@@ -2,9 +2,9 @@ from . import __version__ as app_version
 
 app_name = "website_builder"
 app_title = "Website Builder"
-app_publisher = "Frappe"
-app_description = "Create beautiful websites with few clicks"
-app_email = "developers@frappe.io"
+app_publisher = "asdf"
+app_description = "aasdf"
+app_email = "asdf"
 app_license = "MIT"
 
 # Includes in <head>

@@ -9,9 +9,9 @@ from website_builder import __version__ as version
 setup(
 	name="website_builder",
 	version=version,
-	description="Create beautiful websites with few clicks",
-	author="Frappe",
-	author_email="developers@frappe.io",
+	description="aasdf",
+	author="asdf",
+	author_email="asdf",
 	packages=find_packages(),
 	zip_safe=False,
 	include_package_data=True,
