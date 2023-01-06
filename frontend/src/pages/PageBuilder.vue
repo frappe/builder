@@ -1,15 +1,14 @@
 <template>
-	<div class="flex-col h-screen">
-		<Grid></Grid>
-		<Toolbar></Toolbar>
-		<div class="flex h-full">
-			<div class="widgets bg-gray-200 w-1/5">
-				<h3>Widgets</h3>
+	<div class="flex-col h-[2200px] bg-gray-100">
+		<Toolbar class="z-10 relative"></Toolbar>
+		<div class="flex justify-center">
+			<div class="widgets bg-gray-200 w-1/5 z-10 relative p-5">
+				<h3 class="mb-5">Widgets</h3>
 				<draggable
 					:list="widgets"
 					:group="{ name: 'widgets', pull: 'clone', put: false }"
 					item-key="id"
-					class="w-full h-full flex-col flex items-center"
+					class="w-full h-full flex-col flex"
 				>
 					<template #item="{ element }">
 						<div class="flex items-center cursor-pointer justify-center h-12 w-24  border shadow-md rounded-md">
@@ -18,8 +17,8 @@
 					</template>
 				</draggable>
 			</div>
-			<Canvas class="w-3/5"></Canvas>
-			<div class="properties bg-gray-200 w-1/5">CSS</div>
+			<Canvas></Canvas>
+			<div class="properties bg-gray-200 w-1/5 z-10 relative p-5">CSS</div>
 		</div>
 	</div>
 
@@ -27,10 +26,10 @@
 
 <script setup>
 import draggable from 'vuedraggable';
+import { useStore } from "../store";
 import { ref } from 'vue';
 import Canvas from '../components/Canvas.vue';
 import Toolbar from '../components/Toolbar.vue';
-import Grid from '../components/Grid.vue';
 
 let widgets = ref([{
 	id: 1,
