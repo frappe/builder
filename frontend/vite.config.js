@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
-import { getProxyOptions } from 'frappe-ui/src/utils/vite-dev-server'
 import { webserver_port } from '../../../sites/common_site_config.json'
 
 // https://vitejs.dev/config/
@@ -25,3 +24,16 @@ export default defineConfig({
     include: ['frappe-ui > feather-icons', 'showdown', 'engine.io-client'],
   },
 })
+
+function getProxyOptions({ port }) {
+  return {
+    '^/(app|login|api|assets|files|pages)': {
+      target: `http://localhost:${port}`,
+      ws: true,
+      router: function (req) {
+        const site_name = req.headers.host.split(':')[0]
+        return `http://${site_name}:${port}`
+      },
+    },
+  }
+};

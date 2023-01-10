@@ -1,0 +1,12 @@
+{
+	"blocks": [{
+		"name": "Container",
+		"blocks": [{
+			"name": "Text"
+		}],
+		"attributes": {
+			"class": "",
+			"style": {}
+		}
+	}]
+}

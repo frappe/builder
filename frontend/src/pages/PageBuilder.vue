@@ -1,5 +1,5 @@
 <template>
-	<div class="flex-col h-[2200px] bg-gray-100">
+	<div class="flex-col bg-gray-100">
 		<Toolbar class="z-10 relative"></Toolbar>
 		<div class="flex justify-center">
 			<Widgets></Widgets>

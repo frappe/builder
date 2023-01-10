@@ -1,19 +1,33 @@
 <template>
-	<div class="toolbar bg-gray-300 p-4 flex justify-between" ref="toolbar">
-		<span class="font-bold uppercase font-lg pt-2">Web Buddy</span>
+	<div class="toolbar bg-gray-300 p-3 flex justify-center h-16" ref="toolbar">
 		<div class="breakpoint-options">
-			<Button v-for="option in breakpoint_options" :active="store.active_breakpoint === option.device" appearance="minimal">
-				<FeatherIcon :name="option.icon"  class="h-6 w-6"></FeatherIcon>
+			<Button v-for="(option, device_name) in store.device_breakpoints" :active="store.active_breakpoint === option.device" appearance="minimal" @click="activate_breakpoint(option.device)" class="m-1">
+				<FeatherIcon :name="option.icon"  class="h-6 w-6 text-gray-700"></FeatherIcon>
 			</Button>
 		</div>
-		<Button appearance="primary" @click="publish" class="uppercase">Publish</Button>
+		<Button appearance="primary" @click="publish" class="m-1 absolute right-2">Publish</Button>
 	</div>
 </template>
 <script setup>
 import { ref } from 'vue';
 import { useStore } from "../store";
+import { createResource } from 'frappe-ui';
+
 const store = useStore();
 const toolbar = ref(null);
+
+
+const activate_breakpoint = (device) => {
+	store.active_breakpoint = device;
+}
+
+let publish_web = createResource({
+	url: 'website_builder.api.publish',
+	onSuccess(route) {
+		// hack
+		window.open("/" + route, '_blank');
+	},
+})
 
 const publish = () => {
 	console.log(toolbar);
@@ -21,27 +35,8 @@ const publish = () => {
 	var file = new Blob([toolbar.value.innerHTML], {type: "text/html"});
 	a.href = URL.createObjectURL(file);
 	// a.download = "published_file.html";
-	a.click();
+	publish_web.submit({ data: store.get_page_data(), route: "/pages/hello-world" });
+	// a.click();
 }
-
-let breakpoint_options = [
-	{
-		"icon": "monitor",
-		"device": "desktop",
-		"width": 1024,
-		"active": true
-	},
-	{
-		"icon": "smartphone",
-		"device": "mobile",
-		"width": 320,
-		"active": false
-	}, {
-		"icon": "tablet",
-		"device": "tablet",
-		"width": 640,
-		"active": false
-	}
-]
 
 </script>

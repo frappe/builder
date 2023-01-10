@@ -1,0 +1,64 @@
+{
+ "actions": [],
+ "autoname": "field:page_name",
+ "creation": "2023-01-09 15:20:33.274204",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "page_name",
+  "route",
+  "options",
+  "published"
+ ],
+ "fields": [
+  {
+   "fieldname": "page_name",
+   "fieldtype": "Data",
+   "label": "Page Name",
+   "unique": 1
+  },
+  {
+   "fieldname": "route",
+   "fieldtype": "Data",
+   "label": "Route"
+  },
+  {
+   "fieldname": "options",
+   "fieldtype": "JSON",
+   "label": "Options"
+  },
+  {
+   "default": "1",
+   "fieldname": "published",
+   "fieldtype": "Check",
+   "label": "published"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2023-01-10 10:09:08.873007",
+ "modified_by": "Administrator",
+ "module": "Website Builder",
+ "name": "Web Page Beta",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
