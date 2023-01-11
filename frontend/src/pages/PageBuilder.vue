@@ -13,4 +13,20 @@
 import Canvas from '../components/Canvas.vue';
 import Toolbar from '../components/Toolbar.vue';
 import Widgets from '../components/Widgets.vue';
+
+import { useStore } from "../store";
+
+const store = useStore();
+// const webpages = createResource({
+// 	url: "frappe.client.get_list",
+// 	onSuccess(data) {
+// 		console.log(data);
+// 	}
+// });
+
+// webpages.submit({
+// 	doctype: "Web Page Beta",
+// 	fields: ["name", "title", "route", "options"],
+// });
+
 </script>

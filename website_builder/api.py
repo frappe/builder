@@ -3,11 +3,11 @@ import json
 import random
 
 @frappe.whitelist(allow_guest=True)
-def publish(data, route):
+def publish(data, route, page_name=None):
 	page = frappe.db.exists("Web Page Beta", {"route": route})
 	data = json.dumps(data)
 
-	if page:
+	if page or page_name:
 		page = frappe.get_doc("Web Page Beta", page)
 	else:
 		page = frappe.new_doc("Web Page Beta")
@@ -16,4 +16,4 @@ def publish(data, route):
 
 	page.options = data
 	page.save(ignore_permissions=True)
-	return page.route
+	return page

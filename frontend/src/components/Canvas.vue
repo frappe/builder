@@ -1,13 +1,10 @@
 <template>
-	<div class="canvas-container w-3/4 h-[calc(100vh-4rem)] p-10 flex justify-center overflow-hidden" ref="canvas_container">
-		<div class="canvas h-full flex-col flex page bg-white rounded-md overflow-hidden" :style="'width: ' + store.get_active_breakpoint() + 'px;'"
-			ref="canvas">
-			<draggable
-				:list="store.blocks"
-				:group="{ name: 'widgets' }"
-				item-key="id"
-				class="w-full h-full flex-col flex block-container"
-			>
+	<div class="canvas-container w-3/4 h-[calc(100vh-4rem)] p-10 flex justify-center overflow-hidden"
+		ref="canvas_container">
+		<div class="canvas h-full flex-col flex page bg-white rounded-md overflow-hidden"
+			:style="'width: ' + store.get_active_breakpoint() + 'px;'" ref="canvas">
+			<draggable :list="store.blocks" :group="{ name: 'widgets' }" item-key="id"
+				class="w-full h-full flex-col flex block-container">
 				<template #item="{ element }">
 					<Editable :element-properties="element"></Editable>
 				</template>
@@ -16,7 +13,7 @@
 	</div>
 </template>
 <script setup>
-import { onMounted, ref, provide } from 'vue';
+import { onMounted, ref } from 'vue';
 import draggable from 'vuedraggable';
 import { useStore } from "../store";
 import { set_pan_and_zoom } from '../utils/panandzoom.js';
@@ -26,21 +23,27 @@ let store = useStore();
 function get_page_data() {
 	let blocks = [];
 	function get_attributes(block) {
-		let attributes = {};
+		const attributes = {};
+		const skipped_attributes = {};
+		const attributes_to_skip = ["contenteditable", "draggable", "style"];
+
 		for (let i = 0; i < block.attributes.length; i++) {
-			if (["style", "contenteditable", "draggable"].includes(block.attributes[i].name)) {
+			if (attributes_to_skip.includes(block.attributes[i].name)) {
+				skipped_attributes[block.attributes[i].name] = block.attributes[i].value;
 				continue;
 			}
 			attributes[block.attributes[i].name] = block.attributes[i].value;
 		}
-		return attributes;
+		return {attributes, skipped_attributes};
 	}
 	// bhai bhai
 	canvas.value.getElementsByClassName("block-container")[0].children.forEach(child => {
 		const block = child.getElementsByClassName("component")[0]
+		const { attributes, skipped_attributes } = get_attributes(block);
 		blocks.push({
 			"element": block.tagName.toLowerCase(),
-			"attributes": get_attributes(block),
+			attributes,
+			skipped_attributes,
 			"styles": block.getAttribute("style"),
 			"innerText": block.innerText
 		})

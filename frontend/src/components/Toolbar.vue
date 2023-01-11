@@ -23,9 +23,11 @@ const activate_breakpoint = (device) => {
 
 let publish_web = createResource({
 	url: 'website_builder.api.publish',
-	onSuccess(route) {
+	onSuccess(page) {
 		// hack
-		window.open("/" + route, '_blank');
+		page.options = JSON.parse(page.options);
+		store.pages[page.name] = page;
+		window.open("/" + page.route, '_blank');
 	},
 })
 
@@ -35,7 +37,7 @@ const publish = () => {
 	var file = new Blob([toolbar.value.innerHTML], {type: "text/html"});
 	a.href = URL.createObjectURL(file);
 	// a.download = "published_file.html";
-	publish_web.submit({ data: store.get_page_data(), route: "/pages/hello-world" });
+	publish_web.submit({ data: store.get_page_data(), route: store.route, page_name: store.page_name });
 	// a.click();
 }
 

@@ -1,6 +1,14 @@
 <template>
 	<div class="widgets bg-gray-200 w-1/5 z-10 relative p-5">
-		<h3 class="mb-5 text-gray-600 font-bold text-sm">WIDGETS</h3>
+		<h3 class="mb-1 text-gray-600 font-bold text-sm">PAGES</h3>
+		<div v-for="page, i in store.pages">
+			<ul>
+				<li>
+					<a @click="set_page(page)" class="hover:underline cursor-pointer text-base">{{ page.route }}</a>
+				</li>
+			</ul>
+		</div>
+		<h3 class="mb-3 mt-8 text-gray-600 font-bold text-sm">WIDGETS</h3>
 		<draggable
 			:list="widgets"
 			:group="{ name: 'widgets', pull: 'clone', put: false }"
@@ -18,6 +26,8 @@
 <script setup>
 import draggable from 'vuedraggable';
 import { ref } from 'vue';
+import { useStore } from "../store";
+const store = useStore();
 
 let widgets = ref([{
 	id: 1,
@@ -50,6 +60,11 @@ let widgets = ref([{
 	styles: "object-fit: cover"
 }])
 
+const set_page = (e) => {
+	store.blocks.push(...e.options);
+	store.page_name = e.page_name;
+	store.route = e.route;
+}
 </script>
 
 <style>
