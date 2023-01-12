@@ -2,8 +2,8 @@
 	<div class="canvas-container w-3/4 h-[calc(100vh-4rem)] p-10 flex justify-center overflow-hidden"
 		ref="canvas_container">
 		<div class="canvas h-full flex-col flex page bg-white rounded-md overflow-hidden"
-			:style="'width: ' + store.get_active_breakpoint() + 'px;'" ref="canvas">
-			<draggable :list="store.blocks" :group="{ name: 'widgets' }" item-key="id"
+			:style="'width: ' + store.get_active_breakpoint() + 'px;'" ref="canvas" >
+			<draggable :list="store.blocks" :group="{ name: 'blocks' }" item-key="id"
 				class="w-full h-full flex-col flex block-container">
 				<template #item="{ element }">
 					<Editable :element-properties="element"></Editable>
@@ -13,7 +13,7 @@
 	</div>
 </template>
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref} from 'vue';
 import draggable from 'vuedraggable';
 import { useStore } from "../store";
 import { set_pan_and_zoom } from '../utils/panandzoom.js';

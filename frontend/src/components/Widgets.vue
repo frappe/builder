@@ -1,27 +1,17 @@
 <template>
-	<div class="widgets bg-gray-200 w-1/5 z-10 relative p-5">
-		<h3 class="mb-1 text-gray-600 font-bold text-sm">PAGES</h3>
-		<div v-for="page, i in store.pages">
-			<ul>
-				<li>
-					<a @click="set_page(page)" class="hover:underline cursor-pointer text-base">{{ page.route }}</a>
-				</li>
-			</ul>
-		</div>
-		<h3 class="mb-3 mt-8 text-gray-600 font-bold text-sm">WIDGETS</h3>
-		<draggable
-			:list="widgets"
-			:group="{ name: 'widgets', pull: 'clone', put: false }"
-			item-key="id"
-			class="w-full flex flex-wrap"
-		>
-			<template #item="{ element }">
-				<div class="flex items-center cursor-pointer justify-center h-10 w-10 border shadow-sm rounded-md mr-2 last:mr-0 mb-2 bg-white">
-					<FeatherIcon :name="element.icon" class="h-5 text-gray-700" />
-				</div>
-			</template>
-		</draggable>
-	</div>
+	<h3 class="mb-3 text-gray-600 font-bold text-xs uppercase">WIDGETS</h3>
+	<draggable
+		:list="widgets"
+		:group="{ name: 'blocks', pull: 'clone', put: false }"
+		item-key="id"
+		class="w-full flex flex-wrap"
+	>
+		<template #item="{ element }">
+			<div class="flex items-center cursor-pointer justify-center h-10 w-10 border shadow-sm rounded-md mr-2 last:mr-0 mb-2 bg-white">
+				<FeatherIcon :name="element.icon" class="h-5 text-gray-700" />
+			</div>
+		</template>
+	</draggable>
 </template>
 <script setup>
 import draggable from 'vuedraggable';
