@@ -24,7 +24,9 @@ let widgets = ref([{
 	name: 'Container',
 	element: "div",
 	icon: "square",
+	innerText: "Text",
 	attributes: {
+		contenteditable: true,
 		class: "bg-gray-300 h-[300px] w-full"
 	}
 }, {

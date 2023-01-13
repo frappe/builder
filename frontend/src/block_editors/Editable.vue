@@ -1,7 +1,7 @@
 <template>
-	<div class="editor group relative hover:border-2 hover:border-blue-400">
+	<div class="editor group relative hover:border-2 hover:border-blue-400 cursor-pointer">
 		<component :is="elementProperties.element"
-			class="flex items-center cursor-pointer justify-center overflow-auto group-hover:border-2 group-hover:border-blue-200 relative component"
+			class="flex items-center justify-center overflow-auto group-hover:border-2 group-hover:border-blue-200 relative component"
 			@click="select_component"
 			draggable="true" v-bind="{...elementProperties.attributes, ...elementProperties.skipped_attributes}" :style="elementProperties.styles"> {{
 				elementProperties.innerText

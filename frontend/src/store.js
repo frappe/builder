@@ -4,42 +4,7 @@ export const useStore = defineStore('store', {
   state: () => ({
     page_name: 'test-879',
     route: 'pages/hello',
-    pages: {
-      'test-136': {
-        page_name: 'test-136',
-        route: 'pages/hello',
-        options: [
-          {
-            element: 'span',
-            attributes: {
-              class:
-                'flex items-center cursor-pointer justify-center overflow-auto group-hover:border-2 group-hover:border-blue-200 relative component',
-            },
-            skipped_attributes: {"draggable": "true", "contenteditable": "true"},
-            styles:
-              'height: 50px; color: black; background: none; border: none; box-shadow: none; min-width: 50px; width: auto;',
-            innerText: 'This is it!',
-          },
-        ],
-      },
-      'test-879': {
-        page_name: 'test-879',
-        route: 'pages/hello-world',
-        options: [
-          {
-            element: 'span',
-            attributes: {
-              class:
-                'flex items-center cursor-pointer justify-center overflow-auto group-hover:border-2 group-hover:border-blue-200 relative component',
-            },
-            skipped_attributes: {"draggable": "true", "contenteditable": "true"},
-            styles:
-              'height: 50px; color: black; background: none; border: none; box-shadow: none; min-width: 50px; width: auto;',
-            innerText: 'Text',
-          },
-        ],
-      },
-    },
+    pages: {},
     active_breakpoint: 'desktop',
     blocks: [],
     device_breakpoints: {
