@@ -6,7 +6,7 @@
 			<div v-for="page, i in store.pages">
 				<ul>
 					<li>
-						<a @click="set_page(page)" class="hover:underline cursor-pointer text-base">{{ page.route }}</a>
+						<a @click="set_page(page)" class="hover:underline cursor-pointer text-base">{{ page.name }}</a>
 					</li>
 				</ul>
 			</div>
@@ -43,6 +43,8 @@ let pages = createListResource({
 })
 
 const set_page = (e) => {
+	// clear blocks
+	store.blocks.length = 0;
 	store.blocks.push(...e.options);
 	store.page_name = e.page_name;
 	store.route = e.route;

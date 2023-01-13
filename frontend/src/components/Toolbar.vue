@@ -5,6 +5,7 @@
 				<FeatherIcon :name="option.icon"  class="h-6 w-6 text-gray-700"></FeatherIcon>
 			</Button>
 		</div>
+		<input type="text" v-model="store.page_name" class="border-none rounded" placeholder="Page Name">
 		<Button appearance="primary" @click="publish" class="m-1 absolute right-2">Publish</Button>
 	</div>
 </template>

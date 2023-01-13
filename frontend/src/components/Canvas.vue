@@ -1,7 +1,7 @@
 <template>
 	<div class="canvas-container w-3/4 h-[calc(100vh-4rem)] p-10 flex justify-center overflow-hidden"
 		ref="canvas_container">
-		<div class="canvas h-full flex-col flex page bg-white rounded-md overflow-hidden"
+		<div class="canvas min-h-fit h-full flex-col flex page bg-white rounded-md"
 			:style="'width: ' + store.get_active_breakpoint() + 'px;'" ref="canvas" >
 			<draggable :list="store.blocks" :group="{ name: 'blocks' }" item-key="id"
 				class="w-full h-full flex-col flex block-container">
@@ -18,10 +18,9 @@ import draggable from 'vuedraggable';
 import { useStore } from "../store";
 import { set_pan_and_zoom } from '../utils/panandzoom.js';
 import Editable from '../block_editors/Editable.vue';
-
 let store = useStore();
+
 function get_page_data() {
-	let blocks = [];
 	function get_attributes(block) {
 		const attributes = {};
 		const skipped_attributes = {};
@@ -36,19 +35,37 @@ function get_page_data() {
 		}
 		return {attributes, skipped_attributes};
 	}
-	// bhai bhai
-	canvas.value.getElementsByClassName("block-container")[0].children.forEach(child => {
-		const block = child.getElementsByClassName("component")[0]
-		const { attributes, skipped_attributes } = get_attributes(block);
-		blocks.push({
-			"element": block.tagName.toLowerCase(),
-			attributes,
-			skipped_attributes,
-			"styles": block.getAttribute("style"),
-			"innerText": block.innerText
+
+	function get_blocks(element) {
+		let blocks = []
+		element.childNodes.forEach(node => {
+			if (node.nodeType === Node.ELEMENT_NODE) {
+				// if (!node.classList.contains("component")) {
+				// 	const components = node.getElementsByClassName("component")
+				// 	if (components.length) {
+				// 		node = components[0];
+				// 	} else {
+				// 		return;
+				// 	}
+				// }
+				const { attributes, skipped_attributes } = get_attributes(node);
+				blocks.push({
+					"element": node.tagName.toLowerCase(),
+					attributes,
+					skipped_attributes,
+					"styles": node.getAttribute("style"),
+					"children": get_blocks(node),
+				})
+			} else if (node.nodeType === Node.TEXT_NODE) {
+				blocks.push({
+					"node_type": "Text",
+					"node_value": node.nodeValue,
+				})
+			}
 		})
-	});
-	return blocks;
+		return blocks
+	}
+	return get_blocks(canvas.value.getElementsByClassName("block-container")[0]);
 }
 
 store.get_page_data = get_page_data;

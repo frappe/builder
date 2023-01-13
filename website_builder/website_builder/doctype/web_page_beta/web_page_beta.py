@@ -24,17 +24,23 @@ class WebPageBeta(WebsiteGenerator):
 	def get_content(self):
 		soup = bs.BeautifulSoup("", "html.parser")
 		options = json.loads(self.options)
-		html = ""
-		for option in options:
-			element = soup.new_tag(option["element"])
-			element.attrs = option.get("attributes", {})
-			# style = ""
-			# for (key, value) in option.get("styles", {}).items():
-			# 	style = f"{style}{key}: {value};"
-			element.attrs["style"] = option.get("styles", {})
-			element.string = option.get("innerText", "")
-			html = f"{html}{str(element)}"
-		return html
 
-		# with open("test.html", "w") as f:
-		# 	f.write(self.options)
+		def get_html(options, soup):
+			html = ""
+			def get_tag(node, soup):
+				tag = soup.new_tag(node["element"])
+				tag.attrs = node.get("attributes", {})
+				tag.attrs["style"] = node.get("styles", {})
+				for child in node.get("children", []):
+					print(child)
+					if child.get("node_type") == "Text":
+						tag.append(child.get("node_value", ""))
+					else:
+						tag.append(get_tag(child, soup))
+				return tag
+
+			for option in options:
+				html += str(get_tag(option, soup))
+			return html
+
+		return get_html(options, soup)

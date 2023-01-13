@@ -22,12 +22,11 @@ const store = useStore();
 let widgets = ref([{
 	id: 1,
 	name: 'Container',
-	element: "div",
+	element: "section",
 	icon: "square",
-	innerText: "Text",
+	blocks: [],
 	attributes: {
-		contenteditable: true,
-		class: "bg-gray-300 h-[300px] w-full"
+		class: "w-full h-[300px] bg-gray-300 min-h-fit"
 	}
 }, {
 	id: 2,
@@ -47,7 +46,7 @@ let widgets = ref([{
 	attributes: {
 		// src: "https://picsum.photos/500/200"
 		src: "https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png",
-		class: "bg-gray-600 h-[300px] w-full"
+		class: "h-[300px] w-full"
 	},
 	styles: "object-fit: cover"
 }])

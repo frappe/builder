@@ -12,7 +12,7 @@ def publish(data, route, page_name=None):
 	else:
 		page = frappe.new_doc("Web Page Beta")
 		page.route = route
-		page.page_name = f"test {random.randint(0, 1000)}"
+		page.page_name = page_name or f"test {random.randint(0, 1000)}"
 
 	page.options = data
 	page.save(ignore_permissions=True)
