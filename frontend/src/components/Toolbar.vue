@@ -1,12 +1,12 @@
 <template>
-	<div class="toolbar bg-gray-300 p-3 flex justify-center h-16" ref="toolbar">
+	<div class="toolbar bg-gray-300 p-2 flex justify-center h-14 shadow-sm" ref="toolbar">
+		<input type="text" v-model="store.route" class="border-none rounded m-1 absolute left-4 h-8 bg-gray-200 text-base focus:ring-gray-400" placeholder="Page Name">
 		<div class="breakpoint-options">
 			<Button v-for="(option, device_name) in store.device_breakpoints" :active="store.active_breakpoint === option.device" appearance="minimal" @click="activate_breakpoint(option.device)" class="m-1">
-				<FeatherIcon :name="option.icon"  class="h-6 w-6 text-gray-700"></FeatherIcon>
+				<FeatherIcon :name="option.icon"  class="h-5 w-5 text-gray-700"></FeatherIcon>
 			</Button>
 		</div>
-		<input type="text" v-model="store.page_name" class="border-none rounded" placeholder="Page Name">
-		<Button appearance="primary" @click="publish" class="m-1 absolute right-2">Publish</Button>
+		<Button appearance="primary" @click="publish" class="m-1 absolute right-2 text-sm">Publish</Button>
 	</div>
 </template>
 <script setup>

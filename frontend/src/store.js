@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 export const useStore = defineStore('store', {
   state: () => ({
     page_name: 'test-879',
-    route: 'pages/hello',
+    route: 'pages/home',
     pages: {},
     active_breakpoint: 'desktop',
     blocks: [],
