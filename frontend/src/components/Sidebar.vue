@@ -22,24 +22,24 @@ import Widgets from "./Widgets.vue";
 const store = useStore();
 
 let pages = createListResource({
-  doctype: 'Web Page Beta',
-  fields: ['name', 'options', 'page_name', 'route'],
-  orderBy: 'creation desc',
-  start: 0,
-  pageLength: 5,
-  auto: true,
-  onSuccess(data) {
-	console.log('data', data);
-	store.pages = data;
-  },
-  transform(data) {
-	let pages = {};
-	data.map((d) => {
-		pages[d.name] = d;
-		pages[d.name].options = JSON.parse(d.options);
-	});
-	return pages;
-  },
+	doctype: 'Web Page Beta',
+	fields: ['name', 'options', 'page_name', 'route'],
+	orderBy: 'creation desc',
+	start: 0,
+	pageLength: 5,
+	auto: true,
+	onSuccess(data) {
+		console.log('data', data);
+		store.pages = data;
+	},
+	transform(data) {
+		let pages = {};
+		data.map((d) => {
+			pages[d.name] = d;
+			pages[d.name].options = JSON.parse(d.options);
+		});
+		return pages;
+	},
 })
 
 const set_page = (e) => {

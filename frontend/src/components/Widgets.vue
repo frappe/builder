@@ -16,7 +16,6 @@ import { ref } from 'vue';
 import { useStore } from "../store";
 const store = useStore();
 
-
 const handle_clone = (item) => {
 	let cloned_item = JSON.parse(JSON.stringify(item));
 	// set unique id for each cloned item
