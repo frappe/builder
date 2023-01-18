@@ -1,6 +1,6 @@
 <template>
 	<div class="flex-col bg-gray-100">
-		<Toolbar class="z-10 relative"></Toolbar>
+		<Toolbar class="z-30 relative"></Toolbar>
 		<div class="flex justify-center">
 			<Sidebar></Sidebar>
 			<Canvas></Canvas>
