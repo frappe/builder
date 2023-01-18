@@ -1,5 +1,5 @@
 <template>
-	<div class="widgets bg-gray-200 w-1/5 relative p-5">
+	<div class="widgets bg-gray-200 w-1/5 relative p-5 z-20">
 		<!-- <div class="mb-5">
 			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase">Pages</h3>
 			<div v-if="!Object.keys(store.pages).length" class="italic text-gray-600  text-sm">No Saved Pages</div>
