@@ -11,8 +11,8 @@
 	</draggable>
 </template>
 <script setup>
-import draggable from 'vuedraggable';
 import { ref } from 'vue';
+import draggable from 'vuedraggable';
 import { useStore } from "../store";
 const store = useStore();
 
@@ -53,7 +53,7 @@ let widgets = ref([{
 	icon: "image",
 	attributes: {
 		// src: "https://picsum.photos/500/200"
-		src: "https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png",
+		src: "https://user-images.githubusercontent.com/13928957/212847544-5773795d-2fd6-48d1-8423-b78ecc92522b.png",
 		class: "h-[300px] w-full"
 	},
 	styles: "object-fit: cover"

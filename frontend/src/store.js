@@ -2,6 +2,23 @@ import { defineStore } from 'pinia'
 
 export const useStore = defineStore('store', {
   state: () => ({
+    alignments: [{
+      name: 'Left',
+      class: 'justify-start',
+      icon: 'align-left',
+    }, {
+      name: 'Center',
+      class: 'justify-center',
+      icon: 'align-center',
+    }, {
+      name: 'Right',
+      class: 'justify-end',
+      icon: 'align-right',
+    }, {
+      name: 'Justify',
+      class: 'justify-between',
+      icon: 'align-justify',
+    }],
     page_name: 'test-879',
     route: 'pages/home',
     pages: {},
