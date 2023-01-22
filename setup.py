@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 with open("requirements.txt") as f:
 	install_requires = f.read().strip().split("\n")
@@ -9,9 +9,8 @@ from website_builder import __version__ as version
 setup(
 	name="website_builder",
 	version=version,
-	description="aasdf",
-	author="asdf",
-	author_email="asdf",
+	author="Suraj Shetty",
+	author_email="surajshetty3416@gmail.com",
 	packages=find_packages(),
 	zip_safe=False,
 	include_package_data=True,
