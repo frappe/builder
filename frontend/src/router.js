@@ -1,16 +1,16 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from "vue-router";
 
 const routes = [
-  {
-    path: '/',
-    name: 'Page Builder',
-    component: () => import('@/pages/PageBuilder.vue'),
-  },
-]
+	{
+		path: "/",
+		name: "Page Builder",
+		component: () => import("@/pages/PageBuilder.vue"),
+	},
+];
 
-let router = createRouter({
-  history: createWebHistory('/frontend'),
-  routes,
-})
+const router = createRouter({
+	history: createWebHistory("/frontend"),
+	routes,
+});
 
-export default router
+export default router;
