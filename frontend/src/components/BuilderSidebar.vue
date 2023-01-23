@@ -2,11 +2,17 @@
 	<div class="widgets bg-gray-200 w-1/5 relative p-5 z-20">
 		<!-- <div class="mb-5">
 			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase">Pages</h3>
-			<div v-if="!Object.keys(store.pages).length" class="italic text-gray-600  text-sm">No Saved Pages</div>
+			<div v-if="!Object.keys(store.pages).length"
+				class="italic text-gray-600  text-sm">
+				No Saved Pages
+			</div>
 			<div v-for="page, i in store.pages">
 				<ul>
 					<li>
-						<a @click="set_page(page)" class="hover:underline cursor-pointer text-base">{{ page.name }}</a>
+						<a @click="setPage(page)"
+							class="hover:underline cursor-pointer text-base">
+							{{ page.name }}
+						</a>
 					</li>
 				</ul>
 			</div>
@@ -16,41 +22,39 @@
 	</div>
 </template>
 <script setup>
-import { useStore } from "../store";
 import { createListResource } from "frappe-ui";
-import Widgets from "./Widgets.vue";
+import useStore from "../store";
+import Widgets from "./BuilderWidgets.vue";
+
 const store = useStore();
 
-let pages = createListResource({
-	doctype: 'Web Page Beta',
-	fields: ['name', 'options', 'page_name', 'route'],
-	orderBy: 'creation desc',
+createListResource({
+	doctype: "Web Page Beta",
+	fields: ["name", "options", "page_name", "route"],
+	orderBy: "creation desc",
 	start: 0,
 	pageLength: 5,
 	auto: true,
 	onSuccess(data) {
-		console.log('data', data);
 		store.pages = data;
 	},
 	transform(data) {
-		let pages = {};
-		data.map((d) => {
+		const pages = {};
+		data.forEach((d) => {
 			pages[d.name] = d;
 			pages[d.name].options = JSON.parse(d.options);
 		});
 		return pages;
 	},
-})
+});
 
-const set_page = (e) => {
+const setPage = (e) => {
 	// clear blocks
 	store.blocks.length = 0;
 	store.blocks.push(...e.options);
 	store.page_name = e.page_name;
 	store.route = e.route;
-}
-
-
+};
 
 </script>
 
