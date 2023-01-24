@@ -52,7 +52,7 @@ const setPage = (e) => {
 	// clear blocks
 	store.blocks.length = 0;
 	store.blocks.push(...e.options);
-	store.page_name = e.page_name;
+	store.pageName = e.pageName;
 	store.route = e.route;
 };
 

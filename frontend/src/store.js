@@ -19,7 +19,7 @@ const useStore = defineStore("store", {
 			class: "justify-between",
 			icon: "align-justify",
 		}],
-		page_name: "test-879",
+		pageName: "test-879",
 		route: "pages/home",
 		pages: {},
 		activeBreakpoint: "desktop",
