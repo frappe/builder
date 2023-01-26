@@ -17,7 +17,7 @@
 			<ul class="flex flex-wrap">
 				<li v-for="color in store.pastelCssColors" :key="color" class="mr-2 mb-2 last:mr-0">
 					<a @click="setBgColor(color)" class="hover:underline cursor-pointer text-base">
-						<div class="w-6 h-6 rounded-md shadow-sm" :style="'background-color:' + color"></div>
+						<div class="w-6 h-6 rounded-md shadow-sm" :style="'background:' + color"></div>
 					</a>
 				</li>
 			</ul>
@@ -45,7 +45,7 @@ import useStore from "../store";
 const store = useStore();
 
 const setBgColor = (color) => {
-	store.selectedComponent.style.backgroundColor = color;
+	store.selectedComponent.style.background = color;
 };
 const setTextColor = (color) => {
 	store.selectedComponent.style.color = color;
@@ -56,5 +56,9 @@ const setAlignment = (alignment) => {
 		...store.alignments.map((obj) => obj.class),
 	);
 	store.selectedComponent.classList.add(alignment.class);
+};
+
+const setWidth = (e) => {
+	store.selectedComponent.style.width = e.target.value + "px";
 };
 </script>
