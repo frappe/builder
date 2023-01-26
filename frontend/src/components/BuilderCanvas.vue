@@ -2,14 +2,14 @@
 	<div
 		class="canvas-container w-3/4 h-[calc(100vh-3.5rem)] p-10 flex justify-center overflow-hidden"
 		ref="canvasContainer" @click="clearSelectedComponent">
-		<div class="overlay absolute"></div>
-		<div class="canvas absolute min-h-full h-full bg-white rounded-md overflow-hidden"
+		<div class="overlay absolute" id="overlay"></div>
+		<div class="canvas absolute min-h-full h-fit bg-white rounded-md overflow-hidden"
 			:style="'width: ' + store.getActiveBreakpoint() + 'px;'" ref="canvas">
 			<draggable :list="store.blocks" :group="{ name: 'blocks' }" item-key="id"
 				class="h-full w-auto flex-col block-container min-h-[300px] mx">
 				<template #item="{ element }">
-					<Block :element-properties="element" @dragstart="setCopyData($event, element, i)"
-						@drag.end="copy"></Block>
+					<BuilderBlock :element-properties="element" @dragstart="setCopyData($event, element, i)"
+						@drag.end="copy"></BuilderBlock>
 				</template>
 			</draggable>
 		</div>
@@ -21,8 +21,7 @@ import { onMounted, ref } from "vue";
 import draggable from "vuedraggable";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
-import spacer from "../utils/spacingHandler";
-import Block from "./BuilderBlock.vue";
+import BuilderBlock from "./BuilderBlock.vue";
 
 const store = useStore();
 
@@ -61,14 +60,6 @@ function getPageData() {
 		const blocks = [];
 		element.childNodes.forEach((node) => {
 			if (node.nodeType === Node.ELEMENT_NODE) {
-				// if (!node.classList.contains("component")) {
-				// 	const components = node.getElementsByClassName("component")
-				// 	if (components.length) {
-				// 		node = components[0];
-				// 	} else {
-				// 		return;
-				// 	}
-				// }
 				const { attributes, skippedAttributes } = getAttributes(node);
 				blocks.push({
 					element: node.tagName.toLowerCase(),
@@ -93,7 +84,6 @@ store.getPageData = getPageData;
 
 onMounted(() => {
 	setPanAndZoom(canvas.value);
-	spacer(canvas.value.querySelector(".block-container"));
 });
 
 const clearSelectedComponent = () => {
@@ -112,8 +102,7 @@ onMounted(() => {
 	const containerBound = canvasContainer.value.getBoundingClientRect();
 	const canvasBound = canvas.value.getBoundingClientRect();
 	if (canvasBound.width > containerBound.width) {
-		const scale = (containerBound.width) / (canvasBound.width + padding * 2);
-		canvas.value.style.transform = `scale(${scale})`;
+		const scale = (containerBound.width) / (canvasBound.width + (padding * 2));
 		canvas.value.previousScale = scale;
 	}
 	const diff = (containerBound.top - canvasBound.top);
