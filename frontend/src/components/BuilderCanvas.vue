@@ -107,7 +107,7 @@ onMounted(() => {
 	}
 	const diff = (containerBound.top - canvasBound.top);
 	if (diff !== 0) {
-		canvas.value.previousY = diff;
+		canvas.value.previousY = diff - padding / 2;
 	}
 	canvas.value.style.transform = `translate(${canvas.value.previousX || 0}px, ${canvas.value.previousY || 0}px) scale(${canvas.value.previousScale})`;
 });
