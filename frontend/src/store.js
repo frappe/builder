@@ -3,6 +3,41 @@ import { defineStore } from "pinia";
 const useStore = defineStore("store", {
 	state: () => ({
 		selectedComponent: null,
+		widgets: [{
+			name: "Container",
+			element: "section",
+			icon: "square",
+			blocks: [],
+			attributes: {
+				class: "w-full h-[300px] bg-blue-100 min-h-fit",
+			},
+		}, {
+			name: "Text",
+			element: "span",
+			icon: "type",
+			innerText: "Text",
+			attributes: {
+				contenteditable: true,
+				style: "min-height: 50px; color: black; background: none; border: none; box-shadow: none; min-width: 50px; width: auto; outline: none; padding: 5px",
+			},
+		}, {
+			name: "Spacer",
+			element: "div",
+			icon: "minus",
+			attributes: {
+				style: "height: 50px; color: black; background: none; border: none; box-shadow: none; min-width: 50px; width: auto;",
+			},
+		}, {
+			name: "Image",
+			element: "img",
+			icon: "image",
+			attributes: {
+				// src: "https://picsum.photos/500/200"
+				src: "https://user-images.githubusercontent.com/13928957/212847544-5773795d-2fd6-48d1-8423-b78ecc92522b.png",
+				class: "h-[300px] w-full",
+			},
+			styles: "object-fit: cover",
+		}],
 		alignments: [{
 			name: "Left",
 			class: "justify-start",
