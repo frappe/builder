@@ -2,7 +2,8 @@
 	<div>
 		<h3 class="mb-3 text-gray-600 font-bold text-xs uppercase">WIDGETS</h3>
 		<draggable
-			:list="widgets"
+			:list="store.widgets"
+			:sort="false"
 			:group="{ name: 'blocks', pull: 'clone', put: false }"
 			item-key="id"
 			class="w-full flex flex-wrap" :clone="handleClone">
@@ -19,6 +20,9 @@
 <script setup>
 import { ref } from "vue";
 import draggable from "vuedraggable";
+import useStore from "../store";
+
+const store = useStore();
 
 const handleClone = (item) => {
 	const clonedItem = JSON.parse(JSON.stringify(item));
@@ -26,43 +30,6 @@ const handleClone = (item) => {
 	clonedItem.id = Math.random().toString(36).substr(2, 9);
 	return clonedItem;
 };
-
-const widgets = ref([{
-	name: "Container",
-	element: "section",
-	icon: "square",
-	blocks: [],
-	attributes: {
-		class: "w-full h-[300px] bg-blue-100 min-h-fit",
-	},
-}, {
-	name: "Text",
-	element: "span",
-	icon: "type",
-	innerText: "Text",
-	attributes: {
-		contenteditable: true,
-		style: "min-height: 50px; color: black; background: none; border: none; box-shadow: none; min-width: 50px; width: auto; outline: none; padding: 5px",
-	},
-}, {
-	name: "Spacer",
-	element: "div",
-	icon: "minus",
-	attributes: {
-		style: "height: 50px; color: black; background: none; border: none; box-shadow: none; min-width: 50px; width: auto;",
-	},
-}, {
-	name: "Image",
-	element: "img",
-	icon: "image",
-	attributes: {
-		// src: "https://picsum.photos/500/200"
-		src: "https://user-images.githubusercontent.com/13928957/212847544-5773795d-2fd6-48d1-8423-b78ecc92522b.png",
-		class: "h-[300px] w-full",
-	},
-	styles: "object-fit: cover",
-}]);
-
 </script>
 
 <style>
