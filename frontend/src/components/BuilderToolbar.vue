@@ -39,16 +39,11 @@ const publishWebResource = createResource({
 });
 
 const publish = () => {
-	const a = document.createElement("a");
-	const file = new Blob([toolbar.value.innerHTML], { type: "text/html" });
-	a.href = URL.createObjectURL(file);
-	// a.download = "published_file.html";
 	publishWebResource.submit({
 		data: store.getPageData(),
 		route: store.route,
 		page_name: store.pageName,
 	});
-	// a.click();
 };
 
 </script>
