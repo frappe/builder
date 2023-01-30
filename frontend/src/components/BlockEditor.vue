@@ -33,7 +33,7 @@
 			top-[-4px] right-[-4px] cursor-nesw-resize pointer-events-auto">
 		</div>
 		<div class="absolute w-[8px] h-[8px] border-[1px] border-blue-400 rounded-full bg-white
-			bottom-[-4px] right-[-4px] cursor-nwse-resize pointer-events-auto">
+			bottom-[-4px] right-[-4px] cursor-nwse-resize pointer-events-auto" @mousedown="handleBottomCornerResize">
 		</div>
 	</div>
 </template>
@@ -91,6 +91,31 @@ const handleBottomResize = (ev) => {
 	});
 }
 
+const handleBottomCornerResize = (ev) => {
+	const startX = ev.clientX;
+	const startY = ev.clientY;
+	const startHeight = target.offsetHeight;
+	const startWidth = target.offsetWidth;
+
+	// to disable cursor jitter
+	const docCursor = document.body.style.cursor;
+	document.body.style.cursor = window.getComputedStyle(ev.target).cursor;
+
+	const mousemove = (mouseMoveEvent) => {
+		const movementY = mouseMoveEvent.clientY - startY;
+		target.style.height = `${startHeight + movementY}px`;
+
+		const movementX = mouseMoveEvent.clientX - startX;
+		target.style.width = `${startWidth + movementX}px`;
+		mouseMoveEvent.preventDefault();
+	};
+	document.addEventListener("mousemove", mousemove);
+	document.addEventListener("mouseup", (mouseUpEvent) => {
+		document.body.style.cursor = docCursor;
+		document.removeEventListener("mousemove", mousemove);
+		mouseUpEvent.preventDefault();
+	});
+}
 const handleClick = (ev) => {
 	console.log('click');
 	target.click();
