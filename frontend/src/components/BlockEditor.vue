@@ -1,31 +1,33 @@
 <template>
+	<div class="z-10 editor fixed hover:border-[1px] hover:border-blue-200 group invisible"
+		ref="editor" @click.stop="handleDblClick" @dblclick.stop="handleDblClick" @mousedown.stop="handleMove">
 		<div class="absolute border-radius-resize w-[10px] h-[10px] border-[1px] border-blue-400 bg-white rounded-full pointer-events-auto top-2 left-2 hidden cursor-default" @mousedown.stop="handleRounded" v-if="roundable">
 			<div class="absolute w-[4px] h-[4px] bg-blue-400 top-[2px] left-[2px] rounded-full pointer-events-none"></div>
 		</div>
 		<div class="absolute w-[4px] border-none bg-transparent top-0
-			bottom-0 left-[-2px] left-handle cursor-ew-resize pointer-events-auto" >
+			bottom-0 left-[-2px] left-handle ew-resize pointer-events-auto" >
 		</div>
 		<div class="absolute w-[4px] border-none bg-transparent top-0
 			bottom-0 right-[-2px] right-handle cursor-ew-resize pointer-events-auto" @mousedown.stop="handleRightResize">
 		</div>
 		<div class="absolute h-[4px] border-none bg-transparent top-[-2px]
-			right-0 left-0 top-handle cursor-ns-resize pointer-events-auto">
+			right-0 left-0 top-handle ns-resize pointer-events-auto">
 		</div>
 		<div class="absolute h-[4px] border-none bg-transparent bottom-[-2px]
 			right-0 left-0 bottom-handle cursor-ns-resize pointer-events-auto" @mousedown.stop="handleBottomResize">
 		</div>
 
+		<!-- <div class="absolute w-[8px] h-[8px] border-[1px] border-blue-400 rounded-full bg-white
+			top-[-4px] left-[-4px] nwse-resize pointer-events-auto">
+		</div> -->
+		<!-- <div class="absolute w-[8px] h-[8px] border-[1px] border-blue-400 rounded-full bg-white
+			bottom-[-4px] left-[-4px] nesw-resize pointer-events-auto">
+		</div> -->
+		<!-- <div class="absolute w-[8px] h-[8px] border-[1px] border-blue-400 rounded-full bg-white
+			top-[-4px] right-[-4px] nesw-resize pointer-events-auto">
+		</div> -->
 		<div class="absolute w-[8px] h-[8px] border-[1px] border-blue-400 rounded-full bg-white
-			top-[-4px] left-[-4px] cursor-nwse-resize pointer-events-auto">
-		</div>
-		<div class="absolute w-[8px] h-[8px] border-[1px] border-blue-400 rounded-full bg-white
-			bottom-[-4px] left-[-4px] cursor-nesw-resize pointer-events-auto">
-		</div>
-		<div class="absolute w-[8px] h-[8px] border-[1px] border-blue-400 rounded-full bg-white
-			top-[-4px] right-[-4px] cursor-nesw-resize pointer-events-auto">
-		</div>
-		<div class="absolute w-[8px] h-[8px] border-[1px] border-blue-400 rounded-full bg-white
-			bottom-[-4px] right-[-4px] cursor-nwse-resize pointer-events-auto" @mousedown="handleBottomCornerResize">
+			bottom-[-4px] right-[-4px] cursor-nwse-resize pointer-events-auto" @mousedown.stop="handleBottomCornerResize">
 		</div>
 	</div>
 </template>
@@ -107,9 +109,11 @@ const handleBottomCornerResize = (ev) => {
 		mouseUpEvent.preventDefault();
 	});
 }
-const handleClick = (ev) => {
-	console.log('click');
-	target.click();
+
+const handleDblClick = (ev) => {
+	const editorWrapper = editor.value;
+	editorWrapper.classList.add("pointer-events-none");
+	document.elementFromPoint(ev.x, ev.y).click();
 }
 
 const handleMove = (ev) => {
@@ -154,7 +158,6 @@ onMounted(() => {
 		attributes: true,
 		subtree: true,
 	};
-	console.log(observer.observe(target, observer_config));
 	observer.observe(target.closest(".canvas"), {
 		...observer_config,
 		childList: true,
@@ -166,9 +169,12 @@ onMounted(() => {
 			element.classList.remove("hidden");
 		});
 		editorWrapper.classList.add(
-			"pointer-events-none",
 			"border-[1px]",
 			"border-blue-400",
+		);
+		editorWrapper.classList.remove(
+			"invisible",
+			"pointer-events-none"
 		);
 	}
 
@@ -181,27 +187,38 @@ onMounted(() => {
 				element.classList.remove("hidden");
 			});
 			editorWrapper.classList.add(
-				"pointer-events-none",
 				"border-[1px]",
 				"border-blue-400",
+			);
+			editorWrapper.classList.remove(
+				"invisible",
+				"pointer-events-none"
 			);
 		} else {
 			// un-selected
 			editorWrapper.querySelectorAll("[class*=resize]").forEach((element) => {
 				element.classList.add("hidden");
 			});
+
+			editorWrapper.classList.add(
+				"invisible",
+			);
+
 			editorWrapper.classList.remove(
 				"border-[1px]",
 				"border-blue-400",
 				// if the new selected component is a child of this component
-				target.contains(events.newValue) ? "pointer-events-none" : null,
+				"pointer-events-none",
 			);
 		}
 	});
 })
 
 onUnmounted(() => {
-	target.closest(".canvas-container").removeEventListener("wheel", updateEditor);
+	let container = target.closest(".canvas-container")
+	if (container) {
+		container.removeEventListener("wheel", updateEditor);
+	}
 	window.removeEventListener("resize", updateEditor);
 	window.removeEventListener("scroll", updateEditor);
 })
@@ -209,6 +226,7 @@ onUnmounted(() => {
 function updateEditor() {
 	const bound = target.getBoundingClientRect();
 	const editorWrapper = editor.value;
+	if (!editorWrapper) return;
 	editorWrapper.style.width = `${bound.width}px`;
 	editorWrapper.style.height = `${bound.height}px`;
 	editorWrapper.style.top = `${bound.top}px`;
