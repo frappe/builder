@@ -95,6 +95,10 @@ document.addEventListener("keydown", (e) => {
 		store.blocks = store.blocks.filter((block) => block.id !== store.selectedComponent.element_id);
 		store.selectedComponent = null;
 	}
+
+	if (e.key === "Escape") {
+		store.selectedComponent = null;
+	}
 });
 
 onMounted(() => {
