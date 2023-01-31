@@ -1,6 +1,6 @@
 <template>
 	<component v-if="elementProperties.node_type !== 'Text'" :is="elementProperties.element"
-		class="flex items-center justify-center relative __builder_component__ mx-auto"
+		class="flex items-center justify-center relative __builder_component__ mx-auto cursor-default"
 		@click.exact.stop="selectComponent($event, elementProperties)" @dblclick.stop draggable="true"
 		v-bind="{ ...elementProperties.attributes, ...elementProperties.skipped_attributes }"
 		:style="elementProperties.styles" ref="component">
@@ -13,7 +13,10 @@
 		</draggable>
 	</component>
 	<teleport to='#overlay'>
-		<BlockEditor :movable="elementProperties.element === 'span'"></BlockEditor>
+		<BlockEditor
+			:movable="true"
+			:roundable="elementProperties.element !== 'span'"
+			:resizable="true"></BlockEditor>
 	</teleport>
 </template>
 <script setup>
