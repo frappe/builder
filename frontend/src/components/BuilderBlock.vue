@@ -1,29 +1,27 @@
 <template>
 	<component v-if="elementProperties.node_type !== 'Text'" :is="elementProperties.element"
-		class="flex items-center justify-center relative __builder_component__ mx-auto cursor-default"
-		@click.exact.stop="selectComponent($event, elementProperties)" @dblclick.stop draggable="true"
+		class="flex items-center justify-center relative __builder_component__ cursor-default"
+		@click.exact.stop="selectComponent($event, elementProperties)" @dblclick.stop
 		v-bind="{ ...elementProperties.attributes, ...elementProperties.skipped_attributes }"
 		:style="elementProperties.styles" ref="component">
 		{{ elementProperties.innerText }}
-		<draggable :list="elementProperties.blocks" v-if="elementProperties.element === 'section'"
-			:group="{ name: 'blocks' }" item-key="id" class="w-full h-full flex-col flex block-container">
-			<template #item="{ element }">
-				<BuilderBlock :element-properties="element"></BuilderBlock>
-			</template>
-		</draggable>
+		<BuilderBlock :element-properties="element" v-for="element in elementProperties.blocks"></BuilderBlock>
 	</component>
+	<teleport to="#draggables" v-if="elementProperties.element === 'section'">
+		<BlockDraggables :element-properties="elementProperties"></BlockDraggables>
+	</teleport>
 	<teleport to='#overlay'>
 		<BlockEditor
-			:movable="true"
+			:movable="elementProperties.element === 'span'"
 			:roundable="elementProperties.element !== 'span'"
 			:resizable="true"></BlockEditor>
 	</teleport>
 </template>
 <script setup>
 import { onMounted, ref } from "vue";
-import draggable from "vuedraggable";
 import useStore from "../store";
 import BlockEditor from "./BlockEditor.vue";
+import BlockDraggables from "./BlockDraggables.vue";
 
 const component = ref(null);
 const store = useStore();

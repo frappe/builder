@@ -18,7 +18,6 @@
 	</div>
 </template>
 <script setup>
-import { ref } from "vue";
 import draggable from "vuedraggable";
 import useStore from "../store";
 
