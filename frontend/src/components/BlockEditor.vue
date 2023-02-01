@@ -103,6 +103,8 @@ onMounted(() => {
 const handleRightResize = (ev) => {
 	const startX = ev.clientX;
 	const startWidth = target.offsetWidth;
+	const parentWidth = target.parentElement.offsetWidth;
+	const startWidthPercent = startWidth / parentWidth * 100;
 
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
@@ -110,7 +112,8 @@ const handleRightResize = (ev) => {
 
 	const mousemove = (mouseMoveEvent) => {
 		const movement = mouseMoveEvent.clientX - startX;
-		target.style.width = `${startWidth + movement}px`;
+		const movementPercent = movement / parentWidth * 100;
+		target.style.width = `${startWidthPercent + movementPercent}%`;
 		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);
