@@ -9,7 +9,7 @@ const useStore = defineStore("store", {
 			icon: "square",
 			blocks: [],
 			attributes: {
-				class: "w-full h-[300px] bg-blue-100 min-h-fit",
+				class: "w-full h-[300px] bg-blue-100 min-h-fit mx-auto",
 			},
 		}, {
 			name: "Text",

@@ -1,11 +1,17 @@
-{% block head_include %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>{{title}}</title>
+	<meta name="description" content="Placeholder">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="/assets/website_builder/frontend/assets/index.db941ae9.css">
-{% endblock %}
-
-{% block title %}
-<title>{{title}}</title>
-{%endblock%}
-{% block page_content %}
-{{ content }}
-{% endblock %}
+</head>
+<body>
+	{% block page_content %}
+	{{ content }}
+	{% endblock %}
+</body>
+</html>

@@ -1,6 +1,6 @@
 <template>
 	<div class="z-10 editor fixed hover:border-[1px] hover:border-blue-200 group invisible"
-		ref="editor" @click.stop="handleDblClick" @dblclick.stop="handleDblClick" @mousedown.stop="handleMove">
+		ref="editor" @click.stop @dblclick.stop="handleDblClick" @mousedown.stop="handleMove">
 		<div class="absolute border-radius-resize w-[10px] h-[10px] border-[1px] border-blue-400 bg-white rounded-full pointer-events-auto top-2 left-2 hidden cursor-default" @mousedown.stop="handleRounded" v-if="roundable">
 			<div class="absolute w-[4px] h-[4px] bg-blue-400 top-[2px] left-[2px] rounded-full pointer-events-none"></div>
 		</div>
@@ -32,15 +32,73 @@
 	</div>
 </template>
 <script setup>
-import { onMounted, ref, onUnmounted, getCurrentInstance } from "vue";
+import { getCurrentInstance, onMounted, ref } from "vue";
 import useStore from "../store";
+import trackTarget from "../utils/trackTarget";
 
 const props = defineProps(["movable", "resizable", "roundable"]);
-
 const store = useStore();
 const editor = ref(null);
+
 let target = null;
 let currentInstance = null;
+
+onMounted(() => {
+	currentInstance = getCurrentInstance();
+	const editorWrapper = editor.value;
+	target = currentInstance.parent.refs.component;
+	trackTarget(target, editorWrapper);
+
+	if (store.selectedComponent === target) {
+		// selected
+		editorWrapper.querySelectorAll("[class*=resize]").forEach((element) => {
+			element.classList.remove("hidden");
+		});
+		editorWrapper.classList.add(
+			"border-[1px]",
+			"border-blue-400",
+		);
+		editorWrapper.classList.remove(
+			"invisible",
+			"pointer-events-none"
+		);
+	}
+
+	store.$subscribe(({ events }) => {
+		console.log('in subscribe');
+		if (events.key !== "selectedComponent") return;
+		if (events.newValue === target) {
+			// selected
+			editorWrapper.querySelectorAll("[class*=resize]").forEach((element) => {
+				element.classList.remove("hidden");
+			});
+			editorWrapper.classList.add(
+				"border-[1px]",
+				"border-blue-400",
+			);
+			editorWrapper.classList.remove(
+				"invisible",
+				"pointer-events-none"
+			);
+		} else {
+			// un-selected
+			editorWrapper.querySelectorAll("[class*=resize]").forEach((element) => {
+				element.classList.add("hidden");
+			});
+
+			editorWrapper.classList.add(
+				"invisible",
+			);
+
+			editorWrapper.classList.remove(
+				"border-[1px]",
+				"border-blue-400",
+				// if the new selected component is a child of this component
+				"pointer-events-none",
+			);
+		}
+	});
+})
 
 const handleRightResize = (ev) => {
 	const startX = ev.clientX;
@@ -142,97 +200,6 @@ const handleMove = (ev) => {
 		document.removeEventListener("mousemove", mousemove);
 		mouseUpEvent.preventDefault();
 	});
-}
-
-onMounted(() => {
-	currentInstance = getCurrentInstance();
-	const editorWrapper = editor.value;
-	target = currentInstance.parent.refs.component;
-	updateEditor();
-	target.closest(".canvas-container").addEventListener("wheel", updateEditor);
-	window.addEventListener("resize", updateEditor);
-	window.addEventListener("scroll", updateEditor);
-
-	const observer = new MutationObserver(updateEditor);
-	const observer_config = {
-		attributes: true,
-		subtree: true,
-	};
-	observer.observe(target.closest(".canvas"), {
-		...observer_config,
-		childList: true,
-	});
-
-	if (store.selectedComponent === target) {
-		// selected
-		editorWrapper.querySelectorAll("[class*=resize]").forEach((element) => {
-			element.classList.remove("hidden");
-		});
-		editorWrapper.classList.add(
-			"border-[1px]",
-			"border-blue-400",
-		);
-		editorWrapper.classList.remove(
-			"invisible",
-			"pointer-events-none"
-		);
-	}
-
-	store.$subscribe(({ events }) => {
-		console.log('in subscribe');
-		if (events.key !== "selectedComponent") return;
-		if (events.newValue === target) {
-			// selected
-			editorWrapper.querySelectorAll("[class*=resize]").forEach((element) => {
-				element.classList.remove("hidden");
-			});
-			editorWrapper.classList.add(
-				"border-[1px]",
-				"border-blue-400",
-			);
-			editorWrapper.classList.remove(
-				"invisible",
-				"pointer-events-none"
-			);
-		} else {
-			// un-selected
-			editorWrapper.querySelectorAll("[class*=resize]").forEach((element) => {
-				element.classList.add("hidden");
-			});
-
-			editorWrapper.classList.add(
-				"invisible",
-			);
-
-			editorWrapper.classList.remove(
-				"border-[1px]",
-				"border-blue-400",
-				// if the new selected component is a child of this component
-				"pointer-events-none",
-			);
-		}
-	});
-})
-
-onUnmounted(() => {
-	let container = target.closest(".canvas-container")
-	if (container) {
-		container.removeEventListener("wheel", updateEditor);
-	}
-	window.removeEventListener("resize", updateEditor);
-	window.removeEventListener("scroll", updateEditor);
-})
-
-function updateEditor() {
-	const bound = target.getBoundingClientRect();
-	const editorWrapper = editor.value;
-	if (!editorWrapper) return;
-	editorWrapper.style.width = `${bound.width}px`;
-	editorWrapper.style.height = `${bound.height}px`;
-	editorWrapper.style.top = `${bound.top}px`;
-	editorWrapper.style.right = `${bound.right}px`;
-	editorWrapper.style.left = `${bound.left}px`;
-	editorWrapper.style.right = `${bound.right}px`;
 }
 
 const handleRounded = (ev) => {
