@@ -3,13 +3,15 @@
 		class="canvas-container w-3/4 h-[calc(100vh-3.5rem)] p-10 flex justify-center overflow-hidden"
 		ref="canvasContainer" @click="clearSelectedComponent">
 		<div class="overlay absolute" id="overlay"></div>
+		<div class="absolute" id="draggables"></div>
 		<div class="canvas absolute min-h-full h-fit bg-white rounded-md overflow-hidden"
 			:style="'width: ' + store.getActiveBreakpoint() + 'px;'" ref="canvas">
 			<draggable :list="store.blocks" :group="{ name: 'blocks' }" item-key="id"
 				class="h-full w-auto flex-col block-container min-h-[300px] mx">
 				<template #item="{ element }">
 					<BuilderBlock :element-properties="element" @dragstart="setCopyData($event, element, i)"
-						@drag.end="copy"></BuilderBlock>
+						@drag.end="copy">
+					</BuilderBlock>
 				</template>
 			</draggable>
 		</div>
@@ -93,11 +95,11 @@ const clearSelectedComponent = () => {
 document.addEventListener("keydown", (e) => {
 	if (e.key === "Backspace" && store.selectedComponent && !e.target.closest(".__builder_component__")) {
 		store.blocks = store.blocks.filter((block) => block.id !== store.selectedComponent.element_id);
-		store.selectedComponent = null;
+		clearSelectedComponent();
 	}
 
 	if (e.key === "Escape") {
-		store.selectedComponent = null;
+		clearSelectedComponent();
 	}
 });
 
