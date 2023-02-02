@@ -3,8 +3,8 @@
 	<component v-if="elementProperties.node_type !== 'Text'" :is="elementProperties.element"
 		class="flex items-center relative __builder_component__"
 		@click.exact.stop="selectComponent($event, elementProperties)" @dblclick.stop
-		v-bind="{ ...elementProperties.attributes, ...elementProperties.skippedAttributes }"
-		:style="elementProperties.styles" ref="component" data-draggable="true">
+		v-bind="{ ...elementProperties.attributes, ...elementProperties.skippedAttributes }" :styles="styles"
+		ref="component" data-draggable="true">
 		{{ elementProperties.innerText }}
 		<BuilderBlock :element-properties="element" v-for="element in elementProperties.children"></BuilderBlock>
 	</component>
@@ -12,9 +12,9 @@
 		<BlockDraggables :element-properties="elementProperties"></BlockDraggables>
 	</teleport>
 	<teleport to='#overlay' v-if="elementProperties.node_type !== 'Text'">
-		<BlockEditor
-			:movable="elementProperties.element === 'span'"
-			:roundable="elementProperties.element !== 'span'"
+		<BlockEditor :movable="elementProperties.element === 'span'" :roundable="elementProperties.element !== 'span'"
+			:resizableX="true"
+			:resizableY="elementProperties.element !== 'img'"
 			:resizable="true"></BlockEditor>
 	</teleport>
 </template>
@@ -27,6 +27,7 @@ import BlockDraggables from "./BlockDraggables.vue";
 const component = ref(null);
 const store = useStore();
 const props = defineProps(["element-properties"]);
+const styles = ref(props.elementProperties.styles);
 
 onMounted(() => {
 	if (props.elementProperties.node_type === "Text") {
