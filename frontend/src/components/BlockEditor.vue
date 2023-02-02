@@ -1,20 +1,25 @@
 <template>
-	<div class="z-10 editor fixed hover:border-[1px] hover:border-blue-200 group invisible"
-		ref="editor" @click.stop @dblclick.stop="handleDblClick" @mousedown.stop="handleMove">
-		<div class="absolute border-radius-resize w-[10px] h-[10px] border-[1px] border-blue-400 bg-white rounded-full pointer-events-auto top-2 left-2 hidden cursor-default" @mousedown.stop="handleRounded" v-if="roundable">
-			<div class="absolute w-[4px] h-[4px] bg-blue-400 top-[2px] left-[2px] rounded-full pointer-events-none"></div>
+	<div class="z-10 editor fixed hover:border-[1px] hover:border-blue-200 invisible" ref="editor"
+		@dblclick.stop="handleDblClick" @mousedown.stop="handleMove" draggable="true"
+		@dragstart="setCopyData($event, element, i)" @dragend="copy" @click.stop>
+		<div class="absolute border-radius-resize w-[8px] h-[8px] border-[1px] border-blue-400 bg-white rounded-full pointer-events-auto top-2 left-2 hidden cursor-default box-content"
+			@mousedown.stop="handleRounded" v-if="roundable">
+			<div class="absolute w-[4px] h-[4px] bg-blue-400 top-[2px] left-[2px] border-none rounded-full pointer-events-none">
+			</div>
 		</div>
 		<div class="absolute w-[4px] border-none bg-transparent top-0
-			bottom-0 left-[-2px] left-handle ew-resize pointer-events-auto" >
+			bottom-0 left-[-2px] left-handle ew-resize pointer-events-auto">
 		</div>
 		<div class="absolute w-[4px] border-none bg-transparent top-0
-			bottom-0 right-[-2px] right-handle cursor-ew-resize pointer-events-auto" @mousedown.stop="handleRightResize">
+			bottom-0 right-[-2px] right-handle pointer-events-auto" :class="{ 'cursor-ew-resize': resizableX }"
+			@mousedown.stop="handleRightResize">
 		</div>
 		<div class="absolute h-[4px] border-none bg-transparent top-[-2px]
 			right-0 left-0 top-handle ns-resize pointer-events-auto">
 		</div>
 		<div class="absolute h-[4px] border-none bg-transparent bottom-[-2px]
-			right-0 left-0 bottom-handle cursor-ns-resize pointer-events-auto" @mousedown.stop="handleBottomResize">
+			right-0 left-0 bottom-handle pointer-events-auto" :class="{ 'cursor-ns-resize': resizableY }"
+			 @mousedown.stop="handleBottomResize">
 		</div>
 
 		<!-- <div class="absolute w-[8px] h-[8px] border-[1px] border-blue-400 rounded-full bg-white
@@ -33,19 +38,21 @@
 </template>
 <script setup>
 import { getCurrentInstance, onMounted, ref } from "vue";
+import { useDebounceFn } from "@vueuse/shared";
 import useStore from "../store";
 import trackTarget from "../utils/trackTarget";
 
-const props = defineProps(["movable", "resizable", "roundable"]);
+const props = defineProps(["movable", "resizable", "roundable", "resizableX", "resizableY"]);
 const store = useStore();
 const editor = ref(null);
+let editorWrapper = ref(null);
 
-let target = null;
+let target = ref(null);
 let currentInstance = null;
 
 onMounted(() => {
 	currentInstance = getCurrentInstance();
-	const editorWrapper = editor.value;
+	editorWrapper = editor.value;
 	target = currentInstance.parent.refs.component;
 	trackTarget(target, editorWrapper);
 
@@ -101,6 +108,7 @@ onMounted(() => {
 })
 
 const handleRightResize = (ev) => {
+	if (!props.resizableX) return;
 	const startX = ev.clientX;
 	const startWidth = target.offsetWidth;
 	const parentWidth = target.parentElement.offsetWidth;
@@ -125,6 +133,7 @@ const handleRightResize = (ev) => {
 }
 
 const handleBottomResize = (ev) => {
+	if (!props.resizableY) return;
 	const startY = ev.clientY;
 	const startHeight = target.offsetHeight;
 
@@ -156,11 +165,14 @@ const handleBottomCornerResize = (ev) => {
 	document.body.style.cursor = window.getComputedStyle(ev.target).cursor;
 
 	const mousemove = (mouseMoveEvent) => {
-		const movementY = mouseMoveEvent.clientY - startY;
-		target.style.height = `${startHeight + movementY}px`;
-
-		const movementX = mouseMoveEvent.clientX - startX;
-		target.style.width = `${startWidth + movementX}px`;
+		if (props.resizableX) {
+			const movementX = mouseMoveEvent.clientX - startX;
+			target.style.width = `${startWidth + movementX}px`;
+		}
+		if (props.resizableY) {
+			const movementY = mouseMoveEvent.clientY - startY;
+			target.style.height = `${startHeight + movementY}px`;
+		}
 		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);
@@ -179,6 +191,10 @@ const handleDblClick = (ev) => {
 
 const handleMove = (ev) => {
 	if (!props.movable) return;
+	if (ev.altKey) {
+		setDraggable(ev);
+		return
+	}
 	const startX = ev.clientX;
 	const startY = ev.clientY;
 	const startLeft = target.offsetLeft;
@@ -243,8 +259,8 @@ const handleRounded = (ev) => {
 		const ratio = radius / maxRadius;
 		const handleHeight = parseInt(handleStyle.height, 10);
 		const handleWidth = parseInt(handleStyle.width, 10);
-		const newTop = Math.max(minTop, ((maxDistance * ratio) - handleHeight/2));
-		const newLeft = Math.max(minLeft, ((maxDistance * ratio) - handleWidth/2));
+		const newTop = Math.max(minTop, ((maxDistance * ratio) - handleHeight / 2));
+		const newLeft = Math.max(minLeft, ((maxDistance * ratio) - handleWidth / 2));
 
 		target.style.borderRadius = `${radius}px`;
 		handle.style.top = `${newTop}px`;
@@ -259,5 +275,39 @@ const handleRounded = (ev) => {
 		document.removeEventListener("mousemove", mousemove);
 		mouseUpEvent.preventDefault();
 	});
+}
+
+const setDraggable = (ev) => {
+	ev.target.setAttribute("draggable", "true");
+}
+
+const setCopyData = useDebounceFn((event, data) => {
+	if (event.altKey) {
+		event.dataTransfer.action = "copy";
+		event.dataTransfer.data_to_copy = JSON.parse(JSON.stringify(store.getBlockData(target)));
+	} else {
+		target.draggable = true;
+		relayEventToTarget(event);
+	}
+});
+
+const copy = useDebounceFn((event) => {
+	if (event.dataTransfer.action === "copy") {
+		let superParent = currentInstance.parent.parent;
+		if (superParent.props?.elementProperties?.children) {
+			superParent.props.elementProperties.children.push(event.dataTransfer.data_to_copy);
+		} else {
+			store.blocks.push(event.dataTransfer.data_to_copy);
+		}
+	} else {
+		target.draggable = true;
+		relayEventToTarget(event);
+	}
+});
+
+const relayEventToTarget = (event) => {
+	let eventForTarget = new window[event.constructor.name](event.type, event);
+	target.dispatchEvent(eventForTarget);
+	event.preventDefault();
 }
 </script>
