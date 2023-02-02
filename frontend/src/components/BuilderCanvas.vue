@@ -1,6 +1,5 @@
 <template>
-	<div
-		class="canvas-container w-3/4 h-[calc(100vh-3.5rem)] p-10 flex justify-center overflow-hidden"
+	<div class="canvas-container absolute left-[20%] right-[20%] top-[3.5rem] bottom-0 p-10 flex justify-center overflow-hidden bg-gray-100"
 		ref="canvasContainer" @click="clearSelectedComponent">
 		<div class="overlay absolute" id="overlay"></div>
 		<div class="absolute" id="draggables"></div>
@@ -89,7 +88,17 @@ document.addEventListener("keydown", (e) => {
 		return;
 	}
 	if (e.key === "Backspace" && store.selectedComponent && !e.target.closest(".__builder_component__")) {
-		store.blocks = store.blocks.filter((block) => block.id !== store.selectedComponent.element_id);
+		function find_block_and_remove(blocks, block_id) {
+			blocks.forEach((block, i) => {
+				if (block.id === block_id) {
+					blocks.splice(i, 1);
+					return true;
+				} else if (block.children) {
+					return find_block_and_remove(block.children, block_id);
+				}
+			})
+		}
+		find_block_and_remove(store.blocks, store.selectedComponent.element_id);
 		clearSelectedComponent();
 	}
 
