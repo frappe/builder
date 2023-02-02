@@ -1,6 +1,6 @@
 <template>
 	<div ref="draggableContainer" class="fixed z-20 pointer-events-none p-2">
-		<draggable :list="elementProperties.blocks"
+		<draggable :list="elementProperties.children"
 			:group="{ name: 'blocks' }" item-key="id" class="w-full h-full flex-col flex block-container">
 			<template #item="{ element }">
 				<!--  -->
