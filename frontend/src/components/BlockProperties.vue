@@ -1,10 +1,17 @@
 <template>
-	<div class="bg-gray-200 w-1/5 relative p-5 pr-2 z-20">
+	<div class="bg-white fixed w-1/5 right-0 top-[3.5rem] bottom-0 p-5 pr-2 z-20 border-l-2 border-gray-100">
 		<div v-if="store.selectedComponent">
 			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase">Alignment</h3>
 			<ul class="flex flex-wrap">
 				<li v-for="alignment in store.alignments" :key="alignment.name" class="mr-2 mb-2 last:mr-0">
 					<a @click="setAlignment(alignment)" class="hover:underline cursor-pointer text-base">
+						<div class="w-8 h-8 rounded-md shadow-sm flex items-center justify-center bg-gray-100">
+							<FeatherIcon :name="alignment.icon" class="w-4 h-4 text-gray-700"></FeatherIcon>
+						</div>
+					</a>
+				</li>
+				<li v-for="alignment in store.verticalAlignments" :key="alignment.name" class="mr-2 mb-2 last:mr-0">
+					<a @click="setVerticalAlignment(alignment)" class="hover:underline cursor-pointer text-base">
 						<div class="w-8 h-8 rounded-md shadow-sm flex items-center justify-center bg-gray-100">
 							<FeatherIcon :name="alignment.icon" class="w-4 h-4 text-gray-700"></FeatherIcon>
 						</div>
@@ -35,14 +42,39 @@
 		<div v-if="store.selectedComponent && store.selectedComponent.tagName === 'IMG'">
 			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Image Source</h3>
 			<input type="text" v-model="store.selectedComponent.src"
-				class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300">
+				class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
 		</div>
+		<div v-if="store.selectedComponent && store.selectedComponent.tagName !== 'IMG'">
+			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Font Size</h3>
+			<input label="Font Size" type="text" v-model="fontSize" class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
+		</div>
+
+		<div v-if="store.selectedComponent && store.selectedComponent.tagName === 'SECTION'">
+			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Margin</h3>
+			<input type="text" v-model="margin"
+				class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
+		</div>
+
 	</div>
 </template>
 <script setup>
+import { computed } from "@vue/reactivity";
+import { Input } from "frappe-ui";
 import useStore from "../store";
-
 const store = useStore();
+
+let margin = computed({
+	get: () => store.selectedComponent.style.margin,
+	set: (val) => {
+		store.selectedComponent.style.margin = val;
+	}
+})
+let fontSize = computed({
+	get: () => store.selectedComponent.style.fontSize,
+	set: (val) => {
+		store.selectedComponent.style.fontSize = val;
+	}
+})
 
 const setBgColor = (color) => {
 	store.selectedComponent.style.background = color;
@@ -58,7 +90,10 @@ const setAlignment = (alignment) => {
 	store.selectedComponent.classList.add(alignment.class);
 };
 
-const setWidth = (e) => {
-	store.selectedComponent.style.width = e.target.value + "px";
+const setVerticalAlignment = (alignment) => {
+	store.selectedComponent.classList.remove(
+		...store.verticalAlignments.map((obj) => obj.class),
+	);
+	store.selectedComponent.classList.add(alignment.class);
 };
 </script>
