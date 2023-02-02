@@ -210,14 +210,18 @@ const handleRounded = (ev) => {
 	const startY = ev.clientY;
 	const handle = ev.currentTarget;
 	const handleStyle = window.getComputedStyle(handle);
-	const initialLeft = 10;
-	const initialTop = 10;
+	const minLeft = 10;
+	const minTop = 10;
 
 	const targetBounds = target.getBoundingClientRect();
-	const targetWidth = targetBounds.width;
-	const targetHeight = targetBounds.height;
+	const targetStyle = window.getComputedStyle(target);
+	const targetWidth = parseInt(targetStyle.width, 10);
+	const targetHeight = parseInt(targetStyle.height, 10);
 
-	const maxMovement = Math.min(targetHeight, targetWidth) / 2;
+	const maxRadius = Math.min(targetHeight, targetWidth) / 2;
+
+	// refer position based on bounding rect of target (target could have been scaled)
+	const maxDistance = Math.min(targetBounds.height, targetBounds.width) / 2;
 
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
@@ -231,25 +235,18 @@ const handleRounded = (ev) => {
 		const movementX = (mouseMoveEvent.clientX - lastX);
 		const movementY = (mouseMoveEvent.clientY - lastY);
 
-		let directionX = movementX > 0 ? 'right' : 'left';
-		let directionY = movementY > 0 ? 'down' : 'up';
-
 		// mean of movement on both axis
-		let movement = (movementX + movementY) / 2;
+		const movement = (movementX + movementY) / 2;
+		let radius = parseInt(target.style.borderRadius || 0, 10) + movement;
+		radius = Math.max(0, Math.min(radius, maxRadius))
 
-		let newTop = parseInt(handleStyle.top) + movement;
-		let newLeft = parseInt(handleStyle.left) + movement;
+		const ratio = radius / maxRadius;
+		const handleHeight = parseInt(handleStyle.height, 10);
+		const handleWidth = parseInt(handleStyle.width, 10);
+		const newTop = Math.max(minTop, ((maxDistance * ratio) - handleHeight/2));
+		const newLeft = Math.max(minLeft, ((maxDistance * ratio) - handleWidth/2));
 
-		if (newTop < initialTop) {
-			newTop = initialTop;
-		}
-		if (newLeft < initialLeft) {
-			newLeft = initialLeft;
-		}
-
-		let radius = Math.min(newTop - initialTop, newLeft - initialLeft);
 		target.style.borderRadius = `${radius}px`;
-
 		handle.style.top = `${newTop}px`;
 		handle.style.left = `${newLeft}px`;
 
