@@ -1,14 +1,14 @@
 <template>
-	<div class="toolbar bg-gray-300 p-2 flex justify-center h-14 shadow-sm" ref="toolbar">
+	<div class="toolbar bg-white p-2 flex justify-center h-14 shadow-sm" ref="toolbar">
 		<input type="text" v-model="store.route"
-			class="border-none rounded m-1 absolute left-4 h-8 bg-gray-200 text-base focus:ring-gray-400"
+			class="border-none rounded m-1 absolute left-4 h-8 bg-gray-100 text-base focus:ring-gray-400"
 			placeholder="Page Name">
 		<div class="breakpoint-options">
 			<Button v-for="(option, deviceName) in store.deviceBreakpoints"
 				:key="deviceName"
 				:active="store.activeBreakpoint === option.device" appearance="minimal"
 				@click="activateBreakpoint(option.device)" class="m-1">
-				<FeatherIcon :name="option.icon" class="h-5 w-5 text-gray-700"></FeatherIcon>
+				<FeatherIcon :name="option.icon" class="h-5 w-5 text-gray-800"></FeatherIcon>
 			</Button>
 		</div>
 		<Button appearance="primary" @click="publish" class="m-1 absolute right-2 text-sm">
