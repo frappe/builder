@@ -7,7 +7,7 @@ const useStore = defineStore("store", {
 			name: "Container",
 			element: "section",
 			icon: "square",
-			blocks: [],
+			children: [],
 			attributes: {
 				class: "w-full h-[300px] bg-blue-100 min-h-fit mx-auto",
 			},
