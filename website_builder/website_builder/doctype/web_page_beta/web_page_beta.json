@@ -9,7 +9,7 @@
  "field_order": [
   "page_name",
   "route",
-  "options",
+  "blocks",
   "published"
  ],
  "fields": [
@@ -25,20 +25,20 @@
    "label": "Route"
   },
   {
-   "fieldname": "options",
-   "fieldtype": "JSON",
-   "label": "Options"
-  },
-  {
    "default": "1",
    "fieldname": "published",
    "fieldtype": "Check",
    "label": "published"
+  },
+  {
+   "fieldname": "blocks",
+   "fieldtype": "JSON",
+   "label": "Blocks"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-01-10 10:09:08.873007",
+ "modified": "2023-02-03 21:39:50.892636",
  "modified_by": "Administrator",
  "module": "Website Builder",
  "name": "Web Page Beta",
