@@ -30,7 +30,7 @@ const store = useStore();
 
 createListResource({
 	doctype: "Web Page Beta",
-	fields: ["name", "options", "page_name", "route"],
+	fields: ["name", "blocks", "page_name", "route"],
 	orderBy: "creation desc",
 	start: 0,
 	pageLength: 5,
@@ -42,7 +42,7 @@ createListResource({
 		const pages = {};
 		data.forEach((d) => {
 			pages[d.name] = d;
-			pages[d.name].options = JSON.parse(d.options);
+			pages[d.name].blocks = JSON.parse(d.blocks);
 		});
 		return pages;
 	},
@@ -51,7 +51,7 @@ createListResource({
 const setPage = (e) => {
 	// clear blocks
 	store.blocks.length = 0;
-	store.blocks.push(...e.options);
+	store.blocks.push(...e.blocks);
 	store.pageName = e.pageName;
 	store.route = e.route;
 };

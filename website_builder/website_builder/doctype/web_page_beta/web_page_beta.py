@@ -23,9 +23,9 @@ class WebPageBeta(WebsiteGenerator):
 
 	def get_content(self):
 		soup = bs.BeautifulSoup("", "html.parser")
-		options = json.loads(self.options)
+		blocks = json.loads(self.blocks)
 
-		def get_html(options, soup):
+		def get_html(blocks, soup):
 			html = ""
 			def get_tag(node, soup):
 				tag = soup.new_tag(node["element"])
@@ -39,8 +39,8 @@ class WebPageBeta(WebsiteGenerator):
 						tag.append(get_tag(child, soup))
 				return tag
 
-			for option in options:
-				html += str(get_tag(option, soup))
+			for block in blocks:
+				html += str(get_tag(block, soup))
 			return html
 
-		return get_html(options, soup)
+		return get_html(blocks, soup)

@@ -32,7 +32,7 @@ const publishWebResource = createResource({
 	url: "website_builder.api.publish",
 	onSuccess(page) {
 		// hack
-		page.options = JSON.parse(page.options);
+		page.blocks = JSON.parse(page.blocks);
 		store.pages[page.name] = page;
 		window.open(`/${page.route}`, "_blank");
 	},
@@ -40,7 +40,7 @@ const publishWebResource = createResource({
 
 const publish = () => {
 	publishWebResource.submit({
-		data: store.getPageData(),
+		blocks: store.getPageData(),
 		route: store.route,
 		page_name: store.pageName,
 	});

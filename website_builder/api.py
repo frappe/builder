@@ -3,9 +3,9 @@ import json
 import random
 
 @frappe.whitelist(allow_guest=True)
-def publish(data, route, page_name=None):
+def publish(blocks, route, page_name=None):
 	page = frappe.db.exists("Web Page Beta", {"page_name": page_name})
-	data = json.dumps(data)
+	blocks = json.dumps(blocks)
 
 	if page:
 		page = frappe.get_doc("Web Page Beta", page)
@@ -14,6 +14,6 @@ def publish(data, route, page_name=None):
 		page.page_name = page_name or f"test {random.randint(0, 1000)}"
 
 	page.route = route
-	page.options = data
+	page.blocks = blocks
 	page.save(ignore_permissions=True)
 	return page
