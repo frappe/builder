@@ -1,7 +1,7 @@
 <template>
 	<div class="flex-col bg-gray-100">
 		<BuilderToolbar class="z-30 relative"></BuilderToolbar>
-		<div class="flex justify-center">
+		<div>
 			<BuilderSidebar></BuilderSidebar>
 			<BuilderCanvas></BuilderCanvas>
 			<BlockProperties></BlockProperties>

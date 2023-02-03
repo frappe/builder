@@ -3,16 +3,19 @@
 	<component v-if="elementProperties.node_type !== 'Text'" :is="elementProperties.element"
 		class="flex items-center relative __builder_component__"
 		@click.exact.stop="selectComponent($event, elementProperties)" @dblclick.stop
-		v-bind="{ ...elementProperties.attributes, ...elementProperties.skippedAttributes }" :styles="styles"
-		ref="component" data-draggable="true">
+		v-bind="{ ...elementProperties.attributes, ...elementProperties.skippedAttributes }"
+		:styles="styles"
+		@dragover="selectComponent"
+		ref="component">
 		{{ elementProperties.innerText }}
 		<BuilderBlock :element-properties="element" v-for="element in elementProperties.children"></BuilderBlock>
 	</component>
 	<teleport to="#draggables" v-if="elementProperties.element === 'section'">
-		<BlockDraggables :element-properties="elementProperties"></BlockDraggables>
+		<BlockDraggables :element-properties="elementProperties" v-bind="{...$attrs}"></BlockDraggables>
 	</teleport>
 	<teleport to='#overlay' v-if="elementProperties.node_type !== 'Text'">
-		<BlockEditor :movable="elementProperties.element === 'span'" :roundable="elementProperties.element !== 'span'"
+		<BlockEditor :movable="elementProperties.element === 'span'"
+			:roundable="elementProperties.element !== 'span'"
 			:resizableX="true"
 			:resizableY="elementProperties.element !== 'img'"
 			:resizable="true"></BlockEditor>
