@@ -1,6 +1,6 @@
 <template>
-	<div class="canvas-container absolute left-[20%] right-[20%] top-[3.5rem] bottom-0 p-10 flex justify-center overflow-hidden bg-gray-100"
-		ref="canvasContainer" @click="clearSelectedComponent">
+	<div class="canvas-container absolute left-0 right-[20%] top-[3.5rem] bottom-0 p-10 flex justify-center overflow-hidden bg-gray-100 lg:left-[20%]"
+		ref="canvasContainer">
 		<div class="overlay absolute" id="overlay"></div>
 		<div class="absolute" id="draggables"></div>
 		<div class="canvas absolute min-h-full h-fit bg-white rounded-md overflow-hidden"

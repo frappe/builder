@@ -1,5 +1,5 @@
 <template>
-	<div class="widgets bg-white fixed w-1/5 left-0 top-[3.5rem] bottom-0 p-5 z-20 border-r-2 border-gray-100">
+	<div class="widgets bg-white fixed w-1/5 left-0 top-[3.5rem] bottom-0 p-5 z-20 border-r-2 border-gray-100 overflow-auto hidden lg:block">
 		<!-- <div class="mb-5">
 			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase">Pages</h3>
 			<div v-if="!Object.keys(store.pages).length"
