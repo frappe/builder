@@ -10,7 +10,7 @@ const useStore = defineStore("store", {
 			icon: "square",
 			children: [],
 			attributes: {
-				class: "w-full h-[300px] bg-blue-100 min-h-fit mx-auto",
+				class: "w-full h-full bg-blue-100 min-h-[40px] min-w-[40px] mx-auto p-3",
 			},
 		}, {
 			name: "Text",
@@ -19,7 +19,7 @@ const useStore = defineStore("store", {
 			innerText: "Text",
 			attributes: {
 				contenteditable: true,
-				style: "min-height: 50px; color: black; background: none; border: none; box-shadow: none; min-width: 20px; width: auto; outline: none; padding: 5px; font-size: 14px",
+				style: "min-height: 50px; color: black; background: none; border: none; box-shadow: none; min-width: 20px; width: auto; outline: none; padding: 5px; font-size: 20px; line-height: 1",
 			},
 		}, {
 			name: "Image",
@@ -76,7 +76,7 @@ const useStore = defineStore("store", {
 			"linear-gradient( 135deg, #81FFEF 10%, #F067B4 100%)",
 			"transparent",
 		],
-		textColors: ["#000000", "#424242", "#636363", "#9C9C94", "#CEC6CE", "#EFEFEF", "#F7F7F7", "#FFFFFF", "#C0C0C0", "#808080", "#808000"],
+		textColors: ["#000000", "#424242", "#636363", "#9C9C94", "#CEC6CE", "#EFEFEF", "#F7F7F7", "#C0C0C0", "#808080", "#808000", "#FFFFFF"],
 		deviceBreakpoints: {
 			desktop: {
 				icon: "monitor",
