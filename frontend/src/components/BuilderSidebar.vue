@@ -18,13 +18,14 @@
 			</div>
 		</div> -->
 		<Widgets></Widgets>
-		<!-- <Templates></Templates> -->
+		<Templates></Templates>
 	</div>
 </template>
 <script setup>
 import { createListResource } from "frappe-ui";
 import useStore from "../store";
 import Widgets from "./BuilderWidgets.vue";
+import Templates from "./BuilderTemplates.vue";
 
 const store = useStore();
 
