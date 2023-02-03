@@ -1,10 +1,12 @@
 <template>
-	<div class="z-10 editor fixed hover:border-[1px] hover:border-blue-200 invisible" ref="editor"
-		@dblclick.stop="handleDblClick" @mousedown.stop="handleMove" draggable="true"
-		@dragstart="setCopyData($event, element, i)" @dragend="copy" @click.stop>
-		<div class="absolute border-radius-resize w-[8px] h-[8px] border-[1px] border-blue-400 bg-white rounded-full pointer-events-auto top-2 left-2 hidden cursor-default box-content"
+	<div class="z-10 editor fixed invisible border-[1px] border-blue-300" ref="editor"
+		@dblclick.stop="handleDblClick" @mousedown.stop="handleMove"
+		@dragstart="setCopyData($event, element, i)" @dragend="copy">
+		<div class="absolute padding-handler hover:bg-purple-600 opacity-50 w-full cursor-ns-resize" @mousedown.stop="handlePadding" ref="paddingHandler"></div>
+		<div class="absolute top-0 right-0 border-2 bg-purple-500 w-3 h-3 rounded-full opacity-50 pointer-events-auto" @click.prevent="resetPosition" v-if="movable"></div>
+		<div class="absolute border-radius-resize w-[9px] h-[9px] border-[1px] border-blue-400 bg-white rounded-full pointer-events-auto top-2 left-2 cursor-default"
 			@mousedown.stop="handleRounded" v-if="roundable">
-			<div class="absolute w-[4px] h-[4px] bg-blue-400 top-[2px] left-[2px] border-none rounded-full pointer-events-none">
+			<div class="absolute w-[3px] h-[3px] bg-blue-400 top-[2px] left-[2px] border-none rounded-full pointer-events-none">
 			</div>
 		</div>
 		<div class="absolute w-[4px] border-none bg-transparent top-0
@@ -46,6 +48,7 @@ const props = defineProps(["movable", "resizable", "roundable", "resizableX", "r
 const store = useStore();
 const editor = ref(null);
 let editorWrapper = ref(null);
+let paddingHandler = ref(null);
 
 let target = ref(null);
 let currentInstance = null;
@@ -54,17 +57,13 @@ onMounted(() => {
 	currentInstance = getCurrentInstance();
 	editorWrapper = editor.value;
 	target = currentInstance.parent.refs.component;
+	const targetStyle = window.getComputedStyle(target);
+	paddingHandler.value.style.height = (parseInt(targetStyle.paddingTop, 10) || 5) + "px";
 	trackTarget(target, editorWrapper);
+
 
 	if (store.selectedComponent === target) {
 		// selected
-		editorWrapper.querySelectorAll("[class*=resize]").forEach((element) => {
-			element.classList.remove("hidden");
-		});
-		editorWrapper.classList.add(
-			"border-[1px]",
-			"border-blue-400",
-		);
 		editorWrapper.classList.remove(
 			"invisible",
 			"pointer-events-none"
@@ -72,34 +71,19 @@ onMounted(() => {
 	}
 
 	store.$subscribe(({ events }) => {
-		console.log('in subscribe');
 		if (events.key !== "selectedComponent") return;
 		if (events.newValue === target) {
 			// selected
-			editorWrapper.querySelectorAll("[class*=resize]").forEach((element) => {
-				element.classList.remove("hidden");
-			});
-			editorWrapper.classList.add(
-				"border-[1px]",
-				"border-blue-400",
-			);
 			editorWrapper.classList.remove(
 				"invisible",
 				"pointer-events-none"
 			);
 		} else {
 			// un-selected
-			editorWrapper.querySelectorAll("[class*=resize]").forEach((element) => {
-				element.classList.add("hidden");
-			});
-
 			editorWrapper.classList.add(
 				"invisible",
 			);
-
 			editorWrapper.classList.remove(
-				"border-[1px]",
-				"border-blue-400",
 				// if the new selected component is a child of this component
 				"pointer-events-none",
 			);
@@ -309,5 +293,36 @@ const relayEventToTarget = (event) => {
 	let eventForTarget = new window[event.constructor.name](event.type, event);
 	target.dispatchEvent(eventForTarget);
 	event.preventDefault();
+}
+
+const resetPosition = (ev) => {
+	target.style.position = "relative";
+	target.style.left = "0px";
+	target.style.top = "0px";
+}
+
+const handlePadding = (ev) => {
+	const startY = ev.clientY;
+
+	// to disable cursor jitter
+	const docCursor = document.body.style.cursor;
+	document.body.style.cursor = window.getComputedStyle(ev.target).cursor;
+	paddingHandler.value.classList.add("bg-purple-600");
+
+	const mousemove = (mouseMoveEvent) => {
+		let movementY = mouseMoveEvent.clientY - startY;
+
+		if (movementY < 0) movementY = 0;
+		target.style.padding = movementY + "px";
+		paddingHandler.value.style.height = (parseInt(target.style.padding, 10) || 5) + "px";
+		mouseMoveEvent.preventDefault();
+	};
+	document.addEventListener("mousemove", mousemove);
+	document.addEventListener("mouseup", (mouseUpEvent) => {
+		document.body.style.cursor = docCursor;
+		document.removeEventListener("mousemove", mousemove);
+		paddingHandler.value.classList.remove("bg-purple-600");
+		mouseUpEvent.preventDefault();
+	});
 }
 </script>

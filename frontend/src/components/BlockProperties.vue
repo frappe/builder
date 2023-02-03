@@ -1,5 +1,5 @@
 <template>
-	<div class="bg-white fixed w-1/5 right-0 top-[3.5rem] bottom-0 p-5 pr-2 z-20 border-l-2 border-gray-100">
+	<div class="bg-white fixed w-1/5 right-0 top-[3.5rem] bottom-0 p-5 pr-2 z-20 border-l-2 border-gray-100 overflow-auto">
 		<div v-if="store.selectedComponent">
 			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase">Alignment</h3>
 			<ul class="flex flex-wrap">
@@ -44,9 +44,14 @@
 			<input type="text" v-model="store.selectedComponent.src"
 				class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
 		</div>
-		<div v-if="store.selectedComponent && store.selectedComponent.tagName !== 'IMG'">
+		<div v-if="store.selectedComponent && store.selectedComponent.tagName === 'SPAN'">
 			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Font Size</h3>
-			<input label="Font Size" type="text" v-model="fontSize" class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
+			<input type="text" v-model="fontSize" class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
+		</div>
+
+		<div v-if="store.selectedComponent && store.selectedComponent.tagName === 'SPAN'">
+			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Line Height</h3>
+			<input type="text" v-model="lineHeight" class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
 		</div>
 
 		<div v-if="store.selectedComponent && store.selectedComponent.tagName === 'SECTION'">
@@ -54,7 +59,10 @@
 			<input type="text" v-model="margin"
 				class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
 		</div>
-
+		<div v-if="store.selectedComponent" class="text-base mt-5 text-gray-800">
+			Width: {{ width }}
+			height: {{ height }}
+		</div>
 	</div>
 </template>
 <script setup>
@@ -73,6 +81,27 @@ let fontSize = computed({
 	get: () => store.selectedComponent.style.fontSize,
 	set: (val) => {
 		store.selectedComponent.style.fontSize = val;
+	}
+})
+
+let lineHeight = computed({
+	get: () => store.selectedComponent.style.lineHeight,
+	set: (val) => {
+		store.selectedComponent.style.lineHeight = val;
+	}
+})
+
+let height = computed({
+	get: () => store.selectedComponent.style.height || "auto",
+	set: (val) => {
+		store.selectedComponent.style.lineHeight = val;
+	}
+})
+
+let width = computed({
+	get: () => store.selectedComponent.style.width || "auto",
+	set: (val) => {
+		store.selectedComponent.style.lineHeight = val;
 	}
 })
 
