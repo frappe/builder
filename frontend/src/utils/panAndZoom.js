@@ -1,4 +1,7 @@
 function setPanAndZoom(element, zoomLimits = { min: 0.5, max: 2 }) {
+	const initialScale = element.previousScale || 1;
+	const initialX = element.previousX || 0;
+	const initialY = element.previousY || 0;
 	if (element.parentElement) {
 		element.parentElement.addEventListener(
 			"wheel",
@@ -26,14 +29,14 @@ function setPanAndZoom(element, zoomLimits = { min: 0.5, max: 2 }) {
 					element.previousY = y;
 				}
 			},
-			{ passive: false },
+			{ passive: false }
 		);
 
 		element.addEventListener("dblclick", () => {
-			element.style.transform = "";
-			element.previousX = 0;
-			element.previousY = 0;
-			element.previousScale = 1;
+			element.style.transform = `translate(${initialX}px, ${initialY}px) scale(${initialScale})`;
+			element.previousX = initialX;
+			element.previousY = initialY;
+			element.previousScale = initialScale;
 		});
 	}
 }

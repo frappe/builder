@@ -74,10 +74,6 @@ function getBlockData(node) {
 store.getPageData = getPageData;
 store.getBlockData = getBlockData;
 
-onMounted(() => {
-	setPanAndZoom(canvas.value);
-});
-
 const clearSelectedComponent = () => {
 	store.selectedComponent = null;
 	document.activeElement.blur();
@@ -120,5 +116,6 @@ onMounted(() => {
 		canvas.value.previousY = diff - padding / 2;
 	}
 	canvas.value.style.transform = `translate(${canvas.value.previousX || 0}px, ${canvas.value.previousY || 0}px) scale(${canvas.value.previousScale})`;
+	setPanAndZoom(canvas.value);
 });
 </script>
