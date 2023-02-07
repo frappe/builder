@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<h3 class="mb-3 mt-8 text-gray-600 font-bold text-xs uppercase">Templates</h3>
+		<h3 class="mb-3 text-gray-600 font-bold text-xs uppercase">Templates</h3>
 		<draggable :list="components" :group="{ name: 'blocks', pull: 'clone', put: false }" item-key="id"
 			:clone="handleClone" class="w-full flex flex-wrap">
 			<template #item="{ element }">
@@ -19,8 +19,9 @@
 import { ref } from "vue";
 import draggable from "vuedraggable";
 import { createListResource } from "frappe-ui";
+import useStore from "../store";
 const components = ref([]);
-
+const store = useStore();
 createListResource({
 	doctype: "Web Page Component",
 	fields: ["component_name", "icon", "block"],
@@ -43,7 +44,7 @@ createListResource({
 const handleClone = (item) => {
 	const clonedItem = JSON.parse(JSON.stringify(item.block));
 	// set unique id for each cloned item
-	clonedItem.id = Math.random().toString(36).substr(2, 9);
+	clonedItem.id = store.generateId();
 	return clonedItem;
 };
 </script>

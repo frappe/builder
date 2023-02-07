@@ -1,24 +1,24 @@
 <template>
 	<div class="widgets bg-white fixed w-1/5 left-0 top-[3.5rem] bottom-0 p-5 z-20 border-r-2 border-gray-100 overflow-auto hidden lg:block">
-		<!-- <div class="mb-5">
-			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase">Pages</h3>
+		<div class="mb-8">
+			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mb-3">Pages</h3>
 			<div v-if="!Object.keys(store.pages).length"
 				class="italic text-gray-600  text-sm">
 				No Saved Pages
 			</div>
 			<div v-for="page, i in store.pages">
 				<ul>
-					<li>
+					<li class="mb-1">
 						<a @click="setPage(page)"
-							class="hover:underline cursor-pointer text-base">
-							{{ page.name }}
+							class="cursor-pointer text-base rounded-md p-2" :class="{'bg-gray-200': store.selectedPage === page.name}">
+							{{ page.page_name }}
 						</a>
 					</li>
 				</ul>
 			</div>
-		</div> -->
-		<Widgets></Widgets>
-		<Templates></Templates>
+		</div>
+		<Widgets class="mb-7"></Widgets>
+		<Templates class="mb-3"></Templates>
 	</div>
 </template>
 <script setup>
@@ -53,8 +53,9 @@ const setPage = (e) => {
 	// clear blocks
 	store.blocks.length = 0;
 	store.blocks.push(...e.blocks);
-	store.pageName = e.pageName;
+	store.pageName = e.page_name;
 	store.route = e.route;
+	store.selectedPage = e.name;
 };
 
 </script>
