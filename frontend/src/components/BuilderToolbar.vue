@@ -1,6 +1,6 @@
 <template>
 	<div class="toolbar bg-white p-2 flex justify-center h-14 shadow-sm" ref="toolbar">
-		<input type="text" v-model="store.route"
+		<input type="text" v-model="store.pageName"
 			class="border-none rounded m-1 absolute left-4 h-8 bg-gray-100 text-base focus:ring-gray-400"
 			placeholder="Page Name">
 		<div class="breakpoint-options">
@@ -11,8 +11,8 @@
 				<FeatherIcon :name="option.icon" class="h-5 w-5 text-gray-800"></FeatherIcon>
 			</Button>
 		</div>
-		<Button appearance="primary" @click="publish" class="m-1 absolute right-2 text-sm">
-			Publish
+		<Button appearance="primary" @click="publish" class="m-1 absolute right-2 text-sm p-4">
+			<FeatherIcon :name="play" class="w-4 h-4 text-white"></FeatherIcon>
 		</Button>
 	</div>
 </template>
@@ -34,6 +34,7 @@ const publishWebResource = createResource({
 		// hack
 		page.blocks = JSON.parse(page.blocks);
 		store.pages[page.name] = page;
+		store.pageName = page.page_name;
 		window.open(`/${page.route}`, "_blank");
 	},
 });
@@ -41,7 +42,6 @@ const publishWebResource = createResource({
 const publish = () => {
 	publishWebResource.submit({
 		blocks: store.getPageData(),
-		route: store.route,
 		page_name: store.pageName,
 	});
 };

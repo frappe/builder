@@ -26,7 +26,7 @@ const store = useStore();
 const handleClone = (item) => {
 	const clonedItem = JSON.parse(JSON.stringify(item));
 	// set unique id for each cloned item
-	clonedItem.id = Math.random().toString(36).substr(2, 9);
+	clonedItem.id = store.generateId();
 	return clonedItem;
 };
 </script>
