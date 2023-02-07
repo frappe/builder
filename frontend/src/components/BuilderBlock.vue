@@ -37,6 +37,9 @@ onMounted(() => {
 		return;
 	}
 	store.selectedComponent = component.value;
+	if (!props.elementProperties.id) {
+		props.elementProperties.id = store.generateId();
+	}
 	store.selectedComponent.element_id = props.elementProperties.id;
 });
 
