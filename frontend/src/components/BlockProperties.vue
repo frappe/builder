@@ -20,6 +20,18 @@
 			</ul>
 		</div>
 		<div v-if="store.selectedComponent" class="mt-5">
+			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase">Flow</h3>
+			<ul class="flex flex-wrap">
+				<li v-for="flow in store.flow" :key="flow.name" class="mr-2 mb-2 last:mr-0">
+					<a @click="setFlow(flow)" class="hover:underline cursor-pointer text-base">
+						<div class="w-8 h-8 rounded-md shadow-sm flex items-center justify-center bg-gray-100">
+							<FeatherIcon :name="flow.icon" class="w-4 h-4 text-gray-700"></FeatherIcon>
+						</div>
+					</a>
+				</li>
+			</ul>
+		</div>
+		<div v-if="store.selectedComponent" class="mt-5">
 			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase">Background Color</h3>
 			<ul class="flex flex-wrap">
 				<li v-for="color in store.pastelCssColors" :key="color" class="mr-2 mb-2 last:mr-0">
@@ -124,5 +136,11 @@ const setVerticalAlignment = (alignment) => {
 		...store.verticalAlignments.map((obj) => obj.class),
 	);
 	store.selectedComponent.classList.add(alignment.class);
+};
+const setFlow = (flow) => {
+	store.selectedComponent.classList.remove(
+		...store.flow.map((obj) => obj.class),
+	);
+	store.selectedComponent.classList.add(flow.class);
 };
 </script>
