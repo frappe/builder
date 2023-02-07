@@ -4,13 +4,14 @@ const useStore = defineStore("store", {
 	state: () => ({
 		selectedComponent: null,
 		selectedBlock: null,
+		selectedPage: null,
 		widgets: [{
 			name: "Container",
 			element: "section",
 			icon: "square",
 			children: [],
 			attributes: {
-				class: "w-full h-full bg-blue-100 min-h-[40px] min-w-[40px] mx-auto p-3",
+				class: "w-full h-full bg-blue-100 min-h-[40px] min-w-[40px] mx-auto p-3 flex items-center",
 			},
 		}, {
 			name: "Text",
@@ -30,6 +31,15 @@ const useStore = defineStore("store", {
 				src: "https://user-images.githubusercontent.com/13928957/212847544-5773795d-2fd6-48d1-8423-b78ecc92522b.png",
 				class: "h-auto w-auto",
 			},
+		}],
+		flow: [{
+			name: "Row",
+			class: "flex-row",
+			icon: "columns",
+		}, {
+			name: "Column",
+			class: "flex-col",
+			icon: "credit-card",
 		}],
 		alignments: [{
 			name: "Left",
@@ -61,8 +71,7 @@ const useStore = defineStore("store", {
 			class: "items-end",
 			icon: "arrow-down",
 		}],
-		pageName: "test-879",
-		route: "pages/home",
+		pageName: "Home",
 		pages: {},
 		activeBreakpoint: "desktop",
 		blocks: [],
@@ -99,6 +108,9 @@ const useStore = defineStore("store", {
 		getActiveBreakpoint() {
 			return this.deviceBreakpoints[this.activeBreakpoint].width;
 		},
+		generateId() {
+			return Math.random().toString(36).substr(2, 9);
+		}
 	},
 });
 
