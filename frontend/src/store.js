@@ -3,13 +3,14 @@ import { defineStore } from "pinia";
 const useStore = defineStore("store", {
 	state: () => ({
 		selectedComponent: null,
-		selectedBlock: null,
 		selectedPage: null,
+		selectedBlocks: [],
 		widgets: [{
 			name: "Container",
 			element: "section",
 			icon: "square",
 			children: [],
+			styles: {},
 			attributes: {
 				class: "w-full h-full bg-blue-100 min-h-[40px] min-w-[40px] mx-auto p-3 flex items-center",
 			},
@@ -18,14 +19,24 @@ const useStore = defineStore("store", {
 			element: "span",
 			icon: "type",
 			innerText: "Text",
+			styles: {
+				"color": "black",
+				"background": "none",
+				"border": "none",
+				"box-shadow": "none",
+				"width": "auto",
+				"outline": "none",
+				"font-size": "20px",
+				"line-height": "1"
+			},
 			attributes: {
 				contenteditable: true,
-				style: "color: black; background: none; border: none; box-shadow: none; width: auto; outline: none; font-size: 20px; line-height: 1",
 			},
 		}, {
 			name: "Image",
 			element: "img",
 			icon: "image",
+			styles: {},
 			attributes: {
 				// src: "https://picsum.photos/500/200"
 				src: "https://user-images.githubusercontent.com/13928957/212847544-5773795d-2fd6-48d1-8423-b78ecc92522b.png",

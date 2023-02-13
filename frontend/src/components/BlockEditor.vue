@@ -1,5 +1,5 @@
 <template>
-	<div class="z-10 editor fixed invisible border-[1px] border-blue-300" ref="editor"
+	<div class="z-10 editor fixed border-[1px] border-blue-300" ref="editor"
 		@dblclick.stop="handleDblClick" @mousedown.stop="handleMove"
 		@dragstart="setCopyData($event, element, i)" @dragend="copy" draggable="true">
 		<div class="absolute padding-handler hover:bg-purple-600 opacity-50 w-full cursor-ns-resize" @mousedown.stop="handlePadding" ref="paddingHandler"></div>
@@ -39,7 +39,7 @@
 	</div>
 </template>
 <script setup>
-import { getCurrentInstance, onMounted, ref } from "vue";
+import { getCurrentInstance, onMounted, ref} from "vue";
 import { useDebounceFn } from "@vueuse/shared";
 import useStore from "../store";
 import trackTarget from "../utils/trackTarget";
@@ -60,35 +60,6 @@ onMounted(() => {
 	const targetStyle = window.getComputedStyle(target);
 	paddingHandler.value.style.height = (parseInt(targetStyle.paddingTop, 10) || 5) + "px";
 	trackTarget(target, editorWrapper);
-
-
-	if (store.selectedComponent === target) {
-		// selected
-		editorWrapper.classList.remove(
-			"invisible",
-			"pointer-events-none"
-		);
-	}
-
-	store.$subscribe(({ events }) => {
-		if (events.key !== "selectedComponent") return;
-		if (events.newValue === target) {
-			// selected
-			editorWrapper.classList.remove(
-				"invisible",
-				"pointer-events-none"
-			);
-		} else {
-			// un-selected
-			editorWrapper.classList.add(
-				"invisible",
-			);
-			editorWrapper.classList.remove(
-				// if the new selected component is a child of this component
-				"pointer-events-none",
-			);
-		}
-	});
 })
 
 const handleRightResize = (ev) => {

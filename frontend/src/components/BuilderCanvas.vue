@@ -76,6 +76,7 @@ store.getBlockData = getBlockData;
 
 const clearSelectedComponent = () => {
 	store.selectedComponent = null;
+	store.selectedBlocks = [];
 	document.activeElement.blur();
 };
 
@@ -83,7 +84,7 @@ document.addEventListener("keydown", (e) => {
 	if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
 		return;
 	}
-	if (e.key === "Backspace" && store.selectedComponent && !e.target.closest(".__builder_component__")) {
+	if (e.key === "Backspace" && store.selectedBlocks.length && !e.target.closest(".__builder_component__")) {
 		function find_block_and_remove(blocks, block_id) {
 			blocks.forEach((block, i) => {
 				if (block.id === block_id) {
@@ -94,7 +95,7 @@ document.addEventListener("keydown", (e) => {
 				}
 			})
 		}
-		find_block_and_remove(store.blocks, store.selectedComponent.element_id);
+		find_block_and_remove(store.blocks, store.selectedBlocks[0].id);
 		clearSelectedComponent();
 	}
 

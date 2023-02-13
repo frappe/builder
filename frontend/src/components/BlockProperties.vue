@@ -84,9 +84,9 @@ import useStore from "../store";
 const store = useStore();
 
 let margin = computed({
-	get: () => store.selectedComponent.style.margin,
+	get: () => store.selectedBlocks[0] && store.selectedBlocks[0].styles?.margin,
 	set: (val) => {
-		store.selectedComponent.style.margin = val;
+		store.selectedBlocks[0].styles.margin = val;
 	}
 })
 let fontSize = computed({

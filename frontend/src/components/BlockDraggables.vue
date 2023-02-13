@@ -2,7 +2,6 @@
 	<div ref="draggableContainer" class="fixed z-20 pointer-events-none">
 		<draggable :list="elementProperties.children"
 			:group="{ name: 'blocks' }" item-key="id" class="w-full h-full flex-col flex"
-			:disabled="!selected"
 			:class="{'pointer-events-auto': selected}" @click="handleClick">
 			<template #item="{ element }">
 				<!--  -->
@@ -14,12 +13,9 @@
 import { getCurrentInstance, onMounted, ref } from "vue";
 import draggable from "vuedraggable";
 import trackTarget from "../utils/trackTarget";
-import useStore from "../store";
-let store = useStore();
 
 const props = defineProps(["element-properties"]);
 const draggableContainer = ref(null);
-const selected = ref(false);
 
 let currentInstance = null;
 let target = null;
@@ -29,11 +25,6 @@ onMounted(() => {
 	target = currentInstance.parent.refs.component;
 	trackTarget(target, draggableWrapper, 20);
 });
-
-store.$subscribe(({ events }) => {
-	if (events.key !== "selectedComponent") return;
-	selected.value = events.newValue === target;
-})
 
 const handleClick = (ev) => {
 	// click on target instead of draggable box
