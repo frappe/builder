@@ -1,11 +1,10 @@
 <template>
 	{{ elementProperties.node_type === 'Text' ? elementProperties.node_value : '' }}
 	<component v-if="elementProperties.node_type !== 'Text'" :is="elementProperties.element"
-		class="flex items-center relative __builder_component__"
+		class="relative __builder_component__"
 		@click.exact.stop="selectComponent($event, elementProperties)" @dblclick.stop
 		v-bind="{ ...elementProperties.attributes, ...elementProperties.skippedAttributes }"
 		:styles="styles"
-		@dragover="selectComponent"
 		ref="component">
 		{{ elementProperties.innerText }}
 		<BuilderBlock :element-properties="element" v-for="element in elementProperties.children"></BuilderBlock>
@@ -15,7 +14,7 @@
 	</teleport>
 	<teleport to='#overlay' v-if="elementProperties.node_type !== 'Text'">
 		<BlockEditor :movable="elementProperties.element === 'span'"
-			:roundable="elementProperties.element !== 'span'"
+			:roundable="elementProperties.element === 'section'"
 			:resizableX="true"
 			:resizableY="elementProperties.element !== 'img'"
 			:resizable="true"></BlockEditor>
