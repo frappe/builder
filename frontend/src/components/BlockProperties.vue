@@ -1,5 +1,5 @@
 <template>
-	<div class="bg-white fixed w-1/5 right-0 top-[3.5rem] bottom-0 p-5 pr-2 z-20 border-l-2 border-gray-100 overflow-auto">
+	<div>
 		<div v-if="store.selectedComponent">
 			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase">Alignment</h3>
 			<ul class="flex flex-wrap">

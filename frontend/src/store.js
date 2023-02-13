@@ -20,7 +20,7 @@ const useStore = defineStore("store", {
 			innerText: "Text",
 			attributes: {
 				contenteditable: true,
-				style: "min-height: 50px; color: black; background: none; border: none; box-shadow: none; min-width: 20px; width: auto; outline: none; padding: 5px; font-size: 20px; line-height: 1",
+				style: "color: black; background: none; border: none; box-shadow: none; width: auto; outline: none; font-size: 20px; line-height: 1",
 			},
 		}, {
 			name: "Image",

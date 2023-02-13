@@ -12,7 +12,7 @@
 			</Button>
 		</div>
 		<Button appearance="primary" @click="publish" class="m-1 absolute right-2 text-sm p-4">
-			<FeatherIcon :name="play" class="w-4 h-4 text-white"></FeatherIcon>
+			<FeatherIcon name="play" class="w-3 h-4 text-white"></FeatherIcon>
 		</Button>
 	</div>
 </template>
