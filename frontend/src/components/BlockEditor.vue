@@ -1,7 +1,7 @@
 <template>
 	<div class="z-10 editor fixed invisible border-[1px] border-blue-300" ref="editor"
 		@dblclick.stop="handleDblClick" @mousedown.stop="handleMove"
-		@dragstart="setCopyData($event, element, i)" @dragend="copy">
+		@dragstart="setCopyData($event, element, i)" @dragend="copy" draggable="true">
 		<div class="absolute padding-handler hover:bg-purple-600 opacity-50 w-full cursor-ns-resize" @mousedown.stop="handlePadding" ref="paddingHandler"></div>
 		<div class="absolute top-0 right-0 border-2 bg-purple-500 w-3 h-3 rounded-full opacity-50 pointer-events-auto" @click.prevent="resetPosition" v-if="movable"></div>
 		<div class="absolute border-radius-resize w-[9px] h-[9px] border-[1px] border-blue-400 bg-white rounded-full pointer-events-auto top-2 left-2 cursor-default"
@@ -175,10 +175,10 @@ const handleDblClick = (ev) => {
 
 const handleMove = (ev) => {
 	if (!props.movable) return;
-	if (ev.altKey) {
-		setDraggable(ev);
-		return
-	}
+	// if (ev.altKey) {
+	// 	setDraggable(ev);
+	// 	return
+	// }
 	const startX = ev.clientX;
 	const startY = ev.clientY;
 	const startLeft = target.offsetLeft;
@@ -269,9 +269,6 @@ const setCopyData = useDebounceFn((event, data) => {
 	if (event.altKey) {
 		event.dataTransfer.action = "copy";
 		event.dataTransfer.data_to_copy = JSON.parse(JSON.stringify(store.getBlockData(target)));
-	} else {
-		target.draggable = true;
-		relayEventToTarget(event);
 	}
 });
 
