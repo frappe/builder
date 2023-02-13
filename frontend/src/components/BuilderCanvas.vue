@@ -26,7 +26,8 @@ const canvasContainer = ref(null);
 const canvas = ref(null);
 
 function getPageData() {
-	return getBlocks(canvas.value);
+	let blockContainer = canvas.value.querySelector(".block-container");
+	return getBlocks(blockContainer);
 }
 
 function getBlocks(element) {
