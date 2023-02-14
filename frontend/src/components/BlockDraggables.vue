@@ -1,8 +1,7 @@
 <template>
 	<div ref="draggableContainer" class="fixed z-20 pointer-events-none">
 		<draggable :list="elementProperties.children"
-			:group="{ name: 'blocks' }" item-key="id" class="w-full h-full flex-col flex"
-			:class="{'pointer-events-auto': selected}" @click="handleClick">
+			:group="{ name: 'blocks' }" item-key="id" class="w-full h-full flex-col flex pointer-events-auto" @click="handleClick">
 			<template #item="{ element }">
 				<!--  -->
 			</template>

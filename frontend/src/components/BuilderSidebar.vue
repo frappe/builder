@@ -51,8 +51,8 @@ createListResource({
 
 const setPage = (e) => {
 	// clear blocks
-	store.blocks.length = 0;
-	store.blocks.push(...e.blocks);
+	store.clearBlocks();
+	store.pushBlocks(e.blocks);
 	store.pageName = e.page_name;
 	store.route = e.route;
 	store.selectedPage = e.name;
