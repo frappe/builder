@@ -6,7 +6,7 @@
 			:sort="false"
 			:group="{ name: 'blocks', pull: 'clone', put: false }"
 			item-key="id"
-			class="w-full flex flex-wrap" :clone="handleClone">
+			class="w-full flex flex-wrap" :clone="store.cloneBlock">
 			<template #item="{ element }">
 				<div
 					class="flex items-center cursor-pointer justify-center
@@ -20,15 +20,7 @@
 <script setup>
 import draggable from "vuedraggable";
 import useStore from "../store";
-
 const store = useStore();
-
-const handleClone = (item) => {
-	const clonedItem = JSON.parse(JSON.stringify(item));
-	// set unique id for each cloned item
-	clonedItem.id = store.generateId();
-	return clonedItem;
-};
 </script>
 
 <style>

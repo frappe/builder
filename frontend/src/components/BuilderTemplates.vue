@@ -2,7 +2,7 @@
 	<div>
 		<h3 class="mb-3 text-gray-600 font-bold text-xs uppercase">Templates</h3>
 		<draggable :list="components" :group="{ name: 'blocks', pull: 'clone', put: false }" item-key="id"
-			:clone="handleClone" class="w-full flex flex-wrap">
+			:clone="(obj) => store.cloneBlock(obj.block)" class="w-full flex flex-wrap">
 			<template #item="{ element }">
 				<div>
 					<div class="flex items-center cursor-pointer justify-center
@@ -40,11 +40,4 @@ createListResource({
 		return components;
 	},
 });
-
-const handleClone = (item) => {
-	const clonedItem = JSON.parse(JSON.stringify(item.block));
-	// set unique id for each cloned item
-	clonedItem.id = store.generateId();
-	return clonedItem;
-};
 </script>

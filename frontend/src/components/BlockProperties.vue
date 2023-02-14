@@ -1,6 +1,6 @@
 <template>
-	<div>
-		<div v-if="store.selectedComponent">
+	<div v-if="store.selectedBlock">
+		<div>
 			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase">Alignment</h3>
 			<ul class="flex flex-wrap">
 				<li v-for="alignment in store.alignments" :key="alignment.name" class="mr-2 mb-2 last:mr-0">
@@ -19,7 +19,7 @@
 				</li>
 			</ul>
 		</div>
-		<div v-if="store.selectedComponent" class="mt-5">
+		<div class="mt-5">
 			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase">Flow</h3>
 			<ul class="flex flex-wrap">
 				<li v-for="flow in store.flow" :key="flow.name" class="mr-2 mb-2 last:mr-0">
@@ -31,7 +31,7 @@
 				</li>
 			</ul>
 		</div>
-		<div v-if="store.selectedComponent" class="mt-5">
+		<div class="mt-5">
 			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase">Background Color</h3>
 			<ul class="flex flex-wrap">
 				<li v-for="color in store.pastelCssColors" :key="color" class="mr-2 mb-2 last:mr-0">
@@ -41,7 +41,7 @@
 				</li>
 			</ul>
 		</div>
-		<div v-if="store.selectedComponent && store.selectedComponent.tagName !== 'IMG'" class="mt-5">
+		<div v-if="store.selectedBlock && !store.selectedBlock.isImage()" class="mt-5">
 			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase">Text Color</h3>
 			<ul class="flex flex-wrap">
 				<li v-for="color in store.textColors" :key="color" class="mr-2 mb-2 last:mr-0">
@@ -51,96 +51,52 @@
 				</li>
 			</ul>
 		</div>
-		<div v-if="store.selectedComponent && store.selectedComponent.tagName === 'IMG'">
+		<div v-if="store.selectedBlock && store.selectedBlock.isImage()">
 			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Image Source</h3>
-			<input type="text" v-model="store.selectedComponent.src"
+			<input type="text" v-model="store.selectedBlock.attributes.src"
 				class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
 		</div>
-		<div v-if="store.selectedComponent && store.selectedComponent.tagName === 'SPAN'">
+		<div v-if="store.selectedBlock && store.selectedBlock.isText()">
 			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Font Size</h3>
-			<input type="text" v-model="fontSize" class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
+			<input type="text" v-model="store.selectedBlock.styles.fontSize" class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
 		</div>
 
-		<div v-if="store.selectedComponent && store.selectedComponent.tagName === 'SPAN'">
+		<div v-if="store.selectedBlock && store.selectedBlock.isText()">
 			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Line Height</h3>
-			<input type="text" v-model="lineHeight" class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
+			<input type="text" v-model="store.selectedBlock.styles.lineHeight" class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
 		</div>
 
-		<div v-if="store.selectedComponent && store.selectedComponent.tagName === 'SECTION'">
+		<div v-if="store.selectedBlock && store.selectedBlock.isContainer()">
 			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Margin</h3>
-			<input type="text" v-model="margin"
+			<input type="text" v-model="store.selectedBlock.styles.margin"
 				class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
-		</div>
-		<div v-if="store.selectedComponent" class="text-base mt-5 text-gray-800">
-			Width: {{ width }}
-			height: {{ height }}
 		</div>
 	</div>
 </template>
 <script setup>
-import { computed } from "@vue/reactivity";
+import { computed } from "vue";
 import { Input } from "frappe-ui";
 import useStore from "../store";
 const store = useStore();
 
-let margin = computed({
-	get: () => store.selectedBlocks[0] && store.selectedBlocks[0].styles?.margin,
-	set: (val) => {
-		store.selectedBlocks[0].styles.margin = val;
-	}
-})
-let fontSize = computed({
-	get: () => store.selectedComponent.style.fontSize,
-	set: (val) => {
-		store.selectedComponent.style.fontSize = val;
-	}
-})
-
-let lineHeight = computed({
-	get: () => store.selectedComponent.style.lineHeight,
-	set: (val) => {
-		store.selectedComponent.style.lineHeight = val;
-	}
-})
-
-let height = computed({
-	get: () => store.selectedComponent.style.height || "auto",
-	set: (val) => {
-		store.selectedComponent.style.lineHeight = val;
-	}
-})
-
-let width = computed({
-	get: () => store.selectedComponent.style.width || "auto",
-	set: (val) => {
-		store.selectedComponent.style.lineHeight = val;
-	}
-})
-
 const setBgColor = (color) => {
-	store.selectedComponent.style.background = color;
+	store.selectedBlock.setStyle('background', color);
 };
 const setTextColor = (color) => {
-	store.selectedComponent.style.color = color;
+	store.selectedBlock.setStyle('color', color);
 };
 
 const setAlignment = (alignment) => {
-	store.selectedComponent.classList.remove(
-		...store.alignments.map((obj) => obj.class),
-	);
-	store.selectedComponent.classList.add(alignment.class);
+	store.selectedBlock.classes.remove(...store.alignments.map((obj) => obj.class),)
+	store.selectedBlock.classes.add(alignment.class);
 };
 
 const setVerticalAlignment = (alignment) => {
-	store.selectedComponent.classList.remove(
-		...store.verticalAlignments.map((obj) => obj.class),
-	);
-	store.selectedComponent.classList.add(alignment.class);
+	store.selectedBlock.classes.remove(...store.verticalAlignments.map((obj) => obj.class))
+	store.selectedBlock.classes.add(alignment.class);
 };
 const setFlow = (flow) => {
-	store.selectedComponent.classList.remove(
-		...store.flow.map((obj) => obj.class),
-	);
-	store.selectedComponent.classList.add(flow.class);
+	store.selectedBlock.classes.remove(...store.flow.map((obj) => obj.class))
+	store.selectedBlock.classes.add(flow.class);
 };
 </script>

@@ -1,9 +1,10 @@
 import { defineStore } from "pinia";
+import BlockProperties from "./utils/blockProperties";
 
 const useStore = defineStore("store", {
 	state: () => ({
-		selectedComponent: null,
 		selectedPage: null,
+		selectedBlock: null,
 		selectedBlocks: [],
 		widgets: [{
 			name: "Container",
@@ -11,9 +12,8 @@ const useStore = defineStore("store", {
 			icon: "square",
 			children: [],
 			styles: {},
-			attributes: {
-				class: "w-full h-full bg-blue-100 min-h-[40px] min-w-[40px] mx-auto p-3 flex items-center",
-			},
+			classes: ["w-full", "h-full", "bg-blue-100", "min-h-[40px]", "min-w-[40px]", "mx-auto", "p-3", "flex", "items-center"],
+			attributes: {},
 		}, {
 			name: "Text",
 			element: "span",
@@ -37,10 +37,10 @@ const useStore = defineStore("store", {
 			element: "img",
 			icon: "image",
 			styles: {},
+			classes: ["h-auto", "w-auto"],
 			attributes: {
 				// src: "https://picsum.photos/500/200"
 				src: "https://user-images.githubusercontent.com/13928957/212847544-5773795d-2fd6-48d1-8423-b78ecc92522b.png",
-				class: "h-auto w-auto",
 			},
 		}],
 		flow: [{
@@ -119,8 +119,17 @@ const useStore = defineStore("store", {
 		getActiveBreakpoint() {
 			return this.deviceBreakpoints[this.activeBreakpoint].width;
 		},
-		generateId() {
-			return Math.random().toString(36).substr(2, 9);
+		cloneBlock(options) {
+			const clonedOptions = JSON.parse(JSON.stringify(options));
+			return new BlockProperties(clonedOptions);
+		},
+		clearBlocks() {
+			this.blocks.length = 0;
+		},
+		pushBlocks(blocks) {
+			for (let block of blocks) {
+				this.blocks.push(new BlockProperties(block));
+			}
 		}
 	},
 });
