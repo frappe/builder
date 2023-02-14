@@ -1,20 +1,26 @@
-import { createApp } from 'vue'
-import { FrappeUI, Button, FeatherIcon, setConfig, frappeRequest } from 'frappe-ui'
-import { createPinia } from 'pinia';
-import router from './router'
-import App from './App.vue'
-import './index.css'
+import { createApp } from "vue";
+import {
+	FrappeUI,
+	Button,
+	FeatherIcon,
+	setConfig,
+	frappeRequest,
+} from "frappe-ui";
+import { createPinia } from "pinia";
+import router from "./router";
+import App from "./App.vue";
+import "./index.css";
+import "./utils/arrayFunctions";
 
+const app = createApp(App);
+const pinia = createPinia();
 
-const app = createApp(App)
-const pinia = createPinia()
+setConfig("resourceFetcher", frappeRequest);
 
-setConfig('resourceFetcher', frappeRequest)
+app.use(router);
+app.use(FrappeUI);
+app.use(pinia);
 
-app.use(router)
-app.use(FrappeUI)
-app.use(pinia)
-
-app.component('Button', Button)
-app.component('FeatherIcon', FeatherIcon)
-app.mount('#app')
+app.component("Button", Button);
+app.component("FeatherIcon", FeatherIcon);
+app.mount("#app");
