@@ -44,7 +44,7 @@ import { useDebounceFn } from "@vueuse/shared";
 import useStore from "../store";
 import trackTarget from "../utils/trackTarget";
 
-const props = defineProps(["movable", "resizable", "roundable", "resizableX", "resizableY"]);
+const props = defineProps(["movable", "resizable", "roundable", "resizableX", "resizableY", "element-properties"]);
 const store = useStore();
 const editor = ref(null);
 let editorWrapper = ref(null);
@@ -52,6 +52,8 @@ let paddingHandler = ref(null);
 
 let target = ref(null);
 let currentInstance = null;
+
+let targetProps = props.elementProperties;
 
 onMounted(() => {
 	currentInstance = getCurrentInstance();
@@ -76,7 +78,7 @@ const handleRightResize = (ev) => {
 	const mousemove = (mouseMoveEvent) => {
 		const movement = mouseMoveEvent.clientX - startX;
 		const movementPercent = movement / parentWidth * 100;
-		target.style.width = `${startWidthPercent + movementPercent}%`;
+		targetProps.setStyle("width", `${startWidthPercent + movementPercent}%`);
 		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);
@@ -98,7 +100,7 @@ const handleBottomResize = (ev) => {
 
 	const mousemove = (mouseMoveEvent) => {
 		const movement = mouseMoveEvent.clientY - startY;
-		target.style.height = `${startHeight + movement}px`;
+		targetProps.setStyle("height", `${startHeight + movement}px`);
 		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);
@@ -122,11 +124,11 @@ const handleBottomCornerResize = (ev) => {
 	const mousemove = (mouseMoveEvent) => {
 		if (props.resizableX) {
 			const movementX = mouseMoveEvent.clientX - startX;
-			target.style.width = `${startWidth + movementX}px`;
+			targetProps.setStyle("width", `${startWidth + movementX}px`);
 		}
 		if (props.resizableY) {
 			const movementY = mouseMoveEvent.clientY - startY;
-			target.style.height = `${startHeight + movementY}px`;
+			targetProps.setStyle("height", `${startHeight + movementY}px`);
 		}
 		mouseMoveEvent.preventDefault();
 	};
@@ -163,9 +165,9 @@ const handleMove = (ev) => {
 		const movementX = mouseMoveEvent.clientX - startX;
 		const movementY = mouseMoveEvent.clientY - startY;
 
-		target.style.position = "absolute";
-		target.style.left = `${startLeft + movementX}px`;
-		target.style.top = `${startTop + movementY}px`;
+		targetProps.setStyle("position", "absolute");
+		targetProps.setStyle("left", `${startLeft + movementX}px`);
+		targetProps.setStyle("top", `${startTop + movementY}px`);
 		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);
@@ -217,7 +219,7 @@ const handleRounded = (ev) => {
 		const newTop = Math.max(minTop, ((maxDistance * ratio) - handleHeight / 2));
 		const newLeft = Math.max(minLeft, ((maxDistance * ratio) - handleWidth / 2));
 
-		target.style.borderRadius = `${radius}px`;
+		targetProps.setStyle("borderRadius", `${radius}px`);
 		handle.style.top = `${newTop}px`;
 		handle.style.left = `${newLeft}px`;
 
@@ -264,9 +266,9 @@ const relayEventToTarget = (event) => {
 }
 
 const resetPosition = (ev) => {
-	target.style.position = "relative";
-	target.style.left = "0px";
-	target.style.top = "0px";
+	targetProps.setStyle("position", "relative");
+	targetProps.setStyle("left", "0px");
+	targetProps.setStyle("top", "0px");
 }
 
 const handlePadding = (ev) => {
@@ -281,7 +283,7 @@ const handlePadding = (ev) => {
 		let movementY = mouseMoveEvent.clientY - startY;
 
 		if (movementY < 0) movementY = 0;
-		target.style.padding = movementY + "px";
+		targetProps.setStyle("padding", movementY + "px");
 		paddingHandler.value.style.height = (parseInt(target.style.padding, 10) || 5) + "px";
 		mouseMoveEvent.preventDefault();
 	};
