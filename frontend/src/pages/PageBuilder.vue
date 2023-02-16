@@ -24,7 +24,7 @@ import BlockProperties from "../components/BlockProperties.vue";
 
 <style>
 .page-builder {
-	--left-panel-width: 14rem;
+	--left-panel-width: 17rem;
 	--right-panel-width: 20rem;
 	--toolbar-height: 3.5rem;
 }
