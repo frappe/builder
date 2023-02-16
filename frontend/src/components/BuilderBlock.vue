@@ -3,7 +3,8 @@
 	<component v-if="elementProperties.node_type !== 'Text'" :is="elementProperties.element"
 		class="relative __builder_component__" @click.exact.stop="selectComponent($event, elementProperties)"
 		@dblclick.stop v-bind="{ ...elementProperties.attributes, ...elementProperties.skippedAttributes, ...$attrs }"
-		:style="elementProperties.styles" :class="elementProperties.classes" ref="component">
+		:style="styles"
+		:class="elementProperties.classes" ref="component">
 		{{ elementProperties.innerText }}
 		<BuilderBlock :element-properties="element" v-for="element in elementProperties.children"></BuilderBlock>
 	</component>
@@ -13,13 +14,13 @@
 	</teleport>
 	<teleport to='#overlay' v-if="elementProperties.node_type !== 'Text'">
 		<BlockEditor v-if="store.selectedBlocks.includes(elementProperties)"
-			:movable="elementProperties.element === 'span'" :roundable="elementProperties.element === 'section'"
-			:resizableX="true" :resizableY="elementProperties.element !== 'img'" :selected="true" :resizable="true">
+			:roundable="elementProperties.element === 'section'"
+			:resizableX="true" :resizableY="elementProperties.element !== 'img'" :selected="true" :resizable="true" :element-properties="elementProperties">
 		</BlockEditor>
 	</teleport>
 </template>
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref, computed } from "vue";
 import useStore from "../store";
 import BlockEditor from "./BlockEditor.vue";
 import BlockDraggables from "./BlockDraggables.vue";
@@ -32,13 +33,21 @@ onMounted(() => {
 	if (props.elementProperties.node_type === "Text") {
 		return;
 	}
-
 	selectComponent(null, props.elementProperties);
 });
+
+const styles = computed(() => {
+	let styleObj = props.elementProperties.styles;
+	if (store.activeBreakpoint === 'mobile') {
+		styleObj = {...styleObj, ...props.elementProperties.mobileStyles}
+	} else if (store.activeBreakpoint === 'tablet') {
+		styleObj = {...styleObj, ...props.elementProperties.tabletStyles}
+	}
+	return styleObj;
+})
 
 const selectComponent = (e, elementProperties) => {
 	store.selectedBlock = elementProperties;
 	store.selectedBlocks = [elementProperties];
 };
-
 </script>

@@ -26,7 +26,8 @@ const canvas = ref(null);
 
 function getPageData() {
 	let blockContainer = canvas.value.querySelector(".block-container");
-	return getBlocks(blockContainer);
+	// return getBlocks(blockContainer);
+	return store.blocks;
 }
 
 function getBlocks(element) {
@@ -75,7 +76,7 @@ store.getPageData = getPageData;
 store.getBlockData = getBlockData;
 
 const clearSelectedComponent = () => {
-	store.selectedComponent = null;
+	store.selectedBlock = null;
 	store.selectedBlocks = [];
 	document.activeElement.blur();
 };
@@ -84,10 +85,10 @@ document.addEventListener("keydown", (e) => {
 	if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
 		return;
 	}
-	if (e.key === "Backspace" && store.selectedBlocks.length && !e.target.closest(".__builder_component__")) {
+	if (e.key === "Backspace" && store.selectedBlock && !e.target.closest(".__builder_component__")) {
 		function find_block_and_remove(blocks, block_id) {
 			blocks.forEach((block, i) => {
-				if (block.id === block_id) {
+				if (block.blockId === block_id) {
 					blocks.splice(i, 1);
 					return true;
 				} else if (block.children) {
@@ -95,7 +96,7 @@ document.addEventListener("keydown", (e) => {
 				}
 			})
 		}
-		find_block_and_remove(store.blocks, store.selectedBlocks[0].id);
+		find_block_and_remove(store.blocks, store.selectedBlock.blockId);
 		clearSelectedComponent();
 	}
 
