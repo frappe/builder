@@ -87,6 +87,11 @@
 				<input type="text" v-model="blockStyles.width"
 					class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
 			</div>
+			<div v-if="store.selectedBlock && store.selectedBlock.isLink()">
+				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Link</h3>
+				<input type="text" v-model="store.selectedBlock.attributes.href"
+					class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
+			</div>
 		</div>
 	</div>
 </template>
