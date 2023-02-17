@@ -59,26 +59,52 @@
 			</div>
 			<div v-if="store.selectedBlock && store.selectedBlock.isText()">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Font Size</h3>
-				<input type="text" v-model="store.selectedBlock.styles.fontSize" class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
+				<input type="text" v-model="blockStyles.fontSize" class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
 			</div>
 
 			<div v-if="store.selectedBlock && store.selectedBlock.isText()">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Line Height</h3>
-				<input type="text" v-model="store.selectedBlock.styles.lineHeight" class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
+				<input type="text" v-model="blockStyles.lineHeight" class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
 			</div>
 
 			<div v-if="store.selectedBlock && store.selectedBlock.isContainer()">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Margin</h3>
-				<input type="text" v-model="store.selectedBlock.styles.margin"
+				<input type="text" v-model="blockStyles.margin"
+					class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
+			</div>
+			<div v-if="store.selectedBlock">
+				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Element Type</h3>
+				<input type="text" v-model="store.selectedBlock.element"
+					class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
+			</div>
+			<div v-if="store.selectedBlock">
+				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Height</h3>
+				<input type="text" v-model="blockStyles.height"
+					class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
+			</div>
+			<div v-if="store.selectedBlock">
+				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Width</h3>
+				<input type="text" v-model="blockStyles.width"
 					class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
 			</div>
 		</div>
 	</div>
 </template>
 <script setup>
+import { computed } from "vue";
 import { Input } from "frappe-ui";
 import useStore from "../store";
 const store = useStore();
+
+const blockStyles = computed(() => {
+	let styleObj = store.selectedBlock.styles;
+	if (store.activeBreakpoint === 'mobile') {
+		styleObj = store.selectedBlock.mobileStyles;
+	} else if (store.activeBreakpoint === 'tablet') {
+		styleObj = store.selectedBlock.tabletStyles;
+	}
+	return styleObj;
+})
 
 const setBgColor = (color) => {
 	store.selectedBlock.setStyle('background', color);
