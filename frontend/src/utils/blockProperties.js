@@ -13,7 +13,7 @@ class BlockProperties {
 		return this.element === "img";
 	}
 	isText() {
-		return this.element === "span";
+		return ["span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6"].includes(this.element);
 	}
 	isContainer() {
 		return this.element === "section";

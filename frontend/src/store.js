@@ -16,7 +16,7 @@ const useStore = defineStore("store", {
 			attributes: {},
 		}, {
 			name: "Text",
-			element: "span",
+			element: "p",
 			icon: "type",
 			innerText: "Text",
 			styles: {
@@ -28,9 +28,6 @@ const useStore = defineStore("store", {
 				"outline": "none",
 				"font-size": "20px",
 				"line-height": "1"
-			},
-			attributes: {
-				contenteditable: true,
 			},
 		}, {
 			name: "Image",
