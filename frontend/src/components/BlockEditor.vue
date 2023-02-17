@@ -59,9 +59,13 @@ onMounted(() => {
 	currentInstance = getCurrentInstance();
 	editorWrapper = editor.value;
 	target = currentInstance.parent.refs.component;
-	const targetStyle = window.getComputedStyle(target);
-	paddingHandler.value.style.height = (parseInt(targetStyle.paddingTop, 10) || 5) + "px";
-	trackTarget(target, editorWrapper);
+	if (target instanceof HTMLElement) {
+		const targetStyle = window.getComputedStyle(target);
+		paddingHandler.value.style.height = (parseInt(targetStyle.paddingTop, 10) || 5) + "px";
+		trackTarget(target, editorWrapper);
+	} else {
+		return false;
+	}
 })
 
 const handleRightResize = (ev) => {
