@@ -40,7 +40,6 @@ onMounted(() => {
 	if (props.elementProperties.isText()) {
 		component.value.addEventListener("keydown", (e) => {
 			if (e.key === "b" && e.metaKey) {
-				console.log('bold');
 				e.preventDefault();
 				props.elementProperties.setStyle("fontWeight", "bold");
 			}

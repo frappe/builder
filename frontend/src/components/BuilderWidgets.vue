@@ -6,7 +6,7 @@
 			:sort="false"
 			:group="{ name: 'blocks', pull: 'clone', put: false }"
 			item-key="id"
-			class="w-full flex flex-wrap" :clone="store.cloneBlock">
+			class="w-full flex flex-wrap" :clone="store.getBlockCopy">
 			<template #item="{ element }">
 				<div
 					class="flex items-center cursor-pointer justify-center
