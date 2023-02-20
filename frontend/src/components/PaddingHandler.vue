@@ -53,6 +53,11 @@ const handlePadding = (ev) => {
 	const startY = ev.clientY;
 	const startX = ev.clientX;
 
+	const startTop = parseInt(targetProps.styles.paddingTop, 10) || 0;
+	const startBottom = parseInt(targetProps.styles.paddingBottom, 10) || 0;
+	const startLeft = parseInt(targetProps.styles.paddingLeft, 10) || 0;
+	const startRight = parseInt(targetProps.styles.paddingRight, 10) || 0;
+
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
 	document.body.style.cursor = window.getComputedStyle(ev.target).cursor;
@@ -61,16 +66,16 @@ const handlePadding = (ev) => {
 		let movement = 0;
 
 		if (ev.target === topPaddingHandler.value) {
-			movement = Math.max(mouseMoveEvent.clientY - startY, 0);
+			movement = Math.max(startTop + mouseMoveEvent.clientY - startY, 0);
 			targetProps.setStyle("paddingTop", movement + "px");
 		} else if (ev.target === bottomPaddingHandler.value) {
-			movement = Math.max(startY - mouseMoveEvent.clientY, 0);
+			movement = Math.max(startBottom + startY - mouseMoveEvent.clientY, 0);
 			targetProps.setStyle("paddingBottom", movement + "px");
 		} else if (ev.target === leftPaddingHandler.value) {
-			movement = Math.max(mouseMoveEvent.clientX - startX, 0);
+			movement = Math.max(startLeft + mouseMoveEvent.clientX - startX, 0);
 			targetProps.setStyle("paddingLeft", movement + "px");
 		} else if (ev.target === rightPaddingHandler.value) {
-			movement = Math.max(startX - mouseMoveEvent.clientX, 0);
+			movement = Math.max(startRight + startX - mouseMoveEvent.clientX, 0);
 			targetProps.setStyle("paddingRight", movement + "px");
 		}
 
