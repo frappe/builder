@@ -1,10 +1,11 @@
 <template>
-	{{ elementProperties.node_type === 'Text' ? elementProperties.node_value : '' }}
 	<component v-if="elementProperties.node_type !== 'Text'" :is="elementProperties.element"
-		class="relative __builder_component__" @click.stop="selectBlock($event, elementProperties)"
+		class="relative __builder_component__ outline-none" @click.stop="selectBlock($event, elementProperties)"
 		@dblclick.stop v-bind="{ ...elementProperties.attributes, ...elementProperties.skippedAttributes, ...$attrs }"
 		:style="styles"
-		:contenteditable="elementProperties.isText()"
+		spellcheck="false"
+		:contenteditable="elementProperties.isText() && isSelected"
+		@input.stop.prevent="elementProperties.innerText = $event.target.innerText"
 		:class="elementProperties.classes" ref="component">
 		{{ elementProperties.innerText }}
 		<BuilderBlock :element-properties="element" v-for="element in elementProperties.children"></BuilderBlock>
@@ -34,6 +35,7 @@ onMounted(() => {
 	if (props.elementProperties.node_type === "Text") {
 		return;
 	}
+	props.elementProperties.component = component.value;
 	selectBlock(null, props.elementProperties);
 	if (props.elementProperties.isText()) {
 		component.value.addEventListener("keydown", (e) => {

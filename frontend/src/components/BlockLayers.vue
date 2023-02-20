@@ -1,11 +1,11 @@
 <template>
 	<div>
 		<div v-for="block in blocks">
-			<div class="cursor-pointer text-base"
+			<div class="cursor-pointer text-base p-[2px] truncate"
 				:class="{
-					'bg-gray-200': block.hover,
+					'bg-blue-50': block.hover,
 					'bg-white': !block.hover,
-					'border-2 border-blue-200': store.selectedBlock === block
+					'border-none bg-blue-50': store.selectedBlock === block
 				}"
 				@click.stop="selectBlock($event, block)"
 				@mouseover.stop="block.hover = true"

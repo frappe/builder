@@ -43,6 +43,9 @@ class WebPageBeta(WebsiteGenerator):
 					classes.append(style_class)
 
 				tag.attrs["class"] = get_class(classes)
+				if node.get("innerText"):
+					tag.append(node.get("innerText"))
+
 				for child in node.get("children", []):
 					if child.get("node_type") == "Text":
 						tag.append(child.get("node_value", ""))
