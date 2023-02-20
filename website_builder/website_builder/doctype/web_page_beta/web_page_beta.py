@@ -77,7 +77,7 @@ def append_style(style_obj, style_tag, style_class, device="desktop"):
 
 	style_string = f".{style_class} {{ {style} }}"
 	if device == "mobile":
-		style_string = f"@media only screen and (max-width: 600px) {{ {style_string} }}"
+		style_string = f"@media only screen and (max-width: 425px) {{ {style_string} }}"
 	elif device == "tablet":
-		style_string = f"@media only screen and (max-width: 992px) {{ {style_string} }}"
+		style_string = f"@media only screen and (min-width: 426px) and (max-width: 768px) {{ {style_string} }}"
 	style_tag.append(style_string)
