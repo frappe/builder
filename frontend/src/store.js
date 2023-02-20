@@ -130,10 +130,6 @@ const useStore = defineStore("store", {
 		getActiveBreakpoint() {
 			return this.deviceBreakpoints[this.activeBreakpoint].width;
 		},
-		cloneBlock(options) {
-			const clonedOptions = JSON.parse(JSON.stringify(options));
-			return new BlockProperties(clonedOptions);
-		},
 		clearBlocks() {
 			this.blocks.length = 0;
 		},
