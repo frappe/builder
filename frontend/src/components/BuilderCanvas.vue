@@ -1,9 +1,12 @@
 <template>
 	<div ref="canvasContainer">
-		<div class="overlay absolute" id="overlay"></div>
 		<div class="absolute" id="draggables"></div>
+		<div class="overlay absolute" id="overlay"></div>
 		<div class="canvas absolute min-h-full h-fit bg-white rounded-md overflow-hidden"
-			:style="'width: ' + store.getActiveBreakpoint() + 'px;'" ref="canvas">
+			:style="{
+				width: store.getActiveBreakpoint() + 'px',
+				transform: `scale(${store.canvas.scale}) translate(${store.canvas.translateX}px, ${store.canvas.translateY}px)`,
+			}" ref="canvas">
 			<draggable :list="store.blocks" :group="{ name: 'blocks' }" item-key="id"
 				class="h-full w-auto flex-col block-container min-h-[300px]">
 				<template #item="{ element }">
@@ -111,13 +114,12 @@ onMounted(() => {
 	const canvasBound = canvas.value.getBoundingClientRect();
 	if (canvasBound.width > containerBound.width) {
 		const scale = (containerBound.width) / (canvasBound.width + (padding * 2));
-		canvas.value.previousScale = scale;
+		store.canvas.scale = scale;
 	}
 	const diff = (containerBound.top - canvasBound.top);
 	if (diff !== 0) {
-		canvas.value.previousY = diff - padding / 2;
+		store.canvas.translateY = diff - padding / 2;
 	}
-	canvas.value.style.transform = `translate(${canvas.value.previousX || 0}px, ${canvas.value.previousY || 0}px) scale(${canvas.value.previousScale})`;
-	setPanAndZoom(canvas.value);
+	setPanAndZoom(store.canvas, canvas.value, canvasContainer.value);
 });
 </script>

@@ -120,6 +120,11 @@ const useStore = defineStore("store", {
 				width: 320,
 			},
 		},
+		canvas: {
+			scale: 1,
+			translateX: 0,
+			translateY: 0,
+		}
 	}),
 	actions: {
 		getActiveBreakpoint() {
