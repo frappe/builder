@@ -112,12 +112,12 @@ const useStore = defineStore("store", {
 			tablet: {
 				icon: "tablet",
 				device: "tablet",
-				width: 640,
+				width: 768,
 			},
 			mobile: {
 				icon: "smartphone",
 				device: "mobile",
-				width: 320,
+				width: 425,
 			},
 		},
 		canvas: {
