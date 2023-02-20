@@ -237,14 +237,10 @@ const handleRounded = (ev) => {
 	});
 }
 
-const setDraggable = (ev) => {
-	ev.target.setAttribute("draggable", "true");
-}
-
 const setCopyData = useDebounceFn((event, data) => {
 	if (event.altKey) {
 		event.dataTransfer.action = "copy";
-		event.dataTransfer.data_to_copy = JSON.parse(JSON.stringify(store.getBlockData(target)));
+		event.dataTransfer.data_to_copy = store.getBlockCopy(store.selectedBlock);
 	}
 });
 

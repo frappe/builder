@@ -141,6 +141,11 @@ const useStore = defineStore("store", {
 			for (let block of blocks) {
 				this.blocks.push(new BlockProperties(block));
 			}
+		},
+		getBlockCopy(block) {
+			let b = JSON.parse(JSON.stringify(block));
+			delete b.blockId;
+			return new BlockProperties(b);
 		}
 	},
 });
