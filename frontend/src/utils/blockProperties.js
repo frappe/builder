@@ -12,6 +12,9 @@ class BlockProperties {
 	isImage() {
 		return this.element === "img";
 	}
+	isButton() {
+		return this.element === "button";
+	}
 	isLink() {
 		return this.element === "a";
 	}
