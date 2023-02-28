@@ -11,8 +11,15 @@ const useStore = defineStore("store", {
 			element: "section",
 			icon: "square",
 			children: [],
-			styles: {},
-			classes: ["w-full", "h-full", "bg-blue-100", "min-h-[40px]", "min-w-[40px]", "mx-auto", "p-3", "flex", "items-center"],
+			styles: {
+				"display": "flex",
+				"flexDirection": "column",
+				"justifyContent": "center",
+				"alignItems": "center",
+				"height": "40px",
+				"width": "100%"
+			},
+			classes: ["bg-blue-100", "mx-auto", "p-3"],
 			attributes: {},
 		}, {
 			name: "Text",
@@ -20,15 +27,23 @@ const useStore = defineStore("store", {
 			icon: "type",
 			innerText: "Text",
 			styles: {
-				"color": "black",
-				"background": "none",
-				"border": "none",
-				"box-shadow": "none",
+				"fontSize": "40px",
+				"width": "fit-content",
+				"line-height": "1"
+			},
+		}, {
+			name: "Link",
+			element: "a",
+			icon: "link",
+			innerText: "Link",
+			styles: {
 				"width": "auto",
-				"outline": "none",
 				"font-size": "20px",
 				"line-height": "1"
 			},
+			attributes: {
+				href: "/#"
+			}
 		}, {
 			name: "Image",
 			element: "img",
