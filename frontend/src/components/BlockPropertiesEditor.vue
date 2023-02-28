@@ -62,6 +62,11 @@
 				<input type="text" v-model="blockStyles.fontSize" class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
 			</div>
 
+			<div>
+				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Tag</h3>
+				<Input type="select" :options="['span', 'div', 'section', 'button', 'p', 'h1', 'h2', 'h3']" v-model="store.selectedBlock.element" />
+			</div>
+
 			<div v-if="store.selectedBlock && store.selectedBlock.isText()">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Line Height</h3>
 				<input type="text" v-model="blockStyles.lineHeight" class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
@@ -79,8 +84,7 @@
 			</div>
 			<div v-if="store.selectedBlock">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Height</h3>
-				<input type="text" v-model="blockStyles.height"
-					class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
+				<Input v-model="blockStyles.height" type="text"/>
 			</div>
 			<div v-if="store.selectedBlock">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Width</h3>
@@ -91,6 +95,10 @@
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Link</h3>
 				<input type="text" v-model="store.selectedBlock.attributes.href"
 					class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
+			</div>
+			<div v-if="store.selectedBlock && store.selectedBlock.isButton()">
+				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Action</h3>
+				<Input type="textarea" v-model="store.selectedBlock.attributes.onclick"/>
 			</div>
 		</div>
 	</div>
