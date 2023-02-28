@@ -90,21 +90,3 @@ const setPage = (e) => {
 	store.selectedPage = e.name;
 };
 </script>
-
-<style>
-@tailwind components;
-
-@layer components {
-	.Container {
-		@apply bg-gray-300;
-		@apply h-[300px];
-		@apply w-full;
-	}
-
-	.Image {
-		@apply bg-gray-600;
-		@apply h-[300px];
-		@apply w-full;
-	}
-}
-</style>
