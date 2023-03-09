@@ -6,15 +6,15 @@
 				<ul class="flex flex-wrap">
 					<li v-for="alignment in store.alignments" :key="alignment.name" class="mr-2 mb-2 last:mr-0">
 						<a @click="setAlignment(alignment)" class="hover:underline cursor-pointer text-base">
-							<div class="w-8 h-8 rounded-md shadow-sm flex items-center justify-center bg-gray-100">
-								<FeatherIcon :name="alignment.icon" class="w-4 h-4 text-gray-700"></FeatherIcon>
+							<div class="w-8 h-8 rounded-md shadow-sm flex items-center justify-center bg-gray-100 dark:bg-gray-800 dark:border-gray-700">
+								<FeatherIcon :name="alignment.icon" class="w-4 h-4 text-gray-700 dark:text-gray-300"></FeatherIcon>
 							</div>
 						</a>
 					</li>
 					<li v-for="alignment in store.verticalAlignments" :key="alignment.name" class="mr-2 mb-2 last:mr-0">
 						<a @click="setVerticalAlignment(alignment)" class="hover:underline cursor-pointer text-base">
-							<div class="w-8 h-8 rounded-md shadow-sm flex items-center justify-center bg-gray-100">
-								<FeatherIcon :name="alignment.icon" class="w-4 h-4 text-gray-700"></FeatherIcon>
+							<div class="w-8 h-8 rounded-md shadow-sm flex items-center justify-center bg-gray-100 dark:bg-gray-800 dark:border-gray-700">
+								<FeatherIcon :name="alignment.icon" class="w-4 h-4 text-gray-700 dark:text-gray-300"></FeatherIcon>
 							</div>
 						</a>
 					</li>
@@ -25,8 +25,8 @@
 				<ul class="flex flex-wrap">
 					<li v-for="flow in store.flow" :key="flow.name" class="mr-2 mb-2 last:mr-0">
 						<a @click="setFlow(flow)" class="hover:underline cursor-pointer text-base">
-							<div class="w-8 h-8 rounded-md shadow-sm flex items-center justify-center bg-gray-100">
-								<FeatherIcon :name="flow.icon" class="w-4 h-4 text-gray-700"></FeatherIcon>
+							<div class="w-8 h-8 rounded-md shadow-sm flex items-center justify-center bg-gray-100 dark:bg-gray-800 dark:border-gray-700">
+								<FeatherIcon :name="flow.icon" class="w-4 h-4 text-gray-700 dark:text-gray-300"></FeatherIcon>
 							</div>
 						</a>
 					</li>
@@ -55,46 +55,46 @@
 			<div v-if="store.selectedBlock && store.selectedBlock.isImage()">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Image Source</h3>
 				<input type="text" v-model="store.selectedBlock.attributes.src"
-					class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
+					class="w-full border-none border-gray-300 rounded-md text-sm h-8 bg-gray-100 dark:bg-gray-800 focus:ring-gray-400 dark:focus:ring-gray-700 dark:text-gray-300">
 			</div>
 			<div v-if="store.selectedBlock && store.selectedBlock.isText()">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Font Size</h3>
-				<input type="text" v-model="blockStyles.fontSize" class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
+				<input type="text" v-model="blockStyles.fontSize" class="w-full border-none border-gray-300 rounded-md text-sm h-8 bg-gray-100 dark:bg-gray-800 focus:ring-gray-400 dark:focus:ring-gray-700 dark:text-gray-300">
 			</div>
 
 			<div>
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Tag</h3>
-				<Input type="select" :options="['span', 'div', 'section', 'button', 'p', 'h1', 'h2', 'h3']" v-model="store.selectedBlock.element" />
+				<Input type="select" :options="['span', 'div', 'section', 'button', 'p', 'h1', 'h2', 'h3']" v-model="store.selectedBlock.element" class="bg-gray-100 dark:bg-gray-800 text-base focus:ring-gray-400 dark:focus:ring-gray-700 dark:text-gray-300"/>
 			</div>
 
 			<div v-if="store.selectedBlock && store.selectedBlock.isText()">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Line Height</h3>
-				<input type="text" v-model="blockStyles.lineHeight" class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
+				<input type="text" v-model="blockStyles.lineHeight" class="w-full border-none border-gray-300 rounded-md text-sm h-8 bg-gray-100 dark:bg-gray-800 focus:ring-gray-400 dark:focus:ring-gray-700 dark:text-gray-300">
 			</div>
 
 			<div v-if="store.selectedBlock && store.selectedBlock.isContainer()">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Margin</h3>
 				<input type="text" v-model="blockStyles.margin"
-					class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
+					class="w-full border-none border-gray-300 rounded-md text-sm h-8 bg-gray-100 dark:bg-gray-800 focus:ring-gray-400 dark:focus:ring-gray-700 dark:text-gray-300">
 			</div>
 			<div v-if="store.selectedBlock">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Element Type</h3>
 				<input type="text" v-model="store.selectedBlock.element"
-					class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
+					class="w-full border-none border-gray-300 rounded-md text-sm h-8 bg-gray-100 dark:bg-gray-800 focus:ring-gray-400 dark:focus:ring-gray-700 dark:text-gray-300">
 			</div>
 			<div v-if="store.selectedBlock">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Height</h3>
-				<Input v-model="blockStyles.height" type="text"/>
+				<Input v-model="blockStyles.height" type="text" class="bg-gray-100 dark:bg-gray-800 text-base focus:ring-gray-400 dark:focus:ring-gray-700 dark:text-gray-300"/>
 			</div>
 			<div v-if="store.selectedBlock">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Width</h3>
 				<input type="text" v-model="blockStyles.width"
-					class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
+					class="w-full border-none border-gray-300 rounded-md text-sm h-8 bg-gray-100 dark:bg-gray-800 focus:ring-gray-400 dark:focus:ring-gray-700 dark:text-gray-300">
 			</div>
 			<div v-if="store.selectedBlock && store.selectedBlock.isLink()">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Link</h3>
 				<input type="text" v-model="store.selectedBlock.attributes.href"
-					class="w-full border-none border-gray-300 rounded-md text-sm h-8 focus:ring-gray-300 bg-gray-100">
+					class="w-full border-none border-gray-300 rounded-md text-sm h-8 bg-gray-100 dark:bg-gray-800 focus:ring-gray-400 dark:focus:ring-gray-700 dark:text-gray-300">
 			</div>
 			<div v-if="store.selectedBlock && store.selectedBlock.isButton()">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Action</h3>
