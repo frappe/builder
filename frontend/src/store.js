@@ -153,9 +153,9 @@ const useStore = defineStore("store", {
 				this.blocks.push(new BlockProperties(block));
 			}
 		},
-		getBlockCopy(block) {
+		getBlockCopy(block, retainId = false) {
 			let b = JSON.parse(JSON.stringify(block));
-			delete b.blockId;
+			if (!retainId) delete b.blockId;
 			return new BlockProperties(b);
 		}
 	},
