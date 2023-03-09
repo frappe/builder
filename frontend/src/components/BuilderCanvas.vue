@@ -22,6 +22,8 @@ import draggable from "vuedraggable";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BuilderBlock from "./BuilderBlock.vue";
+import { useDebouncedRefHistory, useRefHistory } from '@vueuse/core';
+import { storeToRefs } from "pinia";
 
 const store = useStore();
 const canvasContainer = ref(null);
@@ -121,5 +123,28 @@ onMounted(() => {
 		store.canvas.translateY = diff - padding / 2;
 	}
 	setPanAndZoom(store.canvas, canvas.value, canvasContainer.value);
+
+	const state = storeToRefs(store);
+
+	const { history, undo, redo, canUndo, canRedo } = useDebouncedRefHistory(state.blocks, {
+		max: 100,
+		deep: true,
+		clone: (arr) => arr.map((val) => store.getBlockCopy(val, true)),
+		debounce: 100,
+	});
+	document.addEventListener("keydown", (e) => {
+		if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
+			return;
+		}
+		if (e.key === "z" && e.metaKey && canUndo.value) {
+			undo();
+			e.preventDefault();
+		}
+		if (e.key === "z" && e.shiftKey && e.metaKey && canRedo.value) {
+			console.log("redo");
+			redo();
+			e.preventDefault();
+		}
+	});
 });
 </script>
