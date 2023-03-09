@@ -1,22 +1,22 @@
 <template>
 	<div>
-		<div class="flex w-fit rounded-md bg-gray-200 p-[2px] text-sm mb-4">
+		<div class="flex w-fit rounded-md bg-gray-200 dark:bg-gray-700 p-[2px] text-sm mb-4">
 			<button
 				class="rounded-md px-3 py-[3px]"
 				@click="currentView = 'Pages'"
-				:class="{ 'bg-white shadow-md': currentView === 'Pages', 'text-gray-700': currentView !== 'Pages' }">
+				:class="{ 'bg-white dark:bg-gray-800 dark:text-gray-200 shadow-md': currentView === 'Pages', 'text-gray-700 dark:text-gray-400': currentView !== 'Pages' }">
 				Pages
 			</button>
 			<button
 				class="ml-1 rounded-md px-3 py-[3px]"
 				@click="currentView = 'Components'"
-				:class="{ 'bg-white shadow-md': currentView === 'Components', 'text-gray-700': currentView !== 'Components'}">
+				:class="{ 'bg-white dark:bg-gray-800 dark:text-gray-200 shadow-md': currentView === 'Components', 'text-gray-700 dark:text-gray-400': currentView !== 'Components'}">
 				Components
 			</button>
 			<button
 				class="ml-1 rounded-md px-3 py-[3px]"
 				@click="currentView = 'Layers'"
-				:class="{ 'bg-white shadow-md': currentView === 'Layers', 'text-gray-700': currentView !== 'Layers'}">
+				:class="{ 'bg-white dark:bg-gray-800 dark:text-gray-200 shadow-md': currentView === 'Layers', 'text-gray-700 dark:text-gray-400': currentView !== 'Layers'}">
 				Layers
 			</button>
 		</div>
@@ -30,10 +30,10 @@
 			<div v-for="(page, i) in store.pages">
 				<ul>
 					<li class="mb-1 flex items-center rounded-md pl-2 cursor-pointer"
-						:class="{ 'bg-gray-200': store.selectedPage === page.name }"
+						:class="{ 'bg-gray-200 dark:bg-gray-700': store.selectedPage === page.name }"
 						@click="setPage(page)">
-						<FeatherIcon name="globe" class="w-3 h-3 text-gray-600"></FeatherIcon>
-						<a class="p-1 px-2 text-base flex">
+						<FeatherIcon name="globe" class="w-3 h-3 text-gray-600 dark:text-gray-200"></FeatherIcon>
+						<a class="p-1 px-2 text-base flex dark:text-gray-200">
 							{{ page.page_name }}
 						</a>
 					</li>
@@ -70,6 +70,7 @@ createListResource({
 	auto: true,
 	onSuccess(data) {
 		store.pages = data;
+		setPage(store.pages["framework-home-3"])
 	},
 	transform(data) {
 		const pages = {};
