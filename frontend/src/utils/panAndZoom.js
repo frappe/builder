@@ -5,8 +5,6 @@ function setPanAndZoom(
 	zoomLimits = { min: 0.2, max: 10 }
 ) {
 	let scale = props.scale || 1;
-	let x = props.translateX || 0;
-	let y = props.translateY || 0;
 	let pointFromCenterX = 0;
 	let pointFromCenterY = 0;
 	let initialTranslateX = 0;
@@ -52,10 +50,8 @@ function setPanAndZoom(
 			} else {
 				pointFromCenterX = null;
 				// Dividing with scale to make the panning feel consistent
-				x -= e.deltaX * 2 / props.scale;
-				y -= e.deltaY * 2 / props.scale;
-				props.translateX = x;
-				props.translateY = y;
+				props.translateX -= e.deltaX * 2 / props.scale;
+				props.translateY -= e.deltaY * 2 / props.scale;
 			}
 		},
 		{ passive: false }
