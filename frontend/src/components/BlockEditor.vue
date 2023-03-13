@@ -1,12 +1,18 @@
 <template>
-	<div class="z-10 editor fixed border-[1px] border-blue-300 box-content" ref="editor"
+	<div class="z-10 editor fixed border-[1px] border-blue-400 box-content" ref="editor"
 		@dblclick.stop="handleDblClick" @mousedown.stop="handleMove"
-		@dragstart="setCopyData($event, element, i)" @dragend="copy" draggable="true">
+		@dragstart="setCopyData($event, element, i)" @dragend="copy" draggable="true"
+		:class="{
+			'pointer-events-none': elementProperties.hover,
+		}">
 
-		<PaddingHandler :target-props="elementProperties"></PaddingHandler>
+		<PaddingHandler :target-props="elementProperties" v-if="selected"></PaddingHandler>
 		<div class="absolute top-0 right-0 border-2 bg-purple-500 w-3 h-3 rounded-full opacity-50 pointer-events-auto" @click.prevent="resetPosition" v-if="movable"></div>
 		<div class="absolute border-radius-resize w-[9px] h-[9px] border-[1px] border-blue-400 bg-white rounded-full pointer-events-auto top-2 left-2 cursor-default"
-			@mousedown.stop="handleRounded" v-if="roundable">
+			:class="{
+				'hidden': store.canvas.scale < 0.6,
+			}"
+			@mousedown.stop="handleRounded" v-if="selected && roundable">
 			<div class="absolute w-[3px] h-[3px] bg-blue-400 top-[2px] left-[2px] border-none rounded-full pointer-events-none">
 			</div>
 		</div>
@@ -35,7 +41,7 @@
 			top-[-4px] right-[-4px] nesw-resize pointer-events-auto">
 		</div> -->
 		<div class="absolute w-[8px] h-[8px] border-[1px] border-blue-400 rounded-full bg-white
-			bottom-[-4px] right-[-4px] cursor-nwse-resize pointer-events-auto" @mousedown.stop="handleBottomCornerResize">
+			bottom-[-4px] right-[-4px] cursor-nwse-resize pointer-events-auto" @mousedown.stop="handleBottomCornerResize" v-if="selected">
 		</div>
 	</div>
 </template>
@@ -46,7 +52,7 @@ import useStore from "../store";
 import trackTarget from "../utils/trackTarget";
 import PaddingHandler from "./PaddingHandler.vue";
 
-const props = defineProps(["movable", "resizable", "roundable", "resizableX", "resizableY", "element-properties"]);
+const props = defineProps(["movable", "resizable", "roundable", "resizableX", "resizableY", "element-properties", "selected"]);
 const store = useStore();
 const editor = ref(null);
 let editorWrapper = ref(null);

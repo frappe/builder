@@ -3,10 +3,12 @@
 		class="relative __builder_component__ outline-none" @click.stop="selectBlock($event, elementProperties)"
 		@dblclick.stop v-bind="{ ...elementProperties.attributes, ...elementProperties.skippedAttributes, ...$attrs }"
 		:style="styles"
-		spellcheck="false"
 		:contenteditable="elementProperties.isText() && isSelected"
 		@input.stop.prevent="elementProperties.innerText = $event.target.innerText"
-		:class="elementProperties.classes" ref="component">
+		:class="elementProperties.classes"
+		@mouseover.stop="elementProperties.hover = true"
+		@mouseleave.stop="elementProperties.hover = false"
+		ref="component">
 		{{ elementProperties.innerText }}
 		<BuilderBlock :element-properties="element" v-for="element in elementProperties.children"></BuilderBlock>
 	</component>
@@ -17,7 +19,7 @@
 	<teleport to='#overlay' v-if="elementProperties.node_type !== 'Text'">
 		<BlockEditor v-if="isSelected || elementProperties.hover"
 			:roundable="elementProperties.element === 'section'"
-			:resizableX="true" :resizableY="elementProperties.element !== 'img'" :selected="true" :resizable="true" :element-properties="elementProperties">
+			:resizableX="true" :resizableY="elementProperties.element !== 'img'" :selected="isSelected" :resizable="true" :element-properties="elementProperties">
 		</BlockEditor>
 	</teleport>
 </template>
