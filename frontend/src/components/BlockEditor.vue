@@ -78,16 +78,20 @@ const handleRightResize = (ev) => {
 	const startX = ev.clientX;
 	const startWidth = target.offsetWidth;
 	const parentWidth = target.parentElement.offsetWidth;
-	const startWidthPercent = startWidth / parentWidth * 100;
-
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
 	document.body.style.cursor = window.getComputedStyle(ev.target).cursor;
 
 	const mousemove = (mouseMoveEvent) => {
-		const movement = mouseMoveEvent.clientX - startX;
-		const movementPercent = movement / parentWidth * 100;
-		targetProps.setStyle("width", `${startWidthPercent + movementPercent}%`);
+		// movement / scale * speed
+		const movement = (mouseMoveEvent.clientX - startX) / store.canvas.scale * 2;
+		if (mouseMoveEvent.shiftKey) {
+			const movementPercent = movement / parentWidth * 100;
+			const startWidthPercent = startWidth / parentWidth * 100;
+			targetProps.setStyle("width", `${startWidthPercent + movementPercent}%`);
+		} else {
+			targetProps.setStyle("width", `${startWidth + movement}px`);
+		}
 		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);
@@ -108,7 +112,7 @@ const handleBottomResize = (ev) => {
 	document.body.style.cursor = window.getComputedStyle(ev.target).cursor;
 
 	const mousemove = (mouseMoveEvent) => {
-		const movement = mouseMoveEvent.clientY - startY;
+		const movement = (mouseMoveEvent.clientY - startY) / store.canvas.scale;
 		targetProps.setStyle("height", `${startHeight + movement}px`);
 		mouseMoveEvent.preventDefault();
 	};
