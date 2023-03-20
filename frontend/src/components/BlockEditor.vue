@@ -3,10 +3,10 @@
 		@dblclick.stop="handleDblClick" @mousedown.stop="handleMove"
 		@dragstart="setCopyData($event, element, i)" @dragend="copy" draggable="true"
 		:class="{
-			'pointer-events-none': elementProperties.hover,
+			'pointer-events-none': elementProperties.blockId === store.hoveredBlock,
 		}">
 
-		<PaddingHandler :target-props="elementProperties" v-if="selected"></PaddingHandler>
+		<PaddingHandler :target-props="elementProperties" v-if="selected" :disable-handlers="false"></PaddingHandler>
 		<div class="absolute top-0 right-0 border-2 bg-purple-500 w-3 h-3 rounded-full opacity-50 pointer-events-auto" @click.prevent="resetPosition" v-if="movable"></div>
 		<div class="absolute border-radius-resize w-[9px] h-[9px] border-[1px] border-blue-400 bg-white rounded-full pointer-events-auto top-2 left-2 cursor-default"
 			:class="{
@@ -250,7 +250,7 @@ const handleRounded = (ev) => {
 const setCopyData = useDebounceFn((event, data) => {
 	if (event.altKey) {
 		event.dataTransfer.action = "copy";
-		event.dataTransfer.data_to_copy = store.getBlockCopy(store.selectedBlock);
+		event.dataTransfer.data_to_copy = store.getBlockCopy(store.builderState.selectedBlock);
 	}
 });
 
@@ -260,7 +260,7 @@ const copy = useDebounceFn((event) => {
 		if (superParent.props?.elementProperties?.children) {
 			superParent.props.elementProperties.children.push(event.dataTransfer.data_to_copy);
 		} else {
-			store.blocks.push(event.dataTransfer.data_to_copy);
+			store.builderState.blocks.push(event.dataTransfer.data_to_copy);
 		}
 	} else {
 		target.draggable = true;
