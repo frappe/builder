@@ -7,17 +7,17 @@
 			<Button v-for="(option, deviceName) in store.deviceBreakpoints"
 				:key="deviceName"
 				:class="{
-					'bg-gray-200 dark:bg-slate-700': store.builderState.activeBreakpoint === option.device,
-					'text-gray-700 dark:text-slate-400': store.builderState.activeBreakpoint !== option.device,
-					'dark:focus:bg-slate-700 dark:hover:bg-slate-800': true
+					'bg-gray-200 dark:bg-zinc-700': store.builderState.activeBreakpoint === option.device,
+					'text-gray-700 dark:text-zinc-400': store.builderState.activeBreakpoint !== option.device,
+					'dark:focus:bg-zinc-700 dark:hover:bg-zinc-800': true
 				}"
 				:active="store.builderState.activeBreakpoint === option.device" appearance="minimal"
 				@click="activateBreakpoint(option.device)" class="m-1">
 				<FeatherIcon :name="option.icon" class="h-5 w-5 text-gray-800 dark:text-gray-400"></FeatherIcon>
 			</Button>
 		</div>
-		<Button appearance="default" @click="publish" class="m-1 absolute right-2 text-sm p-4 border-gray-500">
-			<FeatherIcon name="play" class="w-3 h-4 text-zinc-900 dark:text-gray-50"></FeatherIcon>
+		<Button appearance="primary" @click="publish" class="m-1 absolute right-2 text-xs rounded-2xl dark:border-0">
+			Preview
 		</Button>
 	</div>
 </template>
