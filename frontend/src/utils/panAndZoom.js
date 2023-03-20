@@ -1,3 +1,6 @@
+import useStore from "./../store";
+const store = useStore();
+
 function setPanAndZoom(
 	props,
 	target,
@@ -58,9 +61,9 @@ function setPanAndZoom(
 	);
 
 	target.addEventListener("dblclick", () => {
-		props.scale = 1;
+		props.scale = store.canvas.initialScale;
 		props.translateX = 0;
-		props.translateY = 0;
+		props.translateY = store.canvas.initialTranslateY;
 	});
 }
 
