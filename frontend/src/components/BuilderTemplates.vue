@@ -6,8 +6,8 @@
 			<template #item="{ element }">
 				<div>
 					<div class="flex items-center cursor-pointer justify-center
-						h-10 w-10 border shadow-sm rounded-md mr-2 last:mr-0 mb-2 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
-						<FeatherIcon :name="element.icon" class="h-5 text-gray-700 dark:text-gray-300" />
+						h-8 w-8 border shadow-sm rounded-md mr-2 last:mr-0 mb-2 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
+						<FeatherIcon :name="element.icon" class="h-4 text-gray-700 dark:text-gray-300" />
 					</div>
 					<p class="text-xs text-gray-800">{{ element.component_name }}</p>
 				</div>

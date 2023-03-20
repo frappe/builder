@@ -16,8 +16,8 @@
 				<FeatherIcon :name="option.icon" class="h-5 w-5 text-gray-800 dark:text-gray-400"></FeatherIcon>
 			</Button>
 		</div>
-		<Button appearance="primary" @click="publish" class="m-1 absolute right-2 text-sm p-4">
-			<FeatherIcon name="play" class="w-3 h-4 text-white"></FeatherIcon>
+		<Button appearance="default" @click="publish" class="m-1 absolute right-2 text-sm p-4 border-gray-500">
+			<FeatherIcon name="play" class="w-3 h-4 text-zinc-900 dark:text-gray-50"></FeatherIcon>
 		</Button>
 	</div>
 </template>
