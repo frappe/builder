@@ -1,6 +1,11 @@
 <template>
-	<div>
-		<div v-if="store.selectedBlock">
+	<div :style="{
+		width: `${store.builderLayout.rightPanelWidth}px`
+	}">
+		<PanelResizer :width="store.builderLayout.rightPanelWidth" side="left"
+			@resize="width => store.builderLayout.rightPanelWidth = width"
+			max-width="400">
+		</PanelResizer>
 			<div>
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase">Alignment</h3>
 				<ul class="flex flex-wrap">
@@ -106,6 +111,7 @@
 <script setup>
 import { computed } from "vue";
 import { Input } from "frappe-ui";
+import PanelResizer from "./PanelResizer.vue";
 import useStore from "../store";
 const store = useStore();
 

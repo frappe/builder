@@ -1,20 +1,25 @@
 <template>
-	<div>
-		<div class="flex w-fit rounded-md bg-gray-200 dark:bg-gray-700 p-[2px] text-sm mb-4">
+	<div :style="{
+		width: `${store.builderLayout.leftPanelWidth}px`
+	}">
+		<PanelResizer :width="store.builderLayout.leftPanelWidth" side="right"
+			@resize="width => store.builderLayout.leftPanelWidth = width">
+		</PanelResizer>
+		<div class="flex w-full rounded-md bg-gray-200 dark:bg-gray-700 p-[2px] text-sm mb-4">
 			<button
-				class="rounded-md px-3 py-[3px]"
+				class="rounded-md px-3 py-[3px] flex-1"
 				@click="currentView = 'Pages'"
 				:class="{ 'bg-white dark:bg-gray-800 dark:text-gray-200 shadow-md': currentView === 'Pages', 'text-gray-700 dark:text-gray-400': currentView !== 'Pages' }">
 				Pages
 			</button>
 			<button
-				class="ml-1 rounded-md px-3 py-[3px]"
+				class="ml-1 rounded-md px-3 py-[3px] flex-1"
 				@click="currentView = 'Components'"
 				:class="{ 'bg-white dark:bg-gray-800 dark:text-gray-200 shadow-md': currentView === 'Components', 'text-gray-700 dark:text-gray-400': currentView !== 'Components'}">
 				Components
 			</button>
 			<button
-				class="ml-1 rounded-md px-3 py-[3px]"
+				class="ml-1 rounded-md px-3 py-[3px] flex-1"
 				@click="currentView = 'Layers'"
 				:class="{ 'bg-white dark:bg-gray-800 dark:text-gray-200 shadow-md': currentView === 'Layers', 'text-gray-700 dark:text-gray-400': currentView !== 'Layers'}">
 				Layers
@@ -56,6 +61,7 @@ import useStore from "../store";
 import Widgets from "./BuilderWidgets.vue";
 import Templates from "./BuilderTemplates.vue";
 import BlockLayers from "./BlockLayers.vue";
+import PanelResizer from "./PanelResizer.vue";
 
 const currentView = ref("Components");
 

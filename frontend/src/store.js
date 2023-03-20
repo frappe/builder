@@ -6,6 +6,10 @@ const useStore = defineStore("store", {
 		selectedPage: null,
 		selectedBlock: null,
 		selectedBlocks: [],
+		builderLayout: {
+			rightPanelWidth: 300,
+			leftPanelWidth: 300,
+		},
 		widgets: [{
 			name: "Container",
 			element: "section",
