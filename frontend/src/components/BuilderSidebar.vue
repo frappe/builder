@@ -5,23 +5,23 @@
 		<PanelResizer :width="store.builderLayout.leftPanelWidth" side="right"
 			@resize="width => store.builderLayout.leftPanelWidth = width">
 		</PanelResizer>
-		<div class="flex w-full rounded-md bg-gray-200 dark:bg-gray-700 p-[2px] text-sm mb-4">
+		<div class="flex w-full rounded-md bg-gray-200 dark:bg-zinc-700 p-[2px] text-sm mb-4">
 			<button
 				class="rounded-md px-3 py-[3px] flex-1"
 				@click="currentView = 'Pages'"
-				:class="{ 'bg-white dark:bg-gray-800 dark:text-gray-200 shadow-md': currentView === 'Pages', 'text-gray-700 dark:text-gray-400': currentView !== 'Pages' }">
+				:class="{ 'bg-white dark:bg-zinc-800 dark:text-gray-200 shadow-md': currentView === 'Pages', 'text-gray-700 dark:text-gray-400': currentView !== 'Pages' }">
 				Pages
 			</button>
 			<button
 				class="ml-1 rounded-md px-3 py-[3px] flex-1"
 				@click="currentView = 'Components'"
-				:class="{ 'bg-white dark:bg-gray-800 dark:text-gray-200 shadow-md': currentView === 'Components', 'text-gray-700 dark:text-gray-400': currentView !== 'Components'}">
+				:class="{ 'bg-white dark:bg-zinc-800 dark:text-gray-200 shadow-md': currentView === 'Components', 'text-gray-700 dark:text-gray-400': currentView !== 'Components'}">
 				Components
 			</button>
 			<button
 				class="ml-1 rounded-md px-3 py-[3px] flex-1"
 				@click="currentView = 'Layers'"
-				:class="{ 'bg-white dark:bg-gray-800 dark:text-gray-200 shadow-md': currentView === 'Layers', 'text-gray-700 dark:text-gray-400': currentView !== 'Layers'}">
+				:class="{ 'bg-white dark:bg-zinc-800 dark:text-gray-200 shadow-md': currentView === 'Layers', 'text-gray-700 dark:text-gray-400': currentView !== 'Layers'}">
 				Layers
 			</button>
 		</div>
@@ -35,7 +35,7 @@
 			<div v-for="(page, i) in store.pages">
 				<ul>
 					<li class="mb-1 flex items-center rounded-md pl-2 cursor-pointer"
-						:class="{ 'bg-gray-200 dark:bg-gray-700': store.builderState.selectedPage === page.name }"
+						:class="{ 'bg-gray-200 dark:bg-zinc-800': store.builderState.selectedPage === page.name }"
 						@click="setPage(page)">
 						<FeatherIcon name="globe" class="w-3 h-3 text-gray-600 dark:text-gray-200"></FeatherIcon>
 						<a class="p-1 px-2 text-base flex dark:text-gray-200">
