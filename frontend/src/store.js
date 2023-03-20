@@ -115,6 +115,7 @@ const useStore = defineStore("store", {
 			"linear-gradient(to top, #9795f0 0%, #fbc8d4 100%)",
 			"linear-gradient(-60deg, #16a085 0%, #f4d03f 100%)",
 			"linear-gradient( 135deg, #81FFEF 10%, #F067B4 100%)",
+			"black",
 			"transparent",
 		],
 		textColors: ["#000000", "#424242", "#636363", "#9C9C94", "#CEC6CE", "#EFEFEF", "#F7F7F7", "#C0C0C0", "#808080", "#808000", "#FFFFFF"],
@@ -136,10 +137,14 @@ const useStore = defineStore("store", {
 			},
 		},
 		canvas: {
-			scale: 1,
+			initialScale: 0.35,
+			initialTranslateY: -1350,
+			scale: 0.35,
 			translateX: 0,
-			translateY: 0,
-		}
+			translateY: -1350,
+			startX: 0,
+			startY: 0,
+		},
 	}),
 	actions: {
 		getActiveBreakpoint() {

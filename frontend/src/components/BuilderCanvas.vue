@@ -111,17 +111,7 @@ document.addEventListener("keydown", (e) => {
 });
 
 onMounted(() => {
-	const padding = 40;
-	const containerBound = canvasContainer.value.getBoundingClientRect();
-	const canvasBound = canvas.value.getBoundingClientRect();
-	if (canvasBound.width > containerBound.width) {
-		const scale = (containerBound.width) / (canvasBound.width + (padding * 2));
-		store.canvas.scale = scale;
-	}
-	const diff = (containerBound.top - canvasBound.top);
-	if (diff !== 0) {
-		store.canvas.translateY = diff - padding / 2;
-	}
+
 	setPanAndZoom(store.canvas, canvas.value, canvasContainer.value);
 
 	const state = storeToRefs(store);
