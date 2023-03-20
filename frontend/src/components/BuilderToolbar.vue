@@ -1,7 +1,7 @@
 <template>
 	<div class="toolbar bg-white p-2 flex justify-center h-14 shadow-sm" ref="toolbar">
 		<input type="text" v-model="store.pageName"
-			class="border-none rounded m-1 absolute left-4 h-8 bg-gray-100 dark:bg-gray-800 text-base focus:ring-gray-400 dark:focus:ring-gray-700 dark:text-gray-300"
+			class="border-none rounded mt-[5px] absolute left-4 h-7 bg-gray-100 dark:bg-zinc-800 text-base focus:ring-gray-400 dark:focus:ring-zinc-700 dark:text-gray-300"
 			placeholder="Page Name">
 		<div class="breakpoint-options">
 			<Button v-for="(option, deviceName) in store.deviceBreakpoints"
@@ -16,7 +16,7 @@
 				<FeatherIcon :name="option.icon" class="h-5 w-5 text-gray-800 dark:text-gray-400"></FeatherIcon>
 			</Button>
 		</div>
-		<Button appearance="primary" @click="publish" class="m-1 absolute right-2 text-xs rounded-2xl dark:border-0">
+		<Button appearance="primary" @click="publish" class="mt-[5px] absolute right-3 text-xs rounded-2xl border-0">
 			Preview
 		</Button>
 	</div>
