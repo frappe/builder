@@ -115,11 +115,23 @@ onMounted(() => {
 	setPanAndZoom(store.canvas, canvas.value, canvasContainer.value);
 
 	const state = storeToRefs(store);
+	const states = ref({
+		blocks: state.blocks,
+		selectedBlock: state.selectedBlock,
+		selectedPage: state.selectedPage,
+	})
 
-	const { history, undo, redo, canUndo, canRedo } = useDebouncedRefHistory(state.blocks, {
+	const { history, undo, redo, canUndo, canRedo } = useDebouncedRefHistory(states, {
 		max: 100,
 		deep: true,
-		clone: (arr) => arr.map((val) => store.getBlockCopy(val, true)),
+		clone: (obj) => {
+			let newObj = {};
+			newObj.blocks = obj.blocks.map((val) => store.getBlockCopy(val, true));
+			if (obj.selectedBlock) {
+				newObj.selectedBlock = store.getBlockCopy(obj.blocks.find(d => d.blockId === store.selectedBlock.blockId), true);
+			};
+			newObj.selectedPage = obj.selectedPage;
+		},
 		debounce: 100,
 	});
 	document.addEventListener("keydown", (e) => {
