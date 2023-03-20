@@ -20,7 +20,7 @@
 	</div>
 </template>
 <script setup>
-import { onMounted, ref } from "vue";
+import { nextTick, onMounted, ref } from "vue";
 import draggable from "vuedraggable";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
@@ -112,6 +112,23 @@ document.addEventListener("keydown", (e) => {
 });
 
 onMounted(() => {
+	const padding = 100;
+	const containerBound = canvasContainer.value.getBoundingClientRect();
+	const canvasBound = canvas.value.getBoundingClientRect();
+	if (canvasBound.height > containerBound.height) {
+		const scale = (containerBound.height) / (canvasBound.height + (padding * 2));
+		store.canvas.initialScale = store.canvas.scale = scale;
+	}
+
+	nextTick(() => {
+		const canvasBound = canvas.value.getBoundingClientRect();
+		const scale = store.canvas.scale;
+		const diff = (containerBound.top - canvasBound.top + (padding * scale));
+		console.log(diff);
+		if (diff !== 0) {
+			store.canvas.initialTranslateY = store.canvas.translateY = (diff / scale);
+		}
+	})
 
 	setPanAndZoom(store.canvas, canvas.value, canvasContainer.value);
 	const { builderState } = storeToRefs(store);
