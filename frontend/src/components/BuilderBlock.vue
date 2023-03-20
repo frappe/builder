@@ -1,13 +1,13 @@
 <template>
-	<component v-if="elementProperties.node_type !== 'Text'" :is="elementProperties.element"
+	<component v-if="elementProperties.node_type !== 'Text'" :is="elementProperties.element === 'button' ? 'span' : elementProperties.element"
 		class="relative __builder_component__ outline-none" @click.stop="selectBlock($event, elementProperties)"
 		@dblclick.stop v-bind="{ ...elementProperties.attributes, ...elementProperties.skippedAttributes, ...$attrs }"
 		:style="styles"
 		:contenteditable="elementProperties.isText() && isSelected"
 		@input.stop.prevent="elementProperties.innerText = $event.target.innerText"
 		:class="elementProperties.classes"
-		@mouseover.stop="elementProperties.hover = true"
-		@mouseleave.stop="elementProperties.hover = false"
+		@mouseover.stop="store.hoveredBlock = elementProperties.blockId"
+		@mouseleave.stop="store.hoveredBlock = null"
 		ref="component">
 		{{ elementProperties.innerText }}
 		<BuilderBlock :element-properties="element" v-for="element in elementProperties.children"></BuilderBlock>
@@ -17,7 +17,7 @@
 			v-bind="{ ...$attrs }"></BlockDraggables>
 	</teleport>
 	<teleport to='#overlay' v-if="elementProperties.node_type !== 'Text'">
-		<BlockEditor v-if="isSelected || elementProperties.hover"
+		<BlockEditor v-if="isSelected || store.hoveredBlock === elementProperties.blockId"
 			:roundable="elementProperties.element === 'section'"
 			:resizableX="true" :resizableY="elementProperties.element !== 'img'" :selected="isSelected" :resizable="true" :element-properties="elementProperties">
 		</BlockEditor>
@@ -51,25 +51,25 @@ onMounted(() => {
 
 const styles = computed(() => {
 	let styleObj = props.elementProperties.styles;
-	if (store.activeBreakpoint === 'mobile') {
+	if (store.builderState.activeBreakpoint === 'mobile') {
 		styleObj = {...styleObj, ...props.elementProperties.mobileStyles}
-	} else if (store.activeBreakpoint === 'tablet') {
+	} else if (store.builderState.activeBreakpoint === 'tablet') {
 		styleObj = {...styleObj, ...props.elementProperties.tabletStyles}
 	}
 	return styleObj;
 })
 
 const isSelected = computed(() => {
-	return store.selectedBlock === props.elementProperties || store.selectedBlocks.includes(props.elementProperties);
+	return store.builderState.selectedBlock === props.elementProperties || store.builderState.selectedBlocks.includes(props.elementProperties);
 });
 
 const selectBlock = (e, block) => {
-	store.selectedBlock = block;
+	store.builderState.selectedBlock = block;
 	if (e && e.metaKey) {
-		if (!store.selectedBlocks.length) {
-			store.selectedBlocks.push(store.selectedBlock);
+		if (!store.builderState.selectedBlocks.length) {
+			store.builderState.selectedBlocks.push(store.builderState.selectedBlock);
 		}
-		store.selectedBlocks.push(block);
+		store.builderState.selectedBlocks.push(block);
 	}
 };
 </script>

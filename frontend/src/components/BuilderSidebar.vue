@@ -35,7 +35,7 @@
 			<div v-for="(page, i) in store.pages">
 				<ul>
 					<li class="mb-1 flex items-center rounded-md pl-2 cursor-pointer"
-						:class="{ 'bg-gray-200 dark:bg-gray-700': store.selectedPage === page.name }"
+						:class="{ 'bg-gray-200 dark:bg-gray-700': store.builderState.selectedPage === page.name }"
 						@click="setPage(page)">
 						<FeatherIcon name="globe" class="w-3 h-3 text-gray-600 dark:text-gray-200"></FeatherIcon>
 						<a class="p-1 px-2 text-base flex dark:text-gray-200">
@@ -50,7 +50,7 @@
 			<Templates class="mb-3"></Templates>
 		</div>
 		<div v-if="currentView === 'Layers'">
-			<BlockLayers :blocks="store.blocks"></BlockLayers>
+			<BlockLayers :blocks="store.builderState.blocks"></BlockLayers>
 		</div>
 	</div>
 </template>
@@ -72,11 +72,11 @@ createListResource({
 	fields: ["name", "blocks", "page_name", "route"],
 	orderBy: "creation desc",
 	start: 0,
-	pageLength: 5,
+	pageLength: 10,
 	auto: true,
 	onSuccess(data) {
 		store.pages = data;
-		setPage(store.pages["framework-home-3"])
+		setPage(store.pages["home"])
 	},
 	transform(data) {
 		const pages = {};
@@ -94,6 +94,6 @@ const setPage = (e) => {
 	store.pushBlocks(e.blocks);
 	store.pageName = e.page_name;
 	store.route = e.route;
-	store.selectedPage = e.name;
+	store.builderState.selectedPage = e.name;
 };
 </script>

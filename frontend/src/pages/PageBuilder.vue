@@ -3,13 +3,13 @@
 		<BuilderToolbar class="relative z-30 dark:bg-zinc-900 dark:border-b-[1px] dark:border-gray-800"></BuilderToolbar>
 		<div>
 			<BuilderSidebar
-				class="fixed left-0 top-[var(--toolbar-height)] bottom-0 z-20 overflow-auto border-r-2 border-gray-100 bg-white p-4 dark:bg-zinc-900 dark:border-gray-800">
+				class="fixed left-0 top-[var(--toolbar-height)] bottom-0 z-20 overflow-auto border-r-[1px] bg-white p-4 dark:bg-zinc-900 dark:border-gray-800">
 			</BuilderSidebar>
 			<BuilderCanvas
 				class="canvas-container absolute top-[var(--toolbar-height)] bottom-0 flex justify-center overflow-hidden bg-gray-200 p-10 dark:bg-zinc-800">
 			</BuilderCanvas>
 			<BlockPropertiesEditor
-				class="fixed right-0 top-[var(--toolbar-height)] bottom-0 z-20 overflow-auto border-l-2 border-gray-100 bg-white p-4 pr-2 dark:bg-zinc-900 dark:border-gray-800">
+				class="fixed right-0 top-[var(--toolbar-height)] bottom-0 z-20 overflow-auto border-l-[1px] bg-white p-4 pr-2 dark:bg-zinc-900 dark:border-gray-800">
 			</BlockPropertiesEditor>
 		</div>
 	</div>

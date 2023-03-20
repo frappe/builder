@@ -7,11 +7,11 @@
 			<Button v-for="(option, deviceName) in store.deviceBreakpoints"
 				:key="deviceName"
 				:class="{
-					'bg-gray-200 dark:bg-gray-700': store.activeBreakpoint === option.device,
-					'text-gray-700 dark:text-gray-400': store.activeBreakpoint !== option.device,
-					'dark:focus:bg-gray-700 dark:hover:bg-gray-800': true
+					'bg-gray-200 dark:bg-slate-700': store.builderState.activeBreakpoint === option.device,
+					'text-gray-700 dark:text-slate-400': store.builderState.activeBreakpoint !== option.device,
+					'dark:focus:bg-slate-700 dark:hover:bg-slate-800': true
 				}"
-				:active="store.activeBreakpoint === option.device" appearance="minimal"
+				:active="store.builderState.activeBreakpoint === option.device" appearance="minimal"
 				@click="activateBreakpoint(option.device)" class="m-1">
 				<FeatherIcon :name="option.icon" class="h-5 w-5 text-gray-800 dark:text-gray-400"></FeatherIcon>
 			</Button>
@@ -30,7 +30,7 @@ const store = useStore();
 const toolbar = ref(null);
 
 const activateBreakpoint = (device) => {
-	store.activeBreakpoint = device;
+	store.builderState.activeBreakpoint = device;
 };
 
 const publishWebResource = createResource({

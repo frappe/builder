@@ -1,5 +1,8 @@
 <template>
-	<div ref="canvasContainer">
+	<div ref="canvasContainer" :style="{
+		left: `${store.builderLayout.leftPanelWidth}px`,
+		right: `${store.builderLayout.rightPanelWidth}px`
+	}">
 		<div class="absolute" id="draggables"></div>
 		<div class="overlay absolute" id="overlay"></div>
 		<div class="canvas absolute min-h-full h-fit bg-white rounded-md overflow-hidden"
@@ -30,9 +33,7 @@ const canvasContainer = ref(null);
 const canvas = ref(null);
 
 function getPageData() {
-	let blockContainer = canvas.value.querySelector(".block-container");
-	// return getBlocks(blockContainer);
-	return store.blocks;
+	return store.builderState.blocks;
 }
 
 function getBlocks(element) {
@@ -81,8 +82,8 @@ store.getPageData = getPageData;
 store.getBlockData = getBlockData;
 
 const clearSelectedComponent = () => {
-	store.selectedBlock = null;
-	store.selectedBlocks = [];
+	store.builderState.selectedBlock = null;
+	store.builderState.selectedBlocks = [];
 	document.activeElement.blur();
 };
 
@@ -90,7 +91,7 @@ document.addEventListener("keydown", (e) => {
 	if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
 		return;
 	}
-	if (e.key === "Backspace" && store.selectedBlock && !e.target.closest(".__builder_component__")) {
+	if (e.key === "Backspace" && store.builderState.selectedBlock && !e.target.closest(".__builder_component__")) {
 		function find_block_and_remove(blocks, block_id) {
 			blocks.forEach((block, i) => {
 				if (block.blockId === block_id) {
@@ -101,7 +102,7 @@ document.addEventListener("keydown", (e) => {
 				}
 			})
 		}
-		find_block_and_remove(store.blocks, store.selectedBlock.blockId);
+		find_block_and_remove(store.builderState.blocks, store.builderState.selectedBlock.blockId);
 		clearSelectedComponent();
 	}
 
@@ -113,37 +114,29 @@ document.addEventListener("keydown", (e) => {
 onMounted(() => {
 
 	setPanAndZoom(store.canvas, canvas.value, canvasContainer.value);
-
-	const state = storeToRefs(store);
-	const states = ref({
-		blocks: state.blocks,
-		selectedBlock: state.selectedBlock,
-		selectedPage: state.selectedPage,
-	})
-
-	const { history, undo, redo, canUndo, canRedo } = useDebouncedRefHistory(states, {
+	const { builderState } = storeToRefs(store);
+	const { undo, redo, canUndo, canRedo } = useDebouncedRefHistory(builderState, {
 		max: 100,
 		deep: true,
 		clone: (obj) => {
-			let newObj = {};
+			let newObj = Object.assign({}, obj);
 			newObj.blocks = obj.blocks.map((val) => store.getBlockCopy(val, true));
 			if (obj.selectedBlock) {
-				newObj.selectedBlock = store.getBlockCopy(obj.blocks.find(d => d.blockId === store.selectedBlock.blockId), true);
+				newObj.selectedBlock = newObj.blocks.find(d => d.blockId === obj.selectedBlock.blockId);
 			};
-			newObj.selectedPage = obj.selectedPage;
+			return newObj;
 		},
-		debounce: 100,
+		debounce: 200,
 	});
 	document.addEventListener("keydown", (e) => {
 		if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
 			return;
 		}
-		if (e.key === "z" && e.metaKey && canUndo.value) {
+		if (e.key === "z" && e.metaKey && !e.shiftKey && canUndo.value) {
 			undo();
 			e.preventDefault();
 		}
 		if (e.key === "z" && e.shiftKey && e.metaKey && canRedo.value) {
-			console.log("redo");
 			redo();
 			e.preventDefault();
 		}

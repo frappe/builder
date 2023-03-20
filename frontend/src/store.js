@@ -3,9 +3,14 @@ import BlockProperties from "./utils/blockProperties";
 
 const useStore = defineStore("store", {
 	state: () => ({
-		selectedPage: null,
-		selectedBlock: null,
-		selectedBlocks: [],
+		builderState: {
+			selectedPage: null,
+			selectedBlock: null,
+			selectedBlocks: [],
+			activeBreakpoint: "desktop",
+			blocks: [],
+		},
+		hoveredBlock: null,
 		builderLayout: {
 			rightPanelWidth: 300,
 			leftPanelWidth: 300,
@@ -23,7 +28,7 @@ const useStore = defineStore("store", {
 				"height": "40px",
 				"width": "100%"
 			},
-			classes: ["bg-blue-100", "mx-auto", "p-3"],
+			classes: ["bg-blue-100", "mx-auto"],
 			attributes: {},
 		}, {
 			name: "Text",
@@ -109,8 +114,6 @@ const useStore = defineStore("store", {
 		}],
 		pageName: "Home",
 		pages: {},
-		activeBreakpoint: "desktop",
-		blocks: [],
 		pastelCssColors: ["#FFFFFF", "#F5FFFA", "#F8F8FF", "#F0F8FF", "#F5F5DC", "#FFE4C4", "#FFEBCD", "#FFDEAD", "#FFC1C1", "#FFB6C1", "#FFA07A", "#FF8C00", "#FF7F50", "#FF69B4", "#FF6347", "#FDB813", "#FDAB9F", "#FDA50F", "#F49AC2", "#FFB347", "#FFD700", "#ADFF2F", "#87CEFA", "#00BFFF", "#ADD8E6", "#B0E0E6", "#5F9EA0", "#FDD5B1", "#FCCDE3", "#FCC2D9", "#FCB4D5", "#FBB5A3", "#FBB917", "#FBB972", "#FBB9AC", "#FBCEB1",
 			"linear-gradient(120deg, #f093fb 0%, #f5576c 100%)",
 			"linear-gradient(to top, #a18cd1 0%, #fbc2eb 100%)",
@@ -152,17 +155,18 @@ const useStore = defineStore("store", {
 	}),
 	actions: {
 		getActiveBreakpoint() {
-			return this.deviceBreakpoints[this.activeBreakpoint].width;
+			return this.deviceBreakpoints[this.builderState.activeBreakpoint].width;
 		},
 		clearBlocks() {
-			this.blocks.length = 0;
+			this.builderState.blocks.length = 0;
 		},
 		pushBlocks(blocks) {
 			for (let block of blocks) {
-				this.blocks.push(new BlockProperties(block));
+				this.builderState.blocks.push(new BlockProperties(block));
 			}
 		},
 		getBlockCopy(block, retainId = false) {
+			if (!block) return null;
 			let b = JSON.parse(JSON.stringify(block));
 			if (!retainId) delete b.blockId;
 			return new BlockProperties(b);

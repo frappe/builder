@@ -6,6 +6,7 @@
 			@resize="width => store.builderLayout.rightPanelWidth = width"
 			max-width="400">
 		</PanelResizer>
+		<div v-if="store.builderState.selectedBlock">
 			<div>
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase">Alignment</h3>
 				<ul class="flex flex-wrap">
@@ -47,7 +48,7 @@
 					</li>
 				</ul>
 			</div>
-			<div v-if="store.selectedBlock && !store.selectedBlock.isImage()" class="mt-5">
+			<div v-if="store.builderState.selectedBlock && !store.builderState.selectedBlock.isImage()" class="mt-5">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase">Text Color</h3>
 				<ul class="flex flex-wrap">
 					<li v-for="color in store.textColors" :key="color" class="mr-2 mb-2 last:mr-0">
@@ -57,53 +58,53 @@
 					</li>
 				</ul>
 			</div>
-			<div v-if="store.selectedBlock && store.selectedBlock.isImage()">
+			<div v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isImage()">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Image Source</h3>
-				<input type="text" v-model="store.selectedBlock.attributes.src"
+				<input type="text" v-model="store.builderState.selectedBlock.attributes.src"
 					class="w-full border-none border-gray-300 rounded-md text-sm h-8 bg-gray-100 dark:bg-gray-800 focus:ring-gray-400 dark:focus:ring-gray-700 dark:text-gray-300">
 			</div>
-			<div v-if="store.selectedBlock && store.selectedBlock.isText()">
+			<div v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isText()">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Font Size</h3>
 				<input type="text" v-model="blockStyles.fontSize" class="w-full border-none border-gray-300 rounded-md text-sm h-8 bg-gray-100 dark:bg-gray-800 focus:ring-gray-400 dark:focus:ring-gray-700 dark:text-gray-300">
 			</div>
 
 			<div>
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Tag</h3>
-				<Input type="select" :options="['span', 'div', 'section', 'button', 'p', 'h1', 'h2', 'h3']" v-model="store.selectedBlock.element" class="bg-gray-100 dark:bg-gray-800 text-base focus:ring-gray-400 dark:focus:ring-gray-700 dark:text-gray-300"/>
+				<Input type="select" :options="['span', 'div', 'section', 'button', 'p', 'h1', 'h2', 'h3']" v-model="store.builderState.selectedBlock.element" class="bg-gray-100 dark:bg-gray-800 text-base focus:ring-gray-400 dark:focus:ring-gray-700 dark:text-gray-300"/>
 			</div>
 
-			<div v-if="store.selectedBlock && store.selectedBlock.isText()">
+			<div v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isText()">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Line Height</h3>
 				<input type="text" v-model="blockStyles.lineHeight" class="w-full border-none border-gray-300 rounded-md text-sm h-8 bg-gray-100 dark:bg-gray-800 focus:ring-gray-400 dark:focus:ring-gray-700 dark:text-gray-300">
 			</div>
 
-			<div v-if="store.selectedBlock && store.selectedBlock.isContainer()">
+			<div v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isContainer()">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Margin</h3>
 				<input type="text" v-model="blockStyles.margin"
 					class="w-full border-none border-gray-300 rounded-md text-sm h-8 bg-gray-100 dark:bg-gray-800 focus:ring-gray-400 dark:focus:ring-gray-700 dark:text-gray-300">
 			</div>
-			<div v-if="store.selectedBlock">
+			<div v-if="store.builderState.selectedBlock">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Element Type</h3>
-				<input type="text" v-model="store.selectedBlock.element"
+				<input type="text" v-model="store.builderState.selectedBlock.element"
 					class="w-full border-none border-gray-300 rounded-md text-sm h-8 bg-gray-100 dark:bg-gray-800 focus:ring-gray-400 dark:focus:ring-gray-700 dark:text-gray-300">
 			</div>
-			<div v-if="store.selectedBlock">
+			<div v-if="store.builderState.selectedBlock">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Height</h3>
 				<Input v-model="blockStyles.height" type="text" class="bg-gray-100 dark:bg-gray-800 text-base focus:ring-gray-400 dark:focus:ring-gray-700 dark:text-gray-300"/>
 			</div>
-			<div v-if="store.selectedBlock">
+			<div v-if="store.builderState.selectedBlock">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Width</h3>
 				<input type="text" v-model="blockStyles.width"
 					class="w-full border-none border-gray-300 rounded-md text-sm h-8 bg-gray-100 dark:bg-gray-800 focus:ring-gray-400 dark:focus:ring-gray-700 dark:text-gray-300">
 			</div>
-			<div v-if="store.selectedBlock && store.selectedBlock.isLink()">
+			<div v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isLink()">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Link</h3>
-				<input type="text" v-model="store.selectedBlock.attributes.href"
+				<input type="text" v-model="store.builderState.selectedBlock.attributes.href"
 					class="w-full border-none border-gray-300 rounded-md text-sm h-8 bg-gray-100 dark:bg-gray-800 focus:ring-gray-400 dark:focus:ring-gray-700 dark:text-gray-300">
 			</div>
-			<div v-if="store.selectedBlock && store.selectedBlock.isButton()">
+			<div v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isButton()">
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase mt-5">Action</h3>
-				<Input type="textarea" v-model="store.selectedBlock.attributes.onclick"/>
+				<Input type="textarea" v-model="store.builderState.selectedBlock.attributes.onclick"/>
 			</div>
 		</div>
 	</div>
@@ -116,30 +117,30 @@ import useStore from "../store";
 const store = useStore();
 
 const blockStyles = computed(() => {
-	let styleObj = store.selectedBlock.styles;
-	if (store.activeBreakpoint === 'mobile') {
-		styleObj = store.selectedBlock.mobileStyles;
-	} else if (store.activeBreakpoint === 'tablet') {
-		styleObj = store.selectedBlock.tabletStyles;
+	let styleObj = store.builderState.selectedBlock.styles;
+	if (store.builderState.activeBreakpoint === 'mobile') {
+		styleObj = store.builderState.selectedBlock.mobileStyles;
+	} else if (store.builderState.activeBreakpoint === 'tablet') {
+		styleObj = store.builderState.selectedBlock.tabletStyles;
 	}
 	return styleObj;
 })
 
 const setBgColor = (color) => {
-	store.selectedBlock.setStyle('background', color);
+	store.builderState.selectedBlock.setStyle('background', color);
 };
 const setTextColor = (color) => {
-	store.selectedBlock.setStyle('color', color);
+	store.builderState.selectedBlock.setStyle('color', color);
 };
 
 const setAlignment = (alignment) => {
-	store.selectedBlock.setStyle(alignment.styleKey, alignment.styleValue);
+	store.builderState.selectedBlock.setStyle(alignment.styleKey, alignment.styleValue);
 };
 
 const setVerticalAlignment = (alignment) => {
-	store.selectedBlock.setStyle(alignment.styleKey, alignment.styleValue);
+	store.builderState.selectedBlock.setStyle(alignment.styleKey, alignment.styleValue);
 };
 const setFlow = (flow) => {
-	store.selectedBlock.setStyle(flow.styleKey, flow.styleValue);
+	store.builderState.selectedBlock.setStyle(flow.styleKey, flow.styleValue);
 };
 </script>

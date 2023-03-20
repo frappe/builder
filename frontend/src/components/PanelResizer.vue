@@ -2,12 +2,14 @@
 	<div class="top-0 bottom-0 w-1 bg-transparent absolute hover:cursor-ew-resize"
 		:class="{
 			'left-0': side === 'left',
-			'right-0': side === 'right'
+			'right-0': side === 'right',
+			'bg-gray-300 dark:bg-zinc-700': dragActive,
 		}"
 		@mousedown="resize">
 	</div>
 </template>
 <script setup>
+import { ref } from "vue";
 const props = defineProps({
 	maxWidth: {
 		type: Number,
@@ -32,6 +34,7 @@ const emit = defineEmits({
 	resize: (width) => width
 });
 
+const dragActive = ref(false);
 
 function resize(ev) {
 	const startX = ev.clientX;
@@ -47,12 +50,14 @@ function resize(ev) {
 		newWidth = Math.min(Math.max(props.minWidth, newWidth), props.maxWidth);
 		console.log(props.minWidth, newWidth, props.maxWidth);
 		emit("resize", newWidth);
+		dragActive.value = true;
 		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);
 	document.addEventListener("mouseup", (mouseUpEvent) => {
 		document.body.style.cursor = docCursor;
 		document.removeEventListener("mousemove", mousemove);
+		dragActive.value = false;
 		mouseUpEvent.preventDefault();
 	});
 }
