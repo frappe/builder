@@ -143,6 +143,8 @@ const useStore = defineStore("store", {
 				width: 425,
 			},
 		},
+		canvasSelected: false,
+		sidebarActiveTab: "Components",
 		canvas: {
 			initialScale: 1,
 			initialTranslateY: 0,
