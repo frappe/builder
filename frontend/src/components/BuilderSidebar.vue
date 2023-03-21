@@ -55,7 +55,6 @@
 	</div>
 </template>
 <script setup>
-import { ref } from "vue";
 import { createListResource } from "frappe-ui";
 import useStore from "../store";
 import Widgets from "./BuilderWidgets.vue";
@@ -75,7 +74,7 @@ createListResource({
 	auto: true,
 	onSuccess(data) {
 		store.pages = data;
-		setPage(store.pages["home"])
+		setPage(store.pages[localStorage.getItem("selectedPage") || "home"])
 	},
 	transform(data) {
 		const pages = {};
@@ -87,12 +86,14 @@ createListResource({
 	},
 });
 
-const setPage = (e) => {
+const setPage = (page) => {
+	if (!page) return
 	// clear blocks
 	store.clearBlocks();
-	store.pushBlocks(e.blocks);
-	store.pageName = e.page_name;
-	store.route = e.route;
-	store.builderState.selectedPage = e.name;
+	store.pushBlocks(page.blocks);
+	store.pageName = page.page_name;
+	store.route = page.route;
+	store.builderState.selectedPage = page.name;
+	localStorage.setItem("selectedPage", page.name);
 };
 </script>
