@@ -7,11 +7,12 @@
 			item-key="blockId"
 		>
 			<template #item="{ element }">
-				<div class="cursor-pointer text-base pl-2 pr-[2px] py-1 dark:text-gray-400 rounded-md border-[1px]"
+				<div class="cursor-pointer text-base pl-2 pr-[2px] py-1 rounded-md border-[1px]"
 					:class="{
-							'border-transparent': store.builderState.selectedBlock !== block && store.hoveredBlock !== element.blockId,
-							'border-blue-200 bg-transparent dark:border-blue-800': store.hoveredBlock === element.blockId,
-							'border-blue-400 bg-transparent dark:border-blue-600': store.builderState.selectedBlock && store.builderState.selectedBlock.blockId === element.blockId,
+							// TODO: simplify this
+							'border-transparent text-gray-600 dark:text-gray-500': store.builderState.selectedBlock && store.builderState.selectedBlock.blockId !== element.blockId && store.hoveredBlock !== element.blockId,
+							'border-blue-200 dark:border-blue-800 text-gray-600 dark:text-gray-500': store.hoveredBlock === element.blockId && store.builderState.selectedBlock && store.builderState.selectedBlock.blockId !== element.blockId,
+							'border-blue-400 dark:border-blue-600 text-gray-900 dark:text-gray-200': store.builderState.selectedBlock && store.builderState.selectedBlock.blockId === element.blockId,
 						}"
 						@click.stop="selectBlock($event, element)"
 						@mouseover.stop="store.hoveredBlock = element.blockId"
