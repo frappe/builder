@@ -38,6 +38,9 @@ class BlockProperties {
 	generateId() {
 		return Math.random().toString(36).substr(2, 9);
 	}
+	getIcon() {
+		return this.isText() ? 'type': this.isImage() ? 'image': this.isContainer() ? 'square': this.isLink() ? 'link': ''
+	}
 }
 
 export default BlockProperties;

@@ -64,6 +64,7 @@ const isSelected = computed(() => {
 });
 
 const selectBlock = (e, block) => {
+	store.sidebarActiveTab = "Layers";
 	store.builderState.selectedBlock = block;
 	if (e && e.metaKey) {
 		if (!store.builderState.selectedBlocks.length) {
