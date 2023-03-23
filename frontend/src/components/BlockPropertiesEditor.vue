@@ -3,20 +3,8 @@
 		width: `${store.builderLayout.rightPanelWidth}px`
 	}">
 		<PanelResizer :width="store.builderLayout.rightPanelWidth" side="left"
-			@resize="width => store.builderLayout.rightPanelWidth = width" max-width="400">
+			@resize="width => store.builderLayout.rightPanelWidth = width" :max-width=400>
 		</PanelResizer>
-		<div v-if="store.canvasSelected">
-			<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase">Background Color</h3>
-			<ul class="flex flex-wrap">
-				<li v-for="color in store.pastelCssColors" :key="color" class="mr-2 mb-2 last:mr-0">
-					<a @click="setCanvasBgColor(color)" class="hover:underline cursor-pointer text-base">
-						<div class="w-6 h-6 rounded-md shadow-sm" :style="'background:' + color"></div>
-					</a>
-				</li>
-			</ul>
-			<Input :value="store.canvas.background" @change="color => setCanvasBgColor(color)" class="mt-2"></Input>
-		</div>
-
 		<div v-if="store.builderState.selectedBlock">
 			<div>
 				<h3 class="mb-1 text-gray-600 font-bold text-xs uppercase">Alignment</h3>

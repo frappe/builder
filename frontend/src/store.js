@@ -8,7 +8,14 @@ const useStore = defineStore("store", {
 			selectedBlock: null,
 			selectedBlocks: [],
 			activeBreakpoint: "desktop",
-			blocks: [],
+			blocks: [new BlockProperties({
+				element: "div",
+				originalElement: "body",
+				blockId: "root",
+				children: [],
+				resizable: false,
+				attributes: {},
+			})],
 		},
 		hoveredBlock: null,
 		builderLayout: {
@@ -143,7 +150,6 @@ const useStore = defineStore("store", {
 				width: 425,
 			},
 		},
-		canvasSelected: false,
 		sidebarActiveTab: "Components",
 		canvas: {
 			initialScale: 1,
@@ -160,11 +166,17 @@ const useStore = defineStore("store", {
 			return this.deviceBreakpoints[this.builderState.activeBreakpoint].width;
 		},
 		clearBlocks() {
-			this.builderState.blocks.length = 0;
+			this.builderState.blocks = [];
+			this.builderState.blocks.push(this.getRootBlock());
 		},
 		pushBlocks(blocks) {
-			for (let block of blocks) {
-				this.builderState.blocks.push(new BlockProperties(block));
+			let firstBlock = new BlockProperties(blocks[0]);
+			if (firstBlock.isRoot()) {
+				this.builderState.blocks = [firstBlock];
+			} else {
+				for (let block of blocks) {
+					this.builderState.blocks[0].children.push(new BlockProperties(block));
+				}
 			}
 		},
 		getBlockCopy(block, retainId = false) {
@@ -172,6 +184,15 @@ const useStore = defineStore("store", {
 			let b = JSON.parse(JSON.stringify(block));
 			if (!retainId) delete b.blockId;
 			return new BlockProperties(b);
+		},
+		getRootBlock() {
+			return new BlockProperties({
+				element: "div",
+				originalElement: "body",
+				blockId: "root",
+				children: [],
+				resizable: false,
+			})
 		}
 	},
 });

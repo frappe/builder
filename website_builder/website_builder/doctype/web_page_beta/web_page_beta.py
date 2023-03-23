@@ -32,7 +32,7 @@ class WebPageBeta(WebsiteGenerator):
 		def get_html(blocks, soup):
 			html = ""
 			def get_tag(node, soup):
-				tag = soup.new_tag(node["element"])
+				tag = soup.new_tag(node.get("originalElement") or node["element"])
 				tag.attrs = node.get("attributes", {})
 				classes = node.get("classes", [])
 				if node.get("styles", {}):
