@@ -2,7 +2,7 @@
 	<component v-if="elementProperties.node_type !== 'Text'" :is="elementProperties.element === 'button' ? 'span' : elementProperties.element"
 		class="relative __builder_component__ outline-none" @click.stop="selectBlock($event, elementProperties)"
 		@dblclick.stop v-bind="{ ...elementProperties.attributes, ...elementProperties.skippedAttributes, ...$attrs }"
-		:style="styles"
+		:style="{ ...styles, ...elementProperties.editorStyles }"
 		:contenteditable="elementProperties.isText() && isSelected"
 		@input.stop.prevent="elementProperties.innerText = $event.target.innerText"
 		:class="elementProperties.classes"
@@ -12,14 +12,14 @@
 		{{ elementProperties.innerText }}
 		<BuilderBlock :element-properties="element" v-for="element in elementProperties.children"></BuilderBlock>
 	</component>
-	<teleport to="#draggables" v-if="elementProperties.element === 'section'">
-		<BlockDraggables v-if="isSelected" :element-properties="elementProperties"
+	<teleport to="#block-draggables" v-if="elementProperties.element === 'section' || elementProperties.blockId === 'root'">
+		<BlockDraggables v-if="isSelected || props.elementProperties.blockId === 'root'" :element-properties="elementProperties"
 			v-bind="{ ...$attrs }"></BlockDraggables>
 	</teleport>
 	<teleport to='#overlay' v-if="elementProperties.node_type !== 'Text'">
 		<BlockEditor v-if="isSelected || store.hoveredBlock === elementProperties.blockId"
 			:roundable="elementProperties.element === 'section'"
-			:resizableX="true" :resizableY="elementProperties.element !== 'img'" :selected="isSelected" :resizable="true" :element-properties="elementProperties">
+			:resizableX="elementProperties.blockId !== 'root'" :resizableY="elementProperties.element !== 'img' && elementProperties.blockId !== 'root'" :selected="isSelected" :resizable="elementProperties.blockId !== 'root'" :element-properties="elementProperties">
 		</BlockEditor>
 	</teleport>
 </template>

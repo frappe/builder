@@ -28,10 +28,10 @@ function trackTarget(target, host, padding = 0) {
 		});
 	}
 	watch(targetBounds, () => {
-			host.style.width = `${targetBounds.width - padding}px`;
-			host.style.height = `${targetBounds.height - padding}px`;
-			host.style.top = `${targetBounds.top + padding/2}px`;
-			host.style.left = `${targetBounds.left + padding/2}px`;
+			host.style.width = `${Math.floor(targetBounds.width - padding)}px`;
+			host.style.height = `${Math.floor(targetBounds.height - padding)}px`;
+			host.style.top = `${Math.floor(targetBounds.top + padding/2)}px`;
+			host.style.left = `${Math.floor(targetBounds.left + padding/2)}px`;
 	});
 }
 

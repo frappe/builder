@@ -1,34 +1,34 @@
 <template>
-	<div class="z-10 editor fixed border-[1px] border-blue-400 box-content" ref="editor"
-		@dblclick.stop="handleDblClick" @mousedown.stop="handleMove"
-		@dragstart="setCopyData($event, element, i)" @dragend="copy" draggable="true"
-		:class="{
+	<div class="z-10 editor fixed border-[1px] border-blue-400 box-content" ref="editor" @dblclick.stop="handleDblClick"
+		@mousedown.stop="handleMove" @dragstart="setCopyData($event, element, i)" @dragend="copy"
+		:draggable="elementProperties.draggable !== false" :class="{
 			'pointer-events-none': elementProperties.blockId === store.hoveredBlock,
 		}">
 
 		<PaddingHandler :target-props="elementProperties" v-if="selected" :disable-handlers="false"></PaddingHandler>
-		<div class="absolute top-0 right-0 border-2 bg-purple-500 w-3 h-3 rounded-full opacity-50 pointer-events-auto" @click.prevent="resetPosition" v-if="movable"></div>
+		<div class="absolute top-0 right-0 border-2 bg-purple-500 w-3 h-3 rounded-full opacity-50 pointer-events-auto"
+			@click.prevent="resetPosition" v-if="movable"></div>
 		<div class="absolute border-radius-resize w-[9px] h-[9px] border-[1px] border-blue-400 bg-white rounded-full pointer-events-auto top-2 left-2 cursor-default"
 			:class="{
 				'hidden': store.canvas.scale < 0.6,
-			}"
-			@mousedown.stop="handleRounded" v-if="selected && roundable">
-			<div class="absolute w-[3px] h-[3px] bg-blue-400 top-[2px] left-[2px] border-none rounded-full pointer-events-none">
+			}" @mousedown.stop="handleRounded" v-if="selected && roundable">
+			<div
+				class="absolute w-[3px] h-[3px] bg-blue-400 top-[2px] left-[2px] border-none rounded-full pointer-events-none">
 			</div>
 		</div>
 		<div class="absolute w-[4px] border-none bg-transparent top-0
-			bottom-0 left-[-2px] left-handle ew-resize pointer-events-auto">
+				bottom-0 left-[-2px] left-handle ew-resize pointer-events-auto">
 		</div>
 		<div class="absolute w-[4px] border-none bg-transparent top-0
-			bottom-0 right-[-2px] right-handle pointer-events-auto" :class="{ 'cursor-ew-resize': resizableX }"
+				bottom-0 right-[-2px] right-handle pointer-events-auto" :class="{ 'cursor-ew-resize': resizableX }"
 			@mousedown.stop="handleRightResize">
 		</div>
 		<div class="absolute h-[4px] border-none bg-transparent top-[-2px]
-			right-0 left-0 top-handle ns-resize pointer-events-auto">
+				right-0 left-0 top-handle ns-resize pointer-events-auto">
 		</div>
 		<div class="absolute h-[4px] border-none bg-transparent bottom-[-2px]
-			right-0 left-0 bottom-handle pointer-events-auto" :class="{ 'cursor-ns-resize': resizableY }"
-			 @mousedown.stop="handleBottomResize">
+				right-0 left-0 bottom-handle pointer-events-auto" :class="{ 'cursor-ns-resize': resizableY }"
+			@mousedown.stop="handleBottomResize">
 		</div>
 
 		<!-- <div class="absolute w-[8px] h-[8px] border-[1px] border-blue-400 rounded-full bg-white
@@ -41,12 +41,13 @@
 			top-[-4px] right-[-4px] nesw-resize pointer-events-auto">
 		</div> -->
 		<div class="absolute w-[8px] h-[8px] border-[1px] border-blue-400 rounded-full bg-white
-			bottom-[-4px] right-[-4px] cursor-nwse-resize pointer-events-auto" @mousedown.stop="handleBottomCornerResize" v-if="selected">
+				bottom-[-4px] right-[-4px] cursor-nwse-resize pointer-events-auto" @mousedown.stop="handleBottomCornerResize"
+			v-if="selected && resizable">
 		</div>
 	</div>
 </template>
 <script setup>
-import { getCurrentInstance, onMounted, ref} from "vue";
+import { getCurrentInstance, onMounted, ref } from "vue";
 import { useDebounceFn } from "@vueuse/shared";
 import useStore from "../store";
 import trackTarget from "../utils/trackTarget";

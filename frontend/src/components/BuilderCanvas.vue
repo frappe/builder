@@ -3,34 +3,32 @@
 		left: `${store.builderLayout.leftPanelWidth}px`,
 		right: `${store.builderLayout.rightPanelWidth}px`
 	}">
-		<div class="absolute" id="draggables"></div>
+		<div class="absolute" id="block-draggables"></div>
 		<div class="overlay absolute" id="overlay"></div>
-		<div class="canvas absolute min-h-full h-fit bg-white rounded-md overflow-hidden"
-			:style="{
-				width: store.getActiveBreakpoint() + 'px',
-				transform: `scale(${store.canvas.scale}) translate(${store.canvas.translateX}px, ${store.canvas.translateY}px)`,
-			}" ref="canvas">
-			<draggable :list="store.blocks" :group="{ name: 'blocks' }" item-key="id"
-				class="h-full w-auto flex-col block-container min-h-[300px]">
-				<template #item="{ element }">
-					<BuilderBlock :element-properties="element"></BuilderBlock>
-				</template>
-			</draggable>
+		<div class="canvas fixed bg-white rounded-md overflow-hidden" :style="{
+			background: store.canvas.background,
+			width: store.getActiveBreakpoint() + 'px',
+			minHeight: '1400px',
+			height: 'fit-content',
+			transform: `scale(${store.canvas.scale}) translate(${store.canvas.translateX}px, ${store.canvas.translateY}px)`,
+		}" ref="canvas">
+			<BuilderBlock :element-properties="store.builderState.blocks[0]" v-if="showBlocks"></BuilderBlock>
 		</div>
 	</div>
 </template>
 <script setup>
 import { nextTick, onMounted, ref } from "vue";
-import draggable from "vuedraggable";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BuilderBlock from "./BuilderBlock.vue";
 import { useDebouncedRefHistory, useRefHistory } from '@vueuse/core';
 import { storeToRefs } from "pinia";
+import { toast } from 'frappe-ui'
 
 const store = useStore();
 const canvasContainer = ref(null);
 const canvas = ref(null);
+const showBlocks = ref(false);
 
 function getPageData() {
 	return store.builderState.blocks;
@@ -92,17 +90,26 @@ document.addEventListener("keydown", (e) => {
 		return;
 	}
 	if (e.key === "Backspace" && store.builderState.selectedBlock && !e.target.closest(".__builder_component__")) {
-		function find_block_and_remove(blocks, block_id) {
+		function findBlockAndRemove(blocks, blockId) {
+			if (blockId === 'root') {
+				toast({
+					title: 'Warning',
+					text: 'Cannot Delete Root Block',
+					icon: 'alert-circle',
+					iconClasses: 'text-yellow-500',
+				})
+				return false;
+			}
 			blocks.forEach((block, i) => {
-				if (block.blockId === block_id) {
+				if (block.blockId === blockId) {
 					blocks.splice(i, 1);
 					return true;
 				} else if (block.children) {
-					return find_block_and_remove(block.children, block_id);
+					return findBlockAndRemove(block.children, blockId);
 				}
 			})
 		}
-		find_block_and_remove(store.builderState.blocks, store.builderState.selectedBlock.blockId);
+		findBlockAndRemove(store.builderState.blocks, store.builderState.selectedBlock.blockId);
 		clearSelectedComponent();
 	}
 
@@ -124,10 +131,10 @@ onMounted(() => {
 		const canvasBound = canvas.value.getBoundingClientRect();
 		const scale = store.canvas.scale;
 		const diff = (containerBound.top - canvasBound.top + (padding * scale));
-		console.log(diff);
 		if (diff !== 0) {
 			store.canvas.initialTranslateY = store.canvas.translateY = (diff / scale);
 		}
+		showBlocks.value = true;
 	})
 
 	setPanAndZoom(store.canvas, canvas.value, canvasContainer.value);
