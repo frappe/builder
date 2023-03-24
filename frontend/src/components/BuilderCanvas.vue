@@ -153,7 +153,7 @@ onMounted(() => {
 		debounce: 200,
 	});
 	document.addEventListener("keydown", (e) => {
-		if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
+		if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.getAttribute("contenteditable")) {
 			return;
 		}
 		if (e.key === "z" && e.metaKey && !e.shiftKey && canUndo.value) {

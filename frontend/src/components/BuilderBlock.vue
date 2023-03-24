@@ -4,10 +4,10 @@
 		@dblclick.stop v-bind="{ ...elementProperties.attributes, ...elementProperties.skippedAttributes, ...$attrs }"
 		:style="{ ...styles, ...elementProperties.editorStyles }"
 		:contenteditable="elementProperties.isText() && isSelected"
-		@input.stop.prevent="elementProperties.innerText = $event.target.innerText"
 		:class="elementProperties.classes"
 		@mouseover.stop="store.hoveredBlock = elementProperties.blockId"
 		@mouseleave.stop="store.hoveredBlock = null"
+		@blur="elementProperties.innerText = $event.target.innerText"
 		ref="component">
 		{{ elementProperties.innerText }}
 		<BuilderBlock :element-properties="element" v-for="element in elementProperties.children"></BuilderBlock>
