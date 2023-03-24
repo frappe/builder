@@ -80,6 +80,9 @@ class BlockProperties {
 	isRoot() {
 		return this.originalElement === "body";
 	}
+	getTag() {
+		return this.element === 'button' ? 'span' : this.element;
+	}
 }
 
 export default BlockProperties;
