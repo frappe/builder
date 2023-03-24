@@ -33,51 +33,7 @@ const showBlocks = ref(false);
 function getPageData() {
 	return store.builderState.blocks;
 }
-
-function getBlocks(element) {
-	const blocks = [];
-	element.childNodes.forEach((node) => {
-
-		if (node.nodeType === Node.ELEMENT_NODE) {
-			blocks.push(getBlockData(node));
-		} else if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
-			blocks.push({
-				node_type: "Text",
-				node_value: node.nodeValue,
-			});
-		}
-	});
-	return blocks;
-}
-
-function getAttributes(block) {
-	const attributes = {};
-	const skippedAttributes = {};
-	const attributesToSkip = ["contenteditable", "draggable", "style"];
-
-	for (let i = 0; i < block.attributes.length; i += 1) {
-		if (attributesToSkip.includes(block.attributes[i].name)) {
-			skippedAttributes[block.attributes[i].name] = block.attributes[i].value;
-		} else {
-			attributes[block.attributes[i].name] = block.attributes[i].value;
-		}
-	}
-	return { attributes, skippedAttributes };
-}
-
-function getBlockData(node) {
-	const { attributes, skippedAttributes } = getAttributes(node);
-	return {
-		element: node.tagName.toLowerCase(),
-		attributes,
-		skippedAttributes,
-		styles: node.getAttribute("style"),
-		children: getBlocks(node),
-	}
-}
-
 store.getPageData = getPageData;
-store.getBlockData = getBlockData;
 
 const clearSelectedComponent = () => {
 	store.builderState.selectedBlock = null;

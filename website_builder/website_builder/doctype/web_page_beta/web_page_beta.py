@@ -47,10 +47,7 @@ class WebPageBeta(WebsiteGenerator):
 					tag.append(node.get("innerText"))
 
 				for child in node.get("children", []):
-					if child.get("node_type") == "Text":
-						tag.append(child.get("node_value", ""))
-					else:
-						tag.append(get_tag(child, soup))
+					tag.append(get_tag(child, soup))
 				return tag
 
 			for block in blocks:

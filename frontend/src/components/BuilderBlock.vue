@@ -1,5 +1,5 @@
 <template>
-	<component v-if="elementProperties.node_type !== 'Text'" :is="elementProperties.element === 'button' ? 'span' : elementProperties.element"
+	<component :is="elementProperties.getTag()"
 		class="relative __builder_component__ outline-none" @click.stop="selectBlock($event, elementProperties)"
 		@dblclick.stop v-bind="{ ...elementProperties.attributes, ...elementProperties.skippedAttributes, ...$attrs }"
 		:style="{ ...styles, ...elementProperties.editorStyles }"
@@ -12,14 +12,14 @@
 		{{ elementProperties.innerText }}
 		<BuilderBlock :element-properties="element" v-for="element in elementProperties.children"></BuilderBlock>
 	</component>
-	<teleport to="#block-draggables" v-if="elementProperties.element === 'section' || elementProperties.blockId === 'root'">
-		<BlockDraggables v-if="isSelected || props.elementProperties.blockId === 'root'" :element-properties="elementProperties"
+	<teleport to="#block-draggables" v-if="elementProperties.isContainer() || elementProperties.isRoot()">
+		<BlockDraggables v-if="isSelected || elementProperties.isRoot()" :element-properties="elementProperties"
 			v-bind="{ ...$attrs }"></BlockDraggables>
 	</teleport>
-	<teleport to='#overlay' v-if="elementProperties.node_type !== 'Text'">
+	<teleport to='#overlay'>
 		<BlockEditor v-if="isSelected || store.hoveredBlock === elementProperties.blockId"
-			:roundable="elementProperties.element === 'section'"
-			:resizableX="elementProperties.blockId !== 'root'" :resizableY="elementProperties.element !== 'img' && elementProperties.blockId !== 'root'" :selected="isSelected" :resizable="elementProperties.blockId !== 'root'" :element-properties="elementProperties">
+			:roundable="elementProperties.isContainer()"
+			:resizableX="!elementProperties.isRoot()" :resizableY="!elementProperties.isImage() && !elementProperties.isRoot()" :selected="isSelected" :resizable="!elementProperties.isRoot()" :element-properties="elementProperties">
 		</BlockEditor>
 	</teleport>
 </template>
@@ -34,9 +34,6 @@ const store = useStore();
 const props = defineProps(["element-properties"]);
 
 onMounted(() => {
-	if (props.elementProperties.node_type === "Text") {
-		return;
-	}
 	props.elementProperties.component = component.value;
 	selectBlock(null, props.elementProperties);
 	if (props.elementProperties.isText()) {
