@@ -1,10 +1,12 @@
 <template>
-	<div class="z-10 editor fixed border-[1px] border-blue-400 box-content" ref="editor" @dblclick.stop="handleDblClick"
+	<div class="z-10 editor fixed border-[1px] border-blue-400 box-content" ref="editor" @click.stop="handleClick"
 		@mousedown.stop="handleMove" @dragstart="setCopyData($event, element, i)" @dragend="copy"
 		:draggable="elementProperties.draggable !== false" :class="{
 			'pointer-events-none': elementProperties.blockId === store.hoveredBlock,
 		}">
-
+		<span class="resize-dimensions bg-gray-600 absolute h-8 w-20 justify-center rounded-full text-sm right-0 bottom-[-40px] text-white flex whitespace-nowrap items-center p-2 opacity-80" v-if="resizing">
+			{{ parseInt(elementProperties.styles.width || 100) }} x {{ parseInt(elementProperties.styles.height) }}
+		</span>
 		<PaddingHandler :target-props="elementProperties" v-if="selected" :disable-handlers="false"></PaddingHandler>
 		<div class="absolute top-0 right-0 border-2 bg-purple-500 w-3 h-3 rounded-full opacity-50 pointer-events-auto"
 			@click.prevent="resetPosition" v-if="movable"></div>
@@ -59,6 +61,7 @@ const editor = ref(null);
 let editorWrapper = ref(null);
 
 let target = ref(null);
+let resizing = ref(false);
 let currentInstance = null;
 
 let targetProps = props.elementProperties;
@@ -82,6 +85,7 @@ const handleRightResize = (ev) => {
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
 	document.body.style.cursor = window.getComputedStyle(ev.target).cursor;
+	resizing.value = true;
 
 	const mousemove = (mouseMoveEvent) => {
 		// movement / scale * speed
@@ -100,6 +104,7 @@ const handleRightResize = (ev) => {
 		document.body.style.cursor = docCursor;
 		document.removeEventListener("mousemove", mousemove);
 		mouseUpEvent.preventDefault();
+		resizing.value = false;
 	});
 }
 
@@ -111,6 +116,7 @@ const handleBottomResize = (ev) => {
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
 	document.body.style.cursor = window.getComputedStyle(ev.target).cursor;
+	resizing.value = true;
 
 	const mousemove = (mouseMoveEvent) => {
 		const movement = (mouseMoveEvent.clientY - startY) / store.canvas.scale;
@@ -122,6 +128,7 @@ const handleBottomResize = (ev) => {
 		document.body.style.cursor = docCursor;
 		document.removeEventListener("mousemove", mousemove);
 		mouseUpEvent.preventDefault();
+		resizing.value = false;
 	});
 }
 
@@ -134,6 +141,7 @@ const handleBottomCornerResize = (ev) => {
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
 	document.body.style.cursor = window.getComputedStyle(ev.target).cursor;
+	resizing.value = true;
 
 	const mousemove = (mouseMoveEvent) => {
 		if (props.resizableX) {
@@ -151,13 +159,21 @@ const handleBottomCornerResize = (ev) => {
 		document.body.style.cursor = docCursor;
 		document.removeEventListener("mousemove", mousemove);
 		mouseUpEvent.preventDefault();
+		resizing.value = false;
 	});
 }
 
-const handleDblClick = (ev) => {
+const handleClick = (ev) => {
 	const editorWrapper = editor.value;
 	editorWrapper.classList.add("pointer-events-none");
-	document.elementFromPoint(ev.x, ev.y).click();
+	let element = document.elementFromPoint(ev.x, ev.y);
+	// ignore draggable blocks, select the real element instead
+	while (element.classList.contains("block-draggable")) {
+		element.classList.remove("pointer-events-auto");
+		element.classList.add("pointer-events-none");
+		element = document.elementFromPoint(ev.x, ev.y);
+	}
+	element.click();
 }
 
 const handleMove = (ev) => {
