@@ -33,8 +33,6 @@ function setPanAndZoom(
 						pointFromCenterY = (e.clientY - (targetBound.top + (targetBound.height / 2))) / scale;
 						props.startX = e.clientX;
 						props.startY = e.clientY;
-						props.pinchPointX = `${pointFromCenterX}px`;
-						props.pinchPointY = `${pointFromCenterY}px`;
 						pinchPointSet = true;
 						let clearPinchPoint = () => {
 							pinchPointSet = false;
