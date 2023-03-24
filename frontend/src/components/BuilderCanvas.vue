@@ -102,12 +102,13 @@ onMounted(() => {
 			let newObj = Object.assign({}, obj);
 			newObj.blocks = obj.blocks.map((val) => store.getBlockCopy(val, true));
 			if (obj.selectedBlock) {
-				newObj.selectedBlock = newObj.blocks.find(d => d.blockId === obj.selectedBlock.blockId);
+				newObj.selectedBlock = findBlock(newObj.blocks, obj.selectedBlock.blockId);
 			};
 			return newObj;
 		},
 		debounce: 200,
 	});
+
 	document.addEventListener("keydown", (e) => {
 		if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.getAttribute("contenteditable")) {
 			return;
@@ -121,5 +122,20 @@ onMounted(() => {
 			e.preventDefault();
 		}
 	});
+
+	function findBlock(blocks, blockId) {
+		for (const block of blocks) {
+			if (block.blockId === blockId) {
+				return block;
+			}
+			if (block.children) {
+				const found = findBlock(block.children, blockId);
+				if (found) {
+					return found;
+				}
+			}
+		}
+		return null;
+	};
 });
 </script>
