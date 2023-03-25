@@ -18,7 +18,7 @@
 	</teleport>
 	<teleport to='#overlay'>
 		<BlockEditor v-if="isSelected || store.hoveredBlock === elementProperties.blockId"
-			:roundable="elementProperties.isContainer()"
+			:roundable="elementProperties.isContainer() || elementProperties.isDiv()"
 			:resizableX="!elementProperties.isRoot()" :resizableY="!elementProperties.isImage() && !elementProperties.isRoot()" :selected="isSelected" :resizable="!elementProperties.isRoot()" :element-properties="elementProperties">
 		</BlockEditor>
 	</teleport>

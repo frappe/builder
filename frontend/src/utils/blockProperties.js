@@ -81,7 +81,10 @@ class BlockProperties {
 		return this.originalElement === "body";
 	}
 	getTag() {
-		return this.element === 'button' ? 'span' : this.element;
+		return this.element === 'button' ? 'div' : this.element;
+	}
+	isDiv() {
+		return this.element === 'div';
 	}
 }
 

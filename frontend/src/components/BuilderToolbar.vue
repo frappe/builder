@@ -7,22 +7,30 @@
 			<Button v-for="(option, deviceName) in store.deviceBreakpoints"
 				:key="deviceName"
 				:class="{
-					'bg-gray-200 dark:bg-zinc-700': store.builderState.activeBreakpoint === option.device,
+					'bg-gray-100 dark:bg-zinc-700': store.builderState.activeBreakpoint === option.device,
 					'text-gray-700 dark:text-zinc-400': store.builderState.activeBreakpoint !== option.device,
 					'dark:focus:bg-zinc-700 dark:hover:bg-zinc-800': true
 				}"
 				:active="store.builderState.activeBreakpoint === option.device" appearance="minimal"
 				@click="activateBreakpoint(option.device)" class="m-1">
-				<FeatherIcon :name="option.icon" class="h-5 w-5 text-gray-800 dark:text-gray-400"></FeatherIcon>
+				<FeatherIcon :name="option.icon" class="h-5 w-5 text-gray-600 dark:text-gray-400"></FeatherIcon>
 			</Button>
 		</div>
-		<Button appearance="primary" @click="publish" class="mt-[5px] absolute right-3 text-xs rounded-2xl border-0">
-			Preview
-		</Button>
+		<div class="mt-[5px] absolute right-3 flex items-center">
+			<UseDark v-slot="{ isDark, toggleDark }">
+				<FeatherIcon :name="isDark ? 'moon': 'sun'" class="h-4 w-4 text-gray-600 dark:text-gray-400 mr-4 cursor-pointer"
+					@click="toggleDark()">
+				</FeatherIcon>
+			</UseDark>
+			<Button appearance="primary" @click="publish" class="text-xs rounded-2xl border-0">
+				Preview
+			</Button>
+		</div>
 	</div>
 </template>
 <script setup>
 import { ref } from "vue";
+import { UseDark } from "@vueuse/components";
 import { createResource } from "frappe-ui";
 import useStore from "../store";
 

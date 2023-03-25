@@ -32,7 +32,7 @@ const useStore = defineStore("store", {
 				"flexDirection": "column",
 				"justifyContent": "center",
 				"alignItems": "center",
-				"height": "40px",
+				"height": "200px",
 				"width": "100%"
 			},
 			classes: ["bg-blue-100", "mx-auto"],
