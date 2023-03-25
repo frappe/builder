@@ -23,8 +23,8 @@
 			</div>
 			<div v-for="page of store.pages">
 				<ul>
-					<li class="mb-1 flex items-center rounded-md pl-2 cursor-pointer text-gray-600 dark:text-gray-200 font-medium"
-						:class="{ 'bg-gray-200 dark:bg-zinc-800 text-gray-900': store.builderState.selectedPage === page.name }"
+					<li class="mb-1 flex items-center rounded-md pl-2 cursor-pointer text-gray-600 dark:text-gray-500 font-medium"
+						:class="{ 'bg-gray-200 text-gray-900 dark:text-gray-200 dark:bg-zinc-800': store.builderState.selectedPage === page.name }"
 						@click="setPage(page)">
 						<FeatherIcon name="globe" class="w-3 h-3"></FeatherIcon>
 						<a class="p-1 px-2 text-base flex">
