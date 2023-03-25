@@ -7,22 +7,11 @@
 		</PanelResizer>
 		<div class="flex w-full rounded-md bg-gray-200 dark:bg-zinc-700 p-[2px] text-sm mb-4">
 			<button
+				v-for="tab of ['Pages', 'Components', 'Layers']"
 				class="rounded-md px-3 py-[3px] flex-1"
-				@click="store.sidebarActiveTab = 'Pages'"
-				:class="{ 'bg-white dark:bg-zinc-800 dark:text-gray-200 shadow-md': store.sidebarActiveTab === 'Pages', 'text-gray-700 dark:text-gray-400': store.sidebarActiveTab !== 'Pages' }">
-				Pages
-			</button>
-			<button
-				class="ml-1 rounded-md px-3 py-[3px] flex-1"
-				@click="store.sidebarActiveTab = 'Components'"
-				:class="{ 'bg-white dark:bg-zinc-800 dark:text-gray-200 shadow-md': store.sidebarActiveTab === 'Components', 'text-gray-700 dark:text-gray-400': store.sidebarActiveTab !== 'Components'}">
-				Components
-			</button>
-			<button
-				class="ml-1 rounded-md px-3 py-[3px] flex-1"
-				@click="store.sidebarActiveTab = 'Layers'"
-				:class="{ 'bg-white dark:bg-zinc-800 dark:text-gray-200 shadow-md': store.sidebarActiveTab === 'Layers', 'text-gray-700 dark:text-gray-400': store.sidebarActiveTab !== 'Layers'}">
-				Layers
+				@click="store.sidebarActiveTab = tab"
+				:class="{ 'bg-white font-semibold dark:bg-zinc-800 dark:text-gray-200 shadow-md': store.sidebarActiveTab === tab, 'text-gray-700 dark:text-gray-400': store.sidebarActiveTab !== tab }">
+				{{ tab }}
 			</button>
 		</div>
 		<div class="mb-8" v-if="store.sidebarActiveTab === 'Pages'">
@@ -32,13 +21,13 @@
 				class="text-sm italic text-gray-600">
 				No Saved Pages
 			</div>
-			<div v-for="(page, i) in store.pages">
+			<div v-for="page of store.pages">
 				<ul>
-					<li class="mb-1 flex items-center rounded-md pl-2 cursor-pointer"
-						:class="{ 'bg-gray-200 dark:bg-zinc-800': store.builderState.selectedPage === page.name }"
+					<li class="mb-1 flex items-center rounded-md pl-2 cursor-pointer text-gray-600 dark:text-gray-200 font-medium"
+						:class="{ 'bg-gray-200 dark:bg-zinc-800 text-gray-900': store.builderState.selectedPage === page.name }"
 						@click="setPage(page)">
-						<FeatherIcon name="globe" class="w-3 h-3 text-gray-600 dark:text-gray-200"></FeatherIcon>
-						<a class="p-1 px-2 text-base flex dark:text-gray-200">
+						<FeatherIcon name="globe" class="w-3 h-3"></FeatherIcon>
+						<a class="p-1 px-2 text-base flex">
 							{{ page.page_name }}
 						</a>
 					</li>

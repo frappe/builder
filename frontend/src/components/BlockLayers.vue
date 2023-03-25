@@ -7,7 +7,7 @@
 			item-key="blockId"
 		>
 			<template #item="{ element }">
-				<div class="cursor-pointer text-base pl-2 pr-[2px] py-1 rounded-md border-[1px]"
+				<div class="cursor-pointer text-base pl-2 pr-[2px] py-1 rounded-md border-[1px] text-gray-600"
 					:class="{
 							// TODO: simplify this
 							'border-transparent text-gray-700 dark:text-gray-500': (store.builderState.selectedBlock && store.builderState.selectedBlock.blockId !== element.blockId && store.hoveredBlock !== element.blockId) || !store.builderState.selectedBlock,
@@ -17,8 +17,8 @@
 						@click.stop="selectBlock($event, element)"
 						@mouseover.stop="store.hoveredBlock = element.blockId"
 						@mouseleave.stop="store.hoveredBlock = null">
-						<span class="flex items-center">
-							<FeatherIcon :name="element.getIcon()" class="h-3 w-3 mr-1 text-gray-500"></FeatherIcon>
+						<span class="flex items-center font-medium ">
+							<FeatherIcon :name="element.getIcon()" class="h-3 w-3 mr-1"></FeatherIcon>
 							<span class="truncate">
 								{{ element.originalElement || element.element }} {{ element.innerText ?  " | " + element.innerText : '' }}
 							</span>
