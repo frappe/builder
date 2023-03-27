@@ -7,7 +7,7 @@
 			item-key="blockId"
 		>
 			<template #item="{ element }">
-				<div class="cursor-pointer text-base pl-2 pr-[2px] py-1 rounded-md border-[1px] text-gray-600"
+				<div class="cursor-pointer text-base pl-2 pr-[2px] py-1 rounded-md border-[1px] text-gray-600 bg-white dark:bg-zinc-900"
 					:class="{
 							// TODO: simplify this
 							'border-transparent text-gray-700 dark:text-gray-500': (store.builderState.selectedBlock && store.builderState.selectedBlock.blockId !== element.blockId && store.hoveredBlock !== element.blockId) || !store.builderState.selectedBlock,

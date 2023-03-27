@@ -132,6 +132,10 @@ const useStore = defineStore("store", {
 			"black",
 			"transparent",
 		],
+		guides: {
+			showX: false,
+			showY: false,
+		},
 		textColors: ["#000000", "#424242", "#636363", "#9C9C94", "#CEC6CE", "#EFEFEF", "#F7F7F7", "#C0C0C0", "#808080", "#808000", "#FFFFFF"],
 		deviceBreakpoints: {
 			desktop: {

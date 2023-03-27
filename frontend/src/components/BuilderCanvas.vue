@@ -5,11 +5,12 @@
 	}">
 		<div class="absolute" id="block-draggables"></div>
 		<div class="overlay absolute" id="overlay"></div>
-		<div class="canvas fixed bg-white rounded-md overflow-hidden" :style="{
+		<BlockSnapGuides></BlockSnapGuides>
+		<div class="canvas fixed bg-white rounded-md" :style="{
 			background: store.canvas.background,
 			width: store.getActiveBreakpoint() + 'px',
 			minHeight: '1400px',
-			height: 'fit-content',
+			height: '100%',
 			transform: `scale(${store.canvas.scale}) translate(${store.canvas.translateX}px, ${store.canvas.translateY}px)`,
 		}" ref="canvas">
 			<BuilderBlock :element-properties="store.builderState.blocks[0]" v-if="showBlocks"></BuilderBlock>
@@ -21,7 +22,8 @@ import { nextTick, onMounted, ref } from "vue";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BuilderBlock from "./BuilderBlock.vue";
-import { useDebouncedRefHistory, useRefHistory } from '@vueuse/core';
+import BlockSnapGuides from "./BlockSnapGuides.vue";
+import { useDebouncedRefHistory } from '@vueuse/core';
 import { storeToRefs } from "pinia";
 import { toast } from 'frappe-ui'
 
@@ -53,6 +55,7 @@ document.addEventListener("keydown", (e) => {
 					text: 'Cannot Delete Root Block',
 					icon: 'alert-circle',
 					iconClasses: 'text-yellow-500',
+					position: 'top-left',
 				})
 				return false;
 			}

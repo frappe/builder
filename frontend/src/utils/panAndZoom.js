@@ -14,6 +14,8 @@ function setPanAndZoom(
 	let scale = props.scale || 1;
 	let pointFromCenterX = 0;
 	let pointFromCenterY = 0;
+	let startX = 0;
+	let startY = 0;
 	let pinchPointSet = false;
 
 	panAndZoomAreaElement.addEventListener(
@@ -31,8 +33,8 @@ function setPanAndZoom(
 					if (!pinchPointSet) {
 						pointFromCenterX = (e.clientX - (targetBound.left + (targetBound.width / 2))) / scale;
 						pointFromCenterY = (e.clientY - (targetBound.top + (targetBound.height / 2))) / scale;
-						props.startX = e.clientX;
-						props.startY = e.clientY;
+						startX = e.clientX;
+						startY = e.clientY;
 						pinchPointSet = true;
 						let clearPinchPoint = () => {
 							pinchPointSet = false;
@@ -44,8 +46,8 @@ function setPanAndZoom(
 					let pinchLocationX = targetBound.left + (targetBound.width / 2) + (pointFromCenterX * scale);
 					let pinchLocationY = targetBound.top + (targetBound.height / 2) + (pointFromCenterY * scale);
 
-					let diffX = props.startX - pinchLocationX;
-					let diffY = props.startY - pinchLocationY;
+					let diffX = startX - pinchLocationX;
+					let diffY = startY - pinchLocationY;
 
 					props.translateX += (diffX / scale);
 					props.translateY += (diffY / scale);
