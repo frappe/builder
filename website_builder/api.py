@@ -13,7 +13,7 @@ def publish(blocks, page_name=None):
 		page = frappe.new_doc("Web Page Beta")
 		page.page_name = page_name
 
-	page.route = f"pages/{random.randint(0, 1000)}"
+	page.route = f"pages/{frappe.generate_hash(length=20)}"
 	page.blocks = blocks
 	page.save(ignore_permissions=True)
 	return page
