@@ -8,6 +8,7 @@
 		@mouseover.stop="store.hoveredBlock = elementProperties.blockId"
 		@mouseleave.stop="store.hoveredBlock = null"
 		@blur="elementProperties.innerText = $event.target.innerText"
+		:data-block-id="elementProperties.blockId"
 		ref="component">
 		{{ elementProperties.innerText }}
 		<BuilderBlock :element-properties="element" v-for="element in elementProperties.children"></BuilderBlock>
@@ -18,7 +19,7 @@
 	</teleport>
 	<teleport to='#overlay'>
 		<BlockEditor v-if="isSelected || store.hoveredBlock === elementProperties.blockId"
-			:roundable="elementProperties.isContainer() || elementProperties.isDiv()"
+			:roundable="elementProperties.isContainer() || elementProperties.isDiv() || elementProperties.isImage()"
 			:resizableX="!elementProperties.isRoot()" :resizableY="!elementProperties.isImage() && !elementProperties.isRoot()" :selected="isSelected" :resizable="!elementProperties.isRoot()" :element-properties="elementProperties">
 		</BlockEditor>
 	</teleport>

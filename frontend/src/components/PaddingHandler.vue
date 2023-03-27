@@ -33,10 +33,10 @@
 <script setup>
 import useStore from '../store';
 import { ref, computed } from 'vue';
+import BlockProperties from '../utils/blockProperties';
 const props = defineProps({
 	targetProps: {
-		type: Object,
-		default: () => ({})
+		type: BlockProperties,
 	},
 	disableHandlers: {
 		type: Boolean,
