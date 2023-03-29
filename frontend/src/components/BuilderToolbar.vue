@@ -1,7 +1,7 @@
 <template>
 	<div class="toolbar bg-white p-2 flex justify-center h-14 shadow-sm" ref="toolbar">
 		<input type="text" v-model="store.pageName"
-			class="border-none rounded mt-[5px] absolute left-4 h-7 bg-gray-100 dark:bg-zinc-800 text-base focus:ring-gray-400 dark:focus:ring-zinc-700 dark:text-gray-300"
+			class="border-none rounded-md mt-[5px] absolute left-4 h-7 bg-gray-100 dark:bg-zinc-800 text-base focus:ring-gray-400 dark:focus:ring-zinc-700 dark:text-gray-300"
 			placeholder="Page Name">
 		<div class="breakpoint-options">
 			<Button v-for="(option, deviceName) in store.deviceBreakpoints"

@@ -87,6 +87,13 @@ class BlockProperties {
 	isDiv() {
 		return this.element === 'div';
 	}
+	getStylesCopy() {
+		return {
+			styles: Object.assign({}, this.styles),
+			mobileStyles: Object.assign({}, this.mobileStyles),
+			tabletStyles: Object.assign({}, this.tabletStyles),
+		}
+	}
 }
 
 export default BlockProperties;

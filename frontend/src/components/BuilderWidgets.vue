@@ -10,8 +10,8 @@
 			<template #item="{ element }">
 				<div
 					class="flex items-center cursor-pointer justify-center
-					h-8 w-8 border shadow-sm rounded-md mr-2 last:mr-0 mb-2 bg-white dark:bg-gray-800 dark:border-gray-700">
-					<FeatherIcon :name="element.icon" class="h-4 text-gray-700 dark:text-gray-300"/>
+					h-8 w-8 border shadow-sm rounded-md mr-2 last:mr-0 mb-2 bg-white dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200">
+					<FeatherIcon :name="element.icon" class="h-4 text-gray-700 dark:text-zinc-300"/>
 				</div>
 			</template>
 		</draggable>

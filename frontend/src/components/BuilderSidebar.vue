@@ -14,7 +14,7 @@
 				{{ tab }}
 			</button>
 		</div>
-		<div class="mb-8" v-if="store.sidebarActiveTab === 'Pages'">
+		<div class="mb-8" v-show="store.sidebarActiveTab === 'Pages'">
 			<h3 class="mb-3 text-xs font-bold uppercase text-gray-600">Pages</h3>
 			<div
 				v-if="!Object.keys(store.pages).length"
@@ -34,11 +34,11 @@
 				</ul>
 			</div>
 		</div>
-		<div v-if="store.sidebarActiveTab === 'Components'">
+		<div v-show="store.sidebarActiveTab === 'Components'">
 			<Widgets class="mb-7"></Widgets>
 			<Templates class="mb-3"></Templates>
 		</div>
-		<div v-if="store.sidebarActiveTab === 'Layers'">
+		<div v-show="store.sidebarActiveTab === 'Layers'">
 			<BlockLayers :blocks="store.builderState.blocks"></BlockLayers>
 		</div>
 	</div>

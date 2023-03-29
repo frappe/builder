@@ -164,6 +164,8 @@ const useStore = defineStore("store", {
 			startX: 0,
 			startY: 0,
 		},
+		copiedStyle: null,
+		components: []
 	}),
 	actions: {
 		getActiveBreakpoint() {
@@ -186,7 +188,12 @@ const useStore = defineStore("store", {
 		getBlockCopy(block, retainId = false) {
 			if (!block) return null;
 			let b = JSON.parse(JSON.stringify(block));
-			if (!retainId) delete b.blockId;
+			if (!retainId) {
+				delete b.blockId;
+				for (let child of b.children || []) {
+					delete child.blockId;
+				}
+			}
 			return new BlockProperties(b);
 		},
 		getRootBlock() {
@@ -197,7 +204,7 @@ const useStore = defineStore("store", {
 				children: [],
 				resizable: false,
 			})
-		}
+		},
 	},
 });
 
