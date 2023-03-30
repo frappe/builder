@@ -13,12 +13,12 @@
 		{{ elementProperties.innerText }}
 		<BuilderBlock :element-properties="element" v-for="element in elementProperties.children"></BuilderBlock>
 	</component>
-	<teleport to="#block-draggables" v-if="elementProperties.isContainer() || elementProperties.isRoot()">
+	<teleport to="#block-draggables" v-if="(elementProperties.isContainer() || elementProperties.isRoot()) && !preview">
 		<BlockDraggables v-if="isSelected || elementProperties.isRoot()" :element-properties="elementProperties"
 			v-bind="{ ...$attrs }"></BlockDraggables>
 	</teleport>
 	<teleport to='#overlay'>
-		<BlockEditor v-if="isSelected || store.hoveredBlock === elementProperties.blockId"
+		<BlockEditor v-if="(isSelected || store.hoveredBlock === elementProperties.blockId) && !preview"
 			:roundable="elementProperties.isContainer() || elementProperties.isDiv() || elementProperties.isImage()"
 			:resizableX="!elementProperties.isRoot()" :resizableY="!elementProperties.isImage() && !elementProperties.isRoot()" :selected="isSelected" :resizable="!elementProperties.isRoot()" :element-properties="elementProperties">
 		</BlockEditor>
@@ -32,7 +32,8 @@ import BlockDraggables from "./BlockDraggables.vue";
 
 const component = ref(null);
 const store = useStore();
-const props = defineProps(["element-properties"]);
+const props = defineProps(["element-properties", "preview"]);
+const emit = defineEmits(["renderComplete"]);
 
 onMounted(() => {
 	props.elementProperties.component = component.value;
@@ -45,6 +46,7 @@ onMounted(() => {
 			}
 		});
 	}
+	emit("renderComplete", component.value);
 });
 
 const styles = computed(() => {
