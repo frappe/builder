@@ -21,9 +21,10 @@
 	</div>
 </template>
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import useStore from "../store";
 import BlockProperties from "../utils/blockProperties";
+import guidesTracker from "../utils/guidesTracker";
 
 const props = defineProps({
 	targetProps: {
@@ -38,6 +39,11 @@ const store = useStore();
 const targetProps = props.targetProps;
 const target = props.target;
 const resizing = ref(false);
+let guides = null;
+
+onMounted(() => {
+	guides = guidesTracker(target);
+})
 
 const handleRightResize = (ev) => {
 	const startX = ev.clientX;
@@ -47,20 +53,8 @@ const handleRightResize = (ev) => {
 	const docCursor = document.body.style.cursor;
 	document.body.style.cursor = window.getComputedStyle(ev.target).cursor;
 	resizing.value = true;
-	const canvasBoundingRect = document.querySelector(".canvas").getBoundingClientRect();
-	const threshold = 10;
-
+	guides.showX();
 	const mousemove = (mouseMoveEvent) => {
-		store.guides.showX = false;
-		let targetBounds = target.getBoundingClientRect();
-		if (Math.abs(targetBounds.right - canvasBoundingRect.right) < threshold) {
-			store.guides.showX = true;
-			store.guides.x = canvasBoundingRect.right;
-		} else if (Math.abs(targetBounds.right - (canvasBoundingRect.left + canvasBoundingRect.width/2)) < threshold) {
-			store.guides.showX = true;
-			store.guides.x = (canvasBoundingRect.left + canvasBoundingRect.width/2);
-		}
-
 		// movement / scale * speed
 		const movement = (mouseMoveEvent.clientX - startX) / store.canvas.scale * 2;
 		if (mouseMoveEvent.shiftKey) {
@@ -68,12 +62,7 @@ const handleRightResize = (ev) => {
 			const startWidthPercent = startWidth / parentWidth * 100;
 			targetProps.setStyle("width", `${startWidthPercent + movementPercent}%`);
 		} else {
-			let finalWidth = startWidth + movement;
-			if (Math.abs(targetBounds.left + (finalWidth * store.canvas.scale) - canvasBoundingRect.right) < threshold) {
-				finalWidth = (canvasBoundingRect.right - targetBounds.left) / store.canvas.scale;
-			} else if (Math.abs(targetBounds.left + (finalWidth * store.canvas.scale) - (canvasBoundingRect.left + canvasBoundingRect.width/2)) < threshold) {
-				finalWidth = ((canvasBoundingRect.left + canvasBoundingRect.width/2) - targetBounds.left)/store.canvas.scale;
-			}
+			let finalWidth = guides.getFinalWidth(startWidth + movement);
 			targetProps.setStyle("width", `${finalWidth}px`);
 		}
 		mouseMoveEvent.preventDefault();
@@ -84,7 +73,7 @@ const handleRightResize = (ev) => {
 		document.removeEventListener("mousemove", mousemove);
 		mouseUpEvent.preventDefault();
 		resizing.value = false;
-		store.guides.showX = false;
+		guides.hideX();
 	});
 }
 
@@ -96,10 +85,13 @@ const handleBottomResize = (ev) => {
 	const docCursor = document.body.style.cursor;
 	document.body.style.cursor = window.getComputedStyle(ev.target).cursor;
 	resizing.value = true;
+	guides.showY();
 
 	const mousemove = (mouseMoveEvent) => {
 		const movement = (mouseMoveEvent.clientY - startY) / store.canvas.scale;
-		targetProps.setStyle("height", `${startHeight + movement}px`);
+		let finalHeight = guides.getFinalHeight(startHeight + movement);
+
+		targetProps.setStyle("height", `${finalHeight}px`);
 		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);
@@ -108,6 +100,7 @@ const handleBottomResize = (ev) => {
 		document.removeEventListener("mousemove", mousemove);
 		mouseUpEvent.preventDefault();
 		resizing.value = false;
+		guides.hideY();
 	});
 }
 
