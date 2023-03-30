@@ -42,8 +42,8 @@ import { Dialog, Input } from "frappe-ui";
 import { getCurrentInstance, onMounted, reactive, ref } from "vue";
 import { createResource } from "frappe-ui";
 import useStore from "../store";
+import setGuides from "../utils/guidesTracker";
 import trackTarget from "../utils/trackTarget";
-import PaddingHandler from "./PaddingHandler.vue";
 import BorderRadiusHandler from "./BorderRadiusHandler.vue";
 import BoxResizer from "./BoxResizer.vue";
 import ContextMenu from './ContextMenu.vue';
@@ -54,15 +54,16 @@ const props = defineProps(["movable", "resizable", "roundable", "resizableX", "r
 const store = useStore();
 const editor = ref(null);
 let editorWrapper = ref(null);
-
 let targetProps = props.elementProperties;
 let target = reactive(targetProps.component);
 let currentInstance = null;
+let guides = null;
 
 onMounted(() => {
 	currentInstance = getCurrentInstance();
 	editorWrapper = editor.value;
 	target = reactive(currentInstance.parent.refs.component);
+	guides = setGuides(target);
 	props.elementProperties.targetElement = target
 	if (target instanceof HTMLElement) {
 		trackTarget(target, editorWrapper);
@@ -90,17 +91,21 @@ const handleMove = (ev) => {
 	const startY = ev.clientY;
 	const startLeft = target.offsetLeft;
 	const startTop = target.offsetTop;
+	guides.showX();
 
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
 	document.body.style.cursor = window.getComputedStyle(ev.target).cursor;
 
 	const mousemove = (mouseMoveEvent) => {
-		const movementX = mouseMoveEvent.clientX - startX;
-		const movementY = mouseMoveEvent.clientY - startY;
+		const scale = store.canvas.scale;
+		const movementX = (mouseMoveEvent.clientX - startX) / scale;
+		const movementY = (mouseMoveEvent.clientY - startY) / scale;
+
+		const finalLeft = guides.getFinalLeft(startLeft + movementX);
 
 		targetProps.setStyle("position", "absolute");
-		targetProps.setStyle("left", `${startLeft + movementX}px`);
+		targetProps.setStyle("left", `${finalLeft}px`);
 		targetProps.setStyle("top", `${startTop + movementY}px`);
 		mouseMoveEvent.preventDefault();
 	};
@@ -121,12 +126,7 @@ const setCopyData = useDebounceFn((event, data) => {
 
 const copy = useDebounceFn((event) => {
 	if (event.dataTransfer.action === "copy") {
-		let superParent = currentInstance.parent.parent;
-		if (superParent.props?.elementProperties?.children) {
-			superParent.props.elementProperties.children.push(event.dataTransfer.data_to_copy);
-		} else {
-			store.builderState.blocks.push(event.dataTransfer.data_to_copy);
-		}
+		duplicateBlock(event.dataTransfer.data_to_copy);
 	} else {
 		target.draggable = true;
 		relayEventToTarget(event);
