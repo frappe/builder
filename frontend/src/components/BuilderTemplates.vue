@@ -7,7 +7,7 @@
 			<template #item="{ element }">
 				<div class="mb-3">
 					<div class="flex items-center cursor-pointer justify-center
-								h-24 w-48 border-2 shadow-sm rounded-md mr-2 last:mr-0 mb-1 bg-white
+								h-24 w-48 border shadow-sm rounded-md mr-2 last:mr-0 mb-1 bg-gray-50
 								dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200
 								overflow-hidden relative p-2">
 						<div class="absolute pointer-events-none w-[1200px]" :style="{

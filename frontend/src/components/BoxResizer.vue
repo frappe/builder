@@ -60,7 +60,8 @@ const handleRightResize = (ev) => {
 		if (mouseMoveEvent.shiftKey) {
 			const movementPercent = movement / parentWidth * 100;
 			const startWidthPercent = startWidth / parentWidth * 100;
-			targetProps.setStyle("width", `${startWidthPercent + movementPercent}%`);
+			const finalHeight = Math.round(startWidthPercent + movementPercent);
+			targetProps.setStyle("width", `${finalHeight}%`);
 		} else {
 			let finalWidth = guides.getFinalWidth(startWidth + movement);
 			targetProps.setStyle("width", `${finalWidth}px`);
@@ -117,9 +118,11 @@ const handleBottomCornerResize = (ev) => {
 
 	const mousemove = (mouseMoveEvent) => {
 		const movementX = mouseMoveEvent.clientX - startX;
-		targetProps.setStyle("width", `${startWidth + movementX}px`);
+		const finalWidth = Math.round(startWidth + movementX);
+		targetProps.setStyle("width", `${finalWidth}px`);
 		const movementY = mouseMoveEvent.clientY - startY;
-		targetProps.setStyle("height", `${startHeight + movementY}px`);
+		const finalHeight = Math.round(startHeight + movementY);
+		targetProps.setStyle("height", `${finalHeight}px`);
 		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);
