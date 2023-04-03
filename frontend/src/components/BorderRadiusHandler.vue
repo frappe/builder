@@ -1,7 +1,7 @@
 <template>
 	<div class="absolute border-radius-resize w-[9px] h-[9px] border-[1px] border-blue-400 bg-white rounded-full pointer-events-auto top-2 left-2 cursor-pointer"
 		:class="{
-			'hidden': store.canvas.scale < 0.6,
+			'hidden': store.canvas.scale < 0.7,
 		}" @mousedown.stop="handleRounded">
 		<div class="absolute w-[3px] h-[3px] bg-blue-400 top-[2px] left-[2px] border-none rounded-full pointer-events-none">
 		</div>
@@ -28,13 +28,15 @@ const handleRounded = (ev) => {
 	const startY = ev.clientY;
 	const handle = ev.currentTarget;
 	const handleStyle = window.getComputedStyle(handle);
-	const minLeft = 10;
-	const minTop = 10;
+	let minLeft = 10;
+	let minTop = 10;
 
 	const targetBounds = target.getBoundingClientRect();
 	const targetStyle = window.getComputedStyle(target);
 	const targetWidth = parseInt(targetStyle.width, 10);
 	const targetHeight = parseInt(targetStyle.height, 10);
+	const handleHeight = parseInt(handleStyle.height, 10);
+	const handleWidth = parseInt(handleStyle.width, 10);
 
 	const maxRadius = Math.min(targetHeight, targetWidth) / 2;
 
@@ -55,12 +57,14 @@ const handleRounded = (ev) => {
 
 		// mean of movement on both axis
 		const movement = (movementX + movementY) / 2;
-		let radius = parseInt(target.style.borderRadius || 0, 10) + movement;
+		if (movement < 0) {
+			minTop = -(handleHeight / 2);
+			minLeft = -(handleWidth / 2);
+		}
+		let radius = Math.round(parseInt(target.style.borderRadius || 0, 10) + movement);
 		radius = Math.max(0, Math.min(radius, maxRadius))
 
 		const ratio = radius / maxRadius;
-		const handleHeight = parseInt(handleStyle.height, 10);
-		const handleWidth = parseInt(handleStyle.width, 10);
 		const newTop = Math.max(minTop, ((maxDistance * ratio) - handleHeight / 2));
 		const newLeft = Math.max(minLeft, ((maxDistance * ratio) - handleWidth / 2));
 
@@ -73,6 +77,11 @@ const handleRounded = (ev) => {
 	};
 	document.addEventListener("mousemove", mousemove);
 	document.addEventListener("mouseup", (mouseUpEvent) => {
+		if (parseInt(targetProps.getStyle("borderRadius"), 10) < 10) {
+			handle.style.top = `${10}px`;
+			handle.style.left = `${10}px`;
+		}
+
 		document.body.style.cursor = docCursor;
 		document.removeEventListener("mousemove", mousemove);
 		mouseUpEvent.preventDefault();

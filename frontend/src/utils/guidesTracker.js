@@ -26,7 +26,7 @@ function setGuides(target) {
 		} else {
 			store.guides.x = -1;
 		}
-		return finalWidth;
+		return Math.round(finalWidth);
 	};
 
 	const getFinalHeight = (calculatedHeight) => {
@@ -47,7 +47,7 @@ function setGuides(target) {
 		} else {
 			store.guides.y = -1;
 		}
-		return finalHeight;
+		return Math.round(finalHeight);
 	};
 
 	const getFinalLeft = (calculatedLeft) => {
