@@ -3,7 +3,7 @@
 		<span class="text-gray-600 font-bold text-[10px] uppercase inline-block ml-2 dark:text-zinc-400">
 			<slot></slot>
 		</span>
-		<Input :type="type" :value="value" :options="options" @change="handleChange" class="dark:bg-zinc-700 rounded-md dark:text-zinc-50 dark:focus:bg-zinc-600"/>
+		<Input :type="type" :value="value" :options="options" @change="handleChange" class="text-sm text-gray-800 dark:bg-zinc-800 rounded-md dark:text-zinc-200 dark:focus:bg-zinc-700 min-w-[60%]"/>
 	</div>
 </template>
 <script setup>
@@ -17,6 +17,10 @@ defineProps({
 	type: {
 		type: String,
 		default: "text"
+	},
+	unitOptions: {
+		type: Array,
+		default: () => []
 	},
 	options: {
 		type: Array,
