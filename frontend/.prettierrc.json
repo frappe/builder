@@ -1,4 +1,8 @@
 {
   "useTabs": true,
-  "bracketSameLine": true
+  "bracketSameLine": true,
+  "singleAttributePerLine": false,
+  "plugins": [
+    "prettier-plugin-tailwindcss"
+  ]
 }
