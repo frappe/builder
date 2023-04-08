@@ -1,10 +1,18 @@
 <template>
-	<component :is="elementProperties.getTag()"
-		class="relative __builder_component__ outline-none" @click.stop="selectBlock($event, elementProperties)"
-		@dblclick.stop v-bind="{ ...elementProperties.attributes, ...elementProperties.skippedAttributes, ...$attrs }"
+	<component
+		:is="elementProperties.getTag()"
+		class="__builder_component__ relative outline-none"
+		@click.stop="selectBlock($event, elementProperties)"
+		@dblclick.stop
+		v-bind="{
+			...elementProperties.attributes,
+			...elementProperties.skippedAttributes,
+			...$attrs,
+		}"
 		:style="{ ...styles, ...elementProperties.editorStyles }"
 		:contenteditable="elementProperties.isText() && isSelected"
 		:class="elementProperties.classes"
+		draggable="false"
 		@mouseover.stop="store.hoveredBlock = elementProperties.blockId"
 		@mouseleave.stop="store.hoveredBlock = null"
 		@blur="elementProperties.innerText = $event.target.innerText"
@@ -14,13 +22,20 @@
 		<BuilderBlock :element-properties="element" v-for="element in elementProperties.children"></BuilderBlock>
 	</component>
 	<teleport to="#block-draggables" v-if="(elementProperties.isContainer() || elementProperties.isRoot()) && !preview">
-		<BlockDraggables v-if="isSelected || elementProperties.isRoot()" :element-properties="elementProperties"
+		<BlockDraggables
+			v-if="isSelected || elementProperties.isRoot()"
+			:element-properties="elementProperties"
 			v-bind="{ ...$attrs }"></BlockDraggables>
 	</teleport>
-	<teleport to='#overlay'>
-		<BlockEditor v-if="(isSelected || store.hoveredBlock === elementProperties.blockId) && !preview"
+	<teleport to="#overlay">
+		<BlockEditor
+			v-if="(isSelected || store.hoveredBlock === elementProperties.blockId) && !preview"
 			:roundable="elementProperties.isContainer() || elementProperties.isDiv() || elementProperties.isImage()"
-			:resizableX="!elementProperties.isRoot()" :resizableY="!elementProperties.isImage() && !elementProperties.isRoot()" :selected="isSelected" :resizable="!elementProperties.isRoot()" :element-properties="elementProperties">
+			:resizableX="!elementProperties.isRoot()"
+			:resizableY="!elementProperties.isImage() && !elementProperties.isRoot()"
+			:selected="isSelected"
+			:resizable="!elementProperties.isRoot()"
+			:element-properties="elementProperties">
 		</BlockEditor>
 	</teleport>
 </template>
@@ -36,7 +51,6 @@ const props = defineProps(["element-properties", "preview"]);
 const emit = defineEmits(["renderComplete"]);
 
 onMounted(() => {
-	props.elementProperties.component = component.value;
 	selectBlock(null, props.elementProperties);
 	if (props.elementProperties.isText()) {
 		component.value.addEventListener("keydown", (e) => {
@@ -51,16 +65,19 @@ onMounted(() => {
 
 const styles = computed(() => {
 	let styleObj = props.elementProperties.styles;
-	if (store.builderState.activeBreakpoint === 'mobile') {
-		styleObj = {...styleObj, ...props.elementProperties.mobileStyles}
-	} else if (store.builderState.activeBreakpoint === 'tablet') {
-		styleObj = {...styleObj, ...props.elementProperties.tabletStyles}
+	if (store.builderState.activeBreakpoint === "mobile") {
+		styleObj = { ...styleObj, ...props.elementProperties.mobileStyles };
+	} else if (store.builderState.activeBreakpoint === "tablet") {
+		styleObj = { ...styleObj, ...props.elementProperties.tabletStyles };
 	}
 	return styleObj;
-})
+});
 
 const isSelected = computed(() => {
-	return store.builderState.selectedBlock === props.elementProperties || store.builderState.selectedBlocks.includes(props.elementProperties);
+	return (
+		store.builderState.selectedBlock === props.elementProperties ||
+		store.builderState.selectedBlocks.includes(props.elementProperties)
+	);
 });
 
 const selectBlock = (e, block) => {
