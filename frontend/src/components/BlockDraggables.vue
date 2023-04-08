@@ -1,7 +1,12 @@
 <template>
-	<div ref="draggableContainer" class="fixed z-20 pointer-events-none">
-		<draggable :list="elementProperties.children"
-			:group="{ name: 'blocks' }" item-key="id" class="w-full h-full flex-col flex pointer-events-auto justify-center items-center block-draggable" @click="handleClick">
+	<div ref="draggableContainer" class="pointer-events-none fixed z-20">
+		<draggable
+			:list="elementProperties.children"
+			:sort="true"
+			:group="{ name: 'blocks' }"
+			item-key="blockId"
+			class="block-draggable pointer-events-none h-full w-full"
+			@click="handleClick">
 			<template #item="{ element }">
 				<!--  -->
 			</template>
@@ -33,5 +38,5 @@ const handleClick = (ev) => {
 	if (target) {
 		target.click();
 	}
-}
+};
 </script>

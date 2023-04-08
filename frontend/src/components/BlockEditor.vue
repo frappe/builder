@@ -1,34 +1,54 @@
 <template>
-	<div class="z-[19] editor fixed border-[1px] border-blue-400 box-content" ref="editor" @click.stop="handleClick"
-		@mousedown.stop="handleMove" @dragstart="setCopyData($event, element, i)" @dragend="copy"
-		@contextmenu.prevent="showContextMenu" :draggable="elementProperties.draggable !== false" :class="{
+	<div
+		class="editor fixed z-[19] box-content border-[1px] border-blue-400"
+		ref="editor"
+		@click.stop="handleClick"
+		@mousedown.stop="handleMove"
+		@dragstart="setCopyData($event, element, i)"
+		@dragend="copy"
+		@contextmenu.prevent="showContextMenu"
+		:draggable="elementProperties.draggable !== false"
+		:class="{
 			'pointer-events-none': elementProperties.blockId === store.hoveredBlock,
 		}">
-		<BoxResizer v-if="selected && target && !elementProperties.isRoot()" :targetProps="elementProperties" :target="target"></BoxResizer>
+		<BoxResizer
+			v-if="selected && target && !elementProperties.isRoot()"
+			:targetProps="elementProperties"
+			:target="target"></BoxResizer>
 		<PaddingHandler v-if="selected && target" :targetProps="elementProperties" :disableHandlers="false">
 		</PaddingHandler>
-		<BorderRadiusHandler v-if="selected && target && !elementProperties.isRoot()" :targetProps="elementProperties" :target="target">
-		</BorderRadiusHandler>
-		<ContextMenu v-if="contextMenuVisible" :posX="posX" :posY="posY" :options="contextMenuOptions"
-			@select="handleContextMenuSelect" v-on-click-outside="() => contextMenuVisible = false" />
-		<Dialog class="z-40" :options="{
-			title: 'New Component',
-			size: 'sm',
-			actions: [
-				{
-					label: 'Save',
-					appearance: 'primary',
-					handler: ({ close }) => {
-						createComponent.submit({
-							block: elementProperties,
-							component_name: componentName,
-						});
-						close()
+		<BorderRadiusHandler
+			v-if="selected && target && !elementProperties.isRoot()"
+			:targetProps="elementProperties"
+			:target="target"></BorderRadiusHandler>
+		<ContextMenu
+			v-if="contextMenuVisible"
+			:posX="posX"
+			:posY="posY"
+			:options="contextMenuOptions"
+			@select="handleContextMenuSelect"
+			v-on-click-outside="() => (contextMenuVisible = false)" />
+		<Dialog
+			class="z-40"
+			:options="{
+				title: 'New Component',
+				size: 'sm',
+				actions: [
+					{
+						label: 'Save',
+						appearance: 'primary',
+						handler: ({ close }) => {
+							createComponent.submit({
+								block: elementProperties,
+								component_name: componentName,
+							});
+							close();
+						},
 					},
-				},
-				{ label: 'Cancel' },
-			],
-		}" v-model="showDialog">
+					{ label: 'Cancel' },
+				],
+			}"
+			v-model="showDialog">
 			<template #body-content>
 				<Input type="text" v-model="componentName" label="Component Name" required />
 			</template>
@@ -36,41 +56,44 @@
 	</div>
 </template>
 <script setup>
-import { vOnClickOutside } from '@vueuse/components';
+import { vOnClickOutside } from "@vueuse/components";
 import { useDebounceFn } from "@vueuse/shared";
-import { Dialog, Input } from "frappe-ui";
-import { getCurrentInstance, onMounted, reactive, ref } from "vue";
-import { createResource } from "frappe-ui";
+import { Dialog, Input, createResource } from "frappe-ui";
+import { getCurrentInstance, nextTick, onMounted, reactive, ref } from "vue";
+
 import useStore from "../store";
 import setGuides from "../utils/guidesTracker";
 import trackTarget from "../utils/trackTarget";
 import BorderRadiusHandler from "./BorderRadiusHandler.vue";
 import BoxResizer from "./BoxResizer.vue";
-import ContextMenu from './ContextMenu.vue';
+import ContextMenu from "./ContextMenu.vue";
 import PaddingHandler from "./PaddingHandler.vue";
 
-
-const props = defineProps(["movable", "resizable", "roundable", "resizableX", "resizableY", "element-properties", "selected"]);
+const props = defineProps([
+	"movable",
+	"resizable",
+	"roundable",
+	"resizableX",
+	"resizableY",
+	"element-properties",
+	"selected",
+]);
 const store = useStore();
 const editor = ref(null);
 let editorWrapper = ref(null);
 let targetProps = props.elementProperties;
-let target = reactive(targetProps.component);
 let currentInstance = null;
 let guides = null;
+let target = ref(null);
 
 onMounted(() => {
 	currentInstance = getCurrentInstance();
 	editorWrapper = editor.value;
-	target = reactive(currentInstance.parent.refs.component);
+	target.value = currentInstance.parent.refs.component;
 	guides = setGuides(target);
-	props.elementProperties.targetElement = target
-	if (target instanceof HTMLElement) {
-		trackTarget(target, editorWrapper);
-	} else {
-		return false;
-	}
-})
+	props.elementProperties.targetElement = target;
+	trackTarget(target.value, editorWrapper);
+});
 
 const handleClick = (ev) => {
 	const editorWrapper = editor.value;
@@ -83,10 +106,10 @@ const handleClick = (ev) => {
 		element = document.elementFromPoint(ev.x, ev.y);
 	}
 	element.click();
-}
+};
 
 const handleMove = (ev) => {
-	if (!props.movable) return;
+	// if (!props.movable) return;
 	const startX = ev.clientX;
 	const startY = ev.clientY;
 	const startLeft = target.offsetLeft;
@@ -97,15 +120,16 @@ const handleMove = (ev) => {
 	const docCursor = document.body.style.cursor;
 	document.body.style.cursor = window.getComputedStyle(ev.target).cursor;
 
-	const mousemove = (mouseMoveEvent) => {
+	const mousemove = async (mouseMoveEvent) => {
 		const scale = store.canvas.scale;
 		const movementX = (mouseMoveEvent.clientX - startX) / scale;
 		const movementY = (mouseMoveEvent.clientY - startY) / scale;
-
-		const finalLeft = guides.getFinalLeft(startLeft + movementX);
+		let finalLeft = startLeft + movementX;
+		await nextTick();
+		const leftOffset = guides.getLeftPositionOffset(startLeft + movementX);
 
 		targetProps.setStyle("position", "absolute");
-		targetProps.setStyle("left", `${finalLeft}px`);
+		targetProps.setStyle("left", `${finalLeft + leftOffset}px`);
 		targetProps.setStyle("top", `${startTop + movementY}px`);
 		mouseMoveEvent.preventDefault();
 	};
@@ -115,7 +139,7 @@ const handleMove = (ev) => {
 		document.removeEventListener("mousemove", mousemove);
 		mouseUpEvent.preventDefault();
 	});
-}
+};
 
 const setCopyData = useDebounceFn((event, data) => {
 	if (event.altKey) {
@@ -137,7 +161,7 @@ const relayEventToTarget = (event) => {
 	let eventForTarget = new window[event.constructor.name](event.type, event);
 	target.dispatchEvent(eventForTarget);
 	event.preventDefault();
-}
+};
 
 // Context menu
 const contextMenuVisible = ref(false);
@@ -161,9 +185,9 @@ const handleContextMenuSelect = (action) => {
 const copyStyle = () => {
 	store.copiedStyle = {
 		blockId: props.elementProperties.blockId,
-		style: props.elementProperties.getStylesCopy()
+		style: props.elementProperties.getStylesCopy(),
 	};
-}
+};
 
 const createComponent = createResource({
 	url: "website_builder.website_builder.doctype.web_page_component.web_page_component.create_component",
@@ -179,9 +203,8 @@ const createComponent = createResource({
 });
 
 const saveAsComponent = () => {
-	console.log('save as component');
 	showDialog.value = true;
-}
+};
 
 const duplicateBlock = (block) => {
 	if (!block) {
@@ -193,16 +216,20 @@ const duplicateBlock = (block) => {
 	} else {
 		store.builderState.blocks.push(block);
 	}
-}
+};
 
 const pasteStyle = () => {
 	Object.assign(store.builderState.selectedBlock, store.copiedStyle.style);
-}
+};
 
 const contextMenuOptions = [
-	{ label: 'Copy Style', action: copyStyle },
-	{ label: 'Paste Style', action: pasteStyle, condition: () => store.copiedStyle && store.copiedStyle.blockId !== props.elementProperties.blockId },
-	{ label: 'Save as Component', action: saveAsComponent },
-	{ label: 'Duplicate', action: duplicateBlock }
+	{ label: "Copy Style", action: copyStyle },
+	{
+		label: "Paste Style",
+		action: pasteStyle,
+		condition: () => store.copiedStyle && store.copiedStyle.blockId !== props.elementProperties.blockId,
+	},
+	{ label: "Save as Component", action: saveAsComponent },
+	{ label: "Duplicate", action: duplicateBlock },
 ];
 </script>

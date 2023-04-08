@@ -1,47 +1,67 @@
 <template>
-	<div class="opacity-60 group">
-		<div class="absolute padding-handler bg-purple-400 w-full flex" :style="{
-			height: topPaddingHandlerHeight + 'px',
-		}" :class="{
-			'cursor-ns-resize': !disableHandlers
-		}" @mousedown.stop="handlePadding" ref="topPaddingHandler">
+	<div class="group opacity-60">
+		<div
+			class="padding-handler absolute flex w-full bg-purple-400"
+			:style="{
+				height: topPaddingHandlerHeight + 'px',
+			}"
+			:class="{
+				'cursor-ns-resize': !disableHandlers,
+			}"
+			@mousedown.stop="handlePadding"
+			ref="topPaddingHandler">
 			<!-- <div class="m-auto group-hover:block hidden">{{ targetProps.styles.paddingTop }}</div> -->
 		</div>
-		<div class="absolute padding-handler bg-purple-400 bottom-0 w-full flex" :style="{
-			height: bottomPaddingHandlerHeight + 'px',
-		}" :class="{
-			'cursor-ns-resize': !disableHandlers
-		}" @mousedown.stop="handlePadding" ref="bottomPaddingHandler">
+		<div
+			class="padding-handler absolute bottom-0 flex w-full bg-purple-400"
+			:style="{
+				height: bottomPaddingHandlerHeight + 'px',
+			}"
+			:class="{
+				'cursor-ns-resize': !disableHandlers,
+			}"
+			@mousedown.stop="handlePadding"
+			ref="bottomPaddingHandler">
 			<!-- <div class="m-auto group-hover:block hidden">{{ targetProps.styles.paddingBottom }}</div> -->
 		</div>
-		<div class="absolute padding-handler bg-purple-400 left-0 h-full flex" :style="{
-			width: leftPaddingHandlerWidth + 'px',
-		}" :class="{
-			'cursor-ew-resize': !disableHandlers
-		}" @mousedown.stop="handlePadding" ref="leftPaddingHandler">
+		<div
+			class="padding-handler absolute left-0 flex h-full bg-purple-400"
+			:style="{
+				width: leftPaddingHandlerWidth + 'px',
+			}"
+			:class="{
+				'cursor-ew-resize': !disableHandlers,
+			}"
+			@mousedown.stop="handlePadding"
+			ref="leftPaddingHandler">
 			<!-- <div class="m-auto group-hover:block hidden">{{ targetProps.styles.paddingLeft }}</div> -->
 		</div>
-		<div class="absolute padding-handler bg-purple-400 right-0 h-full flex" :style="{
-			width: rightPaddingHandlerWidth + 'px',
-		}" :class="{
-			'cursor-ew-resize': !disableHandlers
-		}" @mousedown.stop="handlePadding" ref="rightPaddingHandler">
+		<div
+			class="padding-handler absolute right-0 flex h-full bg-purple-400"
+			:style="{
+				width: rightPaddingHandlerWidth + 'px',
+			}"
+			:class="{
+				'cursor-ew-resize': !disableHandlers,
+			}"
+			@mousedown.stop="handlePadding"
+			ref="rightPaddingHandler">
 			<!-- <div class="m-auto group-hover:block hidden">{{ targetProps.styles.paddingRight }}</div> -->
 		</div>
 	</div>
 </template>
 <script setup>
-import useStore from '../store';
-import { ref, computed } from 'vue';
-import BlockProperties from '../utils/blockProperties';
+import useStore from "../store";
+import { ref, computed } from "vue";
+import BlockProperties from "../utils/blockProperties";
 const props = defineProps({
 	targetProps: {
 		type: BlockProperties,
 	},
 	disableHandlers: {
 		type: Boolean,
-		default: false
-	}
+		default: false,
+	},
 });
 
 const store = useStore();
@@ -54,17 +74,17 @@ let leftPaddingHandler = ref(null);
 let rightPaddingHandler = ref(null);
 
 const topPaddingHandlerHeight = computed(() => {
-	return (parseInt(targetProps.styles.paddingTop, 10)) * store.canvas.scale;
-})
+	return parseInt(targetProps.styles.paddingTop, 10) * store.canvas.scale;
+});
 const bottomPaddingHandlerHeight = computed(() => {
-	return (parseInt(targetProps.styles.paddingBottom, 10)) * store.canvas.scale;
-})
+	return parseInt(targetProps.styles.paddingBottom, 10) * store.canvas.scale;
+});
 const leftPaddingHandlerWidth = computed(() => {
-	return (parseInt(targetProps.styles.paddingLeft, 10)) * store.canvas.scale;
-})
+	return parseInt(targetProps.styles.paddingLeft, 10) * store.canvas.scale;
+});
 const rightPaddingHandlerWidth = computed(() => {
-	return (parseInt(targetProps.styles.paddingRight, 10)) * store.canvas.scale;
-})
+	return parseInt(targetProps.styles.paddingRight, 10) * store.canvas.scale;
+});
 
 const handlePadding = (ev) => {
 	if (props.disableHandlers) return;
@@ -104,11 +124,11 @@ const handlePadding = (ev) => {
 
 		if (mouseMoveEvent.shiftKey) {
 			if (affectingAxis === "y") {
-			targetProps.setStyle("paddingTop", movement + "px");
-			targetProps.setStyle("paddingBottom", movement + "px");
+				targetProps.setStyle("paddingTop", movement + "px");
+				targetProps.setStyle("paddingBottom", movement + "px");
 			} else if (affectingAxis === "x") {
-			targetProps.setStyle("paddingLeft", movement + "px");
-			targetProps.setStyle("paddingRight", movement + "px");
+				targetProps.setStyle("paddingLeft", movement + "px");
+				targetProps.setStyle("paddingRight", movement + "px");
 			}
 		}
 
@@ -120,5 +140,5 @@ const handlePadding = (ev) => {
 		document.removeEventListener("mousemove", mousemove);
 		mouseUpEvent.preventDefault();
 	});
-}
+};
 </script>

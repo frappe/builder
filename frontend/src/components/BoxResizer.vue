@@ -1,24 +1,31 @@
 <template>
-	<span class="resize-dimensions bg-gray-600 absolute h-8 w-20 justify-center rounded-full text-sm right-[-40px] bottom-[-40px] text-white flex whitespace-nowrap items-center p-2 opacity-80" v-if="resizing">
-		{{ parseInt(targetProps.styles.width || 100) }} x {{ parseInt(targetProps.styles.height) }}
+	<span
+		class="resize-dimensions absolute right-[-40px] bottom-[-40px] flex h-8 w-20 items-center justify-center whitespace-nowrap rounded-full bg-gray-600 p-2 text-sm text-white opacity-80"
+		v-if="resizing"
+	>
+		{{ parseInt(targetProps.styles.width || 100) }} x
+		{{ parseInt(targetProps.styles.height) }}
 	</span>
-	<div class="absolute w-[4px] border-none bg-transparent top-0
-		bottom-0 left-[-2px] left-handle ew-resize pointer-events-auto">
-	</div>
-	<div class="absolute w-[4px] border-none bg-transparent top-0
-		bottom-0 right-[-2px] right-handle pointer-events-auto" :class="{ 'cursor-ew-resize': true }"
-		@mousedown.stop="handleRightResize">
-	</div>
-	<div class="absolute h-[4px] border-none bg-transparent top-[-2px]
-		right-0 left-0 top-handle ns-resize pointer-events-auto">
-	</div>
-	<div class="absolute h-[4px] border-none bg-transparent bottom-[-2px]
-		right-0 left-0 bottom-handle pointer-events-auto" :class="{ 'cursor-ns-resize': true }"
-			@mousedown.stop="handleBottomResize">
-	</div>
-	<div class="absolute w-[8px] h-[8px] border-[1px] border-blue-400 rounded-full bg-white
-		bottom-[-4px] right-[-4px] cursor-nwse-resize pointer-events-auto" @mousedown.stop="handleBottomCornerResize">
-	</div>
+	<div
+		class="left-handle ew-resize pointer-events-auto absolute top-0 bottom-0 left-[-2px] w-[4px] border-none bg-transparent"
+	></div>
+	<div
+		class="right-handle pointer-events-auto absolute top-0 bottom-0 right-[-2px] w-[4px] border-none bg-transparent"
+		:class="{ 'cursor-ew-resize': true }"
+		@mousedown.stop="handleRightResize"
+	></div>
+	<div
+		class="top-handle ns-resize pointer-events-auto absolute top-[-2px] right-0 left-0 h-[4px] border-none bg-transparent"
+	></div>
+	<div
+		class="bottom-handle pointer-events-auto absolute bottom-[-2px] right-0 left-0 h-[4px] border-none bg-transparent"
+		:class="{ 'cursor-ns-resize': true }"
+		@mousedown.stop="handleBottomResize"
+	></div>
+	<div
+		class="pointer-events-auto absolute bottom-[-4px] right-[-4px] h-[8px] w-[8px] cursor-nwse-resize rounded-full border-[1px] border-blue-400 bg-white"
+		@mousedown.stop="handleBottomCornerResize"
+	></div>
 </template>
 <script setup>
 import { ref, onMounted } from "vue";
@@ -28,11 +35,11 @@ import guidesTracker from "../utils/guidesTracker";
 
 const props = defineProps({
 	targetProps: {
-		type: BlockProperties
+		type: BlockProperties,
 	},
 	target: {
-		type: HTMLElement
-	}
+		type: HTMLElement,
+	},
 });
 
 const store = useStore();
@@ -43,7 +50,7 @@ let guides = null;
 
 onMounted(() => {
 	guides = guidesTracker(target);
-})
+});
 
 const handleRightResize = (ev) => {
 	const startX = ev.clientX;
@@ -56,10 +63,10 @@ const handleRightResize = (ev) => {
 	guides.showX();
 	const mousemove = (mouseMoveEvent) => {
 		// movement / scale * speed
-		const movement = (mouseMoveEvent.clientX - startX) / store.canvas.scale * 2;
+		const movement = ((mouseMoveEvent.clientX - startX) / store.canvas.scale) * 2;
 		if (mouseMoveEvent.shiftKey) {
-			const movementPercent = movement / parentWidth * 100;
-			const startWidthPercent = startWidth / parentWidth * 100;
+			const movementPercent = (movement / parentWidth) * 100;
+			const startWidthPercent = (startWidth / parentWidth) * 100;
 			const finalHeight = Math.round(startWidthPercent + movementPercent);
 			targetProps.setStyle("width", `${finalHeight}%`);
 		} else {
@@ -76,10 +83,10 @@ const handleRightResize = (ev) => {
 		resizing.value = false;
 		guides.hideX();
 	});
-}
+};
 
 const handleBottomResize = (ev) => {
- 	const startY = ev.clientY;
+	const startY = ev.clientY;
 	const startHeight = target.offsetHeight;
 
 	// to disable cursor jitter
@@ -103,7 +110,7 @@ const handleBottomResize = (ev) => {
 		resizing.value = false;
 		guides.hideY();
 	});
-}
+};
 
 const handleBottomCornerResize = (ev) => {
 	const startX = ev.clientX;
@@ -132,5 +139,5 @@ const handleBottomCornerResize = (ev) => {
 		mouseUpEvent.preventDefault();
 		resizing.value = false;
 	});
-}
+};
 </script>
