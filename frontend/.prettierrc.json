@@ -1,6 +1,8 @@
 {
   "useTabs": true,
   "bracketSameLine": true,
+  "bracketSpacing": true,
+  "htmlWhitespaceSensitivity": "ignore",
   "singleAttributePerLine": false,
   "printWidth": 120,
   "plugins": [
