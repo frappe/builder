@@ -13,7 +13,14 @@ module.exports = {
 		quotes: ["error", "double"],
 		indent: ["error", "tab"],
 		"no-param-reassign": ["error", { props: false }],
-		"vue/html-indent": ["error", "tab"],
+		"vue/html-indent": [
+			"error",
+			"tab",
+			{
+				alignAttributesVertically: false,
+				ignores: ["VAttribute"],
+			},
+		],
 		"vue/html-closing-bracket-newline": [
 			"error",
 			{
@@ -30,6 +37,14 @@ module.exports = {
 				multiline: {
 					max: 3,
 				},
+			},
+		],
+		"vue/v-on-event-hyphenation": [
+			"warn",
+			"always",
+			{
+				autofix: true,
+				ignore: [],
 			},
 		],
 	},
