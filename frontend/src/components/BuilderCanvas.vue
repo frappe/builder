@@ -8,34 +8,55 @@
 		<div class="absolute" id="block-draggables" />
 		<div class="overlay absolute" id="overlay" />
 		<BlockSnapGuides />
-		<div class="fixed flex" ref="canvas"
+		<div
+			class="fixed flex"
+			ref="canvas"
 			:style="{
 				transform: `scale(${store.canvas.scale}) translate(${store.canvas.translateX}px, ${store.canvas.translateY}px)`,
 				minHeight: '1400px',
 				height: '100%',
 			}">
+			<div class="absolute top-[-60px] right-0 flex h-fit rounded-md bg-white px-3 dark:bg-zinc-900">
+				<div
+					class="w-auto cursor-pointer p-2"
+					v-for="breakpoint in store.deviceBreakpoints"
+					:key="breakpoint.device"
+					@click.stop="breakpoint.visible = !breakpoint.visible">
+					<FeatherIcon
+						:name="breakpoint.icon"
+						class="h-8 w-6"
+						:class="{
+							'text-gray-700 dark:text-zinc-50': breakpoint.visible,
+							'text-gray-300 dark:text-zinc-500': !breakpoint.visible,
+						}" />
+				</div>
+			</div>
 			<div
-				class="canvas rounded-md bg-white ml-20 h-full relative"
+				class="canvas relative ml-20 h-full rounded-md bg-white"
 				:style="{
 					background: store.canvas.background,
-					width: value.width + 'px',
+					width: breakpoint.width + 'px',
 				}"
-				v-for="(value, breakpoint) in store.deviceBreakpoints"
-				:key="breakpoint">
-				<BuilderBlock :element-properties="store.builderState.blocks[0]" v-if="showBlocks" :breakpoint="breakpoint" />
+				v-for="breakpoint in visibleBreakpoints"
+				:key="breakpoint.device">
+				<BuilderBlock
+					:element-properties="store.builderState.blocks[0]"
+					v-if="showBlocks"
+					:breakpoint="breakpoint.device" />
 			</div>
 		</div>
 	</div>
 </template>
 <script setup>
-import { nextTick, onMounted, ref } from "vue";
+import { nextTick, onMounted, ref, computed, watch, reactive } from "vue";
+import { useElementBounding } from "@vueuse/core";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BuilderBlock from "./BuilderBlock.vue";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import { useDebouncedRefHistory } from "@vueuse/core";
 import { storeToRefs } from "pinia";
-import { toast } from "frappe-ui";
+import { FeatherIcon, toast } from "frappe-ui";
 
 const store = useStore();
 const canvasContainer = ref(null);
@@ -53,11 +74,21 @@ const clearSelectedComponent = () => {
 	document.activeElement.blur();
 };
 
+const visibleBreakpoints = computed(() => {
+	return store.deviceBreakpoints.filter(
+		(breakpoint) => breakpoint.visible || breakpoint.device === "desktop"
+	);
+});
+
 document.addEventListener("keydown", (e) => {
 	if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
 		return;
 	}
-	if (e.key === "Backspace" && store.builderState.selectedBlock && !e.target.closest(".__builder_component__")) {
+	if (
+		e.key === "Backspace" &&
+		store.builderState.selectedBlock &&
+		!e.target.closest(".__builder_component__")
+	) {
 		function findBlockAndRemove(blocks, blockId) {
 			if (blockId === "root") {
 				toast({
@@ -87,30 +118,37 @@ document.addEventListener("keydown", (e) => {
 	}
 });
 
-onMounted(() => {
-	const paddingX = 500;
-	const paddingY = 250;
-	const containerBound = canvasContainer.value.getBoundingClientRect();
-	const canvasBound = canvas.value.getBoundingClientRect();
-	if (canvasBound.width > containerBound.width) {
-		const scale = containerBound.width / (canvasBound.width + paddingX * 2);
-		store.canvas.initialScale = store.canvas.scale = scale;
+const containerBound = reactive(useElementBounding(canvasContainer));
+const canvasBound = reactive(useElementBounding(canvas));
+
+const setScaleAndTranslate = async () => {
+	const paddingX = 300;
+	const paddingY = 400;
+	store.canvas.scale = 1;
+	store.canvas.translateX = 0;
+	store.canvas.translateY = 0;
+
+	await nextTick();
+	canvasBound.update();
+	const containerWidth = containerBound.width;
+	const containerHeight = containerBound.height;
+	store.canvas.initialScale = store.canvas.scale = Math.min(
+		containerWidth / (canvasBound.width + paddingX * 2),
+		containerHeight / (canvasBound.height + paddingY * 2)
+	);
+
+	await nextTick();
+	const scale = store.canvas.scale;
+	canvasBound.update();
+	const diffY = containerBound.top - canvasBound.top + paddingY * scale;
+	if (diffY !== 0) {
+		store.canvas.initialTranslateY = store.canvas.translateY = diffY / scale;
 	}
+	showBlocks.value = true;
+};
 
-	nextTick(() => {
-		const canvasBound = canvas.value.getBoundingClientRect();
-		const scale = store.canvas.scale;
-		const diffX = containerBound.left - canvasBound.left + paddingX * scale;
-		if (diffX !== 0) {
-			store.canvas.initialTranslateX = store.canvas.translateX = diffX / scale;
-		}
-		const diffY = containerBound.top - canvasBound.top + paddingY * scale;
-		if (diffY !== 0) {
-			store.canvas.initialTranslateY = store.canvas.translateY = diffY / scale;
-		}
-		showBlocks.value = true;
-	});
-
+onMounted(() => {
+	setScaleAndTranslate();
 	setPanAndZoom(store.canvas, canvas.value, canvasContainer.value);
 	const { builderState } = storeToRefs(store);
 	const { undo, redo, canUndo, canRedo } = useDebouncedRefHistory(builderState, {
@@ -128,7 +166,11 @@ onMounted(() => {
 	});
 
 	document.addEventListener("keydown", (e) => {
-		if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.getAttribute("contenteditable")) {
+		if (
+			e.target.tagName === "INPUT" ||
+			e.target.tagName === "TEXTAREA" ||
+			e.target.getAttribute("contenteditable")
+		) {
 			return;
 		}
 		if (e.key === "z" && e.metaKey && !e.shiftKey && canUndo.value) {
@@ -156,4 +198,6 @@ onMounted(() => {
 		return null;
 	}
 });
+
+watch(store.deviceBreakpoints, setScaleAndTranslate, { deep: true });
 </script>
