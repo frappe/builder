@@ -1,27 +1,40 @@
 <template>
-	<div class="absolute border-radius-resize w-[9px] h-[9px] border-[1px] border-blue-400 bg-white rounded-full pointer-events-auto top-2 left-2 cursor-pointer"
+	<div
+		class="border-radius-resize pointer-events-auto absolute top-2 left-2 h-[9px] w-[9px] cursor-pointer rounded-full border-[1px] border-blue-400 bg-white"
 		:class="{
-			'hidden': store.canvas.scale < 0.7,
-		}" @mousedown.stop="handleRounded">
-		<div class="absolute w-[3px] h-[3px] bg-blue-400 top-[2px] left-[2px] border-none rounded-full pointer-events-none">
+			hidden: store.canvas.scale < 0.7,
+		}"
+		@mousedown.stop="handleRounded">
+		<div class="pointer-events-none absolute top-[2px] left-[2px] h-[3px] w-[3px] rounded-full border-none bg-blue-400">
+			<div
+				class="absolute top-2 left-2 w-fit rounded-full bg-slate-800 py-1 px-3 text-sm text-white opacity-70"
+				v-if="updating">
+				{{ borderRadius }}
+			</div>
 		</div>
 	</div>
 </template>
 <script setup>
 import useStore from "../store";
 import BlockProperties from "../utils/blockProperties";
+import { ref } from "vue";
+
 const store = useStore();
 const props = defineProps({
 	targetProps: {
 		type: BlockProperties,
+		required: true,
 	},
 	target: {
-		type: Object
-	}
+		type: Object,
+		required: true,
+	},
 });
 
 const targetProps = props.targetProps;
 const target = props.target;
+const borderRadius = ref(parseInt(target.style.borderRadius, 10) || 0);
+const updating = ref(false);
 
 const handleRounded = (ev) => {
 	const startX = ev.clientX;
@@ -50,10 +63,12 @@ const handleRounded = (ev) => {
 	let lastX = startX;
 	let lastY = startY;
 
+	updating.value = true;
+
 	const mousemove = (mouseMoveEvent) => {
 		mouseMoveEvent.preventDefault();
-		const movementX = (mouseMoveEvent.clientX - lastX);
-		const movementY = (mouseMoveEvent.clientY - lastY);
+		const movementX = mouseMoveEvent.clientX - lastX;
+		const movementY = mouseMoveEvent.clientY - lastY;
 
 		// mean of movement on both axis
 		const movement = (movementX + movementY) / 2;
@@ -62,12 +77,12 @@ const handleRounded = (ev) => {
 			minLeft = -(handleWidth / 2);
 		}
 		let radius = Math.round(parseInt(target.style.borderRadius || 0, 10) + movement);
-		radius = Math.max(0, Math.min(radius, maxRadius))
+		radius = Math.max(0, Math.min(radius, maxRadius));
 
 		const ratio = radius / maxRadius;
-		const newTop = Math.max(minTop, ((maxDistance * ratio) - handleHeight / 2));
-		const newLeft = Math.max(minLeft, ((maxDistance * ratio) - handleWidth / 2));
-
+		const newTop = Math.max(minTop, maxDistance * ratio - handleHeight / 2);
+		const newLeft = Math.max(minLeft, maxDistance * ratio - handleWidth / 2);
+		borderRadius.value = radius;
 		targetProps.setStyle("borderRadius", `${radius}px`);
 		handle.style.top = `${newTop}px`;
 		handle.style.left = `${newLeft}px`;
@@ -82,9 +97,10 @@ const handleRounded = (ev) => {
 			handle.style.left = `${10}px`;
 		}
 
+		updating.value = false;
 		document.body.style.cursor = docCursor;
 		document.removeEventListener("mousemove", mousemove);
 		mouseUpEvent.preventDefault();
 	});
-}
+};
 </script>
