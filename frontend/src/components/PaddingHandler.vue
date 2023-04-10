@@ -1,57 +1,108 @@
 <template>
-	<div class="group opacity-60">
+	<div class="group" :class="{
+		'opacity-40': !updating,
+		'opacity-70': updating,
+	}" @click.stop>
 		<div
-			class="padding-handler absolute flex w-full bg-purple-400"
+			class="padding-handler absolute flex w-full"
 			:style="{
 				height: topPaddingHandlerHeight + 'px',
 			}"
 			:class="{
-				'cursor-ns-resize': !disableHandlers,
+				'bg-transparent': !updating,
+				'bg-purple-400': updating,
 			}"
-			@mousedown.stop="handlePadding"
 			ref="topPaddingHandler">
+			<div
+				class="bg-purple-400 border-2 border-purple-500 absolute hover:scale-110 left-[50%] rounded-full" :style="{
+					borderWidth: (1 * store.canvas.scale) + 'px',
+					bottom: topHandle.bottom,
+					left: topHandle.left,
+					height: topHandle.height + 'px',
+					width: topHandle.width + 'px',
+				}"
+				:class="{
+					'cursor-ns-resize': !disableHandlers,
+				}"
+			@mousedown.stop="handlePadding($event,topPaddingHandler)" />
 			<div class="m-auto text-sm text-white" v-show="updating">
 				{{ blockStyles.paddingTop }}
 			</div>
 		</div>
 		<div
-			class="padding-handler absolute bottom-0 flex w-full bg-purple-400"
+			class="padding-handler absolute bottom-0 flex w-full"
 			:style="{
 				height: bottomPaddingHandlerHeight + 'px',
 			}"
 			:class="{
 				'cursor-ns-resize': !disableHandlers,
+				'bg-transparent': !updating,
+				'bg-purple-400': updating,
 			}"
-			@mousedown.stop="handlePadding"
 			ref="bottomPaddingHandler">
+			<div
+				class="bg-purple-400 border-2 border-purple-500 absolute hover:scale-110 left-[50%] rounded-full" :style="{
+					borderWidth: (1 * store.canvas.scale) + 'px',
+					top: bottomHandle.top,
+					left: bottomHandle.left,
+					height: bottomHandle.height + 'px',
+					width: bottomHandle.width + 'px',
+				}" :class="{
+					'cursor-ns-resize': !disableHandlers,
+				}"
+			@mousedown.stop="handlePadding($event,bottomPaddingHandler)" />
 			<div class="m-auto text-sm text-white" v-show="updating">
 				{{ blockStyles.paddingBottom }}
 			</div>
 		</div>
 		<div
-			class="padding-handler absolute left-0 flex h-full bg-purple-400"
+			class="padding-handler absolute left-0 flex h-full"
 			:style="{
 				width: leftPaddingHandlerWidth + 'px',
 			}"
 			:class="{
 				'cursor-ew-resize': !disableHandlers,
+				'bg-transparent': !updating,
+				'bg-purple-400': updating,
 			}"
-			@mousedown.stop="handlePadding"
 			ref="leftPaddingHandler">
+			<div
+				class="bg-purple-400 border-2 border-purple-500 absolute hover:scale-110 top-[50%] rounded-full" :style="{
+					borderWidth: (1 * store.canvas.scale) + 'px',
+					right: leftHandle.right,
+					top: leftHandle.top,
+					height: leftHandle.height + 'px',
+					width: leftHandle.width + 'px',
+				}" :class="{
+					'cursor-ew-resize': !disableHandlers,
+				}"
+			@mousedown.stop="handlePadding($event,leftPaddingHandler)" />
 			<div class="m-auto text-sm text-white" v-show="updating">
 				{{ blockStyles.paddingLeft }}
 			</div>
 		</div>
 		<div
-			class="padding-handler absolute right-0 flex h-full bg-purple-400"
+			class="padding-handler absolute right-0 flex h-full"
 			:style="{
 				width: rightPaddingHandlerWidth + 'px',
 			}"
 			:class="{
 				'cursor-ew-resize': !disableHandlers,
+				'bg-transparent': !updating,
+				'bg-purple-400': updating,
 			}"
-			@mousedown.stop="handlePadding"
 			ref="rightPaddingHandler">
+			<div
+				class="bg-purple-400 border-2 border-purple-500 absolute hover:scale-110 top-[50%] rounded-full" :style="{
+					borderWidth: (1 * store.canvas.scale) + 'px',
+					left: rightHandle.left,
+					top: rightHandle.top,
+					height: rightHandle.height + 'px',
+					width: rightHandle.width + 'px',
+				}" :class="{
+					'cursor-ew-resize': !disableHandlers,
+				}"
+			@mousedown.stop="handlePadding($event,rightPaddingHandler)" />
 			<div class="m-auto text-sm text-white" v-show="updating">
 				{{ blockStyles.paddingRight }}
 			</div>
@@ -120,7 +171,44 @@ const rightPaddingHandlerWidth = computed(() => {
 	return (parseInt(blockStyles.value.paddingRight, 10) || 5) * store.canvas.scale;
 });
 
-const handlePadding = (ev) => {
+const topHandle = computed(() => {
+	return {
+		width: 20 * store.canvas.scale,
+		height: 5 * store.canvas.scale,
+		bottom: `calc(-8px * ${store.canvas.scale})`,
+		left: `calc(50% - ${10 * store.canvas.scale}px)`,
+	};
+});
+
+const bottomHandle = computed(() => {
+	return {
+		width: 20 * store.canvas.scale,
+		height: 5 * store.canvas.scale,
+		top: `calc(-8px * ${store.canvas.scale})`,
+		left: `calc(50% - ${10 * store.canvas.scale}px)`,
+	};
+});
+
+const leftHandle = computed(() => {
+	return {
+		width: 5 * store.canvas.scale,
+		height: 20 * store.canvas.scale,
+		right: `calc(-8px * ${store.canvas.scale})`,
+		top: `calc(50% - ${10 * store.canvas.scale}px)`,
+	};
+});
+
+const rightHandle = computed(() => {
+	return {
+		width: 5 * store.canvas.scale,
+		height: 20 * store.canvas.scale,
+		left: `calc(-8px * ${store.canvas.scale})`,
+		top: `calc(50% - ${10 * store.canvas.scale}px)`,
+	};
+});
+
+
+const handlePadding = (ev, handler) => {
 	if (props.disableHandlers) return;
 	updating.value = true;
 	const startY = ev.clientY;
@@ -140,19 +228,19 @@ const handlePadding = (ev) => {
 		let affectingAxis = null;
 		props.onUpdate && props.onUpdate();
 
-		if (ev.target === topPaddingHandler.value) {
+		if (handler === topPaddingHandler.value) {
 			movement = Math.max(startTop + mouseMoveEvent.clientY - startY, 0);
 			targetProps.setStyle("paddingTop", movement + "px");
 			affectingAxis = "y";
-		} else if (ev.target === bottomPaddingHandler.value) {
+		} else if (handler === bottomPaddingHandler.value) {
 			movement = Math.max(startBottom + startY - mouseMoveEvent.clientY, 0);
 			targetProps.setStyle("paddingBottom", movement + "px");
 			affectingAxis = "y";
-		} else if (ev.target === leftPaddingHandler.value) {
+		} else if (handler === leftPaddingHandler.value) {
 			movement = Math.max(startLeft + mouseMoveEvent.clientX - startX, 0);
 			targetProps.setStyle("paddingLeft", movement + "px");
 			affectingAxis = "x";
-		} else if (ev.target === rightPaddingHandler.value) {
+		} else if (handler === rightPaddingHandler.value) {
 			movement = Math.max(startRight + startX - mouseMoveEvent.clientX, 0);
 			targetProps.setStyle("paddingRight", movement + "px");
 			affectingAxis = "x";
