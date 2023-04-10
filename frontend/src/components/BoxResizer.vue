@@ -1,34 +1,28 @@
 <template>
 	<span
 		class="resize-dimensions absolute right-[-40px] bottom-[-40px] flex h-8 w-20 items-center justify-center whitespace-nowrap rounded-full bg-gray-600 p-2 text-sm text-white opacity-80"
-		v-if="resizing"
-	>
+		v-if="resizing">
 		{{ parseInt(targetProps.styles.width || 100) }} x
 		{{ parseInt(targetProps.styles.height) }}
 	</span>
 	<div
-		class="left-handle ew-resize pointer-events-auto absolute top-0 bottom-0 left-[-2px] w-[4px] border-none bg-transparent"
-	></div>
+		class="left-handle ew-resize pointer-events-auto absolute top-0 bottom-0 left-[-2px] w-[4px] border-none bg-transparent" />
 	<div
 		class="right-handle pointer-events-auto absolute top-0 bottom-0 right-[-2px] w-[4px] border-none bg-transparent"
 		:class="{ 'cursor-ew-resize': true }"
-		@mousedown.stop="handleRightResize"
-	></div>
+		@mousedown.stop="handleRightResize" />
 	<div
-		class="top-handle ns-resize pointer-events-auto absolute top-[-2px] right-0 left-0 h-[4px] border-none bg-transparent"
-	></div>
+		class="top-handle ns-resize pointer-events-auto absolute top-[-2px] right-0 left-0 h-[4px] border-none bg-transparent" />
 	<div
 		class="bottom-handle pointer-events-auto absolute bottom-[-2px] right-0 left-0 h-[4px] border-none bg-transparent"
 		:class="{ 'cursor-ns-resize': true }"
-		@mousedown.stop="handleBottomResize"
-	></div>
+		@mousedown.stop="handleBottomResize" />
 	<div
 		class="pointer-events-auto absolute bottom-[-4px] right-[-4px] h-[8px] w-[8px] cursor-nwse-resize rounded-full border-[1px] border-blue-400 bg-white"
-		@mousedown.stop="handleBottomCornerResize"
-	></div>
+		@mousedown.stop="handleBottomCornerResize" />
 </template>
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watchEffect } from "vue";
 import useStore from "../store";
 import BlockProperties from "../utils/blockProperties";
 import guidesTracker from "../utils/guidesTracker";
@@ -36,12 +30,15 @@ import guidesTracker from "../utils/guidesTracker";
 const props = defineProps({
 	targetProps: {
 		type: BlockProperties,
+		default: null,
 	},
 	target: {
 		type: HTMLElement,
+		default: null,
 	},
 });
 
+const emit = defineEmits(["resizing"]);
 const store = useStore();
 const targetProps = props.targetProps;
 const target = props.target;
@@ -50,6 +47,10 @@ let guides = null;
 
 onMounted(() => {
 	guides = guidesTracker(target);
+});
+
+watchEffect(() => {
+	emit("resizing", resizing.value);
 });
 
 const handleRightResize = (ev) => {
