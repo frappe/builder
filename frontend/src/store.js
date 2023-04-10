@@ -21,7 +21,7 @@ const useStore = defineStore("store", {
 		},
 		hoveredBlock: null,
 		builderLayout: {
-			rightPanelWidth: 300,
+			rightPanelWidth: 285,
 			leftPanelWidth: 280,
 		},
 		widgets: [
@@ -213,7 +213,7 @@ const useStore = defineStore("store", {
 			{
 				icon: "monitor",
 				device: "desktop",
-				width: 1024,
+				width: 1400,
 				visible: true,
 			},
 			{
@@ -262,10 +262,13 @@ const useStore = defineStore("store", {
 			if (!block) return null;
 			let b = JSON.parse(JSON.stringify(block));
 			if (!retainId) {
-				delete b.blockId;
-				for (let child of b.children || []) {
-					delete child.blockId;
+				const deleteBlockId = (block) => {
+					delete block.blockId;
+					for (let child of block.children || []) {
+						deleteBlockId(child)
+					}
 				}
+				deleteBlockId(b);
 			}
 			return new BlockProperties(b);
 		},

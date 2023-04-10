@@ -13,7 +13,7 @@
 					<div
 						class="relative mr-2 mb-1 flex h-24 w-full max-w-[300px] cursor-pointer items-center justify-center overflow-hidden rounded-md border bg-gray-50 p-2 shadow-sm last:mr-0 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
 						<div
-							class="pointer-events-none absolute w-[1200px]"
+							class="pointer-events-none absolute w-[1400px]"
 							:style="{
 								transform: 'scale(' + element.scale + ')',
 							}">
