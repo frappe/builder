@@ -88,20 +88,25 @@ document.addEventListener("keydown", (e) => {
 });
 
 onMounted(() => {
-	const padding = 100;
+	const paddingX = 500;
+	const paddingY = 250;
 	const containerBound = canvasContainer.value.getBoundingClientRect();
 	const canvasBound = canvas.value.getBoundingClientRect();
-	if (canvasBound.height > containerBound.height) {
-		const scale = containerBound.height / (canvasBound.height + padding * 2);
+	if (canvasBound.width > containerBound.width) {
+		const scale = containerBound.width / (canvasBound.width + paddingX * 2);
 		store.canvas.initialScale = store.canvas.scale = scale;
 	}
 
 	nextTick(() => {
 		const canvasBound = canvas.value.getBoundingClientRect();
 		const scale = store.canvas.scale;
-		const diff = containerBound.top - canvasBound.top + padding * scale;
-		if (diff !== 0) {
-			store.canvas.initialTranslateY = store.canvas.translateY = diff / scale;
+		const diffX = containerBound.left - canvasBound.left + paddingX * scale;
+		if (diffX !== 0) {
+			store.canvas.initialTranslateX = store.canvas.translateX = diffX / scale;
+		}
+		const diffY = containerBound.top - canvasBound.top + paddingY * scale;
+		if (diffY !== 0) {
+			store.canvas.initialTranslateY = store.canvas.translateY = diffY / scale;
 		}
 		showBlocks.value = true;
 	});
