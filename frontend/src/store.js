@@ -209,23 +209,26 @@ const useStore = defineStore("store", {
 			"#808000",
 			"#FFFFFF",
 		],
-		deviceBreakpoints: {
-			desktop: {
+		deviceBreakpoints: [
+			{
 				icon: "monitor",
 				device: "desktop",
 				width: 1024,
+				visible: true,
 			},
-			tablet: {
+			{
 				icon: "tablet",
 				device: "tablet",
 				width: 768,
+				visible: false,
 			},
-			mobile: {
+			{
 				icon: "smartphone",
 				device: "mobile",
 				width: 425,
+				visible: false,
 			},
-		},
+		],
 		sidebarActiveTab: "Components",
 		canvas: {
 			initialScale: 1,
@@ -241,9 +244,6 @@ const useStore = defineStore("store", {
 		components: [],
 	}),
 	actions: {
-		getActiveBreakpoint() {
-			return this.deviceBreakpoints[this.builderState.activeBreakpoint].width;
-		},
 		clearBlocks() {
 			this.builderState.blocks = [];
 			this.builderState.blocks.push(this.getRootBlock());
