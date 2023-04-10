@@ -11,7 +11,7 @@
 			@mousedown.stop="handlePadding"
 			ref="topPaddingHandler">
 			<div class="m-auto text-sm text-white" v-show="updating">
-				{{ targetProps.styles.paddingTop }}
+				{{ blockStyles.paddingTop }}
 			</div>
 		</div>
 		<div
@@ -25,7 +25,7 @@
 			@mousedown.stop="handlePadding"
 			ref="bottomPaddingHandler">
 			<div class="m-auto text-sm text-white" v-show="updating">
-				{{ targetProps.styles.paddingBottom }}
+				{{ blockStyles.paddingBottom }}
 			</div>
 		</div>
 		<div
@@ -39,7 +39,7 @@
 			@mousedown.stop="handlePadding"
 			ref="leftPaddingHandler">
 			<div class="m-auto text-sm text-white" v-show="updating">
-				{{ targetProps.styles.paddingLeft }}
+				{{ blockStyles.paddingLeft }}
 			</div>
 		</div>
 		<div
@@ -53,7 +53,7 @@
 			@mousedown.stop="handlePadding"
 			ref="rightPaddingHandler">
 			<div class="m-auto text-sm text-white" v-show="updating">
-				{{ targetProps.styles.paddingRight }}
+				{{ blockStyles.paddingRight }}
 			</div>
 		</div>
 	</div>
@@ -75,6 +75,10 @@ const props = defineProps({
 		type: Function,
 		default: null,
 	},
+	breakpoint: {
+		type: String,
+		default: "desktop",
+	},
 });
 
 const store = useStore();
@@ -93,19 +97,27 @@ watchEffect(() => {
 	emit("update", updating.value);
 });
 
-console.log(targetProps);
+const blockStyles = computed(() => {
+	let styleObj = props.targetProps.styles;
+	if (props.breakpoint === "mobile") {
+		styleObj = { ...styleObj, ...props.targetProps.mobileStyles };
+	} else if (props.breakpoint === "tablet") {
+		styleObj = { ...styleObj, ...props.targetProps.tabletStyles };
+	}
+	return styleObj;
+});
 
 const topPaddingHandlerHeight = computed(() => {
-	return (parseInt(targetProps.styles.paddingTop, 10) || 5) * store.canvas.scale;
+	return (parseInt(blockStyles.value.paddingTop, 10) || 5) * store.canvas.scale;
 });
 const bottomPaddingHandlerHeight = computed(() => {
-	return (parseInt(targetProps.styles.paddingBottom, 10) || 5) * store.canvas.scale;
+	return (parseInt(blockStyles.value.paddingBottom, 10) || 5) * store.canvas.scale;
 });
 const leftPaddingHandlerWidth = computed(() => {
-	return (parseInt(targetProps.styles.paddingLeft, 10) || 5) * store.canvas.scale;
+	return (parseInt(blockStyles.value.paddingLeft, 10) || 5) * store.canvas.scale;
 });
 const rightPaddingHandlerWidth = computed(() => {
-	return (parseInt(targetProps.styles.paddingRight, 10) || 5) * store.canvas.scale;
+	return (parseInt(blockStyles.value.paddingRight, 10) || 5) * store.canvas.scale;
 });
 
 const handlePadding = (ev) => {
@@ -114,10 +126,10 @@ const handlePadding = (ev) => {
 	const startY = ev.clientY;
 	const startX = ev.clientX;
 
-	const startTop = parseInt(targetProps.styles.paddingTop, 10) || 5;
-	const startBottom = parseInt(targetProps.styles.paddingBottom, 10) || 5;
-	const startLeft = parseInt(targetProps.styles.paddingLeft, 10) || 5;
-	const startRight = parseInt(targetProps.styles.paddingRight, 10) || 5;
+	const startTop = parseInt(blockStyles.value.paddingTop, 10) || 5;
+	const startBottom = parseInt(blockStyles.value.paddingBottom, 10) || 5;
+	const startLeft = parseInt(blockStyles.value.paddingLeft, 10) || 5;
+	const startRight = parseInt(blockStyles.value.paddingRight, 10) || 5;
 
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
