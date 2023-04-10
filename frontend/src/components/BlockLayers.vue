@@ -16,18 +16,25 @@
 							store.builderState.selectedBlock &&
 							store.builderState.selectedBlock.blockId !== element.blockId,
 						'border-blue-400 text-gray-900 dark:border-blue-600 dark:text-gray-200':
-							store.builderState.selectedBlock && store.builderState.selectedBlock.blockId === element.blockId,
+							store.builderState.selectedBlock &&
+							store.builderState.selectedBlock.blockId === element.blockId,
 					}"
 					@click.stop="selectBlock($event, element)"
 					@mouseover.stop="store.hoveredBlock = element.blockId"
 					@mouseleave.stop="store.hoveredBlock = null">
 					<span class="flex items-center font-medium">
+						<FeatherIcon
+							:name="element.fold ? 'chevron-right' : 'chevron-down'"
+							class="mr-1 h-3 w-3"
+							v-if="element.children && element.children.length && !element.isRoot()"
+							@click.stop="element.fold = !element.fold" />
 						<FeatherIcon :name="element.getIcon()" class="mr-1 h-3 w-3" />
 						<span class="truncate">
-							{{ element.originalElement || element.element }} {{ element.innerText ? " | " + element.innerText : "" }}
+							{{ element.originalElement || element.element }}
+							{{ element.innerText ? " | " + element.innerText : "" }}
 						</span>
 					</span>
-					<div v-if="element.children">
+					<div v-if="element.children" v-show="!element.fold">
 						<BlockLayers :blocks="element.children" />
 					</div>
 				</div>
