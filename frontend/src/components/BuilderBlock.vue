@@ -1,49 +1,50 @@
 <template>
-	<component
-		:is="elementProperties.getTag()"
-		class="__builder_component__ relative outline-none"
+	<draggable
+		:list="elementProperties.children"
+		:sort="true"
+		:disabled="preview"
+		:group="{ name: 'blocks' }"
+		item-key="blockId"
+		:tag="elementProperties.getTag()"
 		@click.stop="selectBlock($event, elementProperties)"
 		@dblclick.stop
-		v-bind="{
-			...elementProperties.attributes,
-			...elementProperties.skippedAttributes,
-			...$attrs,
-		}"
-		:style="{ ...styles, ...elementProperties.editorStyles }"
-		:contenteditable="elementProperties.isText() && isSelected"
-		:class="elementProperties.classes"
-		draggable="false"
 		@mouseover.stop="store.hoveredBlock = elementProperties.blockId"
 		@mouseleave.stop="store.hoveredBlock = null"
 		@blur="elementProperties.innerText = $event.target.innerText"
-		:data-block-id="elementProperties.blockId"
+		:component-data="{
+			...elementProperties.attributes,
+			...$attrs,
+			...{
+				'data-block-id': elementProperties.blockId,
+				contenteditable: elementProperties.isText() && isSelected,
+				class: ['__builder_component__', 'outline-none', 'select-none', ...(elementProperties.classes || [])],
+				style: { ...styles, ...elementProperties.editorStyles },
+			},
+		}"
 		ref="component">
-		{{ elementProperties.innerText }}
-		<BuilderBlock :element-properties="element" v-for="element in elementProperties.children"></BuilderBlock>
-	</component>
-	<teleport to="#block-draggables" v-if="(elementProperties.isContainer() || elementProperties.isRoot()) && !preview">
-		<BlockDraggables
-			v-if="isSelected || elementProperties.isRoot()"
-			:element-properties="elementProperties"
-			v-bind="{ ...$attrs }"></BlockDraggables>
-	</teleport>
+		<template #header>
+			{{ elementProperties.innerText }}
+		</template>
+		<template #item="{ element }">
+			<BuilderBlock :element-properties="element" />
+		</template>
+	</draggable>
 	<teleport to="#overlay">
 		<BlockEditor
 			v-if="(isSelected || store.hoveredBlock === elementProperties.blockId) && !preview"
 			:roundable="elementProperties.isContainer() || elementProperties.isDiv() || elementProperties.isImage()"
-			:resizableX="!elementProperties.isRoot()"
-			:resizableY="!elementProperties.isImage() && !elementProperties.isRoot()"
+			:resizable-x="!elementProperties.isRoot()"
+			:resizable-y="!elementProperties.isImage() && !elementProperties.isRoot()"
 			:selected="isSelected"
 			:resizable="!elementProperties.isRoot()"
-			:element-properties="elementProperties">
-		</BlockEditor>
+			:element-properties="elementProperties" />
 	</teleport>
 </template>
 <script setup>
 import { onMounted, ref, computed } from "vue";
 import useStore from "../store";
 import BlockEditor from "./BlockEditor.vue";
-import BlockDraggables from "./BlockDraggables.vue";
+import draggable from "vuedraggable";
 
 const component = ref(null);
 const store = useStore();
@@ -52,15 +53,16 @@ const emit = defineEmits(["renderComplete"]);
 
 onMounted(() => {
 	selectBlock(null, props.elementProperties);
+	let targetElement = component.value.targetDomElement;
 	if (props.elementProperties.isText()) {
-		component.value.addEventListener("keydown", (e) => {
+		targetElement.addEventListener("keydown", (e) => {
 			if (e.key === "b" && e.metaKey) {
 				e.preventDefault();
 				props.elementProperties.setStyle("fontWeight", "bold");
 			}
 		});
 	}
-	emit("renderComplete", component.value);
+	emit("renderComplete", targetElement);
 });
 
 const styles = computed(() => {
