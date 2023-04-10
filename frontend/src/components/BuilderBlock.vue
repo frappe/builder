@@ -26,18 +26,19 @@
 			{{ elementProperties.innerText }}
 		</template>
 		<template #item="{ element }">
-			<BuilderBlock :element-properties="element" />
+			<BuilderBlock :element-properties="element" :breakpoint="breakpoint" />
 		</template>
 	</draggable>
 	<teleport to="#overlay">
 		<BlockEditor
-			v-if="(isSelected || store.hoveredBlock === elementProperties.blockId) && !preview"
+			v-if="(isSelected || store.hoveredBlock === elementProperties.blockId) && !preview && breakpoint === store.builderState.activeBreakpoint"
 			:roundable="elementProperties.isContainer() || elementProperties.isDiv() || elementProperties.isImage()"
 			:resizable-x="!elementProperties.isRoot()"
 			:resizable-y="!elementProperties.isImage() && !elementProperties.isRoot()"
 			:selected="isSelected"
 			:resizable="!elementProperties.isRoot()"
-			:element-properties="elementProperties" />
+			:element-properties="elementProperties"
+			:breakpoint="breakpoint" />
 	</teleport>
 </template>
 <script setup>
@@ -48,8 +49,9 @@ import draggable from "vuedraggable";
 
 const component = ref(null);
 const store = useStore();
-const props = defineProps(["element-properties", "preview"]);
+const props = defineProps(["element-properties", "preview", "breakpoint"]);
 const emit = defineEmits(["renderComplete"]);
+
 
 onMounted(() => {
 	selectBlock(null, props.elementProperties);
@@ -67,9 +69,9 @@ onMounted(() => {
 
 const styles = computed(() => {
 	let styleObj = props.elementProperties.styles;
-	if (store.builderState.activeBreakpoint === "mobile") {
+	if (props.breakpoint === "mobile") {
 		styleObj = { ...styleObj, ...props.elementProperties.mobileStyles };
-	} else if (store.builderState.activeBreakpoint === "tablet") {
+	} else if (props.breakpoint === "tablet") {
 		styleObj = { ...styleObj, ...props.elementProperties.tabletStyles };
 	}
 	return styleObj;
@@ -85,6 +87,7 @@ const isSelected = computed(() => {
 const selectBlock = (e, block) => {
 	if (e) e.preventDefault();
 	store.builderState.selectedBlock = block;
+	store.builderState.activeBreakpoint = props.breakpoint;
 	if (e && e.metaKey) {
 		if (!store.builderState.selectedBlocks.length) {
 			store.builderState.selectedBlocks.push(store.builderState.selectedBlock);

@@ -8,17 +8,22 @@
 		<div class="absolute" id="block-draggables" />
 		<div class="overlay absolute" id="overlay" />
 		<BlockSnapGuides />
-		<div
-			class="canvas fixed rounded-md bg-white"
+		<div class="fixed flex" ref="canvas"
 			:style="{
-				background: store.canvas.background,
-				width: store.getActiveBreakpoint() + 'px',
+				transform: `scale(${store.canvas.scale}) translate(${store.canvas.translateX}px, ${store.canvas.translateY}px)`,
 				minHeight: '1400px',
 				height: '100%',
-				transform: `scale(${store.canvas.scale}) translate(${store.canvas.translateX}px, ${store.canvas.translateY}px)`,
-			}"
-			ref="canvas">
-			<BuilderBlock :element-properties="store.builderState.blocks[0]" v-if="showBlocks" />
+			}">
+			<div
+				class="canvas rounded-md bg-white ml-20 h-full relative"
+				:style="{
+					background: store.canvas.background,
+					width: value.width + 'px',
+				}"
+				v-for="(value, breakpoint) in store.deviceBreakpoints"
+				:key="breakpoint">
+				<BuilderBlock :element-properties="store.builderState.blocks[0]" v-if="showBlocks" :breakpoint="breakpoint" />
+			</div>
 		</div>
 	</div>
 </template>

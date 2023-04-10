@@ -17,7 +17,8 @@
 			v-if="selected && target && !resizing"
 			:target-props="elementProperties"
 			:on-update="updateTracker"
-			:disable-handlers="false" />
+			:disable-handlers="false"
+			:breakpoint="breakpoint" />
 		<BorderRadiusHandler
 			v-if="selected && target && !elementProperties.isRoot()"
 			:target-props="elementProperties"
@@ -78,6 +79,7 @@ const props = defineProps([
 	"resizableY",
 	"element-properties",
 	"selected",
+	"breakpoint"
 ]);
 const store = useStore();
 const editor = ref(null);
