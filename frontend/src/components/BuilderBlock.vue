@@ -8,7 +8,10 @@
 		:tag="elementProperties.getTag()"
 		@click.stop="selectBlock($event, elementProperties)"
 		@dblclick.stop
-		@mouseover.stop="store.hoveredBlock = elementProperties.blockId"
+		@mouseover.stop="
+			store.hoveredBlock = elementProperties.blockId;
+			store.hoveredBreakpoint = breakpoint
+		"
 		@mouseleave.stop="store.hoveredBlock = null"
 		@blur="elementProperties.innerText = $event.target.innerText"
 		:component-data="{
@@ -31,7 +34,10 @@
 	</draggable>
 	<teleport to="#overlay">
 		<BlockEditor
-			v-if="(isSelected || store.hoveredBlock === elementProperties.blockId) && !preview && breakpoint === store.builderState.activeBreakpoint"
+			v-if="(
+				(isSelected && breakpoint === store.builderState.activeBreakpoint) ||
+				(store.hoveredBlock === elementProperties.blockId && store.hoveredBreakpoint === breakpoint)
+			) && !preview"
 			:roundable="elementProperties.isContainer() || elementProperties.isDiv() || elementProperties.isImage()"
 			:resizable-x="!elementProperties.isRoot()"
 			:resizable-y="!elementProperties.isImage() && !elementProperties.isRoot()"
