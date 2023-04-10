@@ -19,7 +19,7 @@ class WebPageBeta(WebsiteGenerator):
 
 	def get_context(self, context):
 		# show breadcrumbs
-		context.title = "Page"
+		context.title = "page"
 		content, style = self.get_content()
 		context.content = content
 		context.style = style
