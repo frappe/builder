@@ -4,27 +4,28 @@
 		ref="editor"
 		@click.stop="handleClick"
 		@mousedown.stop="handleMove"
-		@dragstart="setCopyData($event, element, i)"
-		@dragend="copy"
 		@contextmenu.prevent="showContextMenu"
-		:draggable="elementProperties.draggable !== false"
 		:class="{
 			'pointer-events-none': elementProperties.blockId === store.hoveredBlock,
 		}">
 		<BoxResizer
 			v-if="selected && target && !elementProperties.isRoot()"
-			:targetProps="elementProperties"
-			:target="target"></BoxResizer>
-		<PaddingHandler v-if="selected && target" :targetProps="elementProperties" :disableHandlers="false">
-		</PaddingHandler>
+			:target-props="elementProperties"
+			@resizing="resizing = $event"
+			:target="target" />
+		<PaddingHandler
+			v-if="selected && target && !resizing"
+			:target-props="elementProperties"
+			:on-update="updateTracker"
+			:disable-handlers="false" />
 		<BorderRadiusHandler
 			v-if="selected && target && !elementProperties.isRoot()"
-			:targetProps="elementProperties"
-			:target="target"></BorderRadiusHandler>
+			:target-props="elementProperties"
+			:target="target" />
 		<ContextMenu
 			v-if="contextMenuVisible"
-			:posX="posX"
-			:posY="posY"
+			:pos-x="posX"
+			:pos-y="posY"
 			:options="contextMenuOptions"
 			@select="handleContextMenuSelect"
 			v-on-click-outside="() => (contextMenuVisible = false)" />
@@ -59,7 +60,7 @@
 import { vOnClickOutside } from "@vueuse/components";
 import { useDebounceFn } from "@vueuse/shared";
 import { Dialog, Input, createResource } from "frappe-ui";
-import { getCurrentInstance, nextTick, onMounted, reactive, ref } from "vue";
+import { getCurrentInstance, nextTick, onMounted, ref, reactive } from "vue";
 
 import useStore from "../store";
 import setGuides from "../utils/guidesTracker";
@@ -80,19 +81,21 @@ const props = defineProps([
 ]);
 const store = useStore();
 const editor = ref(null);
-let editorWrapper = ref(null);
-let targetProps = props.elementProperties;
+const editorWrapper = ref(null);
+const target = ref(null);
+const updateTracker = ref(null);
+const resizing = ref(false);
+const targetProps = reactive(props.elementProperties);
+
 let currentInstance = null;
 let guides = null;
-let target = ref(null);
 
 onMounted(() => {
 	currentInstance = getCurrentInstance();
-	editorWrapper = editor.value;
-	target.value = currentInstance.parent.refs.component;
+	editorWrapper.value = editor.value;
+	target.value = currentInstance.parent.refs.component.targetDomElement;
 	guides = setGuides(target);
-	props.elementProperties.targetElement = target;
-	trackTarget(target.value, editorWrapper);
+	updateTracker.value = trackTarget(target.value, editorWrapper.value);
 });
 
 const handleClick = (ev) => {
@@ -109,11 +112,11 @@ const handleClick = (ev) => {
 };
 
 const handleMove = (ev) => {
-	// if (!props.movable) return;
+	if (!props.movable) return;
 	const startX = ev.clientX;
 	const startY = ev.clientY;
-	const startLeft = target.offsetLeft;
-	const startTop = target.offsetTop;
+	const startLeft = target.value.offsetLeft;
+	const startTop = target.value.offsetTop;
 	guides.showX();
 
 	// to disable cursor jitter
@@ -152,14 +155,14 @@ const copy = useDebounceFn((event) => {
 	if (event.dataTransfer.action === "copy") {
 		duplicateBlock(event.dataTransfer.data_to_copy);
 	} else {
-		target.draggable = true;
+		target.value.draggable = true;
 		relayEventToTarget(event);
 	}
 });
 
 const relayEventToTarget = (event) => {
 	let eventForTarget = new window[event.constructor.name](event.type, event);
-	target.dispatchEvent(eventForTarget);
+	target.value.dispatchEvent(eventForTarget);
 	event.preventDefault();
 };
 
@@ -207,14 +210,12 @@ const saveAsComponent = () => {
 };
 
 const duplicateBlock = (block) => {
-	if (!block) {
-		block = store.getBlockCopy(store.builderState.selectedBlock);
-	}
+	let blockToDuplicate = block || store.getBlockCopy(store.builderState.selectedBlock);
 	let superParent = currentInstance.parent.parent;
 	if (superParent.props?.elementProperties?.children) {
-		superParent.props.elementProperties.children.push(block);
+		superParent.props.elementProperties.children.push(blockToDuplicate);
 	} else {
-		store.builderState.blocks.push(block);
+		store.builderState.blocks.push(blockToDuplicate);
 	}
 };
 
