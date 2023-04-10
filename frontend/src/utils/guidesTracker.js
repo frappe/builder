@@ -50,31 +50,28 @@ function setGuides(target) {
 		return Math.round(finalHeight);
 	};
 
-	const getFinalLeft = (calculatedLeft) => {
+	const getLeftPositionOffset = () => {
 		targetBounds.update();
 		canvasBounds.update();
 		let scale = store.canvas.scale;
-		let finalLeft = calculatedLeft;
+		let leftOffset = 0;
 
-		const targetRight = targetBounds.left + calculatedLeft * scale;
 		const canvasHalf = canvasBounds.left + canvasBounds.width / 2;
 
-		if (Math.abs(targetRight - canvasBounds.right) < threshold) {
-			finalLeft = (canvasBounds.right - targetBounds.left) / scale;
-			store.guides.x = canvasBounds.right;
-		} else if (Math.abs(targetRight - canvasHalf) < threshold) {
-			finalLeft = (canvasHalf - targetBounds.left) / scale;
+		if (Math.abs(targetBounds.left - canvasBounds.left) < threshold) {
+			leftOffset = (canvasBounds.left - targetBounds.left) / scale;
+			store.guides.x = canvasBounds.left;
+		} else if (Math.abs(targetBounds.left - canvasHalf) < threshold) {
+			leftOffset = (canvasHalf - targetBounds.left) / scale;
 			store.guides.x = canvasHalf;
+		} else if (Math.abs(targetBounds.left - canvasBounds.right) < threshold) {
+			leftOffset = (canvasBounds.right - targetBounds.left) / scale;
+			store.guides.x = canvasBounds.right;
 		} else {
 			store.guides.x = -1;
 		}
-		return finalLeft;
-
+		return Math.round(leftOffset);
 	};
-
-
-
-
 
 	const showX = (x) => {
 		store.guides.x = -1;
@@ -91,7 +88,15 @@ function setGuides(target) {
 		store.guides.showY = false;
 	};
 
-	return { getFinalWidth, getFinalHeight, showX, showY, hideX, hideY, getFinalLeft };
+	return {
+		getFinalWidth,
+		getFinalHeight,
+		showX,
+		showY,
+		hideX,
+		hideY,
+		getLeftPositionOffset,
+	};
 }
 
 export default setGuides;
