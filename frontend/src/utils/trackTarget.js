@@ -16,23 +16,25 @@ function trackTarget(target, host, padding = 0) {
 			nextTick(() => {
 				updateList.forEach((fn) => {
 					fn();
-				})
+				});
 			});
-		}
-		window.observer =  useMutationObserver(container, callback, {
+		};
+		window.observer = useMutationObserver(container, callback, {
 			attributes: true,
 			childList: true,
 			subtree: true,
 			attributeFilter: ["style", "class"],
-			characterData: true
+			characterData: true,
 		});
 	}
 	watch(targetBounds, () => {
-			host.style.width = `${Math.floor(targetBounds.width - padding)}px`;
-			host.style.height = `${Math.floor(targetBounds.height - padding)}px`;
-			host.style.top = `${Math.floor(targetBounds.top + padding/2)}px`;
-			host.style.left = `${Math.floor(targetBounds.left + padding/2)}px`;
+		host.style.width = `${Math.floor(targetBounds.width - padding)}px`;
+		host.style.height = `${Math.floor(targetBounds.height - padding)}px`;
+		host.style.top = `${Math.floor(targetBounds.top + padding / 2)}px`;
+		host.style.left = `${Math.floor(targetBounds.left + padding / 2)}px`;
 	});
+
+	return targetBounds.update;
 }
 
 export default trackTarget;

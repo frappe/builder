@@ -3,13 +3,7 @@ const store = useStore();
 import { useElementBounding } from "@vueuse/core";
 import { nextTick, reactive } from "vue";
 
-
-function setPanAndZoom(
-	props,
-	target,
-	panAndZoomAreaElement,
-	zoomLimits = { min: 0.2, max: 10 }
-) {
+function setPanAndZoom(props, target, panAndZoomAreaElement, zoomLimits = { min: 0.2, max: 10 }) {
 	const targetBound = reactive(useElementBounding(target));
 	let scale = props.scale || 1;
 	let pointFromCenterX = 0;
@@ -31,32 +25,31 @@ function setPanAndZoom(
 				nextTick(() => {
 					targetBound.update();
 					if (!pinchPointSet) {
-						pointFromCenterX = (e.clientX - (targetBound.left + (targetBound.width / 2))) / scale;
-						pointFromCenterY = (e.clientY - (targetBound.top + (targetBound.height / 2))) / scale;
+						pointFromCenterX = (e.clientX - (targetBound.left + targetBound.width / 2)) / scale;
+						pointFromCenterY = (e.clientY - (targetBound.top + targetBound.height / 2)) / scale;
 						startX = e.clientX;
 						startY = e.clientY;
 						pinchPointSet = true;
 						let clearPinchPoint = () => {
 							pinchPointSet = false;
-							panAndZoomAreaElement.removeEventListener("mousemove", clearPinchPoint);
 						};
-						panAndZoomAreaElement.addEventListener("mousemove", clearPinchPoint);
+						panAndZoomAreaElement.addEventListener("mousemove", clearPinchPoint, { once: true });
 					}
 
-					let pinchLocationX = targetBound.left + (targetBound.width / 2) + (pointFromCenterX * scale);
-					let pinchLocationY = targetBound.top + (targetBound.height / 2) + (pointFromCenterY * scale);
+					let pinchLocationX = targetBound.left + targetBound.width / 2 + pointFromCenterX * scale;
+					let pinchLocationY = targetBound.top + targetBound.height / 2 + pointFromCenterY * scale;
 
 					let diffX = startX - pinchLocationX;
 					let diffY = startY - pinchLocationY;
 
-					props.translateX += (diffX / scale);
-					props.translateY += (diffY / scale);
-				})
+					props.translateX += diffX / scale;
+					props.translateY += diffY / scale;
+				});
 			} else {
 				pinchPointSet = false;
 				// Dividing with scale to make the panning feel consistent
-				props.translateX -= e.deltaX * 2 / props.scale;
-				props.translateY -= e.deltaY * 2 / props.scale;
+				props.translateX -= (e.deltaX * 2) / props.scale;
+				props.translateY -= (e.deltaY * 2) / props.scale;
 			}
 		},
 		{ passive: false }
