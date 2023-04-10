@@ -1,9 +1,12 @@
 <template>
 	<div class="flex items-center mt-3 justify-between">
 		<span class="text-gray-600 font-bold text-[10px] uppercase inline-block ml-2 dark:text-zinc-400">
-			<slot></slot>
+			<slot />
 		</span>
-		<Input :type="type" :value="value" :options="options" @change="handleChange" class="text-sm text-gray-800 dark:bg-zinc-800 rounded-md dark:text-zinc-200 dark:focus:bg-zinc-700 min-w-[60%]"/>
+		<Input
+			:type="type" :value="value" :options="options"
+			@change="handleChange"
+			class="text-sm text-gray-800 dark:bg-zinc-800 rounded-md dark:text-zinc-200 dark:focus:bg-zinc-700 min-w-[60%]" />
 	</div>
 </template>
 <script setup>
