@@ -5,7 +5,6 @@ import { nextTick, reactive } from "vue";
 
 function setPanAndZoom(props, target, panAndZoomAreaElement, zoomLimits = { min: 0.2, max: 10 }) {
 	const targetBound = reactive(useElementBounding(target));
-	let scale = props.scale || 1;
 	let pointFromCenterX = 0;
 	let pointFromCenterY = 0;
 	let startX = 0;
@@ -19,7 +18,7 @@ function setPanAndZoom(props, target, panAndZoomAreaElement, zoomLimits = { min:
 			if (e.ctrlKey) {
 				// Multiplying with 0.01 to make the zooming less sensitive
 				// Multiplying with scale to make the zooming feel consistent
-				scale -= e.deltaY * 0.01 * props.scale;
+				let scale = props.scale - e.deltaY * 0.01 * props.scale;
 				scale = Math.min(Math.max(scale, zoomLimits.min), zoomLimits.max);
 				props.scale = scale;
 				nextTick(() => {
