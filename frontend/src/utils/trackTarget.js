@@ -1,16 +1,18 @@
 import { useElementBounding, useEventListener, useMutationObserver } from "@vueuse/core";
 import { nextTick, reactive, watch } from "vue";
+import useStore from "../store";
+const store = useStore();
 
 window.observer = null;
 const updateList = [];
-
 // TODO: Remove padding from here or rename
 function trackTarget(target, host, padding = 0) {
 	let targetBounds = reactive(useElementBounding(target));
 	let container = target.closest(".canvas-container");
-	useEventListener(container, "wheel", targetBounds.update);
 	// TODO: too much? find a better way to track changes
 	updateList.push(targetBounds.update);
+	watch(store.canvas, () => nextTick(targetBounds.update), { deep: true })
+
 	if (!window.observer) {
 		let callback = () => {
 			nextTick(() => {
