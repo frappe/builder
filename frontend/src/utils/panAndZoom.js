@@ -57,7 +57,7 @@ function setPanAndZoom(props, target, panAndZoomAreaElement, zoomLimits = { min:
 
 	target.addEventListener("dblclick", () => {
 		props.scale = store.canvas.initialScale;
-		props.translateX = 0;
+		props.translateX = store.canvas.initialTranslateX;
 		props.translateY = store.canvas.initialTranslateY;
 	});
 }

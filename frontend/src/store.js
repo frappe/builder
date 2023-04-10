@@ -22,7 +22,7 @@ const useStore = defineStore("store", {
 		hoveredBlock: null,
 		builderLayout: {
 			rightPanelWidth: 300,
-			leftPanelWidth: 300,
+			leftPanelWidth: 280,
 		},
 		widgets: [
 			{
@@ -230,6 +230,7 @@ const useStore = defineStore("store", {
 		canvas: {
 			initialScale: 1,
 			initialTranslateY: 0,
+			initialTranslateX: 0,
 			scale: 1,
 			translateX: 0,
 			translateY: 0,

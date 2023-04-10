@@ -9,9 +9,9 @@
 			:clone="(obj) => store.getBlockCopy(obj.block)"
 			class="flex w-full flex-wrap">
 			<template #item="{ element }">
-				<div class="mb-3">
+				<div class="mb-3 w-full">
 					<div
-						class="relative mr-2 mb-1 flex h-24 w-48 cursor-pointer items-center justify-center overflow-hidden rounded-md border bg-gray-50 p-2 shadow-sm last:mr-0 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+						class="relative mr-2 mb-1 flex h-24 w-full max-w-[300px] cursor-pointer items-center justify-center overflow-hidden rounded-md border bg-gray-50 p-2 shadow-sm last:mr-0 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
 						<div
 							class="pointer-events-none absolute w-[1200px]"
 							:style="{
