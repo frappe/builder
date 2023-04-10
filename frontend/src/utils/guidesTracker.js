@@ -1,6 +1,6 @@
-import useStore from "../store";
-import { reactive } from "vue";
 import { useElementBounding } from "@vueuse/core";
+import { reactive } from "vue";
+import useStore from "../store";
 const store = useStore();
 
 function setGuides(target) {

@@ -3,21 +3,34 @@ module.exports = {
 		browser: true,
 		es2021: true,
 	},
-	extends: [
-		"plugin:vue/vue3-strongly-recommended",
-		"eslint:recommended",
-	],
+	extends: ["plugin:vue/vue3-strongly-recommended"],
 	parserOptions: {
 		ecmaVersion: 13,
 		sourceType: "module",
 	},
-	plugins: [
-		"vue",
-	],
+	plugins: ["vue"],
 	rules: {
-		"no-tabs": "off",
 		quotes: ["error", "double"],
 		indent: ["error", "tab"],
 		"no-param-reassign": ["error", { props: false }],
+		"vue/html-indent": ["error", "tab"],
+		"vue/html-closing-bracket-newline": [
+			"error",
+			{
+				singleline: "never",
+				multiline: "never",
+			},
+		],
+		"vue/max-attributes-per-line": [
+			"warn",
+			{
+				singleline: {
+					max: 4,
+				},
+				multiline: {
+					max: 3,
+				},
+			},
+		],
 	},
 };

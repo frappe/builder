@@ -4,7 +4,7 @@
   "bracketSpacing": true,
   "htmlWhitespaceSensitivity": "ignore",
   "singleAttributePerLine": false,
-  "printWidth": 120,
+  "printWidth": 110,
   "plugins": [
     "prettier-plugin-tailwindcss"
   ]
