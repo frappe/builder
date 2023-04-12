@@ -4,7 +4,7 @@
 		'opacity-70': updating,
 	}" @click.stop>
 		<div
-			class="padding-handler absolute flex w-full"
+			class="padding-handler absolute pointer-events-none flex w-full"
 			:style="{
 				height: topPaddingHandlerHeight + 'px',
 			}"
@@ -14,7 +14,7 @@
 			}"
 			ref="topPaddingHandler">
 			<div
-				class="bg-purple-400 border-2 border-purple-500 absolute hover:scale-110 left-[50%] rounded-full" :style="{
+				class="bg-purple-400 border-2 border-purple-500 absolute hover:scale-110 pointer-events-auto left-[50%] rounded-full" :style="{
 					borderWidth: (1 * store.canvas.scale) + 'px',
 					bottom: topHandle.bottom,
 					left: topHandle.left,
@@ -30,18 +30,17 @@
 			</div>
 		</div>
 		<div
-			class="padding-handler absolute bottom-0 flex w-full"
+			class="padding-handler absolute pointer-events-none bottom-0 flex w-full"
 			:style="{
 				height: bottomPaddingHandlerHeight + 'px',
 			}"
 			:class="{
-				'cursor-ns-resize': !disableHandlers,
 				'bg-transparent': !updating,
 				'bg-purple-400': updating,
 			}"
 			ref="bottomPaddingHandler">
 			<div
-				class="bg-purple-400 border-2 border-purple-500 absolute hover:scale-110 left-[50%] rounded-full" :style="{
+				class="bg-purple-400 border-2 border-purple-500 absolute hover:scale-110 pointer-events-auto left-[50%] rounded-full" :style="{
 					borderWidth: (1 * store.canvas.scale) + 'px',
 					top: bottomHandle.top,
 					left: bottomHandle.left,
@@ -56,18 +55,17 @@
 			</div>
 		</div>
 		<div
-			class="padding-handler absolute left-0 flex h-full"
+			class="padding-handler absolute pointer-events-none left-0 flex h-full"
 			:style="{
 				width: leftPaddingHandlerWidth + 'px',
 			}"
 			:class="{
-				'cursor-ew-resize': !disableHandlers,
 				'bg-transparent': !updating,
 				'bg-purple-400': updating,
 			}"
 			ref="leftPaddingHandler">
 			<div
-				class="bg-purple-400 border-2 border-purple-500 absolute hover:scale-110 top-[50%] rounded-full" :style="{
+				class="bg-purple-400 border-2 border-purple-500 absolute hover:scale-110 pointer-events-auto top-[50%] rounded-full" :style="{
 					borderWidth: (1 * store.canvas.scale) + 'px',
 					right: leftHandle.right,
 					top: leftHandle.top,
@@ -82,18 +80,17 @@
 			</div>
 		</div>
 		<div
-			class="padding-handler absolute right-0 flex h-full"
+			class="padding-handler absolute pointer-events-none right-0 flex h-full"
 			:style="{
 				width: rightPaddingHandlerWidth + 'px',
 			}"
 			:class="{
-				'cursor-ew-resize': !disableHandlers,
 				'bg-transparent': !updating,
 				'bg-purple-400': updating,
 			}"
 			ref="rightPaddingHandler">
 			<div
-				class="bg-purple-400 border-2 border-purple-500 absolute hover:scale-110 top-[50%] rounded-full" :style="{
+				class="bg-purple-400 border-2 border-purple-500 absolute hover:scale-110 pointer-events-auto top-[50%] rounded-full" :style="{
 					borderWidth: (1 * store.canvas.scale) + 'px',
 					left: rightHandle.left,
 					top: rightHandle.top,

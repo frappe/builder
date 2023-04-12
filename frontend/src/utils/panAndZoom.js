@@ -3,7 +3,7 @@ const store = useStore();
 import { useElementBounding } from "@vueuse/core";
 import { nextTick, reactive } from "vue";
 
-function setPanAndZoom(props, target, panAndZoomAreaElement, zoomLimits = { min: 0.2, max: 10 }) {
+function setPanAndZoom(props, target, panAndZoomAreaElement, zoomLimits = { min: 0.1, max: 10 }) {
 	const targetBound = reactive(useElementBounding(target));
 	let pointFromCenterX = 0;
 	let pointFromCenterY = 0;

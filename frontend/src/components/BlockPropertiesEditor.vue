@@ -23,7 +23,7 @@
 				<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Text Color</h3>
 				<ul class="flex flex-wrap">
 					<li v-for="color in store.textColors" :key="color" class="mr-2 mb-2 last:mr-0">
-						<a @click="setTextColor(color)" class="cursor-pointer text-base hover:underline">
+						<a @click="blockStyles.color = color" class="cursor-pointer text-base hover:underline">
 							<div class="h-6 w-6 rounded-md shadow-sm" :style="'background-color:' + color" />
 						</a>
 					</li>
@@ -46,7 +46,19 @@
 				Width
 			</InlineInput>
 			<InlineInput
-				v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isContainer()"
+				v-if="store.builderState.selectedBlock"
+				:value="blockStyles.minWidth || 'auto'"
+				@update-value="(val) => (blockStyles.minWidth = val)">
+				Min Width
+			</InlineInput>
+			<InlineInput
+				v-if="store.builderState.selectedBlock"
+				:value="blockStyles.maxWidth || 'auto'"
+				@update-value="(val) => (blockStyles.maxWidth = val)">
+				Max Width
+			</InlineInput>
+			<InlineInput
+				v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isContainer() || store.builderState.selectedBlock.isButton()"
 				:value="blockStyles.margin"
 				@update-value="(val) => (blockStyles.margin = val)">
 				Margin
@@ -216,12 +228,6 @@
 				@update-value="(val) => (store.builderState.selectedBlock.attributes.href = val)">
 				Link
 			</InlineInput>
-			<InlineInput
-				v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isButton()"
-				:value="store.builderState.selectedBlock.attributes.onclick"
-				@update-value="(val) => (store.builderState.selectedBlock.attributes.onclick = val)">
-				Action
-			</InlineInput>
 			<h3 v-if="store.builderState.selectedBlock" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">
 				Options
 			</h3>
@@ -230,6 +236,12 @@
 				:value="store.builderState.selectedBlock.attributes.src"
 				@update-value="(val) => (store.builderState.selectedBlock.attributes.src = val)">
 				Image Source
+			</InlineInput>
+			<InlineInput
+				v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isButton()"
+				:value="store.builderState.selectedBlock.attributes.onclick"
+				@update-value="(val) => (store.builderState.selectedBlock.attributes.onclick = val)">
+				Action
 			</InlineInput>
 			<InlineInput
 				v-if="store.builderState.selectedBlock.element"
@@ -295,9 +307,9 @@ const store = useStore();
 const blockStyles = computed(() => {
 	let styleObj = store.builderState.selectedBlock.styles;
 	if (store.builderState.activeBreakpoint === "mobile") {
-		styleObj = store.builderState.selectedBlock.mobileStyles;
+		styleObj = {...styleObj, ...store.builderState.selectedBlock.mobileStyles };
 	} else if (store.builderState.activeBreakpoint === "tablet") {
-		styleObj = store.builderState.selectedBlock.tabletStyles;
+		styleObj = {...styleObj, ...store.builderState.selectedBlock.tabletStyles };
 	}
 	return styleObj;
 });
