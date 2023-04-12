@@ -1,6 +1,11 @@
 <template>
 	<div>
 		<h3 class="mb-4 text-xs font-bold uppercase text-gray-600">Templates</h3>
+		<div
+			v-if="!Object.keys(store.components).length"
+			class="text-sm italic text-gray-600">
+			No templates saved
+		</div>
 		<draggable
 			:list="store.components"
 			:group="{ name: 'blocks', pull: 'clone', put: false }"
