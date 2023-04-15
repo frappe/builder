@@ -3,6 +3,10 @@
 		:style="{
 			width: `${store.builderLayout.leftPanelWidth}px`
 		}">
+		<div v-if="false" class="flex flex-col mb-5 overflow-hidden rounded-lg text-sm">
+			<textarea class="rounded-sm bg-gray-300 outline-none border-0 resize-none text-sm dark:bg-zinc-700 dark:text-white h-fit no-scrollbar" v-model="prompt" :disabled="generating" />
+			<button @click="getPage" type="button" class="bg-gray-300 text-gray-800 p-2 dark:bg-zinc-700 dark:text-zinc-300" :disabled="generating">Generate</button>
+		</div>
 		<PanelResizer
 			:width="store.builderLayout.leftPanelWidth" side="right"
 			@resize="width => store.builderLayout.leftPanelWidth = width" />
@@ -49,15 +53,20 @@
 	</div>
 </template>
 <script setup>
-import { createListResource } from "frappe-ui";
+import { createListResource, createResource } from "frappe-ui";
+import { ref } from "vue";
 import useStore from "../store";
 import Widgets from "./BuilderWidgets.vue";
 import Templates from "./BuilderTemplates.vue";
 import BlockLayers from "./BlockLayers.vue";
 import PanelResizer from "./PanelResizer.vue";
+import convertHtmlToBlocks from "../utils/convertHtmlToBlocks";
+
+const prompt = ref(null);
 
 
 const store = useStore();
+const generating = ref(false);
 
 createListResource({
 	doctype: "Web Page Beta",
@@ -90,4 +99,19 @@ const setPage = (page) => {
 	store.builderState.selectedPage = page.name;
 	localStorage.setItem("selectedPage", page.name);
 };
+
+const getPage = () => {
+	generating.value = true;
+	createResource({
+		url: "website_builder.api.get_blocks",
+		onSuccess(html) {
+			store.clearBlocks();
+			const blocks = convertHtmlToBlocks(html);
+			store.pushBlocks([blocks]);
+			generating.value = false;
+		},
+	}).submit({
+		prompt: prompt.value,
+	});
+}
 </script>
