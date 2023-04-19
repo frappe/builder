@@ -21,6 +21,8 @@ app.use(router);
 app.use(FrappeUI);
 app.use(pinia);
 
+// eslint-disable-next-line vue/multi-word-component-names, vue/no-reserved-component-names
 app.component("Button", Button);
+
 app.component("FeatherIcon", FeatherIcon);
 app.mount("#app");

@@ -8,7 +8,7 @@
 		</div>
 	</section>
 </template>
-<script setup>
+<script setup lang="ts">
 import { createListResource } from "frappe-ui";
 import { ref } from "vue";
 let pages = ref([]);
@@ -20,7 +20,7 @@ createListResource({
 	start: 0,
 	pageLength: 10,
 	auto: true,
-	onSuccess(data) {
+	onSuccess(data: Array<any>) {
 		pages.value = data;
 		// setPage(store.pages[localStorage.getItem("selectedPage") || "home"])
 	},

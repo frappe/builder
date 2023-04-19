@@ -40,7 +40,7 @@
 				v-for="breakpoint in visibleBreakpoints"
 				:key="breakpoint.device">
 				<BuilderBlock
-					:element-properties="store.builderState.blocks[0]"
+					:block="store.builderState.blocks[0]"
 					v-if="showBlocks"
 					:breakpoint="breakpoint.device" />
 			</div>

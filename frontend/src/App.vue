@@ -4,6 +4,6 @@
 		<Toasts />
 	</div>
 </template>
-<script setup>
+<script setup lang="ts">
 import { Toasts } from "frappe-ui";
 </script>

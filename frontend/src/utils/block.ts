@@ -1,11 +1,46 @@
 import useStore from "../store";
 
-class BlockProperties {
-	constructor(options) {
+interface Styles {
+	[key: string]: string | number;
+}
+
+interface BlockOptions {
+	blockId?: string | undefined;
+	element: string;
+	originalElement?: string;
+	styles?: Styles;
+	mobileStyles?: Styles;
+	tabletStyles?: Styles;
+	editorStyles?: Styles;
+	attributes?: Styles;
+	classes?: Array<string>;
+	children?: Array<Block>;
+	resizable?: boolean;
+	draggable?: boolean;
+	innerText?: string;
+	computedStyles?: ProxyHandler<Styles>;
+}
+
+class Block implements BlockOptions {
+	blockId: string;
+	element: string;
+	editorStyles: Styles;
+	children: Array<Block>;
+	draggable?: boolean;
+	styles: Styles;
+	mobileStyles: { [key: string]: string | number };
+	tabletStyles: Styles;
+	attributes: Styles;
+	classes: Array<string>;
+	resizable?: boolean;
+	computedStyles: ProxyHandler<Styles>;
+	originalElement?: string | undefined;
+	constructor(options: BlockOptions) {
 		delete options.computedStyles;
-		Object.assign(this, options);
+		this.element = options.element;
+		this.draggable = options.draggable;
 		if (this.isRoot()) {
-			this.blockId = 'root';
+			this.blockId = "root";
 			this.editorStyles = {
 				height: "fit-content",
 				minHeight: "100%",
@@ -19,20 +54,22 @@ class BlockProperties {
 			};
 			this.draggable = false;
 		}
-		this.blockId = this.blockId || this.generateId();
-		if (this.children && this.children.length) {
-			this.children = this.children.map(child => new BlockProperties(child));
-		}
-		this.styles = this.styles || {};
-		this.mobileStyles = this.mobileStyles || {};
-		this.tabletStyles = this.tabletStyles || {};
-		this.editorStyles = this.editorStyles || {};
+		this.blockId = options.blockId || this.generateId();
+		this.children = (options.children || []).map((child: BlockOptions) => new Block(child));
+
+		this.styles = options.styles || {};
+		this.mobileStyles = options.mobileStyles || {};
+		this.tabletStyles = options.tabletStyles || {};
+		this.editorStyles = options.editorStyles || {};
+		this.attributes = options.attributes || {};
+		this.classes = options.classes || [];
 
 		this.computedStyles = new Proxy(this.styles, {
-			set: (target, prop, value) => {
+			set: (target, prop: string, value) => {
 				this.setStyle(prop, value);
+				return true;
 			},
-			get: (target, prop) => {
+			get: (target, prop: string) => {
 				return this.getStyle(prop);
 			}
 		})
@@ -52,7 +89,7 @@ class BlockProperties {
 	isContainer() {
 		return this.element === "section";
 	}
-	setStyle(style, value) {
+	setStyle(style: string, value: number | string) {
 		const store = useStore();
 		if (store.builderState.activeBreakpoint === "mobile") {
 			this.mobileStyles[style] = value;
@@ -63,7 +100,7 @@ class BlockProperties {
 		}
 		this.styles[style] = value;
 	}
-	getStyle(style) {
+	getStyle(style: string) {
 		const store = useStore();
 		if (store.builderState.activeBreakpoint === "mobile") {
 			return this.mobileStyles[style] || this.styles[style];
@@ -96,4 +133,9 @@ class BlockProperties {
 	}
 }
 
-export default BlockProperties;
+export default Block;
+
+export {
+	Styles,
+	BlockOptions,
+}

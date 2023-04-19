@@ -1,4 +1,4 @@
-Array.prototype.add = function (...itemsToAdd) {
+Array.prototype.add = function (...itemsToAdd: any[]) {
 	itemsToAdd.forEach(item => {
 		if (!this.includes(item)) {
 			this.push(item)
@@ -6,7 +6,7 @@ Array.prototype.add = function (...itemsToAdd) {
 	})
 }
 
-Array.prototype.remove = function (...itemsToRemove) {
+Array.prototype.remove = function (...itemsToRemove: any[]) {
 	itemsToRemove.forEach(item => {
 		const index = this.indexOf(item)
 		if (index !== -1) {

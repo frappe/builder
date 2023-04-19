@@ -109,10 +109,10 @@
 <script setup>
 import useStore from "../store";
 import { ref, computed, watchEffect } from "vue";
-import BlockProperties from "../utils/blockProperties";
+import Block from "../utils/block";
 const props = defineProps({
-	targetProps: {
-		type: BlockProperties,
+	targetBlock: {
+		type: Block,
 		required: true,
 	},
 	disableHandlers: {
@@ -130,7 +130,7 @@ const props = defineProps({
 });
 
 const store = useStore();
-const targetProps = props.targetProps;
+const block = props.targetBlock;
 
 // Padding handlers
 const topPaddingHandler = ref(null);
@@ -146,11 +146,11 @@ watchEffect(() => {
 });
 
 const blockStyles = computed(() => {
-	let styleObj = props.targetProps.styles;
+	let styleObj = props.targetBlock.styles;
 	if (props.breakpoint === "mobile") {
-		styleObj = { ...styleObj, ...props.targetProps.mobileStyles };
+		styleObj = { ...styleObj, ...props.targetBlock.mobileStyles };
 	} else if (props.breakpoint === "tablet") {
-		styleObj = { ...styleObj, ...props.targetProps.tabletStyles };
+		styleObj = { ...styleObj, ...props.targetBlock.tabletStyles };
 	}
 	return styleObj;
 });
@@ -227,29 +227,29 @@ const handlePadding = (ev, handler) => {
 
 		if (handler === topPaddingHandler.value) {
 			movement = Math.max(startTop + mouseMoveEvent.clientY - startY, 0);
-			targetProps.setStyle("paddingTop", movement + "px");
+			targetBlock.setStyle("paddingTop", movement + "px");
 			affectingAxis = "y";
 		} else if (handler === bottomPaddingHandler.value) {
 			movement = Math.max(startBottom + startY - mouseMoveEvent.clientY, 0);
-			targetProps.setStyle("paddingBottom", movement + "px");
+			targetBlock.setStyle("paddingBottom", movement + "px");
 			affectingAxis = "y";
 		} else if (handler === leftPaddingHandler.value) {
 			movement = Math.max(startLeft + mouseMoveEvent.clientX - startX, 0);
-			targetProps.setStyle("paddingLeft", movement + "px");
+			targetBlock.setStyle("paddingLeft", movement + "px");
 			affectingAxis = "x";
 		} else if (handler === rightPaddingHandler.value) {
 			movement = Math.max(startRight + startX - mouseMoveEvent.clientX, 0);
-			targetProps.setStyle("paddingRight", movement + "px");
+			targetBlock.setStyle("paddingRight", movement + "px");
 			affectingAxis = "x";
 		}
 
 		if (mouseMoveEvent.shiftKey) {
 			if (affectingAxis === "y") {
-				targetProps.setStyle("paddingTop", movement + "px");
-				targetProps.setStyle("paddingBottom", movement + "px");
+				targetBlock.setStyle("paddingTop", movement + "px");
+				targetBlock.setStyle("paddingBottom", movement + "px");
 			} else if (affectingAxis === "x") {
-				targetProps.setStyle("paddingLeft", movement + "px");
-				targetProps.setStyle("paddingRight", movement + "px");
+				targetBlock.setStyle("paddingLeft", movement + "px");
+				targetBlock.setStyle("paddingRight", movement + "px");
 			}
 		}
 
