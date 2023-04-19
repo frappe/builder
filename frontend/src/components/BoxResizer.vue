@@ -2,8 +2,8 @@
 	<span
 		class="resize-dimensions absolute right-[-40px] bottom-[-40px] flex h-8 w-20 items-center justify-center whitespace-nowrap rounded-full bg-gray-600 p-2 text-sm text-white opacity-80"
 		v-if="resizing">
-		{{ parseInt(targetProps.styles.width || 100) }} x
-		{{ parseInt(targetProps.styles.height) }}
+		{{ parseInt(targetBlock.styles.width || 100) }} x
+		{{ parseInt(targetBlock.styles.height) }}
 	</span>
 	<div
 		class="left-handle ew-resize pointer-events-auto absolute top-0 bottom-0 left-[-2px] w-[4px] border-none bg-transparent" />
@@ -24,12 +24,12 @@
 <script setup>
 import { ref, onMounted, watchEffect } from "vue";
 import useStore from "../store";
-import BlockProperties from "../utils/blockProperties";
+import Block from "../utils/block";
 import guidesTracker from "../utils/guidesTracker";
 
 const props = defineProps({
-	targetProps: {
-		type: BlockProperties,
+	targetBlock: {
+		type: Block,
 		default: null,
 	},
 	target: {
@@ -40,7 +40,7 @@ const props = defineProps({
 
 const emit = defineEmits(["resizing"]);
 const store = useStore();
-const targetProps = props.targetProps;
+const targetBlock = props.targetBlock;
 const target = props.target;
 const resizing = ref(false);
 let guides = null;
@@ -69,10 +69,10 @@ const handleRightResize = (ev) => {
 			const movementPercent = (movement / parentWidth) * 100;
 			const startWidthPercent = (startWidth / parentWidth) * 100;
 			const finalHeight = Math.round(startWidthPercent + movementPercent);
-			targetProps.setStyle("width", `${finalHeight}%`);
+			targetBlock.setStyle("width", `${finalHeight}%`);
 		} else {
 			let finalWidth = guides.getFinalWidth(startWidth + movement);
-			targetProps.setStyle("width", `${finalWidth}px`);
+			targetBlock.setStyle("width", `${finalWidth}px`);
 		}
 		mouseMoveEvent.preventDefault();
 	};
@@ -100,7 +100,7 @@ const handleBottomResize = (ev) => {
 		const movement = (mouseMoveEvent.clientY - startY) / store.canvas.scale;
 		let finalHeight = guides.getFinalHeight(startHeight + movement);
 
-		targetProps.setStyle("height", `${finalHeight}px`);
+		targetBlock.setStyle("height", `${finalHeight}px`);
 		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);
@@ -127,10 +127,10 @@ const handleBottomCornerResize = (ev) => {
 	const mousemove = (mouseMoveEvent) => {
 		const movementX = mouseMoveEvent.clientX - startX;
 		const finalWidth = Math.round(startWidth + movementX);
-		targetProps.setStyle("width", `${finalWidth}px`);
+		targetBlock.setStyle("width", `${finalWidth}px`);
 		const movementY = mouseMoveEvent.clientY - startY;
 		const finalHeight = Math.round(startHeight + movementY);
-		targetProps.setStyle("height", `${finalHeight}px`);
+		targetBlock.setStyle("height", `${finalHeight}px`);
 		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);

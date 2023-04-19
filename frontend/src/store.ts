@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import BlockProperties from "./utils/blockProperties";
+import Block, { BlockOptions } from "./utils/block";
 
 const useStore = defineStore("store", {
 	state: () => ({
@@ -9,13 +9,11 @@ const useStore = defineStore("store", {
 			selectedBlocks: [],
 			activeBreakpoint: "desktop",
 			blocks: [
-				new BlockProperties({
+				new Block({
 					element: "div",
 					originalElement: "body",
 					blockId: "root",
-					children: [],
 					resizable: false,
-					attributes: {},
 				}),
 			],
 		},
@@ -195,6 +193,8 @@ const useStore = defineStore("store", {
 		guides: {
 			showX: false,
 			showY: false,
+			x: 0,
+			y: 0,
 		},
 		textColors: [
 			"#000000",
@@ -248,21 +248,21 @@ const useStore = defineStore("store", {
 			this.builderState.blocks = [];
 			this.builderState.blocks.push(this.getRootBlock());
 		},
-		pushBlocks(blocks) {
-			let firstBlock = new BlockProperties(blocks[0]);
+		pushBlocks(blocks: Block[]) {
+			let firstBlock = new Block(blocks[0]);
 			if (firstBlock.isRoot()) {
 				this.builderState.blocks = [firstBlock];
 			} else {
 				for (let block of blocks) {
-					this.builderState.blocks[0].children.push(new BlockProperties(block));
+					this.builderState.blocks[0].children.push(new Block(block));
 				}
 			}
 		},
-		getBlockCopy(block, retainId = false) {
+		getBlockCopy(block: Block, retainId = false) {
 			if (!block) return null;
 			let b = JSON.parse(JSON.stringify(block));
 			if (!retainId) {
-				const deleteBlockId = (block) => {
+				const deleteBlockId = (block: BlockOptions) => {
 					delete block.blockId;
 					for (let child of block.children || []) {
 						deleteBlockId(child)
@@ -270,14 +270,13 @@ const useStore = defineStore("store", {
 				}
 				deleteBlockId(b);
 			}
-			return new BlockProperties(b);
+			return new Block(b);
 		},
 		getRootBlock() {
-			return new BlockProperties({
+			return new Block({
 				element: "div",
 				originalElement: "body",
 				blockId: "root",
-				children: [],
 				resizable: false,
 			});
 		},

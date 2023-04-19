@@ -16,13 +16,13 @@
 </template>
 <script setup>
 import useStore from "../store";
-import BlockProperties from "../utils/blockProperties";
+import Block from "../utils/block";
 import { ref } from "vue";
 
 const store = useStore();
 const props = defineProps({
-	targetProps: {
-		type: BlockProperties,
+	targetBlock: {
+		type: Block,
 		required: true,
 	},
 	target: {
@@ -31,7 +31,7 @@ const props = defineProps({
 	},
 });
 
-const targetProps = props.targetProps;
+const targetBlock = props.targetBlock;
 const target = props.target;
 const borderRadius = ref(parseInt(target.style.borderRadius, 10) || 0);
 const updating = ref(false);
@@ -83,7 +83,7 @@ const handleRounded = (ev) => {
 		const newTop = Math.max(minTop, maxDistance * ratio - handleHeight / 2);
 		const newLeft = Math.max(minLeft, maxDistance * ratio - handleWidth / 2);
 		borderRadius.value = radius;
-		targetProps.setStyle("borderRadius", `${radius}px`);
+		targetBlock.setStyle("borderRadius", `${radius}px`);
 		handle.style.top = `${newTop}px`;
 		handle.style.left = `${newLeft}px`;
 
@@ -92,7 +92,7 @@ const handleRounded = (ev) => {
 	};
 	document.addEventListener("mousemove", mousemove);
 	document.addEventListener("mouseup", (mouseUpEvent) => {
-		if (parseInt(targetProps.getStyle("borderRadius"), 10) < 10) {
+		if (parseInt(targetBlock.getStyle("borderRadius"), 10) < 10) {
 			handle.style.top = `${10}px`;
 			handle.style.left = `${10}px`;
 		}

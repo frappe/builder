@@ -1,49 +1,49 @@
 <template>
 	<draggable
-		:list="elementProperties.children"
+		:list="block.children"
 		:sort="true"
 		:disabled="preview"
 		:group="{ name: 'blocks' }"
 		item-key="blockId"
-		:tag="elementProperties.getTag()"
-		@click.stop="selectBlock($event, elementProperties)"
+		:tag="block.getTag()"
+		@click.stop="selectBlock($event, block)"
 		@dblclick.stop
 		@mouseover.stop="
-			store.hoveredBlock = elementProperties.blockId;
+			store.hoveredBlock = block.blockId;
 			store.hoveredBreakpoint = breakpoint
 		"
 		@mouseleave.stop="store.hoveredBlock = null"
-		@blur="elementProperties.innerText = $event.target.innerText"
+		@blur="block.innerText = $event.target.innerText"
 		:component-data="{
-			...elementProperties.attributes,
+			...block.attributes,
 			...$attrs,
 			...{
-				'data-block-id': elementProperties.blockId,
-				contenteditable: elementProperties.isText() && isSelected,
-				class: ['__builder_component__', 'outline-none', 'select-none', ...(elementProperties.classes || [])],
-				style: { ...styles, ...elementProperties.editorStyles },
+				'data-block-id': block.blockId,
+				contenteditable: block.isText() && isSelected,
+				class: ['__builder_component__', 'outline-none', 'select-none', ...(block.classes || [])],
+				style: { ...styles, ...block.editorStyles },
 			},
 		}"
 		ref="component">
 		<template #header>
-			{{ elementProperties.innerText }}
+			{{ block.innerText }}
 		</template>
 		<template #item="{ element }">
-			<BuilderBlock :element-properties="element" :breakpoint="breakpoint" />
+			<BuilderBlock :block="element" :breakpoint="breakpoint" />
 		</template>
 	</draggable>
 	<teleport to="#overlay">
 		<BlockEditor
 			v-if="(
 				(isSelected && breakpoint === store.builderState.activeBreakpoint) ||
-				(store.hoveredBlock === elementProperties.blockId && store.hoveredBreakpoint === breakpoint)
+				(store.hoveredBlock === block.blockId && store.hoveredBreakpoint === breakpoint)
 			) && !preview"
-			:roundable="elementProperties.isContainer() || elementProperties.isDiv() || elementProperties.isImage()"
-			:resizable-x="!elementProperties.isRoot()"
-			:resizable-y="!elementProperties.isImage() && !elementProperties.isRoot()"
+			:roundable="block.isContainer() || block.isDiv() || block.isImage()"
+			:resizable-x="!block.isRoot()"
+			:resizable-y="!block.isImage() && !block.isRoot()"
 			:selected="isSelected"
-			:resizable="!elementProperties.isRoot()"
-			:element-properties="elementProperties"
+			:resizable="!block.isRoot()"
+			:block="block"
 			:breakpoint="breakpoint" />
 	</teleport>
 </template>
@@ -55,18 +55,18 @@ import draggable from "vuedraggable";
 
 const component = ref(null);
 const store = useStore();
-const props = defineProps(["element-properties", "preview", "breakpoint"]);
+const props = defineProps(["block", "preview", "breakpoint"]);
 const emit = defineEmits(["renderComplete"]);
 
 
 onMounted(() => {
-	selectBlock(null, props.elementProperties);
+	selectBlock(null, props.block);
 	let targetElement = component.value.targetDomElement;
-	if (props.elementProperties.isText()) {
+	if (props.block.isText()) {
 		targetElement.addEventListener("keydown", (e) => {
 			if (e.key === "b" && e.metaKey) {
 				e.preventDefault();
-				props.elementProperties.setStyle("fontWeight", "bold");
+				props.block.setStyle("fontWeight", "bold");
 			}
 		});
 	}
@@ -74,19 +74,19 @@ onMounted(() => {
 });
 
 const styles = computed(() => {
-	let styleObj = props.elementProperties.styles;
+	let styleObj = props.block.styles;
 	if (props.breakpoint === "mobile") {
-		styleObj = { ...styleObj, ...props.elementProperties.mobileStyles };
+		styleObj = { ...styleObj, ...props.block.mobileStyles };
 	} else if (props.breakpoint === "tablet") {
-		styleObj = { ...styleObj, ...props.elementProperties.tabletStyles };
+		styleObj = { ...styleObj, ...props.block.tabletStyles };
 	}
 	return styleObj;
 });
 
 const isSelected = computed(() => {
 	return (
-		store.builderState.selectedBlock === props.elementProperties ||
-		store.builderState.selectedBlocks.includes(props.elementProperties)
+		store.builderState.selectedBlock === props.block ||
+		store.builderState.selectedBlocks.includes(props.block)
 	);
 });
 

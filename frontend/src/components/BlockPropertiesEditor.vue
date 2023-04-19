@@ -304,13 +304,18 @@ import InlineInput from "./InlineInput.vue";
 import useStore from "../store";
 const store = useStore();
 
+// const blockStyles = computed(() => {
+// 	let styleObj = store.builderState.selectedBlock.styles;
+// 	if (store.builderState.activeBreakpoint === "mobile") {
+// 		styleObj = {...styleObj, ...store.builderState.selectedBlock.mobileStyles };
+// 	} else if (store.builderState.activeBreakpoint === "tablet") {
+// 		styleObj = {...styleObj, ...store.builderState.selectedBlock.tabletStyles };
+// 	}
+// 	return styleObj;
+// });
+
 const blockStyles = computed(() => {
-	let styleObj = store.builderState.selectedBlock.styles;
-	if (store.builderState.activeBreakpoint === "mobile") {
-		styleObj = {...styleObj, ...store.builderState.selectedBlock.mobileStyles };
-	} else if (store.builderState.activeBreakpoint === "tablet") {
-		styleObj = {...styleObj, ...store.builderState.selectedBlock.tabletStyles };
-	}
+	let styleObj = store.builderState.selectedBlock.computedStyles;
 	return styleObj;
 });
 

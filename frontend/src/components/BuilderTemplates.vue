@@ -23,7 +23,7 @@
 								transform: 'scale(' + element.scale + ')',
 							}">
 							<BuilderBlock
-								:element-properties="store.getBlockCopy(element.block)"
+								:block="store.getBlockCopy(element.block)"
 								ref="preview"
 								@render-complete="(el) => setScale(el, element)"
 								preview="true" />

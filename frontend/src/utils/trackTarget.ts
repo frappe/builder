@@ -3,12 +3,19 @@ import { nextTick, reactive, watch } from "vue";
 import useStore from "../store";
 const store = useStore();
 
+declare global {
+	interface Window {
+		observer: any;
+	}
+}
+
 window.observer = null;
-const updateList = [];
+const updateList: (() => void)[] = [];
+
 // TODO: Remove padding from here or rename
-function trackTarget(target, host, padding = 0) {
-	let targetBounds = reactive(useElementBounding(target));
-	let container = target.closest(".canvas-container");
+function trackTarget(target: HTMLElement, host: HTMLElement, padding = 0) {
+	const targetBounds = reactive(useElementBounding(target));
+	const container = target.closest(".canvas-container");
 	// TODO: too much? find a better way to track changes
 	updateList.push(targetBounds.update);
 	watch(store.canvas, () => nextTick(targetBounds.update), { deep: true })

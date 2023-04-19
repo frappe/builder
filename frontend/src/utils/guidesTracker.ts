@@ -3,12 +3,12 @@ import { reactive } from "vue";
 import useStore from "../store";
 const store = useStore();
 
-function setGuides(target) {
+function setGuides(target: HTMLElement) {
 	const threshold = 10;
 	const canvasBounds = reactive(useElementBounding(document.querySelector(".canvas")));
 	const targetBounds = reactive(useElementBounding(target));
 
-	const getFinalWidth = (calculatedWidth) => {
+	const getFinalWidth = (calculatedWidth: number) => {
 		targetBounds.update();
 		canvasBounds.update();
 		let scale = store.canvas.scale;
@@ -29,7 +29,7 @@ function setGuides(target) {
 		return Math.round(finalWidth);
 	};
 
-	const getFinalHeight = (calculatedHeight) => {
+	const getFinalHeight = (calculatedHeight: number) => {
 		targetBounds.update();
 		canvasBounds.update();
 		let scale = store.canvas.scale;
@@ -73,11 +73,11 @@ function setGuides(target) {
 		return Math.round(leftOffset);
 	};
 
-	const showX = (x) => {
+	const showX = (x: number) => {
 		store.guides.x = -1;
 		store.guides.showX = true;
 	};
-	const showY = (y) => {
+	const showY = (y: number) => {
 		store.guides.y = -1;
 		store.guides.showY = true;
 	};

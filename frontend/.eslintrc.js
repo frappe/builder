@@ -3,8 +3,13 @@ module.exports = {
 		browser: true,
 		es2021: true,
 	},
-	extends: ["plugin:vue/vue3-strongly-recommended"],
+	globals: {
+		convertHtmlToBlocks: true
+	},
+	extends: ["plugin:vue/vue3-recommended", "plugin:vue/vue3-strongly-recommended", "prettier"],
+	parser: "vue-eslint-parser",
 	parserOptions: {
+		parser: "@typescript-eslint/parser",
 		ecmaVersion: 13,
 		sourceType: "module",
 	},

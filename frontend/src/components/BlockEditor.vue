@@ -6,22 +6,22 @@
 		@mousedown.stop="handleMove"
 		@contextmenu.prevent="showContextMenu"
 		:class="{
-			'pointer-events-none': elementProperties.blockId === store.hoveredBlock,
+			'pointer-events-none': block.blockId === store.hoveredBlock,
 		}">
 		<BoxResizer
-			v-if="selected && target && !elementProperties.isRoot()"
-			:target-props="elementProperties"
+			v-if="selected && target && !block.isRoot()"
+			:target-block="block"
 			@resizing="resizing = $event"
 			:target="target" />
 		<PaddingHandler
 			v-if="selected && target && !resizing"
-			:target-props="elementProperties"
+			:target-block="block"
 			:on-update="updateTracker"
 			:disable-handlers="false"
 			:breakpoint="breakpoint" />
 		<BorderRadiusHandler
-			v-if="selected && target && !elementProperties.isRoot()"
-			:target-props="elementProperties"
+			v-if="selected && target && !block.isRoot()"
+			:target-block="block"
 			:target="target" />
 		<ContextMenu
 			v-if="contextMenuVisible"
@@ -31,9 +31,9 @@
 			@select="handleContextMenuSelect"
 			v-on-click-outside="() => (contextMenuVisible = false)" />
 		<Dialog
-			class="z-40"
+			style="z-index: 40;"
 			:options="{
-				title: 'New Component',
+				title: 'New Template',
 				size: 'sm',
 				actions: [
 					{
@@ -41,7 +41,7 @@
 						appearance: 'primary',
 						handler: ({ close }) => {
 							createComponent.submit({
-								block: elementProperties,
+								block: block,
 								component_name: componentName,
 							});
 							close();
@@ -52,7 +52,7 @@
 			}"
 			v-model="showDialog">
 			<template #body-content>
-				<Input type="text" v-model="componentName" label="Component Name" required />
+				<Input type="text" v-model="componentName" label="Template Name" required />
 			</template>
 		</Dialog>
 	</div>
@@ -77,7 +77,7 @@ const props = defineProps([
 	"roundable",
 	"resizableX",
 	"resizableY",
-	"element-properties",
+	"block",
 	"selected",
 	"breakpoint"
 ]);
@@ -87,7 +87,7 @@ const editorWrapper = ref(null);
 const target = ref(null);
 const updateTracker = ref(null);
 const resizing = ref(false);
-const targetProps = reactive(props.elementProperties);
+const block = reactive(props.block);
 
 let currentInstance = null;
 let guides = null;
@@ -133,9 +133,9 @@ const handleMove = (ev) => {
 		await nextTick();
 		const leftOffset = guides.getLeftPositionOffset(startLeft + movementX);
 
-		targetProps.setStyle("position", "absolute");
-		targetProps.setStyle("left", `${finalLeft + leftOffset}px`);
-		targetProps.setStyle("top", `${startTop + movementY}px`);
+		block.setStyle("position", "absolute");
+		block.setStyle("left", `${finalLeft + leftOffset}px`);
+		block.setStyle("top", `${startTop + movementY}px`);
 		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);
@@ -189,8 +189,8 @@ const handleContextMenuSelect = (action) => {
 
 const copyStyle = () => {
 	store.copiedStyle = {
-		blockId: props.elementProperties.blockId,
-		style: props.elementProperties.getStylesCopy(),
+		blockId: props.block.blockId,
+		style: props.block.getStylesCopy(),
 	};
 };
 
@@ -214,8 +214,8 @@ const saveAsComponent = () => {
 const duplicateBlock = (block) => {
 	let blockToDuplicate = block || store.getBlockCopy(store.builderState.selectedBlock);
 	let superParent = currentInstance.parent.parent;
-	if (superParent.props?.elementProperties?.children) {
-		superParent.props.elementProperties.children.push(blockToDuplicate);
+	if (superParent.props?.block?.children) {
+		superParent.props.block.children.push(blockToDuplicate);
 	} else {
 		store.builderState.blocks.push(blockToDuplicate);
 	}
@@ -230,9 +230,9 @@ const contextMenuOptions = [
 	{
 		label: "Paste Style",
 		action: pasteStyle,
-		condition: () => store.copiedStyle && store.copiedStyle.blockId !== props.elementProperties.blockId,
+		condition: () => store.copiedStyle && store.copiedStyle.blockId !== props.block.blockId,
 	},
-	{ label: "Save as Component", action: saveAsComponent },
+	{ label: "Save as Template", action: saveAsComponent },
 	{ label: "Duplicate", action: duplicateBlock },
 ];
 </script>

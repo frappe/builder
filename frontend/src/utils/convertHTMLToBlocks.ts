@@ -1,4 +1,6 @@
-function convertHtmlToBlocks(html) {
+import { BlockOptions, Styles } from "./block";
+import Block from "./block";
+function convertHtmlToBlocks(html: string) {
 	const start = html.indexOf("```");
 	let htmlStripped;
 	if (start === -1) {
@@ -10,26 +12,25 @@ function convertHtmlToBlocks(html) {
 
 
 	const doc = new DOMParser().parseFromString(htmlStripped, "text/html");
-	const {body} = doc;
+	const { body } = doc;
 	return parseElement(body);
 }
 
-function parseElement(element) {
-	const obj = {
+function parseElement(element: HTMLElement): BlockOptions {
+	const obj: BlockOptions = {
 		element: element.tagName.toLowerCase(),
+		styles: {},
+		attributes: {}
 	};
 
-	obj.styles = {};
 	if (element.style.length) {
 		for (let i = 0; i < element.style.length; i++) {
 			const prop = element.style[i];
-			obj.styles[prop] = element.style[prop];
+			obj.styles[prop] = element.style.getPropertyValue(prop);
 		}
 	}
 
-	obj.attributes = {};
 	if (element.attributes.length) {
-		obj.attributes = {};
 		for (let i = 0; i < element.attributes.length; i++) {
 			const attr = element.attributes[i];
 			obj.attributes[attr.name] = attr.value;
@@ -46,13 +47,14 @@ function parseElement(element) {
 
 	if (element.hasChildNodes()) {
 		obj.children = [];
-		const {childNodes} = element;
+		const { childNodes } = element;
 		for (let i = 0; i < childNodes.length; i++) {
 			const child = childNodes[i];
+			console.log(child);
 			if (child.nodeType === Node.ELEMENT_NODE) {
 				obj.children.push(parseElement(child));
 			} else if (child.nodeType === Node.TEXT_NODE) {
-				obj.innerText = child.textContent.trim();
+				obj.innerText = (child.textContent || '').trim();
 			}
 		}
 	}
@@ -61,5 +63,12 @@ function parseElement(element) {
 }
 
 window.convertHtmlToBlocks = convertHtmlToBlocks;
+
+declare global {
+	interface Window {
+		convertHtmlToBlocks: any;
+	}
+}
+
 
 export default convertHtmlToBlocks;
