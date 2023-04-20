@@ -33,12 +33,14 @@ class Block implements BlockOptions {
 	attributes: Styles;
 	classes: Array<string>;
 	resizable?: boolean;
+	innerText?: string;
 	computedStyles: ProxyHandler<Styles>;
 	originalElement?: string | undefined;
 	constructor(options: BlockOptions) {
 		delete options.computedStyles;
 		this.element = options.element;
 		this.draggable = options.draggable;
+		this.innerText = options.innerText;
 		if (this.isRoot()) {
 			this.blockId = "root";
 			this.editorStyles = {
