@@ -8,7 +8,7 @@
 		}"
 		@mousedown="resize" />
 </template>
-<script setup>
+<script setup lang="ts">
 import { ref } from "vue";
 const props = defineProps({
 	maxWidth: {
@@ -35,14 +35,15 @@ const emit = defineEmits({
 
 const dragActive = ref(false);
 
-function resize(ev) {
+function resize(ev: MouseEvent) {
 	const startX = ev.clientX;
 	const startWidth = props.width;
+	const target = ev.target as HTMLElement;
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(ev.target).cursor;
+	document.body.style.cursor = window.getComputedStyle(target).cursor;
 
-	const mousemove = (mouseMoveEvent) => {
+	const mousemove = (mouseMoveEvent: MouseEvent) => {
 		const movement = (mouseMoveEvent.clientX - startX) * (props.side === "left" ? -1 : 1);
 		let newWidth = startWidth + movement;
 		// clamp width between min and max

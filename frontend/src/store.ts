@@ -1,14 +1,25 @@
 import { defineStore } from "pinia";
 import Block, { BlockOptions } from "./utils/block";
 
+interface Page {
+	name: string;
+	page_name: string;
+	route: string;
+	blocks: string;
+}
+
+interface PageMap {
+	[key: string]: Page;
+}
+
 const useStore = defineStore("store", {
 	state: () => ({
 		builderState: {
 			selectedPage: null,
-			selectedBlock: null,
-			selectedBlocks: [],
+			selectedBlock: <Block | null>null,
+			selectedBlocks: <Block[]>[],
 			activeBreakpoint: "desktop",
-			blocks: [
+			blocks: <Block[]>[
 				new Block({
 					element: "div",
 					originalElement: "body",
@@ -18,6 +29,7 @@ const useStore = defineStore("store", {
 			],
 		},
 		hoveredBlock: null,
+		hoveredBreakpoint: null,
 		builderLayout: {
 			rightPanelWidth: 285,
 			leftPanelWidth: 280,
@@ -142,7 +154,7 @@ const useStore = defineStore("store", {
 			},
 		],
 		pageName: "Home",
-		pages: {},
+		pages: <PageMap>{},
 		pastelCssColors: [
 			"#FFFFFF",
 			"#F5FFFA",
@@ -239,6 +251,7 @@ const useStore = defineStore("store", {
 			translateY: 0,
 			startX: 0,
 			startY: 0,
+			background: ''
 		},
 		copiedStyle: null,
 		components: [],
@@ -280,6 +293,7 @@ const useStore = defineStore("store", {
 				resizable: false,
 			});
 		},
+		getPageData() {},
 	},
 });
 

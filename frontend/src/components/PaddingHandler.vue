@@ -24,7 +24,7 @@
 				:class="{
 					'cursor-ns-resize': !disableHandlers,
 				}"
-			@mousedown.stop="handlePadding($event,topPaddingHandler)" />
+			@mousedown.stop="handlePadding($event, Position.Top)" />
 			<div class="m-auto text-sm text-white" v-show="updating">
 				{{ blockStyles.paddingTop }}
 			</div>
@@ -49,7 +49,7 @@
 				}" :class="{
 					'cursor-ns-resize': !disableHandlers,
 				}"
-			@mousedown.stop="handlePadding($event,bottomPaddingHandler)" />
+			@mousedown.stop="handlePadding($event, Position.Bottom)" />
 			<div class="m-auto text-sm text-white" v-show="updating">
 				{{ blockStyles.paddingBottom }}
 			</div>
@@ -74,7 +74,7 @@
 				}" :class="{
 					'cursor-ew-resize': !disableHandlers,
 				}"
-			@mousedown.stop="handlePadding($event,leftPaddingHandler)" />
+			@mousedown.stop="handlePadding($event, Position.Left)" />
 			<div class="m-auto text-sm text-white" v-show="updating">
 				{{ blockStyles.paddingLeft }}
 			</div>
@@ -99,17 +99,18 @@
 				}" :class="{
 					'cursor-ew-resize': !disableHandlers,
 				}"
-			@mousedown.stop="handlePadding($event,rightPaddingHandler)" />
+			@mousedown.stop="handlePadding($event, Position.Right)" />
 			<div class="m-auto text-sm text-white" v-show="updating">
 				{{ blockStyles.paddingRight }}
 			</div>
 		</div>
 	</div>
 </template>
-<script setup>
+<script setup lang="ts">
 import useStore from "../store";
 import { ref, computed, watchEffect } from "vue";
 import Block from "../utils/block";
+import { getNumberFromPx } from "../utils/helpers";
 const props = defineProps({
 	targetBlock: {
 		type: Block,
@@ -130,13 +131,7 @@ const props = defineProps({
 });
 
 const store = useStore();
-const block = props.targetBlock;
-
-// Padding handlers
-const topPaddingHandler = ref(null);
-const bottomPaddingHandler = ref(null);
-const leftPaddingHandler = ref(null);
-const rightPaddingHandler = ref(null);
+const targetBlock = props.targetBlock;
 
 const updating = ref(false);
 const emit = defineEmits(["update"]);
@@ -156,16 +151,16 @@ const blockStyles = computed(() => {
 });
 
 const topPaddingHandlerHeight = computed(() => {
-	return (parseInt(blockStyles.value.paddingTop, 10) || 5) * store.canvas.scale;
+	return (getNumberFromPx(blockStyles.value.paddingTop) || 5) * store.canvas.scale;
 });
 const bottomPaddingHandlerHeight = computed(() => {
-	return (parseInt(blockStyles.value.paddingBottom, 10) || 5) * store.canvas.scale;
+	return (getNumberFromPx(blockStyles.value.paddingBottom) || 5) * store.canvas.scale;
 });
 const leftPaddingHandlerWidth = computed(() => {
-	return (parseInt(blockStyles.value.paddingLeft, 10) || 5) * store.canvas.scale;
+	return (getNumberFromPx(blockStyles.value.paddingLeft) || 5) * store.canvas.scale;
 });
 const rightPaddingHandlerWidth = computed(() => {
-	return (parseInt(blockStyles.value.paddingRight, 10) || 5) * store.canvas.scale;
+	return (getNumberFromPx(blockStyles.value.paddingRight) || 5) * store.canvas.scale;
 });
 
 const topHandle = computed(() => {
@@ -204,40 +199,46 @@ const rightHandle = computed(() => {
 	};
 });
 
+enum Position {
+	Top = 'top',
+	Right = 'right',
+	Bottom = 'bottom',
+	Left = 'left',
+}
 
-const handlePadding = (ev, handler) => {
+const handlePadding = (ev: MouseEvent, position: Position ) => {
 	if (props.disableHandlers) return;
 	updating.value = true;
 	const startY = ev.clientY;
 	const startX = ev.clientX;
+	const target = ev.target as HTMLElement;
 
-	const startTop = parseInt(blockStyles.value.paddingTop, 10) || 5;
-	const startBottom = parseInt(blockStyles.value.paddingBottom, 10) || 5;
-	const startLeft = parseInt(blockStyles.value.paddingLeft, 10) || 5;
-	const startRight = parseInt(blockStyles.value.paddingRight, 10) || 5;
+	const startTop = getNumberFromPx(blockStyles.value.paddingTop) || 5;
+	const startBottom = getNumberFromPx(blockStyles.value.paddingBottom) || 5;
+	const startLeft = getNumberFromPx(blockStyles.value.paddingLeft) || 5;
+	const startRight = getNumberFromPx(blockStyles.value.paddingRight) || 5;
 
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(ev.target).cursor;
+	document.body.style.cursor = window.getComputedStyle(target).cursor;
 
-	const mousemove = (mouseMoveEvent) => {
+	const mousemove = (mouseMoveEvent: MouseEvent) => {
 		let movement = 0;
 		let affectingAxis = null;
 		props.onUpdate && props.onUpdate();
-
-		if (handler === topPaddingHandler.value) {
+		if (position === Position.Top) {
 			movement = Math.max(startTop + mouseMoveEvent.clientY - startY, 0);
 			targetBlock.setStyle("paddingTop", movement + "px");
 			affectingAxis = "y";
-		} else if (handler === bottomPaddingHandler.value) {
+		} else if (position === Position.Bottom) {
 			movement = Math.max(startBottom + startY - mouseMoveEvent.clientY, 0);
 			targetBlock.setStyle("paddingBottom", movement + "px");
 			affectingAxis = "y";
-		} else if (handler === leftPaddingHandler.value) {
+		} else if (position === Position.Left) {
 			movement = Math.max(startLeft + mouseMoveEvent.clientX - startX, 0);
 			targetBlock.setStyle("paddingLeft", movement + "px");
 			affectingAxis = "x";
-		} else if (handler === rightPaddingHandler.value) {
+		} else if (position === Position.Right) {
 			movement = Math.max(startRight + startX - mouseMoveEvent.clientX, 0);
 			targetBlock.setStyle("paddingRight", movement + "px");
 			affectingAxis = "x";

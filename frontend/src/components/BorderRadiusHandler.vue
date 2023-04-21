@@ -14,7 +14,8 @@
 		</div>
 	</div>
 </template>
-<script setup>
+<script setup lang="ts">
+import { getNumberFromPx } from "@/utils/helpers";
 import useStore from "../store";
 import Block from "../utils/block";
 import { ref } from "vue";
@@ -32,14 +33,14 @@ const props = defineProps({
 });
 
 const targetBlock = props.targetBlock;
-const target = props.target;
+const target = props.target as HTMLElement;
 const borderRadius = ref(parseInt(target.style.borderRadius, 10) || 0);
 const updating = ref(false);
 
-const handleRounded = (ev) => {
+const handleRounded = (ev: MouseEvent) => {
 	const startX = ev.clientX;
 	const startY = ev.clientY;
-	const handle = ev.currentTarget;
+	const handle = ev.currentTarget as HTMLElement;
 	const handleStyle = window.getComputedStyle(handle);
 	let minLeft = 10;
 	let minTop = 10;
@@ -65,7 +66,7 @@ const handleRounded = (ev) => {
 
 	updating.value = true;
 
-	const mousemove = (mouseMoveEvent) => {
+	const mousemove = (mouseMoveEvent: MouseEvent) => {
 		mouseMoveEvent.preventDefault();
 		const movementX = mouseMoveEvent.clientX - lastX;
 		const movementY = mouseMoveEvent.clientY - lastY;
@@ -76,7 +77,7 @@ const handleRounded = (ev) => {
 			minTop = -(handleHeight / 2);
 			minLeft = -(handleWidth / 2);
 		}
-		let radius = Math.round(parseInt(target.style.borderRadius || 0, 10) + movement);
+		let radius = Math.round(getNumberFromPx(target.style.borderRadius) + movement);
 		radius = Math.max(0, Math.min(radius, maxRadius));
 
 		const ratio = radius / maxRadius;
@@ -92,7 +93,7 @@ const handleRounded = (ev) => {
 	};
 	document.addEventListener("mousemove", mousemove);
 	document.addEventListener("mouseup", (mouseUpEvent) => {
-		if (parseInt(targetBlock.getStyle("borderRadius"), 10) < 10) {
+		if (getNumberFromPx(targetBlock.getStyle("borderRadius")) < 10) {
 			handle.style.top = `${10}px`;
 			handle.style.left = `${10}px`;
 		}
