@@ -47,11 +47,12 @@
 			:breakpoint="breakpoint" />
 	</teleport>
 </template>
-<script setup>
+<script setup lang="ts">
 import { onMounted, ref, computed } from "vue";
 import useStore from "../store";
 import BlockEditor from "./BlockEditor.vue";
 import draggable from "vuedraggable";
+import Block from "@/utils/block";
 
 const component = ref(null);
 const store = useStore();
@@ -63,7 +64,7 @@ onMounted(() => {
 	selectBlock(null, props.block);
 	let targetElement = component.value.targetDomElement;
 	if (props.block.isText()) {
-		targetElement.addEventListener("keydown", (e) => {
+		targetElement.addEventListener("keydown", (e: KeyboardEvent) => {
 			if (e.key === "b" && e.metaKey) {
 				e.preventDefault();
 				props.block.setStyle("fontWeight", "bold");
@@ -90,7 +91,7 @@ const isSelected = computed(() => {
 	);
 });
 
-const selectBlock = (e, block) => {
+const selectBlock = (e: MouseEvent, block: Block) => {
 	if (e) e.preventDefault();
 	store.builderState.selectedBlock = block;
 	store.builderState.activeBreakpoint = props.breakpoint;

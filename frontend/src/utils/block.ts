@@ -41,6 +41,7 @@ class Block implements BlockOptions {
 		this.element = options.element;
 		this.draggable = options.draggable;
 		this.innerText = options.innerText;
+		this.originalElement = options.originalElement;
 		if (this.isRoot()) {
 			this.blockId = "root";
 			this.editorStyles = {
@@ -89,7 +90,7 @@ class Block implements BlockOptions {
 		return ["span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6", "a"].includes(this.element);
 	}
 	isContainer() {
-		return this.element === "section";
+		return ["section", "div"].includes(this.element);
 	}
 	setStyle(style: string, value: number | string) {
 		const store = useStore();
@@ -115,7 +116,7 @@ class Block implements BlockOptions {
 		return Math.random().toString(36).substr(2, 9);
 	}
 	getIcon() {
-		return this.isText() ? 'type': this.isImage() ? 'image': this.isContainer() ? 'square': this.isLink() ? 'link': this.isRoot() ? 'hash': 'square';
+		return this.isRoot() ? 'hash' : this.isText() ? 'type': this.isImage() ? 'image': this.isContainer() ? 'square': this.isLink() ? 'link': 'square';
 	}
 	isRoot() {
 		return this.originalElement === "body";

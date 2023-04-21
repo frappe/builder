@@ -23,7 +23,7 @@
 		</div>
 	</div>
 </template>
-<script setup>
+<script setup lang="ts">
 import { ref } from "vue";
 import { UseDark } from "@vueuse/components";
 import { createResource } from "frappe-ui";
@@ -32,13 +32,16 @@ import useStore from "../store";
 const store = useStore();
 const toolbar = ref(null);
 
-const activateBreakpoint = (device) => {
-	store.builderState.activeBreakpoint = device;
-};
+interface Page {
+	name: string;
+	page_name: string;
+	route: string;
+	blocks: string;
+}
 
 const publishWebResource = createResource({
 	url: "website_builder.api.publish",
-	onSuccess(page) {
+	onSuccess(page: Page) {
 		// hack
 		page.blocks = JSON.parse(page.blocks);
 		store.pages[page.name] = page;

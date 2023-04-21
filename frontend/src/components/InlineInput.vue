@@ -9,7 +9,7 @@
 			class="text-sm text-gray-800 dark:bg-zinc-800 rounded-md dark:text-zinc-200 dark:focus:bg-zinc-700 min-w-[60%]" />
 	</div>
 </template>
-<script setup>
+<script setup lang="ts">
 import { Input } from "frappe-ui";
 
 defineProps({
@@ -33,7 +33,7 @@ defineProps({
 
 const emit = defineEmits(["updateValue"]);
 
-const handleChange = (value) => {
+const handleChange = (value: string | number | null) => {
 	emit("updateValue", value);
 }
 

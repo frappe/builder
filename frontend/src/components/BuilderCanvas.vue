@@ -47,7 +47,7 @@
 		</div>
 	</div>
 </template>
-<script setup>
+<script setup lang="ts">
 import { nextTick, onMounted, ref, computed, watch, reactive } from "vue";
 import { useElementBounding } from "@vueuse/core";
 import useStore from "../store";
@@ -57,6 +57,7 @@ import BlockSnapGuides from "./BlockSnapGuides.vue";
 import { useDebouncedRefHistory } from "@vueuse/core";
 import { storeToRefs } from "pinia";
 import { FeatherIcon, toast } from "frappe-ui";
+import Block from "@/utils/block";
 
 const store = useStore();
 const canvasContainer = ref(null);
@@ -71,7 +72,9 @@ store.getPageData = getPageData;
 const clearSelectedComponent = () => {
 	store.builderState.selectedBlock = null;
 	store.builderState.selectedBlocks = [];
-	document.activeElement.blur();
+	if (document.activeElement instanceof HTMLElement) {
+		document.activeElement.blur();
+	}
 };
 
 const visibleBreakpoints = computed(() => {
@@ -81,15 +84,16 @@ const visibleBreakpoints = computed(() => {
 });
 
 document.addEventListener("keydown", (e) => {
-	if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
+	const target = e.target as HTMLElement;
+	if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
 		return;
 	}
 	if (
 		e.key === "Backspace" &&
 		store.builderState.selectedBlock &&
-		!e.target.closest(".__builder_component__")
+		!target.closest(".__builder_component__")
 	) {
-		function findBlockAndRemove(blocks, blockId) {
+		function findBlockAndRemove(blocks: Array<Block>, blockId: string) {
 			if (blockId === "root") {
 				toast({
 					title: "Warning",
@@ -149,10 +153,12 @@ const setScaleAndTranslate = async () => {
 
 onMounted(() => {
 	setScaleAndTranslate();
-	setPanAndZoom(store.canvas, canvas.value, canvasContainer.value);
+	const canvasContainerEl = canvasContainer.value as unknown as HTMLElement;
+	const canvasEl = canvas.value as unknown as HTMLElement;
+	setPanAndZoom(store.canvas, canvasEl, canvasContainerEl);
 	const { builderState } = storeToRefs(store);
 	const { undo, redo, canUndo, canRedo } = useDebouncedRefHistory(builderState, {
-		max: 100,
+		capacity: 100,
 		deep: true,
 		clone: (obj) => {
 			let newObj = Object.assign({}, obj);
@@ -166,10 +172,11 @@ onMounted(() => {
 	});
 
 	document.addEventListener("keydown", (e) => {
+		const target = e.target as HTMLElement;
 		if (
-			e.target.tagName === "INPUT" ||
-			e.target.tagName === "TEXTAREA" ||
-			e.target.getAttribute("contenteditable")
+			target.tagName === "INPUT" ||
+			target.tagName === "TEXTAREA" ||
+			target.getAttribute("contenteditable")
 		) {
 			return;
 		}
@@ -183,7 +190,7 @@ onMounted(() => {
 		}
 	});
 
-	function findBlock(blocks, blockId) {
+	function findBlock(blocks: Array<Block>, blockId: string): Block | null {
 		for (const block of blocks) {
 			if (block.blockId === blockId) {
 				return block;

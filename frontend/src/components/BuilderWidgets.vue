@@ -17,7 +17,7 @@
 		</draggable>
 	</div>
 </template>
-<script setup>
+<script setup lang="ts">
 import draggable from "vuedraggable";
 import useStore from "../store";
 const store = useStore();

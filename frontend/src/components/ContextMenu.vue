@@ -12,18 +12,25 @@
 		</ul>
 	</div>
 </template>
-<script setup>
+<script setup lang="ts">
+
+interface Option {
+	label: string;
+	action: CallableFunction;
+	condition?: () => boolean;
+}
+
 const props = defineProps({
 	posX: Number,
 	posY: Number,
-	options: Array,
+	options: Array as () => Option[],
 });
 
 const emit = defineEmits({
-	select: (action) => action
+	select: (action: CallableFunction) => action
 });
 
-const handleClick = (action) => {
+const handleClick = (action: CallableFunction) => {
 	emit('select', action);
 }
 </script>
