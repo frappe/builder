@@ -20,6 +20,16 @@ import BuilderCanvas from "../components/BuilderCanvas.vue";
 import BuilderToolbar from "../components/BuilderToolbar.vue";
 import BuilderSidebar from "../components/BuilderSidebar.vue";
 import BlockPropertiesEditor from "../components/BlockPropertiesEditor.vue";
+
+// To disable page zooming
+// TODO: Move this to a separate file & find better alternative
+document.addEventListener('wheel', event => {
+	const { ctrlKey } = event
+	if (ctrlKey) {
+		event.preventDefault();
+		return
+	}
+}, { passive: false })
 </script>
 
 <style>
