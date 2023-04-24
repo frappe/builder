@@ -1,9 +1,7 @@
 <template>
 	<div>
 		<h3 class="mb-4 text-xs font-bold uppercase text-gray-600">Templates</h3>
-		<div
-			v-if="!Object.keys(store.components).length"
-			class="text-sm italic text-gray-600">
+		<div v-if="!Object.keys(store.components).length" class="text-sm italic text-gray-600">
 			No templates saved
 		</div>
 		<draggable
@@ -11,7 +9,7 @@
 			:group="{ name: 'blocks', pull: 'clone', put: false }"
 			item-key="id"
 			:sort="false"
-			:clone="(obj) => store.getBlockCopy(obj.block)"
+			:clone="(blockTemplate: BlockTemplate) => store.getBlockCopy(blockTemplate.block)"
 			class="flex w-full flex-wrap">
 			<template #item="{ element }">
 				<div class="mb-3 w-full">
@@ -26,7 +24,7 @@
 								:block="store.getBlockCopy(element.block)"
 								ref="preview"
 								@render-complete="(el) => setScale(el, element)"
-								preview="true" />
+								:preview="true" />
 						</div>
 					</div>
 					<p class="text-xs text-gray-800 dark:text-zinc-500">
@@ -37,7 +35,7 @@
 		</draggable>
 	</div>
 </template>
-<script setup>
+<script setup lang="ts">
 import draggable from "vuedraggable";
 import { createListResource } from "frappe-ui";
 import BuilderBlock from "./BuilderBlock.vue";
@@ -54,19 +52,19 @@ createListResource({
 	start: 0,
 	pageLength: 10,
 	auto: true,
-	onSuccess(data) {
-		store.components = data;
-	},
-	transform(data) {
+	transform(data: any[]) {
 		data.forEach((d) => {
 			d.block = JSON.parse(d.block);
 			d.scale = 0.3; // for preview
 		});
 		return data;
 	},
+	onSuccess(data: BlockTemplate[]) {
+		store.components = data;
+	},
 });
 
-const setScale = (el, block) => {
+const setScale = (el: HTMLElement, block: BlockOptions) => {
 	const scale = Math.min(140 / el.offsetWidth, 70 / el.offsetHeight, 0.6);
 	block.scale = scale;
 };

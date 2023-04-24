@@ -1,40 +1,19 @@
 import useStore from "../store";
 
-interface Styles {
-	[key: string]: string | number;
-}
-
-interface BlockOptions {
-	blockId?: string | undefined;
-	element: string;
-	originalElement?: string;
-	styles?: Styles;
-	mobileStyles?: Styles;
-	tabletStyles?: Styles;
-	editorStyles?: Styles;
-	attributes?: Styles;
-	classes?: Array<string>;
-	children?: Array<Block>;
-	resizable?: boolean;
-	draggable?: boolean;
-	innerText?: string;
-	computedStyles?: ProxyHandler<Styles>;
-}
-
 class Block implements BlockOptions {
 	blockId: string;
 	element: string;
-	editorStyles: Styles;
+	editorStyles: BlockStyleMap;
 	children: Array<Block>;
 	draggable?: boolean;
-	styles: Styles;
-	mobileStyles: { [key: string]: string | number };
-	tabletStyles: Styles;
-	attributes: Styles;
+	styles: BlockStyleMap;
+	mobileStyles: BlockStyleMap;
+	tabletStyles: BlockStyleMap;
+	attributes: BlockAttributeMap;
 	classes: Array<string>;
 	resizable?: boolean;
 	innerText?: string;
-	computedStyles: ProxyHandler<Styles>;
+	computedStyles: ProxyHandler<BlockStyleMap>;
 	originalElement?: string | undefined;
 	constructor(options: BlockOptions) {
 		delete options.computedStyles;
@@ -137,8 +116,3 @@ class Block implements BlockOptions {
 }
 
 export default Block;
-
-export {
-	Styles,
-	BlockOptions,
-}

@@ -1,10 +1,15 @@
 <template>
-	<div class="w-fit h-fit min-w-[120px] p-1 rounded-lg fixed bg-white dark:bg-zinc-900 shadow-xl z-30"
+	<div
+		class="fixed z-30 h-fit w-fit min-w-[120px] rounded-lg bg-white p-1 shadow-xl dark:bg-zinc-900"
 		:style="{ top: posY + 'px', left: posX + 'px' }">
 		<ul class="text-sm">
-			<li class="px-3 py-1 text-gray-900 dark:text-zinc-50  rounded-md"
-				v-for="(option, index) in options" :key="index" @click.prevent.stop="(!option.condition || option.condition()) && handleClick(option.action)" :class="{
-					'hover:bg-gray-200 hover:dark:bg-zinc-700 cursor-pointer': !option.condition || option.condition(),
+			<li
+				class="rounded-md px-3 py-1 text-gray-900 dark:text-zinc-50"
+				v-for="(option, index) in options"
+				:key="index"
+				@click.prevent.stop="(!option.condition || option.condition()) && handleClick(option.action)"
+				:class="{
+					'cursor-pointer hover:bg-gray-200 hover:dark:bg-zinc-700': !option.condition || option.condition(),
 					'text-gray-400 dark:text-zinc-500': option.condition && !option.condition(),
 				}">
 				{{ option.label }}
@@ -13,8 +18,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-
-interface Option {
+interface ContextMenuOption {
 	label: string;
 	action: CallableFunction;
 	condition?: () => boolean;
@@ -23,14 +27,14 @@ interface Option {
 const props = defineProps({
 	posX: Number,
 	posY: Number,
-	options: Array as () => Option[],
+	options: Array as () => ContextMenuOption[],
 });
 
 const emit = defineEmits({
-	select: (action: CallableFunction) => action
+	select: (action: CallableFunction) => action,
 });
 
 const handleClick = (action: CallableFunction) => {
-	emit('select', action);
-}
+	emit("select", action);
+};
 </script>

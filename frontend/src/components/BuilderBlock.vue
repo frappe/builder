@@ -38,25 +38,41 @@
 				(isSelected && breakpoint === store.builderState.activeBreakpoint) ||
 				(store.hoveredBlock === block.blockId && store.hoveredBreakpoint === breakpoint)
 			) && !preview"
-			:roundable="block.isContainer() || block.isDiv() || block.isImage()"
 			:resizable-x="!block.isRoot()"
 			:resizable-y="!block.isImage() && !block.isRoot()"
 			:selected="isSelected"
 			:resizable="!block.isRoot()"
 			:block="block"
-			:breakpoint="breakpoint" />
+			:breakpoint="breakpoint"
+			:target="component.targetDomElement" />
 	</teleport>
 </template>
 <script setup lang="ts">
-import { onMounted, ref, computed } from "vue";
+import { onMounted, ref, computed, Ref } from "vue";
 import useStore from "../store";
 import BlockEditor from "./BlockEditor.vue";
 import draggable from "vuedraggable";
 import Block from "@/utils/block";
 
-const component = ref(null);
+// TODO: Find better way to set type for draggable
+// sortable object for draggable has targetDomElement
+const component = ref(null) as unknown as Ref<{ targetDomElement: HTMLElement }>;
 const store = useStore();
-const props = defineProps(["block", "preview", "breakpoint"]);
+const props = defineProps({
+	block: {
+		type: Block,
+		required: true,
+	},
+	breakpoint: {
+		type: String,
+		default: "desktop",
+	},
+	preview: {
+		type: Boolean,
+		default: false,
+	},
+});
+
 const emit = defineEmits(["renderComplete"]);
 
 
@@ -91,7 +107,7 @@ const isSelected = computed(() => {
 	);
 });
 
-const selectBlock = (e: MouseEvent, block: Block) => {
+const selectBlock = (e: MouseEvent | null, block: Block) => {
 	if (e) e.preventDefault();
 	store.builderState.selectedBlock = block;
 	store.builderState.activeBreakpoint = props.breakpoint;

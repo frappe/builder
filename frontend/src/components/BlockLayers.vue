@@ -19,7 +19,7 @@
 							store.builderState.selectedBlock &&
 							store.builderState.selectedBlock.blockId === element.blockId,
 					}"
-					@click.stop="selectBlock($event, element)"
+					@click.stop="selectBlock(element)"
 					@mouseover.stop="store.hoveredBlock = element.blockId"
 					@mouseleave.stop="store.hoveredBlock = null">
 					<span class="flex items-center font-medium">
@@ -42,10 +42,12 @@
 		</draggable>
 	</div>
 </template>
-<script setup>
+<script setup lang="ts">
 import { FeatherIcon } from "frappe-ui";
 import draggable from "vuedraggable";
 import useStore from "../store";
+import Block from "@/utils/block";
+
 const store = useStore();
 defineProps({
 	blocks: {
@@ -53,7 +55,7 @@ defineProps({
 		default: () => [],
 	},
 });
-const selectBlock = (e, block) => {
+const selectBlock = (block: Block) => {
 	store.builderState.selectedBlock = block;
 };
 </script>

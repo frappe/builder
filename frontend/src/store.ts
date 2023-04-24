@@ -1,21 +1,11 @@
 import { defineStore } from "pinia";
-import Block, { BlockOptions } from "./utils/block";
+import Block from "./utils/block";
 
-interface Page {
-	name: string;
-	page_name: string;
-	route: string;
-	blocks: string;
-}
-
-interface PageMap {
-	[key: string]: Page;
-}
 
 const useStore = defineStore("store", {
 	state: () => ({
 		builderState: {
-			selectedPage: null,
+			selectedPage: <string | null>null,
 			selectedBlock: <Block | null>null,
 			selectedBlocks: <Block[]>[],
 			activeBreakpoint: "desktop",
@@ -28,8 +18,8 @@ const useStore = defineStore("store", {
 				}),
 			],
 		},
-		hoveredBlock: null,
-		hoveredBreakpoint: null,
+		hoveredBlock: <string | null>null,
+		hoveredBreakpoint: <string | null>null,
 		builderLayout: {
 			rightPanelWidth: 285,
 			leftPanelWidth: 280,
@@ -154,6 +144,7 @@ const useStore = defineStore("store", {
 			},
 		],
 		pageName: "Home",
+		route: "/",
 		pages: <PageMap>{},
 		pastelCssColors: [
 			"#FFFFFF",
@@ -253,15 +244,15 @@ const useStore = defineStore("store", {
 			startY: 0,
 			background: ''
 		},
-		copiedStyle: null,
-		components: [],
+		copiedStyle: <StyleCopy | null>null,
+		components: <BlockTemplate[]>[],
 	}),
 	actions: {
 		clearBlocks() {
 			this.builderState.blocks = [];
 			this.builderState.blocks.push(this.getRootBlock());
 		},
-		pushBlocks(blocks: Block[]) {
+		pushBlocks(blocks: BlockOptions[]) {
 			let firstBlock = new Block(blocks[0]);
 			if (firstBlock.isRoot()) {
 				this.builderState.blocks = [firstBlock];
@@ -271,8 +262,7 @@ const useStore = defineStore("store", {
 				}
 			}
 		},
-		getBlockCopy(block: Block, retainId = false) {
-			if (!block) return null;
+		getBlockCopy(block: BlockOptions | Block, retainId = false): Block {
 			let b = JSON.parse(JSON.stringify(block));
 			if (!retainId) {
 				const deleteBlockId = (block: BlockOptions) => {
@@ -293,7 +283,7 @@ const useStore = defineStore("store", {
 				resizable: false,
 			});
 		},
-		getPageData() {},
+		getPageData() { },
 	},
 });
 
