@@ -19,7 +19,9 @@
 					</li>
 				</ul>
 			</div>
-			<div v-if="store.builderState.selectedBlock && !store.builderState.selectedBlock.isImage()" class="mt-5">
+			<div
+				v-if="store.builderState.selectedBlock && !store.builderState.selectedBlock.isImage()"
+				class="mt-5">
 				<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Text Color</h3>
 				<ul class="flex flex-wrap">
 					<li v-for="color in store.textColors" :key="color" class="mr-2 mb-2 last:mr-0">
@@ -58,7 +60,10 @@
 				Max Width
 			</InlineInput>
 			<InlineInput
-				v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isContainer() || store.builderState.selectedBlock.isButton()"
+				v-if="
+					(store.builderState.selectedBlock && store.builderState.selectedBlock.isContainer()) ||
+					store.builderState.selectedBlock.isButton()
+				"
 				:value="blockStyles.margin"
 				@update-value="(val) => (blockStyles.margin = val)">
 				Margin
@@ -177,8 +182,21 @@
 				@update-value="(val) => (blockStyles.gap = val)">
 				Gap
 			</InlineInput>
-
-			<h3 v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isText()" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">
+			<!-- flex basis -->
+			<InlineInput
+				v-if="
+					store.builderState.selectedBlock &&
+					store.builderState.selectedBlock.isContainer() &&
+					blockStyles.display === 'flex'
+				"
+				type="text"
+				:value="blockStyles.flexBasis"
+				@update-value="(val) => (blockStyles.flexBasis = val)">
+				Basis
+			</InlineInput>
+			<h3
+				v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isText()"
+				class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">
 				Text
 			</h3>
 			<InlineInput
@@ -298,7 +316,7 @@
 	</div>
 </template>
 <script setup>
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import PanelResizer from "./PanelResizer.vue";
 import InlineInput from "./InlineInput.vue";
 import useStore from "../store";

@@ -2,8 +2,8 @@
 	<span
 		class="resize-dimensions absolute right-[-40px] bottom-[-40px] flex h-8 w-20 items-center justify-center whitespace-nowrap rounded-full bg-gray-600 p-2 text-sm text-white opacity-80"
 		v-if="resizing">
-		{{ parseInt(targetBlock.styles.width || 100) }} x
-		{{ parseInt(targetBlock.styles.height) }}
+		{{ getNumberFromPx(targetBlock.styles.width) }} x
+		{{ getNumberFromPx(targetBlock.styles.height) }}
 	</span>
 	<div
 		class="left-handle ew-resize pointer-events-auto absolute top-0 bottom-0 left-[-2px] w-[4px] border-none bg-transparent" />
@@ -21,11 +21,12 @@
 		class="pointer-events-auto absolute bottom-[-4px] right-[-4px] h-[8px] w-[8px] cursor-nwse-resize rounded-full border-[1px] border-blue-400 bg-white"
 		@mousedown.stop="handleBottomCornerResize" />
 </template>
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watchEffect } from "vue";
 import useStore from "../store";
 import Block from "../utils/block";
 import guidesTracker from "../utils/guidesTracker";
+import { getNumberFromPx } from "@/utils/helpers";
 
 const props = defineProps({
 	targetBlock: {
@@ -43,7 +44,7 @@ const store = useStore();
 const targetBlock = props.targetBlock;
 const target = props.target;
 const resizing = ref(false);
-let guides = null;
+let guides = null as unknown as ReturnType<typeof guidesTracker>;
 
 onMounted(() => {
 	guides = guidesTracker(target);
@@ -53,16 +54,16 @@ watchEffect(() => {
 	emit("resizing", resizing.value);
 });
 
-const handleRightResize = (ev) => {
+const handleRightResize = (ev: MouseEvent) => {
 	const startX = ev.clientX;
 	const startWidth = target.offsetWidth;
-	const parentWidth = target.parentElement.offsetWidth;
+	const parentWidth = target.parentElement?.offsetWidth || 0;
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(ev.target).cursor;
+	document.body.style.cursor = window.getComputedStyle(ev.target as HTMLElement).cursor;
 	resizing.value = true;
 	guides.showX();
-	const mousemove = (mouseMoveEvent) => {
+	const mousemove = (mouseMoveEvent: MouseEvent) => {
 		// movement / scale * speed
 		const movement = ((mouseMoveEvent.clientX - startX) / store.canvas.scale) * 2;
 		if (mouseMoveEvent.shiftKey) {
@@ -86,17 +87,17 @@ const handleRightResize = (ev) => {
 	});
 };
 
-const handleBottomResize = (ev) => {
+const handleBottomResize = (ev: MouseEvent) => {
 	const startY = ev.clientY;
 	const startHeight = target.offsetHeight;
 
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(ev.target).cursor;
+	document.body.style.cursor = window.getComputedStyle(ev.target as HTMLElement).cursor;
 	resizing.value = true;
 	guides.showY();
 
-	const mousemove = (mouseMoveEvent) => {
+	const mousemove = (mouseMoveEvent: MouseEvent) => {
 		const movement = (mouseMoveEvent.clientY - startY) / store.canvas.scale;
 		let finalHeight = guides.getFinalHeight(startHeight + movement);
 
@@ -113,7 +114,7 @@ const handleBottomResize = (ev) => {
 	});
 };
 
-const handleBottomCornerResize = (ev) => {
+const handleBottomCornerResize = (ev: MouseEvent) => {
 	const startX = ev.clientX;
 	const startY = ev.clientY;
 	const startHeight = target.offsetHeight;
@@ -121,10 +122,10 @@ const handleBottomCornerResize = (ev) => {
 
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(ev.target).cursor;
+	document.body.style.cursor = window.getComputedStyle(ev.target as HTMLElement).cursor;
 	resizing.value = true;
 
-	const mousemove = (mouseMoveEvent) => {
+	const mousemove = (mouseMoveEvent: MouseEvent) => {
 		const movementX = mouseMoveEvent.clientX - startX;
 		const finalWidth = Math.round(startWidth + movementX);
 		targetBlock.setStyle("width", `${finalWidth}px`);

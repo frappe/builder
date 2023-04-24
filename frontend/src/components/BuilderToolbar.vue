@@ -32,19 +32,12 @@ import useStore from "../store";
 const store = useStore();
 const toolbar = ref(null);
 
-interface Page {
-	name: string;
-	page_name: string;
-	route: string;
-	blocks: string;
-}
-
 const publishWebResource = createResource({
 	url: "website_builder.api.publish",
-	onSuccess(page: Page) {
+	onSuccess(page: any) {
 		// hack
 		page.blocks = JSON.parse(page.blocks);
-		store.pages[page.name] = page;
+		store.pages[page.name] = page as Page;
 		store.pageName = page.page_name;
 		window.open(`/${page.route}`, "_blank");
 	},

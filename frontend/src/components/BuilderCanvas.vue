@@ -5,7 +5,6 @@
 			left: `${store.builderLayout.leftPanelWidth}px`,
 			right: `${store.builderLayout.rightPanelWidth}px`,
 		}">
-		<div class="absolute" id="block-draggables" />
 		<div class="overlay absolute" id="overlay" />
 		<BlockSnapGuides />
 		<div

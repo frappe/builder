@@ -5,7 +5,9 @@ const store = useStore();
 
 function setGuides(target: HTMLElement) {
 	const threshold = 10;
-	const canvasBounds = reactive(useElementBounding(document.querySelector(".canvas")));
+	// TODO: Remove canvas dependency
+	const canvasElement = document.getElementById("canvas") as HTMLElement;
+	const canvasBounds = reactive(useElementBounding(canvasElement));
 	const targetBounds = reactive(useElementBounding(target));
 
 	const getFinalWidth = (calculatedWidth: number) => {
@@ -73,11 +75,11 @@ function setGuides(target: HTMLElement) {
 		return Math.round(leftOffset);
 	};
 
-	const showX = (x: number) => {
+	const showX = () => {
 		store.guides.x = -1;
 		store.guides.showX = true;
 	};
-	const showY = (y: number) => {
+	const showY = () => {
 		store.guides.y = -1;
 		store.guides.showY = true;
 	};
