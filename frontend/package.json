@@ -17,7 +17,8 @@
     "pinia": "^2.0.28",
     "vue": "^3.2.25",
     "vue-router": "^4.0.12",
-    "vuedraggable": "^4.1.0"
+    "vuedraggable": "^4.1.0",
+    "webfontloader": "^1.6.28"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^2.0.0",

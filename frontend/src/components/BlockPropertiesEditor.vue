@@ -226,12 +226,14 @@
 				Spacing
 			</InlineInput>
 			<InlineInput
+				type="autocomplete"
+				:options="fontListNames"
 				v-if="
 					store.builderState.selectedBlock &&
 					(store.builderState.selectedBlock.isText() || store.builderState.selectedBlock.isRoot())
 				"
 				:value="blockStyles.fontFamily || 'Inter'"
-				@update-value="(val) => (blockStyles.fontFamily = val)">
+				@update-value="(val) => setFont(val)">
 				Family
 			</InlineInput>
 			<InlineInput
@@ -320,6 +322,12 @@ import { computed } from "vue";
 import PanelResizer from "./PanelResizer.vue";
 import InlineInput from "./InlineInput.vue";
 import useStore from "../store";
+import WebFont from "webfontloader";
+// generate font list from fontList.json file
+// load json using import keyword
+import fontList from "../utils/fontList.json";
+const fontListNames = fontList.items.map((font) => font.family);
+
 const store = useStore();
 
 // const blockStyles = computed(() => {
@@ -331,6 +339,7 @@ const store = useStore();
 // 	}
 // 	return styleObj;
 // });
+
 
 const blockStyles = computed(() => {
 	let styleObj = store.builderState.selectedBlock.computedStyles;
@@ -354,5 +363,17 @@ const setLayout = (layout) => {
 		// store.builderState.selectedBlock.setStyle("gridTemplateRows", "repeat(3, 1fr)");
 		// store.builderState.selectedBlock.setStyle("gridGap", "10px");
 	}
+};
+
+const setFont = (font) => {
+	let fontObj = fontList.items.find((f) => f.family === font.value);
+	WebFont.load({
+		google: {
+			families: [font.value + ":" + fontObj.variants.join(",")],
+		},
+		active: () => {
+			store.builderState.selectedBlock.setStyle("fontFamily", font.value);
+		}
+	});
 };
 </script>
