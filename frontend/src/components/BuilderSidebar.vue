@@ -90,7 +90,6 @@ createListResource({
 		setPage(store.pages[localStorage.getItem("selectedPage") || "home"]);
 	},
 	transform(data: any[]) {
-		console.log(data)
 		const pages = {} as PageMap;
 		data.forEach((d) => {
 			pages[d.name] = d;

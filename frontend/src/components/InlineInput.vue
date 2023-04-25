@@ -5,12 +5,19 @@
 		</span>
 		<Input
 			:type="type" :value="value" :options="options"
+			v-if="type != 'autocomplete'"
 			@change="handleChange"
-			class="text-sm text-gray-800 dark:bg-zinc-800 rounded-md dark:text-zinc-200 dark:focus:bg-zinc-700 min-w-[60%]" />
+			class="text-sm text-gray-800 dark:bg-zinc-800 rounded-md dark:text-zinc-200 dark:focus:bg-zinc-700 w-[150px]" />
+		<Autocomplete
+			v-if="type == 'autocomplete'"
+			:value="value"
+			:options="options.map((option) => ({ label: option, value: option }))"
+			@change="handleChange"
+			class="text-sm text-gray-800 dark:bg-zinc-800 rounded-md dark:text-zinc-200 dark:focus:bg-zinc-700 w-[150px]" />
 	</div>
 </template>
 <script setup lang="ts">
-import { Input } from "frappe-ui";
+import { Input, Autocomplete } from "frappe-ui";
 
 defineProps({
 	value: {
