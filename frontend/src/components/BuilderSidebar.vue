@@ -45,7 +45,7 @@
 							'bg-gray-200 text-gray-900 dark:bg-zinc-800 dark:text-gray-200':
 								store.builderState.selectedPage === page.name,
 						}"
-						@click="setPage(page)">
+						@click="store.setPage(page)">
 						<FeatherIcon name="globe" class="h-3 w-3" />
 						<a class="flex p-1 px-2 text-base">
 							{{ page.page_name }}
@@ -87,7 +87,6 @@ createListResource({
 	auto: true,
 	onSuccess(data: PageMap) {
 		store.pages = data;
-		setPage(store.pages[localStorage.getItem("selectedPage") || "home"]);
 	},
 	transform(data: any[]) {
 		const pages = {} as PageMap;
@@ -98,17 +97,6 @@ createListResource({
 		return pages;
 	},
 });
-
-const setPage = (page: Page) => {
-	if (!page) return;
-	// clear blocks
-	store.clearBlocks();
-	store.pushBlocks(page.blocks);
-	store.pageName = page.page_name;
-	store.route = page.route;
-	store.builderState.selectedPage = page.name;
-	localStorage.setItem("selectedPage", page.name);
-};
 
 const getPage = () => {
 	generating.value = true;
