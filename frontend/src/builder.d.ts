@@ -54,3 +54,9 @@ declare interface StyleCopy {
 	blockId: string;
 	style: Style
 }
+
+declare interface ContextMenuOption {
+	label: string;
+	action: CallableFunction;
+	condition?: () => boolean;
+}
