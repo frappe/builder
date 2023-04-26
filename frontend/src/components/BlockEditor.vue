@@ -211,7 +211,7 @@ const createComponent = createResource({
 const createComponentHandler = ({ close }: { "close": () => void }) => {
 	createComponent.submit({
 		block: block,
-		component_name: componentName,
+		component_name: componentName.value,
 	});
 	close();
 }
@@ -234,12 +234,6 @@ const duplicateBlock = (block: Block) => {
 const pasteStyle = () => {
 	Object.assign(store.builderState.selectedBlock as Block, store.copiedStyle?.style);
 };
-
-interface ContextMenuOption {
-	label: string;
-	action: CallableFunction;
-	condition?: () => boolean;
-}
 
 const contextMenuOptions: ContextMenuOption[] = [
 	{ label: "Copy Style", action: copyStyle },
