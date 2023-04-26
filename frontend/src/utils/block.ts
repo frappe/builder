@@ -21,6 +21,20 @@ class Block implements BlockOptions {
 		this.draggable = options.draggable;
 		this.innerText = options.innerText;
 		this.originalElement = options.originalElement;
+		this.blockId = options.blockId || this.generateId();
+		this.children = (options.children || []).map((child: BlockOptions) => new Block(child));
+
+		this.styles = options.styles || {};
+		this.mobileStyles = options.mobileStyles || {};
+		this.tabletStyles = options.tabletStyles || {};
+		this.editorStyles = options.editorStyles || {};
+		this.attributes = options.attributes || {};
+		this.classes = options.classes || [];
+
+		if (this.isButton()) {
+			this.editorStyles.display = "inline-block";
+		}
+
 		if (this.isRoot()) {
 			this.blockId = "root";
 			this.editorStyles = {
@@ -36,15 +50,6 @@ class Block implements BlockOptions {
 			};
 			this.draggable = false;
 		}
-		this.blockId = options.blockId || this.generateId();
-		this.children = (options.children || []).map((child: BlockOptions) => new Block(child));
-
-		this.styles = options.styles || {};
-		this.mobileStyles = options.mobileStyles || {};
-		this.tabletStyles = options.tabletStyles || {};
-		this.editorStyles = options.editorStyles || {};
-		this.attributes = options.attributes || {};
-		this.classes = options.classes || [];
 
 		this.computedStyles = new Proxy(this.styles, {
 			set: (target, prop: string, value) => {
@@ -66,7 +71,7 @@ class Block implements BlockOptions {
 		return this.element === "a";
 	}
 	isText() {
-		return ["span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6", "a"].includes(this.element);
+		return ["span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6", "a", "label"].includes(this.element);
 	}
 	isContainer() {
 		return ["section", "div"].includes(this.element);
@@ -112,6 +117,9 @@ class Block implements BlockOptions {
 			mobileStyles: Object.assign({}, this.mobileStyles),
 			tabletStyles: Object.assign({}, this.tabletStyles),
 		}
+	}
+	getFontFamily() {
+		return this.styles.fontFamily || this.mobileStyles.fontFamily || this.tabletStyles.fontFamily || 'Inter';
 	}
 }
 

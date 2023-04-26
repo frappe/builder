@@ -326,7 +326,8 @@ import WebFont from "webfontloader";
 // generate font list from fontList.json file
 // load json using import keyword
 import fontList from "../utils/fontList.json";
-const fontListNames = fontList.items.map((font) => font.family);
+// TODO: Remove limit on font list
+const fontListNames = fontList.items.map((font) => font.family).slice(0, 50);
 
 const store = useStore();
 
