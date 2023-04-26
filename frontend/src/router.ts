@@ -3,16 +3,16 @@ import { createRouter, createWebHistory } from "vue-router";
 const routes = [
 	{
 		path: "/",
-		redirect: "builder",
+		redirect: "/home",
 	},
 	{
 		path: "/home",
-		name: "Home",
+		name: "home",
 		component: () => import("@/pages/PageBuilderLanding.vue"),
 	},
 	{
-		path: "/builder",
-		name: "Page Builder",
+		path: "/builder/:page_id",
+		name: "builder",
 		component: () => import("@/pages/PageBuilder.vue"),
 	},
 ];

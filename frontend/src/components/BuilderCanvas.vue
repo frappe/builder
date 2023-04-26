@@ -5,7 +5,7 @@
 			left: `${store.builderLayout.leftPanelWidth}px`,
 			right: `${store.builderLayout.rightPanelWidth}px`,
 		}">
-		<div class="overlay absolute" id="overlay" />
+		<div class="overlay absolute" id="overlay" ref="overlay"/>
 		<BlockSnapGuides />
 		<div
 			class="fixed flex"
@@ -47,7 +47,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { nextTick, onMounted, ref, computed, watch, reactive } from "vue";
+import { nextTick, onMounted, ref, computed, watch, reactive, Ref } from "vue";
 import { useElementBounding } from "@vueuse/core";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
@@ -62,6 +62,10 @@ const store = useStore();
 const canvasContainer = ref(null);
 const canvas = ref(null);
 const showBlocks = ref(false);
+const overlay = ref(null);
+
+// TODO:
+store.overlayElement = overlay;
 
 function getPageData() {
 	return store.builderState.blocks;

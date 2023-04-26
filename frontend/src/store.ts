@@ -246,6 +246,7 @@ const useStore = defineStore("store", {
 		},
 		copiedStyle: <StyleCopy | null>null,
 		components: <BlockTemplate[]>[],
+		overlayElement: <any>null,
 	}),
 	actions: {
 		clearBlocks() {
@@ -284,6 +285,16 @@ const useStore = defineStore("store", {
 			});
 		},
 		getPageData() { },
+		setPage(page: Page) {
+			if (!page) return;
+			// clear blocks
+			this.clearBlocks();
+			this.pushBlocks(page.blocks);
+			this.pageName = page.page_name;
+			this.route = page.route;
+			this.builderState.selectedPage = page.name;
+			// localStorage.setItem("selectedPage", page.name);
+		}
 	},
 });
 

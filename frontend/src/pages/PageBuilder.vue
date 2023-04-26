@@ -1,25 +1,30 @@
 <template>
-	<div class="flex-col bg-gray-100 page-builder">
-		<BuilderToolbar class="relative z-30 dark:bg-zinc-900 dark:border-b-[1px] dark:border-gray-800"></BuilderToolbar>
+	<div class="page-builder flex-col bg-gray-100">
+		<BuilderToolbar
+			class="relative z-30 dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"></BuilderToolbar>
 		<div>
 			<BuilderSidebar
-				class="fixed left-0 top-[var(--toolbar-height)] bottom-0 z-20 overflow-auto border-r-[1px] bg-white p-4 dark:bg-zinc-900 dark:border-gray-800 no-scrollbar">
-			</BuilderSidebar>
+				class="fixed left-0 top-[var(--toolbar-height)] bottom-0 z-20 overflow-auto border-r-[1px] bg-white p-4 no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderSidebar>
 			<BuilderCanvas
-				class="canvas-container absolute top-[var(--toolbar-height)] bottom-0 flex justify-center overflow-hidden bg-gray-200 p-10 dark:bg-zinc-800">
-			</BuilderCanvas>
+				class="canvas-container absolute top-[var(--toolbar-height)] bottom-0 flex justify-center overflow-hidden bg-gray-200 p-10 dark:bg-zinc-800"></BuilderCanvas>
 			<BlockPropertiesEditor
-				class="fixed right-0 top-[var(--toolbar-height)] bottom-0 z-20 overflow-auto border-l-[1px] bg-white p-4 pr-2 dark:bg-zinc-900 dark:border-gray-800 no-scrollbar">
-			</BlockPropertiesEditor>
+				class="fixed right-0 top-[var(--toolbar-height)] bottom-0 z-20 overflow-auto border-l-[1px] bg-white p-4 pr-2 no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BlockPropertiesEditor>
 		</div>
 	</div>
 </template>
 
-<script setup>
-import BuilderCanvas from "../components/BuilderCanvas.vue";
-import BuilderToolbar from "../components/BuilderToolbar.vue";
-import BuilderSidebar from "../components/BuilderSidebar.vue";
-import BlockPropertiesEditor from "../components/BlockPropertiesEditor.vue";
+<script setup lang="ts">
+import { onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { createDocumentResource } from "frappe-ui";
+import BuilderCanvas from "@/components/BuilderCanvas.vue";
+import BuilderToolbar from "@/components/BuilderToolbar.vue";
+import BuilderSidebar from "@/components/BuilderSidebar.vue";
+import BlockPropertiesEditor from "@/components/BlockPropertiesEditor.vue";
+import useStore from "@/store";
+
+const route = useRoute();
+const store = useStore();
 
 // To disable page zooming
 // TODO: Move this to a separate file & find better alternative
@@ -30,6 +35,22 @@ document.addEventListener('wheel', event => {
 		return
 	}
 }, { passive: false })
+
+onMounted(() => {
+	if (route.params.page_id && route.params.page_id !== "new") {
+		createDocumentResource({
+			method: "GET",
+			doctype: "Web Page Beta",
+			name: route.params.page_id || "home",
+			auto: true,
+			onSuccess(page: any) {
+				page.blocks = JSON.parse(page.blocks);
+				store.setPage(page as Page);
+			},
+		});
+	}
+})
+
 </script>
 
 <style>

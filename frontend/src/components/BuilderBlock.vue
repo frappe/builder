@@ -32,7 +32,7 @@
 			<BuilderBlock :block="element" :breakpoint="breakpoint" />
 		</template>
 	</draggable>
-	<teleport to="#overlay">
+	<teleport to="#overlay" v-if="store.overlayElement">
 		<BlockEditor
 			v-if="(
 				(isSelected && breakpoint === store.builderState.activeBreakpoint) ||
