@@ -10,7 +10,7 @@
 		@dblclick.stop
 		@mouseover.stop="
 			store.hoveredBlock = block.blockId;
-			store.hoveredBreakpoint = breakpoint
+			store.hoveredBreakpoint = breakpoint;
 		"
 		@mouseleave.stop="store.hoveredBlock = null"
 		@blur="block.innerText = $event.target.innerText"
@@ -34,11 +34,11 @@
 	</draggable>
 	<teleport to="#overlay" v-if="store.overlayElement">
 		<BlockEditor
-			v-if="(
-				component &&
-				(isSelected && breakpoint === store.builderState.activeBreakpoint) ||
-				(store.hoveredBlock === block.blockId && store.hoveredBreakpoint === breakpoint)
-			) && !preview"
+			v-if="
+				((component && isSelected && breakpoint === store.builderState.activeBreakpoint) ||
+					(store.hoveredBlock === block.blockId && store.hoveredBreakpoint === breakpoint)) &&
+				!preview
+			"
 			:resizable-x="!block.isRoot()"
 			:resizable-y="!block.isImage() && !block.isRoot()"
 			:selected="isSelected"
@@ -49,11 +49,12 @@
 	</teleport>
 </template>
 <script setup lang="ts">
-import { onMounted, ref, computed, Ref } from "vue";
+import Block from "@/utils/block";
+import { setFont } from "@/utils/fontManager";
+import { Ref, computed, onMounted, ref } from "vue";
+import draggable from "vuedraggable";
 import useStore from "../store";
 import BlockEditor from "./BlockEditor.vue";
-import draggable from "vuedraggable";
-import Block from "@/utils/block";
 
 // TODO: Find better way to set type for draggable
 // sortable object for draggable has targetDomElement
@@ -76,9 +77,9 @@ const props = defineProps({
 
 const emit = defineEmits(["renderComplete"]);
 
-
 onMounted(() => {
 	selectBlock(null, props.block);
+	setFont(props.block.getStyle("fontFamily") as string);
 	let targetElement = component.value.targetDomElement;
 	if (props.block.isText()) {
 		targetElement.addEventListener("keydown", (e: KeyboardEvent) => {

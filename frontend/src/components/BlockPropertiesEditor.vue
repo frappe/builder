@@ -215,12 +215,6 @@
 			</InlineInput>
 			<InlineInput
 				v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isText()"
-				:value="blockStyles.fontWeight"
-				@update-value="(val) => (blockStyles.fontWeight = val)">
-				Weight
-			</InlineInput>
-			<InlineInput
-				v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isText()"
 				:value="blockStyles.letterSpacing"
 				@update-value="(val) => (blockStyles.letterSpacing = val)">
 				Spacing
@@ -230,11 +224,22 @@
 				:options="fontListNames"
 				v-if="
 					store.builderState.selectedBlock &&
-					(store.builderState.selectedBlock.isText() || store.builderState.selectedBlock.isRoot())
+					(store.builderState.selectedBlock.isText() || store.builderState.selectedBlock.isContainer())
 				"
 				:value="blockStyles.fontFamily || 'Inter'"
 				@update-value="(val) => setFont(val)">
 				Family
+			</InlineInput>
+			<InlineInput
+				v-if="
+					store.builderState.selectedBlock &&
+					(store.builderState.selectedBlock.isText() || store.builderState.selectedBlock.isContainer())
+				"
+				:value="blockStyles.fontWeight"
+				type="select"
+				:options="getFontWeightOptions(blockStyles.fontFamily)"
+				@update-value="(val) => (blockStyles.fontWeight = val)">
+				Weight
 			</InlineInput>
 			<InlineInput
 				v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isText()"
@@ -318,16 +323,11 @@
 	</div>
 </template>
 <script setup>
+import useStore from "@/store";
+import { setFont as _setFont, fontListNames, getFontWeightOptions } from "@/utils/fontManager";
 import { computed } from "vue";
-import PanelResizer from "./PanelResizer.vue";
 import InlineInput from "./InlineInput.vue";
-import useStore from "../store";
-import WebFont from "webfontloader";
-// generate font list from fontList.json file
-// load json using import keyword
-import fontList from "../utils/fontList.json";
-// TODO: Remove limit on font list
-const fontListNames = fontList.items.map((font) => font.family).slice(0, 50);
+import PanelResizer from "./PanelResizer.vue";
 
 const store = useStore();
 
@@ -340,7 +340,6 @@ const store = useStore();
 // 	}
 // 	return styleObj;
 // });
-
 
 const blockStyles = computed(() => {
 	let styleObj = store.builderState.selectedBlock.computedStyles;
@@ -367,14 +366,8 @@ const setLayout = (layout) => {
 };
 
 const setFont = (font) => {
-	let fontObj = fontList.items.find((f) => f.family === font.value);
-	WebFont.load({
-		google: {
-			families: [font.value + ":" + fontObj.variants.join(",")],
-		},
-		active: () => {
-			store.builderState.selectedBlock.setStyle("fontFamily", font.value);
-		}
+	_setFont(font.value).then(() => {
+		store.builderState.selectedBlock.setStyle("fontFamily", font.value);
 	});
 };
 </script>
