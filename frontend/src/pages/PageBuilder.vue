@@ -14,8 +14,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { onMounted, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { createDocumentResource } from "frappe-ui";
 import BuilderCanvas from "@/components/BuilderCanvas.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
@@ -37,19 +37,31 @@ document.addEventListener('wheel', event => {
 }, { passive: false })
 
 onMounted(() => {
-	if (route.params.page_id && route.params.page_id !== "new") {
-		createDocumentResource({
-			method: "GET",
-			doctype: "Web Page Beta",
-			name: route.params.page_id || "home",
-			auto: true,
-			onSuccess(page: any) {
-				page.blocks = JSON.parse(page.blocks);
-				store.setPage(page as Page);
-			},
-		});
+	if (route.params.pageId && route.params.pageId !== "new") {
+		setPage(route.params.pageId as string)
+	} else {
+		store.clearBlocks();
 	}
 })
+
+watch(() => route.params.pageId, () => {
+	if (route.params.pageId && route.params.pageId !== "new") {
+		setPage(route.params.pageId as string)
+	}
+})
+
+const setPage = (pageName: string) => {
+	createDocumentResource({
+		method: "GET",
+		doctype: "Web Page Beta",
+		name: pageName || "home",
+		auto: true,
+		onSuccess(page: any) {
+			page.blocks = JSON.parse(page.blocks);
+			store.setPage(page as Page);
+		},
+	});
+};
 
 </script>
 

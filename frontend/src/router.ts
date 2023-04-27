@@ -11,7 +11,7 @@ const routes = [
 		component: () => import("@/pages/PageBuilderLanding.vue"),
 	},
 	{
-		path: "/builder/:page_id",
+		path: "/builder/:pageId",
 		name: "builder",
 		component: () => import("@/pages/PageBuilder.vue"),
 	},
