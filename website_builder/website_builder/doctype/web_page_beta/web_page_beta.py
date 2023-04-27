@@ -20,11 +20,12 @@ class WebPageBeta(WebsiteGenerator):
 	def get_context(self, context):
 		# show breadcrumbs
 		context.title = "page"
-		content, style = self.get_content()
+		context.fonts = {}
+		content, style = self.get_content(context)
 		context.content = content
 		context.style = style
 
-	def get_content(self):
+	def get_content(self, context):
 		soup = bs.BeautifulSoup("", "html.parser")
 		blocks = json.loads(self.blocks)
 		style_tag = soup.new_tag("style")
@@ -37,6 +38,10 @@ class WebPageBeta(WebsiteGenerator):
 				classes = node.get("classes", [])
 				if node.get("styles", {}):
 					style_class = f"--{frappe.generate_hash(length=8)}"
+					base_styles = node.get("styles", {})
+					mobile_styles = node.get("mobileStyles", {})
+					tablet_styles = node.get("tabletStyles", {})
+					setFonts([base_styles, mobile_styles, tablet_styles], context)
 					append_style(node.get("styles", {}), style_tag, style_class)
 					append_style(node.get("tabletStyles", {}), style_tag, style_class, device="tablet")
 					append_style(node.get("mobileStyles", {}), style_tag, style_class, device="mobile")
@@ -78,3 +83,13 @@ def append_style(style_obj, style_tag, style_class, device="desktop"):
 	elif device == "tablet":
 		style_string = f"@media only screen and (min-width: 426px) and (max-width: 768px) {{ {style_string} }}"
 	style_tag.append(style_string)
+
+def setFonts(styles, context):
+	for style in styles:
+		font = style.get("fontFamily")
+		if font:
+			if font in context.fonts:
+				if style.get("fontWeight") and style.get("fontWeight") not in context.fonts[font]["weights"]:
+					context.fonts[font]["weights"].append(style.get("fontWeight"))
+			else:
+				context.fonts[font] = { "weights": [style.get("fontWeight") or "400"] }

@@ -29,6 +29,7 @@ class Block implements BlockOptions {
 		this.tabletStyles = options.tabletStyles || {};
 		this.editorStyles = options.editorStyles || {};
 		this.attributes = options.attributes || {};
+		delete this.attributes.style;
 		this.classes = options.classes || [];
 
 		if (this.isButton()) {

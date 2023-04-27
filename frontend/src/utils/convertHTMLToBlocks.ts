@@ -33,7 +33,9 @@ function parseElement(element: HTMLElement): BlockOptions {
 		obj.attributes = {};
 		for (let i = 0; i < element.attributes.length; i++) {
 			const attr = element.attributes[i];
-			obj.attributes[attr.name] = attr.value;
+			if (attr.name !== 'style') {
+				obj.attributes[attr.name] = attr.value;
+			};
 		}
 	}
 
