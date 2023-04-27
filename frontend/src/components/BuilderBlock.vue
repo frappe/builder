@@ -35,6 +35,7 @@
 	<teleport to="#overlay" v-if="store.overlayElement">
 		<BlockEditor
 			v-if="(
+				component &&
 				(isSelected && breakpoint === store.builderState.activeBreakpoint) ||
 				(store.hoveredBlock === block.blockId && store.hoveredBreakpoint === breakpoint)
 			) && !preview"
