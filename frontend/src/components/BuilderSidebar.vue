@@ -45,7 +45,7 @@
 							'bg-gray-200 text-gray-900 dark:bg-zinc-800 dark:text-gray-200':
 								store.builderState.selectedPage === page.name,
 						}"
-						@click="store.setPage(page)">
+						@click="setPage(page)">
 						<FeatherIcon name="globe" class="h-3 w-3" />
 						<a class="flex p-1 px-2 text-base">
 							{{ page.page_name }}
@@ -73,14 +73,17 @@ import BlockLayers from "./BlockLayers.vue";
 import PanelResizer from "./PanelResizer.vue";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 
+import { useRouter } from "vue-router";
+
 const prompt = ref(null) as unknown as Ref<string>;
+const router = useRouter();
 
 const store = useStore();
 const generating = ref(false);
 
 createListResource({
 	doctype: "Web Page Beta",
-	fields: ["name", "blocks", "page_name", "route"],
+	fields: ["name", "page_name", "route"],
 	orderBy: "creation desc",
 	start: 0,
 	pageLength: 10,
@@ -92,7 +95,6 @@ createListResource({
 		const pages = {} as PageMap;
 		data.forEach((d) => {
 			pages[d.name] = d;
-			pages[d.name].blocks = JSON.parse(d.blocks);
 		});
 		return pages;
 	},
@@ -112,4 +114,13 @@ const getPage = () => {
 		prompt: prompt.value,
 	});
 };
+
+const setPage = (page: Page) => {
+	router.replace({
+		name: "builder",
+		params: {
+			pageId: page.name,
+		},
+	})
+}
 </script>

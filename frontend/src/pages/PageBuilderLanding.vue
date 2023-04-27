@@ -9,7 +9,7 @@
 	</div>
 	<section class="max-w-800 m-auto flex w-3/4 flex-wrap gap-y-4 gap-x-3 pt-10">
 		<router-link
-				:to="{ name: 'builder', params: { page_id: 'new' } }">
+				:to="{ name: 'builder', params: { pageId: 'new' } }">
 			<div class="auto mr-2 w-56 rounded-md border-2 border-gray-200 p-2">
 				<span class="mt-2 text-sm">+ New Page</span>
 			</div>
@@ -22,7 +22,7 @@
 			<router-link
 				v-for="page in pages"
 				:key="page.page_name"
-				:to="{ name: 'builder', params: { page_id: page.page_name } }">
+				:to="{ name: 'builder', params: { pageId: page.page_name } }">
 				<div class="mr-2 w-56 rounded-md border-2 border-gray-200 p-2">
 					<img
 						src="https://user-images.githubusercontent.com/13928957/212847544-5773795d-2fd6-48d1-8423-b78ecc92522b.png"
