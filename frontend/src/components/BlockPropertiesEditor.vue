@@ -19,6 +19,7 @@
 					</li>
 				</ul>
 			</div>
+			<InlineInput :value="blockStyles.background" @update-value="setBgColor">Background</InlineInput>
 			<div
 				v-if="store.builderState.selectedBlock && !store.builderState.selectedBlock.isImage()"
 				class="mt-5">

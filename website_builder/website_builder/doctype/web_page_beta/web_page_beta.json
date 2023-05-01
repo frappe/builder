@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_rename": 1,
  "autoname": "field:page_name",
  "creation": "2023-01-09 15:20:33.274204",
  "default_view": "List",
@@ -9,8 +10,8 @@
  "field_order": [
   "page_name",
   "route",
-  "blocks",
-  "published"
+  "published",
+  "blocks"
  ],
  "fields": [
   {
@@ -28,7 +29,7 @@
    "default": "1",
    "fieldname": "published",
    "fieldtype": "Check",
-   "label": "published"
+   "label": "Published"
   },
   {
    "fieldname": "blocks",
@@ -38,7 +39,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-02-03 21:39:50.892636",
+ "modified": "2023-05-01 12:57:36.470628",
  "modified_by": "Administrator",
  "module": "Website Builder",
  "name": "Web Page Beta",

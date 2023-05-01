@@ -93,7 +93,7 @@ onMounted(() => {
 });
 
 const styles = computed(() => {
-	let styleObj = props.block.styles;
+	let styleObj = props.block.baseStyles;
 	if (props.breakpoint === "mobile") {
 		styleObj = { ...styleObj, ...props.block.mobileStyles };
 	} else if (props.breakpoint === "tablet") {

@@ -1,4 +1,4 @@
-import { useElementBounding, useEventListener, useMutationObserver } from "@vueuse/core";
+import { useElementBounding, useMutationObserver } from "@vueuse/core";
 import { nextTick, reactive, watch } from "vue";
 import useStore from "../store";
 const store = useStore();
@@ -28,7 +28,7 @@ function trackTarget(target: HTMLElement, host: HTMLElement, padding = 0) {
 				});
 			});
 		};
-		window.observer = useMutationObserver(container, callback, {
+		window.observer = useMutationObserver(container as HTMLElement, callback, {
 			attributes: true,
 			childList: true,
 			subtree: true,

@@ -1,5 +1,3 @@
-import Block, { BlockOptions } from "./block";
-
 function convertHTMLToBlocks(html: string) {
 	const start = html.indexOf("```");
 	let htmlStripped;

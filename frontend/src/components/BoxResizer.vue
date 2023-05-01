@@ -2,8 +2,8 @@
 	<span
 		class="resize-dimensions absolute right-[-40px] bottom-[-40px] flex h-8 w-20 items-center justify-center whitespace-nowrap rounded-full bg-gray-600 p-2 text-sm text-white opacity-80"
 		v-if="resizing">
-		{{ getNumberFromPx(targetBlock.styles.width) }} x
-		{{ getNumberFromPx(targetBlock.styles.height) }}
+		{{ getNumberFromPx(targetBlock.getStyle("width")) }} x
+		{{ getNumberFromPx(targetBlock.getStyle("height")) }}
 	</span>
 	<div
 		class="left-handle ew-resize pointer-events-auto absolute top-0 bottom-0 left-[-2px] w-[4px] border-none bg-transparent" />
@@ -22,11 +22,11 @@
 		@mousedown.stop="handleBottomCornerResize" />
 </template>
 <script setup lang="ts">
-import { ref, onMounted, watchEffect } from "vue";
+import { getNumberFromPx } from "@/utils/helpers";
+import { onMounted, ref, watchEffect } from "vue";
 import useStore from "../store";
 import Block from "../utils/block";
 import guidesTracker from "../utils/guidesTracker";
-import { getNumberFromPx } from "@/utils/helpers";
 
 const props = defineProps({
 	targetBlock: {
