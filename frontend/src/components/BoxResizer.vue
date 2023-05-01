@@ -2,8 +2,8 @@
 	<span
 		class="resize-dimensions absolute right-[-40px] bottom-[-40px] flex h-8 w-20 items-center justify-center whitespace-nowrap rounded-full bg-gray-600 p-2 text-sm text-white opacity-80"
 		v-if="resizing">
-		{{ getNumberFromPx(targetBlock.getStyle("width")) }} x
-		{{ getNumberFromPx(targetBlock.getStyle("height")) }}
+		{{ targetWidth }} x
+		{{ targetHeight }}
 	</span>
 	<div
 		class="left-handle ew-resize pointer-events-auto absolute top-0 bottom-0 left-[-2px] w-[4px] border-none bg-transparent" />
@@ -22,11 +22,11 @@
 		@mousedown.stop="handleBottomCornerResize" />
 </template>
 <script setup lang="ts">
-import { getNumberFromPx } from "@/utils/helpers";
-import { onMounted, ref, watchEffect } from "vue";
+import { computed, onMounted, ref, watchEffect } from "vue";
 import useStore from "../store";
 import Block from "../utils/block";
 import guidesTracker from "../utils/guidesTracker";
+import { getNumberFromPx } from "@/utils/helpers";
 
 const props = defineProps({
 	targetBlock: {
@@ -54,6 +54,16 @@ watchEffect(() => {
 	emit("resizing", resizing.value);
 });
 
+const targetWidth = computed(() => {
+	targetBlock.getStyle("width"); // to trigger reactivity
+	return getNumberFromPx(getComputedStyle(target).getPropertyValue("width"));
+});
+
+const targetHeight = computed(() => {
+	targetBlock.getStyle("height"); // to trigger reactivity
+	return getNumberFromPx(getComputedStyle(target).getPropertyValue("height"));
+});
+
 const handleRightResize = (ev: MouseEvent) => {
 	const startX = ev.clientX;
 	const startWidth = target.offsetWidth;
@@ -65,7 +75,7 @@ const handleRightResize = (ev: MouseEvent) => {
 	guides.showX();
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
 		// movement / scale * speed
-		const movement = ((mouseMoveEvent.clientX - startX) / store.canvas.scale) * 2;
+		const movement = (mouseMoveEvent.clientX - startX) / store.canvas.scale;
 		if (mouseMoveEvent.shiftKey) {
 			const movementPercent = (movement / parentWidth) * 100;
 			const startWidthPercent = (startWidth / parentWidth) * 100;
@@ -126,10 +136,10 @@ const handleBottomCornerResize = (ev: MouseEvent) => {
 	resizing.value = true;
 
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		const movementX = mouseMoveEvent.clientX - startX;
+		const movementX = (mouseMoveEvent.clientX - startX) / store.canvas.scale;
 		const finalWidth = Math.round(startWidth + movementX);
 		targetBlock.setStyle("width", `${finalWidth}px`);
-		const movementY = mouseMoveEvent.clientY - startY;
+		const movementY = (mouseMoveEvent.clientY - startY) / store.canvas.scale;
 		const finalHeight = Math.round(startHeight + movementY);
 		targetBlock.setStyle("height", `${finalHeight}px`);
 		mouseMoveEvent.preventDefault();
