@@ -141,7 +141,7 @@ watchEffect(() => {
 });
 
 const blockStyles = computed(() => {
-	let styleObj = props.targetBlock.styles;
+	let styleObj = props.targetBlock.baseStyles;
 	if (props.breakpoint === "mobile") {
 		styleObj = { ...styleObj, ...props.targetBlock.mobileStyles };
 	} else if (props.breakpoint === "tablet") {

@@ -1,6 +1,5 @@
 import frappe
 import json
-import openai
 from frappe.integrations.utils import make_post_request
 
 @frappe.whitelist(allow_guest=True)

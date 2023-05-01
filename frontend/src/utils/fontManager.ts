@@ -2,7 +2,7 @@ import fontList from "@/utils/fontList.json";
 import WebFont from "webfontloader";
 
 // TODO: Remove limit on font list
-const fontListNames = fontList.items.map((font) => font.family).slice(0, 50);
+const fontListNames = fontList.items.filter(f => f.variants.length >= 3).map((font) => font.family);
 const setFont = (font: string | null) => {
 	return new Promise((resolve) => {
 		if (!font) return resolve(font);

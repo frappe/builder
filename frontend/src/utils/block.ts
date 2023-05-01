@@ -6,7 +6,7 @@ class Block implements BlockOptions {
 	editorStyles: BlockStyleMap;
 	children: Array<Block>;
 	draggable?: boolean;
-	styles: BlockStyleMap;
+	baseStyles: BlockStyleMap;
 	mobileStyles: BlockStyleMap;
 	tabletStyles: BlockStyleMap;
 	attributes: BlockAttributeMap;
@@ -24,7 +24,7 @@ class Block implements BlockOptions {
 		this.blockId = options.blockId || this.generateId();
 		this.children = (options.children || []).map((child: BlockOptions) => new Block(child));
 
-		this.styles = options.styles || {};
+		this.baseStyles = options.styles || options.baseStyles || {};
 		this.mobileStyles = options.mobileStyles || {};
 		this.tabletStyles = options.tabletStyles || {};
 		this.editorStyles = options.editorStyles || {};
@@ -52,7 +52,7 @@ class Block implements BlockOptions {
 			this.draggable = false;
 		}
 
-		this.computedStyles = new Proxy(this.styles, {
+		this.computedStyles = new Proxy(this.baseStyles, {
 			set: (target, prop: string, value) => {
 				this.setStyle(prop, value);
 				return true;
@@ -86,16 +86,16 @@ class Block implements BlockOptions {
 			this.tabletStyles[style] = value;
 			return;
 		}
-		this.styles[style] = value;
+		this.baseStyles[style] = value;
 	}
 	getStyle(style: string) {
 		const store = useStore();
 		if (store.builderState.activeBreakpoint === "mobile") {
-			return this.mobileStyles[style] || this.styles[style];
+			return this.mobileStyles[style] || this.baseStyles[style];
 		} else if (store.builderState.activeBreakpoint === "tablet") {
-			return this.tabletStyles[style] || this.styles[style];
+			return this.tabletStyles[style] || this.baseStyles[style];
 		}
-		return this.styles[style];
+		return this.baseStyles[style];
 	}
 	generateId() {
 		return Math.random().toString(36).substr(2, 9);
@@ -114,13 +114,13 @@ class Block implements BlockOptions {
 	}
 	getStylesCopy() {
 		return {
-			styles: Object.assign({}, this.styles),
+			styles: Object.assign({}, this.baseStyles),
 			mobileStyles: Object.assign({}, this.mobileStyles),
 			tabletStyles: Object.assign({}, this.tabletStyles),
 		}
 	}
 	getFontFamily() {
-		return this.styles.fontFamily || this.mobileStyles.fontFamily || this.tabletStyles.fontFamily || 'Inter';
+		return this.baseStyles.fontFamily || this.mobileStyles.fontFamily || this.tabletStyles.fontFamily || 'Inter';
 	}
 }
 

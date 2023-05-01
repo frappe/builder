@@ -1,14 +1,15 @@
 # Copyright (c) 2023, asdf and contributors
 # For license information, please see license.txt
 
-# import frappe
-from frappe.model.document import Document
-from frappe.website.website_generator import WebsiteGenerator
-import frappe
 import json
 import re
 
 import bs4 as bs
+import frappe
+# import frappe
+from frappe.model.document import Document
+from frappe.website.website_generator import WebsiteGenerator
+
 
 class WebPageBeta(WebsiteGenerator):
 	website = frappe._dict(
@@ -36,13 +37,13 @@ class WebPageBeta(WebsiteGenerator):
 				tag = soup.new_tag(node.get("originalElement") or node["element"])
 				tag.attrs = node.get("attributes", {})
 				classes = node.get("classes", [])
-				if node.get("styles", {}):
+				if node.get("baseStyles", {}):
 					style_class = f"--{frappe.generate_hash(length=8)}"
-					base_styles = node.get("styles", {})
+					base_styles = node.get("baseStyles", {})
 					mobile_styles = node.get("mobileStyles", {})
 					tablet_styles = node.get("tabletStyles", {})
 					setFonts([base_styles, mobile_styles, tablet_styles], context)
-					append_style(node.get("styles", {}), style_tag, style_class)
+					append_style(node.get("baseStyles", {}), style_tag, style_class)
 					append_style(node.get("tabletStyles", {}), style_tag, style_class, device="tablet")
 					append_style(node.get("mobileStyles", {}), style_tag, style_class, device="mobile")
 					classes.append(style_class)

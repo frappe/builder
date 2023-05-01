@@ -11,7 +11,7 @@ declare interface BlockOptions {
 	blockId?: string | undefined;
 	element: string;
 	originalElement?: string;
-	styles?: BlockStyleMap;
+	baseStyles?: BlockStyleMap;
 	mobileStyles?: BlockStyleMap;
 	tabletStyles?: BlockStyleMap;
 	editorStyles?: BlockStyleMap;
