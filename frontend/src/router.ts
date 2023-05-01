@@ -6,6 +6,10 @@ const routes = [
 		redirect: "/home",
 	},
 	{
+		path: "/builder",
+		redirect: "/builder/new",
+	},
+	{
 		path: "/home",
 		name: "home",
 		component: () => import("@/pages/PageBuilderLanding.vue"),
