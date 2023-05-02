@@ -94,7 +94,8 @@ document.addEventListener("keydown", (e) => {
 	if (
 		e.key === "Backspace" &&
 		store.builderState.selectedBlock &&
-		!target.closest(".__builder_component__")
+		!target.closest(".__builder_component__") &&
+		!target.getAttribute("contenteditable")
 	) {
 		function findBlockAndRemove(blocks: Array<Block>, blockId: string) {
 			if (blockId === "root") {
