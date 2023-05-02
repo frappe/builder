@@ -8,6 +8,7 @@ const useStore = defineStore("store", {
 			selectedPage: <string | null>null,
 			selectedBlock: <Block | null>null,
 			selectedBlocks: <Block[]>[],
+			editableBlock: <Block | null>null,
 			activeBreakpoint: "desktop",
 			blocks: <Block[]>[
 				new Block({

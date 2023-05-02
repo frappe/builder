@@ -1,13 +1,13 @@
 <template>
 	<draggable
 		:list="block.children"
-		:sort="true"
+		:sort="false"
 		:disabled="preview"
 		:group="{ name: 'blocks' }"
 		item-key="blockId"
 		:tag="block.getTag()"
 		@click.stop="selectBlock($event, block)"
-		@dblclick.stop
+		@dblclick.stop="handleDoubleClick"
 		@mouseover.stop="
 			store.hoveredBlock = block.blockId;
 			store.hoveredBreakpoint = breakpoint;
@@ -19,7 +19,7 @@
 			...$attrs,
 			...{
 				'data-block-id': block.blockId,
-				contenteditable: block.isText() && isSelected,
+				contenteditable: block.isText() && isSelected && isEditable,
 				class: ['__builder_component__', 'outline-none', 'select-none', ...(block.classes || [])],
 				style: { ...styles, ...block.editorStyles },
 			},
@@ -45,13 +45,14 @@
 			:resizable="!block.isRoot()"
 			:block="block"
 			:breakpoint="breakpoint"
+			:editable="isEditable"
 			:target="component.targetDomElement" />
 	</teleport>
 </template>
 <script setup lang="ts">
 import Block from "@/utils/block";
 import { setFont } from "@/utils/fontManager";
-import { Ref, computed, onMounted, ref } from "vue";
+import { Ref, computed, nextTick, onMounted, ref } from "vue";
 import draggable from "vuedraggable";
 import useStore from "../store";
 import BlockEditor from "./BlockEditor.vue";
@@ -85,7 +86,7 @@ onMounted(() => {
 		targetElement.addEventListener("keydown", (e: KeyboardEvent) => {
 			if (e.key === "b" && e.metaKey) {
 				e.preventDefault();
-				props.block.setStyle("fontWeight", "bold");
+				props.block.setStyle("fontWeight", "700");
 			}
 		});
 	}
@@ -109,15 +110,39 @@ const isSelected = computed(() => {
 	);
 });
 
+const isEditable = computed(() => {
+	return (
+		store.builderState.editableBlock === props.block
+	);
+});
+
 const selectBlock = (e: MouseEvent | null, block: Block) => {
+	if (store.builderState.editableBlock === props.block) {
+		return;
+	}
 	if (e) e.preventDefault();
 	store.builderState.selectedBlock = block;
+	store.builderState.editableBlock = null;
 	store.builderState.activeBreakpoint = props.breakpoint;
 	if (e && e.metaKey) {
 		if (!store.builderState.selectedBlocks.length) {
 			store.builderState.selectedBlocks.push(store.builderState.selectedBlock);
 		}
 		store.builderState.selectedBlocks.push(block);
+	}
+};
+
+const handleDoubleClick = () => {
+	store.builderState.editableBlock = null;
+	if (props.block.isText()) {
+		store.builderState.editableBlock = props.block;
+		nextTick(() => {
+			const range = document.createRange();
+			range.selectNodeContents(component.value.targetDomElement);
+			const selection = window.getSelection();
+			selection?.removeAllRanges();
+			selection?.addRange(range);
+		});
 	}
 };
 </script>

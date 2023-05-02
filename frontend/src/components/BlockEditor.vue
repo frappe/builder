@@ -9,18 +9,18 @@
 			'pointer-events-none': block.blockId === store.hoveredBlock,
 		}">
 		<BoxResizer
-			v-if="selected && target && !block.isRoot()"
+			v-if="selected && target && !block.isRoot() && !editable"
 			:target-block="block"
 			@resizing="resizing = $event"
 			:target="target" />
 		<PaddingHandler
-			v-if="selected && target && !resizing"
+			v-if="selected && target && !resizing && !editable"
 			:target-block="block"
 			:on-update="updateTracker"
 			:disable-handlers="false"
 			:breakpoint="breakpoint" />
 		<BorderRadiusHandler
-			v-if="selected && target && !block.isRoot()"
+			v-if="selected && target && !block.isRoot() && !editable"
 			:target-block="block"
 			:target="target" />
 		<ContextMenu
@@ -55,8 +55,9 @@
 import { vOnClickOutside } from "@vueuse/components";
 import { useDebounceFn } from "@vueuse/shared";
 import { Dialog, Input, createResource } from "frappe-ui";
-import { nextTick, onMounted, ref, reactive, Ref, getCurrentInstance } from "vue";
+import { Ref, getCurrentInstance, nextTick, onMounted, reactive, ref } from "vue";
 
+import Block from "@/utils/block";
 import useStore from "../store";
 import setGuides from "../utils/guidesTracker";
 import trackTarget from "../utils/trackTarget";
@@ -64,7 +65,6 @@ import BorderRadiusHandler from "./BorderRadiusHandler.vue";
 import BoxResizer from "./BoxResizer.vue";
 import ContextMenu from "./ContextMenu.vue";
 import PaddingHandler from "./PaddingHandler.vue";
-import Block from "@/utils/block";
 
 const props = defineProps({
 	block: {
@@ -86,6 +86,10 @@ const props = defineProps({
 	target: {
 		type: HTMLElement,
 		default: null,
+	},
+	editable: {
+		type: Boolean,
+		default: false,
 	},
 });
 const store = useStore();
@@ -126,6 +130,7 @@ const handleMove = (ev: MouseEvent) => {
 	document.body.style.cursor = window.getComputedStyle(target).cursor;
 
 	const mousemove = async (mouseMoveEvent: MouseEvent) => {
+		updateTracker.value();
 		const scale = store.canvas.scale;
 		const movementX = (mouseMoveEvent.clientX - startX) / scale;
 		const movementY = (mouseMoveEvent.clientY - startY) / scale;
