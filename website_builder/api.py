@@ -1,6 +1,8 @@
-import frappe
 import json
+
+import frappe
 from frappe.integrations.utils import make_post_request
+
 
 @frappe.whitelist(allow_guest=True)
 def publish(blocks, page_name=None):
@@ -25,7 +27,7 @@ def get_blocks(prompt):
 		frappe.throw("OpenAI API Key not set in site config.")
 
 	messages = [
-		{"role": "system", "content": "You are a web developer. You add inline <style> in <body> instead of relying on external stylesheet. You use any publicly available image"},
+		{"role": "system", "content": "You are a website developer. You use any publicly available image and use it in the webpage. You can use any fonts available in fonts.google.com. You NEVER add \<style\> tag to the HTML. You style the webpage using inline styles. You can also use tailwind css classes to style the webpage. You respond only with HTML code WITHOUT any EXPLANATION"},
 		{"role": "user", "content": prompt}
 	]
 
