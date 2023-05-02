@@ -2,6 +2,7 @@ import useStore from "../store";
 
 class Block implements BlockOptions {
 	blockId: string;
+	blockName?: string;
 	element: string;
 	editorStyles: BlockStyleMap;
 	children: Array<Block>;
@@ -29,6 +30,7 @@ class Block implements BlockOptions {
 		this.tabletStyles = options.tabletStyles || {};
 		this.editorStyles = options.editorStyles || {};
 		this.attributes = options.attributes || {};
+		this.blockName = options.blockName;
 		delete this.attributes.style;
 		this.classes = options.classes || [];
 

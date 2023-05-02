@@ -29,9 +29,13 @@
 							v-if="element.children && element.children.length && !element.isRoot()"
 							@click.stop="element.fold = !element.fold" />
 						<FeatherIcon :name="element.getIcon()" class="mr-1 h-3 w-3" />
-						<span class="truncate">
-							{{ element.originalElement || element.element }}
-							{{ element.innerText ? " | " + element.innerText : "" }}
+						<span class="truncate min-h-[1em] min-w-[2em]"
+							:contenteditable="element.editable"
+							@dblclick="element.editable = true"
+							@keyup.enter.stop.prevent="element.editable = false"
+							@blur="setBlockName($event, element)">
+							{{ element.blockName || element.originalElement || element.element }}
+							{{ element.innerText && !element.blockName ? " | " + element.innerText : "" }}
 						</span>
 					</span>
 					<div v-if="element.children" v-show="!element.fold">
@@ -43,10 +47,10 @@
 	</div>
 </template>
 <script setup lang="ts">
+import Block from "@/utils/block";
 import { FeatherIcon } from "frappe-ui";
 import draggable from "vuedraggable";
 import useStore from "../store";
-import Block from "@/utils/block";
 
 const store = useStore();
 defineProps({
@@ -58,4 +62,14 @@ defineProps({
 const selectBlock = (block: Block) => {
 	store.builderState.selectedBlock = block;
 };
+
+interface LayerBlock extends Block {
+	editable: boolean;
+}
+
+const setBlockName = (ev: Event, block: LayerBlock) => {
+	const target = ev.target as HTMLElement;
+	block.blockName = target.innerText;
+	block.editable = false;
+}
 </script>
