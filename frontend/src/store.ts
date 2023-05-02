@@ -38,13 +38,13 @@ const useStore = defineStore("store", {
 					alignItems: "center",
 					height: "auto",
 					width: "100%",
-					"min-height": "200px",
+					minHeight: "200px",
+					margin: "0 auto",
 				},
 				editorStyles: {
-					"min-height": "200px",
 					userSelect: "none",
 				},
-				classes: ["bg-blue-100", "mx-auto"],
+				classes: ["bg-blue-100"],
 				attributes: {},
 			},
 			{
@@ -76,8 +76,10 @@ const useStore = defineStore("store", {
 				name: "Image",
 				element: "img",
 				icon: "image",
-				styles: {},
-				classes: ["h-auto", "w-auto"],
+				styles: {
+					width: "auto",
+					height: "auto",
+				},
 				attributes: {
 					// src: "https://picsum.photos/500/200"
 					src: "https://user-images.githubusercontent.com/13928957/212847544-5773795d-2fd6-48d1-8423-b78ecc92522b.png",

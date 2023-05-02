@@ -31,7 +31,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-02-03 21:34:00.341027",
+ "modified": "2023-05-02 09:41:46.984526",
  "modified_by": "Administrator",
  "module": "Website Builder",
  "name": "Web Page Component",
@@ -52,5 +52,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "component_name"
 }
