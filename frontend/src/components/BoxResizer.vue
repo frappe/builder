@@ -22,11 +22,11 @@
 		@mousedown.stop="handleBottomCornerResize" />
 </template>
 <script setup lang="ts">
+import { getNumberFromPx } from "@/utils/helpers";
 import { computed, onMounted, ref, watchEffect } from "vue";
 import useStore from "../store";
 import Block from "../utils/block";
 import guidesTracker from "../utils/guidesTracker";
-import { getNumberFromPx } from "@/utils/helpers";
 
 const props = defineProps({
 	targetBlock: {

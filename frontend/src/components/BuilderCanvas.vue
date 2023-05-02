@@ -47,16 +47,15 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { nextTick, onMounted, ref, computed, watch, reactive, Ref } from "vue";
-import { useElementBounding } from "@vueuse/core";
+import Block from "@/utils/block";
+import { useDebouncedRefHistory, useElementBounding } from "@vueuse/core";
+import { FeatherIcon, toast } from "frappe-ui";
+import { storeToRefs } from "pinia";
+import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
-import BuilderBlock from "./BuilderBlock.vue";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
-import { useDebouncedRefHistory } from "@vueuse/core";
-import { storeToRefs } from "pinia";
-import { FeatherIcon, toast } from "frappe-ui";
-import Block from "@/utils/block";
+import BuilderBlock from "./BuilderBlock.vue";
 
 const store = useStore();
 const canvasContainer = ref(null);
@@ -75,6 +74,7 @@ store.getPageData = getPageData;
 const clearSelectedComponent = () => {
 	store.builderState.selectedBlock = null;
 	store.builderState.selectedBlocks = [];
+	store.builderState.editableBlock = null;
 	if (document.activeElement instanceof HTMLElement) {
 		document.activeElement.blur();
 	}
