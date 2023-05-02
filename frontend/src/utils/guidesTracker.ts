@@ -2,53 +2,90 @@ import { useElementBounding } from "@vueuse/core";
 import { reactive } from "vue";
 import useStore from "../store";
 const store = useStore();
+const tracks = [{
+	point: 0,
+	strength: 10
+}, {
+	point: 0.25,
+	strength: 2
+}, {
+	point: 0.5,
+	strength: 10
+}, {
+	point: 0.75,
+	strength: 2
+}, {
+	point: 1,
+	strength: 10
+}];
 
 function setGuides(target: HTMLElement) {
 	const threshold = 10;
 	// TODO: Remove canvas dependency
-	const canvasElement = document.getElementById("canvas") as HTMLElement;
+	const canvasElement = target.closest(".canvas") as HTMLElement;
 	const canvasBounds = reactive(useElementBounding(canvasElement));
 	const targetBounds = reactive(useElementBounding(target));
+	const parentBounds = reactive(useElementBounding(target.parentElement as HTMLElement));
 
 	const getFinalWidth = (calculatedWidth: number) => {
 		targetBounds.update();
 		canvasBounds.update();
-		let scale = store.canvas.scale;
-		let finalWidth = calculatedWidth;
+		parentBounds.update();
 
+		const scale = store.canvas.scale;
 		const targetRight = targetBounds.left + calculatedWidth * scale;
-		const canvasHalf = canvasBounds.left + canvasBounds.width / 2;
 
-		if (Math.abs(targetRight - canvasBounds.right) < threshold) {
-			finalWidth = (canvasBounds.right - targetBounds.left) / scale;
-			store.guides.x = canvasBounds.right;
-		} else if (Math.abs(targetRight - canvasHalf) < threshold) {
-			finalWidth = (canvasHalf - targetBounds.left) / scale;
-			store.guides.x = canvasHalf;
-		} else {
+		let finalWidth = calculatedWidth;
+		let set = false;
+		tracks.forEach((track) => {
+			const canvasRight = canvasBounds.left + (canvasBounds.width * track.point);
+			const parentRight = parentBounds.left + (parentBounds.width * track.point);
+			if (Math.abs(targetRight - canvasRight) < track.strength) {
+				finalWidth = (canvasRight - targetBounds.left) / scale;
+				store.guides.x = canvasRight;
+				set = true;
+			} else if (Math.abs(targetRight - parentRight) < track.strength) {
+				finalWidth = (parentRight - targetBounds.left) / scale;
+				store.guides.x = parentRight;
+				set = true;
+			}
+		})
+
+		if (!set) {
 			store.guides.x = -1;
 		}
+
 		return Math.round(finalWidth);
 	};
 
 	const getFinalHeight = (calculatedHeight: number) => {
 		targetBounds.update();
 		canvasBounds.update();
-		let scale = store.canvas.scale;
-		let finalHeight = calculatedHeight;
+		parentBounds.update();
 
+		const scale = store.canvas.scale;
 		const targetBottom = targetBounds.top + calculatedHeight * scale;
-		const canvasHalf = canvasBounds.top + canvasBounds.height / 2;
 
-		if (Math.abs(targetBottom - canvasBounds.bottom) < threshold) {
-			finalHeight = (canvasBounds.bottom - targetBounds.top) / scale;
-			store.guides.y = canvasBounds.bottom;
-		} else if (Math.abs(targetBottom - canvasHalf) < threshold) {
-			finalHeight = (canvasHalf - targetBounds.top) / scale;
-			store.guides.y = canvasHalf;
-		} else {
+		let finalHeight = calculatedHeight;
+		let set = false;
+		tracks.forEach((track) => {
+			const canvasBottom = canvasBounds.top + (canvasBounds.height * track.point);
+			const parentBottom = parentBounds.top + (parentBounds.height * track.point);
+			if (Math.abs(targetBottom - canvasBottom) < track.strength) {
+				finalHeight = (canvasBottom - targetBounds.top) / scale;
+				store.guides.y = canvasBottom;
+				set = true;
+			} else if (Math.abs(targetBottom - parentBottom) < track.strength) {
+				finalHeight = (parentBottom - targetBounds.top) / scale;
+				store.guides.y = parentBottom;
+				set = true;
+			}
+		})
+
+		if (!set) {
 			store.guides.y = -1;
 		}
+
 		return Math.round(finalHeight);
 	};
 
