@@ -55,7 +55,7 @@
 import { vOnClickOutside } from "@vueuse/components";
 import { useDebounceFn } from "@vueuse/shared";
 import { Dialog, Input, createResource } from "frappe-ui";
-import { Ref, getCurrentInstance, nextTick, onMounted, reactive, ref } from "vue";
+import { ComponentInternalInstance, Ref, getCurrentInstance, nextTick, onMounted, reactive, ref } from "vue";
 
 import Block from "@/utils/block";
 import useStore from "../store";
@@ -98,9 +98,11 @@ const updateTracker = ref(() => {});
 const resizing = ref(false);
 const block = reactive(props.block);
 const guides = setGuides(props.target);
+let currentInstance = null as unknown as ComponentInternalInstance | null;
 
 onMounted(() => {
 	updateTracker.value = trackTarget(props.target, editor.value);
+	currentInstance = getCurrentInstance();
 });
 
 const handleClick = (ev: MouseEvent) => {
@@ -117,7 +119,7 @@ const handleClick = (ev: MouseEvent) => {
 };
 
 const handleMove = (ev: MouseEvent) => {
-	if (!props.movable) return;
+	if (!props.movable || props.block.isRoot()) return;
 	const target = ev.target as HTMLElement;
 	const startX = ev.clientX;
 	const startY = ev.clientY;
@@ -227,7 +229,7 @@ const saveAsComponent = () => {
 
 const duplicateBlock = (block: Block) => {
 	const blockToDuplicate = block || store.getBlockCopy(store.builderState.selectedBlock as Block);
-	const superParent = getCurrentInstance()?.parent?.parent;
+	const superParent = currentInstance?.parent?.parent?.parent; // waiting for this to break 👀
 	const parentBlock = superParent?.props?.block as Block;
 	if (parentBlock) {
 		parentBlock.children.push(blockToDuplicate);
