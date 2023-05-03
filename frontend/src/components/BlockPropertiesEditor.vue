@@ -7,6 +7,7 @@
 			:width="store.builderLayout.rightPanelWidth"
 			side="left"
 			@resize="(width) => (store.builderLayout.rightPanelWidth = width)"
+			:min-width="220"
 			:max-width="400" />
 		<div v-if="store.builderState.selectedBlock">
 			<div>
@@ -14,7 +15,7 @@
 				<ul class="flex flex-wrap">
 					<li v-for="color in store.pastelCssColors" :key="color" class="mr-2 mb-2 last:mr-0">
 						<a @click="setBgColor(color)" class="cursor-pointer text-base hover:underline">
-							<div class="h-6 w-6 rounded-md shadow-sm" :style="'background:' + color" />
+							<div class="h-4 w-4 rounded-md shadow-sm" :style="'background:' + color" />
 						</a>
 					</li>
 				</ul>
@@ -27,11 +28,49 @@
 				<ul class="flex flex-wrap">
 					<li v-for="color in store.textColors" :key="color" class="mr-2 mb-2 last:mr-0">
 						<a @click="blockStyles.color = color" class="cursor-pointer text-base hover:underline">
-							<div class="h-6 w-6 rounded-md shadow-sm" :style="'background-color:' + color" />
+							<div class="h-4 w-4 rounded-md shadow-sm" :style="'background-color:' + color" />
 						</a>
 					</li>
 				</ul>
 			</div>
+
+
+			<h3 v-if="store.builderState.selectedBlock" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">
+				Position
+			</h3>
+			<!-- position with options [absolute, relative, static]-->
+			<InlineInput
+				v-if="store.builderState.selectedBlock"
+				:value="blockStyles.position || 'static'"
+				type="select"
+				:options="['static', 'relative', 'absolute', 'fixed', 'sticky']"
+				@update-value="(val) => (blockStylesObj.position = val)">
+				Position
+			</InlineInput>
+			<InlineInput
+				v-if="store.builderState.selectedBlock"
+				:value="blockStyles.top || 'auto'"
+				@update-value="(val) => (blockStylesObj.top = val)">
+				Top
+			</InlineInput>
+			<InlineInput
+				v-if="store.builderState.selectedBlock"
+				:value="blockStyles.right || 'auto'"
+				@update-value="(val) => (blockStylesObj.right = val)">
+				Right
+			</InlineInput>
+			<InlineInput
+				v-if="store.builderState.selectedBlock"
+				:value="blockStyles.bottom || 'auto'"
+				@update-value="(val) => (blockStylesObj.bottom = val)">
+				Bottom
+			</InlineInput>
+			<InlineInput
+				v-if="store.builderState.selectedBlock"
+				:value="blockStyles.left || 'auto'"
+				@update-value="(val) => (blockStylesObj.left = val)">
+				Left
+			</InlineInput>
 
 			<h3 v-if="store.builderState.selectedBlock" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">
 				Dimension
@@ -39,26 +78,38 @@
 			<InlineInput
 				v-if="store.builderState.selectedBlock"
 				:value="blockStyles.height || 'auto'"
-				@update-value="(val) => (blockStyles.height = val)">
+				@update-value="(val) => (blockStylesObj.height = val)">
 				Height
 			</InlineInput>
 			<InlineInput
 				v-if="store.builderState.selectedBlock"
 				:value="blockStyles.width || 'auto'"
-				@update-value="(val) => (blockStyles.width = val)">
+				@update-value="(val) => (blockStylesObj.width = val)">
 				Width
 			</InlineInput>
 			<InlineInput
 				v-if="store.builderState.selectedBlock"
 				:value="blockStyles.minWidth || 'auto'"
-				@update-value="(val) => (blockStyles.minWidth = val)">
+				@update-value="(val) => (blockStylesObj.minWidth = val)">
 				Min Width
 			</InlineInput>
 			<InlineInput
 				v-if="store.builderState.selectedBlock"
 				:value="blockStyles.maxWidth || 'auto'"
-				@update-value="(val) => (blockStyles.maxWidth = val)">
+				@update-value="(val) => (blockStylesObj.maxWidth = val)">
 				Max Width
+			</InlineInput>
+			<InlineInput
+				v-if="store.builderState.selectedBlock"
+				:value="blockStyles.minHeight || 'auto'"
+				@update-value="(val) => (blockStylesObj.minHeight = val)">
+				Min Height
+			</InlineInput>
+			<InlineInput
+				v-if="store.builderState.selectedBlock"
+				:value="blockStyles.maxHeight || 'auto'"
+				@update-value="(val) => (blockStylesObj.maxHeight = val)">
+				Max Height
 			</InlineInput>
 			<InlineInput
 				v-if="
@@ -66,7 +117,7 @@
 					store.builderState.selectedBlock.isButton()
 				"
 				:value="blockStyles.margin"
-				@update-value="(val) => (blockStyles.margin = val)">
+				@update-value="(val) => (blockStylesObj.margin = val)">
 				Margin
 			</InlineInput>
 
@@ -100,7 +151,7 @@
 					{ label: 'Vertical', value: 'column' },
 				]"
 				default="column"
-				@update-value="(val) => (blockStyles.flexDirection = val)">
+				@update-value="(val) => (blockStylesObj.flexDirection = val)">
 				Direction
 			</InlineInput>
 			<InlineInput
@@ -128,7 +179,7 @@
 					{ label: 'Space Around', value: 'space-around' },
 					{ label: 'Space Evenly', value: 'space-evenly' },
 				]"
-				@update-value="(val) => (blockStyles.justifyContent = val)">
+				@update-value="(val) => (blockStylesObj.justifyContent = val)">
 				Distribute
 			</InlineInput>
 			<InlineInput
@@ -153,7 +204,7 @@
 						value: 'flex-end',
 					},
 				]"
-				@update-value="(val) => (blockStyles.alignItems = val)">
+				@update-value="(val) => (blockStylesObj.alignItems = val)">
 				Align
 			</InlineInput>
 			<InlineInput
@@ -169,7 +220,7 @@
 					{ label: 'Wrap', value: 'wrap' },
 				]"
 				default="wrap"
-				@update-value="(val) => (blockStyles.flexWrap = val)">
+				@update-value="(val) => (blockStylesObj.flexWrap = val)">
 				Wrap
 			</InlineInput>
 			<InlineInput
@@ -180,7 +231,7 @@
 				"
 				type="text"
 				:value="blockStyles.gap"
-				@update-value="(val) => (blockStyles.gap = val)">
+				@update-value="(val) => (blockStylesObj.gap = val)">
 				Gap
 			</InlineInput>
 			<!-- flex basis -->
@@ -192,7 +243,7 @@
 				"
 				type="text"
 				:value="blockStyles.flexBasis"
-				@update-value="(val) => (blockStyles.flexBasis = val)">
+				@update-value="(val) => (blockStylesObj.flexBasis = val)">
 				Basis
 			</InlineInput>
 			<h3
@@ -205,19 +256,19 @@
 				:value="blockStyles.textAlign || 'left'"
 				type="select"
 				:options="['left', 'center', 'right', 'justify']"
-				@update-value="(val) => (blockStyles.textAlign = val)">
+				@update-value="(val) => (blockStylesObj.textAlign = val)">
 				Align
 			</InlineInput>
 			<InlineInput
 				v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isText()"
 				:value="blockStyles.fontSize"
-				@update-value="(val) => (blockStyles.fontSize = val)">
+				@update-value="(val) => (blockStylesObj.fontSize = val)">
 				Size
 			</InlineInput>
 			<InlineInput
 				v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isText()"
 				:value="blockStyles.letterSpacing"
-				@update-value="(val) => (blockStyles.letterSpacing = val)">
+				@update-value="(val) => (blockStylesObj.letterSpacing = val)">
 				Spacing
 			</InlineInput>
 			<InlineInput
@@ -239,13 +290,13 @@
 				:value="blockStyles.fontWeight"
 				type="select"
 				:options="getFontWeightOptions(blockStyles.fontFamily)"
-				@update-value="(val) => (blockStyles.fontWeight = val)">
+				@update-value="(val) => (blockStylesObj.fontWeight = val)">
 				Weight
 			</InlineInput>
 			<InlineInput
 				v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isText()"
 				:value="blockStyles.lineHeight"
-				@update-value="(val) => (blockStyles.lineHeight = val)">
+				@update-value="(val) => (blockStylesObj.lineHeight = val)">
 				Line
 			</InlineInput>
 			<InlineInput
@@ -286,7 +337,7 @@
 				"
 				type="number"
 				:value="blockStyles.gridTemplateRows"
-				@update-value="(val) => (blockStyles.gridTemplateRows = val)">
+				@update-value="(val) => (blockStylesObj.gridTemplateRows = val)">
 				Rows
 			</InlineInput>
 			<InlineInput
@@ -297,7 +348,7 @@
 				"
 				type="number"
 				:value="blockStyles.gridTemplateColumns"
-				@update-value="(val) => (blockStyles.gridTemplateColumns = val)">
+				@update-value="(val) => (blockStylesObj.gridTemplateColumns = val)">
 				Columns
 			</InlineInput>
 			<InlineInput
@@ -307,7 +358,7 @@
 					blockStyles.display === 'grid'
 				"
 				:value="blockStyles.gridGap"
-				@update-value="(val) => (blockStyles.gridGap = val)">
+				@update-value="(val) => (blockStylesObj.gridGap = val)">
 				Gap
 			</InlineInput>
 			<InlineInput
@@ -317,7 +368,7 @@
 					blockStyles.display === 'grid'
 				"
 				:value="blockStyles.gridRowGap"
-				@update-value="(val) => (blockStyles.gridRowGap = val)">
+				@update-value="(val) => (blockStylesObj.gridRowGap = val)">
 				Row Gap
 			</InlineInput>
 		</div>
@@ -332,18 +383,24 @@ import PanelResizer from "./PanelResizer.vue";
 
 const store = useStore();
 
-// const blockStyles = computed(() => {
-// 	let styleObj = store.builderState.selectedBlock.styles;
-// 	if (store.builderState.activeBreakpoint === "mobile") {
-// 		styleObj = {...styleObj, ...store.builderState.selectedBlock.mobileStyles };
-// 	} else if (store.builderState.activeBreakpoint === "tablet") {
-// 		styleObj = {...styleObj, ...store.builderState.selectedBlock.tabletStyles };
-// 	}
-// 	return styleObj;
-// });
+// TODO: Temporary for correctness, remove when we have a better way to handle this
+const blockStylesObj = computed(() => {
+	let styleObj = store.builderState.selectedBlock.baseStyles;
+	if (store.builderState.activeBreakpoint === "mobile") {
+		styleObj = store.builderState.selectedBlock.mobileStyles;
+	} else if (store.builderState.activeBreakpoint === "tablet") {
+		styleObj = store.builderState.selectedBlock.tabletStyles;
+	}
+	return styleObj;
+});
 
 const blockStyles = computed(() => {
-	let styleObj = store.builderState.selectedBlock.computedStyles;
+	let styleObj = store.builderState.selectedBlock.baseStyles;
+	if (store.builderState.activeBreakpoint === "mobile") {
+		styleObj = {...styleObj, ...store.builderState.selectedBlock.mobileStyles };
+	} else if (store.builderState.activeBreakpoint === "tablet") {
+		styleObj = {...styleObj, ...store.builderState.selectedBlock.tabletStyles };
+	}
 	return styleObj;
 });
 

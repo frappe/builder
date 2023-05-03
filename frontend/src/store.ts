@@ -22,7 +22,7 @@ const useStore = defineStore("store", {
 		hoveredBlock: <string | null>null,
 		hoveredBreakpoint: <string | null>null,
 		builderLayout: {
-			rightPanelWidth: 285,
+			rightPanelWidth: 270,
 			leftPanelWidth: 280,
 		},
 		widgets: [
@@ -206,13 +206,12 @@ const useStore = defineStore("store", {
 			"#000000",
 			"#424242",
 			"#636363",
+			"#808080",
 			"#9C9C94",
+			"#C0C0C0",
 			"#CEC6CE",
 			"#EFEFEF",
 			"#F7F7F7",
-			"#C0C0C0",
-			"#808080",
-			"#808000",
 			"#FFFFFF",
 		],
 		deviceBreakpoints: [
