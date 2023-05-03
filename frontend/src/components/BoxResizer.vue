@@ -1,10 +1,16 @@
 <template>
 	<span
 		class="resize-dimensions absolute right-[-40px] bottom-[-40px] flex h-8 w-20 items-center justify-center whitespace-nowrap rounded-full bg-gray-600 p-2 text-sm text-white opacity-80"
-		v-if="resizing">
+		v-if="resizing && !targetBlock.isText()">
 		{{ targetWidth }} x
 		{{ targetHeight }}
 	</span>
+	<span
+		class="resize-dimensions absolute right-[-40px] bottom-[-40px] flex h-8 w-fit items-center justify-center whitespace-nowrap rounded-full bg-gray-600 p-2 text-sm text-white opacity-80"
+		v-if="resizing && targetBlock.isText()">
+		{{ fontSize }}
+	</span>
+
 	<div
 		class="left-handle ew-resize pointer-events-auto absolute top-0 bottom-0 left-[-2px] w-[4px] border-none bg-transparent" />
 	<div
@@ -64,6 +70,11 @@ const targetHeight = computed(() => {
 	return getNumberFromPx(getComputedStyle(target).getPropertyValue("height"));
 });
 
+const fontSize = computed(() => {
+	targetBlock.getStyle("fontSize"); // to trigger reactivity
+	return getNumberFromPx(getComputedStyle(target).getPropertyValue("font-size"));
+});
+
 const handleRightResize = (ev: MouseEvent) => {
 	const startX = ev.clientX;
 	const startWidth = target.offsetWidth;
@@ -76,13 +87,19 @@ const handleRightResize = (ev: MouseEvent) => {
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
 		// movement / scale * speed
 		const movement = (mouseMoveEvent.clientX - startX) / store.canvas.scale;
+		const finalWidth = guides.getFinalWidth(startWidth + movement);
+
+		if (targetBlock.isText()) {
+			targetBlock.setStyle("fontSize", `${Math.round(finalWidth * 0.5)}px`);
+			return mouseMoveEvent.preventDefault();
+		}
+
 		if (mouseMoveEvent.shiftKey) {
 			const movementPercent = (movement / parentWidth) * 100;
 			const startWidthPercent = (startWidth / parentWidth) * 100;
 			const finalHeight = Math.round(startWidthPercent + movementPercent);
 			targetBlock.setStyle("width", `${finalHeight}%`);
 		} else {
-			let finalWidth = guides.getFinalWidth(startWidth + movement);
 			targetBlock.setStyle("width", `${finalWidth}px`);
 		}
 		mouseMoveEvent.preventDefault();
@@ -111,6 +128,11 @@ const handleBottomResize = (ev: MouseEvent) => {
 		const movement = (mouseMoveEvent.clientY - startY) / store.canvas.scale;
 		let finalHeight = guides.getFinalHeight(startHeight + movement);
 
+		if (targetBlock.isText()) {
+			targetBlock.setStyle("fontSize", `${Math.round(finalHeight * 0.5)}px`);
+			return mouseMoveEvent.preventDefault();
+		}
+
 		targetBlock.setStyle("height", `${finalHeight}px`);
 		mouseMoveEvent.preventDefault();
 	};
@@ -138,6 +160,12 @@ const handleBottomCornerResize = (ev: MouseEvent) => {
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
 		const movementX = (mouseMoveEvent.clientX - startX) / store.canvas.scale;
 		const finalWidth = Math.round(startWidth + movementX);
+
+		if (targetBlock.isText()) {
+			targetBlock.setStyle("fontSize", `${Math.round(finalWidth * 0.5)}px`);
+			return mouseMoveEvent.preventDefault();
+		}
+
 		targetBlock.setStyle("width", `${finalWidth}px`);
 		const movementY = (mouseMoveEvent.clientY - startY) / store.canvas.scale;
 		const finalHeight = Math.round(startHeight + movementY);
