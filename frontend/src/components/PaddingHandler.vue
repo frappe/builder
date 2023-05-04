@@ -262,6 +262,6 @@ const handlePadding = (ev: MouseEvent, position: Position ) => {
 		document.removeEventListener("mousemove", mousemove);
 		updating.value = false;
 		mouseUpEvent.preventDefault();
-	});
+	}, { once: true });
 };
 </script>

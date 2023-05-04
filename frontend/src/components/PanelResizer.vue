@@ -58,6 +58,6 @@ function resize(ev: MouseEvent) {
 		document.removeEventListener("mousemove", mousemove);
 		dragActive.value = false;
 		mouseUpEvent.preventDefault();
-	});
+	}, { once: true });
 }
 </script>

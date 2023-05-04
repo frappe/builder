@@ -3,9 +3,10 @@
 		class="editor fixed z-[19] box-content border-[1px] border-blue-400"
 		ref="editor"
 		@click.stop="handleClick"
-		@mousedown.stop="handleMove"
+		@mousedown.stop.prevent="handleMove"
 		@contextmenu.prevent="showContextMenu"
 		:class="{
+			'cursor-grab': movable && !block.isRoot(),
 			'pointer-events-none': block.blockId === store.hoveredBlock,
 		}">
 		<BoxResizer
@@ -65,6 +66,7 @@ import BorderRadiusHandler from "./BorderRadiusHandler.vue";
 import BoxResizer from "./BoxResizer.vue";
 import ContextMenu from "./ContextMenu.vue";
 import PaddingHandler from "./PaddingHandler.vue";
+import { getNumberFromPx } from "@/utils/helpers";
 
 const props = defineProps({
 	block: {
@@ -99,6 +101,8 @@ const resizing = ref(false);
 const block = reactive(props.block);
 const guides = setGuides(props.target);
 let currentInstance = null as unknown as ComponentInternalInstance | null;
+const moving = ref(false);
+const preventCLick = ref(false);
 
 onMounted(() => {
 	updateTracker.value = trackTarget(props.target, editor.value);
@@ -106,6 +110,10 @@ onMounted(() => {
 });
 
 const handleClick = (ev: MouseEvent) => {
+	if (preventCLick.value) {
+		preventCLick.value = false;
+		return;
+	}
 	const editorWrapper = editor.value;
 	editorWrapper.classList.add("pointer-events-none");
 	let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
@@ -125,6 +133,7 @@ const handleMove = (ev: MouseEvent) => {
 	const startY = ev.clientY;
 	const startLeft = props.target.offsetLeft;
 	const startTop = props.target.offsetTop;
+	moving.value = true;
 	guides.showX();
 
 	// to disable cursor jitter
@@ -144,13 +153,17 @@ const handleMove = (ev: MouseEvent) => {
 		block.setStyle("left", `${finalLeft + leftOffset}px`);
 		block.setStyle("top", `${startTop + movementY}px`);
 		mouseMoveEvent.preventDefault();
+		preventCLick.value = true;
 	};
 	document.addEventListener("mousemove", mousemove);
 	document.addEventListener("mouseup", (mouseUpEvent) => {
+		moving.value = false;
 		document.body.style.cursor = docCursor;
 		document.removeEventListener("mousemove", mousemove);
 		mouseUpEvent.preventDefault();
-	});
+	}, { once: true });
+
+	// :( hack to prevent click event from firing
 };
 
 const setCopyData = useDebounceFn((event, data) => {
@@ -228,13 +241,22 @@ const saveAsComponent = () => {
 };
 
 const duplicateBlock = (block: Block) => {
-	const blockToDuplicate = block || store.getBlockCopy(store.builderState.selectedBlock as Block);
+	const blockCopy = block || store.getBlockCopy(store.builderState.selectedBlock as Block);
 	const superParent = currentInstance?.parent?.parent?.parent; // waiting for this to break 👀
 	const parentBlock = superParent?.props?.block as Block;
+
+	if (blockCopy.getStyle("position") === "absolute") {
+		// shift the block a bit
+		const left = getNumberFromPx(blockCopy.getStyle("left"));
+		const top = getNumberFromPx(blockCopy.getStyle("top"));
+		blockCopy.setStyle("left", `${left + 20}px`);
+		blockCopy.setStyle("top", `${top + 20}px`);
+	}
+
 	if (parentBlock) {
-		parentBlock.children.push(blockToDuplicate);
+		parentBlock.children.push(blockCopy);
 	} else {
-		store.builderState.blocks.push(blockToDuplicate);
+		store.builderState.blocks.push(blockCopy);
 	}
 };
 
