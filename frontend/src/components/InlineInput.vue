@@ -13,11 +13,12 @@
 			:value="value"
 			:options="options.map((option) => ({ label: option, value: option }))"
 			@change="handleChange"
-			class="text-sm text-gray-800 dark:bg-zinc-800 rounded-md dark:text-zinc-200 dark:focus:bg-zinc-700 w-[150px]" />
+			class="text-sm text-gray-800 dark:bg-zinc-800 rounded-md !dark:text-zinc-200 !dark:focus:bg-zinc-700 w-[150px]
+			[&>div>button]:dark:!bg-zinc-800 [&>div>button]:dark:!text-zinc-200" />
 	</div>
 </template>
 <script setup lang="ts">
-import { Input, Autocomplete } from "frappe-ui";
+import { Autocomplete, Input } from "frappe-ui";
 
 defineProps({
 	value: {
