@@ -102,6 +102,6 @@ const handleRounded = (ev: MouseEvent) => {
 		document.body.style.cursor = docCursor;
 		document.removeEventListener("mousemove", mousemove);
 		mouseUpEvent.preventDefault();
-	});
+	}, { once: true });
 };
 </script>

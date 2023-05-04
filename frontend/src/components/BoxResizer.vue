@@ -111,7 +111,7 @@ const handleRightResize = (ev: MouseEvent) => {
 		mouseUpEvent.preventDefault();
 		resizing.value = false;
 		guides.hideX();
-	});
+	}, { once: true });
 };
 
 const handleBottomResize = (ev: MouseEvent) => {
@@ -143,7 +143,7 @@ const handleBottomResize = (ev: MouseEvent) => {
 		mouseUpEvent.preventDefault();
 		resizing.value = false;
 		guides.hideY();
-	});
+	}, { once: true });
 };
 
 const handleBottomCornerResize = (ev: MouseEvent) => {
@@ -178,6 +178,6 @@ const handleBottomCornerResize = (ev: MouseEvent) => {
 		document.removeEventListener("mousemove", mousemove);
 		mouseUpEvent.preventDefault();
 		resizing.value = false;
-	});
+	}, { once: true });
 };
 </script>

@@ -64,14 +64,14 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { createListResource, createResource } from "frappe-ui";
-import { ref, Ref } from "vue";
-import useStore from "../store";
-import Widgets from "./BuilderWidgets.vue";
-import Templates from "./BuilderTemplates.vue";
-import BlockLayers from "./BlockLayers.vue";
-import PanelResizer from "./PanelResizer.vue";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
+import { createListResource, createResource } from "frappe-ui";
+import { Ref, ref } from "vue";
+import useStore from "../store";
+import BlockLayers from "./BlockLayers.vue";
+import Templates from "./BuilderTemplates.vue";
+import Widgets from "./BuilderWidgets.vue";
+import PanelResizer from "./PanelResizer.vue";
 
 import { useRouter } from "vue-router";
 
