@@ -1,5 +1,5 @@
 <template>
-	<div class="ml-1">
+	<div>
 		<draggable class="block-tree" :list="blocks" :group="{ name: 'block-tree' }" item-key="blockId">
 			<template #item="{ element }">
 				<div

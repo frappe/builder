@@ -1,6 +1,5 @@
 <template>
 	<div>
-		<h3 class="mb-4 text-xs font-bold uppercase text-gray-600">Templates</h3>
 		<div v-if="!Object.keys(store.components).length" class="text-sm italic text-gray-600">
 			No templates saved
 		</div>
@@ -9,7 +8,7 @@
 			:group="{ name: 'blocks', pull: 'clone', put: false }"
 			item-key="id"
 			:sort="false"
-			:clone="(blockTemplate: BlockTemplate) => store.getBlockCopy(blockTemplate.block)"
+			:clone="cloneTemplate"
 			class="flex w-full flex-wrap">
 			<template #item="{ element }">
 				<div class="mb-3 w-full">
@@ -36,11 +35,11 @@
 	</div>
 </template>
 <script setup lang="ts">
-import draggable from "vuedraggable";
 import { createListResource } from "frappe-ui";
-import BuilderBlock from "./BuilderBlock.vue";
-import useStore from "../store";
 import { ref } from "vue";
+import draggable from "vuedraggable";
+import useStore from "../store";
+import BuilderBlock from "./BuilderBlock.vue";
 
 const store = useStore();
 const preview = ref(null);
@@ -68,4 +67,20 @@ const setScale = (el: HTMLElement, block: BlockOptions) => {
 	const scale = Math.min(140 / el.offsetWidth, 70 / el.offsetHeight, 0.6);
 	block.scale = scale;
 };
+
+const cloneTemplate = (blockTemplate: BlockTemplate) => {
+	const blockCopy = store.getBlockCopy(blockTemplate.block);
+	if (blockTemplate.component_name === "Card") {
+		blockCopy.component = {
+			name: "Card",
+			doctype: "User",
+			mappings: {
+				avatar: "user_image",
+				full_name: "full_name",
+				email: "email",
+			}
+		}
+	}
+	return blockCopy;
+}
 </script>

@@ -3,25 +3,25 @@
 		<BuilderToolbar
 			class="relative z-30 dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"></BuilderToolbar>
 		<div>
-			<BuilderSidebar
-				class="fixed left-0 top-[var(--toolbar-height)] bottom-0 z-20 overflow-auto border-r-[1px] bg-white p-4 no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderSidebar>
+			<BuilderLeftPanel
+				class="fixed left-0 top-[var(--toolbar-height)] bottom-0 z-20 overflow-auto border-r-[1px] bg-white no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderLeftPanel>
 			<BuilderCanvas
 				class="canvas-container absolute top-[var(--toolbar-height)] bottom-0 flex justify-center overflow-hidden bg-gray-200 p-10 dark:bg-zinc-800"></BuilderCanvas>
-			<BlockPropertiesEditor
-				class="fixed right-0 top-[var(--toolbar-height)] bottom-0 z-20 overflow-auto border-l-[1px] bg-white p-4 pr-2 no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BlockPropertiesEditor>
+			<BuilderRightPanel
+				class="fixed right-0 top-[var(--toolbar-height)] bottom-0 z-20 overflow-auto border-l-[1px] bg-white p-4 pr-2 no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderRightPanel>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { createDocumentResource } from "frappe-ui";
 import BuilderCanvas from "@/components/BuilderCanvas.vue";
+import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
+import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
-import BuilderSidebar from "@/components/BuilderSidebar.vue";
-import BlockPropertiesEditor from "@/components/BlockPropertiesEditor.vue";
 import useStore from "@/store";
+import { createDocumentResource } from "frappe-ui";
+import { onMounted, watch } from "vue";
+import { useRoute } from "vue-router";
 
 const route = useRoute();
 const store = useStore();

@@ -1,6 +1,5 @@
 <template>
 	<div>
-		<h3 class="mb-3 text-gray-600 font-bold text-xs uppercase">WIDGETS</h3>
 		<draggable
 			:list="store.widgets"
 			:sort="false"

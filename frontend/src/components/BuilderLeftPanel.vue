@@ -20,16 +20,16 @@
 			:width="store.builderLayout.leftPanelWidth"
 			side="right"
 			@resize="(width) => (store.builderLayout.leftPanelWidth = width)" />
-		<div class="mb-4 flex w-full rounded-md bg-gray-200 p-[2px] text-sm dark:bg-zinc-700">
+		<div class="flex w-full p-[2px] text-sm border-gray-200 dark:border-zinc-800">
 			<button
-				v-for="tab of ['Pages', 'Components', 'Layers']"
+				v-for="tab of ['Widgets', 'Components', 'Layers']"
 				:key="tab"
-				class="flex-1 rounded-md px-3 py-[3px]"
+				class="flex-1 p-2"
 				@click="store.sidebarActiveTab = tab"
 				:class="{
-					'bg-white font-semibold shadow-md dark:bg-zinc-800 dark:text-gray-200':
+					'border-b-[1px] border-gray-900 dark:border-zinc-500 dark:text-zinc-300':
 						store.sidebarActiveTab === tab,
-					'text-gray-700 dark:text-gray-400': store.sidebarActiveTab !== tab,
+					'text-gray-700 dark:text-zinc-600': store.sidebarActiveTab !== tab,
 				}">
 				{{ tab }}
 			</button>
@@ -54,12 +54,14 @@
 				</ul>
 			</div>
 		</div>
+		<div v-show="store.sidebarActiveTab === 'Widgets'">
+			<Widgets class="p-4" />
+		</div>
 		<div v-show="store.sidebarActiveTab === 'Components'">
-			<Widgets class="mb-7" />
-			<Templates class="mb-3" />
+			<Components class="p-4" />
 		</div>
 		<div v-show="store.sidebarActiveTab === 'Layers'">
-			<BlockLayers :blocks="store.builderState.blocks" />
+			<BlockLayers class="p-4" :blocks="store.builderState.blocks" />
 		</div>
 	</div>
 </template>
@@ -69,7 +71,7 @@ import { createListResource, createResource } from "frappe-ui";
 import { Ref, ref } from "vue";
 import useStore from "../store";
 import BlockLayers from "./BlockLayers.vue";
-import Templates from "./BuilderTemplates.vue";
+import Components from "./BuilderComponents.vue";
 import Widgets from "./BuilderWidgets.vue";
 import PanelResizer from "./PanelResizer.vue";
 

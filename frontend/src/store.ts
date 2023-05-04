@@ -234,7 +234,7 @@ const useStore = defineStore("store", {
 				visible: false,
 			},
 		],
-		sidebarActiveTab: "Components",
+		sidebarActiveTab: "Widgets",
 		canvas: {
 			initialScale: 1,
 			initialTranslateY: 0,
