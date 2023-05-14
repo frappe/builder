@@ -1,11 +1,11 @@
 {
-  "name": "frappe-ui-frontend",
   "private": true,
   "version": "0.0.0",
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "vite build --base=/assets/website_builder/frontend/ && yarn copy-html-entry",
-    "copy-html-entry": "cp ../website_builder/public/frontend/index.html ../website_builder/www/index.html",
+    "copy-html-entry": "cp ../website_builder/public/frontend/index.html ../website_builder/www/p.html",
     "preview": "vite preview"
   },
   "dependencies": {
