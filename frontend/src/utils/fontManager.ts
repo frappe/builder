@@ -11,6 +11,7 @@ const setFont = (font: string | null) => {
 		WebFont.load({
 			google: {
 				families: [font + ":" + fontObj.variants.join(",")],
+				crossOrigin: 'anonymous'
 			},
 			active: resolve(font)
 		});
