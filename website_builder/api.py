@@ -43,10 +43,3 @@ def get_blocks(prompt):
 		}),
 	)
 	return response['choices'][0]['message']['content']
-
-
-
-
-
-
-
