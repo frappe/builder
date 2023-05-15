@@ -34,7 +34,7 @@
 		<Dialog
 			style="z-index: 40"
 			:options="{
-				title: 'New Template',
+				title: 'New Component',
 				size: 'sm',
 				actions: [
 					{
@@ -47,7 +47,11 @@
 			}"
 			v-model="showDialog">
 			<template #body-content>
-				<Input type="text" v-model="componentName" label="Template Name" required />
+				<Input type="text" v-model="componentProperties.componentName" label="Component Name" required />
+				<div class="mt-3">
+					<Input class="text-sm [&>span]:!text-sm" type="checkbox" v-model="componentProperties.isDynamicComponent"
+						label="Is Dynamic" />
+				</div>
 			</template>
 		</Dialog>
 	</div>
@@ -59,6 +63,7 @@ import { Dialog, Input, createResource } from "frappe-ui";
 import { ComponentInternalInstance, Ref, getCurrentInstance, nextTick, onMounted, reactive, ref } from "vue";
 
 import Block from "@/utils/block";
+import { getNumberFromPx } from "@/utils/helpers";
 import useStore from "../store";
 import setGuides from "../utils/guidesTracker";
 import trackTarget from "../utils/trackTarget";
@@ -66,7 +71,6 @@ import BorderRadiusHandler from "./BorderRadiusHandler.vue";
 import BoxResizer from "./BoxResizer.vue";
 import ContextMenu from "./ContextMenu.vue";
 import PaddingHandler from "./PaddingHandler.vue";
-import { getNumberFromPx } from "@/utils/helpers";
 
 const props = defineProps({
 	block: {
@@ -194,7 +198,10 @@ const contextMenuVisible = ref(false);
 const posX = ref(0);
 const posY = ref(0);
 const showDialog = ref(false);
-const componentName = ref(null);
+const componentProperties = ref({
+	componentName: "",
+	isDynamicComponent: false,
+});
 
 const showContextMenu = (event: MouseEvent) => {
 	event.preventDefault();
@@ -231,7 +238,7 @@ const createComponent = createResource({
 const createComponentHandler = ({ close }: { "close": () => void }) => {
 	createComponent.submit({
 		block: block,
-		component_name: componentName.value,
+		component_name: componentProperties.value.componentName,
 	});
 	close();
 }
@@ -271,7 +278,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		action: pasteStyle,
 		condition: () => Boolean(store.copiedStyle && store.copiedStyle.blockId !== props.block.blockId),
 	},
-	{ label: "Save as Template", action: saveAsComponent },
+	{ label: "Save as Component", action: saveAsComponent },
 	{ label: "Duplicate", action: duplicateBlock },
 ];
 </script>
