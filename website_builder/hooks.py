@@ -2,9 +2,9 @@ from . import __version__ as app_version
 
 app_name = "website_builder"
 app_title = "Website Builder"
-app_publisher = "asdf"
-app_description = "aasdf"
-app_email = "asdf"
+app_publisher = "Frappe Technologies Pvt Ltd"
+app_description = "A simple website builder"
+app_email = "suraj@frappe.io"
 app_license = "MIT"
 
 # Includes in <head>
@@ -190,3 +190,7 @@ website_generators = ["Web Page Beta"]
 # auth_hooks = [
 #	"website_builder.auth.validate"
 # ]
+
+website_route_rules = [
+	{"from_route": "/p/<path:app_path>", "to_route": "p"},
+]
