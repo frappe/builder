@@ -1,16 +1,17 @@
-import { createApp } from "vue";
+import App from "@/App.vue";
 import {
-	FrappeUI,
 	Button,
 	FeatherIcon,
-	setConfig,
+	FrappeUI,
 	frappeRequest,
+	setConfig,
 } from "frappe-ui";
 import { createPinia } from "pinia";
-import router from "./router";
-import App from "./App.vue";
+import { createApp } from "vue";
 import "./index.css";
+import router from "./router";
 import "./utils/arrayFunctions";
+
 
 const app = createApp(App);
 const pinia = createPinia();

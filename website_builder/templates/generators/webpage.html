@@ -13,7 +13,7 @@
 	{% for (font, options) in fonts.items() %}
 	<link href="https://fonts.googleapis.com/css2?family={{ font }}:wght@{{ ";".join(options.weights) }}&display=swap" rel="stylesheet">
 	{% endfor %}
-	<link rel="stylesheet" href="/assets/website_builder/frontend/assets/index.02d450ce.css">
+	<link rel="stylesheet" href="{{ style_file_path }}">
 	{{ style }}
 </head>
 <body>
