@@ -247,7 +247,7 @@ const useStore = defineStore("store", {
 			background: ''
 		},
 		copiedStyle: <StyleCopy | null>null,
-		components: <BlockTemplate[]>[],
+		components: <BlockComponent[]>[],
 		overlayElement: <any>null,
 	}),
 	actions: {

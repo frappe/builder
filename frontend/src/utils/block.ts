@@ -14,7 +14,9 @@ class Block implements BlockOptions {
 	classes: Array<string>;
 	resizable?: boolean;
 	innerText?: string;
+	componentData: ComponentData;
 	computedStyles: ProxyHandler<BlockStyleMap>;
+	isComponent?: boolean;
 	originalElement?: string | undefined;
 	constructor(options: BlockOptions) {
 		delete options.computedStyles;
@@ -33,6 +35,12 @@ class Block implements BlockOptions {
 		this.blockName = options.blockName;
 		delete this.attributes.style;
 		this.classes = options.classes || [];
+		this.isComponent = options.isComponent;
+
+		this.componentData = {
+			name: options.blockName,
+			isDynamic: false,
+		};
 
 		if (this.isButton()) {
 			this.editorStyles.display = "inline-block";

@@ -24,7 +24,7 @@
 			<button
 				v-for="tab of ['Widgets', 'Components', 'Layers']"
 				:key="tab"
-				class="flex-1 p-2"
+				class="flex-1 p-2 mx-3"
 				@click="store.sidebarActiveTab = tab"
 				:class="{
 					'border-b-[1px] border-gray-900 dark:border-zinc-500 dark:text-zinc-300':

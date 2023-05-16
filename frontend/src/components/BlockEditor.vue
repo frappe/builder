@@ -229,7 +229,7 @@ const createComponent = createResource({
 		data.block = JSON.parse(data.block);
 		return data;
 	},
-	onSuccess(component: BlockTemplate) {
+	onSuccess(component: BlockComponent) {
 		store.sidebarActiveTab = "Components";
 		store.components.push(component);
 	},
