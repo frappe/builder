@@ -7,6 +7,7 @@ interface PanAndZoomProps {
 	scale: number;
 	translateX: number;
 	translateY: number;
+	scaling: boolean;
 }
 
 function setPanAndZoom(props: PanAndZoomProps, target: HTMLElement, panAndZoomAreaElement: HTMLElement, zoomLimits = { min: 0.1, max: 10 }) {
@@ -16,14 +17,17 @@ function setPanAndZoom(props: PanAndZoomProps, target: HTMLElement, panAndZoomAr
 	let startX = 0;
 	let startY = 0;
 	let pinchPointSet = false;
+	let wheeling: any = null;
 
 	panAndZoomAreaElement.addEventListener(
 		"wheel",
 		(e) => {
 			e.preventDefault();
+			clearTimeout(wheeling);
 			if (e.ctrlKey) {
 				// Multiplying with 0.01 to make the zooming less sensitive
 				// Multiplying with scale to make the zooming feel consistent
+				props.scaling = true;
 				let scale = props.scale - e.deltaY * 0.01 * props.scale;
 				scale = Math.min(Math.max(scale, zoomLimits.min), zoomLimits.max);
 				props.scale = scale;
@@ -50,6 +54,11 @@ function setPanAndZoom(props: PanAndZoomProps, target: HTMLElement, panAndZoomAr
 					props.translateX += diffX / scale;
 					props.translateY += diffY / scale;
 				});
+
+				wheeling = setTimeout(() => {
+					props.scaling = false;
+				}, 500);
+
 			} else {
 				pinchPointSet = false;
 				// Dividing with scale to make the panning feel consistent

@@ -244,7 +244,8 @@ const useStore = defineStore("store", {
 			translateY: 0,
 			startX: 0,
 			startY: 0,
-			background: ''
+			background: '',
+			scaling: false,
 		},
 		copiedStyle: <StyleCopy | null>null,
 		components: <BlockComponent[]>[],
