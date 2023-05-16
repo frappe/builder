@@ -1,14 +1,14 @@
 <template>
 	<div>
 		<div v-if="!Object.keys(store.components).length" class="text-sm italic text-gray-600">
-			No templates saved
+			No components saved
 		</div>
 		<draggable
 			:list="store.components"
 			:group="{ name: 'blocks', pull: 'clone', put: false }"
 			item-key="id"
 			:sort="false"
-			:clone="cloneTemplate"
+			:clone="cloneComponent"
 			class="flex w-full flex-wrap">
 			<template #item="{ element }">
 				<div class="mb-3 w-full">
@@ -58,7 +58,7 @@ createListResource({
 		});
 		return data;
 	},
-	onSuccess(data: BlockTemplate[]) {
+	onSuccess(data: BlockComponent[]) {
 		store.components = data;
 	},
 });
@@ -68,12 +68,14 @@ const setScale = (el: HTMLElement, block: BlockOptions) => {
 	block.scale = scale;
 };
 
-const cloneTemplate = (blockTemplate: BlockTemplate) => {
-	const blockCopy = store.getBlockCopy(blockTemplate.block);
-	if (blockTemplate.component_name === "Card") {
-		blockCopy.component = {
+const cloneComponent = (blockComponent: BlockComponent) => {
+	const blockCopy = store.getBlockCopy(blockComponent.block);
+	blockCopy.isComponent = true;
+	if (blockComponent.component_name === "Card") {
+		blockCopy.componentData = {
 			name: "Card",
 			doctype: "User",
+			isDynamic: blockComponent.is_dynamic,
 			mappings: {
 				avatar: "user_image",
 				full_name: "full_name",

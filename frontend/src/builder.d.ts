@@ -25,10 +25,11 @@ declare interface BlockOptions {
 	[key: string]: any;
 }
 
-declare interface BlockTemplate {
+declare interface BlockComponent {
 	name?: string;
 	component_name: string;
 	icon: string;
+	is_dynamic: boolean;
 	block: BlockOptions;
 	scale: number;
 }
@@ -59,4 +60,13 @@ declare interface ContextMenuOption {
 	label: string;
 	action: CallableFunction;
 	condition?: () => boolean;
+}
+
+interface ComponentData {
+	name: string;
+	doctype?: string;
+	isDynamic: boolean;
+	mappings?: {
+		[key: string]: string;
+	}
 }

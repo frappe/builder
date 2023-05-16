@@ -9,7 +9,8 @@
  "field_order": [
   "component_name",
   "block",
-  "icon"
+  "icon",
+  "is_dynamic"
  ],
  "fields": [
   {
@@ -27,11 +28,17 @@
    "fieldname": "icon",
    "fieldtype": "Data",
    "label": "Icon"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_dynamic",
+   "fieldtype": "Check",
+   "label": "Is Dynamic"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-05-02 09:41:46.984526",
+ "modified": "2023-05-16 13:13:34.730856",
  "modified_by": "Administrator",
  "module": "Website Builder",
  "name": "Web Page Component",
