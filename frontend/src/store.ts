@@ -36,9 +36,8 @@ const useStore = defineStore("store", {
 					flexDirection: "column",
 					justifyContent: "center",
 					alignItems: "center",
-					height: "auto",
+					height: "200px",
 					width: "100%",
-					minHeight: "200px",
 					margin: "0 auto",
 				},
 				editorStyles: {
@@ -234,7 +233,7 @@ const useStore = defineStore("store", {
 				visible: false,
 			},
 		],
-		sidebarActiveTab: "Widgets",
+		sidebarActiveTab: "Components",
 		canvas: {
 			initialScale: 1,
 			initialTranslateY: 0,
@@ -250,6 +249,14 @@ const useStore = defineStore("store", {
 		copiedStyle: <StyleCopy | null>null,
 		components: <BlockComponent[]>[],
 		overlayElement: <any>null,
+		pageData: {
+			users: [
+				{name: "Suraj", "image": "https://avatars.githubusercontent.com/u/1961952?v=4"},
+				{name: "Raj", "image": "https://avatars.githubusercontent.com/u/1961952?v=4"},
+				{name: "Rahul", "image": "https://avatars.githubusercontent.com/u/1961952?v=4"},
+				{name: "Rohit", "image": "https://avatars.githubusercontent.com/u/1961952?v=4"},
+			]
+		}
 	}),
 	actions: {
 		clearBlocks() {
