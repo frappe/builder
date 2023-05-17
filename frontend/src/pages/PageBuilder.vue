@@ -8,7 +8,7 @@
 			<BuilderCanvas
 				class="canvas-container absolute top-[var(--toolbar-height)] bottom-0 flex justify-center overflow-hidden bg-gray-200 p-10 dark:bg-zinc-800"></BuilderCanvas>
 			<BuilderRightPanel
-				class="fixed right-0 top-[var(--toolbar-height)] bottom-0 z-20 overflow-auto border-l-[1px] bg-white p-4 pr-2 no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderRightPanel>
+				class="fixed right-0 top-[var(--toolbar-height)] bottom-0 z-20 overflow-auto border-l-[1px] bg-white no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderRightPanel>
 		</div>
 		<div class="fixed bottom-12 text-center z-40 bg-white block left-[50%] translate-x-[-50%] px-3 py-2 rounded-lg text-sm" v-show="store.canvas.scaling">
 			{{ Math.round(store.canvas.scale * 100) + "%" }}

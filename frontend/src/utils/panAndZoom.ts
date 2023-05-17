@@ -23,8 +23,8 @@ function setPanAndZoom(props: PanAndZoomProps, target: HTMLElement, panAndZoomAr
 		"wheel",
 		(e) => {
 			e.preventDefault();
-			clearTimeout(wheeling);
 			if (e.ctrlKey) {
+				clearTimeout(wheeling);
 				// Multiplying with 0.01 to make the zooming less sensitive
 				// Multiplying with scale to make the zooming feel consistent
 				props.scaling = true;
