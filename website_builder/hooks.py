@@ -64,7 +64,7 @@ website_generators = ["Web Page Beta"]
 # ------------
 
 # before_install = "website_builder.install.before_install"
-# after_install = "website_builder.install.after_install"
+after_install = "website_builder.install.after_install"
 
 # Uninstallation
 # ------------
