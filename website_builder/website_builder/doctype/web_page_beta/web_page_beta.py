@@ -6,6 +6,7 @@ import re
 
 import bs4 as bs
 import frappe
+import frappe.utils
 # import frappe
 from frappe.model.document import Document
 from frappe.website.serve import get_response_content
@@ -15,14 +16,15 @@ from website_builder.html_preview_image import get_preview
 
 class WebPageBeta(WebsiteGenerator):
 	def on_update(self):
+		file_name=f"{self.name}{frappe.generate_hash()}.png"
 		frappe.enqueue(
 			method=get_preview,
 			html=get_response_content(self.route),
 			output_path=os.path.join(
-				frappe.local.site_path, "public", "files", f"{self.name}.png"
+				frappe.local.site_path, "public", "files", file_name
 			),
 		)
-		self.db_set("preview", f"/files/{self.name}.png")
+		self.db_set("preview", f"/files/{file_name}")
 
 	website = frappe._dict(
 		template = "templates/generators/webpage.html",
@@ -118,4 +120,4 @@ def get_style_file_path():
 	file_pattern = "index.*.css"
 	matching_files = glob.glob(f"{folder_path}/{file_pattern}")
 	if matching_files:
-		return matching_files[0].lstrip(".")
+		return frappe.utils.get_url(matching_files[0].lstrip("."))

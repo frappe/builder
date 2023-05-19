@@ -46,7 +46,7 @@ createListResource({
 	fields: ["name", "page_name", "route", "preview"],
 	orderBy: "creation desc",
 	start: 0,
-	pageLength: 10,
+	pageLength: 100,
 	auto: true,
 	onSuccess(data: Page[]) {
 		pages.value = data;
