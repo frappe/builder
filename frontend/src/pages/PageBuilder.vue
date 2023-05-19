@@ -1,5 +1,5 @@
 <template>
-	<div class="page-builder flex-col bg-gray-100">
+	<div class="page-builder flex-col bg-gray-100 overflow-hidden">
 		<BuilderToolbar
 			class="relative z-30 dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"></BuilderToolbar>
 		<div>
