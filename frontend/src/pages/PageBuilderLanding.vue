@@ -25,9 +25,9 @@
 				<div
 					class="mr-2 w-56 rounded-md border-[1px] border-gray-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
 					<img
-						src="https://user-images.githubusercontent.com/13928957/212847544-5773795d-2fd6-48d1-8423-b78ecc92522b.png"
-						class="h-28 rounded-sm object-cover" />
-					<p class="mt-2 px-3 pb-2 text-sm text-gray-700 dark:text-zinc-300">
+						:src="page.preview"
+						class="h-32 rounded-sm object-cover bg-gray-600" />
+					<p class="px-3 py-2 text-sm text-gray-700 dark:text-zinc-300 border-t-2">
 						{{ page.page_name }}
 					</p>
 				</div>
@@ -43,7 +43,7 @@ const pages = ref([]) as Ref<Page[]>;
 
 createListResource({
 	doctype: "Web Page Beta",
-	fields: ["name", "page_name", "route"],
+	fields: ["name", "page_name", "route", "preview"],
 	orderBy: "creation desc",
 	start: 0,
 	pageLength: 10,

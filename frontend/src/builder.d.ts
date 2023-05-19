@@ -38,6 +38,7 @@ declare interface Page {
 	name: string;
 	page_name: string;
 	route: string;
+	preview: string;
 	blocks: BlockOptions[];
 }
 

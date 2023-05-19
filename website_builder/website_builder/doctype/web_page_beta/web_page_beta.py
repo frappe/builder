@@ -1,17 +1,29 @@
 # Copyright (c) 2023, asdf and contributors
 # For license information, please see license.txt
 
-import json
+import os
 import re
 
 import bs4 as bs
 import frappe
 # import frappe
 from frappe.model.document import Document
+from frappe.website.serve import get_response_content
 from frappe.website.website_generator import WebsiteGenerator
+from website_builder.html_preview_image import get_preview
 
 
 class WebPageBeta(WebsiteGenerator):
+	def on_update(self):
+		frappe.enqueue(
+			method=get_preview,
+			html=get_response_content(self.route),
+			output_path=os.path.join(
+				frappe.local.site_path, "public", "files", f"{self.name}.png"
+			),
+		)
+		self.db_set("preview", f"/files/{self.name}.png")
+
 	website = frappe._dict(
 		template = "templates/generators/webpage.html",
 		condition_field = "published",
@@ -95,6 +107,7 @@ def setFonts(styles, font_map):
 			if font in font_map:
 				if style.get("fontWeight") and style.get("fontWeight") not in font_map[font]["weights"]:
 					font_map[font]["weights"].append(style.get("fontWeight"))
+					font_map[font]["weights"].sort()
 			else:
 				font_map[font] = { "weights": [style.get("fontWeight") or "400"] }
 
