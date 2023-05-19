@@ -5,7 +5,6 @@ from playwright.sync_api import sync_playwright
 
 def get_preview(html, output_path):
 	with sync_playwright() as p:
-		frappe.utils.execute_in_shell("playwright install chromium")
 		browser = p.chromium.launch()
 		page = browser.new_page()
 		page.set_content(html)
