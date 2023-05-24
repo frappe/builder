@@ -7,21 +7,21 @@
 		@contextmenu.prevent="showContextMenu"
 		:class="{
 			'cursor-grab': movable && !block.isRoot(),
-			'pointer-events-none': block.blockId === store.hoveredBlock,
+			'pointer-events-none': block.isHovered() && !block.isSelected(),
 		}">
 		<BoxResizer
-			v-if="selected && target && !block.isRoot() && !editable"
+			v-if="block.isSelected() && target && !block.isRoot() && !editable"
 			:target-block="block"
 			@resizing="resizing = $event"
 			:target="target" />
 		<PaddingHandler
-			v-if="selected && target && !resizing && !editable"
+			v-if="block.isSelected() && target && !resizing && !editable"
 			:target-block="block"
 			:on-update="updateTracker"
 			:disable-handlers="false"
 			:breakpoint="breakpoint" />
 		<BorderRadiusHandler
-			v-if="selected && target && !block.isRoot() && !editable"
+			v-if="block.isSelected() && target && !block.isRoot() && !editable"
 			:target-block="block"
 			:target="target" />
 		<ContextMenu
@@ -80,10 +80,6 @@ const props = defineProps({
 	movable: {
 		type: Boolean,
 		default: true,
-	},
-	selected: {
-		type: Boolean,
-		default: false,
 	},
 	breakpoint: {
 		type: String,
@@ -200,7 +196,7 @@ const posY = ref(0);
 const showDialog = ref(false);
 const componentProperties = ref({
 	componentName: "",
-	isDynamicComponent: false,
+	isDynamicComponent: 0,
 });
 
 const showContextMenu = (event: MouseEvent) => {
@@ -239,6 +235,7 @@ const createComponentHandler = ({ close }: { "close": () => void }) => {
 	createComponent.submit({
 		block: block,
 		component_name: componentProperties.value.componentName,
+		is_dynamic: componentProperties.value.isDynamicComponent,
 	});
 	close();
 }

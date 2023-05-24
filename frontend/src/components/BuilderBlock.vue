@@ -19,7 +19,7 @@
 			...$attrs,
 			...{
 				'data-block-id': block.blockId,
-				contenteditable: block.isText() && isSelected && isEditable,
+				contenteditable: block.isText() && block.isSelected() && isEditable,
 				class: ['__builder_component__', 'outline-none', 'select-none', ...(block.classes || [])],
 				style: { ...styles, ...block.editorStyles },
 			},
@@ -34,14 +34,13 @@
 	</draggable>
 	<teleport to="#overlay" v-if="store.overlayElement">
 		<BlockEditor
-			v-if="
-				((component && isSelected && breakpoint === store.builderState.activeBreakpoint) ||
-					(store.hoveredBlock === block.blockId && store.hoveredBreakpoint === breakpoint)) &&
-				!preview
+			v-if="!preview && component"
+			v-show="
+				(block.isSelected() && breakpoint === store.builderState.activeBreakpoint) ||
+				(block.isHovered() && store.hoveredBreakpoint === breakpoint)
 			"
 			:resizable-x="!block.isRoot()"
 			:resizable-y="!block.isImage() && !block.isRoot()"
-			:selected="isSelected"
 			:resizable="!block.isRoot()"
 			:block="block"
 			:breakpoint="breakpoint"
@@ -103,17 +102,8 @@ const styles = computed(() => {
 	return styleObj;
 });
 
-const isSelected = computed(() => {
-	return (
-		store.builderState.selectedBlock === props.block ||
-		store.builderState.selectedBlocks.includes(props.block)
-	);
-});
-
 const isEditable = computed(() => {
-	return (
-		store.builderState.editableBlock === props.block
-	);
+	return store.builderState.editableBlock === props.block;
 });
 
 const selectBlock = (e: MouseEvent | null, block: Block) => {

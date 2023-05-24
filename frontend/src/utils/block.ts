@@ -1,4 +1,4 @@
-import useStore from "../store";
+import useStore from "@/store";
 
 class Block implements BlockOptions {
 	blockId: string;
@@ -111,7 +111,7 @@ class Block implements BlockOptions {
 		return Math.random().toString(36).substr(2, 9);
 	}
 	getIcon() {
-		return this.isRoot() ? 'hash' : this.isText() ? 'type': this.isImage() ? 'image': this.isContainer() ? 'square': this.isLink() ? 'link': 'square';
+		return this.isRoot() ? 'hash' : this.isText() ? 'type' : this.isImage() ? 'image' : this.isContainer() ? 'square' : this.isLink() ? 'link' : 'square';
 	}
 	isRoot() {
 		return this.originalElement === "body";
@@ -131,6 +131,14 @@ class Block implements BlockOptions {
 	}
 	getFontFamily() {
 		return this.baseStyles.fontFamily || this.mobileStyles.fontFamily || this.tabletStyles.fontFamily || 'Inter';
+	}
+	isHovered(): boolean {
+		const store = useStore();
+		return store.hoveredBlock === this.blockId;
+	}
+	isSelected(): boolean {
+		const store = useStore();
+		return Boolean(store.builderState.selectedBlock) && store.builderState.selectedBlock === this;
 	}
 }
 
