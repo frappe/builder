@@ -8,6 +8,7 @@
 		:tag="block.getTag()"
 		@click.stop="selectBlock($event, block)"
 		@dblclick.stop="handleDoubleClick"
+		@contextmenu.prevent.stop="triggerContextMenu($event)"
 		@mouseover.stop="
 			store.hoveredBlock = block.blockId;
 			store.hoveredBreakpoint = breakpoint;
@@ -45,7 +46,7 @@
 			:block="block"
 			:breakpoint="breakpoint"
 			:editable="isEditable"
-			:target="component.targetDomElement" />
+			:target="component.targetDomElement"/>
 	</teleport>
 </template>
 <script setup lang="ts">
@@ -120,6 +121,22 @@ const selectBlock = (e: MouseEvent | null, block: Block) => {
 		}
 		store.builderState.selectedBlocks.push(block);
 	}
+};
+
+const triggerContextMenu = (e: MouseEvent) => {
+	selectBlock(e, props.block);
+	nextTick(() => {
+		let element = document.elementFromPoint(e.x, e.y) as HTMLElement;
+		if (element === component.value.targetDomElement) return;
+		element.dispatchEvent(
+			new MouseEvent("contextmenu", {
+				bubbles: true,
+				cancelable: true,
+				clientX: e.clientX,
+				clientY: e.clientY,
+			})
+		);
+	});
 };
 
 const handleDoubleClick = () => {
