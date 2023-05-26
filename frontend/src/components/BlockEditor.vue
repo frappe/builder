@@ -60,7 +60,7 @@
 import { vOnClickOutside } from "@vueuse/components";
 import { useDebounceFn } from "@vueuse/shared";
 import { Dialog, Input, createResource } from "frappe-ui";
-import { ComponentInternalInstance, Ref, getCurrentInstance, nextTick, onMounted, reactive, ref } from "vue";
+import { ComponentInternalInstance, Ref, computed, getCurrentInstance, nextTick, onMounted, reactive, ref } from "vue";
 
 import Block from "@/utils/block";
 import { getNumberFromPx } from "@/utils/helpers";
@@ -76,10 +76,6 @@ const props = defineProps({
 	block: {
 		type: Block,
 		required: true,
-	},
-	movable: {
-		type: Boolean,
-		default: true,
 	},
 	breakpoint: {
 		type: String,
@@ -104,6 +100,10 @@ let currentInstance = null as unknown as ComponentInternalInstance | null;
 const moving = ref(false);
 const preventCLick = ref(false);
 
+const movable = computed(() => {
+	return props.block.getStyle("position") === "absolute";
+});
+
 onMounted(() => {
 	updateTracker.value = trackTarget(props.target, editor.value);
 	currentInstance = getCurrentInstance();
@@ -127,7 +127,7 @@ const handleClick = (ev: MouseEvent) => {
 };
 
 const handleMove = (ev: MouseEvent) => {
-	if (!props.movable || props.block.isRoot()) return;
+	if (!movable || props.block.isRoot()) return;
 	const target = ev.target as HTMLElement;
 	const startX = ev.clientX;
 	const startY = ev.clientY;
