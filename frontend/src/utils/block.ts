@@ -51,16 +51,8 @@ class Block implements BlockOptions {
 		if (this.isRoot()) {
 			this.blockId = "root";
 			this.editorStyles = {
-				height: "fit-content",
-				minHeight: "100%",
 				width: "inherit",
-				position: "absolute",
 				"overflow-x": "hidden",
-				top: 0,
-				left: 0,
-				bottom: 0,
-				right: 0,
-				background: "white",
 			};
 			this.draggable = false;
 		}
