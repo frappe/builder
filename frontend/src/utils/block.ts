@@ -53,11 +53,12 @@ class Block implements BlockOptions {
 				minHeight: "100%",
 				width: "inherit",
 				position: "absolute",
-				overflow: "hidden",
+				"overflow-x": "hidden",
 				top: 0,
 				left: 0,
 				bottom: 0,
 				right: 0,
+				background: "white",
 			};
 			this.draggable = false;
 		}
