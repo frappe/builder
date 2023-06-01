@@ -8,6 +8,7 @@ class Block implements BlockOptions {
 	children: Array<Block>;
 	draggable?: boolean;
 	baseStyles: BlockStyleMap;
+	rawStyles: BlockStyleMap;
 	mobileStyles: BlockStyleMap;
 	tabletStyles: BlockStyleMap;
 	attributes: BlockAttributeMap;
@@ -28,6 +29,7 @@ class Block implements BlockOptions {
 		this.children = (options.children || []).map((child: BlockOptions) => new Block(child));
 
 		this.baseStyles = options.styles || options.baseStyles || {};
+		this.rawStyles = options.rawStyles || {};
 		this.mobileStyles = options.mobileStyles || {};
 		this.tabletStyles = options.tabletStyles || {};
 		this.editorStyles = options.editorStyles || {};

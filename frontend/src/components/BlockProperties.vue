@@ -3,7 +3,7 @@
 		<div>
 			<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Background Color</h3>
 			<ul class="flex flex-wrap">
-				<li v-for="color in store.pastelCssColors" :key="color" class="mr-2 mb-2 last:mr-0">
+				<li v-for="color in store.pastelCssColors" :key="color" class="mb-2 mr-2 last:mr-0">
 					<a @click="setBgColor(color)" class="cursor-pointer text-base hover:underline">
 						<div class="h-4 w-4 rounded-md shadow-sm" :style="'background:' + color" />
 					</a>
@@ -11,19 +11,16 @@
 			</ul>
 		</div>
 		<InlineInput :value="blockStyles.background" @update-value="setBgColor">Background</InlineInput>
-		<div
-			v-if="store.builderState.selectedBlock && !store.builderState.selectedBlock.isImage()"
-			class="mt-5">
+		<div v-if="store.builderState.selectedBlock && !store.builderState.selectedBlock.isImage()" class="mt-5">
 			<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Text Color</h3>
 			<ul class="flex flex-wrap">
-				<li v-for="color in store.textColors" :key="color" class="mr-2 mb-2 last:mr-0">
+				<li v-for="color in store.textColors" :key="color" class="mb-2 mr-2 last:mr-0">
 					<a @click="blockStyles.color = color" class="cursor-pointer text-base hover:underline">
 						<div class="h-4 w-4 rounded-md shadow-sm" :style="'background-color:' + color" />
 					</a>
 				</li>
 			</ul>
 		</div>
-
 
 		<h3 v-if="store.builderState.selectedBlock" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">
 			Position
@@ -362,11 +359,23 @@
 			Row Gap
 		</InlineInput>
 		<!-- overflow -->
-		<InlineInput v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isContainer()" type="select" :options="['visible', 'hidden', 'scroll']"
-		:value="blockStyles.overflow"
-		@update-value="(val) => (blockStyles.overflow = val)">
+		<InlineInput
+			v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isContainer()"
+			type="select"
+			:options="['visible', 'hidden', 'scroll']"
+			:value="blockStyles.overflow"
+			@update-value="(val) => (blockStyles.overflow = val)">
 			Overflow
 		</InlineInput>
+
+		<h3 v-if="store.builderState.selectedBlock" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">
+			RAW Styles
+		</h3>
+		<Input
+			type="textarea"
+			class="rounded-md text-sm text-gray-800 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700"
+			:modelValue="JSON.stringify(store.builderState.selectedBlock.rawStyles)"
+			@update:modelValue="(val) => (store.builderState.selectedBlock.rawStyles = JSON.parse(val))" />
 	</div>
 </template>
 <script setup>
@@ -374,6 +383,7 @@ import useStore from "@/store";
 import { setFont as _setFont, fontListNames, getFontWeightOptions } from "@/utils/fontManager";
 import { computed } from "vue";
 import InlineInput from "./InlineInput.vue";
+import { Input } from "frappe-ui";
 
 const store = useStore();
 
@@ -391,9 +401,9 @@ const blockStylesObj = computed(() => {
 const blockStyles = computed(() => {
 	let styleObj = store.builderState.selectedBlock.baseStyles;
 	if (store.builderState.activeBreakpoint === "mobile") {
-		styleObj = {...styleObj, ...store.builderState.selectedBlock.mobileStyles };
+		styleObj = { ...styleObj, ...store.builderState.selectedBlock.mobileStyles };
 	} else if (store.builderState.activeBreakpoint === "tablet") {
-		styleObj = {...styleObj, ...store.builderState.selectedBlock.tabletStyles };
+		styleObj = { ...styleObj, ...store.builderState.selectedBlock.tabletStyles };
 	}
 	return styleObj;
 });

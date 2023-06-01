@@ -62,6 +62,7 @@ def get_block_html(blocks):
 				tablet_styles = node.get("tabletStyles", {})
 				setFonts([base_styles, mobile_styles, tablet_styles], font_map)
 				append_style(node.get("baseStyles", {}), style_tag, style_class)
+				append_style(node.get("rawStyles", {}), style_tag, style_class)
 				append_style(node.get("tabletStyles", {}), style_tag, style_class, device="tablet")
 				append_style(node.get("mobileStyles", {}), style_tag, style_class, device="mobile")
 				classes.append(style_class)

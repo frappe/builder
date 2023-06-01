@@ -46,7 +46,7 @@
 			:block="block"
 			:breakpoint="breakpoint"
 			:editable="isEditable"
-			:target="component.targetDomElement"/>
+			:target="component.targetDomElement" />
 	</teleport>
 </template>
 <script setup lang="ts">
@@ -100,6 +100,7 @@ const styles = computed(() => {
 	} else if (props.breakpoint === "tablet") {
 		styleObj = { ...styleObj, ...props.block.tabletStyles };
 	}
+	styleObj = { ...styleObj, ...props.block.rawStyles };
 	return styleObj;
 });
 
