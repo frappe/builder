@@ -33,6 +33,7 @@
 				:style="{
 					background: store.canvas.background,
 					width: breakpoint.width + 'px',
+					minHeight: '1600px',
 				}"
 				v-for="breakpoint in visibleBreakpoints"
 				:key="breakpoint.device">
