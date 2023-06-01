@@ -13,6 +13,9 @@ from frappe.website.serve import get_response_content
 from frappe.website.website_generator import WebsiteGenerator
 from website_builder.html_preview_image import get_preview
 
+MOBILE_BREAKPOINT = 640
+TABLET_BREAKPOINT = 768
+DESKTOP_BREAKPOINT = 1024
 
 class WebPageBeta(WebsiteGenerator):
 	def on_update(self):
@@ -98,9 +101,9 @@ def append_style(style_obj, style_tag, style_class, device="desktop"):
 
 	style_string = f".{style_class} {{ {style} }}"
 	if device == "mobile":
-		style_string = f"@media only screen and (max-width: 425px) {{ {style_string} }}"
+		style_string = f"@media only screen and (max-width: {MOBILE_BREAKPOINT}px) {{ {style_string} }}"
 	elif device == "tablet":
-		style_string = f"@media only screen and (min-width: 426px) and (max-width: 768px) {{ {style_string} }}"
+		style_string = f"@media only screen and (min-width: {MOBILE_BREAKPOINT + 1}px) and (max-width: {DESKTOP_BREAKPOINT - 1}px) {{ {style_string} }}"
 	style_tag.append(style_string)
 
 def setFonts(styles, font_map):

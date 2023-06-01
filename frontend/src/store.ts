@@ -223,13 +223,13 @@ const useStore = defineStore("store", {
 			{
 				icon: "tablet",
 				device: "tablet",
-				width: 768,
+				width: 800,
 				visible: false,
 			},
 			{
 				icon: "smartphone",
 				device: "mobile",
-				width: 425,
+				width: 640,
 				visible: false,
 			},
 		],

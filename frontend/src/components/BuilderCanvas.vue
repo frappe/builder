@@ -29,7 +29,7 @@
 				</div>
 			</div>
 			<div
-				class="canvas relative ml-20 flex rounded-md bg-white"
+				class="canvas relative ml-20 h-full rounded-md bg-white flex"
 				:style="{
 					background: store.canvas.background,
 					width: breakpoint.width + 'px',
