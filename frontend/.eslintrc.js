@@ -4,9 +4,9 @@ module.exports = {
 		es2021: true,
 	},
 	globals: {
-		convertHTMLToBlocks: true
+		convertHTMLToBlocks: true,
 	},
-	extends: ["plugin:vue/vue3-recommended", "plugin:vue/vue3-strongly-recommended", "prettier"],
+	extends: ["plugin:vue/vue3-recommended", "prettier"],
 	parser: "vue-eslint-parser",
 	parserOptions: {
 		parser: "@typescript-eslint/parser",
