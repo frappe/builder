@@ -374,16 +374,16 @@
 		<Input
 			type="textarea"
 			class="rounded-md text-sm text-gray-800 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700"
-			:modelValue="JSON.stringify(store.builderState.selectedBlock.rawStyles)"
+			:modelValue="JSON.stringify(store.builderState.selectedBlock.rawStyles, null, 2)"
 			@update:modelValue="(val) => (store.builderState.selectedBlock.rawStyles = JSON.parse(val))" />
 	</div>
 </template>
 <script setup>
 import useStore from "@/store";
 import { setFont as _setFont, fontListNames, getFontWeightOptions } from "@/utils/fontManager";
+import { Input } from "frappe-ui";
 import { computed } from "vue";
 import InlineInput from "./InlineInput.vue";
-import { Input } from "frappe-ui";
 
 const store = useStore();
 
