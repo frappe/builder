@@ -5,17 +5,15 @@
 			left: `${store.builderLayout.leftPanelWidth}px`,
 			right: `${store.builderLayout.rightPanelWidth}px`,
 		}">
-		<div class="overlay absolute" id="overlay" ref="overlay"/>
+		<div class="overlay absolute" id="overlay" ref="overlay" />
 		<BlockSnapGuides />
 		<div
 			class="fixed flex"
 			ref="canvas"
 			:style="{
 				transform: `scale(${store.canvas.scale}) translate(${store.canvas.translateX}px, ${store.canvas.translateY}px)`,
-				minHeight: '1400px',
-				height: '100%',
 			}">
-			<div class="absolute top-[-60px] right-0 flex h-fit rounded-md bg-white px-3 dark:bg-zinc-900">
+			<div class="absolute right-0 top-[-60px] flex rounded-md bg-white px-3 dark:bg-zinc-900">
 				<div
 					class="w-auto cursor-pointer p-2"
 					v-for="breakpoint in store.deviceBreakpoints"
