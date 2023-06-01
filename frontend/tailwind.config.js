@@ -1,7 +1,7 @@
-const plugin = require('tailwindcss/plugin')
+const plugin = require("tailwindcss/plugin");
 
 module.exports = {
-	darkMode: 'class',
+	darkMode: "class",
 	presets: [require("frappe-ui/src/utils/tailwind.config")],
 	content: [
 		"./index.html",
@@ -17,16 +17,16 @@ module.exports = {
 		},
 	},
 	plugins: [
-		plugin(function({ addUtilities }) {
+		plugin(function ({ addUtilities }) {
 			addUtilities({
-				".no-scrollbar::-webkit-scrollbar" : {
-					"display": "none"
+				".no-scrollbar::-webkit-scrollbar": {
+					display: "none",
 				},
 				".no-scrollbar": {
 					"-ms-overflow-style": "none",
-					"scrollbar-width": "none"
+					"scrollbar-width": "none",
 				},
-			})
-		})
+			});
+		}),
 	],
 };

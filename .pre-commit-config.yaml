@@ -1,0 +1,28 @@
+exclude: 'node_modules|.git'
+default_stages: [commit]
+fail_fast: false
+
+
+repos:
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v2.7.1
+    hooks:
+      - id: prettier
+        types_or:
+          - javascript
+          - vue
+        additional_dependencies:
+          - prettier
+          - prettier-plugin-tailwindcss
+        exclude: |
+            (?x)^(
+                frappe/public/dist/.*|
+                .*node_modules.*|
+                .*boilerplate.*|
+                .*src.*.js|
+            )$
+
+ci:
+    autoupdate_schedule: weekly
+    skip: []
+    submodules: false
