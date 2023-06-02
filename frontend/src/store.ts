@@ -38,11 +38,11 @@ const useStore = defineStore("store", {
 					height: "200px",
 					width: "100%",
 					margin: "0 auto",
+					background: "gray",
 				},
 				editorStyles: {
 					userSelect: "none",
 				},
-				classes: ["bg-blue-100"],
 				attributes: {},
 			},
 			{
