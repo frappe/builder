@@ -1,7 +1,7 @@
 <template>
 	<div>
 		<div
-			class="x fixed top-0 bottom-0 z-10 w-[1px] bg-pink-600"
+			class="x fixed bottom-0 top-0 z-10 w-[1px] bg-pink-600"
 			v-if="store.guides.showX"
 			:style="{
 				left: store.guides.x + 'px',

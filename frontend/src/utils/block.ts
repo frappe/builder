@@ -64,8 +64,8 @@ class Block implements BlockOptions {
 			},
 			get: (target, prop: string) => {
 				return this.getStyle(prop);
-			}
-		})
+			},
+		});
 	}
 	isImage() {
 		return this.element === "img";
@@ -106,26 +106,38 @@ class Block implements BlockOptions {
 		return Math.random().toString(36).substr(2, 9);
 	}
 	getIcon() {
-		return this.isRoot() ? 'hash' : this.isText() ? 'type' : this.isImage() ? 'image' : this.isContainer() ? 'square' : this.isLink() ? 'link' : 'square';
+		return this.isRoot()
+			? "hash"
+			: this.isText()
+			? "type"
+			: this.isImage()
+			? "image"
+			: this.isContainer()
+			? "square"
+			: this.isLink()
+			? "link"
+			: "square";
 	}
 	isRoot() {
 		return this.originalElement === "body";
 	}
 	getTag() {
-		return this.element === 'button' ? 'div' : this.element;
+		return this.element === "button" ? "div" : this.element;
 	}
 	isDiv() {
-		return this.element === 'div';
+		return this.element === "div";
 	}
 	getStylesCopy() {
 		return {
 			styles: Object.assign({}, this.baseStyles),
 			mobileStyles: Object.assign({}, this.mobileStyles),
 			tabletStyles: Object.assign({}, this.tabletStyles),
-		}
+		};
 	}
 	getFontFamily() {
-		return this.baseStyles.fontFamily || this.mobileStyles.fontFamily || this.tabletStyles.fontFamily || 'Inter';
+		return (
+			this.baseStyles.fontFamily || this.mobileStyles.fontFamily || this.tabletStyles.fontFamily || "Inter"
+		);
 	}
 	isHovered(): boolean {
 		const store = useStore();

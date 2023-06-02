@@ -1,10 +1,13 @@
 <template>
-	<div class="group" :class="{
-		'opacity-40': !updating,
-		'opacity-70': updating,
-	}" @click.stop>
+	<div
+		class="group"
+		:class="{
+			'opacity-40': !updating,
+			'opacity-70': updating,
+		}"
+		@click.stop>
 		<div
-			class="padding-handler absolute pointer-events-none flex w-full"
+			class="padding-handler pointer-events-none absolute flex w-full"
 			:style="{
 				height: topPaddingHandlerHeight + 'px',
 			}"
@@ -14,8 +17,9 @@
 			}"
 			ref="topPaddingHandler">
 			<div
-				class="bg-purple-400 border-2 border-purple-500 absolute hover:scale-110 pointer-events-auto left-[50%] rounded-full" :style="{
-					borderWidth: (1 * store.canvas.scale) + 'px',
+				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-purple-500 bg-purple-400 hover:scale-110"
+				:style="{
+					borderWidth: 1 * store.canvas.scale + 'px',
 					bottom: topHandle.bottom,
 					left: topHandle.left,
 					height: topHandle.height + 'px',
@@ -24,13 +28,13 @@
 				:class="{
 					'cursor-ns-resize': !disableHandlers,
 				}"
-			@mousedown.stop="handlePadding($event, Position.Top)" />
+				@mousedown.stop="handlePadding($event, Position.Top)" />
 			<div class="m-auto text-sm text-white" v-show="updating">
 				{{ blockStyles.paddingTop }}
 			</div>
 		</div>
 		<div
-			class="padding-handler absolute pointer-events-none bottom-0 flex w-full"
+			class="padding-handler pointer-events-none absolute bottom-0 flex w-full"
 			:style="{
 				height: bottomPaddingHandlerHeight + 'px',
 			}"
@@ -40,22 +44,24 @@
 			}"
 			ref="bottomPaddingHandler">
 			<div
-				class="bg-purple-400 border-2 border-purple-500 absolute hover:scale-110 pointer-events-auto left-[50%] rounded-full" :style="{
-					borderWidth: (1 * store.canvas.scale) + 'px',
+				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-purple-500 bg-purple-400 hover:scale-110"
+				:style="{
+					borderWidth: 1 * store.canvas.scale + 'px',
 					top: bottomHandle.top,
 					left: bottomHandle.left,
 					height: bottomHandle.height + 'px',
 					width: bottomHandle.width + 'px',
-				}" :class="{
+				}"
+				:class="{
 					'cursor-ns-resize': !disableHandlers,
 				}"
-			@mousedown.stop="handlePadding($event, Position.Bottom)" />
+				@mousedown.stop="handlePadding($event, Position.Bottom)" />
 			<div class="m-auto text-sm text-white" v-show="updating">
 				{{ blockStyles.paddingBottom }}
 			</div>
 		</div>
 		<div
-			class="padding-handler absolute pointer-events-none left-0 flex h-full"
+			class="padding-handler pointer-events-none absolute left-0 flex h-full"
 			:style="{
 				width: leftPaddingHandlerWidth + 'px',
 			}"
@@ -65,22 +71,24 @@
 			}"
 			ref="leftPaddingHandler">
 			<div
-				class="bg-purple-400 border-2 border-purple-500 absolute hover:scale-110 pointer-events-auto top-[50%] rounded-full" :style="{
-					borderWidth: (1 * store.canvas.scale) + 'px',
+				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-purple-500 bg-purple-400 hover:scale-110"
+				:style="{
+					borderWidth: 1 * store.canvas.scale + 'px',
 					right: leftHandle.right,
 					top: leftHandle.top,
 					height: leftHandle.height + 'px',
 					width: leftHandle.width + 'px',
-				}" :class="{
+				}"
+				:class="{
 					'cursor-ew-resize': !disableHandlers,
 				}"
-			@mousedown.stop="handlePadding($event, Position.Left)" />
+				@mousedown.stop="handlePadding($event, Position.Left)" />
 			<div class="m-auto text-sm text-white" v-show="updating">
 				{{ blockStyles.paddingLeft }}
 			</div>
 		</div>
 		<div
-			class="padding-handler absolute pointer-events-none right-0 flex h-full"
+			class="padding-handler pointer-events-none absolute right-0 flex h-full"
 			:style="{
 				width: rightPaddingHandlerWidth + 'px',
 			}"
@@ -90,16 +98,18 @@
 			}"
 			ref="rightPaddingHandler">
 			<div
-				class="bg-purple-400 border-2 border-purple-500 absolute hover:scale-110 pointer-events-auto top-[50%] rounded-full" :style="{
-					borderWidth: (1 * store.canvas.scale) + 'px',
+				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-purple-500 bg-purple-400 hover:scale-110"
+				:style="{
+					borderWidth: 1 * store.canvas.scale + 'px',
 					left: rightHandle.left,
 					top: rightHandle.top,
 					height: rightHandle.height + 'px',
 					width: rightHandle.width + 'px',
-				}" :class="{
+				}"
+				:class="{
 					'cursor-ew-resize': !disableHandlers,
 				}"
-			@mousedown.stop="handlePadding($event, Position.Right)" />
+				@mousedown.stop="handlePadding($event, Position.Right)" />
 			<div class="m-auto text-sm text-white" v-show="updating">
 				{{ blockStyles.paddingRight }}
 			</div>
@@ -200,13 +210,13 @@ const rightHandle = computed(() => {
 });
 
 enum Position {
-	Top = 'top',
-	Right = 'right',
-	Bottom = 'bottom',
-	Left = 'left',
+	Top = "top",
+	Right = "right",
+	Bottom = "bottom",
+	Left = "left",
 }
 
-const handlePadding = (ev: MouseEvent, position: Position ) => {
+const handlePadding = (ev: MouseEvent, position: Position) => {
 	if (props.disableHandlers) return;
 	updating.value = true;
 	const startY = ev.clientY;
@@ -257,11 +267,15 @@ const handlePadding = (ev: MouseEvent, position: Position ) => {
 		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);
-	document.addEventListener("mouseup", (mouseUpEvent) => {
-		document.body.style.cursor = docCursor;
-		document.removeEventListener("mousemove", mousemove);
-		updating.value = false;
-		mouseUpEvent.preventDefault();
-	}, { once: true });
+	document.addEventListener(
+		"mouseup",
+		(mouseUpEvent) => {
+			document.body.style.cursor = docCursor;
+			document.removeEventListener("mousemove", mousemove);
+			updating.value = false;
+			mouseUpEvent.preventDefault();
+		},
+		{ once: true }
+	);
 };
 </script>

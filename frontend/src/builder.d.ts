@@ -47,14 +47,14 @@ declare interface PageMap {
 }
 
 declare interface Style {
-	styles: BlockStyleMap,
-	mobileStyles?: BlockStyleMap,
-	tabletStyles?: BlockStyleMap,
+	styles: BlockStyleMap;
+	mobileStyles?: BlockStyleMap;
+	tabletStyles?: BlockStyleMap;
 }
 
 declare interface StyleCopy {
 	blockId: string;
-	style: Style
+	style: Style;
 }
 
 declare interface ContextMenuOption {
@@ -69,5 +69,7 @@ interface ComponentData {
 	isDynamic: boolean;
 	mappings?: {
 		[key: string]: string;
-	}
+	};
 }
+
+declare type HashString = `#${string}`;

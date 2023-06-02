@@ -1,6 +1,6 @@
 <template>
 	<Popover transition="default" placement="left" class="w-full" popoverClass="!min-w-fit !mr-[30px]">
-		<template #target="{togglePopover, isOpen}">
+		<template #target="{ togglePopover, isOpen }">
 			<div class="mb-2 flex items-center justify-between">
 				<span class="inline-block text-[10px] font-medium text-gray-600 dark:text-zinc-400">
 					{{ label }}
@@ -87,9 +87,9 @@
 	</Popover>
 </template>
 <script setup lang="ts">
-import {HSVToHex, HexToHSV} from "@/utils/helpers";
-import {Input, Popover} from "frappe-ui";
-import {PropType, Ref, nextTick, ref} from "vue";
+import { HSVToHex, HexToHSV } from "@/utils/helpers";
+import { Input, Popover } from "frappe-ui";
+import { PropType, Ref, nextTick, ref } from "vue";
 
 const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;
 const colorMap = ref(null) as unknown as Ref<HTMLDivElement>;
@@ -112,7 +112,17 @@ const props = defineProps({
 const emit = defineEmits(["update:modelValue"]);
 const hue = ref(0);
 
-const colors = ["#FF6633", "#FFB399", "#FF33FF", "#00B3E6", "#E6B333", "#3366E6", "#999966", "#99FF99", "#B34D4D"];
+const colors = [
+	"#FF6633",
+	"#FFB399",
+	"#FF33FF",
+	"#00B3E6",
+	"#E6B333",
+	"#3366E6",
+	"#999966",
+	"#99FF99",
+	"#B34D4D",
+];
 
 const setRGB = (rgb: HashString) => {
 	emit("update:modelValue", rgb);
@@ -124,8 +134,8 @@ const setColorSelectorPosition = () => {
 	let left = 0 - colorSelectorBounds.width / 2;
 	let top = 0 - colorSelectorBounds.height / 2;
 	if (props.modelValue) {
-		const {width, height} = colorMap.value.getBoundingClientRect();
-		const {s, v} = HexToHSV(props.modelValue as HashString);
+		const { width, height } = colorMap.value.getBoundingClientRect();
+		const { s, v } = HexToHSV(props.modelValue as HashString);
 		left = (s / 100) * width + left;
 		top = ((100 - v) / 100) * height + top;
 	}
@@ -137,8 +147,8 @@ const setHueSelectorPosition = () => {
 	const hueSelectorBounds = hueSelector.value.getBoundingClientRect();
 	let left = 0 - hueSelectorBounds.width / 2;
 	if (props.modelValue) {
-		const {width} = hueMap.value.getBoundingClientRect();
-		const {h} = HexToHSV(props.modelValue as HashString);
+		const { width } = hueMap.value.getBoundingClientRect();
+		const { h } = HexToHSV(props.modelValue as HashString);
 		hue.value = h;
 		left = (h / 360) * width + left;
 		hueSelector.value.style.left = `${left}px`;
@@ -159,7 +169,7 @@ const handleSelectorMove = (ev: MouseEvent) => {
 			document.removeEventListener("mousemove", setColor);
 			mouseUpEvent.preventDefault();
 		},
-		{once: true}
+		{ once: true }
 	);
 };
 
@@ -172,7 +182,7 @@ const handleHueSelectorMove = (ev: MouseEvent) => {
 			document.removeEventListener("mousemove", setHue);
 			mouseUpEvent.preventDefault();
 		},
-		{once: true}
+		{ once: true }
 	);
 };
 
@@ -203,7 +213,7 @@ function setColor(ev: MouseEvent) {
 function setHue(ev: MouseEvent) {
 	const hueMapBounds = hueMap.value.getBoundingClientRect();
 	const hueSelectorBounds = hueSelector.value.getBoundingClientRect();
-	const {clientX} = ev;
+	const { clientX } = ev;
 	let point = clientX - hueMapBounds.left;
 	point = clamp(point, 0, hueMapBounds.width);
 	const x = point - hueSelectorBounds.width / 2;

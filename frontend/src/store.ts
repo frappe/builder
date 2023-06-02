@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import Block from "./utils/block";
 
-
 const useStore = defineStore("store", {
 	state: () => ({
 		builderState: {
@@ -235,15 +234,15 @@ const useStore = defineStore("store", {
 		],
 		sidebarActiveTab: "Components",
 		canvas: {
-			initialScale: 1,
+			initialScale: 0.1,
 			initialTranslateY: 0,
 			initialTranslateX: 0,
-			scale: 1,
+			scale: 0.1,
 			translateX: 0,
 			translateY: 0,
 			startX: 0,
 			startY: 0,
-			background: '',
+			background: "",
 			scaling: false,
 		},
 		copiedStyle: <StyleCopy | null>null,
@@ -251,12 +250,12 @@ const useStore = defineStore("store", {
 		overlayElement: <any>null,
 		pageData: {
 			users: [
-				{name: "Suraj", "image": "https://avatars.githubusercontent.com/u/1961952?v=4"},
-				{name: "Raj", "image": "https://avatars.githubusercontent.com/u/1961952?v=4"},
-				{name: "Rahul", "image": "https://avatars.githubusercontent.com/u/1961952?v=4"},
-				{name: "Rohit", "image": "https://avatars.githubusercontent.com/u/1961952?v=4"},
-			]
-		}
+				{ name: "Suraj", image: "https://avatars.githubusercontent.com/u/1961952?v=4" },
+				{ name: "Raj", image: "https://avatars.githubusercontent.com/u/1961952?v=4" },
+				{ name: "Rahul", image: "https://avatars.githubusercontent.com/u/1961952?v=4" },
+				{ name: "Rohit", image: "https://avatars.githubusercontent.com/u/1961952?v=4" },
+			],
+		},
 	}),
 	actions: {
 		clearBlocks() {
@@ -279,9 +278,9 @@ const useStore = defineStore("store", {
 				const deleteBlockId = (block: BlockOptions) => {
 					delete block.blockId;
 					for (let child of block.children || []) {
-						deleteBlockId(child)
+						deleteBlockId(child);
 					}
-				}
+				};
 				deleteBlockId(b);
 			}
 			return new Block(b);
@@ -294,7 +293,7 @@ const useStore = defineStore("store", {
 				resizable: false,
 			});
 		},
-		getPageData() { },
+		getPageData() {},
 		setPage(page: Page) {
 			if (!page) return;
 			// clear blocks
@@ -304,7 +303,7 @@ const useStore = defineStore("store", {
 			this.route = page.route;
 			this.builderState.selectedPage = page.name;
 			// localStorage.setItem("selectedPage", page.name);
-		}
+		},
 	},
 });
 

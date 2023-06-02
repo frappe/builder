@@ -10,7 +10,12 @@ interface PanAndZoomProps {
 	scaling: boolean;
 }
 
-function setPanAndZoom(props: PanAndZoomProps, target: HTMLElement, panAndZoomAreaElement: HTMLElement, zoomLimits = { min: 0.1, max: 10 }) {
+function setPanAndZoom(
+	props: PanAndZoomProps,
+	target: HTMLElement,
+	panAndZoomAreaElement: HTMLElement,
+	zoomLimits = { min: 0.1, max: 10 }
+) {
 	const targetBound = reactive(useElementBounding(target));
 	let pointFromCenterX = 0;
 	let pointFromCenterY = 0;
@@ -58,7 +63,6 @@ function setPanAndZoom(props: PanAndZoomProps, target: HTMLElement, panAndZoomAr
 				wheeling = setTimeout(() => {
 					props.scaling = false;
 				}, 500);
-
 			} else {
 				pinchPointSet = false;
 				// Dividing with scale to make the panning feel consistent

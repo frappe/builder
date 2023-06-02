@@ -18,7 +18,7 @@ function trackTarget(target: HTMLElement, host: HTMLElement, padding = 0) {
 	const container = target.closest(".canvas-container");
 	// TODO: too much? find a better way to track changes
 	updateList.push(targetBounds.update);
-	watch(store.canvas, () => nextTick(targetBounds.update), { deep: true })
+	watch(store.canvas, () => nextTick(targetBounds.update), { deep: true });
 
 	if (!window.observer) {
 		let callback = () => {

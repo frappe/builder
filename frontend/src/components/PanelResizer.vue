@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="absolute top-0 bottom-0 w-1 bg-transparent hover:cursor-ew-resize"
+		class="absolute bottom-0 top-0 w-1 bg-transparent hover:cursor-ew-resize"
 		:class="{
 			'left-0': side === 'left',
 			'right-0': side === 'right',
@@ -53,11 +53,15 @@ function resize(ev: MouseEvent) {
 		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);
-	document.addEventListener("mouseup", (mouseUpEvent) => {
-		document.body.style.cursor = docCursor;
-		document.removeEventListener("mousemove", mousemove);
-		dragActive.value = false;
-		mouseUpEvent.preventDefault();
-	}, { once: true });
+	document.addEventListener(
+		"mouseup",
+		(mouseUpEvent) => {
+			document.body.style.cursor = docCursor;
+			document.removeEventListener("mousemove", mousemove);
+			dragActive.value = false;
+			mouseUpEvent.preventDefault();
+		},
+		{ once: true }
+	);
 }
 </script>

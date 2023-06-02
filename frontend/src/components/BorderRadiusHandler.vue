@@ -1,13 +1,14 @@
 <template>
 	<div
-		class="border-radius-resize pointer-events-auto absolute top-2 left-2 h-[9px] w-[9px] cursor-pointer rounded-full border-[1px] border-blue-400 bg-white"
+		class="border-radius-resize pointer-events-auto absolute left-2 top-2 h-[9px] w-[9px] cursor-pointer rounded-full border-[1px] border-blue-400 bg-white"
 		:class="{
 			hidden: store.canvas.scale < 0.7,
 		}"
 		@mousedown.stop="handleRounded">
-		<div class="pointer-events-none absolute top-[2px] left-[2px] h-[3px] w-[3px] rounded-full border-none bg-blue-400">
+		<div
+			class="pointer-events-none absolute left-[2px] top-[2px] h-[3px] w-[3px] rounded-full border-none bg-blue-400">
 			<div
-				class="absolute top-2 left-2 w-fit rounded-full bg-slate-800 py-1 px-3 text-sm text-white opacity-70"
+				class="absolute left-2 top-2 w-fit rounded-full bg-slate-800 px-3 py-1 text-sm text-white opacity-70"
 				v-if="updating">
 				{{ borderRadius }}
 			</div>
@@ -92,16 +93,20 @@ const handleRounded = (ev: MouseEvent) => {
 		lastY = mouseMoveEvent.clientY;
 	};
 	document.addEventListener("mousemove", mousemove);
-	document.addEventListener("mouseup", (mouseUpEvent) => {
-		if (getNumberFromPx(targetBlock.getStyle("borderRadius")) < 10) {
-			handle.style.top = `${10}px`;
-			handle.style.left = `${10}px`;
-		}
+	document.addEventListener(
+		"mouseup",
+		(mouseUpEvent) => {
+			if (getNumberFromPx(targetBlock.getStyle("borderRadius")) < 10) {
+				handle.style.top = `${10}px`;
+				handle.style.left = `${10}px`;
+			}
 
-		updating.value = false;
-		document.body.style.cursor = docCursor;
-		document.removeEventListener("mousemove", mousemove);
-		mouseUpEvent.preventDefault();
-	}, { once: true });
+			updating.value = false;
+			document.body.style.cursor = docCursor;
+			document.removeEventListener("mousemove", mousemove);
+			mouseUpEvent.preventDefault();
+		},
+		{ once: true }
+	);
 };
 </script>
