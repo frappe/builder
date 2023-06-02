@@ -2,22 +2,28 @@ import { useElementBounding } from "@vueuse/core";
 import { reactive } from "vue";
 import useStore from "../store";
 const store = useStore();
-const tracks = [{
-	point: 0,
-	strength: 10
-}, {
-	point: 0.25,
-	strength: 2
-}, {
-	point: 0.5,
-	strength: 10
-}, {
-	point: 0.75,
-	strength: 2
-}, {
-	point: 1,
-	strength: 10
-}];
+const tracks = [
+	{
+		point: 0,
+		strength: 10,
+	},
+	{
+		point: 0.25,
+		strength: 2,
+	},
+	{
+		point: 0.5,
+		strength: 10,
+	},
+	{
+		point: 0.75,
+		strength: 2,
+	},
+	{
+		point: 1,
+		strength: 10,
+	},
+];
 
 function setGuides(target: HTMLElement) {
 	const threshold = 10;
@@ -32,14 +38,14 @@ function setGuides(target: HTMLElement) {
 		canvasBounds.update();
 		parentBounds.update();
 
-		const scale = store.canvas.scale;
+		const { scale } = store.canvas;
 		const targetRight = targetBounds.left + calculatedWidth * scale;
 
 		let finalWidth = calculatedWidth;
 		let set = false;
 		tracks.forEach((track) => {
-			const canvasRight = canvasBounds.left + (canvasBounds.width * track.point);
-			const parentRight = parentBounds.left + (parentBounds.width * track.point);
+			const canvasRight = canvasBounds.left + canvasBounds.width * track.point;
+			const parentRight = parentBounds.left + parentBounds.width * track.point;
 			if (Math.abs(targetRight - canvasRight) < track.strength) {
 				finalWidth = (canvasRight - targetBounds.left) / scale;
 				store.guides.x = canvasRight;
@@ -49,7 +55,7 @@ function setGuides(target: HTMLElement) {
 				store.guides.x = parentRight;
 				set = true;
 			}
-		})
+		});
 
 		if (!set) {
 			store.guides.x = -1;
@@ -69,8 +75,8 @@ function setGuides(target: HTMLElement) {
 		let finalHeight = calculatedHeight;
 		let set = false;
 		tracks.forEach((track) => {
-			const canvasBottom = canvasBounds.top + (canvasBounds.height * track.point);
-			const parentBottom = parentBounds.top + (parentBounds.height * track.point);
+			const canvasBottom = canvasBounds.top + canvasBounds.height * track.point;
+			const parentBottom = parentBounds.top + parentBounds.height * track.point;
 			if (Math.abs(targetBottom - canvasBottom) < track.strength) {
 				finalHeight = (canvasBottom - targetBounds.top) / scale;
 				store.guides.y = canvasBottom;
@@ -80,7 +86,7 @@ function setGuides(target: HTMLElement) {
 				store.guides.y = parentBottom;
 				set = true;
 			}
-		})
+		});
 
 		if (!set) {
 			store.guides.y = -1;

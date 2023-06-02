@@ -8,7 +8,6 @@ function convertHTMLToBlocks(html: string) {
 		htmlStripped = html.substring(start + 3, end);
 	}
 
-
 	const doc = new DOMParser().parseFromString(htmlStripped, "text/html");
 	const { body } = doc;
 	return parseElement(body);
@@ -31,9 +30,9 @@ function parseElement(element: HTMLElement): BlockOptions {
 		obj.attributes = {};
 		for (let i = 0; i < element.attributes.length; i++) {
 			const attr = element.attributes[i];
-			if (attr.name !== 'style') {
+			if (attr.name !== "style") {
 				obj.attributes[attr.name] = attr.value;
-			};
+			}
 		}
 	}
 
@@ -53,7 +52,7 @@ function parseElement(element: HTMLElement): BlockOptions {
 			if (child.nodeType === Node.ELEMENT_NODE) {
 				obj.children.push(parseElement(child));
 			} else if (child.nodeType === Node.TEXT_NODE) {
-				obj.innerText = (child.textContent || '').trim();
+				obj.innerText = (child.textContent || "").trim();
 			}
 		}
 	}
@@ -68,6 +67,5 @@ declare global {
 		convertHTMLToBlocks: any;
 	}
 }
-
 
 export default convertHTMLToBlocks;

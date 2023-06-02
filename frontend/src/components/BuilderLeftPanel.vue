@@ -20,11 +20,11 @@
 			:width="store.builderLayout.leftPanelWidth"
 			side="right"
 			@resize="(width) => (store.builderLayout.leftPanelWidth = width)" />
-		<div class="flex w-full p-[2px] text-sm border-gray-200 dark:border-zinc-800">
+		<div class="flex w-full border-gray-200 p-[2px] text-sm dark:border-zinc-800">
 			<button
 				v-for="tab of ['Widgets', 'Components', 'Layers']"
 				:key="tab"
-				class="flex-1 p-2 mx-3"
+				class="mx-3 flex-1 p-2"
 				@click="store.sidebarActiveTab = tab"
 				:class="{
 					'border-b-[1px] border-gray-900 dark:border-zinc-500 dark:text-zinc-300':
@@ -123,6 +123,6 @@ const setPage = (page: Page) => {
 		params: {
 			pageId: page.name,
 		},
-	})
-}
+	});
+};
 </script>

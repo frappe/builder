@@ -1,26 +1,26 @@
 <template>
 	<span
-		class="resize-dimensions absolute right-[-40px] bottom-[-40px] flex h-8 w-20 items-center justify-center whitespace-nowrap rounded-full bg-gray-600 p-2 text-sm text-white opacity-80"
+		class="resize-dimensions absolute bottom-[-40px] right-[-40px] flex h-8 w-20 items-center justify-center whitespace-nowrap rounded-full bg-gray-600 p-2 text-sm text-white opacity-80"
 		v-if="resizing && !targetBlock.isText()">
 		{{ targetWidth }} x
 		{{ targetHeight }}
 	</span>
 	<span
-		class="resize-dimensions absolute right-[-40px] bottom-[-40px] flex h-8 w-fit items-center justify-center whitespace-nowrap rounded-full bg-gray-600 p-2 text-sm text-white opacity-80"
+		class="resize-dimensions absolute bottom-[-40px] right-[-40px] flex h-8 w-fit items-center justify-center whitespace-nowrap rounded-full bg-gray-600 p-2 text-sm text-white opacity-80"
 		v-if="resizing && targetBlock.isText()">
 		{{ fontSize }}
 	</span>
 
 	<div
-		class="left-handle ew-resize pointer-events-auto absolute top-0 bottom-0 left-[-2px] w-[4px] border-none bg-transparent" />
+		class="left-handle ew-resize pointer-events-auto absolute bottom-0 left-[-2px] top-0 w-[4px] border-none bg-transparent" />
 	<div
-		class="right-handle pointer-events-auto absolute top-0 bottom-0 right-[-2px] w-[4px] border-none bg-transparent"
+		class="right-handle pointer-events-auto absolute bottom-0 right-[-2px] top-0 w-[4px] border-none bg-transparent"
 		:class="{ 'cursor-ew-resize': true }"
 		@mousedown.stop="handleRightResize" />
 	<div
-		class="top-handle ns-resize pointer-events-auto absolute top-[-2px] right-0 left-0 h-[4px] border-none bg-transparent" />
+		class="top-handle ns-resize pointer-events-auto absolute left-0 right-0 top-[-2px] h-[4px] border-none bg-transparent" />
 	<div
-		class="bottom-handle pointer-events-auto absolute bottom-[-2px] right-0 left-0 h-[4px] border-none bg-transparent"
+		class="bottom-handle pointer-events-auto absolute bottom-[-2px] left-0 right-0 h-[4px] border-none bg-transparent"
 		:class="{ 'cursor-ns-resize': true }"
 		@mousedown.stop="handleBottomResize" />
 	<div
@@ -105,13 +105,17 @@ const handleRightResize = (ev: MouseEvent) => {
 		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);
-	document.addEventListener("mouseup", (mouseUpEvent) => {
-		document.body.style.cursor = docCursor;
-		document.removeEventListener("mousemove", mousemove);
-		mouseUpEvent.preventDefault();
-		resizing.value = false;
-		guides.hideX();
-	}, { once: true });
+	document.addEventListener(
+		"mouseup",
+		(mouseUpEvent) => {
+			document.body.style.cursor = docCursor;
+			document.removeEventListener("mousemove", mousemove);
+			mouseUpEvent.preventDefault();
+			resizing.value = false;
+			guides.hideX();
+		},
+		{ once: true }
+	);
 };
 
 const handleBottomResize = (ev: MouseEvent) => {
@@ -137,13 +141,17 @@ const handleBottomResize = (ev: MouseEvent) => {
 		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);
-	document.addEventListener("mouseup", (mouseUpEvent) => {
-		document.body.style.cursor = docCursor;
-		document.removeEventListener("mousemove", mousemove);
-		mouseUpEvent.preventDefault();
-		resizing.value = false;
-		guides.hideY();
-	}, { once: true });
+	document.addEventListener(
+		"mouseup",
+		(mouseUpEvent) => {
+			document.body.style.cursor = docCursor;
+			document.removeEventListener("mousemove", mousemove);
+			mouseUpEvent.preventDefault();
+			resizing.value = false;
+			guides.hideY();
+		},
+		{ once: true }
+	);
 };
 
 const handleBottomCornerResize = (ev: MouseEvent) => {
@@ -173,11 +181,15 @@ const handleBottomCornerResize = (ev: MouseEvent) => {
 		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);
-	document.addEventListener("mouseup", (mouseUpEvent) => {
-		document.body.style.cursor = docCursor;
-		document.removeEventListener("mousemove", mousemove);
-		mouseUpEvent.preventDefault();
-		resizing.value = false;
-	}, { once: true });
+	document.addEventListener(
+		"mouseup",
+		(mouseUpEvent) => {
+			document.body.style.cursor = docCursor;
+			document.removeEventListener("mousemove", mousemove);
+			mouseUpEvent.preventDefault();
+			resizing.value = false;
+		},
+		{ once: true }
+	);
 };
 </script>

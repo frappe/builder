@@ -29,7 +29,7 @@
 				</div>
 			</div>
 			<div
-				class="canvas relative ml-20 h-full rounded-md bg-white flex"
+				class="canvas relative ml-20 flex h-full rounded-md bg-white"
 				:style="{
 					background: store.canvas.background,
 					width: breakpoint.width + 'px',
@@ -151,11 +151,9 @@ const setScaleAndTranslate = async () => {
 	if (diffY !== 0) {
 		store.canvas.initialTranslateY = store.canvas.translateY = diffY / scale;
 	}
-	showBlocks.value = true;
 };
 
 onMounted(() => {
-	setScaleAndTranslate();
 	const canvasContainerEl = canvasContainer.value as unknown as HTMLElement;
 	const canvasEl = canvas.value as unknown as HTMLElement;
 	setPanAndZoom(store.canvas, canvasEl, canvasContainerEl);
@@ -207,6 +205,8 @@ onMounted(() => {
 		}
 		return null;
 	}
+	showBlocks.value = true;
+	setTimeout(setScaleAndTranslate, 500);
 });
 
 watch(store.deviceBreakpoints, setScaleAndTranslate, { deep: true });

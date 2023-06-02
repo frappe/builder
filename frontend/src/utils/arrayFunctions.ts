@@ -1,16 +1,16 @@
 Array.prototype.add = function (...itemsToAdd: any[]) {
-	itemsToAdd.forEach(item => {
+	itemsToAdd.forEach((item) => {
 		if (!this.includes(item)) {
-			this.push(item)
+			this.push(item);
 		}
-	})
-}
+	});
+};
 
 Array.prototype.remove = function (...itemsToRemove: any[]) {
-	itemsToRemove.forEach(item => {
-		const index = this.indexOf(item)
+	itemsToRemove.forEach((item) => {
+		const index = this.indexOf(item);
 		if (index !== -1) {
-			this.splice(index, 1)
+			this.splice(index, 1);
 		}
-	})
-}
+	});
+};

@@ -49,7 +49,10 @@
 			<template #body-content>
 				<Input type="text" v-model="componentProperties.componentName" label="Component Name" required />
 				<div class="mt-3">
-					<Input class="text-sm [&>span]:!text-sm" type="checkbox" v-model="componentProperties.isDynamicComponent"
+					<Input
+						class="text-sm [&>span]:!text-sm"
+						type="checkbox"
+						v-model="componentProperties.isDynamicComponent"
 						label="Is Dynamic" />
 				</div>
 			</template>
@@ -60,7 +63,16 @@
 import { vOnClickOutside } from "@vueuse/components";
 import { useDebounceFn } from "@vueuse/shared";
 import { Dialog, Input, createResource } from "frappe-ui";
-import { ComponentInternalInstance, Ref, computed, getCurrentInstance, nextTick, onMounted, reactive, ref } from "vue";
+import {
+	ComponentInternalInstance,
+	Ref,
+	computed,
+	getCurrentInstance,
+	nextTick,
+	onMounted,
+	reactive,
+	ref,
+} from "vue";
 
 import Block from "@/utils/block";
 import { getNumberFromPx } from "@/utils/helpers";
@@ -156,12 +168,16 @@ const handleMove = (ev: MouseEvent) => {
 		preventCLick.value = true;
 	};
 	document.addEventListener("mousemove", mousemove);
-	document.addEventListener("mouseup", (mouseUpEvent) => {
-		moving.value = false;
-		document.body.style.cursor = docCursor;
-		document.removeEventListener("mousemove", mousemove);
-		mouseUpEvent.preventDefault();
-	}, { once: true });
+	document.addEventListener(
+		"mouseup",
+		(mouseUpEvent) => {
+			moving.value = false;
+			document.body.style.cursor = docCursor;
+			document.removeEventListener("mousemove", mousemove);
+			mouseUpEvent.preventDefault();
+		},
+		{ once: true }
+	);
 
 	// :( hack to prevent click event from firing
 };
@@ -231,14 +247,14 @@ const createComponent = createResource({
 	},
 });
 
-const createComponentHandler = ({ close }: { "close": () => void }) => {
+const createComponentHandler = ({ close }: { close: () => void }) => {
 	createComponent.submit({
 		block: block,
 		component_name: componentProperties.value.componentName,
 		is_dynamic: componentProperties.value.isDynamicComponent,
 	});
 	close();
-}
+};
 
 const saveAsComponent = () => {
 	showDialog.value = true;
