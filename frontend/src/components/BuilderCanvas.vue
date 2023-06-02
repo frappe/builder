@@ -123,6 +123,12 @@ document.addEventListener("keydown", (e) => {
 	if (e.key === "Escape") {
 		clearSelectedComponent();
 	}
+
+	// handle arrow keys
+	if (e.key.startsWith("Arrow") && store.builderState.selectedBlock) {
+		const key = e.key.replace("Arrow", "").toLowerCase() as "up" | "down" | "left" | "right";
+		store.builderState.selectedBlock.move(key);
+	}
 });
 
 const containerBound = reactive(useElementBounding(canvasContainer));
