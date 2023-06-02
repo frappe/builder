@@ -72,10 +72,11 @@ import {
 	onMounted,
 	reactive,
 	ref,
+	watchEffect,
 } from "vue";
 
 import Block from "@/utils/block";
-import { getNumberFromPx } from "@/utils/helpers";
+import { addPxToNumber, getNumberFromPx } from "@/utils/helpers";
 import useStore from "../store";
 import setGuides from "../utils/guidesTracker";
 import trackTarget from "../utils/trackTarget";
@@ -111,6 +112,15 @@ const guides = setGuides(props.target);
 let currentInstance = null as unknown as ComponentInternalInstance | null;
 const moving = ref(false);
 const preventCLick = ref(false);
+
+watchEffect(() => {
+	block.getStyle("top");
+	block.getStyle("left");
+	block.getStyle("bottom");
+	block.getStyle("right");
+	block.getStyle("position");
+	updateTracker.value();
+});
 
 const movable = computed(() => {
 	return props.block.getStyle("position") === "absolute";
@@ -153,7 +163,6 @@ const handleMove = (ev: MouseEvent) => {
 	document.body.style.cursor = window.getComputedStyle(target).cursor;
 
 	const mousemove = async (mouseMoveEvent: MouseEvent) => {
-		updateTracker.value();
 		const scale = store.canvas.scale;
 		const movementX = (mouseMoveEvent.clientX - startX) / scale;
 		const movementY = (mouseMoveEvent.clientY - startY) / scale;
@@ -161,9 +170,8 @@ const handleMove = (ev: MouseEvent) => {
 		await nextTick();
 		const leftOffset = guides.getLeftPositionOffset();
 
-		block.setStyle("position", "absolute");
-		block.setStyle("left", `${finalLeft + leftOffset}px`);
-		block.setStyle("top", `${startTop + movementY}px`);
+		block.setStyle("left", addPxToNumber(finalLeft + leftOffset));
+		block.setStyle("top", addPxToNumber(startTop + movementY));
 		mouseMoveEvent.preventDefault();
 		preventCLick.value = true;
 	};

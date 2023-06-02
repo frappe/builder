@@ -1,4 +1,5 @@
 import useStore from "@/store";
+import { addPxToNumber, getNumberFromPx } from "./helpers";
 
 class Block implements BlockOptions {
 	blockId: string;
@@ -146,6 +147,29 @@ class Block implements BlockOptions {
 	isSelected(): boolean {
 		const store = useStore();
 		return Boolean(store.builderState.selectedBlock) && store.builderState.selectedBlock === this;
+	}
+	isMovable(): boolean {
+		return this.getStyle("position") === "absolute";
+	}
+	move(direction: "up" | "left" | "down" | "right") {
+		if (!this.isMovable()) {
+			return;
+		}
+		let top = getNumberFromPx(this.getStyle("top")) || 0;
+		let left = getNumberFromPx(this.getStyle("left")) || 0;
+		if (direction === "up") {
+			top -= 1;
+			this.setStyle("top", addPxToNumber(top));
+		} else if (direction === "down") {
+			top += 1;
+			this.setStyle("top", addPxToNumber(top));
+		} else if (direction === "left") {
+			left -= 1;
+			this.setStyle("left", addPxToNumber(left));
+		} else if (direction === "right") {
+			left += 1;
+			this.setStyle("left", addPxToNumber(left));
+		}
 	}
 }
 

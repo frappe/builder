@@ -8,6 +8,11 @@ function getNumberFromPx(px: string | number): number {
 	return Number(px.replace("px", ""));
 }
 
+function addPxToNumber(number: number, round: boolean = true): string {
+	number = round ? Math.round(number) : number;
+	return `${number}px`;
+}
+
 function HexToHSV(color: HashString): { h: number; s: number; v: number } {
 	const [r, g, b] = color
 		.replace("#", "")
@@ -71,4 +76,4 @@ function HSVToHex(h: number, s: number, v: number): HashString {
 	return `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
 }
 
-export { getNumberFromPx, HexToHSV, HSVToHex };
+export { getNumberFromPx, HexToHSV, HSVToHex, addPxToNumber };
