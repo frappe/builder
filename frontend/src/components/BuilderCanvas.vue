@@ -171,7 +171,7 @@ onMounted(() => {
 			let newObj = Object.assign({}, obj);
 			newObj.blocks = obj.blocks.map((val) => store.getBlockCopy(val, true));
 			if (obj.selectedBlock) {
-				newObj.selectedBlock = findBlock(newObj.blocks, obj.selectedBlock.blockId);
+				newObj.selectedBlock = store.findBlock(newObj.blocks, obj.selectedBlock.blockId);
 			}
 			return newObj;
 		},
@@ -196,21 +196,6 @@ onMounted(() => {
 			e.preventDefault();
 		}
 	});
-
-	function findBlock(blocks: Array<Block>, blockId: string): Block | null {
-		for (const block of blocks) {
-			if (block.blockId === blockId) {
-				return block;
-			}
-			if (block.children) {
-				const found = findBlock(block.children, blockId);
-				if (found) {
-					return found;
-				}
-			}
-		}
-		return null;
-	}
 	showBlocks.value = true;
 	setTimeout(setScaleAndTranslate, 500);
 });
