@@ -12,14 +12,15 @@
 						'border-blue-400 text-gray-900 dark:border-blue-600 dark:text-gray-200': element.isSelected(),
 					}"
 					@click.stop="selectBlock(element)"
+					@dragover="element.expanded = true"
 					@mouseover.stop="store.hoveredBlock = element.blockId"
 					@mouseleave.stop="store.hoveredBlock = null">
 					<span class="flex items-center font-medium">
 						<FeatherIcon
-							:name="element.fold ? 'chevron-right' : 'chevron-down'"
+							:name="isExpanded(element) || element.expanded ? 'chevron-down' : 'chevron-right'"
 							class="mr-1 h-3 w-3"
 							v-if="element.children && element.children.length && !element.isRoot()"
-							@click.stop="element.fold = !element.fold" />
+							@click.stop="element.expanded = !element.expanded" />
 						<FeatherIcon :name="element.getIcon()" class="mr-1 h-3 w-3" />
 						<span
 							class="min-h-[1em] min-w-[2em] truncate"
@@ -31,7 +32,7 @@
 							{{ element.innerText && !element.blockName ? " | " + element.innerText : "" }}
 						</span>
 					</span>
-					<div v-if="element.children" v-show="!element.fold">
+					<div v-if="element.children" v-show="isExpanded(element) || element.expanded">
 						<BlockLayers :blocks="element.children" />
 					</div>
 				</div>
@@ -44,14 +45,16 @@ import Block from "@/utils/block";
 import { FeatherIcon } from "frappe-ui";
 import draggable from "vuedraggable";
 import useStore from "../store";
+import { PropType } from "vue";
 
 const store = useStore();
 defineProps({
 	blocks: {
-		type: Array,
+		type: Array as PropType<Block[]>,
 		default: () => [],
 	},
 });
+
 const selectBlock = (block: Block) => {
 	store.builderState.selectedBlock = block;
 };
@@ -64,5 +67,9 @@ const setBlockName = (ev: Event, block: LayerBlock) => {
 	const target = ev.target as HTMLElement;
 	block.blockName = target.innerText;
 	block.editable = false;
+};
+
+const isExpanded = (block: Block) => {
+	return block.isSelected() || block.children.some(isExpanded);
 };
 </script>

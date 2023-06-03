@@ -304,6 +304,20 @@ const useStore = defineStore("store", {
 			this.builderState.selectedPage = page.name;
 			// localStorage.setItem("selectedPage", page.name);
 		},
+		findBlock(blocks: Array<Block>, blockId: string): Block | null {
+			for (const block of blocks) {
+				if (block.blockId === blockId) {
+					return block;
+				}
+				if (block.children) {
+					const found = this.findBlock(block.children, blockId);
+					if (found) {
+						return found;
+					}
+				}
+			}
+			return null;
+		},
 	},
 });
 
