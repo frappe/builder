@@ -171,7 +171,7 @@ onMounted(() => {
 			let newObj = Object.assign({}, obj);
 			newObj.blocks = obj.blocks.map((val) => store.getBlockCopy(val, true));
 			if (obj.selectedBlock) {
-				newObj.selectedBlock = store.findBlock(newObj.blocks, obj.selectedBlock.blockId);
+				newObj.selectedBlock = store.findBlock(obj.selectedBlock.blockId, newObj.blocks);
 			}
 			return newObj;
 		},

@@ -20,6 +20,7 @@ class Block implements BlockOptions {
 	computedStyles: ProxyHandler<BlockStyleMap>;
 	isComponent?: boolean;
 	originalElement?: string | undefined;
+	parentBlockId?: string;
 	constructor(options: BlockOptions) {
 		delete options.computedStyles;
 		this.element = options.element;
@@ -27,7 +28,11 @@ class Block implements BlockOptions {
 		this.innerText = options.innerText;
 		this.originalElement = options.originalElement;
 		this.blockId = options.blockId || this.generateId();
-		this.children = (options.children || []).map((child: BlockOptions) => new Block(child));
+		this.parentBlockId = options.parentBlockId;
+		this.children = (options.children || []).map((child: BlockOptions) => {
+			child.parentBlockId = this.blockId;
+			return new Block(child);
+		});
 
 		this.baseStyles = options.styles || options.baseStyles || {};
 		this.rawStyles = options.rawStyles || {};
@@ -170,6 +175,10 @@ class Block implements BlockOptions {
 			left += 1;
 			this.setStyle("left", addPxToNumber(left));
 		}
+	}
+	addChild(child: BlockOptions) {
+		child.parentBlockId = this.blockId;
+		this.children.push(new Block(child));
 	}
 }
 
