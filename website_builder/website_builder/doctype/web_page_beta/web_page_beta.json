@@ -9,6 +9,7 @@
  "engine": "InnoDB",
  "field_order": [
   "page_name",
+  "page_title",
   "route",
   "published",
   "blocks",
@@ -41,11 +42,16 @@
    "fieldname": "preview",
    "fieldtype": "Attach Image",
    "label": "Preview"
+  },
+  {
+   "fieldname": "page_title",
+   "fieldtype": "Data",
+   "label": "Page Title"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-05-19 10:36:59.852562",
+ "modified": "2023-06-05 12:29:03.564366",
  "modified_by": "Administrator",
  "module": "Website Builder",
  "name": "Web Page Beta",
