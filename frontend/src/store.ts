@@ -304,13 +304,16 @@ const useStore = defineStore("store", {
 			this.builderState.selectedPage = page.name;
 			// localStorage.setItem("selectedPage", page.name);
 		},
-		findBlock(blocks: Array<Block>, blockId: string): Block | null {
+		findBlock(blockId: string, blocks?: Array<Block>): Block | null {
+			if (!blocks) {
+				blocks = this.builderState.blocks;
+			}
 			for (const block of blocks) {
 				if (block.blockId === blockId) {
 					return block;
 				}
 				if (block.children) {
-					const found = this.findBlock(block.children, blockId);
+					const found = this.findBlock(blockId, block.children);
 					if (found) {
 						return found;
 					}

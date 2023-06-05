@@ -24,6 +24,7 @@ declare interface BlockOptions {
 	resizable?: boolean;
 	draggable?: boolean;
 	innerText?: string;
+	parentBlockId?: string;
 	computedStyles?: ProxyHandler<BlockStyleMap>;
 	[key: string]: any;
 }
