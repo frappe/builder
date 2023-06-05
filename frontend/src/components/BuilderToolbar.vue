@@ -10,6 +10,11 @@
 			class="mt-[5px] h-7 rounded-md border-none bg-gray-100 text-base focus:ring-gray-400 dark:bg-zinc-800 dark:text-gray-300 dark:focus:ring-zinc-700"
 			placeholder="Page Name" />
 		<div class="absolute right-3 mt-[5px] flex items-center">
+			<router-link :to="{ name: 'page-settings' }">
+				<FeatherIcon
+					name="settings"
+					class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400"></FeatherIcon>
+			</router-link>
 			<UseDark v-slot="{ isDark, toggleDark }">
 				<FeatherIcon
 					:name="isDark ? 'moon' : 'sun'"

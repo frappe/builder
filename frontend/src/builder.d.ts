@@ -1,4 +1,7 @@
 // Learn: Why "declare" keyword is needed, everything works without it.
+
+// declare all types in ./types folder
+
 declare interface BlockStyleMap {
 	[key: string]: string | number;
 }
@@ -63,7 +66,7 @@ declare interface ContextMenuOption {
 	condition?: () => boolean;
 }
 
-interface ComponentData {
+declare interface ComponentData {
 	name: string;
 	doctype?: string;
 	isDynamic: boolean;

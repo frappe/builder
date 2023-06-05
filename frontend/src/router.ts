@@ -19,6 +19,11 @@ const routes = [
 		name: "builder",
 		component: () => import("@/pages/PageBuilder.vue"),
 	},
+	{
+		path: "/builder/:pageId/settings",
+		name: "page-settings",
+		component: () => import("@/pages/PageSettings.vue"),
+	}
 ];
 
 const router = createRouter({
