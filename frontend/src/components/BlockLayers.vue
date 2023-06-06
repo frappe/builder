@@ -66,6 +66,6 @@ const setBlockName = (ev: Event, block: LayerBlock) => {
 };
 
 const isExpanded = (block: Block) => {
-	return block.isSelected() || block.children.some(isExpanded);
+	return block.isRoot() || block.isSelected() || block.children.some(isExpanded);
 };
 </script>
