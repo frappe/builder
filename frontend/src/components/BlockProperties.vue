@@ -21,6 +21,9 @@
 				</li>
 			</ul>
 		</div>
+		<InlineInput :value="blockStyles.color" @update-value="(color) => (blockStyles.color = color)">
+			Text Color
+		</InlineInput>
 
 		<h3 v-if="store.builderState.selectedBlock" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">
 			Position

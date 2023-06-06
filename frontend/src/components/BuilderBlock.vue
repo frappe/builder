@@ -2,7 +2,7 @@
 	<draggable
 		:list="block.children"
 		:sort="false"
-		:disabled="true"
+		:disabled="preview"
 		:group="{ name: 'blocks' }"
 		item-key="blockId"
 		:tag="block.getTag()"

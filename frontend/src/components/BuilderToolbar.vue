@@ -93,7 +93,7 @@ const toggleMode = (mode: string) => {
 	if (mode === "text") {
 		const container = document.body.querySelector(".canvas-container") as HTMLElement;
 		container.style.cursor = "text";
-		const canvas = document.body.querySelector(".canvas") as HTMLElement;
+
 		const addText = (ev: MouseEvent) => {
 			ev.preventDefault();
 			let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
@@ -114,28 +114,24 @@ const toggleMode = (mode: string) => {
 						"line-height": "1",
 					} as BlockStyleMap,
 				};
-				if (block.blockId === "root") {
-					const rootElement = document.body.querySelector(".canvas > [data-block-id='root']") as HTMLElement;
-					rootElement.style.position = "relative";
-					const rootBounds = rootElement.getBoundingClientRect();
-					let x = (ev.x - rootBounds.left) / store.canvas.scale;
-					let y = (ev.y - rootBounds.top) / store.canvas.scale;
-					child.styles.position = "absolute";
-					child.styles.top = addPxToNumber(y);
-					child.styles.left = addPxToNumber(x);
-				}
-				block.addChild(child);
+
+				const childBlock = block.addChild(child);
+				childBlock.setStyle("position", "static");
+				childBlock.setStyle("top", "auto");
+				childBlock.setStyle("left", "auto");
+				container.style.cursor = "auto";
+				container.removeEventListener("mousedown", addText);
+				setTimeout(() => {
+					store.builderState.mode = "select";
+				}, 50);
 			}
 			container.style.cursor = "auto";
-			canvas.removeEventListener("mousedown", addText);
 			container.removeEventListener("mousedown", addText);
 		};
-		canvas.addEventListener("mousedown", addText);
 		container.addEventListener("mousedown", addText);
 	}
 
 	if (mode === "container") {
-		store.builderState.mode = "container";
 		const container = document.body.querySelector(".canvas-container") as HTMLElement;
 		container.style.cursor = "crosshair";
 
