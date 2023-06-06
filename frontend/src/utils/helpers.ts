@@ -76,4 +76,9 @@ function HSVToHex(h: number, s: number, v: number): HashString {
 	return `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
 }
 
-export { getNumberFromPx, HexToHSV, HSVToHex, addPxToNumber };
+function getRandomColor() {
+	// return pastel light color
+	return `hsl(${Math.floor(Math.random() * 360)}, 40%, 80%)`;
+}
+
+export { getNumberFromPx, HexToHSV, HSVToHex, addPxToNumber, getRandomColor };

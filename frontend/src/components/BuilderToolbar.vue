@@ -59,7 +59,7 @@ import { createResource } from "frappe-ui";
 import { nextTick, ref, watch } from "vue";
 import useStore from "../store";
 import { clamp } from "@vueuse/core";
-import { addPxToNumber } from "@/utils/helpers";
+import { addPxToNumber, getRandomColor } from "@/utils/helpers";
 
 const store = useStore();
 const toolbar = ref(null);
@@ -144,9 +144,9 @@ const toggleMode = (mode: string) => {
 			ev.stopPropagation();
 			let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
 			if (element) {
-				let block = store.builderState.blocks[0];
+				let parentBlock = store.builderState.blocks[0];
 				if (element.dataset.blockId) {
-					block = store.findBlock(element.dataset.blockId) || block;
+					parentBlock = store.findBlock(element.dataset.blockId) || parentBlock;
 				}
 				const child = {
 					name: "Container",
@@ -155,21 +155,21 @@ const toggleMode = (mode: string) => {
 					styles: {
 						width: "0px",
 						height: "0px",
-						"background-color": "#fef",
+						backgroundColor: getRandomColor(),
 					} as BlockStyleMap,
 				};
-				const childBlock = block.addChild(child);
+				const childBlock = parentBlock.addChild(child);
 				childBlock.selectBlock();
-				if (block.blockId === "root") {
-					const rootElement = document.body.querySelector(".canvas > [data-block-id='root']") as HTMLElement;
-					rootElement.style.position = "relative";
-					const rootBounds = rootElement.getBoundingClientRect();
-					let x = (ev.x - rootBounds.left) / store.canvas.scale;
-					let y = (ev.y - rootBounds.top) / store.canvas.scale;
-					childBlock.setStyle("position", "absolute");
-					childBlock.setStyle("top", addPxToNumber(y));
-					childBlock.setStyle("left", addPxToNumber(x));
-				}
+				const parentElement = document.body.querySelector(
+					`.canvas [data-block-id="${parentBlock.blockId}"]`
+				) as HTMLElement;
+				parentBlock.setStyle("position", "relative");
+				const parentElementBounds = parentElement.getBoundingClientRect();
+				let x = (ev.x - parentElementBounds.left) / store.canvas.scale;
+				let y = (ev.y - parentElementBounds.top) / store.canvas.scale;
+				childBlock.setStyle("position", "absolute");
+				childBlock.setStyle("top", addPxToNumber(y));
+				childBlock.setStyle("left", addPxToNumber(x));
 
 				const initialX = ev.clientX;
 				const initialY = ev.clientY;
@@ -189,7 +189,7 @@ const toggleMode = (mode: string) => {
 
 				document.addEventListener(
 					"mouseup",
-					(ev) => {
+					() => {
 						childBlock.setStyle("position", "static");
 						childBlock.setStyle("top", "auto");
 						childBlock.setStyle("left", "auto");
