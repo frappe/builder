@@ -119,7 +119,9 @@ watchEffect(() => {
 	block.getStyle("bottom");
 	block.getStyle("right");
 	block.getStyle("position");
-	updateTracker.value();
+	nextTick(() => {
+		updateTracker.value();
+	});
 });
 
 const movable = computed(() => {
@@ -186,31 +188,6 @@ const handleMove = (ev: MouseEvent) => {
 		},
 		{ once: true }
 	);
-
-	// :( hack to prevent click event from firing
-};
-
-const setCopyData = useDebounceFn((event, data) => {
-	if (event.altKey) {
-		event.dataTransfer.action = "copy";
-		event.dataTransfer.data_to_copy = store.getBlockCopy(store.builderState.selectedBlock as Block);
-	}
-});
-
-const copy = useDebounceFn((event) => {
-	if (event.dataTransfer.action === "copy") {
-		duplicateBlock(event.dataTransfer.data_to_copy);
-	} else {
-		props.target.draggable = true;
-		relayEventToTarget(event);
-	}
-});
-
-const relayEventToTarget = (event: Event) => {
-	const eventName = event.constructor.name as keyof Window;
-	let eventForTarget = new window[eventName](event.type, event);
-	props.target.dispatchEvent(eventForTarget);
-	event.preventDefault();
 };
 
 // Context menu

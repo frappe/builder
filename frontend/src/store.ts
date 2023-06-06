@@ -9,6 +9,7 @@ const useStore = defineStore("store", {
 			selectedBlocks: <Block[]>[],
 			editableBlock: <Block | null>null,
 			activeBreakpoint: "desktop",
+			mode: "select",
 			blocks: <Block[]>[
 				new Block({
 					element: "div",
@@ -24,66 +25,6 @@ const useStore = defineStore("store", {
 			rightPanelWidth: 270,
 			leftPanelWidth: 280,
 		},
-		widgets: [
-			{
-				name: "Container",
-				element: "section",
-				icon: "square",
-				children: [],
-				styles: {
-					display: "flex",
-					flexDirection: "column",
-					justifyContent: "center",
-					alignItems: "center",
-					height: "200px",
-					width: "100%",
-					margin: "0 auto",
-					background: "gray",
-				},
-				editorStyles: {
-					userSelect: "none",
-				},
-				attributes: {},
-			},
-			{
-				name: "Text",
-				element: "p",
-				icon: "type",
-				innerText: "Text",
-				styles: {
-					fontSize: "40px",
-					width: "fit-content",
-					"line-height": "1",
-				},
-			},
-			{
-				name: "Link",
-				element: "a",
-				icon: "link",
-				innerText: "Link",
-				styles: {
-					width: "auto",
-					"font-size": "20px",
-					"line-height": "1",
-				},
-				attributes: {
-					href: "/#",
-				},
-			},
-			{
-				name: "Image",
-				element: "img",
-				icon: "image",
-				styles: {
-					width: "auto",
-					height: "auto",
-				},
-				attributes: {
-					// src: "https://picsum.photos/500/200"
-					src: "https://user-images.githubusercontent.com/13928957/212847544-5773795d-2fd6-48d1-8423-b78ecc92522b.png",
-				},
-			},
-		],
 		flow: [
 			{
 				name: "Row",
@@ -232,7 +173,7 @@ const useStore = defineStore("store", {
 				visible: false,
 			},
 		],
-		sidebarActiveTab: "Components",
+		sidebarActiveTab: <"Components" | "Layers">"Components",
 		canvas: {
 			initialScale: 0.1,
 			initialTranslateY: 0,
