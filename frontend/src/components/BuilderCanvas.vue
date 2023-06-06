@@ -195,6 +195,22 @@ onMounted(() => {
 			redo();
 			e.preventDefault();
 		}
+
+		if (e.key === "c") {
+			store.builderState.mode = "container";
+		}
+
+		if (e.key === "i") {
+			store.builderState.mode = "image";
+		}
+
+		if (e.key === "t") {
+			store.builderState.mode = "text";
+		}
+
+		if (e.key === "v") {
+			store.builderState.mode = "select";
+		}
 	});
 	showBlocks.value = true;
 	setTimeout(setScaleAndTranslate, 500);
