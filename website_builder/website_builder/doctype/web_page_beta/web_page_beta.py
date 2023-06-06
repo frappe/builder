@@ -32,12 +32,12 @@ class WebPageBeta(WebsiteGenerator):
 	website = frappe._dict(
 		template = "templates/generators/webpage.html",
 		condition_field = "published",
-		page_title_field = "page_name",
+		page_title_field = "page_title",
 	)
 
 	def get_context(self, context):
 		# show breadcrumbs
-		context.title = "page"
+		context.title = self.page_title or "My Page"
 		content, style, fonts = get_block_html(self.blocks)
 		context.fonts = fonts
 		context.content = content
