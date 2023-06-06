@@ -11,7 +11,7 @@
 							element.isHovered() && !element.isSelected(),
 						'border-blue-400 text-gray-900 dark:border-blue-600 dark:text-gray-200': element.isSelected(),
 					}"
-					@click.stop="selectBlock(element)"
+					@click.stop="element.selectBlock()"
 					@dragover="element.expanded = true"
 					@mouseover.stop="store.hoveredBlock = element.blockId"
 					@mouseleave.stop="store.hoveredBlock = null">
@@ -54,10 +54,6 @@ defineProps({
 		default: () => [],
 	},
 });
-
-const selectBlock = (block: Block) => {
-	store.builderState.selectedBlock = block;
-};
 
 interface LayerBlock extends Block {
 	editable: boolean;

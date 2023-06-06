@@ -35,7 +35,7 @@
 	</draggable>
 	<teleport to="#overlay" v-if="store.overlayElement">
 		<BlockEditor
-			v-if="!preview && component"
+			v-if="!preview && component && store.builderState.mode !== 'container'"
 			v-show="
 				(block.isSelected() && breakpoint === store.builderState.activeBreakpoint) ||
 				(block.isHovered() && store.hoveredBreakpoint === breakpoint)
@@ -112,6 +112,9 @@ const selectBlock = (e: MouseEvent | null, block: Block) => {
 	if (store.builderState.editableBlock === props.block) {
 		return;
 	}
+	if (store.builderState.mode !== "select") {
+		return;
+	}
 	if (e) e.preventDefault();
 	store.builderState.selectedBlock = block;
 	store.builderState.editableBlock = null;
@@ -122,6 +125,8 @@ const selectBlock = (e: MouseEvent | null, block: Block) => {
 		}
 		store.builderState.selectedBlocks.push(block);
 	}
+
+	store.sidebarActiveTab = "Layers";
 };
 
 const triggerContextMenu = (e: MouseEvent) => {

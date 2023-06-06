@@ -90,6 +90,7 @@
 import { HSVToHex, HexToHSV } from "@/utils/helpers";
 import { Input, Popover } from "frappe-ui";
 import { PropType, Ref, nextTick, ref } from "vue";
+import { clamp } from "@vueuse/core";
 
 const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;
 const colorMap = ref(null) as unknown as Ref<HTMLDivElement>;
@@ -154,10 +155,6 @@ const setHueSelectorPosition = () => {
 		hueSelector.value.style.left = `${left}px`;
 	}
 	hueSelector.value.style.left = `${left}px`;
-};
-
-const clamp = (value: number, min: number, max: number) => {
-	return Math.min(Math.max(value, min), max);
 };
 
 const handleSelectorMove = (ev: MouseEvent) => {

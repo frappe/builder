@@ -1,5 +1,6 @@
 import useStore from "@/store";
 import { addPxToNumber, getNumberFromPx } from "./helpers";
+import { reactive } from "vue";
 
 class Block implements BlockOptions {
 	blockId: string;
@@ -34,12 +35,12 @@ class Block implements BlockOptions {
 			return new Block(child);
 		});
 
-		this.baseStyles = options.styles || options.baseStyles || {};
-		this.rawStyles = options.rawStyles || {};
-		this.mobileStyles = options.mobileStyles || {};
-		this.tabletStyles = options.tabletStyles || {};
-		this.editorStyles = options.editorStyles || {};
-		this.attributes = options.attributes || {};
+		this.baseStyles = reactive(options.styles || options.baseStyles || {});
+		this.rawStyles = reactive(options.rawStyles || {});
+		this.mobileStyles = reactive(options.mobileStyles || {});
+		this.tabletStyles = reactive(options.tabletStyles || {});
+		this.editorStyles = reactive(options.editorStyles || {});
+		this.attributes = reactive(options.attributes || {});
 		this.blockName = options.blockName;
 		delete this.attributes.style;
 		this.classes = options.classes || [];
@@ -88,8 +89,14 @@ class Block implements BlockOptions {
 	isContainer() {
 		return ["section", "div"].includes(this.element);
 	}
-	setStyle(style: string, value: number | string) {
+	setStyle(style: string, value: number | string | null) {
 		const store = useStore();
+		if (value === null || value === "") {
+			delete this.baseStyles[style];
+			delete this.mobileStyles[style];
+			delete this.tabletStyles[style];
+			return;
+		}
 		if (store.builderState.activeBreakpoint === "mobile") {
 			this.mobileStyles[style] = value;
 			return;
@@ -178,7 +185,13 @@ class Block implements BlockOptions {
 	}
 	addChild(child: BlockOptions) {
 		child.parentBlockId = this.blockId;
-		this.children.push(new Block(child));
+		const childBlock = new Block(child);
+		this.children.push(childBlock);
+		return childBlock;
+	}
+	selectBlock() {
+		const store = useStore();
+		store.builderState.selectedBlock = this;
 	}
 }
 
