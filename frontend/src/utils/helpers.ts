@@ -81,4 +81,11 @@ function getRandomColor() {
 	return `hsl(${Math.floor(Math.random() * 360)}, 40%, 80%)`;
 }
 
-export { getNumberFromPx, HexToHSV, HSVToHex, addPxToNumber, getRandomColor };
+async function confirm(message: string): Promise<boolean> {
+	return new Promise((resolve) => {
+		const confirmed = window.confirm(message);
+		resolve(confirmed);
+	});
+};
+
+export { getNumberFromPx, HexToHSV, HSVToHex, addPxToNumber, getRandomColor, confirm };
