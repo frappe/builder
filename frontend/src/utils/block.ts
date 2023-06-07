@@ -193,6 +193,10 @@ class Block implements BlockOptions {
 		const store = useStore();
 		store.builderState.selectedBlock = this;
 	}
+	getParentBlock(): Block | null {
+		const store = useStore();
+		return store.findBlock(this.parentBlockId || 'root');
+	}
 }
 
 export default Block;

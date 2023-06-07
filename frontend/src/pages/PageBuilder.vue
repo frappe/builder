@@ -24,6 +24,7 @@ import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import useStore from "@/store";
+import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
 import { createDocumentResource } from "frappe-ui";
 import { onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
@@ -70,7 +71,7 @@ const setPage = (pageName: string) => {
 		auto: true,
 		onSuccess(page: any) {
 			page.blocks = JSON.parse(page.blocks);
-			store.setPage(page as Page);
+			store.setPage(page as WebPageBeta);
 		},
 	});
 };

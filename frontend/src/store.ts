@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import Block from "./utils/block";
+import { WebPageBeta } from "./types/WebsiteBuilder/WebPageBeta";
 
 const useStore = defineStore("store", {
 	state: () => ({
@@ -235,13 +236,13 @@ const useStore = defineStore("store", {
 			});
 		},
 		getPageData() {},
-		setPage(page: Page) {
+		setPage(page: WebPageBeta) {
 			if (!page) return;
 			// clear blocks
 			this.clearBlocks();
 			this.pushBlocks(page.blocks);
 			this.pageName = page.page_name;
-			this.route = page.route;
+			this.route = page.route || '/' + page.page_name.toLowerCase().replace(/ /g, '-');
 			this.builderState.selectedPage = page.name;
 			// localStorage.setItem("selectedPage", page.name);
 		},
