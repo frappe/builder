@@ -76,7 +76,7 @@ const props = defineProps({
 	},
 });
 
-const emit = defineEmits(["renderComplete"]);
+const emit = defineEmits(["update:component"]);
 
 onMounted(() => {
 	selectBlock(null, props.block);
@@ -90,7 +90,10 @@ onMounted(() => {
 			}
 		});
 	}
-	emit("renderComplete", targetElement);
+	// TODO: Find better way to inform about re-render
+	setTimeout(() => {
+		emit("update:component", targetElement);
+	}, 300);
 });
 
 const styles = computed(() => {
@@ -126,7 +129,9 @@ const selectBlock = (e: MouseEvent | null, block: Block) => {
 		store.builderState.selectedBlocks.push(block);
 	}
 
-	store.sidebarActiveTab = "Layers";
+	if (!props.preview && props.block.isSelected()) {
+		store.sidebarActiveTab = "Layers";
+	}
 };
 
 const triggerContextMenu = (e: MouseEvent) => {

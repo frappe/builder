@@ -28,7 +28,7 @@
 						onerror="this.src='https://user-images.githubusercontent.com/13928957/212847544-5773795d-2fd6-48d1-8423-b78ecc92522b.png'"
 						class="h-[132px] rounded-sm bg-gray-50 object-cover p-2" />
 					<p class="border-t-[1px] px-3 py-2 text-sm text-gray-700 dark:text-zinc-300">
-						{{ page.page_name }}
+						{{ page.page_title || page.page_name }}
 					</p>
 					<FeatherIcon
 						name="trash"
@@ -43,8 +43,9 @@
 import { createListResource } from "frappe-ui";
 import { ref, Ref } from "vue";
 import { confirm } from "@/utils/helpers";
+import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
 
-const pages = ref([]) as Ref<Page[]>;
+const pages = ref([]) as Ref<WebPageBeta[]>;
 
 const pagesResource = createListResource({
 	doctype: "Web Page Beta",
@@ -53,12 +54,12 @@ const pagesResource = createListResource({
 	start: 0,
 	pageLength: 100,
 	auto: true,
-	onSuccess(data: Page[]) {
+	onSuccess(data: WebPageBeta[]) {
 		pages.value = data;
 	},
 });
 
-const deletePage = async (page: Page) => {
+const deletePage = async (page: WebPageBeta) => {
 	const confirmed = await confirm(`Are you sure you want to delete Page: ${page.page_name}?`);
 	if (confirmed) {
 		await pagesResource.delete.submit(page.name);

@@ -10,7 +10,7 @@ export interface WebPageBeta {
 	parenttype?: string
 	idx?: number
 	/**	Page Name : Data	*/
-	page_name?: string
+	page_name: string
 	/**	Page Title : Data	*/
 	page_title?: string
 	/**	Route : Data	*/

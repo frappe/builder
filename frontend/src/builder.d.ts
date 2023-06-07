@@ -38,14 +38,6 @@ declare interface BlockComponent {
 	scale: number;
 }
 
-declare interface Page {
-	name: string;
-	page_name: string;
-	route: string;
-	preview: string;
-	blocks: BlockOptions[];
-}
-
 declare interface PageMap {
 	[key: string]: Page;
 }

@@ -43,9 +43,9 @@
 <script setup lang="ts">
 import Block from "@/utils/block";
 import { FeatherIcon } from "frappe-ui";
+import { PropType } from "vue";
 import draggable from "vuedraggable";
 import useStore from "../store";
-import { PropType } from "vue";
 
 const store = useStore();
 defineProps({
