@@ -11,24 +11,30 @@
 			:clone="cloneComponent"
 			class="flex w-full flex-wrap">
 			<template #item="{ element }">
-				<div class="mb-3 w-full">
+				<div class="group relative mb-3 w-full">
 					<div
-						class="relative mb-1 mr-2 flex h-24 w-full max-w-[300px] cursor-pointer items-center justify-center overflow-hidden rounded-md border bg-gray-50 p-2 shadow-sm last:mr-0 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+						class="relative mb-1 mr-2 flex h-24 w-full max-w-[300px] cursor-pointer items-center justify-center overflow-hidden rounded-md border bg-gray-50 p-2 shadow-sm last:mr-0 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+						@click="cloneComponent(element)">
 						<div
 							class="pointer-events-none absolute w-[1400px]"
 							:style="{
 								transform: 'scale(' + element.scale + ')',
 							}">
 							<BuilderBlock
+								class="justify-center self-center"
+								v-if="store.sidebarActiveTab === 'Components'"
 								:block="store.getBlockCopy(element.block)"
-								ref="preview"
-								@renderComplete="(el) => setScale(el, element)"
+								@update:component="setScale($event, element.block)"
 								:preview="true" />
 						</div>
 					</div>
 					<p class="text-xs text-gray-800 dark:text-zinc-500">
 						{{ element.component_name }}
 					</p>
+					<FeatherIcon
+						name="trash"
+						class="absolute right-2 top-2 hidden h-7 w-7 cursor-pointer rounded bg-white p-2 group-hover:block"
+						@click.stop.prevent="deleteComponent(element)"></FeatherIcon>
 				</div>
 			</template>
 		</draggable>
@@ -36,17 +42,15 @@
 </template>
 <script setup lang="ts">
 import { createListResource } from "frappe-ui";
-import { ref } from "vue";
 import draggable from "vuedraggable";
 import useStore from "../store";
 import BuilderBlock from "./BuilderBlock.vue";
 
 const store = useStore();
-const preview = ref(null);
 
-createListResource({
+const componentResource = createListResource({
 	doctype: "Web Page Component",
-	fields: ["component_name", "icon", "block"],
+	fields: ["component_name", "icon", "block", "name"],
 	orderBy: "creation",
 	start: 0,
 	pageLength: 10,
@@ -54,7 +58,7 @@ createListResource({
 	transform(data: any[]) {
 		data.forEach((d) => {
 			d.block = JSON.parse(d.block);
-			d.scale = 0.3; // for preview
+			d.scale = 0.2;
 		});
 		return data;
 	},
@@ -64,7 +68,8 @@ createListResource({
 });
 
 const setScale = (el: HTMLElement, block: BlockOptions) => {
-	const scale = Math.min(140 / el.offsetWidth, 70 / el.offsetHeight, 0.6);
+	console.log(el.offsetWidth, el.offsetHeight, el, block);
+	const scale = Math.min(160 / el.offsetWidth, 80 / el.offsetHeight, 0.6);
 	block.scale = scale;
 };
 
@@ -84,5 +89,12 @@ const cloneComponent = (blockComponent: BlockComponent) => {
 		};
 	}
 	return blockCopy;
+};
+
+const deleteComponent = async (component: BlockComponent) => {
+	const confirmed = await confirm(`Are you sure you want to delete component: ${component.component_name}?`);
+	if (confirmed) {
+		componentResource.delete.submit(component.name);
+	}
 };
 </script>
