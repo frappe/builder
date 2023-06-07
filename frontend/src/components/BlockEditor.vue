@@ -61,7 +61,6 @@
 </template>
 <script setup lang="ts">
 import { vOnClickOutside } from "@vueuse/components";
-import { useDebounceFn } from "@vueuse/shared";
 import { Dialog, Input, createResource } from "frappe-ui";
 import {
 	ComponentInternalInstance,
@@ -119,6 +118,10 @@ watchEffect(() => {
 	block.getStyle("bottom");
 	block.getStyle("right");
 	block.getStyle("position");
+	block.getParentBlock()?.getStyle("display");
+	block.getParentBlock()?.getStyle("justifyContent");
+	block.getParentBlock()?.getStyle("alignItems");
+	block.getParentBlock()?.getStyle("flexDirection");
 	nextTick(() => {
 		updateTracker.value();
 	});
