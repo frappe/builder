@@ -16,15 +16,15 @@
 						class="relative mb-1 mr-2 flex h-24 w-full max-w-[300px] cursor-pointer items-center justify-center overflow-hidden rounded-md border bg-gray-50 p-2 shadow-sm last:mr-0 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
 						@click="cloneComponent(element)">
 						<div
-							class="pointer-events-none absolute w-[1400px]"
+							class="pointer-events-none absolute flex w-[1400px] justify-center self-center"
 							:style="{
 								transform: 'scale(' + element.scale + ')',
 							}">
 							<BuilderBlock
-								class="justify-center self-center"
+								class="!static"
 								v-if="store.sidebarActiveTab === 'Components'"
 								:block="store.getBlockCopy(element.block)"
-								@update:component="setScale($event, element.block)"
+								@renderComplete="setScale($event, element)"
 								:preview="true" />
 						</div>
 					</div>
@@ -68,8 +68,7 @@ const componentResource = createListResource({
 });
 
 const setScale = (el: HTMLElement, block: BlockOptions) => {
-	console.log(el.offsetWidth, el.offsetHeight, el, block);
-	const scale = Math.min(160 / el.offsetWidth, 80 / el.offsetHeight, 0.6);
+	const scale = Math.max(Math.min(100 / el.offsetWidth, 80 / el.offsetHeight, 0.6), 0.2);
 	block.scale = scale;
 };
 
