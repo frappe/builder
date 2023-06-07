@@ -5,38 +5,33 @@
 				<img src="/favicon.png" alt="logo" class="h-6" />
 				<h1 class="ml-1 text-base text-gray-600 dark:text-gray-500">pages</h1>
 			</router-link>
-			<div class="ml-10 flex gap-3">
-				<Button
-					icon="mouse-pointer"
-					appearance="minimal"
-					class="!text-gray-700 dark:text-zinc-300 hover:dark:bg-slate-800 focus:dark:bg-slate-800 active:dark:bg-slate-700"
-					@click="store.builderState.mode = 'select'"
-					:active="store.builderState.mode === 'select'"></Button>
-				<Button
-					icon="type"
-					appearance="minimal"
-					class="!text-gray-700 dark:text-zinc-300 hover:dark:bg-slate-800 focus:dark:bg-slate-800 active:dark:bg-slate-700"
-					@click="store.builderState.mode = 'text'"
-					:active="store.builderState.mode === 'text'"></Button>
-				<Button
-					icon="square"
-					appearance="minimal"
-					class="!text-gray-700 dark:text-zinc-300 hover:dark:bg-slate-800 focus:dark:bg-slate-800 active:dark:bg-slate-700"
-					@click="store.builderState.mode = 'container'"
-					:active="store.builderState.mode === 'container'"></Button>
-				<Button
-					icon="image"
-					appearance="minimal"
-					class="!text-gray-700 dark:text-zinc-300 hover:dark:bg-slate-800 focus:dark:bg-slate-800 active:dark:bg-slate-700"
-					@click="store.builderState.mode = 'image'"
-					:active="store.builderState.mode === 'image'"></Button>
-			</div>
 		</div>
-		<input
-			type="text"
-			v-model="store.pageName"
-			class="h-7 rounded-md border-none bg-gray-100 text-base focus:ring-gray-400 dark:bg-zinc-800 dark:text-gray-300 dark:focus:ring-zinc-700"
-			placeholder="Page Name" />
+		<div class="ml-10 flex gap-3">
+			<Button
+				icon="mouse-pointer"
+				appearance="minimal"
+				class="!text-gray-700 dark:text-zinc-300 hover:dark:bg-slate-800 focus:dark:bg-slate-800 active:dark:bg-slate-700"
+				@click="store.builderState.mode = 'select'"
+				:active="store.builderState.mode === 'select'"></Button>
+			<Button
+				icon="type"
+				appearance="minimal"
+				class="!text-gray-700 dark:text-zinc-300 hover:dark:bg-slate-800 focus:dark:bg-slate-800 active:dark:bg-slate-700"
+				@click="store.builderState.mode = 'text'"
+				:active="store.builderState.mode === 'text'"></Button>
+			<Button
+				icon="square"
+				appearance="minimal"
+				class="!text-gray-700 dark:text-zinc-300 hover:dark:bg-slate-800 focus:dark:bg-slate-800 active:dark:bg-slate-700"
+				@click="store.builderState.mode = 'container'"
+				:active="store.builderState.mode === 'container'"></Button>
+			<Button
+				icon="image"
+				appearance="minimal"
+				class="!text-gray-700 dark:text-zinc-300 hover:dark:bg-slate-800 focus:dark:bg-slate-800 active:dark:bg-slate-700"
+				@click="store.builderState.mode = 'image'"
+				:active="store.builderState.mode === 'image'"></Button>
+		</div>
 		<div class="absolute right-3 flex items-center">
 			<router-link :to="{ name: 'page-settings' }">
 				<FeatherIcon
