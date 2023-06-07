@@ -21,7 +21,13 @@
 			...{
 				'data-block-id': block.blockId,
 				contenteditable: block.isText() && block.isSelected() && isEditable,
-				class: ['__builder_component__', 'outline-none', 'select-none', ...(block.classes || [])],
+				class: [
+					$attrs.class,
+					'__builder_component__',
+					'outline-none',
+					'select-none',
+					...(block.classes || []),
+				],
 				style: { ...styles, ...block.editorStyles },
 			},
 		}"
@@ -76,7 +82,7 @@ const props = defineProps({
 	},
 });
 
-const emit = defineEmits(["update:component"]);
+const emit = defineEmits(["renderComplete"]);
 
 onMounted(() => {
 	selectBlock(null, props.block);
@@ -90,10 +96,9 @@ onMounted(() => {
 			}
 		});
 	}
-	// TODO: Find better way to inform about re-render
-	setTimeout(() => {
-		emit("update:component", targetElement);
-	}, 300);
+	nextTick(() => {
+		emit("renderComplete", targetElement);
+	});
 });
 
 const styles = computed(() => {
