@@ -63,7 +63,7 @@ onMounted(() => {
 			},
 		});
 		createPageResource.submit({
-			blocks: [],
+			blocks: [store.getRootBlock()],
 		});
 	}
 });
