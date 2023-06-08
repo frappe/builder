@@ -25,11 +25,12 @@ import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import useStore from "@/store";
 import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
-import { createDocumentResource } from "frappe-ui";
+import { createDocumentResource, createResource } from "frappe-ui";
 import { onMounted, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
+const router = useRouter();
 const store = useStore();
 
 // To disable page zooming
@@ -48,9 +49,22 @@ document.addEventListener(
 
 onMounted(() => {
 	if (route.params.pageId && route.params.pageId !== "new") {
+		console.log(route.params.pageId);
 		setPage(route.params.pageId as string);
 	} else {
-		store.clearBlocks();
+		const createPageResource = createResource({
+			url: "website_builder.api.create_new_page",
+			method: "POST",
+			onSuccess(page: any) {
+				page.blocks = JSON.parse(page.blocks);
+				store.pages[page.name] = page as WebPageBeta;
+				store.pageName = page.page_name;
+				router.push({ name: "builder", params: { pageId: page.name } });
+			},
+		});
+		createPageResource.submit({
+			blocks: [],
+		});
 	}
 });
 

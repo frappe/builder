@@ -33,11 +33,37 @@
 				:active="store.builderState.mode === 'image'"></Button>
 		</div>
 		<div class="absolute right-3 flex items-center">
-			<router-link :to="{ name: 'page-settings' }">
-				<FeatherIcon
-					name="settings"
-					class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400"></FeatherIcon>
-			</router-link>
+			<Popover
+				transition="default"
+				placement="bottom-start"
+				class="w-full"
+				popoverClass="!min-w-fit !mt-[30px]">
+				<template #target="{ togglePopover, isOpen }">
+					<div>
+						<FeatherIcon
+							name="settings"
+							class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400"
+							@click="togglePopover"></FeatherIcon>
+					</div>
+				</template>
+				<template #body-main class="p-3">
+					<div class="flex flex-row flex-wrap gap-5 p-3">
+						<Input
+							type="text"
+							class="w-full text-sm"
+							label="Page Title"
+							:value="pageData.page_title"
+							@change="pageResource.setValue.submit({ page_title: $event })" />
+						<Input
+							type="text"
+							class="w-full text-sm"
+							label="URL"
+							v-model="pageData.route"
+							:value="pageData.route"
+							@change="pageResource.setValue.submit({ route: $event })" />
+					</div>
+				</template>
+			</Popover>
 			<UseDark v-slot="{ isDark, toggleDark }">
 				<FeatherIcon
 					:name="isDark ? 'moon' : 'sun'"
@@ -49,25 +75,41 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { UseDark } from "@vueuse/components";
-import { createResource } from "frappe-ui";
-import { nextTick, ref, watch } from "vue";
-import useStore from "../store";
-import { clamp } from "@vueuse/core";
+import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
 import { addPxToNumber, getRandomColor } from "@/utils/helpers";
+import { UseDark } from "@vueuse/components";
+import { clamp } from "@vueuse/core";
+import { Popover, createDocumentResource, createResource } from "frappe-ui";
+import { Ref, ref, watch, watchEffect } from "vue";
+import useStore from "../store";
 
 const store = useStore();
 const toolbar = ref(null);
+
+const pageData = ref({}) as unknown as Ref<WebPageBeta>;
 
 const publishWebResource = createResource({
 	url: "website_builder.api.publish",
 	onSuccess(page: any) {
 		// hack
 		page.blocks = JSON.parse(page.blocks);
-		store.pages[page.name] = page as Page;
+		store.pages[page.name] = page as WebPageBeta;
 		store.pageName = page.page_name;
 		window.open(`/${page.route}`, "_blank");
 	},
+});
+
+let pageResource = {};
+
+watchEffect(() => {
+	if (store.builderState.selectedPage && pageData.value.name !== store.builderState.selectedPage) {
+		pageResource = createDocumentResource({
+			doctype: "Web Page Beta",
+			name: store.builderState.selectedPage,
+			auto: true,
+		});
+		pageData.value = pageResource.doc;
+	}
 });
 
 const publish = () => {
@@ -109,16 +151,32 @@ const toggleMode = (mode: string) => {
 						"line-height": "1",
 					} as BlockStyleMap,
 				};
-
-				const childBlock = block.addChild(child);
-				childBlock.setStyle("position", "static");
-				childBlock.setStyle("top", "auto");
-				childBlock.setStyle("left", "auto");
+				let parentBlock = store.builderState.blocks[0];
+				if (element.dataset.blockId) {
+					parentBlock = store.findBlock(element.dataset.blockId) || parentBlock;
+				}
+				const childBlock = parentBlock.addChild(child);
+				childBlock.selectBlock();
+				const parentElement = document.body.querySelector(
+					`.canvas [data-block-id="${parentBlock.blockId}"]`
+				) as HTMLElement;
+				parentBlock.setStyle("position", "relative");
+				const parentElementBounds = parentElement.getBoundingClientRect();
+				let x = (ev.x - parentElementBounds.left) / store.canvas.scale;
+				let y = (ev.y - parentElementBounds.top) / store.canvas.scale;
+				childBlock.setStyle("position", "absolute");
+				childBlock.setStyle("top", addPxToNumber(y));
+				childBlock.setStyle("left", addPxToNumber(x));
 				container.style.cursor = "auto";
 				container.removeEventListener("mousedown", addText);
 				setTimeout(() => {
 					store.builderState.mode = "select";
 				}, 50);
+				setTimeout(() => {
+					childBlock.setStyle("position", "static");
+					childBlock.setStyle("top", "auto");
+					childBlock.setStyle("left", "auto");
+				}, 500);
 			}
 			container.style.cursor = "auto";
 			container.removeEventListener("mousedown", addText);
