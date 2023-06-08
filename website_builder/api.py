@@ -47,9 +47,10 @@ def get_blocks(prompt):
 @frappe.whitelist(allow_guest=True)
 def create_new_page(blocks):
 	page = frappe.new_doc("Web Page Beta")
-	page.page_name = f"page-{frappe.generate_hash(length=5)}"
 	page.route = f"pages/{frappe.generate_hash(length=20)}"
-	page.page_title = "My Page"
 	page.blocks = json.dumps(blocks)
+	page.page_name = f"page-{frappe.generate_hash(length=5)}"
+	page.save(ignore_permissions=True)
+	page.page_title = "My Page"
 	page.save(ignore_permissions=True)
 	return page
