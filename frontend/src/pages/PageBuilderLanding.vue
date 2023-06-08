@@ -40,16 +40,16 @@
 	</section>
 </template>
 <script setup lang="ts">
+import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
+import { confirm } from "@/utils/helpers";
 import { createListResource } from "frappe-ui";
 import { ref, Ref } from "vue";
-import { confirm } from "@/utils/helpers";
-import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
 
 const pages = ref([]) as Ref<WebPageBeta[]>;
 
 const pagesResource = createListResource({
 	doctype: "Web Page Beta",
-	fields: ["name", "page_name", "route", "preview"],
+	fields: ["name", "page_name", "route", "preview", "page_title"],
 	orderBy: "creation desc",
 	start: 0,
 	pageLength: 100,
