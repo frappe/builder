@@ -8,36 +8,20 @@
 		</div>
 		<div class="ml-10 flex gap-3">
 			<Button
-				icon="mouse-pointer"
 				appearance="minimal"
-				class="!text-gray-700 dark:text-zinc-300 hover:dark:bg-slate-800 focus:dark:bg-slate-800 active:dark:bg-slate-700"
-				@click="store.builderState.mode = 'select'"
-				:active="store.builderState.mode === 'select'"></Button>
-			<Button
-				icon="type"
-				appearance="minimal"
-				class="!text-gray-700 dark:text-zinc-300 hover:dark:bg-slate-800 focus:dark:bg-slate-800 active:dark:bg-slate-700"
-				@click="store.builderState.mode = 'text'"
-				:active="store.builderState.mode === 'text'"></Button>
-			<Button
-				icon="square"
-				appearance="minimal"
-				class="!text-gray-700 dark:text-zinc-300 hover:dark:bg-slate-800 focus:dark:bg-slate-800 active:dark:bg-slate-700"
-				@click="store.builderState.mode = 'container'"
-				:active="store.builderState.mode === 'container'"></Button>
-			<Button
-				icon="image"
-				appearance="minimal"
-				class="!text-gray-700 dark:text-zinc-300 hover:dark:bg-slate-800 focus:dark:bg-slate-800 active:dark:bg-slate-700"
-				@click="store.builderState.mode = 'image'"
-				:active="store.builderState.mode === 'image'"></Button>
+				v-for="mode in [
+					{ mode: 'select', icon: 'mouse-pointer' },
+					{ mode: 'text', icon: 'type' },
+					{ mode: 'container', icon: 'square' },
+					{ mode: 'image', icon: 'image' },
+				] as { 'mode': BuilderMode; 'icon': string }[]"
+				:icon="mode.icon"
+				class="!text-gray-700 dark:!text-gray-200 hover:dark:bg-slate-800 dark:focus:bg-zinc-800 active:dark:bg-zinc-500"
+				@click="store.builderState.mode = mode.mode"
+				:active="store.builderState.mode === mode.mode"></Button>
 		</div>
 		<div class="absolute right-3 flex items-center">
-			<Popover
-				transition="default"
-				placement="bottom-start"
-				class="w-full"
-				popoverClass="!min-w-fit !mt-[30px]">
+			<Popover transition="default" placement="bottom-start" class="inline w-full">
 				<template #target="{ togglePopover, isOpen }">
 					<div>
 						<FeatherIcon
@@ -80,7 +64,7 @@ import { addPxToNumber, getRandomColor } from "@/utils/helpers";
 import { UseDark } from "@vueuse/components";
 import { clamp } from "@vueuse/core";
 import { Popover, createDocumentResource, createResource } from "frappe-ui";
-import { Ref, ref, watch, watchEffect } from "vue";
+import { Ref, onMounted, ref, watch, watchEffect } from "vue";
 import useStore from "../store";
 
 const store = useStore();
@@ -126,21 +110,33 @@ watch(
 	}
 );
 
-const toggleMode = (mode: string) => {
-	if (mode === "text") {
-		const container = document.body.querySelector(".canvas-container") as HTMLElement;
-		container.style.cursor = "text";
+onMounted(() => {
+	setEvents();
+});
 
-		const addText = (ev: MouseEvent) => {
+function setEvents() {
+	const container = document.body.querySelector(".canvas-container") as HTMLElement;
+	container.addEventListener("mousedown", (ev: MouseEvent) => {
+		const initialX = ev.clientX;
+		const initialY = ev.clientY;
+		if (store.builderState.mode === "select") {
+			return;
+		} else {
 			ev.preventDefault();
 			let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
-			// check if element contains data-block-id
+			let block = store.builderState.blocks[0];
 			if (element) {
-				let block = store.builderState.blocks[0];
 				if (element.dataset.blockId) {
 					block = store.findBlock(element.dataset.blockId) || block;
 				}
-				const child = {
+			}
+			let parentBlock = store.builderState.blocks[0];
+			if (element.dataset.blockId) {
+				parentBlock = store.findBlock(element.dataset.blockId) || parentBlock;
+			}
+			let child;
+			if (store.builderState.mode === "text") {
+				child = {
 					name: "Text",
 					element: "p",
 					icon: "type",
@@ -151,126 +147,8 @@ const toggleMode = (mode: string) => {
 						"line-height": "1",
 					} as BlockStyleMap,
 				};
-				let parentBlock = store.builderState.blocks[0];
-				if (element.dataset.blockId) {
-					parentBlock = store.findBlock(element.dataset.blockId) || parentBlock;
-				}
-				const childBlock = parentBlock.addChild(child);
-				childBlock.selectBlock();
-				const parentElement = document.body.querySelector(
-					`.canvas [data-block-id="${parentBlock.blockId}"]`
-				) as HTMLElement;
-				parentBlock.setStyle("position", "relative");
-				const parentElementBounds = parentElement.getBoundingClientRect();
-				let x = (ev.x - parentElementBounds.left) / store.canvas.scale;
-				let y = (ev.y - parentElementBounds.top) / store.canvas.scale;
-				childBlock.setStyle("position", "absolute");
-				childBlock.setStyle("top", addPxToNumber(y));
-				childBlock.setStyle("left", addPxToNumber(x));
-				container.style.cursor = "auto";
-				container.removeEventListener("mousedown", addText);
-				setTimeout(() => {
-					store.builderState.mode = "select";
-				}, 50);
-				setTimeout(() => {
-					childBlock.setStyle("position", "static");
-					childBlock.setStyle("top", "auto");
-					childBlock.setStyle("left", "auto");
-				}, 500);
-			}
-			container.style.cursor = "auto";
-			container.removeEventListener("mousedown", addText);
-		};
-		container.addEventListener("mousedown", addText);
-	}
-
-	if (mode === "container") {
-		const container = document.body.querySelector(".canvas-container") as HTMLElement;
-		container.style.cursor = "crosshair";
-
-		const addContainer = (ev: MouseEvent) => {
-			ev.preventDefault();
-			ev.stopPropagation();
-			let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
-			if (element) {
-				let parentBlock = store.builderState.blocks[0];
-				if (element.dataset.blockId) {
-					parentBlock = store.findBlock(element.dataset.blockId) || parentBlock;
-				}
-				const child = {
-					name: "Container",
-					element: "div",
-					icon: "square",
-					styles: {
-						width: "0px",
-						height: "0px",
-						backgroundColor: getRandomColor(),
-					} as BlockStyleMap,
-				};
-				const childBlock = parentBlock.addChild(child);
-				childBlock.selectBlock();
-				const parentElement = document.body.querySelector(
-					`.canvas [data-block-id="${parentBlock.blockId}"]`
-				) as HTMLElement;
-				parentBlock.setStyle("position", "relative");
-				const parentElementBounds = parentElement.getBoundingClientRect();
-				let x = (ev.x - parentElementBounds.left) / store.canvas.scale;
-				let y = (ev.y - parentElementBounds.top) / store.canvas.scale;
-				childBlock.setStyle("position", "absolute");
-				childBlock.setStyle("top", addPxToNumber(y));
-				childBlock.setStyle("left", addPxToNumber(x));
-
-				const initialX = ev.clientX;
-				const initialY = ev.clientY;
-
-				const mouseMoveHandler = (ev: MouseEvent) => {
-					ev.preventDefault();
-					let width = (ev.clientX - initialX) / store.canvas.scale;
-					let height = (ev.clientY - initialY) / store.canvas.scale;
-
-					width = clamp(width, 10, width);
-					height = clamp(height, 10, height);
-					childBlock.setStyle("width", addPxToNumber(width));
-					childBlock.setStyle("height", addPxToNumber(height));
-				};
-
-				document.addEventListener("mousemove", mouseMoveHandler);
-
-				document.addEventListener(
-					"mouseup",
-					() => {
-						childBlock.setStyle("position", "static");
-						childBlock.setStyle("top", "auto");
-						childBlock.setStyle("left", "auto");
-						container.style.cursor = "auto";
-						container.removeEventListener("mousedown", addContainer);
-						document.removeEventListener("mousemove", mouseMoveHandler);
-						setTimeout(() => {
-							store.builderState.mode = "select";
-						}, 50);
-					},
-					{ once: true }
-				);
-			}
-		};
-		container.addEventListener("mousedown", addContainer);
-	}
-
-	if (mode === "image") {
-		const container = document.body.querySelector(".canvas-container") as HTMLElement;
-		container.style.cursor = "crosshair";
-		const canvas = document.body.querySelector(".canvas") as HTMLElement;
-
-		const addImage = (ev: MouseEvent) => {
-			ev.preventDefault();
-			let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
-			// check if element contains data-block-id
-			if (element) {
-				let block = store.builderState.blocks[0];
-				if (element.dataset.blockId) {
-					block = store.findBlock(element.dataset.blockId) || block;
-				}
-				const child: BlockOptions = {
+			} else if (store.builderState.mode === "image") {
+				child = {
 					name: "Image",
 					element: "img",
 					icon: "image",
@@ -283,52 +161,76 @@ const toggleMode = (mode: string) => {
 						objectFit: "cover",
 					} as BlockStyleMap,
 				};
-				const childBlock = block.addChild(child);
-				if (block.blockId === "root") {
-					const rootElement = document.body.querySelector(".canvas > [data-block-id='root']") as HTMLElement;
-					rootElement.style.position = "relative";
-					const rootBounds = rootElement.getBoundingClientRect();
-					let x = (ev.x - rootBounds.left) / store.canvas.scale;
-					let y = (ev.y - rootBounds.top) / store.canvas.scale;
-					childBlock.setStyle("position", "absolute");
-					childBlock.setStyle("top", addPxToNumber(y));
-					childBlock.setStyle("left", addPxToNumber(x));
-				}
+			} else {
+				child = {
+					name: "Container",
+					element: "div",
+					icon: "square",
+					styles: {
+						width: "0px",
+						height: "0px",
+						backgroundColor: getRandomColor(),
+					} as BlockStyleMap,
+				};
+			}
+			const childBlock = parentBlock.addChild(child);
+			childBlock.selectBlock();
 
-				const initialX = ev.clientX;
-				const initialY = ev.clientY;
+			const parentElement = document.body.querySelector(
+				`.canvas [data-block-id="${parentBlock.blockId}"]`
+			) as HTMLElement;
+			const parentOldPosition = parentBlock.getStyle("position");
+			parentBlock.setStyle("position", parentOldPosition || "relative");
+			const parentElementBounds = parentElement.getBoundingClientRect();
+			let x = (ev.x - parentElementBounds.left) / store.canvas.scale;
+			let y = (ev.y - parentElementBounds.top) / store.canvas.scale;
+			childBlock.setStyle("position", "absolute");
+			childBlock.setStyle("top", addPxToNumber(y));
+			childBlock.setStyle("left", addPxToNumber(x));
 
-				const mouseMoveHandler = (ev: MouseEvent) => {
-					ev.preventDefault();
-					const width = (ev.clientX - initialX) / store.canvas.scale;
-					const height = (ev.clientY - initialY) / store.canvas.scale;
-
+			const mouseMoveHandler = (mouseMoveEvent: MouseEvent) => {
+				if (store.builderState.mode === "text") {
+					return;
+				} else {
+					mouseMoveEvent.preventDefault();
+					let width = (mouseMoveEvent.clientX - initialX) / store.canvas.scale;
+					let height = (mouseMoveEvent.clientY - initialY) / store.canvas.scale;
+					width = clamp(width, 10, width);
+					height = clamp(height, 10, height);
 					childBlock.setStyle("width", addPxToNumber(width));
 					childBlock.setStyle("height", addPxToNumber(height));
-				};
+				}
+			};
+			document.addEventListener("mousemove", mouseMoveHandler);
+			document.addEventListener(
+				"mouseup",
+				() => {
+					document.removeEventListener("mousemove", mouseMoveHandler);
+					setTimeout(() => {
+						store.builderState.mode = "select";
+					}, 50);
+					if (store.builderState.mode === "text") {
+						return;
+					}
+					childBlock.setStyle("position", "static");
+					childBlock.setStyle("top", "auto");
+					childBlock.setStyle("left", "auto");
+					parentBlock.setStyle("position", parentOldPosition || "static");
+				},
+				{ once: true }
+			);
+		}
+	});
+}
 
-				document.addEventListener("mousemove", mouseMoveHandler);
-
-				document.addEventListener(
-					"mouseup",
-					(ev) => {
-						ev.preventDefault();
-						childBlock.setStyle("position", "static");
-						childBlock.setStyle("top", "auto");
-						childBlock.setStyle("left", "auto");
-						childBlock.selectBlock();
-						container.style.cursor = "auto";
-						document.removeEventListener("mousemove", mouseMoveHandler);
-						canvas.removeEventListener("mousedown", addImage);
-						setTimeout(() => {
-							store.builderState.mode = "select";
-						}, 50);
-					},
-					{ once: true }
-				);
-			}
-		};
-		canvas.addEventListener("mousedown", addImage);
+function toggleMode(mode: BuilderMode) {
+	const container = document.body.querySelector(".canvas-container") as HTMLElement;
+	if (mode === "text") {
+		container.style.cursor = "text";
+	} else if (mode === "select") {
+		container.style.cursor = "default";
+	} else {
+		container.style.cursor = "crosshair";
 	}
-};
+}
 </script>
