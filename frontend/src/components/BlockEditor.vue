@@ -71,6 +71,7 @@ import {
 	onMounted,
 	reactive,
 	ref,
+	watch,
 	watchEffect,
 } from "vue";
 
@@ -122,6 +123,12 @@ watchEffect(() => {
 	block.getParentBlock()?.getStyle("justifyContent");
 	block.getParentBlock()?.getStyle("alignItems");
 	block.getParentBlock()?.getStyle("flexDirection");
+	nextTick(() => {
+		updateTracker.value();
+	});
+});
+
+watch(store.builderState.blocks, () => {
 	nextTick(() => {
 		updateTracker.value();
 	});
