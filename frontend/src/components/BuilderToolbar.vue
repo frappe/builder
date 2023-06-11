@@ -133,6 +133,9 @@ function setEvents() {
 			let parentBlock = store.builderState.blocks[0];
 			if (element.dataset.blockId) {
 				parentBlock = store.findBlock(element.dataset.blockId) || parentBlock;
+				while (parentBlock && !parentBlock.canHaveChildren()) {
+					parentBlock = parentBlock.getParentBlock() || store.builderState.blocks[0];
+				}
 			}
 			let child;
 			if (store.builderState.mode === "text") {
@@ -156,8 +159,8 @@ function setEvents() {
 						src: "https://user-images.githubusercontent.com/13928957/212847544-5773795d-2fd6-48d1-8423-b78ecc92522b.png",
 					},
 					styles: {
-						width: "0px",
-						height: "0px",
+						width: "100%",
+						height: "auto",
 						objectFit: "cover",
 					} as BlockStyleMap,
 				};
@@ -167,8 +170,8 @@ function setEvents() {
 					element: "div",
 					icon: "square",
 					styles: {
-						width: "0px",
-						height: "0px",
+						width: "100%",
+						height: "200px",
 						backgroundColor: getRandomColor(),
 					} as BlockStyleMap,
 				};
