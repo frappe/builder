@@ -8,9 +8,9 @@
 	<section class="max-w-800 m-auto flex w-3/4 flex-wrap gap-x-3 gap-y-4 pt-10">
 		<router-link :to="{ name: 'builder', params: { pageId: 'new' } }">
 			<div
-				class="auto mr-2 flex w-56 justify-between rounded-md p-3 text-sm shadow dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
-				<span>New Page</span>
-				<span>+</span>
+				class="auto group mr-2 flex w-56 justify-between rounded-md p-3 text-sm shadow dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
+				<span class="group-hover:dark:text-zinc-200">New Page</span>
+				<span class="font-semibold group-hover:dark:text-zinc-200">+</span>
 			</div>
 		</router-link>
 	</section>
@@ -22,17 +22,18 @@
 				:key="page.page_name"
 				:to="{ name: 'builder', params: { pageId: page.page_name } }">
 				<div
-					class="group relative mr-2 w-[224px] rounded-md shadow dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
+					class="group relative mr-2 w-[224px] rounded-md shadow hover:cursor-pointer dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
 					<img
 						:src="page.preview"
 						onerror="this.src='https://user-images.githubusercontent.com/13928957/212847544-5773795d-2fd6-48d1-8423-b78ecc92522b.png'"
-						class="h-[132px] rounded-sm bg-gray-50 object-cover p-2" />
-					<p class="border-t-[1px] px-3 py-2 text-sm text-gray-700 dark:text-zinc-300">
+						class="h-[132px] rounded-sm bg-gray-50 object-cover p-2 dark:bg-zinc-900" />
+					<p
+						class="border-t-[1px] px-3 py-2 text-sm text-gray-700 dark:border-zinc-800 dark:text-zinc-400 group-hover:dark:text-zinc-200">
 						{{ page.page_title || page.page_name }}
 					</p>
 					<FeatherIcon
 						name="trash"
-						class="absolute right-2 top-2 hidden h-8 w-8 rounded bg-white p-2 group-hover:block"
+						class="absolute right-2 top-2 hidden h-8 w-8 rounded bg-white p-2 group-hover:block dark:bg-zinc-900 dark:text-zinc-200"
 						@click.stop.prevent="deletePage(page)"></FeatherIcon>
 				</div>
 			</router-link>
