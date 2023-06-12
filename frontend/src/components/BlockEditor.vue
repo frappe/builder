@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="editor fixed z-[19] box-content border-[1px] border-blue-400"
+		class="editor fixed z-[19] box-content select-none border-[1px] border-blue-400"
 		ref="editor"
 		@click.stop="handleClick"
 		@mousedown.stop.prevent="handleMove"

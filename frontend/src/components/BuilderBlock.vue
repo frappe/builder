@@ -15,14 +15,14 @@
 		"
 		@mouseleave.stop="store.hoveredBlock = null"
 		@blur="block.innerText = $event.target.innerText"
-		draggable="false"
-		data-draggable="false"
 		:component-data="{
 			...block.attributes,
 			...$attrs,
 			...{
 				'data-block-id': block.blockId,
 				contenteditable: block.isText() && block.isSelected() && isEditable,
+				'data-draggable': false,
+				draggable: false,
 				class: [
 					$attrs.class,
 					'__builder_component__',
