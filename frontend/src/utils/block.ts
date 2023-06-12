@@ -195,7 +195,7 @@ class Block implements BlockOptions {
 	}
 	getParentBlock(): Block | null {
 		const store = useStore();
-		return store.findBlock(this.parentBlockId || 'root');
+		return store.findBlock(this.parentBlockId || "root");
 	}
 	canHaveChildren(): boolean {
 		return this.isContainer() || this.isRoot() || this.isDiv();
