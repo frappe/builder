@@ -15,6 +15,8 @@
 		"
 		@mouseleave.stop="store.hoveredBlock = null"
 		@blur="block.innerText = $event.target.innerText"
+		draggable="false"
+		data-draggable="false"
 		:component-data="{
 			...block.attributes,
 			...$attrs,

@@ -107,22 +107,21 @@ const store = useStore();
 const editor = ref(null) as unknown as Ref<HTMLElement>;
 const updateTracker = ref(() => {});
 const resizing = ref(false);
-const block = reactive(props.block);
 const guides = setGuides(props.target);
 let currentInstance = null as unknown as ComponentInternalInstance | null;
 const moving = ref(false);
 const preventCLick = ref(false);
 
 watchEffect(() => {
-	block.getStyle("top");
-	block.getStyle("left");
-	block.getStyle("bottom");
-	block.getStyle("right");
-	block.getStyle("position");
-	block.getParentBlock()?.getStyle("display");
-	block.getParentBlock()?.getStyle("justifyContent");
-	block.getParentBlock()?.getStyle("alignItems");
-	block.getParentBlock()?.getStyle("flexDirection");
+	props.block.getStyle("top");
+	props.block.getStyle("left");
+	props.block.getStyle("bottom");
+	props.block.getStyle("right");
+	props.block.getStyle("position");
+	props.block.getParentBlock()?.getStyle("display");
+	props.block.getParentBlock()?.getStyle("justifyContent");
+	props.block.getParentBlock()?.getStyle("alignItems");
+	props.block.getParentBlock()?.getStyle("flexDirection");
 	nextTick(() => {
 		updateTracker.value();
 	});
@@ -182,8 +181,8 @@ const handleMove = (ev: MouseEvent) => {
 		await nextTick();
 		const leftOffset = guides.getLeftPositionOffset();
 
-		block.setStyle("left", addPxToNumber(finalLeft + leftOffset));
-		block.setStyle("top", addPxToNumber(startTop + movementY));
+		props.block.setStyle("left", addPxToNumber(finalLeft + leftOffset));
+		props.block.setStyle("top", addPxToNumber(startTop + movementY));
 		mouseMoveEvent.preventDefault();
 		preventCLick.value = true;
 	};
@@ -244,7 +243,7 @@ const createComponent = createResource({
 
 const createComponentHandler = ({ close }: { close: () => void }) => {
 	createComponent.submit({
-		block: block,
+		block: props.block,
 		component_name: componentProperties.value.componentName,
 		is_dynamic: componentProperties.value.isDynamicComponent,
 	});
