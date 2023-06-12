@@ -69,7 +69,6 @@ import {
 	getCurrentInstance,
 	nextTick,
 	onMounted,
-	reactive,
 	ref,
 	watch,
 	watchEffect,
@@ -160,7 +159,7 @@ const handleClick = (ev: MouseEvent) => {
 };
 
 const handleMove = (ev: MouseEvent) => {
-	if (!movable || props.block.isRoot()) return;
+	if (!movable.value || props.block.isRoot()) return;
 	const target = ev.target as HTMLElement;
 	const startX = ev.clientX;
 	const startY = ev.clientY;
