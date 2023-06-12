@@ -69,3 +69,5 @@ declare interface ComponentData {
 }
 
 declare type HashString = `#${string}`;
+
+declare type BuilderMode = 'select' | 'text' | 'container' | 'image';
