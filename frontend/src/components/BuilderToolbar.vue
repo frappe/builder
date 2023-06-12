@@ -16,7 +16,7 @@
 					{ mode: 'image', icon: 'image' },
 				] as { 'mode': BuilderMode; 'icon': string }[]"
 				:icon="mode.icon"
-				class="!text-gray-700 dark:!text-gray-200 hover:dark:bg-slate-800 dark:focus:bg-zinc-800 active:dark:bg-zinc-500"
+				class="!text-gray-700 dark:bg-transparent dark:!text-gray-200 hover:dark:bg-zinc-800 focus:dark:bg-zinc-700 active:dark:bg-zinc-700"
 				@click="store.builderState.mode = mode.mode"
 				:active="store.builderState.mode === mode.mode"></Button>
 		</div>
