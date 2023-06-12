@@ -10,7 +10,7 @@ const useStore = defineStore("store", {
 			selectedBlocks: <Block[]>[],
 			editableBlock: <Block | null>null,
 			activeBreakpoint: "desktop",
-			mode: "select",
+			mode: <BuilderMode>"select",
 			blocks: <Block[]>[
 				new Block({
 					element: "div",
@@ -242,7 +242,7 @@ const useStore = defineStore("store", {
 			this.clearBlocks();
 			this.pushBlocks(page.blocks);
 			this.pageName = page.page_name;
-			this.route = page.route || '/' + page.page_name.toLowerCase().replace(/ /g, '-');
+			this.route = page.route || "/" + page.page_name.toLowerCase().replace(/ /g, "-");
 			this.builderState.selectedPage = page.name;
 			// localStorage.setItem("selectedPage", page.name);
 		},
