@@ -2,6 +2,7 @@
 	<div
 		class="editor fixed z-[19] box-content select-none border-[1px] border-blue-400"
 		ref="editor"
+		v-show="!store.canvas.scaling && !store.canvas.panning"
 		@click.stop="handleClick"
 		@mousedown.stop.prevent="handleMove"
 		@contextmenu.prevent="showContextMenu"
