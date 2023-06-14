@@ -31,12 +31,6 @@ const routes = [
 		name: "builder",
 		beforeEnter: validateVisit,
 		component: () => import("@/pages/PageBuilder.vue"),
-	},
-	{
-		path: "/builder/:pageId/settings",
-		name: "page-settings",
-		beforeEnter: validateVisit,
-		component: () => import("@/pages/PageSettings.vue"),
 	}
 ];
 
