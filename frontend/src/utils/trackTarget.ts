@@ -1,6 +1,7 @@
 import { useElementBounding, useMutationObserver } from "@vueuse/core";
 import { nextTick, reactive, watch } from "vue";
 import useStore from "../store";
+import { addPxToNumber } from "./helpers";
 const store = useStore();
 
 declare global {
@@ -12,8 +13,7 @@ declare global {
 window.observer = null;
 const updateList: (() => void)[] = [];
 
-// TODO: Remove padding from here or rename
-function trackTarget(target: HTMLElement, host: HTMLElement, padding = 0) {
+function trackTarget(target: HTMLElement, host: HTMLElement) {
 	const targetBounds = reactive(useElementBounding(target));
 	const container = target.closest(".canvas-container");
 	// TODO: too much? find a better way to track changes
@@ -37,10 +37,10 @@ function trackTarget(target: HTMLElement, host: HTMLElement, padding = 0) {
 		});
 	}
 	watch(targetBounds, () => {
-		host.style.width = `${Math.floor(targetBounds.width - padding)}px`;
-		host.style.height = `${Math.floor(targetBounds.height - padding)}px`;
-		host.style.top = `${Math.floor(targetBounds.top + padding / 2)}px`;
-		host.style.left = `${Math.floor(targetBounds.left + padding / 2)}px`;
+		host.style.width = addPxToNumber(targetBounds.width - 1, false);
+		host.style.height = addPxToNumber(targetBounds.height - 1, false);
+		host.style.top = addPxToNumber(targetBounds.top, false);
+		host.style.left = addPxToNumber(targetBounds.left, false);
 	});
 
 	return targetBounds.update;
