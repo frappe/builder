@@ -13,7 +13,7 @@ from website_builder import __version__ as version
 
 def install_playwright():
 	python_path = os.path.join("..", "..", "env", "bin", "python")
-	print(subprocess.run(f"{python_path} -m playwright install", shell=True))
+	print(subprocess.run(f"{python_path} -m playwright install chromium", shell=True))
 
 
 class RunDevelopCommand(develop):
