@@ -45,8 +45,10 @@
 		<BlockEditor
 			v-if="!preview && component && store.builderState.mode !== 'container'"
 			v-show="
-				(block.isSelected() && breakpoint === store.builderState.activeBreakpoint) ||
-				(block.isHovered() && store.hoveredBreakpoint === breakpoint)
+				((block.isSelected() && breakpoint === store.builderState.activeBreakpoint) ||
+					(block.isHovered() && store.hoveredBreakpoint === breakpoint)) &&
+				!store.canvas.scaling &&
+				!store.canvas.panning
 			"
 			:resizable-x="!block.isRoot()"
 			:resizable-y="!block.isImage() && !block.isRoot()"

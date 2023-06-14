@@ -8,6 +8,7 @@ interface PanAndZoomProps {
 	translateX: number;
 	translateY: number;
 	scaling: boolean;
+	panning: boolean;
 }
 
 function setPanAndZoom(
@@ -28,8 +29,8 @@ function setPanAndZoom(
 		"wheel",
 		(e) => {
 			e.preventDefault();
+			clearTimeout(wheeling);
 			if (e.ctrlKey) {
-				clearTimeout(wheeling);
 				// Multiplying with 0.01 to make the zooming less sensitive
 				// Multiplying with scale to make the zooming feel consistent
 				props.scaling = true;
@@ -59,16 +60,17 @@ function setPanAndZoom(
 					props.translateX += diffX / scale;
 					props.translateY += diffY / scale;
 				});
-
-				wheeling = setTimeout(() => {
-					props.scaling = false;
-				}, 500);
 			} else {
+				props.panning = true;
 				pinchPointSet = false;
 				// Dividing with scale to make the panning feel consistent
 				props.translateX -= (e.deltaX * 2) / props.scale;
 				props.translateY -= (e.deltaY * 2) / props.scale;
 			}
+			wheeling = setTimeout(() => {
+				props.scaling = false;
+				props.panning = false;
+			}, 200);
 		},
 		{ passive: false }
 	);
