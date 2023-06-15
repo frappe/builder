@@ -1,438 +1,288 @@
 <template>
-	<div v-if="store.builderState.selectedBlock">
-		<div>
-			<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Background Color</h3>
-			<ul class="flex flex-wrap">
-				<li v-for="color in store.pastelCssColors" :key="color" class="mb-2 mr-2 last:mr-0">
-					<a @click="setBgColor(color)" class="cursor-pointer text-base hover:underline">
+	<div v-if="selectedBlock" class="flex flex-col">
+		<BLockLayoutHandler :block="selectedBlock" v-if="selectedBlock"></BLockLayoutHandler>
+		<BlockPositionHandler :block="selectedBlock" v-if="selectedBlock"></BlockPositionHandler>
+
+		<InlineInput :modelValue="blockStyles.background" @update:modelValue="setBgColor" class="mt-10">
+			Background
+		</InlineInput>
+		<div class="mt-3">
+			<ul class="flex flex-wrap gap-2">
+				<li v-for="color in store.pastelCssColors" :key="color">
+					<a @click="setBgColor(color as HashString)" class="cursor-pointer text-base hover:underline">
 						<div class="h-4 w-4 rounded-md shadow-sm" :style="'background:' + color" />
 					</a>
 				</li>
 			</ul>
 		</div>
-		<InlineInput :value="blockStyles.background" @update-value="setBgColor">Background</InlineInput>
-		<div v-if="store.builderState.selectedBlock && !store.builderState.selectedBlock.isImage()" class="mt-5">
-			<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Text Color</h3>
-			<ul class="flex flex-wrap">
-				<li v-for="color in store.textColors" :key="color" class="mb-2 mr-2 last:mr-0">
+
+		<InlineInput
+			:modelValue="blockStyles.color"
+			@update:modelValue="(color) => (blockStyles.color = color)"
+			class="mt-8">
+			Text Color
+		</InlineInput>
+		<div v-if="selectedBlock && !selectedBlock.isImage()">
+			<ul class="mt-3 flex flex-wrap gap-2">
+				<li v-for="color in store.textColors" :key="color">
 					<a @click="blockStyles.color = color" class="cursor-pointer text-base hover:underline">
 						<div class="h-4 w-4 rounded-md shadow-sm" :style="'background-color:' + color" />
 					</a>
 				</li>
 			</ul>
 		</div>
-		<InlineInput :value="blockStyles.color" @update-value="(color) => (blockStyles.color = color)">
-			Text Color
-		</InlineInput>
-
-		<h3 v-if="store.builderState.selectedBlock" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">
-			Position
-		</h3>
-		<!-- position with options [absolute, relative, static]-->
+		<h3 v-if="selectedBlock" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Dimension</h3>
 		<InlineInput
-			v-if="store.builderState.selectedBlock"
-			:value="blockStyles.position || 'static'"
-			type="select"
-			:options="['static', 'relative', 'absolute', 'fixed', 'sticky']"
-			@update-value="(val) => (blockStylesObj.position = val)">
-			Position
-		</InlineInput>
-		<InlineInput
-			v-if="store.builderState.selectedBlock"
-			:value="blockStyles.top || 'unset'"
-			@update-value="(val) => (blockStylesObj.top = val)">
-			Top
-		</InlineInput>
-		<InlineInput
-			v-if="store.builderState.selectedBlock"
-			:value="blockStyles.right || 'unset'"
-			@update-value="(val) => (blockStylesObj.right = val)">
-			Right
-		</InlineInput>
-		<InlineInput
-			v-if="store.builderState.selectedBlock"
-			:value="blockStyles.bottom || 'unset'"
-			@update-value="(val) => (blockStylesObj.bottom = val)">
-			Bottom
-		</InlineInput>
-		<InlineInput
-			v-if="store.builderState.selectedBlock"
-			:value="blockStyles.left || 'unset'"
-			@update-value="(val) => (blockStylesObj.left = val)">
-			Left
-		</InlineInput>
-
-		<h3 v-if="store.builderState.selectedBlock" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">
-			Dimension
-		</h3>
-		<InlineInput
-			v-if="store.builderState.selectedBlock"
-			:value="blockStyles.height || 'unset'"
-			@update-value="(val) => (blockStylesObj.height = val)">
+			v-if="selectedBlock"
+			:modelValue="blockStyles.height || 'unset'"
+			@update:modelValue="(val) => (blockStylesObj.height = val)">
 			Height
 		</InlineInput>
 		<InlineInput
-			v-if="store.builderState.selectedBlock"
-			:value="blockStyles.width || 'unset'"
-			@update-value="(val) => (blockStylesObj.width = val)">
+			v-if="selectedBlock"
+			:modelValue="blockStyles.width || 'unset'"
+			@update:modelValue="(val) => (blockStylesObj.width = val)">
 			Width
 		</InlineInput>
 		<InlineInput
-			v-if="store.builderState.selectedBlock"
-			:value="blockStyles.minWidth || 'unset'"
-			@update-value="(val) => (blockStylesObj.minWidth = val)">
+			v-if="selectedBlock"
+			:modelValue="blockStyles.minWidth || 'unset'"
+			@update:modelValue="(val) => (blockStylesObj.minWidth = val)">
 			Min Width
 		</InlineInput>
 		<InlineInput
-			v-if="store.builderState.selectedBlock"
-			:value="blockStyles.maxWidth || 'unset'"
-			@update-value="(val) => (blockStylesObj.maxWidth = val)">
+			v-if="selectedBlock"
+			:modelValue="blockStyles.maxWidth || 'unset'"
+			@update:modelValue="(val) => (blockStylesObj.maxWidth = val)">
 			Max Width
 		</InlineInput>
 		<InlineInput
-			v-if="store.builderState.selectedBlock"
-			:value="blockStyles.minHeight || 'unset'"
-			@update-value="(val) => (blockStylesObj.minHeight = val)">
+			v-if="selectedBlock"
+			:modelValue="blockStyles.minHeight || 'unset'"
+			@update:modelValue="(val) => (blockStylesObj.minHeight = val)">
 			Min Height
 		</InlineInput>
 		<InlineInput
-			v-if="store.builderState.selectedBlock"
-			:value="blockStyles.maxHeight || 'unset'"
-			@update-value="(val) => (blockStylesObj.maxHeight = val)">
+			v-if="selectedBlock"
+			:modelValue="blockStyles.maxHeight || 'unset'"
+			@update:modelValue="(val) => (blockStylesObj.maxHeight = val)">
 			Max Height
 		</InlineInput>
 		<InlineInput
-			v-if="
-				(store.builderState.selectedBlock && store.builderState.selectedBlock.isContainer()) ||
-				store.builderState.selectedBlock.isButton()
-			"
-			:value="blockStyles.margin"
-			@update-value="(val) => (blockStylesObj.margin = val)">
+			v-if="(selectedBlock && selectedBlock.isContainer()) || selectedBlock.isButton()"
+			:modelValue="blockStyles.margin"
+			@update:modelValue="(val) => (blockStylesObj.margin = val)">
 			Margin
 		</InlineInput>
-
 		<h3
-			v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isContainer()"
-			class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">
-			Layout
-		</h3>
-		<InlineInput
-			v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isContainer()"
-			:value="blockStyles.display || 'block'"
-			type="select"
-			:options="[
-				{ label: 'Block', value: 'block' },
-				{ label: 'Stack', value: 'flex' },
-				{ label: 'Grid', value: 'grid' },
-			]"
-			@update-value="setLayout">
-			Type
-		</InlineInput>
-		<InlineInput
-			v-if="
-				store.builderState.selectedBlock &&
-				store.builderState.selectedBlock.isContainer() &&
-				blockStyles.display === 'flex'
-			"
-			:value="blockStyles.flexDirection"
-			type="select"
-			:options="[
-				{ label: 'Horizontal', value: 'row' },
-				{ label: 'Vertical', value: 'column' },
-			]"
-			default="column"
-			@update-value="(val) => (blockStylesObj.flexDirection = val)">
-			Direction
-		</InlineInput>
-		<InlineInput
-			v-if="
-				store.builderState.selectedBlock &&
-				store.builderState.selectedBlock.isContainer() &&
-				blockStyles.display === 'flex'
-			"
-			:value="blockStyles.justifyContent"
-			type="select"
-			:options="[
-				{
-					label: blockStyles.flexDirection === 'row' ? 'Start' : 'Top',
-					value: 'flex-start',
-				},
-				{
-					label: blockStyles.flexDirection === 'row' ? 'Center' : 'Middle',
-					value: 'center',
-				},
-				{
-					label: blockStyles.flexDirection === 'row' ? 'End' : 'Bottom',
-					value: 'flex-end',
-				},
-				{ label: 'Space Between', value: 'space-between' },
-				{ label: 'Space Around', value: 'space-around' },
-				{ label: 'Space Evenly', value: 'space-evenly' },
-			]"
-			@update-value="(val) => (blockStylesObj.justifyContent = val)">
-			Distribute
-		</InlineInput>
-		<InlineInput
-			v-if="
-				store.builderState.selectedBlock &&
-				store.builderState.selectedBlock.isContainer() &&
-				blockStyles.display === 'flex'
-			"
-			:value="blockStyles.alignItems"
-			type="select"
-			:options="[
-				{
-					label: blockStyles.flexDirection === 'column' ? 'Start' : 'Top',
-					value: 'flex-start',
-				},
-				{
-					label: blockStyles.flexDirection === 'column' ? 'Center' : 'Middle',
-					value: 'center',
-				},
-				{
-					label: blockStyles.flexDirection === 'column' ? 'End' : 'Bottom',
-					value: 'flex-end',
-				},
-			]"
-			@update-value="(val) => (blockStylesObj.alignItems = val)">
-			Align
-		</InlineInput>
-		<InlineInput
-			v-if="
-				store.builderState.selectedBlock &&
-				store.builderState.selectedBlock.isContainer() &&
-				blockStyles.display === 'flex'
-			"
-			:value="blockStyles.flexWrap || 'nowrap'"
-			type="select"
-			:options="[
-				{ label: 'No Wrap', value: 'nowrap' },
-				{ label: 'Wrap', value: 'wrap' },
-			]"
-			default="wrap"
-			@update-value="(val) => (blockStylesObj.flexWrap = val)">
-			Wrap
-		</InlineInput>
-		<InlineInput
-			v-if="
-				store.builderState.selectedBlock &&
-				store.builderState.selectedBlock.isContainer() &&
-				blockStyles.display === 'flex'
-			"
-			type="text"
-			:value="blockStyles.gap"
-			@update-value="(val) => (blockStylesObj.gap = val)">
-			Gap
-		</InlineInput>
-		<!-- flex basis -->
-		<InlineInput
-			v-if="
-				store.builderState.selectedBlock &&
-				store.builderState.selectedBlock.isContainer() &&
-				blockStyles.display === 'flex'
-			"
-			type="text"
-			:value="blockStyles.flexBasis"
-			@update-value="(val) => (blockStylesObj.flexBasis = val)">
-			Basis
-		</InlineInput>
-		<h3
-			v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isText()"
+			v-if="selectedBlock && selectedBlock.isText()"
 			class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">
 			Text
 		</h3>
 		<InlineInput
-			v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isText()"
-			:value="blockStyles.textAlign || 'left'"
+			v-if="selectedBlock && selectedBlock.isText()"
+			:modelValue="blockStyles.textAlign || 'left'"
 			type="select"
 			:options="['left', 'center', 'right', 'justify']"
-			@update-value="(val) => (blockStylesObj.textAlign = val)">
+			@update:modelValue="(val) => (blockStylesObj.textAlign = val)">
 			Align
 		</InlineInput>
 		<InlineInput
-			v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isText()"
-			:value="blockStyles.fontSize"
-			@update-value="(val) => (blockStylesObj.fontSize = val)">
+			v-if="selectedBlock && selectedBlock.isText()"
+			:modelValue="blockStyles.fontSize"
+			@update:modelValue="(val) => (blockStylesObj.fontSize = val)">
 			Size
 		</InlineInput>
 		<InlineInput
-			v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isText()"
-			:value="blockStyles.letterSpacing"
-			@update-value="(val) => (blockStylesObj.letterSpacing = val)">
+			v-if="selectedBlock && selectedBlock.isText()"
+			:modelValue="blockStyles.letterSpacing"
+			@update:modelValue="(val) => (blockStylesObj.letterSpacing = val)">
 			Spacing
 		</InlineInput>
 		<InlineInput
 			type="autocomplete"
 			:options="fontListNames"
-			v-if="
-				store.builderState.selectedBlock &&
-				(store.builderState.selectedBlock.isText() || store.builderState.selectedBlock.isContainer())
-			"
-			:value="blockStyles.fontFamily || 'Inter'"
-			@update-value="(val) => setFont(val)">
+			v-if="selectedBlock && (selectedBlock.isText() || selectedBlock.isContainer())"
+			:modelValue="blockStyles.fontFamily || 'Inter'"
+			@update:modelValue="(val) => setFont(val)">
 			Family
 		</InlineInput>
 		<InlineInput
-			v-if="
-				store.builderState.selectedBlock &&
-				(store.builderState.selectedBlock.isText() || store.builderState.selectedBlock.isContainer())
-			"
-			:value="blockStyles.fontWeight"
+			v-if="selectedBlock && (selectedBlock.isText() || selectedBlock.isContainer())"
+			:modelValue="blockStyles.fontWeight"
 			type="select"
-			:options="getFontWeightOptions(blockStyles.fontFamily)"
-			@update-value="(val) => (blockStylesObj.fontWeight = val)">
+			:options="getFontWeightOptions(blockStyles.fontFamily as string || 'Inter')"
+			@update:modelValue="(val) => (blockStylesObj.fontWeight = val)">
 			Weight
 		</InlineInput>
 		<InlineInput
-			v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isText()"
-			:value="blockStyles.lineHeight"
-			@update-value="(val) => (blockStylesObj.lineHeight = val)">
+			v-if="selectedBlock && selectedBlock.isText()"
+			:modelValue="blockStyles.lineHeight"
+			@update:modelValue="(val) => (blockStylesObj.lineHeight = val)">
 			Line
 		</InlineInput>
 		<InlineInput
-			v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isLink()"
-			:value="store.builderState.selectedBlock.attributes.href"
-			@update-value="(val) => (store.builderState.selectedBlock.attributes.href = val)">
+			v-if="selectedBlock && selectedBlock.isLink()"
+			:modelValue="selectedBlock.attributes.href"
+			@update:modelValue="(val) => (selectedBlock.attributes.href = val)">
 			Link
 		</InlineInput>
-		<h3 v-if="store.builderState.selectedBlock" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">
-			Options
-		</h3>
+		<h3 v-if="selectedBlock" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Options</h3>
 		<InlineInput
-			v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isImage()"
-			:value="store.builderState.selectedBlock.attributes.src"
-			@update-value="(val) => (store.builderState.selectedBlock.attributes.src = val)">
+			v-if="selectedBlock && selectedBlock.isImage()"
+			:modelValue="selectedBlock.attributes.src"
+			@update:modelValue="(val) => (selectedBlock.attributes.src = val)">
 			Image Source
 		</InlineInput>
 		<InlineInput
-			v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isButton()"
-			:value="store.builderState.selectedBlock.attributes.onclick"
-			@update-value="(val) => (store.builderState.selectedBlock.attributes.onclick = val)">
+			v-if="selectedBlock && selectedBlock.isButton()"
+			:modelValue="selectedBlock.attributes.onclick"
+			@update:modelValue="(val) => (selectedBlock.attributes.onclick = val)">
 			Action
 		</InlineInput>
 		<InlineInput
-			v-if="store.builderState.selectedBlock.element"
-			:value="store.builderState.selectedBlock.element"
+			v-if="selectedBlock.element"
+			:modelValue="selectedBlock.element"
 			type="select"
 			:options="['span', 'div', 'section', 'button', 'p', 'h1', 'h2', 'h3', 'a']"
-			@update-value="(val) => (store.builderState.selectedBlock.element = val)">
+			@update:modelValue="(val) => (selectedBlock.element = val)">
 			Tag
 		</InlineInput>
 
 		<InlineInput
-			v-if="
-				store.builderState.selectedBlock &&
-				store.builderState.selectedBlock.isContainer() &&
-				blockStyles.display === 'grid'
-			"
+			v-if="selectedBlock && selectedBlock.isContainer() && blockStyles.display === 'grid'"
 			type="number"
-			:value="blockStyles.gridTemplateRows"
-			@update-value="(val) => (blockStylesObj.gridTemplateRows = val)">
+			:modelValue="blockStyles.gridTemplateRows"
+			@update:modelValue="(val) => (blockStylesObj.gridTemplateRows = val)">
 			Rows
 		</InlineInput>
 		<InlineInput
-			v-if="
-				store.builderState.selectedBlock &&
-				store.builderState.selectedBlock.isContainer() &&
-				blockStyles.display === 'grid'
-			"
+			v-if="selectedBlock && selectedBlock.isContainer() && blockStyles.display === 'grid'"
 			type="number"
-			:value="blockStyles.gridTemplateColumns"
-			@update-value="(val) => (blockStylesObj.gridTemplateColumns = val)">
+			:modelValue="blockStyles.gridTemplateColumns"
+			@update:modelValue="(val) => (blockStylesObj.gridTemplateColumns = val)">
 			Columns
 		</InlineInput>
 		<InlineInput
-			v-if="
-				store.builderState.selectedBlock &&
-				store.builderState.selectedBlock.isContainer() &&
-				blockStyles.display === 'grid'
-			"
-			:value="blockStyles.gridGap"
-			@update-value="(val) => (blockStylesObj.gridGap = val)">
+			v-if="selectedBlock && selectedBlock.isContainer() && blockStyles.display === 'grid'"
+			:modelValue="blockStyles.gridGap"
+			@update:modelValue="(val) => (blockStylesObj.gridGap = val)">
 			Gap
 		</InlineInput>
 		<InlineInput
-			v-if="
-				store.builderState.selectedBlock &&
-				store.builderState.selectedBlock.isContainer() &&
-				blockStyles.display === 'grid'
-			"
-			:value="blockStyles.gridRowGap"
-			@update-value="(val) => (blockStylesObj.gridRowGap = val)">
+			v-if="selectedBlock && selectedBlock.isContainer() && blockStyles.display === 'grid'"
+			:modelValue="blockStyles.gridRowGap"
+			@update:modelValue="(val) => (blockStylesObj.gridRowGap = val)">
 			Row Gap
 		</InlineInput>
 		<!-- overflow -->
 		<InlineInput
-			v-if="store.builderState.selectedBlock && store.builderState.selectedBlock.isContainer()"
+			v-if="selectedBlock && selectedBlock.isContainer()"
 			type="select"
 			:options="['visible', 'hidden', 'scroll']"
-			:value="blockStyles.overflow"
-			@update-value="(val) => (blockStyles.overflow = val)">
+			:modelValue="blockStyles.overflow"
+			@update:modelValue="(val) => (blockStyles.overflow = val)">
 			Overflow
 		</InlineInput>
 
-		<h3 v-if="store.builderState.selectedBlock" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">
-			RAW Styles
-		</h3>
-		<Input
-			type="textarea"
-			class="rounded-md text-sm text-gray-800 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700"
-			:modelValue="JSON.stringify(store.builderState.selectedBlock.rawStyles, null, 2)"
-			@update:modelValue="(val) => (store.builderState.selectedBlock.rawStyles = JSON.parse(val))" />
+		<h3 v-if="selectedBlock" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">RAW Styles</h3>
+		<div id="editor" class="border border-gray-200 dark:border-zinc-800" />
 	</div>
 </template>
-<script setup>
+<script setup lang="ts">
 import useStore from "@/store";
+import Block from "@/utils/block";
 import { setFont as _setFont, fontListNames, getFontWeightOptions } from "@/utils/fontManager";
-import { Input } from "frappe-ui";
-import { computed } from "vue";
+import { PropType, computed, onMounted, watch, watchEffect } from "vue";
+import BlockPositionHandler from "./BlockPositionHandler.vue";
+import BLockLayoutHandler from "./BlockLayoutHandler.vue";
 import InlineInput from "./InlineInput.vue";
+import { useDark } from "@vueuse/core";
+
+const isDark = useDark();
+
+import ace from "ace-builds";
+import "ace-builds/src-noconflict/mode-json";
+import "ace-builds/src-noconflict/theme-chrome";
+import "ace-builds/src-noconflict/theme-monokai";
 
 const store = useStore();
 
+const props = defineProps({
+	selectedBlock: {
+		type: Object as PropType<Block>,
+		required: true,
+	},
+});
+
 // TODO: Temporary for correctness, remove when we have a better way to handle this
 const blockStylesObj = computed(() => {
-	let styleObj = store.builderState.selectedBlock.baseStyles;
+	let styleObj = props.selectedBlock.baseStyles;
 	if (store.builderState.activeBreakpoint === "mobile") {
-		styleObj = store.builderState.selectedBlock.mobileStyles;
+		styleObj = props.selectedBlock.mobileStyles;
 	} else if (store.builderState.activeBreakpoint === "tablet") {
-		styleObj = store.builderState.selectedBlock.tabletStyles;
+		styleObj = props.selectedBlock.tabletStyles;
 	}
 	return styleObj;
 });
 
 const blockStyles = computed(() => {
-	let styleObj = store.builderState.selectedBlock.baseStyles;
+	let styleObj = props.selectedBlock.baseStyles;
 	if (store.builderState.activeBreakpoint === "mobile") {
-		styleObj = { ...styleObj, ...store.builderState.selectedBlock.mobileStyles };
+		styleObj = { ...styleObj, ...props.selectedBlock.mobileStyles };
 	} else if (store.builderState.activeBreakpoint === "tablet") {
-		styleObj = { ...styleObj, ...store.builderState.selectedBlock.tabletStyles };
+		styleObj = { ...styleObj, ...props.selectedBlock.tabletStyles };
 	}
 	return styleObj;
 });
 
-const setBgColor = (color) => {
-	store.builderState.selectedBlock.setStyle("background", color);
+const setBgColor = (color: HashString) => {
+	props.selectedBlock.setStyle("background", color);
 };
 
-const setLayout = (layout) => {
-	let selectedBlock = store.builderState.selectedBlock;
-	selectedBlock.setStyle("display", layout);
-	if (layout === "flex") {
-		selectedBlock.setStyle("flexDirection", selectedBlock.getStyle("flexDirection") || "row");
-		selectedBlock.setStyle("flexWrap", selectedBlock.getStyle("flexWrap") || "wrap");
-		selectedBlock.setStyle("justifyContent", selectedBlock.getStyle("justifyContent") || "flex-start");
-		selectedBlock.setStyle("alignItems", selectedBlock.getStyle("alignItems") || "flex-start");
-	} else if (layout === "grid") {
-		// store.builderState.selectedBlock.setStyle("gridTemplateColumns", "repeat(3, 1fr)");
-		// store.builderState.selectedBlock.setStyle("gridTemplateRows", "repeat(3, 1fr)");
-		// store.builderState.selectedBlock.setStyle("gridGap", "10px");
-	}
-};
-
-const setFont = (font) => {
+const setFont = (font: { value: string }) => {
 	_setFont(font.value).then(() => {
-		store.builderState.selectedBlock.setStyle("fontFamily", font.value);
+		props.selectedBlock.setStyle("fontFamily", font.value);
 	});
 };
+
+onMounted(() => {
+	const editor = ace.edit("editor");
+	editor.setOptions({
+		fontSize: "12px",
+		useWorker: false,
+		showGutter: false,
+	});
+	editor.setTheme("ace/theme/chrome");
+	editor.session.setMode("ace/mode/json");
+	editor.setValue(JSON.stringify(props.selectedBlock.rawStyles, null, 2));
+	editor.on("blur", () => {
+		const value = editor.getValue();
+		try {
+			const parsed = JSON.parse(value);
+			props.selectedBlock.rawStyles = parsed;
+		} catch (e) {
+			// console.error(e);
+		}
+	});
+
+	watch(props, () => {
+		editor.setValue(JSON.stringify(props.selectedBlock.rawStyles, null, 2));
+	});
+
+	watchEffect(() => {
+		if (isDark.value) {
+			editor.setTheme("ace/theme/monokai");
+		} else {
+			editor.setTheme("ace/theme/chrome");
+		}
+	});
+});
 </script>
+<style scoped>
+:deep(.ace_editor) {
+	height: 200px;
+	width: 100%;
+	border-radius: 5px;
+}
+</style>
