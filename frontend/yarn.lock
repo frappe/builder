@@ -527,6 +527,11 @@
   dependencies:
     vue-demi "*"
 
+ace-builds@^1.22.1:
+  version "1.22.1"
+  resolved "https://registry.yarnpkg.com/ace-builds/-/ace-builds-1.22.1.tgz#3d765d1cfffc79226e372b6353750fd997816154"
+  integrity sha512-o5RGTPBIiRxguWNors3pT6KuLqj0a2NvNLoqir7/2LLiFm34PJV3BMq4sl9kjPayo4+lmd99m6zAq+XPdhyHQA==
+
 acorn-jsx@^5.3.2:
   version "5.3.2"
   resolved "https://registry.npmjs.org/acorn-jsx/-/acorn-jsx-5.3.2.tgz"

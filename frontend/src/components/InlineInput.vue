@@ -5,14 +5,14 @@
 		</span>
 		<Input
 			:type="type"
-			:value="value"
+			:value="modelValue"
 			:options="options"
 			v-if="type != 'autocomplete'"
 			@change="handleChange"
 			class="w-[150px] rounded-md text-sm text-gray-800 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
 		<Autocomplete
 			v-if="type == 'autocomplete'"
-			:value="value"
+			:value="modelValue"
 			:options="options.map((option) => ({ label: option, value: option }))"
 			@change="handleChange"
 			class="!dark:text-zinc-200 !dark:focus:bg-zinc-700 w-[150px] rounded-md text-sm text-gray-800 dark:bg-zinc-800 [&>div>button]:dark:!bg-zinc-800 [&>div>button]:dark:!text-zinc-200" />
@@ -22,7 +22,7 @@
 import { Autocomplete, Input } from "frappe-ui";
 
 defineProps({
-	value: {
+	modelValue: {
 		type: [String, Number],
 		default: "",
 	},
@@ -40,9 +40,9 @@ defineProps({
 	},
 });
 
-const emit = defineEmits(["updateValue"]);
+const emit = defineEmits(["update:modelValue"]);
 
 const handleChange = (value: string | number | null) => {
-	emit("updateValue", value);
+	emit("update:modelValue", value);
 };
 </script>
