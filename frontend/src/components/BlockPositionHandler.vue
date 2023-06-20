@@ -8,8 +8,8 @@
 			class="col-span-1 col-start-2 h-8 w-16 self-end justify-self-center rounded-md text-center text-xs text-gray-800 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
 		<Input
 			type="text"
-			placeholder="right"
-			v-model="right"
+			placeholder="left"
+			v-model="left"
 			class="col-span-1 col-start-1 h-8 w-16 self-center justify-self-end rounded-md text-center text-xs text-gray-800 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
 		<div
 			class="grid-col-3 grid h-16 w-16 grid-rows-3 gap-1 self-center justify-self-center rounded bg-gray-50 p-2 dark:bg-zinc-800">
@@ -26,8 +26,8 @@
 		</div>
 		<Input
 			type="text"
-			placeholder="left"
-			v-model="left"
+			placeholder="right"
+			v-model="right"
 			class="col-span-1 col-start-3 h-8 w-16 self-center justify-self-start rounded-md text-center text-xs text-gray-800 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
 		<Input
 			type="text"
