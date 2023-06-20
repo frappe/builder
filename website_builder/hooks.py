@@ -1,9 +1,9 @@
 from . import __version__ as app_version
 
-app_name = "website_builder"
-app_title = "Website Builder"
+app_name = "studio"
+app_title = "Frappe Studio"
 app_publisher = "Frappe Technologies Pvt Ltd"
-app_description = "A simple website builder"
+app_description = "An easier way to build web pages for your needs!"
 app_email = "suraj@frappe.io"
 app_license = "MIT"
 

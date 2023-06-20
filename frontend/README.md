@@ -1,3 +1,3 @@
-# Website Builder
+# Frappe Studio
 
-A simple website builder!
+An easier way to build web pages for your needs!
