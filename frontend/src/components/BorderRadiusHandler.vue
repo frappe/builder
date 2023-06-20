@@ -17,9 +17,9 @@
 </template>
 <script setup lang="ts">
 import { getNumberFromPx } from "@/utils/helpers";
+import { ref } from "vue";
 import useStore from "../store";
 import Block from "../utils/block";
-import { ref } from "vue";
 
 const store = useStore();
 const props = defineProps({

@@ -60,8 +60,8 @@
 	</div>
 </template>
 <script setup lang="ts">
+import Block from "@/utils/block";
 import { vOnClickOutside } from "@vueuse/components";
-import { Dialog, Input, createResource } from "frappe-ui";
 import {
 	ComponentInternalInstance,
 	Ref,
@@ -74,8 +74,8 @@ import {
 	watchEffect,
 } from "vue";
 
-import Block from "@/utils/block";
 import { addPxToNumber, getNumberFromPx } from "@/utils/helpers";
+import { Dialog, Input, createResource } from "frappe-ui";
 import useStore from "../store";
 import setGuides from "../utils/guidesTracker";
 import trackTarget from "../utils/trackTarget";
