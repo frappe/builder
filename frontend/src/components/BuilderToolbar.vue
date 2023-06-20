@@ -2,8 +2,9 @@
 	<div class="toolbar flex h-14 items-center justify-center bg-white p-2 shadow-sm" ref="toolbar">
 		<div class="absolute left-3 flex items-center">
 			<router-link class="flex items-center" :to="{ name: 'home' }">
-				<img src="/favicon.png" alt="logo" class="h-6" />
-				<h1 class="ml-1 text-base text-gray-600 dark:text-gray-500">pages</h1>
+				<img src="/frappe_black.png" alt="logo" class="h-5 dark:hidden" />
+				<img src="/frappe_white.png" alt="logo" class="hidden h-5 dark:block" />
+				<h1 class="text-base text-gray-800 dark:text-gray-200">Studio</h1>
 			</router-link>
 		</div>
 		<div class="ml-10 flex gap-3">

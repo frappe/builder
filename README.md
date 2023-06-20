@@ -1,6 +1,6 @@
-## Website Builder
+# Frappe Studio
 
-A simple website builder for Frappe apps
+An easier way to build web pages for your needs!
 
 #### License
 
