@@ -6,6 +6,6 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { Toasts } from "frappe-ui";
 import { UseDark } from "@vueuse/components";
+import { Toasts } from "frappe-ui";
 </script>

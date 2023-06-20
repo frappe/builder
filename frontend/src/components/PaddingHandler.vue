@@ -117,8 +117,8 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { computed, ref, watchEffect } from "vue";
 import useStore from "../store";
-import { ref, computed, watchEffect } from "vue";
 import Block from "../utils/block";
 import { getNumberFromPx } from "../utils/helpers";
 const props = defineProps({

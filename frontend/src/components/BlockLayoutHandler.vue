@@ -164,10 +164,10 @@
 	<div class="mb-10"></div>
 </template>
 <script lang="ts" setup>
+import useStore from "@/store";
 import Block from "@/utils/block";
 import { computed } from "vue";
 import InlineInput from "./InlineInput.vue";
-import useStore from "@/store";
 
 const store = useStore();
 

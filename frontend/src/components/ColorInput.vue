@@ -19,7 +19,7 @@
 	</ColorPicker>
 </template>
 <script setup lang="ts">
-import { PropType, ref, watchEffect } from "vue";
+import { PropType } from "vue";
 import ColorPicker from "./ColorPicker.vue";
 
 const props = defineProps({

@@ -178,12 +178,12 @@
 import useStore from "@/store";
 import Block from "@/utils/block";
 import { setFont as _setFont, fontListNames, getFontWeightOptions } from "@/utils/fontManager";
+import { useDark } from "@vueuse/core";
 import { PropType, computed, onMounted, watch, watchEffect } from "vue";
-import BlockPositionHandler from "./BlockPositionHandler.vue";
 import BLockLayoutHandler from "./BlockLayoutHandler.vue";
+import BlockPositionHandler from "./BlockPositionHandler.vue";
 import ColorInput from "./ColorInput.vue";
 import InlineInput from "./InlineInput.vue";
-import { useDark } from "@vueuse/core";
 
 const isDark = useDark();
 
