@@ -15,22 +15,7 @@
 				</li>
 			</ul>
 		</div>
-
-		<InlineInput
-			:modelValue="blockStyles.color"
-			@update:modelValue="(color) => (blockStyles.color = color)"
-			class="mt-8">
-			Text Color
-		</InlineInput>
-		<div v-if="selectedBlock && !selectedBlock.isImage()">
-			<ul class="mt-3 flex flex-wrap gap-2">
-				<li v-for="color in store.textColors" :key="color">
-					<a @click="blockStyles.color = color" class="cursor-pointer text-base hover:underline">
-						<div class="h-4 w-4 rounded-md shadow-sm" :style="'background-color:' + color" />
-					</a>
-				</li>
-			</ul>
-		</div>
+		<ColorInput :value="blockStyles.color" @change="(val) => (blockStyles.color = val)"></ColorInput>
 		<h3 v-if="selectedBlock" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Dimension</h3>
 		<InlineInput
 			v-if="selectedBlock"
@@ -196,6 +181,7 @@ import { setFont as _setFont, fontListNames, getFontWeightOptions } from "@/util
 import { PropType, computed, onMounted, watch, watchEffect } from "vue";
 import BlockPositionHandler from "./BlockPositionHandler.vue";
 import BLockLayoutHandler from "./BlockLayoutHandler.vue";
+import ColorInput from "./ColorInput.vue";
 import InlineInput from "./InlineInput.vue";
 import { useDark } from "@vueuse/core";
 

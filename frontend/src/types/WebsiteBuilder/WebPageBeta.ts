@@ -1,4 +1,5 @@
-export interface WebPageBeta {
+
+export interface WebPageBeta{
 	creation: string
 	name: string
 	modified: string
@@ -10,7 +11,7 @@ export interface WebPageBeta {
 	parenttype?: string
 	idx?: number
 	/**	Page Name : Data	*/
-	page_name: string
+	page_name?: string
 	/**	Page Title : Data	*/
 	page_title?: string
 	/**	Route : Data	*/

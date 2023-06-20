@@ -1,30 +1,15 @@
 <template>
 	<Popover transition="default" placement="left" class="w-full" popoverClass="!min-w-fit !mr-[30px]">
 		<template #target="{ togglePopover, isOpen }">
-			<div class="mb-2 flex items-center justify-between">
-				<span class="inline-block text-[10px] font-medium text-gray-600 dark:text-zinc-400">
-					{{ label }}
-				</span>
-				<div class="relative w-2/3">
-					<div
-						class="absolute left-[5px] top-[4px] z-20 h-5 w-5 cursor-pointer rounded-md shadow-sm"
-						:style="{
-							background: modelValue || 'white',
-						}"
-						@click="
-							() => {
-								togglePopover();
-								setSelectorPosition();
-							}
-						"></div>
-					<Input
-						type="text"
-						:value="modelValue"
-						inputClass="pl-8 text-xs"
-						:placeholder="placeholder"
-						@change="setRGB" />
-				</div>
-			</div>
+			<slot
+				name="target"
+				:togglePopover="
+					() => {
+						togglePopover();
+						setSelectorPosition();
+					}
+				"
+				:isOpen="isOpen"></slot>
 		</template>
 		<template #body-main class="p-3">
 			<div ref="colorPicker" class="p-3">
@@ -47,7 +32,7 @@
 						:style="{
 							color: modelValue,
 							background: 'transparent',
-						}"></div>
+						} as StyleValue"></div>
 				</div>
 				<div
 					ref="hueMap"
@@ -88,9 +73,9 @@
 </template>
 <script setup lang="ts">
 import { HSVToHex, HexToHSV } from "@/utils/helpers";
-import { Input, Popover } from "frappe-ui";
-import { PropType, Ref, nextTick, ref } from "vue";
 import { clamp } from "@vueuse/core";
+import { Popover } from "frappe-ui";
+import { PropType, Ref, StyleValue, nextTick, ref } from "vue";
 
 const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;
 const colorMap = ref(null) as unknown as Ref<HTMLDivElement>;
@@ -98,16 +83,9 @@ const hueSelector = ref(null) as unknown as Ref<HTMLDivElement>;
 const colorSelector = ref(null) as unknown as Ref<HTMLDivElement>;
 
 const props = defineProps({
-	label: {
-		type: String,
-		default: "",
-	},
 	modelValue: {
-		type: String as PropType<HashString>,
-	},
-	placeholder: {
-		type: String,
-		default: "Set Color",
+		type: String as PropType<HashString | null>,
+		default: null,
 	},
 });
 const emit = defineEmits(["update:modelValue"]);
@@ -125,21 +103,16 @@ const colors = [
 	"#B34D4D",
 ];
 
-const setRGB = (rgb: HashString) => {
-	emit("update:modelValue", rgb);
-	setSelectorPosition();
-};
-
 const setColorSelectorPosition = () => {
 	const colorSelectorBounds = colorSelector.value.getBoundingClientRect();
 	let left = 0 - colorSelectorBounds.width / 2;
 	let top = 0 - colorSelectorBounds.height / 2;
-	if (props.modelValue) {
-		const { width, height } = colorMap.value.getBoundingClientRect();
-		const { s, v } = HexToHSV(props.modelValue as HashString);
-		left = (s / 100) * width + left;
-		top = ((100 - v) / 100) * height + top;
-	}
+	const color = props.modelValue || "#FFFFFF";
+	const { width, height } = colorMap.value.getBoundingClientRect();
+	const { s, v } = HexToHSV(color as HashString);
+	left = (s / 100) * width + left;
+	top = ((100 - v) / 100) * height + top;
+	debugger;
 	colorSelector.value.style.left = `${left}px`;
 	colorSelector.value.style.top = `${top}px`;
 };
@@ -147,13 +120,11 @@ const setColorSelectorPosition = () => {
 const setHueSelectorPosition = () => {
 	const hueSelectorBounds = hueSelector.value.getBoundingClientRect();
 	let left = 0 - hueSelectorBounds.width / 2;
-	if (props.modelValue) {
-		const { width } = hueMap.value.getBoundingClientRect();
-		const { h } = HexToHSV(props.modelValue as HashString);
-		hue.value = h;
-		left = (h / 360) * width + left;
-		hueSelector.value.style.left = `${left}px`;
-	}
+	const color = props.modelValue || "#FFFFFF";
+	const { width } = hueMap.value.getBoundingClientRect();
+	const { h } = HexToHSV(color as HashString);
+	hue.value = h;
+	left = (h / 360) * width + left;
 	hueSelector.value.style.left = `${left}px`;
 };
 
