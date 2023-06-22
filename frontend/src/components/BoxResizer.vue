@@ -87,7 +87,7 @@ const handleRightResize = (ev: MouseEvent) => {
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
 		// movement / scale * speed
 		const movement = (mouseMoveEvent.clientX - startX) / store.canvas.scale;
-		const finalWidth = guides.getFinalWidth(startWidth + movement);
+		const finalWidth = Math.abs(guides.getFinalWidth(startWidth + movement));
 
 		if (targetBlock.isText()) {
 			targetBlock.setStyle("fontSize", `${Math.round(finalWidth * 0.5)}px`);
@@ -97,8 +97,8 @@ const handleRightResize = (ev: MouseEvent) => {
 		if (mouseMoveEvent.shiftKey) {
 			const movementPercent = (movement / parentWidth) * 100;
 			const startWidthPercent = (startWidth / parentWidth) * 100;
-			const finalHeight = Math.round(startWidthPercent + movementPercent);
-			targetBlock.setStyle("width", `${finalHeight}%`);
+			const finalWidth = Math.abs(Math.round(startWidthPercent + movementPercent));
+			targetBlock.setStyle("width", `${finalWidth}%`);
 		} else {
 			targetBlock.setStyle("width", `${finalWidth}px`);
 		}
@@ -130,7 +130,7 @@ const handleBottomResize = (ev: MouseEvent) => {
 
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
 		const movement = (mouseMoveEvent.clientY - startY) / store.canvas.scale;
-		let finalHeight = guides.getFinalHeight(startHeight + movement);
+		let finalHeight = Math.abs(guides.getFinalHeight(startHeight + movement));
 
 		if (targetBlock.isText()) {
 			targetBlock.setStyle("fontSize", `${Math.round(finalHeight * 0.5)}px`);
