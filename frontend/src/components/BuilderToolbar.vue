@@ -173,7 +173,7 @@ function setEvents() {
 					styles: {
 						width: "100%",
 						height: "200px",
-						backgroundColor: getRandomColor(),
+						background: getRandomColor(),
 					} as BlockStyleMap,
 				};
 			}
@@ -184,13 +184,13 @@ function setEvents() {
 				`.canvas [data-block-id="${parentBlock.blockId}"]`
 			) as HTMLElement;
 			const parentOldPosition = parentBlock.getStyle("position");
-			parentBlock.setStyle("position", parentOldPosition || "relative");
+			parentBlock.setBaseStyle("position", parentOldPosition || "relative");
 			const parentElementBounds = parentElement.getBoundingClientRect();
 			let x = (ev.x - parentElementBounds.left) / store.canvas.scale;
 			let y = (ev.y - parentElementBounds.top) / store.canvas.scale;
-			childBlock.setStyle("position", "absolute");
-			childBlock.setStyle("top", addPxToNumber(y));
-			childBlock.setStyle("left", addPxToNumber(x));
+			childBlock.setBaseStyle("position", "absolute");
+			childBlock.setBaseStyle("top", addPxToNumber(y));
+			childBlock.setBaseStyle("left", addPxToNumber(x));
 
 			const mouseMoveHandler = (mouseMoveEvent: MouseEvent) => {
 				if (store.builderState.mode === "text") {
@@ -201,8 +201,8 @@ function setEvents() {
 					let height = (mouseMoveEvent.clientY - initialY) / store.canvas.scale;
 					width = clamp(width, 10, width);
 					height = clamp(height, 10, height);
-					childBlock.setStyle("width", addPxToNumber(width));
-					childBlock.setStyle("height", addPxToNumber(height));
+					childBlock.setBaseStyle("width", addPxToNumber(width));
+					childBlock.setBaseStyle("height", addPxToNumber(height));
 				}
 			};
 			document.addEventListener("mousemove", mouseMoveHandler);
@@ -216,10 +216,10 @@ function setEvents() {
 					if (store.builderState.mode === "text") {
 						return;
 					}
-					childBlock.setStyle("position", "static");
-					childBlock.setStyle("top", "auto");
-					childBlock.setStyle("left", "auto");
-					parentBlock.setStyle("position", parentOldPosition || "static");
+					childBlock.setBaseStyle("position", "static");
+					childBlock.setBaseStyle("top", "auto");
+					childBlock.setBaseStyle("left", "auto");
+					parentBlock.setBaseStyle("position", parentOldPosition || "static");
 				},
 				{ once: true }
 			);

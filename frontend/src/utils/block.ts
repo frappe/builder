@@ -106,6 +106,9 @@ class Block implements BlockOptions {
 		}
 		this.baseStyles[style] = value;
 	}
+	setBaseStyle(style: string, value: string | number) {
+		this.baseStyles[style] = value;
+	}
 	getStyle(style: string) {
 		const store = useStore();
 		if (store.builderState.activeBreakpoint === "mobile") {

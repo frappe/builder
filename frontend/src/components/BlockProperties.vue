@@ -5,10 +5,10 @@
 
 		<ColorInput
 			:value="blockStyles.background as HashString"
-			@change="(val) => (blockStyles.background = val)">
+			@change="(val) => (blockStylesObj.background = val)">
 			Background
 		</ColorInput>
-		<ColorInput :value="blockStyles.color as HashString" @change="(val) => (blockStyles.color = val)">
+		<ColorInput :value="blockStyles.color as HashString" @change="(val) => (blockStylesObj.color = val)">
 			Text
 		</ColorInput>
 		<h3 v-if="selectedBlock" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Dimension</h3>
