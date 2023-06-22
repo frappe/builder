@@ -215,4 +215,12 @@ const updateColor = () => {
 		emit("update:modelValue", HSVToHex(h, s, v));
 	});
 };
+
+watch(
+	() => props.modelValue,
+	(color) => {
+		setSelectorPosition(color);
+	},
+	{ immediate: true }
+);
 </script>

@@ -121,6 +121,8 @@ watchEffect(() => {
 	props.block.getParentBlock()?.getStyle("justifyContent");
 	props.block.getParentBlock()?.getStyle("alignItems");
 	props.block.getParentBlock()?.getStyle("flexDirection");
+	store.builderLayout.leftPanelWidth;
+	store.builderLayout.rightPanelWidth;
 	nextTick(() => {
 		updateTracker.value();
 	});

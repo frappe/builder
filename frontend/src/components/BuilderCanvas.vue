@@ -15,6 +15,7 @@
 			}">
 			<div class="absolute right-0 top-[-60px] flex rounded-md bg-white px-3 dark:bg-zinc-900">
 				<div
+					v-show="!store.canvas.scaling && !store.canvas.panning"
 					class="w-auto cursor-pointer p-2"
 					v-for="breakpoint in store.deviceBreakpoints"
 					:key="breakpoint.device"
@@ -29,7 +30,7 @@
 				</div>
 			</div>
 			<div
-				class="canvas relative ml-20 flex h-full rounded-md bg-white"
+				class="canvas relative ml-20 flex h-full rounded-md bg-white shadow-lg"
 				:style="{
 					background: store.canvas.background,
 					width: breakpoint.width + 'px',

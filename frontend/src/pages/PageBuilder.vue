@@ -49,7 +49,6 @@ document.addEventListener(
 
 onMounted(() => {
 	if (route.params.pageId && route.params.pageId !== "new") {
-		console.log(route.params.pageId);
 		setPage(route.params.pageId as string);
 	} else {
 		const createPageResource = createResource({
