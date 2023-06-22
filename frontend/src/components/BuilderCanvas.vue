@@ -8,7 +8,7 @@
 		<div class="overlay absolute" id="overlay" ref="overlay" />
 		<BlockSnapGuides />
 		<div
-			class="fixed flex"
+			class="fixed flex will-change-transform"
 			ref="canvas"
 			:style="{
 				transform: `scale(${store.canvas.scale}) translate(${store.canvas.translateX}px, ${store.canvas.translateY}px)`,
