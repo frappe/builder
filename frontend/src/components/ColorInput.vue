@@ -1,5 +1,5 @@
 <template>
-	<ColorPicker :modelValue="value" @update:model-value="(color) => emit('change', color)">
+	<ColorPicker :modelValue="value" @update:modelValue="(color) => emit('change', color)">
 		<template #target="{ togglePopover, isOpen }">
 			<div class="mt-5 flex items-center justify-between">
 				<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
@@ -14,10 +14,11 @@
 						}"></div>
 					<Input
 						type="text"
+						class="rounded-md text-sm text-gray-800 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700"
 						placeholder="Select Color"
 						inputClass="pl-8"
 						:value="value"
-						@change="emit('change')"></Input>
+						@change="(value) => emit('change', value)"></Input>
 				</div>
 			</div>
 		</template>

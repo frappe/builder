@@ -11,8 +11,8 @@
 				"
 				:isOpen="isOpen"></slot>
 		</template>
-		<template #body-main class="p-3">
-			<div ref="colorPicker" class="p-3">
+		<template #body>
+			<div ref="colorPicker" class="rounded-lg bg-white p-3 shadow-lg dark:bg-zinc-900">
 				<div
 					ref="colorMap"
 					:style="{
@@ -64,11 +64,11 @@
 						}"></div>
 				</div>
 				<div ref="colorPalette">
-					<div class="mt-3 flex flex-wrap gap-1">
+					<div class="mt-3 flex flex-wrap gap-1.5">
 						<div
 							v-for="color in colors"
 							:key="color"
-							class="h-4 w-4 cursor-pointer rounded-full shadow-sm"
+							class="h-3.5 w-3.5 cursor-pointer rounded-full shadow-sm"
 							@click="
 								() => {
 									setSelectorPosition(color);
