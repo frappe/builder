@@ -2,12 +2,13 @@
 	<div
 		class="editor fixed z-[19] box-content select-none border-[1px] border-blue-400"
 		ref="editor"
-		@click.stop="handleClick"
-		@mousedown.stop.prevent="handleMove"
+		@click="handleClick"
+		@dblclick="handleDoubleClick"
+		@mousedown.prevent="handleMove"
 		@contextmenu.prevent="showContextMenu"
 		:class="{
 			'cursor-grab': movable && !block.isRoot(),
-			'pointer-events-none': block.isHovered() && !block.isSelected(),
+			'pointer-events-none': (block.isHovered() && !block.isSelected()) || editable,
 		}">
 		<BoxResizer
 			v-if="block.isSelected() && target && !block.isRoot() && !editable"
@@ -151,16 +152,28 @@ const handleClick = (ev: MouseEvent) => {
 	const editorWrapper = editor.value;
 	editorWrapper.classList.add("pointer-events-none");
 	let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
-	// ignore draggable blocks, select the real element instead
-	while (element.classList.contains("block-draggable")) {
+	if (element.classList.contains("editor")) {
 		element.classList.remove("pointer-events-auto");
 		element.classList.add("pointer-events-none");
 		element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
 	}
 	element.click();
+	if (store.builderState.mode === "select") {
+		editorWrapper.classList.remove("pointer-events-none");
+		editorWrapper.classList.add("pointer-events-auto");
+	}
+};
+
+const handleDoubleClick = () => {
+	if (props.block.isText()) {
+		store.builderState.editableBlock = props.block;
+	}
 };
 
 const handleMove = (ev: MouseEvent) => {
+	if (store.builderState.mode === "text") {
+		store.builderState.editableBlock = props.block;
+	}
 	if (!movable.value || props.block.isRoot()) return;
 	const target = ev.target as HTMLElement;
 	const startX = ev.clientX;
