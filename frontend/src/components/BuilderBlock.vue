@@ -1,7 +1,7 @@
 <template>
 	<draggable
 		:list="block.children"
-		:sort="false"
+		:sort="true"
 		:disabled="preview"
 		:group="{ name: 'blocks' }"
 		item-key="blockId"
@@ -21,8 +21,6 @@
 			...{
 				'data-block-id': block.blockId,
 				contenteditable: block.isText() && block.isSelected() && isEditable,
-				'data-draggable': false,
-				draggable: false,
 				class: [
 					$attrs.class,
 					'__builder_component__',
@@ -62,7 +60,7 @@
 <script setup lang="ts">
 import Block from "@/utils/block";
 import { setFont } from "@/utils/fontManager";
-import { Ref, computed, nextTick, onMounted, ref } from "vue";
+import { Ref, computed, nextTick, onMounted, ref, watchEffect } from "vue";
 import draggable from "vuedraggable";
 import useStore from "../store";
 import BlockEditor from "./BlockEditor.vue";
@@ -163,6 +161,11 @@ const handleDoubleClick = () => {
 	store.builderState.editableBlock = null;
 	if (props.block.isText()) {
 		store.builderState.editableBlock = props.block;
+	}
+};
+
+watchEffect(() => {
+	if (isEditable.value) {
 		nextTick(() => {
 			const range = document.createRange();
 			range.selectNodeContents(component.value.targetDomElement);
@@ -171,5 +174,5 @@ const handleDoubleClick = () => {
 			selection?.addRange(range);
 		});
 	}
-};
+});
 </script>

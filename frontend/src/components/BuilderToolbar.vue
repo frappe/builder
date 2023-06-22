@@ -63,7 +63,7 @@
 import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
 import { addPxToNumber, getRandomColor } from "@/utils/helpers";
 import { UseDark } from "@vueuse/components";
-import { clamp } from "@vueuse/core";
+import { clamp, useEventListener } from "@vueuse/core";
 import { Popover, createDocumentResource, createResource } from "frappe-ui";
 import { Ref, onMounted, ref, watch, watchEffect } from "vue";
 import useStore from "../store";
@@ -117,13 +117,13 @@ onMounted(() => {
 
 function setEvents() {
 	const container = document.body.querySelector(".canvas-container") as HTMLElement;
-	container.addEventListener("mousedown", (ev: MouseEvent) => {
+	useEventListener(container, "mousedown", (ev: MouseEvent) => {
 		const initialX = ev.clientX;
 		const initialY = ev.clientY;
 		if (store.builderState.mode === "select") {
 			return;
 		} else {
-			ev.preventDefault();
+			ev.stopPropagation();
 			let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
 			let block = store.builderState.blocks[0];
 			if (element) {
@@ -199,14 +199,15 @@ function setEvents() {
 					mouseMoveEvent.preventDefault();
 					let width = (mouseMoveEvent.clientX - initialX) / store.canvas.scale;
 					let height = (mouseMoveEvent.clientY - initialY) / store.canvas.scale;
-					width = clamp(width, 10, width);
-					height = clamp(height, 10, height);
+					width = clamp(width, 500, parentElementBounds.width);
+					height = clamp(height, 100, parentElementBounds.height);
 					childBlock.setBaseStyle("width", addPxToNumber(width));
 					childBlock.setBaseStyle("height", addPxToNumber(height));
 				}
 			};
-			document.addEventListener("mousemove", mouseMoveHandler);
-			document.addEventListener(
+			useEventListener(document, "mousemove", mouseMoveHandler);
+			useEventListener(
+				document,
 				"mouseup",
 				() => {
 					document.removeEventListener("mousemove", mouseMoveHandler);
