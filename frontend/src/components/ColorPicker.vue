@@ -6,7 +6,7 @@
 				:togglePopover="
 					() => {
 						togglePopover();
-						setSelectorPosition();
+						setSelectorPosition(modelValue);
 					}
 				"
 				:isOpen="isOpen"></slot>
@@ -22,14 +22,18 @@
 							hsl(${hue}, 100%, 50%)
 						`,
 					}"
-					@mousedown="handleSelectorMove"
+					@mousedown.stop="handleSelectorMove"
 					class="relative m-auto h-24 w-44 rounded-md"
 					@click="setColor">
 					<div
 						ref="colorSelector"
-						@mousedown="handleSelectorMove"
-						class="absolute h-3 w-3 rounded-full border border-black border-opacity-20 before:absolute before:h-full before:w-full before:rounded-full before:border-2 before:border-white before:bg-[currentColor] after:absolute after:left-[2px] after:top-[2px] after:h-[calc(100%-4px)] after:w-[calc(100%-4px)] after:rounded-full after:border after:border-black after:border-opacity-20 after:bg-transparent"
+						@mousedown.stop="handleSelectorMove"
+						class="absolute rounded-full border border-black border-opacity-20 before:absolute before:h-full before:w-full before:rounded-full before:border-2 before:border-white before:bg-[currentColor] after:absolute after:left-[2px] after:top-[2px] after:h-[calc(100%-4px)] after:w-[calc(100%-4px)] after:rounded-full after:border after:border-black after:border-opacity-20 after:bg-transparent"
 						:style="{
+							height: '12px',
+							width: '12px',
+							left: `calc(${colorSelectorPosition.x}px - 6px)`,
+							top: `calc(${colorSelectorPosition.y}px - 6px)`,
 							color: modelValue,
 							background: 'transparent',
 						} as StyleValue"></div>
@@ -50,8 +54,11 @@
 					<div
 						ref="hueSelector"
 						@mousedown="handleHueSelectorMove"
-						class="absolute h-3 w-3 rounded-full border border-[rgba(0,0,0,.2)] before:absolute before:h-full before:w-full before:rounded-full before:border-2 before:border-white before:bg-[currentColor] after:absolute after:left-[2px] after:top-[2px] after:h-[calc(100%-4px)] after:w-[calc(100%-4px)] after:rounded-full after:border after:border-[rgba(0,0,0,.2)] after:bg-transparent"
+						class="absolute rounded-full border border-[rgba(0,0,0,.2)] before:absolute before:h-full before:w-full before:rounded-full before:border-2 before:border-white before:bg-[currentColor] after:absolute after:left-[2px] after:top-[2px] after:h-[calc(100%-4px)] after:w-[calc(100%-4px)] after:rounded-full after:border after:border-[rgba(0,0,0,.2)] after:bg-transparent"
 						:style="{
+							height: '12px',
+							width: '12px',
+							left: `calc(${hueSelectorPosition.x}px - 6px)`,
 							color: `hsl(${hue}, 100%, 50%)`,
 							background: 'transparent',
 						}"></div>
@@ -62,6 +69,7 @@
 							v-for="color in colors"
 							:key="color"
 							class="h-4 w-4 cursor-pointer rounded-full shadow-sm"
+							@click="() => setSelectorPosition(color)"
 							:style="{
 								background: color,
 							}"></div>
@@ -75,12 +83,15 @@
 import { HSVToHex, HexToHSV } from "@/utils/helpers";
 import { clamp } from "@vueuse/core";
 import { Popover } from "frappe-ui";
-import { PropType, Ref, StyleValue, nextTick, ref } from "vue";
+import { PropType, Ref, StyleValue, computed, nextTick, onMounted, ref, watch } from "vue";
 
 const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;
 const colorMap = ref(null) as unknown as Ref<HTMLDivElement>;
 const hueSelector = ref(null) as unknown as Ref<HTMLDivElement>;
 const colorSelector = ref(null) as unknown as Ref<HTMLDivElement>;
+
+const colorSelectorPosition = ref({ x: 0, y: 0 });
+const hueSelectorPosition = ref({ x: 0, y: 0 });
 
 const props = defineProps({
 	modelValue: {
@@ -88,8 +99,8 @@ const props = defineProps({
 		default: null,
 	},
 });
+
 const emit = defineEmits(["update:modelValue"]);
-const hue = ref(0);
 
 const colors = [
 	"#FF6633",
@@ -101,40 +112,34 @@ const colors = [
 	"#999966",
 	"#99FF99",
 	"#B34D4D",
-];
+] as HashString[];
 
-const setColorSelectorPosition = () => {
-	const colorSelectorBounds = colorSelector.value.getBoundingClientRect();
-	let left = 0 - colorSelectorBounds.width / 2;
-	let top = 0 - colorSelectorBounds.height / 2;
-	const color = props.modelValue || "#FFFFFF";
+const setColorSelectorPosition = (color: HashString) => {
 	const { width, height } = colorMap.value.getBoundingClientRect();
-	const { s, v } = HexToHSV(color as HashString);
-	left = (s / 100) * width + left;
-	top = ((100 - v) / 100) * height + top;
-	debugger;
-	colorSelector.value.style.left = `${left}px`;
-	colorSelector.value.style.top = `${top}px`;
+	const { s, v } = HexToHSV(color);
+	const left = (s / 100) * width;
+	const top = ((100 - v) / 100) * height;
+	colorSelectorPosition.value = { x: left, y: top };
 };
 
-const setHueSelectorPosition = () => {
-	const hueSelectorBounds = hueSelector.value.getBoundingClientRect();
-	let left = 0 - hueSelectorBounds.width / 2;
-	const color = props.modelValue || "#FFFFFF";
+const setHueSelectorPosition = (color: HashString) => {
 	const { width } = hueMap.value.getBoundingClientRect();
-	const { h } = HexToHSV(color as HashString);
-	hue.value = h;
-	left = (h / 360) * width + left;
-	hueSelector.value.style.left = `${left}px`;
+	const { h } = HexToHSV(color);
+	const left = (h / 360) * width;
+	hueSelectorPosition.value = { x: left, y: 0 };
 };
 
 const handleSelectorMove = (ev: MouseEvent) => {
 	setColor(ev);
-	document.addEventListener("mousemove", setColor);
+	const mouseMove = (mouseMoveEvent: MouseEvent) => {
+		mouseMoveEvent.preventDefault();
+		setColor(mouseMoveEvent);
+	};
+	document.addEventListener("mousemove", mouseMove);
 	document.addEventListener(
 		"mouseup",
 		(mouseUpEvent) => {
-			document.removeEventListener("mousemove", setColor);
+			document.removeEventListener("mousemove", mouseMove);
 			mouseUpEvent.preventDefault();
 		},
 		{ once: true }
@@ -143,11 +148,15 @@ const handleSelectorMove = (ev: MouseEvent) => {
 
 const handleHueSelectorMove = (ev: MouseEvent) => {
 	setHue(ev);
-	document.addEventListener("mousemove", setHue);
+	const mouseMove = (mouseMoveEvent: MouseEvent) => {
+		mouseMoveEvent.preventDefault();
+		setHue(mouseMoveEvent);
+	};
+	document.addEventListener("mousemove", mouseMove);
 	document.addEventListener(
 		"mouseup",
 		(mouseUpEvent) => {
-			document.removeEventListener("mousemove", setHue);
+			document.removeEventListener("mousemove", mouseMove);
 			mouseUpEvent.preventDefault();
 		},
 		{ once: true }
@@ -157,7 +166,6 @@ const handleHueSelectorMove = (ev: MouseEvent) => {
 function setColor(ev: MouseEvent) {
 	const clickPointX = ev.clientX;
 	const clickPointY = ev.clientY;
-	const colorSelectorBounds = colorSelector.value.getBoundingClientRect();
 	const colorMapBounds = colorMap.value.getBoundingClientRect();
 
 	let pointX = clickPointX - colorMapBounds.left;
@@ -165,35 +173,39 @@ function setColor(ev: MouseEvent) {
 
 	pointX = clamp(pointX, 0, colorMapBounds.width);
 	pointY = clamp(pointY, 0, colorMapBounds.height);
-
-	const s = Math.round((pointX / colorMapBounds.width) * 100);
-	const v = 100 - Math.round((pointY / colorMapBounds.height) * 100);
-	const h = hue.value;
-
-	const left = pointX - colorSelectorBounds.width / 2;
-	const top = pointY - colorSelectorBounds.height / 2;
-
-	emit("update:modelValue", HSVToHex(h, s, v));
-	colorSelector.value.style.top = `${top}px`;
-	colorSelector.value.style.left = `${left}px`;
+	colorSelectorPosition.value = { x: pointX, y: pointY };
+	updateColor();
 }
 
 function setHue(ev: MouseEvent) {
 	const hueMapBounds = hueMap.value.getBoundingClientRect();
-	const hueSelectorBounds = hueSelector.value.getBoundingClientRect();
 	const { clientX } = ev;
 	let point = clientX - hueMapBounds.left;
 	point = clamp(point, 0, hueMapBounds.width);
-	const x = point - hueSelectorBounds.width / 2;
-	const h = Math.round((point / hueMapBounds.width) * 360);
-	hue.value = h;
-	hueSelector.value.style.left = `${x}px`;
+	hueSelectorPosition.value = { x: point, y: 0 };
+	updateColor();
 }
 
-function setSelectorPosition() {
+function setSelectorPosition(color: HashString | null) {
+	if (!color) return;
 	nextTick(() => {
-		setColorSelectorPosition();
-		setHueSelectorPosition();
+		setColorSelectorPosition(color);
+		setHueSelectorPosition(color);
 	});
 }
+
+const hue = computed(() => {
+	if (!hueMap.value) return 0;
+	const positionX = hueSelectorPosition.value.x || 0;
+	const width = hueMap.value.getBoundingClientRect().width || 1;
+	return Math.round((positionX / width) * 360);
+});
+
+const updateColor = () => {
+	const colorMapBounds = colorMap.value.getBoundingClientRect();
+	const s = Math.round((colorSelectorPosition.value.x / colorMapBounds.width) * 100);
+	const v = 100 - Math.round((colorSelectorPosition.value.y / colorMapBounds.height) * 100);
+	const h = hue.value;
+	emit("update:modelValue", HSVToHex(h, s, v));
+};
 </script>
