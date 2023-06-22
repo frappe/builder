@@ -3,19 +3,14 @@
 		<BLockLayoutHandler :block="selectedBlock" v-if="selectedBlock"></BLockLayoutHandler>
 		<BlockPositionHandler :block="selectedBlock" v-if="selectedBlock"></BlockPositionHandler>
 
-		<InlineInput :modelValue="blockStyles.background" @update:modelValue="setBgColor" class="mt-10">
+		<ColorInput
+			:value="blockStyles.background as HashString"
+			@change="(val) => (blockStyles.background = val)">
 			Background
-		</InlineInput>
-		<div class="mt-3">
-			<ul class="flex flex-wrap gap-2">
-				<li v-for="color in store.pastelCssColors" :key="color">
-					<a @click="setBgColor(color as HashString)" class="cursor-pointer text-base hover:underline">
-						<div class="h-4 w-4 rounded-md shadow-sm" :style="'background:' + color" />
-					</a>
-				</li>
-			</ul>
-		</div>
-		<ColorInput :value="blockStyles.color" @change="(val) => (blockStyles.color = val)"></ColorInput>
+		</ColorInput>
+		<ColorInput :value="blockStyles.color as HashString" @change="(val) => (blockStyles.color = val)">
+			Text
+		</ColorInput>
 		<h3 v-if="selectedBlock" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Dimension</h3>
 		<InlineInput
 			v-if="selectedBlock"
