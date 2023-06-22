@@ -69,7 +69,12 @@
 							v-for="color in colors"
 							:key="color"
 							class="h-4 w-4 cursor-pointer rounded-full shadow-sm"
-							@click="() => setSelectorPosition(color)"
+							@click="
+								() => {
+									setSelectorPosition(color);
+									updateColor();
+								}
+							"
 							:style="{
 								background: color,
 							}"></div>
@@ -117,9 +122,9 @@ const colors = [
 const setColorSelectorPosition = (color: HashString) => {
 	const { width, height } = colorMap.value.getBoundingClientRect();
 	const { s, v } = HexToHSV(color);
-	const left = (s / 100) * width;
-	const top = ((100 - v) / 100) * height;
-	colorSelectorPosition.value = { x: left, y: top };
+	let x = clamp(s * width, 0, width);
+	let y = clamp((1 - v) * height, 0, height);
+	colorSelectorPosition.value = { x, y };
 };
 
 const setHueSelectorPosition = (color: HashString) => {
@@ -202,10 +207,12 @@ const hue = computed(() => {
 });
 
 const updateColor = () => {
-	const colorMapBounds = colorMap.value.getBoundingClientRect();
-	const s = Math.round((colorSelectorPosition.value.x / colorMapBounds.width) * 100);
-	const v = 100 - Math.round((colorSelectorPosition.value.y / colorMapBounds.height) * 100);
-	const h = hue.value;
-	emit("update:modelValue", HSVToHex(h, s, v));
+	nextTick(() => {
+		const colorMapBounds = colorMap.value.getBoundingClientRect();
+		const s = Math.round((colorSelectorPosition.value.x / colorMapBounds.width) * 100);
+		const v = 100 - Math.round((colorSelectorPosition.value.y / colorMapBounds.height) * 100);
+		const h = hue.value;
+		emit("update:modelValue", HSVToHex(h, s, v));
+	});
 };
 </script>
