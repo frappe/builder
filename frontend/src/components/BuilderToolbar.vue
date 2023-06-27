@@ -9,7 +9,7 @@
 		</div>
 		<div class="ml-10 flex gap-3">
 			<Button
-				appearance="minimal"
+				variant="ghost"
 				v-for="mode in [
 					{ mode: 'select', icon: 'mouse-pointer' },
 					{ mode: 'text', icon: 'type' },
@@ -55,7 +55,7 @@
 					class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400"
 					@click="toggleDark()" />
 			</UseDark>
-			<Button appearance="primary" @click="publish" class="rounded-2xl border-0 text-xs">Preview</Button>
+			<Button variant="solid" @click="publish" class="rounded-2xl border-0 text-xs">Preview</Button>
 		</div>
 	</div>
 </template>

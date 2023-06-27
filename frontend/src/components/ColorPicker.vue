@@ -1,5 +1,5 @@
 <template>
-	<Popover transition="default" placement="left" class="w-full" popoverClass="!min-w-fit !mr-[30px]">
+	<Popover transition="default" placement="left" class="!block w-full" popoverClass="!min-w-fit !mr-[30px]">
 		<template #target="{ togglePopover, isOpen }">
 			<slot
 				name="target"
@@ -34,7 +34,7 @@
 							width: '12px',
 							left: `calc(${colorSelectorPosition.x}px - 6px)`,
 							top: `calc(${colorSelectorPosition.y}px - 6px)`,
-							color: modelValue,
+							color: modelValue || '#fff',
 							background: 'transparent',
 						} as StyleValue"></div>
 				</div>
