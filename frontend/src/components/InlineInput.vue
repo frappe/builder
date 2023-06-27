@@ -1,5 +1,5 @@
 <template>
-	<div class="mt-3 flex items-center justify-between">
+	<div class="flex items-center justify-between">
 		<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
 			<slot />
 		</span>

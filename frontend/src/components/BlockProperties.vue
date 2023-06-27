@@ -1,7 +1,7 @@
 <template>
-	<div v-if="selectedBlock" class="flex flex-col">
+	<div v-if="selectedBlock" class="flex flex-col gap-3">
 		<BLockLayoutHandler :block="selectedBlock" v-if="selectedBlock"></BLockLayoutHandler>
-		<BlockPositionHandler :block="selectedBlock" v-if="selectedBlock"></BlockPositionHandler>
+		<BlockPositionHandler :block="selectedBlock" v-if="selectedBlock" class="mb-6"></BlockPositionHandler>
 
 		<ColorInput
 			:value="blockStyles.background as HashString"
