@@ -161,7 +161,7 @@ class Block implements BlockOptions {
 	}
 	isSelected(): boolean {
 		const store = useStore();
-		return Boolean(store.builderState.selectedBlock) && store.builderState.selectedBlock === this;
+		return Boolean(store.builderState.selectedBlock) && store.builderState.selectedBlock?.blockId === this.blockId;
 	}
 	isMovable(): boolean {
 		return this.getStyle("position") === "absolute";

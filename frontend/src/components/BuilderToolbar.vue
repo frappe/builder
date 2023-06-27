@@ -61,7 +61,7 @@
 </template>
 <script setup lang="ts">
 import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
-import { addPxToNumber, getRandomColor } from "@/utils/helpers";
+import { addPxToNumber, getNumberFromPx, getRandomColor } from "@/utils/helpers";
 import { UseDark } from "@vueuse/components";
 import { clamp, useEventListener } from "@vueuse/core";
 import { Popover, createDocumentResource, createResource } from "frappe-ui";
@@ -188,6 +188,8 @@ function setEvents() {
 			const parentElementBounds = parentElement.getBoundingClientRect();
 			let x = (ev.x - parentElementBounds.left) / store.canvas.scale;
 			let y = (ev.y - parentElementBounds.top) / store.canvas.scale;
+			const parentWidth = getNumberFromPx(getComputedStyle(parentElement).width);
+			const parentHeight = getNumberFromPx(getComputedStyle(parentElement).height);
 			childBlock.setBaseStyle("position", "absolute");
 			childBlock.setBaseStyle("top", addPxToNumber(y));
 			childBlock.setBaseStyle("left", addPxToNumber(x));
@@ -199,8 +201,8 @@ function setEvents() {
 					mouseMoveEvent.preventDefault();
 					let width = (mouseMoveEvent.clientX - initialX) / store.canvas.scale;
 					let height = (mouseMoveEvent.clientY - initialY) / store.canvas.scale;
-					width = clamp(width, 500, parentElementBounds.width);
-					height = clamp(height, 100, parentElementBounds.height);
+					width = clamp(width, 100, parentWidth);
+					height = clamp(height, 100, parentHeight);
 					childBlock.setBaseStyle("width", addPxToNumber(width));
 					childBlock.setBaseStyle("height", addPxToNumber(height));
 				}

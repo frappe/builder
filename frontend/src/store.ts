@@ -174,7 +174,7 @@ const useStore = defineStore("store", {
 				visible: false,
 			},
 		],
-		sidebarActiveTab: <"Components" | "Layers">"Components",
+		sidebarActiveTab: <LeftSidebarTabOption>"Components",
 		canvas: {
 			initialScale: 0.1,
 			initialTranslateY: 0,

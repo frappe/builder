@@ -5,6 +5,7 @@
 		</span>
 		<Input
 			:type="type"
+			placeholder="unset"
 			:value="modelValue"
 			:options="options"
 			v-if="type != 'autocomplete'"
@@ -15,7 +16,7 @@
 			:value="modelValue"
 			:options="options.map((option) => ({ label: option, value: option }))"
 			@change="handleChange"
-			class="!dark:text-zinc-200 !dark:focus:bg-zinc-700 w-[150px] rounded-md text-sm text-gray-800 dark:bg-zinc-800 [&>div>button]:dark:!bg-zinc-800 [&>div>button]:dark:!text-zinc-200" />
+			class="!dark:text-zinc-200 !dark:focus:bg-zinc-700 rounded-md text-sm text-gray-800 dark:bg-zinc-800 [&>div>button]:w-[150px] [&>div>button]:dark:!bg-zinc-800 [&>div>button]:dark:!text-zinc-200" />
 	</div>
 </template>
 <script setup lang="ts">

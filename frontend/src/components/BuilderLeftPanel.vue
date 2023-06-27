@@ -25,7 +25,7 @@
 				v-for="tab of ['Layers', 'Components']"
 				:key="tab"
 				class="mx-3 flex-1 p-2"
-				@click="store.sidebarActiveTab = tab as 'Layers' | 'Components'"
+				@click.stop="setActiveTab(tab as LeftSidebarTabOption)"
 				:class="{
 					'border-b-[1px] border-gray-900 dark:border-zinc-500 dark:text-zinc-300':
 						store.sidebarActiveTab === tab,
@@ -35,7 +35,7 @@
 			</button>
 		</div>
 		<div v-show="store.sidebarActiveTab === 'Components'">
-			<Components class="p-4" />
+			<BuilderComponents class="p-4" />
 		</div>
 		<div v-show="store.sidebarActiveTab === 'Layers'">
 			<BlockLayers class="p-4" :blocks="store.builderState.blocks" />
@@ -48,7 +48,7 @@ import { createListResource, createResource } from "frappe-ui";
 import { Ref, ref } from "vue";
 import useStore from "../store";
 import BlockLayers from "./BlockLayers.vue";
-import Components from "./BuilderComponents.vue";
+import BuilderComponents from "./BuilderComponents.vue";
 import PanelResizer from "./PanelResizer.vue";
 
 import { useRouter } from "vue-router";
@@ -100,5 +100,9 @@ const setPage = (page: Page) => {
 			pageId: page.name,
 		},
 	});
+};
+
+const setActiveTab = (tab: LeftSidebarTabOption) => {
+	store.sidebarActiveTab = tab;
 };
 </script>

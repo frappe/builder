@@ -22,7 +22,6 @@
 							}">
 							<BuilderBlock
 								class="!static"
-								v-if="store.sidebarActiveTab === 'Components'"
 								:block="store.getBlockCopy(element.block)"
 								@renderComplete="setScale($event, element)"
 								:preview="true" />
@@ -57,7 +56,7 @@ const componentResource = createListResource({
 	auto: true,
 	transform(data: any[]) {
 		data.forEach((d) => {
-			d.block = JSON.parse(d.block);
+			d.block = store.getBlockCopy(JSON.parse(d.block));
 			d.scale = 0.2;
 		});
 		return data;
@@ -68,8 +67,10 @@ const componentResource = createListResource({
 });
 
 const setScale = (el: HTMLElement, block: BlockOptions) => {
-	const scale = Math.max(Math.min(100 / el.offsetWidth, 80 / el.offsetHeight, 0.6), 0.2);
-	block.scale = scale;
+	setTimeout(() => {
+		const scale = Math.max(Math.min(100 / el.offsetWidth, 80 / el.offsetHeight, 0.6), 0.2);
+		block.scale = scale;
+	}, 1000);
 };
 
 const cloneComponent = (blockComponent: BlockComponent) => {

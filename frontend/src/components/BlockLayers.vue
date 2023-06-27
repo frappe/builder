@@ -25,6 +25,7 @@
 						<span
 							class="min-h-[1em] min-w-[2em] truncate"
 							:contenteditable="element.editable"
+							:title="element.blockId"
 							@dblclick="element.editable = true"
 							@keyup.enter.stop.prevent="element.editable = false"
 							@blur="setBlockName($event, element)">

@@ -70,4 +70,6 @@ declare interface ComponentData {
 
 declare type HashString = `#${string}`;
 
+declare type LeftSidebarTabOption = 'Components' | 'Layers';
+
 declare type BuilderMode = 'select' | 'text' | 'container' | 'image';
