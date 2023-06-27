@@ -6,6 +6,7 @@
 		@dblclick="handleDoubleClick"
 		@mousedown.prevent="handleMove"
 		@contextmenu.prevent="showContextMenu"
+		:data-block-id="block.blockId"
 		:class="{
 			'cursor-grab': movable && !block.isRoot(),
 			'pointer-events-none': (block.isHovered() && !block.isSelected()) || editable,

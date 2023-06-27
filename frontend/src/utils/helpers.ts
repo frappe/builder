@@ -77,7 +77,6 @@ function HSVToHex(h: number, s: number, v: number): HashString {
 }
 
 function getRandomColor() {
-	// return pastel light color in rgb hex
 	return HSVToHex(Math.random() * 360, 25, 100);
 }
 

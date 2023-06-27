@@ -14,37 +14,37 @@
 		<h3 v-if="selectedBlock" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Dimension</h3>
 		<InlineInput
 			v-if="selectedBlock"
-			:modelValue="blockStyles.height || 'unset'"
+			:modelValue="blockStyles.height"
 			@update:modelValue="(val) => (blockStylesObj.height = val)">
 			Height
 		</InlineInput>
 		<InlineInput
 			v-if="selectedBlock"
-			:modelValue="blockStyles.width || 'unset'"
+			:modelValue="blockStyles.width"
 			@update:modelValue="(val) => (blockStylesObj.width = val)">
 			Width
 		</InlineInput>
 		<InlineInput
 			v-if="selectedBlock"
-			:modelValue="blockStyles.minWidth || 'unset'"
+			:modelValue="blockStyles.minWidth"
 			@update:modelValue="(val) => (blockStylesObj.minWidth = val)">
 			Min Width
 		</InlineInput>
 		<InlineInput
 			v-if="selectedBlock"
-			:modelValue="blockStyles.maxWidth || 'unset'"
+			:modelValue="blockStyles.maxWidth"
 			@update:modelValue="(val) => (blockStylesObj.maxWidth = val)">
 			Max Width
 		</InlineInput>
 		<InlineInput
 			v-if="selectedBlock"
-			:modelValue="blockStyles.minHeight || 'unset'"
+			:modelValue="blockStyles.minHeight"
 			@update:modelValue="(val) => (blockStylesObj.minHeight = val)">
 			Min Height
 		</InlineInput>
 		<InlineInput
 			v-if="selectedBlock"
-			:modelValue="blockStyles.maxHeight || 'unset'"
+			:modelValue="blockStyles.maxHeight"
 			@update:modelValue="(val) => (blockStylesObj.maxHeight = val)">
 			Max Height
 		</InlineInput>
@@ -161,8 +161,37 @@
 			type="select"
 			:options="['visible', 'hidden', 'scroll']"
 			:modelValue="blockStyles.overflow"
-			@update:modelValue="(val) => (blockStyles.overflow = val)">
+			@update:modelValue="(val) => (blockStylesObj.overflow = val)">
 			Overflow
+		</InlineInput>
+		<!-- shadow -->
+		<InlineInput
+			v-if="selectedBlock && selectedBlock.isContainer()"
+			type="select"
+			:options="[
+				{
+					value: 'none',
+					label: 'None',
+				},
+				{
+					label: 'Small',
+					value:
+						'rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 1px 2px 0px, rgba(0, 0, 0, 0.05) 0px 1px 3px 0px',
+				},
+				{
+					label: 'Medium',
+					value:
+						'rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.1) 0px 4px 6px -4px',
+				},
+				{
+					label: 'Large',
+					value:
+						'rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.1) 0px 10px 10px -5px',
+				},
+			]"
+			:modelValue="blockStyles.boxShadow"
+			@update:modelValue="(val) => (blockStylesObj.boxShadow = val)">
+			Shadow
 		</InlineInput>
 
 		<h3 v-if="selectedBlock" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">RAW Styles</h3>
