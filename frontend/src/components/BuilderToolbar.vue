@@ -173,7 +173,7 @@ function setEvents() {
 					styles: {
 						width: "100%",
 						height: "200px",
-						background: getRandomColor(),
+						background: "#94E6FF",
 					} as BlockStyleMap,
 				};
 			}

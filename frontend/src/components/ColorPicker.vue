@@ -88,7 +88,7 @@
 import { HSVToHex, HexToHSV } from "@/utils/helpers";
 import { clamp } from "@vueuse/core";
 import { Popover } from "frappe-ui";
-import { PropType, Ref, StyleValue, computed, nextTick, onMounted, ref, watch } from "vue";
+import { PropType, Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
 
 const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;
 const colorMap = ref(null) as unknown as Ref<HTMLDivElement>;
@@ -97,6 +97,7 @@ const colorSelector = ref(null) as unknown as Ref<HTMLDivElement>;
 
 const colorSelectorPosition = ref({ x: 0, y: 0 });
 const hueSelectorPosition = ref({ x: 0, y: 0 });
+let currentColor = "#FFF" as HashString;
 
 const props = defineProps({
 	modelValue: {
@@ -212,14 +213,16 @@ const updateColor = () => {
 		const s = Math.round((colorSelectorPosition.value.x / colorMapBounds.width) * 100);
 		const v = 100 - Math.round((colorSelectorPosition.value.y / colorMapBounds.height) * 100);
 		const h = hue.value;
-		emit("update:modelValue", HSVToHex(h, s, v));
+		currentColor = HSVToHex(h, s, v);
+		emit("update:modelValue", currentColor);
 	});
 };
 
 watch(
 	() => props.modelValue,
 	(color) => {
-		setSelectorPosition(color);
+		if (color === currentColor) return;
+		setSelectorPosition(color || "#FFF");
 	},
 	{ immediate: true }
 );

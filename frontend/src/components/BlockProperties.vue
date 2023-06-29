@@ -3,55 +3,55 @@
 		<BLockLayoutHandler :block="selectedBlock" v-if="selectedBlock"></BLockLayoutHandler>
 		<BlockPositionHandler :block="selectedBlock" v-if="selectedBlock" class="mb-6"></BlockPositionHandler>
 
-		<ColorInput
-			:value="blockStyles.background as HashString"
-			@change="(val) => (blockStylesObj.background = val)">
+		<ColorInput :value="blockStyles.background" @change="(val) => selectedBlock.setStyle('background', val)">
 			Background
 		</ColorInput>
-		<ColorInput :value="blockStyles.color as HashString" @change="(val) => (blockStylesObj.color = val)">
+		<ColorInput
+			:value="blockStyles.color as HashString"
+			@change="(val) => selectedBlock.setStyle('color', val)">
 			Text
 		</ColorInput>
 		<h3 v-if="selectedBlock" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Dimension</h3>
 		<InlineInput
 			v-if="selectedBlock"
 			:modelValue="blockStyles.height"
-			@update:modelValue="(val) => (blockStylesObj.height = val)">
+			@update:modelValue="(val) => selectedBlock.setStyle('height', val)">
 			Height
 		</InlineInput>
 		<InlineInput
 			v-if="selectedBlock"
 			:modelValue="blockStyles.width"
-			@update:modelValue="(val) => (blockStylesObj.width = val)">
+			@update:modelValue="(val) => selectedBlock.setStyle('width', val)">
 			Width
 		</InlineInput>
 		<InlineInput
 			v-if="selectedBlock"
 			:modelValue="blockStyles.minWidth"
-			@update:modelValue="(val) => (blockStylesObj.minWidth = val)">
+			@update:modelValue="(val) => selectedBlock.setStyle('minWidth', val)">
 			Min Width
 		</InlineInput>
 		<InlineInput
 			v-if="selectedBlock"
 			:modelValue="blockStyles.maxWidth"
-			@update:modelValue="(val) => (blockStylesObj.maxWidth = val)">
+			@update:modelValue="(val) => selectedBlock.setStyle('maxWidth', val)">
 			Max Width
 		</InlineInput>
 		<InlineInput
 			v-if="selectedBlock"
 			:modelValue="blockStyles.minHeight"
-			@update:modelValue="(val) => (blockStylesObj.minHeight = val)">
+			@update:modelValue="(val) => selectedBlock.setStyle('minHeight', val)">
 			Min Height
 		</InlineInput>
 		<InlineInput
 			v-if="selectedBlock"
 			:modelValue="blockStyles.maxHeight"
-			@update:modelValue="(val) => (blockStylesObj.maxHeight = val)">
+			@update:modelValue="(val) => selectedBlock.setStyle('maxHeight', val)">
 			Max Height
 		</InlineInput>
 		<InlineInput
 			v-if="(selectedBlock && selectedBlock.isContainer()) || selectedBlock.isButton()"
 			:modelValue="blockStyles.margin"
-			@update:modelValue="(val) => (blockStylesObj.margin = val)">
+			@update:modelValue="(val) => selectedBlock.setStyle('margin', val)">
 			Margin
 		</InlineInput>
 		<h3
@@ -64,19 +64,19 @@
 			:modelValue="blockStyles.textAlign || 'left'"
 			type="select"
 			:options="['left', 'center', 'right', 'justify']"
-			@update:modelValue="(val) => (blockStylesObj.textAlign = val)">
+			@update:modelValue="(val) => selectedBlock.setStyle('textAlign', val)">
 			Align
 		</InlineInput>
 		<InlineInput
 			v-if="selectedBlock && selectedBlock.isText()"
 			:modelValue="blockStyles.fontSize"
-			@update:modelValue="(val) => (blockStylesObj.fontSize = val)">
+			@update:modelValue="(val) => selectedBlock.setStyle('fontSize', val)">
 			Size
 		</InlineInput>
 		<InlineInput
 			v-if="selectedBlock && selectedBlock.isText()"
 			:modelValue="blockStyles.letterSpacing"
-			@update:modelValue="(val) => (blockStylesObj.letterSpacing = val)">
+			@update:modelValue="(val) => selectedBlock.setStyle('letterSpacing', val)">
 			Spacing
 		</InlineInput>
 		<InlineInput
@@ -92,13 +92,13 @@
 			:modelValue="blockStyles.fontWeight"
 			type="select"
 			:options="getFontWeightOptions(blockStyles.fontFamily as string || 'Inter')"
-			@update:modelValue="(val) => (blockStylesObj.fontWeight = val)">
+			@update:modelValue="(val) => selectedBlock.setStyle('fontWeight', val)">
 			Weight
 		</InlineInput>
 		<InlineInput
 			v-if="selectedBlock && selectedBlock.isText()"
 			:modelValue="blockStyles.lineHeight"
-			@update:modelValue="(val) => (blockStylesObj.lineHeight = val)">
+			@update:modelValue="(val) => selectedBlock.setStyle('lineHeight', val)">
 			Line
 		</InlineInput>
 		<InlineInput
@@ -133,26 +133,26 @@
 			v-if="selectedBlock && selectedBlock.isContainer() && blockStyles.display === 'grid'"
 			type="number"
 			:modelValue="blockStyles.gridTemplateRows"
-			@update:modelValue="(val) => (blockStylesObj.gridTemplateRows = val)">
+			@update:modelValue="(val) => selectedBlock.setStyle('gridTemplateRows', val)">
 			Rows
 		</InlineInput>
 		<InlineInput
 			v-if="selectedBlock && selectedBlock.isContainer() && blockStyles.display === 'grid'"
 			type="number"
 			:modelValue="blockStyles.gridTemplateColumns"
-			@update:modelValue="(val) => (blockStylesObj.gridTemplateColumns = val)">
+			@update:modelValue="(val) => selectedBlock.setStyle('gridTemplateColumns', val)">
 			Columns
 		</InlineInput>
 		<InlineInput
 			v-if="selectedBlock && selectedBlock.isContainer() && blockStyles.display === 'grid'"
 			:modelValue="blockStyles.gridGap"
-			@update:modelValue="(val) => (blockStylesObj.gridGap = val)">
+			@update:modelValue="(val) => selectedBlock.setStyle('gridGap', val)">
 			Gap
 		</InlineInput>
 		<InlineInput
 			v-if="selectedBlock && selectedBlock.isContainer() && blockStyles.display === 'grid'"
 			:modelValue="blockStyles.gridRowGap"
-			@update:modelValue="(val) => (blockStylesObj.gridRowGap = val)">
+			@update:modelValue="(val) => selectedBlock.setStyle('gridRowGap', val)">
 			Row Gap
 		</InlineInput>
 		<!-- overflow -->
@@ -161,7 +161,7 @@
 			type="select"
 			:options="['visible', 'hidden', 'scroll']"
 			:modelValue="blockStyles.overflow"
-			@update:modelValue="(val) => (blockStylesObj.overflow = val)">
+			@update:modelValue="(val) => selectedBlock.setStyle('overflow', val)">
 			Overflow
 		</InlineInput>
 		<!-- shadow -->
@@ -190,7 +190,7 @@
 				},
 			]"
 			:modelValue="blockStyles.boxShadow"
-			@update:modelValue="(val) => (blockStylesObj.boxShadow = val)">
+			@update:modelValue="(val) => selectedBlock.setStyle('boxShadow', val)">
 			Shadow
 		</InlineInput>
 
@@ -223,17 +223,6 @@ const props = defineProps({
 		type: Object as PropType<Block>,
 		required: true,
 	},
-});
-
-// TODO: Temporary for correctness, remove when we have a better way to handle this
-const blockStylesObj = computed(() => {
-	let styleObj = props.selectedBlock.baseStyles;
-	if (store.builderState.activeBreakpoint === "mobile") {
-		styleObj = props.selectedBlock.mobileStyles;
-	} else if (store.builderState.activeBreakpoint === "tablet") {
-		styleObj = props.selectedBlock.tabletStyles;
-	}
-	return styleObj;
 });
 
 const blockStyles = computed(() => {
