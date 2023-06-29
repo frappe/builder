@@ -9,21 +9,21 @@
 		:data-block-id="block.blockId"
 		:class="{
 			'cursor-grab': movable && !block.isRoot(),
-			'pointer-events-none': (block.isHovered() && !block.isSelected()) || editable,
+			'pointer-events-none': (block.isHovered() && !isBlockSelected) || editable,
 		}">
 		<BoxResizer
-			v-if="block.isSelected() && target && !block.isRoot() && !editable"
+			v-if="isBlockSelected && !block.isRoot() && !editable"
 			:target-block="block"
 			@resizing="resizing = $event"
 			:target="target" />
 		<PaddingHandler
-			v-if="block.isSelected() && target && !resizing && !editable"
+			v-if="isBlockSelected && !resizing && !editable"
 			:target-block="block"
 			:on-update="updateTracker"
 			:disable-handlers="false"
 			:breakpoint="breakpoint" />
 		<BorderRadiusHandler
-			v-if="block.isSelected() && target && !block.isRoot() && !editable"
+			v-if="isBlockSelected && !block.isRoot() && !editable"
 			:target-block="block"
 			:target="target" />
 		<ContextMenu
@@ -97,7 +97,7 @@ const props = defineProps({
 	},
 	target: {
 		type: HTMLElement,
-		default: null,
+		required: true,
 	},
 	editable: {
 		type: Boolean,
@@ -128,6 +128,10 @@ watchEffect(() => {
 	nextTick(() => {
 		updateTracker.value();
 	});
+});
+
+const isBlockSelected = computed(() => {
+	return props.block.isSelected() && props.breakpoint === store.builderState.activeBreakpoint;
 });
 
 watch(store.builderState.blocks, () => {

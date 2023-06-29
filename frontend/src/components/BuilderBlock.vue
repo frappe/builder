@@ -36,12 +36,12 @@
 			{{ block.innerText }}
 		</template>
 		<template #item="{ element }">
-			<BuilderBlock :block="element" :breakpoint="breakpoint" />
+			<BuilderBlock :block="element" :breakpoint="breakpoint" :preview="preview" />
 		</template>
 	</draggable>
 	<teleport to="#overlay" v-if="store.overlayElement && !preview">
 		<BlockEditor
-			v-if="component && store.builderState.mode !== 'container'"
+			v-if="component && store.builderState.mode !== 'container' && component.targetDomElement"
 			v-show="
 				((block.isSelected() && breakpoint === store.builderState.activeBreakpoint) ||
 					(block.isHovered() && store.hoveredBreakpoint === breakpoint)) &&
@@ -119,10 +119,11 @@ const isEditable = computed(() => {
 });
 
 const selectBlock = (e: MouseEvent | null, block: Block) => {
-	if (store.builderState.editableBlock === props.block) {
-		return;
-	}
-	if (store.builderState.mode !== "select") {
+	if (
+		store.builderState.editableBlock === props.block ||
+		store.builderState.mode !== "select" ||
+		props.preview
+	) {
 		return;
 	}
 	if (e) e.preventDefault();

@@ -91,20 +91,17 @@ class Block implements BlockOptions {
 	}
 	setStyle(style: string, value: number | string | null) {
 		const store = useStore();
-		if (value === null || value === "") {
-			delete this.baseStyles[style];
-			delete this.mobileStyles[style];
-			delete this.tabletStyles[style];
-			return;
-		}
+		let styleObj = this.baseStyles;
 		if (store.builderState.activeBreakpoint === "mobile") {
-			this.mobileStyles[style] = value;
-			return;
+			styleObj = this.mobileStyles;
 		} else if (store.builderState.activeBreakpoint === "tablet") {
-			this.tabletStyles[style] = value;
+			styleObj = this.tabletStyles;
+		}
+		if (value === null || value === "") {
+			delete styleObj[style];
 			return;
 		}
-		this.baseStyles[style] = value;
+		styleObj[style] = value;
 	}
 	setBaseStyle(style: string, value: string | number) {
 		this.baseStyles[style] = value;
