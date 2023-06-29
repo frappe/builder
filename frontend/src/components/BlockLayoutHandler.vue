@@ -1,6 +1,6 @@
 <template>
-	<div v-if="block.isContainer()">
-		<h3 class="text-xs font-bold uppercase text-gray-600">Layout</h3>
+	<div v-if="block.isContainer()" class="flex flex-col gap-3">
+		<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Layout</h3>
 		<InlineInput
 			:modelValue="blockStyles.display || 'block'"
 			type="select"

@@ -42,7 +42,7 @@
 					{
 						label: 'Save',
 						appearance: 'primary',
-						handler: createComponentHandler,
+						onClick: createComponentHandler,
 					},
 					{ label: 'Cancel' },
 				],
@@ -252,6 +252,7 @@ const createComponent = createResource({
 	},
 	onSuccess(component: BlockComponent) {
 		store.sidebarActiveTab = "Components";
+		component.block = store.getBlockCopy(component.block);
 		store.components.push(component);
 	},
 });
@@ -263,10 +264,6 @@ const createComponentHandler = ({ close }: { close: () => void }) => {
 		is_dynamic: componentProperties.value.isDynamicComponent,
 	});
 	close();
-};
-
-const saveAsComponent = () => {
-	showDialog.value = true;
 };
 
 const duplicateBlock = (block: Block) => {
@@ -300,7 +297,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		action: pasteStyle,
 		condition: () => Boolean(store.copiedStyle && store.copiedStyle.blockId !== props.block.blockId),
 	},
-	{ label: "Save as Component", action: saveAsComponent },
+	{ label: "Save as Component", action: () => (showDialog.value = true) },
 	{ label: "Duplicate", action: duplicateBlock },
 ];
 </script>

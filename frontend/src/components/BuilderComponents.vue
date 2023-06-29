@@ -22,7 +22,7 @@
 							}">
 							<BuilderBlock
 								class="!static"
-								:block="store.getBlockCopy(element.block)"
+								:block="element.block"
 								@renderComplete="setScale($event, element)"
 								:preview="true" />
 						</div>

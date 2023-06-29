@@ -39,9 +39,9 @@
 			<BuilderBlock :block="element" :breakpoint="breakpoint" />
 		</template>
 	</draggable>
-	<teleport to="#overlay" v-if="store.overlayElement">
+	<teleport to="#overlay" v-if="store.overlayElement && !preview">
 		<BlockEditor
-			v-if="!preview && component && store.builderState.mode !== 'container'"
+			v-if="component && store.builderState.mode !== 'container'"
 			v-show="
 				((block.isSelected() && breakpoint === store.builderState.activeBreakpoint) ||
 					(block.isHovered() && store.hoveredBreakpoint === breakpoint)) &&
