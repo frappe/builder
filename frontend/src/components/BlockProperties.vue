@@ -1,9 +1,11 @@
 <template>
 	<div v-if="selectedBlock" class="flex flex-col gap-3">
-		<BLockLayoutHandler :block="selectedBlock" v-if="selectedBlock"></BLockLayoutHandler>
+		<BLockLayoutHandler :block="selectedBlock" v-if="selectedBlock" class="mb-6"></BLockLayoutHandler>
 		<BlockPositionHandler :block="selectedBlock" v-if="selectedBlock" class="mb-6"></BlockPositionHandler>
-
-		<ColorInput :value="blockStyles.background" @change="(val) => selectedBlock.setStyle('background', val)">
+		<BackgroundHandler :block="selectedBlock"></BackgroundHandler>
+		<ColorInput
+			:value="blockStyles.background as HashString"
+			@change="(val) => selectedBlock.setStyle('background', val)">
 			Background
 		</ColorInput>
 		<ColorInput
@@ -115,6 +117,14 @@
 			Image Source
 		</InlineInput>
 		<InlineInput
+			v-if="selectedBlock && selectedBlock.isImage()"
+			:modelValue="blockStyles.objectFit"
+			type="select"
+			:options="['fill', 'contain', 'cover', 'none']"
+			@update:modelValue="(val) => selectedBlock.setStyle('objectFit', val)">
+			Image Fit
+		</InlineInput>
+		<InlineInput
 			v-if="selectedBlock && selectedBlock.isButton()"
 			:modelValue="selectedBlock.attributes.onclick"
 			@update:modelValue="(val) => (selectedBlock.attributes.onclick = val)">
@@ -124,9 +134,30 @@
 			v-if="selectedBlock.element"
 			:modelValue="selectedBlock.element"
 			type="select"
-			:options="['span', 'div', 'section', 'button', 'p', 'h1', 'h2', 'h3', 'a']"
+			:options="['span', 'div', 'section', 'button', 'p', 'h1', 'h2', 'h3', 'a', 'input']"
 			@update:modelValue="(val) => (selectedBlock.element = val)">
 			Tag
+		</InlineInput>
+		<InlineInput
+			v-if="selectedBlock.isInput()"
+			:modelValue="selectedBlock.getAttribute('type') || 'text'"
+			type="select"
+			:options="['text', 'number', 'email', 'password', 'date', 'time', 'search', 'tel', 'url', 'color']"
+			@update:modelValue="(val) => selectedBlock.setAttribute('type', val)">
+			Input Type
+		</InlineInput>
+		<!-- input placeholder -->
+		<InlineInput
+			v-if="selectedBlock.isInput()"
+			:modelValue="selectedBlock.getAttribute('placeholder')"
+			@update:modelValue="(val) => selectedBlock.setAttribute('placeholder', val)">
+			Placeholder
+		</InlineInput>
+		<InlineInput
+			v-if="selectedBlock.isText() || selectedBlock.isButton()"
+			:modelValue="selectedBlock.innerText"
+			@update:modelValue="(val) => (selectedBlock.innerText = val)">
+			Content
 		</InlineInput>
 
 		<InlineInput
@@ -206,6 +237,7 @@ import { useDark } from "@vueuse/core";
 import { PropType, computed, onMounted, watch, watchEffect } from "vue";
 import BLockLayoutHandler from "./BlockLayoutHandler.vue";
 import BlockPositionHandler from "./BlockPositionHandler.vue";
+import BackgroundHandler from "./BackgroundHandler.vue";
 import ColorInput from "./ColorInput.vue";
 import InlineInput from "./InlineInput.vue";
 

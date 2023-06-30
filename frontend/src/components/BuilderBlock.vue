@@ -20,7 +20,7 @@
 			...$attrs,
 			...{
 				'data-block-id': block.blockId,
-				contenteditable: block.isText() && block.isSelected() && isEditable,
+				contenteditable: (block.isText() || block.isButton()) && block.isSelected() && isEditable,
 				class: [
 					$attrs.class,
 					'__builder_component__',
