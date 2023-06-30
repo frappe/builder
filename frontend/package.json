@@ -10,8 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@vueuse/components": "^9.10.0",
-    "@vueuse/core": "^9.10.0",
+    "@vueuse/components": "^10.2.1",
+    "@vueuse/core": "^10.2.1",
     "ace-builds": "^1.22.1",
     "feather-icons": "^4.28.0",
     "frappe-ui": "^0.1.0-alpha.4",
