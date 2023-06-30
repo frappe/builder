@@ -157,8 +157,12 @@ function setEvents() {
 					element: "img",
 					icon: "image",
 					attributes: {
-						src: "https://user-images.githubusercontent.com/13928957/212847544-5773795d-2fd6-48d1-8423-b78ecc92522b.png",
+						src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj4KICA8cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0ibm9uZSIgLz4KPC9zdmc+Cg==",
 					},
+					editorStyles: {
+						background: `repeating-linear-gradient(45deg, rgba(180, 180, 180, 0.8) 0px, rgba(180, 180, 180, 0.8) 1px, rgba(255, 255, 255, 0.2) 0px, rgba(255, 255, 255, 0.2) 50%)`,
+						backgroundSize: "16px 16px",
+					} as BlockStyleMap,
 					styles: {
 						width: "100%",
 						height: "auto",
@@ -201,8 +205,8 @@ function setEvents() {
 					mouseMoveEvent.preventDefault();
 					let width = (mouseMoveEvent.clientX - initialX) / store.canvas.scale;
 					let height = (mouseMoveEvent.clientY - initialY) / store.canvas.scale;
-					width = clamp(width, 100, parentWidth);
-					height = clamp(height, 100, parentHeight);
+					width = clamp(width, 0, parentWidth);
+					height = clamp(height, 0, parentHeight);
 					childBlock.setBaseStyle("width", addPxToNumber(width));
 					childBlock.setBaseStyle("height", addPxToNumber(height));
 				}
@@ -220,6 +224,12 @@ function setEvents() {
 						return;
 					}
 					childBlock.setBaseStyle("position", "static");
+					if (getNumberFromPx(childBlock.getStyle("width")) < 100) {
+						childBlock.setBaseStyle("width", addPxToNumber(100));
+					}
+					if (getNumberFromPx(childBlock.getStyle("height")) < 100) {
+						childBlock.setBaseStyle("height", addPxToNumber(100));
+					}
 					childBlock.setBaseStyle("top", "auto");
 					childBlock.setBaseStyle("left", "auto");
 					parentBlock.setBaseStyle("position", parentOldPosition || "static");
