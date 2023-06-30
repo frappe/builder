@@ -247,6 +247,20 @@ const useStore = defineStore("store", {
 			this.builderState.selectedPage = page.name;
 			// localStorage.setItem("selectedPage", page.name);
 		},
+		getImageBlock(image_src: string) {
+			return {
+				element: "img",
+				originalElement: "img",
+				resizable: true,
+				editable: false,
+				attributes: {
+					src: image_src,
+				},
+				baseStyles: {
+					objectFit: "cover",
+				},
+			}
+		},
 		findBlock(blockId: string, blocks?: Array<Block>): Block | null {
 			if (!blocks) {
 				blocks = this.builderState.blocks;

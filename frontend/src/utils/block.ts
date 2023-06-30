@@ -89,6 +89,9 @@ class Block implements BlockOptions {
 	isContainer() {
 		return ["section", "div"].includes(this.element);
 	}
+	isInput() {
+		return this.originalElement || this.element === "input";
+	}
 	setStyle(style: string, value: number | string | null) {
 		const store = useStore();
 		let styleObj = this.baseStyles;
@@ -102,6 +105,17 @@ class Block implements BlockOptions {
 			return;
 		}
 		styleObj[style] = value;
+	}
+	setAttribute(attribute: string, value: string) {
+		this.attributes[attribute] = value;
+	}
+	getAttribute(attribute: string) {
+		return this.attributes[attribute];
+	}
+	removeStyle(style: string) {
+		delete this.baseStyles[style];
+		delete this.mobileStyles[style];
+		delete this.tabletStyles[style];
 	}
 	setBaseStyle(style: string, value: string | number) {
 		this.baseStyles[style] = value;
@@ -135,7 +149,7 @@ class Block implements BlockOptions {
 		return this.originalElement === "body";
 	}
 	getTag() {
-		return this.element === "button" ? "div" : this.element;
+		return this.element;
 	}
 	isDiv() {
 		return this.element === "div";
