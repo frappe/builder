@@ -1,6 +1,71 @@
 <template>
-	<div v-if="block.isContainer()" class="flex flex-col gap-3">
+	<div class="flex flex-col gap-3">
 		<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Layout</h3>
+		<div class="flex flex-col" v-show="block.getParentBlock()?.getStyle('display') === 'flex'">
+			<InlineInput
+				type="select"
+				:options="[
+					{
+						value: 'row',
+						label: 'Row',
+					},
+					{
+						value: 'column',
+						label: 'Column',
+					},
+				]"
+				:modelValue="block.getParentBlock()?.getStyle('flexDirection')"
+				@update:modelValue="(val) => block.getParentBlock()?.setStyle('flexDirection', val)">
+				Arrangement
+			</InlineInput>
+		</div>
+		<div class="flex flex-col" v-show="block.getParentBlock()?.getStyle('display') === 'flex'">
+			<InlineInput
+				type="select"
+				:options="[
+					{
+						value: 'top-left',
+						label: 'Top Left',
+					},
+					{
+						value: 'top-middle',
+						label: block.getParentBlock()?.getStyle('flexDirection') === 'row' ? 'Top Middle' : 'Left Middle',
+					},
+					{
+						value: 'top-right',
+						label: block.getParentBlock()?.getStyle('flexDirection') === 'row' ? 'Top Right' : 'Bottom Left',
+					},
+					{
+						value: 'middle-left',
+						label: block.getParentBlock()?.getStyle('flexDirection') === 'row' ? 'Left Middle' : 'Top Middle',
+					},
+					{
+						value: 'middle-middle',
+						label: 'Center',
+					},
+					{
+						value: 'middle-right',
+						label:
+							block.getParentBlock()?.getStyle('flexDirection') === 'row' ? 'Right Middle' : 'Bottom Middle',
+					},
+					{
+						value: 'bottom-left',
+						label: block.getParentBlock()?.getStyle('flexDirection') === 'row' ? 'Bottom Left' : 'Top Right',
+					},
+					{
+						value: 'bottom-middle',
+						label:
+							block.getParentBlock()?.getStyle('flexDirection') === 'row' ? 'Bottom Middle' : 'Right Middle',
+					},
+					{
+						value: 'bottom-right',
+						label: 'Bottom Right',
+					},
+				]"
+				@update:modelValue="setAlignment">
+				Placement
+			</InlineInput>
+		</div>
 		<InlineInput
 			:modelValue="blockStyles.display || 'block'"
 			type="select"
@@ -96,71 +161,6 @@
 			@update:modelValue="(val: string | number) => (blockStylesObj.flexBasis = val)">
 			Basis
 		</InlineInput>
-		<div class="mt-2 flex flex-col" v-show="block.getParentBlock()?.getStyle('display') === 'flex'">
-			<InlineInput
-				type="select"
-				:options="[
-					{
-						value: 'row',
-						label: 'Row',
-					},
-					{
-						value: 'column',
-						label: 'Column',
-					},
-				]"
-				:modelValue="block.getParentBlock()?.getStyle('flexDirection')"
-				@update:modelValue="(val) => block.getParentBlock()?.setStyle('flexDirection', val)">
-				Arrangement
-			</InlineInput>
-		</div>
-		<div class="flex flex-col" v-show="block.getParentBlock()?.getStyle('display') === 'flex'">
-			<InlineInput
-				type="select"
-				:options="[
-					{
-						value: 'top-left',
-						label: 'Top Left',
-					},
-					{
-						value: 'top-middle',
-						label: block.getParentBlock()?.getStyle('flexDirection') === 'row' ? 'Top Middle' : 'Left Middle',
-					},
-					{
-						value: 'top-right',
-						label: block.getParentBlock()?.getStyle('flexDirection') === 'row' ? 'Top Right' : 'Bottom Left',
-					},
-					{
-						value: 'middle-left',
-						label: block.getParentBlock()?.getStyle('flexDirection') === 'row' ? 'Left Middle' : 'Top Middle',
-					},
-					{
-						value: 'middle-middle',
-						label: 'Center',
-					},
-					{
-						value: 'middle-right',
-						label:
-							block.getParentBlock()?.getStyle('flexDirection') === 'row' ? 'Right Middle' : 'Bottom Middle',
-					},
-					{
-						value: 'bottom-left',
-						label: block.getParentBlock()?.getStyle('flexDirection') === 'row' ? 'Bottom Left' : 'Top Right',
-					},
-					{
-						value: 'bottom-middle',
-						label:
-							block.getParentBlock()?.getStyle('flexDirection') === 'row' ? 'Bottom Middle' : 'Right Middle',
-					},
-					{
-						value: 'bottom-right',
-						label: 'Bottom Right',
-					},
-				]"
-				@update:modelValue="setAlignment">
-				Placement
-			</InlineInput>
-		</div>
 	</div>
 </template>
 <script lang="ts" setup>
