@@ -170,7 +170,7 @@ const handleClick = (ev: MouseEvent) => {
 };
 
 const handleDoubleClick = () => {
-	if (props.block.isText()) {
+	if (props.block.isText() || props.block.isButton()) {
 		store.builderState.editableBlock = props.block;
 	}
 };
@@ -262,8 +262,12 @@ const createComponent = createResource({
 });
 
 const createComponentHandler = ({ close }: { close: () => void }) => {
+	const blockCopy = store.getBlockCopy(props.block);
+	blockCopy.removeStyle("left");
+	blockCopy.removeStyle("top");
+	blockCopy.removeStyle("position");
 	createComponent.submit({
-		block: props.block,
+		block: blockCopy,
 		component_name: componentProperties.value.componentName,
 		is_dynamic: componentProperties.value.isDynamicComponent,
 	});
