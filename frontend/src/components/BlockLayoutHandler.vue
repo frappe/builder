@@ -86,7 +86,7 @@
 				{ label: 'Vertical', value: 'column' },
 			]"
 			default="column"
-			@update:modelValue="(val: string | number) => (blockStylesObj.flexDirection = val)">
+			@update:modelValue="(val: string | number) => block.setStyle('flexDirection', val)">
 			Direction
 		</InlineInput>
 		<InlineInput
@@ -110,7 +110,7 @@
 				{ label: 'Space Around', value: 'space-around' },
 				{ label: 'Space Evenly', value: 'space-evenly' },
 			]"
-			@update:modelValue="(val: string | number) => (blockStylesObj.justifyContent = val)">
+			@update:modelValue="(val: string | number) => block.setStyle('justifyContent', val)">
 			Distribute
 		</InlineInput>
 		<InlineInput
@@ -131,7 +131,7 @@
 					value: 'flex-end',
 				},
 			]"
-			@update:modelValue="(val: string | number) => (blockStylesObj.alignItems = val)">
+			@update:modelValue="(val: string | number) => block.setStyle('alignItems', val)">
 			Align
 		</InlineInput>
 		<InlineInput
@@ -143,14 +143,14 @@
 				{ label: 'Wrap', value: 'wrap' },
 			]"
 			default="wrap"
-			@update:modelValue="(val: string | number) => (blockStylesObj.flexWrap = val)">
+			@update:modelValue="(val: string | number) => block.setStyle('flexWrap', val)">
 			Wrap
 		</InlineInput>
 		<InlineInput
 			v-if="blockStyles.display === 'flex'"
 			type="text"
 			:modelValue="blockStyles.gap"
-			@update:modelValue="(val: string | number) => (blockStylesObj.gap = val)">
+			@update:modelValue="(val: string | number) => block.setStyle('gap', val)">
 			Gap
 		</InlineInput>
 		<!-- flex basis -->
@@ -158,7 +158,7 @@
 			v-if="blockStyles.display === 'flex'"
 			type="text"
 			:modelValue="blockStyles.flexBasis"
-			@update:modelValue="(val: string | number) => (blockStylesObj.flexBasis = val)">
+			@update:modelValue="(val: string | number) => block.setStyle('flexBasis', val)">
 			Basis
 		</InlineInput>
 	</div>
@@ -174,17 +174,6 @@ const store = useStore();
 const props = defineProps<{
 	block: Block;
 }>();
-
-// TODO: Temporary for correctness, remove when we have a better way to handle this
-const blockStylesObj = computed(() => {
-	let styleObj = props.block.baseStyles;
-	if (store.builderState.activeBreakpoint === "mobile") {
-		styleObj = props.block.mobileStyles;
-	} else if (store.builderState.activeBreakpoint === "tablet") {
-		styleObj = props.block.tabletStyles;
-	}
-	return styleObj;
-});
 
 const blockStyles = computed(() => {
 	let styleObj = props.block.baseStyles;
