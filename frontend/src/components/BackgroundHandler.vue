@@ -3,7 +3,7 @@
 		<template #target="{ togglePopover, isOpen }">
 			<div class="flex items-center justify-between">
 				<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
-					<slot>Background</slot>
+					<slot>BG Image</slot>
 				</span>
 				<div class="relative w-[150px]">
 					<div>
@@ -11,17 +11,17 @@
 							class="absolute left-2 top-[6px] z-10 h-4 w-4 rounded shadow-sm"
 							@click="togglePopover"
 							:style="{
-								backgroundImage: backgroundURL ? `url(${backgroundURL})` : null,
+								backgroundImage: backgroundURL ? `url(${backgroundURL})` : '',
 								backgroundPosition: `center`,
 								backgroundSize: `contain`,
 								backgroundRepeat: `no-repeat`,
 							}"></div>
 						<Input
 							type="text"
-							class="rounded-md text-sm text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700"
+							class="rounded-md text-sm text-gray-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700"
 							placeholder="Select Background"
 							inputClass="pl-8"
-							:value="backgroundURL"
+							:value="backgroundURL?.replace(/^'|'$/g, '')"
 							@change=""></Input>
 					</div>
 				</div>
@@ -32,7 +32,7 @@
 				<div
 					class="image-preview group relative h-24 w-48 cursor-pointer overflow-hidden rounded bg-gray-200 dark:bg-zinc-700"
 					:style="{
-						backgroundImage: backgroundURL ? `url(${backgroundURL})` : null,
+						backgroundImage: backgroundURL ? `url(${backgroundURL})` : '',
 						backgroundPosition: `center`,
 						backgroundSize: backgroundSize || `contain`,
 						backgroundRepeat: `no-repeat`,
@@ -66,7 +66,7 @@
 import { Popover, FileUploader } from "frappe-ui";
 import Block from "@/utils/block";
 import InlineInput from "./InlineInput.vue";
-import { PropType, computed, ref } from "vue";
+import { PropType, computed } from "vue";
 
 const props = defineProps({
 	block: {
@@ -92,7 +92,6 @@ const backgroundSize = computed(() => {
 		console.log(bgSize);
 		return bgSize;
 	}
-	return null;
 });
 
 const setBG = (file: { file_url: string }) => {
@@ -101,13 +100,10 @@ const setBG = (file: { file_url: string }) => {
 };
 
 const setBGSize = (value: string) => {
-	console.log(`url(${backgroundURL.value}) ${value} / contain no-repeat`);
 	props.block?.setStyle("background", `url(${backgroundURL.value}) center / ${value} no-repeat`);
 };
 
-// background css parser into background-image, background-position, background-size, background-repeat
 const parseBackground = (background: string) => {
-	// url(/path/to/image) center / contain no-repeat
 	const bgImageURL = background.match(/url\((.*?)\)/)?.[1];
 	const bgPosition = background.match(/center|top|bottom|left|right/g)?.[0];
 	const bgSize = background.match(/contain|cover/g)?.[0];
