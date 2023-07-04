@@ -1,16 +1,13 @@
 <template>
 	<div
-		class="editor fixed z-[19] box-content select-none border-[1px] border-blue-400"
+		class="editor fixed z-[19] box-content select-none border-[1px]"
 		ref="editor"
 		@click="handleClick"
 		@dblclick="handleDoubleClick"
 		@mousedown.prevent="handleMove"
 		@contextmenu.prevent="showContextMenu"
 		:data-block-id="block.blockId"
-		:class="{
-			'cursor-grab': movable && !block.isRoot(),
-			'pointer-events-none': (block.isHovered() && !isBlockSelected) || editable,
-		}">
+		:class="getStyleClasses">
 		<BoxResizer
 			v-if="isBlockSelected && !block.isRoot() && !editable"
 			:target-block="block"
@@ -132,6 +129,22 @@ watchEffect(() => {
 
 const isBlockSelected = computed(() => {
 	return props.block.isSelected() && props.breakpoint === store.builderState.activeBreakpoint;
+});
+
+const getStyleClasses = computed(() => {
+	const classes = [];
+	if (movable.value && !props.block.isRoot()) {
+		classes.push("cursor-grab");
+	}
+	if ((props.block.isHovered() && isBlockSelected.value) || props.editable) {
+		classes.push("pointer-events-none");
+	}
+	if (props.block.isComponent) {
+		classes.push("border-purple-400");
+	} else {
+		classes.push("border-blue-400");
+	}
+	return classes;
 });
 
 watch(store.builderState.blocks, () => {

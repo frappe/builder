@@ -2,17 +2,46 @@
 	<div v-if="selectedBlock" class="flex flex-col gap-3">
 		<BLockLayoutHandler :block="selectedBlock" v-if="selectedBlock" class="mb-6"></BLockLayoutHandler>
 		<BlockPositionHandler :block="selectedBlock" v-if="selectedBlock" class="mb-6"></BlockPositionHandler>
-		<BackgroundHandler :block="selectedBlock"></BackgroundHandler>
+		<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Style</h3>
 		<ColorInput
 			:value="blockStyles.background as HashString"
 			@change="(val) => selectedBlock.setStyle('background', val)">
-			Background
+			BG Color
 		</ColorInput>
+		<BackgroundHandler :block="selectedBlock"></BackgroundHandler>
 		<ColorInput
 			:value="blockStyles.color as HashString"
 			@change="(val) => selectedBlock.setStyle('color', val)">
 			Text
 		</ColorInput>
+		<InlineInput
+			v-if="selectedBlock && selectedBlock.isContainer()"
+			type="select"
+			:options="[
+				{
+					value: 'none',
+					label: 'None',
+				},
+				{
+					label: 'Small',
+					value:
+						'rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 1px 2px 0px, rgba(0, 0, 0, 0.05) 0px 1px 3px 0px',
+				},
+				{
+					label: 'Medium',
+					value:
+						'rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.1) 0px 4px 6px -4px',
+				},
+				{
+					label: 'Large',
+					value:
+						'rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.1) 0px 10px 10px -5px',
+				},
+			]"
+			:modelValue="blockStyles.boxShadow"
+			@update:modelValue="(val) => selectedBlock.setStyle('boxShadow', val)">
+			Shadow
+		</InlineInput>
 		<h3 v-if="selectedBlock" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Dimension</h3>
 		<InlineInput
 			v-if="selectedBlock"
@@ -194,35 +223,6 @@
 			:modelValue="blockStyles.overflow"
 			@update:modelValue="(val) => selectedBlock.setStyle('overflow', val)">
 			Overflow
-		</InlineInput>
-		<!-- shadow -->
-		<InlineInput
-			v-if="selectedBlock && selectedBlock.isContainer()"
-			type="select"
-			:options="[
-				{
-					value: 'none',
-					label: 'None',
-				},
-				{
-					label: 'Small',
-					value:
-						'rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 1px 2px 0px, rgba(0, 0, 0, 0.05) 0px 1px 3px 0px',
-				},
-				{
-					label: 'Medium',
-					value:
-						'rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.1) 0px 4px 6px -4px',
-				},
-				{
-					label: 'Large',
-					value:
-						'rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.1) 0px 10px 10px -5px',
-				},
-			]"
-			:modelValue="blockStyles.boxShadow"
-			@update:modelValue="(val) => selectedBlock.setStyle('boxShadow', val)">
-			Shadow
 		</InlineInput>
 
 		<h3 v-if="selectedBlock" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">RAW Styles</h3>

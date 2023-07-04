@@ -238,12 +238,14 @@ const useStore = defineStore("store", {
 		},
 		getPageData() {},
 		setPage(page: WebPageBeta) {
-			if (!page) return;
+			if (!page) {
+				return;
+			}
 			// clear blocks
 			this.clearBlocks();
 			this.pushBlocks(page.blocks);
-			this.pageName = page.page_name;
-			this.route = page.route || "/" + page.page_name.toLowerCase().replace(/ /g, "-");
+			this.pageName = page.page_name as string;
+			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
 			this.builderState.selectedPage = page.name;
 			// localStorage.setItem("selectedPage", page.name);
 		},
