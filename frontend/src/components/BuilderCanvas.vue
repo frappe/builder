@@ -154,6 +154,7 @@ document.addEventListener("keydown", (e) => {
 	}
 
 	if (e.key === "Escape") {
+		store.editingComponent = null;
 		clearSelectedComponent();
 	}
 

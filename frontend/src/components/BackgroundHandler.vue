@@ -79,7 +79,6 @@ const backgroundURL = computed(() => {
 	const background = props.block?.getStyle("background") as string;
 	if (background) {
 		const { bgImageURL } = parseBackground(background);
-		console.log(bgImageURL);
 		return bgImageURL;
 	}
 	return null;
