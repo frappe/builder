@@ -8,9 +8,13 @@
 		<div class="overlay absolute" id="overlay" ref="overlay" />
 		<BlockSnapGuides />
 		<div
+			v-if="isOverDropZone"
+			class="pointer-events-none absolute bottom-0 left-0 right-0 top-0 z-30 bg-cyan-300 opacity-20"></div>
+		<div
 			class="fixed flex will-change-transform"
 			ref="canvas"
 			:style="{
+				transformStyle: 'preserve-3d',
 				transform: `scale(${store.canvas.scale}) translate(${store.canvas.translateX}px, ${store.canvas.translateY}px)`,
 			}">
 			<div class="absolute right-0 top-[-60px] flex rounded-md bg-white px-3 dark:bg-zinc-900">
@@ -30,7 +34,7 @@
 				</div>
 			</div>
 			<div
-				class="canvas relative ml-20 flex h-full rounded-md bg-white shadow-lg"
+				class="canvas relative ml-20 flex h-full rounded-md bg-white"
 				:style="{
 					background: store.canvas.background,
 					width: breakpoint.width + 'px',
@@ -48,7 +52,7 @@
 </template>
 <script setup lang="ts">
 import Block from "@/utils/block";
-import { useDebouncedRefHistory, useElementBounding } from "@vueuse/core";
+import { useDebouncedRefHistory, useElementBounding, useDropZone } from "@vueuse/core";
 import { FeatherIcon, toast } from "frappe-ui";
 import { storeToRefs } from "pinia";
 import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
@@ -56,6 +60,7 @@ import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
+import { FileUploadHandler } from "frappe-ui";
 
 const store = useStore();
 const canvasContainer = ref(null);
@@ -65,6 +70,33 @@ const overlay = ref(null);
 
 // TODO:
 store.overlayElement = overlay;
+
+const { isOverDropZone } = useDropZone(canvasContainer, {
+	onDrop: (files, ev) => {
+		let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
+		let block = store.builderState.blocks[0];
+		if (element) {
+			if (element.dataset.blockId) {
+				block = store.findBlock(element.dataset.blockId) || block;
+			}
+		}
+		if (files && files.length) {
+			const uploader = new FileUploadHandler();
+			uploader
+				.upload(files[0], {
+					private: false,
+				})
+				.then((fileDoc: { file_url: string }) => {
+					const url = encodeURI(window.location.origin + fileDoc.file_url);
+					if (block.isImage()) {
+						block.setAttribute("src", url);
+					} else {
+						block.addChild(store.getImageBlock(url));
+					}
+				});
+		}
+	},
+});
 
 function getPageData() {
 	return store.builderState.blocks;
