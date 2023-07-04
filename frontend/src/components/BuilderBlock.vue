@@ -6,14 +6,11 @@
 		:group="{ name: 'blocks' }"
 		item-key="blockId"
 		:tag="block.getTag()"
-		@click.stop="selectBlock($event, block)"
+		@click="handleClick"
 		@dblclick.stop="handleDoubleClick"
 		@contextmenu.prevent.stop="triggerContextMenu($event)"
-		@mouseover.stop="
-			store.hoveredBlock = block.blockId;
-			store.hoveredBreakpoint = breakpoint;
-		"
-		@mouseleave.stop="store.hoveredBlock = null"
+		@mouseover="handleMouseOver"
+		@mouseleave="handleMouseLeave"
 		@blur="block.innerText = $event.target.innerText"
 		:component-data="{
 			...block.attributes,
@@ -31,12 +28,19 @@
 				style: { ...styles, ...block.editorStyles },
 			},
 		}"
+		:class="{
+			'pointer-events-none': props.isChildOfComponent,
+		}"
 		ref="component">
 		<template #header>
 			{{ block.innerText }}
 		</template>
 		<template #item="{ element }">
-			<BuilderBlock :block="element" :breakpoint="breakpoint" :preview="preview" />
+			<BuilderBlock
+				:block="element"
+				:breakpoint="breakpoint"
+				:preview="preview"
+				:isChildOfComponent="block.isComponent" />
 		</template>
 	</draggable>
 	<teleport to="#overlay" v-if="store.overlayElement && !preview">
@@ -73,6 +77,10 @@ const props = defineProps({
 	block: {
 		type: Block,
 		required: true,
+	},
+	isChildOfComponent: {
+		type: Boolean,
+		default: false,
 	},
 	breakpoint: {
 		type: String,
@@ -115,7 +123,9 @@ const styles = computed(() => {
 });
 
 const isEditable = computed(() => {
-	return store.builderState.editableBlock === props.block;
+	return (
+		store.builderState.editableBlock === props.block && !(props.block.isComponent || props.isChildOfComponent)
+	);
 });
 
 const selectBlock = (e: MouseEvent | null, block: Block) => {
@@ -158,10 +168,35 @@ const triggerContextMenu = (e: MouseEvent) => {
 	});
 };
 
+const handleClick = (e: MouseEvent) => {
+	if (!props.isChildOfComponent) {
+		e.stopPropagation();
+		selectBlock(e, props.block);
+	}
+};
+
 const handleDoubleClick = () => {
 	store.builderState.editableBlock = null;
 	if (props.block.isText()) {
 		store.builderState.editableBlock = props.block;
+	}
+};
+
+const handleMouseOver = (e: MouseEvent) => {
+	if (!props.isChildOfComponent) {
+		e.stopPropagation();
+		store.hoveredBlock = props.block.blockId;
+		store.hoveredBreakpoint = props.breakpoint;
+	}
+};
+
+const handleMouseLeave = (e: MouseEvent) => {
+	console.log(props.block.blockId, "leave");
+	if (!props.isChildOfComponent) {
+		if (store.hoveredBlock === props.block.blockId) {
+			e.stopPropagation();
+			store.hoveredBlock = null;
+		}
 	}
 };
 
