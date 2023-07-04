@@ -1,7 +1,3 @@
-// Learn: Why "declare" keyword is needed, everything works without it.
-
-// declare all types in ./types folder
-
 declare interface BlockStyleMap {
 	[key: string]: string | number;
 }
