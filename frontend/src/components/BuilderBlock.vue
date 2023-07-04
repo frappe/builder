@@ -7,7 +7,7 @@
 		item-key="blockId"
 		:tag="block.getTag()"
 		@click="handleClick"
-		@dblclick.stop="handleDoubleClick"
+		@dblclick="handleDoubleClick"
 		@contextmenu.prevent.stop="triggerContextMenu($event)"
 		@mouseover="handleMouseOver"
 		@mouseleave="handleMouseLeave"
@@ -175,10 +175,15 @@ const handleClick = (e: MouseEvent) => {
 	}
 };
 
-const handleDoubleClick = () => {
+const handleDoubleClick = (e: MouseEvent) => {
 	store.builderState.editableBlock = null;
 	if (props.block.isText()) {
 		store.builderState.editableBlock = props.block;
+		e.stopPropagation();
+	}
+	if (props.block.isComponent) {
+		store.editingComponent = props.block;
+		e.stopPropagation();
 	}
 };
 
@@ -191,7 +196,6 @@ const handleMouseOver = (e: MouseEvent) => {
 };
 
 const handleMouseLeave = (e: MouseEvent) => {
-	console.log(props.block.blockId, "leave");
 	if (!props.isChildOfComponent) {
 		if (store.hoveredBlock === props.block.blockId) {
 			e.stopPropagation();
