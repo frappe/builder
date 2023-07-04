@@ -1,6 +1,8 @@
 import useStore from "@/store";
 import { addPxToNumber, getNumberFromPx } from "./helpers";
-import { reactive } from "vue";
+import { CSSProperties, reactive } from "vue";
+
+type styleProperty = keyof CSSProperties;
 
 class Block implements BlockOptions {
 	blockId: string;
@@ -65,11 +67,11 @@ class Block implements BlockOptions {
 		}
 
 		this.computedStyles = new Proxy(this.baseStyles, {
-			set: (target, prop: string, value) => {
+			set: (target, prop: styleProperty, value) => {
 				this.setStyle(prop, value);
 				return true;
 			},
-			get: (target, prop: string) => {
+			get: (target, prop: styleProperty) => {
 				return this.getStyle(prop);
 			},
 		});
@@ -92,7 +94,7 @@ class Block implements BlockOptions {
 	isInput() {
 		return this.originalElement || this.element === "input";
 	}
-	setStyle(style: string, value: number | string | null) {
+	setStyle(style: styleProperty, value: number | string | null) {
 		const store = useStore();
 		let styleObj = this.baseStyles;
 		if (store.builderState.activeBreakpoint === "mobile") {
@@ -112,15 +114,15 @@ class Block implements BlockOptions {
 	getAttribute(attribute: string) {
 		return this.attributes[attribute];
 	}
-	removeStyle(style: string) {
+	removeStyle(style: styleProperty) {
 		delete this.baseStyles[style];
 		delete this.mobileStyles[style];
 		delete this.tabletStyles[style];
 	}
-	setBaseStyle(style: string, value: string | number) {
+	setBaseStyle(style: styleProperty, value: string | number) {
 		this.baseStyles[style] = value;
 	}
-	getStyle(style: string) {
+	getStyle(style: styleProperty) {
 		const store = useStore();
 		if (store.builderState.activeBreakpoint === "mobile") {
 			return this.mobileStyles[style] || this.baseStyles[style];
