@@ -17,9 +17,6 @@ const useStore = defineStore("store", {
 					originalElement: "body",
 					blockId: "root",
 					resizable: false,
-					baseStyles: {
-						minHeight: "100vh",
-					}
 				}),
 			],
 		},

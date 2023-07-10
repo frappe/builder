@@ -51,7 +51,9 @@ class Block implements BlockOptions {
 		};
 
 		if (this.isRoot()) {
+			this.blockId = "root";
 			this.draggable = false;
+			this.setBaseStyle("minHeight", "100vh");
 		}
 	}
 	isImage() {
@@ -190,7 +192,6 @@ class Block implements BlockOptions {
 		}
 
 		if (this.isRoot()) {
-			this.blockId = "root";
 			styles.width = "inherit";
 			styles.overflowX = "hidden";
 		}
