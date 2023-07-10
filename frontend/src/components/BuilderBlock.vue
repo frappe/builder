@@ -49,8 +49,8 @@
 			v-show="
 				((block.isSelected() && breakpoint === store.builderState.activeBreakpoint) ||
 					(block.isHovered() && store.hoveredBreakpoint === breakpoint)) &&
-				!store.canvas.scaling &&
-				!store.canvas.panning
+				!canvasProps.scaling &&
+				!canvasProps.panning
 			"
 			:resizable-x="!block.isRoot()"
 			:resizable-y="!block.isImage() && !block.isRoot()"
@@ -64,10 +64,12 @@
 <script setup lang="ts">
 import Block from "@/utils/block";
 import { setFont } from "@/utils/fontManager";
-import { Ref, computed, nextTick, onMounted, ref, watchEffect } from "vue";
+import { Ref, computed, inject, nextTick, onMounted, ref, watchEffect } from "vue";
 import draggable from "vuedraggable";
 import useStore from "../store";
 import BlockEditor from "./BlockEditor.vue";
+
+const canvasProps = inject("canvasProps");
 
 // TODO: Find better way to set type for draggable
 // sortable object for draggable has targetDomElement
@@ -181,6 +183,7 @@ const handleDoubleClick = (e: MouseEvent) => {
 		store.builderState.editableBlock = props.block;
 		e.stopPropagation();
 	}
+	console.log(props.block.isComponent);
 	if (props.block.isComponent) {
 		store.editingComponent = props.block;
 		e.stopPropagation();

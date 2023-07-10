@@ -19,6 +19,7 @@ function trackTarget(target: HTMLElement, host: HTMLElement) {
 	// TODO: too much? find a better way to track changes
 	updateList.push(targetBounds.update);
 	watch(store.canvas, () => nextTick(targetBounds.update), { deep: true });
+	watch(store.componentEditor, () => nextTick(targetBounds.update), { deep: true });
 
 	if (!window.observer) {
 		let callback = () => {

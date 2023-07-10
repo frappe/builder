@@ -15,11 +15,11 @@
 			ref="canvas"
 			:style="{
 				transformStyle: 'preserve-3d',
-				transform: `scale(${store.canvas.scale}) translate(${store.canvas.translateX}px, ${store.canvas.translateY}px)`,
+				transform: `scale(${canvasProps.scale}) translate(${canvasProps.translateX}px, ${canvasProps.translateY}px)`,
 			}">
 			<div class="absolute right-0 top-[-60px] flex rounded-md bg-white px-3 dark:bg-zinc-900">
 				<div
-					v-show="!store.canvas.scaling && !store.canvas.panning"
+					v-show="!canvasProps.scaling && !canvasProps.panning"
 					class="w-auto cursor-pointer p-2"
 					v-for="breakpoint in store.deviceBreakpoints"
 					:key="breakpoint.device"
@@ -36,16 +36,13 @@
 			<div
 				class="canvas relative ml-20 flex h-full rounded-md bg-white"
 				:style="{
-					background: store.canvas.background,
-					width: breakpoint.width + 'px',
-					minHeight: '1600px',
+					background: canvasProps.background,
+					width: `${breakpoint.width}px`,
+					...canvasStyles,
 				}"
 				v-for="breakpoint in visibleBreakpoints"
 				:key="breakpoint.device">
-				<BuilderBlock
-					:block="store.builderState.blocks[0]"
-					v-if="showBlocks"
-					:breakpoint="breakpoint.device" />
+				<BuilderBlock :block="block" v-if="showBlocks" :breakpoint="breakpoint.device" />
 			</div>
 		</div>
 	</div>
@@ -61,6 +58,7 @@ import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
 import { FileUploadHandler } from "frappe-ui";
+import { provide } from "vue";
 
 const store = useStore();
 const canvasContainer = ref(null);
@@ -71,10 +69,27 @@ const overlay = ref(null);
 // TODO:
 store.overlayElement = overlay;
 
+const props = defineProps({
+	block: {
+		type: Block,
+		default: false,
+	},
+	canvasProps: {
+		type: Object,
+		default: () => ({}),
+	},
+	canvasStyles: {
+		type: Object,
+		default: () => ({}),
+	},
+});
+
+provide("canvasProps", props.canvasProps);
+
 const { isOverDropZone } = useDropZone(canvasContainer, {
 	onDrop: (files, ev) => {
 		let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
-		let block = store.builderState.blocks[0];
+		let block = props.block;
 		if (element) {
 			if (element.dataset.blockId) {
 				block = store.findBlock(element.dataset.blockId) || block;
@@ -97,11 +112,6 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 		}
 	},
 });
-
-function getPageData() {
-	return store.builderState.blocks;
-}
-store.getPageData = getPageData;
 
 const clearSelectedComponent = () => {
 	store.builderState.selectedBlock = null;
@@ -171,32 +181,32 @@ const canvasBound = reactive(useElementBounding(canvas));
 const setScaleAndTranslate = async () => {
 	const paddingX = 300;
 	const paddingY = 400;
-	store.canvas.scale = 1;
-	store.canvas.translateX = 0;
-	store.canvas.translateY = 0;
+	props.canvasProps.scale = 1;
+	props.canvasProps.translateX = 0;
+	props.canvasProps.translateY = 0;
 
 	await nextTick();
 	canvasBound.update();
 	const containerWidth = containerBound.width;
 	const containerHeight = containerBound.height;
-	store.canvas.initialScale = store.canvas.scale = Math.min(
+	props.canvasProps.initialScale = props.canvasProps.scale = Math.min(
 		containerWidth / (canvasBound.width + paddingX * 2),
 		containerHeight / (canvasBound.height + paddingY * 2)
 	);
 
 	await nextTick();
-	const scale = store.canvas.scale;
+	const scale = props.canvasProps.scale;
 	canvasBound.update();
 	const diffY = containerBound.top - canvasBound.top + paddingY * scale;
 	if (diffY !== 0) {
-		store.canvas.initialTranslateY = store.canvas.translateY = diffY / scale;
+		props.canvasProps.initialTranslateY = props.canvasProps.translateY = diffY / scale;
 	}
 };
 
 onMounted(() => {
 	const canvasContainerEl = canvasContainer.value as unknown as HTMLElement;
 	const canvasEl = canvas.value as unknown as HTMLElement;
-	setPanAndZoom(store.canvas, canvasEl, canvasContainerEl);
+	setPanAndZoom(props.canvasProps, canvasEl, canvasContainerEl);
 	const { builderState } = storeToRefs(store);
 	const { undo, redo, canUndo, canRedo } = useDebouncedRefHistory(builderState, {
 		capacity: 100,

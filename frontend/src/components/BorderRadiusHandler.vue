@@ -8,8 +8,8 @@
 		<div
 			class="pointer-events-none absolute left-[2px] top-[2px] h-[3px] w-[3px] rounded-full border-none bg-blue-400">
 			<div
-				class="absolute left-2 top-2 w-fit rounded-full bg-slate-800 px-3 py-1 text-sm text-white opacity-70"
-				v-if="updating">
+				class="absolute left-2 top-2 w-fit rounded-full bg-zinc-800 px-3 py-2 text-xs text-white opacity-60"
+				v-show="updating">
 				{{ borderRadius }}
 			</div>
 		</div>

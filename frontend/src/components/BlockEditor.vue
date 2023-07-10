@@ -66,6 +66,7 @@ import {
 	Ref,
 	computed,
 	getCurrentInstance,
+	inject,
 	nextTick,
 	onMounted,
 	ref,
@@ -82,6 +83,8 @@ import BorderRadiusHandler from "./BorderRadiusHandler.vue";
 import BoxResizer from "./BoxResizer.vue";
 import ContextMenu from "./ContextMenu.vue";
 import PaddingHandler from "./PaddingHandler.vue";
+
+const canvasProps = inject("canvasProps");
 
 const props = defineProps({
 	block: {
@@ -136,7 +139,7 @@ const getStyleClasses = computed(() => {
 	if (movable.value && !props.block.isRoot()) {
 		classes.push("cursor-grab");
 	}
-	if ((props.block.isHovered() && isBlockSelected.value) || props.editable) {
+	if ((props.block.isHovered() && isBlockSelected.value) || props.editable || props.block.isComponent) {
 		classes.push("pointer-events-none");
 	}
 	if (props.block.isComponent) {
@@ -206,7 +209,7 @@ const handleMove = (ev: MouseEvent) => {
 	document.body.style.cursor = window.getComputedStyle(target).cursor;
 
 	const mousemove = async (mouseMoveEvent: MouseEvent) => {
-		const scale = store.canvas.scale;
+		const scale = canvasProps.value.scale;
 		const movementX = (mouseMoveEvent.clientX - startX) / scale;
 		const movementY = (mouseMoveEvent.clientY - startY) / scale;
 		let finalLeft = startLeft + movementX;
