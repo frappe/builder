@@ -59,7 +59,7 @@ def get_block_html(blocks):
 			tag.attrs = node.get("attributes", {})
 			classes = node.get("classes", [])
 			if node.get("baseStyles", {}):
-				style_class = f"--{frappe.generate_hash(length=8)}"
+				style_class = f"frappe-builder-{frappe.generate_hash(length=8)}"
 				base_styles = node.get("baseStyles", {})
 				mobile_styles = node.get("mobileStyles", {})
 				tablet_styles = node.get("tabletStyles", {})
