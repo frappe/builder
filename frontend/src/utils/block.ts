@@ -19,12 +19,10 @@ class Block implements BlockOptions {
 	resizable?: boolean;
 	innerText?: string;
 	componentData: ComponentData;
-	computedStyles: ProxyHandler<BlockStyleMap>;
 	isComponent?: boolean;
 	originalElement?: string | undefined;
 	parentBlockId?: string;
 	constructor(options: BlockOptions) {
-		delete options.computedStyles;
 		this.element = options.element;
 		this.draggable = options.draggable;
 		this.innerText = options.innerText;
@@ -55,16 +53,6 @@ class Block implements BlockOptions {
 		if (this.isRoot()) {
 			this.draggable = false;
 		}
-
-		this.computedStyles = new Proxy(this.baseStyles, {
-			set: (target, prop: styleProperty, value) => {
-				this.setStyle(prop, value);
-				return true;
-			},
-			get: (target, prop: styleProperty) => {
-				return this.getStyle(prop);
-			},
-		});
 	}
 	isImage() {
 		return this.element === "img";

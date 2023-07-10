@@ -20,7 +20,6 @@ declare interface BlockOptions {
 	draggable?: boolean;
 	innerText?: string;
 	parentBlockId?: string;
-	computedStyles?: ProxyHandler<BlockStyleMap>;
 	[key: string]: any;
 }
 
