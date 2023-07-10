@@ -13,7 +13,6 @@ declare interface BlockOptions {
 	baseStyles?: BlockStyleMap;
 	mobileStyles?: BlockStyleMap;
 	tabletStyles?: BlockStyleMap;
-	editorStyles?: BlockStyleMap;
 	attributes?: BlockAttributeMap;
 	classes?: Array<string>;
 	children?: Array<Block | BlockOptions>;

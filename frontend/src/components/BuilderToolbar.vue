@@ -156,13 +156,6 @@ function setEvents() {
 					name: "Image",
 					element: "img",
 					icon: "image",
-					attributes: {
-						src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj4KICA8cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0ibm9uZSIgLz4KPC9zdmc+Cg==",
-					},
-					editorStyles: {
-						background: `repeating-linear-gradient(45deg, rgba(180, 180, 180, 0.8) 0px, rgba(180, 180, 180, 0.8) 1px, rgba(255, 255, 255, 0.2) 0px, rgba(255, 255, 255, 0.2) 50%)`,
-						backgroundSize: "16px 16px",
-					} as BlockStyleMap,
 					styles: {
 						width: "100%",
 						height: "auto",

@@ -8,7 +8,6 @@ class Block implements BlockOptions {
 	blockId: string;
 	blockName?: string;
 	element: string;
-	editorStyles: BlockStyleMap;
 	children: Array<Block>;
 	draggable?: boolean;
 	baseStyles: BlockStyleMap;
@@ -41,8 +40,8 @@ class Block implements BlockOptions {
 		this.rawStyles = reactive(options.rawStyles || {});
 		this.mobileStyles = reactive(options.mobileStyles || {});
 		this.tabletStyles = reactive(options.tabletStyles || {});
-		this.editorStyles = reactive(options.editorStyles || {});
 		this.attributes = reactive(options.attributes || {});
+
 		this.blockName = options.blockName;
 		delete this.attributes.style;
 		this.classes = options.classes || [];
@@ -53,16 +52,7 @@ class Block implements BlockOptions {
 			isDynamic: false,
 		};
 
-		if (this.isButton()) {
-			this.editorStyles.display = "inline-block";
-		}
-
 		if (this.isRoot()) {
-			this.blockId = "root";
-			this.editorStyles = {
-				width: "inherit",
-				"overflow-x": "hidden",
-			};
 			this.draggable = false;
 		}
 
@@ -204,6 +194,25 @@ class Block implements BlockOptions {
 		const childBlock = new Block(child);
 		this.children.push(childBlock);
 		return childBlock;
+	}
+	getEditorStyles() {
+		const styles = reactive({} as BlockStyleMap) ;
+		if (this.isButton()) {
+			styles.display = "inline-block";
+		}
+
+		if (this.isRoot()) {
+			this.blockId = "root";
+			styles.width = "inherit";
+			styles.overflowX = "hidden";
+		}
+
+		if (this.isImage() && !this.attributes.src) {
+			styles.background = `repeating-linear-gradient(45deg, rgba(180, 180, 180, 0.8) 0px, rgba(180, 180, 180, 0.8) 1px, rgba(255, 255, 255, 0.2) 0px, rgba(255, 255, 255, 0.2) 50%)`;
+			styles.backgroundSize = "16px 16px";
+		}
+
+		return styles;
 	}
 	selectBlock() {
 		const store = useStore();

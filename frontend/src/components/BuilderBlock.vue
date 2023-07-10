@@ -25,7 +25,7 @@
 					'select-none',
 					...(block.classes || []),
 				],
-				style: { ...styles, ...block.editorStyles },
+				style: { ...styles, ...block.getEditorStyles() },
 			},
 		}"
 		:class="{
