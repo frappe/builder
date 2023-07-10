@@ -189,6 +189,19 @@ const useStore = defineStore("store", {
 			scaling: false,
 			panning: false,
 		},
+		componentEditor: {
+			initialScale: 0.1,
+			initialTranslateY: 0,
+			initialTranslateX: 0,
+			scale: 0.1,
+			translateX: 0,
+			translateY: 0,
+			startX: 0,
+			startY: 0,
+			background: "",
+			scaling: false,
+			panning: false,
+		},
 		copiedStyle: <StyleCopy | null>null,
 		components: <BlockComponent[]>[],
 		overlayElement: <any>null,
@@ -237,7 +250,9 @@ const useStore = defineStore("store", {
 				resizable: false,
 			});
 		},
-		getPageData() {},
+		getPageData() {
+			return this.builderState.blocks;
+		},
 		setPage(page: WebPageBeta) {
 			if (!page) {
 				return;

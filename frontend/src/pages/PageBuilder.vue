@@ -6,6 +6,20 @@
 			<BuilderLeftPanel
 				class="fixed bottom-0 left-0 top-[var(--toolbar-height)] z-20 overflow-auto border-r-[1px] bg-white no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderLeftPanel>
 			<BuilderCanvas
+				v-if="store.editingComponent"
+				:block="store.editingComponent"
+				:canvas-props="store.componentEditor"
+				:canvas-styles="{
+					width: 'auto',
+				}"
+				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-200 p-10 dark:bg-zinc-800"></BuilderCanvas>
+			<BuilderCanvas
+				v-else
+				:block="store.builderState.blocks[0]"
+				:canvas-props="store.canvas"
+				:canvas-styles="{
+					minHeight: '1600px',
+				}"
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-200 p-10 dark:bg-zinc-800"></BuilderCanvas>
 			<BuilderRightPanel
 				class="fixed bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] bg-white no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderRightPanel>
