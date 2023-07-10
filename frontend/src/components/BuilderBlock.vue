@@ -69,8 +69,6 @@ import draggable from "vuedraggable";
 import useStore from "../store";
 import BlockEditor from "./BlockEditor.vue";
 
-const canvasProps = inject("canvasProps");
-
 // TODO: Find better way to set type for draggable
 // sortable object for draggable has targetDomElement
 const component = ref(null) as unknown as Ref<{ targetDomElement: HTMLElement }>;
@@ -93,6 +91,8 @@ const props = defineProps({
 		default: false,
 	},
 });
+
+const canvasProps = !props.preview ? inject("canvasProps") : null;
 
 const emit = defineEmits(["renderComplete"]);
 

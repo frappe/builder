@@ -8,6 +8,7 @@
 		@contextmenu.prevent="showContextMenu"
 		:data-block-id="block.blockId"
 		:class="getStyleClasses">
+		<BlockDescription v-if="isBlockSelected && !resizing && !editable" :block="block"></BlockDescription>
 		<BoxResizer
 			v-if="isBlockSelected && !block.isRoot() && !editable"
 			:target-block="block"
@@ -83,6 +84,7 @@ import BorderRadiusHandler from "./BorderRadiusHandler.vue";
 import BoxResizer from "./BoxResizer.vue";
 import ContextMenu from "./ContextMenu.vue";
 import PaddingHandler from "./PaddingHandler.vue";
+import BlockDescription from "./BlockDescription.vue";
 
 const canvasProps = inject("canvasProps");
 

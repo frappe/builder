@@ -52,7 +52,7 @@ const componentResource = createListResource({
 	fields: ["component_name", "icon", "block", "name"],
 	orderBy: "creation",
 	start: 0,
-	pageLength: 10,
+	pageLength: 100,
 	auto: true,
 	transform(data: any[]) {
 		data.forEach((d) => {
