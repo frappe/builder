@@ -55,7 +55,7 @@
 					class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400"
 					@click="toggleDark()" />
 			</UseDark>
-			<Button variant="solid" @click="publish" class="rounded-2xl border-0 text-xs">Preview</Button>
+			<Button variant="solid" @click="publish" class="border-0 text-xs">Preview</Button>
 		</div>
 	</div>
 </template>

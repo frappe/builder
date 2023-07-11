@@ -190,7 +190,7 @@ const setLayout = (layout: string) => {
 	block.setStyle("display", layout);
 	if (layout === "flex") {
 		block.setStyle("flexDirection", block.getStyle("flexDirection") || "row");
-		block.setStyle("flexWrap", block.getStyle("flexWrap") || "wrap");
+		block.setStyle("flexWrap", block.getStyle("flexWrap") || "nowrap");
 		block.setStyle("justifyContent", block.getStyle("justifyContent") || "flex-start");
 		block.setStyle("alignItems", block.getStyle("alignItems") || "flex-start");
 	} else if (layout === "grid") {
