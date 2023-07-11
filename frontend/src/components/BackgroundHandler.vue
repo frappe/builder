@@ -88,7 +88,6 @@ const backgroundSize = computed(() => {
 	const background = props.block?.getStyle("background") as string;
 	if (background) {
 		const { bgSize } = parseBackground(background);
-		console.log(bgSize);
 		return bgSize;
 	}
 });
