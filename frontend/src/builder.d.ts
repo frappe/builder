@@ -1,5 +1,7 @@
+declare type StyleValue = string | number;
+
 declare interface BlockStyleMap {
-	[key: string]: string | number;
+	[key: string]: StyleValue;
 }
 
 declare interface BlockAttributeMap {
@@ -36,15 +38,15 @@ declare interface PageMap {
 	[key: string]: Page;
 }
 
-declare interface Style {
-	styles: BlockStyleMap;
+declare interface BlockStyleObjects {
+	baseStyles: BlockStyleMap;
 	mobileStyles?: BlockStyleMap;
 	tabletStyles?: BlockStyleMap;
 }
 
 declare interface StyleCopy {
 	blockId: string;
-	style: Style;
+	style: BlockStyleObjects;
 }
 
 declare interface ContextMenuOption {

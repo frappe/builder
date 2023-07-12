@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="editor fixed z-[19] box-content select-none border-[1px]"
+		class="editor pointer-events-none fixed z-[19] box-content select-none border-[1px]"
 		ref="editor"
 		@click="handleClick"
 		@dblclick="handleDoubleClick"
@@ -141,9 +141,6 @@ const getStyleClasses = computed(() => {
 	if (movable.value && !props.block.isRoot()) {
 		classes.push("cursor-grab");
 	}
-	if ((props.block.isHovered() && isBlockSelected.value) || props.editable || props.block.isComponent) {
-		classes.push("pointer-events-none");
-	}
 	if (props.block.isComponent) {
 		classes.push("border-purple-400");
 	} else {
@@ -180,7 +177,9 @@ const handleClick = (ev: MouseEvent) => {
 		element.classList.add("pointer-events-none");
 		element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
 	}
-	element.click();
+	if (element.classList.contains("__builder_component__")) {
+		element.dispatchEvent(new MouseEvent("click", ev));
+	}
 	if (store.builderState.mode === "select") {
 		editorWrapper.classList.remove("pointer-events-none");
 		editorWrapper.classList.add("pointer-events-auto");
@@ -292,8 +291,8 @@ const createComponentHandler = ({ close }: { close: () => void }) => {
 	close();
 };
 
-const duplicateBlock = (block: Block) => {
-	const blockCopy = block || store.getBlockCopy(store.builderState.selectedBlock as Block);
+const duplicateBlock = () => {
+	const blockCopy = store.getBlockCopy(props.block);
 	const superParent = currentInstance?.parent?.parent?.parent; // waiting for this to break 👀
 	const parentBlock = superParent?.props?.block as Block;
 
@@ -313,7 +312,7 @@ const duplicateBlock = (block: Block) => {
 };
 
 const pasteStyle = () => {
-	Object.assign(store.builderState.selectedBlock as Block, store.copiedStyle?.style);
+	props.block.updateStyles(store.copiedStyle?.style as BlockStyleObjects);
 };
 
 const contextMenuOptions: ContextMenuOption[] = [

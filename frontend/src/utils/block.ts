@@ -138,7 +138,7 @@ class Block implements BlockOptions {
 	}
 	getStylesCopy() {
 		return {
-			styles: Object.assign({}, this.baseStyles),
+			baseStyles: Object.assign({}, this.baseStyles),
 			mobileStyles: Object.assign({}, this.mobileStyles),
 			tabletStyles: Object.assign({}, this.tabletStyles),
 		};
@@ -213,6 +213,11 @@ class Block implements BlockOptions {
 	}
 	canHaveChildren(): boolean {
 		return this.isContainer() || this.isRoot() || this.isDiv();
+	}
+	updateStyles(styles: BlockStyleObjects) {
+		this.baseStyles = Object.assign({}, this.baseStyles, styles.baseStyles);
+		this.mobileStyles = Object.assign({}, this.mobileStyles, styles.mobileStyles);
+		this.tabletStyles = Object.assign({}, this.tabletStyles, styles.tabletStyles);
 	}
 }
 
