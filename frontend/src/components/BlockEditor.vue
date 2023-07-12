@@ -10,18 +10,24 @@
 		:class="getStyleClasses">
 		<BlockDescription v-if="isBlockSelected && !resizing && !editable" :block="block"></BlockDescription>
 		<BoxResizer
-			v-if="isBlockSelected && !block.isRoot() && !editable"
+			v-if="isBlockSelected && !block.isRoot() && !editable && store.builderState.selectedBlocks.length === 1"
 			:target-block="block"
 			@resizing="resizing = $event"
 			:target="target" />
 		<PaddingHandler
-			v-if="isBlockSelected && !resizing && !editable"
+			v-if="isBlockSelected && !resizing && !editable && store.builderState.selectedBlocks.length === 1"
+			:target-block="block"
+			:on-update="updateTracker"
+			:disable-handlers="false"
+			:breakpoint="breakpoint" />
+		<MarginHandler
+			v-if="isBlockSelected && !resizing && !editable && store.builderState.selectedBlocks.length === 1"
 			:target-block="block"
 			:on-update="updateTracker"
 			:disable-handlers="false"
 			:breakpoint="breakpoint" />
 		<BorderRadiusHandler
-			v-if="isBlockSelected && !block.isRoot() && !editable"
+			v-if="isBlockSelected && !block.isRoot() && !editable && store.builderState.selectedBlocks.length === 1"
 			:target-block="block"
 			:target="target" />
 		<ContextMenu
@@ -85,6 +91,7 @@ import BoxResizer from "./BoxResizer.vue";
 import ContextMenu from "./ContextMenu.vue";
 import PaddingHandler from "./PaddingHandler.vue";
 import BlockDescription from "./BlockDescription.vue";
+import MarginHandler from "./MarginHandler.vue";
 
 const canvasProps = inject("canvasProps");
 
