@@ -80,6 +80,7 @@
 							}"></div>
 						<svg
 							v-if="isSupported"
+							class="text-gray-700 dark:text-zinc-300"
 							@click="() => open()"
 							xmlns="http://www.w3.org/2000/svg"
 							width="16"

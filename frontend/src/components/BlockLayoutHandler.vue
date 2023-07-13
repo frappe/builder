@@ -1,7 +1,7 @@
 <template>
 	<div class="flex flex-col gap-3">
 		<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Layout</h3>
-		<div class="flex flex-col" v-show="block.getParentBlock()?.getStyle('display') === 'flex'">
+		<div class="flex flex-col" v-show="blockController.getParentBlock()?.getStyle('display') === 'flex'">
 			<InlineInput
 				type="select"
 				:options="[
@@ -14,12 +14,12 @@
 						label: 'Column',
 					},
 				]"
-				:modelValue="block.getParentBlock()?.getStyle('flexDirection')"
-				@update:modelValue="(val) => block.getParentBlock()?.setStyle('flexDirection', val)">
+				:modelValue="blockController.getParentBlock()?.getStyle('flexDirection')"
+				@update:modelValue="(val) => blockController.getParentBlock()?.setStyle('flexDirection', val)">
 				Arrangement
 			</InlineInput>
 		</div>
-		<div class="flex flex-col" v-show="block.getParentBlock()?.getStyle('display') === 'flex'">
+		<div class="flex flex-col" v-show="blockController.getParentBlock()?.getStyle('display') === 'flex'">
 			<InlineInput
 				type="select"
 				:options="[
@@ -29,15 +29,24 @@
 					},
 					{
 						value: 'top-middle',
-						label: block.getParentBlock()?.getStyle('flexDirection') === 'row' ? 'Top Middle' : 'Left Middle',
+						label:
+							blockController.getParentBlock()?.getStyle('flexDirection') === 'row'
+								? 'Top Middle'
+								: 'Left Middle',
 					},
 					{
 						value: 'top-right',
-						label: block.getParentBlock()?.getStyle('flexDirection') === 'row' ? 'Top Right' : 'Bottom Left',
+						label:
+							blockController.getParentBlock()?.getStyle('flexDirection') === 'row'
+								? 'Top Right'
+								: 'Bottom Left',
 					},
 					{
 						value: 'middle-left',
-						label: block.getParentBlock()?.getStyle('flexDirection') === 'row' ? 'Left Middle' : 'Top Middle',
+						label:
+							blockController.getParentBlock()?.getStyle('flexDirection') === 'row'
+								? 'Left Middle'
+								: 'Top Middle',
 					},
 					{
 						value: 'middle-middle',
@@ -46,16 +55,23 @@
 					{
 						value: 'middle-right',
 						label:
-							block.getParentBlock()?.getStyle('flexDirection') === 'row' ? 'Right Middle' : 'Bottom Middle',
+							blockController.getParentBlock()?.getStyle('flexDirection') === 'row'
+								? 'Right Middle'
+								: 'Bottom Middle',
 					},
 					{
 						value: 'bottom-left',
-						label: block.getParentBlock()?.getStyle('flexDirection') === 'row' ? 'Bottom Left' : 'Top Right',
+						label:
+							blockController.getParentBlock()?.getStyle('flexDirection') === 'row'
+								? 'Bottom Left'
+								: 'Top Right',
 					},
 					{
 						value: 'bottom-middle',
 						label:
-							block.getParentBlock()?.getStyle('flexDirection') === 'row' ? 'Bottom Middle' : 'Right Middle',
+							blockController.getParentBlock()?.getStyle('flexDirection') === 'row'
+								? 'Bottom Middle'
+								: 'Right Middle',
 					},
 					{
 						value: 'bottom-right',
@@ -67,7 +83,7 @@
 			</InlineInput>
 		</div>
 		<InlineInput
-			:modelValue="blockStyles.display || 'block'"
+			:modelValue="blockController.getStyle('display') || 'block'"
 			type="select"
 			:options="[
 				{ label: 'Block', value: 'block' },
@@ -78,134 +94,111 @@
 			Type
 		</InlineInput>
 		<InlineInput
-			v-if="blockStyles.display === 'flex'"
-			:modelValue="blockStyles.flexDirection"
+			v-if="blockController.getStyle('display') === 'flex'"
+			:modelValue="blockController.getStyle('flexDirection')"
 			type="select"
 			:options="[
 				{ label: 'Horizontal', value: 'row' },
 				{ label: 'Vertical', value: 'column' },
 			]"
 			default="column"
-			@update:modelValue="(val: string | number) => block.setStyle('flexDirection', val)">
+			@update:modelValue="(val: string | number) => blockController.setStyle('flexDirection', val)">
 			Direction
 		</InlineInput>
 		<InlineInput
-			v-if="blockStyles.display === 'flex'"
-			:modelValue="blockStyles.justifyContent"
+			v-if="blockController.getStyle('display') === 'flex'"
+			:modelValue="blockController.getStyle('justifyContent')"
 			type="select"
 			:options="[
 				{
-					label: blockStyles.flexDirection === 'row' ? 'Start' : 'Top',
+					label: blockController.getStyle('flexDirection') === 'row' ? 'Start' : 'Top',
 					value: 'flex-start',
 				},
 				{
-					label: blockStyles.flexDirection === 'row' ? 'Center' : 'Middle',
+					label: blockController.getStyle('flexDirection') === 'row' ? 'Center' : 'Middle',
 					value: 'center',
 				},
 				{
-					label: blockStyles.flexDirection === 'row' ? 'End' : 'Bottom',
+					label: blockController.getStyle('flexDirection') === 'row' ? 'End' : 'Bottom',
 					value: 'flex-end',
 				},
 				{ label: 'Space Between', value: 'space-between' },
 				{ label: 'Space Around', value: 'space-around' },
 				{ label: 'Space Evenly', value: 'space-evenly' },
 			]"
-			@update:modelValue="(val: string | number) => block.setStyle('justifyContent', val)">
+			@update:modelValue="(val: string | number) => blockController.setStyle('justifyContent', val)">
 			Distribute
 		</InlineInput>
 		<InlineInput
-			v-if="blockStyles.display === 'flex'"
-			:modelValue="blockStyles.alignItems"
+			v-if="blockController.getStyle('display') === 'flex'"
+			:modelValue="blockController.getStyle('alignItems')"
 			type="select"
 			:options="[
 				{
-					label: blockStyles.flexDirection === 'column' ? 'Start' : 'Top',
+					label: blockController.getStyle('flexDirection') === 'column' ? 'Start' : 'Top',
 					value: 'flex-start',
 				},
 				{
-					label: blockStyles.flexDirection === 'column' ? 'Center' : 'Middle',
+					label: blockController.getStyle('flexDirection') === 'column' ? 'Center' : 'Middle',
 					value: 'center',
 				},
 				{
-					label: blockStyles.flexDirection === 'column' ? 'End' : 'Bottom',
+					label: blockController.getStyle('flexDirection') === 'column' ? 'End' : 'Bottom',
 					value: 'flex-end',
 				},
 			]"
-			@update:modelValue="(val: string | number) => block.setStyle('alignItems', val)">
+			@update:modelValue="(val: string | number) => blockController.setStyle('alignItems', val)">
 			Align
 		</InlineInput>
 		<InlineInput
-			v-if="blockStyles.display === 'flex'"
-			:modelValue="blockStyles.flexWrap || 'nowrap'"
+			v-if="blockController.getStyle('display') === 'flex'"
+			:modelValue="blockController.getStyle('flexWrap') || 'nowrap'"
 			type="select"
 			:options="[
 				{ label: 'No Wrap', value: 'nowrap' },
 				{ label: 'Wrap', value: 'wrap' },
 			]"
 			default="wrap"
-			@update:modelValue="(val: string | number) => block.setStyle('flexWrap', val)">
+			@update:modelValue="(val: string | number) => blockController.setStyle('flexWrap', val)">
 			Wrap
 		</InlineInput>
 		<InlineInput
-			v-if="blockStyles.display === 'flex'"
+			v-if="blockController.getStyle('display') === 'flex'"
 			type="text"
-			:modelValue="blockStyles.gap"
-			@update:modelValue="(val: string | number) => block.setStyle('gap', val)">
+			:modelValue="blockController.getStyle('gap')"
+			@update:modelValue="(val: string | number) => blockController.setStyle('gap', val)">
 			Gap
 		</InlineInput>
 		<!-- flex basis -->
 		<InlineInput
-			v-if="blockStyles.display === 'flex'"
+			v-if="blockController.getStyle('display') === 'flex'"
 			type="text"
-			:modelValue="blockStyles.flexBasis"
-			@update:modelValue="(val: string | number) => block.setStyle('flexBasis', val)">
+			:modelValue="blockController.getStyle('flexBasis')"
+			@update:modelValue="(val: string | number) => blockController.setStyle('flexBasis', val)">
 			Basis
 		</InlineInput>
 	</div>
 </template>
 <script lang="ts" setup>
-import useStore from "@/store";
-import Block from "@/utils/block";
-import { computed } from "vue";
 import InlineInput from "./InlineInput.vue";
-
-const store = useStore();
-
-const props = defineProps<{
-	block: Block;
-}>();
-
-const blockStyles = computed(() => {
-	let styleObj = props.block.baseStyles;
-	if (store.builderState.activeBreakpoint === "mobile") {
-		styleObj = { ...styleObj, ...props.block.mobileStyles };
-	} else if (store.builderState.activeBreakpoint === "tablet") {
-		styleObj = { ...styleObj, ...props.block.tabletStyles };
-	}
-	return styleObj;
-});
+import blockController from "@/utils/blockController";
 
 const setLayout = (layout: string) => {
-	const { block } = props;
-	block.setStyle("display", layout);
+	blockController.setStyle("display", layout);
 	if (layout === "flex") {
-		block.setStyle("flexDirection", block.getStyle("flexDirection") || "row");
-		block.setStyle("flexWrap", block.getStyle("flexWrap") || "nowrap");
-		block.setStyle("justifyContent", block.getStyle("justifyContent") || "flex-start");
-		block.setStyle("alignItems", block.getStyle("alignItems") || "flex-start");
+		blockController.setStyle("flexDirection", blockController.getStyle("flexDirection") || "row");
+		blockController.setStyle("flexWrap", blockController.getStyle("flexWrap") || "nowrap");
+		blockController.setStyle("justifyContent", blockController.getStyle("justifyContent") || "flex-start");
+		blockController.setStyle("alignItems", blockController.getStyle("alignItems") || "flex-start");
 	} else if (layout === "grid") {
-		// block.setStyle("gridTemplateColumns", "repeat(3, 1fr)");
-		// block.setStyle("gridTemplateRows", "repeat(3, 1fr)");
-		// block.setStyle("gridGap", "10px");
+		// blockController.setStyle("gridTemplateColumns", "repeat(3, 1fr)");
+		// blockController.setStyle("gridTemplateRows", "repeat(3, 1fr)");
+		// blockController.setStyle("gridGap", "10px");
 	}
 };
 
 const setAlignment = (alignment: string) => {
-	const block = props.block;
-	if (!block) {
-		return;
-	}
-	const parentBlock = block.getParentBlock();
+	const parentBlock = blockController.getParentBlock();
 
 	if (!parentBlock) {
 		return;
