@@ -114,7 +114,6 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 });
 
 const clearSelectedComponent = () => {
-	store.builderState.selectedBlock = null;
 	store.builderState.selectedBlocks = [];
 	store.builderState.editableBlock = null;
 	if (document.activeElement instanceof HTMLElement) {
@@ -135,7 +134,7 @@ document.addEventListener("keydown", (e) => {
 	}
 	if (
 		e.key === "Backspace" &&
-		store.builderState.selectedBlock &&
+		store.builderState.selectedBlocks.length &&
 		!target.closest(".__builder_component__") &&
 		!target.getAttribute("contenteditable")
 	) {
@@ -159,7 +158,9 @@ document.addEventListener("keydown", (e) => {
 				}
 			});
 		}
-		findBlockAndRemove(store.builderState.blocks, store.builderState.selectedBlock.blockId);
+		for (const block of store.builderState.selectedBlocks) {
+			findBlockAndRemove(store.builderState.blocks, block.blockId);
+		}
 		clearSelectedComponent();
 	}
 
@@ -169,9 +170,11 @@ document.addEventListener("keydown", (e) => {
 	}
 
 	// handle arrow keys
-	if (e.key.startsWith("Arrow") && store.builderState.selectedBlock) {
+	if (e.key.startsWith("Arrow") && store.builderState.selectedBlocks.length) {
 		const key = e.key.replace("Arrow", "").toLowerCase() as "up" | "down" | "left" | "right";
-		store.builderState.selectedBlock.move(key);
+		for (const block of store.builderState.selectedBlocks) {
+			block.move(key);
+		}
 	}
 });
 
@@ -214,8 +217,10 @@ onMounted(() => {
 		clone: (obj) => {
 			let newObj = Object.assign({}, obj);
 			newObj.blocks = obj.blocks.map((val) => store.getBlockCopy(val, true));
-			if (obj.selectedBlock) {
-				newObj.selectedBlock = store.findBlock(obj.selectedBlock.blockId, newObj.blocks);
+			if (obj.selectedBlocks) {
+				newObj.selectedBlocks = obj.selectedBlocks.map((val) => {
+					return store.findBlock(val.blockId, newObj.blocks);
+				}) as Array<Block>;
 			}
 			return newObj;
 		},

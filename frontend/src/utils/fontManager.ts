@@ -5,9 +5,13 @@ import WebFont from "webfontloader";
 const fontListNames = fontList.items.filter((f) => f.variants.length >= 3).map((font) => font.family);
 const setFont = (font: string | null) => {
 	return new Promise((resolve) => {
-		if (!font) return resolve(font);
+		if (!font) {
+			return resolve(font);
+		}
 		const fontObj = fontList.items?.find((f) => f.family === font);
-		if (!fontObj) return resolve(font);
+		if (!fontObj) {
+			return resolve(font);
+		}
 		WebFont.load({
 			google: {
 				families: [font + ":" + fontObj.variants.join(",")],
@@ -20,9 +24,13 @@ const setFont = (font: string | null) => {
 
 const getFontWeightOptions = (font: string) => {
 	const defaultOptions = [{ value: "400", label: "Regular" }];
-	if (!font) return defaultOptions;
+	if (!font) {
+		return defaultOptions;
+	}
 	const fontObj = fontList.items.find((f) => f.family === font);
-	if (!fontObj) return defaultOptions;
+	if (!fontObj) {
+		return defaultOptions;
+	}
 	return fontObj.variants
 		.filter((variant) => !variant.includes("italic"))
 		.map((variant) => {

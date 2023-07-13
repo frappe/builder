@@ -1,9 +1,14 @@
 <template>
-	<div>
-		<draggable class="block-tree" :list="blocks" :group="{ name: 'block-tree' }" item-key="blockId">
+	<div v-if="blocks.length">
+		<draggable
+			class="block-tree"
+			:list="blocks"
+			:group="{ name: 'block-tree' }"
+			item-key="blockId"
+			:disabled="blocks[0].isRoot()">
 			<template #item="{ element }">
 				<div
-					class="cursor-pointer rounded border-[1px] bg-white py-[6px] pl-2 pr-[2px] text-sm text-gray-600 dark:bg-zinc-900"
+					class="cursor-pointer rounded border-[1px] bg-white pl-2 pr-[2px] text-sm text-gray-600 dark:bg-zinc-900"
 					:class="{
 						'border-transparent text-gray-700 dark:text-gray-500':
 							!element.isSelected() && !element.isHovered(),
@@ -11,16 +16,15 @@
 							element.isHovered() && !element.isSelected(),
 						'border-blue-400 text-gray-900 dark:border-blue-600 dark:text-gray-200': element.isSelected(),
 					}"
-					@click.stop="element.selectBlock()"
-					@dragover="element.expanded = true"
+					@click.stop="store.selectBlock(element, $event)"
 					@mouseover.stop="store.hoveredBlock = element.blockId"
 					@mouseleave.stop="store.hoveredBlock = null">
-					<span class="flex items-center font-medium">
+					<span class="my-[6px] flex items-center font-medium">
 						<FeatherIcon
-							:name="isExpanded(element) || element.expanded ? 'chevron-down' : 'chevron-right'"
+							:name="!element.collapsed ? 'chevron-down' : 'chevron-right'"
 							class="mr-1 h-3 w-3"
 							v-if="element.children && element.children.length && !element.isRoot()"
-							@click.stop="element.expanded = !element.expanded" />
+							@click.stop="element.collapsed = !element.collapsed" />
 						<FeatherIcon :name="element.getIcon()" class="mr-1 h-3 w-3" />
 						<span
 							class="min-h-[1em] min-w-[2em] truncate"
@@ -33,8 +37,8 @@
 							{{ element.innerText && !element.blockName ? " | " + element.innerText : "" }}
 						</span>
 					</span>
-					<div v-if="element.children" v-show="isExpanded(element) || element.expanded">
-						<BlockLayers :blocks="element.children" />
+					<div v-if="element.children" v-show="!element.collapsed">
+						<BlockLayers :blocks="element.children" class="ml-1" />
 					</div>
 				</div>
 			</template>

@@ -1,21 +1,22 @@
 <template>
-	<div v-if="selectedBlock" class="flex flex-col gap-3">
-		<BLockLayoutHandler :block="selectedBlock" class="mb-6"></BLockLayoutHandler>
-		<BlockPositionHandler :block="selectedBlock" class="mb-6"></BlockPositionHandler>
+	<div v-if="blockController.isBLockSelected()" class="flex flex-col gap-3">
+		<!-- <BLockLayoutHandler v-if="!blockController.multipleBlocksSelected()" class="mb-6"></BLockLayoutHandler> -->
+		<BlockPositionHandler
+			v-if="!blockController.multipleBlocksSelected()"
+			class="mb-6"></BlockPositionHandler>
 		<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Style</h3>
 		<ColorInput
-			:value="blockStyles.background as HashString"
-			@change="(val) => selectedBlock.setStyle('background', val)">
+			:value="blockController.getStyle('background')"
+			@change="(val) => blockController.setStyle('background', val)">
 			BG Color
 		</ColorInput>
-		<BackgroundHandler :block="selectedBlock"></BackgroundHandler>
+		<BackgroundHandler></BackgroundHandler>
 		<ColorInput
-			:value="blockStyles.color as HashString"
-			@change="(val) => selectedBlock.setStyle('color', val)">
+			:value="blockController.getStyle('color')"
+			@change="(val) => blockController.setStyle('color', val)">
 			Text
 		</ColorInput>
 		<InlineInput
-			v-if="selectedBlock.isContainer()"
 			type="select"
 			:options="[
 				{
@@ -38,180 +39,173 @@
 						'rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.1) 0px 10px 10px -5px',
 				},
 			]"
-			:modelValue="blockStyles.boxShadow"
-			@update:modelValue="(val) => selectedBlock.setStyle('boxShadow', val)">
+			:modelValue="blockController.getStyle('boxShadow')"
+			@update:modelValue="(val) => blockController.setStyle('boxShadow', val)">
 			Shadow
 		</InlineInput>
 		<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Dimension</h3>
 		<InlineInput
-			:modelValue="blockStyles.height"
-			@update:modelValue="(val) => selectedBlock.setStyle('height', val)">
+			:modelValue="blockController.getStyle('height')"
+			@update:modelValue="(val) => blockController.setStyle('height', val)">
 			Height
 		</InlineInput>
 		<InlineInput
-			:modelValue="blockStyles.width"
-			@update:modelValue="(val) => selectedBlock.setStyle('width', val)">
+			:modelValue="blockController.getStyle('width')"
+			@update:modelValue="(val) => blockController.setStyle('width', val)">
 			Width
 		</InlineInput>
 		<InlineInput
-			:modelValue="blockStyles.minWidth"
-			@update:modelValue="(val) => selectedBlock.setStyle('minWidth', val)">
+			:modelValue="blockController.getStyle('minWidth')"
+			@update:modelValue="(val) => blockController.setStyle('minWidth', val)">
 			Min Width
 		</InlineInput>
 		<InlineInput
-			:modelValue="blockStyles.maxWidth"
-			@update:modelValue="(val) => selectedBlock.setStyle('maxWidth', val)">
+			:modelValue="blockController.getStyle('maxWidth')"
+			@update:modelValue="(val) => blockController.setStyle('maxWidth', val)">
 			Max Width
 		</InlineInput>
 		<InlineInput
-			:modelValue="blockStyles.minHeight"
-			@update:modelValue="(val) => selectedBlock.setStyle('minHeight', val)">
+			:modelValue="blockController.getStyle('minHeight')"
+			@update:modelValue="(val) => blockController.setStyle('minHeight', val)">
 			Min Height
 		</InlineInput>
 		<InlineInput
-			:modelValue="blockStyles.maxHeight"
-			@update:modelValue="(val) => selectedBlock.setStyle('maxHeight', val)">
+			:modelValue="blockController.getStyle('maxHeight')"
+			@update:modelValue="(val) => blockController.setStyle('maxHeight', val)">
 			Max Height
 		</InlineInput>
 		<InlineInput
-			v-if="selectedBlock.isContainer() || selectedBlock.isButton()"
-			:modelValue="blockStyles.margin"
-			@update:modelValue="(val) => selectedBlock.setStyle('margin', val)">
+			v-if="!blockController.multipleBlocksSelected()"
+			:modelValue="blockController.getStyle('margin')"
+			@update:modelValue="(val) => blockController.setStyle('margin', val)">
 			Margin
 		</InlineInput>
-		<h3 v-if="selectedBlock.isText()" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Text</h3>
+		<h3 v-if="blockController.isText()" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Text</h3>
 		<InlineInput
-			v-if="selectedBlock.isText()"
-			:modelValue="blockStyles.textAlign || 'left'"
+			v-if="blockController.isText()"
+			:modelValue="blockController.getStyle('textAlign') || 'left'"
 			type="select"
 			:options="['left', 'center', 'right', 'justify']"
-			@update:modelValue="(val) => selectedBlock.setStyle('textAlign', val)">
+			@update:modelValue="(val) => blockController.setStyle('textAlign', val)">
 			Align
 		</InlineInput>
 		<InlineInput
-			v-if="selectedBlock.isText()"
-			:modelValue="blockStyles.fontSize"
-			@update:modelValue="(val) => selectedBlock.setStyle('fontSize', val)">
+			v-if="blockController.isText()"
+			:modelValue="blockController.getStyle('fontSize')"
+			@update:modelValue="(val) => blockController.setStyle('fontSize', val)">
 			Size
 		</InlineInput>
 		<InlineInput
-			v-if="selectedBlock.isText()"
-			:modelValue="blockStyles.letterSpacing"
-			@update:modelValue="(val) => selectedBlock.setStyle('letterSpacing', val)">
+			v-if="blockController.isText()"
+			:modelValue="blockController.getStyle('letterSpacing')"
+			@update:modelValue="(val) => blockController.setStyle('letterSpacing', val)">
 			Spacing
 		</InlineInput>
 		<InlineInput
 			type="autocomplete"
 			:options="fontListNames"
-			v-if="selectedBlock.isText() || selectedBlock.isContainer()"
-			:modelValue="blockStyles.fontFamily || 'Inter'"
+			v-if="blockController.isText() || blockController.isContainer()"
+			:modelValue="blockController.getStyle('fontFamily') || 'Inter'"
 			@update:modelValue="(val) => setFont(val)">
 			Family
 		</InlineInput>
 		<InlineInput
-			v-if="selectedBlock.isText() || selectedBlock.isContainer()"
-			:modelValue="blockStyles.fontWeight"
+			v-if="blockController.isText() || blockController.isContainer()"
+			:modelValue="blockController.getStyle('fontWeight')"
 			type="select"
-			:options="getFontWeightOptions(blockStyles.fontFamily as string || 'Inter')"
-			@update:modelValue="(val) => selectedBlock.setStyle('fontWeight', val)">
+			:options="getFontWeightOptions(blockController.getStyle('fontFamily') as string || 'Inter')"
+			@update:modelValue="(val) => blockController.setStyle('fontWeight', val)">
 			Weight
 		</InlineInput>
 		<InlineInput
-			v-if="selectedBlock.isText()"
-			:modelValue="blockStyles.lineHeight"
-			@update:modelValue="(val) => selectedBlock.setStyle('lineHeight', val)">
+			v-if="blockController.isText()"
+			:modelValue="blockController.getStyle('lineHeight')"
+			@update:modelValue="(val) => blockController.setStyle('lineHeight', val)">
 			Line
 		</InlineInput>
 		<InlineInput
-			v-if="selectedBlock.isLink()"
-			:modelValue="selectedBlock.attributes.href"
-			@update:modelValue="(val) => (selectedBlock.attributes.href = val)">
+			v-if="blockController.isLink()"
+			:modelValue="blockController.getAttribute('href')"
+			@update:modelValue="(val) => blockController.setAttribute('href', val)">
 			Link
 		</InlineInput>
 		<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Options</h3>
 		<InlineInput
-			v-if="selectedBlock.isImage()"
-			:modelValue="selectedBlock.attributes.src"
-			@update:modelValue="(val) => (selectedBlock.attributes.src = val)">
+			v-if="blockController.isImage()"
+			:modelValue="blockController.getAttribute('src')"
+			@update:modelValue="(val) => blockController.setAttribute('href', val)">
 			Image Source
 		</InlineInput>
 		<InlineInput
-			v-if="selectedBlock.isImage()"
-			:modelValue="blockStyles.objectFit"
+			v-if="blockController.isImage()"
+			:modelValue="blockController.getStyle('objectFit')"
 			type="select"
 			:options="['fill', 'contain', 'cover', 'none']"
-			@update:modelValue="(val) => selectedBlock.setStyle('objectFit', val)">
+			@update:modelValue="(val) => blockController.setStyle('objectFit', val)">
 			Image Fit
 		</InlineInput>
 		<InlineInput
-			v-if="selectedBlock.isButton()"
-			:modelValue="selectedBlock.attributes.onclick"
-			@update:modelValue="(val) => (selectedBlock.attributes.onclick = val)">
-			Action
-		</InlineInput>
-		<InlineInput
-			v-if="selectedBlock.element"
-			:modelValue="selectedBlock.element"
+			:modelValue="blockController.getKeyValue('element')"
 			type="select"
 			:options="['span', 'div', 'section', 'button', 'p', 'h1', 'h2', 'h3', 'a', 'input']"
-			@update:modelValue="(val) => (selectedBlock.element = val)">
+			@update:modelValue="(val) => blockController.setKeyValue('element', val)">
 			Tag
 		</InlineInput>
 		<InlineInput
-			v-if="selectedBlock.isInput()"
-			:modelValue="selectedBlock.getAttribute('type') || 'text'"
+			v-if="blockController.isInput()"
+			:modelValue="blockController.getAttribute('type') || 'text'"
 			type="select"
 			:options="['text', 'number', 'email', 'password', 'date', 'time', 'search', 'tel', 'url', 'color']"
-			@update:modelValue="(val) => selectedBlock.setAttribute('type', val)">
+			@update:modelValue="(val) => blockController.setAttribute('type', val)">
 			Input Type
 		</InlineInput>
 		<!-- input placeholder -->
 		<InlineInput
-			v-if="selectedBlock.isInput()"
-			:modelValue="selectedBlock.getAttribute('placeholder')"
-			@update:modelValue="(val) => selectedBlock.setAttribute('placeholder', val)">
+			v-if="blockController.isInput()"
+			:modelValue="blockController.getAttribute('placeholder')"
+			@update:modelValue="(val) => blockController.setAttribute('placeholder', val)">
 			Placeholder
 		</InlineInput>
 		<InlineInput
-			v-if="selectedBlock.isText() || selectedBlock.isButton()"
-			:modelValue="selectedBlock.innerText"
-			@update:modelValue="(val) => (selectedBlock.innerText = val)">
+			v-if="blockController.isText() || blockController.isButton()"
+			:modelValue="blockController.getKeyValue('innerText')"
+			@update:modelValue="(val) => blockController.setKeyValue('innerText', val)">
 			Content
 		</InlineInput>
 
 		<InlineInput
-			v-if="selectedBlock.isContainer() && blockStyles.display === 'grid'"
+			v-if="blockController.isContainer() && blockController.getStyle('display') === 'grid'"
 			type="number"
-			:modelValue="blockStyles.gridTemplateRows"
-			@update:modelValue="(val) => selectedBlock.setStyle('gridTemplateRows', val)">
+			:modelValue="blockController.getStyle('gridTemplateRows')"
+			@update:modelValue="(val) => blockController.setStyle('gridTemplateRows', val)">
 			Rows
 		</InlineInput>
 		<InlineInput
-			v-if="selectedBlock.isContainer() && blockStyles.display === 'grid'"
+			v-if="blockController.isContainer() && blockController.getStyle('display') === 'grid'"
 			type="number"
-			:modelValue="blockStyles.gridTemplateColumns"
-			@update:modelValue="(val) => selectedBlock.setStyle('gridTemplateColumns', val)">
+			:modelValue="blockController.getStyle('gridTemplateColumns')"
+			@update:modelValue="(val) => blockController.setStyle('gridTemplateColumns', val)">
 			Columns
 		</InlineInput>
 		<InlineInput
-			v-if="selectedBlock.isContainer() && blockStyles.display === 'grid'"
-			:modelValue="blockStyles.gridGap"
-			@update:modelValue="(val) => selectedBlock.setStyle('gridGap', val)">
+			v-if="blockController.isContainer() && blockController.getStyle('display') === 'grid'"
+			:modelValue="blockController.getStyle('gridGap')"
+			@update:modelValue="(val) => blockController.setStyle('gridGap', val)">
 			Gap
 		</InlineInput>
 		<InlineInput
-			v-if="selectedBlock.isContainer() && blockStyles.display === 'grid'"
-			:modelValue="blockStyles.gridRowGap"
-			@update:modelValue="(val) => selectedBlock.setStyle('gridRowGap', val)">
+			v-if="blockController.isContainer() && blockController.getStyle('display') === 'grid'"
+			:modelValue="blockController.getStyle('gridRowGap')"
+			@update:modelValue="(val) => blockController.setStyle('gridRowGap', val)">
 			Row Gap
 		</InlineInput>
 		<!-- overflow -->
 		<InlineInput
-			v-if="selectedBlock.isContainer()"
+			v-if="blockController.isContainer()"
 			type="select"
 			:options="['visible', 'hidden', 'scroll']"
-			:modelValue="blockStyles.overflow"
-			@update:modelValue="(val) => selectedBlock.setStyle('overflow', val)">
+			:modelValue="blockController.getStyle('overflow')"
+			@update:modelValue="(val) => blockController.setStyle('overflow', val)">
 			Overflow
 		</InlineInput>
 
@@ -231,39 +225,17 @@ import BackgroundHandler from "./BackgroundHandler.vue";
 import ColorInput from "./ColorInput.vue";
 import InlineInput from "./InlineInput.vue";
 
-const isDark = useDark();
-
 import ace from "ace-builds";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-chrome";
 import "ace-builds/src-noconflict/theme-monokai";
+import blockController from "@/utils/blockController";
 
-const store = useStore();
-
-const props = defineProps({
-	selectedBlock: {
-		type: Object as PropType<Block>,
-		required: true,
-	},
-});
-
-const blockStyles = computed(() => {
-	let styleObj = props.selectedBlock.baseStyles;
-	if (store.builderState.activeBreakpoint === "mobile") {
-		styleObj = { ...styleObj, ...props.selectedBlock.mobileStyles };
-	} else if (store.builderState.activeBreakpoint === "tablet") {
-		styleObj = { ...styleObj, ...props.selectedBlock.tabletStyles };
-	}
-	return styleObj;
-});
-
-const setBgColor = (color: HashString) => {
-	props.selectedBlock.setStyle("background", color);
-};
+const isDark = useDark();
 
 const setFont = (font: { value: string }) => {
 	_setFont(font.value).then(() => {
-		props.selectedBlock.setStyle("fontFamily", font.value);
+		blockController.setStyle("fontFamily", font.value);
 	});
 };
 
@@ -276,19 +248,19 @@ onMounted(() => {
 	});
 	editor.setTheme("ace/theme/chrome");
 	editor.session.setMode("ace/mode/json");
-	editor.setValue(JSON.stringify(props.selectedBlock.rawStyles, null, 2));
+	editor.setValue(JSON.stringify(blockController.getRawStyles(), null, 2));
 	editor.on("blur", () => {
 		const value = editor.getValue();
 		try {
-			const parsed = JSON.parse(value);
-			props.selectedBlock.rawStyles = parsed;
+			const parsed = JSON.parse(value) as BlockStyleMap;
+			blockController.setRawStyles(parsed);
 		} catch (e) {
 			// console.error(e);
 		}
 	});
 
-	watch(props, () => {
-		editor.setValue(JSON.stringify(props.selectedBlock.rawStyles, null, 2));
+	watchEffect(() => {
+		editor.setValue(JSON.stringify(blockController.getRawStyles(), null, 2));
 	});
 
 	watchEffect(() => {

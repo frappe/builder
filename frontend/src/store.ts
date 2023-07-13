@@ -6,7 +6,6 @@ const useStore = defineStore("store", {
 	state: () => ({
 		builderState: {
 			selectedPage: <string | null>null,
-			selectedBlock: <Block | null>null,
 			selectedBlocks: <Block[]>[],
 			editableBlock: <Block | null>null,
 			activeBreakpoint: "desktop",
@@ -296,6 +295,14 @@ const useStore = defineStore("store", {
 			}
 			return null;
 		},
+		selectBlock(block: Block, e: MouseEvent | null) {
+			if (e && e.shiftKey) {
+				block.toggleSelectBlock();
+			} else {
+				block.selectBlock();
+			}
+			this.builderState.editableBlock = null;
+		}
 	},
 });
 
