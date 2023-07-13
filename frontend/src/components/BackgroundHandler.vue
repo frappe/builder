@@ -66,17 +66,12 @@
 import { Popover, FileUploader } from "frappe-ui";
 import Block from "@/utils/block";
 import InlineInput from "./InlineInput.vue";
-import { PropType, computed } from "vue";
+import { computed } from "vue";
 
-const props = defineProps({
-	block: {
-		type: Object as PropType<Block>,
-		required: true,
-	},
-});
+import blockController from "@/utils/blockController";
 
 const backgroundURL = computed(() => {
-	const background = props.block?.getStyle("background") as string;
+	const background = blockController?.getStyle("background") as string;
 	if (background) {
 		const { bgImageURL } = parseBackground(background);
 		return bgImageURL;
@@ -85,7 +80,7 @@ const backgroundURL = computed(() => {
 });
 
 const backgroundSize = computed(() => {
-	const background = props.block?.getStyle("background") as string;
+	const background = blockController?.getStyle("background") as string;
 	if (background) {
 		const { bgSize } = parseBackground(background);
 		return bgSize;
@@ -94,11 +89,14 @@ const backgroundSize = computed(() => {
 
 const setBG = (file: { file_url: string }) => {
 	const url = window.location.origin + file.file_url;
-	props.block?.setStyle("background", `url('${url}') center / ${backgroundSize.value || "cover"} no-repeat`);
+	blockController?.setStyle(
+		"background",
+		`url('${url}') center / ${backgroundSize.value || "cover"} no-repeat`
+	);
 };
 
 const setBGSize = (value: string) => {
-	props.block?.setStyle("background", `url(${backgroundURL.value}) center / ${value} no-repeat`);
+	blockController?.setStyle("background", `url(${backgroundURL.value}) center / ${value} no-repeat`);
 };
 
 const parseBackground = (background: string) => {
