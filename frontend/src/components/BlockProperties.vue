@@ -1,6 +1,6 @@
 <template>
 	<div v-if="blockController.isBLockSelected()" class="flex flex-col gap-3">
-		<!-- <BLockLayoutHandler v-if="!blockController.multipleBlocksSelected()" class="mb-6"></BLockLayoutHandler> -->
+		<BLockLayoutHandler v-if="!blockController.multipleBlocksSelected()" class="mb-6"></BLockLayoutHandler>
 		<BlockPositionHandler
 			v-if="!blockController.multipleBlocksSelected()"
 			class="mb-6"></BlockPositionHandler>
@@ -20,7 +20,7 @@
 			type="select"
 			:options="[
 				{
-					value: 'none',
+					value: null,
 					label: 'None',
 				},
 				{
@@ -203,7 +203,24 @@
 		<InlineInput
 			v-if="blockController.isContainer()"
 			type="select"
-			:options="['visible', 'hidden', 'scroll']"
+			:options="[
+				{
+					label: 'Visible',
+					value: '',
+				},
+				{
+					label: 'Hidden',
+					value: 'hidden',
+				},
+				{
+					label: 'Scroll',
+					value: 'scroll',
+				},
+				{
+					label: 'Auto',
+					value: 'auto',
+				},
+			]"
 			:modelValue="blockController.getStyle('overflow')"
 			@update:modelValue="(val) => blockController.setStyle('overflow', val)">
 			Overflow

@@ -88,7 +88,7 @@ const blockController = {
 		});
 	},
 	getParentBlock: () => {
-		return blockController.isBLockSelected() && store.builderState.selectedBlocks[0].getParentBlock();
+		return store.builderState.selectedBlocks[0].getParentBlock();
 	}
 };
 
