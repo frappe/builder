@@ -157,8 +157,6 @@ function setEvents() {
 					element: "img",
 					icon: "image",
 					styles: {
-						width: "100%",
-						height: "auto",
 						objectFit: "cover",
 					} as BlockStyleMap,
 				};
@@ -168,8 +166,6 @@ function setEvents() {
 					element: "div",
 					icon: "square",
 					styles: {
-						width: "100%",
-						height: "200px",
 						background: "#94E6FF",
 					} as BlockStyleMap,
 				};
@@ -218,10 +214,10 @@ function setEvents() {
 					}
 					childBlock.setBaseStyle("position", "static");
 					if (getNumberFromPx(childBlock.getStyle("width")) < 100) {
-						childBlock.setBaseStyle("width", addPxToNumber(100));
+						childBlock.setBaseStyle("width", "100%");
 					}
 					if (getNumberFromPx(childBlock.getStyle("height")) < 100) {
-						childBlock.setBaseStyle("height", addPxToNumber(100));
+						childBlock.setBaseStyle("height", "200px");
 					}
 					childBlock.setBaseStyle("top", "auto");
 					childBlock.setBaseStyle("left", "auto");

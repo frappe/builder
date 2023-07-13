@@ -45,13 +45,14 @@
 	</draggable>
 	<teleport to="#overlay" v-if="store.overlayElement && !preview">
 		<BlockEditor
-			v-if="component && store.builderState.mode !== 'container' && component.targetDomElement"
-			v-show="
+			v-if="
+				component &&
+				store.builderState.mode !== 'container' &&
+				component.targetDomElement &&
 				((block.isSelected() && breakpoint === store.builderState.activeBreakpoint) ||
-					(block.isHovered() && store.hoveredBreakpoint === breakpoint)) &&
-				!canvasProps.scaling &&
-				!canvasProps.panning
+					(block.isHovered() && store.hoveredBreakpoint === breakpoint))
 			"
+			v-show="!canvasProps.scaling && !canvasProps.panning"
 			:resizable-x="!block.isRoot()"
 			:resizable-y="!block.isImage() && !block.isRoot()"
 			:resizable="!block.isRoot()"
@@ -97,7 +98,7 @@ const canvasProps = !props.preview ? inject("canvasProps") : null;
 const emit = defineEmits(["renderComplete"]);
 
 onMounted(() => {
-	selectBlock(null, props.block);
+	selectBlock(null);
 	setFont(props.block.getStyle("fontFamily") as string);
 	let targetElement = component.value.targetDomElement;
 	if (props.block.isText()) {
@@ -130,7 +131,7 @@ const isEditable = computed(() => {
 	);
 });
 
-const selectBlock = (e: MouseEvent | null, block: Block) => {
+const selectBlock = (e: MouseEvent | null) => {
 	if (
 		store.builderState.editableBlock === props.block ||
 		store.builderState.mode !== "select" ||
@@ -138,24 +139,16 @@ const selectBlock = (e: MouseEvent | null, block: Block) => {
 	) {
 		return;
 	}
-	if (e) e.preventDefault();
-	store.builderState.selectedBlock = block;
-	store.builderState.editableBlock = null;
+	store.selectBlock(props.block, e);
 	store.builderState.activeBreakpoint = props.breakpoint;
-	if (e && e.metaKey) {
-		if (!store.builderState.selectedBlocks.length) {
-			store.builderState.selectedBlocks.push(store.builderState.selectedBlock);
-		}
-		store.builderState.selectedBlocks.push(block);
-	}
 
-	if (!props.preview && props.block.isSelected()) {
+	if (!props.preview) {
 		store.sidebarActiveTab = "Layers";
 	}
 };
 
 const triggerContextMenu = (e: MouseEvent) => {
-	selectBlock(e, props.block);
+	selectBlock(e);
 	nextTick(() => {
 		let element = document.elementFromPoint(e.x, e.y) as HTMLElement;
 		if (element === component.value.targetDomElement) return;
@@ -172,8 +165,9 @@ const triggerContextMenu = (e: MouseEvent) => {
 
 const handleClick = (e: MouseEvent) => {
 	if (!props.isChildOfComponent) {
+		selectBlock(e);
 		e.stopPropagation();
-		selectBlock(e, props.block);
+		e.preventDefault();
 	}
 };
 
@@ -183,7 +177,6 @@ const handleDoubleClick = (e: MouseEvent) => {
 		store.builderState.editableBlock = props.block;
 		e.stopPropagation();
 	}
-	console.log(props.block.isComponent);
 	if (props.block.isComponent) {
 		store.editingComponent = props.block;
 		e.stopPropagation();
@@ -192,17 +185,17 @@ const handleDoubleClick = (e: MouseEvent) => {
 
 const handleMouseOver = (e: MouseEvent) => {
 	if (!props.isChildOfComponent) {
-		e.stopPropagation();
 		store.hoveredBlock = props.block.blockId;
 		store.hoveredBreakpoint = props.breakpoint;
+		e.stopPropagation();
 	}
 };
 
 const handleMouseLeave = (e: MouseEvent) => {
 	if (!props.isChildOfComponent) {
 		if (store.hoveredBlock === props.block.blockId) {
-			e.stopPropagation();
 			store.hoveredBlock = null;
+			e.stopPropagation();
 		}
 	}
 };

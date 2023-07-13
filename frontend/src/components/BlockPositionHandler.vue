@@ -75,59 +75,53 @@
 </template>
 <script setup lang="ts">
 import Block from "@/utils/block";
+import blockController from "@/utils/blockController";
 import { RadioGroup, RadioGroupOption } from "@headlessui/vue";
 import { PropType, computed } from "vue";
 
-const props = defineProps({
-	block: {
-		type: Object as PropType<Block>,
-		required: true,
-	},
-});
-
 const top = computed({
 	get() {
-		return props.block.getStyle("top");
+		return blockController.getStyle("top");
 	},
 	set(value: string) {
-		props.block.setStyle("top", value);
+		blockController.setStyle("top", value);
 	},
 });
 
 const right = computed({
 	get() {
-		return props.block.getStyle("right");
+		return blockController.getStyle("right");
 	},
 	set(value: string) {
-		props.block.setStyle("right", value);
+		blockController.setStyle("right", value);
 	},
 });
 
 const left = computed({
 	get() {
-		return props.block.getStyle("left");
+		return blockController.getStyle("left");
 	},
 	set(value: string) {
-		props.block.setStyle("left", value);
+		blockController.setStyle("left", value);
 	},
 });
 
 const bottom = computed({
 	get() {
-		return props.block.getStyle("bottom");
+		return blockController.getStyle("bottom");
 	},
 	set(value: string) {
-		props.block.setStyle("bottom", value);
+		blockController.setStyle("bottom", value);
 	},
 });
 
 const position = computed({
 	get() {
-		return props.block.getStyle("position") || "static";
+		return blockController.getStyle("position") || "static";
 	},
 	set(value: string) {
-		props.block.setStyle("position", value);
-		const parentBlock = props.block.getParentBlock();
+		blockController.setStyle("position", value);
+		const parentBlock = blockController.getParentBlock();
 		if (parentBlock) {
 			parentBlock.setStyle("position", "relative");
 		}

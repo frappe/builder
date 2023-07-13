@@ -154,7 +154,7 @@ class Block implements BlockOptions {
 	}
 	isSelected(): boolean {
 		const store = useStore();
-		return Boolean(store.builderState.selectedBlock) && store.builderState.selectedBlock?.blockId === this.blockId;
+		return store.builderState.selectedBlocks.some((block: Block) => block.blockId === this.blockId);
 	}
 	isMovable(): boolean {
 		return this.getStyle("position") === "absolute";
@@ -166,16 +166,16 @@ class Block implements BlockOptions {
 		let top = getNumberFromPx(this.getStyle("top")) || 0;
 		let left = getNumberFromPx(this.getStyle("left")) || 0;
 		if (direction === "up") {
-			top -= 1;
+			top -= 10;
 			this.setStyle("top", addPxToNumber(top));
 		} else if (direction === "down") {
-			top += 1;
+			top += 10;
 			this.setStyle("top", addPxToNumber(top));
 		} else if (direction === "left") {
-			left -= 1;
+			left -= 10;
 			this.setStyle("left", addPxToNumber(left));
 		} else if (direction === "right") {
-			left += 1;
+			left += 10;
 			this.setStyle("left", addPxToNumber(left));
 		}
 	}
@@ -205,7 +205,18 @@ class Block implements BlockOptions {
 	}
 	selectBlock() {
 		const store = useStore();
-		store.builderState.selectedBlock = this;
+		store.builderState.selectedBlocks = [this];
+	}
+	toggleSelectBlock() {
+		const store = useStore();
+		if (this.isSelected()) {
+			store.builderState.selectedBlocks = store.builderState.selectedBlocks.filter(
+				(block: Block) => block.blockId !== this.blockId
+				);
+			} else {
+			store.builderState.selectedBlocks.push(this);
+		}
+
 	}
 	getParentBlock(): Block | null {
 		const store = useStore();

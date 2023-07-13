@@ -28,6 +28,67 @@ const blockController = {
 	},
 	multipleBlocksSelected: () => {
 		return store.builderState.selectedBlocks.length > 1;
+	},
+	isText: () => {
+		return blockController.isBLockSelected() && store.builderState.selectedBlocks[0].isText();
+	},
+	isContainer: () => {
+		return blockController.isBLockSelected() && store.builderState.selectedBlocks[0].isContainer();
+	},
+	isImage: () => {
+		return blockController.isBLockSelected() && store.builderState.selectedBlocks[0].isImage();
+	},
+	isButton: () => {
+		return blockController.isBLockSelected() && store.builderState.selectedBlocks[0].isButton();
+	},
+	isLink: () => {
+		return blockController.isBLockSelected() && store.builderState.selectedBlocks[0].isLink();
+	},
+	isInput: () => {
+		return blockController.isBLockSelected() && store.builderState.selectedBlocks[0].isInput();
+	},
+	getAttribute: (attribute: string) => {
+		let attributeValue = "__initial__" as StyleValue;
+		store.builderState.selectedBlocks.forEach((block) => {
+			if (attributeValue === "__initial__") {
+				attributeValue = block.getAttribute(attribute);
+			} else if (attributeValue !== block.getAttribute(attribute)) {
+				attributeValue = "Mixed";
+			}
+		});
+		return attributeValue;
+	},
+	setAttribute: (attribute: string, value: string) => {
+		store.builderState.selectedBlocks.forEach((block) => {
+			block.setAttribute(attribute, value);
+		});
+	},
+	getKeyValue: (key: 'element' | 'innerText') => {
+		let keyValue = "__initial__" as StyleValue | undefined;
+		store.builderState.selectedBlocks.forEach((block) => {
+			if (keyValue === "__initial__") {
+				keyValue = block[key];
+			} else if (keyValue !== block[key]) {
+				keyValue = "Mixed";
+			}
+		});
+		return keyValue;
+	},
+	setKeyValue: (key: 'element' | 'innerText', value: string) => {
+		store.builderState.selectedBlocks.forEach((block) => {
+			block[key] = value;
+		});
+	},
+	getRawStyles: () => {
+		return blockController.isBLockSelected() && store.builderState.selectedBlocks[0].rawStyles;
+	},
+	setRawStyles: (rawStyles: BlockStyleMap) => {
+		store.builderState.selectedBlocks.forEach((block) => {
+			block.rawStyles = rawStyles;
+		});
+	},
+	getParentBlock: () => {
+		return blockController.isBLockSelected() && store.builderState.selectedBlocks[0].getParentBlock();
 	}
 };
 
