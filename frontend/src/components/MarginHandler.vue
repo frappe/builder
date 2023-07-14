@@ -20,7 +20,7 @@
 			<div
 				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-yellow-500 bg-yellow-400 hover:scale-110"
 				:style="{
-					borderWidth: 1 * store.canvas.scale + 'px',
+					borderWidth: handleBorderWidth,
 					bottom: topHandle.bottom,
 					left: topHandle.left,
 					height: topHandle.height + 'px',
@@ -48,7 +48,7 @@
 			<div
 				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-yellow-500 bg-yellow-400 hover:scale-110"
 				:style="{
-					borderWidth: 1 * store.canvas.scale + 'px',
+					borderWidth: handleBorderWidth,
 					bottom: bottomHandle.bottom,
 					left: bottomHandle.left,
 					height: bottomHandle.height + 'px',
@@ -76,7 +76,7 @@
 			<div
 				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-yellow-500 bg-yellow-400 hover:scale-110"
 				:style="{
-					borderWidth: 1 * store.canvas.scale + 'px',
+					borderWidth: handleBorderWidth,
 					right: leftHandle.right,
 					top: leftHandle.top,
 					height: leftHandle.height + 'px',
@@ -104,7 +104,7 @@
 			<div
 				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-yellow-500 bg-yellow-400 hover:scale-110"
 				:style="{
-					borderWidth: 1 * store.canvas.scale + 'px',
+					borderWidth: handleBorderWidth,
 					right: rightHandle.right,
 					top: rightHandle.top,
 					height: rightHandle.height + 'px',
@@ -125,6 +125,7 @@ import { computed, ref, watchEffect } from "vue";
 import useStore from "../store";
 import Block from "../utils/block";
 import { getNumberFromPx } from "../utils/helpers";
+import { clamp } from "@vueuse/core";
 const props = defineProps({
 	targetBlock: {
 		type: Block,
@@ -177,39 +178,43 @@ const rightMarginHandlerWidth = computed(() => {
 	return (getNumberFromPx(blockStyles.value.marginRight) || 0) * store.canvas.scale;
 });
 
+const handleBorderWidth = computed(() => {
+	return `${clamp(1 * store.canvas.scale, 1, 2)}px`;
+});
+
 const topHandle = computed(() => {
 	return {
-		width: 20 * store.canvas.scale,
-		height: 5 * store.canvas.scale,
-		bottom: `calc(8px * ${store.canvas.scale})`,
-		left: `calc(50% - ${10 * store.canvas.scale}px)`,
+		width: 16 * store.canvas.scale,
+		height: 4 * store.canvas.scale,
+		bottom: `calc(4px * ${store.canvas.scale})`,
+		left: `calc(50% - ${8 * store.canvas.scale}px)`,
 	};
 });
 
 const bottomHandle = computed(() => {
 	return {
-		width: 20 * store.canvas.scale,
-		height: 5 * store.canvas.scale,
+		width: 16 * store.canvas.scale,
+		height: 4 * store.canvas.scale,
 		bottom: `calc(-8px * ${store.canvas.scale})`,
-		left: `calc(50% - ${10 * store.canvas.scale}px)`,
+		left: `calc(50% - ${8 * store.canvas.scale}px)`,
 	};
 });
 
 const leftHandle = computed(() => {
 	return {
-		width: 5 * store.canvas.scale,
-		height: 20 * store.canvas.scale,
-		right: `calc(8px * ${store.canvas.scale})`,
-		top: `calc(50% - ${10 * store.canvas.scale}px)`,
+		width: 4 * store.canvas.scale,
+		height: 16 * store.canvas.scale,
+		right: `calc(4px * ${store.canvas.scale})`,
+		top: `calc(50% - ${8 * store.canvas.scale}px)`,
 	};
 });
 
 const rightHandle = computed(() => {
 	return {
-		width: 5 * store.canvas.scale,
-		height: 20 * store.canvas.scale,
+		width: 4 * store.canvas.scale,
+		height: 16 * store.canvas.scale,
 		right: `calc(-8px * ${store.canvas.scale})`,
-		top: `calc(50% - ${10 * store.canvas.scale}px)`,
+		top: `calc(50% - ${8 * store.canvas.scale}px)`,
 	};
 });
 
