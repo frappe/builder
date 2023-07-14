@@ -153,6 +153,9 @@ const getStyleClasses = computed(() => {
 	} else {
 		classes.push("border-blue-400");
 	}
+	if (props.block.isSelected()) {
+		classes.push("pointer-events-auto");
+	}
 	return classes;
 });
 

@@ -209,10 +209,10 @@ function setEvents() {
 					setTimeout(() => {
 						store.builderState.mode = "select";
 					}, 50);
+					childBlock.setBaseStyle("position", "static");
 					if (store.builderState.mode === "text") {
 						return;
 					}
-					childBlock.setBaseStyle("position", "static");
 					if (getNumberFromPx(childBlock.getStyle("width")) < 100) {
 						childBlock.setBaseStyle("width", "100%");
 					}
