@@ -3,7 +3,7 @@
 		<div class="absolute left-3 mt-2 flex items-center">
 			<img src="/frappe_black.png" alt="logo" class="h-5 dark:hidden" />
 			<img src="/frappe_white.png" alt="logo" class="hidden h-5 dark:block" />
-			<h1 class="text-base text-gray-800 dark:text-gray-200">Studio</h1>
+			<h1 class="text-base text-gray-800 dark:text-gray-200">Builder</h1>
 		</div>
 	</div>
 	<section class="max-w-800 m-auto flex w-3/4 flex-wrap gap-x-3 gap-y-4 pt-10">

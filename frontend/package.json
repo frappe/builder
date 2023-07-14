@@ -2,7 +2,7 @@
   "private": true,
   "version": "0.0.0",
   "license": "MIT",
-  "name": "studio-ui",
+  "name": "builder-ui",
   "scripts": {
     "dev": "vite",
     "build": "vite build --base=/assets/website_builder/frontend/ && yarn copy-html-entry",
