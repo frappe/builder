@@ -3,16 +3,8 @@ const store = useStore();
 import { useElementBounding } from "@vueuse/core";
 import { nextTick, reactive } from "vue";
 
-interface PanAndZoomProps {
-	scale: number;
-	translateX: number;
-	translateY: number;
-	scaling: boolean;
-	panning: boolean;
-}
-
 function setPanAndZoom(
-	props: PanAndZoomProps,
+	props: CanvasProps,
 	target: HTMLElement,
 	panAndZoomAreaElement: HTMLElement,
 	zoomLimits = { min: 0.1, max: 10 }

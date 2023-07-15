@@ -69,3 +69,11 @@ declare type HashString = `#${string}`;
 declare type LeftSidebarTabOption = 'Components' | 'Layers';
 
 declare type BuilderMode = 'select' | 'text' | 'container' | 'image';
+
+declare interface CanvasProps {
+	scale: number;
+	translateX: number;
+	translateY: number;
+	scaling: boolean;
+	panning: boolean;
+}

@@ -115,6 +115,8 @@ onMounted(() => {
 	setEvents();
 });
 
+let current = 0;
+
 function setEvents() {
 	const container = document.body.querySelector(".canvas-container") as HTMLElement;
 	useEventListener(container, "mousedown", (ev: MouseEvent) => {
@@ -145,7 +147,7 @@ function setEvents() {
 					element: "p",
 					icon: "type",
 					innerText: "Text",
-					styles: {
+					baseStyles: {
 						fontSize: "40px",
 						width: "fit-content",
 						"line-height": "1",
@@ -156,22 +158,21 @@ function setEvents() {
 					name: "Image",
 					element: "img",
 					icon: "image",
-					styles: {
+					baseStyles: {
 						objectFit: "cover",
 					} as BlockStyleMap,
 				};
 			} else {
 				child = {
 					name: "Container",
-					element: "div",
+					element: "section",
 					icon: "square",
-					styles: {
-						background: "#94E6FF",
+					baseStyles: {
+						background: ["#F3F3F3", "#EDEDED", "#E2E2E2", "#C7C7C7"][current % 4],
 					} as BlockStyleMap,
 				};
+				current++;
 			}
-			const childBlock = parentBlock.addChild(child);
-			childBlock.selectBlock();
 
 			const parentElement = document.body.querySelector(
 				`.canvas [data-block-id="${parentBlock.blockId}"]`
@@ -183,9 +184,13 @@ function setEvents() {
 			let y = (ev.y - parentElementBounds.top) / store.canvas.scale;
 			const parentWidth = getNumberFromPx(getComputedStyle(parentElement).width);
 			const parentHeight = getNumberFromPx(getComputedStyle(parentElement).height);
-			childBlock.setBaseStyle("position", "absolute");
-			childBlock.setBaseStyle("top", addPxToNumber(y));
-			childBlock.setBaseStyle("left", addPxToNumber(x));
+
+			child.baseStyles.position = "absolute";
+			child.baseStyles.top = addPxToNumber(y);
+			child.baseStyles.left = addPxToNumber(x);
+			const childBlock = parentBlock.addChild(child);
+
+			childBlock.selectBlock();
 
 			const mouseMoveHandler = (mouseMoveEvent: MouseEvent) => {
 				if (store.builderState.mode === "text") {
