@@ -16,12 +16,14 @@
 			:target="target" />
 		<PaddingHandler
 			v-if="isBlockSelected && !resizing && !editable && store.builderState.selectedBlocks.length === 1"
+			v-show="canvasProps.scale > 0.5"
 			:target-block="block"
 			:on-update="updateTracker"
 			:disable-handlers="false"
 			:breakpoint="breakpoint" />
 		<MarginHandler
 			v-if="isBlockSelected && !resizing && !editable && store.builderState.selectedBlocks.length === 1"
+			v-show="canvasProps.scale > 0.5"
 			:target-block="block"
 			:on-update="updateTracker"
 			:disable-handlers="false"
@@ -86,14 +88,14 @@ import { Dialog, Input, createResource } from "frappe-ui";
 import useStore from "../store";
 import setGuides from "../utils/guidesTracker";
 import trackTarget from "../utils/trackTarget";
+import BlockDescription from "./BlockDescription.vue";
 import BorderRadiusHandler from "./BorderRadiusHandler.vue";
 import BoxResizer from "./BoxResizer.vue";
 import ContextMenu from "./ContextMenu.vue";
-import PaddingHandler from "./PaddingHandler.vue";
-import BlockDescription from "./BlockDescription.vue";
 import MarginHandler from "./MarginHandler.vue";
+import PaddingHandler from "./PaddingHandler.vue";
 
-const canvasProps = inject("canvasProps");
+const canvasProps = inject("canvasProps") as Ref<CanvasProps>;
 
 const props = defineProps({
 	block: {
