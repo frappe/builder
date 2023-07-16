@@ -18,6 +18,8 @@
 			...{
 				'data-block-id': block.blockId,
 				contenteditable: (block.isText() || block.isButton()) && block.isSelected() && isEditable,
+				onload: block.isImage() && renderComplete,
+				onerror: block.isImage() && renderComplete,
 				class: [
 					$attrs.class,
 					'__builder_component__',
@@ -110,7 +112,9 @@ onMounted(async () => {
 		});
 	}
 	await nextTick();
-	renderComplete();
+	if (!props.block.isImage()) {
+		renderComplete();
+	}
 });
 
 const styles = computed(() => {
@@ -214,7 +218,7 @@ watchEffect(() => {
 // hack to check if all children are rendered
 let counter = 0;
 const renderComplete = () => {
-	if (props.block.children.length <= counter) {
+	if (props.block.children.length <= counter && component.value) {
 		emit("renderComplete", component.value.targetDomElement);
 	}
 	counter++;
