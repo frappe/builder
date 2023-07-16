@@ -66,11 +66,9 @@ const componentResource = createListResource({
 	},
 });
 
-const setScale = (el: HTMLElement, block: BlockOptions) => {
-	setTimeout(() => {
-		const scale = Math.max(Math.min(100 / el.offsetWidth, 80 / el.offsetHeight, 0.6), 0.2);
-		block.scale = scale;
-	}, 1000);
+const setScale = async (el: HTMLElement, block: BlockOptions) => {
+	const scale = Math.max(Math.min(250 / el.offsetWidth, 80 / el.offsetHeight, 0.6), 0.1);
+	block.scale = scale;
 };
 
 const cloneComponent = (blockComponent: BlockComponent) => {

@@ -76,4 +76,8 @@ declare interface CanvasProps {
 	translateY: number;
 	scaling: boolean;
 	panning: boolean;
+	initialTranslateY: number;
+	initialTranslateX: number;
+	initialScale: number;
+	background: string;
 }

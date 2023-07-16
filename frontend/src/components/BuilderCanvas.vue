@@ -11,10 +11,11 @@
 			v-if="isOverDropZone"
 			class="pointer-events-none absolute bottom-0 left-0 right-0 top-0 z-30 bg-cyan-300 opacity-20"></div>
 		<div
-			class="fixed flex will-change-transform"
+			class="fixed flex gap-44 will-change-transform"
 			ref="canvas"
 			:style="{
 				transformStyle: 'preserve-3d',
+				backfaceVisibility: 'hidden',
 				transform: `scale(${canvasProps.scale}) translate(${canvasProps.translateX}px, ${canvasProps.translateY}px)`,
 			}">
 			<div class="absolute right-0 top-[-60px] flex rounded-md bg-white px-3 dark:bg-zinc-900">
@@ -34,7 +35,7 @@
 				</div>
 			</div>
 			<div
-				class="canvas relative ml-20 flex h-full rounded-md bg-white"
+				class="canvas relative flex h-full rounded-md bg-white shadow-2xl"
 				:style="{
 					background: canvasProps.background,
 					width: `${breakpoint.width}px`,
@@ -42,7 +43,11 @@
 				}"
 				v-for="breakpoint in visibleBreakpoints"
 				:key="breakpoint.device">
-				<BuilderBlock :block="block" v-if="showBlocks" :breakpoint="breakpoint.device" />
+				<BuilderBlock
+					:block="block"
+					v-if="showBlocks"
+					:breakpoint="breakpoint.device"
+					@renderComplete="setScaleAndTranslate" />
 			</div>
 		</div>
 	</div>
@@ -52,13 +57,13 @@ import Block from "@/utils/block";
 import { useDebouncedRefHistory, useElementBounding, useDropZone } from "@vueuse/core";
 import { FeatherIcon, toast } from "frappe-ui";
 import { storeToRefs } from "pinia";
-import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
+import { computed, nextTick, onMounted, reactive, ref } from "vue";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
 import { FileUploadHandler } from "frappe-ui";
-import { provide } from "vue";
+import { provide, PropType } from "vue";
 
 const store = useStore();
 const canvasContainer = ref(null);
@@ -75,7 +80,7 @@ const props = defineProps({
 		default: false,
 	},
 	canvasProps: {
-		type: Object,
+		type: Object as PropType<CanvasProps>,
 		default: () => ({}),
 	},
 	canvasStyles: {
@@ -184,19 +189,22 @@ const canvasBound = reactive(useElementBounding(canvas));
 const setScaleAndTranslate = async () => {
 	const paddingX = 300;
 	const paddingY = 400;
-	props.canvasProps.scale = 1;
-	props.canvasProps.translateX = 0;
-	props.canvasProps.translateY = 0;
 
 	await nextTick();
 	canvasBound.update();
 	const containerWidth = containerBound.width;
 	const containerHeight = containerBound.height;
+
+	const canvasWidth = canvasBound.width / props.canvasProps.scale;
+	const canvasHeight = canvasBound.height / props.canvasProps.scale;
+
 	props.canvasProps.initialScale = props.canvasProps.scale = Math.min(
-		containerWidth / (canvasBound.width + paddingX * 2),
-		containerHeight / (canvasBound.height + paddingY * 2)
+		containerWidth / (canvasWidth + paddingX * 2),
+		containerHeight / (canvasHeight + paddingY * 2)
 	);
 
+	props.canvasProps.translateX = 0;
+	props.canvasProps.translateY = 0;
 	await nextTick();
 	const scale = props.canvasProps.scale;
 	canvasBound.update();
@@ -262,8 +270,5 @@ onMounted(() => {
 		}
 	});
 	showBlocks.value = true;
-	setTimeout(setScaleAndTranslate, 500);
 });
-
-watch(store.deviceBreakpoints, setScaleAndTranslate, { deep: true });
 </script>

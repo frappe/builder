@@ -4,7 +4,7 @@
 		:sort="true"
 		:disabled="preview"
 		:group="{ name: 'blocks' }"
-		item-key="blockId"
+		itemKey="blockId"
 		:tag="block.getTag()"
 		@click="handleClick"
 		@dblclick="handleDoubleClick"
@@ -12,7 +12,7 @@
 		@mouseover="handleMouseOver"
 		@mouseleave="handleMouseLeave"
 		@blur="block.innerText = $event.target.innerText"
-		:component-data="{
+		:componentData="{
 			...block.attributes,
 			...$attrs,
 			...{
@@ -40,10 +40,11 @@
 				:block="element"
 				:breakpoint="breakpoint"
 				:preview="preview"
-				:isChildOfComponent="block.isComponent" />
+				:isChildOfComponent="block.isComponent"
+				@renderComplete="renderComplete" />
 		</template>
 	</draggable>
-	<teleport to="#overlay" v-if="store.overlayElement && !preview">
+	<teleport to="#overlay" v-if="store.overlayElement && !preview && canvasProps">
 		<BlockEditor
 			v-if="
 				component &&
@@ -93,11 +94,10 @@ const props = defineProps({
 	},
 });
 
-const canvasProps = !props.preview ? inject("canvasProps") : null;
+const canvasProps = !props.preview ? (inject("canvasProps") as CanvasProps) : null;
 
 const emit = defineEmits(["renderComplete"]);
-
-onMounted(() => {
+onMounted(async () => {
 	selectBlock(null);
 	setFont(props.block.getStyle("fontFamily") as string);
 	let targetElement = component.value.targetDomElement;
@@ -109,9 +109,8 @@ onMounted(() => {
 			}
 		});
 	}
-	nextTick(() => {
-		emit("renderComplete", targetElement);
-	});
+	await nextTick();
+	renderComplete();
 });
 
 const styles = computed(() => {
@@ -211,4 +210,14 @@ watchEffect(() => {
 		});
 	}
 });
+
+// hack to check if all children are rendered
+let counter = 0;
+const renderComplete = () => {
+	if (props.block.children.length <= counter) {
+		console.log("render complete", props.block.element);
+		emit("renderComplete", component.value.targetDomElement);
+	}
+	counter++;
+};
 </script>
