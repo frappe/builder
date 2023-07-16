@@ -215,7 +215,6 @@ watchEffect(() => {
 let counter = 0;
 const renderComplete = () => {
 	if (props.block.children.length <= counter) {
-		console.log("render complete", props.block.element);
 		emit("renderComplete", component.value.targetDomElement);
 	}
 	counter++;
