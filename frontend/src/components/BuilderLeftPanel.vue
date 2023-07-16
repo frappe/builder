@@ -34,7 +34,7 @@
 				{{ tab }}
 			</button>
 		</div>
-		<div v-show="store.sidebarActiveTab === 'Components'">
+		<div v-if="store.sidebarActiveTab === 'Components'">
 			<BuilderComponents class="p-4" />
 		</div>
 		<div v-show="store.sidebarActiveTab === 'Layers'">
