@@ -12,12 +12,13 @@
 				height: topPaddingHandlerHeight + 'px',
 			}"
 			:class="{
-				'bg-transparent': !updating,
-				'bg-purple-400': updating,
+				'bg-transparent': !targetBlock.isSelected(),
+				'bg-purple-400': targetBlock.isSelected(),
 			}"
 			ref="topPaddingHandler">
 			<div
 				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-purple-500 bg-purple-400 hover:scale-110"
+				v-show="canvasProps.scale > 0.5"
 				:style="{
 					borderWidth: handleBorderWidth,
 					bottom: topHandle.bottom,
@@ -39,12 +40,13 @@
 				height: bottomPaddingHandlerHeight + 'px',
 			}"
 			:class="{
-				'bg-transparent': !updating,
-				'bg-purple-400': updating,
+				'bg-transparent': !targetBlock.isSelected(),
+				'bg-purple-400': targetBlock.isSelected(),
 			}"
 			ref="bottomPaddingHandler">
 			<div
 				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-purple-500 bg-purple-400 hover:scale-110"
+				v-show="canvasProps.scale > 0.5"
 				:style="{
 					borderWidth: handleBorderWidth,
 					top: bottomHandle.top,
@@ -66,12 +68,13 @@
 				width: leftPaddingHandlerWidth + 'px',
 			}"
 			:class="{
-				'bg-transparent': !updating,
-				'bg-purple-400': updating,
+				'bg-transparent': !targetBlock.isSelected(),
+				'bg-purple-400': targetBlock.isSelected(),
 			}"
 			ref="leftPaddingHandler">
 			<div
 				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-purple-500 bg-purple-400 hover:scale-110"
+				v-show="canvasProps.scale > 0.5"
 				:style="{
 					borderWidth: handleBorderWidth,
 					right: leftHandle.right,
@@ -93,12 +96,13 @@
 				width: rightPaddingHandlerWidth + 'px',
 			}"
 			:class="{
-				'bg-transparent': !updating,
-				'bg-purple-400': updating,
+				'bg-transparent': !targetBlock.isSelected(),
+				'bg-purple-400': targetBlock.isSelected(),
 			}"
 			ref="rightPaddingHandler">
 			<div
 				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-purple-500 bg-purple-400 hover:scale-110"
+				v-show="canvasProps.scale > 0.5"
 				:style="{
 					borderWidth: handleBorderWidth,
 					left: rightHandle.left,
@@ -117,11 +121,14 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, ref, watchEffect } from "vue";
-import useStore from "../store";
+import { computed, inject, ref, watchEffect } from "vue";
 import Block from "../utils/block";
-import { addPxToNumber, getNumberFromPx } from "../utils/helpers";
+import { getNumberFromPx } from "../utils/helpers";
 import { clamp } from "@vueuse/core";
+
+import { toast } from "frappe-ui";
+const canvasProps = inject("canvasProps") as CanvasProps;
+
 const props = defineProps({
 	targetBlock: {
 		type: Block,
@@ -141,7 +148,6 @@ const props = defineProps({
 	},
 });
 
-const store = useStore();
 const targetBlock = props.targetBlock;
 
 const updating = ref(false);
@@ -162,55 +168,55 @@ const blockStyles = computed(() => {
 });
 
 const topPaddingHandlerHeight = computed(() => {
-	return (getNumberFromPx(blockStyles.value.paddingTop) || 5) * store.canvas.scale;
+	return getNumberFromPx(blockStyles.value.paddingTop) * canvasProps.scale;
 });
 const bottomPaddingHandlerHeight = computed(() => {
-	return (getNumberFromPx(blockStyles.value.paddingBottom) || 5) * store.canvas.scale;
+	return getNumberFromPx(blockStyles.value.paddingBottom) * canvasProps.scale;
 });
 const leftPaddingHandlerWidth = computed(() => {
-	return (getNumberFromPx(blockStyles.value.paddingLeft) || 5) * store.canvas.scale;
+	return getNumberFromPx(blockStyles.value.paddingLeft) * canvasProps.scale;
 });
 const rightPaddingHandlerWidth = computed(() => {
-	return (getNumberFromPx(blockStyles.value.paddingRight) || 5) * store.canvas.scale;
+	return getNumberFromPx(blockStyles.value.paddingRight) * canvasProps.scale;
 });
 
 const handleBorderWidth = computed(() => {
-	return `${clamp(1 * store.canvas.scale, 1, 2)}px`;
+	return `${clamp(1 * canvasProps.scale, 1, 2)}px`;
 });
 
 const topHandle = computed(() => {
 	return {
-		width: 16 * store.canvas.scale,
-		height: 4 * store.canvas.scale,
-		bottom: `calc(-2px * ${store.canvas.scale})`,
-		left: `calc(50% - ${8 * store.canvas.scale}px)`,
+		width: 16 * canvasProps.scale,
+		height: 4 * canvasProps.scale,
+		bottom: `calc(-2px * ${canvasProps.scale})`,
+		left: `calc(50% - ${8 * canvasProps.scale}px)`,
 	};
 });
 
 const bottomHandle = computed(() => {
 	return {
-		width: 16 * store.canvas.scale,
-		height: 4 * store.canvas.scale,
-		top: `calc(-2px * ${store.canvas.scale})`,
-		left: `calc(50% - ${8 * store.canvas.scale}px)`,
+		width: 16 * canvasProps.scale,
+		height: 4 * canvasProps.scale,
+		top: `calc(-2px * ${canvasProps.scale})`,
+		left: `calc(50% - ${8 * canvasProps.scale}px)`,
 	};
 });
 
 const leftHandle = computed(() => {
 	return {
-		width: 4 * store.canvas.scale,
-		height: 16 * store.canvas.scale,
-		right: `calc(-2px * ${store.canvas.scale})`,
-		top: `calc(50% - ${8 * store.canvas.scale}px)`,
+		width: 4 * canvasProps.scale,
+		height: 16 * canvasProps.scale,
+		right: `calc(-2px * ${canvasProps.scale})`,
+		top: `calc(50% - ${8 * canvasProps.scale}px)`,
 	};
 });
 
 const rightHandle = computed(() => {
 	return {
-		width: 4 * store.canvas.scale,
-		height: 16 * store.canvas.scale,
-		left: `calc(-2px * ${store.canvas.scale})`,
-		top: `calc(50% - ${8 * store.canvas.scale}px)`,
+		width: 4 * canvasProps.scale,
+		height: 16 * canvasProps.scale,
+		left: `calc(-2px * ${canvasProps.scale})`,
+		top: `calc(50% - ${8 * canvasProps.scale}px)`,
 	};
 });
 
@@ -221,8 +227,14 @@ enum Position {
 	Left = "left",
 }
 
+const messageShown = ref(false);
+
 const handlePadding = (ev: MouseEvent, position: Position) => {
 	if (props.disableHandlers) return;
+	// if (!messageShown.value && !(ev.shiftKey || ev.altKey)) {
+	// 	makeToast();
+	// 	messageShown.value = true;
+	// }
 	updating.value = true;
 	const startY = ev.clientY;
 	const startX = ev.clientX;
@@ -259,7 +271,7 @@ const handlePadding = (ev: MouseEvent, position: Position) => {
 			affectingAxis = "x";
 		}
 
-		if (mouseMoveEvent.shiftKey) {
+		if (mouseMoveEvent.altKey) {
 			if (affectingAxis === "y") {
 				targetBlock.setStyle("paddingTop", movement + "px");
 				targetBlock.setStyle("paddingBottom", movement + "px");
@@ -267,6 +279,11 @@ const handlePadding = (ev: MouseEvent, position: Position) => {
 				targetBlock.setStyle("paddingLeft", movement + "px");
 				targetBlock.setStyle("paddingRight", movement + "px");
 			}
+		} else if (mouseMoveEvent.shiftKey) {
+			targetBlock.setStyle("paddingTop", movement + "px");
+			targetBlock.setStyle("paddingBottom", movement + "px");
+			targetBlock.setStyle("paddingLeft", movement + "px");
+			targetBlock.setStyle("paddingRight", movement + "px");
 		}
 
 		mouseMoveEvent.preventDefault();
@@ -283,4 +300,11 @@ const handlePadding = (ev: MouseEvent, position: Position) => {
 		{ once: true }
 	);
 };
+
+let makeToast = () =>
+	toast({
+		text: 'Press "shift" key to apply padding to all sides and "alt" key to apply padding on either sides.',
+		timeout: 6,
+		position: "bottom-left",
+	});
 </script>
