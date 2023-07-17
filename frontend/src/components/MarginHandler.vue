@@ -13,12 +13,13 @@
 				top: `calc(0% - ${topMarginHandlerHeight}px)`,
 			}"
 			:class="{
-				'bg-transparent': !updating,
-				'bg-yellow-200': updating,
+				'bg-transparent': !targetBlock.isSelected(),
+				'bg-yellow-200': targetBlock.isSelected(),
 			}"
 			ref="topMarginHandler">
 			<div
 				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-yellow-500 bg-yellow-400 hover:scale-110"
+				v-show="canvasProps.scale > 0.5"
 				:style="{
 					borderWidth: handleBorderWidth,
 					bottom: topHandle.bottom,
@@ -41,12 +42,13 @@
 				bottom: `calc(0% - ${bottomMarginHandlerHeight}px)`,
 			}"
 			:class="{
-				'bg-transparent': !updating,
-				'bg-yellow-200': updating,
+				'bg-transparent': !targetBlock.isSelected,
+				'bg-yellow-200': targetBlock.isSelected,
 			}"
 			ref="bottomMarginHandler">
 			<div
 				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-yellow-500 bg-yellow-400 hover:scale-110"
+				v-show="canvasProps.scale > 0.5"
 				:style="{
 					borderWidth: handleBorderWidth,
 					bottom: bottomHandle.bottom,
@@ -69,12 +71,13 @@
 				left: `calc(0% - ${leftMarginHandlerWidth}px)`,
 			}"
 			:class="{
-				'bg-transparent': !updating,
-				'bg-yellow-200': updating,
+				'bg-transparent': !targetBlock.isSelected,
+				'bg-yellow-200': targetBlock.isSelected,
 			}"
 			ref="leftMarginHandler">
 			<div
 				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-yellow-500 bg-yellow-400 hover:scale-110"
+				v-show="canvasProps.scale > 0.5"
 				:style="{
 					borderWidth: handleBorderWidth,
 					right: leftHandle.right,
@@ -97,12 +100,13 @@
 				right: `calc(0% - ${rightMarginHandlerWidth}px)`,
 			}"
 			:class="{
-				'bg-transparent': !updating,
-				'bg-yellow-200': updating,
+				'bg-transparent': !targetBlock.isSelected,
+				'bg-yellow-200': targetBlock.isSelected,
 			}"
 			ref="rightMarginHandler">
 			<div
 				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-yellow-500 bg-yellow-400 hover:scale-110"
+				v-show="canvasProps.scale > 0.5"
 				:style="{
 					borderWidth: handleBorderWidth,
 					right: rightHandle.right,
@@ -121,8 +125,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, ref, watchEffect } from "vue";
-import useStore from "../store";
+import { computed, inject, ref, watchEffect } from "vue";
 import Block from "../utils/block";
 import { getNumberFromPx } from "../utils/helpers";
 import { clamp } from "@vueuse/core";
@@ -145,11 +148,12 @@ const props = defineProps({
 	},
 });
 
-const store = useStore();
 const targetBlock = props.targetBlock;
 
 const updating = ref(false);
 const emit = defineEmits(["update"]);
+
+const canvasProps = inject("canvasProps") as CanvasProps;
 
 watchEffect(() => {
 	emit("update", updating.value);
@@ -166,55 +170,55 @@ const blockStyles = computed(() => {
 });
 
 const topMarginHandlerHeight = computed(() => {
-	return (getNumberFromPx(blockStyles.value.marginTop) || 0) * store.canvas.scale;
+	return (getNumberFromPx(blockStyles.value.marginTop) || 0) * canvasProps.scale;
 });
 const bottomMarginHandlerHeight = computed(() => {
-	return (getNumberFromPx(blockStyles.value.marginBottom) || 0) * store.canvas.scale;
+	return (getNumberFromPx(blockStyles.value.marginBottom) || 0) * canvasProps.scale;
 });
 const leftMarginHandlerWidth = computed(() => {
-	return (getNumberFromPx(blockStyles.value.marginLeft) || 0) * store.canvas.scale;
+	return (getNumberFromPx(blockStyles.value.marginLeft) || 0) * canvasProps.scale;
 });
 const rightMarginHandlerWidth = computed(() => {
-	return (getNumberFromPx(blockStyles.value.marginRight) || 0) * store.canvas.scale;
+	return (getNumberFromPx(blockStyles.value.marginRight) || 0) * canvasProps.scale;
 });
 
 const handleBorderWidth = computed(() => {
-	return `${clamp(1 * store.canvas.scale, 1, 2)}px`;
+	return `${clamp(1 * canvasProps.scale, 1, 2)}px`;
 });
 
 const topHandle = computed(() => {
 	return {
-		width: 16 * store.canvas.scale,
-		height: 4 * store.canvas.scale,
-		bottom: `calc(4px * ${store.canvas.scale})`,
-		left: `calc(50% - ${8 * store.canvas.scale}px)`,
+		width: 16 * canvasProps.scale,
+		height: 4 * canvasProps.scale,
+		bottom: `calc(4px * ${canvasProps.scale})`,
+		left: `calc(50% - ${8 * canvasProps.scale}px)`,
 	};
 });
 
 const bottomHandle = computed(() => {
 	return {
-		width: 16 * store.canvas.scale,
-		height: 4 * store.canvas.scale,
-		bottom: `calc(-8px * ${store.canvas.scale})`,
-		left: `calc(50% - ${8 * store.canvas.scale}px)`,
+		width: 16 * canvasProps.scale,
+		height: 4 * canvasProps.scale,
+		bottom: `calc(-8px * ${canvasProps.scale})`,
+		left: `calc(50% - ${8 * canvasProps.scale}px)`,
 	};
 });
 
 const leftHandle = computed(() => {
 	return {
-		width: 4 * store.canvas.scale,
-		height: 16 * store.canvas.scale,
-		right: `calc(4px * ${store.canvas.scale})`,
-		top: `calc(50% - ${8 * store.canvas.scale}px)`,
+		width: 4 * canvasProps.scale,
+		height: 16 * canvasProps.scale,
+		right: `calc(4px * ${canvasProps.scale})`,
+		top: `calc(50% - ${8 * canvasProps.scale}px)`,
 	};
 });
 
 const rightHandle = computed(() => {
 	return {
-		width: 4 * store.canvas.scale,
-		height: 16 * store.canvas.scale,
-		right: `calc(-8px * ${store.canvas.scale})`,
-		top: `calc(50% - ${8 * store.canvas.scale}px)`,
+		width: 4 * canvasProps.scale,
+		height: 16 * canvasProps.scale,
+		right: `calc(-8px * ${canvasProps.scale})`,
+		top: `calc(50% - ${8 * canvasProps.scale}px)`,
 	};
 });
 
@@ -264,6 +268,11 @@ const handleMargin = (ev: MouseEvent, position: Position) => {
 		}
 
 		if (mouseMoveEvent.shiftKey) {
+			targetBlock.setStyle("marginTop", movement + "px");
+			targetBlock.setStyle("marginBottom", movement + "px");
+			targetBlock.setStyle("marginLeft", movement + "px");
+			targetBlock.setStyle("marginRight", movement + "px");
+		} else if (mouseMoveEvent.altKey) {
 			if (affectingAxis === "y") {
 				targetBlock.setStyle("marginTop", movement + "px");
 				targetBlock.setStyle("marginBottom", movement + "px");

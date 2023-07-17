@@ -16,14 +16,12 @@
 			:target="target" />
 		<PaddingHandler
 			v-if="isBlockSelected && !resizing && !editable && store.builderState.selectedBlocks.length === 1"
-			v-show="canvasProps.scale > 0.5"
 			:target-block="block"
 			:on-update="updateTracker"
 			:disable-handlers="false"
 			:breakpoint="breakpoint" />
 		<MarginHandler
 			v-if="isBlockSelected && !resizing && !editable && store.builderState.selectedBlocks.length === 1"
-			v-show="canvasProps.scale > 0.5"
 			:target-block="block"
 			:on-update="updateTracker"
 			:disable-handlers="false"
