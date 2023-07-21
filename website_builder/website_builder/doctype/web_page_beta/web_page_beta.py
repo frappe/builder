@@ -55,7 +55,11 @@ def get_block_html(blocks):
 	def get_html(blocks, soup):
 		html = ""
 		def get_tag(node, soup):
-			tag = soup.new_tag(node.get("originalElement") or node["element"])
+			element = node.get("originalElement") or node["element"]
+			# temp fix: since p inside p is illegal
+			if element == "p":
+				element = "div"
+			tag = soup.new_tag(element)
 			tag.attrs = node.get("attributes", {})
 			classes = node.get("classes", [])
 			if node.get("baseStyles", {}):
@@ -71,8 +75,10 @@ def get_block_html(blocks):
 				classes.append(style_class)
 
 			tag.attrs["class"] = get_class(classes)
-			if node.get("innerText"):
-				tag.append(node.get("innerText"))
+
+			innerContent = node.get("innerHTML") or node.get("innerText")
+			if innerContent:
+				tag.append(bs.BeautifulSoup(innerContent, "html.parser"))
 
 			for child in node.get("children", []):
 				tag.append(get_tag(child, soup))
