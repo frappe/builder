@@ -85,6 +85,12 @@ async function confirm(message: string): Promise<boolean> {
 		const confirmed = window.confirm(message);
 		resolve(confirmed);
 	});
-};
+}
 
-export { getNumberFromPx, HexToHSV, HSVToHex, addPxToNumber, getRandomColor, confirm };
+function getTextContent(html: string) {
+	const tmp = document.createElement("div");
+	tmp.innerHTML = html;
+	return tmp.textContent || tmp.innerText || "";
+}
+
+export { HSVToHex, HexToHSV, addPxToNumber, confirm, getNumberFromPx, getRandomColor, getTextContent };

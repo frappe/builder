@@ -34,7 +34,7 @@
 							@keyup.enter.stop.prevent="element.editable = false"
 							@blur="setBlockName($event, element)">
 							{{ element.blockName || element.originalElement || element.element }}
-							{{ element.innerText && !element.blockName ? " | " + element.innerText : "" }}
+							{{ element.innerHTML && !element.blockName ? " | " + getTextContent(element.innerHTML) : "" }}
 						</span>
 					</span>
 					<div v-if="element.children" v-show="!element.collapsed">
@@ -47,6 +47,7 @@
 </template>
 <script setup lang="ts">
 import Block from "@/utils/block";
+import { getTextContent } from "@/utils/helpers";
 import { FeatherIcon } from "frappe-ui";
 import { PropType } from "vue";
 import draggable from "vuedraggable";
