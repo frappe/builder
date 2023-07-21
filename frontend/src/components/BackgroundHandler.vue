@@ -40,7 +40,11 @@
 					<FileUploader @success="setBG">
 						<template v-slot="{ openFileSelector }">
 							<div
-								class="absolute bottom-0 left-0 right-0 top-0 hidden place-items-center bg-gray-500 bg-opacity-20 group-hover:grid">
+								class="absolute bottom-0 left-0 right-0 top-0 hidden place-items-center bg-gray-500 bg-opacity-20"
+								:class="{
+									'!grid': !backgroundURL,
+									'group-hover:grid': backgroundURL,
+								}">
 								<div
 									class="rounded bg-gray-200 p-2 text-xs text-gray-900 dark:bg-zinc-700 dark:text-zinc-200"
 									@click="openFileSelector">
@@ -63,10 +67,9 @@
 	</Popover>
 </template>
 <script lang="ts" setup>
-import { Popover, FileUploader } from "frappe-ui";
-import Block from "@/utils/block";
-import InlineInput from "./InlineInput.vue";
+import { FileUploader, Popover } from "frappe-ui";
 import { computed } from "vue";
+import InlineInput from "./InlineInput.vue";
 
 import blockController from "@/utils/blockController";
 
