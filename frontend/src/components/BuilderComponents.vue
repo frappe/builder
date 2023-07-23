@@ -20,11 +20,7 @@
 							:style="{
 								transform: 'scale(' + element.scale + ')',
 							}">
-							<BuilderBlock
-								class="!static"
-								:block="element.block"
-								@renderComplete="setScale($event, element)"
-								:preview="true" />
+							<BuilderBlock class="!static" :block="element.block" :preview="true" />
 						</div>
 					</div>
 					<p class="text-xs text-gray-800 dark:text-zinc-500">

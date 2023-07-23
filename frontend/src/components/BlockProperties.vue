@@ -11,9 +11,7 @@
 			BG Color
 		</ColorInput>
 		<BackgroundHandler></BackgroundHandler>
-		<ColorInput
-			:value="blockController.getStyle('color')"
-			@change="(val) => blockController.setStyle('color', val)">
+		<ColorInput :value="blockController.getTextColor()" @change="(val) => blockController.setTextColor(val)">
 			Text
 		</ColorInput>
 		<InlineInput
@@ -231,22 +229,20 @@
 	</div>
 </template>
 <script setup lang="ts">
-import useStore from "@/store";
-import Block from "@/utils/block";
 import { setFont as _setFont, fontListNames, getFontWeightOptions } from "@/utils/fontManager";
 import { useDark } from "@vueuse/core";
-import { PropType, computed, onMounted, watch, watchEffect } from "vue";
+import { onMounted, watchEffect } from "vue";
+import BackgroundHandler from "./BackgroundHandler.vue";
 import BLockLayoutHandler from "./BlockLayoutHandler.vue";
 import BlockPositionHandler from "./BlockPositionHandler.vue";
-import BackgroundHandler from "./BackgroundHandler.vue";
 import ColorInput from "./ColorInput.vue";
 import InlineInput from "./InlineInput.vue";
 
+import blockController from "@/utils/blockController";
 import ace from "ace-builds";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-chrome";
 import "ace-builds/src-noconflict/theme-monokai";
-import blockController from "@/utils/blockController";
 
 const isDark = useDark();
 

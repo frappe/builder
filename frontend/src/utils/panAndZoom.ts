@@ -1,5 +1,3 @@
-import useStore from "./../store";
-const store = useStore();
 import { useElementBounding } from "@vueuse/core";
 import { nextTick, reactive } from "vue";
 
@@ -41,7 +39,7 @@ function setPanAndZoom(
 					};
 					panAndZoomAreaElement.addEventListener("mousemove", clearPinchPoint, { once: true });
 				}
-				let scale = props.scale - (e.deltaY * 0.01 * props.scale);
+				let scale = props.scale - e.deltaY * 0.01 * props.scale;
 				scale = Math.min(Math.max(scale, zoomLimits.min), zoomLimits.max);
 				props.scale = scale;
 				nextTick(() => {
@@ -62,8 +60,8 @@ function setPanAndZoom(
 						panAndZoomAreaElement.addEventListener("mousemove", clearPinchPoint, { once: true });
 					}
 
-					const pinchLocationX = middleX + (pointFromCenterX * scale);
-					const pinchLocationY = middleY + (pointFromCenterY * scale);
+					const pinchLocationX = middleX + pointFromCenterX * scale;
+					const pinchLocationY = middleY + pointFromCenterY * scale;
 
 					const diffX = startX - pinchLocationX;
 					const diffY = startY - pinchLocationY;
@@ -85,12 +83,6 @@ function setPanAndZoom(
 		},
 		{ passive: false }
 	);
-
-	target.addEventListener("dblclick", () => {
-		props.scale = store.canvas.initialScale;
-		props.translateX = store.canvas.initialTranslateX;
-		props.translateY = store.canvas.initialTranslateY;
-	});
 }
 
 export default setPanAndZoom;

@@ -1,8 +1,7 @@
 import useStore from "@/store";
+import { CSSProperties } from "vue";
 
 const store = useStore();
-
-import { CSSProperties } from "vue";
 
 type styleProperty = keyof CSSProperties;
 
@@ -63,7 +62,7 @@ const blockController = {
 			block.setAttribute(attribute, value);
 		});
 	},
-	getKeyValue: (key: 'element' | 'innerText') => {
+	getKeyValue: (key: "element" | "innerText") => {
 		let keyValue = "__initial__" as StyleValue | undefined;
 		store.builderState.selectedBlocks.forEach((block) => {
 			if (keyValue === "__initial__") {
@@ -74,7 +73,7 @@ const blockController = {
 		});
 		return keyValue;
 	},
-	setKeyValue: (key: 'element' | 'innerText', value: string) => {
+	setKeyValue: (key: "element" | "innerText", value: string) => {
 		store.builderState.selectedBlocks.forEach((block) => {
 			block[key] = value;
 		});
@@ -89,7 +88,23 @@ const blockController = {
 	},
 	getParentBlock: () => {
 		return store.builderState.selectedBlocks[0].getParentBlock();
-	}
+	},
+	setTextColor: (color: string) => {
+		store.builderState.selectedBlocks.forEach((block) => {
+			block.setTextColor(color);
+		});
+	},
+	getTextColor: () => {
+		let color = "__initial__" as StyleValue;
+		store.builderState.selectedBlocks.forEach((block) => {
+			if (color === "__initial__") {
+				color = block.getTextColor();
+			} else if (color !== block.getTextColor()) {
+				color = "Mixed";
+			}
+		});
+		return color;
+	},
 };
 
 export default blockController;

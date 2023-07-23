@@ -65,13 +65,19 @@ import { addPxToNumber, getNumberFromPx, getRandomColor } from "@/utils/helpers"
 import { UseDark } from "@vueuse/components";
 import { clamp, useEventListener } from "@vueuse/core";
 import { Popover, createDocumentResource, createResource } from "frappe-ui";
-import { Ref, onMounted, ref, watch, watchEffect } from "vue";
+import { PropType, Ref, onMounted, ref, watch, watchEffect } from "vue";
 import useStore from "../store";
 
 const store = useStore();
 const toolbar = ref(null);
 
 const pageData = ref({}) as unknown as Ref<WebPageBeta>;
+const props = defineProps({
+	canvasProps: {
+		type: Object as PropType<CanvasProps>,
+		required: true,
+	},
+});
 
 const publishWebResource = createResource({
 	url: "website_builder.api.publish",
@@ -146,7 +152,7 @@ function setEvents() {
 					name: "Text",
 					element: "p",
 					icon: "type",
-					innerText: "Text",
+					innerHTML: "Text",
 					baseStyles: {
 						fontSize: "40px",
 						width: "fit-content",
@@ -180,8 +186,8 @@ function setEvents() {
 			const parentOldPosition = parentBlock.getStyle("position");
 			parentBlock.setBaseStyle("position", parentOldPosition || "relative");
 			const parentElementBounds = parentElement.getBoundingClientRect();
-			let x = (ev.x - parentElementBounds.left) / store.canvas.scale;
-			let y = (ev.y - parentElementBounds.top) / store.canvas.scale;
+			let x = (ev.x - parentElementBounds.left) / props.canvasProps.scale;
+			let y = (ev.y - parentElementBounds.top) / props.canvasProps.scale;
 			const parentWidth = getNumberFromPx(getComputedStyle(parentElement).width);
 			const parentHeight = getNumberFromPx(getComputedStyle(parentElement).height);
 
@@ -197,8 +203,8 @@ function setEvents() {
 					return;
 				} else {
 					mouseMoveEvent.preventDefault();
-					let width = (mouseMoveEvent.clientX - initialX) / store.canvas.scale;
-					let height = (mouseMoveEvent.clientY - initialY) / store.canvas.scale;
+					let width = (mouseMoveEvent.clientX - initialX) / props.canvasProps.scale;
+					let height = (mouseMoveEvent.clientY - initialY) / props.canvasProps.scale;
 					width = clamp(width, 0, parentWidth);
 					height = clamp(height, 0, parentHeight);
 					childBlock.setBaseStyle("width", addPxToNumber(width));

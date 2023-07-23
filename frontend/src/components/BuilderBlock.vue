@@ -1,60 +1,28 @@
 <template>
-	<draggable
-		:list="block.children"
-		:sort="true"
-		:disabled="preview"
-		:group="{ name: 'blocks' }"
-		itemKey="blockId"
-		:tag="block.getTag()"
+	<component
+		:is="block.isText() ? TextBlock : block.getTag()"
 		@click="handleClick"
 		@dblclick="handleDoubleClick"
 		@contextmenu.prevent.stop="triggerContextMenu($event)"
 		@mouseover="handleMouseOver"
 		@mouseleave="handleMouseLeave"
-		@blur="block.innerText = $event.target.innerText"
-		:componentData="{
-			...block.attributes,
-			...$attrs,
-			...{
-				'data-block-id': block.blockId,
-				contenteditable: (block.isText() || block.isButton()) && block.isSelected() && isEditable,
-				onload: block.isImage() && renderComplete,
-				onerror: block.isImage() && renderComplete,
-				class: [
-					$attrs.class,
-					'__builder_component__',
-					'outline-none',
-					'select-none',
-					...(block.classes || []),
-				],
-				style: { ...styles, ...block.getEditorStyles() },
-			},
-		}"
-		:class="{
-			'pointer-events-none': props.isChildOfComponent,
-		}"
+		:data-block-id="block.blockId"
+		v-model="textContent"
+		:block="block.isText() ? block : null"
+		:class="[$attrs.class, '__builder_component__', 'outline-none', 'select-none', ...(block.classes || [])]"
+		v-bind="{ ...block.attributes, ...$attrs }"
+		:style="{ ...styles, ...block.getEditorStyles() }"
 		ref="component">
-		<template #header>
-			{{ block.innerText }}
-		</template>
-		<template #item="{ element }">
-			<BuilderBlock
-				:block="element"
-				:breakpoint="breakpoint"
-				:preview="preview"
-				:isChildOfComponent="block.isComponent"
-				@renderComplete="renderComplete" />
-		</template>
-	</draggable>
+		<BuilderBlock
+			:block="child"
+			:breakpoint="breakpoint"
+			:preview="preview"
+			:isChildOfComponent="child.isComponent"
+			v-for="child in block.children" />
+	</component>
 	<teleport to="#overlay" v-if="store.overlayElement && !preview && canvasProps">
 		<BlockEditor
-			v-if="
-				component &&
-				store.builderState.mode !== 'container' &&
-				component.targetDomElement &&
-				((block.isSelected() && breakpoint === store.builderState.activeBreakpoint) ||
-					(block.isHovered() && store.hoveredBreakpoint === breakpoint))
-			"
+			v-if="loadEditor"
 			v-show="!canvasProps.scaling && !canvasProps.panning"
 			:resizable-x="!block.isRoot()"
 			:resizable-y="!block.isImage() && !block.isRoot()"
@@ -62,20 +30,19 @@
 			:block="block"
 			:breakpoint="breakpoint"
 			:editable="isEditable"
-			:target="component.targetDomElement" />
+			:target="(target as HTMLElement)" />
 	</teleport>
 </template>
 <script setup lang="ts">
 import Block from "@/utils/block";
 import { setFont } from "@/utils/fontManager";
-import { Ref, computed, inject, nextTick, onMounted, ref, watchEffect } from "vue";
-import draggable from "vuedraggable";
+import { computed, inject, nextTick, onMounted, ref } from "vue";
+
 import useStore from "../store";
 import BlockEditor from "./BlockEditor.vue";
+import TextBlock from "./TextBlock.vue";
 
-// TODO: Find better way to set type for draggable
-// sortable object for draggable has targetDomElement
-const component = ref(null) as unknown as Ref<{ targetDomElement: HTMLElement }>;
+const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
 const store = useStore();
 const props = defineProps({
 	block: {
@@ -98,23 +65,37 @@ const props = defineProps({
 
 const canvasProps = !props.preview ? (inject("canvasProps") as CanvasProps) : null;
 
-const emit = defineEmits(["renderComplete"]);
+const target = computed(() => {
+	if (!component.value) return null;
+	if (component.value instanceof HTMLElement) {
+		return component.value;
+	} else {
+		return component.value.component;
+	}
+});
+
+const textContent = computed({
+	get() {
+		return props.block.innerHTML || props.block.innerText;
+	},
+	set(value) {
+		props.block.innerHTML = value;
+	},
+});
+
+const loadEditor = computed(() => {
+	return (
+		target.value &&
+		store.builderState.mode !== "container" &&
+		((props.block.isSelected() && props.breakpoint === store.builderState.activeBreakpoint) ||
+			(props.block.isHovered() && store.hoveredBreakpoint === props.breakpoint))
+	);
+});
+
 onMounted(async () => {
 	selectBlock(null);
 	setFont(props.block.getStyle("fontFamily") as string);
-	let targetElement = component.value.targetDomElement;
-	if (props.block.isText()) {
-		targetElement.addEventListener("keydown", (e: KeyboardEvent) => {
-			if (e.key === "b" && e.metaKey) {
-				e.preventDefault();
-				props.block.setStyle("fontWeight", "700");
-			}
-		});
-	}
 	await nextTick();
-	if (!props.block.isImage()) {
-		renderComplete();
-	}
 });
 
 const styles = computed(() => {
@@ -154,7 +135,7 @@ const triggerContextMenu = (e: MouseEvent) => {
 	selectBlock(e);
 	nextTick(() => {
 		let element = document.elementFromPoint(e.x, e.y) as HTMLElement;
-		if (element === component.value.targetDomElement) return;
+		if (element === target.value) return;
 		element.dispatchEvent(
 			new MouseEvent("contextmenu", {
 				bubbles: true,
@@ -167,6 +148,7 @@ const triggerContextMenu = (e: MouseEvent) => {
 };
 
 const handleClick = (e: MouseEvent) => {
+	if (isEditable.value) return;
 	if (!props.isChildOfComponent) {
 		selectBlock(e);
 		e.stopPropagation();
@@ -175,6 +157,7 @@ const handleClick = (e: MouseEvent) => {
 };
 
 const handleDoubleClick = (e: MouseEvent) => {
+	if (isEditable.value) return;
 	store.builderState.editableBlock = null;
 	if (props.block.isText()) {
 		store.builderState.editableBlock = props.block;
@@ -201,26 +184,5 @@ const handleMouseLeave = (e: MouseEvent) => {
 			e.stopPropagation();
 		}
 	}
-};
-
-watchEffect(() => {
-	if (isEditable.value) {
-		nextTick(() => {
-			const range = document.createRange();
-			range.selectNodeContents(component.value.targetDomElement);
-			const selection = window.getSelection();
-			selection?.removeAllRanges();
-			selection?.addRange(range);
-		});
-	}
-});
-
-// hack to check if all children are rendered
-let counter = 0;
-const renderComplete = () => {
-	if (props.block.children.length <= counter && component.value) {
-		emit("renderComplete", component.value.targetDomElement);
-	}
-	counter++;
 };
 </script>

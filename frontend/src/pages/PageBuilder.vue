@@ -1,33 +1,33 @@
 <template>
 	<div class="page-builder h-screen flex-col overflow-hidden bg-gray-100">
 		<BuilderToolbar
-			class="relative z-30 dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"></BuilderToolbar>
+			class="relative z-30 dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"
+			:canvas-props="
+				store.editingComponent ? store.componentEditorCanvas : store.blockEditorCanvas
+			"></BuilderToolbar>
 		<div>
 			<BuilderLeftPanel
 				class="fixed bottom-0 left-0 top-[var(--toolbar-height)] z-20 overflow-auto border-r-[1px] bg-white no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderLeftPanel>
 			<BuilderCanvas
+				ref="componentEditor"
 				v-if="store.editingComponent"
 				:block="store.editingComponent"
-				:canvas-props="store.componentEditor"
+				:canvas-props="store.componentEditorCanvas"
 				:canvas-styles="{
 					width: 'auto',
 				}"
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-200 p-10 dark:bg-zinc-800"></BuilderCanvas>
 			<BuilderCanvas
 				v-else
+				ref="blockEditor"
 				:block="store.builderState.blocks[0]"
-				:canvas-props="store.canvas"
+				:canvas-props="store.blockEditorCanvas"
 				:canvas-styles="{
 					minHeight: '1600px',
 				}"
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-200 p-10 dark:bg-zinc-800"></BuilderCanvas>
 			<BuilderRightPanel
 				class="fixed bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] bg-white no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderRightPanel>
-		</div>
-		<div
-			class="fixed bottom-12 left-[50%] z-40 block translate-x-[-50%] rounded-lg bg-white px-3 py-2 text-center text-sm"
-			v-show="store.canvas.scaling">
-			{{ Math.round(store.canvas.scale * 100) + "%" }}
 		</div>
 	</div>
 </template>
@@ -40,12 +40,15 @@ import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import useStore from "@/store";
 import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
 import { createDocumentResource, createResource } from "frappe-ui";
-import { onMounted, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
 const router = useRouter();
 const store = useStore();
+
+const blockEditor = ref<InstanceType<typeof BuilderCanvas> | null>(null);
+const componentEditor = ref<HTMLElement | null>(null);
 
 // To disable page zooming
 // TODO: Move this to a separate file & find better alternative
@@ -73,6 +76,9 @@ onMounted(() => {
 				store.pages[page.name] = page as WebPageBeta;
 				store.pageName = page.page_name;
 				router.push({ name: "builder", params: { pageId: page.name } });
+				if (blockEditor.value) {
+					blockEditor.value.setScaleAndTranslate();
+				}
 			},
 		});
 		createPageResource.submit({
@@ -99,6 +105,9 @@ const setPage = (pageName: string) => {
 		onSuccess(page: any) {
 			page.blocks = JSON.parse(page.blocks);
 			store.setPage(page as WebPageBeta);
+			if (blockEditor.value) {
+				blockEditor.value.setScaleAndTranslate();
+			}
 		},
 	});
 };

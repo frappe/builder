@@ -31,7 +31,7 @@
 					'cursor-ns-resize': !disableHandlers,
 				}"
 				@mousedown.stop="handleMargin($event, Position.Top)" />
-			<div class="m-auto text-sm text-white" v-show="updating">
+			<div class="m-auto text-sm text-gray-900" v-show="updating">
 				{{ blockStyles.marginTop }}
 			</div>
 		</div>
@@ -60,7 +60,7 @@
 					'cursor-ns-resize': !disableHandlers,
 				}"
 				@mousedown.stop="handleMargin($event, Position.Bottom)" />
-			<div class="m-auto text-sm text-white" v-show="updating">
+			<div class="m-auto text-sm text-gray-900" v-show="updating">
 				{{ blockStyles.marginBottom }}
 			</div>
 		</div>
@@ -89,7 +89,7 @@
 					'cursor-ew-resize': !disableHandlers,
 				}"
 				@mousedown.stop="handleMargin($event, Position.Left)" />
-			<div class="m-auto text-sm text-white" v-show="updating">
+			<div class="m-auto text-sm text-gray-900" v-show="updating">
 				{{ blockStyles.marginLeft }}
 			</div>
 		</div>
@@ -118,17 +118,17 @@
 					'cursor-ew-resize': !disableHandlers,
 				}"
 				@mousedown.stop="handleMargin($event, Position.Right)" />
-			<div class="m-auto text-sm text-white" v-show="updating">
+			<div class="m-auto text-sm text-gray-900" v-show="updating">
 				{{ blockStyles.marginRight }}
 			</div>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
+import { clamp } from "@vueuse/core";
 import { computed, inject, ref, watchEffect } from "vue";
 import Block from "../utils/block";
 import { getNumberFromPx } from "../utils/helpers";
-import { clamp } from "@vueuse/core";
 const props = defineProps({
 	targetBlock: {
 		type: Block,
