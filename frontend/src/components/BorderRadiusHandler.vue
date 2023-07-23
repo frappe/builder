@@ -2,7 +2,7 @@
 	<div
 		class="border-radius-resize pointer-events-auto absolute left-2 top-2 h-[9px] w-[9px] cursor-pointer rounded-full border-[1px] border-blue-400 bg-white"
 		:class="{
-			hidden: store.canvas.scale < 0.7,
+			hidden: canvasProps.scale < 0.7,
 		}"
 		@mousedown.stop="handleRounded">
 		<div
@@ -17,7 +17,7 @@
 </template>
 <script setup lang="ts">
 import { getNumberFromPx } from "@/utils/helpers";
-import { ref } from "vue";
+import { inject, ref } from "vue";
 import useStore from "../store";
 import Block from "../utils/block";
 
@@ -37,6 +37,7 @@ const targetBlock = props.targetBlock;
 const target = props.target as HTMLElement;
 const borderRadius = ref(parseInt(target.style.borderRadius, 10) || 0);
 const updating = ref(false);
+const canvasProps = inject("canvasProps") as CanvasProps;
 
 const handleRounded = (ev: MouseEvent) => {
 	const startX = ev.clientX;

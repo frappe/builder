@@ -9,11 +9,6 @@
 		:data-block-id="block.blockId"
 		:class="getStyleClasses">
 		<BlockDescription v-if="isBlockSelected && !resizing && !editable" :block="block"></BlockDescription>
-		<BoxResizer
-			v-if="isBlockSelected && !block.isRoot() && !editable && store.builderState.selectedBlocks.length === 1"
-			:target-block="block"
-			@resizing="resizing = $event"
-			:target="target" />
 		<PaddingHandler
 			v-if="isBlockSelected && !resizing && !editable && store.builderState.selectedBlocks.length === 1"
 			:target-block="block"
@@ -30,8 +25,13 @@
 			v-if="isBlockSelected && !block.isRoot() && !editable && store.builderState.selectedBlocks.length === 1"
 			:target-block="block"
 			:target="target" />
+		<BoxResizer
+			v-if="isBlockSelected && !block.isRoot() && !editable && store.builderState.selectedBlocks.length === 1"
+			:targetBlock="block"
+			@resizing="resizing = $event"
+			:target="target" />
 		<ContextMenu
-			v-if="contextMenuVisible"
+			v-if="contextMenuVisible && !block.isRoot()"
 			:pos-x="posX"
 			:pos-y="posY"
 			:options="contextMenuOptions"
@@ -68,18 +68,7 @@
 <script setup lang="ts">
 import Block from "@/utils/block";
 import { vOnClickOutside } from "@vueuse/components";
-import {
-	ComponentInternalInstance,
-	Ref,
-	computed,
-	getCurrentInstance,
-	inject,
-	nextTick,
-	onMounted,
-	ref,
-	watch,
-	watchEffect,
-} from "vue";
+import { Ref, computed, inject, nextTick, onMounted, ref, watch, watchEffect } from "vue";
 
 import { addPxToNumber, getNumberFromPx } from "@/utils/helpers";
 import { Dialog, Input, createResource } from "frappe-ui";
@@ -93,7 +82,7 @@ import ContextMenu from "./ContextMenu.vue";
 import MarginHandler from "./MarginHandler.vue";
 import PaddingHandler from "./PaddingHandler.vue";
 
-const canvasProps = inject("canvasProps") as Ref<CanvasProps>;
+const canvasProps = inject("canvasProps") as CanvasProps;
 
 const props = defineProps({
 	block: {
@@ -117,8 +106,7 @@ const store = useStore();
 const editor = ref(null) as unknown as Ref<HTMLElement>;
 const updateTracker = ref(() => {});
 const resizing = ref(false);
-const guides = setGuides(props.target);
-let currentInstance = null as unknown as ComponentInternalInstance | null;
+const guides = setGuides(props.target, canvasProps);
 const moving = ref(false);
 const preventCLick = ref(false);
 
@@ -153,7 +141,7 @@ const getStyleClasses = computed(() => {
 	} else {
 		classes.push("border-blue-400");
 	}
-	if (props.block.isSelected()) {
+	if (props.block.isSelected() && props.breakpoint === store.builderState.activeBreakpoint) {
 		classes.push("pointer-events-auto");
 	}
 	return classes;
@@ -171,10 +159,10 @@ const movable = computed(() => {
 
 onMounted(() => {
 	updateTracker.value = trackTarget(props.target, editor.value);
-	currentInstance = getCurrentInstance();
 });
 
 const handleClick = (ev: MouseEvent) => {
+	if (props.editable) return;
 	if (preventCLick.value) {
 		preventCLick.value = false;
 		return;
@@ -190,13 +178,14 @@ const handleClick = (ev: MouseEvent) => {
 	if (element.classList.contains("__builder_component__")) {
 		element.dispatchEvent(new MouseEvent("click", ev));
 	}
-	if (store.builderState.mode === "select") {
-		editorWrapper.classList.remove("pointer-events-none");
-		editorWrapper.classList.add("pointer-events-auto");
-	}
+	// if (store.builderState.mode === "select") {
+	// 	editorWrapper.classList.remove("pointer-events-none");
+	// 	editorWrapper.classList.add("pointer-events-auto");
+	// }
 };
 
 const handleDoubleClick = () => {
+	if (props.editable) return;
 	if (props.block.isText() || props.block.isButton()) {
 		store.builderState.editableBlock = props.block;
 	}
@@ -220,7 +209,7 @@ const handleMove = (ev: MouseEvent) => {
 	document.body.style.cursor = window.getComputedStyle(target).cursor;
 
 	const mousemove = async (mouseMoveEvent: MouseEvent) => {
-		const scale = canvasProps.value.scale;
+		const scale = canvasProps.scale;
 		const movementX = (mouseMoveEvent.clientX - startX) / scale;
 		const movementY = (mouseMoveEvent.clientY - startY) / scale;
 		let finalLeft = startLeft + movementX;
@@ -303,8 +292,7 @@ const createComponentHandler = ({ close }: { close: () => void }) => {
 
 const duplicateBlock = () => {
 	const blockCopy = store.getBlockCopy(props.block);
-	const superParent = currentInstance?.parent?.parent?.parent; // waiting for this to break 👀
-	const parentBlock = superParent?.props?.block as Block;
+	const parentBlock = props.block.getParentBlock();
 
 	if (blockCopy.getStyle("position") === "absolute") {
 		// shift the block a bit

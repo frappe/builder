@@ -38,9 +38,9 @@
 import { PropType } from "vue";
 import ColorPicker from "./ColorPicker.vue";
 
-const props = defineProps({
+defineProps({
 	value: {
-		type: String as PropType<HashString | null>,
+		type: String as PropType<StyleValue | null>,
 		default: null,
 	},
 });

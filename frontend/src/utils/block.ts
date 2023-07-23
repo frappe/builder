@@ -1,6 +1,6 @@
 import useStore from "@/store";
-import { addPxToNumber, getNumberFromPx } from "./helpers";
 import { CSSProperties, reactive } from "vue";
+import { addPxToNumber, getNumberFromPx } from "./helpers";
 
 type styleProperty = keyof CSSProperties;
 
@@ -18,6 +18,7 @@ class Block implements BlockOptions {
 	classes: Array<string>;
 	resizable?: boolean;
 	innerText?: string;
+	innerHTML?: string;
 	componentData: ComponentData;
 	isComponent?: boolean;
 	originalElement?: string | undefined;
@@ -26,6 +27,7 @@ class Block implements BlockOptions {
 		this.element = options.element;
 		this.draggable = options.draggable;
 		this.innerText = options.innerText;
+		this.innerHTML = options.innerHTML;
 		this.originalElement = options.originalElement;
 		this.blockId = options.blockId || this.generateId();
 		this.parentBlockId = options.parentBlockId;
@@ -186,7 +188,7 @@ class Block implements BlockOptions {
 		return childBlock;
 	}
 	getEditorStyles() {
-		const styles = reactive({} as BlockStyleMap) ;
+		const styles = reactive({} as BlockStyleMap);
 		if (this.isButton()) {
 			styles.display = "inline-block";
 		}
@@ -212,11 +214,10 @@ class Block implements BlockOptions {
 		if (this.isSelected()) {
 			store.builderState.selectedBlocks = store.builderState.selectedBlocks.filter(
 				(block: Block) => block.blockId !== this.blockId
-				);
-			} else {
+			);
+		} else {
 			store.builderState.selectedBlocks.push(this);
 		}
-
 	}
 	getParentBlock(): Block | null {
 		const store = useStore();
@@ -229,6 +230,30 @@ class Block implements BlockOptions {
 		this.baseStyles = Object.assign({}, this.baseStyles, styles.baseStyles);
 		this.mobileStyles = Object.assign({}, this.mobileStyles, styles.mobileStyles);
 		this.tabletStyles = Object.assign({}, this.tabletStyles, styles.tabletStyles);
+	}
+	getBackgroundColor() {
+		return this.getStyle("backgroundColor") || "transparent";
+	}
+	getTextColor() {
+		const editor = this.getEditor();
+		if (this.isText() && editor) {
+			return editor.getAttributes("textStyle").color || this.getStyle("color");
+		} else {
+			return this.getStyle("color");
+		}
+	}
+	getEditor(): any {
+		return null;
+	}
+	setTextColor(color: string) {
+		const editor = this.getEditor();
+		console.log("editor", color, editor);
+		if (this.isText() && editor) {
+			console.log("editor", editor.chain().focus());
+			editor.chain().focus().setColor(color).run();
+		} else {
+			this.setStyle("color", color);
+		}
 	}
 }
 

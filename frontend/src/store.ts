@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
-import Block from "./utils/block";
 import { WebPageBeta } from "./types/WebsiteBuilder/WebPageBeta";
+import Block from "./utils/block";
 
 const useStore = defineStore("store", {
 	state: () => ({
@@ -175,11 +175,8 @@ const useStore = defineStore("store", {
 		],
 		sidebarActiveTab: <LeftSidebarTabOption>"Components",
 		editingComponent: <Block | null>null,
-		canvas: {
-			initialScale: 0.1,
-			initialTranslateY: 0,
-			initialTranslateX: 0,
-			scale: 0.1,
+		blockEditorCanvas: {
+			scale: 0.5,
 			translateX: 0,
 			translateY: 0,
 			startX: 0,
@@ -187,12 +184,10 @@ const useStore = defineStore("store", {
 			background: "",
 			scaling: false,
 			panning: false,
+			settingCanvas: true,
 		},
-		componentEditor: {
-			initialScale: 0.1,
-			initialTranslateY: 0,
-			initialTranslateX: 0,
-			scale: 0.1,
+		componentEditorCanvas: {
+			scale: 0.5,
 			translateX: 0,
 			translateY: 0,
 			startX: 0,
@@ -200,6 +195,7 @@ const useStore = defineStore("store", {
 			background: "",
 			scaling: false,
 			panning: false,
+			settingCanvas: false,
 		},
 		copiedStyle: <StyleCopy | null>null,
 		components: <BlockComponent[]>[],
@@ -276,7 +272,7 @@ const useStore = defineStore("store", {
 				baseStyles: {
 					objectFit: "cover",
 				},
-			}
+			};
 		},
 		findBlock(blockId: string, blocks?: Array<Block>): Block | null {
 			if (!blocks) {
@@ -302,7 +298,7 @@ const useStore = defineStore("store", {
 				block.selectBlock();
 			}
 			this.builderState.editableBlock = null;
-		}
+		},
 	},
 });
 

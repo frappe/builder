@@ -6,7 +6,6 @@
 			right: `${store.builderLayout.rightPanelWidth}px`,
 		}">
 		<div class="overlay absolute" id="overlay" ref="overlay" />
-		<BlockSnapGuides />
 		<div
 			v-if="isOverDropZone"
 			class="pointer-events-none absolute bottom-0 left-0 right-0 top-0 z-30 bg-cyan-300 opacity-20"></div>
@@ -43,27 +42,32 @@
 				}"
 				v-for="breakpoint in visibleBreakpoints"
 				:key="breakpoint.device">
-				<BuilderBlock
-					:block="block"
-					v-if="showBlocks"
-					:breakpoint="breakpoint.device"
-					@renderComplete="setScaleAndTranslate" />
+				<BuilderBlock :block="block" v-if="showBlocks" :breakpoint="breakpoint.device" />
+			</div>
+		</div>
+		<div
+			class="fixed bottom-12 left-[50%] z-40 flex translate-x-[-50%] items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-center text-sm font-semibold text-gray-600 shadow-md dark:bg-zinc-900 dark:text-zinc-400"
+			v-show="!canvasProps.panning">
+			{{ Math.round(canvasProps.scale * 100) + "%" }}
+			<div class="ml-2 cursor-pointer" @click="setScaleAndTranslate">
+				<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24">
+					<path
+						fill="currentColor"
+						d="M20 9V6h-3V4h3q.825 0 1.413.588T22 6v3h-2ZM2 9V6q0-.825.588-1.413T4 4h3v2H4v3H2Zm15 11v-2h3v-3h2v3q0 .825-.588 1.413T20 20h-3ZM4 20q-.825 0-1.413-.588T2 18v-3h2v3h3v2H4Zm12-4H8q-.825 0-1.413-.588T6 14v-4q0-.825.588-1.413T8 8h8q.825 0 1.413.588T18 10v4q0 .825-.588 1.413T16 16Zm-8-2h8v-4H8v4Zm0 0v-4v4Z" />
+				</svg>
 			</div>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
 import Block from "@/utils/block";
-import { useDebouncedRefHistory, useElementBounding, useDropZone } from "@vueuse/core";
-import { FeatherIcon, toast } from "frappe-ui";
+import { useDebouncedRefHistory, useDropZone, useElementBounding } from "@vueuse/core";
+import { FeatherIcon, FileUploadHandler, toast } from "frappe-ui";
 import { storeToRefs } from "pinia";
-import { computed, nextTick, onMounted, reactive, ref } from "vue";
+import { PropType, computed, nextTick, onMounted, provide, reactive, ref, watch } from "vue";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
-import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
-import { FileUploadHandler } from "frappe-ui";
-import { provide, PropType } from "vue";
 
 const store = useStore();
 const canvasContainer = ref(null);
@@ -187,6 +191,12 @@ const containerBound = reactive(useElementBounding(canvasContainer));
 const canvasBound = reactive(useElementBounding(canvas));
 
 const setScaleAndTranslate = async () => {
+	if (document.readyState !== "complete") {
+		console.log("waiting for load");
+		await new Promise((resolve) => {
+			window.addEventListener("load", resolve);
+		});
+	}
 	const paddingX = 300;
 	const paddingY = 400;
 
@@ -198,7 +208,7 @@ const setScaleAndTranslate = async () => {
 	const canvasWidth = canvasBound.width / props.canvasProps.scale;
 	const canvasHeight = canvasBound.height / props.canvasProps.scale;
 
-	props.canvasProps.initialScale = props.canvasProps.scale = Math.min(
+	props.canvasProps.scale = Math.min(
 		containerWidth / (canvasWidth + paddingX * 2),
 		containerHeight / (canvasHeight + paddingY * 2)
 	);
@@ -210,65 +220,79 @@ const setScaleAndTranslate = async () => {
 	canvasBound.update();
 	const diffY = containerBound.top - canvasBound.top + paddingY * scale;
 	if (diffY !== 0) {
-		props.canvasProps.initialTranslateY = props.canvasProps.translateY = diffY / scale;
+		props.canvasProps.translateY = diffY / scale;
 	}
+	props.canvasProps.settingCanvas = false;
 };
 
 onMounted(() => {
+	setScaleAndTranslate();
 	const canvasContainerEl = canvasContainer.value as unknown as HTMLElement;
 	const canvasEl = canvas.value as unknown as HTMLElement;
 	setPanAndZoom(props.canvasProps, canvasEl, canvasContainerEl);
-	const { builderState } = storeToRefs(store);
-	const { undo, redo, canUndo, canRedo } = useDebouncedRefHistory(builderState, {
-		capacity: 100,
-		deep: true,
-		clone: (obj) => {
-			let newObj = Object.assign({}, obj);
-			newObj.blocks = obj.blocks.map((val) => store.getBlockCopy(val, true));
-			if (obj.selectedBlocks) {
-				newObj.selectedBlocks = obj.selectedBlocks.map((val) => {
-					return store.findBlock(val.blockId, newObj.blocks);
-				}) as Array<Block>;
-			}
-			return newObj;
-		},
-		debounce: 200,
-	});
-
-	document.addEventListener("keydown", (e) => {
-		const target = e.target as HTMLElement;
-		if (
-			target.tagName === "INPUT" ||
-			target.tagName === "TEXTAREA" ||
-			target.getAttribute("contenteditable")
-		) {
-			return;
-		}
-		if (e.key === "z" && e.metaKey && !e.shiftKey && canUndo.value) {
-			undo();
-			e.preventDefault();
-		}
-		if (e.key === "z" && e.shiftKey && e.metaKey && canRedo.value) {
-			redo();
-			e.preventDefault();
-		}
-
-		if (e.key === "c") {
-			store.builderState.mode = "container";
-		}
-
-		if (e.key === "i") {
-			store.builderState.mode = "image";
-		}
-
-		if (e.key === "t") {
-			store.builderState.mode = "text";
-		}
-
-		if (e.key === "v") {
-			store.builderState.mode = "select";
-		}
-	});
 	showBlocks.value = true;
+});
+
+const { builderState } = storeToRefs(store);
+const { undo, redo, canUndo, canRedo, clear } = useDebouncedRefHistory(builderState, {
+	capacity: 100,
+	deep: true,
+	clone: (obj) => {
+		let newObj = Object.assign({}, obj);
+		newObj.blocks = obj.blocks.map((val) => store.getBlockCopy(val, true));
+		if (obj.selectedBlocks) {
+			newObj.selectedBlocks = obj.selectedBlocks.map((val) => {
+				return store.findBlock(val.blockId, newObj.blocks);
+			}) as Array<Block>;
+		}
+		return newObj;
+	},
+	debounce: 200,
+});
+
+watch(
+	() => builderState.value.selectedPage,
+	async (newValue, oldValue) => {
+		console.log("selected page changed", newValue, oldValue);
+		if (newValue !== oldValue) {
+			await nextTick();
+			clear();
+		}
+	}
+);
+
+document.addEventListener("keydown", (e) => {
+	const target = e.target as HTMLElement;
+	if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.getAttribute("contenteditable")) {
+		return;
+	}
+	if (e.key === "z" && e.metaKey && !e.shiftKey && canUndo.value) {
+		undo();
+		e.preventDefault();
+	}
+	if (e.key === "z" && e.shiftKey && e.metaKey && canRedo.value) {
+		redo();
+		e.preventDefault();
+	}
+
+	if (e.key === "c") {
+		store.builderState.mode = "container";
+	}
+
+	if (e.key === "i") {
+		store.builderState.mode = "image";
+	}
+
+	if (e.key === "t") {
+		store.builderState.mode = "text";
+	}
+
+	if (e.key === "v") {
+		store.builderState.mode = "select";
+	}
+});
+
+defineExpose({
+	setScaleAndTranslate,
 });
 </script>

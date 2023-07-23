@@ -24,7 +24,7 @@
 					}"
 					@mousedown.stop="handleSelectorMove"
 					class="relative m-auto h-24 w-44 rounded-md"
-					@click="setColor">
+					@click.prevent="setColor">
 					<div
 						ref="colorSelector"
 						@mousedown.stop="handleSelectorMove"
@@ -102,8 +102,7 @@
 </template>
 <script setup lang="ts">
 import { HSVToHex, HexToHSV } from "@/utils/helpers";
-import { useEyeDropper } from "@vueuse/core";
-import { clamp } from "@vueuse/core";
+import { clamp, useEyeDropper } from "@vueuse/core";
 import { Popover } from "frappe-ui";
 import { PropType, Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
 

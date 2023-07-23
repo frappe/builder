@@ -29,7 +29,7 @@
 </template>
 <script setup lang="ts">
 import { getNumberFromPx } from "@/utils/helpers";
-import { computed, onMounted, ref, watchEffect } from "vue";
+import { computed, inject, onMounted, ref, watchEffect } from "vue";
 import useStore from "../store";
 import Block from "../utils/block";
 import guidesTracker from "../utils/guidesTracker";
@@ -52,8 +52,10 @@ const target = props.target;
 const resizing = ref(false);
 let guides = null as unknown as ReturnType<typeof guidesTracker>;
 
+const canvasProps = inject("canvasProps") as CanvasProps;
+
 onMounted(() => {
-	guides = guidesTracker(target);
+	guides = guidesTracker(target, canvasProps);
 });
 
 watchEffect(() => {
@@ -86,7 +88,7 @@ const handleRightResize = (ev: MouseEvent) => {
 	guides.showX();
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
 		// movement / scale * speed
-		const movement = (mouseMoveEvent.clientX - startX) / store.canvas.scale;
+		const movement = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
 		const finalWidth = Math.abs(guides.getFinalWidth(startWidth + movement));
 
 		if (targetBlock.isText()) {
@@ -129,7 +131,7 @@ const handleBottomResize = (ev: MouseEvent) => {
 	guides.showY();
 
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		const movement = (mouseMoveEvent.clientY - startY) / store.canvas.scale;
+		const movement = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
 		let finalHeight = Math.abs(guides.getFinalHeight(startHeight + movement));
 
 		if (targetBlock.isText()) {
@@ -166,7 +168,7 @@ const handleBottomCornerResize = (ev: MouseEvent) => {
 	resizing.value = true;
 
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		const movementX = (mouseMoveEvent.clientX - startX) / store.canvas.scale;
+		const movementX = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
 		const finalWidth = Math.round(startWidth + movementX);
 
 		if (targetBlock.isText()) {
@@ -175,7 +177,7 @@ const handleBottomCornerResize = (ev: MouseEvent) => {
 		}
 
 		targetBlock.setStyle("width", `${finalWidth}px`);
-		const movementY = (mouseMoveEvent.clientY - startY) / store.canvas.scale;
+		const movementY = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
 		const finalHeight = Math.round(startHeight + movementY);
 		targetBlock.setStyle("height", `${finalHeight}px`);
 		mouseMoveEvent.preventDefault();

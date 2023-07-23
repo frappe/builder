@@ -25,7 +25,7 @@ const tracks = [
 	},
 ];
 
-function setGuides(target: HTMLElement) {
+function setGuides(target: HTMLElement, canvasProps: CanvasProps) {
 	const threshold = 10;
 	// TODO: Remove canvas dependency
 	const canvasElement = target.closest(".canvas") as HTMLElement;
@@ -38,7 +38,7 @@ function setGuides(target: HTMLElement) {
 		canvasBounds.update();
 		parentBounds.update();
 
-		const { scale } = store.canvas;
+		const { scale } = canvasProps;
 		const targetRight = targetBounds.left + calculatedWidth * scale;
 
 		let finalWidth = calculatedWidth;
@@ -69,7 +69,7 @@ function setGuides(target: HTMLElement) {
 		canvasBounds.update();
 		parentBounds.update();
 
-		const scale = store.canvas.scale;
+		const { scale } = canvasProps;
 		const targetBottom = targetBounds.top + calculatedHeight * scale;
 
 		let finalHeight = calculatedHeight;
@@ -98,7 +98,7 @@ function setGuides(target: HTMLElement) {
 	const getLeftPositionOffset = () => {
 		targetBounds.update();
 		canvasBounds.update();
-		let scale = store.canvas.scale;
+		let { scale } = canvasProps;
 		let leftOffset = 0;
 
 		const canvasHalf = canvasBounds.left + canvasBounds.width / 2;
