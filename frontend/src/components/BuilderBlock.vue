@@ -176,6 +176,8 @@ const handleDoubleClick = (e: MouseEvent) => {
 	if (props.block.isContainer()) {
 		if (props.block.children.length === 0) {
 			const child = getBlockTemplate("text");
+			props.block.setBaseStyle("alignItems", "center");
+			props.block.setBaseStyle("justifyContent", "center");
 			const childBlock = props.block.addChild(child);
 			childBlock.makeBlockEditable();
 			e.stopPropagation();

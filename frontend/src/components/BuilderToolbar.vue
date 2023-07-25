@@ -95,7 +95,9 @@ const publishWebResource = createResource({
 
 watchEffect(() => {
 	if (store.builderState.selectedPage && pageData.value.name !== store.builderState.selectedPage) {
-		pageData.value = webPages.getRow(store.builderState.selectedPage);
+		webPages.fetchOne.submit(store.builderState.selectedPage).then((data: WebPageBeta[]) => {
+			pageData.value = data[0];
+		});
 	}
 });
 
