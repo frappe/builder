@@ -128,6 +128,7 @@ watchEffect(() => {
 	props.block.getParentBlock()?.getStyle("flexDirection");
 	store.builderLayout.leftPanelWidth;
 	store.builderLayout.rightPanelWidth;
+	store.showPanels;
 	nextTick(() => {
 		updateTracker.value();
 	});
