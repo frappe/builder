@@ -6,7 +6,7 @@
 				:togglePopover="
 					() => {
 						togglePopover();
-						setSelectorPosition(modelValue);
+						setSelectorPosition(modelColor);
 					}
 				"
 				:isOpen="isOpen"></slot>
@@ -34,7 +34,7 @@
 							width: '12px',
 							left: `calc(${colorSelectorPosition.x}px - 6px)`,
 							top: `calc(${colorSelectorPosition.y}px - 6px)`,
-							color: modelValue || '#fff',
+							color: modelColor,
 							background: 'transparent',
 						} as StyleValue"></div>
 				</div>
@@ -101,7 +101,7 @@
 	</Popover>
 </template>
 <script setup lang="ts">
-import { HSVToHex, HexToHSV } from "@/utils/helpers";
+import { HSVToHex, HexToHSV, RGBToHex, getRGB } from "@/utils/helpers";
 import { clamp, useEyeDropper } from "@vueuse/core";
 import { Popover } from "frappe-ui";
 import { PropType, Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
@@ -119,9 +119,13 @@ const { isSupported, sRGBHex, open } = useEyeDropper();
 
 const props = defineProps({
 	modelValue: {
-		type: String as PropType<HashString | null>,
+		type: String as PropType<HashString | RGBString | null>,
 		default: null,
 	},
+});
+
+const modelColor = computed(() => {
+	return getRGB(props.modelValue);
 });
 
 const emit = defineEmits(["update:modelValue"]);
@@ -248,7 +252,8 @@ watch(
 	() => props.modelValue,
 	(color) => {
 		if (color === currentColor) return;
-		setSelectorPosition(color || "#FFF");
+		if (!color) debugger;
+		setSelectorPosition(getRGB(color));
 	},
 	{ immediate: true }
 );

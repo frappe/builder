@@ -1,5 +1,5 @@
 <template>
-	<component :is="block.getTag()" ref="component">
+	<component :is="block.getTag()" ref="component" @click.stop @dblclick.stop>
 		<editor-content @click="handleClick" :editor="editor" />
 	</component>
 </template>
@@ -60,8 +60,7 @@ const handleClick = (e: MouseEvent) => {
 watch(
 	() => props.block.innerHTML,
 	(newValue, oldValue) => {
-		console.log(newValue, oldValue);
-		const isSame = newValue === oldValue;
+		const isSame = newValue === editor.value?.getHTML();
 		if (isSame) {
 			return;
 		}

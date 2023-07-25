@@ -93,4 +93,33 @@ function getTextContent(html: string) {
 	return tmp.textContent || tmp.innerText || "";
 }
 
-export { HSVToHex, HexToHSV, addPxToNumber, confirm, getNumberFromPx, getRandomColor, getTextContent };
+function RGBToHex(rgb: RGBString): HashString {
+	const [r, g, b] = rgb
+		.replace("rgb(", "")
+		.replace(")", "")
+		.split(",")
+		.map((x) => parseInt(x));
+	return `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
+}
+
+function getRGB(color: HashString | RGBString | null): HashString {
+	if (!color) {
+		return "#ffffff";
+	}
+	if (color.startsWith("rgb")) {
+		return RGBToHex(color as RGBString);
+	}
+	return color as HashString;
+}
+
+export {
+	HSVToHex,
+	HexToHSV,
+	RGBToHex,
+	addPxToNumber,
+	confirm,
+	getNumberFromPx,
+	getRGB,
+	getRandomColor,
+	getTextContent,
+};
