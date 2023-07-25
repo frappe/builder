@@ -109,7 +109,9 @@ const styles = computed(() => {
 
 const isEditable = computed(() => {
 	return (
-		store.builderState.editableBlock === props.block && !(props.block.isComponent || props.isChildOfComponent)
+		store.builderState.editableBlock === props.block &&
+		!(props.block.isComponent || props.isChildOfComponent) &&
+		store.builderState.activeBreakpoint === props.breakpoint // to ensure it is right block and not on different breakpoint
 	);
 });
 

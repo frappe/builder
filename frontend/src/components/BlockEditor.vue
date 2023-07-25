@@ -150,7 +150,8 @@ const getStyleClasses = computed(() => {
 	if (
 		props.block.isSelected() &&
 		props.breakpoint === store.builderState.activeBreakpoint &&
-		!props.editable
+		!props.editable &&
+		!props.block.isRoot()
 	) {
 		classes.push("pointer-events-auto");
 	}

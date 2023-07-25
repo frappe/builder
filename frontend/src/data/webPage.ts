@@ -5,9 +5,9 @@ const webPages = createListResource({
 	doctype: "Web Page Beta",
 	fields: ["name", "route", "blocks", "page_name", "preview", "page_title", "creation"],
 	auto: true,
-	cache: ["pages"],
+	cache: "pages",
 	orderBy: "creation desc",
-	limit: 100,
+	pageLength: 50,
 });
 
 export { webPages };

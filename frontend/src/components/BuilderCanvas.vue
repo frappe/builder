@@ -141,12 +141,7 @@ document.addEventListener("keydown", (e) => {
 	if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
 		return;
 	}
-	if (
-		e.key === "Backspace" &&
-		store.builderState.selectedBlocks.length &&
-		!target.closest(".__builder_component__") &&
-		!target.getAttribute("contenteditable")
-	) {
+	if (e.key === "Backspace" && store.builderState.selectedBlocks.length && !target.isContentEditable) {
 		function findBlockAndRemove(blocks: Array<Block>, blockId: string) {
 			if (blockId === "root") {
 				toast({
@@ -253,7 +248,6 @@ const { undo, redo, canUndo, canRedo, clear } = useDebouncedRefHistory(builderSt
 watch(
 	() => builderState.value.selectedPage,
 	async (newValue, oldValue) => {
-		console.log("selected page changed", newValue, oldValue);
 		if (newValue !== oldValue) {
 			await nextTick();
 			clear();
