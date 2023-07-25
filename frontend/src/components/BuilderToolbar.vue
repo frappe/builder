@@ -15,6 +15,7 @@
 					{ mode: 'text', icon: 'type' },
 					{ mode: 'container', icon: 'square' },
 					{ mode: 'image', icon: 'image' },
+					{ mode: 'html', icon: 'code'}
 				] as { 'mode': BuilderMode; 'icon': string }[]"
 				:icon="mode.icon"
 				class="!text-gray-700 dark:bg-transparent dark:!text-gray-200 hover:dark:bg-zinc-800 focus:dark:bg-zinc-700 active:dark:bg-zinc-700"
@@ -38,14 +39,14 @@
 							class="w-full text-sm"
 							label="Page Title"
 							:value="pageData.page_title"
-							@change="pageResource.setValue.submit({ page_title: $event })" />
+							@change="webPages.setValue.submit({ name: pageData.name, page_title: $event })" />
 						<Input
 							type="text"
 							class="w-full text-sm"
 							label="URL"
 							v-model="pageData.route"
 							:value="pageData.route"
-							@change="pageResource.setValue.submit({ route: $event })" />
+							@change="webPages.setValue.submit({ name: pageData.name, route: $event })" />
 					</div>
 				</template>
 			</Popover>
@@ -61,11 +62,15 @@
 </template>
 <script setup lang="ts">
 import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
-import { addPxToNumber, getNumberFromPx, getRandomColor } from "@/utils/helpers";
+import getBlockTemplate from "@/utils/blockTemplate";
+import { addPxToNumber, getNumberFromPx } from "@/utils/helpers";
 import { UseDark } from "@vueuse/components";
 import { clamp, useEventListener } from "@vueuse/core";
-import { Popover, createDocumentResource, createResource } from "frappe-ui";
+import { Popover, createResource } from "frappe-ui";
 import { PropType, Ref, onMounted, ref, watch, watchEffect } from "vue";
+
+import { webPages } from "@/data/webPage";
+
 import useStore from "../store";
 
 const store = useStore();
@@ -81,25 +86,16 @@ const props = defineProps({
 
 const publishWebResource = createResource({
 	url: "website_builder.api.publish",
-	onSuccess(page: any) {
-		// hack
+	onSuccess(page: WebPageBeta) {
 		page.blocks = JSON.parse(page.blocks);
-		store.pages[page.name] = page as WebPageBeta;
-		store.pageName = page.page_name;
+		store.pageName = page.page_name || page.name;
 		window.open(`/${page.route}`, "_blank");
 	},
 });
 
-let pageResource = {};
-
 watchEffect(() => {
 	if (store.builderState.selectedPage && pageData.value.name !== store.builderState.selectedPage) {
-		pageResource = createDocumentResource({
-			doctype: "Web Page Beta",
-			name: store.builderState.selectedPage,
-			auto: true,
-		});
-		pageData.value = pageResource.doc;
+		pageData.value = webPages.getRow(store.builderState.selectedPage);
 	}
 });
 
@@ -120,8 +116,6 @@ watch(
 onMounted(() => {
 	setEvents();
 });
-
-let current = 0;
 
 function setEvents() {
 	const container = document.body.querySelector(".canvas-container") as HTMLElement;
@@ -146,40 +140,7 @@ function setEvents() {
 					parentBlock = parentBlock.getParentBlock() || store.builderState.blocks[0];
 				}
 			}
-			let child;
-			if (store.builderState.mode === "text") {
-				child = {
-					name: "Text",
-					element: "p",
-					icon: "type",
-					innerHTML: "Text",
-					baseStyles: {
-						fontSize: "40px",
-						width: "fit-content",
-						"line-height": "1",
-					} as BlockStyleMap,
-				};
-			} else if (store.builderState.mode === "image") {
-				child = {
-					name: "Image",
-					element: "img",
-					icon: "image",
-					baseStyles: {
-						objectFit: "cover",
-					} as BlockStyleMap,
-				};
-			} else {
-				child = {
-					name: "Container",
-					element: "section",
-					icon: "square",
-					baseStyles: {
-						background: ["#F3F3F3", "#EDEDED", "#E2E2E2", "#C7C7C7"][current % 4],
-					} as BlockStyleMap,
-				};
-				current++;
-			}
-
+			const child = getBlockTemplate(store.builderState.mode);
 			const parentElement = document.body.querySelector(
 				`.canvas [data-block-id="${parentBlock.blockId}"]`
 			) as HTMLElement;
@@ -199,7 +160,7 @@ function setEvents() {
 			childBlock.selectBlock();
 
 			const mouseMoveHandler = (mouseMoveEvent: MouseEvent) => {
-				if (store.builderState.mode === "text") {
+				if (store.builderState.mode === "text" || store.builderState.mode === "html") {
 					return;
 				} else {
 					mouseMoveEvent.preventDefault();
@@ -221,7 +182,9 @@ function setEvents() {
 						store.builderState.mode = "select";
 					}, 50);
 					childBlock.setBaseStyle("position", "static");
-					if (store.builderState.mode === "text") {
+					childBlock.setBaseStyle("top", "auto");
+					childBlock.setBaseStyle("left", "auto");
+					if (store.builderState.mode === "text" || store.builderState.mode === "html") {
 						return;
 					}
 					if (getNumberFromPx(childBlock.getStyle("width")) < 100) {
@@ -230,8 +193,6 @@ function setEvents() {
 					if (getNumberFromPx(childBlock.getStyle("height")) < 100) {
 						childBlock.setBaseStyle("height", "200px");
 					}
-					childBlock.setBaseStyle("top", "auto");
-					childBlock.setBaseStyle("left", "auto");
 					parentBlock.setBaseStyle("position", parentOldPosition || "static");
 				},
 				{ once: true }
@@ -244,10 +205,10 @@ function toggleMode(mode: BuilderMode) {
 	const container = document.body.querySelector(".canvas-container") as HTMLElement;
 	if (mode === "text") {
 		container.style.cursor = "text";
-	} else if (mode === "select") {
-		container.style.cursor = "default";
-	} else {
+	} else if (["container", "image", "html"].includes(mode)) {
 		container.style.cursor = "crosshair";
+	} else {
+		container.style.cursor = "default";
 	}
 }
 </script>

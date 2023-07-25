@@ -5,7 +5,7 @@
 		@click="handleClick"
 		@dblclick="handleDoubleClick"
 		@mousedown.prevent="handleMove"
-		@contextmenu.prevent="showContextMenu"
+		@contextmenu="showContextMenu"
 		:data-block-id="block.blockId"
 		:class="getStyleClasses">
 		<BlockDescription v-if="isBlockSelected && !resizing && !editable" :block="block"></BlockDescription>
@@ -25,13 +25,9 @@
 			v-if="isBlockSelected && !block.isRoot() && !editable && store.builderState.selectedBlocks.length === 1"
 			:target-block="block"
 			:target="target" />
-		<BoxResizer
-			v-if="isBlockSelected && !block.isRoot() && !editable && store.builderState.selectedBlocks.length === 1"
-			:targetBlock="block"
-			@resizing="resizing = $event"
-			:target="target" />
+		<BoxResizer v-if="showResizer" :targetBlock="block" @resizing="resizing = $event" :target="target" />
 		<ContextMenu
-			v-if="contextMenuVisible && !block.isRoot()"
+			v-if="contextMenuVisible"
 			:pos-x="posX"
 			:pos-y="posY"
 			:options="contextMenuOptions"
@@ -83,6 +79,16 @@ import MarginHandler from "./MarginHandler.vue";
 import PaddingHandler from "./PaddingHandler.vue";
 
 const canvasProps = inject("canvasProps") as CanvasProps;
+
+const showResizer = computed(() => {
+	return (
+		!props.block.isRoot() &&
+		!props.editable &&
+		isBlockSelected.value &&
+		store.builderState.selectedBlocks.length === 1 &&
+		!props.block.isHTML()
+	);
+});
 
 const props = defineProps({
 	block: {
@@ -141,7 +147,11 @@ const getStyleClasses = computed(() => {
 	} else {
 		classes.push("border-blue-400");
 	}
-	if (props.block.isSelected() && props.breakpoint === store.builderState.activeBreakpoint) {
+	if (
+		props.block.isSelected() &&
+		props.breakpoint === store.builderState.activeBreakpoint &&
+		!props.editable
+	) {
 		classes.push("pointer-events-auto");
 	}
 	return classes;
@@ -245,10 +255,12 @@ const componentProperties = ref({
 });
 
 const showContextMenu = (event: MouseEvent) => {
-	event.preventDefault();
+	if (props.block.isRoot() || props.editable) return;
 	contextMenuVisible.value = true;
 	posX.value = event.pageX;
 	posY.value = event.pageY;
+	event.preventDefault();
+	event.stopPropagation();
 };
 
 const handleContextMenuSelect = (action: CallableFunction) => {

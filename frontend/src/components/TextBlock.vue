@@ -20,20 +20,14 @@ const props = defineProps({
 		type: Block,
 		required: true,
 	},
-	modelValue: {
-		type: String,
-		default: "",
-	},
 });
-
-const emit = defineEmits(["update:modelValue"]);
 
 const component = ref(null) as Ref<HTMLElement | null>;
 const editor = useEditor({
-	content: props.modelValue,
+	content: props.block.innerHTML || props.block.innerText,
 	extensions: [StarterKit, TextStyle, Color],
 	onUpdate({ editor }) {
-		emit("update:modelValue", editor.getHTML());
+		props.block.innerHTML = editor.getHTML();
 	},
 	autofocus: false,
 	injectCSS: false,
@@ -64,15 +58,14 @@ const handleClick = (e: MouseEvent) => {
 };
 
 watch(
-	() => props.modelValue,
+	() => props.block.innerHTML,
 	(newValue, oldValue) => {
 		console.log(newValue, oldValue);
 		const isSame = newValue === oldValue;
 		if (isSame) {
-			console.log("same");
 			return;
 		}
-		editor.value?.commands.setContent(newValue, false, {
+		editor.value?.commands.setContent(newValue || "", false, {
 			preserveWhitespace: "full",
 		});
 	}

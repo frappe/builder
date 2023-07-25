@@ -16,7 +16,6 @@ class Block implements BlockOptions {
 	tabletStyles: BlockStyleMap;
 	attributes: BlockAttributeMap;
 	classes: Array<string>;
-	resizable?: boolean;
 	innerText?: string;
 	innerHTML?: string;
 	componentData: ComponentData;
@@ -57,6 +56,21 @@ class Block implements BlockOptions {
 			this.draggable = false;
 			this.setBaseStyle("minHeight", "100vh");
 		}
+	}
+	getBlockDescription() {
+		let description = this.blockName || this.originalElement || this.element;
+		if (this.innerHTML && !this.blockName) {
+			description += " | " + this.getTextContent();
+		}
+		return description;
+	}
+	getTextContent() {
+		let editor = this.getEditor();
+		let text = "";
+		if (this.isText() && editor) {
+			text = editor.getText();
+		}
+		return text || this.innerText || "";
 	}
 	isImage() {
 		return this.element === "img";
@@ -247,13 +261,14 @@ class Block implements BlockOptions {
 	}
 	setTextColor(color: string) {
 		const editor = this.getEditor();
-		console.log("editor", color, editor);
 		if (this.isText() && editor) {
-			console.log("editor", editor.chain().focus());
 			editor.chain().focus().setColor(color).run();
 		} else {
 			this.setStyle("color", color);
 		}
+	}
+	isHTML() {
+		return this.originalElement === "__html__";
 	}
 }
 

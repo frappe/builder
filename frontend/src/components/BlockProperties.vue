@@ -41,44 +41,63 @@
 			@update:modelValue="(val) => blockController.setStyle('boxShadow', val)">
 			Shadow
 		</InlineInput>
-		<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Dimension</h3>
-		<InlineInput
-			:modelValue="blockController.getStyle('height')"
-			@update:modelValue="(val) => blockController.setStyle('height', val)">
-			Height
-		</InlineInput>
-		<InlineInput
-			:modelValue="blockController.getStyle('width')"
-			@update:modelValue="(val) => blockController.setStyle('width', val)">
-			Width
-		</InlineInput>
-		<InlineInput
-			:modelValue="blockController.getStyle('minWidth')"
-			@update:modelValue="(val) => blockController.setStyle('minWidth', val)">
-			Min Width
-		</InlineInput>
-		<InlineInput
-			:modelValue="blockController.getStyle('maxWidth')"
-			@update:modelValue="(val) => blockController.setStyle('maxWidth', val)">
-			Max Width
-		</InlineInput>
-		<InlineInput
-			:modelValue="blockController.getStyle('minHeight')"
-			@update:modelValue="(val) => blockController.setStyle('minHeight', val)">
-			Min Height
-		</InlineInput>
-		<InlineInput
-			:modelValue="blockController.getStyle('maxHeight')"
-			@update:modelValue="(val) => blockController.setStyle('maxHeight', val)">
-			Max Height
-		</InlineInput>
+		<div class="flex flex-col gap-3" v-if="!blockController.isHTML() || !blockController.isRoot()">
+			<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Dimension</h3>
+			<InlineInput
+				:modelValue="blockController.getStyle('height')"
+				@update:modelValue="(val) => blockController.setStyle('height', val)">
+				Height
+			</InlineInput>
+			<InlineInput
+				:modelValue="blockController.getStyle('width')"
+				@update:modelValue="(val) => blockController.setStyle('width', val)">
+				Width
+			</InlineInput>
+			<InlineInput
+				:modelValue="blockController.getStyle('minWidth')"
+				@update:modelValue="(val) => blockController.setStyle('minWidth', val)">
+				Min Width
+			</InlineInput>
+			<InlineInput
+				:modelValue="blockController.getStyle('maxWidth')"
+				@update:modelValue="(val) => blockController.setStyle('maxWidth', val)">
+				Max Width
+			</InlineInput>
+			<InlineInput
+				:modelValue="blockController.getStyle('minHeight')"
+				@update:modelValue="(val) => blockController.setStyle('minHeight', val)">
+				Min Height
+			</InlineInput>
+			<InlineInput
+				:modelValue="blockController.getStyle('maxHeight')"
+				@update:modelValue="(val) => blockController.setStyle('maxHeight', val)">
+				Max Height
+			</InlineInput>
+		</div>
+
+		<h3
+			class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600"
+			v-if="!blockController.multipleBlocksSelected()">
+			Spacing
+		</h3>
 		<InlineInput
 			v-if="!blockController.multipleBlocksSelected()"
 			:modelValue="blockController.getStyle('margin')"
 			@update:modelValue="(val) => blockController.setStyle('margin', val)">
 			Margin
 		</InlineInput>
-		<h3 v-if="blockController.isText()" class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Text</h3>
+		<InlineInput
+			v-if="!blockController.multipleBlocksSelected()"
+			:modelValue="blockController.getStyle('padding')"
+			@update:modelValue="(val) => blockController.setStyle('padding', val)">
+			Padding
+		</InlineInput>
+
+		<h3
+			v-if="blockController.isText() || blockController.isContainer()"
+			class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">
+			Text
+		</h3>
 		<InlineInput
 			v-if="blockController.isText()"
 			:modelValue="blockController.getStyle('textAlign') || 'left'"
@@ -121,13 +140,14 @@
 			@update:modelValue="(val) => blockController.setStyle('lineHeight', val)">
 			Line
 		</InlineInput>
+
+		<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Options</h3>
 		<InlineInput
 			v-if="blockController.isLink()"
 			:modelValue="blockController.getAttribute('href')"
 			@update:modelValue="(val) => blockController.setAttribute('href', val)">
 			Link
 		</InlineInput>
-		<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Options</h3>
 		<InlineInput
 			v-if="blockController.isImage()"
 			:modelValue="blockController.getAttribute('src')"
@@ -170,7 +190,6 @@
 			@update:modelValue="(val) => blockController.setKeyValue('innerText', val)">
 			Content
 		</InlineInput>
-
 		<InlineInput
 			v-if="blockController.isContainer() && blockController.getStyle('display') === 'grid'"
 			type="number"
@@ -226,6 +245,14 @@
 
 		<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">RAW Styles</h3>
 		<div id="editor" class="border border-gray-200 dark:border-zinc-800" />
+		<Input
+			v-show="blockController.isHTML()"
+			type="textarea"
+			label="HTML"
+			class="mb-8 h-36"
+			id="html"
+			@change="(val) => blockController.setInnerHTML(val)"
+			:value="blockController.getInnerHTML()" />
 	</div>
 </template>
 <script setup lang="ts">
@@ -240,6 +267,7 @@ import InlineInput from "./InlineInput.vue";
 
 import blockController from "@/utils/blockController";
 import ace from "ace-builds";
+import "ace-builds/src-noconflict/mode-html";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-chrome";
 import "ace-builds/src-noconflict/theme-monokai";
@@ -272,15 +300,34 @@ onMounted(() => {
 		}
 	});
 
+	const htmlEditor = ace.edit("html");
+	htmlEditor.setOptions({
+		fontSize: "12px",
+		useWorker: false,
+		showGutter: false,
+	});
+	htmlEditor.setTheme("ace/theme/chrome");
+	htmlEditor.session.setMode("ace/mode/html");
+	htmlEditor.on("blur", () => {
+		const value = htmlEditor.getValue();
+		blockController.setInnerHTML(value);
+	});
+
 	watchEffect(() => {
 		editor.setValue(JSON.stringify(blockController.getRawStyles(), null, 2));
 	});
 
 	watchEffect(() => {
+		htmlEditor.setValue(blockController.getInnerHTML() as string);
+	});
+
+	watchEffect(() => {
 		if (isDark.value) {
 			editor.setTheme("ace/theme/monokai");
+			htmlEditor.setTheme("ace/theme/monokai");
 		} else {
 			editor.setTheme("ace/theme/chrome");
+			htmlEditor.setTheme("ace/theme/chrome");
 		}
 	});
 });

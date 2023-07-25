@@ -13,11 +13,24 @@ from frappe.website.serve import get_response_content
 from frappe.website.website_generator import WebsiteGenerator
 from website_builder.html_preview_image import get_preview
 
+import json
+
 MOBILE_BREAKPOINT = 640
 TABLET_BREAKPOINT = 768
 DESKTOP_BREAKPOINT = 1024
 
 class WebPageBeta(WebsiteGenerator):
+	def before_insert(self):
+		if isinstance(self.blocks, list):
+			self.blocks = json.dumps(self.blocks)
+		if not self.blocks:
+			self.blocks = "[]"
+		self.route = f"pages/{frappe.generate_hash(length=20)}"
+
+	def autoname(self):
+		if not self.name:
+			self.name = f"page-{frappe.generate_hash(length=5)}"
+
 	def on_update(self):
 		file_name=f"{self.name}{frappe.generate_hash()}.png"
 		frappe.enqueue(
@@ -57,7 +70,7 @@ def get_block_html(blocks):
 		def get_tag(node, soup):
 			element = node.get("originalElement") or node["element"]
 			# temp fix: since p inside p is illegal
-			if element == "p":
+			if element in ["p", "__html__"]:
 				element = "div"
 			tag = soup.new_tag(element)
 			tag.attrs = node.get("attributes", {})

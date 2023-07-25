@@ -59,25 +59,6 @@ const router = useRouter();
 const store = useStore();
 const generating = ref(false);
 
-createListResource({
-	doctype: "Web Page Beta",
-	fields: ["name", "page_name", "route"],
-	orderBy: "creation desc",
-	start: 0,
-	pageLength: 10,
-	auto: true,
-	onSuccess(data: PageMap) {
-		store.pages = data;
-	},
-	transform(data: any[]) {
-		const pages = {} as PageMap;
-		data.forEach((d) => {
-			pages[d.name] = d;
-		});
-		return pages;
-	},
-});
-
 const getPage = () => {
 	generating.value = true;
 	createResource({
