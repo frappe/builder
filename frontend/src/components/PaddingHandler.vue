@@ -17,7 +17,7 @@
 			}"
 			ref="topPaddingHandler">
 			<div
-				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-purple-500 bg-purple-400 hover:scale-110"
+				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-purple-500 bg-purple-400 hover:scale-125"
 				v-show="canvasProps.scale > 0.5"
 				:style="{
 					borderWidth: handleBorderWidth,
@@ -30,7 +30,7 @@
 					'cursor-ns-resize': !disableHandlers,
 				}"
 				@mousedown.stop="handlePadding($event, Position.Top)" />
-			<div class="m-auto text-sm text-white" v-show="updating">
+			<div class="m-auto text-sm text-purple-900" v-show="updating">
 				{{ blockStyles.paddingTop }}
 			</div>
 		</div>
@@ -45,7 +45,7 @@
 			}"
 			ref="bottomPaddingHandler">
 			<div
-				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-purple-500 bg-purple-400 hover:scale-110"
+				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-purple-500 bg-purple-400 hover:scale-125"
 				v-show="canvasProps.scale > 0.5"
 				:style="{
 					borderWidth: handleBorderWidth,
@@ -58,7 +58,7 @@
 					'cursor-ns-resize': !disableHandlers,
 				}"
 				@mousedown.stop="handlePadding($event, Position.Bottom)" />
-			<div class="m-auto text-sm text-white" v-show="updating">
+			<div class="m-auto text-sm text-purple-900" v-show="updating">
 				{{ blockStyles.paddingBottom }}
 			</div>
 		</div>
@@ -73,7 +73,7 @@
 			}"
 			ref="leftPaddingHandler">
 			<div
-				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-purple-500 bg-purple-400 hover:scale-110"
+				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-purple-500 bg-purple-400 hover:scale-125"
 				v-show="canvasProps.scale > 0.5"
 				:style="{
 					borderWidth: handleBorderWidth,
@@ -86,7 +86,7 @@
 					'cursor-ew-resize': !disableHandlers,
 				}"
 				@mousedown.stop="handlePadding($event, Position.Left)" />
-			<div class="m-auto text-sm text-white" v-show="updating">
+			<div class="m-auto text-sm text-purple-900" v-show="updating">
 				{{ blockStyles.paddingLeft }}
 			</div>
 		</div>
@@ -101,7 +101,7 @@
 			}"
 			ref="rightPaddingHandler">
 			<div
-				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-purple-500 bg-purple-400 hover:scale-110"
+				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-purple-500 bg-purple-400 hover:scale-125"
 				v-show="canvasProps.scale > 0.5"
 				:style="{
 					borderWidth: handleBorderWidth,
@@ -114,17 +114,17 @@
 					'cursor-ew-resize': !disableHandlers,
 				}"
 				@mousedown.stop="handlePadding($event, Position.Right)" />
-			<div class="m-auto text-sm text-white" v-show="updating">
+			<div class="m-auto text-sm text-purple-900" v-show="updating">
 				{{ blockStyles.paddingRight }}
 			</div>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
+import { clamp } from "@vueuse/core";
 import { computed, inject, ref, watchEffect } from "vue";
 import Block from "../utils/block";
 import { getNumberFromPx } from "../utils/helpers";
-import { clamp } from "@vueuse/core";
 
 import { toast } from "frappe-ui";
 const canvasProps = inject("canvasProps") as CanvasProps;
@@ -188,7 +188,7 @@ const topHandle = computed(() => {
 	return {
 		width: 16 * canvasProps.scale,
 		height: 4 * canvasProps.scale,
-		bottom: `calc(-2px * ${canvasProps.scale})`,
+		bottom: `calc(-8px * ${canvasProps.scale})`,
 		left: `calc(50% - ${8 * canvasProps.scale}px)`,
 	};
 });
@@ -197,7 +197,7 @@ const bottomHandle = computed(() => {
 	return {
 		width: 16 * canvasProps.scale,
 		height: 4 * canvasProps.scale,
-		top: `calc(-2px * ${canvasProps.scale})`,
+		top: `calc(-8px * ${canvasProps.scale})`,
 		left: `calc(50% - ${8 * canvasProps.scale}px)`,
 	};
 });
@@ -206,7 +206,7 @@ const leftHandle = computed(() => {
 	return {
 		width: 4 * canvasProps.scale,
 		height: 16 * canvasProps.scale,
-		right: `calc(-2px * ${canvasProps.scale})`,
+		right: `calc(-8px * ${canvasProps.scale})`,
 		top: `calc(50% - ${8 * canvasProps.scale}px)`,
 	};
 });
@@ -215,7 +215,7 @@ const rightHandle = computed(() => {
 	return {
 		width: 4 * canvasProps.scale,
 		height: 16 * canvasProps.scale,
-		left: `calc(-2px * ${canvasProps.scale})`,
+		left: `calc(-8px * ${canvasProps.scale})`,
 		top: `calc(50% - ${8 * canvasProps.scale}px)`,
 	};
 });
