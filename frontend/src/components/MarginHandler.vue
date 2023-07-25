@@ -18,7 +18,7 @@
 			}"
 			ref="topMarginHandler">
 			<div
-				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-yellow-500 bg-yellow-400 hover:scale-110"
+				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-yellow-600 bg-yellow-400 hover:scale-125"
 				v-show="canvasProps.scale > 0.5"
 				:style="{
 					borderWidth: handleBorderWidth,
@@ -31,7 +31,7 @@
 					'cursor-ns-resize': !disableHandlers,
 				}"
 				@mousedown.stop="handleMargin($event, Position.Top)" />
-			<div class="m-auto text-sm text-gray-900" v-show="updating">
+			<div class="m-auto text-sm text-yellow-900" v-show="updating">
 				{{ blockStyles.marginTop }}
 			</div>
 		</div>
@@ -47,7 +47,7 @@
 			}"
 			ref="bottomMarginHandler">
 			<div
-				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-yellow-500 bg-yellow-400 hover:scale-110"
+				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-yellow-600 bg-yellow-400 hover:scale-125"
 				v-show="canvasProps.scale > 0.5"
 				:style="{
 					borderWidth: handleBorderWidth,
@@ -60,7 +60,7 @@
 					'cursor-ns-resize': !disableHandlers,
 				}"
 				@mousedown.stop="handleMargin($event, Position.Bottom)" />
-			<div class="m-auto text-sm text-gray-900" v-show="updating">
+			<div class="m-auto text-sm text-yellow-900" v-show="updating">
 				{{ blockStyles.marginBottom }}
 			</div>
 		</div>
@@ -76,7 +76,7 @@
 			}"
 			ref="leftMarginHandler">
 			<div
-				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-yellow-500 bg-yellow-400 hover:scale-110"
+				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-yellow-600 bg-yellow-400 hover:scale-125"
 				v-show="canvasProps.scale > 0.5"
 				:style="{
 					borderWidth: handleBorderWidth,
@@ -89,7 +89,7 @@
 					'cursor-ew-resize': !disableHandlers,
 				}"
 				@mousedown.stop="handleMargin($event, Position.Left)" />
-			<div class="m-auto text-sm text-gray-900" v-show="updating">
+			<div class="m-auto text-sm text-yellow-900" v-show="updating">
 				{{ blockStyles.marginLeft }}
 			</div>
 		</div>
@@ -105,7 +105,7 @@
 			}"
 			ref="rightMarginHandler">
 			<div
-				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-yellow-500 bg-yellow-400 hover:scale-110"
+				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-yellow-600 bg-yellow-400 hover:scale-125"
 				v-show="canvasProps.scale > 0.5"
 				:style="{
 					borderWidth: handleBorderWidth,
@@ -118,7 +118,7 @@
 					'cursor-ew-resize': !disableHandlers,
 				}"
 				@mousedown.stop="handleMargin($event, Position.Right)" />
-			<div class="m-auto text-sm text-gray-900" v-show="updating">
+			<div class="m-auto text-sm text-yellow-900" v-show="updating">
 				{{ blockStyles.marginRight }}
 			</div>
 		</div>
