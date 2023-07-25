@@ -15,7 +15,7 @@
 		</div>
 		<div class="flex flex-wrap gap-6">
 			<router-link
-				v-for="page in pages"
+				v-for="page in webPages.data"
 				:key="page.page_name"
 				:to="{ name: 'builder', params: { pageId: page.page_name } }"
 				class="max-w-[250px] flex-grow basis-52">
@@ -39,29 +39,14 @@
 	</section>
 </template>
 <script setup lang="ts">
+import { webPages } from "@/data/webPage";
 import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
 import { confirm } from "@/utils/helpers";
-import { createListResource } from "frappe-ui";
-import { ref, Ref } from "vue";
-
-const pages = ref([]) as Ref<WebPageBeta[]>;
-
-const pagesResource = createListResource({
-	doctype: "Web Page Beta",
-	fields: ["name", "page_name", "route", "preview", "page_title"],
-	orderBy: "creation desc",
-	start: 0,
-	pageLength: 100,
-	auto: true,
-	onSuccess(data: WebPageBeta[]) {
-		pages.value = data;
-	},
-});
 
 const deletePage = async (page: WebPageBeta) => {
 	const confirmed = await confirm(`Are you sure you want to delete Page: ${page.page_name}?`);
 	if (confirmed) {
-		await pagesResource.delete.submit(page.name);
+		await webPages.delete.submit(page.name);
 	}
 };
 </script>

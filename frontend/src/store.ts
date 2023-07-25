@@ -14,8 +14,10 @@ const useStore = defineStore("store", {
 				new Block({
 					element: "div",
 					originalElement: "body",
+					baseStyles: {
+						display: "flex",
+					},
 					blockId: "root",
-					resizable: false,
 				}),
 			],
 		},
@@ -87,7 +89,6 @@ const useStore = defineStore("store", {
 		],
 		pageName: "Home",
 		route: "/",
-		pages: <PageMap>{},
 		pastelCssColors: [
 			"#FFFFFF",
 			"#F5FFFA",
@@ -242,7 +243,9 @@ const useStore = defineStore("store", {
 				element: "div",
 				originalElement: "body",
 				blockId: "root",
-				resizable: false,
+				baseStyles: {
+					display: "flex",
+				},
 			});
 		},
 		getPageData() {
@@ -264,8 +267,6 @@ const useStore = defineStore("store", {
 			return {
 				element: "img",
 				originalElement: "img",
-				resizable: true,
-				editable: false,
 				attributes: {
 					src: image_src,
 				},

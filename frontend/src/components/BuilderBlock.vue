@@ -1,14 +1,13 @@
 <template>
 	<component
-		:is="block.isText() ? TextBlock : block.getTag()"
+		:is="getComponentName(block)"
 		@click="handleClick"
 		@dblclick="handleDoubleClick"
-		@contextmenu.prevent.stop="triggerContextMenu($event)"
+		@contextmenu="triggerContextMenu($event)"
 		@mouseover="handleMouseOver"
 		@mouseleave="handleMouseLeave"
 		:data-block-id="block.blockId"
-		v-model="textContent"
-		:block="block.isText() ? block : null"
+		:block="block.isText() || block.isHTML() ? block : null"
 		:class="[$attrs.class, '__builder_component__', 'outline-none', 'select-none', ...(block.classes || [])]"
 		v-bind="{ ...block.attributes, ...$attrs }"
 		:style="{ ...styles, ...block.getEditorStyles() }"
@@ -24,9 +23,6 @@
 		<BlockEditor
 			v-if="loadEditor"
 			v-show="!canvasProps.scaling && !canvasProps.panning"
-			:resizable-x="!block.isRoot()"
-			:resizable-y="!block.isImage() && !block.isRoot()"
-			:resizable="!block.isRoot()"
 			:block="block"
 			:breakpoint="breakpoint"
 			:editable="isEditable"
@@ -40,6 +36,7 @@ import { computed, inject, nextTick, onMounted, ref } from "vue";
 
 import useStore from "../store";
 import BlockEditor from "./BlockEditor.vue";
+import BlockHTML from "./BlockHTML.vue";
 import TextBlock from "./TextBlock.vue";
 
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
@@ -63,6 +60,16 @@ const props = defineProps({
 	},
 });
 
+const getComponentName = (block: Block) => {
+	if (block.isText()) {
+		return TextBlock;
+	} else if (block.isHTML()) {
+		return BlockHTML;
+	} else {
+		return block.getTag();
+	}
+};
+
 const canvasProps = !props.preview ? (inject("canvasProps") as CanvasProps) : null;
 
 const target = computed(() => {
@@ -72,15 +79,6 @@ const target = computed(() => {
 	} else {
 		return component.value.component;
 	}
-});
-
-const textContent = computed({
-	get() {
-		return props.block.innerHTML || props.block.innerText;
-	},
-	set(value) {
-		props.block.innerHTML = value;
-	},
 });
 
 const loadEditor = computed(() => {
@@ -132,6 +130,9 @@ const selectBlock = (e: MouseEvent | null) => {
 };
 
 const triggerContextMenu = (e: MouseEvent) => {
+	if (props.block.isRoot()) return;
+	e.stopPropagation();
+	e.preventDefault();
 	selectBlock(e);
 	nextTick(() => {
 		let element = document.elementFromPoint(e.x, e.y) as HTMLElement;

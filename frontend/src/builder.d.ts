@@ -18,7 +18,6 @@ declare interface BlockOptions {
 	attributes?: BlockAttributeMap;
 	classes?: Array<string>;
 	children?: Array<Block | BlockOptions>;
-	resizable?: boolean;
 	draggable?: boolean;
 	innerText?: string;
 	parentBlockId?: string;
@@ -66,9 +65,9 @@ declare interface ComponentData {
 
 declare type HashString = `#${string}`;
 
-declare type LeftSidebarTabOption = 'Components' | 'Layers';
+declare type LeftSidebarTabOption = "Components" | "Layers";
 
-declare type BuilderMode = 'select' | 'text' | 'container' | 'image';
+declare type BuilderMode = "select" | "text" | "container" | "image" | "html";
 
 declare interface CanvasProps {
 	scale: number;

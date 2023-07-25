@@ -6,7 +6,10 @@ const store = useStore();
 type styleProperty = keyof CSSProperties;
 
 const blockController = {
-	setStyle: (style: any, value: any) => {
+	isRoot() {
+		return store.builderState.selectedBlocks[0].isRoot();
+	},
+	setStyle: (style: styleProperty, value: any) => {
 		store.builderState.selectedBlocks.forEach((block) => {
 			block.setStyle(style, value);
 		});
@@ -104,6 +107,17 @@ const blockController = {
 			}
 		});
 		return color;
+	},
+	isHTML: () => {
+		return blockController.isBLockSelected() && store.builderState.selectedBlocks[0].isHTML();
+	},
+	getInnerHTML: () => {
+		return blockController.isBLockSelected() && store.builderState.selectedBlocks[0].innerHTML;
+	},
+	setInnerHTML: (value: string) => {
+		store.builderState.selectedBlocks.forEach((block) => {
+			block.innerHTML = value;
+		});
 	},
 };
 

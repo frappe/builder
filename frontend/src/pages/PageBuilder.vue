@@ -37,9 +37,9 @@ import BuilderCanvas from "@/components/BuilderCanvas.vue";
 import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
+import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
-import { createDocumentResource, createResource } from "frappe-ui";
 import { onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
@@ -68,22 +68,17 @@ onMounted(() => {
 	if (route.params.pageId && route.params.pageId !== "new") {
 		setPage(route.params.pageId as string);
 	} else {
-		const createPageResource = createResource({
-			url: "website_builder.api.create_new_page",
-			method: "POST",
-			onSuccess(page: any) {
-				page.blocks = JSON.parse(page.blocks);
-				store.pages[page.name] = page as WebPageBeta;
-				store.pageName = page.page_name;
-				router.push({ name: "builder", params: { pageId: page.name } });
-				if (blockEditor.value) {
-					blockEditor.value.setScaleAndTranslate();
+		webPages.insert
+			.submit({
+				page_title: "My Page",
+				blocks: [store.getRootBlock()],
+			})
+			.then((data: WebPageBeta) => {
+				router.push({ name: "builder", params: { pageId: data.name } });
+				if (data.blocks) {
+					data.blocks = JSON.parse(data.blocks);
 				}
-			},
-		});
-		createPageResource.submit({
-			blocks: [store.getRootBlock()],
-		});
+			});
 	}
 });
 
@@ -97,18 +92,9 @@ watch(
 );
 
 const setPage = (pageName: string) => {
-	createDocumentResource({
-		method: "GET",
-		doctype: "Web Page Beta",
-		name: pageName || "home",
-		auto: true,
-		onSuccess(page: any) {
-			page.blocks = JSON.parse(page.blocks);
-			store.setPage(page as WebPageBeta);
-			if (blockEditor.value) {
-				blockEditor.value.setScaleAndTranslate();
-			}
-		},
+	webPages.fetchOne.submit(pageName).then((data: WebPageBeta[]) => {
+		data[0].blocks = JSON.parse(data[0].blocks);
+		store.setPage(data[0]);
 	});
 };
 </script>
