@@ -1,11 +1,11 @@
 <template>
-	<div v-if="blocks.length">
+	<div>
 		<draggable
 			class="block-tree"
 			:list="blocks"
 			:group="{ name: 'block-tree' }"
 			item-key="blockId"
-			:disabled="blocks[0].isRoot()">
+			:disabled="blocks.length && blocks[0].isRoot()">
 			<template #item="{ element }">
 				<div
 					class="cursor-pointer rounded border-[1px] bg-white pl-2 pr-[2px] text-sm text-gray-600 dark:bg-zinc-900"
@@ -36,7 +36,7 @@
 							{{ element.getBlockDescription() }}
 						</span>
 					</span>
-					<div v-if="element.children" v-show="!element.collapsed">
+					<div v-show="!element.collapsed">
 						<BlockLayers :blocks="element.children" class="ml-1" />
 					</div>
 				</div>

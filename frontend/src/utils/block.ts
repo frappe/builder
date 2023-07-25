@@ -28,7 +28,12 @@ class Block implements BlockOptions {
 		this.innerText = options.innerText;
 		this.innerHTML = options.innerHTML;
 		this.originalElement = options.originalElement;
-		this.blockId = options.blockId || this.generateId();
+
+		if (!options.blockId || options.blockId === "root") {
+			this.blockId = this.generateId();
+		} else {
+			this.blockId = options.blockId;
+		}
 		this.parentBlockId = options.parentBlockId;
 		this.children = (options.children || []).map((child: BlockOptions) => {
 			child.parentBlockId = this.blockId;
