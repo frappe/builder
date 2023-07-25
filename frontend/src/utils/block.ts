@@ -1,5 +1,5 @@
 import useStore from "@/store";
-import { CSSProperties, reactive } from "vue";
+import { CSSProperties, nextTick, reactive } from "vue";
 import { addPxToNumber, getNumberFromPx } from "./helpers";
 
 type styleProperty = keyof CSSProperties;
@@ -269,6 +269,14 @@ class Block implements BlockOptions {
 	}
 	isHTML() {
 		return this.originalElement === "__html__";
+	}
+	makeBlockEditable() {
+		const store = useStore();
+		this.selectBlock();
+		store.builderState.editableBlock = this;
+		nextTick(() => {
+			this.getEditor()?.commands.focus("all");
+		});
 	}
 }
 
