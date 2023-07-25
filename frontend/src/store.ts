@@ -176,6 +176,7 @@ const useStore = defineStore("store", {
 		],
 		sidebarActiveTab: <LeftSidebarTabOption>"Components",
 		editingComponent: <Block | null>null,
+		showPanels: <boolean>true,
 		blockEditorCanvas: {
 			scale: 0.5,
 			translateX: 0,

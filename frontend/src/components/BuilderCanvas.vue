@@ -1,10 +1,5 @@
 <template>
-	<div
-		ref="canvasContainer"
-		:style="{
-			left: `${store.builderLayout.leftPanelWidth}px`,
-			right: `${store.builderLayout.rightPanelWidth}px`,
-		}">
+	<div ref="canvasContainer">
 		<div class="overlay absolute" id="overlay" ref="overlay" />
 		<div
 			v-if="isOverDropZone"
@@ -109,6 +104,7 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 			uploader
 				.upload(files[0], {
 					private: false,
+					optimize: true,
 				})
 				.then((fileDoc: { file_url: string }) => {
 					const url = encodeURI(window.location.origin + fileDoc.file_url);

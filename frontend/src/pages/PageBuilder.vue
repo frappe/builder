@@ -7,6 +7,7 @@
 			"></BuilderToolbar>
 		<div>
 			<BuilderLeftPanel
+				v-show="store.showPanels"
 				class="fixed bottom-0 left-0 top-[var(--toolbar-height)] z-20 overflow-auto border-r-[1px] bg-white no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderLeftPanel>
 			<BuilderCanvas
 				ref="componentEditor"
@@ -15,6 +16,10 @@
 				:canvas-props="store.componentEditorCanvas"
 				:canvas-styles="{
 					width: 'auto',
+				}"
+				:style="{
+					left: `${store.showPanels ? store.builderLayout.leftPanelWidth : 0}px`,
+					right: `${store.showPanels ? store.builderLayout.rightPanelWidth : 0}px`,
 				}"
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-200 p-10 dark:bg-zinc-800"></BuilderCanvas>
 			<BuilderCanvas
@@ -25,8 +30,13 @@
 				:canvas-styles="{
 					minHeight: '1600px',
 				}"
+				:style="{
+					left: `${store.showPanels ? store.builderLayout.leftPanelWidth : 0}px`,
+					right: `${store.showPanels ? store.builderLayout.rightPanelWidth : 0}px`,
+				}"
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-200 p-10 dark:bg-zinc-800"></BuilderCanvas>
 			<BuilderRightPanel
+				v-show="store.showPanels"
 				class="fixed bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] bg-white no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderRightPanel>
 		</div>
 	</div>
@@ -40,7 +50,7 @@ import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
-import { onMounted, ref, watch } from "vue";
+import { nextTick, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
@@ -63,6 +73,13 @@ document.addEventListener(
 	},
 	{ passive: false }
 );
+
+document.addEventListener("keydown", (e) => {
+	if (e.key === "\\" && e.metaKey) {
+		e.preventDefault();
+		store.showPanels = !store.showPanels;
+	}
+});
 
 onMounted(() => {
 	if (route.params.pageId && route.params.pageId !== "new") {
@@ -95,6 +112,11 @@ const setPage = (pageName: string) => {
 	webPages.fetchOne.submit(pageName).then((data: WebPageBeta[]) => {
 		data[0].blocks = JSON.parse(data[0].blocks);
 		store.setPage(data[0]);
+		nextTick(() => {
+			if (blockEditor.value) {
+				blockEditor.value.setScaleAndTranslate();
+			}
+		});
 	});
 };
 </script>
