@@ -252,7 +252,6 @@ watch(
 	() => props.modelValue,
 	(color) => {
 		if (color === currentColor) return;
-		if (!color) debugger;
 		setSelectorPosition(getRGB(color));
 	},
 	{ immediate: true }
