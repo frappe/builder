@@ -51,6 +51,12 @@ watchEffect(() => {
 	editor.value?.setEditable(isEditable.value);
 });
 
+watch(isEditable, (newValue) => {
+	if (newValue) {
+		editor.value?.commands.focus("all");
+	}
+});
+
 const handleClick = (e: MouseEvent) => {
 	if (isEditable.value) {
 		e.stopPropagation();

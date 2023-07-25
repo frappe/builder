@@ -34,6 +34,7 @@ import Block from "@/utils/block";
 import { setFont } from "@/utils/fontManager";
 import { computed, inject, nextTick, onMounted, ref } from "vue";
 
+import getBlockTemplate from "@/utils/blockTemplate";
 import useStore from "../store";
 import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
@@ -169,6 +170,20 @@ const handleDoubleClick = (e: MouseEvent) => {
 	if (props.block.isComponent) {
 		store.editingComponent = props.block;
 		e.stopPropagation();
+	}
+
+	// dblclick on container adds text block or selects text block if only one child
+	if (props.block.isContainer()) {
+		if (props.block.children.length === 0) {
+			const child = getBlockTemplate("text");
+			const childBlock = props.block.addChild(child);
+			childBlock.makeBlockEditable();
+			e.stopPropagation();
+		} else if (props.block.children.length === 1 && props.block.children[0].isText()) {
+			const child = props.block.children[0];
+			child.makeBlockEditable();
+			e.stopPropagation();
+		}
 	}
 };
 
