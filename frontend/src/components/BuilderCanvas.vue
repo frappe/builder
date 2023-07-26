@@ -99,7 +99,12 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 				block = store.findBlock(element.dataset.blockId) || block;
 			}
 		}
-		if (files && files.length) {
+		let data = ev.dataTransfer?.getData("text");
+		if (data) {
+			let blockOptions = JSON.parse(data) as BlockOptions;
+			block.addChild(store.getBlockCopy(blockOptions));
+			ev.stopPropagation();
+		} else if (files && files.length) {
 			const uploader = new FileUploadHandler();
 			uploader
 				.upload(files[0], {

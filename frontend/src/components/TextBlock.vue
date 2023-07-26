@@ -23,8 +23,12 @@ const props = defineProps({
 });
 
 const component = ref(null) as Ref<HTMLElement | null>;
+
+const textContent = computed(() => {
+	return props.block.innerText || props.block.innerHTML;
+});
 const editor = useEditor({
-	content: props.block.innerHTML || props.block.innerText,
+	content: textContent.value,
 	extensions: [StarterKit, TextStyle, Color],
 	onUpdate({ editor }) {
 		props.block.innerHTML = editor.getHTML();
@@ -41,7 +45,7 @@ onUnmounted(() => {
 	editor.value?.destroy();
 });
 
-props.block.getEditor = () => editor.value;
+props.block.getEditor = () => editor.value || null;
 
 const isEditable = computed(() => {
 	return props.block === store.builderState.editableBlock;
@@ -64,7 +68,7 @@ const handleClick = (e: MouseEvent) => {
 };
 
 watch(
-	() => props.block.innerHTML,
+	() => textContent.value,
 	(newValue, oldValue) => {
 		const isSame = newValue === editor.value?.getHTML();
 		if (isSame) {

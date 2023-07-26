@@ -3,41 +3,37 @@
 		<div v-if="!Object.keys(store.components).length" class="text-sm italic text-gray-600">
 			No components saved
 		</div>
-		<draggable
+		<div
 			:list="store.components"
-			:group="{ name: 'blocks', pull: 'clone', put: false }"
-			item-key="id"
-			:sort="false"
-			:clone="cloneComponent"
+			v-for="component in store.components"
+			:key="component.name"
 			class="flex w-full flex-wrap">
-			<template #item="{ element }">
-				<div class="group relative mb-3 w-full">
+			<div class="group relative mb-3 w-full">
+				<div
+					class="relative mb-1 mr-2 flex h-24 w-full max-w-[300px] cursor-pointer items-center justify-center overflow-hidden rounded-md border bg-gray-50 p-2 shadow-sm last:mr-0 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+					draggable="true"
+					@dragstart="(ev) => setData(ev, component)">
 					<div
-						class="relative mb-1 mr-2 flex h-24 w-full max-w-[300px] cursor-pointer items-center justify-center overflow-hidden rounded-md border bg-gray-50 p-2 shadow-sm last:mr-0 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
-						@click="cloneComponent(element)">
-						<div
-							class="pointer-events-none absolute flex w-[1400px] justify-center self-center"
-							:style="{
-								transform: 'scale(' + element.scale + ')',
-							}">
-							<BuilderBlock class="!static" :block="element.block" :preview="true" />
-						</div>
+						class="pointer-events-none absolute flex w-[1400px] justify-center self-center"
+						:style="{
+							transform: 'scale(' + component.scale + ')',
+						}">
+						<BuilderBlock class="!static" :block="component.block" :preview="true" />
 					</div>
-					<p class="text-xs text-gray-800 dark:text-zinc-500">
-						{{ element.component_name }}
-					</p>
-					<FeatherIcon
-						name="trash"
-						class="absolute right-2 top-2 hidden h-7 w-7 cursor-pointer rounded bg-white p-2 group-hover:block"
-						@click.stop.prevent="deleteComponent(element)"></FeatherIcon>
 				</div>
-			</template>
-		</draggable>
+				<p class="text-xs text-gray-800 dark:text-zinc-500">
+					{{ component.component_name }}
+				</p>
+				<FeatherIcon
+					name="trash"
+					class="absolute right-2 top-2 hidden h-7 w-7 cursor-pointer rounded bg-white p-2 group-hover:block"
+					@click.stop.prevent="deleteComponent(component)"></FeatherIcon>
+			</div>
+		</div>
 	</div>
 </template>
 <script setup lang="ts">
 import { createListResource } from "frappe-ui";
-import draggable from "vuedraggable";
 import useStore from "../store";
 import BuilderBlock from "./BuilderBlock.vue";
 
@@ -67,28 +63,15 @@ const setScale = async (el: HTMLElement, block: BlockOptions) => {
 	block.scale = scale;
 };
 
-const cloneComponent = (blockComponent: BlockComponent) => {
-	const blockCopy = store.getBlockCopy(blockComponent.block);
-	blockCopy.isComponent = true;
-	if (blockComponent.component_name === "Card") {
-		blockCopy.componentData = {
-			name: "Card",
-			doctype: "User",
-			isDynamic: blockComponent.is_dynamic,
-			mappings: {
-				avatar: "user_image",
-				full_name: "full_name",
-				email: "email",
-			},
-		};
-	}
-	return blockCopy;
-};
-
 const deleteComponent = async (component: BlockComponent) => {
 	const confirmed = await confirm(`Are you sure you want to delete component: ${component.component_name}?`);
 	if (confirmed) {
 		componentResource.delete.submit(component.name);
 	}
+};
+
+const setData = (ev: DragEvent, component: BlockComponent) => {
+	const blockCopy = store.getBlockCopy(component.block);
+	ev?.dataTransfer?.setData("text/plain", JSON.stringify(blockCopy));
 };
 </script>
