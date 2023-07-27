@@ -50,6 +50,8 @@ import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
+import blockController from "@/utils/blockController";
+import { isHTMLString } from "@/utils/helpers";
 import { nextTick, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
@@ -78,6 +80,17 @@ document.addEventListener("keydown", (e) => {
 	if (e.key === "\\" && e.metaKey) {
 		e.preventDefault();
 		store.showPanels = !store.showPanels;
+	}
+});
+
+// detects if user is pasting HTML on HTML block
+document.addEventListener("paste", (e) => {
+	if (blockController.isHTML()) {
+		e.preventDefault();
+		const text = e.clipboardData?.getData("text/plain");
+		if (text && isHTMLString(text)) {
+			blockController.setInnerHTML(text);
+		}
 	}
 });
 
