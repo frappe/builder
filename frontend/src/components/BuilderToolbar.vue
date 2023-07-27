@@ -89,7 +89,7 @@ const publishWebResource = createResource({
 	onSuccess(page: WebPageBeta) {
 		page.blocks = JSON.parse(page.blocks);
 		store.pageName = page.page_name || page.name;
-		window.open(`/${page.route}`, "_blank");
+		window.open(`/${page.route}`, "preview-page");
 	},
 });
 
