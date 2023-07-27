@@ -1,13 +1,7 @@
 <template>
 	<div>
-		<div v-if="!Object.keys(store.components).length" class="text-sm italic text-gray-600">
-			No components saved
-		</div>
-		<div
-			:list="store.components"
-			v-for="component in store.components"
-			:key="component.name"
-			class="flex w-full flex-wrap">
+		<div v-if="!components.length" class="text-sm italic text-gray-600">No components saved</div>
+		<div v-for="component in components" :key="component.name" class="flex w-full flex-wrap">
 			<div class="group relative mb-3 w-full">
 				<div
 					class="relative mb-1 mr-2 flex h-24 w-full max-w-[300px] cursor-pointer items-center justify-center overflow-hidden rounded-md border bg-gray-50 p-2 shadow-sm last:mr-0 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
@@ -33,30 +27,13 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { createListResource } from "frappe-ui";
+import { computed } from "vue";
 import useStore from "../store";
 import BuilderBlock from "./BuilderBlock.vue";
 
-const store = useStore();
+import webComponent from "@/data/webComponent";
 
-const componentResource = createListResource({
-	doctype: "Web Page Component",
-	fields: ["component_name", "icon", "block", "name"],
-	orderBy: "creation",
-	start: 0,
-	pageLength: 100,
-	auto: true,
-	transform(data: any[]) {
-		data.forEach((d) => {
-			d.block = store.getBlockCopy(JSON.parse(d.block));
-			d.scale = 0.2;
-		});
-		return data;
-	},
-	onSuccess(data: BlockComponent[]) {
-		store.components = data;
-	},
-});
+const components = computed(() => webComponent.data || []);
 
 const setScale = async (el: HTMLElement, block: BlockOptions) => {
 	const scale = Math.max(Math.min(250 / el.offsetWidth, 80 / el.offsetHeight, 0.6), 0.1);
@@ -66,12 +43,11 @@ const setScale = async (el: HTMLElement, block: BlockOptions) => {
 const deleteComponent = async (component: BlockComponent) => {
 	const confirmed = await confirm(`Are you sure you want to delete component: ${component.component_name}?`);
 	if (confirmed) {
-		componentResource.delete.submit(component.name);
+		webComponent.delete.submit(component.name);
 	}
 };
 
 const setData = (ev: DragEvent, component: BlockComponent) => {
-	const blockCopy = store.getBlockCopy(component.block);
-	ev?.dataTransfer?.setData("text/plain", JSON.stringify(blockCopy));
+	ev?.dataTransfer?.setData("componentName", component.name);
 };
 </script>

@@ -16,7 +16,7 @@
 			:block="child"
 			:breakpoint="breakpoint"
 			:preview="preview"
-			:isChildOfComponent="child.isComponent"
+			:isChildOfComponent="block.isComponent"
 			v-for="child in block.children" />
 	</component>
 	<teleport to="#overlay" v-if="store.overlayElement && !preview && canvasProps">
@@ -84,6 +84,7 @@ const target = computed(() => {
 
 const loadEditor = computed(() => {
 	return (
+		!props.isChildOfComponent &&
 		target.value &&
 		store.builderState.mode !== "container" &&
 		((props.block.isSelected() && props.breakpoint === store.builderState.activeBreakpoint) ||

@@ -16,6 +16,7 @@ const useStore = defineStore("store", {
 					originalElement: "body",
 					baseStyles: {
 						display: "flex",
+						flexWrap: "wrap",
 					},
 					blockId: "root",
 				}),
