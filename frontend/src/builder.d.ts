@@ -25,7 +25,7 @@ declare interface BlockOptions {
 }
 
 declare interface BlockComponent {
-	name?: string;
+	name: string;
 	component_name: string;
 	icon: string;
 	is_dynamic: boolean;

@@ -77,6 +77,7 @@ import BoxResizer from "./BoxResizer.vue";
 import ContextMenu from "./ContextMenu.vue";
 import MarginHandler from "./MarginHandler.vue";
 import PaddingHandler from "./PaddingHandler.vue";
+import webComponent from "@/data/webComponent";
 
 const canvasProps = inject("canvasProps") as CanvasProps;
 
@@ -170,7 +171,7 @@ const movable = computed(() => {
 });
 
 onMounted(() => {
-	updateTracker.value = trackTarget(props.target, editor.value);
+	updateTracker.value = trackTarget(props.target, editor.value, canvasProps);
 });
 
 const handleClick = (ev: MouseEvent) => {
@@ -277,30 +278,20 @@ const copyStyle = () => {
 	};
 };
 
-const createComponent = createResource({
-	url: "website_builder.website_builder.doctype.web_page_component.web_page_component.create_component",
-	method: "POST",
-	transform(data: { block: string }) {
-		data.block = JSON.parse(data.block);
-		return data;
-	},
-	onSuccess(component: BlockComponent) {
-		store.sidebarActiveTab = "Components";
-		component.block = store.getBlockCopy(component.block);
-		store.components.push(component);
-	},
-});
-
 const createComponentHandler = ({ close }: { close: () => void }) => {
 	const blockCopy = store.getBlockCopy(props.block);
 	blockCopy.removeStyle("left");
 	blockCopy.removeStyle("top");
 	blockCopy.removeStyle("position");
-	createComponent.submit({
-		block: blockCopy,
-		component_name: componentProperties.value.componentName,
-		is_dynamic: componentProperties.value.isDynamicComponent,
-	});
+	webComponent.insert
+		.submit({
+			block: blockCopy,
+			component_name: componentProperties.value.componentName,
+			is_dynamic: componentProperties.value.isDynamicComponent,
+		})
+		.then(() => {
+			store.sidebarActiveTab = "Components";
+		});
 	close();
 };
 

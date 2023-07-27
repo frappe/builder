@@ -23,9 +23,28 @@
 						<FeatherIcon
 							:name="!element.collapsed ? 'chevron-down' : 'chevron-right'"
 							class="mr-1 h-3 w-3"
-							v-if="element.children && element.children.length && !element.isRoot()"
+							v-if="element.children && element.children.length && !element.isRoot() && !element.isComponent"
 							@click.stop="element.collapsed = !element.collapsed" />
-						<FeatherIcon :name="element.getIcon()" class="mr-1 h-3 w-3" />
+						<FeatherIcon :name="element.getIcon()" class="mr-1 h-3 w-3" v-if="!element.isComponent" />
+						<svg
+							class="mr-1 h-3 w-3"
+							xmlns="http://www.w3.org/2000/svg"
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							v-if="element.isComponent">
+							<g
+								fill="none"
+								stroke="currentColor"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2">
+								<rect width="7" height="9" x="3" y="3" rx="1" />
+								<rect width="7" height="5" x="14" y="3" rx="1" />
+								<rect width="7" height="9" x="14" y="12" rx="1" />
+								<rect width="7" height="5" x="3" y="16" rx="1" />
+							</g>
+						</svg>
 						<span
 							class="min-h-[1em] min-w-[2em] truncate"
 							:contenteditable="element.editable"
@@ -36,7 +55,7 @@
 							{{ element.getBlockDescription() }}
 						</span>
 					</span>
-					<div v-show="!element.collapsed">
+					<div v-show="!element.collapsed" v-if="!element.isComponent">
 						<BlockLayers :blocks="element.children" class="ml-1" />
 					</div>
 				</div>

@@ -63,6 +63,8 @@ import { PropType, computed, nextTick, onMounted, provide, reactive, ref, watch 
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BuilderBlock from "./BuilderBlock.vue";
+import Component from "@/utils/component";
+import webComponent from "@/data/webComponent";
 
 const store = useStore();
 const canvasContainer = ref(null);
@@ -99,10 +101,9 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 				block = store.findBlock(element.dataset.blockId) || block;
 			}
 		}
-		let data = ev.dataTransfer?.getData("text");
-		if (data) {
-			let blockOptions = JSON.parse(data) as BlockOptions;
-			block.addChild(store.getBlockCopy(blockOptions));
+		let componentName = ev.dataTransfer?.getData("componentName");
+		if (componentName) {
+			block.addChild(new Component(webComponent.getRow(componentName).block));
 			ev.stopPropagation();
 		} else if (files && files.length) {
 			const uploader = new FileUploadHandler();
@@ -188,7 +189,6 @@ const canvasBound = reactive(useElementBounding(canvas));
 
 const setScaleAndTranslate = async () => {
 	if (document.readyState !== "complete") {
-		console.log("waiting for load");
 		await new Promise((resolve) => {
 			window.addEventListener("load", resolve);
 		});

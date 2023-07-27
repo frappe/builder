@@ -13,13 +13,12 @@ declare global {
 window.observer = null;
 const updateList: (() => void)[] = [];
 
-function trackTarget(target: HTMLElement, host: HTMLElement) {
+function trackTarget(target: HTMLElement, host: HTMLElement, canvasProps: CanvasProps) {
 	const targetBounds = reactive(useElementBounding(target));
 	const container = target.closest(".canvas-container");
 	// TODO: too much? find a better way to track changes
 	updateList.push(targetBounds.update);
-	watch(store.blockEditorCanvas, () => nextTick(targetBounds.update), { deep: true });
-	watch(store.componentEditorCanvas, () => nextTick(targetBounds.update), { deep: true });
+	watch(canvasProps, () => nextTick(targetBounds.update), { deep: true });
 
 	if (!window.observer) {
 		let callback = () => {
