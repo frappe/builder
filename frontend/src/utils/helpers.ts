@@ -112,6 +112,10 @@ function getRGB(color: HashString | RGBString | null): HashString {
 	return color as HashString;
 }
 
+function isHTMLString(str: string) {
+	return /<[a-z][\s\S]*>/i.test(str);
+}
+
 export {
 	HSVToHex,
 	HexToHSV,
@@ -122,4 +126,5 @@ export {
 	getRGB,
 	getRandomColor,
 	getTextContent,
+	isHTMLString,
 };
