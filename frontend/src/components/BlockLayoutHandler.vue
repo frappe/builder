@@ -177,6 +177,13 @@
 			@update:modelValue="(val: string | number) => blockController.setStyle('flexBasis', val)">
 			Basis
 		</InlineInput>
+		<InlineInput
+			v-if="blockController.getStyle('display') === 'flex'"
+			type="text"
+			:modelValue="blockController.getStyle('flexGrow')"
+			@update:modelValue="(val: string | number) => blockController.setStyle('flexGrow', val)">
+			Grow
+		</InlineInput>
 	</div>
 </template>
 <script lang="ts" setup>

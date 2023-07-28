@@ -165,7 +165,7 @@
 		<InlineInput
 			:modelValue="blockController.getKeyValue('element')"
 			type="select"
-			:options="['span', 'div', 'section', 'button', 'p', 'h1', 'h2', 'h3', 'a', 'input']"
+			:options="['span', 'div', 'section', 'button', 'p', 'h1', 'h2', 'h3', 'a', 'input', 'hr']"
 			@update:modelValue="(val) => blockController.setKeyValue('element', val)">
 			Tag
 		</InlineInput>

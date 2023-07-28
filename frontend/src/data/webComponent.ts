@@ -16,6 +16,8 @@ const webComponent = createListResource({
 	transform(data: any[]) {
 		data.forEach((d) => {
 			d.block = reactive(store.getBlockCopy(JSON.parse(d.block)));
+			d.block.isComponent = true;
+			d.block.blockName = d.block.blockName || d.component_name;
 			d.scale = 0.2;
 		});
 		return data;

@@ -121,7 +121,8 @@ const selectBlock = (e: MouseEvent | null) => {
 	if (
 		store.builderState.editableBlock === props.block ||
 		store.builderState.mode !== "select" ||
-		props.preview
+		props.preview ||
+		props.isChildOfComponent
 	) {
 		return;
 	}

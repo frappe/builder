@@ -87,7 +87,7 @@ class Block implements BlockOptions {
 		return this.element === "a";
 	}
 	isText() {
-		return ["span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6", "a", "label"].includes(this.element);
+		return ["span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6", "label"].includes(this.element);
 	}
 	isContainer() {
 		return ["section", "div"].includes(this.element);
@@ -152,7 +152,7 @@ class Block implements BlockOptions {
 		return this.originalElement === "body";
 	}
 	getTag() {
-		return this.element;
+		return this.element === "button" ? "div" : this.element;
 	}
 	isDiv() {
 		return this.element === "div";
@@ -208,9 +208,6 @@ class Block implements BlockOptions {
 	}
 	getEditorStyles() {
 		const styles = reactive({} as BlockStyleMap);
-		if (this.isButton()) {
-			styles.display = "inline-block";
-		}
 
 		if (this.isRoot()) {
 			styles.width = "inherit";
