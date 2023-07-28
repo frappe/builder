@@ -20,8 +20,12 @@ declare interface BlockOptions {
 	children?: Array<Block | BlockOptions>;
 	draggable?: boolean;
 	innerText?: string;
-	parentBlockId?: string;
 	[key: string]: any;
+}
+
+interface ComponentOptions extends BlockOptions {
+	component: WebPageComponent;
+	componentData: ComponentData;
 }
 
 declare interface BlockComponent {
@@ -80,3 +84,5 @@ declare interface CanvasProps {
 	background: string;
 	settingCanvas: boolean;
 }
+
+declare type EditingMode = "page" | "component";

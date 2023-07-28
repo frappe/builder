@@ -5,7 +5,7 @@ function getBlockTemplate(type: "html" | "text" | "image" | "container" | "body"
 			return {
 				name: "HTML",
 				element: "div",
-				originalElement: "__html__",
+				originalElement: "__raw_html__",
 				innerHTML: "<p>HTML</p>",
 				baseStyles: {
 					height: "fit-content",

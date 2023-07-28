@@ -60,6 +60,9 @@ class Block implements BlockOptions {
 		}
 	}
 	getBlockDescription() {
+		if (this.isHTML()) {
+			return "raw";
+		}
 		let description = this.blockName || this.originalElement || this.element;
 		if (this.innerHTML && !this.blockName) {
 			description += " | " + this.getTextContent();
@@ -133,17 +136,22 @@ class Block implements BlockOptions {
 		return Math.random().toString(36).substr(2, 9);
 	}
 	getIcon() {
-		return this.isRoot()
-			? "hash"
-			: this.isText()
-			? "type"
-			: this.isImage()
-			? "image"
-			: this.isContainer()
-			? "square"
-			: this.isLink()
-			? "link"
-			: "square";
+		switch (true) {
+			case this.isRoot():
+				return "hash";
+			case this.isHTML():
+				return "code";
+			case this.isText():
+				return "type";
+			case this.isContainer():
+				return "square";
+			case this.isImage():
+				return "image";
+			case this.isLink():
+				return "link";
+			default:
+				return "square";
+		}
 	}
 	isRoot() {
 		return this.originalElement === "body";
@@ -274,7 +282,7 @@ class Block implements BlockOptions {
 		}
 	}
 	isHTML() {
-		return this.originalElement === "__html__";
+		return this.originalElement === "__raw_html__";
 	}
 	makeBlockEditable() {
 		const store = useStore();
