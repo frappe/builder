@@ -21,7 +21,6 @@ class Block implements BlockOptions {
 	componentData: ComponentData;
 	isComponent?: boolean;
 	originalElement?: string | undefined;
-	parentBlockId?: string;
 	constructor(options: BlockOptions) {
 		this.element = options.element;
 		this.draggable = options.draggable;
@@ -34,9 +33,7 @@ class Block implements BlockOptions {
 		} else {
 			this.blockId = options.blockId;
 		}
-		this.parentBlockId = options.parentBlockId;
 		this.children = (options.children || []).map((child: BlockOptions) => {
-			child.parentBlockId = this.blockId;
 			return new Block(child);
 		});
 
@@ -200,11 +197,18 @@ class Block implements BlockOptions {
 			this.setStyle("left", addPxToNumber(left));
 		}
 	}
-	addChild(child: BlockOptions) {
-		child.parentBlockId = this.blockId;
+	addChild(child: BlockOptions, index?: number) {
 		const childBlock = new Block(child);
-		this.children.push(childBlock);
+		if (index) {
+			this.children.splice(index, 0, childBlock);
+		} else {
+			this.children.push(childBlock);
+		}
 		return childBlock;
+	}
+	addChildAfter(child: BlockOptions, siblingBlock: Block) {
+		const siblingIndex = this.children.findIndex((block) => block.blockId === siblingBlock.blockId);
+		return this.addChild(child, siblingIndex + 1);
 	}
 	getEditorStyles() {
 		const styles = reactive({} as BlockStyleMap);
@@ -237,7 +241,7 @@ class Block implements BlockOptions {
 	}
 	getParentBlock(): Block | null {
 		const store = useStore();
-		return store.findBlock(this.parentBlockId || "root");
+		return store.findParentBlock(this.blockId);
 	}
 	canHaveChildren(): boolean {
 		return this.isContainer() || this.isRoot() || this.isDiv();
