@@ -45,7 +45,7 @@ import Component from "@/utils/component";
 import { getNumberFromPx } from "@/utils/helpers";
 import { vOnClickOutside } from "@vueuse/components";
 import { Dialog } from "frappe-ui";
-import { ref } from "vue";
+import { nextTick, ref } from "vue";
 import ContextMenu from "./ContextMenu.vue";
 const store = useStore();
 
@@ -89,6 +89,7 @@ const copyStyle = () => {
 const pasteStyle = () => {
 	props.block.updateStyles(store.copiedStyle?.style as BlockStyleObjects);
 };
+
 const duplicateBlock = () => {
 	const blockCopy = store.getBlockCopy(props.block);
 	const parentBlock = props.block.getParentBlock();
@@ -101,11 +102,17 @@ const duplicateBlock = () => {
 		blockCopy.setStyle("top", `${top + 20}px`);
 	}
 
+	let child = null as Block | null;
 	if (parentBlock) {
-		parentBlock.addChild(blockCopy);
+		child = parentBlock.addChildAfter(blockCopy, props.block);
 	} else {
-		store.builderState.blocks[0]?.addChild(blockCopy);
+		child = store.builderState.blocks[0]?.addChild(blockCopy);
 	}
+	nextTick(() => {
+		if (child) {
+			child.selectBlock();
+		}
+	});
 };
 
 const createComponentHandler = ({ close }: { close: () => void }) => {

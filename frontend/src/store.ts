@@ -1,6 +1,8 @@
 import { defineStore } from "pinia";
 import { WebPageBeta } from "./types/WebsiteBuilder/WebPageBeta";
 import Block from "./utils/block";
+import getBlockTemplate from "./utils/blockTemplate";
+import Component from "./utils/component";
 
 const useStore = defineStore("store", {
 	state: () => ({
@@ -10,17 +12,9 @@ const useStore = defineStore("store", {
 			editableBlock: <Block | null>null,
 			activeBreakpoint: "desktop",
 			mode: <BuilderMode>"select",
-			blocks: <Block[]>[
-				new Block({
-					element: "div",
-					originalElement: "body",
-					baseStyles: {
-						display: "flex",
-						flexWrap: "wrap",
-					},
-					blockId: "root",
-				}),
-			],
+			blocks: <Block[]>[new Block(getBlockTemplate("body"))],
+			editingComponent: <Block | null>null,
+			editingMode: <EditingMode>"page",
 		},
 		hoveredBlock: <string | null>null,
 		hoveredBreakpoint: <string | null>null,
@@ -241,14 +235,7 @@ const useStore = defineStore("store", {
 			return new Block(b);
 		},
 		getRootBlock() {
-			return new Block({
-				element: "div",
-				originalElement: "body",
-				blockId: "root",
-				baseStyles: {
-					display: "flex",
-				},
-			});
+			return new Block(getBlockTemplate("body"));
 		},
 		getPageData() {
 			return this.builderState.blocks;
@@ -287,6 +274,25 @@ const useStore = defineStore("store", {
 				}
 				if (block.children) {
 					const found = this.findBlock(blockId, block.children);
+					if (found) {
+						return found;
+					}
+				}
+			}
+			return null;
+		},
+		findParentBlock(blockId: string, blocks?: Array<Block>): Block | null {
+			if (!blocks) {
+				blocks = this.builderState.blocks;
+			}
+			for (const block of blocks) {
+				if (block.children) {
+					for (const child of block.children) {
+						if (child.blockId === blockId) {
+							return block;
+						}
+					}
+					const found = this.findParentBlock(blockId, block.children);
 					if (found) {
 						return found;
 					}

@@ -1,5 +1,5 @@
 let current = 0;
-function getBlockTemplate(type: "html" | "text" | "image" | "container") {
+function getBlockTemplate(type: "html" | "text" | "image" | "container" | "body"): BlockOptions {
 	switch (type) {
 		case "html":
 			return {
@@ -34,14 +34,28 @@ function getBlockTemplate(type: "html" | "text" | "image" | "container") {
 				} as BlockStyleMap,
 			};
 		case "container":
+			current++;
 			return {
 				name: "Container",
-				element: "section",
+				element: "div",
+				blockName: "Container",
 				baseStyles: {
-					background: ["#F3F3F3", "#EDEDED", "#E2E2E2", "#C7C7C7"][current % 4],
+					background: ["#A3A3A3", "#F3F3F3", "#E2E2E2", "#C7C7C7"][current % 4],
 					display: "flex",
 					flexDirection: "column",
 				} as BlockStyleMap,
+			};
+		case "body":
+			return {
+				element: "div",
+				originalElement: "body",
+				attributes: {} as BlockAttributeMap,
+				baseStyles: {
+					display: "flex",
+					flexWrap: "wrap",
+					flexDirection: "column",
+				} as BlockStyleMap,
+				blockId: "root",
 			};
 	}
 }

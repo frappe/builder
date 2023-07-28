@@ -158,6 +158,11 @@ document.addEventListener("keydown", (e) => {
 			blocks.forEach((block, i) => {
 				if (block.blockId === blockId) {
 					blocks.splice(i, 1);
+					nextTick(() => {
+						if (blocks.length && blocks[i]) {
+							blocks[i].selectBlock();
+						}
+					});
 					return true;
 				} else if (block.children) {
 					return findBlockAndRemove(block.children, blockId);
@@ -171,7 +176,7 @@ document.addEventListener("keydown", (e) => {
 	}
 
 	if (e.key === "Escape") {
-		store.editingComponent = null;
+		store.editPage();
 		clearSelectedComponent();
 	}
 
