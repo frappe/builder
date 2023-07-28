@@ -38,13 +38,14 @@
 			<BuilderComponents class="p-4" />
 		</div>
 		<div v-show="store.sidebarActiveTab === 'Layers'">
-			<BlockLayers class="p-4" :blocks="store.builderState.blocks" />
+			<BlockLayers class="p-4" :blocks="store.builderState.blocks" v-show="!store.editingComponent" />
+			<BlockLayers class="p-4" :blocks="[store.editingComponent]" v-if="store.editingComponent" />
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
-import { createListResource, createResource } from "frappe-ui";
+import { createResource } from "frappe-ui";
 import { Ref, ref } from "vue";
 import useStore from "../store";
 import BlockLayers from "./BlockLayers.vue";

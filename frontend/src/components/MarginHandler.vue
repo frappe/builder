@@ -29,6 +29,7 @@
 				}"
 				:class="{
 					'cursor-ns-resize': !disableHandlers,
+					hidden: updating,
 				}"
 				@mousedown.stop="handleMargin($event, Position.Top)" />
 			<div class="m-auto text-sm text-yellow-900" v-show="updating">
@@ -58,6 +59,7 @@
 				}"
 				:class="{
 					'cursor-ns-resize': !disableHandlers,
+					hidden: updating,
 				}"
 				@mousedown.stop="handleMargin($event, Position.Bottom)" />
 			<div class="m-auto text-sm text-yellow-900" v-show="updating">
@@ -87,6 +89,7 @@
 				}"
 				:class="{
 					'cursor-ew-resize': !disableHandlers,
+					hidden: updating,
 				}"
 				@mousedown.stop="handleMargin($event, Position.Left)" />
 			<div class="m-auto text-sm text-yellow-900" v-show="updating">
@@ -116,6 +119,7 @@
 				}"
 				:class="{
 					'cursor-ew-resize': !disableHandlers,
+					hidden: updating,
 				}"
 				@mousedown.stop="handleMargin($event, Position.Right)" />
 			<div class="m-auto text-sm text-yellow-900" v-show="updating">

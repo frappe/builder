@@ -55,7 +55,9 @@
 							{{ element.getBlockDescription() }}
 						</span>
 					</span>
-					<div v-show="!element.collapsed" v-if="!element.isComponent">
+					<div
+						v-show="!element.collapsed"
+						v-if="!(element.isComponent || element.isText() || element.isImage())">
 						<BlockLayers :blocks="element.children" class="ml-1" />
 					</div>
 				</div>

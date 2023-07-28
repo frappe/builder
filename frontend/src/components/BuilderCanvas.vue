@@ -5,7 +5,7 @@
 			v-if="isOverDropZone"
 			class="pointer-events-none absolute bottom-0 left-0 right-0 top-0 z-30 bg-cyan-300 opacity-20"></div>
 		<div
-			class="fixed flex gap-44 will-change-transform"
+			class="fixed flex gap-44"
 			ref="canvas"
 			:style="{
 				transformStyle: 'preserve-3d',
@@ -55,7 +55,9 @@
 	</div>
 </template>
 <script setup lang="ts">
+import webComponent from "@/data/webComponent";
 import Block from "@/utils/block";
+import Component from "@/utils/component";
 import { useDebouncedRefHistory, useDropZone, useElementBounding } from "@vueuse/core";
 import { FeatherIcon, FileUploadHandler, toast } from "frappe-ui";
 import { storeToRefs } from "pinia";
@@ -63,8 +65,6 @@ import { PropType, computed, nextTick, onMounted, provide, reactive, ref, watch 
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BuilderBlock from "./BuilderBlock.vue";
-import Component from "@/utils/component";
-import webComponent from "@/data/webComponent";
 
 const store = useStore();
 const canvasContainer = ref(null);

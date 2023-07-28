@@ -40,6 +40,7 @@ function getBlockTemplate(type: "html" | "text" | "image" | "container") {
 				baseStyles: {
 					background: ["#F3F3F3", "#EDEDED", "#E2E2E2", "#C7C7C7"][current % 4],
 					display: "flex",
+					flexDirection: "column",
 				} as BlockStyleMap,
 			};
 	}
