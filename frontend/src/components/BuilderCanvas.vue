@@ -8,8 +8,6 @@
 			class="fixed flex gap-44"
 			ref="canvas"
 			:style="{
-				transformStyle: 'preserve-3d',
-				backfaceVisibility: 'hidden',
 				transform: `scale(${canvasProps.scale}) translate(${canvasProps.translateX}px, ${canvasProps.translateY}px)`,
 			}">
 			<div class="absolute right-0 top-[-60px] flex rounded-md bg-white px-3 dark:bg-zinc-900">
@@ -159,6 +157,7 @@ document.addEventListener("keydown", (e) => {
 				if (block.blockId === blockId) {
 					blocks.splice(i, 1);
 					nextTick(() => {
+						// select the next sibling block
 						if (blocks.length && blocks[i]) {
 							blocks[i].selectBlock();
 						}

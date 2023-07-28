@@ -70,7 +70,7 @@ def get_block_html(blocks):
 		def get_tag(node, soup):
 			element = node.get("originalElement") or node["element"]
 			# temp fix: since p inside p is illegal
-			if element in ["p", "__html__"]:
+			if element in ["p", "__raw_html__"]:
 				element = "div"
 			tag = soup.new_tag(element)
 			tag.attrs = node.get("attributes", {})
