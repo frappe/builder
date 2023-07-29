@@ -160,7 +160,10 @@ class Block implements BlockOptions {
 		return this.originalElement === "body";
 	}
 	getTag() {
-		return this.element === "button" ? "div" : this.element;
+		if (this.isButton() || this.isInput()) {
+			return "div";
+		}
+		return this.element;
 	}
 	isDiv() {
 		return this.element === "div";
@@ -232,6 +235,12 @@ class Block implements BlockOptions {
 		if (this.isImage() && !this.attributes.src) {
 			styles.background = `repeating-linear-gradient(45deg, rgba(180, 180, 180, 0.8) 0px, rgba(180, 180, 180, 0.8) 1px, rgba(255, 255, 255, 0.2) 0px, rgba(255, 255, 255, 0.2) 50%)`;
 			styles.backgroundSize = "16px 16px";
+		}
+
+		if (this.isButton()) {
+			styles.display = "flex";
+			styles.alignItems = "center";
+			styles.justifyContent = "center";
 		}
 
 		return styles;
