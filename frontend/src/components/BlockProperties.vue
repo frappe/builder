@@ -258,7 +258,7 @@
 <script setup lang="ts">
 import { setFont as _setFont, fontListNames, getFontWeightOptions } from "@/utils/fontManager";
 import { useDark } from "@vueuse/core";
-import { onMounted, watchEffect } from "vue";
+import { onMounted, watch, watchEffect } from "vue";
 import BackgroundHandler from "./BackgroundHandler.vue";
 import BLockLayoutHandler from "./BlockLayoutHandler.vue";
 import BlockPositionHandler from "./BlockPositionHandler.vue";
@@ -321,7 +321,7 @@ onMounted(() => {
 		htmlEditor.setValue(blockController.getInnerHTML() as string);
 	});
 
-	watchEffect(() => {
+	watch(isDark, () => {
 		if (isDark.value) {
 			editor.setTheme("ace/theme/monokai");
 			htmlEditor.setTheme("ace/theme/monokai");

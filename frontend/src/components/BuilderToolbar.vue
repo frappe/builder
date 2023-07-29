@@ -67,7 +67,7 @@ import { addPxToNumber, getNumberFromPx } from "@/utils/helpers";
 import { UseDark } from "@vueuse/components";
 import { clamp, useEventListener } from "@vueuse/core";
 import { Popover, createResource } from "frappe-ui";
-import { PropType, Ref, onMounted, ref, watch, watchEffect } from "vue";
+import { PropType, Ref, onMounted, ref, watch } from "vue";
 
 import { webPages } from "@/data/webPage";
 
@@ -93,13 +93,16 @@ const publishWebResource = createResource({
 	},
 });
 
-watchEffect(() => {
-	if (store.builderState.selectedPage && pageData.value.name !== store.builderState.selectedPage) {
-		webPages.fetchOne.submit(store.builderState.selectedPage).then((data: WebPageBeta[]) => {
-			pageData.value = data[0];
-		});
+watch(
+	() => store.builderState.selectedPage,
+	() => {
+		if (store.builderState.selectedPage && pageData.value.name !== store.builderState.selectedPage) {
+			webPages.fetchOne.submit(store.builderState.selectedPage).then((data: WebPageBeta[]) => {
+				pageData.value = data[0];
+			});
+		}
 	}
-});
+);
 
 const publish = () => {
 	publishWebResource.submit({
@@ -154,10 +157,10 @@ function setEvents() {
 			const parentWidth = getNumberFromPx(getComputedStyle(parentElement).width);
 			const parentHeight = getNumberFromPx(getComputedStyle(parentElement).height);
 
-			child.baseStyles.position = "absolute";
-			child.baseStyles.top = addPxToNumber(y);
-			child.baseStyles.left = addPxToNumber(x);
 			const childBlock = parentBlock.addChild(child);
+			childBlock.setBaseStyle("position", "absolute");
+			childBlock.setBaseStyle("top", addPxToNumber(y));
+			childBlock.setBaseStyle("left", addPxToNumber(x));
 
 			childBlock.selectBlock();
 
