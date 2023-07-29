@@ -11,7 +11,7 @@ import { FontFamily } from "@tiptap/extension-font-family";
 import TextStyle from "@tiptap/extension-text-style";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
-import { Ref, computed, onBeforeMount, onBeforeUnmount, onMounted, ref, watch, watchEffect } from "vue";
+import { Ref, computed, onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
 
 import useStore from "@/store";
 import { setFontFromHTML } from "@/utils/fontManager";
@@ -44,10 +44,6 @@ onBeforeMount(() => {
 	setFontFromHTML(html);
 });
 
-onMounted(() => {
-	editor.value?.commands.resetAttributes("paragraph", ["style", "class"]);
-});
-
 onBeforeUnmount(() => {
 	editor.value?.destroy();
 });
@@ -58,11 +54,8 @@ const isEditable = computed(() => {
 	return props.block === store.builderState.editableBlock;
 });
 
-watchEffect(() => {
-	editor.value?.setEditable(isEditable.value);
-});
-
 watch(isEditable, (newValue) => {
+	editor.value?.setEditable(isEditable.value);
 	if (newValue) {
 		editor.value?.commands.focus("all");
 	}

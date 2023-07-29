@@ -272,7 +272,6 @@ class Block implements BlockOptions {
 	getFontFamily() {
 		const editor = this.getEditor();
 		if (this.isText() && editor && editor.isEditable) {
-			console.log(editor.getAttributes("textStyle"));
 			return editor.getAttributes("textStyle").fontFamily;
 		}
 		return this.getStyle("fontFamily");
