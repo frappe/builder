@@ -175,11 +175,6 @@ class Block implements BlockOptions {
 			tabletStyles: Object.assign({}, this.tabletStyles),
 		};
 	}
-	getFontFamily() {
-		return (
-			this.baseStyles.fontFamily || this.mobileStyles.fontFamily || this.tabletStyles.fontFamily || "Inter"
-		);
-	}
 	isHovered(): boolean {
 		const store = useStore();
 		return store.hoveredBlock === this.blockId;
@@ -274,10 +269,26 @@ class Block implements BlockOptions {
 	getBackgroundColor() {
 		return this.getStyle("backgroundColor") || "transparent";
 	}
+	getFontFamily() {
+		const editor = this.getEditor();
+		if (this.isText() && editor && editor.isEditable) {
+			console.log(editor.getAttributes("textStyle"));
+			return editor.getAttributes("textStyle").fontFamily;
+		}
+		return this.getStyle("fontFamily");
+	}
+	setFontFamily(fontFamily: string) {
+		const editor = this.getEditor();
+		if (this.isText() && editor && editor.isEditable) {
+			editor.chain().focus().setFontFamily(fontFamily).run();
+		} else {
+			this.setStyle("fontFamily", fontFamily);
+		}
+	}
 	getTextColor() {
 		const editor = this.getEditor();
-		if (this.isText() && editor) {
-			return editor.getAttributes("textStyle").color || this.getStyle("color");
+		if (this.isText() && editor && editor.isEditable) {
+			return editor.getAttributes("textStyle").color;
 		} else {
 			return this.getStyle("color");
 		}
@@ -287,7 +298,7 @@ class Block implements BlockOptions {
 	}
 	setTextColor(color: string) {
 		const editor = this.getEditor();
-		if (this.isText() && editor) {
+		if (this.isText() && editor && editor.isEditable) {
 			editor.chain().focus().setColor(color).run();
 		} else {
 			this.setStyle("color", color);

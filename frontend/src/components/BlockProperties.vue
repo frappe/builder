@@ -122,7 +122,7 @@
 			type="autocomplete"
 			:options="fontListNames"
 			v-if="blockController.isText() || blockController.isContainer()"
-			:modelValue="blockController.getStyle('fontFamily') || 'Inter'"
+			:modelValue="blockController.getFontFamily()"
 			@update:modelValue="(val) => setFont(val)">
 			Family
 		</InlineInput>
@@ -276,7 +276,7 @@ const isDark = useDark();
 
 const setFont = (font: { value: string }) => {
 	_setFont(font.value).then(() => {
-		blockController.setStyle("fontFamily", font.value);
+		blockController.setFontFamily(font.value);
 	});
 };
 

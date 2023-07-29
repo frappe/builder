@@ -7,12 +7,14 @@
 <script setup lang="ts">
 import Block from "@/utils/block";
 import { Color } from "@tiptap/extension-color";
+import { FontFamily } from "@tiptap/extension-font-family";
 import TextStyle from "@tiptap/extension-text-style";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
-import { Ref, computed, onMounted, onUnmounted, ref, watch, watchEffect } from "vue";
+import { Ref, computed, onBeforeMount, onBeforeUnmount, onMounted, ref, watch, watchEffect } from "vue";
 
 import useStore from "@/store";
+import { setFontFromHTML } from "@/utils/fontManager";
 const store = useStore();
 
 const props = defineProps({
@@ -29,7 +31,7 @@ const textContent = computed(() => {
 });
 const editor = useEditor({
 	content: textContent.value,
-	extensions: [StarterKit, TextStyle, Color],
+	extensions: [StarterKit, TextStyle, Color, FontFamily],
 	onUpdate({ editor }) {
 		props.block.innerHTML = editor.getHTML();
 	},
@@ -37,11 +39,16 @@ const editor = useEditor({
 	injectCSS: false,
 });
 
+onBeforeMount(() => {
+	let html = props.block.innerHTML || "";
+	setFontFromHTML(html);
+});
+
 onMounted(() => {
 	editor.value?.commands.resetAttributes("paragraph", ["style", "class"]);
 });
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
 	editor.value?.destroy();
 });
 

@@ -80,7 +80,7 @@ def get_block_html(blocks):
 				base_styles = node.get("baseStyles", {})
 				mobile_styles = node.get("mobileStyles", {})
 				tablet_styles = node.get("tabletStyles", {})
-				setFonts([base_styles, mobile_styles, tablet_styles], font_map)
+				set_fonts([base_styles, mobile_styles, tablet_styles], font_map)
 				append_style(node.get("baseStyles", {}), style_tag, style_class)
 				append_style(node.get("rawStyles", {}), style_tag, style_class)
 				append_style(node.get("tabletStyles", {}), style_tag, style_class, device="tablet")
@@ -91,7 +91,10 @@ def get_block_html(blocks):
 
 			innerContent = node.get("innerHTML")
 			if innerContent:
-				tag.append(bs.BeautifulSoup(innerContent, "html.parser"))
+				inner_soup = bs.BeautifulSoup(innerContent, "html.parser")
+				set_fonts_from_html(inner_soup, font_map)
+				tag.append(inner_soup)
+
 
 			for child in node.get("children", []):
 				tag.append(get_tag(child, soup))
@@ -125,7 +128,7 @@ def append_style(style_obj, style_tag, style_class, device="desktop"):
 		style_string = f"@media only screen and (min-width: {MOBILE_BREAKPOINT + 1}px) and (max-width: {DESKTOP_BREAKPOINT - 1}px) {{ {style_string} }}"
 	style_tag.append(style_string)
 
-def setFonts(styles, font_map):
+def set_fonts(styles, font_map):
 	for style in styles:
 		font = style.get("fontFamily")
 		if font:
@@ -135,6 +138,16 @@ def setFonts(styles, font_map):
 					font_map[font]["weights"].sort()
 			else:
 				font_map[font] = { "weights": [style.get("fontWeight") or "400"] }
+
+def set_fonts_from_html(soup, font_map):
+	# get font-family from inline styles
+	for tag in soup.find_all(style=True):
+		styles = tag.attrs.get("style").split(";")
+		for style in styles:
+			if "font-family" in style:
+				font = style.split(":")[1].strip()
+				if font:
+					font_map[font] = { "weights": ["400"] }
 
 def get_style_file_path():
 	# TODO: Redo this, currently it loads the first matching file
