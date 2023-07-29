@@ -108,6 +108,22 @@ const blockController = {
 		});
 		return color;
 	},
+	setFontFamily: (value: string) => {
+		store.builderState.selectedBlocks.forEach((block) => {
+			block.setFontFamily(value);
+		});
+	},
+	getFontFamily: () => {
+		let fontFamily = "__initial__" as StyleValue;
+		store.builderState.selectedBlocks.forEach((block) => {
+			if (fontFamily === "__initial__") {
+				fontFamily = block.getFontFamily();
+			} else if (fontFamily !== block.getFontFamily()) {
+				fontFamily = "Mixed";
+			}
+		});
+		return fontFamily;
+	},
 	isHTML: () => {
 		return blockController.isBLockSelected() && store.builderState.selectedBlocks[0].isHTML();
 	},

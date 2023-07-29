@@ -41,4 +41,15 @@ const getFontWeightOptions = (font: string) => {
 		});
 };
 
-export { fontListNames, setFont, getFontWeightOptions };
+function setFontFromHTML(html: string) {
+	const fontFamilies = html.match(/font-family: ([^;"]+)["|;]/g)?.map((fontFamily) => {
+		return fontFamily.replace(/font-family: ([^;"]+)["|;]/, "$1");
+	});
+	if (fontFamilies) {
+		fontFamilies.forEach((fontFamily) => {
+			setFont(fontFamily);
+		});
+	}
+}
+
+export { fontListNames, getFontWeightOptions, setFont, setFontFromHTML };
