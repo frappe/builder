@@ -1,6 +1,6 @@
 import useStore from "@/store";
 import { CSSProperties, nextTick, reactive } from "vue";
-import { addPxToNumber, getNumberFromPx } from "./helpers";
+import { addPxToNumber, getNumberFromPx, getTextContent } from "./helpers";
 
 type styleProperty = keyof CSSProperties;
 
@@ -24,8 +24,11 @@ class Block implements BlockOptions {
 	constructor(options: BlockOptions) {
 		this.element = options.element;
 		this.draggable = options.draggable;
-		this.innerText = options.innerText;
 		this.innerHTML = options.innerHTML;
+		if (options.innerText) {
+			this.innerHTML = options.innerText;
+		}
+
 		this.originalElement = options.originalElement;
 
 		if (!options.blockId || options.blockId === "root") {
@@ -75,7 +78,7 @@ class Block implements BlockOptions {
 		if (this.isText() && editor) {
 			text = editor.getText();
 		}
-		return text || this.innerText || "";
+		return text || getTextContent(this.innerHTML || "");
 	}
 	isImage() {
 		return this.element === "img";

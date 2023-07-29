@@ -25,7 +25,7 @@ const props = defineProps({
 const component = ref(null) as Ref<HTMLElement | null>;
 
 const textContent = computed(() => {
-	return props.block.innerText || props.block.innerHTML;
+	return props.block.innerHTML;
 });
 const editor = useEditor({
 	content: textContent.value,

@@ -87,9 +87,9 @@ async function confirm(message: string): Promise<boolean> {
 	});
 }
 
-function getTextContent(html: string) {
+function getTextContent(html: string | null) {
 	const tmp = document.createElement("div");
-	tmp.innerHTML = html;
+	tmp.innerHTML = html || "";
 	return tmp.textContent || tmp.innerText || "";
 }
 
@@ -116,12 +116,25 @@ function isHTMLString(str: string) {
 	return /<[a-z][\s\S]*>/i.test(str);
 }
 
+function copyToClipboard(text: string) {
+	const el = document.createElement("textarea");
+	el.value = text;
+	el.setAttribute("readonly", "");
+	el.style.position = "absolute";
+	el.style.left = "-9999px";
+	document.body.appendChild(el);
+	el.select();
+	document.execCommand("copy");
+	document.body.removeChild(el);
+}
+
 export {
 	HSVToHex,
 	HexToHSV,
 	RGBToHex,
 	addPxToNumber,
 	confirm,
+	copyToClipboard,
 	getNumberFromPx,
 	getRGB,
 	getRandomColor,

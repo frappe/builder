@@ -19,7 +19,6 @@ declare interface BlockOptions {
 	classes?: Array<string>;
 	children?: Array<Block | BlockOptions>;
 	draggable?: boolean;
-	innerText?: string;
 	[key: string]: any;
 }
 

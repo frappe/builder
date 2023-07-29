@@ -42,7 +42,7 @@ import useStore from "@/store";
 import { WebPageComponent } from "@/types/WebsiteBuilder/WebPageComponent";
 import Block from "@/utils/block";
 import Component from "@/utils/component";
-import { getNumberFromPx } from "@/utils/helpers";
+import { copyToClipboard, getNumberFromPx } from "@/utils/helpers";
 import { vOnClickOutside } from "@vueuse/components";
 import { Dialog } from "frappe-ui";
 import { nextTick, ref } from "vue";
@@ -84,6 +84,12 @@ const copyStyle = () => {
 		blockId: props.block.blockId,
 		style: props.block.getStylesCopy(),
 	};
+};
+
+const copyBlocks = () => {
+	// copy selected blocks to clipboard
+	const selectedBlocks = store.builderState.selectedBlocks;
+	copyToClipboard(JSON.stringify(selectedBlocks));
 };
 
 const pasteStyle = () => {
@@ -136,6 +142,7 @@ const createComponentHandler = ({ close }: { close: () => void }) => {
 };
 
 const contextMenuOptions: ContextMenuOption[] = [
+	{ label: "Copy", action: copyBlocks },
 	{ label: "Copy Style", action: copyStyle },
 	{
 		label: "Paste Style",

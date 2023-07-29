@@ -253,16 +253,13 @@ const useStore = defineStore("store", {
 			// localStorage.setItem("selectedPage", page.name);
 		},
 		getImageBlock(image_src: string) {
-			return {
-				element: "img",
-				originalElement: "img",
-				attributes: {
-					src: image_src,
-				},
-				baseStyles: {
-					objectFit: "cover",
-				},
-			};
+			const imageBlock = getBlockTemplate("image");
+			if (imageBlock.attributes) {
+				imageBlock.attributes.src = image_src;
+			} else {
+				imageBlock.attributes = { src: image_src };
+			}
+			return imageBlock;
 		},
 		findBlock(blockId: string, blocks?: Array<Block>): Block | null {
 			if (!blocks) {

@@ -89,7 +89,7 @@ def get_block_html(blocks):
 
 			tag.attrs["class"] = get_class(classes)
 
-			innerContent = node.get("innerHTML") or node.get("innerText")
+			innerContent = node.get("innerHTML")
 			if innerContent:
 				tag.append(bs.BeautifulSoup(innerContent, "html.parser"))
 
