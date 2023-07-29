@@ -176,11 +176,16 @@ const handleBottomCornerResize = (ev: MouseEvent) => {
 			return mouseMoveEvent.preventDefault();
 		}
 
-		targetBlock.setStyle("width", `${finalWidth}px`);
-		const movementY = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
-		const finalHeight = Math.round(startHeight + movementY);
-		targetBlock.setStyle("height", `${finalHeight}px`);
-		mouseMoveEvent.preventDefault();
+		if (mouseMoveEvent.shiftKey) {
+			targetBlock.setStyle("width", `${finalWidth}px`);
+			targetBlock.setStyle("height", `${finalWidth}px`);
+		} else {
+			targetBlock.setStyle("width", `${finalWidth}px`);
+			const movementY = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
+			const finalHeight = Math.round(startHeight + movementY);
+			targetBlock.setStyle("height", `${finalHeight}px`);
+			mouseMoveEvent.preventDefault();
+		}
 	};
 	document.addEventListener("mousemove", mousemove);
 	document.addEventListener(

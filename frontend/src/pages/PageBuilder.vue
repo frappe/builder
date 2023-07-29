@@ -91,6 +91,22 @@ document.addEventListener("paste", (e) => {
 		if (text && isHTMLString(text)) {
 			blockController.setInnerHTML(text);
 		}
+	} else {
+		const textJSON = e.clipboardData?.getData("text/plain");
+		if (textJSON) {
+			const data = JSON.parse(textJSON);
+			// check if data is from builder and a list of blocks
+			if (Array.isArray(data) && data[0].blockId) {
+				if (store.builderState.selectedBlocks.length) {
+					data.forEach((block: BlockOptions) => {
+						delete block.blockId;
+						store.builderState.selectedBlocks[0].addChild(block);
+					});
+				} else {
+					store.pushBlocks(data);
+				}
+			}
+		}
 	}
 });
 

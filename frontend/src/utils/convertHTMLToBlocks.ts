@@ -14,10 +14,14 @@ function convertHTMLToBlocks(html: string) {
 }
 
 function parseElement(element: HTMLElement): BlockOptions {
+	const tag = element.tagName.toLowerCase();
 	const obj: BlockOptions = {
-		element: element.tagName.toLowerCase(),
+		element: tag,
 	};
-
+	if (tag === "body") {
+		obj.originalElement = "body";
+		obj.element = "div";
+	}
 	if (element.style.length) {
 		obj.styles = {};
 		for (let i = 0; i < element.style.length; i++) {
@@ -52,7 +56,7 @@ function parseElement(element: HTMLElement): BlockOptions {
 			if (child.nodeType === Node.ELEMENT_NODE) {
 				obj.children.push(parseElement(child));
 			} else if (child.nodeType === Node.TEXT_NODE) {
-				obj.innerText = (child.textContent || "").trim();
+				obj.innerHTML = (child.textContent || "").trim();
 			}
 		}
 	}

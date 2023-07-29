@@ -27,7 +27,7 @@ def get_blocks(prompt):
 		frappe.throw("OpenAI API Key not set in site config.")
 
 	messages = [
-		{"role": "system", "content": "You are a website developer. You use any publicly available image and use it in the webpage. You can use any fonts available in fonts.google.com. You NEVER add \<style\> tag to the HTML. You style the webpage using inline styles. You can also use tailwind css classes to style the webpage. You respond only with HTML code WITHOUT any EXPLANATION"},
+		{"role": "system", "content": "You are a website developer. You respond only with HTML code WITHOUT any EXPLANATION. You use any publicly available images in the webpage. You can use any font from fonts.google.com. Do not use any external css file or font files. DO NOT ADD <style> TAG AT ALL! You should use tailwindcss for styling the page. Use images from pixabay.com or unsplash.com"},
 		{"role": "user", "content": prompt}
 	]
 
