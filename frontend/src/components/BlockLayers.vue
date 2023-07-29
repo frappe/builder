@@ -94,7 +94,7 @@ interface LayerBlock extends Block {
 
 const setBlockName = (ev: Event, block: LayerBlock) => {
 	const target = ev.target as HTMLElement;
-	block.blockName = target.innerText;
+	block.blockName = target.innerText.trim();
 	block.editable = false;
 };
 

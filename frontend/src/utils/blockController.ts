@@ -65,7 +65,7 @@ const blockController = {
 			block.setAttribute(attribute, value);
 		});
 	},
-	getKeyValue: (key: "element" | "innerText") => {
+	getKeyValue: (key: "element") => {
 		let keyValue = "__initial__" as StyleValue | undefined;
 		store.builderState.selectedBlocks.forEach((block) => {
 			if (keyValue === "__initial__") {
@@ -76,7 +76,7 @@ const blockController = {
 		});
 		return keyValue;
 	},
-	setKeyValue: (key: "element" | "innerText", value: string) => {
+	setKeyValue: (key: "element", value: string) => {
 		store.builderState.selectedBlocks.forEach((block) => {
 			block[key] = value;
 		});

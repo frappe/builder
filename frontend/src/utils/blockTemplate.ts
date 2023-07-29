@@ -38,7 +38,7 @@ function getBlockTemplate(type: "html" | "text" | "image" | "container" | "body"
 			return {
 				name: "Container",
 				element: "div",
-				blockName: "Container",
+				blockName: "container",
 				baseStyles: {
 					background: ["#A3A3A3", "#F3F3F3", "#E2E2E2", "#C7C7C7"][current % 4],
 					display: "flex",

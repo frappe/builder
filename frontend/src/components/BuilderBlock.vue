@@ -7,16 +7,15 @@
 		@mouseover="handleMouseOver"
 		@mouseleave="handleMouseLeave"
 		:data-block-id="block.blockId"
-		:block="block.isText() || block.isHTML() ? block : null"
-		:class="[$attrs.class, '__builder_component__', 'outline-none', 'select-none', ...(block.classes || [])]"
-		v-bind="{ ...block.attributes, ...$attrs }"
-		:style="{ ...styles, ...block.getEditorStyles() }"
+		:class="classes"
+		v-bind="attributes"
+		:style="styles"
 		ref="component">
 		<BuilderBlock
 			:block="child"
 			:breakpoint="breakpoint"
 			:preview="preview"
-			:isChildOfComponent="block.isComponent"
+			:isChildOfComponent="block.isComponent || isChildOfComponent"
 			v-for="child in block.children" />
 	</component>
 	<teleport to="#overlay" v-if="store.overlayElement && !preview && canvasProps">
@@ -32,7 +31,7 @@
 <script setup lang="ts">
 import Block from "@/utils/block";
 import { setFont } from "@/utils/fontManager";
-import { computed, inject, nextTick, onMounted, ref } from "vue";
+import { computed, inject, nextTick, onMounted, ref, useAttrs } from "vue";
 
 import getBlockTemplate from "@/utils/blockTemplate";
 import useStore from "../store";
@@ -41,7 +40,9 @@ import BlockHTML from "./BlockHTML.vue";
 import TextBlock from "./TextBlock.vue";
 
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
+const attrs = useAttrs();
 const store = useStore();
+
 const props = defineProps({
 	block: {
 		type: Block,
@@ -62,7 +63,7 @@ const props = defineProps({
 });
 
 const getComponentName = (block: Block) => {
-	if (block.isText()) {
+	if (block.isText() || block.isLink() || block.isButton()) {
 		return TextBlock;
 	} else if (block.isHTML()) {
 		return BlockHTML;
@@ -70,6 +71,18 @@ const getComponentName = (block: Block) => {
 		return block.getTag();
 	}
 };
+
+const classes = computed(() => {
+	return ["__builder_component__", "outline-none", "select-none", ...(props.block.classes || [])];
+});
+
+const attributes = computed(() => {
+	const attribs = { ...props.block.attributes, ...attrs };
+	if (props.block.isText() || props.block.isHTML() || props.block.isLink() || props.block.isButton()) {
+		attribs.block = props.block;
+	}
+	return attribs;
+});
 
 const canvasProps = !props.preview ? (inject("canvasProps") as CanvasProps) : null;
 
@@ -80,6 +93,17 @@ const target = computed(() => {
 	} else {
 		return component.value.component;
 	}
+});
+
+const styles = computed(() => {
+	let styleObj = props.block.baseStyles;
+	if (props.breakpoint === "mobile") {
+		styleObj = { ...styleObj, ...props.block.mobileStyles };
+	} else if (props.breakpoint === "tablet") {
+		styleObj = { ...styleObj, ...props.block.tabletStyles };
+	}
+	styleObj = { ...styleObj, ...props.block.rawStyles };
+	return { ...styleObj, ...props.block.getEditorStyles() };
 });
 
 const loadEditor = computed(() => {
@@ -96,17 +120,6 @@ onMounted(async () => {
 	selectBlock(null);
 	setFont(props.block.getStyle("fontFamily") as string);
 	await nextTick();
-});
-
-const styles = computed(() => {
-	let styleObj = props.block.baseStyles;
-	if (props.breakpoint === "mobile") {
-		styleObj = { ...styleObj, ...props.block.mobileStyles };
-	} else if (props.breakpoint === "tablet") {
-		styleObj = { ...styleObj, ...props.block.tabletStyles };
-	}
-	styleObj = { ...styleObj, ...props.block.rawStyles };
-	return styleObj;
 });
 
 const isEditable = computed(() => {
@@ -165,12 +178,12 @@ const handleClick = (e: MouseEvent) => {
 const handleDoubleClick = (e: MouseEvent) => {
 	if (isEditable.value) return;
 	store.builderState.editableBlock = null;
-	if (props.block.isText()) {
+	if (props.block.isText() || props.block.isLink() || props.block.isButton()) {
 		store.builderState.editableBlock = props.block;
 		e.stopPropagation();
 	}
 	if (props.block.isComponent) {
-		store.editingComponent = props.block;
+		// store.editingComponent = props.block;
 		e.stopPropagation();
 	}
 
