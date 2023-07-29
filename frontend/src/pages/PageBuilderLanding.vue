@@ -23,7 +23,7 @@
 					class="group relative mr-2 w-full overflow-hidden rounded-md shadow hover:cursor-pointer dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
 					<img
 						:src="page.preview"
-						onerror="this.src='https://user-images.githubusercontent.com/13928957/212847544-5773795d-2fd6-48d1-8423-b78ecc92522b.png'"
+						onerror="this.src='/src/assets/fallback.png'"
 						class="w-full rounded-sm bg-gray-50 object-cover p-2 dark:bg-zinc-900" />
 					<p
 						class="border-t-[1px] px-3 py-2 text-sm text-gray-700 dark:border-zinc-800 dark:text-zinc-400 group-hover:dark:text-zinc-200">
