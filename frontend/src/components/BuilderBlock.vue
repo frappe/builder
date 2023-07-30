@@ -73,13 +73,20 @@ const getComponentName = (block: Block) => {
 };
 
 const classes = computed(() => {
-	return ["__builder_component__", "outline-none", "select-none", ...(props.block.classes || [])];
+	return [
+		attrs.class,
+		"__builder_component__",
+		"outline-none",
+		"select-none",
+		...(props.block.classes || []),
+	];
 });
 
 const attributes = computed(() => {
 	const attribs = { ...props.block.attributes, ...attrs };
 	if (props.block.isText() || props.block.isHTML() || props.block.isLink() || props.block.isButton()) {
 		attribs.block = props.block;
+		attribs.preview = props.preview;
 	}
 	return attribs;
 });
