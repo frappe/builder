@@ -12,7 +12,11 @@
 						:style="{
 							transform: 'scale(' + component.scale + ')',
 						}">
-						<BuilderBlock class="!static" :block="component.block" :preview="true" />
+						<BuilderBlock
+							class="!static !m-0 h-fit max-w-fit !items-center !justify-center"
+							:block="component.block"
+							@mounted="($el) => setScale($el, component)"
+							:preview="true" />
 					</div>
 				</div>
 				<p class="text-xs text-gray-800 dark:text-zinc-500">
@@ -27,8 +31,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed } from "vue";
-import useStore from "../store";
+import { computed, nextTick } from "vue";
 import BuilderBlock from "./BuilderBlock.vue";
 
 import webComponent from "@/data/webComponent";
@@ -36,8 +39,10 @@ import webComponent from "@/data/webComponent";
 const components = computed(() => webComponent.data || []);
 
 const setScale = async (el: HTMLElement, block: BlockOptions) => {
-	const scale = Math.max(Math.min(250 / el.offsetWidth, 80 / el.offsetHeight, 0.6), 0.1);
-	block.scale = scale;
+	nextTick(() => {
+		const scale = Math.max(Math.min(60 / el.offsetHeight, 200 / el.offsetWidth), 0.1);
+		block.scale = scale;
+	});
 };
 
 const deleteComponent = async (component: BlockComponent) => {

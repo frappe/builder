@@ -123,10 +123,12 @@ const loadEditor = computed(() => {
 	);
 });
 
+const emit = defineEmits(["mounted"]);
 onMounted(async () => {
 	selectBlock(null);
 	setFont(props.block.getStyle("fontFamily") as string);
 	await nextTick();
+	emit("mounted", target.value);
 });
 
 const isEditable = computed(() => {
