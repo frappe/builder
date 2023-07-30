@@ -186,8 +186,8 @@
 		</InlineInput>
 		<InlineInput
 			v-if="blockController.isText() || blockController.isButton()"
-			:modelValue="blockController.getKeyValue('innerText')"
-			@update:modelValue="(val) => blockController.setKeyValue('innerText', val)">
+			:modelValue="blockController.getTextContent()"
+			@update:modelValue="(val) => blockController.setKeyValue('innerHTML', val)">
 			Content
 		</InlineInput>
 		<InlineInput
@@ -242,7 +242,12 @@
 			@update:modelValue="(val) => blockController.setStyle('overflow', val)">
 			Overflow
 		</InlineInput>
-
+		<InlineInput
+			v-if="blockController.isImage()"
+			:modelValue="blockController.getAttribute('alt')"
+			@update:modelValue="(val) => blockController.setAttribute('alt', val)">
+			Alt Text
+		</InlineInput>
 		<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">RAW Styles</h3>
 		<div id="editor" class="border border-gray-200 dark:border-zinc-800" />
 		<Input

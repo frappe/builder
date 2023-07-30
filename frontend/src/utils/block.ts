@@ -96,7 +96,7 @@ class Block implements BlockOptions {
 		return ["section", "div"].includes(this.element);
 	}
 	isInput() {
-		return this.originalElement || this.element === "input";
+		return this.originalElement === "input" || this.element === "input";
 	}
 	setStyle(style: styleProperty, value: number | string | null) {
 		const store = useStore();
@@ -232,7 +232,7 @@ class Block implements BlockOptions {
 			styles.backgroundSize = "16px 16px";
 		}
 
-		if (this.isButton()) {
+		if (this.isButton() && this.children.length === 0) {
 			styles.display = "flex";
 			styles.alignItems = "center";
 			styles.justifyContent = "center";

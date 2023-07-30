@@ -128,6 +128,14 @@ function copyToClipboard(text: string) {
 	document.body.removeChild(el);
 }
 
+function stripExtension(string: string) {
+	const lastDotPosition = string.lastIndexOf(".");
+	if (lastDotPosition === -1) {
+		return string;
+	}
+	return string.substr(0, lastDotPosition);
+}
+
 export {
 	HSVToHex,
 	HexToHSV,
@@ -140,4 +148,5 @@ export {
 	getRandomColor,
 	getTextContent,
 	isHTMLString,
+	stripExtension,
 };
