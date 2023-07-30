@@ -110,12 +110,13 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 					private: false,
 					optimize: true,
 				})
-				.then((fileDoc: { file_url: string }) => {
+				.then((fileDoc: { file_url: string; file_name: string }) => {
 					const url = encodeURI(window.location.origin + fileDoc.file_url);
 					if (block.isImage()) {
 						block.setAttribute("src", url);
+						block.setAttribute("alt", fileDoc.file_name);
 					} else {
-						block.addChild(store.getImageBlock(url));
+						block.addChild(store.getImageBlock(url, fileDoc.file_name));
 					}
 				});
 		}
