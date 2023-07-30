@@ -1,6 +1,7 @@
 <template>
 	<component :is="block.getTag()" ref="component" @click.stop @dblclick.stop>
 		<editor-content @click="handleClick" :editor="editor" />
+		<slot />
 	</component>
 </template>
 
@@ -22,6 +23,10 @@ const props = defineProps({
 		type: Block,
 		required: true,
 	},
+	preview: {
+		type: Boolean,
+		default: false,
+	},
 });
 
 const component = ref(null) as Ref<HTMLElement | null>;
@@ -42,6 +47,10 @@ const editor = useEditor({
 onBeforeMount(() => {
 	let html = props.block.innerHTML || "";
 	setFontFromHTML(html);
+
+	if (!props.block.classes.includes("TextBlock")) {
+		props.block.classes.push("TextBlock");
+	}
 });
 
 onBeforeUnmount(() => {
@@ -51,7 +60,7 @@ onBeforeUnmount(() => {
 props.block.getEditor = () => editor.value || null;
 
 const isEditable = computed(() => {
-	return props.block === store.builderState.editableBlock;
+	return props.block === store.builderState.editableBlock && !props.preview;
 });
 
 watch(isEditable, (newValue) => {
