@@ -65,7 +65,7 @@ const blockController = {
 			block.setAttribute(attribute, value);
 		});
 	},
-	getKeyValue: (key: "element") => {
+	getKeyValue: (key: "element" | "innerHTML") => {
 		let keyValue = "__initial__" as StyleValue | undefined;
 		store.builderState.selectedBlocks.forEach((block) => {
 			if (keyValue === "__initial__") {
@@ -76,7 +76,7 @@ const blockController = {
 		});
 		return keyValue;
 	},
-	setKeyValue: (key: "element", value: string) => {
+	setKeyValue: (key: "element" | "innerHTML", value: string) => {
 		store.builderState.selectedBlocks.forEach((block) => {
 			block[key] = value;
 		});
@@ -134,6 +134,9 @@ const blockController = {
 		store.builderState.selectedBlocks.forEach((block) => {
 			block.innerHTML = value;
 		});
+	},
+	getTextContent: () => {
+		return store.builderState.selectedBlocks[0].getTextContent();
 	},
 };
 

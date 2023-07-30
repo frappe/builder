@@ -18,7 +18,7 @@ function getBlockTemplate(type: "html" | "text" | "image" | "container" | "body"
 				element: "p",
 				innerHTML: "Text",
 				baseStyles: {
-					fontSize: "40px",
+					fontSize: "16px",
 					width: "fit-content",
 					height: "fit-content",
 					lineHeight: "1",
