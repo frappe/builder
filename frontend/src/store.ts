@@ -252,13 +252,17 @@ const useStore = defineStore("store", {
 			this.builderState.selectedPage = page.name;
 			// localStorage.setItem("selectedPage", page.name);
 		},
-		getImageBlock(image_src: string) {
+		getImageBlock(imageSrc: string, imageAlt: string = "") {
+			imageAlt = stripExtension(imageAlt);
 			const imageBlock = getBlockTemplate("image");
-			if (imageBlock.attributes) {
-				imageBlock.attributes.src = image_src;
-			} else {
-				imageBlock.attributes = { src: image_src };
+			if (!imageBlock.attributes) {
+				imageBlock.attributes = {};
 			}
+			imageBlock.attributes.src = imageSrc;
+			if (imageAlt) {
+				imageBlock.attributes.alt = imageAlt;
+			}
+
 			return imageBlock;
 		},
 		findBlock(blockId: string, blocks?: Array<Block>): Block | null {
