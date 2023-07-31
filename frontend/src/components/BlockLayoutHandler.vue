@@ -1,7 +1,7 @@
 <template>
 	<div class="flex flex-col gap-3">
 		<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Layout</h3>
-		<div class="flex flex-col" v-show="blockController.getParentBlock()?.getStyle('display') === 'flex'">
+		<!-- <div class="flex flex-col" v-show="blockController.getParentBlock()?.getStyle('display') === 'flex'">
 			<InlineInput
 				type="select"
 				:options="[
@@ -81,7 +81,7 @@
 				@update:modelValue="setAlignment">
 				Placement
 			</InlineInput>
-		</div>
+		</div> -->
 
 		<div class="flex items-center justify-between">
 			<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
@@ -96,7 +96,20 @@
 				@update:modelValue="setLayout"
 				class="w-fit self-end"></TabButtons>
 		</div>
-		<InlineInput
+		<div class="flex items-center justify-between" v-if="blockController.getStyle('display') === 'flex'">
+			<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
+				Direction
+			</span>
+			<TabButtons
+				:modelValue="blockController.getStyle('flexDirection') || 'column'"
+				:buttons="[
+					{ label: 'Horizontal', value: 'row' },
+					{ label: 'Vertical', value: 'column' },
+				]"
+				@update:modelValue="(val: string | number) => blockController.setStyle('flexDirection', val)"
+				class="w-fit self-end"></TabButtons>
+		</div>
+		<!-- <InlineInput
 			v-if="blockController.getStyle('display') === 'flex'"
 			:modelValue="blockController.getStyle('flexDirection')"
 			type="select"
@@ -107,7 +120,7 @@
 			default="column"
 			@update:modelValue="(val: string | number) => blockController.setStyle('flexDirection', val)">
 			Direction
-		</InlineInput>
+		</InlineInput> -->
 		<InlineInput
 			v-if="blockController.getStyle('display') === 'flex'"
 			:modelValue="blockController.getStyle('justifyContent')"
@@ -153,6 +166,28 @@
 			@update:modelValue="(val: string | number) => blockController.setStyle('alignItems', val)">
 			Align
 		</InlineInput>
+		<InlineInput
+			v-if="blockController.getStyle('display') === 'flex'"
+			type="text"
+			:modelValue="blockController.getStyle('gap')"
+			@update:modelValue="(val: string | number) => blockController.setStyle('gap', val)">
+			Gap
+		</InlineInput>
+		<!-- flex basis -->
+		<!-- <InlineInput
+			v-if="blockController.getStyle('display') === 'flex'"
+			type="text"
+			:modelValue="blockController.getStyle('flexBasis')"
+			@update:modelValue="(val: string | number) => blockController.setStyle('flexBasis', val)">
+			Basis
+		</InlineInput>
+		<InlineInput
+			v-if="blockController.getStyle('display') === 'flex'"
+			type="text"
+			:modelValue="blockController.getStyle('flexGrow')"
+			@update:modelValue="(val: string | number) => blockController.setStyle('flexGrow', val)">
+			Grow
+		</InlineInput> -->
 		<div class="flex items-center justify-between" v-if="blockController.getStyle('display') === 'flex'">
 			<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
 				Wrap
@@ -166,28 +201,6 @@
 				@update:modelValue="(val: string | number) => blockController.setStyle('flexWrap', val)"
 				class="w-fit self-end"></TabButtons>
 		</div>
-		<InlineInput
-			v-if="blockController.getStyle('display') === 'flex'"
-			type="text"
-			:modelValue="blockController.getStyle('gap')"
-			@update:modelValue="(val: string | number) => blockController.setStyle('gap', val)">
-			Gap
-		</InlineInput>
-		<!-- flex basis -->
-		<InlineInput
-			v-if="blockController.getStyle('display') === 'flex'"
-			type="text"
-			:modelValue="blockController.getStyle('flexBasis')"
-			@update:modelValue="(val: string | number) => blockController.setStyle('flexBasis', val)">
-			Basis
-		</InlineInput>
-		<InlineInput
-			v-if="blockController.getStyle('display') === 'flex'"
-			type="text"
-			:modelValue="blockController.getStyle('flexGrow')"
-			@update:modelValue="(val: string | number) => blockController.setStyle('flexGrow', val)">
-			Grow
-		</InlineInput>
 	</div>
 </template>
 <script lang="ts" setup>

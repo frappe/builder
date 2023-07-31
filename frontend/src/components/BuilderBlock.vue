@@ -111,6 +111,7 @@ const loadEditor = computed(() => {
 	return (
 		!props.isChildOfComponent &&
 		target.value &&
+		props.block.getStyle("display") !== "none" &&
 		store.builderState.mode !== "container" &&
 		((props.block.isSelected() && props.breakpoint === store.builderState.activeBreakpoint) ||
 			(props.block.isHovered() && store.hoveredBreakpoint === props.breakpoint))

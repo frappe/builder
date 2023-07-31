@@ -33,6 +33,7 @@ import { computed, inject, onMounted, ref, watchEffect } from "vue";
 import useStore from "../store";
 import Block from "../utils/block";
 import guidesTracker from "../utils/guidesTracker";
+import { clamp } from "@vueuse/core";
 
 const props = defineProps({
 	targetBlock: {
@@ -91,8 +92,9 @@ const handleRightResize = (ev: MouseEvent) => {
 		const movement = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
 		const finalWidth = Math.abs(guides.getFinalWidth(startWidth + movement));
 
-		if (targetBlock.isText()) {
-			targetBlock.setStyle("fontSize", `${Math.round(finalWidth * 0.5)}px`);
+		if (targetBlock.isText() && !mouseMoveEvent.shiftKey) {
+			const fontSize = clamp(Math.round(finalWidth * 0.5), 10, 150);
+			targetBlock.setStyle("fontSize", `${fontSize}px`);
 			return mouseMoveEvent.preventDefault();
 		}
 
@@ -134,8 +136,9 @@ const handleBottomResize = (ev: MouseEvent) => {
 		const movement = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
 		let finalHeight = Math.abs(guides.getFinalHeight(startHeight + movement));
 
-		if (targetBlock.isText()) {
-			targetBlock.setStyle("fontSize", `${Math.round(finalHeight * 0.5)}px`);
+		if (targetBlock.isText() && !mouseMoveEvent.shiftKey) {
+			const fontSize = clamp(Math.round(finalHeight * 0.5), 10, 300);
+			targetBlock.setStyle("fontSize", `${fontSize}px`);
 			return mouseMoveEvent.preventDefault();
 		}
 
@@ -171,8 +174,9 @@ const handleBottomCornerResize = (ev: MouseEvent) => {
 		const movementX = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
 		const finalWidth = Math.round(startWidth + movementX);
 
-		if (targetBlock.isText()) {
-			targetBlock.setStyle("fontSize", `${Math.round(finalWidth * 0.5)}px`);
+		if (targetBlock.isText() && !mouseMoveEvent.shiftKey) {
+			const fontSize = clamp(Math.round(finalWidth * 0.5), 10, 300);
+			targetBlock.setStyle("fontSize", `${fontSize}px`);
 			return mouseMoveEvent.preventDefault();
 		}
 
