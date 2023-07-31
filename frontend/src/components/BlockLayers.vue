@@ -11,7 +11,7 @@
 					<BlockContextMenu v-slot="{ onContextMenu }" :block="element" :editable="false">
 						<div
 							@contextmenu.prevent.stop="onContextMenu"
-							class="cursor-pointer rounded border-[1px] bg-white pl-2 pr-[2px] text-sm text-gray-600 dark:bg-zinc-900"
+							class="cursor-pointer rounded border bg-white pl-2 pr-[2px] text-sm text-gray-600 dark:bg-zinc-900"
 							:class="{
 								'border-transparent text-gray-700 dark:text-gray-500':
 									!element.isSelected() && !element.isHovered(),

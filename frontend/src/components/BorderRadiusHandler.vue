@@ -1,12 +1,12 @@
 <template>
 	<div
-		class="border-radius-resize pointer-events-auto absolute left-2 top-2 h-[9px] w-[9px] cursor-pointer rounded-full border-[1px] border-blue-400 bg-white"
+		class="border-radius-resize pointer-events-auto absolute left-2 top-2 h-[12px] w-[12px] cursor-pointer rounded-full border-[2px] border-blue-400 bg-white"
 		:class="{
 			hidden: canvasProps.scale < 0.7,
 		}"
 		@mousedown.stop="handleRounded">
 		<div
-			class="pointer-events-none absolute left-[2px] top-[2px] h-[3px] w-[3px] rounded-full border-none bg-blue-400">
+			class="pointer-events-none absolute left-[2px] top-[2px] h-[4px] w-[4px] rounded-full border-none bg-blue-400">
 			<div
 				class="absolute left-2 top-2 w-fit rounded-full bg-zinc-800 px-3 py-2 text-xs text-white opacity-60"
 				v-show="updating">
