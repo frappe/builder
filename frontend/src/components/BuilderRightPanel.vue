@@ -9,7 +9,7 @@
 			@resize="(width) => (store.builderLayout.rightPanelWidth = width)"
 			:min-width="220"
 			:max-width="400" />
-		<div class="flex w-full border-gray-200 p-[2px] text-sm dark:border-zinc-800">
+		<!-- <div class="flex w-full border-gray-200 p-[2px] text-sm dark:border-zinc-800">
 			<button
 				v-for="tab of ['Properties', 'Data', 'Settings']"
 				:key="tab"
@@ -21,7 +21,7 @@
 				}">
 				{{ tab }}
 			</button>
-		</div>
+		</div> -->
 		<BlockProperties
 			v-if="store.builderState.selectedBlocks.length"
 			v-show="activeTab === 'Properties'"

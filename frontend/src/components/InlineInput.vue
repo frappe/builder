@@ -1,5 +1,5 @@
 <template>
-	<div class="flex items-center justify-between">
+	<div class="relative flex items-center justify-between">
 		<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
 			<slot />
 		</span>
@@ -17,6 +17,17 @@
 			:options="options.map((option) => ({ label: option, value: option }))"
 			@change="handleChange"
 			class="!dark:text-zinc-200 !dark:focus:bg-zinc-700 rounded-md text-sm text-gray-800 dark:bg-zinc-800 [&>div>button]:w-[150px] [&>div>button]:dark:!bg-zinc-800 [&>div>button]:dark:!text-zinc-200" />
+		<div
+			class="absolute right-1 top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
+			@click="clearValue"
+			v-if="!['autocomplete', 'select'].includes(type)"
+			v-show="modelValue">
+			<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24">
+				<path
+					fill="currentColor"
+					d="M18.3 5.71a.996.996 0 0 0-1.41 0L12 10.59L7.11 5.7A.996.996 0 1 0 5.7 7.11L10.59 12L5.7 16.89a.996.996 0 1 0 1.41 1.41L12 13.41l4.89 4.89a.996.996 0 1 0 1.41-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z" />
+			</svg>
+		</div>
 	</div>
 </template>
 <script setup lang="ts">
@@ -46,4 +57,6 @@ const emit = defineEmits(["update:modelValue"]);
 const handleChange = (value: string | number | null) => {
 	emit("update:modelValue", value);
 };
+
+const clearValue = () => emit("update:modelValue", null);
 </script>

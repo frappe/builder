@@ -44,11 +44,6 @@
 		<div class="flex flex-col gap-3" v-if="!blockController.isHTML() || !blockController.isRoot()">
 			<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Dimension</h3>
 			<InlineInput
-				:modelValue="blockController.getStyle('height')"
-				@update:modelValue="(val) => blockController.setStyle('height', val)">
-				Height
-			</InlineInput>
-			<InlineInput
 				:modelValue="blockController.getStyle('width')"
 				@update:modelValue="(val) => blockController.setStyle('width', val)">
 				Width
@@ -62,6 +57,12 @@
 				:modelValue="blockController.getStyle('maxWidth')"
 				@update:modelValue="(val) => blockController.setStyle('maxWidth', val)">
 				Max Width
+			</InlineInput>
+			<hr />
+			<InlineInput
+				:modelValue="blockController.getStyle('height')"
+				@update:modelValue="(val) => blockController.setStyle('height', val)">
+				Height
 			</InlineInput>
 			<InlineInput
 				:modelValue="blockController.getStyle('minHeight')"
@@ -149,16 +150,6 @@
 			Link
 		</InlineInput>
 		<InlineInput
-			:modelValue="blockController.getStyle('display') || 'flex'"
-			type="select"
-			:options="[
-				{ label: 'Visible', value: 'flex' },
-				{ label: 'Hidden', value: 'none' },
-			]"
-			@update:modelValue="(val) => blockController.setStyle('display', val)">
-			Visibility
-		</InlineInput>
-		<InlineInput
 			v-if="blockController.isImage()"
 			:modelValue="blockController.getAttribute('src')"
 			@update:modelValue="(val) => blockController.setAttribute('href', val)">
@@ -226,39 +217,64 @@
 			@update:modelValue="(val) => blockController.setStyle('gridRowGap', val)">
 			Row Gap
 		</InlineInput>
-		<!-- overflow -->
-		<InlineInput
-			v-if="blockController.isContainer()"
+		<!-- <InlineInput
+			:modelValue="blockController.getStyle('display') || 'flex'"
 			type="select"
 			:options="[
-				{
-					label: 'Visible',
-					value: '',
-				},
-				{
-					label: 'Hidden',
-					value: 'hidden',
-				},
-				{
-					label: 'Scroll',
-					value: 'scroll',
-				},
-				{
-					label: 'Auto',
-					value: 'auto',
-				},
+				{ label: 'Visible', value: 'flex' },
+				{ label: 'Hidden', value: 'none' },
 			]"
-			:modelValue="blockController.getStyle('overflow')"
-			@update:modelValue="(val) => blockController.setStyle('overflow', val)">
-			Overflow
-		</InlineInput>
+			@update:modelValue="(val) => blockController.setStyle('display', val)">
+			Visibility
+		</InlineInput> -->
+		<div class="flex items-center justify-between">
+			<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
+				Visibility
+			</span>
+			<TabButtons
+				:buttons="[
+					{
+						label: 'Visible',
+						value: 'flex',
+					},
+					{
+						label: 'Hidden',
+						value: 'none',
+					},
+				]"
+				:modelValue="blockController.getStyle('display') || 'flex'"
+				@update:modelValue="(val) => blockController.setStyle('display', val)"></TabButtons>
+		</div>
+		<div class="flex items-center justify-between">
+			<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
+				Overflow
+			</span>
+			<TabButtons
+				v-if="blockController.isContainer()"
+				:buttons="[
+					{
+						label: 'Auto',
+						value: 'auto',
+					},
+					{
+						label: 'Hide',
+						value: 'hidden',
+					},
+					{
+						label: 'Scroll',
+						value: 'scroll',
+					},
+				]"
+				:modelValue="blockController.getStyle('overflow') || 'auto'"
+				@update:modelValue="(val) => blockController.setStyle('overflow', val)"></TabButtons>
+		</div>
 		<InlineInput
 			v-if="blockController.isImage()"
 			:modelValue="blockController.getAttribute('alt')"
 			@update:modelValue="(val) => blockController.setAttribute('alt', val)">
 			Alt Text
 		</InlineInput>
-		<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">RAW Styles</h3>
+		<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">RAW Styles (as JSON)</h3>
 		<div id="editor" class="border border-gray-200 dark:border-zinc-800" />
 		<Input
 			v-show="blockController.isHTML()"
@@ -273,7 +289,9 @@
 <script setup lang="ts">
 import { setFont as _setFont, fontListNames, getFontWeightOptions } from "@/utils/fontManager";
 import { useDark } from "@vueuse/core";
+import { TabButtons } from "frappe-ui";
 import { onMounted, watch, watchEffect } from "vue";
+
 import BackgroundHandler from "./BackgroundHandler.vue";
 import BLockLayoutHandler from "./BlockLayoutHandler.vue";
 import BlockPositionHandler from "./BlockPositionHandler.vue";
