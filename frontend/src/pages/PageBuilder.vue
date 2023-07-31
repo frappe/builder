@@ -3,7 +3,7 @@
 		<BuilderToolbar
 			class="relative z-30 dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"
 			:canvas-props="
-				store.editingComponent ? store.componentEditorCanvas : store.blockEditorCanvas
+				store.builderState.editingComponent ? store.componentEditorCanvas : store.blockEditorCanvas
 			"></BuilderToolbar>
 		<div>
 			<BuilderLeftPanel
@@ -11,8 +11,8 @@
 				class="fixed bottom-0 left-0 top-[var(--toolbar-height)] z-20 overflow-auto border-r-[1px] bg-white no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderLeftPanel>
 			<BuilderCanvas
 				ref="componentEditor"
-				v-if="store.editingComponent"
-				:block="store.editingComponent"
+				v-if="store.builderState.editingComponent"
+				:block="store.builderState.editingComponent"
 				:canvas-props="store.componentEditorCanvas"
 				:canvas-styles="{
 					width: 'auto',

@@ -3,6 +3,7 @@ import { WebPageBeta } from "./types/WebsiteBuilder/WebPageBeta";
 import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
 import Component from "./utils/component";
+import { stripExtension } from "./utils/helpers";
 
 const useStore = defineStore("store", {
 	state: () => ({
@@ -16,6 +17,7 @@ const useStore = defineStore("store", {
 			editingComponent: <Block | null>null,
 			editingMode: <EditingMode>"page",
 		},
+		usedComponents: {},
 		hoveredBlock: <string | null>null,
 		hoveredBreakpoint: <string | null>null,
 		builderLayout: {
@@ -170,7 +172,6 @@ const useStore = defineStore("store", {
 			},
 		],
 		sidebarActiveTab: <LeftSidebarTabOption>"Components",
-		editingComponent: <Block | null>null,
 		showPanels: <boolean>true,
 		blockEditorCanvas: {
 			scale: 0.5,
@@ -217,7 +218,7 @@ const useStore = defineStore("store", {
 				this.builderState.blocks = [firstBlock];
 			} else {
 				for (let block of blocks) {
-					this.builderState.blocks[0].children.push(new Block(block));
+					this.builderState.blocks[0].children.push(this.getBlockInstance(block));
 				}
 			}
 		},
@@ -308,6 +309,21 @@ const useStore = defineStore("store", {
 				block.selectBlock();
 			}
 			this.builderState.editableBlock = null;
+		},
+		getBlockInstance(options: BlockOptions) {
+			if (options.isComponent) {
+				return new Component(options as ComponentOptions);
+			} else {
+				return new Block(options);
+			}
+		},
+		editComponent(block: Block) {
+			this.builderState.editableBlock = block;
+			this.builderState.editingMode = "component";
+		},
+		editPage() {
+			this.builderState.editableBlock = null;
+			this.builderState.editingMode = "page";
 		},
 	},
 });

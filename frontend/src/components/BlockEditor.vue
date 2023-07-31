@@ -24,7 +24,12 @@
 				:breakpoint="breakpoint" />
 			<BorderRadiusHandler
 				v-if="
-					isBlockSelected && !block.isRoot() && !editable && store.builderState.selectedBlocks.length === 1
+					isBlockSelected &&
+					!block.isRoot() &&
+					!block.isText() &&
+					!block.isHTML() &&
+					!editable &&
+					store.builderState.selectedBlocks.length === 1
 				"
 				:target-block="block"
 				:target="target" />
