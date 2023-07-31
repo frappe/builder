@@ -149,6 +149,16 @@
 			Link
 		</InlineInput>
 		<InlineInput
+			:modelValue="blockController.getStyle('display') || 'flex'"
+			type="select"
+			:options="[
+				{ label: 'Visible', value: 'flex' },
+				{ label: 'Hidden', value: 'none' },
+			]"
+			@update:modelValue="(val) => blockController.setStyle('display', val)">
+			Visibility
+		</InlineInput>
+		<InlineInput
 			v-if="blockController.isImage()"
 			:modelValue="blockController.getAttribute('src')"
 			@update:modelValue="(val) => blockController.setAttribute('href', val)">
