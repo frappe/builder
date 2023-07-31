@@ -82,16 +82,20 @@
 				Placement
 			</InlineInput>
 		</div>
-		<InlineInput
-			:modelValue="blockController.getStyle('display') || 'block'"
-			type="select"
-			:options="[
-				{ label: 'Block', value: 'block' },
-				{ label: 'Stack', value: 'flex' },
-			]"
-			@update:modelValue="setLayout">
-			Type
-		</InlineInput>
+
+		<div class="flex items-center justify-between">
+			<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
+				Type
+			</span>
+			<TabButtons
+				:modelValue="blockController.getStyle('display') || 'block'"
+				:buttons="[
+					{ label: 'Block', value: 'block' },
+					{ label: 'Stack', value: 'flex' },
+				]"
+				@update:modelValue="setLayout"
+				class="w-fit self-end"></TabButtons>
+		</div>
 		<InlineInput
 			v-if="blockController.getStyle('display') === 'flex'"
 			:modelValue="blockController.getStyle('flexDirection')"
@@ -149,18 +153,19 @@
 			@update:modelValue="(val: string | number) => blockController.setStyle('alignItems', val)">
 			Align
 		</InlineInput>
-		<InlineInput
-			v-if="blockController.getStyle('display') === 'flex'"
-			:modelValue="blockController.getStyle('flexWrap') || 'nowrap'"
-			type="select"
-			:options="[
-				{ label: 'No Wrap', value: 'nowrap' },
-				{ label: 'Wrap', value: 'wrap' },
-			]"
-			default="wrap"
-			@update:modelValue="(val: string | number) => blockController.setStyle('flexWrap', val)">
-			Wrap
-		</InlineInput>
+		<div class="flex items-center justify-between" v-if="blockController.getStyle('display') === 'flex'">
+			<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
+				Wrap
+			</span>
+			<TabButtons
+				:modelValue="blockController.getStyle('flexWrap') || 'nowrap'"
+				:buttons="[
+					{ label: 'No Wrap', value: 'nowrap' },
+					{ label: 'Wrap', value: 'wrap' },
+				]"
+				@update:modelValue="(val: string | number) => blockController.setStyle('flexWrap', val)"
+				class="w-fit self-end"></TabButtons>
+		</div>
 		<InlineInput
 			v-if="blockController.getStyle('display') === 'flex'"
 			type="text"
@@ -186,8 +191,9 @@
 	</div>
 </template>
 <script lang="ts" setup>
-import InlineInput from "./InlineInput.vue";
 import blockController from "@/utils/blockController";
+import { TabButtons } from "frappe-ui";
+import InlineInput from "./InlineInput.vue";
 
 const setLayout = (layout: string) => {
 	blockController.setStyle("display", layout);
@@ -196,10 +202,6 @@ const setLayout = (layout: string) => {
 		blockController.setStyle("flexWrap", blockController.getStyle("flexWrap") || "nowrap");
 		blockController.setStyle("justifyContent", blockController.getStyle("justifyContent") || "flex-start");
 		blockController.setStyle("alignItems", blockController.getStyle("alignItems") || "flex-start");
-	} else if (layout === "grid") {
-		// blockController.setStyle("gridTemplateColumns", "repeat(3, 1fr)");
-		// blockController.setStyle("gridTemplateRows", "repeat(3, 1fr)");
-		// blockController.setStyle("gridGap", "10px");
 	}
 };
 

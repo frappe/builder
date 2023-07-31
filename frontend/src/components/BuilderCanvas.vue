@@ -275,6 +275,10 @@ document.addEventListener("keydown", (e) => {
 		e.preventDefault();
 	}
 
+	if (e.metaKey || e.ctrlKey || e.shiftKey) {
+		return;
+	}
+
 	if (e.key === "c") {
 		store.builderState.mode = "container";
 	}
