@@ -313,8 +313,8 @@ const useStore = defineStore("store", {
 				document
 					.querySelector(`[data-block-layer-id="${block.blockId}"]`)
 					?.scrollIntoView({ behavior: "instant", block: "center" });
-				this.builderState.editableBlock = null;
 			}
+			this.builderState.editableBlock = null;
 		},
 		getBlockInstance(options: BlockOptions) {
 			if (options.isComponent) {
