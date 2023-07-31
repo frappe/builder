@@ -1,7 +1,7 @@
 <template>
 	<BlockContextMenu :block="block" :editable="editable" v-slot="{ onContextMenu }">
 		<div
-			class="editor pointer-events-none fixed z-[19] box-content select-none border"
+			class="editor pointer-events-none fixed z-[19] box-content select-none ring-2 ring-inset"
 			ref="editor"
 			@click="handleClick"
 			@dblclick="handleDoubleClick"
@@ -114,16 +114,13 @@ const isBlockSelected = computed(() => {
 
 const getStyleClasses = computed(() => {
 	const classes = [];
-	if (isBlockSelected.value) {
-		classes.push("border-2");
-	}
 	if (movable.value && !props.block.isRoot()) {
 		classes.push("cursor-grab");
 	}
 	if (props.block.isComponent) {
-		classes.push("border-purple-400");
+		classes.push("ring-purple-400");
 	} else {
-		classes.push("border-blue-400");
+		classes.push("ring-blue-400");
 	}
 	if (
 		props.block.isSelected() &&
