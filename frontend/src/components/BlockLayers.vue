@@ -20,7 +20,7 @@
 									element.isHovered() && !element.isSelected(),
 								'border-blue-400 text-gray-900 dark:border-blue-600 dark:text-gray-200': element.isSelected(),
 							}"
-							@click.stop="store.selectBlock(element, $event)"
+							@click.stop="store.selectBlock(element, $event, false)"
 							@mouseover.stop="store.hoveredBlock = element.blockId"
 							@mouseleave.stop="store.hoveredBlock = null">
 							<span class="my-[6px] flex items-center font-medium">

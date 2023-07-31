@@ -302,17 +302,19 @@ const useStore = defineStore("store", {
 			}
 			return null;
 		},
-		selectBlock(block: Block, e: MouseEvent | null) {
+		selectBlock(block: Block, e: MouseEvent | null, scrollIntoView = true) {
 			if (e && e.shiftKey) {
 				block.toggleSelectBlock();
 			} else {
 				block.selectBlock();
 			}
-			// TODO: move to layers?
-			document
-				.querySelector(`[data-block-layer-id="${block.blockId}"]`)
-				?.scrollIntoView({ behavior: "instant", block: "center" });
-			this.builderState.editableBlock = null;
+			if (scrollIntoView) {
+				// TODO: move to layers?
+				document
+					.querySelector(`[data-block-layer-id="${block.blockId}"]`)
+					?.scrollIntoView({ behavior: "instant", block: "center" });
+				this.builderState.editableBlock = null;
+			}
 		},
 		getBlockInstance(options: BlockOptions) {
 			if (options.isComponent) {
