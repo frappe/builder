@@ -8,9 +8,9 @@
 	</div>
 	<section class="max-w-800 m-auto mb-32 flex w-3/4 flex-col pt-10">
 		<div class="mb-6 flex justify-between">
-			<h1 class="mb-2 font-bold text-gray-800 dark:text-zinc-400">Your Pages</h1>
+			<h1 class="mb-2 font-bold text-gray-800 dark:text-zinc-400">My Pages</h1>
 			<router-link :to="{ name: 'builder', params: { pageId: 'new' } }">
-				<Button variant="solid" icon-right="plus">New Page</Button>
+				<Button variant="solid" icon-left="plus">New</Button>
 			</router-link>
 		</div>
 		<div class="flex flex-wrap gap-6">
@@ -25,14 +25,26 @@
 						:src="page.preview"
 						onerror="this.src='/src/assets/fallback.png'"
 						class="w-full rounded-sm bg-gray-50 object-cover p-2 dark:bg-zinc-900" />
-					<p
-						class="border-t-[1px] px-3 py-2 text-sm text-gray-700 dark:border-zinc-800 dark:text-zinc-400 group-hover:dark:text-zinc-200">
-						{{ page.page_title || page.page_name }}
-					</p>
-					<FeatherIcon
-						name="trash"
-						class="absolute right-2 top-2 hidden h-8 w-8 rounded bg-white p-2 group-hover:block dark:bg-zinc-900 dark:text-zinc-200"
-						@click.stop.prevent="deletePage(page)"></FeatherIcon>
+					<div class="flex items-center justify-between border-t-[1px] px-3 dark:border-zinc-800">
+						<p class="py-2 text-sm text-gray-700 dark:text-zinc-200">
+							{{ page.page_title || page.page_name }}
+							<UseTimeAgo v-slot="{ timeAgo }" :time="page.creation">
+								<span class="mt-1 block text-xs text-gray-500">
+									{{ timeAgo }}
+								</span>
+							</UseTimeAgo>
+						</p>
+						<Dropdown
+							:options="[{ label: 'Delete', onClick: () => deletePage(page), icon: 'trash' }]"
+							placement="right">
+							<template v-slot="{ open }">
+								<FeatherIcon
+									name="more-vertical"
+									class="h-4 w-4 text-gray-500 group-hover:text-gray-700"
+									@click="open"></FeatherIcon>
+							</template>
+						</Dropdown>
+					</div>
 				</div>
 			</router-link>
 		</div>
@@ -42,6 +54,8 @@
 import { webPages } from "@/data/webPage";
 import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
 import { confirm } from "@/utils/helpers";
+import { UseTimeAgo } from "@vueuse/components";
+import { Dropdown } from "frappe-ui";
 
 const deletePage = async (page: WebPageBeta) => {
 	const confirmed = await confirm(`Are you sure you want to delete Page: ${page.page_name}?`);
