@@ -88,7 +88,6 @@
 			:options="[
 				{ label: 'Block', value: 'block' },
 				{ label: 'Stack', value: 'flex' },
-				{ label: 'Grid', value: 'grid' },
 			]"
 			@update:modelValue="setLayout">
 			Type
