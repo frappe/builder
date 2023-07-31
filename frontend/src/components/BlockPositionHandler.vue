@@ -36,49 +36,24 @@
 				v-model="bottom"
 				class="col-span-1 col-start-2 h-8 w-16 self-start justify-self-center rounded-md text-center text-xs text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
 		</div>
-		<RadioGroup v-model="position" class="m-auto flex w-fit items-center justify-between">
-			<div
-				class="flex h-fit w-fit flex-row gap-x-1 rounded-md bg-gray-100 p-[4px] dark:bg-zinc-800 dark:text-zinc-300">
-				<RadioGroupOption
-					:value="pos.value"
-					v-slot="{ active, checked }"
-					v-for="pos in [
-						{
-							value: 'static',
-							label: 'Auto',
-						},
-						{
-							value: 'absolute',
-							label: 'Free',
-						},
-						{
-							value: 'fixed',
-							label: 'Fixed',
-						},
-						{
-							value: 'sticky',
-							label: 'Sticky',
-						},
-					]">
-					<span
-						:class="{
-							'bg-gray-300 font-medium dark:bg-zinc-700': active || checked,
-							'text-gray-600': !(active || checked),
-						}"
-						class="block cursor-pointer rounded px-2 py-1 text-xs">
-						{{ pos.label }}
-					</span>
-				</RadioGroupOption>
-			</div>
-		</RadioGroup>
+		<TabButtons
+			:buttons="[
+				{ label: 'Auto', value: 'static' },
+				{ label: 'Free', value: 'absolute' },
+				{
+					label: 'Fixed',
+					value: 'fixed',
+				},
+				{ label: 'Sticky', value: 'sticky' },
+			]"
+			v-model="(position as string)"
+			class="mx-auto w-fit"></TabButtons>
 	</div>
 </template>
 <script setup lang="ts">
-import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
-import { RadioGroup, RadioGroupOption } from "@headlessui/vue";
-import { PropType, computed } from "vue";
-
+import { TabButtons } from "frappe-ui";
+import { computed } from "vue";
 const top = computed({
 	get() {
 		return blockController.getStyle("top");

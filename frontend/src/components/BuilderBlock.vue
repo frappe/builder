@@ -73,13 +73,7 @@ const getComponentName = (block: Block) => {
 };
 
 const classes = computed(() => {
-	return [
-		attrs.class,
-		"__builder_component__",
-		"outline-none",
-		"select-none",
-		...(props.block.classes || []),
-	];
+	return [attrs.class, "__builder_component__", "outline-none", "select-none", ...props.block.classes];
 });
 
 const attributes = computed(() => {
