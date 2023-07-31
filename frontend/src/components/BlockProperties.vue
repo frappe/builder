@@ -308,8 +308,8 @@ import "ace-builds/src-noconflict/theme-monokai";
 const isDark = useDark();
 
 const setFont = (font: { value: string }) => {
-	_setFont(font.value).then(() => {
-		blockController.setFontFamily(font.value);
+	_setFont(font?.value).then(() => {
+		blockController.setFontFamily(font?.value);
 	});
 };
 

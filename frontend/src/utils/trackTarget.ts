@@ -37,8 +37,8 @@ function trackTarget(target: HTMLElement, host: HTMLElement, canvasProps: Canvas
 		});
 	}
 	watch(targetBounds, () => {
-		host.style.width = addPxToNumber(targetBounds.width - 4, false);
-		host.style.height = addPxToNumber(targetBounds.height - 4, false);
+		host.style.width = addPxToNumber(targetBounds.width, false);
+		host.style.height = addPxToNumber(targetBounds.height, false);
 		host.style.top = addPxToNumber(targetBounds.top, false);
 		host.style.left = addPxToNumber(targetBounds.left, false);
 	});
