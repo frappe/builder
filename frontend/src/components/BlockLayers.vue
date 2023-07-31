@@ -10,6 +10,7 @@
 				<div>
 					<BlockContextMenu v-slot="{ onContextMenu }" :block="element" :editable="false">
 						<div
+							:data-block-layer-id="element.blockId"
 							@contextmenu.prevent.stop="onContextMenu"
 							class="cursor-pointer rounded border bg-white pl-2 pr-[2px] text-sm text-gray-600 dark:bg-zinc-900"
 							:class="{
