@@ -38,8 +38,14 @@
 			<BuilderComponents class="p-4" />
 		</div>
 		<div v-show="store.sidebarActiveTab === 'Layers'">
-			<BlockLayers class="p-4" :blocks="store.builderState.blocks" v-show="!store.editingComponent" />
-			<BlockLayers class="p-4" :blocks="[store.editingComponent]" v-if="store.editingComponent" />
+			<BlockLayers
+				class="p-4"
+				:blocks="store.builderState.blocks"
+				v-show="store.builderState.editingMode == 'page'" />
+			<BlockLayers
+				class="p-4"
+				:blocks="[store.builderState.editingComponent]"
+				v-if="store.builderState.editingComponent" />
 		</div>
 	</div>
 </template>
