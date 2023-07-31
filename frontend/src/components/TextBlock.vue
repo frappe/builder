@@ -12,7 +12,7 @@ import { FontFamily } from "@tiptap/extension-font-family";
 import TextStyle from "@tiptap/extension-text-style";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
-import { Ref, computed, onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
+import { Ref, computed, onBeforeMount, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 import useStore from "@/store";
 import { setFontFromHTML } from "@/utils/fontManager";
@@ -53,6 +53,10 @@ onBeforeMount(() => {
 	}
 });
 
+onMounted(() => {
+	editor.value?.setEditable(isEditable.value);
+});
+
 onBeforeUnmount(() => {
 	editor.value?.destroy();
 });
@@ -60,7 +64,7 @@ onBeforeUnmount(() => {
 props.block.getEditor = () => editor.value || null;
 
 const isEditable = computed(() => {
-	return props.block === store.builderState.editableBlock && !props.preview;
+	return !props.preview && store.builderState.editableBlock === props.block;
 });
 
 watch(isEditable, (newValue) => {
