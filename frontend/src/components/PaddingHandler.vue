@@ -189,38 +189,46 @@ const handleBorderWidth = computed(() => {
 });
 
 const topHandle = computed(() => {
+	const width = clamp(16 * canvasProps.scale, 8, 32);
+	const height = clamp(4 * canvasProps.scale, 2, 8);
 	return {
-		width: 16 * canvasProps.scale,
-		height: 4 * canvasProps.scale,
-		bottom: `calc(-8px * ${canvasProps.scale})`,
-		left: `calc(50% - ${8 * canvasProps.scale}px)`,
+		width: width,
+		height: height,
+		bottom: `clamp(-16px, calc(-6px * ${canvasProps.scale}), 2px)`,
+		left: `calc(50% - ${width / 2}px)`,
 	};
 });
 
 const bottomHandle = computed(() => {
+	const width = clamp(16 * canvasProps.scale, 8, 32);
+	const height = clamp(4 * canvasProps.scale, 2, 8);
 	return {
-		width: 16 * canvasProps.scale,
-		height: 4 * canvasProps.scale,
-		top: `calc(-8px * ${canvasProps.scale})`,
-		left: `calc(50% - ${8 * canvasProps.scale}px)`,
+		width: width,
+		height: height,
+		top: `clamp(-16px, calc(-6px * ${canvasProps.scale}), 2px)`,
+		left: `calc(50% - ${width / 2}px)`,
 	};
 });
 
 const leftHandle = computed(() => {
+	const width = clamp(4 * canvasProps.scale, 2, 8);
+	const height = clamp(16 * canvasProps.scale, 8, 32);
 	return {
-		width: 4 * canvasProps.scale,
-		height: 16 * canvasProps.scale,
-		right: `calc(-8px * ${canvasProps.scale})`,
-		top: `calc(50% - ${8 * canvasProps.scale}px)`,
+		width: width,
+		height: height,
+		right: `clamp(-16px, calc(-6px * ${canvasProps.scale}), 2px)`,
+		top: `calc(50% - ${height / 2}px)`,
 	};
 });
 
 const rightHandle = computed(() => {
+	const width = clamp(4 * canvasProps.scale, 2, 8);
+	const height = clamp(16 * canvasProps.scale, 8, 32);
 	return {
-		width: 4 * canvasProps.scale,
-		height: 16 * canvasProps.scale,
-		left: `calc(-8px * ${canvasProps.scale})`,
-		top: `calc(50% - ${8 * canvasProps.scale}px)`,
+		width: width,
+		height: height,
+		left: `clamp(-16px, calc(-6px * ${canvasProps.scale}), 2px)`,
+		top: `calc(50% - ${height / 2}px)`,
 	};
 });
 
