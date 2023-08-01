@@ -88,7 +88,7 @@ const copyStyle = () => {
 
 const copyBlocks = () => {
 	// copy selected blocks to clipboard
-	const selectedBlocks = store.builderState.selectedBlocks;
+	const selectedBlocks = store.selectedBlocks;
 	copyToClipboard(JSON.stringify(selectedBlocks));
 };
 

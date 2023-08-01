@@ -97,10 +97,10 @@ document.addEventListener("paste", (e) => {
 			const data = JSON.parse(textJSON);
 			// check if data is from builder and a list of blocks
 			if (Array.isArray(data) && data[0].blockId) {
-				if (store.builderState.selectedBlocks.length) {
+				if (store.selectedBlocks.length) {
 					data.forEach((block: BlockOptions) => {
 						delete block.blockId;
-						store.builderState.selectedBlocks[0].addChild(block);
+						store.selectedBlocks[0].addChild(block);
 					});
 				} else {
 					store.pushBlocks(data);

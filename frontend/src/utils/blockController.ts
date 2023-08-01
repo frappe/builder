@@ -6,17 +6,23 @@ const store = useStore();
 type styleProperty = keyof CSSProperties;
 
 const blockController = {
+	clearSelection: () => {
+		store.selectedBlocks = [];
+	},
+	getSelectedBlocks: () => {
+		return store.selectedBlocks;
+	},
 	isRoot() {
-		return store.builderState.selectedBlocks[0].isRoot();
+		return store.selectedBlocks[0].isRoot();
 	},
 	setStyle: (style: styleProperty, value: any) => {
-		store.builderState.selectedBlocks.forEach((block) => {
+		store.selectedBlocks.forEach((block) => {
 			block.setStyle(style, value);
 		});
 	},
 	getStyle: (style: styleProperty) => {
 		let styleValue = "__initial__" as StyleValue;
-		store.builderState.selectedBlocks.forEach((block) => {
+		store.selectedBlocks.forEach((block) => {
 			if (styleValue === "__initial__") {
 				styleValue = block.getStyle(style);
 			} else if (styleValue !== block.getStyle(style)) {
@@ -26,32 +32,32 @@ const blockController = {
 		return styleValue;
 	},
 	isBLockSelected: () => {
-		return store.builderState.selectedBlocks.length > 0;
+		return store.selectedBlocks.length > 0;
 	},
 	multipleBlocksSelected: () => {
-		return store.builderState.selectedBlocks.length > 1;
+		return store.selectedBlocks.length > 1;
 	},
 	isText: () => {
-		return blockController.isBLockSelected() && store.builderState.selectedBlocks[0].isText();
+		return blockController.isBLockSelected() && store.selectedBlocks[0].isText();
 	},
 	isContainer: () => {
-		return blockController.isBLockSelected() && store.builderState.selectedBlocks[0].isContainer();
+		return blockController.isBLockSelected() && store.selectedBlocks[0].isContainer();
 	},
 	isImage: () => {
-		return blockController.isBLockSelected() && store.builderState.selectedBlocks[0].isImage();
+		return blockController.isBLockSelected() && store.selectedBlocks[0].isImage();
 	},
 	isButton: () => {
-		return blockController.isBLockSelected() && store.builderState.selectedBlocks[0].isButton();
+		return blockController.isBLockSelected() && store.selectedBlocks[0].isButton();
 	},
 	isLink: () => {
-		return blockController.isBLockSelected() && store.builderState.selectedBlocks[0].isLink();
+		return blockController.isBLockSelected() && store.selectedBlocks[0].isLink();
 	},
 	isInput: () => {
-		return blockController.isBLockSelected() && store.builderState.selectedBlocks[0].isInput();
+		return blockController.isBLockSelected() && store.selectedBlocks[0].isInput();
 	},
 	getAttribute: (attribute: string) => {
 		let attributeValue = "__initial__" as StyleValue;
-		store.builderState.selectedBlocks.forEach((block) => {
+		store.selectedBlocks.forEach((block) => {
 			if (attributeValue === "__initial__") {
 				attributeValue = block.getAttribute(attribute);
 			} else if (attributeValue !== block.getAttribute(attribute)) {
@@ -61,13 +67,13 @@ const blockController = {
 		return attributeValue;
 	},
 	setAttribute: (attribute: string, value: string) => {
-		store.builderState.selectedBlocks.forEach((block) => {
+		store.selectedBlocks.forEach((block) => {
 			block.setAttribute(attribute, value);
 		});
 	},
 	getKeyValue: (key: "element" | "innerHTML") => {
 		let keyValue = "__initial__" as StyleValue | undefined;
-		store.builderState.selectedBlocks.forEach((block) => {
+		store.selectedBlocks.forEach((block) => {
 			if (keyValue === "__initial__") {
 				keyValue = block[key];
 			} else if (keyValue !== block[key]) {
@@ -77,29 +83,29 @@ const blockController = {
 		return keyValue;
 	},
 	setKeyValue: (key: "element" | "innerHTML", value: string) => {
-		store.builderState.selectedBlocks.forEach((block) => {
+		store.selectedBlocks.forEach((block) => {
 			block[key] = value;
 		});
 	},
 	getRawStyles: () => {
-		return blockController.isBLockSelected() && store.builderState.selectedBlocks[0].rawStyles;
+		return blockController.isBLockSelected() && store.selectedBlocks[0].rawStyles;
 	},
 	setRawStyles: (rawStyles: BlockStyleMap) => {
-		store.builderState.selectedBlocks.forEach((block) => {
+		store.selectedBlocks.forEach((block) => {
 			block.rawStyles = rawStyles;
 		});
 	},
 	getParentBlock: () => {
-		return store.builderState.selectedBlocks[0].getParentBlock();
+		return store.selectedBlocks[0].getParentBlock();
 	},
 	setTextColor: (color: string) => {
-		store.builderState.selectedBlocks.forEach((block) => {
+		store.selectedBlocks.forEach((block) => {
 			block.setTextColor(color);
 		});
 	},
 	getTextColor: () => {
 		let color = "__initial__" as StyleValue;
-		store.builderState.selectedBlocks.forEach((block) => {
+		store.selectedBlocks.forEach((block) => {
 			if (color === "__initial__") {
 				color = block.getTextColor();
 			} else if (color !== block.getTextColor()) {
@@ -109,13 +115,13 @@ const blockController = {
 		return color;
 	},
 	setFontFamily: (value: string) => {
-		store.builderState.selectedBlocks.forEach((block) => {
+		store.selectedBlocks.forEach((block) => {
 			block.setFontFamily(value);
 		});
 	},
 	getFontFamily: () => {
 		let fontFamily = "__initial__" as StyleValue;
-		store.builderState.selectedBlocks.forEach((block) => {
+		store.selectedBlocks.forEach((block) => {
 			if (fontFamily === "__initial__") {
 				fontFamily = block.getFontFamily();
 			} else if (fontFamily !== block.getFontFamily()) {
@@ -125,18 +131,18 @@ const blockController = {
 		return fontFamily;
 	},
 	isHTML: () => {
-		return blockController.isBLockSelected() && store.builderState.selectedBlocks[0].isHTML();
+		return blockController.isBLockSelected() && store.selectedBlocks[0].isHTML();
 	},
 	getInnerHTML: () => {
-		return blockController.isBLockSelected() && store.builderState.selectedBlocks[0].innerHTML;
+		return blockController.isBLockSelected() && store.selectedBlocks[0].innerHTML;
 	},
 	setInnerHTML: (value: string) => {
-		store.builderState.selectedBlocks.forEach((block) => {
+		store.selectedBlocks.forEach((block) => {
 			block.innerHTML = value;
 		});
 	},
 	getTextContent: () => {
-		return store.builderState.selectedBlocks[0].getTextContent();
+		return store.selectedBlocks[0].getTextContent();
 	},
 };
 

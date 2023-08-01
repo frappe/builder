@@ -194,7 +194,7 @@ const topHandle = computed(() => {
 	return {
 		width: width,
 		height: height,
-		bottom: `clamp(-16px, calc(-6px * ${canvasProps.scale}), 2px)`,
+		bottom: `clamp(-20px, calc(-6px * ${canvasProps.scale}), -8px)`,
 		left: `calc(50% - ${width / 2}px)`,
 	};
 });
@@ -205,7 +205,7 @@ const bottomHandle = computed(() => {
 	return {
 		width: width,
 		height: height,
-		top: `clamp(-16px, calc(-6px * ${canvasProps.scale}), 2px)`,
+		top: `clamp(-20px, calc(-6px * ${canvasProps.scale}), -8px)`,
 		left: `calc(50% - ${width / 2}px)`,
 	};
 });
@@ -216,7 +216,7 @@ const leftHandle = computed(() => {
 	return {
 		width: width,
 		height: height,
-		right: `clamp(-16px, calc(-6px * ${canvasProps.scale}), 2px)`,
+		right: `clamp(-20px, calc(-6px * ${canvasProps.scale}), -8px)`,
 		top: `calc(50% - ${height / 2}px)`,
 	};
 });
@@ -227,7 +227,7 @@ const rightHandle = computed(() => {
 	return {
 		width: width,
 		height: height,
-		left: `clamp(-16px, calc(-6px * ${canvasProps.scale}), 2px)`,
+		left: `clamp(-20px, calc(-6px * ${canvasProps.scale}), -8px)`,
 		top: `calc(50% - ${height / 2}px)`,
 	};
 });

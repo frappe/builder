@@ -1,3 +1,4 @@
+import { UseRefHistoryReturn } from "@vueuse/core";
 import { defineStore } from "pinia";
 import { WebPageBeta } from "./types/WebsiteBuilder/WebPageBeta";
 import Block from "./utils/block";
@@ -9,7 +10,6 @@ const useStore = defineStore("store", {
 	state: () => ({
 		builderState: {
 			selectedPage: <string | null>null,
-			selectedBlocks: <Block[]>[],
 			editableBlock: <Block | null>null,
 			activeBreakpoint: "desktop",
 			mode: <BuilderMode>"select",
@@ -17,6 +17,8 @@ const useStore = defineStore("store", {
 			editingComponent: <Block | null>null,
 			editingMode: <EditingMode>"page",
 		},
+		selectedBlocks: <Block[]>[],
+		history: <UseRefHistoryReturn<{}, {}>>{},
 		usedComponents: {},
 		hoveredBlock: <string | null>null,
 		hoveredBreakpoint: <string | null>null,
@@ -251,6 +253,7 @@ const useStore = defineStore("store", {
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
 			this.builderState.selectedPage = page.name;
+			this.history?.clear();
 			// localStorage.setItem("selectedPage", page.name);
 		},
 		getImageBlock(imageSrc: string, imageAlt: string = "") {

@@ -181,7 +181,7 @@ class Block implements BlockOptions {
 	}
 	isSelected(): boolean {
 		const store = useStore();
-		return store.builderState.selectedBlocks.some((block: Block) => block.blockId === this.blockId);
+		return store.selectedBlocks.some((block: Block) => block.blockId === this.blockId);
 	}
 	isMovable(): boolean {
 		return this.getStyle("position") === "absolute";
@@ -242,16 +242,14 @@ class Block implements BlockOptions {
 	}
 	selectBlock() {
 		const store = useStore();
-		store.builderState.selectedBlocks = [this];
+		store.selectedBlocks = [this];
 	}
 	toggleSelectBlock() {
 		const store = useStore();
 		if (this.isSelected()) {
-			store.builderState.selectedBlocks = store.builderState.selectedBlocks.filter(
-				(block: Block) => block.blockId !== this.blockId
-			);
+			store.selectedBlocks = store.selectedBlocks.filter((block: Block) => block.blockId !== this.blockId);
 		} else {
-			store.builderState.selectedBlocks.push(this);
+			store.selectedBlocks.push(this);
 		}
 	}
 	getParentBlock(): Block | null {
