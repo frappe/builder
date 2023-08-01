@@ -11,7 +11,7 @@
 			:class="getStyleClasses">
 			<BlockDescription v-if="isBlockSelected && !resizing && !editable" :block="block"></BlockDescription>
 			<PaddingHandler
-				v-if="isBlockSelected && !resizing && !editable && store.builderState.selectedBlocks.length === 1"
+				v-if="isBlockSelected && !resizing && !editable && !blockController.multipleBlocksSelected()"
 				:target-block="block"
 				:on-update="updateTracker"
 				:disable-handlers="false"
@@ -22,7 +22,7 @@
 					!block.isRoot() &&
 					!resizing &&
 					!editable &&
-					store.builderState.selectedBlocks.length === 1
+					!blockController.multipleBlocksSelected()
 				"
 				:target-block="block"
 				:on-update="updateTracker"
@@ -35,7 +35,7 @@
 					!block.isText() &&
 					!block.isHTML() &&
 					!editable &&
-					store.builderState.selectedBlocks.length === 1
+					!blockController.multipleBlocksSelected()
 				"
 				:target-block="block"
 				:target="target" />
@@ -48,6 +48,7 @@ import Block from "@/utils/block";
 import { addPxToNumber } from "@/utils/helpers";
 import { Ref, computed, inject, nextTick, onMounted, ref, watch, watchEffect } from "vue";
 
+import blockController from "@/utils/blockController";
 import useStore from "../store";
 import setGuides from "../utils/guidesTracker";
 import trackTarget from "../utils/trackTarget";
@@ -65,7 +66,7 @@ const showResizer = computed(() => {
 		!props.block.isRoot() &&
 		!props.editable &&
 		isBlockSelected.value &&
-		store.builderState.selectedBlocks.length === 1 &&
+		!blockController.multipleBlocksSelected() &&
 		!props.block.isHTML()
 	);
 });

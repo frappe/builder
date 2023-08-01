@@ -58,7 +58,7 @@
 				@update:modelValue="(val) => blockController.setStyle('maxWidth', val)">
 				Max Width
 			</InlineInput>
-			<hr />
+			<hr class="dark:border-zinc-700" />
 			<InlineInput
 				:modelValue="blockController.getStyle('height')"
 				@update:modelValue="(val) => blockController.setStyle('height', val)">

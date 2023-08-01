@@ -22,10 +22,7 @@
 				{{ tab }}
 			</button>
 		</div> -->
-		<BlockProperties
-			v-if="store.builderState.selectedBlocks.length"
-			v-show="activeTab === 'Properties'"
-			class="p-4" />
+		<BlockProperties v-if="store.selectedBlocks.length" v-show="activeTab === 'Properties'" class="p-4" />
 		<PageData class="p-4" v-show="activeTab === 'Data'" />
 	</div>
 </template>

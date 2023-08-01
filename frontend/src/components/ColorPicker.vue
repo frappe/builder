@@ -101,10 +101,13 @@
 	</Popover>
 </template>
 <script setup lang="ts">
+import useStore from "@/store";
 import { HSVToHex, HexToHSV, RGBToHex, getRGB } from "@/utils/helpers";
 import { clamp, useEyeDropper } from "@vueuse/core";
 import { Popover } from "frappe-ui";
+
 import { PropType, Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
+const store = useStore();
 
 const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;
 const colorMap = ref(null) as unknown as Ref<HTMLDivElement>;
@@ -179,6 +182,7 @@ const handleSelectorMove = (ev: MouseEvent) => {
 
 const handleHueSelectorMove = (ev: MouseEvent) => {
 	setHue(ev);
+	store.history.pause();
 	const mouseMove = (mouseMoveEvent: MouseEvent) => {
 		mouseMoveEvent.preventDefault();
 		setHue(mouseMoveEvent);
@@ -189,6 +193,7 @@ const handleHueSelectorMove = (ev: MouseEvent) => {
 		(mouseUpEvent) => {
 			document.removeEventListener("mousemove", mouseMove);
 			mouseUpEvent.preventDefault();
+			store.history.resume();
 		},
 		{ once: true }
 	);

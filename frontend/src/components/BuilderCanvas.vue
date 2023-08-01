@@ -55,11 +55,12 @@
 <script setup lang="ts">
 import webComponent from "@/data/webComponent";
 import Block from "@/utils/block";
+import blockController from "@/utils/blockController";
 import Component from "@/utils/component";
 import { useDebouncedRefHistory, useDropZone, useElementBounding } from "@vueuse/core";
 import { FeatherIcon, FileUploadHandler, toast } from "frappe-ui";
 import { storeToRefs } from "pinia";
-import { PropType, computed, nextTick, onMounted, provide, reactive, ref, watch } from "vue";
+import { PropType, computed, nextTick, onMounted, provide, reactive, ref } from "vue";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BuilderBlock from "./BuilderBlock.vue";
@@ -124,7 +125,7 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 });
 
 const clearSelectedComponent = () => {
-	store.builderState.selectedBlocks = [];
+	blockController.clearSelection();
 	store.builderState.editableBlock = null;
 	if (document.activeElement instanceof HTMLElement) {
 		document.activeElement.blur();
@@ -142,7 +143,7 @@ document.addEventListener("keydown", (e) => {
 	if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
 		return;
 	}
-	if (e.key === "Backspace" && store.builderState.selectedBlocks.length && !target.isContentEditable) {
+	if (e.key === "Backspace" && blockController.isBLockSelected() && !target.isContentEditable) {
 		function findBlockAndRemove(blocks: Array<Block>, blockId: string) {
 			if (blockId === "root") {
 				toast({
@@ -169,7 +170,7 @@ document.addEventListener("keydown", (e) => {
 				}
 			});
 		}
-		for (const block of store.builderState.selectedBlocks) {
+		for (const block of blockController.getSelectedBlocks()) {
 			findBlockAndRemove(store.builderState.blocks, block.blockId);
 		}
 		clearSelectedComponent();
@@ -181,9 +182,9 @@ document.addEventListener("keydown", (e) => {
 	}
 
 	// handle arrow keys
-	if (e.key.startsWith("Arrow") && store.builderState.selectedBlocks.length) {
+	if (e.key.startsWith("Arrow") && blockController.isBLockSelected()) {
 		const key = e.key.replace("Arrow", "").toLowerCase() as "up" | "down" | "left" | "right";
-		for (const block of store.builderState.selectedBlocks) {
+		for (const block of blockController.getSelectedBlocks()) {
 			block.move(key);
 		}
 	}
@@ -235,44 +236,29 @@ onMounted(() => {
 });
 
 const { builderState } = storeToRefs(store);
-const { undo, redo, canUndo, canRedo, clear } = useDebouncedRefHistory(builderState, {
-	capacity: 100,
+
+// @ts-ignore
+store.history = useDebouncedRefHistory(builderState, {
+	capacity: 50,
 	deep: true,
 	clone: (obj) => {
 		let newObj = Object.assign({}, obj);
 		newObj.blocks = obj.blocks.map((val) => store.getBlockCopy(val, true));
-		if (obj.selectedBlocks) {
-			newObj.selectedBlocks = obj.selectedBlocks.map((val) => {
-				return store.findBlock(val.blockId, newObj.blocks);
-			}) as Array<Block>;
-		}
 		return newObj;
 	},
 	debounce: 200,
 });
-
-watch(
-	() => builderState.value.selectedPage,
-	async (newValue, oldValue) => {
-		if (newValue !== oldValue) {
-			await nextTick();
-			clear();
-		}
-	}
-);
 
 document.addEventListener("keydown", (e) => {
 	const target = e.target as HTMLElement;
 	if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.getAttribute("contenteditable")) {
 		return;
 	}
-	if (e.key === "z" && e.metaKey && !e.shiftKey && canUndo.value) {
-		undo();
-		e.preventDefault();
+	if (e.key === "z" && e.metaKey && !e.shiftKey && store.history.canUndo) {
+		store.history.undo();
 	}
-	if (e.key === "z" && e.shiftKey && e.metaKey && canRedo.value) {
-		redo();
-		e.preventDefault();
+	if (e.key === "z" && e.shiftKey && e.metaKey && store.history.canRedo) {
+		store.history.redo();
 	}
 
 	if (e.metaKey || e.ctrlKey || e.shiftKey) {
