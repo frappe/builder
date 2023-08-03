@@ -1,9 +1,9 @@
 import { UseRefHistoryReturn } from "@vueuse/core";
 import { defineStore } from "pinia";
+import webComponent from "./data/webComponent";
 import { WebPageBeta } from "./types/WebsiteBuilder/WebPageBeta";
 import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
-import Component from "./utils/component";
 import { stripExtension } from "./utils/helpers";
 
 const useStore = defineStore("store", {
@@ -14,7 +14,7 @@ const useStore = defineStore("store", {
 			activeBreakpoint: "desktop",
 			mode: <BuilderMode>"select",
 			blocks: <Block[]>[new Block(getBlockTemplate("body"))],
-			editingComponent: <Block | null>null,
+			editingComponent: <string | null>null,
 			editingMode: <EditingMode>"page",
 		},
 		selectedBlocks: <Block[]>[],
@@ -157,18 +157,21 @@ const useStore = defineStore("store", {
 			{
 				icon: "monitor",
 				device: "desktop",
+				displayName: "Desktop",
 				width: 1400,
 				visible: true,
 			},
 			{
 				icon: "tablet",
 				device: "tablet",
+				displayName: "Tablet",
 				width: 800,
 				visible: false,
 			},
 			{
 				icon: "smartphone",
 				device: "mobile",
+				displayName: "Mobile",
 				width: 640,
 				visible: false,
 			},
@@ -320,19 +323,58 @@ const useStore = defineStore("store", {
 			this.builderState.editableBlock = null;
 		},
 		getBlockInstance(options: BlockOptions) {
-			if (options.isComponent) {
-				return new Component(options as ComponentOptions);
-			} else {
-				return new Block(options);
-			}
+			return new Block(options);
 		},
 		editComponent(block: Block) {
-			this.builderState.editableBlock = block;
+			if (block.isComponent()) {
+				this.builderState.editingComponent = block?.extendedFromComponent as string;
+			}
 			this.builderState.editingMode = "component";
 		},
-		editPage() {
-			this.builderState.editableBlock = null;
+		isComponentUsed(componentName: string) {
+			// TODO: Refactor or reduce complexity
+			const checkComponent = (block: Block) => {
+				if (block.extendedFromComponent === componentName) {
+					console.log("component used", componentName);
+					return true;
+				}
+				if (block.children) {
+					for (const child of block.children) {
+						if (checkComponent(child)) {
+							return true;
+						}
+					}
+				}
+				return false;
+			};
+			for (const block of this.builderState.blocks) {
+				if (checkComponent(block)) {
+					return true;
+				}
+			}
+			return false;
+		},
+		editPage(saveComponent = false) {
 			this.builderState.editingMode = "page";
+			this.builderState.editableBlock = null;
+
+			if (saveComponent && this.builderState.editingComponent) {
+				webComponent.setValue.submit({
+					name: this.builderState.editingComponent,
+					block: this.getComponentBlock(this.builderState.editingComponent),
+				});
+				this.builderState.editingComponent = null;
+			}
+		},
+		getComponentBlock(componentName: string) {
+			return webComponent.getRow(componentName).block as Block;
+		},
+		getComponentName(componentId: string) {
+			let componentObj = webComponent.getRow(componentId);
+			if (!componentObj) {
+				return componentId;
+			}
+			return componentObj.component_name as Block;
 		},
 	},
 });

@@ -7,7 +7,7 @@ type styleProperty = keyof CSSProperties;
 class Block implements BlockOptions {
 	blockId: string;
 	blockName?: string;
-	element: string;
+	element?: string;
 	children: Array<Block>;
 	draggable?: boolean;
 	baseStyles: BlockStyleMap;
@@ -18,13 +18,12 @@ class Block implements BlockOptions {
 	classes: Array<string>;
 	innerText?: string;
 	innerHTML?: string;
-	componentData: ComponentData;
-	isComponent?: boolean;
+	extendedFromComponent?: string;
 	originalElement?: string | undefined;
 	constructor(options: BlockOptions) {
 		this.element = options.element;
-		this.draggable = options.draggable;
 		this.innerHTML = options.innerHTML;
+		this.extendedFromComponent = options.extendedFromComponent;
 		if (options.innerText) {
 			this.innerHTML = options.innerText;
 		}
@@ -49,12 +48,6 @@ class Block implements BlockOptions {
 		this.blockName = options.blockName;
 		delete this.attributes.style;
 		this.classes = options.classes || [];
-		this.isComponent = options.isComponent;
-
-		this.componentData = {
-			name: options.blockName,
-			isDynamic: false,
-		};
 
 		if (this.isRoot()) {
 			this.blockId = "root";
@@ -62,7 +55,70 @@ class Block implements BlockOptions {
 			this.setBaseStyle("minHeight", "100vh");
 		}
 	}
+
+	getStyles(breakpoint: string = "desktop") {
+		if (this.isComponent()) {
+			return this.getComponentStyles(breakpoint);
+		}
+		let styleObj = this.baseStyles;
+		if (breakpoint === "mobile") {
+			styleObj = { ...styleObj, ...this.mobileStyles };
+		} else if (breakpoint === "tablet") {
+			styleObj = { ...styleObj, ...this.tabletStyles };
+		}
+		styleObj = { ...styleObj, ...this.rawStyles };
+
+		return styleObj;
+	}
+	getComponent() {
+		const store = useStore();
+		return store.getComponentBlock(this.extendedFromComponent as string);
+	}
+
+	getComponentStyles(breakpoint: string): BlockStyleMap {
+		return this.getComponent()?.getStyles(breakpoint);
+	}
+
+	getAttributes() {
+		if (this.isComponent()) {
+			return this.getComponentAttributes();
+		}
+		return this.attributes;
+	}
+	getComponentAttributes() {
+		return this.getComponent()?.attributes || {};
+	}
+
+	getClasses() {
+		if (this.isComponent()) {
+			return this.getComponentClasses();
+		}
+		return this.classes;
+	}
+
+	getComponentClasses() {
+		return this.getComponent()?.classes || [];
+	}
+
+	getChildren() {
+		if (this.isComponent()) {
+			return this.getComponentChildren();
+		}
+		return this.children;
+	}
+
+	hasChildren() {
+		return this.getChildren().length > 0;
+	}
+
+	getComponentChildren() {
+		return this.getComponent()?.children || [];
+	}
+
 	getBlockDescription() {
+		if (this.isComponent()) {
+			return this.getComponentBlockDescription();
+		}
 		if (this.isHTML()) {
 			return "raw";
 		}
@@ -71,6 +127,10 @@ class Block implements BlockOptions {
 			description += " | " + this.getTextContent();
 		}
 		return description;
+	}
+	getComponentBlockDescription() {
+		const store = useStore();
+		return store.getComponentName(this.extendedFromComponent as string);
 	}
 	getTextContent() {
 		let editor = this.getEditor();
@@ -160,11 +220,19 @@ class Block implements BlockOptions {
 		return this.originalElement === "body";
 	}
 	getTag() {
+		if (this.isComponent()) {
+			return this.getComponentTag();
+		}
 		if (this.isButton() || this.isInput()) {
 			return "div";
 		}
 		return this.element;
 	}
+
+	getComponentTag() {
+		return this.getComponent()?.element || "div";
+	}
+
 	isDiv() {
 		return this.element === "div";
 	}
@@ -206,7 +274,10 @@ class Block implements BlockOptions {
 			this.setStyle("left", addPxToNumber(left));
 		}
 	}
-	addChild(child: BlockOptions, index?: number) {
+	addChild(child: BlockOptions, index?: number, extendedFromComponent?: string) {
+		if (extendedFromComponent) {
+			child.extendedFromComponent = extendedFromComponent;
+		}
 		const childBlock = new Block(child);
 		if (index) {
 			this.children.splice(index, 0, childBlock);
@@ -214,6 +285,12 @@ class Block implements BlockOptions {
 			this.children.push(childBlock);
 		}
 		return childBlock;
+	}
+	removeChild(child: Block) {
+		const index = this.children.findIndex((block) => block.blockId === child.blockId);
+		if (index > -1) {
+			this.children.splice(index, 1);
+		}
 	}
 	addChildAfter(child: BlockOptions, siblingBlock: Block) {
 		const siblingIndex = this.children.findIndex((block) => block.blockId === siblingBlock.blockId);
@@ -311,6 +388,9 @@ class Block implements BlockOptions {
 		nextTick(() => {
 			this.getEditor()?.commands.focus("all");
 		});
+	}
+	isComponent() {
+		return Boolean(this.extendedFromComponent);
 	}
 }
 

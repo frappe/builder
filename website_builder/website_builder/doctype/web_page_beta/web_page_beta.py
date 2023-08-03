@@ -67,36 +67,37 @@ def get_block_html(blocks):
 
 	def get_html(blocks, soup):
 		html = ""
-		def get_tag(node, soup):
-			element = node.get("originalElement") or node["element"]
+		def get_tag(block, soup):
+			block = extend_with_component(block)
+			element = block.get("originalElement") or block.get("element")
 			# temp fix: since p inside p is illegal
 			if element in ["p", "__raw_html__"]:
 				element = "div"
 			tag = soup.new_tag(element)
-			tag.attrs = node.get("attributes", {})
-			classes = node.get("classes", [])
-			if node.get("baseStyles", {}):
+			tag.attrs = block.get("attributes", {})
+			classes = block.get("classes", [])
+			if block.get("baseStyles", {}):
 				style_class = f"frappe-builder-{frappe.generate_hash(length=8)}"
-				base_styles = node.get("baseStyles", {})
-				mobile_styles = node.get("mobileStyles", {})
-				tablet_styles = node.get("tabletStyles", {})
+				base_styles = block.get("baseStyles", {})
+				mobile_styles = block.get("mobileStyles", {})
+				tablet_styles = block.get("tabletStyles", {})
 				set_fonts([base_styles, mobile_styles, tablet_styles], font_map)
-				append_style(node.get("baseStyles", {}), style_tag, style_class)
-				append_style(node.get("rawStyles", {}), style_tag, style_class)
-				append_style(node.get("tabletStyles", {}), style_tag, style_class, device="tablet")
-				append_style(node.get("mobileStyles", {}), style_tag, style_class, device="mobile")
+				append_style(block.get("baseStyles", {}), style_tag, style_class)
+				append_style(block.get("rawStyles", {}), style_tag, style_class)
+				append_style(block.get("tabletStyles", {}), style_tag, style_class, device="tablet")
+				append_style(block.get("mobileStyles", {}), style_tag, style_class, device="mobile")
 				classes.append(style_class)
 
 			tag.attrs["class"] = get_class(classes)
 
-			innerContent = node.get("innerHTML")
+			innerContent = block.get("innerHTML")
 			if innerContent:
 				inner_soup = bs.BeautifulSoup(innerContent, "html.parser")
 				set_fonts_from_html(inner_soup, font_map)
 				tag.append(inner_soup)
 
 
-			for child in node.get("children", []):
+			for child in block.get("children", []):
 				tag.append(get_tag(child, soup))
 			return tag
 
@@ -149,11 +150,52 @@ def set_fonts_from_html(soup, font_map):
 				if font:
 					font_map[font] = { "weights": ["400"] }
 
+def extend_with_component(block):
+	if block.get("extendedFromComponent"):
+		component = frappe.get_cached_value("Web Page Component", block["extendedFromComponent"], ["block", "name"], as_dict=True)
+		componentBlock = frappe.parse_json(component.block)
+		if componentBlock:
+			block.update(componentBlock)
+	return block
+
 def get_style_file_path():
 	# TODO: Redo this, currently it loads the first matching file
+	# from frappe.utils import get_url
+	# return get_url("/files/tailwind.css")
 	import glob
 	folder_path = "./assets/website_builder/frontend/assets/"
 	file_pattern = "index.*.css"
 	matching_files = glob.glob(f"{folder_path}/{file_pattern}")
 	if matching_files:
 		return frappe.utils.get_url(matching_files[0].lstrip("."))
+
+# def generate_tailwind_css_file_from_html(html):
+# 	# execute tailwindcss cli command to generate css file
+# 	import subprocess
+# 	import os
+# 	import json
+# 	import shutil
+# 	from frappe.utils import get_site_path, get_site_base_path
+
+# 	# create temp folder
+# 	temp_folder = os.path.join(get_site_base_path(), "temp")
+# 	if os.path.exists(temp_folder):
+# 		shutil.rmtree(temp_folder)
+# 	os.mkdir(temp_folder)
+
+# 	# create temp html file
+# 	temp_html_file_path = os.path.join(temp_folder, "temp.html")
+# 	with open(temp_html_file_path, "w") as f:
+# 		f.write(html)
+
+
+# 	# place tailwind.css file in public folder
+# 	tailwind_css_file_path = os.path.join(get_site_path(), "public", "files", "tailwind.css")
+
+# 	# create temp config file
+# 	temp_config_file_path = os.path.join(temp_folder, "tailwind.config.js")
+# 	with open(temp_config_file_path, "w") as f:
+# 		f.write("module.exports = {content: ['./temp.html']}")
+
+# 	# run tailwindcss cli command in production mode
+# 	subprocess.run(["npx", "tailwindcss", "-o", tailwind_css_file_path, "--config", temp_config_file_path, "--minify"])

@@ -15,8 +15,8 @@
 			:block="child"
 			:breakpoint="breakpoint"
 			:preview="preview"
-			:isChildOfComponent="block.isComponent || isChildOfComponent"
-			v-for="child in block.children" />
+			:isChildOfComponent="block.isComponent() || isChildOfComponent"
+			v-for="child in block.getChildren()" />
 	</component>
 	<teleport to="#overlay" v-if="store.overlayElement && !preview && canvasProps">
 		<BlockEditor
@@ -73,11 +73,11 @@ const getComponentName = (block: Block) => {
 };
 
 const classes = computed(() => {
-	return [attrs.class, "__builder_component__", "outline-none", "select-none", ...props.block.classes];
+	return [attrs.class, "__builder_component__", "outline-none", "select-none", ...props.block.getClasses()];
 });
 
 const attributes = computed(() => {
-	const attribs = { ...props.block.attributes, ...attrs };
+	const attribs = { ...props.block.getAttributes(), ...attrs };
 	if (props.block.isText() || props.block.isHTML() || props.block.isLink() || props.block.isButton()) {
 		attribs.block = props.block;
 		attribs.preview = props.preview;
@@ -97,14 +97,14 @@ const target = computed(() => {
 });
 
 const styles = computed(() => {
-	let styleObj = props.block.baseStyles;
-	if (props.breakpoint === "mobile") {
-		styleObj = { ...styleObj, ...props.block.mobileStyles };
-	} else if (props.breakpoint === "tablet") {
-		styleObj = { ...styleObj, ...props.block.tabletStyles };
-	}
-	styleObj = { ...styleObj, ...props.block.rawStyles };
-	return { ...styleObj, ...props.block.getEditorStyles() };
+	// let styleObj = props.block.baseStyles;
+	// if (props.breakpoint === "mobile") {
+	// 	styleObj = { ...styleObj, ...props.block.mobileStyles };
+	// } else if (props.breakpoint === "tablet") {
+	// 	styleObj = { ...styleObj, ...props.block.tabletStyles };
+	// }
+	// styleObj = { ...styleObj, ...props.block.rawStyles };
+	return { ...props.block.getStyles(props.breakpoint), ...props.block.getEditorStyles() };
 });
 
 const loadEditor = computed(() => {
@@ -129,7 +129,7 @@ onMounted(async () => {
 const isEditable = computed(() => {
 	return (
 		store.builderState.editableBlock === props.block &&
-		!(props.block.isComponent || props.isChildOfComponent) &&
+		!(props.block.isComponent() || props.isChildOfComponent) &&
 		store.builderState.activeBreakpoint === props.breakpoint // to ensure it is right block and not on different breakpoint
 	);
 });
@@ -171,6 +171,7 @@ const triggerContextMenu = (e: MouseEvent) => {
 };
 
 const handleClick = (e: MouseEvent) => {
+	console.log(props.block);
 	if (isEditable.value) return;
 	if (!props.isChildOfComponent) {
 		selectBlock(e);
@@ -186,22 +187,23 @@ const handleDoubleClick = (e: MouseEvent) => {
 		store.builderState.editableBlock = props.block;
 		e.stopPropagation();
 	}
-	if (props.block.isComponent) {
-		// store.editingComponent = props.block;
+	if (props.block.isComponent()) {
+		store.editComponent(props.block);
 		e.stopPropagation();
 	}
 
 	// dblclick on container adds text block or selects text block if only one child
+	let children = props.block.getChildren();
 	if (props.block.isContainer()) {
-		if (props.block.children.length === 0) {
+		if (!children.length) {
 			const child = getBlockTemplate("text");
 			props.block.setBaseStyle("alignItems", "center");
 			props.block.setBaseStyle("justifyContent", "center");
 			const childBlock = props.block.addChild(child);
 			childBlock.makeBlockEditable();
 			e.stopPropagation();
-		} else if (props.block.children.length === 1 && props.block.children[0].isText()) {
-			const child = props.block.children[0];
+		} else if (children.length === 1 && children[0].isText()) {
+			const child = children[0];
 			child.makeBlockEditable();
 			e.stopPropagation();
 		}
@@ -224,4 +226,59 @@ const handleMouseLeave = (e: MouseEvent) => {
 		}
 	}
 };
+
+// let ghostElement = null as HTMLElement | null;
+
+// const handleDragStart = (e: DragEvent) => {
+// 	console.log(e, props.block.blockId);
+// 	e.dataTransfer?.setData("block", props.block.blockId);
+// 	const target = e.target as HTMLElement;
+// 	ghostElement = target.cloneNode(true) as HTMLElement;
+// 	ghostElement.id = "ghost";
+// 	ghostElement.style.position = "fixed";
+// 	ghostElement.style.transform = `scale(${canvasProps?.scale})`;
+// 	document.body.appendChild(ghostElement);
+// 	if (e.dataTransfer) {
+// 		e.dataTransfer.effectAllowed = "move";
+// 		const blankImage = document.createElement("img");
+// 		e.dataTransfer.setDragImage(blankImage, e.offsetX, e.offsetY);
+// 	}
+// };
+
+// const handleDrag = (e: DragEvent) => {
+// 	const target = e.target as HTMLElement;
+// 	ghostElement = ghostElement as HTMLElement;
+// 	ghostElement.style.left = e.clientX - target.offsetWidth / 2 + "px";
+// 	ghostElement.style.top = e.clientY - target.offsetHeight / 2 + "px";
+// };
+
+// const handleDragEnd = (e: DragEvent) => {
+// 	const target = e.target as HTMLElement;
+// 	if (ghostElement) {
+// 		ghostElement.remove();
+// 	}
+// 	target.style.opacity = "1";
+// };
+
+// const handleDrop = (e: DragEvent) => {
+// 	store.history.pause();
+// 	// move block to new container
+// 	if (e.dataTransfer) {
+// 		const blockId = e.dataTransfer.getData("block");
+// 		const block = store.findBlock(blockId);
+// 		if (block) {
+// 			const newParent = props.block;
+// 			const oldParent = block.getParentBlock();
+// 			if (newParent.blockId === oldParent?.blockId) return;
+// 			if (newParent.isContainer()) {
+// 				if (oldParent) {
+// 					oldParent.removeChild(block);
+// 				}
+// 				newParent.addChild(block);
+// 				store.selectBlock(block, e);
+// 			}
+// 		}
+// 	}
+// 	store.history.resume();
+// };
 </script>

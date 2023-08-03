@@ -67,6 +67,7 @@ const showResizer = computed(() => {
 		!props.editable &&
 		isBlockSelected.value &&
 		!blockController.multipleBlocksSelected() &&
+		!props.block.isComponent() &&
 		!props.block.isHTML()
 	);
 });
@@ -110,6 +111,7 @@ watchEffect(() => {
 	store.builderLayout.leftPanelWidth;
 	store.builderLayout.rightPanelWidth;
 	store.showPanels;
+
 	nextTick(() => {
 		updateTracker.value();
 	});
@@ -124,7 +126,7 @@ const getStyleClasses = computed(() => {
 	if (movable.value && !props.block.isRoot()) {
 		classes.push("cursor-grab");
 	}
-	if (props.block.isComponent) {
+	if (props.block.isComponent()) {
 		classes.push("ring-purple-400");
 	} else {
 		classes.push("ring-blue-400");
@@ -172,6 +174,13 @@ const handleClick = (ev: MouseEvent) => {
 		element.dispatchEvent(new MouseEvent("click", ev));
 	}
 };
+
+// // dispatch drop event to the target block
+// const handleDrop = (ev: DragEvent) => {
+// 	if (props.editable) return;
+// 	const dropEvent = new DragEvent("drop", ev);
+// 	props.target.dispatchEvent(dropEvent);
+// };
 
 const handleDoubleClick = () => {
 	if (props.editable) return;

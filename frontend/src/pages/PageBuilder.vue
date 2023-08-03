@@ -12,7 +12,7 @@
 			<BuilderCanvas
 				ref="componentEditor"
 				v-if="store.builderState.editingComponent"
-				:block="store.builderState.editingComponent"
+				:block="store.getComponentBlock(store.builderState.editingComponent)"
 				:canvas-props="store.componentEditorCanvas"
 				:canvas-styles="{
 					width: 'auto',
@@ -51,6 +51,7 @@ import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
 import blockController from "@/utils/blockController";
+import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { isHTMLString } from "@/utils/helpers";
 import { nextTick, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -92,9 +93,9 @@ document.addEventListener("paste", (e) => {
 			blockController.setInnerHTML(text);
 		}
 	} else {
-		const textJSON = e.clipboardData?.getData("text/plain");
-		if (textJSON) {
-			const data = JSON.parse(textJSON);
+		const text = e.clipboardData?.getData("text/plain") as string;
+		try {
+			const data = JSON.parse(text);
 			// check if data is from builder and a list of blocks
 			if (Array.isArray(data) && data[0].blockId) {
 				if (store.selectedBlocks.length) {
@@ -104,6 +105,14 @@ document.addEventListener("paste", (e) => {
 					});
 				} else {
 					store.pushBlocks(data);
+				}
+			}
+		} catch (error) {
+			if (text && isHTMLString(text)) {
+				e.preventDefault();
+				const block = convertHTMLToBlocks(text) as BlockOptions;
+				if (block) {
+					store.pushBlocks([block]);
 				}
 			}
 		}

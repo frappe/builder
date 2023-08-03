@@ -35,6 +35,9 @@
 				}"
 				v-for="breakpoint in visibleBreakpoints"
 				:key="breakpoint.device">
+				<div class="text-md absolute left-0 top-[-35px] select-none text-gray-800 dark:text-zinc-300">
+					{{ breakpoint.displayName }}
+				</div>
 				<BuilderBlock :block="block" v-if="showBlocks" :breakpoint="breakpoint.device" />
 			</div>
 		</div>
@@ -56,7 +59,6 @@
 import webComponent from "@/data/webComponent";
 import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
-import Component from "@/utils/component";
 import { useDebouncedRefHistory, useDropZone, useElementBounding } from "@vueuse/core";
 import { FeatherIcon, FileUploadHandler, toast } from "frappe-ui";
 import { storeToRefs } from "pinia";
@@ -102,7 +104,8 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 		}
 		let componentName = ev.dataTransfer?.getData("componentName");
 		if (componentName) {
-			block.addChild(new Component(webComponent.getRow(componentName).block));
+			const blockCopy = store.getBlockCopy(webComponent.getRow(componentName).block);
+			block.addChild(blockCopy, 0, componentName);
 			ev.stopPropagation();
 		} else if (files && files.length) {
 			const uploader = new FileUploadHandler();
@@ -174,10 +177,12 @@ document.addEventListener("keydown", (e) => {
 			findBlockAndRemove(store.builderState.blocks, block.blockId);
 		}
 		clearSelectedComponent();
+		e.stopPropagation();
+		return;
 	}
 
 	if (e.key === "Escape") {
-		store.editPage();
+		store.editPage(true);
 		clearSelectedComponent();
 	}
 
@@ -237,7 +242,6 @@ onMounted(() => {
 
 const { builderState } = storeToRefs(store);
 
-// @ts-ignore
 store.history = useDebouncedRefHistory(builderState, {
 	capacity: 50,
 	deep: true,
@@ -247,7 +251,7 @@ store.history = useDebouncedRefHistory(builderState, {
 		return newObj;
 	},
 	debounce: 200,
-});
+}) as unknown as typeof store.history;
 
 document.addEventListener("keydown", (e) => {
 	const target = e.target as HTMLElement;
