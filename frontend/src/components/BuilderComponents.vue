@@ -23,6 +23,7 @@
 					{{ component.component_name }}
 				</p>
 				<FeatherIcon
+					v-if="component.for_web_page"
 					name="trash"
 					class="absolute right-2 top-2 hidden h-7 w-7 cursor-pointer rounded bg-white p-2 group-hover:block"
 					@click.stop.prevent="deleteComponent(component)"></FeatherIcon>

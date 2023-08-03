@@ -111,6 +111,7 @@ watchEffect(() => {
 	store.builderLayout.leftPanelWidth;
 	store.builderLayout.rightPanelWidth;
 	store.showPanels;
+	store.deviceBreakpoints;
 
 	nextTick(() => {
 		updateTracker.value();
