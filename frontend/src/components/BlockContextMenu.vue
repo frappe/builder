@@ -41,7 +41,6 @@ import webComponent from "@/data/webComponent";
 import useStore from "@/store";
 import { WebPageComponent } from "@/types/WebsiteBuilder/WebPageComponent";
 import Block from "@/utils/block";
-import Component from "@/utils/component";
 import { copyToClipboard, getNumberFromPx } from "@/utils/helpers";
 import { vOnClickOutside } from "@vueuse/components";
 import { Dialog } from "frappe-ui";
@@ -135,8 +134,8 @@ const createComponentHandler = ({ close }: { close: () => void }) => {
 		.then(async (data: WebPageComponent) => {
 			await webComponent.list.promise;
 			const block = store.findBlock(props.block.blockId);
-			const component = new Component(webComponent.getRow(data.name).block);
-			Object.assign(block, component);
+			if (!block) return;
+			block.extendedFromComponent = data.name;
 		});
 	close();
 };
@@ -152,7 +151,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Save as Component",
 		action: () => (showDialog.value = true),
-		condition: () => !props.block.isComponent,
+		condition: () => !props.block.isComponent(),
 	},
 	{ label: "Duplicate", action: duplicateBlock },
 ];

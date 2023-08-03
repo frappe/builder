@@ -1,7 +1,7 @@
 import { createListResource } from "frappe-ui";
 
 import useStore from "@/store";
-import { reactive } from "vue";
+import Block from "@/utils/block";
 const store = useStore();
 
 const webComponent = createListResource({
@@ -15,9 +15,9 @@ const webComponent = createListResource({
 	auto: true,
 	transform(data: any[]) {
 		data.forEach((d) => {
-			d.block = reactive(store.getBlockCopy(JSON.parse(d.block)));
-			d.block.isComponent = true;
-			d.block.blockName = d.block.blockName || d.component_name;
+			if (!(d.block instanceof Block)) {
+				d.block = new Block(store.getBlockCopy(JSON.parse(d.block)));
+			}
 		});
 		return data;
 	},

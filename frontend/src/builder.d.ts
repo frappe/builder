@@ -10,7 +10,7 @@ declare interface BlockAttributeMap {
 
 declare interface BlockOptions {
 	blockId?: string | undefined;
-	element: string;
+	element?: string;
 	originalElement?: string;
 	baseStyles?: BlockStyleMap;
 	mobileStyles?: BlockStyleMap;

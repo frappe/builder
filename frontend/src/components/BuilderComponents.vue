@@ -36,6 +36,9 @@ import BuilderBlock from "./BuilderBlock.vue";
 
 import webComponent from "@/data/webComponent";
 
+import useStore from "@/store";
+const store = useStore();
+
 const components = computed(() => webComponent.data || []);
 
 const setScale = async (el: HTMLElement, block: BlockOptions) => {
@@ -46,9 +49,15 @@ const setScale = async (el: HTMLElement, block: BlockOptions) => {
 };
 
 const deleteComponent = async (component: BlockComponent) => {
-	const confirmed = await confirm(`Are you sure you want to delete component: ${component.component_name}?`);
-	if (confirmed) {
-		webComponent.delete.submit(component.name);
+	if (store.isComponentUsed(component.name)) {
+		alert("Component is used in a page. You cannot delete it.");
+	} else {
+		const confirmed = await confirm(
+			`Are you sure you want to delete component: ${component.component_name}?`
+		);
+		if (confirmed) {
+			webComponent.delete.submit(component.name);
+		}
 	}
 };
 

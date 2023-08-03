@@ -28,17 +28,17 @@
 									:name="!element.collapsed ? 'chevron-down' : 'chevron-right'"
 									class="mr-1 h-3 w-3"
 									v-if="
-										element.children && element.children.length && !element.isRoot() && !element.isComponent
+										element.children && element.children.length && !element.isRoot() && !element.isComponent()
 									"
 									@click.stop="element.collapsed = !element.collapsed" />
-								<FeatherIcon :name="element.getIcon()" class="mr-1 h-3 w-3" v-if="!element.isComponent" />
+								<FeatherIcon :name="element.getIcon()" class="mr-1 h-3 w-3" v-if="!element.isComponent()" />
 								<svg
 									class="mr-1 h-3 w-3"
 									xmlns="http://www.w3.org/2000/svg"
 									width="16"
 									height="16"
 									viewBox="0 0 24 24"
-									v-if="element.isComponent">
+									v-if="element.isComponent()">
 									<g
 										fill="none"
 										stroke="currentColor"
@@ -63,7 +63,7 @@
 							</span>
 							<div
 								v-show="!element.collapsed"
-								v-if="!(element.isComponent || element.isText() || element.isImage())">
+								v-if="!(element.isComponent() || element.isText() || element.isImage())">
 								<BlockLayers :blocks="element.children" class="ml-1" />
 							</div>
 						</div>
