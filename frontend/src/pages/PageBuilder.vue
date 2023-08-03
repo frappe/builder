@@ -52,7 +52,7 @@ import useStore from "@/store";
 import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
 import blockController from "@/utils/blockController";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
-import { isHTMLString } from "@/utils/helpers";
+import { copyToClipboard, isHTMLString } from "@/utils/helpers";
 import { nextTick, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
@@ -82,9 +82,14 @@ document.addEventListener("keydown", (e) => {
 		e.preventDefault();
 		store.showPanels = !store.showPanels;
 	}
+	if (e.key === "c" && e.metaKey) {
+		e.preventDefault();
+		if (store.selectedBlocks.length) {
+			copyToClipboard(JSON.stringify(store.selectedBlocks));
+		}
+	}
 });
 
-// detects if user is pasting HTML on HTML block
 document.addEventListener("paste", (e) => {
 	if (blockController.isHTML()) {
 		e.preventDefault();
@@ -100,8 +105,7 @@ document.addEventListener("paste", (e) => {
 			if (Array.isArray(data) && data[0].blockId) {
 				if (store.selectedBlocks.length) {
 					data.forEach((block: BlockOptions) => {
-						delete block.blockId;
-						store.selectedBlocks[0].addChild(block);
+						store.selectedBlocks[0].addChild(store.getBlockCopy(block));
 					});
 				} else {
 					store.pushBlocks(data);

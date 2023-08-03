@@ -7,7 +7,7 @@ const store = useStore();
 const webComponent = createListResource({
 	method: "GET",
 	doctype: "Web Page Component",
-	fields: ["component_name", "icon", "block", "name"],
+	fields: ["component_name", "block", "name", "for_web_page"],
 	orderBy: "creation",
 	cache: "components",
 	start: 0,
