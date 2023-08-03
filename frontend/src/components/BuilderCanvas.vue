@@ -5,7 +5,7 @@
 			v-if="isOverDropZone"
 			class="pointer-events-none absolute bottom-0 left-0 right-0 top-0 z-30 bg-cyan-300 opacity-20"></div>
 		<div
-			class="fixed flex gap-44"
+			class="fixed flex gap-40"
 			ref="canvas"
 			:style="{
 				transform: `scale(${canvasProps.scale}) translate(${canvasProps.translateX}px, ${canvasProps.translateY}px)`,
@@ -35,7 +35,9 @@
 				}"
 				v-for="breakpoint in visibleBreakpoints"
 				:key="breakpoint.device">
-				<div class="text-md absolute left-0 top-[-35px] select-none text-gray-800 dark:text-zinc-300">
+				<div
+					class="absolute left-0 top-[-45px] select-none text-3xl text-gray-800 dark:text-zinc-300"
+					v-show="!canvasProps.scaling && !canvasProps.panning">
 					{{ breakpoint.displayName }}
 				</div>
 				<BuilderBlock :block="block" v-if="showBlocks" :breakpoint="breakpoint.device" />

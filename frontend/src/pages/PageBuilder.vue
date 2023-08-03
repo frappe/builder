@@ -16,19 +16,20 @@
 				:canvas-props="store.componentEditorCanvas"
 				:canvas-styles="{
 					width: 'auto',
+					padding: '40px',
 				}"
 				:style="{
 					left: `${store.showPanels ? store.builderLayout.leftPanelWidth : 0}px`,
 					right: `${store.showPanels ? store.builderLayout.rightPanelWidth : 0}px`,
 				}"
-				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-200 p-10 dark:bg-zinc-800"></BuilderCanvas>
+				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-400 p-10 dark:bg-zinc-700"></BuilderCanvas>
 			<BuilderCanvas
 				v-else
 				ref="blockEditor"
 				:block="store.builderState.blocks[0]"
 				:canvas-props="store.blockEditorCanvas"
 				:canvas-styles="{
-					minHeight: '1600px',
+					minHeight: '1000px',
 				}"
 				:style="{
 					left: `${store.showPanels ? store.builderLayout.leftPanelWidth : 0}px`,
