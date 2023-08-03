@@ -37,9 +37,14 @@ import BuilderBlock from "./BuilderBlock.vue";
 import webComponent from "@/data/webComponent";
 
 import useStore from "@/store";
+import { WebPageComponent } from "@/types/WebsiteBuilder/WebPageComponent";
 const store = useStore();
 
-const components = computed(() => webComponent.data || []);
+const components = computed(() =>
+	(webComponent.data || []).filter(
+		(d: WebPageComponent) => !d.for_web_page || d.for_web_page === store.builderState.selectedPage
+	)
+);
 
 const setScale = async (el: HTMLElement, block: BlockOptions) => {
 	nextTick(() => {

@@ -1,5 +1,7 @@
 let current = 0;
-function getBlockTemplate(type: "html" | "text" | "image" | "container" | "body"): BlockOptions {
+function getBlockTemplate(
+	type: "html" | "text" | "image" | "container" | "body" | "fit-container"
+): BlockOptions {
 	switch (type) {
 		case "html":
 			return {
@@ -56,6 +58,21 @@ function getBlockTemplate(type: "html" | "text" | "image" | "container" | "body"
 					flexDirection: "column",
 				} as BlockStyleMap,
 				blockId: "root",
+			};
+
+		case "fit-container":
+			return {
+				name: "Container",
+				element: "div",
+				blockName: "container",
+				baseStyles: {
+					display: "flex",
+					flexDirection: "column",
+					alignItems: "center",
+					justifyContent: "center",
+					height: "fit-content",
+					width: "fit-content",
+				} as BlockStyleMap,
 			};
 	}
 }

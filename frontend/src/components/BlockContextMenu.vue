@@ -29,8 +29,8 @@
 					<Input
 						class="text-sm [&>span]:!text-sm"
 						type="checkbox"
-						v-model="componentProperties.isDynamicComponent"
-						label="Is Dynamic" />
+						v-model="componentProperties.isGlobalComponent"
+						label="Global Component" />
 				</div>
 			</template>
 		</Dialog>
@@ -41,7 +41,8 @@ import webComponent from "@/data/webComponent";
 import useStore from "@/store";
 import { WebPageComponent } from "@/types/WebsiteBuilder/WebPageComponent";
 import Block from "@/utils/block";
-import { copyToClipboard, getNumberFromPx } from "@/utils/helpers";
+import getBlockTemplate from "@/utils/blockTemplate";
+import { getNumberFromPx } from "@/utils/helpers";
 import { vOnClickOutside } from "@vueuse/components";
 import { Dialog } from "frappe-ui";
 import { nextTick, ref } from "vue";
@@ -61,7 +62,7 @@ const showDialog = ref(false);
 
 const componentProperties = ref({
 	componentName: "",
-	isDynamicComponent: 0,
+	isGlobalComponent: 0,
 });
 
 const showContextMenu = (event: MouseEvent) => {
@@ -83,12 +84,6 @@ const copyStyle = () => {
 		blockId: props.block.blockId,
 		style: props.block.getStylesCopy(),
 	};
-};
-
-const copyBlocks = () => {
-	// copy selected blocks to clipboard
-	const selectedBlocks = store.selectedBlocks;
-	copyToClipboard(JSON.stringify(selectedBlocks));
 };
 
 const pasteStyle = () => {
@@ -129,7 +124,7 @@ const createComponentHandler = ({ close }: { close: () => void }) => {
 		.submit({
 			block: blockCopy,
 			component_name: componentProperties.value.componentName,
-			is_dynamic: componentProperties.value.isDynamicComponent,
+			web_page: componentProperties.value.isGlobalComponent ? null : store.builderState.selectedPage,
 		})
 		.then(async (data: WebPageComponent) => {
 			await webComponent.list.promise;
@@ -141,8 +136,38 @@ const createComponentHandler = ({ close }: { close: () => void }) => {
 };
 
 const contextMenuOptions: ContextMenuOption[] = [
-	{ label: "Copy", action: copyBlocks },
 	{ label: "Copy Style", action: copyStyle },
+	{
+		label: "Wrap in Container",
+		action: () => {
+			const newBlockObj = getBlockTemplate("fit-container");
+			const parentBlock = props.block.getParentBlock();
+
+			const newBlock = parentBlock?.addChild(newBlockObj);
+
+			// move selected blocks to newBlock
+			const selectedBlocks = store.selectedBlocks;
+			selectedBlocks.forEach((block) => {
+				parentBlock?.removeChild(block);
+				newBlock?.addChild(block);
+			});
+
+			nextTick(() => {
+				if (newBlock) {
+					newBlock.selectBlock();
+				}
+			});
+		},
+		condition: () => {
+			if (props.block.isRoot()) return false;
+			if (store.selectedBlocks.length === 1) return true;
+			// check if all selected blocks are siblings
+			const parentBlock = props.block.getParentBlock();
+			if (!parentBlock) return false;
+			const selectedBlocks = store.selectedBlocks;
+			return selectedBlocks.every((block) => block.getParentBlock() === parentBlock);
+		},
+	},
 	{
 		label: "Paste Style",
 		action: pasteStyle,

@@ -14,10 +14,6 @@ export interface WebPageComponent{
 	component_name?: string
 	/**	Block : JSON	*/
 	block?: any
-	/**	Icon : Data	*/
-	icon?: string
-	/**	Is Dynamic : Check	*/
-	is_dynamic?: 0 | 1
-	/**	Preview Image : Attach Image	*/
-	preview_image?: string
+	/**	For Web Page : Link - Web Page Beta	*/
+	for_web_page?: string
 }

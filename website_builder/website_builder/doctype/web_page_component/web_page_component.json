@@ -9,9 +9,7 @@
  "field_order": [
   "component_name",
   "block",
-  "icon",
-  "is_dynamic",
-  "preview_image"
+  "for_web_page"
  ],
  "fields": [
   {
@@ -22,29 +20,19 @@
   {
    "fieldname": "block",
    "fieldtype": "JSON",
-   "label": "Block"
+   "label": "Block",
+   "read_only": 1
   },
   {
-   "default": "menu",
-   "fieldname": "icon",
-   "fieldtype": "Data",
-   "label": "Icon"
-  },
-  {
-   "default": "0",
-   "fieldname": "is_dynamic",
-   "fieldtype": "Check",
-   "label": "Is Dynamic"
-  },
-  {
-   "fieldname": "preview_image",
-   "fieldtype": "Attach Image",
-   "label": "Preview Image"
+   "fieldname": "for_web_page",
+   "fieldtype": "Link",
+   "label": "For Web Page",
+   "options": "Web Page Beta"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-06-07 01:05:27.671219",
+ "modified": "2023-08-03 17:47:37.047345",
  "modified_by": "Administrator",
  "module": "Website Builder",
  "name": "Web Page Component",
