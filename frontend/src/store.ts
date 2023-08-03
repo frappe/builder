@@ -18,7 +18,7 @@ const useStore = defineStore("store", {
 			editingMode: <EditingMode>"page",
 		},
 		selectedBlocks: <Block[]>[],
-		history: <UseRefHistoryReturn<{}, {}>>{},
+		history: {} as UseRefHistoryReturn<{}, {}>,
 		usedComponents: {},
 		hoveredBlock: <string | null>null,
 		hoveredBreakpoint: <string | null>null,

@@ -6,7 +6,7 @@ function getBlockTemplate(type: "html" | "text" | "image" | "container" | "body"
 				name: "HTML",
 				element: "div",
 				originalElement: "__raw_html__",
-				innerHTML: "<p>HTML</p>",
+				innerHTML: `<div style="background:#e2e2e2;display:flex;flex-direction:column;position:static;top:auto;left:auto;width:564px;height:497px;align-items:center;justify-content:center"><div style="font-size:40px;width:fit-content;height:fit-content;line-height:1;min-width:30px"><p>&lt;paste html&gt;</p></div></div>`,
 				baseStyles: {
 					height: "fit-content",
 					width: "fit-content",
