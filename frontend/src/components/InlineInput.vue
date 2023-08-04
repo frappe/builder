@@ -7,16 +7,16 @@
 			:type="type"
 			placeholder="unset"
 			:value="modelValue"
-			:options="options"
+			:options="inputOptions"
 			v-if="type != 'autocomplete'"
 			@change="handleChange"
 			class="w-[150px] rounded-md text-sm text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
 		<Autocomplete
 			v-if="type == 'autocomplete'"
-			:value="modelValue"
-			:options="options.map((option) => ({ label: option, value: option }))"
-			@change="handleChange"
-			class="!dark:text-zinc-200 !dark:focus:bg-zinc-700 rounded-md text-sm text-gray-800 dark:bg-zinc-800 [&>div>button]:w-[150px] [&>div>button]:dark:!bg-zinc-800 [&>div>button]:dark:!text-zinc-200" />
+			:modelValue="modelValue"
+			:options="inputOptions"
+			@update:modelValue="handleChange"
+			class="!dark:text-zinc-200 !dark:focus:bg-zinc-700 w-[150px] rounded-md text-sm text-gray-800 dark:bg-zinc-800 [&>div>button]:dark:!bg-zinc-800 [&>div>button]:dark:!text-zinc-200" />
 		<div
 			class="absolute right-1 top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
 			@click="clearValue"
@@ -31,13 +31,12 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { Autocomplete, Input } from "frappe-ui";
+import { Input } from "frappe-ui";
+import { computed } from "vue";
+import Autocomplete from "./Autocomplete.vue";
 
-defineProps({
-	modelValue: {
-		type: [String, Number],
-		default: "",
-	},
+const props = defineProps({
+	modelValue: {},
 	type: {
 		type: String,
 		default: "text",
@@ -54,7 +53,20 @@ defineProps({
 
 const emit = defineEmits(["update:modelValue"]);
 
+const inputOptions = computed(() => {
+	return (props.options || []).map((option) => {
+		if (typeof option === "string" || (typeof option === "number" && props.type === "autocomplete")) {
+			return {
+				label: option,
+				value: option,
+			};
+		}
+		return option;
+	});
+});
+
 const handleChange = (value: string | number | null) => {
+	console.log(value);
 	emit("update:modelValue", value);
 };
 

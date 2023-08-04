@@ -37,6 +37,7 @@ import getBlockTemplate from "@/utils/blockTemplate";
 import useStore from "../store";
 import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
+import DataLoaderBlock from "./DataLoaderBlock.vue";
 import TextBlock from "./TextBlock.vue";
 
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
@@ -63,6 +64,9 @@ const props = defineProps({
 });
 
 const getComponentName = (block: Block) => {
+	if (block.isRepeater()) {
+		return DataLoaderBlock;
+	}
 	if (block.isText() || block.isLink() || block.isButton()) {
 		return TextBlock;
 	} else if (block.isHTML()) {
@@ -78,9 +82,16 @@ const classes = computed(() => {
 
 const attributes = computed(() => {
 	const attribs = { ...props.block.getAttributes(), ...attrs };
-	if (props.block.isText() || props.block.isHTML() || props.block.isLink() || props.block.isButton()) {
+	if (
+		props.block.isText() ||
+		props.block.isHTML() ||
+		props.block.isLink() ||
+		props.block.isButton() ||
+		props.block.isRepeater()
+	) {
 		attribs.block = props.block;
 		attribs.preview = props.preview;
+		attribs.breakpoint = props.breakpoint;
 	}
 	return attribs;
 });

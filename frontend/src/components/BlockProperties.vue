@@ -44,6 +44,17 @@
 		<div class="flex flex-col gap-3" v-if="!blockController.isHTML() || !blockController.isRoot()">
 			<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Dimension</h3>
 			<InlineInput
+				type="autocomplete"
+				:options="[
+					{
+						label: 'Auto',
+						value: 'auto',
+					},
+					{
+						label: 'Fit Content',
+						value: 'fit-content',
+					},
+				]"
 				:modelValue="blockController.getStyle('width')"
 				@update:modelValue="(val) => blockController.setStyle('width', val)">
 				Width
@@ -152,7 +163,7 @@
 		<InlineInput
 			v-if="blockController.isImage()"
 			:modelValue="blockController.getAttribute('src')"
-			@update:modelValue="(val) => blockController.setAttribute('href', val)">
+			@update:modelValue="(val) => blockController.setAttribute('src', val)">
 			Image Source
 		</InlineInput>
 		<InlineInput
@@ -284,6 +295,23 @@
 			id="html"
 			@change="(val) => blockController.setInnerHTML(val)"
 			:value="blockController.getInnerHTML()" />
+		<h3
+			class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600"
+			v-show="
+				blockController.isBLockSelected() &&
+				!blockController.multipleBlocksSelected() &&
+				!blockController.isRoot()
+			">
+			Block Data (Array)
+		</h3>
+		<div
+			id="blockData"
+			class="border border-gray-200 dark:border-zinc-800"
+			v-show="
+				blockController.isBLockSelected() &&
+				!blockController.multipleBlocksSelected() &&
+				!blockController.isRoot()
+			" />
 	</div>
 </template>
 <script setup lang="ts">
@@ -346,12 +374,43 @@ onMounted(() => {
 		blockController.setInnerHTML(value);
 	});
 
+	const blockData = ace.edit("blockData");
+	blockData.setOptions({
+		fontSize: "12px",
+		useWorker: false,
+		showGutter: false,
+	});
+	blockData.setTheme("ace/theme/chrome");
+	blockData.session.setMode("ace/mode/json");
+	blockData.setValue(JSON.stringify(blockController.getBlockData(), null, 2));
+	blockData.on("blur", () => {
+		const value = blockData.getValue();
+		try {
+			const parsed = JSON.parse(value) as BlockStyleMap;
+			blockController.setBlockData(parsed);
+		} catch (e) {
+			// console.error(e);
+		}
+	});
+
+	watch(isDark, () => {
+		if (isDark.value) {
+			blockData.setTheme("ace/theme/monokai");
+		} else {
+			blockData.setTheme("ace/theme/chrome");
+		}
+	});
+
 	watchEffect(() => {
 		editor.setValue(JSON.stringify(blockController.getRawStyles(), null, 2));
 	});
 
 	watchEffect(() => {
 		htmlEditor.setValue(blockController.getInnerHTML() as string);
+	});
+
+	watchEffect(() => {
+		blockData.setValue(JSON.stringify(blockController.getBlockData(), null, 2));
 	});
 
 	watch(isDark, () => {

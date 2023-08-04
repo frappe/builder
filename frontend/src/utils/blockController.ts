@@ -144,6 +144,14 @@ const blockController = {
 	getTextContent: () => {
 		return store.selectedBlocks[0].getTextContent();
 	},
+	setBlockData: (data: BlockData) => {
+		store.selectedBlocks.forEach((block) => {
+			block.blockData = data;
+		});
+	},
+	getBlockData: () => {
+		return store.selectedBlocks[0]?.blockData || [];
+	},
 };
 
 export default blockController;
