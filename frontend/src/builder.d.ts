@@ -85,3 +85,5 @@ declare interface CanvasProps {
 }
 
 declare type EditingMode = "page" | "component";
+
+declare type BlockData = Array | Object;

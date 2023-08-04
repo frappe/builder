@@ -179,5 +179,12 @@ const contextMenuOptions: ContextMenuOption[] = [
 		condition: () => !props.block.isComponent(),
 	},
 	{ label: "Duplicate", action: duplicateBlock },
+	{
+		label: "Convert To Repeater",
+		action: () => {
+			props.block.convertToRepeater();
+		},
+		condition: () => props.block.isContainer() && !props.block.isComponent() && !props.block.isRoot(),
+	},
 ];
 </script>

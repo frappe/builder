@@ -36,7 +36,11 @@
 				v-for="breakpoint in visibleBreakpoints"
 				:key="breakpoint.device">
 				<div
-					class="absolute left-0 top-[-45px] select-none text-3xl text-gray-800 dark:text-zinc-300"
+					class="absolute left-0 select-none text-3xl text-gray-700 dark:text-zinc-300"
+					:style="{
+						fontSize: `calc(${12}px * 1/${canvasProps.scale})`,
+						top: `calc(${-20}px * 1/${canvasProps.scale})`,
+					}"
 					v-show="!canvasProps.scaling && !canvasProps.panning">
 					{{ breakpoint.displayName }}
 				</div>
@@ -94,6 +98,16 @@ const props = defineProps({
 });
 
 provide("canvasProps", props.canvasProps);
+
+// const targetIsVisible = ref(false);
+
+// const { stop } = useIntersectionObserver(canvas, ([{ isIntersecting }], observerElement) => {
+// 	targetIsVisible.value = isIntersecting;
+// });
+
+// watchEffect(() => {
+// 	console.log("targetIsVisible", targetIsVisible.value);
+// });
 
 const { isOverDropZone } = useDropZone(canvasContainer, {
 	onDrop: (files, ev) => {

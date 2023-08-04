@@ -19,11 +19,15 @@ class Block implements BlockOptions {
 	innerText?: string;
 	innerHTML?: string;
 	extendedFromComponent?: string;
+	blockData?: BlockData;
 	originalElement?: string | undefined;
 	constructor(options: BlockOptions) {
 		this.element = options.element;
 		this.innerHTML = options.innerHTML;
 		this.extendedFromComponent = options.extendedFromComponent;
+
+		this.blockData = options.blockData;
+
 		if (options.innerText) {
 			this.innerHTML = options.innerText;
 		}
@@ -202,6 +206,8 @@ class Block implements BlockOptions {
 		switch (true) {
 			case this.isRoot():
 				return "hash";
+			case this.isRepeater():
+				return "database";
 			case this.isHTML():
 				return "code";
 			case this.isText():
@@ -391,6 +397,19 @@ class Block implements BlockOptions {
 	}
 	isComponent() {
 		return Boolean(this.extendedFromComponent);
+	}
+	convertToRepeater() {
+		this.setBaseStyle("display", "flex");
+		this.setBaseStyle("flexDirection", "column");
+		this.setBaseStyle("alignItems", "flex-start");
+		this.setBaseStyle("justifyContent", "flex-start");
+		this.setBaseStyle("flexWrap", "wrap");
+		this.setBaseStyle("width", "fit-content");
+		this.setBaseStyle("height", "fit-content");
+		this.blockData = [1, 2, 3];
+	}
+	isRepeater() {
+		return Array.isArray(this.blockData);
 	}
 }
 

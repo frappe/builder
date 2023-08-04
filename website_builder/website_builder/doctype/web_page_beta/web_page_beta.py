@@ -96,9 +96,12 @@ def get_block_html(blocks):
 				set_fonts_from_html(inner_soup, font_map)
 				tag.append(inner_soup)
 
-
-			for child in block.get("children", []):
-				tag.append(get_tag(child, soup))
+			if block.get("blockData"):
+				for i in block.get("blockData", []):
+					tag.append(get_tag(block.get("children")[0], soup))
+			else:
+				for child in block.get("children", []):
+					tag.append(get_tag(child, soup))
 			return tag
 
 		for block in blocks:
