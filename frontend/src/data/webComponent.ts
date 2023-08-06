@@ -2,7 +2,6 @@ import { createListResource } from "frappe-ui";
 
 import useStore from "@/store";
 import Block from "@/utils/block";
-const store = useStore();
 
 const webComponent = createListResource({
 	method: "GET",
@@ -14,6 +13,7 @@ const webComponent = createListResource({
 	pageLength: 100,
 	auto: true,
 	transform(data: any[]) {
+		const store = useStore();
 		data.forEach((d) => {
 			if (!(d.block instanceof Block)) {
 				d.block = new Block(store.getBlockCopy(JSON.parse(d.block)));

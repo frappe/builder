@@ -136,6 +136,33 @@ function stripExtension(string: string) {
 	return string.substr(0, lastDotPosition);
 }
 
+function findNearestSiblingIndex(e: MouseEvent) {
+	let nearestElementIndex = 0;
+	let minDistance = Number.MAX_VALUE;
+	let parent = e.target as HTMLElement;
+
+	const elements = Array.from(parent.children);
+	elements.forEach(function (element, index) {
+		const rect = element.getBoundingClientRect();
+		const centerX = rect.left + rect.width / 2;
+		const centerY = rect.top + rect.height / 2;
+
+		const distance = Math.sqrt(Math.pow(centerX - e.clientX, 2) + Math.pow(centerY - e.clientY, 2));
+		if (distance < minDistance) {
+			minDistance = distance;
+			nearestElementIndex = index;
+			const positionBitmask = element.compareDocumentPosition(e.target as Node);
+			// sourcery skip: possible-incorrect-bitwise-operator
+			if (positionBitmask & Node.DOCUMENT_POSITION_PRECEDING) {
+				// before
+			} else {
+				nearestElementIndex += 1;
+			}
+		}
+	});
+	return nearestElementIndex;
+}
+
 export {
 	HSVToHex,
 	HexToHSV,
@@ -143,6 +170,7 @@ export {
 	addPxToNumber,
 	confirm,
 	copyToClipboard,
+	findNearestSiblingIndex,
 	getNumberFromPx,
 	getRGB,
 	getRandomColor,

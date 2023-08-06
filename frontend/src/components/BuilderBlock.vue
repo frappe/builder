@@ -7,6 +7,7 @@
 		@mouseover="handleMouseOver"
 		@mouseleave="handleMouseLeave"
 		:data-block-id="block.blockId"
+		:draggable="draggable"
 		:class="classes"
 		v-bind="attributes"
 		:style="styles"
@@ -31,9 +32,10 @@
 <script setup lang="ts">
 import Block from "@/utils/block";
 import { setFont } from "@/utils/fontManager";
-import { computed, inject, nextTick, onMounted, ref, useAttrs } from "vue";
+import { computed, inject, nextTick, onMounted, reactive, ref, useAttrs } from "vue";
 
 import getBlockTemplate from "@/utils/blockTemplate";
+import { useDraggableBlock } from "@/utils/useDraggableBlock";
 import useStore from "../store";
 import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
@@ -61,6 +63,10 @@ const props = defineProps({
 		type: Boolean,
 		default: false,
 	},
+});
+
+const draggable = computed(() => {
+	return !props.block.isRoot() && !props.preview && false;
 });
 
 const getComponentName = (block: Block) => {
@@ -108,13 +114,6 @@ const target = computed(() => {
 });
 
 const styles = computed(() => {
-	// let styleObj = props.block.baseStyles;
-	// if (props.breakpoint === "mobile") {
-	// 	styleObj = { ...styleObj, ...props.block.mobileStyles };
-	// } else if (props.breakpoint === "tablet") {
-	// 	styleObj = { ...styleObj, ...props.block.tabletStyles };
-	// }
-	// styleObj = { ...styleObj, ...props.block.rawStyles };
 	return { ...props.block.getStyles(props.breakpoint), ...props.block.getEditorStyles() };
 });
 
@@ -135,6 +134,14 @@ onMounted(async () => {
 	setFont(props.block.getStyle("fontFamily") as string);
 	await nextTick();
 	emit("mounted", target.value);
+
+	if (draggable.value) {
+		useDraggableBlock(
+			props.block,
+			component.value as HTMLElement,
+			reactive({ ghostScale: canvasProps?.scale || 1 })
+		);
+	}
 });
 
 const isEditable = computed(() => {
@@ -182,7 +189,6 @@ const triggerContextMenu = (e: MouseEvent) => {
 };
 
 const handleClick = (e: MouseEvent) => {
-	console.log(props.block);
 	if (isEditable.value) return;
 	if (!props.isChildOfComponent) {
 		selectBlock(e);
@@ -237,59 +243,4 @@ const handleMouseLeave = (e: MouseEvent) => {
 		}
 	}
 };
-
-// let ghostElement = null as HTMLElement | null;
-
-// const handleDragStart = (e: DragEvent) => {
-// 	console.log(e, props.block.blockId);
-// 	e.dataTransfer?.setData("block", props.block.blockId);
-// 	const target = e.target as HTMLElement;
-// 	ghostElement = target.cloneNode(true) as HTMLElement;
-// 	ghostElement.id = "ghost";
-// 	ghostElement.style.position = "fixed";
-// 	ghostElement.style.transform = `scale(${canvasProps?.scale})`;
-// 	document.body.appendChild(ghostElement);
-// 	if (e.dataTransfer) {
-// 		e.dataTransfer.effectAllowed = "move";
-// 		const blankImage = document.createElement("img");
-// 		e.dataTransfer.setDragImage(blankImage, e.offsetX, e.offsetY);
-// 	}
-// };
-
-// const handleDrag = (e: DragEvent) => {
-// 	const target = e.target as HTMLElement;
-// 	ghostElement = ghostElement as HTMLElement;
-// 	ghostElement.style.left = e.clientX - target.offsetWidth / 2 + "px";
-// 	ghostElement.style.top = e.clientY - target.offsetHeight / 2 + "px";
-// };
-
-// const handleDragEnd = (e: DragEvent) => {
-// 	const target = e.target as HTMLElement;
-// 	if (ghostElement) {
-// 		ghostElement.remove();
-// 	}
-// 	target.style.opacity = "1";
-// };
-
-// const handleDrop = (e: DragEvent) => {
-// 	store.history.pause();
-// 	// move block to new container
-// 	if (e.dataTransfer) {
-// 		const blockId = e.dataTransfer.getData("block");
-// 		const block = store.findBlock(blockId);
-// 		if (block) {
-// 			const newParent = props.block;
-// 			const oldParent = block.getParentBlock();
-// 			if (newParent.blockId === oldParent?.blockId) return;
-// 			if (newParent.isContainer()) {
-// 				if (oldParent) {
-// 					oldParent.removeChild(block);
-// 				}
-// 				newParent.addChild(block);
-// 				store.selectBlock(block, e);
-// 			}
-// 		}
-// 	}
-// 	store.history.resume();
-// };
 </script>
