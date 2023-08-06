@@ -125,6 +125,7 @@ onMounted(() => {
 function setEvents() {
 	const container = document.body.querySelector(".canvas-container") as HTMLElement;
 	useEventListener(container, "mousedown", (ev: MouseEvent) => {
+		store.history.pause();
 		const initialX = ev.clientX;
 		const initialY = ev.clientY;
 		if (store.builderState.mode === "select") {
@@ -190,7 +191,7 @@ function setEvents() {
 					childBlock.setBaseStyle("top", "auto");
 					childBlock.setBaseStyle("left", "auto");
 					if (store.builderState.mode === "text" || store.builderState.mode === "html") {
-						return;
+						store.history.resume();
 					}
 					if (getNumberFromPx(childBlock.getStyle("width")) < 100) {
 						childBlock.setBaseStyle("width", "100%");
@@ -199,6 +200,7 @@ function setEvents() {
 						childBlock.setBaseStyle("height", "200px");
 					}
 					parentBlock.setBaseStyle("position", parentOldPosition || "static");
+					store.history.resume();
 				},
 				{ once: true }
 			);

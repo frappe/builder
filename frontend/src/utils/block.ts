@@ -71,7 +71,6 @@ class Block implements BlockOptions {
 			styleObj = { ...styleObj, ...this.tabletStyles };
 		}
 		styleObj = { ...styleObj, ...this.rawStyles };
-
 		return styleObj;
 	}
 	getComponent() {
@@ -285,7 +284,7 @@ class Block implements BlockOptions {
 			child.extendedFromComponent = extendedFromComponent;
 		}
 		const childBlock = new Block(child);
-		if (index) {
+		if (index !== undefined) {
 			this.children.splice(index, 0, childBlock);
 		} else {
 			this.children.push(childBlock);
@@ -407,6 +406,13 @@ class Block implements BlockOptions {
 		this.setBaseStyle("width", "fit-content");
 		this.setBaseStyle("height", "fit-content");
 		this.blockData = [1, 2, 3];
+	}
+	moveChild(child: Block, index: number) {
+		const childIndex = this.children.findIndex((block) => block.blockId === child.blockId);
+		if (childIndex > -1) {
+			this.children.splice(childIndex, 1);
+			this.children.splice(index, 0, child);
+		}
 	}
 	isRepeater() {
 		return Array.isArray(this.blockData);

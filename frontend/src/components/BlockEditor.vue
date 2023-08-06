@@ -6,6 +6,7 @@
 			@click="handleClick"
 			@dblclick="handleDoubleClick"
 			@mousedown.prevent="handleMove"
+			@drop.prevent.stop="handleDrop"
 			@contextmenu="onContextMenu"
 			:data-block-id="block.blockId"
 			:class="getStyleClasses">
@@ -176,12 +177,12 @@ const handleClick = (ev: MouseEvent) => {
 	}
 };
 
-// // dispatch drop event to the target block
-// const handleDrop = (ev: DragEvent) => {
-// 	if (props.editable) return;
-// 	const dropEvent = new DragEvent("drop", ev);
-// 	props.target.dispatchEvent(dropEvent);
-// };
+// dispatch drop event to the target block
+const handleDrop = (ev: DragEvent) => {
+	if (props.editable) return;
+	const dropEvent = new DragEvent("drop", ev);
+	props.target.dispatchEvent(dropEvent);
+};
 
 const handleDoubleClick = () => {
 	if (props.editable) return;
