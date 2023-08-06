@@ -43,48 +43,13 @@
 		</InlineInput>
 		<div class="flex flex-col gap-3" v-if="!blockController.isHTML() || !blockController.isRoot()">
 			<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Dimension</h3>
-			<InlineInput
-				type="autocomplete"
-				:options="[
-					{
-						label: 'Auto',
-						value: 'auto',
-					},
-					{
-						label: 'Fit Content',
-						value: 'fit-content',
-					},
-				]"
-				:modelValue="blockController.getStyle('width')"
-				@update:modelValue="(val) => blockController.setStyle('width', val)">
-				Width
-			</InlineInput>
-			<InlineInput
-				:modelValue="blockController.getStyle('minWidth')"
-				@update:modelValue="(val) => blockController.setStyle('minWidth', val)">
-				Min Width
-			</InlineInput>
-			<InlineInput
-				:modelValue="blockController.getStyle('maxWidth')"
-				@update:modelValue="(val) => blockController.setStyle('maxWidth', val)">
-				Max Width
-			</InlineInput>
+			<DimensionInput property="width">Width</DimensionInput>
+			<DimensionInput property="minWidth">Min Width</DimensionInput>
+			<DimensionInput property="maxWidth">Max Width</DimensionInput>
 			<hr class="dark:border-zinc-700" />
-			<InlineInput
-				:modelValue="blockController.getStyle('height')"
-				@update:modelValue="(val) => blockController.setStyle('height', val)">
-				Height
-			</InlineInput>
-			<InlineInput
-				:modelValue="blockController.getStyle('minHeight')"
-				@update:modelValue="(val) => blockController.setStyle('minHeight', val)">
-				Min Height
-			</InlineInput>
-			<InlineInput
-				:modelValue="blockController.getStyle('maxHeight')"
-				@update:modelValue="(val) => blockController.setStyle('maxHeight', val)">
-				Max Height
-			</InlineInput>
+			<DimensionInput property="height">Height</DimensionInput>
+			<DimensionInput property="minHeight">Min Height</DimensionInput>
+			<DimensionInput property="maxHeight">Max Height</DimensionInput>
 		</div>
 
 		<h3
@@ -332,6 +297,7 @@ import "ace-builds/src-noconflict/mode-html";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-chrome";
 import "ace-builds/src-noconflict/theme-monokai";
+import DimensionInput from "./DimensionInput.vue";
 
 const isDark = useDark();
 
