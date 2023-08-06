@@ -10,6 +10,7 @@
 			:options="inputOptions"
 			v-if="type != 'autocomplete'"
 			@change="handleChange"
+			inputClass="pr-6"
 			class="w-[150px] rounded-md text-sm text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
 		<Autocomplete
 			v-if="type == 'autocomplete'"
