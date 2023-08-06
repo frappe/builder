@@ -2,7 +2,7 @@ import useStore from "@/store";
 import { CSSProperties, nextTick, reactive } from "vue";
 import { addPxToNumber, getNumberFromPx, getTextContent } from "./helpers";
 
-type styleProperty = keyof CSSProperties;
+export type styleProperty = keyof CSSProperties;
 
 class Block implements BlockOptions {
 	blockId: string;

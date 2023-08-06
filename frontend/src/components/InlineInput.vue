@@ -14,6 +14,7 @@
 			class="w-[150px] rounded-md text-sm text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
 		<Autocomplete
 			v-if="type == 'autocomplete'"
+			placeholder="unset"
 			:modelValue="modelValue"
 			:options="inputOptions"
 			@update:modelValue="handleChange"
@@ -54,6 +55,11 @@ const props = defineProps({
 
 const emit = defineEmits(["update:modelValue"]);
 
+type Option = {
+	label: string;
+	value: string;
+};
+
 const inputOptions = computed(() => {
 	return (props.options || []).map((option) => {
 		if (typeof option === "string" || (typeof option === "number" && props.type === "autocomplete")) {
@@ -63,7 +69,7 @@ const inputOptions = computed(() => {
 			};
 		}
 		return option;
-	});
+	}) as Option[];
 });
 
 const handleChange = (value: string | number | null) => {
