@@ -6,7 +6,7 @@
 				@change="query = $event.target.value"
 				:displayValue="(option: Option) => (option ? option.label : '')"
 				:placeholder="placeholder"
-				class="flex h-7 w-full items-center justify-between gap-2 rounded bg-gray-100 px-2 py-1 pr-6 text-sm text-gray-800 outline-none transition-colors hover:bg-gray-200 focus:ring-2 focus:ring-gray-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
+				class="form-input flex h-7 w-full items-center justify-between gap-2 rounded border-gray-400 px-2 py-1 pr-6 text-sm transition-colors dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
 			<ComboboxOptions
 				class="absolute right-0 z-50 max-h-[15rem] w-full max-w-[150px] overflow-y-auto rounded-lg bg-white px-1.5 py-1.5 shadow-2xl"
 				v-show="filteredValues.length">
