@@ -1,9 +1,27 @@
 <template>
-	<div v-if="blockController.isBLockSelected()" class="flex flex-col gap-3">
+	<div v-if="blockController.isBLockSelected()" class="flex flex-col gap-3 pb-48">
 		<BLockLayoutHandler v-if="!blockController.multipleBlocksSelected()" class="mb-6"></BLockLayoutHandler>
 		<BlockPositionHandler
 			v-if="!blockController.multipleBlocksSelected()"
 			class="mb-6"></BlockPositionHandler>
+		<div v-if="store.builderState.editingMode === 'component'" class="flex flex-col gap-3">
+			<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Component Keys</h3>
+			<InlineInput
+				:modelValue="blockController.getDataKey('key')"
+				@update:modelValue="(val) => blockController.setDataKey('key', val)">
+				Key
+			</InlineInput>
+			<InlineInput
+				:modelValue="blockController.getDataKey('type')"
+				@update:modelValue="(val) => blockController.setDataKey('type', val)">
+				Type
+			</InlineInput>
+			<InlineInput
+				:modelValue="blockController.getDataKey('property')"
+				@update:modelValue="(val) => blockController.setDataKey('property', val)">
+				Property
+			</InlineInput>
+		</div>
 		<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Style</h3>
 		<ColorInput
 			:value="blockController.getStyle('background')"
@@ -291,6 +309,7 @@ import BlockPositionHandler from "./BlockPositionHandler.vue";
 import ColorInput from "./ColorInput.vue";
 import InlineInput from "./InlineInput.vue";
 
+import useStore from "@/store";
 import blockController from "@/utils/blockController";
 import ace from "ace-builds";
 import "ace-builds/src-noconflict/mode-html";
@@ -298,6 +317,8 @@ import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-chrome";
 import "ace-builds/src-noconflict/theme-monokai";
 import DimensionInput from "./DimensionInput.vue";
+
+const store = useStore();
 
 const isDark = useDark();
 

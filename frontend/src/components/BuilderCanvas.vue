@@ -198,8 +198,15 @@ document.addEventListener("keydown", (e) => {
 	}
 
 	if (e.key === "Escape") {
+		store.editPage(false);
+		clearSelectedComponent();
+	}
+
+	if (e.key === "s" && (e.ctrlKey || e.metaKey) && store.builderState.editingMode === "component") {
 		store.editPage(true);
 		clearSelectedComponent();
+		e.stopPropagation();
+		e.preventDefault();
 	}
 
 	// handle arrow keys

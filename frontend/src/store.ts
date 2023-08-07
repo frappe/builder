@@ -1,4 +1,5 @@
 import { UseRefHistoryReturn } from "@vueuse/core";
+import { toast } from "frappe-ui";
 import { defineStore } from "pinia";
 import webComponent from "./data/webComponent";
 import { WebPageBeta } from "./types/WebsiteBuilder/WebPageBeta";
@@ -358,13 +359,24 @@ const useStore = defineStore("store", {
 			this.builderState.editingMode = "page";
 			this.builderState.editableBlock = null;
 
-			if (saveComponent && this.builderState.editingComponent) {
-				webComponent.setValue.submit({
-					name: this.builderState.editingComponent,
-					block: this.getComponentBlock(this.builderState.editingComponent),
-				});
-				this.builderState.editingComponent = null;
+			if (this.builderState.editingComponent) {
+				if (saveComponent) {
+					webComponent.setValue
+						.submit({
+							name: this.builderState.editingComponent,
+							block: this.getComponentBlock(this.builderState.editingComponent),
+						})
+						.then(() => {
+							toast({
+								text: "Component saved!",
+								position: "top-center",
+							});
+						});
+				} else {
+					// webComponent.fet;
+				}
 			}
+			this.builderState.editingComponent = null;
 		},
 		getComponentBlock(componentName: string) {
 			return webComponent.getRow(componentName).block as Block;

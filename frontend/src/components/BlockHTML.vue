@@ -1,5 +1,5 @@
 <template>
-	<div v-html="block.innerHTML" ref="component"></div>
+	<div v-html="block.getInnerHTML()" ref="component"></div>
 </template>
 <script setup lang="ts">
 import Block from "@/utils/block";

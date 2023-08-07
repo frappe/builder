@@ -16,7 +16,7 @@ const webComponent = createListResource({
 		const store = useStore();
 		data.forEach((d) => {
 			if (!(d.block instanceof Block)) {
-				d.block = new Block(store.getBlockCopy(JSON.parse(d.block)));
+				d.block = new Block(store.getBlockCopy(JSON.parse(d.block), true));
 			}
 		});
 		return data;

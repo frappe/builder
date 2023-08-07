@@ -4,6 +4,23 @@ import { addPxToNumber, getNumberFromPx, getTextContent } from "./helpers";
 
 export type styleProperty = keyof CSSProperties;
 
+export interface BlockDataKey {
+	key?: string;
+	type?: string;
+	property?: string;
+}
+
+function resetBlock(block: Block | BlockOptions) {
+	delete block.innerHTML;
+	block.baseStyles = {};
+	block.rawStyles = {};
+	block.mobileStyles = {};
+	block.tabletStyles = {};
+	block.attributes = {};
+	block.classes = [];
+	delete block.children;
+}
+
 class Block implements BlockOptions {
 	blockId: string;
 	blockName?: string;
@@ -21,10 +38,26 @@ class Block implements BlockOptions {
 	extendedFromComponent?: string;
 	blockData?: BlockData;
 	originalElement?: string | undefined;
+	dataKeys?: BlockDataKey[];
+	dataKey: BlockDataKey | null = null;
 	constructor(options: BlockOptions) {
 		this.element = options.element;
 		this.innerHTML = options.innerHTML;
 		this.extendedFromComponent = options.extendedFromComponent;
+		this.dataKeys = options.dataKeys || [
+			{
+				key: "text",
+				type: "blockKey",
+				property: "innerText",
+			},
+			{
+				key: "color",
+				type: "style",
+				property: "color",
+			},
+		];
+
+		this.dataKey = options.dataKey || null;
 
 		this.blockData = options.blockData;
 
@@ -61,10 +94,11 @@ class Block implements BlockOptions {
 	}
 
 	getStyles(breakpoint: string = "desktop") {
+		let styleObj = {};
 		if (this.isComponent()) {
-			return this.getComponentStyles(breakpoint);
+			styleObj = this.getComponentStyles(breakpoint);
 		}
-		let styleObj = this.baseStyles;
+		styleObj = { ...styleObj, ...this.baseStyles };
 		if (breakpoint === "mobile") {
 			styleObj = { ...styleObj, ...this.mobileStyles };
 		} else if (breakpoint === "tablet") {
@@ -83,20 +117,24 @@ class Block implements BlockOptions {
 	}
 
 	getAttributes() {
+		let attributes = {};
 		if (this.isComponent()) {
-			return this.getComponentAttributes();
+			attributes = this.getComponentAttributes();
 		}
-		return this.attributes;
+		attributes = { ...attributes, ...this.attributes };
+		return attributes;
 	}
 	getComponentAttributes() {
 		return this.getComponent()?.attributes || {};
 	}
 
 	getClasses() {
+		let classes = [] as Array<string>;
 		if (this.isComponent()) {
-			return this.getComponentClasses();
+			classes = this.getComponentClasses();
 		}
-		return this.classes;
+		classes = [...classes, ...this.classes];
+		return classes;
 	}
 
 	getComponentClasses() {
@@ -104,10 +142,23 @@ class Block implements BlockOptions {
 	}
 
 	getChildren() {
+		let store = useStore();
+		let children = [] as Array<Block>;
 		if (this.isComponent()) {
-			return this.getComponentChildren();
+			const componentChildren = this.getComponentChildren();
+			// Seriously???
+			componentChildren.forEach((componentChild) => {
+				let child = this.children.find((c) => c.blockId === componentChild.blockId) as Block;
+				if (!child) {
+					child = store.getBlockCopy(componentChild, true);
+					children.push(child);
+				}
+				const componentChildClone = JSON.parse(JSON.stringify(componentChild));
+				Object.assign(componentChildClone, child);
+				Object.assign(child, componentChildClone);
+			});
 		}
-		return this.children;
+		return children.length ? children : this.children;
 	}
 
 	hasChildren() {
@@ -126,7 +177,7 @@ class Block implements BlockOptions {
 			return "raw";
 		}
 		let description = this.blockName || this.originalElement || this.element;
-		if (this.innerHTML && !this.blockName) {
+		if (this.getInnerHTML() && !this.blockName) {
 			description += " | " + this.getTextContent();
 		}
 		return description;
@@ -141,7 +192,7 @@ class Block implements BlockOptions {
 		if (this.isText() && editor) {
 			text = editor.getText();
 		}
-		return text || getTextContent(this.innerHTML || "");
+		return text || getTextContent(this.getInnerHTML() || "");
 	}
 	isImage() {
 		return this.element === "img";
@@ -282,6 +333,7 @@ class Block implements BlockOptions {
 	addChild(child: BlockOptions, index?: number, extendedFromComponent?: string) {
 		if (extendedFromComponent) {
 			child.extendedFromComponent = extendedFromComponent;
+			resetBlock(child);
 		}
 		const childBlock = new Block(child);
 		if (index !== undefined) {
@@ -405,7 +457,11 @@ class Block implements BlockOptions {
 		this.setBaseStyle("flexWrap", "wrap");
 		this.setBaseStyle("width", "fit-content");
 		this.setBaseStyle("height", "fit-content");
-		this.blockData = [1, 2, 3];
+		this.setBaseStyle("gap", "20px");
+		this.blockData = [
+			{ title: "Human 1", subtitle: "Human 1 subtitle", image: "https://picsum.photos/300/300" },
+			{ title: "Human 2", subtitle: "Human 2 subtitle", image: "https://picsum.photos/200/200" },
+		];
 	}
 	moveChild(child: Block, index: number) {
 		const childIndex = this.children.findIndex((block) => block.blockId === child.blockId);
@@ -416,6 +472,29 @@ class Block implements BlockOptions {
 	}
 	isRepeater() {
 		return Array.isArray(this.blockData);
+	}
+	getDataKey(key: keyof BlockDataKey) {
+		return this.dataKey && this.dataKey[key];
+	}
+	setDataKey(key: keyof BlockDataKey, value: any) {
+		if (!this.dataKey) {
+			this.dataKey = {
+				key: "",
+				type: "key",
+				property: "innerHTML",
+			};
+		}
+		this.dataKey[key] = value;
+	}
+	getInnerHTML(): string {
+		let innerHTML = this.innerHTML || "";
+		if (!innerHTML && this.isComponent()) {
+			innerHTML = this.getComponent().getInnerHTML();
+		}
+		return innerHTML;
+	}
+	setInnerHTML(innerHTML: string) {
+		this.innerHTML = innerHTML;
 	}
 }
 

@@ -13,6 +13,7 @@
 		:style="styles"
 		ref="component">
 		<BuilderBlock
+			:data="data"
 			:block="child"
 			:breakpoint="breakpoint"
 			:preview="preview"
@@ -63,6 +64,10 @@ const props = defineProps({
 		type: Boolean,
 		default: false,
 	},
+	data: {
+		type: Object,
+		default: null,
+	},
 });
 
 const draggable = computed(() => {
@@ -99,6 +104,12 @@ const attributes = computed(() => {
 		attribs.block = props.block;
 		attribs.preview = props.preview;
 		attribs.breakpoint = props.breakpoint;
+		attribs.data = props.data;
+	}
+	if (props.data) {
+		if (props.block.dataKey?.type === "attribute") {
+			attribs[props.block.dataKey?.property] = props.data[props.block.dataKey.key];
+		}
 	}
 	return attribs;
 });

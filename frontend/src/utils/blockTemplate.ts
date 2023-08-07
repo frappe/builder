@@ -1,4 +1,3 @@
-let current = 0;
 function getBlockTemplate(
 	type: "html" | "text" | "image" | "container" | "body" | "fit-container"
 ): BlockOptions {
@@ -20,9 +19,10 @@ function getBlockTemplate(
 				element: "p",
 				innerHTML: "Text",
 				baseStyles: {
-					fontSize: "40px",
-					width: "fit-content",
+					fontSize: "30px",
+					width: "100%",
 					height: "fit-content",
+					textAlign: "center",
 					lineHeight: "1",
 					minWidth: "30px",
 				} as BlockStyleMap,
@@ -36,13 +36,11 @@ function getBlockTemplate(
 				} as BlockStyleMap,
 			};
 		case "container":
-			current++;
 			return {
 				name: "Container",
 				element: "div",
 				blockName: "container",
 				baseStyles: {
-					background: ["#A3A3A3", "#F3F3F3", "#E2E2E2", "#C7C7C7"][current % 4],
 					display: "flex",
 					flexDirection: "column",
 				} as BlockStyleMap,
@@ -56,6 +54,7 @@ function getBlockTemplate(
 					display: "flex",
 					flexWrap: "wrap",
 					flexDirection: "column",
+					alignItems: "center",
 				} as BlockStyleMap,
 				blockId: "root",
 			};
