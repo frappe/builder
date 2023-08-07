@@ -160,6 +160,9 @@ const blockController = {
 	getDataKey: (key: string) => {
 		return store.selectedBlocks[0].getDataKey(key);
 	},
+	isRepeater: () => {
+		return blockController.isBLockSelected() && store.selectedBlocks[0].isRepeater();
+	},
 };
 
 export default blockController;

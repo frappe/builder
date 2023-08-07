@@ -47,7 +47,7 @@
 				{ label: 'Sticky', value: 'sticky' },
 			]"
 			v-model="(position as string)"
-			class="mx-auto w-fit"></TabButtons>
+			class="mx-auto w-fit [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
 	</div>
 </template>
 <script setup lang="ts">

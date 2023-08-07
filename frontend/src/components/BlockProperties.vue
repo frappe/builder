@@ -226,6 +226,7 @@
 				Visibility
 			</span>
 			<TabButtons
+				class="[&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"
 				:buttons="[
 					{
 						label: 'Visible',
@@ -244,6 +245,7 @@
 				Overflow
 			</span>
 			<TabButtons
+				class="[&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"
 				v-if="blockController.isContainer()"
 				:buttons="[
 					{
@@ -278,23 +280,13 @@
 			id="html"
 			@change="(val) => blockController.setInnerHTML(val)"
 			:value="blockController.getInnerHTML()" />
-		<h3
-			class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600"
-			v-show="
-				blockController.isBLockSelected() &&
-				!blockController.multipleBlocksSelected() &&
-				!blockController.isRoot()
-			">
+		<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600" v-show="blockController.isRepeater()">
 			Block Data (Array)
 		</h3>
 		<div
 			id="blockData"
 			class="border border-gray-200 dark:border-zinc-800"
-			v-show="
-				blockController.isBLockSelected() &&
-				!blockController.multipleBlocksSelected() &&
-				!blockController.isRoot()
-			" />
+			v-show="blockController.isRepeater()" />
 	</div>
 </template>
 <script setup lang="ts">
@@ -380,14 +372,6 @@ onMounted(() => {
 		}
 	});
 
-	watch(isDark, () => {
-		if (isDark.value) {
-			blockData.setTheme("ace/theme/monokai");
-		} else {
-			blockData.setTheme("ace/theme/chrome");
-		}
-	});
-
 	watchEffect(() => {
 		editor.setValue(JSON.stringify(blockController.getRawStyles(), null, 2));
 	});
@@ -400,15 +384,21 @@ onMounted(() => {
 		blockData.setValue(JSON.stringify(blockController.getBlockData(), null, 2));
 	});
 
-	watch(isDark, () => {
-		if (isDark.value) {
-			editor.setTheme("ace/theme/monokai");
-			htmlEditor.setTheme("ace/theme/monokai");
-		} else {
-			editor.setTheme("ace/theme/chrome");
-			htmlEditor.setTheme("ace/theme/chrome");
-		}
-	});
+	watch(
+		isDark,
+		() => {
+			if (isDark.value) {
+				editor.setTheme("ace/theme/monokai");
+				htmlEditor.setTheme("ace/theme/monokai");
+				blockData.setTheme("ace/theme/monokai");
+			} else {
+				editor.setTheme("ace/theme/chrome");
+				htmlEditor.setTheme("ace/theme/chrome");
+				blockData.setTheme("ace/theme/chrome");
+			}
+		},
+		{ immediate: true }
+	);
 });
 </script>
 <style scoped>
@@ -416,5 +406,9 @@ onMounted(() => {
 	height: 200px;
 	width: 100%;
 	border-radius: 5px;
+	overscroll-behavior: none;
+}
+:deep(.ace_scrollbar) {
+	display: none;
 }
 </style>
