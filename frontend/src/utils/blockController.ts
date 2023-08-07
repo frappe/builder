@@ -134,11 +134,11 @@ const blockController = {
 		return blockController.isBLockSelected() && store.selectedBlocks[0].isHTML();
 	},
 	getInnerHTML: () => {
-		return blockController.isBLockSelected() && store.selectedBlocks[0].innerHTML;
+		return blockController.isBLockSelected() && store.selectedBlocks[0].getInnerHTML();
 	},
 	setInnerHTML: (value: string) => {
 		store.selectedBlocks.forEach((block) => {
-			block.innerHTML = value;
+			block.setInnerHTML(value);
 		});
 	},
 	getTextContent: () => {
@@ -151,6 +151,14 @@ const blockController = {
 	},
 	getBlockData: () => {
 		return store.selectedBlocks[0]?.blockData || [];
+	},
+	setDataKey: (key: string, value: string) => {
+		store.selectedBlocks.forEach((block) => {
+			block.setDataKey(key, value);
+		});
+	},
+	getDataKey: (key: string) => {
+		return store.selectedBlocks[0].getDataKey(key);
 	},
 };
 

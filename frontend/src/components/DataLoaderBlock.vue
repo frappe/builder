@@ -3,11 +3,12 @@
 		<div v-if="!block.hasChildren()" class="flex h-52 w-52 items-center justify-center">Drop A Component</div>
 		<BuilderBlock
 			v-else
+			:data="data"
 			:block="block.children[0]"
 			:preview="preview"
 			:breakpoint="breakpoint"
 			:isChildOfComponent="block.isComponent()"
-			v-for="i in block.blockData" />
+			v-for="data in block.blockData" />
 	</div>
 </template>
 

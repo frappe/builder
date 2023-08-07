@@ -83,7 +83,7 @@ document.addEventListener("keydown", (e) => {
 		e.preventDefault();
 		store.showPanels = !store.showPanels;
 	}
-	if (e.key === "c" && e.metaKey) {
+	if (e.key === "c" && e.metaKey && e.target === document.body) {
 		e.preventDefault();
 		if (store.selectedBlocks.length) {
 			copyToClipboard(JSON.stringify(store.selectedBlocks));

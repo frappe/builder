@@ -27,25 +27,35 @@ const props = defineProps({
 		type: Boolean,
 		default: false,
 	},
+	data: {
+		type: Object,
+		default: () => ({}),
+	},
 });
 
 const component = ref(null) as Ref<HTMLElement | null>;
 
 const textContent = computed(() => {
-	return props.block.innerHTML;
+	let innerHTML = props.block.getInnerHTML();
+	if (props.data) {
+		if (props.block.dataKey?.property === "innerHTML" && props.data[props.block.dataKey?.key]) {
+			innerHTML = props.data[props.block.dataKey?.key];
+		}
+	}
+	return innerHTML;
 });
 const editor = useEditor({
 	content: textContent.value,
 	extensions: [StarterKit, TextStyle, Color, FontFamily],
 	onUpdate({ editor }) {
-		props.block.innerHTML = editor.getHTML();
+		props.block.setInnerHTML(editor.getHTML());
 	},
 	autofocus: false,
 	injectCSS: false,
 });
 
 onBeforeMount(() => {
-	let html = props.block.innerHTML || "";
+	let html = props.block.getInnerHTML() || "";
 	setFontFromHTML(html);
 
 	if (!props.block.classes.includes("TextBlock")) {

@@ -67,8 +67,8 @@ def get_block_html(blocks):
 
 	def get_html(blocks, soup):
 		html = ""
-		def get_tag(block, soup):
-			block = extend_with_component(block)
+		def get_tag(block, soup, data=None):
+			block = extend_with_component(block, data)
 			element = block.get("originalElement") or block.get("element")
 			# temp fix: since p inside p is illegal
 			if element in ["p", "__raw_html__"]:
@@ -97,8 +97,8 @@ def get_block_html(blocks):
 				tag.append(inner_soup)
 
 			if block.get("blockData"):
-				for i in block.get("blockData", []):
-					tag.append(get_tag(block.get("children")[0], soup))
+				for data in block.get("blockData", []):
+					tag.append(get_tag(block.get("children")[0], soup, data))
 			else:
 				for child in block.get("children", []):
 					tag.append(get_tag(child, soup))
@@ -153,13 +153,30 @@ def set_fonts_from_html(soup, font_map):
 				if font:
 					font_map[font] = { "weights": ["400"] }
 
-def extend_with_component(block):
+def extend_with_component(block, data=None):
 	if block.get("extendedFromComponent"):
 		component = frappe.get_cached_value("Web Page Component", block["extendedFromComponent"], ["block", "name"], as_dict=True)
-		componentBlock = frappe.parse_json(component.block)
-		if componentBlock:
-			block.update(componentBlock)
+		component_block = frappe.parse_json(component.block)
+		block_children = block.get("children", [])
+		if component_block:
+			extend_block(component_block, block)
+			for child in component_block.children:
+				for block_child in block_children:
+					if child.get("blockId") == block_child.get("blockId"):
+						extend_block(child, block_child)
+						break
+			block = component_block
 	return block
+
+def extend_block(block, updater):
+	block["baseStyles"].update(updater["baseStyles"])
+	block["mobileStyles"].update(updater["mobileStyles"])
+	block["tabletStyles"].update(updater["tabletStyles"])
+	block["rawStyles"].update(updater["rawStyles"])
+	block["attributes"].update(updater["attributes"])
+	block["classes"].extend(updater["classes"])
+	if block.get("innerHTML"):
+		block["innerHTML"] = updater["innerHTML"] or "hoola"
 
 def get_style_file_path():
 	# TODO: Redo this, currently it loads the first matching file
