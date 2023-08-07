@@ -96,7 +96,7 @@ def get_block_html(blocks):
 				set_fonts_from_html(inner_soup, font_map)
 				tag.append(inner_soup)
 
-			if block.get("blockData"):
+			if block.get("blockData") and block.get("children"):
 				for data in block.get("blockData", []):
 					tag.append(get_tag(block.get("children")[0], soup, data))
 			else:
@@ -157,18 +157,13 @@ def extend_with_component(block, data=None):
 	if block.get("extendedFromComponent"):
 		component = frappe.get_cached_value("Web Page Component", block["extendedFromComponent"], ["block", "name"], as_dict=True)
 		component_block = frappe.parse_json(component.block)
-		block_children = block.get("children", [])
 		if component_block:
-			extend_block(component_block, block)
-			for child in component_block.children:
-				for block_child in block_children:
-					if child.get("blockId") == block_child.get("blockId"):
-						extend_block(child, block_child)
-						break
+			extend_block(component_block, block, data=data)
 			block = component_block
+
 	return block
 
-def extend_block(block, updater):
+def extend_block(block, updater, data=None):
 	block["baseStyles"].update(updater["baseStyles"])
 	block["mobileStyles"].update(updater["mobileStyles"])
 	block["tabletStyles"].update(updater["tabletStyles"])
@@ -176,7 +171,26 @@ def extend_block(block, updater):
 	block["attributes"].update(updater["attributes"])
 	block["classes"].extend(updater["classes"])
 	if block.get("innerHTML"):
-		block["innerHTML"] = updater["innerHTML"] or "hoola"
+		block["innerHTML"] = updater["innerHTML"]
+
+	component_children = block.get("children", [])
+	extend_with_data(block, data)
+
+	for component_child in component_children:
+		# TODO: fix
+		extend_block(component_child, component_child, data=data)
+
+def extend_with_data(block, data):
+	data_key = block.get("dataKey")
+	if data_key:
+		value = data.get((data_key.get("key")))
+		if value:
+			if data_key.get("type") == "attribute":
+				block["attributes"][data_key.get("property")] = value
+			elif data_key.get("type") == "style":
+				block["baseStyles"][data_key.get("property")] = value
+			elif data_key.get("type") == "key":
+				block[data_key.get("property")] = value
 
 def get_style_file_path():
 	# TODO: Redo this, currently it loads the first matching file
