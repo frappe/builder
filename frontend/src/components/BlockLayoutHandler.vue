@@ -1,88 +1,6 @@
 <template>
 	<div class="flex flex-col gap-3">
 		<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Layout</h3>
-		<!-- <div class="flex flex-col" v-show="blockController.getParentBlock()?.getStyle('display') === 'flex'">
-			<InlineInput
-				type="select"
-				:options="[
-					{
-						value: 'row',
-						label: 'Row',
-					},
-					{
-						value: 'column',
-						label: 'Column',
-					},
-				]"
-				:modelValue="blockController.getParentBlock()?.getStyle('flexDirection')"
-				@update:modelValue="(val) => blockController.getParentBlock()?.setStyle('flexDirection', val)">
-				Arrangement
-			</InlineInput>
-		</div>
-		<div class="flex flex-col" v-show="blockController.getParentBlock()?.getStyle('display') === 'flex'">
-			<InlineInput
-				type="select"
-				:options="[
-					{
-						value: 'top-left',
-						label: 'Top Left',
-					},
-					{
-						value: 'top-middle',
-						label:
-							blockController.getParentBlock()?.getStyle('flexDirection') === 'row'
-								? 'Top Middle'
-								: 'Left Middle',
-					},
-					{
-						value: 'top-right',
-						label:
-							blockController.getParentBlock()?.getStyle('flexDirection') === 'row'
-								? 'Top Right'
-								: 'Bottom Left',
-					},
-					{
-						value: 'middle-left',
-						label:
-							blockController.getParentBlock()?.getStyle('flexDirection') === 'row'
-								? 'Left Middle'
-								: 'Top Middle',
-					},
-					{
-						value: 'middle-middle',
-						label: 'Center',
-					},
-					{
-						value: 'middle-right',
-						label:
-							blockController.getParentBlock()?.getStyle('flexDirection') === 'row'
-								? 'Right Middle'
-								: 'Bottom Middle',
-					},
-					{
-						value: 'bottom-left',
-						label:
-							blockController.getParentBlock()?.getStyle('flexDirection') === 'row'
-								? 'Bottom Left'
-								: 'Top Right',
-					},
-					{
-						value: 'bottom-middle',
-						label:
-							blockController.getParentBlock()?.getStyle('flexDirection') === 'row'
-								? 'Bottom Middle'
-								: 'Right Middle',
-					},
-					{
-						value: 'bottom-right',
-						label: 'Bottom Right',
-					},
-				]"
-				@update:modelValue="setAlignment">
-				Placement
-			</InlineInput>
-		</div> -->
-
 		<div class="flex items-center justify-between">
 			<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
 				Type
@@ -94,7 +12,7 @@
 					{ label: 'Stack', value: 'flex' },
 				]"
 				@update:modelValue="setLayout"
-				class="w-fit self-end"></TabButtons>
+				class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
 		</div>
 		<div class="flex items-center justify-between" v-if="blockController.getStyle('display') === 'flex'">
 			<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
@@ -107,20 +25,8 @@
 					{ label: 'Vertical', value: 'column' },
 				]"
 				@update:modelValue="(val: string | number) => blockController.setStyle('flexDirection', val)"
-				class="w-fit self-end"></TabButtons>
+				class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
 		</div>
-		<!-- <InlineInput
-			v-if="blockController.getStyle('display') === 'flex'"
-			:modelValue="blockController.getStyle('flexDirection')"
-			type="select"
-			:options="[
-				{ label: 'Horizontal', value: 'row' },
-				{ label: 'Vertical', value: 'column' },
-			]"
-			default="column"
-			@update:modelValue="(val: string | number) => blockController.setStyle('flexDirection', val)">
-			Direction
-		</InlineInput> -->
 		<InlineInput
 			v-if="blockController.getStyle('display') === 'flex'"
 			:modelValue="blockController.getStyle('justifyContent')"
@@ -199,7 +105,7 @@
 					{ label: 'Wrap', value: 'wrap' },
 				]"
 				@update:modelValue="(val: string | number) => blockController.setStyle('flexWrap', val)"
-				class="w-fit self-end"></TabButtons>
+				class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
 		</div>
 	</div>
 </template>

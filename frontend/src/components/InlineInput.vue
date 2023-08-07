@@ -18,7 +18,7 @@
 			:modelValue="modelValue"
 			:options="inputOptions"
 			@update:modelValue="handleChange"
-			class="!dark:text-zinc-200 !dark:focus:bg-zinc-700 w-[150px] rounded-md text-sm text-gray-800 dark:bg-zinc-800 [&>div>button]:dark:!bg-zinc-800 [&>div>button]:dark:!text-zinc-200" />
+			class="!dark:text-zinc-200 !dark:focus:bg-zinc-700 w-[150px] rounded-md text-sm text-gray-800 dark:bg-zinc-800" />
 		<div
 			class="absolute right-1 top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
 			@click="clearValue"
