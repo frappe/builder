@@ -73,7 +73,6 @@ const inputOptions = computed(() => {
 });
 
 const handleChange = (value: string | number | null) => {
-	console.log(value);
 	emit("update:modelValue", value);
 };
 
