@@ -66,7 +66,7 @@ import webComponent from "@/data/webComponent";
 import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
 import { useDebouncedRefHistory, useDropZone, useElementBounding } from "@vueuse/core";
-import { FeatherIcon, FileUploadHandler, toast } from "frappe-ui";
+import { FeatherIcon, toast } from "frappe-ui";
 import { storeToRefs } from "pinia";
 import { PropType, computed, nextTick, onMounted, provide, reactive, ref } from "vue";
 import useStore from "../store";
@@ -124,21 +124,15 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 			block.addChild(blockCopy, 0, componentName);
 			ev.stopPropagation();
 		} else if (files && files.length) {
-			const uploader = new FileUploadHandler();
-			uploader
-				.upload(files[0], {
-					private: false,
-					optimize: true,
-				})
-				.then((fileDoc: { file_url: string; file_name: string }) => {
-					const url = encodeURI(window.location.origin + fileDoc.file_url);
-					if (block.isImage()) {
-						block.setAttribute("src", url);
-						block.setAttribute("alt", fileDoc.file_name);
-					} else {
-						block.addChild(store.getImageBlock(url, fileDoc.file_name));
-					}
-				});
+			store.uploadFile(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
+				const url = encodeURI(window.location.origin + fileDoc.fileURL);
+				if (block.isImage()) {
+					block.setAttribute("src", url);
+					block.setAttribute("alt", fileDoc.fileName);
+				} else {
+					block.addChild(store.getImageBlock(url, fileDoc.fileName));
+				}
+			});
 		}
 	},
 });
