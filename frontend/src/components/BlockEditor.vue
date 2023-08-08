@@ -10,7 +10,6 @@
 			@contextmenu="onContextMenu"
 			:data-block-id="block.blockId"
 			:class="getStyleClasses">
-			<BlockDescription v-if="isBlockSelected && !resizing && !editable" :block="block"></BlockDescription>
 			<PaddingHandler
 				v-if="isBlockSelected && !resizing && !editable && !blockController.multipleBlocksSelected()"
 				:target-block="block"
@@ -54,7 +53,6 @@ import useStore from "../store";
 import setGuides from "../utils/guidesTracker";
 import trackTarget from "../utils/trackTarget";
 import BlockContextMenu from "./BlockContextMenu.vue";
-import BlockDescription from "./BlockDescription.vue";
 import BorderRadiusHandler from "./BorderRadiusHandler.vue";
 import BoxResizer from "./BoxResizer.vue";
 import MarginHandler from "./MarginHandler.vue";

@@ -138,6 +138,12 @@ const createComponentHandler = ({ close }: { close: () => void }) => {
 const contextMenuOptions: ContextMenuOption[] = [
 	{ label: "Copy Style", action: copyStyle },
 	{
+		label: "Paste Style",
+		action: pasteStyle,
+		condition: () => Boolean(store.copiedStyle && store.copiedStyle.blockId !== props.block.blockId),
+	},
+	{ label: "Duplicate", action: duplicateBlock },
+	{
 		label: "Wrap in Container",
 		action: () => {
 			const newBlockObj = getBlockTemplate("fit-container");
@@ -169,16 +175,10 @@ const contextMenuOptions: ContextMenuOption[] = [
 		},
 	},
 	{
-		label: "Paste Style",
-		action: pasteStyle,
-		condition: () => Boolean(store.copiedStyle && store.copiedStyle.blockId !== props.block.blockId),
-	},
-	{
 		label: "Save as Component",
 		action: () => (showDialog.value = true),
 		condition: () => !props.block.isComponent(),
 	},
-	{ label: "Duplicate", action: duplicateBlock },
 	{
 		label: "Convert To Repeater",
 		action: () => {
