@@ -279,7 +279,7 @@ class Block implements BlockOptions {
 		if (this.isComponent()) {
 			return this.getComponentTag();
 		}
-		if (this.isButton() || this.isInput()) {
+		if (this.isButton()) {
 			return "div";
 		}
 		return this.element;

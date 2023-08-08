@@ -73,13 +73,16 @@ onMounted(() => {
 		{ immediate: true }
 	);
 
-	watchEffect(() => {
-		let value = props.modelValue;
-		if (props.type === "JSON") {
-			value = JSON.stringify(value, null, 2);
+	watch(
+		() => props.modelValue,
+		() => {
+			let value = props.modelValue;
+			if (props.type === "JSON") {
+				value = JSON.stringify(value, null, 2);
+			}
+			aceEditor.setValue(value as string);
 		}
-		aceEditor.setValue(value as string);
-	});
+	);
 });
 </script>
 <style scoped>

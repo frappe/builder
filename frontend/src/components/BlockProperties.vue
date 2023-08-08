@@ -102,7 +102,7 @@
 			Align
 		</InlineInput>
 		<InlineInput
-			v-if="blockController.isText()"
+			v-if="blockController.isText() || blockController.isInput()"
 			:modelValue="blockController.getStyle('fontSize')"
 			@update:modelValue="(val) => blockController.setStyle('fontSize', val)">
 			Size
@@ -210,16 +210,6 @@
 			:modelValue="blockController.getStyle('gridRowGap')"
 			@update:modelValue="(val) => blockController.setStyle('gridRowGap', val)">
 			Row Gap
-		</InlineInput>
-		<InlineInput
-			:modelValue="blockController.getStyle('display') || 'flex'"
-			type="select"
-			:options="[
-				{ label: 'Visible', value: 'flex' },
-				{ label: 'Hidden', value: 'none' },
-			]"
-			@update:modelValue="(val) => blockController.setStyle('display', val)">
-			Visibility
 		</InlineInput>
 		<div class="flex items-center justify-between">
 			<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
