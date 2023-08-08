@@ -124,7 +124,7 @@ const createComponentHandler = ({ close }: { close: () => void }) => {
 		.submit({
 			block: blockCopy,
 			component_name: componentProperties.value.componentName,
-			web_page: componentProperties.value.isGlobalComponent ? null : store.builderState.selectedPage,
+			web_page: componentProperties.value.isGlobalComponent ? null : store.selectedPage,
 		})
 		.then(async (data: WebPageComponent) => {
 			await webComponent.list.promise;

@@ -43,7 +43,7 @@ const store = useStore();
 
 const components = computed(() =>
 	(webComponent.data || []).filter(
-		(d: WebPageComponent) => !d.for_web_page || d.for_web_page === store.builderState.selectedPage
+		(d: WebPageComponent) => !d.for_web_page || d.for_web_page === store.selectedPage
 	)
 );
 

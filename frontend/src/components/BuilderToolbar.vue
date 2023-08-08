@@ -94,10 +94,10 @@ const publishWebResource = createResource({
 });
 
 watch(
-	() => store.builderState.selectedPage,
+	() => store.selectedPage,
 	() => {
-		if (store.builderState.selectedPage && pageData.value.name !== store.builderState.selectedPage) {
-			webPages.fetchOne.submit(store.builderState.selectedPage).then((data: WebPageBeta[]) => {
+		if (store.selectedPage && pageData.value.name !== store.selectedPage) {
+			webPages.fetchOne.submit(store.selectedPage).then((data: WebPageBeta[]) => {
 				pageData.value = data[0];
 			});
 		}

@@ -118,7 +118,7 @@ watchEffect(() => {
 });
 
 const isBlockSelected = computed(() => {
-	return props.block.isSelected() && props.breakpoint === store.builderState.activeBreakpoint;
+	return props.block.isSelected() && props.breakpoint === store.activeBreakpoint;
 });
 
 const getStyleClasses = computed(() => {
@@ -133,7 +133,7 @@ const getStyleClasses = computed(() => {
 	}
 	if (
 		props.block.isSelected() &&
-		props.breakpoint === store.builderState.activeBreakpoint &&
+		props.breakpoint === store.activeBreakpoint &&
 		!props.editable &&
 		!props.block.isRoot()
 	) {

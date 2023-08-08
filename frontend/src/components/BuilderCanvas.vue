@@ -65,9 +65,8 @@
 import webComponent from "@/data/webComponent";
 import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
-import { useDebouncedRefHistory, useDropZone, useElementBounding } from "@vueuse/core";
+import { useDropZone, useElementBounding } from "@vueuse/core";
 import { FeatherIcon, toast } from "frappe-ui";
-import { storeToRefs } from "pinia";
 import { PropType, computed, nextTick, onMounted, provide, reactive, ref } from "vue";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
@@ -196,7 +195,7 @@ document.addEventListener("keydown", (e) => {
 		clearSelectedComponent();
 	}
 
-	if (e.key === "s" && (e.ctrlKey || e.metaKey) && store.builderState.editingMode === "component") {
+	if (e.key === "s" && (e.ctrlKey || e.metaKey) && store.editingMode === "component") {
 		store.editPage(true);
 		clearSelectedComponent();
 		e.stopPropagation();
@@ -256,19 +255,6 @@ onMounted(() => {
 	setPanAndZoom(props.canvasProps, canvasEl, canvasContainerEl);
 	showBlocks.value = true;
 });
-
-const { builderState } = storeToRefs(store);
-
-store.history = useDebouncedRefHistory(builderState, {
-	capacity: 50,
-	deep: true,
-	clone: (obj) => {
-		let newObj = Object.assign({}, obj);
-		newObj.blocks = obj.blocks.map((val) => store.getBlockCopy(val, true));
-		return newObj;
-	},
-	debounce: 200,
-}) as unknown as typeof store.history;
 
 document.addEventListener("keydown", (e) => {
 	const target = e.target as HTMLElement;

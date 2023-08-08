@@ -215,9 +215,9 @@ class Block implements BlockOptions {
 	setStyle(style: styleProperty, value: number | string | null) {
 		const store = useStore();
 		let styleObj = this.baseStyles;
-		if (store.builderState.activeBreakpoint === "mobile") {
+		if (store.activeBreakpoint === "mobile") {
 			styleObj = this.mobileStyles;
-		} else if (store.builderState.activeBreakpoint === "tablet") {
+		} else if (store.activeBreakpoint === "tablet") {
 			styleObj = this.tabletStyles;
 		}
 		if (value === null || value === "") {
@@ -242,9 +242,9 @@ class Block implements BlockOptions {
 	}
 	getStyle(style: styleProperty) {
 		const store = useStore();
-		if (store.builderState.activeBreakpoint === "mobile") {
+		if (store.activeBreakpoint === "mobile") {
 			return this.mobileStyles[style] || this.baseStyles[style];
-		} else if (store.builderState.activeBreakpoint === "tablet") {
+		} else if (store.activeBreakpoint === "tablet") {
 			return this.tabletStyles[style] || this.baseStyles[style];
 		}
 		return this.baseStyles[style];
