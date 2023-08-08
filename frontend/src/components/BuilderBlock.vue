@@ -134,7 +134,7 @@ const loadEditor = computed(() => {
 		!props.isChildOfComponent &&
 		target.value &&
 		props.block.getStyle("display") !== "none" &&
-		store.builderState.mode !== "container" &&
+		store.mode !== "container" &&
 		((props.block.isSelected() && props.breakpoint === store.builderState.activeBreakpoint) ||
 			(props.block.isHovered() && store.hoveredBreakpoint === props.breakpoint))
 	);
@@ -167,7 +167,7 @@ const isEditable = computed(() => {
 const selectBlock = (e: MouseEvent | null) => {
 	if (
 		store.builderState.editableBlock === props.block ||
-		store.builderState.mode !== "select" ||
+		store.mode !== "select" ||
 		props.preview ||
 		props.isChildOfComponent
 	) {
