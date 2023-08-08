@@ -11,7 +11,13 @@
 			:data-block-id="block.blockId"
 			:class="getStyleClasses">
 			<PaddingHandler
-				v-if="isBlockSelected && !resizing && !editable && !blockController.multipleBlocksSelected()"
+				v-if="
+					isBlockSelected &&
+					!resizing &&
+					!editable &&
+					!blockController.multipleBlocksSelected() &&
+					!block.isComponent()
+				"
 				:target-block="block"
 				:on-update="updateTracker"
 				:disable-handlers="false"
@@ -22,7 +28,8 @@
 					!block.isRoot() &&
 					!resizing &&
 					!editable &&
-					!blockController.multipleBlocksSelected()
+					!blockController.multipleBlocksSelected() &&
+					!block.isComponent()
 				"
 				:target-block="block"
 				:on-update="updateTracker"
@@ -35,7 +42,8 @@
 					!block.isText() &&
 					!block.isHTML() &&
 					!editable &&
-					!blockController.multipleBlocksSelected()
+					!blockController.multipleBlocksSelected() &&
+					!block.isComponent()
 				"
 				:target-block="block"
 				:target="target" />
@@ -111,7 +119,6 @@ watchEffect(() => {
 	store.builderLayout.rightPanelWidth;
 	store.showPanels;
 	store.deviceBreakpoints;
-
 	nextTick(() => {
 		updateTracker.value();
 	});

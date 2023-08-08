@@ -1,5 +1,5 @@
 import { useElementBounding, useMutationObserver } from "@vueuse/core";
-import { nextTick, reactive, watch } from "vue";
+import { nextTick, reactive, watch, watchEffect } from "vue";
 import useStore from "../store";
 import { addPxToNumber } from "./helpers";
 const store = useStore();
@@ -36,7 +36,7 @@ function trackTarget(target: HTMLElement, host: HTMLElement, canvasProps: Canvas
 			characterData: true,
 		});
 	}
-	watch(targetBounds, () => {
+	watchEffect(() => {
 		host.style.width = addPxToNumber(targetBounds.width, false);
 		host.style.height = addPxToNumber(targetBounds.height, false);
 		host.style.top = addPxToNumber(targetBounds.top, false);

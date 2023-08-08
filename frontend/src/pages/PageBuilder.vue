@@ -24,7 +24,7 @@
 				}"
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-400 p-10 dark:bg-zinc-700"></BuilderCanvas>
 			<BuilderCanvas
-				v-else
+				v-show="!store.editingComponent"
 				ref="blockEditor"
 				:block="store.builderState.blocks[0]"
 				:canvas-props="store.blockEditorCanvas"
