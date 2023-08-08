@@ -41,12 +41,12 @@
 			<BlockLayers
 				class="p-4"
 				:blocks="store.builderState.blocks"
-				v-if="!store.builderState.editingComponent"
-				v-show="store.builderState.editingMode == 'page'" />
+				v-if="!store.editingComponent"
+				v-show="store.editingMode == 'page'" />
 			<BlockLayers
 				class="p-4"
-				:blocks="[store.getComponentBlock(store.builderState.editingComponent)]"
-				v-if="store.builderState.editingComponent" />
+				:blocks="[store.getComponentBlock(store.editingComponent)]"
+				v-if="store.editingComponent" />
 		</div>
 	</div>
 </template>

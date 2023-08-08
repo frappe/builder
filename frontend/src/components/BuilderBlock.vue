@@ -135,7 +135,7 @@ const loadEditor = computed(() => {
 		target.value &&
 		props.block.getStyle("display") !== "none" &&
 		store.mode !== "container" &&
-		((props.block.isSelected() && props.breakpoint === store.builderState.activeBreakpoint) ||
+		((props.block.isSelected() && props.breakpoint === store.activeBreakpoint) ||
 			(props.block.isHovered() && store.hoveredBreakpoint === props.breakpoint))
 	);
 });
@@ -160,7 +160,7 @@ const isEditable = computed(() => {
 	return (
 		store.builderState.editableBlock === props.block &&
 		!(props.block.isComponent() || props.isChildOfComponent) &&
-		store.builderState.activeBreakpoint === props.breakpoint // to ensure it is right block and not on different breakpoint
+		store.activeBreakpoint === props.breakpoint // to ensure it is right block and not on different breakpoint
 	);
 });
 
@@ -174,7 +174,7 @@ const selectBlock = (e: MouseEvent | null) => {
 		return;
 	}
 	store.selectBlock(props.block, e);
-	store.builderState.activeBreakpoint = props.breakpoint;
+	store.activeBreakpoint = props.breakpoint;
 
 	if (!props.preview) {
 		store.sidebarActiveTab = "Layers";

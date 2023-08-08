@@ -4,7 +4,7 @@
 		<BlockPositionHandler
 			v-if="!blockController.multipleBlocksSelected()"
 			class="mb-6"></BlockPositionHandler>
-		<div v-if="store.builderState.editingMode === 'component'" class="flex flex-col gap-3">
+		<div v-if="store.editingMode === 'component'" class="flex flex-col gap-3">
 			<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Component Keys</h3>
 			<InlineInput
 				:modelValue="blockController.getDataKey('key')"

@@ -1,6 +1,6 @@
-import { UseRefHistoryReturn } from "@vueuse/core";
+import { UseRefHistoryReturn, useDebouncedRefHistory } from "@vueuse/core";
 import { FileUploadHandler, toast } from "frappe-ui";
-import { defineStore } from "pinia";
+import { defineStore, storeToRefs } from "pinia";
 import webComponent from "./data/webComponent";
 import { WebPageBeta } from "./types/WebsiteBuilder/WebPageBeta";
 import Block from "./utils/block";
@@ -10,13 +10,13 @@ import { stripExtension } from "./utils/helpers";
 const useStore = defineStore("store", {
 	state: () => ({
 		builderState: {
-			selectedPage: <string | null>null,
 			editableBlock: <Block | null>null,
-			activeBreakpoint: "desktop",
 			blocks: <Block[]>[new Block(getBlockTemplate("body"))],
-			editingComponent: <string | null>null,
-			editingMode: <EditingMode>"page",
 		},
+		editingComponent: <string | null>null,
+		editingMode: <EditingMode>"page",
+		activeBreakpoint: "desktop",
+		selectedPage: <string | null>null,
 		mode: <BuilderMode>"select",
 		selectedBlocks: <Block[]>[],
 		history: {} as UseRefHistoryReturn<{}, {}>,
@@ -256,8 +256,8 @@ const useStore = defineStore("store", {
 			this.pushBlocks(page.blocks);
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
-			this.builderState.selectedPage = page.name;
-			this.history?.clear();
+			this.selectedPage = page.name;
+			this.setupHistory();
 			// localStorage.setItem("selectedPage", page.name);
 		},
 		getImageBlock(imageSrc: string, imageAlt: string = "") {
@@ -328,9 +328,9 @@ const useStore = defineStore("store", {
 		},
 		editComponent(block: Block) {
 			if (block.isComponent()) {
-				this.builderState.editingComponent = block?.extendedFromComponent as string;
+				this.editingComponent = block?.extendedFromComponent as string;
 			}
-			this.builderState.editingMode = "component";
+			this.editingMode = "component";
 		},
 		isComponentUsed(componentName: string) {
 			// TODO: Refactor or reduce complexity
@@ -356,15 +356,15 @@ const useStore = defineStore("store", {
 			return false;
 		},
 		editPage(saveComponent = false) {
-			this.builderState.editingMode = "page";
+			this.editingMode = "page";
 			this.builderState.editableBlock = null;
 
-			if (this.builderState.editingComponent) {
+			if (this.editingComponent) {
 				if (saveComponent) {
 					webComponent.setValue
 						.submit({
-							name: this.builderState.editingComponent,
-							block: this.getComponentBlock(this.builderState.editingComponent),
+							name: this.editingComponent,
+							block: this.getComponentBlock(this.editingComponent),
 						})
 						.then(() => {
 							toast({
@@ -376,7 +376,7 @@ const useStore = defineStore("store", {
 					// webComponent.fet;
 				}
 			}
-			this.builderState.editingComponent = null;
+			this.editingComponent = null;
 		},
 		getComponentBlock(componentName: string) {
 			return webComponent.getRow(componentName).block as Block;
@@ -387,6 +387,19 @@ const useStore = defineStore("store", {
 				return componentId;
 			}
 			return componentObj.component_name as Block;
+		},
+		setupHistory() {
+			const { builderState } = storeToRefs(this);
+			this.history = useDebouncedRefHistory(builderState, {
+				capacity: 50,
+				deep: true,
+				clone: (obj) => {
+					let newObj = Object.assign({}, obj);
+					newObj.blocks = obj.blocks.map((val: Block) => this.getBlockCopy(val, true));
+					return newObj;
+				},
+				debounce: 200,
+			}) as unknown as typeof this.history;
 		},
 		uploadFile(file: File) {
 			const uploader = new FileUploadHandler();
