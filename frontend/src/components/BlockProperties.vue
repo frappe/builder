@@ -211,7 +211,7 @@
 			@update:modelValue="(val) => blockController.setStyle('gridRowGap', val)">
 			Row Gap
 		</InlineInput>
-		<!-- <InlineInput
+		<InlineInput
 			:modelValue="blockController.getStyle('display') || 'flex'"
 			type="select"
 			:options="[
@@ -220,7 +220,7 @@
 			]"
 			@update:modelValue="(val) => blockController.setStyle('display', val)">
 			Visibility
-		</InlineInput> -->
+		</InlineInput>
 		<div class="flex items-center justify-between">
 			<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
 				Visibility
@@ -270,30 +270,38 @@
 			@update:modelValue="(val) => blockController.setAttribute('alt', val)">
 			Alt Text
 		</InlineInput>
-		<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">RAW Styles (as JSON)</h3>
-		<div id="editor" class="border border-gray-200 dark:border-zinc-800" />
-		<Input
-			v-show="blockController.isHTML()"
-			type="textarea"
+		<CodeEditor
+			label="RAW Styles (as JSON)"
+			:modelValue="blockController.getRawStyles() || {}"
+			@update:modelValue="
+				(val) => {
+					blockController.setRawStyles(val);
+				}
+			"></CodeEditor>
+		<CodeEditor
+			v-if="blockController.isHTML()"
 			label="HTML"
-			class="mb-8 h-36"
-			id="html"
-			@change="(val) => blockController.setInnerHTML(val)"
-			:value="blockController.getInnerHTML()" />
-		<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600" v-show="blockController.isRepeater()">
-			Block Data (Array)
-		</h3>
-		<div
-			id="blockData"
-			class="border border-gray-200 dark:border-zinc-800"
-			v-show="blockController.isRepeater()" />
+			type="HTML"
+			:modelValue="blockController.getInnerHTML() || ''"
+			@update:modelValue="
+				(val) => {
+					blockController.setInnerHTML(val);
+				}
+			"></CodeEditor>
+		<CodeEditor
+			v-if="blockController.isRepeater()"
+			label="Block Data (Array)"
+			:modelValue="blockController.getBlockData()"
+			@update:modelValue="
+				(val) => {
+					blockController.setBlockData(val);
+				}
+			"></CodeEditor>
 	</div>
 </template>
 <script setup lang="ts">
 import { setFont as _setFont, fontListNames, getFontWeightOptions } from "@/utils/fontManager";
-import { useDark } from "@vueuse/core";
 import { TabButtons } from "frappe-ui";
-import { onMounted, watch, watchEffect } from "vue";
 
 import BackgroundHandler from "./BackgroundHandler.vue";
 import BLockLayoutHandler from "./BlockLayoutHandler.vue";
@@ -303,103 +311,16 @@ import InlineInput from "./InlineInput.vue";
 
 import useStore from "@/store";
 import blockController from "@/utils/blockController";
-import ace from "ace-builds";
-import "ace-builds/src-noconflict/mode-html";
-import "ace-builds/src-noconflict/mode-json";
-import "ace-builds/src-noconflict/theme-chrome";
-import "ace-builds/src-noconflict/theme-monokai";
+import CodeEditor from "./CodeEditor.vue";
 import DimensionInput from "./DimensionInput.vue";
 
 const store = useStore();
-
-const isDark = useDark();
 
 const setFont = (font: { value: string }) => {
 	_setFont(font?.value).then(() => {
 		blockController.setFontFamily(font?.value);
 	});
 };
-
-onMounted(() => {
-	const editor = ace.edit("editor");
-	editor.setOptions({
-		fontSize: "12px",
-		useWorker: false,
-		showGutter: false,
-	});
-	editor.setTheme("ace/theme/chrome");
-	editor.session.setMode("ace/mode/json");
-	editor.setValue(JSON.stringify(blockController.getRawStyles(), null, 2));
-	editor.on("blur", () => {
-		const value = editor.getValue();
-		try {
-			const parsed = JSON.parse(value) as BlockStyleMap;
-			blockController.setRawStyles(parsed);
-		} catch (e) {
-			// console.error(e);
-		}
-	});
-
-	const htmlEditor = ace.edit("html");
-	htmlEditor.setOptions({
-		fontSize: "12px",
-		useWorker: false,
-		showGutter: false,
-	});
-	htmlEditor.setTheme("ace/theme/chrome");
-	htmlEditor.session.setMode("ace/mode/html");
-	htmlEditor.on("blur", () => {
-		const value = htmlEditor.getValue();
-		blockController.setInnerHTML(value);
-	});
-
-	const blockData = ace.edit("blockData");
-	blockData.setOptions({
-		fontSize: "12px",
-		useWorker: false,
-		showGutter: false,
-	});
-	blockData.setTheme("ace/theme/chrome");
-	blockData.session.setMode("ace/mode/json");
-	blockData.setValue(JSON.stringify(blockController.getBlockData(), null, 2));
-	blockData.on("blur", () => {
-		const value = blockData.getValue();
-		try {
-			const parsed = JSON.parse(value) as BlockStyleMap;
-			blockController.setBlockData(parsed);
-		} catch (e) {
-			// console.error(e);
-		}
-	});
-
-	watchEffect(() => {
-		editor.setValue(JSON.stringify(blockController.getRawStyles(), null, 2));
-	});
-
-	watchEffect(() => {
-		htmlEditor.setValue(blockController.getInnerHTML() as string);
-	});
-
-	watchEffect(() => {
-		blockData.setValue(JSON.stringify(blockController.getBlockData(), null, 2));
-	});
-
-	watch(
-		isDark,
-		() => {
-			if (isDark.value) {
-				editor.setTheme("ace/theme/monokai");
-				htmlEditor.setTheme("ace/theme/monokai");
-				blockData.setTheme("ace/theme/monokai");
-			} else {
-				editor.setTheme("ace/theme/chrome");
-				htmlEditor.setTheme("ace/theme/chrome");
-				blockData.setTheme("ace/theme/chrome");
-			}
-		},
-		{ immediate: true }
-	);
-});
 </script>
 <style scoped>
 :deep(.ace_editor) {
