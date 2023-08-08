@@ -293,19 +293,19 @@ document.addEventListener("keydown", (e) => {
 	}
 
 	if (e.key === "c") {
-		store.builderState.mode = "container";
+		store.mode = "container";
 	}
 
 	if (e.key === "i") {
-		store.builderState.mode = "image";
+		store.mode = "image";
 	}
 
 	if (e.key === "t") {
-		store.builderState.mode = "text";
+		store.mode = "text";
 	}
 
 	if (e.key === "v") {
-		store.builderState.mode = "select";
+		store.mode = "select";
 	}
 });
 

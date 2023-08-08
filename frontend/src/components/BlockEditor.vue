@@ -192,7 +192,7 @@ const handleDoubleClick = () => {
 };
 
 const handleMove = (ev: MouseEvent) => {
-	if (store.builderState.mode === "text") {
+	if (store.mode === "text") {
 		store.builderState.editableBlock = props.block;
 	}
 	if (!movable.value || props.block.isRoot()) return;

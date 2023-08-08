@@ -19,8 +19,8 @@
 				] as { 'mode': BuilderMode; 'icon': string }[]"
 				:icon="mode.icon"
 				class="!text-gray-700 dark:bg-transparent dark:!text-gray-200 hover:dark:bg-zinc-800 focus:dark:bg-zinc-700 active:dark:bg-zinc-700"
-				@click="store.builderState.mode = mode.mode"
-				:active="store.builderState.mode === mode.mode"></Button>
+				@click="store.mode = mode.mode"
+				:active="store.mode === mode.mode"></Button>
 		</div>
 		<div class="absolute right-3 flex items-center">
 			<Popover transition="default" placement="bottom-start" class="inline w-full">
@@ -112,9 +112,9 @@ const publish = () => {
 };
 
 watch(
-	() => store.builderState.mode,
+	() => store.mode,
 	() => {
-		toggleMode(store.builderState.mode);
+		toggleMode(store.mode);
 	}
 );
 
@@ -128,7 +128,7 @@ function setEvents() {
 		store.history.pause();
 		const initialX = ev.clientX;
 		const initialY = ev.clientY;
-		if (store.builderState.mode === "select") {
+		if (store.mode === "select") {
 			return;
 		} else {
 			ev.stopPropagation();
@@ -146,7 +146,7 @@ function setEvents() {
 					parentBlock = parentBlock.getParentBlock() || store.builderState.blocks[0];
 				}
 			}
-			const child = getBlockTemplate(store.builderState.mode);
+			const child = getBlockTemplate(store.mode);
 			const parentElement = document.body.querySelector(
 				`.canvas [data-block-id="${parentBlock.blockId}"]`
 			) as HTMLElement;
@@ -166,7 +166,7 @@ function setEvents() {
 			childBlock.selectBlock();
 
 			const mouseMoveHandler = (mouseMoveEvent: MouseEvent) => {
-				if (store.builderState.mode === "text" || store.builderState.mode === "html") {
+				if (store.mode === "text" || store.mode === "html") {
 					return;
 				} else {
 					mouseMoveEvent.preventDefault();
@@ -185,12 +185,12 @@ function setEvents() {
 				() => {
 					document.removeEventListener("mousemove", mouseMoveHandler);
 					setTimeout(() => {
-						store.builderState.mode = "select";
+						store.mode = "select";
 					}, 50);
 					childBlock.setBaseStyle("position", "static");
 					childBlock.setBaseStyle("top", "auto");
 					childBlock.setBaseStyle("left", "auto");
-					if (store.builderState.mode === "text" || store.builderState.mode === "html") {
+					if (store.mode === "text" || store.mode === "html") {
 						store.history.resume();
 					}
 					if (getNumberFromPx(childBlock.getStyle("width")) < 100) {
