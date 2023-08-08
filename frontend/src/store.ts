@@ -1,5 +1,5 @@
 import { UseRefHistoryReturn } from "@vueuse/core";
-import { toast } from "frappe-ui";
+import { FileUploadHandler, toast } from "frappe-ui";
 import { defineStore } from "pinia";
 import webComponent from "./data/webComponent";
 import { WebPageBeta } from "./types/WebsiteBuilder/WebPageBeta";
@@ -387,6 +387,21 @@ const useStore = defineStore("store", {
 				return componentId;
 			}
 			return componentObj.component_name as Block;
+		},
+		uploadFile(file: File) {
+			const uploader = new FileUploadHandler();
+			return uploader
+				.upload(file, {
+					private: false,
+					optimize: true,
+				})
+				.then((fileDoc: { file_url: string; file_name: string }) => {
+					const fileURL = encodeURI(window.location.origin + fileDoc.file_url);
+					return {
+						fileURL,
+						fileName: fileDoc.file_name,
+					};
+				});
 		},
 	},
 });

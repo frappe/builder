@@ -52,6 +52,7 @@ import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
 import blockController from "@/utils/blockController";
+import getBlockTemplate from "@/utils/blockTemplate";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { copyToClipboard, isHTMLString } from "@/utils/helpers";
 import { nextTick, onMounted, ref, watch } from "vue";
@@ -92,7 +93,21 @@ document.addEventListener("keydown", (e) => {
 });
 
 document.addEventListener("paste", (e) => {
-	if (blockController.isHTML()) {
+	const clipboardItems = Array.from(e.clipboardData?.items || []);
+	if (clipboardItems.some((item) => item.type.includes("image"))) {
+		e.preventDefault();
+		const file = clipboardItems.find((item) => item.type.includes("image"))?.getAsFile();
+		if (file) {
+			store.uploadFile(file).then((res: { fileURL: string; fileName: string }) => {
+				const block = store.getBlockCopy(getBlockTemplate("image"));
+				block.attributes.src = res.fileURL;
+				block.attributes.alt = res.fileName;
+				if (block) {
+					store.pushBlocks([block]);
+				}
+			});
+		}
+	} else if (blockController.isHTML()) {
 		e.preventDefault();
 		const text = e.clipboardData?.getData("text/plain");
 		if (text && isHTMLString(text)) {
