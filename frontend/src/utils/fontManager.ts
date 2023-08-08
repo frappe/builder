@@ -8,13 +8,9 @@ const setFont = (font: string | null) => {
 		if (!font) {
 			return resolve(font);
 		}
-		const fontObj = fontList.items?.find((f) => f.family === font);
-		if (!fontObj) {
-			return resolve(font);
-		}
 		WebFont.load({
 			google: {
-				families: [font + ":" + fontObj.variants.join(",")],
+				families: [font],
 				crossOrigin: "anonymous",
 			},
 			active: resolve(font),
