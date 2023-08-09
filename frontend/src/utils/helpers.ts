@@ -102,12 +102,14 @@ function RGBToHex(rgb: RGBString): HashString {
 	return `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
 }
 
-function getRGB(color: HashString | RGBString | null): HashString {
+function getRGB(color: HashString | RGBString | string | null): HashString {
 	if (!color) {
 		return "#ffffff";
 	}
 	if (color.startsWith("rgb")) {
 		return RGBToHex(color as RGBString);
+	} else if (!color.startsWith("#") && color.match(/\b[a-fA-F0-9]{3,6}\b/g)) {
+		return `#${color}` as HashString;
 	}
 	return color as HashString;
 }
