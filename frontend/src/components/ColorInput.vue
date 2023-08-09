@@ -20,7 +20,10 @@
 						placeholder="Select Color"
 						inputClass="pl-8 pr-6"
 						:value="value"
-						@change="(value: string) => emit('change', value)"></Input>
+						@change="(value: string) => {
+							value = getRGB(value);
+							emit('change', value)
+						}"></Input>
 					<div
 						class="absolute right-1 top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
 						@click="clearValue"
@@ -39,6 +42,7 @@
 <script setup lang="ts">
 import { PropType } from "vue";
 import ColorPicker from "./ColorPicker.vue";
+import { getRGB } from "@/utils/helpers";
 
 defineProps({
 	value: {
