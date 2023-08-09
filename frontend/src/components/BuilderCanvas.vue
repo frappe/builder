@@ -120,6 +120,8 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 				if (block.isImage()) {
 					block.setAttribute("src", fileDoc.fileURL);
 					block.setAttribute("alt", fileDoc.fileName);
+				} else if (block.isContainer()) {
+					block.setStyle("background", `url(${fileDoc.fileURL})`);
 				} else {
 					block.addChild(store.getImageBlock(fileDoc.fileURL, fileDoc.fileName));
 				}

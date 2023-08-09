@@ -18,7 +18,7 @@
 					{ mode: 'html', icon: 'code'}
 				] as { 'mode': BuilderMode; 'icon': string }[]"
 				:icon="mode.icon"
-				class="!text-gray-700 dark:!text-gray-200 hover:dark:bg-zinc-800 focus:dark:bg-zinc-700 [&[active='true']]:bg-gray-100 [&[active='true']]:!text-gray-900 [&[active='true']]:dark:bg-zinc-700"
+				class="!text-gray-700 dark:!text-gray-200 hover:dark:bg-zinc-800 focus:dark:bg-zinc-700 [&[active='true']]:bg-gray-100 [&[active='true']]:!text-gray-900 [&[active='true']]:dark:bg-zinc-700 [&[active='true']]:dark:!text-zinc-50"
 				@click="store.mode = mode.mode"
 				:active="store.mode === mode.mode"></Button>
 		</div>

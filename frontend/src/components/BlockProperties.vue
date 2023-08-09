@@ -1,11 +1,8 @@
 <template>
 	<div v-if="blockController.isBLockSelected()" class="flex flex-col gap-3 pb-48">
 		<BLockLayoutHandler v-if="!blockController.multipleBlocksSelected()" class="mb-6"></BLockLayoutHandler>
-		<BlockPositionHandler
-			v-if="!blockController.multipleBlocksSelected()"
-			class="mb-6"></BlockPositionHandler>
-		<div v-if="store.editingMode === 'component'" class="flex flex-col gap-3">
-			<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Component Keys</h3>
+		<div v-if="store.editingMode === 'component'" class="mb-8 flex flex-col gap-3">
+			<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Component Keys</h3>
 			<InlineInput
 				:modelValue="blockController.getDataKey('key')"
 				@update:modelValue="(val) => blockController.setDataKey('key', val)">
@@ -59,8 +56,8 @@
 			@update:modelValue="(val) => blockController.setStyle('boxShadow', val)">
 			Shadow
 		</InlineInput>
-		<div class="flex flex-col gap-3" v-if="!blockController.isHTML() || !blockController.isRoot()">
-			<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Dimension</h3>
+		<div class="mt-6 flex flex-col gap-3" v-if="!blockController.isHTML() || !blockController.isRoot()">
+			<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Dimension</h3>
 			<DimensionInput property="width">Width</DimensionInput>
 			<DimensionInput property="minWidth">Min Width</DimensionInput>
 			<DimensionInput property="maxWidth">Max Width</DimensionInput>
@@ -69,9 +66,12 @@
 			<DimensionInput property="minHeight">Min Height</DimensionInput>
 			<DimensionInput property="maxHeight">Max Height</DimensionInput>
 		</div>
+		<BlockPositionHandler
+			v-if="!blockController.multipleBlocksSelected()"
+			class="mb-6"></BlockPositionHandler>
 
 		<h3
-			class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600"
+			class="mb-1 mt-6 text-xs font-bold uppercase text-gray-600"
 			v-if="!blockController.multipleBlocksSelected()">
 			Spacing
 		</h3>
@@ -124,7 +124,7 @@
 		<InlineInput
 			v-if="blockController.isText() || blockController.isContainer()"
 			:modelValue="blockController.getStyle('fontWeight')"
-			type="select"
+			type="autocomplete"
 			:options="getFontWeightOptions(blockController.getStyle('fontFamily') as string || 'Inter')"
 			@update:modelValue="(val) => blockController.setStyle('fontWeight', val)">
 			Weight
@@ -261,6 +261,15 @@
 			Alt Text
 		</InlineInput>
 		<CodeEditor
+			v-if="blockController.isRepeater()"
+			label="Block Data (Array)"
+			:modelValue="blockController.getBlockData()"
+			@update:modelValue="
+				(val) => {
+					blockController.setBlockData(val);
+				}
+			"></CodeEditor>
+		<CodeEditor
 			label="RAW Styles (as JSON)"
 			:modelValue="blockController.getRawStyles() || {}"
 			@update:modelValue="
@@ -276,15 +285,6 @@
 			@update:modelValue="
 				(val) => {
 					blockController.setInnerHTML(val);
-				}
-			"></CodeEditor>
-		<CodeEditor
-			v-if="blockController.isRepeater()"
-			label="Block Data (Array)"
-			:modelValue="blockController.getBlockData()"
-			@update:modelValue="
-				(val) => {
-					blockController.setBlockData(val);
 				}
 			"></CodeEditor>
 	</div>
