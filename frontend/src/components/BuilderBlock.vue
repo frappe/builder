@@ -201,6 +201,11 @@ const triggerContextMenu = (e: MouseEvent) => {
 };
 
 const handleClick = (e: MouseEvent) => {
+	if (props.block.isComponent()) {
+		store.editComponent(props.block);
+		e.stopPropagation();
+		e.preventDefault();
+	}
 	if (isEditable.value) return;
 	if (!props.isChildOfComponent) {
 		selectBlock(e);

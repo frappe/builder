@@ -1,5 +1,5 @@
 <template>
-	<div>
+	<div class="mt-6">
 		<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Position</h3>
 		<div class="grid grid-cols-3 grid-rows-3 gap-2">
 			<Input

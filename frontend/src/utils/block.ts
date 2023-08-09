@@ -480,8 +480,8 @@ class Block implements BlockOptions {
 		if (!this.dataKey) {
 			this.dataKey = {
 				key: "",
-				type: "key",
-				property: "innerHTML",
+				type: this.isImage() ? "attribute" : "key",
+				property: this.isImage() ? "src" : "innerHTML",
 			};
 		}
 		this.dataKey[key] = value;
