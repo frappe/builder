@@ -64,24 +64,20 @@
 <script setup lang="ts">
 import webComponent from "@/data/webComponent";
 import Block from "@/utils/block";
-import blockController from "@/utils/blockController";
+import getBlockTemplate from "@/utils/blockTemplate";
+import { addPxToNumber, getNumberFromPx } from "@/utils/helpers";
 import { clamp, useDropZone, useElementBounding, useEventListener } from "@vueuse/core";
-import { FeatherIcon, toast } from "frappe-ui";
+import { FeatherIcon } from "frappe-ui";
 import { PropType, computed, nextTick, onMounted, provide, reactive, ref } from "vue";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BuilderBlock from "./BuilderBlock.vue";
-import getBlockTemplate from "@/utils/blockTemplate";
-import { addPxToNumber, getNumberFromPx } from "@/utils/helpers";
 
 const store = useStore();
 const canvasContainer = ref(null);
 const canvas = ref(null);
 const showBlocks = ref(false);
 const overlay = ref(null);
-
-// TODO:
-store.overlayElement = overlay;
 
 const props = defineProps({
 	block: {
@@ -101,6 +97,7 @@ const props = defineProps({
 provide("canvasProps", props.canvasProps);
 
 onMounted(() => {
+	props.canvasProps.overlayElement = overlay.value;
 	setEvents();
 });
 

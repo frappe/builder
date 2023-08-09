@@ -82,6 +82,7 @@ declare interface CanvasProps {
 	panning: boolean;
 	background: string;
 	settingCanvas: boolean;
+	overlayElement: HTMLElement | null;
 }
 
 declare type EditingMode = "page" | "component";
