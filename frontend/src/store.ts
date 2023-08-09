@@ -189,6 +189,7 @@ const useStore = defineStore("store", {
 			scaling: false,
 			panning: false,
 			settingCanvas: true,
+			overlayElement: <HTMLElement | null>null,
 		},
 		componentEditorCanvas: {
 			scale: 0.5,
@@ -200,10 +201,10 @@ const useStore = defineStore("store", {
 			scaling: false,
 			panning: false,
 			settingCanvas: false,
+			overlayElement: <HTMLElement | null>null,
 		},
 		copiedStyle: <StyleCopy | null>null,
 		components: <BlockComponent[]>[],
-		overlayElement: <any>null,
 		pageData: {
 			users: [
 				{ name: "Suraj", image: "https://avatars.githubusercontent.com/u/1961952?v=4" },
@@ -339,6 +340,7 @@ const useStore = defineStore("store", {
 			if (block.isComponent()) {
 				this.editingComponent = block?.extendedFromComponent as string;
 			}
+			this.clearSelection();
 			this.editingMode = "component";
 		},
 		isComponentUsed(componentName: string) {
@@ -365,6 +367,7 @@ const useStore = defineStore("store", {
 			return false;
 		},
 		editPage(saveComponent = false) {
+			this.clearSelection();
 			this.editingMode = "page";
 			this.builderState.editableBlock = null;
 
@@ -424,6 +427,9 @@ const useStore = defineStore("store", {
 						fileName: fileDoc.file_name,
 					};
 				});
+		},
+		clearSelection() {
+			this.selectedBlocks = [];
 		},
 	},
 });

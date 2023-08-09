@@ -20,7 +20,7 @@
 			:isChildOfComponent="block.isComponent() || isChildOfComponent"
 			v-for="child in block.getChildren()" />
 	</component>
-	<teleport to="#overlay" v-if="store.overlayElement && !preview && canvasProps">
+	<teleport to="#overlay" v-if="canvasProps?.overlayElement && !preview && canvasProps">
 		<BlockEditor
 			v-if="loadEditor"
 			v-show="!canvasProps.scaling && !canvasProps.panning"
@@ -212,12 +212,14 @@ const handleClick = (e: MouseEvent) => {
 const handleDoubleClick = (e: MouseEvent) => {
 	if (isEditable.value) return;
 	store.builderState.editableBlock = null;
-	if (props.block.isText() || props.block.isLink() || props.block.isButton()) {
-		store.builderState.editableBlock = props.block;
-		e.stopPropagation();
-	}
 	if (props.block.isComponent()) {
 		store.editComponent(props.block);
+		e.stopPropagation();
+		e.preventDefault();
+		return;
+	}
+	if (props.block.isText() || props.block.isLink() || props.block.isButton()) {
+		store.builderState.editableBlock = props.block;
 		e.stopPropagation();
 	}
 
