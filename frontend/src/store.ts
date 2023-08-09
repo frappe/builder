@@ -219,14 +219,23 @@ const useStore = defineStore("store", {
 			this.builderState.blocks.push(this.getRootBlock());
 		},
 		pushBlocks(blocks: BlockOptions[]) {
+			let parent = this.builderState.blocks[0];
+			if (this.editingComponent) {
+				parent = this.getComponentBlock(this.editingComponent);
+			}
 			let firstBlock = new Block(blocks[0]);
-			if (firstBlock.isRoot()) {
+			if (firstBlock.isRoot() && !this.editingComponent) {
 				this.builderState.blocks = [firstBlock];
 			} else {
 				for (let block of blocks) {
-					this.builderState.blocks[0].children.push(this.getBlockInstance(block));
+					parent.children.push(this.getBlockInstance(block));
 				}
 			}
+		},
+		getFirstBlock() {
+			return this.editingComponent
+				? this.getComponentBlock(this.editingComponent)
+				: this.builderState.blocks[0];
 		},
 		getBlockCopy(block: BlockOptions | Block, retainId = false): Block {
 			let b = JSON.parse(JSON.stringify(block));
