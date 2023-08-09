@@ -65,12 +65,14 @@
 import webComponent from "@/data/webComponent";
 import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
-import { useDropZone, useElementBounding } from "@vueuse/core";
+import { clamp, useDropZone, useElementBounding, useEventListener } from "@vueuse/core";
 import { FeatherIcon, toast } from "frappe-ui";
 import { PropType, computed, nextTick, onMounted, provide, reactive, ref } from "vue";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BuilderBlock from "./BuilderBlock.vue";
+import getBlockTemplate from "@/utils/blockTemplate";
+import { addPxToNumber, getNumberFromPx } from "@/utils/helpers";
 
 const store = useStore();
 const canvasContainer = ref(null);
@@ -98,15 +100,9 @@ const props = defineProps({
 
 provide("canvasProps", props.canvasProps);
 
-// const targetIsVisible = ref(false);
-
-// const { stop } = useIntersectionObserver(canvas, ([{ isIntersecting }], observerElement) => {
-// 	targetIsVisible.value = isIntersecting;
-// });
-
-// watchEffect(() => {
-// 	console.log("targetIsVisible", targetIsVisible.value);
-// });
+onMounted(() => {
+	setEvents();
+});
 
 const { isOverDropZone } = useDropZone(canvasContainer, {
 	onDrop: (files, ev) => {
@@ -124,25 +120,16 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 			ev.stopPropagation();
 		} else if (files && files.length) {
 			store.uploadFile(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
-				const url = encodeURI(window.location.origin + fileDoc.fileURL);
 				if (block.isImage()) {
-					block.setAttribute("src", url);
+					block.setAttribute("src", fileDoc.fileURL);
 					block.setAttribute("alt", fileDoc.fileName);
 				} else {
-					block.addChild(store.getImageBlock(url, fileDoc.fileName));
+					block.addChild(store.getImageBlock(fileDoc.fileURL, fileDoc.fileName));
 				}
 			});
 		}
 	},
 });
-
-const clearSelectedComponent = () => {
-	blockController.clearSelection();
-	store.builderState.editableBlock = null;
-	if (document.activeElement instanceof HTMLElement) {
-		document.activeElement.blur();
-	}
-};
 
 const visibleBreakpoints = computed(() => {
 	return store.deviceBreakpoints.filter(
@@ -150,66 +137,91 @@ const visibleBreakpoints = computed(() => {
 	);
 });
 
-document.addEventListener("keydown", (e) => {
-	const target = e.target as HTMLElement;
-	if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
-		return;
-	}
-	if (e.key === "Backspace" && blockController.isBLockSelected() && !target.isContentEditable) {
-		function findBlockAndRemove(blocks: Array<Block>, blockId: string) {
-			if (blockId === "root") {
-				toast({
-					title: "Warning",
-					text: "Cannot Delete Root Block",
-					icon: "alert-circle",
-					iconClasses: "text-yellow-500",
-					position: "top-left",
-				});
-				return false;
-			}
-			blocks.forEach((block, i) => {
-				if (block.blockId === blockId) {
-					blocks.splice(i, 1);
-					nextTick(() => {
-						// select the next sibling block
-						if (blocks.length && blocks[i]) {
-							blocks[i].selectBlock();
-						}
-					});
-					return true;
-				} else if (block.children) {
-					return findBlockAndRemove(block.children, blockId);
+function setEvents() {
+	const container = document.body.querySelector(".canvas-container") as HTMLElement;
+	useEventListener(container, "mousedown", (ev: MouseEvent) => {
+		store.history.pause();
+		const initialX = ev.clientX;
+		const initialY = ev.clientY;
+		if (store.mode === "select") {
+			return;
+		} else {
+			ev.stopPropagation();
+			let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
+			let block = store.getFirstBlock();
+			if (element) {
+				if (element.dataset.blockId) {
+					block = store.findBlock(element.dataset.blockId) || block;
 				}
-			});
-		}
-		for (const block of blockController.getSelectedBlocks()) {
-			findBlockAndRemove(store.builderState.blocks, block.blockId);
-		}
-		clearSelectedComponent();
-		e.stopPropagation();
-		return;
-	}
+			}
+			let parentBlock = store.getFirstBlock();
+			if (element.dataset.blockId) {
+				parentBlock = store.findBlock(element.dataset.blockId) || parentBlock;
+				while (parentBlock && !parentBlock.canHaveChildren()) {
+					parentBlock = parentBlock.getParentBlock() || store.getFirstBlock();
+				}
+			}
+			const child = getBlockTemplate(store.mode);
+			const parentElement = document.body.querySelector(
+				`.canvas [data-block-id="${parentBlock.blockId}"]`
+			) as HTMLElement;
+			const parentOldPosition = parentBlock.getStyle("position");
+			parentBlock.setBaseStyle("position", parentOldPosition || "relative");
+			const parentElementBounds = parentElement.getBoundingClientRect();
+			let x = (ev.x - parentElementBounds.left) / props.canvasProps.scale;
+			let y = (ev.y - parentElementBounds.top) / props.canvasProps.scale;
+			const parentWidth = getNumberFromPx(getComputedStyle(parentElement).width);
+			const parentHeight = getNumberFromPx(getComputedStyle(parentElement).height);
 
-	if (e.key === "Escape") {
-		store.editPage(false);
-		clearSelectedComponent();
-	}
+			const childBlock = parentBlock.addChild(child);
+			childBlock.setBaseStyle("position", "absolute");
+			childBlock.setBaseStyle("top", addPxToNumber(y));
+			childBlock.setBaseStyle("left", addPxToNumber(x));
 
-	if (e.key === "s" && (e.ctrlKey || e.metaKey) && store.editingMode === "component") {
-		store.editPage(true);
-		clearSelectedComponent();
-		e.stopPropagation();
-		e.preventDefault();
-	}
+			childBlock.selectBlock();
 
-	// handle arrow keys
-	if (e.key.startsWith("Arrow") && blockController.isBLockSelected()) {
-		const key = e.key.replace("Arrow", "").toLowerCase() as "up" | "down" | "left" | "right";
-		for (const block of blockController.getSelectedBlocks()) {
-			block.move(key);
+			const mouseMoveHandler = (mouseMoveEvent: MouseEvent) => {
+				if (store.mode === "text" || store.mode === "html") {
+					return;
+				} else {
+					mouseMoveEvent.preventDefault();
+					let width = (mouseMoveEvent.clientX - initialX) / props.canvasProps.scale;
+					let height = (mouseMoveEvent.clientY - initialY) / props.canvasProps.scale;
+					width = clamp(width, 0, parentWidth);
+					height = clamp(height, 0, parentHeight);
+					childBlock.setBaseStyle("width", addPxToNumber(width));
+					childBlock.setBaseStyle("height", addPxToNumber(height));
+				}
+			};
+			useEventListener(document, "mousemove", mouseMoveHandler);
+			useEventListener(
+				document,
+				"mouseup",
+				() => {
+					document.removeEventListener("mousemove", mouseMoveHandler);
+					setTimeout(() => {
+						store.mode = "select";
+					}, 50);
+					childBlock.setBaseStyle("position", "static");
+					childBlock.setBaseStyle("top", "auto");
+					childBlock.setBaseStyle("left", "auto");
+					if (store.mode === "text" || store.mode === "html") {
+						store.history.resume();
+					}
+					if (getNumberFromPx(childBlock.getStyle("width")) < 100) {
+						childBlock.setBaseStyle("width", "100%");
+					}
+					if (getNumberFromPx(childBlock.getStyle("height")) < 100) {
+						childBlock.setBaseStyle("height", "200px");
+					}
+					parentBlock.setBaseStyle("position", parentOldPosition || "static");
+					store.history.resume();
+				},
+				{ once: true }
+			);
 		}
-	}
-});
+	});
+}
 
 const containerBound = reactive(useElementBounding(canvasContainer));
 const canvasBound = reactive(useElementBounding(canvas));
@@ -254,39 +266,6 @@ onMounted(() => {
 	const canvasEl = canvas.value as unknown as HTMLElement;
 	setPanAndZoom(props.canvasProps, canvasEl, canvasContainerEl);
 	showBlocks.value = true;
-});
-
-document.addEventListener("keydown", (e) => {
-	const target = e.target as HTMLElement;
-	if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.getAttribute("contenteditable")) {
-		return;
-	}
-	if (e.key === "z" && e.metaKey && !e.shiftKey && store.history.canUndo) {
-		store.history.undo();
-	}
-	if (e.key === "z" && e.shiftKey && e.metaKey && store.history.canRedo) {
-		store.history.redo();
-	}
-
-	if (e.metaKey || e.ctrlKey || e.shiftKey) {
-		return;
-	}
-
-	if (e.key === "c") {
-		store.mode = "container";
-	}
-
-	if (e.key === "i") {
-		store.mode = "image";
-	}
-
-	if (e.key === "t") {
-		store.mode = "text";
-	}
-
-	if (e.key === "v") {
-		store.mode = "select";
-	}
 });
 
 defineExpose({

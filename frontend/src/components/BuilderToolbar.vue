@@ -62,12 +62,9 @@
 </template>
 <script setup lang="ts">
 import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
-import getBlockTemplate from "@/utils/blockTemplate";
-import { addPxToNumber, getNumberFromPx } from "@/utils/helpers";
 import { UseDark } from "@vueuse/components";
-import { clamp, useEventListener } from "@vueuse/core";
 import { Popover, createResource } from "frappe-ui";
-import { PropType, Ref, onMounted, ref, watch } from "vue";
+import { PropType, Ref, ref, watch } from "vue";
 
 import { webPages } from "@/data/webPage";
 
@@ -77,7 +74,7 @@ const store = useStore();
 const toolbar = ref(null);
 
 const pageData = ref({}) as unknown as Ref<WebPageBeta>;
-const props = defineProps({
+defineProps({
 	canvasProps: {
 		type: Object as PropType<CanvasProps>,
 		required: true,
@@ -117,96 +114,6 @@ watch(
 		toggleMode(store.mode);
 	}
 );
-
-onMounted(() => {
-	setEvents();
-});
-
-function setEvents() {
-	const container = document.body.querySelector(".canvas-container") as HTMLElement;
-	useEventListener(container, "mousedown", (ev: MouseEvent) => {
-		store.history.pause();
-		const initialX = ev.clientX;
-		const initialY = ev.clientY;
-		if (store.mode === "select") {
-			return;
-		} else {
-			ev.stopPropagation();
-			let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
-			let block = store.builderState.blocks[0];
-			if (element) {
-				if (element.dataset.blockId) {
-					block = store.findBlock(element.dataset.blockId) || block;
-				}
-			}
-			let parentBlock = store.builderState.blocks[0];
-			if (element.dataset.blockId) {
-				parentBlock = store.findBlock(element.dataset.blockId) || parentBlock;
-				while (parentBlock && !parentBlock.canHaveChildren()) {
-					parentBlock = parentBlock.getParentBlock() || store.builderState.blocks[0];
-				}
-			}
-			const child = getBlockTemplate(store.mode);
-			const parentElement = document.body.querySelector(
-				`.canvas [data-block-id="${parentBlock.blockId}"]`
-			) as HTMLElement;
-			const parentOldPosition = parentBlock.getStyle("position");
-			parentBlock.setBaseStyle("position", parentOldPosition || "relative");
-			const parentElementBounds = parentElement.getBoundingClientRect();
-			let x = (ev.x - parentElementBounds.left) / props.canvasProps.scale;
-			let y = (ev.y - parentElementBounds.top) / props.canvasProps.scale;
-			const parentWidth = getNumberFromPx(getComputedStyle(parentElement).width);
-			const parentHeight = getNumberFromPx(getComputedStyle(parentElement).height);
-
-			const childBlock = parentBlock.addChild(child);
-			childBlock.setBaseStyle("position", "absolute");
-			childBlock.setBaseStyle("top", addPxToNumber(y));
-			childBlock.setBaseStyle("left", addPxToNumber(x));
-
-			childBlock.selectBlock();
-
-			const mouseMoveHandler = (mouseMoveEvent: MouseEvent) => {
-				if (store.mode === "text" || store.mode === "html") {
-					return;
-				} else {
-					mouseMoveEvent.preventDefault();
-					let width = (mouseMoveEvent.clientX - initialX) / props.canvasProps.scale;
-					let height = (mouseMoveEvent.clientY - initialY) / props.canvasProps.scale;
-					width = clamp(width, 0, parentWidth);
-					height = clamp(height, 0, parentHeight);
-					childBlock.setBaseStyle("width", addPxToNumber(width));
-					childBlock.setBaseStyle("height", addPxToNumber(height));
-				}
-			};
-			useEventListener(document, "mousemove", mouseMoveHandler);
-			useEventListener(
-				document,
-				"mouseup",
-				() => {
-					document.removeEventListener("mousemove", mouseMoveHandler);
-					setTimeout(() => {
-						store.mode = "select";
-					}, 50);
-					childBlock.setBaseStyle("position", "static");
-					childBlock.setBaseStyle("top", "auto");
-					childBlock.setBaseStyle("left", "auto");
-					if (store.mode === "text" || store.mode === "html") {
-						store.history.resume();
-					}
-					if (getNumberFromPx(childBlock.getStyle("width")) < 100) {
-						childBlock.setBaseStyle("width", "100%");
-					}
-					if (getNumberFromPx(childBlock.getStyle("height")) < 100) {
-						childBlock.setBaseStyle("height", "200px");
-					}
-					parentBlock.setBaseStyle("position", parentOldPosition || "static");
-					store.history.resume();
-				},
-				{ once: true }
-			);
-		}
-	});
-}
 
 function toggleMode(mode: BuilderMode) {
 	const container = document.body.querySelector(".canvas-container") as HTMLElement;
