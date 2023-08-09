@@ -25,12 +25,12 @@
 							@mouseleave.stop="store.hoveredBlock = null">
 							<span class="my-[6px] flex items-center font-medium">
 								<FeatherIcon
-									:name="!element.collapsed ? 'chevron-down' : 'chevron-right'"
+									:name="isExpanded(element) ? 'chevron-down' : 'chevron-right'"
 									class="mr-1 h-3 w-3"
 									v-if="
 										element.children && element.children.length && !element.isRoot() && !element.isComponent()
 									"
-									@click.stop="element.collapsed = !element.collapsed" />
+									@click.stop="element.expanded = !element.expanded" />
 								<FeatherIcon :name="element.getIcon()" class="mr-1 h-3 w-3" v-if="!element.isComponent()" />
 								<svg
 									class="mr-1 h-3 w-3"
@@ -56,13 +56,13 @@
 									:contenteditable="element.editable"
 									:title="element.blockId"
 									@dblclick="element.editable = true"
-									@keyup.enter.stop.prevent="element.editable = false"
+									@keydown.enter.stop.prevent="element.editable = false"
 									@blur="setBlockName($event, element)">
 									{{ element.getBlockDescription() }}
 								</span>
 							</span>
 							<div
-								v-show="!element.collapsed"
+								v-show="isExpanded(element)"
 								v-if="!(element.isComponent() || element.isText() || element.isImage())">
 								<BlockLayers :blocks="element.children" class="ml-1" />
 							</div>
@@ -100,6 +100,6 @@ const setBlockName = (ev: Event, block: LayerBlock) => {
 };
 
 const isExpanded = (block: Block) => {
-	return block.isRoot() || block.isSelected() || block.children.some(isExpanded);
+	return block.isRoot() || block.isSelected() || block.children.some(isExpanded) || block.expanded === true;
 };
 </script>
