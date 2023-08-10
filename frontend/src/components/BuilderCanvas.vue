@@ -139,12 +139,12 @@ const visibleBreakpoints = computed(() => {
 function setEvents() {
 	const container = document.body.querySelector(".canvas-container") as HTMLElement;
 	useEventListener(container, "mousedown", (ev: MouseEvent) => {
-		store.history.pause();
 		const initialX = ev.clientX;
 		const initialY = ev.clientY;
 		if (store.mode === "select") {
 			return;
 		} else {
+			store.history.pause();
 			ev.stopPropagation();
 			let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
 			let block = store.getFirstBlock();

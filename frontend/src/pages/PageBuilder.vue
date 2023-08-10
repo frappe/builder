@@ -217,7 +217,9 @@ useEventListener(document, "keydown", (e) => {
 			}
 			blocks.forEach((block, i) => {
 				if (block.blockId === blockId) {
-					blocks.splice(i, 1);
+					store.history.batch(() => {
+						blocks.splice(i, 1);
+					});
 					nextTick(() => {
 						// select the next sibling block
 						if (blocks.length && blocks[i]) {

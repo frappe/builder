@@ -73,7 +73,7 @@ class Block implements BlockOptions {
 			this.blockId = options.blockId;
 		}
 		this.children = (options.children || []).map((child: BlockOptions) => {
-			return new Block(child);
+			return reactive(new Block(child));
 		});
 
 		this.baseStyles = reactive(options.styles || options.baseStyles || {});
@@ -335,7 +335,7 @@ class Block implements BlockOptions {
 			child.extendedFromComponent = extendedFromComponent;
 			resetBlock(child);
 		}
-		const childBlock = new Block(child);
+		const childBlock = reactive(new Block(child));
 		if (index !== undefined) {
 			this.children.splice(index, 0, childBlock);
 		} else {

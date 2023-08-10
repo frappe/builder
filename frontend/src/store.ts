@@ -1,6 +1,7 @@
 import { UseRefHistoryReturn, useDebouncedRefHistory } from "@vueuse/core";
 import { FileUploadHandler, toast } from "frappe-ui";
 import { defineStore, storeToRefs } from "pinia";
+import { reactive } from "vue";
 import webComponent from "./data/webComponent";
 import { WebPageBeta } from "./types/WebsiteBuilder/WebPageBeta";
 import Block from "./utils/block";
@@ -11,7 +12,7 @@ const useStore = defineStore("store", {
 	state: () => ({
 		builderState: {
 			editableBlock: <Block | null>null,
-			blocks: <Block[]>[new Block(getBlockTemplate("body"))],
+			blocks: <Block[]>[reactive(new Block(getBlockTemplate("body")))],
 		},
 		editingComponent: <string | null>null,
 		editingMode: <EditingMode>"page",
@@ -224,7 +225,7 @@ const useStore = defineStore("store", {
 			if (this.editingComponent) {
 				parent = this.getComponentBlock(this.editingComponent);
 			}
-			let firstBlock = new Block(blocks[0]);
+			let firstBlock = reactive(new Block(blocks[0]));
 			if (firstBlock.isRoot() && !this.editingComponent) {
 				this.builderState.blocks = [firstBlock];
 			} else {
@@ -249,10 +250,10 @@ const useStore = defineStore("store", {
 				};
 				deleteBlockId(b);
 			}
-			return new Block(b);
+			return reactive(new Block(b));
 		},
 		getRootBlock() {
-			return new Block(getBlockTemplate("body"));
+			return reactive(new Block(getBlockTemplate("body")));
 		},
 		getPageData() {
 			return this.builderState.blocks;
@@ -334,7 +335,7 @@ const useStore = defineStore("store", {
 			this.builderState.editableBlock = null;
 		},
 		getBlockInstance(options: BlockOptions) {
-			return new Block(options);
+			return reactive(new Block(options));
 		},
 		editComponent(block: Block) {
 			if (block.isComponent()) {
