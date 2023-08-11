@@ -1,4 +1,5 @@
 import useStore from "@/store";
+import { clamp } from "@vueuse/core";
 import { CSSProperties, nextTick, reactive } from "vue";
 import { addPxToNumber, getNumberFromPx, getTextContent } from "./helpers";
 
@@ -204,7 +205,7 @@ class Block implements BlockOptions {
 		return this.element === "a";
 	}
 	isText() {
-		return ["span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6", "label"].includes(this.element);
+		return ["span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6", "label", "a"].includes(this.element);
 	}
 	isContainer() {
 		return ["section", "div"].includes(this.element);
@@ -335,22 +336,26 @@ class Block implements BlockOptions {
 			child.extendedFromComponent = extendedFromComponent;
 			resetBlock(child);
 		}
-		const childBlock = reactive(new Block(child));
-		if (index !== undefined) {
-			this.children.splice(index, 0, childBlock);
-		} else {
-			this.children.push(childBlock);
+		if (index === undefined) {
+			index = this.children.length;
 		}
+		index = clamp(index, 0, this.children.length);
+
+		const childBlock = reactive(new Block(child));
+		this.children.splice(index, 0, childBlock);
 		return childBlock;
 	}
 	removeChild(child: Block) {
-		const index = this.children.findIndex((block) => block.blockId === child.blockId);
+		const index = this.getChildIndex(child);
 		if (index > -1) {
 			this.children.splice(index, 1);
 		}
 	}
+	getChildIndex(child: Block) {
+		return this.children.findIndex((block) => block.blockId === child.blockId);
+	}
 	addChildAfter(child: BlockOptions, siblingBlock: Block) {
-		const siblingIndex = this.children.findIndex((block) => block.blockId === siblingBlock.blockId);
+		const siblingIndex = this.getChildIndex(siblingBlock);
 		return this.addChild(child, siblingIndex + 1);
 	}
 	getEditorStyles() {
