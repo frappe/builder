@@ -148,11 +148,13 @@ const contextMenuOptions: ContextMenuOption[] = [
 		action: () => {
 			const newBlockObj = getBlockTemplate("fit-container");
 			const parentBlock = props.block.getParentBlock();
+			if (!parentBlock) return;
 
-			const newBlock = parentBlock?.addChild(newBlockObj);
+			const selectedBlocks = store.selectedBlocks;
+			const blockPosition = Math.min(...selectedBlocks.map(parentBlock.getChildIndex.bind(parentBlock)));
+			const newBlock = parentBlock?.addChild(newBlockObj, blockPosition);
 
 			// move selected blocks to newBlock
-			const selectedBlocks = store.selectedBlocks;
 			selectedBlocks.forEach((block) => {
 				parentBlock?.removeChild(block);
 				newBlock?.addChild(block);
