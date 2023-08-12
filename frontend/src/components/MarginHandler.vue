@@ -18,7 +18,7 @@
 			}"
 			ref="topMarginHandler">
 			<div
-				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-yellow-600 bg-yellow-400 hover:scale-125"
+				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-yellow-800 bg-yellow-400 hover:scale-125"
 				v-show="canvasProps.scale > 0.5"
 				:style="{
 					borderWidth: handleBorderWidth,
@@ -48,7 +48,7 @@
 			}"
 			ref="bottomMarginHandler">
 			<div
-				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-yellow-600 bg-yellow-400 hover:scale-125"
+				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-yellow-800 bg-yellow-400 hover:scale-125"
 				v-show="canvasProps.scale > 0.5"
 				:style="{
 					borderWidth: handleBorderWidth,
@@ -78,7 +78,7 @@
 			}"
 			ref="leftMarginHandler">
 			<div
-				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-yellow-600 bg-yellow-400 hover:scale-125"
+				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-yellow-800 bg-yellow-400 hover:scale-125"
 				v-show="canvasProps.scale > 0.5"
 				:style="{
 					borderWidth: handleBorderWidth,
@@ -108,7 +108,7 @@
 			}"
 			ref="rightMarginHandler">
 			<div
-				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-yellow-600 bg-yellow-400 hover:scale-125"
+				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-yellow-800 bg-yellow-400 hover:scale-125"
 				v-show="canvasProps.scale > 0.5"
 				:style="{
 					borderWidth: handleBorderWidth,
