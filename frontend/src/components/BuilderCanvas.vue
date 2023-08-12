@@ -120,7 +120,7 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 				if (block.isImage()) {
 					block.setAttribute("src", fileDoc.fileURL);
 					block.setAttribute("alt", fileDoc.fileName);
-				} else if (block.isContainer()) {
+				} else if (block.isContainer() && ev.shiftKey) {
 					block.setStyle("background", `url(${fileDoc.fileURL})`);
 				} else {
 					block.addChild(store.getImageBlock(fileDoc.fileURL, fileDoc.fileName));
@@ -198,9 +198,6 @@ function setEvents() {
 				"mouseup",
 				() => {
 					document.removeEventListener("mousemove", mouseMoveHandler);
-					setTimeout(() => {
-						store.mode = "select";
-					}, 50);
 					childBlock.setBaseStyle("position", "static");
 					childBlock.setBaseStyle("top", "auto");
 					childBlock.setBaseStyle("left", "auto");
@@ -214,6 +211,9 @@ function setEvents() {
 						childBlock.setBaseStyle("height", "200px");
 					}
 					parentBlock.setBaseStyle("position", parentOldPosition || "static");
+					setTimeout(() => {
+						store.mode = "select";
+					}, 50);
 					store.history.resume();
 				},
 				{ once: true }

@@ -108,17 +108,16 @@ useEventListener(document, "paste", (e) => {
 		const file = clipboardItems.find((item) => item.type.includes("image"))?.getAsFile();
 		if (file) {
 			store.uploadFile(file).then((res: { fileURL: string; fileName: string }) => {
-				let block = null as unknown as Block;
-				if (blockController.isImage()) {
-					block = blockController.getSelectedBlocks()[0];
+				const selectedBlocks = blockController.getSelectedBlocks();
+				const parentBlock = selectedBlocks.length ? selectedBlocks[0] : store.getFirstBlock();
+				let imageBlock = null as unknown as Block;
+				if (parentBlock.isImage()) {
+					imageBlock = parentBlock;
 				} else {
-					block = store.getBlockCopy(getBlockTemplate("image"));
-					if (block) {
-						store.pushBlocks([block]);
-					}
+					imageBlock = parentBlock.addChild(store.getBlockCopy(getBlockTemplate("image")));
 				}
-				block.setAttribute("src", res.fileURL);
-				block.setAttribute("alt", res.fileName);
+				imageBlock.setAttribute("src", res.fileURL);
+				imageBlock.setAttribute("alt", res.fileName);
 			});
 		}
 	} else if (blockController.isHTML()) {

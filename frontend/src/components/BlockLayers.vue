@@ -12,18 +12,24 @@
 						<div
 							:data-block-layer-id="element.blockId"
 							@contextmenu.prevent.stop="onContextMenu"
-							class="cursor-pointer rounded border bg-white pl-2 pr-[2px] text-sm text-gray-600 dark:bg-zinc-900"
+							class="cursor-pointer rounded border bg-white pl-2 pr-[2px] text-sm text-gray-700 dark:bg-zinc-900"
 							:class="{
-								'border-transparent text-gray-700 dark:text-gray-500':
-									!element.isSelected() && !element.isHovered(),
-								'border-blue-200 text-gray-600 dark:border-blue-800 dark:text-gray-500':
+								'border-transparent dark:text-gray-500': !element.isSelected() && !element.isHovered(),
+								'border-blue-300 text-gray-700 dark:border-blue-800 dark:text-gray-500':
 									element.isHovered() && !element.isSelected(),
 								'border-blue-400 text-gray-900 dark:border-blue-600 dark:text-gray-200': element.isSelected(),
 							}"
-							@click.stop="store.selectBlock(element, $event, false)"
+							@click.stop="
+								element.expanded = true;
+								store.selectBlock(element, $event, false);
+							"
 							@mouseover.stop="store.hoveredBlock = element.blockId"
 							@mouseleave.stop="store.hoveredBlock = null">
-							<span class="my-[6px] flex items-center font-medium">
+							<span
+								class="group my-[6px] flex items-center font-medium"
+								:class="{
+									'opacity-50': !element.isVisible(),
+								}">
 								<FeatherIcon
 									:name="isExpanded(element) ? 'chevron-down' : 'chevron-right'"
 									class="mr-1 h-3 w-3"
@@ -60,11 +66,17 @@
 									@blur="setBlockName($event, element)">
 									{{ element.getBlockDescription() }}
 								</span>
+								<!-- toggle visibility -->
+								<FeatherIcon
+									v-if="!element.isRoot()"
+									:name="element.isVisible() ? 'eye' : 'eye-off'"
+									class="ml-auto mr-2 hidden h-3 w-3 group-hover:block"
+									@click.stop="element.toggleVisibility()" />
 							</span>
 							<div
-								v-show="isExpanded(element)"
+								v-show="isExpanded(element) && element.isVisible()"
 								v-if="!(element.isComponent() || element.isText() || element.isImage())">
-								<BlockLayers :blocks="element.children" class="ml-1" />
+								<BlockLayers :blocks="element.children" class="ml-2" />
 							</div>
 						</div>
 					</BlockContextMenu>

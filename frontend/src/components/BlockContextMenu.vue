@@ -188,5 +188,12 @@ const contextMenuOptions: ContextMenuOption[] = [
 		},
 		condition: () => props.block.isContainer() && !props.block.isComponent() && !props.block.isRoot(),
 	},
+	{
+		label: "Edit Component",
+		action: () => {
+			store.editComponent(props.block);
+		},
+		condition: () => props.block.isComponent(),
+	},
 ];
 </script>

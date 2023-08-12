@@ -382,7 +382,7 @@ const useStore = defineStore("store", {
 						.then(() => {
 							toast({
 								text: "Component saved!",
-								position: "top-center",
+								position: "bottom-center",
 							});
 						});
 				} else {

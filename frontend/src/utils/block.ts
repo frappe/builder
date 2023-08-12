@@ -178,7 +178,7 @@ class Block implements BlockOptions {
 			return "raw";
 		}
 		let description = this.blockName || this.originalElement || this.element;
-		if (this.getInnerHTML() && !this.blockName) {
+		if (this.getTextContent() && !this.blockName) {
 			description += " | " + this.getTextContent();
 		}
 		return description;
@@ -500,6 +500,16 @@ class Block implements BlockOptions {
 	}
 	setInnerHTML(innerHTML: string) {
 		this.innerHTML = innerHTML;
+	}
+	toggleVisibility() {
+		if (this.getStyle("display") === "none") {
+			this.setStyle("display", "block");
+		} else {
+			this.setStyle("display", "none");
+		}
+	}
+	isVisible() {
+		return this.getStyle("display") !== "none";
 	}
 }
 
