@@ -128,6 +128,25 @@ useEventListener(document, "paste", (e) => {
 		}
 	} else {
 		const text = e.clipboardData?.getData("text/plain") as string;
+		// TODO: revisit
+		// try pasting figma text styles
+		if (text.includes("styleName:")) {
+			e.preventDefault();
+			const styleObj = text.split(";").reduce((acc, curr) => {
+				const [key, value] = curr.split(":").map((item) => (item ? item.trim() : ""));
+				if (["font-size", "font-weight", "line-height", "letter-spacing", "text-align"].includes(key)) {
+					acc[key] = value;
+				}
+				return acc;
+			}, {});
+			if (blockController.isText()) {
+				Object.entries(styleObj).forEach(([key, value]) => {
+					blockController.setStyle(key as styleProperty, value);
+				});
+			}
+			return;
+		}
+
 		try {
 			const data = JSON.parse(text);
 			// check if data is from builder and a list of blocks
