@@ -3,6 +3,7 @@ import { FileUploadHandler, toast } from "frappe-ui";
 import { defineStore, storeToRefs } from "pinia";
 import { reactive } from "vue";
 import webComponent from "./data/webComponent";
+import { webPages } from "./data/webPage";
 import { WebPageBeta } from "./types/WebsiteBuilder/WebPageBeta";
 import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
@@ -348,7 +349,6 @@ const useStore = defineStore("store", {
 			// TODO: Refactor or reduce complexity
 			const checkComponent = (block: Block) => {
 				if (block.extendedFromComponent === componentName) {
-					console.log("component used", componentName);
 					return true;
 				}
 				if (block.children) {
@@ -431,6 +431,9 @@ const useStore = defineStore("store", {
 		},
 		clearSelection() {
 			this.selectedBlocks = [];
+		},
+		getActivePage() {
+			return webPages.getRow(this.selectedPage as string) as WebPageBeta;
 		},
 	},
 });

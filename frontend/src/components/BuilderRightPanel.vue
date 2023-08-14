@@ -22,17 +22,28 @@
 				{{ tab }}
 			</button>
 		</div>
-		<BlockProperties v-if="store.selectedBlocks.length" v-show="activeTab === 'Properties'" class="p-4" />
-		<PageData class="p-4" v-show="activeTab === 'Data'" />
+		<BlockProperties
+			v-if="blockController.isBLockSelected()"
+			v-show="activeTab === 'Properties'"
+			class="p-4" />
+		<PageData
+			class="p-4"
+			v-show="activeTab === 'Data'"
+			:block="blockController.getSelectedBlocks()[0]"
+			v-if="
+				blockController.isBLockSelected() &&
+				!blockController.multipleBlocksSelected() &&
+				blockController.isRepeater()
+			" />
 	</div>
 </template>
 <script setup>
 import useStore from "@/store";
+import blockController from "@/utils/blockController";
 import { ref } from "vue";
 import BlockProperties from "./BlockProperties.vue";
-import PageData from "./PageData.vue";
 import PanelResizer from "./PanelResizer.vue";
-
+import PageData from "./PageData.vue";
 const activeTab = ref("Properties");
 
 const store = useStore();
