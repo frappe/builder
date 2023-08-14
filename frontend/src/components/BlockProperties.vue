@@ -31,6 +31,34 @@
 		<ColorInput :value="blockController.getTextColor()" @change="(val) => blockController.setTextColor(val)">
 			Text
 		</ColorInput>
+		<!-- border width, color -->
+		<ColorInput
+			:value="blockController.getStyle('borderColor')"
+			@change="
+				(val) => {
+					blockController.setStyle('borderColor', val);
+					if (val && !blockController.getStyle('borderWidth')) {
+						blockController.setStyle('borderWidth', '1px');
+						blockController.setStyle('borderStyle', 'solid');
+					}
+				}
+			">
+			Border Color
+		</ColorInput>
+		<InlineInput
+			v-show="blockController.getStyle('borderColor')"
+			:modelValue="blockController.getStyle('borderWidth')"
+			@update:modelValue="(val) => blockController.setStyle('borderWidth', val)">
+			Border Width
+		</InlineInput>
+		<InlineInput
+			v-show="blockController.getStyle('borderColor')"
+			:modelValue="blockController.getStyle('borderStyle')"
+			type="select"
+			:options="['solid', 'dashed', 'dotted']"
+			@update:modelValue="(val) => blockController.setStyle('borderStyle', val)">
+			Border Style
+		</InlineInput>
 		<InlineInput
 			type="select"
 			:options="[
@@ -57,37 +85,6 @@
 			:modelValue="blockController.getStyle('boxShadow')"
 			@update:modelValue="(val) => blockController.setStyle('boxShadow', val)">
 			Shadow
-		</InlineInput>
-		<div class="mt-6 flex flex-col gap-3" v-if="!blockController.isHTML() || !blockController.isRoot()">
-			<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Dimension</h3>
-			<DimensionInput property="width">Width</DimensionInput>
-			<DimensionInput property="minWidth">Min Width</DimensionInput>
-			<DimensionInput property="maxWidth">Max Width</DimensionInput>
-			<hr class="dark:border-zinc-700" />
-			<DimensionInput property="height">Height</DimensionInput>
-			<DimensionInput property="minHeight">Min Height</DimensionInput>
-			<DimensionInput property="maxHeight">Max Height</DimensionInput>
-		</div>
-		<BlockPositionHandler
-			v-if="!blockController.multipleBlocksSelected()"
-			class="mb-6"></BlockPositionHandler>
-
-		<h3
-			class="mb-1 mt-6 text-xs font-bold uppercase text-gray-600"
-			v-if="!blockController.multipleBlocksSelected()">
-			Spacing
-		</h3>
-		<InlineInput
-			v-if="!blockController.multipleBlocksSelected()"
-			:modelValue="blockController.getStyle('margin')"
-			@update:modelValue="(val) => blockController.setStyle('margin', val)">
-			Margin
-		</InlineInput>
-		<InlineInput
-			v-if="!blockController.multipleBlocksSelected()"
-			:modelValue="blockController.getStyle('padding')"
-			@update:modelValue="(val) => blockController.setStyle('padding', val)">
-			Padding
 		</InlineInput>
 
 		<h3
@@ -136,6 +133,37 @@
 			:modelValue="blockController.getStyle('lineHeight')"
 			@update:modelValue="(val) => blockController.setStyle('lineHeight', val)">
 			Line
+		</InlineInput>
+		<div class="mt-6 flex flex-col gap-3" v-if="!blockController.isHTML() || !blockController.isRoot()">
+			<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Dimension</h3>
+			<DimensionInput property="width">Width</DimensionInput>
+			<DimensionInput property="minWidth">Min Width</DimensionInput>
+			<DimensionInput property="maxWidth">Max Width</DimensionInput>
+			<hr class="dark:border-zinc-700" />
+			<DimensionInput property="height">Height</DimensionInput>
+			<DimensionInput property="minHeight">Min Height</DimensionInput>
+			<DimensionInput property="maxHeight">Max Height</DimensionInput>
+		</div>
+		<BlockPositionHandler
+			v-if="!blockController.multipleBlocksSelected()"
+			class="mb-6"></BlockPositionHandler>
+
+		<h3
+			class="mb-1 mt-6 text-xs font-bold uppercase text-gray-600"
+			v-if="!blockController.multipleBlocksSelected()">
+			Spacing
+		</h3>
+		<InlineInput
+			v-if="!blockController.multipleBlocksSelected()"
+			:modelValue="blockController.getStyle('margin')"
+			@update:modelValue="(val) => blockController.setStyle('margin', val)">
+			Margin
+		</InlineInput>
+		<InlineInput
+			v-if="!blockController.multipleBlocksSelected()"
+			:modelValue="blockController.getStyle('padding')"
+			@update:modelValue="(val) => blockController.setStyle('padding', val)">
+			Padding
 		</InlineInput>
 
 		<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Options</h3>

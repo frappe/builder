@@ -435,6 +435,19 @@ const useStore = defineStore("store", {
 		getActivePage() {
 			return webPages.getRow(this.selectedPage as string) as WebPageBeta;
 		},
+		savePage(open_preview = false) {
+			return webPages.setValue
+				.submit({
+					name: this.selectedPage,
+					blocks: JSON.stringify(this.getPageData()),
+					page_data: JSON.stringify(this.getActivePage().page_data || {}),
+				})
+				.then((doc: WebPageBeta) => {
+					if (open_preview) {
+						window.open(`/${doc.route}`, "preview-page");
+					}
+				});
+		},
 	},
 });
 
