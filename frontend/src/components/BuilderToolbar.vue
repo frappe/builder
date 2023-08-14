@@ -56,7 +56,7 @@
 					class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400"
 					@click="toggleDark()" />
 			</UseDark>
-			<Button variant="solid" @click="savePage" class="border-0 text-xs">Preview</Button>
+			<Button variant="solid" @click="() => store.savePage(true)" class="border-0 text-xs">Preview</Button>
 		</div>
 	</div>
 </template>
@@ -91,18 +91,6 @@ watch(
 		}
 	}
 );
-
-const savePage = () => {
-	webPages.setValue
-		.submit({
-			name: store.selectedPage,
-			blocks: JSON.stringify(store.getPageData()),
-			page_data: JSON.stringify(store.getActivePage().page_data || {}),
-		})
-		.then((doc: WebPageBeta) => {
-			window.open(`/${doc.route}`, "preview-page");
-		});
-};
 
 watch(
 	() => store.mode,

@@ -100,7 +100,7 @@ def get_block_html(blocks, page_data={}):
 			blockData = []
 			if block.get("isRepeaterBlock"):
 				blockData = page_data.get(block.get("dataKey", {}).get("key", {}), {})
-			elif block.get("blockData", []):
+			if block.get("blockData", []):
 				blockData = block.get("blockData", [])
 
 			if blockData and block.get("children"):
@@ -188,6 +188,8 @@ def extend_block(block, updater, data=None):
 		extend_block(component_child, component_child, data=data)
 
 def extend_with_data(block, data):
+	if not data:
+		return
 	data_key = block.get("dataKey")
 	if data_key:
 		value = data.get((data_key.get("key")))

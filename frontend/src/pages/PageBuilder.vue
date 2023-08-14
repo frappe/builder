@@ -51,7 +51,7 @@ import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
-import Block from "@/utils/block";
+import Block, { styleProperty } from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
@@ -216,6 +216,27 @@ useEventListener(document, "keydown", (e) => {
 		e.preventDefault();
 		store.showPanels = !store.showPanels;
 	}
+	// save page or component
+	if (e.key === "s" && (e.ctrlKey || e.metaKey)) {
+		e.preventDefault();
+		if (store.editingMode === "component") {
+			store.editPage(true);
+			clearSelectedComponent();
+			e.stopPropagation();
+			e.preventDefault();
+		} else {
+			store.savePage().then(() => {
+				toast({
+					text: "Page Saved!",
+					icon: "check-circle",
+					iconClasses: "text-green-500",
+					position: "bottom-center",
+				});
+			});
+		}
+		return;
+	}
+
 	if (e.key === "c" && e.metaKey && e.target === document.body) {
 		e.preventDefault();
 		if (store.selectedBlocks.length) {
@@ -266,13 +287,6 @@ useEventListener(document, "keydown", (e) => {
 	if (e.key === "Escape") {
 		store.editPage(false);
 		clearSelectedComponent();
-	}
-
-	if (e.key === "s" && (e.ctrlKey || e.metaKey) && store.editingMode === "component") {
-		store.editPage(true);
-		clearSelectedComponent();
-		e.stopPropagation();
-		e.preventDefault();
 	}
 
 	// handle arrow keys
