@@ -38,13 +38,16 @@ class Block implements BlockOptions {
 	innerHTML?: string;
 	extendedFromComponent?: string;
 	blockData?: BlockData;
+	blockDataSource?: Object;
 	originalElement?: string | undefined;
+	isRepeaterBlock?: boolean;
 	dataKeys?: BlockDataKey[];
 	dataKey: BlockDataKey | null = null;
 	constructor(options: BlockOptions) {
 		this.element = options.element;
 		this.innerHTML = options.innerHTML;
 		this.extendedFromComponent = options.extendedFromComponent;
+		this.isRepeaterBlock = options.isRepeaterBlock;
 		this.dataKeys = options.dataKeys || [
 			{
 				key: "text",
@@ -205,10 +208,12 @@ class Block implements BlockOptions {
 		return this.element === "a";
 	}
 	isText() {
-		return ["span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6", "label", "a"].includes(this.element);
+		return ["span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6", "label", "a"].includes(
+			this.element as string
+		);
 	}
 	isContainer() {
-		return ["section", "div"].includes(this.element);
+		return ["section", "div"].includes(this.element as string);
 	}
 	isInput() {
 		return this.originalElement === "input" || this.element === "input";
@@ -463,6 +468,7 @@ class Block implements BlockOptions {
 		this.setBaseStyle("width", "fit-content");
 		this.setBaseStyle("height", "fit-content");
 		this.setBaseStyle("gap", "20px");
+		this.isRepeaterBlock = true;
 		this.blockData = [
 			{ title: "Human 1", subtitle: "Human 1 subtitle", image: "https://picsum.photos/300/300" },
 			{ title: "Human 2", subtitle: "Human 2 subtitle", image: "https://picsum.photos/200/200" },
@@ -476,7 +482,7 @@ class Block implements BlockOptions {
 		}
 	}
 	isRepeater() {
-		return Array.isArray(this.blockData);
+		return this.isRepeaterBlock;
 	}
 	getDataKey(key: keyof BlockDataKey) {
 		return this.dataKey && this.dataKey[key];

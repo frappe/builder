@@ -51,13 +51,14 @@ class WebPageBeta(WebsiteGenerator):
 	def get_context(self, context):
 		# show breadcrumbs
 		context.title = self.page_title or "My Page"
-		content, style, fonts = get_block_html(self.blocks)
+		context.page_data = json.loads(self.page_data or '{}')
+		content, style, fonts = get_block_html(self.blocks, context.page_data)
 		context.fonts = fonts
 		context.content = content
 		context.style = style
 		context.style_file_path = get_style_file_path()
 
-def get_block_html(blocks):
+def get_block_html(blocks, page_data={}):
 	blocks = frappe.parse_json(blocks)
 	if not isinstance(blocks, list):
 		blocks = [blocks]
@@ -96,8 +97,14 @@ def get_block_html(blocks):
 				set_fonts_from_html(inner_soup, font_map)
 				tag.append(inner_soup)
 
-			if block.get("blockData") and block.get("children"):
-				for data in block.get("blockData", []):
+			blockData = []
+			if block.get("isRepeaterBlock"):
+				blockData = page_data.get(block.get("dataKey", {}).get("key", {}), {})
+			elif block.get("blockData", []):
+				blockData = block.get("blockData", [])
+
+			if blockData and block.get("children"):
+				for data in blockData:
 					tag.append(get_tag(block.get("children")[0], soup, data))
 			else:
 				for child in block.get("children", []):

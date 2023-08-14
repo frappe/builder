@@ -9,13 +9,12 @@ import { useDark } from "@vueuse/core";
 import ace from "ace-builds";
 import "ace-builds/src-noconflict/theme-chrome";
 import "ace-builds/src-noconflict/theme-monokai";
-import { PropType, onMounted, ref, watch, watchEffect } from "vue";
+import { PropType, onMounted, ref, watch } from "vue";
 const isDark = useDark();
 
 const props = defineProps({
 	modelValue: {
 		type: [Object, String, Array],
-		required: true,
 	},
 	type: {
 		type: String as PropType<"JSON" | "HTML">,

@@ -56,14 +56,14 @@
 					class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400"
 					@click="toggleDark()" />
 			</UseDark>
-			<Button variant="solid" @click="publish" class="border-0 text-xs">Preview</Button>
+			<Button variant="solid" @click="savePage" class="border-0 text-xs">Preview</Button>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
 import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
 import { UseDark } from "@vueuse/components";
-import { Popover, createResource } from "frappe-ui";
+import { Popover } from "frappe-ui";
 import { PropType, Ref, ref, watch } from "vue";
 
 import { webPages } from "@/data/webPage";
@@ -81,15 +81,6 @@ defineProps({
 	},
 });
 
-const publishWebResource = createResource({
-	url: "website_builder.api.publish",
-	onSuccess(page: WebPageBeta) {
-		page.blocks = JSON.parse(page.blocks);
-		store.pageName = page.page_name || page.name;
-		window.open(`/${page.route}`, "preview-page");
-	},
-});
-
 watch(
 	() => store.selectedPage,
 	() => {
@@ -101,11 +92,16 @@ watch(
 	}
 );
 
-const publish = () => {
-	publishWebResource.submit({
-		blocks: store.getPageData(),
-		page_name: store.pageName,
-	});
+const savePage = () => {
+	webPages.setValue
+		.submit({
+			name: store.selectedPage,
+			blocks: JSON.stringify(store.getPageData()),
+			page_data: JSON.stringify(store.getActivePage().page_data || {}),
+		})
+		.then((doc: WebPageBeta) => {
+			window.open(`/${doc.route}`, "preview-page");
+		});
 };
 
 watch(

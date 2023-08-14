@@ -13,6 +13,7 @@
   "route",
   "published",
   "blocks",
+  "page_data",
   "preview"
  ],
  "fields": [
@@ -47,11 +48,16 @@
    "fieldname": "page_title",
    "fieldtype": "Data",
    "label": "Page Title"
+  },
+  {
+   "fieldname": "page_data",
+   "fieldtype": "Code",
+   "label": "Page Data"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-08-03 17:50:08.685455",
+ "modified": "2023-08-13 23:11:15.318779",
  "modified_by": "Administrator",
  "module": "Website Builder",
  "name": "Web Page Beta",

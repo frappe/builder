@@ -20,6 +20,8 @@ export interface WebPageBeta{
 	published?: 0 | 1
 	/**	Blocks : JSON	*/
 	blocks?: any
+	/**	Page Data : Code	*/
+	page_data?: string
 	/**	Preview : Attach Image	*/
 	preview?: string
 }
