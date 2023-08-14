@@ -1,6 +1,17 @@
 <template>
 	<div>
-		<Combobox :modelValue="value" @update:modelValue="(val) => emit('update:modelValue', val)" nullable>
+		<Combobox
+			:modelValue="value"
+			@update:modelValue="(val: string|{'value': string}|null) => {
+				if (val === null) {
+					emit('update:modelValue', null)
+				} else if (typeof val === 'object') {
+					emit('update:modelValue', val.value)
+				} else {
+					emit('update:modelValue', val)
+				}
+			}"
+			nullable>
 			<ComboboxInput
 				autocomplete="off"
 				@change="query = $event.target.value"
@@ -50,7 +61,10 @@ const filteredValues = computed(() =>
 	query.value === ""
 		? props.options
 		: props.options.filter((option) => {
-				return option.value.toLowerCase().includes(query.value.toLowerCase());
+				return (
+					option.value.toLowerCase().includes(query.value.toLowerCase()) ||
+					option.label.toLowerCase().includes(query.value.toLowerCase())
+				);
 		  })
 );
 
