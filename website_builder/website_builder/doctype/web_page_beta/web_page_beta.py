@@ -180,12 +180,18 @@ def extend_block(block, updater, data=None):
 	if block.get("innerHTML"):
 		block["innerHTML"] = updater["innerHTML"]
 
-	component_children = block.get("children", [])
 	extend_with_data(block, data)
 
-	for component_child in component_children:
-		# TODO: fix
-		extend_block(component_child, component_child, data=data)
+	component_children = block.get("children", [])
+	overridden_children = updater.get("children", [])
+
+	for overridden_child in overridden_children:
+		component_child = next((child for child in component_children if child.get("blockId") == overridden_child.get("blockId")), None)
+		if component_child:
+			extend_block(component_child, overridden_child, data=data)
+		else:
+			component_children.append(overridden_child)
+
 
 def extend_with_data(block, data):
 	if not data:

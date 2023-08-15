@@ -104,26 +104,27 @@ onMounted(() => {
 const { isOverDropZone } = useDropZone(canvasContainer, {
 	onDrop: (files, ev) => {
 		let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
-		let block = props.block;
+		let parentBlock = props.block;
 		if (element) {
 			if (element.dataset.blockId) {
-				block = store.findBlock(element.dataset.blockId) || block;
+				parentBlock = store.findBlock(element.dataset.blockId) || parentBlock;
 			}
 		}
 		let componentName = ev.dataTransfer?.getData("componentName");
 		if (componentName) {
-			const blockCopy = store.getBlockCopy(webComponent.getRow(componentName).block);
-			block.addChild(blockCopy, 0, componentName);
+			const newBlock = store.getBlockCopy(webComponent.getRow(componentName).block);
+			newBlock.extendFromComponent(componentName);
+			parentBlock.addChild(newBlock);
 			ev.stopPropagation();
 		} else if (files && files.length) {
 			store.uploadFile(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
-				if (block.isImage()) {
-					block.setAttribute("src", fileDoc.fileURL);
-					block.setAttribute("alt", fileDoc.fileName);
-				} else if (block.isContainer() && ev.shiftKey) {
-					block.setStyle("background", `url(${fileDoc.fileURL})`);
+				if (parentBlock.isImage()) {
+					parentBlock.setAttribute("src", fileDoc.fileURL);
+					parentBlock.setAttribute("alt", fileDoc.fileName);
+				} else if (parentBlock.isContainer() && ev.shiftKey) {
+					parentBlock.setStyle("background", `url(${fileDoc.fileURL})`);
 				} else {
-					block.addChild(store.getImageBlock(fileDoc.fileURL, fileDoc.fileName));
+					parentBlock.addChild(store.getImageBlock(fileDoc.fileURL, fileDoc.fileName));
 				}
 			});
 		}

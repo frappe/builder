@@ -33,18 +33,19 @@
 								<FeatherIcon
 									:name="isExpanded(element) ? 'chevron-down' : 'chevron-right'"
 									class="mr-1 h-3 w-3"
-									v-if="
-										element.children && element.children.length && !element.isRoot() && !element.isComponent()
-									"
+									v-if="element.children && element.children.length && !element.isRoot()"
 									@click.stop="element.expanded = !element.expanded" />
-								<FeatherIcon :name="element.getIcon()" class="mr-1 h-3 w-3" v-if="!element.isComponent()" />
+								<FeatherIcon
+									:name="element.getIcon()"
+									class="mr-1 h-3 w-3"
+									v-if="!Boolean(element.extendedFromComponent)" />
 								<svg
 									class="mr-1 h-3 w-3"
 									xmlns="http://www.w3.org/2000/svg"
 									width="16"
 									height="16"
 									viewBox="0 0 24 24"
-									v-if="element.isComponent()">
+									v-if="Boolean(element.extendedFromComponent)">
 									<g
 										fill="none"
 										stroke="currentColor"
@@ -75,7 +76,7 @@
 							</span>
 							<div
 								v-show="isExpanded(element) && element.isVisible()"
-								v-if="!(element.isComponent() || element.isText() || element.isImage())">
+								v-if="!(element.isText() || element.isImage())">
 								<BlockLayers :blocks="element.children" class="ml-2" />
 							</div>
 						</div>

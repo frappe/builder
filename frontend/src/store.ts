@@ -264,6 +264,7 @@ const useStore = defineStore("store", {
 				return;
 			}
 			// clear blocks
+			this.editPage();
 			this.clearBlocks();
 			this.pushBlocks(page.blocks);
 			this.pageName = page.page_name as string;

@@ -11,13 +11,7 @@
 			:data-block-id="block.blockId"
 			:class="getStyleClasses">
 			<PaddingHandler
-				v-if="
-					isBlockSelected &&
-					!resizing &&
-					!editable &&
-					!blockController.multipleBlocksSelected() &&
-					!block.isComponent()
-				"
+				v-if="false && isBlockSelected && !resizing && !editable && !blockController.multipleBlocksSelected()"
 				:target-block="block"
 				:on-update="updateTracker"
 				:disable-handlers="false"
@@ -28,8 +22,7 @@
 					!block.isRoot() &&
 					!resizing &&
 					!editable &&
-					!blockController.multipleBlocksSelected() &&
-					!block.isComponent()
+					!blockController.multipleBlocksSelected()
 				"
 				:target-block="block"
 				:on-update="updateTracker"
@@ -42,8 +35,7 @@
 					!block.isText() &&
 					!block.isHTML() &&
 					!editable &&
-					!blockController.multipleBlocksSelected() &&
-					!block.isComponent()
+					!blockController.multipleBlocksSelected()
 				"
 				:target-block="block"
 				:target="target" />
@@ -74,7 +66,6 @@ const showResizer = computed(() => {
 		!props.editable &&
 		isBlockSelected.value &&
 		!blockController.multipleBlocksSelected() &&
-		!props.block.isComponent() &&
 		!props.block.isHTML()
 	);
 });
@@ -133,7 +124,7 @@ const getStyleClasses = computed(() => {
 	if (movable.value && !props.block.isRoot()) {
 		classes.push("cursor-grab");
 	}
-	if (props.block.isComponent()) {
+	if (Boolean(props.block.extendedFromComponent)) {
 		classes.push("ring-purple-400");
 	} else {
 		classes.push("ring-blue-400");
