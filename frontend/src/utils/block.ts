@@ -19,50 +19,38 @@ function resetBlock(block: Block | BlockOptions) {
 	block.tabletStyles = {};
 	block.attributes = {};
 	block.classes = [];
-	delete block.children;
+	block.children = [];
 }
 
 class Block implements BlockOptions {
 	blockId: string;
-	blockName?: string;
-	element?: string;
 	children: Array<Block>;
-	draggable?: boolean;
 	baseStyles: BlockStyleMap;
 	rawStyles: BlockStyleMap;
 	mobileStyles: BlockStyleMap;
 	tabletStyles: BlockStyleMap;
 	attributes: BlockAttributeMap;
 	classes: Array<string>;
+	dataKey?: BlockDataKey | null = null;
+	blockName?: string;
+	element?: string;
+	draggable?: boolean;
 	innerText?: string;
 	innerHTML?: string;
 	extendedFromComponent?: string;
 	blockData?: BlockData;
 	blockDataSource?: Object;
 	originalElement?: string | undefined;
+	isChildOfComponent?: string;
 	isRepeaterBlock?: boolean;
-	dataKeys?: BlockDataKey[];
-	dataKey: BlockDataKey | null = null;
 	constructor(options: BlockOptions) {
 		this.element = options.element;
 		this.innerHTML = options.innerHTML;
 		this.extendedFromComponent = options.extendedFromComponent;
 		this.isRepeaterBlock = options.isRepeaterBlock;
-		this.dataKeys = options.dataKeys || [
-			{
-				key: "text",
-				type: "blockKey",
-				property: "innerText",
-			},
-			{
-				key: "color",
-				type: "style",
-				property: "color",
-			},
-		];
+		this.isChildOfComponent = options.isChildOfComponent;
 
 		this.dataKey = options.dataKey || null;
-
 		this.blockData = options.blockData;
 
 		if (options.innerText) {
@@ -96,7 +84,6 @@ class Block implements BlockOptions {
 			this.setBaseStyle("minHeight", "100vh");
 		}
 	}
-
 	getStyles(breakpoint: string = "desktop") {
 		let styleObj = {};
 		if (this.isComponent()) {
@@ -113,13 +100,19 @@ class Block implements BlockOptions {
 	}
 	getComponent() {
 		const store = useStore();
-		return store.getComponentBlock(this.extendedFromComponent as string);
+		if (this.extendedFromComponent) {
+			return store.getComponentBlock(this.extendedFromComponent as string);
+		}
+		if (this.isChildOfComponent) {
+			return store.getComponentBlock(this.isChildOfComponent as string).children.find((child) => {
+				return child.blockId === this.blockId;
+			}) as Block;
+		}
+		return this;
 	}
-
 	getComponentStyles(breakpoint: string): BlockStyleMap {
 		return this.getComponent()?.getStyles(breakpoint);
 	}
-
 	getAttributes() {
 		let attributes = {};
 		if (this.isComponent()) {
@@ -131,7 +124,6 @@ class Block implements BlockOptions {
 	getComponentAttributes() {
 		return this.getComponent()?.attributes || {};
 	}
-
 	getClasses() {
 		let classes = [] as Array<string>;
 		if (this.isComponent()) {
@@ -140,41 +132,21 @@ class Block implements BlockOptions {
 		classes = [...classes, ...this.classes];
 		return classes;
 	}
-
 	getComponentClasses() {
 		return this.getComponent()?.classes || [];
 	}
-
 	getChildren() {
-		let store = useStore();
-		let children = [] as Array<Block>;
-		if (this.isComponent()) {
-			const componentChildren = this.getComponentChildren();
-			// Seriously???
-			componentChildren.forEach((componentChild) => {
-				let child = this.children.find((c) => c.blockId === componentChild.blockId) as Block;
-				if (!child) {
-					child = store.getBlockCopy(componentChild, true);
-					children.push(child);
-				}
-				const componentChildClone = JSON.parse(JSON.stringify(componentChild));
-				Object.assign(componentChildClone, child);
-				Object.assign(child, componentChildClone);
-			});
-		}
-		return children.length ? children : this.children;
+		return this.children;
 	}
-
 	hasChildren() {
 		return this.getChildren().length > 0;
 	}
-
 	getComponentChildren() {
 		return this.getComponent()?.children || [];
 	}
 
 	getBlockDescription() {
-		if (this.isComponent()) {
+		if (this.isComponent() && !this.isChildOfComponentBlock()) {
 			return this.getComponentBlockDescription();
 		}
 		if (this.isHTML()) {
@@ -290,11 +262,9 @@ class Block implements BlockOptions {
 		}
 		return this.element;
 	}
-
 	getComponentTag() {
 		return this.getComponent()?.element || "div";
 	}
-
 	isDiv() {
 		return this.element === "div";
 	}
@@ -336,11 +306,7 @@ class Block implements BlockOptions {
 			this.setStyle("left", addPxToNumber(left));
 		}
 	}
-	addChild(child: BlockOptions, index?: number, extendedFromComponent?: string) {
-		if (extendedFromComponent) {
-			child.extendedFromComponent = extendedFromComponent;
-			resetBlock(child);
-		}
+	addChild(child: BlockOptions, index?: number) {
 		if (index === undefined) {
 			index = this.children.length;
 		}
@@ -457,7 +423,7 @@ class Block implements BlockOptions {
 		});
 	}
 	isComponent() {
-		return Boolean(this.extendedFromComponent);
+		return Boolean(this.extendedFromComponent) || Boolean(this.isChildOfComponent);
 	}
 	convertToRepeater() {
 		this.setBaseStyle("display", "flex");
@@ -516,6 +482,29 @@ class Block implements BlockOptions {
 	}
 	isVisible() {
 		return this.getStyle("display") !== "none";
+	}
+	extendFromComponent(componentName: string) {
+		resetBlock(this);
+		this.extendedFromComponent = componentName;
+		this.children.push(...this.getComponentChildrenCopy());
+	}
+	isChildOfComponentBlock() {
+		return Boolean(this.isChildOfComponent);
+	}
+	getComponentChildrenCopy() {
+		const store = useStore();
+		const children = [] as Block[];
+		const componentChildren = this.getComponentChildren();
+		componentChildren.forEach((componentChild) => {
+			const componentChildClone = store.getBlockCopy(componentChild, true);
+			componentChildClone.isChildOfComponent = this.extendedFromComponent;
+			children.push(componentChildClone);
+		});
+		return children;
+	}
+	resetChanges() {
+		resetBlock(this);
+		this.children = this.getComponentChildrenCopy();
 	}
 }
 

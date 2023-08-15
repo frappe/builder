@@ -130,7 +130,7 @@ const createComponentHandler = ({ close }: { close: () => void }) => {
 			await webComponent.list.promise;
 			const block = store.findBlock(props.block.blockId);
 			if (!block) return;
-			block.extendedFromComponent = data.name;
+			block.extendFromComponent(data.name);
 		});
 	close();
 };
@@ -187,6 +187,12 @@ const contextMenuOptions: ContextMenuOption[] = [
 			props.block.convertToRepeater();
 		},
 		condition: () => props.block.isContainer() && !props.block.isComponent() && !props.block.isRoot(),
+	},
+	{
+		label: "Reset Changes",
+		action: () => {
+			props.block.resetChanges();
+		},
 	},
 	{
 		label: "Edit Component",

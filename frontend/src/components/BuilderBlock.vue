@@ -131,10 +131,8 @@ const styles = computed(() => {
 
 const loadEditor = computed(() => {
 	return (
-		!props.isChildOfComponent &&
 		target.value &&
 		props.block.getStyle("display") !== "none" &&
-		store.mode !== "container" &&
 		((props.block.isSelected() && props.breakpoint === store.activeBreakpoint) ||
 			(props.block.isHovered() && store.hoveredBreakpoint === props.breakpoint))
 	);
@@ -158,19 +156,12 @@ onMounted(async () => {
 
 const isEditable = computed(() => {
 	return (
-		store.builderState.editableBlock === props.block &&
-		!(props.block.isComponent() || props.isChildOfComponent) &&
-		store.activeBreakpoint === props.breakpoint // to ensure it is right block and not on different breakpoint
+		store.builderState.editableBlock === props.block && store.activeBreakpoint === props.breakpoint // to ensure it is right block and not on different breakpoint
 	);
 });
 
 const selectBlock = (e: MouseEvent | null) => {
-	if (
-		store.builderState.editableBlock === props.block ||
-		store.mode !== "select" ||
-		props.preview ||
-		props.isChildOfComponent
-	) {
+	if (store.builderState.editableBlock === props.block || store.mode !== "select" || props.preview) {
 		return;
 	}
 	store.selectBlock(props.block, e);
@@ -202,17 +193,15 @@ const triggerContextMenu = (e: MouseEvent) => {
 
 const handleClick = (e: MouseEvent) => {
 	if (isEditable.value) return;
-	if (!props.isChildOfComponent) {
-		selectBlock(e);
-		e.stopPropagation();
-		e.preventDefault();
-	}
+	selectBlock(e);
+	e.stopPropagation();
+	e.preventDefault();
 };
 
 const handleDoubleClick = (e: MouseEvent) => {
 	if (isEditable.value) return;
 	store.builderState.editableBlock = null;
-	if (props.block.isComponent()) {
+	if (Boolean(props.block.extendedFromComponent)) {
 		store.editComponent(props.block);
 		e.stopPropagation();
 		e.preventDefault();
@@ -242,19 +231,15 @@ const handleDoubleClick = (e: MouseEvent) => {
 };
 
 const handleMouseOver = (e: MouseEvent) => {
-	if (!props.isChildOfComponent) {
-		store.hoveredBlock = props.block.blockId;
-		store.hoveredBreakpoint = props.breakpoint;
-		e.stopPropagation();
-	}
+	store.hoveredBlock = props.block.blockId;
+	store.hoveredBreakpoint = props.breakpoint;
+	e.stopPropagation();
 };
 
 const handleMouseLeave = (e: MouseEvent) => {
-	if (!props.isChildOfComponent) {
-		if (store.hoveredBlock === props.block.blockId) {
-			store.hoveredBlock = null;
-			e.stopPropagation();
-		}
+	if (store.hoveredBlock === props.block.blockId) {
+		store.hoveredBlock = null;
+		e.stopPropagation();
 	}
 };
 </script>

@@ -261,16 +261,27 @@ useEventListener(document, "keydown", (e) => {
 			}
 			blocks.forEach((block, i) => {
 				if (block.blockId === blockId) {
-					store.history.batch(() => {
-						blocks.splice(i, 1);
-					});
-					nextTick(() => {
-						// select the next sibling block
-						if (blocks.length && blocks[i]) {
-							blocks[i].selectBlock();
-						}
-					});
-					return true;
+					if (block.isChildOfComponentBlock()) {
+						toast({
+							title: "Warning",
+							text: "Cannot Delete Block Inside Component",
+							icon: "alert-circle",
+							iconClasses: "text-yellow-500",
+							position: "top-left",
+						});
+						return false;
+					} else {
+						store.history.batch(() => {
+							blocks.splice(i, 1);
+						});
+						nextTick(() => {
+							// select the next sibling block
+							if (blocks.length && blocks[i]) {
+								blocks[i].selectBlock();
+							}
+						});
+						return true;
+					}
 				} else if (block.children) {
 					return findBlockAndRemove(block.children, blockId);
 				}

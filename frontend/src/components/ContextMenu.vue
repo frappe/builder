@@ -7,7 +7,7 @@
 				v-slot="{ active, disabled }"
 				class="block cursor-pointer rounded-md px-3 py-1 dark:text-zinc-50"
 				v-for="(option, index) in options"
-				:disabled="option.condition && !option.condition()">
+				v-show="!option.condition || option.condition()">
 				<div
 					@click.prevent.stop="(!option.condition || option.condition()) && handleClick(option.action)"
 					:class="{
