@@ -292,6 +292,7 @@
 		</InlineInput>
 		<CodeEditor
 			v-if="blockController.isRepeater()"
+			class="mt-8"
 			label="Block Data (Array)"
 			:modelValue="blockController.getBlockData()"
 			@update:modelValue="
@@ -300,6 +301,7 @@
 				}
 			"></CodeEditor>
 		<CodeEditor
+			class="mt-8"
 			label="RAW Styles (as JSON)"
 			:modelValue="blockController.getRawStyles() || {}"
 			@update:modelValue="
@@ -309,6 +311,7 @@
 			"></CodeEditor>
 		<CodeEditor
 			v-if="blockController.isHTML()"
+			class="mt-8"
 			label="HTML"
 			type="HTML"
 			:modelValue="blockController.getInnerHTML() || ''"
@@ -342,14 +345,3 @@ const setFont = (font: { value: string }) => {
 	});
 };
 </script>
-<style scoped>
-:deep(.ace_editor) {
-	height: 200px;
-	width: 100%;
-	border-radius: 5px;
-	overscroll-behavior: none;
-}
-:deep(.ace_scrollbar) {
-	display: none;
-}
-</style>

@@ -12,6 +12,7 @@ from frappe.model.document import Document
 from frappe.website.serve import get_response_content
 from frappe.website.website_generator import WebsiteGenerator
 from website_builder.html_preview_image import get_preview
+from frappe.utils.safe_exec import safe_exec
 
 import json
 
@@ -51,12 +52,21 @@ class WebPageBeta(WebsiteGenerator):
 	def get_context(self, context):
 		# show breadcrumbs
 		context.title = self.page_title or "My Page"
-		context.page_data = json.loads(self.page_data or '{}')
-		content, style, fonts = get_block_html(self.blocks, context.page_data)
+		page_data = self.get_page_data()
+		content, style, fonts = get_block_html(self.blocks, page_data)
 		context.fonts = fonts
 		context.content = content
 		context.style = style
 		context.style_file_path = get_style_file_path()
+
+	@frappe.whitelist()
+	def get_page_data(self):
+		page_data = frappe._dict()
+		if self.page_data_script:
+			_locals = dict(data=frappe._dict())
+			safe_exec(self.page_data_script, None, _locals)
+			page_data.update(_locals["data"])
+		return page_data
 
 def get_block_html(blocks, page_data={}):
 	blocks = frappe.parse_json(blocks)
@@ -99,7 +109,10 @@ def get_block_html(blocks, page_data={}):
 
 			blockData = []
 			if block.get("isRepeaterBlock"):
-				blockData = page_data.get(block.get("dataKey", {}).get("key", {}), {})
+				dataKey = block.get("dataKey")
+				key = dataKey.get("key") if dataKey else ""
+				if key:
+					blockData = page_data.get(key, [])
 			if block.get("blockData", []):
 				blockData = block.get("blockData", [])
 

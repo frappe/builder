@@ -19,6 +19,7 @@ const useStore = defineStore("store", {
 		editingMode: <EditingMode>"page",
 		activeBreakpoint: "desktop",
 		selectedPage: <string | null>null,
+		pageData: <{ [key: string]: [] }>{},
 		mode: <BuilderMode>"select",
 		selectedBlocks: <Block[]>[],
 		history: {} as UseRefHistoryReturn<{}, {}>,
@@ -207,14 +208,6 @@ const useStore = defineStore("store", {
 		},
 		copiedStyle: <StyleCopy | null>null,
 		components: <BlockComponent[]>[],
-		pageData: {
-			users: [
-				{ name: "Suraj", image: "https://avatars.githubusercontent.com/u/1961952?v=4" },
-				{ name: "Raj", image: "https://avatars.githubusercontent.com/u/1961952?v=4" },
-				{ name: "Rahul", image: "https://avatars.githubusercontent.com/u/1961952?v=4" },
-				{ name: "Rohit", image: "https://avatars.githubusercontent.com/u/1961952?v=4" },
-			],
-		},
 	}),
 	actions: {
 		clearBlocks() {
@@ -270,6 +263,7 @@ const useStore = defineStore("store", {
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
 			this.selectedPage = page.name;
+			this.setPageData();
 			this.setupHistory();
 			// localStorage.setItem("selectedPage", page.name);
 		},
@@ -441,12 +435,33 @@ const useStore = defineStore("store", {
 				.submit({
 					name: this.selectedPage,
 					blocks: JSON.stringify(this.getPageData()),
-					page_data: JSON.stringify(this.getActivePage().page_data || {}),
 				})
 				.then((doc: WebPageBeta) => {
 					if (open_preview) {
 						window.open(`/${doc.route}`, "preview-page");
 					}
+				});
+		},
+		setPageData() {
+			const page = this.getActivePage();
+			if (!page.page_data_script) {
+				return;
+			}
+			webPages.runDocMethod
+				.submit({
+					method: "get_page_data",
+					name: page.name,
+				})
+				.then((data: { message: { [key: string]: [] } }) => {
+					this.pageData = data.message;
+				})
+				.catch((err) => {
+					toast({
+						text: "There was error in fetching page data",
+						position: "top-right",
+						icon: "disabled",
+						iconClasses: "text-red-500",
+					});
 				});
 		},
 	},

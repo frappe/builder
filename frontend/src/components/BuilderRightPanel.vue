@@ -26,7 +26,11 @@
 			v-if="blockController.isBLockSelected()"
 			v-show="activeTab === 'Properties'"
 			class="p-4" />
-		<PageData class="p-4" v-show="activeTab === 'Data'" v-if="store.selectedPage && store.getActivePage()" />
+		<PageData
+			class="p-4"
+			v-show="activeTab === 'Data'"
+			:key="store.selectedPage"
+			v-if="store.selectedPage && store.getActivePage()" />
 	</div>
 </template>
 <script setup>

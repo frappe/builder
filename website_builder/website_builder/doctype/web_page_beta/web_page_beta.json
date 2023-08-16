@@ -13,8 +13,10 @@
   "route",
   "published",
   "blocks",
-  "page_data",
-  "preview"
+  "preview",
+  "scripting_tab",
+  "page_data_script",
+  "page_data"
  ],
  "fields": [
   {
@@ -52,12 +54,25 @@
   {
    "fieldname": "page_data",
    "fieldtype": "Code",
-   "label": "Page Data"
+   "label": "Page Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "scripting_tab",
+   "fieldtype": "Tab Break",
+   "label": "Scripting"
+  },
+  {
+   "description": "data.events = frappe.get_list(\"Event\")\n<br>\n<b>Note:</b> Each key value of data should be a list.",
+   "fieldname": "page_data_script",
+   "fieldtype": "Code",
+   "label": "Page Data Script",
+   "options": "Python"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-08-13 23:11:15.318779",
+ "modified": "2023-08-16 19:24:41.184970",
  "modified_by": "Administrator",
  "module": "Website Builder",
  "name": "Web Page Beta",
