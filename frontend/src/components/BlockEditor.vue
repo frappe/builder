@@ -11,7 +11,7 @@
 			:data-block-id="block.blockId"
 			:class="getStyleClasses">
 			<PaddingHandler
-				v-if="false && isBlockSelected && !resizing && !editable && !blockController.multipleBlocksSelected()"
+				v-if="isBlockSelected && !resizing && !editable && !blockController.multipleBlocksSelected()"
 				:target-block="block"
 				:on-update="updateTracker"
 				:disable-handlers="false"
@@ -210,11 +210,17 @@ const handleMove = (ev: MouseEvent) => {
 		const movementX = (mouseMoveEvent.clientX - startX) / scale;
 		const movementY = (mouseMoveEvent.clientY - startY) / scale;
 		let finalLeft = startLeft + movementX;
-		await nextTick();
-		const leftOffset = guides.getLeftPositionOffset();
-
-		props.block.setStyle("left", addPxToNumber(finalLeft + leftOffset));
+		props.block.setStyle("left", addPxToNumber(finalLeft));
 		props.block.setStyle("top", addPxToNumber(startTop + movementY));
+		await nextTick();
+		const { leftOffset, rightOffset } = guides.getPositionOffset();
+		if (leftOffset !== 0) {
+			props.block.setStyle("left", addPxToNumber(finalLeft + leftOffset));
+		}
+		if (rightOffset !== 0) {
+			props.block.setStyle("left", addPxToNumber(finalLeft + rightOffset));
+		}
+
 		mouseMoveEvent.preventDefault();
 		preventCLick.value = true;
 	};
@@ -226,6 +232,7 @@ const handleMove = (ev: MouseEvent) => {
 			document.body.style.cursor = docCursor;
 			document.removeEventListener("mousemove", mousemove);
 			mouseUpEvent.preventDefault();
+			guides.hideX();
 		},
 		{ once: true }
 	);

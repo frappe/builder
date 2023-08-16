@@ -95,27 +95,44 @@ function setGuides(target: HTMLElement, canvasProps: CanvasProps) {
 		return Math.round(finalHeight);
 	};
 
-	const getLeftPositionOffset = () => {
+	const getPositionOffset = () => {
 		targetBounds.update();
 		canvasBounds.update();
 		let { scale } = canvasProps;
 		let leftOffset = 0;
+		let rightOffset = 0;
 
 		const canvasHalf = canvasBounds.left + canvasBounds.width / 2;
 
 		if (Math.abs(targetBounds.left - canvasBounds.left) < threshold) {
 			leftOffset = (canvasBounds.left - targetBounds.left) / scale;
 			store.guides.x = canvasBounds.left;
-		} else if (Math.abs(targetBounds.left - canvasHalf) < threshold) {
+		}
+		if (Math.abs(targetBounds.left - canvasHalf) < threshold) {
 			leftOffset = (canvasHalf - targetBounds.left) / scale;
 			store.guides.x = canvasHalf;
-		} else if (Math.abs(targetBounds.left - canvasBounds.right) < threshold) {
+		}
+		if (Math.abs(targetBounds.left - canvasBounds.right) < threshold) {
 			leftOffset = (canvasBounds.right - targetBounds.left) / scale;
 			store.guides.x = canvasBounds.right;
-		} else {
+		}
+
+		if (Math.abs(targetBounds.right - canvasBounds.left) < threshold) {
+			rightOffset = (canvasBounds.left - targetBounds.right) / scale;
+			store.guides.x = canvasBounds.left;
+		}
+		if (Math.abs(targetBounds.right - canvasHalf) < threshold) {
+			rightOffset = (canvasHalf - targetBounds.right) / scale;
+			store.guides.x = canvasHalf;
+		}
+		if (Math.abs(targetBounds.right - canvasBounds.right) < threshold) {
+			rightOffset = (canvasBounds.right - targetBounds.right) / scale;
+			store.guides.x = canvasBounds.right;
+		}
+		if ((leftOffset && rightOffset) || (!leftOffset && !rightOffset)) {
 			store.guides.x = -1;
 		}
-		return Math.round(leftOffset);
+		return { leftOffset: Math.round(leftOffset), rightOffset: Math.round(rightOffset) };
 	};
 
 	const showX = () => {
@@ -140,7 +157,7 @@ function setGuides(target: HTMLElement, canvasProps: CanvasProps) {
 		showY,
 		hideX,
 		hideY,
-		getLeftPositionOffset,
+		getPositionOffset,
 	};
 }
 

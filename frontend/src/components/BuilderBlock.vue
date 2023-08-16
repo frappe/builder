@@ -18,6 +18,7 @@
 			:breakpoint="breakpoint"
 			:preview="preview"
 			:isChildOfComponent="block.isComponent() || isChildOfComponent"
+			:key="child.blockId"
 			v-for="child in block.getChildren()" />
 	</component>
 	<teleport to="#overlay" v-if="canvasProps?.overlayElement && !preview && canvasProps">

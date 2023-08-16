@@ -1,6 +1,7 @@
 <template>
 	<div ref="canvasContainer">
 		<div class="overlay absolute" id="overlay" ref="overlay" />
+		<BlockSnapGuides></BlockSnapGuides>
 		<div
 			v-if="isOverDropZone"
 			class="pointer-events-none absolute bottom-0 left-0 right-0 top-0 z-30 bg-cyan-300 opacity-20"></div>
@@ -71,6 +72,7 @@ import { FeatherIcon } from "frappe-ui";
 import { PropType, computed, nextTick, onMounted, provide, reactive, ref } from "vue";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
+import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
 
 const store = useStore();
