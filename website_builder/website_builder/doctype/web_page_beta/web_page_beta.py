@@ -170,20 +170,20 @@ def extend_with_component(block, data=None):
 
 	return block
 
-def extend_block(block, updater, data=None):
-	block["baseStyles"].update(updater["baseStyles"])
-	block["mobileStyles"].update(updater["mobileStyles"])
-	block["tabletStyles"].update(updater["tabletStyles"])
-	block["rawStyles"].update(updater["rawStyles"])
-	block["attributes"].update(updater["attributes"])
-	block["classes"].extend(updater["classes"])
-	if block.get("innerHTML"):
-		block["innerHTML"] = updater["innerHTML"]
+def extend_block(block, overridden_block, data=None):
+	block["baseStyles"].update(overridden_block["baseStyles"])
+	block["mobileStyles"].update(overridden_block["mobileStyles"])
+	block["tabletStyles"].update(overridden_block["tabletStyles"])
+	block["rawStyles"].update(overridden_block["rawStyles"])
+	block["attributes"].update(overridden_block["attributes"])
+	block["classes"].extend(overridden_block["classes"])
+	if overridden_block.get("innerHTML"):
+		block["innerHTML"] = overridden_block["innerHTML"]
 
 	extend_with_data(block, data)
 
 	component_children = block.get("children", [])
-	overridden_children = updater.get("children", [])
+	overridden_children = overridden_block.get("children", [])
 
 	for overridden_child in overridden_children:
 		component_child = next((child for child in component_children if child.get("blockId") == overridden_child.get("blockId")), None)
