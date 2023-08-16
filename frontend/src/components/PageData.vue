@@ -5,10 +5,12 @@
 </template>
 <script lang="ts" setup>
 import useStore from "@/store";
+import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
+import { ref } from "vue";
 import CodeEditor from "./CodeEditor.vue";
 const store = useStore();
 
-const page = store.getActivePage();
+const page = ref<WebPageBeta>(store.getActivePage());
 </script>
 <style scoped>
 :deep(.ace_editor) {
