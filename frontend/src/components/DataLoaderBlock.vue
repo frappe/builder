@@ -15,7 +15,6 @@
 </template>
 
 <script setup lang="ts">
-import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import Block from "@/utils/block";
 import { Ref, computed, ref } from "vue";
@@ -40,7 +39,7 @@ const props = defineProps({
 const component = ref(null) as Ref<HTMLElement | null>;
 
 const blockData = computed(() => {
-	const pageData = store.getActivePage()?.page_data;
+	const pageData = store.pageData;
 	const data = {};
 	if (pageData && props.block.dataKey?.key) {
 		Object.assign(data, pageData[props.block.dataKey?.key]);

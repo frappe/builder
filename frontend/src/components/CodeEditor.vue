@@ -1,14 +1,20 @@
 <template>
-	<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">
-		{{ label }}
-	</h3>
-	<div ref="editor" class="border border-gray-200 dark:border-zinc-800" />
+	<div
+		class="editor"
+		:style="{
+			height: height,
+		}">
+		<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">
+			{{ label }}
+		</h3>
+		<div ref="editor" class="border border-gray-200 dark:border-zinc-800" />
+	</div>
 </template>
 <script setup lang="ts">
 import { useDark } from "@vueuse/core";
 import ace from "ace-builds";
 import "ace-builds/src-noconflict/theme-chrome";
-import "ace-builds/src-noconflict/theme-monokai";
+import "ace-builds/src-noconflict/theme-twilight";
 import { PropType, onMounted, ref, watch } from "vue";
 const isDark = useDark();
 
@@ -17,12 +23,24 @@ const props = defineProps({
 		type: [Object, String, Array],
 	},
 	type: {
-		type: String as PropType<"JSON" | "HTML">,
+		type: String as PropType<"JSON" | "HTML" | "Python">,
 		default: "JSON",
 	},
 	label: {
 		type: String,
 		default: "",
+	},
+	readonly: {
+		type: Boolean,
+		default: false,
+	},
+	height: {
+		type: String,
+		default: "200px",
+	},
+	showLineNumbers: {
+		type: Boolean,
+		default: false,
 	},
 });
 
@@ -31,13 +49,18 @@ const emit = defineEmits(["update:modelValue"]);
 const editor = ref<HTMLElement | null>(null);
 onMounted(() => {
 	let initialValue = props.modelValue;
-	const aceEditor = ace.edit(editor.value!);
+	const aceEditor = ace.edit(editor.value || "");
+	aceEditor.setReadOnly(props.readonly);
 	aceEditor.setOptions({
 		fontSize: "12px",
 		useWorker: false,
-		showGutter: false,
+		showGutter: props.showLineNumbers,
 	});
-	if (props.type === "JSON") {
+	if (props.type === "Python") {
+		import("ace-builds/src-noconflict/mode-python").then(() => {
+			aceEditor.session.setMode("ace/mode/python");
+		});
+	} else if (props.type === "JSON") {
 		import("ace-builds/src-noconflict/mode-json").then(() => {
 			aceEditor.session.setMode("ace/mode/json");
 		});
@@ -67,7 +90,7 @@ onMounted(() => {
 	watch(
 		isDark,
 		() => {
-			aceEditor.setTheme(isDark.value ? "ace/theme/monokai" : "ace/theme/chrome");
+			aceEditor.setTheme(isDark.value ? "ace/theme/twilight" : "ace/theme/chrome");
 		},
 		{ immediate: true }
 	);
@@ -85,13 +108,13 @@ onMounted(() => {
 });
 </script>
 <style scoped>
-:deep(.ace_editor) {
-	height: 200px;
+.editor .ace_editor {
+	height: 100%;
 	width: 100%;
 	border-radius: 5px;
 	overscroll-behavior: none;
 }
-:deep(.ace_scrollbar) {
+.editor :deep(.ace_scrollbar-h) {
 	display: none;
 }
 </style>

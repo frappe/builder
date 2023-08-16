@@ -20,8 +20,12 @@ export interface WebPageBeta{
 	published?: 0 | 1
 	/**	Blocks : JSON	*/
 	blocks?: any
-	/**	Page Data : Code	*/
-	page_data?: string
 	/**	Preview : Attach Image	*/
 	preview?: string
+	/**	Page Data Script : Code - data.events = frappe.get_list("Event")
+<br>
+<b>Note:</b> Each key value of data should be a list.	*/
+	page_data_script?: string
+	/**	Page Data : Code	*/
+	page_data?: string
 }
