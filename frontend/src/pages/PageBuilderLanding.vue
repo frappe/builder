@@ -14,6 +14,11 @@
 			</router-link>
 		</div>
 		<div class="flex flex-wrap gap-6">
+			<div v-if="!webPages.data || !webPages.data.length" class="flex flex-col items-center justify-center">
+				<p class="mt-4 text-center text-gray-500">
+					You don't have any pages yet. Click on the "+ New" button to create a new page.
+				</p>
+			</div>
 			<router-link
 				v-for="page in webPages.data"
 				:key="page.page_name"
