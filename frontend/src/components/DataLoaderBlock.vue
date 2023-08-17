@@ -1,6 +1,8 @@
 <template>
 	<div ref="component">
-		<div v-if="!block.hasChildren()" class="flex h-52 w-52 items-center justify-center font-semibold">
+		<div
+			v-if="!block.hasChildren()"
+			class="pointer-events-none flex h-52 w-52 items-center justify-center font-semibold">
 			Drop A Component
 		</div>
 		<BuilderBlock

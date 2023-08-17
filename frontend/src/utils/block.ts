@@ -435,10 +435,7 @@ class Block implements BlockOptions {
 		this.setBaseStyle("height", "fit-content");
 		this.setBaseStyle("gap", "20px");
 		this.isRepeaterBlock = true;
-		this.blockData = [
-			{ title: "Human 1", subtitle: "Human 1 subtitle", image: "https://picsum.photos/300/300" },
-			{ title: "Human 2", subtitle: "Human 2 subtitle", image: "https://picsum.photos/200/200" },
-		];
+		this.blockData = [];
 	}
 	moveChild(child: Block, index: number) {
 		const childIndex = this.children.findIndex((block) => block.blockId === child.blockId);

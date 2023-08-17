@@ -264,6 +264,8 @@ const useStore = defineStore("store", {
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
 			this.selectedPage = page.name;
+			const variables = localStorage.getItem(`${page.name}:routeVariables`) || "{}";
+			this.routeVariables = JSON.parse(variables);
 			this.setPageData();
 			this.setupHistory();
 			// localStorage.setItem("selectedPage", page.name);
@@ -439,7 +441,18 @@ const useStore = defineStore("store", {
 				})
 				.then((doc: WebPageBeta) => {
 					if (open_preview) {
-						window.open(`/${doc.route}`, "preview-page");
+						let { route } = doc;
+						if (this.getActivePage().dynamic_route && this.pageData) {
+							const routeVariables = (route?.match(/<\w+>/g) || []).map((match: string) =>
+								match.slice(1, -1)
+							);
+							routeVariables.forEach((variable: string) => {
+								if (this.routeVariables[variable]) {
+									route = route?.replace(`<${variable}>`, this.routeVariables[variable]);
+								}
+							});
+						}
+						window.open(`/${route}`, "preview-page");
 					}
 				});
 		},
@@ -465,6 +478,11 @@ const useStore = defineStore("store", {
 						iconClasses: "text-red-500",
 					});
 				});
+		},
+		setRouteVariable(variable: string, value: string) {
+			this.routeVariables[variable] = value;
+			localStorage.setItem(`${this.selectedPage}:routeVariables`, JSON.stringify(this.routeVariables));
+			this.setPageData();
 		},
 	},
 });
