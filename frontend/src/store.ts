@@ -26,6 +26,7 @@ const useStore = defineStore("store", {
 		usedComponents: {},
 		hoveredBlock: <string | null>null,
 		hoveredBreakpoint: <string | null>null,
+		routeVariables: <{ [key: string]: string }>{},
 		builderLayout: {
 			rightPanelWidth: 270,
 			leftPanelWidth: 280,
@@ -451,11 +452,12 @@ const useStore = defineStore("store", {
 				.submit({
 					method: "get_page_data",
 					name: page.name,
+					...this.routeVariables,
 				})
 				.then((data: { message: { [key: string]: [] } }) => {
 					this.pageData = data.message;
 				})
-				.catch((err) => {
+				.catch(() => {
 					toast({
 						text: "There was error in fetching page data",
 						position: "top-right",

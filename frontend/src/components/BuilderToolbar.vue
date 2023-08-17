@@ -23,33 +23,6 @@
 				:active="store.mode === mode.mode"></Button>
 		</div>
 		<div class="absolute right-3 flex items-center">
-			<Popover transition="default" placement="bottom-start" class="inline w-full">
-				<template #target="{ togglePopover, isOpen }">
-					<div>
-						<FeatherIcon
-							name="settings"
-							class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400"
-							@click="togglePopover"></FeatherIcon>
-					</div>
-				</template>
-				<template #body-main class="p-3">
-					<div class="flex flex-row flex-wrap gap-5 p-3">
-						<Input
-							type="text"
-							class="w-full text-sm"
-							label="Page Title"
-							:value="pageData.page_title"
-							@change="webPages.setValue.submit({ name: pageData.name, page_title: $event })" />
-						<Input
-							type="text"
-							class="w-full text-sm"
-							label="URL"
-							v-model="pageData.route"
-							:value="pageData.route"
-							@change="webPages.setValue.submit({ name: pageData.name, route: $event })" />
-					</div>
-				</template>
-			</Popover>
 			<UseDark v-slot="{ isDark, toggleDark }">
 				<FeatherIcon
 					:name="isDark ? 'moon' : 'sun'"
@@ -61,52 +34,11 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
 import { UseDark } from "@vueuse/components";
-import { Popover } from "frappe-ui";
-import { PropType, Ref, ref, watch } from "vue";
-
-import { webPages } from "@/data/webPage";
+import { ref } from "vue";
 
 import useStore from "../store";
 
 const store = useStore();
 const toolbar = ref(null);
-
-const pageData = ref({}) as unknown as Ref<WebPageBeta>;
-defineProps({
-	canvasProps: {
-		type: Object as PropType<CanvasProps>,
-		required: true,
-	},
-});
-
-watch(
-	() => store.selectedPage,
-	() => {
-		if (store.selectedPage && pageData.value.name !== store.selectedPage) {
-			webPages.fetchOne.submit(store.selectedPage).then((data: WebPageBeta[]) => {
-				pageData.value = data[0];
-			});
-		}
-	}
-);
-
-watch(
-	() => store.mode,
-	() => {
-		toggleMode(store.mode);
-	}
-);
-
-function toggleMode(mode: BuilderMode) {
-	const container = document.body.querySelector(".canvas-container") as HTMLElement;
-	if (mode === "text") {
-		container.style.cursor = "text";
-	} else if (["container", "image", "html"].includes(mode)) {
-		container.style.cursor = "crosshair";
-	} else {
-		container.style.cursor = "default";
-	}
-}
 </script>

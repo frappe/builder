@@ -1,10 +1,7 @@
 <template>
 	<div class="page-builder h-screen flex-col overflow-hidden bg-gray-100">
 		<BuilderToolbar
-			class="relative z-30 dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"
-			:canvas-props="
-				store.editingComponent ? store.componentEditorCanvas : store.blockEditorCanvas
-			"></BuilderToolbar>
+			class="relative z-30 dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"></BuilderToolbar>
 		<div>
 			<BuilderLeftPanel
 				v-show="store.showPanels"
@@ -64,6 +61,8 @@ import { useRoute, useRouter } from "vue-router";
 const route = useRoute();
 const router = useRouter();
 const store = useStore();
+
+window.store = store;
 
 const blockEditor = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 const componentEditor = ref<HTMLElement | null>(null);
@@ -240,7 +239,15 @@ useEventListener(document, "keydown", (e) => {
 	if (e.key === "c" && e.metaKey && e.target === document.body) {
 		e.preventDefault();
 		if (store.selectedBlocks.length) {
-			copyToClipboard(JSON.stringify(store.selectedBlocks));
+			const copiedBlocks = JSON.stringify(store.selectedBlocks);
+			console.log(copiedBlocks);
+			const dataTransfer = new DataTransfer();
+			dataTransfer.setData("builder-block", copiedBlocks);
+			if (navigator.clipboard) {
+				navigator.clipboard.write(dataTransfer);
+			} else {
+				copyToClipboard(copiedBlocks);
+			}
 		}
 	}
 	if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {

@@ -8,10 +8,14 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "content_tab",
+  "published",
   "page_name",
   "page_title",
+  "column_break_nasy",
   "route",
-  "published",
+  "dynamic_route",
+  "section_break_ujsp",
   "blocks",
   "preview",
   "scripting_tab",
@@ -28,6 +32,7 @@
   {
    "fieldname": "route",
    "fieldtype": "Data",
+   "ignore_xss_filter": 1,
    "label": "Route"
   },
   {
@@ -44,7 +49,7 @@
   {
    "fieldname": "preview",
    "fieldtype": "Attach Image",
-   "label": "Preview"
+   "label": "Page Preview"
   },
   {
    "fieldname": "page_title",
@@ -68,11 +73,31 @@
    "fieldtype": "Code",
    "label": "Page Data Script",
    "options": "Python"
+  },
+  {
+   "fieldname": "content_tab",
+   "fieldtype": "Tab Break",
+   "label": "Content"
+  },
+  {
+   "fieldname": "column_break_nasy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Map route parameters into form variables. Example <code>/profile/&lt;user&gt;</code>",
+   "fieldname": "dynamic_route",
+   "fieldtype": "Check",
+   "label": "Dynamic Route"
+  },
+  {
+   "fieldname": "section_break_ujsp",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-08-16 19:24:41.184970",
+ "modified": "2023-08-17 03:15:07.408937",
  "modified_by": "Administrator",
  "module": "Website Builder",
  "name": "Web Page Beta",

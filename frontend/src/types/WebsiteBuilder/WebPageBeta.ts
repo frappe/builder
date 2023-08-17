@@ -10,17 +10,19 @@ export interface WebPageBeta{
 	parentfield?: string
 	parenttype?: string
 	idx?: number
+	/**	Published : Check	*/
+	published?: 0 | 1
 	/**	Page Name : Data	*/
 	page_name?: string
 	/**	Page Title : Data	*/
 	page_title?: string
 	/**	Route : Data	*/
 	route?: string
-	/**	Published : Check	*/
-	published?: 0 | 1
+	/**	Dynamic Route : Check - Map route parameters into form variables. Example <code>/profile/&lt;user&gt;</code>	*/
+	dynamic_route?: 0 | 1
 	/**	Blocks : JSON	*/
 	blocks?: any
-	/**	Preview : Attach Image	*/
+	/**	Page Preview : Attach Image	*/
 	preview?: string
 	/**	Page Data Script : Code - data.events = frappe.get_list("Event")
 <br>

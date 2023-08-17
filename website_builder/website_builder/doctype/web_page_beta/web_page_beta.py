@@ -13,6 +13,8 @@ from frappe.website.serve import get_response_content
 from frappe.website.website_generator import WebsiteGenerator
 from website_builder.html_preview_image import get_preview
 from frappe.utils.safe_exec import safe_exec
+from frappe.utils.caching import redis_cache
+
 
 import json
 
@@ -60,7 +62,10 @@ class WebPageBeta(WebsiteGenerator):
 		context.style_file_path = get_style_file_path()
 
 	@frappe.whitelist()
-	def get_page_data(self):
+	def get_page_data(self, args=None):
+		if args:
+			args = frappe.parse_json(args)
+			frappe.form_dict.update(args)
 		page_data = frappe._dict()
 		if self.page_data_script:
 			_locals = dict(data=frappe._dict())
@@ -261,3 +266,10 @@ def get_style_file_path():
 
 # 	# run tailwindcss cli command in production mode
 # 	subprocess.run(["npx", "tailwindcss", "-o", tailwind_css_file_path, "--config", temp_config_file_path, "--minify"])
+
+@redis_cache(ttl=60 * 60)
+def get_web_pages_with_dynamic_routes() -> dict[str, str]:
+	return frappe.get_all(
+		"Web Page Beta", fields=["name", "route", "modified"], filters=dict(published=1, dynamic_route=1),
+		update={"doctype": "Web Page Beta"}
+	)

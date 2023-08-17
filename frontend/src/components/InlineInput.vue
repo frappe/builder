@@ -10,8 +10,11 @@
 			:options="inputOptions"
 			v-if="type != 'autocomplete'"
 			@change="handleChange"
-			inputClass="pr-6"
-			class="w-[150px] rounded-md text-sm text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
+			:inputClass="type == 'checkbox' ? ' ml-2 !w-4' : 'pr-6'"
+			class="rounded-md text-sm text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700"
+			:class="{
+				'w-[150px]': type != 'checkbox',
+			}" />
 		<Autocomplete
 			v-if="type == 'autocomplete'"
 			placeholder="unset"
@@ -22,7 +25,7 @@
 		<div
 			class="absolute right-1 top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
 			@click="clearValue"
-			v-if="!['autocomplete', 'select'].includes(type)"
+			v-if="!['autocomplete', 'select', 'checkbox'].includes(type)"
 			v-show="modelValue">
 			<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24">
 				<path
