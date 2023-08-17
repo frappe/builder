@@ -20,6 +20,11 @@ const blockController = {
 			block.setStyle(style, value);
 		});
 	},
+	setBaseStyle: (style: styleProperty, value: any) => {
+		store.selectedBlocks.forEach((block) => {
+			block.setBaseStyle(style, value);
+		});
+	},
 	getStyle: (style: styleProperty) => {
 		let styleValue = "__initial__" as StyleValue;
 		store.selectedBlocks.forEach((block) => {

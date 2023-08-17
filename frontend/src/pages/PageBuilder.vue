@@ -140,7 +140,7 @@ useEventListener(document, "paste", (e) => {
 			}, {});
 			if (blockController.isText()) {
 				Object.entries(styleObj).forEach(([key, value]) => {
-					blockController.setStyle(key as styleProperty, value);
+					blockController.setBaseStyle(key as styleProperty, value);
 				});
 			}
 			return;
@@ -239,15 +239,7 @@ useEventListener(document, "keydown", (e) => {
 	if (e.key === "c" && e.metaKey && e.target === document.body) {
 		e.preventDefault();
 		if (store.selectedBlocks.length) {
-			const copiedBlocks = JSON.stringify(store.selectedBlocks);
-			console.log(copiedBlocks);
-			const dataTransfer = new DataTransfer();
-			dataTransfer.setData("builder-block", copiedBlocks);
-			if (navigator.clipboard) {
-				navigator.clipboard.write(dataTransfer);
-			} else {
-				copyToClipboard(copiedBlocks);
-			}
+			copyToClipboard(JSON.stringify(store.selectedBlocks));
 		}
 	}
 	if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
