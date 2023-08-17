@@ -35,7 +35,7 @@
 						type="text"
 						class="w-full text-sm"
 						:modelValue="store.routeVariables[variable]"
-						@update:modelValue="(val) => (store.routeVariables[variable] = val)">
+						@update:modelValue="(val) => store.setRouteVariable(variable, val)">
 						{{ variable }}
 					</InlineInput>
 				</div>
