@@ -69,7 +69,7 @@ import getBlockTemplate from "@/utils/blockTemplate";
 import { addPxToNumber, getNumberFromPx } from "@/utils/helpers";
 import { clamp, useDropZone, useElementBounding, useEventListener } from "@vueuse/core";
 import { FeatherIcon } from "frappe-ui";
-import { PropType, computed, nextTick, onMounted, provide, reactive, ref } from "vue";
+import { PropType, computed, nextTick, onMounted, provide, reactive, ref, watchEffect } from "vue";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
@@ -273,4 +273,20 @@ onMounted(() => {
 defineExpose({
 	setScaleAndTranslate,
 });
+
+watchEffect(() => {
+	toggleMode(store.mode);
+});
+
+function toggleMode(mode: BuilderMode) {
+	if (!canvasContainer.value) return;
+	const container = canvasContainer.value as HTMLElement;
+	if (mode === "text") {
+		container.style.cursor = "text";
+	} else if (["container", "image", "html"].includes(mode)) {
+		container.style.cursor = "crosshair";
+	} else {
+		container.style.cursor = "default";
+	}
+}
 </script>

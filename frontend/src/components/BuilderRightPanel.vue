@@ -31,6 +31,11 @@
 			v-show="activeTab === 'Data'"
 			:key="store.selectedPage"
 			v-if="store.selectedPage && store.getActivePage()" />
+		<PageSettings
+			class="p-4"
+			v-show="activeTab === 'Settings'"
+			:key="store.selectedPage"
+			v-if="store.selectedPage && store.getActivePage()" />
 	</div>
 </template>
 <script setup>
@@ -40,6 +45,7 @@ import { ref } from "vue";
 import BlockProperties from "./BlockProperties.vue";
 import PageData from "./PageData.vue";
 import PanelResizer from "./PanelResizer.vue";
+import PageSettings from "./PageSettings.vue";
 const activeTab = ref("Properties");
 
 const store = useStore();

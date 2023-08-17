@@ -14,6 +14,7 @@ const webPages = createListResource({
 		"creation",
 		"page_data",
 		"page_data_script",
+		"dynamic_route",
 	],
 	auto: true,
 	cache: "pages",
