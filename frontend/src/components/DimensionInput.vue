@@ -10,9 +10,13 @@
 				label: 'Fit Content',
 				value: 'fit-content',
 			},
+			{
+				label: 'Stretch',
+				value: '100%',
+			},
 		]"
-		:modelValue="blockController.getStyle(property)"
-		@update:modelValue="(val: string) => blockController.setStyle(property, val)">
+		:modelValue="blockController.getStyle(props.property)"
+		@update:modelValue="(val) => blockController.setStyle(property, val)">
 		<slot />
 	</InlineInput>
 </template>
@@ -22,7 +26,7 @@ import blockController from "@/utils/blockController";
 import { PropType } from "vue";
 import InlineInput from "./InlineInput.vue";
 
-defineProps({
+const props = defineProps({
 	property: {
 		type: String as PropType<styleProperty>,
 		required: true,

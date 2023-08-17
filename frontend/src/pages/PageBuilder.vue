@@ -53,7 +53,7 @@ import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { copyToClipboard, isHTMLString } from "@/utils/helpers";
-import { useEventListener } from "@vueuse/core";
+import { useEventListener, watchDebounced } from "@vueuse/core";
 import { toast } from "frappe-ui";
 import { nextTick, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -63,6 +63,7 @@ const router = useRouter();
 const store = useStore();
 
 window.store = store;
+window.blockController = blockController;
 
 const blockEditor = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 const componentEditor = ref<HTMLElement | null>(null);
@@ -336,6 +337,16 @@ const setPage = (pageName: string) => {
 		});
 	});
 };
+
+watchDebounced(
+	() => store.builderState.blocks,
+	() => {
+		if (store.selectedPage && store.autoSave) {
+			store.savePage();
+		}
+	},
+	{ debounce: 1000 }
+);
 </script>
 
 <style>
