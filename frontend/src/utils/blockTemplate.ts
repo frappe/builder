@@ -22,7 +22,6 @@ function getBlockTemplate(
 					fontSize: "30px",
 					width: "100%",
 					height: "fit-content",
-					textAlign: "center",
 					lineHeight: "1",
 					minWidth: "30px",
 				} as BlockStyleMap,
