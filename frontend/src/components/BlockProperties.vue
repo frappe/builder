@@ -14,7 +14,7 @@
 				:modelValue="blockController.getDataKey('type')"
 				@update:modelValue="(val) => blockController.setDataKey('type', val)" />
 			<InlineInput
-				type="Property"
+				label="Property"
 				:modelValue="blockController.getDataKey('property')"
 				@update:modelValue="(val) => blockController.setDataKey('property', val)" />
 		</div>
@@ -124,13 +124,13 @@
 			@update:modelValue="(val) => blockController.setStyle('textAlign', val)"></InlineInput>
 		<div class="mt-6 flex flex-col gap-3" v-if="!blockController.isHTML() || !blockController.isRoot()">
 			<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Dimension</h3>
-			<DimensionInput property="width">Width</DimensionInput>
-			<DimensionInput property="minWidth">Min Width</DimensionInput>
-			<DimensionInput property="maxWidth">Max Width</DimensionInput>
+			<DimensionInput label="Width" property="width" />
+			<DimensionInput label="Min Width" property="minWidth" />
+			<DimensionInput label="Max Width" property="maxWidth" />
 			<hr class="dark:border-zinc-700" />
-			<DimensionInput property="height">Height</DimensionInput>
-			<DimensionInput property="minHeight">Min Height</DimensionInput>
-			<DimensionInput property="maxHeight">Max Height</DimensionInput>
+			<DimensionInput label="Height" property="height" />
+			<DimensionInput label="Min Height" property="minHeight" />
+			<DimensionInput label="Max Height" property="maxHeight" />
 		</div>
 		<BlockPositionHandler
 			v-if="!blockController.multipleBlocksSelected()"

@@ -29,11 +29,10 @@
 						v-for="(variable, index) in dynamicVariables"
 						:key="index"
 						type="text"
+						:label="variable"
 						class="w-full text-sm"
 						:modelValue="store.routeVariables[variable]"
-						@update:modelValue="(val) => store.setRouteVariable(variable, val)">
-						{{ variable }}
-					</InlineInput>
+						@update:modelValue="(val) => store.setRouteVariable(variable, val)" />
 				</div>
 			</div>
 		</div>
