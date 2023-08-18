@@ -7,22 +7,23 @@
 				</span>
 				<div class="relative w-[150px]">
 					<div>
+						<Input
+							type="text"
+							class="rounded-md text-sm text-gray-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700 [&>div_input]:pl-8"
+							placeholder="Set Background"
+							:value="backgroundURL?.replace(/^'|'$/g, '')"></Input>
 						<div
 							class="absolute left-2 top-[6px] z-10 h-4 w-4 rounded shadow-sm"
 							@click="togglePopover"
+							:class="{
+								'bg-gray-400 dark:bg-zinc-600': !backgroundURL,
+							}"
 							:style="{
 								backgroundImage: backgroundURL ? `url(${backgroundURL})` : '',
 								backgroundPosition: `center`,
 								backgroundSize: `contain`,
 								backgroundRepeat: `no-repeat`,
 							}"></div>
-						<Input
-							type="text"
-							class="rounded-md text-sm text-gray-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700"
-							placeholder="Select Background"
-							inputClass="pl-8"
-							:value="backgroundURL?.replace(/^'|'$/g, '')"
-							@change=""></Input>
 					</div>
 				</div>
 			</div>
@@ -55,13 +56,12 @@
 					</FileUploader>
 				</div>
 				<InlineInput
+					label="Size"
 					class="mt-4"
 					:modelValue="backgroundSize"
 					type="select"
 					:options="['contain', 'cover']"
-					@update:modelValue="setBGSize">
-					Size
-				</InlineInput>
+					@update:modelValue="setBGSize" />
 			</div>
 		</template>
 	</Popover>

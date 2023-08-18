@@ -1,7 +1,7 @@
 <template>
 	<div class="relative flex items-center justify-between">
 		<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
-			<slot />
+			{{ label }}
 		</span>
 		<Input
 			:type="type"
@@ -36,12 +36,15 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { Input } from "frappe-ui";
 import { computed } from "vue";
 import Autocomplete from "./Autocomplete.vue";
 
 const props = defineProps({
 	modelValue: {},
+	label: {
+		type: String,
+		default: "",
+	},
 	type: {
 		type: String,
 		default: "text",

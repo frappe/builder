@@ -6,33 +6,31 @@
 			class="mb-8 flex flex-col gap-3">
 			<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Component Keys</h3>
 			<InlineInput
+				label="Key"
 				:modelValue="blockController.getDataKey('key')"
-				@update:modelValue="(val) => blockController.setDataKey('key', val)">
-				Key
-			</InlineInput>
+				@update:modelValue="(val) => blockController.setDataKey('key', val)" />
 			<InlineInput
+				label="Type"
 				:modelValue="blockController.getDataKey('type')"
-				@update:modelValue="(val) => blockController.setDataKey('type', val)">
-				Type
-			</InlineInput>
+				@update:modelValue="(val) => blockController.setDataKey('type', val)" />
 			<InlineInput
+				type="Property"
 				:modelValue="blockController.getDataKey('property')"
-				@update:modelValue="(val) => blockController.setDataKey('property', val)">
-				Property
-			</InlineInput>
+				@update:modelValue="(val) => blockController.setDataKey('property', val)" />
 		</div>
 		<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Style</h3>
-		<ColorInput
-			:value="blockController.getStyle('background')"
-			@change="(val) => blockController.setStyle('background', val)">
-			BG Color
-		</ColorInput>
 		<BackgroundHandler></BackgroundHandler>
-		<ColorInput :value="blockController.getTextColor()" @change="(val) => blockController.setTextColor(val)">
-			Text
-		</ColorInput>
+		<ColorInput
+			label="BG Color"
+			:value="blockController.getStyle('background')"
+			@change="(val) => blockController.setStyle('background', val)" />
+		<ColorInput
+			label="Text Color"
+			:value="blockController.getTextColor()"
+			@change="(val) => blockController.setTextColor(val)" />
 		<!-- border width, color -->
 		<ColorInput
+			label="Border Color"
 			:value="blockController.getStyle('borderColor')"
 			@change="
 				(val) => {
@@ -42,24 +40,22 @@
 						blockController.setStyle('borderStyle', 'solid');
 					}
 				}
-			">
-			Border Color
-		</ColorInput>
+			"></ColorInput>
 		<InlineInput
+			label="Border Width"
 			v-show="blockController.getStyle('borderColor')"
 			:modelValue="blockController.getStyle('borderWidth')"
-			@update:modelValue="(val) => blockController.setStyle('borderWidth', val)">
-			Border Width
-		</InlineInput>
+			@update:modelValue="(val) => blockController.setStyle('borderWidth', val)" />
+
 		<InlineInput
+			label="Border Style"
 			v-show="blockController.getStyle('borderColor')"
 			:modelValue="blockController.getStyle('borderStyle')"
 			type="select"
 			:options="['solid', 'dashed', 'dotted']"
-			@update:modelValue="(val) => blockController.setStyle('borderStyle', val)">
-			Border Style
-		</InlineInput>
+			@update:modelValue="(val) => blockController.setStyle('borderStyle', val)" />
 		<InlineInput
+			label="Shadow"
 			type="select"
 			:options="[
 				{
@@ -83,9 +79,7 @@
 				},
 			]"
 			:modelValue="blockController.getStyle('boxShadow')"
-			@update:modelValue="(val) => blockController.setStyle('boxShadow', val)">
-			Shadow
-		</InlineInput>
+			@update:modelValue="(val) => blockController.setStyle('boxShadow', val)"></InlineInput>
 
 		<h3
 			v-if="blockController.isText() || blockController.isContainer()"
@@ -93,47 +87,41 @@
 			Text
 		</h3>
 		<InlineInput
-			v-if="blockController.isText()"
-			:modelValue="blockController.getStyle('textAlign') || 'left'"
-			type="select"
-			:options="['left', 'center', 'right', 'justify']"
-			@update:modelValue="(val) => blockController.setStyle('textAlign', val)">
-			Align
-		</InlineInput>
-		<InlineInput
-			v-if="blockController.isText() || blockController.isInput()"
-			:modelValue="blockController.getStyle('fontSize')"
-			@update:modelValue="(val) => blockController.setStyle('fontSize', val)">
-			Size
-		</InlineInput>
-		<InlineInput
-			v-if="blockController.isText()"
-			:modelValue="blockController.getStyle('letterSpacing')"
-			@update:modelValue="(val) => blockController.setStyle('letterSpacing', val)">
-			Spacing
-		</InlineInput>
-		<InlineInput
+			label="Family"
 			type="autocomplete"
 			:options="fontListNames"
 			v-if="blockController.isText() || blockController.isContainer()"
 			:modelValue="blockController.getFontFamily()"
-			@update:modelValue="(val) => setFont(val)">
-			Family
-		</InlineInput>
+			@update:modelValue="(val) => setFont(val)" />
 		<InlineInput
+			label="Weight"
 			v-if="blockController.isText() || blockController.isContainer()"
 			:modelValue="blockController.getStyle('fontWeight')"
 			type="autocomplete"
 			:options="getFontWeightOptions(blockController.getStyle('fontFamily') as string || 'Inter')"
-			@update:modelValue="(val) => blockController.setStyle('fontWeight', val)">
-			Weight
-		</InlineInput>
+			@update:modelValue="(val) => blockController.setStyle('fontWeight', val)" />
 		<InlineInput
+			label="Size"
+			v-if="blockController.isText() || blockController.isInput()"
+			:modelValue="blockController.getStyle('fontSize')"
+			@update:modelValue="(val) => blockController.setStyle('fontSize', val)" />
+		<InlineInput
+			label="Height"
 			v-if="blockController.isText()"
 			:modelValue="blockController.getStyle('lineHeight')"
-			@update:modelValue="(val) => blockController.setStyle('lineHeight', val)">
-			Line
-		</InlineInput>
+			@update:modelValue="(val) => blockController.setStyle('lineHeight', val)" />
+		<InlineInput
+			label="Letter"
+			v-if="blockController.isText()"
+			:modelValue="blockController.getStyle('letterSpacing')"
+			@update:modelValue="(val) => blockController.setStyle('letterSpacing', val)" />
+		<InlineInput
+			label="Align"
+			v-if="blockController.isText()"
+			:modelValue="blockController.getStyle('textAlign') || 'left'"
+			type="select"
+			:options="['left', 'center', 'right', 'justify']"
+			@update:modelValue="(val) => blockController.setStyle('textAlign', val)"></InlineInput>
 		<div class="mt-6 flex flex-col gap-3" v-if="!blockController.isHTML() || !blockController.isRoot()">
 			<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Dimension</h3>
 			<DimensionInput property="width">Width</DimensionInput>
@@ -154,93 +142,58 @@
 			Spacing
 		</h3>
 		<InlineInput
+			label="Margin"
 			v-if="!blockController.multipleBlocksSelected()"
 			:modelValue="blockController.getStyle('margin')"
-			@update:modelValue="(val) => blockController.setStyle('margin', val)">
-			Margin
-		</InlineInput>
+			@update:modelValue="(val) => blockController.setStyle('margin', val)" />
 		<InlineInput
+			label="Padding"
 			v-if="!blockController.multipleBlocksSelected()"
 			:modelValue="blockController.getStyle('padding')"
-			@update:modelValue="(val) => blockController.setStyle('padding', val)">
-			Padding
-		</InlineInput>
+			@update:modelValue="(val) => blockController.setStyle('padding', val)" />
 
 		<h3 class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">Options</h3>
 		<InlineInput
+			label="Link"
 			v-if="blockController.isLink()"
 			:modelValue="blockController.getAttribute('href')"
-			@update:modelValue="(val) => blockController.setAttribute('href', val)">
-			Link
-		</InlineInput>
+			@update:modelValue="(val) => blockController.setAttribute('href', val)" />
 		<InlineInput
+			label="Image URL"
 			v-if="blockController.isImage()"
 			:modelValue="blockController.getAttribute('src')"
-			@update:modelValue="(val) => blockController.setAttribute('src', val)">
-			Image Source
-		</InlineInput>
+			@update:modelValue="(val) => blockController.setAttribute('src', val)" />
 		<InlineInput
+			label="Image Fit"
 			v-if="blockController.isImage()"
 			:modelValue="blockController.getStyle('objectFit')"
 			type="select"
 			:options="['fill', 'contain', 'cover', 'none']"
-			@update:modelValue="(val) => blockController.setStyle('objectFit', val)">
-			Image Fit
-		</InlineInput>
+			@update:modelValue="(val) => blockController.setStyle('objectFit', val)" />
 		<InlineInput
+			label="Tag"
 			:modelValue="blockController.getKeyValue('element')"
 			type="select"
 			:options="['span', 'div', 'section', 'button', 'p', 'h1', 'h2', 'h3', 'a', 'input', 'hr']"
-			@update:modelValue="(val) => blockController.setKeyValue('element', val)">
-			Tag
-		</InlineInput>
+			@update:modelValue="(val) => blockController.setKeyValue('element', val)" />
 		<InlineInput
+			label="Input Type"
 			v-if="blockController.isInput()"
 			:modelValue="blockController.getAttribute('type') || 'text'"
 			type="select"
 			:options="['text', 'number', 'email', 'password', 'date', 'time', 'search', 'tel', 'url', 'color']"
-			@update:modelValue="(val) => blockController.setAttribute('type', val)">
-			Input Type
-		</InlineInput>
+			@update:modelValue="(val) => blockController.setAttribute('type', val)" />
 		<!-- input placeholder -->
 		<InlineInput
+			label="Placeholder"
 			v-if="blockController.isInput()"
 			:modelValue="blockController.getAttribute('placeholder')"
-			@update:modelValue="(val) => blockController.setAttribute('placeholder', val)">
-			Placeholder
-		</InlineInput>
+			@update:modelValue="(val) => blockController.setAttribute('placeholder', val)" />
 		<InlineInput
+			label="Content"
 			v-if="blockController.isText() || blockController.isButton()"
 			:modelValue="blockController.getTextContent()"
-			@update:modelValue="(val) => blockController.setKeyValue('innerHTML', val)">
-			Content
-		</InlineInput>
-		<InlineInput
-			v-if="blockController.isContainer() && blockController.getStyle('display') === 'grid'"
-			type="number"
-			:modelValue="blockController.getStyle('gridTemplateRows')"
-			@update:modelValue="(val) => blockController.setStyle('gridTemplateRows', val)">
-			Rows
-		</InlineInput>
-		<InlineInput
-			v-if="blockController.isContainer() && blockController.getStyle('display') === 'grid'"
-			type="number"
-			:modelValue="blockController.getStyle('gridTemplateColumns')"
-			@update:modelValue="(val) => blockController.setStyle('gridTemplateColumns', val)">
-			Columns
-		</InlineInput>
-		<InlineInput
-			v-if="blockController.isContainer() && blockController.getStyle('display') === 'grid'"
-			:modelValue="blockController.getStyle('gridGap')"
-			@update:modelValue="(val) => blockController.setStyle('gridGap', val)">
-			Gap
-		</InlineInput>
-		<InlineInput
-			v-if="blockController.isContainer() && blockController.getStyle('display') === 'grid'"
-			:modelValue="blockController.getStyle('gridRowGap')"
-			@update:modelValue="(val) => blockController.setStyle('gridRowGap', val)">
-			Row Gap
-		</InlineInput>
+			@update:modelValue="(val) => blockController.setKeyValue('innerHTML', val)" />
 		<div class="flex items-center justify-between">
 			<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
 				Visibility
@@ -258,7 +211,7 @@
 					},
 				]"
 				:modelValue="blockController.getStyle('display') || 'flex'"
-				@update:modelValue="(val) => blockController.setStyle('display', val)"></TabButtons>
+				@update:modelValue="(val: string) => blockController.setStyle('display', val)"></TabButtons>
 		</div>
 		<div class="flex items-center justify-between">
 			<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
@@ -282,14 +235,13 @@
 					},
 				]"
 				:modelValue="blockController.getStyle('overflow') || 'auto'"
-				@update:modelValue="(val) => blockController.setStyle('overflow', val)"></TabButtons>
+				@update:modelValue="(val: string) => blockController.setStyle('overflow', val)"></TabButtons>
 		</div>
 		<InlineInput
+			label="Alt Text"
 			v-if="blockController.isImage()"
 			:modelValue="blockController.getAttribute('alt')"
-			@update:modelValue="(val) => blockController.setAttribute('alt', val)">
-			Alt Text
-		</InlineInput>
+			@update:modelValue="(val) => blockController.setAttribute('alt', val)" />
 		<CodeEditor
 			v-if="blockController.isRepeater()"
 			class="mt-8"

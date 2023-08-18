@@ -3,28 +3,24 @@
 		<div class="flex flex-row flex-wrap gap-5">
 			<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Page Options</h3>
 			<InlineInput
+				label="Title"
 				type="text"
 				class="w-full text-sm"
 				:modelValue="pageData.page_title"
-				@update:modelValue="(val) => webPages.setValue.submit({ name: pageData.name, page_title: val })">
-				Title
-			</InlineInput>
+				@update:modelValue="(val) => webPages.setValue.submit({ name: pageData.name, page_title: val })" />
 			<InlineInput
 				type="text"
 				class="w-full text-sm"
-				label="URL"
+				label="Route"
 				:modelValue="pageData.route"
-				@update:modelValue="(val) => webPages.setValue.submit({ name: pageData.name, route: val })">
-				Route
-			</InlineInput>
+				@update:modelValue="(val) => webPages.setValue.submit({ name: pageData.name, route: val })" />
 			<!-- is Dynamic Route -->
 			<InlineInput
+				label="Dynamic Route?"
 				class="w-full text-sm"
 				type="checkbox"
 				:modelValue="pageData.dynamic_route"
-				@update:modelValue="(val) => webPages.setValue.submit({ name: pageData.name, dynamic_route: val })">
-				Dynamic Route?
-			</InlineInput>
+				@update:modelValue="(val) => webPages.setValue.submit({ name: pageData.name, dynamic_route: val })" />
 			<!-- Dynamic Route Variables -->
 			<div v-if="pageData.dynamic_route" class="w-full">
 				<h3 class="mt-5 text-xs font-bold uppercase text-gray-600">Route Values</h3>
