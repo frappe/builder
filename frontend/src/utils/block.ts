@@ -1,7 +1,7 @@
 import useStore from "@/store";
 import { clamp } from "@vueuse/core";
 import { CSSProperties, nextTick, reactive } from "vue";
-import { addPxToNumber, getNumberFromPx, getTextContent } from "./helpers";
+import { addPxToNumber, getNumberFromPx, getTextContent, kebabToCamelCase } from "./helpers";
 
 export type styleProperty = keyof CSSProperties;
 
@@ -193,6 +193,7 @@ class Block implements BlockOptions {
 	setStyle(style: styleProperty, value: number | string | null) {
 		const store = useStore();
 		let styleObj = this.baseStyles;
+		style = kebabToCamelCase(style) as styleProperty;
 		if (store.activeBreakpoint === "mobile") {
 			styleObj = this.mobileStyles;
 		} else if (store.activeBreakpoint === "tablet") {
@@ -216,6 +217,7 @@ class Block implements BlockOptions {
 		delete this.tabletStyles[style];
 	}
 	setBaseStyle(style: styleProperty, value: string | number) {
+		style = kebabToCamelCase(style) as styleProperty;
 		this.baseStyles[style] = value;
 	}
 	getStyle(style: styleProperty) {

@@ -1,5 +1,5 @@
 import App from "@/App.vue";
-import { Button, FeatherIcon, FrappeUI, Input, frappeRequest, setConfig } from "frappe-ui";
+import { Button, FeatherIcon, FrappeUI, Input, frappeRequest, setConfig, FormControl } from "frappe-ui";
 import { createPinia } from "pinia";
 import { createApp } from "vue";
 import "./index.css";
@@ -18,6 +18,7 @@ app.use(pinia);
 // eslint-disable-next-line vue/multi-word-component-names, vue/no-reserved-component-names
 app.component("Button", Button);
 app.component("Input", Input);
+app.component("FormControl", FormControl);
 
 app.component("FeatherIcon", FeatherIcon);
 app.mount("#app");

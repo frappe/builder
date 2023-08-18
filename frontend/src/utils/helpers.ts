@@ -165,6 +165,13 @@ function findNearestSiblingIndex(e: MouseEvent) {
 	return nearestElementIndex;
 }
 
+// converts border-color to borderColor
+function kebabToCamelCase(str: string) {
+	return str.replace(/-([a-z])/g, function (g) {
+		return g[1].toUpperCase();
+	});
+}
+
 export {
 	HSVToHex,
 	HexToHSV,
@@ -178,5 +185,6 @@ export {
 	getRandomColor,
 	getTextContent,
 	isHTMLString,
+	kebabToCamelCase,
 	stripExtension,
 };
