@@ -13,6 +13,7 @@ export interface BlockDataKey {
 
 function resetBlock(block: Block | BlockOptions) {
 	delete block.innerHTML;
+	delete block.element;
 	block.baseStyles = {};
 	block.rawStyles = {};
 	block.mobileStyles = {};
@@ -240,14 +241,15 @@ class Block implements BlockOptions {
 				return "database";
 			case this.isHTML():
 				return "code";
+			case this.isLink():
+				return "link";
 			case this.isText():
 				return "type";
 			case this.isContainer():
 				return "square";
 			case this.isImage():
 				return "image";
-			case this.isLink():
-				return "link";
+
 			default:
 				return "square";
 		}
@@ -255,17 +257,17 @@ class Block implements BlockOptions {
 	isRoot() {
 		return this.originalElement === "body";
 	}
-	getTag() {
+	getTag(): string {
 		if (this.isComponent()) {
 			return this.getComponentTag();
 		}
 		if (this.isButton()) {
 			return "div";
 		}
-		return this.element;
+		return this.element || "div";
 	}
 	getComponentTag() {
-		return this.getComponent()?.element || "div";
+		return this.getComponent()?.getTag() || "div";
 	}
 	isDiv() {
 		return this.element === "div";
@@ -456,8 +458,8 @@ class Block implements BlockOptions {
 		if (!this.dataKey) {
 			this.dataKey = {
 				key: "",
-				type: this.isImage() ? "attribute" : "key",
-				property: this.isImage() ? "src" : "innerHTML",
+				type: this.isImage() || this.isLink() ? "attribute" : "key",
+				property: this.isLink() ? "href" : this.isImage() ? "src" : "innerHTML",
 			};
 		}
 		this.dataKey[key] = value;
@@ -504,6 +506,10 @@ class Block implements BlockOptions {
 	resetChanges() {
 		resetBlock(this);
 		this.children = this.getComponentChildrenCopy();
+	}
+	convertToLink() {
+		this.element = "a";
+		this.attributes.href = "#";
 	}
 }
 

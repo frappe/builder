@@ -1,5 +1,17 @@
 <template>
 	<div>
+		<div class="mb-8" v-if="components.length || filter">
+			<Input
+				type="text"
+				placeholder="Filter"
+				inputClass="w-full"
+				v-model="filter"
+				@input="
+					(value: string) => {
+						filter = value;
+					}
+				" />
+		</div>
 		<div v-if="!components.length" class="text-sm italic text-gray-600">No components saved</div>
 		<div v-for="component in components" :key="component.name" class="flex w-full flex-wrap">
 			<div class="group relative mb-3 w-full">
@@ -23,7 +35,6 @@
 					{{ component.component_name }}
 				</p>
 				<FeatherIcon
-					v-if="component.for_web_page"
 					name="trash"
 					class="absolute right-2 top-2 hidden h-7 w-7 cursor-pointer rounded bg-white p-2 group-hover:block"
 					@click.stop.prevent="deleteComponent(component)"></FeatherIcon>
@@ -32,7 +43,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, nextTick } from "vue";
+import { computed, nextTick, ref } from "vue";
 import BuilderBlock from "./BuilderBlock.vue";
 
 import webComponent from "@/data/webComponent";
@@ -40,11 +51,19 @@ import webComponent from "@/data/webComponent";
 import useStore from "@/store";
 import { WebPageComponent } from "@/types/WebsiteBuilder/WebPageComponent";
 const store = useStore();
+const filter = ref("");
 
 const components = computed(() =>
-	(webComponent.data || []).filter(
-		(d: WebPageComponent) => !d.for_web_page || d.for_web_page === store.selectedPage
-	)
+	(webComponent.data || []).filter((d: WebPageComponent) => {
+		if (d.for_web_page && d.for_web_page !== store.getActivePage?.name) {
+			return false;
+		}
+		if (filter.value) {
+			return d.component_name?.toLowerCase().includes(filter.value.toLowerCase());
+		} else {
+			return true;
+		}
+	})
 );
 
 const setScale = async (el: HTMLElement, block: BlockOptions) => {
