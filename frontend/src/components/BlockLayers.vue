@@ -74,9 +74,7 @@
 									class="ml-auto mr-2 hidden h-3 w-3 group-hover:block"
 									@click.stop="element.toggleVisibility()" />
 							</span>
-							<div
-								v-show="isExpanded(element) && element.isVisible()"
-								v-if="!(element.isText() || element.isImage())">
+							<div v-show="isExpanded(element) && element.isVisible()" v-if="!element.isImage()">
 								<BlockLayers :blocks="element.children" class="ml-2" />
 							</div>
 						</div>

@@ -31,6 +31,7 @@
 			v-if="blockController.getStyle('display') === 'flex'"
 			:modelValue="blockController.getStyle('justifyContent')"
 			type="select"
+			label="Placement"
 			:options="[
 				{
 					label: blockController.getStyle('flexDirection') === 'row' ? 'Start' : 'Top',
@@ -48,11 +49,11 @@
 				{ label: 'Space Around', value: 'space-around' },
 				{ label: 'Space Evenly', value: 'space-evenly' },
 			]"
-			@update:modelValue="(val: string | number) => blockController.setStyle('justifyContent', val)">
-			Distribute
-		</InlineInput>
+			@update:modelValue="(val: string | number) => blockController.setStyle('justifyContent', val)" />
+
 		<InlineInput
 			v-if="blockController.getStyle('display') === 'flex'"
+			label="Align"
 			:modelValue="blockController.getStyle('alignItems')"
 			type="select"
 			:options="[
@@ -69,16 +70,14 @@
 					value: 'flex-end',
 				},
 			]"
-			@update:modelValue="(val: string | number) => blockController.setStyle('alignItems', val)">
-			Align
-		</InlineInput>
+			@update:modelValue="(val: string | number) => blockController.setStyle('alignItems', val)" />
 		<InlineInput
+			label="Gap"
 			v-if="blockController.getStyle('display') === 'flex'"
 			type="text"
 			:modelValue="blockController.getStyle('gap')"
-			@update:modelValue="(val: string | number) => blockController.setStyle('gap', val)">
-			Gap
-		</InlineInput>
+			@update:modelValue="(val: string | number) => blockController.setStyle('gap', val)" />
+
 		<!-- flex basis -->
 		<!-- <InlineInput
 			v-if="blockController.getStyle('display') === 'flex'"

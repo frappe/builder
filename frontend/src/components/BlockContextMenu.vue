@@ -124,7 +124,7 @@ const createComponentHandler = ({ close }: { close: () => void }) => {
 		.submit({
 			block: blockCopy,
 			component_name: componentProperties.value.componentName,
-			web_page: componentProperties.value.isGlobalComponent ? null : store.selectedPage,
+			for_web_page: componentProperties.value.isGlobalComponent ? null : store.getActivePage()?.name,
 		})
 		.then(async (data: WebPageComponent) => {
 			await webComponent.list.promise;
@@ -200,6 +200,14 @@ const contextMenuOptions: ContextMenuOption[] = [
 			store.editComponent(props.block);
 		},
 		condition: () => props.block.isComponent(),
+	},
+	// convert to link
+	{
+		label: "Convert to Link",
+		action: () => {
+			props.block.convertToLink();
+		},
+		condition: () => props.block.isContainer() && !props.block.isComponent() && !props.block.isRoot(),
 	},
 ];
 </script>

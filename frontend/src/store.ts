@@ -27,7 +27,7 @@ const useStore = defineStore("store", {
 		hoveredBlock: <string | null>null,
 		hoveredBreakpoint: <string | null>null,
 		routeVariables: <{ [key: string]: string }>{},
-		autoSave: true,
+		autoSave: false,
 		builderLayout: {
 			rightPanelWidth: 270,
 			leftPanelWidth: 280,
