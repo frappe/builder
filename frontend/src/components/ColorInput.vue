@@ -3,7 +3,7 @@
 		<template #target="{ togglePopover, isOpen }">
 			<div class="flex items-center justify-between">
 				<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
-					<slot />
+					{{ label }}
 				</span>
 				<div class="relative w-[150px]">
 					<div
@@ -17,7 +17,7 @@
 					<Input
 						type="text"
 						class="rounded-md text-sm text-gray-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:focus:bg-zinc-700"
-						placeholder="Select Color"
+						placeholder="Set Color"
 						inputClass="pl-8 pr-6"
 						:value="value"
 						@change="(value: string) => {
@@ -40,14 +40,18 @@
 	</ColorPicker>
 </template>
 <script setup lang="ts">
+import { getRGB } from "@/utils/helpers";
 import { PropType } from "vue";
 import ColorPicker from "./ColorPicker.vue";
-import { getRGB } from "@/utils/helpers";
 
 defineProps({
 	value: {
 		type: String as PropType<StyleValue | null>,
 		default: null,
+	},
+	label: {
+		type: String,
+		default: "",
 	},
 });
 
