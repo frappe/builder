@@ -1,6 +1,7 @@
 <template>
 	<InlineInput
 		type="autocomplete"
+		:label="label"
 		:options="[
 			{
 				label: 'Auto',
@@ -16,9 +17,7 @@
 			},
 		]"
 		:modelValue="blockController.getStyle(props.property)"
-		@update:modelValue="(val) => blockController.setStyle(property, val)">
-		<slot />
-	</InlineInput>
+		@update:modelValue="(val) => blockController.setStyle(property, val)"></InlineInput>
 </template>
 <script setup lang="ts">
 import { styleProperty } from "@/utils/block";
@@ -29,6 +28,10 @@ import InlineInput from "./InlineInput.vue";
 const props = defineProps({
 	property: {
 		type: String as PropType<styleProperty>,
+		required: true,
+	},
+	label: {
+		type: String,
 		required: true,
 	},
 });
