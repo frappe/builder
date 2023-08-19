@@ -153,7 +153,7 @@ class Block implements BlockOptions {
 		if (this.isHTML()) {
 			return "raw";
 		}
-		let description = this.blockName || this.originalElement || this.element;
+		let description = this.blockName || this.originalElement || this.getElement();
 		if (this.getTextContent() && !this.blockName) {
 			description += " | " + this.getTextContent();
 		}
@@ -172,24 +172,24 @@ class Block implements BlockOptions {
 		return text || getTextContent(this.getInnerHTML() || "");
 	}
 	isImage() {
-		return this.element === "img";
+		return this.getElement() === "img";
 	}
 	isButton() {
-		return this.element === "button";
+		return this.getElement() === "button";
 	}
 	isLink() {
-		return this.element === "a";
+		return this.getElement() === "a";
 	}
 	isText() {
 		return ["span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6", "label", "a"].includes(
-			this.element as string
+			this.getElement() as string
 		);
 	}
 	isContainer() {
-		return ["section", "div"].includes(this.element as string);
+		return ["section", "div"].includes(this.getElement() as string);
 	}
 	isInput() {
-		return this.originalElement === "input" || this.element === "input";
+		return this.originalElement === "input" || this.getElement() === "input";
 	}
 	setStyle(style: styleProperty, value: number | string | null) {
 		const store = useStore();
@@ -258,19 +258,16 @@ class Block implements BlockOptions {
 		return this.originalElement === "body";
 	}
 	getTag(): string {
-		if (this.isComponent()) {
-			return this.getComponentTag();
-		}
 		if (this.isButton()) {
 			return "div";
 		}
-		return this.element || "div";
+		return this.getElement() || "div";
 	}
 	getComponentTag() {
 		return this.getComponent()?.getTag() || "div";
 	}
 	isDiv() {
-		return this.element === "div";
+		return this.getElement() === "div";
 	}
 	getStylesCopy() {
 		return {
@@ -510,6 +507,12 @@ class Block implements BlockOptions {
 	convertToLink() {
 		this.element = "a";
 		this.attributes.href = "#";
+	}
+	getElement() {
+		if (this.isComponent()) {
+			return this.getComponent()?.element || "div";
+		}
+		return this.element;
 	}
 }
 
