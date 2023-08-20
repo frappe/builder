@@ -1,0 +1,1 @@
+website_builder.website_builder.doctype.web_page_beta.patches.create_upload_folder_for_builder #
