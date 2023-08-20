@@ -24,7 +24,7 @@
 		:class="{ 'cursor-ns-resize': true }"
 		@mousedown.stop="handleBottomResize" />
 	<div
-		class="pointer-events-auto absolute bottom-[-5px] right-[-5px] h-[12px] w-[12px] cursor-nwse-resize rounded-full border-[3px] border-blue-400 bg-white"
+		class="pointer-events-auto absolute bottom-[-5px] right-[-5px] h-[12px] w-[12px] cursor-nwse-resize rounded-full border-[2.5px] border-blue-400 bg-white"
 		@mousedown.stop="handleBottomCornerResize" />
 </template>
 <script setup lang="ts">

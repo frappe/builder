@@ -66,8 +66,6 @@ function getBlockTemplate(
 				baseStyles: {
 					display: "flex",
 					flexDirection: "column",
-					alignItems: "center",
-					justifyContent: "center",
 					height: "fit-content",
 					width: "fit-content",
 				} as BlockStyleMap,
