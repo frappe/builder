@@ -1,7 +1,7 @@
 <template>
 	<BlockContextMenu :block="block" :editable="editable" v-slot="{ onContextMenu }">
 		<div
-			class="editor pointer-events-none fixed z-[19] box-content select-none ring-2 ring-inset"
+			class="editor pointer-events-none fixed z-[18] box-content select-none ring-2 ring-inset"
 			ref="editor"
 			@click="handleClick"
 			@dblclick="handleDoubleClick"
@@ -136,7 +136,10 @@ const getStyleClasses = computed(() => {
 		!props.block.isRoot() &&
 		!props.block.isRepeater()
 	) {
+		// make editor interactive
 		classes.push("pointer-events-auto");
+		// Place the block on the top of the stack
+		classes.push("!z-[19]");
 	}
 	return classes;
 });
