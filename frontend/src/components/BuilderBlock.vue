@@ -94,7 +94,7 @@ const classes = computed(() => {
 });
 
 const attributes = computed(() => {
-	const attribs = { ...props.block.getAttributes(), ...attrs };
+	const attribs = { ...props.block.getAttributes(), ...attrs } as { [key: string]: any };
 	if (
 		props.block.isText() ||
 		props.block.isHTML() ||
@@ -109,7 +109,7 @@ const attributes = computed(() => {
 	}
 	if (props.data) {
 		if (props.block.dataKey?.type === "attribute") {
-			attribs[props.block.dataKey?.property] = props.data[props.block.dataKey.key];
+			attribs[props.block.dataKey?.property as string] = props.data[props.block.dataKey.key as string];
 		}
 	}
 	return attribs;

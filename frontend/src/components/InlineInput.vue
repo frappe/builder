@@ -78,7 +78,10 @@ const inputOptions = computed(() => {
 	}) as Option[];
 });
 
-const handleChange = (value: string | number | null) => {
+const handleChange = (value: string | number | null | { label: string; value: string }) => {
+	if (typeof value === "object" && value !== null && "value" in value) {
+		value = value.value;
+	}
 	emit("update:modelValue", value);
 };
 

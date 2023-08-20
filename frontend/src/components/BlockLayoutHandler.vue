@@ -8,8 +8,8 @@
 			<TabButtons
 				:modelValue="blockController.getStyle('display') || 'block'"
 				:buttons="[
-					{ label: 'Block', value: 'block' },
 					{ label: 'Stack', value: 'flex' },
+					{ label: 'Block', value: 'block' },
 				]"
 				@update:modelValue="setLayout"
 				class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>

@@ -12,19 +12,19 @@
 	</span>
 
 	<div
-		class="left-handle ew-resize pointer-events-auto absolute bottom-0 left-[-2px] top-0 w-[4px] border-none bg-transparent" />
+		class="left-handle ew-resize pointer-events-auto absolute bottom-0 left-[-2px] top-0 w-2 border-none bg-transparent" />
 	<div
-		class="right-handle pointer-events-auto absolute bottom-0 right-[-2px] top-0 w-[4px] border-none bg-transparent"
+		class="right-handle pointer-events-auto absolute bottom-0 right-[-2px] top-0 w-2 border-none bg-transparent"
 		:class="{ 'cursor-ew-resize': true }"
 		@mousedown.stop="handleRightResize" />
 	<div
-		class="top-handle ns-resize pointer-events-auto absolute left-0 right-0 top-[-2px] h-[4px] border-none bg-transparent" />
+		class="top-handle ns-resize pointer-events-auto absolute left-0 right-0 top-[-2px] h-2 border-none bg-transparent" />
 	<div
-		class="bottom-handle pointer-events-auto absolute bottom-[-2px] left-0 right-0 h-[4px] border-none bg-transparent"
+		class="bottom-handle pointer-events-auto absolute bottom-[-2px] left-0 right-0 h-2 border-none bg-transparent"
 		:class="{ 'cursor-ns-resize': true }"
 		@mousedown.stop="handleBottomResize" />
 	<div
-		class="pointer-events-auto absolute bottom-[-6px] right-[-6px] h-[12px] w-[12px] cursor-nwse-resize rounded-full border-[2px] border-blue-400 bg-white"
+		class="pointer-events-auto absolute bottom-[-5px] right-[-5px] h-[12px] w-[12px] cursor-nwse-resize rounded-full border-[3px] border-blue-400 bg-white"
 		@mousedown.stop="handleBottomCornerResize" />
 </template>
 <script setup lang="ts">

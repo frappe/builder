@@ -303,7 +303,7 @@ const useStore = defineStore("store", {
 		},
 		findParentBlock(blockId: string, blocks?: Array<Block>): Block | null {
 			if (!blocks) {
-				blocks = this.builderState.blocks;
+				blocks = [this.getFirstBlock()];
 			}
 			for (const block of blocks) {
 				if (block.children) {
@@ -403,7 +403,7 @@ const useStore = defineStore("store", {
 		setupHistory() {
 			const { builderState } = storeToRefs(this);
 			this.history = useDebouncedRefHistory(builderState, {
-				capacity: 50,
+				capacity: 200,
 				deep: true,
 				clone: (obj) => {
 					let newObj = Object.assign({}, obj);
