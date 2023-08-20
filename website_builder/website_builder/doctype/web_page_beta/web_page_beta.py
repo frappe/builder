@@ -35,7 +35,7 @@ class WebPageBeta(WebsiteGenerator):
 			self.name = f"page-{frappe.generate_hash(length=5)}"
 
 	def on_update(self):
-		file_name=f"{self.name}{frappe.generate_hash()}.png"
+		file_name=f"{self.name}{frappe.generate_hash()}.jpeg"
 		frappe.enqueue(
 			method=get_preview,
 			html=get_response_content(self.route),
