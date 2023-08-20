@@ -3,28 +3,39 @@
 		<Combobox
 			:modelValue="value"
 			@update:modelValue="(val: string|{'value': string}|null) => {
-				if (val === null) {
-					emit('update:modelValue', null)
-				} else if (typeof val === 'object') {
-					emit('update:modelValue', val.value)
-				} else {
-					emit('update:modelValue', val)
-				}
+				emit('update:modelValue', val)
 			}"
-			nullable>
-			<ComboboxInput
-				autocomplete="off"
-				@change="query = $event.target.value"
-				:displayValue="(option: Option) => (option ? option.label : '')"
-				:placeholder="placeholder"
-				class="form-input flex h-7 w-full items-center justify-between gap-2 rounded border-gray-400 px-2 py-1 pr-6 text-sm transition-colors dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
+			v-slot="{ open }"
+			:nullable="nullable"
+			:multiple="multiple">
+			<div
+				class="form-input flex h-7 w-full items-center justify-between gap-2 rounded border-gray-400 px-2 py-1 pr-6 text-sm transition-colors dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700">
+				<!-- {{ displayValue }} -->
+				<ComboboxInput
+					autocomplete="off"
+					@change="query = $event.target.value"
+					@focus="() => open"
+					:displayValue="
+						(option) => {
+							if (Array.isArray(option)) {
+								return option.map((o) => o.label).join(', ');
+							} else if (option) {
+								return option.label || option.value || '';
+							} else {
+								return '';
+							}
+						}
+					"
+					:placeholder="!modelValue ? placeholder : null"
+					class="h-full w-full border-none bg-transparent p-0 text-xs focus:border-none focus:ring-0" />
+			</div>
 			<ComboboxOptions
 				class="absolute right-0 z-50 max-h-[15rem] w-full max-w-[150px] overflow-y-auto rounded-lg bg-white px-1.5 py-1.5 shadow-2xl"
-				v-show="filteredValues.length">
+				v-show="filteredOptions.length">
 				<ComboboxOption v-if="query" :value="query" class="flex items-center"></ComboboxOption>
 				<ComboboxOption
 					v-slot="{ active, selected }"
-					v-for="option in filteredValues"
+					v-for="option in filteredOptions"
 					:key="option.value"
 					:value="option"
 					class="flex items-center">
@@ -55,23 +66,14 @@
 <script setup lang="ts">
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from "@headlessui/vue";
 import { ComputedRef, PropType, computed, ref } from "vue";
-const query = ref("");
-
-const filteredValues = computed(() =>
-	query.value === ""
-		? props.options
-		: props.options.filter((option) => {
-				return (
-					option.value.toLowerCase().includes(query.value.toLowerCase()) ||
-					option.label.toLowerCase().includes(query.value.toLowerCase())
-				);
-		  })
-);
 
 type Option = {
 	label: string;
 	value: string;
 };
+
+const emit = defineEmits(["update:modelValue"]);
+
 const props = defineProps({
 	options: {
 		type: Array as PropType<Option[]>,
@@ -83,6 +85,20 @@ const props = defineProps({
 		default: "Search",
 	},
 });
+
+const query = ref("");
+
+const multiple = computed(() => Array.isArray(props.modelValue));
+const nullable = computed(() => !multiple.value);
+
+const displayValue = computed(() => {
+	if (Array.isArray(props.modelValue) && props.modelValue.length > 0) {
+		return props.modelValue.join(", ");
+	} else {
+		return (props.modelValue as Option)?.label;
+	}
+});
+
 const value = computed(() => {
 	if (
 		props.modelValue instanceof String ||
@@ -95,6 +111,17 @@ const value = computed(() => {
 		return props.modelValue;
 	}
 }) as ComputedRef<Option>;
-const emit = defineEmits(["update:modelValue"]);
+
+const filteredOptions = computed(() => {
+	return query.value === ""
+		? props.options
+		: props.options.filter((option) => {
+				return (
+					option.label.toLowerCase().includes(query.value.toLowerCase()) ||
+					option.value.toLowerCase().includes(query.value.toLowerCase())
+				);
+		  });
+});
+
 const clearValue = () => emit("update:modelValue", null);
 </script>

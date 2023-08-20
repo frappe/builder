@@ -291,9 +291,9 @@ import DimensionInput from "./DimensionInput.vue";
 
 const store = useStore();
 
-const setFont = (font: { value: string }) => {
-	_setFont(font?.value).then(() => {
-		blockController.setFontFamily(font?.value);
+const setFont = (font: string) => {
+	_setFont(font).then(() => {
+		blockController.setFontFamily(font);
 	});
 };
 </script>
