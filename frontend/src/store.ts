@@ -418,6 +418,7 @@ const useStore = defineStore("store", {
 			return uploader
 				.upload(file, {
 					private: false,
+					folder: "Home/Builder Uploads",
 					optimize: true,
 				})
 				.then((fileDoc: { file_url: string; file_name: string }) => {
