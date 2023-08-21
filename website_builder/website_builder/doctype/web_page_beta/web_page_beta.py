@@ -18,7 +18,7 @@ from frappe.utils.caching import redis_cache
 
 import json
 
-MOBILE_BREAKPOINT = 640
+MOBILE_BREAKPOINT = 576
 TABLET_BREAKPOINT = 768
 DESKTOP_BREAKPOINT = 1024
 
