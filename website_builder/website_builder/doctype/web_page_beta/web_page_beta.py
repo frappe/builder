@@ -118,17 +118,15 @@ def get_block_html(blocks, page_data={}):
 				set_fonts_from_html(inner_soup, font_map)
 				tag.append(inner_soup)
 
-			blockData = []
+			block_data = []
 			if block.get("isRepeaterBlock"):
 				dataKey = block.get("dataKey")
 				key = dataKey.get("key") if dataKey else ""
 				if key:
-					blockData = page_data.get(key, [])
-			# if block.get("blockData", []):
-			# 	blockData = block.get("blockData", [])
+					block_data = page_data.get(key, [])
 
-			if blockData and block.get("children"):
-				for data in blockData:
+			if block_data and block.get("children"):
+				for data in block_data:
 					tag.append(get_tag(block.get("children")[0], soup, data))
 			else:
 				for child in block.get("children", []):

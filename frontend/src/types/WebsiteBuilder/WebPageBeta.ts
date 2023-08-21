@@ -22,12 +22,12 @@ export interface WebPageBeta{
 	dynamic_route?: 0 | 1
 	/**	Blocks : JSON	*/
 	blocks?: any
+	/**	Draft Blocks : JSON	*/
+	draft_blocks?: any
 	/**	Page Preview : Attach Image	*/
 	preview?: string
 	/**	Page Data Script : Code - data.events = frappe.get_list("Event")
 <br>
 <b>Note:</b> Each key value of data should be a list.	*/
 	page_data_script?: string
-	/**	Page Data : Code	*/
-	page_data?: string
 }

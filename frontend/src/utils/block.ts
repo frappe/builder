@@ -40,7 +40,6 @@ class Block implements BlockOptions {
 	innerHTML?: string;
 	extendedFromComponent?: string;
 	blockData?: BlockData;
-	blockDataSource?: Object;
 	originalElement?: string | undefined;
 	isChildOfComponent?: string;
 	isRepeaterBlock?: boolean;

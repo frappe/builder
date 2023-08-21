@@ -23,6 +23,7 @@ export default defineConfig({
 	optimizeDeps: {
 		include: ["frappe-ui > feather-icons", "showdown", "engine.io-client"],
 	},
+	sourcemap: true,
 });
 
 function getProxyOptions({ port }) {

@@ -74,7 +74,6 @@ const deletePage = async (page: WebPageBeta) => {
 
 const duplicatePage = async (page: WebPageBeta) => {
 	const pageCopy = { ...page };
-	delete pageCopy.page_data;
 	pageCopy.page_name = `${page.page_name}-copy`;
 	pageCopy.page_title = `${page.page_title} Copy`;
 	await webPages.insert.submit(pageCopy);
