@@ -73,8 +73,8 @@ function setPanAndZoom(
 				props.panning = true;
 				pinchPointSet = false;
 				// Dividing with scale to make the panning feel consistent
-				props.translateX -= (e.deltaX * 2) / props.scale;
-				props.translateY -= (e.deltaY * 2) / props.scale;
+				props.translateX -= e.deltaX / props.scale;
+				props.translateY -= e.deltaY / props.scale;
 			}
 			wheeling = setTimeout(() => {
 				props.scaling = false;
