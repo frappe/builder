@@ -28,6 +28,8 @@ class WebPageBeta(WebsiteGenerator):
 			self.blocks = json.dumps(self.blocks)
 		if not self.blocks:
 			self.blocks = "[]"
+		if self.preview:
+			self.flags.skip_preview = True
 		self.route = f"pages/{frappe.generate_hash(length=20)}"
 
 	def autoname(self):
@@ -35,15 +37,16 @@ class WebPageBeta(WebsiteGenerator):
 			self.name = f"page-{frappe.generate_hash(length=5)}"
 
 	def on_update(self):
-		file_name=f"{self.name}{frappe.generate_hash()}.jpeg"
-		frappe.enqueue(
-			method=get_preview,
-			html=get_response_content(self.route),
-			output_path=os.path.join(
-				frappe.local.site_path, "public", "files", file_name
-			),
-		)
-		self.db_set("preview", f"/files/{file_name}")
+		if not self.flags.skip_preview:
+			file_name=f"{self.name}{frappe.generate_hash()}.jpeg"
+			frappe.enqueue(
+				method=get_preview,
+				html=get_response_content(self.route),
+				output_path=os.path.join(
+					frappe.local.site_path, "public", "files", file_name
+				),
+			)
+			self.db_set("preview", f"/files/{file_name}")
 
 	website = frappe._dict(
 		template = "templates/generators/webpage.html",
