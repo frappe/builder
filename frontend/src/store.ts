@@ -178,7 +178,7 @@ const useStore = defineStore("store", {
 				icon: "smartphone",
 				device: "mobile",
 				displayName: "Mobile",
-				width: 400,
+				width: 420,
 				visible: false,
 			},
 		],
