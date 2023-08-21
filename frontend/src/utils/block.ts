@@ -436,7 +436,7 @@ class Block implements BlockOptions {
 		this.setBaseStyle("height", "fit-content");
 		this.setBaseStyle("gap", "20px");
 		this.isRepeaterBlock = true;
-		this.blockData = [];
+		this.blockData = [{}];
 	}
 	moveChild(child: Block, index: number) {
 		const childIndex = this.children.findIndex((block) => block.blockId === child.blockId);

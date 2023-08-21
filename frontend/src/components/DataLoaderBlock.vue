@@ -43,10 +43,10 @@ const component = ref(null) as Ref<HTMLElement | null>;
 const blockData = computed(() => {
 	const pageData = store.pageData;
 	const data = {};
+	Object.assign(data, props.block.blockData);
 	if (pageData && props.block.dataKey?.key) {
 		Object.assign(data, pageData[props.block.dataKey?.key]);
 	}
-	Object.assign(data, props.block.blockData);
 	return data;
 });
 
