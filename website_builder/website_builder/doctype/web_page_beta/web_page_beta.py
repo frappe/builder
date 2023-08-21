@@ -124,8 +124,8 @@ def get_block_html(blocks, page_data={}):
 				key = dataKey.get("key") if dataKey else ""
 				if key:
 					blockData = page_data.get(key, [])
-			if block.get("blockData", []):
-				blockData = block.get("blockData", [])
+			# if block.get("blockData", []):
+			# 	blockData = block.get("blockData", [])
 
 			if blockData and block.get("children"):
 				for data in blockData:

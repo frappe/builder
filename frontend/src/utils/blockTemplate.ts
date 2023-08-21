@@ -20,7 +20,7 @@ function getBlockTemplate(
 				innerHTML: "Text",
 				baseStyles: {
 					fontSize: "30px",
-					width: "100%",
+					width: "fit-content",
 					height: "fit-content",
 					lineHeight: "1",
 					minWidth: "30px",
