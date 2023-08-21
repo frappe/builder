@@ -12,7 +12,7 @@
 						:style="{
 							background: value
 								? value
-								: `url(/assets/website_builder/frontend/color-circle.png) center / contain`,
+								: `url(/assets/website_builder/images/color-circle.png) center / contain`,
 						}"></div>
 					<Input
 						type="text"
