@@ -28,7 +28,7 @@
 					class="group relative mr-2 w-full overflow-hidden rounded-md shadow hover:cursor-pointer dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
 					<img
 						:src="page.preview"
-						onerror="this.src='/src/assets/fallback.png'"
+						onerror="this.src='/fallback.png'"
 						class="w-full rounded-sm bg-gray-50 object-cover p-2 dark:bg-zinc-900" />
 					<div class="flex items-center justify-between border-t-[1px] px-3 dark:border-zinc-800">
 						<p class="py-2 text-sm text-gray-700 dark:text-zinc-200">
@@ -40,7 +40,10 @@
 							</UseTimeAgo>
 						</p>
 						<Dropdown
-							:options="[{ label: 'Delete', onClick: () => deletePage(page), icon: 'trash' }]"
+							:options="[
+								{ label: 'Duplicate', onClick: () => duplicatePage(page), icon: 'copy' },
+								{ label: 'Delete', onClick: () => deletePage(page), icon: 'trash' },
+							]"
 							placement="right">
 							<template v-slot="{ open }">
 								<FeatherIcon
@@ -67,5 +70,13 @@ const deletePage = async (page: WebPageBeta) => {
 	if (confirmed) {
 		await webPages.delete.submit(page.name);
 	}
+};
+
+const duplicatePage = async (page: WebPageBeta) => {
+	const pageCopy = { ...page };
+	delete pageCopy.page_data;
+	pageCopy.page_name = `${page.page_name}-copy`;
+	pageCopy.page_title = `${page.page_title} Copy`;
+	await webPages.insert.submit(pageCopy);
 };
 </script>
