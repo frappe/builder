@@ -58,6 +58,9 @@ class WebPageBeta(WebsiteGenerator):
 		# show breadcrumbs
 		context.title = self.page_title or "My Page"
 		page_data = self.get_page_data()
+		if page_data.get("title"):
+			context.title = page_data.get("page_title")
+
 		content, style, fonts = get_block_html(self.blocks, page_data)
 		context.fonts = fonts
 		context.content = content
