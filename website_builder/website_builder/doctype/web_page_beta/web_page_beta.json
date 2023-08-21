@@ -19,8 +19,7 @@
   "blocks",
   "preview",
   "scripting_tab",
-  "page_data_script",
-  "page_data"
+  "page_data_script"
  ],
  "fields": [
   {
@@ -57,12 +56,6 @@
    "label": "Page Title"
   },
   {
-   "fieldname": "page_data",
-   "fieldtype": "Code",
-   "label": "Page Data",
-   "read_only": 1
-  },
-  {
    "fieldname": "scripting_tab",
    "fieldtype": "Tab Break",
    "label": "Scripting"
@@ -97,7 +90,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-08-17 03:15:07.408937",
+ "modified": "2023-08-21 23:14:44.727513",
  "modified_by": "Administrator",
  "module": "Website Builder",
  "name": "Web Page Beta",
