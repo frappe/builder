@@ -17,6 +17,7 @@
   "dynamic_route",
   "section_break_ujsp",
   "blocks",
+  "draft_blocks",
   "preview",
   "scripting_tab",
   "page_data_script"
@@ -35,7 +36,7 @@
    "label": "Route"
   },
   {
-   "default": "1",
+   "default": "0",
    "fieldname": "published",
    "fieldtype": "Check",
    "label": "Published"
@@ -86,11 +87,16 @@
   {
    "fieldname": "section_break_ujsp",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "draft_blocks",
+   "fieldtype": "JSON",
+   "label": "Draft Blocks"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-08-21 23:14:44.727513",
+ "modified": "2023-08-22 07:30:51.827617",
  "modified_by": "Administrator",
  "module": "Website Builder",
  "name": "Web Page Beta",

@@ -6,7 +6,9 @@
 			'right-0': side === 'right',
 			'bg-gray-300 dark:bg-zinc-700': dragActive,
 		}"
-		@mousedown="resize" />
+		@mousedown="resize">
+		<slot />
+	</div>
 </template>
 <script setup lang="ts">
 import { ref } from "vue";

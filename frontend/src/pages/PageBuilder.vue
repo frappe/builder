@@ -75,13 +75,10 @@ onMounted(() => {
 		webPages.insert
 			.submit({
 				page_title: "My Page",
-				blocks: [store.getRootBlock()],
+				draft_blocks: [store.getRootBlock()],
 			})
 			.then((data: WebPageBeta) => {
 				router.push({ name: "builder", params: { pageId: data.name } });
-				if (data.blocks) {
-					data.blocks = JSON.parse(data.blocks);
-				}
 			});
 	}
 });
@@ -328,7 +325,6 @@ watch(
 
 const setPage = (pageName: string) => {
 	webPages.fetchOne.submit(pageName).then((data: WebPageBeta[]) => {
-		data[0].blocks = JSON.parse(data[0].blocks);
 		store.setPage(data[0]);
 		nextTick(() => {
 			if (blockEditor.value) {

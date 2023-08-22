@@ -258,10 +258,11 @@ const useStore = defineStore("store", {
 			if (!page) {
 				return;
 			}
+			const blocks = JSON.parse(page.draft_blocks || page.blocks || "[]");
 			// clear blocks
 			this.editPage();
 			this.clearBlocks();
-			this.pushBlocks(page.blocks);
+			this.pushBlocks(blocks);
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
 			this.selectedPage = page.name;
@@ -269,7 +270,6 @@ const useStore = defineStore("store", {
 			this.routeVariables = JSON.parse(variables);
 			this.setPageData();
 			this.setupHistory();
-			// localStorage.setItem("selectedPage", page.name);
 		},
 		getImageBlock(imageSrc: string, imageAlt: string = "") {
 			imageAlt = stripExtension(imageAlt);
@@ -435,28 +435,40 @@ const useStore = defineStore("store", {
 		getActivePage() {
 			return webPages.getRow(this.selectedPage as string) as WebPageBeta;
 		},
-		savePage(open_preview = false) {
-			return webPages.setValue
-				.submit({
-					name: this.selectedPage,
-					blocks: JSON.stringify(this.getPageData()),
-				})
-				.then((doc: WebPageBeta) => {
-					if (open_preview) {
-						let { route } = doc;
-						if (this.getActivePage().dynamic_route && this.pageData) {
-							const routeVariables = (route?.match(/<\w+>/g) || []).map((match: string) =>
-								match.slice(1, -1)
-							);
-							routeVariables.forEach((variable: string) => {
-								if (this.routeVariables[variable]) {
-									route = route?.replace(`<${variable}>`, this.routeVariables[variable]);
-								}
-							});
-						}
-						window.open(`/${route}`, "preview-page");
+		async savePage(publish = false) {
+			const confirmed = !publish || (await confirm(`Are you sure you want to Publish?`));
+			if (!confirmed) {
+				return;
+			}
+			const pageData = JSON.stringify(this.getPageData());
+			const args: {
+				name: string;
+				publish: number;
+				blocks?: string;
+				draft_blocks?: string;
+			} = {
+				name: this.selectedPage as string,
+				publish: publish ? 1 : 0,
+			};
+			if (publish) {
+				args["blocks"] = pageData;
+			} else {
+				args["draft_blocks"] = pageData;
+			}
+			return webPages.setValue.submit(args).then((doc: WebPageBeta) => {
+				if (publish) {
+					let { route } = doc;
+					if (this.getActivePage().dynamic_route && this.pageData) {
+						const routeVariables = (route?.match(/<\w+>/g) || []).map((match: string) => match.slice(1, -1));
+						routeVariables.forEach((variable: string) => {
+							if (this.routeVariables[variable]) {
+								route = route?.replace(`<${variable}>`, this.routeVariables[variable]);
+							}
+						});
 					}
-				});
+					window.open(`/${route}`, "_blank");
+				}
+			});
 		},
 		setPageData() {
 			const page = this.getActivePage();
