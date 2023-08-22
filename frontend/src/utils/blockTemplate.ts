@@ -7,7 +7,7 @@ function getBlockTemplate(
 				name: "HTML",
 				element: "div",
 				originalElement: "__raw_html__",
-				innerHTML: `<div style="background:#e2e2e2;display:flex;flex-direction:column;position:static;top:auto;left:auto;width:564px;height:497px;align-items:center;justify-content:center"><div style="font-size:40px;width:fit-content;height:fit-content;line-height:1;min-width:30px"><p>&lt;paste html&gt;</p></div></div>`,
+				innerHTML: `<div style="color: #8e8e8e;background: #f4f4f4;display:flex;flex-direction:column;position:static;top:auto;left:auto;width: 600px;height: 275px;align-items:center;font-size: 30px;justify-content:center"><p>&lt;paste html&gt;</p></div>`,
 				baseStyles: {
 					height: "fit-content",
 					width: "fit-content",
