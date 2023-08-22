@@ -9,7 +9,7 @@ import frappe
 import frappe.utils
 # import frappe
 from frappe.model.document import Document
-from frappe.website.serve import get_response_content
+from frappe.website.serve import get_response_content, get_response
 from frappe.website.website_generator import WebsiteGenerator
 from website_builder.html_preview_image import get_preview
 from frappe.utils.safe_exec import safe_exec
@@ -25,7 +25,9 @@ DESKTOP_BREAKPOINT = 1024
 class WebPageBeta(WebsiteGenerator):
 	def before_insert(self):
 		if isinstance(self.blocks, list):
-			self.blocks = json.dumps(self.blocks)
+			self.blocks = frappe.as_json(self.blocks, indent=None)
+		if isinstance(self.draft_blocks, list):
+			self.draft_blocks = frappe.as_json(self.draft_blocks, indent=None)
 		if not self.blocks:
 			self.blocks = "[]"
 		if self.preview:
@@ -37,6 +39,10 @@ class WebPageBeta(WebsiteGenerator):
 			self.name = f"page-{frappe.generate_hash(length=5)}"
 
 	def on_update(self):
+		if self.published and self.draft_blocks:
+			self.blocks = self.draft_blocks
+			self.draft_blocks = None
+
 		if not self.flags.skip_preview:
 			file_name=f"{self.name}{frappe.generate_hash()}.jpeg"
 			frappe.enqueue(
@@ -61,7 +67,11 @@ class WebPageBeta(WebsiteGenerator):
 		if page_data.get("title"):
 			context.title = page_data.get("page_title")
 
-		content, style, fonts = get_block_html(self.blocks, page_data)
+		blocks = self.blocks
+		if frappe.flags.show_preview and self.draft_blocks:
+			blocks = self.draft_blocks
+
+		content, style, fonts = get_block_html(blocks, page_data)
 		context.fonts = fonts
 		context.content = content
 		context.style = style
@@ -278,3 +288,10 @@ def get_web_pages_with_dynamic_routes() -> dict[str, str]:
 		"Web Page Beta", fields=["name", "route", "modified"], filters=dict(published=1, dynamic_route=1),
 		update={"doctype": "Web Page Beta"}
 	)
+
+@frappe.whitelist()
+def get_page_preview_html(page: str) -> str:
+	"""Returns the HTML of the page preview"""
+	page = frappe.get_cached_doc("Web Page Beta", page)
+	frappe.flags.show_preview = True
+	return get_response(page.route)
