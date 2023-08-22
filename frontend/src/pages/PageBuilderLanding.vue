@@ -65,6 +65,8 @@ import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
 import { Dropdown } from "frappe-ui";
 
+if (!webPages.data) webPages.fetch();
+
 const deletePage = async (page: WebPageBeta) => {
 	const confirmed = await confirm(`Are you sure you want to delete Page: ${page.page_name}?`);
 	if (confirmed) {

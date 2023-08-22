@@ -234,6 +234,17 @@ useEventListener(document, "keydown", (e) => {
 		return;
 	}
 
+	if (e.key === "p" && (e.ctrlKey || e.metaKey)) {
+		e.preventDefault();
+		store.savePage();
+		router.push({
+			name: "preview",
+			params: {
+				pageId: store.selectedPage as string,
+			},
+		});
+	}
+
 	if (e.key === "c" && e.metaKey && e.target === document.body) {
 		e.preventDefault();
 		if (store.selectedBlocks.length) {
@@ -341,7 +352,7 @@ watchDebounced(
 			store.savePage();
 		}
 	},
-	{ debounce: 5000, deep: true }
+	{ debounce: 500, deep: true }
 );
 </script>
 

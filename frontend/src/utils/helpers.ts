@@ -88,9 +88,14 @@ async function confirm(message: string): Promise<boolean> {
 }
 
 function getTextContent(html: string | null) {
+	if (!html || !isHTMLString(html)) {
+		return html || "";
+	}
 	const tmp = document.createElement("div");
 	tmp.innerHTML = html || "";
-	return tmp.textContent || tmp.innerText || "";
+	const textContent = tmp.textContent || tmp.innerText || "";
+	tmp.remove();
+	return textContent;
 }
 
 function RGBToHex(rgb: RGBString): HashString {

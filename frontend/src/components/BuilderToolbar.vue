@@ -29,7 +29,7 @@
 					class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400"
 					@click="toggleDark()" />
 			</UseDark>
-			<router-link :to="{ name: 'preview', params: { pageId: store.selectedPage } }" replace>
+			<router-link :to="{ name: 'preview', params: { pageId: store.selectedPage } }">
 				<FeatherIcon name="play" class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
 			</router-link>
 			<Button variant="solid" @click="() => store.savePage(true)" class="border-0 text-xs dark:bg-zinc-800">
