@@ -341,7 +341,7 @@ watchDebounced(
 			store.savePage();
 		}
 	},
-	{ debounce: 10000 }
+	{ debounce: 5000, deep: true }
 );
 </script>
 
