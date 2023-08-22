@@ -15,6 +15,7 @@ const useStore = defineStore("store", {
 			editableBlock: <Block | null>null,
 			blocks: <Block[]>[reactive(new Block(getBlockTemplate("body")))],
 		},
+		settingPage: false,
 		editingComponent: <string | null>null,
 		editingMode: <EditingMode>"page",
 		activeBreakpoint: "desktop",
@@ -254,7 +255,8 @@ const useStore = defineStore("store", {
 		getPageData() {
 			return this.builderState.blocks;
 		},
-		setPage(page: WebPageBeta) {
+		async setPage(page: WebPageBeta) {
+			this.settingPage = true;
 			if (!page) {
 				return;
 			}
@@ -270,6 +272,7 @@ const useStore = defineStore("store", {
 			this.routeVariables = JSON.parse(variables);
 			this.setPageData();
 			this.setupHistory();
+			this.settingPage = false;
 		},
 		getImageBlock(imageSrc: string, imageAlt: string = "") {
 			imageAlt = stripExtension(imageAlt);
@@ -321,6 +324,9 @@ const useStore = defineStore("store", {
 			return null;
 		},
 		selectBlock(block: Block, e: MouseEvent | null, scrollIntoView = true) {
+			if (this.settingPage) {
+				return;
+			}
 			if (e && e.shiftKey) {
 				block.toggleSelectBlock();
 			} else {
@@ -472,7 +478,7 @@ const useStore = defineStore("store", {
 		},
 		setPageData() {
 			const page = this.getActivePage();
-			if (!page.page_data_script) {
+			if (!page || !page.page_data_script) {
 				return;
 			}
 			webPages.runDocMethod

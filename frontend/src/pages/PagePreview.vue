@@ -3,7 +3,6 @@
 		<div class="w-full">
 			<router-link
 				:to="{ name: 'builder', params: { pageId: route.params.pageId } }"
-				replace
 				class="flex w-fit text-sm text-gray-600 dark:text-gray-400">
 				<FeatherIcon name="arrow-left" class="mr-4 h-4 w-4 cursor-pointer" />
 				Back to builder
@@ -48,6 +47,7 @@
 </template>
 <script lang="ts" setup>
 import PanelResizer from "@/components/PanelResizer.vue";
+import { useEventListener } from "@vueuse/core";
 import { Ref, onMounted, ref, watchEffect } from "vue";
 import { useRoute } from "vue-router";
 
@@ -59,6 +59,13 @@ const width = ref(maxWidth);
 const loading = ref(false);
 
 const previewWindow = ref(null) as Ref<HTMLIFrameElement | null>;
+
+useEventListener(document, "keydown", (ev) => {
+	if (ev.key === "Escape") {
+		history.back();
+	}
+});
+
 // hack to relay mouseup event from iframe to parent
 watchEffect(() => {
 	if (previewWindow.value) {

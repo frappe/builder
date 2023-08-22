@@ -16,7 +16,6 @@ const webPages = createListResource({
 		"published",
 		"dynamic_route",
 	],
-	auto: true,
 	cache: "pages",
 	orderBy: "creation desc",
 	pageLength: 50,
