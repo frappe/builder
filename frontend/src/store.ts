@@ -467,9 +467,6 @@ const useStore = defineStore("store", {
 				name: this.selectedPage,
 				draft_blocks: pageData,
 			};
-			const row = webPages.getRow(this.selectedPage);
-			// TODO: hack to avoid memory leak this this is released https://github.com/frappe/frappe-ui/pull/95
-			delete row._previousData;
 			webPages.setValue.submit(args);
 		},
 		setPageData() {
