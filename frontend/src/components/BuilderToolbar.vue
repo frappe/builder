@@ -25,15 +25,25 @@
 		<div class="absolute right-3 flex items-center">
 			<UseDark v-slot="{ isDark, toggleDark }">
 				<FeatherIcon
+					title="Toggle Theme"
 					:name="isDark ? 'moon' : 'sun'"
 					class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400"
 					@click="toggleDark()" />
 			</UseDark>
-			<router-link :to="{ name: 'preview', params: { pageId: store.selectedPage } }">
+			<router-link :to="{ name: 'preview', params: { pageId: store.selectedPage } }" title="Preview">
 				<FeatherIcon name="play" class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
 			</router-link>
-			<Button variant="solid" @click="() => store.publishPage()" class="border-0 text-xs dark:bg-zinc-800">
-				Publish
+			<Button
+				variant="solid"
+				@click="
+					() => {
+						publishing = true;
+						store.publishPage().finally(() => (publishing = false));
+					}
+				"
+				class="border-0 text-xs dark:bg-zinc-800"
+				:loading="publishing">
+				{{ publishing ? "Publishing" : "Publish" }}
 			</Button>
 		</div>
 	</div>
@@ -41,6 +51,8 @@
 <script setup lang="ts">
 import { UseDark } from "@vueuse/components";
 import { ref } from "vue";
+
+const publishing = ref(false);
 
 import useStore from "../store";
 

@@ -442,11 +442,7 @@ const useStore = defineStore("store", {
 			return webPages.getRow(this.selectedPage as string) as WebPageBeta;
 		},
 		async publishPage() {
-			const confirmed = await confirm(`Are you sure you want to Publish?`);
-			if (!confirmed) {
-				return;
-			}
-			webPages.runDocMethod
+			return webPages.runDocMethod
 				.submit({
 					name: this.selectedPage as string,
 					method: "publish",

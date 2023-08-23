@@ -55,7 +55,7 @@ import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { copyToClipboard, isHTMLString } from "@/utils/helpers";
 import { useEventListener, watchDebounced } from "@vueuse/core";
 import { toast } from "frappe-ui";
-import { nextTick, onMounted, ref, watch } from "vue";
+import { nextTick, onActivated, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
@@ -67,21 +67,6 @@ window.blockController = blockController;
 
 const blockEditor = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 const componentEditor = ref<HTMLElement | null>(null);
-
-onMounted(() => {
-	if (route.params.pageId && route.params.pageId !== "new") {
-		setPage(route.params.pageId as string);
-	} else {
-		webPages.insert
-			.submit({
-				page_title: "My Page",
-				draft_blocks: [store.getRootBlock()],
-			})
-			.then((data: WebPageBeta) => {
-				router.push({ name: "builder", params: { pageId: data.name } });
-			});
-	}
-});
 
 // to disable page zoom
 useEventListener(
@@ -316,14 +301,24 @@ const clearSelectedComponent = () => {
 	}
 };
 
-watch(
-	() => route.params.pageId,
-	() => {
-		if (route.params.pageId && route.params.pageId !== "new") {
-			setPage(route.params.pageId as string);
-		}
+onActivated(() => {
+	if (route.params.pageId === store.selectedPage) {
+		return;
 	}
-);
+	if (route.params.pageId && route.params.pageId !== "new") {
+		setPage(route.params.pageId as string);
+	} else {
+		webPages.insert
+			.submit({
+				page_title: "My Page",
+				draft_blocks: [store.getRootBlock()],
+			})
+			.then((data: WebPageBeta) => {
+				router.push({ name: "builder", params: { pageId: data.name }, force: true });
+				setPage(data.name);
+			});
+	}
+});
 
 const setPage = (pageName: string) => {
 	webPages.fetchOne.submit(pageName).then((data: WebPageBeta[]) => {
