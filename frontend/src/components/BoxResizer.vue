@@ -65,17 +65,17 @@ watchEffect(() => {
 
 const targetWidth = computed(() => {
 	targetBlock.getStyle("width"); // to trigger reactivity
-	return getNumberFromPx(getComputedStyle(target).getPropertyValue("width"));
+	return Math.round(getNumberFromPx(getComputedStyle(target).getPropertyValue("width")));
 });
 
 const targetHeight = computed(() => {
 	targetBlock.getStyle("height"); // to trigger reactivity
-	return getNumberFromPx(getComputedStyle(target).getPropertyValue("height"));
+	return Math.round(getNumberFromPx(getComputedStyle(target).getPropertyValue("height")));
 });
 
 const fontSize = computed(() => {
 	targetBlock.getStyle("fontSize"); // to trigger reactivity
-	return getNumberFromPx(getComputedStyle(target).getPropertyValue("font-size"));
+	return Math.round(getNumberFromPx(getComputedStyle(target).getPropertyValue("font-size")));
 });
 
 const handleRightResize = (ev: MouseEvent) => {
@@ -134,7 +134,7 @@ const handleBottomResize = (ev: MouseEvent) => {
 
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
 		const movement = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
-		let finalHeight = Math.abs(guides.getFinalHeight(startHeight + movement));
+		let finalHeight = Math.round(Math.abs(guides.getFinalHeight(startHeight + movement)));
 
 		if (targetBlock.isText() && mouseMoveEvent.shiftKey) {
 			const fontSize = clamp(Math.round(finalHeight * 0.5), 10, 300);

@@ -33,7 +33,7 @@
 				}"
 				@mousedown.stop="handleMargin($event, Position.Top)" />
 			<div class="m-auto text-sm text-yellow-900" v-show="updating">
-				{{ blockStyles.marginTop }}
+				{{ blockStyles.marginTop || "auto" }}
 			</div>
 		</div>
 		<div
@@ -63,7 +63,7 @@
 				}"
 				@mousedown.stop="handleMargin($event, Position.Bottom)" />
 			<div class="m-auto text-sm text-yellow-900" v-show="updating">
-				{{ blockStyles.marginBottom }}
+				{{ blockStyles.marginBottom || "auto" }}
 			</div>
 		</div>
 		<div
@@ -93,7 +93,7 @@
 				}"
 				@mousedown.stop="handleMargin($event, Position.Left)" />
 			<div class="m-auto text-sm text-yellow-900" v-show="updating">
-				{{ blockStyles.marginLeft }}
+				{{ blockStyles.marginLeft || "auto" }}
 			</div>
 		</div>
 		<div
@@ -123,7 +123,7 @@
 				}"
 				@mousedown.stop="handleMargin($event, Position.Right)" />
 			<div class="m-auto text-sm text-yellow-900" v-show="updating">
-				{{ blockStyles.marginRight }}
+				{{ blockStyles.marginRight || "auto" }}
 			</div>
 		</div>
 	</div>
@@ -136,6 +136,10 @@ import { getNumberFromPx } from "../utils/helpers";
 const props = defineProps({
 	targetBlock: {
 		type: Block,
+		required: true,
+	},
+	target: {
+		type: HTMLElement,
 		required: true,
 	},
 	disableHandlers: {
@@ -174,16 +178,36 @@ const blockStyles = computed(() => {
 });
 
 const topMarginHandlerHeight = computed(() => {
-	return (getNumberFromPx(blockStyles.value.marginTop) || 0) * canvasProps.scale;
+	blockStyles.value.marginTop;
+	blockStyles.value.display;
+	blockStyles.value.margin;
+	let marginTop = window.getComputedStyle(props.target).marginTop;
+	let value = getNumberFromPx(marginTop) * canvasProps.scale;
+	return value;
 });
 const bottomMarginHandlerHeight = computed(() => {
-	return (getNumberFromPx(blockStyles.value.marginBottom) || 0) * canvasProps.scale;
+	blockStyles.value.marginBottom;
+	blockStyles.value.display;
+	blockStyles.value.margin;
+	let marginBottom = window.getComputedStyle(props.target).marginBottom;
+	let value = getNumberFromPx(marginBottom) * canvasProps.scale;
+	return value;
 });
 const leftMarginHandlerWidth = computed(() => {
-	return (getNumberFromPx(blockStyles.value.marginLeft) || 0) * canvasProps.scale;
+	blockStyles.value.marginLeft;
+	blockStyles.value.display;
+	blockStyles.value.margin;
+	let marginLeft = window.getComputedStyle(props.target).marginLeft;
+	let value = getNumberFromPx(marginLeft) * canvasProps.scale;
+	return value;
 });
 const rightMarginHandlerWidth = computed(() => {
-	return (getNumberFromPx(blockStyles.value.marginRight) || 0) * canvasProps.scale;
+	blockStyles.value.marginRight;
+	blockStyles.value.display;
+	blockStyles.value.margin;
+	let marginRight = window.getComputedStyle(props.target).marginRight;
+	let value = getNumberFromPx(marginRight) * canvasProps.scale;
+	return value;
 });
 
 const handleBorderWidth = computed(() => {
