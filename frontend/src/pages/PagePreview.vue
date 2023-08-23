@@ -3,7 +3,7 @@
 		<div class="w-full">
 			<router-link
 				:to="{ name: 'builder', params: { pageId: route.params.pageId } }"
-				class="flex w-fit text-sm text-gray-600 dark:text-gray-400">
+				class="flex w-fit text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 hover:dark:text-gray-100">
 				<FeatherIcon name="arrow-left" class="mr-4 h-4 w-4 cursor-pointer" />
 				Back to builder
 			</router-link>

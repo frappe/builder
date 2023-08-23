@@ -64,8 +64,7 @@ import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
 import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
 import { Dropdown } from "frappe-ui";
-
-if (!webPages.data) webPages.fetch();
+import { onActivated } from "vue";
 
 const deletePage = async (page: WebPageBeta) => {
 	const confirmed = await confirm(`Are you sure you want to delete Page: ${page.page_name}?`);
@@ -80,4 +79,8 @@ const duplicatePage = async (page: WebPageBeta) => {
 	pageCopy.page_title = `${page.page_title} Copy`;
 	await webPages.insert.submit(pageCopy);
 };
+
+onActivated(() => {
+	webPages.fetch();
+});
 </script>

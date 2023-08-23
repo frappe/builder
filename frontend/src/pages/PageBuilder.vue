@@ -221,15 +221,6 @@ useEventListener(document, "keydown", (e) => {
 			clearSelectedComponent();
 			e.stopPropagation();
 			e.preventDefault();
-		} else {
-			store.savePage().then(() => {
-				toast({
-					text: "Page Saved!",
-					icon: "check-circle",
-					iconClasses: "text-green-500",
-					position: "bottom-center",
-				});
-			});
 		}
 		return;
 	}

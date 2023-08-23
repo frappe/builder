@@ -441,29 +441,19 @@ const useStore = defineStore("store", {
 		getActivePage() {
 			return webPages.getRow(this.selectedPage as string) as WebPageBeta;
 		},
-		async savePage(publish = false) {
-			const confirmed = !publish || (await confirm(`Are you sure you want to Publish?`));
+		async publishPage() {
+			const confirmed = await confirm(`Are you sure you want to Publish?`);
 			if (!confirmed) {
 				return;
 			}
-			const pageData = JSON.stringify(this.getPageData());
-			const args: {
-				name: string;
-				publish: number;
-				blocks?: string;
-				draft_blocks?: string;
-			} = {
-				name: this.selectedPage as string,
-				publish: publish ? 1 : 0,
-			};
-			if (publish) {
-				args["blocks"] = pageData;
-			} else {
-				args["draft_blocks"] = pageData;
-			}
-			return webPages.setValue.submit(args).then((doc: WebPageBeta) => {
-				if (publish) {
-					let { route } = doc;
+			webPages.runDocMethod
+				.submit({
+					name: this.selectedPage as string,
+					method: "publish",
+				})
+				.then((res: { message: string }) => {
+					let route = res.message;
+
 					if (this.getActivePage().dynamic_route && this.pageData) {
 						const routeVariables = (route?.match(/<\w+>/g) || []).map((match: string) => match.slice(1, -1));
 						routeVariables.forEach((variable: string) => {
@@ -473,8 +463,18 @@ const useStore = defineStore("store", {
 						});
 					}
 					window.open(`/${route}`, "_blank");
-				}
-			});
+				});
+		},
+		savePage() {
+			const pageData = JSON.stringify(this.getPageData());
+			const args = {
+				name: this.selectedPage,
+				draft_blocks: pageData,
+			};
+			const row = webPages.getRow(this.selectedPage);
+			// TODO: hack to avoid memory leak this this is released https://github.com/frappe/frappe-ui/pull/95
+			delete row._previousData;
+			webPages.setValue.submit(args);
 		},
 		setPageData() {
 			const page = this.getActivePage();
