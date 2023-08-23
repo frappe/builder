@@ -29,6 +29,10 @@ const props = defineProps({
 		type: String,
 		default: "right",
 	},
+	resizeSensitivity: {
+		type: Number,
+		default: 1,
+	},
 });
 
 const emit = defineEmits({
@@ -46,7 +50,8 @@ function resize(ev: MouseEvent) {
 	document.body.style.cursor = window.getComputedStyle(target).cursor;
 
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		const movement = (mouseMoveEvent.clientX - startX) * (props.side === "left" ? -1 : 1);
+		const movement =
+			(mouseMoveEvent.clientX - startX) * (props.side === "left" ? -1 : 1) * props.resizeSensitivity;
 		let newWidth = startWidth + movement;
 		// clamp width between min and max
 		newWidth = Math.min(Math.max(props.minWidth, newWidth), props.maxWidth);
