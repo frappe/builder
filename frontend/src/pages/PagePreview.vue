@@ -7,20 +7,20 @@
 				<FeatherIcon name="arrow-left" class="mr-4 h-4 w-4 cursor-pointer" />
 				Back to builder
 			</router-link>
-			<div class="flex gap-1 text-gray-300 dark:bg-zinc-900 dark:text-zinc-500">
+			<div class="flex gap-1 text-gray-500 dark:bg-zinc-900 dark:text-zinc-500">
 				<div
 					class="w-auto cursor-pointer rounded-md p-1 px-[8px]"
 					v-for="breakpoint in deviceBreakpoints"
 					:key="breakpoint.device"
 					:class="{
-						'bg-white dark:bg-zinc-700': activeBreakpoint === breakpoint.device,
+						'bg-white shadow-sm dark:bg-zinc-700': activeBreakpoint === breakpoint.device,
 					}"
 					@click.stop="() => setWidth(breakpoint.device)">
 					<FeatherIcon
 						:name="breakpoint.icon"
 						class="h-6 w-5"
 						:class="{
-							'text-gray-700 dark:text-zinc-50': activeBreakpoint === breakpoint.device,
+							'text-gray-700   dark:text-zinc-50': activeBreakpoint === breakpoint.device,
 						}" />
 				</div>
 			</div>
@@ -36,6 +36,7 @@
 				:width="width"
 				:minWidth="minWidth"
 				:maxWidth="maxWidth"
+				:resizeSensitivity="2"
 				@resize="(val) => (width = val)">
 				<div class="resize-handler-left h-full w-2 rounded-sm bg-gray-200 dark:bg-zinc-600"></div>
 			</PanelResizer>
@@ -56,6 +57,7 @@
 				:width="width"
 				:minWidth="minWidth"
 				:maxWidth="maxWidth"
+				:resizeSensitivity="2"
 				@resize="(val) => (width = val)">
 				<div class="resize-handler-left h-full w-2 rounded-sm bg-gray-200 dark:bg-zinc-600"></div>
 			</PanelResizer>
@@ -66,18 +68,28 @@
 import PanelResizer from "@/components/PanelResizer.vue";
 import useStore from "@/store";
 import { useEventListener } from "@vueuse/core";
-import { Ref, ref, watch, watchEffect } from "vue";
+import { Ref, computed, ref, watch, watchEffect } from "vue";
 import { useRoute } from "vue-router";
 
 const route = useRoute();
 const maxWidth = window.innerWidth * 0.92;
-const minWidth = 480;
+const minWidth = 400;
 let previewRoute = ref("");
 const width = ref(maxWidth);
 const loading = ref(false);
 const store = useStore();
 const { deviceBreakpoints } = store;
-const activeBreakpoint = ref("desktop");
+const activeBreakpoint = computed(() => {
+	const tabletBreakpoint = deviceBreakpoints.find((b) => b.device === "tablet");
+	const mobileBreakpoint = deviceBreakpoints.find((b) => b.device === "mobile");
+	if (width.value <= (mobileBreakpoint?.width || minWidth)) {
+		return "mobile";
+	}
+	if (width.value <= (tabletBreakpoint?.width || maxWidth)) {
+		return "tablet";
+	}
+	return "desktop";
+});
 
 const previewWindow = ref(null) as Ref<HTMLIFrameElement | null>;
 
