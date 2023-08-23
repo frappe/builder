@@ -14,6 +14,8 @@ from frappe.website.website_generator import WebsiteGenerator
 from website_builder.html_preview_image import get_preview
 from frappe.utils.safe_exec import safe_exec
 from frappe.utils.caching import redis_cache
+from frappe.website.page_renderers.document_page import DocumentPage
+
 
 
 import json
@@ -32,27 +34,24 @@ class WebPageBeta(WebsiteGenerator):
 			self.blocks = "[]"
 		if self.preview:
 			self.flags.skip_preview = True
-		self.route = f"pages/{frappe.generate_hash(length=20)}"
+		else:
+			self.preview = "/assets/website_builder/images/fallback.png"
+
+		self.route = f"pages/{camel_case_to_kebab_case(self.page_title)}-{frappe.generate_hash(length=4)}"
 
 	def autoname(self):
 		if not self.name:
 			self.name = f"page-{frappe.generate_hash(length=5)}"
 
-	def on_update(self):
-		if self.published and self.draft_blocks:
+	@frappe.whitelist()
+	def publish(self):
+		self.published = 1
+		if self.draft_blocks:
 			self.blocks = self.draft_blocks
 			self.draft_blocks = None
-
-		if not self.flags.skip_preview:
-			file_name=f"{self.name}{frappe.generate_hash()}.jpeg"
-			frappe.enqueue(
-				method=get_preview,
-				html=get_response_content(self.route),
-				output_path=os.path.join(
-					frappe.local.site_path, "public", "files", file_name
-				),
-			)
-			self.db_set("preview", f"/files/{file_name}")
+			self.generate_page_preview_image()
+		self.save()
+		return self.route
 
 	website = frappe._dict(
 		template = "templates/generators/webpage.html",
@@ -88,6 +87,15 @@ class WebPageBeta(WebsiteGenerator):
 			safe_exec(self.page_data_script, None, _locals)
 			page_data.update(_locals["data"])
 		return page_data
+
+	def generate_page_preview_image(self, html=None):
+		file_name=f"{self.name}{frappe.generate_hash()}.jpeg"
+		frappe.enqueue(method=get_preview,
+			html=html or get_response_content(self.route),
+			output_path=os.path.join(
+				frappe.local.site_path, "public", "files", file_name
+			))
+		self.db_set("preview", f"/files/{file_name}", notify=True, commit=True)
 
 def get_block_html(blocks, page_data={}):
 	blocks = frappe.parse_json(blocks)
@@ -290,8 +298,15 @@ def get_web_pages_with_dynamic_routes() -> dict[str, str]:
 	)
 
 @frappe.whitelist()
-def get_page_preview_html(page: str) -> str:
-	"""Returns the HTML of the page preview"""
-	page = frappe.get_cached_doc("Web Page Beta", page)
+def get_page_preview_html(page: str, **kwarg) -> str:
+	# to load preview without publishing
+	frappe.form_dict.update(kwarg)
+	renderer = DocumentPage(path="")
+	renderer.docname = page
+	renderer.doctype = "Web Page Beta"
+	renderer.init_context()
 	frappe.flags.show_preview = True
-	return get_response(page.route)
+	response = renderer.render()
+	page = frappe.get_cached_doc("Web Page Beta", page)
+	page.generate_page_preview_image(html=str(response.data, 'utf-8'))
+	return response
