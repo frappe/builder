@@ -71,7 +71,10 @@ watch(
 	(editable) => {
 		editor.value?.setEditable(editable);
 		if (editable) {
+			store.history.pause();
 			editor.value?.commands.focus("all");
+		} else {
+			store.history.resume();
 		}
 	}
 );
