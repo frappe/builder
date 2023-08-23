@@ -25,6 +25,7 @@
 					!blockController.multipleBlocksSelected()
 				"
 				:target-block="block"
+				:target="target"
 				:on-update="updateTracker"
 				:disable-handlers="false"
 				:breakpoint="breakpoint" />
