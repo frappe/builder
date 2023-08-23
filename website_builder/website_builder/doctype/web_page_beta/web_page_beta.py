@@ -304,8 +304,9 @@ def get_page_preview_html(page: str, **kwarg) -> str:
 	renderer = DocumentPage(path="")
 	renderer.docname = page
 	renderer.doctype = "Web Page Beta"
-	renderer.init_context()
 	frappe.flags.show_preview = True
+	frappe.local.no_cache = 1
+	renderer.init_context()
 	response = renderer.render()
 	page = frappe.get_cached_doc("Web Page Beta", page)
 	page.generate_page_preview_image(html=str(response.data, 'utf-8'))
