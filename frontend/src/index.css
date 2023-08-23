@@ -1,1 +1,8 @@
 @import "frappe-ui/src/style.css";
+
+@layer base {
+  ul, ol {
+    list-style: revert;
+    padding: revert;
+  }
+}

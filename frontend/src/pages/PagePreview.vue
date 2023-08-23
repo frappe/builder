@@ -66,7 +66,7 @@
 import PanelResizer from "@/components/PanelResizer.vue";
 import useStore from "@/store";
 import { useEventListener } from "@vueuse/core";
-import { Ref, onMounted, ref, watchEffect } from "vue";
+import { Ref, ref, watch, watchEffect } from "vue";
 import { useRoute } from "vue-router";
 
 const route = useRoute();
@@ -117,7 +117,23 @@ const setWidth = (device: string) => {
 	}
 };
 
-onMounted(() => {
-	previewRoute.value = `/api/method/website_builder.website_builder.doctype.web_page_beta.web_page_beta.get_page_preview_html?page=${route.params.pageId}`;
-});
+const setPreviewURL = () => {
+	let queryParams = {
+		page: route.params.pageId,
+		...store.routeVariables,
+	};
+	previewRoute.value = `/api/method/website_builder.website_builder.doctype.web_page_beta.web_page_beta.get_page_preview_html?${Object.entries(
+		queryParams
+	)
+		.map(([key, value]) => `${key}=${value}`)
+		.join("&")}`;
+};
+
+watch(
+	() => route.params.pageId,
+	() => {
+		setPreviewURL();
+	},
+	{ immediate: true }
+);
 </script>
