@@ -143,7 +143,7 @@
 		</h3>
 		<InlineInput
 			label="Margin"
-			v-if="!blockController.multipleBlocksSelected()"
+			v-if="!blockController.multipleBlocksSelected() && !blockController.isRoot()"
 			:modelValue="blockController.getStyle('margin')"
 			@update:modelValue="(val) => blockController.setStyle('margin', val)" />
 		<InlineInput
