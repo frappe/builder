@@ -1,4 +1,4 @@
-function getNumberFromPx(px: string | number): number {
+function getNumberFromPx(px: string | number | null | undefined): number {
 	if (!px) {
 		return 0;
 	}

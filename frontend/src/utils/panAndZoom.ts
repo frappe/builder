@@ -13,7 +13,7 @@ function setPanAndZoom(
 	let startX = 0;
 	let startY = 0;
 	let pinchPointSet = false;
-	let wheeling: any = null;
+	let wheeling: undefined | number;
 
 	panAndZoomAreaElement.addEventListener(
 		"wheel",

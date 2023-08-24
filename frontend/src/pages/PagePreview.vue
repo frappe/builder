@@ -125,7 +125,6 @@ const setWidth = (device: string) => {
 		} else {
 			width.value = breakpoint.width;
 		}
-		activeBreakpoint.value = breakpoint.device;
 	}
 };
 

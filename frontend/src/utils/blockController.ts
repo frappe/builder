@@ -1,5 +1,6 @@
 import useStore from "@/store";
 import { CSSProperties } from "vue";
+import { BlockDataKey } from "./block";
 
 const store = useStore();
 
@@ -15,12 +16,12 @@ const blockController = {
 	isRoot() {
 		return store.selectedBlocks[0].isRoot();
 	},
-	setStyle: (style: styleProperty, value: any) => {
+	setStyle: (style: styleProperty, value: StyleValue) => {
 		store.selectedBlocks.forEach((block) => {
 			block.setStyle(style, value);
 		});
 	},
-	setBaseStyle: (style: styleProperty, value: any) => {
+	setBaseStyle: (style: styleProperty, value: StyleValue) => {
 		store.selectedBlocks.forEach((block) => {
 			block.setBaseStyle(style, value);
 		});
@@ -149,20 +150,12 @@ const blockController = {
 	getTextContent: () => {
 		return store.selectedBlocks[0].getTextContent();
 	},
-	setBlockData: (data: BlockData) => {
-		store.selectedBlocks.forEach((block) => {
-			block.blockData = data;
-		});
-	},
-	getBlockData: () => {
-		return store.selectedBlocks[0]?.blockData || [];
-	},
-	setDataKey: (key: string, value: string) => {
+	setDataKey: (key: keyof BlockDataKey, value: string) => {
 		store.selectedBlocks.forEach((block) => {
 			block.setDataKey(key, value);
 		});
 	},
-	getDataKey: (key: string) => {
+	getDataKey: (key: keyof BlockDataKey) => {
 		return store.selectedBlocks[0].getDataKey(key);
 	},
 	isRepeater: () => {

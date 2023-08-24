@@ -47,5 +47,4 @@ import PageData from "./PageData.vue";
 import PageSettings from "./PageSettings.vue";
 import PanelResizer from "./PanelResizer.vue";
 const store = useStore();
-console.log(store.rightPanelActiveTab);
 </script>

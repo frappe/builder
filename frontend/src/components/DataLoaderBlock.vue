@@ -7,12 +7,12 @@
 		</div>
 		<BuilderBlock
 			v-else
-			:data="data"
+			:data="_data"
 			:block="block.children[0]"
 			:preview="preview"
 			:breakpoint="breakpoint"
 			:isChildOfComponent="block.isComponent()"
-			v-for="data in blockData" />
+			v-for="_data in blockData" />
 	</div>
 </template>
 
@@ -36,18 +36,21 @@ const props = defineProps({
 		type: String,
 		default: "desktop",
 	},
+	data: {
+		type: Object,
+		default: null,
+	},
 });
 
 const component = ref(null) as Ref<HTMLElement | null>;
 
 const blockData = computed(() => {
-	const pageData = store.pageData;
-	const data = {};
-	Object.assign(data, props.block.blockData);
+	const pageData = props.data || store.pageData;
 	if (pageData && props.block.dataKey?.key) {
-		Object.assign(data, pageData[props.block.dataKey?.key]);
+		return pageData[props.block.dataKey?.key];
+	} else {
+		return [];
 	}
-	return data;
 });
 
 defineExpose({

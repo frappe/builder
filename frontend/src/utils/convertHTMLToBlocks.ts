@@ -68,7 +68,7 @@ window.convertHTMLToBlocks = convertHTMLToBlocks;
 
 declare global {
 	interface Window {
-		convertHTMLToBlocks: any;
+		convertHTMLToBlocks: typeof convertHTMLToBlocks;
 	}
 }
 
