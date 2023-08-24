@@ -56,7 +56,7 @@ import { TabButtons } from "frappe-ui";
 import { computed } from "vue";
 const top = computed({
 	get() {
-		return blockController.getStyle("top");
+		return blockController.getStyle("top") as string;
 	},
 	set(value: string) {
 		blockController.setStyle("top", value);
@@ -65,7 +65,7 @@ const top = computed({
 
 const right = computed({
 	get() {
-		return blockController.getStyle("right");
+		return blockController.getStyle("right") as string;
 	},
 	set(value: string) {
 		blockController.setStyle("right", value);
@@ -74,7 +74,7 @@ const right = computed({
 
 const left = computed({
 	get() {
-		return blockController.getStyle("left");
+		return blockController.getStyle("left") as string;
 	},
 	set(value: string) {
 		blockController.setStyle("left", value);
@@ -83,7 +83,7 @@ const left = computed({
 
 const bottom = computed({
 	get() {
-		return blockController.getStyle("bottom");
+		return blockController.getStyle("bottom") as string;
 	},
 	set(value: string) {
 		blockController.setStyle("bottom", value);
@@ -92,7 +92,7 @@ const bottom = computed({
 
 const position = computed({
 	get() {
-		return blockController.getStyle("position") || "static";
+		return (blockController.getStyle("position") as string) || "static";
 	},
 	set(value: string) {
 		blockController.setStyle("position", value);

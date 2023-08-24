@@ -1,5 +1,6 @@
 import { createListResource } from "frappe-ui";
 
+import { WebPageComponent } from "@/types/WebsiteBuilder/WebPageComponent";
 import Block from "@/utils/block";
 import { reactive } from "vue";
 
@@ -12,7 +13,7 @@ const webComponent = createListResource({
 	start: 0,
 	pageLength: 100,
 	auto: true,
-	transform(data: any[]) {
+	transform(data: WebPageComponent[]) {
 		data.forEach((d) => {
 			if (!(d.block instanceof Block)) {
 				d.block = reactive(new Block(JSON.parse(d.block)));

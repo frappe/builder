@@ -123,8 +123,11 @@ useEventListener(document, "paste", (e) => {
 		// try pasting figma text styles
 		if (text.includes("styleName:")) {
 			e.preventDefault();
-			const styleObj = text.split(";").reduce((acc, curr) => {
-				const [key, value] = curr.split(":").map((item) => (item ? item.trim() : ""));
+			const styleObj = text.split(";").reduce((acc: BlockStyleMap, curr) => {
+				const [key, value] = curr.split(":").map((item) => (item ? item.trim() : "")) as [
+					styleProperty,
+					StyleValue
+				];
 				if (["font-size", "font-weight", "line-height", "letter-spacing", "text-align"].includes(key)) {
 					acc[key] = value;
 				}

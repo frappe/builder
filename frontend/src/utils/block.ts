@@ -1,4 +1,5 @@
 import useStore from "@/store";
+import { Editor } from "@tiptap/vue-3";
 import { clamp } from "@vueuse/core";
 import { CSSProperties, nextTick, reactive } from "vue";
 import { addPxToNumber, getNumberFromPx, getTextContent, kebabToCamelCase } from "./helpers";
@@ -39,7 +40,6 @@ class Block implements BlockOptions {
 	innerText?: string;
 	innerHTML?: string;
 	extendedFromComponent?: string;
-	blockData?: BlockData;
 	originalElement?: string | undefined;
 	isChildOfComponent?: string;
 	isRepeaterBlock?: boolean;
@@ -51,7 +51,6 @@ class Block implements BlockOptions {
 		this.isChildOfComponent = options.isChildOfComponent;
 
 		this.dataKey = options.dataKey || null;
-		this.blockData = options.blockData;
 
 		if (options.innerText) {
 			this.innerHTML = options.innerText;
@@ -190,7 +189,7 @@ class Block implements BlockOptions {
 	isInput() {
 		return this.originalElement === "input" || this.getElement() === "input";
 	}
-	setStyle(style: styleProperty, value: number | string | null) {
+	setStyle(style: styleProperty, value: StyleValue) {
 		const store = useStore();
 		let styleObj = this.baseStyles;
 		style = kebabToCamelCase(style) as styleProperty;
@@ -216,7 +215,7 @@ class Block implements BlockOptions {
 		delete this.mobileStyles[style];
 		delete this.tabletStyles[style];
 	}
-	setBaseStyle(style: styleProperty, value: string | number) {
+	setBaseStyle(style: styleProperty, value: StyleValue) {
 		style = kebabToCamelCase(style) as styleProperty;
 		this.baseStyles[style] = value;
 	}
@@ -400,7 +399,7 @@ class Block implements BlockOptions {
 			return this.getStyle("color");
 		}
 	}
-	getEditor(): any {
+	getEditor(): null | Editor {
 		return null;
 	}
 	setTextColor(color: string) {
@@ -435,7 +434,6 @@ class Block implements BlockOptions {
 		this.setBaseStyle("height", "fit-content");
 		this.setBaseStyle("gap", "20px");
 		this.isRepeaterBlock = true;
-		this.blockData = [{}];
 	}
 	moveChild(child: Block, index: number) {
 		const childIndex = this.children.findIndex((block) => block.blockId === child.blockId);
@@ -450,7 +448,7 @@ class Block implements BlockOptions {
 	getDataKey(key: keyof BlockDataKey) {
 		return this.dataKey && this.dataKey[key];
 	}
-	setDataKey(key: keyof BlockDataKey, value: any) {
+	setDataKey(key: keyof BlockDataKey, value: string) {
 		if (!this.dataKey) {
 			this.dataKey = {
 				key: "",

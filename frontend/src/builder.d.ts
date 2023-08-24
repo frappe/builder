@@ -1,4 +1,4 @@
-declare type StyleValue = string | number;
+declare type StyleValue = string | number | null | undefined;
 
 declare interface BlockStyleMap {
 	[key: string]: StyleValue;

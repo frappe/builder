@@ -82,15 +82,6 @@ const getPage = () => {
 	});
 };
 
-const setPage = (page: Page) => {
-	router.replace({
-		name: "builder",
-		params: {
-			pageId: page.name,
-		},
-	});
-};
-
 const setActiveTab = (tab: LeftSidebarTabOption) => {
 	store.leftPanelActiveTab = tab;
 };

@@ -223,7 +223,7 @@ const useStore = defineStore("store", {
 			if (this.editingComponent) {
 				parent = this.getComponentBlock(this.editingComponent);
 			}
-			let firstBlock = reactive(new Block(blocks[0]));
+			let firstBlock = this.getBlockInstance(blocks[0]);
 			if (firstBlock.isRoot() && !this.editingComponent) {
 				this.builderState.blocks = [firstBlock];
 			} else {
@@ -248,10 +248,10 @@ const useStore = defineStore("store", {
 				};
 				deleteBlockId(b);
 			}
-			return reactive(new Block(b));
+			return this.getBlockInstance(b);
 		},
 		getRootBlock() {
-			return reactive(new Block(getBlockTemplate("body")));
+			return this.getBlockInstance(getBlockTemplate("body"));
 		},
 		getPageData() {
 			return this.builderState.blocks;
