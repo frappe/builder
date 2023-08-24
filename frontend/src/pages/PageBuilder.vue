@@ -57,7 +57,7 @@ import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { copyToClipboard, isHTMLString } from "@/utils/helpers";
 import { useEventListener, watchDebounced } from "@vueuse/core";
 import { toast } from "frappe-ui";
-import { nextTick, onActivated, ref, watch } from "vue";
+import { nextTick, onActivated, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
@@ -323,9 +323,12 @@ const clearSelectedComponent = () => {
 	}
 };
 
-onActivated(() => {
+onActivated(async () => {
 	if (route.params.pageId === store.selectedPage) {
 		return;
+	}
+	if (!webPages.data) {
+		await webPages.fetchOne.submit(route.params.pageId as string);
 	}
 	if (route.params.pageId && route.params.pageId !== "new") {
 		setPage(route.params.pageId as string);
