@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<div class="mb-8" v-if="components.length || filter">
+		<div class="mb-8" v-show="components.length || filter">
 			<Input
 				class="rounded-md text-sm text-gray-800 focus:ring-0 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700"
 				type="text"
@@ -13,9 +13,9 @@
 					}
 				" />
 		</div>
-		<div v-if="!components.length" class="text-sm italic text-gray-600">No components saved</div>
+		<div v-show="!components.length" class="text-sm italic text-gray-600">No components saved</div>
 		<div v-for="component in components" :key="component.name" class="flex w-full flex-wrap">
-			<div class="group relative mb-3 w-full">
+			<div class="component-container group relative mb-3 w-full">
 				<div
 					class="relative mb-1 mr-2 flex h-24 w-full max-w-[300px] cursor-pointer items-center justify-center overflow-hidden rounded-md border bg-gray-50 p-2 shadow-sm last:mr-0 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
 					draggable="true"
@@ -44,13 +44,13 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, nextTick, ref } from "vue";
-import BuilderBlock from "./BuilderBlock.vue";
-
 import webComponent from "@/data/webComponent";
-
 import useStore from "@/store";
 import { WebPageComponent } from "@/types/WebsiteBuilder/WebPageComponent";
+import { useIntersectionObserver } from "@vueuse/core";
+import { computed, ref } from "vue";
+import BuilderBlock from "./BuilderBlock.vue";
+
 const store = useStore();
 const filter = ref("");
 
@@ -68,10 +68,18 @@ const components = computed(() =>
 );
 
 const setScale = async (el: HTMLElement, block: BlockOptions) => {
-	nextTick(() => {
-		const scale = Math.max(Math.min(60 / el.offsetHeight, 200 / el.offsetWidth), 0.1);
-		block.scale = scale;
-	});
+	// set scale to fit in container
+	// setting scale when element is on screen
+	const { stop } = useIntersectionObserver(
+		el.closest(".component-container") as HTMLElement,
+		([{ isIntersecting }], observerElement) => {
+			if (isIntersecting) {
+				const scale = Math.max(Math.min(60 / el.offsetHeight, 200 / el.offsetWidth), 0.1);
+				block.scale = scale;
+				stop();
+			}
+		}
+	);
 };
 
 const deleteComponent = async (component: BlockComponent) => {

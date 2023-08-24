@@ -24,7 +24,6 @@
 	<teleport to="#overlay" v-if="canvasProps?.overlayElement && !preview && canvasProps">
 		<BlockEditor
 			v-if="loadEditor"
-			v-show="!canvasProps.scaling && !canvasProps.panning"
 			:block="block"
 			:breakpoint="breakpoint"
 			:editable="isEditable"
@@ -132,6 +131,8 @@ const styles = computed(() => {
 
 const loadEditor = computed(() => {
 	return (
+		!canvasProps?.scaling &&
+		!canvasProps?.panning &&
 		target.value &&
 		props.block.getStyle("display") !== "none" &&
 		((props.block.isSelected() && props.breakpoint === store.activeBreakpoint) ||
