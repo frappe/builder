@@ -183,7 +183,8 @@ const useStore = defineStore("store", {
 				visible: false,
 			},
 		],
-		sidebarActiveTab: <LeftSidebarTabOption>"Components",
+		leftPanelActiveTab: <LeftSidebarTabOption>"Components",
+		rightPanelActiveTab: <RightSidebarTabOption>"Properties",
 		showPanels: <boolean>true,
 		blockEditorCanvas: {
 			scale: 0.5,

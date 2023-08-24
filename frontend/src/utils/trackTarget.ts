@@ -1,8 +1,6 @@
 import { useElementBounding, useMutationObserver } from "@vueuse/core";
 import { nextTick, reactive, watch, watchEffect } from "vue";
-import useStore from "../store";
 import { addPxToNumber } from "./helpers";
-const store = useStore();
 
 declare global {
 	interface Window {

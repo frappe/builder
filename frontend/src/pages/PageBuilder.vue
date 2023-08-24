@@ -12,7 +12,9 @@
 				:block="store.getComponentBlock(store.editingComponent)"
 				:canvas-props="store.componentEditorCanvas"
 				:canvas-styles="{
-					width: 'auto',
+					width: (store.getComponentBlock(store.editingComponent).getStyle('width') + '').endsWith('px')
+						? '!fit-content'
+						: null,
 					padding: '40px',
 				}"
 				:style="{
@@ -55,12 +57,19 @@ import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { copyToClipboard, isHTMLString } from "@/utils/helpers";
 import { useEventListener, watchDebounced } from "@vueuse/core";
 import { toast } from "frappe-ui";
-import { nextTick, onActivated, ref } from "vue";
+import { nextTick, onActivated, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
 const router = useRouter();
 const store = useStore();
+
+declare global {
+	interface Window {
+		store: typeof store;
+		blockController: typeof blockController;
+	}
+}
 
 window.store = store;
 window.blockController = blockController;
@@ -160,6 +169,7 @@ useEventListener(document, "keydown", (e) => {
 	}
 	if (e.key === "z" && e.metaKey && !e.shiftKey && store.history.canUndo) {
 		store.history.undo();
+		e.preventDefault();
 		return;
 	}
 	if (e.key === "z" && e.shiftKey && e.metaKey && store.history.canRedo) {
@@ -227,6 +237,18 @@ useEventListener(document, "keydown", (e) => {
 			copyToClipboard(JSON.stringify(store.selectedBlocks));
 		}
 	}
+
+	if (e.key === "c" && e.metaKey && e.shiftKey) {
+		if (blockController.isBLockSelected() && !blockController.multipleBlocksSelected()) {
+			e.preventDefault();
+			const block = blockController.getSelectedBlocks()[0];
+			store.copiedStyle = {
+				blockId: block.blockId,
+				style: block.getStylesCopy(),
+			};
+		}
+	}
+
 	if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
 		return;
 	}

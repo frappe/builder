@@ -2,6 +2,7 @@
 	<div>
 		<div class="mb-8" v-if="components.length || filter">
 			<Input
+				class="rounded-md text-sm text-gray-800 focus:ring-0 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700"
 				type="text"
 				placeholder="Filter"
 				inputClass="w-full"
