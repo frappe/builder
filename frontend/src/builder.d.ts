@@ -71,6 +71,7 @@ declare type HashString = `#${string}`;
 declare type RGBString = `rgb(${number}, ${number}, ${number})`;
 
 declare type LeftSidebarTabOption = "Components" | "Layers";
+declare type RightSidebarTabOption = "Properties" | "Data" | "Settings";
 
 declare type BuilderMode = "select" | "text" | "container" | "image" | "html";
 

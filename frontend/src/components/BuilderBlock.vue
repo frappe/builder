@@ -169,7 +169,8 @@ const selectBlock = (e: MouseEvent | null) => {
 	store.activeBreakpoint = props.breakpoint;
 
 	if (!props.preview) {
-		store.sidebarActiveTab = "Layers";
+		store.leftPanelActiveTab = "Layers";
+		store.rightPanelActiveTab = "Properties";
 	}
 };
 

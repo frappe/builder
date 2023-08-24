@@ -27,6 +27,8 @@
 				<div
 					class="group relative mr-2 w-full overflow-hidden rounded-md shadow hover:cursor-pointer dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
 					<img
+						width="250"
+						height="140"
 						:src="page.preview"
 						onerror="this.src='/assets/website_builder/images/fallback.png'"
 						class="w-full rounded-sm bg-gray-50 object-cover p-2 dark:bg-zinc-900" />

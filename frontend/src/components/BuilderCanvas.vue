@@ -30,9 +30,9 @@
 			<div
 				class="canvas relative flex h-full rounded-md bg-white shadow-2xl"
 				:style="{
+					...canvasStyles,
 					background: canvasProps.background,
 					width: `${breakpoint.width}px`,
-					...canvasStyles,
 				}"
 				v-for="breakpoint in visibleBreakpoints"
 				:key="breakpoint.device">

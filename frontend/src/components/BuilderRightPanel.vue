@@ -14,39 +14,38 @@
 				v-for="tab of ['Properties', 'Data', 'Settings']"
 				:key="tab"
 				class="mx-3 flex-1 p-2"
-				@click="activeTab = tab"
+				@click="store.rightPanelActiveTab = tab as RightSidebarTabOption"
 				:class="{
-					'border-b-[1px] border-gray-900 dark:border-zinc-500 dark:text-zinc-300': activeTab === tab,
-					'text-gray-700 dark:text-zinc-600': activeTab !== tab,
+					'border-b-[1px] border-gray-900 dark:border-zinc-500 dark:text-zinc-300':
+						store.rightPanelActiveTab === tab,
+					'text-gray-700 dark:text-zinc-600': store.rightPanelActiveTab !== tab,
 				}">
 				{{ tab }}
 			</button>
 		</div>
 		<BlockProperties
 			v-if="blockController.isBLockSelected()"
-			v-show="activeTab === 'Properties'"
+			v-show="store.rightPanelActiveTab === 'Properties'"
 			class="p-4" />
 		<PageData
 			class="p-4"
-			v-show="activeTab === 'Data'"
+			v-show="store.rightPanelActiveTab === 'Data'"
 			:key="store.selectedPage"
 			v-if="store.selectedPage && store.getActivePage()" />
 		<PageSettings
 			class="p-4"
-			v-show="activeTab === 'Settings'"
+			v-show="store.rightPanelActiveTab === 'Settings'"
 			:key="store.selectedPage"
 			v-if="store.selectedPage && store.getActivePage()" />
 	</div>
 </template>
-<script setup>
+<script setup lang="ts">
 import useStore from "@/store";
 import blockController from "@/utils/blockController";
-import { ref } from "vue";
 import BlockProperties from "./BlockProperties.vue";
 import PageData from "./PageData.vue";
-import PanelResizer from "./PanelResizer.vue";
 import PageSettings from "./PageSettings.vue";
-const activeTab = ref("Properties");
-
+import PanelResizer from "./PanelResizer.vue";
 const store = useStore();
+console.log(store.rightPanelActiveTab);
 </script>

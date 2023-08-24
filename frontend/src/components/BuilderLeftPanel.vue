@@ -28,16 +28,16 @@
 				@click.stop="setActiveTab(tab as LeftSidebarTabOption)"
 				:class="{
 					'border-b-[1px] border-gray-900 dark:border-zinc-500 dark:text-zinc-300':
-						store.sidebarActiveTab === tab,
-					'text-gray-700 dark:text-zinc-600': store.sidebarActiveTab !== tab,
+						store.leftPanelActiveTab === tab,
+					'text-gray-700 dark:text-zinc-600': store.leftPanelActiveTab !== tab,
 				}">
 				{{ tab }}
 			</button>
 		</div>
-		<div v-if="store.sidebarActiveTab === 'Components'">
+		<div v-if="store.leftPanelActiveTab === 'Components'">
 			<BuilderComponents class="p-4" />
 		</div>
-		<div v-show="store.sidebarActiveTab === 'Layers'">
+		<div v-show="store.leftPanelActiveTab === 'Layers'">
 			<BlockLayers
 				class="p-4"
 				:blocks="store.builderState.blocks"
@@ -92,6 +92,6 @@ const setPage = (page: Page) => {
 };
 
 const setActiveTab = (tab: LeftSidebarTabOption) => {
-	store.sidebarActiveTab = tab;
+	store.leftPanelActiveTab = tab;
 };
 </script>
