@@ -11,6 +11,7 @@
 					<BlockContextMenu v-slot="{ onContextMenu }" :block="element" :editable="false">
 						<div
 							:data-block-layer-id="element.blockId"
+							:title="element.blockId"
 							@contextmenu.prevent.stop="onContextMenu"
 							class="cursor-pointer rounded border bg-white pl-2 pr-[2px] text-sm text-gray-700 dark:bg-zinc-900"
 							:class="{
@@ -34,7 +35,7 @@
 									:name="isExpanded(element) ? 'chevron-down' : 'chevron-right'"
 									class="mr-1 h-3 w-3"
 									v-if="element.children && element.children.length && !element.isRoot()"
-									@click.stop="element.expanded = !element.expanded" />
+									@click.stop="toggleExpanded(element)" />
 								<FeatherIcon
 									:name="element.getIcon()"
 									class="mr-1 h-3 w-3"
@@ -87,7 +88,7 @@
 <script setup lang="ts">
 import Block from "@/utils/block";
 import { FeatherIcon } from "frappe-ui";
-import { PropType } from "vue";
+import { PropType, ref, watch } from "vue";
 import draggable from "vuedraggable";
 import useStore from "../store";
 import BlockContextMenu from "./BlockContextMenu.vue";
@@ -110,7 +111,37 @@ const setBlockName = (ev: Event, block: LayerBlock) => {
 	block.editable = false;
 };
 
+const expandedLayers = ref(new Set());
+
 const isExpanded = (block: Block) => {
-	return block.isRoot() || block.isSelected() || block.children.some(isExpanded) || block.expanded === true;
+	return expandedLayers.value.has(block.blockId);
 };
+
+const toggleExpanded = (block: Block) => {
+	if (isExpanded(block)) {
+		expandedLayers.value.delete(block.blockId);
+	} else {
+		expandedLayers.value.add(block.blockId);
+	}
+};
+
+watch(
+	() => store.selectedBlocks,
+	() => {
+		if (store.selectedBlocks.length) {
+			store.selectedBlocks.forEach((block) => {
+				if (block) {
+					expandedLayers.value.add(block.blockId);
+					let parentBlock = block.getParentBlock();
+					// open all parent blocks
+					while (parentBlock && !parentBlock.isRoot()) {
+						expandedLayers.value.add(parentBlock?.blockId);
+						parentBlock = parentBlock.getParentBlock();
+					}
+				}
+			});
+		}
+	},
+	{ immediate: true }
+);
 </script>

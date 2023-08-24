@@ -103,10 +103,11 @@ watchEffect(() => {
 	props.block.getStyle("bottom");
 	props.block.getStyle("right");
 	props.block.getStyle("position");
-	props.block.getParentBlock()?.getStyle("display");
-	props.block.getParentBlock()?.getStyle("justifyContent");
-	props.block.getParentBlock()?.getStyle("alignItems");
-	props.block.getParentBlock()?.getStyle("flexDirection");
+	const parentBlock = props.block.getParentBlock();
+	parentBlock?.getStyle("display");
+	parentBlock?.getStyle("justifyContent");
+	parentBlock?.getStyle("alignItems");
+	parentBlock?.getStyle("flexDirection");
 	store.builderLayout.leftPanelWidth;
 	store.builderLayout.rightPanelWidth;
 	store.showPanels;
