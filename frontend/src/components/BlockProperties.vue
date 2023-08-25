@@ -243,16 +243,6 @@
 			:modelValue="blockController.getAttribute('alt')"
 			@update:modelValue="(val) => blockController.setAttribute('alt', val)" />
 		<CodeEditor
-			v-if="blockController.isRepeater()"
-			class="mt-8"
-			label="Block Data (Array)"
-			:modelValue="blockController.getBlockData()"
-			@update:modelValue="
-				(val) => {
-					blockController.setBlockData(val);
-				}
-			"></CodeEditor>
-		<CodeEditor
 			class="mt-8"
 			label="RAW Styles (as JSON)"
 			:modelValue="blockController.getRawStyles() || {}"
