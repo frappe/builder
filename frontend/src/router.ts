@@ -1,9 +1,37 @@
+import { createResource } from "frappe-ui";
 import { createRouter, createWebHistory } from "vue-router";
 
 // Hack, TODO: Check authentication
+let hasPermission: null | boolean = null;
+
+function validatePermission(next: CallableFunction) {
+	if (hasPermission) {
+		next();
+	} else {
+		alert("You do not have permission to access this page");
+		window.location.href = "/login";
+	}
+}
+
 const validateVisit = function (to, from, next) {
 	if (document.cookie.includes("user_id") && !document.cookie.includes("user_id=Guest")) {
-		next();
+		if (hasPermission === null) {
+			createResource({
+				url: "frappe.client.has_permission",
+				caches: "has_permission",
+			})
+				.submit({
+					doctype: "Web Page Beta",
+					docname: null,
+					perm_type: "write",
+				})
+				.then((res: any) => {
+					hasPermission = res.has_permission as boolean;
+					validatePermission(next);
+				});
+		} else {
+			validatePermission(next);
+		}
 	} else {
 		window.location.href = "/login";
 	}
