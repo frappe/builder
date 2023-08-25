@@ -46,8 +46,8 @@ const component = ref(null) as Ref<HTMLElement | null>;
 
 const blockData = computed(() => {
 	const pageData = props.data || store.pageData;
-	if (pageData && props.block.dataKey?.key) {
-		return pageData[props.block.dataKey?.key];
+	if (pageData && props.block.getDataKey("key")) {
+		return pageData[props.block.getDataKey("key")];
 	} else {
 		return [];
 	}

@@ -111,14 +111,14 @@ const setBlockName = (ev: Event, block: LayerBlock) => {
 	block.editable = false;
 };
 
-const expandedLayers = ref(new Set());
+const expandedLayers = ref(new Set("root"));
 
 const isExpanded = (block: Block) => {
 	return expandedLayers.value.has(block.blockId);
 };
 
 const toggleExpanded = (block: Block) => {
-	if (isExpanded(block)) {
+	if (isExpanded(block) && block.blockId !== "root") {
 		expandedLayers.value.delete(block.blockId);
 	} else {
 		expandedLayers.value.add(block.blockId);

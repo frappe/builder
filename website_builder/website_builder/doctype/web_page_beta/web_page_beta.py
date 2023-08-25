@@ -36,8 +36,7 @@ class WebPageBeta(WebsiteGenerator):
 			self.flags.skip_preview = True
 		else:
 			self.preview = "/assets/website_builder/images/fallback.png"
-
-		self.route = f"pages/{camel_case_to_kebab_case(self.page_title)}-{frappe.generate_hash(length=4)}"
+		self.route = f"pages/{camel_case_to_kebab_case(self.page_title, True)}-{frappe.generate_hash(length=4)}"
 
 	def autoname(self):
 		if not self.name:
@@ -107,8 +106,8 @@ def get_block_html(blocks, page_data={}):
 
 	def get_html(blocks, soup):
 		html = ""
-		def get_tag(block, soup, data=None):
-			block = extend_with_component(block, data)
+		def get_tag(block, soup, context_data=None):
+			block = extend_with_component(block, context_data)
 			element = block.get("originalElement") or block.get("element")
 			# temp fix: since p inside p is illegal
 			if element in ["p", "__raw_html__"]:
@@ -141,18 +140,18 @@ def get_block_html(blocks, page_data={}):
 				dataKey = block.get("dataKey")
 				key = dataKey.get("key") if dataKey else ""
 				if key:
-					block_data = page_data.get(key, [])
+					block_data = context_data and context_data.get(key, [])
 
 			if block_data and block.get("children"):
-				for data in block_data:
-					tag.append(get_tag(block.get("children")[0], soup, data))
+				for _data in block_data:
+					tag.append(get_tag(block.get("children")[0], soup, _data))
 			else:
 				for child in block.get("children", []):
-					tag.append(get_tag(child, soup))
+					tag.append(get_tag(child, soup, context_data))
 			return tag
 
 		for block in blocks:
-			html += str(get_tag(block, soup))
+			html += str(get_tag(block, soup, page_data))
 
 		return html, str(style_tag), font_map
 
@@ -164,8 +163,11 @@ def get_style(style_obj):
 def get_class(class_list):
 	return " ".join(class_list)
 
-def camel_case_to_kebab_case(text):
-	return re.sub(r'(?<!^)(?=[A-Z])', '-', text).lower()
+def camel_case_to_kebab_case(text, remove_spaces=False):
+	text = re.sub(r'(?<!^)(?=[A-Z])', '-', text).lower()
+	if remove_spaces:
+		text = text.replace(" ", "")
+	return text
 
 def append_style(style_obj, style_tag, style_class, device="desktop"):
 	style = get_style(style_obj)
@@ -219,12 +221,9 @@ def extend_block(block, overridden_block, data=None):
 	block["classes"].extend(overridden_block["classes"])
 	if overridden_block.get("innerHTML"):
 		block["innerHTML"] = overridden_block["innerHTML"]
-
 	extend_with_data(block, data)
-
 	component_children = block.get("children", [])
 	overridden_children = overridden_block.get("children", [])
-
 	for overridden_child in overridden_children:
 		component_child = next((child for child in component_children if child.get("blockId") == overridden_child.get("blockId")), None)
 		if component_child:
@@ -233,19 +232,18 @@ def extend_block(block, overridden_block, data=None):
 			component_children.insert(overridden_children.index(overridden_child), overridden_child)
 
 
-
 def extend_with_data(block, data):
 	if not data:
 		return
 	data_key = block.get("dataKey")
 	if data_key:
-		value = data.get((data_key.get("key")))
+		value = frappe.cstr(data.get((data_key.get("key"))))
 		if value:
 			if data_key.get("type") == "attribute":
 				block["attributes"][data_key.get("property")] = value
 			elif data_key.get("type") == "style":
 				block["baseStyles"][data_key.get("property")] = value
-			elif data_key.get("type") == "key":
+			elif data_key.get("type") == "key" and not block.get("isRepeaterBlock"):
 				block[data_key.get("property")] = value
 
 def get_style_file_path():

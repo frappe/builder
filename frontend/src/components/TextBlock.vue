@@ -37,8 +37,8 @@ const component = ref(null) as Ref<HTMLElement | null>;
 const textContent = computed(() => {
 	let innerHTML = props.block.getInnerHTML();
 	if (props.data) {
-		if (props.block.dataKey?.property === "innerHTML" && props.data[props.block.dataKey?.key as string]) {
-			innerHTML = props.data[props.block.dataKey?.key as string];
+		if (props.block.getDataKey("property") === "innerHTML" && props.data[props.block.getDataKey("key")]) {
+			innerHTML = props.data[props.block.getDataKey("key")];
 		}
 	}
 	return innerHTML;
