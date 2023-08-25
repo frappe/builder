@@ -49,7 +49,7 @@ const blockData = computed(() => {
 	if (pageData && props.block.getDataKey("key")) {
 		return pageData[props.block.getDataKey("key")];
 	} else {
-		return [];
+		return [{}];
 	}
 });
 

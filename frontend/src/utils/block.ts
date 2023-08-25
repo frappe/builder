@@ -445,8 +445,11 @@ class Block implements BlockOptions {
 	isRepeater() {
 		return this.isRepeaterBlock;
 	}
-	getDataKey(key: keyof BlockDataKey) {
-		return this.dataKey && this.dataKey[key];
+	getDataKey(key: keyof BlockDataKey): string {
+		if (this.isComponent()) {
+			return this.getComponent()?.getDataKey(key);
+		}
+		return (this.dataKey && this.dataKey[key]) || "";
 	}
 	setDataKey(key: keyof BlockDataKey, value: string) {
 		if (!this.dataKey) {
