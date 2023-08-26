@@ -228,8 +228,8 @@ def extend_block(block, overridden_block, data=None):
 		component_child = next((child for child in component_children if child.get("blockId") == overridden_child.get("blockId")), None)
 		if component_child:
 			extend_block(component_child, overridden_child, data=data)
-		else:
-			component_children.insert(overridden_children.index(overridden_child), overridden_child)
+		# else:
+		# 	component_children.insert(overridden_children.index(overridden_child), overridden_child)
 
 
 def extend_with_data(block, data):

@@ -103,9 +103,11 @@ class Block implements BlockOptions {
 			return store.getComponentBlock(this.extendedFromComponent as string);
 		}
 		if (this.isChildOfComponent) {
-			return store.getComponentBlock(this.isChildOfComponent as string).children.find((child) => {
-				return child.blockId === this.blockId;
-			}) as Block;
+			return (
+				(store.getComponentBlock(this.isChildOfComponent as string).children.find((child) => {
+					return child.blockId === this.blockId;
+				}) as Block) || store.getFallbackComponent()
+			);
 		}
 		return this;
 	}
