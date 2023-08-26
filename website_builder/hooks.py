@@ -38,7 +38,7 @@ app_license = "MIT"
 # ----------
 
 # application home page (will override Website Settings)
-home_page = "/p/home"
+# home_page = "/p/home"
 
 # website user home page (by Role)
 
