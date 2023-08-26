@@ -1,5 +1,5 @@
 function getBlockTemplate(
-	type: "html" | "text" | "image" | "container" | "body" | "fit-container"
+	type: "html" | "text" | "image" | "container" | "body" | "fit-container" | "fallback-component"
 ): BlockOptions {
 	switch (type) {
 		case "html":
@@ -69,6 +69,17 @@ function getBlockTemplate(
 				baseStyles: {
 					display: "flex",
 					flexDirection: "column",
+					height: "fit-content",
+					width: "fit-content",
+				} as BlockStyleMap,
+			};
+		case "fallback-component":
+			return {
+				name: "HTML",
+				element: "p",
+				originalElement: "__raw_html__",
+				innerHTML: `<div style="color: red;background: #f4f4f4;display:flex;flex-direction:column;position:static;top:auto;left:auto;width: 600px;height: 275px;align-items:center;font-size: 30px;justify-content:center"><p>Component missing</p></div>`,
+				baseStyles: {
 					height: "fit-content",
 					width: "fit-content",
 				} as BlockStyleMap,

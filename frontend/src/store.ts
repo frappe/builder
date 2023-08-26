@@ -398,7 +398,10 @@ const useStore = defineStore("store", {
 			this.editingComponent = null;
 		},
 		getComponentBlock(componentName: string) {
-			return webComponent.getRow(componentName).block as Block;
+			return (webComponent.getRow(componentName)?.block as Block) || this.getFallbackComponent();
+		},
+		getFallbackComponent() {
+			return this.getBlockInstance(getBlockTemplate("fallback-component"));
 		},
 		getComponentName(componentId: string) {
 			let componentObj = webComponent.getRow(componentId);

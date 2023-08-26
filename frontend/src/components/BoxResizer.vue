@@ -61,6 +61,11 @@ onMounted(() => {
 
 watchEffect(() => {
 	emit("resizing", resizing.value);
+	if (resizing.value) {
+		store.history.pause();
+	} else {
+		store.history.resume();
+	}
 });
 
 const targetWidth = computed(() => {

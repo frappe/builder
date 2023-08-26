@@ -9,10 +9,10 @@
 			v-else
 			:data="_data"
 			:block="block.children[0]"
-			:preview="preview"
+			:preview="index !== 0 || preview"
 			:breakpoint="breakpoint"
 			:isChildOfComponent="block.isComponent()"
-			v-for="_data in blockData" />
+			v-for="(_data, index) in blockData" />
 	</div>
 </template>
 
