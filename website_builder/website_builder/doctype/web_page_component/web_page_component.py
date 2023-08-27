@@ -5,4 +5,6 @@ import frappe
 from frappe.model.document import Document
 
 class WebPageComponent(Document):
-	pass
+	def before_insert(self):
+		# Generate a ID for the component so that it is uniquely identifiable if copied to different site
+		self.component_id = frappe.generate_hash(length=16)
