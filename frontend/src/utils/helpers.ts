@@ -181,6 +181,13 @@ function isJSONString(str: string) {
 	return true;
 }
 
+function isTargetEditable(e: Event) {
+	const target = e.target as HTMLElement;
+	const isEditable = target.isContentEditable;
+	const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA";
+	return isEditable || isInput;
+}
+
 export {
 	HSVToHex,
 	HexToHSV,
@@ -194,7 +201,8 @@ export {
 	getRandomColor,
 	getTextContent,
 	isHTMLString,
+	isJSONString,
+	isTargetEditable,
 	kebabToCamelCase,
 	stripExtension,
-	isJSONString,
 };

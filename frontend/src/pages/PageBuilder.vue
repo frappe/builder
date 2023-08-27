@@ -55,7 +55,7 @@ import Block, { styleProperty } from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
-import { copyToClipboard, isHTMLString, isJSONString } from "@/utils/helpers";
+import { copyToClipboard, isHTMLString, isJSONString, isTargetEditable } from "@/utils/helpers";
 import { useEventListener, watchDebounced } from "@vueuse/core";
 import { toast } from "frappe-ui";
 import { nextTick, onActivated, ref } from "vue";
@@ -93,6 +93,7 @@ useEventListener(
 );
 
 useEventListener(document, "copy", (e) => {
+	if (isTargetEditable(e)) return;
 	e.preventDefault();
 	if (store.selectedBlocks.length) {
 		const componentDocuments: WebPageComponent[] = [];
@@ -115,6 +116,7 @@ useEventListener(document, "copy", (e) => {
 });
 
 useEventListener(document, "paste", (e) => {
+	if (isTargetEditable(e)) return;
 	e.stopPropagation();
 	const clipboardItems = Array.from(e.clipboardData?.items || []);
 
@@ -207,10 +209,7 @@ useEventListener(document, "paste", (e) => {
 
 // TODO: Refactor with useMagicKeys
 useEventListener(document, "keydown", (e) => {
-	const target = e.target as HTMLElement;
-	if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.getAttribute("contenteditable")) {
-		return;
-	}
+	if (isTargetEditable(e)) return;
 	if (e.key === "z" && e.metaKey && !e.shiftKey && store.history.canUndo) {
 		store.history.undo();
 		e.preventDefault();
@@ -286,11 +285,9 @@ useEventListener(document, "keydown", (e) => {
 		}
 	}
 
-	if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
-		return;
-	}
+	if (isTargetEditable(e)) return;
 
-	if (e.key === "Backspace" && blockController.isBLockSelected() && !target.isContentEditable) {
+	if (e.key === "Backspace" && blockController.isBLockSelected()) {
 		function findBlockAndRemove(blocks: Array<Block>, blockId: string) {
 			if (blockId === "root") {
 				toast({
