@@ -1,1 +1,2 @@
 website_builder.website_builder.doctype.web_page_beta.patches.create_upload_folder_for_builder #
+website_builder.website_builder.doctype.web_page_component.patches.set_component_id

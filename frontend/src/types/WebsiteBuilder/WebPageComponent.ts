@@ -16,4 +16,6 @@ export interface WebPageComponent{
 	block?: any
 	/**	For Web Page : Link - Web Page Beta	*/
 	for_web_page?: string
+	/**	Component ID : Data	*/
+	component_id?: string
 }

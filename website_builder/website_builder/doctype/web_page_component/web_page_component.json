@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "field:component_name",
+ "autoname": "field:component_id",
  "creation": "2023-02-03 21:34:00.341027",
  "default_view": "List",
  "doctype": "DocType",
@@ -10,7 +10,8 @@
  "field_order": [
   "component_name",
   "block",
-  "for_web_page"
+  "for_web_page",
+  "component_id"
  ],
  "fields": [
   {
@@ -29,12 +30,20 @@
    "fieldname": "for_web_page",
    "fieldtype": "Link",
    "label": "For Web Page",
-   "options": "Web Page Beta"
+   "options": "Web Page Beta",
+   "read_only": 1
+  },
+  {
+   "fieldname": "component_id",
+   "fieldtype": "Data",
+   "label": "Component ID",
+   "read_only": 1,
+   "unique": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-08-26 20:25:36.034560",
+ "modified": "2023-08-27 08:22:59.312839",
  "modified_by": "Administrator",
  "module": "Website Builder",
  "name": "Web Page Component",
