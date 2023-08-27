@@ -7,7 +7,7 @@ import { reactive } from "vue";
 const webComponent = createListResource({
 	method: "GET",
 	doctype: "Web Page Component",
-	fields: ["component_name", "block", "name", "for_web_page"],
+	fields: ["component_name", "block", "name", "for_web_page", "component_id"],
 	orderBy: "creation",
 	cache: "components",
 	start: 0,
