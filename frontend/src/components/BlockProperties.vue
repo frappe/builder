@@ -19,7 +19,6 @@
 				@update:modelValue="(val) => blockController.setDataKey('property', val)" />
 		</div>
 		<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Style</h3>
-		<BackgroundHandler></BackgroundHandler>
 		<ColorInput
 			label="BG Color"
 			:value="blockController.getStyle('background')"
@@ -41,6 +40,7 @@
 					}
 				}
 			"></ColorInput>
+		<BackgroundHandler></BackgroundHandler>
 		<InlineInput
 			label="Border Width"
 			v-show="blockController.getStyle('borderColor')"

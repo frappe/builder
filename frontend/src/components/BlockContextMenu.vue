@@ -116,7 +116,7 @@ const duplicateBlock = () => {
 };
 
 const createComponentHandler = ({ close }: { close: () => void }) => {
-	const blockCopy = store.getBlockCopy(props.block);
+	const blockCopy = store.getBlockCopy(props.block, true);
 	blockCopy.removeStyle("left");
 	blockCopy.removeStyle("top");
 	blockCopy.removeStyle("position");
@@ -179,17 +179,19 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Save as Component",
 		action: () => (showDialog.value = true),
-		condition: () => !props.block.isComponent(),
+		condition: () => !props.block.isExtendedFromComponent(),
 	},
 	{
 		label: "Convert To Repeater",
 		action: () => {
 			props.block.convertToRepeater();
 		},
-		condition: () => props.block.isContainer() && !props.block.isComponent() && !props.block.isRoot(),
+		condition: () =>
+			props.block.isContainer() && !props.block.isExtendedFromComponent() && !props.block.isRoot(),
 	},
 	{
 		label: "Reset Changes",
+		condition: () => Boolean(props.block.extendedFromComponent),
 		action: () => {
 			props.block.resetChanges();
 		},
@@ -199,7 +201,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		action: () => {
 			store.editComponent(props.block);
 		},
-		condition: () => props.block.isComponent(),
+		condition: () => props.block.isExtendedFromComponent(),
 	},
 	// convert to link
 	{
@@ -207,7 +209,8 @@ const contextMenuOptions: ContextMenuOption[] = [
 		action: () => {
 			props.block.convertToLink();
 		},
-		condition: () => props.block.isContainer() && !props.block.isComponent() && !props.block.isRoot(),
+		condition: () =>
+			props.block.isContainer() && !props.block.isExtendedFromComponent() && !props.block.isRoot(),
 	},
 ];
 </script>

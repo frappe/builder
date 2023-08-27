@@ -346,7 +346,7 @@ const useStore = defineStore("store", {
 			return reactive(new Block(options));
 		},
 		editComponent(block: Block) {
-			if (block.isComponent()) {
+			if (block.isExtendedFromComponent()) {
 				this.editingComponent = block?.extendedFromComponent as string;
 			}
 			this.clearSelection();
