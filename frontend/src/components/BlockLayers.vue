@@ -74,6 +74,9 @@
 									:name="element.isVisible() ? 'eye' : 'eye-off'"
 									class="ml-auto mr-2 hidden h-3 w-3 group-hover:block"
 									@click.stop="element.toggleVisibility()" />
+								<span v-if="element.isRoot()" class="ml-auto mr-2 text-gray-400 dark:text-zinc-600">
+									{{ store.activeBreakpoint }}
+								</span>
 							</span>
 							<div v-show="isExpanded(element) && element.isVisible()" v-if="!element.isImage()">
 								<BlockLayers :blocks="element.children" class="ml-3" />
@@ -94,6 +97,7 @@ import useStore from "../store";
 import BlockContextMenu from "./BlockContextMenu.vue";
 
 const store = useStore();
+
 defineProps({
 	blocks: {
 		type: Array as PropType<Block[]>,

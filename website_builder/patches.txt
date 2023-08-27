@@ -3,3 +3,4 @@ website_builder.website_builder.doctype.web_page_beta.patches.create_upload_fold
 
 [post_model_sync]
 website_builder.website_builder.doctype.web_page_component.patches.set_component_id
+website_builder.website_builder.doctype.web_page_beta.patches.properly_extend_blocks_from_component
