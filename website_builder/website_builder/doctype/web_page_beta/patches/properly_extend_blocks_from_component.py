@@ -8,11 +8,11 @@ def execute():
 		blocks = frappe.parse_json(web_page.blocks)
 		if blocks:
 			update_blocks(blocks)
-			frappe.db.set_value("Web Page Beta", web_page.name, "blocks", frappe.as_json(blocks), update_modified=False)
+			frappe.db.set_value("Web Page Beta", web_page.name, "blocks", frappe.as_json(blocks, indent=None), update_modified=False)
 		draft_blocks = frappe.parse_json(web_page.draft_blocks)
 		if draft_blocks:
 			update_blocks(draft_blocks)
-			frappe.db.set_value("Web Page Beta", web_page.name, "draft_blocks", frappe.as_json(blocks), update_modified=False)
+			frappe.db.set_value("Web Page Beta", web_page.name, "draft_blocks", frappe.as_json(blocks, indent=None), update_modified=False)
 
 def update_blocks(blocks):
 	for block in blocks:
@@ -24,6 +24,8 @@ def update_blocks(blocks):
 			try:
 				component = frappe.get_cached_doc("Web Page Component", block.get("extendedFromComponent"))
 				component_block = frappe.parse_json(component.get("block"))
+				update_blocks([component_block])
+				frappe.db.set_value("Web Page Component", component.name, "block", frappe.as_json(component_block, indent=None), update_modified=False)
 				extend_block_from_component(block, component.name, component_block.get("children"), component_block)
 			except frappe.DoesNotExistError:
 				frappe.log_error(f"Web Page Component {block.get('extendedFromComponent')} not found")
