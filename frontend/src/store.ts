@@ -5,6 +5,7 @@ import { reactive } from "vue";
 import webComponent from "./data/webComponent";
 import { webPages } from "./data/webPage";
 import { WebPageBeta } from "./types/WebsiteBuilder/WebPageBeta";
+import { WebPageComponent } from "./types/WebsiteBuilder/WebPageComponent";
 import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
 import { stripExtension } from "./utils/helpers";
@@ -398,9 +399,20 @@ const useStore = defineStore("store", {
 			this.editingComponent = null;
 		},
 		getComponentBlock(componentName: string) {
-			return (webComponent.getRow(componentName)?.block as Block) || this.getFallbackComponent();
+			return (this.getComponent(componentName)?.block as Block) || this.getFallbackBlock();
 		},
-		getFallbackComponent() {
+		getComponent(componentName: string) {
+			return webComponent.getRow(componentName) as WebPageComponent;
+		},
+		createComponent(obj: WebPageComponent) {
+			if (this.getComponent(obj.name)) {
+				return;
+			}
+			webComponent.insert.submit(obj).catch(() => {
+				console.log(`There was an error while creating ${obj.component_name}`);
+			});
+		},
+		getFallbackBlock() {
 			return this.getBlockInstance(getBlockTemplate("fallback-component"));
 		},
 		getComponentName(componentId: string) {
