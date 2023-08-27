@@ -123,16 +123,11 @@ function isHTMLString(str: string) {
 	return /<[a-z][\s\S]*>/i.test(str);
 }
 
-function copyToClipboard(text: string) {
-	const el = document.createElement("textarea");
-	el.value = text;
-	el.setAttribute("readonly", "");
-	el.style.position = "absolute";
-	el.style.left = "-9999px";
-	document.body.appendChild(el);
-	el.select();
-	document.execCommand("copy");
-	document.body.removeChild(el);
+function copyToClipboard(text: string | object, e: ClipboardEvent, copyFormat = "text/plain") {
+	if (typeof text !== "string") {
+		text = JSON.stringify(text);
+	}
+	e.clipboardData?.setData(copyFormat, text);
 }
 
 function stripExtension(string: string) {
@@ -177,6 +172,15 @@ function kebabToCamelCase(str: string) {
 	});
 }
 
+function isJSONString(str: string) {
+	try {
+		JSON.parse(str);
+	} catch (e) {
+		return false;
+	}
+	return true;
+}
+
 export {
 	HSVToHex,
 	HexToHSV,
@@ -192,4 +196,5 @@ export {
 	isHTMLString,
 	kebabToCamelCase,
 	stripExtension,
+	isJSONString,
 };

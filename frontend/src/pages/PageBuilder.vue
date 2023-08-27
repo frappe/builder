@@ -50,11 +50,12 @@ import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
+import { WebPageComponent } from "@/types/WebsiteBuilder/WebPageComponent";
 import Block, { styleProperty } from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
-import { copyToClipboard, isHTMLString } from "@/utils/helpers";
+import { copyToClipboard, isHTMLString, isJSONString } from "@/utils/helpers";
 import { useEventListener, watchDebounced } from "@vueuse/core";
 import { toast } from "frappe-ui";
 import { nextTick, onActivated, ref } from "vue";
@@ -91,9 +92,33 @@ useEventListener(
 	{ passive: false }
 );
 
+useEventListener(document, "copy", (e) => {
+	e.preventDefault();
+	if (store.selectedBlocks.length) {
+		const componentDocuments: WebPageComponent[] = [];
+		store.selectedBlocks.forEach((block) => {
+			const components = block.getUsedComponentNames();
+			components.forEach((componentName) => {
+				const component = store.getComponent(componentName);
+				if (component) {
+					componentDocuments.push(component);
+				}
+			});
+		});
+
+		const dataToCopy = {
+			blocks: store.selectedBlocks,
+			components: componentDocuments,
+		};
+		copyToClipboard(dataToCopy, e, "builder-copied-blocks");
+	}
+});
+
 useEventListener(document, "paste", (e) => {
 	e.stopPropagation();
 	const clipboardItems = Array.from(e.clipboardData?.items || []);
+
+	// paste image from clipboard
 	if (clipboardItems.some((item) => item.type.includes("image"))) {
 		e.preventDefault();
 		const file = clipboardItems.find((item) => item.type.includes("image"))?.getAsFile();
@@ -111,60 +136,76 @@ useEventListener(document, "paste", (e) => {
 				imageBlock.setAttribute("alt", res.fileName);
 			});
 		}
-	} else if (blockController.isHTML()) {
-		e.preventDefault();
-		const text = e.clipboardData?.getData("text/plain");
-		if (text && isHTMLString(text)) {
-			blockController.setInnerHTML(text);
-		}
-	} else {
-		const text = e.clipboardData?.getData("text/plain") as string;
-		// TODO: revisit
-		// try pasting figma text styles
-		if (text.includes("styleName:")) {
-			e.preventDefault();
-			const styleObj = text.split(";").reduce((acc: BlockStyleMap, curr) => {
-				const [key, value] = curr.split(":").map((item) => (item ? item.trim() : "")) as [
-					styleProperty,
-					StyleValue
-				];
-				if (["font-size", "font-weight", "line-height", "letter-spacing", "text-align"].includes(key)) {
-					acc[key] = value;
-				}
-				return acc;
-			}, {});
-			if (blockController.isText()) {
-				Object.entries(styleObj).forEach(([key, value]) => {
-					blockController.setBaseStyle(key as styleProperty, value);
-				});
-			}
-			return;
+		return;
+	}
+
+	const data = e.clipboardData?.getData("builder-copied-blocks") as string;
+	// paste blocks directly
+	if (data && isJSONString(data)) {
+		const dataObj = JSON.parse(data) as { blocks: Block[]; components: WebPageComponent[] };
+		console.log(dataObj);
+
+		dataObj.components.forEach((component) => {
+			store.createComponent(component);
+		});
+
+		if (store.selectedBlocks.length && dataObj.blocks[0].blockId !== "root") {
+			dataObj.blocks.forEach((block: BlockOptions) => {
+				store.selectedBlocks[0].addChild(store.getBlockCopy(block));
+			});
+		} else {
+			store.pushBlocks(dataObj.blocks);
 		}
 
-		try {
-			const data = JSON.parse(text);
-			// check if data is from builder and a list of blocks
-			if (Array.isArray(data) && data[0].blockId) {
-				if (store.selectedBlocks.length) {
-					data.forEach((block: BlockOptions) => {
-						store.selectedBlocks[0].addChild(store.getBlockCopy(block));
-					});
-				} else {
-					store.pushBlocks(data);
-				}
-			}
-		} catch (error) {
-			if (text && isHTMLString(text)) {
-				e.preventDefault();
-				const block = convertHTMLToBlocks(text) as BlockOptions;
-				if (block) {
-					store.pushBlocks([block]);
-				}
+		// check if data is from builder and a list of blocks and components
+		// if yes then create components and then blocks
+
+		return;
+	}
+
+	const text = e.clipboardData?.getData("text/plain") as string;
+	if (!text) {
+		return;
+	}
+
+	if (isHTMLString(text)) {
+		e.preventDefault();
+		// paste html
+		if (blockController.isHTML()) {
+			blockController.setInnerHTML(text);
+		} else {
+			// create block from html
+			const block = convertHTMLToBlocks(text) as BlockOptions;
+			if (block) {
+				store.pushBlocks([block]);
 			}
 		}
+		return;
+	}
+
+	// try pasting figma text styles
+	if (text.includes("styleName:")) {
+		e.preventDefault();
+		const styleObj = text.split(";").reduce((acc: BlockStyleMap, curr) => {
+			const [key, value] = curr.split(":").map((item) => (item ? item.trim() : "")) as [
+				styleProperty,
+				StyleValue
+			];
+			if (["font-size", "font-weight", "line-height", "letter-spacing", "text-align"].includes(key)) {
+				acc[key] = value;
+			}
+			return acc;
+		}, {});
+		if (blockController.isText()) {
+			Object.entries(styleObj).forEach(([key, value]) => {
+				blockController.setBaseStyle(key as styleProperty, value);
+			});
+		}
+		return;
 	}
 });
 
+// TODO: Refactor with useMagicKeys
 useEventListener(document, "keydown", (e) => {
 	const target = e.target as HTMLElement;
 	if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.getAttribute("contenteditable")) {
@@ -232,13 +273,6 @@ useEventListener(document, "keydown", (e) => {
 				pageId: store.selectedPage as string,
 			},
 		});
-	}
-
-	if (e.key === "c" && e.metaKey && e.target === document.body) {
-		e.preventDefault();
-		if (store.selectedBlocks.length) {
-			copyToClipboard(JSON.stringify(store.selectedBlocks));
-		}
 	}
 
 	if (e.key === "c" && e.metaKey && e.shiftKey) {
