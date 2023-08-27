@@ -84,7 +84,7 @@ const setScale = async (el: HTMLElement, block: BlockOptions) => {
 
 const deleteComponent = async (component: BlockComponent) => {
 	if (store.isComponentUsed(component.name)) {
-		alert("Component is used in a page. You cannot delete it.");
+		alert("Component is used in current page. You cannot delete it.");
 	} else {
 		const confirmed = await confirm(
 			`Are you sure you want to delete component: ${component.component_name}?`

@@ -114,7 +114,7 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 		}
 		let componentName = ev.dataTransfer?.getData("componentName");
 		if (componentName) {
-			const newBlock = store.getBlockCopy(webComponent.getRow(componentName).block);
+			const newBlock = store.getBlockCopy(webComponent.getRow(componentName).block, true);
 			newBlock.extendFromComponent(componentName);
 			parentBlock.addChild(newBlock);
 			ev.stopPropagation();

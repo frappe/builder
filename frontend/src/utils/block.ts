@@ -12,16 +12,22 @@ export interface BlockDataKey {
 	property?: string;
 }
 
-function resetBlock(block: Block | BlockOptions) {
+function resetBlock(block: Block | BlockOptions, extendedFromComponent?: string) {
 	delete block.innerHTML;
 	delete block.element;
+	block.blockId = block.generateId();
 	block.baseStyles = {};
 	block.rawStyles = {};
 	block.mobileStyles = {};
 	block.tabletStyles = {};
 	block.attributes = {};
 	block.classes = [];
-	block.children = [];
+	block.children?.forEach((child) => {
+		child.isChildOfComponent = extendedFromComponent;
+		if (!child.extendedFromComponent && child.referenceBlockId) {
+			resetBlock(child, extendedFromComponent);
+		}
+	});
 }
 
 class Block implements BlockOptions {
@@ -42,6 +48,7 @@ class Block implements BlockOptions {
 	extendedFromComponent?: string;
 	originalElement?: string | undefined;
 	isChildOfComponent?: string;
+	referenceBlockId?: string;
 	isRepeaterBlock?: boolean;
 	constructor(options: BlockOptions) {
 		this.element = options.element;
@@ -49,6 +56,7 @@ class Block implements BlockOptions {
 		this.extendedFromComponent = options.extendedFromComponent;
 		this.isRepeaterBlock = options.isRepeaterBlock;
 		this.isChildOfComponent = options.isChildOfComponent;
+		this.referenceBlockId = options.referenceBlockId;
 
 		this.dataKey = options.dataKey || null;
 
@@ -85,7 +93,7 @@ class Block implements BlockOptions {
 	}
 	getStyles(breakpoint: string = "desktop") {
 		let styleObj = {};
-		if (this.isComponent()) {
+		if (this.isExtendedFromComponent()) {
 			styleObj = this.getComponentStyles(breakpoint);
 		}
 		styleObj = { ...styleObj, ...this.baseStyles };
@@ -103,10 +111,11 @@ class Block implements BlockOptions {
 			return store.getComponentBlock(this.extendedFromComponent as string);
 		}
 		if (this.isChildOfComponent) {
+			const componentBlock = store.getComponentBlock(this.isChildOfComponent as string);
 			return (
-				(store.getComponentBlock(this.isChildOfComponent as string).children.find((child) => {
-					return child.blockId === this.blockId;
-				}) as Block) || store.getFallbackComponent()
+				store.findBlock(this.referenceBlockId as string, [componentBlock]) ||
+				store.findBlock(this.blockId as string, [componentBlock]) ||
+				new Block({})
 			);
 		}
 		return this;
@@ -116,7 +125,7 @@ class Block implements BlockOptions {
 	}
 	getAttributes() {
 		let attributes = {};
-		if (this.isComponent()) {
+		if (this.isExtendedFromComponent()) {
 			attributes = this.getComponentAttributes();
 		}
 		attributes = { ...attributes, ...this.attributes };
@@ -127,7 +136,7 @@ class Block implements BlockOptions {
 	}
 	getClasses() {
 		let classes = [] as Array<string>;
-		if (this.isComponent()) {
+		if (this.isExtendedFromComponent()) {
 			classes = this.getComponentClasses();
 		}
 		classes = [...classes, ...this.classes];
@@ -147,7 +156,7 @@ class Block implements BlockOptions {
 	}
 
 	getBlockDescription() {
-		if (this.isComponent() && !this.isChildOfComponentBlock()) {
+		if (this.isExtendedFromComponent() && !this.isChildOfComponentBlock()) {
 			return this.getComponentBlockDescription();
 		}
 		if (this.isHTML()) {
@@ -423,7 +432,7 @@ class Block implements BlockOptions {
 			this.getEditor()?.commands.focus("all");
 		});
 	}
-	isComponent() {
+	isExtendedFromComponent() {
 		return Boolean(this.extendedFromComponent) || Boolean(this.isChildOfComponent);
 	}
 	convertToRepeater() {
@@ -448,7 +457,7 @@ class Block implements BlockOptions {
 		return this.isRepeaterBlock;
 	}
 	getDataKey(key: keyof BlockDataKey): string {
-		if (this.isComponent()) {
+		if (this.isExtendedFromComponent()) {
 			return this.getComponent()?.getDataKey(key);
 		}
 		return (this.dataKey && this.dataKey[key]) || "";
@@ -465,7 +474,7 @@ class Block implements BlockOptions {
 	}
 	getInnerHTML(): string {
 		let innerHTML = this.innerHTML || "";
-		if (!innerHTML && this.isComponent()) {
+		if (!innerHTML && this.isExtendedFromComponent()) {
 			innerHTML = this.getComponent().getInnerHTML();
 		}
 		return innerHTML;
@@ -484,34 +493,21 @@ class Block implements BlockOptions {
 		return this.getStyle("display") !== "none";
 	}
 	extendFromComponent(componentName: string) {
-		resetBlock(this);
 		this.extendedFromComponent = componentName;
-		this.children.push(...this.getComponentChildrenCopy());
+		resetBlock(this, this.extendedFromComponent);
 	}
 	isChildOfComponentBlock() {
 		return Boolean(this.isChildOfComponent);
 	}
-	getComponentChildrenCopy() {
-		const store = useStore();
-		const children = [] as Block[];
-		const componentChildren = this.getComponentChildren();
-		componentChildren.forEach((componentChild) => {
-			const componentChildClone = store.getBlockCopy(componentChild, true);
-			componentChildClone.isChildOfComponent = this.extendedFromComponent;
-			children.push(componentChildClone);
-		});
-		return children;
-	}
 	resetChanges() {
-		resetBlock(this);
-		this.children = this.getComponentChildrenCopy();
+		resetBlock(this, this.extendedFromComponent);
 	}
 	convertToLink() {
 		this.element = "a";
 		this.attributes.href = "#";
 	}
 	getElement() {
-		if (this.isComponent()) {
+		if (this.isExtendedFromComponent()) {
 			return this.getComponent()?.element || "div";
 		}
 		return this.element;

@@ -17,7 +17,7 @@
 			:block="child"
 			:breakpoint="breakpoint"
 			:preview="preview"
-			:isChildOfComponent="block.isComponent() || isChildOfComponent"
+			:isChildOfComponent="block.isExtendedFromComponent() || isChildOfComponent"
 			:key="child.blockId"
 			v-for="child in block.getChildren()" />
 	</component>

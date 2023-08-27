@@ -11,7 +11,7 @@
 			:block="block.children[0]"
 			:preview="index !== 0 || preview"
 			:breakpoint="breakpoint"
-			:isChildOfComponent="block.isComponent()"
+			:isChildOfComponent="block.isExtendedFromComponent()"
 			v-for="(_data, index) in blockData" />
 	</div>
 </template>
