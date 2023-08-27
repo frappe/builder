@@ -45,10 +45,10 @@ def extend_block_from_component(block, extended_from_component, children, compon
 	if "children" in block:
 		for index, child in enumerate(block["children"]):
 			child["isChildOfComponent"] = extended_from_component
-			component_child = children[index]
-			if component_child:
-				child["referenceBlockId"] = component_child["blockId"]
-				extend_block_from_component(child, extended_from_component, component_child["children"], component_child)
+			if children and index < len(children):
+				if component_child := children[index]:
+					child["referenceBlockId"] = component_child["blockId"]
+					extend_block_from_component(child, extended_from_component, component_child["children"], component_child)
 
 def generate_id():
 	return frappe.generate_hash("", 10)
