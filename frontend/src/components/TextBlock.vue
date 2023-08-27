@@ -48,6 +48,9 @@ const editor = useEditor({
 	content: textContent.value,
 	extensions: [StarterKit, TextStyle, Color, FontFamily],
 	onUpdate({ editor }) {
+		if (props.block.getInnerHTML() === editor.getHTML()) {
+			return;
+		}
 		props.block.setInnerHTML(editor.getHTML());
 	},
 	autofocus: false,

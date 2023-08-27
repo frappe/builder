@@ -12,7 +12,11 @@ export interface BlockDataKey {
 	property?: string;
 }
 
-function resetBlock(block: Block | BlockOptions, extendedFromComponent?: string) {
+function resetBlock(
+	block: Block | BlockOptions,
+	extendedFromComponent: string | undefined,
+	children: Block[]
+) {
 	delete block.innerHTML;
 	delete block.element;
 	block.blockId = block.generateId();
@@ -22,10 +26,12 @@ function resetBlock(block: Block | BlockOptions, extendedFromComponent?: string)
 	block.tabletStyles = {};
 	block.attributes = {};
 	block.classes = [];
-	block.children?.forEach((child) => {
+	block.children?.forEach((child, index) => {
 		child.isChildOfComponent = extendedFromComponent;
-		if (!child.extendedFromComponent && child.referenceBlockId) {
-			resetBlock(child, extendedFromComponent);
+		const componentChild = children[index];
+		if (componentChild) {
+			child.referenceBlockId = componentChild.blockId;
+			resetBlock(child, extendedFromComponent, componentChild.children);
 		}
 	});
 }
@@ -123,7 +129,7 @@ class Block implements BlockOptions {
 	getComponentStyles(breakpoint: string): BlockStyleMap {
 		return this.getComponent()?.getStyles(breakpoint);
 	}
-	getAttributes() {
+	getAttributes(): BlockAttributeMap {
 		let attributes = {};
 		if (this.isExtendedFromComponent()) {
 			attributes = this.getComponentAttributes();
@@ -219,7 +225,7 @@ class Block implements BlockOptions {
 		this.attributes[attribute] = value;
 	}
 	getAttribute(attribute: string) {
-		return this.attributes[attribute];
+		return this.getAttributes()[attribute];
 	}
 	removeStyle(style: styleProperty) {
 		delete this.baseStyles[style];
@@ -347,7 +353,7 @@ class Block implements BlockOptions {
 			styles.overflowX = "hidden";
 		}
 
-		if (this.isImage() && !this.attributes.src) {
+		if (this.isImage() && !this.getAttribute("src")) {
 			styles.background = `repeating-linear-gradient(45deg, rgba(180, 180, 180, 0.8) 0px, rgba(180, 180, 180, 0.8) 1px, rgba(255, 255, 255, 0.2) 0px, rgba(255, 255, 255, 0.2) 50%)`;
 			styles.backgroundSize = "16px 16px";
 		}
@@ -494,13 +500,15 @@ class Block implements BlockOptions {
 	}
 	extendFromComponent(componentName: string) {
 		this.extendedFromComponent = componentName;
-		resetBlock(this, this.extendedFromComponent);
+		this.resetChanges();
 	}
 	isChildOfComponentBlock() {
 		return Boolean(this.isChildOfComponent);
 	}
 	resetChanges() {
-		resetBlock(this, this.extendedFromComponent);
+		// resetBlock(this, this.extendedFromComponent);
+		const component = this.getComponent();
+		resetBlock(this, this.extendedFromComponent, component.children);
 	}
 	convertToLink() {
 		this.element = "a";
@@ -532,5 +540,25 @@ class Block implements BlockOptions {
 		return new Set(componentNames);
 	}
 }
+
+// class BlockTree {
+// 	blocksMap: Map<string, Block>;
+// 	constructor() {
+// 		this.blocksMap = new Map();
+// 	}
+
+// 	buildBlockMap(blocks: Array<Block>) {
+// 		for (const block of blocks) {
+// 			for (const child of block.children) {
+// 				this.blocksMap.set(child.blockId, block);
+// 				this.buildBlockMap(child.children);
+// 			}
+// 		}
+// 	}
+
+// 	findParentBlock(blockId: string) {
+// 		return this.blocksMap.get(blockId) || null;
+// 	}
+// }
 
 export default Block;
