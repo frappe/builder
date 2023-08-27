@@ -516,6 +516,25 @@ class Block implements BlockOptions {
 		}
 		return this.element;
 	}
+	getUsedComponentNames() {
+		const store = useStore();
+		const componentNames = [] as string[];
+		if (this.extendedFromComponent) {
+			componentNames.push(this.extendedFromComponent);
+		}
+		if (this.isChildOfComponent) {
+			componentNames.push(this.isChildOfComponent);
+		}
+		this.children.forEach((child) => {
+			componentNames.push(...child.getUsedComponentNames());
+		});
+
+		componentNames.forEach((name) => {
+			componentNames.push(...store.getComponentBlock(name).getUsedComponentNames());
+		});
+
+		return new Set(componentNames);
+	}
 }
 
 export default Block;
