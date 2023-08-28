@@ -330,6 +330,7 @@ class Block implements BlockOptions {
 
 		const childBlock = reactive(new Block(child));
 		this.children.splice(index, 0, childBlock);
+		childBlock.selectBlock();
 		return childBlock;
 	}
 	removeChild(child: Block) {

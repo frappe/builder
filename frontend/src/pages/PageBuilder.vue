@@ -301,7 +301,7 @@ useEventListener(document, "keydown", (e) => {
 			}
 			blocks.forEach((block, i) => {
 				if (block.blockId === blockId) {
-					if (block.isChildOfComponentBlock()) {
+					if (block.isChildOfComponentBlock() && !e.shiftKey) {
 						toast({
 							title: "Warning",
 							text: "Cannot Delete Block Inside Component",

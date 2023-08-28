@@ -143,7 +143,6 @@ const loadEditor = computed(() => {
 
 const emit = defineEmits(["mounted"]);
 onMounted(async () => {
-	selectBlock(null);
 	setFont(props.block.getStyle("fontFamily") as string);
 	await nextTick();
 	emit("mounted", target.value);
@@ -183,6 +182,7 @@ const triggerContextMenu = (e: MouseEvent) => {
 	selectBlock(e);
 	nextTick(() => {
 		let element = document.elementFromPoint(e.x, e.y) as HTMLElement;
+		if (element === target.value) return;
 		element.dispatchEvent(new MouseEvent("contextmenu", e));
 	});
 };
