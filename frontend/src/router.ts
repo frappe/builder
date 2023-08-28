@@ -44,9 +44,9 @@ const routes = [
 		redirect: "/home",
 	},
 	{
-		path: "/builder",
+		path: "/page",
 		beforeEnter: validateVisit,
-		redirect: "/builder/new",
+		redirect: "/home",
 	},
 	{
 		path: "/home",
@@ -55,13 +55,13 @@ const routes = [
 		component: () => import("@/pages/PageBuilderLanding.vue"),
 	},
 	{
-		path: "/builder/:pageId",
+		path: "/page/:pageId",
 		name: "builder",
 		beforeEnter: validateVisit,
 		component: () => import("@/pages/PageBuilder.vue"),
 	},
 	{
-		path: "/builder/:pageId/preview",
+		path: "/page/:pageId/preview",
 		name: "preview",
 		beforeEnter: validateVisit,
 		component: () => import("@/pages/PagePreview.vue"),
@@ -69,7 +69,7 @@ const routes = [
 ];
 
 const router = createRouter({
-	history: createWebHistory("/p"),
+	history: createWebHistory("/builder"),
 	routes,
 });
 

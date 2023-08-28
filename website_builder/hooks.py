@@ -189,7 +189,7 @@ after_install = "website_builder.install.after_install"
 # ]
 
 website_route_rules = [
-	{"from_route": "/p/<path:app_path>", "to_route": "p"},
+	{"from_route": "/builder/<path:app_path>", "to_route": "builder"},
 ]
 
 get_web_pages_with_dynamic_routes = "website_builder.website_builder.doctype.web_page_beta.web_page_beta.get_web_pages_with_dynamic_routes"
