@@ -1,6 +1,7 @@
 <template>
-	<component :is="block.getTag()" ref="component" @click.stop @dblclick.stop>
-		<editor-content @click="handleClick" :editor="editor" />
+	<component :is="block.getTag()" ref="component" @click.stop @dblclick.stop :key="editor">
+		<div v-html="textContent" v-show="!editor"></div>
+		<editor-content @click="handleClick" :editor="editor" v-if="editor" />
 		<slot />
 	</component>
 </template>
@@ -13,8 +14,8 @@ import { Color } from "@tiptap/extension-color";
 import { FontFamily } from "@tiptap/extension-font-family";
 import TextStyle from "@tiptap/extension-text-style";
 import StarterKit from "@tiptap/starter-kit";
-import { EditorContent, useEditor } from "@tiptap/vue-3";
-import { Ref, computed, onBeforeMount, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { Editor, EditorContent } from "@tiptap/vue-3";
+import { Ref, computed, onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
 
 const props = defineProps({
 	block: {
@@ -44,24 +45,11 @@ const textContent = computed(() => {
 	return innerHTML;
 });
 
-const editor = useEditor({
-	content: textContent.value,
-	extensions: [StarterKit, TextStyle, Color, FontFamily],
-	onUpdate({ editor }) {
-		if (props.block.getInnerHTML() === editor.getHTML()) {
-			return;
-		}
-		props.block.setInnerHTML(editor.getHTML());
-	},
-	autofocus: false,
-	injectCSS: false,
-});
+let editor: Ref<Editor | null> = ref(null);
 
 const isEditable = computed(() => {
-	return !props.preview && store.builderState.editableBlock === props.block;
+	return store.builderState.editableBlock === props.block;
 });
-
-props.block.getEditor = () => editor.value || null;
 
 const handleClick = (e: MouseEvent) => {
 	if (isEditable.value) {
@@ -93,17 +81,41 @@ watch(
 	}
 );
 
+if (!props.preview) {
+	watch(
+		() => props.block.isSelected(),
+		() => {
+			// only load editor if block is selected for performance reasons
+			if (props.block.isSelected()) {
+				editor.value = new Editor({
+					content: textContent.value,
+					extensions: [StarterKit, TextStyle, Color, FontFamily],
+					onUpdate({ editor }) {
+						if (props.block.getInnerHTML() === editor.getHTML()) {
+							return;
+						}
+						props.block.setInnerHTML(editor.getHTML());
+					},
+					autofocus: false,
+					injectCSS: false,
+				});
+				props.block.getEditor = () => editor.value || null;
+				editor.value?.setEditable(isEditable.value);
+			} else {
+				editor.value?.destroy();
+				editor.value = null;
+			}
+		}
+	);
+
+	onBeforeUnmount(() => {
+		editor.value?.destroy();
+	});
+}
+
 onBeforeMount(() => {
 	let html = props.block.getInnerHTML() || "";
 	setFontFromHTML(html);
-});
-
-onMounted(() => {
-	editor.value?.setEditable(isEditable.value);
-});
-
-onBeforeUnmount(() => {
-	editor.value?.destroy();
 });
 
 defineExpose({
