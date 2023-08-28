@@ -462,6 +462,7 @@ const useStore = defineStore("store", {
 				.submit({
 					name: this.selectedPage as string,
 					method: "publish",
+					...this.routeVariables,
 				})
 				.then((res: { message: string }) => {
 					let route = res.message;
