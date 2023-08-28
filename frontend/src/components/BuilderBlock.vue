@@ -177,21 +177,13 @@ const selectBlock = (e: MouseEvent | null) => {
 };
 
 const triggerContextMenu = (e: MouseEvent) => {
-	if (props.block.isRoot()) return;
+	if (props.block.isRoot() || isEditable.value) return;
 	e.stopPropagation();
 	e.preventDefault();
 	selectBlock(e);
 	nextTick(() => {
 		let element = document.elementFromPoint(e.x, e.y) as HTMLElement;
-		if (element === target.value) return;
-		element.dispatchEvent(
-			new MouseEvent("contextmenu", {
-				bubbles: true,
-				cancelable: true,
-				clientX: e.clientX,
-				clientY: e.clientY,
-			})
-		);
+		element.dispatchEvent(new MouseEvent("contextmenu", e));
 	});
 };
 
