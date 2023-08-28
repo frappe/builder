@@ -43,7 +43,8 @@ class WebPageBeta(WebsiteGenerator):
 			self.name = f"page-{frappe.generate_hash(length=5)}"
 
 	@frappe.whitelist()
-	def publish(self):
+	def publish(self, **kwargs):
+		frappe.form_dict.update(kwargs)
 		self.published = 1
 		if self.draft_blocks:
 			self.blocks = self.draft_blocks
@@ -94,6 +95,14 @@ class WebPageBeta(WebsiteGenerator):
 			output_path=os.path.join(
 				frappe.local.site_path, "public", "files", file_name
 			))
+
+		# delete old preview
+		from frappe.desk.form.load import get_attachments
+		for attachment_file in get_attachments(self.doctype, self.name):
+			doc = frappe.get_doc("File", attachment_file.name)
+			if doc.attached_to_field == "preview":
+				doc.delete(ignore_permissions=True)
+
 		self.db_set("preview", f"/files/{file_name}", notify=True, commit=True)
 
 def get_block_html(blocks, page_data={}):
