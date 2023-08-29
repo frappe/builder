@@ -184,7 +184,7 @@ const useStore = defineStore("store", {
 				visible: false,
 			},
 		],
-		leftPanelActiveTab: <LeftSidebarTabOption>"Components",
+		leftPanelActiveTab: <LeftSidebarTabOption>"Layers",
 		rightPanelActiveTab: <RightSidebarTabOption>"Properties",
 		showPanels: <boolean>true,
 		blockEditorCanvas: {
