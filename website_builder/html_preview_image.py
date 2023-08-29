@@ -3,7 +3,7 @@ from install_playwright import install
 from playwright.sync_api import sync_playwright
 
 
-def get_preview(html, output_path):
+def generate_preview(html, output_path):
 	with sync_playwright() as p:
 		browser = p.chromium.launch()
 		page = browser.new_page()

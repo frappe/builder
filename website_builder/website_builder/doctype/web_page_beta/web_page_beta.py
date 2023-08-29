@@ -12,7 +12,7 @@ import frappe.utils
 from frappe.model.document import Document
 from frappe.website.serve import get_response_content, get_response
 from frappe.website.website_generator import WebsiteGenerator
-from website_builder.html_preview_image import get_preview
+from website_builder.html_preview_image import generate_preview
 from frappe.utils.safe_exec import safe_exec
 from frappe.utils.caching import redis_cache
 from frappe.website.page_renderers.document_page import DocumentPage
@@ -91,15 +91,15 @@ class WebPageBeta(WebsiteGenerator):
 
 	def generate_page_preview_image(self, html=None):
 		file_name=f"{self.name}{frappe.generate_hash()}.jpeg"
-		frappe.enqueue(method=get_preview,
-			html=html or get_response_content(self.route),
-			output_path=os.path.join(
-				frappe.local.site_path, "public", "files", file_name
-			))
-
-		# delete old preview
+		generate_preview(html or get_response_content(self.route), os.path.join(
+			frappe.local.site_path, "public", "files", file_name
+		))
 		with contextlib.suppress(frappe.DoesNotExistError):
-			attached_files = frappe.get_all("File", {"attached_to_field": "preview", "attached_to_doctype": "Web Page Beta", "attached_to_name": self.name})
+			attached_files = frappe.get_all("File", {
+				"attached_to_field": "preview",
+				"attached_to_doctype": "Web Page Beta",
+				"attached_to_name": self.name
+			})
 			for file in attached_files:
 				preview_file = frappe.get_doc("File", file.name)
 				preview_file.delete(ignore_permissions=True)
@@ -328,5 +328,11 @@ def get_page_preview_html(page: str, **kwarg) -> str:
 	renderer.init_context()
 	response = renderer.render()
 	page = frappe.get_cached_doc("Web Page Beta", page)
-	page.generate_page_preview_image(html=str(response.data, 'utf-8'))
+	frappe.enqueue_doc(
+		page.doctype,
+		page.name,
+		"generate_page_preview_image",
+		html=str(response.data, 'utf-8'),
+		queue="short",
+	)
 	return response
