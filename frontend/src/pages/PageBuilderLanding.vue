@@ -45,6 +45,7 @@
 						<Dropdown
 							:options="[
 								{ label: 'Duplicate', onClick: () => duplicatePage(page), icon: 'copy' },
+								{ label: 'View in Desk', onClick: () => openInDesk(page), icon: 'arrow-up-right' },
 								{ label: 'Delete', onClick: () => deletePage(page), icon: 'trash' },
 							]"
 							placement="right">
@@ -81,6 +82,10 @@ const duplicatePage = async (page: WebPageBeta) => {
 	pageCopy.page_name = `${page.page_name}-copy`;
 	pageCopy.page_title = `${page.page_title} Copy`;
 	await webPages.insert.submit(pageCopy);
+};
+
+const openInDesk = (page: WebPageBeta) => {
+	window.open(`/app/web-page-beta/${page.page_name}`, "_blank");
 };
 
 onActivated(() => {
