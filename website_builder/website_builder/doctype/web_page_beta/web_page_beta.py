@@ -1,6 +1,7 @@
 # Copyright (c) 2023, asdf and contributors
 # For license information, please see license.txt
 
+import contextlib
 import os
 import re
 
@@ -97,13 +98,13 @@ class WebPageBeta(WebsiteGenerator):
 			))
 
 		# delete old preview
-		from frappe.desk.form.load import get_attachments
-		for attachment_file in get_attachments(self.doctype, self.name):
-			doc = frappe.get_doc("File", attachment_file.name)
-			if doc.attached_to_field == "preview":
-				doc.delete(ignore_permissions=True)
+		with contextlib.suppress(frappe.DoesNotExistError):
+			attached_files = frappe.get_all("File", {"attached_to_field": "preview", "attached_to_doctype": "Web Page Beta", "attached_to_name": self.name})
+			for file in attached_files:
+				preview_file = frappe.get_doc("File", file.name)
+				preview_file.delete(ignore_permissions=True)
 
-		self.db_set("preview", f"/files/{file_name}", notify=True, commit=True)
+		self.db_set("preview", f"/files/{file_name}", commit=True)
 
 def get_block_html(blocks, page_data={}):
 	blocks = frappe.parse_json(blocks)
