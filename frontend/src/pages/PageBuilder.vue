@@ -183,22 +183,27 @@ useEventListener(document, "paste", (e) => {
 			}
 		}
 		return;
-	}
-
-	// try pasting figma text styles
-	if (text.includes("styleName:")) {
-		e.preventDefault();
-		const styleObj = text.split(";").reduce((acc: BlockStyleMap, curr) => {
-			const [key, value] = curr.split(":").map((item) => (item ? item.trim() : "")) as [
-				styleProperty,
-				StyleValue
-			];
-			if (["font-size", "font-weight", "line-height", "letter-spacing", "text-align"].includes(key)) {
-				acc[key] = value;
-			}
-			return acc;
-		}, {});
-		if (blockController.isText()) {
+	} else {
+		// try pasting figma text styles
+		if (blockController.isText() && text.includes(":") && !store.builderState.editableBlock) {
+			e.preventDefault();
+			const styleObj = text.split(";").reduce((acc: BlockStyleMap, curr) => {
+				const [key, value] = curr.split(":").map((item) => (item ? item.trim() : "")) as [
+					styleProperty,
+					StyleValue
+				];
+				if (
+					["font-family", "font-size", "font-weight", "line-height", "letter-spacing", "text-align"].includes(
+						key
+					)
+				) {
+					acc[key] = value;
+					if (key === "font-family" && String(value).toLowerCase().includes("inter")) {
+						acc["font-family"] = "";
+					}
+				}
+				return acc;
+			}, {});
 			Object.entries(styleObj).forEach(([key, value]) => {
 				blockController.setBaseStyle(key as styleProperty, value);
 			});
