@@ -1,8 +1,13 @@
 <template>
 	<div
+		ref="handler"
 		class="border-radius-resize pointer-events-auto absolute left-2 top-2 h-[12px] w-[12px] cursor-pointer rounded-full border-2 border-blue-400 bg-white"
 		:class="{
-			hidden: canvasProps.scale < 0.7,
+			hidden: canvasProps.scale < 0.4,
+		}"
+		:style="{
+			top: handlerTop + 'px',
+			left: handlerLeft + 'px',
 		}"
 		@mousedown.stop="handleRounded">
 		<div
@@ -14,11 +19,9 @@
 </template>
 <script setup lang="ts">
 import { getNumberFromPx } from "@/utils/helpers";
-import { inject, ref } from "vue";
-import useStore from "../store";
+import { Ref, inject, onMounted, ref } from "vue";
 import Block from "../utils/block";
 
-const store = useStore();
 const props = defineProps({
 	targetBlock: {
 		type: Block,
@@ -35,30 +38,20 @@ const target = props.target as HTMLElement;
 const borderRadius = ref(parseInt(target.style.borderRadius, 10) || 0);
 const updating = ref(false);
 const canvasProps = inject("canvasProps") as CanvasProps;
+const handler = ref() as Ref<HTMLElement>;
+const handlerTop = ref(0);
+const handlerLeft = ref(0);
+
+let minLeft = 10;
+let minTop = 10;
 
 const handleRounded = (ev: MouseEvent) => {
 	const startX = ev.clientX;
 	const startY = ev.clientY;
-	const handle = ev.currentTarget as HTMLElement;
-	const handleStyle = window.getComputedStyle(handle);
-	let minLeft = 10;
-	let minTop = 10;
+	const handleStyle = window.getComputedStyle(handler.value);
 
-	const targetBounds = target.getBoundingClientRect();
-	const targetStyle = window.getComputedStyle(target);
-	const targetWidth = parseInt(targetStyle.width, 10);
-	const targetHeight = parseInt(targetStyle.height, 10);
 	const handleHeight = parseInt(handleStyle.height, 10);
 	const handleWidth = parseInt(handleStyle.width, 10);
-
-	const maxRadius = Math.min(targetHeight, targetWidth) / 2;
-
-	// refer position based on bounding rect of target (target could have been scaled)
-	const maxDistance = Math.min(targetBounds.height, targetBounds.width) / 2;
-
-	// to disable cursor jitter
-	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = handle.style.cursor;
 
 	let lastX = startX;
 	let lastY = startY;
@@ -71,7 +64,7 @@ const handleRounded = (ev: MouseEvent) => {
 		const movementY = mouseMoveEvent.clientY - lastY;
 
 		// mean of movement on both axis
-		const movement = (movementX + movementY) / 2;
+		const movement = ((movementX + movementY) / 2) * 2;
 		if (movement < 0) {
 			minTop = -(handleHeight / 2);
 			minLeft = -(handleWidth / 2);
@@ -79,13 +72,9 @@ const handleRounded = (ev: MouseEvent) => {
 		let radius = Math.round(getNumberFromPx(target.style.borderRadius) + movement);
 		radius = Math.max(0, Math.min(radius, maxRadius));
 
-		const ratio = radius / maxRadius;
-		const newTop = Math.max(minTop, maxDistance * ratio - handleHeight / 2);
-		const newLeft = Math.max(minLeft, maxDistance * ratio - handleWidth / 2);
+		setHandlerPosition(radius);
 		borderRadius.value = radius;
 		targetBlock.setStyle("borderRadius", `${radius}px`);
-		handle.style.top = `${newTop}px`;
-		handle.style.left = `${newLeft}px`;
 
 		lastX = mouseMoveEvent.clientX;
 		lastY = mouseMoveEvent.clientY;
@@ -95,16 +84,36 @@ const handleRounded = (ev: MouseEvent) => {
 		"mouseup",
 		(mouseUpEvent) => {
 			if (getNumberFromPx(targetBlock.getStyle("borderRadius")) < 10) {
-				handle.style.top = `${10}px`;
-				handle.style.left = `${10}px`;
+				handlerTop.value = 10;
+				handlerLeft.value = 10;
 			}
 
 			updating.value = false;
-			document.body.style.cursor = docCursor;
 			document.removeEventListener("mousemove", mousemove);
 			mouseUpEvent.preventDefault();
 		},
 		{ once: true }
 	);
 };
+
+const targetStyle = window.getComputedStyle(target);
+const targetWidth = parseInt(targetStyle.width, 10);
+const targetHeight = parseInt(targetStyle.height, 10);
+const targetBounds = target.getBoundingClientRect();
+const maxDistance = Math.min(targetBounds.height, targetBounds.width) / 2;
+const maxRadius = Math.min(targetHeight, targetWidth) / 2;
+
+const setHandlerPosition = (radius: number) => {
+	// refer position based on bounding rect of target (target could have been scaled)
+	const handleStyle = window.getComputedStyle(handler.value);
+	const handleHeight = parseInt(handleStyle.height, 10);
+	const handleWidth = parseInt(handleStyle.width, 10);
+	const ratio = radius / maxRadius;
+	handlerTop.value = Math.max(minTop, maxDistance * ratio - handleHeight / 2);
+	handlerLeft.value = Math.max(minLeft, maxDistance * ratio - handleWidth / 2);
+};
+
+onMounted(() => {
+	setHandlerPosition(borderRadius.value);
+});
 </script>
