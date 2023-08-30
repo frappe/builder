@@ -136,6 +136,7 @@ const createComponentHandler = ({ close }: { close: () => void }) => {
 };
 
 const contextMenuOptions: ContextMenuOption[] = [
+	{ label: "Copy", action: () => document.execCommand("copy") },
 	{ label: "Copy Style", action: copyStyle },
 	{
 		label: "Paste Style",
