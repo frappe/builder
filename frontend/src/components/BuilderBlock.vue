@@ -107,7 +107,7 @@ const attributes = computed(() => {
 		attribs.data = props.data;
 	}
 	if (props.data) {
-		if (props.block.getDataKey("type") === "attribute") {
+		if (props.block.getDataKey("type") === "attribute" && props.data[props.block.getDataKey("key")]) {
 			attribs[props.block.getDataKey("property") as string] =
 				props.data[props.block.getDataKey("key") as string];
 		}

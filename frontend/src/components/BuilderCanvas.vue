@@ -1,5 +1,5 @@
 <template>
-	<div ref="canvasContainer">
+	<div ref="canvasContainer" @click.stop="blockController.clearSelection()">
 		<div class="overlay absolute" id="overlay" ref="overlay" />
 		<BlockSnapGuides></BlockSnapGuides>
 		<div
@@ -74,6 +74,7 @@ import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
+import blockController from "@/utils/blockController";
 
 const store = useStore();
 const canvasContainer = ref(null);
