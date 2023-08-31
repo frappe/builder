@@ -408,7 +408,7 @@ const useStore = defineStore("store", {
 			if (this.getComponent(obj.name)) {
 				return;
 			}
-			webComponent.insert.submit(obj).catch(() => {
+			return webComponent.insert.submit(obj).catch(() => {
 				console.log(`There was an error while creating ${obj.component_name}`);
 			});
 		},

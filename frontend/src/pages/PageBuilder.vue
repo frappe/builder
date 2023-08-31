@@ -115,7 +115,7 @@ useEventListener(document, "copy", (e) => {
 	}
 });
 
-useEventListener(document, "paste", (e) => {
+useEventListener(document, "paste", async (e) => {
 	if (isTargetEditable(e)) return;
 	e.stopPropagation();
 	const clipboardItems = Array.from(e.clipboardData?.items || []);
@@ -145,11 +145,10 @@ useEventListener(document, "paste", (e) => {
 	// paste blocks directly
 	if (data && isJSONString(data)) {
 		const dataObj = JSON.parse(data) as { blocks: Block[]; components: WebPageComponent[] };
-		console.log(dataObj);
 
-		dataObj.components.forEach((component) => {
-			store.createComponent(component);
-		});
+		for (const component of dataObj.components) {
+			await store.createComponent(component);
+		}
 
 		if (store.selectedBlocks.length && dataObj.blocks[0].blockId !== "root") {
 			dataObj.blocks.forEach((block: BlockOptions) => {
