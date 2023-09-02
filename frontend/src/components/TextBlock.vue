@@ -67,7 +67,8 @@ watch(
 		} else {
 			store.history.resume();
 		}
-	}
+	},
+	{ immediate: true }
 );
 
 watch(
@@ -105,7 +106,8 @@ if (!props.preview) {
 				editor.value?.destroy();
 				editor.value = null;
 			}
-		}
+		},
+		{ immediate: true }
 	);
 
 	onBeforeUnmount(() => {
