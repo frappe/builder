@@ -19,28 +19,30 @@ function setPanAndZoom(
 		clearTimeout(wheeling);
 		if (e.ctrlKey) {
 			props.scaling = true;
+			if (!pinchPointSet) {
+				// set pinch point before setting new scale value
+				targetBound.update();
+				const middleX = targetBound.left + targetBound.width / 2;
+				const middleY = targetBound.top + targetBound.height / 2;
+				pointFromCenterX = (e.clientX - middleX) / props.scale;
+				pointFromCenterY = (e.clientY - middleY) / props.scale;
+				startX = e.clientX;
+				startY = e.clientY;
+				pinchPointSet = true;
+				let clearPinchPoint = () => {
+					pinchPointSet = false;
+				};
+				panAndZoomAreaElement.addEventListener("mousemove", clearPinchPoint, { once: true });
+			}
 			// Multiplying with 0.01 to make the zooming less sensitive
 			// Multiplying with scale to make the zooming feel consistent
-			let scale = props.scale - e.deltaY * 0.01 * props.scale;
+			let scale = props.scale - e.deltaY * 0.006 * props.scale;
 			scale = Math.min(Math.max(scale, zoomLimits.min), zoomLimits.max);
 			props.scale = scale;
 			nextTick(() => {
 				targetBound.update();
 				const middleX = targetBound.left + targetBound.width / 2;
 				const middleY = targetBound.top + targetBound.height / 2;
-				if (!pinchPointSet) {
-					const middleX = targetBound.left + targetBound.width / 2;
-					const middleY = targetBound.top + targetBound.height / 2;
-					pointFromCenterX = (e.clientX - middleX) / scale;
-					pointFromCenterY = (e.clientY - middleY) / scale;
-					startX = e.clientX;
-					startY = e.clientY;
-					pinchPointSet = true;
-					let clearPinchPoint = () => {
-						pinchPointSet = false;
-					};
-					panAndZoomAreaElement.addEventListener("mousemove", clearPinchPoint, { once: true });
-				}
 
 				const pinchLocationX = middleX + pointFromCenterX * scale;
 				const pinchLocationY = middleY + pointFromCenterY * scale;
