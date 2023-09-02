@@ -1,5 +1,5 @@
 <template>
-	<div ref="canvasContainer" @click.stop="blockController.clearSelection()">
+	<div ref="canvasContainer">
 		<div class="overlay absolute" id="overlay" ref="overlay" />
 		<BlockSnapGuides></BlockSnapGuides>
 		<div
@@ -74,7 +74,6 @@ import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
-import blockController from "@/utils/blockController";
 
 const store = useStore();
 const canvasContainer = ref(null);
@@ -180,8 +179,6 @@ function setEvents() {
 			childBlock.setBaseStyle("position", "absolute");
 			childBlock.setBaseStyle("top", addPxToNumber(y));
 			childBlock.setBaseStyle("left", addPxToNumber(x));
-
-			childBlock.selectBlock();
 
 			const mouseMoveHandler = (mouseMoveEvent: MouseEvent) => {
 				if (store.mode === "text" || store.mode === "html") {

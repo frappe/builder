@@ -1,7 +1,7 @@
 <template>
 	<div
 		ref="handler"
-		class="border-radius-resize pointer-events-auto absolute left-2 top-2 h-[12px] w-[12px] cursor-pointer rounded-full border-2 border-blue-400 bg-white"
+		class="border-radius-resize pointer-events-auto absolute left-2 top-2 h-[10px] w-[10px] cursor-pointer rounded-full border-2 border-blue-400 bg-white"
 		:class="{
 			hidden: canvasProps.scale < 0.4,
 		}"
@@ -39,8 +39,8 @@ const borderRadius = ref(parseInt(target.style.borderRadius, 10) || 0);
 const updating = ref(false);
 const canvasProps = inject("canvasProps") as CanvasProps;
 const handler = ref() as Ref<HTMLElement>;
-const handlerTop = ref(0);
-const handlerLeft = ref(0);
+const handlerTop = ref(10);
+const handlerLeft = ref(10);
 
 let minLeft = 10;
 let minTop = 10;
@@ -83,6 +83,7 @@ const handleRounded = (ev: MouseEvent) => {
 	document.addEventListener(
 		"mouseup",
 		(mouseUpEvent) => {
+			mouseUpEvent.preventDefault();
 			if (getNumberFromPx(targetBlock.getStyle("borderRadius")) < 10) {
 				handlerTop.value = 10;
 				handlerLeft.value = 10;
@@ -90,7 +91,6 @@ const handleRounded = (ev: MouseEvent) => {
 
 			updating.value = false;
 			document.removeEventListener("mousemove", mousemove);
-			mouseUpEvent.preventDefault();
 		},
 		{ once: true }
 	);
