@@ -2,6 +2,7 @@
 	<InlineInput
 		type="autocomplete"
 		:label="label"
+		:enableSlider="true"
 		:options="[
 			{
 				label: 'Auto',
@@ -17,6 +18,7 @@
 			},
 		]"
 		:modelValue="blockController.getStyle(props.property)"
+		:unitOptions="['px', '%', 'vw', 'vh']"
 		@update:modelValue="(val) => blockController.setStyle(property, val)"></InlineInput>
 </template>
 <script setup lang="ts">

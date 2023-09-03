@@ -24,7 +24,10 @@ const useStore = defineStore("store", {
 		pageData: <{ [key: string]: [] }>{},
 		mode: <BuilderMode>"select",
 		selectedBlocks: <Block[]>[],
-		history: {} as UseRefHistoryReturn<{}, {}>,
+		history: {
+			pause: () => {},
+			resume: () => {},
+		} as UseRefHistoryReturn<{}, {}>,
 		usedComponents: {},
 		hoveredBlock: <string | null>null,
 		hoveredBreakpoint: <string | null>null,

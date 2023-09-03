@@ -273,6 +273,14 @@ defineExpose({
 });
 
 watchEffect(() => {
+	store.deviceBreakpoints.map((b) => b.visible);
+	if (props.canvasProps.settingCanvas) {
+		return;
+	}
+	setScaleAndTranslate();
+});
+
+watchEffect(() => {
 	toggleMode(store.mode);
 });
 
