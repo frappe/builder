@@ -1,9 +1,12 @@
 <template>
 	<div>
-		<CodeEditor v-model="store.pageData" type="JSON" label="Page Data Preview" :readonly="true"></CodeEditor>
-		<Button @click="showDialog = !showDialog" class="mt-8 text-base" icon-left="code">
-			Update Data Script
-		</Button>
+		<Button @click="showDialog = !showDialog" class="text-base" icon-left="code">Set Data Script</Button>
+		<CodeEditor
+			v-model="store.pageData"
+			type="JSON"
+			label="Page Data Preview"
+			:readonly="true"
+			class="mt-8"></CodeEditor>
 		<Dialog
 			style="z-index: 40"
 			:options="{
@@ -12,7 +15,7 @@
 				actions: [
 					{
 						label: 'Save',
-						appearance: 'primary',
+						variant: 'solid',
 						onClick: savePageDataScript,
 					},
 				],

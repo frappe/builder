@@ -1,5 +1,5 @@
 <template>
-	<div v-if="blockController.isBLockSelected()" class="flex flex-col gap-3 pb-48">
+	<div v-if="blockController.isBLockSelected()" class="flex select-none flex-col gap-3 pb-48">
 		<BLockLayoutHandler v-if="!blockController.multipleBlocksSelected()" class="mb-6"></BLockLayoutHandler>
 		<div
 			v-if="store.editingMode === 'component' || blockController.isRepeater()"
