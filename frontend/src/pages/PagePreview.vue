@@ -24,6 +24,18 @@
 						}" />
 				</div>
 			</div>
+			<Button
+				variant="solid"
+				@click="
+					() => {
+						publishing = true;
+						store.publishPage().finally(() => (publishing = false));
+					}
+				"
+				class="absolute right-0 border-0 text-xs dark:bg-zinc-800"
+				:loading="publishing">
+				{{ publishing ? "Publishing" : "Publish" }}
+			</Button>
 		</div>
 		<div
 			class="relative mt-5 flex h-[85vh] bg-white"
@@ -66,6 +78,7 @@
 </template>
 <script lang="ts" setup>
 import PanelResizer from "@/components/PanelResizer.vue";
+import router from "@/router";
 import useStore from "@/store";
 import { useEventListener } from "@vueuse/core";
 import { Ref, computed, ref, watch, watchEffect } from "vue";
@@ -78,6 +91,7 @@ let previewRoute = ref("");
 const width = ref(maxWidth);
 const loading = ref(false);
 const store = useStore();
+const publishing = ref(false);
 const { deviceBreakpoints } = store;
 const activeBreakpoint = computed(() => {
 	const tabletBreakpoint = deviceBreakpoints.find((b) => b.device === "tablet");
@@ -94,7 +108,7 @@ const activeBreakpoint = computed(() => {
 const previewWindow = ref(null) as Ref<HTMLIFrameElement | null>;
 
 useEventListener(document, "keydown", (ev) => {
-	if (ev.key === "Escape") {
+	if (ev.key === "Escape" && router.currentRoute.value.name === "preview") {
 		history.back();
 	}
 });

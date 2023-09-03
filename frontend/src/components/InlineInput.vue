@@ -104,6 +104,9 @@ const handleChange = (value: string | number | null | { label: string; value: st
 };
 
 const handleMouseDown = (e: MouseEvent) => {
+	if (!props.enableSlider) {
+		return;
+	}
 	const value = (props.modelValue as string) || "";
 
 	let [_, number, unit] = value.match(/([0-9]+)([a-z%]*)/) || ["", "", ""];
