@@ -23,6 +23,7 @@
 	</component>
 	<teleport to="#overlay" v-if="canvasProps?.overlayElement && !preview && canvasProps">
 		<BlockEditor
+			ref="editor"
 			v-if="loadEditor"
 			:block="block"
 			:breakpoint="breakpoint"
@@ -46,6 +47,7 @@ import TextBlock from "./TextBlock.vue";
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
 const attrs = useAttrs();
 const store = useStore();
+const editor = ref<InstanceType<typeof BlockEditor> | null>(null);
 
 const props = defineProps({
 	block: {
@@ -181,9 +183,7 @@ const triggerContextMenu = (e: MouseEvent) => {
 	e.preventDefault();
 	selectBlock(e);
 	nextTick(() => {
-		let element = document.elementFromPoint(e.x, e.y) as HTMLElement;
-		if (element === target.value) return;
-		element.dispatchEvent(new MouseEvent("contextmenu", e));
+		editor.value?.element.dispatchEvent(new MouseEvent("contextmenu", e));
 	});
 };
 

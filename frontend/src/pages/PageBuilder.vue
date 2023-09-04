@@ -192,9 +192,15 @@ useEventListener(document, "paste", async (e) => {
 					StyleValue
 				];
 				if (
-					["font-family", "font-size", "font-weight", "line-height", "letter-spacing", "text-align"].includes(
-						key
-					)
+					[
+						"font-family",
+						"font-size",
+						"font-weight",
+						"line-height",
+						"letter-spacing",
+						"text-align",
+						"color",
+					].includes(key)
 				) {
 					acc[key] = value;
 					if (key === "font-family" && String(value).toLowerCase().includes("inter")) {

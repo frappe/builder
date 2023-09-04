@@ -104,6 +104,7 @@
 			label="Size"
 			v-if="blockController.isText() || blockController.isInput()"
 			:modelValue="blockController.getStyle('fontSize')"
+			:enableSlider="true"
 			@update:modelValue="(val) => blockController.setStyle('fontSize', val)" />
 		<InlineInput
 			label="Height"
