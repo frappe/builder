@@ -195,6 +195,9 @@ class Block implements BlockOptions {
 	isLink() {
 		return this.getElement() === "a";
 	}
+	isSVG() {
+		return this.getElement() === "svg" || this.getInnerHTML()?.startsWith("<svg");
+	}
 	isText() {
 		return ["span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6", "label", "a"].includes(
 			this.getElement() as string
@@ -254,6 +257,8 @@ class Block implements BlockOptions {
 				return "hash";
 			case this.isRepeater():
 				return "database";
+			case this.isSVG():
+				return "aperture";
 			case this.isHTML():
 				return "code";
 			case this.isLink():

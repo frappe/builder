@@ -1,4 +1,4 @@
-function convertHTMLToBlocks(html: string) {
+function convertHTMLToBlocks(html: string, skipBody = false) {
 	const start = html.indexOf("```");
 	let htmlStripped;
 	if (start === -1) {
@@ -10,15 +10,18 @@ function convertHTMLToBlocks(html: string) {
 
 	const doc = new DOMParser().parseFromString(htmlStripped, "text/html");
 	const { body } = doc;
-	return parseElement(body);
+	return parseElement(body, skipBody);
 }
 
-function parseElement(element: HTMLElement): BlockOptions {
+function parseElement(element: HTMLElement, skipBody = false): BlockOptions {
 	const tag = element.tagName.toLowerCase();
 	const obj: BlockOptions = {
 		element: tag,
 	};
 	if (tag === "body") {
+		if (skipBody) {
+			return parseElement(element.children[0] as HTMLElement);
+		}
 		obj.originalElement = "body";
 		obj.element = "div";
 	}
