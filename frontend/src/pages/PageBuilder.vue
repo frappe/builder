@@ -176,8 +176,12 @@ useEventListener(document, "paste", async (e) => {
 			blockController.setInnerHTML(text);
 		} else {
 			// create block from html
-			const block = convertHTMLToBlocks(text) as BlockOptions;
-			if (block) {
+			const block = convertHTMLToBlocks(text, true) as BlockOptions;
+			const parentBlock = blockController.getSelectedBlocks()[0];
+			if (!block) return;
+			if (parentBlock) {
+				parentBlock.addChild(block);
+			} else {
 				store.pushBlocks([block]);
 			}
 		}

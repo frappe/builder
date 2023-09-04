@@ -34,7 +34,13 @@
 								<FeatherIcon
 									:name="isExpanded(element) ? 'chevron-down' : 'chevron-right'"
 									class="mr-1 h-3 w-3"
-									v-if="element.children && element.children.length && !element.isRoot()"
+									v-if="
+										element.children &&
+										element.children.length &&
+										!element.isRoot() &&
+										!element.isImage() &&
+										!element.isSVG()
+									"
 									@click.stop="toggleExpanded(element)" />
 								<FeatherIcon
 									:name="element.getIcon()"
@@ -78,7 +84,9 @@
 									{{ store.activeBreakpoint }}
 								</span>
 							</span>
-							<div v-show="isExpanded(element) && element.isVisible()" v-if="!element.isImage()">
+							<div
+								v-show="isExpanded(element) && element.isVisible()"
+								v-if="!element.isImage() && !element.isSVG()">
 								<BlockLayers :blocks="element.children" class="ml-3" />
 							</div>
 						</div>
