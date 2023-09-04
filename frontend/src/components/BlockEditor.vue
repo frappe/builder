@@ -243,4 +243,8 @@ const handleMove = (ev: MouseEvent) => {
 		{ once: true }
 	);
 };
+
+defineExpose({
+	element: editor,
+});
 </script>

@@ -134,14 +134,14 @@ const modelColor = computed(() => {
 const emit = defineEmits(["update:modelValue"]);
 
 const colors = [
-	"#FF6633",
-	"#FFB399",
-	"#FF33FF",
+	"#FFB3E6",
 	"#00B3E6",
 	"#E6B333",
 	"#3366E6",
 	"#999966",
 	"#99FF99",
+	"#B34D4D",
+	"#80B300",
 ] as HashString[];
 
 if (!isSupported.value) {

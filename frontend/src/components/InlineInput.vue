@@ -95,7 +95,7 @@ const handleChange = (value: string | number | null | { label: string; value: st
 	}
 	if (value && typeof value === "string") {
 		let [_, number, unit] = value.match(/([0-9]+)([a-z%]*)/) || ["", "", ""];
-		if (!unit && props.unitOptions.length) {
+		if (!unit && props.unitOptions.length && number) {
 			value = number + props.unitOptions[0];
 		}
 	}
@@ -111,7 +111,7 @@ const handleMouseDown = (e: MouseEvent) => {
 
 	let [_, number, unit] = value.match(/([0-9]+)([a-z%]*)/) || ["", "", ""];
 
-	if (!unit && props.unitOptions.length) {
+	if (!unit && props.unitOptions.length && number) {
 		unit = props.unitOptions[0];
 	}
 
