@@ -265,6 +265,10 @@ class Block implements BlockOptions {
 				return "link";
 			case this.isText():
 				return "type";
+			case this.isContainer() && this.isRow():
+				return "columns";
+			case this.isContainer() && this.isColumn():
+				return "credit-card";
 			case this.isContainer():
 				return "square";
 			case this.isImage():
@@ -547,6 +551,43 @@ class Block implements BlockOptions {
 		});
 
 		return new Set(componentNames);
+	}
+	isFlex() {
+		return this.getStyle("display") === "flex";
+	}
+	isRow() {
+		return this.isFlex() && this.getStyle("flexDirection") === "row";
+	}
+	isColumn() {
+		return this.isFlex() && this.getStyle("flexDirection") === "column";
+	}
+	duplicateBlock() {
+		const store = useStore();
+		store.history.pause();
+		const blockCopy = store.getBlockCopy(this);
+		const parentBlock = this.getParentBlock();
+
+		if (blockCopy.getStyle("position") === "absolute") {
+			// shift the block a bit
+			const left = getNumberFromPx(blockCopy.getStyle("left"));
+			const top = getNumberFromPx(blockCopy.getStyle("top"));
+			blockCopy.setStyle("left", `${left + 20}px`);
+			blockCopy.setStyle("top", `${top + 20}px`);
+		}
+
+		let child = null as Block | null;
+		if (parentBlock) {
+			child = parentBlock.addChildAfter(blockCopy, this);
+		} else {
+			child = store.builderState.blocks[0]?.addChild(blockCopy);
+		}
+		nextTick(() => {
+			if (child) {
+				child.selectBlock();
+			}
+			store.history.resume();
+			store.history.commit();
+		});
 	}
 }
 

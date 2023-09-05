@@ -299,6 +299,14 @@ useEventListener(document, "keydown", (e) => {
 		}
 	}
 
+	if (e.key === "d" && e.metaKey) {
+		if (blockController.isBLockSelected() && !blockController.multipleBlocksSelected()) {
+			e.preventDefault();
+			const block = blockController.getSelectedBlocks()[0];
+			block.duplicateBlock();
+		}
+	}
+
 	if (isTargetEditable(e)) return;
 
 	if (e.key === "Backspace" && blockController.isBLockSelected()) {
