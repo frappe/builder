@@ -42,7 +42,6 @@ import useStore from "@/store";
 import { WebPageComponent } from "@/types/WebsiteBuilder/WebPageComponent";
 import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { getNumberFromPx } from "@/utils/helpers";
 import { vOnClickOutside } from "@vueuse/components";
 import { Dialog } from "frappe-ui";
 import { nextTick, ref } from "vue";
@@ -91,28 +90,7 @@ const pasteStyle = () => {
 };
 
 const duplicateBlock = () => {
-	const blockCopy = store.getBlockCopy(props.block);
-	const parentBlock = props.block.getParentBlock();
-
-	if (blockCopy.getStyle("position") === "absolute") {
-		// shift the block a bit
-		const left = getNumberFromPx(blockCopy.getStyle("left"));
-		const top = getNumberFromPx(blockCopy.getStyle("top"));
-		blockCopy.setStyle("left", `${left + 20}px`);
-		blockCopy.setStyle("top", `${top + 20}px`);
-	}
-
-	let child = null as Block | null;
-	if (parentBlock) {
-		child = parentBlock.addChildAfter(blockCopy, props.block);
-	} else {
-		child = store.builderState.blocks[0]?.addChild(blockCopy);
-	}
-	nextTick(() => {
-		if (child) {
-			child.selectBlock();
-		}
-	});
+	props.block.duplicateBlock();
 };
 
 const createComponentHandler = ({ close }: { close: () => void }) => {
