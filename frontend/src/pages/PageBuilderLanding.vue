@@ -35,7 +35,8 @@
 					<div class="flex items-center justify-between border-t-[1px] px-3 dark:border-zinc-800">
 						<p class="py-2 text-sm text-gray-700 dark:text-zinc-200">
 							{{ page.page_title || page.page_name }}
-							<Badge v-show="page.draft_blocks">Draft</Badge>
+							<Badge v-show="page.draft_blocks" size="sm">Draft</Badge>
+							<Badge v-show="page.published && !page.draft_blocks" theme="green" size="sm">Published</Badge>
 							<UseTimeAgo v-slot="{ timeAgo }" :time="page.creation">
 								<span class="mt-1 block text-xs text-gray-500">
 									{{ timeAgo }}

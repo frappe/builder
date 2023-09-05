@@ -62,6 +62,8 @@
 			label="Gap"
 			v-if="blockController.getStyle('display') === 'flex'"
 			type="text"
+			:enableSlider="true"
+			:unitOptions="['px', 'em', 'rem']"
 			:modelValue="blockController.getStyle('gap')"
 			@update:modelValue="(val: string | number) => blockController.setStyle('gap', val)" />
 

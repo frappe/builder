@@ -9,6 +9,7 @@
 <script setup lang="ts">
 import useStore from "@/store";
 import Block from "@/utils/block";
+import blockController from "@/utils/blockController";
 import { setFontFromHTML } from "@/utils/fontManager";
 import { Color } from "@tiptap/extension-color";
 import { FontFamily } from "@tiptap/extension-font-family";
@@ -87,7 +88,7 @@ if (!props.preview) {
 		() => props.block.isSelected(),
 		() => {
 			// only load editor if block is selected for performance reasons
-			if (props.block.isSelected()) {
+			if (props.block.isSelected() && !blockController.multipleBlocksSelected()) {
 				editor.value = new Editor({
 					content: textContent.value,
 					extensions: [StarterKit, TextStyle, Color, FontFamily],
