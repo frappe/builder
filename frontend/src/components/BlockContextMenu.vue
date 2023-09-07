@@ -186,10 +186,14 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Convert to Link",
 		action: () => {
-			props.block.convertToLink();
+			blockController.getSelectedBlocks().forEach((block) => {
+				block.convertToLink();
+			});
 		},
 		condition: () =>
-			props.block.isContainer() && !props.block.isExtendedFromComponent() && !props.block.isRoot(),
+			(props.block.isContainer() || props.block.isText()) &&
+			!props.block.isExtendedFromComponent() &&
+			!props.block.isRoot(),
 	},
 ];
 </script>

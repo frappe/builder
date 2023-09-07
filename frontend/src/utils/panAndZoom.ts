@@ -36,7 +36,7 @@ function setPanAndZoom(
 			}
 			// Multiplying with 0.01 to make the zooming less sensitive
 			// Multiplying with scale to make the zooming feel consistent
-			let scale = props.scale - e.deltaY * 0.006 * props.scale;
+			let scale = props.scale - e.deltaY * 0.008 * props.scale;
 			scale = Math.min(Math.max(scale, zoomLimits.min), zoomLimits.max);
 			props.scale = scale;
 			nextTick(() => {
