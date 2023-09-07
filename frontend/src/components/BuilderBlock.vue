@@ -34,7 +34,7 @@
 <script setup lang="ts">
 import Block from "@/utils/block";
 import { setFont } from "@/utils/fontManager";
-import { computed, inject, nextTick, onMounted, reactive, ref, useAttrs } from "vue";
+import { computed, inject, nextTick, onMounted, reactive, ref, useAttrs, watchEffect } from "vue";
 
 import getBlockTemplate from "@/utils/blockTemplate";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
@@ -144,8 +144,12 @@ const loadEditor = computed(() => {
 });
 
 const emit = defineEmits(["mounted"]);
-onMounted(async () => {
+
+watchEffect(() => {
 	setFont(props.block.getStyle("fontFamily") as string);
+});
+
+onMounted(async () => {
 	await nextTick();
 	emit("mounted", target.value);
 
