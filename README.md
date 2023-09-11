@@ -19,7 +19,7 @@ Credit: [Web Page design source](https://www.figma.com/community/file/9492664364
 1. [Install bench](https://github.com/frappe/bench).
 2. Install Frappe Builder app
 	```sh
-	$ bench get-app website_builder
+	$ bench get-app builder
 	```
 3. Create a site with builder app
 	```sh
