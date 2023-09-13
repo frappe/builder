@@ -87,6 +87,7 @@ const handleRightResize = (ev: MouseEvent) => {
 	const startX = ev.clientX;
 	const startWidth = target.offsetWidth;
 	const parentWidth = target.parentElement?.offsetWidth || 0;
+	const startFontSize = fontSize.value;
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
 	document.body.style.cursor = window.getComputedStyle(ev.target as HTMLElement).cursor;
@@ -96,9 +97,9 @@ const handleRightResize = (ev: MouseEvent) => {
 		// movement / scale * speed
 		const movement = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
 		const finalWidth = Math.abs(guides.getFinalWidth(startWidth + movement));
-
-		if (targetBlock.isText() && mouseMoveEvent.shiftKey) {
-			const fontSize = clamp(Math.round(finalWidth * 0.5), 10, 150);
+		console.log(startFontSize, movement);
+		if (targetBlock.isText() && !mouseMoveEvent.shiftKey) {
+			const fontSize = clamp(Math.round(startFontSize + 0.5 * movement), 10, 150);
 			targetBlock.setStyle("fontSize", `${fontSize}px`);
 			return mouseMoveEvent.preventDefault();
 		}
@@ -130,6 +131,7 @@ const handleRightResize = (ev: MouseEvent) => {
 const handleBottomResize = (ev: MouseEvent) => {
 	const startY = ev.clientY;
 	const startHeight = target.offsetHeight;
+	const startFontSize = fontSize.value || 0;
 
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
@@ -141,8 +143,8 @@ const handleBottomResize = (ev: MouseEvent) => {
 		const movement = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
 		let finalHeight = Math.round(Math.abs(guides.getFinalHeight(startHeight + movement)));
 
-		if (targetBlock.isText() && mouseMoveEvent.shiftKey) {
-			const fontSize = clamp(Math.round(finalHeight * 0.5), 10, 300);
+		if (targetBlock.isText() && !mouseMoveEvent.shiftKey) {
+			const fontSize = clamp(Math.round(startFontSize + 0.5 * movement), 10, 300);
 			targetBlock.setStyle("fontSize", `${fontSize}px`);
 			return mouseMoveEvent.preventDefault();
 		}
@@ -169,6 +171,7 @@ const handleBottomCornerResize = (ev: MouseEvent) => {
 	const startY = ev.clientY;
 	const startHeight = target.offsetHeight;
 	const startWidth = target.offsetWidth;
+	const startFontSize = fontSize.value || 0;
 
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
@@ -179,8 +182,8 @@ const handleBottomCornerResize = (ev: MouseEvent) => {
 		const movementX = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
 		const finalWidth = Math.round(startWidth + movementX);
 
-		if (targetBlock.isText() && mouseMoveEvent.shiftKey) {
-			const fontSize = clamp(Math.round(finalWidth * 0.5), 10, 300);
+		if (targetBlock.isText() && !mouseMoveEvent.shiftKey) {
+			const fontSize = clamp(Math.round(startFontSize + 0.5 * movementX), 10, 300);
 			targetBlock.setStyle("fontSize", `${fontSize}px`);
 			return mouseMoveEvent.preventDefault();
 		}
