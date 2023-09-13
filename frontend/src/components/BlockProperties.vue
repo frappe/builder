@@ -243,6 +243,14 @@
 			v-if="blockController.isImage()"
 			:modelValue="blockController.getAttribute('alt')"
 			@update:modelValue="(val) => blockController.setAttribute('alt', val)" />
+
+		<!-- class -->
+		<InlineInput
+			label="Class"
+			v-if="!blockController.multipleBlocksSelected()"
+			:modelValue="getClasses()"
+			@update:modelValue="(val) => setClasses(val)" />
+
 		<CodeEditor
 			class="mt-8"
 			label="RAW Styles (as JSON)"
@@ -286,5 +294,14 @@ const setFont = (font: string) => {
 	_setFont(font).then(() => {
 		blockController.setFontFamily(font);
 	});
+};
+
+const getClasses = () => {
+	return blockController.getClasses().join(", ");
+};
+
+const setClasses = (val: string) => {
+	const classes = val.split(",").map((c) => c.trim());
+	blockController.setClasses(classes);
 };
 </script>
