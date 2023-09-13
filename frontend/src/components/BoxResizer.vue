@@ -97,7 +97,6 @@ const handleRightResize = (ev: MouseEvent) => {
 		// movement / scale * speed
 		const movement = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
 		const finalWidth = Math.abs(guides.getFinalWidth(startWidth + movement));
-		console.log(startFontSize, movement);
 		if (targetBlock.isText() && !mouseMoveEvent.shiftKey) {
 			const fontSize = clamp(Math.round(startFontSize + 0.5 * movement), 10, 150);
 			targetBlock.setStyle("fontSize", `${fontSize}px`);

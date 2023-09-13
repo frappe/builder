@@ -93,6 +93,14 @@ const blockController = {
 			block[key] = value;
 		});
 	},
+	getClasses: () => {
+		let classes = [] as string[];
+		classes = store.selectedBlocks[0].getClasses();
+		return classes;
+	},
+	setClasses: (classes: string[]) => {
+		store.selectedBlocks[0].classes = classes;
+	},
 	getRawStyles: () => {
 		return blockController.isBLockSelected() && store.selectedBlocks[0].rawStyles;
 	},
