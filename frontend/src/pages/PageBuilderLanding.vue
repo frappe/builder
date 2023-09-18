@@ -65,27 +65,27 @@
 </template>
 <script setup lang="ts">
 import { webPages } from "@/data/webPage";
-import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
+import { BuilderPage } from "@/types/WebsiteBuilder/BuilderPage";
 import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
 import { Badge, Dropdown } from "frappe-ui";
 import { onActivated } from "vue";
 
-const deletePage = async (page: WebPageBeta) => {
+const deletePage = async (page: BuilderPage) => {
 	const confirmed = await confirm(`Are you sure you want to delete Page: ${page.page_name}?`);
 	if (confirmed) {
 		await webPages.delete.submit(page.name);
 	}
 };
 
-const duplicatePage = async (page: WebPageBeta) => {
+const duplicatePage = async (page: BuilderPage) => {
 	const pageCopy = { ...page };
 	pageCopy.page_name = `${page.page_name}-copy`;
 	pageCopy.page_title = `${page.page_title} Copy`;
 	await webPages.insert.submit(pageCopy);
 };
 
-const openInDesk = (page: WebPageBeta) => {
+const openInDesk = (page: BuilderPage) => {
 	window.open(`/app/web-page-beta/${page.page_name}`, "_blank");
 };
 

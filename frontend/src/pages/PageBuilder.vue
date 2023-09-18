@@ -49,8 +49,8 @@ import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
-import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
-import { WebPageComponent } from "@/types/WebsiteBuilder/WebPageComponent";
+import { BuilderComponent } from "@/types/WebsiteBuilder/BuilderComponent";
+import { BuilderPage } from "@/types/WebsiteBuilder/BuilderPage";
 import Block, { styleProperty } from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
@@ -96,7 +96,7 @@ useEventListener(document, "copy", (e) => {
 	if (isTargetEditable(e)) return;
 	e.preventDefault();
 	if (store.selectedBlocks.length) {
-		const componentDocuments: WebPageComponent[] = [];
+		const componentDocuments: BuilderComponent[] = [];
 		store.selectedBlocks.forEach((block) => {
 			const components = block.getUsedComponentNames();
 			components.forEach((componentName) => {
@@ -144,7 +144,7 @@ useEventListener(document, "paste", async (e) => {
 	const data = e.clipboardData?.getData("builder-copied-blocks") as string;
 	// paste blocks directly
 	if (data && isJSONString(data)) {
-		const dataObj = JSON.parse(data) as { blocks: Block[]; components: WebPageComponent[] };
+		const dataObj = JSON.parse(data) as { blocks: Block[]; components: BuilderComponent[] };
 
 		for (const component of dataObj.components) {
 			await store.createComponent(component);
@@ -394,7 +394,7 @@ onActivated(async () => {
 				page_title: "My Page",
 				draft_blocks: [store.getRootBlock()],
 			})
-			.then((data: WebPageBeta) => {
+			.then((data: BuilderPage) => {
 				router.push({ name: "builder", params: { pageId: data.name }, force: true });
 				setPage(data.name);
 			});
@@ -402,7 +402,7 @@ onActivated(async () => {
 });
 
 const setPage = (pageName: string) => {
-	webPages.fetchOne.submit(pageName).then((data: WebPageBeta[]) => {
+	webPages.fetchOne.submit(pageName).then((data: BuilderPage[]) => {
 		store.setPage(data[0]);
 		nextTick(() => {
 			if (blockEditor.value) {

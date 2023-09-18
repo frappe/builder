@@ -4,8 +4,8 @@ import { defineStore, storeToRefs } from "pinia";
 import { reactive } from "vue";
 import webComponent from "./data/webComponent";
 import { webPages } from "./data/webPage";
-import { WebPageBeta } from "./types/WebsiteBuilder/WebPageBeta";
-import { WebPageComponent } from "./types/WebsiteBuilder/WebPageComponent";
+import { BuilderComponent } from "./types/WebsiteBuilder/BuilderComponent";
+import { BuilderPage } from "./types/WebsiteBuilder/BuilderPage";
 import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
 import { stripExtension } from "./utils/helpers";
@@ -260,7 +260,7 @@ const useStore = defineStore("store", {
 		getPageData() {
 			return this.builderState.blocks;
 		},
-		async setPage(page: WebPageBeta) {
+		async setPage(page: BuilderPage) {
 			this.settingPage = true;
 			if (!page) {
 				return;
@@ -405,9 +405,9 @@ const useStore = defineStore("store", {
 			return (this.getComponent(componentName)?.block as Block) || this.getFallbackBlock();
 		},
 		getComponent(componentName: string) {
-			return webComponent.getRow(componentName) as WebPageComponent;
+			return webComponent.getRow(componentName) as BuilderComponent;
 		},
-		createComponent(obj: WebPageComponent) {
+		createComponent(obj: BuilderComponent) {
 			if (this.getComponent(obj.name)) {
 				return;
 			}
@@ -458,7 +458,7 @@ const useStore = defineStore("store", {
 			this.selectedBlocks = [];
 		},
 		getActivePage() {
-			return webPages.getRow(this.selectedPage as string) as WebPageBeta;
+			return webPages.getRow(this.selectedPage as string) as BuilderPage;
 		},
 		async publishPage() {
 			return webPages.runDocMethod

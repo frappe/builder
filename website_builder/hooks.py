@@ -46,7 +46,7 @@ app_license = "MIT"
 # ----------
 
 # automatically create page for each record of this doctype
-website_generators = ["Web Page Beta"]
+website_generators = ["Builder Page"]
 
 # Jinja
 # ----------
@@ -192,4 +192,4 @@ website_route_rules = [
 	{"from_route": "/builder/<path:app_path>", "to_route": "builder"},
 ]
 
-get_web_pages_with_dynamic_routes = "website_builder.website_builder.doctype.web_page_beta.web_page_beta.get_web_pages_with_dynamic_routes"
+get_web_pages_with_dynamic_routes = "website_builder.website_builder.doctype.builder_page.builder_page.get_web_pages_with_dynamic_routes"
