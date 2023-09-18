@@ -25,7 +25,7 @@ MOBILE_BREAKPOINT = 576
 TABLET_BREAKPOINT = 768
 DESKTOP_BREAKPOINT = 1024
 
-class WebPageBeta(WebsiteGenerator):
+class BuilderPage(WebsiteGenerator):
 	def before_insert(self):
 		if isinstance(self.blocks, list):
 			self.blocks = frappe.as_json(self.blocks, indent=None)
@@ -97,7 +97,7 @@ class WebPageBeta(WebsiteGenerator):
 		with contextlib.suppress(frappe.DoesNotExistError):
 			attached_files = frappe.get_all("File", {
 				"attached_to_field": "preview",
-				"attached_to_doctype": "Web Page Beta",
+				"attached_to_doctype": "Builder Page",
 				"attached_to_name": self.name
 			})
 			for file in attached_files:
@@ -214,7 +214,7 @@ def set_fonts_from_html(soup, font_map):
 
 def extend_with_component(block, data=None):
 	if block.get("extendedFromComponent"):
-		component = frappe.get_cached_value("Web Page Component", block["extendedFromComponent"], ["block", "name"], as_dict=True)
+		component = frappe.get_cached_value("Builder Component", block["extendedFromComponent"], ["block", "name"], as_dict=True)
 		component_block = frappe.parse_json(component.block)
 		if component_block:
 			extend_block(component_block, block, data=data)
@@ -312,8 +312,8 @@ def get_style_file_path():
 @redis_cache(ttl=60 * 60)
 def get_web_pages_with_dynamic_routes() -> dict[str, str]:
 	return frappe.get_all(
-		"Web Page Beta", fields=["name", "route", "modified"], filters=dict(published=1, dynamic_route=1),
-		update={"doctype": "Web Page Beta"}
+		"Builder Page", fields=["name", "route", "modified"], filters=dict(published=1, dynamic_route=1),
+		update={"doctype": "Builder Page"}
 	)
 
 @frappe.whitelist()
@@ -322,12 +322,12 @@ def get_page_preview_html(page: str, **kwarg) -> str:
 	frappe.form_dict.update(kwarg)
 	renderer = DocumentPage(path="")
 	renderer.docname = page
-	renderer.doctype = "Web Page Beta"
+	renderer.doctype = "Builder Page"
 	frappe.flags.show_preview = True
 	frappe.local.no_cache = 1
 	renderer.init_context()
 	response = renderer.render()
-	page = frappe.get_cached_doc("Web Page Beta", page)
+	page = frappe.get_cached_doc("Builder Page", page)
 	frappe.enqueue_doc(
 		page.doctype,
 		page.name,

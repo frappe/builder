@@ -40,13 +40,13 @@
 <script lang="ts" setup>
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
-import { WebPageBeta } from "@/types/WebsiteBuilder/WebPageBeta";
+import { BuilderPage } from "@/types/WebsiteBuilder/BuilderPage";
 import { Dialog } from "frappe-ui";
 import { onMounted, ref } from "vue";
 import CodeEditor from "./CodeEditor.vue";
 const store = useStore();
 const showDialog = ref(false);
-const page = ref<WebPageBeta>(store.getActivePage());
+const page = ref<BuilderPage>(store.getActivePage());
 
 onMounted(() => {
 	page.value = store.getActivePage();

@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestWebPageComponent(FrappeTestCase):
+class TestBuilderPage(FrappeTestCase):
 	pass

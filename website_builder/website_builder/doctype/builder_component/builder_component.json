@@ -29,7 +29,7 @@
    "fieldname": "for_web_page",
    "fieldtype": "Link",
    "label": "For Web Page",
-   "options": "Web Page Beta",
+   "options": "Builder Page",
    "read_only": 1
   },
   {
@@ -45,7 +45,7 @@
  "modified": "2023-08-27 11:56:45.322261",
  "modified_by": "Administrator",
  "module": "Website Builder",
- "name": "Web Page Component",
+ "name": "Builder Component",
  "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
