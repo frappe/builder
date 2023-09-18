@@ -2,7 +2,7 @@ import { createListResource } from "frappe-ui";
 
 const webPages = createListResource({
 	method: "GET",
-	doctype: "Web Page Beta",
+	doctype: "Builder Page",
 	fields: [
 		"name",
 		"route",

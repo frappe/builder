@@ -21,7 +21,7 @@ const validateVisit = function (to, from, next) {
 				caches: "has_permission",
 			})
 				.submit({
-					doctype: "Web Page Beta",
+					doctype: "Builder Page",
 					docname: null,
 					perm_type: "write",
 				})

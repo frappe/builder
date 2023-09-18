@@ -29,7 +29,7 @@
    "fieldname": "for_web_page",
    "fieldtype": "Link",
    "label": "For Web Page",
-   "options": "Web Page Beta",
+   "options": "Builder Page",
    "read_only": 1
   },
   {
