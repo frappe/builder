@@ -3,16 +3,16 @@ import frappe
 
 def execute():
 	"""Properly extend blocks from component"""
-	web_pages = frappe.get_all("Web Page Beta", fields=["name", "blocks"])
+	web_pages = frappe.get_all("Builder Page", fields=["name", "blocks"])
 	for web_page in web_pages:
 		blocks = frappe.parse_json(web_page.blocks)
 		if blocks:
 			update_blocks(blocks)
-			frappe.db.set_value("Web Page Beta", web_page.name, "blocks", frappe.as_json(blocks, indent=None), update_modified=False)
+			frappe.db.set_value("Builder Page", web_page.name, "blocks", frappe.as_json(blocks, indent=None), update_modified=False)
 		draft_blocks = frappe.parse_json(web_page.draft_blocks)
 		if draft_blocks:
 			update_blocks(draft_blocks)
-			frappe.db.set_value("Web Page Beta", web_page.name, "draft_blocks", frappe.as_json(blocks, indent=None), update_modified=False)
+			frappe.db.set_value("Builder Page", web_page.name, "draft_blocks", frappe.as_json(blocks, indent=None), update_modified=False)
 
 def update_blocks(blocks):
 	for block in blocks:
