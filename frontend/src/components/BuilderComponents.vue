@@ -46,7 +46,7 @@
 <script setup lang="ts">
 import webComponent from "@/data/webComponent";
 import useStore from "@/store";
-import { WebPageComponent } from "@/types/WebsiteBuilder/WebPageComponent";
+import { BuilderComponent } from "@/types/WebsiteBuilder/BuilderComponent";
 import { useIntersectionObserver } from "@vueuse/core";
 import { computed, ref } from "vue";
 import BuilderBlock from "./BuilderBlock.vue";
@@ -55,7 +55,7 @@ const store = useStore();
 const filter = ref("");
 
 const components = computed(() =>
-	(webComponent.data || []).filter((d: WebPageComponent) => {
+	(webComponent.data || []).filter((d: BuilderComponent) => {
 		if (d.for_web_page && d.for_web_page !== store.getActivePage?.name) {
 			return false;
 		}

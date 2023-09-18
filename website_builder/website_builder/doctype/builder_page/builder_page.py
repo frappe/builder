@@ -214,7 +214,7 @@ def set_fonts_from_html(soup, font_map):
 
 def extend_with_component(block, data=None):
 	if block.get("extendedFromComponent"):
-		component = frappe.get_cached_value("Web Page Component", block["extendedFromComponent"], ["block", "name"], as_dict=True)
+		component = frappe.get_cached_value("Builder Component", block["extendedFromComponent"], ["block", "name"], as_dict=True)
 		component_block = frappe.parse_json(component.block)
 		if component_block:
 			extend_block(component_block, block, data=data)

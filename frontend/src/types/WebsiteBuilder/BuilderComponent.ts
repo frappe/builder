@@ -1,4 +1,4 @@
-export interface WebPageComponent {
+export interface BuilderComponent {
 	creation: string;
 	name: string;
 	modified: string;
