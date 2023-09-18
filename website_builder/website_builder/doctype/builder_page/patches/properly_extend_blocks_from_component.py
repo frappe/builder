@@ -22,13 +22,13 @@ def update_blocks(blocks):
 
 		if block.get("extendedFromComponent"):
 			try:
-				component = frappe.get_cached_doc("Web Page Component", block.get("extendedFromComponent"))
+				component = frappe.get_cached_doc("Builder Component", block.get("extendedFromComponent"))
 				component_block = frappe.parse_json(component.get("block"))
 				update_blocks([component_block])
-				frappe.db.set_value("Web Page Component", component.name, "block", frappe.as_json(component_block, indent=None), update_modified=False)
+				frappe.db.set_value("Builder Component", component.name, "block", frappe.as_json(component_block, indent=None), update_modified=False)
 				extend_block_from_component(block, component.name, component_block.get("children"), component_block)
 			except frappe.DoesNotExistError:
-				frappe.log_error(f"Web Page Component {block.get('extendedFromComponent')} not found")
+				frappe.log_error(f"Builder Component {block.get('extendedFromComponent')} not found")
 
 		if "children" in block:
 			update_blocks(block["children"])

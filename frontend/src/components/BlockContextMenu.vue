@@ -39,7 +39,7 @@
 <script setup lang="ts">
 import webComponent from "@/data/webComponent";
 import useStore from "@/store";
-import { WebPageComponent } from "@/types/WebsiteBuilder/WebPageComponent";
+import { BuilderComponent } from "@/types/WebsiteBuilder/BuilderComponent";
 import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { vOnClickOutside } from "@vueuse/components";
@@ -104,7 +104,7 @@ const createComponentHandler = ({ close }: { close: () => void }) => {
 			component_name: componentProperties.value.componentName,
 			for_web_page: componentProperties.value.isGlobalComponent ? null : store.getActivePage()?.name,
 		})
-		.then(async (data: WebPageComponent) => {
+		.then(async (data: BuilderComponent) => {
 			await webComponent.list.promise;
 			const block = store.findBlock(props.block.blockId);
 			if (!block) return;

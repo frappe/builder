@@ -22,11 +22,6 @@ declare interface BlockOptions {
 	[key: string]: any;
 }
 
-interface ComponentOptions extends BlockOptions {
-	component: WebPageComponent;
-	componentData: ComponentData;
-}
-
 declare interface BlockComponent {
 	name: string;
 	component_name: string;
