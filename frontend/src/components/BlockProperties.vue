@@ -1,9 +1,7 @@
 <template>
 	<div v-if="blockController.isBLockSelected()" class="flex select-none flex-col gap-3 pb-48">
 		<BLockLayoutHandler v-if="!blockController.multipleBlocksSelected()" class="mb-6"></BLockLayoutHandler>
-		<div
-			v-if="store.editingMode === 'component' || blockController.isRepeater()"
-			class="mb-8 flex flex-col gap-3">
+		<div class="mb-8 flex flex-col gap-3">
 			<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Component Keys</h3>
 			<InlineInput
 				label="Key"
