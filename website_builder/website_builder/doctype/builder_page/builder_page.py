@@ -126,7 +126,7 @@ def get_block_html(blocks, page_data={}):
 		html = ""
 		def get_tag(block, soup, repeater_child=False):
 			block = extend_with_component(block)
-			extend_with_data(block, repeater_child)
+			set_dynamic_content_placeholder(block, repeater_child)
 			element = block.get("originalElement") or block.get("element")
 			# temp fix: since p inside p is illegal
 			if element in ["p", "__raw_html__"]:
@@ -258,9 +258,9 @@ def extend_block(block, overridden_block):
 			component_children.insert(overridden_children.index(overridden_child), overridden_child)
 
 
-def extend_with_data(block, repeater_child=False):
+def set_dynamic_content_placeholder(block, repeater_child=False):
 	data_key = block.get("dataKey")
-	if data_key:
+	if data_key and data_key.get("key"):
 		key = f"_data.{data_key.get('key')}" if repeater_child else data_key.get("key")
 		value = "{{" + key + "}}"
 		if data_key.get("type") == "attribute":
