@@ -517,6 +517,9 @@ const useStore = defineStore("store", {
 			localStorage.setItem(`${this.selectedPage}:routeVariables`, JSON.stringify(this.routeVariables));
 			this.setPageData();
 		},
+		openInDesk(page: BuilderPage) {
+			window.open(`/app/builder-page/${page.page_name}`, "_blank");
+		},
 	},
 });
 

@@ -46,7 +46,7 @@
 						<Dropdown
 							:options="[
 								{ label: 'Duplicate', onClick: () => duplicatePage(page), icon: 'copy' },
-								{ label: 'View in Desk', onClick: () => openInDesk(page), icon: 'arrow-up-right' },
+								{ label: 'View in Desk', onClick: () => store.openInDesk(page), icon: 'arrow-up-right' },
 								{ label: 'Delete', onClick: () => deletePage(page), icon: 'trash' },
 							]"
 							placement="right">
@@ -65,11 +65,14 @@
 </template>
 <script setup lang="ts">
 import { webPages } from "@/data/webPage";
+import useStore from "@/store";
 import { BuilderPage } from "@/types/WebsiteBuilder/BuilderPage";
 import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
 import { Badge, Dropdown } from "frappe-ui";
 import { onActivated } from "vue";
+
+const store = useStore();
 
 const deletePage = async (page: BuilderPage) => {
 	const confirmed = await confirm(`Are you sure you want to delete Page: ${page.page_name}?`);
@@ -83,10 +86,6 @@ const duplicatePage = async (page: BuilderPage) => {
 	pageCopy.page_name = `${page.page_name}-copy`;
 	pageCopy.page_title = `${page.page_title} Copy`;
 	await webPages.insert.submit(pageCopy);
-};
-
-const openInDesk = (page: BuilderPage) => {
-	window.open(`/app/web-page-beta/${page.page_name}`, "_blank");
 };
 
 onActivated(() => {
