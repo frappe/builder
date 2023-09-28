@@ -16,6 +16,8 @@ from website_builder.html_preview_image import generate_preview
 from frappe.utils.safe_exec import safe_exec
 from frappe.utils.caching import redis_cache
 from frappe.website.page_renderers.document_page import DocumentPage
+from frappe.utils.jinja import render_template
+from jinja2.exceptions import TemplateSyntaxError
 
 
 
@@ -71,11 +73,17 @@ class BuilderPage(WebsiteGenerator):
 		if frappe.flags.show_preview and self.draft_blocks:
 			blocks = self.draft_blocks
 
-		content, style, fonts = get_block_html(blocks, page_data)
+		content, style, fonts = get_block_html(blocks)
 		context.fonts = fonts
 		context.content = content
 		context.style = style
 		context.style_file_path = get_style_file_path()
+		context.update(page_data)
+		try:
+			context["content"] = render_template(context.content, context)
+			context["no_cache"] = 1
+		except TemplateSyntaxError:
+			raise
 
 	@frappe.whitelist()
 	def get_page_data(self, args=None):
@@ -116,8 +124,9 @@ def get_block_html(blocks, page_data={}):
 
 	def get_html(blocks, soup):
 		html = ""
-		def get_tag(block, soup, context_data=None):
-			block = extend_with_component(block, context_data)
+		def get_tag(block, soup, repeater_child=False):
+			block = extend_with_component(block)
+			set_dynamic_content_placeholder(block, repeater_child)
 			element = block.get("originalElement") or block.get("element")
 			# temp fix: since p inside p is illegal
 			if element in ["p", "__raw_html__"]:
@@ -147,25 +156,22 @@ def get_block_html(blocks, page_data={}):
 
 			block_data = []
 			if block.get("isRepeaterBlock"):
-				dataKey = block.get("dataKey")
-				key = dataKey.get("key") if dataKey else ""
-				if key:
-					block_data = context_data and context_data.get(key, [])
-
-			if block_data and block.get("children"):
-				for _data in block_data:
-					tag.append(get_tag(block.get("children")[0], soup, _data))
+				tag.append("{% for _data in " + block.get("dataKey").get("key") + " %}")
+				tag.append(get_tag(block.get("children")[0], soup, True))
+				tag.append("{% endfor %}")
 			else:
 				for child in block.get("children", []):
-					tag.append(get_tag(child, soup, context_data))
+					tag.append(get_tag(child, soup, repeater_child))
+
 			return tag
 
 		for block in blocks:
-			html += str(get_tag(block, soup, page_data))
+			html += str(get_tag(block, soup))
 
 		return html, str(style_tag), font_map
 
-	return get_html(blocks, soup)
+	data = get_html(blocks, soup)
+	return data
 
 def get_style(style_obj):
 	return "".join(f"{camel_case_to_kebab_case(key)}: {value};" for key, value in style_obj.items()) if style_obj else ""
@@ -212,17 +218,17 @@ def set_fonts_from_html(soup, font_map):
 				if font:
 					font_map[font] = { "weights": ["400"] }
 
-def extend_with_component(block, data=None):
+def extend_with_component(block):
 	if block.get("extendedFromComponent"):
 		component = frappe.get_cached_value("Builder Component", block["extendedFromComponent"], ["block", "name"], as_dict=True)
 		component_block = frappe.parse_json(component.block)
 		if component_block:
-			extend_block(component_block, block, data=data)
+			extend_block(component_block, block)
 			block = component_block
 
 	return block
 
-def extend_block(block, overridden_block, data=None):
+def extend_block(block, overridden_block):
 	block["baseStyles"].update(overridden_block["baseStyles"])
 	block["mobileStyles"].update(overridden_block["mobileStyles"])
 	block["tabletStyles"].update(overridden_block["tabletStyles"])
@@ -231,7 +237,6 @@ def extend_block(block, overridden_block, data=None):
 	block["classes"].extend(overridden_block["classes"])
 	if overridden_block.get("innerHTML"):
 		block["innerHTML"] = overridden_block["innerHTML"]
-	extend_with_data(block, data)
 	component_children = block.get("children", [])
 	overridden_children = overridden_block.get("children", [])
 	for overridden_child in overridden_children:
@@ -248,24 +253,22 @@ def extend_block(block, overridden_block, data=None):
 			None,
 		)
 		if component_child:
-			extend_block(component_child, overridden_child, data=data)
+			extend_block(component_child, overridden_child)
 		else:
 			component_children.insert(overridden_children.index(overridden_child), overridden_child)
 
 
-def extend_with_data(block, data):
-	if not data:
-		return
+def set_dynamic_content_placeholder(block, repeater_child=False):
 	data_key = block.get("dataKey")
-	if data_key:
-		value = frappe.cstr(data.get((data_key.get("key"))))
-		if value:
-			if data_key.get("type") == "attribute":
-				block["attributes"][data_key.get("property")] = value
-			elif data_key.get("type") == "style":
-				block["baseStyles"][data_key.get("property")] = value
-			elif data_key.get("type") == "key" and not block.get("isRepeaterBlock"):
-				block[data_key.get("property")] = value
+	if data_key and data_key.get("key"):
+		key = f"_data.{data_key.get('key')}" if repeater_child else data_key.get("key")
+		value = "{{" + key + "}}"
+		if data_key.get("type") == "attribute":
+			block["attributes"][data_key.get("property")] = value
+		elif data_key.get("type") == "style":
+			block["baseStyles"][data_key.get("property")] = value
+		elif data_key.get("type") == "key" and not block.get("isRepeaterBlock"):
+			block[data_key.get("property")] = value
 
 def get_style_file_path():
 	# TODO: Redo this, currently it loads the first matching file

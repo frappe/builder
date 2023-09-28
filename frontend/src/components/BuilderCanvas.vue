@@ -45,7 +45,11 @@
 					v-show="!canvasProps.scaling && !canvasProps.panning">
 					{{ breakpoint.displayName }}
 				</div>
-				<BuilderBlock :block="block" v-if="showBlocks" :breakpoint="breakpoint.device" />
+				<BuilderBlock
+					:block="block"
+					v-if="showBlocks"
+					:breakpoint="breakpoint.device"
+					:data="store.pageData" />
 			</div>
 		</div>
 		<div
