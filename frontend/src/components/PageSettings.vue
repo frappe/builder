@@ -1,7 +1,7 @@
 <template>
 	<div>
 		<div class="flex flex-row flex-wrap gap-5">
-			<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Page Options</h3>
+			<h3 class="mb-1 w-full text-xs font-bold uppercase text-gray-600">Page Options</h3>
 			<InlineInput
 				label="Title"
 				type="text"
@@ -35,6 +35,9 @@
 						@update:modelValue="(val) => store.setRouteVariable(variable, val)" />
 				</div>
 			</div>
+			<Button @click="() => store.openInDesk(pageData)" class="mt-3 block text-base" icon-left="code">
+				View in Desk
+			</Button>
 		</div>
 	</div>
 </template>

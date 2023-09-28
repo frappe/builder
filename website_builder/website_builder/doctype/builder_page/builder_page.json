@@ -11,7 +11,6 @@
   "content_tab",
   "published",
   "page_name",
-  "page_title",
   "column_break_nasy",
   "route",
   "dynamic_route",
@@ -20,7 +19,13 @@
   "draft_blocks",
   "preview",
   "scripting_tab",
-  "page_data_script"
+  "page_data_script",
+  "settings_tab",
+  "meta_column",
+  "page_title",
+  "meta_description",
+  "meta_image",
+  "set_meta_tags"
  ],
  "fields": [
   {
@@ -54,7 +59,7 @@
   {
    "fieldname": "page_title",
    "fieldtype": "Data",
-   "label": "Page Title"
+   "label": "Title"
   },
   {
    "fieldname": "scripting_tab",
@@ -92,11 +97,36 @@
    "fieldname": "draft_blocks",
    "fieldtype": "JSON",
    "label": "Draft Blocks"
+  },
+  {
+   "fieldname": "settings_tab",
+   "fieldtype": "Tab Break",
+   "label": "Settings"
+  },
+  {
+   "fieldname": "meta_column",
+   "fieldtype": "Column Break",
+   "label": "Meta"
+  },
+  {
+   "fieldname": "meta_image",
+   "fieldtype": "Attach Image",
+   "label": "Image"
+  },
+  {
+   "fieldname": "set_meta_tags",
+   "fieldtype": "Button",
+   "label": "Add Custom Meta Tags"
+  },
+  {
+   "fieldname": "meta_description",
+   "fieldtype": "Small Text",
+   "label": "Description"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-08-26 20:17:43.996093",
+ "modified": "2023-09-28 15:51:19.458047",
  "modified_by": "Administrator",
  "module": "Website Builder",
  "name": "Builder Page",

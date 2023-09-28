@@ -64,7 +64,6 @@ class BuilderPage(WebsiteGenerator):
 
 	def get_context(self, context):
 		# show breadcrumbs
-		context.title = self.page_title or "My Page"
 		page_data = self.get_page_data()
 		if page_data.get("title"):
 			context.title = page_data.get("page_title")
@@ -79,11 +78,19 @@ class BuilderPage(WebsiteGenerator):
 		context.style = style
 		context.style_file_path = get_style_file_path()
 		context.update(page_data)
+		self.set_meta_tags(context=context)
 		try:
 			context["content"] = render_template(context.content, context)
 			context["no_cache"] = 1
 		except TemplateSyntaxError:
 			raise
+
+	def set_meta_tags(self, context):
+		context.tags = {
+			"title": self.page_title or "My Page",
+			"description": self.meta_description or self.page_title,
+			"image": self.meta_image or self.preview
+		}
 
 	@frappe.whitelist()
 	def get_page_data(self, args=None):

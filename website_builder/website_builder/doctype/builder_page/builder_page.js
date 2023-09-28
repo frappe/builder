@@ -8,4 +8,7 @@ frappe.ui.form.on("Builder Page", {
       .attr("href", `/builder/page/${frm.doc.name}`)
       .attr("target", "_blank");
   },
+  set_meta_tags(frm) {
+    frappe.utils.set_meta_tag(frm.doc.route);
+  },
 });
