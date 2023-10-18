@@ -134,10 +134,12 @@ const contextMenuOptions: ContextMenuOption[] = [
 			const newBlock = parentBlock?.addChild(newBlockObj, blockPosition);
 
 			// move selected blocks to newBlock
-			selectedBlocks.forEach((block) => {
-				parentBlock?.removeChild(block);
-				newBlock?.addChild(block);
-			});
+			selectedBlocks
+				.sort((a, b) => parentBlock.getChildIndex(a) - parentBlock.getChildIndex(b))
+				.forEach((block) => {
+					parentBlock?.removeChild(block);
+					newBlock?.addChild(block);
+				});
 
 			nextTick(() => {
 				if (newBlock) {
