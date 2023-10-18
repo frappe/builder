@@ -234,6 +234,66 @@ useEventListener(document, "keydown", (e) => {
 		return;
 	}
 
+	if (e.key === "0" && e.metaKey) {
+		e.preventDefault();
+		if (blockEditor.value) {
+			if (e.shiftKey) {
+				blockEditor.value.setScaleAndTranslate();
+			} else {
+				blockEditor.value.resetZoom();
+			}
+		}
+		return;
+	}
+
+	if (e.key === "ArrowRight" && !blockController.isBLockSelected()) {
+		e.preventDefault();
+		if (blockEditor.value) {
+			blockEditor.value.moveCanvas("right");
+		}
+		return;
+	}
+
+	if (e.key === "ArrowLeft" && !blockController.isBLockSelected()) {
+		e.preventDefault();
+		if (blockEditor.value) {
+			blockEditor.value.moveCanvas("left");
+		}
+		return;
+	}
+
+	if (e.key === "ArrowUp" && !blockController.isBLockSelected()) {
+		e.preventDefault();
+		if (blockEditor.value) {
+			blockEditor.value.moveCanvas("up");
+		}
+		return;
+	}
+
+	if (e.key === "ArrowDown" && !blockController.isBLockSelected()) {
+		e.preventDefault();
+		if (blockEditor.value) {
+			blockEditor.value.moveCanvas("down");
+		}
+		return;
+	}
+
+	if (e.key === "=" && e.metaKey) {
+		e.preventDefault();
+		if (blockEditor.value) {
+			blockEditor.value.zoomIn();
+		}
+		return;
+	}
+
+	if (e.key === "-" && e.metaKey) {
+		e.preventDefault();
+		if (blockEditor.value) {
+			blockEditor.value.zoomOut();
+		}
+		return;
+	}
+
 	if (e.metaKey || e.ctrlKey || e.shiftKey) {
 		return;
 	}
