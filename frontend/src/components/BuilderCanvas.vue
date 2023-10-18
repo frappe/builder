@@ -272,8 +272,38 @@ onMounted(() => {
 	showBlocks.value = true;
 });
 
+const resetZoom = () => {
+	props.canvasProps.scale = 1;
+	props.canvasProps.translateX = 0;
+	props.canvasProps.translateY = 0;
+};
+
+const moveCanvas = (direction: "up" | "down" | "right" | "left") => {
+	if (direction === "up") {
+		props.canvasProps.translateY -= 20;
+	} else if (direction === "down") {
+		props.canvasProps.translateY += 20;
+	} else if (direction === "right") {
+		props.canvasProps.translateX += 20;
+	} else if (direction === "left") {
+		props.canvasProps.translateX -= 20;
+	}
+};
+
+const zoomIn = () => {
+	props.canvasProps.scale += 0.1;
+};
+
+const zoomOut = () => {
+	props.canvasProps.scale -= 0.1;
+};
+
 defineExpose({
 	setScaleAndTranslate,
+	resetZoom,
+	moveCanvas,
+	zoomIn,
+	zoomOut,
 });
 
 watchEffect(() => {
