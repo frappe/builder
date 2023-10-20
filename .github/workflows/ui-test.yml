@@ -1,0 +1,100 @@
+name: UI Test
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    if: ${{ github.repository_owner == 'frappe' }}
+    timeout-minutes: 60
+
+    strategy:
+      fail-fast: false
+
+    name: UI Tests (Cypress)
+
+    services:
+      mariadb:
+        image: mariadb:10.6
+        env:
+          MARIADB_ROOT_PASSWORD: 123
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
+
+    steps:
+      - name: Clone
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          check-latest: true
+
+      - name: Add to Hosts
+        run: |
+          echo "127.0.0.1 builder.test" | sudo tee -a /etc/hosts
+
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/*requirements.txt', '**/pyproject.toml', '**/setup.py') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - uses: actions/cache@v3
+        id: yarn-cache
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-ui-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-ui-
+
+      - name: Cache cypress binary
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/Cypress
+          key: ${{ runner.os }}-cypress
+
+      - name: Install Dependencies
+        run: |
+          bash ${GITHUB_WORKSPACE}/.github/helper/install_dependencies.sh
+          bash ${GITHUB_WORKSPACE}/.github/helper/install.sh
+        env:
+          BEFORE: ${{ env.GITHUB_EVENT_PATH.before }}
+          AFTER: ${{ env.GITHUB_EVENT_PATH.after }}
+
+      - name: Site Setup
+        run: |
+          cd ~/frappe-bench/
+          bench --site builder.test execute frappe.utils.install.complete_setup_wizard
+          bench --site builder.test execute frappe.tests.ui_test_helpers.create_test_user
+
+      - name: UI Tests
+        run: cd ~/frappe-bench/apps/gameplan/frontend && yarn test
+
+      - name: Stop server
+        run: |
+          ps -ef | grep "[f]rappe serve" | awk '{print $2}' | xargs kill -s SIGINT
+          sleep 5
+
+      - name: Show bench output
+        if: ${{ always() }}
+        run: cat ~/frappe-bench/bench_start.log || true

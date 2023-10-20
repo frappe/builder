@@ -4,11 +4,11 @@ name: CI
 on:
   push:
     branches:
-      - develop
+      - main
   pull_request:
 
 concurrency:
-  group: develop-website_builder-${{ github.event.number }}
+  group: main-website_builder-${{ github.event.number }}
   cancel-in-progress: true
 
 jobs:
