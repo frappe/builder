@@ -42,8 +42,7 @@ CI=Yes bench build &
 build_pid=$!
 
 bench --site builder.test reinstall --yes
-bench --site builder.test install-app builder
-bench --site builder.test execute builder.search.build_index_if_not_exists
+bench --site builder.test install-app website_builder
 
 # wait till assets are built succesfully
 wait $build_pid
