@@ -4,6 +4,6 @@
 *.swp
 tags
 node_modules
-website_builder/public/frontend
-website_builder/www/index.html
-website_builder/www/p.html
+builder/public/frontend
+builder/www/index.html
+builder/www/p.html

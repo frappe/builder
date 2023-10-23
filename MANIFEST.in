@@ -4,15 +4,15 @@ include *.json
 include *.md
 include *.py
 include *.txt
-recursive-include website_builder *.css
-recursive-include website_builder *.csv
-recursive-include website_builder *.html
-recursive-include website_builder *.ico
-recursive-include website_builder *.js
-recursive-include website_builder *.json
-recursive-include website_builder *.md
-recursive-include website_builder *.png
-recursive-include website_builder *.py
-recursive-include website_builder *.svg
-recursive-include website_builder *.txt
-recursive-exclude website_builder *.pyc
+recursive-include builder *.css
+recursive-include builder *.csv
+recursive-include builder *.html
+recursive-include builder *.ico
+recursive-include builder *.js
+recursive-include builder *.json
+recursive-include builder *.md
+recursive-include builder *.png
+recursive-include builder *.py
+recursive-include builder *.svg
+recursive-include builder *.txt
+recursive-exclude builder *.pyc
