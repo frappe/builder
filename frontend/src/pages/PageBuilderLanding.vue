@@ -30,7 +30,7 @@
 						width="250"
 						height="140"
 						:src="page.preview"
-						onerror="this.src='/assets/website_builder/images/fallback.png'"
+						onerror="this.src='/assets/builder/images/fallback.png'"
 						class="w-full rounded-sm bg-gray-50 object-cover p-2 dark:bg-zinc-900" />
 					<div class="flex items-center justify-between border-t-[1px] px-3 dark:border-zinc-800">
 						<p class="py-2 text-sm text-gray-700 dark:text-zinc-200">

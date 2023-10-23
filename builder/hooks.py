@@ -11,15 +11,15 @@ app_license = "MIT"
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/website_builder/css/website_builder.css"
-# app_include_js = "/assets/website_builder/js/website_builder.js"
+# app_include_css = "/assets/builder/css/builder.css"
+# app_include_js = "/assets/builder/js/builder.js"
 
 # include js, css files in header of web template
-# web_include_css = "/assets/website_builder/css/website_builder.css"
-# web_include_js = "/assets/website_builder/js/website_builder.js"
+# web_include_css = "/assets/builder/css/builder.css"
+# web_include_js = "/assets/builder/js/builder.js"
 
 # include custom scss in every website theme (without file extension ".scss")
-# website_theme_scss = "website_builder/public/scss/website"
+# website_theme_scss = "builder/public/scss/website"
 
 # include js, css files in header of web form
 # webform_include_js = {"doctype": "public/js/doctype.js"}
@@ -53,27 +53,27 @@ website_generators = ["Builder Page"]
 
 # add methods and filters to jinja environment
 # jinja = {
-#	"methods": "website_builder.utils.jinja_methods",
-#	"filters": "website_builder.utils.jinja_filters"
+#	"methods": "builder.utils.jinja_methods",
+#	"filters": "builder.utils.jinja_filters"
 # }
 
 # Installation
 # ------------
 
-# before_install = "website_builder.install.before_install"
-after_install = "website_builder.install.after_install"
+# before_install = "builder.install.before_install"
+after_install = "builder.install.after_install"
 
 # Uninstallation
 # ------------
 
-# before_uninstall = "website_builder.uninstall.before_uninstall"
-# after_uninstall = "website_builder.uninstall.after_uninstall"
+# before_uninstall = "builder.uninstall.before_uninstall"
+# after_uninstall = "builder.uninstall.after_uninstall"
 
 # Desk Notifications
 # ------------------
 # See frappe.core.notifications.get_notification_config
 
-# notification_config = "website_builder.notifications.get_notification_config"
+# notification_config = "builder.notifications.get_notification_config"
 
 # Permissions
 # -----------
@@ -112,39 +112,39 @@ after_install = "website_builder.install.after_install"
 
 # scheduler_events = {
 #	"all": [
-#		"website_builder.tasks.all"
+#		"builder.tasks.all"
 #	],
 #	"daily": [
-#		"website_builder.tasks.daily"
+#		"builder.tasks.daily"
 #	],
 #	"hourly": [
-#		"website_builder.tasks.hourly"
+#		"builder.tasks.hourly"
 #	],
 #	"weekly": [
-#		"website_builder.tasks.weekly"
+#		"builder.tasks.weekly"
 #	],
 #	"monthly": [
-#		"website_builder.tasks.monthly"
+#		"builder.tasks.monthly"
 #	],
 # }
 
 # Testing
 # -------
 
-# before_tests = "website_builder.install.before_tests"
+# before_tests = "builder.install.before_tests"
 
 # Overriding Methods
 # ------------------------------
 #
 # override_whitelisted_methods = {
-#	"frappe.desk.doctype.event.event.get_events": "website_builder.event.get_events"
+#	"frappe.desk.doctype.event.event.get_events": "builder.event.get_events"
 # }
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
 # override_doctype_dashboards = {
-#	"Task": "website_builder.task.get_dashboard_data"
+#	"Task": "builder.task.get_dashboard_data"
 # }
 
 # exempt linked doctypes from being automatically cancelled
@@ -185,11 +185,11 @@ after_install = "website_builder.install.after_install"
 # --------------------------------
 
 # auth_hooks = [
-#	"website_builder.auth.validate"
+#	"builder.auth.validate"
 # ]
 
 website_route_rules = [
 	{"from_route": "/builder/<path:app_path>", "to_route": "builder"},
 ]
 
-get_web_pages_with_dynamic_routes = "website_builder.website_builder.doctype.builder_page.builder_page.get_web_pages_with_dynamic_routes"
+get_web_pages_with_dynamic_routes = "builder.builder.doctype.builder_page.builder_page.get_web_pages_with_dynamic_routes"
