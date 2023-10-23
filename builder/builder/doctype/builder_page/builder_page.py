@@ -12,7 +12,7 @@ import frappe.utils
 from frappe.model.document import Document
 from frappe.website.serve import get_response_content, get_response
 from frappe.website.website_generator import WebsiteGenerator
-from website_builder.html_preview_image import generate_preview
+from builder.html_preview_image import generate_preview
 from frappe.utils.safe_exec import safe_exec
 from frappe.utils.caching import redis_cache
 from frappe.website.page_renderers.document_page import DocumentPage
@@ -38,7 +38,7 @@ class BuilderPage(WebsiteGenerator):
 		if self.preview:
 			self.flags.skip_preview = True
 		else:
-			self.preview = "/assets/website_builder/images/fallback.png"
+			self.preview = "/assets/builder/images/fallback.png"
 		self.route = f"pages/{camel_case_to_kebab_case(self.page_title, True)}-{frappe.generate_hash(length=4)}"
 
 	def autoname(self):
@@ -282,7 +282,7 @@ def get_style_file_path():
 	# from frappe.utils import get_url
 	# return get_url("/files/tailwind.css")
 	import glob
-	folder_path = "./assets/website_builder/frontend/assets/"
+	folder_path = "./assets/builder/frontend/assets/"
 	file_pattern = "index.*.css"
 	matching_files = glob.glob(f"{folder_path}/{file_pattern}")
 	if matching_files:

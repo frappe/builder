@@ -70,7 +70,7 @@ const generating = ref(false);
 const getPage = () => {
 	generating.value = true;
 	createResource({
-		url: "website_builder.api.get_blocks",
+		url: "builder.api.get_blocks",
 		onSuccess(html: string) {
 			store.clearBlocks();
 			const blocks = convertHTMLToBlocks(html);

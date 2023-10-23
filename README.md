@@ -7,7 +7,7 @@ Crafting Web Pages Made Effortless!
 > Frappe Builder is currently in an experimental stage, and the core design might get updated to enhance app architecture as needed.
 
 
-> **Note:** Builder is optimized for mac devices as of now. 
+> **Note:** Builder is optimized for mac devices as of now.
 
 <img width="1552" alt="Screenshot 2023-09-05 at 8 10 58 AM" src="https://github.com/frappe/builder/assets/13928957/da873bf4-30d5-4304-97da-7cb22901acc0">
 
@@ -23,7 +23,7 @@ Credit: [Web Page design source](https://www.figma.com/community/file/9492664364
 	```
 3. Create a site with builder app
 	```sh
-	$ bench --site sitename.localhost install-app website_builder
+	$ bench --site sitename.localhost install-app builder
 	```
 4. Once the site is setup, use bench browse command to open the site in browser
 	```sh
