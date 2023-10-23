@@ -46,7 +46,7 @@
 <script setup lang="ts">
 import webComponent from "@/data/webComponent";
 import useStore from "@/store";
-import { BuilderComponent } from "@/types/WebsiteBuilder/BuilderComponent";
+import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import { useIntersectionObserver } from "@vueuse/core";
 import { computed, ref } from "vue";
 import BuilderBlock from "./BuilderBlock.vue";

@@ -66,7 +66,7 @@
 <script setup lang="ts">
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
-import { BuilderPage } from "@/types/WebsiteBuilder/BuilderPage";
+import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
 import { Badge, Dropdown } from "frappe-ui";
