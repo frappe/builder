@@ -1,6 +1,6 @@
 import { createListResource } from "frappe-ui";
 
-import { BuilderComponent } from "@/types/WebsiteBuilder/BuilderComponent";
+import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import Block from "@/utils/block";
 import { reactive } from "vue";
 

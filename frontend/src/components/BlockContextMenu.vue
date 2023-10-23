@@ -39,7 +39,7 @@
 <script setup lang="ts">
 import webComponent from "@/data/webComponent";
 import useStore from "@/store";
-import { BuilderComponent } from "@/types/WebsiteBuilder/BuilderComponent";
+import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { vOnClickOutside } from "@vueuse/components";
