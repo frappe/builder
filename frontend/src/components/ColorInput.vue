@@ -10,9 +10,7 @@
 						class="absolute left-2 top-[6px] z-10 h-4 w-4 rounded shadow-sm"
 						@click="togglePopover"
 						:style="{
-							background: value
-								? value
-								: `url(/assets/website_builder/images/color-circle.png) center / contain`,
+							background: value ? value : `url(/assets/builder/images/color-circle.png) center / contain`,
 						}"></div>
 					<Input
 						type="text"
