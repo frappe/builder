@@ -4,12 +4,8 @@ name: CI
 on:
   push:
     branches:
-      - develop
+      - master
   pull_request:
-
-concurrency:
-  group: develop-builder-${{ github.event.number }}
-  cancel-in-progress: true
 
 jobs:
   tests:
