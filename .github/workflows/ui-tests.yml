@@ -1,0 +1,114 @@
+name: UI Test
+
+on:
+  pull_request:
+  push:
+    branches: master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    name: UI Tests (Cypress)
+
+    services:
+      redis-cache:
+        image: redis:alpine
+        ports:
+          - 13000:6379
+      redis-queue:
+        image: redis:alpine
+        ports:
+          - 11000:6379
+      redis-socketio:
+        image: redis:alpine
+        ports:
+          - 12000:6379
+      mariadb:
+        image: mariadb:10.6
+        env:
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
+
+    steps:
+      - name: Clone
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          check-latest: true
+
+      - name: Add to Hosts
+        run: |
+          echo "127.0.0.1 builder.test" | sudo tee -a /etc/hosts
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/*requirements.txt', '**/pyproject.toml', '**/setup.py') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - uses: actions/cache@v3
+        id: yarn-cache
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-ui-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-ui-
+      - name: Cache cypress binary
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/Cypress
+          key: ${{ runner.os }}-cypress
+
+      - name: Setup
+        run: |
+          bash ${GITHUB_WORKSPACE}/.github/helper/install_dependencies.sh
+          pip install frappe-bench
+          bench init --skip-redis-config-generation --skip-assets --python "$(which python)" ~/frappe-bench
+          mysql --host 127.0.0.1 --port 3306 -u root -proot -e "SET GLOBAL character_set_server = 'utf8mb4'"
+          mysql --host 127.0.0.1 --port 3306 -u root -proot -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'"
+          echo "Starting Bench..."
+          bench start &> ~/frappe-bench/bench_start.log &
+
+      - name: Install
+        working-directory: /home/runner/frappe-bench
+        run: |
+          bench get-app builder $GITHUB_WORKSPACE
+          bench setup requirements --dev
+          bench new-site --db-root-password root --admin-password admin builder.test
+          bench --site builder.test install-app builder
+          bench build
+        env:
+          CI: 'Yes'
+
+      - name: Site Setup
+        run: |
+          cd ~/frappe-bench/
+          bench --site builder.test execute frappe.utils.install.complete_setup_wizard
+          bench --site builder.test execute frappe.tests.ui_test_helpers.create_test_user
+          bench --site builder.test migrate
+      - name: UI Tests
+        run: cd ~/frappe-bench/apps/builder/frontend && yarn test
+
+      - name: Stop server
+        run: |
+          ps -ef | grep "[f]rappe serve" | awk '{print $2}' | xargs kill -s SIGINT
+          sleep 5
+      - name: Show bench output
+        if: ${{ always() }}
+        run: cat ~/frappe-bench/bench_start.log || true
