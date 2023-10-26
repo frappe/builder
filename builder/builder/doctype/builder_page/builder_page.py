@@ -87,7 +87,7 @@ class BuilderPage(WebsiteGenerator):
 			raise
 
 	def set_meta_tags(self, context):
-		context.tags = {
+		context.metatags = {
 			"title": self.page_title or "My Page",
 			"description": self.meta_description or self.page_title,
 			"image": self.meta_image or self.preview
