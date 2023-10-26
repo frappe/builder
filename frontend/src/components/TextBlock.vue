@@ -93,10 +93,11 @@ if (!props.preview) {
 					content: textContent.value,
 					extensions: [StarterKit, TextStyle, Color, FontFamily],
 					onUpdate({ editor }) {
-						if (props.block.getInnerHTML() === editor.getHTML()) {
+						const innerHTML = editor.isEmpty ? "" : editor.getHTML();
+						if (props.block.getInnerHTML() === innerHTML) {
 							return;
 						}
-						props.block.setInnerHTML(editor.getHTML());
+						props.block.setInnerHTML(innerHTML);
 					},
 					autofocus: false,
 					injectCSS: false,
