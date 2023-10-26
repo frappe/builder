@@ -9,9 +9,22 @@
 	<section class="max-w-800 m-auto mb-32 flex w-3/4 flex-col pt-10">
 		<div class="mb-6 flex justify-between">
 			<h1 class="mb-2 font-bold text-gray-800 dark:text-zinc-400">My Pages</h1>
-			<router-link :to="{ name: 'builder', params: { pageId: 'new' } }">
-				<Button variant="solid" icon-left="plus">New</Button>
-			</router-link>
+			<div class="flex gap-4">
+				<Input
+					class="rounded-md text-sm text-gray-800 focus:ring-0 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700"
+					type="text"
+					placeholder="Filter"
+					inputClass="w-full"
+					v-model="filter"
+					@input="
+						(value: string) => {
+							filter = value;
+						}
+					" />
+				<router-link :to="{ name: 'builder', params: { pageId: 'new' } }">
+					<Button variant="solid" icon-left="plus">New</Button>
+				</router-link>
+			</div>
 		</div>
 		<div class="flex flex-wrap gap-6">
 			<div v-if="!webPages.data || !webPages.data.length" class="flex flex-col items-center justify-center">
@@ -19,8 +32,11 @@
 					You don't have any pages yet. Click on the "+ New" button to create a new page.
 				</p>
 			</div>
+			<div v-else-if="!pages.length" class="flex flex-col items-center justify-center">
+				<p class="mt-4 text-center text-gray-500">No matching pages found.</p>
+			</div>
 			<router-link
-				v-for="page in webPages.data"
+				v-for="page in pages"
 				:key="page.page_name"
 				:to="{ name: 'builder', params: { pageId: page.page_name } }"
 				class="max-w-[250px] flex-grow basis-52">
@@ -70,9 +86,23 @@ import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
 import { Badge, Dropdown } from "frappe-ui";
-import { onActivated } from "vue";
+import { computed, onActivated, ref } from "vue";
 
 const store = useStore();
+const filter = ref("");
+
+const pages = computed(() =>
+	(webPages.data || []).filter((page: BuilderPage) => {
+		if (filter.value) {
+			return (
+				page.page_title?.toLowerCase().includes(filter.value.toLowerCase()) ||
+				page.route?.toLowerCase().includes(filter.value.toLowerCase())
+			);
+		} else {
+			return true;
+		}
+	})
+);
 
 const deletePage = async (page: BuilderPage) => {
 	const confirmed = await confirm(`Are you sure you want to delete Page: ${page.page_name}?`);
