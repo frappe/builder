@@ -77,6 +77,7 @@ class BuilderPage(WebsiteGenerator):
 		context.content = content
 		context.style = style
 		context.style_file_path = get_style_file_path()
+		context.script = self.client_script
 		context.update(page_data)
 		self.set_meta_tags(context=context)
 		try:
