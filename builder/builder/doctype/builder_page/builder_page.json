@@ -19,6 +19,7 @@
   "draft_blocks",
   "preview",
   "scripting_tab",
+  "client_script",
   "page_data_script",
   "settings_tab",
   "meta_column",
@@ -122,11 +123,17 @@
    "fieldname": "meta_description",
    "fieldtype": "Small Text",
    "label": "Description"
+  },
+  {
+   "fieldname": "client_script",
+   "fieldtype": "Code",
+   "label": "Client Script",
+   "options": "Javascript"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-09-28 15:51:19.458047",
+ "modified": "2023-10-26 10:49:44.127249",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

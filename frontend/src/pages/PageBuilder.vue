@@ -39,6 +39,7 @@
 				v-show="store.showPanels"
 				class="fixed bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] bg-white no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderRightPanel>
 		</div>
+		<PageScript v-if="store.selectedPage" v-show="showPageScriptPanel"></PageScript>
 	</div>
 </template>
 
@@ -47,6 +48,7 @@ import BuilderCanvas from "@/components/BuilderCanvas.vue";
 import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
+import PageScript from "@/components/PageScript.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
@@ -56,7 +58,7 @@ import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { copyToClipboard, isHTMLString, isJSONString, isTargetEditable } from "@/utils/helpers";
-import { useEventListener, watchDebounced } from "@vueuse/core";
+import { useEventListener, useMagicKeys, watchDebounced, whenever } from "@vueuse/core";
 import { toast } from "frappe-ui";
 import { nextTick, onActivated, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -77,6 +79,14 @@ window.blockController = blockController;
 
 const blockEditor = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 const componentEditor = ref<HTMLElement | null>(null);
+
+const showPageScriptPanel = ref(false);
+const keys = useMagicKeys();
+const CtrlBacktick = keys["Ctrl+`"];
+
+whenever(CtrlBacktick, () => {
+	showPageScriptPanel.value = !showPageScriptPanel.value;
+});
 
 // to disable page zoom
 useEventListener(
