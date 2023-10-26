@@ -46,6 +46,7 @@ import { vOnClickOutside } from "@vueuse/components";
 import { Dialog } from "frappe-ui";
 import { nextTick, ref } from "vue";
 import ContextMenu from "./ContextMenu.vue";
+import blockController from "@/utils/blockController";
 const store = useStore();
 
 const props = defineProps<{
@@ -188,7 +189,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Convert to Link",
 		action: () => {
-			blockController.getSelectedBlocks().forEach((block) => {
+			blockController.getSelectedBlocks().forEach((block: Block) => {
 				block.convertToLink();
 			});
 		},
