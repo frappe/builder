@@ -22,5 +22,10 @@
 	{% block page_content %}
 	{{ content }}
 	{% endblock %}
+	{% block script %}
+		{%- if script -%}
+			<script>{{ script }}</script>
+		{%- endif -%}
+	{%- endblock %}
 </body>
 </html>

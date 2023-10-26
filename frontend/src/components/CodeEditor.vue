@@ -23,7 +23,7 @@ const props = defineProps({
 		type: [Object, String, Array],
 	},
 	type: {
-		type: String as PropType<"JSON" | "HTML" | "Python">,
+		type: String as PropType<"JSON" | "HTML" | "Python" | "JavaScript">,
 		default: "JSON",
 	},
 	label: {
@@ -56,7 +56,11 @@ onMounted(() => {
 		useWorker: false,
 		showGutter: props.showLineNumbers,
 	});
-	if (props.type === "Python") {
+	if (props.type === "JavaScript") {
+		import("ace-builds/src-noconflict/mode-javascript").then(() => {
+			aceEditor.session.setMode("ace/mode/javascript");
+		});
+	} else if (props.type === "Python") {
 		import("ace-builds/src-noconflict/mode-python").then(() => {
 			aceEditor.session.setMode("ace/mode/python");
 		});
