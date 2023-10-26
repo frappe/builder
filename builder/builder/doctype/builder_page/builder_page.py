@@ -163,7 +163,7 @@ def get_block_html(blocks, page_data={}):
 				tag.append(inner_soup)
 
 			block_data = []
-			if block.get("isRepeaterBlock"):
+			if block.get("isRepeaterBlock") and block.get("children"):
 				tag.append("{% for _data in " + block.get("dataKey").get("key") + " %}")
 				tag.append(get_tag(block.get("children")[0], soup, True))
 				tag.append("{% endfor %}")
