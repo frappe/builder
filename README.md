@@ -16,6 +16,22 @@ Credit: [Web Page design source](https://www.figma.com/community/file/9492664364
 
 ## Getting Started
 
+### Using codespaces
+
+https://github.com/frappe/builder/assets/13928957/c96ce2ce-9eb3-4bd5-8e92-0b39d971cb00
+
+- [Open this link](https://github.com/codespaces/new?hide_repo_select=true&ref=master&repo=587413812&skip_quickstart=true&machine=standardLinux32gb&devcontainer_path=.devcontainer%2Fdevcontainer.json&geo=SoutheastAsia) and click on "Create codespace".
+- Once the codespaces is created it'll take **some time** (~15mins) to initialize. You can track the progress by selecting the **Codespaces : View Creation Log** from the command palette. You will have to wait until this process is completed.
+- Once the setup is done, run `bench start` command from terminal tab.
+- After that, click on the link beside "8000" port under "Ports" tab.
+- You'll be greeted with a login page. Enter "Administrator" in username and "admin" in password to login.
+- Go to `<random-id>.github.dev/builder` to access the builder interface.
+
+
+
+
+### Local setup
+
 1. [Install bench](https://github.com/frappe/bench).
 2. Install Frappe Builder app
 	```sh
