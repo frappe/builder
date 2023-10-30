@@ -77,6 +77,7 @@ class BuilderPage(WebsiteGenerator):
 		context.content = content
 		context.style = style
 		context.style_file_path = get_style_file_path()
+		context.script = self.client_script
 		context.update(page_data)
 		self.set_meta_tags(context=context)
 		try:
@@ -86,7 +87,7 @@ class BuilderPage(WebsiteGenerator):
 			raise
 
 	def set_meta_tags(self, context):
-		context.tags = {
+		context.metatags = {
 			"title": self.page_title or "My Page",
 			"description": self.meta_description or self.page_title,
 			"image": self.meta_image or self.preview
@@ -162,7 +163,7 @@ def get_block_html(blocks, page_data={}):
 				tag.append(inner_soup)
 
 			block_data = []
-			if block.get("isRepeaterBlock"):
+			if block.get("isRepeaterBlock") and block.get("children"):
 				tag.append("{% for _data in " + block.get("dataKey").get("key") + " %}")
 				tag.append(get_tag(block.get("children")[0], soup, True))
 				tag.append("{% endfor %}")
