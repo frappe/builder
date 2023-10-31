@@ -52,8 +52,13 @@ class BuilderPage(WebsiteGenerator):
 		if self.draft_blocks:
 			self.blocks = self.draft_blocks
 			self.draft_blocks = None
-			self.generate_page_preview_image()
 		self.save()
+		frappe.enqueue_doc(
+			self.doctype,
+			self.name,
+			"generate_page_preview_image",
+			queue="short",
+		)
 		return self.route
 
 	website = frappe._dict(
