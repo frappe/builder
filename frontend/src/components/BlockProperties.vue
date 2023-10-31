@@ -115,6 +115,25 @@
 			:modelValue="blockController.getStyle('letterSpacing')"
 			@update:modelValue="(val) => blockController.setStyle('letterSpacing', val)" />
 		<InlineInput
+			label="Transform"
+			v-if="blockController.isText()"
+			:modelValue="blockController.getStyle('textTransform')"
+			type="select"
+			:options="[{
+				value: null,
+				label: 'None',
+			}, {
+				value: 'uppercase',
+				label: 'Uppercase',
+			}, {
+				value: 'lowercase',
+				label: 'Lowercase',
+			}, {
+				value: 'capitalize',
+				label: 'Capitalize',
+			}]"
+			@update:modelValue="(val) => blockController.setStyle('textTransform', val)" />
+		<InlineInput
 			label="Align"
 			v-if="blockController.isText()"
 			:modelValue="blockController.getStyle('textAlign') || 'left'"
