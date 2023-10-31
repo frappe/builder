@@ -200,7 +200,9 @@ useEventListener(document, "paste", async (e) => {
 		// try pasting figma text styles
 		if (blockController.isText() && text.includes(":") && !store.builderState.editableBlock) {
 			e.preventDefault();
-			const styleObj = text.split(";").reduce((acc: BlockStyleMap, curr) => {
+			// strip out all comments: line-height: 115%; /* 12.65px */ -> line-height: 115%;
+			const strippedText = text.replace(/\/\*.*?\*\//g, "");
+			const styleObj = strippedText.split(";").reduce((acc: BlockStyleMap, curr) => {
 				const [key, value] = curr.split(":").map((item) => (item ? item.trim() : "")) as [
 					styleProperty,
 					StyleValue
@@ -213,6 +215,7 @@ useEventListener(document, "paste", async (e) => {
 						"line-height",
 						"letter-spacing",
 						"text-align",
+						"text-transform",
 						"color",
 					].includes(key)
 				) {
