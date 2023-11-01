@@ -8,6 +8,6 @@ def generate_preview(html, output_path):
 		browser = p.chromium.launch()
 		page = browser.new_page()
 		page.set_content(html)
-		page.wait_for_load_state('networkidle', timeout=2000)
+		page.wait_for_load_state('networkidle')
 		page.screenshot(path=output_path, quality=30, type='jpeg')
 		browser.close()
