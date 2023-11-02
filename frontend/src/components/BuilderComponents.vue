@@ -2,7 +2,7 @@
 	<div>
 		<div class="mb-8" v-show="components.length || filter">
 			<Input
-				class="rounded-md text-sm text-gray-800 focus:ring-0 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700"
+				class="h-7 rounded-md text-sm text-gray-800 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
 				type="text"
 				placeholder="Filter"
 				inputClass="w-full"
