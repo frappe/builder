@@ -78,7 +78,13 @@
 			]"
 			:modelValue="blockController.getStyle('boxShadow')"
 			@update:modelValue="(val) => blockController.setStyle('boxShadow', val)"></InlineInput>
-
+		<InlineInput
+			label="Border Radius"
+			:modelValue="blockController.getStyle('borderRadius')"
+			:enableSlider="true"
+			:unitOptions="['px', '%']"
+			:minValue="0"
+			@update:modelValue="(val) => blockController.setStyle('borderRadius', val)" />
 		<h3
 			v-if="blockController.isText() || blockController.isContainer()"
 			class="mb-1 mt-8 text-xs font-bold uppercase text-gray-600">
@@ -119,19 +125,24 @@
 			v-if="blockController.isText()"
 			:modelValue="blockController.getStyle('textTransform')"
 			type="select"
-			:options="[{
-				value: null,
-				label: 'None',
-			}, {
-				value: 'uppercase',
-				label: 'Uppercase',
-			}, {
-				value: 'lowercase',
-				label: 'Lowercase',
-			}, {
-				value: 'capitalize',
-				label: 'Capitalize',
-			}]"
+			:options="[
+				{
+					value: null,
+					label: 'None',
+				},
+				{
+					value: 'uppercase',
+					label: 'Uppercase',
+				},
+				{
+					value: 'lowercase',
+					label: 'Lowercase',
+				},
+				{
+					value: 'capitalize',
+					label: 'Capitalize',
+				},
+			]"
 			@update:modelValue="(val) => blockController.setStyle('textTransform', val)" />
 		<InlineInput
 			label="Align"

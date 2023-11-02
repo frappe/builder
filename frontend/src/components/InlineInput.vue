@@ -42,6 +42,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { isNumber } from "@tiptap/vue-3";
 import { PropType, computed } from "vue";
 import Autocomplete from "./Autocomplete.vue";
 
@@ -66,6 +67,14 @@ const props = defineProps({
 	enableSlider: {
 		type: Boolean,
 		default: false,
+	},
+	minValue: {
+		type: Number,
+		default: null,
+	},
+	maxValue: {
+		type: Number,
+		default: null,
 	},
 });
 
@@ -119,7 +128,13 @@ const handleMouseDown = (e: MouseEvent) => {
 	const startValue = Number(number);
 	const handleMouseMove = (e: MouseEvent) => {
 		const diff = startY - e.clientY;
-		const newValue = startValue + diff;
+		let newValue = startValue + diff;
+		if (isNumber(props.minValue) && newValue < props.minValue) {
+			newValue = props.minValue;
+		}
+		if (isNumber(props.maxValue) && newValue > props.maxValue) {
+			newValue = props.maxValue;
+		}
 		handleChange(newValue + "" + unit);
 	};
 	const handleMouseUp = () => {
