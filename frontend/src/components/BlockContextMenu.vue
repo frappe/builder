@@ -183,7 +183,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		action: () => {
 			store.editComponent(props.block);
 		},
-		condition: () => props.block.isExtendedFromComponent(),
+		condition: () => Boolean(props.block.extendedFromComponent),
 	},
 	// convert to link
 	{

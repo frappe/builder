@@ -201,12 +201,6 @@ const handleClick = (e: MouseEvent) => {
 const handleDoubleClick = (e: MouseEvent) => {
 	if (isEditable.value) return;
 	store.builderState.editableBlock = null;
-	if (Boolean(props.block.extendedFromComponent)) {
-		store.editComponent(props.block);
-		e.stopPropagation();
-		e.preventDefault();
-		return;
-	}
 	if (props.block.isText() || props.block.isLink() || props.block.isButton()) {
 		store.builderState.editableBlock = props.block;
 		e.stopPropagation();
