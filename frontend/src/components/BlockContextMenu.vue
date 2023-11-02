@@ -41,12 +41,12 @@ import webComponent from "@/data/webComponent";
 import useStore from "@/store";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import Block from "@/utils/block";
+import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { vOnClickOutside } from "@vueuse/components";
 import { Dialog } from "frappe-ui";
 import { nextTick, ref } from "vue";
 import ContextMenu from "./ContextMenu.vue";
-import blockController from "@/utils/blockController";
 const store = useStore();
 
 const props = defineProps<{
