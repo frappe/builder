@@ -1,7 +1,7 @@
 <template>
 	<component :is="block.getTag()" ref="component" @click.stop @dblclick.stop :key="editor">
 		<div v-html="textContent" v-show="!editor" @click="handleClick"></div>
-		<editor-content @click="handleClick" :editor="editor" v-if="editor" />
+		<editor-content @click="handleClick" :editor="editor" v-if="editor && showEditor" />
 		<slot />
 	</component>
 </template>
@@ -50,6 +50,10 @@ let editor: Ref<Editor | null> = ref(null);
 
 const isEditable = computed(() => {
 	return store.builderState.editableBlock === props.block;
+});
+
+const showEditor = computed(() => {
+	return textContent.value && !(props.block.isLink() && props.block.hasChildren());
 });
 
 const handleClick = (e: MouseEvent) => {
