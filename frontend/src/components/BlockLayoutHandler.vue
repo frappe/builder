@@ -1,3 +1,4 @@
+<!-- TODO: Refactor -->
 <template>
 	<div class="flex flex-col gap-3">
 		<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Layout</h3>
@@ -79,6 +80,50 @@
 				]"
 				@update:modelValue="(val: string | number) => blockController.setStyle('flexWrap', val)"
 				class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
+		</div>
+		<!-- flex basis -->
+		<div class="flex flex-col gap-3" v-if="blockController.getParentBlock()?.isFlex()">
+			<InlineInput
+				label="Basis"
+				type="text"
+				:enableSlider="true"
+				:unitOptions="['px', 'em', 'rem']"
+				:modelValue="blockController.getStyle('flexBasis')"
+				@update:modelValue="(val: string | number) => blockController.setStyle('flexBasis', val)" />
+			<div class="flex items-center justify-between">
+				<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
+					Grow
+				</span>
+				<TabButtons
+					label="Grow"
+					:modelValue="blockController.getStyle('flexGrow') || 0"
+					:buttons="[
+						{ label: 'Yes', value: 1 },
+						{ label: 'No', value: 0 },
+					]"
+					@update:modelValue="(val: string | number) => blockController.setStyle('flexGrow', val)"
+					class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
+			</div>
+			<div class="flex items-center justify-between">
+				<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
+					Shrink
+				</span>
+				<TabButtons
+					label="Shrink"
+					:modelValue="blockController.getStyle('flexShrink') || 0"
+					:buttons="[
+						{ label: 'Yes', value: 1 },
+						{ label: 'No', value: 0 },
+					]"
+					@update:modelValue="(val: string | number) => blockController.setStyle('flexShrink', val)"
+					class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
+			</div>
+			<InlineInput
+				label="Order"
+				type="number"
+				min="0"
+				:modelValue="blockController.getStyle('order')"
+				@update:modelValue="(val: string | number) => blockController.setStyle('order', val)" />
 		</div>
 	</div>
 </template>
