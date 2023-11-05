@@ -1,9 +1,13 @@
 <template>
 	<div
-		class="absolute bottom-0 top-0 w-1 bg-transparent hover:cursor-ew-resize"
+		class="absolute z-20 bg-transparent"
 		:class="{
+			'bottom-0 top-0 w-1 hover:cursor-ew-resize': side === 'left' || side === 'right',
+			'left-0 right-0 h-1 hover:cursor-ns-resize': side === 'top' || side === 'bottom',
 			'left-0': side === 'left',
 			'right-0': side === 'right',
+			'top-0': side === 'top',
+			'bottom-0': side === 'bottom',
 			'bg-gray-300 dark:bg-zinc-700': dragActive,
 		}"
 		@mousedown="resize">
@@ -13,21 +17,22 @@
 <script setup lang="ts">
 import { ref } from "vue";
 const props = defineProps({
-	maxWidth: {
+	maxDimension: {
 		type: Number,
 		default: 350,
 	},
-	minWidth: {
+	minDimension: {
 		type: Number,
 		default: 280,
 	},
-	width: {
+	dimension: {
 		type: Number,
 		default: 300,
 	},
 	side: {
 		type: String,
 		default: "right",
+		validator: (value: string) => ["left", "right", "top", "bottom"].includes(value),
 	},
 	resizeSensitivity: {
 		type: Number,
@@ -43,19 +48,27 @@ const dragActive = ref(false);
 
 function resize(ev: MouseEvent) {
 	const startX = ev.clientX;
-	const startWidth = props.width;
+	const startY = ev.clientY;
+	const startDimension = props.dimension;
 	const target = ev.target as HTMLElement;
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
 	document.body.style.cursor = window.getComputedStyle(target).cursor;
 
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		const movement =
-			(mouseMoveEvent.clientX - startX) * (props.side === "left" ? -1 : 1) * props.resizeSensitivity;
-		let newWidth = startWidth + movement;
+		let movement = 0;
+		if (["top", "bottom"].includes(props.side)) {
+			movement =
+				(mouseMoveEvent.clientY - startY) * (props.side === "top" ? -1 : 1) * props.resizeSensitivity;
+		} else {
+			movement =
+				(mouseMoveEvent.clientX - startX) * (props.side === "left" ? -1 : 1) * props.resizeSensitivity;
+		}
+
+		let newDimension = startDimension + movement;
 		// clamp width between min and max
-		newWidth = Math.min(Math.max(props.minWidth, newWidth), props.maxWidth);
-		emit("resize", newWidth);
+		newDimension = Math.min(Math.max(props.minDimension, newDimension), props.maxDimension);
+		emit("resize", newDimension);
 		dragActive.value = true;
 		mouseMoveEvent.preventDefault();
 	};
