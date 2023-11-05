@@ -4,12 +4,13 @@
 			width: `${store.builderLayout.rightPanelWidth}px`,
 		}">
 		<PanelResizer
-			:width="store.builderLayout.rightPanelWidth"
+			:dimension="store.builderLayout.rightPanelWidth"
 			side="left"
 			@resize="(width) => (store.builderLayout.rightPanelWidth = width)"
-			:min-width="220"
-			:max-width="400" />
-		<div class="flex w-full border-gray-200 p-[2px] text-sm dark:border-zinc-800">
+			:min-dimension="220"
+			:max-dimension="400" />
+		<div
+			class="sticky top-0 z-10 flex w-full border-gray-200 bg-white p-[2px] text-sm dark:border-zinc-800 dark:bg-zinc-900">
 			<button
 				v-for="tab of ['Properties', 'Data', 'Settings']"
 				:key="tab"

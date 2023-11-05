@@ -1,130 +1,121 @@
 <!-- TODO: Refactor -->
 <template>
-	<div class="flex flex-col gap-3">
-		<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">Layout</h3>
-		<div class="flex items-center justify-between">
-			<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
-				Type
-			</span>
-			<TabButtons
-				:modelValue="blockController.getStyle('display') || 'block'"
-				:buttons="[
-					{ label: 'Stack', value: 'flex' },
-					{ label: 'Block', value: 'block' },
-				]"
-				@update:modelValue="setLayout"
-				class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
-		</div>
-		<div class="flex items-center justify-between" v-if="blockController.getStyle('display') === 'flex'">
-			<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
-				Direction
-			</span>
-			<TabButtons
-				:modelValue="blockController.getStyle('flexDirection') || 'column'"
-				:buttons="[
-					{ label: 'Horizontal', value: 'row' },
-					{ label: 'Vertical', value: 'column' },
-				]"
-				@update:modelValue="(val: string | number) => blockController.setStyle('flexDirection', val)"
-				class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
-		</div>
-		<div
-			class="items-top relative flex justify-between"
-			v-if="blockController.getStyle('display') === 'flex'">
-			<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
-				Placement
-			</span>
-			<div
-				class="grid h-16 w-16 grid-cols-3 items-center justify-items-center rounded-sm bg-gray-200 p-1 dark:bg-zinc-800">
-				<div
-					class="h-3 w-3 cursor-pointer rounded-sm bg-gray-300 hover:bg-gray-400 dark:bg-zinc-700 dark:hover:bg-zinc-600"
-					:class="{
-						'bg-gray-700 dark:!bg-zinc-500': activePlacement === option,
-					}"
-					v-for="option in placementOptions"
-					:key="option"
-					@click="setAlignment(option)"></div>
-			</div>
-		</div>
-
-		<InlineInput
-			v-if="blockController.getStyle('display') === 'flex'"
-			:modelValue="blockController.getStyle('justifyContent')"
-			type="select"
-			label="Arrangement"
-			:options="[
-				{ label: 'Space Between', value: 'space-between' },
-				{ label: 'Space Around', value: 'space-around' },
-				{ label: 'Space Evenly', value: 'space-evenly' },
+	<div class="flex items-center justify-between">
+		<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">Type</span>
+		<TabButtons
+			:modelValue="blockController.getStyle('display') || 'block'"
+			:buttons="[
+				{ label: 'Stack', value: 'flex' },
+				{ label: 'Block', value: 'block' },
 			]"
-			@update:modelValue="(val: string | number) => blockController.setStyle('justifyContent', val)" />
+			@update:modelValue="setLayout"
+			class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
+	</div>
+	<div class="flex items-center justify-between" v-if="blockController.getStyle('display') === 'flex'">
+		<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
+			Direction
+		</span>
+		<TabButtons
+			:modelValue="blockController.getStyle('flexDirection') || 'column'"
+			:buttons="[
+				{ label: 'Horizontal', value: 'row' },
+				{ label: 'Vertical', value: 'column' },
+			]"
+			@update:modelValue="(val: string | number) => blockController.setStyle('flexDirection', val)"
+			class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
+	</div>
+	<div class="items-top relative flex justify-between" v-if="blockController.getStyle('display') === 'flex'">
+		<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
+			Placement
+		</span>
+		<div
+			class="grid h-16 w-16 grid-cols-3 items-center justify-items-center rounded-sm bg-gray-200 p-1 dark:bg-zinc-800">
+			<div
+				class="h-3 w-3 cursor-pointer rounded-sm bg-gray-300 hover:bg-gray-400 dark:bg-zinc-700 dark:hover:bg-zinc-600"
+				:class="{
+					'bg-gray-700 dark:!bg-zinc-500': activePlacement === option,
+				}"
+				v-for="option in placementOptions"
+				:key="option"
+				@click="setAlignment(option)"></div>
+		</div>
+	</div>
 
+	<InlineInput
+		v-if="blockController.getStyle('display') === 'flex'"
+		:modelValue="blockController.getStyle('justifyContent')"
+		type="select"
+		label="Arrangement"
+		:options="[
+			{ label: 'Space Between', value: 'space-between' },
+			{ label: 'Space Around', value: 'space-around' },
+			{ label: 'Space Evenly', value: 'space-evenly' },
+		]"
+		@update:modelValue="(val: string | number) => blockController.setStyle('justifyContent', val)" />
+
+	<InlineInput
+		label="Gap"
+		v-if="blockController.getStyle('display') === 'flex'"
+		type="text"
+		:enableSlider="true"
+		:unitOptions="['px', 'em', 'rem']"
+		:modelValue="blockController.getStyle('gap')"
+		@update:modelValue="(val: string | number) => blockController.setStyle('gap', val)" />
+
+	<div class="flex items-center justify-between" v-if="blockController.getStyle('display') === 'flex'">
+		<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">Wrap</span>
+		<TabButtons
+			:modelValue="blockController.getStyle('flexWrap') || 'nowrap'"
+			:buttons="[
+				{ label: 'No Wrap', value: 'nowrap' },
+				{ label: 'Wrap', value: 'wrap' },
+			]"
+			@update:modelValue="(val: string | number) => blockController.setStyle('flexWrap', val)"
+			class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
+	</div>
+	<!-- flex basis -->
+	<div class="flex flex-col gap-3" v-if="blockController.getParentBlock()?.isFlex()">
 		<InlineInput
-			label="Gap"
-			v-if="blockController.getStyle('display') === 'flex'"
+			label="Basis"
 			type="text"
 			:enableSlider="true"
 			:unitOptions="['px', 'em', 'rem']"
-			:modelValue="blockController.getStyle('gap')"
-			@update:modelValue="(val: string | number) => blockController.setStyle('gap', val)" />
-
-		<div class="flex items-center justify-between" v-if="blockController.getStyle('display') === 'flex'">
+			:modelValue="blockController.getStyle('flexBasis')"
+			@update:modelValue="(val: string | number) => blockController.setStyle('flexBasis', val)" />
+		<div class="flex items-center justify-between">
 			<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
-				Wrap
+				Grow
 			</span>
 			<TabButtons
-				:modelValue="blockController.getStyle('flexWrap') || 'nowrap'"
+				label="Grow"
+				:modelValue="blockController.getStyle('flexGrow') || 0"
 				:buttons="[
-					{ label: 'No Wrap', value: 'nowrap' },
-					{ label: 'Wrap', value: 'wrap' },
+					{ label: 'Yes', value: 1 },
+					{ label: 'No', value: 0 },
 				]"
-				@update:modelValue="(val: string | number) => blockController.setStyle('flexWrap', val)"
+				@update:modelValue="(val: string | number) => blockController.setStyle('flexGrow', val)"
 				class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
 		</div>
-		<!-- flex basis -->
-		<div class="flex flex-col gap-3" v-if="blockController.getParentBlock()?.isFlex()">
-			<InlineInput
-				label="Basis"
-				type="text"
-				:enableSlider="true"
-				:unitOptions="['px', 'em', 'rem']"
-				:modelValue="blockController.getStyle('flexBasis')"
-				@update:modelValue="(val: string | number) => blockController.setStyle('flexBasis', val)" />
-			<div class="flex items-center justify-between">
-				<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
-					Grow
-				</span>
-				<TabButtons
-					label="Grow"
-					:modelValue="blockController.getStyle('flexGrow') || 0"
-					:buttons="[
-						{ label: 'Yes', value: 1 },
-						{ label: 'No', value: 0 },
-					]"
-					@update:modelValue="(val: string | number) => blockController.setStyle('flexGrow', val)"
-					class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
-			</div>
-			<div class="flex items-center justify-between">
-				<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
-					Shrink
-				</span>
-				<TabButtons
-					label="Shrink"
-					:modelValue="blockController.getStyle('flexShrink') || 0"
-					:buttons="[
-						{ label: 'Yes', value: 1 },
-						{ label: 'No', value: 0 },
-					]"
-					@update:modelValue="(val: string | number) => blockController.setStyle('flexShrink', val)"
-					class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
-			</div>
-			<InlineInput
-				label="Order"
-				type="number"
-				min="0"
-				:modelValue="blockController.getStyle('order')"
-				@update:modelValue="(val: string | number) => blockController.setStyle('order', val)" />
+		<div class="flex items-center justify-between">
+			<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
+				Shrink
+			</span>
+			<TabButtons
+				label="Shrink"
+				:modelValue="blockController.getStyle('flexShrink') || 0"
+				:buttons="[
+					{ label: 'Yes', value: 1 },
+					{ label: 'No', value: 0 },
+				]"
+				@update:modelValue="(val: string | number) => blockController.setStyle('flexShrink', val)"
+				class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
 		</div>
+		<InlineInput
+			label="Order"
+			type="number"
+			min="0"
+			:modelValue="blockController.getStyle('order')"
+			@update:modelValue="(val: string | number) => blockController.setStyle('order', val)" />
 	</div>
 </template>
 <script lang="ts" setup>
