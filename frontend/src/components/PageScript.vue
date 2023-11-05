@@ -1,37 +1,61 @@
 <template>
-	<div class="absolute bottom-0 z-50 h-fit w-full bg-white dark:bg-gray-900">
-		<CodeEditor
-			v-model="page.client_script"
-			type="JavaScript"
-			height="400px"
-			:show-line-numbers="true"></CodeEditor>
+	<div
+		class="absolute bottom-0 z-50 h-fit w-full border-t border-gray-200 bg-white p-2 dark:border-zinc-700 dark:bg-gray-900">
+		<PanelResizer
+			side="top"
+			:dimension="store.builderLayout.scriptEditorHeight"
+			:minDimension="100"
+			:maxDimension="600"
+			@resize="store.builderLayout.scriptEditorHeight = $event"></PanelResizer>
+		<div class="flex flex-col gap-1">
+			<TabButtons
+				class="w-fit [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"
+				:buttons="[
+					{ label: 'Script', value: 'script' },
+					{ label: 'Style', value: 'style' },
+				]"
+				:modelValue="activeTab"
+				@update:modelValue="activeTab = $event"></TabButtons>
+			<CodeEditor
+				v-show="activeTab === 'script'"
+				:modelValue="page.client_script"
+				@update:modelValue="save('client_script', $event)"
+				type="JavaScript"
+				:height="store.builderLayout.scriptEditorHeight + 'px'"
+				:show-line-numbers="true"></CodeEditor>
+			<CodeEditor
+				v-show="activeTab === 'style'"
+				:modelValue="page.style"
+				@update:modelValue="save('style', $event)"
+				type="CSS"
+				:height="store.builderLayout.scriptEditorHeight + 'px'"
+				:show-line-numbers="true"></CodeEditor>
+		</div>
 	</div>
 </template>
 <script setup lang="ts">
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { watchDebounced } from "@vueuse/core";
+import { TabButtons } from "frappe-ui";
 import { ref } from "vue";
 import CodeEditor from "./CodeEditor.vue";
+import PanelResizer from "./PanelResizer.vue";
+
+const activeTab = ref("script");
 
 const store = useStore();
 const page = ref<BuilderPage>(store.getActivePage());
 
-watchDebounced(
-	() => page.value.client_script,
-	() => {
-		if (!page.value) return;
-		webPages.setValue
-			.submit({
-				name: page.value.name,
-				client_script: page.value.client_script,
-			})
-			.then(() => {
-				close();
-				store.setPageData();
-			});
-	},
-	{ deep: true }
-);
+const save = (type: "client_script" | "style", value: string) => {
+	if (!page.value) return;
+	webPages.setValue
+		.submit({
+			name: page.value.name,
+			[type]: value,
+		})
+		.then(() => {
+			store.setPageData();
+		});
+};
 </script>

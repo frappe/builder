@@ -82,6 +82,9 @@ class BuilderPage(WebsiteGenerator):
 		context.content = content
 		context.style = style
 		context.style_file_path = get_style_file_path()
+		if self.style:
+			context.style = context.style.replace("</style>", f"{self.style or ''}</style>")
+
 		context.script = self.client_script
 		context.update(page_data)
 		self.set_meta_tags(context=context)
