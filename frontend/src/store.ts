@@ -36,6 +36,7 @@ const useStore = defineStore("store", {
 		builderLayout: {
 			rightPanelWidth: 270,
 			leftPanelWidth: 280,
+			scriptEditorHeight: 400,
 		},
 		flow: [
 			{

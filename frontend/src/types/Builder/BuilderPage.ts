@@ -30,6 +30,7 @@ export interface BuilderPage {
 
 	client_script?: string;
 	/**	Title : Data	*/
+	style?: string;
 
 	page_title?: string;
 	/**	Description : Small Text	*/
