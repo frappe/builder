@@ -57,10 +57,8 @@ const x = computed(() => {
 });
 
 const y = computed(() => {
-	console.log(menu.value);
 	const menuHeight = menu.value?.$el.clientHeight;
 	const windowHeight = window.innerHeight;
-	console.log(menuHeight, windowHeight, props.posY + menuHeight);
 	const diff = windowHeight - (props.posY + menuHeight);
 	if (diff < 0) {
 		return props.posY + diff - 10;

@@ -38,20 +38,26 @@ import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { TabButtons } from "frappe-ui";
-import { ref } from "vue";
+import { PropType, ref } from "vue";
 import CodeEditor from "./CodeEditor.vue";
 import PanelResizer from "./PanelResizer.vue";
 
 const activeTab = ref("script");
 
 const store = useStore();
-const page = ref<BuilderPage>(store.getActivePage());
+
+const props = defineProps({
+	page: {
+		type: Object as PropType<BuilderPage>,
+		required: true,
+	},
+});
 
 const save = (type: "client_script" | "style", value: string) => {
-	if (!page.value) return;
+	if (!props.page) return;
 	webPages.setValue
 		.submit({
-			name: page.value.name,
+			name: props.page.name,
 			[type]: value,
 		})
 		.then(() => {

@@ -39,7 +39,10 @@
 				v-show="store.showPanels"
 				class="fixed bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] bg-white no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderRightPanel>
 		</div>
-		<PageScript v-if="store.selectedPage" v-show="showPageScriptPanel"></PageScript>
+		<PageScript
+			v-if="store.selectedPage"
+			v-show="showPageScriptPanel"
+			:page="store.getActivePage()"></PageScript>
 	</div>
 </template>
 
@@ -58,9 +61,9 @@ import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { copyToClipboard, isHTMLString, isJSONString, isTargetEditable } from "@/utils/helpers";
-import { useEventListener, useMagicKeys, watchDebounced, whenever } from "@vueuse/core";
+import { useDebounceFn, useEventListener, useMagicKeys, whenever } from "@vueuse/core";
 import { toast } from "frappe-ui";
-import { nextTick, onActivated, ref } from "vue";
+import { nextTick, onActivated, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
@@ -485,14 +488,15 @@ const setPage = (pageName: string) => {
 	});
 };
 
-watchDebounced(
+const debouncedPageSave = useDebounceFn(store.savePage, 500);
+watch(
 	() => store.builderState.blocks,
 	() => {
-		if (store.selectedPage && store.autoSave) {
-			store.savePage();
+		if (store.selectedPage && store.autoSave && !store.settingPage) {
+			debouncedPageSave();
 		}
 	},
-	{ debounce: 500, deep: true }
+	{ deep: true }
 );
 </script>
 
