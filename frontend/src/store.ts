@@ -278,7 +278,7 @@ const useStore = defineStore("store", {
 			this.routeVariables = JSON.parse(variables);
 			this.setPageData();
 			this.setupHistory();
-			this.settingPage = false;
+			setTimeout(() => (this.settingPage = false));
 		},
 		getImageBlock(imageSrc: string, imageAlt: string = "") {
 			imageAlt = stripExtension(imageAlt);
