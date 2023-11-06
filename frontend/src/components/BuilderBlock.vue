@@ -37,6 +37,7 @@ import { setFont } from "@/utils/fontManager";
 import { computed, inject, nextTick, onMounted, reactive, ref, useAttrs, watchEffect } from "vue";
 
 import getBlockTemplate from "@/utils/blockTemplate";
+import { getDataForKey } from "@/utils/helpers";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
 import useStore from "../store";
 import BlockEditor from "./BlockEditor.vue";
@@ -106,12 +107,14 @@ const attributes = computed(() => {
 		attribs.block = props.block;
 		attribs.preview = props.preview;
 		attribs.breakpoint = props.breakpoint;
-		attribs.data = props.data;
 	}
+	attribs.data = props.data;
 	if (props.data) {
-		if (props.block.getDataKey("type") === "attribute" && props.data[props.block.getDataKey("key")]) {
-			attribs[props.block.getDataKey("property") as string] =
-				props.data[props.block.getDataKey("key") as string];
+		if (props.block.getDataKey("type") === "attribute") {
+			attribs[props.block.getDataKey("property") as string] = getDataForKey(
+				props.data,
+				props.block.getDataKey("key")
+			);
 		}
 	}
 	return attribs;
