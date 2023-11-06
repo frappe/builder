@@ -190,7 +190,8 @@ const useStore = defineStore("store", {
 		],
 		leftPanelActiveTab: <LeftSidebarTabOption>"Layers",
 		rightPanelActiveTab: <RightSidebarTabOption>"Properties",
-		showPanels: <boolean>true,
+		showRightPanel: <boolean>true,
+		showLeftPanel: <boolean>true,
 		blockEditorCanvas: {
 			scale: 0.5,
 			translateX: 0,

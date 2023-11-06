@@ -4,7 +4,7 @@
 			class="relative z-30 dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"></BuilderToolbar>
 		<div>
 			<BuilderLeftPanel
-				v-show="store.showPanels"
+				v-show="store.showLeftPanel"
 				class="fixed bottom-0 left-0 top-[var(--toolbar-height)] z-20 overflow-auto border-r-[1px] bg-white no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderLeftPanel>
 			<BuilderCanvas
 				ref="componentEditor"
@@ -18,8 +18,8 @@
 					padding: '40px',
 				}"
 				:style="{
-					left: `${store.showPanels ? store.builderLayout.leftPanelWidth : 0}px`,
-					right: `${store.showPanels ? store.builderLayout.rightPanelWidth : 0}px`,
+					left: `${store.showLeftPanel ? store.builderLayout.leftPanelWidth : 0}px`,
+					right: `${store.showRightPanel ? store.builderLayout.rightPanelWidth : 0}px`,
 				}"
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-400 p-10 dark:bg-zinc-700"></BuilderCanvas>
 			<BuilderCanvas
@@ -31,12 +31,12 @@
 					minHeight: '1000px',
 				}"
 				:style="{
-					left: `${store.showPanels ? store.builderLayout.leftPanelWidth : 0}px`,
-					right: `${store.showPanels ? store.builderLayout.rightPanelWidth : 0}px`,
+					left: `${store.showLeftPanel ? store.builderLayout.leftPanelWidth : 0}px`,
+					right: `${store.showRightPanel ? store.builderLayout.rightPanelWidth : 0}px`,
 				}"
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-200 p-10 dark:bg-zinc-800"></BuilderCanvas>
 			<BuilderRightPanel
-				v-show="store.showPanels"
+				v-show="store.showRightPanel"
 				class="fixed bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] bg-white no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderRightPanel>
 		</div>
 		<PageScript
@@ -336,10 +336,14 @@ useEventListener(document, "keydown", (e) => {
 });
 
 useEventListener(document, "keydown", (e) => {
-	const target = e.target as HTMLElement;
 	if (e.key === "\\" && e.metaKey) {
 		e.preventDefault();
-		store.showPanels = !store.showPanels;
+		if (e.shiftKey) {
+			store.showLeftPanel = !store.showLeftPanel;
+		} else {
+			store.showRightPanel = !store.showRightPanel;
+			store.showLeftPanel = store.showRightPanel;
+		}
 	}
 	// save page or component
 	if (e.key === "s" && (e.ctrlKey || e.metaKey)) {
