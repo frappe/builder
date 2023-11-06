@@ -110,7 +110,8 @@ watchEffect(() => {
 	parentBlock?.getStyle("flexDirection");
 	store.builderLayout.leftPanelWidth;
 	store.builderLayout.rightPanelWidth;
-	store.showPanels;
+	store.showRightPanel;
+	store.showLeftPanel;
 	store.activeBreakpoint;
 	store.deviceBreakpoints.map((bp) => bp.visible);
 	nextTick(() => {
