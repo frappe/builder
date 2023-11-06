@@ -29,7 +29,7 @@
 				:class="{
 					'border-b-[1px] border-gray-900 dark:border-zinc-500 dark:text-zinc-300':
 						store.leftPanelActiveTab === tab,
-					'text-gray-700 dark:text-zinc-600': store.leftPanelActiveTab !== tab,
+					'text-gray-700 dark:text-zinc-500': store.leftPanelActiveTab !== tab,
 				}">
 				{{ tab }}
 			</button>
