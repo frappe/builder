@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="absolute z-20 bg-transparent"
+		class="absolute z-20"
 		:class="{
 			'bottom-0 top-0 w-1 hover:cursor-ew-resize': side === 'left' || side === 'right',
 			'left-0 right-0 h-1 hover:cursor-ns-resize': side === 'top' || side === 'bottom',

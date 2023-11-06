@@ -10,7 +10,7 @@
 			:min-dimension="220"
 			:max-dimension="400" />
 		<div
-			class="sticky top-0 z-10 flex w-full border-gray-200 bg-white p-[2px] text-sm dark:border-zinc-800 dark:bg-zinc-900">
+			class="sticky top-0 z-[12] flex w-full border-gray-200 bg-white p-[2px] text-sm dark:border-zinc-800 dark:bg-zinc-900">
 			<button
 				v-for="tab of ['Properties', 'Data', 'Settings']"
 				:key="tab"
@@ -19,7 +19,7 @@
 				:class="{
 					'border-b-[1px] border-gray-900 dark:border-zinc-500 dark:text-zinc-300':
 						store.rightPanelActiveTab === tab,
-					'text-gray-700 dark:text-zinc-600': store.rightPanelActiveTab !== tab,
+					'text-gray-700 dark:text-zinc-500': store.rightPanelActiveTab !== tab,
 				}">
 				{{ tab }}
 			</button>
