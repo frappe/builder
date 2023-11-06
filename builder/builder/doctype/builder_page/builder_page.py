@@ -140,9 +140,9 @@ def get_block_html(blocks, page_data={}):
 
 	def get_html(blocks, soup):
 		html = ""
-		def get_tag(block, soup, repeater_child=False):
+		def get_tag(block, soup, data_key=None):
 			block = extend_with_component(block)
-			set_dynamic_content_placeholder(block, repeater_child)
+			set_dynamic_content_placeholder(block, data_key)
 			element = block.get("originalElement") or block.get("element")
 			# temp fix: since p inside p is illegal
 			if element in ["p", "__raw_html__"]:
@@ -173,11 +173,11 @@ def get_block_html(blocks, page_data={}):
 			block_data = []
 			if block.get("isRepeaterBlock") and block.get("children"):
 				tag.append("{% for _data in " + block.get("dataKey").get("key") + " %}")
-				tag.append(get_tag(block.get("children")[0], soup, True))
+				tag.append(get_tag(block.get("children")[0], soup, "_data"))
 				tag.append("{% endfor %}")
 			else:
 				for child in block.get("children", []):
-					tag.append(get_tag(child, soup, repeater_child))
+					tag.append(get_tag(child, soup, data_key=data_key))
 
 			return tag
 
@@ -274,17 +274,17 @@ def extend_block(block, overridden_block):
 			component_children.insert(overridden_children.index(overridden_child), overridden_child)
 
 
-def set_dynamic_content_placeholder(block, repeater_child=False):
-	data_key = block.get("dataKey")
-	if data_key and data_key.get("key"):
-		key = f"_data.{data_key.get('key')}" if repeater_child else data_key.get("key")
+def set_dynamic_content_placeholder(block, data_key=False):
+	block_data_key = block.get("dataKey")
+	if block_data_key and block_data_key.get("key"):
+		key = f"{data_key}.{block_data_key.get('key')}" if data_key else block_data_key.get("key")
 		value = "{{" + key + "}}"
-		if data_key.get("type") == "attribute":
-			block["attributes"][data_key.get("property")] = value
-		elif data_key.get("type") == "style":
-			block["baseStyles"][data_key.get("property")] = value
-		elif data_key.get("type") == "key" and not block.get("isRepeaterBlock"):
-			block[data_key.get("property")] = value
+		if block_data_key.get("type") == "attribute":
+			block["attributes"][block_data_key.get("property")] = value
+		elif block_data_key.get("type") == "style":
+			block["baseStyles"][block_data_key.get("property")] = value
+		elif block_data_key.get("type") == "key" and not block.get("isRepeaterBlock"):
+			block[block_data_key.get("property")] = value
 
 def get_style_file_path():
 	# TODO: Redo this, currently it loads the first matching file
