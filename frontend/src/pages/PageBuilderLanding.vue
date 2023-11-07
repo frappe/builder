@@ -1,28 +1,21 @@
 <template>
-	<div class="toolbar flex h-14 justify-center bg-white p-2 shadow-sm dark:bg-zinc-900">
-		<div class="absolute left-3 mt-2 flex items-center">
-			<img src="/frappe_black.png" alt="logo" class="h-5 dark:hidden" />
-			<img src="/frappe_white.png" alt="logo" class="hidden h-5 dark:block" />
-			<h1 class="text-base text-gray-800 dark:text-gray-200">Builder</h1>
+	<div
+		class="toolbar flex h-14 items-center justify-center bg-white p-2 shadow-sm dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"
+		ref="toolbar">
+		<div class="absolute left-3 flex items-center">
+			<router-link class="flex items-center" :to="{ name: 'home' }">
+				<img src="/frappe_black.png" alt="logo" class="h-5 dark:hidden" />
+				<img src="/frappe_white.png" alt="logo" class="hidden h-5 dark:block" />
+				<h1 class="text-md leading-5 text-gray-800 dark:text-gray-200">Builder</h1>
+			</router-link>
 		</div>
 	</div>
 	<section class="max-w-800 m-auto mb-32 flex w-3/4 flex-col pt-10">
-		<div class="mb-6 flex justify-between">
-			<h1 class="mb-2 font-bold text-gray-800 dark:text-zinc-400">My Pages</h1>
+		<div class="mb-6 flex items-center justify-between">
+			<h1 class="text-sm font-bold uppercase text-gray-800 dark:text-zinc-400">My Pages</h1>
 			<div class="flex gap-4">
 				<Input
-					type="select"
-					class="h-7 rounded-md text-xs text-gray-800 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
-					inputClass="w-32"
-					v-model="typeFilter"
-					:options="[
-						{ label: 'All', value: '' },
-						{ label: 'Draft', value: 'draft' },
-						{ label: 'Published', value: 'published' },
-						{ label: 'Unpublished', value: 'unpublished' },
-					]" />
-				<Input
-					class="h-7 rounded-md text-xs text-gray-800 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
+					class="h-7 rounded-md text-sm text-gray-800 hover:border-gray-400 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
 					type="text"
 					placeholder="Filter by title or route"
 					inputClass="w-full"
@@ -32,6 +25,17 @@
 							filter = value;
 						}
 					" />
+				<Input
+					type="select"
+					class="h-7 rounded-md border-gray-400 text-sm text-gray-800 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
+					inputClass="w-32"
+					v-model="typeFilter"
+					:options="[
+						{ label: 'All', value: '' },
+						{ label: 'Draft', value: 'draft' },
+						{ label: 'Published', value: 'published' },
+						{ label: 'Unpublished', value: 'unpublished' },
+					]" />
 				<router-link :to="{ name: 'builder', params: { pageId: 'new' } }">
 					<Button variant="solid" icon-left="plus">New</Button>
 				</router-link>

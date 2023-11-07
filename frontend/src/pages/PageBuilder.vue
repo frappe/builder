@@ -1,7 +1,6 @@
 <template>
 	<div class="page-builder h-screen flex-col overflow-hidden bg-gray-100">
-		<BuilderToolbar
-			class="relative z-30 dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"></BuilderToolbar>
+		<BuilderToolbar class="relative z-30"></BuilderToolbar>
 		<div>
 			<BuilderLeftPanel
 				v-show="store.showLeftPanel"

@@ -24,10 +24,7 @@
 				{{ tab }}
 			</button>
 		</div>
-		<BlockProperties
-			v-if="blockController.isBLockSelected()"
-			v-show="store.rightPanelActiveTab === 'Properties'"
-			class="p-4" />
+		<BlockProperties v-show="store.rightPanelActiveTab === 'Properties'" class="p-4" />
 		<PageData
 			class="p-4"
 			v-show="store.rightPanelActiveTab === 'Data'"
