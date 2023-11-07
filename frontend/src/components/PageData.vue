@@ -11,7 +11,7 @@
 			type="JSON"
 			label="Page Data Preview"
 			:readonly="true"
-			class="mt-8"></CodeEditor>
+			class="mt-5"></CodeEditor>
 		<Dialog
 			style="z-index: 40"
 			:options="{

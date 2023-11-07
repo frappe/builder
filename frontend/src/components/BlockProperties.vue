@@ -1,6 +1,6 @@
 <!-- TODO: Refactor -->
 <template>
-	<div v-if="blockController.isBLockSelected()" class="flex select-none flex-col gap-3 pb-48">
+	<div v-if="blockController.isBLockSelected()" class="mt-[-10px] flex select-none flex-col gap-3 pb-16">
 		<CollapsibleSection sectionName="Layout" v-if="!blockController.multipleBlocksSelected()">
 			<BLockLayoutHandler></BLockLayoutHandler>
 		</CollapsibleSection>
@@ -282,6 +282,9 @@
 				:modelValue="blockController.getDataKey('property')"
 				@update:modelValue="(val) => blockController.setDataKey('property', val)" />
 		</CollapsibleSection>
+	</div>
+	<div v-else>
+		<p class="text-center text-sm text-gray-600 dark:text-zinc-500">Select a block to edit properties.</p>
 	</div>
 </template>
 <script setup lang="ts">
