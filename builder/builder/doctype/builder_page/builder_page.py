@@ -251,6 +251,8 @@ def extend_block(block, overridden_block):
 	block["rawStyles"].update(overridden_block["rawStyles"])
 	block["attributes"].update(overridden_block["attributes"])
 	block["classes"].extend(overridden_block["classes"])
+	if overridden_block.get("dataKey"):
+		block["dataKey"] = overridden_block["dataKey"]
 	if overridden_block.get("innerHTML"):
 		block["innerHTML"] = overridden_block["innerHTML"]
 	component_children = block.get("children", [])
@@ -278,13 +280,14 @@ def set_dynamic_content_placeholder(block, data_key=False):
 	block_data_key = block.get("dataKey")
 	if block_data_key and block_data_key.get("key"):
 		key = f"{data_key}.{block_data_key.get('key')}" if data_key else block_data_key.get("key")
-		value = "{{" + key + "}}"
-		if block_data_key.get("type") == "attribute":
-			block["attributes"][block_data_key.get("property")] = value
-		elif block_data_key.get("type") == "style":
-			block["baseStyles"][block_data_key.get("property")] = value
-		elif block_data_key.get("type") == "key" and not block.get("isRepeaterBlock"):
-			block[block_data_key.get("property")] = value
+		_property = block_data_key.get("property")
+		_type = block_data_key.get("type")
+		if _type == "attribute":
+			block["attributes"][_property] = f"{{{{ {key} or '{block['attributes'].get(_property, '')}' }}}}"
+		elif _type == "style":
+			block["baseStyles"][_property] = f"{{{{ {key} or '{block['baseStyles'].get(_property, '')}' }}}}"
+		elif _type == "key" and not block.get("isRepeaterBlock"):
+			block[_property] = f"{{{{ {key} or '{block.get(_property, '')}' }}}}"
 
 def get_style_file_path():
 	# TODO: Redo this, currently it loads the first matching file
