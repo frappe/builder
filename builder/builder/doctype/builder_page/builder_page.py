@@ -283,11 +283,11 @@ def set_dynamic_content_placeholder(block, data_key=False):
 		_property = block_data_key.get("property")
 		_type = block_data_key.get("type")
 		if _type == "attribute":
-			block["attributes"][_property] = f"{{{{ {key} or '{block['attributes'].get(_property, '')}' }}}}"
+			block["attributes"][_property] = f"{{{{ {key} or '{escape_single_quotes(block['attributes'].get(_property, ''))}' }}}}"
 		elif _type == "style":
-			block["baseStyles"][_property] = f"{{{{ {key} or '{block['baseStyles'].get(_property, '')}' }}}}"
+			block["baseStyles"][_property] = f"{{{{ {key} or '{escape_single_quotes(block['baseStyles'].get(_property, ''))}' }}}}"
 		elif _type == "key" and not block.get("isRepeaterBlock"):
-			block[_property] = f"{{{{ {key} or '{block.get(_property, '')}' }}}}"
+			block[_property] = f"{{{{ {key} or '{escape_single_quotes(block.get(_property, ''))}' }}}}"
 
 def get_style_file_path():
 	# TODO: Redo this, currently it loads the first matching file
@@ -299,6 +299,9 @@ def get_style_file_path():
 	matching_files = glob.glob(f"{folder_path}/{file_pattern}")
 	if matching_files:
 		return frappe.utils.get_url(matching_files[0].lstrip("."))
+
+def escape_single_quotes(text):
+	return text.replace("'", "\\'")
 
 # def generate_tailwind_css_file_from_html(html):
 # 	# execute tailwindcss cli command to generate css file
