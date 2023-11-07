@@ -409,9 +409,19 @@ const useStore = defineStore("store", {
 		getComponent(componentName: string) {
 			return webComponent.getRow(componentName) as BuilderComponent;
 		},
-		createComponent(obj: BuilderComponent) {
-			if (this.getComponent(obj.name)) {
-				return;
+		createComponent(obj: BuilderComponent, updateExisting = false) {
+			const component = this.getComponent(obj.name);
+			if (component) {
+				const existingComponent = JSON.stringify(component.block);
+				const newComponent = JSON.stringify(obj.block);
+				if (updateExisting && existingComponent !== newComponent) {
+					return webComponent.setValue.submit({
+						name: obj.name,
+						block: obj.block,
+					});
+				} else {
+					return;
+				}
 			}
 			return webComponent.insert.submit(obj).catch(() => {
 				console.log(`There was an error while creating ${obj.component_name}`);

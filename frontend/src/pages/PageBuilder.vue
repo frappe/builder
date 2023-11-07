@@ -160,7 +160,8 @@ useEventListener(document, "paste", async (e) => {
 		const dataObj = JSON.parse(data) as { blocks: Block[]; components: BuilderComponent[] };
 
 		for (const component of dataObj.components) {
-			await store.createComponent(component);
+			delete component.for_web_page;
+			await store.createComponent(component, true);
 		}
 
 		if (store.selectedBlocks.length && dataObj.blocks[0].blockId !== "root") {
