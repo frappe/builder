@@ -1,6 +1,6 @@
 <template>
 	<component :is="block.getTag()" ref="component" @click.stop @dblclick.stop :key="editor">
-		<div v-html="textContent" v-show="!editor" @click="handleClick"></div>
+		<div v-html="textContent" v-show="!editor && textContent" @click="handleClick"></div>
 		<editor-content @click="handleClick" :editor="editor" v-if="editor && showEditor" />
 		<slot />
 	</component>
