@@ -1,10 +1,10 @@
 <template>
-	<div>
-		<div class="mb-8" v-show="components.length || filter">
+	<div class="flex flex-col gap-5">
+		<div v-show="components.length || filter">
 			<Input
-				class="h-7 rounded-md text-sm text-gray-800 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
+				class="h-7 rounded-md text-sm text-gray-800 hover:border-gray-400 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
 				type="text"
-				placeholder="Filter"
+				placeholder="Filter component"
 				inputClass="w-full"
 				v-model="filter"
 				@input="
@@ -14,10 +14,10 @@
 				" />
 		</div>
 		<div v-show="!components.length" class="text-sm italic text-gray-600">No components saved</div>
-		<div v-for="component in components" :key="component.name" class="flex w-full flex-wrap">
-			<div class="component-container group relative mb-3 w-full">
+		<div v-for="component in components" :key="component.name" class="flex w-full">
+			<div class="component-container group relative flex w-full flex-col gap-2">
 				<div
-					class="relative mb-1 mr-2 flex h-24 w-full max-w-[300px] cursor-pointer items-center justify-center overflow-hidden rounded-md border bg-gray-50 p-2 shadow-sm last:mr-0 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+					class="relative flex h-24 w-full max-w-[300px] cursor-pointer items-center justify-center overflow-hidden rounded-md border bg-gray-50 p-2 shadow-sm last:mr-0 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
 					draggable="true"
 					@dragstart="(ev) => setData(ev, component)">
 					<div
@@ -32,7 +32,7 @@
 							:preview="true" />
 					</div>
 				</div>
-				<p class="text-xs text-gray-800 dark:text-zinc-500">
+				<p class="text-xs text-gray-800 dark:text-zinc-400">
 					{{ component.component_name }}
 				</p>
 				<FeatherIcon
