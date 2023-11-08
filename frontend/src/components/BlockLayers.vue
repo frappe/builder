@@ -5,7 +5,7 @@
 			:list="blocks"
 			:group="{ name: 'block-tree' }"
 			item-key="blockId"
-			:disabled="blocks.length && blocks[0].isRoot()">
+			:disabled="blocks.length && (blocks[0].isRoot() || blocks[0].isChildOfComponentBlock())">
 			<template #item="{ element }">
 				<div>
 					<BlockContextMenu v-slot="{ onContextMenu }" :block="element" :editable="false">
