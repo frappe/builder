@@ -29,7 +29,8 @@
 							<span
 								class="group my-[6px] flex items-center font-medium"
 								:class="{
-									'opacity-50': !element.isVisible(),
+									'!opacity-50': !element.isVisible() || element.isChildOfComponentBlock(),
+									'text-purple-500 opacity-80 dark:text-purple-400': element.isExtendedFromComponent(),
 								}">
 								<FeatherIcon
 									:name="isExpanded(element) ? 'chevron-down' : 'chevron-right'"
