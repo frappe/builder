@@ -35,16 +35,16 @@
 			</button>
 		</div>
 		<div v-show="store.leftPanelActiveTab === 'Components'">
-			<BuilderComponents class="p-4" />
+			<BuilderComponents class="p-4 pt-3" />
 		</div>
 		<div v-show="store.leftPanelActiveTab === 'Layers'">
 			<BlockLayers
-				class="p-4"
+				class="p-4 pt-3"
 				:blocks="store.builderState.blocks"
 				v-if="!store.editingComponent"
 				v-show="store.editingMode == 'page'" />
 			<BlockLayers
-				class="p-4"
+				class="p-4 pt-3"
 				:blocks="[store.getComponentBlock(store.editingComponent)]"
 				v-if="store.editingComponent" />
 		</div>
