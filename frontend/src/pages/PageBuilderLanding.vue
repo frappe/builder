@@ -2,10 +2,9 @@
 	<div
 		class="toolbar flex h-14 items-center justify-center bg-white p-2 shadow-sm dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"
 		ref="toolbar">
-		<div class="absolute left-3 flex items-center opacity-80">
-			<router-link class="flex items-center" :to="{ name: 'home' }">
-				<img src="/frappe_black.png" alt="logo" class="h-5 dark:hidden" />
-				<img src="/frappe_white.png" alt="logo" class="hidden h-5 dark:block" />
+		<div class="absolute left-3 flex items-center">
+			<router-link class="flex items-center gap-2" :to="{ name: 'home' }">
+				<img src="/builder_logo.png" alt="logo" class="h-7" />
 				<h1 class="text-md font-semibold leading-5 text-gray-800 dark:text-gray-200">Builder</h1>
 			</router-link>
 		</div>
@@ -43,12 +42,12 @@
 		</div>
 		<div class="flex flex-wrap gap-6">
 			<div v-if="!webPages.data || !webPages.data.length" class="flex flex-col items-center justify-center">
-				<p class="mt-4 text-center text-gray-500">
+				<p class="mt-4 text-center text-base text-gray-500">
 					You don't have any pages yet. Click on the "+ New" button to create a new page.
 				</p>
 			</div>
 			<div v-else-if="!pages.length" class="flex flex-col items-center justify-center">
-				<p class="mt-4 text-center text-gray-500">No matching pages found.</p>
+				<p class="mt-4 text-center text-base text-gray-500">No matching pages found.</p>
 			</div>
 			<router-link
 				v-for="page in pages"
