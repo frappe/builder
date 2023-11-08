@@ -2,11 +2,11 @@
 	<div
 		class="toolbar flex h-14 items-center justify-center bg-white p-2 shadow-sm dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"
 		ref="toolbar">
-		<div class="absolute left-3 flex items-center">
+		<div class="absolute left-3 flex items-center opacity-80">
 			<router-link class="flex items-center" :to="{ name: 'home' }">
 				<img src="/frappe_black.png" alt="logo" class="h-5 dark:hidden" />
 				<img src="/frappe_white.png" alt="logo" class="hidden h-5 dark:block" />
-				<h1 class="text-md leading-5 text-gray-800 dark:text-gray-200">Builder</h1>
+				<h1 class="text-md font-semibold leading-5 text-gray-800 dark:text-gray-200">Builder</h1>
 			</router-link>
 		</div>
 	</div>
