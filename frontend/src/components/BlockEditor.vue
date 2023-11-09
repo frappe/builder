@@ -35,6 +35,7 @@
 					!block.isRoot() &&
 					!block.isText() &&
 					!block.isHTML() &&
+					!block.isSVG() &&
 					!editable &&
 					!blockController.multipleBlocksSelected()
 				"
@@ -67,6 +68,7 @@ const showResizer = computed(() => {
 		!props.editable &&
 		isBlockSelected.value &&
 		!blockController.multipleBlocksSelected() &&
+		!props.block.isSVG() &&
 		!props.block.isHTML()
 	);
 });
@@ -81,7 +83,7 @@ const props = defineProps({
 		default: "desktop",
 	},
 	target: {
-		type: HTMLElement,
+		type: [HTMLElement, SVGElement],
 		required: true,
 	},
 	editable: {

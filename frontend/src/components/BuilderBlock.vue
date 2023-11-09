@@ -123,7 +123,7 @@ const canvasProps = !props.preview ? (inject("canvasProps") as CanvasProps) : nu
 
 const target = computed(() => {
 	if (!component.value) return null;
-	if (component.value instanceof HTMLElement) {
+	if (component.value instanceof HTMLElement || component.value instanceof SVGElement) {
 		return component.value;
 	} else {
 		return component.value.component;
