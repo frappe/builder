@@ -72,8 +72,19 @@
 				:unitOptions="['px', '%']"
 				:minValue="0"
 				@update:modelValue="(val) => blockController.setStyle('borderRadius', val)" />
+			<InlineInput
+				v-if="
+					!blockController.multipleBlocksSelected() &&
+					!blockController.isRoot() &&
+					blockController.getStyle('position') !== 'static'
+				"
+				label="Z-Index"
+				:modelValue="blockController.getStyle('zIndex')"
+				@update:modelValue="(val) => blockController.setStyle('zIndex', val)" />
 		</CollapsibleSection>
-		<CollapsibleSection sectionName="Typography">
+		<CollapsibleSection
+			sectionName="Typography"
+			v-if="blockController.isText() || blockController.isContainer()">
 			<InlineInput
 				label="Family"
 				type="autocomplete"
@@ -225,25 +236,20 @@
 				<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
 					Overflow
 				</span>
-				<TabButtons
-					class="[&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"
-					v-if="blockController.isContainer()"
-					:buttons="[
-						{
-							label: 'Auto',
-							value: 'auto',
-						},
-						{
-							label: 'Hide',
-							value: 'hidden',
-						},
-						{
-							label: 'Scroll',
-							value: 'scroll',
-						},
-					]"
-					:modelValue="blockController.getStyle('overflow') || 'auto'"
-					@update:modelValue="(val: string) => blockController.setStyle('overflow', val)"></TabButtons>
+				<div class="flex w-[150px] gap-2">
+					<Input
+						type="select"
+						:modelValue="blockController.getStyle('overflowX') || 'auto'"
+						:options="['auto', 'hidden', 'scroll']"
+						@change="(val: string) => blockController.setStyle('overflowX', val)"
+						class="flex-1 rounded-md text-sm text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
+					<Input
+						type="select"
+						:modelValue="blockController.getStyle('overflowY') || 'auto'"
+						:options="['auto', 'hidden', 'scroll']"
+						@change="(val: string) => blockController.setStyle('overflowY', val)"
+						class="flex-1 rounded-md text-sm text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
+				</div>
 			</div>
 			<InlineInput
 				label="Alt Text"
