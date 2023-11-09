@@ -41,7 +41,7 @@ const props = defineProps({
 		default: null,
 	},
 	target: {
-		type: HTMLElement,
+		type: [HTMLElement, SVGElement],
 		default: null,
 	},
 });
