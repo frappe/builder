@@ -34,7 +34,7 @@ const useStore = defineStore("store", {
 		routeVariables: <{ [key: string]: string }>{},
 		autoSave: true,
 		builderLayout: {
-			rightPanelWidth: 270,
+			rightPanelWidth: 275,
 			leftPanelWidth: 280,
 			scriptEditorHeight: 400,
 		},

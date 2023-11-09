@@ -7,7 +7,7 @@
 			:dimension="store.builderLayout.rightPanelWidth"
 			side="left"
 			@resize="(width) => (store.builderLayout.rightPanelWidth = width)"
-			:min-dimension="220"
+			:min-dimension="275"
 			:max-dimension="400" />
 		<div
 			class="sticky top-0 z-[12] flex w-full border-gray-200 bg-white p-[2px] text-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -39,7 +39,6 @@
 </template>
 <script setup lang="ts">
 import useStore from "@/store";
-import blockController from "@/utils/blockController";
 import BlockProperties from "./BlockProperties.vue";
 import PageData from "./PageData.vue";
 import PageSettings from "./PageSettings.vue";
