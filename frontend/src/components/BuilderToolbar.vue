@@ -5,7 +5,7 @@
 		<div class="absolute left-3 flex items-center">
 			<router-link class="flex items-center gap-2" :to="{ name: 'home' }">
 				<img src="/builder_logo.png" alt="logo" class="h-7" />
-				<h1 class="text-md font-semibold leading-5 text-gray-800 dark:text-gray-200">Builder</h1>
+				<h1 class="text-md mt-[2px] font-semibold leading-5 text-gray-800 dark:text-gray-200">Builder</h1>
 			</router-link>
 		</div>
 		<div class="ml-10 flex gap-3">

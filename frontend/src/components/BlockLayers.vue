@@ -96,7 +96,7 @@
 									{{ store.activeBreakpoint }}
 								</span>
 							</span>
-							<div v-show="isExpanded(element) && element.isVisible()">
+							<div v-show="isExpanded(element) && element.isVisible() && !element.isSVG()">
 								<BlockLayers :blocks="element.children" class="ml-3" />
 							</div>
 						</div>
