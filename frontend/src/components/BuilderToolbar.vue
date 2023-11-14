@@ -25,11 +25,12 @@
 		</div>
 		<div class="absolute right-3 flex items-center">
 			<UseDark v-slot="{ isDark, toggleDark }">
-				<FeatherIcon
-					title="Toggle Theme"
-					:name="isDark ? 'moon' : 'sun'"
-					class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400"
-					@click="toggleDark()" />
+				<button @click="toggleDark()">
+					<FeatherIcon
+						title="Toggle Theme"
+						:name="isDark ? 'moon' : 'sun'"
+						class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
+				</button>
 			</UseDark>
 			<router-link :to="{ name: 'preview', params: { pageId: store.selectedPage } }" title="Preview">
 				<FeatherIcon name="play" class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
