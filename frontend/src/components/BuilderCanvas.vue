@@ -1,5 +1,5 @@
 <template>
-	<div ref="canvasContainer">
+	<div ref="canvasContainer" @click.prevent.stop="store.clearSelection()">
 		<div class="overlay absolute" id="overlay" ref="overlay" />
 		<BlockSnapGuides></BlockSnapGuides>
 		<div
