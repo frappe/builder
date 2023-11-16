@@ -14,7 +14,7 @@ const blockController = {
 		return store.selectedBlocks;
 	},
 	isRoot() {
-		return store.selectedBlocks[0].isRoot();
+		return blockController.isBLockSelected() && store.selectedBlocks[0].isRoot();
 	},
 	setStyle: (style: styleProperty, value: StyleValue) => {
 		store.selectedBlocks.forEach((block) => {
@@ -110,7 +110,7 @@ const blockController = {
 		});
 	},
 	getParentBlock: () => {
-		return store.selectedBlocks[0].getParentBlock();
+		return blockController.isBLockSelected() && store.selectedBlocks[0].getParentBlock();
 	},
 	setTextColor: (color: string) => {
 		store.selectedBlocks.forEach((block) => {
@@ -168,6 +168,12 @@ const blockController = {
 	},
 	isRepeater: () => {
 		return blockController.isBLockSelected() && store.selectedBlocks[0].isRepeater();
+	},
+	getPadding: () => {
+		return store.selectedBlocks[0].getPadding();
+	},
+	setPadding: (value: string) => {
+		store.selectedBlocks[0].setPadding(value);
 	},
 };
 

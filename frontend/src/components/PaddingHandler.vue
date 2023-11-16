@@ -150,6 +150,10 @@ const props = defineProps({
 		type: String,
 		default: "desktop",
 	},
+	target: {
+		type: [HTMLElement, SVGElement],
+		required: true,
+	},
 });
 
 const targetBlock = props.targetBlock;
@@ -172,17 +176,29 @@ const blockStyles = computed(() => {
 });
 
 const topPaddingHandlerHeight = computed(() => {
-	return getNumberFromPx(blockStyles.value.paddingTop) * canvasProps.scale;
+	return getPadding("Top");
 });
+
 const bottomPaddingHandlerHeight = computed(() => {
-	return getNumberFromPx(blockStyles.value.paddingBottom) * canvasProps.scale;
+	return getPadding("Bottom");
 });
+
 const leftPaddingHandlerWidth = computed(() => {
-	return getNumberFromPx(blockStyles.value.paddingLeft) * canvasProps.scale;
+	return getPadding("Left");
 });
+
 const rightPaddingHandlerWidth = computed(() => {
-	return getNumberFromPx(blockStyles.value.paddingRight) * canvasProps.scale;
+	return getPadding("Right");
 });
+
+const getPadding = (side: "Top" | "Left" | "Right" | "Bottom") => {
+	blockStyles.value.paddingRight;
+	blockStyles.value.paddingTop;
+	blockStyles.value.paddingBottom;
+	blockStyles.value.paddingLeft;
+	blockStyles.value.padding;
+	return getNumberFromPx(getComputedStyle(props.target)[`padding${side}`]) * canvasProps.scale;
+};
 
 const handleBorderWidth = computed(() => {
 	return `${clamp(1 * canvasProps.scale, 1, 2)}px`;
@@ -299,6 +315,7 @@ const handlePadding = (ev: MouseEvent, position: Position) => {
 		}
 
 		mouseMoveEvent.preventDefault();
+		mouseMoveEvent.stopPropagation();
 	};
 	document.addEventListener("mousemove", mousemove);
 	document.addEventListener(
