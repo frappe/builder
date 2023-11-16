@@ -163,8 +163,8 @@
 			<InlineInput
 				label="Margin"
 				v-if="!blockController.multipleBlocksSelected() && !blockController.isRoot()"
-				:modelValue="blockController.getStyle('margin')"
-				@update:modelValue="(val) => blockController.setStyle('margin', val)" />
+				:modelValue="blockController.getMargin()"
+				@update:modelValue="(val) => blockController.setMargin(val)" />
 			<InlineInput
 				label="Padding"
 				v-if="!blockController.multipleBlocksSelected()"

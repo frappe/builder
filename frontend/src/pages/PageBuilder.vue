@@ -39,7 +39,7 @@
 				class="fixed bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] bg-white no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderRightPanel>
 		</div>
 		<PageScript
-			v-if="store.selectedPage"
+			v-if="store.selectedPage && store.getActivePage()"
 			v-show="showPageScriptPanel"
 			:page="store.getActivePage()"></PageScript>
 	</div>
