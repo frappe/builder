@@ -1,5 +1,5 @@
 <template>
-	<div ref="canvasContainer" @click.prevent.stop="store.clearSelection()">
+	<div ref="canvasContainer" @click="handleClick">
 		<div class="overlay absolute" id="overlay" ref="overlay" />
 		<BlockSnapGuides></BlockSnapGuides>
 		<div
@@ -329,4 +329,13 @@ function toggleMode(mode: BuilderMode) {
 		container.style.cursor = "default";
 	}
 }
+
+const handleClick = (ev: MouseEvent) => {
+	const target = document.elementFromPoint(ev.clientX, ev.clientY);
+	// hack to ensure if click is on canvas-container
+	// TODO: Still clears selection if space handlers are dragged over canvas-container
+	if (target?.classList.contains("canvas-container")) {
+		store.clearSelection();
+	}
+};
 </script>
