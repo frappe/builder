@@ -653,6 +653,69 @@ class Block implements BlockOptions {
 			this.setStyle("paddingLeft", paddingArray[3]);
 		}
 	}
+	setMargin(margin: string) {
+		// reset margin
+		this.removeStyle("margin");
+		this.removeStyle("marginTop");
+		this.removeStyle("marginBottom");
+		this.removeStyle("marginLeft");
+		this.removeStyle("marginRight");
+
+		if (!margin) {
+			return;
+		}
+
+		const marginArray = margin.split(" ");
+
+		if (marginArray.length === 1) {
+			this.setStyle("margin", marginArray[0]);
+		} else if (marginArray.length === 2) {
+			this.setStyle("marginTop", marginArray[0]);
+			this.setStyle("marginBottom", marginArray[0]);
+			this.setStyle("marginLeft", marginArray[1]);
+			this.setStyle("marginRight", marginArray[1]);
+		} else if (marginArray.length === 3) {
+			this.setStyle("marginTop", marginArray[0]);
+			this.setStyle("marginLeft", marginArray[1]);
+			this.setStyle("marginRight", marginArray[1]);
+			this.setStyle("marginBottom", marginArray[2]);
+		} else if (marginArray.length === 4) {
+			this.setStyle("marginTop", marginArray[0]);
+			this.setStyle("marginRight", marginArray[1]);
+			this.setStyle("marginBottom", marginArray[2]);
+			this.setStyle("marginLeft", marginArray[3]);
+		}
+	}
+	getMargin() {
+		const margin = this.getStyle("margin") || "0px";
+
+		const marginTop = this.getStyle("marginTop");
+		const marginBottom = this.getStyle("marginBottom");
+		const marginLeft = this.getStyle("marginLeft");
+		const marginRight = this.getStyle("marginRight");
+
+		if (!marginTop && !marginBottom && !marginLeft && !marginRight) {
+			return margin;
+		}
+
+		if (
+			marginTop &&
+			marginBottom &&
+			marginTop === marginBottom &&
+			marginTop === marginRight &&
+			marginTop === marginLeft
+		) {
+			return marginTop;
+		}
+
+		if (marginTop && marginLeft && marginTop === marginBottom && marginLeft === marginRight) {
+			return `${marginTop} ${marginLeft}`;
+		} else {
+			return `${marginTop || margin} ${marginRight || margin} ${marginBottom || margin} ${
+				marginLeft || margin
+			}`;
+		}
+	}
 }
 
 // class BlockTree {

@@ -175,6 +175,12 @@ const blockController = {
 	setPadding: (value: string) => {
 		store.selectedBlocks[0].setPadding(value);
 	},
+	getMargin: () => {
+		return store.selectedBlocks[0].getMargin();
+	},
+	setMargin: (value: string) => {
+		store.selectedBlocks[0].setMargin(value);
+	},
 };
 
 export default blockController;
