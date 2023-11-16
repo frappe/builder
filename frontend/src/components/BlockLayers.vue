@@ -5,7 +5,7 @@
 			:list="blocks"
 			:group="{ name: 'block-tree' }"
 			item-key="blockId"
-			:disabled="blocks.length && blocks[0].isRoot()">
+			:disabled="blocks.length && (blocks[0].isRoot() || blocks[0].isChildOfComponentBlock())">
 			<template #item="{ element }">
 				<div>
 					<BlockContextMenu v-slot="{ onContextMenu }" :block="element" :editable="false">
@@ -29,7 +29,7 @@
 							<span
 								class="group my-[6px] flex items-center font-medium"
 								:class="{
-									'opacity-50': !element.isVisible(),
+									'!opacity-50': !element.isVisible(),
 								}">
 								<FeatherIcon
 									:name="isExpanded(element) ? 'chevron-down' : 'chevron-right'"
@@ -45,6 +45,10 @@
 								<FeatherIcon
 									:name="element.getIcon()"
 									class="mr-1 h-3 w-3"
+									:class="{
+										'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
+											element.isExtendedFromComponent(),
+									}"
 									v-if="!Boolean(element.extendedFromComponent)" />
 								<svg
 									class="mr-1 h-3 w-3"
@@ -52,6 +56,10 @@
 									width="16"
 									height="16"
 									viewBox="0 0 24 24"
+									:class="{
+										'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
+											element.isExtendedFromComponent(),
+									}"
 									v-if="Boolean(element.extendedFromComponent)">
 									<g
 										fill="none"
@@ -69,6 +77,10 @@
 									class="min-h-[1em] min-w-[2em] truncate"
 									:contenteditable="element.editable"
 									:title="element.blockId"
+									:class="{
+										'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
+											element.isExtendedFromComponent(),
+									}"
 									@dblclick="element.editable = true"
 									@keydown.enter.stop.prevent="element.editable = false"
 									@blur="setBlockName($event, element)">
@@ -84,7 +96,8 @@
 									{{ store.activeBreakpoint }}
 								</span>
 							</span>
-							<div v-show="isExpanded(element) && element.isVisible()">
+							<div
+								v-show="isExpanded(element) && element.isVisible() && !element.isSVG() && !element.isImage()">
 								<BlockLayers :blocks="element.children" class="ml-3" />
 							</div>
 						</div>

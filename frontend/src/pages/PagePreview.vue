@@ -45,9 +45,9 @@
 			<PanelResizer
 				class="ml-[-12px]"
 				side="left"
-				:width="width"
-				:minWidth="minWidth"
-				:maxWidth="maxWidth"
+				:dimension="width"
+				:minDimension="minWidth"
+				:maxDimension="maxWidth"
 				:resizeSensitivity="2"
 				@resize="(val) => (width = val)">
 				<div class="resize-handler-left h-full w-2 rounded-sm bg-gray-200 dark:bg-zinc-600"></div>
@@ -66,9 +66,9 @@
 			<PanelResizer
 				class="mr-[-8px]"
 				side="right"
-				:width="width"
-				:minWidth="minWidth"
-				:maxWidth="maxWidth"
+				:dimension="width"
+				:minDimension="minWidth"
+				:maxDimension="maxWidth"
 				:resizeSensitivity="2"
 				@resize="(val) => (width = val)">
 				<div class="resize-handler-left h-full w-2 rounded-sm bg-gray-200 dark:bg-zinc-600"></div>

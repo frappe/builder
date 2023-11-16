@@ -476,10 +476,11 @@ class Block implements BlockOptions {
 		return this.isRepeaterBlock;
 	}
 	getDataKey(key: keyof BlockDataKey): string {
-		if (this.isExtendedFromComponent()) {
-			return this.getComponent()?.getDataKey(key);
+		let dataKey = (this.dataKey && this.dataKey[key]) || "";
+		if (!dataKey && this.isExtendedFromComponent()) {
+			dataKey = this.getComponent()?.getDataKey(key);
 		}
-		return (this.dataKey && this.dataKey[key]) || "";
+		return dataKey;
 	}
 	setDataKey(key: keyof BlockDataKey, value: string) {
 		if (!this.dataKey) {

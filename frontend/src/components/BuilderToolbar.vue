@@ -1,10 +1,11 @@
 <template>
-	<div class="toolbar flex h-14 items-center justify-center bg-white p-2 shadow-sm" ref="toolbar">
+	<div
+		class="toolbar flex h-14 items-center justify-center bg-white p-2 shadow-sm dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"
+		ref="toolbar">
 		<div class="absolute left-3 flex items-center">
-			<router-link class="flex items-center" :to="{ name: 'home' }">
-				<img src="/frappe_black.png" alt="logo" class="h-5 dark:hidden" />
-				<img src="/frappe_white.png" alt="logo" class="hidden h-5 dark:block" />
-				<h1 class="text-base text-gray-800 dark:text-gray-200">Builder</h1>
+			<router-link class="flex items-center gap-2" :to="{ name: 'home' }">
+				<img src="/builder_logo.png" alt="logo" class="h-7" />
+				<h1 class="text-md mt-[2px] font-semibold leading-5 text-gray-800 dark:text-gray-200">Builder</h1>
 			</router-link>
 		</div>
 		<div class="ml-10 flex gap-3">
@@ -24,11 +25,12 @@
 		</div>
 		<div class="absolute right-3 flex items-center">
 			<UseDark v-slot="{ isDark, toggleDark }">
-				<FeatherIcon
-					title="Toggle Theme"
-					:name="isDark ? 'moon' : 'sun'"
-					class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400"
-					@click="toggleDark()" />
+				<button @click="toggleDark()">
+					<FeatherIcon
+						title="Toggle Theme"
+						:name="isDark ? 'moon' : 'sun'"
+						class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
+				</button>
 			</UseDark>
 			<router-link :to="{ name: 'preview', params: { pageId: store.selectedPage } }" title="Preview">
 				<FeatherIcon name="play" class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />

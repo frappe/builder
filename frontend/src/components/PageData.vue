@@ -1,12 +1,17 @@
 <template>
 	<div>
-		<Button @click="showDialog = !showDialog" class="text-base" icon-left="code">Set Data Script</Button>
+		<Button
+			@click="showDialog = !showDialog"
+			class="text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+			icon-left="code">
+			Set Data Script
+		</Button>
 		<CodeEditor
 			v-model="store.pageData"
 			type="JSON"
 			label="Page Data Preview"
 			:readonly="true"
-			class="mt-8"></CodeEditor>
+			class="mt-5"></CodeEditor>
 		<Dialog
 			style="z-index: 40"
 			:options="{

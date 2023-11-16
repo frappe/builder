@@ -1,10 +1,9 @@
 <template>
 	<div class="page-builder h-screen flex-col overflow-hidden bg-gray-100">
-		<BuilderToolbar
-			class="relative z-30 dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"></BuilderToolbar>
+		<BuilderToolbar class="relative z-30"></BuilderToolbar>
 		<div>
 			<BuilderLeftPanel
-				v-show="store.showPanels"
+				v-show="store.showLeftPanel"
 				class="fixed bottom-0 left-0 top-[var(--toolbar-height)] z-20 overflow-auto border-r-[1px] bg-white no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderLeftPanel>
 			<BuilderCanvas
 				ref="componentEditor"
@@ -18,8 +17,8 @@
 					padding: '40px',
 				}"
 				:style="{
-					left: `${store.showPanels ? store.builderLayout.leftPanelWidth : 0}px`,
-					right: `${store.showPanels ? store.builderLayout.rightPanelWidth : 0}px`,
+					left: `${store.showLeftPanel ? store.builderLayout.leftPanelWidth : 0}px`,
+					right: `${store.showRightPanel ? store.builderLayout.rightPanelWidth : 0}px`,
 				}"
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-400 p-10 dark:bg-zinc-700"></BuilderCanvas>
 			<BuilderCanvas
@@ -31,15 +30,18 @@
 					minHeight: '1000px',
 				}"
 				:style="{
-					left: `${store.showPanels ? store.builderLayout.leftPanelWidth : 0}px`,
-					right: `${store.showPanels ? store.builderLayout.rightPanelWidth : 0}px`,
+					left: `${store.showLeftPanel ? store.builderLayout.leftPanelWidth : 0}px`,
+					right: `${store.showRightPanel ? store.builderLayout.rightPanelWidth : 0}px`,
 				}"
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-200 p-10 dark:bg-zinc-800"></BuilderCanvas>
 			<BuilderRightPanel
-				v-show="store.showPanels"
+				v-show="store.showRightPanel"
 				class="fixed bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] bg-white no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderRightPanel>
 		</div>
-		<PageScript v-if="store.selectedPage" v-show="showPageScriptPanel"></PageScript>
+		<PageScript
+			v-if="store.selectedPage"
+			v-show="showPageScriptPanel"
+			:page="store.getActivePage()"></PageScript>
 	</div>
 </template>
 
@@ -58,9 +60,9 @@ import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { copyToClipboard, isHTMLString, isJSONString, isTargetEditable } from "@/utils/helpers";
-import { useEventListener, useMagicKeys, watchDebounced, whenever } from "@vueuse/core";
+import { useDebounceFn, useEventListener, useMagicKeys, whenever } from "@vueuse/core";
 import { toast } from "frappe-ui";
-import { nextTick, onActivated, ref } from "vue";
+import { nextTick, onActivated, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
@@ -157,7 +159,8 @@ useEventListener(document, "paste", async (e) => {
 		const dataObj = JSON.parse(data) as { blocks: Block[]; components: BuilderComponent[] };
 
 		for (const component of dataObj.components) {
-			await store.createComponent(component);
+			delete component.for_web_page;
+			await store.createComponent(component, true);
 		}
 
 		if (store.selectedBlocks.length && dataObj.blocks[0].blockId !== "root") {
@@ -200,7 +203,9 @@ useEventListener(document, "paste", async (e) => {
 		// try pasting figma text styles
 		if (blockController.isText() && text.includes(":") && !store.builderState.editableBlock) {
 			e.preventDefault();
-			const styleObj = text.split(";").reduce((acc: BlockStyleMap, curr) => {
+			// strip out all comments: line-height: 115%; /* 12.65px */ -> line-height: 115%;
+			const strippedText = text.replace(/\/\*.*?\*\//g, "");
+			const styleObj = strippedText.split(";").reduce((acc: BlockStyleMap, curr) => {
 				const [key, value] = curr.split(":").map((item) => (item ? item.trim() : "")) as [
 					styleProperty,
 					StyleValue
@@ -213,6 +218,7 @@ useEventListener(document, "paste", async (e) => {
 						"line-height",
 						"letter-spacing",
 						"text-align",
+						"text-transform",
 						"color",
 					].includes(key)
 				) {
@@ -330,10 +336,14 @@ useEventListener(document, "keydown", (e) => {
 });
 
 useEventListener(document, "keydown", (e) => {
-	const target = e.target as HTMLElement;
 	if (e.key === "\\" && e.metaKey) {
 		e.preventDefault();
-		store.showPanels = !store.showPanels;
+		if (e.shiftKey) {
+			store.showLeftPanel = !store.showLeftPanel;
+		} else {
+			store.showRightPanel = !store.showRightPanel;
+			store.showLeftPanel = store.showRightPanel;
+		}
 	}
 	// save page or component
 	if (e.key === "s" && (e.ctrlKey || e.metaKey)) {
@@ -482,14 +492,15 @@ const setPage = (pageName: string) => {
 	});
 };
 
-watchDebounced(
+const debouncedPageSave = useDebounceFn(store.savePage, 500);
+watch(
 	() => store.builderState.blocks,
 	() => {
-		if (store.selectedPage && store.autoSave) {
-			store.savePage();
+		if (store.selectedPage && store.autoSave && !store.settingPage) {
+			debouncedPageSave();
 		}
 	},
-	{ debounce: 500, deep: true }
+	{ deep: true }
 );
 </script>
 

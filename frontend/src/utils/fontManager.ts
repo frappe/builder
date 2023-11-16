@@ -3,11 +3,25 @@ import WebFont from "webfontloader";
 
 // TODO: Remove limit on font list
 const fontListNames = fontList.items.filter((f) => f.variants.length >= 3).map((font) => font.family);
+const requestedFonts = new Set<string>();
+
+const isFontRequested = (font: string) => {
+	return requestedFonts.has(font);
+};
+
+const setFontRequested = (font: string) => {
+	requestedFonts.add(font);
+};
+
 const setFont = (font: string | null) => {
 	return new Promise((resolve) => {
 		if (!font) {
 			return resolve(font);
 		}
+		if (isFontRequested(font)) {
+			return resolve(font);
+		}
+		setFontRequested(font);
 		WebFont.load({
 			google: {
 				families: [font],
@@ -17,7 +31,6 @@ const setFont = (font: string | null) => {
 		});
 	});
 };
-
 const getFontWeightOptions = (font: string) => {
 	const defaultOptions = [{ value: "400", label: "Regular" }];
 	if (!font) {

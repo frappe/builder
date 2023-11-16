@@ -1,7 +1,7 @@
 <template>
 	<component :is="block.getTag()" ref="component" @click.stop @dblclick.stop :key="editor">
-		<div v-html="textContent" v-show="!editor" @click="handleClick"></div>
-		<editor-content @click="handleClick" :editor="editor" v-if="editor" />
+		<div v-html="textContent" v-show="!editor && textContent" @click="handleClick"></div>
+		<editor-content @click="handleClick" :editor="editor" v-if="editor && showEditor" />
 		<slot />
 	</component>
 </template>
@@ -11,6 +11,7 @@ import useStore from "@/store";
 import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
 import { setFontFromHTML } from "@/utils/fontManager";
+import { getDataForKey } from "@/utils/helpers";
 import { Color } from "@tiptap/extension-color";
 import { FontFamily } from "@tiptap/extension-font-family";
 import TextStyle from "@tiptap/extension-text-style";
@@ -39,8 +40,8 @@ const component = ref(null) as Ref<HTMLElement | null>;
 const textContent = computed(() => {
 	let innerHTML = props.block.getInnerHTML();
 	if (props.data) {
-		if (props.block.getDataKey("property") === "innerHTML" && props.data[props.block.getDataKey("key")]) {
-			innerHTML = props.data[props.block.getDataKey("key")];
+		if (props.block.getDataKey("property") === "innerHTML") {
+			innerHTML = getDataForKey(props.data, props.block.getDataKey("key")) || innerHTML;
 		}
 	}
 	return innerHTML;
@@ -50,6 +51,10 @@ let editor: Ref<Editor | null> = ref(null);
 
 const isEditable = computed(() => {
 	return store.builderState.editableBlock === props.block;
+});
+
+const showEditor = computed(() => {
+	return textContent.value && !(props.block.isLink() && props.block.hasChildren());
 });
 
 const handleClick = (e: MouseEvent) => {

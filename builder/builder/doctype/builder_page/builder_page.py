@@ -52,8 +52,13 @@ class BuilderPage(WebsiteGenerator):
 		if self.draft_blocks:
 			self.blocks = self.draft_blocks
 			self.draft_blocks = None
-			self.generate_page_preview_image()
 		self.save()
+		frappe.enqueue_doc(
+			self.doctype,
+			self.name,
+			"generate_page_preview_image",
+			queue="short",
+		)
 		return self.route
 
 	website = frappe._dict(
@@ -77,6 +82,9 @@ class BuilderPage(WebsiteGenerator):
 		context.content = content
 		context.style = style
 		context.style_file_path = get_style_file_path()
+		if self.style:
+			context.style = context.style.replace("</style>", f"{self.style or ''}</style>")
+
 		context.script = self.client_script
 		context.update(page_data)
 		self.set_meta_tags(context=context)
@@ -132,9 +140,9 @@ def get_block_html(blocks, page_data={}):
 
 	def get_html(blocks, soup):
 		html = ""
-		def get_tag(block, soup, repeater_child=False):
+		def get_tag(block, soup, data_key=None):
 			block = extend_with_component(block)
-			set_dynamic_content_placeholder(block, repeater_child)
+			set_dynamic_content_placeholder(block, data_key)
 			element = block.get("originalElement") or block.get("element")
 			# temp fix: since p inside p is illegal
 			if element in ["p", "__raw_html__"]:
@@ -165,11 +173,11 @@ def get_block_html(blocks, page_data={}):
 			block_data = []
 			if block.get("isRepeaterBlock") and block.get("children"):
 				tag.append("{% for _data in " + block.get("dataKey").get("key") + " %}")
-				tag.append(get_tag(block.get("children")[0], soup, True))
+				tag.append(get_tag(block.get("children")[0], soup, "_data"))
 				tag.append("{% endfor %}")
 			else:
 				for child in block.get("children", []):
-					tag.append(get_tag(child, soup, repeater_child))
+					tag.append(get_tag(child, soup, data_key=data_key))
 
 			return tag
 
@@ -243,6 +251,8 @@ def extend_block(block, overridden_block):
 	block["rawStyles"].update(overridden_block["rawStyles"])
 	block["attributes"].update(overridden_block["attributes"])
 	block["classes"].extend(overridden_block["classes"])
+	if overridden_block.get("dataKey"):
+		block["dataKey"] = overridden_block["dataKey"]
 	if overridden_block.get("innerHTML"):
 		block["innerHTML"] = overridden_block["innerHTML"]
 	component_children = block.get("children", [])
@@ -266,17 +276,18 @@ def extend_block(block, overridden_block):
 			component_children.insert(overridden_children.index(overridden_child), overridden_child)
 
 
-def set_dynamic_content_placeholder(block, repeater_child=False):
-	data_key = block.get("dataKey")
-	if data_key and data_key.get("key"):
-		key = f"_data.{data_key.get('key')}" if repeater_child else data_key.get("key")
-		value = "{{" + key + "}}"
-		if data_key.get("type") == "attribute":
-			block["attributes"][data_key.get("property")] = value
-		elif data_key.get("type") == "style":
-			block["baseStyles"][data_key.get("property")] = value
-		elif data_key.get("type") == "key" and not block.get("isRepeaterBlock"):
-			block[data_key.get("property")] = value
+def set_dynamic_content_placeholder(block, data_key=False):
+	block_data_key = block.get("dataKey")
+	if block_data_key and block_data_key.get("key"):
+		key = f"{data_key}.{block_data_key.get('key')}" if data_key else block_data_key.get("key")
+		_property = block_data_key.get("property")
+		_type = block_data_key.get("type")
+		if _type == "attribute":
+			block["attributes"][_property] = f"{{{{ {key} or '{escape_single_quotes(block['attributes'].get(_property, ''))}' }}}}"
+		elif _type == "style":
+			block["baseStyles"][_property] = f"{{{{ {key} or '{escape_single_quotes(block['baseStyles'].get(_property, ''))}' }}}}"
+		elif _type == "key" and not block.get("isRepeaterBlock"):
+			block[_property] = f"{{{{ {key} or '{escape_single_quotes(block.get(_property, ''))}' }}}}"
 
 def get_style_file_path():
 	# TODO: Redo this, currently it loads the first matching file
@@ -288,6 +299,9 @@ def get_style_file_path():
 	matching_files = glob.glob(f"{folder_path}/{file_pattern}")
 	if matching_files:
 		return frappe.utils.get_url(matching_files[0].lstrip("."))
+
+def escape_single_quotes(text):
+	return text.replace("'", "\\'")
 
 # def generate_tailwind_css_file_from_html(html):
 # 	# execute tailwindcss cli command to generate css file

@@ -1,7 +1,8 @@
 <template>
 	<Menu
 		class="fixed z-50 h-fit w-fit min-w-[120px] rounded-lg bg-white p-1 shadow-xl dark:bg-zinc-900"
-		:style="{ top: posY + 'px', left: posX + 'px' }">
+		:style="{ top: y + 'px', left: x + 'px' }"
+		ref="menu">
 		<MenuItems static class="text-sm">
 			<MenuItem
 				v-slot="{ active, disabled }"
@@ -23,6 +24,9 @@
 </template>
 <script setup lang="ts">
 import { Menu, MenuItem, MenuItems } from "@headlessui/vue";
+import { Ref, computed, ref } from "vue";
+
+const menu = ref(null) as unknown as typeof Menu;
 
 interface ContextMenuOption {
 	label: string;
@@ -31,9 +35,35 @@ interface ContextMenuOption {
 }
 
 const props = defineProps({
-	posX: Number,
-	posY: Number,
+	posX: {
+		type: Number,
+		required: true,
+	},
+	posY: {
+		type: Number,
+		required: true,
+	},
 	options: Array as () => ContextMenuOption[],
+});
+
+const x = computed(() => {
+	const menuWidth = menu.value?.$el.clientWidth;
+	const windowWidth = window.innerWidth;
+	const diff = windowWidth - (props.posX + menuWidth);
+	if (diff < 0) {
+		return props.posX + diff - 10;
+	}
+	return props.posX;
+});
+
+const y = computed(() => {
+	const menuHeight = menu.value?.$el.clientHeight;
+	const windowHeight = window.innerHeight;
+	const diff = windowHeight - (props.posY + menuHeight);
+	if (diff < 0) {
+		return props.posY + diff - 10;
+	}
+	return props.posY;
 });
 
 const emit = defineEmits({

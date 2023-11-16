@@ -187,6 +187,10 @@ function isTargetEditable(e: Event) {
 	const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA";
 	return isEditable || isInput;
 }
+function getDataForKey(datum: Object, key: string) {
+	const data = Object.assign({}, datum);
+	return key.split(".").reduce((d, key) => (d ? d[key] : null), data) as string;
+}
 
 export {
 	HSVToHex,
@@ -196,6 +200,7 @@ export {
 	confirm,
 	copyToClipboard,
 	findNearestSiblingIndex,
+	getDataForKey,
 	getNumberFromPx,
 	getRGB,
 	getRandomColor,

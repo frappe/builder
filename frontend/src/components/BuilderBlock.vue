@@ -37,6 +37,7 @@ import { setFont } from "@/utils/fontManager";
 import { computed, inject, nextTick, onMounted, reactive, ref, useAttrs, watchEffect } from "vue";
 
 import getBlockTemplate from "@/utils/blockTemplate";
+import { getDataForKey } from "@/utils/helpers";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
 import useStore from "../store";
 import BlockEditor from "./BlockEditor.vue";
@@ -106,12 +107,13 @@ const attributes = computed(() => {
 		attribs.block = props.block;
 		attribs.preview = props.preview;
 		attribs.breakpoint = props.breakpoint;
-		attribs.data = props.data;
 	}
+	attribs.data = props.data;
 	if (props.data) {
-		if (props.block.getDataKey("type") === "attribute" && props.data[props.block.getDataKey("key")]) {
+		if (props.block.getDataKey("type") === "attribute") {
 			attribs[props.block.getDataKey("property") as string] =
-				props.data[props.block.getDataKey("key") as string];
+				getDataForKey(props.data, props.block.getDataKey("key")) ||
+				attribs[props.block.getDataKey("property") as string];
 		}
 	}
 	return attribs;
@@ -121,7 +123,7 @@ const canvasProps = !props.preview ? (inject("canvasProps") as CanvasProps) : nu
 
 const target = computed(() => {
 	if (!component.value) return null;
-	if (component.value instanceof HTMLElement) {
+	if (component.value instanceof HTMLElement || component.value instanceof SVGElement) {
 		return component.value;
 	} else {
 		return component.value.component;
@@ -201,12 +203,6 @@ const handleClick = (e: MouseEvent) => {
 const handleDoubleClick = (e: MouseEvent) => {
 	if (isEditable.value) return;
 	store.builderState.editableBlock = null;
-	if (Boolean(props.block.extendedFromComponent)) {
-		store.editComponent(props.block);
-		e.stopPropagation();
-		e.preventDefault();
-		return;
-	}
 	if (props.block.isText() || props.block.isLink() || props.block.isButton()) {
 		store.builderState.editableBlock = props.block;
 		e.stopPropagation();

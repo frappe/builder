@@ -17,7 +17,7 @@
 			</button>
 		</div>
 		<PanelResizer
-			:width="store.builderLayout.leftPanelWidth"
+			:dimension="store.builderLayout.leftPanelWidth"
 			side="right"
 			@resize="(width) => (store.builderLayout.leftPanelWidth = width)" />
 		<div class="flex w-full border-gray-200 p-[2px] text-sm dark:border-zinc-800">
@@ -29,22 +29,22 @@
 				:class="{
 					'border-b-[1px] border-gray-900 dark:border-zinc-500 dark:text-zinc-300':
 						store.leftPanelActiveTab === tab,
-					'text-gray-700 dark:text-zinc-600': store.leftPanelActiveTab !== tab,
+					'text-gray-700 dark:text-zinc-500': store.leftPanelActiveTab !== tab,
 				}">
 				{{ tab }}
 			</button>
 		</div>
 		<div v-show="store.leftPanelActiveTab === 'Components'">
-			<BuilderComponents class="p-4" />
+			<BuilderComponents class="p-4 pt-3" />
 		</div>
 		<div v-show="store.leftPanelActiveTab === 'Layers'">
 			<BlockLayers
-				class="p-4"
+				class="p-4 pt-3"
 				:blocks="store.builderState.blocks"
 				v-if="!store.editingComponent"
 				v-show="store.editingMode == 'page'" />
 			<BlockLayers
-				class="p-4"
+				class="p-4 pt-3"
 				:blocks="[store.getComponentBlock(store.editingComponent)]"
 				v-if="store.editingComponent" />
 		</div>

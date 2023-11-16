@@ -139,7 +139,7 @@ const props = defineProps({
 		required: true,
 	},
 	target: {
-		type: HTMLElement,
+		type: [HTMLElement, SVGElement],
 		required: true,
 	},
 	disableHandlers: {
