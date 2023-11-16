@@ -3,7 +3,7 @@
 		<div
 			class="editor pointer-events-none fixed z-[18] box-content select-none ring-2 ring-inset"
 			ref="editor"
-			@click="handleClick"
+			@click.stop="handleClick"
 			@dblclick="handleDoubleClick"
 			@mousedown.prevent="handleMove"
 			@drop.prevent.stop="handleDrop"
@@ -13,6 +13,7 @@
 			<PaddingHandler
 				v-if="isBlockSelected && !resizing && !editable && !blockController.multipleBlocksSelected()"
 				:target-block="block"
+				:target="target"
 				:on-update="updateTracker"
 				:disable-handlers="false"
 				:breakpoint="breakpoint" />

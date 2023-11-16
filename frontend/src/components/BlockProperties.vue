@@ -159,7 +159,7 @@
 		<CollapsibleSection sectionName="Position" v-if="!blockController.multipleBlocksSelected()">
 			<BlockPositionHandler></BlockPositionHandler>
 		</CollapsibleSection>
-		<CollapsibleSection sectionName="Spacing">
+		<CollapsibleSection sectionName="Spacing" v-if="!blockController.multipleBlocksSelected()">
 			<InlineInput
 				label="Margin"
 				v-if="!blockController.multipleBlocksSelected() && !blockController.isRoot()"
@@ -168,8 +168,8 @@
 			<InlineInput
 				label="Padding"
 				v-if="!blockController.multipleBlocksSelected()"
-				:modelValue="blockController.getStyle('padding')"
-				@update:modelValue="(val) => blockController.setStyle('padding', val)" />
+				:modelValue="blockController.getPadding()"
+				@update:modelValue="(val) => blockController.setPadding(val)" />
 		</CollapsibleSection>
 		<CollapsibleSection sectionName="Options">
 			<InlineInput

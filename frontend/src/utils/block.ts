@@ -590,6 +590,69 @@ class Block implements BlockOptions {
 			store.history.commit();
 		});
 	}
+	getPadding() {
+		const padding = this.getStyle("padding") || "0px";
+
+		const paddingTop = this.getStyle("paddingTop");
+		const paddingBottom = this.getStyle("paddingBottom");
+		const paddingLeft = this.getStyle("paddingLeft");
+		const paddingRight = this.getStyle("paddingRight");
+
+		if (!paddingTop && !paddingBottom && !paddingLeft && !paddingRight) {
+			return padding;
+		}
+
+		if (
+			paddingTop &&
+			paddingBottom &&
+			paddingTop === paddingBottom &&
+			paddingTop === paddingRight &&
+			paddingTop === paddingLeft
+		) {
+			return paddingTop;
+		}
+
+		if (paddingTop && paddingLeft && paddingTop === paddingBottom && paddingLeft === paddingRight) {
+			return `${paddingTop} ${paddingLeft}`;
+		} else {
+			return `${paddingTop || padding} ${paddingRight || padding} ${paddingBottom || padding} ${
+				paddingLeft || padding
+			}`;
+		}
+	}
+	setPadding(padding: string) {
+		// reset padding
+		this.removeStyle("padding");
+		this.removeStyle("paddingTop");
+		this.removeStyle("paddingBottom");
+		this.removeStyle("paddingLeft");
+		this.removeStyle("paddingRight");
+
+		if (!padding) {
+			return;
+		}
+
+		const paddingArray = padding.split(" ");
+
+		if (paddingArray.length === 1) {
+			this.setStyle("padding", paddingArray[0]);
+		} else if (paddingArray.length === 2) {
+			this.setStyle("paddingTop", paddingArray[0]);
+			this.setStyle("paddingBottom", paddingArray[0]);
+			this.setStyle("paddingLeft", paddingArray[1]);
+			this.setStyle("paddingRight", paddingArray[1]);
+		} else if (paddingArray.length === 3) {
+			this.setStyle("paddingTop", paddingArray[0]);
+			this.setStyle("paddingLeft", paddingArray[1]);
+			this.setStyle("paddingRight", paddingArray[1]);
+			this.setStyle("paddingBottom", paddingArray[2]);
+		} else if (paddingArray.length === 4) {
+			this.setStyle("paddingTop", paddingArray[0]);
+			this.setStyle("paddingRight", paddingArray[1]);
+			this.setStyle("paddingBottom", paddingArray[2]);
+			this.setStyle("paddingLeft", paddingArray[3]);
+		}
+	}
 }
 
 // class BlockTree {
