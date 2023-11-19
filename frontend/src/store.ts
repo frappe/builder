@@ -311,7 +311,7 @@ const useStore = defineStore("store", {
 			}
 			return null;
 		},
-		findParentBlock(blockId: string, blocks?: Array<Block>): Block | null {
+		findParentBlock(blockId: string, blocks?: Array<Block>): Block {
 			if (!blocks) {
 				blocks = [this.getFirstBlock()];
 			}
@@ -328,7 +328,7 @@ const useStore = defineStore("store", {
 					}
 				}
 			}
-			return null;
+			return this.getFirstBlock();
 		},
 		selectBlock(block: Block, e: MouseEvent | null, scrollIntoView = true) {
 			if (this.settingPage) {
