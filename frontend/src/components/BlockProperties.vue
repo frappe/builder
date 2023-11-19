@@ -19,19 +19,22 @@
 				@change="
 					(val) => {
 						blockController.setStyle('borderColor', val);
-						if (val && !blockController.getStyle('borderWidth')) {
-							blockController.setStyle('borderWidth', '1px');
-							blockController.setStyle('borderStyle', 'solid');
+						if (val) {
+							if (!blockController.getStyle('borderWidth')) {
+								blockController.setStyle('borderWidth', '1px');
+								blockController.setStyle('borderStyle', 'solid');
+							}
+						} else {
+							blockController.setStyle('borderWidth', null);
+							blockController.setStyle('borderStyle', null);
 						}
 					}
 				"></ColorInput>
-			<BackgroundHandler></BackgroundHandler>
 			<InlineInput
 				label="Border Width"
 				v-show="blockController.getStyle('borderColor')"
 				:modelValue="blockController.getStyle('borderWidth')"
 				@update:modelValue="(val) => blockController.setStyle('borderWidth', val)" />
-
 			<InlineInput
 				label="Border Style"
 				v-show="blockController.getStyle('borderColor')"
@@ -39,6 +42,7 @@
 				type="select"
 				:options="['solid', 'dashed', 'dotted']"
 				@update:modelValue="(val) => blockController.setStyle('borderStyle', val)" />
+			<BackgroundHandler></BackgroundHandler>
 			<InlineInput
 				label="Shadow"
 				type="select"
