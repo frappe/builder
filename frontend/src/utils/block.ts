@@ -391,7 +391,7 @@ class Block implements BlockOptions {
 			store.selectedBlocks.push(this);
 		}
 	}
-	getParentBlock(): Block | null {
+	getParentBlock(): Block {
 		const store = useStore();
 		return store.findParentBlock(this.blockId);
 	}
