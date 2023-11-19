@@ -110,7 +110,7 @@ onMounted(() => {
 const { isOverDropZone } = useDropZone(canvasContainer, {
 	onDrop: (files, ev) => {
 		let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
-		let parentBlock = props.block;
+		let parentBlock = props.block as Block | null;
 		if (element) {
 			if (element.dataset.blockId) {
 				parentBlock = store.findBlock(element.dataset.blockId) || parentBlock;
@@ -120,13 +120,15 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 		if (componentName) {
 			const newBlock = store.getBlockCopy(webComponent.getRow(componentName).block, true);
 			newBlock.extendFromComponent(componentName);
-			while ((parentBlock && parentBlock.isImage()) || parentBlock.isSVG()) {
+			while (parentBlock && (parentBlock.isImage() || parentBlock.isSVG())) {
 				parentBlock = parentBlock.getParentBlock();
 			}
+			if (!parentBlock) return;
 			parentBlock.addChild(newBlock);
 			ev.stopPropagation();
 		} else if (files && files.length) {
 			store.uploadFile(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
+				if (!parentBlock) return;
 				if (parentBlock.isImage()) {
 					parentBlock.setAttribute("src", fileDoc.fileURL);
 					parentBlock.setAttribute("alt", fileDoc.fileName);
