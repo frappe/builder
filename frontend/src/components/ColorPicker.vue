@@ -34,7 +34,7 @@
 							width: '12px',
 							left: `calc(${colorSelectorPosition.x}px - 6px)`,
 							top: `calc(${colorSelectorPosition.y}px - 6px)`,
-							color: modelColor,
+							color: modelColor || '#FFF',
 							background: 'transparent',
 						} as StyleValue"></div>
 				</div>
@@ -102,7 +102,7 @@
 </template>
 <script setup lang="ts">
 import useStore from "@/store";
-import { HSVToHex, HexToHSV, RGBToHex, getRGB } from "@/utils/helpers";
+import { HSVToHex, HexToHSV, getRGB } from "@/utils/helpers";
 import { clamp, useEyeDropper } from "@vueuse/core";
 import { Popover } from "frappe-ui";
 
@@ -223,7 +223,11 @@ function setHue(ev: MouseEvent) {
 }
 
 function setSelectorPosition(color: HashString | null) {
-	if (!color) return;
+	if (!color) {
+		colorSelectorPosition.value = { x: 0, y: 0 };
+		hueSelectorPosition.value = { x: 0, y: 0 };
+		return;
+	}
 	nextTick(() => {
 		setColorSelectorPosition(color);
 		setHueSelectorPosition(color);

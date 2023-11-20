@@ -18,7 +18,7 @@
 						placeholder="Set Color"
 						inputClass="pl-8 pr-6"
 						:value="value"
-						@change="(value: string) => {
+						@change="(value: string | null) => {
 							value = getRGB(value);
 							emit('change', value)
 						}"></Input>
