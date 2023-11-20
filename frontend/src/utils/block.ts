@@ -91,6 +91,10 @@ class Block implements BlockOptions {
 		delete this.attributes.style;
 		this.classes = options.classes || [];
 
+		if (this.isText() && !this.classes.includes("__text_block__")) {
+			this.classes.push("__text_block__");
+		}
+
 		if (this.isRoot()) {
 			this.blockId = "root";
 			this.draggable = false;
