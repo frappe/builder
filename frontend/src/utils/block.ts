@@ -109,6 +109,14 @@ class Block implements BlockOptions {
 			styleObj = { ...styleObj, ...this.tabletStyles };
 		}
 		styleObj = { ...styleObj, ...this.rawStyles };
+		// replace variables with values
+		// Object.keys(styleObj).forEach((style) => {
+		// 	const value = styleObj[style];
+		// 	if (typeof value === "string" && value.startsWith("--")) {
+		// 		styleObj[style] = this.getVariableValue(value);
+		// 	}
+		// });
+
 		return styleObj;
 	}
 	getComponent() {
@@ -715,6 +723,10 @@ class Block implements BlockOptions {
 				marginLeft || margin
 			}`;
 		}
+	}
+	getVariableValue(variable: string) {
+		const store = useStore();
+		return store.getVariableValue(variable);
 	}
 }
 

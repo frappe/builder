@@ -17,14 +17,23 @@
 	{% endfor %}
 	<link rel="stylesheet" href="{{ style_file_path }}">
 	{{ style }}
+	{% block style %}
+		{%- if styles -%}
+			{% for style_path in styles %}
+				<link rel="stylesheet" href="{{ style_path }}">
+			{% endfor %}
+		{%- endif -%}
+	{%- endblock %}
 </head>
 <body>
 	{% block page_content %}
 	{{ content }}
 	{% endblock %}
 	{% block script %}
-		{%- if script -%}
-			<script>{{ script }}</script>
+		{%- if scripts -%}
+			{% for script_path in scripts %}
+				<script src="{{ script_path }}"></script>
+			{% endfor %}
 		{%- endif -%}
 	{%- endblock %}
 </body>
