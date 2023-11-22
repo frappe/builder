@@ -22,7 +22,7 @@ const useStore = defineStore("store", {
 		activeBreakpoint: "desktop",
 		selectedPage: <string | null>null,
 		pageData: <{ [key: string]: [] }>{},
-		mode: <BuilderMode>"select",
+		mode: <BuilderMode>"select", // check setEvents in BuilderCanvas for usage
 		selectedBlocks: <Block[]>[],
 		history: {
 			pause: () => {},
@@ -100,6 +100,9 @@ const useStore = defineStore("store", {
 		],
 		pageName: "Home",
 		route: "/",
+		defaults: {
+			lastFontSize: "16px",
+		},
 		pastelCssColors: [
 			"#FFFFFF",
 			"#F5FFFA",
