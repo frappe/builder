@@ -102,7 +102,7 @@ class BuilderPage(WebsiteGenerator):
 	def set_style_and_script(self, context):
 		for script in self.get("client_scripts", []):
 			script_doc = frappe.get_cached_doc("Builder Client Script", script.builder_script)
-			if script_doc.script_type == "Javascript":
+			if script_doc.script_type == "JavaScript":
 				context.setdefault("scripts", []).append(script_doc.public_url)
 			else:
 				context.setdefault("styles", []).append(script_doc.public_url)

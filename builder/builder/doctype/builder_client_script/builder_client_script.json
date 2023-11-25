@@ -21,8 +21,8 @@
    "fieldname": "script_type",
    "fieldtype": "Autocomplete",
    "in_list_view": 1,
-   "label": "Sript Type",
-   "options": "Javascript\nCSS",
+   "label": "Script Type",
+   "options": "JavaScript\nCSS",
    "reqd": 1
   },
   {
@@ -33,7 +33,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-11-21 12:47:09.430587",
+ "modified": "2023-11-25 17:35:36.139320",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Client Script",
