@@ -10,7 +10,7 @@ export interface BuilderClientScript{
 	parentfield?: string
 	parenttype?: string
 	idx?: number
-	/**	Sript Type : Autocomplete	*/
+	/**	Script Type : Autocomplete	*/
 	script_type: any
 	/**	Script : Code	*/
 	script: string
