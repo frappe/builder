@@ -32,8 +32,14 @@
   }
  ],
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2023-11-25 17:35:36.139320",
+ "links": [
+  {
+   "link_doctype": "Builder Page",
+   "link_fieldname": "builder_script",
+   "table_fieldname": "client_scripts"
+  }
+ ],
+ "modified": "2023-11-26 16:21:39.961506",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Client Script",
