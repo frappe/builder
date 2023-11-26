@@ -107,9 +107,9 @@ function RGBToHex(rgb: RGBString): HashString {
 	return `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
 }
 
-function getRGB(color: HashString | RGBString | string | null): HashString {
+function getRGB(color: HashString | RGBString | string | null): HashString | null {
 	if (!color) {
-		return "#ffffff";
+		return null;
 	}
 	if (color.startsWith("rgb")) {
 		return RGBToHex(color as RGBString);
