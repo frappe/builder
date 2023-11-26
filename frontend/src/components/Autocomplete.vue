@@ -91,14 +91,6 @@ const query = ref("");
 const multiple = computed(() => Array.isArray(props.modelValue));
 const nullable = computed(() => !multiple.value);
 
-const displayValue = computed(() => {
-	if (Array.isArray(props.modelValue) && props.modelValue.length > 0) {
-		return props.modelValue.join(", ");
-	} else {
-		return (props.modelValue as Option)?.label;
-	}
-});
-
 const value = computed(() => {
 	if (
 		props.modelValue instanceof String ||

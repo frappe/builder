@@ -1,0 +1,65 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "prompt",
+ "creation": "2023-11-20 09:10:55.441174",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "script_type",
+  "script",
+  "public_url"
+ ],
+ "fields": [
+  {
+   "fieldname": "script",
+   "fieldtype": "Code",
+   "label": "Script",
+   "reqd": 1
+  },
+  {
+   "fieldname": "script_type",
+   "fieldtype": "Autocomplete",
+   "in_list_view": 1,
+   "label": "Script Type",
+   "options": "JavaScript\nCSS",
+   "reqd": 1
+  },
+  {
+   "fieldname": "public_url",
+   "fieldtype": "Read Only",
+   "label": "Public URL"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "link_doctype": "Builder Page",
+   "link_fieldname": "builder_script",
+   "table_fieldname": "client_scripts"
+  }
+ ],
+ "modified": "2023-11-26 16:21:39.961506",
+ "modified_by": "Administrator",
+ "module": "Builder",
+ "name": "Builder Client Script",
+ "naming_rule": "Set by user",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

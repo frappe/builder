@@ -292,6 +292,33 @@
 				:modelValue="blockController.getDataKey('property')"
 				@update:modelValue="(val) => blockController.setDataKey('property', val)" />
 		</CollapsibleSection>
+		<CollapsibleSection sectionName="Raw Style">
+			<div v-for="(value, key) in rawStyles" :key="key" class="flex gap-2">
+				<Input
+					placeholder="Property"
+					:modelValue="key"
+					@update:modelValue="
+						(val: string) => {
+							replaceKey(rawStyles, key, val);
+						}
+					"
+					class="rounded-md text-sm text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
+				<Input
+					placeholder="Value"
+					v-model="rawStyles[key]"
+					class="rounded-md text-sm text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
+				<Button
+					variant="outline"
+					icon="x"
+					class="p-2 dark:bg-zinc-800 dark:text-gray-100 dark:outline-0 dark:hover:bg-zinc-700 dark:hover:text-gray-100"
+					@click="deleteRawStyle(key)"></Button>
+			</div>
+			<Button
+				variant="subtle"
+				label="Add Style"
+				class="dark:bg-zinc-800 dark:text-gray-100"
+				@click="addRawStyle"></Button>
+		</CollapsibleSection>
 	</div>
 	<div v-else>
 		<p class="text-center text-sm text-gray-600 dark:text-zinc-500">Select a block to edit properties.</p>
@@ -309,8 +336,27 @@ import ColorInput from "./ColorInput.vue";
 import InlineInput from "./InlineInput.vue";
 
 import blockController from "@/utils/blockController";
+import { computed } from "vue";
 import CodeEditor from "./CodeEditor.vue";
 import DimensionInput from "./DimensionInput.vue";
+
+const rawStyles = computed({
+	get: () => {
+		return blockController.getRawStyles();
+	},
+	set: (val) => {
+		blockController.setRawStyles(val);
+	},
+});
+
+const addRawStyle = () => {
+	rawStyles["new"] = "";
+};
+
+const deleteRawStyle = (key: string) => {
+	console.log(key);
+	delete rawStyles[key];
+};
 
 const setFont = (font: string) => {
 	_setFont(font).then(() => {
@@ -325,5 +371,27 @@ const getClasses = () => {
 const setClasses = (val: string) => {
 	const classes = val.split(",").map((c) => c.trim());
 	blockController.setClasses(classes);
+};
+
+const replaceKey = (obj, oldKey, newKey) => {
+	if (!(oldKey in obj)) {
+		// If the old key doesn't exist, return the original object
+		return obj;
+	}
+
+	const updatedObject = {};
+
+	// Iterate over the keys in the original object
+	for (const key in obj) {
+		if (key === oldKey) {
+			// Replace the old key with the new key
+			updatedObject[newKey] = obj[key];
+		} else {
+			// Copy other keys as they are
+			updatedObject[key] = obj[key];
+		}
+	}
+
+	return updatedObject;
 };
 </script>

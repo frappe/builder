@@ -22,7 +22,7 @@ const useStore = defineStore("store", {
 		activeBreakpoint: "desktop",
 		selectedPage: <string | null>null,
 		pageData: <{ [key: string]: [] }>{},
-		mode: <BuilderMode>"select",
+		mode: <BuilderMode>"select", // check setEvents in BuilderCanvas for usage
 		selectedBlocks: <Block[]>[],
 		history: {
 			pause: () => {},
@@ -100,6 +100,9 @@ const useStore = defineStore("store", {
 		],
 		pageName: "Home",
 		route: "/",
+		defaults: {
+			lastFontSize: "16px",
+		},
 		pastelCssColors: [
 			"#FFFFFF",
 			"#F5FFFA",
@@ -479,19 +482,22 @@ const useStore = defineStore("store", {
 					method: "publish",
 					...this.routeVariables,
 				})
-				.then((res: { message: string }) => {
-					let route = res.message;
-
-					if (this.getActivePage().dynamic_route && this.pageData) {
-						const routeVariables = (route?.match(/<\w+>/g) || []).map((match: string) => match.slice(1, -1));
-						routeVariables.forEach((variable: string) => {
-							if (this.routeVariables[variable]) {
-								route = route?.replace(`<${variable}>`, this.routeVariables[variable]);
-							}
-						});
-					}
-					window.open(`/${route}`, "_blank");
+				.then(() => {
+					this.openPageInBrowser();
 				});
+		},
+		openPageInBrowser() {
+			const page = this.getActivePage();
+			let route = page.route;
+			if (page.dynamic_route && this.pageData) {
+				const routeVariables = (route?.match(/<\w+>/g) || []).map((match: string) => match.slice(1, -1));
+				routeVariables.forEach((variable: string) => {
+					if (this.routeVariables[variable]) {
+						route = route?.replace(`<${variable}>`, this.routeVariables[variable]);
+					}
+				});
+			}
+			window.open(`/${route}`, "builder-preview");
 		},
 		savePage() {
 			const pageData = JSON.stringify(this.getPageData());
