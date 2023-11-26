@@ -12,6 +12,7 @@
   "dependencies": {
     "@tiptap/extension-color": "^2.0.4",
     "@tiptap/extension-font-family": "^2.0.4",
+    "@tiptap/extension-link": "^2.1.12",
     "@tiptap/extension-text-style": "^2.0.4",
     "@tiptap/pm": "^2.0.4",
     "@tiptap/starter-kit": "^2.0.4",
