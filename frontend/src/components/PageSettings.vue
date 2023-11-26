@@ -36,9 +36,13 @@
 				</div>
 			</div>
 			<Button
+				@click="() => store.openPageInBrowser()"
+				class="block text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
+				Open Page
+			</Button>
+			<Button
 				@click="() => store.openInDesk(pageData)"
-				class="block text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-				icon-left="code">
+				class="block text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
 				View in Desk
 			</Button>
 		</div>

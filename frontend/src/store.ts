@@ -482,19 +482,22 @@ const useStore = defineStore("store", {
 					method: "publish",
 					...this.routeVariables,
 				})
-				.then((res: { message: string }) => {
-					let route = res.message;
-
-					if (this.getActivePage().dynamic_route && this.pageData) {
-						const routeVariables = (route?.match(/<\w+>/g) || []).map((match: string) => match.slice(1, -1));
-						routeVariables.forEach((variable: string) => {
-							if (this.routeVariables[variable]) {
-								route = route?.replace(`<${variable}>`, this.routeVariables[variable]);
-							}
-						});
-					}
-					window.open(`/${route}`, "_blank");
+				.then(() => {
+					this.openPageInBrowser();
 				});
+		},
+		openPageInBrowser() {
+			const page = this.getActivePage();
+			let route = page.route;
+			if (page.dynamic_route && this.pageData) {
+				const routeVariables = (route?.match(/<\w+>/g) || []).map((match: string) => match.slice(1, -1));
+				routeVariables.forEach((variable: string) => {
+					if (this.routeVariables[variable]) {
+						route = route?.replace(`<${variable}>`, this.routeVariables[variable]);
+					}
+				});
+			}
+			window.open(`/${route}`, "builder-preview");
 		},
 		savePage() {
 			const pageData = JSON.stringify(this.getPageData());
