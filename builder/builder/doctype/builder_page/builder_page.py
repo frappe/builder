@@ -82,10 +82,8 @@ class BuilderPage(WebsiteGenerator):
 		context.content = content
 		context.style = style
 		context.style_file_path = get_style_file_path()
-		if self.style:
-			context.style = context.style.replace("</style>", f"{self.style or ''}</style>")
 
-		context.script = self.client_script
+		self.set_style_and_script(context)
 		context.update(page_data)
 		self.set_meta_tags(context=context)
 		try:
@@ -100,6 +98,14 @@ class BuilderPage(WebsiteGenerator):
 			"description": self.meta_description or self.page_title,
 			"image": self.meta_image or self.preview
 		}
+
+	def set_style_and_script(self, context):
+		for script in self.get("client_scripts", []):
+			script_doc = frappe.get_cached_doc("Builder Client Script", script.builder_script)
+			if script_doc.script_type == "JavaScript":
+				context.setdefault("scripts", []).append(script_doc.public_url)
+			else:
+				context.setdefault("styles", []).append(script_doc.public_url)
 
 	@frappe.whitelist()
 	def get_page_data(self, args=None):

@@ -4,7 +4,7 @@
 		:style="{
 			height: height,
 		}">
-		<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">
+		<h3 class="mb-1 text-xs font-bold uppercase text-gray-600" v-if="label">
 			{{ label }}
 		</h3>
 		<div ref="editor" class="border border-gray-200 dark:border-zinc-800" />
@@ -83,7 +83,6 @@ onMounted(() => {
 			aceEditor.session.setMode("ace/mode/html");
 		});
 	}
-	aceEditor.setValue(initialValue as string);
 	aceEditor.on("blur", () => {
 		try {
 			let value = aceEditor.getValue();
@@ -112,7 +111,10 @@ onMounted(() => {
 				value = JSON.stringify(value, null, 2);
 			}
 			aceEditor.setValue(value as string);
-		}
+			aceEditor.clearSelection();
+			aceEditor.focus();
+		},
+		{ immediate: true }
 	);
 });
 </script>

@@ -150,6 +150,7 @@ const visibleBreakpoints = computed(() => {
 
 function setEvents() {
 	const container = document.body.querySelector(".canvas-container") as HTMLElement;
+	let counter = 0;
 	useEventListener(container, "mousedown", (ev: MouseEvent) => {
 		const initialX = ev.clientX;
 		const initialY = ev.clientY;
@@ -188,6 +189,11 @@ function setEvents() {
 			childBlock.setBaseStyle("position", "absolute");
 			childBlock.setBaseStyle("top", addPxToNumber(y));
 			childBlock.setBaseStyle("left", addPxToNumber(x));
+			if (store.mode === "container") {
+				const colors = ["#ededed", "#e2e2e2", "#c7c7c7"];
+				childBlock.setBaseStyle("background", colors[counter % colors.length]);
+				counter++;
+			}
 
 			const mouseMoveHandler = (mouseMoveEvent: MouseEvent) => {
 				if (store.mode === "text" || store.mode === "html") {
