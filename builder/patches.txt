@@ -6,3 +6,4 @@ builder.builder.patches.rename_web_page_component_to_builder_component
 [post_model_sync]
 builder.builder.doctype.builder_component.patches.set_component_id
 builder.builder.doctype.builder_page.patches.properly_extend_blocks_from_component
+builder.builder.doctype.builder_page.patches.attach_client_script_to_builder_page
