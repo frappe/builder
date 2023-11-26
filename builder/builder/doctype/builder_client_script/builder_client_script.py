@@ -24,7 +24,6 @@ class BuilderClientScript(Document):
 		with open(file_path, "w") as f:
 			f.write(self.script)
 		self.public_url = f"/assets/builder/{folder_name}/{file_name}"
-		print(self.public_url)
 
 	def on_update(self):
 		if self.script_type == "JavaScript":
@@ -33,13 +32,17 @@ class BuilderClientScript(Document):
 			self.update_file("css", "page_styles")
 
 	def update_file(self, file_type, folder_name):
-		file_name = self.public_url.split("/")[-1]
+		if "?" in self.public_url:
+			public_url = self.public_url.split("?")[0]
+		else:
+			public_url = self.public_url
+		file_name = public_url.split("/")[-1]
 		file_path = f"./assets/builder/{folder_name}/{file_name}"
 		with open(file_path, "w") as f:
 			f.write(self.script)
 		# update query params in public url to bust cache
 		public_url = f"/assets/builder/{folder_name}/{file_name}?v={frappe.generate_hash(length=10)}"
-		self.db_set("public_url", self.public_url, commit=True)
+		self.db_set("public_url", public_url, commit=True)
 
 	def on_trash(self):
 		if self.script_type == "JavaScript":
@@ -52,4 +55,5 @@ class BuilderClientScript(Document):
 			return
 		file_name = self.public_url.split("/")[-1]
 		file_path = f"assets/builder/{folder_name}/{file_name}"
-		os.remove(file_path)
+		if os.path.exists(file_path):
+			os.remove(file_path)

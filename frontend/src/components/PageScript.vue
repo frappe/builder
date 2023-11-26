@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="absolute bottom-0 z-50 h-fit w-full border-t border-gray-200 bg-white p-2 py-3 dark:border-zinc-700 dark:bg-zinc-900">
+		class="absolute bottom-0 z-50 h-fit w-full border-t border-gray-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
 		<PanelResizer
 			side="top"
 			:dimension="store.builderLayout.scriptEditorHeight"
@@ -20,11 +20,12 @@
 						}"
 						@click="selectScript(script)"
 						class="group flex items-center justify-between gap-1 text-sm">
-						<div class="flex items-center gap-1">
+						<div class="flex w-[90%] items-center gap-1">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								width="18"
 								height="18"
+								class="shrink-0"
 								viewBox="0 0 256 256"
 								v-if="script.script_type === 'CSS'">
 								<path
@@ -35,13 +36,14 @@
 								xmlns="http://www.w3.org/2000/svg"
 								width="18"
 								height="18"
+								class="shrink-0"
 								viewBox="0 0 256 256"
 								v-if="script.script_type === 'JavaScript'">
 								<path
 									fill="currentColor"
 									d="m213.66 82.34l-56-56A8 8 0 0 0 152 24H56a16 16 0 0 0-16 16v72a8 8 0 0 0 16 0V40h88v48a8 8 0 0 0 8 8h48v120h-24a8 8 0 0 0 0 16h24a16 16 0 0 0 16-16V88a8 8 0 0 0-2.34-5.66ZM160 51.31L188.69 80H160Zm-12.19 145a20.82 20.82 0 0 1-9.19 15.23C133.43 215 127 216 121.13 216a61.34 61.34 0 0 1-15.19-2a8 8 0 0 1 4.31-15.41c4.38 1.2 15 2.7 19.55-.36c.88-.59 1.83-1.52 2.14-3.93c.34-2.67-.71-4.1-12.78-7.59c-9.35-2.7-25-7.23-23-23.11a20.56 20.56 0 0 1 9-14.95c11.84-8 30.71-3.31 32.83-2.76a8 8 0 0 1-4.07 15.48c-4.49-1.17-15.23-2.56-19.83.56a4.54 4.54 0 0 0-2 3.67c-.12.9-.14 1.09 1.11 1.9c2.31 1.49 6.45 2.68 10.45 3.84c9.84 2.83 26.4 7.66 24.16 24.97ZM80 152v38a26 26 0 0 1-52 0a8 8 0 0 1 16 0a10 10 0 0 0 20 0v-38a8 8 0 0 1 16 0Z" />
 							</svg>
-							<span>
+							<span class="truncate">
 								{{ script.script_name }}
 							</span>
 						</div>
@@ -56,14 +58,13 @@
 							size="sm"
 							placement="right">
 							<template v-slot="{ open }">
-								<Button class="mt-2 w-full text-xs" @click="open">Add</Button>
+								<Button class="mt-2 w-full text-xs" @click="open">New Script</Button>
 							</template>
 						</Dropdown>
 						<Dropdown
 							v-if="clientScriptResource.data && clientScriptResource.data.length > 0"
 							:options="
-								clientScriptResource.data.map((d) => {
-									console.log(d);
+								clientScriptResource.data.map((d: {'name': string}) => {
 									return {
 										label: d.name,
 										onClick: () => {
@@ -84,19 +85,24 @@
 							size="sm"
 							placement="right">
 							<template v-slot="{ open }">
-								<Button class="mt-2 w-full text-xs" @click="open">Attach</Button>
+								<Button class="mt-2 w-full text-xs" @click="open">Attach Script</Button>
 							</template>
 						</Dropdown>
 					</div>
 				</div>
 			</div>
 			<div
-				class="flex min-h-[400px] w-full items-center justify-center rounded bg-gray-100 text-base text-gray-600 dark:bg-zinc-800 dark:text-zinc-500"
+				class="flex min-h-[425px] w-full items-center justify-center rounded bg-gray-100 text-base text-gray-600 dark:bg-zinc-800 dark:text-zinc-500"
 				v-show="!activeScript">
 				Select Script
 			</div>
 			<div v-if="activeScript" class="w-full">
-				<span class="rounded-t-sm bg-gray-100 p-1 px-2 text-xs dark:bg-zinc-800 dark:text-zinc-100">
+				<span
+					class="rounded-t-sm bg-gray-100 p-1 px-2 text-xs dark:bg-zinc-800 dark:text-zinc-100"
+					@dblclick="activeScript.editable = true"
+					:contenteditable="activeScript.editable"
+					@keydown.enter.stop.prevent="activeScript.editable = false"
+					@blur="updateScriptName($event)">
 					{{ activeScript.script_name }}
 				</span>
 				<CodeEditor
@@ -120,7 +126,7 @@
 <script setup lang="ts">
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { createListResource, Dropdown } from "frappe-ui";
+import { Dropdown, createListResource, createResource } from "frappe-ui";
 import { PropType, ref } from "vue";
 import CodeEditor from "./CodeEditor.vue";
 import PanelResizer from "./PanelResizer.vue";
@@ -130,6 +136,7 @@ type attachedScript = {
 	script_type: string;
 	name: string;
 	script_name: string;
+	editable: boolean;
 };
 const activeScript = ref<attachedScript | null>(null);
 
@@ -165,6 +172,7 @@ const attachedScriptResource = createListResource({
 const clientScriptResource = createListResource({
 	doctype: "Builder Client Script",
 	fields: ["script", "script_type", "name"],
+	auto: true,
 });
 
 const updateScript = (value: string) => {
@@ -196,7 +204,6 @@ const addScript = (scriptType: "JavaScript" | "CSS") => {
 				.then(async () => {
 					await attachedScriptResource.reload();
 					attachedScriptResource.data?.forEach((script: attachedScript) => {
-						console.log(script.script_name, res.name);
 						if (script.script_name === res.name) {
 							selectScript(script);
 						}
@@ -210,5 +217,20 @@ const deleteScript = (scriptName: string) => {
 	attachedScriptResource.delete.submit(scriptName).then(() => {
 		attachedScriptResource.reload();
 	});
+};
+
+const updateScriptName = (ev: Event) => {
+	const target = ev.target as HTMLElement;
+	createResource({
+		url: "frappe.client.rename_doc",
+	})
+		.submit({
+			doctype: "Builder Client Script",
+			old_name: activeScript.value?.script_name,
+			new_name: target.innerText.trim(),
+		})
+		.then(() => {
+			attachedScriptResource.reload();
+		});
 };
 </script>
