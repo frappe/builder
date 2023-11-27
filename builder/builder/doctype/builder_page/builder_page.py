@@ -41,6 +41,10 @@ class BuilderPage(WebsiteGenerator):
 			self.preview = "/assets/builder/images/fallback.png"
 		self.route = f"pages/{camel_case_to_kebab_case(self.page_title, True)}-{frappe.generate_hash(length=4)}"
 
+	def on_update(self):
+		if self.has_value_changed("dynamic_route") or self.has_value_changed("route"):
+			get_web_pages_with_dynamic_routes.clear_cache()
+
 	def autoname(self):
 		if not self.name:
 			self.name = f"page-{frappe.generate_hash(length=5)}"
