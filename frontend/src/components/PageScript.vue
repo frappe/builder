@@ -67,7 +67,11 @@
 							size="sm"
 							placement="right">
 							<template v-slot="{ open }">
-								<Button class="mt-2 w-full text-xs" @click="open">New Script</Button>
+								<Button
+									class="mt-2 w-full text-xs dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+									@click="open">
+									New Script
+								</Button>
 							</template>
 						</Dropdown>
 						<Dropdown
@@ -77,16 +81,7 @@
 									return {
 										label: d.name,
 										onClick: () => {
-											attachedScriptResource.insert
-												.submit({
-													parent: props.page.name,
-													parenttype: 'Builder Page',
-													parentfield: 'client_scripts',
-													builder_script: d.name,
-												})
-												.then(() => {
-													attachedScriptResource.reload();
-												});
+											attachScript(d.name);
 										},
 									};
 								})
@@ -94,7 +89,11 @@
 							size="sm"
 							placement="right">
 							<template v-slot="{ open }">
-								<Button class="mt-2 w-full text-xs" @click="open">Attach Script</Button>
+								<Button
+									class="mt-2 w-full text-xs dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+									@click="open">
+									Attach Script
+								</Button>
 							</template>
 						</Dropdown>
 					</div>
@@ -105,7 +104,7 @@
 				v-show="!activeScript">
 				Select Script
 			</div>
-			<div v-if="activeScript" class="h-full w-full">
+			<div v-if="activeScript" class="flex h-full w-full flex-col">
 				<span class="rounded-t-sm bg-gray-100 p-1 px-2 text-xs dark:bg-zinc-800 dark:text-zinc-100">
 					{{ activeScript.script_name }}
 				</span>
@@ -114,14 +113,16 @@
 					:modelValue="activeScript.script"
 					@update:modelValue="updateScript"
 					type="JavaScript"
-					:height="'100%'"
+					class="flex-1"
+					height="auto"
 					:show-line-numbers="true"></CodeEditor>
 				<CodeEditor
 					v-if="activeScript.script_type === 'CSS'"
 					:modelValue="activeScript.script"
 					@update:modelValue="updateScript"
 					type="CSS"
-					:height="'100%'"
+					class="flex-1"
+					height="auto"
 					:show-line-numbers="true"></CodeEditor>
 			</div>
 		</div>
@@ -215,6 +216,24 @@ const addScript = (scriptType: "JavaScript" | "CSS") => {
 		});
 };
 
+const attachScript = (builder_script_name: string) => {
+	attachedScriptResource.insert
+		.submit({
+			parent: props.page.name,
+			parenttype: "Builder Page",
+			parentfield: "client_scripts",
+			builder_script: builder_script_name,
+		})
+		.then(async () => {
+			await attachedScriptResource.reload();
+			attachedScriptResource.data?.forEach((script: attachedScript) => {
+				if (script.script_name === builder_script_name) {
+					selectScript(script);
+				}
+			});
+		});
+};
+
 const deleteScript = (scriptName: string) => {
 	activeScript.value = null;
 	attachedScriptResource.delete.submit(scriptName).then(() => {
@@ -256,3 +275,9 @@ watch(
 	}
 );
 </script>
+<style scoped>
+:deep(.editor > .ace_editor) {
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
+}
+</style>
