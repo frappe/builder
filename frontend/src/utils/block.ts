@@ -420,14 +420,14 @@ class Block implements BlockOptions {
 	}
 	getFontFamily() {
 		const editor = this.getEditor();
-		if (this.isText() && editor && editor.isEditable) {
+		if (this.isText() && editor && editor.isFocused) {
 			return editor.getAttributes("textStyle").fontFamily;
 		}
 		return this.getStyle("fontFamily");
 	}
 	setFontFamily(fontFamily: string) {
 		const editor = this.getEditor();
-		if (this.isText() && editor && editor.isEditable) {
+		if (this.isText() && editor && editor.isFocused) {
 			editor.chain().focus().setFontFamily(fontFamily).run();
 		} else {
 			this.setStyle("fontFamily", fontFamily);
@@ -435,8 +435,9 @@ class Block implements BlockOptions {
 	}
 	getTextColor() {
 		const editor = this.getEditor();
-		if (this.isText() && editor && editor.isEditable) {
-			return editor.getAttributes("textStyle").color;
+		const color = editor?.getAttributes("textStyle").color;
+		if (this.isText() && editor && editor.isFocused) {
+			return color;
 		} else {
 			return this.getStyle("color");
 		}
