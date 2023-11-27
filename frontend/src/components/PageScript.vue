@@ -165,6 +165,7 @@ const attachedScriptResource = createListResource({
 		"name",
 	],
 	orderBy: "`tabBuilder Page Client Script`.creation asc",
+	auto: true,
 });
 
 const clientScriptResource = createListResource({
