@@ -244,13 +244,13 @@
 					<Input
 						type="select"
 						:modelValue="blockController.getStyle('overflowX') || 'auto'"
-						:options="['auto', 'hidden', 'scroll']"
+						:options="['auto', 'hidden', 'scroll', 'visible']"
 						@change="(val: string) => blockController.setStyle('overflowX', val)"
 						class="flex-1 rounded-md text-sm text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
 					<Input
 						type="select"
 						:modelValue="blockController.getStyle('overflowY') || 'auto'"
-						:options="['auto', 'hidden', 'scroll']"
+						:options="['auto', 'hidden', 'scroll', 'visible']"
 						@change="(val: string) => blockController.setStyle('overflowY', val)"
 						class="flex-1 rounded-md text-sm text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
 				</div>
