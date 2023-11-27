@@ -123,7 +123,8 @@ const props = defineProps({
 const store = useStore();
 const component = ref(null) as Ref<HTMLElement | null>;
 
-const canvasProps = inject("canvasProps") as CanvasProps;
+const canvasProps = !props.preview ? (inject("canvasProps") as CanvasProps) : null;
+
 const settingLink = ref(false);
 const textLink = ref("");
 const linkInput = ref(null) as Ref<typeof Input | null>;
