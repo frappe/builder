@@ -234,6 +234,7 @@ const updateScriptName = (ev: Event, script: attachedScript) => {
 		})
 		.then(async () => {
 			await attachedScriptResource.reload();
+			await clientScriptResource.reload();
 			attachedScriptResource.data?.forEach((script: attachedScript) => {
 				if (script.script_name === newName) {
 					selectScript(script);
