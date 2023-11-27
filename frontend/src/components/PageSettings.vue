@@ -36,6 +36,7 @@
 				</div>
 			</div>
 			<Button
+				v-if="pageData.published"
 				@click="() => store.openPageInBrowser()"
 				class="block text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
 				Open Page
