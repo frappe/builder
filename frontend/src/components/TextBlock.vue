@@ -10,7 +10,7 @@
 					watch(
 						() => canvasProps,
 						() => {
-							if (canvasProps.panning || canvasProps.scaling) {
+							if (canvasProps?.panning || canvasProps?.scaling) {
 								instance.hide();
 							} else {
 								instance.show();

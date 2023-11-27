@@ -7,7 +7,11 @@
 			:minDimension="100"
 			:maxDimension="600"
 			@resize="store.builderLayout.scriptEditorHeight = $event"></PanelResizer>
-		<div class="flex h-[300px] gap-3">
+		<div
+			class="flex gap-3"
+			:style="{
+				height: store.builderLayout.scriptEditorHeight + 'px',
+			}">
 			<div class="flex flex-col gap-3">
 				<div class="pt-2 text-xs font-bold uppercase text-gray-600">Client Scripts</div>
 				<div class="flex w-56 flex-col gap-1">
