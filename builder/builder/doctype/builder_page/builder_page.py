@@ -78,6 +78,7 @@ class BuilderPage(WebsiteGenerator):
 			context.title = page_data.get("page_title")
 
 		blocks = self.blocks
+		context.preview = frappe.flags.show_preview
 		if frappe.flags.show_preview and self.draft_blocks:
 			blocks = self.draft_blocks
 
