@@ -635,11 +635,11 @@ class Block implements BlockOptions {
 	}
 	setPadding(padding: string) {
 		// reset padding
-		this.removeStyle("padding");
-		this.removeStyle("paddingTop");
-		this.removeStyle("paddingBottom");
-		this.removeStyle("paddingLeft");
-		this.removeStyle("paddingRight");
+		this.setStyle("padding", null);
+		this.setStyle("paddingTop", null);
+		this.setStyle("paddingBottom", null);
+		this.setStyle("paddingLeft", null);
+		this.setStyle("paddingRight", null);
 
 		if (!padding) {
 			return;
@@ -668,11 +668,11 @@ class Block implements BlockOptions {
 	}
 	setMargin(margin: string) {
 		// reset margin
-		this.removeStyle("margin");
-		this.removeStyle("marginTop");
-		this.removeStyle("marginBottom");
-		this.removeStyle("marginLeft");
-		this.removeStyle("marginRight");
+		this.setStyle("margin", null);
+		this.setStyle("marginTop", null);
+		this.setStyle("marginBottom", null);
+		this.setStyle("marginLeft", null);
+		this.setStyle("marginRight", null);
 
 		if (!margin) {
 			return;
