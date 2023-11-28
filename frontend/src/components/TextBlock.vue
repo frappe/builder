@@ -55,11 +55,7 @@
 					@click="editor.chain().focus().toggleStrike().run()"
 					class="rounded px-2 py-1 hover:bg-gray-100"
 					:class="{ 'bg-gray-200': editor.isActive('strike') }">
-					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 256 256">
-						<path
-							fill="currentColor"
-							d="M224 128a8 8 0 0 1-8 8h-40.07c9.19 7.11 16.07 17.2 16.07 32c0 13.34-7 25.7-19.75 34.79C160.33 211.31 144.61 216 128 216s-32.33-4.69-44.25-13.21C71 193.7 64 181.34 64 168a8 8 0 0 1 16 0c0 17.35 22 32 48 32s48-14.65 48-32c0-14.85-10.54-23.58-38.77-32H40a8 8 0 0 1 0-16h176a8 8 0 0 1 8 8ZM76.33 104a8 8 0 0 0 7.61-10.49a17.3 17.3 0 0 1-.83-5.51c0-18.24 19.3-32 44.89-32c18.84 0 34.16 7.42 41 19.85a8 8 0 0 0 14-7.7C173.33 50.52 152.77 40 128 40c-34.71 0-60.89 20.63-60.89 48a33.73 33.73 0 0 0 1.62 10.49a8 8 0 0 0 7.6 5.51Z" />
-					</svg>
+					<StrikeThroughIcon />
 				</button>
 				<button
 					@click="
@@ -102,6 +98,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { BubbleMenu, Editor, EditorContent } from "@tiptap/vue-3";
 import { Input } from "frappe-ui";
 import { Ref, computed, inject, nextTick, onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
+import StrikeThroughIcon from "./Icons/StrikeThrough.vue";
 
 const overlayElement = document.querySelector("#overlay") as HTMLElement;
 
