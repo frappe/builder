@@ -182,8 +182,13 @@ def get_block_html(blocks, page_data={}):
 
 			block_data = []
 			if block.get("isRepeaterBlock") and block.get("children"):
-				tag.append("{% for _data in " + block.get("dataKey").get("key") + " %}")
-				tag.append(get_tag(block.get("children")[0], soup, "_data"))
+				_key = block.get("dataKey").get("key")
+				if data_key:
+					_key = f"{data_key}.{_key}"
+
+				item_key = block.get("blockId")
+				tag.append(f"{{% for {item_key} in {_key} %}}")
+				tag.append(get_tag(block.get("children")[0], soup, item_key))
 				tag.append("{% endfor %}")
 			else:
 				for child in block.get("children", []):
