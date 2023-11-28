@@ -50,29 +50,13 @@
 											element.isExtendedFromComponent(),
 									}"
 									v-if="!Boolean(element.extendedFromComponent)" />
-								<svg
+								<BlocksIcon
 									class="mr-1 h-3 w-3"
-									xmlns="http://www.w3.org/2000/svg"
-									width="16"
-									height="16"
-									viewBox="0 0 24 24"
 									:class="{
 										'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
 											element.isExtendedFromComponent(),
 									}"
-									v-if="Boolean(element.extendedFromComponent)">
-									<g
-										fill="none"
-										stroke="currentColor"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2">
-										<rect width="7" height="9" x="3" y="3" rx="1" />
-										<rect width="7" height="5" x="14" y="3" rx="1" />
-										<rect width="7" height="9" x="14" y="12" rx="1" />
-										<rect width="7" height="5" x="3" y="16" rx="1" />
-									</g>
-								</svg>
+									v-if="Boolean(element.extendedFromComponent)" />
 								<span
 									class="min-h-[1em] min-w-[2em] truncate"
 									:contenteditable="element.editable"
@@ -114,6 +98,7 @@ import { PropType, ref, watch } from "vue";
 import draggable from "vuedraggable";
 import useStore from "../store";
 import BlockContextMenu from "./BlockContextMenu.vue";
+import BlocksIcon from "./Icons/Blocks.vue";
 
 const store = useStore();
 
