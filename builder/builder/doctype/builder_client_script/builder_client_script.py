@@ -4,7 +4,7 @@
 import frappe
 from frappe.model.document import Document
 import os
-
+from frappe.utils import get_files_path
 
 class BuilderClientScript(Document):
 	def before_insert(self):
@@ -26,19 +26,19 @@ class BuilderClientScript(Document):
 		if not file_name:
 			file_name = f"{self.name.strip()}-{frappe.generate_hash(length=10)}.{file_extension}"
 		folder_name = "page_scripts" if script_type == "JavaScript" else "page_styles"
-		file_path = f"./assets/builder/{folder_name}/{file_name}"
+		file_path = get_files_path(f"{folder_name}/{file_name}")
 		os.makedirs(os.path.dirname(file_path), exist_ok=True)
 		with open(file_path, "w") as f:
 			f.write(self.script)
 
-		public_url = f"/assets/builder/{folder_name}/{file_name}?v={frappe.generate_hash(length=10)}"
+		public_url = f"/files/{folder_name}/{file_name}?v={frappe.generate_hash(length=10)}"
 		self.db_set("public_url", public_url, commit=True)
 
 	def delete_script_file(self):
 		script_type = self.script_type or ""
 		folder_name = "page_scripts" if script_type == "JavaScript" else "page_styles"
 		file_name = self.get_file_name_from_url()
-		file_path = f"./assets/builder/{folder_name}/{file_name}"
+		file_path = get_files_path(f"{folder_name}/{file_name}")
 		if os.path.exists(file_path):
 			os.remove(file_path)
 
