@@ -19,6 +19,7 @@
 					placeholder="Filter by title or route"
 					inputClass="w-full"
 					v-model="filter"
+					autofocus
 					@input="
 						(value: string) => {
 							filter = value;
