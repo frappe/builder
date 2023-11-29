@@ -155,6 +155,10 @@ def get_block_html(blocks, page_data={}):
 			block = extend_with_component(block)
 			set_dynamic_content_placeholder(block, data_key)
 			element = block.get("originalElement") or block.get("element")
+
+			if not element:
+				return ""
+
 			# temp fix: since p inside p is illegal
 			if element in ["p", "__raw_html__"]:
 				element = "div"
