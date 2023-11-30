@@ -1,14 +1,15 @@
 <template>
 	<div>
-		<div
-			class="flex cursor-pointer items-center justify-between text-sm dark:text-zinc-400"
-			@click="toggleCollapsed">
-			<h3 class="text-2xs font-bold uppercase text-gray-600">{{ sectionName }}</h3>
+		<div class="flex items-center justify-between text-sm dark:text-zinc-400">
+			<h3 class="cursor-pointer text-2xs font-bold uppercase text-gray-600" @click="toggleCollapsed">
+				{{ sectionName }}
+			</h3>
 			<Button
 				class="dark:text-zinc-400 dark:hover:bg-zinc-700"
 				:icon="collapsed ? 'minus' : 'plus'"
 				:variant="'ghost'"
-				size="sm"></Button>
+				size="sm"
+				@click="toggleCollapsed"></Button>
 		</div>
 		<div v-if="collapsed">
 			<div class="mb-4 mt-3 flex flex-col gap-3"><slot /></div>

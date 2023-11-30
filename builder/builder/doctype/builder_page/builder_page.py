@@ -172,7 +172,10 @@ def get_block_html(blocks, page_data={}):
 				tablet_styles = block.get("tabletStyles", {})
 				set_fonts([base_styles, mobile_styles, tablet_styles], font_map)
 				append_style(block.get("baseStyles", {}), style_tag, style_class)
-				append_style(block.get("rawStyles", {}), style_tag, style_class)
+				plain_styles = {k: v for k, v in block.get("rawStyles", {}).items() if ":" not in k}
+				state_styles = {k: v for k, v in block.get("rawStyles", {}).items() if ":" in k}
+				append_style(plain_styles, style_tag, style_class)
+				append_state_style(state_styles, style_tag, style_class)
 				append_style(block.get("tabletStyles", {}), style_tag, style_class, device="tablet")
 				append_style(block.get("mobileStyles", {}), style_tag, style_class, device="mobile")
 				classes.append(style_class)
@@ -232,6 +235,11 @@ def append_style(style_obj, style_tag, style_class, device="desktop"):
 	elif device == "tablet":
 		style_string = f"@media only screen and (min-width: {MOBILE_BREAKPOINT + 1}px) and (max-width: {DESKTOP_BREAKPOINT - 1}px) {{ {style_string} }}"
 	style_tag.append(style_string)
+
+def append_state_style(style_obj, style_tag, style_class):
+	for key, value in style_obj.items():
+		state, property = key.split(":")
+		style_tag.append(f".{style_class}:{state} {{ {property}: {value} }}")
 
 def set_fonts(styles, font_map):
 	for style in styles:
