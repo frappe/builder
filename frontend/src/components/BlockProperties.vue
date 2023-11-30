@@ -321,6 +321,18 @@
 				label="Add Style"
 				class="dark:bg-zinc-800 dark:text-gray-100"
 				@click="addRawStyle"></Button>
+			<p class="rounded-sm bg-gray-100 p-2 text-2xs text-gray-800 dark:bg-zinc-800 dark:text-zinc-300">
+				<b>Note:</b>
+				<br />
+				<br />
+				- Raw styles get applied across all devices
+				<br />
+				- State based styles are supported (e.g. hover, focus, visited)
+				<br />
+				Syntax: hover:color, focus:color, etc.
+				<br />
+				- State styles are only activated in preview mode
+			</p>
 		</CollapsibleSection>
 	</div>
 	<div v-else>
