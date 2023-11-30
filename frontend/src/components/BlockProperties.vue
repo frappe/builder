@@ -182,6 +182,22 @@
 				:modelValue="blockController.getAttribute('href')"
 				@update:modelValue="(val) => blockController.setAttribute('href', val)" />
 			<InlineInput
+				label="Opens in"
+				v-if="blockController.isLink()"
+				type="select"
+				:options="[
+					{
+						value: '_self',
+						label: 'Same Tab',
+					},
+					{
+						value: '_blank',
+						label: 'New Tab',
+					},
+				]"
+				:modelValue="blockController.getAttribute('target')"
+				@update:modelValue="(val) => blockController.setAttribute('target', val)" />
+			<InlineInput
 				label="Image URL"
 				v-if="blockController.isImage()"
 				:modelValue="blockController.getAttribute('src')"
