@@ -252,6 +252,10 @@
 					:modelValue="blockController.getStyle('display') || 'flex'"
 					@update:modelValue="(val: string) => blockController.setStyle('display', val)"></TabButtons>
 			</div>
+			<InlineInput
+				label="Condition"
+				:modelValue="blockController.getKeyValue('visibilityCondition')"
+				@update:modelValue="(val) => blockController.setKeyValue('visibilityCondition', val)" />
 			<div class="flex items-center justify-between">
 				<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
 					Overflow

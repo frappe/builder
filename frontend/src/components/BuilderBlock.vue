@@ -11,6 +11,7 @@
 		:class="classes"
 		v-bind="attributes"
 		:style="styles"
+		v-if="showBlock"
 		ref="component">
 		<BuilderBlock
 			:data="data"
@@ -238,4 +239,8 @@ const handleMouseLeave = (e: MouseEvent) => {
 		e.stopPropagation();
 	}
 };
+
+const showBlock = computed(() => {
+	return !props.block.visibilityCondition || props.data?.[props.block.visibilityCondition];
+});
 </script>

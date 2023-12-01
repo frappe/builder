@@ -77,7 +77,7 @@ const blockController = {
 			block.setAttribute(attribute, value);
 		});
 	},
-	getKeyValue: (key: "element" | "innerHTML") => {
+	getKeyValue: (key: "element" | "innerHTML" | "visibilityCondition") => {
 		let keyValue = "__initial__" as StyleValue | undefined;
 		store.selectedBlocks.forEach((block) => {
 			if (keyValue === "__initial__") {
@@ -88,7 +88,7 @@ const blockController = {
 		});
 		return keyValue;
 	},
-	setKeyValue: (key: "element" | "innerHTML", value: string) => {
+	setKeyValue: (key: "element" | "innerHTML" | "visibilityCondition", value: string) => {
 		store.selectedBlocks.forEach((block) => {
 			block[key] = value;
 		});
