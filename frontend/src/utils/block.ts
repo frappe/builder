@@ -56,6 +56,7 @@ class Block implements BlockOptions {
 	isChildOfComponent?: string;
 	referenceBlockId?: string;
 	isRepeaterBlock?: boolean;
+	visibilityCondition?: string;
 	constructor(options: BlockOptions) {
 		this.element = options.element;
 		this.innerHTML = options.innerHTML;
@@ -63,6 +64,7 @@ class Block implements BlockOptions {
 		this.isRepeaterBlock = options.isRepeaterBlock;
 		this.isChildOfComponent = options.isChildOfComponent;
 		this.referenceBlockId = options.referenceBlockId;
+		this.visibilityCondition = options.visibilityCondition;
 
 		this.dataKey = options.dataKey || null;
 
