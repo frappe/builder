@@ -6,10 +6,9 @@
 				v-show="store.showLeftPanel"
 				class="absolute bottom-0 left-0 top-[var(--toolbar-height)] z-20 overflow-auto border-r-[1px] bg-white no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderLeftPanel>
 			<BuilderCanvas
-				ref="componentEditor"
+				ref="componentCanvas"
 				v-if="store.editingComponent"
 				:block="store.getComponentBlock(store.editingComponent)"
-				:canvas-props="store.componentEditorCanvas"
 				:canvas-styles="{
 					width: (store.getComponentBlock(store.editingComponent).getStyle('width') + '').endsWith('px')
 						? '!fit-content'
@@ -23,9 +22,8 @@
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-400 p-10 dark:bg-zinc-700"></BuilderCanvas>
 			<BuilderCanvas
 				v-show="!store.editingComponent"
-				ref="blockEditor"
+				ref="pageCanvas"
 				:block="store.builderState.blocks[0]"
-				:canvas-props="store.blockEditorCanvas"
 				:canvas-styles="{
 					minHeight: '1000px',
 				}"
@@ -79,8 +77,8 @@ declare global {
 window.store = store;
 window.blockController = blockController;
 
-const blockEditor = ref<InstanceType<typeof BuilderCanvas> | null>(null);
-const componentEditor = ref<HTMLElement | null>(null);
+const pageCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
+const componentCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 
 const showPageScriptPanel = ref(false);
 const keys = useMagicKeys();
@@ -252,11 +250,11 @@ useEventListener(document, "keydown", (e) => {
 
 	if (e.key === "0" && e.metaKey) {
 		e.preventDefault();
-		if (blockEditor.value) {
+		if (pageCanvas.value) {
 			if (e.shiftKey) {
-				blockEditor.value.setScaleAndTranslate();
+				pageCanvas.value.setScaleAndTranslate();
 			} else {
-				blockEditor.value.resetZoom();
+				pageCanvas.value.resetZoom();
 			}
 		}
 		return;
@@ -264,48 +262,48 @@ useEventListener(document, "keydown", (e) => {
 
 	if (e.key === "ArrowRight" && !blockController.isBLockSelected()) {
 		e.preventDefault();
-		if (blockEditor.value) {
-			blockEditor.value.moveCanvas("right");
+		if (pageCanvas.value) {
+			pageCanvas.value.moveCanvas("right");
 		}
 		return;
 	}
 
 	if (e.key === "ArrowLeft" && !blockController.isBLockSelected()) {
 		e.preventDefault();
-		if (blockEditor.value) {
-			blockEditor.value.moveCanvas("left");
+		if (pageCanvas.value) {
+			pageCanvas.value.moveCanvas("left");
 		}
 		return;
 	}
 
 	if (e.key === "ArrowUp" && !blockController.isBLockSelected()) {
 		e.preventDefault();
-		if (blockEditor.value) {
-			blockEditor.value.moveCanvas("up");
+		if (pageCanvas.value) {
+			pageCanvas.value.moveCanvas("up");
 		}
 		return;
 	}
 
 	if (e.key === "ArrowDown" && !blockController.isBLockSelected()) {
 		e.preventDefault();
-		if (blockEditor.value) {
-			blockEditor.value.moveCanvas("down");
+		if (pageCanvas.value) {
+			pageCanvas.value.moveCanvas("down");
 		}
 		return;
 	}
 
 	if (e.key === "=" && e.metaKey) {
 		e.preventDefault();
-		if (blockEditor.value) {
-			blockEditor.value.zoomIn();
+		if (pageCanvas.value) {
+			pageCanvas.value.zoomIn();
 		}
 		return;
 	}
 
 	if (e.key === "-" && e.metaKey) {
 		e.preventDefault();
-		if (blockEditor.value) {
-			blockEditor.value.zoomOut();
+		if (pageCanvas.value) {
+			pageCanvas.value.zoomOut();
 		}
 		return;
 	}
@@ -485,8 +483,8 @@ const setPage = (pageName: string) => {
 	webPages.fetchOne.submit(pageName).then((data: BuilderPage[]) => {
 		store.setPage(data[0]);
 		nextTick(() => {
-			if (blockEditor.value) {
-				blockEditor.value.setScaleAndTranslate();
+			if (pageCanvas.value) {
+				pageCanvas.value.setScaleAndTranslate();
 			}
 		});
 	});
