@@ -11,11 +11,11 @@
 	{% block meta_block %}
 		{% include "templates/includes/meta_block.html" %}
 	{% endblock %}
+	<link rel="stylesheet" href="/assets/builder/reset.css">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	{% for (font, options) in fonts.items() %}
 	<link href="https://fonts.googleapis.com/css2?family={{ font }}:wght@{{ ";".join(options.weights) }}&display=swap" rel="stylesheet">
 	{% endfor %}
-	<link rel="stylesheet" href="{{ style_file_path }}">
 	{{ style }}
 	{% block style %}
 		{%- if styles -%}
