@@ -89,7 +89,6 @@ class BuilderPage(WebsiteGenerator):
 		context.fonts = fonts
 		context.content = content
 		context.style = style
-		context.style_file_path = get_style_file_path()
 
 		self.set_style_and_script(context)
 		context.update(page_data)

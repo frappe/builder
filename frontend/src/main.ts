@@ -1,5 +1,5 @@
 import App from "@/App.vue";
-import { Button, FeatherIcon, FrappeUI, Input, frappeRequest, setConfig, FormControl } from "frappe-ui";
+import { Button, FeatherIcon, FormControl, FrappeUI, Input, frappeRequest, setConfig } from "frappe-ui";
 import { createPinia } from "pinia";
 import { createApp } from "vue";
 import "./index.css";
