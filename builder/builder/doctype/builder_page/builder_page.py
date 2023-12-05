@@ -79,6 +79,9 @@ class BuilderPage(WebsiteGenerator):
 
 		blocks = self.blocks
 		context.preview = frappe.flags.show_preview
+
+		if not self.dynamic_route and not page_data:
+			context.no_cache = 1
 		if frappe.flags.show_preview and self.draft_blocks:
 			blocks = self.draft_blocks
 
@@ -93,7 +96,6 @@ class BuilderPage(WebsiteGenerator):
 		self.set_meta_tags(context=context)
 		try:
 			context["content"] = render_template(context.content, context)
-			context["no_cache"] = 1
 		except TemplateSyntaxError:
 			raise
 
