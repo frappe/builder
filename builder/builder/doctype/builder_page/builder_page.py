@@ -80,8 +80,9 @@ class BuilderPage(WebsiteGenerator):
 		blocks = self.blocks
 		context.preview = frappe.flags.show_preview
 
-		if not self.dynamic_route and not page_data:
+		if self.dynamic_route or page_data:
 			context.no_cache = 1
+
 		if frappe.flags.show_preview and self.draft_blocks:
 			blocks = self.draft_blocks
 
