@@ -201,7 +201,10 @@ def get_block_html(blocks, page_data={}):
 			else:
 				for child in block.get("children", []):
 					if child.get("visibilityCondition"):
-						tag.append("{% if " + child.get("visibilityCondition") + " %}")
+						key = child.get("visibilityCondition")
+						if data_key:
+							key = f"{data_key}.{key}"
+						tag.append(f"{{% if {key} %}}")
 					tag.append(get_tag(child, soup, data_key=data_key))
 					if child.get("visibilityCondition"):
 						tag.append("{% endif %}")
