@@ -13,7 +13,7 @@ function validatePermission(next: CallableFunction) {
 	}
 }
 
-const validateVisit = function (to, from, next) {
+const validateVisit = function (to: string, from: string, next: CallableFunction) {
 	if (document.cookie.includes("user_id") && !document.cookie.includes("user_id=Guest")) {
 		if (hasPermission === null) {
 			createResource({

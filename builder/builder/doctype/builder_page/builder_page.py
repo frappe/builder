@@ -91,6 +91,7 @@ class BuilderPage(WebsiteGenerator):
 		context.content = content
 		context.style = style
 		context.editor_link = f"/builder/page/{self.name}"
+		context.base_url = frappe.utils.get_url(".")
 
 		self.set_style_and_script(context)
 		context.update(page_data)
