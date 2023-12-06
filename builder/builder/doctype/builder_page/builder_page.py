@@ -90,6 +90,7 @@ class BuilderPage(WebsiteGenerator):
 		context.fonts = fonts
 		context.content = content
 		context.style = style
+		context.editor_link = f"/builder/page/{self.name}"
 
 		self.set_style_and_script(context)
 		context.update(page_data)
@@ -191,7 +192,7 @@ def get_block_html(blocks, page_data={}):
 				tag.append(inner_soup)
 
 			block_data = []
-			if block.get("isRepeaterBlock") and block.get("children"):
+			if block.get("isRepeaterBlock") and block.get("children") and block.get("dataKey"):
 				_key = block.get("dataKey").get("key")
 				if data_key:
 					_key = f"{data_key}.{_key}"
