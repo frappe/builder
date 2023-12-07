@@ -510,4 +510,20 @@ watch(
 	--right-panel-width: 20rem;
 	--toolbar-height: 3.5rem;
 }
+
+[id^="headlessui-menu-items"] {
+	@apply dark:bg-zinc-800;
+	@apply no-scrollbar;
+	@apply overflow-auto;
+	@apply max-h-56;
+}
+
+[id^="headlessui-menu-items"] button {
+	@apply dark:text-zinc-200;
+	@apply dark:hover:bg-zinc-700;
+}
+
+[id^="headlessui-menu-items"] button svg {
+	@apply dark:text-zinc-200;
+}
 </style>
