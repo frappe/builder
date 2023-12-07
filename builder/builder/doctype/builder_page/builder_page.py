@@ -166,6 +166,12 @@ def get_block_html(blocks, page_data={}):
 			# temp fix: since p inside p is illegal
 			if element in ["p", "__raw_html__"]:
 				element = "div"
+
+			# temp fix: since img src is not absolute, it doesn't load in preview
+			image_src = block.get("attribute", {}).get("src") or ""
+			if element == "img" and image_src.startswith("/"):
+				block["attribute"]["src"] = frappe.utils.get_url(image_src)
+
 			tag = soup.new_tag(element)
 			tag.attrs = block.get("attributes", {})
 			classes = block.get("classes", [])
