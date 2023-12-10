@@ -32,7 +32,7 @@
 					type="Python"
 					height="60vh"
 					:show-line-numbers="true"></CodeEditor>
-				<span class="text-xs text-gray-600">
+				<span class="text-xs text-gray-600 dark:text-zinc-400">
 					data.events = frappe.get_list("Event")
 					<br />
 					<b>Note:</b>
@@ -69,3 +69,19 @@ const savePageDataScript = ({ close }: { close: () => void }) => {
 		});
 };
 </script>
+<style>
+[id^="headlessui-dialog-panel"] {
+	@apply dark:bg-zinc-800;
+}
+[id^="headlessui-dialog-panel"] > div {
+	@apply dark:bg-zinc-800;
+}
+
+[id^="headlessui-dialog-panel"] header h3 {
+	@apply dark:text-white;
+}
+
+[id^="headlessui-dialog-panel"] button svg path {
+	@apply dark:fill-white;
+}
+</style>

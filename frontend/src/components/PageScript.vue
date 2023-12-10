@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="absolute bottom-0 z-50 h-fit w-full border-t border-gray-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
+		class="absolute bottom-0 z-40 h-fit w-full border-t border-gray-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
 		<PanelResizer
 			side="top"
 			:dimension="store.builderLayout.scriptEditorHeight"
