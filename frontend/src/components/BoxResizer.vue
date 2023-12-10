@@ -30,7 +30,7 @@
 <script setup lang="ts">
 import { getNumberFromPx } from "@/utils/helpers";
 import { clamp } from "@vueuse/core";
-import { computed, inject, onMounted, ref, watchEffect } from "vue";
+import { computed, inject, onMounted, ref, watch, watchEffect } from "vue";
 import useStore from "../store";
 import Block from "../utils/block";
 import guidesTracker from "../utils/guidesTracker";
@@ -41,7 +41,7 @@ const props = defineProps({
 		default: null,
 	},
 	target: {
-		type: [HTMLElement, SVGElement],
+		type: HTMLElement,
 		default: null,
 	},
 });
@@ -56,15 +56,14 @@ let guides = null as unknown as ReturnType<typeof guidesTracker>;
 const canvasProps = inject("canvasProps") as CanvasProps;
 
 onMounted(() => {
-	guides = guidesTracker(target, canvasProps);
+	guides = guidesTracker(target as HTMLElement, canvasProps);
 });
 
-watchEffect(() => {
-	emit("resizing", resizing.value);
+watch(resizing, () => {
 	if (resizing.value) {
-		store.history.pause();
+		store.activeCanvas?.history.pause();
 	} else {
-		store.history.resume();
+		store.activeCanvas?.history.resume(true);
 	}
 });
 

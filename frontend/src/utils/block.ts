@@ -461,7 +461,7 @@ class Block implements BlockOptions {
 	makeBlockEditable() {
 		const store = useStore();
 		this.selectBlock();
-		store.builderState.editableBlock = this;
+		store.editableBlock = this;
 		nextTick(() => {
 			this.getEditor()?.commands.focus("all");
 		});
@@ -579,7 +579,7 @@ class Block implements BlockOptions {
 	}
 	duplicateBlock() {
 		const store = useStore();
-		store.history.pause();
+		store.activeCanvas?.history.pause();
 		const blockCopy = store.getBlockCopy(this);
 		const parentBlock = this.getParentBlock();
 
@@ -595,14 +595,13 @@ class Block implements BlockOptions {
 		if (parentBlock) {
 			child = parentBlock.addChildAfter(blockCopy, this);
 		} else {
-			child = store.builderState.blocks[0]?.addChild(blockCopy);
+			child = store.activeCanvas?.getFirstBlock().addChild(blockCopy);
 		}
 		nextTick(() => {
 			if (child) {
 				child.selectBlock();
 			}
-			store.history.resume();
-			store.history.commit();
+			store.activeCanvas?.history.resume(true);
 		});
 	}
 	getPadding() {
