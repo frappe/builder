@@ -79,6 +79,10 @@ class BuilderPage(WebsiteGenerator):
 
 		blocks = self.blocks
 		context.preview = frappe.flags.show_preview
+
+		if self.dynamic_route or page_data:
+			context.no_cache = 1
+
 		if frappe.flags.show_preview and self.draft_blocks:
 			blocks = self.draft_blocks
 
@@ -86,14 +90,14 @@ class BuilderPage(WebsiteGenerator):
 		context.fonts = fonts
 		context.content = content
 		context.style = style
-		context.style_file_path = get_style_file_path()
+		context.editor_link = f"/builder/page/{self.name}"
+		context.base_url = frappe.utils.get_url(".")
 
 		self.set_style_and_script(context)
 		context.update(page_data)
 		self.set_meta_tags(context=context)
 		try:
 			context["content"] = render_template(context.content, context)
-			context["no_cache"] = 1
 		except TemplateSyntaxError:
 			raise
 
@@ -162,6 +166,12 @@ def get_block_html(blocks, page_data={}):
 			# temp fix: since p inside p is illegal
 			if element in ["p", "__raw_html__"]:
 				element = "div"
+
+			# temp fix: since img src is not absolute, it doesn't load in preview
+			image_src = block.get("attributes", {}).get("src") or ""
+			if element == "img" and image_src.startswith("/"):
+				block["attributes"]["src"] = frappe.utils.get_url(image_src)
+
 			tag = soup.new_tag(element)
 			tag.attrs = block.get("attributes", {})
 			classes = block.get("classes", [])
@@ -189,7 +199,7 @@ def get_block_html(blocks, page_data={}):
 				tag.append(inner_soup)
 
 			block_data = []
-			if block.get("isRepeaterBlock") and block.get("children"):
+			if block.get("isRepeaterBlock") and block.get("children") and block.get("dataKey"):
 				_key = block.get("dataKey").get("key")
 				if data_key:
 					_key = f"{data_key}.{_key}"
@@ -201,7 +211,10 @@ def get_block_html(blocks, page_data={}):
 			else:
 				for child in block.get("children", []):
 					if child.get("visibilityCondition"):
-						tag.append("{% if " + child.get("visibilityCondition") + " %}")
+						key = child.get("visibilityCondition")
+						if data_key:
+							key = f"{data_key}.{key}"
+						tag.append(f"{{% if {key} %}}")
 					tag.append(get_tag(child, soup, data_key=data_key))
 					if child.get("visibilityCondition"):
 						tag.append("{% endif %}")
