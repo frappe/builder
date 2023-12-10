@@ -8,7 +8,7 @@
 			<BuilderCanvas
 				ref="componentCanvas"
 				v-if="store.editingComponent"
-				:block="store.getComponentBlock(store.editingComponent)"
+				:block-data="store.getComponentBlock(store.editingComponent)"
 				:canvas-styles="{
 					width: (store.getComponentBlock(store.editingComponent).getStyle('width') + '').endsWith('px')
 						? '!fit-content'
@@ -23,7 +23,7 @@
 			<BuilderCanvas
 				v-show="!store.editingComponent"
 				ref="pageCanvas"
-				:block="store.builderState.blocks[0]"
+				:block-data="store.getRootBlock()"
 				:canvas-styles="{
 					minHeight: '1000px',
 				}"
@@ -58,9 +58,9 @@ import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { copyToClipboard, isHTMLString, isJSONString, isTargetEditable } from "@/utils/helpers";
-import { useDebounceFn, useEventListener, useMagicKeys, whenever } from "@vueuse/core";
+import { useEventListener, useMagicKeys, whenever } from "@vueuse/core";
 import { toast } from "frappe-ui";
-import { nextTick, onActivated, ref, watch } from "vue";
+import { nextTick, onActivated, ref, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
@@ -79,6 +79,8 @@ window.blockController = blockController;
 
 const pageCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 const componentCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
+
+const pageData = ref<BuilderPage | null>(null);
 
 const showPageScriptPanel = ref(false);
 const keys = useMagicKeys();
@@ -107,7 +109,7 @@ useEventListener(document, "copy", (e) => {
 	e.preventDefault();
 	if (store.selectedBlocks.length) {
 		const componentDocuments: BuilderComponent[] = [];
-		store.selectedBlocks.forEach((block) => {
+		store.selectedBlocks.forEach((block: Block) => {
 			const components = block.getUsedComponentNames();
 			components.forEach((componentName) => {
 				const component = store.getComponent(componentName);
@@ -137,7 +139,7 @@ useEventListener(document, "paste", async (e) => {
 		if (file) {
 			store.uploadFile(file).then((res: { fileURL: string; fileName: string }) => {
 				const selectedBlocks = blockController.getSelectedBlocks();
-				const parentBlock = selectedBlocks.length ? selectedBlocks[0] : store.getFirstBlock();
+				const parentBlock = selectedBlocks.length ? selectedBlocks[0] : store.activeCanvas?.getFirstBlock();
 				let imageBlock = null as unknown as Block;
 				if (parentBlock.isImage()) {
 					imageBlock = parentBlock;
@@ -199,7 +201,7 @@ useEventListener(document, "paste", async (e) => {
 		return;
 	} else {
 		// try pasting figma text styles
-		if (blockController.isText() && text.includes(":") && !store.builderState.editableBlock) {
+		if (blockController.isText() && text.includes(":") && !store.editableBlock) {
 			e.preventDefault();
 			// strip out all comments: line-height: 115%; /* 12.65px */ -> line-height: 115%;
 			const strippedText = text.replace(/\/\*.*?\*\//g, "");
@@ -238,13 +240,14 @@ useEventListener(document, "paste", async (e) => {
 // TODO: Refactor with useMagicKeys
 useEventListener(document, "keydown", (e) => {
 	if (isTargetEditable(e)) return;
-	if (e.key === "z" && e.metaKey && !e.shiftKey && store.history.canUndo) {
-		store.history.undo();
+	if (e.key === "z" && e.metaKey && !e.shiftKey && store.activeCanvas?.history.canUndo) {
+		store.activeCanvas?.history.undo();
 		e.preventDefault();
 		return;
 	}
-	if (e.key === "z" && e.shiftKey && e.metaKey && store.history.canRedo) {
-		store.history.redo();
+	if (e.key === "z" && e.shiftKey && e.metaKey && store.activeCanvas?.history.canRedo) {
+		store.activeCanvas?.history.redo();
+		e.preventDefault();
 		return;
 	}
 
@@ -411,7 +414,7 @@ useEventListener(document, "keydown", (e) => {
 						});
 						return false;
 					} else {
-						store.history.batch(() => {
+						store.activeCanvas?.history.batch(() => {
 							blocks.splice(i, 1);
 						});
 						nextTick(() => {
@@ -428,7 +431,7 @@ useEventListener(document, "keydown", (e) => {
 			});
 		}
 		for (const block of blockController.getSelectedBlocks()) {
-			findBlockAndRemove([store.getFirstBlock()], block.blockId);
+			findBlockAndRemove([store.activeCanvas?.getFirstBlock()], block.blockId);
 		}
 		clearSelectedComponent();
 		e.stopPropagation();
@@ -451,7 +454,7 @@ useEventListener(document, "keydown", (e) => {
 
 const clearSelectedComponent = () => {
 	blockController.clearSelection();
-	store.builderState.editableBlock = null;
+	store.editableBlock = null;
 	if (document.activeElement instanceof HTMLElement) {
 		document.activeElement.blur();
 	}
@@ -490,16 +493,13 @@ const setPage = (pageName: string) => {
 	});
 };
 
-const debouncedPageSave = useDebounceFn(store.savePage, 500);
-watch(
-	() => store.builderState.blocks,
-	() => {
-		if (store.selectedPage && store.autoSave && !store.settingPage) {
-			debouncedPageSave();
-		}
-	},
-	{ deep: true }
-);
+watchEffect(() => {
+	if (componentCanvas.value) {
+		store.activeCanvas = componentCanvas.value;
+	} else {
+		store.activeCanvas = pageCanvas.value;
+	}
+});
 </script>
 
 <style>

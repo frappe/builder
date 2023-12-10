@@ -167,12 +167,12 @@ onMounted(async () => {
 
 const isEditable = computed(() => {
 	return (
-		store.builderState.editableBlock === props.block && store.activeBreakpoint === props.breakpoint // to ensure it is right block and not on different breakpoint
+		store.editableBlock === props.block && store.activeBreakpoint === props.breakpoint // to ensure it is right block and not on different breakpoint
 	);
 });
 
 const selectBlock = (e: MouseEvent | null) => {
-	if (store.builderState.editableBlock === props.block || store.mode !== "select" || props.preview) {
+	if (store.editableBlock === props.block || store.mode !== "select" || props.preview) {
 		return;
 	}
 	store.selectBlock(props.block, e);
@@ -203,9 +203,9 @@ const handleClick = (e: MouseEvent) => {
 
 const handleDoubleClick = (e: MouseEvent) => {
 	if (isEditable.value) return;
-	store.builderState.editableBlock = null;
+	store.editableBlock = null;
 	if (props.block.isText() || props.block.isLink() || props.block.isButton()) {
-		store.builderState.editableBlock = props.block;
+		store.editableBlock = props.block;
 		e.stopPropagation();
 	}
 

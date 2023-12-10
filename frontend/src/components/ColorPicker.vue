@@ -171,7 +171,7 @@ const handleSelectorMove = (ev: MouseEvent) => {
 
 const handleHueSelectorMove = (ev: MouseEvent) => {
 	setHue(ev);
-	store.history.pause();
+	store.activeCanvas?.history.pause();
 	const mouseMove = (mouseMoveEvent: MouseEvent) => {
 		mouseMoveEvent.preventDefault();
 		setHue(mouseMoveEvent);
@@ -182,7 +182,7 @@ const handleHueSelectorMove = (ev: MouseEvent) => {
 		(mouseUpEvent) => {
 			document.removeEventListener("mousemove", mouseMove);
 			mouseUpEvent.preventDefault();
-			store.history.resume();
+			store.activeCanvas?.history.resume(true);
 		},
 		{ once: true }
 	);

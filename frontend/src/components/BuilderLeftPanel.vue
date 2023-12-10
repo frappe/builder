@@ -40,13 +40,13 @@
 		<div v-show="store.leftPanelActiveTab === 'Layers'">
 			<BlockLayers
 				class="p-4 pt-3"
-				:blocks="store.builderState.blocks"
-				v-if="!store.editingComponent"
+				:blocks="[store.activeCanvas?.getFirstBlock()]"
+				v-if="!store.editingComponent && store.activeCanvas?.getFirstBlock()"
 				v-show="store.editingMode == 'page'" />
 			<BlockLayers
 				class="p-4 pt-3"
-				:blocks="[store.getComponentBlock(store.editingComponent)]"
-				v-if="store.editingComponent" />
+				:blocks="[store.activeCanvas?.getFirstBlock()]"
+				v-if="store.editingComponent && store.activeCanvas?.getFirstBlock()" />
 		</div>
 	</div>
 </template>

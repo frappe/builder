@@ -67,9 +67,17 @@ import webComponent from "@/data/webComponent";
 import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { addPxToNumber, getNumberFromPx } from "@/utils/helpers";
-import { clamp, useDropZone, useElementBounding, useEventListener } from "@vueuse/core";
+import {
+	UseRefHistoryReturn,
+	clamp,
+	useDebounceFn,
+	useDebouncedRefHistory,
+	useDropZone,
+	useElementBounding,
+	useEventListener,
+} from "@vueuse/core";
 import { FeatherIcon } from "frappe-ui";
-import { computed, nextTick, onMounted, provide, reactive, ref, watchEffect } from "vue";
+import { Ref, computed, nextTick, onMounted, provide, reactive, ref, watch, watchEffect } from "vue";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
@@ -83,7 +91,7 @@ const showBlocks = ref(false);
 const overlay = ref(null);
 
 const props = defineProps({
-	block: {
+	blockData: {
 		type: Block,
 		default: false,
 	},
@@ -92,6 +100,9 @@ const props = defineProps({
 		default: () => ({}),
 	},
 });
+
+// clone props.block into canvas data to avoid mutating them
+const block = ref(store.getBlockCopy(props.blockData, true)) as Ref<Block>;
 
 const canvasProps = reactive({
 	overlayElement: null,
@@ -104,17 +115,57 @@ const canvasProps = reactive({
 	panning: false,
 });
 
+const canvasHistory = ref(null) as Ref<UseRefHistoryReturn<{}, {}>> | Ref<null>;
+
 provide("canvasProps", canvasProps);
 
 onMounted(() => {
 	canvasProps.overlayElement = overlay.value;
+	setupHistory();
 	setEvents();
 });
+
+function setupHistory() {
+	canvasHistory.value = useDebouncedRefHistory(block, {
+		capacity: 200,
+		deep: true,
+		debounce: 200,
+		clone: (obj) => {
+			// check diff between obj and previous state
+			function logObjectDiff(obj1, obj2, path = []) {
+				if (!obj1 || !obj2) return;
+				for (const key in obj1) {
+					const newPath = path.concat(key);
+
+					if (obj2.hasOwnProperty(key)) {
+						if (typeof obj1[key] === "object" && typeof obj2[key] === "object") {
+							logObjectDiff(obj1[key], obj2[key], newPath);
+						} else {
+							if (obj1[key] !== obj2[key]) {
+								console.log(`Difference at ${newPath.join(".")} - ${obj1[key]} !== ${obj2[key]}`);
+							}
+						}
+					} else {
+						// console.log(`Property ${newPath.join(".")} is missing in the second object`);
+					}
+				}
+
+				for (const key in obj2) {
+					if (!obj1.hasOwnProperty(key)) {
+						// console.log(`Property ${key} is missing in the first object`);
+					}
+				}
+			}
+			logObjectDiff(obj, canvasHistory.value?.last.snapshot);
+			return store.getBlockCopy(obj, true);
+		},
+	});
+}
 
 const { isOverDropZone } = useDropZone(canvasContainer, {
 	onDrop: (files, ev) => {
 		let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
-		let parentBlock = props.block as Block | null;
+		let parentBlock = block.value as Block | null;
 		if (element) {
 			if (element.dataset.blockId) {
 				parentBlock = store.findBlock(element.dataset.blockId) || parentBlock;
@@ -161,20 +212,20 @@ function setEvents() {
 		if (store.mode === "select") {
 			return;
 		} else {
-			store.history.pause();
+			store.activeCanvas?.history.pause();
 			ev.stopPropagation();
 			let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
-			let block = store.getFirstBlock();
+			let block = getFirstBlock();
 			if (element) {
 				if (element.dataset.blockId) {
 					block = store.findBlock(element.dataset.blockId) || block;
 				}
 			}
-			let parentBlock = store.getFirstBlock();
+			let parentBlock = getFirstBlock();
 			if (element.dataset.blockId) {
 				parentBlock = store.findBlock(element.dataset.blockId) || parentBlock;
 				while (parentBlock && !parentBlock.canHaveChildren()) {
-					parentBlock = parentBlock.getParentBlock() || store.getFirstBlock();
+					parentBlock = parentBlock.getParentBlock() || getFirstBlock();
 				}
 			}
 			const child = getBlockTemplate(store.mode);
@@ -222,7 +273,7 @@ function setEvents() {
 					childBlock.setBaseStyle("top", "auto");
 					childBlock.setBaseStyle("left", "auto");
 					if (store.mode === "text" || store.mode === "html") {
-						store.history.resume();
+						store.activeCanvas?.history.resume(true);
 					}
 					if (getNumberFromPx(childBlock.getStyle("width")) < 100) {
 						childBlock.setBaseStyle("width", "100%");
@@ -234,7 +285,7 @@ function setEvents() {
 					setTimeout(() => {
 						store.mode = "select";
 					}, 50);
-					store.history.resume();
+					store.activeCanvas?.history.resume(true);
 				},
 				{ once: true }
 			);
@@ -313,14 +364,6 @@ const zoomOut = () => {
 	canvasProps.scale -= 0.1;
 };
 
-defineExpose({
-	setScaleAndTranslate,
-	resetZoom,
-	moveCanvas,
-	zoomIn,
-	zoomOut,
-});
-
 watchEffect(() => {
 	store.deviceBreakpoints.map((b) => b.visible);
 	if (canvasProps.settingCanvas) {
@@ -353,4 +396,44 @@ const handleClick = (ev: MouseEvent) => {
 		store.clearSelection();
 	}
 };
+
+const clearCanvas = () => {
+	block.value = store.getRootBlock();
+};
+
+const getFirstBlock = () => {
+	return block.value;
+};
+
+const setRootBlock = (newBlock: Block) => {
+	block.value = newBlock;
+	setupHistory();
+};
+
+const debouncedPageSave = useDebounceFn(store.savePage, 500);
+
+watch(
+	() => block.value,
+	() => {
+		if (store.selectedPage && store.autoSave && !store.settingPage && !store.editingComponent) {
+			debouncedPageSave();
+		}
+	},
+	{
+		deep: true,
+	}
+);
+
+defineExpose({
+	setScaleAndTranslate,
+	resetZoom,
+	moveCanvas,
+	zoomIn,
+	zoomOut,
+	history: canvasHistory as Ref<UseRefHistoryReturn<{}, {}>>,
+	clearCanvas,
+	getFirstBlock,
+	block,
+	setRootBlock,
+});
 </script>

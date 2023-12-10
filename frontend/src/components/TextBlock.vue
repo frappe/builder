@@ -153,7 +153,7 @@ const textContent = computed(() => {
 let editor: Ref<Editor | null> = ref(null);
 
 const isEditable = computed(() => {
-	return store.builderState.editableBlock === props.block;
+	return store.editableBlock === props.block;
 });
 
 const showEditor = computed(() => {
@@ -171,10 +171,10 @@ watch(
 	(editable) => {
 		editor.value?.setEditable(editable);
 		if (editable) {
-			store.history.pause();
+			store.activeCanvas?.history.pause();
 			editor.value?.commands.focus("all");
 		} else {
-			store.history.resume();
+			store.activeCanvas?.history.resume();
 		}
 	},
 	{ immediate: true }
