@@ -14,7 +14,7 @@
 	<link rel="stylesheet" rel="preload" href="{{ base_url }}assets/builder/reset.css" media="screen">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	{% for (font, options) in fonts.items() %}
-	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ font }}:wght@{{ ";".join(options.weights) }}&display=block" media="print" onload="this.media='all'">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ font }}:wght@{{ ";".join(options.weights) }}&display=block" media="screen">
 	{% endfor %}
 	{{ style }}
 	{% block style %}
