@@ -30,7 +30,7 @@
 <script setup lang="ts">
 import { getNumberFromPx } from "@/utils/helpers";
 import { clamp } from "@vueuse/core";
-import { computed, inject, onMounted, ref, watch, watchEffect } from "vue";
+import { computed, inject, onMounted, ref, watch } from "vue";
 import useStore from "../store";
 import Block from "../utils/block";
 import guidesTracker from "../utils/guidesTracker";
@@ -48,14 +48,13 @@ const props = defineProps({
 
 const emit = defineEmits(["resizing"]);
 const store = useStore();
-const target = props.target;
 const resizing = ref(false);
 let guides = null as unknown as ReturnType<typeof guidesTracker>;
 
 const canvasProps = inject("canvasProps") as CanvasProps;
 
 onMounted(() => {
-	guides = guidesTracker(target as HTMLElement, canvasProps);
+	guides = guidesTracker(props.target as HTMLElement, canvasProps);
 });
 
 watch(resizing, () => {
@@ -68,23 +67,23 @@ watch(resizing, () => {
 
 const targetWidth = computed(() => {
 	props.targetBlock.getStyle("width"); // to trigger reactivity
-	return Math.round(getNumberFromPx(getComputedStyle(target).getPropertyValue("width")));
+	return Math.round(getNumberFromPx(getComputedStyle(props.target).getPropertyValue("width")));
 });
 
 const targetHeight = computed(() => {
 	props.targetBlock.getStyle("height"); // to trigger reactivity
-	return Math.round(getNumberFromPx(getComputedStyle(target).getPropertyValue("height")));
+	return Math.round(getNumberFromPx(getComputedStyle(props.target).getPropertyValue("height")));
 });
 
 const fontSize = computed(() => {
 	props.targetBlock.getStyle("fontSize"); // to trigger reactivity
-	return Math.round(getNumberFromPx(getComputedStyle(target).getPropertyValue("font-size")));
+	return Math.round(getNumberFromPx(getComputedStyle(props.target).getPropertyValue("font-size")));
 });
 
 const handleRightResize = (ev: MouseEvent) => {
 	const startX = ev.clientX;
-	const startWidth = target.offsetWidth;
-	const parentWidth = target.parentElement?.offsetWidth || 0;
+	const startWidth = props.target.offsetWidth;
+	const parentWidth = props.target.parentElement?.offsetWidth || 0;
 	const startFontSize = fontSize.value;
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
@@ -127,7 +126,7 @@ const handleRightResize = (ev: MouseEvent) => {
 
 const handleBottomResize = (ev: MouseEvent) => {
 	const startY = ev.clientY;
-	const startHeight = target.offsetHeight;
+	const startHeight = props.target.offsetHeight;
 	const startFontSize = fontSize.value || 0;
 
 	// to disable cursor jitter
@@ -166,8 +165,8 @@ const handleBottomResize = (ev: MouseEvent) => {
 const handleBottomCornerResize = (ev: MouseEvent) => {
 	const startX = ev.clientX;
 	const startY = ev.clientY;
-	const startHeight = target.offsetHeight;
-	const startWidth = target.offsetWidth;
+	const startHeight = props.target.offsetHeight;
+	const startWidth = props.target.offsetWidth;
 	const startFontSize = fontSize.value || 0;
 
 	// to disable cursor jitter
