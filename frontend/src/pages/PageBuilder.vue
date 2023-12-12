@@ -139,7 +139,9 @@ useEventListener(document, "paste", async (e) => {
 		if (file) {
 			store.uploadFile(file).then((res: { fileURL: string; fileName: string }) => {
 				const selectedBlocks = blockController.getSelectedBlocks();
-				const parentBlock = selectedBlocks.length ? selectedBlocks[0] : store.activeCanvas?.getFirstBlock();
+				const parentBlock = selectedBlocks.length
+					? selectedBlocks[0]
+					: (store.activeCanvas?.getFirstBlock() as Block);
 				let imageBlock = null as unknown as Block;
 				if (parentBlock.isImage()) {
 					imageBlock = parentBlock;
@@ -414,9 +416,7 @@ useEventListener(document, "keydown", (e) => {
 						});
 						return false;
 					} else {
-						store.activeCanvas?.history.batch(() => {
-							blocks.splice(i, 1);
-						});
+						blocks.splice(i, 1);
 						nextTick(() => {
 							// select the next sibling block
 							if (blocks.length && blocks[i]) {
@@ -431,7 +431,7 @@ useEventListener(document, "keydown", (e) => {
 			});
 		}
 		for (const block of blockController.getSelectedBlocks()) {
-			findBlockAndRemove([store.activeCanvas?.getFirstBlock()], block.blockId);
+			findBlockAndRemove([store.activeCanvas?.getFirstBlock() as Block], block.blockId);
 		}
 		clearSelectedComponent();
 		e.stopPropagation();

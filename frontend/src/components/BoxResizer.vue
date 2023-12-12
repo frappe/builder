@@ -1,13 +1,13 @@
 <template>
 	<span
 		class="resize-dimensions absolute bottom-[-40px] right-[-40px] flex h-8 w-20 items-center justify-center whitespace-nowrap rounded-full bg-gray-600 p-2 text-sm text-white opacity-80"
-		v-if="resizing && !targetBlock.isText()">
+		v-if="resizing && !props.targetBlock.isText()">
 		{{ targetWidth }} x
 		{{ targetHeight }}
 	</span>
 	<span
 		class="resize-dimensions absolute bottom-[-40px] right-[-40px] flex h-8 w-fit items-center justify-center whitespace-nowrap rounded-full bg-gray-600 p-2 text-sm text-white opacity-80"
-		v-if="resizing && targetBlock.isText()">
+		v-if="resizing && props.targetBlock.isText()">
 		{{ fontSize }}
 	</span>
 
@@ -48,7 +48,6 @@ const props = defineProps({
 
 const emit = defineEmits(["resizing"]);
 const store = useStore();
-const targetBlock = props.targetBlock;
 const target = props.target;
 const resizing = ref(false);
 let guides = null as unknown as ReturnType<typeof guidesTracker>;
@@ -68,17 +67,17 @@ watch(resizing, () => {
 });
 
 const targetWidth = computed(() => {
-	targetBlock.getStyle("width"); // to trigger reactivity
+	props.targetBlock.getStyle("width"); // to trigger reactivity
 	return Math.round(getNumberFromPx(getComputedStyle(target).getPropertyValue("width")));
 });
 
 const targetHeight = computed(() => {
-	targetBlock.getStyle("height"); // to trigger reactivity
+	props.targetBlock.getStyle("height"); // to trigger reactivity
 	return Math.round(getNumberFromPx(getComputedStyle(target).getPropertyValue("height")));
 });
 
 const fontSize = computed(() => {
-	targetBlock.getStyle("fontSize"); // to trigger reactivity
+	props.targetBlock.getStyle("fontSize"); // to trigger reactivity
 	return Math.round(getNumberFromPx(getComputedStyle(target).getPropertyValue("font-size")));
 });
 
@@ -96,9 +95,9 @@ const handleRightResize = (ev: MouseEvent) => {
 		// movement / scale * speed
 		const movement = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
 		const finalWidth = Math.abs(guides.getFinalWidth(startWidth + movement));
-		if (targetBlock.isText() && !mouseMoveEvent.shiftKey) {
+		if (props.targetBlock.isText() && !mouseMoveEvent.shiftKey) {
 			const fontSize = clamp(Math.round(startFontSize + 0.5 * movement), 10, 150);
-			targetBlock.setStyle("fontSize", `${fontSize}px`);
+			props.targetBlock.setStyle("fontSize", `${fontSize}px`);
 			return mouseMoveEvent.preventDefault();
 		}
 
@@ -106,9 +105,9 @@ const handleRightResize = (ev: MouseEvent) => {
 			const movementPercent = (movement / parentWidth) * 100;
 			const startWidthPercent = (startWidth / parentWidth) * 100;
 			const finalWidth = Math.abs(Math.round(startWidthPercent + movementPercent));
-			targetBlock.setStyle("width", `${finalWidth}%`);
+			props.targetBlock.setStyle("width", `${finalWidth}%`);
 		} else {
-			targetBlock.setStyle("width", `${finalWidth}px`);
+			props.targetBlock.setStyle("width", `${finalWidth}px`);
 		}
 		mouseMoveEvent.preventDefault();
 	};
@@ -141,13 +140,13 @@ const handleBottomResize = (ev: MouseEvent) => {
 		const movement = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
 		let finalHeight = Math.round(Math.abs(guides.getFinalHeight(startHeight + movement)));
 
-		if (targetBlock.isText() && !mouseMoveEvent.shiftKey) {
+		if (props.targetBlock.isText() && !mouseMoveEvent.shiftKey) {
 			const fontSize = clamp(Math.round(startFontSize + 0.5 * movement), 10, 300);
-			targetBlock.setStyle("fontSize", `${fontSize}px`);
+			props.targetBlock.setStyle("fontSize", `${fontSize}px`);
 			return mouseMoveEvent.preventDefault();
 		}
 
-		targetBlock.setStyle("height", `${finalHeight}px`);
+		props.targetBlock.setStyle("height", `${finalHeight}px`);
 		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);
@@ -180,20 +179,20 @@ const handleBottomCornerResize = (ev: MouseEvent) => {
 		const movementX = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
 		const finalWidth = Math.round(startWidth + movementX);
 
-		if (targetBlock.isText() && !mouseMoveEvent.shiftKey) {
+		if (props.targetBlock.isText() && !mouseMoveEvent.shiftKey) {
 			const fontSize = clamp(Math.round(startFontSize + 0.5 * movementX), 10, 300);
-			targetBlock.setStyle("fontSize", `${fontSize}px`);
+			props.targetBlock.setStyle("fontSize", `${fontSize}px`);
 			return mouseMoveEvent.preventDefault();
 		}
 
 		if (mouseMoveEvent.shiftKey) {
-			targetBlock.setStyle("width", `${finalWidth}px`);
-			targetBlock.setStyle("height", `${finalWidth}px`);
+			props.targetBlock.setStyle("width", `${finalWidth}px`);
+			props.targetBlock.setStyle("height", `${finalWidth}px`);
 		} else {
-			targetBlock.setStyle("width", `${finalWidth}px`);
+			props.targetBlock.setStyle("width", `${finalWidth}px`);
 			const movementY = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
 			const finalHeight = Math.round(startHeight + movementY);
-			targetBlock.setStyle("height", `${finalHeight}px`);
+			props.targetBlock.setStyle("height", `${finalHeight}px`);
 			mouseMoveEvent.preventDefault();
 		}
 	};

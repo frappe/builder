@@ -186,6 +186,7 @@ const useStore = defineStore("store", {
 			return null;
 		},
 		selectBlock(block: Block, e: MouseEvent | null, scrollIntoView = true) {
+			this.activeCanvas?.history?.pause();
 			if (this.settingPage) {
 				return;
 			}
@@ -200,6 +201,7 @@ const useStore = defineStore("store", {
 					.querySelector(`[data-block-layer-id="${block.blockId}"]`)
 					?.scrollIntoView({ behavior: "instant", block: "center" });
 			}
+			this.activeCanvas?.history?.resume();
 			this.editableBlock = null;
 		},
 		getBlockInstance(options: BlockOptions) {
