@@ -155,11 +155,14 @@ const getStyleClasses = computed(() => {
 	return classes;
 });
 
-watch(store.activeCanvas?.block, () => {
-	nextTick(() => {
-		updateTracker.value();
-	});
-});
+watch(
+	() => store.activeCanvas?.block,
+	() => {
+		nextTick(() => {
+			updateTracker.value();
+		});
+	}
+);
 
 const movable = computed(() => {
 	return props.block.getStyle("position") === "absolute";

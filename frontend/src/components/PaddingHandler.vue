@@ -156,8 +156,6 @@ const props = defineProps({
 	},
 });
 
-const targetBlock = props.targetBlock;
-
 const updating = ref(false);
 const emit = defineEmits(["update"]);
 
@@ -283,35 +281,35 @@ const handlePadding = (ev: MouseEvent, position: Position) => {
 		props.onUpdate && props.onUpdate();
 		if (position === Position.Top) {
 			movement = Math.max(startTop + mouseMoveEvent.clientY - startY, 0);
-			targetBlock.setStyle("paddingTop", movement + "px");
+			props.targetBlock.setStyle("paddingTop", movement + "px");
 			affectingAxis = "y";
 		} else if (position === Position.Bottom) {
 			movement = Math.max(startBottom + startY - mouseMoveEvent.clientY, 0);
-			targetBlock.setStyle("paddingBottom", movement + "px");
+			props.targetBlock.setStyle("paddingBottom", movement + "px");
 			affectingAxis = "y";
 		} else if (position === Position.Left) {
 			movement = Math.max(startLeft + mouseMoveEvent.clientX - startX, 0);
-			targetBlock.setStyle("paddingLeft", movement + "px");
+			props.targetBlock.setStyle("paddingLeft", movement + "px");
 			affectingAxis = "x";
 		} else if (position === Position.Right) {
 			movement = Math.max(startRight + startX - mouseMoveEvent.clientX, 0);
-			targetBlock.setStyle("paddingRight", movement + "px");
+			props.targetBlock.setStyle("paddingRight", movement + "px");
 			affectingAxis = "x";
 		}
 
 		if (mouseMoveEvent.altKey) {
 			if (affectingAxis === "y") {
-				targetBlock.setStyle("paddingTop", movement + "px");
-				targetBlock.setStyle("paddingBottom", movement + "px");
+				props.targetBlock.setStyle("paddingTop", movement + "px");
+				props.targetBlock.setStyle("paddingBottom", movement + "px");
 			} else if (affectingAxis === "x") {
-				targetBlock.setStyle("paddingLeft", movement + "px");
-				targetBlock.setStyle("paddingRight", movement + "px");
+				props.targetBlock.setStyle("paddingLeft", movement + "px");
+				props.targetBlock.setStyle("paddingRight", movement + "px");
 			}
 		} else if (mouseMoveEvent.shiftKey) {
-			targetBlock.setStyle("paddingTop", movement + "px");
-			targetBlock.setStyle("paddingBottom", movement + "px");
-			targetBlock.setStyle("paddingLeft", movement + "px");
-			targetBlock.setStyle("paddingRight", movement + "px");
+			props.targetBlock.setStyle("paddingTop", movement + "px");
+			props.targetBlock.setStyle("paddingBottom", movement + "px");
+			props.targetBlock.setStyle("paddingLeft", movement + "px");
+			props.targetBlock.setStyle("paddingRight", movement + "px");
 		}
 
 		mouseMoveEvent.preventDefault();
