@@ -131,32 +131,6 @@ function setupHistory() {
 		deep: true,
 		debounce: 200,
 		clone: (obj) => {
-			// check diff between obj and previous state
-			function logObjectDiff(obj1, obj2, path = []) {
-				if (!obj1 || !obj2) return;
-				for (const key in obj1) {
-					const newPath = path.concat(key);
-
-					if (obj2.hasOwnProperty(key)) {
-						if (typeof obj1[key] === "object" && typeof obj2[key] === "object") {
-							logObjectDiff(obj1[key], obj2[key], newPath);
-						} else {
-							if (obj1[key] !== obj2[key]) {
-								console.log(`Difference at ${newPath.join(".")} - ${obj1[key]} !== ${obj2[key]}`);
-							}
-						}
-					} else {
-						// console.log(`Property ${newPath.join(".")} is missing in the second object`);
-					}
-				}
-
-				for (const key in obj2) {
-					if (!obj1.hasOwnProperty(key)) {
-						// console.log(`Property ${key} is missing in the first object`);
-					}
-				}
-			}
-			logObjectDiff(obj, canvasHistory.value?.last.snapshot);
 			return store.getBlockCopy(obj, true);
 		},
 	});
