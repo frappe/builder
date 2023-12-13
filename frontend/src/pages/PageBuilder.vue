@@ -244,11 +244,13 @@ useEventListener(document, "keydown", (e) => {
 	if (isTargetEditable(e)) return;
 	if (e.key === "z" && e.metaKey && !e.shiftKey && store.activeCanvas?.history.canUndo) {
 		store.activeCanvas?.history.undo();
+		updateSelectedBlocks();
 		e.preventDefault();
 		return;
 	}
 	if (e.key === "z" && e.shiftKey && e.metaKey && store.activeCanvas?.history.canRedo) {
 		store.activeCanvas?.history.redo();
+		updateSelectedBlocks();
 		e.preventDefault();
 		return;
 	}
@@ -491,6 +493,18 @@ const setPage = (pageName: string) => {
 			}
 		});
 	});
+};
+
+const updateSelectedBlocks = () => {
+	const selectedBlocks = blockController.getSelectedBlocks();
+	const activeCanvasBlocks = [store.activeCanvas?.block as Block];
+	for (const block of selectedBlocks) {
+		const blockInActiveCanvas = store.findBlock(block.blockId, activeCanvasBlocks);
+		if (blockInActiveCanvas) {
+			// replace in place
+			selectedBlocks.splice(selectedBlocks.indexOf(block), 1, blockInActiveCanvas);
+		}
+	}
 };
 
 watchEffect(() => {
