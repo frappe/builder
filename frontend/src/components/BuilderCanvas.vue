@@ -70,14 +70,13 @@ import { addPxToNumber, getNumberFromPx } from "@/utils/helpers";
 import {
 	UseRefHistoryReturn,
 	clamp,
-	useDebounceFn,
 	useDebouncedRefHistory,
 	useDropZone,
 	useElementBounding,
 	useEventListener,
 } from "@vueuse/core";
 import { FeatherIcon } from "frappe-ui";
-import { Ref, computed, nextTick, onMounted, provide, reactive, ref, watch, watchEffect } from "vue";
+import { Ref, computed, nextTick, onMounted, provide, reactive, ref, watchEffect } from "vue";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
@@ -384,20 +383,6 @@ const setRootBlock = (newBlock: Block) => {
 	setupHistory();
 };
 
-const debouncedPageSave = useDebounceFn(store.savePage, 500);
-
-watch(
-	() => block.value,
-	() => {
-		if (store.selectedPage && store.autoSave && !store.settingPage && !store.editingComponent) {
-			debouncedPageSave();
-		}
-	},
-	{
-		deep: true,
-	}
-);
-
 defineExpose({
 	setScaleAndTranslate,
 	resetZoom,
@@ -409,5 +394,6 @@ defineExpose({
 	getFirstBlock,
 	block,
 	setRootBlock,
+	canvasProps,
 });
 </script>
