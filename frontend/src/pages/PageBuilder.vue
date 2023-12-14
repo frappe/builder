@@ -1,5 +1,5 @@
 <template>
-	<div class="page-builder h-screen flex-col overflow-hidden bg-gray-100">
+	<div class="page-builder h-screen flex-col overflow-hidden bg-gray-100 dark:bg-zinc-800">
 		<BuilderToolbar class="relative z-30"></BuilderToolbar>
 		<div>
 			<BuilderLeftPanel
@@ -23,7 +23,8 @@
 			<BuilderCanvas
 				v-show="!store.editingComponent"
 				ref="pageCanvas"
-				:block-data="store.getRootBlock()"
+				v-if="store.pageBlocks[0]"
+				:block-data="store.pageBlocks[0]"
 				:canvas-styles="{
 					minHeight: '1000px',
 				}"
@@ -58,9 +59,9 @@ import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { copyToClipboard, isHTMLString, isJSONString, isTargetEditable } from "@/utils/helpers";
-import { useEventListener, useMagicKeys, whenever } from "@vueuse/core";
+import { useDebounceFn, useEventListener, useMagicKeys, whenever } from "@vueuse/core";
 import { toast } from "frappe-ui";
-import { nextTick, onActivated, ref, watchEffect } from "vue";
+import { nextTick, onActivated, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
@@ -79,8 +80,6 @@ window.blockController = blockController;
 
 const pageCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 const componentCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
-
-const pageData = ref<BuilderPage | null>(null);
 
 const showPageScriptPanel = ref(false);
 const keys = useMagicKeys();
@@ -514,6 +513,25 @@ watchEffect(() => {
 		store.activeCanvas = pageCanvas.value;
 	}
 });
+
+const debouncedPageSave = useDebounceFn(store.savePage, 500);
+
+watch(
+	() => pageCanvas.value?.block,
+	() => {
+		if (
+			store.selectedPage &&
+			!store.settingPage &&
+			!store.editingComponent &&
+			!pageCanvas.value?.canvasProps?.settingCanvas
+		) {
+			debouncedPageSave();
+		}
+	},
+	{
+		deep: true,
+	}
+);
 </script>
 
 <style>
