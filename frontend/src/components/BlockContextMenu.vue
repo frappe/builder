@@ -133,6 +133,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			const selectedBlocks = store.selectedBlocks;
 			const blockPosition = Math.min(...selectedBlocks.map(parentBlock.getChildIndex.bind(parentBlock)));
 			const newBlock = parentBlock?.addChild(newBlockObj, blockPosition);
+			newBlock.updateStyles(parentBlock.getStylesCopy());
 
 			// move selected blocks to newBlock
 			selectedBlocks

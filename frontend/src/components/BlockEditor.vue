@@ -42,7 +42,11 @@
 				"
 				:target-block="block"
 				:target="target" />
-			<BoxResizer v-if="showResizer" :targetBlock="block" @resizing="resizing = $event" :target="target" />
+			<BoxResizer
+				v-if="showResizer && !block.isSVG()"
+				:targetBlock="block"
+				@resizing="resizing = $event"
+				:target="(target as HTMLElement)" />
 		</div>
 	</BlockContextMenu>
 </template>
@@ -151,11 +155,14 @@ const getStyleClasses = computed(() => {
 	return classes;
 });
 
-watch(store.builderState.blocks, () => {
-	nextTick(() => {
-		updateTracker.value();
-	});
-});
+watch(
+	() => store.activeCanvas?.block,
+	() => {
+		nextTick(() => {
+			updateTracker.value();
+		});
+	}
+);
 
 const movable = computed(() => {
 	return props.block.getStyle("position") === "absolute";
@@ -194,20 +201,21 @@ const handleDrop = (ev: DragEvent) => {
 const handleDoubleClick = () => {
 	if (props.editable) return;
 	if (props.block.isText() || props.block.isButton() || props.block.isLink()) {
-		store.builderState.editableBlock = props.block;
+		store.editableBlock = props.block;
 	}
 };
 
 const handleMove = (ev: MouseEvent) => {
 	if (store.mode === "text") {
-		store.builderState.editableBlock = props.block;
+		store.editableBlock = props.block;
 	}
 	if (!movable.value || props.block.isRoot()) return;
 	const target = ev.target as HTMLElement;
 	const startX = ev.clientX;
 	const startY = ev.clientY;
-	const startLeft = props.target.offsetLeft;
-	const startTop = props.target.offsetTop;
+	const targetBounds = target.getBoundingClientRect();
+	const startLeft = targetBounds.left;
+	const startTop = targetBounds.top;
 	moving.value = true;
 	guides.showX();
 

@@ -1,15 +1,14 @@
 <template>
-	<div class="page-builder h-screen flex-col overflow-hidden bg-gray-100">
+	<div class="page-builder h-screen flex-col overflow-hidden bg-gray-100 dark:bg-zinc-800">
 		<BuilderToolbar class="relative z-30"></BuilderToolbar>
 		<div>
 			<BuilderLeftPanel
 				v-show="store.showLeftPanel"
 				class="absolute bottom-0 left-0 top-[var(--toolbar-height)] z-20 overflow-auto border-r-[1px] bg-white no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderLeftPanel>
 			<BuilderCanvas
-				ref="componentEditor"
+				ref="componentCanvas"
 				v-if="store.editingComponent"
-				:block="store.getComponentBlock(store.editingComponent)"
-				:canvas-props="store.componentEditorCanvas"
+				:block-data="store.getComponentBlock(store.editingComponent)"
 				:canvas-styles="{
 					width: (store.getComponentBlock(store.editingComponent).getStyle('width') + '').endsWith('px')
 						? '!fit-content'
@@ -23,9 +22,9 @@
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-400 p-10 dark:bg-zinc-700"></BuilderCanvas>
 			<BuilderCanvas
 				v-show="!store.editingComponent"
-				ref="blockEditor"
-				:block="store.builderState.blocks[0]"
-				:canvas-props="store.blockEditorCanvas"
+				ref="pageCanvas"
+				v-if="store.pageBlocks[0]"
+				:block-data="store.pageBlocks[0]"
 				:canvas-styles="{
 					minHeight: '1000px',
 				}"
@@ -62,7 +61,7 @@ import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { copyToClipboard, isHTMLString, isJSONString, isTargetEditable } from "@/utils/helpers";
 import { useDebounceFn, useEventListener, useMagicKeys, whenever } from "@vueuse/core";
 import { toast } from "frappe-ui";
-import { nextTick, onActivated, ref, watch } from "vue";
+import { nextTick, onActivated, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
@@ -79,8 +78,8 @@ declare global {
 window.store = store;
 window.blockController = blockController;
 
-const blockEditor = ref<InstanceType<typeof BuilderCanvas> | null>(null);
-const componentEditor = ref<HTMLElement | null>(null);
+const pageCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
+const componentCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 
 const showPageScriptPanel = ref(false);
 const keys = useMagicKeys();
@@ -109,7 +108,7 @@ useEventListener(document, "copy", (e) => {
 	e.preventDefault();
 	if (store.selectedBlocks.length) {
 		const componentDocuments: BuilderComponent[] = [];
-		store.selectedBlocks.forEach((block) => {
+		store.selectedBlocks.forEach((block: Block) => {
 			const components = block.getUsedComponentNames();
 			components.forEach((componentName) => {
 				const component = store.getComponent(componentName);
@@ -139,7 +138,9 @@ useEventListener(document, "paste", async (e) => {
 		if (file) {
 			store.uploadFile(file).then((res: { fileURL: string; fileName: string }) => {
 				const selectedBlocks = blockController.getSelectedBlocks();
-				const parentBlock = selectedBlocks.length ? selectedBlocks[0] : store.getFirstBlock();
+				const parentBlock = selectedBlocks.length
+					? selectedBlocks[0]
+					: (store.activeCanvas?.getFirstBlock() as Block);
 				let imageBlock = null as unknown as Block;
 				if (parentBlock.isImage()) {
 					imageBlock = parentBlock;
@@ -201,7 +202,7 @@ useEventListener(document, "paste", async (e) => {
 		return;
 	} else {
 		// try pasting figma text styles
-		if (blockController.isText() && text.includes(":") && !store.builderState.editableBlock) {
+		if (blockController.isText() && text.includes(":") && !store.editableBlock) {
 			e.preventDefault();
 			// strip out all comments: line-height: 115%; /* 12.65px */ -> line-height: 115%;
 			const strippedText = text.replace(/\/\*.*?\*\//g, "");
@@ -240,23 +241,26 @@ useEventListener(document, "paste", async (e) => {
 // TODO: Refactor with useMagicKeys
 useEventListener(document, "keydown", (e) => {
 	if (isTargetEditable(e)) return;
-	if (e.key === "z" && e.metaKey && !e.shiftKey && store.history.canUndo) {
-		store.history.undo();
+	if (e.key === "z" && e.metaKey && !e.shiftKey && store.activeCanvas?.history.canUndo) {
+		store.activeCanvas?.history.undo();
+		updateSelectedBlocks();
 		e.preventDefault();
 		return;
 	}
-	if (e.key === "z" && e.shiftKey && e.metaKey && store.history.canRedo) {
-		store.history.redo();
+	if (e.key === "z" && e.shiftKey && e.metaKey && store.activeCanvas?.history.canRedo) {
+		store.activeCanvas?.history.redo();
+		updateSelectedBlocks();
+		e.preventDefault();
 		return;
 	}
 
 	if (e.key === "0" && e.metaKey) {
 		e.preventDefault();
-		if (blockEditor.value) {
+		if (pageCanvas.value) {
 			if (e.shiftKey) {
-				blockEditor.value.setScaleAndTranslate();
+				pageCanvas.value.setScaleAndTranslate();
 			} else {
-				blockEditor.value.resetZoom();
+				pageCanvas.value.resetZoom();
 			}
 		}
 		return;
@@ -264,48 +268,48 @@ useEventListener(document, "keydown", (e) => {
 
 	if (e.key === "ArrowRight" && !blockController.isBLockSelected()) {
 		e.preventDefault();
-		if (blockEditor.value) {
-			blockEditor.value.moveCanvas("right");
+		if (pageCanvas.value) {
+			pageCanvas.value.moveCanvas("right");
 		}
 		return;
 	}
 
 	if (e.key === "ArrowLeft" && !blockController.isBLockSelected()) {
 		e.preventDefault();
-		if (blockEditor.value) {
-			blockEditor.value.moveCanvas("left");
+		if (pageCanvas.value) {
+			pageCanvas.value.moveCanvas("left");
 		}
 		return;
 	}
 
 	if (e.key === "ArrowUp" && !blockController.isBLockSelected()) {
 		e.preventDefault();
-		if (blockEditor.value) {
-			blockEditor.value.moveCanvas("up");
+		if (pageCanvas.value) {
+			pageCanvas.value.moveCanvas("up");
 		}
 		return;
 	}
 
 	if (e.key === "ArrowDown" && !blockController.isBLockSelected()) {
 		e.preventDefault();
-		if (blockEditor.value) {
-			blockEditor.value.moveCanvas("down");
+		if (pageCanvas.value) {
+			pageCanvas.value.moveCanvas("down");
 		}
 		return;
 	}
 
 	if (e.key === "=" && e.metaKey) {
 		e.preventDefault();
-		if (blockEditor.value) {
-			blockEditor.value.zoomIn();
+		if (pageCanvas.value) {
+			pageCanvas.value.zoomIn();
 		}
 		return;
 	}
 
 	if (e.key === "-" && e.metaKey) {
 		e.preventDefault();
-		if (blockEditor.value) {
-			blockEditor.value.zoomOut();
+		if (pageCanvas.value) {
+			pageCanvas.value.zoomOut();
 		}
 		return;
 	}
@@ -413,9 +417,7 @@ useEventListener(document, "keydown", (e) => {
 						});
 						return false;
 					} else {
-						store.history.batch(() => {
-							blocks.splice(i, 1);
-						});
+						blocks.splice(i, 1);
 						nextTick(() => {
 							// select the next sibling block
 							if (blocks.length && blocks[i]) {
@@ -430,7 +432,7 @@ useEventListener(document, "keydown", (e) => {
 			});
 		}
 		for (const block of blockController.getSelectedBlocks()) {
-			findBlockAndRemove([store.getFirstBlock()], block.blockId);
+			findBlockAndRemove([store.activeCanvas?.getFirstBlock() as Block], block.blockId);
 		}
 		clearSelectedComponent();
 		e.stopPropagation();
@@ -453,7 +455,7 @@ useEventListener(document, "keydown", (e) => {
 
 const clearSelectedComponent = () => {
 	blockController.clearSelection();
-	store.builderState.editableBlock = null;
+	store.editableBlock = null;
 	if (document.activeElement instanceof HTMLElement) {
 		document.activeElement.blur();
 	}
@@ -485,22 +487,50 @@ const setPage = (pageName: string) => {
 	webPages.fetchOne.submit(pageName).then((data: BuilderPage[]) => {
 		store.setPage(data[0]);
 		nextTick(() => {
-			if (blockEditor.value) {
-				blockEditor.value.setScaleAndTranslate();
+			if (pageCanvas.value) {
+				pageCanvas.value.setScaleAndTranslate();
 			}
 		});
 	});
 };
 
+const updateSelectedBlocks = () => {
+	const selectedBlocks = blockController.getSelectedBlocks();
+	const activeCanvasBlocks = [store.activeCanvas?.block as Block];
+	for (const block of selectedBlocks) {
+		const blockInActiveCanvas = store.findBlock(block.blockId, activeCanvasBlocks);
+		if (blockInActiveCanvas) {
+			// replace in place
+			selectedBlocks.splice(selectedBlocks.indexOf(block), 1, blockInActiveCanvas);
+		}
+	}
+};
+
+watchEffect(() => {
+	if (componentCanvas.value) {
+		store.activeCanvas = componentCanvas.value;
+	} else {
+		store.activeCanvas = pageCanvas.value;
+	}
+});
+
 const debouncedPageSave = useDebounceFn(store.savePage, 500);
+
 watch(
-	() => store.builderState.blocks,
+	() => pageCanvas.value?.block,
 	() => {
-		if (store.selectedPage && store.autoSave && !store.settingPage) {
+		if (
+			store.selectedPage &&
+			!store.settingPage &&
+			!store.editingComponent &&
+			!pageCanvas.value?.canvasProps?.settingCanvas
+		) {
 			debouncedPageSave();
 		}
 	},
-	{ deep: true }
+	{
+		deep: true,
+	}
 );
 </script>
 

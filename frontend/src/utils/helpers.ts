@@ -206,6 +206,31 @@ function replaceMapKey(map: Map<any, any>, oldKey: string, newKey: string) {
 
 const mapToObject = (map: Map<any, any>) => Object.fromEntries(map.entries());
 
+function logObjectDiff(obj1: { [key: string]: {} }, obj2: { [key: string]: {} }, path = []) {
+	if (!obj1 || !obj2) return;
+	for (const key in obj1) {
+		const newPath = path.concat(key);
+
+		if (obj2.hasOwnProperty(key)) {
+			if (typeof obj1[key] === "object" && typeof obj2[key] === "object") {
+				logObjectDiff(obj1[key], obj2[key], newPath);
+			} else {
+				if (obj1[key] !== obj2[key]) {
+					console.log(`Difference at ${newPath.join(".")} - ${obj1[key]} !== ${obj2[key]}`);
+				}
+			}
+		} else {
+			// console.log(`Property ${newPath.join(".")} is missing in the second object`);
+		}
+	}
+
+	for (const key in obj2) {
+		if (!obj1.hasOwnProperty(key)) {
+			// console.log(`Property ${key} is missing in the first object`);
+		}
+	}
+}
+
 export {
 	HSVToHex,
 	HexToHSV,
@@ -223,6 +248,7 @@ export {
 	isJSONString,
 	isTargetEditable,
 	kebabToCamelCase,
+	logObjectDiff,
 	mapToObject,
 	replaceMapKey,
 	stripExtension,

@@ -21,8 +21,10 @@
 								'border-blue-400 text-gray-900 dark:border-blue-600 dark:text-gray-200': element.isSelected(),
 							}"
 							@click.stop="
+								store.activeCanvas?.history.pause();
 								element.expanded = true;
 								store.selectBlock(element, $event, false);
+								store.activeCanvas?.history.resume();
 							"
 							@mouseover.stop="store.hoveredBlock = element.blockId"
 							@mouseleave.stop="store.hoveredBlock = null">
@@ -137,7 +139,7 @@ watch(
 	() => store.selectedBlocks,
 	() => {
 		if (store.selectedBlocks.length) {
-			store.selectedBlocks.forEach((block) => {
+			store.selectedBlocks.forEach((block: Block) => {
 				if (block) {
 					expandedLayers.value.add(block.blockId);
 					let parentBlock = block.getParentBlock();
