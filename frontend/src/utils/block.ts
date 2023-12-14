@@ -475,7 +475,6 @@ class Block implements BlockOptions {
 		this.setBaseStyle("alignItems", "flex-start");
 		this.setBaseStyle("justifyContent", "flex-start");
 		this.setBaseStyle("flexWrap", "wrap");
-		this.setBaseStyle("width", "fit-content");
 		this.setBaseStyle("height", "fit-content");
 		this.setBaseStyle("gap", "20px");
 		this.isRepeaterBlock = true;
