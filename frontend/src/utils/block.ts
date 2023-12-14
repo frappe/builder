@@ -93,8 +93,10 @@ class Block implements BlockOptions {
 		delete this.attributes.style;
 		this.classes = options.classes || [];
 
-		if (this.isText() && !this.classes.includes("__text_block__")) {
-			this.classes.push("__text_block__");
+		// TODO: remove this
+		if (this.classes.includes("__text_block__")) {
+			// remove this class
+			this.classes = this.classes.filter((c) => c !== "__text_block__");
 		}
 
 		if (this.isRoot()) {
