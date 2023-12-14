@@ -1,5 +1,5 @@
 <template>
-	<component :is="block.getTag()" ref="component" @click.stop @dblclick.stop :key="editor">
+	<component :is="block.getTag()" ref="component" @click.stop @dblclick.stop :key="editor" class="shrink-0">
 		<div v-html="textContent" v-show="!editor && textContent" @click="handleClick"></div>
 		<bubble-menu
 			ref="menu"
