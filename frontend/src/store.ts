@@ -31,6 +31,7 @@ const useStore = defineStore("store", {
 		hoveredBreakpoint: <string | null>null,
 		routeVariables: <{ [key: string]: string }>{},
 		autoSave: true,
+		pageBlocks: <Block[]>[],
 		builderLayout: {
 			rightPanelWidth: 275,
 			leftPanelWidth: 280,
@@ -85,7 +86,7 @@ const useStore = defineStore("store", {
 				this.activeCanvas.setRootBlock(firstBlock);
 			} else {
 				for (let block of blocks) {
-					parent.children.push(this.getBlockInstance(block));
+					parent?.children.push(this.getBlockInstance(block));
 				}
 			}
 		},
@@ -122,6 +123,7 @@ const useStore = defineStore("store", {
 				this.pushBlocks([blocks]);
 			}
 			this.activeCanvas?.setRootBlock(this.getBlockInstance(blocks[0]));
+			this.pageBlocks = [this.getBlockInstance(blocks[0])];
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
 			this.selectedPage = page.name;
@@ -341,7 +343,9 @@ const useStore = defineStore("store", {
 			window.open(`/${route}`, "builder-preview");
 		},
 		savePage() {
-			const pageData = JSON.stringify(this.getPageData());
+			this.pageBlocks = this.getPageData() as Block[];
+			const pageData = JSON.stringify(this.pageBlocks);
+
 			const args = {
 				name: this.selectedPage,
 				draft_blocks: pageData,
