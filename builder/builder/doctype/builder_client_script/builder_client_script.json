@@ -39,7 +39,7 @@
    "table_fieldname": "client_scripts"
   }
  ],
- "modified": "2023-11-26 16:21:39.961506",
+ "modified": "2023-11-27 13:05:19.427647",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Client Script",
@@ -55,6 +55,18 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Website Manager",
    "share": 1,
    "write": 1
   }

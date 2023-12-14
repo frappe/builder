@@ -25,7 +25,7 @@ const tracks = [
 	},
 ];
 
-function setGuides(target: HTMLElement, canvasProps: CanvasProps) {
+function setGuides(target: HTMLElement | SVGElement, canvasProps: CanvasProps) {
 	const threshold = 10;
 	// TODO: Remove canvas dependency
 	const canvasElement = target.closest(".canvas") as HTMLElement;

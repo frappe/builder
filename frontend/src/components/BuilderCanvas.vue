@@ -67,9 +67,16 @@ import webComponent from "@/data/webComponent";
 import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { addPxToNumber, getNumberFromPx } from "@/utils/helpers";
-import { clamp, useDropZone, useElementBounding, useEventListener } from "@vueuse/core";
+import {
+	UseRefHistoryReturn,
+	clamp,
+	useDebouncedRefHistory,
+	useDropZone,
+	useElementBounding,
+	useEventListener,
+} from "@vueuse/core";
 import { FeatherIcon } from "frappe-ui";
-import { PropType, computed, nextTick, onMounted, provide, reactive, ref, watchEffect } from "vue";
+import { Ref, computed, nextTick, onMounted, provide, reactive, ref, watchEffect } from "vue";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
@@ -83,13 +90,9 @@ const showBlocks = ref(false);
 const overlay = ref(null);
 
 const props = defineProps({
-	block: {
+	blockData: {
 		type: Block,
 		default: false,
-	},
-	canvasProps: {
-		type: Object as PropType<CanvasProps>,
-		default: () => ({}),
 	},
 	canvasStyles: {
 		type: Object,
@@ -97,17 +100,45 @@ const props = defineProps({
 	},
 });
 
-provide("canvasProps", props.canvasProps);
+// clone props.block into canvas data to avoid mutating them
+const block = ref(store.getBlockCopy(props.blockData, true)) as Ref<Block>;
+
+const canvasProps = reactive({
+	overlayElement: null,
+	background: "#fff",
+	scale: 1,
+	translateX: 0,
+	translateY: 0,
+	settingCanvas: true,
+	scaling: false,
+	panning: false,
+});
+
+const canvasHistory = ref(null) as Ref<UseRefHistoryReturn<{}, {}>> | Ref<null>;
+
+provide("canvasProps", canvasProps);
 
 onMounted(() => {
-	props.canvasProps.overlayElement = overlay.value;
+	canvasProps.overlayElement = overlay.value;
+	setupHistory();
 	setEvents();
 });
+
+function setupHistory() {
+	canvasHistory.value = useDebouncedRefHistory(block, {
+		capacity: 200,
+		deep: true,
+		debounce: 200,
+		clone: (obj) => {
+			return store.getBlockCopy(obj, true);
+		},
+	});
+}
 
 const { isOverDropZone } = useDropZone(canvasContainer, {
 	onDrop: (files, ev) => {
 		let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
-		let parentBlock = props.block as Block | null;
+		let parentBlock = block.value as Block | null;
 		if (element) {
 			if (element.dataset.blockId) {
 				parentBlock = store.findBlock(element.dataset.blockId) || parentBlock;
@@ -154,20 +185,20 @@ function setEvents() {
 		if (store.mode === "select") {
 			return;
 		} else {
-			store.history.pause();
+			store.activeCanvas?.history.pause();
 			ev.stopPropagation();
 			let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
-			let block = store.getFirstBlock();
+			let block = getFirstBlock();
 			if (element) {
 				if (element.dataset.blockId) {
 					block = store.findBlock(element.dataset.blockId) || block;
 				}
 			}
-			let parentBlock = store.getFirstBlock();
+			let parentBlock = getFirstBlock();
 			if (element.dataset.blockId) {
 				parentBlock = store.findBlock(element.dataset.blockId) || parentBlock;
 				while (parentBlock && !parentBlock.canHaveChildren()) {
-					parentBlock = parentBlock.getParentBlock() || store.getFirstBlock();
+					parentBlock = parentBlock.getParentBlock() || getFirstBlock();
 				}
 			}
 			const child = getBlockTemplate(store.mode);
@@ -177,8 +208,8 @@ function setEvents() {
 			const parentOldPosition = parentBlock.getStyle("position");
 			parentBlock.setBaseStyle("position", parentOldPosition || "relative");
 			const parentElementBounds = parentElement.getBoundingClientRect();
-			let x = (ev.x - parentElementBounds.left) / props.canvasProps.scale;
-			let y = (ev.y - parentElementBounds.top) / props.canvasProps.scale;
+			let x = (ev.x - parentElementBounds.left) / canvasProps.scale;
+			let y = (ev.y - parentElementBounds.top) / canvasProps.scale;
 			const parentWidth = getNumberFromPx(getComputedStyle(parentElement).width);
 			const parentHeight = getNumberFromPx(getComputedStyle(parentElement).height);
 
@@ -197,8 +228,8 @@ function setEvents() {
 					return;
 				} else {
 					mouseMoveEvent.preventDefault();
-					let width = (mouseMoveEvent.clientX - initialX) / props.canvasProps.scale;
-					let height = (mouseMoveEvent.clientY - initialY) / props.canvasProps.scale;
+					let width = (mouseMoveEvent.clientX - initialX) / canvasProps.scale;
+					let height = (mouseMoveEvent.clientY - initialY) / canvasProps.scale;
 					width = clamp(width, 0, parentWidth);
 					height = clamp(height, 0, parentHeight);
 					childBlock.setBaseStyle("width", addPxToNumber(width));
@@ -215,7 +246,7 @@ function setEvents() {
 					childBlock.setBaseStyle("top", "auto");
 					childBlock.setBaseStyle("left", "auto");
 					if (store.mode === "text" || store.mode === "html") {
-						store.history.resume();
+						store.activeCanvas?.history.resume(true);
 					}
 					if (getNumberFromPx(childBlock.getStyle("width")) < 100) {
 						childBlock.setBaseStyle("width", "100%");
@@ -227,7 +258,7 @@ function setEvents() {
 					setTimeout(() => {
 						store.mode = "select";
 					}, 50);
-					store.history.resume();
+					store.activeCanvas?.history.resume(true);
 				},
 				{ once: true }
 			);
@@ -252,71 +283,63 @@ const setScaleAndTranslate = async () => {
 	const containerWidth = containerBound.width;
 	const containerHeight = containerBound.height;
 
-	const canvasWidth = canvasBound.width / props.canvasProps.scale;
-	const canvasHeight = canvasBound.height / props.canvasProps.scale;
+	const canvasWidth = canvasBound.width / canvasProps.scale;
+	const canvasHeight = canvasBound.height / canvasProps.scale;
 
-	props.canvasProps.scale = Math.min(
+	canvasProps.scale = Math.min(
 		containerWidth / (canvasWidth + paddingX * 2),
 		containerHeight / (canvasHeight + paddingY * 2)
 	);
 
-	props.canvasProps.translateX = 0;
-	props.canvasProps.translateY = 0;
+	canvasProps.translateX = 0;
+	canvasProps.translateY = 0;
 	await nextTick();
-	const scale = props.canvasProps.scale;
+	const scale = canvasProps.scale;
 	canvasBound.update();
 	const diffY = containerBound.top - canvasBound.top + paddingY * scale;
 	if (diffY !== 0) {
-		props.canvasProps.translateY = diffY / scale;
+		canvasProps.translateY = diffY / scale;
 	}
-	props.canvasProps.settingCanvas = false;
+	canvasProps.settingCanvas = false;
 };
 
 onMounted(() => {
 	setScaleAndTranslate();
 	const canvasContainerEl = canvasContainer.value as unknown as HTMLElement;
 	const canvasEl = canvas.value as unknown as HTMLElement;
-	setPanAndZoom(props.canvasProps, canvasEl, canvasContainerEl);
+	setPanAndZoom(canvasProps, canvasEl, canvasContainerEl);
 	showBlocks.value = true;
 });
 
 const resetZoom = () => {
-	props.canvasProps.scale = 1;
-	props.canvasProps.translateX = 0;
-	props.canvasProps.translateY = 0;
+	canvasProps.scale = 1;
+	canvasProps.translateX = 0;
+	canvasProps.translateY = 0;
 };
 
 const moveCanvas = (direction: "up" | "down" | "right" | "left") => {
 	if (direction === "up") {
-		props.canvasProps.translateY -= 20;
+		canvasProps.translateY -= 20;
 	} else if (direction === "down") {
-		props.canvasProps.translateY += 20;
+		canvasProps.translateY += 20;
 	} else if (direction === "right") {
-		props.canvasProps.translateX += 20;
+		canvasProps.translateX += 20;
 	} else if (direction === "left") {
-		props.canvasProps.translateX -= 20;
+		canvasProps.translateX -= 20;
 	}
 };
 
 const zoomIn = () => {
-	props.canvasProps.scale += 0.1;
+	canvasProps.scale += 0.1;
 };
 
 const zoomOut = () => {
-	props.canvasProps.scale -= 0.1;
+	canvasProps.scale -= 0.1;
 };
-
-defineExpose({
-	setScaleAndTranslate,
-	resetZoom,
-	moveCanvas,
-	zoomIn,
-	zoomOut,
-});
 
 watchEffect(() => {
 	store.deviceBreakpoints.map((b) => b.visible);
-	if (props.canvasProps.settingCanvas) {
+	if (canvasProps.settingCanvas) {
 		return;
 	}
 	setScaleAndTranslate();
@@ -346,4 +369,31 @@ const handleClick = (ev: MouseEvent) => {
 		store.clearSelection();
 	}
 };
+
+const clearCanvas = () => {
+	block.value = store.getRootBlock();
+};
+
+const getFirstBlock = () => {
+	return block.value;
+};
+
+const setRootBlock = (newBlock: Block) => {
+	block.value = newBlock;
+	setupHistory();
+};
+
+defineExpose({
+	setScaleAndTranslate,
+	resetZoom,
+	moveCanvas,
+	zoomIn,
+	zoomOut,
+	history: canvasHistory as Ref<UseRefHistoryReturn<{}, {}>>,
+	clearCanvas,
+	getFirstBlock,
+	block,
+	setRootBlock,
+	canvasProps,
+});
 </script>

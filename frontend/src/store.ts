@@ -1,7 +1,8 @@
-import { UseRefHistoryReturn, useDebouncedRefHistory } from "@vueuse/core";
+import { UseRefHistoryReturn } from "@vueuse/core";
 import { FileUploadHandler, toast } from "frappe-ui";
-import { defineStore, storeToRefs } from "pinia";
-import { reactive } from "vue";
+import { defineStore } from "pinia";
+import { nextTick, reactive } from "vue";
+import BuilderCanvas from "./components/BuilderCanvas.vue";
 import webComponent from "./data/webComponent";
 import { webPages } from "./data/webPage";
 import { BuilderComponent } from "./types/Builder/BuilderComponent";
@@ -12,10 +13,7 @@ import { stripExtension } from "./utils/helpers";
 
 const useStore = defineStore("store", {
 	state: () => ({
-		builderState: {
-			editableBlock: <Block | null>null,
-			blocks: <Block[]>[reactive(new Block(getBlockTemplate("body")))],
-		},
+		editableBlock: <Block | null>null,
 		settingPage: false,
 		editingComponent: <string | null>null,
 		editingMode: <EditingMode>"page",
@@ -24,150 +22,29 @@ const useStore = defineStore("store", {
 		pageData: <{ [key: string]: [] }>{},
 		mode: <BuilderMode>"select", // check setEvents in BuilderCanvas for usage
 		selectedBlocks: <Block[]>[],
+		activeCanvas: <InstanceType<typeof BuilderCanvas> | null>null,
 		history: {
 			pause: () => {},
 			resume: () => {},
 		} as UseRefHistoryReturn<{}, {}>,
-		usedComponents: {},
 		hoveredBlock: <string | null>null,
 		hoveredBreakpoint: <string | null>null,
 		routeVariables: <{ [key: string]: string }>{},
 		autoSave: true,
+		pageBlocks: <Block[]>[],
 		builderLayout: {
 			rightPanelWidth: 275,
 			leftPanelWidth: 280,
 			scriptEditorHeight: 300,
 		},
-		flow: [
-			{
-				name: "Row",
-				styleKey: "flexDirection",
-				styleValue: "row",
-				icon: "columns",
-			},
-			{
-				name: "Column",
-				styleKey: "flexDirection",
-				styleValue: "column",
-				icon: "credit-card",
-			},
-		],
-		alignments: [
-			{
-				name: "Left",
-				styleKey: "justifyContent",
-				styleValue: "flex-start",
-				icon: "align-left",
-			},
-			{
-				name: "Center",
-				styleKey: "justifyContent",
-				styleValue: "center",
-				icon: "align-center",
-			},
-			{
-				name: "Right",
-				styleKey: "justifyContent",
-				styleValue: "flex-end",
-				icon: "align-right",
-			},
-			{
-				name: "Justify",
-				styleKey: "justifyContent",
-				styleValue: "space-between",
-				icon: "align-justify",
-			},
-		],
-		verticalAlignments: [
-			{
-				name: "Top",
-				styleKey: "alignItems",
-				styleValue: "flex-start",
-				icon: "arrow-up",
-			},
-			{
-				name: "Middle",
-				styleKey: "alignItems",
-				styleValue: "center",
-				icon: "minus",
-			},
-			{
-				name: "Bottom",
-				styleKey: "alignItems",
-				styleValue: "flex-end",
-				icon: "arrow-down",
-			},
-		],
 		pageName: "Home",
 		route: "/",
-		defaults: {
-			lastFontSize: "16px",
-		},
-		pastelCssColors: [
-			"#FFFFFF",
-			"#F5FFFA",
-			"#F8F8FF",
-			"#F0F8FF",
-			"#F5F5DC",
-			"#FFE4C4",
-			"#FFEBCD",
-			"#FFDEAD",
-			"#FFC1C1",
-			"#FFB6C1",
-			"#FFA07A",
-			"#FF8C00",
-			"#FF7F50",
-			"#FF69B4",
-			"#FF6347",
-			"#FDB813",
-			"#FDAB9F",
-			"#FDA50F",
-			"#F49AC2",
-			"#FFB347",
-			"#FFD700",
-			"#ADFF2F",
-			"#87CEFA",
-			"#00BFFF",
-			"#ADD8E6",
-			"#B0E0E6",
-			"#5F9EA0",
-			"#FDD5B1",
-			"#FCCDE3",
-			"#FCC2D9",
-			"#FCB4D5",
-			"#FBB5A3",
-			"#FBB917",
-			"#FBB972",
-			"#FBB9AC",
-			"#FBCEB1",
-			"linear-gradient(120deg, #f093fb 0%, #f5576c 100%)",
-			"linear-gradient(to top, #a18cd1 0%, #fbc2eb 100%)",
-			"linear-gradient(to top, #a8edea 0%, #fed6e3 100%)",
-			"linear-gradient(to top, #96fbc4 0%, #f9f586 100%)",
-			"linear-gradient(to top, #9795f0 0%, #fbc8d4 100%)",
-			"linear-gradient(-60deg, #16a085 0%, #f4d03f 100%)",
-			"linear-gradient( 135deg, #81FFEF 10%, #F067B4 100%)",
-			"black",
-			"transparent",
-		],
 		guides: {
 			showX: false,
 			showY: false,
 			x: 0,
 			y: 0,
 		},
-		textColors: [
-			"#000000",
-			"#424242",
-			"#636363",
-			"#808080",
-			"#9C9C94",
-			"#C0C0C0",
-			"#CEC6CE",
-			"#EFEFEF",
-			"#F7F7F7",
-			"#FFFFFF",
-		],
 		deviceBreakpoints: [
 			{
 				icon: "monitor",
@@ -195,56 +72,26 @@ const useStore = defineStore("store", {
 		rightPanelActiveTab: <RightSidebarTabOption>"Properties",
 		showRightPanel: <boolean>true,
 		showLeftPanel: <boolean>true,
-		blockEditorCanvas: {
-			scale: 0.5,
-			translateX: 0,
-			translateY: 0,
-			startX: 0,
-			startY: 0,
-			background: "",
-			scaling: false,
-			panning: false,
-			settingCanvas: true,
-			overlayElement: <HTMLElement | null>null,
-		},
-		componentEditorCanvas: {
-			scale: 0.5,
-			translateX: 0,
-			translateY: 0,
-			startX: 0,
-			startY: 0,
-			background: "",
-			scaling: false,
-			panning: false,
-			settingCanvas: false,
-			overlayElement: <HTMLElement | null>null,
-		},
 		copiedStyle: <StyleCopy | null>null,
 		components: <BlockComponent[]>[],
 	}),
 	actions: {
 		clearBlocks() {
-			this.builderState.blocks = [];
-			this.builderState.blocks.push(this.getRootBlock());
+			this.activeCanvas?.clearCanvas();
 		},
 		pushBlocks(blocks: BlockOptions[]) {
-			let parent = this.builderState.blocks[0];
-			if (this.editingComponent) {
-				parent = this.getComponentBlock(this.editingComponent);
-			}
+			let parent = this.activeCanvas?.getFirstBlock();
 			let firstBlock = this.getBlockInstance(blocks[0]);
-			if (firstBlock.isRoot() && !this.editingComponent) {
-				this.builderState.blocks = [firstBlock];
+			if (firstBlock.isRoot() && !this.editingComponent && this.activeCanvas?.block) {
+				this.activeCanvas.setRootBlock(firstBlock);
 			} else {
 				for (let block of blocks) {
-					parent.children.push(this.getBlockInstance(block));
+					parent?.children.push(this.getBlockInstance(block));
 				}
 			}
 		},
 		getFirstBlock() {
-			return this.editingComponent
-				? this.getComponentBlock(this.editingComponent)
-				: this.builderState.blocks[0];
+			return this.activeCanvas?.getFirstBlock();
 		},
 		getBlockCopy(block: BlockOptions | Block, retainId = false): Block {
 			let b = JSON.parse(JSON.stringify(block));
@@ -263,7 +110,7 @@ const useStore = defineStore("store", {
 			return this.getBlockInstance(getBlockTemplate("body"));
 		},
 		getPageData() {
-			return this.builderState.blocks;
+			return [this.activeCanvas?.getFirstBlock()];
 		},
 		async setPage(page: BuilderPage) {
 			this.settingPage = true;
@@ -271,18 +118,21 @@ const useStore = defineStore("store", {
 				return;
 			}
 			const blocks = JSON.parse(page.draft_blocks || page.blocks || "[]");
-			// clear blocks
 			this.editPage();
-			this.clearBlocks();
-			this.pushBlocks(blocks);
+			if (!Array.isArray(blocks)) {
+				this.pushBlocks([blocks]);
+			}
+			this.activeCanvas?.setRootBlock(this.getBlockInstance(blocks[0]));
+			this.pageBlocks = [this.getBlockInstance(blocks[0])];
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
 			this.selectedPage = page.name;
 			const variables = localStorage.getItem(`${page.name}:routeVariables`) || "{}";
 			this.routeVariables = JSON.parse(variables);
 			this.setPageData();
-			this.setupHistory();
-			setTimeout(() => (this.settingPage = false));
+			nextTick(() => {
+				this.settingPage = false;
+			});
 		},
 		getImageBlock(imageSrc: string, imageAlt: string = "") {
 			imageAlt = stripExtension(imageAlt);
@@ -299,7 +149,7 @@ const useStore = defineStore("store", {
 		},
 		findBlock(blockId: string, blocks?: Array<Block>): Block | null {
 			if (!blocks) {
-				blocks = this.builderState.blocks;
+				blocks = [this.activeCanvas?.getFirstBlock() as Block];
 			}
 			for (const block of blocks) {
 				if (block.blockId === blockId) {
@@ -316,7 +166,11 @@ const useStore = defineStore("store", {
 		},
 		findParentBlock(blockId: string, blocks?: Array<Block>): Block | null {
 			if (!blocks) {
-				blocks = [this.getFirstBlock()];
+				const firstBlock = this.activeCanvas?.getFirstBlock() as Block;
+				if (!firstBlock) {
+					return null;
+				}
+				blocks = [firstBlock];
 			}
 			for (const block of blocks) {
 				if (block.children) {
@@ -334,6 +188,7 @@ const useStore = defineStore("store", {
 			return null;
 		},
 		selectBlock(block: Block, e: MouseEvent | null, scrollIntoView = true) {
+			this.activeCanvas?.history?.pause();
 			if (this.settingPage) {
 				return;
 			}
@@ -348,7 +203,8 @@ const useStore = defineStore("store", {
 					.querySelector(`[data-block-layer-id="${block.blockId}"]`)
 					?.scrollIntoView({ behavior: "instant", block: "center" });
 			}
-			this.builderState.editableBlock = null;
+			this.activeCanvas?.history?.resume();
+			this.editableBlock = null;
 		},
 		getBlockInstance(options: BlockOptions) {
 			return reactive(new Block(options));
@@ -375,7 +231,7 @@ const useStore = defineStore("store", {
 				}
 				return false;
 			};
-			for (const block of this.builderState.blocks) {
+			for (const block of this.activeCanvas?.getFirstBlock()?.children || []) {
 				if (checkComponent(block)) {
 					return true;
 				}
@@ -385,14 +241,14 @@ const useStore = defineStore("store", {
 		editPage(saveComponent = false) {
 			this.clearSelection();
 			this.editingMode = "page";
-			this.builderState.editableBlock = null;
+			this.editableBlock = null;
 
 			if (this.editingComponent) {
 				if (saveComponent) {
 					webComponent.setValue
 						.submit({
 							name: this.editingComponent,
-							block: this.getComponentBlock(this.editingComponent),
+							block: this.activeCanvas?.getFirstBlock(),
 						})
 						.then(() => {
 							toast({
@@ -439,19 +295,6 @@ const useStore = defineStore("store", {
 				return componentId;
 			}
 			return componentObj.component_name as Block;
-		},
-		setupHistory() {
-			const { builderState } = storeToRefs(this);
-			this.history = useDebouncedRefHistory(builderState, {
-				capacity: 200,
-				deep: true,
-				clone: (obj) => {
-					let newObj = Object.assign({}, obj);
-					newObj.blocks = obj.blocks.map((val: Block) => this.getBlockCopy(val, true));
-					return newObj;
-				},
-				debounce: 200,
-			}) as unknown as typeof this.history;
 		},
 		uploadFile(file: File) {
 			const uploader = new FileUploadHandler();
@@ -500,7 +343,9 @@ const useStore = defineStore("store", {
 			window.open(`/${route}`, "builder-preview");
 		},
 		savePage() {
-			const pageData = JSON.stringify(this.getPageData());
+			this.pageBlocks = this.getPageData() as Block[];
+			const pageData = JSON.stringify(this.pageBlocks);
+
 			const args = {
 				name: this.selectedPage,
 				draft_blocks: pageData,

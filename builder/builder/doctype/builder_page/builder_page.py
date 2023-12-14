@@ -163,6 +163,10 @@ def get_block_html(blocks, page_data={}):
 			if not element:
 				return ""
 
+			classes = block.get("classes", [])
+			if element in  ("span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6", "label", "a"):
+				classes.append("__text_block__")
+
 			# temp fix: since p inside p is illegal
 			if element in ["p", "__raw_html__"]:
 				element = "div"
@@ -174,7 +178,7 @@ def get_block_html(blocks, page_data={}):
 
 			tag = soup.new_tag(element)
 			tag.attrs = block.get("attributes", {})
-			classes = block.get("classes", [])
+
 			if block.get("baseStyles", {}):
 				style_class = f"frappe-builder-{frappe.generate_hash(length=8)}"
 				base_styles = block.get("baseStyles", {})
