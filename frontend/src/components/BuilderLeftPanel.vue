@@ -38,11 +38,7 @@
 			<BuilderComponents class="p-4 pt-3" />
 		</div>
 		<div v-show="store.leftPanelActiveTab === 'Layers'">
-			<BlockLayers
-				class="p-4 pt-3"
-				:blocks="[store.activeCanvas?.getFirstBlock()]"
-				v-if="!store.editingComponent && store.activeCanvas?.getFirstBlock()"
-				v-show="store.editingMode == 'page'" />
+			<BlockLayers class="p-4 pt-3" :blocks="store.pageBlocks" v-show="store.editingMode == 'page'" />
 			<BlockLayers
 				class="p-4 pt-3"
 				:blocks="[store.activeCanvas?.getFirstBlock()]"
