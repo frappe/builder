@@ -75,6 +75,7 @@ const savePageDataScript = ({ close }: { close: () => void }) => {
 }
 [id^="headlessui-dialog-panel"] > div {
 	@apply dark:bg-zinc-800;
+	@apply dark:text-zinc-50;
 }
 
 [id^="headlessui-dialog-panel"] header h3 {
@@ -83,5 +84,36 @@ const savePageDataScript = ({ close }: { close: () => void }) => {
 
 [id^="headlessui-dialog-panel"] button svg path {
 	@apply dark:fill-white;
+}
+[id^="headlessui-dialog-panel"] button {
+	@apply dark:text-white;
+	@apply dark:hover:bg-zinc-700;
+	@apply dark:bg-zinc-900;
+}
+[id^="headlessui-dialog-panel"] input {
+	@apply dark:bg-zinc-900;
+	@apply dark:border-zinc-800;
+}
+
+[id^="headlessui-dialog-panel"] input:focus {
+	@apply dark:ring-0;
+	@apply dark:border-zinc-700;
+}
+
+[id^="headlessui-dialog-panel"] input[type="checkbox"]:checked {
+	@apply dark:bg-zinc-700;
+}
+
+[id^="headlessui-dialog-panel"] input[type="checkbox"]:focus {
+	@apply dark:ring-zinc-700;
+	@apply dark:ring-offset-0;
+}
+
+[id^="headlessui-dialog-panel"] input[type="checkbox"]:hover {
+	@apply dark:bg-zinc-900;
+}
+
+[id^="headlessui-dialog-panel"] label > span {
+	@apply dark:text-gray-50;
 }
 </style>
