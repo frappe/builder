@@ -120,7 +120,7 @@ watchEffect(() => {
 	store.showRightPanel;
 	store.showLeftPanel;
 	store.activeBreakpoint;
-	store.deviceBreakpoints.map((bp) => bp.visible);
+	canvasProps.breakpoints.map((bp) => bp.visible);
 	nextTick(() => {
 		updateTracker.value();
 	});

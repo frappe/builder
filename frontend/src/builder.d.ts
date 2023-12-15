@@ -70,6 +70,14 @@ declare type RightSidebarTabOption = "Properties" | "Data" | "Settings";
 
 declare type BuilderMode = "select" | "text" | "container" | "image" | "html";
 
+declare interface Breakpoint {
+	icon: string;
+	device: string;
+	displayName: string;
+	width: number;
+	visible: boolean;
+}
+
 declare interface CanvasProps {
 	scale: number;
 	translateX: number;
@@ -79,6 +87,7 @@ declare interface CanvasProps {
 	background: string;
 	settingCanvas: boolean;
 	overlayElement: HTMLElement | null;
+	breakpoints: Breakpoint[];
 }
 
 declare type EditingMode = "page" | "component";
