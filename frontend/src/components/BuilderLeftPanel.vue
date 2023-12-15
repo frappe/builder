@@ -38,27 +38,34 @@
 			<BuilderComponents class="p-4 pt-3" />
 		</div>
 		<div v-show="store.leftPanelActiveTab === 'Layers'">
-			<BlockLayers class="p-4 pt-3" :blocks="store.pageBlocks" v-show="store.editingMode == 'page'" />
 			<BlockLayers
 				class="p-4 pt-3"
-				:blocks="[store.activeCanvas?.getFirstBlock()]"
-				v-if="store.editingComponent && store.activeCanvas?.getFirstBlock()" />
+				v-if="pageCanvas"
+				:blocks="[pageCanvas?.getFirstBlock() as Block]"
+				v-show="store.editingMode == 'page'" />
+			<BlockLayers
+				class="p-4 pt-3"
+				:blocks="[componentCanvas?.getFirstBlock()]"
+				v-if="store.editingComponent && componentCanvas" />
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { createResource } from "frappe-ui";
-import { Ref, ref } from "vue";
+import { Ref, inject, ref } from "vue";
 import useStore from "../store";
 import BlockLayers from "./BlockLayers.vue";
 import BuilderComponents from "./BuilderComponents.vue";
 import PanelResizer from "./PanelResizer.vue";
 
-import { useRouter } from "vue-router";
+import Block from "@/utils/block";
+import BuilderCanvas from "./BuilderCanvas.vue";
+
+const pageCanvas = inject("pageCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
+const componentCanvas = inject("componentCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
 
 const prompt = ref(null) as unknown as Ref<string>;
-const router = useRouter();
 
 const store = useStore();
 const generating = ref(false);

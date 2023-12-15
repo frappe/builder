@@ -61,7 +61,7 @@ import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { copyToClipboard, isHTMLString, isJSONString, isTargetEditable } from "@/utils/helpers";
 import { useDebounceFn, useEventListener, useMagicKeys, whenever } from "@vueuse/core";
 import { toast } from "frappe-ui";
-import { nextTick, onActivated, ref, watch, watchEffect } from "vue";
+import { nextTick, onActivated, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
@@ -84,6 +84,9 @@ const componentCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 const showPageScriptPanel = ref(false);
 const keys = useMagicKeys();
 const CtrlBacktick = keys["Ctrl+`"];
+
+provide("pageCanvas", pageCanvas);
+provide("componentCanvas", componentCanvas);
 
 whenever(CtrlBacktick, () => {
 	showPageScriptPanel.value = !showPageScriptPanel.value;
