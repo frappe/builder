@@ -298,7 +298,7 @@ class Block implements BlockOptions {
 		return this.originalElement === "body";
 	}
 	getTag(): string {
-		if (this.isButton()) {
+		if (this.isButton() || this.isLink()) {
 			return "div";
 		}
 		return this.getElement() || "div";
@@ -596,7 +596,7 @@ class Block implements BlockOptions {
 		if (parentBlock) {
 			child = parentBlock.addChildAfter(blockCopy, this);
 		} else {
-			child = store.activeCanvas?.getFirstBlock().addChild(blockCopy);
+			child = store.activeCanvas?.getFirstBlock().addChild(blockCopy) as Block;
 		}
 		nextTick(() => {
 			if (child) {
@@ -730,10 +730,6 @@ class Block implements BlockOptions {
 				marginLeft || margin
 			}`;
 		}
-	}
-	getVariableValue(variable: string) {
-		const store = useStore();
-		return store.getVariableValue(variable);
 	}
 }
 
