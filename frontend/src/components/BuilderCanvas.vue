@@ -15,7 +15,7 @@
 				<div
 					v-show="!canvasProps.scaling && !canvasProps.panning"
 					class="w-auto cursor-pointer p-2"
-					v-for="breakpoint in store.deviceBreakpoints"
+					v-for="breakpoint in canvasProps.breakpoints"
 					:key="breakpoint.device"
 					@click.stop="breakpoint.visible = !breakpoint.visible">
 					<FeatherIcon
@@ -112,6 +112,29 @@ const canvasProps = reactive({
 	settingCanvas: true,
 	scaling: false,
 	panning: false,
+	breakpoints: [
+		{
+			icon: "monitor",
+			device: "desktop",
+			displayName: "Desktop",
+			width: 1400,
+			visible: true,
+		},
+		{
+			icon: "tablet",
+			device: "tablet",
+			displayName: "Tablet",
+			width: 800,
+			visible: false,
+		},
+		{
+			icon: "smartphone",
+			device: "mobile",
+			displayName: "Mobile",
+			width: 420,
+			visible: false,
+		},
+	],
 });
 
 const canvasHistory = ref(null) as Ref<UseRefHistoryReturn<{}, {}>> | Ref<null>;
@@ -171,7 +194,7 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 });
 
 const visibleBreakpoints = computed(() => {
-	return store.deviceBreakpoints.filter(
+	return canvasProps.breakpoints.filter(
 		(breakpoint) => breakpoint.visible || breakpoint.device === "desktop"
 	);
 });
@@ -338,7 +361,7 @@ const zoomOut = () => {
 };
 
 watchEffect(() => {
-	store.deviceBreakpoints.map((b) => b.visible);
+	canvasProps.breakpoints.map((b) => b.visible);
 	if (canvasProps.settingCanvas) {
 		return;
 	}
