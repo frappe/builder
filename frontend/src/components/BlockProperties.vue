@@ -213,7 +213,21 @@
 				label="Tag"
 				:modelValue="blockController.getKeyValue('element')"
 				type="select"
-				:options="['span', 'div', 'section', 'button', 'p', 'h1', 'h2', 'h3', 'a', 'input', 'hr']"
+				:options="[
+					'span',
+					'div',
+					'section',
+					'button',
+					'p',
+					'h1',
+					'h2',
+					'h3',
+					'a',
+					'input',
+					'hr',
+					'form',
+					'textarea',
+				]"
 				@update:modelValue="(val) => blockController.setKeyValue('element', val)" />
 			<InlineInput
 				label="Input Type"
