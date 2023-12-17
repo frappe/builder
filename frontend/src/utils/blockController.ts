@@ -90,6 +90,10 @@ const blockController = {
 	},
 	setKeyValue: (key: "element" | "innerHTML" | "visibilityCondition", value: string) => {
 		store.selectedBlocks.forEach((block) => {
+			if (key === "element" && block.blockName === "container") {
+				// reset blockName since it will not be a container anymore
+				delete block.blockName;
+			}
 			block[key] = value;
 		});
 	},
