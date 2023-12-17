@@ -353,11 +353,11 @@ const moveCanvas = (direction: "up" | "down" | "right" | "left") => {
 };
 
 const zoomIn = () => {
-	canvasProps.scale += 0.1;
+	canvasProps.scale = Math.min(canvasProps.scale + 0.1, 10);
 };
 
 const zoomOut = () => {
-	canvasProps.scale -= 0.1;
+	canvasProps.scale = Math.max(canvasProps.scale - 0.1, 0.1);
 };
 
 watchEffect(() => {
