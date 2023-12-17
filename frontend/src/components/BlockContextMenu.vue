@@ -133,7 +133,12 @@ const contextMenuOptions: ContextMenuOption[] = [
 			const selectedBlocks = store.selectedBlocks;
 			const blockPosition = Math.min(...selectedBlocks.map(parentBlock.getChildIndex.bind(parentBlock)));
 			const newBlock = parentBlock?.addChild(newBlockObj, blockPosition);
-			newBlock.updateStyles(parentBlock.getStylesCopy());
+
+			newBlock.setStyle("display", parentBlock.getStyle("display") || "flex");
+			newBlock.setStyle("flex-direction", parentBlock.getStyle("flex-direction") || "column");
+			newBlock.setStyle("align-items", parentBlock.getStyle("align-items") || "center");
+			newBlock.setStyle("width", parentBlock.getStyle("width") || "fit-content");
+			newBlock.setStyle("height", parentBlock.getStyle("height") || "fit-content");
 
 			// move selected blocks to newBlock
 			selectedBlocks
