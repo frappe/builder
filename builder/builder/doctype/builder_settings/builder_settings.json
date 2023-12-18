@@ -5,19 +5,41 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "global_script"
+  "script",
+  "script_public_url",
+  "style",
+  "style_public_url"
  ],
  "fields": [
   {
-   "fieldname": "global_script",
+   "description": "Global script that will be loaded with every page built with Frappe Builder",
+   "fieldname": "script",
    "fieldtype": "Code",
-   "label": "Global Script"
+   "label": "Script",
+   "options": "JS"
+  },
+  {
+   "description": "Global style that will be loaded with every page built with Frappe Builder",
+   "fieldname": "style",
+   "fieldtype": "Code",
+   "label": "Style",
+   "options": "CSS"
+  },
+  {
+   "fieldname": "script_public_url",
+   "fieldtype": "Read Only",
+   "label": "Script Public URL"
+  },
+  {
+   "fieldname": "style_public_url",
+   "fieldtype": "Read Only",
+   "label": "Style Public URL"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2023-11-08 16:05:45.473724",
+ "modified": "2023-12-18 15:50:24.418583",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Settings",

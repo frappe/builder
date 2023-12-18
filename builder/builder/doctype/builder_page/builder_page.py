@@ -116,6 +116,12 @@ class BuilderPage(WebsiteGenerator):
 			else:
 				context.setdefault("styles", []).append(script_doc.public_url)
 
+		builder_settings = frappe.get_cached_doc("Builder Settings", "Builder Settings")
+		if builder_settings.script:
+			context.setdefault("scripts", []).append(builder_settings.script_public_url)
+		if builder_settings.style:
+			context.setdefault("styles", []).append(builder_settings.style_public_url)
+
 	@frappe.whitelist()
 	def get_page_data(self, args=None):
 		if args:
