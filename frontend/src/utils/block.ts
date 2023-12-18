@@ -57,6 +57,7 @@ class Block implements BlockOptions {
 	referenceBlockId?: string;
 	isRepeaterBlock?: boolean;
 	visibilityCondition?: string;
+	customAttributes?: BlockAttributeMap;
 	constructor(options: BlockOptions) {
 		this.element = options.element;
 		this.innerHTML = options.innerHTML;
@@ -85,6 +86,7 @@ class Block implements BlockOptions {
 
 		this.baseStyles = reactive(options.styles || options.baseStyles || {});
 		this.rawStyles = reactive(options.rawStyles || {});
+		this.customAttributes = reactive(options.customAttributes || {});
 		this.mobileStyles = reactive(options.mobileStyles || {});
 		this.tabletStyles = reactive(options.tabletStyles || {});
 		this.attributes = reactive(options.attributes || {});

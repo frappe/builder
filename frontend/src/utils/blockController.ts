@@ -113,6 +113,14 @@ const blockController = {
 			block.rawStyles = rawStyles;
 		});
 	},
+	getCustomAttributes: () => {
+		return blockController.isBLockSelected() && store.selectedBlocks[0].customAttributes;
+	},
+	setCustomAttributes: (customAttributes: BlockAttributeMap) => {
+		store.selectedBlocks.forEach((block) => {
+			block.customAttributes = customAttributes;
+		});
+	},
 	getParentBlock: () => {
 		return blockController.isBLockSelected() && store.selectedBlocks[0].getParentBlock();
 	},

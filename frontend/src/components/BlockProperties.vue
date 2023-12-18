@@ -326,35 +326,15 @@
 				:modelValue="blockController.getDataKey('property')"
 				@update:modelValue="(val) => blockController.setDataKey('property', val)" />
 		</CollapsibleSection>
+		<CollapsibleSection sectionName="Custom Attributes">
+			<ObjectEditor
+				:obj="(blockController.getCustomAttributes() as Record<string, string>)"
+				@update:obj="(obj) => blockController.setCustomAttributes(obj)"></ObjectEditor>
+		</CollapsibleSection>
 		<CollapsibleSection sectionName="Raw Style">
-			<div v-for="(value, key) in blockController.getRawStyles()" :key="key" class="flex gap-2">
-				<Input
-					placeholder="Property"
-					:modelValue="key"
-					@update:modelValue="
-						(val: string) => {
-							replaceKey(key, val)
-						}
-					"
-					class="rounded-md text-sm text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
-				<Input
-					placeholder="Value"
-					:modelValue="value"
-					@update:modelValue="(val: string) => {
-							updateRawStyle(key, val)
-						}"
-					class="rounded-md text-sm text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
-				<Button
-					variant="outline"
-					icon="x"
-					class="p-2 dark:bg-zinc-800 dark:text-gray-100 dark:outline-0 dark:hover:bg-zinc-700 dark:hover:text-gray-100"
-					@click="deleteRawStyle(key as string)"></Button>
-			</div>
-			<Button
-				variant="subtle"
-				label="Add Style"
-				class="dark:bg-zinc-800 dark:text-gray-100"
-				@click="addRawStyle"></Button>
+			<ObjectEditor
+				:obj="(blockController.getRawStyles() as Record<string, string>)"
+				@update:obj="(obj) => blockController.setRawStyles(obj)"></ObjectEditor>
 			<p class="rounded-sm bg-gray-100 p-2 text-2xs text-gray-800 dark:bg-zinc-800 dark:text-zinc-300">
 				<b>Note:</b>
 				<br />
@@ -383,35 +363,11 @@ import BlockPositionHandler from "./BlockPositionHandler.vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
 import ColorInput from "./ColorInput.vue";
 import InlineInput from "./InlineInput.vue";
+import ObjectEditor from "./ObjectEditor.vue";
 
 import blockController from "@/utils/blockController";
-import { mapToObject, replaceMapKey } from "@/utils/helpers";
 import CodeEditor from "./CodeEditor.vue";
 import DimensionInput from "./DimensionInput.vue";
-
-const addRawStyle = () => {
-	const rawStyles = new Map(Object.entries(blockController.getRawStyles()));
-	rawStyles.set("", "");
-	blockController.setRawStyles(mapToObject(rawStyles));
-};
-
-const updateRawStyle = (key: string, value: string) => {
-	const rawStyles = new Map(Object.entries(blockController.getRawStyles()));
-	rawStyles.set(key, value);
-	blockController.setRawStyles(mapToObject(rawStyles));
-};
-
-const replaceKey = (oldKey: string, newKey: string) => {
-	const rawStyles = new Map(Object.entries(blockController.getRawStyles()));
-	blockController.setRawStyles(mapToObject(replaceMapKey(rawStyles, oldKey, newKey)));
-};
-
-const deleteRawStyle = (key: string) => {
-	console.log(key);
-	const rawStyles = blockController.getRawStyles() as Record<string, string>;
-	delete rawStyles[key];
-	blockController.setRawStyles(rawStyles);
-};
 
 const setFont = (font: string) => {
 	_setFont(font).then(() => {

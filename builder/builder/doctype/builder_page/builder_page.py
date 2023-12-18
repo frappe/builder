@@ -179,6 +179,11 @@ def get_block_html(blocks, page_data={}):
 			tag = soup.new_tag(element)
 			tag.attrs = block.get("attributes", {})
 
+			customAttributes = block.get("customAttributes", {})
+			if customAttributes:
+				for key, value in customAttributes.items():
+					tag[key] = value
+
 			if block.get("baseStyles", {}):
 				style_class = f"frappe-builder-{frappe.generate_hash(length=8)}"
 				base_styles = block.get("baseStyles", {})
