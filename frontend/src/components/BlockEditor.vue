@@ -216,8 +216,6 @@ const handleMove = (ev: MouseEvent) => {
 	const startLeft = getNumberFromPx(props.block.getStyle("left"));
 	const startTop = getNumberFromPx(props.block.getStyle("top"));
 
-	console.log("startLeft", startLeft, props.block.getStyle("left"));
-	console.log("startTop", startTop);
 	moving.value = true;
 	guides.showX();
 
