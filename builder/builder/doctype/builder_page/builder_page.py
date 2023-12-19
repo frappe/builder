@@ -28,6 +28,22 @@ TABLET_BREAKPOINT = 768
 DESKTOP_BREAKPOINT = 1024
 
 class BuilderPage(WebsiteGenerator):
+	def add_comment(
+		self,
+		comment_type="Comment",
+		text=None,
+		comment_email=None,
+		comment_by=None,
+	):
+		if comment_type in ["Attachment Removed", "Attachment"]:
+			return
+		super().add_comment(
+			comment_type=comment_type,
+			text=text,
+			comment_email=comment_email,
+			comment_by=comment_by,
+		)
+
 	def before_insert(self):
 		if isinstance(self.blocks, list):
 			self.blocks = frappe.as_json(self.blocks, indent=None)
