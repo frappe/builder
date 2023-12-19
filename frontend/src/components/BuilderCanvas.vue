@@ -229,7 +229,9 @@ function setEvents() {
 				`.canvas [data-block-id="${parentBlock.blockId}"]`
 			) as HTMLElement;
 			const parentOldPosition = parentBlock.getStyle("position");
-			parentBlock.setBaseStyle("position", parentOldPosition || "relative");
+			if (parentOldPosition === "static" || parentOldPosition === "inherit" || !parentOldPosition) {
+				parentBlock.setBaseStyle("position", "relative");
+			}
 			const parentElementBounds = parentElement.getBoundingClientRect();
 			let x = (ev.x - parentElementBounds.left) / canvasProps.scale;
 			let y = (ev.y - parentElementBounds.top) / canvasProps.scale;
@@ -265,6 +267,7 @@ function setEvents() {
 				"mouseup",
 				() => {
 					document.removeEventListener("mousemove", mouseMoveHandler);
+					parentBlock.setBaseStyle("position", parentOldPosition || "static");
 					childBlock.setBaseStyle("position", "static");
 					childBlock.setBaseStyle("top", "auto");
 					childBlock.setBaseStyle("left", "auto");
