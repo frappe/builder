@@ -52,7 +52,7 @@
 </template>
 <script setup lang="ts">
 import Block from "@/utils/block";
-import { addPxToNumber } from "@/utils/helpers";
+import { addPxToNumber, getNumberFromPx } from "@/utils/helpers";
 import { Ref, computed, inject, nextTick, onMounted, ref, watch, watchEffect } from "vue";
 
 import blockController from "@/utils/blockController";
@@ -213,9 +213,11 @@ const handleMove = (ev: MouseEvent) => {
 	const target = ev.target as HTMLElement;
 	const startX = ev.clientX;
 	const startY = ev.clientY;
-	const targetBounds = target.getBoundingClientRect();
-	const startLeft = targetBounds.left;
-	const startTop = targetBounds.top;
+	const startLeft = getNumberFromPx(props.block.getStyle("left"));
+	const startTop = getNumberFromPx(props.block.getStyle("top"));
+
+	console.log("startLeft", startLeft, props.block.getStyle("left"));
+	console.log("startTop", startTop);
 	moving.value = true;
 	guides.showX();
 
@@ -228,8 +230,9 @@ const handleMove = (ev: MouseEvent) => {
 		const movementX = (mouseMoveEvent.clientX - startX) / scale;
 		const movementY = (mouseMoveEvent.clientY - startY) / scale;
 		let finalLeft = startLeft + movementX;
+		let finalTop = startTop + movementY;
 		props.block.setStyle("left", addPxToNumber(finalLeft));
-		props.block.setStyle("top", addPxToNumber(startTop + movementY));
+		props.block.setStyle("top", addPxToNumber(finalTop));
 		await nextTick();
 		const { leftOffset, rightOffset } = guides.getPositionOffset();
 		if (leftOffset !== 0) {

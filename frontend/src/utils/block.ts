@@ -414,7 +414,7 @@ class Block implements BlockOptions {
 		return store.findParentBlock(this.blockId);
 	}
 	canHaveChildren(): boolean {
-		return this.isContainer() || this.isRoot() || this.isDiv();
+		return (this.isContainer() || this.isRoot() || this.isDiv()) && !this.isExtendedFromComponent();
 	}
 	updateStyles(styles: BlockStyleObjects) {
 		this.baseStyles = Object.assign({}, this.baseStyles, styles.baseStyles);

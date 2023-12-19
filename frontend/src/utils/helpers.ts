@@ -5,7 +5,11 @@ function getNumberFromPx(px: string | number | null | undefined): number {
 	if (typeof px === "number") {
 		return px;
 	}
-	return Number(px.replace("px", ""));
+	const number = Number(px.replace("px", ""));
+	if (isNaN(number)) {
+		return 0;
+	}
+	return number;
 }
 
 function addPxToNumber(number: number, round: boolean = true): string {
