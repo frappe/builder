@@ -151,7 +151,6 @@ useEventListener(document, "paste", async (e) => {
 					imageBlock = parentBlock.addChild(store.getBlockCopy(getBlockTemplate("image")));
 				}
 				imageBlock.setAttribute("src", res.fileURL);
-				imageBlock.setAttribute("alt", res.fileName);
 			});
 		}
 		return;

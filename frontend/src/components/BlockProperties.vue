@@ -1,21 +1,22 @@
 <template>
 	<div v-if="blockController.isBLockSelected()" class="mt-[-10px] flex select-none flex-col gap-3 pb-16">
-		<div class="relative flex w-full">
+		<div class="sticky top-9 z-50 flex w-full bg-white py-2 dark:bg-zinc-900">
 			<Input
-				class="mt-1 h-7 w-full rounded-md text-sm text-gray-800 hover:border-gray-400 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
+				ref="searchInput"
+				class="properties-search-input h-7 w-full rounded-md text-sm text-gray-800 hover:border-gray-400 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
 				type="text"
 				placeholder="Search properties"
 				inputClass="w-full"
-				v-model="searchInput"
+				v-model="filter"
 				@input="
 					(value: string) => {
-						searchInput = value;
+						filter = value;
 					}
 				" />
 			<div
 				class="absolute right-1 top-[11px] z-20 cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
-				@click="searchInput = ''"
-				v-show="searchInput">
+				@click="filter = ''"
+				v-show="filter">
 				<CrossIcon />
 			</div>
 		</div>
@@ -43,7 +44,7 @@ import ObjectEditor from "./ObjectEditor.vue";
 import CrossIcon from "./Icons/Cross.vue";
 
 import blockController from "@/utils/blockController";
-import { computed, ref } from "vue";
+import { Ref, computed, ref } from "vue";
 import CodeEditor from "./CodeEditor.vue";
 import DimensionInput from "./DimensionInput.vue";
 import OptionToggle from "./OptionToggle.vue";
@@ -52,7 +53,7 @@ import OptionToggle from "./OptionToggle.vue";
 window.addEventListener("keydown", (e) => {
 	if (e.key === "f" && (e.metaKey || e.ctrlKey)) {
 		e.preventDefault();
-		searchInput.value = "";
+		document.querySelector(".properties-search-input")?.querySelector("input")?.focus();
 	}
 });
 
@@ -70,7 +71,8 @@ type PropertySection = {
 	condition?: () => boolean;
 };
 
-const searchInput = ref("");
+const searchInput = ref(null) as Ref<HTMLElement | null>;
+const filter = ref("");
 
 const filteredSections = computed(() => {
 	return sections.filter((section) => {
@@ -78,7 +80,7 @@ const filteredSections = computed(() => {
 		if (section.condition) {
 			showSection = section.condition();
 		}
-		if (showSection && searchInput.value) {
+		if (showSection && filter.value) {
 			showSection = getFilteredProperties(section).length > 0;
 		}
 		return showSection;
@@ -91,10 +93,10 @@ const getFilteredProperties = (section: PropertySection) => {
 		if (property.condition) {
 			showProperty = property.condition();
 		}
-		if (showProperty && searchInput.value) {
+		if (showProperty && filter.value) {
 			showProperty =
-				section.name.toLowerCase().includes(searchInput.value.toLowerCase()) ||
-				property.searchKeyWords.toLowerCase().includes(searchInput.value.toLowerCase());
+				section.name.toLowerCase().includes(filter.value.toLowerCase()) ||
+				property.searchKeyWords.toLowerCase().includes(filter.value.toLowerCase());
 		}
 		return showProperty;
 	});
@@ -314,7 +316,7 @@ const styleSectionProperties = [
 		events: {
 			"update:modelValue": (val: StyleValue) => blockController.setStyle("borderWidth", val),
 		},
-		condition: () => blockController.getStyle("borderColor"),
+		condition: () => blockController.getStyle("borderColor") || blockController.getStyle("borderWidth"),
 	},
 	{
 		component: InlineInput,
@@ -438,6 +440,15 @@ const dimensionSectionProperties = [
 				property: "maxWidth",
 			};
 		},
+	},
+	{
+		component: "hr",
+		getProps: () => {
+			return {
+				class: "dark:border-zinc-700",
+			};
+		},
+		searchKeyWords: "",
 	},
 	{
 		component: DimensionInput,
@@ -696,6 +707,38 @@ const optionsSectionProperties = [
 		component: InlineInput,
 		getProps: () => {
 			return {
+				label: "Overflow X",
+				type: "select",
+				options: ["auto", "visible", "hidden", "scroll"],
+				modelValue: blockController.getStyle("overflowX"),
+			};
+		},
+		searchKeyWords:
+			"Overflow, X, OverflowX, Overflow X, Auto, Visible, Hide, Scroll, horizontal scroll, horizontalScroll",
+		events: {
+			"update:modelValue": (val: StyleValue) => blockController.setStyle("overflowX", val),
+		},
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Overflow Y",
+				type: "select",
+				options: ["auto", "visible", "hidden", "scroll"],
+				modelValue: blockController.getStyle("overflowY"),
+			};
+		},
+		searchKeyWords:
+			"Overflow, Y, OverflowY, Overflow Y, Auto, Visible, Hide, Scroll, vertical scroll, verticalScroll",
+		events: {
+			"update:modelValue": (val: StyleValue) => blockController.setStyle("overflowY", val),
+		},
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
 				label: "Alt Text",
 				modelValue: blockController.getAttribute("alt"),
 			};
@@ -726,6 +769,7 @@ const optionsSectionProperties = [
 			return {
 				label: "HTML",
 				type: "HTML",
+				autofocus: false,
 				modelValue: blockController.getInnerHTML() || "",
 			};
 		},
@@ -802,6 +846,18 @@ const rawStyleSectionProperties = [
 		getProps: () => {
 			return {
 				obj: blockController.getRawStyles() as Record<string, string>,
+				description: `
+					<b>Note:</b>
+					<br />
+					<br />
+					- Raw styles get applied across all devices
+					<br />
+					- State based styles are supported (e.g. hover, focus, visited)
+					<br />
+					Syntax: hover:color, focus:color, etc.
+					<br />
+					- State styles are only activated in preview mode
+				`,
 			};
 		},
 		searchKeyWords: "Raw, RawStyle, Raw Style, CSS, Style, Styles",
