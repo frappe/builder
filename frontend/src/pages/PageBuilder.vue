@@ -496,6 +496,15 @@ const setPage = (pageName: string) => {
 	});
 };
 
+// on tab activation, reload for latest data
+useEventListener(document, "visibilitychange", () => {
+	if (document.visibilityState === "visible") {
+		if (route.params.pageId && route.params.pageId !== "new") {
+			setPage(route.params.pageId as string);
+		}
+	}
+});
+
 const updateSelectedBlocks = () => {
 	const selectedBlocks = blockController.getSelectedBlocks();
 	const activeCanvasBlocks = [store.activeCanvas?.block as Block];
