@@ -37,10 +37,6 @@
 				v-show="store.showRightPanel"
 				class="absolute bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] bg-white no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderRightPanel>
 		</div>
-		<PageScript
-			v-if="store.selectedPage && store.getActivePage()"
-			v-show="showPageScriptPanel"
-			:page="store.getActivePage()"></PageScript>
 	</div>
 </template>
 
@@ -49,7 +45,6 @@ import BuilderCanvas from "@/components/BuilderCanvas.vue";
 import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
-import PageScript from "@/components/PageScript.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
@@ -81,16 +76,11 @@ window.blockController = blockController;
 const pageCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 const componentCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 
-const showPageScriptPanel = ref(false);
 const keys = useMagicKeys();
 const CtrlBacktick = keys["Ctrl+`"];
 
 provide("pageCanvas", pageCanvas);
 provide("componentCanvas", componentCanvas);
-
-whenever(CtrlBacktick, () => {
-	showPageScriptPanel.value = !showPageScriptPanel.value;
-});
 
 // to disable page zoom
 useEventListener(
