@@ -608,11 +608,14 @@ const optionsSectionProperties = [
 					"hr",
 					"form",
 					"textarea",
+					"nav",
+					"header",
+					"footer",
 				],
 				modelValue: blockController.getKeyValue("element"),
 			};
 		},
-		searchKeyWords: "Tag, Element, TagName, Tag Name, ElementName, Element Name",
+		searchKeyWords: "Tag, Element, TagName, Tag Name, ElementName, Element Name, header, footer, nav, input",
 		events: {
 			"update:modelValue": (val: string) => blockController.setKeyValue("element", val),
 		},
