@@ -271,8 +271,12 @@ function setEvents() {
 					childBlock.setBaseStyle("position", "static");
 					childBlock.setBaseStyle("top", "auto");
 					childBlock.setBaseStyle("left", "auto");
+					setTimeout(() => {
+						store.mode = "select";
+					}, 50);
 					if (store.mode === "text" || store.mode === "html") {
 						store.activeCanvas?.history.resume(true);
+						return;
 					}
 					if (getNumberFromPx(childBlock.getStyle("width")) < 100) {
 						childBlock.setBaseStyle("width", "100%");
@@ -280,10 +284,6 @@ function setEvents() {
 					if (getNumberFromPx(childBlock.getStyle("height")) < 100) {
 						childBlock.setBaseStyle("height", "200px");
 					}
-					parentBlock.setBaseStyle("position", parentOldPosition || "static");
-					setTimeout(() => {
-						store.mode = "select";
-					}, 50);
 					store.activeCanvas?.history.resume(true);
 				},
 				{ once: true }
