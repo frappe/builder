@@ -4,7 +4,7 @@
 			<Input
 				class="h-7 rounded-md text-sm text-gray-800 hover:border-gray-400 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
 				type="text"
-				placeholder="Filter component"
+				placeholder="Search component"
 				inputClass="w-full"
 				v-model="filter"
 				@input="
