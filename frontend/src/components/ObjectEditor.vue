@@ -21,12 +21,18 @@
 		label="Add"
 		class="dark:bg-zinc-800 dark:text-gray-100"
 		@click="addObjectKey"></Button>
+	<p
+		class="rounded-sm bg-gray-100 p-2 text-2xs text-gray-800 dark:bg-zinc-800 dark:text-zinc-300"
+		v-show="description">
+		<span v-html="description"></span>
+	</p>
 </template>
 <script setup lang="ts">
 import { mapToObject, replaceMapKey } from "@/utils/helpers";
 
 const props = defineProps<{
 	obj: Record<string, string>;
+	description?: string;
 }>();
 
 const emit = defineEmits({
