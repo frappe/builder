@@ -244,7 +244,7 @@ const layoutSectionProperties = [
 		component: BLockLayoutHandler,
 		getProps: () => {},
 		searchKeyWords:
-			"Layout, Flex, Flexbox, Flex Box, FlexBox, Justify, Space Between, Flex Grow, Flex Shrink, Flex Basis, Align Items, Align Content, Align Self, Flex Direction, Flex Wrap, Flex Flow, Flex Grow, Flex Shrink, Flex Basis",
+			"Layout, Flex, Flexbox, Flex Box, FlexBox, Justify, Space Between, Flex Grow, Flex Shrink, Flex Basis, Align Items, Align Content, Align Self, Flex Direction, Flex Wrap, Flex Flow, Flex Grow, Flex Shrink, Flex Basis, Gap",
 	},
 ];
 
@@ -876,7 +876,7 @@ const sections = [
 	{
 		name: "Typography",
 		properties: typographySectionProperties,
-		condition: () => blockController.isText() || blockController.isContainer(),
+		condition: () => blockController.isText() || blockController.isContainer() || blockController.isInput(),
 	},
 	{
 		name: "Dimension",
