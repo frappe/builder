@@ -326,6 +326,9 @@ def extend_block(block, overridden_block):
 	block["tabletStyles"].update(overridden_block["tabletStyles"])
 	block["rawStyles"].update(overridden_block["rawStyles"])
 	block["attributes"].update(overridden_block["attributes"])
+	if not block.get("customAttributes"):
+		block["customAttributes"] = {}
+	block["customAttributes"].update(overridden_block.get("customAttributes", {}))
 	block["classes"].extend(overridden_block["classes"])
 	dataKey = overridden_block.get("dataKey", {})
 	if not block.get("dataKey"):
