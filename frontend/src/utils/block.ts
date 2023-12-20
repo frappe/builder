@@ -225,7 +225,9 @@ class Block implements BlockOptions {
 		return ["section", "div"].includes(this.getElement() as string);
 	}
 	isInput() {
-		return this.originalElement === "input" || this.getElement() === "input";
+		return (
+			this.originalElement === "input" || this.getElement() === "input" || this.getElement() === "textarea"
+		);
 	}
 	setStyle(style: styleProperty, value: StyleValue) {
 		const store = useStore();
