@@ -108,10 +108,6 @@ const setFont = (font: string) => {
 	});
 };
 
-const getClasses = () => {
-	return blockController.getClasses().join(", ");
-};
-
 const setClasses = (val: string) => {
 	const classes = val.split(",").map((c) => c.trim());
 	blockController.setClasses(classes);
@@ -754,7 +750,7 @@ const optionsSectionProperties = [
 		getProps: () => {
 			return {
 				label: "Class",
-				value: getClasses(),
+				modelValue: blockController.getClasses().join(", "),
 			};
 		},
 		searchKeyWords: "Class, ClassName, Class Name",
