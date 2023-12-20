@@ -1,12 +1,27 @@
 <template>
 	<div v-if="blockController.isBLockSelected()" class="mt-[-10px] flex select-none flex-col gap-3 pb-16">
-		<CollapsibleSection :sectionName="section.name" v-for="section in sections">
-			<template v-for="property in section.properties">
-				<component
-					v-if="property.condition ? property.condition() : true"
-					:is="property.component"
-					v-bind="property.getProps()"
-					v-on="property.events || {}" />
+		<div class="relative flex w-full">
+			<Input
+				class="mt-1 h-7 w-full rounded-md text-sm text-gray-800 hover:border-gray-400 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
+				type="text"
+				placeholder="Search properties"
+				inputClass="w-full"
+				v-model="searchInput"
+				@input="
+					(value: string) => {
+						searchInput = value;
+					}
+				" />
+			<div
+				class="absolute right-1 top-[11px] z-20 cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
+				@click="searchInput = ''"
+				v-show="searchInput">
+				<CrossIcon />
+			</div>
+		</div>
+		<CollapsibleSection :sectionName="section.name" v-for="section in filteredSections">
+			<template v-for="property in getFilteredProperties(section)">
+				<component :is="property.component" v-bind="property.getProps()" v-on="property.events || {}" />
 			</template>
 		</CollapsibleSection>
 	</div>
@@ -25,15 +40,27 @@ import ColorInput from "./ColorInput.vue";
 import InlineInput from "./InlineInput.vue";
 import ObjectEditor from "./ObjectEditor.vue";
 
+import CrossIcon from "./Icons/Cross.vue";
+
 import blockController from "@/utils/blockController";
+import { computed, ref } from "vue";
 import CodeEditor from "./CodeEditor.vue";
 import DimensionInput from "./DimensionInput.vue";
 import OptionToggle from "./OptionToggle.vue";
+
+// command + f should focus on search input
+window.addEventListener("keydown", (e) => {
+	if (e.key === "f" && (e.metaKey || e.ctrlKey)) {
+		e.preventDefault();
+		searchInput.value = "";
+	}
+});
 
 type BlockProperty = {
 	component: any;
 	getProps: () => Record<string, unknown>;
 	events?: Record<string, unknown>;
+	searchKeyWords: string;
 	condition?: () => boolean;
 };
 
@@ -41,6 +68,36 @@ type PropertySection = {
 	name: string;
 	properties: BlockProperty[];
 	condition?: () => boolean;
+};
+
+const searchInput = ref("");
+
+const filteredSections = computed(() => {
+	return sections.filter((section) => {
+		let showSection = true;
+		if (section.condition) {
+			showSection = section.condition();
+		}
+		if (showSection && searchInput.value) {
+			showSection = getFilteredProperties(section).length > 0;
+		}
+		return showSection;
+	});
+});
+
+const getFilteredProperties = (section: PropertySection) => {
+	return section.properties.filter((property) => {
+		let showProperty = true;
+		if (property.condition) {
+			showProperty = property.condition();
+		}
+		if (showProperty && searchInput.value) {
+			showProperty =
+				section.name.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+				property.searchKeyWords.toLowerCase().includes(searchInput.value.toLowerCase());
+		}
+		return showProperty;
+	});
 };
 
 const setFont = (font: string) => {
@@ -69,6 +126,7 @@ const typographySectionProperties = [
 				modelValue: blockController.getFontFamily(),
 			};
 		},
+		searchKeyWords: "Font, Family, FontFamily",
 		events: {
 			"update:modelValue": (val: string) => setFont(val),
 		},
@@ -84,6 +142,7 @@ const typographySectionProperties = [
 				options: getFontWeightOptions((blockController.getStyle("fontFamily") || "Inter") as string),
 			};
 		},
+		searchKeyWords: "Font, Weight, FontWeight",
 		events: {
 			"update:modelValue": (val: StyleValue) => blockController.setStyle("fontWeight", val),
 		},
@@ -97,6 +156,7 @@ const typographySectionProperties = [
 				enableSlider: true,
 			};
 		},
+		searchKeyWords: "Font, Size, FontSize",
 		events: {
 			"update:modelValue": (val: StyleValue) => blockController.setStyle("fontSize", val),
 		},
@@ -110,6 +170,7 @@ const typographySectionProperties = [
 				modelValue: blockController.getStyle("lineHeight"),
 			};
 		},
+		searchKeyWords: "Font, Height, LineHeight, Line Height",
 		events: {
 			"update:modelValue": (val: StyleValue) => blockController.setStyle("lineHeight", val),
 		},
@@ -126,6 +187,7 @@ const typographySectionProperties = [
 		events: {
 			"update:modelValue": (val: StyleValue) => blockController.setStyle("letterSpacing", val),
 		},
+		searchKeyWords: "Font, Letter, LetterSpacing, Letter Spacing",
 		condition: () => blockController.isText(),
 	},
 	{
@@ -155,6 +217,7 @@ const typographySectionProperties = [
 				],
 			};
 		},
+		searchKeyWords: "Font, Transform, TextTransform, Text Transform, Capitalize, Uppercase, Lowercase",
 		events: {
 			"update:modelValue": (val: StyleValue) => blockController.setStyle("textTransform", val),
 		},
@@ -170,6 +233,7 @@ const typographySectionProperties = [
 				options: ["left", "center", "right", "justify"],
 			};
 		},
+		searchKeyWords: "Font, Align, TextAlign, Text Align, Left, Center, Right, Justify",
 		events: {
 			"update:modelValue": (val: StyleValue) => blockController.setStyle("textAlign", val),
 		},
@@ -181,6 +245,8 @@ const layoutSectionProperties = [
 	{
 		component: BLockLayoutHandler,
 		getProps: () => {},
+		searchKeyWords:
+			"Layout, Flex, Flexbox, Flex Box, FlexBox, Justify, Space Between, Flex Grow, Flex Shrink, Flex Basis, Align Items, Align Content, Align Self, Flex Direction, Flex Wrap, Flex Flow, Flex Grow, Flex Shrink, Flex Basis",
 	},
 ];
 
@@ -193,6 +259,7 @@ const styleSectionProperties = [
 				value: blockController.getStyle("background"),
 			};
 		},
+		searchKeyWords: "Background, BackgroundColor, Background Color, BG, BGColor, BG Color",
 		events: {
 			change: (val: StyleValue) => blockController.setStyle("background", val),
 		},
@@ -205,6 +272,7 @@ const styleSectionProperties = [
 				value: blockController.getTextColor(),
 			};
 		},
+		searchKeyWords: "Text, Color, TextColor, Text Color",
 		events: {
 			change: (val: string) => blockController.setTextColor(val),
 		},
@@ -217,6 +285,7 @@ const styleSectionProperties = [
 				value: blockController.getStyle("borderColor"),
 			};
 		},
+		searchKeyWords: "Border, Color, BorderColor, Border Color",
 		events: {
 			change: (val: StyleValue) => {
 				blockController.setStyle("borderColor", val);
@@ -241,6 +310,7 @@ const styleSectionProperties = [
 				enableSlider: true,
 			};
 		},
+		searchKeyWords: "Border, Width, BorderWidth, Border Width",
 		events: {
 			"update:modelValue": (val: StyleValue) => blockController.setStyle("borderWidth", val),
 		},
@@ -256,6 +326,7 @@ const styleSectionProperties = [
 				options: ["solid", "dashed", "dotted"],
 			};
 		},
+		searchKeyWords: "Border, Style, BorderStyle, Border Style, Solid, Dashed, Dotted",
 		events: {
 			"update:modelValue": (val: StyleValue) => blockController.setStyle("borderStyle", val),
 		},
@@ -264,6 +335,8 @@ const styleSectionProperties = [
 	{
 		component: BackgroundHandler,
 		getProps: () => {},
+		searchKeyWords:
+			"Background, BackgroundImage, Background Image, Background Position, Background Repeat, Background Size, BG, BGImage, BG Image, BGPosition, BG Position, BGRepeat, BG Repeat, BGSize, BG Size",
 	},
 	{
 		component: InlineInput,
@@ -295,6 +368,7 @@ const styleSectionProperties = [
 				modelValue: blockController.getStyle("boxShadow"),
 			};
 		},
+		searchKeyWords: "Shadow, BoxShadow, Box Shadow",
 		events: {
 			"update:modelValue": (val: StyleValue) => blockController.setStyle("boxShadow", val),
 		},
@@ -310,6 +384,7 @@ const styleSectionProperties = [
 				minValue: 0,
 			};
 		},
+		searchKeyWords: "Border, Radius, BorderRadius, Border Radius",
 		events: {
 			"update:modelValue": (val: StyleValue) => blockController.setStyle("borderRadius", val),
 		},
@@ -322,6 +397,7 @@ const styleSectionProperties = [
 				modelValue: blockController.getStyle("zIndex"),
 			};
 		},
+		searchKeyWords: "Z, Index, ZIndex, Z Index",
 		events: {
 			"update:modelValue": (val: StyleValue) => blockController.setStyle("zIndex", val),
 		},
@@ -335,6 +411,7 @@ const styleSectionProperties = [
 const dimensionSectionProperties = [
 	{
 		component: DimensionInput,
+		searchKeyWords: "Width",
 		getProps: () => {
 			return {
 				label: "Width",
@@ -344,6 +421,7 @@ const dimensionSectionProperties = [
 	},
 	{
 		component: DimensionInput,
+		searchKeyWords: "Min, Width, MinWidth, Min Width",
 		getProps: () => {
 			return {
 				label: "Min Width",
@@ -353,6 +431,7 @@ const dimensionSectionProperties = [
 	},
 	{
 		component: DimensionInput,
+		searchKeyWords: "Max, Width, MaxWidth, Max Width",
 		getProps: () => {
 			return {
 				label: "Max Width",
@@ -362,6 +441,7 @@ const dimensionSectionProperties = [
 	},
 	{
 		component: DimensionInput,
+		searchKeyWords: "Height",
 		getProps: () => {
 			return {
 				label: "Height",
@@ -371,6 +451,7 @@ const dimensionSectionProperties = [
 	},
 	{
 		component: DimensionInput,
+		searchKeyWords: "Min, Height, MinHeight, Min Height",
 		getProps: () => {
 			return {
 				label: "Min Height",
@@ -380,6 +461,7 @@ const dimensionSectionProperties = [
 	},
 	{
 		component: DimensionInput,
+		searchKeyWords: "Max, Height, MaxHeight, Max Height",
 		getProps: () => {
 			return {
 				label: "Max Height",
@@ -392,6 +474,8 @@ const dimensionSectionProperties = [
 const positionSectionProperties = [
 	{
 		component: BlockPositionHandler,
+		searchKeyWords:
+			"Position, Top, Right, Bottom, Left, PositionTop, Position Top, PositionRight, Position Right, PositionBottom, Position Bottom, PositionLeft, Position Left, Free, Fixed, Absolute, Relative, Sticky",
 		getProps: () => {},
 	},
 ];
@@ -399,6 +483,7 @@ const positionSectionProperties = [
 const spacingSectionProperties = [
 	{
 		component: InlineInput,
+		searchKeyWords: "Margin, Top, MarginTop, Margin Top",
 		getProps: () => {
 			return {
 				label: "Margin",
@@ -412,6 +497,7 @@ const spacingSectionProperties = [
 	},
 	{
 		component: InlineInput,
+		searchKeyWords: "Padding, Top, PaddingTop, Padding Top",
 		getProps: () => {
 			return {
 				label: "Padding",
@@ -434,6 +520,7 @@ const optionsSectionProperties = [
 				modelValue: blockController.getAttribute("href"),
 			};
 		},
+		searchKeyWords: "Link, Href, URL",
 		events: {
 			"update:modelValue": (val: string) => blockController.setAttribute("href", val),
 		},
@@ -458,6 +545,7 @@ const optionsSectionProperties = [
 				modelValue: blockController.getAttribute("target"),
 			};
 		},
+		searchKeyWords: "Link, Target, Opens in, OpensIn, Opens In, New Tab",
 		events: {
 			"update:modelValue": (val: string) => blockController.setAttribute("target", val),
 		},
@@ -471,6 +559,7 @@ const optionsSectionProperties = [
 				modelValue: blockController.getAttribute("src"),
 			};
 		},
+		searchKeyWords: "Image, URL, Src",
 		events: {
 			"update:modelValue": (val: string) => blockController.setAttribute("src", val),
 		},
@@ -486,6 +575,7 @@ const optionsSectionProperties = [
 				modelValue: blockController.getStyle("objectFit"),
 			};
 		},
+		searchKeyWords: "Image, Fit, ObjectFit, Object Fit, Fill, Contain, Cover, None",
 		events: {
 			"update:modelValue": (val: StyleValue) => blockController.setStyle("objectFit", val),
 		},
@@ -515,6 +605,7 @@ const optionsSectionProperties = [
 				modelValue: blockController.getKeyValue("element"),
 			};
 		},
+		searchKeyWords: "Tag, Element, TagName, Tag Name, ElementName, Element Name",
 		events: {
 			"update:modelValue": (val: string) => blockController.setKeyValue("element", val),
 		},
@@ -529,6 +620,8 @@ const optionsSectionProperties = [
 				modelValue: blockController.getAttribute("type") || "text",
 			};
 		},
+		searchKeyWords:
+			"Input, Type, InputType, Input Type, Text, Number, Email, Password, Date, Time, Search, Tel, Url, Color",
 		events: {
 			"update:modelValue": (val: string) => blockController.setAttribute("type", val),
 		},
@@ -542,6 +635,7 @@ const optionsSectionProperties = [
 				modelValue: blockController.getAttribute("placeholder"),
 			};
 		},
+		searchKeyWords: "Placeholder, Input, PlaceholderText, Placeholder Text",
 		events: {
 			"update:modelValue": (val: string) => blockController.setAttribute("placeholder", val),
 		},
@@ -555,6 +649,7 @@ const optionsSectionProperties = [
 				modelValue: blockController.getTextContent(),
 			};
 		},
+		searchKeyWords: "Content, Text, ContentText, Content Text",
 		events: {
 			"update:modelValue": (val: string) => blockController.setKeyValue("innerHTML", val),
 		},
@@ -578,6 +673,7 @@ const optionsSectionProperties = [
 				modelValue: blockController.getStyle("display") || "flex",
 			};
 		},
+		searchKeyWords: "Visibility, Display, Visible, Hidden, Flex, None, hide, show",
 		events: {
 			"update:modelValue": (val: StyleValue) => blockController.setStyle("display", val),
 		},
@@ -590,6 +686,8 @@ const optionsSectionProperties = [
 				modelValue: blockController.getKeyValue("visibilityCondition"),
 			};
 		},
+		searchKeyWords:
+			"Condition, Visibility, VisibilityCondition, Visibility Condition, show, hide, display, hideIf, showIf",
 		events: {
 			"update:modelValue": (val: string) => blockController.setKeyValue("visibilityCondition", val),
 		},
@@ -602,6 +700,7 @@ const optionsSectionProperties = [
 				modelValue: blockController.getAttribute("alt"),
 			};
 		},
+		searchKeyWords: "Alt, Text, AltText, Alternate Text",
 		events: {
 			"update:modelValue": (val: string) => blockController.setAttribute("alt", val),
 		},
@@ -615,6 +714,7 @@ const optionsSectionProperties = [
 				value: getClasses(),
 			};
 		},
+		searchKeyWords: "Class, ClassName, Class Name",
 		events: {
 			"update:modelValue": (val: string) => setClasses(val),
 		},
@@ -629,6 +729,7 @@ const optionsSectionProperties = [
 				modelValue: blockController.getInnerHTML() || "",
 			};
 		},
+		searchKeyWords: "HTML, InnerHTML, Inner HTML",
 		events: {
 			"update:modelValue": (val: string) => {
 				blockController.setInnerHTML(val);
@@ -647,6 +748,7 @@ const dataKeySectionProperties = [
 				modelValue: blockController.getDataKey("key"),
 			};
 		},
+		searchKeyWords: "Key, DataKey, Data Key",
 		events: {
 			"update:modelValue": (val: string) => blockController.setDataKey("key", val),
 		},
@@ -659,6 +761,7 @@ const dataKeySectionProperties = [
 				modelValue: blockController.getDataKey("type"),
 			};
 		},
+		searchKeyWords: "Type, DataType, Data Type",
 		events: {
 			"update:modelValue": (val: string) => blockController.setDataKey("type", val),
 		},
@@ -671,6 +774,7 @@ const dataKeySectionProperties = [
 				modelValue: blockController.getDataKey("property"),
 			};
 		},
+		searchKeyWords: "Property, DataProperty, Data Property",
 		events: {
 			"update:modelValue": (val: string) => blockController.setDataKey("property", val),
 		},
@@ -685,6 +789,7 @@ const customAttributesSectionProperties = [
 				obj: blockController.getCustomAttributes() as Record<string, string>,
 			};
 		},
+		searchKeyWords: "Attributes, CustomAttributes, Custom Attributes",
 		events: {
 			"update:obj": (obj: Record<string, string>) => blockController.setCustomAttributes(obj),
 		},
@@ -699,6 +804,7 @@ const rawStyleSectionProperties = [
 				obj: blockController.getRawStyles() as Record<string, string>,
 			};
 		},
+		searchKeyWords: "Raw, RawStyle, Raw Style, CSS, Style, Styles",
 		events: {
 			"update:obj": (obj: Record<string, string>) => blockController.setRawStyles(obj),
 		},
