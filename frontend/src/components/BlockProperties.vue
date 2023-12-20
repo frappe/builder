@@ -1,352 +1,13 @@
-<!-- TODO: Refactor -->
 <template>
 	<div v-if="blockController.isBLockSelected()" class="mt-[-10px] flex select-none flex-col gap-3 pb-16">
-		<CollapsibleSection sectionName="Layout" v-if="!blockController.multipleBlocksSelected()">
-			<BLockLayoutHandler></BLockLayoutHandler>
-		</CollapsibleSection>
-		<CollapsibleSection sectionName="Style">
-			<ColorInput
-				label="BG Color"
-				:value="blockController.getStyle('background')"
-				@change="(val) => blockController.setStyle('background', val)" />
-			<ColorInput
-				label="Text Color"
-				:value="blockController.getTextColor()"
-				@change="(val) => blockController.setTextColor(val)" />
-			<ColorInput
-				label="Border Color"
-				:value="blockController.getStyle('borderColor')"
-				@change="
-					(val) => {
-						blockController.setStyle('borderColor', val);
-						if (val) {
-							if (!blockController.getStyle('borderWidth')) {
-								blockController.setStyle('borderWidth', '1px');
-								blockController.setStyle('borderStyle', 'solid');
-							}
-						} else {
-							blockController.setStyle('borderWidth', null);
-							blockController.setStyle('borderStyle', null);
-						}
-					}
-				"></ColorInput>
-			<InlineInput
-				label="Border Width"
-				v-show="blockController.getStyle('borderColor')"
-				:modelValue="blockController.getStyle('borderWidth')"
-				@update:modelValue="(val) => blockController.setStyle('borderWidth', val)" />
-			<InlineInput
-				label="Border Style"
-				v-show="blockController.getStyle('borderColor')"
-				:modelValue="blockController.getStyle('borderStyle')"
-				type="select"
-				:options="['solid', 'dashed', 'dotted']"
-				@update:modelValue="(val) => blockController.setStyle('borderStyle', val)" />
-			<BackgroundHandler></BackgroundHandler>
-			<InlineInput
-				label="Shadow"
-				type="select"
-				:options="[
-					{
-						value: null,
-						label: 'None',
-					},
-					{
-						label: 'Small',
-						value:
-							'rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 1px 2px 0px, rgba(0, 0, 0, 0.05) 0px 1px 3px 0px',
-					},
-					{
-						label: 'Medium',
-						value:
-							'rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.1) 0px 4px 6px -4px',
-					},
-					{
-						label: 'Large',
-						value:
-							'rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.1) 0px 10px 10px -5px',
-					},
-				]"
-				:modelValue="blockController.getStyle('boxShadow')"
-				@update:modelValue="(val) => blockController.setStyle('boxShadow', val)"></InlineInput>
-			<InlineInput
-				label="Border Radius"
-				:modelValue="blockController.getStyle('borderRadius')"
-				:enableSlider="true"
-				:unitOptions="['px', '%']"
-				:minValue="0"
-				@update:modelValue="(val) => blockController.setStyle('borderRadius', val)" />
-			<InlineInput
-				v-if="
-					!blockController.multipleBlocksSelected() &&
-					!blockController.isRoot() &&
-					blockController.getStyle('position') !== 'static'
-				"
-				label="Z-Index"
-				:modelValue="blockController.getStyle('zIndex')"
-				@update:modelValue="(val) => blockController.setStyle('zIndex', val)" />
-		</CollapsibleSection>
-		<CollapsibleSection
-			sectionName="Typography"
-			v-if="blockController.isText() || blockController.isContainer()">
-			<InlineInput
-				label="Family"
-				type="autocomplete"
-				:options="fontListNames"
-				v-if="blockController.isText() || blockController.isContainer()"
-				:modelValue="blockController.getFontFamily()"
-				@update:modelValue="(val) => setFont(val)" />
-			<InlineInput
-				label="Weight"
-				v-if="blockController.isText() || blockController.isContainer()"
-				:modelValue="blockController.getStyle('fontWeight')"
-				type="autocomplete"
-				:options="getFontWeightOptions(blockController.getStyle('fontFamily') as string || 'Inter')"
-				@update:modelValue="(val) => blockController.setStyle('fontWeight', val)" />
-			<InlineInput
-				label="Size"
-				v-if="blockController.isText() || blockController.isInput()"
-				:modelValue="blockController.getStyle('fontSize')"
-				:enableSlider="true"
-				@update:modelValue="(val) => blockController.setStyle('fontSize', val)" />
-			<InlineInput
-				label="Height"
-				v-if="blockController.isText()"
-				:modelValue="blockController.getStyle('lineHeight')"
-				@update:modelValue="(val) => blockController.setStyle('lineHeight', val)" />
-			<InlineInput
-				label="Letter"
-				v-if="blockController.isText()"
-				:modelValue="blockController.getStyle('letterSpacing')"
-				@update:modelValue="(val) => blockController.setStyle('letterSpacing', val)" />
-			<InlineInput
-				label="Transform"
-				v-if="blockController.isText()"
-				:modelValue="blockController.getStyle('textTransform')"
-				type="select"
-				:options="[
-					{
-						value: null,
-						label: 'None',
-					},
-					{
-						value: 'uppercase',
-						label: 'Uppercase',
-					},
-					{
-						value: 'lowercase',
-						label: 'Lowercase',
-					},
-					{
-						value: 'capitalize',
-						label: 'Capitalize',
-					},
-				]"
-				@update:modelValue="(val) => blockController.setStyle('textTransform', val)" />
-			<InlineInput
-				label="Align"
-				v-if="blockController.isText()"
-				:modelValue="blockController.getStyle('textAlign') || 'left'"
-				type="select"
-				:options="['left', 'center', 'right', 'justify']"
-				@update:modelValue="(val) => blockController.setStyle('textAlign', val)"></InlineInput>
-		</CollapsibleSection>
-		<CollapsibleSection sectionName="Dimension">
-			<DimensionInput label="Width" property="width" />
-			<DimensionInput label="Min Width" property="minWidth" />
-			<DimensionInput label="Max Width" property="maxWidth" />
-			<hr class="dark:border-zinc-700" />
-			<DimensionInput label="Height" property="height" />
-			<DimensionInput label="Min Height" property="minHeight" />
-			<DimensionInput label="Max Height" property="maxHeight" />
-		</CollapsibleSection>
-		<CollapsibleSection sectionName="Position" v-if="!blockController.multipleBlocksSelected()">
-			<BlockPositionHandler></BlockPositionHandler>
-		</CollapsibleSection>
-		<CollapsibleSection sectionName="Spacing" v-if="!blockController.multipleBlocksSelected()">
-			<InlineInput
-				label="Margin"
-				v-if="!blockController.multipleBlocksSelected() && !blockController.isRoot()"
-				:modelValue="blockController.getMargin()"
-				@update:modelValue="(val) => blockController.setMargin(val)" />
-			<InlineInput
-				label="Padding"
-				v-if="!blockController.multipleBlocksSelected()"
-				:modelValue="blockController.getPadding()"
-				@update:modelValue="(val) => blockController.setPadding(val)" />
-		</CollapsibleSection>
-		<CollapsibleSection sectionName="Options">
-			<InlineInput
-				label="Link"
-				v-if="blockController.isLink()"
-				:modelValue="blockController.getAttribute('href')"
-				@update:modelValue="(val) => blockController.setAttribute('href', val)" />
-			<InlineInput
-				label="Opens in"
-				v-if="blockController.isLink()"
-				type="select"
-				:options="[
-					{
-						value: '_self',
-						label: 'Same Tab',
-					},
-					{
-						value: '_blank',
-						label: 'New Tab',
-					},
-				]"
-				:modelValue="blockController.getAttribute('target')"
-				@update:modelValue="(val) => blockController.setAttribute('target', val)" />
-			<InlineInput
-				label="Image URL"
-				v-if="blockController.isImage()"
-				:modelValue="blockController.getAttribute('src')"
-				@update:modelValue="(val) => blockController.setAttribute('src', val)" />
-			<InlineInput
-				label="Image Fit"
-				v-if="blockController.isImage()"
-				:modelValue="blockController.getStyle('objectFit')"
-				type="select"
-				:options="['fill', 'contain', 'cover', 'none']"
-				@update:modelValue="(val) => blockController.setStyle('objectFit', val)" />
-			<InlineInput
-				label="Tag"
-				:modelValue="blockController.getKeyValue('element')"
-				type="select"
-				:options="[
-					'span',
-					'div',
-					'section',
-					'button',
-					'p',
-					'h1',
-					'h2',
-					'h3',
-					'a',
-					'input',
-					'hr',
-					'form',
-					'textarea',
-				]"
-				@update:modelValue="(val) => blockController.setKeyValue('element', val)" />
-			<InlineInput
-				label="Input Type"
-				v-if="blockController.isInput()"
-				:modelValue="blockController.getAttribute('type') || 'text'"
-				type="select"
-				:options="['text', 'number', 'email', 'password', 'date', 'time', 'search', 'tel', 'url', 'color']"
-				@update:modelValue="(val) => blockController.setAttribute('type', val)" />
-			<!-- input placeholder -->
-			<InlineInput
-				label="Placeholder"
-				v-if="blockController.isInput()"
-				:modelValue="blockController.getAttribute('placeholder')"
-				@update:modelValue="(val) => blockController.setAttribute('placeholder', val)" />
-			<InlineInput
-				label="Content"
-				v-if="blockController.isText() || blockController.isButton()"
-				:modelValue="blockController.getTextContent()"
-				@update:modelValue="(val) => blockController.setKeyValue('innerHTML', val)" />
-			<div class="flex items-center justify-between">
-				<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
-					Visibility
-				</span>
-				<TabButtons
-					class="[&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"
-					:buttons="[
-						{
-							label: 'Visible',
-							value: 'flex',
-						},
-						{
-							label: 'Hidden',
-							value: 'none',
-						},
-					]"
-					:modelValue="blockController.getStyle('display') || 'flex'"
-					@update:modelValue="(val: string) => blockController.setStyle('display', val)"></TabButtons>
-			</div>
-			<InlineInput
-				label="Condition"
-				:modelValue="blockController.getKeyValue('visibilityCondition')"
-				@update:modelValue="(val) => blockController.setKeyValue('visibilityCondition', val)" />
-			<div class="flex items-center justify-between">
-				<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
-					Overflow
-				</span>
-				<div class="flex w-[150px] gap-2">
-					<Input
-						type="select"
-						:modelValue="blockController.getStyle('overflowX') || 'auto'"
-						:options="['auto', 'hidden', 'scroll', 'visible']"
-						@change="(val: string) => blockController.setStyle('overflowX', val)"
-						class="flex-1 rounded-md text-sm text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
-					<Input
-						type="select"
-						:modelValue="blockController.getStyle('overflowY') || 'auto'"
-						:options="['auto', 'hidden', 'scroll', 'visible']"
-						@change="(val: string) => blockController.setStyle('overflowY', val)"
-						class="flex-1 rounded-md text-sm text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
-				</div>
-			</div>
-			<InlineInput
-				label="Alt Text"
-				v-if="blockController.isImage()"
-				:modelValue="blockController.getAttribute('alt')"
-				@update:modelValue="(val) => blockController.setAttribute('alt', val)" />
-
-			<InlineInput
-				label="Class"
-				v-if="!blockController.multipleBlocksSelected()"
-				:modelValue="getClasses()"
-				@update:modelValue="(val) => setClasses(val)" />
-			<CodeEditor
-				v-if="blockController.isHTML()"
-				class="mt-8"
-				label="HTML"
-				type="HTML"
-				:modelValue="blockController.getInnerHTML() || ''"
-				@update:modelValue="
-					(val) => {
-						blockController.setInnerHTML(val);
-					}
-				"></CodeEditor>
-		</CollapsibleSection>
-		<CollapsibleSection sectionName="Data Key">
-			<InlineInput
-				label="Key"
-				:modelValue="blockController.getDataKey('key')"
-				@update:modelValue="(val) => blockController.setDataKey('key', val)" />
-			<InlineInput
-				label="Type"
-				:modelValue="blockController.getDataKey('type')"
-				@update:modelValue="(val) => blockController.setDataKey('type', val)" />
-			<InlineInput
-				label="Property"
-				:modelValue="blockController.getDataKey('property')"
-				@update:modelValue="(val) => blockController.setDataKey('property', val)" />
-		</CollapsibleSection>
-		<CollapsibleSection sectionName="Custom Attributes">
-			<ObjectEditor
-				:obj="(blockController.getCustomAttributes() as Record<string, string>)"
-				@update:obj="(obj) => blockController.setCustomAttributes(obj)"></ObjectEditor>
-		</CollapsibleSection>
-		<CollapsibleSection sectionName="Raw Style">
-			<ObjectEditor
-				:obj="(blockController.getRawStyles() as Record<string, string>)"
-				@update:obj="(obj) => blockController.setRawStyles(obj)"></ObjectEditor>
-			<p class="rounded-sm bg-gray-100 p-2 text-2xs text-gray-800 dark:bg-zinc-800 dark:text-zinc-300">
-				<b>Note:</b>
-				<br />
-				<br />
-				- Raw styles get applied across all devices
-				<br />
-				- State based styles are supported (e.g. hover, focus, visited)
-				<br />
-				Syntax: hover:color, focus:color, etc.
-				<br />
-				- State styles are only activated in preview mode
-			</p>
+		<CollapsibleSection :sectionName="section.name" v-for="section in sections">
+			<template v-for="property in section.properties">
+				<component
+					v-if="property.condition ? property.condition() : true"
+					:is="property.component"
+					v-bind="property.getProps()"
+					v-on="property.events || {}" />
+			</template>
 		</CollapsibleSection>
 	</div>
 	<div v-else>
@@ -355,7 +16,6 @@
 </template>
 <script setup lang="ts">
 import { setFont as _setFont, fontListNames, getFontWeightOptions } from "@/utils/fontManager";
-import { TabButtons } from "frappe-ui";
 
 import BackgroundHandler from "./BackgroundHandler.vue";
 import BLockLayoutHandler from "./BlockLayoutHandler.vue";
@@ -368,6 +28,20 @@ import ObjectEditor from "./ObjectEditor.vue";
 import blockController from "@/utils/blockController";
 import CodeEditor from "./CodeEditor.vue";
 import DimensionInput from "./DimensionInput.vue";
+import OptionToggle from "./OptionToggle.vue";
+
+type BlockProperty = {
+	component: any;
+	getProps: () => Record<string, unknown>;
+	events?: Record<string, unknown>;
+	condition?: () => boolean;
+};
+
+type PropertySection = {
+	name: string;
+	properties: BlockProperty[];
+	condition?: () => boolean;
+};
 
 const setFont = (font: string) => {
 	_setFont(font).then(() => {
@@ -383,4 +57,699 @@ const setClasses = (val: string) => {
 	const classes = val.split(",").map((c) => c.trim());
 	blockController.setClasses(classes);
 };
+
+const typographySectionProperties = [
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Family",
+				type: "autocomplete",
+				options: fontListNames,
+				modelValue: blockController.getFontFamily(),
+			};
+		},
+		events: {
+			"update:modelValue": (val: string) => setFont(val),
+		},
+		condition: () => blockController.isText() || blockController.isContainer(),
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Weight",
+				modelValue: blockController.getStyle("fontWeight"),
+				type: "autocomplete",
+				options: getFontWeightOptions((blockController.getStyle("fontFamily") || "Inter") as string),
+			};
+		},
+		events: {
+			"update:modelValue": (val: StyleValue) => blockController.setStyle("fontWeight", val),
+		},
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Size",
+				modelValue: blockController.getStyle("fontSize"),
+				enableSlider: true,
+			};
+		},
+		events: {
+			"update:modelValue": (val: StyleValue) => blockController.setStyle("fontSize", val),
+		},
+		condition: () => blockController.isText() || blockController.isInput(),
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Height",
+				modelValue: blockController.getStyle("lineHeight"),
+			};
+		},
+		events: {
+			"update:modelValue": (val: StyleValue) => blockController.setStyle("lineHeight", val),
+		},
+		condition: () => blockController.isText(),
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Letter",
+				modelValue: blockController.getStyle("letterSpacing"),
+			};
+		},
+		events: {
+			"update:modelValue": (val: StyleValue) => blockController.setStyle("letterSpacing", val),
+		},
+		condition: () => blockController.isText(),
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Transform",
+				modelValue: blockController.getStyle("textTransform"),
+				type: "select",
+				options: [
+					{
+						value: null,
+						label: "None",
+					},
+					{
+						value: "uppercase",
+						label: "Uppercase",
+					},
+					{
+						value: "lowercase",
+						label: "Lowercase",
+					},
+					{
+						value: "capitalize",
+						label: "Capitalize",
+					},
+				],
+			};
+		},
+		events: {
+			"update:modelValue": (val: StyleValue) => blockController.setStyle("textTransform", val),
+		},
+		condition: () => blockController.isText(),
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Align",
+				modelValue: blockController.getStyle("textAlign") || "left",
+				type: "select",
+				options: ["left", "center", "right", "justify"],
+			};
+		},
+		events: {
+			"update:modelValue": (val: StyleValue) => blockController.setStyle("textAlign", val),
+		},
+		condition: () => blockController.isText(),
+	},
+];
+
+const layoutSectionProperties = [
+	{
+		component: BLockLayoutHandler,
+		getProps: () => {},
+	},
+];
+
+const styleSectionProperties = [
+	{
+		component: ColorInput,
+		getProps: () => {
+			return {
+				label: "BG Color",
+				value: blockController.getStyle("background"),
+			};
+		},
+		events: {
+			change: (val: StyleValue) => blockController.setStyle("background", val),
+		},
+	},
+	{
+		component: ColorInput,
+		getProps: () => {
+			return {
+				label: "Text Color",
+				value: blockController.getTextColor(),
+			};
+		},
+		events: {
+			change: (val: string) => blockController.setTextColor(val),
+		},
+	},
+	{
+		component: ColorInput,
+		getProps: () => {
+			return {
+				label: "Border Color",
+				value: blockController.getStyle("borderColor"),
+			};
+		},
+		events: {
+			change: (val: StyleValue) => {
+				blockController.setStyle("borderColor", val);
+				if (val) {
+					if (!blockController.getStyle("borderWidth")) {
+						blockController.setStyle("borderWidth", "1px");
+						blockController.setStyle("borderStyle", "solid");
+					}
+				} else {
+					blockController.setStyle("borderWidth", null);
+					blockController.setStyle("borderStyle", null);
+				}
+			},
+		},
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Border Width",
+				modelValue: blockController.getStyle("borderWidth"),
+				enableSlider: true,
+			};
+		},
+		events: {
+			"update:modelValue": (val: StyleValue) => blockController.setStyle("borderWidth", val),
+		},
+		condition: () => blockController.getStyle("borderColor"),
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Border Style",
+				modelValue: blockController.getStyle("borderStyle"),
+				type: "select",
+				options: ["solid", "dashed", "dotted"],
+			};
+		},
+		events: {
+			"update:modelValue": (val: StyleValue) => blockController.setStyle("borderStyle", val),
+		},
+		condition: () => blockController.getStyle("borderColor"),
+	},
+	{
+		component: BackgroundHandler,
+		getProps: () => {},
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Shadow",
+				type: "select",
+				options: [
+					{
+						value: null,
+						label: "None",
+					},
+					{
+						label: "Small",
+						value:
+							"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 1px 2px 0px, rgba(0, 0, 0, 0.05) 0px 1px 3px 0px",
+					},
+					{
+						label: "Medium",
+						value:
+							"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.1) 0px 4px 6px -4px",
+					},
+					{
+						label: "Large",
+						value:
+							"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.1) 0px 10px 10px -5px",
+					},
+				],
+				modelValue: blockController.getStyle("boxShadow"),
+			};
+		},
+		events: {
+			"update:modelValue": (val: StyleValue) => blockController.setStyle("boxShadow", val),
+		},
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Border Radius",
+				modelValue: blockController.getStyle("borderRadius"),
+				enableSlider: true,
+				unitOptions: ["px", "%"],
+				minValue: 0,
+			};
+		},
+		events: {
+			"update:modelValue": (val: StyleValue) => blockController.setStyle("borderRadius", val),
+		},
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Z-Index",
+				modelValue: blockController.getStyle("zIndex"),
+			};
+		},
+		events: {
+			"update:modelValue": (val: StyleValue) => blockController.setStyle("zIndex", val),
+		},
+		condition: () =>
+			!blockController.multipleBlocksSelected() &&
+			!blockController.isRoot() &&
+			blockController.getStyle("position") !== "static",
+	},
+];
+
+const dimensionSectionProperties = [
+	{
+		component: DimensionInput,
+		getProps: () => {
+			return {
+				label: "Width",
+				property: "width",
+			};
+		},
+	},
+	{
+		component: DimensionInput,
+		getProps: () => {
+			return {
+				label: "Min Width",
+				property: "minWidth",
+			};
+		},
+	},
+	{
+		component: DimensionInput,
+		getProps: () => {
+			return {
+				label: "Max Width",
+				property: "maxWidth",
+			};
+		},
+	},
+	{
+		component: DimensionInput,
+		getProps: () => {
+			return {
+				label: "Height",
+				property: "height",
+			};
+		},
+	},
+	{
+		component: DimensionInput,
+		getProps: () => {
+			return {
+				label: "Min Height",
+				property: "minHeight",
+			};
+		},
+	},
+	{
+		component: DimensionInput,
+		getProps: () => {
+			return {
+				label: "Max Height",
+				property: "maxHeight",
+			};
+		},
+	},
+];
+
+const positionSectionProperties = [
+	{
+		component: BlockPositionHandler,
+		getProps: () => {},
+	},
+];
+
+const spacingSectionProperties = [
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Margin",
+				modelValue: blockController.getMargin(),
+			};
+		},
+		events: {
+			"update:modelValue": (val: string) => blockController.setMargin(val),
+		},
+		condition: () => !blockController.multipleBlocksSelected() && !blockController.isRoot(),
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Padding",
+				modelValue: blockController.getPadding(),
+			};
+		},
+		events: {
+			"update:modelValue": (val: string) => blockController.setPadding(val),
+		},
+		condition: () => !blockController.multipleBlocksSelected(),
+	},
+];
+
+const optionsSectionProperties = [
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Link",
+				modelValue: blockController.getAttribute("href"),
+			};
+		},
+		events: {
+			"update:modelValue": (val: string) => blockController.setAttribute("href", val),
+		},
+		condition: () => blockController.isLink(),
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Opens in",
+				type: "select",
+				options: [
+					{
+						value: "_self",
+						label: "Same Tab",
+					},
+					{
+						value: "_blank",
+						label: "New Tab",
+					},
+				],
+				modelValue: blockController.getAttribute("target"),
+			};
+		},
+		events: {
+			"update:modelValue": (val: string) => blockController.setAttribute("target", val),
+		},
+		condition: () => blockController.isLink(),
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Image URL",
+				modelValue: blockController.getAttribute("src"),
+			};
+		},
+		events: {
+			"update:modelValue": (val: string) => blockController.setAttribute("src", val),
+		},
+		condition: () => blockController.isImage(),
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Image Fit",
+				type: "select",
+				options: ["fill", "contain", "cover", "none"],
+				modelValue: blockController.getStyle("objectFit"),
+			};
+		},
+		events: {
+			"update:modelValue": (val: StyleValue) => blockController.setStyle("objectFit", val),
+		},
+		condition: () => blockController.isImage(),
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Tag",
+				type: "select",
+				options: [
+					"span",
+					"div",
+					"section",
+					"button",
+					"p",
+					"h1",
+					"h2",
+					"h3",
+					"a",
+					"input",
+					"hr",
+					"form",
+					"textarea",
+				],
+				modelValue: blockController.getKeyValue("element"),
+			};
+		},
+		events: {
+			"update:modelValue": (val: string) => blockController.setKeyValue("element", val),
+		},
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Input Type",
+				type: "select",
+				options: ["text", "number", "email", "password", "date", "time", "search", "tel", "url", "color"],
+				modelValue: blockController.getAttribute("type") || "text",
+			};
+		},
+		events: {
+			"update:modelValue": (val: string) => blockController.setAttribute("type", val),
+		},
+		condition: () => blockController.isInput(),
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Placeholder",
+				modelValue: blockController.getAttribute("placeholder"),
+			};
+		},
+		events: {
+			"update:modelValue": (val: string) => blockController.setAttribute("placeholder", val),
+		},
+		condition: () => blockController.isInput(),
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Content",
+				modelValue: blockController.getTextContent(),
+			};
+		},
+		events: {
+			"update:modelValue": (val: string) => blockController.setKeyValue("innerHTML", val),
+		},
+		condition: () => blockController.isText() || blockController.isButton(),
+	},
+	{
+		component: OptionToggle,
+		getProps: () => {
+			return {
+				label: "Visibility",
+				options: [
+					{
+						label: "Visible",
+						value: "flex",
+					},
+					{
+						label: "Hidden",
+						value: "none",
+					},
+				],
+				modelValue: blockController.getStyle("display") || "flex",
+			};
+		},
+		events: {
+			"update:modelValue": (val: StyleValue) => blockController.setStyle("display", val),
+		},
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Condition",
+				modelValue: blockController.getKeyValue("visibilityCondition"),
+			};
+		},
+		events: {
+			"update:modelValue": (val: string) => blockController.setKeyValue("visibilityCondition", val),
+		},
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Alt Text",
+				modelValue: blockController.getAttribute("alt"),
+			};
+		},
+		events: {
+			"update:modelValue": (val: string) => blockController.setAttribute("alt", val),
+		},
+		condition: () => blockController.isImage(),
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Class",
+				value: getClasses(),
+			};
+		},
+		events: {
+			"update:modelValue": (val: string) => setClasses(val),
+		},
+		condition: () => !blockController.multipleBlocksSelected(),
+	},
+	{
+		component: CodeEditor,
+		getProps: () => {
+			return {
+				label: "HTML",
+				type: "HTML",
+				modelValue: blockController.getInnerHTML() || "",
+			};
+		},
+		events: {
+			"update:modelValue": (val: string) => {
+				blockController.setInnerHTML(val);
+			},
+		},
+		condition: () => blockController.isHTML(),
+	},
+];
+
+const dataKeySectionProperties = [
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Key",
+				modelValue: blockController.getDataKey("key"),
+			};
+		},
+		events: {
+			"update:modelValue": (val: string) => blockController.setDataKey("key", val),
+		},
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Type",
+				modelValue: blockController.getDataKey("type"),
+			};
+		},
+		events: {
+			"update:modelValue": (val: string) => blockController.setDataKey("type", val),
+		},
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Property",
+				modelValue: blockController.getDataKey("property"),
+			};
+		},
+		events: {
+			"update:modelValue": (val: string) => blockController.setDataKey("property", val),
+		},
+	},
+];
+
+const customAttributesSectionProperties = [
+	{
+		component: ObjectEditor,
+		getProps: () => {
+			return {
+				obj: blockController.getCustomAttributes() as Record<string, string>,
+			};
+		},
+		events: {
+			"update:obj": (obj: Record<string, string>) => blockController.setCustomAttributes(obj),
+		},
+	},
+];
+
+const rawStyleSectionProperties = [
+	{
+		component: ObjectEditor,
+		getProps: () => {
+			return {
+				obj: blockController.getRawStyles() as Record<string, string>,
+			};
+		},
+		events: {
+			"update:obj": (obj: Record<string, string>) => blockController.setRawStyles(obj),
+		},
+	},
+];
+
+const sections = [
+	{
+		name: "Layout",
+		properties: layoutSectionProperties,
+		condition: () => !blockController.multipleBlocksSelected(),
+	},
+	{
+		name: "Style",
+		properties: styleSectionProperties,
+	},
+	{
+		name: "Typography",
+		properties: typographySectionProperties,
+		condition: () => blockController.isText() || blockController.isContainer(),
+	},
+	{
+		name: "Dimension",
+		properties: dimensionSectionProperties,
+	},
+	{
+		name: "Position",
+		properties: positionSectionProperties,
+		condition: () => !blockController.multipleBlocksSelected(),
+	},
+	{
+		name: "Spacing",
+		properties: spacingSectionProperties,
+		condition: () => !blockController.multipleBlocksSelected(),
+	},
+	{
+		name: "Options",
+		properties: optionsSectionProperties,
+	},
+	{
+		name: "Data Key",
+		properties: dataKeySectionProperties,
+		condition: () => blockController.isBLockSelected(),
+	},
+	{
+		name: "Custom Attributes",
+		properties: customAttributesSectionProperties,
+	},
+	{
+		name: "Raw Style",
+		properties: rawStyleSectionProperties,
+	},
+] as PropertySection[];
 </script>
