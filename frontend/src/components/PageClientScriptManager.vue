@@ -103,7 +103,6 @@
 	</div>
 </template>
 <script setup lang="ts">
-import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { Dropdown, createListResource, createResource } from "frappe-ui";
 import { PropType, ref, watch } from "vue";
@@ -118,7 +117,7 @@ type attachedScript = {
 	script_name: string;
 	editable: boolean;
 };
-const store = useStore();
+
 const activeScript = ref<attachedScript | null>(null);
 
 const props = defineProps({
@@ -142,6 +141,11 @@ const attachedScriptResource = createListResource({
 	],
 	orderBy: "`tabBuilder Page Client Script`.creation asc",
 	auto: true,
+	onSuccess: (data: attachedScript[]) => {
+		if (data && data.length > 0 && !activeScript.value) {
+			selectScript(data[0]);
+		}
+	},
 });
 
 const clientScriptResource = createListResource({

@@ -332,6 +332,7 @@ const useStore = defineStore("store", {
 		setPageData() {
 			const page = this.getActivePage();
 			if (!page || !page.page_data_script) {
+				this.pageData = {};
 				return;
 			}
 			webPages.runDocMethod
