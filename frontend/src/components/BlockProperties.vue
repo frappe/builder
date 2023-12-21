@@ -14,7 +14,7 @@
 					}
 				" />
 			<div
-				class="absolute right-1 top-[11px] z-20 cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
+				class="absolute right-1 top-[15px] z-20 cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
 				@click="filter = ''"
 				v-show="filter">
 				<CrossIcon />
