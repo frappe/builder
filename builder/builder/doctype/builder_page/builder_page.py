@@ -281,7 +281,7 @@ def append_style(style_obj, style_tag, style_class, device="desktop"):
 	if device == "mobile":
 		style_string = f"@media only screen and (max-width: {MOBILE_BREAKPOINT}px) {{ {style_string} }}"
 	elif device == "tablet":
-		style_string = f"@media only screen and (min-width: {MOBILE_BREAKPOINT + 1}px) and (max-width: {DESKTOP_BREAKPOINT - 1}px) {{ {style_string} }}"
+		style_string = f"@media only screen and (max-width: {DESKTOP_BREAKPOINT - 1}px) {{ {style_string} }}"
 	style_tag.append(style_string)
 
 def append_state_style(style_obj, style_tag, style_class):
