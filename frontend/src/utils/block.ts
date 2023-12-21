@@ -113,10 +113,11 @@ class Block implements BlockOptions {
 			styleObj = this.getComponentStyles(breakpoint);
 		}
 		styleObj = { ...styleObj, ...this.baseStyles };
-		if (breakpoint === "mobile") {
-			styleObj = { ...styleObj, ...this.mobileStyles };
-		} else if (breakpoint === "tablet") {
+		if (["mobile", "tablet"].includes(breakpoint)) {
 			styleObj = { ...styleObj, ...this.tabletStyles };
+			if (breakpoint === "mobile") {
+				styleObj = { ...styleObj, ...this.mobileStyles };
+			}
 		}
 		styleObj = { ...styleObj, ...this.rawStyles };
 		// replace variables with values
