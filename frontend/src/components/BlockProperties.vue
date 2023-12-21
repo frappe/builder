@@ -1,6 +1,6 @@
 <template>
-	<div v-if="blockController.isBLockSelected()" class="mt-[-10px] flex select-none flex-col gap-3 pb-16">
-		<div class="sticky top-9 z-50 flex w-full bg-white py-2 dark:bg-zinc-900">
+	<div v-if="blockController.isBLockSelected()" class="flex select-none flex-col pb-16">
+		<div class="sticky top-9 z-50 mt-[-15px] flex w-full bg-white py-3 dark:bg-zinc-900">
 			<Input
 				ref="searchInput"
 				class="properties-search-input h-7 w-full rounded-md text-sm text-gray-800 hover:border-gray-400 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
@@ -20,11 +20,13 @@
 				<CrossIcon />
 			</div>
 		</div>
-		<CollapsibleSection :sectionName="section.name" v-for="section in filteredSections">
-			<template v-for="property in getFilteredProperties(section)">
-				<component :is="property.component" v-bind="property.getProps()" v-on="property.events || {}" />
-			</template>
-		</CollapsibleSection>
+		<div class="flex flex-col gap-3">
+			<CollapsibleSection :sectionName="section.name" v-for="section in filteredSections">
+				<template v-for="property in getFilteredProperties(section)">
+					<component :is="property.component" v-bind="property.getProps()" v-on="property.events || {}" />
+				</template>
+			</CollapsibleSection>
+		</div>
 	</div>
 	<div v-else>
 		<p class="text-center text-sm text-gray-600 dark:text-zinc-500">Select a block to edit properties.</p>
