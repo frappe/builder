@@ -163,7 +163,7 @@ const isEditable = computed(() => {
 });
 
 const showEditor = computed(() => {
-	return textContent.value && !(props.block.isLink() && props.block.hasChildren());
+	return !(props.block.isLink() && props.block.hasChildren());
 });
 
 const handleClick = (e: MouseEvent) => {
@@ -252,7 +252,6 @@ defineExpose({
 	component,
 });
 
-// add cmd + k  shortcut to open link menu
 const handleKeydown = (e: KeyboardEvent) => {
 	if (e.key === "k" && e.metaKey) {
 		enableLinkInput();
