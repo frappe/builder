@@ -525,6 +525,38 @@ const optionsSectionProperties = [
 		component: InlineInput,
 		getProps: () => {
 			return {
+				label: "Tag",
+				type: "select",
+				options: [
+					"span",
+					"div",
+					"section",
+					"button",
+					"p",
+					"h1",
+					"h2",
+					"h3",
+					"a",
+					"input",
+					"hr",
+					"form",
+					"textarea",
+					"nav",
+					"header",
+					"footer",
+				],
+				modelValue: blockController.getKeyValue("element"),
+			};
+		},
+		searchKeyWords: "Tag, Element, TagName, Tag Name, ElementName, Element Name, header, footer, nav, input",
+		events: {
+			"update:modelValue": (val: string) => blockController.setKeyValue("element", val),
+		},
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
 				label: "Link",
 				modelValue: blockController.getAttribute("href"),
 			};
@@ -589,38 +621,6 @@ const optionsSectionProperties = [
 			"update:modelValue": (val: StyleValue) => blockController.setStyle("objectFit", val),
 		},
 		condition: () => blockController.isImage(),
-	},
-	{
-		component: InlineInput,
-		getProps: () => {
-			return {
-				label: "Tag",
-				type: "select",
-				options: [
-					"span",
-					"div",
-					"section",
-					"button",
-					"p",
-					"h1",
-					"h2",
-					"h3",
-					"a",
-					"input",
-					"hr",
-					"form",
-					"textarea",
-					"nav",
-					"header",
-					"footer",
-				],
-				modelValue: blockController.getKeyValue("element"),
-			};
-		},
-		searchKeyWords: "Tag, Element, TagName, Tag Name, ElementName, Element Name, header, footer, nav, input",
-		events: {
-			"update:modelValue": (val: string) => blockController.setKeyValue("element", val),
-		},
 	},
 	{
 		component: InlineInput,
