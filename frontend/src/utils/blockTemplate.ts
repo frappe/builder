@@ -23,7 +23,7 @@ function getBlockTemplate(
 					width: "fit-content",
 					height: "fit-content",
 					lineHeight: "1",
-					minWidth: "30px",
+					minWidth: "10px",
 				} as BlockStyleMap,
 			};
 		case "image":
