@@ -90,7 +90,7 @@ const useStore = defineStore("store", {
 		getPageData() {
 			return [this.activeCanvas?.getFirstBlock()];
 		},
-		async setPage(page: BuilderPage) {
+		async setPage(page: BuilderPage, resetCanvas = true) {
 			this.settingPage = true;
 			if (!page) {
 				return;
@@ -109,7 +109,7 @@ const useStore = defineStore("store", {
 			await this.setPageData();
 			nextTick(() => {
 				this.settingPage = false;
-				this.activeCanvas?.setRootBlock(this.pageBlocks[0]);
+				this.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas);
 			});
 		},
 		getImageBlock(imageSrc: string, imageAlt: string = "") {

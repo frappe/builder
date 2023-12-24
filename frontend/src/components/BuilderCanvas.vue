@@ -76,7 +76,7 @@ import {
 	useEventListener,
 } from "@vueuse/core";
 import { FeatherIcon } from "frappe-ui";
-import { Ref, computed, nextTick, onMounted, provide, reactive, ref, watchEffect } from "vue";
+import { Ref, computed, nextTick, onMounted, provide, reactive, ref, watch, watchEffect } from "vue";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
@@ -366,13 +366,15 @@ const zoomOut = () => {
 	canvasProps.scale = Math.max(canvasProps.scale - 0.1, 0.1);
 };
 
-watchEffect(() => {
-	canvasProps.breakpoints.map((b) => b.visible);
-	if (canvasProps.settingCanvas) {
-		return;
+watch(
+	() => canvasProps.breakpoints.map((b) => b.visible),
+	() => {
+		if (canvasProps.settingCanvas) {
+			return;
+		}
+		setScaleAndTranslate();
 	}
-	setScaleAndTranslate();
-});
+);
 
 watchEffect(() => {
 	toggleMode(store.mode);
@@ -407,9 +409,14 @@ const getFirstBlock = () => {
 	return block.value;
 };
 
-const setRootBlock = (newBlock: Block) => {
+const setRootBlock = (newBlock: Block, resetCanvas = false) => {
 	block.value = newBlock;
 	setupHistory();
+	if (resetCanvas) {
+		nextTick(() => {
+			setScaleAndTranslate();
+		});
+	}
 };
 
 defineExpose({

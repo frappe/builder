@@ -54,10 +54,10 @@ import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { copyToClipboard, isHTMLString, isJSONString, isTargetEditable } from "@/utils/helpers";
-import { useDebounceFn, useEventListener, useMagicKeys, whenever } from "@vueuse/core";
-import { toast } from "vue-sonner";
+import { useDebounceFn, useEventListener, useMagicKeys } from "@vueuse/core";
 import { nextTick, onActivated, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { toast } from "vue-sonner";
 
 const route = useRoute();
 const router = useRouter();
@@ -468,14 +468,9 @@ onActivated(async () => {
 	}
 });
 
-const setPage = (pageName: string) => {
+const setPage = (pageName: string, resetCanvas = true) => {
 	webPages.fetchOne.submit(pageName).then((data: BuilderPage[]) => {
-		store.setPage(data[0]);
-		nextTick(() => {
-			if (pageCanvas.value) {
-				pageCanvas.value.setScaleAndTranslate();
-			}
-		});
+		store.setPage(data[0], resetCanvas);
 	});
 };
 
@@ -483,7 +478,7 @@ const setPage = (pageName: string) => {
 useEventListener(document, "visibilitychange", () => {
 	if (document.visibilityState === "visible") {
 		if (route.params.pageId && route.params.pageId !== "new") {
-			setPage(route.params.pageId as string);
+			setPage(route.params.pageId as string, false);
 		}
 	}
 });
