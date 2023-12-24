@@ -1,7 +1,8 @@
 import { UseRefHistoryReturn } from "@vueuse/core";
-import { FileUploadHandler, toast } from "frappe-ui";
+import { FileUploadHandler } from "frappe-ui";
 import { defineStore } from "pinia";
 import { nextTick, reactive } from "vue";
+import { toast } from "vue-sonner";
 import BuilderCanvas from "./components/BuilderCanvas.vue";
 import webComponent from "./data/webComponent";
 import { webPages } from "./data/webPage";
@@ -99,16 +100,16 @@ const useStore = defineStore("store", {
 			if (!Array.isArray(blocks)) {
 				this.pushBlocks([blocks]);
 			}
-			this.activeCanvas?.setRootBlock(this.getBlockInstance(blocks[0]));
 			this.pageBlocks = [this.getBlockInstance(blocks[0])];
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
 			this.selectedPage = page.name;
 			const variables = localStorage.getItem(`${page.name}:routeVariables`) || "{}";
 			this.routeVariables = JSON.parse(variables);
-			this.setPageData();
+			await this.setPageData();
 			nextTick(() => {
 				this.settingPage = false;
+				this.activeCanvas?.setRootBlock(this.pageBlocks[0]);
 			});
 		},
 		getImageBlock(imageSrc: string, imageAlt: string = "") {
@@ -228,10 +229,7 @@ const useStore = defineStore("store", {
 							block: this.activeCanvas?.getFirstBlock(),
 						})
 						.then(() => {
-							toast({
-								text: "Component saved!",
-								position: "bottom-center",
-							});
+							toast.success("Component saved!");
 						});
 				} else {
 					// webComponent.fet;
@@ -273,21 +271,35 @@ const useStore = defineStore("store", {
 			}
 			return componentObj.component_name as Block;
 		},
-		uploadFile(file: File) {
+		uploadFile: async (file: File) => {
 			const uploader = new FileUploadHandler();
-			return uploader
-				.upload(file, {
-					private: false,
-					folder: "Home/Builder Uploads",
-					optimize: true,
-				})
-				.then((fileDoc: { file_url: string; file_name: string }) => {
-					const fileURL = encodeURI(window.location.origin + fileDoc.file_url);
-					return {
-						fileURL,
-						fileName: fileDoc.file_name,
-					};
+			let fileDoc = {
+				file_url: "",
+				file_name: "",
+			};
+			const upload = uploader.upload(file, {
+				private: false,
+				folder: "Home/Builder Uploads",
+				optimize: true,
+			});
+			await new Promise((resolve) => {
+				toast.promise(upload, {
+					loading: "Uploading...",
+					success: (data: { file_name: string; file_url: string }) => {
+						fileDoc.file_name = data.file_name;
+						fileDoc.file_url = data.file_url;
+						resolve(fileDoc);
+						return "Uploaded";
+					},
+					error: () => "Failed to upload",
+					duration: 500,
 				});
+			});
+
+			return {
+				fileURL: encodeURI(window.location.origin + fileDoc.file_url),
+				fileName: fileDoc.file_name,
+			};
 		},
 		clearSelection() {
 			this.selectedBlocks = [];
@@ -335,7 +347,7 @@ const useStore = defineStore("store", {
 				this.pageData = {};
 				return;
 			}
-			webPages.runDocMethod
+			return webPages.runDocMethod
 				.submit({
 					method: "get_page_data",
 					name: page.name,

@@ -113,6 +113,7 @@ const showServerScriptEditor = () => {
 [id^="headlessui-dialog-panel"] input {
 	@apply dark:bg-zinc-900;
 	@apply dark:border-zinc-800;
+	@apply dark:text-gray-50;
 }
 
 [id^="headlessui-dialog-panel"] input:focus {

@@ -55,7 +55,7 @@ import getBlockTemplate from "@/utils/blockTemplate";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { copyToClipboard, isHTMLString, isJSONString, isTargetEditable } from "@/utils/helpers";
 import { useDebounceFn, useEventListener, useMagicKeys, whenever } from "@vueuse/core";
-import { toast } from "frappe-ui";
+import { toast } from "vue-sonner";
 import { nextTick, onActivated, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
@@ -388,24 +388,17 @@ useEventListener(document, "keydown", (e) => {
 	if (e.key === "Backspace" && blockController.isBLockSelected()) {
 		function findBlockAndRemove(blocks: Array<Block>, blockId: string) {
 			if (blockId === "root") {
-				toast({
-					title: "Warning",
-					text: "Cannot Delete Root Block",
-					icon: "alert-circle",
-					iconClasses: "text-yellow-500",
-					position: "top-left",
+				toast("⚠️ Warning", {
+					description: "Cannot Delete Root Block",
 				});
+
 				return false;
 			}
 			blocks.forEach((block, i) => {
 				if (block.blockId === blockId) {
 					if (block.isChildOfComponentBlock() && !e.shiftKey) {
-						toast({
-							title: "Warning",
-							text: "Cannot Delete Block Inside Component",
-							icon: "alert-circle",
-							iconClasses: "text-yellow-500",
-							position: "top-left",
+						toast("⚠️ Warning", {
+							description: "Cannot Delete Block Inside Component",
 						});
 						return false;
 					} else {
@@ -556,5 +549,9 @@ watch(
 
 [id^="headlessui-menu-items"] button svg {
 	@apply dark:text-zinc-200;
+}
+
+[data-sonner-toaster] {
+	font-family: "InterVar";
 }
 </style>

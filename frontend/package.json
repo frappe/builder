@@ -26,6 +26,7 @@
     "pinia": "^2.0.28",
     "vue": "^3.2.25",
     "vue-router": "^4.0.12",
+    "vue-sonner": "^1.0.2",
     "vuedraggable": "^4.1.0",
     "webfontloader": "^1.6.28"
   },
