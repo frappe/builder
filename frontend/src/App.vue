@@ -7,7 +7,7 @@
 		</router-view>
 		<Toasts />
 		<UseDark></UseDark>
-		<Toaster :theme="isDark ? 'dark' : 'light'" />
+		<Toaster :theme="isDark ? 'dark' : 'light'" richColors />
 	</div>
 </template>
 <script setup lang="ts">

@@ -388,8 +388,8 @@ useEventListener(document, "keydown", (e) => {
 	if (e.key === "Backspace" && blockController.isBLockSelected()) {
 		function findBlockAndRemove(blocks: Array<Block>, blockId: string) {
 			if (blockId === "root") {
-				toast("⚠️ Warning", {
-					description: "Cannot Delete Root Block",
+				toast.warning("Warning", {
+					description: "Cannot delete root block",
 				});
 
 				return false;
@@ -397,8 +397,8 @@ useEventListener(document, "keydown", (e) => {
 			blocks.forEach((block, i) => {
 				if (block.blockId === blockId) {
 					if (block.isChildOfComponentBlock() && !e.shiftKey) {
-						toast("⚠️ Warning", {
-							description: "Cannot Delete Block Inside Component",
+						toast.warning("Warning", {
+							description: "Cannot delete block inside component",
 						});
 						return false;
 					} else {
@@ -548,5 +548,10 @@ watch(
 
 [data-sonner-toaster] {
 	font-family: "InterVar";
+}
+
+[data-sonner-toast][data-styled="true"] {
+	@apply dark:bg-zinc-900;
+	@apply dark:border-zinc-800;
 }
 </style>
