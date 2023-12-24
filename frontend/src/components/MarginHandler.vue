@@ -73,8 +73,8 @@
 				left: `calc(0% - ${leftMarginHandlerWidth}px)`,
 			}"
 			:class="{
-				'bg-transparent': !targetBlock.isSelected,
-				'bg-yellow-200': targetBlock.isSelected,
+				'bg-transparent': !targetBlock.isSelected(),
+				'bg-yellow-200': targetBlock.isSelected(),
 			}"
 			ref="leftMarginHandler">
 			<div
