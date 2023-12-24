@@ -3247,6 +3247,11 @@ vue-router@^4.0.12:
   dependencies:
     "@vue/devtools-api" "^6.5.0"
 
+vue-sonner@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/vue-sonner/-/vue-sonner-1.0.2.tgz#93d8a65965afeb15c167588eddb56faa88c3a66a"
+  integrity sha512-BXIyb9lGSMUjTpOukISp7oV9nrczgbfYz+TnDeoap3io3ayGXiWv+/3eQ9UKnmofwUlC4nh/H5jzBOO89lRItQ==
+
 vue@^3.2.25:
   version "3.3.4"
   resolved "https://registry.npmjs.org/vue/-/vue-3.3.4.tgz"
