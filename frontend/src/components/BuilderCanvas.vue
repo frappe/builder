@@ -171,7 +171,10 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 		if (componentName) {
 			const newBlock = store.getBlockCopy(webComponent.getRow(componentName).block, true);
 			newBlock.extendFromComponent(componentName);
-			while (parentBlock && (parentBlock.isImage() || parentBlock.isSVG())) {
+			while (
+				parentBlock &&
+				(parentBlock.isImage() || parentBlock.isSVG() || (parentBlock.isText() && !parentBlock.isLink()))
+			) {
 				parentBlock = parentBlock.getParentBlock();
 			}
 			if (!parentBlock) return;

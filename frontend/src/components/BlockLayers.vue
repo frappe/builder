@@ -83,7 +83,13 @@
 								</span>
 							</span>
 							<div
-								v-show="isExpanded(element) && element.isVisible() && !element.isSVG() && !element.isImage()">
+								v-show="
+									isExpanded(element) &&
+									element.isVisible() &&
+									!element.isSVG() &&
+									!element.isImage() &&
+									!(element.isText() && !element.isLink())
+								">
 								<BlockLayers :blocks="element.children" class="ml-3" />
 							</div>
 						</div>
