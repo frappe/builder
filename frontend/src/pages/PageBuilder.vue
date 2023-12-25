@@ -521,6 +521,20 @@ watch(
 		deep: true,
 	}
 );
+
+// moved out of BlockLayers for performance
+// TODO: Find a better way to do this
+watch(
+	() => store.hoveredBlock,
+	() => {
+		document.querySelectorAll(`[data-block-layer-id].hovered-block`).forEach((el) => {
+			el.classList.remove("hovered-block");
+		});
+		if (store.hoveredBlock) {
+			document.querySelector(`[data-block-layer-id="${store.hoveredBlock}"]`)?.classList.add("hovered-block");
+		}
+	}
+);
 </script>
 
 <style>

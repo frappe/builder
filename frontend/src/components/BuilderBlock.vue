@@ -14,6 +14,7 @@
 		v-if="showBlock"
 		ref="component">
 		<BuilderBlock
+			v-if="block.isVisible()"
 			:data="data"
 			:block="child"
 			:breakpoint="breakpoint"
@@ -29,13 +30,14 @@
 			:block="block"
 			:breakpoint="breakpoint"
 			:editable="isEditable"
+			:isSelected="isSelected"
 			:target="(target as HTMLElement)" />
 	</teleport>
 </template>
 <script setup lang="ts">
 import Block from "@/utils/block";
 import { setFont } from "@/utils/fontManager";
-import { computed, inject, nextTick, onMounted, reactive, ref, useAttrs, watchEffect } from "vue";
+import { computed, inject, nextTick, onMounted, reactive, ref, useAttrs, watch, watchEffect } from "vue";
 
 import getBlockTemplate from "@/utils/blockTemplate";
 import { getDataForKey } from "@/utils/helpers";
@@ -78,6 +80,9 @@ const draggable = computed(() => {
 	// TODO: enable this
 	return !props.block.isRoot() && !props.preview && false;
 });
+
+const hovered = ref(false);
+const isSelected = ref(false);
 
 const getComponentName = (block: Block) => {
 	if (block.isRepeater()) {
@@ -141,8 +146,8 @@ const loadEditor = computed(() => {
 		!canvasProps?.panning &&
 		target.value &&
 		props.block.getStyle("display") !== "none" &&
-		((props.block.isSelected() && props.breakpoint === store.activeBreakpoint) ||
-			(props.block.isHovered() && store.hoveredBreakpoint === props.breakpoint))
+		((isSelected.value && props.breakpoint === store.activeBreakpoint) ||
+			(hovered.value && store.hoveredBreakpoint === props.breakpoint))
 	);
 });
 
@@ -166,9 +171,8 @@ onMounted(async () => {
 });
 
 const isEditable = computed(() => {
-	return (
-		store.editableBlock === props.block && store.activeBreakpoint === props.breakpoint // to ensure it is right block and not on different breakpoint
-	);
+	// to ensure it is right block and not on different breakpoint
+	return store.editableBlock === props.block && store.activeBreakpoint === props.breakpoint;
 });
 
 const selectBlock = (e: MouseEvent | null) => {
@@ -246,4 +250,26 @@ const showBlock = computed(() => {
 		: true;
 	return data;
 });
+
+watch(
+	() => store.hoveredBlock,
+	(newValue, oldValue) => {
+		if (newValue === props.block.blockId) {
+			hovered.value = true;
+		} else if (oldValue === props.block.blockId) {
+			hovered.value = false;
+		}
+	}
+);
+
+watch(
+	() => store.selectedBlocks,
+	(newValue, oldValue) => {
+		if (newValue.some((block: Block) => block.blockId === props.block.blockId)) {
+			isSelected.value = true;
+		} else if (oldValue.some((block: Block) => block.blockId === props.block.blockId)) {
+			isSelected.value = false;
+		}
+	}
+);
 </script>
