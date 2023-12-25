@@ -95,6 +95,10 @@ const props = defineProps({
 		type: Boolean,
 		default: false,
 	},
+	isSelected: {
+		type: Boolean,
+		default: false,
+	},
 });
 const store = useStore();
 const editor = ref(null) as unknown as Ref<HTMLElement>;
@@ -129,7 +133,7 @@ watchEffect(() => {
 });
 
 const isBlockSelected = computed(() => {
-	return props.block.isSelected() && props.breakpoint === store.activeBreakpoint;
+	return props.isSelected && props.breakpoint === store.activeBreakpoint;
 });
 
 const getStyleClasses = computed(() => {
@@ -142,13 +146,7 @@ const getStyleClasses = computed(() => {
 	} else {
 		classes.push("ring-blue-400");
 	}
-	if (
-		props.block.isSelected() &&
-		props.breakpoint === store.activeBreakpoint &&
-		!props.editable &&
-		!props.block.isRoot() &&
-		!props.block.isRepeater()
-	) {
+	if (isBlockSelected.value && !props.editable && !props.block.isRoot() && !props.block.isRepeater()) {
 		// make editor interactive
 		classes.push("pointer-events-auto");
 		// Place the block on the top of the stack

@@ -13,12 +13,9 @@
 							:data-block-layer-id="element.blockId"
 							:title="element.blockId"
 							@contextmenu.prevent.stop="onContextMenu"
-							class="cursor-pointer rounded border bg-white pl-2 pr-[2px] text-sm text-gray-700 dark:bg-zinc-900"
+							class="cursor-pointer rounded border border-transparent bg-white pl-2 pr-[2px] text-sm text-gray-700 dark:bg-zinc-900 dark:text-gray-500"
 							:class="{
-								'border-transparent dark:text-gray-500': !element.isSelected() && !element.isHovered(),
-								'border-blue-300 text-gray-700 dark:border-blue-800 dark:text-gray-500':
-									element.isHovered() && !element.isSelected(),
-								'border-blue-400 text-gray-900 dark:border-blue-600 dark:text-gray-200': element.isSelected(),
+								'block-selected': element.isSelected(),
 							}"
 							@click.stop="
 								store.activeCanvas?.history.pause();
@@ -161,3 +158,11 @@ watch(
 	{ immediate: true }
 );
 </script>
+<style>
+.hovered-block {
+	@apply border-blue-300 text-gray-700 dark:border-blue-800 dark:text-gray-500;
+}
+.block-selected {
+	@apply border-blue-400 text-gray-900 dark:border-blue-600 dark:text-gray-200;
+}
+</style>

@@ -321,16 +321,12 @@ class Block implements BlockOptions {
 			tabletStyles: Object.assign({}, this.tabletStyles),
 		};
 	}
-	isHovered(): boolean {
-		const store = useStore();
-		return store.hoveredBlock === this.blockId;
-	}
 	isSelected(): boolean {
 		const store = useStore();
 		return store.selectedBlocks.some((block: Block) => block.blockId === this.blockId);
 	}
 	isMovable(): boolean {
-		return this.getStyle("position") === "absolute";
+		return ["absolute", "fixed"].includes(this.getStyle("position") as string);
 	}
 	move(direction: "up" | "left" | "down" | "right") {
 		if (!this.isMovable()) {

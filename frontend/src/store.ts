@@ -304,6 +304,9 @@ const useStore = defineStore("store", {
 		clearSelection() {
 			this.selectedBlocks = [];
 		},
+		isSelected(blockId: string) {
+			return this.selectedBlocks.some((block) => block.blockId === blockId);
+		},
 		getActivePage() {
 			return webPages.getRow(this.selectedPage as string) as BuilderPage;
 		},
