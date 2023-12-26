@@ -25,7 +25,7 @@
 		</div>
 		<div class="absolute right-3 flex items-center">
 			<UseDark v-slot="{ isDark, toggleDark }">
-				<button @click="toggleDark()">
+				<button @click="transitionTheme(toggleDark)">
 					<FeatherIcon
 						title="Toggle Theme"
 						:name="isDark ? 'moon' : 'sun'"
@@ -58,6 +58,21 @@ const publishing = ref(false);
 
 import useStore from "../store";
 
+declare global {
+	interface Document {
+		startViewTransition(callback: () => void): void;
+	}
+}
+
 const store = useStore();
 const toolbar = ref(null);
+const transitionTheme = (toggleDark: () => void) => {
+	if (document.startViewTransition && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+		document.startViewTransition(() => {
+			toggleDark();
+		});
+	} else {
+		toggleDark();
+	}
+};
 </script>
