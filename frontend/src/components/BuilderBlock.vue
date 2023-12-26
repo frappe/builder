@@ -14,7 +14,7 @@
 		v-if="showBlock"
 		ref="component">
 		<BuilderBlock
-			v-if="block.isVisible()"
+			v-if="styles?.display && styles?.display !== 'none'"
 			:data="data"
 			:block="child"
 			:breakpoint="breakpoint"
@@ -137,7 +137,7 @@ const target = computed(() => {
 });
 
 const styles = computed(() => {
-	return { ...props.block.getStyles(props.breakpoint), ...props.block.getEditorStyles() };
+	return { ...props.block.getStyles(props.breakpoint), ...props.block.getEditorStyles() } as BlockStyleMap;
 });
 
 const loadEditor = computed(() => {
