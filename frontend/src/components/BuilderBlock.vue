@@ -14,7 +14,6 @@
 		v-if="showBlock"
 		ref="component">
 		<BuilderBlock
-			v-if="styles?.display && styles?.display !== 'none'"
 			:data="data"
 			:block="child"
 			:breakpoint="breakpoint"
