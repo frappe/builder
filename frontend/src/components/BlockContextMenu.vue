@@ -46,8 +46,8 @@ import getBlockTemplate from "@/utils/blockTemplate";
 import { vOnClickOutside } from "@vueuse/components";
 import { Dialog } from "frappe-ui";
 import { nextTick, ref } from "vue";
-import ContextMenu from "./ContextMenu.vue";
 import { toast } from "vue-sonner";
+import ContextMenu from "./ContextMenu.vue";
 const store = useStore();
 
 const props = defineProps<{
@@ -186,7 +186,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		condition: () => !props.block.isRoot() && !props.block.isRepeater(),
 	},
 	{
-		label: "Reset Changes",
+		label: "Reset Component",
 		condition: () => Boolean(props.block.extendedFromComponent),
 		action: () => {
 			props.block.resetChanges();

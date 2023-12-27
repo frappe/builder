@@ -15,7 +15,7 @@ export interface BlockDataKey {
 function resetBlock(
 	block: Block | BlockOptions,
 	extendedFromComponent: string | undefined,
-	children: Block[]
+	componentChildren: Block[]
 ) {
 	delete block.innerHTML;
 	delete block.element;
@@ -26,12 +26,31 @@ function resetBlock(
 	block.tabletStyles = {};
 	block.attributes = {};
 	block.classes = [];
-	block.children?.forEach((child, index) => {
+
+	block.children?.forEach((child) => {
 		child.isChildOfComponent = extendedFromComponent;
-		const componentChild = children[index];
+		const componentChild = componentChildren.find((c) => c.blockId === child.blockId);
 		if (componentChild) {
 			child.referenceBlockId = componentChild.blockId;
 			resetBlock(child, extendedFromComponent, componentChild.children);
+		}
+	});
+
+	componentChildren.forEach((componentChild, index) => {
+		const existingChild = block.children?.find((c) => c.referenceBlockId === componentChild.blockId);
+		if (!existingChild) {
+			const store = useStore();
+			const blockComponent = store.getBlockCopy(componentChild);
+			blockComponent.isChildOfComponent = extendedFromComponent;
+			blockComponent.referenceBlockId = componentChild.blockId;
+			block.addChild(blockComponent, index);
+		}
+	});
+
+	block.children?.forEach((child) => {
+		const existingChild = componentChildren.find((c) => c.blockId === child.referenceBlockId);
+		if (!existingChild) {
+			block.removeChild(child);
 		}
 	});
 }
