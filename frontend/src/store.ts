@@ -33,6 +33,7 @@ const useStore = defineStore("store", {
 		routeVariables: <{ [key: string]: string }>{},
 		autoSave: true,
 		pageBlocks: <Block[]>[],
+		propertyFilter: <string | null>null,
 		builderLayout: {
 			rightPanelWidth: 275,
 			leftPanelWidth: 280,

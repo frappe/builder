@@ -2,7 +2,7 @@
 	<div ref="component">
 		<div
 			v-if="!block.hasChildren()"
-			class="pointer-events-none flex h-52 w-52 items-center justify-center font-semibold">
+			class="pointer-events-none flex h-full w-full items-center justify-center font-semibold">
 			Add a block to repeat
 		</div>
 		<BuilderBlock
