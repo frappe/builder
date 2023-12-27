@@ -5,12 +5,12 @@
 			<InlineInput
 				label="Title"
 				type="text"
-				class="w-full text-sm"
+				class="w-full text-sm [&>label]:w-[60%] [&>label]:min-w-[180px]"
 				:modelValue="pageData.page_title"
 				@update:modelValue="(val) => webPages.setValue.submit({ name: pageData.name, page_title: val })" />
 			<InlineInput
 				type="text"
-				class="w-full text-sm"
+				class="w-full text-sm [&>label]:w-[60%] [&>label]:min-w-[180px]"
 				label="Route"
 				:modelValue="pageData.route"
 				@update:modelValue="(val) => webPages.setValue.submit({ name: pageData.name, route: val })" />
@@ -59,6 +59,6 @@ const store = useStore();
 const pageData = computed(() => store.getActivePage());
 const dynamicVariables = computed(() => {
 	const variables = (pageData.value.route?.match(/<\w+>/g) || []).map((match) => match.slice(1, -1));
-	return variables;
+	return variables.map((variable) => variable.replace("_", " "));
 });
 </script>
