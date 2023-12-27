@@ -42,7 +42,8 @@
 						fontSize: `calc(${12}px * 1/${canvasProps.scale})`,
 						top: `calc(${-20}px * 1/${canvasProps.scale})`,
 					}"
-					v-show="!canvasProps.scaling && !canvasProps.panning">
+					v-show="!canvasProps.scaling && !canvasProps.panning"
+					@click="store.activeBreakpoint = breakpoint.device">
 					{{ breakpoint.displayName }}
 				</div>
 				<BuilderBlock
