@@ -86,10 +86,8 @@
 									</Tooltip>
 								</div> -->
 							</div>
-							<UseTimeAgo v-slot="{ timeAgo }" :time="page.creation">
-								<p class="mt-1 block text-xs text-gray-500">
-									{{ timeAgo }}
-								</p>
+							<UseTimeAgo v-slot="{ timeAgo }" :time="page.modified">
+								<p class="mt-1 block text-xs text-gray-500">Edited {{ timeAgo }}</p>
 							</UseTimeAgo>
 						</span>
 						<Dropdown

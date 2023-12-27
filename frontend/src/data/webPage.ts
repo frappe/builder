@@ -16,9 +16,10 @@ const webPages = createListResource({
 		"published",
 		"dynamic_route",
 		"client_scripts",
+		"modified",
 	],
 	cache: "pages",
-	orderBy: "creation desc",
+	orderBy: "modified desc",
 	pageLength: 50,
 });
 
