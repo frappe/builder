@@ -245,14 +245,14 @@ function setEvents() {
 			childBlock.setBaseStyle("position", "absolute");
 			childBlock.setBaseStyle("top", addPxToNumber(y));
 			childBlock.setBaseStyle("left", addPxToNumber(x));
-			if (store.mode === "container") {
+			if (store.mode === "container" || store.mode === "repeater") {
 				const colors = ["#ededed", "#e2e2e2", "#c7c7c7"];
 				childBlock.setBaseStyle("background", colors[counter % colors.length]);
 				counter++;
 			}
 
 			const mouseMoveHandler = (mouseMoveEvent: MouseEvent) => {
-				if (store.mode === "text" || store.mode === "html") {
+				if (store.mode === "text") {
 					return;
 				} else {
 					mouseMoveEvent.preventDefault();
@@ -277,7 +277,7 @@ function setEvents() {
 					setTimeout(() => {
 						store.mode = "select";
 					}, 50);
-					if (store.mode === "text" || store.mode === "html") {
+					if (store.mode === "text") {
 						store.activeCanvas?.history.resume(true);
 						return;
 					}
@@ -385,7 +385,7 @@ function toggleMode(mode: BuilderMode) {
 	const container = canvasContainer.value as HTMLElement;
 	if (mode === "text") {
 		container.style.cursor = "text";
-	} else if (["container", "image", "html"].includes(mode)) {
+	} else if (["container", "image", "repeater"].includes(mode)) {
 		container.style.cursor = "crosshair";
 	} else {
 		container.style.cursor = "default";

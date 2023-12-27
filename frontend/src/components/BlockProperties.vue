@@ -7,16 +7,16 @@
 				type="text"
 				placeholder="Search properties"
 				inputClass="w-full"
-				v-model="filter"
+				v-model="store.propertyFilter"
 				@input="
 					(value: string) => {
-						filter = value;
+						store.propertyFilter = value;
 					}
 				" />
 			<div
 				class="absolute right-1 top-[15px] z-20 cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
-				@click="filter = ''"
-				v-show="filter">
+				@click="store.propertyFilter = ''"
+				v-show="store.propertyFilter">
 				<CrossIcon />
 			</div>
 		</div>
@@ -45,11 +45,14 @@ import ObjectEditor from "./ObjectEditor.vue";
 
 import CrossIcon from "./Icons/Cross.vue";
 
+import useStore from "@/store";
 import blockController from "@/utils/blockController";
 import { Ref, computed, ref } from "vue";
 import CodeEditor from "./CodeEditor.vue";
 import DimensionInput from "./DimensionInput.vue";
 import OptionToggle from "./OptionToggle.vue";
+
+const store = useStore();
 
 // command + f should focus on search input
 window.addEventListener("keydown", (e) => {
@@ -74,7 +77,6 @@ type PropertySection = {
 };
 
 const searchInput = ref(null) as Ref<HTMLElement | null>;
-const filter = ref("");
 
 const filteredSections = computed(() => {
 	return sections.filter((section) => {
@@ -82,7 +84,7 @@ const filteredSections = computed(() => {
 		if (section.condition) {
 			showSection = section.condition();
 		}
-		if (showSection && filter.value) {
+		if (showSection && store.propertyFilter) {
 			showSection = getFilteredProperties(section).length > 0;
 		}
 		return showSection;
@@ -95,10 +97,10 @@ const getFilteredProperties = (section: PropertySection) => {
 		if (property.condition) {
 			showProperty = property.condition();
 		}
-		if (showProperty && filter.value) {
+		if (showProperty && store.propertyFilter) {
 			showProperty =
-				section.name.toLowerCase().includes(filter.value.toLowerCase()) ||
-				property.searchKeyWords.toLowerCase().includes(filter.value.toLowerCase());
+				section.name.toLowerCase().includes(store.propertyFilter.toLowerCase()) ||
+				property.searchKeyWords.toLowerCase().includes(store.propertyFilter.toLowerCase());
 		}
 		return showProperty;
 	});
@@ -800,6 +802,7 @@ const dataKeySectionProperties = [
 	},
 	{
 		component: InlineInput,
+		condition: () => !blockController.isRepeater(),
 		getProps: () => {
 			return {
 				label: "Type",
@@ -813,6 +816,7 @@ const dataKeySectionProperties = [
 	},
 	{
 		component: InlineInput,
+		condition: () => !blockController.isRepeater(),
 		getProps: () => {
 			return {
 				label: "Property",

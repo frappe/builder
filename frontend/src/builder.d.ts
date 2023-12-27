@@ -68,7 +68,7 @@ declare type RGBString = `rgb(${number}, ${number}, ${number})`;
 declare type LeftSidebarTabOption = "Components" | "Layers";
 declare type RightSidebarTabOption = "Properties" | "Script" | "Settings";
 
-declare type BuilderMode = "select" | "text" | "container" | "image" | "html";
+declare type BuilderMode = "select" | "text" | "container" | "image" | "repeater";
 
 declare interface Breakpoint {
 	icon: string;

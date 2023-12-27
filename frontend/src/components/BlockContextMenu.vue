@@ -47,6 +47,7 @@ import { vOnClickOutside } from "@vueuse/components";
 import { Dialog } from "frappe-ui";
 import { nextTick, ref } from "vue";
 import ContextMenu from "./ContextMenu.vue";
+import { toast } from "vue-sonner";
 const store = useStore();
 
 const props = defineProps<{
@@ -170,12 +171,19 @@ const contextMenuOptions: ContextMenuOption[] = [
 		condition: () => !props.block.isExtendedFromComponent(),
 	},
 	{
-		label: "Convert To Repeater",
+		label: "Repeat block with data",
 		action: () => {
-			props.block.convertToRepeater();
+			const repeaterBlockObj = getBlockTemplate("repeater");
+			const parentBlock = props.block.getParentBlock();
+			if (!parentBlock) return;
+			const repeaterBlock = parentBlock.addChild(repeaterBlockObj, parentBlock.getChildIndex(props.block));
+			repeaterBlock.addChild(store.getBlockCopy(props.block));
+			parentBlock.removeChild(props.block);
+			repeaterBlock.selectBlock();
+			store.propertyFilter = "data key";
+			toast.warning("Please set data key for repeater block");
 		},
-		condition: () =>
-			props.block.isContainer() && !props.block.isExtendedFromComponent() && !props.block.isRoot(),
+		condition: () => !props.block.isRoot() && !props.block.isRepeater(),
 	},
 	{
 		label: "Reset Changes",
