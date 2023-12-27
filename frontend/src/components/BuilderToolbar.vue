@@ -11,6 +11,7 @@
 		<div class="ml-10 flex gap-3">
 			<Tooltip
 				:text="mode.description"
+				hoverDelay=".6"
 				v-for="mode in [
 					{ mode: 'select', icon: 'mouse-pointer', 'description': 'Select (v)' },
 					{ mode: 'text', icon: 'type', 'description': 'Text (t)' },
@@ -79,3 +80,8 @@ const transitionTheme = (toggleDark: () => void) => {
 	}
 };
 </script>
+<style>
+.popover-container {
+	margin-top: 20px !important;
+}
+</style>
