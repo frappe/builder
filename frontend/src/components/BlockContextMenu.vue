@@ -43,7 +43,7 @@ import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { confirm } from "@/utils/helpers";
+import { confirm, getBlockCopy } from "@/utils/helpers";
 import { vOnClickOutside } from "@vueuse/components";
 import { Dialog } from "frappe-ui";
 import { nextTick, ref } from "vue";
@@ -97,7 +97,7 @@ const duplicateBlock = () => {
 };
 
 const createComponentHandler = ({ close }: { close: () => void }) => {
-	const blockCopy = store.getBlockCopy(props.block, true);
+	const blockCopy = getBlockCopy(props.block, true);
 	blockCopy.removeStyle("left");
 	blockCopy.removeStyle("top");
 	blockCopy.removeStyle("position");
@@ -178,7 +178,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			const parentBlock = props.block.getParentBlock();
 			if (!parentBlock) return;
 			const repeaterBlock = parentBlock.addChild(repeaterBlockObj, parentBlock.getChildIndex(props.block));
-			repeaterBlock.addChild(store.getBlockCopy(props.block));
+			repeaterBlock.addChild(getBlockCopy(props.block));
 			parentBlock.removeChild(props.block);
 			repeaterBlock.selectBlock();
 			store.propertyFilter = "data key";
@@ -190,7 +190,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		label: "Reset Changes",
 		action: () => {
 			if (props.block.hasChildren()) {
-				confirm("Reset child as well?").then((confirmed) => {
+				confirm("Reset changes in child blocks as well?").then((confirmed) => {
 					props.block.resetChanges(confirmed);
 				});
 			} else {

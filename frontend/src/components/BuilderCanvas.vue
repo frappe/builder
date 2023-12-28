@@ -67,7 +67,7 @@
 import webComponent from "@/data/webComponent";
 import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { addPxToNumber, getNumberFromPx } from "@/utils/helpers";
+import { addPxToNumber, getBlockCopy, getNumberFromPx } from "@/utils/helpers";
 import {
 	UseRefHistoryReturn,
 	clamp,
@@ -102,7 +102,7 @@ const props = defineProps({
 });
 
 // clone props.block into canvas data to avoid mutating them
-const block = ref(store.getBlockCopy(props.blockData, true)) as Ref<Block>;
+const block = ref(getBlockCopy(props.blockData, true)) as Ref<Block>;
 
 const canvasProps = reactive({
 	overlayElement: null,
@@ -154,7 +154,7 @@ function setupHistory() {
 		deep: true,
 		debounce: 200,
 		clone: (obj) => {
-			return store.getBlockCopy(obj, true);
+			return getBlockCopy(obj, true);
 		},
 	});
 }
@@ -170,7 +170,7 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 		}
 		let componentName = ev.dataTransfer?.getData("componentName");
 		if (componentName) {
-			const newBlock = store.getBlockCopy(webComponent.getRow(componentName).block, true);
+			const newBlock = getBlockCopy(webComponent.getRow(componentName).block, true);
 			newBlock.extendFromComponent(componentName);
 			// if shift key is pressed, replace parent block with new block
 			if (ev.shiftKey) {

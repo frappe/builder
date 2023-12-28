@@ -1,7 +1,7 @@
 import { UseRefHistoryReturn } from "@vueuse/core";
 import { FileUploadHandler } from "frappe-ui";
 import { defineStore } from "pinia";
-import { nextTick, reactive } from "vue";
+import { nextTick } from "vue";
 import { toast } from "vue-sonner";
 import BuilderCanvas from "./components/BuilderCanvas.vue";
 import webComponent from "./data/webComponent";
@@ -10,7 +10,7 @@ import { BuilderComponent } from "./types/Builder/BuilderComponent";
 import { BuilderPage } from "./types/Builder/BuilderPage";
 import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
-import { stripExtension } from "./utils/helpers";
+import { getBlockInstance, stripExtension } from "./utils/helpers";
 
 const useStore = defineStore("store", {
 	state: () => ({
@@ -60,12 +60,12 @@ const useStore = defineStore("store", {
 		},
 		pushBlocks(blocks: BlockOptions[]) {
 			let parent = this.activeCanvas?.getFirstBlock();
-			let firstBlock = this.getBlockInstance(blocks[0]);
+			let firstBlock = getBlockInstance(blocks[0]);
 			if (firstBlock.isRoot() && !this.editingComponent && this.activeCanvas?.block) {
 				this.activeCanvas.setRootBlock(firstBlock);
 			} else {
 				for (let block of blocks) {
-					parent?.children.push(this.getBlockInstance(block));
+					parent?.children.push(getBlockInstance(block));
 				}
 			}
 		},
@@ -83,10 +83,10 @@ const useStore = defineStore("store", {
 				};
 				deleteBlockId(b);
 			}
-			return this.getBlockInstance(b);
+			return getBlockInstance(b);
 		},
 		getRootBlock() {
-			return this.getBlockInstance(getBlockTemplate("body"));
+			return getBlockInstance(getBlockTemplate("body"));
 		},
 		getPageData() {
 			return [this.activeCanvas?.getFirstBlock()];
@@ -101,7 +101,7 @@ const useStore = defineStore("store", {
 			if (!Array.isArray(blocks)) {
 				this.pushBlocks([blocks]);
 			}
-			this.pageBlocks = [this.getBlockInstance(blocks[0])];
+			this.pageBlocks = [getBlockInstance(blocks[0])];
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
 			this.selectedPage = page.name;
@@ -185,9 +185,6 @@ const useStore = defineStore("store", {
 			this.activeCanvas?.history?.resume();
 			this.editableBlock = null;
 		},
-		getBlockInstance(options: BlockOptions) {
-			return reactive(new Block(options));
-		},
 		editComponent(block: Block) {
 			if (block.isExtendedFromComponent()) {
 				this.editingComponent = block?.extendedFromComponent as string;
@@ -263,7 +260,7 @@ const useStore = defineStore("store", {
 			});
 		},
 		getFallbackBlock() {
-			return this.getBlockInstance(getBlockTemplate("fallback-component"));
+			return getBlockInstance(getBlockTemplate("fallback-component"));
 		},
 		getComponentName(componentId: string) {
 			let componentObj = webComponent.getRow(componentId);
@@ -374,6 +371,9 @@ const useStore = defineStore("store", {
 		},
 		openInDesk(page: BuilderPage) {
 			window.open(`/app/builder-page/${page.page_name}`, "_blank");
+		},
+		openBuilderSettings() {
+			window.open("/app/builder-settings", "_blank");
 		},
 	},
 });
