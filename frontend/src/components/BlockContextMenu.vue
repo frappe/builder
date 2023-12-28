@@ -43,6 +43,7 @@ import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
+import { confirm } from "@/utils/helpers";
 import { vOnClickOutside } from "@vueuse/components";
 import { Dialog } from "frappe-ui";
 import { nextTick, ref } from "vue";
@@ -186,10 +187,34 @@ const contextMenuOptions: ContextMenuOption[] = [
 		condition: () => !props.block.isRoot() && !props.block.isRepeater(),
 	},
 	{
+		label: "Reset Changes",
+		action: () => {
+			if (props.block.hasChildren()) {
+				confirm("Reset child as well?").then((confirmed) => {
+					props.block.resetChanges(confirmed);
+				});
+			} else {
+				props.block.resetChanges();
+			}
+		},
+		condition: () => props.block.isExtendedFromComponent(),
+	},
+	{
+		label: "Sync Component",
+		condition: () => Boolean(props.block.extendedFromComponent),
+		action: () => {
+			props.block.syncWithComponent();
+		},
+	},
+	{
 		label: "Reset Component",
 		condition: () => Boolean(props.block.extendedFromComponent),
 		action: () => {
-			props.block.resetChanges();
+			confirm("Are you sure you want to reset?").then((confirmed) => {
+				if (confirmed) {
+					props.block.resetWithComponent();
+				}
+			});
 		},
 	},
 	{

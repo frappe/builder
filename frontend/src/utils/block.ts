@@ -12,49 +12,6 @@ export interface BlockDataKey {
 	property?: string;
 }
 
-function resetBlock(
-	block: Block | BlockOptions,
-	extendedFromComponent: string | undefined,
-	componentChildren: Block[]
-) {
-	delete block.innerHTML;
-	delete block.element;
-	block.blockId = block.generateId();
-	block.baseStyles = {};
-	block.rawStyles = {};
-	block.mobileStyles = {};
-	block.tabletStyles = {};
-	block.attributes = {};
-	block.classes = [];
-
-	block.children?.forEach((child) => {
-		child.isChildOfComponent = extendedFromComponent;
-		const componentChild = componentChildren.find((c) => c.blockId === child.blockId);
-		if (componentChild) {
-			child.referenceBlockId = componentChild.blockId;
-			resetBlock(child, extendedFromComponent, componentChild.children);
-		}
-	});
-
-	componentChildren.forEach((componentChild, index) => {
-		const existingChild = block.children?.find((c) => c.referenceBlockId === componentChild.blockId);
-		if (!existingChild) {
-			const store = useStore();
-			const blockComponent = store.getBlockCopy(componentChild);
-			blockComponent.isChildOfComponent = extendedFromComponent;
-			blockComponent.referenceBlockId = componentChild.blockId;
-			block.addChild(blockComponent, index);
-		}
-	});
-
-	block.children?.forEach((child) => {
-		const existingChild = componentChildren.find((c) => c.blockId === child.referenceBlockId);
-		if (!existingChild) {
-			block.removeChild(child);
-		}
-	});
-}
-
 class Block implements BlockOptions {
 	blockId: string;
 	children: Array<Block>;
@@ -367,15 +324,17 @@ class Block implements BlockOptions {
 			this.setStyle("left", addPxToNumber(left));
 		}
 	}
-	addChild(child: BlockOptions, index?: number) {
-		if (index === undefined) {
+	addChild(child: BlockOptions, index?: number, select: boolean = true) {
+		if (index === undefined || index === null) {
 			index = this.children.length;
 		}
 		index = clamp(index, 0, this.children.length);
 
 		const childBlock = reactive(new Block(child));
 		this.children.splice(index, 0, childBlock);
-		childBlock.selectBlock();
+		if (select) {
+			childBlock.selectBlock();
+		}
 		if (childBlock.isText()) {
 			childBlock.makeBlockEditable();
 		}
@@ -550,15 +509,26 @@ class Block implements BlockOptions {
 	}
 	extendFromComponent(componentName: string) {
 		this.extendedFromComponent = componentName;
-		this.resetChanges();
+		const component = this.getComponent();
+		extendWithComponent(this, componentName, component.children);
 	}
 	isChildOfComponentBlock() {
 		return Boolean(this.isChildOfComponent);
 	}
-	resetChanges() {
-		// resetBlock(this, this.extendedFromComponent);
+	resetWithComponent() {
 		const component = this.getComponent();
-		resetBlock(this, this.extendedFromComponent, component.children);
+		if (component) {
+			resetWithComponent(this, this.extendedFromComponent as string, component.children);
+		}
+	}
+	syncWithComponent() {
+		const component = this.getComponent();
+		if (component) {
+			syncBlockWithComponent(this, this, this.extendedFromComponent as string, component.children);
+		}
+	}
+	resetChanges(resetChildren: boolean = false) {
+		resetBlock(this, resetChildren);
 	}
 	convertToLink() {
 		this.element = "a";
@@ -753,24 +723,98 @@ class Block implements BlockOptions {
 	}
 }
 
-// class BlockTree {
-// 	blocksMap: Map<string, Block>;
-// 	constructor() {
-// 		this.blocksMap = new Map();
-// 	}
+function extendWithComponent(
+	block: Block | BlockOptions,
+	extendedFromComponent: string | undefined,
+	componentChildren: Block[]
+) {
+	resetBlock(block);
+	block.children?.forEach((child, index) => {
+		child.isChildOfComponent = extendedFromComponent;
+		let componentChild = componentChildren[index];
+		if (componentChild) {
+			child.referenceBlockId = componentChild.blockId;
+			extendWithComponent(child, extendedFromComponent, componentChild.children);
+		}
+	});
+}
 
-// 	buildBlockMap(blocks: Array<Block>) {
-// 		for (const block of blocks) {
-// 			for (const child of block.children) {
-// 				this.blocksMap.set(child.blockId, block);
-// 				this.buildBlockMap(child.children);
-// 			}
-// 		}
-// 	}
+function resetWithComponent(
+	block: Block | BlockOptions,
+	extendedWithComponent: string,
+	componentChildren: Block[]
+) {
+	resetBlock(block);
+	block.children?.splice(0, block.children.length);
+	const store = useStore();
+	componentChildren.forEach((componentChild) => {
+		const blockComponent = store.getBlockCopy(componentChild);
+		blockComponent.isChildOfComponent = extendedWithComponent;
+		blockComponent.referenceBlockId = componentChild.blockId;
+		const childBlock = block.addChild(blockComponent, null, false);
+		resetWithComponent(childBlock, extendedWithComponent, componentChild.children);
+	});
+}
 
-// 	findParentBlock(blockId: string) {
-// 		return this.blocksMap.get(blockId) || null;
-// 	}
-// }
+function syncBlockWithComponent(
+	parentBlock: Block,
+	block: Block,
+	componentName: string,
+	componentChildren: Block[]
+) {
+	const store = useStore();
+	componentChildren.forEach((componentChild, index) => {
+		const blockExists = findComponentBlock(componentChild.blockId, parentBlock.children);
+		if (!blockExists) {
+			const blockComponent = store.getBlockCopy(componentChild);
+			blockComponent.isChildOfComponent = componentName;
+			blockComponent.referenceBlockId = componentChild.blockId;
+			resetBlock(blockComponent);
+			resetWithComponent(blockComponent, componentName, componentChild.children);
+			block.addChild(blockComponent, index, false);
+		}
+	});
+
+	block.children.forEach((child) => {
+		const componentChild = componentChildren.find((c) => c.blockId === child.referenceBlockId);
+		if (componentChild) {
+			syncBlockWithComponent(parentBlock, child, componentName, componentChild.children);
+		}
+	});
+}
+
+function findComponentBlock(blockId: string, blocks: Block[]): Block | null {
+	for (const block of blocks) {
+		if (block.referenceBlockId === blockId) {
+			return block;
+		}
+		if (block.children) {
+			const found = findComponentBlock(blockId, block.children);
+			if (found) {
+				return found;
+			}
+		}
+	}
+	return null;
+}
+
+function resetBlock(block: Block | BlockOptions, resetChildren: boolean = true) {
+	delete block.innerHTML;
+	delete block.element;
+	block.blockId = block.generateId();
+	block.baseStyles = {};
+	block.rawStyles = {};
+	block.mobileStyles = {};
+	block.tabletStyles = {};
+	block.attributes = {};
+	block.customAttributes = {};
+	block.classes = [];
+
+	if (resetChildren) {
+		block.children?.forEach((child) => {
+			resetBlock(child, resetChildren);
+		});
+	}
+}
 
 export default Block;
