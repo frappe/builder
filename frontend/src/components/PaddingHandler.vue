@@ -7,13 +7,9 @@
 		}"
 		@click.stop>
 		<div
-			class="padding-handler pointer-events-none absolute flex w-full"
+			class="padding-handler pointer-events-none absolute flex w-full bg-purple-400"
 			:style="{
 				height: topPaddingHandlerHeight + 'px',
-			}"
-			:class="{
-				'bg-transparent': !targetBlock.isSelected(),
-				'bg-purple-400': targetBlock.isSelected(),
 			}"
 			ref="topPaddingHandler">
 			<div
@@ -36,13 +32,9 @@
 			</div>
 		</div>
 		<div
-			class="padding-handler pointer-events-none absolute bottom-0 flex w-full"
+			class="padding-handler pointer-events-none absolute bottom-0 flex w-full bg-purple-400"
 			:style="{
 				height: bottomPaddingHandlerHeight + 'px',
-			}"
-			:class="{
-				'bg-transparent': !targetBlock.isSelected(),
-				'bg-purple-400': targetBlock.isSelected(),
 			}"
 			ref="bottomPaddingHandler">
 			<div
@@ -65,13 +57,9 @@
 			</div>
 		</div>
 		<div
-			class="padding-handler pointer-events-none absolute left-0 flex h-full"
+			class="padding-handler pointer-events-none absolute left-0 flex h-full bg-purple-400"
 			:style="{
 				width: leftPaddingHandlerWidth + 'px',
-			}"
-			:class="{
-				'bg-transparent': !targetBlock.isSelected(),
-				'bg-purple-400': targetBlock.isSelected(),
 			}"
 			ref="leftPaddingHandler">
 			<div
@@ -94,13 +82,9 @@
 			</div>
 		</div>
 		<div
-			class="padding-handler pointer-events-none absolute right-0 flex h-full"
+			class="padding-handler pointer-events-none absolute right-0 flex h-full bg-purple-400"
 			:style="{
 				width: rightPaddingHandlerWidth + 'px',
-			}"
-			:class="{
-				'bg-transparent': !targetBlock.isSelected(),
-				'bg-purple-400': targetBlock.isSelected(),
 			}"
 			ref="rightPaddingHandler">
 			<div

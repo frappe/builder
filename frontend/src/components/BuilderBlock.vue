@@ -81,7 +81,9 @@ const draggable = computed(() => {
 });
 
 const hovered = ref(false);
-const isSelected = ref(false);
+const isSelected = computed(() => {
+	return store.selectedBlocks.some((block) => block.blockId === props.block.blockId);
+});
 
 const getComponentName = (block: Block) => {
 	if (block.isRepeater()) {
@@ -257,17 +259,6 @@ watch(
 			hovered.value = true;
 		} else if (oldValue === props.block.blockId) {
 			hovered.value = false;
-		}
-	}
-);
-
-watch(
-	() => store.selectedBlocks,
-	(newValue, oldValue) => {
-		if (newValue.some((block: Block) => block.blockId === props.block.blockId)) {
-			isSelected.value = true;
-		} else if (oldValue.some((block: Block) => block.blockId === props.block.blockId)) {
-			isSelected.value = false;
 		}
 	}
 );

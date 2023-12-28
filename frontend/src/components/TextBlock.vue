@@ -199,10 +199,10 @@ watch(
 
 if (!props.preview) {
 	watch(
-		() => props.block.isSelected(),
+		() => store.isSelected(props.block.blockId),
 		() => {
 			// only load editor if block is selected for performance reasons
-			if (props.block.isSelected() && !blockController.multipleBlocksSelected()) {
+			if (store.isSelected(props.block.blockId) && !blockController.multipleBlocksSelected()) {
 				editor.value = new Editor({
 					content: textContent.value,
 					extensions: [
