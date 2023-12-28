@@ -48,7 +48,7 @@ import webComponent from "@/data/webComponent";
 import useStore from "@/store";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import { useIntersectionObserver } from "@vueuse/core";
-import { computed, ref } from "vue";
+import { computed, nextTick, ref } from "vue";
 import BuilderBlock from "./BuilderBlock.vue";
 
 const store = useStore();
@@ -70,16 +70,18 @@ const components = computed(() =>
 const setScale = async (el: HTMLElement, block: BlockOptions) => {
 	// set scale to fit in container
 	// setting scale when element is on screen
-	const { stop } = useIntersectionObserver(
-		el.closest(".component-container") as HTMLElement,
-		([{ isIntersecting }], observerElement) => {
-			if (isIntersecting) {
-				const scale = Math.max(Math.min(60 / el.offsetHeight, 200 / el.offsetWidth), 0.1);
-				block.scale = scale;
-				stop();
+	nextTick(() => {
+		const { stop } = useIntersectionObserver(
+			el.closest(".component-container") as HTMLElement,
+			([{ isIntersecting }], observerElement) => {
+				if (isIntersecting) {
+					const scale = Math.max(Math.min(60 / el.offsetHeight, 200 / el.offsetWidth), 0.1);
+					block.scale = scale;
+					stop();
+				}
 			}
-		}
-	);
+		);
+	});
 };
 
 const deleteComponent = async (component: BlockComponent) => {
