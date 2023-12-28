@@ -172,14 +172,29 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 		if (componentName) {
 			const newBlock = store.getBlockCopy(webComponent.getRow(componentName).block, true);
 			newBlock.extendFromComponent(componentName);
-			while (
-				parentBlock &&
-				(parentBlock.isImage() || parentBlock.isSVG() || (parentBlock.isText() && !parentBlock.isLink()))
-			) {
-				parentBlock = parentBlock.getParentBlock();
+			// if shift key is pressed, replace parent block with new block
+			if (ev.shiftKey) {
+				while (parentBlock && parentBlock.isChildOfComponent) {
+					parentBlock = parentBlock.getParentBlock();
+				}
+				if (!parentBlock) return;
+				const parentParentBlock = parentBlock.getParentBlock();
+				if (!parentParentBlock) return;
+				const index = parentParentBlock.children.indexOf(parentBlock);
+				parentParentBlock.children.splice(index, 1, newBlock);
+			} else {
+				while (
+					parentBlock &&
+					(parentBlock.isImage() ||
+						parentBlock.isSVG() ||
+						parentBlock.isExtendedFromComponent() ||
+						(parentBlock.isText() && !parentBlock.isLink()))
+				) {
+					parentBlock = parentBlock.getParentBlock();
+				}
+				if (!parentBlock) return;
+				parentBlock.addChild(newBlock);
 			}
-			if (!parentBlock) return;
-			parentBlock.addChild(newBlock);
 			ev.stopPropagation();
 		} else if (files && files.length) {
 			store.uploadFile(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
