@@ -1,8 +1,8 @@
 import useStore from "@/store";
 import { Editor } from "@tiptap/vue-3";
 import { clamp } from "@vueuse/core";
-import { CSSProperties, nextTick, reactive } from "vue";
-import { addPxToNumber, getNumberFromPx, getTextContent, kebabToCamelCase } from "./helpers";
+import { CSSProperties, markRaw, nextTick, reactive } from "vue";
+import { addPxToNumber, getBlockCopy, getNumberFromPx, getTextContent, kebabToCamelCase } from "./helpers";
 
 export type styleProperty = keyof CSSProperties;
 
@@ -571,7 +571,7 @@ class Block implements BlockOptions {
 	duplicateBlock() {
 		const store = useStore();
 		store.activeCanvas?.history.pause();
-		const blockCopy = store.getBlockCopy(this);
+		const blockCopy = getBlockCopy(this);
 		const parentBlock = this.getParentBlock();
 
 		if (blockCopy.getStyle("position") === "absolute") {
@@ -746,9 +746,8 @@ function resetWithComponent(
 ) {
 	resetBlock(block);
 	block.children?.splice(0, block.children.length);
-	const store = useStore();
 	componentChildren.forEach((componentChild) => {
-		const blockComponent = store.getBlockCopy(componentChild);
+		const blockComponent = getBlockCopy(componentChild);
 		blockComponent.isChildOfComponent = extendedWithComponent;
 		blockComponent.referenceBlockId = componentChild.blockId;
 		const childBlock = block.addChild(blockComponent, null, false);
@@ -762,11 +761,10 @@ function syncBlockWithComponent(
 	componentName: string,
 	componentChildren: Block[]
 ) {
-	const store = useStore();
 	componentChildren.forEach((componentChild, index) => {
 		const blockExists = findComponentBlock(componentChild.blockId, parentBlock.children);
 		if (!blockExists) {
-			const blockComponent = store.getBlockCopy(componentChild);
+			const blockComponent = getBlockCopy(componentChild);
 			blockComponent.isChildOfComponent = componentName;
 			blockComponent.referenceBlockId = componentChild.blockId;
 			resetBlock(blockComponent);
@@ -799,6 +797,7 @@ function findComponentBlock(blockId: string, blocks: Block[]): Block | null {
 }
 
 function resetBlock(block: Block | BlockOptions, resetChildren: boolean = true) {
+	block = markRaw(block);
 	delete block.innerHTML;
 	delete block.element;
 	block.blockId = block.generateId();

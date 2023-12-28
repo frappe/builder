@@ -1,3 +1,6 @@
+import { reactive } from "vue";
+import Block from "./block";
+
 function getNumberFromPx(px: string | number | null | undefined): number {
 	if (!px) {
 		return 0;
@@ -235,6 +238,24 @@ function logObjectDiff(obj1: { [key: string]: {} }, obj2: { [key: string]: {} },
 	}
 }
 
+function getBlockInstance(options: BlockOptions) {
+	return reactive(new Block(options));
+}
+
+function getBlockCopy(block: BlockOptions | Block, retainId = false): Block {
+	let b = JSON.parse(JSON.stringify(block));
+	if (!retainId) {
+		const deleteBlockId = (block: BlockOptions) => {
+			delete block.blockId;
+			for (let child of block.children || []) {
+				deleteBlockId(child);
+			}
+		};
+		deleteBlockId(b);
+	}
+	return getBlockInstance(b);
+}
+
 export {
 	HSVToHex,
 	HexToHSV,
@@ -243,6 +264,8 @@ export {
 	confirm,
 	copyToClipboard,
 	findNearestSiblingIndex,
+	getBlockCopy,
+	getBlockInstance,
 	getDataForKey,
 	getNumberFromPx,
 	getRGB,

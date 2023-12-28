@@ -53,7 +53,7 @@ import Block, { styleProperty } from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
-import { copyToClipboard, isHTMLString, isJSONString, isTargetEditable } from "@/utils/helpers";
+import { copyToClipboard, getBlockCopy, isHTMLString, isJSONString, isTargetEditable } from "@/utils/helpers";
 import { useDebounceFn, useEventListener, useMagicKeys } from "@vueuse/core";
 import { nextTick, onActivated, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -110,7 +110,7 @@ useEventListener(document, "copy", (e) => {
 				}
 			});
 		});
-
+		// just copy non components
 		const dataToCopy = {
 			blocks: store.selectedBlocks,
 			components: componentDocuments,
@@ -138,7 +138,7 @@ useEventListener(document, "paste", async (e) => {
 				if (parentBlock.isImage()) {
 					imageBlock = parentBlock;
 				} else {
-					imageBlock = parentBlock.addChild(store.getBlockCopy(getBlockTemplate("image")));
+					imageBlock = parentBlock.addChild(getBlockCopy(getBlockTemplate("image")));
 				}
 				imageBlock.setAttribute("src", res.fileURL);
 			});
@@ -158,7 +158,7 @@ useEventListener(document, "paste", async (e) => {
 
 		if (store.selectedBlocks.length && dataObj.blocks[0].blockId !== "root") {
 			dataObj.blocks.forEach((block: BlockOptions) => {
-				store.selectedBlocks[0].addChild(store.getBlockCopy(block));
+				store.selectedBlocks[0].addChild(getBlockCopy(block));
 			});
 		} else {
 			store.pushBlocks(dataObj.blocks);
