@@ -12,10 +12,6 @@
 				height: topMarginHandlerHeight + 'px',
 				top: `calc(0% - ${topMarginHandlerHeight}px)`,
 			}"
-			:class="{
-				'bg-transparent': !targetBlock.isSelected(),
-				'bg-yellow-200': targetBlock.isSelected(),
-			}"
 			ref="topMarginHandler">
 			<div
 				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-yellow-800 bg-yellow-400 hover:scale-125"
@@ -37,14 +33,10 @@
 			</div>
 		</div>
 		<div
-			class="margin-handler pointer-events-none absolute bottom-0 flex w-full"
+			class="margin-handler pointer-events-none absolute bottom-0 flex w-full bg-yellow-200"
 			:style="{
 				height: bottomMarginHandlerHeight + 'px',
 				bottom: `calc(0% - ${bottomMarginHandlerHeight}px)`,
-			}"
-			:class="{
-				'bg-transparent': !targetBlock.isSelected,
-				'bg-yellow-200': targetBlock.isSelected,
 			}"
 			ref="bottomMarginHandler">
 			<div
@@ -67,14 +59,10 @@
 			</div>
 		</div>
 		<div
-			class="margin-handler pointer-events-none absolute left-0 flex h-full"
+			class="margin-handler pointer-events-none absolute left-0 flex h-full bg-yellow-200"
 			:style="{
 				width: leftMarginHandlerWidth + 'px',
 				left: `calc(0% - ${leftMarginHandlerWidth}px)`,
-			}"
-			:class="{
-				'bg-transparent': !targetBlock.isSelected(),
-				'bg-yellow-200': targetBlock.isSelected(),
 			}"
 			ref="leftMarginHandler">
 			<div
@@ -97,14 +85,10 @@
 			</div>
 		</div>
 		<div
-			class="margin-handler pointer-events-none absolute right-0 flex h-full"
+			class="margin-handler pointer-events-none absolute right-0 flex h-full bg-yellow-200"
 			:style="{
 				width: rightMarginHandlerWidth + 'px',
 				right: `calc(0% - ${rightMarginHandlerWidth}px)`,
-			}"
-			:class="{
-				'bg-transparent': !targetBlock.isSelected,
-				'bg-yellow-200': targetBlock.isSelected,
 			}"
 			ref="rightMarginHandler">
 			<div

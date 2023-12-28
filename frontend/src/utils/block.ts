@@ -297,10 +297,6 @@ class Block implements BlockOptions {
 			tabletStyles: Object.assign({}, this.tabletStyles),
 		};
 	}
-	isSelected(): boolean {
-		const store = useStore();
-		return store.selectedBlocks.some((block: Block) => block.blockId === this.blockId);
-	}
 	isMovable(): boolean {
 		return ["absolute", "fixed"].includes(this.getStyle("position") as string);
 	}
@@ -380,7 +376,7 @@ class Block implements BlockOptions {
 	}
 	toggleSelectBlock() {
 		const store = useStore();
-		if (this.isSelected()) {
+		if (store.isSelected(this.blockId)) {
 			store.selectedBlocks = store.selectedBlocks.filter((block: Block) => block.blockId !== this.blockId);
 		} else {
 			store.selectedBlocks.push(this);
