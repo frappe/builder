@@ -476,7 +476,7 @@ const setPage = (pageName: string, resetCanvas = true) => {
 
 // on tab activation, reload for latest data
 useEventListener(document, "visibilitychange", () => {
-	if (document.visibilityState === "visible") {
+	if (document.visibilityState === "visible" && !componentCanvas.value) {
 		if (route.params.pageId && route.params.pageId !== "new") {
 			setPage(route.params.pageId as string, false);
 		}
