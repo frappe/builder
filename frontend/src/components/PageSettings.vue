@@ -22,8 +22,8 @@
 				:modelValue="pageData.dynamic_route"
 				@update:modelValue="(val) => webPages.setValue.submit({ name: pageData.name, dynamic_route: val })" />
 			<!-- Dynamic Route Variables -->
-			<div v-if="pageData.dynamic_route" class="w-full">
-				<h3 class="mt-5 text-xs font-bold uppercase text-gray-600">Route Values</h3>
+			<div v-if="pageData.dynamic_route" class="mb-3 mt-3 w-full">
+				<h3 class="text-xs font-bold uppercase text-gray-600">Route Values</h3>
 				<div class="mt-5 flex flex-row flex-wrap gap-5">
 					<InlineInput
 						v-for="(variable, index) in dynamicVariables"
@@ -40,7 +40,7 @@
 					v-if="pageData.published"
 					@click="() => store.openPageInBrowser()"
 					class="block text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
-					View Page
+					View Published Page
 				</Button>
 				<Button
 					v-if="pageData.published"
@@ -48,6 +48,7 @@
 					class="block text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
 					Unpublish Page
 				</Button>
+				<hr class="my-2" v-if="pageData.published" />
 				<Button
 					@click="() => store.openInDesk(pageData)"
 					class="block text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
