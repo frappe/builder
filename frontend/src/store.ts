@@ -108,9 +108,9 @@ const useStore = defineStore("store", {
 			const variables = localStorage.getItem(`${page.name}:routeVariables`) || "{}";
 			this.routeVariables = JSON.parse(variables);
 			await this.setPageData();
+			this.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas);
 			nextTick(() => {
 				this.settingPage = false;
-				this.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas);
 			});
 		},
 		getImageBlock(imageSrc: string, imageAlt: string = "") {
