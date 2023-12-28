@@ -35,17 +35,30 @@
 						@update:modelValue="(val) => store.setRouteVariable(variable, val)" />
 				</div>
 			</div>
-			<Button
-				v-if="pageData.published"
-				@click="() => store.openPageInBrowser()"
-				class="block text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
-				Open Page
-			</Button>
-			<Button
-				@click="() => store.openInDesk(pageData)"
-				class="block text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
-				View in Desk
-			</Button>
+			<div class="flex w-full flex-col gap-2">
+				<Button
+					v-if="pageData.published"
+					@click="() => store.openPageInBrowser()"
+					class="block text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
+					View Page
+				</Button>
+				<Button
+					v-if="pageData.published"
+					@click="() => unpublishPage()"
+					class="block text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
+					Unpublish Page
+				</Button>
+				<Button
+					@click="() => store.openInDesk(pageData)"
+					class="block text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
+					Open in Desk
+				</Button>
+				<Button
+					@click="() => store.openBuilderSettings()"
+					class="block text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
+					Open Builder Settings
+				</Button>
+			</div>
 		</div>
 	</div>
 </template>
@@ -53,6 +66,7 @@
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { computed } from "vue";
+import { toast } from "vue-sonner";
 import InlineInput from "./InlineInput.vue";
 
 const store = useStore();
@@ -61,4 +75,16 @@ const dynamicVariables = computed(() => {
 	const variables = (pageData.value.route?.match(/<\w+>/g) || []).map((match) => match.slice(1, -1));
 	return variables.map((variable) => variable.replace("_", " "));
 });
+
+const unpublishPage = () => {
+	webPages.setValue
+		.submit({
+			name: pageData.value.name,
+			published: false,
+		})
+		.then(() => {
+			toast.success("Page unpublished");
+			store.setPageData();
+		});
+};
 </script>
