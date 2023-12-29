@@ -126,7 +126,19 @@ const contextMenuOptions: ContextMenuOption[] = [
 	},
 	{ label: "Duplicate", action: duplicateBlock },
 	{
-		label: "Wrap in Container",
+		label: "Convert To Link",
+		action: () => {
+			blockController.getSelectedBlocks().forEach((block: Block) => {
+				block.convertToLink();
+			});
+		},
+		condition: () =>
+			(props.block.isContainer() || props.block.isText()) &&
+			!props.block.isExtendedFromComponent() &&
+			!props.block.isRoot(),
+	},
+	{
+		label: "Wrap In Container",
 		action: () => {
 			const newBlockObj = getBlockTemplate("fit-container");
 			const parentBlock = props.block.getParentBlock();
@@ -167,12 +179,13 @@ const contextMenuOptions: ContextMenuOption[] = [
 		},
 	},
 	{
-		label: "Save as Component",
+		label: "Save As Component",
 		action: () => (showDialog.value = true),
 		condition: () => !props.block.isExtendedFromComponent(),
 	},
+
 	{
-		label: "Repeat block with data",
+		label: "Repeat Block",
 		action: () => {
 			const repeaterBlockObj = getBlockTemplate("repeater");
 			const parentBlock = props.block.getParentBlock();
@@ -185,6 +198,13 @@ const contextMenuOptions: ContextMenuOption[] = [
 			toast.warning("Please set data key for repeater block");
 		},
 		condition: () => !props.block.isRoot() && !props.block.isRepeater(),
+	},
+	{
+		label: "Reset Overrides",
+		condition: () => props.block.hasOverrides(store.activeBreakpoint),
+		action: () => {
+			props.block.resetOverrides(store.activeBreakpoint);
+		},
 	},
 	{
 		label: "Reset Changes",
@@ -223,19 +243,6 @@ const contextMenuOptions: ContextMenuOption[] = [
 			store.editComponent(props.block);
 		},
 		condition: () => Boolean(props.block.extendedFromComponent),
-	},
-	// convert to link
-	{
-		label: "Convert to Link",
-		action: () => {
-			blockController.getSelectedBlocks().forEach((block: Block) => {
-				block.convertToLink();
-			});
-		},
-		condition: () =>
-			(props.block.isContainer() || props.block.isText()) &&
-			!props.block.isExtendedFromComponent() &&
-			!props.block.isRoot(),
 	},
 ];
 </script>

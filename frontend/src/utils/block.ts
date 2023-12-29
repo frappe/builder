@@ -106,6 +106,23 @@ class Block implements BlockOptions {
 
 		return styleObj;
 	}
+	hasOverrides(breakpoint: string) {
+		if (breakpoint === "mobile") {
+			return Object.keys(this.mobileStyles).length > 0;
+		}
+		if (breakpoint === "tablet") {
+			return Object.keys(this.tabletStyles).length > 0;
+		}
+		return false;
+	}
+	resetOverrides(breakpoint: string) {
+		if (breakpoint === "mobile") {
+			this.mobileStyles = {};
+		}
+		if (breakpoint === "tablet") {
+			this.tabletStyles = {};
+		}
+	}
 	getComponent() {
 		const store = useStore();
 		if (this.extendedFromComponent) {
