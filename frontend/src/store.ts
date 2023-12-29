@@ -97,7 +97,7 @@ const useStore = defineStore("store", {
 				return;
 			}
 			const blocks = JSON.parse(page.draft_blocks || page.blocks || "[]");
-			this.editPage();
+			this.editPage(false, !resetCanvas);
 			if (!Array.isArray(blocks)) {
 				this.pushBlocks([blocks]);
 			}
@@ -172,9 +172,13 @@ const useStore = defineStore("store", {
 				return;
 			}
 			if (e && e.shiftKey) {
-				block.toggleSelectBlock();
+				if (this.isSelected(block.blockId)) {
+					this.selectedBlocks = this.selectedBlocks.filter((block: Block) => block.blockId !== block.blockId);
+				} else {
+					this.selectedBlocks.push(block);
+				}
 			} else {
-				block.selectBlock();
+				this.selectedBlocks = [block];
 			}
 			if (scrollIntoView) {
 				// TODO: move to layers?
@@ -214,8 +218,10 @@ const useStore = defineStore("store", {
 			}
 			return false;
 		},
-		editPage(saveComponent = false) {
-			this.clearSelection();
+		editPage(saveComponent = false, retainSelection = false) {
+			if (!retainSelection) {
+				this.clearSelection();
+			}
 			this.editingMode = "page";
 			this.editableBlock = null;
 

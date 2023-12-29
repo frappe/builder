@@ -155,7 +155,13 @@ class Block implements BlockOptions {
 	getComponentChildren() {
 		return this.getComponent()?.children || [];
 	}
-
+	getVisibilityCondition() {
+		let visibilityCondition = this.visibilityCondition;
+		if (this.isExtendedFromComponent() && this.getComponent()?.visibilityCondition) {
+			visibilityCondition = this.getComponent()?.visibilityCondition;
+		}
+		return visibilityCondition;
+	}
 	getBlockDescription() {
 		if (this.isExtendedFromComponent() && !this.isChildOfComponentBlock()) {
 			return this.getComponentBlockDescription();
@@ -320,7 +326,7 @@ class Block implements BlockOptions {
 			this.setStyle("left", addPxToNumber(left));
 		}
 	}
-	addChild(child: BlockOptions, index?: number, select: boolean = true) {
+	addChild(child: BlockOptions, index?: number | null, select: boolean = true) {
 		if (index === undefined || index === null) {
 			index = this.children.length;
 		}
@@ -372,15 +378,7 @@ class Block implements BlockOptions {
 	}
 	selectBlock() {
 		const store = useStore();
-		store.selectedBlocks = [this];
-	}
-	toggleSelectBlock() {
-		const store = useStore();
-		if (store.isSelected(this.blockId)) {
-			store.selectedBlocks = store.selectedBlocks.filter((block: Block) => block.blockId !== this.blockId);
-		} else {
-			store.selectedBlocks.push(this);
-		}
+		store.selectBlock(this, null);
 	}
 	getParentBlock(): Block | null {
 		const store = useStore();
@@ -495,7 +493,7 @@ class Block implements BlockOptions {
 	}
 	toggleVisibility() {
 		if (this.getStyle("display") === "none") {
-			this.setStyle("display", "block");
+			this.setStyle("display", "flex");
 		} else {
 			this.setStyle("display", "none");
 		}

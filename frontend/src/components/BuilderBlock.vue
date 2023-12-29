@@ -246,8 +246,8 @@ const handleMouseLeave = (e: MouseEvent) => {
 };
 
 const showBlock = computed(() => {
-	const data = props.block.visibilityCondition
-		? getDataForKey(props.data, props.block.visibilityCondition)
+	const data = props.block.getVisibilityCondition()
+		? getDataForKey(props.data, props.block.getVisibilityCondition() as string)
 		: true;
 	return data;
 });

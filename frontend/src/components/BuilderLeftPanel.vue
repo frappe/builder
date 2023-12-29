@@ -19,6 +19,7 @@
 		<PanelResizer
 			:dimension="store.builderLayout.leftPanelWidth"
 			side="right"
+			:maxDimension="500"
 			@resize="(width) => (store.builderLayout.leftPanelWidth = width)" />
 		<div class="flex w-full border-gray-200 p-[2px] text-sm dark:border-zinc-800">
 			<button

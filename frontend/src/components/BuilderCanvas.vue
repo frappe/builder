@@ -227,7 +227,7 @@ function setEvents() {
 		if (store.mode === "select") {
 			return;
 		} else {
-			store.activeCanvas?.history.pause();
+			canvasHistory.value?.pause();
 			ev.stopPropagation();
 			let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
 			let block = getFirstBlock();
@@ -294,7 +294,7 @@ function setEvents() {
 						store.mode = "select";
 					}, 50);
 					if (store.mode === "text") {
-						store.activeCanvas?.history.resume(true);
+						canvasHistory.value?.resume(true);
 						return;
 					}
 					if (getNumberFromPx(childBlock.getStyle("width")) < 100) {
@@ -303,7 +303,7 @@ function setEvents() {
 					if (getNumberFromPx(childBlock.getStyle("height")) < 100) {
 						childBlock.setBaseStyle("height", "200px");
 					}
-					store.activeCanvas?.history.resume(true);
+					canvasHistory.value?.resume(true);
 				},
 				{ once: true }
 			);
@@ -427,7 +427,9 @@ const getFirstBlock = () => {
 
 const setRootBlock = (newBlock: Block, resetCanvas = false) => {
 	block.value = newBlock;
-	setupHistory();
+	if (canvasHistory.value) {
+		canvasHistory.value.clear();
+	}
 	if (resetCanvas) {
 		nextTick(() => {
 			setScaleAndTranslate();

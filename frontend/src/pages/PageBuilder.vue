@@ -157,8 +157,9 @@ useEventListener(document, "paste", async (e) => {
 		}
 
 		if (store.selectedBlocks.length && dataObj.blocks[0].blockId !== "root") {
+			const parentBlock = store.selectedBlocks[0];
 			dataObj.blocks.forEach((block: BlockOptions) => {
-				store.selectedBlocks[0].addChild(getBlockCopy(block));
+				parentBlock.addChild(getBlockCopy(block), null, true);
 			});
 		} else {
 			store.pushBlocks(dataObj.blocks);
