@@ -29,7 +29,7 @@
 						v-for="(variable, index) in dynamicVariables"
 						:key="index"
 						type="text"
-						:label="variable"
+						:label="variable.replace(/_/g, ' ')"
 						class="w-full text-sm"
 						:modelValue="store.routeVariables[variable]"
 						@update:modelValue="(val) => store.setRouteVariable(variable, val)" />
@@ -73,8 +73,7 @@ import InlineInput from "./InlineInput.vue";
 const store = useStore();
 const pageData = computed(() => store.getActivePage());
 const dynamicVariables = computed(() => {
-	const variables = (pageData.value.route?.match(/<\w+>/g) || []).map((match) => match.slice(1, -1));
-	return variables.map((variable) => variable.replace("_", " "));
+	return (pageData.value.route?.match(/<\w+>/g) || []).map((match) => match.slice(1, -1));
 });
 
 const unpublishPage = () => {
