@@ -124,6 +124,12 @@ class BuilderPage(WebsiteGenerator):
 			"image": self.meta_image or self.preview
 		}
 
+	def is_component_used(self, component_id):
+		if self.blocks and is_component_used(self.blocks, component_id):
+			return True
+		elif self.draft_blocks and is_component_used(self.draft_blocks, component_id):
+			return True
+
 	def set_style_and_script(self, context):
 		for script in self.get("client_scripts", []):
 			script_doc = frappe.get_cached_doc("Builder Client Script", script.builder_script)
@@ -450,3 +456,17 @@ def get_page_preview_html(page: str, **kwarg) -> str:
 		queue="short",
 	)
 	return response
+
+def is_component_used(blocks, component_id):
+	blocks = frappe.parse_json(blocks)
+	if not isinstance(blocks, list):
+		blocks = [blocks]
+
+	for block in blocks:
+		if not block: continue
+		if block.get("extendedFromComponent") == component_id:
+			return True
+		elif block.get("children"):
+			return is_component_used(block.get("children"), component_id)
+
+	return False
