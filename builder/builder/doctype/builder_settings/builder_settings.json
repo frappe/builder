@@ -36,10 +36,11 @@
    "label": "Style Public URL"
   }
  ],
+ "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2023-12-18 15:50:24.418583",
+ "modified": "2023-12-28 10:07:43.415786",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Settings",
