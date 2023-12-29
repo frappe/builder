@@ -48,7 +48,7 @@
 					class="block text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
 					Unpublish Page
 				</Button>
-				<hr class="my-2" v-if="pageData.published" />
+				<hr class="my-2 dark:border-zinc-800" v-if="pageData.published" />
 				<Button
 					@click="() => store.openInDesk(pageData)"
 					class="block text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
