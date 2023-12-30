@@ -163,7 +163,7 @@ const isEditable = computed(() => {
 });
 
 const showEditor = computed(() => {
-	return !(props.block.isLink() && props.block.hasChildren());
+	return !((props.block.isLink() || props.block.isButton()) && props.block.hasChildren());
 });
 
 const handleClick = (e: MouseEvent) => {
@@ -199,10 +199,10 @@ watch(
 
 if (!props.preview) {
 	watch(
-		() => store.isSelected(props.block.blockId),
+		() => store.activeCanvas?.isBlockSelected(props.block),
 		() => {
 			// only load editor if block is selected for performance reasons
-			if (store.isSelected(props.block.blockId) && !blockController.multipleBlocksSelected()) {
+			if (store.activeCanvas?.isBlockSelected(props.block) && !blockController.multipleBlocksSelected()) {
 				editor.value = new Editor({
 					content: textContent.value,
 					extensions: [
