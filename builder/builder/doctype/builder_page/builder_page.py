@@ -118,11 +118,13 @@ class BuilderPage(WebsiteGenerator):
 			raise
 
 	def set_meta_tags(self, context, page_data={}):
-		context.metatags = {
+		metatags = {
 			"title": self.page_title or "My Page",
 			"description": self.meta_description or self.page_title,
 			"image": self.meta_image or self.preview,
-		}.update(page_data.get("metatags", {}))
+		}
+		metatags.update(page_data.get("metatags", {}))
+		context.metatags = metatags
 
 	def is_component_used(self, component_id):
 		if self.blocks and is_component_used(self.blocks, component_id):
