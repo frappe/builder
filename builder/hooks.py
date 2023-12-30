@@ -192,4 +192,7 @@ website_route_rules = [
 	{"from_route": "/builder/<path:app_path>", "to_route": "builder"},
 ]
 
+website_path_resolver = "builder.builder.doctype.builder_page.builder_page.resolve_path"
+page_renderer = "builder.builder.doctype.builder_page.builder_page.BuilderPageRenderer"
+
 get_web_pages_with_dynamic_routes = "builder.builder.doctype.builder_page.builder_page.get_web_pages_with_dynamic_routes"
