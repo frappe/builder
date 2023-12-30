@@ -233,12 +233,14 @@ const handleDoubleClick = (e: MouseEvent) => {
 };
 
 const handleMouseOver = (e: MouseEvent) => {
+	if (store.mode === "move") return;
 	store.hoveredBlock = props.block.blockId;
 	store.hoveredBreakpoint = props.breakpoint;
 	e.stopPropagation();
 };
 
 const handleMouseLeave = (e: MouseEvent) => {
+	if (store.mode === "move") return;
 	if (store.hoveredBlock === props.block.blockId) {
 		store.hoveredBlock = null;
 		e.stopPropagation();

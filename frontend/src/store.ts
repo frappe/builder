@@ -22,6 +22,7 @@ const useStore = defineStore("store", {
 		selectedPage: <string | null>null,
 		pageData: <{ [key: string]: [] }>{},
 		mode: <BuilderMode>"select", // check setEvents in BuilderCanvas for usage
+		lastMode: <BuilderMode>"select",
 		selectedBlocks: <Block[]>[],
 		activeCanvas: <InstanceType<typeof BuilderCanvas> | null>null,
 		history: {
