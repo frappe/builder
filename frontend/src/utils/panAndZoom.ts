@@ -17,7 +17,7 @@ function setPanAndZoom(
 
 	const updatePanAndZoom = (e: WheelEvent) => {
 		clearTimeout(wheeling);
-		if (e.ctrlKey) {
+		if (e.ctrlKey || e.metaKey) {
 			props.scaling = true;
 			if (!pinchPointSet) {
 				// set pinch point before setting new scale value
