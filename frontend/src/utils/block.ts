@@ -83,7 +83,7 @@ class Block implements BlockOptions {
 			this.setBaseStyle("minHeight", "100vh");
 		}
 	}
-	getStyles(breakpoint: string = "desktop") {
+	getStyles(breakpoint: string = "desktop"): BlockStyleMap {
 		let styleObj = {};
 		if (this.isExtendedFromComponent()) {
 			styleObj = this.getComponentStyles(breakpoint);
@@ -262,7 +262,7 @@ class Block implements BlockOptions {
 	getStyle(style: styleProperty) {
 		const store = useStore();
 		if (store.activeBreakpoint === "mobile") {
-			return this.mobileStyles[style] || this.baseStyles[style];
+			return this.mobileStyles[style] || this.tabletStyles[style] || this.baseStyles[style];
 		} else if (store.activeBreakpoint === "tablet") {
 			return this.tabletStyles[style] || this.baseStyles[style];
 		}
@@ -390,6 +390,7 @@ class Block implements BlockOptions {
 			styles.alignItems = "center";
 			styles.justifyContent = "center";
 		}
+		styles.transition = "unset";
 
 		return styles;
 	}

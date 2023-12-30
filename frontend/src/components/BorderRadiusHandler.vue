@@ -3,7 +3,7 @@
 		ref="handler"
 		class="border-radius-resize pointer-events-auto absolute left-2 top-2 h-[10px] w-[10px] cursor-pointer rounded-full border-2 border-blue-400 bg-white"
 		:class="{
-			hidden: canvasProps.scale < 0.4,
+			hidden: canvasProps.scale < 0.4 || !showHandler(),
 		}"
 		:style="{
 			top: handlerTop + 'px',
@@ -109,6 +109,14 @@ const setHandlerPosition = (radius: number) => {
 	const ratio = radius / maxRadius;
 	handlerTop.value = Math.max(minTop, maxDistance * ratio - handleHeight / 2);
 	handlerLeft.value = Math.max(minLeft, maxDistance * ratio - handleWidth / 2);
+};
+
+const showHandler = () => {
+	canvasProps.scale;
+	props.targetBlock.getStyle("height");
+	props.targetBlock.getStyle("width");
+	const targetBounds = props.target.getBoundingClientRect();
+	return getNumberFromPx(targetBounds.height) >= 25 && getNumberFromPx(targetBounds.width) >= 25;
 };
 
 onMounted(() => {
