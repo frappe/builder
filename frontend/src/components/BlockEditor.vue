@@ -165,7 +165,7 @@ watch(
 );
 
 const movable = computed(() => {
-	return props.block.getStyle("position") === "absolute";
+	return props.block.isMovable();
 });
 
 onMounted(() => {
