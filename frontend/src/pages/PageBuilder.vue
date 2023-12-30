@@ -54,8 +54,8 @@ import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { copyToClipboard, getBlockCopy, isHTMLString, isJSONString, isTargetEditable } from "@/utils/helpers";
-import { useDebounceFn, useEventListener, useMagicKeys } from "@vueuse/core";
-import { nextTick, onActivated, provide, ref, watch, watchEffect } from "vue";
+import { useActiveElement, useDebounceFn, useEventListener, useMagicKeys } from "@vueuse/core";
+import { computed, nextTick, onActivated, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { toast } from "vue-sonner";
 
@@ -337,10 +337,17 @@ useEventListener(document, "keydown", (e) => {
 	}
 });
 
+const activeElement = useActiveElement();
+const notUsingInput = computed(
+	() => activeElement.value?.tagName !== "INPUT" && activeElement.value?.tagName !== "TEXTAREA"
+);
+
 const { space } = useMagicKeys({
 	passive: false,
 	onEventFired(e) {
-		if (!store.editableBlock) e.preventDefault();
+		if (e.key === " " && notUsingInput.value && !store.editableBlock) {
+			e.preventDefault();
+		}
 	},
 });
 
