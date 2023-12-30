@@ -77,7 +77,7 @@ import {
 	useEventListener,
 } from "@vueuse/core";
 import { FeatherIcon } from "frappe-ui";
-import { Ref, computed, nextTick, onMounted, provide, reactive, ref, watch, watchEffect } from "vue";
+import { Ref, computed, nextTick, onMounted, provide, reactive, ref, watch } from "vue";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
@@ -222,6 +222,9 @@ function setEvents() {
 	const container = document.body.querySelector(".canvas-container") as HTMLElement;
 	let counter = 0;
 	useEventListener(container, "mousedown", (ev: MouseEvent) => {
+		if (store.mode === "move") {
+			return;
+		}
 		const initialX = ev.clientX;
 		const initialY = ev.clientY;
 		if (store.mode === "select") {
@@ -309,6 +312,35 @@ function setEvents() {
 			);
 		}
 	});
+
+	useEventListener(container, "mousedown", (ev: MouseEvent) => {
+		if (store.mode === "move") {
+			container.style.cursor = "grabbing";
+			const initialX = ev.clientX;
+			const initialY = ev.clientY;
+			const initialTranslateX = canvasProps.translateX;
+			const initialTranslateY = canvasProps.translateY;
+			const mouseMoveHandler = (mouseMoveEvent: MouseEvent) => {
+				mouseMoveEvent.preventDefault();
+				const diffX = (mouseMoveEvent.clientX - initialX) / canvasProps.scale;
+				const diffY = (mouseMoveEvent.clientY - initialY) / canvasProps.scale;
+				canvasProps.translateX = initialTranslateX + diffX;
+				canvasProps.translateY = initialTranslateY + diffY;
+			};
+			useEventListener(document, "mousemove", mouseMoveHandler);
+			useEventListener(
+				document,
+				"mouseup",
+				() => {
+					document.removeEventListener("mousemove", mouseMoveHandler);
+					container.style.cursor = "grab";
+				},
+				{ once: true }
+			);
+			ev.stopPropagation();
+			ev.preventDefault();
+		}
+	});
 }
 
 const containerBound = reactive(useElementBounding(canvasContainer));
@@ -392,9 +424,13 @@ watch(
 	}
 );
 
-watchEffect(() => {
-	toggleMode(store.mode);
-});
+watch(
+	() => store.mode,
+	(newValue, oldValue) => {
+		store.lastMode = oldValue;
+		toggleMode(store.mode);
+	}
+);
 
 function toggleMode(mode: BuilderMode) {
 	if (!canvasContainer.value) return;
@@ -403,6 +439,8 @@ function toggleMode(mode: BuilderMode) {
 		container.style.cursor = "text";
 	} else if (["container", "image", "repeater"].includes(mode)) {
 		container.style.cursor = "crosshair";
+	} else if (mode === "move") {
+		container.style.cursor = "grab";
 	} else {
 		container.style.cursor = "default";
 	}

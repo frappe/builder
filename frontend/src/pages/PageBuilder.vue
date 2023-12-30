@@ -330,6 +330,26 @@ useEventListener(document, "keydown", (e) => {
 		store.mode = "select";
 		return;
 	}
+
+	if (e.key === "h") {
+		store.mode = "move";
+		return;
+	}
+});
+
+const { space } = useMagicKeys({
+	passive: false,
+	onEventFired(e) {
+		if (!store.editableBlock) e.preventDefault();
+	},
+});
+
+watch(space, (value) => {
+	if (value && !store.editableBlock) {
+		store.mode = "move";
+	} else if (store.mode === "move") {
+		store.mode = store.lastMode !== "move" ? store.lastMode : "select";
+	}
 });
 
 useEventListener(document, "keydown", (e) => {
