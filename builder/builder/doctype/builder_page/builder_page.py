@@ -2,30 +2,55 @@
 # For license information, please see license.txt
 
 import contextlib
+import json
 import os
 import re
 
 import bs4 as bs
 import frappe
 import frappe.utils
-# import frappe
-from frappe.model.document import Document
-from frappe.website.serve import get_response_content, get_response
-from frappe.website.website_generator import WebsiteGenerator
 from builder.html_preview_image import generate_preview
-from frappe.utils.safe_exec import safe_exec
+from frappe.model.document import Document
 from frappe.utils.caching import redis_cache
-from frappe.website.page_renderers.document_page import DocumentPage
 from frappe.utils.jinja import render_template
+from frappe.utils.safe_exec import safe_exec
+from frappe.website.page_renderers.document_page import (
+	DocumentPage,
+	_find_matching_document_webview,
+)
+from frappe.website.path_resolver import evaluate_dynamic_routes
+from frappe.website.path_resolver import resolve_path as original_resolve_path
+from frappe.website.router import get_page_info_from_web_page_with_dynamic_routes
+from frappe.website.serve import get_response, get_response_content
+from frappe.website.website_generator import WebsiteGenerator
 from jinja2.exceptions import TemplateSyntaxError
-
-
-
-import json
+from werkzeug.routing import Rule
 
 MOBILE_BREAKPOINT = 576
 TABLET_BREAKPOINT = 768
 DESKTOP_BREAKPOINT = 1024
+
+
+class BuilderPageRenderer(DocumentPage):
+	def can_render(self):
+		if page := find_page_with_path(self.path):
+			self.doctype = "Builder Page"
+			self.docname = page
+			return True
+
+		if self.search_web_page_dynamic_routes():
+			for d in get_web_pages_with_dynamic_routes():
+				if evaluate_dynamic_routes(
+					[Rule(f"/{d.route}", endpoint=d.name)], self.path
+				):
+					self.doctype = d.doctype
+					self.docname = d.name
+					return True
+				else:
+					return False
+
+		return False
+
 
 class BuilderPage(WebsiteGenerator):
 	def add_comment(
@@ -60,6 +85,7 @@ class BuilderPage(WebsiteGenerator):
 	def on_update(self):
 		if self.has_value_changed("dynamic_route") or self.has_value_changed("route"):
 			get_web_pages_with_dynamic_routes.clear_cache()
+			find_page_with_path.clear_cache()
 
 	def autoname(self):
 		if not self.name:
@@ -82,9 +108,9 @@ class BuilderPage(WebsiteGenerator):
 		return self.route
 
 	website = frappe._dict(
-		template = "templates/generators/webpage.html",
-		condition_field = "published",
-		page_title_field = "page_title",
+		template="templates/generators/webpage.html",
+		condition_field="published",
+		page_title_field="page_title",
 	)
 
 	def get_context(self, context):
@@ -134,7 +160,9 @@ class BuilderPage(WebsiteGenerator):
 
 	def set_style_and_script(self, context):
 		for script in self.get("client_scripts", []):
-			script_doc = frappe.get_cached_doc("Builder Client Script", script.builder_script)
+			script_doc = frappe.get_cached_doc(
+				"Builder Client Script", script.builder_script
+			)
 			if script_doc.script_type == "JavaScript":
 				context.setdefault("scripts", []).append(script_doc.public_url)
 			else:
@@ -159,21 +187,26 @@ class BuilderPage(WebsiteGenerator):
 		return page_data
 
 	def generate_page_preview_image(self, html=None):
-		file_name=f"{self.name}{frappe.generate_hash()}.jpeg"
-		generate_preview(html or get_response_content(self.route), os.path.join(
-			frappe.local.site_path, "public", "files", file_name
-		))
+		file_name = f"{self.name}{frappe.generate_hash()}.jpeg"
+		generate_preview(
+			html or get_response_content(self.route),
+			os.path.join(frappe.local.site_path, "public", "files", file_name),
+		)
 		with contextlib.suppress(frappe.DoesNotExistError):
-			attached_files = frappe.get_all("File", {
-				"attached_to_field": "preview",
-				"attached_to_doctype": "Builder Page",
-				"attached_to_name": self.name
-			})
+			attached_files = frappe.get_all(
+				"File",
+				{
+					"attached_to_field": "preview",
+					"attached_to_doctype": "Builder Page",
+					"attached_to_name": self.name,
+				},
+			)
 			for file in attached_files:
 				preview_file = frappe.get_doc("File", file.name)
 				preview_file.delete(ignore_permissions=True)
 
 		self.db_set("preview", f"/files/{file_name}", commit=True)
+
 
 def get_block_html(blocks, page_data={}):
 	blocks = frappe.parse_json(blocks)
@@ -185,6 +218,7 @@ def get_block_html(blocks, page_data={}):
 
 	def get_html(blocks, soup):
 		html = ""
+
 		def get_tag(block, soup, data_key=None):
 			block = extend_with_component(block)
 			set_dynamic_content_placeholder(block, data_key)
@@ -194,7 +228,19 @@ def get_block_html(blocks, page_data={}):
 				return ""
 
 			classes = block.get("classes", [])
-			if element in  ("span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6", "label", "a"):
+			if element in (
+				"span",
+				"h1",
+				"p",
+				"b",
+				"h2",
+				"h3",
+				"h4",
+				"h5",
+				"h6",
+				"label",
+				"a",
+			):
 				classes.append("__text_block__")
 
 			# temp fix: since p inside p is illegal
@@ -221,12 +267,26 @@ def get_block_html(blocks, page_data={}):
 				tablet_styles = block.get("tabletStyles", {})
 				set_fonts([base_styles, mobile_styles, tablet_styles], font_map)
 				append_style(block.get("baseStyles", {}), style_tag, style_class)
-				plain_styles = {k: v for k, v in block.get("rawStyles", {}).items() if ":" not in k}
-				state_styles = {k: v for k, v in block.get("rawStyles", {}).items() if ":" in k}
+				plain_styles = {
+					k: v for k, v in block.get("rawStyles", {}).items() if ":" not in k
+				}
+				state_styles = {
+					k: v for k, v in block.get("rawStyles", {}).items() if ":" in k
+				}
 				append_style(plain_styles, style_tag, style_class)
 				append_state_style(state_styles, style_tag, style_class)
-				append_style(block.get("tabletStyles", {}), style_tag, style_class, device="tablet")
-				append_style(block.get("mobileStyles", {}), style_tag, style_class, device="mobile")
+				append_style(
+					block.get("tabletStyles", {}),
+					style_tag,
+					style_class,
+					device="tablet",
+				)
+				append_style(
+					block.get("mobileStyles", {}),
+					style_tag,
+					style_class,
+					device="mobile",
+				)
 				classes.append(style_class)
 
 			tag.attrs["class"] = get_class(classes)
@@ -238,7 +298,11 @@ def get_block_html(blocks, page_data={}):
 				tag.append(inner_soup)
 
 			block_data = []
-			if block.get("isRepeaterBlock") and block.get("children") and block.get("dataKey"):
+			if (
+				block.get("isRepeaterBlock")
+				and block.get("children")
+				and block.get("dataKey")
+			):
 				_key = block.get("dataKey").get("key")
 				if data_key:
 					_key = f"{data_key}.{_key}"
@@ -268,17 +332,20 @@ def get_block_html(blocks, page_data={}):
 	data = get_html(blocks, soup)
 	return data
 
+
 def get_style(style_obj):
 	return "".join(f"{camel_case_to_kebab_case(key)}: {value};" for key, value in style_obj.items()) if style_obj else ""
 
 def get_class(class_list):
 	return " ".join(class_list)
 
+
 def camel_case_to_kebab_case(text, remove_spaces=False):
-	text = re.sub(r'(?<!^)(?=[A-Z])', '-', text).lower()
+	text = re.sub(r"(?<!^)(?=[A-Z])", "-", text).lower()
 	if remove_spaces:
 		text = text.replace(" ", "")
 	return text
+
 
 def append_style(style_obj, style_tag, style_class, device="desktop"):
 	style = get_style(style_obj)
@@ -292,10 +359,12 @@ def append_style(style_obj, style_tag, style_class, device="desktop"):
 		style_string = f"@media only screen and (max-width: {DESKTOP_BREAKPOINT - 1}px) {{ {style_string} }}"
 	style_tag.append(style_string)
 
+
 def append_state_style(style_obj, style_tag, style_class):
 	for key, value in style_obj.items():
 		state, property = key.split(":")
 		style_tag.append(f".{style_class}:{state} {{ {property}: {value} }}")
+
 
 def set_fonts(styles, font_map):
 	for style in styles:
@@ -316,17 +385,24 @@ def set_fonts_from_html(soup, font_map):
 			if "font-family" in style:
 				font = style.split(":")[1].strip()
 				if font:
-					font_map[font] = { "weights": ["400"] }
+					font_map[font] = {"weights": ["400"]}
+
 
 def extend_with_component(block):
 	if block.get("extendedFromComponent"):
-		component = frappe.get_cached_value("Builder Component", block["extendedFromComponent"], ["block", "name"], as_dict=True)
+		component = frappe.get_cached_value(
+			"Builder Component",
+			block["extendedFromComponent"],
+			["block", "name"],
+			as_dict=True,
+		)
 		component_block = frappe.parse_json(component.block)
 		if component_block:
 			extend_block(component_block, block)
 			block = component_block
 
 	return block
+
 
 def extend_block(block, overridden_block):
 	block["baseStyles"].update(overridden_block["baseStyles"])
@@ -370,7 +446,9 @@ def extend_block(block, overridden_block):
 		if component_child:
 			extend_block(component_child, overridden_child)
 		else:
-			component_children.insert(overridden_children.index(overridden_child), overridden_child)
+			component_children.insert(
+				overridden_children.index(overridden_child), overridden_child
+			)
 
 
 def set_dynamic_content_placeholder(block, data_key=False):
@@ -396,6 +474,7 @@ def get_style_file_path():
 	matching_files = glob.glob(f"{folder_path}/{file_pattern}")
 	if matching_files:
 		return frappe.utils.get_url(matching_files[0].lstrip("."))
+
 
 def escape_single_quotes(text):
 	return text.replace("'", "\\'")
@@ -431,18 +510,12 @@ def escape_single_quotes(text):
 # 	# run tailwindcss cli command in production mode
 # 	subprocess.run(["npx", "tailwindcss", "-o", tailwind_css_file_path, "--config", temp_config_file_path, "--minify"])
 
-@redis_cache(ttl=60 * 60)
-def get_web_pages_with_dynamic_routes() -> dict[str, str]:
-	return frappe.get_all(
-		"Builder Page", fields=["name", "route", "modified"], filters=dict(published=1, dynamic_route=1),
-		update={"doctype": "Builder Page"}
-	)
 
 @frappe.whitelist()
 def get_page_preview_html(page: str, **kwarg) -> str:
 	# to load preview without publishing
 	frappe.form_dict.update(kwarg)
-	renderer = DocumentPage(path="")
+	renderer = BuilderPageRenderer(path="")
 	renderer.docname = page
 	renderer.doctype = "Builder Page"
 	frappe.flags.show_preview = True
@@ -454,10 +527,47 @@ def get_page_preview_html(page: str, **kwarg) -> str:
 		page.doctype,
 		page.name,
 		"generate_page_preview_image",
-		html=str(response.data, 'utf-8'),
+		html=str(response.data, "utf-8"),
 		queue="short",
 	)
 	return response
+
+
+@redis_cache(ttl=60 * 60)
+def find_page_with_path(route):
+	try:
+		return frappe.db.get_value(
+			doctype, dict(route=route, published=1), "name", cache=True
+		)
+	except:
+		pass
+
+
+@redis_cache(ttl=60 * 60)
+def get_web_pages_with_dynamic_routes() -> dict[str, str]:
+	return frappe.get_all(
+		"Builder Page",
+		fields=["name", "route", "modified"],
+		filters=dict(published=1, dynamic_route=1),
+		update={"doctype": "Builder Page"},
+	)
+
+
+def resolve_path(path):
+	doc = _find_matching_document_webview(path)
+	if doc and doc[0] == "Builder Page":
+		return path
+	elif evaluate_dynamic_routes(
+		[
+			Rule(f"/{d.route}", endpoint=d.name)
+			for d in get_web_pages_with_dynamic_routes()
+		],
+		path,
+	):
+		return path
+
+	return original_resolve_path(path)
+
 
 def is_component_used(blocks, component_id):
 	blocks = frappe.parse_json(blocks)
@@ -465,7 +575,8 @@ def is_component_used(blocks, component_id):
 		blocks = [blocks]
 
 	for block in blocks:
-		if not block: continue
+		if not block:
+			continue
 		if block.get("extendedFromComponent") == component_id:
 			return True
 		elif block.get("children"):
