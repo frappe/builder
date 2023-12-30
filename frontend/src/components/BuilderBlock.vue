@@ -22,7 +22,7 @@
 			:key="child.blockId"
 			v-for="child in block.getChildren()" />
 	</component>
-	<teleport to="#overlay" v-if="canvasProps?.overlayElement && !preview && canvasProps">
+	<teleport to="#overlay" v-if="canvasProps?.overlayElement && !preview && Boolean(canvasProps)">
 		<BlockEditor
 			ref="editor"
 			v-if="loadEditor"
@@ -143,12 +143,12 @@ const styles = computed(() => {
 
 const loadEditor = computed(() => {
 	return (
-		!canvasProps?.scaling &&
-		!canvasProps?.panning &&
 		target.value &&
 		props.block.getStyle("display") !== "none" &&
 		((isSelected.value && props.breakpoint === store.activeBreakpoint) ||
-			(hovered.value && store.hoveredBreakpoint === props.breakpoint))
+			(hovered.value && store.hoveredBreakpoint === props.breakpoint)) &&
+		!canvasProps?.scaling &&
+		!canvasProps?.panning
 	);
 });
 
