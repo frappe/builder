@@ -111,18 +111,18 @@ class BuilderPage(WebsiteGenerator):
 
 		self.set_style_and_script(context)
 		context.update(page_data)
-		self.set_meta_tags(context=context)
+		self.set_meta_tags(context=context, page_data=page_data)
 		try:
 			context["content"] = render_template(context.content, context)
 		except TemplateSyntaxError:
 			raise
 
-	def set_meta_tags(self, context):
+	def set_meta_tags(self, context, page_data={}):
 		context.metatags = {
 			"title": self.page_title or "My Page",
 			"description": self.meta_description or self.page_title,
-			"image": self.meta_image or self.preview
-		}
+			"image": self.meta_image or self.preview,
+		}.update(page_data.get("metatags", {}))
 
 	def is_component_used(self, component_id):
 		if self.blocks and is_component_used(self.blocks, component_id):
