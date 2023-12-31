@@ -773,6 +773,7 @@ const optionsSectionProperties = [
 				label: "HTML",
 				type: "HTML",
 				autofocus: false,
+				class: "mb-5",
 				modelValue: blockController.getInnerHTML() || "",
 			};
 		},

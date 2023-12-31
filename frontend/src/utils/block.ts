@@ -184,7 +184,13 @@ class Block implements BlockOptions {
 			return this.getComponentBlockDescription();
 		}
 		if (this.isHTML()) {
-			return "raw";
+			const innerHTML = this.getInnerHTML() || "";
+			const match = innerHTML.match(/<([a-z]+)[^>]*>/);
+			if (match) {
+				return `${match[1]}`;
+			} else {
+				return "raw";
+			}
 		}
 		let description = this.blockName || this.originalElement || this.getElement();
 		if (this.getTextContent() && !this.blockName) {

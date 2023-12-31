@@ -182,10 +182,14 @@ useEventListener(document, "paste", async (e) => {
 		if (blockController.isHTML()) {
 			blockController.setInnerHTML(text);
 		} else {
-			// create block from html
-			const block = convertHTMLToBlocks(text, true) as BlockOptions;
+			let block = null as unknown as Block | BlockOptions;
+			if (text.startsWith("<svg")) {
+				block = convertHTMLToBlocks(text, true);
+			} else {
+				block = getBlockTemplate("html");
+				block.innerHTML = text;
+			}
 			const parentBlock = blockController.getSelectedBlocks()[0];
-			if (!block) return;
 			if (parentBlock) {
 				parentBlock.addChild(block);
 			} else {
