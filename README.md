@@ -63,6 +63,10 @@ If you prefer self-hosting, follow the official [Frappe Bench Installation](http
     ```
 5. Access the builder page at `sitename.localhost:8000/builder` in your web browser.
 
+## Need help?
+
+Join our [telegram group](https://t.me/frappebuilder) for instant help.
+
 ## License
 
 [GNU Affero General Public License v3.0](LICENSE)
