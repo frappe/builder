@@ -221,7 +221,8 @@ const handleMove = (ev: MouseEvent) => {
 
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(target).cursor;
+	document.body.style.cursor = "grabbing";
+	target.style.cursor = "grabbing";
 
 	const mousemove = async (mouseMoveEvent: MouseEvent) => {
 		const scale = canvasProps.scale;
@@ -249,6 +250,7 @@ const handleMove = (ev: MouseEvent) => {
 		(mouseUpEvent) => {
 			moving.value = false;
 			document.body.style.cursor = docCursor;
+			target.style.cursor = "grab";
 			document.removeEventListener("mousemove", mousemove);
 			mouseUpEvent.preventDefault();
 			guides.hideX();
