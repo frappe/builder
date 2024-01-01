@@ -107,7 +107,7 @@ const getFilteredProperties = (section: PropertySection) => {
 };
 
 const setFont = (font: string) => {
-	_setFont(font).then(() => {
+	_setFont(font, null).then(() => {
 		blockController.setFontFamily(font);
 	});
 };
