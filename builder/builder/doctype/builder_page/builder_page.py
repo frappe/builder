@@ -45,8 +45,8 @@ class BuilderPageRenderer(DocumentPage):
 				self.doctype = "Builder Page"
 				self.docname = d.name
 				return True
-			else:
-				return False
+
+		return False
 
 
 class BuilderPage(WebsiteGenerator):
