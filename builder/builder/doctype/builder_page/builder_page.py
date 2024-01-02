@@ -38,18 +38,15 @@ class BuilderPageRenderer(DocumentPage):
 			self.docname = page
 			return True
 
-		if self.search_web_page_dynamic_routes():
-			for d in get_web_pages_with_dynamic_routes():
-				if evaluate_dynamic_routes(
-					[Rule(f"/{d.route}", endpoint=d.name)], self.path
-				):
-					self.doctype = d.doctype
-					self.docname = d.name
-					return True
-				else:
-					return False
-
-		return False
+		for d in get_web_pages_with_dynamic_routes():
+			if evaluate_dynamic_routes(
+				[Rule(f"/{d.route}", endpoint=d.name)], self.path
+			):
+				self.doctype = "Builder Page"
+				self.docname = d.name
+				return True
+			else:
+				return False
 
 
 class BuilderPage(WebsiteGenerator):
@@ -554,8 +551,7 @@ def get_web_pages_with_dynamic_routes() -> dict[str, str]:
 
 
 def resolve_path(path):
-	doc = _find_matching_document_webview(path)
-	if doc and doc[0] == "Builder Page":
+	if find_page_with_path(path):
 		return path
 	elif evaluate_dynamic_routes(
 		[
