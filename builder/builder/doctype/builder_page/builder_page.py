@@ -534,7 +534,7 @@ def get_page_preview_html(page: str, **kwarg) -> str:
 def find_page_with_path(route):
 	try:
 		return frappe.db.get_value(
-			doctype, dict(route=route, published=1), "name", cache=True
+			"Builder Page", dict(route=route, published=1), "name", cache=True
 		)
 	except:
 		pass
