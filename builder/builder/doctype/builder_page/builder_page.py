@@ -14,10 +14,7 @@ from frappe.model.document import Document
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
 from frappe.utils.safe_exec import safe_exec
-from frappe.website.page_renderers.document_page import (
-	DocumentPage,
-	_find_matching_document_webview,
-)
+from frappe.website.page_renderers.document_page import DocumentPage
 from frappe.website.path_resolver import evaluate_dynamic_routes
 from frappe.website.path_resolver import resolve_path as original_resolve_path
 from frappe.website.router import get_page_info_from_web_page_with_dynamic_routes
