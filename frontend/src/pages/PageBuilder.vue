@@ -52,7 +52,6 @@ import { BuilderPage } from "@/types/Builder/BuilderPage";
 import Block, { styleProperty } from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
-import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { copyToClipboard, getBlockCopy, isHTMLString, isJSONString, isTargetEditable } from "@/utils/helpers";
 import { useActiveElement, useDebounceFn, useEventListener, useMagicKeys } from "@vueuse/core";
 import { computed, nextTick, onActivated, provide, ref, watch, watchEffect } from "vue";
@@ -183,12 +182,8 @@ useEventListener(document, "paste", async (e) => {
 			blockController.setInnerHTML(text);
 		} else {
 			let block = null as unknown as Block | BlockOptions;
-			if (text.startsWith("<svg")) {
-				block = convertHTMLToBlocks(text, true);
-			} else {
-				block = getBlockTemplate("html");
-				block.innerHTML = text;
-			}
+			block = getBlockTemplate("html");
+			block.innerHTML = text;
 			const parentBlock = blockController.getSelectedBlocks()[0];
 			if (parentBlock) {
 				parentBlock.addChild(block);
