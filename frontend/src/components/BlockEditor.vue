@@ -52,7 +52,7 @@
 </template>
 <script setup lang="ts">
 import Block from "@/utils/block";
-import { addPxToNumber, getNumberFromPx } from "@/utils/helpers";
+import { addPxToNumber } from "@/utils/helpers";
 import { Ref, computed, inject, nextTick, onMounted, ref, watch, watchEffect } from "vue";
 
 import blockController from "@/utils/blockController";
@@ -213,8 +213,8 @@ const handleMove = (ev: MouseEvent) => {
 	const target = ev.target as HTMLElement;
 	const startX = ev.clientX;
 	const startY = ev.clientY;
-	const startLeft = getNumberFromPx(props.block.getStyle("left"));
-	const startTop = getNumberFromPx(props.block.getStyle("top"));
+	const startLeft = props.target.offsetLeft || 0;
+	const startTop = props.target.offsetTop || 0;
 
 	moving.value = true;
 	guides.showX();
