@@ -466,7 +466,8 @@ const getFirstBlock = () => {
 const setRootBlock = (newBlock: Block, resetCanvas = false) => {
 	block.value = newBlock;
 	if (canvasHistory.value) {
-		canvasHistory.value.clear();
+		canvasHistory.value.dispose();
+		setupHistory();
 	}
 	if (resetCanvas) {
 		nextTick(() => {
