@@ -244,5 +244,18 @@ const contextMenuOptions: ContextMenuOption[] = [
 		},
 		condition: () => Boolean(props.block.extendedFromComponent),
 	},
+	{
+		label: "Delete",
+		action: () => {
+			props.block.getParentBlock()?.removeChild(props.block);
+		},
+		condition: () => {
+			return (
+				!props.block.isRoot() &&
+				!props.block.isChildOfComponentBlock() &&
+				Boolean(props.block.getParentBlock())
+			);
+		},
+	},
 ];
 </script>
