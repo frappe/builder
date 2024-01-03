@@ -417,7 +417,7 @@ useEventListener(document, "keydown", (e) => {
 
 	if (isTargetEditable(e)) return;
 
-	if (e.key === "Backspace" && blockController.isBLockSelected()) {
+	if ((e.key === "Backspace" || e.key === "Delete") && blockController.isBLockSelected()) {
 		function findBlockAndRemove(blocks: Array<Block>, blockId: string) {
 			if (blockId === "root") {
 				toast.warning("Warning", {
