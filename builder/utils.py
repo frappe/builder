@@ -6,19 +6,13 @@ import socket
 from frappe.utils.safe_exec import (
 	FrappeTransformer,
 	NamespaceDict,
-	_getattr_for_safe_exec,
-	_getitem,
-	_write,
 	get_python_builtins,
-	patched_qb,
 	safe_exec_flags,
+	get_safe_globals
 )
 
-import json
 from RestrictedPython import compile_restricted
-from frappe.core.utils import html2text
 
-from RestrictedPython.Guards import guarded_iter_unpack_sequence
 
 
 def get_doc_as_dict(doctype, name):
@@ -36,56 +30,50 @@ def make_safe_get_request(url, **kwargs):
 	return frappe.integrations.utils.make_get_request(url, **kwargs)
 
 
-def safe_get_all(
-	doctype,
-	fields=None,
-	**kwargs,
-):
-	# remove fields with function
+def safe_get_all(*args, **kwargs):
+	if args and len(args) > 1 and isinstance(args[1], list):
+		args = list(args)
+		args[1] = remove_unsafe_fields(args[1])
+
+	fields = kwargs.get("fields", [])
 	if fields:
-		fields = [f for f in fields if "(" not in f]
+		kwargs["fields"] = remove_unsafe_fields(fields)
 
 	return frappe.db.get_all(
-		doctype,
-		fields,
+		*args,
 		**kwargs,
 	)
 
+def remove_unsafe_fields(fields):
+	return [f for f in fields if not "(" in f]
 
-def get_safest_globals():
-	user = getattr(frappe.local, "session", None) and frappe.local.session.user \
-		or "Guest"
+def get_safer_globals():
+	safe_globals = get_safe_globals()
 
 	out = NamespaceDict(
-		json=NamespaceDict(loads=json.loads, dumps=json.dumps),
+		json=safe_globals["json"],
 		as_json=frappe.as_json,
-		dict=dict,
-		get_value=frappe.db.get_value,
-		get_all=frappe.db.get_all,
-		get_list=safe_get_all,
-		exists=frappe.db.exists,
-		count=frappe.db.count,
-		html2text=html2text,
+		dict=safe_globals["dict"],
 		frappe=NamespaceDict(
-			qb=frappe.qb,
+			db=NamespaceDict(
+				count=frappe.db.count,
+				exists=frappe.db.exists,
+				get_value=frappe.db.get_value,
+				get_all=frappe.db.get_all,
+				get_list=safe_get_all,
+			),
 			make_get_request=make_safe_get_request,
 			get_doc=get_doc_as_dict,
-		),
-		session=frappe._dict(
-			user=user,
-			csrf_token=frappe.local.session.data.csrf_token
-			if getattr(frappe.local, "session", None)
-			else "",
+			_=frappe._,
+			session=safe_globals["frappe"]["session"],
 		),
 	)
 
-	out._write_ = _write
-	out._getitem_ = _getitem
-	out._getattr_ = _getattr_for_safe_exec
-
-	# allow iterators and list comprehension
-	out._getiter_ = iter
-	out._iter_unpack_sequence_ = guarded_iter_unpack_sequence
+	out._write_ = safe_globals["_write_"]
+	out._getitem_ = safe_globals["_getitem_"]
+	out._getattr_ = safe_globals["_getattr_"]
+	out._getiter_ = safe_globals["_getiter_"]
+	out._iter_unpack_sequence_ = safe_globals["_iter_unpack_sequence_"]
 
 	# add common python builtins
 	out.update(get_python_builtins())
@@ -97,15 +85,12 @@ def safer_exec(
 	script: str,
 	_globals: dict | None = None,
 	_locals: dict | None = None,
-	*,
-	restrict_commit_rollback: bool = False,
-	script_filename: str | None = None,
 ):
-	exec_globals = get_safest_globals()
+	exec_globals = get_safer_globals()
 	if _globals:
 		exec_globals.update(_globals)
 
-	with safe_exec_flags(), patched_qb():
+	with safe_exec_flags():
 		# execute script compiled by RestrictedPython
 		exec(
 			compile_restricted(
