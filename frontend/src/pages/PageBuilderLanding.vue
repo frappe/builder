@@ -101,7 +101,7 @@
 							<template v-slot="{ open }">
 								<FeatherIcon
 									name="more-vertical"
-									class="h-4 w-4 text-gray-500 group-hover:text-gray-700"
+									class="h-4 w-4 text-gray-500 hover:text-gray-700"
 									@click="open"></FeatherIcon>
 							</template>
 						</Dropdown>
