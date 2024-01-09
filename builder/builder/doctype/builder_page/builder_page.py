@@ -175,9 +175,9 @@ class BuilderPage(WebsiteGenerator):
 		if self.page_data_script:
 			_locals = dict(data=frappe._dict())
 			if is_safe_exec_enabled():
-				safe_exec(self.page_data_script, None, _locals)
+				safe_exec(self.page_data_script, None, _locals, script_filename=self.name)
 			else:
-				safer_exec(self.page_data_script, None, _locals)
+				safer_exec(self.page_data_script, None, _locals, script_filename=self.name)
 			page_data.update(_locals["data"])
 		return page_data
 

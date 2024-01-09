@@ -8,7 +8,8 @@ from frappe.utils.safe_exec import (
 	NamespaceDict,
 	get_python_builtins,
 	safe_exec_flags,
-	get_safe_globals
+	get_safe_globals,
+	SERVER_SCRIPT_FILE_PREFIX
 )
 
 from RestrictedPython import compile_restricted
@@ -97,16 +98,22 @@ def safer_exec(
 	script: str,
 	_globals: dict | None = None,
 	_locals: dict | None = None,
+	*,
+	script_filename: str | None = None,
 ):
 	exec_globals = get_safer_globals()
 	if _globals:
 		exec_globals.update(_globals)
 
+	filename = SERVER_SCRIPT_FILE_PREFIX
+	if script_filename:
+		filename += f": {frappe.scrub(script_filename)}"
+
 	with safe_exec_flags():
 		# execute script compiled by RestrictedPython
 		exec(
 			compile_restricted(
-				script, filename="<data-script>", policy=FrappeTransformer
+				script, filename=filename, policy=FrappeTransformer
 			),
 			exec_globals,
 			_locals,
