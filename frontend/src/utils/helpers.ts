@@ -256,6 +256,10 @@ function getBlockCopy(block: BlockOptions | Block, retainId = false): Block {
 	return getBlockInstance(b);
 }
 
+function isCtrlOrCmd(e: KeyboardEvent) {
+	return e.ctrlKey || e.metaKey;
+}
+
 export {
 	HSVToHex,
 	HexToHSV,
@@ -271,6 +275,7 @@ export {
 	getRGB,
 	getRandomColor,
 	getTextContent,
+	isCtrlOrCmd,
 	isHTMLString,
 	isJSONString,
 	isTargetEditable,
