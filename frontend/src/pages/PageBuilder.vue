@@ -52,7 +52,14 @@ import { BuilderPage } from "@/types/Builder/BuilderPage";
 import Block, { styleProperty } from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { copyToClipboard, getBlockCopy, isHTMLString, isJSONString, isTargetEditable } from "@/utils/helpers";
+import {
+	copyToClipboard,
+	getBlockCopy,
+	isCtrlOrCmd,
+	isHTMLString,
+	isJSONString,
+	isTargetEditable,
+} from "@/utils/helpers";
 import { useActiveElement, useDebounceFn, useEventListener, useMagicKeys } from "@vueuse/core";
 import { computed, nextTick, onActivated, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -233,20 +240,20 @@ useEventListener(document, "paste", async (e) => {
 // TODO: Refactor with useMagicKeys
 useEventListener(document, "keydown", (e) => {
 	if (isTargetEditable(e)) return;
-	if (e.key === "z" && e.metaKey && !e.shiftKey && store.activeCanvas?.history.canUndo) {
+	if (e.key === "z" && isCtrlOrCmd(e) && !e.shiftKey && store.activeCanvas?.history.canUndo) {
 		store.activeCanvas?.history.undo();
 		updateSelectedBlocks();
 		e.preventDefault();
 		return;
 	}
-	if (e.key === "z" && e.shiftKey && e.metaKey && store.activeCanvas?.history.canRedo) {
+	if (e.key === "z" && e.shiftKey && isCtrlOrCmd(e) && store.activeCanvas?.history.canRedo) {
 		store.activeCanvas?.history.redo();
 		updateSelectedBlocks();
 		e.preventDefault();
 		return;
 	}
 
-	if (e.key === "0" && e.metaKey) {
+	if (e.key === "0" && isCtrlOrCmd(e)) {
 		e.preventDefault();
 		if (pageCanvas.value) {
 			if (e.shiftKey) {
@@ -290,7 +297,7 @@ useEventListener(document, "keydown", (e) => {
 		return;
 	}
 
-	if (e.key === "=" && e.metaKey) {
+	if (e.key === "=" && isCtrlOrCmd(e)) {
 		e.preventDefault();
 		if (pageCanvas.value) {
 			pageCanvas.value.zoomIn();
@@ -298,7 +305,7 @@ useEventListener(document, "keydown", (e) => {
 		return;
 	}
 
-	if (e.key === "-" && e.metaKey) {
+	if (e.key === "-" && isCtrlOrCmd(e)) {
 		e.preventDefault();
 		if (pageCanvas.value) {
 			pageCanvas.value.zoomOut();
@@ -306,7 +313,7 @@ useEventListener(document, "keydown", (e) => {
 		return;
 	}
 
-	if (e.metaKey || e.ctrlKey || e.shiftKey) {
+	if (isCtrlOrCmd(e) || e.shiftKey) {
 		return;
 	}
 
@@ -359,7 +366,7 @@ watch(space, (value) => {
 });
 
 useEventListener(document, "keydown", (e) => {
-	if (e.key === "\\" && e.metaKey) {
+	if (e.key === "\\" && isCtrlOrCmd(e)) {
 		e.preventDefault();
 		if (e.shiftKey) {
 			store.showLeftPanel = !store.showLeftPanel;
@@ -369,7 +376,7 @@ useEventListener(document, "keydown", (e) => {
 		}
 	}
 	// save page or component
-	if (e.key === "s" && (e.ctrlKey || e.metaKey)) {
+	if (e.key === "s" && isCtrlOrCmd(e)) {
 		e.preventDefault();
 		if (store.editingMode === "component") {
 			store.editPage(true);
@@ -380,7 +387,7 @@ useEventListener(document, "keydown", (e) => {
 		return;
 	}
 
-	if (e.key === "p" && (e.ctrlKey || e.metaKey)) {
+	if (e.key === "p" && isCtrlOrCmd(e)) {
 		e.preventDefault();
 		store.savePage();
 		router.push({
@@ -391,7 +398,7 @@ useEventListener(document, "keydown", (e) => {
 		});
 	}
 
-	if (e.key === "c" && e.metaKey && e.shiftKey) {
+	if (e.key === "c" && isCtrlOrCmd(e) && e.shiftKey) {
 		if (blockController.isBLockSelected() && !blockController.multipleBlocksSelected()) {
 			e.preventDefault();
 			const block = blockController.getSelectedBlocks()[0];
@@ -402,7 +409,7 @@ useEventListener(document, "keydown", (e) => {
 		}
 	}
 
-	if (e.key === "d" && e.metaKey) {
+	if (e.key === "d" && isCtrlOrCmd(e)) {
 		if (blockController.isBLockSelected() && !blockController.multipleBlocksSelected()) {
 			e.preventDefault();
 			const block = blockController.getSelectedBlocks()[0];
