@@ -2,7 +2,6 @@
 # For license information, please see license.txt
 
 import contextlib
-import json
 import os
 import re
 
@@ -10,18 +9,17 @@ import bs4 as bs
 import frappe
 import frappe.utils
 from builder.html_preview_image import generate_preview
-from frappe.model.document import Document
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
-from frappe.utils.safe_exec import safe_exec
+from frappe.utils.safe_exec import safe_exec, is_safe_exec_enabled
 from frappe.website.page_renderers.document_page import DocumentPage
 from frappe.website.path_resolver import evaluate_dynamic_routes
 from frappe.website.path_resolver import resolve_path as original_resolve_path
-from frappe.website.router import get_page_info_from_web_page_with_dynamic_routes
-from frappe.website.serve import get_response, get_response_content
+from frappe.website.serve import get_response_content
 from frappe.website.website_generator import WebsiteGenerator
 from jinja2.exceptions import TemplateSyntaxError
 from werkzeug.routing import Rule
+from builder.utils import safer_exec
 
 MOBILE_BREAKPOINT = 576
 TABLET_BREAKPOINT = 768
@@ -176,7 +174,10 @@ class BuilderPage(WebsiteGenerator):
 		page_data = frappe._dict()
 		if self.page_data_script:
 			_locals = dict(data=frappe._dict())
-			safe_exec(self.page_data_script, None, _locals)
+			if is_safe_exec_enabled():
+				safe_exec(self.page_data_script, None, _locals)
+			else:
+				safer_exec(self.page_data_script, None, _locals)
 			page_data.update(_locals["data"])
 		return page_data
 
@@ -328,7 +329,15 @@ def get_block_html(blocks, page_data={}):
 
 
 def get_style(style_obj):
-	return "".join(f"{camel_case_to_kebab_case(key)}: {value};" for key, value in style_obj.items()) if style_obj else ""
+	return (
+		"".join(
+			f"{camel_case_to_kebab_case(key)}: {value};"
+			for key, value in style_obj.items()
+		)
+		if style_obj
+		else ""
+	)
+
 
 def get_class(class_list):
 	return " ".join(class_list)
@@ -365,11 +374,15 @@ def set_fonts(styles, font_map):
 		font = style.get("fontFamily")
 		if font:
 			if font in font_map:
-				if style.get("fontWeight") and style.get("fontWeight") not in font_map[font]["weights"]:
+				if (
+					style.get("fontWeight")
+					and style.get("fontWeight") not in font_map[font]["weights"]
+				):
 					font_map[font]["weights"].append(style.get("fontWeight"))
 					font_map[font]["weights"].sort()
 			else:
-				font_map[font] = { "weights": [style.get("fontWeight") or "400"] }
+				font_map[font] = {"weights": [style.get("fontWeight") or "400"]}
+
 
 def set_fonts_from_html(soup, font_map):
 	# get font-family from inline styles
@@ -448,21 +461,33 @@ def extend_block(block, overridden_block):
 def set_dynamic_content_placeholder(block, data_key=False):
 	block_data_key = block.get("dataKey")
 	if block_data_key and block_data_key.get("key"):
-		key = f"{data_key}.{block_data_key.get('key')}" if data_key else block_data_key.get("key")
+		key = (
+			f"{data_key}.{block_data_key.get('key')}"
+			if data_key
+			else block_data_key.get("key")
+		)
 		_property = block_data_key.get("property")
 		_type = block_data_key.get("type")
 		if _type == "attribute":
-			block["attributes"][_property] = f"{{{{ {key} or '{escape_single_quotes(block['attributes'].get(_property, ''))}' }}}}"
+			block["attributes"][
+				_property
+			] = f"{{{{ {key} or '{escape_single_quotes(block['attributes'].get(_property, ''))}' }}}}"
 		elif _type == "style":
-			block["baseStyles"][_property] = f"{{{{ {key} or '{escape_single_quotes(block['baseStyles'].get(_property, ''))}' }}}}"
+			block["baseStyles"][
+				_property
+			] = f"{{{{ {key} or '{escape_single_quotes(block['baseStyles'].get(_property, ''))}' }}}}"
 		elif _type == "key" and not block.get("isRepeaterBlock"):
-			block[_property] = f"{{{{ {key} or '{escape_single_quotes(block.get(_property, ''))}' }}}}"
+			block[
+				_property
+			] = f"{{{{ {key} or '{escape_single_quotes(block.get(_property, ''))}' }}}}"
+
 
 def get_style_file_path():
 	# TODO: Redo this, currently it loads the first matching file
 	# from frappe.utils import get_url
 	# return get_url("/files/tailwind.css")
 	import glob
+
 	folder_path = "./assets/builder/frontend/assets/"
 	file_pattern = "index.*.css"
 	matching_files = glob.glob(f"{folder_path}/{file_pattern}")
@@ -472,6 +497,7 @@ def get_style_file_path():
 
 def escape_single_quotes(text):
 	return text.replace("'", "\\'")
+
 
 # def generate_tailwind_css_file_from_html(html):
 # 	# execute tailwindcss cli command to generate css file
