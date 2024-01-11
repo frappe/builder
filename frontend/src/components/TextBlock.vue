@@ -40,7 +40,7 @@
 						}
 					"
 					ref="linkInput"></Input>
-				<Button @click="setLink" class="ml-1">
+				<Button @click="() => setLink(linkInput?.getInputValue())" class="ml-1">
 					<FeatherIcon class="h-3 w-3" name="check" />
 				</Button>
 			</div>

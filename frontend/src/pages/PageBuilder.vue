@@ -163,7 +163,10 @@ useEventListener(document, "paste", async (e) => {
 		}
 
 		if (store.selectedBlocks.length && dataObj.blocks[0].blockId !== "root") {
-			const parentBlock = store.selectedBlocks[0];
+			let parentBlock = store.selectedBlocks[0];
+			while (parentBlock && !parentBlock.canHaveChildren()) {
+				parentBlock = parentBlock.getParentBlock() as Block;
+			}
 			dataObj.blocks.forEach((block: BlockOptions) => {
 				parentBlock.addChild(getBlockCopy(block), null, true);
 			});
