@@ -74,7 +74,7 @@ const pasteObj = (e: ClipboardEvent) => {
 		const map = new Map(Object.entries(props.obj));
 		try {
 			const objString = text.match(/{[^{}]+}/)?.[0];
-			if (!objString) return new Error("Invalid object");
+			if (!objString) throw new Error("Invalid object");
 			const obj = new Function("return " + objString)();
 			if (typeof obj === "object") {
 				for (const [key, value] of Object.entries(obj)) {
@@ -91,7 +91,6 @@ const pasteObj = (e: ClipboardEvent) => {
 			}
 			map.delete("");
 		}
-		e.preventDefault();
 		emit("update:obj", mapToObject(map));
 	}
 };

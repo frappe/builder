@@ -110,7 +110,12 @@ const blockController = {
 	},
 	setRawStyles: (rawStyles: BlockStyleMap) => {
 		store.selectedBlocks.forEach((block) => {
-			block.rawStyles = rawStyles;
+			Object.keys(block.rawStyles).forEach((key) => {
+				if (!rawStyles[key]) {
+					delete block.rawStyles[key];
+				}
+			});
+			Object.assign(block.rawStyles, rawStyles);
 		});
 	},
 	getCustomAttributes: () => {
@@ -118,7 +123,12 @@ const blockController = {
 	},
 	setCustomAttributes: (customAttributes: BlockAttributeMap) => {
 		store.selectedBlocks.forEach((block) => {
-			block.customAttributes = customAttributes;
+			Object.keys(block.customAttributes).forEach((key) => {
+				if (!customAttributes[key]) {
+					delete block.customAttributes[key];
+				}
+			});
+			Object.assign(block.customAttributes, customAttributes);
 		});
 	},
 	getParentBlock: () => {

@@ -5,7 +5,7 @@ declare interface BlockStyleMap {
 }
 
 declare interface BlockAttributeMap {
-	[key: string]: string;
+	[key: string]: string | number | null | undefined;
 }
 
 declare interface BlockOptions {

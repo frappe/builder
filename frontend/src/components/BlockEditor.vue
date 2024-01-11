@@ -114,6 +114,7 @@ watchEffect(() => {
 	props.block.getStyle("bottom");
 	props.block.getStyle("right");
 	props.block.getStyle("position");
+	props.block.rawStyles;
 	const parentBlock = props.block.getParentBlock();
 	parentBlock?.getStyle("display");
 	parentBlock?.getStyle("justifyContent");
