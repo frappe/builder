@@ -33,7 +33,7 @@ class Block implements BlockOptions {
 	referenceBlockId?: string;
 	isRepeaterBlock?: boolean;
 	visibilityCondition?: string;
-	customAttributes?: BlockAttributeMap;
+	customAttributes: BlockAttributeMap;
 	constructor(options: BlockOptions) {
 		this.element = options.element;
 		this.innerHTML = options.innerHTML;
@@ -409,7 +409,12 @@ class Block implements BlockOptions {
 		return store.findParentBlock(this.blockId);
 	}
 	canHaveChildren(): boolean {
-		return (this.isContainer() || this.isRoot() || this.isDiv()) && !this.isExtendedFromComponent();
+		return !(
+			this.isImage() ||
+			this.isSVG() ||
+			(this.isText() && !this.isLink()) ||
+			this.isExtendedFromComponent()
+		);
 	}
 	updateStyles(styles: BlockStyleObjects) {
 		this.baseStyles = Object.assign({}, this.baseStyles, styles.baseStyles);
