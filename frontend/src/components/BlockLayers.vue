@@ -33,13 +33,7 @@
 								<FeatherIcon
 									:name="isExpanded(element) ? 'chevron-down' : 'chevron-right'"
 									class="mr-1 h-3 w-3"
-									v-if="
-										element.children &&
-										element.children.length &&
-										!element.isRoot() &&
-										!element.isImage() &&
-										!element.isSVG()
-									"
+									v-if="element.children && element.children.length && !element.isRoot()"
 									@click.stop="toggleExpanded(element)" />
 								<FeatherIcon
 									:name="element.getIcon()"
@@ -83,9 +77,7 @@
 								v-show="
 									isExpanded(element) &&
 									element.isVisible() &&
-									!element.isSVG() &&
-									!element.isImage() &&
-									!(element.isText() && !element.isLink())
+									(element.canHaveChildren() || element.hasChildren())
 								">
 								<BlockLayers :blocks="element.children" class="ml-3" />
 							</div>
