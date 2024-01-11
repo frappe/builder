@@ -183,13 +183,7 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 				const index = parentParentBlock.children.indexOf(parentBlock);
 				parentParentBlock.children.splice(index, 1, newBlock);
 			} else {
-				while (
-					parentBlock &&
-					(parentBlock.isImage() ||
-						parentBlock.isSVG() ||
-						parentBlock.isExtendedFromComponent() ||
-						(parentBlock.isText() && !parentBlock.isLink()))
-				) {
+				while (parentBlock && !parentBlock.canHaveChildren()) {
 					parentBlock = parentBlock.getParentBlock();
 				}
 				if (!parentBlock) return;
