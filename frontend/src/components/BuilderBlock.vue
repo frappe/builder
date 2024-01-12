@@ -41,6 +41,7 @@ import { computed, inject, nextTick, onMounted, reactive, ref, useAttrs, watch, 
 import getBlockTemplate from "@/utils/blockTemplate";
 import { getDataForKey } from "@/utils/helpers";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
+import { computedWithControl } from "@vueuse/core";
 import useStore from "../store";
 import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
@@ -81,9 +82,24 @@ const draggable = computed(() => {
 });
 
 const hovered = ref(false);
-const isSelected = computed(() => {
-	return store.selectedBlocks.some((block) => block.blockId === props.block.blockId);
-});
+const isSelected = computedWithControl(
+	() => props.block.blockId,
+	() => {
+		return store.activeCanvas?.isSelected(props.block);
+	}
+);
+
+watch(
+	() => store.activeCanvas?.selectedBlockIds,
+	(newList, oldList) => {
+		if (store.activeCanvas?.isSelected(props.block) || oldList?.includes(props.block.blockId)) {
+			isSelected.trigger();
+		}
+	},
+	{
+		deep: true,
+	}
+);
 
 const getComponentName = (block: Block) => {
 	if (block.isRepeater()) {

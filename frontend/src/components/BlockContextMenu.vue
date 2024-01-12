@@ -144,7 +144,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			const parentBlock = props.block.getParentBlock();
 			if (!parentBlock) return;
 
-			const selectedBlocks = store.selectedBlocks;
+			const selectedBlocks = store.activeCanvas?.selectedBlocks || [];
 			const blockPosition = Math.min(...selectedBlocks.map(parentBlock.getChildIndex.bind(parentBlock)));
 			const newBlock = parentBlock?.addChild(newBlockObj, blockPosition);
 
@@ -170,11 +170,11 @@ const contextMenuOptions: ContextMenuOption[] = [
 		},
 		condition: () => {
 			if (props.block.isRoot()) return false;
-			if (store.selectedBlocks.length === 1) return true;
+			if (store.activeCanvas?.selectedBlocks.length === 1) return true;
 			// check if all selected blocks are siblings
 			const parentBlock = props.block.getParentBlock();
 			if (!parentBlock) return false;
-			const selectedBlocks = store.selectedBlocks;
+			const selectedBlocks = store.activeCanvas?.selectedBlocks || [];
 			return selectedBlocks.every((block) => block.getParentBlock() === parentBlock);
 		},
 	},

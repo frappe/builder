@@ -165,7 +165,7 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 		let parentBlock = block.value as Block | null;
 		if (element) {
 			if (element.dataset.blockId) {
-				parentBlock = store.findBlock(element.dataset.blockId) || parentBlock;
+				parentBlock = findBlock(element.dataset.blockId) || parentBlock;
 			}
 		}
 		let componentName = ev.dataTransfer?.getData("componentName");
@@ -230,12 +230,12 @@ function setEvents() {
 			let block = getFirstBlock();
 			if (element) {
 				if (element.dataset.blockId) {
-					block = store.findBlock(element.dataset.blockId) || block;
+					block = findBlock(element.dataset.blockId) || block;
 				}
 			}
 			let parentBlock = getFirstBlock();
 			if (element.dataset.blockId) {
-				parentBlock = store.findBlock(element.dataset.blockId) || parentBlock;
+				parentBlock = findBlock(element.dataset.blockId) || parentBlock;
 				while (parentBlock && !parentBlock.canHaveChildren()) {
 					parentBlock = parentBlock.getParentBlock() || getFirstBlock();
 				}
@@ -445,7 +445,7 @@ const handleClick = (ev: MouseEvent) => {
 	// hack to ensure if click is on canvas-container
 	// TODO: Still clears selection if space handlers are dragged over canvas-container
 	if (target?.classList.contains("canvas-container")) {
-		store.clearSelection();
+		clearSelection();
 	}
 };
 
@@ -470,6 +470,104 @@ const setRootBlock = (newBlock: Block, resetCanvas = false) => {
 	}
 };
 
+const selectedBlockIds = ref([]) as Ref<string[]>;
+const selectedBlocks = computed(() => {
+	return selectedBlockIds.value.map((id) => findBlock(id));
+}) as Ref<Block[]>;
+
+const isSelected = (block: Block) => {
+	return selectedBlockIds.value.includes(block.blockId);
+};
+
+const selectBlock = (_block: Block, multiSelect = false) => {
+	if (isSelected(_block)) {
+		return;
+	}
+	if (multiSelect) {
+		selectedBlockIds.value.push(_block.blockId);
+	} else {
+		selectedBlockIds.value.splice(0, selectedBlockIds.value.length, _block.blockId);
+	}
+};
+
+const toggleBlockSelection = (_block: Block) => {
+	if (isSelected(_block)) {
+		selectedBlockIds.value.splice(selectedBlockIds.value.indexOf(_block.blockId), 1);
+	} else {
+		selectBlock(_block, true);
+	}
+};
+
+const clearSelection = () => {
+	selectedBlockIds.value = [];
+};
+
+// findParentBlock(blockId: string, blocks?: Array<Block>): Block | null {
+// 			if (!blocks) {
+// 				const firstBlock = this.activeCanvas?.getFirstBlock() as Block;
+// 				if (!firstBlock) {
+// 					return null;
+// 				}
+// 				blocks = [firstBlock];
+// 			}
+// 			for (const block of blocks) {
+// 				if (block.children) {
+// 					for (const child of block.children) {
+// 						if (child.blockId === blockId) {
+// 							return block;
+// 						}
+// 					}
+// 					const found = this.findParentBlock(blockId, block.children);
+// 					if (found) {
+// 						return found;
+// 					}
+// 				}
+// 			}
+// 			return null;
+// 		},
+
+const findParentBlock = (blockId: string, blocks?: Block[]): Block | null => {
+	if (!blocks) {
+		const firstBlock = getFirstBlock();
+		if (!firstBlock) {
+			return null;
+		}
+		blocks = [firstBlock];
+	}
+	for (const block of blocks) {
+		if (block.children) {
+			for (const child of block.children) {
+				if (child.blockId === blockId) {
+					return block;
+				}
+			}
+			const found = findParentBlock(blockId, block.children);
+			if (found) {
+				return found;
+			}
+		}
+	}
+	return null;
+};
+
+const findBlock = (blockId: string, blocks?: Block[]): Block | null => {
+	if (!blocks) {
+		blocks = [getFirstBlock()];
+	}
+	for (const block of blocks) {
+		if (block.blockId === blockId) {
+			return block;
+		}
+		if (block.children) {
+			const found = findBlock(blockId, block.children);
+			if (found) {
+				return found;
+			}
+		}
+	}
+	return null;
+};
+
 defineExpose({
 	setScaleAndTranslate,
 	resetZoom,
@@ -482,5 +580,13 @@ defineExpose({
 	block,
 	setRootBlock,
 	canvasProps,
+	selectBlock,
+	toggleBlockSelection,
+	selectedBlocks,
+	clearSelection,
+	isSelected,
+	selectedBlockIds,
+	findParentBlock,
+	findBlock,
 });
 </script>

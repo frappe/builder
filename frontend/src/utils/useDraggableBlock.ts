@@ -38,7 +38,7 @@ export function useDraggableBlock(block: Block, target: HTMLElement, options: { 
 		// move block to new container
 		if (e.dataTransfer) {
 			const draggingBlockId = e.dataTransfer.getData("draggingBlockId");
-			const draggingBlock = store.findBlock(draggingBlockId) as Block;
+			const draggingBlock = store.activeCanvas?.findBlock(draggingBlockId) as Block;
 			const nearestElementIndex = findNearestSiblingIndex(e);
 			if (draggingBlock) {
 				const newParent = block;
