@@ -23,7 +23,6 @@ const useStore = defineStore("store", {
 		pageData: <{ [key: string]: [] }>{},
 		mode: <BuilderMode>"select", // check setEvents in BuilderCanvas for usage
 		lastMode: <BuilderMode>"select",
-		selectedBlocks: <Block[]>[],
 		activeCanvas: <InstanceType<typeof BuilderCanvas> | null>null,
 		history: {
 			pause: () => {},
@@ -127,59 +126,15 @@ const useStore = defineStore("store", {
 
 			return imageBlock;
 		},
-		findBlock(blockId: string, blocks?: Array<Block>): Block | null {
-			if (!blocks) {
-				blocks = [this.activeCanvas?.getFirstBlock() as Block];
-			}
-			for (const block of blocks) {
-				if (block.blockId === blockId) {
-					return block;
-				}
-				if (block.children) {
-					const found = this.findBlock(blockId, block.children);
-					if (found) {
-						return found;
-					}
-				}
-			}
-			return null;
-		},
-		findParentBlock(blockId: string, blocks?: Array<Block>): Block | null {
-			if (!blocks) {
-				const firstBlock = this.activeCanvas?.getFirstBlock() as Block;
-				if (!firstBlock) {
-					return null;
-				}
-				blocks = [firstBlock];
-			}
-			for (const block of blocks) {
-				if (block.children) {
-					for (const child of block.children) {
-						if (child.blockId === blockId) {
-							return block;
-						}
-					}
-					const found = this.findParentBlock(blockId, block.children);
-					if (found) {
-						return found;
-					}
-				}
-			}
-			return null;
-		},
 		selectBlock(block: Block, e: MouseEvent | null, scrollIntoView = true) {
 			this.activeCanvas?.history?.pause();
 			if (this.settingPage) {
 				return;
 			}
 			if (e && e.shiftKey) {
-				if (this.isSelected(block.blockId)) {
-					this.selectedBlocks = this.selectedBlocks.filter((block: Block) => block.blockId !== block.blockId);
-				} else {
-					this.selectedBlocks.push(block);
-				}
+				this.activeCanvas?.toggleBlockSelection(block);
 			} else {
-				this.selectedBlocks = [block];
+				this.activeCanvas?.selectBlock(block);
 			}
 			if (scrollIntoView) {
 				// TODO: move to layers?
@@ -194,7 +149,7 @@ const useStore = defineStore("store", {
 			if (block.isExtendedFromComponent()) {
 				this.editingComponent = block?.extendedFromComponent as string;
 			}
-			this.clearSelection();
+			this.activeCanvas?.clearSelection();
 			this.editingMode = "component";
 		},
 		isComponentUsed(componentName: string) {
@@ -221,7 +176,7 @@ const useStore = defineStore("store", {
 		},
 		editPage(saveComponent = false, retainSelection = false) {
 			if (!retainSelection) {
-				this.clearSelection();
+				this.activeCanvas?.clearSelection();
 			}
 			this.editingMode = "page";
 			this.editableBlock = null;
@@ -305,12 +260,6 @@ const useStore = defineStore("store", {
 				fileURL: encodeURI(window.location.origin + fileDoc.file_url),
 				fileName: fileDoc.file_name,
 			};
-		},
-		clearSelection() {
-			this.selectedBlocks = [];
-		},
-		isSelected(blockId: string) {
-			return this.selectedBlocks.some((block) => block.blockId === blockId);
 		},
 		getActivePage() {
 			return webPages.getRow(this.selectedPage as string) as BuilderPage;
