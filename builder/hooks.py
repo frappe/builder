@@ -12,7 +12,7 @@ app_license = "MIT"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/builder/css/builder.css"
-# app_include_js = "/assets/builder/js/builder.js"
+app_include_js = "/assets/builder/js/builder.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/builder/css/builder.css"
@@ -191,5 +191,8 @@ after_install = "builder.install.after_install"
 website_route_rules = [
 	{"from_route": "/builder/<path:app_path>", "to_route": "builder"},
 ]
+
+website_path_resolver = "builder.builder.doctype.builder_page.builder_page.resolve_path"
+page_renderer = "builder.builder.doctype.builder_page.builder_page.BuilderPageRenderer"
 
 get_web_pages_with_dynamic_routes = "builder.builder.doctype.builder_page.builder_page.get_web_pages_with_dynamic_routes"

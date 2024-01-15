@@ -12,10 +12,6 @@
 				height: topMarginHandlerHeight + 'px',
 				top: `calc(0% - ${topMarginHandlerHeight}px)`,
 			}"
-			:class="{
-				'bg-transparent': !targetBlock.isSelected(),
-				'bg-yellow-200': targetBlock.isSelected(),
-			}"
 			ref="topMarginHandler">
 			<div
 				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-yellow-800 bg-yellow-400 hover:scale-125"
@@ -37,14 +33,10 @@
 			</div>
 		</div>
 		<div
-			class="margin-handler pointer-events-none absolute bottom-0 flex w-full"
+			class="margin-handler pointer-events-none absolute bottom-0 flex w-full bg-yellow-200"
 			:style="{
 				height: bottomMarginHandlerHeight + 'px',
 				bottom: `calc(0% - ${bottomMarginHandlerHeight}px)`,
-			}"
-			:class="{
-				'bg-transparent': !targetBlock.isSelected,
-				'bg-yellow-200': targetBlock.isSelected,
 			}"
 			ref="bottomMarginHandler">
 			<div
@@ -67,14 +59,10 @@
 			</div>
 		</div>
 		<div
-			class="margin-handler pointer-events-none absolute left-0 flex h-full"
+			class="margin-handler pointer-events-none absolute left-0 flex h-full bg-yellow-200"
 			:style="{
 				width: leftMarginHandlerWidth + 'px',
 				left: `calc(0% - ${leftMarginHandlerWidth}px)`,
-			}"
-			:class="{
-				'bg-transparent': !targetBlock.isSelected,
-				'bg-yellow-200': targetBlock.isSelected,
 			}"
 			ref="leftMarginHandler">
 			<div
@@ -97,14 +85,10 @@
 			</div>
 		</div>
 		<div
-			class="margin-handler pointer-events-none absolute right-0 flex h-full"
+			class="margin-handler pointer-events-none absolute right-0 flex h-full bg-yellow-200"
 			:style="{
 				width: rightMarginHandlerWidth + 'px',
 				right: `calc(0% - ${rightMarginHandlerWidth}px)`,
-			}"
-			:class="{
-				'bg-transparent': !targetBlock.isSelected,
-				'bg-yellow-200': targetBlock.isSelected,
 			}"
 			ref="rightMarginHandler">
 			<div
@@ -155,8 +139,6 @@ const props = defineProps({
 		default: "desktop",
 	},
 });
-
-const targetBlock = props.targetBlock;
 
 const updating = ref(false);
 const emit = defineEmits(["update"]);
@@ -287,34 +269,34 @@ const handleMargin = (ev: MouseEvent, position: Position) => {
 		props.onUpdate && props.onUpdate();
 		if (position === Position.Top) {
 			movement = Math.max(startTop + mouseMoveEvent.clientY - startY, 0);
-			targetBlock.setStyle("marginTop", movement + "px");
+			props.targetBlock.setStyle("marginTop", movement + "px");
 			affectingAxis = "y";
 		} else if (position === Position.Bottom) {
 			movement = Math.max(startBottom + mouseMoveEvent.clientY - startY, 0);
-			targetBlock.setStyle("marginBottom", movement + "px");
+			props.targetBlock.setStyle("marginBottom", movement + "px");
 			affectingAxis = "y";
 		} else if (position === Position.Left) {
 			movement = Math.max(startLeft + mouseMoveEvent.clientX - startX, 0);
-			targetBlock.setStyle("marginLeft", movement + "px");
+			props.targetBlock.setStyle("marginLeft", movement + "px");
 			affectingAxis = "x";
 		} else if (position === Position.Right) {
 			movement = Math.max(startRight + mouseMoveEvent.clientX - startX, 0);
-			targetBlock.setStyle("marginRight", movement + "px");
+			props.targetBlock.setStyle("marginRight", movement + "px");
 			affectingAxis = "x";
 		}
 
 		if (mouseMoveEvent.shiftKey) {
-			targetBlock.setStyle("marginTop", movement + "px");
-			targetBlock.setStyle("marginBottom", movement + "px");
-			targetBlock.setStyle("marginLeft", movement + "px");
-			targetBlock.setStyle("marginRight", movement + "px");
+			props.targetBlock.setStyle("marginTop", movement + "px");
+			props.targetBlock.setStyle("marginBottom", movement + "px");
+			props.targetBlock.setStyle("marginLeft", movement + "px");
+			props.targetBlock.setStyle("marginRight", movement + "px");
 		} else if (mouseMoveEvent.altKey) {
 			if (affectingAxis === "y") {
-				targetBlock.setStyle("marginTop", movement + "px");
-				targetBlock.setStyle("marginBottom", movement + "px");
+				props.targetBlock.setStyle("marginTop", movement + "px");
+				props.targetBlock.setStyle("marginBottom", movement + "px");
 			} else if (affectingAxis === "x") {
-				targetBlock.setStyle("marginLeft", movement + "px");
-				targetBlock.setStyle("marginRight", movement + "px");
+				props.targetBlock.setStyle("marginLeft", movement + "px");
+				props.targetBlock.setStyle("marginRight", movement + "px");
 			}
 		}
 

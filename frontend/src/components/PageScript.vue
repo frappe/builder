@@ -1,67 +1,144 @@
 <template>
-	<div
-		class="absolute bottom-0 z-50 h-fit w-full border-t border-gray-200 bg-white p-2 dark:border-zinc-700 dark:bg-gray-900">
-		<PanelResizer
-			side="top"
-			:dimension="store.builderLayout.scriptEditorHeight"
-			:minDimension="100"
-			:maxDimension="600"
-			@resize="store.builderLayout.scriptEditorHeight = $event"></PanelResizer>
-		<div class="flex flex-col gap-1">
-			<TabButtons
-				class="w-fit [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"
-				:buttons="[
-					{ label: 'Script', value: 'script' },
-					{ label: 'Style', value: 'style' },
-				]"
-				:modelValue="activeTab"
-				@update:modelValue="activeTab = $event"></TabButtons>
-			<CodeEditor
-				v-show="activeTab === 'script'"
-				:modelValue="page.client_script"
-				@update:modelValue="save('client_script', $event)"
-				type="JavaScript"
-				:height="store.builderLayout.scriptEditorHeight + 'px'"
-				:show-line-numbers="true"></CodeEditor>
-			<CodeEditor
-				v-show="activeTab === 'style'"
-				:modelValue="page.style"
-				@update:modelValue="save('style', $event)"
-				type="CSS"
-				:height="store.builderLayout.scriptEditorHeight + 'px'"
-				:show-line-numbers="true"></CodeEditor>
+	<div class="flex flex-col gap-4">
+		<div class="flex gap-2">
+			<Button
+				@click="showClientScriptEditor()"
+				class="flex-1 text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
+				Client Script
+			</Button>
+			<Button
+				@click="showServerScriptEditor()"
+				class="flex-1 text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
+				Data Script
+			</Button>
 		</div>
+		<CodeEditor v-model="store.pageData" type="JSON" label="Data Preview" :readonly="true"></CodeEditor>
+		<Dialog
+			style="z-index: 40"
+			class="overscroll-none"
+			:options="{
+				title: currentScriptEditor == 'data' ? 'Data Script' : 'Client Script',
+				size: '7xl',
+			}"
+			v-model="showDialog">
+			<template #body-content>
+				<div v-if="currentScriptEditor == 'client'">
+					<PageClientScriptManager :page="store.getActivePage()"></PageClientScriptManager>
+				</div>
+				<div v-else>
+					<CodeEditor
+						class="overscroll-none"
+						v-model="page.page_data_script"
+						type="Python"
+						height="60vh"
+						:show-line-numbers="true"></CodeEditor>
+					<span class="text-xs text-gray-600 dark:text-zinc-400">
+						Can be used to fetch dynamic data from server and pass it to the page.
+						<br />
+						eg. data.events = frappe.get_list("Event")
+					</span>
+					<div class="mt-2 flex flex-1">
+						<Button
+							@click="savePageDataScript"
+							class="w-full text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
+							Save
+						</Button>
+					</div>
+				</div>
+			</template>
+		</Dialog>
 	</div>
 </template>
-<script setup lang="ts">
+<script lang="ts" setup>
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { TabButtons } from "frappe-ui";
-import { PropType, ref } from "vue";
+import { Dialog } from "frappe-ui";
+import { onMounted, ref } from "vue";
 import CodeEditor from "./CodeEditor.vue";
-import PanelResizer from "./PanelResizer.vue";
-
-const activeTab = ref("script");
-
+import PageClientScriptManager from "./PageClientScriptManager.vue";
 const store = useStore();
+const showDialog = ref(false);
+const page = ref<BuilderPage>(store.getActivePage());
 
-const props = defineProps({
-	page: {
-		type: Object as PropType<BuilderPage>,
-		required: true,
-	},
+onMounted(() => {
+	page.value = store.getActivePage();
 });
 
-const save = (type: "client_script" | "style", value: string) => {
-	if (!props.page) return;
+const currentScriptEditor = ref<"client" | "data">("client");
+
+const savePageDataScript = () => {
 	webPages.setValue
 		.submit({
-			name: props.page.name,
-			[type]: value,
+			name: page.value.name,
+			page_data_script: page.value.page_data_script,
 		})
 		.then(() => {
+			showDialog.value = false;
 			store.setPageData();
 		});
 };
+
+const showClientScriptEditor = () => {
+	currentScriptEditor.value = "client";
+	showDialog.value = true;
+};
+
+const showServerScriptEditor = () => {
+	currentScriptEditor.value = "data";
+	showDialog.value = true;
+};
 </script>
+<style>
+[id^="headlessui-dialog-panel"] {
+	@apply dark:bg-zinc-800;
+}
+[id^="headlessui-dialog-panel"] > div {
+	@apply dark:bg-zinc-800;
+	@apply dark:text-zinc-50;
+}
+
+[id^="headlessui-dialog-panel"] header h3 {
+	@apply dark:text-white;
+}
+
+[id^="headlessui-dialog-panel"] button svg path {
+	@apply dark:fill-white;
+}
+[id^="headlessui-dialog-panel"] button {
+	@apply dark:text-white;
+	@apply dark:hover:bg-zinc-700;
+	@apply dark:bg-zinc-900;
+}
+[id^="headlessui-dialog-panel"] input {
+	@apply dark:bg-zinc-900;
+	@apply dark:border-zinc-800;
+	@apply dark:text-gray-50;
+}
+
+[id^="headlessui-dialog-panel"] input:focus {
+	@apply dark:ring-0;
+	@apply dark:border-zinc-700;
+}
+
+[id^="headlessui-dialog-panel"] input[type="checkbox"]:checked {
+	@apply dark:bg-zinc-700;
+}
+
+[id^="headlessui-dialog-panel"] input[type="checkbox"]:focus {
+	@apply dark:ring-zinc-700;
+	@apply dark:ring-offset-0;
+}
+
+[id^="headlessui-dialog-panel"] input[type="checkbox"]:hover {
+	@apply dark:bg-zinc-900;
+}
+
+[id^="headlessui-dialog-panel"] label > span {
+	@apply dark:text-gray-50;
+}
+
+[id^="headlessui-dialog"] [data-dialog] {
+	@apply dark:bg-black-overlay-800;
+}
+</style>

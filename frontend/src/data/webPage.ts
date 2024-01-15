@@ -15,11 +15,11 @@ const webPages = createListResource({
 		"draft_blocks",
 		"published",
 		"dynamic_route",
-		"client_script",
-		"style",
+		"client_scripts",
+		"modified",
 	],
 	cache: "pages",
-	orderBy: "creation desc",
+	orderBy: "modified desc",
 	pageLength: 50,
 });
 

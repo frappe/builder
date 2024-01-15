@@ -4,9 +4,9 @@
 		:style="{
 			height: height,
 		}">
-		<h3 class="mb-1 text-xs font-bold uppercase text-gray-600">
+		<span class="text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
 			{{ label }}
-		</h3>
+		</span>
 		<div ref="editor" class="border border-gray-200 dark:border-zinc-800" />
 	</div>
 </template>
@@ -41,6 +41,10 @@ const props = defineProps({
 	showLineNumbers: {
 		type: Boolean,
 		default: false,
+	},
+	autofocus: {
+		type: Boolean,
+		default: true,
 	},
 });
 
@@ -83,7 +87,6 @@ onMounted(() => {
 			aceEditor.session.setMode("ace/mode/html");
 		});
 	}
-	aceEditor.setValue(initialValue as string);
 	aceEditor.on("blur", () => {
 		try {
 			let value = aceEditor.getValue();
@@ -112,7 +115,10 @@ onMounted(() => {
 				value = JSON.stringify(value, null, 2);
 			}
 			aceEditor.setValue(value as string);
-		}
+			aceEditor.clearSelection();
+			props.autofocus && aceEditor.focus();
+		},
+		{ immediate: true }
 	);
 });
 </script>

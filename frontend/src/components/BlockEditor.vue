@@ -3,7 +3,7 @@
 		<div
 			class="editor pointer-events-none fixed z-[18] box-content select-none ring-2 ring-inset"
 			ref="editor"
-			@click="handleClick"
+			@click.stop="handleClick"
 			@dblclick="handleDoubleClick"
 			@mousedown.prevent="handleMove"
 			@drop.prevent.stop="handleDrop"
@@ -13,6 +13,7 @@
 			<PaddingHandler
 				v-if="isBlockSelected && !resizing && !editable && !blockController.multipleBlocksSelected()"
 				:target-block="block"
+				:target="target"
 				:on-update="updateTracker"
 				:disable-handlers="false"
 				:breakpoint="breakpoint" />
@@ -41,7 +42,11 @@
 				"
 				:target-block="block"
 				:target="target" />
-			<BoxResizer v-if="showResizer" :targetBlock="block" @resizing="resizing = $event" :target="target" />
+			<BoxResizer
+				v-if="showResizer && !block.isSVG()"
+				:targetBlock="block"
+				@resizing="resizing = $event"
+				:target="(target as HTMLElement)" />
 		</div>
 	</BlockContextMenu>
 </template>
@@ -90,6 +95,10 @@ const props = defineProps({
 		type: Boolean,
 		default: false,
 	},
+	isSelected: {
+		type: Boolean,
+		default: false,
+	},
 });
 const store = useStore();
 const editor = ref(null) as unknown as Ref<HTMLElement>;
@@ -105,24 +114,27 @@ watchEffect(() => {
 	props.block.getStyle("bottom");
 	props.block.getStyle("right");
 	props.block.getStyle("position");
+	props.block.rawStyles;
 	const parentBlock = props.block.getParentBlock();
 	parentBlock?.getStyle("display");
 	parentBlock?.getStyle("justifyContent");
 	parentBlock?.getStyle("alignItems");
 	parentBlock?.getStyle("flexDirection");
+	parentBlock?.getStyle("padding");
+	parentBlock?.getStyle("margin");
 	store.builderLayout.leftPanelWidth;
 	store.builderLayout.rightPanelWidth;
 	store.showRightPanel;
 	store.showLeftPanel;
 	store.activeBreakpoint;
-	store.deviceBreakpoints.map((bp) => bp.visible);
+	canvasProps.breakpoints.map((bp) => bp.visible);
 	nextTick(() => {
 		updateTracker.value();
 	});
 });
 
 const isBlockSelected = computed(() => {
-	return props.block.isSelected() && props.breakpoint === store.activeBreakpoint;
+	return props.isSelected && props.breakpoint === store.activeBreakpoint;
 });
 
 const getStyleClasses = computed(() => {
@@ -135,13 +147,7 @@ const getStyleClasses = computed(() => {
 	} else {
 		classes.push("ring-blue-400");
 	}
-	if (
-		props.block.isSelected() &&
-		props.breakpoint === store.activeBreakpoint &&
-		!props.editable &&
-		!props.block.isRoot() &&
-		!props.block.isRepeater()
-	) {
+	if (isBlockSelected.value && !props.editable && !props.block.isRoot() && !props.block.isRepeater()) {
 		// make editor interactive
 		classes.push("pointer-events-auto");
 		// Place the block on the top of the stack
@@ -150,14 +156,17 @@ const getStyleClasses = computed(() => {
 	return classes;
 });
 
-watch(store.builderState.blocks, () => {
-	nextTick(() => {
-		updateTracker.value();
-	});
-});
+watch(
+	() => store.activeCanvas?.block,
+	() => {
+		nextTick(() => {
+			updateTracker.value();
+		});
+	}
+);
 
 const movable = computed(() => {
-	return props.block.getStyle("position") === "absolute";
+	return props.block.isMovable();
 });
 
 onMounted(() => {
@@ -193,34 +202,37 @@ const handleDrop = (ev: DragEvent) => {
 const handleDoubleClick = () => {
 	if (props.editable) return;
 	if (props.block.isText() || props.block.isButton() || props.block.isLink()) {
-		store.builderState.editableBlock = props.block;
+		store.editableBlock = props.block;
 	}
 };
 
 const handleMove = (ev: MouseEvent) => {
 	if (store.mode === "text") {
-		store.builderState.editableBlock = props.block;
+		store.editableBlock = props.block;
 	}
 	if (!movable.value || props.block.isRoot()) return;
 	const target = ev.target as HTMLElement;
 	const startX = ev.clientX;
 	const startY = ev.clientY;
-	const startLeft = props.target.offsetLeft;
-	const startTop = props.target.offsetTop;
+	const startLeft = props.target.offsetLeft || 0;
+	const startTop = props.target.offsetTop || 0;
+
 	moving.value = true;
 	guides.showX();
 
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(target).cursor;
+	document.body.style.cursor = "grabbing";
+	target.style.cursor = "grabbing";
 
 	const mousemove = async (mouseMoveEvent: MouseEvent) => {
 		const scale = canvasProps.scale;
 		const movementX = (mouseMoveEvent.clientX - startX) / scale;
 		const movementY = (mouseMoveEvent.clientY - startY) / scale;
 		let finalLeft = startLeft + movementX;
+		let finalTop = startTop + movementY;
 		props.block.setStyle("left", addPxToNumber(finalLeft));
-		props.block.setStyle("top", addPxToNumber(startTop + movementY));
+		props.block.setStyle("top", addPxToNumber(finalTop));
 		await nextTick();
 		const { leftOffset, rightOffset } = guides.getPositionOffset();
 		if (leftOffset !== 0) {
@@ -239,6 +251,7 @@ const handleMove = (ev: MouseEvent) => {
 		(mouseUpEvent) => {
 			moving.value = false;
 			document.body.style.cursor = docCursor;
+			target.style.cursor = "grab";
 			document.removeEventListener("mousemove", mousemove);
 			mouseUpEvent.preventDefault();
 			guides.hideX();

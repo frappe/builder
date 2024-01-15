@@ -13,16 +13,15 @@
 							:data-block-layer-id="element.blockId"
 							:title="element.blockId"
 							@contextmenu.prevent.stop="onContextMenu"
-							class="cursor-pointer rounded border bg-white pl-2 pr-[2px] text-sm text-gray-700 dark:bg-zinc-900"
+							class="cursor-pointer rounded border border-transparent bg-white pl-2 pr-[2px] text-sm text-gray-700 dark:bg-zinc-900 dark:text-gray-500"
 							:class="{
-								'border-transparent dark:text-gray-500': !element.isSelected() && !element.isHovered(),
-								'border-blue-300 text-gray-700 dark:border-blue-800 dark:text-gray-500':
-									element.isHovered() && !element.isSelected(),
-								'border-blue-400 text-gray-900 dark:border-blue-600 dark:text-gray-200': element.isSelected(),
+								'block-selected': store.isSelected(element.blockId),
 							}"
 							@click.stop="
+								store.activeCanvas?.history.pause();
 								element.expanded = true;
 								store.selectBlock(element, $event, false);
+								store.activeCanvas?.history.resume();
 							"
 							@mouseover.stop="store.hoveredBlock = element.blockId"
 							@mouseleave.stop="store.hoveredBlock = null">
@@ -34,13 +33,7 @@
 								<FeatherIcon
 									:name="isExpanded(element) ? 'chevron-down' : 'chevron-right'"
 									class="mr-1 h-3 w-3"
-									v-if="
-										element.children &&
-										element.children.length &&
-										!element.isRoot() &&
-										!element.isImage() &&
-										!element.isSVG()
-									"
+									v-if="element.children && element.children.length && !element.isRoot()"
 									@click.stop="toggleExpanded(element)" />
 								<FeatherIcon
 									:name="element.getIcon()"
@@ -50,29 +43,13 @@
 											element.isExtendedFromComponent(),
 									}"
 									v-if="!Boolean(element.extendedFromComponent)" />
-								<svg
+								<BlocksIcon
 									class="mr-1 h-3 w-3"
-									xmlns="http://www.w3.org/2000/svg"
-									width="16"
-									height="16"
-									viewBox="0 0 24 24"
 									:class="{
 										'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
 											element.isExtendedFromComponent(),
 									}"
-									v-if="Boolean(element.extendedFromComponent)">
-									<g
-										fill="none"
-										stroke="currentColor"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2">
-										<rect width="7" height="9" x="3" y="3" rx="1" />
-										<rect width="7" height="5" x="14" y="3" rx="1" />
-										<rect width="7" height="9" x="14" y="12" rx="1" />
-										<rect width="7" height="5" x="3" y="16" rx="1" />
-									</g>
-								</svg>
+									v-if="Boolean(element.extendedFromComponent)" />
 								<span
 									class="min-h-[1em] min-w-[2em] truncate"
 									:contenteditable="element.editable"
@@ -97,7 +74,11 @@
 								</span>
 							</span>
 							<div
-								v-show="isExpanded(element) && element.isVisible() && !element.isSVG() && !element.isImage()">
+								v-show="
+									isExpanded(element) &&
+									element.isVisible() &&
+									(element.canHaveChildren() || element.hasChildren())
+								">
 								<BlockLayers :blocks="element.children" class="ml-3" />
 							</div>
 						</div>
@@ -114,6 +95,7 @@ import { PropType, ref, watch } from "vue";
 import draggable from "vuedraggable";
 import useStore from "../store";
 import BlockContextMenu from "./BlockContextMenu.vue";
+import BlocksIcon from "./Icons/Blocks.vue";
 
 const store = useStore();
 
@@ -152,7 +134,7 @@ watch(
 	() => store.selectedBlocks,
 	() => {
 		if (store.selectedBlocks.length) {
-			store.selectedBlocks.forEach((block) => {
+			store.selectedBlocks.forEach((block: Block) => {
 				if (block) {
 					expandedLayers.value.add(block.blockId);
 					let parentBlock = block.getParentBlock();
@@ -164,7 +146,14 @@ watch(
 				}
 			});
 		}
-	},
-	{ immediate: true }
+	}
 );
 </script>
+<style>
+.hovered-block {
+	@apply border-blue-300 text-gray-700 dark:border-blue-800 dark:text-gray-500;
+}
+.block-selected {
+	@apply border-blue-400 text-gray-900 dark:border-blue-600 dark:text-gray-200;
+}
+</style>

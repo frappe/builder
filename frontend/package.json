@@ -14,6 +14,7 @@
   "dependencies": {
     "@tiptap/extension-color": "^2.0.4",
     "@tiptap/extension-font-family": "^2.0.4",
+    "@tiptap/extension-link": "^2.1.12",
     "@tiptap/extension-text-style": "^2.0.4",
     "@tiptap/pm": "^2.0.4",
     "@tiptap/starter-kit": "^2.0.4",
@@ -27,6 +28,7 @@
     "pinia": "^2.0.28",
     "vue": "^3.2.25",
     "vue-router": "^4.0.12",
+    "vue-sonner": "^1.0.2",
     "vuedraggable": "^4.1.0",
     "webfontloader": "^1.6.28"
   },

@@ -1,8 +1,8 @@
 import useStore from "@/store";
 import { Editor } from "@tiptap/vue-3";
 import { clamp } from "@vueuse/core";
-import { CSSProperties, nextTick, reactive } from "vue";
-import { addPxToNumber, getNumberFromPx, getTextContent, kebabToCamelCase } from "./helpers";
+import { CSSProperties, markRaw, nextTick, reactive } from "vue";
+import { addPxToNumber, getBlockCopy, getNumberFromPx, getTextContent, kebabToCamelCase } from "./helpers";
 
 export type styleProperty = keyof CSSProperties;
 
@@ -10,30 +10,6 @@ export interface BlockDataKey {
 	key?: string;
 	type?: string;
 	property?: string;
-}
-
-function resetBlock(
-	block: Block | BlockOptions,
-	extendedFromComponent: string | undefined,
-	children: Block[]
-) {
-	delete block.innerHTML;
-	delete block.element;
-	block.blockId = block.generateId();
-	block.baseStyles = {};
-	block.rawStyles = {};
-	block.mobileStyles = {};
-	block.tabletStyles = {};
-	block.attributes = {};
-	block.classes = [];
-	block.children?.forEach((child, index) => {
-		child.isChildOfComponent = extendedFromComponent;
-		const componentChild = children[index];
-		if (componentChild) {
-			child.referenceBlockId = componentChild.blockId;
-			resetBlock(child, extendedFromComponent, componentChild.children);
-		}
-	});
 }
 
 class Block implements BlockOptions {
@@ -56,6 +32,8 @@ class Block implements BlockOptions {
 	isChildOfComponent?: string;
 	referenceBlockId?: string;
 	isRepeaterBlock?: boolean;
+	visibilityCondition?: string;
+	customAttributes: BlockAttributeMap;
 	constructor(options: BlockOptions) {
 		this.element = options.element;
 		this.innerHTML = options.innerHTML;
@@ -63,6 +41,7 @@ class Block implements BlockOptions {
 		this.isRepeaterBlock = options.isRepeaterBlock;
 		this.isChildOfComponent = options.isChildOfComponent;
 		this.referenceBlockId = options.referenceBlockId;
+		this.visibilityCondition = options.visibilityCondition;
 
 		this.dataKey = options.dataKey || null;
 
@@ -83,6 +62,7 @@ class Block implements BlockOptions {
 
 		this.baseStyles = reactive(options.styles || options.baseStyles || {});
 		this.rawStyles = reactive(options.rawStyles || {});
+		this.customAttributes = reactive(options.customAttributes || {});
 		this.mobileStyles = reactive(options.mobileStyles || {});
 		this.tabletStyles = reactive(options.tabletStyles || {});
 		this.attributes = reactive(options.attributes || {});
@@ -91,25 +71,57 @@ class Block implements BlockOptions {
 		delete this.attributes.style;
 		this.classes = options.classes || [];
 
+		// TODO: remove this
+		if (this.classes.includes("__text_block__")) {
+			// remove this class
+			this.classes = this.classes.filter((c) => c !== "__text_block__");
+		}
+
 		if (this.isRoot()) {
 			this.blockId = "root";
 			this.draggable = false;
 			this.setBaseStyle("minHeight", "100vh");
 		}
 	}
-	getStyles(breakpoint: string = "desktop") {
+	getStyles(breakpoint: string = "desktop"): BlockStyleMap {
 		let styleObj = {};
 		if (this.isExtendedFromComponent()) {
 			styleObj = this.getComponentStyles(breakpoint);
 		}
 		styleObj = { ...styleObj, ...this.baseStyles };
-		if (breakpoint === "mobile") {
-			styleObj = { ...styleObj, ...this.mobileStyles };
-		} else if (breakpoint === "tablet") {
+		if (["mobile", "tablet"].includes(breakpoint)) {
 			styleObj = { ...styleObj, ...this.tabletStyles };
+			if (breakpoint === "mobile") {
+				styleObj = { ...styleObj, ...this.mobileStyles };
+			}
 		}
 		styleObj = { ...styleObj, ...this.rawStyles };
+		// replace variables with values
+		// Object.keys(styleObj).forEach((style) => {
+		// 	const value = styleObj[style];
+		// 	if (typeof value === "string" && value.startsWith("--")) {
+		// 		styleObj[style] = this.getVariableValue(value);
+		// 	}
+		// });
+
 		return styleObj;
+	}
+	hasOverrides(breakpoint: string) {
+		if (breakpoint === "mobile") {
+			return Object.keys(this.mobileStyles).length > 0;
+		}
+		if (breakpoint === "tablet") {
+			return Object.keys(this.tabletStyles).length > 0;
+		}
+		return false;
+	}
+	resetOverrides(breakpoint: string) {
+		if (breakpoint === "mobile") {
+			this.mobileStyles = {};
+		}
+		if (breakpoint === "tablet") {
+			this.tabletStyles = {};
+		}
 	}
 	getComponent() {
 		const store = useStore();
@@ -160,13 +172,25 @@ class Block implements BlockOptions {
 	getComponentChildren() {
 		return this.getComponent()?.children || [];
 	}
-
+	getVisibilityCondition() {
+		let visibilityCondition = this.visibilityCondition;
+		if (this.isExtendedFromComponent() && this.getComponent()?.visibilityCondition) {
+			visibilityCondition = this.getComponent()?.visibilityCondition;
+		}
+		return visibilityCondition;
+	}
 	getBlockDescription() {
 		if (this.isExtendedFromComponent() && !this.isChildOfComponentBlock()) {
 			return this.getComponentBlockDescription();
 		}
 		if (this.isHTML()) {
-			return "raw";
+			const innerHTML = this.getInnerHTML() || "";
+			const match = innerHTML.match(/<([a-z]+)[^>]*>/);
+			if (match) {
+				return `${match[1]}`;
+			} else {
+				return "raw";
+			}
 		}
 		let description = this.blockName || this.originalElement || this.getElement();
 		if (this.getTextContent() && !this.blockName) {
@@ -207,7 +231,9 @@ class Block implements BlockOptions {
 		return ["section", "div"].includes(this.getElement() as string);
 	}
 	isInput() {
-		return this.originalElement === "input" || this.getElement() === "input";
+		return (
+			this.originalElement === "input" || this.getElement() === "input" || this.getElement() === "textarea"
+		);
 	}
 	setStyle(style: styleProperty, value: StyleValue) {
 		const store = useStore();
@@ -242,7 +268,7 @@ class Block implements BlockOptions {
 	getStyle(style: styleProperty) {
 		const store = useStore();
 		if (store.activeBreakpoint === "mobile") {
-			return this.mobileStyles[style] || this.baseStyles[style];
+			return this.mobileStyles[style] || this.tabletStyles[style] || this.baseStyles[style];
 		} else if (store.activeBreakpoint === "tablet") {
 			return this.tabletStyles[style] || this.baseStyles[style];
 		}
@@ -282,7 +308,7 @@ class Block implements BlockOptions {
 		return this.originalElement === "body";
 	}
 	getTag(): string {
-		if (this.isButton()) {
+		if (this.isButton() || this.isLink()) {
 			return "div";
 		}
 		return this.getElement() || "div";
@@ -300,16 +326,8 @@ class Block implements BlockOptions {
 			tabletStyles: Object.assign({}, this.tabletStyles),
 		};
 	}
-	isHovered(): boolean {
-		const store = useStore();
-		return store.hoveredBlock === this.blockId;
-	}
-	isSelected(): boolean {
-		const store = useStore();
-		return store.selectedBlocks.some((block: Block) => block.blockId === this.blockId);
-	}
 	isMovable(): boolean {
-		return this.getStyle("position") === "absolute";
+		return ["absolute", "fixed"].includes(this.getStyle("position") as string);
 	}
 	move(direction: "up" | "left" | "down" | "right") {
 		if (!this.isMovable()) {
@@ -331,15 +349,17 @@ class Block implements BlockOptions {
 			this.setStyle("left", addPxToNumber(left));
 		}
 	}
-	addChild(child: BlockOptions, index?: number) {
-		if (index === undefined) {
+	addChild(child: BlockOptions, index?: number | null, select: boolean = true) {
+		if (index === undefined || index === null) {
 			index = this.children.length;
 		}
 		index = clamp(index, 0, this.children.length);
 
 		const childBlock = reactive(new Block(child));
 		this.children.splice(index, 0, childBlock);
-		childBlock.selectBlock();
+		if (select) {
+			childBlock.selectBlock();
+		}
 		if (childBlock.isText()) {
 			childBlock.makeBlockEditable();
 		}
@@ -376,27 +396,25 @@ class Block implements BlockOptions {
 			styles.alignItems = "center";
 			styles.justifyContent = "center";
 		}
+		styles.transition = "unset";
 
 		return styles;
 	}
 	selectBlock() {
 		const store = useStore();
-		store.selectedBlocks = [this];
-	}
-	toggleSelectBlock() {
-		const store = useStore();
-		if (this.isSelected()) {
-			store.selectedBlocks = store.selectedBlocks.filter((block: Block) => block.blockId !== this.blockId);
-		} else {
-			store.selectedBlocks.push(this);
-		}
+		store.selectBlock(this, null);
 	}
 	getParentBlock(): Block | null {
 		const store = useStore();
 		return store.findParentBlock(this.blockId);
 	}
 	canHaveChildren(): boolean {
-		return this.isContainer() || this.isRoot() || this.isDiv();
+		return !(
+			this.isImage() ||
+			this.isSVG() ||
+			(this.isText() && !this.isLink()) ||
+			this.isExtendedFromComponent()
+		);
 	}
 	updateStyles(styles: BlockStyleObjects) {
 		this.baseStyles = Object.assign({}, this.baseStyles, styles.baseStyles);
@@ -408,14 +426,14 @@ class Block implements BlockOptions {
 	}
 	getFontFamily() {
 		const editor = this.getEditor();
-		if (this.isText() && editor && editor.isEditable) {
+		if (this.isText() && editor && editor.isFocused) {
 			return editor.getAttributes("textStyle").fontFamily;
 		}
 		return this.getStyle("fontFamily");
 	}
 	setFontFamily(fontFamily: string) {
 		const editor = this.getEditor();
-		if (this.isText() && editor && editor.isEditable) {
+		if (this.isText() && editor && editor.isFocused) {
 			editor.chain().focus().setFontFamily(fontFamily).run();
 		} else {
 			this.setStyle("fontFamily", fontFamily);
@@ -423,8 +441,9 @@ class Block implements BlockOptions {
 	}
 	getTextColor() {
 		const editor = this.getEditor();
-		if (this.isText() && editor && editor.isEditable) {
-			return editor.getAttributes("textStyle").color;
+		const color = editor?.getAttributes("textStyle").color;
+		if (this.isText() && editor && editor.isFocused) {
+			return color;
 		} else {
 			return this.getStyle("color");
 		}
@@ -446,7 +465,7 @@ class Block implements BlockOptions {
 	makeBlockEditable() {
 		const store = useStore();
 		this.selectBlock();
-		store.builderState.editableBlock = this;
+		store.editableBlock = this;
 		nextTick(() => {
 			this.getEditor()?.commands.focus("all");
 		});
@@ -460,7 +479,6 @@ class Block implements BlockOptions {
 		this.setBaseStyle("alignItems", "flex-start");
 		this.setBaseStyle("justifyContent", "flex-start");
 		this.setBaseStyle("flexWrap", "wrap");
-		this.setBaseStyle("width", "fit-content");
 		this.setBaseStyle("height", "fit-content");
 		this.setBaseStyle("gap", "20px");
 		this.isRepeaterBlock = true;
@@ -504,7 +522,7 @@ class Block implements BlockOptions {
 	}
 	toggleVisibility() {
 		if (this.getStyle("display") === "none") {
-			this.setStyle("display", "block");
+			this.setStyle("display", "flex");
 		} else {
 			this.setStyle("display", "none");
 		}
@@ -514,15 +532,26 @@ class Block implements BlockOptions {
 	}
 	extendFromComponent(componentName: string) {
 		this.extendedFromComponent = componentName;
-		this.resetChanges();
+		const component = this.getComponent();
+		extendWithComponent(this, componentName, component.children);
 	}
 	isChildOfComponentBlock() {
 		return Boolean(this.isChildOfComponent);
 	}
-	resetChanges() {
-		// resetBlock(this, this.extendedFromComponent);
+	resetWithComponent() {
 		const component = this.getComponent();
-		resetBlock(this, this.extendedFromComponent, component.children);
+		if (component) {
+			resetWithComponent(this, this.extendedFromComponent as string, component.children);
+		}
+	}
+	syncWithComponent() {
+		const component = this.getComponent();
+		if (component) {
+			syncBlockWithComponent(this, this, this.extendedFromComponent as string, component.children);
+		}
+	}
+	resetChanges(resetChildren: boolean = false) {
+		resetBlock(this, resetChildren);
 	}
 	convertToLink() {
 		this.element = "a";
@@ -564,8 +593,8 @@ class Block implements BlockOptions {
 	}
 	duplicateBlock() {
 		const store = useStore();
-		store.history.pause();
-		const blockCopy = store.getBlockCopy(this);
+		store.activeCanvas?.history.pause();
+		const blockCopy = getBlockCopy(this);
 		const parentBlock = this.getParentBlock();
 
 		if (blockCopy.getStyle("position") === "absolute") {
@@ -580,36 +609,234 @@ class Block implements BlockOptions {
 		if (parentBlock) {
 			child = parentBlock.addChildAfter(blockCopy, this);
 		} else {
-			child = store.builderState.blocks[0]?.addChild(blockCopy);
+			child = store.activeCanvas?.getFirstBlock().addChild(blockCopy) as Block;
 		}
 		nextTick(() => {
 			if (child) {
 				child.selectBlock();
 			}
-			store.history.resume();
-			store.history.commit();
+			store.activeCanvas?.history.resume(true);
 		});
+	}
+	getPadding() {
+		const padding = this.getStyle("padding") || "0px";
+
+		const paddingTop = this.getStyle("paddingTop");
+		const paddingBottom = this.getStyle("paddingBottom");
+		const paddingLeft = this.getStyle("paddingLeft");
+		const paddingRight = this.getStyle("paddingRight");
+
+		if (!paddingTop && !paddingBottom && !paddingLeft && !paddingRight) {
+			return padding;
+		}
+
+		if (
+			paddingTop &&
+			paddingBottom &&
+			paddingTop === paddingBottom &&
+			paddingTop === paddingRight &&
+			paddingTop === paddingLeft
+		) {
+			return paddingTop;
+		}
+
+		if (paddingTop && paddingLeft && paddingTop === paddingBottom && paddingLeft === paddingRight) {
+			return `${paddingTop} ${paddingLeft}`;
+		} else {
+			return `${paddingTop || padding} ${paddingRight || padding} ${paddingBottom || padding} ${
+				paddingLeft || padding
+			}`;
+		}
+	}
+	setPadding(padding: string) {
+		// reset padding
+		this.setStyle("padding", null);
+		this.setStyle("paddingTop", null);
+		this.setStyle("paddingBottom", null);
+		this.setStyle("paddingLeft", null);
+		this.setStyle("paddingRight", null);
+
+		if (!padding) {
+			return;
+		}
+
+		const paddingArray = padding.split(" ");
+
+		if (paddingArray.length === 1) {
+			this.setStyle("padding", paddingArray[0]);
+		} else if (paddingArray.length === 2) {
+			this.setStyle("paddingTop", paddingArray[0]);
+			this.setStyle("paddingBottom", paddingArray[0]);
+			this.setStyle("paddingLeft", paddingArray[1]);
+			this.setStyle("paddingRight", paddingArray[1]);
+		} else if (paddingArray.length === 3) {
+			this.setStyle("paddingTop", paddingArray[0]);
+			this.setStyle("paddingLeft", paddingArray[1]);
+			this.setStyle("paddingRight", paddingArray[1]);
+			this.setStyle("paddingBottom", paddingArray[2]);
+		} else if (paddingArray.length === 4) {
+			this.setStyle("paddingTop", paddingArray[0]);
+			this.setStyle("paddingRight", paddingArray[1]);
+			this.setStyle("paddingBottom", paddingArray[2]);
+			this.setStyle("paddingLeft", paddingArray[3]);
+		}
+	}
+	setMargin(margin: string) {
+		// reset margin
+		this.setStyle("margin", null);
+		this.setStyle("marginTop", null);
+		this.setStyle("marginBottom", null);
+		this.setStyle("marginLeft", null);
+		this.setStyle("marginRight", null);
+
+		if (!margin) {
+			return;
+		}
+
+		const marginArray = margin.split(" ");
+
+		if (marginArray.length === 1) {
+			this.setStyle("margin", marginArray[0]);
+		} else if (marginArray.length === 2) {
+			this.setStyle("marginTop", marginArray[0]);
+			this.setStyle("marginBottom", marginArray[0]);
+			this.setStyle("marginLeft", marginArray[1]);
+			this.setStyle("marginRight", marginArray[1]);
+		} else if (marginArray.length === 3) {
+			this.setStyle("marginTop", marginArray[0]);
+			this.setStyle("marginLeft", marginArray[1]);
+			this.setStyle("marginRight", marginArray[1]);
+			this.setStyle("marginBottom", marginArray[2]);
+		} else if (marginArray.length === 4) {
+			this.setStyle("marginTop", marginArray[0]);
+			this.setStyle("marginRight", marginArray[1]);
+			this.setStyle("marginBottom", marginArray[2]);
+			this.setStyle("marginLeft", marginArray[3]);
+		}
+	}
+	getMargin() {
+		const margin = this.getStyle("margin") || "0px";
+
+		const marginTop = this.getStyle("marginTop");
+		const marginBottom = this.getStyle("marginBottom");
+		const marginLeft = this.getStyle("marginLeft");
+		const marginRight = this.getStyle("marginRight");
+
+		if (!marginTop && !marginBottom && !marginLeft && !marginRight) {
+			return margin;
+		}
+
+		if (
+			marginTop &&
+			marginBottom &&
+			marginTop === marginBottom &&
+			marginTop === marginRight &&
+			marginTop === marginLeft
+		) {
+			return marginTop;
+		}
+
+		if (marginTop && marginLeft && marginTop === marginBottom && marginLeft === marginRight) {
+			return `${marginTop} ${marginLeft}`;
+		} else {
+			return `${marginTop || margin} ${marginRight || margin} ${marginBottom || margin} ${
+				marginLeft || margin
+			}`;
+		}
 	}
 }
 
-// class BlockTree {
-// 	blocksMap: Map<string, Block>;
-// 	constructor() {
-// 		this.blocksMap = new Map();
-// 	}
+function extendWithComponent(
+	block: Block | BlockOptions,
+	extendedFromComponent: string | undefined,
+	componentChildren: Block[]
+) {
+	resetBlock(block);
+	block.children?.forEach((child, index) => {
+		child.isChildOfComponent = extendedFromComponent;
+		let componentChild = componentChildren[index];
+		if (componentChild) {
+			child.referenceBlockId = componentChild.blockId;
+			extendWithComponent(child, extendedFromComponent, componentChild.children);
+		}
+	});
+}
 
-// 	buildBlockMap(blocks: Array<Block>) {
-// 		for (const block of blocks) {
-// 			for (const child of block.children) {
-// 				this.blocksMap.set(child.blockId, block);
-// 				this.buildBlockMap(child.children);
-// 			}
-// 		}
-// 	}
+function resetWithComponent(
+	block: Block | BlockOptions,
+	extendedWithComponent: string,
+	componentChildren: Block[]
+) {
+	resetBlock(block);
+	block.children?.splice(0, block.children.length);
+	componentChildren.forEach((componentChild) => {
+		const blockComponent = getBlockCopy(componentChild);
+		blockComponent.isChildOfComponent = extendedWithComponent;
+		blockComponent.referenceBlockId = componentChild.blockId;
+		const childBlock = block.addChild(blockComponent, null, false);
+		resetWithComponent(childBlock, extendedWithComponent, componentChild.children);
+	});
+}
 
-// 	findParentBlock(blockId: string) {
-// 		return this.blocksMap.get(blockId) || null;
-// 	}
-// }
+function syncBlockWithComponent(
+	parentBlock: Block,
+	block: Block,
+	componentName: string,
+	componentChildren: Block[]
+) {
+	componentChildren.forEach((componentChild, index) => {
+		const blockExists = findComponentBlock(componentChild.blockId, parentBlock.children);
+		if (!blockExists) {
+			const blockComponent = getBlockCopy(componentChild);
+			blockComponent.isChildOfComponent = componentName;
+			blockComponent.referenceBlockId = componentChild.blockId;
+			resetBlock(blockComponent);
+			resetWithComponent(blockComponent, componentName, componentChild.children);
+			block.addChild(blockComponent, index, false);
+		}
+	});
+
+	block.children.forEach((child) => {
+		const componentChild = componentChildren.find((c) => c.blockId === child.referenceBlockId);
+		if (componentChild) {
+			syncBlockWithComponent(parentBlock, child, componentName, componentChild.children);
+		}
+	});
+}
+
+function findComponentBlock(blockId: string, blocks: Block[]): Block | null {
+	for (const block of blocks) {
+		if (block.referenceBlockId === blockId) {
+			return block;
+		}
+		if (block.children) {
+			const found = findComponentBlock(blockId, block.children);
+			if (found) {
+				return found;
+			}
+		}
+	}
+	return null;
+}
+
+function resetBlock(block: Block | BlockOptions, resetChildren: boolean = true) {
+	block = markRaw(block);
+	delete block.innerHTML;
+	delete block.element;
+	block.blockId = block.generateId();
+	block.baseStyles = {};
+	block.rawStyles = {};
+	block.mobileStyles = {};
+	block.tabletStyles = {};
+	block.attributes = {};
+	block.customAttributes = {};
+	block.classes = [];
+
+	if (resetChildren) {
+		block.children?.forEach((child) => {
+			resetBlock(child, resetChildren);
+		});
+	}
+}
 
 export default Block;

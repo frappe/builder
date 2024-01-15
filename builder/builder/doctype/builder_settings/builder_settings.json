@@ -1,0 +1,63 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-11-08 16:04:51.360374",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "script",
+  "script_public_url",
+  "style",
+  "style_public_url"
+ ],
+ "fields": [
+  {
+   "description": "Global script that will be loaded with every page built with Frappe Builder",
+   "fieldname": "script",
+   "fieldtype": "Code",
+   "label": "Script",
+   "options": "JS"
+  },
+  {
+   "description": "Global style that will be loaded with every page built with Frappe Builder",
+   "fieldname": "style",
+   "fieldtype": "Code",
+   "label": "Style",
+   "options": "CSS"
+  },
+  {
+   "fieldname": "script_public_url",
+   "fieldtype": "Read Only",
+   "label": "Script Public URL"
+  },
+  {
+   "fieldname": "style_public_url",
+   "fieldtype": "Read Only",
+   "label": "Style Public URL"
+  }
+ ],
+ "hide_toolbar": 1,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2023-12-28 10:07:43.415786",
+ "modified_by": "Administrator",
+ "module": "Builder",
+ "name": "Builder Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

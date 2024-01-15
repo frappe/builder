@@ -13,10 +13,17 @@ const setFontRequested = (font: string) => {
 	requestedFonts.add(font);
 };
 
-const setFont = (font: string | null) => {
+const setFont = (font: string | null, weight: string | null) => {
 	return new Promise((resolve) => {
 		if (!font) {
 			return resolve(font);
+		}
+		if (typeof weight !== "string") {
+			weight = null;
+		}
+		weight = weight || "400";
+		if (weight && ["100", "200", "300", "400", "500", "600", "700", "800", "900"].includes(weight)) {
+			font = `${font}:${weight}`;
 		}
 		if (isFontRequested(font)) {
 			return resolve(font);
@@ -109,7 +116,7 @@ function setFontFromHTML(html: string) {
 	});
 	if (fontFamilies) {
 		fontFamilies.forEach((fontFamily) => {
-			setFont(fontFamily);
+			setFont(fontFamily, null);
 		});
 	}
 }

@@ -1,5 +1,5 @@
 function getBlockTemplate(
-	type: "html" | "text" | "image" | "container" | "body" | "fit-container" | "fallback-component"
+	type: "html" | "text" | "image" | "container" | "body" | "fit-container" | "fallback-component" | "repeater"
 ): BlockOptions {
 	switch (type) {
 		case "html":
@@ -23,7 +23,7 @@ function getBlockTemplate(
 					width: "fit-content",
 					height: "fit-content",
 					lineHeight: "1",
-					minWidth: "30px",
+					minWidth: "10px",
 				} as BlockStyleMap,
 			};
 		case "image":
@@ -83,6 +83,19 @@ function getBlockTemplate(
 					height: "fit-content",
 					width: "fit-content",
 				} as BlockStyleMap,
+			};
+		case "repeater":
+			return {
+				name: "Repeater",
+				element: "div",
+				blockName: "repeater",
+				baseStyles: {
+					display: "flex",
+					flexDirection: "column",
+					width: "100%",
+					minHeight: "300px",
+				} as BlockStyleMap,
+				isRepeaterBlock: true,
 			};
 	}
 }

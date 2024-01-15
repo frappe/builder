@@ -3,7 +3,7 @@
 		ref="handler"
 		class="border-radius-resize pointer-events-auto absolute left-2 top-2 h-[10px] w-[10px] cursor-pointer rounded-full border-2 border-blue-400 bg-white"
 		:class="{
-			hidden: canvasProps.scale < 0.4,
+			hidden: canvasProps.scale < 0.4 || !showHandler(),
 		}"
 		:style="{
 			top: handlerTop + 'px',
@@ -28,14 +28,12 @@ const props = defineProps({
 		required: true,
 	},
 	target: {
-		type: Object,
+		type: [HTMLElement, SVGElement],
 		required: true,
 	},
 });
 
-const targetBlock = props.targetBlock;
-const target = props.target as HTMLElement;
-const borderRadius = ref(parseInt(target.style.borderRadius, 10) || 0);
+const borderRadius = ref(parseInt(props.target.style.borderRadius, 10) || 0);
 const updating = ref(false);
 const canvasProps = inject("canvasProps") as CanvasProps;
 const handler = ref() as Ref<HTMLElement>;
@@ -69,12 +67,12 @@ const handleRounded = (ev: MouseEvent) => {
 			minTop = -(handleHeight / 2);
 			minLeft = -(handleWidth / 2);
 		}
-		let radius = Math.round(getNumberFromPx(target.style.borderRadius) + movement);
+		let radius = Math.round(getNumberFromPx(props.target.style.borderRadius) + movement);
 		radius = Math.max(0, Math.min(radius, maxRadius));
 
 		setHandlerPosition(radius);
 		borderRadius.value = radius;
-		targetBlock.setStyle("borderRadius", `${radius}px`);
+		props.targetBlock.setStyle("borderRadius", `${radius}px`);
 
 		lastX = mouseMoveEvent.clientX;
 		lastY = mouseMoveEvent.clientY;
@@ -84,7 +82,7 @@ const handleRounded = (ev: MouseEvent) => {
 		"mouseup",
 		(mouseUpEvent) => {
 			mouseUpEvent.preventDefault();
-			if (getNumberFromPx(targetBlock.getStyle("borderRadius")) < 10) {
+			if (getNumberFromPx(props.targetBlock.getStyle("borderRadius")) < 10) {
 				handlerTop.value = 10;
 				handlerLeft.value = 10;
 			}
@@ -96,10 +94,10 @@ const handleRounded = (ev: MouseEvent) => {
 	);
 };
 
-const targetStyle = window.getComputedStyle(target);
+const targetStyle = window.getComputedStyle(props.target);
 const targetWidth = parseInt(targetStyle.width, 10);
 const targetHeight = parseInt(targetStyle.height, 10);
-const targetBounds = target.getBoundingClientRect();
+const targetBounds = props.target.getBoundingClientRect();
 const maxDistance = Math.min(targetBounds.height, targetBounds.width) / 2;
 const maxRadius = Math.min(targetHeight, targetWidth) / 2;
 
@@ -111,6 +109,14 @@ const setHandlerPosition = (radius: number) => {
 	const ratio = radius / maxRadius;
 	handlerTop.value = Math.max(minTop, maxDistance * ratio - handleHeight / 2);
 	handlerLeft.value = Math.max(minLeft, maxDistance * ratio - handleWidth / 2);
+};
+
+const showHandler = () => {
+	canvasProps.scale;
+	props.targetBlock.getStyle("height");
+	props.targetBlock.getStyle("width");
+	const targetBounds = props.target.getBoundingClientRect();
+	return getNumberFromPx(targetBounds.height) >= 25 && getNumberFromPx(targetBounds.width) >= 25;
 };
 
 onMounted(() => {

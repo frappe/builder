@@ -1,3 +1,6 @@
+import { reactive } from "vue";
+import Block from "./block";
+
 function getNumberFromPx(px: string | number | null | undefined): number {
 	if (!px) {
 		return 0;
@@ -5,7 +8,11 @@ function getNumberFromPx(px: string | number | null | undefined): number {
 	if (typeof px === "number") {
 		return px;
 	}
-	return Number(px.replace("px", ""));
+	const number = Number(px.replace("px", ""));
+	if (isNaN(number)) {
+		return 0;
+	}
+	return number;
 }
 
 function addPxToNumber(number: number, round: boolean = true): string {
@@ -107,9 +114,9 @@ function RGBToHex(rgb: RGBString): HashString {
 	return `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
 }
 
-function getRGB(color: HashString | RGBString | string | null): HashString {
+function getRGB(color: HashString | RGBString | string | null): HashString | null {
 	if (!color) {
-		return "#ffffff";
+		return null;
 	}
 	if (color.startsWith("rgb")) {
 		return RGBToHex(color as RGBString);
@@ -192,6 +199,67 @@ function getDataForKey(datum: Object, key: string) {
 	return key.split(".").reduce((d, key) => (d ? d[key] : null), data) as string;
 }
 
+function replaceMapKey(map: Map<any, any>, oldKey: string, newKey: string) {
+	const newMap = new Map();
+	map.forEach((value, key) => {
+		if (key === oldKey) {
+			newMap.set(newKey, value);
+		} else {
+			newMap.set(key, value);
+		}
+	});
+	return newMap;
+}
+
+const mapToObject = (map: Map<any, any>) => Object.fromEntries(map.entries());
+
+function logObjectDiff(obj1: { [key: string]: {} }, obj2: { [key: string]: {} }, path = []) {
+	if (!obj1 || !obj2) return;
+	for (const key in obj1) {
+		const newPath = path.concat(key);
+
+		if (obj2.hasOwnProperty(key)) {
+			if (typeof obj1[key] === "object" && typeof obj2[key] === "object") {
+				logObjectDiff(obj1[key], obj2[key], newPath);
+			} else {
+				if (obj1[key] !== obj2[key]) {
+					console.log(`Difference at ${newPath.join(".")} - ${obj1[key]} !== ${obj2[key]}`);
+				}
+			}
+		} else {
+			// console.log(`Property ${newPath.join(".")} is missing in the second object`);
+		}
+	}
+
+	for (const key in obj2) {
+		if (!obj1.hasOwnProperty(key)) {
+			// console.log(`Property ${key} is missing in the first object`);
+		}
+	}
+}
+
+function getBlockInstance(options: BlockOptions) {
+	return reactive(new Block(options));
+}
+
+function getBlockCopy(block: BlockOptions | Block, retainId = false): Block {
+	let b = JSON.parse(JSON.stringify(block));
+	if (!retainId) {
+		const deleteBlockId = (block: BlockOptions) => {
+			delete block.blockId;
+			for (let child of block.children || []) {
+				deleteBlockId(child);
+			}
+		};
+		deleteBlockId(b);
+	}
+	return getBlockInstance(b);
+}
+
+function isCtrlOrCmd(e: KeyboardEvent) {
+	return e.ctrlKey || e.metaKey;
+}
+
 export {
 	HSVToHex,
 	HexToHSV,
@@ -200,14 +268,20 @@ export {
 	confirm,
 	copyToClipboard,
 	findNearestSiblingIndex,
+	getBlockCopy,
+	getBlockInstance,
 	getDataForKey,
 	getNumberFromPx,
 	getRGB,
 	getRandomColor,
 	getTextContent,
+	isCtrlOrCmd,
 	isHTMLString,
 	isJSONString,
 	isTargetEditable,
 	kebabToCamelCase,
+	logObjectDiff,
+	mapToObject,
+	replaceMapKey,
 	stripExtension,
 };

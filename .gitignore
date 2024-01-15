@@ -5,7 +5,8 @@
 tags
 node_modules
 builder/public/frontend
+builder/public/page_scripts
+builder/public/page_styles
 builder/www/index.html
 builder/www/p.html
-builder/www/builder.html
 builder/www/builder.html

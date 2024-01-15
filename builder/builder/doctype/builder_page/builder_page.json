@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_guest_to_view": 1,
  "allow_rename": 1,
  "autoname": "field:page_name",
  "creation": "2023-01-09 15:20:33.274204",
@@ -19,9 +20,8 @@
   "draft_blocks",
   "preview",
   "scripting_tab",
-  "client_script",
   "page_data_script",
-  "style",
+  "client_scripts",
   "settings_tab",
   "meta_column",
   "page_title",
@@ -126,21 +126,15 @@
    "label": "Description"
   },
   {
-   "fieldname": "client_script",
-   "fieldtype": "Code",
-   "label": "Client Script",
-   "options": "Javascript"
-  },
-  {
-   "fieldname": "style",
-   "fieldtype": "Code",
-   "label": "Style",
-   "options": "CSS"
+   "fieldname": "client_scripts",
+   "fieldtype": "Table MultiSelect",
+   "label": "Client Scripts",
+   "options": "Builder Page Client Script"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-11-05 20:52:56.527331",
+ "modified": "2023-12-29 17:26:16.477410",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

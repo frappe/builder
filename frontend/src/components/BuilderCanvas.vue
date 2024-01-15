@@ -1,5 +1,5 @@
 <template>
-	<div ref="canvasContainer" @click.prevent.stop="store.clearSelection()">
+	<div ref="canvasContainer" @click="handleClick">
 		<div class="overlay absolute" id="overlay" ref="overlay" />
 		<BlockSnapGuides></BlockSnapGuides>
 		<div
@@ -15,7 +15,7 @@
 				<div
 					v-show="!canvasProps.scaling && !canvasProps.panning"
 					class="w-auto cursor-pointer p-2"
-					v-for="breakpoint in store.deviceBreakpoints"
+					v-for="breakpoint in canvasProps.breakpoints"
 					:key="breakpoint.device"
 					@click.stop="breakpoint.visible = !breakpoint.visible">
 					<FeatherIcon
@@ -42,7 +42,8 @@
 						fontSize: `calc(${12}px * 1/${canvasProps.scale})`,
 						top: `calc(${-20}px * 1/${canvasProps.scale})`,
 					}"
-					v-show="!canvasProps.scaling && !canvasProps.panning">
+					v-show="!canvasProps.scaling && !canvasProps.panning"
+					@click="store.activeBreakpoint = breakpoint.device">
 					{{ breakpoint.displayName }}
 				</div>
 				<BuilderBlock
@@ -57,11 +58,7 @@
 			v-show="!canvasProps.panning">
 			{{ Math.round(canvasProps.scale * 100) + "%" }}
 			<div class="ml-2 cursor-pointer" @click="setScaleAndTranslate">
-				<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24">
-					<path
-						fill="currentColor"
-						d="M20 9V6h-3V4h3q.825 0 1.413.588T22 6v3h-2ZM2 9V6q0-.825.588-1.413T4 4h3v2H4v3H2Zm15 11v-2h3v-3h2v3q0 .825-.588 1.413T20 20h-3ZM4 20q-.825 0-1.413-.588T2 18v-3h2v3h3v2H4Zm12-4H8q-.825 0-1.413-.588T6 14v-4q0-.825.588-1.413T8 8h8q.825 0 1.413.588T18 10v4q0 .825-.588 1.413T16 16Zm-8-2h8v-4H8v4Zm0 0v-4v4Z" />
-				</svg>
+				<FitScreenIcon />
 			</div>
 		</div>
 	</div>
@@ -70,14 +67,22 @@
 import webComponent from "@/data/webComponent";
 import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { addPxToNumber, getNumberFromPx } from "@/utils/helpers";
-import { clamp, useDropZone, useElementBounding, useEventListener } from "@vueuse/core";
+import { addPxToNumber, getBlockCopy, getNumberFromPx } from "@/utils/helpers";
+import {
+	UseRefHistoryReturn,
+	clamp,
+	useDebouncedRefHistory,
+	useDropZone,
+	useElementBounding,
+	useEventListener,
+} from "@vueuse/core";
 import { FeatherIcon } from "frappe-ui";
-import { PropType, computed, nextTick, onMounted, provide, reactive, ref, watchEffect } from "vue";
+import { Ref, computed, nextTick, onMounted, provide, reactive, ref, watch } from "vue";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
+import FitScreenIcon from "./Icons/FitScreen.vue";
 
 const store = useStore();
 const canvasContainer = ref(null);
@@ -86,13 +91,9 @@ const showBlocks = ref(false);
 const overlay = ref(null);
 
 const props = defineProps({
-	block: {
+	blockData: {
 		type: Block,
 		default: false,
-	},
-	canvasProps: {
-		type: Object as PropType<CanvasProps>,
-		default: () => ({}),
 	},
 	canvasStyles: {
 		type: Object,
@@ -100,17 +101,68 @@ const props = defineProps({
 	},
 });
 
-provide("canvasProps", props.canvasProps);
+// clone props.block into canvas data to avoid mutating them
+const block = ref(getBlockCopy(props.blockData, true)) as Ref<Block>;
+
+const canvasProps = reactive({
+	overlayElement: null,
+	background: "#fff",
+	scale: 1,
+	translateX: 0,
+	translateY: 0,
+	settingCanvas: true,
+	scaling: false,
+	panning: false,
+	breakpoints: [
+		{
+			icon: "monitor",
+			device: "desktop",
+			displayName: "Desktop",
+			width: 1400,
+			visible: true,
+		},
+		{
+			icon: "tablet",
+			device: "tablet",
+			displayName: "Tablet",
+			width: 800,
+			visible: false,
+		},
+		{
+			icon: "smartphone",
+			device: "mobile",
+			displayName: "Mobile",
+			width: 420,
+			visible: false,
+		},
+	],
+});
+
+const canvasHistory = ref(null) as Ref<UseRefHistoryReturn<{}, {}>> | Ref<null>;
+
+provide("canvasProps", canvasProps);
 
 onMounted(() => {
-	props.canvasProps.overlayElement = overlay.value;
+	canvasProps.overlayElement = overlay.value;
+	setupHistory();
 	setEvents();
 });
+
+function setupHistory() {
+	canvasHistory.value = useDebouncedRefHistory(block, {
+		capacity: 200,
+		deep: true,
+		debounce: 200,
+		clone: (obj) => {
+			return getBlockCopy(obj, true);
+		},
+	});
+}
 
 const { isOverDropZone } = useDropZone(canvasContainer, {
 	onDrop: (files, ev) => {
 		let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
-		let parentBlock = props.block;
+		let parentBlock = block.value as Block | null;
 		if (element) {
 			if (element.dataset.blockId) {
 				parentBlock = store.findBlock(element.dataset.blockId) || parentBlock;
@@ -118,12 +170,29 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 		}
 		let componentName = ev.dataTransfer?.getData("componentName");
 		if (componentName) {
-			const newBlock = store.getBlockCopy(webComponent.getRow(componentName).block, true);
+			const newBlock = getBlockCopy(webComponent.getRow(componentName).block, true);
 			newBlock.extendFromComponent(componentName);
-			parentBlock.addChild(newBlock);
+			// if shift key is pressed, replace parent block with new block
+			if (ev.shiftKey) {
+				while (parentBlock && parentBlock.isChildOfComponent) {
+					parentBlock = parentBlock.getParentBlock();
+				}
+				if (!parentBlock) return;
+				const parentParentBlock = parentBlock.getParentBlock();
+				if (!parentParentBlock) return;
+				const index = parentParentBlock.children.indexOf(parentBlock);
+				parentParentBlock.children.splice(index, 1, newBlock);
+			} else {
+				while (parentBlock && !parentBlock.canHaveChildren()) {
+					parentBlock = parentBlock.getParentBlock();
+				}
+				if (!parentBlock) return;
+				parentBlock.addChild(newBlock);
+			}
 			ev.stopPropagation();
 		} else if (files && files.length) {
 			store.uploadFile(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
+				if (!parentBlock) return;
 				if (parentBlock.isImage()) {
 					parentBlock.setAttribute("src", fileDoc.fileURL);
 					parentBlock.setAttribute("alt", fileDoc.fileName);
@@ -138,33 +207,37 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 });
 
 const visibleBreakpoints = computed(() => {
-	return store.deviceBreakpoints.filter(
+	return canvasProps.breakpoints.filter(
 		(breakpoint) => breakpoint.visible || breakpoint.device === "desktop"
 	);
 });
 
 function setEvents() {
 	const container = document.body.querySelector(".canvas-container") as HTMLElement;
+	let counter = 0;
 	useEventListener(container, "mousedown", (ev: MouseEvent) => {
+		if (store.mode === "move") {
+			return;
+		}
 		const initialX = ev.clientX;
 		const initialY = ev.clientY;
 		if (store.mode === "select") {
 			return;
 		} else {
-			store.history.pause();
+			canvasHistory.value?.pause();
 			ev.stopPropagation();
 			let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
-			let block = store.getFirstBlock();
+			let block = getFirstBlock();
 			if (element) {
 				if (element.dataset.blockId) {
 					block = store.findBlock(element.dataset.blockId) || block;
 				}
 			}
-			let parentBlock = store.getFirstBlock();
+			let parentBlock = getFirstBlock();
 			if (element.dataset.blockId) {
 				parentBlock = store.findBlock(element.dataset.blockId) || parentBlock;
 				while (parentBlock && !parentBlock.canHaveChildren()) {
-					parentBlock = parentBlock.getParentBlock() || store.getFirstBlock();
+					parentBlock = parentBlock.getParentBlock() || getFirstBlock();
 				}
 			}
 			const child = getBlockTemplate(store.mode);
@@ -172,10 +245,12 @@ function setEvents() {
 				`.canvas [data-block-id="${parentBlock.blockId}"]`
 			) as HTMLElement;
 			const parentOldPosition = parentBlock.getStyle("position");
-			parentBlock.setBaseStyle("position", parentOldPosition || "relative");
+			if (parentOldPosition === "static" || parentOldPosition === "inherit" || !parentOldPosition) {
+				parentBlock.setBaseStyle("position", "relative");
+			}
 			const parentElementBounds = parentElement.getBoundingClientRect();
-			let x = (ev.x - parentElementBounds.left) / props.canvasProps.scale;
-			let y = (ev.y - parentElementBounds.top) / props.canvasProps.scale;
+			let x = (ev.x - parentElementBounds.left) / canvasProps.scale;
+			let y = (ev.y - parentElementBounds.top) / canvasProps.scale;
 			const parentWidth = getNumberFromPx(getComputedStyle(parentElement).width);
 			const parentHeight = getNumberFromPx(getComputedStyle(parentElement).height);
 
@@ -183,14 +258,19 @@ function setEvents() {
 			childBlock.setBaseStyle("position", "absolute");
 			childBlock.setBaseStyle("top", addPxToNumber(y));
 			childBlock.setBaseStyle("left", addPxToNumber(x));
+			if (store.mode === "container" || store.mode === "repeater") {
+				const colors = ["#ededed", "#e2e2e2", "#c7c7c7"];
+				childBlock.setBaseStyle("background", colors[counter % colors.length]);
+				counter++;
+			}
 
 			const mouseMoveHandler = (mouseMoveEvent: MouseEvent) => {
-				if (store.mode === "text" || store.mode === "html") {
+				if (store.mode === "text") {
 					return;
 				} else {
 					mouseMoveEvent.preventDefault();
-					let width = (mouseMoveEvent.clientX - initialX) / props.canvasProps.scale;
-					let height = (mouseMoveEvent.clientY - initialY) / props.canvasProps.scale;
+					let width = (mouseMoveEvent.clientX - initialX) / canvasProps.scale;
+					let height = (mouseMoveEvent.clientY - initialY) / canvasProps.scale;
 					width = clamp(width, 0, parentWidth);
 					height = clamp(height, 0, parentHeight);
 					childBlock.setBaseStyle("width", addPxToNumber(width));
@@ -203,11 +283,16 @@ function setEvents() {
 				"mouseup",
 				() => {
 					document.removeEventListener("mousemove", mouseMoveHandler);
+					parentBlock.setBaseStyle("position", parentOldPosition || "static");
 					childBlock.setBaseStyle("position", "static");
 					childBlock.setBaseStyle("top", "auto");
 					childBlock.setBaseStyle("left", "auto");
-					if (store.mode === "text" || store.mode === "html") {
-						store.history.resume();
+					setTimeout(() => {
+						store.mode = "select";
+					}, 50);
+					if (store.mode === "text") {
+						canvasHistory.value?.resume(true);
+						return;
 					}
 					if (getNumberFromPx(childBlock.getStyle("width")) < 100) {
 						childBlock.setBaseStyle("width", "100%");
@@ -215,14 +300,39 @@ function setEvents() {
 					if (getNumberFromPx(childBlock.getStyle("height")) < 100) {
 						childBlock.setBaseStyle("height", "200px");
 					}
-					parentBlock.setBaseStyle("position", parentOldPosition || "static");
-					setTimeout(() => {
-						store.mode = "select";
-					}, 50);
-					store.history.resume();
+					canvasHistory.value?.resume(true);
 				},
 				{ once: true }
 			);
+		}
+	});
+
+	useEventListener(container, "mousedown", (ev: MouseEvent) => {
+		if (store.mode === "move") {
+			container.style.cursor = "grabbing";
+			const initialX = ev.clientX;
+			const initialY = ev.clientY;
+			const initialTranslateX = canvasProps.translateX;
+			const initialTranslateY = canvasProps.translateY;
+			const mouseMoveHandler = (mouseMoveEvent: MouseEvent) => {
+				mouseMoveEvent.preventDefault();
+				const diffX = (mouseMoveEvent.clientX - initialX) / canvasProps.scale;
+				const diffY = (mouseMoveEvent.clientY - initialY) / canvasProps.scale;
+				canvasProps.translateX = initialTranslateX + diffX;
+				canvasProps.translateY = initialTranslateY + diffY;
+			};
+			useEventListener(document, "mousemove", mouseMoveHandler);
+			useEventListener(
+				document,
+				"mouseup",
+				() => {
+					document.removeEventListener("mousemove", mouseMoveHandler);
+					container.style.cursor = "grab";
+				},
+				{ once: true }
+			);
+			ev.stopPropagation();
+			ev.preventDefault();
 		}
 	});
 }
@@ -244,58 +354,120 @@ const setScaleAndTranslate = async () => {
 	const containerWidth = containerBound.width;
 	const containerHeight = containerBound.height;
 
-	const canvasWidth = canvasBound.width / props.canvasProps.scale;
-	const canvasHeight = canvasBound.height / props.canvasProps.scale;
+	const canvasWidth = canvasBound.width / canvasProps.scale;
+	const canvasHeight = canvasBound.height / canvasProps.scale;
 
-	props.canvasProps.scale = Math.min(
+	canvasProps.scale = Math.min(
 		containerWidth / (canvasWidth + paddingX * 2),
 		containerHeight / (canvasHeight + paddingY * 2)
 	);
 
-	props.canvasProps.translateX = 0;
-	props.canvasProps.translateY = 0;
+	canvasProps.translateX = 0;
+	canvasProps.translateY = 0;
 	await nextTick();
-	const scale = props.canvasProps.scale;
+	const scale = canvasProps.scale;
 	canvasBound.update();
 	const diffY = containerBound.top - canvasBound.top + paddingY * scale;
 	if (diffY !== 0) {
-		props.canvasProps.translateY = diffY / scale;
+		canvasProps.translateY = diffY / scale;
 	}
-	props.canvasProps.settingCanvas = false;
+	canvasProps.settingCanvas = false;
 };
 
 onMounted(() => {
 	setScaleAndTranslate();
 	const canvasContainerEl = canvasContainer.value as unknown as HTMLElement;
 	const canvasEl = canvas.value as unknown as HTMLElement;
-	setPanAndZoom(props.canvasProps, canvasEl, canvasContainerEl);
+	setPanAndZoom(canvasProps, canvasEl, canvasContainerEl);
 	showBlocks.value = true;
 });
 
 const resetZoom = () => {
-	props.canvasProps.scale = 1;
-	props.canvasProps.translateX = 0;
-	props.canvasProps.translateY = 0;
+	canvasProps.scale = 1;
+	canvasProps.translateX = 0;
+	canvasProps.translateY = 0;
 };
 
 const moveCanvas = (direction: "up" | "down" | "right" | "left") => {
 	if (direction === "up") {
-		props.canvasProps.translateY -= 20;
+		canvasProps.translateY -= 20;
 	} else if (direction === "down") {
-		props.canvasProps.translateY += 20;
+		canvasProps.translateY += 20;
 	} else if (direction === "right") {
-		props.canvasProps.translateX += 20;
+		canvasProps.translateX += 20;
 	} else if (direction === "left") {
-		props.canvasProps.translateX -= 20;
+		canvasProps.translateX -= 20;
 	}
 };
 
 const zoomIn = () => {
-	props.canvasProps.scale += 0.1;
+	canvasProps.scale = Math.min(canvasProps.scale + 0.1, 10);
 };
 
 const zoomOut = () => {
-	props.canvasProps.scale -= 0.1;
+	canvasProps.scale = Math.max(canvasProps.scale - 0.1, 0.1);
+};
+
+watch(
+	() => canvasProps.breakpoints.map((b) => b.visible),
+	() => {
+		if (canvasProps.settingCanvas) {
+			return;
+		}
+		setScaleAndTranslate();
+	}
+);
+
+watch(
+	() => store.mode,
+	(newValue, oldValue) => {
+		store.lastMode = oldValue;
+		toggleMode(store.mode);
+	}
+);
+
+function toggleMode(mode: BuilderMode) {
+	if (!canvasContainer.value) return;
+	const container = canvasContainer.value as HTMLElement;
+	if (mode === "text") {
+		container.style.cursor = "text";
+	} else if (["container", "image", "repeater"].includes(mode)) {
+		container.style.cursor = "crosshair";
+	} else if (mode === "move") {
+		container.style.cursor = "grab";
+	} else {
+		container.style.cursor = "default";
+	}
+}
+
+const handleClick = (ev: MouseEvent) => {
+	const target = document.elementFromPoint(ev.clientX, ev.clientY);
+	// hack to ensure if click is on canvas-container
+	// TODO: Still clears selection if space handlers are dragged over canvas-container
+	if (target?.classList.contains("canvas-container")) {
+		store.clearSelection();
+	}
+};
+
+const clearCanvas = () => {
+	block.value = store.getRootBlock();
+};
+
+const getFirstBlock = () => {
+	return block.value;
+};
+
+const setRootBlock = (newBlock: Block, resetCanvas = false) => {
+	block.value = newBlock;
+	if (canvasHistory.value) {
+		canvasHistory.value.dispose();
+		setupHistory();
+	}
+	if (resetCanvas) {
+		nextTick(() => {
+			setScaleAndTranslate();
+		});
+	}
 };
 
 defineExpose({
@@ -304,29 +476,11 @@ defineExpose({
 	moveCanvas,
 	zoomIn,
 	zoomOut,
+	history: canvasHistory as Ref<UseRefHistoryReturn<{}, {}>>,
+	clearCanvas,
+	getFirstBlock,
+	block,
+	setRootBlock,
+	canvasProps,
 });
-
-watchEffect(() => {
-	store.deviceBreakpoints.map((b) => b.visible);
-	if (props.canvasProps.settingCanvas) {
-		return;
-	}
-	setScaleAndTranslate();
-});
-
-watchEffect(() => {
-	toggleMode(store.mode);
-});
-
-function toggleMode(mode: BuilderMode) {
-	if (!canvasContainer.value) return;
-	const container = canvasContainer.value as HTMLElement;
-	if (mode === "text") {
-		container.style.cursor = "text";
-	} else if (["container", "image", "html"].includes(mode)) {
-		container.style.cursor = "crosshair";
-	} else {
-		container.style.cursor = "default";
-	}
-}
 </script>

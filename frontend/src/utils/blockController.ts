@@ -14,7 +14,7 @@ const blockController = {
 		return store.selectedBlocks;
 	},
 	isRoot() {
-		return store.selectedBlocks[0].isRoot();
+		return blockController.isBLockSelected() && store.selectedBlocks[0].isRoot();
 	},
 	setStyle: (style: styleProperty, value: StyleValue) => {
 		store.selectedBlocks.forEach((block) => {
@@ -77,7 +77,7 @@ const blockController = {
 			block.setAttribute(attribute, value);
 		});
 	},
-	getKeyValue: (key: "element" | "innerHTML") => {
+	getKeyValue: (key: "element" | "innerHTML" | "visibilityCondition") => {
 		let keyValue = "__initial__" as StyleValue | undefined;
 		store.selectedBlocks.forEach((block) => {
 			if (keyValue === "__initial__") {
@@ -88,8 +88,12 @@ const blockController = {
 		});
 		return keyValue;
 	},
-	setKeyValue: (key: "element" | "innerHTML", value: string) => {
+	setKeyValue: (key: "element" | "innerHTML" | "visibilityCondition", value: string) => {
 		store.selectedBlocks.forEach((block) => {
+			if (key === "element" && block.blockName === "container") {
+				// reset blockName since it will not be a container anymore
+				delete block.blockName;
+			}
 			block[key] = value;
 		});
 	},
@@ -106,11 +110,29 @@ const blockController = {
 	},
 	setRawStyles: (rawStyles: BlockStyleMap) => {
 		store.selectedBlocks.forEach((block) => {
-			block.rawStyles = rawStyles;
+			Object.keys(block.rawStyles).forEach((key) => {
+				if (!rawStyles[key]) {
+					delete block.rawStyles[key];
+				}
+			});
+			Object.assign(block.rawStyles, rawStyles);
+		});
+	},
+	getCustomAttributes: () => {
+		return blockController.isBLockSelected() && store.selectedBlocks[0].customAttributes;
+	},
+	setCustomAttributes: (customAttributes: BlockAttributeMap) => {
+		store.selectedBlocks.forEach((block) => {
+			Object.keys(block.customAttributes).forEach((key) => {
+				if (!customAttributes[key]) {
+					delete block.customAttributes[key];
+				}
+			});
+			Object.assign(block.customAttributes, customAttributes);
 		});
 	},
 	getParentBlock: () => {
-		return store.selectedBlocks[0].getParentBlock();
+		return blockController.isBLockSelected() && store.selectedBlocks[0].getParentBlock();
 	},
 	setTextColor: (color: string) => {
 		store.selectedBlocks.forEach((block) => {
@@ -168,6 +190,18 @@ const blockController = {
 	},
 	isRepeater: () => {
 		return blockController.isBLockSelected() && store.selectedBlocks[0].isRepeater();
+	},
+	getPadding: () => {
+		return store.selectedBlocks[0].getPadding();
+	},
+	setPadding: (value: string) => {
+		store.selectedBlocks[0].setPadding(value);
+	},
+	getMargin: () => {
+		return store.selectedBlocks[0].getMargin();
+	},
+	setMargin: (value: string) => {
+		store.selectedBlocks[0].setMargin(value);
 	},
 };
 

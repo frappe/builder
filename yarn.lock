@@ -616,6 +616,13 @@
   dependencies:
     linkifyjs "^4.1.0"
 
+"@tiptap/extension-link@^2.1.12":
+  version "2.1.12"
+  resolved "https://registry.yarnpkg.com/@tiptap/extension-link/-/extension-link-2.1.12.tgz#a18f83a0b54342e6274ff9e5a5907ef7f15aa723"
+  integrity sha512-Sti5hhlkCqi5vzdQjU/gbmr8kb578p+u0J4kWS+SSz3BknNThEm/7Id67qdjBTOQbwuN07lHjDaabJL0hSkzGQ==
+  dependencies:
+    linkifyjs "^4.1.0"
+
 "@tiptap/extension-list-item@^2.0.4":
   version "2.0.4"
   resolved "https://registry.npmjs.org/@tiptap/extension-list-item/-/extension-list-item-2.0.4.tgz"
@@ -4080,6 +4087,11 @@ vue-router@^4.0.12:
   integrity sha512-9PISkmaCO02OzPVOMq2w82ilty6+xJmQrarYZDkjZBfl4RvYAlt4PKnEX21oW4KTtWfa9OuO/b3qk1Od3AEdCQ==
   dependencies:
     "@vue/devtools-api" "^6.5.0"
+
+vue-sonner@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/vue-sonner/-/vue-sonner-1.0.2.tgz#93d8a65965afeb15c167588eddb56faa88c3a66a"
+  integrity sha512-BXIyb9lGSMUjTpOukISp7oV9nrczgbfYz+TnDeoap3io3ayGXiWv+/3eQ9UKnmofwUlC4nh/H5jzBOO89lRItQ==
 
 vue@^3.2.25:
   version "3.3.4"

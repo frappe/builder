@@ -102,7 +102,9 @@
 			</span>
 			<TabButtons
 				label="Shrink"
-				:modelValue="blockController.getStyle('flexShrink') || 0"
+				:modelValue="
+					blockController.getStyle('flexShrink') === undefined ? 1 : blockController.getStyle('flexShrink')
+				"
 				:buttons="[
 					{ label: 'Yes', value: 1 },
 					{ label: 'No', value: 0 },

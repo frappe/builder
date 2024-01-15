@@ -43,9 +43,11 @@ import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
+import { confirm, getBlockCopy } from "@/utils/helpers";
 import { vOnClickOutside } from "@vueuse/components";
 import { Dialog } from "frappe-ui";
 import { nextTick, ref } from "vue";
+import { toast } from "vue-sonner";
 import ContextMenu from "./ContextMenu.vue";
 const store = useStore();
 
@@ -95,7 +97,7 @@ const duplicateBlock = () => {
 };
 
 const createComponentHandler = ({ close }: { close: () => void }) => {
-	const blockCopy = store.getBlockCopy(props.block, true);
+	const blockCopy = getBlockCopy(props.block, true);
 	blockCopy.removeStyle("left");
 	blockCopy.removeStyle("top");
 	blockCopy.removeStyle("position");
@@ -124,7 +126,19 @@ const contextMenuOptions: ContextMenuOption[] = [
 	},
 	{ label: "Duplicate", action: duplicateBlock },
 	{
-		label: "Wrap in Container",
+		label: "Convert To Link",
+		action: () => {
+			blockController.getSelectedBlocks().forEach((block: Block) => {
+				block.convertToLink();
+			});
+		},
+		condition: () =>
+			(props.block.isContainer() || props.block.isText()) &&
+			!props.block.isExtendedFromComponent() &&
+			!props.block.isRoot(),
+	},
+	{
+		label: "Wrap In Container",
 		action: () => {
 			const newBlockObj = getBlockTemplate("fit-container");
 			const parentBlock = props.block.getParentBlock();
@@ -133,6 +147,12 @@ const contextMenuOptions: ContextMenuOption[] = [
 			const selectedBlocks = store.selectedBlocks;
 			const blockPosition = Math.min(...selectedBlocks.map(parentBlock.getChildIndex.bind(parentBlock)));
 			const newBlock = parentBlock?.addChild(newBlockObj, blockPosition);
+
+			newBlock.setStyle("display", parentBlock.getStyle("display") || "flex");
+			newBlock.setStyle("flex-direction", parentBlock.getStyle("flex-direction") || "column");
+			newBlock.setStyle("align-items", parentBlock.getStyle("align-items") || "center");
+			newBlock.setStyle("width", parentBlock.getStyle("width") || "fit-content");
+			newBlock.setStyle("height", parentBlock.getStyle("height") || "fit-content");
 
 			// move selected blocks to newBlock
 			selectedBlocks
@@ -159,23 +179,62 @@ const contextMenuOptions: ContextMenuOption[] = [
 		},
 	},
 	{
-		label: "Save as Component",
+		label: "Save As Component",
 		action: () => (showDialog.value = true),
 		condition: () => !props.block.isExtendedFromComponent(),
 	},
+
 	{
-		label: "Convert To Repeater",
+		label: "Repeat Block",
 		action: () => {
-			props.block.convertToRepeater();
+			const repeaterBlockObj = getBlockTemplate("repeater");
+			const parentBlock = props.block.getParentBlock();
+			if (!parentBlock) return;
+			const repeaterBlock = parentBlock.addChild(repeaterBlockObj, parentBlock.getChildIndex(props.block));
+			repeaterBlock.addChild(getBlockCopy(props.block));
+			parentBlock.removeChild(props.block);
+			repeaterBlock.selectBlock();
+			store.propertyFilter = "data key";
+			toast.warning("Please set data key for repeater block");
 		},
-		condition: () =>
-			props.block.isContainer() && !props.block.isExtendedFromComponent() && !props.block.isRoot(),
+		condition: () => !props.block.isRoot() && !props.block.isRepeater(),
+	},
+	{
+		label: "Reset Overrides",
+		condition: () => props.block.hasOverrides(store.activeBreakpoint),
+		action: () => {
+			props.block.resetOverrides(store.activeBreakpoint);
+		},
 	},
 	{
 		label: "Reset Changes",
+		action: () => {
+			if (props.block.hasChildren()) {
+				confirm("Reset changes in child blocks as well?").then((confirmed) => {
+					props.block.resetChanges(confirmed);
+				});
+			} else {
+				props.block.resetChanges();
+			}
+		},
+		condition: () => props.block.isExtendedFromComponent(),
+	},
+	{
+		label: "Sync Component",
 		condition: () => Boolean(props.block.extendedFromComponent),
 		action: () => {
-			props.block.resetChanges();
+			props.block.syncWithComponent();
+		},
+	},
+	{
+		label: "Reset Component",
+		condition: () => Boolean(props.block.extendedFromComponent),
+		action: () => {
+			confirm("Are you sure you want to reset?").then((confirmed) => {
+				if (confirmed) {
+					props.block.resetWithComponent();
+				}
+			});
 		},
 	},
 	{
@@ -185,18 +244,18 @@ const contextMenuOptions: ContextMenuOption[] = [
 		},
 		condition: () => Boolean(props.block.extendedFromComponent),
 	},
-	// convert to link
 	{
-		label: "Convert to Link",
+		label: "Delete",
 		action: () => {
-			blockController.getSelectedBlocks().forEach((block: Block) => {
-				block.convertToLink();
-			});
+			props.block.getParentBlock()?.removeChild(props.block);
 		},
-		condition: () =>
-			(props.block.isContainer() || props.block.isText()) &&
-			!props.block.isExtendedFromComponent() &&
-			!props.block.isRoot(),
+		condition: () => {
+			return (
+				!props.block.isRoot() &&
+				!props.block.isChildOfComponentBlock() &&
+				Boolean(props.block.getParentBlock())
+			);
+		},
 	},
 ];
 </script>

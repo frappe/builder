@@ -5,7 +5,7 @@ declare interface BlockStyleMap {
 }
 
 declare interface BlockAttributeMap {
-	[key: string]: string;
+	[key: string]: string | number | null | undefined;
 }
 
 declare interface BlockOptions {
@@ -66,9 +66,17 @@ declare type HashString = `#${string}`;
 declare type RGBString = `rgb(${number}, ${number}, ${number})`;
 
 declare type LeftSidebarTabOption = "Components" | "Layers";
-declare type RightSidebarTabOption = "Properties" | "Data" | "Settings";
+declare type RightSidebarTabOption = "Properties" | "Script" | "Settings";
 
-declare type BuilderMode = "select" | "text" | "container" | "image" | "html";
+declare type BuilderMode = "select" | "text" | "container" | "image" | "repeater" | "move";
+
+declare interface Breakpoint {
+	icon: string;
+	device: string;
+	displayName: string;
+	width: number;
+	visible: boolean;
+}
 
 declare interface CanvasProps {
 	scale: number;
@@ -79,6 +87,7 @@ declare interface CanvasProps {
 	background: string;
 	settingCanvas: boolean;
 	overlayElement: HTMLElement | null;
+	breakpoints: Breakpoint[];
 }
 
 declare type EditingMode = "page" | "component";

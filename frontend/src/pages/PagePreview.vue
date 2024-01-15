@@ -92,7 +92,25 @@ const width = ref(maxWidth);
 const loading = ref(false);
 const store = useStore();
 const publishing = ref(false);
-const { deviceBreakpoints } = store;
+
+const deviceBreakpoints = [
+	{
+		icon: "monitor",
+		device: "desktop",
+		width: 1400,
+	},
+	{
+		icon: "tablet",
+		device: "tablet",
+		width: 800,
+	},
+	{
+		icon: "smartphone",
+		device: "mobile",
+		width: 420,
+	},
+];
+
 const activeBreakpoint = computed(() => {
 	const tabletBreakpoint = deviceBreakpoints.find((b) => b.device === "tablet");
 	const mobileBreakpoint = deviceBreakpoints.find((b) => b.device === "mobile");

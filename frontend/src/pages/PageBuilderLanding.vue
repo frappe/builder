@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="toolbar flex h-14 items-center justify-center bg-white p-2 shadow-sm dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"
+		class="toolbar sticky top-0 z-10 flex h-14 items-center justify-center bg-white p-2 shadow-sm dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"
 		ref="toolbar">
 		<div class="absolute left-3 flex items-center">
 			<router-link class="flex items-center gap-2" :to="{ name: 'home' }">
@@ -13,17 +13,26 @@
 		<div class="mb-6 flex items-center justify-between">
 			<h1 class="text-sm font-bold uppercase text-gray-800 dark:text-zinc-400">My Pages</h1>
 			<div class="flex gap-4">
-				<Input
-					class="h-7 rounded-md text-sm text-gray-800 hover:border-gray-400 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
-					type="text"
-					placeholder="Filter by title or route"
-					inputClass="w-full"
-					v-model="filter"
-					@input="
-						(value: string) => {
-							filter = value;
-						}
-					" />
+				<div class="relative flex">
+					<Input
+						class="h-7 rounded-md text-sm text-gray-800 hover:border-gray-400 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
+						type="text"
+						placeholder="Filter by title or route"
+						inputClass="w-full"
+						v-model="filter"
+						autofocus
+						@input="
+							(value: string) => {
+								filter = value;
+							}
+						" />
+					<div
+						class="absolute right-1 top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
+						@click="filter = ''"
+						v-show="filter">
+						<CrossIcon />
+					</div>
+				</div>
 				<Input
 					type="select"
 					class="h-7 rounded-md border-gray-400 text-sm text-gray-800 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
@@ -77,10 +86,8 @@
 									</Tooltip>
 								</div> -->
 							</div>
-							<UseTimeAgo v-slot="{ timeAgo }" :time="page.creation">
-								<p class="mt-1 block text-xs text-gray-500">
-									{{ timeAgo }}
-								</p>
+							<UseTimeAgo v-slot="{ timeAgo }" :time="page.modified">
+								<p class="mt-1 block text-xs text-gray-500">Edited {{ timeAgo }}</p>
 							</UseTimeAgo>
 						</span>
 						<Dropdown
@@ -94,7 +101,7 @@
 							<template v-slot="{ open }">
 								<FeatherIcon
 									name="more-vertical"
-									class="h-4 w-4 text-gray-500 group-hover:text-gray-700"
+									class="h-4 w-4 text-gray-500 hover:text-gray-700"
 									@click="open"></FeatherIcon>
 							</template>
 						</Dropdown>
@@ -105,6 +112,7 @@
 	</section>
 </template>
 <script setup lang="ts">
+import CrossIcon from "@/components/Icons/Cross.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";

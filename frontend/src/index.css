@@ -6,3 +6,15 @@
     padding: revert;
   }
 }
+
+/* to match style of tip tap editor for new lines */
+p:empty::before {
+  content: '';
+  display: inline-block;
+}
+
+.__text_block__ a {
+  color: var(--link-color);
+  text-decoration: underline;
+  background-color: transparent;
+}

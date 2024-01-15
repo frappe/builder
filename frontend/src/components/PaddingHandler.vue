@@ -7,13 +7,9 @@
 		}"
 		@click.stop>
 		<div
-			class="padding-handler pointer-events-none absolute flex w-full"
+			class="padding-handler pointer-events-none absolute flex w-full bg-purple-400"
 			:style="{
 				height: topPaddingHandlerHeight + 'px',
-			}"
-			:class="{
-				'bg-transparent': !targetBlock.isSelected(),
-				'bg-purple-400': targetBlock.isSelected(),
 			}"
 			ref="topPaddingHandler">
 			<div
@@ -36,13 +32,9 @@
 			</div>
 		</div>
 		<div
-			class="padding-handler pointer-events-none absolute bottom-0 flex w-full"
+			class="padding-handler pointer-events-none absolute bottom-0 flex w-full bg-purple-400"
 			:style="{
 				height: bottomPaddingHandlerHeight + 'px',
-			}"
-			:class="{
-				'bg-transparent': !targetBlock.isSelected(),
-				'bg-purple-400': targetBlock.isSelected(),
 			}"
 			ref="bottomPaddingHandler">
 			<div
@@ -65,13 +57,9 @@
 			</div>
 		</div>
 		<div
-			class="padding-handler pointer-events-none absolute left-0 flex h-full"
+			class="padding-handler pointer-events-none absolute left-0 flex h-full bg-purple-400"
 			:style="{
 				width: leftPaddingHandlerWidth + 'px',
-			}"
-			:class="{
-				'bg-transparent': !targetBlock.isSelected(),
-				'bg-purple-400': targetBlock.isSelected(),
 			}"
 			ref="leftPaddingHandler">
 			<div
@@ -94,13 +82,9 @@
 			</div>
 		</div>
 		<div
-			class="padding-handler pointer-events-none absolute right-0 flex h-full"
+			class="padding-handler pointer-events-none absolute right-0 flex h-full bg-purple-400"
 			:style="{
 				width: rightPaddingHandlerWidth + 'px',
-			}"
-			:class="{
-				'bg-transparent': !targetBlock.isSelected(),
-				'bg-purple-400': targetBlock.isSelected(),
 			}"
 			ref="rightPaddingHandler">
 			<div
@@ -150,9 +134,11 @@ const props = defineProps({
 		type: String,
 		default: "desktop",
 	},
+	target: {
+		type: [HTMLElement, SVGElement],
+		required: true,
+	},
 });
-
-const targetBlock = props.targetBlock;
 
 const updating = ref(false);
 const emit = defineEmits(["update"]);
@@ -172,17 +158,29 @@ const blockStyles = computed(() => {
 });
 
 const topPaddingHandlerHeight = computed(() => {
-	return getNumberFromPx(blockStyles.value.paddingTop) * canvasProps.scale;
+	return getPadding("Top");
 });
+
 const bottomPaddingHandlerHeight = computed(() => {
-	return getNumberFromPx(blockStyles.value.paddingBottom) * canvasProps.scale;
+	return getPadding("Bottom");
 });
+
 const leftPaddingHandlerWidth = computed(() => {
-	return getNumberFromPx(blockStyles.value.paddingLeft) * canvasProps.scale;
+	return getPadding("Left");
 });
+
 const rightPaddingHandlerWidth = computed(() => {
-	return getNumberFromPx(blockStyles.value.paddingRight) * canvasProps.scale;
+	return getPadding("Right");
 });
+
+const getPadding = (side: "Top" | "Left" | "Right" | "Bottom") => {
+	blockStyles.value.paddingRight;
+	blockStyles.value.paddingTop;
+	blockStyles.value.paddingBottom;
+	blockStyles.value.paddingLeft;
+	blockStyles.value.padding;
+	return getNumberFromPx(getComputedStyle(props.target)[`padding${side}`]) * canvasProps.scale;
+};
 
 const handleBorderWidth = computed(() => {
 	return `${clamp(1 * canvasProps.scale, 1, 2)}px`;
@@ -267,38 +265,39 @@ const handlePadding = (ev: MouseEvent, position: Position) => {
 		props.onUpdate && props.onUpdate();
 		if (position === Position.Top) {
 			movement = Math.max(startTop + mouseMoveEvent.clientY - startY, 0);
-			targetBlock.setStyle("paddingTop", movement + "px");
+			props.targetBlock.setStyle("paddingTop", movement + "px");
 			affectingAxis = "y";
 		} else if (position === Position.Bottom) {
 			movement = Math.max(startBottom + startY - mouseMoveEvent.clientY, 0);
-			targetBlock.setStyle("paddingBottom", movement + "px");
+			props.targetBlock.setStyle("paddingBottom", movement + "px");
 			affectingAxis = "y";
 		} else if (position === Position.Left) {
 			movement = Math.max(startLeft + mouseMoveEvent.clientX - startX, 0);
-			targetBlock.setStyle("paddingLeft", movement + "px");
+			props.targetBlock.setStyle("paddingLeft", movement + "px");
 			affectingAxis = "x";
 		} else if (position === Position.Right) {
 			movement = Math.max(startRight + startX - mouseMoveEvent.clientX, 0);
-			targetBlock.setStyle("paddingRight", movement + "px");
+			props.targetBlock.setStyle("paddingRight", movement + "px");
 			affectingAxis = "x";
 		}
 
 		if (mouseMoveEvent.altKey) {
 			if (affectingAxis === "y") {
-				targetBlock.setStyle("paddingTop", movement + "px");
-				targetBlock.setStyle("paddingBottom", movement + "px");
+				props.targetBlock.setStyle("paddingTop", movement + "px");
+				props.targetBlock.setStyle("paddingBottom", movement + "px");
 			} else if (affectingAxis === "x") {
-				targetBlock.setStyle("paddingLeft", movement + "px");
-				targetBlock.setStyle("paddingRight", movement + "px");
+				props.targetBlock.setStyle("paddingLeft", movement + "px");
+				props.targetBlock.setStyle("paddingRight", movement + "px");
 			}
 		} else if (mouseMoveEvent.shiftKey) {
-			targetBlock.setStyle("paddingTop", movement + "px");
-			targetBlock.setStyle("paddingBottom", movement + "px");
-			targetBlock.setStyle("paddingLeft", movement + "px");
-			targetBlock.setStyle("paddingRight", movement + "px");
+			props.targetBlock.setStyle("paddingTop", movement + "px");
+			props.targetBlock.setStyle("paddingBottom", movement + "px");
+			props.targetBlock.setStyle("paddingLeft", movement + "px");
+			props.targetBlock.setStyle("paddingRight", movement + "px");
 		}
 
 		mouseMoveEvent.preventDefault();
+		mouseMoveEvent.stopPropagation();
 	};
 	document.addEventListener("mousemove", mousemove);
 	document.addEventListener(

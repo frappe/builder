@@ -75,5 +75,3 @@ def kebab_to_camel_case(string):
 		word.capitalize() if index > 0 else word
 		for index, word in enumerate(string.split("-"))
 	)
-
-
