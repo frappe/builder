@@ -480,9 +480,6 @@ const isSelected = (block: Block) => {
 };
 
 const selectBlock = (_block: Block, multiSelect = false) => {
-	if (isSelected(_block)) {
-		return;
-	}
 	if (multiSelect) {
 		selectedBlockIds.value.push(_block.blockId);
 	} else {
@@ -501,30 +498,6 @@ const toggleBlockSelection = (_block: Block) => {
 const clearSelection = () => {
 	selectedBlockIds.value = [];
 };
-
-// findParentBlock(blockId: string, blocks?: Array<Block>): Block | null {
-// 			if (!blocks) {
-// 				const firstBlock = this.activeCanvas?.getFirstBlock() as Block;
-// 				if (!firstBlock) {
-// 					return null;
-// 				}
-// 				blocks = [firstBlock];
-// 			}
-// 			for (const block of blocks) {
-// 				if (block.children) {
-// 					for (const child of block.children) {
-// 						if (child.blockId === blockId) {
-// 							return block;
-// 						}
-// 					}
-// 					const found = this.findParentBlock(blockId, block.children);
-// 					if (found) {
-// 						return found;
-// 					}
-// 				}
-// 			}
-// 			return null;
-// 		},
 
 const findParentBlock = (blockId: string, blocks?: Block[]): Block | null => {
 	if (!blocks) {
