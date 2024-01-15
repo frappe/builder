@@ -80,10 +80,8 @@ const draggable = computed(() => {
 	return !props.block.isRoot() && !props.preview && false;
 });
 
-const hovered = ref(false);
-const isSelected = computed(() => {
-	return store.selectedBlocks.some((block) => block.blockId === props.block.blockId);
-});
+const isHovered = ref(false);
+const isSelected = ref(false);
 
 const getComponentName = (block: Block) => {
 	if (block.isRepeater()) {
@@ -146,7 +144,7 @@ const loadEditor = computed(() => {
 		target.value &&
 		props.block.getStyle("display") !== "none" &&
 		((isSelected.value && props.breakpoint === store.activeBreakpoint) ||
-			(hovered.value && store.hoveredBreakpoint === props.breakpoint)) &&
+			(isHovered.value && store.hoveredBreakpoint === props.breakpoint)) &&
 		!canvasProps?.scaling &&
 		!canvasProps?.panning
 	);
@@ -258,10 +256,24 @@ watch(
 	() => store.hoveredBlock,
 	(newValue, oldValue) => {
 		if (newValue === props.block.blockId) {
-			hovered.value = true;
+			isHovered.value = true;
 		} else if (oldValue === props.block.blockId) {
-			hovered.value = false;
+			isHovered.value = false;
 		}
+	}
+);
+
+watch(
+	() => store.activeCanvas?.selectedBlockIds,
+	() => {
+		if (store.activeCanvas?.isSelected(props.block)) {
+			isSelected.value = true;
+		} else {
+			isSelected.value = false;
+		}
+	},
+	{
+		deep: true,
 	}
 );
 </script>

@@ -54,7 +54,7 @@
 <script setup lang="ts">
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { createResource } from "frappe-ui";
-import { Ref, inject, ref } from "vue";
+import { Ref, inject, ref, watch } from "vue";
 import useStore from "../store";
 import BlockLayers from "./BlockLayers.vue";
 import BuilderComponents from "./BuilderComponents.vue";
@@ -89,4 +89,32 @@ const getPage = () => {
 const setActiveTab = (tab: LeftSidebarTabOption) => {
 	store.leftPanelActiveTab = tab;
 };
+
+// moved out of BlockLayers for performance
+// TODO: Find a better way to do this
+watch(
+	() => store.hoveredBlock,
+	() => {
+		document.querySelectorAll(`[data-block-layer-id].hovered-block`).forEach((el) => {
+			el.classList.remove("hovered-block");
+		});
+		if (store.hoveredBlock) {
+			document.querySelector(`[data-block-layer-id="${store.hoveredBlock}"]`)?.classList.add("hovered-block");
+		}
+	}
+);
+
+watch(
+	() => store.activeCanvas?.selectedBlocks,
+	() => {
+		document.querySelectorAll(`[data-block-layer-id].block-selected`).forEach((el) => {
+			el.classList.remove("block-selected");
+		});
+		if (store.activeCanvas?.selectedBlocks.length) {
+			store.activeCanvas?.selectedBlocks.forEach((block: Block) => {
+				document.querySelector(`[data-block-layer-id="${block.blockId}"]`)?.classList.add("block-selected");
+			});
+		}
+	}
+);
 </script>
