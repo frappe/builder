@@ -131,8 +131,8 @@ class Block implements BlockOptions {
 		if (this.isChildOfComponent) {
 			const componentBlock = store.getComponentBlock(this.isChildOfComponent as string);
 			return (
-				store.findBlock(this.referenceBlockId as string, [componentBlock]) ||
-				store.findBlock(this.blockId as string, [componentBlock]) ||
+				store.activeCanvas?.findBlock(this.referenceBlockId as string, [componentBlock]) ||
+				store.activeCanvas?.findBlock(this.blockId as string, [componentBlock]) ||
 				new Block({})
 			);
 		}
@@ -406,7 +406,11 @@ class Block implements BlockOptions {
 	}
 	getParentBlock(): Block | null {
 		const store = useStore();
-		return store.findParentBlock(this.blockId);
+		if (store.activeCanvas) {
+			return store.activeCanvas.findParentBlock(this.blockId);
+		} else {
+			return null;
+		}
 	}
 	canHaveChildren(): boolean {
 		return !(
