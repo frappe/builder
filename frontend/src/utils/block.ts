@@ -402,7 +402,9 @@ class Block implements BlockOptions {
 	}
 	selectBlock() {
 		const store = useStore();
-		store.selectBlock(this, null);
+		nextTick(() => {
+			store.selectBlock(this, null);
+		});
 	}
 	getParentBlock(): Block | null {
 		const store = useStore();

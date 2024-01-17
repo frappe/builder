@@ -313,8 +313,8 @@ const useStore = defineStore("store", {
 				.then((data: { message: { [key: string]: [] } }) => {
 					this.pageData = data.message;
 				})
-				.catch((e: { exc: string }) => {
-					const error_message = e.exc.split("\n").slice(-2)[0];
+				.catch((e: { exc: string | null }) => {
+					const error_message = e.exc?.split("\n").slice(-2)[0];
 					toast.error("There was an error while fetching page data", {
 						description: error_message,
 					});
