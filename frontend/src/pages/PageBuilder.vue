@@ -245,13 +245,11 @@ useEventListener(document, "keydown", (e) => {
 	if (isTargetEditable(e)) return;
 	if (e.key === "z" && isCtrlOrCmd(e) && !e.shiftKey && store.activeCanvas?.history.canUndo) {
 		store.activeCanvas?.history.undo();
-		updateSelectedBlocks();
 		e.preventDefault();
 		return;
 	}
 	if (e.key === "z" && e.shiftKey && isCtrlOrCmd(e) && store.activeCanvas?.history.canRedo) {
 		store.activeCanvas?.history.redo();
-		updateSelectedBlocks();
 		e.preventDefault();
 		return;
 	}
@@ -519,18 +517,6 @@ useEventListener(document, "visibilitychange", () => {
 		}
 	}
 });
-
-const updateSelectedBlocks = () => {
-	const selectedBlocks = blockController.getSelectedBlocks();
-	const activeCanvasBlocks = [store.activeCanvas?.block as Block];
-	for (const block of selectedBlocks) {
-		const blockInActiveCanvas = store.findBlock(block.blockId, activeCanvasBlocks);
-		if (blockInActiveCanvas) {
-			// replace in place
-			selectedBlocks.splice(selectedBlocks.indexOf(block), 1, blockInActiveCanvas);
-		}
-	}
-};
 
 watchEffect(() => {
 	if (componentCanvas.value) {
