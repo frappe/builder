@@ -252,28 +252,30 @@ const showBlock = computed(() => {
 	return data;
 });
 
-watch(
-	() => store.hoveredBlock,
-	(newValue, oldValue) => {
-		if (newValue === props.block.blockId) {
-			isHovered.value = true;
-		} else if (oldValue === props.block.blockId) {
-			isHovered.value = false;
+if (!props.preview) {
+	watch(
+		() => store.hoveredBlock,
+		(newValue, oldValue) => {
+			if (newValue === props.block.blockId) {
+				isHovered.value = true;
+			} else if (oldValue === props.block.blockId) {
+				isHovered.value = false;
+			}
 		}
-	}
-);
-
-watch(
-	() => store.activeCanvas?.selectedBlockIds,
-	() => {
-		if (store.activeCanvas?.isSelected(props.block)) {
-			isSelected.value = true;
-		} else {
-			isSelected.value = false;
+	);
+	watch(
+		() => store.activeCanvas?.selectedBlockIds,
+		() => {
+			if (store.activeCanvas?.isSelected(props.block)) {
+				isSelected.value = true;
+			} else {
+				isSelected.value = false;
+			}
+		},
+		{
+			deep: true,
+			immediate: true,
 		}
-	},
-	{
-		deep: true,
-	}
-);
+	);
+}
 </script>
