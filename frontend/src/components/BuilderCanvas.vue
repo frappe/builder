@@ -472,7 +472,7 @@ const setRootBlock = (newBlock: Block, resetCanvas = false) => {
 
 const selectedBlockIds = ref([]) as Ref<string[]>;
 const selectedBlocks = computed(() => {
-	return selectedBlockIds.value.map((id) => findBlock(id));
+	return selectedBlockIds.value.map((id) => findBlock(id)).filter((b) => b) as Block[];
 }) as Ref<Block[]>;
 
 const isSelected = (block: Block) => {
