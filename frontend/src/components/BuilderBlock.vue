@@ -214,7 +214,9 @@ const handleDoubleClick = (e: MouseEvent) => {
 
 	// dblclick on container adds text block or selects text block if only one child
 	let children = props.block.getChildren();
-	if (props.block.isContainer()) {
+	if (props.block.isHTML()) {
+		editor.value?.element.dispatchEvent(new MouseEvent("dblclick", e));
+	} else if (props.block.isContainer()) {
 		if (!children.length) {
 			const child = getBlockTemplate("text");
 			props.block.setBaseStyle("alignItems", "center");
