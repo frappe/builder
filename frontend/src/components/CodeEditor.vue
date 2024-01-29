@@ -7,7 +7,7 @@
 		<span class="text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
 			{{ label }}
 		</span>
-		<div ref="editor" class="border border-gray-200 dark:border-zinc-800" />
+		<div ref="editor" class="overscroll-none border border-gray-200 dark:border-zinc-800" />
 	</div>
 </template>
 <script setup lang="ts">
@@ -59,6 +59,7 @@ onMounted(() => {
 		fontSize: "12px",
 		useWorker: false,
 		showGutter: props.showLineNumbers,
+		wrap: props.showLineNumbers,
 	});
 	if (props.type === "CSS") {
 		import("ace-builds/src-noconflict/mode-css").then(() => {
