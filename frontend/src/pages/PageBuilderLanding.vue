@@ -51,9 +51,7 @@
 						{ label: 'Published', value: 'published' },
 						{ label: 'Unpublished', value: 'unpublished' },
 					]" />
-				<router-link :to="{ name: 'builder', params: { pageId: 'new' } }">
-					<Button variant="solid" icon-left="plus">New</Button>
-				</router-link>
+				<Button variant="solid" icon-left="plus" @click="() => (showDialog = true)">New</Button>
 			</div>
 		</div>
 		<div class="flex flex-wrap gap-6">
@@ -179,11 +177,26 @@
 			size="sm">
 			Load More
 		</Button>
+		<Dialog
+			:options="{
+				title: 'Select Template',
+				size: '6xl',
+			}"
+			v-model="showDialog">
+			<template #body-content>
+				<div
+					class="flex h-12 w-48 cursor-pointer items-center rounded-sm bg-gray-50 p-4 align-middle dark:bg-zinc-900"
+					@click="() => loadPage(null)">
+					Blank
+				</div>
+			</template>
+		</Dialog>
 	</section>
 </template>
 <script setup lang="ts">
 import CrossIcon from "@/components/Icons/Cross.vue";
 import { webPages } from "@/data/webPage";
+import router from "@/router";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { confirm } from "@/utils/helpers";
@@ -197,6 +210,7 @@ const displayType = useStorage("displayType", "grid");
 const store = useStore();
 const searchFilter = ref("");
 const typeFilter = ref("");
+const showDialog = ref(false);
 
 watchDebounced(
 	[searchFilter, typeFilter],
@@ -246,4 +260,11 @@ const loadMore = () => {
 onMounted(() => {
 	webPages.fetch();
 });
+
+const loadPage = (template: string | null) => {
+	if (!template) {
+		router.push({ name: "builder", params: { pageId: "new" } });
+		showDialog.value = false;
+	}
+};
 </script>

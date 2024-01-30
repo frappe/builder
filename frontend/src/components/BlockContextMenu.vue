@@ -45,7 +45,6 @@ import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { confirm, detachBlockFromComponent, getBlockCopy } from "@/utils/helpers";
 import { vOnClickOutside } from "@vueuse/components";
-import { Dialog } from "frappe-ui";
 import { nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
 import ContextMenu from "./ContextMenu.vue";
