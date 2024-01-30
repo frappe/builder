@@ -80,10 +80,8 @@ const draggable = computed(() => {
 	return !props.block.isRoot() && !props.preview && false;
 });
 
-const hovered = ref(false);
-const isSelected = computed(() => {
-	return store.selectedBlocks.some((block) => block.blockId === props.block.blockId);
-});
+const isHovered = ref(false);
+const isSelected = ref(false);
 
 const getComponentName = (block: Block) => {
 	if (block.isRepeater()) {
@@ -146,7 +144,7 @@ const loadEditor = computed(() => {
 		target.value &&
 		props.block.getStyle("display") !== "none" &&
 		((isSelected.value && props.breakpoint === store.activeBreakpoint) ||
-			(hovered.value && store.hoveredBreakpoint === props.breakpoint)) &&
+			(isHovered.value && store.hoveredBreakpoint === props.breakpoint)) &&
 		!canvasProps?.scaling &&
 		!canvasProps?.panning
 	);
@@ -216,7 +214,9 @@ const handleDoubleClick = (e: MouseEvent) => {
 
 	// dblclick on container adds text block or selects text block if only one child
 	let children = props.block.getChildren();
-	if (props.block.isContainer()) {
+	if (props.block.isHTML()) {
+		editor.value?.element.dispatchEvent(new MouseEvent("dblclick", e));
+	} else if (props.block.isContainer()) {
 		if (!children.length) {
 			const child = getBlockTemplate("text");
 			props.block.setBaseStyle("alignItems", "center");
@@ -254,14 +254,30 @@ const showBlock = computed(() => {
 	return data;
 });
 
-watch(
-	() => store.hoveredBlock,
-	(newValue, oldValue) => {
-		if (newValue === props.block.blockId) {
-			hovered.value = true;
-		} else if (oldValue === props.block.blockId) {
-			hovered.value = false;
+if (!props.preview) {
+	watch(
+		() => store.hoveredBlock,
+		(newValue, oldValue) => {
+			if (newValue === props.block.blockId) {
+				isHovered.value = true;
+			} else if (oldValue === props.block.blockId) {
+				isHovered.value = false;
+			}
 		}
-	}
-);
+	);
+	watch(
+		() => store.activeCanvas?.selectedBlockIds,
+		() => {
+			if (store.activeCanvas?.isSelected(props.block)) {
+				isSelected.value = true;
+			} else {
+				isSelected.value = false;
+			}
+		},
+		{
+			deep: true,
+			immediate: true,
+		}
+	);
+}
 </script>

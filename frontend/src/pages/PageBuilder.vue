@@ -105,9 +105,9 @@ useEventListener(
 useEventListener(document, "copy", (e) => {
 	if (isTargetEditable(e)) return;
 	e.preventDefault();
-	if (store.selectedBlocks.length) {
+	if (store.activeCanvas?.selectedBlocks.length) {
 		const componentDocuments: BuilderComponent[] = [];
-		store.selectedBlocks.forEach((block: Block) => {
+		store.activeCanvas?.selectedBlocks.forEach((block: Block) => {
 			const components = block.getUsedComponentNames();
 			components.forEach((componentName) => {
 				const component = store.getComponent(componentName);
@@ -118,7 +118,7 @@ useEventListener(document, "copy", (e) => {
 		});
 		// just copy non components
 		const dataToCopy = {
-			blocks: store.selectedBlocks,
+			blocks: store.activeCanvas?.selectedBlocks,
 			components: componentDocuments,
 		};
 		copyToClipboard(dataToCopy, e, "builder-copied-blocks");
@@ -162,8 +162,8 @@ useEventListener(document, "paste", async (e) => {
 			await store.createComponent(component, true);
 		}
 
-		if (store.selectedBlocks.length && dataObj.blocks[0].blockId !== "root") {
-			let parentBlock = store.selectedBlocks[0];
+		if (store.activeCanvas?.selectedBlocks.length && dataObj.blocks[0].blockId !== "root") {
+			let parentBlock = store.activeCanvas.selectedBlocks[0];
 			while (parentBlock && !parentBlock.canHaveChildren()) {
 				parentBlock = parentBlock.getParentBlock() as Block;
 			}
@@ -245,13 +245,11 @@ useEventListener(document, "keydown", (e) => {
 	if (isTargetEditable(e)) return;
 	if (e.key === "z" && isCtrlOrCmd(e) && !e.shiftKey && store.activeCanvas?.history.canUndo) {
 		store.activeCanvas?.history.undo();
-		updateSelectedBlocks();
 		e.preventDefault();
 		return;
 	}
 	if (e.key === "z" && e.shiftKey && isCtrlOrCmd(e) && store.activeCanvas?.history.canRedo) {
 		store.activeCanvas?.history.redo();
-		updateSelectedBlocks();
 		e.preventDefault();
 		return;
 	}
@@ -520,18 +518,6 @@ useEventListener(document, "visibilitychange", () => {
 	}
 });
 
-const updateSelectedBlocks = () => {
-	const selectedBlocks = blockController.getSelectedBlocks();
-	const activeCanvasBlocks = [store.activeCanvas?.block as Block];
-	for (const block of selectedBlocks) {
-		const blockInActiveCanvas = store.findBlock(block.blockId, activeCanvasBlocks);
-		if (blockInActiveCanvas) {
-			// replace in place
-			selectedBlocks.splice(selectedBlocks.indexOf(block), 1, blockInActiveCanvas);
-		}
-	}
-};
-
 watchEffect(() => {
 	if (componentCanvas.value) {
 		store.activeCanvas = componentCanvas.value;
@@ -556,20 +542,6 @@ watch(
 	},
 	{
 		deep: true,
-	}
-);
-
-// moved out of BlockLayers for performance
-// TODO: Find a better way to do this
-watch(
-	() => store.hoveredBlock,
-	() => {
-		document.querySelectorAll(`[data-block-layer-id].hovered-block`).forEach((el) => {
-			el.classList.remove("hovered-block");
-		});
-		if (store.hoveredBlock) {
-			document.querySelector(`[data-block-layer-id="${store.hoveredBlock}"]`)?.classList.add("hovered-block");
-		}
 	}
 );
 </script>
