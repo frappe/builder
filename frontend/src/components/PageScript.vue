@@ -53,7 +53,6 @@
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { Dialog } from "frappe-ui";
 import { onMounted, ref } from "vue";
 import CodeEditor from "./CodeEditor.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
