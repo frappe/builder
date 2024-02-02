@@ -365,7 +365,7 @@ def append_style(style_obj, style_tag, style_class, device="desktop"):
 
 def append_state_style(style_obj, style_tag, style_class):
 	for key, value in style_obj.items():
-		state, property = key.split(":")
+		state, property = key.split(":", 1)
 		style_tag.append(f".{style_class}:{state} {{ {property}: {value} }}")
 
 
