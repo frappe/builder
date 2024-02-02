@@ -54,7 +54,7 @@
 			</div>
 		</div>
 		<div
-			class="fixed bottom-12 left-[50%] z-40 flex translate-x-[-50%] items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-center text-sm font-semibold text-gray-600 shadow-md dark:bg-zinc-900 dark:text-zinc-400"
+			class="fixed bottom-12 left-[50%] z-40 flex translate-x-[-50%] cursor-default items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-center text-sm font-semibold text-gray-600 shadow-md dark:bg-zinc-900 dark:text-zinc-400"
 			v-show="!canvasProps.panning">
 			{{ Math.round(canvasProps.scale * 100) + "%" }}
 			<div class="ml-2 cursor-pointer" @click="setScaleAndTranslate">
