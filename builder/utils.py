@@ -73,6 +73,7 @@ def get_safer_globals():
 				exists=frappe.db.exists,
 				get_all=safe_get_all,
 				get_list=safe_get_list,
+				get_single_value=frappe.db.get_single_value,
 			),
 			make_get_request=make_safe_get_request,
 			get_doc=get_doc_as_dict,
