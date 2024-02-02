@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build --base=/assets/builder/frontend/ && yarn copy-html-entry",
     "copy-html-entry": "cp ../builder/public/frontend/index.html ../builder/www/builder.html",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test-local": "cypress open --e2e --browser chrome",
+    "test": "npx cypress run --record --key fa50a4df-569e-41bc-8600-850331fd1630"
   },
   "dependencies": {
     "@tiptap/extension-color": "^2.0.4",
@@ -33,6 +35,7 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "3",
     "autoprefixer": "^10.4.2",
+    "cypress": "^13.3.2",
     "eslint": "^8.38.0",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-vue": "^9.11.0",
