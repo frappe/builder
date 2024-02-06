@@ -17,6 +17,7 @@ const webPages = createListResource({
 		"dynamic_route",
 		"client_scripts",
 		"modified",
+		"owner",
 	],
 	cache: "pages",
 	orderBy: "modified desc",
