@@ -19,7 +19,28 @@
 					left: `${store.showLeftPanel ? store.builderLayout.leftPanelWidth : 0}px`,
 					right: `${store.showRightPanel ? store.builderLayout.rightPanelWidth : 0}px`,
 				}"
-				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-400 p-10 dark:bg-zinc-700"></BuilderCanvas>
+				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-400 p-10 dark:bg-zinc-700">
+				<template v-slot:header>
+					<div
+						class="absolute left-0 right-0 top-0 z-20 flex items-center justify-between bg-white p-2 text-sm text-gray-800 dark:bg-zinc-900 dark:text-zinc-400">
+						<div class="flex items-center gap-1 text-xs">
+							<a @click="store.editPage(false)" class="cursor-pointer">Page</a>
+							<FeatherIcon name="chevron-right" class="h-3 w-3" />
+							{{ store.getComponent(store.editingComponent).component_name }}
+						</div>
+						<Button
+							class="text-xs dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+							@click="
+								() => {
+									store.editPage(true);
+									clearSelectedComponent();
+								}
+							">
+							Save Component
+						</Button>
+					</div>
+				</template>
+			</BuilderCanvas>
 			<BuilderCanvas
 				v-show="!store.editingComponent"
 				ref="pageCanvas"
@@ -81,9 +102,6 @@ window.blockController = blockController;
 
 const pageCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 const componentCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
-
-const keys = useMagicKeys();
-const CtrlBacktick = keys["Ctrl+`"];
 
 provide("pageCanvas", pageCanvas);
 provide("componentCanvas", componentCanvas);
@@ -555,9 +573,6 @@ watch(
 
 [id^="headlessui-menu-items"] {
 	@apply dark:bg-zinc-800;
-	@apply no-scrollbar;
-	@apply overflow-auto;
-	@apply max-h-56;
 }
 
 [id^="headlessui-menu-items"] button {
