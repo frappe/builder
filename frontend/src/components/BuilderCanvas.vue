@@ -1,5 +1,6 @@
 <template>
 	<div ref="canvasContainer" @click="handleClick">
+		<slot name="header"></slot>
 		<div class="overlay absolute" id="overlay" ref="overlay" />
 		<BlockSnapGuides></BlockSnapGuides>
 		<div
