@@ -129,7 +129,20 @@ const contextMenuOptions: ContextMenuOption[] = [
 		label: "Convert To Link",
 		action: () => {
 			blockController.getSelectedBlocks().forEach((block: Block) => {
-				block.convertToLink();
+				if (block.isSVG()) {
+					const parentBlock = block.getParentBlock();
+					if (!parentBlock) return;
+					const newBlockObj = getBlockTemplate("fit-container");
+					const newBlock = parentBlock.addChild(newBlockObj, parentBlock.getChildIndex(block));
+					newBlock.addChild(block);
+					parentBlock.removeChild(block);
+					newBlock.convertToLink();
+					nextTick(() => {
+						newBlock.selectBlock();
+					});
+				} else {
+					block.convertToLink();
+				}
 			});
 		},
 		condition: () =>
@@ -148,19 +161,24 @@ const contextMenuOptions: ContextMenuOption[] = [
 			const blockPosition = Math.min(...selectedBlocks.map(parentBlock.getChildIndex.bind(parentBlock)));
 			const newBlock = parentBlock?.addChild(newBlockObj, blockPosition);
 
-			newBlock.setStyle("display", parentBlock.getStyle("display") || "flex");
-			newBlock.setStyle("flex-direction", parentBlock.getStyle("flex-direction") || "column");
-			newBlock.setStyle("align-items", parentBlock.getStyle("align-items") || "center");
-			newBlock.setStyle("width", parentBlock.getStyle("width") || "fit-content");
-			newBlock.setStyle("height", parentBlock.getStyle("height") || "fit-content");
-
+			let width = null as string | null;
 			// move selected blocks to newBlock
 			selectedBlocks
 				.sort((a, b) => parentBlock.getChildIndex(a) - parentBlock.getChildIndex(b))
 				.forEach((block) => {
 					parentBlock?.removeChild(block);
 					newBlock?.addChild(block);
+					if (!width) {
+						const blockWidth = block.getStyle("width") as string | undefined;
+						if (blockWidth && (blockWidth == "auto" || blockWidth.endsWith("%"))) {
+							width = "100%";
+						}
+					}
 				});
+
+			if (width) {
+				newBlock?.setStyle("width", width);
+			}
 
 			nextTick(() => {
 				if (newBlock) {
