@@ -43,7 +43,7 @@
 				:target-block="block"
 				:target="target" />
 			<BoxResizer
-				v-if="showResizer && !block.isSVG()"
+				v-if="showResizer"
 				:targetBlock="block"
 				@resizing="resizing = $event"
 				:target="(target as HTMLElement)" />
@@ -94,8 +94,7 @@ const showResizer = computed(() => {
 		!props.editable &&
 		isBlockSelected.value &&
 		!blockController.multipleBlocksSelected() &&
-		!props.block.isSVG() &&
-		!props.block.isHTML()
+		!(props.block.isHTML() && !props.block.isSVG())
 	);
 });
 
