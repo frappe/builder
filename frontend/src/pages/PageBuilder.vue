@@ -216,8 +216,8 @@ useEventListener(document, "paste", async (e) => {
 			if (text.startsWith("<svg")) {
 				const dom = new DOMParser().parseFromString(text, "text/html");
 				const svg = dom.body.querySelector("svg") as SVGElement;
-				const width = svg.getAttribute("width");
-				const height = svg.getAttribute("height");
+				const width = svg.getAttribute("width") || "100";
+				const height = svg.getAttribute("height") || "100";
 				if (width && block.baseStyles) {
 					block.baseStyles.width = addPxToNumber(parseInt(width));
 					svg.removeAttribute("width");

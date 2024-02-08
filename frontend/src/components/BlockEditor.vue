@@ -11,7 +11,13 @@
 			:data-block-id="block.blockId"
 			:class="getStyleClasses">
 			<PaddingHandler
-				v-if="isBlockSelected && !resizing && !editable && !blockController.multipleBlocksSelected()"
+				v-if="
+					isBlockSelected &&
+					!resizing &&
+					!editable &&
+					!blockController.multipleBlocksSelected() &&
+					!block.isSVG()
+				"
 				:target-block="block"
 				:target="target"
 				:on-update="updateTracker"
