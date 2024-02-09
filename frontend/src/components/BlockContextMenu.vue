@@ -109,7 +109,7 @@ const createComponentHandler = ({ close }: { close: () => void }) => {
 		})
 		.then(async (data: BuilderComponent) => {
 			await webComponent.list.promise;
-			const block = store.findBlock(props.block.blockId);
+			const block = store.activeCanvas?.findBlock(props.block.blockId);
 			if (!block) return;
 			block.extendFromComponent(data.name);
 		});
