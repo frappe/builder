@@ -11,7 +11,13 @@
 			:data-block-id="block.blockId"
 			:class="getStyleClasses">
 			<PaddingHandler
-				v-if="isBlockSelected && !resizing && !editable && !blockController.multipleBlocksSelected()"
+				v-if="
+					isBlockSelected &&
+					!resizing &&
+					!editable &&
+					!blockController.multipleBlocksSelected() &&
+					!block.isSVG()
+				"
 				:target-block="block"
 				:target="target"
 				:on-update="updateTracker"
@@ -43,7 +49,7 @@
 				:target-block="block"
 				:target="target" />
 			<BoxResizer
-				v-if="showResizer && !block.isSVG()"
+				v-if="showResizer"
 				:targetBlock="block"
 				@resizing="resizing = $event"
 				:target="(target as HTMLElement)" />
@@ -94,8 +100,7 @@ const showResizer = computed(() => {
 		!props.editable &&
 		isBlockSelected.value &&
 		!blockController.multipleBlocksSelected() &&
-		!props.block.isSVG() &&
-		!props.block.isHTML()
+		!(props.block.isHTML() && !props.block.isSVG())
 	);
 });
 

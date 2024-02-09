@@ -100,7 +100,10 @@ const handleRightResize = (ev: MouseEvent) => {
 			return mouseMoveEvent.preventDefault();
 		}
 
-		if (mouseMoveEvent.shiftKey) {
+		if (props.targetBlock.isSVG()) {
+			props.targetBlock.setStyle("width", `${finalWidth}px`);
+			props.targetBlock.setStyle("height", `${finalWidth}px`);
+		} else if (mouseMoveEvent.shiftKey) {
 			const movementPercent = (movement / parentWidth) * 100;
 			const startWidthPercent = (startWidth / parentWidth) * 100;
 			const finalWidth = Math.abs(Math.round(startWidthPercent + movementPercent));
@@ -145,7 +148,13 @@ const handleBottomResize = (ev: MouseEvent) => {
 			return mouseMoveEvent.preventDefault();
 		}
 
-		props.targetBlock.setStyle("height", `${finalHeight}px`);
+		if (props.targetBlock.isSVG()) {
+			props.targetBlock.setStyle("width", `${finalHeight}px`);
+			props.targetBlock.setStyle("height", `${finalHeight}px`);
+		} else {
+			props.targetBlock.setStyle("height", `${finalHeight}px`);
+		}
+
 		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);
@@ -184,7 +193,7 @@ const handleBottomCornerResize = (ev: MouseEvent) => {
 			return mouseMoveEvent.preventDefault();
 		}
 
-		if (mouseMoveEvent.shiftKey) {
+		if (mouseMoveEvent.shiftKey || props.targetBlock.isSVG()) {
 			props.targetBlock.setStyle("width", `${finalWidth}px`);
 			props.targetBlock.setStyle("height", `${finalWidth}px`);
 		} else {

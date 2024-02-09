@@ -74,6 +74,7 @@ import Block, { styleProperty } from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import {
+	addPxToNumber,
 	copyToClipboard,
 	getBlockCopy,
 	isCtrlOrCmd,
@@ -198,7 +199,7 @@ useEventListener(document, "paste", async (e) => {
 		return;
 	}
 
-	const text = e.clipboardData?.getData("text/plain") as string;
+	let text = e.clipboardData?.getData("text/plain") as string;
 	if (!text) {
 		return;
 	}
@@ -211,7 +212,25 @@ useEventListener(document, "paste", async (e) => {
 		} else {
 			let block = null as unknown as Block | BlockOptions;
 			block = getBlockTemplate("html");
+
+			if (text.startsWith("<svg")) {
+				const dom = new DOMParser().parseFromString(text, "text/html");
+				const svg = dom.body.querySelector("svg") as SVGElement;
+				const width = svg.getAttribute("width") || "100";
+				const height = svg.getAttribute("height") || "100";
+				if (width && block.baseStyles) {
+					block.baseStyles.width = addPxToNumber(parseInt(width));
+					svg.removeAttribute("width");
+				}
+				if (height && block.baseStyles) {
+					block.baseStyles.height = addPxToNumber(parseInt(height));
+					svg.removeAttribute("height");
+				}
+				text = svg.outerHTML;
+			}
+
 			block.innerHTML = text;
+
 			const parentBlock = blockController.getSelectedBlocks()[0];
 			if (parentBlock) {
 				parentBlock.addChild(block);
