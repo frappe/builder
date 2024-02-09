@@ -9,17 +9,18 @@ import bs4 as bs
 import frappe
 import frappe.utils
 from builder.html_preview_image import generate_preview
+from builder.utils import safer_exec
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
-from frappe.utils.safe_exec import safe_exec, is_safe_exec_enabled
+from frappe.utils.safe_exec import is_safe_exec_enabled, safe_exec
 from frappe.website.page_renderers.document_page import DocumentPage
 from frappe.website.path_resolver import evaluate_dynamic_routes
 from frappe.website.path_resolver import resolve_path as original_resolve_path
 from frappe.website.serve import get_response_content
+from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
 from jinja2.exceptions import TemplateSyntaxError
 from werkzeug.routing import Rule
-from builder.utils import safer_exec
 
 MOBILE_BREAKPOINT = 576
 TABLET_BREAKPOINT = 768
@@ -78,6 +79,9 @@ class BuilderPage(WebsiteGenerator):
 		if self.has_value_changed("dynamic_route") or self.has_value_changed("route"):
 			get_web_pages_with_dynamic_routes.clear_cache()
 			find_page_with_path.clear_cache()
+
+		if self.has_value_changed("published") and not self.published:
+			clear_cache(self.route)
 
 	def autoname(self):
 		if not self.name:
