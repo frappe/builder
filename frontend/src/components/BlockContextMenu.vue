@@ -43,7 +43,7 @@ import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { confirm, getBlockCopy } from "@/utils/helpers";
+import { confirm, detachBlockFromComponent, getBlockCopy } from "@/utils/helpers";
 import { vOnClickOutside } from "@vueuse/components";
 import { Dialog } from "frappe-ui";
 import { nextTick, ref } from "vue";
@@ -259,6 +259,17 @@ const contextMenuOptions: ContextMenuOption[] = [
 		label: "Edit Component",
 		action: () => {
 			store.editComponent(props.block);
+		},
+		condition: () => Boolean(props.block.extendedFromComponent),
+	},
+	{
+		label: "Detach Component",
+		action: () => {
+			const newBlock = detachBlockFromComponent(props.block);
+			if (newBlock) {
+				newBlock.selectBlock();
+			}
+			props.block.getParentBlock()?.replaceChild(props.block, newBlock);
 		},
 		condition: () => Boolean(props.block.extendedFromComponent),
 	},
