@@ -371,6 +371,12 @@ class Block implements BlockOptions {
 			this.children.splice(index, 1);
 		}
 	}
+	replaceChild(child: Block, newChild: Block) {
+		const index = this.getChildIndex(child);
+		if (index > -1) {
+			this.children.splice(index, 1, newChild);
+		}
+	}
 	getChildIndex(child: Block) {
 		return this.children.findIndex((block) => block.blockId === child.blockId);
 	}
