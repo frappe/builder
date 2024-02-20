@@ -565,7 +565,7 @@ class Block implements BlockOptions {
 	}
 	getElement() {
 		if (this.isExtendedFromComponent()) {
-			return this.getComponent()?.element || "div";
+			return this.getComponent()?.element || this.element;
 		}
 		return this.element;
 	}

@@ -76,6 +76,7 @@ import getBlockTemplate from "@/utils/blockTemplate";
 import {
 	addPxToNumber,
 	copyToClipboard,
+	detachBlockFromComponent,
 	getBlockCopy,
 	isCtrlOrCmd,
 	isHTMLString,
@@ -135,9 +136,15 @@ useEventListener(document, "copy", (e) => {
 				}
 			});
 		});
+		const blocksToCopy = store.activeCanvas?.selectedBlocks.map((block) => {
+			if (!Boolean(block.extendedFromComponent) && block.isChildOfComponent) {
+				return detachBlockFromComponent(block);
+			}
+			return block;
+		});
 		// just copy non components
 		const dataToCopy = {
-			blocks: store.activeCanvas?.selectedBlocks,
+			blocks: blocksToCopy,
 			components: componentDocuments,
 		};
 		copyToClipboard(dataToCopy, e, "builder-copied-blocks");

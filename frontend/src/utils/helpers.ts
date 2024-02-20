@@ -260,6 +260,34 @@ function isCtrlOrCmd(e: KeyboardEvent) {
 	return e.ctrlKey || e.metaKey;
 }
 
+const detachBlockFromComponent = (block: Block) => {
+	const blockCopy = getBlockCopy(block);
+	const component = block.getComponent();
+	blockCopy.element = block?.getElement();
+	blockCopy.attributes = block.getAttributes();
+	blockCopy.classes = block.getClasses();
+	blockCopy.baseStyles = component?.baseStyles
+		? { ...component.baseStyles, ...block.baseStyles }
+		: block.baseStyles;
+	blockCopy.mobileStyles = component?.mobileStyles
+		? { ...component.mobileStyles, ...block.mobileStyles }
+		: block.mobileStyles;
+	blockCopy.tabletStyles = component?.tabletStyles
+		? { ...component.tabletStyles, ...block.tabletStyles }
+		: block.tabletStyles;
+	blockCopy.customAttributes = component?.customAttributes
+		? { ...component.customAttributes, ...block.customAttributes }
+		: block.customAttributes;
+	blockCopy.isRepeaterBlock = component?.isRepeaterBlock || block.isRepeaterBlock;
+	blockCopy.visibilityCondition = component?.visibilityCondition || block.visibilityCondition;
+	blockCopy.innerHTML = component?.innerHTML || block.innerHTML;
+	delete blockCopy.extendedFromComponent;
+	delete blockCopy.isChildOfComponent;
+	delete blockCopy.referenceBlockId;
+	blockCopy.children = blockCopy.children.map(detachBlockFromComponent);
+	return blockCopy;
+};
+
 export {
 	HSVToHex,
 	HexToHSV,
@@ -267,6 +295,7 @@ export {
 	addPxToNumber,
 	confirm,
 	copyToClipboard,
+	detachBlockFromComponent,
 	findNearestSiblingIndex,
 	getBlockCopy,
 	getBlockInstance,
