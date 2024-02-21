@@ -280,7 +280,7 @@ const detachBlockFromComponent = (block: Block) => {
 		: block.customAttributes;
 	blockCopy.isRepeaterBlock = component?.isRepeaterBlock || block.isRepeaterBlock;
 	blockCopy.visibilityCondition = component?.visibilityCondition || block.visibilityCondition;
-	blockCopy.innerHTML = component?.innerHTML || block.innerHTML;
+	blockCopy.innerHTML = block.innerHTML || blockCopy.innerHTML;
 	delete blockCopy.extendedFromComponent;
 	delete blockCopy.isChildOfComponent;
 	delete blockCopy.referenceBlockId;
