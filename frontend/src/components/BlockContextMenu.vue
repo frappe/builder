@@ -147,6 +147,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		},
 		condition: () =>
 			(props.block.isContainer() || props.block.isText()) &&
+			!props.block.isLink() &&
 			!props.block.isExtendedFromComponent() &&
 			!props.block.isRoot(),
 	},
