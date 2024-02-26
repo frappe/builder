@@ -22,6 +22,8 @@ from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
 from jinja2.exceptions import TemplateSyntaxError
 from werkzeug.routing import Rule
+from frappe.modules.export_file import export_to_files
+
 
 MOBILE_BREAKPOINT = 576
 TABLET_BREAKPOINT = 768
@@ -84,9 +86,12 @@ class BuilderPage(WebsiteGenerator):
 		if self.has_value_changed("published") and not self.published:
 			clear_cache(self.route)
 
+		if frappe.conf.developer_mode and self.is_template:
+			export_to_files(record_list=[["Builder Page", self.name, "builder_page_template"]], record_module="builder")
+
 	def autoname(self):
 		if not self.name:
-			self.name = f"page-{frappe.generate_hash(length=5)}"
+			self.name = f"page-{frappe.generate_hash(length=8)}"
 
 	@frappe.whitelist()
 	def publish(self, **kwargs):

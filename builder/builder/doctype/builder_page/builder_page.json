@@ -16,6 +16,7 @@
   "route",
   "dynamic_route",
   "is_template",
+  "template_name",
   "section_break_ujsp",
   "blocks",
   "draft_blocks",
@@ -137,11 +138,18 @@
    "fieldname": "is_template",
    "fieldtype": "Check",
    "label": "Is Template"
+  },
+  {
+   "depends_on": "is_template",
+   "fieldname": "template_name",
+   "fieldtype": "Data",
+   "label": "Template Name",
+   "mandatory_depends_on": "is_template"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-02-21 12:32:39.316486",
+ "modified": "2024-02-26 09:56:14.345845",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

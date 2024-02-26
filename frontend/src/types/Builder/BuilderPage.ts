@@ -21,6 +21,8 @@ export interface BuilderPage{
 	dynamic_route?: 0 | 1
 	/**	Is Template : Check	*/
 	is_template?: 0 | 1
+	/**	Template Name : Data	*/
+	template_name?: string
 	/**	Blocks : JSON	*/
 	blocks?: any
 	/**	Draft Blocks : JSON	*/

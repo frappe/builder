@@ -1,19 +1,15 @@
+import os
+import socket
+from os.path import join
 from urllib.parse import urlparse
 
 import frappe
-import socket
-
-from frappe.utils.safe_exec import (
-	FrappeTransformer,
-	NamespaceDict,
-	get_python_builtins,
-	safe_exec_flags,
-	get_safe_globals,
-	SERVER_SCRIPT_FILE_PREFIX
-)
-
+from frappe.modules.import_file import import_file_by_path
+from frappe.utils.safe_exec import (SERVER_SCRIPT_FILE_PREFIX,
+	FrappeTransformer, NamespaceDict,
+	get_python_builtins, get_safe_globals,
+	safe_exec_flags)
 from RestrictedPython import compile_restricted
-
 
 
 def get_doc_as_dict(doctype, name):
@@ -121,3 +117,19 @@ def safer_exec(
 		)
 
 	return exec_globals, _locals
+
+
+def sync_page_template():
+	print("Syncing Page Templates")
+	builder_page_template_path = frappe.get_module_path(
+		"builder", "builder_page_template"
+	)
+	make_records(builder_page_template_path)
+
+def make_records(path):
+	if os.path.isdir(path):
+		for fname in os.listdir(path):
+			if os.path.isdir(join(path, fname)):
+				if fname == "__pycache__":
+					continue
+				import_file_by_path(f"{path}/{fname}/{fname}.json")
