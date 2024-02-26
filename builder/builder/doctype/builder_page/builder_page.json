@@ -15,6 +15,7 @@
   "column_break_nasy",
   "route",
   "dynamic_route",
+  "is_template",
   "section_break_ujsp",
   "blocks",
   "draft_blocks",
@@ -130,11 +131,17 @@
    "fieldtype": "Table MultiSelect",
    "label": "Client Scripts",
    "options": "Builder Page Client Script"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_template",
+   "fieldtype": "Check",
+   "label": "Is Template"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-12-29 17:26:16.477410",
+ "modified": "2024-02-21 12:32:39.316486",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",
