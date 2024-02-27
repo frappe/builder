@@ -82,28 +82,28 @@
 			}"
 			v-model="showDialog">
 			<template #body-content>
-				<div>
-					<div class="mb-5 max-w-[250px] flex-grow basis-52">
-						<div
-							@click="() => loadPage(null)"
-							class="group relative mr-2 w-full overflow-hidden rounded-md shadow hover:cursor-pointer dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
-							<img
-								width="250"
-								height="140"
-								:src="'/assets/builder/images/fallback.png'"
-								class="w-full overflow-hidden rounded-lg bg-gray-50 object-cover p-2 dark:bg-zinc-900" />
-							<div class="flex items-center justify-between border-t-[1px] px-3 dark:border-zinc-800">
-								<span class="inline-block max-w-[160px] py-2 text-sm text-gray-700 dark:text-zinc-200">
-									<div class="flex items-center gap-1">
-										<p class="truncate">Blank</p>
-									</div>
-								</span>
-							</div>
+				<div class="flex flex-wrap gap-6">
+					<div
+						@click="() => loadPage(null)"
+						class="group relative mr-2 w-full max-w-[250px] flex-grow basis-52 overflow-hidden rounded-md shadow hover:cursor-pointer dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
+						<img
+							width="250"
+							height="140"
+							:src="'/assets/builder/images/fallback.png'"
+							class="w-full overflow-hidden rounded-lg bg-gray-50 object-cover p-2 dark:bg-zinc-900" />
+						<div class="flex items-center justify-between border-t-[1px] px-3 dark:border-zinc-800">
+							<span class="inline-block max-w-[160px] py-2 text-sm text-gray-700 dark:text-zinc-200">
+								<div class="flex items-center gap-1">
+									<p class="truncate">Blank</p>
+								</div>
+							</span>
 						</div>
 					</div>
-					<div class="flex flex-wrap gap-6">
-						<TemplatePagePreview v-for="page in webPages.data.slice(0, 8)" :page="page"></TemplatePagePreview>
-					</div>
+					<TemplatePagePreview
+						class="max-w-[250px] flex-grow basis-52"
+						v-for="page in webPages.data.slice(0, 8)"
+						:page="page"
+						@click="() => duplicatePage(page)"></TemplatePagePreview>
 				</div>
 			</template>
 		</Dialog>
@@ -116,6 +116,7 @@ import TemplatePagePreview from "@/components/TemplatePagePreview.vue";
 import { webPages } from "@/data/webPage";
 import router from "@/router";
 import useStore from "@/store";
+import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { useStorage, watchDebounced } from "@vueuse/core";
 import { TabButtons } from "frappe-ui";
 import { Ref, onMounted, ref } from "vue";
@@ -167,5 +168,15 @@ const loadPage = (template: string | null) => {
 		router.push({ name: "builder", params: { pageId: "new" } });
 		showDialog.value = false;
 	}
+};
+
+const duplicatePage = async (page: BuilderPage) => {
+	const pageCopy = { ...page };
+	pageCopy.page_name = `${page.page_name}-copy`;
+	pageCopy.page_title = `${page.page_title} Copy`;
+	pageCopy.is_template = 0;
+	const newPage = await webPages.insert.submit(pageCopy);
+	router.push({ name: "builder", params: { pageId: newPage.name } });
+	showDialog.value = false;
 };
 </script>
