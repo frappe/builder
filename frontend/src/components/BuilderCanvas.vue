@@ -349,20 +349,14 @@ const setScaleAndTranslate = async () => {
 		});
 	}
 	const paddingX = 300;
-	const paddingY = 400;
+	const paddingY = 200;
 
 	await nextTick();
 	canvasBound.update();
 	const containerWidth = containerBound.width;
-	const containerHeight = containerBound.height;
-
 	const canvasWidth = canvasBound.width / canvasProps.scale;
-	const canvasHeight = canvasBound.height / canvasProps.scale;
 
-	canvasProps.scale = Math.min(
-		containerWidth / (canvasWidth + paddingX * 2),
-		containerHeight / (canvasHeight + paddingY * 2)
-	);
+	canvasProps.scale = containerWidth / (canvasWidth + paddingX * 2);
 
 	canvasProps.translateX = 0;
 	canvasProps.translateY = 0;
