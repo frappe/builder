@@ -94,7 +94,7 @@ const handleRightResize = (ev: MouseEvent) => {
 		// movement / scale * speed
 		const movement = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
 		const finalWidth = Math.abs(guides.getFinalWidth(startWidth + movement));
-		if (props.targetBlock.isText() && !mouseMoveEvent.shiftKey) {
+		if (props.targetBlock.isText() && !props.targetBlock.hasChildren() && !mouseMoveEvent.shiftKey) {
 			const fontSize = clamp(Math.round(startFontSize + 0.5 * movement), 10, 150);
 			props.targetBlock.setStyle("fontSize", `${fontSize}px`);
 			return mouseMoveEvent.preventDefault();
@@ -142,7 +142,7 @@ const handleBottomResize = (ev: MouseEvent) => {
 		const movement = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
 		let finalHeight = Math.round(Math.abs(guides.getFinalHeight(startHeight + movement)));
 
-		if (props.targetBlock.isText() && !mouseMoveEvent.shiftKey) {
+		if (props.targetBlock.isText() && !props.targetBlock.hasChildren() && !mouseMoveEvent.shiftKey) {
 			const fontSize = clamp(Math.round(startFontSize + 0.5 * movement), 10, 300);
 			props.targetBlock.setStyle("fontSize", `${fontSize}px`);
 			return mouseMoveEvent.preventDefault();
@@ -187,7 +187,7 @@ const handleBottomCornerResize = (ev: MouseEvent) => {
 		const movementX = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
 		const finalWidth = Math.round(startWidth + movementX);
 
-		if (props.targetBlock.isText() && !mouseMoveEvent.shiftKey) {
+		if (props.targetBlock.isText() && !props.targetBlock.hasChildren() && !mouseMoveEvent.shiftKey) {
 			const fontSize = clamp(Math.round(startFontSize + 0.5 * movementX), 10, 300);
 			props.targetBlock.setStyle("fontSize", `${fontSize}px`);
 			return mouseMoveEvent.preventDefault();
