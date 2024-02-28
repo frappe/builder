@@ -10,6 +10,7 @@
 			class="fixed flex gap-40"
 			ref="canvas"
 			:style="{
+				transformOrigin: 'top center',
 				transform: `scale(${canvasProps.scale}) translate(${canvasProps.translateX}px, ${canvasProps.translateY}px)`,
 			}">
 			<div class="absolute right-0 top-[-60px] flex rounded-md bg-white px-3 dark:bg-zinc-900">
