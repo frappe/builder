@@ -12,6 +12,10 @@ defineProps({
 		type: Block,
 		required: true,
 	},
+	data: {
+		type: Object,
+		default: null,
+	},
 });
 
 defineExpose({
