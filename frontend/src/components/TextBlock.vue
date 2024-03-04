@@ -46,6 +46,24 @@
 			</div>
 			<div v-show="!settingLink" class="flex gap-1">
 				<button
+					@click="() => setHeading(1)"
+					class="rounded px-2 py-1 text-sm hover:bg-gray-100"
+					:class="{ 'bg-gray-200': editor.isActive('heading', { level: 1 }) }">
+					<code>H1</code>
+				</button>
+				<button
+					@click="setHeading(2)"
+					class="rounded px-2 py-1 text-sm hover:bg-gray-100"
+					:class="{ 'bg-gray-200': editor.isActive('heading', { level: 2 }) }">
+					<code>H2</code>
+				</button>
+				<button
+					@click="setHeading(3)"
+					class="rounded px-2 py-1 text-sm hover:bg-gray-100"
+					:class="{ 'bg-gray-200': editor.isActive('heading', { level: 3 }) }">
+					<code>H3</code>
+				</button>
+				<button
 					@click="editor.chain().focus().toggleBold().run()"
 					class="rounded px-2 py-1 hover:bg-gray-100"
 					:class="{ 'bg-gray-200': editor.isActive('bold') }">
@@ -215,7 +233,17 @@ if (!props.preview) {
 						}),
 					],
 					onUpdate({ editor }) {
-						const innerHTML = editor.isEmpty ? "" : editor.getHTML();
+						let innerHTML = editor.isEmpty ? "" : editor.getHTML();
+						if (
+							props.block.isHeader() &&
+							!(
+								editor.isActive("heading", { level: 1 }) ||
+								editor.isActive("heading", { level: 2 }) ||
+								editor.isActive("heading", { level: 3 })
+							)
+						) {
+							innerHTML = editor.getText();
+						}
 						if (props.block.getInnerHTML() === innerHTML) {
 							return;
 						}
@@ -266,5 +294,11 @@ const enableLinkInput = () => {
 			input.focus();
 		}
 	});
+};
+
+const setHeading = (level: 1 | 2 | 3) => {
+	editor.value?.chain().focus().toggleHeading({ level: level }).run();
+	props.block.setBaseStyle("font-size", level === 1 ? "2rem" : level === 2 ? "1.5rem" : "1.25rem");
+	props.block.setBaseStyle("font-weight", "bold");
 };
 </script>

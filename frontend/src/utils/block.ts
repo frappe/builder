@@ -230,6 +230,9 @@ class Block implements BlockOptions {
 	isContainer() {
 		return ["section", "div"].includes(this.getElement() as string);
 	}
+	isHeader() {
+		return ["h1", "h2", "h3", "h4", "h5", "h6"].includes(this.getElement() as string);
+	}
 	isInput() {
 		return (
 			this.originalElement === "input" || this.getElement() === "input" || this.getElement() === "textarea"
