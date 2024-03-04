@@ -8,7 +8,8 @@
   "script",
   "script_public_url",
   "style",
-  "style_public_url"
+  "style_public_url",
+  "favicon"
  ],
  "fields": [
   {
@@ -34,13 +35,19 @@
    "fieldname": "style_public_url",
    "fieldtype": "Read Only",
    "label": "Style Public URL"
+  },
+  {
+   "description": "An icon file with .ico extension. Should be 16 x 16 px.<br>You can generate using <a href=\"https://favicon-generator.org\" target=\"_blank\">favicon-generator.org</a>",
+   "fieldname": "favicon",
+   "fieldtype": "Attach Image",
+   "label": "Favicon"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2023-12-28 10:07:43.415786",
+ "modified": "2024-03-04 12:48:44.181412",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Settings",
