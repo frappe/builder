@@ -176,6 +176,11 @@ const activePlacement = computed(() => {
 const setAlignment = (alignment: string) => {
 	blockController.setStyle("display", "flex");
 	const flexDirection = blockController.getStyle("flexDirection");
+	if (alignment === activePlacement.value) {
+		blockController.setStyle("justifyContent", "");
+		blockController.setStyle("alignItems", "");
+		return;
+	}
 	switch (alignment) {
 		case "top-right":
 			if (flexDirection === "row") {
