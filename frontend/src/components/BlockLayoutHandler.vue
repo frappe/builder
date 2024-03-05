@@ -1,16 +1,5 @@
 <!-- TODO: Refactor -->
 <template>
-	<div class="flex items-center justify-between">
-		<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">Type</span>
-		<TabButtons
-			:modelValue="blockController.getStyle('display') || 'block'"
-			:buttons="[
-				{ label: 'Stack', value: 'flex' },
-				{ label: 'Block', value: 'block' },
-			]"
-			@update:modelValue="setLayout"
-			class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
-	</div>
 	<div class="flex items-center justify-between" v-if="blockController.getStyle('display') === 'flex'">
 		<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
 			Direction
@@ -126,16 +115,6 @@ import { TabButtons } from "frappe-ui";
 import { computed } from "vue";
 import InlineInput from "./InlineInput.vue";
 
-const setLayout = (layout: string) => {
-	blockController.setStyle("display", layout);
-	if (layout === "flex") {
-		blockController.setStyle("flexDirection", blockController.getStyle("flexDirection") || "row");
-		blockController.setStyle("flexWrap", blockController.getStyle("flexWrap") || "nowrap");
-		blockController.setStyle("justifyContent", blockController.getStyle("justifyContent") || "flex-start");
-		blockController.setStyle("alignItems", blockController.getStyle("alignItems") || "flex-start");
-	}
-};
-
 const placementOptions = [
 	"top-left",
 	"top-middle",
@@ -197,6 +176,11 @@ const activePlacement = computed(() => {
 const setAlignment = (alignment: string) => {
 	blockController.setStyle("display", "flex");
 	const flexDirection = blockController.getStyle("flexDirection");
+	if (alignment === activePlacement.value) {
+		blockController.setStyle("justifyContent", "");
+		blockController.setStyle("alignItems", "");
+		return;
+	}
 	switch (alignment) {
 		case "top-right":
 			if (flexDirection === "row") {
