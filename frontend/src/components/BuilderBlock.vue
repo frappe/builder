@@ -112,8 +112,9 @@ const attributes = computed(() => {
 		attribs.block = props.block;
 		attribs.preview = props.preview;
 		attribs.breakpoint = props.breakpoint;
+		attribs.data = props.data;
 	}
-	attribs.data = props.data;
+
 	if (props.data) {
 		if (props.block.getDataKey("type") === "attribute") {
 			attribs[props.block.getDataKey("property") as string] =

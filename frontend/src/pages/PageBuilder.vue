@@ -396,7 +396,7 @@ const notUsingInput = computed(
 const { space } = useMagicKeys({
 	passive: false,
 	onEventFired(e) {
-		if (e.key === " " && notUsingInput.value && !store.editableBlock) {
+		if (e.key === " " && notUsingInput.value && !isTargetEditable(e)) {
 			e.preventDefault();
 		}
 	},

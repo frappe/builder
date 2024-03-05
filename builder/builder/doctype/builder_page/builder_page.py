@@ -110,7 +110,9 @@ class BuilderPage(WebsiteGenerator):
 	)
 
 	def get_context(self, context):
-		# show breadcrumbs
+		# delete default favicon
+		del context.favicon
+
 		page_data = self.get_page_data()
 		if page_data.get("title"):
 			context.title = page_data.get("page_title")
@@ -134,6 +136,7 @@ class BuilderPage(WebsiteGenerator):
 		self.set_style_and_script(context)
 		context.update(page_data)
 		self.set_meta_tags(context=context, page_data=page_data)
+		self.set_favicon(context)
 		try:
 			context["content"] = render_template(context.content, context)
 		except TemplateSyntaxError:
@@ -147,6 +150,10 @@ class BuilderPage(WebsiteGenerator):
 		}
 		metatags.update(page_data.get("metatags", {}))
 		context.metatags = metatags
+
+	def set_favicon(self, context):
+		if not context.get("favicon"):
+			context.favicon = frappe.get_cached_value("Builder Settings", None, "favicon")
 
 	def is_component_used(self, component_id):
 		if self.blocks and is_component_used(self.blocks, component_id):
