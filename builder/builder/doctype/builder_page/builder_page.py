@@ -13,6 +13,7 @@ from builder.utils import safer_exec
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
 from frappe.utils.safe_exec import is_safe_exec_enabled, safe_exec
+from frappe.utils.telemetry import capture
 from frappe.website.page_renderers.document_page import DocumentPage
 from frappe.website.path_resolver import evaluate_dynamic_routes
 from frappe.website.path_resolver import resolve_path as original_resolve_path
@@ -101,6 +102,7 @@ class BuilderPage(WebsiteGenerator):
 			"generate_page_preview_image",
 			queue="short",
 		)
+		capture(f"{self.name}_published", 'builder')
 		return self.route
 
 	website = frappe._dict(
