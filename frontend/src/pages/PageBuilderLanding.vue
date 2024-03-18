@@ -19,25 +19,24 @@
 						{ label: 'List', value: 'list' },
 					]"
 					v-model="displayType"
-					class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-900">
-				</TabButtons>
+					class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-900"></TabButtons>
 				<div class="relative flex">
 					<Input
 						class="h-7 rounded-md text-sm text-gray-800 hover:border-gray-400 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
 						type="text"
 						placeholder="Filter by title or route"
 						inputClass="w-full"
-						v-model="filter"
+						v-model="searchFilter"
 						autofocus
 						@input="
 							(value: string) => {
-								filter = value;
+								searchFilter = value;
 							}
 						" />
 					<div
 						class="absolute right-1 top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
-						@click="filter = ''"
-						v-show="filter">
+						@click="searchFilter = ''"
+						v-show="searchFilter">
 						<CrossIcon />
 					</div>
 				</div>
@@ -58,17 +57,19 @@
 			</div>
 		</div>
 		<div class="flex flex-wrap gap-6">
-			<div v-if="!webPages.data || !webPages.data.length" class="flex flex-col items-center justify-center">
+			<div
+				v-if="!webPages.data?.length && !searchFilter && !typeFilter"
+				class="flex flex-col items-center justify-center">
 				<p class="mt-4 text-center text-base text-gray-500">
 					You don't have any pages yet. Click on the "+ New" button to create a new page.
 				</p>
 			</div>
-			<div v-else-if="!pages.length" class="flex flex-col items-center justify-center">
+			<div v-else-if="!webPages.data?.length" class="flex flex-col items-center justify-center">
 				<p class="mt-4 text-center text-base text-gray-500">No matching pages found.</p>
 			</div>
 			<router-link
 				v-if="displayType === 'grid'"
-				v-for="page in pages"
+				v-for="page in webPages.data"
 				:key="page.page_name"
 				:to="{ name: 'builder', params: { pageId: page.page_name } }"
 				class="max-w-[250px] flex-grow basis-52">
@@ -110,46 +111,46 @@
 				</div>
 			</router-link>
 			<router-link
-				v-for="page in pages"
+				v-for="page in webPages.data"
 				v-if="displayType === 'list'"
 				:key="page.page_name"
 				:to="{ name: 'builder', params: { pageId: page.page_name } }"
-				class="w-full flex-grow h-fit">
+				class="h-fit w-full flex-grow">
 				<div
-					class="group relative mr-2 w-full overflow-hidden rounded-md shadow hover:cursor-pointer dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 flex">
+					class="group relative mr-2 flex w-full overflow-hidden rounded-md shadow hover:cursor-pointer dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
 					<img
 						width="250"
 						height="140"
 						:src="page.preview"
 						onerror="this.src='/assets/builder/images/fallback.png'"
-						class="w-44 overflow-hidden rounded-lg bg-gray-50 object-cover p-2 dark:bg-zinc-900 block" />
-					<div class="flex items-start justify-between border-t-[1px] px-3 dark:border-zinc-800 flex-1 p-3">
-						<span class="flex text-sm text-gray-700 dark:text-zinc-200 flex-col h-full justify-between">
+						class="block w-44 overflow-hidden rounded-lg bg-gray-50 object-cover p-2 dark:bg-zinc-900" />
+					<div class="flex flex-1 items-start justify-between border-t-[1px] p-3 px-3 dark:border-zinc-800">
+						<span class="flex h-full flex-col justify-between text-sm text-gray-700 dark:text-zinc-200">
 							<div>
 								<div class="flex items-center gap-1">
 									<p class="truncate">
 										{{ page.page_title || page.page_name }}
 									</p>
 								</div>
-								<div class="flex items-center gap-1 mt-2">
-									<FeatherIcon
-											name="globe"
-											class="h-3 w-3 text-gray-500 hover:text-gray-700"
-											></FeatherIcon>
-									<p class="text-gray-600 text-xs">
+								<div class="mt-2 flex items-center gap-1">
+									<FeatherIcon name="globe" class="h-3 w-3 text-gray-500 hover:text-gray-700"></FeatherIcon>
+									<p class="text-xs text-gray-600">
 										{{ page.route }}
 									</p>
 								</div>
 							</div>
-							<div class="flex gap-1 items-baseline">
-								<p class="mt-1 block text-xs text-gray-500">Created By {{ page.owner }}</p> ·
+							<div class="flex items-baseline gap-1">
+								<p class="mt-1 block text-xs text-gray-500">Created By {{ page.owner }}</p>
+								·
 								<UseTimeAgo v-slot="{ timeAgo }" :time="page.modified">
 									<p class="mt-1 block text-xs text-gray-500">Edited {{ timeAgo }}</p>
 								</UseTimeAgo>
 							</div>
 						</span>
 						<div class="flex items-center gap-2">
-							<Badge theme="green" v-if="page.published" class="dark:bg-green-900 dark:text-green-400">Published</Badge>
+							<Badge theme="green" v-if="page.published" class="dark:bg-green-900 dark:text-green-400">
+								Published
+							</Badge>
 							<Dropdown
 								:options="[
 									{ label: 'Duplicate', onClick: () => duplicatePage(page), icon: 'copy' },
@@ -170,6 +171,14 @@
 				</div>
 			</router-link>
 		</div>
+		<Button
+			class="m-auto mt-12 w-fit text-sm dark:bg-zinc-900 dark:text-zinc-300"
+			@click="loadMore"
+			v-show="webPages.hasNextPage"
+			variant="subtle"
+			size="sm">
+			Load More
+		</Button>
 	</section>
 </template>
 <script setup lang="ts">
@@ -179,36 +188,41 @@ import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
-import { useStorage } from "@vueuse/core";
+import { useStorage, watchDebounced } from "@vueuse/core";
 import { Badge, Dropdown, TabButtons } from "frappe-ui";
-import { computed, onActivated, ref } from "vue";
+import { onMounted, ref } from "vue";
 
-const displayType = useStorage('displayType', 'grid');
+const displayType = useStorage("displayType", "grid");
 
 const store = useStore();
-const filter = ref("");
+const searchFilter = ref("");
 const typeFilter = ref("");
 
-const pages = computed(() =>
-	(webPages.data || []).filter((page: BuilderPage) => {
+watchDebounced(
+	[searchFilter, typeFilter],
+	() => {
+		const filters = {} as any;
 		if (typeFilter.value) {
-			if (
-				(typeFilter.value === "published" && !page.published) ||
-				(typeFilter.value === "unpublished" && page.published) ||
-				(typeFilter.value === "draft" && !page.draft_blocks)
-			) {
-				return false;
+			if (typeFilter.value === "published") {
+				filters["published"] = true;
+			} else if (typeFilter.value === "unpublished") {
+				filters["published"] = false;
+			} else if (typeFilter.value === "draft") {
+				filters["draft_blocks"] = ["is", "set"];
 			}
 		}
-		if (filter.value) {
-			return (
-				page.page_title?.toLowerCase().includes(filter.value.toLowerCase()) ||
-				page.route?.toLowerCase().includes(filter.value.toLowerCase())
-			);
-		} else {
-			return true;
+		const orFilters = {} as any;
+		if (searchFilter.value) {
+			orFilters["page_title"] = ["like", `%${searchFilter.value}%`];
+			orFilters["route"] = ["like", `%${searchFilter.value}%`];
 		}
-	})
+		webPages.update({
+			filters,
+			orFilters,
+		});
+		webPages.fetch();
+	},
+	{ debounce: 300 }
 );
 
 const deletePage = async (page: BuilderPage) => {
@@ -225,7 +239,11 @@ const duplicatePage = async (page: BuilderPage) => {
 	await webPages.insert.submit(pageCopy);
 };
 
-onActivated(() => {
+const loadMore = () => {
+	webPages.next();
+};
+
+onMounted(() => {
 	webPages.fetch();
 });
 </script>
