@@ -102,7 +102,7 @@ class BuilderPage(WebsiteGenerator):
 			"generate_page_preview_image",
 			queue="short",
 		)
-		capture(f"{self.name}_published", 'builder')
+		capture("page_published", 'builder', properties={"page": self.name})
 		return self.route
 
 	website = frappe._dict(
