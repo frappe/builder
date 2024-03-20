@@ -1,5 +1,7 @@
 <template>
-	<div v-html="block.getInnerHTML()" ref="component"></div>
+	<div ref="component">
+		<div v-html="block.getInnerHTML()" class="pointer-events-none"></div>
+	</div>
 </template>
 <script setup lang="ts">
 import Block from "@/utils/block";
