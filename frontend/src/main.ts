@@ -24,7 +24,6 @@ app.use(router);
 app.use(FrappeUI);
 app.use(pinia);
 
-// eslint-disable-next-line vue/multi-word-component-names, vue/no-reserved-component-names
 app.component("Button", Button);
 app.component("Input", Input);
 app.component("FormControl", FormControl);
@@ -32,3 +31,10 @@ app.component("Dialog", Dialog);
 
 app.component("FeatherIcon", FeatherIcon);
 app.mount("#app");
+
+declare global {
+	interface Window {
+		is_developer_mode?: boolean;
+	}
+}
+window.is_developer_mode = process.env.NODE_ENV === "development";
