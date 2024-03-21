@@ -4,7 +4,7 @@
 		<div>
 			<BuilderLeftPanel
 				v-show="store.showLeftPanel"
-				class="absolute bottom-0 left-0 top-[var(--toolbar-height)] z-20 overflow-auto border-r-[1px] bg-white no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderLeftPanel>
+				class="no-scrollbar absolute bottom-0 left-0 top-[var(--toolbar-height)] z-20 overflow-auto border-r-[1px] bg-white dark:border-gray-800 dark:bg-zinc-900"></BuilderLeftPanel>
 			<BuilderCanvas
 				ref="componentCanvas"
 				v-if="store.editingComponent"
@@ -56,7 +56,30 @@
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-200 p-10 dark:bg-zinc-800"></BuilderCanvas>
 			<BuilderRightPanel
 				v-show="store.showRightPanel"
-				class="absolute bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] bg-white no-scrollbar dark:border-gray-800 dark:bg-zinc-900"></BuilderRightPanel>
+				class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] bg-white dark:border-gray-800 dark:bg-zinc-900"></BuilderRightPanel>
+			<Dialog
+				style="z-index: 40"
+				v-model="store.showHTMLDialog"
+				class="overscroll-none"
+				:options="{
+					title: 'HTML Code',
+					size: '6xl',
+				}">
+				<template #body-content>
+					<CodeEditor
+						:modelValue="store.editableBlock?.getInnerHTML()"
+						type="HTML"
+						height="60vh"
+						:showLineNumbers="true"
+						@update:modelValue="
+							(val) => {
+								store.editableBlock?.setInnerHTML(val);
+								store.editableBlock = null;
+							}
+						"
+						required />
+				</template>
+			</Dialog>
 		</div>
 	</div>
 </template>
@@ -84,9 +107,11 @@ import {
 	isTargetEditable,
 } from "@/utils/helpers";
 import { useActiveElement, useDebounceFn, useEventListener, useMagicKeys } from "@vueuse/core";
+import { Dialog } from "frappe-ui";
 import { computed, nextTick, onActivated, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { toast } from "vue-sonner";
+import CodeEditor from "../components/CodeEditor.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -586,6 +611,15 @@ watch(
 	},
 	{
 		deep: true,
+	}
+);
+
+watch(
+	() => store.showHTMLDialog,
+	(value) => {
+		if (!value) {
+			store.editableBlock = null;
+		}
 	}
 );
 </script>

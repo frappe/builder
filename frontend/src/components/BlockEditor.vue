@@ -53,31 +53,12 @@
 				:targetBlock="block"
 				@resizing="resizing = $event"
 				:target="(target as HTMLElement)" />
-			<Dialog
-				style="z-index: 40"
-				v-model="showDialog"
-				class="overscroll-none"
-				:options="{
-					title: 'HTML Code',
-					size: '6xl',
-				}">
-				<template #body-content>
-					<CodeEditor
-						:modelValue="block.getInnerHTML()"
-						type="HTML"
-						height="60vh"
-						:showLineNumbers="true"
-						@update:modelValue="block.setInnerHTML($event)"
-						required />
-				</template>
-			</Dialog>
 		</div>
 	</BlockContextMenu>
 </template>
 <script setup lang="ts">
 import Block from "@/utils/block";
 import { addPxToNumber } from "@/utils/helpers";
-import { Dialog } from "frappe-ui";
 import { Ref, computed, inject, nextTick, onMounted, ref, watch, watchEffect } from "vue";
 
 import blockController from "@/utils/blockController";
@@ -87,12 +68,10 @@ import trackTarget from "../utils/trackTarget";
 import BlockContextMenu from "./BlockContextMenu.vue";
 import BorderRadiusHandler from "./BorderRadiusHandler.vue";
 import BoxResizer from "./BoxResizer.vue";
-import CodeEditor from "./CodeEditor.vue";
 import MarginHandler from "./MarginHandler.vue";
 import PaddingHandler from "./PaddingHandler.vue";
 
 const canvasProps = inject("canvasProps") as CanvasProps;
-const showDialog = ref(false);
 
 const showResizer = computed(() => {
 	return (
@@ -225,12 +204,14 @@ const handleDrop = (ev: DragEvent) => {
 	props.target.dispatchEvent(dropEvent);
 };
 
-const handleDoubleClick = () => {
+const handleDoubleClick = (ev: MouseEvent) => {
+	if (props.block.isHTML()) {
+		store.editHTML(props.block);
+		return;
+	}
 	if (props.editable) return;
 	if (props.block.isText() || props.block.isButton() || props.block.isLink()) {
 		store.editableBlock = props.block;
-	} else if (props.block.isHTML()) {
-		showDialog.value = true;
 	}
 };
 

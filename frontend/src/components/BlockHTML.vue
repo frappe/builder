@@ -1,15 +1,12 @@
 <template>
-	<div ref="component">
-		<div v-html="block.getInnerHTML()" class="pointer-events-none"></div>
-	</div>
+	<div ref="component" class="relative" v-html="html"></div>
 </template>
 <script setup lang="ts">
 import Block from "@/utils/block";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 
 const component = ref<HTMLElement | null>(null);
-
-defineProps({
+const props = defineProps({
 	block: {
 		type: Block,
 		required: true,
@@ -19,6 +16,12 @@ defineProps({
 		default: null,
 	},
 });
+const html = computed(
+	() => `
+		<div class="absolute top-0 bottom-0 right-0 left-0"></div>
+		${props.block.getInnerHTML()}
+	`
+);
 
 defineExpose({
 	component,
