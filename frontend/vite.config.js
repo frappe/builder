@@ -5,6 +5,9 @@ import { webserver_port } from "../../../sites/common_site_config.json";
 
 // https://vitejs.dev/config/
 export default defineConfig({
+	define: {
+		__VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
+	},
 	plugins: [vue()],
 	server: {
 		port: 8080,

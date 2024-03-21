@@ -117,6 +117,13 @@ const createComponentHandler = ({ close }: { close: () => void }) => {
 };
 
 const contextMenuOptions: ContextMenuOption[] = [
+	{
+		label: "Edit HTML",
+		action: () => {
+			store.editHTML(props.block);
+		},
+		condition: () => props.block.isHTML(),
+	},
 	{ label: "Copy", action: () => document.execCommand("copy") },
 	{ label: "Copy Style", action: copyStyle },
 	{
