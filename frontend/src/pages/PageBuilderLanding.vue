@@ -101,7 +101,7 @@
 					</div>
 					<TemplatePagePreview
 						class="max-w-[250px] flex-grow basis-52"
-						v-for="page in webPages.data.slice(0, 8)"
+						v-for="page in templates.data"
 						:page="page"
 						@click="() => duplicatePage(page)"></TemplatePagePreview>
 				</div>
@@ -113,9 +113,8 @@
 import CrossIcon from "@/components/Icons/Cross.vue";
 import PagePreviewCard from "@/components/PagePreviewCard.vue";
 import TemplatePagePreview from "@/components/TemplatePagePreview.vue";
-import { webPages } from "@/data/webPage";
+import { templates, webPages } from "@/data/webPage";
 import router from "@/router";
-import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { useStorage, watchDebounced } from "@vueuse/core";
 import { TabButtons } from "frappe-ui";
@@ -123,7 +122,6 @@ import { Ref, onMounted, ref } from "vue";
 
 const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list">;
 
-const store = useStore();
 const searchFilter = ref("");
 const typeFilter = ref("");
 const showDialog = ref(false);
@@ -131,7 +129,9 @@ const showDialog = ref(false);
 watchDebounced(
 	[searchFilter, typeFilter],
 	() => {
-		const filters = {} as any;
+		const filters = {
+			is_template: 0,
+		} as any;
 		if (typeFilter.value) {
 			if (typeFilter.value === "published") {
 				filters["published"] = true;
@@ -172,8 +172,8 @@ const loadPage = (template: string | null) => {
 
 const duplicatePage = async (page: BuilderPage) => {
 	const pageCopy = { ...page };
-	pageCopy.page_name = `${page.page_name}-copy`;
-	pageCopy.page_title = `${page.page_title} Copy`;
+	delete pageCopy.page_name;
+	pageCopy.page_title = `${page.page_title}`;
 	pageCopy.is_template = 0;
 	const newPage = await webPages.insert.submit(pageCopy);
 	router.push({ name: "builder", params: { pageId: newPage.name } });

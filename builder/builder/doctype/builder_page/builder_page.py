@@ -87,6 +87,7 @@ class BuilderPage(WebsiteGenerator):
 			clear_cache(self.route)
 
 		if frappe.conf.developer_mode and self.is_template:
+			# move all assets to www/builder_assets/{page_name}
 			export_to_files(record_list=[["Builder Page", self.name, "builder_page_template"]], record_module="builder")
 
 	def autoname(self):
@@ -620,3 +621,28 @@ def is_component_used(blocks, component_id):
 			return is_component_used(block.get("children"), component_id)
 
 	return False
+
+@frappe.whitelist()
+def save_page_as_template(page_name: str, template_name: str):
+	page = frappe.get_doc("Builder Page", page_name)
+	blocks = frappe.parse_json(page.drag_blocks)
+	# move all assets to www/builder_assets/{page_name}
+	for block in blocks:
+		if block.get("element") == "img":
+			src = block.get("attributes", {}).get("src")
+			if src and src.startswith("/files"):
+				# find file doc
+				files = frappe.get_all("File", filters={"file_url": src}, fields=["name"])
+				if files:
+					_file = frappe.get_doc("File", files[0].name)
+
+				block["attributes"]["src"] = f"/builder_assets/{page_name}/{src.split('/')[-1]}"
+
+	template = frappe.new_doc("Builder Asset", {
+		"doctype": "Builder Asset",
+		"asset_type": "Page Template",
+		"asset_name": template_name,
+		"block": page.draft_blocks,
+	})
+	template.insert()
+	return template
