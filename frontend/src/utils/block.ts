@@ -477,6 +477,9 @@ class Block implements BlockOptions {
 	isHTML() {
 		return this.originalElement === "__raw_html__";
 	}
+	isIframe() {
+		return this.innerHTML?.startsWith("<iframe");
+	}
 	makeBlockEditable() {
 		const store = useStore();
 		this.selectBlock();
