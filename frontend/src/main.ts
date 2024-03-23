@@ -24,6 +24,8 @@ app.use(router);
 app.use(FrappeUI);
 app.use(pinia);
 
+window.name = "frappe-builder";
+
 app.component("Button", Button);
 app.component("Input", Input);
 app.component("FormControl", FormControl);
