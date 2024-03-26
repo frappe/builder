@@ -45,7 +45,6 @@ import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { confirm, detachBlockFromComponent, getBlockCopy } from "@/utils/helpers";
 import { vOnClickOutside } from "@vueuse/components";
-import { Dialog } from "frappe-ui";
 import { nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
 import ContextMenu from "./ContextMenu.vue";
@@ -136,7 +135,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		label: "Convert To Link",
 		action: () => {
 			blockController.getSelectedBlocks().forEach((block: Block) => {
-				if (block.isSVG()) {
+				if (block.isSVG() || block.isImage()) {
 					const parentBlock = block.getParentBlock();
 					if (!parentBlock) return;
 					const newBlockObj = getBlockTemplate("fit-container");
@@ -153,7 +152,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			});
 		},
 		condition: () =>
-			(props.block.isContainer() || props.block.isText()) &&
+			(props.block.isContainer() || props.block.isText() || props.block.isImage()) &&
 			!props.block.isLink() &&
 			!props.block.isExtendedFromComponent() &&
 			!props.block.isRoot(),
