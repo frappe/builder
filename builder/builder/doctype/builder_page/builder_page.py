@@ -23,6 +23,8 @@ from frappe.website.website_generator import WebsiteGenerator
 from jinja2.exceptions import TemplateSyntaxError
 from werkzeug.routing import Rule
 from frappe.modules.export_file import export_to_files
+from urllib.parse import unquote
+import shutil
 
 
 MOBILE_BREAKPOINT = 576
@@ -88,6 +90,11 @@ class BuilderPage(WebsiteGenerator):
 
 		if frappe.conf.developer_mode and self.is_template:
 			# move all assets to www/builder_assets/{page_name}
+			blocks = frappe.parse_json(self.draft_blocks)
+			for block in blocks:
+				copy_img_to_asset_folder(block, self)
+			self.db_set("draft_blocks", frappe.as_json(blocks, indent=None))
+			self.reload()
 			export_to_files(record_list=[["Builder Page", self.name, "builder_page_template"]], record_module="builder")
 
 	def autoname(self):
@@ -646,3 +653,28 @@ def save_page_as_template(page_name: str, template_name: str):
 	})
 	template.insert()
 	return template
+
+def copy_img_to_asset_folder(block, self):
+	if block.get("element") == "img":
+		src = block.get("attributes", {}).get("src")
+		site_url = frappe.utils.get_url()
+
+		if src and (src.startswith(f"{site_url}/files") or src.startswith("/files")):
+			# find file doc
+			if src.startswith(f"{site_url}/files"):
+				src = src.split(f"{site_url}")[1]
+			# url decode
+			src = unquote(src)
+			print(f"src: {src}")
+			files = frappe.get_all("File", filters={"file_url": src}, fields=["name"])
+			print(f"files: {files}")
+			if files:
+				_file = frappe.get_doc("File", files[0].name)
+				# copy physical file to new location
+				new_path = os.path.join(frappe.get_app_path("builder"), "www", "builder_assets", self.name)
+				if not os.path.exists(new_path):
+					os.makedirs(new_path)
+				shutil.copy(_file.get_full_path(), new_path)
+			block["attributes"]["src"] = f"/builder_assets/{self.name}/{src.split('/')[-1]}"
+	for child in block.get("children", []):
+		copy_img_to_asset_folder(child, self)
