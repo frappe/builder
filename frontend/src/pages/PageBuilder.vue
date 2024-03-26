@@ -273,31 +273,39 @@ useEventListener(document, "paste", async (e) => {
 		return;
 	} else {
 		// try pasting figma text styles
-		if (blockController.isText() && text.includes(":") && !store.editableBlock) {
+		if (text.includes(":") && !store.editableBlock) {
 			e.preventDefault();
 			// strip out all comments: line-height: 115%; /* 12.65px */ -> line-height: 115%;
-			const strippedText = text.replace(/\/\*.*?\*\//g, "");
+			const strippedText = text.replace(/\/\*.*?\*\//g, "").replace(/\n/g, "");
 			const styleObj = strippedText.split(";").reduce((acc: BlockStyleMap, curr) => {
 				const [key, value] = curr.split(":").map((item) => (item ? item.trim() : "")) as [
 					styleProperty,
 					StyleValue
 				];
-				if (
-					[
-						"font-family",
-						"font-size",
-						"font-weight",
-						"line-height",
-						"letter-spacing",
-						"text-align",
-						"text-transform",
-						"color",
-					].includes(key)
-				) {
-					acc[key] = value;
-					if (key === "font-family" && String(value).toLowerCase().includes("inter")) {
-						acc["font-family"] = "";
+				if (blockController.isText()) {
+					if (
+						[
+							"font-family",
+							"font-size",
+							"font-weight",
+							"line-height",
+							"letter-spacing",
+							"text-align",
+							"text-transform",
+							"color",
+						].includes(key)
+					) {
+						if (key === "font-family") {
+							acc[key] = (value + "").replace(/['"]+/g, "");
+							if (String(value).toLowerCase().includes("inter")) {
+								acc["font-family"] = "";
+							}
+						} else {
+							acc[key] = value;
+						}
 					}
+				} else if (["width", "height", "box-shadow", "background", "border-radius"].includes(key)) {
+					acc[key] = value;
 				}
 				return acc;
 			}, {});
