@@ -271,48 +271,56 @@ useEventListener(document, "paste", async (e) => {
 			}
 		}
 		return;
-	} else {
-		// try pasting figma text styles
-		if (text.includes(":") && !store.editableBlock) {
-			e.preventDefault();
-			// strip out all comments: line-height: 115%; /* 12.65px */ -> line-height: 115%;
-			const strippedText = text.replace(/\/\*.*?\*\//g, "").replace(/\n/g, "");
-			const styleObj = strippedText.split(";").reduce((acc: BlockStyleMap, curr) => {
-				const [key, value] = curr.split(":").map((item) => (item ? item.trim() : "")) as [
-					styleProperty,
-					StyleValue
-				];
-				if (blockController.isText()) {
-					if (
-						[
-							"font-family",
-							"font-size",
-							"font-weight",
-							"line-height",
-							"letter-spacing",
-							"text-align",
-							"text-transform",
-							"color",
-						].includes(key)
-					) {
-						if (key === "font-family") {
-							acc[key] = (value + "").replace(/['"]+/g, "");
-							if (String(value).toLowerCase().includes("inter")) {
-								acc["font-family"] = "";
-							}
-						} else {
-							acc[key] = value;
+	}
+	// try pasting figma text styles
+	if (text.includes(":") && !store.editableBlock) {
+		e.preventDefault();
+		// strip out all comments: line-height: 115%; /* 12.65px */ -> line-height: 115%;
+		const strippedText = text.replace(/\/\*.*?\*\//g, "").replace(/\n/g, "");
+		const styleObj = strippedText.split(";").reduce((acc: BlockStyleMap, curr) => {
+			const [key, value] = curr.split(":").map((item) => (item ? item.trim() : "")) as [
+				styleProperty,
+				StyleValue
+			];
+			if (blockController.isText()) {
+				if (
+					[
+						"font-family",
+						"font-size",
+						"font-weight",
+						"line-height",
+						"letter-spacing",
+						"text-align",
+						"text-transform",
+						"color",
+					].includes(key)
+				) {
+					if (key === "font-family") {
+						acc[key] = (value + "").replace(/['"]+/g, "");
+						if (String(value).toLowerCase().includes("inter")) {
+							acc["font-family"] = "";
 						}
+					} else {
+						acc[key] = value;
 					}
-				} else if (["width", "height", "box-shadow", "background", "border-radius"].includes(key)) {
-					acc[key] = value;
 				}
-				return acc;
-			}, {});
-			Object.entries(styleObj).forEach(([key, value]) => {
-				blockController.setBaseStyle(key as styleProperty, value);
-			});
-		}
+			} else if (["width", "height", "box-shadow", "background", "border-radius"].includes(key)) {
+				acc[key] = value;
+			}
+			return acc;
+		}, {});
+		Object.entries(styleObj).forEach(([key, value]) => {
+			blockController.setBaseStyle(key as styleProperty, value);
+		});
+		return;
+	}
+
+	// if selected block is container, create a new text block inside it and set the text
+	if (blockController.isContainer()) {
+		e.preventDefault();
+		const block = getBlockTemplate("text");
+		block.innerHTML = text;
+		blockController.getSelectedBlocks()[0].addChild(block);
 		return;
 	}
 });
