@@ -14,6 +14,7 @@
 			:value="modelValue"
 			:options="inputOptions"
 			v-if="type != 'autocomplete'"
+			@mousedown="handleMouseDown"
 			@change="handleChange"
 			@keydown="handleKeyDown"
 			:inputClass="type == 'checkbox' ? ' ml-2 !w-4' : 'pr-6'"
