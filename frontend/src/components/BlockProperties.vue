@@ -156,6 +156,7 @@ const typographySectionProperties = [
 				label: "Size",
 				modelValue: blockController.getStyle("fontSize"),
 				enableSlider: true,
+				minValue: 1,
 			};
 		},
 		searchKeyWords: "Font, Size, FontSize",
@@ -310,6 +311,8 @@ const styleSectionProperties = [
 				label: "Border Width",
 				modelValue: blockController.getStyle("borderWidth"),
 				enableSlider: true,
+				unitOptions: ["px", "%", "em", "rem"],
+				minValue: 0,
 			};
 		},
 		searchKeyWords: "Border, Width, BorderWidth, Border Width",
