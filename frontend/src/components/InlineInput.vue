@@ -114,7 +114,7 @@ const handleMouseDown = (e: MouseEvent) => {
 	if (!props.enableSlider) {
 		return;
 	}
-	const number = (props.modelValue as string).match(/([0-9]+)/)?.[0] || "0";
+	const number = ((props.modelValue || "") as string).match(/([0-9]+)/)?.[0] || "0";
 	const startY = e.clientY;
 	const startValue = Number(number);
 	const handleMouseMove = (e: MouseEvent) => {
