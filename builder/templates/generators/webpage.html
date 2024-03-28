@@ -36,7 +36,7 @@
 			{% endfor %}
 		{%- endif -%}
 	{%- endblock %}
-	<a class="__editor_link" href="{{ editor_link }}" style="position: fixed; bottom: 40px; right: 50px; height: 35px; width: 35px; display: none; opacity: 0.1;">
+	<a class="__editor_link" href="{{ editor_link }}" target="frappe-builder" style="position: fixed; bottom: 40px; right: 50px; height: 35px; width: 35px; display: none; opacity: 0.1;">
 		<img src="/assets/builder/frontend/builder_logo.png" style="box-shadow: #bdbdbd 0px 0px 5px; border-radius: 10px;" alt="Frappe" />
 	</a>
 	<script>window.page_data = {{ (page_data or {})|tojson|safe }}</script>

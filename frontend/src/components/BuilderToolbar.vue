@@ -57,7 +57,10 @@
 						class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
 				</button>
 			</UseDark>
-			<router-link :to="{ name: 'preview', params: { pageId: store.selectedPage } }" title="Preview">
+			<router-link
+				v-if="store.selectedPage"
+				:to="{ name: 'preview', params: { pageId: store.selectedPage } }"
+				title="Preview">
 				<FeatherIcon name="play" class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
 			</router-link>
 			<Button

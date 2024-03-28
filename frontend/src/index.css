@@ -1,20 +1,32 @@
 @import "frappe-ui/src/style.css";
 
 @layer base {
-  ul, ol {
-    list-style: revert;
-    padding: revert;
-  }
+	ul,
+	ol {
+		list-style: revert;
+		padding: revert;
+	}
 }
 
 /* to match style of tip tap editor for new lines */
 p:empty::before {
-  content: '';
-  display: inline-block;
+	content: "";
+	display: inline-block;
 }
 
 .__text_block__ a {
-  color: var(--link-color);
-  text-decoration: underline;
-  background-color: transparent;
+	color: var(--link-color);
+	text-decoration: underline;
+	background-color: transparent;
+}
+
+@layer utilities {
+	/* Chrome, Safari and Opera */
+	.no-scrollbar::-webkit-scrollbar {
+		display: none;
+	}
+
+	.no-scrollbar {
+		-ms-overflow-style: none; /* IE and Edge */
+	}
 }
