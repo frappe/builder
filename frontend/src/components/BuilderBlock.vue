@@ -217,6 +217,7 @@ const handleDoubleClick = (e: MouseEvent) => {
 	let children = props.block.getChildren();
 	if (props.block.isHTML()) {
 		editor.value?.element.dispatchEvent(new MouseEvent("dblclick", e));
+		e.stopPropagation();
 	} else if (props.block.isContainer()) {
 		if (!children.length) {
 			const child = getBlockTemplate("text");
@@ -224,12 +225,11 @@ const handleDoubleClick = (e: MouseEvent) => {
 			props.block.setBaseStyle("justifyContent", "center");
 			const childBlock = props.block.addChild(child);
 			childBlock.makeBlockEditable();
-			e.stopPropagation();
 		} else if (children.length === 1 && children[0].isText()) {
 			const child = children[0];
 			child.makeBlockEditable();
-			e.stopPropagation();
 		}
+		e.stopPropagation();
 	}
 };
 

@@ -15,6 +15,7 @@ app.use(router);
 app.use(FrappeUI);
 app.use(pinia);
 
+window.name = "frappe-builder";
 // eslint-disable-next-line vue/multi-word-component-names, vue/no-reserved-component-names
 app.component("Button", Button);
 app.component("Input", Input);

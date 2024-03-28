@@ -53,6 +53,7 @@ const useStore = defineStore("store", {
 		showLeftPanel: <boolean>true,
 		copiedStyle: <StyleCopy | null>null,
 		components: <BlockComponent[]>[],
+		showHTMLDialog: false,
 	}),
 	actions: {
 		clearBlocks() {
@@ -330,6 +331,12 @@ const useStore = defineStore("store", {
 		},
 		openBuilderSettings() {
 			window.open("/app/builder-settings", "_blank");
+		},
+		editHTML(block: Block) {
+			this.editableBlock = block;
+			nextTick(() => {
+				this.showHTMLDialog = true;
+			});
 		},
 	},
 });

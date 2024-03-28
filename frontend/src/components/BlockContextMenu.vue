@@ -117,6 +117,13 @@ const createComponentHandler = ({ close }: { close: () => void }) => {
 };
 
 const contextMenuOptions: ContextMenuOption[] = [
+	{
+		label: "Edit HTML",
+		action: () => {
+			store.editHTML(props.block);
+		},
+		condition: () => props.block.isHTML(),
+	},
 	{ label: "Copy", action: () => document.execCommand("copy") },
 	{ label: "Copy Style", action: copyStyle },
 	{
@@ -129,7 +136,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		label: "Convert To Link",
 		action: () => {
 			blockController.getSelectedBlocks().forEach((block: Block) => {
-				if (block.isSVG()) {
+				if (block.isSVG() || block.isImage()) {
 					const parentBlock = block.getParentBlock();
 					if (!parentBlock) return;
 					const newBlockObj = getBlockTemplate("fit-container");
@@ -146,7 +153,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			});
 		},
 		condition: () =>
-			(props.block.isContainer() || props.block.isText()) &&
+			(props.block.isContainer() || props.block.isText() || props.block.isImage()) &&
 			!props.block.isLink() &&
 			!props.block.isExtendedFromComponent() &&
 			!props.block.isRoot(),
