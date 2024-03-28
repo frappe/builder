@@ -22,6 +22,10 @@ from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
 from jinja2.exceptions import TemplateSyntaxError
 from werkzeug.routing import Rule
+from frappe.modules.export_file import export_to_files
+from urllib.parse import unquote
+import shutil
+
 
 MOBILE_BREAKPOINT = 576
 TABLET_BREAKPOINT = 768
@@ -84,9 +88,18 @@ class BuilderPage(WebsiteGenerator):
 		if self.has_value_changed("published") and not self.published:
 			clear_cache(self.route)
 
+		if frappe.conf.developer_mode and self.is_template:
+			# move all assets to www/builder_assets/{page_name}
+			blocks = frappe.parse_json(self.draft_blocks)
+			for block in blocks:
+				copy_img_to_asset_folder(block, self)
+			self.db_set("draft_blocks", frappe.as_json(blocks, indent=None))
+			self.reload()
+			export_to_files(record_list=[["Builder Page", self.name, "builder_page_template"]], record_module="builder")
+
 	def autoname(self):
 		if not self.name:
-			self.name = f"page-{frappe.generate_hash(length=5)}"
+			self.name = f"page-{frappe.generate_hash(length=8)}"
 
 	@frappe.whitelist()
 	def publish(self, **kwargs):
@@ -615,3 +628,53 @@ def is_component_used(blocks, component_id):
 			return is_component_used(block.get("children"), component_id)
 
 	return False
+
+@frappe.whitelist()
+def save_page_as_template(page_name: str, template_name: str):
+	page = frappe.get_doc("Builder Page", page_name)
+	blocks = frappe.parse_json(page.drag_blocks)
+	# move all assets to www/builder_assets/{page_name}
+	for block in blocks:
+		if block.get("element") == "img":
+			src = block.get("attributes", {}).get("src")
+			if src and src.startswith("/files"):
+				# find file doc
+				files = frappe.get_all("File", filters={"file_url": src}, fields=["name"])
+				if files:
+					_file = frappe.get_doc("File", files[0].name)
+
+				block["attributes"]["src"] = f"/builder_assets/{page_name}/{src.split('/')[-1]}"
+
+	template = frappe.new_doc("Builder Asset", {
+		"doctype": "Builder Asset",
+		"asset_type": "Page Template",
+		"asset_name": template_name,
+		"block": page.draft_blocks,
+	})
+	template.insert()
+	return template
+
+def copy_img_to_asset_folder(block, self):
+	if block.get("element") == "img":
+		src = block.get("attributes", {}).get("src")
+		site_url = frappe.utils.get_url()
+
+		if src and (src.startswith(f"{site_url}/files") or src.startswith("/files")):
+			# find file doc
+			if src.startswith(f"{site_url}/files"):
+				src = src.split(f"{site_url}")[1]
+			# url decode
+			src = unquote(src)
+			print(f"src: {src}")
+			files = frappe.get_all("File", filters={"file_url": src}, fields=["name"])
+			print(f"files: {files}")
+			if files:
+				_file = frappe.get_doc("File", files[0].name)
+				# copy physical file to new location
+				new_path = os.path.join(frappe.get_app_path("builder"), "www", "builder_assets", self.name)
+				if not os.path.exists(new_path):
+					os.makedirs(new_path)
+				shutil.copy(_file.get_full_path(), new_path)
+			block["attributes"]["src"] = f"/builder_assets/{self.name}/{src.split('/')[-1]}"
+	for child in block.get("children", []):
+		copy_img_to_asset_folder(child, self)
