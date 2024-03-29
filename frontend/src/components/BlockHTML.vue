@@ -1,5 +1,5 @@
 <template>
-	<div ref="component" class="relative" v-html="html"></div>
+	<div ref="component" class="!relative" v-html="html"></div>
 </template>
 <script setup lang="ts">
 import Block from "@/utils/block";

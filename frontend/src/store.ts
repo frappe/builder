@@ -1,5 +1,5 @@
 import { UseRefHistoryReturn } from "@vueuse/core";
-import { FileUploadHandler } from "frappe-ui";
+import { FileUploadHandler, createDocumentResource } from "frappe-ui";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
 import { toast } from "vue-sonner";
@@ -54,6 +54,7 @@ const useStore = defineStore("store", {
 		copiedStyle: <StyleCopy | null>null,
 		components: <BlockComponent[]>[],
 		showHTMLDialog: false,
+		activePage: <BuilderPage | null>null,
 	}),
 	actions: {
 		clearBlocks() {
@@ -97,6 +98,17 @@ const useStore = defineStore("store", {
 			if (!page) {
 				return;
 			}
+
+			const webPageResource = await createDocumentResource({
+				doctype: "Builder Page",
+				name: page.name,
+				auto: true,
+			});
+			await webPageResource.get.promise;
+
+			page = webPageResource.doc as BuilderPage;
+			this.activePage = page;
+
 			const blocks = JSON.parse(page.draft_blocks || page.blocks || "[]");
 			this.editPage(false, !resetCanvas);
 			if (!Array.isArray(blocks)) {
@@ -262,9 +274,6 @@ const useStore = defineStore("store", {
 				fileName: fileDoc.file_name,
 			};
 		},
-		getActivePage() {
-			return webPages.getRow(this.selectedPage as string) as BuilderPage;
-		},
 		async publishPage() {
 			return webPages.runDocMethod
 				.submit({
@@ -273,11 +282,10 @@ const useStore = defineStore("store", {
 					...this.routeVariables,
 				})
 				.then(() => {
-					this.openPageInBrowser();
+					this.openPageInBrowser(this.activePage as BuilderPage);
 				});
 		},
-		openPageInBrowser() {
-			const page = this.getActivePage();
+		openPageInBrowser(page: BuilderPage) {
 			let route = page.route;
 			if (page.dynamic_route && this.pageData) {
 				const routeVariables = (route?.match(/<\w+>/g) || []).map((match: string) => match.slice(1, -1));
@@ -299,8 +307,7 @@ const useStore = defineStore("store", {
 			};
 			webPages.setValue.submit(args);
 		},
-		setPageData() {
-			const page = this.getActivePage();
+		setPageData(page?: BuilderPage) {
 			if (!page || !page.page_data_script) {
 				this.pageData = {};
 				return;
