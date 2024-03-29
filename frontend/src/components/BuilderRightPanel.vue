@@ -29,12 +29,14 @@
 			class="p-4"
 			v-show="store.rightPanelActiveTab === 'Script'"
 			:key="store.selectedPage"
-			v-if="store.selectedPage && store.getActivePage()" />
+			v-if="store.selectedPage && store.activePage"
+			:page="store.activePage" />
 		<PageSettings
 			class="p-4"
 			v-show="store.rightPanelActiveTab === 'Settings'"
 			:key="store.selectedPage"
-			v-if="store.selectedPage && store.getActivePage()" />
+			v-if="store.selectedPage && store.activePage"
+			:page="store.activePage" />
 	</div>
 </template>
 <script setup lang="ts">
