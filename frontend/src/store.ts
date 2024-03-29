@@ -93,20 +93,20 @@ const useStore = defineStore("store", {
 		getPageData() {
 			return [this.activeCanvas?.getFirstBlock()];
 		},
-		async setPage(page: BuilderPage, resetCanvas = true) {
+		async setPage(pageName: string, resetCanvas = true) {
 			this.settingPage = true;
-			if (!page) {
+			if (!pageName) {
 				return;
 			}
 
 			const webPageResource = await createDocumentResource({
 				doctype: "Builder Page",
-				name: page.name,
+				name: pageName,
 				auto: true,
 			});
 			await webPageResource.get.promise;
 
-			page = webPageResource.doc as BuilderPage;
+			const page = webPageResource.doc as BuilderPage;
 			this.activePage = page;
 
 			const blocks = JSON.parse(page.draft_blocks || page.blocks || "[]");

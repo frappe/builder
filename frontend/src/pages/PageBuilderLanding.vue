@@ -190,7 +190,7 @@ import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
 import { useStorage, watchDebounced } from "@vueuse/core";
 import { Badge, Dropdown, TabButtons } from "frappe-ui";
-import { onMounted, ref } from "vue";
+import { ref } from "vue";
 
 const displayType = useStorage("displayType", "grid");
 
@@ -242,8 +242,4 @@ const duplicatePage = async (page: BuilderPage) => {
 const loadMore = () => {
 	webPages.next();
 };
-
-onMounted(() => {
-	webPages.fetch();
-});
 </script>

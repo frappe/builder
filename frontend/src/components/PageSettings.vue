@@ -89,7 +89,7 @@ const unpublishPage = () => {
 		})
 		.then(() => {
 			toast.success("Page unpublished");
-			store.setPage(props.page);
+			store.setPage(props.page.name);
 		});
 };
 </script>
