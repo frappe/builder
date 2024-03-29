@@ -574,7 +574,7 @@ onActivated(async () => {
 		await webPages.fetchOne.submit(route.params.pageId as string);
 	}
 	if (route.params.pageId && route.params.pageId !== "new") {
-		setPage(route.params.pageId as string);
+		store.setPage(route.params.pageId as string);
 	} else {
 		webPages.insert
 			.submit({
@@ -583,22 +583,16 @@ onActivated(async () => {
 			})
 			.then((data: BuilderPage) => {
 				router.push({ name: "builder", params: { pageId: data.name }, force: true });
-				setPage(data.name);
+				store.setPage(data.name);
 			});
 	}
 });
-
-const setPage = (pageName: string, resetCanvas = true) => {
-	webPages.fetchOne.submit(pageName).then((data: BuilderPage[]) => {
-		store.setPage(data[0], resetCanvas);
-	});
-};
 
 // on tab activation, reload for latest data
 useEventListener(document, "visibilitychange", () => {
 	if (document.visibilityState === "visible" && !componentCanvas.value) {
 		if (route.params.pageId && route.params.pageId !== "new") {
-			setPage(route.params.pageId as string, false);
+			store.setPage(route.params.pageId as string, false);
 		}
 	}
 });
