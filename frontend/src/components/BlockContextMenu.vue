@@ -45,6 +45,7 @@ import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { confirm, detachBlockFromComponent, getBlockCopy } from "@/utils/helpers";
 import { vOnClickOutside } from "@vueuse/components";
+import { Dialog } from "frappe-ui";
 import { nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
 import ContextMenu from "./ContextMenu.vue";
@@ -104,7 +105,7 @@ const createComponentHandler = ({ close }: { close: () => void }) => {
 		.submit({
 			block: blockCopy,
 			component_name: componentProperties.value.componentName,
-			for_web_page: componentProperties.value.isGlobalComponent ? null : store.getActivePage()?.name,
+			for_web_page: componentProperties.value.isGlobalComponent ? null : store.selectedPage,
 		})
 		.then(async (data: BuilderComponent) => {
 			await webComponent.list.promise;

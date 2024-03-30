@@ -23,7 +23,7 @@
 			v-model="showDialog">
 			<template #body-content>
 				<div v-if="currentScriptEditor == 'client'">
-					<PageClientScriptManager :page="store.getActivePage()"></PageClientScriptManager>
+					<PageClientScriptManager :page="(store.activePage as BuilderPage)"></PageClientScriptManager>
 				</div>
 				<div v-else>
 					<CodeEditor
@@ -53,24 +53,24 @@
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { onMounted, ref } from "vue";
+import { Dialog } from "frappe-ui";
+import { ref } from "vue";
 import CodeEditor from "./CodeEditor.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
 const store = useStore();
 const showDialog = ref(false);
-const page = ref<BuilderPage>(store.getActivePage());
 
-onMounted(() => {
-	page.value = store.getActivePage();
-});
+const props = defineProps<{
+	page: BuilderPage;
+}>();
 
 const currentScriptEditor = ref<"client" | "data">("client");
 
 const savePageDataScript = () => {
 	webPages.setValue
 		.submit({
-			name: page.value.name,
-			page_data_script: page.value.page_data_script,
+			name: props.page.name,
+			page_data_script: props.page.page_data_script,
 		})
 		.then(() => {
 			showDialog.value = false;
