@@ -14,8 +14,9 @@
 			:value="modelValue"
 			:options="inputOptions"
 			v-if="type != 'autocomplete'"
-			@change="handleChange"
 			@mousedown="handleMouseDown"
+			@change="handleChange"
+			@keydown="handleKeyDown"
 			:inputClass="type == 'checkbox' ? ' ml-2 !w-4' : 'pr-6'"
 			class="rounded-md text-sm text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700"
 			:class="{
@@ -67,7 +68,7 @@ const props = defineProps({
 	},
 	minValue: {
 		type: Number,
-		default: null,
+		default: 0,
 	},
 	maxValue: {
 		type: Number,
@@ -113,32 +114,42 @@ const handleMouseDown = (e: MouseEvent) => {
 	if (!props.enableSlider) {
 		return;
 	}
-	const value = (props.modelValue as string) || "";
-
-	let [_, number, unit] = value.match(/([0-9]+)([a-z%]*)/) || ["", "", ""];
-
-	if (!unit && props.unitOptions.length && number) {
-		unit = props.unitOptions[0];
-	}
-
+	const number = ((props.modelValue || "") as string).match(/([0-9]+)/)?.[0] || "0";
 	const startY = e.clientY;
 	const startValue = Number(number);
 	const handleMouseMove = (e: MouseEvent) => {
 		const diff = startY - e.clientY;
-		let newValue = startValue + diff;
-		if (isNumber(props.minValue) && newValue < props.minValue) {
-			newValue = props.minValue;
-		}
-		if (isNumber(props.maxValue) && newValue > props.maxValue) {
-			newValue = props.maxValue;
-		}
-		handleChange(newValue + "" + unit);
+		incrementOrDecrement(diff, startValue);
 	};
 	const handleMouseUp = () => {
 		window.removeEventListener("mousemove", handleMouseMove);
 	};
 	window.addEventListener("mousemove", handleMouseMove);
 	window.addEventListener("mouseup", handleMouseUp, { once: true });
+};
+
+const handleKeyDown = (e: KeyboardEvent) => {
+	if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+		const step = e.key === "ArrowUp" ? 1 : -1;
+		incrementOrDecrement(step);
+		e.preventDefault();
+	}
+};
+
+const incrementOrDecrement = (step: number, initialValue: null | number = null) => {
+	const value = (props.modelValue as string) || "";
+	let [_, number, unit] = value.match(/([0-9]+)([a-z%]*)/) || ["", "", ""];
+	if (!unit && props.unitOptions.length && !isNaN(Number(number))) {
+		unit = props.unitOptions[0];
+	}
+	let newValue = (initialValue != null ? Number(initialValue) : Number(number)) + step;
+	if (isNumber(props.minValue) && newValue <= props.minValue) {
+		newValue = props.minValue;
+	}
+	if (isNumber(props.maxValue) && newValue >= props.maxValue) {
+		newValue = props.maxValue;
+	}
+	handleChange(newValue + "" + unit);
 };
 
 const clearValue = () => emit("update:modelValue", null);
