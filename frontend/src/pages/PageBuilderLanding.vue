@@ -117,7 +117,7 @@ import { templates, webPages } from "@/data/webPage";
 import router from "@/router";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { useStorage, watchDebounced } from "@vueuse/core";
-import { TabButtons } from "frappe-ui";
+import { TabButtons, createDocumentResource } from "frappe-ui";
 import { Ref, onMounted, ref } from "vue";
 
 const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list">;
@@ -155,10 +155,6 @@ watchDebounced(
 	{ debounce: 300 }
 );
 
-const loadMore = () => {
-	webPages.next();
-};
-
 onMounted(() => {
 	webPages.fetch();
 });
@@ -171,12 +167,23 @@ const loadPage = (template: string | null) => {
 };
 
 const duplicatePage = async (page: BuilderPage) => {
-	const pageCopy = { ...page };
-	delete pageCopy.page_name;
-	pageCopy.page_title = `${page.page_title}`;
+	const webPageResource = await createDocumentResource({
+		doctype: "Builder Page",
+		name: page.page_name,
+		auto: true,
+	});
+	await webPageResource.get.promise;
+
+	const pageCopy = webPageResource.doc as BuilderPage;
+	pageCopy.page_name = `${pageCopy.page_name}-copy`;
+	pageCopy.page_title = `${pageCopy.page_title} Copy`;
 	pageCopy.is_template = 0;
 	const newPage = await webPages.insert.submit(pageCopy);
 	router.push({ name: "builder", params: { pageId: newPage.name } });
 	showDialog.value = false;
+};
+
+const loadMore = () => {
+	webPages.next();
 };
 </script>

@@ -74,7 +74,7 @@ const savePageDataScript = () => {
 		})
 		.then(() => {
 			showDialog.value = false;
-			store.setPageData();
+			store.setPageData(props.page);
 		});
 };
 

@@ -120,7 +120,7 @@ const useStore = defineStore("store", {
 			this.selectedPage = page.name;
 			const variables = localStorage.getItem(`${page.name}:routeVariables`) || "{}";
 			this.routeVariables = JSON.parse(variables);
-			await this.setPageData();
+			await this.setPageData(this.activePage);
 			this.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas);
 			nextTick(() => {
 				this.settingPage = false;
@@ -331,7 +331,7 @@ const useStore = defineStore("store", {
 		setRouteVariable(variable: string, value: string) {
 			this.routeVariables[variable] = value;
 			localStorage.setItem(`${this.selectedPage}:routeVariables`, JSON.stringify(this.routeVariables));
-			this.setPageData();
+			this.setPageData(this.activePage as BuilderPage);
 		},
 		openInDesk(page: BuilderPage) {
 			window.open(`/app/builder-page/${page.page_name}`, "_blank");
