@@ -66,6 +66,12 @@ const routes = [
 		beforeEnter: validateVisit,
 		component: () => import("@/pages/PagePreview.vue"),
 	},
+	// {
+	// 	path: "/reset",
+	// 	name: "reset",
+	// 	beforeEnter: validateVisit,
+	// 	component: () => import("@/components/Reset.vue"),
+	// },
 ];
 
 const router = createRouter({

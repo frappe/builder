@@ -10,6 +10,7 @@ import frappe
 import frappe.utils
 from builder.html_preview_image import generate_preview
 from builder.utils import safer_exec
+from frappe.core.doctype.file.utils import get_local_image
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
 from frappe.utils.safe_exec import is_safe_exec_enabled, safe_exec
@@ -22,6 +23,7 @@ from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
 from jinja2.exceptions import TemplateSyntaxError
 from werkzeug.routing import Rule
+from frappe.core.doctype.file import delete_file
 
 MOBILE_BREAKPOINT = 576
 TABLET_BREAKPOINT = 768
@@ -615,3 +617,24 @@ def is_component_used(blocks, component_id):
 			return is_component_used(block.get("children"), component_id)
 
 	return False
+
+
+@frappe.whitelist(allow_guest=True)
+def upload_image():
+	from frappe.handler import upload_file
+	frappe.form_dict["convert_to_webp"] = 1
+	image_file = upload_file()
+	# convert_to_webp(image_file)
+	return image_file
+
+def convert_to_webp(self):
+	"""Convert image to webp format"""
+	if self.file_url.startswith(("/files", "/private/files")) and self.file_url.endswith((".png", ".jpeg", ".jpg")):
+		image, filename, extn = get_local_image(self.file_url)
+		# create new webp image file
+		webp_path = self.get_full_path().replace(extn, "webp")
+		image.save(webp_path, "WEBP")
+
+		delete_file(self.get_full_path())
+		self.file_url = f"{filename}.webp"
+		self.save()
