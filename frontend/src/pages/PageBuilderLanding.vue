@@ -189,7 +189,7 @@ import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
 import { useStorage, watchDebounced } from "@vueuse/core";
-import { Badge, Dropdown, TabButtons } from "frappe-ui";
+import { Badge, Dropdown, TabButtons, createDocumentResource } from "frappe-ui";
 import { ref } from "vue";
 
 const displayType = useStorage("displayType", "grid");
@@ -233,9 +233,16 @@ const deletePage = async (page: BuilderPage) => {
 };
 
 const duplicatePage = async (page: BuilderPage) => {
-	const pageCopy = { ...page };
-	pageCopy.page_name = `${page.page_name}-copy`;
-	pageCopy.page_title = `${page.page_title} Copy`;
+	const webPageResource = await createDocumentResource({
+		doctype: "Builder Page",
+		name: page.page_name,
+		auto: true,
+	});
+	await webPageResource.get.promise;
+
+	const pageCopy = webPageResource.doc as BuilderPage;
+	pageCopy.page_name = `${pageCopy.page_name}-copy`;
+	pageCopy.page_title = `${pageCopy.page_title} Copy`;
 	await webPages.insert.submit(pageCopy);
 };
 
