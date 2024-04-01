@@ -254,7 +254,6 @@ const useStore = defineStore("store", {
 				private: false,
 				folder: "Home/Builder Uploads",
 				optimize: true,
-				upload_endpoint: "/api/method/builder.builder.doctype.builder_page.builder_page.upload_image",
 			});
 			await new Promise((resolve) => {
 				toast.promise(upload, {
