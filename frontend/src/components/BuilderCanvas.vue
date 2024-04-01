@@ -202,7 +202,6 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 				if (!parentBlock) return;
 				if (parentBlock.isImage()) {
 					parentBlock.setAttribute("src", fileDoc.fileURL);
-					parentBlock.setAttribute("alt", fileDoc.fileName);
 				} else if (parentBlock.isContainer() && ev.shiftKey) {
 					parentBlock.setStyle("background", `url(${fileDoc.fileURL})`);
 				} else {
