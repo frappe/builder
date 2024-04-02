@@ -27,7 +27,7 @@ Frappe Builder is a low-code website builder designed for simplicity, speed, and
 
 ### Managed Hosting
 
-Get started with your personal or business site with a few clicks on [Frappe Cloud](https://frappecloud.com/marketplace/apps/builder).
+Get started with your personal or business site with a few clicks on [Frappe Cloud](https://frappecloud.com/builder/signup).
 
 ### Self-hosting
 
