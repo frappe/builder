@@ -12,9 +12,9 @@
   "content_tab",
   "published",
   "page_name",
-  "column_break_nasy",
   "route",
   "dynamic_route",
+  "column_break_nasy",
   "is_template",
   "template_name",
   "section_break_ujsp",
@@ -35,6 +35,7 @@
   {
    "fieldname": "page_name",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "Page Name",
    "unique": 1
   },
@@ -42,23 +43,28 @@
    "fieldname": "route",
    "fieldtype": "Data",
    "ignore_xss_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Route"
   },
   {
    "default": "0",
    "fieldname": "published",
    "fieldtype": "Check",
+   "in_list_view": 1,
    "label": "Published"
   },
   {
    "fieldname": "blocks",
    "fieldtype": "JSON",
-   "label": "Blocks"
+   "label": "Blocks",
+   "read_only": 1
   },
   {
    "fieldname": "preview",
    "fieldtype": "Attach Image",
-   "label": "Page Preview"
+   "label": "Page Preview",
+   "read_only": 1
   },
   {
    "fieldname": "page_title",
@@ -100,7 +106,8 @@
   {
    "fieldname": "draft_blocks",
    "fieldtype": "JSON",
-   "label": "Draft Blocks"
+   "label": "Draft Blocks",
+   "read_only": 1
   },
   {
    "fieldname": "settings_tab",
@@ -110,7 +117,7 @@
   {
    "fieldname": "meta_column",
    "fieldtype": "Column Break",
-   "label": "Meta"
+   "label": "Meta Tags"
   },
   {
    "fieldname": "meta_image",
@@ -149,7 +156,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-02-26 09:56:14.345845",
+ "modified": "2024-04-03 15:46:21.802985",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",
