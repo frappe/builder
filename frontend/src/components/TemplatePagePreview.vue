@@ -11,7 +11,7 @@
 			<span class="inline-block max-w-[160px] py-2 text-sm text-gray-700 dark:text-zinc-200">
 				<div class="flex items-center gap-1">
 					<p class="truncate">
-						{{ page.page_title || page.page_name }}
+						{{ page.template_name || page.page_title || page.page_name }}
 					</p>
 				</div>
 			</span>
