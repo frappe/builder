@@ -90,7 +90,7 @@ const useStore = defineStore("store", {
 		getRootBlock() {
 			return getBlockInstance(getBlockTemplate("body"));
 		},
-		getPageData() {
+		getPageBlocks() {
 			return [this.activeCanvas?.getFirstBlock()];
 		},
 		async setPage(pageName: string, resetCanvas = true) {
@@ -114,7 +114,11 @@ const useStore = defineStore("store", {
 			if (!Array.isArray(blocks)) {
 				this.pushBlocks([blocks]);
 			}
-			this.pageBlocks = [getBlockInstance(blocks[0])];
+			if (blocks.length === 0) {
+				this.pageBlocks = [getBlockInstance(getBlockTemplate("body"))];
+			} else {
+				this.pageBlocks = [getBlockInstance(blocks[0])];
+			}
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
 			this.selectedPage = page.name;
@@ -298,7 +302,7 @@ const useStore = defineStore("store", {
 			window.open(`/${route}`, "builder-preview");
 		},
 		savePage() {
-			this.pageBlocks = this.getPageData() as Block[];
+			this.pageBlocks = this.getPageBlocks() as Block[];
 			const pageData = JSON.stringify(this.pageBlocks);
 
 			const args = {

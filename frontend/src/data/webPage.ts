@@ -39,6 +39,7 @@ const templates = createListResource({
 		"dynamic_route",
 		"modified",
 		"is_template",
+		"template_name",
 		"owner",
 	],
 	filters: {
