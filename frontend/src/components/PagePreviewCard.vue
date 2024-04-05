@@ -91,7 +91,7 @@ import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { UseTimeAgo } from "@vueuse/components";
-import { Badge, Dropdown } from "frappe-ui";
+import { Badge, Dropdown, createDocumentResource } from "frappe-ui";
 
 const store = useStore();
 
@@ -101,9 +101,16 @@ const props = defineProps<{
 }>();
 
 const duplicatePage = async (page: BuilderPage) => {
-	const pageCopy = { ...page };
-	pageCopy.page_name = `${page.page_name}-copy`;
-	pageCopy.page_title = `${page.page_title} Copy`;
+	const webPageResource = await createDocumentResource({
+		doctype: "Builder Page",
+		name: page.page_name,
+		auto: true,
+	});
+	await webPageResource.get.promise;
+
+	const pageCopy = webPageResource.doc as BuilderPage;
+	pageCopy.page_name = `${pageCopy.page_name}-copy`;
+	pageCopy.page_title = `${pageCopy.page_title} Copy`;
 	await webPages.insert.submit(pageCopy);
 };
 
