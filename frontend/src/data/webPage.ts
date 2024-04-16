@@ -15,6 +15,7 @@ const webPages = createListResource({
 		"modified",
 		"owner",
 	],
+	auto: true,
 	cache: "pages",
 	orderBy: "modified desc",
 	pageLength: 50,
