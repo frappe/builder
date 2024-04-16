@@ -18,7 +18,7 @@
     "@tiptap/pm": "^2.0.4",
     "@tiptap/starter-kit": "^2.0.4",
     "@tiptap/vue-3": "^2.0.4",
-    "@vitejs/plugin-vue": "3",
+    "@vitejs/plugin-vue": "5",
     "@vueuse/components": "^10.2.1",
     "@vueuse/core": "^10.2.1",
     "ace-builds": "^1.22.0",
