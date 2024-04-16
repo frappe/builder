@@ -1,8 +1,9 @@
-const colors = require("tailwindcss/colors");
+import colors from "tailwindcss/colors";
+import tailwindConfig from "frappe-ui/src/utils/tailwind.config";
 
 module.exports = {
 	darkMode: "class",
-	presets: [require("frappe-ui/src/utils/tailwind.config")],
+	presets: [tailwindConfig],
 	content: [
 		"./index.html",
 		"./src/**/*.{vue,js,ts,jsx,tsx}",
