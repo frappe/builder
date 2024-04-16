@@ -7,8 +7,6 @@ app_description = "An easier way to build web pages for your needs!"
 app_email = "suraj@frappe.io"
 app_license = "MIT"
 
-develop_version = "1.x.x-develop"
-
 # Includes in <head>
 # ------------------
 
