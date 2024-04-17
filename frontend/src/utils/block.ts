@@ -366,6 +366,13 @@ class Block implements BlockOptions {
 		if (childBlock.isText()) {
 			childBlock.makeBlockEditable();
 		}
+
+		if (childBlock.getStyle("position")) {
+			if (!this.getStyle("position")) {
+				this.setStyle("position", "relative");
+			}
+		}
+
 		return childBlock;
 	}
 	removeChild(child: Block) {
