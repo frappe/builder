@@ -522,7 +522,7 @@ def get_style_file_path():
 
 
 def escape_single_quotes(text):
-	return text.replace("'", "\\'")
+	return (text or "").replace("'", "\\'")
 
 
 # def generate_tailwind_css_file_from_html(html):
