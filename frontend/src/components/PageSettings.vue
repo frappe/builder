@@ -44,6 +44,13 @@
 				</Button>
 				<Button
 					v-if="page.published"
+					:disabled="isHomePage(page)"
+					@click="() => setHomePage(page)"
+					class="block text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
+					Set as Home Page
+				</Button>
+				<Button
+					v-if="page.published"
 					@click="() => unpublishPage()"
 					class="block text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
 					Unpublish Page
@@ -64,6 +71,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { builderSettings } from "@/data/builderSettings";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
@@ -91,5 +99,19 @@ const unpublishPage = () => {
 			toast.success("Page unpublished");
 			store.setPage(props.page.name);
 		});
+};
+
+const setHomePage = (page: BuilderPage) => {
+	builderSettings.setValue
+		.submit({
+			home_page: page.route,
+		})
+		.then(() => {
+			toast.success("Home Page set");
+		});
+};
+
+const isHomePage = (page: BuilderPage) => {
+	return builderSettings.doc.home_page === page.route;
 };
 </script>

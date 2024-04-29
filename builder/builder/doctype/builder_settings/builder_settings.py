@@ -38,3 +38,7 @@ class BuilderSettings(Document):
 	def write_to_file(self, file_path, content):
 		with open(file_path, "w") as f:
 			f.write(content)
+
+def get_website_user_home_page(session_user=None):
+	home_page = frappe.get_cached_value("Builder Settings", None, "home_page")
+	return home_page

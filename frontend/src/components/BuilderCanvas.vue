@@ -4,7 +4,7 @@
 		<div class="overlay absolute" id="overlay" ref="overlay" />
 		<Transition name="fade">
 			<div
-				class="absolute bottom-0 left-0 right-0 top-0 z-50 w-full bg-gray-200 p-10 dark:bg-zinc-800"
+				class="absolute bottom-0 left-0 right-0 top-0 z-40 w-full bg-gray-200 p-10 dark:bg-zinc-800"
 				v-show="store.settingPage"></div>
 		</Transition>
 		<BlockSnapGuides></BlockSnapGuides>
