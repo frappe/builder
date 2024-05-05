@@ -1,5 +1,14 @@
 function getBlockTemplate(
-	type: "html" | "text" | "image" | "container" | "body" | "fit-container" | "fallback-component" | "repeater"
+	type:
+		| "html"
+		| "text"
+		| "image"
+		| "container"
+		| "body"
+		| "fit-container"
+		| "fallback-component"
+		| "repeater"
+		| "video"
 ): BlockOptions {
 	switch (type) {
 		case "html":
@@ -96,6 +105,17 @@ function getBlockTemplate(
 					minHeight: "300px",
 				} as BlockStyleMap,
 				isRepeaterBlock: true,
+			};
+		case "video":
+			return {
+				name: "Video",
+				element: "video",
+				attributes: {
+					autoplay: "",
+				} as BlockAttributeMap,
+				baseStyles: {
+					objectFit: "cover",
+				} as BlockStyleMap,
 			};
 	}
 }

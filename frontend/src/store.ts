@@ -139,6 +139,14 @@ const useStore = defineStore("store", {
 
 			return imageBlock;
 		},
+		getVideoBlock(videoSrc: string) {
+			const videoBlock = getBlockTemplate("video");
+			if (!videoBlock.attributes) {
+				videoBlock.attributes = {};
+			}
+			videoBlock.attributes.src = videoSrc;
+			return videoBlock;
+		},
 		selectBlock(block: Block, e: MouseEvent | null, scrollIntoView = true) {
 			this.activeCanvas?.history?.pause();
 			if (this.settingPage) {

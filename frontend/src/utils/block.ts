@@ -213,6 +213,9 @@ class Block implements BlockOptions {
 	isImage() {
 		return this.getElement() === "img";
 	}
+	isVideo() {
+		return this.getElement() === "video" || this.getInnerHTML()?.startsWith("<video");
+	}
 	isButton() {
 		return this.getElement() === "button";
 	}
@@ -253,8 +256,11 @@ class Block implements BlockOptions {
 		}
 		styleObj[style] = value;
 	}
-	setAttribute(attribute: string, value: string) {
+	setAttribute(attribute: string, value: string | undefined) {
 		this.attributes[attribute] = value;
+	}
+	removeAttribute(attribute: string) {
+		this.setAttribute(attribute, undefined);
 	}
 	getAttribute(attribute: string) {
 		return this.getAttributes()[attribute];
@@ -302,6 +308,8 @@ class Block implements BlockOptions {
 				return "square";
 			case this.isImage():
 				return "image";
+			case this.isVideo():
+				return "film";
 
 			default:
 				return "square";
