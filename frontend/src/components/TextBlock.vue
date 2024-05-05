@@ -48,35 +48,35 @@
 				<button
 					@click="() => setHeading(1)"
 					class="rounded px-2 py-1 text-sm hover:bg-gray-100"
-					:class="{ 'bg-gray-200': editor.isActive('heading', { level: 1 }) }">
+					:class="{ 'bg-gray-200': block.getElement() === 'h1' }">
 					<code>H1</code>
 				</button>
 				<button
 					@click="setHeading(2)"
 					class="rounded px-2 py-1 text-sm hover:bg-gray-100"
-					:class="{ 'bg-gray-200': editor.isActive('heading', { level: 2 }) }">
+					:class="{ 'bg-gray-200': block.getElement() === 'h2' }">
 					<code>H2</code>
 				</button>
 				<button
 					@click="setHeading(3)"
 					class="rounded px-2 py-1 text-sm hover:bg-gray-100"
-					:class="{ 'bg-gray-200': editor.isActive('heading', { level: 3 }) }">
+					:class="{ 'bg-gray-200': block.getElement() === 'h3' }">
 					<code>H3</code>
 				</button>
 				<button
-					@click="editor.chain().focus().toggleBold().run()"
+					@click="editor?.chain().focus().toggleBold().run()"
 					class="rounded px-2 py-1 hover:bg-gray-100"
 					:class="{ 'bg-gray-200': editor.isActive('bold') }">
 					<FeatherIcon class="h-3 w-3" name="bold" />
 				</button>
 				<button
-					@click="editor.chain().focus().toggleItalic().run()"
+					@click="editor?.chain().focus().toggleItalic().run()"
 					class="rounded px-2 py-1 hover:bg-gray-100"
 					:class="{ 'bg-gray-200': editor.isActive('italic') }">
 					<FeatherIcon class="h-3 w-3" name="italic" />
 				</button>
 				<button
-					@click="editor.chain().focus().toggleStrike().run()"
+					@click="editor?.chain().focus().toggleStrike().run()"
 					class="rounded px-2 py-1 hover:bg-gray-100"
 					:class="{ 'bg-gray-200': editor.isActive('strike') }">
 					<StrikeThroughIcon />
@@ -299,7 +299,7 @@ const enableLinkInput = () => {
 const setHeading = (level: 1 | 2 | 3) => {
 	props.block.setBaseStyle("font-size", level === 1 ? "2rem" : level === 2 ? "1.5rem" : "1.25rem");
 	props.block.setBaseStyle("font-weight", "bold");
-	props.block.element = "h" + level;
+	props.block.element = `h${level}`;
 	nextTick(() => {
 		props.block.selectBlock();
 	});
