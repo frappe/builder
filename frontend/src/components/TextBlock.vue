@@ -297,8 +297,11 @@ const enableLinkInput = () => {
 };
 
 const setHeading = (level: 1 | 2 | 3) => {
-	editor.value?.chain().focus().toggleHeading({ level: level }).run();
 	props.block.setBaseStyle("font-size", level === 1 ? "2rem" : level === 2 ? "1.5rem" : "1.25rem");
 	props.block.setBaseStyle("font-weight", "bold");
+	props.block.element = "h" + level;
+	nextTick(() => {
+		props.block.selectBlock();
+	});
 };
 </script>
