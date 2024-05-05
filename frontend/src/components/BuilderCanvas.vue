@@ -200,6 +200,10 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 		} else if (files && files.length) {
 			store.uploadFile(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
 				if (!parentBlock) return;
+				if (fileDoc.fileName.match(/\.(mp4|webm|ogg|mov)$/)) {
+					parentBlock.addChild(store.getVideoBlock(fileDoc.fileURL));
+					return;
+				}
 				if (parentBlock.isImage()) {
 					parentBlock.setAttribute("src", fileDoc.fileURL);
 				} else if (parentBlock.isContainer() && ev.shiftKey) {
