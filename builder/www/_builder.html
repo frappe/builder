@@ -7,6 +7,8 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<!-- <script src="https://cdn.tailwindcss.com"></script> -->
 		<title>Frappe Builder</title>
+		<script type="module" crossorigin src="/assets/builder/frontend/assets/index-ClXYlalJ.js"></script>
+		<link rel="stylesheet" crossorigin href="/assets/builder/frontend/assets/index-Cj6YJ25H.css">
 	</head>
 	<body class="overscroll-none dark:bg-zinc-800 no-scrollbar">
 		<div id="app"></div>
@@ -17,6 +19,5 @@
 			window.csrf_token = "{{ csrf_token }}";
 			window.builder_path = "{{ builder_path }}"
 		</script>
-		<script type="module" src="/src/main.ts"></script>
 	</body>
 </html>
