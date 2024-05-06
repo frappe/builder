@@ -68,8 +68,18 @@ const routes = [
 	},
 ];
 
+declare global {
+	interface Window {
+		builder_path: string;
+	}
+}
+
+let builder_path = window.builder_path || "/builder";
+if (builder_path.startsWith("{{")) {
+	builder_path = "/builder";
+}
 const router = createRouter({
-	history: createWebHistory("/builder"),
+	history: createWebHistory(builder_path),
 	routes,
 });
 
