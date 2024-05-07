@@ -331,6 +331,9 @@ def get_block_html(blocks, page_data={}):
 					if child.get("visibilityCondition"):
 						tag.append("{% endif %}")
 
+			if element == "body":
+				tag.append("{% include 'templates/generators/webpage_scripts.html' %}")
+
 			return tag
 
 		for block in blocks:

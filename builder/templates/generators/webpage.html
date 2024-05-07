@@ -8,58 +8,20 @@
 	<link rel="icon" href="{{ favicon_light or favicon or '/assets/builder/images/frappe_black.png' }}"  media="(prefers-color-scheme: light)"/>
 	<link rel="icon" href="{{ favicon_dark or favicon or '/assets/builder/images/frappe_white.png' }}"  media="(prefers-color-scheme: dark)"/>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	{% block meta_block %}
-		{% include "templates/includes/meta_block.html" %}
-	{% endblock %}
+	{% block meta_block %}{% include "templates/includes/meta_block.html" %}{% endblock %}
 	<link rel="stylesheet" href="{{ base_url }}assets/builder/reset.css?v=1" media="screen">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
-	{% for (font, options) in fonts.items() %}
-	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ font }}:wght@{{ ";".join(options.weights) }}&display=swap" media="screen">
-	{% endfor %}
+	{% for (font, options) in fonts.items() %}<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ font }}:wght@{{ ";".join(options.weights) }}&display=swap" media="screen">{% endfor %}
 	{{ style }}
 	{% block style %}
 		{%- if styles -%}
 			{% for style_path in styles %}
-				<link rel="stylesheet" href="{{ style_path }}">
+			<link rel="stylesheet" href="{{ style_path }}">
 			{% endfor %}
 		{%- endif -%}
 	{%- endblock %}
 </head>
-<body>
-	{% block page_content %}
-	{{ content }}
-	{% endblock %}
-	{% block script %}
-		{%- if scripts -%}
-			{% for script_path in scripts %}
-				<script src="{{ script_path }}"></script>
-			{% endfor %}
-		{%- endif -%}
-	{%- endblock %}
-	<a class="__editor_link" href="{{ editor_link }}" target="frappe-builder" style="position: fixed; bottom: 40px; right: 50px; height: 35px; width: 35px; display: none; opacity: 0.1;">
-		<img src="/assets/builder/frontend/builder_logo.png" style="box-shadow: #bdbdbd 0px 0px 5px; border-radius: 10px;" alt="Frappe" />
-	</a>
-	<script>window.page_data = {{ (page_data or {})|tojson|safe }}</script>
-	<script>if (!window.frappe) window.frappe = {};</script>
-	<!-- csrf_token -->
-	{% if enable_view_tracking and not preview %}
-	<script async>
-		if (navigator.doNotTrack != 1) {document.addEventListener("DOMContentLoaded", function() {let b=getBrowser(),q=getQueryParams();import('https://openfpcdn.io/fingerprintjs/v3').then(f=>f.load()).then(fp=>fp.get()).then(r=>{const d={referrer:document.referrer,browser:b.name,version:b.version,user_tz:Intl.DateTimeFormat().resolvedOptions().timeZone,source:q.source,medium:q.medium,campaign:q.campaign,visitor_id:r.visitorId};makeViewLog(d)})})}function getBrowser(){const ua=navigator.userAgent,b={};if(ua.indexOf("Chrome")!==-1){b.name="Chrome";b.version=parseInt(ua.split("Chrome/")[1])}else if(ua.indexOf("Firefox")!==-1){b.name="Firefox";b.version=parseInt(ua.split("Firefox/")[1])}else{b.name="Unknown";b.version="Unknown"}return b}function getQueryParams(){const q={},p=window.location.search.substring(1).split("&");p.forEach(p=>{const [k,v]=p.split("=");q[k]=v});return q}function makeViewLog(d){fetch('/api/method/frappe.website.doctype.web_page_view.web_page_view.make_view_log',{method:'POST',headers:{'Content-Type':'application/json',"X-Frappe-CSRF-Token": frappe.csrf_token},body:JSON.stringify(d)})}
-	</script>
-	<script>
-		// TODO: check if user has edit permissions (UX)
-		if (document.cookie.indexOf("user_id=Guest") === -1) {
-			document.querySelector(".__editor_link").style.display = "block";
-			document.querySelector(".__editor_link").addEventListener("mouseover", function() {
-				this.style.opacity = "1";
-			});
-			document.querySelector(".__editor_link").addEventListener("mouseout", function() {
-				this.style.opacity = "0.1";
-			});
-		} else {
-			document.querySelector(".__editor_link")?.remove();
-		}
-	</script>
-	{% endif %}
-</body>
+{% block page_content %}
+{{ content }}
+{% endblock %}
 </html>
