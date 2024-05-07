@@ -11,16 +11,16 @@
 	{% block meta_block %}
 		{% include "templates/includes/meta_block.html" %}
 	{% endblock %}
-	<link rel="stylesheet" rel="preload" href="{{ base_url }}assets/builder/reset.css?v=1" media="screen">
+	<link rel="stylesheet" href="{{ base_url }}assets/builder/reset.css?v=1" media="screen">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	{% for (font, options) in fonts.items() %}
-	<link rel="stylesheet" rel="preload" href="https://fonts.googleapis.com/css2?family={{ font }}:wght@{{ ";".join(options.weights) }}&display=swap" media="screen">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ font }}:wght@{{ ";".join(options.weights) }}&display=swap" media="screen">
 	{% endfor %}
 	{{ style }}
 	{% block style %}
 		{%- if styles -%}
 			{% for style_path in styles %}
-				<link rel="stylesheet" rel="preload" href="{{ style_path }}">
+				<link rel="stylesheet" href="{{ style_path }}">
 			{% endfor %}
 		{%- endif -%}
 	{%- endblock %}
