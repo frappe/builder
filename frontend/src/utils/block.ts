@@ -442,6 +442,7 @@ class Block implements BlockOptions {
 		return !(
 			this.isImage() ||
 			this.isSVG() ||
+			this.isVideo() ||
 			(this.isText() && !this.isLink()) ||
 			this.isExtendedFromComponent()
 		);
