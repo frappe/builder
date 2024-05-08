@@ -762,7 +762,7 @@ const optionsSectionProperties = [
 		},
 		searchKeyWords: "Class, ClassName, Class Name",
 		events: {
-			"update:modelValue": (val: string) => setClasses(val),
+			"update:modelValue": (val: string) => setClasses(val || ""),
 		},
 		condition: () => !blockController.multipleBlocksSelected(),
 	},
