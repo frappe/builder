@@ -93,7 +93,8 @@ class BuilderPage(WebsiteGenerator):
 			blocks = frappe.parse_json(self.draft_blocks or self.blocks)
 			for block in blocks:
 				copy_img_to_asset_folder(block, self)
-			self.db_set("draft_blocks", frappe.as_json(blocks, indent=None))
+			self.db_set("draft_blocks", frappe.as_json([], indent=None))
+			self.db_set("blocks", frappe.as_json(blocks, indent=None))
 			self.reload()
 			export_to_files(record_list=[["Builder Page", self.name, "builder_page_template"]], record_module="builder")
 
@@ -208,10 +209,10 @@ class BuilderPage(WebsiteGenerator):
 		return page_data
 
 	def generate_page_preview_image(self, html=None):
-		file_name = f"{self.name}{frappe.generate_hash()}.jpeg"
+		public_path, local_path = get_builder_page_preview_paths(self)
 		generate_preview(
 			html or get_response_content(self.route),
-			os.path.join(frappe.local.site_path, "public", "files", file_name),
+			local_path,
 		)
 		with contextlib.suppress(frappe.DoesNotExistError):
 			attached_files = frappe.get_all(
@@ -222,11 +223,11 @@ class BuilderPage(WebsiteGenerator):
 					"attached_to_name": self.name,
 				},
 			)
-			for file in attached_files:
-				preview_file = frappe.get_doc("File", file.name)
+			for _file in attached_files:
+				preview_file = frappe.get_doc("File", _file.name)
 				preview_file.delete(ignore_permissions=True)
 
-		self.db_set("preview", f"/files/{file_name}", commit=True)
+		self.db_set("preview", public_path, commit=True)
 
 
 def get_block_html(blocks, page_data={}):
@@ -678,3 +679,14 @@ def copy_img_to_asset_folder(block, self):
 			block["attributes"]["src"] = f"/builder_assets/{self.name}/{src.split('/')[-1]}"
 	for child in block.get("children", []):
 		copy_img_to_asset_folder(child, self)
+
+def get_builder_page_preview_paths(page_doc):
+	public_path, public_path = None, None
+	if page_doc.is_template:
+		local_path = os.path.join(frappe.get_app_path("builder"), "www", "builder_assets", page_doc.name, "preview.jpeg")
+		public_path = f"/builder_assets/{page_doc.name}/preview.jpeg"
+	else:
+		file_name = f"{page_doc.name}{frappe.generate_hash()}.jpeg"
+		local_path = os.path.join(frappe.local.site_path, "public", "files", file_name)
+		public_path = f"/files/{file_name}"
+	return public_path, local_path
