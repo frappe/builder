@@ -1,16 +1,12 @@
 [project]
 name = "builder"
 authors = [
-    { name = "Suraj Shetty", email = "surajshetty3416@gmail.com"}
+    { name = "Suraj Shetty", email = "suraj@frappe.io"}
 ]
 description = "Modern website builder for modern web pages"
 requires-python = ">=3.10"
 readme = "README.md"
 dynamic = ["version"]
-dependencies = [
-    "playwright",
-    "install-playwright",
-]
 
 [build-system]
 requires = ["flit_core >=3.4,<4"]
