@@ -8,6 +8,11 @@ requires-python = ">=3.10"
 readme = "README.md"
 dynamic = ["version"]
 
+[project.urls]
+Homepage = "https://frappe.io/builder"
+Repository = "https://github.com/frappe/builder.git"
+"Bug Reports" = "https://github.com/frappe/builder/issues"
+
 [build-system]
 requires = ["flit_core >=3.4,<4"]
 build-backend = "flit_core.buildapi"
