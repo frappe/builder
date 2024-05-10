@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+	<base href="{{ base_url }}">
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,7 +10,7 @@
 	<link rel="icon" href="{{ favicon_dark or favicon or '/assets/builder/images/frappe_white.png' }}"  media="(prefers-color-scheme: dark)"/>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	{% block meta_block %}{% include "templates/includes/meta_block.html" %}{% endblock %}
-	<link rel="stylesheet" href="{{ base_url }}assets/builder/reset.css?v=1" media="screen">
+	<link rel="stylesheet" href="/assets/builder/reset.css?v=1" media="screen">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	{% for (font, options) in fonts.items() %}<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ font }}:wght@{{ ";".join(options.weights) }}&display=swap" media="screen">{% endfor %}
 	{{ style }}
