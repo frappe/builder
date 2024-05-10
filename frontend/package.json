@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build --base=/assets/builder/frontend/ && yarn copy-html-entry",
-    "copy-html-entry": "cp ../builder/public/frontend/index.html ../builder/www/builder.html",
+    "copy-html-entry": "cp ../builder/public/frontend/index.html ../builder/www/_builder.html",
     "preview": "vite preview",
     "test-local": "cypress open --e2e --browser chrome",
     "test": "npx cypress run --record --key fa50a4df-569e-41bc-8600-850331fd1630"
@@ -18,7 +18,7 @@
     "@tiptap/pm": "^2.0.4",
     "@tiptap/starter-kit": "^2.0.4",
     "@tiptap/vue-3": "^2.0.4",
-    "@vitejs/plugin-vue": "3",
+    "@vitejs/plugin-vue": "5",
     "@vueuse/components": "^10.2.1",
     "@vueuse/core": "^10.2.1",
     "ace-builds": "^1.22.0",
@@ -28,7 +28,7 @@
     "pinia": "^2.0.28",
     "postcss": "^8.4.5",
     "tailwindcss": "^3.3.2",
-    "vite": "3",
+    "vite": "^5.2.6",
     "vue": "^3.2.25",
     "vue-router": "^4.0.12",
     "vue-sonner": "^1.0.2",

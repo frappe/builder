@@ -2,6 +2,11 @@
 	<div ref="canvasContainer" @click="handleClick">
 		<slot name="header"></slot>
 		<div class="overlay absolute" id="overlay" ref="overlay" />
+		<Transition name="fade">
+			<div
+				class="absolute bottom-0 left-0 right-0 top-0 z-40 w-full bg-gray-200 p-10 dark:bg-zinc-800"
+				v-show="store.settingPage"></div>
+		</Transition>
 		<BlockSnapGuides></BlockSnapGuides>
 		<div
 			v-if="isOverDropZone"
@@ -195,12 +200,23 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 		} else if (files && files.length) {
 			store.uploadFile(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
 				if (!parentBlock) return;
+
+				if (fileDoc.fileName.match(/\.(mp4|webm|ogg|mov)$/)) {
+					while (parentBlock && !parentBlock.canHaveChildren()) {
+						parentBlock = parentBlock.getParentBlock() as Block;
+					}
+					parentBlock.addChild(store.getVideoBlock(fileDoc.fileURL));
+					return;
+				}
+
 				if (parentBlock.isImage()) {
 					parentBlock.setAttribute("src", fileDoc.fileURL);
-					parentBlock.setAttribute("alt", fileDoc.fileName);
 				} else if (parentBlock.isContainer() && ev.shiftKey) {
 					parentBlock.setStyle("background", `url(${fileDoc.fileURL})`);
 				} else {
+					while (parentBlock && !parentBlock.canHaveChildren()) {
+						parentBlock = parentBlock.getParentBlock() as Block;
+					}
 					parentBlock.addChild(store.getImageBlock(fileDoc.fileURL, fileDoc.fileName));
 				}
 			});

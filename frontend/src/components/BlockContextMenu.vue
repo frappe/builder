@@ -105,7 +105,7 @@ const createComponentHandler = ({ close }: { close: () => void }) => {
 		.submit({
 			block: blockCopy,
 			component_name: componentProperties.value.componentName,
-			for_web_page: componentProperties.value.isGlobalComponent ? null : store.getActivePage()?.name,
+			for_web_page: componentProperties.value.isGlobalComponent ? null : store.selectedPage,
 		})
 		.then(async (data: BuilderComponent) => {
 			await webComponent.list.promise;
@@ -136,7 +136,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		label: "Convert To Link",
 		action: () => {
 			blockController.getSelectedBlocks().forEach((block: Block) => {
-				if (block.isSVG()) {
+				if (block.isSVG() || block.isImage()) {
 					const parentBlock = block.getParentBlock();
 					if (!parentBlock) return;
 					const newBlockObj = getBlockTemplate("fit-container");
@@ -153,7 +153,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			});
 		},
 		condition: () =>
-			(props.block.isContainer() || props.block.isText()) &&
+			(props.block.isContainer() || props.block.isText() || props.block.isImage()) &&
 			!props.block.isLink() &&
 			!props.block.isExtendedFromComponent() &&
 			!props.block.isRoot(),

@@ -114,7 +114,7 @@ import { computed, inject, ref, watchEffect } from "vue";
 import Block from "../utils/block";
 import { getNumberFromPx } from "../utils/helpers";
 
-import { toast } from "frappe-ui";
+import { toast } from "vue-sonner";
 const canvasProps = inject("canvasProps") as CanvasProps;
 
 const props = defineProps({
@@ -242,7 +242,7 @@ const messageShown = ref(false);
 const handlePadding = (ev: MouseEvent, position: Position) => {
 	if (props.disableHandlers) return;
 	// if (!messageShown.value && !(ev.shiftKey || ev.altKey)) {
-	// 	makeToast();
+	// 	showToast();
 	// 	messageShown.value = true;
 	// }
 	updating.value = true;
@@ -312,10 +312,6 @@ const handlePadding = (ev: MouseEvent, position: Position) => {
 	);
 };
 
-let makeToast = () =>
-	toast({
-		text: 'Press "shift" key to apply padding to all sides and "alt" key to apply padding on either sides.',
-		timeout: 6,
-		position: "bottom-left",
-	});
+let showToast = () =>
+	toast('Press "shift" key to apply padding to all sides and "alt" key to apply padding on either sides.');
 </script>

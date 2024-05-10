@@ -55,6 +55,9 @@ const blockController = {
 	isImage: () => {
 		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isImage();
 	},
+	isVideo: () => {
+		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isVideo();
+	},
 	isButton: () => {
 		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isButton();
 	},
@@ -209,6 +212,15 @@ const blockController = {
 	},
 	setMargin: (value: string) => {
 		blockController.getFirstSelectedBlock().setMargin(value);
+	},
+	toggleAttribute: (attribute: string) => {
+		store.activeCanvas?.selectedBlocks.forEach((block) => {
+			if (block.getAttribute(attribute) !== undefined) {
+				block.removeAttribute(attribute);
+			} else {
+				block.setAttribute(attribute, "");
+			}
+		});
 	},
 };
 

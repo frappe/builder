@@ -56,7 +56,7 @@ const filter = ref("");
 
 const components = computed(() =>
 	(webComponent.data || []).filter((d: BuilderComponent) => {
-		if (d.for_web_page && d.for_web_page !== store.getActivePage?.name) {
+		if (d.for_web_page && d.for_web_page !== store.selectedPage) {
 			return false;
 		}
 		if (filter.value) {

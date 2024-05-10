@@ -132,7 +132,8 @@ class BuilderPage(WebsiteGenerator):
 		context.fonts = fonts
 		context.content = content
 		context.style = style
-		context.editor_link = f"/builder/page/{self.name}"
+		builder_path = frappe.conf.builder_path or "builder"
+		context.editor_link = f"/{builder_path}/page/{self.name}"
 		context.base_url = frappe.utils.get_url(".")
 
 		self.set_style_and_script(context)
@@ -330,6 +331,9 @@ def get_block_html(blocks, page_data={}):
 					if child.get("visibilityCondition"):
 						tag.append("{% endif %}")
 
+			if element == "body":
+				tag.append("{% include 'templates/generators/webpage_scripts.html' %}")
+
 			return tag
 
 		for block in blocks:
@@ -509,7 +513,7 @@ def get_style_file_path():
 
 
 def escape_single_quotes(text):
-	return text.replace("'", "\\'")
+	return (text or "").replace("'", "\\'")
 
 
 # def generate_tailwind_css_file_from_html(html):

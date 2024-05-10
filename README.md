@@ -11,7 +11,7 @@
 
 # Frappe Builder
 
-Frappe Builder is a low-code website builder designed for simplicity, speed, and flexibility. Craft beautiful websites effortlessly with intuitive visual builder and modern design principles. Whether you're a designer looking for ease or a developer seeking customization, Frappe Builder empowers you.
+Frappe Builder is a low-code website builder designed for simplicity, speed, and flexibility. Craft beautiful websites effortlessly with an intuitive visual builder. Whether you're a designer looking for ease or a developer seeking customization, Frappe Builder empowers you. It also features a click-to-publish option that gives you the complete end-to-end website creation experience.
 
 ## Key Features
 
@@ -27,13 +27,13 @@ Frappe Builder is a low-code website builder designed for simplicity, speed, and
 
 ### Managed Hosting
 
-Get started with your personal or business site with a few clicks on [Frappe Cloud](https://frappecloud.com/marketplace/apps/builder).
+Get started with your personal or business site with a few clicks on [Frappe Cloud](https://frappecloud.com/builder/signup).
 
 ### Self-hosting
 
 If you prefer self-hosting, follow the official [Frappe Bench Installation](https://github.com/frappe/bench#installation) instructions.
 
-## Want to Just Try Out or Contribute?
+## Want to just try out or contribute?
 
 ### Codespaces
 
