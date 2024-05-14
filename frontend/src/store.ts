@@ -173,6 +173,13 @@ const useStore = defineStore("store", {
 			this.activeCanvas?.clearSelection();
 			this.editingMode = "component";
 		},
+		selectComponent(componentName: string | null = null) {
+			if (componentName) {
+				this.editingComponent = componentName;
+			}
+			this.activeCanvas?.clearSelection();
+			this.editingMode = "component";
+		},
 		isComponentUsed(componentName: string) {
 			// TODO: Refactor or reduce complexity
 			const checkComponent = (block: Block) => {
