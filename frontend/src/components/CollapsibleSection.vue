@@ -1,7 +1,7 @@
 <template>
 	<div>
-		<div class="flex items-center justify-between text-sm dark:text-zinc-400">
-			<h3 class="cursor-pointer text-2xs font-bold uppercase text-gray-600" @click="toggleCollapsed">
+		<div class="flex items-center justify-between text-sm font-medium dark:text-zinc-400">
+			<h3 class="cursor-pointer text-gray-900 dark:text-zinc-300" @click="toggleCollapsed">
 				{{ sectionName }}
 			</h3>
 			<Button
