@@ -593,7 +593,12 @@ onActivated(async () => {
 useEventListener(document, "visibilitychange", () => {
 	if (document.visibilityState === "visible" && !componentCanvas.value) {
 		if (route.params.pageId && route.params.pageId !== "new") {
-			store.setPage(route.params.pageId as string, false);
+			const currentModified = store.activePage?.modified;
+			webPages.fetchOne.submit(store.activePage?.name).then((doc: BuilderPage[]) => {
+				if (currentModified !== doc[0]?.modified) {
+					store.setPage(route.params.pageId as string, false);
+				}
+			});
 		}
 	}
 });
