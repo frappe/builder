@@ -90,6 +90,7 @@ import BuilderCanvas from "@/components/BuilderCanvas.vue";
 import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
+import webComponent from "@/data/webComponent";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
@@ -109,7 +110,7 @@ import {
 } from "@/utils/helpers";
 import { useActiveElement, useDebounceFn, useEventListener, useMagicKeys } from "@vueuse/core";
 import { Dialog } from "frappe-ui";
-import { computed, nextTick, onActivated, provide, ref, watch, watchEffect } from "vue";
+import { computed, nextTick, onActivated, onMounted, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { toast } from "vue-sonner";
 import CodeEditor from "../components/CodeEditor.vue";
@@ -638,6 +639,11 @@ watch(
 		}
 	}
 );
+
+// TODO: Remove this (seems redundant)
+onMounted(() => {
+	webComponent.fetch();
+});
 </script>
 
 <style>
