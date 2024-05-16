@@ -98,6 +98,13 @@ class BuilderPage(WebsiteGenerator):
 			self.reload()
 			export_to_files(record_list=[["Builder Page", self.name, "builder_page_template"]], record_module="builder")
 
+	def on_trash(self):
+		if self.is_template and frappe.conf.developer_mode:
+			# delete all assets
+			asset_folder = os.path.join(frappe.get_app_path("builder"), "www", "builder_assets", self.name)
+			if os.path.exists(asset_folder):
+				shutil.rmtree(asset_folder)
+
 	def autoname(self):
 		if not self.name:
 			self.name = f"page-{frappe.generate_hash(length=8)}"
