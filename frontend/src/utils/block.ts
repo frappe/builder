@@ -71,12 +71,6 @@ class Block implements BlockOptions {
 		delete this.attributes.style;
 		this.classes = options.classes || [];
 
-		// TODO: remove this
-		if (this.classes.includes("__text_block__")) {
-			// remove this class
-			this.classes = this.classes.filter((c) => c !== "__text_block__");
-		}
-
 		if (this.isRoot()) {
 			this.blockId = "root";
 			this.draggable = false;
