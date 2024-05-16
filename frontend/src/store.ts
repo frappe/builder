@@ -143,6 +143,14 @@ const useStore = defineStore("store", {
 
 			return imageBlock;
 		},
+		getVideoBlock(videoSrc: string) {
+			const videoBlock = getBlockTemplate("video");
+			if (!videoBlock.attributes) {
+				videoBlock.attributes = {};
+			}
+			videoBlock.attributes.src = videoSrc;
+			return videoBlock;
+		},
 		selectBlock(block: Block, e: MouseEvent | null, scrollIntoView = true) {
 			this.activeCanvas?.history?.pause();
 			if (this.settingPage) {
@@ -165,6 +173,13 @@ const useStore = defineStore("store", {
 		editComponent(block: Block) {
 			if (block.isExtendedFromComponent()) {
 				this.editingComponent = block?.extendedFromComponent as string;
+			}
+			this.activeCanvas?.clearSelection();
+			this.editingMode = "component";
+		},
+		selectComponent(componentName: string | null = null) {
+			if (componentName) {
+				this.editingComponent = componentName;
 			}
 			this.activeCanvas?.clearSelection();
 			this.editingMode = "component";
