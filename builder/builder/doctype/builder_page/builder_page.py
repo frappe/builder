@@ -214,7 +214,7 @@ class BuilderPage(WebsiteGenerator):
 				preview_file = frappe.get_doc("File", file.name)
 				preview_file.delete(ignore_permissions=True)
 
-		self.db_set("preview", f"/files/{file_name}", commit=True)
+		self.db_set("preview", f"/files/{file_name}", commit=True, update_modified=False)
 
 
 def get_block_html(blocks, page_data={}):

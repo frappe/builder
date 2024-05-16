@@ -593,7 +593,7 @@ onActivated(async () => {
 useEventListener(document, "visibilitychange", () => {
 	if (document.visibilityState === "visible" && !componentCanvas.value) {
 		if (route.params.pageId && route.params.pageId !== "new") {
-			const currentModified = store.activePage?.modified;
+			const currentModified = webPages.getRow(store.activePage?.name as string)?.modified;
 			webPages.fetchOne.submit(store.activePage?.name).then((doc: BuilderPage[]) => {
 				if (currentModified !== doc[0]?.modified) {
 					store.setPage(route.params.pageId as string, false);
