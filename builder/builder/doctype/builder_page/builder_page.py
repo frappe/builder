@@ -250,7 +250,7 @@ def get_block_html(blocks, page_data={}):
 				"label",
 				"a",
 			):
-				classes.append("__text_block__")
+				classes.insert(0, "__text_block__")
 
 			# temp fix: since p inside p is illegal
 			if element in ["p", "__raw_html__"]:
@@ -296,7 +296,7 @@ def get_block_html(blocks, page_data={}):
 					style_class,
 					device="mobile",
 				)
-				classes.append(style_class)
+				classes.insert(0, style_class)
 
 			tag.attrs["class"] = get_class(classes)
 
