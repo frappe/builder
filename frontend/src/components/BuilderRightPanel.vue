@@ -13,7 +13,7 @@
 			<div
 				class="sticky top-0 z-[12] flex w-full border-gray-200 bg-white p-[2px] text-sm dark:border-zinc-800 dark:bg-zinc-900">
 				<button
-					v-for="tab of (['Properties', 'Script', 'Settings'] as RightSidebarTabOption[])"
+					v-for="tab of (['Properties', 'Script', 'Options'] as RightSidebarTabOption[])"
 					:key="tab"
 					class="mx-3 flex-1 p-2"
 					@click="store.rightPanelActiveTab = tab"
@@ -32,9 +32,9 @@
 				:key="store.selectedPage"
 				v-if="store.selectedPage && store.activePage"
 				:page="store.activePage" />
-			<PageSettings
+			<PageOptions
 				class="p-4"
-				v-show="store.rightPanelActiveTab === 'Settings'"
+				v-show="store.rightPanelActiveTab === 'Options'"
 				:key="store.selectedPage"
 				v-if="store.selectedPage && store.activePage"
 				:page="store.activePage" />
@@ -45,7 +45,7 @@
 import useStore from "@/store";
 import BlockProperties from "./BlockProperties.vue";
 import PageScript from "./PageScript.vue";
-import PageSettings from "./PageSettings.vue";
+import PageOptions from "./PageOptions.vue";
 import PanelResizer from "./PanelResizer.vue";
 const store = useStore();
 </script>

@@ -114,6 +114,9 @@ const useStore = defineStore("store", {
 			if (!Array.isArray(blocks)) {
 				this.pushBlocks([blocks]);
 			}
+			if (blocks.length === 0) {
+				blocks.push(getBlockTemplate("body"));
+			}
 			this.pageBlocks = [getBlockInstance(blocks[0])];
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");

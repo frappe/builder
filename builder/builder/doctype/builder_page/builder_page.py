@@ -156,6 +156,8 @@ class BuilderPage(WebsiteGenerator):
 
 	def set_favicon(self, context):
 		if not context.get("favicon"):
+			context.favicon = self.favicon
+		if not context.get("favicon"):
 			context.favicon = frappe.get_cached_value("Builder Settings", None, "favicon")
 
 	def is_component_used(self, component_id):
