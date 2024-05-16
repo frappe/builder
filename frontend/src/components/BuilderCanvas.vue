@@ -200,11 +200,23 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 		} else if (files && files.length) {
 			store.uploadFile(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
 				if (!parentBlock) return;
+
+				if (fileDoc.fileName.match(/\.(mp4|webm|ogg|mov)$/)) {
+					while (parentBlock && !parentBlock.canHaveChildren()) {
+						parentBlock = parentBlock.getParentBlock() as Block;
+					}
+					parentBlock.addChild(store.getVideoBlock(fileDoc.fileURL));
+					return;
+				}
+
 				if (parentBlock.isImage()) {
 					parentBlock.setAttribute("src", fileDoc.fileURL);
 				} else if (parentBlock.isContainer() && ev.shiftKey) {
 					parentBlock.setStyle("background", `url(${fileDoc.fileURL})`);
 				} else {
+					while (parentBlock && !parentBlock.canHaveChildren()) {
+						parentBlock = parentBlock.getParentBlock() as Block;
+					}
 					parentBlock.addChild(store.getImageBlock(fileDoc.fileURL, fileDoc.fileName));
 				}
 			});

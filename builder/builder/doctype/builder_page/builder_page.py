@@ -146,7 +146,8 @@ class BuilderPage(WebsiteGenerator):
 		context.fonts = fonts
 		context.content = content
 		context.style = style
-		context.editor_link = f"/builder/page/{self.name}"
+		builder_path = frappe.conf.builder_path or "builder"
+		context.editor_link = f"/{builder_path}/page/{self.name}"
 		context.base_url = frappe.utils.get_url(".")
 
 		self.set_style_and_script(context)
@@ -227,7 +228,7 @@ class BuilderPage(WebsiteGenerator):
 				preview_file = frappe.get_doc("File", _file.name)
 				preview_file.delete(ignore_permissions=True)
 
-		self.db_set("preview", public_path, commit=True)
+		self.db_set("preview", public_path, commit=True, update_modified=False)
 
 
 def get_block_html(blocks, page_data={}):
@@ -263,7 +264,7 @@ def get_block_html(blocks, page_data={}):
 				"label",
 				"a",
 			):
-				classes.append("__text_block__")
+				classes.insert(0, "__text_block__")
 
 			# temp fix: since p inside p is illegal
 			if element in ["p", "__raw_html__"]:
@@ -309,7 +310,7 @@ def get_block_html(blocks, page_data={}):
 					style_class,
 					device="mobile",
 				)
-				classes.append(style_class)
+				classes.insert(0, style_class)
 
 			tag.attrs["class"] = get_class(classes)
 
@@ -343,6 +344,9 @@ def get_block_html(blocks, page_data={}):
 					tag.append(get_tag(child, soup, data_key=data_key))
 					if child.get("visibilityCondition"):
 						tag.append("{% endif %}")
+
+			if element == "body":
+				tag.append("{% include 'templates/generators/webpage_scripts.html' %}")
 
 			return tag
 

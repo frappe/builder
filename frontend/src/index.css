@@ -28,5 +28,6 @@ p:empty::before {
 
 	.no-scrollbar {
 		-ms-overflow-style: none; /* IE and Edge */
+		scrollbar-width: none;
 	}
 }

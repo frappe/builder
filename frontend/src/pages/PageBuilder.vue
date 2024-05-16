@@ -7,6 +7,7 @@
 				class="no-scrollbar absolute bottom-0 left-0 top-[var(--toolbar-height)] z-20 overflow-auto border-r-[1px] bg-white dark:border-gray-800 dark:bg-zinc-900"></BuilderLeftPanel>
 			<BuilderCanvas
 				ref="componentCanvas"
+				:key="store.editingComponent"
 				v-if="store.editingComponent"
 				:block-data="store.getComponentBlock(store.editingComponent)"
 				:canvas-styles="{
@@ -592,7 +593,12 @@ onActivated(async () => {
 useEventListener(document, "visibilitychange", () => {
 	if (document.visibilityState === "visible" && !componentCanvas.value) {
 		if (route.params.pageId && route.params.pageId !== "new") {
-			store.setPage(route.params.pageId as string, false);
+			const currentModified = webPages.getRow(store.activePage?.name as string)?.modified;
+			webPages.fetchOne.submit(store.activePage?.name).then((doc: BuilderPage[]) => {
+				if (currentModified !== doc[0]?.modified) {
+					store.setPage(route.params.pageId as string, false);
+				}
+			});
 		}
 	}
 });
