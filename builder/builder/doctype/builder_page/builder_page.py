@@ -90,17 +90,21 @@ class BuilderPage(WebsiteGenerator):
 
 		if frappe.conf.developer_mode and self.is_template:
 			# move all assets to www/builder_assets/{page_name}
-			blocks = frappe.parse_json(self.draft_blocks or self.blocks)
+			self.publish()
+			blocks = frappe.parse_json(self.blocks)
 			for block in blocks:
 				copy_img_to_asset_folder(block, self)
-			self.db_set("draft_blocks", frappe.as_json([], indent=None))
+			self.db_set("draft_blocks", None)
 			self.db_set("blocks", frappe.as_json(blocks, indent=None))
 			self.reload()
 			export_to_files(record_list=[["Builder Page", self.name, "builder_page_template"]], record_module="builder")
 
 	def on_trash(self):
 		if self.is_template and frappe.conf.developer_mode:
-			# delete all assets
+			from frappe.modules import scrub
+			page_template_folder = os.path.join(frappe.get_app_path("builder"), "builder", "builder_page_template", scrub(self.name))
+			if os.path.exists(page_template_folder):
+				shutil.rmtree(page_template_folder)
 			asset_folder = os.path.join(frappe.get_app_path("builder"), "www", "builder_assets", self.name)
 			if os.path.exists(asset_folder):
 				shutil.rmtree(asset_folder)
