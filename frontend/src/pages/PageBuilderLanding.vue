@@ -82,29 +82,7 @@
 			}"
 			v-model="showDialog">
 			<template #body-content>
-				<div class="flex flex-wrap gap-6">
-					<div
-						@click="() => loadPage(null)"
-						class="group relative mr-2 w-full max-w-[250px] flex-grow basis-52 overflow-hidden rounded-md shadow hover:cursor-pointer dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
-						<img
-							width="250"
-							height="140"
-							:src="'/assets/builder/images/fallback.png'"
-							class="w-full overflow-hidden rounded-lg bg-gray-50 object-cover p-2 dark:bg-zinc-900" />
-						<div class="flex items-center justify-between border-t-[1px] px-3 dark:border-zinc-800">
-							<span class="inline-block max-w-[160px] py-2 text-sm text-gray-700 dark:text-zinc-200">
-								<div class="flex items-center gap-1">
-									<p class="truncate">Blank</p>
-								</div>
-							</span>
-						</div>
-					</div>
-					<TemplatePagePreview
-						class="max-w-[250px] flex-grow basis-52"
-						v-for="page in templates.data"
-						:page="page"
-						@click="() => duplicatePage(page)"></TemplatePagePreview>
-				</div>
+				<TemplateSelector></TemplateSelector>
 			</template>
 		</Dialog>
 	</section>
@@ -112,13 +90,12 @@
 <script setup lang="ts">
 import CrossIcon from "@/components/Icons/Cross.vue";
 import PagePreviewCard from "@/components/PagePreviewCard.vue";
-import TemplatePagePreview from "@/components/TemplatePagePreview.vue";
-import { templates, webPages } from "@/data/webPage";
-import router from "@/router";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { webPages } from "@/data/webPage";
 import { useStorage, watchDebounced } from "@vueuse/core";
-import { TabButtons, createDocumentResource } from "frappe-ui";
+import { TabButtons } from "frappe-ui";
 import { Ref, onMounted, ref } from "vue";
+
+import TemplateSelector from "@/components/TemplateSelector.vue";
 
 const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list">;
 
@@ -158,30 +135,6 @@ watchDebounced(
 onMounted(() => {
 	webPages.fetch();
 });
-
-const loadPage = (template: string | null) => {
-	if (!template) {
-		router.push({ name: "builder", params: { pageId: "new" } });
-		showDialog.value = false;
-	}
-};
-
-const duplicatePage = async (page: BuilderPage) => {
-	const webPageResource = await createDocumentResource({
-		doctype: "Builder Page",
-		name: page.page_name,
-		auto: true,
-	});
-	await webPageResource.get.promise;
-
-	const pageCopy = webPageResource.doc as BuilderPage;
-	pageCopy.page_name = `${pageCopy.page_name}-copy`;
-	pageCopy.page_title = `${pageCopy.page_title} Copy`;
-	pageCopy.is_template = 0;
-	const newPage = await webPages.insert.submit(pageCopy);
-	router.push({ name: "builder", params: { pageId: newPage.name } });
-	showDialog.value = false;
-};
 
 const loadMore = () => {
 	webPages.next();
