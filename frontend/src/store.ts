@@ -10,7 +10,7 @@ import { BuilderComponent } from "./types/Builder/BuilderComponent";
 import { BuilderPage } from "./types/Builder/BuilderPage";
 import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
-import { getBlockInstance, stripExtension } from "./utils/helpers";
+import { getBlockInstance } from "./utils/helpers";
 
 const useStore = defineStore("store", {
 	state: () => ({
@@ -130,15 +130,11 @@ const useStore = defineStore("store", {
 			});
 		},
 		getImageBlock(imageSrc: string, imageAlt: string = "") {
-			imageAlt = stripExtension(imageAlt);
 			const imageBlock = getBlockTemplate("image");
 			if (!imageBlock.attributes) {
 				imageBlock.attributes = {};
 			}
 			imageBlock.attributes.src = imageSrc;
-			if (imageAlt) {
-				imageBlock.attributes.alt = imageAlt;
-			}
 
 			return imageBlock;
 		},
