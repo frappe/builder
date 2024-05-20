@@ -83,6 +83,9 @@ class BuilderPage(WebsiteGenerator):
 
 		if self.has_value_changed("published") and not self.published:
 			clear_cache(self.route)
+			# if this is homepage then clear homepage from builder settings
+			if frappe.get_cached_value("Builder Settings", None, "home_page") == self.route:
+				frappe.db.set_value("Builder Settings", None, "home_page", None)
 
 	def autoname(self):
 		if not self.name:
@@ -103,6 +106,7 @@ class BuilderPage(WebsiteGenerator):
 			queue="short",
 		)
 		capture("page_published", 'builder', properties={"page": self.name})
+
 		return self.route
 
 	website = frappe._dict(
