@@ -52,7 +52,6 @@ const useStore = defineStore("store", {
 		rightPanelActiveTab: <RightSidebarTabOption>"Properties",
 		showRightPanel: <boolean>true,
 		showLeftPanel: <boolean>true,
-		copiedStyle: <StyleCopy | null>null,
 		components: <BlockComponent[]>[],
 		showHTMLDialog: false,
 		activePage: <BuilderPage | null>null,

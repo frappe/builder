@@ -107,9 +107,9 @@ import {
 	isJSONString,
 	isTargetEditable,
 } from "@/utils/helpers";
-import { useActiveElement, useDebounceFn, useEventListener, useMagicKeys } from "@vueuse/core";
+import { useActiveElement, useDebounceFn, useEventListener, useMagicKeys, useStorage } from "@vueuse/core";
 import { Dialog } from "frappe-ui";
-import { computed, nextTick, onActivated, provide, ref, watch, watchEffect } from "vue";
+import { Ref, computed, nextTick, onActivated, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { toast } from "vue-sonner";
 import CodeEditor from "../components/CodeEditor.vue";
@@ -489,7 +489,12 @@ useEventListener(document, "keydown", (e) => {
 		if (blockController.isBLockSelected() && !blockController.multipleBlocksSelected()) {
 			e.preventDefault();
 			const block = blockController.getSelectedBlocks()[0];
-			store.copiedStyle = {
+			const copiedStyle = useStorage(
+				"copiedStyle",
+				{ blockId: "", style: {} },
+				sessionStorage
+			) as Ref<StyleCopy>;
+			copiedStyle.value = {
 				blockId: block.blockId,
 				style: block.getStylesCopy(),
 			};
