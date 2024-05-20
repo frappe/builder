@@ -14,16 +14,28 @@
 				label="Route"
 				:modelValue="page.route"
 				@update:modelValue="(val) => webPages.setValue.submit({ name: page.name, route: val })" />
-			<!-- is Dynamic Route -->
-			<InlineInput
-				label="Dynamic Route?"
-				class="w-full text-sm"
-				type="checkbox"
-				:modelValue="page.dynamic_route"
-				@update:modelValue="(val) => webPages.setValue.submit({ name: page.name, dynamic_route: val })" />
+
+			<!-- TODO: Fix option arrangement and placements -->
+
+			<OptionToggle
+				class="w-full"
+				:label="'Dynamic Route?'"
+				:modelValue="page.dynamic_route ? 'Yes' : 'No'"
+				@update:modelValue="
+					(val) => {
+						webPages.setValue.submit({ name: page.name, dynamic_route: val === 'Yes' });
+						page.dynamic_route = val === 'Yes' ? 1 : 0;
+					}
+				"
+				:options="[
+					{ label: 'Yes', value: 'Yes' },
+					{ label: 'No', value: 'No' },
+				]"
+				ß></OptionToggle>
+
 			<!-- Dynamic Route Variables -->
 			<div v-if="page.dynamic_route" class="mb-3 mt-3 w-full">
-				<h3 class="text-xs font-bold uppercase text-gray-600">Route Values</h3>
+				<h3 class="text-sm font-medium text-gray-900 dark:text-zinc-300">Route Values</h3>
 				<div class="mt-5 flex flex-row flex-wrap gap-5">
 					<InlineInput
 						v-for="(variable, index) in dynamicVariables"
@@ -35,7 +47,44 @@
 						@update:modelValue="(val) => store.setRouteVariable(variable, val)" />
 				</div>
 			</div>
-			<div class="flex w-full flex-col gap-2">
+			<!-- favicon -->
+			<InlineInput
+				label="Favicon"
+				type="text"
+				class="w-full text-sm [&>label]:w-[60%] [&>label]:min-w-[180px]"
+				:modelValue="page.favicon"
+				:disabled="true"
+				@update:modelValue="(val) => webPages.setValue.submit({ name: page.name, favicon: val })" />
+			<div class="flex w-full justify-end">
+				<FileUploader
+					file-types="image/ico"
+					class="text-base [&>div>button]:dark:bg-zinc-800 [&>div>button]:dark:text-zinc-200 [&>div>button]:dark:hover:bg-zinc-700"
+					@success="(file: {'file_url': string}) => {
+						webPages.setValue.submit({ name: page.name, favicon: file.file_url }).then(() => {
+							page.favicon = file.file_url
+						}) }">
+					<template v-slot="{ file, progress, uploading, openFileSelector }">
+						<div class="flex items-center space-x-2">
+							<Button @click="openFileSelector">
+								{{
+									uploading ? `Uploading ${progress}%` : page.favicon ? "Change Favicon" : "Upload Favicon"
+								}}
+							</Button>
+							<Button
+								v-if="page.favicon"
+								@click="
+									() => {
+										page.favicon = '';
+										webPages.setValue.submit({ name: page.name, favicon: '' });
+									}
+								">
+								Remove
+							</Button>
+						</div>
+					</template>
+				</FileUploader>
+			</div>
+			<div class="mt-5 flex w-full flex-col gap-2">
 				<Button
 					v-if="page.published"
 					@click="() => store.openPageInBrowser(page)"
@@ -75,9 +124,12 @@ import { builderSettings } from "@/data/builderSettings";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { FileUploader } from "frappe-ui";
 import { computed } from "vue";
 import { toast } from "vue-sonner";
 import InlineInput from "./InlineInput.vue";
+
+import OptionToggle from "./OptionToggle.vue";
 
 const store = useStore();
 

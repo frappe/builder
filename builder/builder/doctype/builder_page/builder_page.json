@@ -12,6 +12,7 @@
   "content_tab",
   "published",
   "page_name",
+  "column_break_ymjg",
   "route",
   "dynamic_route",
   "column_break_nasy",
@@ -20,11 +21,14 @@
   "section_break_ujsp",
   "blocks",
   "draft_blocks",
-  "preview",
   "scripting_tab",
   "page_data_script",
   "client_scripts",
   "settings_tab",
+  "section_break_shab",
+  "preview",
+  "favicon",
+  "section_break_uqpw",
   "meta_column",
   "page_title",
   "meta_description",
@@ -89,10 +93,6 @@
    "label": "Content"
   },
   {
-   "fieldname": "column_break_nasy",
-   "fieldtype": "Column Break"
-  },
-  {
    "default": "0",
    "description": "Map route parameters into form variables. Example <code>/profile/&lt;user&gt;</code>",
    "fieldname": "dynamic_route",
@@ -112,7 +112,7 @@
   {
    "fieldname": "settings_tab",
    "fieldtype": "Tab Break",
-   "label": "Settings"
+   "label": "Meta"
   },
   {
    "fieldname": "meta_column",
@@ -152,11 +152,29 @@
    "fieldtype": "Data",
    "label": "Template Name",
    "mandatory_depends_on": "is_template"
+  },
+  {
+   "fieldname": "section_break_shab",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "An icon file with .ico extension. Should be 16 x 16 px.\nYou can generate using favicon-generator.org",
+   "fieldname": "favicon",
+   "fieldtype": "Attach Image",
+   "label": "Favicon"
+  },
+  {
+   "fieldname": "section_break_uqpw",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_ymjg",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-04-03 15:46:21.802985",
+ "modified": "2024-05-16 17:14:40.848275",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

@@ -27,14 +27,17 @@ export interface BuilderPage{
 	blocks?: any
 	/**	Draft Blocks : JSON	*/
 	draft_blocks?: any
-	/**	Page Preview : Attach Image	*/
-	preview?: string
 	/**	Page Data Script : Code - data.events = frappe.get_list("Event")
 <br>
 <b>Note:</b> Each key value of data should be a list.	*/
 	page_data_script?: string
 	/**	Client Scripts : Table MultiSelect - Builder Page Client Script	*/
 	client_scripts?: BuilderPageClientScript[]
+	/**	Page Preview : Attach Image	*/
+	preview?: string
+	/**	Favicon : Attach Image - An icon file with .ico extension. Should be 16 x 16 px.
+You can generate using favicon-generator.org	*/
+	favicon?: string
 	/**	Title : Data	*/
 	page_title?: string
 	/**	Description : Small Text	*/

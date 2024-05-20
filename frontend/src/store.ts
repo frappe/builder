@@ -119,6 +119,7 @@ const useStore = defineStore("store", {
 			} else {
 				this.pageBlocks = [getBlockInstance(blocks[0])];
 			}
+			this.pageBlocks = [getBlockInstance(blocks[0])];
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
 			this.selectedPage = page.name;
