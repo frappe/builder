@@ -4,6 +4,7 @@ import { defineStore } from "pinia";
 import { nextTick } from "vue";
 import { toast } from "vue-sonner";
 import BuilderCanvas from "./components/BuilderCanvas.vue";
+import { builderSettings } from "./data/builderSettings";
 import webComponent from "./data/webComponent";
 import { webPages } from "./data/webPage";
 import { BuilderComponent } from "./types/Builder/BuilderComponent";
@@ -99,14 +100,7 @@ const useStore = defineStore("store", {
 				return;
 			}
 
-			const webPageResource = await createDocumentResource({
-				doctype: "Builder Page",
-				name: pageName,
-				auto: true,
-			});
-			await webPageResource.get.promise;
-
-			const page = webPageResource.doc as BuilderPage;
+			const page = await this.fetchActivePage(pageName);
 			this.activePage = page;
 
 			const blocks = JSON.parse(page.draft_blocks || page.blocks || "[]");
@@ -128,6 +122,17 @@ const useStore = defineStore("store", {
 			nextTick(() => {
 				this.settingPage = false;
 			});
+		},
+		async fetchActivePage(pageName: string) {
+			const webPageResource = await createDocumentResource({
+				doctype: "Builder Page",
+				name: pageName,
+				auto: true,
+			});
+			await webPageResource.get.promise;
+
+			const page = webPageResource.doc as BuilderPage;
+			return page;
 		},
 		getImageBlock(imageSrc: string, imageAlt: string = "") {
 			const imageBlock = getBlockTemplate("image");
@@ -295,8 +300,9 @@ const useStore = defineStore("store", {
 					method: "publish",
 					...this.routeVariables,
 				})
-				.then(() => {
+				.then(async () => {
 					this.openPageInBrowser(this.activePage as BuilderPage);
+					this.activePage = await this.fetchActivePage(this.selectedPage as string);
 				});
 		},
 		openPageInBrowser(page: BuilderPage) {
@@ -358,6 +364,9 @@ const useStore = defineStore("store", {
 			nextTick(() => {
 				this.showHTMLDialog = true;
 			});
+		},
+		isHomePage(page: BuilderPage | null = null) {
+			return builderSettings.doc.home_page === (page || this.activePage)?.route;
 		},
 	},
 });
