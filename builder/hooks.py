@@ -1,11 +1,12 @@
 from . import __version__ as app_version
+import frappe
 
 app_name = "builder"
 app_title = "Frappe Builder"
 app_publisher = "Frappe Technologies Pvt Ltd"
 app_description = "An easier way to build web pages for your needs!"
 app_email = "suraj@frappe.io"
-app_license = "MIT"
+app_license = "GNU Affero General Public License v3.0"
 
 # Includes in <head>
 # ------------------
@@ -188,11 +189,15 @@ after_install = "builder.install.after_install"
 #	"builder.auth.validate"
 # ]
 
+builder_path = frappe.conf.builder_path or "builder"
 website_route_rules = [
-	{"from_route": "/builder/<path:app_path>", "to_route": "builder"},
+	{"from_route": f"/{builder_path}/<path:app_path>", "to_route": f"_builder"},
+	{"from_route": f"/{builder_path}", "to_route": f"_builder"},
 ]
 
 website_path_resolver = "builder.builder.doctype.builder_page.builder_page.resolve_path"
 page_renderer = "builder.builder.doctype.builder_page.builder_page.BuilderPageRenderer"
 
 get_web_pages_with_dynamic_routes = "builder.builder.doctype.builder_page.builder_page.get_web_pages_with_dynamic_routes"
+
+get_website_user_home_page = "builder.builder.doctype.builder_settings.builder_settings.get_website_user_home_page"

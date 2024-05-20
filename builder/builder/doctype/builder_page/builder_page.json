@@ -12,17 +12,20 @@
   "content_tab",
   "published",
   "page_name",
-  "column_break_nasy",
+  "column_break_ymjg",
   "route",
   "dynamic_route",
   "section_break_ujsp",
   "blocks",
   "draft_blocks",
-  "preview",
   "scripting_tab",
   "page_data_script",
   "client_scripts",
   "settings_tab",
+  "section_break_shab",
+  "preview",
+  "favicon",
+  "section_break_uqpw",
   "meta_column",
   "page_title",
   "meta_description",
@@ -33,6 +36,7 @@
   {
    "fieldname": "page_name",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "Page Name",
    "unique": 1
   },
@@ -40,23 +44,28 @@
    "fieldname": "route",
    "fieldtype": "Data",
    "ignore_xss_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Route"
   },
   {
    "default": "0",
    "fieldname": "published",
    "fieldtype": "Check",
+   "in_list_view": 1,
    "label": "Published"
   },
   {
    "fieldname": "blocks",
    "fieldtype": "JSON",
-   "label": "Blocks"
+   "label": "Blocks",
+   "read_only": 1
   },
   {
    "fieldname": "preview",
    "fieldtype": "Attach Image",
-   "label": "Page Preview"
+   "label": "Page Preview",
+   "read_only": 1
   },
   {
    "fieldname": "page_title",
@@ -81,10 +90,6 @@
    "label": "Content"
   },
   {
-   "fieldname": "column_break_nasy",
-   "fieldtype": "Column Break"
-  },
-  {
    "default": "0",
    "description": "Map route parameters into form variables. Example <code>/profile/&lt;user&gt;</code>",
    "fieldname": "dynamic_route",
@@ -98,17 +103,18 @@
   {
    "fieldname": "draft_blocks",
    "fieldtype": "JSON",
-   "label": "Draft Blocks"
+   "label": "Draft Blocks",
+   "read_only": 1
   },
   {
    "fieldname": "settings_tab",
    "fieldtype": "Tab Break",
-   "label": "Settings"
+   "label": "Meta"
   },
   {
    "fieldname": "meta_column",
    "fieldtype": "Column Break",
-   "label": "Meta"
+   "label": "Meta Tags"
   },
   {
    "fieldname": "meta_image",
@@ -130,11 +136,29 @@
    "fieldtype": "Table MultiSelect",
    "label": "Client Scripts",
    "options": "Builder Page Client Script"
+  },
+  {
+   "fieldname": "section_break_shab",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "An icon file with .ico extension. Should be 16 x 16 px.\nYou can generate using favicon-generator.org",
+   "fieldname": "favicon",
+   "fieldtype": "Attach Image",
+   "label": "Favicon"
+  },
+  {
+   "fieldname": "section_break_uqpw",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_ymjg",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-12-29 17:26:16.477410",
+ "modified": "2024-05-16 17:14:40.848275",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

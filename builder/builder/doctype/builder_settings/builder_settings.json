@@ -9,7 +9,9 @@
   "script_public_url",
   "style",
   "style_public_url",
-  "favicon"
+  "favicon",
+  "landing_page_section",
+  "home_page"
  ],
  "fields": [
   {
@@ -41,13 +43,23 @@
    "fieldname": "favicon",
    "fieldtype": "Attach Image",
    "label": "Favicon"
+  },
+  {
+   "fieldname": "landing_page_section",
+   "fieldtype": "Section Break",
+   "label": "Landing Page"
+  },
+  {
+   "fieldname": "home_page",
+   "fieldtype": "Data",
+   "label": "Home Page"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-03-04 12:48:44.181412",
+ "modified": "2024-04-17 12:28:24.846509",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Settings",
