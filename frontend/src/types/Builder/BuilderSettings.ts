@@ -20,4 +20,6 @@ export interface BuilderSettings{
 	style_public_url?: string
 	/**	Favicon : Attach Image - An icon file with .ico extension. Should be 16 x 16 px.<br>You can generate using <a href="https://favicon-generator.org" target="_blank">favicon-generator.org</a>	*/
 	favicon?: string
+	/**	Home Page : Data	*/
+	home_page?: string
 }

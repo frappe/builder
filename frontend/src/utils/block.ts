@@ -71,12 +71,6 @@ class Block implements BlockOptions {
 		delete this.attributes.style;
 		this.classes = options.classes || [];
 
-		// TODO: remove this
-		if (this.classes.includes("__text_block__")) {
-			// remove this class
-			this.classes = this.classes.filter((c) => c !== "__text_block__");
-		}
-
 		if (this.isRoot()) {
 			this.blockId = "root";
 			this.draggable = false;
@@ -213,6 +207,9 @@ class Block implements BlockOptions {
 	isImage() {
 		return this.getElement() === "img";
 	}
+	isVideo() {
+		return this.getElement() === "video" || this.getInnerHTML()?.startsWith("<video");
+	}
 	isButton() {
 		return this.getElement() === "button";
 	}
@@ -253,8 +250,11 @@ class Block implements BlockOptions {
 		}
 		styleObj[style] = value;
 	}
-	setAttribute(attribute: string, value: string) {
+	setAttribute(attribute: string, value: string | undefined) {
 		this.attributes[attribute] = value;
+	}
+	removeAttribute(attribute: string) {
+		this.setAttribute(attribute, undefined);
 	}
 	getAttribute(attribute: string) {
 		return this.getAttributes()[attribute];
@@ -302,6 +302,8 @@ class Block implements BlockOptions {
 				return "square";
 			case this.isImage():
 				return "image";
+			case this.isVideo():
+				return "film";
 
 			default:
 				return "square";
@@ -434,6 +436,7 @@ class Block implements BlockOptions {
 		return !(
 			this.isImage() ||
 			this.isSVG() ||
+			this.isVideo() ||
 			(this.isText() && !this.isLink()) ||
 			this.isExtendedFromComponent()
 		);

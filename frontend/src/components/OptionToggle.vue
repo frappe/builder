@@ -16,10 +16,10 @@ import { PropType } from "vue";
 
 defineProps({
 	modelValue: {
-		type: String,
+		type: [String, Number, Boolean],
 	},
 	options: {
-		type: Array as PropType<{ label: string; value: string }[]>,
+		type: Array as PropType<{ label: string; value: string | number }[]>,
 		default: () => [],
 	},
 	label: {

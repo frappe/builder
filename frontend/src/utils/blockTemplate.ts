@@ -1,5 +1,14 @@
 function getBlockTemplate(
-	type: "html" | "text" | "image" | "container" | "body" | "fit-container" | "fallback-component" | "repeater"
+	type:
+		| "html"
+		| "text"
+		| "image"
+		| "container"
+		| "body"
+		| "fit-container"
+		| "fallback-component"
+		| "repeater"
+		| "video"
 ): BlockOptions {
 	switch (type) {
 		case "html":
@@ -19,10 +28,10 @@ function getBlockTemplate(
 				element: "p",
 				innerHTML: "Text",
 				baseStyles: {
-					fontSize: "30px",
+					fontSize: "16px",
 					width: "fit-content",
 					height: "fit-content",
-					lineHeight: "1",
+					lineHeight: "1.4",
 					minWidth: "10px",
 				} as BlockStyleMap,
 			};
@@ -96,6 +105,17 @@ function getBlockTemplate(
 					minHeight: "300px",
 				} as BlockStyleMap,
 				isRepeaterBlock: true,
+			};
+		case "video":
+			return {
+				name: "Video",
+				element: "video",
+				attributes: {
+					autoplay: "",
+				} as BlockAttributeMap,
+				baseStyles: {
+					objectFit: "cover",
+				} as BlockStyleMap,
 			};
 	}
 }

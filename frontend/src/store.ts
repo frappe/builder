@@ -10,7 +10,7 @@ import { BuilderComponent } from "./types/Builder/BuilderComponent";
 import { BuilderPage } from "./types/Builder/BuilderPage";
 import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
-import { getBlockInstance, stripExtension } from "./utils/helpers";
+import { getBlockInstance } from "./utils/helpers";
 
 const useStore = defineStore("store", {
 	state: () => ({
@@ -114,6 +114,9 @@ const useStore = defineStore("store", {
 			if (!Array.isArray(blocks)) {
 				this.pushBlocks([blocks]);
 			}
+			if (blocks.length === 0) {
+				blocks.push(getBlockTemplate("body"));
+			}
 			this.pageBlocks = [getBlockInstance(blocks[0])];
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
@@ -127,17 +130,21 @@ const useStore = defineStore("store", {
 			});
 		},
 		getImageBlock(imageSrc: string, imageAlt: string = "") {
-			imageAlt = stripExtension(imageAlt);
 			const imageBlock = getBlockTemplate("image");
 			if (!imageBlock.attributes) {
 				imageBlock.attributes = {};
 			}
 			imageBlock.attributes.src = imageSrc;
-			if (imageAlt) {
-				imageBlock.attributes.alt = imageAlt;
-			}
 
 			return imageBlock;
+		},
+		getVideoBlock(videoSrc: string) {
+			const videoBlock = getBlockTemplate("video");
+			if (!videoBlock.attributes) {
+				videoBlock.attributes = {};
+			}
+			videoBlock.attributes.src = videoSrc;
+			return videoBlock;
 		},
 		selectBlock(block: Block, e: MouseEvent | null, scrollIntoView = true) {
 			this.activeCanvas?.history?.pause();
@@ -161,6 +168,13 @@ const useStore = defineStore("store", {
 		editComponent(block: Block) {
 			if (block.isExtendedFromComponent()) {
 				this.editingComponent = block?.extendedFromComponent as string;
+			}
+			this.activeCanvas?.clearSelection();
+			this.editingMode = "component";
+		},
+		selectComponent(componentName: string | null = null) {
+			if (componentName) {
+				this.editingComponent = componentName;
 			}
 			this.activeCanvas?.clearSelection();
 			this.editingMode = "component";
