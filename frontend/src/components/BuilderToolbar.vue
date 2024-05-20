@@ -26,7 +26,7 @@
 					:active="store.mode === mode.mode"></Button>
 			</Tooltip>
 		</div>
-		<div class="absolute right-3 flex items-center">
+		<div class="absolute right-3 flex items-center gap-5">
 			<Dialog
 				style="z-index: 40"
 				:options="{
@@ -43,25 +43,27 @@
 						allowfullscreen></iframe>
 				</template>
 			</Dialog>
-			<button @click="showDialog = true">
+			<Badge :variant="'subtle'" theme="gray" size="md" label="Badge" v-if="store.isHomePage()">
+				Homepage
+			</Badge>
+			<!-- <button @click="showDialog = true">
 				<FeatherIcon
-					title="Toggle Theme"
 					name="info"
 					class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
-			</button>
+			</button> -->
 			<UseDark v-slot="{ isDark, toggleDark }">
 				<button @click="transitionTheme(toggleDark)">
 					<FeatherIcon
 						title="Toggle Theme"
 						:name="isDark ? 'moon' : 'sun'"
-						class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
+						class="h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
 				</button>
 			</UseDark>
 			<router-link
 				v-if="store.selectedPage"
 				:to="{ name: 'preview', params: { pageId: store.selectedPage } }"
 				title="Preview">
-				<FeatherIcon name="play" class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
+				<FeatherIcon name="play" class="h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
 			</router-link>
 			<Button
 				variant="solid"
@@ -80,7 +82,7 @@
 </template>
 <script setup lang="ts">
 import { UseDark } from "@vueuse/components";
-import { Dialog, Tooltip } from "frappe-ui";
+import { Badge, Dialog, Tooltip } from "frappe-ui";
 import { ref } from "vue";
 import useStore from "../store";
 
