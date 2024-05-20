@@ -310,6 +310,7 @@ function setEvents() {
 					}, 50);
 					if (store.mode === "text") {
 						canvasHistory.value?.resume(true);
+						store.editableBlock = childBlock;
 						return;
 					}
 					if (getNumberFromPx(childBlock.getStyle("width")) < 100) {
