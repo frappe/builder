@@ -82,6 +82,7 @@ class BuilderPage(WebsiteGenerator):
 			find_page_with_path.clear_cache()
 
 		if self.has_value_changed("published") and not self.published:
+			find_page_with_path.clear_cache()
 			clear_cache(self.route)
 			# if this is homepage then clear homepage from builder settings
 			if frappe.get_cached_value("Builder Settings", None, "home_page") == self.route:
