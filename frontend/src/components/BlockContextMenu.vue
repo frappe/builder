@@ -45,8 +45,9 @@ import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { confirm, detachBlockFromComponent, getBlockCopy } from "@/utils/helpers";
 import { vOnClickOutside } from "@vueuse/components";
+import { useStorage } from "@vueuse/core";
 import { Dialog } from "frappe-ui";
-import { nextTick, ref } from "vue";
+import { Ref, nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
 import ContextMenu from "./ContextMenu.vue";
 const store = useStore();
@@ -81,15 +82,17 @@ const handleContextMenuSelect = (action: CallableFunction) => {
 	contextMenuVisible.value = false;
 };
 
+const copiedStyle = useStorage("copiedStyle", { blockId: "", style: {} }, sessionStorage) as Ref<StyleCopy>;
+
 const copyStyle = () => {
-	store.copiedStyle = {
+	copiedStyle.value = {
 		blockId: props.block.blockId,
 		style: props.block.getStylesCopy(),
 	};
 };
 
 const pasteStyle = () => {
-	props.block.updateStyles(store.copiedStyle?.style as BlockStyleObjects);
+	props.block.updateStyles(copiedStyle.value?.style as BlockStyleObjects);
 };
 
 const duplicateBlock = () => {
@@ -129,7 +132,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Paste Style",
 		action: pasteStyle,
-		condition: () => Boolean(store.copiedStyle && store.copiedStyle.blockId !== props.block.blockId),
+		condition: () => Boolean(copiedStyle.value.blockId && copiedStyle.value?.blockId !== props.block.blockId),
 	},
 	{ label: "Duplicate", action: duplicateBlock },
 	{
