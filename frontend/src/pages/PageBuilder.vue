@@ -616,7 +616,7 @@ watchEffect(() => {
 	}
 });
 
-const debouncedPageSave = useDebounceFn(store.savePage, 500);
+const debouncedPageSave = useDebounceFn(store.savePage, 300);
 
 watch(
 	() => pageCanvas.value?.block,
@@ -627,6 +627,7 @@ watch(
 			!store.editingComponent &&
 			!pageCanvas.value?.canvasProps?.settingCanvas
 		) {
+			store.savingPage = true;
 			debouncedPageSave();
 		}
 	},
