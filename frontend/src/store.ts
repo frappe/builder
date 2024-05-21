@@ -55,6 +55,7 @@ const useStore = defineStore("store", {
 		components: <BlockComponent[]>[],
 		showHTMLDialog: false,
 		activePage: <BuilderPage | null>null,
+		savingPage: false,
 	}),
 	actions: {
 		clearBlocks() {
@@ -293,6 +294,9 @@ const useStore = defineStore("store", {
 			};
 		},
 		async publishPage() {
+			// Wait for the page to save before publishing
+			await new Promise((resolve) => setTimeout(resolve, 100));
+			while (this.savingPage) {}
 			return webPages.runDocMethod
 				.submit({
 					name: this.selectedPage as string,
@@ -324,7 +328,9 @@ const useStore = defineStore("store", {
 				name: this.selectedPage,
 				draft_blocks: pageData,
 			};
-			webPages.setValue.submit(args);
+			return webPages.setValue.submit(args).finally(() => {
+				this.savingPage = false;
+			});
 		},
 		setPageData(page?: BuilderPage) {
 			if (!page || !page.page_data_script) {
