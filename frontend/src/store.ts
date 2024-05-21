@@ -300,8 +300,8 @@ const useStore = defineStore("store", {
 					...this.routeVariables,
 				})
 				.then(async () => {
-					this.openPageInBrowser(this.activePage as BuilderPage);
 					this.activePage = await this.fetchActivePage(this.selectedPage as string);
+					this.openPageInBrowser(this.activePage as BuilderPage);
 				});
 		},
 		openPageInBrowser(page: BuilderPage) {
