@@ -294,9 +294,7 @@ const useStore = defineStore("store", {
 			};
 		},
 		async publishPage() {
-			// Wait for the page to save before publishing
-			await new Promise((resolve) => setTimeout(resolve, 100));
-			while (this.savingPage) {}
+			await this.waitTillPageIsSaved();
 			return webPages.runDocMethod
 				.submit({
 					name: this.selectedPage as string,
@@ -372,6 +370,18 @@ const useStore = defineStore("store", {
 		},
 		isHomePage(page: BuilderPage | null = null) {
 			return builderSettings.doc.home_page === (page || this.activePage)?.route;
+		},
+		async waitTillPageIsSaved() {
+			// small delay so that all the save requests are triggered
+			await new Promise((resolve) => setTimeout(resolve, 100));
+			return new Promise((resolve) => {
+				const interval = setInterval(() => {
+					if (!this.savingPage) {
+						clearInterval(interval);
+						resolve(null);
+					}
+				}, 100);
+			});
 		},
 	},
 });
