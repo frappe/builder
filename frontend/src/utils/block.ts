@@ -402,6 +402,7 @@ class Block implements BlockOptions {
 		if (this.isRoot()) {
 			styles.width = "inherit";
 			styles.overflowX = "hidden";
+			styles.paddingBottom = "20px";
 		}
 
 		if (this.isImage() && !this.getAttribute("src")) {
@@ -620,6 +621,9 @@ class Block implements BlockOptions {
 		return this.isFlex() && this.getStyle("flexDirection") === "column";
 	}
 	duplicateBlock() {
+		if (this.isRoot()) {
+			return;
+		}
 		const store = useStore();
 		store.activeCanvas?.history.pause();
 		const blockCopy = getBlockCopy(this);

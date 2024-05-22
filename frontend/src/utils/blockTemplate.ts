@@ -58,9 +58,6 @@ function getBlockTemplate(
 				element: "div",
 				originalElement: "body",
 				attributes: {} as BlockAttributeMap,
-				editorStyles: {
-					paddingBottom: "100px",
-				} as BlockStyleMap,
 				baseStyles: {
 					display: "flex",
 					flexWrap: "wrap",
