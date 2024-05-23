@@ -402,7 +402,6 @@ class Block implements BlockOptions {
 		if (this.isRoot()) {
 			styles.width = "inherit";
 			styles.overflowX = "hidden";
-			styles.paddingBottom = "20px";
 		}
 
 		if (this.isImage() && !this.getAttribute("src")) {
