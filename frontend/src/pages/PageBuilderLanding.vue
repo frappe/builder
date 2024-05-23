@@ -143,7 +143,9 @@
 								<p class="mt-1 block text-xs text-gray-500">Created By {{ page.owner }}</p>
 								·
 								<UseTimeAgo v-slot="{ timeAgo }" :time="page.modified">
-									<p class="mt-1 block text-xs text-gray-500">Edited {{ timeAgo }}</p>
+									<p class="mt-1 block text-xs text-gray-500">
+										Edited {{ timeAgo }} by {{ page.modified_by }}
+									</p>
 								</UseTimeAgo>
 							</div>
 						</span>
@@ -222,7 +224,7 @@ watchDebounced(
 		});
 		webPages.fetch();
 	},
-	{ debounce: 300 }
+	{ debounce: 300 },
 );
 
 const deletePage = async (page: BuilderPage) => {

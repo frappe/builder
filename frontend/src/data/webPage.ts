@@ -12,6 +12,7 @@ const webPages = createListResource({
 		"creation",
 		"published",
 		"dynamic_route",
+		"modified_by",
 		"modified",
 		"owner",
 	],
