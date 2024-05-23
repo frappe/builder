@@ -23,7 +23,9 @@
 		<div class="flex flex-col gap-3">
 			<CollapsibleSection :sectionName="section.name" v-for="section in filteredSections">
 				<template v-for="property in getFilteredProperties(section)">
-					<component :is="property.component" v-bind="property.getProps()" v-on="property.events || {}" />
+					<component :is="property.component" v-bind="property.getProps()" v-on="property.events || {}">
+						{{ property.innerText || "" }}
+					</component>
 				</template>
 			</CollapsibleSection>
 		</div>
@@ -33,23 +35,22 @@
 	</div>
 </template>
 <script setup lang="ts">
+import useStore from "@/store";
+import blockController from "@/utils/blockController";
 import { setFont as _setFont, fontListNames, getFontWeightOptions } from "@/utils/fontManager";
-
+import { Button, createResource } from "frappe-ui";
+import { Ref, computed, ref } from "vue";
+import { toast } from "vue-sonner";
 import BackgroundHandler from "./BackgroundHandler.vue";
 import BLockLayoutHandler from "./BlockLayoutHandler.vue";
 import BlockPositionHandler from "./BlockPositionHandler.vue";
+import CodeEditor from "./CodeEditor.vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
 import ColorInput from "./ColorInput.vue";
+import DimensionInput from "./DimensionInput.vue";
+import CrossIcon from "./Icons/Cross.vue";
 import InlineInput from "./InlineInput.vue";
 import ObjectEditor from "./ObjectEditor.vue";
-
-import CrossIcon from "./Icons/Cross.vue";
-
-import useStore from "@/store";
-import blockController from "@/utils/blockController";
-import { Ref, computed, ref } from "vue";
-import CodeEditor from "./CodeEditor.vue";
-import DimensionInput from "./DimensionInput.vue";
 import OptionToggle from "./OptionToggle.vue";
 
 const store = useStore();
@@ -68,6 +69,7 @@ type BlockProperty = {
 	events?: Record<string, unknown>;
 	searchKeyWords: string;
 	condition?: () => boolean;
+	innerText?: string;
 };
 
 type PropertySection = {
@@ -607,6 +609,47 @@ const optionsSectionProperties = [
 			"update:modelValue": (val: string) => blockController.setAttribute("src", val),
 		},
 		condition: () => blockController.isImage(),
+	},
+	{
+		component: Button,
+		getProps: () => {
+			return {
+				label: "Convert to WebP",
+			};
+		},
+		innerText: "Convert to WebP",
+		searchKeyWords: "Convert, webp, Convert to webp, image, src, url",
+		events: {
+			click: () => {
+				const convertToWebP = createResource({
+					url: "/api/method/builder.builder.doctype.builder_page.builder_page.convert_to_webp",
+					params: {
+						image_url: blockController.getAttribute("src"),
+					},
+				});
+				convertToWebP
+					.fetch()
+					.then((res: string) => {
+						blockController.setAttribute("src", res);
+						toast.success("Image converted to WebP");
+					})
+					.catch((err: Error) => {
+						console.error(err);
+					});
+			},
+		},
+		condition: () => {
+			if (!blockController.isImage()) {
+				return false;
+			}
+			if (
+				[".jpg", ".jpeg", ".png"].some((ext) =>
+					((blockController.getAttribute("src") as string) || ("" as string)).includes(ext)
+				)
+			) {
+				return true;
+			}
+		},
 	},
 	{
 		component: InlineInput,
