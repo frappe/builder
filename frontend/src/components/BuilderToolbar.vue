@@ -108,7 +108,7 @@ const transitionTheme = (toggleDark: () => void) => {
 };
 </script>
 <style>
-.popover-container > div {
-	margin-top: 20px !important;
+[data-radix-popper-content-wrapper] {
+	margin-top: 15px !important;
 }
 </style>
