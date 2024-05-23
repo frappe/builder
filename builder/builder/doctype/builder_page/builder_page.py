@@ -8,8 +8,6 @@ import re
 import bs4 as bs
 import frappe
 import frappe.utils
-from builder.html_preview_image import generate_preview
-from builder.utils import safer_exec
 from frappe.model.document import Document
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
@@ -24,6 +22,9 @@ from frappe.website.website_generator import WebsiteGenerator
 from jinja2.exceptions import TemplateSyntaxError
 from werkzeug.routing import Rule
 
+from builder.html_preview_image import generate_preview
+from builder.utils import safer_exec
+
 MOBILE_BREAKPOINT = 576
 TABLET_BREAKPOINT = 768
 DESKTOP_BREAKPOINT = 1024
@@ -37,9 +38,7 @@ class BuilderPageRenderer(DocumentPage):
 			return True
 
 		for d in get_web_pages_with_dynamic_routes():
-			if evaluate_dynamic_routes(
-				[Rule(f"/{d.route}", endpoint=d.name)], self.path
-			):
+			if evaluate_dynamic_routes([Rule(f"/{d.route}", endpoint=d.name)], self.path):
 				self.doctype = "Builder Page"
 				self.docname = d.name
 				return True
@@ -75,7 +74,9 @@ class BuilderPage(WebsiteGenerator):
 			self.flags.skip_preview = True
 		else:
 			self.preview = "/assets/builder/images/fallback.png"
-		self.route = f"pages/{camel_case_to_kebab_case(self.page_title, True)}-{frappe.generate_hash(length=4)}"
+		self.route = (
+			f"pages/{camel_case_to_kebab_case(self.page_title, True)}-{frappe.generate_hash(length=4)}"
+		)
 
 	def on_update(self):
 		if self.has_value_changed("dynamic_route") or self.has_value_changed("route"):
@@ -107,7 +108,7 @@ class BuilderPage(WebsiteGenerator):
 			"generate_page_preview_image",
 			queue="short",
 		)
-		capture("page_published", 'builder', properties={"page": self.name})
+		capture("page_published", "builder", properties={"page": self.name})
 
 		return self.route
 
@@ -151,7 +152,10 @@ class BuilderPage(WebsiteGenerator):
 		except TemplateSyntaxError:
 			raise
 
-	def set_meta_tags(self, context, page_data={}):
+	def set_meta_tags(self, context, page_data=None):
+		if not page_data:
+			page_data = {}
+
 		metatags = {
 			"title": self.page_title or "My Page",
 			"description": self.meta_description or self.page_title,
@@ -174,9 +178,7 @@ class BuilderPage(WebsiteGenerator):
 
 	def set_style_and_script(self, context):
 		for script in self.get("client_scripts", []):
-			script_doc = frappe.get_cached_doc(
-				"Builder Client Script", script.builder_script
-			)
+			script_doc = frappe.get_cached_doc("Builder Client Script", script.builder_script)
 			if script_doc.script_type == "JavaScript":
 				context.setdefault("scripts", []).append(script_doc.public_url)
 			else:
@@ -225,7 +227,7 @@ class BuilderPage(WebsiteGenerator):
 		self.db_set("preview", f"/files/{file_name}", commit=True, update_modified=False)
 
 
-def get_block_html(blocks, page_data={}):
+def get_block_html(blocks):
 	blocks = frappe.parse_json(blocks)
 	if not isinstance(blocks, list):
 		blocks = [blocks]
@@ -279,12 +281,8 @@ def get_block_html(blocks, page_data={}):
 				tablet_styles = block.get("tabletStyles", {})
 				set_fonts([base_styles, mobile_styles, tablet_styles], font_map)
 				append_style(block.get("baseStyles", {}), style_tag, style_class)
-				plain_styles = {
-					k: v for k, v in block.get("rawStyles", {}).items() if ":" not in k
-				}
-				state_styles = {
-					k: v for k, v in block.get("rawStyles", {}).items() if ":" in k
-				}
+				plain_styles = {k: v for k, v in block.get("rawStyles", {}).items() if ":" not in k}
+				state_styles = {k: v for k, v in block.get("rawStyles", {}).items() if ":" in k}
 				append_style(plain_styles, style_tag, style_class)
 				append_state_style(state_styles, style_tag, style_class)
 				append_style(
@@ -309,12 +307,7 @@ def get_block_html(blocks, page_data={}):
 				set_fonts_from_html(inner_soup, font_map)
 				tag.append(inner_soup)
 
-			block_data = []
-			if (
-				block.get("isRepeaterBlock")
-				and block.get("children")
-				and block.get("dataKey")
-			):
+			if block.get("isRepeaterBlock") and block.get("children") and block.get("dataKey"):
 				_key = block.get("dataKey").get("key")
 				if data_key:
 					_key = f"{data_key}.{_key}"
@@ -352,7 +345,8 @@ def get_style(style_obj):
 	return (
 		"".join(
 			f"{camel_case_to_kebab_case(key)}: {value};"
-			for key, value in style_obj.items() if value is not None and value != ""
+			for key, value in style_obj.items()
+			if value is not None and value != ""
 		)
 		if style_obj
 		else ""
@@ -394,10 +388,7 @@ def set_fonts(styles, font_map):
 		font = style.get("fontFamily")
 		if font:
 			if font in font_map:
-				if (
-					style.get("fontWeight")
-					and style.get("fontWeight") not in font_map[font]["weights"]
-				):
+				if style.get("fontWeight") and style.get("fontWeight") not in font_map[font]["weights"]:
 					font_map[font]["weights"].append(style.get("fontWeight"))
 					font_map[font]["weights"].sort()
 			else:
@@ -473,19 +464,13 @@ def extend_block(block, overridden_block):
 		if component_child:
 			extend_block(component_child, overridden_child)
 		else:
-			component_children.insert(
-				overridden_children.index(overridden_child), overridden_child
-			)
+			component_children.insert(overridden_children.index(overridden_child), overridden_child)
 
 
 def set_dynamic_content_placeholder(block, data_key=False):
 	block_data_key = block.get("dataKey")
 	if block_data_key and block_data_key.get("key"):
-		key = (
-			f"{data_key}.{block_data_key.get('key')}"
-			if data_key
-			else block_data_key.get("key")
-		)
+		key = f"{data_key}.{block_data_key.get('key')}" if data_key else block_data_key.get("key")
 		_property = block_data_key.get("property")
 		_type = block_data_key.get("type")
 		if _type == "attribute":
@@ -497,9 +482,7 @@ def set_dynamic_content_placeholder(block, data_key=False):
 				_property
 			] = f"{{{{ {key} or '{escape_single_quotes(block['baseStyles'].get(_property, ''))}' }}}}"
 		elif _type == "key" and not block.get("isRepeaterBlock"):
-			block[
-				_property
-			] = f"{{{{ {key} or '{escape_single_quotes(block.get(_property, ''))}' }}}}"
+			block[_property] = f"{{{{ {key} or '{escape_single_quotes(block.get(_property, ''))}' }}}}"
 
 
 def get_style_file_path():
@@ -576,10 +559,8 @@ def get_page_preview_html(page: str, **kwarg) -> str:
 @redis_cache(ttl=60 * 60)
 def find_page_with_path(route):
 	try:
-		return frappe.db.get_value(
-			"Builder Page", dict(route=route, published=1), "name", cache=True
-		)
-	except:
+		return frappe.db.get_value("Builder Page", dict(route=route, published=1), "name", cache=True)
+	except frappe.DoesNotExistError:
 		pass
 
 
@@ -597,10 +578,7 @@ def resolve_path(path):
 	if find_page_with_path(path):
 		return path
 	elif evaluate_dynamic_routes(
-		[
-			Rule(f"/{d.route}", endpoint=d.name)
-			for d in get_web_pages_with_dynamic_routes()
-		],
+		[Rule(f"/{d.route}", endpoint=d.name) for d in get_web_pages_with_dynamic_routes()],
 		path,
 	):
 		return path
@@ -623,19 +601,25 @@ def is_component_used(blocks, component_id):
 
 	return False
 
+
 @frappe.whitelist()
 def upload_builder_asset():
 	from frappe.handler import upload_file
+
 	image_file = upload_file()
-	if image_file.file_url.endswith((".png", ".jpeg", ".jpg")) and frappe.get_cached_value("Builder Settings", None, "auto_convert_images_to_webp"):
+	if image_file.file_url.endswith((".png", ".jpeg", ".jpg")) and frappe.get_cached_value(
+		"Builder Settings", None, "auto_convert_images_to_webp"
+	):
 		convert_to_webp(file_doc=image_file)
 	return image_file
 
+
 @frappe.whitelist()
-def convert_to_webp(image_url: str = None, file_doc: Document = None):
+def convert_to_webp(image_url: str | None = None, file_doc: Document | None = None):
 	"""BETA: Convert image to webp format"""
 	from frappe.core.doctype.file.file import get_local_image
 	from frappe.core.doctype.file.utils import delete_file
+
 	if not image_url and not file_doc:
 		return ""
 
@@ -658,7 +642,7 @@ def convert_to_webp(image_url: str = None, file_doc: Document = None):
 			if _file.file_url.startswith("/files") and _file.file_url.endswith((".png", ".jpeg", ".jpg")):
 				image, filename, extn = get_local_image(_file.file_url)
 				if extn not in ["png", "jpeg", "jpg"]:
-					frappe.throw(_("Only PNG and JPEG files can be converted to WEBP"), title=_("Invalid File Type"))
+					return _file.file_url
 				# create new webp image file
 				webp_path = _file.get_full_path().replace(extn, "webp")
 				image.save(webp_path, "WEBP")
@@ -669,19 +653,26 @@ def convert_to_webp(image_url: str = None, file_doc: Document = None):
 				return new_file.file_url
 
 	elif image_url.startswith("http"):
+		from io import BytesIO
+		from urllib.parse import unquote
+
 		import requests
 		from PIL import Image
-		from io import BytesIO
+
+		image_url = unquote(image_url)
 		response = requests.get(image_url)
 		image = Image.open(BytesIO(response.content))
 		filename = image_url.split("/")[-1]
 		extn = filename.split(".")[-1] or ""
+
 		if extn.lower() in ["png", "jpeg", "jpg"]:
-			_file = frappe.get_doc({
-				"doctype": "File",
-				"file_name": f"{filename.replace(extn, 'webp')}",
-				"file_url": f"/files/{filename.replace(extn, 'webp')}",
-			})
+			_file = frappe.get_doc(
+				{
+					"doctype": "File",
+					"file_name": f"{filename.replace(extn, 'webp')}",
+					"file_url": f"/files/{filename.replace(extn, 'webp')}",
+				}
+			)
 			webp_path = f"{_file.get_full_path()}"
 			image.save(webp_path, "WEBP")
 			_file.save()
