@@ -3,7 +3,7 @@
 		<template #target="{ togglePopover, isOpen }">
 			<div class="flex items-center justify-between">
 				<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
-					<slot>BG Image</slot>
+					BG Image
 				</span>
 				<div class="relative w-[150px]">
 					<div>

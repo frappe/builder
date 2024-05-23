@@ -627,15 +627,16 @@ const optionsSectionProperties = [
 						image_url: blockController.getAttribute("src"),
 					},
 				});
-				convertToWebP
-					.fetch()
-					.then((res: string) => {
+				toast.promise(
+					convertToWebP.fetch().then((res: string) => {
 						blockController.setAttribute("src", res);
-						toast.success("Image converted to WebP");
-					})
-					.catch((err: Error) => {
-						console.error(err);
-					});
+					}),
+					{
+						loading: "Converting...",
+						success: () => "Image converted to WebP",
+						error: () => "Failed to convert image to WebP",
+					}
+				);
 			},
 		},
 		condition: () => {
