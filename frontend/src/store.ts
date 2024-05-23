@@ -273,6 +273,7 @@ const useStore = defineStore("store", {
 				private: false,
 				folder: "Home/Builder Uploads",
 				optimize: true,
+				upload_endpoint: "/api/method/builder.builder.doctype.builder_page.builder_page.upload_builder_asset",
 			});
 			await new Promise((resolve) => {
 				toast.promise(upload, {
@@ -289,7 +290,7 @@ const useStore = defineStore("store", {
 			});
 
 			return {
-				fileURL: encodeURI(window.location.origin + fileDoc.file_url),
+				fileURL: fileDoc.file_url,
 				fileName: fileDoc.file_name,
 			};
 		},
