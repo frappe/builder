@@ -28,10 +28,10 @@ function getBlockTemplate(
 				element: "p",
 				innerHTML: "Text",
 				baseStyles: {
-					fontSize: "30px",
+					fontSize: "16px",
 					width: "fit-content",
 					height: "fit-content",
-					lineHeight: "1",
+					lineHeight: "1.4",
 					minWidth: "10px",
 				} as BlockStyleMap,
 			};
@@ -58,9 +58,6 @@ function getBlockTemplate(
 				element: "div",
 				originalElement: "body",
 				attributes: {} as BlockAttributeMap,
-				editorStyles: {
-					paddingBottom: "100px",
-				} as BlockStyleMap,
 				baseStyles: {
 					display: "flex",
 					flexWrap: "wrap",

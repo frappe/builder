@@ -129,7 +129,7 @@ watchDebounced(
 		});
 		webPages.fetch();
 	},
-	{ debounce: 300 }
+	{ debounce: 300 },
 );
 
 onMounted(() => {

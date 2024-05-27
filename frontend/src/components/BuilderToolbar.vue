@@ -13,20 +13,20 @@
 				:text="mode.description"
 				:hoverDelay="0.6"
 				v-for="mode in [
-					{ mode: 'select', icon: 'mouse-pointer', 'description': 'Select (v)' },
-					{ mode: 'text', icon: 'type', 'description': 'Text (t)' },
-					{ mode: 'container', icon: 'square', 'description': 'Container (c)' },
-					{ mode: 'image', icon: 'image', 'description': 'Image (i)' },
-				] as { 'mode': BuilderMode; 'icon': string, 'description': string }[]">
+					{ mode: 'select', icon: 'mouse-pointer', description: 'Select (v)' },
+					{ mode: 'text', icon: 'type', description: 'Text (t)' },
+					{ mode: 'container', icon: 'square', description: 'Container (c)' },
+					{ mode: 'image', icon: 'image', description: 'Image (i)' },
+				]">
 				<Button
 					variant="ghost"
 					:icon="mode.icon"
 					class="!text-gray-700 dark:!text-gray-200 hover:dark:bg-zinc-800 focus:dark:bg-zinc-700 [&[active='true']]:bg-gray-100 [&[active='true']]:!text-gray-900 [&[active='true']]:dark:bg-zinc-700 [&[active='true']]:dark:!text-zinc-50"
-					@click="store.mode = mode.mode"
+					@click="store.mode = mode.mode as BuilderMode"
 					:active="store.mode === mode.mode"></Button>
 			</Tooltip>
 		</div>
-		<div class="absolute right-3 flex items-center">
+		<div class="absolute right-3 flex items-center gap-5">
 			<Dialog
 				style="z-index: 40"
 				:options="{
@@ -43,25 +43,27 @@
 						allowfullscreen></iframe>
 				</template>
 			</Dialog>
-			<button @click="showDialog = true">
+			<Badge :variant="'subtle'" theme="gray" size="md" label="Badge" v-if="store.isHomePage()">
+				Homepage
+			</Badge>
+			<!-- <button @click="showDialog = true">
 				<FeatherIcon
-					title="Toggle Theme"
 					name="info"
 					class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
-			</button>
+			</button> -->
 			<UseDark v-slot="{ isDark, toggleDark }">
 				<button @click="transitionTheme(toggleDark)">
 					<FeatherIcon
 						title="Toggle Theme"
 						:name="isDark ? 'moon' : 'sun'"
-						class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
+						class="h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
 				</button>
 			</UseDark>
 			<router-link
 				v-if="store.selectedPage"
 				:to="{ name: 'preview', params: { pageId: store.selectedPage } }"
 				title="Preview">
-				<FeatherIcon name="play" class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
+				<FeatherIcon name="play" class="h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
 			</router-link>
 			<Button
 				variant="solid"
@@ -80,7 +82,7 @@
 </template>
 <script setup lang="ts">
 import { UseDark } from "@vueuse/components";
-import { Tooltip } from "frappe-ui";
+import { Badge, Dialog, Tooltip } from "frappe-ui";
 import { ref } from "vue";
 import useStore from "../store";
 
@@ -106,7 +108,7 @@ const transitionTheme = (toggleDark: () => void) => {
 };
 </script>
 <style>
-.popover-container > div {
-	margin-top: 20px !important;
+[data-radix-popper-content-wrapper] {
+	margin-top: 15px !important;
 }
 </style>

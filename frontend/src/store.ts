@@ -4,13 +4,14 @@ import { defineStore } from "pinia";
 import { nextTick } from "vue";
 import { toast } from "vue-sonner";
 import BuilderCanvas from "./components/BuilderCanvas.vue";
+import { builderSettings } from "./data/builderSettings";
 import webComponent from "./data/webComponent";
 import { webPages } from "./data/webPage";
 import { BuilderComponent } from "./types/Builder/BuilderComponent";
 import { BuilderPage } from "./types/Builder/BuilderPage";
 import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
-import { getBlockInstance, stripExtension } from "./utils/helpers";
+import { getBlockInstance } from "./utils/helpers";
 
 const useStore = defineStore("store", {
 	state: () => ({
@@ -51,10 +52,10 @@ const useStore = defineStore("store", {
 		rightPanelActiveTab: <RightSidebarTabOption>"Properties",
 		showRightPanel: <boolean>true,
 		showLeftPanel: <boolean>true,
-		copiedStyle: <StyleCopy | null>null,
 		components: <BlockComponent[]>[],
 		showHTMLDialog: false,
 		activePage: <BuilderPage | null>null,
+		savingPage: false,
 	}),
 	actions: {
 		clearBlocks() {
@@ -99,14 +100,7 @@ const useStore = defineStore("store", {
 				return;
 			}
 
-			const webPageResource = await createDocumentResource({
-				doctype: "Builder Page",
-				name: pageName,
-				auto: true,
-			});
-			await webPageResource.get.promise;
-
-			const page = webPageResource.doc as BuilderPage;
+			const page = await this.fetchActivePage(pageName);
 			this.activePage = page;
 
 			const blocks = JSON.parse(page.draft_blocks || page.blocks || "[]");
@@ -119,7 +113,7 @@ const useStore = defineStore("store", {
 			} else {
 				this.pageBlocks = [getBlockInstance(blocks[0])];
 			}
-			this.pageBlocks = [getBlockInstance(blocks[0])];
+			this.pageBlocks = [getBlockInstance(blocks[0] || getBlockTemplate("body"))];
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
 			this.selectedPage = page.name;
@@ -131,16 +125,23 @@ const useStore = defineStore("store", {
 				this.settingPage = false;
 			});
 		},
+		async fetchActivePage(pageName: string) {
+			const webPageResource = await createDocumentResource({
+				doctype: "Builder Page",
+				name: pageName,
+				auto: true,
+			});
+			await webPageResource.get.promise;
+
+			const page = webPageResource.doc as BuilderPage;
+			return page;
+		},
 		getImageBlock(imageSrc: string, imageAlt: string = "") {
-			imageAlt = stripExtension(imageAlt);
 			const imageBlock = getBlockTemplate("image");
 			if (!imageBlock.attributes) {
 				imageBlock.attributes = {};
 			}
 			imageBlock.attributes.src = imageSrc;
-			if (imageAlt) {
-				imageBlock.attributes.alt = imageAlt;
-			}
 
 			return imageBlock;
 		},
@@ -274,6 +275,7 @@ const useStore = defineStore("store", {
 				private: false,
 				folder: "Home/Builder Uploads",
 				optimize: true,
+				upload_endpoint: "/api/method/builder.builder.doctype.builder_page.builder_page.upload_builder_asset",
 			});
 			await new Promise((resolve) => {
 				toast.promise(upload, {
@@ -290,18 +292,20 @@ const useStore = defineStore("store", {
 			});
 
 			return {
-				fileURL: encodeURI(window.location.origin + fileDoc.file_url),
+				fileURL: fileDoc.file_url,
 				fileName: fileDoc.file_name,
 			};
 		},
 		async publishPage() {
+			await this.waitTillPageIsSaved();
 			return webPages.runDocMethod
 				.submit({
 					name: this.selectedPage as string,
 					method: "publish",
 					...this.routeVariables,
 				})
-				.then(() => {
+				.then(async () => {
+					this.activePage = await this.fetchActivePage(this.selectedPage as string);
 					this.openPageInBrowser(this.activePage as BuilderPage);
 				});
 		},
@@ -325,7 +329,9 @@ const useStore = defineStore("store", {
 				name: this.selectedPage,
 				draft_blocks: pageData,
 			};
-			webPages.setValue.submit(args);
+			return webPages.setValue.submit(args).finally(() => {
+				this.savingPage = false;
+			});
 		},
 		setPageData(page?: BuilderPage) {
 			if (!page || !page.page_data_script) {
@@ -363,6 +369,21 @@ const useStore = defineStore("store", {
 			this.editableBlock = block;
 			nextTick(() => {
 				this.showHTMLDialog = true;
+			});
+		},
+		isHomePage(page: BuilderPage | null = null) {
+			return builderSettings.doc.home_page === (page || this.activePage)?.route;
+		},
+		async waitTillPageIsSaved() {
+			// small delay so that all the save requests are triggered
+			await new Promise((resolve) => setTimeout(resolve, 100));
+			return new Promise((resolve) => {
+				const interval = setInterval(() => {
+					if (!this.savingPage) {
+						clearInterval(interval);
+						resolve(null);
+					}
+				}, 100);
 			});
 		},
 	},
