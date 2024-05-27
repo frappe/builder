@@ -86,17 +86,22 @@
 			</div>
 			<div class="mt-5 flex w-full flex-col gap-2">
 				<Button
+					v-if="page.published && !store.isHomePage(page)"
+					@click="() => setHomePage(page)"
+					class="block text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
+					Set as Home Page
+				</Button>
+				<Button
+					v-if="page.published && store.isHomePage(page)"
+					@click="() => unsetHomePage()"
+					class="block text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
+					Unset as Home Page
+				</Button>
+				<Button
 					v-if="page.published"
 					@click="() => store.openPageInBrowser(page)"
 					class="block text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
 					View Published Page
-				</Button>
-				<Button
-					v-if="page.published"
-					:disabled="isHomePage(page)"
-					@click="() => setHomePage(page)"
-					class="block text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
-					Set as Home Page
 				</Button>
 				<Button
 					v-if="page.published"
@@ -150,6 +155,7 @@ const unpublishPage = () => {
 		.then(() => {
 			toast.success("Page unpublished");
 			store.setPage(props.page.name);
+			builderSettings.reload();
 		});
 };
 
@@ -163,7 +169,13 @@ const setHomePage = (page: BuilderPage) => {
 		});
 };
 
-const isHomePage = (page: BuilderPage) => {
-	return builderSettings.doc.home_page === page.route;
+const unsetHomePage = () => {
+	builderSettings.setValue
+		.submit({
+			home_page: "",
+		})
+		.then(() => {
+			toast.success("Home Page unset");
+		});
 };
 </script>

@@ -7,11 +7,13 @@
 		</router-view>
 		<UseDark></UseDark>
 		<Toaster :theme="isDark ? 'dark' : 'light'" richColors />
+		<Dialogs></Dialogs>
 	</div>
 </template>
 <script setup lang="ts">
 import { UseDark } from "@vueuse/components";
 import { useDark, useTitle } from "@vueuse/core";
+import { Dialogs } from "frappe-ui";
 import { computed } from "vue";
 import { useRoute } from "vue-router";
 import { Toaster } from "vue-sonner";

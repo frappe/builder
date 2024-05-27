@@ -11,6 +11,7 @@
 			:data-block-id="block.blockId"
 			:class="getStyleClasses">
 			<PaddingHandler
+				:data-block-id="block.blockId"
 				v-if="
 					isBlockSelected &&
 					!resizing &&
@@ -37,6 +38,7 @@
 				:disable-handlers="false"
 				:breakpoint="breakpoint" />
 			<BorderRadiusHandler
+				:data-block-id="block.blockId"
 				v-if="
 					isBlockSelected &&
 					!block.isRoot() &&
@@ -49,10 +51,11 @@
 				:target-block="block"
 				:target="target" />
 			<BoxResizer
+				:data-block-id="block.blockId"
 				v-if="showResizer"
 				:targetBlock="block"
 				@resizing="resizing = $event"
-				:target="(target as HTMLElement)" />
+				:target="target as HTMLElement" />
 		</div>
 	</BlockContextMenu>
 </template>
@@ -170,7 +173,7 @@ watch(
 		nextTick(() => {
 			updateTracker.value();
 		});
-	}
+	},
 );
 
 const movable = computed(() => {
@@ -268,7 +271,7 @@ const handleMove = (ev: MouseEvent) => {
 			mouseUpEvent.preventDefault();
 			guides.hideX();
 		},
-		{ once: true }
+		{ once: true },
 	);
 };
 
