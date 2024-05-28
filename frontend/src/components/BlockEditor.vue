@@ -51,7 +51,6 @@
 				:target-block="block"
 				:target="target" />
 			<BoxResizer
-				:data-block-id="block.blockId"
 				v-if="showResizer"
 				:targetBlock="block"
 				@resizing="resizing = $event"

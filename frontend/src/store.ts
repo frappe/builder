@@ -12,7 +12,7 @@ import { BuilderPage } from "./types/Builder/BuilderPage";
 import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
 import { getBlockInstance } from "./utils/helpers";
-
+import RealTimeHandler from "./utils/realtimeHandler";
 const useStore = defineStore("store", {
 	state: () => ({
 		editableBlock: <Block | null>null,
@@ -56,6 +56,8 @@ const useStore = defineStore("store", {
 		showHTMLDialog: false,
 		activePage: <BuilderPage | null>null,
 		savingPage: false,
+		realtime: new RealTimeHandler(),
+		viewers: <UserInfo[]>[],
 	}),
 	actions: {
 		clearBlocks() {
