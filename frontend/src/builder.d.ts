@@ -91,3 +91,5 @@ declare interface CanvasProps {
 }
 
 declare type EditingMode = "page" | "component";
+
+declare type UserInfo = { user: string; fullname: string; image: string };

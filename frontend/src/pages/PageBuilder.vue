@@ -91,6 +91,7 @@ import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import { webPages } from "@/data/webPage";
+import { sessionUser } from "@/router";
 import useStore from "@/store";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
@@ -107,9 +108,10 @@ import {
 	isJSONString,
 	isTargetEditable,
 } from "@/utils/helpers";
+import { getUsersInfo } from "@/usersInfo";
 import { useActiveElement, useDebounceFn, useEventListener, useMagicKeys, useStorage } from "@vueuse/core";
 import { Dialog } from "frappe-ui";
-import { Ref, computed, nextTick, onActivated, provide, ref, watch, watchEffect } from "vue";
+import { Ref, computed, nextTick, onActivated, onDeactivated, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { toast } from "vue-sonner";
 import CodeEditor from "../components/CodeEditor.vue";
@@ -145,7 +147,7 @@ useEventListener(
 			return;
 		}
 	},
-	{ passive: false }
+	{ passive: false },
 );
 
 useEventListener(document, "copy", (e) => {
@@ -281,7 +283,7 @@ useEventListener(document, "paste", async (e) => {
 		const styleObj = strippedText.split(";").reduce((acc: BlockStyleMap, curr) => {
 			const [key, value] = curr.split(":").map((item) => (item ? item.trim() : "")) as [
 				styleProperty,
-				StyleValue
+				StyleValue,
 			];
 			if (blockController.isText()) {
 				if (
@@ -432,7 +434,7 @@ useEventListener(document, "keydown", (e) => {
 
 const activeElement = useActiveElement();
 const notUsingInput = computed(
-	() => activeElement.value?.tagName !== "INPUT" && activeElement.value?.tagName !== "TEXTAREA"
+	() => activeElement.value?.tagName !== "INPUT" && activeElement.value?.tagName !== "TEXTAREA",
 );
 
 const { space } = useMagicKeys({
@@ -492,7 +494,7 @@ useEventListener(document, "keydown", (e) => {
 			const copiedStyle = useStorage(
 				"copiedStyle",
 				{ blockId: "", style: {} },
-				sessionStorage
+				sessionStorage,
 			) as Ref<StyleCopy>;
 			copiedStyle.value = {
 				blockId: block.blockId,
@@ -573,6 +575,11 @@ const clearSelectedComponent = () => {
 };
 
 onActivated(async () => {
+	store.realtime.on("doc_viewers", async (data) => {
+		store.viewers = await getUsersInfo(data.users.filter((user: string) => user !== sessionUser.value));
+	});
+	store.realtime.doc_subscribe("Builder Page", route.params.pageId as string);
+	store.realtime.doc_open("Builder Page", route.params.pageId as string);
 	if (route.params.pageId === store.selectedPage) {
 		return;
 	}
@@ -582,7 +589,7 @@ onActivated(async () => {
 	if (route.params.pageId && route.params.pageId !== "new") {
 		store.setPage(route.params.pageId as string);
 	} else {
-		webPages.insert
+		await webPages.insert
 			.submit({
 				page_title: "My Page",
 				draft_blocks: [store.getRootBlock()],
@@ -592,6 +599,12 @@ onActivated(async () => {
 				store.setPage(data.name);
 			});
 	}
+});
+
+onDeactivated(() => {
+	store.realtime.doc_close("Builder Page", store.activePage?.name as string);
+	store.realtime.off("doc_viewers", () => {});
+	store.viewers = [];
 });
 
 // on tab activation, reload for latest data
@@ -633,7 +646,7 @@ watch(
 	},
 	{
 		deep: true,
-	}
+	},
 );
 
 watch(
@@ -642,7 +655,7 @@ watch(
 		if (!value) {
 			store.editableBlock = null;
 		}
-	}
+	},
 );
 </script>
 
