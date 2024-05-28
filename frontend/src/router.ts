@@ -1,7 +1,9 @@
 import { createResource } from "frappe-ui";
+import { ref } from "vue";
 import { NavigationGuardNext, RouteLocationNormalized, createRouter, createWebHistory } from "vue-router";
 
 let hasPermission: null | boolean = null;
+let sessionUser = ref("Guest");
 
 function validatePermission(next: NavigationGuardNext) {
 	if (hasPermission) {
@@ -18,6 +20,7 @@ const validateVisit = function (
 	next: NavigationGuardNext
 ) {
 	if (document.cookie.includes("user_id") && !document.cookie.includes("user_id=Guest")) {
+		sessionUser.value = decodeURIComponent(document.cookie.split("user_id=")[1].split(";")[0]);
 		if (hasPermission === null) {
 			createResource({
 				url: "frappe.client.has_permission",
@@ -90,4 +93,5 @@ const router = createRouter({
 	routes,
 });
 
+export { sessionUser };
 export default router;

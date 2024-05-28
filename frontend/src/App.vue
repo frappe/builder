@@ -14,12 +14,16 @@
 import { UseDark } from "@vueuse/components";
 import { useDark, useTitle } from "@vueuse/core";
 import { Dialogs } from "frappe-ui";
-import { computed } from "vue";
+import { computed, provide } from "vue";
 import { useRoute } from "vue-router";
 import { Toaster } from "vue-sonner";
+import { sessionUser } from "./router";
 import useStore from "./store";
+
 const store = useStore();
 const route = useRoute();
+
+provide("sessionUser", sessionUser);
 
 const title = computed(() => {
 	return store.activePage && route.name !== "home"
