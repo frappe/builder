@@ -22,7 +22,7 @@
 								instance.show();
 							}
 						},
-						{ deep: true }
+						{ deep: true },
 					);
 				},
 			}"
@@ -46,7 +46,7 @@
 			</div>
 			<div v-show="!settingLink" class="flex gap-1">
 				<button
-					@click="() => setHeading(1)"
+					@click="setHeading(1)"
 					class="rounded px-2 py-1 text-sm hover:bg-gray-100"
 					:class="{ 'bg-gray-200': block.getElement() === 'h1' }">
 					<code>H1</code>
@@ -64,24 +64,28 @@
 					<code>H3</code>
 				</button>
 				<button
+					v-show="!block.isHeader()"
 					@click="editor?.chain().focus().toggleBold().run()"
 					class="rounded px-2 py-1 hover:bg-gray-100"
 					:class="{ 'bg-gray-200': editor.isActive('bold') }">
 					<FeatherIcon class="h-3 w-3" name="bold" />
 				</button>
 				<button
+					v-show="!block.isHeader()"
 					@click="editor?.chain().focus().toggleItalic().run()"
 					class="rounded px-2 py-1 hover:bg-gray-100"
 					:class="{ 'bg-gray-200': editor.isActive('italic') }">
 					<FeatherIcon class="h-3 w-3" name="italic" />
 				</button>
 				<button
+					v-show="!block.isHeader()"
 					@click="editor?.chain().focus().toggleStrike().run()"
 					class="rounded px-2 py-1 hover:bg-gray-100"
 					:class="{ 'bg-gray-200': editor.isActive('strike') }">
 					<StrikeThroughIcon />
 				</button>
 				<button
+					v-show="!block.isHeader()"
 					@click="
 						() => {
 							if (!editor) return;
@@ -201,7 +205,7 @@ watch(
 			store.activeCanvas?.history.resume();
 		}
 	},
-	{ immediate: true }
+	{ immediate: true },
 );
 
 watch(
@@ -212,7 +216,7 @@ watch(
 			return;
 		}
 		editor.value?.commands.setContent(newValue || "", false);
-	}
+	},
 );
 
 if (!props.preview) {
@@ -263,7 +267,7 @@ if (!props.preview) {
 				editor.value = null;
 			}
 		},
-		{ immediate: true }
+		{ immediate: true },
 	);
 
 	onBeforeUnmount(() => {
@@ -299,7 +303,13 @@ const enableLinkInput = () => {
 const setHeading = (level: 1 | 2 | 3) => {
 	props.block.setBaseStyle("font-size", level === 1 ? "2rem" : level === 2 ? "1.5rem" : "1.25rem");
 	props.block.setBaseStyle("font-weight", "bold");
-	props.block.element = `h${level}`;
+	const tag = `h${level}`;
+	if (props.block.element === tag) {
+		props.block.element = "p";
+	} else {
+		props.block.element = tag;
+	}
+
 	nextTick(() => {
 		props.block.selectBlock();
 	});
