@@ -138,7 +138,7 @@ class BuilderPage(WebsiteGenerator):
 		content, style, fonts = get_block_html(blocks)
 		context.fonts = fonts
 		context.content = content
-		context.style = style
+		context.style = render_template(style, page_data)
 		builder_path = frappe.conf.builder_path or "builder"
 		context.editor_link = f"/{builder_path}/page/{self.name}"
 		context.base_url = frappe.utils.get_url(".")
@@ -147,6 +147,7 @@ class BuilderPage(WebsiteGenerator):
 		context.update(page_data)
 		self.set_meta_tags(context=context, page_data=page_data)
 		self.set_favicon(context)
+
 		try:
 			context["content"] = render_template(context.content, context)
 		except TemplateSyntaxError:
