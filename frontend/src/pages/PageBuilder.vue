@@ -95,6 +95,7 @@ import { sessionUser } from "@/router";
 import useStore from "@/store";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { getUsersInfo } from "@/usersInfo";
 import Block, { styleProperty } from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
@@ -108,7 +109,6 @@ import {
 	isJSONString,
 	isTargetEditable,
 } from "@/utils/helpers";
-import { getUsersInfo } from "@/usersInfo";
 import { useActiveElement, useDebounceFn, useEventListener, useMagicKeys, useStorage } from "@vueuse/core";
 import { Dialog } from "frappe-ui";
 import { Ref, computed, nextTick, onActivated, onDeactivated, provide, ref, watch, watchEffect } from "vue";
@@ -664,27 +664,5 @@ watch(
 	--left-panel-width: 17rem;
 	--right-panel-width: 20rem;
 	--toolbar-height: 3.5rem;
-}
-
-[id^="headlessui-menu-items"] {
-	@apply dark:bg-zinc-800;
-}
-
-[id^="headlessui-menu-items"] button {
-	@apply dark:text-zinc-200;
-	@apply dark:hover:bg-zinc-700;
-}
-
-[id^="headlessui-menu-items"] button svg {
-	@apply dark:text-zinc-200;
-}
-
-[data-sonner-toaster] {
-	font-family: "InterVar";
-}
-
-[data-sonner-toast][data-styled="true"] {
-	@apply dark:bg-zinc-900;
-	@apply dark:border-zinc-800;
 }
 </style>
