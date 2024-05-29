@@ -46,15 +46,14 @@
 			<div class="group flex hover:gap-1" v-if="store.viewers.length">
 				<div v-for="user in store.viewers">
 					<Tooltip :text="currentlyViewedByText" :hoverDelay="0.6">
-						<div
-							class="ml-[-10px] h-6 w-6 cursor-pointer transition-all group-hover:ml-0"
-							:title="user.fullname">
+						<div class="ml-[-10px] h-6 w-6 cursor-pointer transition-all group-hover:ml-0">
 							<img
-								class="rounded-full border-2 border-orange-400 shadow-sm"
+								class="h-full w-full rounded-full border-2 border-orange-400 object-cover shadow-sm"
 								:src="user.image"
 								v-if="user.image" />
 							<div
 								v-else
+								:title="user.fullname"
 								class="grid h-full w-full place-items-center rounded-full border-2 border-orange-400 bg-gray-400 text-sm text-gray-700 shadow-sm">
 								{{ user.fullname.charAt(0) }}
 							</div>
