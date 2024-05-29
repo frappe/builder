@@ -30,7 +30,7 @@
 			:breakpoint="breakpoint"
 			:editable="isEditable"
 			:isSelected="isSelected"
-			:target="(target as HTMLElement)" />
+			:target="target as HTMLElement" />
 	</teleport>
 </template>
 <script setup lang="ts">
@@ -137,7 +137,23 @@ const target = computed(() => {
 });
 
 const styles = computed(() => {
-	return { ...props.block.getStyles(props.breakpoint), ...props.block.getEditorStyles() } as BlockStyleMap;
+	let dynamicStyles = {};
+	if (props.data) {
+		if (props.block.getDataKey("type") === "style") {
+			dynamicStyles = {
+				[props.block.getDataKey("property") as string]: getDataForKey(
+					props.data,
+					props.block.getDataKey("key"),
+				),
+			};
+		}
+	}
+
+	return {
+		...props.block.getStyles(props.breakpoint),
+		...props.block.getEditorStyles(),
+		...dynamicStyles,
+	} as BlockStyleMap;
 });
 
 const loadEditor = computed(() => {
@@ -165,7 +181,7 @@ onMounted(async () => {
 		useDraggableBlock(
 			props.block,
 			component.value as HTMLElement,
-			reactive({ ghostScale: canvasProps?.scale || 1 })
+			reactive({ ghostScale: canvasProps?.scale || 1 }),
 		);
 	}
 });
@@ -264,7 +280,7 @@ if (!props.preview) {
 			} else if (oldValue === props.block.blockId) {
 				isHovered.value = false;
 			}
-		}
+		},
 	);
 	watch(
 		() => store.activeCanvas?.selectedBlockIds,
@@ -278,7 +294,7 @@ if (!props.preview) {
 		{
 			deep: true,
 			immediate: true,
-		}
+		},
 	);
 }
 </script>
