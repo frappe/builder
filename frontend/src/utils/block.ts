@@ -6,9 +6,11 @@ import { addPxToNumber, getBlockCopy, getNumberFromPx, getTextContent, kebabToCa
 
 export type styleProperty = keyof CSSProperties;
 
+type BlockDataKeyType = "key" | "attribute" | "style";
+
 export interface BlockDataKey {
 	key?: string;
-	type?: string;
+	type?: BlockDataKeyType;
 	property?: string;
 }
 
@@ -528,7 +530,7 @@ class Block implements BlockOptions {
 		}
 		return dataKey;
 	}
-	setDataKey(key: keyof BlockDataKey, value: string) {
+	setDataKey(key: keyof BlockDataKey, value: BlockDataKeyType) {
 		if (!this.dataKey) {
 			this.dataKey = {
 				key: "",
