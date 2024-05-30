@@ -176,7 +176,7 @@ class Block implements BlockOptions {
 		return visibilityCondition;
 	}
 	getBlockDescription() {
-		if (this.isExtendedFromComponent() && !this.isChildOfComponentBlock()) {
+		if (this.extendedFromComponent) {
 			return this.getComponentBlockDescription();
 		}
 		if (this.isHTML()) {
@@ -782,15 +782,20 @@ class Block implements BlockOptions {
 function extendWithComponent(
 	block: Block | BlockOptions,
 	extendedFromComponent: string | undefined,
-	componentChildren: Block[]
+	componentChildren: Block[],
+	resetOverrides: boolean = true
 ) {
-	resetBlock(block);
+	resetBlock(block, true, resetOverrides);
 	block.children?.forEach((child, index) => {
 		child.isChildOfComponent = extendedFromComponent;
 		let componentChild = componentChildren[index];
-		if (componentChild) {
+		if (child.extendedFromComponent) {
+			const component = child.getComponent();
 			child.referenceBlockId = componentChild.blockId;
-			extendWithComponent(child, extendedFromComponent, componentChild.children);
+			extendWithComponent(child, child.extendedFromComponent, component.children, false);
+		} else if (componentChild) {
+			child.referenceBlockId = componentChild.blockId;
+			extendWithComponent(child, extendedFromComponent, componentChild.children, resetOverrides);
 		}
 	});
 }
@@ -798,16 +803,22 @@ function extendWithComponent(
 function resetWithComponent(
 	block: Block | BlockOptions,
 	extendedWithComponent: string,
-	componentChildren: Block[]
+	componentChildren: Block[],
+	resetOverrides: boolean = true
 ) {
-	resetBlock(block);
+	resetBlock(block, true, resetOverrides);
 	block.children?.splice(0, block.children.length);
 	componentChildren.forEach((componentChild) => {
 		const blockComponent = getBlockCopy(componentChild);
 		blockComponent.isChildOfComponent = extendedWithComponent;
 		blockComponent.referenceBlockId = componentChild.blockId;
 		const childBlock = block.addChild(blockComponent, null, false);
-		resetWithComponent(childBlock, extendedWithComponent, componentChild.children);
+		if (componentChild.extendedFromComponent) {
+			const component = childBlock.getComponent();
+			resetWithComponent(childBlock, componentChild.extendedFromComponent, component.children, false);
+		} else {
+			resetWithComponent(childBlock, extendedWithComponent, componentChild.children, resetOverrides);
+		}
 	});
 }
 
@@ -852,22 +863,28 @@ function findComponentBlock(blockId: string, blocks: Block[]): Block | null {
 	return null;
 }
 
-function resetBlock(block: Block | BlockOptions, resetChildren: boolean = true) {
+function resetBlock(
+	block: Block | BlockOptions,
+	resetChildren: boolean = true,
+	resetOverrides: boolean = true
+) {
 	block = markRaw(block);
-	delete block.innerHTML;
-	delete block.element;
 	block.blockId = block.generateId();
-	block.baseStyles = {};
-	block.rawStyles = {};
-	block.mobileStyles = {};
-	block.tabletStyles = {};
-	block.attributes = {};
-	block.customAttributes = {};
-	block.classes = [];
+	if (resetOverrides) {
+		delete block.innerHTML;
+		delete block.element;
+		block.baseStyles = {};
+		block.rawStyles = {};
+		block.mobileStyles = {};
+		block.tabletStyles = {};
+		block.attributes = {};
+		block.customAttributes = {};
+		block.classes = [];
+	}
 
 	if (resetChildren) {
 		block.children?.forEach((child) => {
-			resetBlock(child, resetChildren);
+			resetBlock(child, resetChildren, !Boolean(child.extendedFromComponent));
 		});
 	}
 }
