@@ -272,10 +272,26 @@ class Block implements BlockOptions {
 	}
 	getStyle(style: styleProperty) {
 		const store = useStore();
+		let styleValue = undefined as StyleValue;
 		if (store.activeBreakpoint === "mobile") {
-			return this.mobileStyles[style] || this.tabletStyles[style] || this.baseStyles[style];
+			styleValue = this.mobileStyles[style] || this.tabletStyles[style] || this.baseStyles[style];
 		} else if (store.activeBreakpoint === "tablet") {
-			return this.tabletStyles[style] || this.baseStyles[style];
+			styleValue = this.tabletStyles[style] || this.baseStyles[style];
+		} else {
+			styleValue = this.baseStyles[style];
+		}
+		if (styleValue === undefined && this.isExtendedFromComponent()) {
+			styleValue = this.getComponent()?.getStyle(style) as StyleValue;
+		}
+		return styleValue;
+	}
+	getNativeStyle(style: styleProperty) {
+		const store = useStore();
+		if (store.activeBreakpoint === "mobile") {
+			return this.mobileStyles[style];
+		}
+		if (store.activeBreakpoint === "tablet") {
+			return this.tabletStyles[style];
 		}
 		return this.baseStyles[style];
 	}
