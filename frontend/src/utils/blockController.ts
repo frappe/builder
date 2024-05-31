@@ -40,6 +40,17 @@ const blockController = {
 		});
 		return styleValue;
 	},
+	getNativeStyle: (style: styleProperty) => {
+		let styleValue = "__initial__" as StyleValue;
+		store.activeCanvas?.selectedBlocks.forEach((block) => {
+			if (styleValue === "__initial__") {
+				styleValue = block.getNativeStyle(style);
+			} else if (styleValue !== block.getNativeStyle(style)) {
+				styleValue = "Mixed";
+			}
+		});
+		return styleValue;
+	},
 	isBLockSelected: () => {
 		return store.activeCanvas?.selectedBlocks.length || 0 > 0;
 	},
