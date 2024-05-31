@@ -315,7 +315,7 @@ class Block implements BlockOptions {
 		return this.originalElement === "body";
 	}
 	getTag(): string {
-		if (this.isButton() || this.isLink()) {
+		if (this.isButton() || this.isLink() || this.isInput()) {
 			return "div";
 		}
 		return this.getElement() || "div";
@@ -438,6 +438,7 @@ class Block implements BlockOptions {
 		return !(
 			this.isImage() ||
 			this.isSVG() ||
+			this.isInput() ||
 			this.isVideo() ||
 			(this.isText() && !this.isLink()) ||
 			this.isExtendedFromComponent()
