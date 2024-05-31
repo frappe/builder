@@ -486,7 +486,7 @@ class Block implements BlockOptions {
 	getTextColor() {
 		const editor = this.getEditor();
 		const color = editor?.getAttributes("textStyle").color;
-		if (this.isText() && editor && editor.isFocused && color) {
+		if (this.isText() && editor && color && editor.isEditable) {
 			return color;
 		} else {
 			return this.getStyle("color");
@@ -498,7 +498,7 @@ class Block implements BlockOptions {
 	setTextColor(color: string) {
 		const editor = this.getEditor();
 		if (this.isText() && editor && editor.isEditable) {
-			editor.chain().focus().setColor(color).run();
+			editor.chain().setColor(color).run();
 		} else {
 			this.setStyle("color", color);
 		}
