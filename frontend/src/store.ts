@@ -224,6 +224,7 @@ const useStore = defineStore("store", {
 						})
 						.then(() => {
 							toast.success("Component saved!");
+							this.activeCanvas?.toggleDirty(false);
 						});
 				} else {
 					// webComponent.fet;
@@ -331,6 +332,7 @@ const useStore = defineStore("store", {
 			};
 			return webPages.setValue.submit(args).finally(() => {
 				this.savingPage = false;
+				this.activeCanvas?.toggleDirty(false);
 			});
 		},
 		setPageData(page?: BuilderPage) {

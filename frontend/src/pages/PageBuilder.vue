@@ -25,7 +25,7 @@
 					<div
 						class="absolute left-0 right-0 top-0 z-20 flex items-center justify-between bg-white p-2 text-sm text-gray-800 dark:bg-zinc-900 dark:text-zinc-400">
 						<div class="flex items-center gap-1 text-xs">
-							<a @click="store.editPage(false)" class="cursor-pointer">Page</a>
+							<a @click="exitComponentMode" class="cursor-pointer">Page</a>
 							<FeatherIcon name="chevron-right" class="h-3 w-3" />
 							{{ store.getComponent(store.editingComponent).component_name }}
 						</div>
@@ -101,6 +101,7 @@ import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import {
 	addPxToNumber,
+	confirm,
 	copyToClipboard,
 	detachBlockFromComponent,
 	getBlockCopy,
@@ -553,8 +554,7 @@ useEventListener(document, "keydown", (e) => {
 	}
 
 	if (e.key === "Escape") {
-		store.editPage(false);
-		clearSelectedComponent();
+		exitComponentMode(e);
 	}
 
 	// handle arrow keys
@@ -572,6 +572,21 @@ const clearSelectedComponent = () => {
 	if (document.activeElement instanceof HTMLElement) {
 		document.activeElement.blur();
 	}
+};
+
+const exitComponentMode = (e: Event) => {
+	if (store.editingComponent && store.activeCanvas?.isDirty) {
+		e.preventDefault();
+		confirm("Are you sure you want to exit without saving?").then((result) => {
+			if (result) {
+				store.editPage(false);
+				clearSelectedComponent();
+			}
+		});
+		return;
+	}
+	store.editPage(false);
+	clearSelectedComponent();
 };
 
 onActivated(async () => {
