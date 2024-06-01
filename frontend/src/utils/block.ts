@@ -168,6 +168,22 @@ class Block implements BlockOptions {
 	getComponentChildren() {
 		return this.getComponent()?.children || [];
 	}
+	getCustomAttributes() {
+		let customAttributes = {};
+		if (this.isExtendedFromComponent()) {
+			customAttributes = this.getComponent()?.customAttributes || {};
+		}
+		customAttributes = { ...customAttributes, ...this.customAttributes };
+		return customAttributes;
+	}
+	getRawStyles() {
+		let rawStyles = {};
+		if (this.isExtendedFromComponent()) {
+			rawStyles = this.getComponent()?.rawStyles || {};
+		}
+		rawStyles = { ...rawStyles, ...this.rawStyles };
+		return rawStyles;
+	}
 	getVisibilityCondition() {
 		let visibilityCondition = this.visibilityCondition;
 		if (this.isExtendedFromComponent() && this.getComponent()?.visibilityCondition) {
