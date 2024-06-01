@@ -96,6 +96,7 @@ const canvasContainer = ref(null);
 const canvas = ref(null);
 const showBlocks = ref(false);
 const overlay = ref(null);
+const isDirty = ref(false);
 
 const props = defineProps({
 	blockData: {
@@ -226,7 +227,7 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 
 const visibleBreakpoints = computed(() => {
 	return canvasProps.breakpoints.filter(
-		(breakpoint) => breakpoint.visible || breakpoint.device === "desktop"
+		(breakpoint) => breakpoint.visible || breakpoint.device === "desktop",
 	);
 });
 
@@ -260,7 +261,7 @@ function setEvents() {
 			}
 			const child = getBlockTemplate(store.mode);
 			const parentElement = document.body.querySelector(
-				`.canvas [data-block-id="${parentBlock.blockId}"]`
+				`.canvas [data-block-id="${parentBlock.blockId}"]`,
 			) as HTMLElement;
 			const parentOldPosition = parentBlock.getStyle("position");
 			if (parentOldPosition === "static" || parentOldPosition === "inherit" || !parentOldPosition) {
@@ -321,7 +322,7 @@ function setEvents() {
 					}
 					canvasHistory.value?.resume(true);
 				},
-				{ once: true }
+				{ once: true },
 			);
 		}
 	});
@@ -348,7 +349,7 @@ function setEvents() {
 					document.removeEventListener("mousemove", mouseMoveHandler);
 					container.style.cursor = "grab";
 				},
-				{ once: true }
+				{ once: true },
 			);
 			ev.stopPropagation();
 			ev.preventDefault();
@@ -428,7 +429,7 @@ watch(
 			return;
 		}
 		setScaleAndTranslate();
-	}
+	},
 );
 
 watch(
@@ -436,7 +437,7 @@ watch(
 	(newValue, oldValue) => {
 		store.lastMode = oldValue;
 		toggleMode(store.mode);
-	}
+	},
 );
 
 function toggleMode(mode: BuilderMode) {
@@ -479,6 +480,7 @@ const setRootBlock = (newBlock: Block, resetCanvas = false) => {
 	if (resetCanvas) {
 		nextTick(() => {
 			setScaleAndTranslate();
+			toggleDirty(false);
 		});
 	}
 };
@@ -554,6 +556,22 @@ const findBlock = (blockId: string, blocks?: Block[]): Block | null => {
 	return null;
 };
 
+watch(
+	() => block,
+	() => {
+		toggleDirty(true);
+	},
+	{ deep: true },
+);
+
+const toggleDirty = (dirty: boolean | null = null) => {
+	if (dirty === null) {
+		isDirty.value = !isDirty.value;
+	} else {
+		isDirty.value = dirty;
+	}
+};
+
 defineExpose({
 	setScaleAndTranslate,
 	resetZoom,
@@ -574,5 +592,7 @@ defineExpose({
 	selectedBlockIds,
 	findParentBlock,
 	findBlock,
+	isDirty,
+	toggleDirty,
 });
 </script>
