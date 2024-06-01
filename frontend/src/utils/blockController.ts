@@ -127,7 +127,7 @@ const blockController = {
 		block.classes = classes;
 	},
 	getRawStyles: () => {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().rawStyles;
+		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().getRawStyles();
 	},
 	setRawStyles: (rawStyles: BlockStyleMap) => {
 		store.activeCanvas?.selectedBlocks.forEach((block) => {
@@ -140,7 +140,7 @@ const blockController = {
 		});
 	},
 	getCustomAttributes: () => {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().customAttributes;
+		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().getCustomAttributes();
 	},
 	setCustomAttributes: (customAttributes: BlockAttributeMap) => {
 		store.activeCanvas?.selectedBlocks.forEach((block) => {
