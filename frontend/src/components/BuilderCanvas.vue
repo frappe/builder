@@ -572,6 +572,70 @@ const toggleDirty = (dirty: boolean | null = null) => {
 	}
 };
 
+const scrollBlockIntoView = async (blockToFocus: Block) => {
+	// wait for editor to render
+	await new Promise((resolve) => setTimeout(resolve, 100));
+	await nextTick();
+	if (!canvasContainer.value || !canvas.value) {
+		return;
+	}
+	const container = canvasContainer.value as HTMLElement;
+	const containerRect = container.getBoundingClientRect();
+	const selectedBlock = document.body.querySelector(
+		`.editor[data-block-id="${blockToFocus.blockId}"]`,
+	) as HTMLElement;
+
+	if (!selectedBlock) {
+		return;
+	}
+	const blockRect = reactive(useElementBounding(selectedBlock));
+	// check if block is in view
+	if (
+		blockRect.top >= containerRect.top &&
+		blockRect.bottom <= containerRect.bottom &&
+		blockRect.left >= containerRect.left &&
+		blockRect.right <= containerRect.right
+	) {
+		return;
+	}
+
+	let padding = 80;
+	let paddingBottom = 200;
+	const blockWidth = blockRect.width + padding * 2;
+	const containerBound = container.getBoundingClientRect();
+
+	if (blockWidth > containerBound.width) {
+		const scaleX = containerBound.width / blockWidth;
+		if (scaleX < 1) {
+			canvasProps.scale = canvasProps.scale * scaleX;
+			await new Promise((resolve) => setTimeout(resolve, 600));
+			await nextTick();
+			blockRect.update();
+		}
+	}
+
+	padding = padding * canvasProps.scale;
+	paddingBottom = paddingBottom * canvasProps.scale;
+
+	// slide in block from the closest edge of the container
+	const diffTop = containerRect.top - blockRect.top + padding;
+	const diffBottom = blockRect.bottom - containerRect.bottom + paddingBottom;
+	const diffLeft = containerRect.left - blockRect.left + padding;
+	const diffRight = blockRect.right - containerRect.right + padding;
+
+	if (diffTop > 0) {
+		canvasProps.translateY += diffTop / canvasProps.scale;
+	} else if (diffBottom > 0) {
+		canvasProps.translateY -= diffBottom / canvasProps.scale;
+	}
+
+	if (diffLeft > 0) {
+		canvasProps.translateX += diffLeft / canvasProps.scale;
+	} else if (diffRight > 0) {
+		canvasProps.translateX -= diffRight / canvasProps.scale;
+	}
+};
+
 defineExpose({
 	setScaleAndTranslate,
 	resetZoom,
@@ -594,5 +658,6 @@ defineExpose({
 	findBlock,
 	isDirty,
 	toggleDirty,
+	scrollBlockIntoView,
 });
 </script>
