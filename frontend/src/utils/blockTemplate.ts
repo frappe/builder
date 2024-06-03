@@ -109,6 +109,7 @@ function getBlockTemplate(
 				element: "video",
 				attributes: {
 					autoplay: "",
+					muted: "",
 				} as BlockAttributeMap,
 				baseStyles: {
 					objectFit: "cover",
