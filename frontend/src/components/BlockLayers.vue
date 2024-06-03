@@ -17,7 +17,7 @@
 							@click.stop="
 								store.activeCanvas?.history.pause();
 								element.expanded = true;
-								store.selectBlock(element, $event, false);
+								store.selectBlock(element, $event, false, true);
 								store.activeCanvas?.history.resume();
 							"
 							@mouseover.stop="store.hoveredBlock = element.blockId"
@@ -143,7 +143,7 @@ watch(
 				}
 			});
 		}
-	}
+	},
 );
 </script>
 <style>

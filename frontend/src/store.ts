@@ -153,7 +153,7 @@ const useStore = defineStore("store", {
 			videoBlock.attributes.src = videoSrc;
 			return videoBlock;
 		},
-		selectBlock(block: Block, e: MouseEvent | null, scrollIntoView = true) {
+		selectBlock(block: Block, e: MouseEvent | null, scrollLayerIntoView = true, scrollBlockIntoView = false) {
 			this.activeCanvas?.history?.pause();
 			if (this.settingPage) {
 				return;
@@ -163,14 +163,18 @@ const useStore = defineStore("store", {
 			} else {
 				this.activeCanvas?.selectBlock(block);
 			}
-			if (scrollIntoView) {
+			if (scrollLayerIntoView) {
 				// TODO: move to layers?
 				document
 					.querySelector(`[data-block-layer-id="${block.blockId}"]`)
 					?.scrollIntoView({ behavior: "instant", block: "center" });
 			}
+
 			this.activeCanvas?.history?.resume();
 			this.editableBlock = null;
+			if (scrollBlockIntoView) {
+				this.activeCanvas?.scrollBlockIntoView(block);
+			}
 		},
 		editComponent(block: Block) {
 			if (block.isExtendedFromComponent()) {
