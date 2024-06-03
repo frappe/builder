@@ -608,7 +608,7 @@ const scrollBlockIntoView = async (blockToFocus: Block) => {
 		const scaleX = containerBound.width / blockWidth;
 		if (scaleX < 1) {
 			canvasProps.scale = canvasProps.scale * scaleX;
-			await new Promise((resolve) => setTimeout(resolve, 600));
+			await new Promise((resolve) => setTimeout(resolve, 100));
 			await nextTick();
 			blockRect.update();
 		}
