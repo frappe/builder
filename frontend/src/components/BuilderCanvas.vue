@@ -576,7 +576,7 @@ const scrollBlockIntoView = async (blockToFocus: Block) => {
 	// wait for editor to render
 	await new Promise((resolve) => setTimeout(resolve, 100));
 	await nextTick();
-	if (!canvasContainer.value || !canvas.value) {
+	if (!canvasContainer.value || !canvas.value || blockToFocus.isRoot()) {
 		return;
 	}
 	const container = canvasContainer.value as HTMLElement;
