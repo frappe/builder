@@ -14,6 +14,10 @@ p:empty::before {
 	display: inline-block;
 }
 
+.__text_block__ {
+	overflow-wrap: break-word;
+}
+
 .__text_block__ a {
 	color: var(--link-color);
 	text-decoration: underline;
