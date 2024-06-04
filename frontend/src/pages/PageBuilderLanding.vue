@@ -82,7 +82,7 @@
 			}"
 			v-model="showDialog">
 			<template #body-content>
-				<TemplateSelector></TemplateSelector>
+				<TemplateSelector @templateSelected="showDialog = false"></TemplateSelector>
 			</template>
 		</Dialog>
 	</section>

@@ -1,7 +1,7 @@
 <template>
 	<div class="flex flex-wrap gap-6">
 		<div
-			@click="() => loadPage(null)"
+			@click="() => loadPage('new')"
 			class="group relative mr-2 w-full max-w-[250px] flex-grow basis-52 overflow-hidden rounded-md shadow hover:cursor-pointer dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
 			<img
 				width="250"
@@ -28,16 +28,14 @@ import { templates, webPages } from "@/data/webPage";
 import router from "@/router";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { createDocumentResource } from "frappe-ui";
-import { ref } from "vue";
 import TemplatePagePreview from "./TemplatePagePreview.vue";
 
-const showDialog = ref(false);
+const emit = defineEmits(["templateSelected"]);
 
-const loadPage = (template: string | null) => {
-	if (!template) {
-		router.push({ name: "builder", params: { pageId: "new" } });
-		showDialog.value = false;
-	}
+const loadPage = async (pageName: string = "new") => {
+	emit("templateSelected", null);
+	await new Promise((resolve) => setTimeout(resolve, 500));
+	router.push({ name: "builder", params: { pageId: pageName } });
 };
 
 const duplicatePage = async (page: BuilderPage) => {
@@ -53,7 +51,6 @@ const duplicatePage = async (page: BuilderPage) => {
 	pageCopy.page_title = `${pageCopy.page_title} Copy`;
 	pageCopy.is_template = 0;
 	const newPage = await webPages.insert.submit(pageCopy);
-	router.push({ name: "builder", params: { pageId: newPage.name } });
-	showDialog.value = false;
+	loadPage(newPage.name);
 };
 </script>
