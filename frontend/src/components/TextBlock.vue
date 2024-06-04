@@ -260,7 +260,9 @@ if (!props.preview) {
 					autofocus: false,
 					injectCSS: false,
 				});
-				props.block.getEditor = () => editor.value || null;
+
+				// @ts-ignore
+				props.block.__proto__.editor = editor.value;
 				editor.value?.setEditable(isEditable.value);
 			} else {
 				editor.value?.destroy();

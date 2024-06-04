@@ -509,7 +509,8 @@ class Block implements BlockOptions {
 		}
 	}
 	getEditor(): null | Editor {
-		return null;
+		// @ts-ignore
+		return this.__proto__.editor || null;
 	}
 	setTextColor(color: string) {
 		const editor = this.getEditor();
