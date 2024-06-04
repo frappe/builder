@@ -95,7 +95,9 @@ class BuilderPage(WebsiteGenerator):
 
 		if frappe.conf.developer_mode and self.is_template:
 			# move all assets to www/builder_assets/{page_name}
-			self.publish()
+			if self.draft_blocks:
+				self.publish()
+
 			blocks = frappe.parse_json(self.blocks)
 			for block in blocks:
 				copy_img_to_asset_folder(block, self)
