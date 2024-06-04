@@ -6,9 +6,11 @@ import { addPxToNumber, getBlockCopy, getNumberFromPx, getTextContent, kebabToCa
 
 export type styleProperty = keyof CSSProperties;
 
+type BlockDataKeyType = "key" | "attribute" | "style";
+
 export interface BlockDataKey {
 	key?: string;
-	type?: string;
+	type?: BlockDataKeyType;
 	property?: string;
 }
 
@@ -166,6 +168,22 @@ class Block implements BlockOptions {
 	getComponentChildren() {
 		return this.getComponent()?.children || [];
 	}
+	getCustomAttributes() {
+		let customAttributes = {};
+		if (this.isExtendedFromComponent()) {
+			customAttributes = this.getComponent()?.customAttributes || {};
+		}
+		customAttributes = { ...customAttributes, ...this.customAttributes };
+		return customAttributes;
+	}
+	getRawStyles() {
+		let rawStyles = {};
+		if (this.isExtendedFromComponent()) {
+			rawStyles = this.getComponent()?.rawStyles || {};
+		}
+		rawStyles = { ...rawStyles, ...this.rawStyles };
+		return rawStyles;
+	}
 	getVisibilityCondition() {
 		let visibilityCondition = this.visibilityCondition;
 		if (this.isExtendedFromComponent() && this.getComponent()?.visibilityCondition) {
@@ -174,7 +192,7 @@ class Block implements BlockOptions {
 		return visibilityCondition;
 	}
 	getBlockDescription() {
-		if (this.isExtendedFromComponent() && !this.isChildOfComponentBlock()) {
+		if (this.extendedFromComponent) {
 			return this.getComponentBlockDescription();
 		}
 		if (this.isHTML()) {
@@ -270,10 +288,26 @@ class Block implements BlockOptions {
 	}
 	getStyle(style: styleProperty) {
 		const store = useStore();
+		let styleValue = undefined as StyleValue;
 		if (store.activeBreakpoint === "mobile") {
-			return this.mobileStyles[style] || this.tabletStyles[style] || this.baseStyles[style];
+			styleValue = this.mobileStyles[style] || this.tabletStyles[style] || this.baseStyles[style];
 		} else if (store.activeBreakpoint === "tablet") {
-			return this.tabletStyles[style] || this.baseStyles[style];
+			styleValue = this.tabletStyles[style] || this.baseStyles[style];
+		} else {
+			styleValue = this.baseStyles[style];
+		}
+		if (styleValue === undefined && this.isExtendedFromComponent()) {
+			styleValue = this.getComponent()?.getStyle(style) as StyleValue;
+		}
+		return styleValue;
+	}
+	getNativeStyle(style: styleProperty) {
+		const store = useStore();
+		if (store.activeBreakpoint === "mobile") {
+			return this.mobileStyles[style];
+		}
+		if (store.activeBreakpoint === "tablet") {
+			return this.tabletStyles[style];
 		}
 		return this.baseStyles[style];
 	}
@@ -313,7 +347,7 @@ class Block implements BlockOptions {
 		return this.originalElement === "body";
 	}
 	getTag(): string {
-		if (this.isButton() || this.isLink()) {
+		if (this.isButton() || this.isLink() || this.isInput()) {
 			return "div";
 		}
 		return this.getElement() || "div";
@@ -436,6 +470,7 @@ class Block implements BlockOptions {
 		return !(
 			this.isImage() ||
 			this.isSVG() ||
+			this.isInput() ||
 			this.isVideo() ||
 			(this.isText() && !this.isLink()) ||
 			this.isExtendedFromComponent()
@@ -467,7 +502,7 @@ class Block implements BlockOptions {
 	getTextColor() {
 		const editor = this.getEditor();
 		const color = editor?.getAttributes("textStyle").color;
-		if (this.isText() && editor && editor.isFocused) {
+		if (this.isText() && editor && color && editor.isEditable) {
 			return color;
 		} else {
 			return this.getStyle("color");
@@ -479,7 +514,7 @@ class Block implements BlockOptions {
 	setTextColor(color: string) {
 		const editor = this.getEditor();
 		if (this.isText() && editor && editor.isEditable) {
-			editor.chain().focus().setColor(color).run();
+			editor.chain().setColor(color).run();
 		} else {
 			this.setStyle("color", color);
 		}
@@ -528,7 +563,7 @@ class Block implements BlockOptions {
 		}
 		return dataKey;
 	}
-	setDataKey(key: keyof BlockDataKey, value: string) {
+	setDataKey(key: keyof BlockDataKey, value: BlockDataKeyType) {
 		if (!this.dataKey) {
 			this.dataKey = {
 				key: "",
@@ -780,15 +815,20 @@ class Block implements BlockOptions {
 function extendWithComponent(
 	block: Block | BlockOptions,
 	extendedFromComponent: string | undefined,
-	componentChildren: Block[]
+	componentChildren: Block[],
+	resetOverrides: boolean = true
 ) {
-	resetBlock(block);
+	resetBlock(block, true, resetOverrides);
 	block.children?.forEach((child, index) => {
 		child.isChildOfComponent = extendedFromComponent;
 		let componentChild = componentChildren[index];
-		if (componentChild) {
+		if (child.extendedFromComponent) {
+			const component = child.getComponent();
 			child.referenceBlockId = componentChild.blockId;
-			extendWithComponent(child, extendedFromComponent, componentChild.children);
+			extendWithComponent(child, child.extendedFromComponent, component.children, false);
+		} else if (componentChild) {
+			child.referenceBlockId = componentChild.blockId;
+			extendWithComponent(child, extendedFromComponent, componentChild.children, resetOverrides);
 		}
 	});
 }
@@ -796,16 +836,22 @@ function extendWithComponent(
 function resetWithComponent(
 	block: Block | BlockOptions,
 	extendedWithComponent: string,
-	componentChildren: Block[]
+	componentChildren: Block[],
+	resetOverrides: boolean = true
 ) {
-	resetBlock(block);
+	resetBlock(block, true, resetOverrides);
 	block.children?.splice(0, block.children.length);
 	componentChildren.forEach((componentChild) => {
 		const blockComponent = getBlockCopy(componentChild);
 		blockComponent.isChildOfComponent = extendedWithComponent;
 		blockComponent.referenceBlockId = componentChild.blockId;
 		const childBlock = block.addChild(blockComponent, null, false);
-		resetWithComponent(childBlock, extendedWithComponent, componentChild.children);
+		if (componentChild.extendedFromComponent) {
+			const component = childBlock.getComponent();
+			resetWithComponent(childBlock, componentChild.extendedFromComponent, component.children, false);
+		} else {
+			resetWithComponent(childBlock, extendedWithComponent, componentChild.children, resetOverrides);
+		}
 	});
 }
 
@@ -850,22 +896,28 @@ function findComponentBlock(blockId: string, blocks: Block[]): Block | null {
 	return null;
 }
 
-function resetBlock(block: Block | BlockOptions, resetChildren: boolean = true) {
+function resetBlock(
+	block: Block | BlockOptions,
+	resetChildren: boolean = true,
+	resetOverrides: boolean = true
+) {
 	block = markRaw(block);
-	delete block.innerHTML;
-	delete block.element;
 	block.blockId = block.generateId();
-	block.baseStyles = {};
-	block.rawStyles = {};
-	block.mobileStyles = {};
-	block.tabletStyles = {};
-	block.attributes = {};
-	block.customAttributes = {};
-	block.classes = [];
+	if (resetOverrides) {
+		delete block.innerHTML;
+		delete block.element;
+		block.baseStyles = {};
+		block.rawStyles = {};
+		block.mobileStyles = {};
+		block.tabletStyles = {};
+		block.attributes = {};
+		block.customAttributes = {};
+		block.classes = [];
+	}
 
 	if (resetChildren) {
 		block.children?.forEach((child) => {
-			resetBlock(child, resetChildren);
+			resetBlock(child, resetChildren, !Boolean(child.extendedFromComponent));
 		});
 	}
 }
