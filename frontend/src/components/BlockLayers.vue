@@ -16,7 +16,6 @@
 							class="cursor-pointer rounded border border-transparent bg-white pl-2 pr-[2px] text-sm text-gray-700 dark:bg-zinc-900 dark:text-gray-500"
 							@click.stop="
 								store.activeCanvas?.history.pause();
-								element.expanded = true;
 								store.selectBlock(element, $event, false, true);
 								store.activeCanvas?.history.resume();
 							"
