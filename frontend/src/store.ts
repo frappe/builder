@@ -165,9 +165,11 @@ const useStore = defineStore("store", {
 			}
 			if (scrollLayerIntoView) {
 				// TODO: move to layers?
-				document
-					.querySelector(`[data-block-layer-id="${block.blockId}"]`)
-					?.scrollIntoView({ behavior: "instant", block: "center" });
+				nextTick(() => {
+					document
+						.querySelector(`[data-block-layer-id="${block.blockId}"]`)
+						?.scrollIntoView({ behavior: "instant", block: "center" });
+				});
 			}
 
 			this.activeCanvas?.history?.resume();
