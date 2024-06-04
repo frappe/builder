@@ -67,7 +67,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-05-23 12:51:27.735772",
+ "modified": "2024-05-27 16:54:08.439843",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Settings",
@@ -81,6 +81,11 @@
    "read": 1,
    "role": "System Manager",
    "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Website Manager",
    "write": 1
   }
  ],

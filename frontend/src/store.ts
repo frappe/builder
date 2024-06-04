@@ -12,7 +12,7 @@ import { BuilderPage } from "./types/Builder/BuilderPage";
 import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
 import { getBlockInstance } from "./utils/helpers";
-
+import RealTimeHandler from "./utils/realtimeHandler";
 const useStore = defineStore("store", {
 	state: () => ({
 		editableBlock: <Block | null>null,
@@ -56,6 +56,8 @@ const useStore = defineStore("store", {
 		showHTMLDialog: false,
 		activePage: <BuilderPage | null>null,
 		savingPage: false,
+		realtime: new RealTimeHandler(),
+		viewers: <UserInfo[]>[],
 	}),
 	actions: {
 		clearBlocks() {
@@ -153,7 +155,7 @@ const useStore = defineStore("store", {
 			videoBlock.attributes.src = videoSrc;
 			return videoBlock;
 		},
-		selectBlock(block: Block, e: MouseEvent | null, scrollIntoView = true) {
+		selectBlock(block: Block, e: MouseEvent | null, scrollLayerIntoView = true, scrollBlockIntoView = false) {
 			this.activeCanvas?.history?.pause();
 			if (this.settingPage) {
 				return;
@@ -163,14 +165,18 @@ const useStore = defineStore("store", {
 			} else {
 				this.activeCanvas?.selectBlock(block);
 			}
-			if (scrollIntoView) {
+			if (scrollLayerIntoView) {
 				// TODO: move to layers?
 				document
 					.querySelector(`[data-block-layer-id="${block.blockId}"]`)
 					?.scrollIntoView({ behavior: "instant", block: "center" });
 			}
+
 			this.activeCanvas?.history?.resume();
 			this.editableBlock = null;
+			if (scrollBlockIntoView) {
+				this.activeCanvas?.scrollBlockIntoView(block);
+			}
 		},
 		editComponent(block: Block) {
 			if (block.isExtendedFromComponent()) {
@@ -224,6 +230,7 @@ const useStore = defineStore("store", {
 						})
 						.then(() => {
 							toast.success("Component saved!");
+							this.activeCanvas?.toggleDirty(false);
 						});
 				} else {
 					// webComponent.fet;
@@ -331,6 +338,7 @@ const useStore = defineStore("store", {
 			};
 			return webPages.setValue.submit(args).finally(() => {
 				this.savingPage = false;
+				this.activeCanvas?.toggleDirty(false);
 			});
 		},
 		setPageData(page?: BuilderPage) {

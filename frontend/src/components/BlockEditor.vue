@@ -50,12 +50,12 @@
 				"
 				:target-block="block"
 				:target="target" />
+			<!-- prettier-ignore -->
 			<BoxResizer
-				:data-block-id="block.blockId"
 				v-if="showResizer"
 				:targetBlock="block"
 				@resizing="resizing = $event"
-				:target="target as HTMLElement" />
+				:target="(target as HTMLElement)" />
 		</div>
 	</BlockContextMenu>
 </template>

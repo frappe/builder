@@ -11,8 +11,11 @@
 				"
 				:isOpen="isOpen"></slot>
 		</template>
-		<template #body>
-			<div ref="colorPicker" class="rounded-lg bg-white p-3 shadow-lg dark:bg-zinc-900">
+		<template #body="{ close }">
+			<div
+				ref="colorPicker"
+				class="rounded-lg bg-white p-3 shadow-lg dark:bg-zinc-900"
+				v-on-click-outside="close">
 				<div
 					ref="colorMap"
 					:style="{
@@ -29,14 +32,16 @@
 						ref="colorSelector"
 						@mousedown.stop="handleSelectorMove"
 						class="absolute rounded-full border border-black border-opacity-20 before:absolute before:h-full before:w-full before:rounded-full before:border-2 before:border-white before:bg-[currentColor] after:absolute after:left-[2px] after:top-[2px] after:h-[calc(100%-4px)] after:w-[calc(100%-4px)] after:rounded-full after:border after:border-black after:border-opacity-20 after:bg-transparent"
-						:style="{
-							height: '12px',
-							width: '12px',
-							left: `calc(${colorSelectorPosition.x}px - 6px)`,
-							top: `calc(${colorSelectorPosition.y}px - 6px)`,
-							color: modelColor || '#FFF',
-							background: 'transparent',
-						} as StyleValue"></div>
+						:style="
+							{
+								height: '12px',
+								width: '12px',
+								left: `calc(${colorSelectorPosition.x}px - 6px)`,
+								top: `calc(${colorSelectorPosition.y}px - 6px)`,
+								color: modelColor || '#FFF',
+								background: 'transparent',
+							} as StyleValue
+						"></div>
 				</div>
 				<div
 					ref="hueMap"
@@ -91,9 +96,9 @@
 <script setup lang="ts">
 import useStore from "@/store";
 import { HSVToHex, HexToHSV, getRGB } from "@/utils/helpers";
+import { vOnClickOutside } from "@vueuse/components";
 import { clamp, useEyeDropper } from "@vueuse/core";
 import { Popover } from "frappe-ui";
-
 import { PropType, Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
 import EyeDropperIcon from "./Icons/EyeDropper.vue";
 const store = useStore();
@@ -165,7 +170,7 @@ const handleSelectorMove = (ev: MouseEvent) => {
 			document.removeEventListener("mousemove", mouseMove);
 			mouseUpEvent.preventDefault();
 		},
-		{ once: true }
+		{ once: true },
 	);
 };
 
@@ -184,7 +189,7 @@ const handleHueSelectorMove = (ev: MouseEvent) => {
 			mouseUpEvent.preventDefault();
 			store.activeCanvas?.history.resume(true);
 		},
-		{ once: true }
+		{ once: true },
 	);
 };
 
@@ -252,6 +257,6 @@ watch(
 		if (color === currentColor) return;
 		setSelectorPosition(getRGB(color));
 	},
-	{ immediate: true }
+	{ immediate: true },
 );
 </script>

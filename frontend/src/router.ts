@@ -1,10 +1,11 @@
 import { createResource } from "frappe-ui";
-import { createRouter, createWebHistory } from "vue-router";
+import { ref } from "vue";
+import { NavigationGuardNext, RouteLocationNormalized, createRouter, createWebHistory } from "vue-router";
 
-// Hack, TODO: Check authentication
 let hasPermission: null | boolean = null;
+let sessionUser = ref("Guest");
 
-function validatePermission(next: CallableFunction) {
+function validatePermission(next: NavigationGuardNext) {
 	if (hasPermission) {
 		next();
 	} else {
@@ -13,8 +14,13 @@ function validatePermission(next: CallableFunction) {
 	}
 }
 
-const validateVisit = function (to: string, from: string, next: CallableFunction) {
+const validateVisit = function (
+	to: RouteLocationNormalized,
+	from: RouteLocationNormalized,
+	next: NavigationGuardNext
+) {
 	if (document.cookie.includes("user_id") && !document.cookie.includes("user_id=Guest")) {
+		sessionUser.value = decodeURIComponent(document.cookie.split("user_id=")[1].split(";")[0]);
 		if (hasPermission === null) {
 			createResource({
 				url: "frappe.client.has_permission",
@@ -25,15 +31,19 @@ const validateVisit = function (to: string, from: string, next: CallableFunction
 					docname: null,
 					perm_type: "write",
 				})
-				.then((res: any) => {
-					hasPermission = res.has_permission as boolean;
+				.then((res: { has_permission: boolean }) => {
+					hasPermission = res.has_permission;
+					validatePermission(next);
+				})
+				.catch(() => {
+					hasPermission = false;
 					validatePermission(next);
 				});
 		} else {
 			validatePermission(next);
 		}
 	} else {
-		window.location.href = "/login";
+		validatePermission(next);
 	}
 };
 
@@ -83,4 +93,5 @@ const router = createRouter({
 	routes,
 });
 
+export { sessionUser };
 export default router;

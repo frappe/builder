@@ -43,6 +43,25 @@
 						allowfullscreen></iframe>
 				</template>
 			</Dialog>
+			<div class="group flex hover:gap-1" v-if="store.viewers.length">
+				<div v-for="user in store.viewers">
+					<Tooltip :text="currentlyViewedByText" :hoverDelay="0.6">
+						<div class="ml-[-10px] h-6 w-6 cursor-pointer transition-all group-hover:ml-0">
+							<img
+								class="h-full w-full rounded-full border-2 border-orange-400 object-cover shadow-sm"
+								:src="user.image"
+								v-if="user.image" />
+							<div
+								v-else
+								:title="user.fullname"
+								class="grid h-full w-full place-items-center rounded-full border-2 border-orange-400 bg-gray-400 text-sm text-gray-700 shadow-sm">
+								{{ user.fullname.charAt(0) }}
+							</div>
+						</div>
+					</Tooltip>
+				</div>
+			</div>
+
 			<Badge :variant="'subtle'" theme="gray" size="md" label="Badge" v-if="store.isHomePage()">
 				Homepage
 			</Badge>
@@ -83,11 +102,27 @@
 <script setup lang="ts">
 import { UseDark } from "@vueuse/components";
 import { Badge, Dialog, Tooltip } from "frappe-ui";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import useStore from "../store";
 
+const store = useStore();
 const publishing = ref(false);
 const showDialog = ref(false);
+const toolbar = ref(null);
+
+const currentlyViewedByText = computed(() => {
+	const names = store.viewers.map((viewer) => viewer.fullname).map((name) => name.split(" ")[0]);
+	const count = names.length;
+	if (count === 0) {
+		return "";
+	} else if (count === 1) {
+		return `${names[0]}`;
+	} else if (count === 2) {
+		return `${names.join(" & ")}`;
+	} else {
+		return `${names.slice(0, 2).join(", ")} & ${count - 2} others`;
+	}
+});
 
 declare global {
 	interface Document {
@@ -95,8 +130,6 @@ declare global {
 	}
 }
 
-const store = useStore();
-const toolbar = ref(null);
 const transitionTheme = (toggleDark: () => void) => {
 	if (document.startViewTransition && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
 		document.startViewTransition(() => {
@@ -110,5 +143,6 @@ const transitionTheme = (toggleDark: () => void) => {
 <style>
 [data-radix-popper-content-wrapper] {
 	margin-top: 15px !important;
+	z-index: 20 !important;
 }
 </style>

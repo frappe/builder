@@ -12,6 +12,7 @@
 	{% block meta_block %}{% include "templates/includes/meta_block.html" %}{% endblock %}
 	<link rel="stylesheet" href="/assets/builder/reset.css?v=1" media="screen">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<style>body{height:100vh}</style>
 	{% for (font, options) in fonts.items() %}<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ font }}:wght@{{ ";".join(options.weights) }}&display=swap" media="screen">{% endfor %}
 	{{ style }}
 	{% block style %}

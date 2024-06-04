@@ -47,6 +47,7 @@
 import webComponent from "@/data/webComponent";
 import useStore from "@/store";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
+import { confirm } from "@/utils/helpers";
 import { computed, ref } from "vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
 
@@ -63,7 +64,7 @@ const components = computed(() =>
 		} else {
 			return true;
 		}
-	})
+	}),
 );
 
 const deleteComponent = async (component: BlockComponent) => {
@@ -71,7 +72,7 @@ const deleteComponent = async (component: BlockComponent) => {
 		alert("Component is used in current page. You cannot delete it.");
 	} else {
 		const confirmed = await confirm(
-			`Are you sure you want to delete component: ${component.component_name}?`
+			`Are you sure you want to delete component: ${component.component_name}?`,
 		);
 		if (confirmed) {
 			webComponent.delete.submit(component.name);
