@@ -142,7 +142,7 @@ class BuilderPage(WebsiteGenerator):
 		builder_path = frappe.conf.builder_path or "builder"
 		context.editor_link = f"/{builder_path}/page/{self.name}"
 
-		if self.dynamic_route and frappe.local.request:
+		if self.dynamic_route and hasattr(frappe.local, "request"):
 			context.base_url = frappe.utils.get_url(frappe.local.request.path or self.route)
 		else:
 			context.base_url = frappe.utils.get_url(self.route)
