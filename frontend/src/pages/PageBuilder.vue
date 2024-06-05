@@ -4,7 +4,7 @@
 		<div>
 			<BuilderLeftPanel
 				v-show="store.showLeftPanel"
-				class="no-scrollbar absolute bottom-0 left-0 top-[var(--toolbar-height)] z-20 overflow-auto border-r-[1px] bg-white dark:border-gray-800 dark:bg-zinc-900"></BuilderLeftPanel>
+				class="no-scrollbar absolute bottom-0 left-0 top-[var(--toolbar-height)] z-20 overflow-auto border-r-[1px] bg-white shadow-lg dark:border-gray-800 dark:bg-zinc-900"></BuilderLeftPanel>
 			<BuilderCanvas
 				ref="componentCanvas"
 				:key="store.editingComponent"
@@ -57,7 +57,7 @@
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-200 p-10 dark:bg-zinc-800"></BuilderCanvas>
 			<BuilderRightPanel
 				v-show="store.showRightPanel"
-				class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] bg-white dark:border-gray-800 dark:bg-zinc-900"></BuilderRightPanel>
+				class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] bg-white shadow-lg dark:border-gray-800 dark:bg-zinc-900"></BuilderRightPanel>
 			<Dialog
 				style="z-index: 40"
 				v-model="store.showHTMLDialog"
