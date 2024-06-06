@@ -645,7 +645,7 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 		webp_path = file_doc.get_full_path().replace(extn, "webp")
 		convert_and_save_image(image, webp_path)
 		delete_file(file_doc.get_full_path())
-		file_doc.file_url = f"{file_doc.file_name.replace(extn, 'webp')}"
+		file_doc.file_url = f"{file_doc.file_url.replace(extn, 'webp')}"
 		file_doc.save()
 		return file_doc.file_url
 
