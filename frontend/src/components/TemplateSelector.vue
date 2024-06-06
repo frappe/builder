@@ -1,8 +1,8 @@
 <template>
-	<div class="flex flex-wrap gap-6">
+	<div class="flex min-h-[50vh] flex-wrap gap-6">
 		<div
 			@click="() => loadPage('new')"
-			class="group relative mr-2 w-full max-w-[250px] flex-grow basis-52 overflow-hidden rounded-md shadow hover:cursor-pointer dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
+			class="group relative mr-2 h-fit w-full max-w-[250px] flex-grow basis-52 overflow-hidden rounded-md shadow hover:cursor-pointer dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
 			<img
 				width="250"
 				height="140"
@@ -17,7 +17,7 @@
 			</div>
 		</div>
 		<TemplatePagePreview
-			class="max-w-[250px] flex-grow basis-52"
+			class="h-fit max-w-[250px] flex-grow basis-52"
 			v-for="page in templates.data"
 			:page="page"
 			@click="() => duplicatePage(page)"></TemplatePagePreview>
