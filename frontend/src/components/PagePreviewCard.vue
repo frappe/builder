@@ -90,6 +90,7 @@
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
 import { Badge, Dropdown, createDocumentResource } from "frappe-ui";
 
@@ -115,7 +116,9 @@ const duplicatePage = async (page: BuilderPage) => {
 };
 
 const deletePage = async (page: BuilderPage) => {
-	const confirmed = await confirm(`Are you sure you want to delete Page: ${page.page_name}?`);
+	const confirmed = await confirm(
+		`Are you sure you want to delete <b title=${page.page_name}>${page.page_title}</b>?`,
+	);
 	if (confirmed) {
 		await webPages.delete.submit(page.name);
 	}
