@@ -54,6 +54,7 @@
 					{{ breakpoint.displayName }}
 				</div>
 				<BuilderBlock
+					class="h-full min-h-[inherit]"
 					:block="block"
 					v-if="showBlocks"
 					:breakpoint="breakpoint.device"

@@ -76,7 +76,7 @@ class Block implements BlockOptions {
 		if (this.isRoot()) {
 			this.blockId = "root";
 			this.draggable = false;
-			this.setBaseStyle("minHeight", "100vh");
+			this.removeStyle("minHeight");
 		}
 	}
 	getStyles(breakpoint: string = "desktop"): BlockStyleMap {
