@@ -5,11 +5,15 @@ import contextlib
 import os
 import re
 import shutil
+from io import BytesIO
 from urllib.parse import unquote
 
 import bs4 as bs
 import frappe
 import frappe.utils
+import requests
+from frappe.core.doctype.file.file import get_local_image
+from frappe.core.doctype.file.utils import delete_file
 from frappe.model.document import Document
 from frappe.modules.export_file import export_to_files
 from frappe.utils.caching import redis_cache
@@ -23,6 +27,7 @@ from frappe.website.serve import get_response_content
 from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
 from jinja2.exceptions import TemplateSyntaxError
+from PIL import Image
 from werkzeug.routing import Rule
 
 from builder.html_preview_image import generate_preview
@@ -173,7 +178,7 @@ class BuilderPage(WebsiteGenerator):
 		builder_path = frappe.conf.builder_path or "builder"
 		context.editor_link = f"/{builder_path}/page/{self.name}"
 
-		if self.dynamic_route and frappe.local.request:
+		if self.dynamic_route and hasattr(frappe.local, "request"):
 			context.base_url = frappe.utils.get_url(frappe.local.request.path or self.route)
 		else:
 			context.base_url = frappe.utils.get_url(self.route)
@@ -691,57 +696,49 @@ def upload_builder_asset():
 
 
 @frappe.whitelist()
-def convert_to_webp(image_url: str | None = None, file_doc: Document | None = None):
+def convert_to_webp(image_url: str | None = None, file_doc: Document | None = None) -> str:
 	"""BETA: Convert image to webp format"""
-	from frappe.core.doctype.file.file import get_local_image
-	from frappe.core.doctype.file.utils import delete_file
 
-	if not image_url and not file_doc:
-		return ""
+	CONVERTIBLE_IMAGE_EXTENSIONS = ["png", "jpeg", "jpg"]
 
-	if file_doc and file_doc.file_url.startswith("/files"):
-		image, filename, extn = get_local_image(file_doc.file_url)
-		if extn in ["png", "jpeg", "jpg"]:
-			webp_path = file_doc.get_full_path().replace(extn, "webp")
-			image.save(webp_path, "WEBP")
-			delete_file(file_doc.get_full_path())
-			file_doc.file_url = f"{filename}.webp"
-			file_doc.save()
-			return file_doc.file_url
+	def can_convert_image(extn):
+		return extn.lower() in CONVERTIBLE_IMAGE_EXTENSIONS
 
-	elif image_url.startswith("/files"):
-		# find file doc
-		files = frappe.get_all("File", filters={"file_url": image_url}, fields=["name"], limit=1)
+	def get_extension(filename):
+		return filename.split(".")[-1].lower()
+
+	def convert_and_save_image(image, path):
+		image.save(path, "WEBP")
+		return path
+
+	def update_file_doc_with_webp(file_doc, image, extn):
+		webp_path = file_doc.get_full_path().replace(extn, "webp")
+		convert_and_save_image(image, webp_path)
+		delete_file(file_doc.get_full_path())
+		file_doc.file_url = f"{file_doc.file_name.replace(extn, 'webp')}"
+		file_doc.save()
+		return file_doc.file_url
+
+	def create_new_webp_file_doc(file_url, image, extn):
+		files = frappe.get_all("File", filters={"file_url": file_url}, fields=["name"], limit=1)
 		if files:
 			_file = frappe.get_doc("File", files[0].name)
-			# create a new file doc with webp format
-			if _file.file_url.startswith("/files") and _file.file_url.endswith((".png", ".jpeg", ".jpg")):
-				image, filename, extn = get_local_image(_file.file_url)
-				if extn not in ["png", "jpeg", "jpg"]:
-					return _file.file_url
-				# create new webp image file
-				webp_path = _file.get_full_path().replace(extn, "webp")
-				image.save(webp_path, "WEBP")
-				new_file = frappe.copy_doc(_file)
-				new_file.file_name = f"{_file.file_name.replace(extn, 'webp')}"
-				new_file.file_url = f"{_file.file_url.replace(extn, 'webp')}"
-				new_file.save()
-				return new_file.file_url
+			webp_path = _file.get_full_path().replace(extn, "webp")
+			convert_and_save_image(image, webp_path)
+			new_file = frappe.copy_doc(_file)
+			new_file.file_name = f"{_file.file_name.replace(extn, 'webp')}"
+			new_file.file_url = f"{_file.file_url.replace(extn, 'webp')}"
+			new_file.save()
+			return new_file.file_url
+		return file_url
 
-	elif image_url.startswith("http"):
-		from io import BytesIO
-		from urllib.parse import unquote
-
-		import requests
-		from PIL import Image
-
+	def handle_image_from_url(image_url):
 		image_url = unquote(image_url)
 		response = requests.get(image_url)
 		image = Image.open(BytesIO(response.content))
 		filename = image_url.split("/")[-1]
-		extn = filename.split(".")[-1] or ""
-
-		if extn.lower() in ["png", "jpeg", "jpg"]:
+		extn = get_extension(filename)
+		if can_convert_image(extn):
 			_file = frappe.get_doc(
 				{
 					"doctype": "File",
@@ -749,9 +746,29 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 					"file_url": f"/files/{filename.replace(extn, 'webp')}",
 				}
 			)
-			webp_path = f"{_file.get_full_path()}"
-			image.save(webp_path, "WEBP")
+			webp_path = _file.get_full_path()
+			convert_and_save_image(image, webp_path)
 			_file.save()
 			return _file.file_url
+		return image_url
+
+	if not image_url and not file_doc:
+		return ""
+
+	if file_doc:
+		if file_doc.file_url.startswith("/files"):
+			image, filename, extn = get_local_image(file_doc.file_url)
+			if can_convert_image(extn):
+				return update_file_doc_with_webp(file_doc, image, extn)
+		return file_doc.file_url
+
+	if image_url.startswith("/files"):
+		image, filename, extn = get_local_image(image_url)
+		if can_convert_image(extn):
+			return create_new_webp_file_doc(image_url, image, extn)
+		return image_url
+
+	if image_url.startswith("http"):
+		return handle_image_from_url(image_url)
 
 	return image_url

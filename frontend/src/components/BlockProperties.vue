@@ -620,21 +620,23 @@ const optionsSectionProperties = [
 		getProps: () => {
 			return {
 				label: "Convert to WebP",
+				class: "text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700",
 			};
 		},
 		innerText: "Convert to WebP",
 		searchKeyWords: "Convert, webp, Convert to webp, image, src, url",
 		events: {
 			click: () => {
+				const block = blockController.getSelectedBlocks()[0];
 				const convertToWebP = createResource({
 					url: "/api/method/builder.builder.doctype.builder_page.builder_page.convert_to_webp",
 					params: {
-						image_url: blockController.getAttribute("src"),
+						image_url: block.getAttribute("src"),
 					},
 				});
 				toast.promise(
 					convertToWebP.fetch().then((res: string) => {
-						blockController.setAttribute("src", res);
+						block.setAttribute("src", res);
 					}),
 					{
 						loading: "Converting...",
@@ -650,7 +652,7 @@ const optionsSectionProperties = [
 			}
 			if (
 				[".jpg", ".jpeg", ".png"].some((ext) =>
-					((blockController.getAttribute("src") as string) || ("" as string)).includes(ext),
+					((blockController.getAttribute("src") as string) || ("" as string)).toLowerCase().endsWith(ext),
 				)
 			) {
 				return true;
