@@ -44,7 +44,7 @@
 				v-for="breakpoint in visibleBreakpoints"
 				:key="breakpoint.device">
 				<div
-					class="absolute left-0 select-none text-3xl text-gray-700 dark:text-zinc-300"
+					class="cursor absolute left-0 select-none text-3xl text-gray-700 dark:text-zinc-300"
 					:style="{
 						fontSize: `calc(${12}px * 1/${canvasProps.scale})`,
 						top: `calc(${-20}px * 1/${canvasProps.scale})`,
@@ -54,6 +54,7 @@
 					{{ breakpoint.displayName }}
 				</div>
 				<BuilderBlock
+					class="h-full min-h-[inherit]"
 					:block="block"
 					v-if="showBlocks"
 					:breakpoint="breakpoint.device"
