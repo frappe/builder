@@ -215,12 +215,7 @@ class Block implements BlockOptions {
 		return store.getComponentName(this.extendedFromComponent as string);
 	}
 	getTextContent() {
-		let editor = this.getEditor();
-		let text = "";
-		if (this.isText() && editor) {
-			text = editor.getText();
-		}
-		return text || getTextContent(this.getInnerHTML() || "");
+		return getTextContent(this.getInnerHTML() || "");
 	}
 	isImage() {
 		return this.getElement() === "img";
