@@ -1,4 +1,5 @@
 <template>
+	<!-- prettier-ignore -->
 	<ColorPicker :modelValue="(value as HashString)" @update:modelValue="(color) => emit('change', color)">
 		<template #target="{ togglePopover, isOpen }">
 			<div class="flex items-center justify-between">
@@ -14,14 +15,15 @@
 						}"></div>
 					<Input
 						type="text"
-						class="rounded-md text-sm text-gray-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:focus:bg-zinc-700"
+						class="rounded-md pl-8 text-sm text-gray-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:focus:bg-zinc-700"
 						placeholder="Set Color"
-						inputClass="pl-8 pr-6"
 						:value="value"
-						@change="(value: string | null) => {
-							value = getRGB(value);
-							emit('change', value)
-						}"></Input>
+						@change="
+							(value: string | null) => {
+								value = getRGB(value);
+								emit('change', value);
+							}
+						" />
 					<div
 						class="absolute right-1 top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
 						@click="clearValue"
@@ -38,6 +40,7 @@ import { getRGB } from "@/utils/helpers";
 import { PropType } from "vue";
 import ColorPicker from "./ColorPicker.vue";
 import CrossIcon from "./Icons/Cross.vue";
+import Input from "./Input.vue";
 
 defineProps({
 	value: {

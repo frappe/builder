@@ -22,10 +22,9 @@
 					class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-900"></TabButtons>
 				<div class="relative flex">
 					<Input
-						class="h-7 rounded-md text-sm text-gray-800 hover:border-gray-400 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
+						class="[&>div>input]:focus:ring-0 [&>div>input]:dark:bg-zinc-900"
 						type="text"
 						placeholder="Filter by title or route"
-						inputClass="w-full"
 						v-model="searchFilter"
 						autofocus
 						@input="
@@ -42,7 +41,7 @@
 				</div>
 				<Input
 					type="select"
-					class="h-7 rounded-md border-gray-400 text-sm text-gray-800 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
+					class="[&>div>select]:focus:ring-0 [&>div>select]:dark:bg-zinc-900"
 					inputClass="w-32"
 					v-model="typeFilter"
 					:options="[
@@ -195,6 +194,7 @@
 </template>
 <script setup lang="ts">
 import CrossIcon from "@/components/Icons/Cross.vue";
+import Input from "@/components/Input.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";

@@ -11,14 +11,13 @@
 		<Input
 			:type="type"
 			placeholder="unset"
-			:value="modelValue"
+			:modelValue="modelValue"
 			:options="inputOptions"
 			v-if="type != 'autocomplete'"
 			@mousedown="handleMouseDown"
-			@change="handleChange"
+			@update:modelValue="handleChange"
 			@keydown="handleKeyDown"
 			:inputClass="type == 'checkbox' ? ' ml-2 !w-4' : 'pr-6'"
-			class="rounded-md text-sm text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700"
 			:class="{
 				'w-[150px]': type != 'checkbox',
 			}" />
@@ -28,7 +27,7 @@
 			:modelValue="modelValue"
 			:options="inputOptions"
 			@update:modelValue="handleChange"
-			class="!dark:text-zinc-200 !dark:focus:bg-zinc-700 w-[150px] rounded-md text-sm text-gray-800 dark:bg-zinc-800" />
+			class="w-[150px] [&>div>select]:text-sm [&>div>select]:text-gray-800 [&>div>select]:dark:border-zinc-700 [&>div>select]:dark:bg-zinc-800 [&>div>select]:dark:text-zinc-200 [&>div>select]:dark:focus:bg-zinc-700" />
 		<div
 			class="absolute right-1 top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
 			@click="clearValue"
@@ -43,9 +42,13 @@ import { isNumber } from "@tiptap/vue-3";
 import { PropType, computed } from "vue";
 import Autocomplete from "./Autocomplete.vue";
 import CrossIcon from "./Icons/Cross.vue";
+import Input from "./Input.vue";
 
 const props = defineProps({
-	modelValue: {},
+	modelValue: {
+		type: [String, Number],
+		default: null,
+	},
 	label: {
 		type: String,
 		default: "",
