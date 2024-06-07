@@ -712,7 +712,8 @@ const optionsSectionProperties = [
 		getProps: () => {
 			return {
 				label: "Content",
-				modelValue: blockController.getTextContent(),
+				// @ts-ignore
+				modelValue: blockController.getSelectedBlocks()[0]?.__proto__?.editor?.getText(),
 			};
 		},
 		searchKeyWords: "Content, Text, ContentText, Content Text",
