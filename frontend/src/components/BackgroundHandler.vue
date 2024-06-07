@@ -2,12 +2,14 @@
 	<Popover transition="default" placement="left" class="!block w-full" popoverClass="!min-w-fit !mr-[30px]">
 		<template #target="{ togglePopover, isOpen }">
 			<div class="flex items-center justify-between">
-				<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
-					BG Image
-				</span>
-				<div class="relative w-[150px]">
+				<InputLabel>BG Image</InputLabel>
+				<div class="relative">
 					<div>
-						<Input type="text" placeholder="Set Background" :value="backgroundURL?.replace(/^'|'$/g, '')" />
+						<Input
+							class="[&>div>input]:pl-8"
+							type="text"
+							placeholder="Set Background"
+							:value="backgroundURL?.replace(/^'|'$/g, '')" />
 						<div
 							class="absolute left-2 top-[6px] z-10 h-4 w-4 rounded shadow-sm"
 							@click="togglePopover"
@@ -68,6 +70,7 @@ import { FileUploader, Popover } from "frappe-ui";
 import { computed } from "vue";
 import InlineInput from "./InlineInput.vue";
 import Input from "./Input.vue";
+import InputLabel from "./InputLabel.vue";
 
 const backgroundURL = computed(() => {
 	const background = blockController?.getStyle("background") as string;

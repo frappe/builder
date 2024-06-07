@@ -3,10 +3,8 @@
 	<ColorPicker :modelValue="(value as HashString)" @update:modelValue="(color) => emit('change', color)">
 		<template #target="{ togglePopover, isOpen }">
 			<div class="flex items-center justify-between">
-				<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
-					{{ label }}
-				</span>
-				<div class="relative w-[150px]">
+				<InputLabel>{{ label}}</InputLabel>
+				<div class="relative">
 					<div
 						class="absolute left-2 top-[6px] z-10 h-4 w-4 rounded shadow-sm"
 						@click="togglePopover"
@@ -15,7 +13,7 @@
 						}"></div>
 					<Input
 						type="text"
-						class="rounded-md pl-8 text-sm text-gray-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:focus:bg-zinc-700"
+						class="rounded-md [&>div>input]:pl-8 text-sm text-gray-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:focus:bg-zinc-700"
 						placeholder="Set Color"
 						:value="value"
 						@change="
@@ -41,6 +39,7 @@ import { PropType } from "vue";
 import ColorPicker from "./ColorPicker.vue";
 import CrossIcon from "./Icons/Cross.vue";
 import Input from "./Input.vue";
+import InputLabel from "./InputLabel.vue";
 
 defineProps({
 	value: {

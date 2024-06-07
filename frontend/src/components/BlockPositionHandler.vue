@@ -38,7 +38,7 @@
 			@update:modelValue="(value: string) => blockController.setStyle('bottom', value)"
 			class="col-span-1 col-start-2 h-8 w-16 self-start justify-self-center rounded-md text-center text-xs text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
 	</div>
-	<TabButtons
+	<!-- <TabButtons
 		:buttons="[
 			{ label: 'Auto', value: 'static' },
 			{ label: 'Free', value: 'absolute' },
@@ -49,13 +49,25 @@
 			{ label: 'Sticky', value: 'sticky' },
 		]"
 		v-model="position"
-		class="mx-auto w-fit [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
+		class="mx-auto w-fit [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons> -->
+	<OptionToggle
+		class="[&>div]:mx-auto"
+		v-model="position"
+		:options="[
+			{ label: 'Auto', value: 'static' },
+			{ label: 'Free', value: 'absolute' },
+			{
+				label: 'Fixed',
+				value: 'fixed',
+			},
+			{ label: 'Sticky', value: 'sticky' },
+		]"></OptionToggle>
 </template>
 <script setup lang="ts">
 import blockController from "@/utils/blockController";
-import { TabButtons } from "frappe-ui";
 import { computed } from "vue";
 import Input from "./Input.vue";
+import OptionToggle from "./OptionToggle.vue";
 
 const position = computed({
 	get() {
