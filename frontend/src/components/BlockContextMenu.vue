@@ -50,6 +50,8 @@ import { Dialog } from "frappe-ui";
 import { Ref, nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
 import ContextMenu from "./ContextMenu.vue";
+import Input from "./Input.vue";
+
 const store = useStore();
 
 const props = defineProps<{

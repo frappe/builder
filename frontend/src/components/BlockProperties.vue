@@ -9,7 +9,7 @@
 				inputClass="w-full"
 				v-model="store.propertyFilter"
 				@input="
-					(value: string) => {
+					(value) => {
 						store.propertyFilter = value;
 					}
 				" />
@@ -50,6 +50,7 @@ import ColorInput from "./ColorInput.vue";
 import DimensionInput from "./DimensionInput.vue";
 import CrossIcon from "./Icons/Cross.vue";
 import InlineInput from "./InlineInput.vue";
+import Input from "./Input.vue";
 import ObjectEditor from "./ObjectEditor.vue";
 import OptionToggle from "./OptionToggle.vue";
 
