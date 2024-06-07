@@ -482,6 +482,14 @@ def set_dynamic_content_placeholder(block, data_key=False):
 	block_data_key = block.get("dataKey")
 	if block_data_key and block_data_key.get("key"):
 		key = f"{data_key}.{block_data_key.get('key')}" if data_key else block_data_key.get("key")
+		if data_key:
+			# convert a.b to (a or {}).get('b', {})
+			# to avoid undefined error in jinja
+			keys = key.split(".")
+			key = f"({keys[0]} or {{}})"
+			for k in keys[1:]:
+				key = f"{key}.get('{k}', {{}})"
+
 		_property = block_data_key.get("property")
 		_type = block_data_key.get("type")
 		if _type == "attribute":
