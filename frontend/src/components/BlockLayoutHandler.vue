@@ -1,22 +1,19 @@
 <!-- TODO: Refactor -->
 <template>
 	<div class="flex items-center justify-between" v-if="blockController.getStyle('display') === 'flex'">
-		<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
-			Direction
-		</span>
-		<TabButtons
+		<OptionToggle
+			:label="'Direction'"
 			:modelValue="blockController.getStyle('flexDirection') || 'column'"
-			:buttons="[
+			:options="[
 				{ label: 'Horizontal', value: 'row' },
 				{ label: 'Vertical', value: 'column' },
 			]"
-			@update:modelValue="(val: string | number) => blockController.setStyle('flexDirection', val)"
-			class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
+			@update:modelValue="
+				(val: string | number) => blockController.setStyle('flexDirection', val)
+			"></OptionToggle>
 	</div>
 	<div class="items-top relative flex justify-between" v-if="blockController.getStyle('display') === 'flex'">
-		<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
-			Placement
-		</span>
+		<InputLabel>Placement</InputLabel>
 		<div
 			class="grid h-16 w-16 grid-cols-3 items-center justify-items-center rounded-sm bg-gray-200 p-1 dark:bg-zinc-800">
 			<div
@@ -32,10 +29,11 @@
 
 	<InlineInput
 		v-if="blockController.getStyle('display') === 'flex'"
-		:modelValue="blockController.getStyle('justifyContent')"
+		:modelValue="blockController.getStyle('justifyContent') || 'flex-start'"
 		type="select"
 		label="Arrangement"
 		:options="[
+			{ label: 'Start', value: 'flex-start' },
 			{ label: 'Space Between', value: 'space-between' },
 			{ label: 'Space Around', value: 'space-around' },
 			{ label: 'Space Evenly', value: 'space-evenly' },
@@ -48,19 +46,18 @@
 		type="text"
 		:enableSlider="true"
 		:unitOptions="['px', 'em', 'rem']"
-		:modelValue="blockController.getStyle('gap')"
+		:modelValue="blockController.getStyle('gap') || '0'"
 		@update:modelValue="(val: string | number) => blockController.setStyle('gap', val)" />
 
 	<div class="flex items-center justify-between" v-if="blockController.getStyle('display') === 'flex'">
-		<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">Wrap</span>
-		<TabButtons
+		<OptionToggle
+			:label="'Wrap'"
 			:modelValue="blockController.getStyle('flexWrap') || 'nowrap'"
-			:buttons="[
+			:options="[
 				{ label: 'No Wrap', value: 'nowrap' },
 				{ label: 'Wrap', value: 'wrap' },
 			]"
-			@update:modelValue="(val: string | number) => blockController.setStyle('flexWrap', val)"
-			class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
+			@update:modelValue="(val: string | number) => blockController.setStyle('flexWrap', val)"></OptionToggle>
 	</div>
 	<!-- flex basis -->
 	<div class="flex flex-col gap-3" v-if="blockController.getParentBlock()?.isFlex()">
@@ -69,51 +66,50 @@
 			type="text"
 			:enableSlider="true"
 			:unitOptions="['px', 'em', 'rem']"
-			:modelValue="blockController.getStyle('flexBasis')"
+			:modelValue="blockController.getStyle('flexBasis') || 'auto'"
 			@update:modelValue="(val: string | number) => blockController.setStyle('flexBasis', val)" />
 		<div class="flex items-center justify-between">
-			<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
-				Grow
-			</span>
-			<TabButtons
-				label="Grow"
+			<OptionToggle
+				:label="'Grow'"
 				:modelValue="blockController.getStyle('flexGrow') || 0"
-				:buttons="[
+				:options="[
 					{ label: 'Yes', value: 1 },
 					{ label: 'No', value: 0 },
 				]"
-				@update:modelValue="(val: string | number) => blockController.setStyle('flexGrow', val)"
-				class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
+				@update:modelValue="
+					(val: string | number) => blockController.setStyle('flexGrow', val)
+				"></OptionToggle>
 		</div>
 		<div class="flex items-center justify-between">
-			<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
-				Shrink
-			</span>
-			<TabButtons
-				label="Shrink"
+			<OptionToggle
+				:label="'Shrink'"
 				:modelValue="
-					blockController.getStyle('flexShrink') === undefined ? 1 : blockController.getStyle('flexShrink')
+					blockController.getStyle('flexShrink') === undefined
+						? 1
+						: (blockController.getStyle('flexShrink') as number)
 				"
-				:buttons="[
+				:options="[
 					{ label: 'Yes', value: 1 },
 					{ label: 'No', value: 0 },
 				]"
-				@update:modelValue="(val: string | number) => blockController.setStyle('flexShrink', val)"
-				class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
+				@update:modelValue="
+					(val: string | number) => blockController.setStyle('flexShrink', val)
+				"></OptionToggle>
 		</div>
 		<InlineInput
 			label="Order"
 			type="number"
 			min="0"
-			:modelValue="blockController.getStyle('order')"
+			:modelValue="blockController.getStyle('order') || 0"
 			@update:modelValue="(val: string | number) => blockController.setStyle('order', val)" />
 	</div>
 </template>
 <script lang="ts" setup>
 import blockController from "@/utils/blockController";
-import { TabButtons } from "frappe-ui";
 import { computed } from "vue";
 import InlineInput from "./InlineInput.vue";
+import InputLabel from "./InputLabel.vue";
+import OptionToggle from "./OptionToggle.vue";
 
 const placementOptions = [
 	"top-left",

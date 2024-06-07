@@ -1,7 +1,7 @@
 <template>
 	<div>
 		<div class="flex items-center justify-between text-sm font-medium dark:text-zinc-400">
-			<h3 class="cursor-pointer text-gray-900 dark:text-zinc-300" @click="toggleCollapsed">
+			<h3 class="cursor-pointer text-base text-gray-900 dark:text-zinc-300" @click="toggleCollapsed">
 				{{ sectionName }}
 			</h3>
 			<Button
