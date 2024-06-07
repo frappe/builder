@@ -94,11 +94,21 @@
 						</span>
 						<Dropdown
 							:options="[
-								{ label: 'Duplicate', onClick: () => duplicatePage(page), icon: 'copy' },
-								{ label: 'View in Desk', onClick: () => store.openInDesk(page), icon: 'arrow-up-right' },
-								{ label: 'Delete', onClick: () => deletePage(page), icon: 'trash' },
+								{
+									group: 'Actions',
+									hideLabel: true,
+									items: [
+										{ label: 'Duplicate', onClick: () => duplicatePage(page), icon: 'copy' },
+										{ label: 'View in Desk', onClick: () => store.openInDesk(page), icon: 'arrow-up-right' },
+									],
+								},
+								{
+									group: 'Delete',
+									hideLabel: true,
+									items: [{ label: 'Delete', onClick: () => deletePage(page), icon: 'trash' }],
+								},
 							]"
-							size="sm"
+							size="xs"
 							placement="right">
 							<template v-slot="{ open }">
 								<FeatherIcon

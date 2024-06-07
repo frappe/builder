@@ -267,6 +267,8 @@ if (!props.preview) {
 			} else {
 				editor.value?.destroy();
 				editor.value = null;
+				// @ts-ignore
+				props.block.__proto__.editor = null;
 			}
 		},
 		{ immediate: true },

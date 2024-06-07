@@ -76,6 +76,10 @@ const props = defineProps({
 	},
 });
 
+defineOptions({
+	inheritAttrs: false,
+});
+
 const draggable = computed(() => {
 	// TODO: enable this
 	return !props.block.isRoot() && !props.preview && false;
