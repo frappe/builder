@@ -19,7 +19,6 @@
 		:minValue="1"
 		:maxValue="20"
 		@update:modelValue="setColumns" />
-
 	<InlineInput
 		label="Min Width"
 		v-if="blockController.isGrid()"
@@ -280,34 +279,42 @@ const rowSpan = computed(() => {
 
 const setColumns = (val: string | number) => {
 	if (val == null) {
-		val = "auto-fit";
+		val = "auto-fill";
 	}
-	val = `repeat(${val}, minmax(${width.value}, 1fr))`;
+	const widthRange = `minmax(${width.value}, 1fr)`;
+	val = `repeat(${val}, ${widthRange})`;
 	blockController.setStyle("gridTemplateColumns", val);
+	blockController.setStyle("gridAutoColumns", widthRange);
 };
 
 const setRows = (val: string | number) => {
 	if (val == null) {
-		val = "auto-fit";
+		val = "auto-fill";
 	}
-	val = `repeat(${val}, minmax(${height.value}, 1fr))`;
+	const heightRange = `minmax(${height.value}, 1fr)`;
+	val = `repeat(${val}, ${heightRange})`;
 	blockController.setStyle("gridTemplateRows", val);
+	blockController.setStyle("gridAutoRows", heightRange);
 };
 
 const setWidth = (val: string | number) => {
 	if (val == null) {
 		val = "1fr";
 	}
-	val = `repeat(${columns.value}, minmax(${val}, 1fr))`;
+	const widthRange = `minmax(${val}, 1fr)`;
+	val = `repeat(${columns.value}, ${widthRange})`;
 	blockController.setStyle("gridTemplateColumns", val);
+	blockController.setStyle("gridAutoColumns", widthRange);
 };
 
 const setHeight = (val: string | number) => {
 	if (val == null) {
 		val = "1fr";
 	}
-	val = `repeat(${rows.value}, minmax(${val}, 1fr))`;
+	const heightRange = `minmax(${val}, 1fr)`;
+	val = `repeat(${rows.value}, ${heightRange})`;
 	blockController.setStyle("gridTemplateRows", val);
+	blockController.setStyle("gridAutoRows", heightRange);
 };
 
 const setColumnSpan = (val: string) => {
