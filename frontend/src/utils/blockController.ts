@@ -19,6 +19,12 @@ const blockController = {
 	isRoot() {
 		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isRoot();
 	},
+	isFlex() {
+		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isFlex();
+	},
+	isGrid() {
+		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isGrid();
+	},
 	setStyle: (style: styleProperty, value: StyleValue) => {
 		store.activeCanvas?.selectedBlocks.forEach((block) => {
 			block.setStyle(style, value);

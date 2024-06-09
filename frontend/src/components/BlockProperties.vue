@@ -42,7 +42,8 @@ import { Button, createResource } from "frappe-ui";
 import { Ref, computed, ref } from "vue";
 import { toast } from "vue-sonner";
 import BackgroundHandler from "./BackgroundHandler.vue";
-import BLockLayoutHandler from "./BlockLayoutHandler.vue";
+import BlockFlexLayoutHandler from "./BlockFlexLayoutHandler.vue";
+import BlockGridLayoutHandler from "./BlockGridLayoutHandler.vue";
 import BlockPositionHandler from "./BlockPositionHandler.vue";
 import CodeEditor from "./CodeEditor.vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
@@ -248,7 +249,51 @@ const typographySectionProperties = [
 
 const layoutSectionProperties = [
 	{
-		component: BLockLayoutHandler,
+		component: OptionToggle,
+		getProps: () => {
+			return {
+				label: "Type",
+				options: [
+					{
+						label: "Flex",
+						value: "flex",
+					},
+					{
+						label: "Grid",
+						value: "grid",
+					},
+				],
+				modelValue: blockController.getStyle("display") || "flex",
+			};
+		},
+		searchKeyWords: "Layout, Display, Flex, Grid, Flexbox, Flex Box, FlexBox",
+		events: {
+			"update:modelValue": (val: StyleValue) => {
+				blockController.setStyle("display", val);
+				if (val === "grid") {
+					if (!blockController.getStyle("gridTemplateColumns")) {
+						blockController.setStyle("gridTemplateColumns", "repeat(auto-fill, minmax(200px, 1fr))");
+					}
+					if (!blockController.getStyle("gap")) {
+						blockController.setStyle("gap", "10px");
+					}
+					if (blockController.getStyle("height")) {
+						if (blockController.getSelectedBlocks()[0].hasChildren()) {
+							blockController.setStyle("height", null);
+						}
+					}
+				}
+			},
+		},
+	},
+	{
+		component: BlockGridLayoutHandler,
+		getProps: () => {},
+		searchKeyWords:
+			"Layout, Grid, GridTemplate, Grid Template, GridGap, Grid Gap, GridRow, Grid Row, GridColumn, Grid Column",
+	},
+	{
+		component: BlockFlexLayoutHandler,
 		getProps: () => {},
 		searchKeyWords:
 			"Layout, Flex, Flexbox, Flex Box, FlexBox, Justify, Space Between, Flex Grow, Flex Shrink, Flex Basis, Align Items, Align Content, Align Self, Flex Direction, Flex Wrap, Flex Flow, Flex Grow, Flex Shrink, Flex Basis, Gap",
