@@ -51,6 +51,7 @@ function getBlockTemplate(
 				baseStyles: {
 					display: "flex",
 					flexDirection: "column",
+					flexShrink: 0,
 				} as BlockStyleMap,
 			};
 		case "body":
@@ -61,6 +62,7 @@ function getBlockTemplate(
 				baseStyles: {
 					display: "flex",
 					flexWrap: "wrap",
+					flexShrink: 0,
 					flexDirection: "column",
 					alignItems: "center",
 				} as BlockStyleMap,
@@ -75,6 +77,7 @@ function getBlockTemplate(
 				baseStyles: {
 					display: "flex",
 					flexDirection: "column",
+					flexShrink: 0,
 					height: "fit-content",
 					width: "fit-content",
 				} as BlockStyleMap,
@@ -99,6 +102,7 @@ function getBlockTemplate(
 					display: "flex",
 					flexDirection: "column",
 					width: "100%",
+					flexShrink: 0,
 					minHeight: "300px",
 				} as BlockStyleMap,
 				isRepeaterBlock: true,

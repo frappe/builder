@@ -66,6 +66,10 @@ const props = defineProps({
 		type: Boolean,
 		default: false,
 	},
+	changeFactor: {
+		type: Number,
+		default: 1,
+	},
 	minValue: {
 		type: Number,
 		default: 0,
@@ -114,11 +118,12 @@ const handleMouseDown = (e: MouseEvent) => {
 	if (!props.enableSlider) {
 		return;
 	}
-	const number = ((props.modelValue || "") as string).match(/([0-9]+)/)?.[0] || "0";
+	const number = ((props.modelValue + "" || "") as string).match(/([0-9]+)/)?.[0] || "0";
 	const startY = e.clientY;
 	const startValue = Number(number);
 	const handleMouseMove = (e: MouseEvent) => {
-		const diff = startY - e.clientY;
+		let diff = (startY - e.clientY) * props.changeFactor;
+		diff = Math.round(diff);
 		incrementOrDecrement(diff, startValue);
 	};
 	const handleMouseUp = () => {
@@ -137,7 +142,7 @@ const handleKeyDown = (e: KeyboardEvent) => {
 };
 
 const incrementOrDecrement = (step: number, initialValue: null | number = null) => {
-	const value = (props.modelValue as string) || "";
+	const value = props.modelValue + "" || "";
 	let [_, number, unit] = value.match(/([0-9]+)([a-z%]*)/) || ["", "", ""];
 	if (!unit && props.unitOptions.length && !isNaN(Number(number))) {
 		unit = props.unitOptions[0];

@@ -1,0 +1,349 @@
+<template>
+	<InlineInput
+		v-if="blockController.isGrid()"
+		label="Columns"
+		:modelValue="columns"
+		type="autocomplete"
+		:options="[
+			{
+				label: 'Auto (Fit)',
+				value: 'auto-fit',
+			},
+			{
+				label: 'Auto (Fill)',
+				value: 'auto-fill',
+			},
+		]"
+		:enableSlider="true"
+		:changeFactor="0.08"
+		:minValue="1"
+		:maxValue="20"
+		@update:modelValue="setColumns" />
+
+	<InlineInput
+		label="Min Width"
+		v-if="blockController.isGrid()"
+		v-show="['auto-fit', 'auto-fill'].includes(columns as string)"
+		type="text"
+		:modelValue="width"
+		:enableSlider="true"
+		:unitOptions="['px', 'em', 'rem', 'fr']"
+		@update:modelValue="setWidth" />
+	<InlineInput
+		v-if="blockController.isGrid()"
+		label="Rows"
+		type="autocomplete"
+		:options="[
+			{
+				label: 'Auto (Fit)',
+				value: 'auto-fit',
+			},
+			{
+				label: 'Auto (Fill)',
+				value: 'auto-fill',
+			},
+		]"
+		:modelValue="rows"
+		:enableSlider="true"
+		:changeFactor="0.08"
+		:minValue="1"
+		@update:modelValue="setRows" />
+	<InlineInput
+		label="Min Height"
+		v-if="blockController.isGrid()"
+		v-show="['auto-fit', 'auto-fill'].includes(rows as string)"
+		:enableSlider="true"
+		:unitOptions="['px', 'em', 'rem', 'fr']"
+		type="text"
+		:modelValue="height"
+		@update:modelValue="setHeight" />
+	<InlineInput
+		label="Gap"
+		v-if="blockController.isGrid()"
+		type="text"
+		:enableSlider="true"
+		:unitOptions="['px', 'em', 'rem']"
+		:modelValue="blockController.getStyle('gap')"
+		@update:modelValue="(val: string | number) => blockController.setStyle('gap', val)" />
+	<InlineInput
+		label="Align"
+		v-if="blockController.isGrid()"
+		type="select"
+		:modelValue="blockController.getStyle('justifyItems') || 'stretch'"
+		:options="[
+			{
+				label: 'Stretch',
+				value: 'stretch',
+			},
+			{
+				label: 'Start',
+				value: 'start',
+			},
+			{
+				label: 'Center',
+				value: 'center',
+			},
+			{
+				label: 'End',
+				value: 'end',
+			},
+		]"
+		@update:modelValue="(val: string) => blockController.setStyle('justifyItems', val)" />
+	<InlineInput
+		label="Flow"
+		v-if="blockController.isGrid()"
+		type="select"
+		:modelValue="blockController.getStyle('gridAutoFlow') || 'row'"
+		:options="[
+			{
+				label: 'Row',
+				value: 'row',
+			},
+			{
+				label: 'Column',
+				value: 'column',
+			},
+			{
+				label: 'Row Dense',
+				value: 'row dense',
+			},
+			{
+				label: 'Column Dense',
+				value: 'column dense',
+			},
+		]"
+		@update:modelValue="(val: string) => blockController.setStyle('gridAutoFlow', val)" />
+
+	<!-- place items -->
+	<InlineInput
+		label="Place Items"
+		v-if="blockController.isGrid()"
+		type="select"
+		:modelValue="blockController.getStyle('placeItems') || 'stretch'"
+		:options="[
+			{
+				label: 'Top Right',
+				value: 'start end',
+			},
+			{
+				label: 'Top Center',
+				value: 'start center',
+			},
+			{
+				label: 'Top Left',
+				value: 'start start',
+			},
+			{
+				label: 'Center Right',
+				value: 'center end',
+			},
+			{
+				label: 'Center',
+				value: 'center center',
+			},
+			{
+				label: 'Center Left',
+				value: 'center start',
+			},
+			{
+				label: 'Bottom Right',
+				value: 'end end',
+			},
+			{
+				label: 'Bottom Center',
+				value: 'end center',
+			},
+			{
+				label: 'Bottom Left',
+				value: 'end start',
+			},
+		]"
+		@update:modelValue="(val: string) => blockController.setStyle('placeItems', val)" />
+
+	<InlineInput
+		label="Column Span"
+		v-if="blockController.getParentBlock()?.isGrid()"
+		type="text"
+		:enableSlider="true"
+		:changeFactor="0.08"
+		:modelValue="columnSpan"
+		@update:modelValue="setColumnSpan" />
+	<InlineInput
+		label="Row Span"
+		v-if="blockController.getParentBlock()?.isGrid()"
+		type="text"
+		:enableSlider="true"
+		:changeFactor="0.08"
+		:modelValue="rowSpan"
+		@update:modelValue="setRowSpan" />
+
+	<!-- place self -->
+	<InlineInput
+		label="Place Self"
+		v-if="blockController.getParentBlock()?.isGrid()"
+		type="select"
+		:modelValue="blockController.getStyle('placeSelf') || 'stretch'"
+		:options="[
+			{
+				label: 'Top Right',
+				value: 'start end',
+			},
+			{
+				label: 'Top Center',
+				value: 'start center',
+			},
+			{
+				label: 'Top Left',
+				value: 'start start',
+			},
+			{
+				label: 'Center Right',
+				value: 'center end',
+			},
+			{
+				label: 'Center',
+				value: 'center center',
+			},
+			{
+				label: 'Center Left',
+				value: 'center start',
+			},
+			{
+				label: 'Bottom Right',
+				value: 'end end',
+			},
+			{
+				label: 'Bottom Center',
+				value: 'end center',
+			},
+			{
+				label: 'Bottom Left',
+				value: 'end start',
+			},
+		]"
+		@update:modelValue="(val: string) => blockController.setStyle('placeSelf', val)" />
+</template>
+<script lang="ts" setup>
+import blockController from "@/utils/blockController";
+import { computed } from "vue";
+import InlineInput from "./InlineInput.vue";
+
+const columns = computed(() => {
+	const template = blockController.getStyle("gridTemplateColumns") as string;
+	if (!template) {
+		return;
+	}
+	const value = parseRepeatFunction(template);
+	return value.repeat;
+});
+
+const rows = computed(() => {
+	const template = blockController.getStyle("gridTemplateRows") as string;
+	if (!template) {
+		return;
+	}
+	const value = parseRepeatFunction(template);
+	return value.repeat;
+});
+
+const width = computed(() => {
+	const template = blockController.getStyle("gridTemplateColumns") as string;
+	const value = parseRepeatFunction(template);
+	return value.minValue;
+});
+
+const height = computed(() => {
+	const template = blockController.getStyle("gridTemplateRows") as string;
+	const value = parseRepeatFunction(template);
+	return value.minValue;
+});
+
+const columnSpan = computed(() => {
+	let gridColumn = blockController.getStyle("gridColumn") as string;
+	if (!gridColumn) {
+		return;
+	}
+	gridColumn = gridColumn.replace("span", "").trim();
+	const [start, end] = gridColumn.split("/");
+	return end ? parseInt(end) - parseInt(start) : start || 1;
+});
+
+const rowSpan = computed(() => {
+	let gridRow = blockController.getStyle("gridRow") as string;
+	if (!gridRow) {
+		return;
+	}
+	gridRow = gridRow.replace("span", "").trim();
+	const [start, end] = gridRow.split("/");
+	return end ? parseInt(end) - parseInt(start) : start || 1;
+});
+
+const setColumns = (val: string | number) => {
+	if (val == null) {
+		val = "auto-fit";
+	}
+	val = `repeat(${val}, minmax(${width.value}, 1fr))`;
+	blockController.setStyle("gridTemplateColumns", val);
+};
+
+const setRows = (val: string | number) => {
+	if (val == null) {
+		val = "auto-fit";
+	}
+	val = `repeat(${val}, minmax(${height.value}, 1fr))`;
+	blockController.setStyle("gridTemplateRows", val);
+};
+
+const setWidth = (val: string | number) => {
+	if (val == null) {
+		val = "1fr";
+	}
+	val = `repeat(${columns.value}, minmax(${val}, 1fr))`;
+	blockController.setStyle("gridTemplateColumns", val);
+};
+
+const setHeight = (val: string | number) => {
+	if (val == null) {
+		val = "1fr";
+	}
+	val = `repeat(${rows.value}, minmax(${val}, 1fr))`;
+	blockController.setStyle("gridTemplateRows", val);
+};
+
+const setColumnSpan = (val: string) => {
+	if (!val) {
+		blockController.setStyle("gridColumn", val);
+	} else {
+		blockController.setStyle("gridColumn", `span ${val}`);
+	}
+};
+
+const setRowSpan = (val: string) => {
+	if (!val) {
+		blockController.setStyle("gridRow", val);
+	} else {
+		blockController.setStyle("gridRow", `span ${val}`);
+	}
+};
+
+function parseRepeatFunction(input: string) {
+	const res = {
+		repeat: 1 as number | string,
+		minValue: 0 as number | string,
+	};
+	if (!input) {
+		return res;
+	}
+	const repeatPattern = /repeat\((\d+|auto-fit|auto-fill),\s*(.+)\)/;
+	const minMaxPattern = /minmax\((.+),\s*(.+)\)/;
+	const match = input.match(repeatPattern);
+	if (match) {
+		const countOrKeyword = match[1]; // Extract the count or keyword
+		const values = match[2].trim(); // Extract the values inside the repeat
+		const minValueMatch = values.match(minMaxPattern);
+		res.repeat = isNaN(parseInt(countOrKeyword, 10)) ? countOrKeyword : parseInt(countOrKeyword, 10);
+		res.minValue = minValueMatch ? minValueMatch[1] : 0;
+	}
+	return res;
+}
+</script>
