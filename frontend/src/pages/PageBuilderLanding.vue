@@ -122,7 +122,7 @@
 				v-if="displayType === 'list'"
 				:key="page.page_name"
 				:to="{ name: 'builder', params: { pageId: page.page_name } }"
-				class="h-fit w-full flex-grow">
+				class="col-span-full h-fit w-full flex-grow">
 				<div
 					class="group relative mr-2 flex w-full overflow-hidden rounded-md shadow hover:cursor-pointer dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
 					<img
