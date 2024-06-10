@@ -30,7 +30,7 @@
 	</div>
 
 	<InlineInput
-		v-if="blockController.isFlex() || blockController.isGrid()"
+		v-if="blockController.isFlex()"
 		:modelValue="blockController.getStyle('justifyContent')"
 		type="select"
 		label="Arrangement"
