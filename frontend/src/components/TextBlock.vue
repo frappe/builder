@@ -129,6 +129,7 @@ import { Ref, computed, inject, nextTick, onBeforeMount, onBeforeUnmount, ref, w
 import StrikeThroughIcon from "./Icons/StrikeThrough.vue";
 
 const overlayElement = document.querySelector("#overlay") as HTMLElement;
+const dataChanged = ref(false);
 
 const props = defineProps({
 	block: {
@@ -202,7 +203,8 @@ watch(
 			store.activeCanvas?.history.pause();
 			editor.value?.commands.focus("all");
 		} else {
-			store.activeCanvas?.history.resume();
+			store.activeCanvas?.history.resume(dataChanged.value);
+			dataChanged.value = false;
 		}
 	},
 	{ immediate: true },
@@ -251,6 +253,7 @@ if (!props.preview) {
 						if (props.block.getInnerHTML() === innerHTML) {
 							return;
 						}
+						dataChanged.value = true;
 						props.block.setInnerHTML(innerHTML);
 					},
 					onSelectionUpdate: ({ editor }) => {
