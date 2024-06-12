@@ -75,7 +75,7 @@
 import webComponent from "@/data/webComponent";
 import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { addPxToNumber, getBlockCopy, getNumberFromPx } from "@/utils/helpers";
+import { addPxToNumber, getBlockCopy, getBlockInstance, getNumberFromPx } from "@/utils/helpers";
 import {
 	UseRefHistoryReturn,
 	clamp,
@@ -213,6 +213,10 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 
 				if (parentBlock.isImage()) {
 					parentBlock.setAttribute("src", fileDoc.fileURL);
+				} else if (parentBlock.isSVG()) {
+					const imageBlock = store.getImageBlock(fileDoc.fileURL, fileDoc.fileName);
+					const parentParentBlock = parentBlock.getParentBlock();
+					parentParentBlock?.replaceChild(parentBlock, getBlockInstance(imageBlock));
 				} else if (parentBlock.isContainer() && ev.shiftKey) {
 					parentBlock.setStyle("background", `url(${fileDoc.fileURL})`);
 				} else {
