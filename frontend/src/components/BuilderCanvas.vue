@@ -297,7 +297,8 @@ function setEvents() {
 					let height = (mouseMoveEvent.clientY - initialY) / canvasProps.scale;
 					width = clamp(width, 0, parentWidth);
 					height = clamp(height, 0, parentHeight);
-					childBlock.setBaseStyle("width", addPxToNumber(width));
+					const setFullWidth = width === parentWidth;
+					childBlock.setBaseStyle("width", setFullWidth ? "100%" : addPxToNumber(width));
 					childBlock.setBaseStyle("height", addPxToNumber(height));
 				}
 			};
