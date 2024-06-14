@@ -204,10 +204,14 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 				if (!parentBlock) return;
 
 				if (fileDoc.fileName.match(/\.(mp4|webm|ogg|mov)$/)) {
-					while (parentBlock && !parentBlock.canHaveChildren()) {
-						parentBlock = parentBlock.getParentBlock() as Block;
+					if (parentBlock.isVideo()) {
+						parentBlock.setAttribute("src", fileDoc.fileURL);
+					} else {
+						while (parentBlock && !parentBlock.canHaveChildren()) {
+							parentBlock = parentBlock.getParentBlock() as Block;
+						}
+						parentBlock.addChild(store.getVideoBlock(fileDoc.fileURL));
 					}
-					parentBlock.addChild(store.getVideoBlock(fileDoc.fileURL));
 					return;
 				}
 
