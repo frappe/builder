@@ -43,6 +43,16 @@
 				<Button @click="() => setLink(linkInput?.getInputValue())" class="ml-1">
 					<FeatherIcon class="h-3 w-3" name="check" />
 				</Button>
+				<Button
+					@click="
+						() => {
+							textLink = '';
+							setLink(null);
+						}
+					"
+					class="ml-1">
+					<FeatherIcon class="h-3 w-3" name="x" />
+				</Button>
 			</div>
 			<div v-show="!settingLink" class="flex gap-1">
 				<button
@@ -89,11 +99,7 @@
 					@click="
 						() => {
 							if (!editor) return;
-							if (editor.isActive('link')) {
-								editor.chain().focus().unsetLink().run();
-							} else {
-								enableLinkInput();
-							}
+							enableLinkInput();
 						}
 					"
 					class="rounded px-2 py-1 hover:bg-gray-100"
@@ -302,6 +308,9 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 const enableLinkInput = () => {
 	settingLink.value = true;
+	// check if link is already set on selection
+	const link = editor.value?.isActive("link") ? editor.value?.getAttributes("link").href : null;
+	textLink.value = link || "";
 	nextTick(() => {
 		if (linkInput.value) {
 			const input = document.querySelector(".link-input") as HTMLInputElement;
