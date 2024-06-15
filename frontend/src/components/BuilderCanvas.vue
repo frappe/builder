@@ -368,7 +368,7 @@ function setEvents() {
 	});
 
 	useEventListener(document, "keydown", (ev: KeyboardEvent) => {
-		if (ev.shiftKey && ev.key === "{") {
+		if (ev.shiftKey && ev.key === "ArrowLeft") {
 			if (selectedBlocks.value.length) {
 				const selectedBlock = selectedBlocks.value[0];
 				const parentBlock = selectedBlock.getParentBlock();
@@ -378,12 +378,35 @@ function setEvents() {
 				}
 			}
 		}
-		if (ev.shiftKey && ev.key === "}") {
+		if (ev.shiftKey && ev.key === "ArrowRight") {
 			const blockId = selectionTrail.pop();
 			if (blockId) {
 				const block = findBlock(blockId);
 				if (block) {
 					selectBlock(block, false, true);
+				}
+			} else {
+				if (selectedBlocks.value.length) {
+					const selectedBlock = selectedBlocks.value[0];
+					if (selectedBlock.children) {
+						selectBlock(selectedBlock.children[0], false, true);
+					}
+				}
+			}
+		}
+		if (ev.shiftKey && ev.key === "ArrowUp") {
+			if (selectedBlocks.value.length) {
+				let sibling = selectedBlocks.value[0].getSiblingBlock("previous");
+				if (sibling) {
+					sibling.selectBlock();
+				}
+			}
+		}
+		if (ev.shiftKey && ev.key === "ArrowDown") {
+			if (selectedBlocks.value.length) {
+				let sibling = selectedBlocks.value[0].getSiblingBlock("next");
+				if (sibling) {
+					sibling.selectBlock();
 				}
 			}
 		}

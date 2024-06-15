@@ -168,7 +168,7 @@ const useStore = defineStore("store", {
 				nextTick(() => {
 					document
 						.querySelector(`[data-block-layer-id="${block.blockId}"]`)
-						?.scrollIntoView({ behavior: "instant", block: "center" });
+						?.scrollIntoView({ behavior: "smooth", block: "center" });
 				});
 			}
 

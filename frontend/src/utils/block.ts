@@ -467,6 +467,27 @@ class Block implements BlockOptions {
 			parentBlock.selectBlock();
 		}
 	}
+	getSiblingBlock(direction: "next" | "previous") {
+		const parentBlock = this.getParentBlock();
+		let sibling = null as Block | null;
+		if (parentBlock) {
+			const index = parentBlock.getChildIndex(this);
+			if (direction === "next") {
+				sibling = parentBlock.children[index + 1];
+			} else {
+				sibling = parentBlock.children[index - 1];
+			}
+			if (sibling) {
+				return sibling;
+			}
+		}
+	}
+	selectSiblingBlock(direction: "next" | "previous") {
+		const sibling = this.getSiblingBlock(direction);
+		if (sibling) {
+			sibling.selectBlock();
+		}
+	}
 	canHaveChildren(): boolean {
 		return !(
 			this.isImage() ||
