@@ -123,13 +123,20 @@ import { FontFamily } from "@tiptap/extension-font-family";
 import { Link } from "@tiptap/extension-link";
 import TextStyle from "@tiptap/extension-text-style";
 import StarterKit from "@tiptap/starter-kit";
-import { BubbleMenu, Editor, EditorContent } from "@tiptap/vue-3";
+import { BubbleMenu, Editor, EditorContent, Extension } from "@tiptap/vue-3";
 import { Input } from "frappe-ui";
+import { Plugin, PluginKey } from "prosemirror-state";
 import { Ref, computed, inject, nextTick, onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
 import StrikeThroughIcon from "./Icons/StrikeThrough.vue";
 
-const overlayElement = document.querySelector("#overlay") as HTMLElement;
+const store = useStore();
 const dataChanged = ref(false);
+const settingLink = ref(false);
+const textLink = ref("");
+const linkInput = ref(null) as Ref<typeof Input | null>;
+const component = ref(null) as Ref<HTMLElement | null>;
+const overlayElement = document.querySelector("#overlay") as HTMLElement;
+let editor: Ref<Editor | null> = ref(null);
 
 const props = defineProps({
 	block: {
@@ -146,28 +153,34 @@ const props = defineProps({
 	},
 });
 
-const store = useStore();
-const component = ref(null) as Ref<HTMLElement | null>;
-
 const canvasProps = !props.preview ? (inject("canvasProps") as CanvasProps) : null;
 
-const settingLink = ref(false);
-const textLink = ref("");
-const linkInput = ref(null) as Ref<typeof Input | null>;
-
-const setLink = (value: string | null) => {
-	if (!value && !textLink.value) {
-		editor.value?.chain().focus().unsetLink().run();
-	} else {
-		editor.value
-			?.chain()
-			.focus()
-			.setLink({ href: value || textLink.value })
-			.run();
-		textLink.value = "";
-	}
-	settingLink.value = false;
-};
+const FontFamilyPasteRule = Extension.create({
+	name: "fontFamilyPasteRule",
+	addProseMirrorPlugins() {
+		return [
+			new Plugin({
+				key: new PluginKey("fontFamilyPasteRule"),
+				props: {
+					transformPastedHTML(html) {
+						const div = document.createElement("div");
+						div.innerHTML = html;
+						const removeFontFamily = (element: HTMLElement) => {
+							if (element.style) {
+								element.style.fontFamily = "";
+							}
+							for (let i = 0; i < element.children.length; i++) {
+								removeFontFamily(element.children[i] as HTMLElement);
+							}
+						};
+						removeFontFamily(div);
+						return div.innerHTML;
+					},
+				},
+			}),
+		];
+	},
+});
 
 const textContent = computed(() => {
 	let innerHTML = props.block.getInnerHTML();
@@ -179,8 +192,6 @@ const textContent = computed(() => {
 	return innerHTML;
 });
 
-let editor: Ref<Editor | null> = ref(null);
-
 const isEditable = computed(() => {
 	return store.editableBlock === props.block;
 });
@@ -189,11 +200,10 @@ const showEditor = computed(() => {
 	return !((props.block.isLink() || props.block.isButton()) && props.block.hasChildren());
 });
 
-const handleClick = (e: MouseEvent) => {
-	if (isEditable.value) {
-		e.stopPropagation();
-	}
-};
+onBeforeMount(() => {
+	let html = props.block.getInnerHTML() || "";
+	setFontFromHTML(html);
+});
 
 watch(
 	() => isEditable.value,
@@ -237,7 +247,9 @@ if (!props.preview) {
 						Link.configure({
 							openOnClick: false,
 						}),
+						FontFamilyPasteRule,
 					],
+					enablePasteRules: false,
 					onUpdate({ editor }) {
 						let innerHTML = editor.isEmpty ? "" : editor.getHTML();
 						if (
@@ -282,15 +294,6 @@ if (!props.preview) {
 	});
 }
 
-onBeforeMount(() => {
-	let html = props.block.getInnerHTML() || "";
-	setFontFromHTML(html);
-});
-
-defineExpose({
-	component,
-});
-
 const handleKeydown = (e: KeyboardEvent) => {
 	if (e.key === "k" && e.metaKey) {
 		enableLinkInput();
@@ -307,6 +310,20 @@ const enableLinkInput = () => {
 	});
 };
 
+const setLink = (value: string | null) => {
+	if (!value && !textLink.value) {
+		editor.value?.chain().focus().unsetLink().run();
+	} else {
+		editor.value
+			?.chain()
+			.focus()
+			.setLink({ href: value || textLink.value })
+			.run();
+		textLink.value = "";
+	}
+	settingLink.value = false;
+};
+
 const setHeading = (level: 1 | 2 | 3) => {
 	props.block.setBaseStyle("font-size", level === 1 ? "2rem" : level === 2 ? "1.5rem" : "1.25rem");
 	props.block.setBaseStyle("font-weight", "bold");
@@ -321,4 +338,14 @@ const setHeading = (level: 1 | 2 | 3) => {
 		props.block.selectBlock();
 	});
 };
+
+const handleClick = (e: MouseEvent) => {
+	if (isEditable.value) {
+		e.stopPropagation();
+	}
+};
+
+defineExpose({
+	component,
+});
 </script>
