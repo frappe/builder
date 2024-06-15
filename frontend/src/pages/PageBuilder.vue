@@ -570,15 +570,6 @@ useEventListener(document, "keydown", (e) => {
 			block.move(key);
 		}
 	}
-	if (
-		e.key === "{" &&
-		e.shiftKey &&
-		blockController.isBLockSelected() &&
-		!blockController.multipleBlocksSelected()
-	) {
-		const block = blockController.getSelectedBlocks()[0];
-		block.selectParentBlock();
-	}
 });
 
 const clearSelectedComponent = () => {

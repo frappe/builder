@@ -98,6 +98,7 @@ const canvas = ref(null);
 const showBlocks = ref(false);
 const overlay = ref(null);
 const isDirty = ref(false);
+let selectionTrail = [] as string[];
 
 const props = defineProps({
 	blockData: {
@@ -365,6 +366,28 @@ function setEvents() {
 			ev.preventDefault();
 		}
 	});
+
+	useEventListener(document, "keydown", (ev: KeyboardEvent) => {
+		if (ev.shiftKey && ev.key === "{") {
+			if (selectedBlocks.value.length) {
+				const selectedBlock = selectedBlocks.value[0];
+				const parentBlock = selectedBlock.getParentBlock();
+				if (parentBlock) {
+					selectionTrail.push(selectedBlock.blockId);
+					selectBlock(parentBlock, false, true);
+				}
+			}
+		}
+		if (ev.shiftKey && ev.key === "}") {
+			const blockId = selectionTrail.pop();
+			if (blockId) {
+				const block = findBlock(blockId);
+				if (block) {
+					selectBlock(block, false, true);
+				}
+			}
+		}
+	});
 }
 
 const containerBound = reactive(useElementBounding(canvasContainer));
@@ -504,11 +527,14 @@ const isSelected = (block: Block) => {
 	return selectedBlockIds.value.includes(block.blockId);
 };
 
-const selectBlock = (_block: Block, multiSelect = false) => {
+const selectBlock = (_block: Block, multiSelect = false, maintainTrail = false) => {
 	if (multiSelect) {
 		selectedBlockIds.value.push(_block.blockId);
 	} else {
 		selectedBlockIds.value.splice(0, selectedBlockIds.value.length, _block.blockId);
+	}
+	if (!maintainTrail) {
+		selectionTrail = [];
 	}
 };
 
