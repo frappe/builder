@@ -235,7 +235,9 @@ watchDebounced(
 );
 
 const deletePage = async (page: BuilderPage) => {
-	const confirmed = await confirm(`Are you sure you want to delete Page: ${page.page_name}?`);
+	const confirmed = await confirm(
+		`Are you sure you want to delete Page: ${page.page_title || page.page_name}?`,
+	);
 	if (confirmed) {
 		await webPages.delete.submit(page.name);
 	}
