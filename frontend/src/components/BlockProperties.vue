@@ -766,7 +766,7 @@ const optionsSectionProperties = [
 				label: "Overflow X",
 				type: "select",
 				options: ["auto", "visible", "hidden", "scroll"],
-				modelValue: blockController.getStyle("overflowX"),
+				modelValue: blockController.getStyle("overflowX") || blockController.getStyle("overflow"),
 			};
 		},
 		searchKeyWords:
@@ -782,7 +782,7 @@ const optionsSectionProperties = [
 				label: "Overflow Y",
 				type: "select",
 				options: ["auto", "visible", "hidden", "scroll"],
-				modelValue: blockController.getStyle("overflowY"),
+				modelValue: blockController.getStyle("overflowY") || blockController.getStyle("overflow"),
 			};
 		},
 		searchKeyWords:
