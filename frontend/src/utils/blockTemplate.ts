@@ -8,7 +8,7 @@ function getBlockTemplate(
 		| "fit-container"
 		| "fallback-component"
 		| "repeater"
-		| "video"
+		| "video",
 ): BlockOptions {
 	switch (type) {
 		case "html":
@@ -51,6 +51,7 @@ function getBlockTemplate(
 				baseStyles: {
 					display: "flex",
 					flexDirection: "column",
+					overflow: "hidden",
 				} as BlockStyleMap,
 			};
 		case "body":
@@ -77,6 +78,7 @@ function getBlockTemplate(
 					flexDirection: "column",
 					height: "fit-content",
 					width: "fit-content",
+					overflow: "hidden",
 				} as BlockStyleMap,
 			};
 		case "fallback-component":
@@ -100,6 +102,7 @@ function getBlockTemplate(
 					flexDirection: "column",
 					width: "100%",
 					minHeight: "300px",
+					overflow: "hidden",
 				} as BlockStyleMap,
 				isRepeaterBlock: true,
 			};
