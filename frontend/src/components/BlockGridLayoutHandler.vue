@@ -1,19 +1,18 @@
 <template>
-	<InlineInput
+	<OptionToggle
+		class="w-full"
+		label="Grid Type"
 		v-if="blockController.isGrid()"
+		:modelValue="isFixed ? 'fixed' : 'filled'"
+		@update:modelValue="setGridType"
+		:options="[
+			{ label: 'Filled', value: 'filled' },
+			{ label: 'Fixed', value: 'fixed' },
+		]"></OptionToggle>
+	<InlineInput
+		v-if="blockController.isGrid() && isFixed"
 		label="Columns"
 		:modelValue="columns"
-		type="autocomplete"
-		:options="[
-			{
-				label: 'Auto (Fit)',
-				value: 'auto-fit',
-			},
-			{
-				label: 'Auto (Fill)',
-				value: 'auto-fill',
-			},
-		]"
 		:enableSlider="true"
 		:changeFactor="0.08"
 		:minValue="1"
@@ -29,26 +28,7 @@
 		:unitOptions="['px', 'em', 'rem', 'fr']"
 		@update:modelValue="setWidth" />
 	<InlineInput
-		v-if="blockController.isGrid()"
-		label="Rows"
-		type="autocomplete"
-		:options="[
-			{
-				label: 'Auto (Fit)',
-				value: 'auto-fit',
-			},
-			{
-				label: 'Auto (Fill)',
-				value: 'auto-fill',
-			},
-		]"
-		:modelValue="rows"
-		:enableSlider="true"
-		:changeFactor="0.08"
-		:minValue="1"
-		@update:modelValue="setRows" />
-	<InlineInput
-		label="Min Height"
+		label="Row Height"
 		v-if="blockController.isGrid()"
 		v-show="['auto-fit', 'auto-fill'].includes(rows as string)"
 		:enableSlider="true"
@@ -64,7 +44,7 @@
 		:unitOptions="['px', 'em', 'rem']"
 		:modelValue="blockController.getStyle('gap')"
 		@update:modelValue="(val: string | number) => blockController.setStyle('gap', val)" />
-	<InlineInput
+	<!-- <InlineInput
 		label="Align"
 		v-if="blockController.isGrid()"
 		type="select"
@@ -87,8 +67,8 @@
 				value: 'end',
 			},
 		]"
-		@update:modelValue="(val: string) => blockController.setStyle('justifyItems', val)" />
-	<InlineInput
+		@update:modelValue="(val: string) => blockController.setStyle('justifyItems', val)" /> -->
+	<!-- <InlineInput
 		label="Flow"
 		v-if="blockController.isGrid()"
 		type="select"
@@ -111,10 +91,10 @@
 				value: 'column dense',
 			},
 		]"
-		@update:modelValue="(val: string) => blockController.setStyle('gridAutoFlow', val)" />
+		@update:modelValue="(val: string) => blockController.setStyle('gridAutoFlow', val)" /> -->
 
 	<!-- place items -->
-	<InlineInput
+	<!-- <InlineInput
 		label="Place Items"
 		v-if="blockController.isGrid()"
 		type="select"
@@ -157,7 +137,7 @@
 				value: 'end start',
 			},
 		]"
-		@update:modelValue="(val: string) => blockController.setStyle('placeItems', val)" />
+		@update:modelValue="(val: string) => blockController.setStyle('placeItems', val)" /> -->
 
 	<InlineInput
 		label="Column Span"
@@ -177,7 +157,7 @@
 		@update:modelValue="setRowSpan" />
 
 	<!-- place self -->
-	<InlineInput
+	<!-- <InlineInput
 		label="Place Self"
 		v-if="blockController.getParentBlock()?.isGrid()"
 		type="select"
@@ -220,12 +200,13 @@
 				value: 'end start',
 			},
 		]"
-		@update:modelValue="(val: string) => blockController.setStyle('placeSelf', val)" />
+		@update:modelValue="(val: string) => blockController.setStyle('placeSelf', val)" /> -->
 </template>
 <script lang="ts" setup>
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
 import InlineInput from "./InlineInput.vue";
+import OptionToggle from "./OptionToggle.vue";
 
 const columns = computed(() => {
 	const template = blockController.getStyle("gridTemplateColumns") as string;
@@ -353,4 +334,21 @@ function parseRepeatFunction(input: string) {
 	}
 	return res;
 }
+
+const isFixed = computed(() => {
+	const template = blockController.getStyle("gridTemplateColumns") as string;
+	if (!template) {
+		return false;
+	}
+	const value = parseRepeatFunction(template);
+	return value.repeat !== "auto-fill" && value.repeat !== "auto-fit";
+});
+
+const setGridType = (val: string) => {
+	if (val === "fixed") {
+		blockController.setStyle("gridTemplateColumns", `repeat(2, minmax(${width.value}, 1fr))`);
+	} else {
+		blockController.setStyle("gridTemplateColumns", `repeat(auto-fill, minmax(${width.value}, 1fr))`);
+	}
+};
 </script>
