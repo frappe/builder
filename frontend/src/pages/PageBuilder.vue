@@ -250,6 +250,12 @@ useEventListener(document, "paste", async (e) => {
 			block = getBlockTemplate("html");
 
 			if (text.startsWith("<svg")) {
+				if (text.includes("<image")) {
+					toast.warning("Warning", {
+						description: "SVG with inlined image in it is not supported. Please paste it as PNG instead.",
+					});
+					return;
+				}
 				const dom = new DOMParser().parseFromString(text, "text/html");
 				const svg = dom.body.querySelector("svg") as SVGElement;
 				const width = svg.getAttribute("width") || "100";

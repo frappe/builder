@@ -8,8 +8,6 @@ app_description = "An easier way to build web pages for your needs!"
 app_email = "suraj@frappe.io"
 app_license = "GNU Affero General Public License v3.0"
 
-develop_version = "1.x.x-develop"
-
 # Includes in <head>
 # ------------------
 

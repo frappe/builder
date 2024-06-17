@@ -3,6 +3,7 @@ import { FileUploadHandler, createDocumentResource } from "frappe-ui";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
 import { toast } from "vue-sonner";
+import BlockLayers from "./components/BlockLayers.vue";
 import BuilderCanvas from "./components/BuilderCanvas.vue";
 import { builderSettings } from "./data/builderSettings";
 import webComponent from "./data/webComponent";
@@ -25,6 +26,7 @@ const useStore = defineStore("store", {
 		mode: <BuilderMode>"select", // check setEvents in BuilderCanvas for usage
 		lastMode: <BuilderMode>"select",
 		activeCanvas: <InstanceType<typeof BuilderCanvas> | null>null,
+		activeLayers: <InstanceType<typeof BlockLayers> | null>null,
 		history: {
 			pause: () => {},
 			resume: () => {},
@@ -168,7 +170,7 @@ const useStore = defineStore("store", {
 				nextTick(() => {
 					document
 						.querySelector(`[data-block-layer-id="${block.blockId}"]`)
-						?.scrollIntoView({ behavior: "instant", block: "center" });
+						?.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
 				});
 			}
 
