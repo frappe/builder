@@ -255,7 +255,7 @@ const layoutSectionProperties = [
 				label: "Type",
 				options: [
 					{
-						label: "Flex",
+						label: "Stack",
 						value: "flex",
 					},
 					{
