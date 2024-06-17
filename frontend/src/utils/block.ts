@@ -327,6 +327,8 @@ class Block implements BlockOptions {
 				return "columns";
 			case this.isContainer() && this.isColumn():
 				return "credit-card";
+			case this.isGrid():
+				return "grid";
 			case this.isContainer():
 				return "square";
 			case this.isImage():
@@ -671,6 +673,9 @@ class Block implements BlockOptions {
 	}
 	isFlex() {
 		return this.getStyle("display") === "flex";
+	}
+	isGrid() {
+		return this.getStyle("display") === "grid";
 	}
 	isRow() {
 		return this.isFlex() && this.getStyle("flexDirection") === "row";

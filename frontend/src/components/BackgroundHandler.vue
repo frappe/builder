@@ -94,7 +94,7 @@ const setBG = (file: { file_url: string }) => {
 	const url = window.location.origin + file.file_url;
 	blockController?.setStyle(
 		"background",
-		`url('${url}') center / ${backgroundSize.value || "cover"} no-repeat`
+		`url('${url}') center / ${backgroundSize.value || "cover"} no-repeat`,
 	);
 };
 
