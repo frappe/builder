@@ -159,7 +159,7 @@ const blockController = {
 		});
 	},
 	getParentBlock: () => {
-		return store.activeCanvas?.selectedBlocks[0]?.getParentBlock() || store.activeCanvas?.getFirstBlock();
+		return store.activeCanvas?.selectedBlocks[0]?.getParentBlock();
 	},
 	setTextColor: (color: string) => {
 		store.activeCanvas?.selectedBlocks.forEach((block) => {
