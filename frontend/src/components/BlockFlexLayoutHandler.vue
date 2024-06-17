@@ -6,28 +6,13 @@
 		<TabButtons
 			:modelValue="blockController.getStyle('flexDirection') || 'column'"
 			:buttons="[
-				{ label: 'Horizontal', value: 'row' },
-				{ label: 'Vertical', value: 'column' },
+				{ label: 'Horizontal', value: 'row', icon: 'arrow-right', hideLabel: true },
+				{ label: 'Vertical', value: 'column', icon: 'arrow-down', hideLabel: true },
 			]"
 			@update:modelValue="(val: string | number) => blockController.setStyle('flexDirection', val)"
 			class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-800"></TabButtons>
 	</div>
-	<div class="items-top relative flex justify-between" v-if="blockController.isFlex()">
-		<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
-			Placement
-		</span>
-		<div
-			class="grid h-16 w-16 grid-cols-3 items-center justify-items-center rounded-sm bg-gray-200 p-1 dark:bg-zinc-800">
-			<div
-				class="h-3 w-3 cursor-pointer rounded-sm bg-gray-300 hover:bg-gray-400 dark:bg-zinc-700 dark:hover:bg-zinc-600"
-				:class="{
-					'bg-gray-700 dark:!bg-zinc-500': activePlacement === option,
-				}"
-				v-for="option in placementOptions"
-				:key="option"
-				@click="setAlignment(option)"></div>
-		</div>
-	</div>
+	<PlacementControl v-if="blockController.isFlex()"></PlacementControl>
 
 	<InlineInput
 		v-if="blockController.isFlex()"
@@ -76,6 +61,7 @@ import blockController from "@/utils/blockController";
 import { TabButtons } from "frappe-ui";
 import { computed } from "vue";
 import InlineInput from "./InlineInput.vue";
+import PlacementControl from "./PlacementControl.vue";
 
 const placementOptions = [
 	"top-left",
