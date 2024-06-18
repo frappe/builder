@@ -75,7 +75,14 @@
 import webComponent from "@/data/webComponent";
 import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { addPxToNumber, getBlockCopy, getBlockInstance, getNumberFromPx, isCtrlOrCmd } from "@/utils/helpers";
+import {
+	addPxToNumber,
+	getBlockCopy,
+	getBlockInstance,
+	getNumberFromPx,
+	isCtrlOrCmd,
+	isTargetEditable,
+} from "@/utils/helpers";
 import {
 	UseRefHistoryReturn,
 	clamp,
@@ -368,6 +375,9 @@ function setEvents() {
 	});
 
 	useEventListener(document, "keydown", (ev: KeyboardEvent) => {
+		if (isTargetEditable(ev)) {
+			return;
+		}
 		if (ev.shiftKey && ev.key === "ArrowLeft") {
 			if (isCtrlOrCmd(ev)) {
 				if (selectedBlocks.value.length) {
