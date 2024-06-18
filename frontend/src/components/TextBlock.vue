@@ -358,3 +358,8 @@ defineExpose({
 	component,
 });
 </script>
+<style>
+.__text_block__ [contenteditable="true"] {
+	caret-color: currentcolor !important;
+}
+</style>
