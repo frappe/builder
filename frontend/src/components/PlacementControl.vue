@@ -10,15 +10,11 @@
 					:key="option"
 					class="group/option flex h-5 w-5 cursor-pointer items-center justify-center opacity-50"
 					:class="{
-						'!justify-start':
-							(direction === 'column' && option.includes('left')) ||
-							(direction === 'row' && option.includes('top')),
-						'!justify-end':
-							(direction === 'column' && option.includes('right')) ||
-							(direction === 'row' && option.includes('bottom')),
+						'!justify-start': option.includes('left'),
+						'!justify-end': option.includes('right'),
+						'!items-start': option.includes('top'),
+						'!items-end': option.includes('bottom'),
 					}">
-					<!-- <div
-						class="mx-auto h-1 w-1 rounded-sm bg-gray-400 opacity-0 group-hover/option:hidden group-hover:opacity-100 dark:bg-zinc-700"></div> -->
 					<div
 						@click="setAlignment(option)"
 						@dblclick="setAlignment(option, true)"
@@ -59,7 +55,7 @@
 				</div>
 			</div>
 			<div
-				class="pointer-events-none absolute top-0 flex h-full w-full cursor-pointer gap-[2px] rounded-sm p-1.5"
+				class="pointer-events-none absolute top-0 flex h-full w-full cursor-pointer gap-[2px] rounded-sm p-1"
 				:style="{
 					'flex-direction': direction,
 					'justify-content': justifyContent,
@@ -108,44 +104,42 @@ const justifyContent = computed(() => blockController.getStyle("justifyContent")
 const alignItems = computed(() => blockController.getStyle("alignItems") as string);
 
 const setAlignment = (alignment: string, spaceBetween: boolean = false) => {
-	const flexDirection = blockController.getStyle("flexDirection");
-
 	switch (alignment) {
 		case "top-right":
-			blockController.setStyle("justifyContent", flexDirection === "row" ? "flex-end" : "flex-start");
-			blockController.setStyle("alignItems", flexDirection === "row" ? "flex-start" : "flex-end");
+			blockController.setStyle("justifyContent", direction.value === "row" ? "flex-end" : "flex-start");
+			blockController.setStyle("alignItems", direction.value === "row" ? "flex-start" : "flex-end");
 			break;
 		case "top-middle":
-			blockController.setStyle("justifyContent", flexDirection === "row" ? "center" : "flex-start");
-			blockController.setStyle("alignItems", flexDirection === "row" ? "flex-start" : "center");
+			blockController.setStyle("justifyContent", direction.value === "row" ? "center" : "flex-start");
+			blockController.setStyle("alignItems", direction.value === "row" ? "flex-start" : "center");
 			break;
 		case "top-left":
 			blockController.setStyle("justifyContent", "flex-start");
 			blockController.setStyle("alignItems", "flex-start");
 			break;
 		case "middle-right":
-			blockController.setStyle("justifyContent", flexDirection === "row" ? "flex-end" : "center");
-			blockController.setStyle("alignItems", flexDirection === "row" ? "center" : "flex-end");
+			blockController.setStyle("justifyContent", direction.value === "row" ? "flex-end" : "center");
+			blockController.setStyle("alignItems", direction.value === "row" ? "center" : "flex-end");
 			break;
 		case "middle-middle":
 			blockController.setStyle("justifyContent", "center");
 			blockController.setStyle("alignItems", "center");
 			break;
 		case "middle-left":
-			blockController.setStyle("justifyContent", flexDirection === "row" ? "flex-start" : "center");
-			blockController.setStyle("alignItems", flexDirection === "row" ? "center" : "flex-start");
+			blockController.setStyle("justifyContent", direction.value === "row" ? "flex-start" : "center");
+			blockController.setStyle("alignItems", direction.value === "row" ? "center" : "flex-start");
 			break;
 		case "bottom-right":
 			blockController.setStyle("justifyContent", "flex-end");
 			blockController.setStyle("alignItems", "flex-end");
 			break;
 		case "bottom-middle":
-			blockController.setStyle("justifyContent", flexDirection === "row" ? "center" : "flex-end");
-			blockController.setStyle("alignItems", flexDirection === "row" ? "flex-end" : "center");
+			blockController.setStyle("justifyContent", direction.value === "row" ? "center" : "flex-end");
+			blockController.setStyle("alignItems", direction.value === "row" ? "flex-end" : "center");
 			break;
 		case "bottom-left":
-			blockController.setStyle("justifyContent", flexDirection === "row" ? "flex-start" : "flex-end");
-			blockController.setStyle("alignItems", flexDirection === "row" ? "flex-end" : "flex-start");
+			blockController.setStyle("justifyContent", direction.value === "row" ? "flex-start" : "flex-end");
+			blockController.setStyle("alignItems", direction.value === "row" ? "flex-end" : "flex-start");
 			break;
 	}
 	if (spaceBetween) {
