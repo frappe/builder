@@ -80,6 +80,8 @@ class BuilderPage(WebsiteGenerator):
 			self.flags.skip_preview = True
 		else:
 			self.preview = "/assets/builder/images/fallback.png"
+		if not self.page_title:
+			self.page_title = "My Page"
 		self.route = (
 			f"pages/{camel_case_to_kebab_case(self.page_title, True)}-{frappe.generate_hash(length=4)}"
 		)
@@ -369,6 +371,8 @@ def get_class(class_list):
 
 
 def camel_case_to_kebab_case(text, remove_spaces=False):
+	if not text:
+		return ""
 	text = re.sub(r"(?<!^)(?=[A-Z])", "-", text).lower()
 	if remove_spaces:
 		text = text.replace(" ", "")
