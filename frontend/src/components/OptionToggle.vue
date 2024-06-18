@@ -1,6 +1,8 @@
 <template>
 	<div class="flex items-center justify-between">
-		<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
+		<span
+			class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400"
+			v-if="label">
 			{{ label }}
 		</span>
 		<TabButtons

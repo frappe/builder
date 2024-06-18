@@ -1,6 +1,7 @@
 <template>
 	<component
 		:is="getComponentName(block)"
+		:selected="isSelected"
 		@click="handleClick"
 		@dblclick="handleDoubleClick"
 		@contextmenu="triggerContextMenu($event)"
