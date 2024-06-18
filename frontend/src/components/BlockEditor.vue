@@ -47,6 +47,7 @@
 					!block.isHTML() &&
 					!block.isSVG() &&
 					!editable &&
+					!resizing &&
 					!blockController.multipleBlocksSelected()
 				"
 				:target-block="block"

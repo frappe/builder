@@ -25,6 +25,7 @@
 		@mousedown.stop="handleBottomResize" />
 	<div
 		class="pointer-events-auto absolute bottom-[-5px] right-[-5px] h-[12px] w-[12px] cursor-nwse-resize rounded-full border-[2.5px] border-blue-400 bg-white"
+		v-show="!resizing"
 		@mousedown.stop="handleBottomCornerResize" />
 </template>
 <script setup lang="ts">
@@ -60,8 +61,10 @@ onMounted(() => {
 watch(resizing, () => {
 	if (resizing.value) {
 		store.activeCanvas?.history.pause();
+		emit("resizing", true);
 	} else {
 		store.activeCanvas?.history.resume(true);
+		emit("resizing", false);
 	}
 });
 
