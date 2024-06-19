@@ -4,7 +4,7 @@
 		:type="type"
 		:class="{
 			'text-sm [&>div>input]:pr-6': !['select', 'checkbox'].includes(type),
-			'w-[140px]': !['checkbox'].includes(type),
+			'w-full': !['checkbox'].includes(type),
 		}"
 		@input="($event: Event) => emit('update:modelValue', ($event.target as HTMLInputElement).value)"
 		autocomplete="off"

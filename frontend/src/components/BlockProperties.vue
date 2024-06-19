@@ -3,10 +3,8 @@
 		<div class="sticky top-9 z-50 mt-[-15px] flex w-full bg-white py-3 dark:bg-zinc-900">
 			<Input
 				ref="searchInput"
-				class="properties-search-input h-7 w-full rounded-md text-sm text-gray-800 hover:border-gray-400 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
 				type="text"
 				placeholder="Search properties"
-				inputClass="w-full"
 				v-model="store.propertyFilter"
 				@input="
 					(value) => {
@@ -430,7 +428,7 @@ const styleSectionProperties = [
 		component: InlineInput,
 		getProps: () => {
 			return {
-				label: "Border Radius",
+				label: "Radius",
 				modelValue: blockController.getStyle("borderRadius"),
 				enableSlider: true,
 				unitOptions: ["px", "%"],

@@ -22,7 +22,7 @@
 					class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-900"></TabButtons>
 				<div class="relative flex">
 					<Input
-						class="[&>div>input]:focus:ring-0 [&>div>input]:dark:bg-zinc-900"
+						class="w-44"
 						type="text"
 						placeholder="Filter by title or route"
 						v-model="searchFilter"
@@ -41,8 +41,7 @@
 				</div>
 				<Input
 					type="select"
-					class="[&>div>select]:focus:ring-0 [&>div>select]:dark:bg-zinc-900"
-					inputClass="w-32"
+					class="w-36"
 					v-model="typeFilter"
 					:options="[
 						{ label: 'All', value: '' },
