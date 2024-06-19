@@ -1099,6 +1099,11 @@ const sections = [
 		condition: () => !blockController.multipleBlocksSelected(),
 	},
 	{
+		name: "Typography",
+		properties: typographySectionProperties,
+		condition: () => blockController.isText() || blockController.isContainer() || blockController.isInput(),
+	},
+	{
 		name: "Style",
 		properties: styleSectionProperties,
 	},
@@ -1107,11 +1112,7 @@ const sections = [
 		properties: videoOptionsSectionProperties,
 		condition: () => blockController.isVideo(),
 	},
-	{
-		name: "Typography",
-		properties: typographySectionProperties,
-		condition: () => blockController.isText() || blockController.isContainer() || blockController.isInput(),
-	},
+
 	{
 		name: "Dimension",
 		properties: dimensionSectionProperties,
