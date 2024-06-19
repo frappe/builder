@@ -13,7 +13,7 @@
 							:data-block-layer-id="element.blockId"
 							:title="element.blockId"
 							@contextmenu.prevent.stop="onContextMenu"
-							class="min-w-24 cursor-pointer rounded border border-transparent bg-white pl-2 pr-[2px] text-sm text-gray-700 dark:bg-zinc-900 dark:text-gray-500"
+							class="min-w-24 cursor-pointer rounded border border-transparent bg-white pl-2 pr-[2px] text-base text-gray-700 dark:bg-zinc-900 dark:text-gray-500"
 							@click.stop="
 								store.activeCanvas?.history.pause();
 								store.selectBlock(element, $event, false, true);
@@ -65,7 +65,9 @@
 									:name="element.isVisible() ? 'eye' : 'eye-off'"
 									class="ml-auto mr-2 hidden h-3 w-3 group-hover:block"
 									@click.stop="element.toggleVisibility()" />
-								<span v-if="element.isRoot()" class="ml-auto mr-2 text-gray-400 dark:text-zinc-600">
+								<span
+									v-if="element.isRoot()"
+									class="ml-auto mr-2 capitalize text-gray-400 dark:text-zinc-600">
 									{{ store.activeBreakpoint }}
 								</span>
 							</span>

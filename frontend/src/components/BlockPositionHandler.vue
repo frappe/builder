@@ -56,6 +56,7 @@
 <script setup lang="ts">
 import blockController from "@/utils/blockController";
 import { computed, watch } from "vue";
+import Input from "./Input.vue";
 import OptionToggle from "./OptionToggle.vue";
 
 const position = computed({

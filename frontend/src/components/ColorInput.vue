@@ -4,7 +4,7 @@
 		<template #target="{ togglePopover, isOpen }">
 			<div class="flex items-center justify-between">
 				<InputLabel>{{ label}}</InputLabel>
-				<div class="relative">
+				<div class="relative w-full">
 					<div
 						class="absolute left-2 top-[6px] z-10 h-4 w-4 rounded shadow-sm"
 						@click="togglePopover"

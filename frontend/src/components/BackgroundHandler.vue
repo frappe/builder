@@ -3,7 +3,7 @@
 		<template #target="{ togglePopover, isOpen }">
 			<div class="flex items-center justify-between">
 				<InputLabel>BG Image</InputLabel>
-				<div class="relative">
+				<div class="relative w-full">
 					<div>
 						<Input
 							class="[&>div>input]:pl-8"
