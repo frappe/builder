@@ -699,24 +699,20 @@ const scrollBlockIntoView = async (blockToFocus: Block) => {
 	const containerBound = container.getBoundingClientRect();
 	const blockHeight = blockRect.height + padding + paddingBottom;
 
-	if (blockWidth > containerBound.width) {
-		const scaleX = containerBound.width / blockWidth;
-		if (scaleX < 1) {
-			canvasProps.scale = canvasProps.scale * scaleX;
-			await new Promise((resolve) => setTimeout(resolve, 100));
-			await nextTick();
-			blockRect.update();
-		}
+	const scaleX = containerBound.width / blockWidth;
+	const scaleY = containerBound.height / blockHeight;
+	const newScale = Math.min(scaleX, scaleY);
+
+	const scaleDiff = canvasProps.scale - canvasProps.scale * newScale;
+	if (scaleDiff > 0.2) {
+		return;
 	}
 
-	if (blockHeight > containerBound.height) {
-		const scaleY = containerBound.height / blockHeight;
-		if (scaleY < 1) {
-			canvasProps.scale = canvasProps.scale * scaleY;
-			await new Promise((resolve) => setTimeout(resolve, 100));
-			await nextTick();
-			blockRect.update();
-		}
+	if (newScale < 1) {
+		canvasProps.scale = canvasProps.scale * newScale;
+		await new Promise((resolve) => setTimeout(resolve, 100));
+		await nextTick();
+		blockRect.update();
 	}
 
 	padding = padding * canvasProps.scale;
