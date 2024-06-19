@@ -15,7 +15,7 @@
 		v-if="blockController.isFlex()"
 		:modelValue="blockController.getStyle('justifyContent')"
 		type="select"
-		label="Arrangement"
+		label="Distribution"
 		:options="[
 			{ label: 'Space Between', value: 'space-between' },
 			{ label: 'Space Around', value: 'space-around' },
@@ -40,15 +40,26 @@
 		]"
 		:modelValue="blockController.getStyle('flexWrap') || 'nowrap'"
 		@update:modelValue="(val: string | number) => blockController.setStyle('flexWrap', val)"></OptionToggle>
-	<!-- flex basis -->
-	<!-- <div class="flex flex-col gap-3" v-if="blockController.getParentBlock()?.isFlex()">
-		<InlineInput
-			label="Order"
-			type="number"
-			min="0"
-			:modelValue="blockController.getStyle('order')"
-			@update:modelValue="(val: string | number) => blockController.setStyle('order', val)" />
-	</div> -->
+	<div class="flex flex-col gap-3" v-if="blockController.getParentBlock()?.isFlex()">
+		<OptionToggle
+			label="Grow"
+			:options="[
+				{ label: 'Yes', value: 1 },
+				{ label: 'No', value: 0 },
+			]"
+			:modelValue="blockController.getStyle('flexGrow') || 0"
+			@update:modelValue="(val: string | number) => blockController.setStyle('flexGrow', val)"></OptionToggle>
+		<OptionToggle
+			label="Shrink"
+			:options="[
+				{ label: 'Yes', value: 1 },
+				{ label: 'No', value: 0 },
+			]"
+			:modelValue="blockController.getStyle('flexShrink') || 0"
+			@update:modelValue="
+				(val: string | number) => blockController.setStyle('flexShrink', val)
+			"></OptionToggle>
+	</div>
 </template>
 <script lang="ts" setup>
 import blockController from "@/utils/blockController";

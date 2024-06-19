@@ -4,7 +4,7 @@
 			Placement
 		</span>
 		<div class="relative h-fit w-fit">
-			<div class="group grid grid-cols-3 rounded-sm bg-gray-200 p-1 dark:bg-zinc-800">
+			<div class="group grid grid-cols-3 rounded-sm bg-gray-200 p-1.5 dark:bg-zinc-800">
 				<div
 					v-for="option in placementOptions"
 					:key="option"
@@ -55,7 +55,7 @@
 				</div>
 			</div>
 			<div
-				class="pointer-events-none absolute top-0 flex h-full w-full cursor-pointer gap-[2px] rounded-sm p-1"
+				class="pointer-events-none absolute top-0 flex h-full w-full cursor-pointer gap-[2px] rounded-sm p-1.5"
 				:style="{
 					'flex-direction': direction,
 					'justify-content': justifyContent,
