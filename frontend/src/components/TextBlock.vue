@@ -43,6 +43,16 @@
 				<Button @click="() => setLink(linkInput?.getInputValue())" class="ml-1">
 					<FeatherIcon class="h-3 w-3" name="check" />
 				</Button>
+				<Button
+					@click="
+						() => {
+							textLink = '';
+							setLink(null);
+						}
+					"
+					class="ml-1">
+					<FeatherIcon class="h-3 w-3" name="x" />
+				</Button>
 			</div>
 			<div v-show="!settingLink" class="flex gap-1">
 				<button
@@ -89,11 +99,7 @@
 					@click="
 						() => {
 							if (!editor) return;
-							if (editor.isActive('link')) {
-								editor.chain().focus().unsetLink().run();
-							} else {
-								enableLinkInput();
-							}
+							enableLinkInput();
 						}
 					"
 					class="rounded px-2 py-1 hover:bg-gray-100"
@@ -123,12 +129,20 @@ import { FontFamily } from "@tiptap/extension-font-family";
 import { Link } from "@tiptap/extension-link";
 import TextStyle from "@tiptap/extension-text-style";
 import StarterKit from "@tiptap/starter-kit";
-import { BubbleMenu, Editor, EditorContent } from "@tiptap/vue-3";
+import { BubbleMenu, Editor, EditorContent, Extension } from "@tiptap/vue-3";
 import { Input } from "frappe-ui";
+import { Plugin, PluginKey } from "prosemirror-state";
 import { Ref, computed, inject, nextTick, onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
 import StrikeThroughIcon from "./Icons/StrikeThrough.vue";
 
+const store = useStore();
+const dataChanged = ref(false);
+const settingLink = ref(false);
+const textLink = ref("");
+const linkInput = ref(null) as Ref<typeof Input | null>;
+const component = ref(null) as Ref<HTMLElement | null>;
 const overlayElement = document.querySelector("#overlay") as HTMLElement;
+let editor: Ref<Editor | null> = ref(null);
 
 const props = defineProps({
 	block: {
@@ -145,28 +159,34 @@ const props = defineProps({
 	},
 });
 
-const store = useStore();
-const component = ref(null) as Ref<HTMLElement | null>;
-
 const canvasProps = !props.preview ? (inject("canvasProps") as CanvasProps) : null;
 
-const settingLink = ref(false);
-const textLink = ref("");
-const linkInput = ref(null) as Ref<typeof Input | null>;
-
-const setLink = (value: string | null) => {
-	if (!value && !textLink.value) {
-		editor.value?.chain().focus().unsetLink().run();
-	} else {
-		editor.value
-			?.chain()
-			.focus()
-			.setLink({ href: value || textLink.value })
-			.run();
-		textLink.value = "";
-	}
-	settingLink.value = false;
-};
+const FontFamilyPasteRule = Extension.create({
+	name: "fontFamilyPasteRule",
+	addProseMirrorPlugins() {
+		return [
+			new Plugin({
+				key: new PluginKey("fontFamilyPasteRule"),
+				props: {
+					transformPastedHTML(html) {
+						const div = document.createElement("div");
+						div.innerHTML = html;
+						const removeFontFamily = (element: HTMLElement) => {
+							if (element.style) {
+								element.style.fontFamily = "";
+							}
+							for (let i = 0; i < element.children.length; i++) {
+								removeFontFamily(element.children[i] as HTMLElement);
+							}
+						};
+						removeFontFamily(div);
+						return div.innerHTML;
+					},
+				},
+			}),
+		];
+	},
+});
 
 const textContent = computed(() => {
 	let innerHTML = props.block.getInnerHTML();
@@ -178,8 +198,6 @@ const textContent = computed(() => {
 	return innerHTML;
 });
 
-let editor: Ref<Editor | null> = ref(null);
-
 const isEditable = computed(() => {
 	return store.editableBlock === props.block;
 });
@@ -188,11 +206,10 @@ const showEditor = computed(() => {
 	return !((props.block.isLink() || props.block.isButton()) && props.block.hasChildren());
 });
 
-const handleClick = (e: MouseEvent) => {
-	if (isEditable.value) {
-		e.stopPropagation();
-	}
-};
+onBeforeMount(() => {
+	let html = props.block.getInnerHTML() || "";
+	setFontFromHTML(html);
+});
 
 watch(
 	() => isEditable.value,
@@ -202,7 +219,8 @@ watch(
 			store.activeCanvas?.history.pause();
 			editor.value?.commands.focus("all");
 		} else {
-			store.activeCanvas?.history.resume();
+			store.activeCanvas?.history.resume(dataChanged.value);
+			dataChanged.value = false;
 		}
 	},
 	{ immediate: true },
@@ -235,7 +253,9 @@ if (!props.preview) {
 						Link.configure({
 							openOnClick: false,
 						}),
+						FontFamilyPasteRule,
 					],
+					enablePasteRules: false,
 					onUpdate({ editor }) {
 						let innerHTML = editor.isEmpty ? "" : editor.getHTML();
 						if (
@@ -251,6 +271,7 @@ if (!props.preview) {
 						if (props.block.getInnerHTML() === innerHTML) {
 							return;
 						}
+						dataChanged.value = true;
 						props.block.setInnerHTML(innerHTML);
 					},
 					onSelectionUpdate: ({ editor }) => {
@@ -279,15 +300,6 @@ if (!props.preview) {
 	});
 }
 
-onBeforeMount(() => {
-	let html = props.block.getInnerHTML() || "";
-	setFontFromHTML(html);
-});
-
-defineExpose({
-	component,
-});
-
 const handleKeydown = (e: KeyboardEvent) => {
 	if (e.key === "k" && e.metaKey) {
 		enableLinkInput();
@@ -296,12 +308,29 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 const enableLinkInput = () => {
 	settingLink.value = true;
+	// check if link is already set on selection
+	const link = editor.value?.isActive("link") ? editor.value?.getAttributes("link").href : null;
+	textLink.value = link || "";
 	nextTick(() => {
 		if (linkInput.value) {
 			const input = document.querySelector(".link-input") as HTMLInputElement;
 			input.focus();
 		}
 	});
+};
+
+const setLink = (value: string | null) => {
+	if (!value && !textLink.value) {
+		editor.value?.chain().focus().unsetLink().run();
+	} else {
+		editor.value
+			?.chain()
+			.focus()
+			.setLink({ href: value || textLink.value })
+			.run();
+		textLink.value = "";
+	}
+	settingLink.value = false;
 };
 
 const setHeading = (level: 1 | 2 | 3) => {
@@ -318,4 +347,19 @@ const setHeading = (level: 1 | 2 | 3) => {
 		props.block.selectBlock();
 	});
 };
+
+const handleClick = (e: MouseEvent) => {
+	if (isEditable.value) {
+		e.stopPropagation();
+	}
+};
+
+defineExpose({
+	component,
+});
 </script>
+<style>
+.__text_block__ [contenteditable="true"] {
+	caret-color: currentcolor !important;
+}
+</style>

@@ -25,6 +25,7 @@
 		@mousedown.stop="handleBottomResize" />
 	<div
 		class="pointer-events-auto absolute bottom-[-5px] right-[-5px] h-[12px] w-[12px] cursor-nwse-resize rounded-full border-[2.5px] border-blue-400 bg-white"
+		v-show="!resizing"
 		@mousedown.stop="handleBottomCornerResize" />
 </template>
 <script setup lang="ts">
@@ -60,8 +61,10 @@ onMounted(() => {
 watch(resizing, () => {
 	if (resizing.value) {
 		store.activeCanvas?.history.pause();
+		emit("resizing", true);
 	} else {
 		store.activeCanvas?.history.resume(true);
+		emit("resizing", false);
 	}
 });
 
@@ -82,34 +85,26 @@ const fontSize = computed(() => {
 
 const handleRightResize = (ev: MouseEvent) => {
 	const startX = ev.clientX;
+	const startHeight = props.target.offsetHeight;
 	const startWidth = props.target.offsetWidth;
-	const parentWidth = props.target.parentElement?.offsetWidth || 0;
-	const startFontSize = fontSize.value;
+	const blockStartWidth = props.targetBlock.getStyle("width") as string;
+	const blockStartHeight = props.targetBlock.getStyle("height") as string;
+	const startFontSize = fontSize.value || 0;
+
 	// to disable cursor jitter
 	const docCursor = document.body.style.cursor;
 	document.body.style.cursor = window.getComputedStyle(ev.target as HTMLElement).cursor;
 	resizing.value = true;
 	guides.showX();
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		// movement / scale * speed
 		const movement = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
-		const finalWidth = Math.abs(guides.getFinalWidth(startWidth + movement));
-		if (props.targetBlock.isText() && !props.targetBlock.hasChildren() && !mouseMoveEvent.shiftKey) {
-			const fontSize = clamp(Math.round(startFontSize + 0.5 * movement), 10, 150);
-			props.targetBlock.setStyle("fontSize", `${fontSize}px`);
+		if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
+			setFontSize(movement, startFontSize);
 			return mouseMoveEvent.preventDefault();
 		}
-
-		if (props.targetBlock.isSVG()) {
-			props.targetBlock.setStyle("width", `${finalWidth}px`);
-			props.targetBlock.setStyle("height", `${finalWidth}px`);
-		} else if (mouseMoveEvent.shiftKey) {
-			const movementPercent = (movement / parentWidth) * 100;
-			const startWidthPercent = (startWidth / parentWidth) * 100;
-			const finalWidth = Math.abs(Math.round(startWidthPercent + movementPercent));
-			props.targetBlock.setStyle("width", `${finalWidth}%`);
-		} else {
-			props.targetBlock.setStyle("width", `${finalWidth}px`);
+		setWidth(movement, startWidth, blockStartWidth);
+		if (mouseMoveEvent.shiftKey) {
+			setHeight(movement, startHeight, blockStartHeight);
 		}
 		mouseMoveEvent.preventDefault();
 	};
@@ -123,13 +118,16 @@ const handleRightResize = (ev: MouseEvent) => {
 			resizing.value = false;
 			guides.hideX();
 		},
-		{ once: true }
+		{ once: true },
 	);
 };
 
 const handleBottomResize = (ev: MouseEvent) => {
 	const startY = ev.clientY;
 	const startHeight = props.target.offsetHeight;
+	const startWidth = props.target.offsetWidth;
+	const blockStartWidth = props.targetBlock.getStyle("width") as string;
+	const blockStartHeight = props.targetBlock.getStyle("height") as string;
 	const startFontSize = fontSize.value || 0;
 
 	// to disable cursor jitter
@@ -140,21 +138,15 @@ const handleBottomResize = (ev: MouseEvent) => {
 
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
 		const movement = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
-		let finalHeight = Math.round(Math.abs(guides.getFinalHeight(startHeight + movement)));
 
-		if (props.targetBlock.isText() && !props.targetBlock.hasChildren() && !mouseMoveEvent.shiftKey) {
-			const fontSize = clamp(Math.round(startFontSize + 0.5 * movement), 10, 300);
-			props.targetBlock.setStyle("fontSize", `${fontSize}px`);
+		if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
+			setFontSize(movement, startFontSize);
 			return mouseMoveEvent.preventDefault();
 		}
-
-		if (props.targetBlock.isSVG()) {
-			props.targetBlock.setStyle("width", `${finalHeight}px`);
-			props.targetBlock.setStyle("height", `${finalHeight}px`);
-		} else {
-			props.targetBlock.setStyle("height", `${finalHeight}px`);
+		setHeight(movement, startHeight, blockStartHeight);
+		if (mouseMoveEvent.shiftKey) {
+			setWidth(movement, startWidth, blockStartWidth);
 		}
-
 		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);
@@ -167,7 +159,7 @@ const handleBottomResize = (ev: MouseEvent) => {
 			resizing.value = false;
 			guides.hideY();
 		},
-		{ once: true }
+		{ once: true },
 	);
 };
 
@@ -176,6 +168,8 @@ const handleBottomCornerResize = (ev: MouseEvent) => {
 	const startY = ev.clientY;
 	const startHeight = props.target.offsetHeight;
 	const startWidth = props.target.offsetWidth;
+	const blockStartWidth = props.targetBlock.getStyle("width") as string;
+	const blockStartHeight = props.targetBlock.getStyle("height") as string;
 	const startFontSize = fontSize.value || 0;
 
 	// to disable cursor jitter
@@ -185,24 +179,14 @@ const handleBottomCornerResize = (ev: MouseEvent) => {
 
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
 		const movementX = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
-		const finalWidth = Math.round(startWidth + movementX);
-
-		if (props.targetBlock.isText() && !props.targetBlock.hasChildren() && !mouseMoveEvent.shiftKey) {
-			const fontSize = clamp(Math.round(startFontSize + 0.5 * movementX), 10, 300);
-			props.targetBlock.setStyle("fontSize", `${fontSize}px`);
+		const movementY = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
+		if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
+			setFontSize(movementY, startFontSize);
 			return mouseMoveEvent.preventDefault();
 		}
-
-		if (mouseMoveEvent.shiftKey || props.targetBlock.isSVG()) {
-			props.targetBlock.setStyle("width", `${finalWidth}px`);
-			props.targetBlock.setStyle("height", `${finalWidth}px`);
-		} else {
-			props.targetBlock.setStyle("width", `${finalWidth}px`);
-			const movementY = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
-			const finalHeight = Math.round(startHeight + movementY);
-			props.targetBlock.setStyle("height", `${finalHeight}px`);
-			mouseMoveEvent.preventDefault();
-		}
+		setWidth(movementX, startWidth, blockStartWidth);
+		setHeight(mouseMoveEvent.shiftKey ? movementX : movementY, startHeight, blockStartHeight);
+		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);
 	document.addEventListener(
@@ -213,7 +197,38 @@ const handleBottomCornerResize = (ev: MouseEvent) => {
 			mouseUpEvent.preventDefault();
 			resizing.value = false;
 		},
-		{ once: true }
+		{ once: true },
 	);
+};
+
+const setWidth = (movementX: number, startWidth: number, blockStartWidth: string) => {
+	const finalWidth = Math.round(startWidth + movementX);
+	if (blockStartWidth?.includes("%")) {
+		const parentWidth = props.target.parentElement?.offsetWidth || 0;
+		const movementPercent = (movementX / parentWidth) * 100;
+		const startWidthPercent = (startWidth / parentWidth) * 100;
+		const finalWidthPercent = Math.abs(Math.round(startWidthPercent + movementPercent));
+		props.targetBlock.setStyle("width", `${finalWidthPercent}%`);
+	} else {
+		props.targetBlock.setStyle("width", `${finalWidth}px`);
+	}
+};
+
+const setHeight = (movementY: number, startHeight: number, blockStartHeight: string) => {
+	const finalHeight = Math.round(startHeight + movementY);
+	if (blockStartHeight?.includes("%")) {
+		const parentHeight = props.target.parentElement?.offsetHeight || 0;
+		const movementPercent = (movementY / parentHeight) * 100;
+		const startHeightPercent = (startHeight / parentHeight) * 100;
+		const finalHeightPercent = Math.abs(Math.round(startHeightPercent + movementPercent));
+		props.targetBlock.setStyle("height", `${finalHeightPercent}%`);
+	} else {
+		props.targetBlock.setStyle("height", `${finalHeight}px`);
+	}
+};
+
+const setFontSize = (movement: number, startFontSize: number) => {
+	const fontSize = clamp(Math.round(startFontSize + 0.5 * movement), 10, 300);
+	props.targetBlock.setStyle("fontSize", `${fontSize}px`);
 };
 </script>

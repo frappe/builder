@@ -88,10 +88,10 @@ function getRandomColor() {
 	return HSVToHex(Math.random() * 360, 25, 100);
 }
 
-async function confirm(message: string): Promise<boolean> {
+async function confirm(message: string, title: string = "Confirm"): Promise<boolean> {
 	return new Promise((resolve) => {
 		confirmDialog({
-			title: "Confirm",
+			title: title,
 			message: message,
 			onConfirm: ({ hideDialog }: { hideDialog: Function }) => {
 				resolve(true);
