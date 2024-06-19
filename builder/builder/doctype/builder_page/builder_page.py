@@ -219,25 +219,15 @@ class BuilderPage(WebsiteGenerator):
 		return page_data
 
 	def generate_page_preview_image(self, html=None):
-		file_name = f"{self.name}{frappe.generate_hash()}.jpeg"
+		file_name = f"{self.name}-preview.jpeg"
 		generate_preview(
 			html or get_response_content(self.route),
 			os.path.join(frappe.local.site_path, "public", "files", file_name),
 		)
-		with contextlib.suppress(frappe.DoesNotExistError):
-			attached_files = frappe.get_all(
-				"File",
-				{
-					"attached_to_field": "preview",
-					"attached_to_doctype": "Builder Page",
-					"attached_to_name": self.name,
-				},
-			)
-			for file in attached_files:
-				preview_file = frappe.get_doc("File", file.name)
-				preview_file.delete(ignore_permissions=True)
-
-		self.db_set("preview", f"/files/{file_name}", commit=True, update_modified=False)
+		random_hash = frappe.generate_hash(length=5)
+		self.db_set(
+			"preview", f"/files/{file_name}?v={random_hash}", commit=True, update_modified=False, notify=True
+		)
 
 
 def get_block_html(blocks):
