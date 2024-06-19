@@ -55,23 +55,20 @@
 				</router-link>
 			</div>
 		</div>
-		<div class="flex flex-wrap gap-6">
-			<div
-				v-if="!webPages.data?.length && !searchFilter && !typeFilter"
-				class="flex flex-col items-center justify-center">
-				<p class="mt-4 text-center text-base text-gray-500">
+		<div class="grid-col grid gap-6 auto-fill-[220px]">
+			<div v-if="!webPages.data?.length && !searchFilter && !typeFilter" class="col-span-full">
+				<p class="mt-4 text-base text-gray-500">
 					You don't have any pages yet. Click on the "+ New" button to create a new page.
 				</p>
 			</div>
-			<div v-else-if="!webPages.data?.length" class="flex flex-col items-center justify-center">
-				<p class="mt-4 text-center text-base text-gray-500">No matching pages found.</p>
+			<div v-else-if="!webPages.data?.length" class="col-span-full">
+				<p class="mt-4 text-base text-gray-500">No matching pages found.</p>
 			</div>
 			<router-link
 				v-if="displayType === 'grid'"
 				v-for="page in webPages.data"
 				:key="page.page_name"
-				:to="{ name: 'builder', params: { pageId: page.page_name } }"
-				class="max-w-[250px] flex-grow basis-52">
+				:to="{ name: 'builder', params: { pageId: page.page_name } }">
 				<div
 					class="group relative mr-2 w-full overflow-hidden rounded-md shadow hover:cursor-pointer dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
 					<img
@@ -124,7 +121,7 @@
 				v-if="displayType === 'list'"
 				:key="page.page_name"
 				:to="{ name: 'builder', params: { pageId: page.page_name } }"
-				class="h-fit w-full flex-grow">
+				class="col-span-full h-fit w-full flex-grow">
 				<div
 					class="group relative mr-2 flex w-full overflow-hidden rounded-md shadow hover:cursor-pointer dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
 					<img
@@ -238,7 +235,9 @@ watchDebounced(
 );
 
 const deletePage = async (page: BuilderPage) => {
-	const confirmed = await confirm(`Are you sure you want to delete Page: ${page.page_name}?`);
+	const confirmed = await confirm(
+		`Are you sure you want to delete page: ${page.page_title || page.page_name}?`,
+	);
 	if (confirmed) {
 		await webPages.delete.submit(page.name);
 	}

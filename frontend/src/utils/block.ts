@@ -234,7 +234,7 @@ class Block implements BlockOptions {
 	}
 	isText() {
 		return ["span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6", "label", "a"].includes(
-			this.getElement() as string
+			this.getElement() as string,
 		);
 	}
 	isContainer() {
@@ -327,6 +327,8 @@ class Block implements BlockOptions {
 				return "columns";
 			case this.isContainer() && this.isColumn():
 				return "credit-card";
+			case this.isGrid():
+				return "grid";
 			case this.isContainer():
 				return "square";
 			case this.isImage():
@@ -459,6 +461,34 @@ class Block implements BlockOptions {
 			return store.activeCanvas.findParentBlock(this.blockId);
 		} else {
 			return null;
+		}
+	}
+	selectParentBlock() {
+		const parentBlock = this.getParentBlock();
+		if (parentBlock) {
+			parentBlock.selectBlock();
+		}
+	}
+	getSiblingBlock(direction: "next" | "previous") {
+		const parentBlock = this.getParentBlock();
+		let sibling = null as Block | null;
+		if (parentBlock) {
+			const index = parentBlock.getChildIndex(this);
+			if (direction === "next") {
+				sibling = parentBlock.children[index + 1];
+			} else {
+				sibling = parentBlock.children[index - 1];
+			}
+			if (sibling) {
+				return sibling;
+			}
+		}
+		return null;
+	}
+	selectSiblingBlock(direction: "next" | "previous") {
+		const sibling = this.getSiblingBlock(direction);
+		if (sibling) {
+			sibling.selectBlock();
 		}
 	}
 	canHaveChildren(): boolean {
@@ -644,6 +674,9 @@ class Block implements BlockOptions {
 	isFlex() {
 		return this.getStyle("display") === "flex";
 	}
+	isGrid() {
+		return this.getStyle("display") === "grid";
+	}
 	isRow() {
 		return this.isFlex() && this.getStyle("flexDirection") === "row";
 	}
@@ -812,7 +845,7 @@ function extendWithComponent(
 	block: Block | BlockOptions,
 	extendedFromComponent: string | undefined,
 	componentChildren: Block[],
-	resetOverrides: boolean = true
+	resetOverrides: boolean = true,
 ) {
 	resetBlock(block, true, resetOverrides);
 	block.children?.forEach((child, index) => {
@@ -833,7 +866,7 @@ function resetWithComponent(
 	block: Block | BlockOptions,
 	extendedWithComponent: string,
 	componentChildren: Block[],
-	resetOverrides: boolean = true
+	resetOverrides: boolean = true,
 ) {
 	resetBlock(block, true, resetOverrides);
 	block.children?.splice(0, block.children.length);
@@ -855,7 +888,7 @@ function syncBlockWithComponent(
 	parentBlock: Block,
 	block: Block,
 	componentName: string,
-	componentChildren: Block[]
+	componentChildren: Block[],
 ) {
 	componentChildren.forEach((componentChild, index) => {
 		const blockExists = findComponentBlock(componentChild.blockId, parentBlock.children);
@@ -895,7 +928,7 @@ function findComponentBlock(blockId: string, blocks: Block[]): Block | null {
 function resetBlock(
 	block: Block | BlockOptions,
 	resetChildren: boolean = true,
-	resetOverrides: boolean = true
+	resetOverrides: boolean = true,
 ) {
 	block = markRaw(block);
 	block.blockId = block.generateId();

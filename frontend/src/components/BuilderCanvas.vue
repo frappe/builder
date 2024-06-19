@@ -75,7 +75,14 @@
 import webComponent from "@/data/webComponent";
 import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { addPxToNumber, getBlockCopy, getNumberFromPx } from "@/utils/helpers";
+import {
+	addPxToNumber,
+	getBlockCopy,
+	getBlockInstance,
+	getNumberFromPx,
+	isCtrlOrCmd,
+	isTargetEditable,
+} from "@/utils/helpers";
 import {
 	UseRefHistoryReturn,
 	clamp,
@@ -98,6 +105,7 @@ const canvas = ref(null);
 const showBlocks = ref(false);
 const overlay = ref(null);
 const isDirty = ref(false);
+let selectionTrail = [] as string[];
 
 const props = defineProps({
 	blockData: {
@@ -204,15 +212,23 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 				if (!parentBlock) return;
 
 				if (fileDoc.fileName.match(/\.(mp4|webm|ogg|mov)$/)) {
-					while (parentBlock && !parentBlock.canHaveChildren()) {
-						parentBlock = parentBlock.getParentBlock() as Block;
+					if (parentBlock.isVideo()) {
+						parentBlock.setAttribute("src", fileDoc.fileURL);
+					} else {
+						while (parentBlock && !parentBlock.canHaveChildren()) {
+							parentBlock = parentBlock.getParentBlock() as Block;
+						}
+						parentBlock.addChild(store.getVideoBlock(fileDoc.fileURL));
 					}
-					parentBlock.addChild(store.getVideoBlock(fileDoc.fileURL));
 					return;
 				}
 
 				if (parentBlock.isImage()) {
 					parentBlock.setAttribute("src", fileDoc.fileURL);
+				} else if (parentBlock.isSVG()) {
+					const imageBlock = store.getImageBlock(fileDoc.fileURL, fileDoc.fileName);
+					const parentParentBlock = parentBlock.getParentBlock();
+					parentParentBlock?.replaceChild(parentBlock, getBlockInstance(imageBlock));
 				} else if (parentBlock.isContainer() && ev.shiftKey) {
 					parentBlock.setStyle("background", `url(${fileDoc.fileURL})`);
 				} else {
@@ -293,7 +309,8 @@ function setEvents() {
 					let height = (mouseMoveEvent.clientY - initialY) / canvasProps.scale;
 					width = clamp(width, 0, parentWidth);
 					height = clamp(height, 0, parentHeight);
-					childBlock.setBaseStyle("width", addPxToNumber(width));
+					const setFullWidth = width === parentWidth;
+					childBlock.setBaseStyle("width", setFullWidth ? "100%" : addPxToNumber(width));
 					childBlock.setBaseStyle("height", addPxToNumber(height));
 				}
 			};
@@ -354,6 +371,72 @@ function setEvents() {
 			);
 			ev.stopPropagation();
 			ev.preventDefault();
+		}
+	});
+
+	useEventListener(document, "keydown", (ev: KeyboardEvent) => {
+		if (isTargetEditable(ev)) {
+			return;
+		}
+		if (ev.shiftKey && ev.key === "ArrowLeft") {
+			if (isCtrlOrCmd(ev)) {
+				if (selectedBlocks.value.length) {
+					const selectedBlock = selectedBlocks.value[0];
+					store.activeLayers?.toggleExpanded(selectedBlock);
+					return;
+				}
+			}
+			if (selectedBlocks.value.length) {
+				const selectedBlock = selectedBlocks.value[0];
+				const parentBlock = selectedBlock.getParentBlock();
+				if (parentBlock) {
+					selectionTrail.push(selectedBlock.blockId);
+					maintainTrail = true;
+					store.selectBlock(parentBlock, null, true, true);
+					maintainTrail = false;
+				}
+			}
+		}
+		if (ev.shiftKey && ev.key === "ArrowRight") {
+			const blockId = selectionTrail.pop();
+			if (blockId) {
+				const block = findBlock(blockId);
+				if (block) {
+					maintainTrail = true;
+					store.selectBlock(block, null, true, true);
+					maintainTrail = false;
+				}
+			} else {
+				if (selectedBlocks.value.length) {
+					const selectedBlock = selectedBlocks.value[0];
+					if (selectedBlock.children && selectedBlock.isVisible()) {
+						let child = selectedBlock.children[0];
+						while (child && !child.isVisible()) {
+							child = child.getSiblingBlock("next") as Block;
+							if (!child) {
+								break;
+							}
+						}
+						child && store.selectBlock(child, null, true, true);
+					}
+				}
+			}
+		}
+		if (ev.shiftKey && ev.key === "ArrowUp") {
+			if (selectedBlocks.value.length) {
+				let sibling = selectedBlocks.value[0].getSiblingBlock("previous");
+				if (sibling) {
+					store.selectBlock(sibling, null, true, true);
+				}
+			}
+		}
+		if (ev.shiftKey && ev.key === "ArrowDown") {
+			if (selectedBlocks.value.length) {
+				let sibling = selectedBlocks.value[0].getSiblingBlock("next");
+				if (sibling) {
+					store.selectBlock(sibling, null, true, true);
+				}
+			}
 		}
 	});
 }
@@ -495,11 +578,16 @@ const isSelected = (block: Block) => {
 	return selectedBlockIds.value.includes(block.blockId);
 };
 
+let maintainTrail = false;
+
 const selectBlock = (_block: Block, multiSelect = false) => {
 	if (multiSelect) {
 		selectedBlockIds.value.push(_block.blockId);
 	} else {
 		selectedBlockIds.value.splice(0, selectedBlockIds.value.length, _block.blockId);
+	}
+	if (!maintainTrail) {
+		selectionTrail = [];
 	}
 };
 
@@ -577,15 +665,20 @@ const scrollBlockIntoView = async (blockToFocus: Block) => {
 	// wait for editor to render
 	await new Promise((resolve) => setTimeout(resolve, 100));
 	await nextTick();
-	if (!canvasContainer.value || !canvas.value || blockToFocus.isRoot()) {
+	if (
+		!canvasContainer.value ||
+		!canvas.value ||
+		blockToFocus.isRoot() ||
+		!blockToFocus.isVisible() ||
+		blockToFocus.getParentBlock()?.isSVG()
+	) {
 		return;
 	}
 	const container = canvasContainer.value as HTMLElement;
 	const containerRect = container.getBoundingClientRect();
 	const selectedBlock = document.body.querySelector(
-		`.editor[data-block-id="${blockToFocus.blockId}"]`,
+		`.editor[data-block-id="${blockToFocus.blockId}"][selected=true]`,
 	) as HTMLElement;
-
 	if (!selectedBlock) {
 		return;
 	}
@@ -604,11 +697,22 @@ const scrollBlockIntoView = async (blockToFocus: Block) => {
 	let paddingBottom = 200;
 	const blockWidth = blockRect.width + padding * 2;
 	const containerBound = container.getBoundingClientRect();
+	const blockHeight = blockRect.height + padding + paddingBottom;
 
 	if (blockWidth > containerBound.width) {
 		const scaleX = containerBound.width / blockWidth;
 		if (scaleX < 1) {
 			canvasProps.scale = canvasProps.scale * scaleX;
+			await new Promise((resolve) => setTimeout(resolve, 100));
+			await nextTick();
+			blockRect.update();
+		}
+	}
+
+	if (blockHeight > containerBound.height) {
+		const scaleY = containerBound.height / blockHeight;
+		if (scaleY < 1) {
+			canvasProps.scale = canvasProps.scale * scaleY;
 			await new Promise((resolve) => setTimeout(resolve, 100));
 			await nextTick();
 			blockRect.update();
