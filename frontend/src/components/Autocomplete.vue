@@ -1,5 +1,5 @@
 <template>
-	<div>
+	<div class="relative">
 		<Combobox
 			:modelValue="value"
 			@update:modelValue="
@@ -11,7 +11,7 @@
 			:nullable="nullable"
 			:multiple="multiple">
 			<div
-				class="form-input flex h-7 w-full items-center justify-between gap-2 rounded px-2 py-1 pr-6 text-sm transition-colors dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700">
+				class="form-input flex h-7 w-full items-center justify-between gap-2 rounded px-2 py-1 pr-5 text-sm transition-colors dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700">
 				<!-- {{ displayValue }} -->
 				<ComboboxInput
 					autocomplete="off"
@@ -53,7 +53,7 @@
 			</ComboboxOptions>
 		</Combobox>
 		<div
-			class="absolute right-1 top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
+			class="absolute right-[1px] top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
 			@click="clearValue"
 			v-show="modelValue">
 			<CrossIcon />

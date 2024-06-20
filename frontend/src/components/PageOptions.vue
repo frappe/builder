@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<div class="flex flex-row flex-wrap gap-5">
+		<div class="flex flex-row flex-wrap gap-3">
 			<h3 class="mb-1 w-full text-sm font-medium text-gray-900 dark:text-zinc-300">Page Options</h3>
 			<InlineInput
 				label="Title"

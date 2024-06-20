@@ -17,14 +17,14 @@
 				<div v-for="component in components" :key="component.name" class="flex w-full">
 					<div class="component-container group relative flex w-full flex-col">
 						<div
-							class="relative flex translate-x-0 translate-y-0 cursor-pointer items-center justify-between overflow-hidden truncate rounded-md bg-white p-2 dark:bg-zinc-900"
+							class="relative flex translate-x-0 translate-y-0 cursor-pointer items-center justify-between overflow-hidden truncate rounded border border-transparent bg-white px-2 py-1.5 dark:bg-zinc-900"
 							draggable="true"
 							:class="{
-								'border border-gray-400 dark:border-zinc-600': store.editingComponent === component.name,
+								'!border-gray-400 dark:!border-zinc-600': store.editingComponent === component.name,
 							}"
 							@click="store.selectComponent(component.name)"
 							@dragstart="(ev) => setData(ev, component)">
-							<div class="flex gap-2">
+							<div class="flex items-center gap-2">
 								<FeatherIcon :name="'box'" class="h-4 w-4 text-gray-800 dark:text-zinc-400"></FeatherIcon>
 								<p class="text-xs text-gray-800 dark:text-zinc-400">
 									{{ component.component_name }}

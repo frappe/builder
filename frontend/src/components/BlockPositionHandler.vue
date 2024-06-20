@@ -13,18 +13,20 @@
 				{ label: 'Sticky', value: 'sticky' },
 			]"></OptionToggle>
 		<div class="grid-rows grid grid-cols-3 gap-4" v-if="showHandler">
-			<Input
-				type="text"
-				placeholder="top"
-				:modelValue="blockController.getStyle('top') as string"
-				@update:modelValue="(value: string) => blockController.setStyle('top', value)"
-				class="col-span-1 col-start-2 h-8 w-16 self-end justify-self-center rounded-md text-center text-xs text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
-			<Input
-				type="text"
-				placeholder="left"
-				:modelValue="blockController.getStyle('left') as string"
-				@update:modelValue="(value: string) => blockController.setStyle('left', value)"
-				class="col-span-1 col-start-1 h-8 w-16 self-center justify-self-end rounded-md text-center text-xs text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
+			<div class="col-span-1 col-start-2 w-16 self-center">
+				<Input
+					type="text"
+					placeholder="top"
+					:modelValue="blockController.getStyle('top') as string"
+					@update:modelValue="(value: string) => blockController.setStyle('top', value)" />
+			</div>
+			<div class="col-span-1 col-start-1 w-16 self-center">
+				<Input
+					type="text"
+					placeholder="left"
+					:modelValue="blockController.getStyle('left') as string"
+					@update:modelValue="(value: string) => blockController.setStyle('left', value)" />
+			</div>
 			<div
 				class="grid-col-3 grid h-16 w-16 grid-rows-3 gap-1 self-center justify-self-center rounded bg-gray-50 p-2 dark:bg-zinc-800">
 				<div
@@ -38,18 +40,20 @@
 				<div
 					class="col-span-1 col-start-3 row-start-2 h-[2px] w-2 self-center justify-self-center rounded bg-gray-400 dark:bg-zinc-900"></div>
 			</div>
-			<Input
-				type="text"
-				placeholder="right"
-				:modelValue="blockController.getStyle('right') as string"
-				@update:modelValue="(value: string) => blockController.setStyle('right', value)"
-				class="col-span-1 col-start-3 h-8 w-16 self-center justify-self-start rounded-md text-center text-xs text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
-			<Input
-				type="text"
-				placeholder="bottom"
-				:modelValue="blockController.getStyle('bottom') as string"
-				@update:modelValue="(value: string) => blockController.setStyle('bottom', value)"
-				class="col-span-1 col-start-2 h-8 w-16 self-start justify-self-center rounded-md text-center text-xs text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
+			<div class="col-span-1 col-start-3 w-16 self-center">
+				<Input
+					type="text"
+					placeholder="right"
+					:modelValue="blockController.getStyle('right') as string"
+					@update:modelValue="(value: string) => blockController.setStyle('right', value)" />
+			</div>
+			<div class="col-span-1 col-start-2 w-16 self-center">
+				<Input
+					type="text"
+					placeholder="bottom"
+					:modelValue="blockController.getStyle('bottom') as string"
+					@update:modelValue="(value: string) => blockController.setStyle('bottom', value)" />
+			</div>
 		</div>
 	</div>
 </template>

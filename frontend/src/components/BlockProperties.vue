@@ -11,12 +11,6 @@
 						store.propertyFilter = value;
 					}
 				" />
-			<div
-				class="absolute right-1 top-[15px] z-20 cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
-				@click="store.propertyFilter = ''"
-				v-show="store.propertyFilter">
-				<CrossIcon />
-			</div>
 		</div>
 		<div class="flex flex-col gap-3">
 			<CollapsibleSection :sectionName="section.name" v-for="section in filteredSections">
@@ -47,7 +41,6 @@ import CodeEditor from "./CodeEditor.vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
 import ColorInput from "./ColorInput.vue";
 import DimensionInput from "./DimensionInput.vue";
-import CrossIcon from "./Icons/Cross.vue";
 import InlineInput from "./InlineInput.vue";
 import Input from "./Input.vue";
 import ObjectEditor from "./ObjectEditor.vue";
