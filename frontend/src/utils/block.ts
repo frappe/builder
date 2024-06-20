@@ -223,6 +223,9 @@ class Block implements BlockOptions {
 	isVideo() {
 		return this.getElement() === "video" || this.getInnerHTML()?.startsWith("<video");
 	}
+	isForm() {
+		return this.getElement() === "form";
+	}
 	isButton() {
 		return this.getElement() === "button";
 	}
@@ -335,7 +338,8 @@ class Block implements BlockOptions {
 				return "image";
 			case this.isVideo():
 				return "film";
-
+			case this.isForm():
+				return "file-text";
 			default:
 				return "square";
 		}
