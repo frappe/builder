@@ -13,7 +13,7 @@
 							:data-block-layer-id="element.blockId"
 							:title="element.blockId"
 							@contextmenu.prevent.stop="onContextMenu"
-							class="min-w-24 cursor-pointer rounded border border-transparent bg-white pl-2 pr-[2px] text-base text-gray-700 dark:bg-zinc-900 dark:text-gray-500"
+							class="min-w-24 cursor-pointer rounded border border-transparent bg-white pl-2 pr-[2px] text-sm text-gray-700 dark:bg-zinc-900 dark:text-gray-500"
 							@click.stop="
 								store.activeCanvas?.history.pause();
 								store.selectBlock(element, $event, false, true);
@@ -22,18 +22,18 @@
 							@mouseover.stop="store.hoveredBlock = element.blockId"
 							@mouseleave.stop="store.hoveredBlock = null">
 							<span
-								class="group my-[6px] flex items-center font-medium"
+								class="group my-[7px] flex items-center gap-1.5 font-medium"
 								:class="{
 									'!opacity-50': !element.isVisible(),
 								}">
 								<FeatherIcon
 									:name="isExpanded(element) ? 'chevron-down' : 'chevron-right'"
-									class="mr-1 h-3 w-3"
+									class="h-3 w-3"
 									v-if="element.children && element.children.length && !element.isRoot()"
 									@click.stop="toggleExpanded(element)" />
 								<FeatherIcon
 									:name="element.getIcon()"
-									class="mr-1 h-3 w-3"
+									class="h-3 w-3"
 									:class="{
 										'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
 											element.isExtendedFromComponent(),
