@@ -3,22 +3,14 @@
 		<div class="sticky top-9 z-50 mt-[-15px] flex w-full bg-white py-3 dark:bg-zinc-900">
 			<Input
 				ref="searchInput"
-				class="properties-search-input h-7 w-full rounded-md text-sm text-gray-800 hover:border-gray-400 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
 				type="text"
 				placeholder="Search properties"
-				inputClass="w-full"
 				v-model="store.propertyFilter"
 				@input="
-					(value: string) => {
+					(value) => {
 						store.propertyFilter = value;
 					}
 				" />
-			<div
-				class="absolute right-1 top-[15px] z-20 cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
-				@click="store.propertyFilter = ''"
-				v-show="store.propertyFilter">
-				<CrossIcon />
-			</div>
 		</div>
 		<div class="flex flex-col gap-3">
 			<CollapsibleSection :sectionName="section.name" v-for="section in filteredSections">
@@ -49,8 +41,8 @@ import CodeEditor from "./CodeEditor.vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
 import ColorInput from "./ColorInput.vue";
 import DimensionInput from "./DimensionInput.vue";
-import CrossIcon from "./Icons/Cross.vue";
 import InlineInput from "./InlineInput.vue";
+import Input from "./Input.vue";
 import ObjectEditor from "./ObjectEditor.vue";
 import OptionToggle from "./OptionToggle.vue";
 
@@ -429,7 +421,7 @@ const styleSectionProperties = [
 		component: InlineInput,
 		getProps: () => {
 			return {
-				label: "Border Radius",
+				label: "Radius",
 				modelValue: blockController.getStyle("borderRadius"),
 				enableSlider: true,
 				unitOptions: ["px", "%"],
