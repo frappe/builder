@@ -36,13 +36,14 @@
    "fieldname": "component_id",
    "fieldtype": "Data",
    "label": "Component ID",
+   "no_copy": 1,
    "read_only": 1,
    "unique": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-08-27 11:56:45.322261",
+ "modified": "2024-06-20 08:16:29.611058",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Component",
