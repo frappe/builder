@@ -75,7 +75,6 @@
 						@update:modelValue="
 							(val) => {
 								store.editableBlock?.setInnerHTML(val);
-								store.editableBlock = null;
 							}
 						"
 						required />
