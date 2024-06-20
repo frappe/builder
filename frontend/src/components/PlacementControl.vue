@@ -1,8 +1,6 @@
 <template>
 	<div class="items-top relative flex justify-between">
-		<span class="flex items-center text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
-			Placement
-		</span>
+		<InputLabel class="items-center">Placement</InputLabel>
 		<div class="relative h-fit w-fit">
 			<div class="group grid grid-cols-3 rounded-sm bg-gray-200 p-1.5 dark:bg-zinc-800">
 				<div
@@ -86,6 +84,7 @@
 <script setup lang="ts">
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
+import InputLabel from "./InputLabel.vue";
 
 const placementOptions = [
 	"top-left",

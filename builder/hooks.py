@@ -1,5 +1,6 @@
-from . import __version__ as app_version
 import frappe
+
+from . import __version__ as app_version
 
 app_name = "builder"
 app_title = "Frappe Builder"
@@ -56,8 +57,8 @@ website_generators = ["Builder Page"]
 
 # add methods and filters to jinja environment
 # jinja = {
-#	"methods": "builder.utils.jinja_methods",
-#	"filters": "builder.utils.jinja_filters"
+# "methods": "builder.utils.jinja_methods",
+# "filters": "builder.utils.jinja_filters"
 # }
 
 # Installation
@@ -83,11 +84,11 @@ after_install = "builder.install.after_install"
 # Permissions evaluated in scripted ways
 
 # permission_query_conditions = {
-#	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
+# "Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
 # }
 #
 # has_permission = {
-#	"Event": "frappe.desk.doctype.event.event.has_permission",
+# "Event": "frappe.desk.doctype.event.event.has_permission",
 # }
 
 # DocType Class
@@ -95,7 +96,7 @@ after_install = "builder.install.after_install"
 # Override standard doctype classes
 
 # override_doctype_class = {
-#	"ToDo": "custom_app.overrides.CustomToDo"
+# "ToDo": "custom_app.overrides.CustomToDo"
 # }
 
 # Document Events
@@ -103,32 +104,32 @@ after_install = "builder.install.after_install"
 # Hook on document methods and events
 
 # doc_events = {
-#	"*": {
-#		"on_update": "method",
-#		"on_cancel": "method",
-#		"on_trash": "method"
-#	}
+# "*": {
+# "on_update": "method",
+# "on_cancel": "method",
+# "on_trash": "method"
+# }
 # }
 
 # Scheduled Tasks
 # ---------------
 
 # scheduler_events = {
-#	"all": [
-#		"builder.tasks.all"
-#	],
-#	"daily": [
-#		"builder.tasks.daily"
-#	],
-#	"hourly": [
-#		"builder.tasks.hourly"
-#	],
-#	"weekly": [
-#		"builder.tasks.weekly"
-#	],
-#	"monthly": [
-#		"builder.tasks.monthly"
-#	],
+# "all": [
+# "builder.tasks.all"
+# ],
+# "daily": [
+# "builder.tasks.daily"
+# ],
+# "hourly": [
+# "builder.tasks.hourly"
+# ],
+# "weekly": [
+# "builder.tasks.weekly"
+# ],
+# "monthly": [
+# "builder.tasks.monthly"
+# ],
 # }
 
 # Testing
@@ -140,14 +141,14 @@ after_install = "builder.install.after_install"
 # ------------------------------
 #
 # override_whitelisted_methods = {
-#	"frappe.desk.doctype.event.event.get_events": "builder.event.get_events"
+# "frappe.desk.doctype.event.event.get_events": "builder.event.get_events"
 # }
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
 # override_doctype_dashboards = {
-#	"Task": "builder.task.get_dashboard_data"
+# "Task": "builder.task.get_dashboard_data"
 # }
 
 # exempt linked doctypes from being automatically cancelled
@@ -164,42 +165,46 @@ after_install = "builder.install.after_install"
 # --------------------
 
 # user_data_fields = [
-#	{
-#		"doctype": "{doctype_1}",
-#		"filter_by": "{filter_by}",
-#		"redact_fields": ["{field_1}", "{field_2}"],
-#		"partial": 1,
-#	},
-#	{
-#		"doctype": "{doctype_2}",
-#		"filter_by": "{filter_by}",
-#		"partial": 1,
-#	},
-#	{
-#		"doctype": "{doctype_3}",
-#		"strict": False,
-#	},
-#	{
-#		"doctype": "{doctype_4}"
-#	}
+# {
+# "doctype": "{doctype_1}",
+# "filter_by": "{filter_by}",
+# "redact_fields": ["{field_1}", "{field_2}"],
+# "partial": 1,
+# },
+# {
+# "doctype": "{doctype_2}",
+# "filter_by": "{filter_by}",
+# "partial": 1,
+# },
+# {
+# "doctype": "{doctype_3}",
+# "strict": False,
+# },
+# {
+# "doctype": "{doctype_4}"
+# }
 # ]
 
 # Authentication and authorization
 # --------------------------------
 
 # auth_hooks = [
-#	"builder.auth.validate"
+# "builder.auth.validate"
 # ]
 
 builder_path = frappe.conf.builder_path or "builder"
 website_route_rules = [
-	{"from_route": f"/{builder_path}/<path:app_path>", "to_route": f"_builder"},
-	{"from_route": f"/{builder_path}", "to_route": f"_builder"},
+	{"from_route": f"/{builder_path}/<path:app_path>", "to_route": "_builder"},
+	{"from_route": f"/{builder_path}", "to_route": "_builder"},
 ]
 
 website_path_resolver = "builder.builder.doctype.builder_page.builder_page.resolve_path"
 page_renderer = "builder.builder.doctype.builder_page.builder_page.BuilderPageRenderer"
 
-get_web_pages_with_dynamic_routes = "builder.builder.doctype.builder_page.builder_page.get_web_pages_with_dynamic_routes"
+get_web_pages_with_dynamic_routes = (
+	"builder.builder.doctype.builder_page.builder_page.get_web_pages_with_dynamic_routes"
+)
 
-get_website_user_home_page = "builder.builder.doctype.builder_settings.builder_settings.get_website_user_home_page"
+get_website_user_home_page = (
+	"builder.builder.doctype.builder_settings.builder_settings.get_website_user_home_page"
+)
