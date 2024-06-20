@@ -22,7 +22,7 @@
 					class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-900"></TabButtons>
 				<div class="relative flex">
 					<Input
-						class="w-44"
+						class="w-44 [&>div>input]:dark:bg-zinc-900"
 						type="text"
 						placeholder="Filter by title or route"
 						v-model="searchFilter"
@@ -32,16 +32,10 @@
 								searchFilter = value;
 							}
 						" />
-					<div
-						class="absolute right-1 top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
-						@click="searchFilter = ''"
-						v-show="searchFilter">
-						<CrossIcon />
-					</div>
 				</div>
 				<Input
 					type="select"
-					class="w-36"
+					class="w-36 [&>div>select]:dark:bg-zinc-900"
 					v-model="typeFilter"
 					:options="[
 						{ label: 'All', value: '' },
@@ -189,7 +183,6 @@
 	</section>
 </template>
 <script setup lang="ts">
-import CrossIcon from "@/components/Icons/Cross.vue";
 import Input from "@/components/Input.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";

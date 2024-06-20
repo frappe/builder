@@ -1,5 +1,5 @@
 <template>
-	<div class="relative flex items-center justify-between [&>div>input]:!bg-red-600 [&>div>input]:pr-6">
+	<div class="flex items-center justify-between [&>div>input]:!bg-red-600 [&>div>input]:pr-6">
 		<InputLabel
 			:class="{
 				'cursor-ns-resize': enableSlider,
@@ -23,20 +23,12 @@
 			:options="inputOptions"
 			@update:modelValue="handleChange"
 			class="w-full [&>div>select]:text-sm [&>div>select]:text-gray-800 [&>div>select]:dark:border-zinc-700 [&>div>select]:dark:bg-zinc-800 [&>div>select]:dark:text-zinc-200 [&>div>select]:dark:focus:bg-zinc-700" />
-		<div
-			class="absolute right-1 top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
-			@click="clearValue"
-			v-if="!['autocomplete', 'select', 'checkbox'].includes(type)"
-			v-show="modelValue">
-			<CrossIcon />
-		</div>
 	</div>
 </template>
 <script setup lang="ts">
 import { isNumber } from "@tiptap/vue-3";
 import { PropType, computed } from "vue";
 import Autocomplete from "./Autocomplete.vue";
-import CrossIcon from "./Icons/Cross.vue";
 import Input from "./Input.vue";
 import InputLabel from "./InputLabel.vue";
 
@@ -49,6 +41,7 @@ const props = defineProps({
 		type: String,
 		default: "",
 	},
+	description: {},
 	type: {
 		type: String,
 		default: "text",
@@ -155,6 +148,4 @@ const incrementOrDecrement = (step: number, initialValue: null | number = null) 
 	}
 	handleChange(newValue + "" + unit);
 };
-
-const clearValue = () => emit("update:modelValue", null);
 </script>
