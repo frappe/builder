@@ -13,9 +13,8 @@
 			:modelValue="modelValue"
 			:options="inputOptions"
 			v-if="type != 'autocomplete'"
-			@mousedown="handleMouseDown"
 			@update:modelValue="handleChange"
-			@keydown="handleKeyDown" />
+			@keydown.stop="handleKeyDown" />
 		<Autocomplete
 			v-if="type == 'autocomplete'"
 			placeholder="unset"
