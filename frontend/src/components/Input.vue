@@ -6,10 +6,11 @@
 			:class="{
 				'text-sm [&>div>input]:pr-5': !['select', 'checkbox'].includes(type),
 			}"
-			@input="($event: Event) => emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+			@change="($event: Event) => emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+			@input="($event: Event) => emit('input', ($event.target as HTMLInputElement).value)"
 			autocomplete="off"
 			v-bind="attrs"
-			v-model="data"></FormControl>
+			:modelValue="data"></FormControl>
 		<div
 			class="absolute right-[1px] top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
 			@click="clearValue"
