@@ -24,10 +24,15 @@
 			}"
 			v-model="showDialog">
 			<template #body-content>
-				<Input type="text" v-model="componentProperties.componentName" label="Component Name" required />
+				<Input
+					type="text"
+					v-model="componentProperties.componentName"
+					label="Component Name"
+					required
+					class="[&>div>input]:dark:bg-zinc-900 [&>label]:dark:text-zinc-300" />
 				<div class="mt-3">
 					<Input
-						class="text-sm [&>span]:!text-sm"
+						class="text-sm [&>label]:dark:text-zinc-300 [&>span]:!text-sm"
 						type="checkbox"
 						v-model="componentProperties.isGlobalComponent"
 						label="Global Component" />
