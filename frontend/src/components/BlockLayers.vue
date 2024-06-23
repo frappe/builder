@@ -13,7 +13,7 @@
 							:data-block-layer-id="element.blockId"
 							:title="element.blockId"
 							@contextmenu.prevent.stop="onContextMenu"
-							class="min-w-24 cursor-pointer rounded border border-transparent bg-white pl-2 pr-[2px] text-sm text-gray-700 dark:bg-zinc-900 dark:text-gray-500"
+							class="min-w-24 cursor-pointer overflow-hidden rounded border border-transparent bg-white text-sm text-gray-700 dark:bg-zinc-900 dark:text-gray-500"
 							@click.stop="
 								store.activeCanvas?.history.pause();
 								store.selectBlock(element, $event, false, true);
@@ -22,7 +22,8 @@
 							@mouseover.stop="store.hoveredBlock = element.blockId"
 							@mouseleave.stop="store.hoveredBlock = null">
 							<span
-								class="group my-[7px] flex items-center gap-1.5 font-medium"
+								class="group my-[7px] flex items-center gap-1.5 pr-[2px] font-medium"
+								:style="{ paddingLeft: `${indent * 10}px` }"
 								:class="{
 									'!opacity-50': !element.isVisible(),
 								}">
@@ -77,7 +78,7 @@
 									element.isVisible() &&
 									(element.canHaveChildren() || element.hasChildren())
 								">
-								<BlockLayers :blocks="element.children" class="ml-3" ref="childLayer" />
+								<BlockLayers :blocks="element.children" ref="childLayer" :indent="childIndent" />
 							</div>
 						</div>
 					</BlockContextMenu>
@@ -104,11 +105,17 @@ const props = defineProps({
 		type: Array as PropType<Block[]>,
 		default: () => [],
 	},
+	indent: {
+		type: Number,
+		default: 1,
+	},
 });
 
 interface LayerBlock extends Block {
 	editable: boolean;
 }
+
+const childIndent = props.indent + 1;
 
 const setBlockName = (ev: Event, block: LayerBlock) => {
 	const target = ev.target as HTMLElement;
@@ -161,9 +168,9 @@ defineExpose({
 </script>
 <style>
 .hovered-block {
-	@apply border-blue-300 text-gray-700 dark:border-blue-800 dark:text-gray-500;
+	@apply border-blue-300 text-gray-700 dark:border-blue-900 dark:text-gray-500;
 }
 .block-selected {
-	@apply border-blue-400 text-gray-900 dark:border-blue-600 dark:text-gray-200;
+	@apply border-blue-400 text-gray-900 dark:border-blue-700 dark:text-gray-200;
 }
 </style>
