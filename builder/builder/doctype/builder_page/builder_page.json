@@ -65,8 +65,9 @@
   },
   {
    "fieldname": "preview",
-   "fieldtype": "Attach Image",
+   "fieldtype": "Data",
    "label": "Page Preview",
+   "options": "URL",
    "read_only": 1
   },
   {
@@ -173,7 +174,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-05-20 12:46:36.028495",
+ "modified": "2024-06-19 13:14:20.308173",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

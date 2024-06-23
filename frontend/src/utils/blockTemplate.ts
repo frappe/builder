@@ -8,7 +8,7 @@ function getBlockTemplate(
 		| "fit-container"
 		| "fallback-component"
 		| "repeater"
-		| "video"
+		| "video",
 ): BlockOptions {
 	switch (type) {
 		case "html":
@@ -51,6 +51,8 @@ function getBlockTemplate(
 				baseStyles: {
 					display: "flex",
 					flexDirection: "column",
+					flexShrink: 0,
+					overflow: "hidden",
 				} as BlockStyleMap,
 			};
 		case "body":
@@ -61,6 +63,7 @@ function getBlockTemplate(
 				baseStyles: {
 					display: "flex",
 					flexWrap: "wrap",
+					flexShrink: 0,
 					flexDirection: "column",
 					alignItems: "center",
 				} as BlockStyleMap,
@@ -75,8 +78,10 @@ function getBlockTemplate(
 				baseStyles: {
 					display: "flex",
 					flexDirection: "column",
+					flexShrink: 0,
 					height: "fit-content",
 					width: "fit-content",
+					overflow: "hidden",
 				} as BlockStyleMap,
 			};
 		case "fallback-component":
@@ -99,7 +104,9 @@ function getBlockTemplate(
 					display: "flex",
 					flexDirection: "column",
 					width: "100%",
+					flexShrink: 0,
 					minHeight: "300px",
+					overflow: "hidden",
 				} as BlockStyleMap,
 				isRepeaterBlock: true,
 			};

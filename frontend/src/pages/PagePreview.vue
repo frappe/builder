@@ -145,6 +145,9 @@ watchEffect(() => {
 			previewWindow.value?.contentWindow?.document.addEventListener("mouseup", (ev) => {
 				document.dispatchEvent(new MouseEvent("mouseup", ev));
 			});
+			previewWindow.value?.contentWindow?.document.addEventListener("mousemove", (ev) => {
+				document.dispatchEvent(new MouseEvent("mousemove", ev));
+			});
 		});
 	}
 });
@@ -166,7 +169,7 @@ const setPreviewURL = () => {
 		...store.routeVariables,
 	};
 	previewRoute.value = `/api/method/builder.builder.doctype.builder_page.builder_page.get_page_preview_html?${Object.entries(
-		queryParams
+		queryParams,
 	)
 		.map(([key, value]) => `${key}=${value}`)
 		.join("&")}`;
@@ -177,6 +180,6 @@ watch(
 	() => {
 		setPreviewURL();
 	},
-	{ immediate: true }
+	{ immediate: true },
 );
 </script>

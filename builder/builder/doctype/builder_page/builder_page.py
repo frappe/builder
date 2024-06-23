@@ -82,6 +82,8 @@ class BuilderPage(WebsiteGenerator):
 			self.flags.skip_preview = True
 		else:
 			self.preview = "/assets/builder/images/fallback.png"
+		if not self.page_title:
+			self.page_title = "My Page"
 		self.route = (
 			f"pages/{camel_case_to_kebab_case(self.page_title, True)}-{frappe.generate_hash(length=4)}"
 		)
@@ -252,19 +254,6 @@ class BuilderPage(WebsiteGenerator):
 			html or get_response_content(self.route),
 			local_path,
 		)
-		with contextlib.suppress(frappe.DoesNotExistError):
-			attached_files = frappe.get_all(
-				"File",
-				{
-					"attached_to_field": "preview",
-					"attached_to_doctype": "Builder Page",
-					"attached_to_name": self.name,
-				},
-			)
-			for _file in attached_files:
-				preview_file = frappe.get_doc("File", _file.name)
-				preview_file.delete(ignore_permissions=True)
-
 		self.db_set("preview", public_path, commit=True, update_modified=False)
 
 
@@ -399,6 +388,8 @@ def get_class(class_list):
 
 
 def camel_case_to_kebab_case(text, remove_spaces=False):
+	if not text:
+		return ""
 	text = re.sub(r"(?<!^)(?=[A-Z])", "-", text).lower()
 	if remove_spaces:
 		text = text.replace(" ", "")
@@ -512,6 +503,14 @@ def set_dynamic_content_placeholder(block, data_key=False):
 	block_data_key = block.get("dataKey")
 	if block_data_key and block_data_key.get("key"):
 		key = f"{data_key}.{block_data_key.get('key')}" if data_key else block_data_key.get("key")
+		if data_key:
+			# convert a.b to (a or {}).get('b', {})
+			# to avoid undefined error in jinja
+			keys = key.split(".")
+			key = f"({keys[0]} or {{}})"
+			for k in keys[1:]:
+				key = f"{key}.get('{k}', {{}})"
+
 		_property = block_data_key.get("property")
 		_type = block_data_key.get("type")
 		if _type == "attribute":
@@ -677,9 +676,10 @@ def get_builder_page_preview_paths(page_doc):
 		)
 		public_path = f"/builder_assets/{page_doc.name}/preview.jpeg"
 	else:
-		file_name = f"{page_doc.name}{frappe.generate_hash()}.jpeg"
+		file_name = f"{page_doc.name}-preview.jpeg"
 		local_path = os.path.join(frappe.local.site_path, "public", "files", file_name)
-		public_path = f"/files/{file_name}"
+		random_hash = frappe.generate_hash(length=5)
+		public_path = f"/files/{file_name}?v={random_hash}"
 	return public_path, local_path
 
 

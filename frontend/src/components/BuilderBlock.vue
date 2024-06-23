@@ -1,6 +1,7 @@
 <template>
 	<component
 		:is="getComponentName(block)"
+		:selected="isSelected"
 		@click="handleClick"
 		@dblclick="handleDoubleClick"
 		@contextmenu="triggerContextMenu($event)"
@@ -74,6 +75,10 @@ const props = defineProps({
 		type: Object,
 		default: null,
 	},
+});
+
+defineOptions({
+	inheritAttrs: false,
 });
 
 const draggable = computed(() => {

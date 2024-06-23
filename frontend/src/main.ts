@@ -1,4 +1,4 @@
-import { Button, Dialog, FeatherIcon, FormControl, FrappeUI, Input } from "frappe-ui";
+import { Button, Dialog, FeatherIcon, FormControl, FrappeUI } from "frappe-ui";
 import { createPinia } from "pinia";
 import { createApp } from "vue";
 import "./index.css";
@@ -18,7 +18,6 @@ app.use(pinia);
 window.name = "frappe-builder";
 
 app.component("Button", Button);
-app.component("Input", Input);
 app.component("FormControl", FormControl);
 app.component("Dialog", Dialog);
 

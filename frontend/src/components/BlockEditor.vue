@@ -3,6 +3,7 @@
 		<div
 			class="editor pointer-events-none fixed z-[18] box-content select-none ring-2 ring-inset"
 			ref="editor"
+			:selected="isBlockSelected"
 			@click.stop="handleClick"
 			@dblclick="handleDoubleClick"
 			@mousedown.prevent="handleMove"
@@ -46,6 +47,7 @@
 					!block.isHTML() &&
 					!block.isSVG() &&
 					!editable &&
+					!resizing &&
 					!blockController.multipleBlocksSelected()
 				"
 				:target-block="block"

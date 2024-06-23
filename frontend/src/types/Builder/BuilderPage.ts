@@ -33,7 +33,7 @@ export interface BuilderPage{
 	page_data_script?: string
 	/**	Client Scripts : Table MultiSelect - Builder Page Client Script	*/
 	client_scripts?: BuilderPageClientScript[]
-	/**	Page Preview : Attach Image	*/
+	/**	Page Preview : Data	*/
 	preview?: string
 	/**	Favicon : Attach Image - An icon file with .ico extension. Should be 16 x 16 px.
 You can generate using favicon-generator.org	*/

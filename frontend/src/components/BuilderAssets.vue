@@ -3,10 +3,8 @@
 		<CollapsibleSection :sectionName="'Components'">
 			<div v-show="components.length > 10 || filter">
 				<Input
-					class="h-7 rounded-md text-sm text-gray-800 hover:border-gray-400 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
 					type="text"
 					placeholder="Search component"
-					inputClass="w-full"
 					v-model="filter"
 					@input="
 						(value: string) => {
@@ -19,22 +17,22 @@
 				<div v-for="component in components" :key="component.name" class="flex w-full">
 					<div class="component-container group relative flex w-full flex-col">
 						<div
-							class="relative flex translate-x-0 translate-y-0 cursor-pointer items-center justify-between overflow-hidden truncate rounded-md bg-white p-2 dark:bg-zinc-900"
+							class="relative flex translate-x-0 translate-y-0 cursor-pointer items-center justify-between overflow-hidden truncate rounded border border-transparent bg-white px-2 py-1.5 dark:bg-zinc-900"
 							draggable="true"
 							:class="{
-								'border border-gray-400 dark:border-zinc-600': store.editingComponent === component.name,
+								'!border-gray-400 dark:!border-zinc-600': store.editingComponent === component.name,
 							}"
 							@click="store.selectComponent(component.name)"
 							@dragstart="(ev) => setData(ev, component)">
-							<div class="flex gap-2">
+							<div class="flex items-center gap-2">
 								<FeatherIcon :name="'box'" class="h-4 w-4 text-gray-800 dark:text-zinc-400"></FeatherIcon>
 								<p class="text-xs text-gray-800 dark:text-zinc-400">
 									{{ component.component_name }}
 								</p>
 							</div>
 							<FeatherIcon
-								name="x"
-								class="hidden h-4 w-4 cursor-pointer text-gray-800 group-hover:block dark:text-zinc-400"
+								name="trash"
+								class="hidden h-3 w-3 cursor-pointer text-gray-800 group-hover:block dark:text-zinc-400"
 								@click.stop.prevent="deleteComponent(component)"></FeatherIcon>
 						</div>
 					</div>
@@ -50,6 +48,7 @@ import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import { confirm } from "@/utils/helpers";
 import { computed, ref } from "vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
+import Input from "./Input.vue";
 
 const store = useStore();
 const filter = ref("");
