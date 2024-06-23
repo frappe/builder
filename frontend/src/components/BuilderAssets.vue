@@ -31,8 +31,8 @@
 								</p>
 							</div>
 							<FeatherIcon
-								name="x"
-								class="hidden h-4 w-4 cursor-pointer text-gray-800 group-hover:block dark:text-zinc-400"
+								name="trash"
+								class="hidden h-3 w-3 cursor-pointer text-gray-800 group-hover:block dark:text-zinc-400"
 								@click.stop.prevent="deleteComponent(component)"></FeatherIcon>
 						</div>
 					</div>
