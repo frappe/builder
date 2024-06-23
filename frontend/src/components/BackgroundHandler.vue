@@ -2,16 +2,14 @@
 	<Popover transition="default" placement="left" class="!block w-full" popoverClass="!min-w-fit !mr-[30px]">
 		<template #target="{ togglePopover, isOpen }">
 			<div class="flex items-center justify-between">
-				<span class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400">
-					BG Image
-				</span>
-				<div class="relative w-[150px]">
+				<InputLabel>BG Image</InputLabel>
+				<div class="relative w-full">
 					<div>
 						<Input
+							class="[&>div>input]:pl-8"
 							type="text"
-							class="rounded-md text-sm text-gray-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700 [&>div_input]:pl-8"
 							placeholder="Set Background"
-							:value="backgroundURL?.replace(/^'|'$/g, '')"></Input>
+							:value="backgroundURL?.replace(/^'|'$/g, '')" />
 						<div
 							class="absolute left-2 top-[6px] z-10 h-4 w-4 rounded shadow-sm"
 							@click="togglePopover"
@@ -67,11 +65,12 @@
 	</Popover>
 </template>
 <script lang="ts" setup>
+import blockController from "@/utils/blockController";
 import { FileUploader, Popover } from "frappe-ui";
 import { computed } from "vue";
 import InlineInput from "./InlineInput.vue";
-
-import blockController from "@/utils/blockController";
+import Input from "./Input.vue";
+import InputLabel from "./InputLabel.vue";
 
 const backgroundURL = computed(() => {
 	const background = blockController?.getStyle("background") as string;
@@ -94,7 +93,7 @@ const setBG = (file: { file_url: string }) => {
 	const url = window.location.origin + file.file_url;
 	blockController?.setStyle(
 		"background",
-		`url('${url}') center / ${backgroundSize.value || "cover"} no-repeat`
+		`url('${url}') center / ${backgroundSize.value || "cover"} no-repeat`,
 	);
 };
 

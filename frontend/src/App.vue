@@ -98,6 +98,20 @@ const isDark = useDark();
 
 [id^="headlessui-menu-items"] {
 	@apply dark:bg-zinc-800;
+	@apply overflow-y-auto;
+	-ms-overflow-style: none; /* IE and Edge */
+	scrollbar-width: none;
+	@apply max-w-60;
+	max-height: min(60vh, 24rem);
+}
+[id^="headlessui-menu-items"] [id^="headlessui-menu-item"] > span {
+	@apply truncate;
+}
+[id^="headlessui-menu-items"] .divide-gray-100 > :not([hidden]) ~ :not([hidden]) {
+	@apply dark:border-zinc-700;
+}
+[id^="headlessui-menu-items"] &::webkit-scrollbar {
+	display: none;
 }
 
 [id^="headlessui-menu-items"] button {

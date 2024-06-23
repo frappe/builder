@@ -19,6 +19,12 @@ const blockController = {
 	isRoot() {
 		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isRoot();
 	},
+	isFlex() {
+		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isFlex();
+	},
+	isGrid() {
+		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isGrid();
+	},
 	setStyle: (style: styleProperty, value: StyleValue) => {
 		store.activeCanvas?.selectedBlocks.forEach((block) => {
 			block.setStyle(style, value);
@@ -153,7 +159,7 @@ const blockController = {
 		});
 	},
 	getParentBlock: () => {
-		return store.activeCanvas?.selectedBlocks[0]?.getParentBlock() || store.activeCanvas?.getFirstBlock();
+		return store.activeCanvas?.selectedBlocks[0]?.getParentBlock();
 	},
 	setTextColor: (color: string) => {
 		store.activeCanvas?.selectedBlocks.forEach((block) => {
