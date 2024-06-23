@@ -101,7 +101,7 @@ const duplicateBlock = () => {
 	props.block.duplicateBlock();
 };
 
-const createComponentHandler = ({ close }: { close: () => void }) => {
+const createComponentHandler = (close: () => void) => {
 	const blockCopy = getBlockCopy(props.block, true);
 	blockCopy.removeStyle("left");
 	blockCopy.removeStyle("top");
