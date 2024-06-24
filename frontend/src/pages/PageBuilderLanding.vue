@@ -196,9 +196,10 @@ import TemplateSelector from "@/components/TemplateSelector.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
 import { useStorage, watchDebounced } from "@vueuse/core";
-import { TabButtons, createDocumentResource, Dropdown, Badge } from "frappe-ui";
+import { Badge, Dropdown, TabButtons, createDocumentResource } from "frappe-ui";
 import { Ref, onMounted, ref } from "vue";
 
 const store = useStore();
