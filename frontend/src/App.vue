@@ -107,7 +107,7 @@ const isDark = useDark();
 [id^="headlessui-menu-items"] [id^="headlessui-menu-item"] > span {
 	@apply truncate;
 }
-[id^="headlessui-menu-items"] .divide-gray-100 > :not([hidden]) ~ :not([hidden]) {
+.divide-gray-100 > :not([hidden]) ~ :not([hidden]) {
 	@apply dark:border-zinc-700;
 }
 [id^="headlessui-menu-items"] &::webkit-scrollbar {
