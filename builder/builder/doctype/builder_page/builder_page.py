@@ -104,6 +104,8 @@ class BuilderPage(WebsiteGenerator):
 			# move all assets to www/builder_assets/{page_name}
 			if self.draft_blocks:
 				self.publish()
+			if not self.template_name:
+				self.template_name = self.page_title
 
 			blocks = frappe.parse_json(self.blocks)
 			for block in blocks:
