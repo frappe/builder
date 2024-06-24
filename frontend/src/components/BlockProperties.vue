@@ -222,13 +222,31 @@ const typographySectionProperties = [
 		condition: () => blockController.isText(),
 	},
 	{
-		component: InlineInput,
+		component: OptionToggle,
 		getProps: () => {
 			return {
 				label: "Align",
+				options: [
+					{
+						label: "Left",
+						value: "left",
+						icon: "align-left",
+						hideLabel: true,
+					},
+					{
+						label: "Center",
+						value: "center",
+						icon: "align-center",
+						hideLabel: true,
+					},
+					{
+						label: "Right",
+						value: "right",
+						icon: "align-right",
+						hideLabel: true,
+					},
+				],
 				modelValue: blockController.getStyle("textAlign") || "left",
-				type: "select",
-				options: ["left", "center", "right", "justify"],
 			};
 		},
 		searchKeyWords: "Font, Align, TextAlign, Text Align, Left, Center, Right, Justify",
