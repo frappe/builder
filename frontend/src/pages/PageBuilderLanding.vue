@@ -200,7 +200,7 @@ import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
 import { useStorage, watchDebounced } from "@vueuse/core";
 import { Badge, Dropdown, TabButtons, createDocumentResource } from "frappe-ui";
-import { Ref, onMounted, ref } from "vue";
+import { Ref, ref } from "vue";
 
 const store = useStore();
 const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list">;
@@ -238,9 +238,6 @@ watchDebounced(
 	{ debounce: 300 },
 );
 
-onMounted(() => {
-	webPages.fetch();
-});
 const deletePage = async (page: BuilderPage) => {
 	const confirmed = await confirm(
 		`Are you sure you want to delete page: ${page.page_title || page.page_name}?`,

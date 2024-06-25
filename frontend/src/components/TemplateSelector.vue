@@ -47,8 +47,7 @@ const duplicatePage = async (page: BuilderPage) => {
 	await webPageResource.get.promise;
 
 	const pageCopy = webPageResource.doc as BuilderPage;
-	pageCopy.page_name = `${pageCopy.page_name}-copy`;
-	pageCopy.page_title = `${pageCopy.page_title} Copy`;
+	pageCopy.page_title = `${pageCopy.page_title}`;
 	pageCopy.is_template = 0;
 	const newPage = await webPages.insert.submit(pageCopy);
 	loadPage(newPage.name);

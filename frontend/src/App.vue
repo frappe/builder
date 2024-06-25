@@ -37,7 +37,7 @@ const isDark = useDark();
 </script>
 <style>
 [id^="headlessui-dialog"] {
-	@apply z-30;
+	@apply z-50;
 }
 
 [id^="headlessui-dialog-panel"] {
