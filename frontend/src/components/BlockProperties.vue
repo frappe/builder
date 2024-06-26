@@ -564,7 +564,7 @@ const spacingSectionProperties = [
 		events: {
 			"update:modelValue": (val: string) => blockController.setMargin(val),
 		},
-		condition: () => !blockController.multipleBlocksSelected() && !blockController.isRoot(),
+		condition: () => !blockController.isRoot(),
 	},
 	{
 		component: InlineInput,
@@ -578,7 +578,6 @@ const spacingSectionProperties = [
 		events: {
 			"update:modelValue": (val: string) => blockController.setPadding(val),
 		},
-		condition: () => !blockController.multipleBlocksSelected(),
 	},
 ];
 
@@ -1135,7 +1134,6 @@ const sections = [
 	{
 		name: "Spacing",
 		properties: spacingSectionProperties,
-		condition: () => !blockController.multipleBlocksSelected(),
 	},
 	{
 		name: "Options",
@@ -1144,7 +1142,6 @@ const sections = [
 	{
 		name: "Data Key",
 		properties: dataKeySectionProperties,
-		condition: () => blockController.isBLockSelected(),
 	},
 	{
 		name: "HTML Attributes",
