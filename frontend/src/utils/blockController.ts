@@ -219,16 +219,36 @@ const blockController = {
 		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isRepeater();
 	},
 	getPadding: () => {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().getPadding();
+		let padding = "__initial__" as StyleValue;
+		blockController.getSelectedBlocks().forEach((block) => {
+			if (padding === "__initial__") {
+				padding = block.getPadding();
+			} else if (padding !== block.getPadding()) {
+				padding = "Mixed";
+			}
+		});
+		return padding;
 	},
 	setPadding: (value: string) => {
-		blockController.getFirstSelectedBlock().setPadding(value);
+		blockController.getSelectedBlocks().forEach((block) => {
+			block.setPadding(value);
+		});
 	},
 	getMargin: () => {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().getMargin();
+		let margin = "__initial__" as StyleValue;
+		blockController.getSelectedBlocks().forEach((block) => {
+			if (margin === "__initial__") {
+				margin = block.getMargin();
+			} else if (margin !== block.getMargin()) {
+				margin = "Mixed";
+			}
+		});
+		return margin;
 	},
 	setMargin: (value: string) => {
-		blockController.getFirstSelectedBlock().setMargin(value);
+		blockController.getSelectedBlocks().forEach((block) => {
+			block.setMargin(value);
+		});
 	},
 	toggleAttribute: (attribute: string) => {
 		store.activeCanvas?.selectedBlocks.forEach((block) => {
