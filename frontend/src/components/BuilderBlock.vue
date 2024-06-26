@@ -32,7 +32,7 @@
 			:breakpoint="breakpoint"
 			:editable="isEditable"
 			:isSelected="isSelected"
-			:target="target as HTMLElement" />
+			:target="(target as HTMLElement)" />
 	</teleport>
 </template>
 <script setup lang="ts">
