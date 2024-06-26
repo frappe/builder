@@ -282,7 +282,7 @@ const layoutSectionProperties = [
 				blockController.setStyle("display", val);
 				if (val === "grid") {
 					if (!blockController.getStyle("gridTemplateColumns")) {
-						blockController.setStyle("gridTemplateColumns", "repeat(auto-fill, minmax(200px, 1fr))");
+						blockController.setStyle("gridTemplateColumns", "repeat(2, minmax(200px, 1fr))");
 					}
 					if (!blockController.getStyle("gap")) {
 						blockController.setStyle("gap", "10px");
