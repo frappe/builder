@@ -6,8 +6,8 @@
 		:modelValue="isFixed ? 'fixed' : 'filled'"
 		@update:modelValue="setGridType"
 		:options="[
-			{ label: 'Filled', value: 'filled' },
 			{ label: 'Fixed', value: 'fixed' },
+			{ label: 'Filled', value: 'filled' },
 		]"></OptionToggle>
 	<InlineInput
 		v-if="blockController.isGrid() && isFixed"
@@ -18,6 +18,15 @@
 		:minValue="1"
 		:maxValue="20"
 		@update:modelValue="setColumns" />
+	<InlineInput
+		v-if="blockController.isGrid() && isFixed"
+		label="Rows"
+		:modelValue="rows"
+		:enableSlider="true"
+		:changeFactor="0.08"
+		:minValue="1"
+		:maxValue="20"
+		@update:modelValue="setRows" />
 	<InlineInput
 		label="Min Width"
 		v-if="blockController.isGrid()"
@@ -42,7 +51,7 @@
 		type="text"
 		:enableSlider="true"
 		:unitOptions="['px', 'em', 'rem']"
-		:modelValue="blockController.getStyle('gap')"
+		:modelValue="blockController.getStyle('gap') || '0px'"
 		@update:modelValue="(val: string | number) => blockController.setStyle('gap', val)" />
 	<!-- <InlineInput
 		label="Align"
@@ -214,7 +223,7 @@ const columns = computed(() => {
 		return;
 	}
 	const value = parseRepeatFunction(template);
-	return value.repeat;
+	return value.repeat || 1;
 });
 
 const rows = computed(() => {
@@ -223,7 +232,7 @@ const rows = computed(() => {
 		return;
 	}
 	const value = parseRepeatFunction(template);
-	return value.repeat;
+	return value.repeat || 1;
 });
 
 const width = computed(() => {

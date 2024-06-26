@@ -84,6 +84,7 @@ const showResizer = computed(() => {
 		!props.editable &&
 		isBlockSelected.value &&
 		!blockController.multipleBlocksSelected() &&
+		!props.block.getParentBlock()?.isGrid() &&
 		!(props.block.isHTML() && !props.block.isSVG() && !props.block.isIframe())
 	);
 });
