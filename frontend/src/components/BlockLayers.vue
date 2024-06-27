@@ -23,7 +23,7 @@
 							@mouseleave.stop="store.hoveredBlock = null">
 							<span
 								class="group my-[7px] flex items-center gap-1.5 pr-[2px] font-medium"
-								:style="{ paddingLeft: `${indent * 10}px` }"
+								:style="{ paddingLeft: `${indent}px` }"
 								:class="{
 									'!opacity-50': !element.isVisible(),
 								}">
@@ -107,7 +107,7 @@ const props = defineProps({
 	},
 	indent: {
 		type: Number,
-		default: 1,
+		default: 10,
 	},
 });
 
@@ -115,7 +115,7 @@ interface LayerBlock extends Block {
 	editable: boolean;
 }
 
-const childIndent = props.indent + 1;
+const childIndent = props.indent + 16;
 
 const setBlockName = (ev: Event, block: LayerBlock) => {
 	const target = ev.target as HTMLElement;
@@ -148,7 +148,6 @@ watch(
 		if (store.activeCanvas?.selectedBlocks.length) {
 			store.activeCanvas?.selectedBlocks.forEach((block: Block) => {
 				if (block) {
-					expandedLayers.value.add(block.blockId);
 					let parentBlock = block.getParentBlock();
 					// open all parent blocks
 					while (parentBlock && !parentBlock.isRoot()) {

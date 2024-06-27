@@ -332,11 +332,16 @@ function setEvents() {
 						store.editableBlock = childBlock;
 						return;
 					}
-					if (getNumberFromPx(childBlock.getStyle("width")) < 100) {
-						childBlock.setBaseStyle("width", "100%");
-					}
-					if (getNumberFromPx(childBlock.getStyle("height")) < 100) {
-						childBlock.setBaseStyle("height", "200px");
+					if (parentBlock.isGrid()) {
+						childBlock.setStyle("width", "auto");
+						childBlock.setStyle("height", "100%");
+					} else {
+						if (getNumberFromPx(childBlock.getStyle("width")) < 100) {
+							childBlock.setBaseStyle("width", "100%");
+						}
+						if (getNumberFromPx(childBlock.getStyle("height")) < 100) {
+							childBlock.setBaseStyle("height", "200px");
+						}
 					}
 					canvasHistory.value?.resume(true);
 				},
