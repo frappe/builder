@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<div class="flex flex-row flex-wrap gap-5">
+		<div class="flex flex-row flex-wrap gap-3">
 			<h3 class="mb-1 w-full text-sm font-medium text-gray-900 dark:text-zinc-300">Page Options</h3>
 			<InlineInput
 				label="Title"
@@ -18,7 +18,6 @@
 			<!-- TODO: Fix option arrangement and placements -->
 
 			<OptionToggle
-				class="w-full"
 				:label="'Dynamic Route?'"
 				:modelValue="page.dynamic_route ? 'Yes' : 'No'"
 				@update:modelValue="
@@ -59,10 +58,13 @@
 				<FileUploader
 					file-types="image/ico"
 					class="text-base [&>div>button]:dark:bg-zinc-800 [&>div>button]:dark:text-zinc-200 [&>div>button]:dark:hover:bg-zinc-700"
-					@success="(file: {'file_url': string}) => {
-						webPages.setValue.submit({ name: page.name, favicon: file.file_url }).then(() => {
-							page.favicon = file.file_url
-						}) }">
+					@success="
+						(file: FileDoc) => {
+							webPages.setValue.submit({ name: page.name, favicon: file.file_url }).then(() => {
+								page.favicon = file.file_url;
+							});
+						}
+					">
 					<template v-slot="{ file, progress, uploading, openFileSelector }">
 						<div class="flex items-center space-x-2">
 							<Button @click="openFileSelector">
@@ -133,15 +135,16 @@ import { FileUploader } from "frappe-ui";
 import { computed } from "vue";
 import { toast } from "vue-sonner";
 import InlineInput from "./InlineInput.vue";
-
 import OptionToggle from "./OptionToggle.vue";
 
-const store = useStore();
+type FileDoc = {
+	file_url: string;
+};
 
+const store = useStore();
 const props = defineProps<{
 	page: BuilderPage;
 }>();
-
 const dynamicVariables = computed(() => {
 	return (props.page.route?.match(/<\w+>/g) || []).map((match) => match.slice(1, -1));
 });

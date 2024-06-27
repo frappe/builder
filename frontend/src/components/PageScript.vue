@@ -23,7 +23,7 @@
 			v-model="showDialog">
 			<template #body-content>
 				<div v-if="currentScriptEditor == 'client'">
-					<PageClientScriptManager :page="(store.activePage as BuilderPage)"></PageClientScriptManager>
+					<PageClientScriptManager :page="store.activePage as BuilderPage"></PageClientScriptManager>
 				</div>
 				<div v-else>
 					<CodeEditor
@@ -88,56 +88,4 @@ const showServerScriptEditor = () => {
 	showDialog.value = true;
 };
 </script>
-<style>
-[id^="headlessui-dialog-panel"] {
-	@apply dark:bg-zinc-800;
-}
-[id^="headlessui-dialog-panel"] > div {
-	@apply dark:bg-zinc-800;
-	@apply dark:text-zinc-50;
-}
-
-[id^="headlessui-dialog-panel"] header h3 {
-	@apply dark:text-white;
-}
-
-[id^="headlessui-dialog-panel"] button svg path {
-	@apply dark:fill-white;
-}
-[id^="headlessui-dialog-panel"] button {
-	@apply dark:text-white;
-	@apply dark:hover:bg-zinc-700;
-	@apply dark:bg-zinc-900;
-}
-[id^="headlessui-dialog-panel"] input {
-	@apply dark:bg-zinc-900;
-	@apply dark:border-zinc-800;
-	@apply dark:text-gray-50;
-}
-
-[id^="headlessui-dialog-panel"] input:focus {
-	@apply dark:ring-0;
-	@apply dark:border-zinc-700;
-}
-
-[id^="headlessui-dialog-panel"] input[type="checkbox"]:checked {
-	@apply dark:bg-zinc-700;
-}
-
-[id^="headlessui-dialog-panel"] input[type="checkbox"]:focus {
-	@apply dark:ring-zinc-700;
-	@apply dark:ring-offset-0;
-}
-
-[id^="headlessui-dialog-panel"] input[type="checkbox"]:hover {
-	@apply dark:bg-zinc-900;
-}
-
-[id^="headlessui-dialog-panel"] label > span {
-	@apply dark:text-gray-50;
-}
-
-[id^="headlessui-dialog"] [data-dialog] {
-	@apply dark:bg-black-overlay-800;
-}
-</style>
+<style></style>

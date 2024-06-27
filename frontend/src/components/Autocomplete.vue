@@ -1,15 +1,17 @@
 <template>
-	<div>
+	<div class="relative">
 		<Combobox
 			:modelValue="value"
-			@update:modelValue="(val: string|{'value': string}|null) => {
-				emit('update:modelValue', val)
-			}"
+			@update:modelValue="
+				(val) => {
+					emit('update:modelValue', val);
+				}
+			"
 			v-slot="{ open }"
 			:nullable="nullable"
 			:multiple="multiple">
 			<div
-				class="form-input flex h-7 w-full items-center justify-between gap-2 rounded border-gray-400 px-2 py-1 pr-6 text-sm transition-colors dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700">
+				class="form-input flex h-7 w-full items-center justify-between gap-2 rounded px-2 py-1 pr-5 text-sm transition-colors dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700">
 				<!-- {{ displayValue }} -->
 				<ComboboxInput
 					autocomplete="off"
@@ -51,7 +53,7 @@
 			</ComboboxOptions>
 		</Combobox>
 		<div
-			class="absolute right-1 top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
+			class="absolute right-[1px] top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
 			@click="clearValue"
 			v-show="modelValue">
 			<CrossIcon />
@@ -109,7 +111,7 @@ const filteredOptions = computed(() => {
 					option.label.toLowerCase().includes(query.value.toLowerCase()) ||
 					option.value.toLowerCase().includes(query.value.toLowerCase())
 				);
-		  });
+			});
 });
 
 const clearValue = () => emit("update:modelValue", null);

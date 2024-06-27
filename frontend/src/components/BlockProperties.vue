@@ -3,27 +3,21 @@
 		<div class="sticky top-9 z-50 mt-[-15px] flex w-full bg-white py-3 dark:bg-zinc-900">
 			<Input
 				ref="searchInput"
-				class="properties-search-input h-7 w-full rounded-md text-sm text-gray-800 hover:border-gray-400 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
 				type="text"
 				placeholder="Search properties"
-				inputClass="w-full"
 				v-model="store.propertyFilter"
 				@input="
-					(value: string) => {
+					(value) => {
 						store.propertyFilter = value;
 					}
 				" />
-			<div
-				class="absolute right-1 top-[15px] z-20 cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
-				@click="store.propertyFilter = ''"
-				v-show="store.propertyFilter">
-				<CrossIcon />
-			</div>
 		</div>
 		<div class="flex flex-col gap-3">
 			<CollapsibleSection :sectionName="section.name" v-for="section in filteredSections">
 				<template v-for="property in getFilteredProperties(section)">
-					<component :is="property.component" v-bind="property.getProps()" v-on="property.events || {}" />
+					<component :is="property.component" v-bind="property.getProps()" v-on="property.events || {}">
+						{{ property.innerText || "" }}
+					</component>
 				</template>
 			</CollapsibleSection>
 		</div>
@@ -33,23 +27,23 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { setFont as _setFont, fontListNames, getFontWeightOptions } from "@/utils/fontManager";
-
-import BackgroundHandler from "./BackgroundHandler.vue";
-import BLockLayoutHandler from "./BlockLayoutHandler.vue";
-import BlockPositionHandler from "./BlockPositionHandler.vue";
-import CollapsibleSection from "./CollapsibleSection.vue";
-import ColorInput from "./ColorInput.vue";
-import InlineInput from "./InlineInput.vue";
-import ObjectEditor from "./ObjectEditor.vue";
-
-import CrossIcon from "./Icons/Cross.vue";
-
 import useStore from "@/store";
 import blockController from "@/utils/blockController";
+import { setFont as _setFont, fontListNames, getFontWeightOptions } from "@/utils/fontManager";
+import { Button, createResource } from "frappe-ui";
 import { Ref, computed, ref } from "vue";
+import { toast } from "vue-sonner";
+import BackgroundHandler from "./BackgroundHandler.vue";
+import BlockFlexLayoutHandler from "./BlockFlexLayoutHandler.vue";
+import BlockGridLayoutHandler from "./BlockGridLayoutHandler.vue";
+import BlockPositionHandler from "./BlockPositionHandler.vue";
 import CodeEditor from "./CodeEditor.vue";
+import CollapsibleSection from "./CollapsibleSection.vue";
+import ColorInput from "./ColorInput.vue";
 import DimensionInput from "./DimensionInput.vue";
+import InlineInput from "./InlineInput.vue";
+import Input from "./Input.vue";
+import ObjectEditor from "./ObjectEditor.vue";
 import OptionToggle from "./OptionToggle.vue";
 
 const store = useStore();
@@ -68,6 +62,7 @@ type BlockProperty = {
 	events?: Record<string, unknown>;
 	searchKeyWords: string;
 	condition?: () => boolean;
+	innerText?: string;
 };
 
 type PropertySection = {
@@ -227,13 +222,31 @@ const typographySectionProperties = [
 		condition: () => blockController.isText(),
 	},
 	{
-		component: InlineInput,
+		component: OptionToggle,
 		getProps: () => {
 			return {
 				label: "Align",
+				options: [
+					{
+						label: "Left",
+						value: "left",
+						icon: "align-left",
+						hideLabel: true,
+					},
+					{
+						label: "Center",
+						value: "center",
+						icon: "align-center",
+						hideLabel: true,
+					},
+					{
+						label: "Right",
+						value: "right",
+						icon: "align-right",
+						hideLabel: true,
+					},
+				],
 				modelValue: blockController.getStyle("textAlign") || "left",
-				type: "select",
-				options: ["left", "center", "right", "justify"],
 			};
 		},
 		searchKeyWords: "Font, Align, TextAlign, Text Align, Left, Center, Right, Justify",
@@ -246,7 +259,51 @@ const typographySectionProperties = [
 
 const layoutSectionProperties = [
 	{
-		component: BLockLayoutHandler,
+		component: OptionToggle,
+		getProps: () => {
+			return {
+				label: "Type",
+				options: [
+					{
+						label: "Stack",
+						value: "flex",
+					},
+					{
+						label: "Grid",
+						value: "grid",
+					},
+				],
+				modelValue: blockController.getStyle("display") || "flex",
+			};
+		},
+		searchKeyWords: "Layout, Display, Flex, Grid, Flexbox, Flex Box, FlexBox",
+		events: {
+			"update:modelValue": (val: StyleValue) => {
+				blockController.setStyle("display", val);
+				if (val === "grid") {
+					if (!blockController.getStyle("gridTemplateColumns")) {
+						blockController.setStyle("gridTemplateColumns", "repeat(2, minmax(200px, 1fr))");
+					}
+					if (!blockController.getStyle("gap")) {
+						blockController.setStyle("gap", "10px");
+					}
+					if (blockController.getStyle("height")) {
+						if (blockController.getSelectedBlocks()[0].hasChildren()) {
+							blockController.setStyle("height", null);
+						}
+					}
+				}
+			},
+		},
+	},
+	{
+		component: BlockGridLayoutHandler,
+		getProps: () => {},
+		searchKeyWords:
+			"Layout, Grid, GridTemplate, Grid Template, GridGap, Grid Gap, GridRow, Grid Row, GridColumn, Grid Column",
+	},
+	{
+		component: BlockFlexLayoutHandler,
 		getProps: () => {},
 		searchKeyWords:
 			"Layout, Flex, Flexbox, Flex Box, FlexBox, Justify, Space Between, Flex Grow, Flex Shrink, Flex Basis, Align Items, Align Content, Align Self, Flex Direction, Flex Wrap, Flex Flow, Flex Grow, Flex Shrink, Flex Basis, Gap",
@@ -382,7 +439,7 @@ const styleSectionProperties = [
 		component: InlineInput,
 		getProps: () => {
 			return {
-				label: "Border Radius",
+				label: "Radius",
 				modelValue: blockController.getStyle("borderRadius"),
 				enableSlider: true,
 				unitOptions: ["px", "%"],
@@ -507,7 +564,7 @@ const spacingSectionProperties = [
 		events: {
 			"update:modelValue": (val: string) => blockController.setMargin(val),
 		},
-		condition: () => !blockController.multipleBlocksSelected() && !blockController.isRoot(),
+		condition: () => !blockController.isRoot(),
 	},
 	{
 		component: InlineInput,
@@ -521,7 +578,6 @@ const spacingSectionProperties = [
 		events: {
 			"update:modelValue": (val: string) => blockController.setPadding(val),
 		},
-		condition: () => !blockController.multipleBlocksSelected(),
 	},
 ];
 
@@ -533,6 +589,8 @@ const optionsSectionProperties = [
 				label: "Tag",
 				type: "select",
 				options: [
+					"aside",
+					"article",
 					"span",
 					"div",
 					"section",
@@ -546,11 +604,14 @@ const optionsSectionProperties = [
 					"nav",
 					"header",
 					"footer",
+					"select",
+					"option",
 				],
 				modelValue: blockController.getKeyValue("element"),
 			};
 		},
-		searchKeyWords: "Tag, Element, TagName, Tag Name, ElementName, Element Name, header, footer, nav, input",
+		searchKeyWords:
+			"Tag, Element, TagName, Tag Name, ElementName, Element Name, header, footer, nav, input, form, textarea, button, p, a, div, span, section, hr, TagType, Tag Type, ElementType, Element Type",
 		events: {
 			"update:modelValue": (val: string) => blockController.setKeyValue("element", val),
 		},
@@ -609,6 +670,50 @@ const optionsSectionProperties = [
 		condition: () => blockController.isImage(),
 	},
 	{
+		component: Button,
+		getProps: () => {
+			return {
+				label: "Convert to WebP",
+				class: "text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700",
+			};
+		},
+		innerText: "Convert to WebP",
+		searchKeyWords: "Convert, webp, Convert to webp, image, src, url",
+		events: {
+			click: () => {
+				const block = blockController.getSelectedBlocks()[0];
+				const convertToWebP = createResource({
+					url: "/api/method/builder.builder.doctype.builder_page.builder_page.convert_to_webp",
+					params: {
+						image_url: block.getAttribute("src"),
+					},
+				});
+				toast.promise(
+					convertToWebP.fetch().then((res: string) => {
+						block.setAttribute("src", res);
+					}),
+					{
+						loading: "Converting...",
+						success: () => "Image converted to WebP",
+						error: () => "Failed to convert image to WebP",
+					},
+				);
+			},
+		},
+		condition: () => {
+			if (!blockController.isImage()) {
+				return false;
+			}
+			if (
+				[".jpg", ".jpeg", ".png"].some((ext) =>
+					((blockController.getAttribute("src") as string) || ("" as string)).toLowerCase().endsWith(ext),
+				)
+			) {
+				return true;
+			}
+		},
+	},
+	{
 		component: InlineInput,
 		getProps: () => {
 			return {
@@ -635,7 +740,7 @@ const optionsSectionProperties = [
 			};
 		},
 		searchKeyWords:
-			"Input, Type, InputType, Input Type, Text, Number, Email, Password, Date, Time, Search, Tel, Url, Color",
+			"Input, Type, InputType, Input Type, Text, Number, Email, Password, Date, Time, Search, Tel, Url, Color, tag",
 		events: {
 			"update:modelValue": (val: string) => blockController.setAttribute("type", val),
 		},
@@ -649,7 +754,8 @@ const optionsSectionProperties = [
 				modelValue: blockController.getAttribute("placeholder"),
 			};
 		},
-		searchKeyWords: "Placeholder, Input, PlaceholderText, Placeholder Text",
+		searchKeyWords:
+			"Placeholder, Input, PlaceholderText, Placeholder Text, form, input, text, number, email, password, date, time, search, tel, url, color, tag",
 		events: {
 			"update:modelValue": (val: string) => blockController.setAttribute("placeholder", val),
 		},
@@ -660,7 +766,8 @@ const optionsSectionProperties = [
 		getProps: () => {
 			return {
 				label: "Content",
-				modelValue: blockController.getTextContent(),
+				// @ts-ignore
+				modelValue: blockController.getSelectedBlocks()[0]?.__proto__?.editor?.getText(),
 			};
 		},
 		searchKeyWords: "Content, Text, ContentText, Content Text",
@@ -713,7 +820,7 @@ const optionsSectionProperties = [
 				label: "Overflow X",
 				type: "select",
 				options: ["auto", "visible", "hidden", "scroll"],
-				modelValue: blockController.getStyle("overflowX"),
+				modelValue: blockController.getStyle("overflowX") || blockController.getStyle("overflow"),
 			};
 		},
 		searchKeyWords:
@@ -729,7 +836,7 @@ const optionsSectionProperties = [
 				label: "Overflow Y",
 				type: "select",
 				options: ["auto", "visible", "hidden", "scroll"],
-				modelValue: blockController.getStyle("overflowY"),
+				modelValue: blockController.getStyle("overflowY") || blockController.getStyle("overflow"),
 			};
 		},
 		searchKeyWords:
@@ -1001,6 +1108,11 @@ const sections = [
 		condition: () => !blockController.multipleBlocksSelected(),
 	},
 	{
+		name: "Typography",
+		properties: typographySectionProperties,
+		condition: () => blockController.isText() || blockController.isContainer() || blockController.isInput(),
+	},
+	{
 		name: "Style",
 		properties: styleSectionProperties,
 	},
@@ -1009,11 +1121,7 @@ const sections = [
 		properties: videoOptionsSectionProperties,
 		condition: () => blockController.isVideo(),
 	},
-	{
-		name: "Typography",
-		properties: typographySectionProperties,
-		condition: () => blockController.isText() || blockController.isContainer() || blockController.isInput(),
-	},
+
 	{
 		name: "Dimension",
 		properties: dimensionSectionProperties,
@@ -1026,7 +1134,6 @@ const sections = [
 	{
 		name: "Spacing",
 		properties: spacingSectionProperties,
-		condition: () => !blockController.multipleBlocksSelected(),
 	},
 	{
 		name: "Options",
@@ -1035,7 +1142,6 @@ const sections = [
 	{
 		name: "Data Key",
 		properties: dataKeySectionProperties,
-		condition: () => blockController.isBLockSelected(),
 	},
 	{
 		name: "HTML Attributes",

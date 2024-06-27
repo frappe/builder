@@ -1,55 +1,46 @@
 <template>
-	<div class="relative flex items-center justify-between">
-		<span
-			class="inline-block text-[10px] font-medium uppercase text-gray-600 dark:text-zinc-400"
+	<div class="flex items-center justify-between [&>div>input]:!bg-red-600 [&>div>input]:pr-6">
+		<InputLabel
 			:class="{
 				'cursor-ns-resize': enableSlider,
 			}"
 			@mousedown="handleMouseDown">
 			{{ label }}
-		</span>
+		</InputLabel>
 		<Input
 			:type="type"
 			placeholder="unset"
-			:value="modelValue"
+			:modelValue="modelValue"
 			:options="inputOptions"
 			v-if="type != 'autocomplete'"
-			@mousedown="handleMouseDown"
-			@change="handleChange"
-			@keydown="handleKeyDown"
-			:inputClass="type == 'checkbox' ? ' ml-2 !w-4' : 'pr-6'"
-			class="rounded-md text-sm text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700"
-			:class="{
-				'w-[150px]': type != 'checkbox',
-			}" />
+			@update:modelValue="handleChange"
+			@keydown.stop="handleKeyDown" />
 		<Autocomplete
 			v-if="type == 'autocomplete'"
 			placeholder="unset"
 			:modelValue="modelValue"
 			:options="inputOptions"
 			@update:modelValue="handleChange"
-			class="!dark:text-zinc-200 !dark:focus:bg-zinc-700 w-[150px] rounded-md text-sm text-gray-800 dark:bg-zinc-800" />
-		<div
-			class="absolute right-1 top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
-			@click="clearValue"
-			v-if="!['autocomplete', 'select', 'checkbox'].includes(type)"
-			v-show="modelValue">
-			<CrossIcon />
-		</div>
+			class="w-full [&>div>select]:text-sm [&>div>select]:text-gray-800 [&>div>select]:dark:border-zinc-700 [&>div>select]:dark:bg-zinc-800 [&>div>select]:dark:text-zinc-200 [&>div>select]:dark:focus:bg-zinc-700" />
 	</div>
 </template>
 <script setup lang="ts">
 import { isNumber } from "@tiptap/vue-3";
 import { PropType, computed } from "vue";
 import Autocomplete from "./Autocomplete.vue";
-import CrossIcon from "./Icons/Cross.vue";
+import Input from "./Input.vue";
+import InputLabel from "./InputLabel.vue";
 
 const props = defineProps({
-	modelValue: {},
+	modelValue: {
+		type: [String, Number],
+		default: null,
+	},
 	label: {
 		type: String,
 		default: "",
 	},
+	description: {},
 	type: {
 		type: String,
 		default: "text",
@@ -65,6 +56,10 @@ const props = defineProps({
 	enableSlider: {
 		type: Boolean,
 		default: false,
+	},
+	changeFactor: {
+		type: Number,
+		default: 1,
 	},
 	minValue: {
 		type: Number,
@@ -114,11 +109,12 @@ const handleMouseDown = (e: MouseEvent) => {
 	if (!props.enableSlider) {
 		return;
 	}
-	const number = ((props.modelValue || "") as string).match(/([0-9]+)/)?.[0] || "0";
+	const number = ((props.modelValue + "" || "") as string).match(/([0-9]+)/)?.[0] || "0";
 	const startY = e.clientY;
 	const startValue = Number(number);
 	const handleMouseMove = (e: MouseEvent) => {
-		const diff = startY - e.clientY;
+		let diff = (startY - e.clientY) * props.changeFactor;
+		diff = Math.round(diff);
 		incrementOrDecrement(diff, startValue);
 	};
 	const handleMouseUp = () => {
@@ -137,7 +133,7 @@ const handleKeyDown = (e: KeyboardEvent) => {
 };
 
 const incrementOrDecrement = (step: number, initialValue: null | number = null) => {
-	const value = (props.modelValue as string) || "";
+	const value = props.modelValue + "" || "";
 	let [_, number, unit] = value.match(/([0-9]+)([a-z%]*)/) || ["", "", ""];
 	if (!unit && props.unitOptions.length && !isNaN(Number(number))) {
 		unit = props.unitOptions[0];
@@ -151,6 +147,4 @@ const incrementOrDecrement = (step: number, initialValue: null | number = null) 
 	}
 	handleChange(newValue + "" + unit);
 };
-
-const clearValue = () => emit("update:modelValue", null);
 </script>

@@ -3,6 +3,7 @@
 		<div
 			class="editor pointer-events-none fixed z-[18] box-content select-none ring-2 ring-inset"
 			ref="editor"
+			:selected="isBlockSelected"
 			@click.stop="handleClick"
 			@dblclick="handleDoubleClick"
 			@mousedown.prevent="handleMove"
@@ -11,6 +12,7 @@
 			:data-block-id="block.blockId"
 			:class="getStyleClasses">
 			<PaddingHandler
+				:data-block-id="block.blockId"
 				v-if="
 					isBlockSelected &&
 					!resizing &&
@@ -37,6 +39,7 @@
 				:disable-handlers="false"
 				:breakpoint="breakpoint" />
 			<BorderRadiusHandler
+				:data-block-id="block.blockId"
 				v-if="
 					isBlockSelected &&
 					!block.isRoot() &&
@@ -44,10 +47,12 @@
 					!block.isHTML() &&
 					!block.isSVG() &&
 					!editable &&
+					!resizing &&
 					!blockController.multipleBlocksSelected()
 				"
 				:target-block="block"
 				:target="target" />
+			<!-- prettier-ignore -->
 			<BoxResizer
 				v-if="showResizer"
 				:targetBlock="block"
@@ -79,6 +84,7 @@ const showResizer = computed(() => {
 		!props.editable &&
 		isBlockSelected.value &&
 		!blockController.multipleBlocksSelected() &&
+		!props.block.getParentBlock()?.isGrid() &&
 		!(props.block.isHTML() && !props.block.isSVG() && !props.block.isIframe())
 	);
 });
@@ -167,7 +173,7 @@ watch(
 		nextTick(() => {
 			updateTracker.value();
 		});
-	}
+	},
 );
 
 const movable = computed(() => {
@@ -265,7 +271,7 @@ const handleMove = (ev: MouseEvent) => {
 			mouseUpEvent.preventDefault();
 			guides.hideX();
 		},
-		{ once: true }
+		{ once: true },
 	);
 };
 

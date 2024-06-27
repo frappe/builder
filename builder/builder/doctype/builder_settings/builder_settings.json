@@ -10,6 +10,7 @@
   "style",
   "style_public_url",
   "favicon",
+  "auto_convert_images_to_webp",
   "landing_page_section",
   "home_page"
  ],
@@ -53,13 +54,20 @@
    "fieldname": "home_page",
    "fieldtype": "Data",
    "label": "Home Page"
+  },
+  {
+   "default": "1",
+   "description": "Beta: All the images uploaded to Canvas will be auto converted to WebP for better page performance.",
+   "fieldname": "auto_convert_images_to_webp",
+   "fieldtype": "Check",
+   "label": "Auto convert images to WebP"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-04-17 12:28:24.846509",
+ "modified": "2024-05-27 16:54:08.439843",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Settings",
@@ -73,6 +81,11 @@
    "read": 1,
    "role": "System Manager",
    "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Website Manager",
    "write": 1
   }
  ],

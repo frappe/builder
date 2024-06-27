@@ -22,10 +22,9 @@
 					class="w-fit self-end [&>div>button[aria-checked='false']]:dark:!bg-transparent [&>div>button[aria-checked='false']]:dark:!text-zinc-400 [&>div>button[aria-checked='true']]:dark:!bg-zinc-700 [&>div>button]:dark:!bg-zinc-700 [&>div>button]:dark:!text-zinc-100 [&>div]:dark:!bg-zinc-900"></TabButtons>
 				<div class="relative flex">
 					<Input
-						class="h-7 rounded-md text-sm text-gray-800 hover:border-gray-400 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
+						class="w-44 [&>div>input]:dark:bg-zinc-900"
 						type="text"
 						placeholder="Filter by title or route"
-						inputClass="w-full"
 						v-model="searchFilter"
 						autofocus
 						@input="
@@ -33,17 +32,10 @@
 								searchFilter = value;
 							}
 						" />
-					<div
-						class="absolute right-1 top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
-						@click="searchFilter = ''"
-						v-show="searchFilter">
-						<CrossIcon />
-					</div>
 				</div>
 				<Input
 					type="select"
-					class="h-7 rounded-md border-gray-400 text-sm text-gray-800 focus:border-gray-400 focus:bg-gray-50 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:focus:border-zinc-200 focus:dark:border-zinc-700"
-					inputClass="w-32"
+					class="w-36 [&>div>select]:dark:bg-zinc-900"
 					v-model="typeFilter"
 					:options="[
 						{ label: 'All', value: '' },
@@ -56,23 +48,20 @@
 				</router-link>
 			</div>
 		</div>
-		<div class="flex flex-wrap gap-6">
-			<div
-				v-if="!webPages.data?.length && !searchFilter && !typeFilter"
-				class="flex flex-col items-center justify-center">
-				<p class="mt-4 text-center text-base text-gray-500">
+		<div class="grid-col grid gap-6 auto-fill-[220px]">
+			<div v-if="!webPages.data?.length && !searchFilter && !typeFilter" class="col-span-full">
+				<p class="mt-4 text-base text-gray-500">
 					You don't have any pages yet. Click on the "+ New" button to create a new page.
 				</p>
 			</div>
-			<div v-else-if="!webPages.data?.length" class="flex flex-col items-center justify-center">
-				<p class="mt-4 text-center text-base text-gray-500">No matching pages found.</p>
+			<div v-else-if="!webPages.data?.length" class="col-span-full">
+				<p class="mt-4 text-base text-gray-500">No matching pages found.</p>
 			</div>
 			<router-link
 				v-if="displayType === 'grid'"
 				v-for="page in webPages.data"
 				:key="page.page_name"
-				:to="{ name: 'builder', params: { pageId: page.page_name } }"
-				class="max-w-[250px] flex-grow basis-52">
+				:to="{ name: 'builder', params: { pageId: page.page_name } }">
 				<div
 					class="group relative mr-2 w-full overflow-hidden rounded-md shadow hover:cursor-pointer dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
 					<img
@@ -94,11 +83,21 @@
 						</span>
 						<Dropdown
 							:options="[
-								{ label: 'Duplicate', onClick: () => duplicatePage(page), icon: 'copy' },
-								{ label: 'View in Desk', onClick: () => store.openInDesk(page), icon: 'arrow-up-right' },
-								{ label: 'Delete', onClick: () => deletePage(page), icon: 'trash' },
+								{
+									group: 'Actions',
+									hideLabel: true,
+									items: [
+										{ label: 'Duplicate', onClick: () => duplicatePage(page), icon: 'copy' },
+										{ label: 'View in Desk', onClick: () => store.openInDesk(page), icon: 'arrow-up-right' },
+									],
+								},
+								{
+									group: 'Delete',
+									hideLabel: true,
+									items: [{ label: 'Delete', onClick: () => deletePage(page), icon: 'trash' }],
+								},
 							]"
-							size="sm"
+							size="xs"
 							placement="right">
 							<template v-slot="{ open }">
 								<FeatherIcon
@@ -115,7 +114,7 @@
 				v-if="displayType === 'list'"
 				:key="page.page_name"
 				:to="{ name: 'builder', params: { pageId: page.page_name } }"
-				class="h-fit w-full flex-grow">
+				class="col-span-full h-fit w-full flex-grow">
 				<div
 					class="group relative mr-2 flex w-full overflow-hidden rounded-md shadow hover:cursor-pointer dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
 					<img
@@ -143,7 +142,9 @@
 								<p class="mt-1 block text-xs text-gray-500">Created By {{ page.owner }}</p>
 								·
 								<UseTimeAgo v-slot="{ timeAgo }" :time="page.modified">
-									<p class="mt-1 block text-xs text-gray-500">Edited {{ timeAgo }}</p>
+									<p class="mt-1 block text-xs text-gray-500">
+										Edited {{ timeAgo }} by {{ page.modified_by }}
+									</p>
 								</UseTimeAgo>
 							</div>
 						</span>
@@ -182,7 +183,7 @@
 	</section>
 </template>
 <script setup lang="ts">
-import CrossIcon from "@/components/Icons/Cross.vue";
+import Input from "@/components/Input.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
@@ -222,11 +223,13 @@ watchDebounced(
 		});
 		webPages.fetch();
 	},
-	{ debounce: 300 }
+	{ debounce: 300 },
 );
 
 const deletePage = async (page: BuilderPage) => {
-	const confirmed = await confirm(`Are you sure you want to delete Page: ${page.page_name}?`);
+	const confirmed = await confirm(
+		`Are you sure you want to delete page: ${page.page_title || page.page_name}?`,
+	);
 	if (confirmed) {
 		await webPages.delete.submit(page.name);
 	}

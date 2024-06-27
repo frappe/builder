@@ -10,7 +10,7 @@
 			'bottom-0': side === 'bottom',
 			'bg-gray-300 dark:bg-zinc-700': dragActive,
 		}"
-		@mousedown="resize">
+		@mousedown.prevent="resize">
 		<slot />
 	</div>
 </template>
@@ -81,7 +81,7 @@ function resize(ev: MouseEvent) {
 			dragActive.value = false;
 			mouseUpEvent.preventDefault();
 		},
-		{ once: true }
+		{ once: true },
 	);
 }
 </script>
