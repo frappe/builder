@@ -18,7 +18,7 @@
 					@change="query = $event.target.value"
 					@focus="() => open"
 					:displayValue="
-						(option) => {
+						(option: Option) => {
 							if (Array.isArray(option)) {
 								return option.map((o) => o.label).join(', ');
 							} else if (option) {
@@ -91,16 +91,12 @@ const multiple = computed(() => Array.isArray(props.modelValue));
 const nullable = computed(() => !multiple.value);
 
 const value = computed(() => {
-	if (
-		props.modelValue instanceof String ||
-		typeof props.modelValue === "string" ||
-		props.modelValue instanceof Number ||
-		typeof props.modelValue === "number"
-	) {
-		return { label: props.modelValue, value: props.modelValue };
-	} else {
-		return props.modelValue;
-	}
+	return (
+		props.options.find((option) => option.value === props.modelValue) || {
+			label: props.modelValue,
+			value: props.modelValue,
+		}
+	);
 }) as ComputedRef<Option>;
 
 const filteredOptions = computed(() => {
