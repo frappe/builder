@@ -29,7 +29,7 @@
 						}
 					"
 					:placeholder="!modelValue ? placeholder : null"
-					class="h-full w-full border-none bg-transparent p-0 text-xs focus:border-none focus:ring-0" />
+					class="h-full w-full border-none bg-transparent p-0 text-base focus:border-none focus:ring-0" />
 			</div>
 			<ComboboxOptions
 				class="absolute right-0 z-50 max-h-[15rem] w-full max-w-[150px] overflow-y-auto rounded-lg bg-white px-1.5 py-1.5 shadow-2xl"
