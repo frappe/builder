@@ -46,17 +46,17 @@
 						<Dropdown
 							v-if="clientScriptResource.data && clientScriptResource.data.length > 0"
 							:options="
-									clientScriptResource.data.map((d: {'name': string}) => {
-										return {
-											label: d.name,
-											onClick: () => {
-												attachScript(d.name);
-											},
-										};
-									})
-								"
+								clientScriptResource.data.map((d: { name: string }) => {
+									return {
+										label: d.name,
+										onClick: () => {
+											attachScript(d.name);
+										},
+									};
+								})
+							"
 							size="sm"
-							class="flex-1 [&>div>div>div]:w-full"
+							class="max-w-60 flex-1 [&>div>div>div]:w-full"
 							placement="right">
 							<template v-slot="{ open }">
 								<Button
@@ -151,6 +151,7 @@ const attachedScriptResource = createListResource({
 const clientScriptResource = createListResource({
 	doctype: "Builder Client Script",
 	fields: ["script", "script_type", "name"],
+	pageLength: 100,
 	auto: true,
 });
 
@@ -251,7 +252,7 @@ watch(
 		if (attachedScriptResource.data && attachedScriptResource.data.length > 0) {
 			selectScript(attachedScriptResource.data[0]);
 		}
-	}
+	},
 );
 </script>
 <style scoped>

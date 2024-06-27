@@ -1,6 +1,7 @@
 <template>
 	<component
 		:is="getComponentName(block)"
+		:selected="isSelected"
 		@click="handleClick"
 		@dblclick="handleDoubleClick"
 		@contextmenu="triggerContextMenu($event)"
@@ -23,6 +24,7 @@
 			v-for="child in block.getChildren()" />
 	</component>
 	<teleport to="#overlay" v-if="canvasProps?.overlayElement && !preview && Boolean(canvasProps)">
+		<!-- prettier-ignore -->
 		<BlockEditor
 			ref="editor"
 			v-if="loadEditor"
@@ -30,7 +32,7 @@
 			:breakpoint="breakpoint"
 			:editable="isEditable"
 			:isSelected="isSelected"
-			:target="target as HTMLElement" />
+			:target="(target as HTMLElement)" />
 	</teleport>
 </template>
 <script setup lang="ts">
@@ -73,6 +75,10 @@ const props = defineProps({
 		type: Object,
 		default: null,
 	},
+});
+
+defineOptions({
+	inheritAttrs: false,
 });
 
 const draggable = computed(() => {

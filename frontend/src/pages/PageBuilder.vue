@@ -4,7 +4,7 @@
 		<div>
 			<BuilderLeftPanel
 				v-show="store.showLeftPanel"
-				class="no-scrollbar absolute bottom-0 left-0 top-[var(--toolbar-height)] z-20 overflow-auto border-r-[1px] bg-white dark:border-gray-800 dark:bg-zinc-900"></BuilderLeftPanel>
+				class="no-scrollbar absolute bottom-0 left-0 top-[var(--toolbar-height)] z-20 overflow-auto border-r-[1px] bg-white shadow-lg dark:border-gray-800 dark:bg-zinc-900"></BuilderLeftPanel>
 			<BuilderCanvas
 				ref="componentCanvas"
 				:key="store.editingComponent"
@@ -25,7 +25,7 @@
 					<div
 						class="absolute left-0 right-0 top-0 z-20 flex items-center justify-between bg-white p-2 text-sm text-gray-800 dark:bg-zinc-900 dark:text-zinc-400">
 						<div class="flex items-center gap-1 text-xs">
-							<a @click="store.editPage(false)" class="cursor-pointer">Page</a>
+							<a @click="exitComponentMode" class="cursor-pointer">Page</a>
 							<FeatherIcon name="chevron-right" class="h-3 w-3" />
 							{{ store.getComponent(store.editingComponent).component_name }}
 						</div>
@@ -57,7 +57,7 @@
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-200 p-10 dark:bg-zinc-800"></BuilderCanvas>
 			<BuilderRightPanel
 				v-show="store.showRightPanel"
-				class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] bg-white dark:border-gray-800 dark:bg-zinc-900"></BuilderRightPanel>
+				class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] bg-white shadow-lg dark:border-gray-800 dark:bg-zinc-900"></BuilderRightPanel>
 			<Dialog
 				style="z-index: 40"
 				v-model="store.showHTMLDialog"
@@ -75,7 +75,6 @@
 						@update:modelValue="
 							(val) => {
 								store.editableBlock?.setInnerHTML(val);
-								store.editableBlock = null;
 							}
 						"
 						required />
@@ -91,14 +90,17 @@ import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import { webPages } from "@/data/webPage";
+import { sessionUser } from "@/router";
 import useStore from "@/store";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { getUsersInfo } from "@/usersInfo";
 import Block, { styleProperty } from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import {
 	addPxToNumber,
+	confirm,
 	copyToClipboard,
 	detachBlockFromComponent,
 	getBlockCopy,
@@ -109,7 +111,7 @@ import {
 } from "@/utils/helpers";
 import { useActiveElement, useDebounceFn, useEventListener, useMagicKeys, useStorage } from "@vueuse/core";
 import { Dialog } from "frappe-ui";
-import { Ref, computed, nextTick, onActivated, provide, ref, watch, watchEffect } from "vue";
+import { Ref, computed, nextTick, onActivated, onDeactivated, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { toast } from "vue-sonner";
 import CodeEditor from "../components/CodeEditor.vue";
@@ -145,7 +147,7 @@ useEventListener(
 			return;
 		}
 	},
-	{ passive: false }
+	{ passive: false },
 );
 
 useEventListener(document, "copy", (e) => {
@@ -247,6 +249,12 @@ useEventListener(document, "paste", async (e) => {
 			block = getBlockTemplate("html");
 
 			if (text.startsWith("<svg")) {
+				if (text.includes("<image")) {
+					toast.warning("Warning", {
+						description: "SVG with inlined image in it is not supported. Please paste it as PNG instead.",
+					});
+					return;
+				}
 				const dom = new DOMParser().parseFromString(text, "text/html");
 				const svg = dom.body.querySelector("svg") as SVGElement;
 				const width = svg.getAttribute("width") || "100";
@@ -281,7 +289,7 @@ useEventListener(document, "paste", async (e) => {
 		const styleObj = strippedText.split(";").reduce((acc: BlockStyleMap, curr) => {
 			const [key, value] = curr.split(":").map((item) => (item ? item.trim() : "")) as [
 				styleProperty,
-				StyleValue
+				StyleValue,
 			];
 			if (blockController.isText()) {
 				if (
@@ -432,7 +440,7 @@ useEventListener(document, "keydown", (e) => {
 
 const activeElement = useActiveElement();
 const notUsingInput = computed(
-	() => activeElement.value?.tagName !== "INPUT" && activeElement.value?.tagName !== "TEXTAREA"
+	() => activeElement.value?.tagName !== "INPUT" && activeElement.value?.tagName !== "TEXTAREA",
 );
 
 const { space } = useMagicKeys({
@@ -492,7 +500,7 @@ useEventListener(document, "keydown", (e) => {
 			const copiedStyle = useStorage(
 				"copiedStyle",
 				{ blockId: "", style: {} },
-				sessionStorage
+				sessionStorage,
 			) as Ref<StyleCopy>;
 			copiedStyle.value = {
 				blockId: block.blockId,
@@ -551,8 +559,7 @@ useEventListener(document, "keydown", (e) => {
 	}
 
 	if (e.key === "Escape") {
-		store.editPage(false);
-		clearSelectedComponent();
+		exitComponentMode(e);
 	}
 
 	// handle arrow keys
@@ -572,7 +579,27 @@ const clearSelectedComponent = () => {
 	}
 };
 
+const exitComponentMode = (e: Event) => {
+	if (store.editingComponent && store.activeCanvas?.isDirty) {
+		e.preventDefault();
+		confirm("Are you sure you want to exit without saving?").then((result) => {
+			if (result) {
+				store.editPage(false);
+				clearSelectedComponent();
+			}
+		});
+		return;
+	}
+	store.editPage(false);
+	clearSelectedComponent();
+};
+
 onActivated(async () => {
+	store.realtime.on("doc_viewers", async (data) => {
+		store.viewers = await getUsersInfo(data.users.filter((user: string) => user !== sessionUser.value));
+	});
+	store.realtime.doc_subscribe("Builder Page", route.params.pageId as string);
+	store.realtime.doc_open("Builder Page", route.params.pageId as string);
 	if (route.params.pageId === store.selectedPage) {
 		return;
 	}
@@ -582,7 +609,7 @@ onActivated(async () => {
 	if (route.params.pageId && route.params.pageId !== "new") {
 		store.setPage(route.params.pageId as string);
 	} else {
-		webPages.insert
+		await webPages.insert
 			.submit({
 				page_title: "My Page",
 				draft_blocks: [store.getRootBlock()],
@@ -592,6 +619,12 @@ onActivated(async () => {
 				store.setPage(data.name);
 			});
 	}
+});
+
+onDeactivated(() => {
+	store.realtime.doc_close("Builder Page", store.activePage?.name as string);
+	store.realtime.off("doc_viewers", () => {});
+	store.viewers = [];
 });
 
 // on tab activation, reload for latest data
@@ -633,7 +666,7 @@ watch(
 	},
 	{
 		deep: true,
-	}
+	},
 );
 
 watch(
@@ -642,7 +675,7 @@ watch(
 		if (!value) {
 			store.editableBlock = null;
 		}
-	}
+	},
 );
 </script>
 
@@ -651,27 +684,5 @@ watch(
 	--left-panel-width: 17rem;
 	--right-panel-width: 20rem;
 	--toolbar-height: 3.5rem;
-}
-
-[id^="headlessui-menu-items"] {
-	@apply dark:bg-zinc-800;
-}
-
-[id^="headlessui-menu-items"] button {
-	@apply dark:text-zinc-200;
-	@apply dark:hover:bg-zinc-700;
-}
-
-[id^="headlessui-menu-items"] button svg {
-	@apply dark:text-zinc-200;
-}
-
-[data-sonner-toaster] {
-	font-family: "InterVar";
-}
-
-[data-sonner-toast][data-styled="true"] {
-	@apply dark:bg-zinc-900;
-	@apply dark:border-zinc-800;
 }
 </style>

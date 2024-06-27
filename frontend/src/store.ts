@@ -3,6 +3,7 @@ import { FileUploadHandler, createDocumentResource } from "frappe-ui";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
 import { toast } from "vue-sonner";
+import BlockLayers from "./components/BlockLayers.vue";
 import BuilderCanvas from "./components/BuilderCanvas.vue";
 import { builderSettings } from "./data/builderSettings";
 import webComponent from "./data/webComponent";
@@ -12,7 +13,7 @@ import { BuilderPage } from "./types/Builder/BuilderPage";
 import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
 import { getBlockInstance } from "./utils/helpers";
-
+import RealTimeHandler from "./utils/realtimeHandler";
 const useStore = defineStore("store", {
 	state: () => ({
 		editableBlock: <Block | null>null,
@@ -25,6 +26,7 @@ const useStore = defineStore("store", {
 		mode: <BuilderMode>"select", // check setEvents in BuilderCanvas for usage
 		lastMode: <BuilderMode>"select",
 		activeCanvas: <InstanceType<typeof BuilderCanvas> | null>null,
+		activeLayers: <InstanceType<typeof BlockLayers> | null>null,
 		history: {
 			pause: () => {},
 			resume: () => {},
@@ -56,6 +58,8 @@ const useStore = defineStore("store", {
 		showHTMLDialog: false,
 		activePage: <BuilderPage | null>null,
 		savingPage: false,
+		realtime: new RealTimeHandler(),
+		viewers: <UserInfo[]>[],
 	}),
 	actions: {
 		clearBlocks() {
@@ -111,7 +115,7 @@ const useStore = defineStore("store", {
 			if (blocks.length === 0) {
 				blocks.push(getBlockTemplate("body"));
 			}
-			this.pageBlocks = [getBlockInstance(blocks[0])];
+			this.pageBlocks = [getBlockInstance(blocks[0] || getBlockTemplate("body"))];
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
 			this.selectedPage = page.name;
@@ -151,7 +155,7 @@ const useStore = defineStore("store", {
 			videoBlock.attributes.src = videoSrc;
 			return videoBlock;
 		},
-		selectBlock(block: Block, e: MouseEvent | null, scrollIntoView = true) {
+		selectBlock(block: Block, e: MouseEvent | null, scrollLayerIntoView = true, scrollBlockIntoView = false) {
 			this.activeCanvas?.history?.pause();
 			if (this.settingPage) {
 				return;
@@ -161,14 +165,20 @@ const useStore = defineStore("store", {
 			} else {
 				this.activeCanvas?.selectBlock(block);
 			}
-			if (scrollIntoView) {
+			if (scrollLayerIntoView) {
 				// TODO: move to layers?
-				document
-					.querySelector(`[data-block-layer-id="${block.blockId}"]`)
-					?.scrollIntoView({ behavior: "instant", block: "center" });
+				nextTick(() => {
+					document
+						.querySelector(`[data-block-layer-id="${block.blockId}"]`)
+						?.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
+				});
 			}
+
 			this.activeCanvas?.history?.resume();
 			this.editableBlock = null;
+			if (scrollBlockIntoView) {
+				this.activeCanvas?.scrollBlockIntoView(block);
+			}
 		},
 		editComponent(block: Block) {
 			if (block.isExtendedFromComponent()) {
@@ -222,6 +232,7 @@ const useStore = defineStore("store", {
 						})
 						.then(() => {
 							toast.success("Component saved!");
+							this.activeCanvas?.toggleDirty(false);
 						});
 				} else {
 					// webComponent.fet;
@@ -273,6 +284,7 @@ const useStore = defineStore("store", {
 				private: false,
 				folder: "Home/Builder Uploads",
 				optimize: true,
+				upload_endpoint: "/api/method/builder.builder.doctype.builder_page.builder_page.upload_builder_asset",
 			});
 			await new Promise((resolve) => {
 				toast.promise(upload, {
@@ -289,7 +301,7 @@ const useStore = defineStore("store", {
 			});
 
 			return {
-				fileURL: encodeURI(window.location.origin + fileDoc.file_url),
+				fileURL: fileDoc.file_url,
 				fileName: fileDoc.file_name,
 			};
 		},
@@ -328,6 +340,7 @@ const useStore = defineStore("store", {
 			};
 			return webPages.setValue.submit(args).finally(() => {
 				this.savingPage = false;
+				this.activeCanvas?.toggleDirty(false);
 			});
 		},
 		setPageData(page?: BuilderPage) {

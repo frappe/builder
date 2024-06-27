@@ -1,3 +1,4 @@
+import { confirmDialog } from "frappe-ui";
 import { reactive } from "vue";
 import Block from "./block";
 
@@ -87,10 +88,16 @@ function getRandomColor() {
 	return HSVToHex(Math.random() * 360, 25, 100);
 }
 
-async function confirm(message: string): Promise<boolean> {
+async function confirm(message: string, title: string = "Confirm"): Promise<boolean> {
 	return new Promise((resolve) => {
-		const confirmed = window.confirm(message);
-		resolve(confirmed);
+		confirmDialog({
+			title: title,
+			message: message,
+			onConfirm: ({ hideDialog }: { hideDialog: Function }) => {
+				resolve(true);
+				hideDialog();
+			},
+		});
 	});
 }
 

@@ -8,7 +8,8 @@
 	font-weight: 100 900;
 	font-display: swap;
 	font-style: normal;
-	src: url("/assets/builder/fonts/Inter/Inter.var.woff2?v=3.19") format("woff2-variations"),
+	src:
+		url("/assets/builder/fonts/Inter/Inter.var.woff2?v=3.19") format("woff2-variations"),
 		url("/assets/builder/fonts/Inter/Inter.var.woff2?v=3.19") format("woff2");
 	src: url("/assets/builder/fonts/Inter/Inter.var.woff2?v=3.19") format("woff2") tech("variations");
 }
@@ -18,7 +19,8 @@
 	font-weight: 100 900;
 	font-display: swap;
 	font-style: italic;
-	src: url("/assets/builder/fonts/Inter/Inter-Italic.var.woff2?v=3.19") format("woff2-variations"),
+	src:
+		url("/assets/builder/fonts/Inter/Inter-Italic.var.woff2?v=3.19") format("woff2-variations"),
 		url("/assets/builder/fonts/Inter/Inter-Italic.var.woff2?v=3.19") format("woff2");
 	src: url("/assets/builder/fonts/Inter/Inter-Italic.var.woff2?v=3.19") format("woff2") tech("variations");
 }
@@ -35,6 +37,10 @@
 p:empty:before {
 	content: "";
 	display: inline-block;
+}
+
+.__text_block__ {
+	overflow-wrap: break-word;
 }
 .__text_block__ a {
 	color: var(--link-color);

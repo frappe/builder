@@ -15,18 +15,7 @@
 <script>
 	if (navigator.doNotTrack != 1) {document.addEventListener("DOMContentLoaded", function() {let b=getBrowser(),q=getQueryParams();import('https://openfpcdn.io/fingerprintjs/v3').then(f=>f.load()).then(fp=>fp.get()).then(r=>{const d={referrer:document.referrer,browser:b.name,version:b.version,user_tz:Intl.DateTimeFormat().resolvedOptions().timeZone,source:q.source,medium:q.medium,campaign:q.campaign,visitor_id:r.visitorId};makeViewLog(d)})})}function getBrowser(){const ua=navigator.userAgent,b={};if(ua.indexOf("Chrome")!==-1){b.name="Chrome";b.version=parseInt(ua.split("Chrome/")[1])}else if(ua.indexOf("Firefox")!==-1){b.name="Firefox";b.version=parseInt(ua.split("Firefox/")[1])}else{b.name="Unknown";b.version="Unknown"}return b}function getQueryParams(){const q={},p=window.location.search.substring(1).split("&");p.forEach(p=>{const [k,v]=p.split("=");q[k]=v});return q}function makeViewLog(d){fetch('/api/method/frappe.website.doctype.web_page_view.web_page_view.make_view_log',{method:'POST',headers:{'Content-Type':'application/json',"X-Frappe-CSRF-Token": frappe.csrf_token},body:JSON.stringify(d)})}
 </script>
-<script>
-	// TODO: check if user has edit permissions (UX)
-	if (document.cookie.indexOf("user_id=Guest") === -1) {
-		document.querySelector(".__editor_link").style.display = "block";
-		document.querySelector(".__editor_link").addEventListener("mouseover", function() {
-			this.style.opacity = "1";
-		});
-		document.querySelector(".__editor_link").addEventListener("mouseout", function() {
-			this.style.opacity = "0.1";
-		});
-	} else {
-		document.querySelector(".__editor_link")?.remove();
-	}
-</script>
 {% endif %}
+<script>
+if(document.cookie.indexOf("user_id=Guest")===-1){const e=document.querySelector(".__editor_link");e.style.display="block";e.addEventListener("mouseover",()=>e.style.opacity="1");e.addEventListener("mouseout",()=>e.style.opacity="0.1");}else{document.querySelector(".__editor_link")?.remove();}
+</script>
