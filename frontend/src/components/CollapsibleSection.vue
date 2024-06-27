@@ -6,12 +6,12 @@
 			</h3>
 			<Button
 				class="dark:text-zinc-400 dark:hover:bg-zinc-700"
-				:icon="collapsed ? 'minus' : 'plus'"
+				:icon="collapsed ? 'plus' : 'minus'"
 				:variant="'ghost'"
 				size="sm"
 				@click="toggleCollapsed"></Button>
 		</div>
-		<div v-if="collapsed">
+		<div v-if="!collapsed">
 			<div class="mb-4 mt-3 flex flex-col gap-3"><slot /></div>
 		</div>
 	</div>
@@ -26,7 +26,7 @@ const props = defineProps({
 	},
 	sectionCollapsed: {
 		type: Boolean,
-		default: true,
+		default: false,
 	},
 });
 
