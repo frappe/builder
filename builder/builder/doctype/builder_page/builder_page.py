@@ -117,6 +117,30 @@ class BuilderPage(WebsiteGenerator):
 				record_list=[["Builder Page", self.name, "builder_page_template"]], record_module="builder"
 			)
 
+			components = set()
+
+			def get_component(block):
+				if block.get("extendedFromComponent"):
+					component = block.get("extendedFromComponent")
+					components.add(component)
+					# export nested components as well
+					component_doc = frappe.get_cached_doc("Builder Component", component)
+					if component_doc.blocks:
+						component_blocks = frappe.parse_json(component_doc.blocks)
+						for block in component_blocks:
+							get_component(block)
+				for child in block.get("children", []):
+					get_component(child)
+
+			for block in blocks:
+				get_component(block)
+
+			if components:
+				export_to_files(
+					record_list=[["Builder Component", c, "builder_component"] for c in components],
+					record_module="builder",
+				)
+
 	def on_trash(self):
 		if self.is_template and frappe.conf.developer_mode:
 			from frappe.modules import scrub

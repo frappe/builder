@@ -20,7 +20,7 @@
 			class="h-fit max-w-[250px] flex-grow basis-52"
 			v-for="page in templates.data"
 			:page="page"
-			@click="() => duplicatePage(page)"></TemplatePagePreview>
+			@click="(p) => duplicatePage(p)"></TemplatePagePreview>
 	</div>
 </template>
 <script setup lang="ts">
@@ -38,7 +38,10 @@ const loadPage = async (pageName: string = "new") => {
 	router.push({ name: "builder", params: { pageId: pageName } });
 };
 
-const duplicatePage = async (page: BuilderPage) => {
+const duplicatePage = async (page?: BuilderPage) => {
+	if (!page) {
+		return emit("templateSelected", null);
+	}
 	const webPageResource = await createDocumentResource({
 		doctype: "Builder Page",
 		name: page.page_name,
