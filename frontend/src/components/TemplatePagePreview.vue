@@ -1,6 +1,7 @@
 <template>
 	<div
-		class="group relative mr-2 w-full overflow-hidden rounded-md shadow hover:cursor-pointer dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
+		class="group relative mr-2 w-full overflow-hidden rounded-md shadow hover:cursor-pointer dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+		@click="() => $emit('click', page)">
 		<img
 			width="250"
 			height="140"
@@ -17,6 +18,7 @@
 			</span>
 			<router-link
 				:key="page.page_name"
+				@click.stop="() => $emit('click', null)"
 				:to="{ name: 'builder', params: { pageId: page.page_name } }"
 				v-if="is_developer_mode">
 				<FeatherIcon name="edit" class="h-4 w-4 text-gray-500 hover:text-gray-700"></FeatherIcon>
@@ -29,7 +31,7 @@ import { BuilderPage } from "@/types/Builder/BuilderPage";
 
 const is_developer_mode = window.is_developer_mode;
 
-const props = defineProps<{
+defineProps<{
 	page: BuilderPage;
 }>();
 </script>
