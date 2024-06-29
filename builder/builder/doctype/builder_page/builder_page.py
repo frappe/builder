@@ -149,9 +149,9 @@ class BuilderPage(WebsiteGenerator):
 			)
 			if os.path.exists(page_template_folder):
 				shutil.rmtree(page_template_folder)
-			asset_folder = os.path.join(frappe.get_app_path("builder"), "www", "builder_assets", self.name)
-			if os.path.exists(asset_folder):
-				shutil.rmtree(asset_folder)
+			assets_path = get_template_assets_folder_path(self)
+			if os.path.exists(assets_path):
+				shutil.rmtree(assets_path)
 
 	def autoname(self):
 		if not self.name:
@@ -684,10 +684,8 @@ def copy_img_to_asset_folder(block, self):
 			if files:
 				_file = frappe.get_doc("File", files[0].name)
 				# copy physical file to new location
-				new_path = os.path.join(frappe.get_app_path("builder"), "www", "builder_assets", self.name)
-				if not os.path.exists(new_path):
-					os.makedirs(new_path)
-				shutil.copy(_file.get_full_path(), new_path)
+				assets_folder_path = get_template_assets_folder_path(self)
+				shutil.copy(_file.get_full_path(), assets_folder_path)
 			block["attributes"]["src"] = f"/builder_assets/{self.name}/{src.split('/')[-1]}"
 	for child in block.get("children", []):
 		copy_img_to_asset_folder(child, self)
@@ -696,9 +694,7 @@ def copy_img_to_asset_folder(block, self):
 def get_builder_page_preview_paths(page_doc):
 	public_path, public_path = None, None
 	if page_doc.is_template:
-		local_path = os.path.join(
-			frappe.get_app_path("builder"), "www", "builder_assets", page_doc.name, "preview.jpeg"
-		)
+		local_path = os.path.join(get_template_assets_folder_path(page_doc), "preview.jpeg")
 		public_path = f"/builder_assets/{page_doc.name}/preview.jpeg"
 	else:
 		file_name = f"{page_doc.name}-preview.jpeg"
@@ -706,6 +702,13 @@ def get_builder_page_preview_paths(page_doc):
 		random_hash = frappe.generate_hash(length=5)
 		public_path = f"/files/{file_name}?v={random_hash}"
 	return public_path, local_path
+
+
+def get_template_assets_folder_path(page_doc):
+	path = os.path.join(frappe.get_app_path("builder"), "www", "builder_assets", page_doc.name)
+	if not os.path.exists(path):
+		os.makedirs(path)
+	return path
 
 
 @frappe.whitelist()
