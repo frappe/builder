@@ -125,10 +125,9 @@ class BuilderPage(WebsiteGenerator):
 					components.add(component)
 					# export nested components as well
 					component_doc = frappe.get_cached_doc("Builder Component", component)
-					if component_doc.blocks:
-						component_blocks = frappe.parse_json(component_doc.blocks)
-						for block in component_blocks:
-							get_component(block)
+					if component_doc.block:
+						component_block = frappe.parse_json(component_doc.block)
+						get_component(component_block)
 				for child in block.get("children", []):
 					get_component(child)
 
