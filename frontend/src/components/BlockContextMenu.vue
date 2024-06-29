@@ -145,22 +145,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Convert To Link",
 		action: () => {
-			blockController.getSelectedBlocks().forEach((block: Block) => {
-				if (block.isSVG() || block.isImage()) {
-					const parentBlock = block.getParentBlock();
-					if (!parentBlock) return;
-					const newBlockObj = getBlockTemplate("fit-container");
-					const newBlock = parentBlock.addChild(newBlockObj, parentBlock.getChildIndex(block));
-					newBlock.addChild(block);
-					parentBlock.removeChild(block);
-					newBlock.convertToLink();
-					nextTick(() => {
-						newBlock.selectBlock();
-					});
-				} else {
-					block.convertToLink();
-				}
-			});
+			blockController.convertToLink();
 		},
 		condition: () =>
 			(props.block.isContainer() || props.block.isText() || props.block.isImage()) &&

@@ -648,7 +648,6 @@ class Block implements BlockOptions {
 	}
 	convertToLink() {
 		this.element = "a";
-		this.attributes.href = "#";
 	}
 	getElement() {
 		if (this.isExtendedFromComponent()) {
