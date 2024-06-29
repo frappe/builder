@@ -16,7 +16,7 @@
 			<CollapsibleSection
 				:sectionName="section.name"
 				v-for="section in filteredSections"
-				:sectionCollapsed="section?.collapsed">
+				:sectionCollapsed="section.collapsed">
 				<template v-for="property in getFilteredProperties(section)">
 					<component :is="property.component" v-bind="property.getProps()" v-on="property.events || {}">
 						{{ property.innerText || "" }}
@@ -30,11 +30,12 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import blockController from "@/utils/blockController";
 import { setFont as _setFont, fontListNames, getFontWeightOptions } from "@/utils/fontManager";
 import { Button, createResource } from "frappe-ui";
-import { Ref, computed, ref } from "vue";
+import { Ref, computed, nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
 import BackgroundHandler from "./BackgroundHandler.vue";
 import BlockFlexLayoutHandler from "./BlockFlexLayoutHandler.vue";
@@ -115,6 +116,77 @@ const setClasses = (val: string) => {
 	const classes = val.split(",").map((c) => c.trim());
 	blockController.setClasses(classes);
 };
+
+const linkSectionProperties = [
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Link To",
+				type: "autocomplete",
+				options: webPages.data
+					.filter((page) => {
+						return page.route && !page.dynamic_route;
+					})
+					.map((page) => {
+						return {
+							value: page.route,
+							label: page.route,
+						};
+					}),
+				modelValue: blockController.getAttribute("href"),
+			};
+		},
+		searchKeyWords: "Link, Href, URL",
+		events: {
+			"update:modelValue": async (val: string) => {
+				if (val && !blockController.isLink()) {
+					blockController.convertToLink();
+					await nextTick();
+					await nextTick();
+				}
+				if (!val && blockController.isLink()) {
+					blockController.removeAttribute("href");
+					blockController.removeAttribute("target");
+					blockController.setKeyValue("element", "div");
+				} else {
+					blockController.setAttribute("href", val);
+				}
+			},
+		},
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Opens in",
+				type: "select",
+				options: [
+					{
+						value: "_self",
+						label: "Same Tab",
+					},
+					{
+						value: "_blank",
+						label: "New Tab",
+					},
+				],
+				modelValue: blockController.getAttribute("target") || "_self",
+			};
+		},
+		searchKeyWords: "Link, Target, Opens in, OpensIn, Opens In, New Tab",
+		events: {
+			"update:modelValue": (val: string) => {
+				if (val === "_self") {
+					blockController.removeAttribute("target");
+				} else {
+					blockController.setAttribute("target", val);
+				}
+			},
+		},
+		condition: () => blockController.getAttribute("href"),
+	},
+];
 
 const typographySectionProperties = [
 	{
@@ -624,45 +696,6 @@ const optionsSectionProperties = [
 		component: InlineInput,
 		getProps: () => {
 			return {
-				label: "Link",
-				modelValue: blockController.getAttribute("href"),
-			};
-		},
-		searchKeyWords: "Link, Href, URL",
-		events: {
-			"update:modelValue": (val: string) => blockController.setAttribute("href", val),
-		},
-		condition: () => blockController.isLink(),
-	},
-	{
-		component: InlineInput,
-		getProps: () => {
-			return {
-				label: "Opens in",
-				type: "select",
-				options: [
-					{
-						value: "_self",
-						label: "Same Tab",
-					},
-					{
-						value: "_blank",
-						label: "New Tab",
-					},
-				],
-				modelValue: blockController.getAttribute("target"),
-			};
-		},
-		searchKeyWords: "Link, Target, Opens in, OpensIn, Opens In, New Tab",
-		events: {
-			"update:modelValue": (val: string) => blockController.setAttribute("target", val),
-		},
-		condition: () => blockController.isLink(),
-	},
-	{
-		component: InlineInput,
-		getProps: () => {
-			return {
 				label: "Image URL",
 				modelValue: blockController.getAttribute("src"),
 			};
@@ -1111,6 +1144,12 @@ const sections = [
 		properties: layoutSectionProperties,
 		condition: () => !blockController.multipleBlocksSelected(),
 		collapsed: true,
+	},
+	{
+		name: "Link",
+		properties: linkSectionProperties,
+		collapsed: computed(() => !blockController.isLink()),
+		condition: () => !blockController.multipleBlocksSelected(),
 	},
 	{
 		name: "Typography",
