@@ -13,7 +13,10 @@
 				" />
 		</div>
 		<div class="flex flex-col gap-3">
-			<CollapsibleSection :sectionName="section.name" v-for="section in filteredSections">
+			<CollapsibleSection
+				:sectionName="section.name"
+				v-for="section in filteredSections"
+				:sectionCollapsed="section?.collapsed">
 				<template v-for="property in getFilteredProperties(section)">
 					<component :is="property.component" v-bind="property.getProps()" v-on="property.events || {}">
 						{{ property.innerText || "" }}
@@ -69,6 +72,7 @@ type PropertySection = {
 	name: string;
 	properties: BlockProperty[];
 	condition?: () => boolean;
+	collapsed?: boolean;
 };
 
 const searchInput = ref(null) as Ref<HTMLElement | null>;
@@ -1106,6 +1110,7 @@ const sections = [
 		name: "Layout",
 		properties: layoutSectionProperties,
 		condition: () => !blockController.multipleBlocksSelected(),
+		collapsed: true,
 	},
 	{
 		name: "Typography",
@@ -1130,26 +1135,32 @@ const sections = [
 		name: "Position",
 		properties: positionSectionProperties,
 		condition: () => !blockController.multipleBlocksSelected(),
+		collapsed: true,
 	},
 	{
 		name: "Spacing",
 		properties: spacingSectionProperties,
+		collapsed: true,
 	},
 	{
 		name: "Options",
 		properties: optionsSectionProperties,
+		collapsed: true,
 	},
 	{
 		name: "Data Key",
 		properties: dataKeySectionProperties,
+		collapsed: true,
 	},
 	{
 		name: "HTML Attributes",
 		properties: customAttributesSectionProperties,
+		collapsed: true,
 	},
 	{
 		name: "Raw Style",
 		properties: rawStyleSectionProperties,
+		collapsed: true,
 	},
 ] as PropertySection[];
 </script>
