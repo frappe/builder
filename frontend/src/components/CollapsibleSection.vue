@@ -17,7 +17,7 @@
 	</div>
 </template>
 <script lang="ts" setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 
 const props = defineProps({
 	sectionName: {
@@ -25,16 +25,23 @@ const props = defineProps({
 		required: true,
 	},
 	sectionCollapsed: {
-		type: Boolean,
+		type: [Boolean, Object],
 		default: false,
 	},
 });
 
-const emit = defineEmits(["update:sectionCollapsed"]);
-const collapsed = ref(props.sectionCollapsed);
+const propCollapsed = ref(props.sectionCollapsed);
+const collapsed = ref(false);
 
 const toggleCollapsed = () => {
 	collapsed.value = !collapsed.value;
-	emit("update:sectionCollapsed", collapsed.value);
 };
+
+watch(
+	() => propCollapsed.value,
+	(newVal) => {
+		collapsed.value = newVal as boolean;
+	},
+	{ immediate: true },
+);
 </script>
