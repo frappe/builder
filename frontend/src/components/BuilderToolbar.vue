@@ -62,7 +62,13 @@
 				</div>
 			</div>
 
-			<Badge :variant="'subtle'" theme="gray" size="md" label="Badge" v-if="store.isHomePage()">
+			<Badge
+				:variant="'subtle'"
+				theme="gray"
+				size="md"
+				label="Badge"
+				class="dark:bg-zinc-600 dark:text-zinc-100"
+				v-if="store.isHomePage()">
 				Homepage
 			</Badge>
 			<span class="text-sm dark:text-zinc-300" v-if="store.savingPage">Saving template</span>
