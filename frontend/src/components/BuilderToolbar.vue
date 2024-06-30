@@ -62,7 +62,13 @@
 				</div>
 			</div>
 
-			<Badge :variant="'subtle'" theme="gray" size="md" label="Badge" v-if="store.isHomePage()">
+			<Badge
+				:variant="'subtle'"
+				theme="gray"
+				size="md"
+				label="Badge"
+				class="dark:bg-zinc-600 dark:text-zinc-100"
+				v-if="store.isHomePage()">
 				Homepage
 			</Badge>
 			<!-- <button @click="showDialog = true">
