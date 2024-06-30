@@ -96,7 +96,8 @@ const isDark = useDark();
 	@apply dark:bg-black-overlay-800;
 }
 
-[id^="headlessui-menu-items"] {
+[id^="headlessui-menu-items"],
+[id^="headlessui-combobox-options"] {
 	@apply dark:bg-zinc-800;
 	@apply overflow-y-auto;
 	-ms-overflow-style: none; /* IE and Edge */
@@ -114,9 +115,12 @@ const isDark = useDark();
 	display: none;
 }
 
-[id^="headlessui-menu-items"] button {
+[id^="headlessui-menu-items"] button,
+[id^="headlessui-combobox-options"] li {
 	@apply dark:text-zinc-200;
 	@apply dark:hover:bg-zinc-700;
+	@apply dark:rounded;
+	@apply break-all;
 }
 
 [id^="headlessui-menu-items"] button svg {
