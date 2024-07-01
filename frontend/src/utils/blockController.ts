@@ -283,6 +283,11 @@ const blockController = {
 			}
 		});
 	},
+	unsetLink: () => {
+		blockController.getSelectedBlocks().forEach((block) => {
+			block.unsetLink();
+		});
+	},
 };
 
 export default blockController;

@@ -123,6 +123,16 @@ const isDark = useDark();
 	@apply break-all;
 }
 
+[data-headlessui-state~="active"] li {
+	@apply dark:bg-zinc-600;
+	@apply dark:text-zinc-200;
+}
+
+[data-headlessui-state="selected"] li {
+	@apply dark:bg-zinc-700;
+	@apply dark:text-zinc-200;
+}
+
 [id^="headlessui-menu-items"] button svg {
 	@apply dark:text-zinc-200;
 }

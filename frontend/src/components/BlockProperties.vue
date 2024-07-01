@@ -32,6 +32,7 @@
 <script setup lang="ts">
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
+import { BuilderPage } from "@/types/Builder/BuilderPage";
 import blockController from "@/utils/blockController";
 import { setFont as _setFont, fontListNames, getFontWeightOptions } from "@/utils/fontManager";
 import { Button, createResource } from "frappe-ui";
@@ -124,14 +125,15 @@ const linkSectionProperties = [
 			return {
 				label: "Link To",
 				type: "autocomplete",
+				showInputAsOption: true,
 				options: webPages.data
-					.filter((page) => {
+					.filter((page: BuilderPage) => {
 						return page.route && !page.dynamic_route;
 					})
-					.map((page) => {
+					.map((page: BuilderPage) => {
 						return {
-							value: page.route,
-							label: page.route,
+							value: `/${page.route}`,
+							label: `/${page.route}`,
 						};
 					}),
 				modelValue: blockController.getAttribute("href"),
@@ -146,9 +148,7 @@ const linkSectionProperties = [
 					await nextTick();
 				}
 				if (!val && blockController.isLink()) {
-					blockController.removeAttribute("href");
-					blockController.removeAttribute("target");
-					blockController.setKeyValue("element", "div");
+					blockController.unsetLink();
 				} else {
 					blockController.setAttribute("href", val);
 				}
@@ -1179,12 +1179,11 @@ const sections = [
 	{
 		name: "Spacing",
 		properties: spacingSectionProperties,
-		collapsed: true,
+		collapsed: false,
 	},
 	{
 		name: "Options",
 		properties: optionsSectionProperties,
-		collapsed: true,
 	},
 	{
 		name: "Data Key",
