@@ -35,6 +35,7 @@ class Block implements BlockOptions {
 	referenceBlockId?: string;
 	isRepeaterBlock?: boolean;
 	visibilityCondition?: string;
+	elementBeforeConversion?: string;
 	customAttributes: BlockAttributeMap;
 	constructor(options: BlockOptions) {
 		this.element = options.element;
@@ -647,7 +648,15 @@ class Block implements BlockOptions {
 		resetBlock(this, resetChildren);
 	}
 	convertToLink() {
+		this.elementBeforeConversion = this.element;
 		this.element = "a";
+	}
+	unsetLink() {
+		this.removeAttribute("href");
+		this.removeAttribute("target");
+		if (this.elementBeforeConversion) {
+			this.element = this.elementBeforeConversion;
+		}
 	}
 	getElement() {
 		if (this.isExtendedFromComponent()) {
