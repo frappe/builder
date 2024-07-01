@@ -83,6 +83,10 @@ const props = defineProps({
 		type: String,
 		default: "Search",
 	},
+	showInputAsOption: {
+		type: Boolean,
+		default: false,
+	},
 });
 
 const query = ref("");
@@ -100,14 +104,23 @@ const value = computed(() => {
 }) as ComputedRef<Option>;
 
 const filteredOptions = computed(() => {
-	return query.value === ""
-		? props.options
-		: props.options.filter((option) => {
-				return (
-					option.label.toLowerCase().includes(query.value.toLowerCase()) ||
-					option.value.toLowerCase().includes(query.value.toLowerCase())
-				);
+	if (query.value === "") {
+		return props.options;
+	} else {
+		const options = props.options.filter((option) => {
+			return (
+				option.label.toLowerCase().includes(query.value.toLowerCase()) ||
+				option.value.toLowerCase().includes(query.value.toLowerCase())
+			);
+		});
+		if (props.showInputAsOption) {
+			options.unshift({
+				label: query.value,
+				value: query.value,
 			});
+		}
+		return options;
+	}
 });
 
 const clearValue = () => emit("update:modelValue", null);
