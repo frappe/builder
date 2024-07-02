@@ -72,7 +72,8 @@
   {
    "fieldname": "page_title",
    "fieldtype": "Data",
-   "label": "Title"
+   "label": "Title",
+   "search_index": 1
   },
   {
    "fieldname": "scripting_tab",
@@ -160,7 +161,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-07-02 17:48:46.585527",
+ "modified": "2024-07-02 18:13:15.327787",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",
