@@ -19,6 +19,10 @@ export interface BuilderPage{
 	route?: string
 	/**	Dynamic Route : Check - Map route parameters into form variables. Example <code>/profile/&lt;user&gt;</code>	*/
 	dynamic_route?: 0 | 1
+	/**	Is Template : Check	*/
+	is_template?: 0 | 1
+	/**	Template Name : Data	*/
+	template_name?: string
 	/**	Blocks : JSON	*/
 	blocks?: any
 	/**	Draft Blocks : JSON	*/

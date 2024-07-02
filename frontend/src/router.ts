@@ -17,7 +17,7 @@ function validatePermission(next: NavigationGuardNext) {
 const validateVisit = function (
 	to: RouteLocationNormalized,
 	from: RouteLocationNormalized,
-	next: NavigationGuardNext
+	next: NavigationGuardNext,
 ) {
 	if (document.cookie.includes("user_id") && !document.cookie.includes("user_id=Guest")) {
 		sessionUser.value = decodeURIComponent(document.cookie.split("user_id=")[1].split(";")[0]);

@@ -15,7 +15,7 @@
     "resolveJsonModule": true,
     "sourceMap": true,
     "baseUrl": ".",
-    "types": [],
+    "types": ["node"],
     "allowJs": true,
     "paths": {
       "@/*": [

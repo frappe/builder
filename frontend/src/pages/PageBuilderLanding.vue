@@ -43,9 +43,7 @@
 						{ label: 'Published', value: 'published' },
 						{ label: 'Unpublished', value: 'unpublished' },
 					]" />
-				<router-link :to="{ name: 'builder', params: { pageId: 'new' } }">
-					<Button variant="solid" icon-left="plus">New</Button>
-				</router-link>
+				<Button variant="solid" icon-left="plus" @click="() => (showDialog = true)">New</Button>
 			</div>
 		</div>
 		<div class="grid-col grid gap-6 auto-fill-[220px]">
@@ -180,10 +178,21 @@
 			size="sm">
 			Load More
 		</Button>
+		<Dialog
+			:options="{
+				title: 'Select Template',
+				size: '6xl',
+			}"
+			v-model="showDialog">
+			<template #body-content>
+				<TemplateSelector @templateSelected="showDialog = false"></TemplateSelector>
+			</template>
+		</Dialog>
 	</section>
 </template>
 <script setup lang="ts">
 import Input from "@/components/Input.vue";
+import TemplateSelector from "@/components/TemplateSelector.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
@@ -191,18 +200,21 @@ import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
 import { useStorage, watchDebounced } from "@vueuse/core";
 import { Badge, Dropdown, TabButtons, createDocumentResource } from "frappe-ui";
-import { ref } from "vue";
-
-const displayType = useStorage("displayType", "grid");
+import { Ref, ref } from "vue";
 
 const store = useStore();
+const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list">;
+
 const searchFilter = ref("");
 const typeFilter = ref("");
+const showDialog = ref(false);
 
 watchDebounced(
 	[searchFilter, typeFilter],
 	() => {
-		const filters = {} as any;
+		const filters = {
+			is_template: 0,
+		} as any;
 		if (typeFilter.value) {
 			if (typeFilter.value === "published") {
 				filters["published"] = true;
