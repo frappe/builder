@@ -46,7 +46,8 @@
    "ignore_xss_filter": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Route"
+   "label": "Route",
+   "search_index": 1
   },
   {
    "default": "0",
@@ -159,7 +160,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-06-19 13:14:20.308173",
+ "modified": "2024-07-02 17:48:46.585527",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",
