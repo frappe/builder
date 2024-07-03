@@ -65,7 +65,6 @@
    "fieldname": "preview",
    "fieldtype": "Data",
    "label": "Page Preview",
-   "options": "URL",
    "read_only": 1
   },
   {
