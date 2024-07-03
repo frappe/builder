@@ -3,11 +3,11 @@
 		class="w-full"
 		label="Grid Type"
 		v-if="blockController.isGrid()"
-		:modelValue="isFixed ? 'fixed' : 'filled'"
+		:modelValue="isFixed ? 'fixed' : 'auto'"
 		@update:modelValue="setGridType"
 		:options="[
 			{ label: 'Fixed', value: 'fixed' },
-			{ label: 'Filled', value: 'filled' },
+			{ label: 'Auto', value: 'auto' },
 		]"></OptionToggle>
 	<InlineInput
 		v-if="blockController.isGrid() && isFixed"
@@ -28,7 +28,7 @@
 		:maxValue="20"
 		@update:modelValue="setRows" />
 	<InlineInput
-		label="Min Width"
+		label="Item Width"
 		v-if="blockController.isGrid()"
 		v-show="['auto-fit', 'auto-fill'].includes(columns as string)"
 		type="text"
@@ -149,7 +149,7 @@
 		@update:modelValue="(val: string) => blockController.setStyle('placeItems', val)" /> -->
 
 	<InlineInput
-		label="Column Span"
+		label="Col Span"
 		v-if="blockController.getParentBlock()?.isGrid()"
 		type="text"
 		:enableSlider="true"
@@ -238,19 +238,19 @@ const rows = computed(() => {
 const width = computed(() => {
 	const template = blockController.getStyle("gridTemplateColumns") as string;
 	const value = parseRepeatFunction(template);
-	return value.minValue;
+	return value.minValue !== "0" ? value.minValue : "200px";
 });
 
 const height = computed(() => {
 	const template = blockController.getStyle("gridTemplateRows") as string;
 	const value = parseRepeatFunction(template);
-	return value.minValue;
+	return value.minValue !== "0" ? value.minValue : "200px";
 });
 
 const columnSpan = computed(() => {
 	let gridColumn = blockController.getStyle("gridColumn") as string;
 	if (!gridColumn) {
-		return;
+		return 1;
 	}
 	gridColumn = gridColumn.replace("span", "").trim();
 	const [start, end] = gridColumn.split("/");
@@ -260,7 +260,7 @@ const columnSpan = computed(() => {
 const rowSpan = computed(() => {
 	let gridRow = blockController.getStyle("gridRow") as string;
 	if (!gridRow) {
-		return;
+		return 1;
 	}
 	gridRow = gridRow.replace("span", "").trim();
 	const [start, end] = gridRow.split("/");
@@ -271,7 +271,7 @@ const setColumns = (val: string | number) => {
 	if (val == null) {
 		val = "auto-fill";
 	}
-	const widthRange = `minmax(${width.value}, 1fr)`;
+	const widthRange = `minmax(0, 1fr)`;
 	val = `repeat(${val}, ${widthRange})`;
 	blockController.setStyle("gridTemplateColumns", val);
 	blockController.setStyle("gridAutoColumns", widthRange);
@@ -281,7 +281,7 @@ const setRows = (val: string | number) => {
 	if (val == null) {
 		val = "auto-fill";
 	}
-	const heightRange = `minmax(${height.value}, 1fr)`;
+	const heightRange = `minmax(0, 1fr)`;
 	val = `repeat(${val}, ${heightRange})`;
 	blockController.setStyle("gridTemplateRows", val);
 	blockController.setStyle("gridAutoRows", heightRange);
@@ -308,6 +308,10 @@ const setHeight = (val: string | number) => {
 };
 
 const setColumnSpan = (val: string) => {
+	blockController.setStyle("width", null);
+	blockController.setStyle("minWidth", null);
+	blockController.setStyle("maxWidth", null);
+
 	if (!val) {
 		blockController.setStyle("gridColumn", val);
 	} else {
@@ -316,6 +320,10 @@ const setColumnSpan = (val: string) => {
 };
 
 const setRowSpan = (val: string) => {
+	blockController.setStyle("height", null);
+	blockController.setStyle("minHeight", null);
+	blockController.setStyle("maxHeight", null);
+
 	if (!val) {
 		blockController.setStyle("gridRow", val);
 	} else {
@@ -355,7 +363,7 @@ const isFixed = computed(() => {
 
 const setGridType = (val: string) => {
 	if (val === "fixed") {
-		blockController.setStyle("gridTemplateColumns", `repeat(2, minmax(${width.value}, 1fr))`);
+		blockController.setStyle("gridTemplateColumns", `repeat(2, minmax(0, 1fr))`);
 	} else {
 		blockController.setStyle("gridTemplateColumns", `repeat(auto-fill, minmax(${width.value}, 1fr))`);
 	}
