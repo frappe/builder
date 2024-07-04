@@ -1140,10 +1140,15 @@ const videoOptionsSectionProperties = [
 
 const sections = [
 	{
+		name: "Link",
+		properties: linkSectionProperties,
+		collapsed: computed(() => !blockController.isLink()),
+		condition: () => !blockController.multipleBlocksSelected(),
+	},
+	{
 		name: "Layout",
 		properties: layoutSectionProperties,
 		condition: () => !blockController.multipleBlocksSelected(),
-		collapsed: true,
 	},
 	{
 		name: "Link",
