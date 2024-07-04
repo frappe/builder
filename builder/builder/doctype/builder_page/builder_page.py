@@ -796,6 +796,19 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 			return create_new_webp_file_doc(image_url, image, extn)
 		return image_url
 
+	if image_url.startswith("/builder_assets"):
+		image_path = os.path.abspath(frappe.get_app_path("builder", "www", image_url.lstrip("/")))
+		image_path = image_path.replace("_", "-")
+		image_path = image_path.replace("/builder-assets", "/builder_assets")
+
+		image = Image.open(image_path)
+		extn = get_extension(image_path)
+		if can_convert_image(extn):
+			webp_path = image_path.replace(extn, "webp")
+			convert_and_save_image(image, webp_path)
+			return image_url.replace(extn, "webp")
+		return image_url
+
 	if image_url.startswith("http"):
 		return handle_image_from_url(image_url)
 
