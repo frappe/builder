@@ -130,6 +130,10 @@ def sync_page_template():
 	builder_component_path = frappe.get_module_path("builder", "builder_component")
 	make_records(builder_component_path)
 
+	print("Syncing Scripts")
+	builder_script_path = frappe.get_module_path("builder", "builder_script")
+	make_records(builder_script_path)
+
 	print("Syncing Page Templates")
 	builder_page_template_path = frappe.get_module_path("builder", "builder_page_template")
 	make_records(builder_page_template_path)

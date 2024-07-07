@@ -1,7 +1,6 @@
 # Copyright (c) 2023, asdf and contributors
 # For license information, please see license.txt
 
-import contextlib
 import os
 import re
 import shutil
@@ -15,6 +14,7 @@ import requests
 from frappe.core.doctype.file.file import get_local_image
 from frappe.core.doctype.file.utils import delete_file
 from frappe.model.document import Document
+from frappe.modules import scrub
 from frappe.modules.export_file import export_to_files
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
@@ -55,21 +55,15 @@ class BuilderPageRenderer(DocumentPage):
 
 
 class BuilderPage(WebsiteGenerator):
-	def add_comment(
-		self,
-		comment_type="Comment",
-		text=None,
-		comment_email=None,
-		comment_by=None,
-	):
-		if comment_type in ["Attachment Removed", "Attachment"]:
-			return
-		super().add_comment(
-			comment_type=comment_type,
-			text=text,
-			comment_email=comment_email,
-			comment_by=comment_by,
-		)
+	website = frappe._dict(
+		template="templates/generators/webpage.html",
+		condition_field="published",
+		page_title_field="page_title",
+	)
+
+	def autoname(self):
+		if not self.name:
+			self.name = f"page-{frappe.generate_hash(length=8)}"
 
 	def before_insert(self):
 		if isinstance(self.blocks, list):
@@ -101,49 +95,10 @@ class BuilderPage(WebsiteGenerator):
 				frappe.db.set_value("Builder Settings", None, "home_page", None)
 
 		if frappe.conf.developer_mode and self.is_template:
-			# move all assets to www/builder_assets/{page_name}
-			if self.draft_blocks:
-				self.publish()
-			if not self.template_name:
-				self.template_name = self.page_title
-
-			blocks = frappe.parse_json(self.blocks)
-			for block in blocks:
-				copy_img_to_asset_folder(block, self)
-			self.db_set("draft_blocks", None)
-			self.db_set("blocks", frappe.as_json(blocks, indent=None))
-			self.reload()
-			export_to_files(
-				record_list=[["Builder Page", self.name, "builder_page_template"]], record_module="builder"
-			)
-
-			components = set()
-
-			def get_component(block):
-				if block.get("extendedFromComponent"):
-					component = block.get("extendedFromComponent")
-					components.add(component)
-					# export nested components as well
-					component_doc = frappe.get_cached_doc("Builder Component", component)
-					if component_doc.block:
-						component_block = frappe.parse_json(component_doc.block)
-						get_component(component_block)
-				for child in block.get("children", []):
-					get_component(child)
-
-			for block in blocks:
-				get_component(block)
-
-			if components:
-				export_to_files(
-					record_list=[["Builder Component", c, "builder_component"] for c in components],
-					record_module="builder",
-				)
+			save_as_template(self)
 
 	def on_trash(self):
 		if self.is_template and frappe.conf.developer_mode:
-			from frappe.modules import scrub
-
 			page_template_folder = os.path.join(
 				frappe.get_app_path("builder"), "builder", "builder_page_template", scrub(self.name)
 			)
@@ -153,9 +108,16 @@ class BuilderPage(WebsiteGenerator):
 			if os.path.exists(assets_path):
 				shutil.rmtree(assets_path)
 
-	def autoname(self):
-		if not self.name:
-			self.name = f"page-{frappe.generate_hash(length=8)}"
+	def add_comment(self, comment_type="Comment", text=None, comment_email=None, comment_by=None):
+		if comment_type in ["Attachment Removed", "Attachment"]:
+			return
+
+		super().add_comment(
+			comment_type=comment_type,
+			text=text,
+			comment_email=comment_email,
+			comment_by=comment_by,
+		)
 
 	@frappe.whitelist()
 	def publish(self, **kwargs):
@@ -175,16 +137,9 @@ class BuilderPage(WebsiteGenerator):
 
 		return self.route
 
-	website = frappe._dict(
-		template="templates/generators/webpage.html",
-		condition_field="published",
-		page_title_field="page_title",
-	)
-
 	def get_context(self, context):
 		# delete default favicon
 		del context.favicon
-
 		page_data = self.get_page_data()
 		if page_data.get("title"):
 			context.title = page_data.get("page_title")
@@ -280,6 +235,61 @@ class BuilderPage(WebsiteGenerator):
 			local_path,
 		)
 		self.db_set("preview", public_path, commit=True, update_modified=False)
+
+
+def save_as_template(page_doc: BuilderPage):
+	# move all assets to www/builder_assets/{page_name}
+	if page_doc.draft_blocks:
+		page_doc.publish()
+	if not page_doc.template_name:
+		page_doc.template_name = page_doc.page_title
+
+	blocks = frappe.parse_json(page_doc.blocks)
+	for block in blocks:
+		copy_img_to_asset_folder(block, page_doc)
+
+	page_doc.db_set("draft_blocks", None)
+	page_doc.db_set("blocks", frappe.as_json(blocks, indent=None))
+	page_doc.reload()
+	export_to_files(
+		record_list=[["Builder Page", page_doc.name, "builder_page_template"]], record_module="builder"
+	)
+
+	components = set()
+
+	def get_component(block):
+		if block.get("extendedFromComponent"):
+			component = block.get("extendedFromComponent")
+			components.add(component)
+			# export nested components as well
+			component_doc = frappe.get_cached_doc("Builder Component", component)
+			if component_doc.block:
+				component_block = frappe.parse_json(component_doc.block)
+				get_component(component_block)
+		for child in block.get("children", []):
+			get_component(child)
+
+	for block in blocks:
+		get_component(block)
+
+	if components:
+		export_to_files(
+			record_list=[["Builder Component", c, "builder_component"] for c in components],
+			record_module="builder",
+		)
+
+	scripts = frappe.get_all(
+		"Builder Page Client Script",
+		filters={"parent": page_doc.name},
+		fields=["name", "builder_script"],
+	)
+	if scripts:
+		export_to_files(
+			record_list=[
+				["Builder Client Script", s.builder_script, "builder_client_script"] for s in scripts
+			],
+			record_module="builder",
+		)
 
 
 def get_block_html(blocks):
