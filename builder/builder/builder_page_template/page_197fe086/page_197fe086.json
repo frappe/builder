@@ -7,14 +7,14 @@
  "dynamic_route": 0,
  "idx": 0,
  "is_template": 1,
- "modified": "2024-07-09 17:41:35.381352",
+ "modified": "2024-07-09 17:51:05.477455",
  "modified_by": "Administrator",
  "name": "page-197fe086",
  "owner": "Administrator",
  "page_name": "page-197fe086",
- "page_title": "Tyler George | Portfolio",
+ "page_title": "Tyler George | Product Designer",
  "preview": "/builder_assets/page-197fe086/preview.jpeg",
  "published": 1,
- "route": "pages/tyler-george|-portfolio-93f2",
+ "route": "pages/portfolio",
  "template_name": "Portfolio"
 }
