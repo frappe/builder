@@ -74,7 +74,9 @@ const deleteComponent = async (component: BlockComponent) => {
 			`Are you sure you want to delete component: ${component.component_name}?`,
 		);
 		if (confirmed) {
-			webComponent.delete.submit(component.name);
+			webComponent.delete.submit(component.name).then(() => {
+				store.componentMap.delete(component.name);
+			});
 		}
 	}
 };
