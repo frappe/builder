@@ -1,5 +1,5 @@
 import { confirmDialog } from "frappe-ui";
-import { reactive } from "vue";
+import { reactive, toRaw } from "vue";
 import Block from "./block";
 
 function getNumberFromPx(px: string | number | null | undefined): number {
@@ -250,7 +250,7 @@ function getBlockInstance(options: BlockOptions) {
 }
 
 function getBlockCopy(block: BlockOptions | Block, retainId = false): Block {
-	let b = JSON.parse(JSON.stringify(block));
+	const b = getCopyWithoutParent(block);
 	if (!retainId) {
 		const deleteBlockId = (block: BlockOptions) => {
 			delete block.blockId;
@@ -298,10 +298,14 @@ const detachBlockFromComponent = (block: Block) => {
 	return blockCopy;
 };
 
+function getCopyWithoutParent(block: BlockOptions | Block) {
+	const blockCopy = { ...toRaw(block) };
+	blockCopy.children = blockCopy.children?.map((child) => getCopyWithoutParent(child));
+	delete blockCopy.parentBlock;
+	return blockCopy;
+}
+
 export {
-	HSVToHex,
-	HexToHSV,
-	RGBToHex,
 	addPxToNumber,
 	confirm,
 	copyToClipboard,
@@ -309,11 +313,14 @@ export {
 	findNearestSiblingIndex,
 	getBlockCopy,
 	getBlockInstance,
+	getCopyWithoutParent,
 	getDataForKey,
 	getNumberFromPx,
-	getRGB,
 	getRandomColor,
+	getRGB,
 	getTextContent,
+	HexToHSV,
+	HSVToHex,
 	isCtrlOrCmd,
 	isHTMLString,
 	isJSONString,
@@ -322,5 +329,6 @@ export {
 	logObjectDiff,
 	mapToObject,
 	replaceMapKey,
+	RGBToHex,
 	stripExtension,
 };

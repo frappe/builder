@@ -12,7 +12,7 @@ import { BuilderComponent } from "./types/Builder/BuilderComponent";
 import { BuilderPage } from "./types/Builder/BuilderPage";
 import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
-import { getBlockInstance } from "./utils/helpers";
+import { getBlockCopy, getBlockInstance, getCopyWithoutParent } from "./utils/helpers";
 import RealTimeHandler from "./utils/realtimeHandler";
 const useStore = defineStore("store", {
 	state: () => ({
@@ -80,17 +80,7 @@ const useStore = defineStore("store", {
 			return this.activeCanvas?.getFirstBlock();
 		},
 		getBlockCopy(block: BlockOptions | Block, retainId = false): Block {
-			let b = JSON.parse(JSON.stringify(block));
-			if (!retainId) {
-				const deleteBlockId = (block: BlockOptions) => {
-					delete block.blockId;
-					for (let child of block.children || []) {
-						deleteBlockId(child);
-					}
-				};
-				deleteBlockId(b);
-			}
-			return getBlockInstance(b);
+			return getBlockCopy(block, retainId);
 		},
 		getRootBlock() {
 			return getBlockInstance(getBlockTemplate("body"));
@@ -332,7 +322,8 @@ const useStore = defineStore("store", {
 		},
 		savePage() {
 			this.pageBlocks = this.getPageData() as Block[];
-			const pageData = JSON.stringify(this.pageBlocks);
+
+			const pageData = JSON.stringify(this.pageBlocks.map((block) => getCopyWithoutParent(block)));
 
 			const args = {
 				name: this.selectedPage,
