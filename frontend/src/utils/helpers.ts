@@ -245,12 +245,15 @@ function logObjectDiff(obj1: { [key: string]: {} }, obj2: { [key: string]: {} },
 	}
 }
 
-function getBlockInstance(options: BlockOptions) {
+function getBlockInstance(options: BlockOptions | string) {
+	if (typeof options === "string") {
+		options = JSON.parse(options) as BlockOptions;
+	}
 	return reactive(new Block(options));
 }
 
 function getBlockCopy(block: BlockOptions | Block, retainId = false): Block {
-	const b = getCopyWithoutParent(block);
+	const b = getBlockObjectCopy(block);
 	if (!retainId) {
 		const deleteBlockId = (block: BlockOptions) => {
 			delete block.blockId;
@@ -298,7 +301,15 @@ const detachBlockFromComponent = (block: Block) => {
 	return blockCopy;
 };
 
-function getCopyWithoutParent(block: BlockOptions | Block) {
+function getBlockString(block: BlockOptions | Block): string {
+	return JSON.stringify(getCopyWithoutParent(block));
+}
+
+function getBlockObjectCopy(block: BlockOptions | Block): BlockOptions {
+	return JSON.parse(getBlockString(block));
+}
+
+function getCopyWithoutParent(block: BlockOptions | Block): BlockOptions {
 	const blockCopy = { ...toRaw(block) };
 	blockCopy.children = blockCopy.children?.map((child) => getCopyWithoutParent(child));
 	delete blockCopy.parentBlock;
@@ -313,6 +324,8 @@ export {
 	findNearestSiblingIndex,
 	getBlockCopy,
 	getBlockInstance,
+	getBlockObjectCopy as getBlockObject,
+	getBlockString,
 	getCopyWithoutParent,
 	getDataForKey,
 	getNumberFromPx,

@@ -104,6 +104,7 @@ import {
 	copyToClipboard,
 	detachBlockFromComponent,
 	getBlockCopy,
+	getCopyWithoutParent,
 	isCtrlOrCmd,
 	isHTMLString,
 	isJSONString,
@@ -168,7 +169,7 @@ useEventListener(document, "copy", (e) => {
 			if (!Boolean(block.extendedFromComponent) && block.isChildOfComponent) {
 				return detachBlockFromComponent(block);
 			}
-			return block;
+			return getCopyWithoutParent(block);
 		});
 		// just copy non components
 		const dataToCopy = {

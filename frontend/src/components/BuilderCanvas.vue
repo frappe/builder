@@ -169,7 +169,7 @@ onMounted(() => {
 
 function setupHistory() {
 	canvasHistory.value = useDebouncedRefHistory(block, {
-		capacity: 200,
+		capacity: 50,
 		deep: true,
 		debounce: 200,
 		dump: (obj) => {
@@ -192,7 +192,7 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 		}
 		let componentName = ev.dataTransfer?.getData("componentName");
 		if (componentName) {
-			const newBlock = getBlockCopy(webComponent.getRow(componentName).block, true);
+			const newBlock = getBlockInstance(webComponent.getRow(componentName).block);
 			newBlock.extendFromComponent(componentName);
 			// if shift key is pressed, replace parent block with new block
 			if (ev.shiftKey) {
@@ -635,6 +635,12 @@ const removeBlock = (block: Block) => {
 	if (block.blockId === "root") {
 		toast.warning("Warning", {
 			description: "Cannot delete root block",
+		});
+		return;
+	}
+	if (block.isChildOfComponentBlock()) {
+		toast.warning("Warning", {
+			description: "Cannot delete block inside component",
 		});
 		return;
 	}
