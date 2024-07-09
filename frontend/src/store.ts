@@ -12,7 +12,7 @@ import { BuilderComponent } from "./types/Builder/BuilderComponent";
 import { BuilderPage } from "./types/Builder/BuilderPage";
 import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
-import { getBlockInstance } from "./utils/helpers";
+import { getBlockCopy, getBlockInstance, getBlockObject, getCopyWithoutParent } from "./utils/helpers";
 import RealTimeHandler from "./utils/realtimeHandler";
 const useStore = defineStore("store", {
 	state: () => ({
@@ -60,6 +60,7 @@ const useStore = defineStore("store", {
 		savingPage: false,
 		realtime: new RealTimeHandler(),
 		viewers: <UserInfo[]>[],
+		componentMap: <Map<string, Block>>new Map(),
 	}),
 	actions: {
 		clearBlocks() {
@@ -80,17 +81,7 @@ const useStore = defineStore("store", {
 			return this.activeCanvas?.getFirstBlock();
 		},
 		getBlockCopy(block: BlockOptions | Block, retainId = false): Block {
-			let b = JSON.parse(JSON.stringify(block));
-			if (!retainId) {
-				const deleteBlockId = (block: BlockOptions) => {
-					delete block.blockId;
-					for (let child of block.children || []) {
-						deleteBlockId(child);
-					}
-				};
-				deleteBlockId(b);
-			}
-			return getBlockInstance(b);
+			return getBlockCopy(block, retainId);
 		},
 		getRootBlock() {
 			return getBlockInstance(getBlockTemplate("body"));
@@ -223,25 +214,30 @@ const useStore = defineStore("store", {
 			this.editingMode = "page";
 			this.editableBlock = null;
 
-			if (this.editingComponent) {
+			if (this.editingComponent && this.activeCanvas) {
 				if (saveComponent) {
 					webComponent.setValue
 						.submit({
 							name: this.editingComponent,
-							block: this.activeCanvas?.getFirstBlock(),
+							block: getBlockObject(this.activeCanvas.getFirstBlock()),
 						})
-						.then(() => {
+						.then((data: BuilderComponent) => {
+							this.componentMap.set(data.name, getBlockInstance(data.block));
 							toast.success("Component saved!");
 							this.activeCanvas?.toggleDirty(false);
 						});
-				} else {
-					// webComponent.fet;
 				}
 			}
 			this.editingComponent = null;
 		},
 		getComponentBlock(componentName: string) {
-			return (this.getComponent(componentName)?.block as Block) || this.getFallbackBlock();
+			if (!this.componentMap.has(componentName)) {
+				this.componentMap.set(
+					componentName,
+					getBlockInstance(this.getComponent(componentName)?.block || getBlockTemplate("fallback-component")),
+				);
+			}
+			return this.componentMap.get(componentName) as Block;
 		},
 		getComponent(componentName: string) {
 			return webComponent.getRow(componentName) as BuilderComponent;
@@ -249,8 +245,8 @@ const useStore = defineStore("store", {
 		createComponent(obj: BuilderComponent, updateExisting = false) {
 			const component = this.getComponent(obj.name);
 			if (component) {
-				const existingComponent = JSON.stringify(component.block);
-				const newComponent = JSON.stringify(obj.block);
+				const existingComponent = component.block;
+				const newComponent = obj.block;
 				if (updateExisting && existingComponent !== newComponent) {
 					return webComponent.setValue.submit({
 						name: obj.name,
@@ -260,19 +256,21 @@ const useStore = defineStore("store", {
 					return;
 				}
 			}
-			return webComponent.insert.submit(obj).catch(() => {
-				console.log(`There was an error while creating ${obj.component_name}`);
-			});
-		},
-		getFallbackBlock() {
-			return getBlockInstance(getBlockTemplate("fallback-component"));
+			return webComponent.insert
+				.submit(obj)
+				.then(() => {
+					this.componentMap.set(obj.name, getBlockInstance(obj.block));
+				})
+				.catch(() => {
+					console.log(`There was an error while creating ${obj.component_name}`);
+				});
 		},
 		getComponentName(componentId: string) {
 			let componentObj = webComponent.getRow(componentId);
 			if (!componentObj) {
 				return componentId;
 			}
-			return componentObj.component_name as Block;
+			return componentObj.component_name;
 		},
 		uploadFile: async (file: File) => {
 			const uploader = new FileUploadHandler();
@@ -332,7 +330,8 @@ const useStore = defineStore("store", {
 		},
 		savePage() {
 			this.pageBlocks = this.getPageData() as Block[];
-			const pageData = JSON.stringify(this.pageBlocks);
+
+			const pageData = JSON.stringify(this.pageBlocks.map((block) => getCopyWithoutParent(block)));
 
 			const args = {
 				name: this.selectedPage,
