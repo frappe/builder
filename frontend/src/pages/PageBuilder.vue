@@ -111,7 +111,7 @@ import {
 } from "@/utils/helpers";
 import { useActiveElement, useDebounceFn, useEventListener, useMagicKeys, useStorage } from "@vueuse/core";
 import { Dialog } from "frappe-ui";
-import { Ref, computed, nextTick, onActivated, onDeactivated, provide, ref, watch, watchEffect } from "vue";
+import { Ref, computed, onActivated, onDeactivated, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { toast } from "vue-sonner";
 import CodeEditor from "../components/CodeEditor.vue";
@@ -520,38 +520,8 @@ useEventListener(document, "keydown", (e) => {
 	if (isTargetEditable(e)) return;
 
 	if ((e.key === "Backspace" || e.key === "Delete") && blockController.isBLockSelected()) {
-		function findBlockAndRemove(blocks: Array<Block>, blockId: string) {
-			if (blockId === "root") {
-				toast.warning("Warning", {
-					description: "Cannot delete root block",
-				});
-
-				return false;
-			}
-			blocks.forEach((block, i) => {
-				if (block.blockId === blockId) {
-					if (block.isChildOfComponentBlock() && !e.shiftKey) {
-						toast.warning("Warning", {
-							description: "Cannot delete block inside component",
-						});
-						return false;
-					} else {
-						blocks.splice(i, 1);
-						nextTick(() => {
-							// select the next sibling block
-							if (blocks.length && blocks[i]) {
-								blocks[i].selectBlock();
-							}
-						});
-						return true;
-					}
-				} else if (block.children) {
-					return findBlockAndRemove(block.children, blockId);
-				}
-			});
-		}
 		for (const block of blockController.getSelectedBlocks()) {
-			findBlockAndRemove([store.activeCanvas?.getFirstBlock() as Block], block.blockId);
+			store.activeCanvas?.removeBlock(block);
 		}
 		clearSelectedComponent();
 		e.stopPropagation();

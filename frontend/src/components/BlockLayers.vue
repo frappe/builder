@@ -5,6 +5,8 @@
 			:list="blocks"
 			:group="{ name: 'block-tree' }"
 			item-key="blockId"
+			@add="updateParent"
+			@remove="updateParent"
 			:disabled="blocks.length && (blocks[0].isRoot() || blocks[0].isChildOfComponentBlock())">
 			<template #item="{ element }">
 				<div>
@@ -159,6 +161,14 @@ watch(
 		}
 	},
 );
+const updateParent = (event) => {
+	if (event.type == "add") {
+		console.log("add", event, event.to);
+		event.item.__draggable_context.element.parentBlock = store.activeCanvas?.findBlock(
+			event.to.closest("[data-block-layer-id]").dataset.blockLayerId,
+		);
+	}
+};
 
 defineExpose({
 	isExpanded,
