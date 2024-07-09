@@ -5,6 +5,7 @@
 			:list="blocks"
 			:group="{ name: 'block-tree' }"
 			item-key="blockId"
+			@add="updateParent"
 			:disabled="blocks.length && (blocks[0].isRoot() || blocks[0].isChildOfComponentBlock())">
 			<template #item="{ element }">
 				<div>
@@ -13,7 +14,7 @@
 							:data-block-layer-id="element.blockId"
 							:title="element.blockId"
 							@contextmenu.prevent.stop="onContextMenu"
-							class="min-w-24 cursor-pointer overflow-hidden rounded border border-transparent bg-white text-sm text-gray-700 dark:bg-zinc-900 dark:text-gray-500"
+							class="min-w-24 cursor-pointer overflow-hidden rounded border border-transparent bg-white bg-opacity-50 text-sm text-gray-700 dark:bg-zinc-900 dark:text-gray-500"
 							@click.stop="
 								store.activeCanvas?.history.pause();
 								store.selectBlock(element, $event, false, true);
@@ -72,12 +73,7 @@
 									{{ store.activeBreakpoint }}
 								</span>
 							</span>
-							<div
-								v-show="
-									isExpanded(element) &&
-									element.isVisible() &&
-									(element.canHaveChildren() || element.hasChildren())
-								">
+							<div v-show="canShowChildLayer(element)">
 								<BlockLayers :blocks="element.children" ref="childLayer" :indent="childIndent" />
 							</div>
 						</div>
@@ -142,6 +138,13 @@ const toggleExpanded = (block: Block) => {
 	}
 };
 
+const canShowChildLayer = (block: Block) => {
+	return (
+		((isExpanded(block) && block.hasChildren()) || (block.canHaveChildren() && !block.hasChildren())) &&
+		block.isVisible()
+	);
+};
+
 watch(
 	() => store.activeCanvas?.selectedBlocks,
 	() => {
@@ -159,6 +162,12 @@ watch(
 		}
 	},
 );
+
+const updateParent = (event) => {
+	event.item.__draggable_context.element.parentBlock = store.activeCanvas?.findBlock(
+		event.to.closest("[data-block-layer-id]").dataset.blockLayerId,
+	);
+};
 
 defineExpose({
 	isExpanded,
