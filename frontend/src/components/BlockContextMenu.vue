@@ -48,7 +48,7 @@ import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { confirm, detachBlockFromComponent, getBlockCopy } from "@/utils/helpers";
+import { confirm, detachBlockFromComponent, getBlockCopy, getBlockInstance } from "@/utils/helpers";
 import { vOnClickOutside } from "@vueuse/components";
 import { useStorage } from "@vueuse/core";
 import { Dialog } from "frappe-ui";
@@ -118,7 +118,7 @@ const createComponentHandler = (close: () => void) => {
 			for_web_page: componentProperties.value.isGlobalComponent ? null : store.selectedPage,
 		})
 		.then(async (data: BuilderComponent) => {
-			await webComponent.list.promise;
+			store.componentMap.set(data.name, getBlockInstance(data.block));
 			const block = store.activeCanvas?.findBlock(props.block.blockId);
 			if (!block) return;
 			block.extendFromComponent(data.name);

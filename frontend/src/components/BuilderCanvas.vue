@@ -79,6 +79,7 @@ import {
 	addPxToNumber,
 	getBlockCopy,
 	getBlockInstance,
+	getBlockObject,
 	getNumberFromPx,
 	isCtrlOrCmd,
 	isTargetEditable,
@@ -93,6 +94,7 @@ import {
 } from "@vueuse/core";
 import { FeatherIcon } from "frappe-ui";
 import { Ref, computed, nextTick, onMounted, provide, reactive, ref, watch } from "vue";
+import { toast } from "vue-sonner";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
@@ -167,11 +169,14 @@ onMounted(() => {
 
 function setupHistory() {
 	canvasHistory.value = useDebouncedRefHistory(block, {
-		capacity: 200,
+		capacity: 50,
 		deep: true,
 		debounce: 200,
-		clone: (obj) => {
-			return getBlockCopy(obj, true);
+		dump: (obj) => {
+			return getBlockObject(obj);
+		},
+		parse: (obj) => {
+			return getBlockInstance(obj);
 		},
 	});
 }
@@ -187,7 +192,7 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 		}
 		let componentName = ev.dataTransfer?.getData("componentName");
 		if (componentName) {
-			const newBlock = getBlockCopy(webComponent.getRow(componentName).block, true);
+			const newBlock = getBlockInstance(webComponent.getRow(componentName).block);
 			newBlock.extendFromComponent(componentName);
 			// if shift key is pressed, replace parent block with new block
 			if (ev.shiftKey) {
@@ -608,30 +613,6 @@ const clearSelection = () => {
 	selectedBlockIds.value = [];
 };
 
-const findParentBlock = (blockId: string, blocks?: Block[]): Block | null => {
-	if (!blocks) {
-		const firstBlock = getFirstBlock();
-		if (!firstBlock) {
-			return null;
-		}
-		blocks = [firstBlock];
-	}
-	for (const block of blocks) {
-		if (block.children) {
-			for (const child of block.children) {
-				if (child.blockId === blockId) {
-					return block;
-				}
-			}
-			const found = findParentBlock(blockId, block.children);
-			if (found) {
-				return found;
-			}
-		}
-	}
-	return null;
-};
-
 const findBlock = (blockId: string, blocks?: Block[]): Block | null => {
 	if (!blocks) {
 		blocks = [getFirstBlock()];
@@ -650,12 +631,43 @@ const findBlock = (blockId: string, blocks?: Block[]): Block | null => {
 	return null;
 };
 
+const removeBlock = (block: Block) => {
+	if (block.blockId === "root") {
+		toast.warning("Warning", {
+			description: "Cannot delete root block",
+		});
+		return;
+	}
+	if (block.isChildOfComponentBlock()) {
+		toast.warning("Warning", {
+			description: "Cannot delete block inside component",
+		});
+		return;
+	}
+	const parentBlock = block.parentBlock;
+	if (!parentBlock) {
+		return;
+	}
+	const index = parentBlock.children.indexOf(block);
+	parentBlock.removeChild(block);
+	nextTick(() => {
+		if (parentBlock.children.length) {
+			const nextSibling = parentBlock.children[index] || parentBlock.children[index - 1];
+			if (nextSibling) {
+				selectBlock(nextSibling);
+			}
+		}
+	});
+};
+
 watch(
 	() => block,
 	() => {
 		toggleDirty(true);
 	},
-	{ deep: true },
+	{
+		deep: true,
+	},
 );
 
 const toggleDirty = (dirty: boolean | null = null) => {
@@ -760,10 +772,10 @@ defineExpose({
 	clearSelection,
 	isSelected,
 	selectedBlockIds,
-	findParentBlock,
 	findBlock,
 	isDirty,
 	toggleDirty,
 	scrollBlockIntoView,
+	removeBlock,
 });
 </script>
