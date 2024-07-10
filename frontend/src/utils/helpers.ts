@@ -245,15 +245,10 @@ function logObjectDiff(obj1: { [key: string]: {} }, obj2: { [key: string]: {} },
 	}
 }
 
-function getBlockInstance(options: BlockOptions | string) {
+function getBlockInstance(options: BlockOptions | string, retainId = true): Block {
 	if (typeof options === "string") {
 		options = JSON.parse(options) as BlockOptions;
 	}
-	return reactive(new Block(options));
-}
-
-function getBlockCopy(block: BlockOptions | Block, retainId = false): Block {
-	const b = getBlockObjectCopy(block);
 	if (!retainId) {
 		const deleteBlockId = (block: BlockOptions) => {
 			delete block.blockId;
@@ -261,9 +256,14 @@ function getBlockCopy(block: BlockOptions | Block, retainId = false): Block {
 				deleteBlockId(child);
 			}
 		};
-		deleteBlockId(b);
+		deleteBlockId(options);
 	}
-	return getBlockInstance(b);
+	return reactive(new Block(options));
+}
+
+function getBlockCopy(block: BlockOptions | Block, retainId = false): Block {
+	const b = getBlockObjectCopy(block);
+	return getBlockInstance(b, retainId);
 }
 
 function isCtrlOrCmd(e: KeyboardEvent) {

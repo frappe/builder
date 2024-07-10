@@ -90,6 +90,6 @@ declare interface CanvasProps {
 	breakpoints: Breakpoint[];
 }
 
-declare type EditingMode = "page" | "component";
+declare type EditingMode = "page" | "fragment";
 
 declare type UserInfo = { user: string; fullname: string; image: string };

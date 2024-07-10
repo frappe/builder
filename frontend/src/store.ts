@@ -9,11 +9,13 @@ import builderBlockTemplate from "./data/builderBlockTemplate";
 import { builderSettings } from "./data/builderSettings";
 import webComponent from "./data/webComponent";
 import { webPages } from "./data/webPage";
+import { BlockTemplate } from "./types/Builder/BlockTemplate";
 import { BuilderComponent } from "./types/Builder/BuilderComponent";
 import { BuilderPage } from "./types/Builder/BuilderPage";
 import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
 import {
+	confirm,
 	getBlockCopy,
 	getBlockInstance,
 	getBlockObject,
@@ -25,7 +27,6 @@ const useStore = defineStore("store", {
 	state: () => ({
 		editableBlock: <Block | null>null,
 		settingPage: false,
-		editingComponent: <string | null>null,
 		editingMode: <EditingMode>"page",
 		activeBreakpoint: "desktop",
 		selectedPage: <string | null>null,
@@ -68,6 +69,12 @@ const useStore = defineStore("store", {
 		realtime: new RealTimeHandler(),
 		viewers: <UserInfo[]>[],
 		componentMap: <Map<string, Block>>new Map(),
+		fragmentData: {
+			block: <Block | null>null,
+			saveAction: <Function | null>null,
+			saveActionLabel: <string | null>null,
+			fragmentName: <string | null>null,
+		},
 	}),
 	actions: {
 		clearBlocks() {
@@ -76,7 +83,7 @@ const useStore = defineStore("store", {
 		pushBlocks(blocks: BlockOptions[]) {
 			let parent = this.activeCanvas?.getFirstBlock();
 			let firstBlock = getBlockInstance(blocks[0]);
-			if (firstBlock.isRoot() && !this.editingComponent && this.activeCanvas?.block) {
+			if (this.editingMode === "page" && firstBlock.isRoot() && this.activeCanvas?.block) {
 				this.activeCanvas.setRootBlock(firstBlock);
 			} else {
 				for (let block of blocks) {
@@ -106,7 +113,7 @@ const useStore = defineStore("store", {
 			this.activePage = page;
 
 			const blocks = JSON.parse(page.draft_blocks || page.blocks || "[]");
-			this.editPage(false, !resetCanvas);
+			this.editPage(!resetCanvas);
 			if (!Array.isArray(blocks)) {
 				this.pushBlocks([blocks]);
 			}
@@ -180,19 +187,47 @@ const useStore = defineStore("store", {
 				this.activeCanvas?.scrollBlockIntoView(block);
 			}
 		},
-		editComponent(block: Block) {
-			if (block.isExtendedFromComponent()) {
-				this.editingComponent = block?.extendedFromComponent as string;
+		editComponent(block?: Block | null, componentName?: string) {
+			if (!block?.isExtendedFromComponent() && !componentName) {
+				return;
 			}
-			this.activeCanvas?.clearSelection();
-			this.editingMode = "component";
+			componentName = componentName || (block?.extendedFromComponent as string);
+			const component = this.getComponent(componentName);
+			const componentBlock = this.getComponentBlock(componentName);
+			this.editOnCanvas(
+				componentBlock,
+				(block: Block) => {
+					webComponent.setValue
+						.submit({
+							name: componentName,
+							block: getBlockObject(block),
+						})
+						.then((data: BuilderComponent) => {
+							this.componentMap.set(data.name, getBlockInstance(data.block));
+							toast.success("Component saved!");
+						});
+				},
+				"Save Component",
+				component.component_name,
+			);
 		},
-		selectComponent(componentName: string | null = null) {
-			if (componentName) {
-				this.editingComponent = componentName;
-			}
-			this.activeCanvas?.clearSelection();
-			this.editingMode = "component";
+		editBlockTemplate(blockTemplateName: string) {
+			const blockTemplate = this.getBlockTemplate(blockTemplateName);
+			const blockTemplateBlock = this.getBlockTemplateBlock(blockTemplateName);
+			this.editOnCanvas(
+				blockTemplateBlock,
+				(block: Block) => {
+					this.saveBlockTemplate(block, blockTemplateName);
+				},
+				"Save Template",
+				blockTemplate.template_name,
+			);
+		},
+		getBlockTemplateBlock(blockTemplateName: string) {
+			return getBlockInstance(this.getBlockTemplate(blockTemplateName).block);
+		},
+		getBlockTemplate(blockTemplateName: string) {
+			return builderBlockTemplate.getRow(blockTemplateName) as BlockTemplate;
 		},
 		isComponentUsed(componentName: string) {
 			// TODO: Refactor or reduce complexity
@@ -216,28 +251,11 @@ const useStore = defineStore("store", {
 			}
 			return false;
 		},
-		editPage(saveComponent = false, retainSelection = false) {
+		editPage(retainSelection = false) {
 			if (!retainSelection) {
 				this.activeCanvas?.clearSelection();
 			}
 			this.editingMode = "page";
-			this.editableBlock = null;
-
-			if (this.editingComponent && this.activeCanvas) {
-				if (saveComponent) {
-					webComponent.setValue
-						.submit({
-							name: this.editingComponent,
-							block: getBlockObject(this.activeCanvas.getFirstBlock()),
-						})
-						.then((data: BuilderComponent) => {
-							this.componentMap.set(data.name, getBlockInstance(data.block));
-							toast.success("Component saved!");
-							this.activeCanvas?.toggleDirty(false);
-						});
-				}
-			}
-			this.editingComponent = null;
 		},
 		getComponentBlock(componentName: string) {
 			if (!this.componentMap.has(componentName)) {
@@ -403,15 +421,60 @@ const useStore = defineStore("store", {
 				}, 100);
 			});
 		},
-		async saveBlockTemplate(block: Block, templateName: string, category: string, previewImage: string) {
-			const template = getBlockString(block);
+		async saveBlockTemplate(
+			block: Block,
+			templateName: string,
+			category: BlockTemplate["category"] = "Basic",
+			previewImage: string = "",
+		) {
+			const blockString = getBlockString(block);
 			const args = {
-				template_name: templateName,
-				block: template,
-				category: category,
-				preview: previewImage,
+				name: templateName,
+				block: blockString,
+			} as BlockTemplate;
+			if (builderBlockTemplate.getRow(templateName)) {
+				await builderBlockTemplate.setValue.submit(args);
+			} else {
+				args["category"] = category;
+				args["preview"] = previewImage;
+				await builderBlockTemplate.insert.submit(args);
+			}
+			toast.success("Block template saved!");
+		},
+		editOnCanvas(
+			block: Block,
+			saveAction: (block: Block) => void,
+			saveActionLabel: string = "Save",
+			fragmentName?: string,
+		) {
+			this.fragmentData = {
+				block,
+				saveAction,
+				saveActionLabel,
+				fragmentName: fragmentName || block.getBlockDescription(),
 			};
-			return await builderBlockTemplate.insert.submit(args);
+			this.editingMode = "fragment";
+		},
+		async exitFragmentMode(e?: Event) {
+			if (this.editingMode === "page") {
+				return;
+			}
+			e?.preventDefault();
+			if (this.activeCanvas?.isDirty) {
+				const exit = await confirm("Are you sure you want to exit without saving?");
+				if (!exit) {
+					return;
+				}
+			}
+			this.activeCanvas?.clearSelection();
+			this.editingMode = "page";
+			// reset fragmentData
+			this.fragmentData = {
+				block: null,
+				saveAction: null,
+				saveActionLabel: null,
+				fragmentName: null,
+			};
 		},
 	},
 });

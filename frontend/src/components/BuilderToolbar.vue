@@ -109,7 +109,7 @@
 			<div class="flex" v-else>
 				<Button
 					variant="solid"
-					:disabled="store.activePage?.is_template"
+					:disabled="Boolean(store.activePage?.is_template)"
 					@click="
 						() => {
 							publishing = true;
@@ -132,7 +132,7 @@
 						<Button
 							variant="solid"
 							@click="open"
-							:disabled="store.activePage?.is_template"
+							:disabled="Boolean(store.activePage?.is_template)"
 							icon="chevron-down"
 							class="!w-6 justify-start rounded-bl-none rounded-tl-none border-0 pr-0 text-xs dark:bg-zinc-800"></Button>
 					</template>
