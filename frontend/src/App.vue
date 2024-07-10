@@ -45,7 +45,7 @@ const isDark = useDark();
 }
 
 [id^="headlessui-dialog-panel"] > div,
-[id^="headlessui-dialog-panel"] p {
+[id^="headlessui-dialog-panel"] > p {
 	@apply dark:bg-zinc-800;
 	@apply dark:text-zinc-50;
 }
