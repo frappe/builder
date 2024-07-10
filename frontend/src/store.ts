@@ -5,6 +5,7 @@ import { nextTick } from "vue";
 import { toast } from "vue-sonner";
 import BlockLayers from "./components/BlockLayers.vue";
 import BuilderCanvas from "./components/BuilderCanvas.vue";
+import builderBlockTemplate from "./data/builderBlockTemplate";
 import { builderSettings } from "./data/builderSettings";
 import webComponent from "./data/webComponent";
 import { webPages } from "./data/webPage";
@@ -12,7 +13,13 @@ import { BuilderComponent } from "./types/Builder/BuilderComponent";
 import { BuilderPage } from "./types/Builder/BuilderPage";
 import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
-import { getBlockCopy, getBlockInstance, getBlockObject, getCopyWithoutParent } from "./utils/helpers";
+import {
+	getBlockCopy,
+	getBlockInstance,
+	getBlockObject,
+	getBlockString,
+	getCopyWithoutParent,
+} from "./utils/helpers";
 import RealTimeHandler from "./utils/realtimeHandler";
 const useStore = defineStore("store", {
 	state: () => ({
@@ -395,6 +402,16 @@ const useStore = defineStore("store", {
 					}
 				}, 100);
 			});
+		},
+		async saveBlockTemplate(block: Block, templateName: string, category: string, previewImage: string) {
+			const template = getBlockString(block);
+			const args = {
+				template_name: templateName,
+				block: template,
+				category: category,
+				preview: previewImage,
+			};
+			return await builderBlockTemplate.insert.submit(args);
 		},
 	},
 });

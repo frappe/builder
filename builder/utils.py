@@ -125,24 +125,29 @@ def safer_exec(
 	return exec_globals, _locals
 
 
-def sync_page_template():
-	print("Syncing Components")
+def sync_page_templates():
+	print("Syncing Builder Components")
 	builder_component_path = frappe.get_module_path("builder", "builder_component")
 	make_records(builder_component_path)
 
-	print("Syncing Scripts")
+	print("Syncing Builder Scripts")
 	builder_script_path = frappe.get_module_path("builder", "builder_script")
 	make_records(builder_script_path)
 
-	print("Syncing Page Templates")
+	print("Syncing Builder Page Templates")
 	builder_page_template_path = frappe.get_module_path("builder", "builder_page_template")
 	make_records(builder_page_template_path)
 
 
+def sync_block_templates():
+	print("Syncing Builder Block Templates")
+	builder_block_template_path = frappe.get_module_path("builder", "builder_block_template")
+	make_records(builder_block_template_path)
+
+
 def make_records(path):
-	if os.path.isdir(path):
-		for fname in os.listdir(path):
-			if os.path.isdir(join(path, fname)):
-				if fname == "__pycache__":
-					continue
-				import_file_by_path(f"{path}/{fname}/{fname}.json")
+	if not os.path.isdir(path):
+		return
+	for fname in os.listdir(path):
+		if os.path.isdir(join(path, fname)) and fname != "__pycache__":
+			import_file_by_path(f"{path}/{fname}/{fname}.json")

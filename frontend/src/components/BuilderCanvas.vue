@@ -72,6 +72,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import builderBlockTemplate from "@/data/builderBlockTemplate";
 import webComponent from "@/data/webComponent";
 import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
@@ -190,7 +191,8 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 				parentBlock = findBlock(element.dataset.blockId) || parentBlock;
 			}
 		}
-		let componentName = ev.dataTransfer?.getData("componentName");
+		const componentName = ev.dataTransfer?.getData("componentName");
+		const blockTemplate = ev.dataTransfer?.getData("blockTemplate");
 		if (componentName) {
 			const newBlock = getBlockInstance(webComponent.getRow(componentName).block);
 			newBlock.extendFromComponent(componentName);
@@ -212,6 +214,27 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 				parentBlock.addChild(newBlock);
 			}
 			ev.stopPropagation();
+		} else if (blockTemplate) {
+			const templateDoc = builderBlockTemplate.getRow(blockTemplate);
+			console.log(templateDoc);
+			const newBlock = getBlockInstance(templateDoc.block);
+			// if shift key is pressed, replace parent block with new block
+			if (ev.shiftKey) {
+				while (parentBlock && parentBlock.isChildOfComponent) {
+					parentBlock = parentBlock.getParentBlock();
+				}
+				if (!parentBlock) return;
+				const parentParentBlock = parentBlock.getParentBlock();
+				if (!parentParentBlock) return;
+				const index = parentParentBlock.children.indexOf(parentBlock);
+				parentParentBlock.children.splice(index, 1, newBlock);
+			} else {
+				while (parentBlock && !parentBlock.canHaveChildren()) {
+					parentBlock = parentBlock.getParentBlock();
+				}
+				if (!parentBlock) return;
+				parentBlock.addChild(newBlock);
+			}
 		} else if (files && files.length) {
 			store.uploadFile(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
 				if (!parentBlock) return;
