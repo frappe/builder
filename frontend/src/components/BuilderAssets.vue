@@ -18,7 +18,7 @@
 						class="relative flex h-28 w-full translate-x-0 translate-y-0 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden truncate rounded border border-transparent bg-gray-100 px-2 py-1.5 dark:bg-zinc-900"
 						draggable="true"
 						@dragstart="(ev) => setBlockTemplateData(ev, blockTemplate)">
-						<div class="flex h-16 w-16 items-center">
+						<div class="flex h-16 w-16 items-center justify-center">
 							<img :src="blockTemplate.preview" class="text-gray-800 dark:text-zinc-400" />
 						</div>
 						<p class="text-xs text-gray-800 dark:text-zinc-400">

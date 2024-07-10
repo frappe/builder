@@ -54,6 +54,7 @@
 								blockTemplateProperties.category,
 								blockTemplateProperties.previewImage,
 							);
+							showBlockTemplateDialog = false;
 						},
 					},
 				],
@@ -81,7 +82,7 @@
 						<FileUploader
 							@success="
 								// prettier-ignore
-								(file: { 'file_url': string }) => (blockTemplateProperties.previewImage = file.file_url)
+								(file: { 'file_url': string }) => blockTemplateProperties.previewImage = file.file_url
 							"
 							file-types="image/*">
 							<template v-slot="{ openFileSelector }">
@@ -333,7 +334,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		action: () => {
 			showBlockTemplateDialog.value = true;
 		},
-		condition: () => !props.block.isExtendedFromComponent(),
+		condition: () => !props.block.isExtendedFromComponent() && Boolean(window.is_developer_mode),
 	},
 	{
 		label: "Detach Component",
