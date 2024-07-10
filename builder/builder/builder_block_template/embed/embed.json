@@ -1,0 +1,14 @@
+{
+ "block": "{\"blockId\":\"1vw78v0md\",\"children\":[],\"baseStyles\":{\"height\":\"fit-content\",\"width\":\"fit-content\"},\"rawStyles\":{},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[],\"dataKey\":null,\"blockName\":\"Embed HTML\",\"element\":\"div\",\"innerHTML\":\"<div style=\\\"color:#8e8e8e;background:#f4f4f4;display:grid;width:500px;height:155px;place-items:center;font-size:18px;\\\">\\n    <p>Paste HTML or double click to edit</p>\\n</div>\",\"originalElement\":\"__raw_html__\",\"customAttributes\":{},\"editable\":false}",
+ "category": "Basic",
+ "creation": "2024-07-10 17:07:00.407251",
+ "docstatus": 0,
+ "doctype": "Block Template",
+ "idx": 0,
+ "modified": "2024-07-10 17:19:51.934456",
+ "modified_by": "Administrator",
+ "name": "Embed",
+ "owner": "Administrator",
+ "preview": "/builder_assets/Embed/embed.png",
+ "template_name": "Embed"
+}

@@ -1,18 +1,20 @@
 # Copyright (c) 2024, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
+import os
 import shutil
 
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.modules import scrub
 from frappe.modules.export_file import export_to_files
 
 from builder.builder.doctype.builder_page.builder_page import get_template_assets_folder_path
 
 
 class BlockTemplate(Document):
-	def before_save(self):
+	def on_update(self):
 		if not self.preview:
 			frappe.throw(_("Preview Image is mandatory"))
 
@@ -34,3 +36,11 @@ class BlockTemplate(Document):
 			],
 			record_module="builder",
 		)
+
+	def on_trash(self):
+		block_template_folder = os.path.join(
+			frappe.get_app_path("builder"), "builder", "builder_block_template", scrub(self.name)
+		)
+		shutil.rmtree(block_template_folder, ignore_errors=True)
+		assets_folder_path = get_template_assets_folder_path(self)
+		shutil.rmtree(assets_folder_path, ignore_errors=True)

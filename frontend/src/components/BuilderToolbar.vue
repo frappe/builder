@@ -71,7 +71,9 @@
 				v-if="store.isHomePage()">
 				Homepage
 			</Badge>
-			<span class="text-sm dark:text-zinc-300" v-if="store.savingPage">Saving template</span>
+			<span class="text-sm dark:text-zinc-300" v-if="store.savingPage && store.activePage?.is_template">
+				Saving template
+			</span>
 			<!-- <button @click="showDialog = true">
 				<FeatherIcon
 					name="info"

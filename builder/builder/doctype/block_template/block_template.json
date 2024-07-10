@@ -23,7 +23,6 @@
   {
    "fieldname": "block",
    "fieldtype": "JSON",
-   "in_list_view": 1,
    "label": "Block",
    "reqd": 1
   },
@@ -38,6 +37,7 @@
    "default": "Basic",
    "fieldname": "category",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Category",
    "options": "Basic\nStructure"
   }
@@ -45,7 +45,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-07-10 10:37:05.608567",
+ "modified": "2024-07-10 17:25:15.700195",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Block Template",
