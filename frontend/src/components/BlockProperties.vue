@@ -1151,12 +1151,6 @@ const sections = [
 		condition: () => !blockController.multipleBlocksSelected(),
 	},
 	{
-		name: "Link",
-		properties: linkSectionProperties,
-		collapsed: computed(() => !blockController.isLink()),
-		condition: () => !blockController.multipleBlocksSelected(),
-	},
-	{
 		name: "Typography",
 		properties: typographySectionProperties,
 		condition: () => blockController.isText() || blockController.isContainer() || blockController.isInput(),
