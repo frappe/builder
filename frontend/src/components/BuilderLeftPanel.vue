@@ -49,8 +49,8 @@
 				<BlockLayers
 					class="no-scrollbar overflow-auto"
 					ref="componentLayers"
-					:blocks="[componentCanvas?.getFirstBlock()]"
-					v-if="store.editingComponent && componentCanvas" />
+					:blocks="[fragmentCanvas?.getFirstBlock()]"
+					v-if="store.editingMode === 'fragment' && fragmentCanvas" />
 			</div>
 		</div>
 	</div>
@@ -68,7 +68,7 @@ import Block from "@/utils/block";
 import BuilderCanvas from "./BuilderCanvas.vue";
 
 const pageCanvas = inject("pageCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
-const componentCanvas = inject("componentCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
+const fragmentCanvas = inject("fragmentCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
 
 const prompt = ref(null) as unknown as Ref<string>;
 
