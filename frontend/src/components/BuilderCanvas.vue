@@ -216,8 +216,7 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 			ev.stopPropagation();
 		} else if (blockTemplate) {
 			const templateDoc = builderBlockTemplate.getRow(blockTemplate);
-			console.log(templateDoc);
-			const newBlock = getBlockInstance(templateDoc.block);
+			const newBlock = getBlockInstance(templateDoc.block, false);
 			// if shift key is pressed, replace parent block with new block
 			if (ev.shiftKey) {
 				while (parentBlock && parentBlock.isChildOfComponent) {
