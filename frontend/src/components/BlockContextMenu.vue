@@ -48,7 +48,13 @@ import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { confirm, detachBlockFromComponent, getBlockCopy, getBlockInstance } from "@/utils/helpers";
+import {
+	confirm,
+	detachBlockFromComponent,
+	getBlockCopy,
+	getBlockInstance,
+	getBlockString,
+} from "@/utils/helpers";
 import { vOnClickOutside } from "@vueuse/components";
 import { useStorage } from "@vueuse/core";
 import { Dialog } from "frappe-ui";
@@ -113,7 +119,7 @@ const createComponentHandler = (close: () => void) => {
 	blockCopy.removeStyle("position");
 	webComponent.insert
 		.submit({
-			block: blockCopy,
+			block: getBlockString(blockCopy),
 			component_name: componentProperties.value.componentName,
 			for_web_page: componentProperties.value.isGlobalComponent ? null : store.selectedPage,
 		})
