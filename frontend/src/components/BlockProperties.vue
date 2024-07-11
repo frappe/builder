@@ -1173,12 +1173,19 @@ const sections = [
 		name: "Position",
 		properties: positionSectionProperties,
 		condition: () => !blockController.multipleBlocksSelected(),
-		collapsed: true,
+		collapsed: computed(() => {
+			return (
+				!blockController.getStyle("top") &&
+				!blockController.getStyle("right") &&
+				!blockController.getStyle("bottom") &&
+				!blockController.getStyle("left")
+			);
+		}),
 	},
 	{
 		name: "Spacing",
 		properties: spacingSectionProperties,
-		collapsed: false,
+		collapsed: computed(() => !blockController.getStyle("margin") && !blockController.getStyle("padding")),
 	},
 	{
 		name: "Options",
@@ -1187,17 +1194,23 @@ const sections = [
 	{
 		name: "Data Key",
 		properties: dataKeySectionProperties,
-		collapsed: true,
+		collapsed: computed(() => {
+			return !blockController.getDataKey("key");
+		}),
 	},
 	{
 		name: "HTML Attributes",
 		properties: customAttributesSectionProperties,
-		collapsed: true,
+		collapsed: computed(() => {
+			return Object.keys(blockController.getCustomAttributes()).length === 0;
+		}),
 	},
 	{
 		name: "Raw Style",
 		properties: rawStyleSectionProperties,
-		collapsed: true,
+		collapsed: computed(() => {
+			return Object.keys(blockController.getRawStyles()).length === 0;
+		}),
 	},
 ] as PropertySection[];
 </script>
