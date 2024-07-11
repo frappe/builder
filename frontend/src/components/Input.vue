@@ -6,7 +6,15 @@
 			:class="{
 				'text-sm [&>div>input]:pr-5': !['select', 'checkbox'].includes(type),
 			}"
-			@change="($event: Event) => emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+			@change="
+				($event: Event) => {
+					if (type === 'checkbox') {
+						emit('update:modelValue', ($event.target as HTMLInputElement).checked);
+					} else {
+						emit('update:modelValue', ($event.target as HTMLInputElement).value);
+					}
+				}
+			"
 			@input="($event: Event) => emit('input', ($event.target as HTMLInputElement).value)"
 			autocomplete="off"
 			v-bind="attrs"
