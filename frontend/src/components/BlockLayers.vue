@@ -14,7 +14,7 @@
 							:data-block-layer-id="element.blockId"
 							:title="element.blockId"
 							@contextmenu.prevent.stop="onContextMenu"
-							class="min-w-24 cursor-pointer overflow-hidden rounded border border-transparent bg-white bg-opacity-50 text-sm text-gray-700 dark:bg-zinc-900 dark:text-gray-500"
+							class="min-w-24 cursor-pointer overflow-hidden rounded border border-transparent bg-white bg-opacity-50 text-base text-gray-700 dark:bg-zinc-900 dark:text-gray-500"
 							@click.stop="
 								store.activeCanvas?.history.pause();
 								store.selectBlock(element, $event, false, true);
@@ -69,7 +69,7 @@
 									@click.stop="element.toggleVisibility()" />
 								<span
 									v-if="element.isRoot()"
-									class="ml-auto mr-2 capitalize text-gray-400 dark:text-zinc-600">
+									class="ml-auto mr-2 text-sm capitalize text-gray-500 dark:text-zinc-500">
 									{{ store.activeBreakpoint }}
 								</span>
 							</span>

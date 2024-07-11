@@ -93,3 +93,7 @@ declare interface CanvasProps {
 declare type EditingMode = "page" | "fragment";
 
 declare type UserInfo = { user: string; fullname: string; image: string };
+
+declare type FileDoc = {
+	file_url: string;
+};
