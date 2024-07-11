@@ -430,6 +430,7 @@ const useStore = defineStore("store", {
 			const blockString = getBlockString(block);
 			const args = {
 				name: templateName,
+				template_name: templateName,
 				block: blockString,
 			} as BlockTemplate;
 			if (builderBlockTemplate.getRow(templateName)) {

@@ -51,7 +51,7 @@
 							store.saveBlockTemplate(
 								block,
 								blockTemplateProperties.templateName,
-								blockTemplateProperties.category,
+								'Basic',
 								blockTemplateProperties.previewImage,
 							);
 							showBlockTemplateDialog = false;
@@ -68,11 +68,6 @@
 						label="Template Name"
 						required
 						class="[&>div>input]:dark:bg-zinc-900 [&>label]:dark:text-zinc-300" />
-					<Input
-						type="text"
-						v-model="blockTemplateProperties.category"
-						label="Category"
-						class="[&>div>input]:dark:bg-zinc-900 [&>label]:dark:text-zinc-300" />
 					<div class="relative">
 						<Input
 							type="text"
@@ -82,7 +77,11 @@
 						<FileUploader
 							@success="
 								// prettier-ignore
-								(file: { 'file_url': string }) => blockTemplateProperties.previewImage = file.file_url
+
+								(file: { 'file_url': string }) => {
+									console.log(file)
+									blockTemplateProperties.previewImage = file.file_url
+								}
 							"
 							file-types="image/*">
 							<template v-slot="{ openFileSelector }">
