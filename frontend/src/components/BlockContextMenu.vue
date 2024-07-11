@@ -67,23 +67,22 @@
 						v-model="blockTemplateProperties.templateName"
 						label="Template Name"
 						required
+						:hideClearButton="true"
 						class="[&>div>input]:dark:bg-zinc-900 [&>label]:dark:text-zinc-300" />
 					<div class="relative">
 						<Input
 							type="text"
 							v-model="blockTemplateProperties.previewImage"
 							label="Preview Image"
+							:hideClearButton="true"
 							class="[&>div>input]:dark:bg-zinc-900 [&>label]:dark:text-zinc-300" />
 						<FileUploader
+							file-types="image/*"
 							@success="
-								// prettier-ignore
-
-								(file: { 'file_url': string }) => {
-									console.log(file)
-									blockTemplateProperties.previewImage = file.file_url
+								(file: FileDoc) => {
+									blockTemplateProperties.previewImage = file.file_url;
 								}
-							"
-							file-types="image/*">
+							">
 							<template v-slot="{ openFileSelector }">
 								<div class="absolute bottom-0 right-0 place-items-center">
 									<Button size="sm" @click="openFileSelector" class="text-sm">Upload</Button>
