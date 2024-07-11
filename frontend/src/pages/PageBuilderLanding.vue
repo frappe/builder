@@ -11,7 +11,7 @@
 	</div>
 	<section class="max-w-800 m-auto mb-32 flex w-3/4 flex-col pt-10">
 		<div class="mb-6 flex items-center justify-between">
-			<h1 class="text-sm font-bold uppercase text-gray-800 dark:text-zinc-400">My Pages</h1>
+			<h1 class="text-lg font-medium text-gray-900 dark:text-zinc-400">All Pages</h1>
 			<div class="flex gap-4">
 				<TabButtons
 					:buttons="[

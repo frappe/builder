@@ -1,5 +1,5 @@
 <template>
-	<div class="flex flex-col">
+	<div class="flex flex-col gap-3">
 		<CollapsibleSection :sectionName="'Block Templates'">
 			<div v-show="blockTemplates.length > 10 || blockTemplateFilter">
 				<Input
@@ -22,7 +22,7 @@
 						<div class="flex h-16 w-16 items-center justify-center">
 							<img :src="blockTemplate.preview" class="text-gray-800 dark:text-zinc-400" />
 						</div>
-						<p class="text-xs text-gray-800 dark:text-zinc-400">
+						<p class="text-sm text-gray-800 dark:text-zinc-400">
 							{{ blockTemplate.template_name }}
 						</p>
 					</div>
@@ -42,7 +42,7 @@
 					" />
 			</div>
 			<div>
-				<div v-show="!components.length" class="mt-2 text-sm italic text-gray-600">No components saved</div>
+				<div v-show="!components.length" class="mt-2 text-base italic text-gray-600">No components saved</div>
 				<div v-for="component in components" :key="component.name" class="flex w-full">
 					<div class="component-container group relative flex w-full flex-col">
 						<div
@@ -56,7 +56,7 @@
 							@dragstart="(ev) => setComponentData(ev, component)">
 							<div class="flex items-center gap-2">
 								<FeatherIcon :name="'box'" class="h-4 w-4 text-gray-800 dark:text-zinc-400"></FeatherIcon>
-								<p class="text-xs text-gray-800 dark:text-zinc-400">
+								<p class="text-base text-gray-800 dark:text-zinc-400">
 									{{ component.component_name }}
 								</p>
 							</div>
