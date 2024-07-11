@@ -56,6 +56,7 @@
 				<BuilderBlock
 					class="h-full min-h-[inherit]"
 					:block="block"
+					:key="block.blockId"
 					v-if="showBlocks"
 					:breakpoint="breakpoint.device"
 					:data="store.pageData" />

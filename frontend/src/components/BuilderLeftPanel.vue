@@ -22,11 +22,11 @@
 					Generate
 				</button>
 			</div>
-			<div class="flex w-full border-gray-200 p-[2px] text-sm dark:border-zinc-800">
+			<div class="flex w-full border-gray-200 px-2 text-base dark:border-zinc-800">
 				<button
 					v-for="tab of ['Layers', 'Assets'] as LeftSidebarTabOption[]"
 					:key="tab"
-					class="mx-3 flex-1 p-2"
+					class="mx-3 flex-1 p-2 py-3"
 					@click.stop="setActiveTab(tab as LeftSidebarTabOption)"
 					:class="{
 						'border-b-[1px] border-gray-900 dark:border-zinc-500 dark:text-zinc-300':
@@ -37,7 +37,7 @@
 				</button>
 			</div>
 			<div v-show="store.leftPanelActiveTab === 'Assets'">
-				<BuilderAssets class="p-4 pt-3" />
+				<BuilderAssets class="mt-1 p-4 pt-3" />
 			</div>
 			<div v-show="store.leftPanelActiveTab === 'Layers'" class="p-4 pt-3">
 				<BlockLayers
