@@ -44,8 +44,8 @@
 <script setup lang="ts">
 import useStore from "@/store";
 import BlockProperties from "./BlockProperties.vue";
-import PageScript from "./PageScript.vue";
 import PageOptions from "./PageOptions.vue";
+import PageScript from "./PageScript.vue";
 import PanelResizer from "./PanelResizer.vue";
 const store = useStore();
 </script>
