@@ -7,7 +7,7 @@
  "dynamic_route": 0,
  "idx": 0,
  "is_template": 1,
- "modified": "2024-07-04 13:57:20.830077",
+ "modified": "2024-07-12 14:04:15.514842",
  "modified_by": "Administrator",
  "name": "page-eceecee1",
  "owner": "Administrator",
@@ -16,6 +16,6 @@
  "page_title": "Caku",
  "preview": "/builder_assets/page-eceecee1/preview.jpeg",
  "published": 1,
- "route": "pages/caku-89ac",
- "template_name": "Caku"
+ "route": "pages/caku-1d53",
+ "template_name": "Landing"
 }
