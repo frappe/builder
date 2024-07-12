@@ -43,7 +43,10 @@
 						{ label: 'Published', value: 'published' },
 						{ label: 'Unpublished', value: 'unpublished' },
 					]" />
-				<Button variant="solid" icon-left="plus" @click="() => (showDialog = true)">New</Button>
+				<!-- <Button variant="solid" icon-left="plus" @click="() => (showDialog = true)">New</Button> -->
+				<router-link :to="{ name: 'builder', params: { pageId: 'new' } }">
+					<Button variant="solid" icon-left="plus">New</Button>
+				</router-link>
 			</div>
 		</div>
 		<div class="grid-col grid gap-6 auto-fill-[220px]">
