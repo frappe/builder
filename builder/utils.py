@@ -1,25 +1,26 @@
+import os
+import socket
+from os.path import join
 from urllib.parse import urlparse
 
 import frappe
-import socket
-
+from frappe.modules.import_file import import_file_by_path
 from frappe.utils.safe_exec import (
+	SERVER_SCRIPT_FILE_PREFIX,
 	FrappeTransformer,
 	NamespaceDict,
 	get_python_builtins,
-	safe_exec_flags,
 	get_safe_globals,
-	SERVER_SCRIPT_FILE_PREFIX
+	safe_exec_flags,
 )
-
 from RestrictedPython import compile_restricted
-
 
 
 def get_doc_as_dict(doctype, name):
 	assert isinstance(doctype, str)
 	assert isinstance(name, str)
 	return frappe.get_doc(doctype, name).as_dict()
+
 
 def get_cached_doc_as_dict(doctype, name):
 	assert isinstance(doctype, str)
@@ -35,6 +36,7 @@ def make_safe_get_request(url, **kwargs):
 
 	return frappe.integrations.utils.make_get_request(url, **kwargs)
 
+
 def safe_get_list(*args, **kwargs):
 	if args and len(args) > 1 and isinstance(args[1], list):
 		args = list(args)
@@ -49,6 +51,7 @@ def safe_get_list(*args, **kwargs):
 		**kwargs,
 	)
 
+
 def safe_get_all(*args, **kwargs):
 	kwargs["ignore_permissions"] = True
 	if "limit_page_length" not in kwargs:
@@ -58,7 +61,8 @@ def safe_get_all(*args, **kwargs):
 
 
 def remove_unsafe_fields(fields):
-	return [f for f in fields if not "(" in f]
+	return [f for f in fields if "(" not in f]
+
 
 def get_safer_globals():
 	safe_globals = get_safe_globals()
@@ -113,11 +117,37 @@ def safer_exec(
 	with safe_exec_flags():
 		# execute script compiled by RestrictedPython
 		exec(
-			compile_restricted(
-				script, filename=filename, policy=FrappeTransformer
-			),
+			compile_restricted(script, filename=filename, policy=FrappeTransformer),
 			exec_globals,
 			_locals,
 		)
 
 	return exec_globals, _locals
+
+
+def sync_page_templates():
+	print("Syncing Builder Components")
+	builder_component_path = frappe.get_module_path("builder", "builder_component")
+	make_records(builder_component_path)
+
+	print("Syncing Builder Scripts")
+	builder_script_path = frappe.get_module_path("builder", "builder_script")
+	make_records(builder_script_path)
+
+	print("Syncing Builder Page Templates")
+	builder_page_template_path = frappe.get_module_path("builder", "builder_page_template")
+	make_records(builder_page_template_path)
+
+
+def sync_block_templates():
+	print("Syncing Builder Block Templates")
+	builder_block_template_path = frappe.get_module_path("builder", "builder_block_template")
+	make_records(builder_block_template_path)
+
+
+def make_records(path):
+	if not os.path.isdir(path):
+		return
+	for fname in os.listdir(path):
+		if os.path.isdir(join(path, fname)) and fname != "__pycache__":
+			import_file_by_path(f"{path}/{fname}/{fname}.json")

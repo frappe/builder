@@ -12,9 +12,11 @@
   "content_tab",
   "published",
   "page_name",
-  "column_break_ymjg",
   "route",
   "dynamic_route",
+  "column_break_ymjg",
+  "is_template",
+  "template_name",
   "section_break_ujsp",
   "blocks",
   "draft_blocks",
@@ -139,6 +141,19 @@
    "fieldtype": "Table MultiSelect",
    "label": "Client Scripts",
    "options": "Builder Page Client Script"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_template",
+   "fieldtype": "Check",
+   "label": "Is Template"
+  },
+  {
+   "depends_on": "is_template",
+   "fieldname": "template_name",
+   "fieldtype": "Data",
+   "label": "Template Name",
+   "mandatory_depends_on": "is_template"
   },
   {
    "fieldname": "section_break_shab",

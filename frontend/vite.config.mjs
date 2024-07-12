@@ -8,7 +8,7 @@ export default defineConfig({
 	define: {
 		__VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
 	},
-	plugins: [frappeui({ source: "^/(app|login|api|assets|files|pages)" }), vue()],
+	plugins: [frappeui({ source: "^/(app|login|api|assets|files|pages|builder_assets)" }), vue()],
 	resolve: {
 		alias: {
 			"@": path.resolve(__dirname, "src"),

@@ -1,0 +1,14 @@
+{
+ "block": "{\"blockId\":\"4ur2l2mc6\",\"children\":[{\"blockId\":\"3z5gwjl2f\",\"children\":[],\"baseStyles\":{\"color\":\"var(--neutral-white, #FFF)\",\"fontSize\":\"14px\",\"fontWeight\":\"420\",\"height\":\"fit-content\",\"left\":\"auto\",\"letterSpacing\":\"0.28px\",\"lineHeight\":\"115%\",\"minWidth\":\"30px\",\"position\":\"static\",\"top\":\"auto\",\"width\":\"fit-content\"},\"rawStyles\":{},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[\"__text_block__\"],\"dataKey\":null,\"element\":\"p\",\"innerHTML\":\"<p>Button</p>\",\"customAttributes\":{}}],\"baseStyles\":{\"background\":\"#171717\",\"borderRadius\":\"4px\",\"display\":\"flex\",\"flexDirection\":\"column\",\"height\":\"fit-content\",\"padding\":\"6px 8px\",\"width\":\"fit-content\"},\"rawStyles\":{\"flex-shrink\":\"0\",\"hover:background\":\"#383838\",\"transition\":\"all 0.1s ease-out\"},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{\"href\":\"#\"},\"classes\":[\"__text_block__\"],\"dataKey\":null,\"blockName\":\"container\",\"element\":\"a\",\"customAttributes\":{}}",
+ "category": "Basic",
+ "creation": "2024-07-10 14:44:08.816465",
+ "docstatus": 0,
+ "doctype": "Block Template",
+ "idx": 0,
+ "modified": "2024-07-12 09:34:22.716694",
+ "modified_by": "Administrator",
+ "name": "Button",
+ "owner": "Administrator",
+ "preview": "/builder_assets/Button/button.png",
+ "template_name": "Button"
+}

@@ -131,8 +131,12 @@ watchEffect(() => {
 	parentBlock?.getStyle("justifyContent");
 	parentBlock?.getStyle("alignItems");
 	parentBlock?.getStyle("flexDirection");
-	parentBlock?.getStyle("padding");
+	parentBlock?.getStyle("paddingTop");
+	parentBlock?.getStyle("paddingBottom");
+	parentBlock?.getStyle("paddingLeft");
+	parentBlock?.getStyle("paddingRight");
 	parentBlock?.getStyle("margin");
+	parentBlock?.getChildIndex(props.block);
 	store.builderLayout.leftPanelWidth;
 	store.builderLayout.rightPanelWidth;
 	store.showRightPanel;
