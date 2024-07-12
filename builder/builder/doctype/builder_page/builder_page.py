@@ -1,9 +1,9 @@
 # Copyright (c) 2023, asdf and contributors
 # For license information, please see license.txt
 
-import contextlib
 import os
 import re
+import shutil
 from io import BytesIO
 from urllib.parse import unquote
 
@@ -14,6 +14,8 @@ import requests
 from frappe.core.doctype.file.file import get_local_image
 from frappe.core.doctype.file.utils import delete_file
 from frappe.model.document import Document
+from frappe.modules import scrub
+from frappe.modules.export_file import export_to_files
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
 from frappe.utils.safe_exec import is_safe_exec_enabled, safe_exec
@@ -53,21 +55,15 @@ class BuilderPageRenderer(DocumentPage):
 
 
 class BuilderPage(WebsiteGenerator):
-	def add_comment(
-		self,
-		comment_type="Comment",
-		text=None,
-		comment_email=None,
-		comment_by=None,
-	):
-		if comment_type in ["Attachment Removed", "Attachment"]:
-			return
-		super().add_comment(
-			comment_type=comment_type,
-			text=text,
-			comment_email=comment_email,
-			comment_by=comment_by,
-		)
+	website = frappe._dict(
+		template="templates/generators/webpage.html",
+		condition_field="published",
+		page_title_field="page_title",
+	)
+
+	def autoname(self):
+		if not self.name:
+			self.name = f"page-{frappe.generate_hash(length=8)}"
 
 	def before_insert(self):
 		if isinstance(self.blocks, list):
@@ -98,9 +94,30 @@ class BuilderPage(WebsiteGenerator):
 			if frappe.get_cached_value("Builder Settings", None, "home_page") == self.route:
 				frappe.db.set_value("Builder Settings", None, "home_page", None)
 
-	def autoname(self):
-		if not self.name:
-			self.name = f"page-{frappe.generate_hash(length=5)}"
+		if frappe.conf.developer_mode and self.is_template:
+			save_as_template(self)
+
+	def on_trash(self):
+		if self.is_template and frappe.conf.developer_mode:
+			page_template_folder = os.path.join(
+				frappe.get_app_path("builder"), "builder", "builder_page_template", scrub(self.name)
+			)
+			if os.path.exists(page_template_folder):
+				shutil.rmtree(page_template_folder)
+			assets_path = get_template_assets_folder_path(self)
+			if os.path.exists(assets_path):
+				shutil.rmtree(assets_path)
+
+	def add_comment(self, comment_type="Comment", text=None, comment_email=None, comment_by=None):
+		if comment_type in ["Attachment Removed", "Attachment"]:
+			return
+
+		super().add_comment(
+			comment_type=comment_type,
+			text=text,
+			comment_email=comment_email,
+			comment_by=comment_by,
+		)
 
 	@frappe.whitelist()
 	def publish(self, **kwargs):
@@ -120,16 +137,9 @@ class BuilderPage(WebsiteGenerator):
 
 		return self.route
 
-	website = frappe._dict(
-		template="templates/generators/webpage.html",
-		condition_field="published",
-		page_title_field="page_title",
-	)
-
 	def get_context(self, context):
 		# delete default favicon
 		del context.favicon
-
 		page_data = self.get_page_data()
 		if page_data.get("title"):
 			context.title = page_data.get("page_title")
@@ -219,14 +229,66 @@ class BuilderPage(WebsiteGenerator):
 		return page_data
 
 	def generate_page_preview_image(self, html=None):
-		file_name = f"{self.name}-preview.jpeg"
+		public_path, local_path = get_builder_page_preview_paths(self)
 		generate_preview(
 			html or get_response_content(self.route),
-			os.path.join(frappe.local.site_path, "public", "files", file_name),
+			local_path,
 		)
-		random_hash = frappe.generate_hash(length=5)
-		self.db_set(
-			"preview", f"/files/{file_name}?v={random_hash}", commit=True, update_modified=False, notify=True
+		self.db_set("preview", public_path, commit=True, update_modified=False)
+
+
+def save_as_template(page_doc: BuilderPage):
+	# move all assets to www/builder_assets/{page_name}
+	if page_doc.draft_blocks:
+		page_doc.publish()
+	if not page_doc.template_name:
+		page_doc.template_name = page_doc.page_title
+
+	blocks = frappe.parse_json(page_doc.blocks)
+	for block in blocks:
+		copy_img_to_asset_folder(block, page_doc)
+
+	page_doc.db_set("draft_blocks", None)
+	page_doc.db_set("blocks", frappe.as_json(blocks, indent=None))
+	page_doc.reload()
+	export_to_files(
+		record_list=[["Builder Page", page_doc.name, "builder_page_template"]], record_module="builder"
+	)
+
+	components = set()
+
+	def get_component(block):
+		if block.get("extendedFromComponent"):
+			component = block.get("extendedFromComponent")
+			components.add(component)
+			# export nested components as well
+			component_doc = frappe.get_cached_doc("Builder Component", component)
+			if component_doc.block:
+				component_block = frappe.parse_json(component_doc.block)
+				get_component(component_block)
+		for child in block.get("children", []):
+			get_component(child)
+
+	for block in blocks:
+		get_component(block)
+
+	if components:
+		export_to_files(
+			record_list=[["Builder Component", c, "builder_component"] for c in components],
+			record_module="builder",
+		)
+
+	scripts = frappe.get_all(
+		"Builder Page Client Script",
+		filters={"parent": page_doc.name},
+		fields=["name", "builder_script"],
+	)
+	if scripts:
+		export_to_files(
+			record_list=[
+				["Builder Client Script", s.builder_script, "builder_client_script"] for s in scripts
+			],
+			record_module="builder",
 		)
 
 
@@ -615,6 +677,50 @@ def is_component_used(blocks, component_id):
 	return False
 
 
+def copy_img_to_asset_folder(block, self):
+	if block.get("element") == "img":
+		src = block.get("attributes", {}).get("src")
+		site_url = frappe.utils.get_url()
+
+		if src and (src.startswith(f"{site_url}/files") or src.startswith("/files")):
+			# find file doc
+			if src.startswith(f"{site_url}/files"):
+				src = src.split(f"{site_url}")[1]
+			# url decode
+			src = unquote(src)
+			print(f"src: {src}")
+			files = frappe.get_all("File", filters={"file_url": src}, fields=["name"])
+			print(f"files: {files}")
+			if files:
+				_file = frappe.get_doc("File", files[0].name)
+				# copy physical file to new location
+				assets_folder_path = get_template_assets_folder_path(self)
+				shutil.copy(_file.get_full_path(), assets_folder_path)
+			block["attributes"]["src"] = f"/builder_assets/{self.name}/{src.split('/')[-1]}"
+	for child in block.get("children", []):
+		copy_img_to_asset_folder(child, self)
+
+
+def get_builder_page_preview_paths(page_doc):
+	public_path, public_path = None, None
+	if page_doc.is_template:
+		local_path = os.path.join(get_template_assets_folder_path(page_doc), "preview.jpeg")
+		public_path = f"/builder_assets/{page_doc.name}/preview.jpeg"
+	else:
+		file_name = f"{page_doc.name}-preview.jpeg"
+		local_path = os.path.join(frappe.local.site_path, "public", "files", file_name)
+		random_hash = frappe.generate_hash(length=5)
+		public_path = f"/files/{file_name}?v={random_hash}"
+	return public_path, local_path
+
+
+def get_template_assets_folder_path(page_doc):
+	path = os.path.join(frappe.get_app_path("builder"), "www", "builder_assets", page_doc.name)
+	if not os.path.exists(path):
+		os.makedirs(path)
+	return path
+
+
 @frappe.whitelist()
 def upload_builder_asset():
 	from frappe.handler import upload_file
@@ -698,6 +804,19 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 		image, filename, extn = get_local_image(image_url)
 		if can_convert_image(extn):
 			return create_new_webp_file_doc(image_url, image, extn)
+		return image_url
+
+	if image_url.startswith("/builder_assets"):
+		image_path = os.path.abspath(frappe.get_app_path("builder", "www", image_url.lstrip("/")))
+		image_path = image_path.replace("_", "-")
+		image_path = image_path.replace("/builder-assets", "/builder_assets")
+
+		image = Image.open(image_path)
+		extn = get_extension(image_path)
+		if can_convert_image(extn):
+			webp_path = image_path.replace(extn, "webp")
+			convert_and_save_image(image, webp_path)
+			return image_url.replace(extn, "webp")
 		return image_url
 
 	if image_url.startswith("http"):

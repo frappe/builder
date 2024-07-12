@@ -16,10 +16,9 @@
 				actions: [
 					{
 						label: 'Save',
-						appearance: 'primary',
+						variant: 'solid',
 						onClick: createComponentHandler,
 					},
-					{ label: 'Cancel' },
 				],
 			}"
 			v-model="showDialog">
@@ -36,6 +35,61 @@
 						type="checkbox"
 						v-model="componentProperties.isGlobalComponent"
 						label="Global Component" />
+				</div>
+			</template>
+		</Dialog>
+		<Dialog
+			style="z-index: 40"
+			:options="{
+				title: 'Save as Block Template',
+				size: 'sm',
+				actions: [
+					{
+						label: 'Save',
+						variant: 'solid',
+						onClick: () => {
+							store.saveBlockTemplate(
+								block,
+								blockTemplateProperties.templateName,
+								'Basic',
+								blockTemplateProperties.previewImage,
+							);
+							showBlockTemplateDialog = false;
+						},
+					},
+				],
+			}"
+			v-model="showBlockTemplateDialog">
+			<template #body-content>
+				<div class="flex flex-col gap-4">
+					<Input
+						type="text"
+						v-model="blockTemplateProperties.templateName"
+						label="Template Name"
+						required
+						:hideClearButton="true"
+						class="[&>div>input]:dark:bg-zinc-900 [&>label]:dark:text-zinc-300" />
+					<div class="relative">
+						<Input
+							type="text"
+							v-model="blockTemplateProperties.previewImage"
+							label="Preview Image"
+							:hideClearButton="true"
+							class="[&>div>input]:dark:bg-zinc-900 [&>label]:dark:text-zinc-300" />
+						<FileUploader
+							file-types="image/*"
+							@success="
+								(file: FileDoc) => {
+									blockTemplateProperties.previewImage = file.file_url;
+								}
+							">
+							<template v-slot="{ openFileSelector }">
+								<div class="absolute bottom-0 right-0 place-items-center">
+									<Button size="sm" @click="openFileSelector" class="text-sm">Upload</Button>
+								</div>
+							</template>
+						</FileUploader>
+					</div>
 				</div>
 			</template>
 		</Dialog>
@@ -57,7 +111,7 @@ import {
 } from "@/utils/helpers";
 import { vOnClickOutside } from "@vueuse/components";
 import { useStorage } from "@vueuse/core";
-import { Dialog } from "frappe-ui";
+import { Dialog, FileUploader } from "frappe-ui";
 import { Ref, nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
 import ContextMenu from "./ContextMenu.vue";
@@ -80,6 +134,14 @@ const componentProperties = ref({
 	componentName: "",
 	isGlobalComponent: 0,
 });
+
+const blockTemplateProperties = ref({
+	templateName: "",
+	category: "",
+	previewImage: "",
+});
+
+const showBlockTemplateDialog = ref(false);
 
 const showContextMenu = (event: MouseEvent) => {
 	if (props.block.isRoot() || props.editable) return;
@@ -270,6 +332,13 @@ const contextMenuOptions: ContextMenuOption[] = [
 			store.editComponent(props.block);
 		},
 		condition: () => Boolean(props.block.extendedFromComponent),
+	},
+	{
+		label: "Save as Block Template",
+		action: () => {
+			showBlockTemplateDialog.value = true;
+		},
+		condition: () => !props.block.isExtendedFromComponent() && Boolean(window.is_developer_mode),
 	},
 	{
 		label: "Detach Component",

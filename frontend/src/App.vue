@@ -37,7 +37,7 @@ const isDark = useDark();
 </script>
 <style>
 [id^="headlessui-dialog"] {
-	@apply z-30;
+	@apply z-50;
 }
 
 [id^="headlessui-dialog-panel"] {
@@ -45,7 +45,7 @@ const isDark = useDark();
 }
 
 [id^="headlessui-dialog-panel"] > div,
-[id^="headlessui-dialog-panel"] p {
+[id^="headlessui-dialog-panel"] .space-y-4 > p {
 	@apply dark:bg-zinc-800;
 	@apply dark:text-zinc-50;
 }

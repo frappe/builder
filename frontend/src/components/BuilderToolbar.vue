@@ -22,7 +22,7 @@
 					variant="ghost"
 					:icon="mode.icon"
 					class="!text-gray-700 dark:!text-gray-200 hover:dark:bg-zinc-800 focus:dark:bg-zinc-700 [&[active='true']]:bg-gray-100 [&[active='true']]:!text-gray-900 [&[active='true']]:dark:bg-zinc-700 [&[active='true']]:dark:!text-zinc-50"
-					@click="store.mode = mode.mode"
+					@click="store.mode = mode.mode as BuilderMode"
 					:active="store.mode === mode.mode"></Button>
 			</Tooltip>
 		</div>
@@ -71,6 +71,9 @@
 				v-if="store.isHomePage()">
 				Homepage
 			</Badge>
+			<span class="text-sm dark:text-zinc-300" v-if="store.savingPage && store.activePage?.is_template">
+				Saving template
+			</span>
 			<!-- <button @click="showDialog = true">
 				<FeatherIcon
 					name="info"
@@ -91,6 +94,7 @@
 				<FeatherIcon name="play" class="h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
 			</router-link>
 			<Button
+				v-if="!is_developer_mode"
 				variant="solid"
 				@click="
 					() => {
@@ -102,19 +106,55 @@
 				:loading="publishing">
 				{{ publishing ? "Publishing" : "Publish" }}
 			</Button>
+			<div class="flex" v-else>
+				<Button
+					variant="solid"
+					:disabled="Boolean(store.activePage?.is_template)"
+					@click="
+						() => {
+							publishing = true;
+							store.publishPage().finally(() => (publishing = false));
+						}
+					"
+					class="rounded-br-none rounded-tr-none border-0 pr-1 text-xs dark:bg-zinc-800"
+					:loading="publishing">
+					{{ publishing ? "Publishing" : "Publish" }}
+				</Button>
+				<Dropdown
+					:options="[
+						// { label: 'Publish', onClick: () => publish() },
+						{ label: 'Save As Template', onClick: () => saveAsTemplate() },
+					]"
+					size="sm"
+					class="flex-1 [&>div>div>div]:w-full"
+					placement="right">
+					<template v-slot="{ open }">
+						<Button
+							variant="solid"
+							@click="open"
+							:disabled="Boolean(store.activePage?.is_template)"
+							icon="chevron-down"
+							class="!w-6 justify-start rounded-bl-none rounded-tl-none border-0 pr-0 text-xs dark:bg-zinc-800"></Button>
+					</template>
+				</Dropdown>
+			</div>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
+import { webPages } from "@/data/webPage";
 import { UseDark } from "@vueuse/components";
-import { Badge, Dialog, Tooltip } from "frappe-ui";
+import { Badge, Dialog, Dropdown, Tooltip } from "frappe-ui";
 import { computed, ref } from "vue";
+import { toast } from "vue-sonner";
 import useStore from "../store";
 
 const store = useStore();
 const publishing = ref(false);
 const showDialog = ref(false);
 const toolbar = ref(null);
+
+const is_developer_mode = window.is_developer_mode;
 
 const currentlyViewedByText = computed(() => {
 	const names = store.viewers.map((viewer) => viewer.fullname).map((name) => name.split(" ")[0]);
@@ -144,6 +184,29 @@ const transitionTheme = (toggleDark: () => void) => {
 	} else {
 		toggleDark();
 	}
+};
+
+const publish = () => {
+	publishing.value = true;
+	store.publishPage().finally(() => (publishing.value = false));
+};
+
+const saveAsTemplate = async () => {
+	toast.promise(
+		webPages.setValue.submit({
+			name: store.activePage?.name,
+			is_template: true,
+		}),
+		{
+			loading: "Saving as template",
+			success: () => {
+				store.fetchActivePage(store.selectedPage as string).then((page) => {
+					store.activePage = page;
+				});
+				return "Page saved as template";
+			},
+		},
+	);
 };
 </script>
 <style>

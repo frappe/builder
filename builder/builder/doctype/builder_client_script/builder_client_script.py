@@ -1,10 +1,13 @@
 # Copyright (c) 2023, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
+import os
+
 import frappe
 from frappe.model.document import Document
-import os
+from frappe.modules.export_file import export_to_files
 from frappe.utils import get_files_path
+
 
 class BuilderClientScript(Document):
 	def before_insert(self):
@@ -14,12 +17,12 @@ class BuilderClientScript(Document):
 
 	def on_update(self):
 		self.update_script_file()
+		self.update_exported_script()
 
 	def on_trash(self):
 		self.delete_script_file()
 
 	def update_script_file(self):
-		script = self.script or ""
 		script_type = self.script_type or ""
 		file_name = self.get_file_name_from_url()
 		file_extension = "js" if script_type == "JavaScript" else "css"
@@ -47,3 +50,15 @@ class BuilderClientScript(Document):
 		if "?" in public_url:
 			public_url = public_url.split("?")[0]
 		return public_url.split("/")[-1]
+
+	def update_exported_script(self):
+		if not frappe.conf.developer_mode:
+			return
+		script_path = os.path.join(
+			frappe.get_app_path("builder"), "builder", "builder_client_script", self.name
+		)
+		if os.path.exists(script_path):
+			export_to_files(
+				record_list=[["Builder Client Script", self.name, "builder_client_script"]],
+				record_module="builder",
+			)

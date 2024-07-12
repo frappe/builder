@@ -352,7 +352,7 @@ class Block implements BlockOptions {
 		return this.originalElement === "body";
 	}
 	getTag(): string {
-		if (this.isButton() || this.isLink() || this.isInput()) {
+		if (this.isButton() || this.isLink()) {
 			return "div";
 		}
 		return this.getElement() || "div";
