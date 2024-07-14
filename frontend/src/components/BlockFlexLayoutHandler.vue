@@ -55,7 +55,7 @@
 				{ label: 'Yes', value: 1 },
 				{ label: 'No', value: 0 },
 			]"
-			:modelValue="blockController.getStyle('flexShrink') || 0"
+			:modelValue="blockController.getStyle('flexShrink') ?? 1"
 			@update:modelValue="
 				(val: string | number) => blockController.setStyle('flexShrink', val)
 			"></OptionToggle>
