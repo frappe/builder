@@ -271,7 +271,7 @@ function isCtrlOrCmd(e: KeyboardEvent) {
 }
 
 const detachBlockFromComponent = (block: Block) => {
-	const blockCopy = getBlockCopy(block);
+	const blockCopy = getBlockCopy(block, true);
 	const component = block.getComponent();
 	blockCopy.element = block?.getElement();
 	blockCopy.attributes = block.getAttributes();
@@ -298,7 +298,7 @@ const detachBlockFromComponent = (block: Block) => {
 	delete blockCopy.isChildOfComponent;
 	delete blockCopy.referenceBlockId;
 	blockCopy.children = blockCopy.children.map(detachBlockFromComponent);
-	return blockCopy;
+	return getBlockInstance(blockCopy);
 };
 
 function getBlockString(block: BlockOptions | Block): string {
