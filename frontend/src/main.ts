@@ -28,6 +28,7 @@ app.mount("#app");
 declare global {
 	interface Window {
 		is_developer_mode?: boolean;
+		posthog: typeof posthog;
 	}
 }
 window.is_developer_mode = process.env.NODE_ENV === "development";
@@ -55,11 +56,13 @@ createResource({
 			autocapture: false,
 			capture_pageview: false,
 			capture_pageleave: false,
+			enable_heatmaps: false,
 			disable_session_recording: !posthogSettings.record_session,
 			loaded: (posthog) => {
 				posthog.identify(posthogSettings?.posthog_identify || window.location.host);
-				posthog.startSessionRecording();
 			},
 		});
 	},
 });
+
+window.posthog = posthog;
