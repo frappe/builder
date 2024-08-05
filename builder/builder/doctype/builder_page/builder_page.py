@@ -480,7 +480,7 @@ def extend_with_component(block):
 			["block", "name"],
 			as_dict=True,
 		)
-		component_block = frappe.parse_json(component.block or "{}")
+		component_block = frappe.parse_json(component.block if component else "{}")
 		if component_block:
 			extend_block(component_block, block)
 			block = component_block
