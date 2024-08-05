@@ -54,6 +54,7 @@ import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { Dialog } from "frappe-ui";
+import posthog from "posthog-js";
 import { ref } from "vue";
 import CodeEditor from "./CodeEditor.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
@@ -73,6 +74,7 @@ const savePageDataScript = () => {
 			page_data_script: props.page.page_data_script,
 		})
 		.then(() => {
+			posthog.capture("builder_page_data_script_saved");
 			showDialog.value = false;
 			store.setPageData(props.page);
 		});

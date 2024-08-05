@@ -112,6 +112,7 @@ import {
 import { vOnClickOutside } from "@vueuse/components";
 import { useStorage } from "@vueuse/core";
 import { Dialog, FileUploader } from "frappe-ui";
+import posthog from "posthog-js";
 import { Ref, nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
 import ContextMenu from "./ContextMenu.vue";
@@ -186,6 +187,7 @@ const createComponentHandler = (close: () => void) => {
 			for_web_page: componentProperties.value.isGlobalComponent ? null : store.selectedPage,
 		})
 		.then(async (data: BuilderComponent) => {
+			posthog.capture("builder_component_created", { component_name: data.name });
 			store.componentMap.set(data.name, getBlockInstance(data.block));
 			const block = store.activeCanvas?.findBlock(props.block.blockId);
 			if (!block) return;

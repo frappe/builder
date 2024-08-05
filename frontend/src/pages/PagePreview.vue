@@ -81,7 +81,8 @@ import PanelResizer from "@/components/PanelResizer.vue";
 import router from "@/router";
 import useStore from "@/store";
 import { useEventListener } from "@vueuse/core";
-import { Ref, computed, ref, watch, watchEffect } from "vue";
+import posthog from "posthog-js";
+import { Ref, computed, onActivated, ref, watch, watchEffect } from "vue";
 import { useRoute } from "vue-router";
 
 const route = useRoute();
@@ -182,4 +183,8 @@ watch(
 	},
 	{ immediate: true },
 );
+
+onActivated(() => {
+	posthog.capture("builder_page_preview_viewed");
+});
 </script>

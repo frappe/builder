@@ -56,8 +56,7 @@
 								})
 							"
 							size="sm"
-							class="max-w-60 flex-1 [&>div>div>div]:w-full"
-							placement="right">
+							class="max-w-60 flex-1 [&>div>div>div]:w-full">
 							<template v-slot="{ open }">
 								<Button
 									class="w-full text-xs dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
@@ -105,6 +104,7 @@
 <script setup lang="ts">
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { Dropdown, createListResource, createResource } from "frappe-ui";
+import posthog from "posthog-js";
 import { PropType, ref, watch } from "vue";
 import CodeEditor from "./CodeEditor.vue";
 import CSSIcon from "./Icons/CSS.vue";
@@ -186,6 +186,9 @@ const addScript = (scriptType: "JavaScript" | "CSS") => {
 					builder_script: res.name,
 				})
 				.then(async () => {
+					posthog.capture("builder_client_script_added", {
+						script_type: res.script_type,
+					});
 					await attachedScriptResource.reload();
 					attachedScriptResource.data?.forEach((script: attachedScript) => {
 						if (script.script_name === res.name) {
@@ -205,6 +208,7 @@ const attachScript = (builder_script_name: string) => {
 			builder_script: builder_script_name,
 		})
 		.then(async () => {
+			posthog.capture("builder_client_script_attached");
 			await attachedScriptResource.reload();
 			attachedScriptResource.data?.forEach((script: attachedScript) => {
 				if (script.script_name === builder_script_name) {
