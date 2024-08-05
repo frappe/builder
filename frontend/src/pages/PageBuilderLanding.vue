@@ -44,7 +44,13 @@
 						{ label: 'Unpublished', value: 'unpublished' },
 					]" />
 				<!-- <Button variant="solid" icon-left="plus" @click="() => (showDialog = true)">New</Button> -->
-				<router-link :to="{ name: 'builder', params: { pageId: 'new' } }">
+				<router-link
+					:to="{ name: 'builder', params: { pageId: 'new' } }"
+					@click="
+						() => {
+							posthog.capture('builder_new_page_created');
+						}
+					">
 					<Button variant="solid" icon-left="plus">New</Button>
 				</router-link>
 			</div>
@@ -202,8 +208,9 @@ import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
 import { useStorage, watchDebounced } from "@vueuse/core";
-import { Badge, Dropdown, TabButtons, createDocumentResource } from "frappe-ui";
-import { Ref, ref } from "vue";
+import { Badge, createDocumentResource, Dropdown, TabButtons } from "frappe-ui";
+import posthog from "posthog-js";
+import { onActivated, Ref, ref } from "vue";
 
 const store = useStore();
 const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list">;
@@ -211,6 +218,10 @@ const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list">;
 const searchFilter = ref("");
 const typeFilter = ref("");
 const showDialog = ref(false);
+
+onActivated(() => {
+	posthog.capture("builder_landing_page_viewed");
+});
 
 watchDebounced(
 	[searchFilter, typeFilter],

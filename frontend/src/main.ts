@@ -1,4 +1,4 @@
-import { Button, Dialog, FeatherIcon, FormControl, FrappeUI } from "frappe-ui";
+import { Button, Dialog, FeatherIcon, FormControl, FrappeUI, createResource } from "frappe-ui";
 import { createPinia } from "pinia";
 import { createApp } from "vue";
 import "./index.css";
@@ -7,6 +7,7 @@ import "./setupFrappeUIResource";
 import "./utils/arrayFunctions";
 
 import App from "@/App.vue";
+import posthog from "posthog-js";
 
 const app = createApp(App);
 const pinia = createPinia();
@@ -30,3 +31,35 @@ declare global {
 	}
 }
 window.is_developer_mode = process.env.NODE_ENV === "development";
+
+type PosthogSettings = {
+	posthog_project_id: string;
+	posthog_host: string;
+	enable_telemetry: boolean;
+	telemetry_site_age: number;
+	record_session: boolean;
+	posthog_identify: string;
+};
+
+createResource({
+	url: "builder.api.get_posthog_settings",
+	method: "GET",
+	auto: true,
+	onSuccess: (posthogSettings: PosthogSettings) => {
+		if (!posthogSettings.enable_telemetry || !posthogSettings.posthog_project_id) {
+			return;
+		}
+		posthog.init(posthogSettings.posthog_project_id, {
+			api_host: posthogSettings.posthog_host,
+			person_profiles: "identified_only", // or 'always' to create profiles for anonymous users as well
+			autocapture: false,
+			capture_pageview: false,
+			capture_pageleave: false,
+			disable_session_recording: !posthogSettings.record_session,
+			loaded: (posthog) => {
+				posthog.identify(posthogSettings?.posthog_identify || window.location.host);
+				posthog.startSessionRecording();
+			},
+		});
+	},
+});
