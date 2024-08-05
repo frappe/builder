@@ -23,6 +23,7 @@ import {
 	getCopyWithoutParent,
 } from "./utils/helpers";
 import RealTimeHandler from "./utils/realtimeHandler";
+import posthog from "posthog-js";
 const useStore = defineStore("store", {
 	state: () => ({
 		editableBlock: <Block | null>null,
@@ -339,6 +340,9 @@ const useStore = defineStore("store", {
 					...this.routeVariables,
 				})
 				.then(async () => {
+					posthog.capture("builder_page_published", {
+						page: this.selectedPage,
+					});
 					this.activePage = await this.fetchActivePage(this.selectedPage as string);
 					this.openPageInBrowser(this.activePage as BuilderPage);
 				});

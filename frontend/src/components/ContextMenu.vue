@@ -24,7 +24,7 @@
 </template>
 <script setup lang="ts">
 import { Menu, MenuItem, MenuItems } from "@headlessui/vue";
-import { Ref, computed, ref } from "vue";
+import { computed, ref } from "vue";
 
 const menu = ref(null) as unknown as typeof Menu;
 
