@@ -133,7 +133,6 @@ class BuilderPage(WebsiteGenerator):
 			"generate_page_preview_image",
 			queue="short",
 		)
-		capture("page_published", "builder", properties={"page": self.name})
 
 		return self.route
 
@@ -481,7 +480,7 @@ def extend_with_component(block):
 			["block", "name"],
 			as_dict=True,
 		)
-		component_block = frappe.parse_json(component.block)
+		component_block = frappe.parse_json(component.block or "{}")
 		if component_block:
 			extend_block(component_block, block)
 			block = component_block

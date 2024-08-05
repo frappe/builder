@@ -186,11 +186,6 @@ const transitionTheme = (toggleDark: () => void) => {
 	}
 };
 
-const publish = () => {
-	publishing.value = true;
-	store.publishPage().finally(() => (publishing.value = false));
-};
-
 const saveAsTemplate = async () => {
 	toast.promise(
 		webPages.setValue.submit({

@@ -95,6 +95,7 @@ import {
 	useEventListener,
 } from "@vueuse/core";
 import { FeatherIcon } from "frappe-ui";
+import posthog from "posthog-js";
 import { Ref, computed, nextTick, onMounted, provide, reactive, ref, watch } from "vue";
 import { toast } from "vue-sonner";
 import useStore from "../store";
@@ -215,6 +216,7 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 				parentBlock.addChild(newBlock);
 			}
 			ev.stopPropagation();
+			posthog.capture("builder_component_used");
 		} else if (blockTemplate) {
 			const templateDoc = builderBlockTemplate.getRow(blockTemplate);
 			const newBlock = getBlockInstance(templateDoc.block, false);
@@ -235,6 +237,7 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 				if (!parentBlock) return;
 				parentBlock.addChild(newBlock);
 			}
+			posthog.capture("builder_block_template_used", { template: blockTemplate });
 		} else if (files && files.length) {
 			store.uploadFile(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
 				if (!parentBlock) return;
@@ -248,22 +251,35 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 						}
 						parentBlock.addChild(store.getVideoBlock(fileDoc.fileURL));
 					}
+					posthog.capture("builder_video_uploaded");
 					return;
 				}
 
 				if (parentBlock.isImage()) {
 					parentBlock.setAttribute("src", fileDoc.fileURL);
+					posthog.capture("builder_image_uploaded", {
+						type: "image-replace",
+					});
 				} else if (parentBlock.isSVG()) {
 					const imageBlock = store.getImageBlock(fileDoc.fileURL, fileDoc.fileName);
 					const parentParentBlock = parentBlock.getParentBlock();
 					parentParentBlock?.replaceChild(parentBlock, getBlockInstance(imageBlock));
+					posthog.capture("builder_image_uploaded", {
+						type: "svg-replace",
+					});
 				} else if (parentBlock.isContainer() && ev.shiftKey) {
 					parentBlock.setStyle("background", `url(${fileDoc.fileURL})`);
+					posthog.capture("builder_image_uploaded", {
+						type: "background",
+					});
 				} else {
 					while (parentBlock && !parentBlock.canHaveChildren()) {
 						parentBlock = parentBlock.getParentBlock() as Block;
 					}
 					parentBlock.addChild(store.getImageBlock(fileDoc.fileURL, fileDoc.fileName));
+					posthog.capture("builder_image_uploaded", {
+						type: "new-image",
+					});
 				}
 			});
 		}
