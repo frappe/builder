@@ -284,7 +284,7 @@ useEventListener(document, "paste", async (e) => {
 				styleProperty,
 				StyleValue,
 			];
-			if (blockController.isText()) {
+			if (blockController.isText() && !blockController.isLink()) {
 				if (
 					[
 						"font-family",
