@@ -52,14 +52,14 @@ createResource({
 		}
 		posthog.init(posthogSettings.posthog_project_id, {
 			api_host: posthogSettings.posthog_host,
-			person_profiles: "identified_only", // or 'always' to create profiles for anonymous users as well
+			person_profiles: "identified_only",
 			autocapture: false,
 			capture_pageview: false,
 			capture_pageleave: false,
 			enable_heatmaps: false,
-			disable_session_recording: !posthogSettings.record_session,
+			disable_session_recording: false,
 			loaded: (posthog) => {
-				posthog.identify(posthogSettings?.posthog_identify || window.location.host);
+				posthog.identify(window.location.hostname);
 			},
 		});
 	},
