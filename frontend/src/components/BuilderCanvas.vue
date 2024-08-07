@@ -648,6 +648,28 @@ const toggleBlockSelection = (_block: Block) => {
 	}
 };
 
+const selectBlockRange = (_block: Block) => {
+	const lastSelectedBlockId = selectedBlockIds.value[selectedBlockIds.value.length - 1];
+	const lastSelectedBlock = findBlock(lastSelectedBlockId);
+	if (!lastSelectedBlock) {
+		_block.selectBlock();
+		return;
+	}
+	const lastSelectedBlockIndex = lastSelectedBlock.parentBlock?.children.indexOf(lastSelectedBlock);
+	const _blockIndex = _block.parentBlock?.children.indexOf(_block);
+	if (lastSelectedBlockIndex === undefined || _blockIndex === undefined) {
+		return;
+	}
+	const start = Math.min(lastSelectedBlockIndex, _blockIndex);
+	const end = Math.max(lastSelectedBlockIndex, _blockIndex);
+	const parentBlock = lastSelectedBlock.parentBlock;
+	if (!parentBlock) {
+		return;
+	}
+	const blocks = parentBlock.children.slice(start, end + 1);
+	selectedBlockIds.value = selectedBlockIds.value.concat(...blocks.map((b) => b.blockId));
+};
+
 const clearSelection = () => {
 	selectedBlockIds.value = [];
 };
@@ -816,5 +838,6 @@ defineExpose({
 	toggleDirty,
 	scrollBlockIntoView,
 	removeBlock,
+	selectBlockRange,
 });
 </script>

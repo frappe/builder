@@ -1,6 +1,7 @@
 import { UseRefHistoryReturn } from "@vueuse/core";
 import { FileUploadHandler, createDocumentResource } from "frappe-ui";
 import { defineStore } from "pinia";
+import posthog from "posthog-js";
 import { nextTick } from "vue";
 import { toast } from "vue-sonner";
 import BlockLayers from "./components/BlockLayers.vue";
@@ -23,7 +24,6 @@ import {
 	getCopyWithoutParent,
 } from "./utils/helpers";
 import RealTimeHandler from "./utils/realtimeHandler";
-import posthog from "posthog-js";
 const useStore = defineStore("store", {
 	state: () => ({
 		editableBlock: <Block | null>null,
@@ -169,6 +169,8 @@ const useStore = defineStore("store", {
 				return;
 			}
 			if (e && e.shiftKey) {
+				this.activeCanvas?.selectBlockRange(block);
+			} else if (e && e.metaKey) {
 				this.activeCanvas?.toggleBlockSelection(block);
 			} else {
 				this.activeCanvas?.selectBlock(block);

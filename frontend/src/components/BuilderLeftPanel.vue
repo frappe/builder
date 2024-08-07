@@ -3,7 +3,9 @@
 		:style="{
 			width: `${store.builderLayout.leftPanelWidth}px`,
 		}">
-		<div class="relative min-h-full">
+		<div
+			class="relative min-h-full"
+			@click.stop="store.leftPanelActiveTab === 'Layers' && store.activeCanvas?.clearSelection()">
 			<PanelResizer
 				:dimension="store.builderLayout.leftPanelWidth"
 				side="right"
