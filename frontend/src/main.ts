@@ -59,7 +59,10 @@ createResource({
 			enable_heatmaps: false,
 			disable_session_recording: false,
 			loaded: (posthog) => {
-				posthog.identify(window.location.hostname);
+				posthog.identify(posthogSettings?.posthog_identify || window.location.host);
+				if (posthogSettings.record_session) {
+					posthog.startSessionRecording();
+				}
 			},
 		});
 	},
