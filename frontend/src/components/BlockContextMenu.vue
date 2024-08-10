@@ -98,6 +98,7 @@
 <script setup lang="ts">
 import webComponent from "@/data/webComponent";
 import useStore from "@/store";
+import { posthog } from "@/telemetry";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
@@ -112,7 +113,6 @@ import {
 import { vOnClickOutside } from "@vueuse/components";
 import { useStorage } from "@vueuse/core";
 import { Dialog, FileUploader } from "frappe-ui";
-import posthog from "posthog-js";
 import { Ref, nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
 import ContextMenu from "./ContextMenu.vue";
