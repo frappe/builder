@@ -102,10 +102,10 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { Dropdown, createListResource, createResource } from "frappe-ui";
-import posthog from "posthog-js";
-import { PropType, ref, watch } from "vue";
+import { Badge, createListResource, createResource, Dropdown } from "frappe-ui";
+import { computed, nextTick, PropType, ref, watch } from "vue";
 import CodeEditor from "./CodeEditor.vue";
 import CSSIcon from "./Icons/CSS.vue";
 import JavaScriptIcon from "./Icons/JavaScript.vue";

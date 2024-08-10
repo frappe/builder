@@ -80,8 +80,8 @@
 import PanelResizer from "@/components/PanelResizer.vue";
 import router from "@/router";
 import useStore from "@/store";
+import { posthog } from "@/telemetry";
 import { useEventListener } from "@vueuse/core";
-import posthog from "posthog-js";
 import { Ref, computed, onActivated, ref, watch, watchEffect } from "vue";
 import { useRoute } from "vue-router";
 

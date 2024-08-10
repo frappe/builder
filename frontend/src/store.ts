@@ -1,7 +1,7 @@
+import { posthog } from "@/telemetry";
 import { UseRefHistoryReturn } from "@vueuse/core";
 import { FileUploadHandler, createDocumentResource } from "frappe-ui";
 import { defineStore } from "pinia";
-import posthog from "posthog-js";
 import { nextTick } from "vue";
 import { toast } from "vue-sonner";
 import BlockLayers from "./components/BlockLayers.vue";

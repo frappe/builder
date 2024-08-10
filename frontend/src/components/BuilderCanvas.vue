@@ -75,6 +75,7 @@
 <script setup lang="ts">
 import builderBlockTemplate from "@/data/builderBlockTemplate";
 import webComponent from "@/data/webComponent";
+import { posthog } from "@/telemetry";
 import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
 import {
@@ -95,7 +96,6 @@ import {
 	useEventListener,
 } from "@vueuse/core";
 import { FeatherIcon } from "frappe-ui";
-import posthog from "posthog-js";
 import { Ref, computed, nextTick, onMounted, provide, reactive, ref, watch } from "vue";
 import { toast } from "vue-sonner";
 import useStore from "../store";

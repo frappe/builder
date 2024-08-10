@@ -204,12 +204,12 @@ import Input from "@/components/Input.vue";
 import TemplateSelector from "@/components/TemplateSelector.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
+import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
 import { useStorage, watchDebounced } from "@vueuse/core";
 import { Badge, createDocumentResource, Dropdown, TabButtons } from "frappe-ui";
-import posthog from "posthog-js";
 import { onActivated, Ref, ref } from "vue";
 
 const store = useStore();
