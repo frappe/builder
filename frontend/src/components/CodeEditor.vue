@@ -135,7 +135,7 @@ const getModelValue = () => {
 
 function resetEditor(value: string, resetHistory = false) {
 	value = getModelValue();
-	aceEditor?.setValue(value);
+	aceEditor?.setValue(value || "");
 	aceEditor?.clearSelection();
 	aceEditor?.setTheme(isDark.value ? "ace/theme/twilight" : "ace/theme/chrome");
 	props.autofocus && aceEditor?.focus();
