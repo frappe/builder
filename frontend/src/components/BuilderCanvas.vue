@@ -668,6 +668,7 @@ const selectBlockRange = (_block: Block) => {
 	}
 	const blocks = parentBlock.children.slice(start, end + 1);
 	selectedBlockIds.value = selectedBlockIds.value.concat(...blocks.map((b) => b.blockId));
+	selectedBlockIds.value = Array.from(new Set(selectedBlockIds.value));
 };
 
 const clearSelection = () => {
