@@ -7,6 +7,7 @@ declare global {
 			init: (projectToken: string, options: any) => void;
 			identify: (userId: string) => void;
 			startSessionRecording: () => void;
+			capture: (eventName: string, data?: any) => void;
 		};
 	}
 }
