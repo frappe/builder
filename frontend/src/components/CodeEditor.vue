@@ -122,7 +122,7 @@ const setupEditor = () => {
 };
 
 const getModelValue = () => {
-	let value = props.modelValue;
+	let value = props.modelValue || "";
 	try {
 		if (props.type === "JSON" || typeof value === "object") {
 			value = JSON.stringify(value, null, 2);
@@ -135,7 +135,7 @@ const getModelValue = () => {
 
 function resetEditor(value: string, resetHistory = false) {
 	value = getModelValue();
-	aceEditor?.setValue(value || "");
+	aceEditor?.setValue(value);
 	aceEditor?.clearSelection();
 	aceEditor?.setTheme(isDark.value ? "ace/theme/twilight" : "ace/theme/chrome");
 	props.autofocus && aceEditor?.focus();
