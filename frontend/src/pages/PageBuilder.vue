@@ -65,9 +65,11 @@
 						type="HTML"
 						height="60vh"
 						:showLineNumbers="true"
-						@update:modelValue="
+						:showSaveButton="true"
+						@save="
 							(val) => {
 								store.editableBlock?.setInnerHTML(val);
+								store.showHTMLDialog = false;
 							}
 						"
 						required />
