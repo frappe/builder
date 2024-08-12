@@ -41,6 +41,7 @@ function getBlockTemplate(
 				element: "img",
 				baseStyles: {
 					objectFit: "cover",
+					flexShrink: 0,
 				} as BlockStyleMap,
 			};
 		case "container":

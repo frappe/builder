@@ -11,7 +11,7 @@
 	</div>
 	<section class="max-w-800 m-auto mb-32 flex w-3/4 flex-col pt-10">
 		<div class="mb-6 flex items-center justify-between">
-			<h1 class="text-sm font-bold uppercase text-gray-800 dark:text-zinc-400">My Pages</h1>
+			<h1 class="text-lg font-medium text-gray-900 dark:text-zinc-400">All Pages</h1>
 			<div class="flex gap-4">
 				<TabButtons
 					:buttons="[
@@ -43,7 +43,14 @@
 						{ label: 'Published', value: 'published' },
 						{ label: 'Unpublished', value: 'unpublished' },
 					]" />
-				<router-link :to="{ name: 'builder', params: { pageId: 'new' } }">
+				<!-- <Button variant="solid" icon-left="plus" @click="() => (showDialog = true)">New</Button> -->
+				<router-link
+					:to="{ name: 'builder', params: { pageId: 'new' } }"
+					@click="
+						() => {
+							posthog.capture('builder_new_page_created');
+						}
+					">
 					<Button variant="solid" icon-left="plus">New</Button>
 				</router-link>
 			</div>
@@ -180,29 +187,48 @@
 			size="sm">
 			Load More
 		</Button>
+		<Dialog
+			:options="{
+				title: 'Select Template',
+				size: '6xl',
+			}"
+			v-model="showDialog">
+			<template #body-content>
+				<TemplateSelector @templateSelected="showDialog = false"></TemplateSelector>
+			</template>
+		</Dialog>
 	</section>
 </template>
 <script setup lang="ts">
 import Input from "@/components/Input.vue";
+import TemplateSelector from "@/components/TemplateSelector.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
+import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
 import { useStorage, watchDebounced } from "@vueuse/core";
-import { Badge, Dropdown, TabButtons, createDocumentResource } from "frappe-ui";
-import { ref } from "vue";
-
-const displayType = useStorage("displayType", "grid");
+import { Badge, createDocumentResource, Dropdown, TabButtons } from "frappe-ui";
+import { onActivated, Ref, ref } from "vue";
 
 const store = useStore();
+const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list">;
+
 const searchFilter = ref("");
 const typeFilter = ref("");
+const showDialog = ref(false);
+
+onActivated(() => {
+	posthog.capture("builder_landing_page_viewed");
+});
 
 watchDebounced(
 	[searchFilter, typeFilter],
 	() => {
-		const filters = {} as any;
+		const filters = {
+			is_template: 0,
+		} as any;
 		if (typeFilter.value) {
 			if (typeFilter.value === "published") {
 				filters["published"] = true;

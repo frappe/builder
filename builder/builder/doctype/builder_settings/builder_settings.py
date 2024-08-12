@@ -1,12 +1,16 @@
+import os
+
 import frappe
 from frappe.model.document import Document
 from frappe.utils import get_files_path
-import os
+
 
 class BuilderSettings(Document):
 	def on_update(self):
 		self.handle_script_update("script", "JavaScript", "js", "page_scripts")
 		self.handle_script_update("style", "css", "css", "page_styles")
+		if self.has_value_changed("home_page"):
+			frappe.cache.delete_key("home_page")
 
 	def handle_script_update(self, attribute, script_type, extension, folder_name):
 		if self.has_value_changed(attribute):
@@ -38,6 +42,7 @@ class BuilderSettings(Document):
 	def write_to_file(self, file_path, content):
 		with open(file_path, "w") as f:
 			f.write(content)
+
 
 def get_website_user_home_page(session_user=None):
 	home_page = frappe.get_cached_value("Builder Settings", None, "home_page")

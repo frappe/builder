@@ -29,6 +29,38 @@ Frappe Builder is a low-code website builder designed for simplicity, speed, and
 
 Get started with your personal or business site with a few clicks on [Frappe Cloud](https://frappecloud.com/builder/signup).
 
+### Docker (Recommended)
+
+The quickest way to set up Frappe Builder and take it for a test ride.
+
+Frappe framework is multi-tenant and supports multiple apps by default. This docker compose is just a standalone version with Frappe Builder pre-installed. Just put it behind your desired reverse-proxy if needed, and you're good to go.  
+  
+If you wish to use multiple Frappe apps or need multi-tenancy. Take a look at our production ready self-hosted workflow, or join us on Frappe Cloud to get first party support and hassle-free hosting.
+
+**Step 1**: Setup folder and download the required files
+
+    mkdir frappe-builder
+    cd frappe-builder
+
+**Step 2**: Download the required files
+
+Docker Compose File:
+
+    wget -O docker-compose.yml https://raw.githubusercontent.com/frappe/builder/develop/docker/docker-compose.yml
+
+Frappe Builder bench setup script
+
+    wget -O init.sh https://raw.githubusercontent.com/frappe/builder/develop/docker/init.sh
+
+**Step 3**: Run the container and daemonize it
+
+    docker compose up -d
+
+**Step 4**: The site [http://builder.localhost](http://builder.localhost) should now be available. The default credentials are:
+
+> username: administrator  
+> password: admin
+
 ### Self-hosting
 
 If you prefer self-hosting, follow the official [Frappe Bench Installation](https://github.com/frappe/bench#installation) instructions.

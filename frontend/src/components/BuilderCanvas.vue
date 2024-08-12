@@ -56,6 +56,7 @@
 				<BuilderBlock
 					class="h-full min-h-[inherit]"
 					:block="block"
+					:key="block.blockId"
 					v-if="showBlocks"
 					:breakpoint="breakpoint.device"
 					:data="store.pageData" />
@@ -72,13 +73,16 @@
 	</div>
 </template>
 <script setup lang="ts">
+import builderBlockTemplate from "@/data/builderBlockTemplate";
 import webComponent from "@/data/webComponent";
+import { posthog } from "@/telemetry";
 import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
 import {
 	addPxToNumber,
 	getBlockCopy,
 	getBlockInstance,
+	getBlockObject,
 	getNumberFromPx,
 	isCtrlOrCmd,
 	isTargetEditable,
@@ -93,6 +97,7 @@ import {
 } from "@vueuse/core";
 import { FeatherIcon } from "frappe-ui";
 import { Ref, computed, nextTick, onMounted, provide, reactive, ref, watch } from "vue";
+import { toast } from "vue-sonner";
 import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
@@ -167,11 +172,14 @@ onMounted(() => {
 
 function setupHistory() {
 	canvasHistory.value = useDebouncedRefHistory(block, {
-		capacity: 200,
+		capacity: 50,
 		deep: true,
 		debounce: 200,
-		clone: (obj) => {
-			return getBlockCopy(obj, true);
+		dump: (obj) => {
+			return getBlockObject(obj);
+		},
+		parse: (obj) => {
+			return getBlockInstance(obj);
 		},
 	});
 }
@@ -185,9 +193,10 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 				parentBlock = findBlock(element.dataset.blockId) || parentBlock;
 			}
 		}
-		let componentName = ev.dataTransfer?.getData("componentName");
+		const componentName = ev.dataTransfer?.getData("componentName");
+		const blockTemplate = ev.dataTransfer?.getData("blockTemplate");
 		if (componentName) {
-			const newBlock = getBlockCopy(webComponent.getRow(componentName).block, true);
+			const newBlock = getBlockInstance(webComponent.getRow(componentName).block);
 			newBlock.extendFromComponent(componentName);
 			// if shift key is pressed, replace parent block with new block
 			if (ev.shiftKey) {
@@ -207,6 +216,28 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 				parentBlock.addChild(newBlock);
 			}
 			ev.stopPropagation();
+			posthog.capture("builder_component_used");
+		} else if (blockTemplate) {
+			const templateDoc = builderBlockTemplate.getRow(blockTemplate);
+			const newBlock = getBlockInstance(templateDoc.block, false);
+			// if shift key is pressed, replace parent block with new block
+			if (ev.shiftKey) {
+				while (parentBlock && parentBlock.isChildOfComponent) {
+					parentBlock = parentBlock.getParentBlock();
+				}
+				if (!parentBlock) return;
+				const parentParentBlock = parentBlock.getParentBlock();
+				if (!parentParentBlock) return;
+				const index = parentParentBlock.children.indexOf(parentBlock);
+				parentParentBlock.children.splice(index, 1, newBlock);
+			} else {
+				while (parentBlock && !parentBlock.canHaveChildren()) {
+					parentBlock = parentBlock.getParentBlock();
+				}
+				if (!parentBlock) return;
+				parentBlock.addChild(newBlock);
+			}
+			posthog.capture("builder_block_template_used", { template: blockTemplate });
 		} else if (files && files.length) {
 			store.uploadFile(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
 				if (!parentBlock) return;
@@ -220,22 +251,35 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 						}
 						parentBlock.addChild(store.getVideoBlock(fileDoc.fileURL));
 					}
+					posthog.capture("builder_video_uploaded");
 					return;
 				}
 
 				if (parentBlock.isImage()) {
 					parentBlock.setAttribute("src", fileDoc.fileURL);
+					posthog.capture("builder_image_uploaded", {
+						type: "image-replace",
+					});
 				} else if (parentBlock.isSVG()) {
 					const imageBlock = store.getImageBlock(fileDoc.fileURL, fileDoc.fileName);
 					const parentParentBlock = parentBlock.getParentBlock();
 					parentParentBlock?.replaceChild(parentBlock, getBlockInstance(imageBlock));
+					posthog.capture("builder_image_uploaded", {
+						type: "svg-replace",
+					});
 				} else if (parentBlock.isContainer() && ev.shiftKey) {
 					parentBlock.setStyle("background", `url(${fileDoc.fileURL})`);
+					posthog.capture("builder_image_uploaded", {
+						type: "background",
+					});
 				} else {
 					while (parentBlock && !parentBlock.canHaveChildren()) {
 						parentBlock = parentBlock.getParentBlock() as Block;
 					}
 					parentBlock.addChild(store.getImageBlock(fileDoc.fileURL, fileDoc.fileName));
+					posthog.capture("builder_image_uploaded", {
+						type: "new-image",
+					});
 				}
 			});
 		}
@@ -604,32 +648,31 @@ const toggleBlockSelection = (_block: Block) => {
 	}
 };
 
-const clearSelection = () => {
-	selectedBlockIds.value = [];
+const selectBlockRange = (_block: Block) => {
+	const lastSelectedBlockId = selectedBlockIds.value[selectedBlockIds.value.length - 1];
+	const lastSelectedBlock = findBlock(lastSelectedBlockId);
+	if (!lastSelectedBlock) {
+		_block.selectBlock();
+		return;
+	}
+	const lastSelectedBlockIndex = lastSelectedBlock.parentBlock?.children.indexOf(lastSelectedBlock);
+	const _blockIndex = _block.parentBlock?.children.indexOf(_block);
+	if (lastSelectedBlockIndex === undefined || _blockIndex === undefined) {
+		return;
+	}
+	const start = Math.min(lastSelectedBlockIndex, _blockIndex);
+	const end = Math.max(lastSelectedBlockIndex, _blockIndex);
+	const parentBlock = lastSelectedBlock.parentBlock;
+	if (!parentBlock) {
+		return;
+	}
+	const blocks = parentBlock.children.slice(start, end + 1);
+	selectedBlockIds.value = selectedBlockIds.value.concat(...blocks.map((b) => b.blockId));
+	selectedBlockIds.value = Array.from(new Set(selectedBlockIds.value));
 };
 
-const findParentBlock = (blockId: string, blocks?: Block[]): Block | null => {
-	if (!blocks) {
-		const firstBlock = getFirstBlock();
-		if (!firstBlock) {
-			return null;
-		}
-		blocks = [firstBlock];
-	}
-	for (const block of blocks) {
-		if (block.children) {
-			for (const child of block.children) {
-				if (child.blockId === blockId) {
-					return block;
-				}
-			}
-			const found = findParentBlock(blockId, block.children);
-			if (found) {
-				return found;
-			}
-		}
-	}
-	return null;
+const clearSelection = () => {
+	selectedBlockIds.value = [];
 };
 
 const findBlock = (blockId: string, blocks?: Block[]): Block | null => {
@@ -650,12 +693,43 @@ const findBlock = (blockId: string, blocks?: Block[]): Block | null => {
 	return null;
 };
 
+const removeBlock = (block: Block) => {
+	if (block.blockId === "root") {
+		toast.warning("Warning", {
+			description: "Cannot delete root block",
+		});
+		return;
+	}
+	if (block.isChildOfComponentBlock()) {
+		toast.warning("Warning", {
+			description: "Cannot delete block inside component",
+		});
+		return;
+	}
+	const parentBlock = block.parentBlock;
+	if (!parentBlock) {
+		return;
+	}
+	const index = parentBlock.children.indexOf(block);
+	parentBlock.removeChild(block);
+	nextTick(() => {
+		if (parentBlock.children.length) {
+			const nextSibling = parentBlock.children[index] || parentBlock.children[index - 1];
+			if (nextSibling) {
+				selectBlock(nextSibling);
+			}
+		}
+	});
+};
+
 watch(
 	() => block,
 	() => {
 		toggleDirty(true);
 	},
-	{ deep: true },
+	{
+		deep: true,
+	},
 );
 
 const toggleDirty = (dirty: boolean | null = null) => {
@@ -760,10 +834,11 @@ defineExpose({
 	clearSelection,
 	isSelected,
 	selectedBlockIds,
-	findParentBlock,
 	findBlock,
 	isDirty,
 	toggleDirty,
 	scrollBlockIntoView,
+	removeBlock,
+	selectBlockRange,
 });
 </script>

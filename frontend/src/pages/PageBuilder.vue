@@ -6,14 +6,12 @@
 				v-show="store.showLeftPanel"
 				class="no-scrollbar absolute bottom-0 left-0 top-[var(--toolbar-height)] z-20 overflow-auto border-r-[1px] bg-white shadow-lg dark:border-gray-800 dark:bg-zinc-900"></BuilderLeftPanel>
 			<BuilderCanvas
-				ref="componentCanvas"
-				:key="store.editingComponent"
-				v-if="store.editingComponent"
-				:block-data="store.getComponentBlock(store.editingComponent)"
+				ref="fragmentCanvas"
+				:key="store.fragmentData.block?.blockId"
+				v-if="store.editingMode === 'fragment' && store.fragmentData.block"
+				:block-data="store.fragmentData.block"
 				:canvas-styles="{
-					width: (store.getComponentBlock(store.editingComponent).getStyle('width') + '').endsWith('px')
-						? '!fit-content'
-						: null,
+					width: (store.fragmentData.block.getStyle('width') + '').endsWith('px') ? '!fit-content' : null,
 					padding: '40px',
 				}"
 				:style="{
@@ -25,25 +23,20 @@
 					<div
 						class="absolute left-0 right-0 top-0 z-20 flex items-center justify-between bg-white p-2 text-sm text-gray-800 dark:bg-zinc-900 dark:text-zinc-400">
 						<div class="flex items-center gap-1 text-xs">
-							<a @click="exitComponentMode" class="cursor-pointer">Page</a>
+							<a @click="store.exitFragmentMode" class="cursor-pointer">Page</a>
 							<FeatherIcon name="chevron-right" class="h-3 w-3" />
-							{{ store.getComponent(store.editingComponent).component_name }}
+							{{ store.fragmentData.fragmentName }}
 						</div>
 						<Button
 							class="text-xs dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-							@click="
-								() => {
-									store.editPage(true);
-									clearSelectedComponent();
-								}
-							">
-							Save Component
+							@click="saveAndExitFragmentMode">
+							{{ store.fragmentData.saveActionLabel || "Save" }}
 						</Button>
 					</div>
 				</template>
 			</BuilderCanvas>
 			<BuilderCanvas
-				v-show="!store.editingComponent"
+				v-show="store.editingMode === 'page'"
 				ref="pageCanvas"
 				v-if="store.pageBlocks[0]"
 				:block-data="store.pageBlocks[0]"
@@ -72,9 +65,11 @@
 						type="HTML"
 						height="60vh"
 						:showLineNumbers="true"
-						@update:modelValue="
+						:showSaveButton="true"
+						@save="
 							(val) => {
 								store.editableBlock?.setInnerHTML(val);
+								store.showHTMLDialog = false;
 							}
 						"
 						required />
@@ -100,10 +95,10 @@ import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import {
 	addPxToNumber,
-	confirm,
 	copyToClipboard,
 	detachBlockFromComponent,
 	getBlockCopy,
+	getCopyWithoutParent,
 	isCtrlOrCmd,
 	isHTMLString,
 	isJSONString,
@@ -111,7 +106,7 @@ import {
 } from "@/utils/helpers";
 import { useActiveElement, useDebounceFn, useEventListener, useMagicKeys, useStorage } from "@vueuse/core";
 import { Dialog } from "frappe-ui";
-import { Ref, computed, nextTick, onActivated, onDeactivated, provide, ref, watch, watchEffect } from "vue";
+import { Ref, computed, onActivated, onDeactivated, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { toast } from "vue-sonner";
 import CodeEditor from "../components/CodeEditor.vue";
@@ -131,10 +126,10 @@ window.store = store;
 window.blockController = blockController;
 
 const pageCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
-const componentCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
+const fragmentCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 
 provide("pageCanvas", pageCanvas);
-provide("componentCanvas", componentCanvas);
+provide("fragmentCanvas", fragmentCanvas);
 
 // to disable page zoom
 useEventListener(
@@ -168,7 +163,7 @@ useEventListener(document, "copy", (e) => {
 			if (!Boolean(block.extendedFromComponent) && block.isChildOfComponent) {
 				return detachBlockFromComponent(block);
 			}
-			return block;
+			return getCopyWithoutParent(block);
 		});
 		// just copy non components
 		const dataToCopy = {
@@ -291,7 +286,7 @@ useEventListener(document, "paste", async (e) => {
 				styleProperty,
 				StyleValue,
 			];
-			if (blockController.isText()) {
+			if (blockController.isText() && !blockController.isLink()) {
 				if (
 					[
 						"font-family",
@@ -473,11 +468,9 @@ useEventListener(document, "keydown", (e) => {
 	// save page or component
 	if (e.key === "s" && isCtrlOrCmd(e)) {
 		e.preventDefault();
-		if (store.editingMode === "component") {
-			store.editPage(true);
-			clearSelectedComponent();
+		if (store.editingMode === "fragment") {
+			saveAndExitFragmentMode(e);
 			e.stopPropagation();
-			e.preventDefault();
 		}
 		return;
 	}
@@ -520,46 +513,16 @@ useEventListener(document, "keydown", (e) => {
 	if (isTargetEditable(e)) return;
 
 	if ((e.key === "Backspace" || e.key === "Delete") && blockController.isBLockSelected()) {
-		function findBlockAndRemove(blocks: Array<Block>, blockId: string) {
-			if (blockId === "root") {
-				toast.warning("Warning", {
-					description: "Cannot delete root block",
-				});
-
-				return false;
-			}
-			blocks.forEach((block, i) => {
-				if (block.blockId === blockId) {
-					if (block.isChildOfComponentBlock() && !e.shiftKey) {
-						toast.warning("Warning", {
-							description: "Cannot delete block inside component",
-						});
-						return false;
-					} else {
-						blocks.splice(i, 1);
-						nextTick(() => {
-							// select the next sibling block
-							if (blocks.length && blocks[i]) {
-								blocks[i].selectBlock();
-							}
-						});
-						return true;
-					}
-				} else if (block.children) {
-					return findBlockAndRemove(block.children, blockId);
-				}
-			});
-		}
 		for (const block of blockController.getSelectedBlocks()) {
-			findBlockAndRemove([store.activeCanvas?.getFirstBlock() as Block], block.blockId);
+			store.activeCanvas?.removeBlock(block);
 		}
-		clearSelectedComponent();
+		clearSelection();
 		e.stopPropagation();
 		return;
 	}
 
 	if (e.key === "Escape") {
-		exitComponentMode(e);
+		store.exitFragmentMode(e);
 	}
 
 	// handle arrow keys
@@ -571,7 +534,7 @@ useEventListener(document, "keydown", (e) => {
 	}
 });
 
-const clearSelectedComponent = () => {
+const clearSelection = () => {
 	blockController.clearSelection();
 	store.editableBlock = null;
 	if (document.activeElement instanceof HTMLElement) {
@@ -579,19 +542,10 @@ const clearSelectedComponent = () => {
 	}
 };
 
-const exitComponentMode = (e: Event) => {
-	if (store.editingComponent && store.activeCanvas?.isDirty) {
-		e.preventDefault();
-		confirm("Are you sure you want to exit without saving?").then((result) => {
-			if (result) {
-				store.editPage(false);
-				clearSelectedComponent();
-			}
-		});
-		return;
-	}
-	store.editPage(false);
-	clearSelectedComponent();
+const saveAndExitFragmentMode = (e: Event) => {
+	store.fragmentData.saveAction?.(fragmentCanvas.value?.getFirstBlock());
+	fragmentCanvas.value?.toggleDirty(false);
+	store.exitFragmentMode(e);
 };
 
 onActivated(async () => {
@@ -629,7 +583,7 @@ onDeactivated(() => {
 
 // on tab activation, reload for latest data
 useEventListener(document, "visibilitychange", () => {
-	if (document.visibilityState === "visible" && !componentCanvas.value) {
+	if (document.visibilityState === "visible" && !fragmentCanvas.value) {
 		if (route.params.pageId && route.params.pageId !== "new") {
 			const currentModified = webPages.getRow(store.activePage?.name as string)?.modified;
 			webPages.fetchOne.submit(store.activePage?.name).then((doc: BuilderPage[]) => {
@@ -642,8 +596,8 @@ useEventListener(document, "visibilitychange", () => {
 });
 
 watchEffect(() => {
-	if (componentCanvas.value) {
-		store.activeCanvas = componentCanvas.value;
+	if (fragmentCanvas.value) {
+		store.activeCanvas = fragmentCanvas.value;
 	} else {
 		store.activeCanvas = pageCanvas.value;
 	}
@@ -657,7 +611,7 @@ watch(
 		if (
 			store.selectedPage &&
 			!store.settingPage &&
-			!store.editingComponent &&
+			store.editingMode === "page" &&
 			!pageCanvas.value?.canvasProps?.settingCanvas
 		) {
 			store.savingPage = true;

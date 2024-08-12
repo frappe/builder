@@ -1,0 +1,14 @@
+{
+ "block": "{\"blockId\":\"69xrb0gy4\",\"children\":[],\"baseStyles\":{\"objectFit\":\"cover\",\"width\":\"550px\"},\"rawStyles\":{},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{\"autoplay\":\"\",\"muted\":\"\",\"src\":\"https://cdn.free-stock.video/2152023/wave-nature-waves-ocean-water-sand-water-23350-small.mp4\"},\"classes\":[],\"dataKey\":null,\"element\":\"video\",\"customAttributes\":{}}",
+ "category": "Basic",
+ "creation": "2024-07-10 23:09:39.980242",
+ "docstatus": 0,
+ "doctype": "Block Template",
+ "idx": 0,
+ "modified": "2024-07-12 09:34:20.763472",
+ "modified_by": "Administrator",
+ "name": "Video",
+ "owner": "Administrator",
+ "preview": "/builder_assets/Video/video.png",
+ "template_name": "Video"
+}

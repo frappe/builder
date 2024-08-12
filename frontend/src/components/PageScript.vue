@@ -30,20 +30,13 @@
 						class="overscroll-none"
 						v-model="page.page_data_script"
 						type="Python"
-						height="60vh"
-						:show-line-numbers="true"></CodeEditor>
-					<span class="text-xs text-gray-600 dark:text-zinc-400">
-						Can be used to fetch dynamic data from server and pass it to the page.
+						height="65vh"
+						@save="savePageDataScript"
+						:showSaveButton="true"
+						description='Can be used to fetch dynamic data from server and pass it to the page.
 						<br />
-						eg. data.events = frappe.get_list("Event")
-					</span>
-					<div class="mt-2 flex flex-1">
-						<Button
-							@click="savePageDataScript"
-							class="w-full text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
-							Save
-						</Button>
-					</div>
+						eg. data.events = frappe.get_list("Event")'
+						:show-line-numbers="true"></CodeEditor>
 				</div>
 			</template>
 		</Dialog>
@@ -52,9 +45,11 @@
 <script lang="ts" setup>
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
+import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { Dialog } from "frappe-ui";
 import { ref } from "vue";
+import { toast } from "vue-sonner";
 import CodeEditor from "./CodeEditor.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
 const store = useStore();
@@ -66,15 +61,24 @@ const props = defineProps<{
 
 const currentScriptEditor = ref<"client" | "data">("client");
 
-const savePageDataScript = () => {
+const savePageDataScript = (value: string) => {
 	webPages.setValue
 		.submit({
 			name: props.page.name,
-			page_data_script: props.page.page_data_script,
+			page_data_script: value,
 		})
 		.then(() => {
+			posthog.capture("builder_page_data_script_saved");
 			showDialog.value = false;
+			props.page.page_data_script = value;
 			store.setPageData(props.page);
+			toast.success("Data script saved");
+		})
+		.catch((e: { message: string; exc: string }) => {
+			const error_message = e.exc.split("\n").slice(-2)[0];
+			toast.error("Failed to save script", {
+				description: error_message,
+			});
 		});
 };
 

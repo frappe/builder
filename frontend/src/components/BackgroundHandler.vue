@@ -9,6 +9,7 @@
 							class="[&>div>input]:pl-8"
 							type="text"
 							placeholder="Set Background"
+							@update:modelValue="updateBG"
 							:value="backgroundURL?.replace(/^'|'$/g, '')" />
 						<div
 							class="absolute left-2 top-[6px] z-10 h-4 w-4 rounded shadow-sm"
@@ -107,5 +108,12 @@ const parseBackground = (background: string) => {
 	const bgSize = background.match(/contain|cover/g)?.[0];
 	const bgRepeat = background.match(/repeat|no-repeat/g)?.[0];
 	return { bgImageURL, bgPosition, bgSize, bgRepeat };
+};
+
+const updateBG = (value: string) => {
+	blockController?.setStyle(
+		"background",
+		`url('${value}') center / ${backgroundSize.value || "cover"} no-repeat`,
+	);
 };
 </script>

@@ -6,7 +6,15 @@
 			:class="{
 				'text-sm [&>div>input]:pr-5': !['select', 'checkbox'].includes(type),
 			}"
-			@change="($event: Event) => emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+			@change="
+				($event: Event) => {
+					if (type === 'checkbox') {
+						emit('update:modelValue', ($event.target as HTMLInputElement).checked);
+					} else {
+						emit('update:modelValue', ($event.target as HTMLInputElement).value);
+					}
+				}
+			"
 			@input="($event: Event) => emit('input', ($event.target as HTMLInputElement).value)"
 			autocomplete="off"
 			v-bind="attrs"
@@ -14,7 +22,7 @@
 		<div
 			class="absolute right-[1px] top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
 			@click="clearValue"
-			v-if="!['select', 'checkbox'].includes(type)"
+			v-if="!['select', 'checkbox'].includes(type) && !hideClearButton"
 			v-show="data">
 			<CrossIcon />
 		</div>
@@ -25,7 +33,7 @@ import { useVModel } from "@vueuse/core";
 import { useAttrs } from "vue";
 import CrossIcon from "./Icons/Cross.vue";
 
-const props = defineProps(["modelValue", "type"]);
+const props = defineProps(["modelValue", "type", "hideClearButton"]);
 const emit = defineEmits(["update:modelValue", "input"]);
 const data = useVModel(props, "modelValue", emit);
 

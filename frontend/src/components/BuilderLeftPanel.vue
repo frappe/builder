@@ -3,7 +3,9 @@
 		:style="{
 			width: `${store.builderLayout.leftPanelWidth}px`,
 		}">
-		<div class="relative min-h-full">
+		<div
+			class="relative min-h-full"
+			@click.stop="store.leftPanelActiveTab === 'Layers' && store.activeCanvas?.clearSelection()">
 			<PanelResizer
 				:dimension="store.builderLayout.leftPanelWidth"
 				side="right"
@@ -22,11 +24,11 @@
 					Generate
 				</button>
 			</div>
-			<div class="flex w-full border-gray-200 p-[2px] text-sm dark:border-zinc-800">
+			<div class="flex w-full border-gray-200 px-2 text-base dark:border-zinc-800">
 				<button
 					v-for="tab of ['Layers', 'Assets'] as LeftSidebarTabOption[]"
 					:key="tab"
-					class="mx-3 flex-1 p-2"
+					class="mx-3 flex-1 p-2 py-3"
 					@click.stop="setActiveTab(tab as LeftSidebarTabOption)"
 					:class="{
 						'border-b-[1px] border-gray-900 dark:border-zinc-500 dark:text-zinc-300':
@@ -37,7 +39,7 @@
 				</button>
 			</div>
 			<div v-show="store.leftPanelActiveTab === 'Assets'">
-				<BuilderAssets class="p-4 pt-3" />
+				<BuilderAssets class="mt-1 p-4 pt-3" />
 			</div>
 			<div v-show="store.leftPanelActiveTab === 'Layers'" class="p-4 pt-3">
 				<BlockLayers
@@ -49,8 +51,8 @@
 				<BlockLayers
 					class="no-scrollbar overflow-auto"
 					ref="componentLayers"
-					:blocks="[componentCanvas?.getFirstBlock()]"
-					v-if="store.editingComponent && componentCanvas" />
+					:blocks="[fragmentCanvas?.getFirstBlock()]"
+					v-if="store.editingMode === 'fragment' && fragmentCanvas" />
 			</div>
 		</div>
 	</div>
@@ -68,7 +70,7 @@ import Block from "@/utils/block";
 import BuilderCanvas from "./BuilderCanvas.vue";
 
 const pageCanvas = inject("pageCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
-const componentCanvas = inject("componentCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
+const fragmentCanvas = inject("fragmentCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
 
 const prompt = ref(null) as unknown as Ref<string>;
 

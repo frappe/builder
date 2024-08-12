@@ -16,10 +16,9 @@
 				actions: [
 					{
 						label: 'Save',
-						appearance: 'primary',
+						variant: 'solid',
 						onClick: createComponentHandler,
 					},
-					{ label: 'Cancel' },
 				],
 			}"
 			v-model="showDialog">
@@ -39,19 +38,81 @@
 				</div>
 			</template>
 		</Dialog>
+		<Dialog
+			style="z-index: 40"
+			:options="{
+				title: 'Save as Block Template',
+				size: 'sm',
+				actions: [
+					{
+						label: 'Save',
+						variant: 'solid',
+						onClick: () => {
+							store.saveBlockTemplate(
+								block,
+								blockTemplateProperties.templateName,
+								'Basic',
+								blockTemplateProperties.previewImage,
+							);
+							showBlockTemplateDialog = false;
+						},
+					},
+				],
+			}"
+			v-model="showBlockTemplateDialog">
+			<template #body-content>
+				<div class="flex flex-col gap-4">
+					<Input
+						type="text"
+						v-model="blockTemplateProperties.templateName"
+						label="Template Name"
+						required
+						:hideClearButton="true"
+						class="[&>div>input]:dark:bg-zinc-900 [&>label]:dark:text-zinc-300" />
+					<div class="relative">
+						<Input
+							type="text"
+							v-model="blockTemplateProperties.previewImage"
+							label="Preview Image"
+							:hideClearButton="true"
+							class="[&>div>input]:dark:bg-zinc-900 [&>label]:dark:text-zinc-300" />
+						<FileUploader
+							file-types="image/*"
+							@success="
+								(file: FileDoc) => {
+									blockTemplateProperties.previewImage = file.file_url;
+								}
+							">
+							<template v-slot="{ openFileSelector }">
+								<div class="absolute bottom-0 right-0 place-items-center">
+									<Button size="sm" @click="openFileSelector" class="text-sm">Upload</Button>
+								</div>
+							</template>
+						</FileUploader>
+					</div>
+				</div>
+			</template>
+		</Dialog>
 	</div>
 </template>
 <script setup lang="ts">
 import webComponent from "@/data/webComponent";
 import useStore from "@/store";
+import { posthog } from "@/telemetry";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { confirm, detachBlockFromComponent, getBlockCopy } from "@/utils/helpers";
+import {
+	confirm,
+	detachBlockFromComponent,
+	getBlockCopy,
+	getBlockInstance,
+	getBlockString,
+} from "@/utils/helpers";
 import { vOnClickOutside } from "@vueuse/components";
 import { useStorage } from "@vueuse/core";
-import { Dialog } from "frappe-ui";
+import { Dialog, FileUploader } from "frappe-ui";
 import { Ref, nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
 import ContextMenu from "./ContextMenu.vue";
@@ -74,6 +135,14 @@ const componentProperties = ref({
 	componentName: "",
 	isGlobalComponent: 0,
 });
+
+const blockTemplateProperties = ref({
+	templateName: "",
+	category: "",
+	previewImage: "",
+});
+
+const showBlockTemplateDialog = ref(false);
 
 const showContextMenu = (event: MouseEvent) => {
 	if (props.block.isRoot() || props.editable) return;
@@ -113,12 +182,13 @@ const createComponentHandler = (close: () => void) => {
 	blockCopy.removeStyle("position");
 	webComponent.insert
 		.submit({
-			block: blockCopy,
+			block: getBlockString(blockCopy),
 			component_name: componentProperties.value.componentName,
 			for_web_page: componentProperties.value.isGlobalComponent ? null : store.selectedPage,
 		})
 		.then(async (data: BuilderComponent) => {
-			await webComponent.list.promise;
+			posthog.capture("builder_component_created", { component_name: data.name });
+			store.componentMap.set(data.name, getBlockInstance(data.block));
 			const block = store.activeCanvas?.findBlock(props.block.blockId);
 			if (!block) return;
 			block.extendFromComponent(data.name);
@@ -145,22 +215,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Convert To Link",
 		action: () => {
-			blockController.getSelectedBlocks().forEach((block: Block) => {
-				if (block.isSVG() || block.isImage()) {
-					const parentBlock = block.getParentBlock();
-					if (!parentBlock) return;
-					const newBlockObj = getBlockTemplate("fit-container");
-					const newBlock = parentBlock.addChild(newBlockObj, parentBlock.getChildIndex(block));
-					newBlock.addChild(block);
-					parentBlock.removeChild(block);
-					newBlock.convertToLink();
-					nextTick(() => {
-						newBlock.selectBlock();
-					});
-				} else {
-					block.convertToLink();
-				}
-			});
+			blockController.convertToLink();
 		},
 		condition: () =>
 			(props.block.isContainer() || props.block.isText() || props.block.isImage()) &&
@@ -279,6 +334,13 @@ const contextMenuOptions: ContextMenuOption[] = [
 			store.editComponent(props.block);
 		},
 		condition: () => Boolean(props.block.extendedFromComponent),
+	},
+	{
+		label: "Save as Block Template",
+		action: () => {
+			showBlockTemplateDialog.value = true;
+		},
+		condition: () => !props.block.isExtendedFromComponent() && Boolean(window.is_developer_mode),
 	},
 	{
 		label: "Detach Component",
