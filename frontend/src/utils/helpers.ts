@@ -1,5 +1,5 @@
 import { confirmDialog } from "frappe-ui";
-import { reactive } from "vue";
+import { reactive, toRaw } from "vue";
 import Block from "./block";
 
 function getNumberFromPx(px: string | number | null | undefined): number {
@@ -245,12 +245,10 @@ function logObjectDiff(obj1: { [key: string]: {} }, obj2: { [key: string]: {} },
 	}
 }
 
-function getBlockInstance(options: BlockOptions) {
-	return reactive(new Block(options));
-}
-
-function getBlockCopy(block: BlockOptions | Block, retainId = false): Block {
-	let b = JSON.parse(JSON.stringify(block));
+function getBlockInstance(options: BlockOptions | string, retainId = true): Block {
+	if (typeof options === "string") {
+		options = JSON.parse(options) as BlockOptions;
+	}
 	if (!retainId) {
 		const deleteBlockId = (block: BlockOptions) => {
 			delete block.blockId;
@@ -258,9 +256,14 @@ function getBlockCopy(block: BlockOptions | Block, retainId = false): Block {
 				deleteBlockId(child);
 			}
 		};
-		deleteBlockId(b);
+		deleteBlockId(options);
 	}
-	return getBlockInstance(b);
+	return reactive(new Block(options));
+}
+
+function getBlockCopy(block: BlockOptions | Block, retainId = false): Block {
+	const b = getBlockObjectCopy(block);
+	return getBlockInstance(b, retainId);
 }
 
 function isCtrlOrCmd(e: KeyboardEvent) {
@@ -268,7 +271,7 @@ function isCtrlOrCmd(e: KeyboardEvent) {
 }
 
 const detachBlockFromComponent = (block: Block) => {
-	const blockCopy = getBlockCopy(block);
+	const blockCopy = getBlockCopy(block, true);
 	const component = block.getComponent();
 	blockCopy.element = block?.getElement();
 	blockCopy.attributes = block.getAttributes();
@@ -295,13 +298,25 @@ const detachBlockFromComponent = (block: Block) => {
 	delete blockCopy.isChildOfComponent;
 	delete blockCopy.referenceBlockId;
 	blockCopy.children = blockCopy.children.map(detachBlockFromComponent);
-	return blockCopy;
+	return getBlockInstance(blockCopy);
 };
 
+function getBlockString(block: BlockOptions | Block): string {
+	return JSON.stringify(getCopyWithoutParent(block));
+}
+
+function getBlockObjectCopy(block: BlockOptions | Block): BlockOptions {
+	return JSON.parse(getBlockString(block));
+}
+
+function getCopyWithoutParent(block: BlockOptions | Block): BlockOptions {
+	const blockCopy = { ...toRaw(block) };
+	blockCopy.children = blockCopy.children?.map((child) => getCopyWithoutParent(child));
+	delete blockCopy.parentBlock;
+	return blockCopy;
+}
+
 export {
-	HSVToHex,
-	HexToHSV,
-	RGBToHex,
 	addPxToNumber,
 	confirm,
 	copyToClipboard,
@@ -309,11 +324,16 @@ export {
 	findNearestSiblingIndex,
 	getBlockCopy,
 	getBlockInstance,
+	getBlockObjectCopy as getBlockObject,
+	getBlockString,
+	getCopyWithoutParent,
 	getDataForKey,
 	getNumberFromPx,
-	getRGB,
 	getRandomColor,
+	getRGB,
 	getTextContent,
+	HexToHSV,
+	HSVToHex,
 	isCtrlOrCmd,
 	isHTMLString,
 	isJSONString,
@@ -322,5 +342,6 @@ export {
 	logObjectDiff,
 	mapToObject,
 	replaceMapKey,
+	RGBToHex,
 	stripExtension,
 };

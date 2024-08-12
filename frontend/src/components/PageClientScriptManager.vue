@@ -7,7 +7,7 @@
 						v-for="script in attachedScriptResource.data"
 						href="#"
 						:class="{
-							'text-gray-600 dark:text-gray-300': activeScript !== script,
+							'text-gray-600 dark:text-gray-500': activeScript !== script,
 							'font-medium dark:text-zinc-200': activeScript === script,
 						}"
 						@click="selectScript(script)"
@@ -19,7 +19,7 @@
 								class="truncate"
 								@blur="updateScriptName($event, script)"
 								@keydown.enter.stop.prevent="script.editable = false"
-								@dblclick="script.editable = true"
+								@dblclick.stop="script.editable = true"
 								:contenteditable="script.editable">
 								{{ script.script_name }}
 							</span>
@@ -45,19 +45,9 @@
 						</Dropdown>
 						<Dropdown
 							v-if="clientScriptResource.data && clientScriptResource.data.length > 0"
-							:options="
-								clientScriptResource.data.map((d: { name: string }) => {
-									return {
-										label: d.name,
-										onClick: () => {
-											attachScript(d.name);
-										},
-									};
-								})
-							"
+							:options="clientScriptOptions"
 							size="sm"
-							class="max-w-60 flex-1 [&>div>div>div]:w-full"
-							placement="right">
+							class="max-w-60 flex-1 [&>div>div>div]:w-full">
 							<template v-slot="{ open }">
 								<Button
 									class="w-full text-xs dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
@@ -80,35 +70,31 @@
 			Add Script
 		</div>
 		<div v-if="activeScript" class="flex h-full w-full flex-col">
-			<span class="rounded-t-sm bg-gray-100 p-1 px-2 text-xs dark:bg-zinc-800 dark:text-zinc-100">
-				{{ activeScript.script_name }}
-			</span>
 			<CodeEditor
-				v-if="activeScript.script_type === 'JavaScript'"
+				ref="scriptEditor"
 				:modelValue="activeScript.script"
-				@update:modelValue="updateScript"
-				type="JavaScript"
+				:label="activeScript.script_name"
+				:type="activeScript.script_type as 'JavaScript' | 'CSS'"
 				class="flex-1"
 				height="auto"
-				:show-line-numbers="true"></CodeEditor>
-			<CodeEditor
-				v-if="activeScript.script_type === 'CSS'"
-				:modelValue="activeScript.script"
-				@update:modelValue="updateScript"
-				type="CSS"
-				class="flex-1"
-				height="auto"
+				:autofocus="false"
+				:show-save-button="true"
+				@save="updateScript"
 				:show-line-numbers="true"></CodeEditor>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
+import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { Dropdown, createListResource, createResource } from "frappe-ui";
-import { PropType, ref, watch } from "vue";
+import { createListResource, createResource, Dropdown } from "frappe-ui";
+import { computed, nextTick, PropType, ref, watch } from "vue";
+import { toast } from "vue-sonner";
 import CodeEditor from "./CodeEditor.vue";
 import CSSIcon from "./Icons/CSS.vue";
 import JavaScriptIcon from "./Icons/JavaScript.vue";
+
+const scriptEditor = ref<typeof CodeEditor | null>(null);
 
 type attachedScript = {
 	script: string;
@@ -157,17 +143,33 @@ const clientScriptResource = createListResource({
 
 const selectScript = (script: attachedScript) => {
 	activeScript.value = script;
+	nextTick(() => {
+		scriptEditor.value?.resetEditor(script.script, true);
+	});
 };
 
 const updateScript = (value: string) => {
+	console.log(value);
 	if (!activeScript.value) return;
 	clientScriptResource.setValue
 		.submit({
 			name: activeScript.value.script_name,
 			script: value,
 		})
-		.then(() => {
-			attachedScriptResource.reload();
+		.then(async () => {
+			await attachedScriptResource.reload();
+			attachedScriptResource.data?.forEach((script: attachedScript) => {
+				if (script.script_name === activeScript.value?.script_name) {
+					activeScript.value = script;
+				}
+			});
+			toast.success("Script saved successfully");
+		})
+		.catch((e: { message: string; exc: string }) => {
+			const error_message = e.exc.split("\n").slice(-2)[0];
+			toast.error("Failed to save script", {
+				description: error_message,
+			});
 		});
 };
 
@@ -186,6 +188,9 @@ const addScript = (scriptType: "JavaScript" | "CSS") => {
 					builder_script: res.name,
 				})
 				.then(async () => {
+					posthog.capture("builder_client_script_added", {
+						script_type: res.script_type,
+					});
 					await attachedScriptResource.reload();
 					attachedScriptResource.data?.forEach((script: attachedScript) => {
 						if (script.script_name === res.name) {
@@ -205,6 +210,7 @@ const attachScript = (builder_script_name: string) => {
 			builder_script: builder_script_name,
 		})
 		.then(async () => {
+			posthog.capture("builder_client_script_attached");
 			await attachedScriptResource.reload();
 			attachedScriptResource.data?.forEach((script: attachedScript) => {
 				if (script.script_name === builder_script_name) {
@@ -242,6 +248,13 @@ const updateScriptName = (ev: Event, script: attachedScript) => {
 			});
 		});
 };
+
+const clientScriptOptions = computed(() =>
+	clientScriptResource.data?.map((script: { name: string; script_type: string }) => ({
+		label: script.name,
+		onClick: () => attachScript(script.name),
+	})),
+);
 
 watch(
 	() => props.page,

@@ -64,6 +64,7 @@ website_generators = ["Builder Page"]
 
 # before_install = "builder.install.before_install"
 after_install = "builder.install.after_install"
+after_migrate = "builder.install.after_migrate"
 
 # Uninstallation
 # ------------

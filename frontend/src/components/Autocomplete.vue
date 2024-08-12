@@ -32,7 +32,7 @@
 					class="h-full w-full border-none bg-transparent p-0 text-base focus:border-none focus:ring-0" />
 			</div>
 			<ComboboxOptions
-				class="absolute right-0 z-50 max-h-[15rem] w-full max-w-[150px] overflow-y-auto rounded-lg bg-white px-1.5 py-1.5 shadow-2xl"
+				class="absolute right-0 z-50 max-h-[15rem] w-full overflow-y-auto rounded-lg bg-white px-1.5 py-1.5 shadow-2xl"
 				v-show="filteredOptions.length">
 				<ComboboxOption v-if="query" :value="query" class="flex items-center"></ComboboxOption>
 				<ComboboxOption
@@ -83,6 +83,10 @@ const props = defineProps({
 		type: String,
 		default: "Search",
 	},
+	showInputAsOption: {
+		type: Boolean,
+		default: false,
+	},
 });
 
 const query = ref("");
@@ -100,14 +104,23 @@ const value = computed(() => {
 }) as ComputedRef<Option>;
 
 const filteredOptions = computed(() => {
-	return query.value === ""
-		? props.options
-		: props.options.filter((option) => {
-				return (
-					option.label.toLowerCase().includes(query.value.toLowerCase()) ||
-					option.value.toLowerCase().includes(query.value.toLowerCase())
-				);
+	if (query.value === "") {
+		return props.options;
+	} else {
+		const options = props.options.filter((option) => {
+			return (
+				option.label.toLowerCase().includes(query.value.toLowerCase()) ||
+				option.value.toLowerCase().includes(query.value.toLowerCase())
+			);
+		});
+		if (props.showInputAsOption) {
+			options.unshift({
+				label: query.value,
+				value: query.value,
 			});
+		}
+		return options;
+	}
 });
 
 const clearValue = () => emit("update:modelValue", null);
