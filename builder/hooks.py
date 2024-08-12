@@ -209,3 +209,13 @@ get_web_pages_with_dynamic_routes = (
 get_website_user_home_page = (
 	"builder.builder.doctype.builder_settings.builder_settings.get_website_user_home_page"
 )
+
+add_to_apps_screen = [
+	{
+		"name": "builder",
+		"logo": "/assets/builder/frontend/builder_logo.png",
+		"title": "Builder",
+		"route": f"/{builder_path}",
+		"has_permission": "builder.api.check_app_permission",
+	}
+]
