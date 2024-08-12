@@ -14,5 +14,3 @@ def get_context(context):
 	context.is_developer_mode = frappe.conf.developer_mode
 	if frappe.session.user != "Guest":
 		capture("active_site", "builder")
-	if frappe.session.user != "Guest":
-		capture("active_site", "builder")
