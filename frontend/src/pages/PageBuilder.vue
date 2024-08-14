@@ -84,6 +84,7 @@ import BuilderCanvas from "@/components/BuilderCanvas.vue";
 import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
+import webComponent from "@/data/webComponent";
 import { webPages } from "@/data/webPage";
 import { sessionUser } from "@/router";
 import useStore from "@/store";
@@ -586,6 +587,7 @@ useEventListener(document, "visibilitychange", () => {
 	if (document.visibilityState === "visible" && !fragmentCanvas.value) {
 		if (route.params.pageId && route.params.pageId !== "new") {
 			const currentModified = webPages.getRow(store.activePage?.name as string)?.modified;
+			webComponent.reload();
 			webPages.fetchOne.submit(store.activePage?.name).then((doc: BuilderPage[]) => {
 				if (currentModified !== doc[0]?.modified) {
 					store.setPage(route.params.pageId as string, false);
