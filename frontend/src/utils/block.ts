@@ -4,7 +4,7 @@ import { clamp } from "@vueuse/core";
 import { CSSProperties, markRaw, nextTick, reactive } from "vue";
 import { addPxToNumber, getBlockCopy, getNumberFromPx, getTextContent, kebabToCamelCase } from "./helpers";
 
-export type styleProperty = keyof CSSProperties;
+export type styleProperty = keyof CSSProperties | `__${string}`;
 
 type BlockDataKeyType = "key" | "attribute" | "style";
 
@@ -616,8 +616,10 @@ class Block implements BlockOptions {
 	}
 	toggleVisibility() {
 		if (this.getStyle("display") === "none") {
-			this.setStyle("display", "flex");
+			this.setStyle("display", this.getStyle("__last_display") || "flex");
+			this.setStyle("__last_display", null);
 		} else {
+			this.setStyle("__last_display", this.getStyle("display"));
 			this.setStyle("display", "none");
 		}
 	}
