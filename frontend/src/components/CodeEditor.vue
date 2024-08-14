@@ -69,7 +69,7 @@ const props = defineProps({
 	},
 });
 
-const emit = defineEmits(["save"]);
+const emit = defineEmits(["save", "update:modelValue"]);
 const editor = ref<HTMLElement | null>(null);
 let aceEditor = null as ace.Ace.Editor | null;
 
@@ -115,6 +115,9 @@ const setupEditor = () => {
 				value = JSON.parse(value);
 			}
 			if (value === props.modelValue) return;
+			if (!props.showSaveButton && !props.readonly) {
+				emit("update:modelValue", value);
+			}
 		} catch (e) {
 			// do nothing
 		}
