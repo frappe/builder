@@ -927,7 +927,7 @@ const optionsSectionProperties = [
 				blockController.setInnerHTML(val);
 			},
 		},
-		condition: () => blockController.isHTML(),
+		condition: () => blockController.isHTML() || blockController.getInnerHTML(),
 	},
 ];
 
