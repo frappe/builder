@@ -30,6 +30,7 @@ from jinja2.exceptions import TemplateSyntaxError
 from PIL import Image
 from werkzeug.routing import Rule
 
+from builder.hooks import builder_path
 from builder.html_preview_image import generate_preview
 from builder.utils import safer_exec
 
@@ -55,6 +56,9 @@ class BuilderPageRenderer(DocumentPage):
 
 
 class BuilderPage(WebsiteGenerator):
+	def onload(self):
+		self.set_onload("builder_path", builder_path)
+
 	website = frappe._dict(
 		template="templates/generators/webpage.html",
 		condition_field="published",
@@ -156,7 +160,6 @@ class BuilderPage(WebsiteGenerator):
 		context.fonts = fonts
 		context.content = content
 		context.style = render_template(style, page_data)
-		builder_path = frappe.conf.builder_path or "builder"
 		context.editor_link = f"/{builder_path}/page/{self.name}"
 
 		if self.dynamic_route and hasattr(frappe.local, "request"):
