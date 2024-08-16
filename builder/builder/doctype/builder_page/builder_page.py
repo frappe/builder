@@ -156,7 +156,7 @@ class BuilderPage(WebsiteGenerator):
 		context.fonts = fonts
 		context.content = content
 		context.style = render_template(style, page_data)
-		builder_path = frappe.conf.builder_path or "builder"
+		builder_path = get_builder_path()
 		context.editor_link = f"/{builder_path}/page/{self.name}"
 
 		if self.dynamic_route and hasattr(frappe.local, "request"):
@@ -234,6 +234,11 @@ class BuilderPage(WebsiteGenerator):
 			local_path,
 		)
 		self.db_set("preview", public_path, commit=True, update_modified=False)
+
+
+@frappe.whitelist()
+def get_builder_path() -> str:
+	return frappe.conf.builder_path or "builder"
 
 
 def save_as_template(page_doc: BuilderPage):

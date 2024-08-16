@@ -5,10 +5,16 @@ frappe.ui.form.on("Builder Page", {
   refresh(frm) {
     // only show in developer mode
     if (frappe.boot.developer_mode || !frm.doc.is_template) {
-      frm.sidebar
-        .add_user_action(__("Open in Builder"))
-        .attr("href", `/builder/page/${frm.doc.name}`)
-        .attr("target", "_blank");
+      frappe
+        .call(
+          "builder.builder.doctype.builder_page.builder_page.get_builder_path",
+        )
+        .then((r) => {
+          frm.sidebar
+            .add_user_action(__("Open in Builder"))
+            .attr("href", `/${r.message}/page/${frm.doc.name}`)
+            .attr("target", "_blank");
+        });
     }
   },
   onload(frm) {
