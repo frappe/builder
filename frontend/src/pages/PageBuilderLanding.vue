@@ -101,7 +101,7 @@
 								{
 									group: 'Delete',
 									hideLabel: true,
-									items: [{ label: 'Delete', onClick: () => deletePage(page), icon: 'trash' }],
+									items: [{ label: 'Delete', onClick: () => store.deletePage(page), icon: 'trash' }],
 								},
 							]"
 							size="xs"
@@ -163,7 +163,7 @@
 								:options="[
 									{ label: 'Duplicate', onClick: () => duplicatePage(page), icon: 'copy' },
 									{ label: 'View in Desk', onClick: () => store.openInDesk(page), icon: 'arrow-up-right' },
-									{ label: 'Delete', onClick: () => deletePage(page), icon: 'trash' },
+									{ label: 'Delete', onClick: () => store.deletePage(page), icon: 'trash' },
 								]"
 								size="sm"
 								placement="right">
@@ -206,7 +206,6 @@ import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
 import { useStorage, watchDebounced } from "@vueuse/core";
 import { Badge, createDocumentResource, Dropdown, TabButtons } from "frappe-ui";
@@ -251,15 +250,6 @@ watchDebounced(
 	},
 	{ debounce: 300 },
 );
-
-const deletePage = async (page: BuilderPage) => {
-	const confirmed = await confirm(
-		`Are you sure you want to delete page: ${page.page_title || page.page_name}?`,
-	);
-	if (confirmed) {
-		await webPages.delete.submit(page.name);
-	}
-};
 
 const duplicatePage = async (page: BuilderPage) => {
 	const webPageResource = await createDocumentResource({

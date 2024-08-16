@@ -13,7 +13,7 @@
 			<div
 				class="sticky top-0 z-[12] flex w-full border-gray-200 bg-white px-2 text-base dark:border-zinc-800 dark:bg-zinc-900">
 				<button
-					v-for="tab of ['Properties', 'Script', 'Options'] as RightSidebarTabOption[]"
+					v-for="tab of ['Properties', 'Script'] as RightSidebarTabOption[]"
 					:key="tab"
 					class="mx-2 flex-1 p-2 py-3"
 					@click="store.rightPanelActiveTab = tab"
@@ -32,12 +32,12 @@
 				:key="store.selectedPage"
 				v-if="store.selectedPage && store.activePage"
 				:page="store.activePage" />
-			<PageOptions
+			<!-- <PageOptions
 				class="p-4"
 				v-show="store.rightPanelActiveTab === 'Options'"
 				:key="store.selectedPage"
 				v-if="store.selectedPage && store.activePage"
-				:page="store.activePage" />
+				:page="store.activePage" /> -->
 		</div>
 	</div>
 </template>
