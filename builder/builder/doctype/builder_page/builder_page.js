@@ -7,7 +7,7 @@ frappe.ui.form.on("Builder Page", {
     if (frappe.boot.developer_mode || !frm.doc.is_template) {
       frm.sidebar
         .add_user_action(__("Open in Builder"))
-        .attr("href", `/builder/page/${frm.doc.name}`)
+        .attr("href", `/${frm.doc.__onload.builder_path}/page/${frm.doc.name}`)
         .attr("target", "_blank");
     }
   },
