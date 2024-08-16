@@ -917,7 +917,6 @@ const optionsSectionProperties = [
 				label: "HTML",
 				type: "HTML",
 				autofocus: false,
-				class: "mb-5",
 				modelValue: blockController.getInnerHTML() || "",
 			};
 		},
@@ -927,7 +926,8 @@ const optionsSectionProperties = [
 				blockController.setInnerHTML(val);
 			},
 		},
-		condition: () => blockController.isHTML(),
+		condition: () =>
+			blockController.isHTML() || (blockController.getInnerHTML() && !blockController.isText()),
 	},
 ];
 

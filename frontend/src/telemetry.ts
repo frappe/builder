@@ -21,7 +21,7 @@ type PosthogSettings = {
 	posthog_identify: string;
 };
 
-const posthog = window.posthog;
+let posthog = window.posthog;
 
 createResource({
 	url: "builder.api.get_posthog_settings",
@@ -38,9 +38,10 @@ createResource({
 			capture_pageview: false,
 			capture_pageleave: false,
 			enable_heatmaps: false,
-			disable_session_recording: false,
+			disable_session_recording: true,
 			loaded: (ph: typeof posthog) => {
 				ph.identify(posthogSettings?.posthog_identify || window.location.host);
+				posthog = ph;
 				if (posthogSettings.record_session) {
 					ph.startSessionRecording();
 				}

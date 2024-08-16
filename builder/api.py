@@ -48,3 +48,13 @@ def get_posthog_settings():
 		"record_session": can_record_session,
 		"posthog_identifier": frappe.local.site,
 	}
+
+
+def check_app_permission():
+	if frappe.session.user == "Administrator":
+		return True
+
+	if frappe.has_permission("Builder Page", ptype="write"):
+		return True
+
+	return False

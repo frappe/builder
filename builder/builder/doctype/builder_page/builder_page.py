@@ -410,7 +410,7 @@ def get_style(style_obj):
 		"".join(
 			f"{camel_case_to_kebab_case(key)}: {value};"
 			for key, value in style_obj.items()
-			if value is not None and value != ""
+			if value is not None and value != "" and not key.startswith("__")
 		)
 		if style_obj
 		else ""
