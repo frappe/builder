@@ -333,6 +333,15 @@ const useStore = defineStore("store", {
 				fileName: fileDoc.file_name,
 			};
 		},
+		deletePage: async (page: BuilderPage) => {
+			const confirmed = await confirm(
+				`Are you sure you want to delete page: ${page.page_title || page.page_name}?`,
+			);
+			if (confirmed) {
+				await webPages.delete.submit(page.name);
+			}
+			toast.success("Page deleted successfully!");
+		},
 		async publishPage() {
 			await this.waitTillPageIsSaved();
 			return webPages.runDocMethod
@@ -347,6 +356,18 @@ const useStore = defineStore("store", {
 					});
 					this.activePage = await this.fetchActivePage(this.selectedPage as string);
 					this.openPageInBrowser(this.activePage as BuilderPage);
+				});
+		},
+		unpublishPage() {
+			return webPages.setValue
+				.submit({
+					name: this.selectedPage,
+					published: false,
+				})
+				.then(() => {
+					toast.success("Page unpublished");
+					this.setPage(this.selectedPage as string);
+					builderSettings.reload();
 				});
 		},
 		openPageInBrowser(page: BuilderPage) {
@@ -369,10 +390,15 @@ const useStore = defineStore("store", {
 				name: this.selectedPage,
 				draft_blocks: pageData,
 			};
-			return webPages.setValue.submit(args).finally(() => {
-				this.savingPage = false;
-				this.activeCanvas?.toggleDirty(false);
-			});
+			return webPages.setValue
+				.submit(args)
+				.then((page: BuilderPage) => {
+					this.activePage = page;
+				})
+				.finally(() => {
+					this.savingPage = false;
+					this.activeCanvas?.toggleDirty(false);
+				});
 		},
 		setPageData(page?: BuilderPage) {
 			if (!page || !page.page_data_script) {

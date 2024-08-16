@@ -53,7 +53,7 @@
 			</ComboboxOptions>
 		</Combobox>
 		<div
-			class="absolute right-[1px] top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
+			class="absolute right-[1px] top-[3px] cursor-pointer p-1 text-gray-500 dark:text-zinc-400"
 			@click="clearValue"
 			v-show="modelValue">
 			<CrossIcon />

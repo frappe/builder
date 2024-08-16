@@ -1,7 +1,7 @@
 <template>
 	<div class="relative w-full">
 		<FormControl
-			class="relative [&>div>input]:focus-visible:ring-zinc-700 [&>div>input]:dark:border-zinc-700 [&>div>input]:dark:bg-zinc-800 [&>div>input]:dark:text-zinc-200 [&>div>input]:dark:focus:border-zinc-600 [&>div>input]:dark:focus:bg-zinc-700 [&>div>input]:dark:focus-visible:outline-0 [&>div>input]:dark:focus-visible:ring-zinc-700 [&>div>select]:text-sm [&>div>select]:text-gray-800 [&>div>select]:dark:border-zinc-700 [&>div>select]:dark:bg-zinc-800 [&>div>select]:dark:text-zinc-200 [&>div>select]:dark:focus:bg-zinc-700"
+			class="relative [&>div>input]:focus-visible:ring-zinc-700 [&>div>input]:dark:border-zinc-700 [&>div>input]:dark:bg-zinc-800 [&>div>input]:dark:text-zinc-200 [&>div>input]:dark:focus:border-zinc-600 [&>div>input]:dark:focus:bg-zinc-700 [&>div>input]:dark:focus-visible:outline-0 [&>div>input]:dark:focus-visible:ring-zinc-700 [&>div>select]:text-sm [&>div>select]:text-gray-800 [&>div>select]:dark:border-zinc-700 [&>div>select]:dark:bg-zinc-800 [&>div>select]:dark:text-zinc-200 [&>div>select]:dark:focus:bg-zinc-700 [&>label]:text-sm [&>label]:text-gray-700 [&>label]:dark:text-zinc-200"
 			:type="type"
 			:class="{
 				'text-sm [&>div>input]:pr-5': !['select', 'checkbox'].includes(type),
@@ -20,7 +20,7 @@
 			v-bind="attrs"
 			:modelValue="data"></FormControl>
 		<div
-			class="absolute right-[1px] top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
+			class="absolute bottom-[3px] right-[1px] cursor-pointer p-1 text-gray-500 dark:text-zinc-400"
 			@click="clearValue"
 			v-if="!['select', 'checkbox'].includes(type) && !hideClearButton"
 			v-show="data">
