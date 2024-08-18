@@ -114,7 +114,7 @@
 				</button>
 			</UseDark> -->
 			<router-link :to="{ name: 'settings' }" title="Settings">
-				<FeatherIcon name="settings" class="h-4 w-4 cursor-pointer text-gray-700 dark:text-gray-400" />
+				<FeatherIcon name="settings" class="h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
 			</router-link>
 			<router-link
 				v-if="store.selectedPage"
