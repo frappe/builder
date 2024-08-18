@@ -370,6 +370,21 @@ const useStore = defineStore("store", {
 					builderSettings.reload();
 				});
 		},
+		updateActivePage(key: keyof BuilderPage, value: any) {
+			if (!this.activePage) {
+				return;
+			}
+			return webPages.setValue
+				.submit({
+					name: this.activePage.name as string,
+					[key]: value,
+				})
+				.then(() => {
+					if (this.activePage) {
+						this.activePage[key] = value;
+					}
+				});
+		},
 		openPageInBrowser(page: BuilderPage) {
 			let route = page.route;
 			if (page.dynamic_route && this.pageData) {
