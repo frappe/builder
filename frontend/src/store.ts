@@ -24,6 +24,7 @@ import {
 	getCopyWithoutParent,
 } from "./utils/helpers";
 import RealTimeHandler from "./utils/realtimeHandler";
+
 const useStore = defineStore("store", {
 	state: () => ({
 		editableBlock: <Block | null>null,
@@ -111,6 +112,10 @@ const useStore = defineStore("store", {
 			}
 
 			const page = await this.fetchActivePage(pageName);
+			if (!page) {
+				toast.error("Page not found");
+				return;
+			}
 			this.activePage = page;
 
 			const blocks = JSON.parse(page.draft_blocks || page.blocks || "[]");
@@ -135,13 +140,25 @@ const useStore = defineStore("store", {
 				this.settingPage = false;
 			});
 		},
+		async setActivePage(pageName: string) {
+			this.selectedPage = pageName;
+			const page = await this.fetchActivePage(pageName);
+			if (!page) {
+				return;
+			}
+			this.activePage = page;
+		},
 		async fetchActivePage(pageName: string) {
 			const webPageResource = await createDocumentResource({
 				doctype: "Builder Page",
 				name: pageName,
 				auto: true,
 			});
-			await webPageResource.get.promise;
+			try {
+				await webPageResource.get.promise;
+			} catch (e) {
+				return null;
+			}
 
 			const page = webPageResource.doc as BuilderPage;
 			return page;
