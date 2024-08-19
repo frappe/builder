@@ -113,7 +113,14 @@
 						class="h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
 				</button>
 			</UseDark> -->
-			<router-link :to="{ name: 'settings' }" title="Settings">
+			<router-link
+				:to="{
+					name: 'settings',
+					params: {
+						pageId: store.selectedPage,
+					},
+				}"
+				title="Settings">
 				<FeatherIcon name="settings" class="h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
 			</router-link>
 			<router-link
@@ -123,8 +130,9 @@
 				<FeatherIcon name="play" class="h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
 			</router-link>
 			<Button
-				v-if="!store.activePage?.published"
 				variant="solid"
+				:disabled="!store.activePage?.draft_blocks"
+				iconLeft="globe"
 				@click="
 					() => {
 						publishing = true;
@@ -135,7 +143,7 @@
 				:loading="publishing">
 				{{ publishing ? "Publishing" : "Publish" }}
 			</Button>
-			<div class="flex" v-else>
+			<!-- <div class="flex" v-else>
 				<Button
 					variant="solid"
 					:disabled="!store.activePage?.draft_blocks"
@@ -151,7 +159,7 @@
 						publishing
 							? "Publishing"
 							: store.activePage?.published && store.activePage?.draft_blocks
-								? "Publish Changes"
+								? "Publish"
 								: "Publish"
 					}}
 				</Button>
@@ -169,7 +177,7 @@
 							class="!w-6 justify-start rounded-bl-none rounded-tl-none border-0 pr-0 text-xs dark:bg-zinc-800"></Button>
 					</template>
 				</Dropdown>
-			</div>
+			</div> -->
 		</div>
 	</div>
 </template>
@@ -177,7 +185,7 @@
 import { webPages } from "@/data/webPage";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { useDark, useToggle } from "@vueuse/core";
-import { Badge, Dialog, Dropdown, Tooltip } from "frappe-ui";
+import { Badge, Dialog, Tooltip } from "frappe-ui";
 import Popover from "frappe-ui/src/components/Popover.vue";
 import { computed, ref } from "vue";
 import { toast } from "vue-sonner";

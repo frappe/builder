@@ -4,7 +4,9 @@
 			{
 				group: 'Builder',
 				hideLabel: true,
-				items: [{ label: 'Go to Dashboard', onClick: () => $router.push({ name: 'home' }), icon: 'list' }],
+				items: [
+					{ label: 'Back to Dashboard', onClick: () => $router.push({ name: 'home' }), icon: 'arrow-left' },
+				],
 			},
 			{
 				group: 'Builder',

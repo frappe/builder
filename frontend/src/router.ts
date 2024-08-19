@@ -77,7 +77,7 @@ const routes = [
 		component: () => import("@/pages/PagePreview.vue"),
 	},
 	{
-		path: "/settings",
+		path: "/page/:pageId/settings",
 		name: "settings",
 		beforeEnter: validateVisit,
 		component: () => import("@/pages/PageSettings.vue"),
