@@ -16,6 +16,7 @@
 		<Dialog
 			style="z-index: 40"
 			class="overscroll-none"
+			:disableOutsideClickToClose="true"
 			:options="{
 				title: currentScriptEditor == 'data' ? 'Data Script' : 'Client Script',
 				size: '7xl',
