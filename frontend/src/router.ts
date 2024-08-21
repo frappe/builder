@@ -76,12 +76,6 @@ const routes = [
 		beforeEnter: validateVisit,
 		component: () => import("@/pages/PagePreview.vue"),
 	},
-	{
-		path: "/page/:pageId/settings",
-		name: "settings",
-		beforeEnter: validateVisit,
-		component: () => import("@/pages/PageSettings.vue"),
-	},
 ];
 
 declare global {

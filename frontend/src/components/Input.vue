@@ -4,7 +4,7 @@
 			class="relative [&>div>input]:dark:border-zinc-700 [&>div>input]:dark:bg-zinc-800 [&>div>input]:dark:text-zinc-200 [&>div>input]:dark:focus:border-zinc-600 [&>div>input]:dark:focus:bg-zinc-700 [&>div>select]:pr-7 [&>div>select]:text-sm [&>div>select]:text-gray-800 [&>div>select]:dark:border-zinc-700 [&>div>select]:dark:bg-zinc-800 [&>div>select]:dark:text-zinc-200 [&>div>select]:dark:focus:bg-zinc-700 [&>label]:text-sm [&>label]:text-gray-700 [&>label]:dark:text-zinc-200 [&>textarea]:focus-visible:ring-zinc-700 [&>textarea]:dark:border-zinc-700 [&>textarea]:dark:bg-zinc-800 [&>textarea]:dark:text-zinc-200 [&>textarea]:dark:focus:border-zinc-600 [&>textarea]:dark:focus:bg-zinc-700"
 			:type="type"
 			:class="{
-				'text-sm [&>div>input]:pr-5': !['select', 'checkbox'].includes(type),
+				'text-sm [&>div>input]:pr-5': !['select', 'checkbox'].includes(type) && !hideClearButton,
 			}"
 			@change="
 				($event: Event) => {

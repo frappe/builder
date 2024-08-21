@@ -59,7 +59,7 @@
 					title: 'Get Started',
 					size: '4xl',
 				}"
-				v-model="showDialog">
+				v-model="showInfoDialog">
 				<template #body-content>
 					<iframe
 						class="h-[60vh] w-full rounded-sm"
@@ -87,7 +87,6 @@
 					</Tooltip>
 				</div>
 			</div>
-
 			<Badge
 				:variant="'subtle'"
 				theme="gray"
@@ -100,20 +99,7 @@
 			<span class="text-sm dark:text-zinc-300" v-if="store.savingPage && store.activePage?.is_template">
 				Saving template
 			</span>
-			<!-- <button @click="showDialog = true">
-				<FeatherIcon
-					name="info"
-					class="mr-4 h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
-			</button> -->
-			<!-- <UseDark v-slot="{ isDark, toggleDark }">
-				<button @click="transitionTheme(toggleDark)">
-					<FeatherIcon
-						title="Toggle Theme"
-						:name="isDark ? 'moon' : 'sun'"
-						class="h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
-				</button>
-			</UseDark> -->
-			<router-link
+			<!-- <router-link
 				:to="{
 					name: 'settings',
 					params: {
@@ -122,7 +108,24 @@
 				}"
 				title="Settings">
 				<FeatherIcon name="settings" class="h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
-			</router-link>
+			</router-link> -->
+			<FeatherIcon
+				@click="showSettingsDialog = true"
+				name="settings"
+				class="h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
+			<Dialog
+				v-model="showSettingsDialog"
+				style="z-index: 40"
+				:disableOutsideClickToClose="true"
+				:options="{
+					title: 'Settings',
+					size: '6xl',
+				}">
+				<template #body>
+					<Settings @close="showSettingsDialog = false"></Settings>
+				</template>
+			</Dialog>
+
 			<router-link
 				v-if="store.selectedPage"
 				:to="{ name: 'preview', params: { pageId: store.selectedPage } }"
@@ -192,13 +195,15 @@ import { toast } from "vue-sonner";
 import useStore from "../store";
 import MainMenu from "./MainMenu.vue";
 import PageOptions from "./PageOptions.vue";
+import Settings from "./Settings.vue";
 
 const isDark = useDark();
 const toggleDark = useToggle(isDark);
 
 const store = useStore();
 const publishing = ref(false);
-const showDialog = ref(false);
+const showInfoDialog = ref(false);
+const showSettingsDialog = ref(false);
 const toolbar = ref(null);
 
 const is_developer_mode = window.is_developer_mode;
