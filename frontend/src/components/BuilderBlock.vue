@@ -275,10 +275,10 @@ const handleMouseLeave = (e: MouseEvent) => {
 };
 
 const showBlock = computed(() => {
-	const data = props.block.getVisibilityCondition()
-		? getDataForKey(props.data, props.block.getVisibilityCondition() as string)
-		: true;
-	return data;
+	// const data = props.block.getVisibilityCondition()
+	// 	? getDataForKey(props.data, props.block.getVisibilityCondition() as string)
+	// 	: true;
+	return true;
 });
 
 if (!props.preview) {
