@@ -840,20 +840,6 @@ const optionsSectionProperties = [
 		component: InlineInput,
 		getProps: () => {
 			return {
-				label: "Condition",
-				modelValue: blockController.getKeyValue("visibilityCondition"),
-			};
-		},
-		searchKeyWords:
-			"Condition, Visibility, VisibilityCondition, Visibility Condition, show, hide, display, hideIf, showIf",
-		events: {
-			"update:modelValue": (val: string) => blockController.setKeyValue("visibilityCondition", val),
-		},
-	},
-	{
-		component: InlineInput,
-		getProps: () => {
-			return {
 				label: "Overflow X",
 				type: "select",
 				options: ["auto", "visible", "hidden", "scroll"],
@@ -928,6 +914,22 @@ const optionsSectionProperties = [
 		},
 		condition: () =>
 			blockController.isHTML() || (blockController.getInnerHTML() && !blockController.isText()),
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Condition",
+				modelValue: blockController.getKeyValue("visibilityCondition"),
+				description:
+					"Visibility condition to show/hide the block based on a condition. Pass a boolean variable created in your Data Script.<br><b>Note:</b> This is only evaluated in the preview mode.",
+			};
+		},
+		searchKeyWords:
+			"Condition, Visibility, VisibilityCondition, Visibility Condition, show, hide, display, hideIf, showIf",
+		events: {
+			"update:modelValue": (val: string) => blockController.setKeyValue("visibilityCondition", val),
+		},
 	},
 ];
 
