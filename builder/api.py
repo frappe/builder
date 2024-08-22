@@ -36,9 +36,11 @@ def get_blocks(prompt):
 def get_posthog_settings():
 	can_record_session = False
 	if start_time := frappe.db.get_default("session_recording_start"):
-		start_datetime = frappe.utils.data.str_to_datetime(start_time)
-		now = frappe.utils.data.now_datetime()
-		can_record_session = frappe.utils.data.get_minute_diff(now, start_datetime) < 120
+		time_difference = (
+			frappe.utils.now_datetime() - frappe.utils.get_datetime(start_time)
+		).total_seconds()
+		if time_difference < 86400:  # 1 day
+			can_record_session = True
 
 	return {
 		"posthog_project_id": frappe.conf.get(POSTHOG_PROJECT_FIELD),
