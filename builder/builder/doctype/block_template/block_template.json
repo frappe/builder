@@ -45,7 +45,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-07-10 17:25:15.700195",
+ "modified": "2024-08-22 21:48:45.695550",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Block Template",
@@ -61,6 +61,18 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Website Manager",
    "share": 1,
    "write": 1
   }
