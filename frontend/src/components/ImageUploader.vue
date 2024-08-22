@@ -8,8 +8,8 @@
 			}
 		">
 		<template v-slot="{ file, progress, uploading, openFileSelector }">
-			<div class="flex items-center space-x-2">
-				<Input v-model="url" readonly="true" :hideClearButton="true"></Input>
+			<div class="flex items-end space-x-2">
+				<Input v-model="url" readonly="true" :hideClearButton="true" :label="label"></Input>
 				<Button @click="openFileSelector">
 					{{ uploading ? `Uploading ${progress}%` : image_url ? "Change" : "Upload" }}
 				</Button>
@@ -27,6 +27,10 @@ const prop = defineProps({
 	image_type: {
 		type: String,
 		default: "image/*",
+	},
+	label: {
+		type: String,
+		default: "",
 	},
 });
 const emit = defineEmits(["upload", "remove"]);
