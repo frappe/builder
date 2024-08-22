@@ -68,6 +68,11 @@
 				v-if="displayType === 'grid'"
 				v-for="page in webPages.data"
 				:key="page.page_name"
+				@click="
+					() => {
+						posthog.capture('builder_page_opened', { page_name: page.page_name });
+					}
+				"
 				:to="{ name: 'builder', params: { pageId: page.page_name } }">
 				<div
 					class="group relative mr-2 w-full overflow-hidden rounded-md shadow hover:cursor-pointer dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
@@ -121,6 +126,11 @@
 				v-if="displayType === 'list'"
 				:key="page.page_name"
 				:to="{ name: 'builder', params: { pageId: page.page_name } }"
+				@click="
+					() => {
+						posthog.capture('builder_page_opened', { page_name: page.page_name });
+					}
+				"
 				class="col-span-full h-fit w-full flex-grow">
 				<div
 					class="group relative mr-2 flex w-full overflow-hidden rounded-md shadow hover:cursor-pointer dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
@@ -220,7 +230,7 @@ const typeFilter = ref("");
 const showDialog = ref(false);
 
 onActivated(() => {
-	posthog.capture("builder_landing_page_viewed");
+	posthog.capture("builder_landing_page_visited");
 });
 
 watchDebounced(
