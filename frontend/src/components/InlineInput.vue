@@ -6,6 +6,19 @@
 			}"
 			@mousedown="handleMouseDown">
 			{{ label }}
+
+			<Popover trigger="hover" v-if="description" placement="top">
+				<template #target>
+					<FeatherIcon name="info" class="ml-1 h-[12px] w-[12px] text-gray-500" />
+				</template>
+				<template #body>
+					<slot name="body">
+						<div
+							class="w-fit max-w-52 rounded bg-gray-800 px-2 py-1 text-center text-xs text-white shadow-xl"
+							v-html="description"></div>
+					</slot>
+				</template>
+			</Popover>
 		</InputLabel>
 		<Input
 			:type="type"
@@ -27,6 +40,8 @@
 </template>
 <script setup lang="ts">
 import { isNumber } from "@tiptap/vue-3";
+import { Popover } from "frappe-ui";
+import FeatherIcon from "frappe-ui/src/components/FeatherIcon.vue";
 import { PropType, computed } from "vue";
 import Autocomplete from "./Autocomplete.vue";
 import Input from "./Input.vue";
@@ -41,7 +56,10 @@ const props = defineProps({
 		type: String,
 		default: "",
 	},
-	description: {},
+	description: {
+		type: String,
+		default: "",
+	},
 	type: {
 		type: String,
 		default: "text",

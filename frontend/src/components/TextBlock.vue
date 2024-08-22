@@ -195,7 +195,7 @@ const textContent = computed(() => {
 			innerHTML = getDataForKey(props.data, props.block.getDataKey("key")) || innerHTML;
 		}
 	}
-	return innerHTML;
+	return String(innerHTML ?? "");
 });
 
 const isEditable = computed(() => {
