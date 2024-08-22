@@ -1,6 +1,6 @@
 <template>
 	<div class="flex h-[80vh] overflow-hidden">
-		<div class="flex w-48 flex-col gap-5 bg-gray-50 p-4 px-3">
+		<div class="flex w-48 flex-col gap-5 bg-gray-50 p-4 px-3 dark:bg-gray-900">
 			<span class="px-2 py-1 text-xl font-semibold text-gray-900 dark:text-zinc-200">Settings</span>
 			<div class="flex flex-col" v-for="(item, index) in settingsSidebarItems" :key="index">
 				<span class="mb-2 px-3 text-base font-semibold text-gray-900 dark:text-zinc-200">
@@ -10,7 +10,7 @@
 					@click="() => selectItem(link.value)"
 					class="cursor-pointer rounded p-2 px-3 text-base text-gray-800 dark:text-zinc-500"
 					:class="{
-						'bg-white text-gray-800 shadow-sm dark:bg-zinc-900 dark:!text-zinc-300':
+						'bg-white text-gray-800 shadow-sm dark:bg-zinc-800 dark:!text-zinc-300':
 							selectedItem === link.value,
 					}"
 					v-for="link in item.items">
