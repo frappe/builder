@@ -14,24 +14,11 @@
 						:modelValue="store.activePage?.route"
 						@update:modelValue="(val) => store.updateActivePage('route', val)" />
 				</div>
-				<Input
-					type="textarea"
-					label="Page Description"
-					:modelValue="store.activePage?.meta_description"
-					:hideClearButton="true"
-					@update:modelValue="(val) => store.updateActivePage('meta_description', val)" />
 				<div class="flex justify-between gap-5">
 					<div class="flex flex-1 gap-4">
 						<div class="flex flex-1 flex-col gap-2">
-							<InputLabel>Meta Image</InputLabel>
 							<ImageUploader
-								:image_url="store.activePage?.meta_image"
-								@upload="(url: string) => store.updateActivePage('meta_image', url)"
-								@remove="() => store.updateActivePage('meta_image', '')" />
-						</div>
-						<div class="flex flex-1 flex-col gap-2">
-							<InputLabel>Favicon</InputLabel>
-							<ImageUploader
+								label="Favicon"
 								image_type="image/ico"
 								:image_url="store.activePage?.favicon"
 								@upload="(url: string) => store.updateActivePage('favicon', url)"

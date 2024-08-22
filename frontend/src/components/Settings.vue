@@ -20,9 +20,7 @@
 		</div>
 		<div class="flex h-full flex-1 flex-col gap-5 bg-white p-5 dark:bg-zinc-900">
 			<div class="flex justify-between">
-				<span class="text-xl font-semibold text-gray-800 dark:text-zinc-200">
-					{{ selectedItemDoc?.title }}
-				</span>
+				<h2 class="text-xl font-semibold leading-none">{{ selectedItemDoc?.title }}</h2>
 				<Button icon="x" @click="$emit('close')"></Button>
 			</div>
 			<component :is="(selectedItemDoc as SidebarItem).component" />
