@@ -1,9 +1,9 @@
 import frappe
-
-no_cache = 1
 from frappe.utils.telemetry import capture
 
 from builder.hooks import builder_path
+
+no_cache = 1
 
 
 def get_context(context):
