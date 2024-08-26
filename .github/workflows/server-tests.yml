@@ -118,6 +118,7 @@ jobs:
       - name: Upload coverage data
         uses: codecov/codecov-action@v3
         with:
-          name: coverage-unittests
+          name: Server
+          token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
           verbose: true
