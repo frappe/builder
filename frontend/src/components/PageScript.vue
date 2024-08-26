@@ -34,9 +34,10 @@
 						height="65vh"
 						@save="savePageDataScript"
 						:showSaveButton="true"
-						description='Can be used to fetch dynamic data from server and pass it to the page.
-						<br />
-						eg. data.events = frappe.get_list("Event")'
+						description='Use Data Script to provide dynamic data to your web page.<br>
+						<b>Example:</b> data.events = frappe.get_list("Event")<br><br>
+						For more details on how to write data script, refer to <b><a class="underline" href="https://docs.frappe.io/builder/data-script" target="_blank">this documentation</a></b>.
+						'
 						:show-line-numbers="true"></CodeEditor>
 				</div>
 			</template>
