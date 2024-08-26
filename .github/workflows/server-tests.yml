@@ -1,5 +1,5 @@
 
-name: CI
+name: Server Tests
 
 on:
   push:
@@ -83,7 +83,7 @@ jobs:
         working-directory: /home/runner/frappe-bench
         run: |
           bench get-app builder $GITHUB_WORKSPACE
-          bench setup requirements
+          bench setup requirements --dev
           bench new-site --db-root-password root --admin-password admin test_site
           bench --site test_site install-app builder
           bench build
@@ -97,6 +97,12 @@ jobs:
           bench --site test_site run-tests --app builder --coverage
         env:
           TYPE: server
+
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-${{ matrix.container }}
+          path: /home/runner/frappe-bench/sites/coverage.xml
 
   coverage:
     name: Coverage Wrap Up
