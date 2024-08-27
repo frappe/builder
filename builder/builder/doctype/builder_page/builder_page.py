@@ -88,19 +88,25 @@ class BuilderPage(WebsiteGenerator):
 			)
 
 	def on_update(self):
-		if self.has_value_changed("dynamic_route") or self.has_value_changed("route"):
-			get_web_pages_with_dynamic_routes.clear_cache()
-			find_page_with_path.clear_cache()
+		if (
+			self.has_value_changed("dynamic_route")
+			or self.has_value_changed("route")
+			or self.has_value_changed("published")
+		):
+			self.clear_route_cache()
 
 		if self.has_value_changed("published") and not self.published:
-			find_page_with_path.clear_cache()
-			clear_cache(self.route)
 			# if this is homepage then clear homepage from builder settings
 			if frappe.get_cached_value("Builder Settings", None, "home_page") == self.route:
 				frappe.db.set_value("Builder Settings", None, "home_page", None)
 
 		if frappe.conf.developer_mode and self.is_template:
 			save_as_template(self)
+
+	def clear_route_cache(self):
+		get_web_pages_with_dynamic_routes.clear_cache()
+		find_page_with_path.clear_cache()
+		clear_cache(self.route)
 
 	def on_trash(self):
 		if self.is_template and frappe.conf.developer_mode:
@@ -140,6 +146,11 @@ class BuilderPage(WebsiteGenerator):
 		)
 
 		return self.route
+
+	@frappe.whitelist()
+	def unpublish(self, **kwargs):
+		self.published = 0
+		self.save()
 
 	def get_context(self, context):
 		# delete default favicon
