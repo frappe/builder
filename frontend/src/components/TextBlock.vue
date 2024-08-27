@@ -27,7 +27,7 @@
 				},
 			}"
 			v-if="editor"
-			class="z-50 rounded-md border border-gray-300 bg-white p-1 text-lg">
+			class="z-50 rounded-md border border-gray-300 bg-white p-1 text-lg shadow-2xl">
 			<div v-if="settingLink" class="flex">
 				<Input
 					v-model="textLink"
