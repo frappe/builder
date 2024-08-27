@@ -1,10 +1,11 @@
 
-name: CI
+name: Server Tests
 
 on:
   push:
     branches:
       - master
+      - develop
   pull_request:
 
 jobs:
@@ -83,7 +84,7 @@ jobs:
         working-directory: /home/runner/frappe-bench
         run: |
           bench get-app builder $GITHUB_WORKSPACE
-          bench setup requirements
+          bench setup requirements --dev
           bench new-site --db-root-password root --admin-password admin test_site
           bench --site test_site install-app builder
           bench build
@@ -94,6 +95,31 @@ jobs:
         working-directory: /home/runner/frappe-bench
         run: |
           bench --site test_site set-config allow_tests true
-          bench --site test_site run-tests --app builder
+          bench --site test_site run-tests --app builder --coverage
         env:
           TYPE: server
+
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-${{ matrix.container }}
+          path: /home/runner/frappe-bench/sites/coverage.xml
+
+  coverage:
+    name: Coverage Wrap Up
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone
+        uses: actions/checkout@v3
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Upload coverage data
+        uses: codecov/codecov-action@v3
+        with:
+          name: Server
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          verbose: true

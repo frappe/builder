@@ -648,27 +648,27 @@ const toggleBlockSelection = (_block: Block) => {
 	}
 };
 
-const selectBlockRange = (_block: Block) => {
+const selectBlockRange = (newSelectedBlock: Block) => {
 	const lastSelectedBlockId = selectedBlockIds.value[selectedBlockIds.value.length - 1];
 	const lastSelectedBlock = findBlock(lastSelectedBlockId);
-	if (!lastSelectedBlock) {
-		_block.selectBlock();
+	const lastSelectedBlockParent = lastSelectedBlock?.parentBlock;
+	if (!lastSelectedBlock || !lastSelectedBlockParent) {
+		newSelectedBlock.selectBlock();
 		return;
 	}
 	const lastSelectedBlockIndex = lastSelectedBlock.parentBlock?.children.indexOf(lastSelectedBlock);
-	const _blockIndex = _block.parentBlock?.children.indexOf(_block);
-	if (lastSelectedBlockIndex === undefined || _blockIndex === undefined) {
+	const newSelectedBlockIndex = newSelectedBlock.parentBlock?.children.indexOf(newSelectedBlock);
+	const newSelectedBlockParent = newSelectedBlock.parentBlock;
+	if (lastSelectedBlockIndex === undefined || newSelectedBlockIndex === undefined) {
 		return;
 	}
-	const start = Math.min(lastSelectedBlockIndex, _blockIndex);
-	const end = Math.max(lastSelectedBlockIndex, _blockIndex);
-	const parentBlock = lastSelectedBlock.parentBlock;
-	if (!parentBlock) {
-		return;
+	const start = Math.min(lastSelectedBlockIndex, newSelectedBlockIndex);
+	const end = Math.max(lastSelectedBlockIndex, newSelectedBlockIndex);
+	if (lastSelectedBlockParent === newSelectedBlockParent) {
+		const blocks = lastSelectedBlockParent.children.slice(start, end + 1);
+		selectedBlockIds.value = selectedBlockIds.value.concat(...blocks.map((b) => b.blockId));
+		selectedBlockIds.value = Array.from(new Set(selectedBlockIds.value));
 	}
-	const blocks = parentBlock.children.slice(start, end + 1);
-	selectedBlockIds.value = selectedBlockIds.value.concat(...blocks.map((b) => b.blockId));
-	selectedBlockIds.value = Array.from(new Set(selectedBlockIds.value));
 };
 
 const clearSelection = () => {
