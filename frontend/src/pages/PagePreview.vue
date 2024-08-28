@@ -32,7 +32,7 @@
 						store.publishPage().finally(() => (publishing = false));
 					}
 				"
-				class="absolute right-0 border-0 text-xs dark:bg-zinc-800"
+				class="absolute right-5 border-0 text-xs dark:bg-zinc-800"
 				:loading="publishing">
 				{{ publishing ? "Publishing" : "Publish" }}
 			</Button>
@@ -49,8 +49,9 @@
 				:minDimension="minWidth"
 				:maxDimension="maxWidth"
 				:resizeSensitivity="2"
+				ref="leftPanelRef"
 				@resize="(val) => (width = val)">
-				<div class="resize-handler-left h-full w-2 rounded-sm bg-gray-200 dark:bg-zinc-600"></div>
+				<div class="resize-handler-left h-full w-2 rounded-sm bg-gray-300 dark:bg-zinc-600"></div>
 			</PanelResizer>
 			<iframe
 				:src="previewRoute"
@@ -59,9 +60,9 @@
 				class="flex-1 rounded-sm"
 				ref="previewWindow"></iframe>
 			<div
-				v-if="loading"
-				class="absolute flex h-full w-full flex-1 items-center justify-center bg-white bg-opacity-50 text-gray-600">
-				Loading...
+				v-if="loading || resizing"
+				class="absolute flex h-full w-full flex-1 items-center justify-center bg-gray-700 bg-zinc-700 bg-opacity-80 text-xl font-semibold text-gray-400 transition-all dark:bg-opacity-80 dark:text-zinc-400">
+				{{ loading ? "Loading..." : "Resizing..." }}
 			</div>
 			<PanelResizer
 				class="mr-[-8px]"
@@ -70,8 +71,9 @@
 				:minDimension="minWidth"
 				:maxDimension="maxWidth"
 				:resizeSensitivity="2"
+				ref="rightPanelRef"
 				@resize="(val) => (width = val)">
-				<div class="resize-handler-left h-full w-2 rounded-sm bg-gray-200 dark:bg-zinc-600"></div>
+				<div class="resize-handler-left h-full w-2 rounded-sm bg-gray-300 dark:bg-zinc-600"></div>
 			</PanelResizer>
 		</div>
 	</div>
@@ -111,6 +113,11 @@ const deviceBreakpoints = [
 		width: 420,
 	},
 ];
+
+const leftPanelRef = ref<InstanceType<typeof PanelResizer> | null>(null);
+const rightPanelRef = ref<InstanceType<typeof PanelResizer> | null>(null);
+
+const resizing = computed(() => leftPanelRef.value?.dragActive || rightPanelRef.value?.dragActive);
 
 const activeBreakpoint = computed(() => {
 	const tabletBreakpoint = deviceBreakpoints.find((b) => b.device === "tablet");
