@@ -720,7 +720,7 @@ const optionsSectionProperties = [
 			click: () => {
 				const block = blockController.getSelectedBlocks()[0];
 				const convertToWebP = createResource({
-					url: "/api/method/builder.builder.doctype.builder_page.builder_page.convert_to_webp",
+					url: "/api/method/builder.api.convert_to_webp",
 					params: {
 						image_url: block.getAttribute("src"),
 					},
