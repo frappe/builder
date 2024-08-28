@@ -46,6 +46,8 @@ const emit = defineEmits({
 
 const dragActive = ref(false);
 
+defineExpose({ dragActive });
+
 function resize(ev: MouseEvent) {
 	const startX = ev.clientX;
 	const startY = ev.clientY;
