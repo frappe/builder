@@ -2,24 +2,16 @@
 # For license information, please see license.txt
 
 import os
-import re
 import shutil
-from io import BytesIO
-from urllib.parse import unquote
 
 import bs4 as bs
 import frappe
 import frappe.utils
-import requests
-from frappe.core.doctype.file.file import get_local_image
-from frappe.core.doctype.file.utils import delete_file
-from frappe.model.document import Document
 from frappe.modules import scrub
 from frappe.modules.export_file import export_to_files
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
 from frappe.utils.safe_exec import is_safe_exec_enabled, safe_exec
-from frappe.utils.telemetry import capture
 from frappe.website.page_renderers.document_page import DocumentPage
 from frappe.website.path_resolver import evaluate_dynamic_routes
 from frappe.website.path_resolver import resolve_path as original_resolve_path
@@ -27,12 +19,19 @@ from frappe.website.serve import get_response_content
 from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
 from jinja2.exceptions import TemplateSyntaxError
-from PIL import Image
 from werkzeug.routing import Rule
 
 from builder.hooks import builder_path
 from builder.html_preview_image import generate_preview
-from builder.utils import safer_exec
+from builder.utils import (
+	camel_case_to_kebab_case,
+	copy_img_to_asset_folder,
+	escape_single_quotes,
+	execute_script,
+	get_builder_page_preview_paths,
+	get_template_assets_folder_path,
+	is_component_used,
+)
 
 MOBILE_BREAKPOINT = 576
 TABLET_BREAKPOINT = 768
@@ -235,10 +234,7 @@ class BuilderPage(WebsiteGenerator):
 		page_data = frappe._dict()
 		if self.page_data_script:
 			_locals = dict(data=frappe._dict())
-			if is_safe_exec_enabled():
-				safe_exec(self.page_data_script, None, _locals, script_filename=self.name)
-			else:
-				safer_exec(self.page_data_script, None, _locals, script_filename=self.name)
+			execute_script(self.page_data_script, _locals, self.name)
 			page_data.update(_locals["data"])
 		return page_data
 
@@ -378,7 +374,7 @@ def get_block_html(blocks):
 				)
 				classes.insert(0, style_class)
 
-			tag.attrs["class"] = get_class(classes)
+			tag.attrs["class"] = " ".join(classes)
 
 			innerContent = block.get("innerHTML")
 			if innerContent:
@@ -430,19 +426,6 @@ def get_style(style_obj):
 		if style_obj
 		else ""
 	)
-
-
-def get_class(class_list):
-	return " ".join(class_list)
-
-
-def camel_case_to_kebab_case(text, remove_spaces=False):
-	if not text:
-		return ""
-	text = re.sub(r"(?<!^)(?=[A-Z])", "-", text).lower()
-	if remove_spaces:
-		text = text.replace(" ", "")
-	return text
 
 
 def append_style(style_obj, style_tag, style_class, device="desktop"):
@@ -574,77 +557,6 @@ def set_dynamic_content_placeholder(block, data_key=False):
 			block[_property] = f"{{{{ {key} or '{escape_single_quotes(block.get(_property, ''))}' }}}}"
 
 
-def get_style_file_path():
-	# TODO: Redo this, currently it loads the first matching file
-	# from frappe.utils import get_url
-	# return get_url("/files/tailwind.css")
-	import glob
-
-	folder_path = "./assets/builder/frontend/assets/"
-	file_pattern = "index.*.css"
-	matching_files = glob.glob(f"{folder_path}/{file_pattern}")
-	if matching_files:
-		return frappe.utils.get_url(matching_files[0].lstrip("."))
-
-
-def escape_single_quotes(text):
-	return (text or "").replace("'", "\\'")
-
-
-# def generate_tailwind_css_file_from_html(html):
-# 	# execute tailwindcss cli command to generate css file
-# 	import subprocess
-# 	import os
-# 	import json
-# 	import shutil
-# 	from frappe.utils import get_site_path, get_site_base_path
-
-# 	# create temp folder
-# 	temp_folder = os.path.join(get_site_base_path(), "temp")
-# 	if os.path.exists(temp_folder):
-# 		shutil.rmtree(temp_folder)
-# 	os.mkdir(temp_folder)
-
-# 	# create temp html file
-# 	temp_html_file_path = os.path.join(temp_folder, "temp.html")
-# 	with open(temp_html_file_path, "w") as f:
-# 		f.write(html)
-
-
-# 	# place tailwind.css file in public folder
-# 	tailwind_css_file_path = os.path.join(get_site_path(), "public", "files", "tailwind.css")
-
-# 	# create temp config file
-# 	temp_config_file_path = os.path.join(temp_folder, "tailwind.config.js")
-# 	with open(temp_config_file_path, "w") as f:
-# 		f.write("module.exports = {content: ['./temp.html']}")
-
-# 	# run tailwindcss cli command in production mode
-# 	subprocess.run(["npx", "tailwindcss", "-o", tailwind_css_file_path, "--config", temp_config_file_path, "--minify"])
-
-
-@frappe.whitelist()
-def get_page_preview_html(page: str, **kwarg) -> str:
-	# to load preview without publishing
-	frappe.form_dict.update(kwarg)
-	renderer = BuilderPageRenderer(path="")
-	renderer.docname = page
-	renderer.doctype = "Builder Page"
-	frappe.flags.show_preview = True
-	frappe.local.no_cache = 1
-	renderer.init_context()
-	response = renderer.render()
-	page = frappe.get_cached_doc("Builder Page", page)
-	frappe.enqueue_doc(
-		page.doctype,
-		page.name,
-		"generate_page_preview_image",
-		html=str(response.data, "utf-8"),
-		queue="short",
-	)
-	return response
-
-
 @redis_cache(ttl=60 * 60)
 def find_page_with_path(route):
 	try:
@@ -673,167 +585,3 @@ def resolve_path(path):
 		return path
 
 	return original_resolve_path(path)
-
-
-def is_component_used(blocks, component_id):
-	blocks = frappe.parse_json(blocks)
-	if not isinstance(blocks, list):
-		blocks = [blocks]
-
-	for block in blocks:
-		if not block:
-			continue
-		if block.get("extendedFromComponent") == component_id:
-			return True
-		elif block.get("children"):
-			return is_component_used(block.get("children"), component_id)
-
-	return False
-
-
-def copy_img_to_asset_folder(block, self):
-	if block.get("element") == "img":
-		src = block.get("attributes", {}).get("src")
-		site_url = frappe.utils.get_url()
-
-		if src and (src.startswith(f"{site_url}/files") or src.startswith("/files")):
-			# find file doc
-			if src.startswith(f"{site_url}/files"):
-				src = src.split(f"{site_url}")[1]
-			# url decode
-			src = unquote(src)
-			print(f"src: {src}")
-			files = frappe.get_all("File", filters={"file_url": src}, fields=["name"])
-			print(f"files: {files}")
-			if files:
-				_file = frappe.get_doc("File", files[0].name)
-				# copy physical file to new location
-				assets_folder_path = get_template_assets_folder_path(self)
-				shutil.copy(_file.get_full_path(), assets_folder_path)
-			block["attributes"]["src"] = f"/builder_assets/{self.name}/{src.split('/')[-1]}"
-	for child in block.get("children", []):
-		copy_img_to_asset_folder(child, self)
-
-
-def get_builder_page_preview_paths(page_doc):
-	public_path, public_path = None, None
-	if page_doc.is_template:
-		local_path = os.path.join(get_template_assets_folder_path(page_doc), "preview.jpeg")
-		public_path = f"/builder_assets/{page_doc.name}/preview.jpeg"
-	else:
-		file_name = f"{page_doc.name}-preview.jpeg"
-		local_path = os.path.join(frappe.local.site_path, "public", "files", file_name)
-		random_hash = frappe.generate_hash(length=5)
-		public_path = f"/files/{file_name}?v={random_hash}"
-	return public_path, local_path
-
-
-def get_template_assets_folder_path(page_doc):
-	path = os.path.join(frappe.get_app_path("builder"), "www", "builder_assets", page_doc.name)
-	if not os.path.exists(path):
-		os.makedirs(path)
-	return path
-
-
-@frappe.whitelist()
-def upload_builder_asset():
-	from frappe.handler import upload_file
-
-	image_file = upload_file()
-	if image_file.file_url.endswith((".png", ".jpeg", ".jpg")) and frappe.get_cached_value(
-		"Builder Settings", None, "auto_convert_images_to_webp"
-	):
-		convert_to_webp(file_doc=image_file)
-	return image_file
-
-
-@frappe.whitelist()
-def convert_to_webp(image_url: str | None = None, file_doc: Document | None = None) -> str:
-	"""BETA: Convert image to webp format"""
-
-	CONVERTIBLE_IMAGE_EXTENSIONS = ["png", "jpeg", "jpg"]
-
-	def can_convert_image(extn):
-		return extn.lower() in CONVERTIBLE_IMAGE_EXTENSIONS
-
-	def get_extension(filename):
-		return filename.split(".")[-1].lower()
-
-	def convert_and_save_image(image, path):
-		image.save(path, "WEBP")
-		return path
-
-	def update_file_doc_with_webp(file_doc, image, extn):
-		webp_path = file_doc.get_full_path().replace(extn, "webp")
-		convert_and_save_image(image, webp_path)
-		delete_file(file_doc.get_full_path())
-		file_doc.file_url = f"{file_doc.file_url.replace(extn, 'webp')}"
-		file_doc.save()
-		return file_doc.file_url
-
-	def create_new_webp_file_doc(file_url, image, extn):
-		files = frappe.get_all("File", filters={"file_url": file_url}, fields=["name"], limit=1)
-		if files:
-			_file = frappe.get_doc("File", files[0].name)
-			webp_path = _file.get_full_path().replace(extn, "webp")
-			convert_and_save_image(image, webp_path)
-			new_file = frappe.copy_doc(_file)
-			new_file.file_name = f"{_file.file_name.replace(extn, 'webp')}"
-			new_file.file_url = f"{_file.file_url.replace(extn, 'webp')}"
-			new_file.save()
-			return new_file.file_url
-		return file_url
-
-	def handle_image_from_url(image_url):
-		image_url = unquote(image_url)
-		response = requests.get(image_url)
-		image = Image.open(BytesIO(response.content))
-		filename = image_url.split("/")[-1]
-		extn = get_extension(filename)
-		if can_convert_image(extn):
-			_file = frappe.get_doc(
-				{
-					"doctype": "File",
-					"file_name": f"{filename.replace(extn, 'webp')}",
-					"file_url": f"/files/{filename.replace(extn, 'webp')}",
-				}
-			)
-			webp_path = _file.get_full_path()
-			convert_and_save_image(image, webp_path)
-			_file.save()
-			return _file.file_url
-		return image_url
-
-	if not image_url and not file_doc:
-		return ""
-
-	if file_doc:
-		if file_doc.file_url.startswith("/files"):
-			image, filename, extn = get_local_image(file_doc.file_url)
-			if can_convert_image(extn):
-				return update_file_doc_with_webp(file_doc, image, extn)
-		return file_doc.file_url
-
-	if image_url.startswith("/files"):
-		image, filename, extn = get_local_image(image_url)
-		if can_convert_image(extn):
-			return create_new_webp_file_doc(image_url, image, extn)
-		return image_url
-
-	if image_url.startswith("/builder_assets"):
-		image_path = os.path.abspath(frappe.get_app_path("builder", "www", image_url.lstrip("/")))
-		image_path = image_path.replace("_", "-")
-		image_path = image_path.replace("/builder-assets", "/builder_assets")
-
-		image = Image.open(image_path)
-		extn = get_extension(image_path)
-		if can_convert_image(extn):
-			webp_path = image_path.replace(extn, "webp")
-			convert_and_save_image(image, webp_path)
-			return image_url.replace(extn, "webp")
-		return image_url
-
-	if image_url.startswith("http"):
-		return handle_image_from_url(image_url)
-
-	return image_url
