@@ -56,23 +56,26 @@ class TestBuilderPage(FrappeTestCase):
 		path = get_template_assets_folder_path(page_doc)
 		self.assertEqual(path, f"{frappe.get_app_path('builder')}/www/builder_assets/mypage")
 
-	def test_execute_script(self):
-		with patch("builder.utils.is_safe_exec_enabled", return_value=False):
-			script = "data.test = frappe.get_doc('User', 'Administrator').email"
-			_locals = dict(data=frappe._dict())
-			execute_script(script, _locals, "test.py")
-			self.assertEqual(_locals["data"]["test"], "admin@example.com")
+	@patch("builder.utils.is_safe_exec_enabled", return_value=False)
+	@patch("frappe.utils.safe_exec.is_safe_exec_enabled", return_value=False)
+	def test_execute_script_with_enabled_server_script(self, *args):
+		script = "data.test = frappe.get_doc('User', 'Administrator').email"
+		_locals = dict(data=frappe._dict())
+		execute_script(script, _locals, "test.py")
+		self.assertEqual(_locals["data"]["test"], "admin@example.com")
 
-			script = "data.users = frappe.db.get_all('User')"
-			execute_script(script, _locals, "test.py")
-			self.assertTrue(_locals["data"]["users"])
+	@patch("builder.utils.is_safe_exec_enabled", return_value=True)
+	@patch("frappe.utils.safe_exec.is_safe_exec_enabled", return_value=True)
+	def test_execute_script_with_disabled_server_script(self, *args):
+		script = "data.test = frappe.get_doc('User', 'Administrator').email"
+		_locals = dict(data=frappe._dict())
+		execute_script(script, _locals, "test.py")
+		self.assertEqual(_locals["data"]["test"], "admin@example.com")
 
-			script = "data.users = frappe.db.get_all('User')"
-			execute_script(script, _locals, "test.py")
-			self.assertTrue(_locals["data"]["users"])
+		script = "data.users = frappe.db.get_all('User')"
+		execute_script(script, _locals, "test.py")
+		self.assertTrue(_locals["data"]["users"])
 
-		with patch("builder.utils.is_safe_exec_enabled", return_value=True):
-			script = "data.test = frappe.get_doc('User', 'Administrator').email"
-			_locals = dict(data=frappe._dict())
-			execute_script(script, _locals, "test.py")
-			self.assertEqual(_locals["data"]["test"], "admin@example.com")
+		script = "data.users = frappe.db.get_all('User')"
+		execute_script(script, _locals, "test.py")
+		self.assertTrue(_locals["data"]["users"])
