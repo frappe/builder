@@ -169,9 +169,7 @@ const setPreviewURL = () => {
 		page: route.params.pageId,
 		...store.routeVariables,
 	};
-	previewRoute.value = `/api/method/builder.builder.doctype.builder_page.builder_page.get_page_preview_html?${Object.entries(
-		queryParams,
-	)
+	previewRoute.value = `/api/method/builder.api.get_page_preview_html?${Object.entries(queryParams)
 		.map(([key, value]) => `${key}=${value}`)
 		.join("&")}`;
 };

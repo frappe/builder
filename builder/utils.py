@@ -1,16 +1,23 @@
+import glob
 import os
+import re
+import shutil
 import socket
+import subprocess
 from os.path import join
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 import frappe
 from frappe.modules.import_file import import_file_by_path
+from frappe.utils import get_site_base_path, get_site_path, get_url
 from frappe.utils.safe_exec import (
 	SERVER_SCRIPT_FILE_PREFIX,
 	FrappeTransformer,
 	NamespaceDict,
 	get_python_builtins,
 	get_safe_globals,
+	is_safe_exec_enabled,
+	safe_exec,
 	safe_exec_flags,
 )
 from RestrictedPython import compile_restricted
@@ -151,3 +158,118 @@ def make_records(path):
 	for fname in os.listdir(path):
 		if os.path.isdir(join(path, fname)) and fname != "__pycache__":
 			import_file_by_path(f"{path}/{fname}/{fname}.json")
+
+
+# def generate_tailwind_css_file_from_html(html):
+# 	# execute tailwindcss cli command to generate css file
+# 	# create temp folder
+# 	temp_folder = os.path.join(get_site_base_path(), "temp")
+# 	if os.path.exists(temp_folder):
+# 		shutil.rmtree(temp_folder)
+# 	os.mkdir(temp_folder)
+
+# 	# create temp html file
+# 	temp_html_file_path = os.path.join(temp_folder, "temp.html")
+# 	with open(temp_html_file_path, "w") as f:
+# 		f.write(html)
+
+# 	# place tailwind.css file in public folder
+# 	tailwind_css_file_path = os.path.join(get_site_path(), "public", "files", "tailwind.css")
+
+# 	# create temp config file
+# 	temp_config_file_path = os.path.join(temp_folder, "tailwind.config.js")
+# 	with open(temp_config_file_path, "w") as f:
+# 		f.write("module.exports = {content: ['./temp.html']}")
+
+# 	# run tailwindcss cli command in production mode
+# 	subprocess.run(
+# 		["npx", "tailwindcss", "-o", tailwind_css_file_path, "--config", temp_config_file_path, "--minify"]
+# 	)
+
+
+def copy_img_to_asset_folder(block, self):
+	if block.get("element") == "img":
+		src = block.get("attributes", {}).get("src")
+		site_url = get_url()
+
+		if src and (src.startswith(f"{site_url}/files") or src.startswith("/files")):
+			# find file doc
+			if src.startswith(f"{site_url}/files"):
+				src = src.split(f"{site_url}")[1]
+			# url decode
+			src = unquote(src)
+			print(f"src: {src}")
+			files = frappe.get_all("File", filters={"file_url": src}, fields=["name"])
+			print(f"files: {files}")
+			if files:
+				_file = frappe.get_doc("File", files[0].name)
+				# copy physical file to new location
+				assets_folder_path = get_template_assets_folder_path(self)
+				shutil.copy(_file.get_full_path(), assets_folder_path)
+			block["attributes"]["src"] = f"/builder_assets/{self.name}/{src.split('/')[-1]}"
+	for child in block.get("children", []):
+		copy_img_to_asset_folder(child, self)
+
+
+def get_template_assets_folder_path(page_doc):
+	path = os.path.join(frappe.get_app_path("builder"), "www", "builder_assets", page_doc.name)
+	if not os.path.exists(path):
+		os.makedirs(path)
+	return path
+
+
+def get_builder_page_preview_paths(page_doc):
+	public_path, public_path = None, None
+	if page_doc.is_template:
+		local_path = os.path.join(get_template_assets_folder_path(page_doc), "preview.jpeg")
+		public_path = f"/builder_assets/{page_doc.name}/preview.jpeg"
+	else:
+		file_name = f"{page_doc.name}-preview.jpeg"
+		local_path = os.path.join(frappe.local.site_path, "public", "files", file_name)
+		random_hash = frappe.generate_hash(length=5)
+		public_path = f"/files/{file_name}?v={random_hash}"
+	return public_path, local_path
+
+
+def is_component_used(blocks, component_id):
+	blocks = frappe.parse_json(blocks)
+	if not isinstance(blocks, list):
+		blocks = [blocks]
+
+	for block in blocks:
+		if not block:
+			continue
+		if block.get("extendedFromComponent") == component_id:
+			return True
+		elif block.get("children"):
+			return is_component_used(block.get("children"), component_id)
+
+	return False
+
+
+def escape_single_quotes(text):
+	return (text or "").replace("'", "\\'")
+
+
+def camel_case_to_kebab_case(text, remove_spaces=False):
+	if not text:
+		return ""
+	text = re.sub(r"(?<!^)(?=[A-Z])", "-", text).lower()
+	if remove_spaces:
+		text = text.replace(" ", "")
+	return text
+
+
+def get_style_file_path():
+	folder_path = "./assets/builder/frontend/assets/"
+	file_pattern = "index.*.css"
+	matching_files = glob.glob(f"{folder_path}/{file_pattern}")
+	if matching_files:
+		return get_url(matching_files[0].lstrip("."))
+
+
+def execute_script(script, _locals, script_filename):
+	if is_safe_exec_enabled():
+		safe_exec(script, None, _locals, script_filename=script_filename)
+	else:
+		safer_exec(script, None, _locals, script_filename=script_filename)
