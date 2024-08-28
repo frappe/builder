@@ -350,7 +350,7 @@ def get_block_html(blocks):
 					tag[key] = value
 
 			if block.get("baseStyles", {}):
-				style_class = f"frappe-builder-{frappe.generate_hash(length=8)}"
+				style_class = f"fb-{frappe.generate_hash(length=8)}"
 				base_styles = block.get("baseStyles", {})
 				mobile_styles = block.get("mobileStyles", {})
 				tablet_styles = block.get("tabletStyles", {})
