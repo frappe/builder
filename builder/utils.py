@@ -260,16 +260,29 @@ def camel_case_to_kebab_case(text, remove_spaces=False):
 	return text
 
 
-def get_style_file_path():
-	folder_path = "./assets/builder/frontend/assets/"
-	file_pattern = "index.*.css"
-	matching_files = glob.glob(f"{folder_path}/{file_pattern}")
-	if matching_files:
-		return get_url(matching_files[0].lstrip("."))
-
-
 def execute_script(script, _locals, script_filename):
 	if is_safe_exec_enabled():
 		safe_exec(script, None, _locals, script_filename=script_filename)
 	else:
 		safer_exec(script, None, _locals, script_filename=script_filename)
+
+
+def get_dummy_blocks():
+	return [
+		{
+			"element": "div",
+			"extendedFromComponent": "component-1",
+			"children": [
+				{
+					"element": "div",
+					"children": [
+						{
+							"element": "div",
+							"extendedFromComponent": "component-2",
+							"children": [],
+						},
+					],
+				},
+			],
+		},
+	]
