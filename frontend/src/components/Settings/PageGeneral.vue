@@ -26,8 +26,16 @@
 					<Input
 						type="checkbox"
 						label="Set As Homepage"
-						:modelValue="store.activePage?.authenticated_access"
-						@update:modelValue="(val) => store.updateActivePage('authenticated_access', val)" />
+						:modelValue="store.isHomePage(store.activePage)"
+						@update:modelValue="
+							(val) => {
+								if (val) {
+									store.setHomePage(store.activePage?.route as string);
+								} else {
+									store.unsetHomePage();
+								}
+							}
+						" />
 				</div>
 				<hr class="w-full border-gray-200 dark:border-zinc-800" />
 				<div class="flex flex-col justify-between gap-5">
