@@ -1,6 +1,6 @@
 <template>
 	<div class="flex h-full flex-col items-center gap-5 overflow-y-auto">
-		<div class="flex w-full max-w-[500px] gap-4">
+		<div class="flex w-full gap-4">
 			<div class="flex flex-1 flex-col gap-5">
 				<Input
 					type="text"
