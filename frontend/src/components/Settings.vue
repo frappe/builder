@@ -1,24 +1,24 @@
 <template>
-	<div class="flex h-[80vh] overflow-hidden">
-		<div class="flex w-48 flex-col gap-5 bg-gray-50 p-4 px-3 dark:bg-gray-900">
-			<span class="px-2 py-1 text-xl font-semibold text-gray-900 dark:text-zinc-200">Settings</span>
+	<div class="flex max-h-[90vh] min-h-[80vh] overflow-hidden">
+		<div class="flex w-48 flex-col gap-5 bg-surface-menu-bar p-4 px-2">
+			<span class="px-2 text-lg font-semibold text-text-icons-gray-9">Settings</span>
 			<div class="flex flex-col" v-for="(item, index) in settingsSidebarItems" :key="index">
-				<span class="mb-2 px-3 text-base font-semibold text-gray-900 dark:text-zinc-200">
+				<span class="mb-2 px-2 text-base font-medium text-text-icons-gray-5">
 					{{ item.title }}
 				</span>
 				<a
 					@click="() => selectItem(link.value)"
-					class="cursor-pointer rounded p-2 px-3 text-base text-gray-800 dark:text-zinc-500"
+					class="flex cursor-pointer items-center gap-2 rounded p-2 py-[5px] text-base text-text-icons-gray-8"
 					:class="{
-						'bg-white text-gray-800 shadow-sm dark:bg-zinc-800 dark:!text-zinc-300':
-							selectedItem === link.value,
+						'bg-surface-selected shadow-sm': selectedItem === link.value,
 					}"
 					v-for="link in item.items">
+					<component v-if="link?.icon" :is="link?.icon" class="h-4 w-4 text-text-icons-gray-5" />
 					{{ link.label }}
 				</a>
 			</div>
 		</div>
-		<div class="flex h-full flex-1 flex-col gap-5 bg-white p-5 dark:bg-zinc-900">
+		<div class="flex h-full flex-1 flex-col gap-5 bg-white p-14 px-16 dark:bg-zinc-900">
 			<div class="flex justify-between">
 				<h2 class="text-xl font-semibold leading-none">{{ selectedItemDoc?.title }}</h2>
 				<Button icon="x" @click="$emit('close')"></Button>
@@ -33,12 +33,14 @@ import { computed, onActivated, ref } from "vue";
 import PageGeneral from "./Settings/PageGeneral.vue";
 // check route for page id
 import { useRoute } from "vue-router";
+import ChartIcon from "./Icons/Chart.vue";
+import MetaIcon from "./Icons/Meta.vue";
+import SettingsIcon from "./Icons/Settings.vue";
 import GlobalAnalytics from "./Settings/GlobalAnalytics.vue";
 import GlobalGeneral from "./Settings/GlobalGeneral.vue";
 import GlobalMeta from "./Settings/GlobalMeta.vue";
 import PageAnalytics from "./Settings/PageAnalytics.vue";
 import PageMeta from "./Settings/PageMeta.vue";
-import PageRobots from "./Settings/PageRobots.vue";
 const route = useRoute();
 const store = useStore();
 const emit = defineEmits(["close"]);
@@ -50,6 +52,8 @@ type SidebarItem = {
 	value: string;
 	component: any;
 	title: string;
+	// prettier-ignore
+	icon?: typeof import("*.vue");
 };
 
 const selectedItemDoc = computed(() => {
@@ -64,12 +68,23 @@ const selectedItemDoc = computed(() => {
 
 const settingsSidebarItems = [
 	{
-		title: "Page",
+		title: "Current Page",
 		items: [
-			{ label: "General", value: "page_general", component: PageGeneral, title: "General" },
-			{ label: "Meta", value: "page_meta", component: PageMeta, title: "Meta" },
-			{ label: "Robots", value: "page_robots", component: PageRobots, title: "Robots" },
-			{ label: "Analytics", value: "page_analytics", component: PageAnalytics, title: "Analytics" },
+			{
+				label: "General",
+				value: "page_general",
+				component: PageGeneral,
+				title: "General",
+				icon: SettingsIcon,
+			},
+			{ label: "Meta", value: "page_meta", component: PageMeta, title: "Meta", icon: MetaIcon },
+			{
+				label: "Analytics",
+				value: "page_analytics",
+				component: PageAnalytics,
+				title: "Analytics",
+				icon: ChartIcon,
+			},
 		],
 	},
 	{

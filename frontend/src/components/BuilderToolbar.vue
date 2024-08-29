@@ -119,7 +119,7 @@
 				:disableOutsideClickToClose="true"
 				:options="{
 					title: 'Settings',
-					size: '6xl',
+					size: '5xl',
 				}">
 				<template #body>
 					<Settings @close="showSettingsDialog = false"></Settings>
