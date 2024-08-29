@@ -647,6 +647,6 @@ watch(
 .page-builder {
 	--left-panel-width: 17rem;
 	--right-panel-width: 20rem;
-	--toolbar-height: 3.5rem;
+	--toolbar-height: 3rem;
 }
 </style>

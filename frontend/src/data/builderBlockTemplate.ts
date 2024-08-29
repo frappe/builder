@@ -5,7 +5,7 @@ const builderBlockTemplate = createListResource({
 	doctype: "Block Template",
 	fields: ["template_name", "category", "preview", "block", "name"],
 	orderBy: "modified desc",
-	cache: "block_template",
+	cache: "blockTemplate",
 	start: 0,
 	pageLength: 100,
 	auto: true,

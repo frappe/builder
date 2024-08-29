@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="toolbar flex h-14 items-center justify-center bg-white p-2 shadow-sm dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"
+		class="toolbar flex items-center justify-center bg-white px-2 py-1 shadow-sm dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"
 		ref="toolbar">
 		<div class="absolute left-3 flex items-center gap-5">
 			<MainMenu></MainMenu>
@@ -23,17 +23,20 @@
 				</Tooltip>
 			</div>
 		</div>
-		<div v-if="store.activePage">
+		<div>
 			<Popover transition="default" placement="bottom" popoverClass="!absolute top-0 !mt-[20px]">
 				<template #target="{ togglePopover, isOpen }">
 					<div class="flex cursor-pointer items-center gap-2 p-2 dark:bg-zinc-900 dark:text-zinc-200">
-						<div class="" @click="togglePopover">
-							<span class="max-w-48 truncate text-base dark:text-zinc-200">
-								{{ store.activePage.page_title }}
+						<div class="flex h-6 items-center text-base text-text-icons-gray-6" v-if="!store.activePage">
+							Loading...
+						</div>
+						<div @click="togglePopover" v-else>
+							<span class="max-w-48 truncate text-base text-text-icons-gray-8">
+								{{ store?.activePage?.page_title || "My Page" }}
 							</span>
 							-
 							<span class="max-w-48 truncate text-base text-gray-500 dark:text-zinc-500">
-								{{ store.activePage.route }}
+								{{ store?.activePage?.route || "/" }}
 							</span>
 						</div>
 						<FeatherIcon
@@ -52,6 +55,7 @@
 				</template>
 			</Popover>
 		</div>
+		<!-- actions -->
 		<div class="absolute right-3 flex items-center gap-5">
 			<Dialog
 				style="z-index: 40"
@@ -99,20 +103,11 @@
 			<span class="text-sm dark:text-zinc-300" v-if="store.savingPage && store.activePage?.is_template">
 				Saving template
 			</span>
-			<!-- <router-link
-				:to="{
-					name: 'settings',
-					params: {
-						pageId: store.selectedPage,
-					},
-				}"
-				title="Settings">
-				<FeatherIcon name="settings" class="h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
-			</router-link> -->
-			<FeatherIcon
-				@click="showSettingsDialog = true"
-				name="settings"
-				class="h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
+			<Tooltip text="Settings" :hoverDelay="0.6">
+				<SettingsGearIcon
+					@click="showSettingsDialog = true"
+					class="h-4 w-4 cursor-pointer text-text-icons-gray-8"></SettingsGearIcon>
+			</Tooltip>
 			<Dialog
 				v-model="showSettingsDialog"
 				style="z-index: 40"
@@ -126,11 +121,10 @@
 				</template>
 			</Dialog>
 
-			<router-link
-				v-if="store.selectedPage"
-				:to="{ name: 'preview', params: { pageId: store.selectedPage } }"
-				title="Preview">
-				<FeatherIcon name="play" class="h-4 w-4 cursor-pointer text-gray-600 dark:text-gray-400" />
+			<router-link :to="{ name: 'preview', params: { pageId: store.selectedPage } }" title="Preview">
+				<Tooltip text="Preview" :hoverDelay="0.6">
+					<PlayIcon class="h-[18px] w-[18px] cursor-pointer text-text-icons-gray-8"></PlayIcon>
+				</Tooltip>
 			</router-link>
 			<Button
 				variant="solid"
@@ -142,7 +136,7 @@
 						store.publishPage().finally(() => (publishing = false));
 					}
 				"
-				class="border-0 text-xs dark:bg-zinc-800"
+				class="border-0 bg-surface-gray-7 text-text-icons-white"
 				:loading="publishing">
 				{{ publishing ? "Publishing" : "Publish" }}
 			</Button>
@@ -185,6 +179,8 @@
 	</div>
 </template>
 <script setup lang="ts">
+import PlayIcon from "@/components/Icons/Play.vue";
+import SettingsGearIcon from "@/components/Icons/SettingsGear.vue";
 import { webPages } from "@/data/webPage";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { useDark, useToggle } from "@vueuse/core";
