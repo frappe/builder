@@ -34,7 +34,12 @@
 						store.publishPage().finally(() => (publishing = false));
 					}
 				"
-				class="absolute right-5 border-0 bg-surface-gray-7 text-text-icons-white hover:bg-surface-gray-6"
+				class="absolute right-5 border-0"
+				:class="{
+					'bg-surface-gray-7 text-text-icons-white hover:bg-surface-gray-6':
+						!publishing && store.activePage?.draft_blocks,
+					'dark:bg-surface-gray-2 dark:text-text-icons-gray-4': !store.activePage?.draft_blocks,
+				}"
 				:loading="publishing">
 				{{ publishing ? "Publishing" : "Publish" }}
 			</Button>
