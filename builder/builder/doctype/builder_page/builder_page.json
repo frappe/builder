@@ -32,7 +32,9 @@
   "page_title",
   "meta_description",
   "meta_image",
-  "set_meta_tags"
+  "set_meta_tags",
+  "options_tab",
+  "authenticated_access"
  ],
  "fields": [
   {
@@ -172,11 +174,23 @@
   {
    "fieldname": "column_break_ymjg",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "options_tab",
+   "fieldtype": "Tab Break",
+   "label": "Options"
+  },
+  {
+   "default": "0",
+   "description": "Only allow logged-in users to view this page.",
+   "fieldname": "authenticated_access",
+   "fieldtype": "Check",
+   "label": "Authenticated Access"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-07-02 18:13:15.327787",
+ "modified": "2024-08-29 15:22:34.243512",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

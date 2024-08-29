@@ -43,15 +43,23 @@ class BuilderPageRenderer(DocumentPage):
 		if page := find_page_with_path(self.path):
 			self.doctype = "Builder Page"
 			self.docname = page
+			self.validate_access()
 			return True
 
 		for d in get_web_pages_with_dynamic_routes():
 			if evaluate_dynamic_routes([Rule(f"/{d.route}", endpoint=d.name)], self.path):
 				self.doctype = "Builder Page"
 				self.docname = d.name
+				self.validate_access()
 				return True
 
 		return False
+
+	def validate_access(self):
+		if self.docname:
+			self.doc = frappe.get_cached_doc(self.doctype, self.docname)
+			if self.doc.authenticated_access and frappe.session.user == "Guest":
+				raise frappe.PermissionError("Please log in to view this page.")
 
 
 class BuilderPage(WebsiteGenerator):
