@@ -696,80 +696,6 @@ const optionsSectionProperties = [
 		component: InlineInput,
 		getProps: () => {
 			return {
-				label: "Image URL",
-				modelValue: blockController.getAttribute("src"),
-			};
-		},
-		searchKeyWords: "Image, URL, Src",
-		events: {
-			"update:modelValue": (val: string) => blockController.setAttribute("src", val),
-		},
-		condition: () => blockController.isImage(),
-	},
-	{
-		component: Button,
-		getProps: () => {
-			return {
-				label: "Convert to WebP",
-				class: "text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700",
-			};
-		},
-		innerText: "Convert to WebP",
-		searchKeyWords: "Convert, webp, Convert to webp, image, src, url",
-		events: {
-			click: () => {
-				const block = blockController.getSelectedBlocks()[0];
-				const convertToWebP = createResource({
-					url: "/api/method/builder.api.convert_to_webp",
-					params: {
-						image_url: block.getAttribute("src"),
-					},
-				});
-				toast.promise(
-					convertToWebP.fetch().then((res: string) => {
-						block.setAttribute("src", res);
-					}),
-					{
-						loading: "Converting...",
-						success: () => "Image converted to WebP",
-						error: () => "Failed to convert image to WebP",
-					},
-				);
-			},
-		},
-		condition: () => {
-			if (!blockController.isImage()) {
-				return false;
-			}
-			if (
-				[".jpg", ".jpeg", ".png"].some((ext) =>
-					((blockController.getAttribute("src") as string) || ("" as string)).toLowerCase().endsWith(ext),
-				)
-			) {
-				return true;
-			}
-		},
-	},
-	{
-		component: InlineInput,
-		getProps: () => {
-			return {
-				label: "Image Fit",
-				type: "select",
-				options: ["fill", "contain", "cover", "none"],
-				modelValue: blockController.getStyle("objectFit"),
-			};
-		},
-		searchKeyWords: "Image, Fit, ObjectFit, Object Fit, Fill, Contain, Cover, None",
-		events: {
-			"update:modelValue": (val: StyleValue) => blockController.setStyle("objectFit", val),
-		},
-		condition: () => blockController.isImage(),
-	},
-	{
-		component: InlineInput,
-		getProps: () => {
-			return {
 				label: "Input Type",
 				type: "select",
 				options: ["text", "number", "email", "password", "date", "time", "search", "tel", "url", "color"],
@@ -1140,6 +1066,81 @@ const videoOptionsSectionProperties = [
 	},
 ];
 
+const imageOptionsSectionProperties = [
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Image URL",
+				modelValue: blockController.getAttribute("src"),
+			};
+		},
+		searchKeyWords: "Image, URL, Src",
+		events: {
+			"update:modelValue": (val: string) => blockController.setAttribute("src", val),
+		},
+	},
+	{
+		component: Button,
+		getProps: () => {
+			return {
+				label: "Convert to WebP",
+				class: "text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700",
+			};
+		},
+		innerText: "Convert to WebP",
+		searchKeyWords: "Convert, webp, Convert to webp, image, src, url",
+		events: {
+			click: () => {
+				const block = blockController.getSelectedBlocks()[0];
+				const convertToWebP = createResource({
+					url: "/api/method/builder.api.convert_to_webp",
+					params: {
+						image_url: block.getAttribute("src"),
+					},
+				});
+				toast.promise(
+					convertToWebP.fetch().then((res: string) => {
+						block.setAttribute("src", res);
+					}),
+					{
+						loading: "Converting...",
+						success: () => "Image converted to WebP",
+						error: () => "Failed to convert image to WebP",
+					},
+				);
+			},
+		},
+		condition: () => {
+			if (!blockController.isImage()) {
+				return false;
+			}
+			if (
+				[".jpg", ".jpeg", ".png"].some((ext) =>
+					((blockController.getAttribute("src") as string) || ("" as string)).toLowerCase().endsWith(ext),
+				)
+			) {
+				return true;
+			}
+		},
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Image Fit",
+				type: "select",
+				options: ["fill", "contain", "cover", "none"],
+				modelValue: blockController.getStyle("objectFit"),
+			};
+		},
+		searchKeyWords: "Image, Fit, ObjectFit, Object Fit, Fill, Contain, Cover, None",
+		events: {
+			"update:modelValue": (val: StyleValue) => blockController.setStyle("objectFit", val),
+		},
+	},
+];
+
 const sections = [
 	{
 		name: "Link",
@@ -1153,6 +1154,16 @@ const sections = [
 		condition: () => !blockController.multipleBlocksSelected(),
 	},
 	{
+		name: "Image Options",
+		properties: imageOptionsSectionProperties,
+		condition: () => blockController.isImage(),
+	},
+	{
+		name: "Video Options",
+		properties: videoOptionsSectionProperties,
+		condition: () => blockController.isVideo(),
+	},
+	{
 		name: "Typography",
 		properties: typographySectionProperties,
 		condition: () => blockController.isText() || blockController.isContainer() || blockController.isInput(),
@@ -1161,12 +1172,6 @@ const sections = [
 		name: "Style",
 		properties: styleSectionProperties,
 	},
-	{
-		name: "Video Options",
-		properties: videoOptionsSectionProperties,
-		condition: () => blockController.isVideo(),
-	},
-
 	{
 		name: "Dimension",
 		properties: dimensionSectionProperties,
