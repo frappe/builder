@@ -10,7 +10,7 @@
 							type="text"
 							placeholder="Set Background"
 							@update:modelValue="updateBG"
-							:value="backgroundURL?.replace(/^'|'$/g, '')" />
+							:modelValue="backgroundURL?.replace(/^'|'$/g, '')" />
 						<div
 							class="absolute left-2 top-[6px] z-10 h-4 w-4 rounded shadow-sm"
 							@click="togglePopover"
@@ -37,7 +37,14 @@
 						backgroundSize: backgroundSize || `contain`,
 						backgroundRepeat: `no-repeat`,
 					}">
-					<FileUploader @success="setBG">
+					<FileUploader
+						@success="setBG"
+						:uploadArgs="{
+							private: false,
+							folder: 'Home/Builder Uploads',
+							optimize: true,
+							upload_endpoint: '/api/method/builder.api.upload_builder_asset',
+						}">
 						<template v-slot="{ openFileSelector }">
 							<div
 								class="absolute bottom-0 left-0 right-0 top-0 hidden place-items-center bg-gray-500 bg-opacity-20"
@@ -111,9 +118,7 @@ const parseBackground = (background: string) => {
 };
 
 const updateBG = (value: string) => {
-	blockController?.setStyle(
-		"background",
-		`url('${value}') center / ${backgroundSize.value || "cover"} no-repeat`,
-	);
+	value = value ? `url('${value}') center / ${backgroundSize.value || "cover"} no-repeat` : "";
+	blockController?.setStyle("background", value);
 };
 </script>
