@@ -21,7 +21,12 @@ type PosthogSettings = {
 	posthog_identify: string;
 };
 
-let posthog = window.posthog;
+let posthog = {
+	init: (projectToken: string, options: any) => {},
+	identify: (userId: string) => {},
+	startSessionRecording: () => {},
+	capture: (eventName: string, data?: any) => {},
+};
 
 createResource({
 	url: "builder.api.get_posthog_settings",
@@ -31,7 +36,7 @@ createResource({
 		if (!posthogSettings.enable_telemetry || !posthogSettings.posthog_project_id) {
 			return;
 		}
-		posthog.init(posthogSettings.posthog_project_id, {
+		window.posthog.init(posthogSettings.posthog_project_id, {
 			api_host: posthogSettings.posthog_host,
 			person_profiles: "identified_only",
 			autocapture: false,
