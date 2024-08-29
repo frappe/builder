@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="toolbar sticky top-0 z-10 flex h-14 items-center justify-center bg-white p-2 shadow-sm dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"
+		class="toolbar sticky top-0 z-10 flex h-12 items-center justify-center bg-white p-2 shadow-sm dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"
 		ref="toolbar">
 		<div class="absolute left-3 flex items-center">
 			<router-link class="flex items-center gap-2" :to="{ name: 'home' }">
@@ -48,7 +48,7 @@
 						{ label: 'Alphabetically (Z-A)', value: 'alphabetically_z_a' },
 					]" />
 				<OptionToggle
-					class="[&>div]:min-w-0"
+					class="[&>div>div]:dark:!bg-zinc-900 [&>div]:min-w-0"
 					:options="[
 						{ label: 'Grid', value: 'grid', icon: 'grid', hideLabel: true },
 						{ label: 'List', value: 'list', icon: 'list', hideLabel: true },
