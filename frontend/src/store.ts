@@ -473,6 +473,24 @@ const useStore = defineStore("store", {
 		isHomePage(page: BuilderPage | null = null) {
 			return builderSettings.doc.home_page === (page || this.activePage)?.route;
 		},
+		setHomePage(route: string) {
+			return builderSettings.setValue
+				.submit({
+					home_page: route,
+				})
+				.then(() => {
+					toast.success("Home page set successfully!");
+				});
+		},
+		unsetHomePage() {
+			return builderSettings.setValue
+				.submit({
+					home_page: "",
+				})
+				.then(() => {
+					toast.warning("This page will no longer be the home page");
+				});
+		},
 		async waitTillPageIsSaved() {
 			// small delay so that all the save requests are triggered
 			await new Promise((resolve) => setTimeout(resolve, 100));
