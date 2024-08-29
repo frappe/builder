@@ -44,4 +44,6 @@ You can generate using favicon-generator.org	*/
 	meta_description?: string
 	/**	Image : Attach Image	*/
 	meta_image?: string
+	/**	Authenticated Access : Check - Only allow logged-in users to view this page.	*/
+	authenticated_access?: 0 | 1
 }

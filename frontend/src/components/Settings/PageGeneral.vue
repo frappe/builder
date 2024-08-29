@@ -20,6 +20,7 @@
 					<Input
 						type="checkbox"
 						label="Authenticated Access"
+						description="Only logged-in users can access this page"
 						:modelValue="store.activePage?.authenticated_access"
 						@update:modelValue="(val) => store.updateActivePage('authenticated_access', val)" />
 					<Input
