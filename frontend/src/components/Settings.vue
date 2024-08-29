@@ -1,5 +1,5 @@
 <template>
-	<div class="flex max-h-[90vh] min-h-[80vh] overflow-hidden">
+	<div class="flex h-fit max-h-[90vh] min-h-[60vh] overflow-hidden">
 		<div class="flex w-48 flex-col gap-5 bg-surface-menu-bar p-4 px-2">
 			<span class="px-2 text-lg font-semibold text-text-icons-gray-9">Settings</span>
 			<div class="flex flex-col" v-for="(item, index) in settingsSidebarItems" :key="index">
@@ -18,11 +18,9 @@
 				</a>
 			</div>
 		</div>
-		<div class="flex h-full flex-1 flex-col gap-5 bg-white p-14 px-16 dark:bg-zinc-900">
-			<div class="flex justify-between">
-				<h2 class="text-xl font-semibold leading-none">{{ selectedItemDoc?.title }}</h2>
-				<Button icon="x" @click="$emit('close')"></Button>
-			</div>
+		<div class="flex flex-1 flex-col gap-5 bg-white p-14 px-16 dark:bg-zinc-900">
+			<h2 class="text-xl font-semibold leading-none">{{ selectedItemDoc?.title }}</h2>
+			<Button icon="x" @click="$emit('close')" class="absolute right-5 top-5"></Button>
 			<component :is="(selectedItemDoc as SidebarItem).component" />
 		</div>
 	</div>

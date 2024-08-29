@@ -136,7 +136,7 @@
 						store.publishPage().finally(() => (publishing = false));
 					}
 				"
-				class="border-0 bg-surface-gray-7 text-text-icons-white"
+				class="border-0 bg-surface-gray-7 text-text-icons-white hover:bg-surface-gray-6"
 				:loading="publishing">
 				{{ publishing ? "Publishing" : "Publish" }}
 			</Button>
