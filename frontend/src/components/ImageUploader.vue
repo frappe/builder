@@ -21,7 +21,6 @@
 <script setup lang="ts">
 import { FileUploader } from "frappe-ui";
 import { computed } from "vue";
-import Input from "./Input.vue";
 const prop = defineProps({
 	image_url: String,
 	image_type: {

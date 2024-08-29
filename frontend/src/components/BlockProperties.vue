@@ -46,6 +46,7 @@ import CodeEditor from "./CodeEditor.vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
 import ColorInput from "./ColorInput.vue";
 import DimensionInput from "./DimensionInput.vue";
+import ImageUploadInput from "./ImageUploadInput.vue";
 import InlineInput from "./InlineInput.vue";
 import Input from "./Input.vue";
 import ObjectEditor from "./ObjectEditor.vue";
@@ -798,20 +799,6 @@ const optionsSectionProperties = [
 		component: InlineInput,
 		getProps: () => {
 			return {
-				label: "Alt Text",
-				modelValue: blockController.getAttribute("alt"),
-			};
-		},
-		searchKeyWords: "Alt, Text, AltText, Alternate Text",
-		events: {
-			"update:modelValue": (val: string) => blockController.setAttribute("alt", val),
-		},
-		condition: () => blockController.isImage(),
-	},
-	{
-		component: InlineInput,
-		getProps: () => {
-			return {
 				label: "Class",
 				modelValue: blockController.getClasses().join(", "),
 			};
@@ -1068,17 +1055,19 @@ const videoOptionsSectionProperties = [
 
 const imageOptionsSectionProperties = [
 	{
-		component: InlineInput,
+		component: ImageUploadInput,
 		getProps: () => {
 			return {
 				label: "Image URL",
-				modelValue: blockController.getAttribute("src"),
+				imageURL: blockController.getAttribute("src"),
+				imageFit: blockController.getStyle("objectFit"),
 			};
 		},
-		searchKeyWords: "Image, URL, Src",
 		events: {
-			"update:modelValue": (val: string) => blockController.setAttribute("src", val),
+			"update:imageURL": (val: string) => blockController.setAttribute("src", val),
+			"update:imageFit": (val: StyleValue) => blockController.setStyle("objectFit", val),
 		},
+		searchKeyWords: "Image, URL, Src, Fit, ObjectFit, Object Fit, Fill, Contain, Cover",
 	},
 	{
 		component: Button,
@@ -1128,16 +1117,15 @@ const imageOptionsSectionProperties = [
 		component: InlineInput,
 		getProps: () => {
 			return {
-				label: "Image Fit",
-				type: "select",
-				options: ["fill", "contain", "cover", "none"],
-				modelValue: blockController.getStyle("objectFit"),
+				label: "Alt Text",
+				modelValue: blockController.getAttribute("alt"),
 			};
 		},
-		searchKeyWords: "Image, Fit, ObjectFit, Object Fit, Fill, Contain, Cover, None",
+		searchKeyWords: "Alt, Text, AltText, Alternate Text",
 		events: {
-			"update:modelValue": (val: StyleValue) => blockController.setStyle("objectFit", val),
+			"update:modelValue": (val: string) => blockController.setAttribute("alt", val),
 		},
+		condition: () => blockController.isImage(),
 	},
 ];
 
