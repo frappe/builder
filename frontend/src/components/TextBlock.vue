@@ -113,6 +113,7 @@
 			:editor="editor"
 			v-if="editor && showEditor"
 			class="relative z-50"
+			:style="$attrs.style"
 			@keydown="handleKeydown" />
 		<slot />
 	</component>
@@ -132,9 +133,10 @@ import StarterKit from "@tiptap/starter-kit";
 import { BubbleMenu, Editor, EditorContent, Extension } from "@tiptap/vue-3";
 import { Input } from "frappe-ui";
 import { Plugin, PluginKey } from "prosemirror-state";
-import { Ref, computed, inject, nextTick, onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
+import { Ref, computed, inject, nextTick, onBeforeMount, onBeforeUnmount, ref, useAttrs, watch } from "vue";
 import StrikeThroughIcon from "./Icons/StrikeThrough.vue";
 
+const attrs = useAttrs();
 const store = useStore();
 const dataChanged = ref(false);
 const settingLink = ref(false);
