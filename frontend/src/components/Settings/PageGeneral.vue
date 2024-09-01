@@ -23,25 +23,26 @@
 						description="Only logged-in users can access this page"
 						:modelValue="store.activePage?.authenticated_access"
 						@update:modelValue="(val) => store.updateActivePage('authenticated_access', val)" />
-					<Input
-						type="checkbox"
-						label="Set As Homepage"
-						:modelValue="store.isHomePage(store.activePage)"
-						@update:modelValue="
-							(val) => {
-								if (val) {
-									store.setHomePage(store.activePage?.route as string);
-								} else {
-									store.unsetHomePage();
-								}
-							}
-						" />
+					<div class="flex items-center justify-between">
+						<div class="flex flex-col gap-2">
+							<span class="text-base dark:text-zinc-200">Homepage</span>
+							<p class="text-sm text-gray-600">Set current page as Homepage</p>
+						</div>
+						<Tooltip
+							:test="
+								store.activePage?.published ? 'Unpublish this page' : 'This page is already unpublished'
+							">
+							<Button variant="subtle" @click="store.setHomePage(store.activePage?.route as string)">
+								Set As Homepage
+							</Button>
+						</Tooltip>
+					</div>
 				</div>
 				<hr class="w-full border-gray-200 dark:border-zinc-800" />
 				<div class="flex flex-col justify-between gap-5">
 					<span class="text-lg font-semibold text-text-icons-gray-9">Favicon</span>
 					<div class="flex flex-1 gap-5">
-						<div class="flex items-center justify-center rounded border border-outline-gray-1 px-16 py-6">
+						<div class="flex items-center justify-center rounded border border-outline-gray-1 px-16 py-8">
 							<img
 								:src="store.activePage?.favicon || '/assets/builder/images/frappe_black.png'"
 								alt=""

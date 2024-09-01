@@ -64,7 +64,7 @@
 					<Button
 						variant="solid"
 						iconLeft="plus"
-						class="bg-surface-gray-7 text-text-icons-white hover:bg-surface-gray-6">
+						class="bg-surface-gray-7 !text-text-icons-white hover:bg-surface-gray-6">
 						New
 					</Button>
 				</router-link>

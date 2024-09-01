@@ -10,7 +10,7 @@
 		<template v-slot="{ file, progress, uploading, openFileSelector }">
 			<div class="flex items-end space-x-2">
 				<!-- <Input v-model="url" readonly="true" :hideClearButton="true" :label="label"></Input> -->
-				<Button @click="openFileSelector" variant="solid">
+				<Button @click="openFileSelector" variant="subtle">
 					{{ uploading ? `Uploading ${progress}%` : image_url ? "Change" : "Upload" }}
 				</Button>
 				<Button v-if="image_url" @click="$emit('remove')">Remove</Button>
