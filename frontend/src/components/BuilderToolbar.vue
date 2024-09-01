@@ -138,48 +138,13 @@
 				"
 				class="border-0"
 				:class="{
-					'bg-surface-gray-7 text-text-icons-white hover:bg-surface-gray-6':
+					'bg-surface-gray-7 !text-text-icons-white hover:bg-surface-gray-6':
 						!publishing && store.activePage?.draft_blocks,
 					'dark:bg-surface-gray-2 dark:text-text-icons-gray-4': !store.activePage?.draft_blocks,
 				}"
 				:loading="publishing">
 				{{ publishing ? "Publishing" : "Publish" }}
 			</Button>
-			<!-- <div class="flex" v-else>
-				<Button
-					variant="solid"
-					:disabled="!store.activePage?.draft_blocks"
-					@click="
-						() => {
-							publishing = true;
-							store.publishPage().finally(() => (publishing = false));
-						}
-					"
-					class="rounded-br-none rounded-tr-none border-0 pr-1 text-xs dark:bg-zinc-800"
-					:loading="publishing">
-					{{
-						publishing
-							? "Publishing"
-							: store.activePage?.published && store.activePage?.draft_blocks
-								? "Publish"
-								: "Publish"
-					}}
-				</Button>
-				<Dropdown
-					:options="[{ label: 'Unpublish Page', onClick: () => store.unpublishPage() }]"
-					size="sm"
-					class="flex-1 [&>div>div>div]:w-full"
-					placement="right">
-					<template v-slot="{ open }">
-						<Button
-							variant="solid"
-							@click="open"
-							:disabled="!store.activePage?.draft_blocks"
-							icon="chevron-down"
-							class="!w-6 justify-start rounded-bl-none rounded-tl-none border-0 pr-0 text-xs dark:bg-zinc-800"></Button>
-					</template>
-				</Dropdown>
-			</div> -->
 		</div>
 	</div>
 </template>
