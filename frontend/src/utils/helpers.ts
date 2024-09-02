@@ -316,6 +316,19 @@ function getCopyWithoutParent(block: BlockOptions | Block): BlockOptions {
 	return blockCopy;
 }
 
+function getRouteVariables(route: string) {
+	const variables = [] as string[];
+	route.split("/").map((part) => {
+		if (part.startsWith(":")) {
+			variables.push(part.slice(1));
+		}
+		if (part.startsWith("<")) {
+			variables.push(part.slice(1, -1));
+		}
+	});
+	return variables;
+}
+
 export {
 	addPxToNumber,
 	confirm,
@@ -331,6 +344,7 @@ export {
 	getNumberFromPx,
 	getRandomColor,
 	getRGB,
+	getRouteVariables,
 	getTextContent,
 	HexToHSV,
 	HSVToHex,

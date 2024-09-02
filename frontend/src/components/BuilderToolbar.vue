@@ -30,14 +30,14 @@
 						<div class="flex h-6 items-center text-base text-text-icons-gray-6" v-if="!store.activePage">
 							Loading...
 						</div>
-						<div @click="togglePopover" v-else>
+						<div @click="togglePopover" v-else class="flex items-center gap-1">
 							<span class="max-w-48 truncate text-base text-text-icons-gray-8">
 								{{ store?.activePage?.page_title || "My Page" }}
 							</span>
 							-
-							<span class="max-w-48 truncate text-base text-gray-500 dark:text-zinc-500">
-								{{ store?.activePage?.route || "/" }}
-							</span>
+							<span
+								class="flex max-w-96 gap-[2px] truncate text-base text-gray-500 dark:text-zinc-500"
+								v-html="routeString"></span>
 						</div>
 						<FeatherIcon
 							name="external-link"
@@ -194,6 +194,28 @@ declare global {
 		startViewTransition(callback: () => void): void;
 	}
 }
+
+const routeString = computed(() => {
+	const route = store.activePage?.route || "/";
+	const routeStringToReturn = route.split("/").map((part) => {
+		let variable = "";
+
+		if (part.startsWith(":")) {
+			variable = part.slice(1);
+		} else if (part.startsWith("<")) {
+			variable = part.slice(1, -1);
+		}
+		if (variable) {
+			const previewValue = store.routeVariables[variable];
+			return `<span class="${
+				previewValue ? "bg-blue-100" : "bg-purple-100"
+			} rounded-sm px-1 py-[1px] pb-[2px] text-sm">${previewValue || part}</span>`;
+		} else {
+			return part;
+		}
+	});
+	return routeStringToReturn.join("/");
+});
 
 const transitionTheme = (toggleDark: () => void) => {
 	if (document.startViewTransition && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
