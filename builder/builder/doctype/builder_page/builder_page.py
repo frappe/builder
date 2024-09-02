@@ -24,6 +24,7 @@ from werkzeug.routing import Rule
 from builder.hooks import builder_path
 from builder.html_preview_image import generate_preview
 from builder.utils import (
+	ColonRule,
 	camel_case_to_kebab_case,
 	copy_img_to_asset_folder,
 	escape_single_quotes,
@@ -47,7 +48,7 @@ class BuilderPageRenderer(DocumentPage):
 			return True
 
 		for d in get_web_pages_with_dynamic_routes():
-			if evaluate_dynamic_routes([Rule(f"/{d.route}", endpoint=d.name)], self.path):
+			if evaluate_dynamic_routes([ColonRule(f"/{d.route}", endpoint=d.name)], self.path):
 				self.doctype = "Builder Page"
 				self.docname = d.name
 				self.validate_access()
@@ -95,6 +96,12 @@ class BuilderPage(WebsiteGenerator):
 			)
 
 	def on_update(self):
+		if self.has_value_changed("route"):
+			if ":" in self.route or "<" in self.route:
+				self.db_set("dynamic_route", 1)
+			else:
+				self.db_set("dynamic_route", 0)
+
 		if (
 			self.has_value_changed("dynamic_route")
 			or self.has_value_changed("route")
@@ -587,7 +594,7 @@ def resolve_path(path):
 	if find_page_with_path(path):
 		return path
 	elif evaluate_dynamic_routes(
-		[Rule(f"/{d.route}", endpoint=d.name) for d in get_web_pages_with_dynamic_routes()],
+		[ColonRule(f"/{d.route}", endpoint=d.name) for d in get_web_pages_with_dynamic_routes()],
 		path,
 	):
 		return path

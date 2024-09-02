@@ -22,6 +22,7 @@ import {
 	getBlockObject,
 	getBlockString,
 	getCopyWithoutParent,
+	getRouteVariables,
 } from "./utils/helpers";
 import RealTimeHandler from "./utils/realtimeHandler";
 
@@ -404,11 +405,16 @@ const useStore = defineStore("store", {
 		},
 		openPageInBrowser(page: BuilderPage) {
 			let route = page.route;
-			if (page.dynamic_route && this.pageData) {
-				const routeVariables = (route?.match(/<\w+>/g) || []).map((match: string) => match.slice(1, -1));
+			if (this.pageData) {
+				const routeVariables = getRouteVariables(route || "");
 				routeVariables.forEach((variable: string) => {
-					if (this.routeVariables[variable]) {
-						route = route?.replace(`<${variable}>`, this.routeVariables[variable]);
+					const routeVariableValue = this.routeVariables[variable];
+					if (routeVariableValue) {
+						if (route?.includes(`<${variable}>`)) {
+							route = route?.replace(`<${variable}>`, routeVariableValue);
+						} else if (route?.includes(`:${variable}`)) {
+							route = route?.replace(`:${variable}`, routeVariableValue);
+						}
 					}
 				});
 			}

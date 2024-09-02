@@ -11,20 +11,14 @@
 				type="text"
 				class="w-full text-sm [&>label]:w-[60%] [&>label]:min-w-[180px]"
 				label="Route"
+				@input="(val) => (page.route = val)"
 				:modelValue="page.route"
 				@update:modelValue="(val) => store.updateActivePage('route', val)" />
-			<Input
-				type="checkbox"
-				label="Dynamic Route?"
-				:modelValue="page.dynamic_route"
-				@update:modelValue="(val) => store.updateActivePage('dynamic_route', val)" />
-
 			<!-- Dynamic Route Variables -->
 			<CollapsibleSection
-				sectionName="Test Dynamic Values"
-				:sectionCollapsed="true"
-				v-if="page.dynamic_route && dynamicVariables.length"
-				class="w-full">
+				sectionName="URL Variables"
+				v-if="dynamicVariables.length"
+				class="w-full [&>div>h3]:!text-xs [&>div>h3]:!text-text-icons-gray-5">
 				<Input
 					v-for="(variable, index) in dynamicVariables"
 					:key="index"
@@ -39,6 +33,7 @@
 <script setup lang="ts">
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { getRouteVariables } from "@/utils/helpers";
 import { computed } from "vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
 import Input from "./Input.vue";
@@ -48,6 +43,6 @@ const props = defineProps<{
 	page: BuilderPage;
 }>();
 const dynamicVariables = computed(() => {
-	return (props.page.route?.match(/<\w+>/g) || []).map((match) => match.slice(1, -1));
+	return getRouteVariables(props.page.route || "");
 });
 </script>
