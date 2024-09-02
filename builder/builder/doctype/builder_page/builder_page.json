@@ -34,7 +34,8 @@
   "meta_image",
   "set_meta_tags",
   "options_tab",
-  "authenticated_access"
+  "authenticated_access",
+  "disable_indexing"
  ],
  "fields": [
   {
@@ -186,11 +187,18 @@
    "fieldname": "authenticated_access",
    "fieldtype": "Check",
    "label": "Authenticated Access"
+  },
+  {
+   "default": "0",
+   "description": "Prevent search engines from indexing this page",
+   "fieldname": "disable_indexing",
+   "fieldtype": "Check",
+   "label": "Disable Indexing"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-08-29 15:22:34.243512",
+ "modified": "2024-09-02 14:20:24.457766",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

@@ -162,6 +162,7 @@ class BuilderPage(WebsiteGenerator):
 	def get_context(self, context):
 		# delete default favicon
 		del context.favicon
+		context.disable_indexing = self.disable_indexing
 		page_data = self.get_page_data()
 		if page_data.get("title"):
 			context.title = page_data.get("page_title")
@@ -190,7 +191,6 @@ class BuilderPage(WebsiteGenerator):
 		context.update(page_data)
 		self.set_meta_tags(context=context, page_data=page_data)
 		self.set_favicon(context)
-
 		try:
 			context["content"] = render_template(context.content, context)
 		except TemplateSyntaxError:

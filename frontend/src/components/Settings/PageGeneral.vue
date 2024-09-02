@@ -16,13 +16,8 @@
 						:hideClearButton="true"
 						@update:modelValue="(val) => store.updateActivePage('route', val)" />
 				</div>
+				<!-- homepage -->
 				<div class="flex flex-col gap-2">
-					<Input
-						type="checkbox"
-						label="Authenticated Access"
-						description="Only logged-in users can access this page"
-						:modelValue="store.activePage?.authenticated_access"
-						@update:modelValue="(val) => store.updateActivePage('authenticated_access', val)" />
 					<div class="flex items-center justify-between">
 						<div class="flex flex-col gap-2">
 							<span class="text-base dark:text-zinc-200">Homepage</span>
@@ -42,6 +37,21 @@
 					</div>
 				</div>
 				<hr class="w-full border-surface-gray-2" />
+				<Switch
+					size="sm"
+					label="Authenticated Access"
+					description="Only logged-in users can access this page"
+					:modelValue="store.activePage?.authenticated_access"
+					@update:modelValue="(val: Boolean) => store.updateActivePage('authenticated_access', val)" />
+				<hr class="w-full border-surface-gray-2" />
+				<Switch
+					size="sm"
+					label="Disable Indexing"
+					description="Prevent search engines from indexing this page"
+					:modelValue="store.activePage?.disable_indexing"
+					@update:modelValue="(val: Boolean) => store.updateActivePage('authenticated_access', val)" />
+				<hr class="w-full border-surface-gray-2" />
+
 				<div class="flex flex-col justify-between gap-5">
 					<span class="text-lg font-semibold text-text-icons-gray-9">Favicon</span>
 					<div class="flex flex-1 gap-5">
@@ -64,7 +74,7 @@
 						</div>
 					</div>
 				</div>
-				<hr class="w-full border-gray-200 dark:border-zinc-800" />
+				<hr class="w-full border-surface-gray-2" />
 				<div class="flex flex-col justify-between gap-5">
 					<span class="text-lg font-semibold text-text-icons-gray-9">Redirect</span>
 					<div class="flex items-end gap-8">
@@ -85,7 +95,7 @@
 				</div>
 			</div>
 		</div>
-		<hr class="w-full border-gray-200 dark:border-zinc-800" />
+		<hr class="w-full border-surface-gray-2" />
 
 		<div class="flex w-full flex-col gap-5">
 			<span class="text-lg font-semibold text-text-icons-gray-9">Unpublish</span>
@@ -105,7 +115,7 @@
 import ImageUploader from "@/components/ImageUploader.vue";
 import Input from "@/components/Input.vue";
 import useStore from "@/store";
-import { Tooltip } from "frappe-ui";
+import { Switch, Tooltip } from "frappe-ui";
 import FeatherIcon from "frappe-ui/src/components/FeatherIcon.vue";
 // check route for page id
 const store = useStore();
