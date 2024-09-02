@@ -1,5 +1,5 @@
 <template>
-	<div class="flex h-[85vh] max-h-[800px] overflow-hidden">
+	<div class="flex h-[90vh] max-h-[800px] overflow-hidden">
 		<div class="flex w-48 flex-col gap-5 bg-surface-menu-bar p-4 px-2">
 			<span class="px-2 text-lg font-semibold text-text-icons-gray-9">Settings</span>
 			<div class="flex flex-col" v-for="(item, index) in settingsSidebarItems" :key="index">

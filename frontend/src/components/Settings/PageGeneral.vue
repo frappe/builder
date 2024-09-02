@@ -32,13 +32,16 @@
 							:test="
 								store.activePage?.published ? 'Unpublish this page' : 'This page is already unpublished'
 							">
-							<Button variant="subtle" @click="store.setHomePage(store.activePage?.route as string)">
+							<Button
+								variant="subtle"
+								class="!bg-surface-gray-2"
+								@click="store.setHomePage(store.activePage?.route as string)">
 								Set As Homepage
 							</Button>
 						</Tooltip>
 					</div>
 				</div>
-				<hr class="w-full border-gray-200 dark:border-zinc-800" />
+				<hr class="w-full border-surface-gray-2" />
 				<div class="flex flex-col justify-between gap-5">
 					<span class="text-lg font-semibold text-text-icons-gray-9">Favicon</span>
 					<div class="flex flex-1 gap-5">
@@ -85,10 +88,9 @@
 		<hr class="w-full border-gray-200 dark:border-zinc-800" />
 
 		<div class="flex w-full flex-col gap-5">
-			<span class="text-lg font-semibold text-text-icons-gray-9">Danger zone</span>
+			<span class="text-lg font-semibold text-text-icons-gray-9">Unpublish</span>
 			<div class="flex items-center justify-between">
 				<div class="flex flex-col gap-2">
-					<span class="text-base dark:text-zinc-200">Unpublish</span>
 					<p class="text-sm text-gray-600">Unpublish your page</p>
 				</div>
 				<Tooltip
