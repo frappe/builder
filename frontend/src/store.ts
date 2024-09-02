@@ -366,7 +366,7 @@ const useStore = defineStore("store", {
 				.submit({
 					name: this.selectedPage as string,
 					method: "publish",
-					...this.routeVariables,
+					route_variables: this.routeVariables,
 				})
 				.then(async () => {
 					posthog.capture("builder_page_published", {
@@ -447,7 +447,7 @@ const useStore = defineStore("store", {
 				.submit({
 					method: "get_page_data",
 					name: page.name,
-					...this.routeVariables,
+					route_variables: this.routeVariables,
 				})
 				.then((data: { message: { [key: string]: [] } }) => {
 					this.pageData = data.message;

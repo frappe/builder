@@ -145,8 +145,9 @@ class BuilderPage(WebsiteGenerator):
 		)
 
 	@frappe.whitelist()
-	def publish(self, **kwargs):
-		frappe.form_dict.update(kwargs)
+	def publish(self, route_variables=None):
+		if route_variables:
+			frappe.form_dict.update(frappe.parse_json(route_variables or "{}"))
 		self.published = 1
 		if self.draft_blocks:
 			self.blocks = self.draft_blocks
@@ -242,10 +243,9 @@ class BuilderPage(WebsiteGenerator):
 			context.setdefault("styles", []).append(builder_settings.style_public_url)
 
 	@frappe.whitelist()
-	def get_page_data(self, args=None):
-		if args:
-			args = frappe.parse_json(args)
-			frappe.form_dict.update(args)
+	def get_page_data(self, route_variables=None):
+		if route_variables:
+			frappe.form_dict.update(frappe.parse_json(route_variables or "{}"))
 		page_data = frappe._dict()
 		if self.page_data_script:
 			_locals = dict(data=frappe._dict())
