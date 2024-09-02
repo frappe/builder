@@ -49,7 +49,7 @@
 					label="Disable Indexing"
 					description="Prevent search engines from indexing this page"
 					:modelValue="store.activePage?.disable_indexing"
-					@update:modelValue="(val: Boolean) => store.updateActivePage('authenticated_access', val)" />
+					@update:modelValue="(val: Boolean) => store.updateActivePage('disable_indexing', val)" />
 				<hr class="w-full border-surface-gray-2" />
 
 				<div class="flex flex-col justify-between gap-5">
