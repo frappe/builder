@@ -32,11 +32,11 @@ import PageGeneral from "./Settings/PageGeneral.vue";
 // check route for page id
 import { useRoute } from "vue-router";
 import ChartIcon from "./Icons/Chart.vue";
+import CodeIcon from "./Icons/Code.vue";
 import MetaIcon from "./Icons/Meta.vue";
 import SettingsIcon from "./Icons/Settings.vue";
-import GlobalAnalytics from "./Settings/GlobalAnalytics.vue";
+import GlobalCode from "./Settings/GlobalCode.vue";
 import GlobalGeneral from "./Settings/GlobalGeneral.vue";
-import GlobalMeta from "./Settings/GlobalMeta.vue";
 import PageAnalytics from "./Settings/PageAnalytics.vue";
 import PageMeta from "./Settings/PageMeta.vue";
 const route = useRoute();
@@ -88,9 +88,14 @@ const settingsSidebarItems = [
 	{
 		title: "Global",
 		items: [
-			{ label: "General", value: "global_general", component: GlobalGeneral, title: "General" },
-			{ label: "Meta", value: "global_meta", component: GlobalMeta, title: "Meta" },
-			{ label: "Analytics", value: "global_analytics", component: GlobalAnalytics, title: "Analytics" },
+			{
+				label: "General",
+				value: "global_general",
+				component: GlobalGeneral,
+				title: "General",
+				icon: SettingsIcon,
+			},
+			{ label: "Code", value: "global_code", component: GlobalCode, title: "Code", icon: CodeIcon },
 		],
 	},
 ];

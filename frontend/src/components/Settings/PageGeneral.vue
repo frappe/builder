@@ -41,14 +41,14 @@
 					size="sm"
 					label="Authenticated Access"
 					description="Only logged-in users can access this page"
-					:modelValue="store.activePage?.authenticated_access"
+					:modelValue="Boolean(store.activePage?.authenticated_access)"
 					@update:modelValue="(val: Boolean) => store.updateActivePage('authenticated_access', val)" />
 				<hr class="w-full border-surface-gray-2" />
 				<Switch
 					size="sm"
 					label="Disable Indexing"
 					description="Prevent search engines from indexing this page"
-					:modelValue="store.activePage?.disable_indexing"
+					:modelValue="Boolean(store.activePage?.disable_indexing)"
 					@update:modelValue="(val: Boolean) => store.updateActivePage('disable_indexing', val)" />
 				<hr class="w-full border-surface-gray-2" />
 
