@@ -36,7 +36,7 @@
 							</span>
 							-
 							<span
-								class="flex max-w-96 gap-[2px] truncate text-base text-text-icons-gray-5"
+								class="flex max-w-96 truncate text-base text-text-icons-gray-5"
 								v-html="routeString"></span>
 						</div>
 						<FeatherIcon
