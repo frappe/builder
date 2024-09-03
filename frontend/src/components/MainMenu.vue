@@ -9,24 +9,19 @@
 				],
 			},
 			{
-				group: 'Builder',
+				hideLabel: true,
 				items: [
 					{
 						label: 'New Page',
 						onClick: () => $router.push({ name: 'builder', params: { pageId: 'new' } }),
 						icon: 'plus',
 					},
-				],
-			},
-			{
-				group: 'Settings',
-				items: [
 					{
 						label: `Switch to ${isDark ? 'light' : 'dark'} mode`,
 						onClick: () => toggleDark(),
 						icon: isDark ? 'sun' : 'moon',
 					},
-					{ label: 'Page Settings', onClick: () => $router.push({ name: 'settings' }), icon: 'settings' },
+					{ label: 'Settings', onClick: () => $emit('showSettings'), icon: 'settings' },
 				],
 			},
 			{
@@ -65,7 +60,6 @@ import { useDark, useToggle } from "@vueuse/core";
 import { Dropdown } from "frappe-ui";
 
 const store = useStore();
-
 const isDark = useDark();
 const toggleDark = useToggle(isDark);
 </script>

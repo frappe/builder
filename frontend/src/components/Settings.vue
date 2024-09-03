@@ -28,8 +28,6 @@
 <script setup lang="ts">
 import useStore from "@/store";
 import { computed, onActivated, ref } from "vue";
-import PageGeneral from "./Settings/PageGeneral.vue";
-// check route for page id
 import { useRoute } from "vue-router";
 import ChartIcon from "./Icons/Chart.vue";
 import CodeIcon from "./Icons/Code.vue";
@@ -38,12 +36,17 @@ import SettingsIcon from "./Icons/Settings.vue";
 import GlobalCode from "./Settings/GlobalCode.vue";
 import GlobalGeneral from "./Settings/GlobalGeneral.vue";
 import PageAnalytics from "./Settings/PageAnalytics.vue";
+import PageGeneral from "./Settings/PageGeneral.vue";
 import PageMeta from "./Settings/PageMeta.vue";
+
+const props = defineProps<{
+	onlyGlobal?: boolean;
+}>();
+
 const route = useRoute();
 const store = useStore();
 const emit = defineEmits(["close"]);
-
-const selectedItem = ref<string>("page_general");
+const selectedItem = ref<string>(props.onlyGlobal ? "global_general" : "page_general");
 
 type SidebarItem = {
 	label: string;
@@ -64,41 +67,43 @@ const selectedItemDoc = computed(() => {
 	}
 });
 
-const settingsSidebarItems = [
-	{
-		title: "Current Page",
-		items: [
-			{
-				label: "General",
-				value: "page_general",
-				component: PageGeneral,
-				title: "General",
-				icon: SettingsIcon,
-			},
-			{ label: "Meta", value: "page_meta", component: PageMeta, title: "Meta", icon: MetaIcon },
-			{
-				label: "Analytics",
-				value: "page_analytics",
-				component: PageAnalytics,
-				title: "Analytics",
-				icon: ChartIcon,
-			},
-		],
-	},
-	{
-		title: "Global",
-		items: [
-			{
-				label: "General",
-				value: "global_general",
-				component: GlobalGeneral,
-				title: "General",
-				icon: SettingsIcon,
-			},
-			{ label: "Code", value: "global_code", component: GlobalCode, title: "Code", icon: CodeIcon },
-		],
-	},
-];
+const pageSettings = {
+	title: "Current Page",
+	items: [
+		{
+			label: "General",
+			value: "page_general",
+			component: PageGeneral,
+			title: "General",
+			icon: SettingsIcon,
+		},
+		{ label: "Meta", value: "page_meta", component: PageMeta, title: "Meta", icon: MetaIcon },
+		{
+			label: "Analytics",
+			value: "page_analytics",
+			component: PageAnalytics,
+			title: "Analytics",
+			icon: ChartIcon,
+		},
+	],
+};
+
+const globalSettings = {
+	title: "Global",
+	items: [
+		{
+			label: "General",
+			value: "global_general",
+			component: GlobalGeneral,
+			title: "General",
+			icon: SettingsIcon,
+		},
+		{ label: "Code", value: "global_code", component: GlobalCode, title: "Code", icon: CodeIcon },
+	],
+};
+
+const settingsSidebarItems = [globalSettings];
+if (!props.onlyGlobal) settingsSidebarItems.unshift(pageSettings);
 
 const selectItem = (value: string) => {
 	selectedItem.value = value;

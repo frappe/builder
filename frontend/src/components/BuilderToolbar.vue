@@ -3,7 +3,7 @@
 		class="toolbar flex items-center justify-center bg-white px-2 py-1 shadow-sm dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"
 		ref="toolbar">
 		<div class="absolute left-3 flex items-center gap-5">
-			<MainMenu></MainMenu>
+			<MainMenu @showSettings="() => (showSettingsDialog = true)"></MainMenu>
 			<div class="flex gap-2">
 				<Tooltip
 					:text="mode.description"

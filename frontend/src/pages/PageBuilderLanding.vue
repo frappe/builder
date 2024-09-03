@@ -2,11 +2,62 @@
 	<div
 		class="toolbar sticky top-0 z-10 flex h-12 items-center justify-center bg-white p-2 shadow-sm dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"
 		ref="toolbar">
+		<Dialog
+			v-model="showSettingsDialog"
+			style="z-index: 40"
+			class="[&>div>div[id^=headlessui-dialog-panel]]:my-3"
+			:disableOutsideClickToClose="true"
+			:options="{
+				title: 'Settings',
+				size: '5xl',
+			}">
+			<template #body>
+				<Settings @close="showSettingsDialog = false" :onlyGlobal="true"></Settings>
+			</template>
+		</Dialog>
 		<div class="absolute left-3 flex items-center">
-			<router-link class="flex items-center gap-2" :to="{ name: 'home' }">
-				<img src="/builder_logo.png" alt="logo" class="h-7" />
-				<h1 class="text-md mt-[2px] font-semibold leading-5 text-gray-800 dark:text-gray-200">Builder</h1>
-			</router-link>
+			<Dropdown
+				:options="[
+					{
+						group: 'Builder',
+						hideLabel: true,
+						items: [
+							{
+								label: 'New Page',
+								onClick: () => $router.push({ name: 'builder', params: { pageId: 'new' } }),
+								icon: 'plus',
+							},
+						],
+					},
+					{
+						hideLabel: true,
+						items: [
+							{
+								label: `Switch to ${isDark ? 'light' : 'dark'} mode`,
+								onClick: () => toggleDark(),
+								icon: isDark ? 'sun' : 'moon',
+							},
+							{
+								label: 'Settings',
+								onClick: () => (showSettingsDialog = true),
+								icon: 'settings',
+							},
+						],
+					},
+				]"
+				size="sm"
+				class="flex-1 [&>div>div>div]:w-full"
+				placement="right">
+				<template v-slot="{ open }">
+					<div class="flex cursor-pointer items-center gap-2">
+						<img src="/builder_logo.png" alt="logo" class="h-7" />
+						<h1 class="text-md mt-[2px] font-semibold leading-5 text-gray-800 dark:text-gray-200">Builder</h1>
+						<FeatherIcon
+							:name="open ? 'chevron-up' : 'chevron-down'"
+							class="h-4 w-4 !text-gray-700 dark:!text-gray-200"></FeatherIcon>
+					</div>
+				</template>
+			</Dropdown>
 		</div>
 	</div>
 	<section class="max-w-800 m-auto mb-32 flex w-3/4 flex-col pt-10">
@@ -227,16 +278,19 @@
 <script setup lang="ts">
 import Input from "@/components/Input.vue";
 import OptionToggle from "@/components/OptionToggle.vue";
+import Settings from "@/components/Settings.vue";
 import TemplateSelector from "@/components/TemplateSelector.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { UseTimeAgo } from "@vueuse/components";
-import { useStorage, watchDebounced } from "@vueuse/core";
+import { useDark, useStorage, useToggle, watchDebounced } from "@vueuse/core";
 import { Badge, createDocumentResource, Dropdown } from "frappe-ui";
 import { onActivated, Ref, ref } from "vue";
 
+const isDark = useDark();
+const toggleDark = useToggle(isDark);
 const store = useStore();
 const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list">;
 
@@ -306,4 +360,6 @@ const duplicatePage = async (page: BuilderPage) => {
 const loadMore = () => {
 	webPages.next();
 };
+
+const showSettingsDialog = ref(false);
 </script>
