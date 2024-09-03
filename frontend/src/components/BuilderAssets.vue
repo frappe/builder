@@ -20,9 +20,11 @@
 						draggable="true"
 						:class="{
 							'!border-gray-400 dark:!border-zinc-600':
-								store.fragmentData.fragmentName === component.component_name,
+								store.fragmentData.fragmentId === component.name ||
+								selectedComponent === component.component_id,
 						}"
-						@click="store.editComponent(null, component.name)"
+						@click="selectComponent(component)"
+						@dblclick="store.editComponent(null, component.name)"
 						@dragstart="(ev) => setComponentData(ev, component)">
 						<div class="flex items-center gap-2">
 							<FeatherIcon :name="'box'" class="h-4 w-4 text-gray-800 dark:text-zinc-400"></FeatherIcon>
@@ -81,5 +83,14 @@ const deleteComponent = async (component: BlockComponent) => {
 
 const setComponentData = (ev: DragEvent, component: BlockComponent) => {
 	ev?.dataTransfer?.setData("componentName", component.name);
+};
+
+const selectedComponent = ref<string | null>(null);
+const selectComponent = (component: BlockComponent) => {
+	selectedComponent.value = component.component_id;
+	// if in edit mode, open the component in editor
+	if (store.fragmentData.fragmentId) {
+		store.editComponent(null, component.name);
+	}
 };
 </script>

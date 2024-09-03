@@ -79,6 +79,7 @@ const useStore = defineStore("store", {
 			saveAction: <Function | null>null,
 			saveActionLabel: <string | null>null,
 			fragmentName: <string | null>null,
+			fragmentId: <string | null>null,
 		},
 	}),
 	actions: {
@@ -552,6 +553,7 @@ const useStore = defineStore("store", {
 				saveAction,
 				saveActionLabel,
 				fragmentName: fragmentName || block.getBlockDescription(),
+				fragmentId: block.blockId,
 			};
 			this.editingMode = "fragment";
 		},
@@ -574,6 +576,7 @@ const useStore = defineStore("store", {
 				saveAction: null,
 				saveActionLabel: null,
 				fragmentName: null,
+				fragmentId: null,
 			};
 		},
 	},

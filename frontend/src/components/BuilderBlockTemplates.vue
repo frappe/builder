@@ -16,7 +16,8 @@
 				<div
 					class="relative flex h-24 w-full translate-x-0 translate-y-0 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden truncate rounded border border-transparent bg-gray-100 px-2 py-1.5 dark:bg-zinc-800"
 					draggable="true"
-					@click="is_developer_mode && store.editBlockTemplate(blockTemplate.name)"
+					@click="selectBlockTemplate(blockTemplate)"
+					@dblclick="is_developer_mode && store.editBlockTemplate(blockTemplate.name)"
 					@dragstart="(ev) => setBlockTemplateData(ev, blockTemplate)">
 					<div class="flex h-11 w-15 items-center justify-center">
 						<img :src="blockTemplate.preview" class="text-gray-800 dark:text-zinc-400" />
@@ -51,5 +52,13 @@ const blockTemplates = computed(() => {
 
 const setBlockTemplateData = (ev: DragEvent, component: BlockComponent) => {
 	ev?.dataTransfer?.setData("blockTemplate", component.name);
+};
+
+const selectedBlockTemplate = ref<string | null>(null);
+const selectBlockTemplate = (blockTemplate: BlockComponent) => {
+	selectedBlockTemplate.value = blockTemplate.name;
+	if (is_developer_mode && store.fragmentData.fragmentId) {
+		store.editBlockTemplate(blockTemplate.name);
+	}
 };
 </script>
