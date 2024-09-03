@@ -3,7 +3,7 @@
 		<div v-show="blockTemplates.length > 10 || blockTemplateFilter">
 			<Input
 				type="text"
-				placeholder="Search component"
+				placeholder="Search Template"
 				v-model="blockTemplateFilter"
 				@input="
 					(value: string) => {
@@ -11,29 +11,33 @@
 					}
 				" />
 		</div>
-		<div class="grid grid-cols-2 gap-4">
-			<div v-for="blockTemplate in blockTemplates" :key="blockTemplate.name" class="flex">
-				<div
-					class="relative flex h-24 w-full translate-x-0 translate-y-0 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden truncate rounded border border-transparent bg-gray-100 px-2 py-1.5 dark:bg-zinc-800"
-					draggable="true"
-					@click="selectBlockTemplate(blockTemplate)"
-					@dblclick="is_developer_mode && store.editBlockTemplate(blockTemplate.name)"
-					@dragstart="(ev) => setBlockTemplateData(ev, blockTemplate)">
-					<div class="flex h-11 w-15 items-center justify-center">
-						<img :src="blockTemplate.preview" class="text-gray-800 dark:text-zinc-400" />
+		<CollapsibleSection :sectionName="section.sectionName" v-for="section in sections">
+			<div class="grid grid-cols-2 gap-4">
+				<div v-for="blockTemplate in section.blocks" :key="blockTemplate.name" class="flex">
+					<div
+						class="relative flex h-24 w-full translate-x-0 translate-y-0 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden truncate rounded border border-transparent bg-gray-100 px-2 py-1.5 dark:bg-zinc-800"
+						draggable="true"
+						@click="selectBlockTemplate(blockTemplate)"
+						@dblclick="is_developer_mode && store.editBlockTemplate(blockTemplate.name)"
+						@dragstart="(ev) => setBlockTemplateData(ev, blockTemplate)">
+						<div class="flex h-11 w-15 items-center justify-center">
+							<img :src="blockTemplate.preview" class="text-gray-800 dark:text-zinc-400" />
+						</div>
+						<p class="text-sm text-gray-800 dark:text-zinc-400">
+							{{ blockTemplate.template_name }}
+						</p>
 					</div>
-					<p class="text-sm text-gray-800 dark:text-zinc-400">
-						{{ blockTemplate.template_name }}
-					</p>
 				</div>
 			</div>
-		</div>
+		</CollapsibleSection>
 	</div>
 </template>
 <script setup lang="ts">
 import builderBlockTemplate from "@/data/builderBlockTemplate";
 import useStore from "@/store";
+import { BlockTemplate } from "@/types/Builder/BlockTemplate";
 import { computed, ref } from "vue";
+import CollapsibleSection from "./CollapsibleSection.vue";
 import Input from "./Input.vue";
 
 const store = useStore();
@@ -41,7 +45,7 @@ const is_developer_mode = window.is_developer_mode;
 
 const blockTemplateFilter = ref("");
 const blockTemplates = computed(() => {
-	return builderBlockTemplate.data.filter((d) => {
+	return builderBlockTemplate.data.filter((d: BlockTemplate) => {
 		if (blockTemplateFilter.value) {
 			return d.name?.toLowerCase().includes(blockTemplateFilter.value.toLowerCase());
 		} else {
@@ -50,15 +54,31 @@ const blockTemplates = computed(() => {
 	});
 });
 
-const setBlockTemplateData = (ev: DragEvent, component: BlockComponent) => {
+const setBlockTemplateData = (ev: DragEvent, component: BlockTemplate) => {
 	ev?.dataTransfer?.setData("blockTemplate", component.name);
 };
 
 const selectedBlockTemplate = ref<string | null>(null);
-const selectBlockTemplate = (blockTemplate: BlockComponent) => {
+const selectBlockTemplate = (blockTemplate: BlockTemplate) => {
 	selectedBlockTemplate.value = blockTemplate.name;
 	if (is_developer_mode && store.fragmentData.fragmentId) {
 		store.editBlockTemplate(blockTemplate.name);
 	}
 };
+
+const getFilteredBlockTemplates = (section: string) => {
+	return blockTemplates.value.filter((d: BlockTemplate) => d.category === section);
+};
+
+const sections = computed(() => {
+	const categories = store.blockTemplateCategoryOptions as string[];
+	return categories
+		.map((category) => {
+			return {
+				sectionName: category as string,
+				blocks: getFilteredBlockTemplates(category) as BlockTemplate[],
+			};
+		})
+		.filter((section) => section.blocks.length > 0);
+});
 </script>

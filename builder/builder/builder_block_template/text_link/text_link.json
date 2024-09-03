@@ -1,0 +1,14 @@
+{
+ "block": "{\"blockId\":\"z5hw6riip\",\"children\":[],\"baseStyles\":{\"fontSize\":\"16px\",\"width\":\"fit-content\",\"height\":\"fit-content\",\"lineHeight\":\"1.4\",\"minWidth\":\"10px\",\"position\":\"static\"},\"rawStyles\":{},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[],\"dataKey\":null,\"element\":\"p\",\"innerHTML\":\"<p>Hi, <a target=\\\"_blank\\\" rel=\\\"noopener noreferrer nofollow\\\" href=\\\"https://click.me\\\">click me</a>&nbsp;</p>\",\"customAttributes\":{}}",
+ "category": "Typography",
+ "creation": "2024-09-03 23:08:18.568344",
+ "docstatus": 0,
+ "doctype": "Block Template",
+ "idx": 0,
+ "modified": "2024-09-03 23:08:18.568344",
+ "modified_by": "Administrator",
+ "name": "Text Link",
+ "owner": "Administrator",
+ "preview": "/builder_assets/Text Link/text-link.png",
+ "template_name": "Text Link"
+}

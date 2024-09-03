@@ -17,5 +17,5 @@ export interface BlockTemplate{
 	/**	Preview : Data	*/
 	preview: string
 	/**	Category : Select	*/
-	category?: "Basic" | "Structure"
+	category?: "Structure" | "Basic" | "Typography" | "Basic Forms" | "Form parts" | "Media" | "Advanced"
 }

@@ -681,8 +681,11 @@ const optionsSectionProperties = [
 					"nav",
 					"header",
 					"footer",
+					"label",
 					"select",
 					"option",
+					"blockquote",
+					"cite",
 				],
 				modelValue: blockController.getKeyValue("element"),
 			};

@@ -13,6 +13,7 @@
 				label="Route"
 				@input="(val) => (page.route = val)"
 				:modelValue="page.route"
+				:hideClearButton="true"
 				@update:modelValue="(val) => store.updateActivePage('route', val)" />
 			<!-- Dynamic Route Variables -->
 			<CollapsibleSection
