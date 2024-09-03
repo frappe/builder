@@ -26,7 +26,7 @@
 		<div>
 			<Popover transition="default" placement="bottom" popoverClass="!absolute top-0 !mt-[20px]">
 				<template #target="{ togglePopover, isOpen }">
-					<div class="flex cursor-pointer items-center gap-2 p-2 dark:bg-zinc-900 dark:text-zinc-200">
+					<div class="flex cursor-pointer items-center gap-2 p-2 text-text-icons-gray-8">
 						<div class="flex h-6 items-center text-base text-text-icons-gray-6" v-if="!store.activePage">
 							Loading...
 						</div>
@@ -36,7 +36,7 @@
 							</span>
 							-
 							<span
-								class="flex max-w-96 gap-[2px] truncate text-base text-gray-500 dark:text-zinc-500"
+								class="flex max-w-96 gap-[2px] truncate text-base text-text-icons-gray-5"
 								v-html="routeString"></span>
 						</div>
 						<FeatherIcon
@@ -129,7 +129,6 @@
 			</router-link>
 			<Button
 				variant="solid"
-				:disabled="!store.activePage?.draft_blocks"
 				iconLeft="globe"
 				@click="
 					() => {
@@ -208,8 +207,8 @@ const routeString = computed(() => {
 		if (variable) {
 			const previewValue = store.routeVariables[variable];
 			return `<span class="${
-				previewValue ? "bg-blue-100" : "bg-purple-100"
-			} rounded-sm px-1 py-[1px] pb-[2px] text-sm">${previewValue || part}</span>`;
+				previewValue ? "bg-purple-100 dark:bg-purple-900" : "bg-gray-100 dark:bg-gray-800"
+			} rounded-sm px-[5px] pb-[2px] text-sm">${previewValue || part}</span>`;
 		} else {
 			return part;
 		}
