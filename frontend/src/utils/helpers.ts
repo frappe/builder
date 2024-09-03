@@ -319,10 +319,10 @@ function getCopyWithoutParent(block: BlockOptions | Block): BlockOptions {
 function getRouteVariables(route: string) {
 	const variables = [] as string[];
 	route.split("/").map((part) => {
-		if (part.startsWith(":")) {
+		if (part.startsWith(":") && part.length > 1) {
 			variables.push(part.slice(1));
 		}
-		if (part.startsWith("<")) {
+		if (part.startsWith("<") && part.length > 1) {
 			variables.push(part.slice(1, -1));
 		}
 	});
