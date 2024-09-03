@@ -51,8 +51,9 @@ const useStore = defineStore("store", {
 		propertyFilter: <string | null>null,
 		builderLayout: {
 			rightPanelWidth: 275,
-			leftPanelWidth: 280,
+			leftPanelWidth: 250,
 			scriptEditorHeight: 300,
+			optionsPanelWidth: 57,
 		},
 		pageName: "Home",
 		route: "/",

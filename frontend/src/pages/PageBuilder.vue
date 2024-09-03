@@ -4,7 +4,7 @@
 		<div>
 			<BuilderLeftPanel
 				v-show="store.showLeftPanel"
-				class="no-scrollbar absolute bottom-0 left-0 top-[var(--toolbar-height)] z-20 overflow-auto border-r-[1px] bg-white shadow-lg dark:border-gray-800 dark:bg-zinc-900"></BuilderLeftPanel>
+				class="absolute bottom-0 left-0 top-[var(--toolbar-height)] z-20 border-r-[1px] bg-white shadow-lg dark:border-gray-800 dark:bg-zinc-900"></BuilderLeftPanel>
 			<BuilderCanvas
 				ref="fragmentCanvas"
 				:key="store.fragmentData.block?.blockId"
@@ -15,7 +15,11 @@
 					padding: '40px',
 				}"
 				:style="{
-					left: `${store.showLeftPanel ? store.builderLayout.leftPanelWidth : 0}px`,
+					left: `${
+						store.showLeftPanel
+							? store.builderLayout.leftPanelWidth + store.builderLayout.optionsPanelWidth
+							: 0
+					}px`,
 					right: `${store.showRightPanel ? store.builderLayout.rightPanelWidth : 0}px`,
 				}"
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-400 p-10 dark:bg-zinc-700">
@@ -44,7 +48,11 @@
 					minHeight: '1000px',
 				}"
 				:style="{
-					left: `${store.showLeftPanel ? store.builderLayout.leftPanelWidth : 0}px`,
+					left: `${
+						store.showLeftPanel
+							? store.builderLayout.leftPanelWidth + store.builderLayout.optionsPanelWidth
+							: 0
+					}px`,
 					right: `${store.showRightPanel ? store.builderLayout.rightPanelWidth : 0}px`,
 				}"
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-200 p-10 dark:bg-zinc-800"></BuilderCanvas>

@@ -1,10 +1,22 @@
 <template>
-	<div
-		:style="{
-			width: `${store.builderLayout.leftPanelWidth}px`,
-		}">
+	<div class="flex">
+		<div class="flex min-h-full flex-col items-center gap-3 border-r border-outline-gray-2 p-3">
+			<button
+				v-for="option of leftPanelOptions"
+				:key="option.value"
+				class="h-8 w-8 rounded text-text-icons-gray-7"
+				:class="{
+					'bg-surface-gray-3': store.leftPanelActiveTab === option.value,
+				}"
+				@click.stop="setActiveTab(option.value as LeftSidebarTabOption)">
+				<component :is="option.icon" />
+			</button>
+		</div>
 		<div
-			class="relative min-h-full"
+			class="no-scrollbar relative min-h-full overflow-auto"
+			:style="{
+				width: `${store.builderLayout.leftPanelWidth}px`,
+			}"
 			@click.stop="store.leftPanelActiveTab === 'Layers' && store.activeCanvas?.clearSelection()">
 			<PanelResizer
 				:dimension="store.builderLayout.leftPanelWidth"
@@ -24,19 +36,8 @@
 					Generate
 				</button>
 			</div>
-			<div class="flex w-full border-gray-200 px-2 text-base dark:border-zinc-800">
-				<button
-					v-for="tab of ['Layers', 'Assets'] as LeftSidebarTabOption[]"
-					:key="tab"
-					class="mx-3 flex-1 p-2 py-3"
-					@click.stop="setActiveTab(tab as LeftSidebarTabOption)"
-					:class="{
-						'border-b-[1px] border-gray-900 dark:border-zinc-500 dark:text-zinc-300':
-							store.leftPanelActiveTab === tab,
-						'text-gray-700 dark:text-zinc-500': store.leftPanelActiveTab !== tab,
-					}">
-					{{ tab }}
-				</button>
+			<div v-show="store.leftPanelActiveTab === 'Blocks'">
+				<BuilderBlockTemplates class="mt-1 p-4 pt-3" />
 			</div>
 			<div v-show="store.leftPanelActiveTab === 'Assets'">
 				<BuilderAssets class="mt-1 p-4 pt-3" />
@@ -58,16 +59,19 @@
 	</div>
 </template>
 <script setup lang="ts">
+import ComponentIcon from "@/components/Icons/Component.vue";
+import LayersIcon from "@/components/Icons/Layers.vue";
+import PlusIcon from "@/components/Icons/Plus.vue";
+import Block from "@/utils/block";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { createResource } from "frappe-ui";
 import { Ref, inject, ref, watch, watchEffect } from "vue";
 import useStore from "../store";
 import BlockLayers from "./BlockLayers.vue";
 import BuilderAssets from "./BuilderAssets.vue";
-import PanelResizer from "./PanelResizer.vue";
-
-import Block from "@/utils/block";
+import BuilderBlockTemplates from "./BuilderBlockTemplates.vue";
 import BuilderCanvas from "./BuilderCanvas.vue";
+import PanelResizer from "./PanelResizer.vue";
 
 const pageCanvas = inject("pageCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
 const fragmentCanvas = inject("fragmentCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
@@ -87,6 +91,24 @@ watchEffect(() => {
 		store.activeLayers = componentLayers.value;
 	}
 });
+
+const leftPanelOptions = [
+	{
+		label: "Blocks",
+		value: "Blocks",
+		icon: PlusIcon,
+	},
+	{
+		label: "Layers",
+		value: "Layers",
+		icon: LayersIcon,
+	},
+	{
+		label: "Components",
+		value: "Assets",
+		icon: ComponentIcon,
+	},
+];
 
 const getPage = () => {
 	generating.value = true;
