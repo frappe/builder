@@ -1,0 +1,14 @@
+{
+ "block": "{\"blockId\":\"1w8x9wtvc\",\"children\":[{\"blockId\":\"xh8ticga0\",\"children\":[],\"baseStyles\":{\"display\":\"flex\",\"flexDirection\":\"column\",\"flexShrink\":1,\"overflow\":\"hidden\",\"position\":\"static\",\"background\":\"#e2e2e2\",\"width\":\"100%\",\"height\":\"100%\",\"justifyContent\":\"center\",\"alignItems\":\"center\"},\"rawStyles\":{},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[],\"dataKey\":null,\"blockName\":\"container\",\"element\":\"div\",\"customAttributes\":{}},{\"blockId\":\"dqkd8jjr8\",\"children\":[{\"blockId\":\"8xas835ea\",\"children\":[],\"baseStyles\":{\"display\":\"flex\",\"flexDirection\":\"column\",\"flexShrink\":1,\"overflow\":\"hidden\",\"position\":\"static\",\"background\":\"#c7c7c7\",\"width\":\"100%\",\"height\":\"100%\",\"justifyContent\":\"center\",\"alignItems\":\"center\"},\"rawStyles\":{},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[],\"dataKey\":null,\"blockName\":\"container\",\"element\":\"div\",\"customAttributes\":{}},{\"blockId\":\"sntr9rcir\",\"children\":[],\"baseStyles\":{\"display\":\"flex\",\"flexDirection\":\"column\",\"flexShrink\":1,\"overflow\":\"hidden\",\"position\":\"static\",\"background\":\"#ededed\",\"width\":\"100%\",\"height\":\"100%\",\"justifyContent\":\"center\",\"alignItems\":\"center\"},\"rawStyles\":{},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[],\"dataKey\":null,\"blockName\":\"container\",\"element\":\"div\",\"customAttributes\":{}}],\"baseStyles\":{\"display\":\"flex\",\"flexDirection\":\"column\",\"flexShrink\":1,\"height\":\"100%\",\"width\":\"100%\",\"overflow\":\"hidden\",\"position\":\"relative\",\"gap\":\"20px\"},\"rawStyles\":{},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[],\"dataKey\":null,\"blockName\":\"container\",\"element\":\"div\",\"customAttributes\":{}}],\"baseStyles\":{\"display\":\"flex\",\"flexDirection\":\"row\",\"flexShrink\":0,\"overflow\":\"hidden\",\"position\":\"static\",\"background\":\"#ffffff\",\"width\":\"100%\",\"height\":\"600px\",\"gap\":\"20px\"},\"rawStyles\":{},\"mobileStyles\":{\"flexDirection\":\"column\"},\"tabletStyles\":{},\"attributes\":{},\"classes\":[],\"dataKey\":null,\"blockName\":\"container\",\"element\":\"div\",\"customAttributes\":{}}",
+ "category": "Structure",
+ "creation": "2024-09-03 22:36:28.203260",
+ "docstatus": 0,
+ "doctype": "Block Template",
+ "idx": 0,
+ "modified": "2024-09-03 23:19:34.970272",
+ "modified_by": "Administrator",
+ "name": "Quick Stack",
+ "owner": "Administrator",
+ "preview": "/builder_assets/Quick Stack/quick-stack.png",
+ "template_name": "Quick Stack"
+}

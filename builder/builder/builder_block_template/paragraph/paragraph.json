@@ -1,0 +1,14 @@
+{
+ "block": "{\"blockId\":\"z5hw6riip\",\"children\":[],\"baseStyles\":{\"fontSize\":\"16px\",\"width\":\"fit-content\",\"height\":\"fit-content\",\"lineHeight\":\"1.4\",\"minWidth\":\"10px\",\"position\":\"static\"},\"rawStyles\":{},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[],\"dataKey\":null,\"element\":\"p\",\"innerHTML\":\"<p>\\\"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\\\"</p>\",\"customAttributes\":{}}",
+ "category": "Typography",
+ "creation": "2024-09-03 23:03:27.782586",
+ "docstatus": 0,
+ "doctype": "Block Template",
+ "idx": 0,
+ "modified": "2024-09-03 23:03:27.782586",
+ "modified_by": "Administrator",
+ "name": "Paragraph",
+ "owner": "Administrator",
+ "preview": "/builder_assets/Paragraph/paragraph.png",
+ "template_name": "Paragraph"
+}

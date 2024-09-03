@@ -39,13 +39,13 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Category",
-   "options": "Basic\nStructure"
+   "options": "Structure\nBasic\nTypography\nBasic Forms\nForm parts\nMedia\nAdvanced"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-08-22 21:48:45.695550",
+ "modified": "2024-09-03 22:17:07.960608",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Block Template",

@@ -1,0 +1,14 @@
+{
+ "block": "{\"blockId\":\"udqa5zyxm\",\"children\":[{\"blockId\":\"98f44tdju\",\"children\":[],\"baseStyles\":{\"fontSize\":\"16px\",\"width\":\"fit-content\",\"height\":\"fit-content\",\"lineHeight\":\"1.4\",\"minWidth\":\"10px\",\"position\":\"static\"},\"rawStyles\":{},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[],\"dataKey\":null,\"element\":\"p\",\"innerHTML\":\"<p>Words can be like X-rays, if you use them properly\u2014they\u2019ll go through anything. You read and you\u2019re pierced.</p>\",\"customAttributes\":{}},{\"blockId\":\"ztvga4ewc\",\"children\":[{\"blockId\":\"pxv3ojq7t\",\"children\":[],\"baseStyles\":{\"height\":\"fit-content\",\"width\":\"fit-content\"},\"rawStyles\":{},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[],\"dataKey\":null,\"element\":\"div\",\"innerHTML\":\"<p>\u2014Aldous Huxley,\",\"originalElement\":\"__raw_html__\",\"customAttributes\":{}},{\"blockId\":\"bglu90k42\",\"children\":[],\"baseStyles\":{\"display\":\"flex\",\"flexDirection\":\"column\",\"flexShrink\":0,\"overflow\":\"hidden\",\"position\":\"static\",\"background\":\"#e2e2e2\"},\"rawStyles\":{},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[],\"dataKey\":null,\"element\":\"cite\",\"innerHTML\":\"<p>Brave New World</p>\",\"customAttributes\":{}}],\"baseStyles\":{\"display\":\"flex\",\"flexDirection\":\"row\",\"flexShrink\":0,\"height\":\"fit-content\",\"width\":\"fit-content\",\"overflow\":\"hidden\",\"position\":\"relative\",\"gap\":\"6px\"},\"rawStyles\":{},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[],\"dataKey\":null,\"blockName\":\"container\",\"element\":\"div\",\"customAttributes\":{}}],\"baseStyles\":{\"display\":\"flex\",\"flexDirection\":\"column\",\"flexShrink\":0,\"overflow\":\"hidden\",\"position\":\"static\",\"top\":\"auto\",\"left\":\"auto\",\"width\":\"100%\"},\"rawStyles\":{},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[],\"dataKey\":null,\"element\":\"blockquote\",\"customAttributes\":{\"cite\":\"https://www.huxley.net/bnw/four.html\"}}",
+ "category": "Typography",
+ "creation": "2024-09-03 23:17:52.830414",
+ "docstatus": 0,
+ "doctype": "Block Template",
+ "idx": 0,
+ "modified": "2024-09-03 23:17:52.830414",
+ "modified_by": "Administrator",
+ "name": "Blockquote",
+ "owner": "Administrator",
+ "preview": "/builder_assets/Blockquote/blockquote.png",
+ "template_name": "Blockquote"
+}

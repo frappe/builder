@@ -51,7 +51,7 @@
 							store.saveBlockTemplate(
 								block,
 								blockTemplateProperties.templateName,
-								'Basic',
+								blockTemplateProperties.category,
 								blockTemplateProperties.previewImage,
 							);
 							showBlockTemplateDialog = false;
@@ -67,6 +67,14 @@
 						v-model="blockTemplateProperties.templateName"
 						label="Template Name"
 						required
+						:hideClearButton="true"
+						class="[&>div>input]:dark:bg-zinc-900 [&>label]:dark:text-zinc-300" />
+
+					<Input
+						type="select"
+						v-model="blockTemplateProperties.category"
+						label="Category"
+						:options="store.blockTemplateCategoryOptions"
 						:hideClearButton="true"
 						class="[&>div>input]:dark:bg-zinc-900 [&>label]:dark:text-zinc-300" />
 					<div class="relative">
@@ -138,7 +146,7 @@ const componentProperties = ref({
 
 const blockTemplateProperties = ref({
 	templateName: "",
-	category: "",
+	category: "" as (typeof store.blockTemplateCategoryOptions)[number],
 	previewImage: "",
 });
 
