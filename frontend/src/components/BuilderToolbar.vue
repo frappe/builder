@@ -203,6 +203,7 @@ const routeString = computed(() => {
 			variable = part.slice(1);
 		} else if (part.startsWith("<")) {
 			variable = part.slice(1, -1);
+			part = `&lt;${variable}&gt;`;
 		}
 		if (variable) {
 			const previewValue = store.routeVariables[variable];
