@@ -595,7 +595,7 @@ class Block implements BlockOptions {
 		return dataKey;
 	}
 	setDataKey(key: keyof BlockDataKey, value: BlockDataKeyType) {
-		if (!this.dataKey) {
+		if (!this.dataKey || !this.dataKey[key]) {
 			this.dataKey = {
 				key: "",
 				type: this.isImage() || this.isLink() ? "attribute" : "key",

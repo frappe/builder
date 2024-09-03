@@ -1202,9 +1202,7 @@ const sections = [
 	{
 		name: "Data Key",
 		properties: dataKeySectionProperties,
-		collapsed: computed(() => {
-			return !blockController.getDataKey("key");
-		}),
+		collapsed: false,
 	},
 	{
 		name: "HTML Attributes",
