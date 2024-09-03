@@ -8,6 +8,7 @@
 			}"
 			@change="
 				($event: Event) => {
+					console.log($event);
 					if (type === 'checkbox') {
 						emit('update:modelValue', ($event.target as HTMLInputElement).checked);
 					} else {

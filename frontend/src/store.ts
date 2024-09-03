@@ -13,6 +13,7 @@ import { webPages } from "./data/webPage";
 import { BlockTemplate } from "./types/Builder/BlockTemplate";
 import { BuilderComponent } from "./types/Builder/BuilderComponent";
 import { BuilderPage } from "./types/Builder/BuilderPage";
+import { BuilderSettings } from "./types/Builder/BuilderSettings";
 import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
 import {
@@ -401,6 +402,15 @@ const useStore = defineStore("store", {
 					if (this.activePage) {
 						this.activePage[key] = value;
 					}
+				});
+		},
+		updateBuilderSettings(key: keyof BuilderSettings, value: any) {
+			return builderSettings.setValue
+				.submit({
+					[key]: value,
+				})
+				.then(() => {
+					builderSettings.reload();
 				});
 		},
 		openPageInBrowser(page: BuilderPage) {
