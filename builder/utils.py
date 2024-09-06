@@ -297,7 +297,4 @@ class ColonRule(Rule):
 
 	@staticmethod
 	def convert_colon_to_brackets(string):
-		# Find all instances of :variable and replace with <variable>
-		import re
-
-		return re.sub(r":(\w+)", r"<\1>", string)
+		return re.sub(r":([a-zA-Z0-9_-]+)", r"<\1>", string)
