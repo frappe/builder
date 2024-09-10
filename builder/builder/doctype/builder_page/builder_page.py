@@ -48,11 +48,14 @@ class BuilderPageRenderer(DocumentPage):
 			return True
 
 		for d in get_web_pages_with_dynamic_routes():
-			if evaluate_dynamic_routes([ColonRule(f"/{d.route}", endpoint=d.name)], self.path):
-				self.doctype = "Builder Page"
-				self.docname = d.name
-				self.validate_access()
-				return True
+			try:
+				if evaluate_dynamic_routes([ColonRule(f"/{d.route}", endpoint=d.name)], self.path):
+					self.doctype = "Builder Page"
+					self.docname = d.name
+					self.validate_access()
+					return True
+			except ValueError:
+				return False
 
 		return False
 
@@ -591,12 +594,15 @@ def get_web_pages_with_dynamic_routes() -> dict[str, str]:
 
 
 def resolve_path(path):
-	if find_page_with_path(path):
-		return path
-	elif evaluate_dynamic_routes(
-		[ColonRule(f"/{d.route}", endpoint=d.name) for d in get_web_pages_with_dynamic_routes()],
-		path,
-	):
-		return path
+	try:
+		if find_page_with_path(path):
+			return path
+		elif evaluate_dynamic_routes(
+			[ColonRule(f"/{d.route}", endpoint=d.name) for d in get_web_pages_with_dynamic_routes()],
+			path,
+		):
+			return path
+	except Exception:
+		pass
 
 	return original_resolve_path(path)
