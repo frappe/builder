@@ -82,9 +82,7 @@ class BuilderPage(WebsiteGenerator):
 		if not self.page_title:
 			self.page_title = "My Page"
 		if not self.route:
-			self.route = (
-				f"pages/{camel_case_to_kebab_case(self.page_title, True)}-{frappe.generate_hash(length=4)}"
-			)
+			self.route = f"pages/{self.name}"
 
 	def on_update(self):
 		if (
