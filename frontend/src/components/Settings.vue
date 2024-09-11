@@ -18,7 +18,7 @@
 				</a>
 			</div>
 		</div>
-		<div class="flex flex-1 flex-col gap-5 bg-white p-14 px-16 dark:bg-zinc-900">
+		<div class="flex flex-1 flex-col gap-5 bg-surface-white p-14 px-16 dark:bg-zinc-900">
 			<h2 class="text-xl font-semibold leading-none">{{ selectedItemDoc?.title }}</h2>
 			<Button icon="x" @click="$emit('close')" class="absolute right-5 top-5"></Button>
 			<component :is="(selectedItemDoc as SidebarItem).component" />

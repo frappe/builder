@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="toolbar flex items-center justify-center bg-white px-2 py-1 shadow-sm dark:border-b-[1px] dark:border-gray-800 dark:bg-zinc-900"
+		class="toolbar flex items-center justify-center border-b-[1px] border-outline-gray-1 bg-surface-white px-2 py-1"
 		ref="toolbar">
 		<div class="absolute left-3 flex items-center gap-5">
 			<MainMenu @showSettings="() => (showSettingsDialog = true)"></MainMenu>
@@ -48,7 +48,7 @@
 				</template>
 				<template #body="{ close }">
 					<div
-						class="flex w-72 flex-col gap-3 rounded bg-white p-4 shadow-lg dark:bg-zinc-900"
+						class="flex w-72 flex-col gap-3 rounded bg-surface-white p-4 shadow-lg"
 						v-if="store.activePage">
 						<PageOptions v-if="store.activePage" :page="store.activePage"></PageOptions>
 					</div>

@@ -20,9 +20,7 @@ const webPages = createListResource({
 	filters: {
 		is_template: 0,
 	},
-	auto: true,
 	cache: "pages",
-	orderBy: "modified desc",
 	pageLength: 50,
 });
 

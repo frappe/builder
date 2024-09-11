@@ -24,7 +24,7 @@
 			</div>
 		</template>
 		<template #body>
-			<div class="rounded-lg bg-white p-3 shadow-lg dark:bg-zinc-900">
+			<div class="rounded-lg bg-surface-white p-3 shadow-lg">
 				<FileUploader
 					@success="(file: FileDoc) => setImageURL(file.file_url)"
 					:uploadArgs="{

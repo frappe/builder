@@ -10,8 +10,7 @@
 				@resize="(width) => (store.builderLayout.rightPanelWidth = width)"
 				:min-dimension="275"
 				:max-dimension="400" />
-			<div
-				class="sticky top-0 z-[12] flex w-full border-gray-200 bg-white px-2 text-base dark:border-zinc-800 dark:bg-zinc-900">
+			<div class="sticky top-0 z-[12] flex w-full bg-surface-white px-2 text-base">
 				<button
 					v-for="tab of ['Properties', 'Script'] as RightSidebarTabOption[]"
 					:key="tab"
@@ -44,7 +43,6 @@
 <script setup lang="ts">
 import useStore from "@/store";
 import BlockProperties from "./BlockProperties.vue";
-import PageOptions from "./PageOptions.vue";
 import PageScript from "./PageScript.vue";
 import PanelResizer from "./PanelResizer.vue";
 const store = useStore();

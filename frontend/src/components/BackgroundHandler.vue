@@ -28,7 +28,7 @@
 			</div>
 		</template>
 		<template #body>
-			<div class="rounded-lg bg-white p-3 shadow-lg dark:bg-zinc-900">
+			<div class="rounded-lg bg-surface-white p-3 shadow-lg">
 				<div
 					class="image-preview group relative h-24 w-48 cursor-pointer overflow-hidden rounded bg-gray-200 dark:bg-zinc-700"
 					:style="{

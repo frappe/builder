@@ -4,7 +4,7 @@
 		<div class="overlay absolute" id="overlay" ref="overlay" />
 		<Transition name="fade">
 			<div
-				class="absolute bottom-0 left-0 right-0 top-0 z-40 w-full bg-gray-200 p-10 dark:bg-zinc-800"
+				class="absolute bottom-0 left-0 right-0 top-0 z-40 w-full bg-surface-gray-2 p-10"
 				v-show="store.settingPage"></div>
 		</Transition>
 		<BlockSnapGuides></BlockSnapGuides>
@@ -18,7 +18,7 @@
 				transformOrigin: 'top center',
 				transform: `scale(${canvasProps.scale}) translate(${canvasProps.translateX}px, ${canvasProps.translateY}px)`,
 			}">
-			<div class="absolute right-0 top-[-60px] flex rounded-md bg-white px-3 dark:bg-zinc-900">
+			<div class="absolute right-0 top-[-60px] flex rounded-md bg-surface-white px-3">
 				<div
 					v-show="!canvasProps.scaling && !canvasProps.panning"
 					class="w-auto cursor-pointer p-2"
@@ -35,7 +35,7 @@
 				</div>
 			</div>
 			<div
-				class="canvas relative flex h-full rounded-md bg-white shadow-2xl"
+				class="canvas relative flex h-full rounded-md bg-surface-white shadow-2xl"
 				:style="{
 					...canvasStyles,
 					background: canvasProps.background,
@@ -63,7 +63,7 @@
 			</div>
 		</div>
 		<div
-			class="fixed bottom-12 left-[50%] z-40 flex translate-x-[-50%] cursor-default items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-center text-sm font-semibold text-gray-600 shadow-md dark:bg-zinc-900 dark:text-zinc-400"
+			class="fixed bottom-12 left-[50%] z-40 flex translate-x-[-50%] cursor-default items-center justify-center gap-2 rounded-lg bg-surface-white px-3 py-2 text-center text-sm font-semibold text-gray-600 shadow-md dark:text-zinc-400"
 			v-show="!canvasProps.panning">
 			{{ Math.round(canvasProps.scale * 100) + "%" }}
 			<div class="ml-2 cursor-pointer" @click="setScaleAndTranslate">
