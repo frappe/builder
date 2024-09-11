@@ -104,6 +104,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import ContextMenu from "@/components/ContextMenu.vue";
 import webComponent from "@/data/webComponent";
 import useStore from "@/store";
 import { posthog } from "@/telemetry";
@@ -123,8 +124,6 @@ import { useStorage } from "@vueuse/core";
 import { Dialog, FileUploader } from "frappe-ui";
 import { Ref, nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
-import ContextMenu from "./ContextMenu.vue";
-import Input from "./Input.vue";
 
 const store = useStore();
 

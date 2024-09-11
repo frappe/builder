@@ -29,9 +29,9 @@
 	</div>
 </template>
 <script lang="ts" setup>
+import CrossIcon from "@/components/Icons/Cross.vue";
 import { useVModel } from "@vueuse/core";
 import { useAttrs } from "vue";
-import CrossIcon from "./Icons/Cross.vue";
 
 const props = defineProps(["modelValue", "type", "hideClearButton"]);
 const emit = defineEmits(["update:modelValue", "input"]);

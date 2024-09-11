@@ -48,7 +48,6 @@ import useStore from "@/store";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import { confirm } from "@/utils/helpers";
 import { computed, ref } from "vue";
-import Input from "./Input.vue";
 
 const store = useStore();
 const componentFilter = ref("");

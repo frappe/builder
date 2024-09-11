@@ -62,9 +62,9 @@
 </template>
 
 <script setup lang="ts">
+import CrossIcon from "@/components/Icons/Cross.vue";
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from "@headlessui/vue";
 import { ComputedRef, PropType, computed, ref } from "vue";
-import CrossIcon from "./Icons/Cross.vue";
 
 type Option = {
 	label: string;

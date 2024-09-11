@@ -21,7 +21,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import CodeEditor from "@/components/CodeEditor.vue";
+import CodeEditor from "@/components/Controls/CodeEditor.vue";
 import { builderSettings } from "@/data/builderSettings";
 import useStore from "@/store";
 

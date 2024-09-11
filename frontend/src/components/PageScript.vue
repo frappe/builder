@@ -52,7 +52,7 @@ import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { Dialog } from "frappe-ui";
 import { ref } from "vue";
 import { toast } from "vue-sonner";
-import CodeEditor from "./CodeEditor.vue";
+import CodeEditor from "./Controls/CodeEditor.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
 const store = useStore();
 const showDialog = ref(false);

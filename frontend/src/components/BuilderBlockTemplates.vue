@@ -38,7 +38,6 @@ import useStore from "@/store";
 import { BlockTemplate } from "@/types/Builder/BlockTemplate";
 import { computed, ref } from "vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
-import Input from "./Input.vue";
 
 const store = useStore();
 const is_developer_mode = window.is_developer_mode;

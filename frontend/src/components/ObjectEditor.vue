@@ -32,7 +32,6 @@
 <script setup lang="ts">
 import { mapToObject, replaceMapKey } from "@/utils/helpers";
 import { ref } from "vue";
-import Input from "./Input.vue";
 
 const props = defineProps<{
 	obj: Record<string, string>;

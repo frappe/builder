@@ -26,7 +26,6 @@
 			</div>
 			<Button
 				variant="solid"
-				:disabled="!store.activePage?.draft_blocks"
 				iconLeft="globe"
 				@click="
 					() => {
@@ -36,7 +35,7 @@
 				"
 				class="absolute right-5 border-0"
 				:class="{
-					'bg-surface-gray-7 text-text-icons-white hover:bg-surface-gray-6':
+					'bg-surface-gray-7 !text-text-icons-white hover:bg-surface-gray-6':
 						!publishing && store.activePage?.draft_blocks,
 					'dark:bg-surface-gray-2 dark:text-text-icons-gray-4': !store.activePage?.draft_blocks,
 				}"
@@ -45,7 +44,7 @@
 			</Button>
 		</div>
 		<div
-			class="relative mt-5 flex h-[85vh] bg-surface-white"
+			class="relative mt-5 flex h-[85vh] bg-white"
 			:style="{
 				width: width + 'px',
 			}">
@@ -68,7 +67,7 @@
 				ref="previewWindow"></iframe>
 			<div
 				v-if="loading || resizing"
-				class="absolute flex h-full w-full flex-1 items-center justify-center bg-gray-700 bg-zinc-700 bg-opacity-80 text-xl font-semibold text-gray-400 transition-all dark:bg-opacity-80 dark:text-zinc-400">
+				class="absolute flex h-full w-full flex-1 items-center justify-center bg-gray-700 bg-opacity-80 text-xl font-semibold text-gray-400 transition-all dark:bg-opacity-80 dark:text-zinc-400">
 				{{ loading ? "Loading..." : "Resizing..." }}
 			</div>
 			<PanelResizer

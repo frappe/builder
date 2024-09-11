@@ -30,6 +30,8 @@
 	</div>
 </template>
 <script setup lang="ts">
+import InlineInput from "@/components/Controls/InlineInput.vue";
+import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
@@ -42,15 +44,12 @@ import BackgroundHandler from "./BackgroundHandler.vue";
 import BlockFlexLayoutHandler from "./BlockFlexLayoutHandler.vue";
 import BlockGridLayoutHandler from "./BlockGridLayoutHandler.vue";
 import BlockPositionHandler from "./BlockPositionHandler.vue";
-import CodeEditor from "./CodeEditor.vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
-import ColorInput from "./ColorInput.vue";
+import CodeEditor from "./Controls/CodeEditor.vue";
+import ColorInput from "./Controls/ColorInput.vue";
 import DimensionInput from "./DimensionInput.vue";
 import ImageUploadInput from "./ImageUploadInput.vue";
-import InlineInput from "./InlineInput.vue";
-import Input from "./Input.vue";
 import ObjectEditor from "./ObjectEditor.vue";
-import OptionToggle from "./OptionToggle.vue";
 
 const store = useStore();
 

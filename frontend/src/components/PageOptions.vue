@@ -37,7 +37,6 @@ import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { getRouteVariables } from "@/utils/helpers";
 import { computed } from "vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
-import Input from "./Input.vue";
 
 const store = useStore();
 const props = defineProps<{

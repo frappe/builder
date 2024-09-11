@@ -70,11 +70,10 @@
 	</Popover>
 </template>
 <script lang="ts" setup>
+import InlineInput from "@/components/Controls/InlineInput.vue";
+import InputLabel from "@/components/Controls/InputLabel.vue";
 import { FileUploader, Popover } from "frappe-ui";
 import { PropType } from "vue";
-import InlineInput from "./InlineInput.vue";
-import Input from "./Input.vue";
-import InputLabel from "./InputLabel.vue";
 
 defineProps({
 	imageURL: String,

@@ -156,7 +156,7 @@
 					"
 					:to="{ name: 'builder', params: { pageId: page.page_name } }">
 					<div
-						class="group relative w-full cursor-pointer overflow-hidden rounded-md border border-outline-gray-1 bg-surface-white shadow">
+						class="group relative w-full cursor-pointer overflow-hidden rounded-md bg-surface-white shadow hover:shadow-2xl dark:border dark:border-outline-gray-2 hover:dark:bg-surface-gray-1">
 						<img
 							width="250"
 							height="140"
@@ -296,9 +296,8 @@
 	</section>
 </template>
 <script setup lang="ts">
+import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import GlobeIcon from "@/components/Icons/Globe.vue";
-import Input from "@/components/Input.vue";
-import OptionToggle from "@/components/OptionToggle.vue";
 import Settings from "@/components/Settings.vue";
 import TemplateSelector from "@/components/TemplateSelector.vue";
 import { webPages } from "@/data/webPage";
