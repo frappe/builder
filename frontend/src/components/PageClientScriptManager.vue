@@ -90,7 +90,7 @@ import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { createListResource, createResource, Dropdown } from "frappe-ui";
 import { computed, nextTick, PropType, ref, watch } from "vue";
 import { toast } from "vue-sonner";
-import CodeEditor from "./CodeEditor.vue";
+import CodeEditor from "./Controls/CodeEditor.vue";
 import CSSIcon from "./Icons/CSS.vue";
 import JavaScriptIcon from "./Icons/JavaScript.vue";
 

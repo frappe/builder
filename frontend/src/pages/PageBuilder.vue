@@ -118,7 +118,7 @@ import { Dialog } from "frappe-ui";
 import { Ref, computed, onActivated, onDeactivated, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { toast } from "vue-sonner";
-import CodeEditor from "../components/CodeEditor.vue";
+import CodeEditor from "../components/Controls/CodeEditor.vue";
 
 const route = useRoute();
 const router = useRouter();

@@ -73,12 +73,11 @@
 	</Popover>
 </template>
 <script lang="ts" setup>
+import InlineInput from "@/components/Controls/InlineInput.vue";
+import InputLabel from "@/components/Controls/InputLabel.vue";
 import blockController from "@/utils/blockController";
 import { FileUploader, Popover } from "frappe-ui";
 import { computed } from "vue";
-import InlineInput from "./InlineInput.vue";
-import Input from "./Input.vue";
-import InputLabel from "./InputLabel.vue";
 
 const backgroundURL = computed(() => {
 	const background = blockController?.getStyle("background") as string;

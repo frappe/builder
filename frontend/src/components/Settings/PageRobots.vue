@@ -24,5 +24,5 @@
 </template>
 <script setup lang="ts">
 import { websiteSettings } from "@/data/websiteSettings";
-import CodeEditor from "../CodeEditor.vue";
+import CodeEditor from "../Controls/CodeEditor.vue";
 </script>

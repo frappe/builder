@@ -39,6 +39,7 @@
 				<hr class="w-full border-surface-gray-2" />
 				<Switch
 					size="sm"
+					class="[&>span>[id^=headlessui-description]]:text-text-icons-gray-9 [&>span>[id^=headlessui-label]]:text-text-icons-gray-6"
 					label="Authenticated Access"
 					description="Only logged-in users can access this page"
 					:modelValue="Boolean(store.activePage?.authenticated_access)"
@@ -112,10 +113,9 @@
 	</div>
 </template>
 <script setup lang="ts">
-import ImageUploader from "@/components/ImageUploader.vue";
-import Input from "@/components/Input.vue";
+import ImageUploader from "@/components/Controls/ImageUploader.vue";
+import Switch from "@/components/Controls/Switch.vue";
 import useStore from "@/store";
-import { Switch, Tooltip } from "frappe-ui";
 import FeatherIcon from "frappe-ui/src/components/FeatherIcon.vue";
 // check route for page id
 const store = useStore();

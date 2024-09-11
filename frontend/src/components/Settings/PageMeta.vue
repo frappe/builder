@@ -65,8 +65,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import ImageUploader from "@/components/ImageUploader.vue";
-import Input from "@/components/Input.vue";
+import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import useStore from "@/store";
 import { ListView } from "frappe-ui";
 // check route for page id

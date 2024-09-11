@@ -44,7 +44,6 @@ import { Popover } from "frappe-ui";
 import FeatherIcon from "frappe-ui/src/components/FeatherIcon.vue";
 import { PropType, computed } from "vue";
 import Autocomplete from "./Autocomplete.vue";
-import Input from "./Input.vue";
 import InputLabel from "./InputLabel.vue";
 
 const props = defineProps({

@@ -8,6 +8,7 @@ import "./telemetry";
 import "./utils/arrayFunctions";
 
 import App from "@/App.vue";
+import Input from "@/components/Controls/Input.vue";
 
 const app = createApp(App);
 const pinia = createPinia();
@@ -21,6 +22,7 @@ window.name = "frappe-builder";
 app.component("Button", Button);
 app.component("FormControl", FormControl);
 app.component("Dialog", Dialog);
+app.component("Input", Input);
 
 app.component("FeatherIcon", FeatherIcon);
 app.mount("#app");

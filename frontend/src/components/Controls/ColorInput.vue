@@ -30,7 +30,6 @@
 import { getRGB } from "@/utils/helpers";
 import { PropType } from "vue";
 import ColorPicker from "./ColorPicker.vue";
-import Input from "./Input.vue";
 import InputLabel from "./InputLabel.vue";
 
 const props = defineProps({

@@ -91,13 +91,13 @@
 	</Popover>
 </template>
 <script setup lang="ts">
+import EyeDropperIcon from "@/components/Icons/EyeDropper.vue";
 import useStore from "@/store";
 import { HSVToHex, HexToHSV, getRGB } from "@/utils/helpers";
 import { vOnClickOutside } from "@vueuse/components";
 import { clamp, useEyeDropper } from "@vueuse/core";
 import { Popover } from "frappe-ui";
 import { PropType, Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
-import EyeDropperIcon from "./Icons/EyeDropper.vue";
 const store = useStore();
 
 const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;

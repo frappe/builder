@@ -9,9 +9,9 @@
 	</div>
 </template>
 <script setup lang="ts">
+import InputLabel from "@/components/Controls/InputLabel.vue";
 import { TabButtons } from "frappe-ui";
 import { PropType } from "vue";
-import InputLabel from "./InputLabel.vue";
 
 defineProps({
 	modelValue: {

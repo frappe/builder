@@ -82,9 +82,9 @@
 	</div>
 </template>
 <script setup lang="ts">
+import InputLabel from "@/components/Controls/InputLabel.vue";
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
-import InputLabel from "./InputLabel.vue";
 
 const placementOptions = [
 	"top-left",
