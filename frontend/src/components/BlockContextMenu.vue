@@ -28,7 +28,7 @@
 					v-model="componentProperties.componentName"
 					label="Component Name"
 					required
-					class="[&>div>input]:dark:bg-zinc-900 [&>label]:dark:text-zinc-300" />
+					class="[&>div>input]:bg-surface-white [&>label]:dark:text-zinc-300" />
 				<div class="mt-3">
 					<Input
 						class="text-sm [&>label]:dark:text-zinc-300 [&>span]:!text-sm"
@@ -68,7 +68,7 @@
 						label="Template Name"
 						required
 						:hideClearButton="true"
-						class="[&>div>input]:dark:bg-zinc-900 [&>label]:dark:text-zinc-300" />
+						class="[&>div>input]:bg-surface-white [&>label]:dark:text-zinc-300" />
 
 					<Input
 						type="select"
@@ -76,14 +76,14 @@
 						label="Category"
 						:options="store.blockTemplateCategoryOptions"
 						:hideClearButton="true"
-						class="[&>div>input]:dark:bg-zinc-900 [&>label]:dark:text-zinc-300" />
+						class="[&>div>input]:bg-surface-white [&>label]:dark:text-zinc-300" />
 					<div class="relative">
 						<Input
 							type="text"
 							v-model="blockTemplateProperties.previewImage"
 							label="Preview Image"
 							:hideClearButton="true"
-							class="[&>div>input]:dark:bg-zinc-900 [&>label]:dark:text-zinc-300" />
+							class="[&>div>input]:bg-surface-white [&>label]:dark:text-zinc-300" />
 						<FileUploader
 							file-types="image/*"
 							@success="

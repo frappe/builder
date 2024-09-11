@@ -16,7 +16,7 @@
 			<div v-for="component in components" :key="component.name" class="flex w-full">
 				<div class="component-container group relative flex w-full flex-col">
 					<div
-						class="relative flex translate-x-0 translate-y-0 cursor-pointer items-center justify-between overflow-hidden truncate rounded border border-transparent bg-white px-2 py-1.5 dark:bg-zinc-900"
+						class="relative flex translate-x-0 translate-y-0 cursor-pointer items-center justify-between overflow-hidden truncate rounded border border-transparent bg-surface-white px-2 py-1.5"
 						draggable="true"
 						:class="{
 							'!border-gray-400 dark:!border-zinc-600':

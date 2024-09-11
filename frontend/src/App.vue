@@ -61,11 +61,11 @@ const isDark = useDark();
 [id^="headlessui-dialog-panel"] button {
 	@apply dark:text-white;
 	@apply dark:hover:bg-zinc-700;
-	@apply dark:bg-zinc-900;
+	@apply bg-surface-white;
 }
 
 [id^="headlessui-dialog-panel"] input {
-	@apply dark:bg-zinc-900;
+	@apply bg-surface-white;
 	@apply dark:border-zinc-800;
 	@apply dark:text-gray-50;
 }
@@ -85,7 +85,7 @@ const isDark = useDark();
 }
 
 [id^="headlessui-dialog-panel"] input[type="checkbox"]:hover {
-	@apply dark:bg-zinc-900;
+	@apply bg-surface-white;
 }
 
 [id^="headlessui-dialog-panel"] label > span {
@@ -142,7 +142,7 @@ const isDark = useDark();
 }
 
 [data-sonner-toast][data-styled="true"] {
-	@apply dark:bg-zinc-900;
+	@apply bg-surface-white;
 	@apply dark:border-zinc-800;
 }
 </style>

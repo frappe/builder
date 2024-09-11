@@ -13,7 +13,7 @@
 					v-for="breakpoint in deviceBreakpoints"
 					:key="breakpoint.device"
 					:class="{
-						'bg-white shadow-sm dark:bg-zinc-700': activeBreakpoint === breakpoint.device,
+						'bg-surface-white shadow-sm dark:bg-zinc-700': activeBreakpoint === breakpoint.device,
 					}"
 					@click.stop="() => setWidth(breakpoint.device)">
 					<FeatherIcon
@@ -45,7 +45,7 @@
 			</Button>
 		</div>
 		<div
-			class="relative mt-5 flex h-[85vh] bg-white"
+			class="relative mt-5 flex h-[85vh] bg-surface-white"
 			:style="{
 				width: width + 'px',
 			}">

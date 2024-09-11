@@ -65,7 +65,7 @@
 			</div>
 		</div>
 		<div
-			class="flex h-full w-full items-center justify-center rounded bg-gray-100 text-base text-gray-600 dark:bg-zinc-900 dark:text-zinc-500"
+			class="flex h-full w-full items-center justify-center rounded bg-surface-gray-1 text-base text-gray-600 dark:text-zinc-500"
 			v-show="!activeScript">
 			Add Script
 		</div>

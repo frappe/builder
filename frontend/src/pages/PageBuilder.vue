@@ -1,10 +1,10 @@
 <template>
-	<div class="page-builder h-screen flex-col overflow-hidden bg-gray-100 dark:bg-zinc-800">
+	<div class="page-builder h-screen flex-col overflow-hidden bg-surface-gray-1">
 		<BuilderToolbar class="relative z-30"></BuilderToolbar>
 		<div>
 			<BuilderLeftPanel
 				v-show="store.showLeftPanel"
-				class="absolute bottom-0 left-0 top-[var(--toolbar-height)] z-20 border-r-[1px] bg-white shadow-lg dark:border-gray-800 dark:bg-zinc-900"></BuilderLeftPanel>
+				class="absolute bottom-0 left-0 top-[var(--toolbar-height)] z-20 border-r-[1px] border-outline-gray-2 bg-surface-white"></BuilderLeftPanel>
 			<BuilderCanvas
 				ref="fragmentCanvas"
 				:key="store.fragmentData.block?.blockId"
@@ -22,10 +22,10 @@
 					}px`,
 					right: `${store.showRightPanel ? store.builderLayout.rightPanelWidth : 0}px`,
 				}"
-				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-400 p-10 dark:bg-zinc-700">
+				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-surface-gray-2 p-10">
 				<template v-slot:header>
 					<div
-						class="absolute left-0 right-0 top-0 z-20 flex items-center justify-between bg-white p-2 text-sm text-gray-800 dark:bg-zinc-900 dark:text-zinc-400">
+						class="absolute left-0 right-0 top-0 z-20 flex items-center justify-between bg-surface-white p-2 text-sm text-gray-800 dark:text-zinc-400">
 						<div class="flex items-center gap-1 text-xs">
 							<a @click="store.exitFragmentMode" class="cursor-pointer">Page</a>
 							<FeatherIcon name="chevron-right" class="h-3 w-3" />
@@ -55,10 +55,10 @@
 					}px`,
 					right: `${store.showRightPanel ? store.builderLayout.rightPanelWidth : 0}px`,
 				}"
-				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-200 p-10 dark:bg-zinc-800"></BuilderCanvas>
+				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-surface-gray-1 p-10"></BuilderCanvas>
 			<BuilderRightPanel
 				v-show="store.showRightPanel"
-				class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] bg-white shadow-lg dark:border-gray-800 dark:bg-zinc-900"></BuilderRightPanel>
+				class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] border-outline-gray-2 bg-surface-white"></BuilderRightPanel>
 			<Dialog
 				style="z-index: 40"
 				v-model="store.showHTMLDialog"

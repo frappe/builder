@@ -12,10 +12,7 @@
 				:isOpen="isOpen"></slot>
 		</template>
 		<template #body="{ close }">
-			<div
-				ref="colorPicker"
-				class="rounded-lg bg-white p-3 shadow-lg dark:bg-zinc-900"
-				v-on-click-outside="close">
+			<div ref="colorPicker" class="rounded-lg bg-surface-white p-3 shadow-lg" v-on-click-outside="close">
 				<div
 					ref="colorMap"
 					:style="{

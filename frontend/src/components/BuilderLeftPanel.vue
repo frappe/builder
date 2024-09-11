@@ -1,6 +1,6 @@
 <template>
 	<div class="flex">
-		<div class="flex min-h-full flex-col items-center gap-3 border-r border-outline-gray-2 p-3">
+		<div class="flex min-h-full flex-col items-center gap-3 border-r border-outline-gray-1 p-3">
 			<button
 				v-for="option of leftPanelOptions"
 				:key="option.value"

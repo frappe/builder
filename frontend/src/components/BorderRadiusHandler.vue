@@ -90,7 +90,7 @@ const handleRounded = (ev: MouseEvent) => {
 			updating.value = false;
 			document.removeEventListener("mousemove", mousemove);
 		},
-		{ once: true }
+		{ once: true },
 	);
 };
 
