@@ -525,7 +525,7 @@ onMounted(() => {
 	setScaleAndTranslate();
 	const canvasContainerEl = canvasContainer.value as unknown as HTMLElement;
 	const canvasEl = canvas.value as unknown as HTMLElement;
-	setPanAndZoom(canvasProps, canvasEl, canvasContainerEl);
+	setPanAndZoom(canvasEl, canvasContainerEl, canvasProps);
 	showBlocks.value = true;
 });
 
