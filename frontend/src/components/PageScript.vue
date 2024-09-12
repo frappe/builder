@@ -3,12 +3,12 @@
 		<div class="flex gap-2">
 			<Button
 				@click="showClientScriptEditor()"
-				class="flex-1 text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
+				class="flex-1 bg-surface-gray-2 text-base text-text-icons-gray-8 hover:bg-surface-gray-3">
 				Client Script
 			</Button>
 			<Button
 				@click="showServerScriptEditor()"
-				class="flex-1 text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
+				class="flex-1 bg-surface-gray-2 text-base text-text-icons-gray-8 hover:bg-surface-gray-3">
 				Data Script
 			</Button>
 		</div>

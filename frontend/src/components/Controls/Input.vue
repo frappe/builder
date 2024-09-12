@@ -43,16 +43,22 @@ const classes = computed(() => {
 	if (!["select", "checkbox"].includes(props.type) && !props.hideClearButton) {
 		_classes.push("[&>div>input]:pr-7");
 	}
+	if (props.type === "checkbox") {
+		_classes.push("[&>label]:text-text-icons-gray-7");
+	}
 	if (props.type === "select") {
 		_classes.push(
 			...[
-				"[&>div>select]:text-text-icons-8",
-				"[&>label]:text-text-outline-gray-7",
+				"[&>div>select]:text-text-icons-gray-8",
+				"[&>label]:text-text-icons-gray-7",
 				"[&>div>select]:border-outline-gray-1",
 				"[&>div>select]:bg-surface-gray-2",
 				"[&>div>select]:pr-7",
-				"[&>div>select]:focus:border-outline-gray-3",
-				"[&>div>select]:focus:bg-surface-gray-1",
+				"[&>div>select]:hover:border-outline-gray-2",
+				"[&>div>select]:hover:bg-surface-gray-1",
+				"focus:[&>div>select]:bg-surface-gray-1",
+				"focus:[&>div>select]:border-outline-gray-3",
+				"focus:[&>div>select]:ring-outline-gray-3",
 			],
 		);
 	} else if (props.type === "textarea") {
@@ -65,15 +71,16 @@ const classes = computed(() => {
 		]);
 	} else {
 		_classes.push([
-			"[&>div>input]:focus:!bg-surface-gray-1",
-			"[&>div>input]:focus-visible:!bg-surface-gray-1",
 			"[&>div>input]:border-outline-gray-1",
 			"[&>div>input]:bg-surface-gray-2",
 			"[&>div>input]:text-text-icons-gray-8",
-			"[&>div>input]:focus:border-outline-gray-3",
 			"[&>div>input]:pr-5 text-sm",
-			"[&>div>input]:hover:border-outline-gray-2",
-			"[&>div>input]:hover:bg-surface-gray-1",
+			"[&>div>input]:hover:!border-outline-gray-2",
+			"[&>div>input]:hover:!bg-surface-gray-1",
+			"[&>div>input]:focus-visible:bg-surface-gray-1",
+			"focus:[&>div>input]:border-outline-gray-3",
+			"focus:[&>div>input]:bg-surface-gray-1",
+			"focus:[&>div>input]:ring-outline-gray-3",
 		]);
 	}
 	return _classes;
