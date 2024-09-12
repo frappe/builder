@@ -41,7 +41,7 @@ const isDark = useDark();
 }
 
 [id^="headlessui-dialog-panel"] {
-	@apply dark:bg-zinc-800;
+	@apply bg-surface-gray-1;
 }
 
 [id^="headlessui-dialog-panel"] > div,
@@ -61,30 +61,6 @@ const isDark = useDark();
 [id^="headlessui-dialog-panel"] button {
 	@apply dark:text-white;
 	@apply dark:hover:bg-zinc-700;
-	@apply bg-surface-white;
-}
-
-[id^="headlessui-dialog-panel"] input {
-	@apply bg-surface-white;
-	@apply dark:border-zinc-800;
-	@apply dark:text-gray-50;
-}
-
-[id^="headlessui-dialog-panel"] input:focus {
-	@apply dark:ring-0;
-	@apply dark:border-zinc-700;
-}
-
-[id^="headlessui-dialog-panel"] input[type="checkbox"]:checked {
-	@apply dark:bg-zinc-700;
-}
-
-[id^="headlessui-dialog-panel"] input[type="checkbox"]:focus {
-	@apply dark:ring-zinc-700;
-	@apply dark:ring-offset-0;
-}
-
-[id^="headlessui-dialog-panel"] input[type="checkbox"]:hover {
 	@apply bg-surface-white;
 }
 
