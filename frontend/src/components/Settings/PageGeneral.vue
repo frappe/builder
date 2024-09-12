@@ -115,6 +115,7 @@
 <script setup lang="ts">
 import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import Switch from "@/components/Controls/Switch.vue";
+import { Tooltip } from "frappe-ui";
 import useStore from "@/store";
 import FeatherIcon from "frappe-ui/src/components/FeatherIcon.vue";
 // check route for page id

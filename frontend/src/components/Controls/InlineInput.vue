@@ -35,7 +35,7 @@
 			:options="inputOptions"
 			@update:modelValue="handleChange"
 			:showInputAsOption="showInputAsOption"
-			class="w-full [&>div>select]:text-sm [&>div>select]:text-gray-800 [&>div>select]:dark:border-zinc-700 [&>div>select]:dark:bg-zinc-800 [&>div>select]:dark:text-zinc-200 [&>div>select]:dark:focus:bg-zinc-700" />
+			class="[&>div>select]:text-text-icons-8 w-full [&>div>select]:border-outline-gray-1 [&>div>select]:bg-surface-gray-2 [&>div>select]:focus:border-outline-gray-3 [&>div>select]:focus:bg-surface-gray-1" />
 	</div>
 </template>
 <script setup lang="ts">
