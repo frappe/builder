@@ -13,14 +13,24 @@
 		</div>
 		<CollapsibleSection :sectionName="section.sectionName" v-for="section in sections">
 			<div class="grid grid-cols-2 gap-4">
-				<div v-for="blockTemplate in section.blocks" :key="blockTemplate.name" class="flex">
+				<div
+					v-for="blockTemplate in section.blocks"
+					:key="blockTemplate.name"
+					class="flex"
+					:class="{
+						'col-span-2': blockTemplate?.preview_width === 2,
+					}">
 					<div
 						class="relative flex h-24 w-full translate-x-0 translate-y-0 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden truncate rounded border border-transparent bg-gray-100 px-2 py-1.5 dark:bg-zinc-800"
 						draggable="true"
 						@click="selectBlockTemplate(blockTemplate)"
 						@dblclick="is_developer_mode && store.editBlockTemplate(blockTemplate.name)"
 						@dragstart="(ev) => setBlockTemplateData(ev, blockTemplate)">
-						<div class="flex h-11 w-15 items-center justify-center">
+						<div
+							class="flex h-11 items-center justify-center"
+							:class="{
+								'w-14': !blockTemplate?.preview_width || blockTemplate?.preview_width == 1,
+							}">
 							<img :src="blockTemplate.preview" class="text-gray-800 dark:text-zinc-400" />
 						</div>
 						<p class="text-sm text-gray-800 dark:text-zinc-400">
