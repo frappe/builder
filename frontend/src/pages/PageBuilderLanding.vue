@@ -35,6 +35,11 @@
 							hideLabel: true,
 							items: [
 								{
+									label: `Apps`,
+									component: AppsMenu,
+									icon: 'grid',
+								},
+								{
 									label: `Switch to ${isDark ? 'light' : 'dark'} mode`,
 									onClick: () => toggleDark(),
 									icon: isDark ? 'sun' : 'moon',
@@ -296,6 +301,7 @@
 	</section>
 </template>
 <script setup lang="ts">
+import AppsMenu from "@/components/AppsMenu.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import GlobeIcon from "@/components/Icons/Globe.vue";
 import Settings from "@/components/Settings.vue";

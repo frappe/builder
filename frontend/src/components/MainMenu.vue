@@ -17,6 +17,11 @@
 						icon: 'plus',
 					},
 					{
+						label: `Apps`,
+						component: AppsMenu,
+						icon: 'grid',
+					},
+					{
 						label: `Switch to ${isDark ? 'light' : 'dark'} mode`,
 						onClick: () => toggleDark(),
 						icon: isDark ? 'sun' : 'moon',
@@ -55,6 +60,7 @@
 	</Dropdown>
 </template>
 <script setup lang="ts">
+import AppsMenu from "@/components/AppsMenu.vue";
 import useStore from "@/store";
 import { useDark, useToggle } from "@vueuse/core";
 import { Dropdown } from "frappe-ui";
