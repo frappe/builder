@@ -8,13 +8,13 @@
 						label="Page Title"
 						:modelValue="store.activePage?.page_title"
 						:hideClearButton="true"
-						@update:modelValue="(val) => store.updateActivePage('page_title', val)" />
+						@update:modelValue="(val: string) => store.updateActivePage('page_title', val)" />
 					<Input
 						type="text"
 						label="Page Route"
 						:modelValue="store.activePage?.route"
 						:hideClearButton="true"
-						@update:modelValue="(val) => store.updateActivePage('route', val)" />
+						@update:modelValue="(val: string) => store.updateActivePage('route', val)" />
 				</div>
 				<!-- homepage -->
 				<div class="flex flex-col gap-2">
@@ -30,8 +30,16 @@
 							<Button
 								variant="subtle"
 								class="!bg-surface-gray-2"
-								@click="store.setHomePage(store.activePage?.route as string)">
-								Set As Homepage
+								@click="
+									() => {
+										if (store.isHomePage(store.activePage)) {
+											store.unsetHomePage();
+										} else {
+											store.setHomePage(store.activePage?.route as string);
+										}
+									}
+								">
+								{{ store.isHomePage(store.activePage) ? "Unset Homepage" : "Set As Homepage" }}
 							</Button>
 						</Tooltip>
 					</div>
@@ -114,8 +122,8 @@
 <script setup lang="ts">
 import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import Switch from "@/components/Controls/Switch.vue";
-import { Tooltip } from "frappe-ui";
 import useStore from "@/store";
+import { Tooltip } from "frappe-ui";
 import FeatherIcon from "frappe-ui/src/components/FeatherIcon.vue";
 // check route for page id
 const store = useStore();
