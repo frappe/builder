@@ -188,7 +188,7 @@ def make_records(path):
 # 	)
 
 
-def copy_img_to_asset_folder(block, self):
+def copy_img_to_asset_folder(block, page_doc):
 	if block.get("element") == "img":
 		src = block.get("attributes", {}).get("src")
 		site_url = get_url()
@@ -205,11 +205,11 @@ def copy_img_to_asset_folder(block, self):
 			if files:
 				_file = frappe.get_doc("File", files[0].name)
 				# copy physical file to new location
-				assets_folder_path = get_template_assets_folder_path(self)
+				assets_folder_path = get_template_assets_folder_path(page_doc)
 				shutil.copy(_file.get_full_path(), assets_folder_path)
-			block["attributes"]["src"] = f"/builder_assets/{self.name}/{src.split('/')[-1]}"
+			block["attributes"]["src"] = f"/builder_assets/{page_doc.name}/{src.split('/')[-1]}"
 	for child in block.get("children", []):
-		copy_img_to_asset_folder(child, self)
+		copy_img_to_asset_folder(child, page_doc)
 
 
 def get_template_assets_folder_path(page_doc):
