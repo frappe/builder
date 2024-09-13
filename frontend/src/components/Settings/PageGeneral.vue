@@ -39,7 +39,6 @@
 				<hr class="w-full border-surface-gray-2" />
 				<Switch
 					size="sm"
-					class="[&>span>[id^=headlessui-description]]:text-text-icons-gray-9 [&>span>[id^=headlessui-label]]:text-text-icons-gray-6"
 					label="Authenticated Access"
 					description="Only logged-in users can access this page"
 					:modelValue="Boolean(store.activePage?.authenticated_access)"

@@ -68,6 +68,11 @@ const classes = computed(() => {
 			"[&>textarea]:text-text-icons-gray-8",
 			"[&>textarea]:focus:border-outline-gray-3",
 			"[&>textarea]:focus:bg-surface-gray-1",
+			"[&>textarea]:hover:!border-outline-gray-2",
+			"[&>textarea]:hover:!bg-surface-gray-1",
+			"focus:[&>textarea]:border-outline-gray-3",
+			"focus:[&>textarea]:bg-surface-gray-1",
+			"focus:[&>textarea]:ring-outline-gray-3",
 		]);
 	} else {
 		_classes.push([
