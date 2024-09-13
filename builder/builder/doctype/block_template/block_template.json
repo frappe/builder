@@ -9,6 +9,7 @@
   "template_name",
   "block",
   "preview",
+  "preview_width",
   "category"
  ],
  "fields": [
@@ -40,12 +41,18 @@
    "in_list_view": 1,
    "label": "Category",
    "options": "Structure\nBasic\nTypography\nBasic Forms\nForm parts\nMedia\nAdvanced"
+  },
+  {
+   "default": "1",
+   "fieldname": "preview_width",
+   "fieldtype": "Int",
+   "label": "Preview Width"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-03 22:17:07.960608",
+ "modified": "2024-09-13 08:06:23.681943",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Block Template",

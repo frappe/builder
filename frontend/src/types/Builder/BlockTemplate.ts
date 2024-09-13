@@ -16,6 +16,8 @@ export interface BlockTemplate{
 	block: any
 	/**	Preview : Data	*/
 	preview: string
+	/**	Preview Width : Int	*/
+	preview_width?: number
 	/**	Category : Select	*/
 	category?: "Structure" | "Basic" | "Typography" | "Basic Forms" | "Form parts" | "Media" | "Advanced"
 }
