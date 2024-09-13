@@ -156,8 +156,8 @@ useEventListener(
 
 useEventListener(document, "copy", (e) => {
 	if (isTargetEditable(e)) return;
-	e.preventDefault();
 	if (store.activeCanvas?.selectedBlocks.length) {
+		e.preventDefault();
 		const componentDocuments: BuilderComponent[] = [];
 		store.activeCanvas?.selectedBlocks.forEach((block: Block) => {
 			const components = block.getUsedComponentNames();

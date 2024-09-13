@@ -2,20 +2,20 @@
 	<Popover transition="default" placement="left" class="!block w-full" popoverClass="!min-w-fit !mr-[30px]">
 		<template #target="{ togglePopover, isOpen }">
 			<div class="flex items-center justify-between">
-				<InputLabel>Image URL</InputLabel>
+				<InputLabel>Image Src</InputLabel>
 				<div class="relative w-full">
 					<div>
 						<Input
 							class="[&>div>input]:pl-8"
 							type="text"
-							placeholder="Set Image URL"
+							placeholder="Set Image"
 							@update:modelValue="setImageURL"
 							:modelValue="imageURL" />
 						<img
 							:src="imageURL || '/assets/builder/images/fallback.png'"
 							alt=""
 							@click="togglePopover"
-							class="absolute left-2 top-[6px] z-10 h-4 w-4 rounded shadow-sm"
+							class="absolute left-2 top-[6px] z-10 h-4 w-4 rounded border border-outline-gray-3 shadow-sm"
 							:style="{
 								'object-fit': imageFit || 'contain',
 							}" />
