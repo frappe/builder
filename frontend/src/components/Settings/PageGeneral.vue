@@ -1,4 +1,10 @@
 <template>
+	<div
+		class="flex w-full items-center gap-3 rounded bg-surface-amber-1 p-3 py-2 text-text-icons-amber-3"
+		v-show="store.activePage?.authenticated_access">
+		<AuthenticatedUserIcon></AuthenticatedUserIcon>
+		<span class="text-sm">This page is only accessible to logged-in users</span>
+	</div>
 	<div class="no-scrollbar flex h-full flex-col items-center gap-6 overflow-y-auto">
 		<div class="flex w-full gap-4">
 			<div class="flex flex-1 flex-col gap-4">
@@ -122,6 +128,7 @@
 <script setup lang="ts">
 import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import Switch from "@/components/Controls/Switch.vue";
+import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import useStore from "@/store";
 import { Tooltip } from "frappe-ui";
 import FeatherIcon from "frappe-ui/src/components/FeatherIcon.vue";

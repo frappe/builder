@@ -20,7 +20,7 @@ export interface BuilderSettings{
 	style_public_url?: string
 	/**	Favicon : Attach Image - An icon file with .ico extension. Should be 16 x 16 px.<br>You can generate using <a href="https://favicon-generator.org" target="_blank">favicon-generator.org</a>	*/
 	favicon?: string
-	/**	Auto convert images to WebP : Check - Beta: All the images uploaded to Canvas will be auto converted to WebP for better page performance.	*/
+	/**	Auto convert images to WebP : Check - All the images uploaded to Canvas will be auto converted to WebP for better page performance.	*/
 	auto_convert_images_to_webp?: 0 | 1
 	/**	Home Page : Data	*/
 	home_page?: string
