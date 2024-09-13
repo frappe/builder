@@ -54,16 +54,6 @@ const isDark = useDark();
 	@apply dark:text-white;
 }
 
-[id^="headlessui-dialog-panel"] button svg path {
-	@apply dark:fill-white;
-}
-
-[id^="headlessui-dialog-panel"] button {
-	@apply dark:text-white;
-	@apply dark:hover:bg-zinc-700;
-	@apply bg-surface-white;
-}
-
 [id^="headlessui-dialog-panel"] label > span {
 	@apply dark:text-gray-50;
 }

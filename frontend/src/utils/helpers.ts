@@ -1,5 +1,6 @@
+import AlertDialog from "@/components/AlertDialog.vue";
 import { confirmDialog } from "frappe-ui";
-import { reactive, toRaw } from "vue";
+import { h, reactive, toRaw } from "vue";
 import Block from "./block";
 
 function getNumberFromPx(px: string | number | null | undefined): number {
@@ -97,6 +98,16 @@ async function confirm(message: string, title: string = "Confirm"): Promise<bool
 				resolve(true);
 				hideDialog();
 			},
+		});
+	});
+}
+
+async function alert(message: string, title: string = "Alert"): Promise<boolean> {
+	return new Promise((resolve) => {
+		h(AlertDialog, {
+			title,
+			message,
+			onClick: resolve,
 		});
 	});
 }
@@ -331,6 +342,7 @@ function getRouteVariables(route: string) {
 
 export {
 	addPxToNumber,
+	alert,
 	confirm,
 	copyToClipboard,
 	detachBlockFromComponent,
