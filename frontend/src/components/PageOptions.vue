@@ -6,15 +6,16 @@
 				type="text"
 				class="w-full text-sm [&>label]:w-[60%] [&>label]:min-w-[180px]"
 				:modelValue="page.page_title"
-				@update:modelValue="(val) => store.updateActivePage('page_title', val)" />
+				@update:modelValue="(val: string) => store.updateActivePage('page_title', val)" />
 			<Input
 				type="text"
-				class="w-full text-sm [&>label]:w-[60%] [&>label]:min-w-[180px]"
+				class="w-full text-sm [&>label]:w-[60%] [&>label]:min-w-[180px] [&>p]:text-p-xs"
 				label="Route"
-				@input="(val) => (page.route = val)"
+				description="The URL path for this page. For variables, use colon (e.g. /users/:id)"
+				@input="(val: string) => (page.route = val)"
 				:modelValue="page.route"
 				:hideClearButton="true"
-				@update:modelValue="(val) => store.updateActivePage('route', val)" />
+				@update:modelValue="(val: string) => store.updateActivePage('route', val)" />
 			<!-- Dynamic Route Variables -->
 			<CollapsibleSection
 				sectionName="URL Variables"
@@ -26,7 +27,7 @@
 					type="text"
 					:label="variable.replace(/_/g, ' ')"
 					:modelValue="store.routeVariables[variable]"
-					@update:modelValue="(val) => store.setRouteVariable(variable, val)" />
+					@update:modelValue="(val: string) => store.setRouteVariable(variable, val)" />
 			</CollapsibleSection>
 		</div>
 	</div>
