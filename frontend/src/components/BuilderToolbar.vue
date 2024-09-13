@@ -31,6 +31,12 @@
 							Loading...
 						</div>
 						<div @click="togglePopover" v-else class="flex items-center gap-1">
+							<Tooltip text="This is the homepage for your site" :hoverDelay="0.6">
+								<FeatherIcon
+									name="home"
+									class="h-[14px] w-4"
+									v-if="store.isHomePage(store.activePage)"></FeatherIcon>
+							</Tooltip>
 							<span class="max-w-48 truncate text-base text-text-icons-gray-8">
 								{{ store?.activePage?.page_title || "My Page" }}
 							</span>
@@ -91,15 +97,6 @@
 					</Tooltip>
 				</div>
 			</div>
-			<Badge
-				:variant="'subtle'"
-				theme="gray"
-				size="md"
-				label="Badge"
-				class="dark:bg-zinc-600 dark:text-zinc-100"
-				v-if="store.isHomePage()">
-				Homepage
-			</Badge>
 			<span class="text-sm dark:text-zinc-300" v-if="store.savingPage && store.activePage?.is_template">
 				Saving template
 			</span>
@@ -153,8 +150,7 @@ import PlayIcon from "@/components/Icons/Play.vue";
 import SettingsGearIcon from "@/components/Icons/SettingsGear.vue";
 import { webPages } from "@/data/webPage";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { useDark, useToggle } from "@vueuse/core";
-import { Badge, Dialog, Tooltip } from "frappe-ui";
+import { Dialog, Tooltip } from "frappe-ui";
 import Popover from "frappe-ui/src/components/Popover.vue";
 import { computed, ref } from "vue";
 import { toast } from "vue-sonner";
@@ -163,16 +159,11 @@ import MainMenu from "./MainMenu.vue";
 import PageOptions from "./PageOptions.vue";
 import Settings from "./Settings.vue";
 
-const isDark = useDark();
-const toggleDark = useToggle(isDark);
-
 const store = useStore();
 const publishing = ref(false);
 const showInfoDialog = ref(false);
 const showSettingsDialog = ref(false);
 const toolbar = ref(null);
-
-const is_developer_mode = window.is_developer_mode;
 
 const currentlyViewedByText = computed(() => {
 	const names = store.viewers.map((viewer) => viewer.fullname).map((name) => name.split(" ")[0]);

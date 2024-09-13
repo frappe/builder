@@ -506,7 +506,7 @@ const useStore = defineStore("store", {
 					home_page: route,
 				})
 				.then(() => {
-					toast.success("Home page set successfully!");
+					toast.success("Homepage set successfully");
 				});
 		},
 		unsetHomePage() {
@@ -515,7 +515,7 @@ const useStore = defineStore("store", {
 					home_page: "",
 				})
 				.then(() => {
-					toast.warning("This page will no longer be the home page");
+					toast.success("This page will no longer be the homepage");
 				});
 		},
 		async waitTillPageIsSaved() {
