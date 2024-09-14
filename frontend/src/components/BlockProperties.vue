@@ -7,7 +7,7 @@
 				placeholder="Search properties"
 				v-model="store.propertyFilter"
 				@input="
-					(value) => {
+					(value: string) => {
 						store.propertyFilter = value;
 					}
 				" />
@@ -15,8 +15,10 @@
 		<div class="flex flex-col gap-3">
 			<CollapsibleSection
 				:sectionName="section.name"
-				v-for="section in filteredSections"
-				:sectionCollapsed="section.collapsed">
+				v-for="section in sections"
+				v-show="showSection(section)"
+				:key="section.name"
+				:sectionCollapsed="toValue(section.collapsed) && !store.propertyFilter">
 				<template v-for="property in getFilteredProperties(section)">
 					<component :is="property.component" v-bind="property.getProps()" v-on="property.events || {}">
 						{{ property.innerText || "" }}
@@ -37,6 +39,7 @@ import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import blockController from "@/utils/blockController";
 import { setFont as _setFont, fontListNames, getFontWeightOptions } from "@/utils/fontManager";
+import { toValue } from "@vueuse/core";
 import { Button, createResource } from "frappe-ui";
 import { Ref, computed, nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
@@ -79,18 +82,16 @@ type PropertySection = {
 
 const searchInput = ref(null) as Ref<HTMLElement | null>;
 
-const filteredSections = computed(() => {
-	return sections.filter((section) => {
-		let showSection = true;
-		if (section.condition) {
-			showSection = section.condition();
-		}
-		if (showSection && store.propertyFilter) {
-			showSection = getFilteredProperties(section).length > 0;
-		}
-		return showSection;
-	});
-});
+const showSection = (section: PropertySection) => {
+	let showSection = true;
+	if (section.condition) {
+		showSection = section.condition();
+	}
+	if (showSection && store.propertyFilter) {
+		showSection = getFilteredProperties(section).length > 0;
+	}
+	return showSection;
+};
 
 const getFilteredProperties = (section: PropertySection) => {
 	return section.properties.filter((property) => {
@@ -1197,7 +1198,9 @@ const sections = [
 	{
 		name: "Data Key",
 		properties: dataKeySectionProperties,
-		collapsed: false,
+		collapsed: computed(() => {
+			return !blockController.getDataKey("key") && !blockController.isRepeater();
+		}),
 	},
 	{
 		name: "HTML Attributes",
