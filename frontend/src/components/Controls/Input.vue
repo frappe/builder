@@ -15,7 +15,11 @@
 			@input="($event: Event) => emit('input', ($event.target as HTMLInputElement).value)"
 			autocomplete="off"
 			v-bind="attrs"
-			:modelValue="data"></FormControl>
+			:modelValue="data">
+			<template #prefix v-if="$slots.prefix">
+				<slot name="prefix" />
+			</template>
+		</FormControl>
 		<div
 			class="absolute bottom-[3px] right-[1px] cursor-pointer p-1 text-text-icons-gray-4 hover:text-text-icons-gray-5"
 			@click="clearValue"
@@ -40,7 +44,7 @@ defineOptions({
 
 const classes = computed(() => {
 	const _classes = [];
-	if (!["select", "checkbox"].includes(props.type) && !props.hideClearButton) {
+	if (!["select", "checkbox"].includes(props.type) && !props.hideClearButton && props.modelValue) {
 		_classes.push("[&>div>input]:pr-7");
 	}
 	if (props.type === "checkbox") {
@@ -79,7 +83,7 @@ const classes = computed(() => {
 			"[&>div>input]:border-outline-gray-1",
 			"[&>div>input]:bg-surface-gray-2",
 			"[&>div>input]:text-text-icons-gray-8",
-			"[&>div>input]:pr-5 text-sm",
+			"text-sm",
 			"[&>div>input]:hover:!border-outline-gray-2",
 			"[&>div>input]:hover:!bg-surface-gray-1",
 			"[&>div>input]:focus-visible:bg-surface-gray-1",
