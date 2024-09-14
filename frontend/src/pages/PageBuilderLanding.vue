@@ -88,11 +88,11 @@
 	<section class="m-auto mb-32 flex w-3/4 max-w-5xl flex-col pt-10">
 		<!-- list head -->
 		<div class="mb-6 flex items-center justify-between">
-			<h1 class="text-lg font-medium text-gray-900 dark:text-zinc-400">All Pages</h1>
-			<div class="flex gap-4">
+			<h1 class="text-xl font-semibold text-text-icons-gray-9">All Pages</h1>
+			<div class="flex gap-2">
 				<div class="relative flex">
 					<Input
-						class="w-44"
+						class="w-48"
 						type="text"
 						placeholder="Filter by title or route"
 						v-model="searchFilter"
@@ -101,7 +101,11 @@
 							(value: string) => {
 								searchFilter = value;
 							}
-						" />
+						">
+						<template #prefix>
+							<FeatherIcon name="search" class="size-4 text-text-icons-gray-5"></FeatherIcon>
+						</template>
+					</Input>
 				</div>
 				<div class="max-md:hidden">
 					<Input
@@ -150,7 +154,7 @@
 				<p class="mt-4 text-base text-gray-500">No matching pages found.</p>
 			</div>
 			<!-- grid -->
-			<div class="grid-col grid gap-6 auto-fill-[220px]" v-if="displayType === 'grid'">
+			<div class="grid-col grid gap-6 gap-y-8 auto-fill-[220px]" v-if="displayType === 'grid'">
 				<router-link
 					v-for="page in webPages.data"
 					:key="page.page_name"
@@ -160,23 +164,25 @@
 						}
 					"
 					:to="{ name: 'builder', params: { pageId: page.page_name } }">
-					<div
-						class="group relative w-full cursor-pointer overflow-hidden rounded-md bg-surface-white shadow hover:shadow-2xl dark:border dark:border-outline-gray-2 hover:dark:bg-surface-gray-1">
+					<div class="group relative w-full cursor-pointer rounded-md bg-surface-white">
 						<img
 							width="250"
 							height="140"
 							:src="page.preview"
 							onerror="this.src='/assets/builder/images/fallback.png'"
-							class="w-full overflow-hidden rounded-t-lg bg-surface-gray-1 object-cover p-2" />
-						<div class="flex items-center justify-between border-t-[1px] border-outline-gray-2 px-3">
-							<span class="inline-block max-w-[160px] py-2 text-sm text-gray-700 dark:text-zinc-200">
+							class="w-full overflow-hidden rounded-lg object-cover shadow group-hover:shadow-2xl dark:border dark:border-outline-gray-1" />
+						<div class="flex items-center justify-between border-outline-gray-2">
+							<span class="inline-block max-w-[160px] py-2">
 								<div class="flex items-center gap-1">
-									<p class="truncate">
+									<p
+										class="truncate text-base font-medium text-text-icons-gray-7 group-hover:text-text-icons-gray-9">
 										{{ page.page_title || page.page_name }}
 									</p>
 								</div>
 								<UseTimeAgo v-slot="{ timeAgo }" :time="page.modified">
-									<p class="mt-1 block text-xs text-gray-500">Edited {{ timeAgo }}</p>
+									<p class="mt-1 block text-sm text-text-icons-gray-5 group-hover:text-text-icons-gray-6">
+										Edited {{ timeAgo }}
+									</p>
 								</UseTimeAgo>
 							</span>
 							<Dropdown
@@ -202,10 +208,12 @@
 								size="xs"
 								placement="right">
 								<template v-slot="{ open }">
-									<FeatherIcon
-										name="more-vertical"
-										class="h-4 w-4 text-gray-500 hover:text-gray-700"
-										@click="open"></FeatherIcon>
+									<Button
+										icon="more-horizontal"
+										size="sm"
+										variant="subtle"
+										class="bg-surface-gray-2 text-text-icons-gray-6 hover:bg-surface-gray-3 hover:text-text-icons-gray-9 active:bg-surface-gray-4"
+										@click="open"></Button>
 								</template>
 							</Dropdown>
 						</div>
