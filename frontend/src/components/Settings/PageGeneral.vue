@@ -26,8 +26,8 @@
 				<div class="flex flex-col gap-2">
 					<div class="flex items-center justify-between">
 						<div class="flex flex-col gap-2">
-							<span class="text-base dark:text-zinc-200">Homepage</span>
-							<p class="text-sm text-gray-600">Set current page as Homepage</p>
+							<span class="text-base text-text-icons-gray-9">Homepage</span>
+							<p class="text-base text-text-icons-gray-5">Set current page as Homepage</p>
 						</div>
 						<Tooltip
 							:test="
@@ -35,7 +35,6 @@
 							">
 							<Button
 								variant="subtle"
-								class="!bg-surface-gray-2"
 								@click="
 									() => {
 										if (store.isHomePage(store.activePage)) {
@@ -82,7 +81,7 @@
 								:image_url="store.activePage?.favicon"
 								@upload="(url: string) => store.updateActivePage('favicon', url)"
 								@remove="() => store.updateActivePage('favicon', '')" />
-							<span class="text-base leading-5 text-text-icons-gray-6">
+							<span class="text-p-base text-text-icons-gray-6">
 								Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO
 							</span>
 						</div>
@@ -126,6 +125,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import Button from "@/components/Controls/Button.vue";
 import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import Switch from "@/components/Controls/Switch.vue";
 import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";

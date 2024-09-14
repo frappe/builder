@@ -20,12 +20,13 @@
 		</div>
 		<div class="flex flex-1 flex-col gap-5 bg-surface-white p-14 px-16 dark:bg-zinc-900">
 			<h2 class="text-xl font-semibold leading-none">{{ selectedItemDoc?.title }}</h2>
-			<Button icon="x" @click="$emit('close')" class="absolute right-5 top-5"></Button>
-			<component :is="(selectedItemDoc as SidebarItem).component" />
+			<Button icon="x" variant="subtle" @click="$emit('close')" class="absolute right-5 top-5"></Button>
+			<component :is="selectedItemDoc?.component" />
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
+import Button from "@/components/Controls/Button.vue";
 import useStore from "@/store";
 import { computed, onActivated, ref } from "vue";
 import { useRoute } from "vue-router";
