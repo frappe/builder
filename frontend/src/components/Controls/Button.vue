@@ -1,0 +1,27 @@
+<template>
+	<Button :variant="variant" :class="classes"><slot /></Button>
+</template>
+<script lang="ts" setup>
+import { computed } from "vue";
+
+const props = defineProps(["variant"]);
+const classes = computed(() => {
+	const _classes = [];
+	if (props.variant === "solid") {
+		_classes.push([
+			"bg-surface-gray-7",
+			"text-text-icons-white",
+			"hover:bg-surface-gray-6",
+			"active:bg-surface-gray-5",
+		]);
+	} else if (props.variant === "subtle") {
+		_classes.push([
+			"bg-surface-gray-2",
+			"text-text-icons-gray-7",
+			"hover:bg-surface-gray-3",
+			"active:bg-surface-gray-4",
+		]);
+	}
+	return _classes;
+});
+</script>

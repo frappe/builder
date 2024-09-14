@@ -208,12 +208,7 @@
 								size="xs"
 								placement="right">
 								<template v-slot="{ open }">
-									<Button
-										icon="more-horizontal"
-										size="sm"
-										variant="subtle"
-										class="bg-surface-gray-2 text-text-icons-gray-6 hover:bg-surface-gray-3 hover:text-text-icons-gray-9 active:bg-surface-gray-4"
-										@click="open"></Button>
+									<Button icon="more-horizontal" size="sm" variant="subtle" @click="open"></Button>
 								</template>
 							</Dropdown>
 						</div>
@@ -310,6 +305,7 @@
 </template>
 <script setup lang="ts">
 import AppsMenu from "@/components/AppsMenu.vue";
+import Button from "@/components/Controls/Button.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import GlobeIcon from "@/components/Icons/Globe.vue";
 import Settings from "@/components/Settings.vue";

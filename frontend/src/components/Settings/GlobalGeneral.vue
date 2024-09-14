@@ -29,7 +29,7 @@
 						:image_url="builderSettings.doc?.favicon"
 						@upload="(url: string) => store.updateBuilderSettings('favicon', url)"
 						@remove="() => store.updateBuilderSettings('favicon', '')" />
-					<span class="text-base leading-5 text-text-icons-gray-6">
+					<span class="text-p-base text-text-icons-gray-6">
 						Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO
 					</span>
 				</div>
