@@ -319,7 +319,9 @@ import { useDark, useStorage, useToggle, watchDebounced } from "@vueuse/core";
 import { Avatar, Badge, createDocumentResource, Dropdown } from "frappe-ui";
 import { onActivated, Ref, ref } from "vue";
 
-const isDark = useDark();
+const isDark = useDark({
+	attribute: "data-theme",
+});
 const toggleDark = useToggle(isDark);
 const store = useStore();
 const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list">;
