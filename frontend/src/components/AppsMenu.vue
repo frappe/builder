@@ -1,5 +1,5 @@
 <template>
-	<Popover placement="right-start" trigger="hover" hoverDelay="0.1" leaveDelay="0.1">
+	<Popover placement="right-start" trigger="hover" :hoverDelay="0.1" :leaveDelay="0.1">
 		<template #target="{ togglePopover, isOpen }">
 			<button
 				class="flex h-7 w-full items-center justify-between rounded px-2 text-base hover:bg-surface-gray-2"
