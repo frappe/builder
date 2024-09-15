@@ -5,7 +5,7 @@
 				<component :is="Component" />
 			</keep-alive>
 		</router-view>
-		<UseDark></UseDark>
+		<UseDark attribute="data-theme"></UseDark>
 		<Toaster :theme="isDark ? 'dark' : 'light'" richColors />
 		<Dialogs></Dialogs>
 	</div>
@@ -33,7 +33,9 @@ const title = computed(() => {
 
 useTitle(title);
 
-const isDark = useDark();
+const isDark = useDark({
+	attribute: "data-theme",
+});
 </script>
 <style>
 [id^="headlessui-dialog"] {

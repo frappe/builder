@@ -30,7 +30,9 @@ import "ace-builds/src-min-noconflict/theme-chrome";
 import "ace-builds/src-min-noconflict/theme-twilight";
 import { PropType, onMounted, ref, watch } from "vue";
 
-const isDark = useDark();
+const isDark = useDark({
+	attribute: "data-theme",
+});
 const props = defineProps({
 	modelValue: {
 		type: [Object, String, Array],

@@ -4,7 +4,7 @@ import plugin from "tailwindcss/plugin";
 import espressoColors from "./espresso_colors";
 
 module.exports = {
-	darkMode: "class",
+	darkMode: ["selector", '[data-theme="dark"]'],
 	presets: [tailwindConfig],
 	content: [
 		"./index.html",

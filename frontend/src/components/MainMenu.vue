@@ -66,6 +66,8 @@ import { useDark, useToggle } from "@vueuse/core";
 import { Dropdown } from "frappe-ui";
 
 const store = useStore();
-const isDark = useDark();
+const isDark = useDark({
+	attribute: "data-theme",
+});
 const toggleDark = useToggle(isDark);
 </script>

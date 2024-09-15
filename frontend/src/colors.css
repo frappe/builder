@@ -74,7 +74,7 @@
 		--text-icons-violet-1: rgb(104 70 227);
 		--text-icons-white: rgb(255 255 255);
 	}
-	.dark {
+	[data-theme="dark"] {
 		--outline-amber-1: rgb(130 65 8);
 		--outline-amber-2: rgb(130 65 8);
 		--outline-blue-1: rgb(21 89 153);
