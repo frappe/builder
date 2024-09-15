@@ -27,6 +27,8 @@
 </template>
 <script setup lang="ts">
 import Button from "@/components/Controls/Button.vue";
+import RedirectIcon from "@/components/Icons/Redirect.vue";
+import GlobalRedirects from "@/components/Settings/GlobalRedirects.vue";
 import useStore from "@/store";
 import { computed, onActivated, ref } from "vue";
 import { useRoute } from "vue-router";
@@ -100,6 +102,13 @@ const globalSettings = {
 			icon: SettingsIcon,
 		},
 		{ label: "Code", value: "global_code", component: GlobalCode, title: "Code", icon: CodeIcon },
+		{
+			label: "Redirects",
+			value: "global_redirects",
+			component: GlobalRedirects,
+			title: "Redirects",
+			icon: RedirectIcon,
+		},
 	],
 };
 
