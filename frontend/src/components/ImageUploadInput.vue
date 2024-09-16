@@ -2,23 +2,35 @@
 	<Popover transition="default" placement="left" class="!block w-full" popoverClass="!min-w-fit !mr-[30px]">
 		<template #target="{ togglePopover, isOpen }">
 			<div class="flex items-center justify-between">
-				<InputLabel>Image Src</InputLabel>
+				<InputLabel v-if="labelPosition === 'left'">{{ label }}</InputLabel>
 				<div class="relative w-full">
 					<div>
 						<Input
-							class="[&>div>input]:pl-8"
+							:class="{
+								'[&>div>input]:pl-8': labelPosition === 'left',
+							}"
 							type="text"
-							placeholder="Set Image"
+							:label="labelPosition === 'top' ? label : null"
+							:placeholder="placeholder"
+							:description="description"
 							@update:modelValue="setImageURL"
 							:modelValue="imageURL" />
 						<img
+							v-if="labelPosition === 'left'"
 							:src="imageURL || '/assets/builder/images/fallback.png'"
 							alt=""
 							@click="togglePopover"
-							class="absolute left-2 top-[6px] z-10 h-4 w-4 rounded border border-outline-gray-3 shadow-sm"
+							class="absolute bottom-[6px] left-2 z-10 h-4 w-4 rounded border border-outline-gray-3 shadow-sm"
 							:style="{
 								'object-fit': imageFit || 'contain',
 							}" />
+						<ImageUploader
+							v-if="labelPosition === 'top'"
+							@upload="setImageURL"
+							@remove="setImageURL('')"
+							:image_url="imageURL"
+							class="absolute right-0 top-5 rounded bg-surface-gray-2 px-1"
+							:file_types="['image/*']" />
 					</div>
 				</div>
 			</div>
@@ -70,6 +82,7 @@
 	</Popover>
 </template>
 <script lang="ts" setup>
+import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import { FileUploader, Popover } from "frappe-ui";
@@ -77,9 +90,25 @@ import { PropType } from "vue";
 
 defineProps({
 	imageURL: String,
+	label: {
+		type: String,
+		default: "Image",
+	},
+	labelPosition: {
+		type: String as PropType<"top" | "left">,
+		default: "left",
+	},
+	placeholder: {
+		type: String,
+		default: "Set Image",
+	},
 	imageFit: {
 		type: String as PropType<"contain" | "cover" | "fill" | "none">,
 		default: "contain",
+	},
+	description: {
+		type: String,
+		default: "",
 	},
 });
 

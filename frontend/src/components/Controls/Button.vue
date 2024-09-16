@@ -4,7 +4,12 @@
 <script lang="ts" setup>
 import { computed } from "vue";
 
-const props = defineProps(["variant"]);
+const props = defineProps({
+	variant: {
+		type: String,
+		default: "subtle",
+	},
+});
 const classes = computed(() => {
 	const _classes = [];
 	if (props.variant === "solid") {
