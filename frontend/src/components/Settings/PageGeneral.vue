@@ -62,7 +62,11 @@
 					<div class="flex flex-1 gap-5">
 						<div class="flex items-center justify-center rounded border border-outline-gray-1 px-20 py-5">
 							<img
-								:src="store.activePage?.favicon || '/assets/builder/images/frappe_black.png'"
+								:src="
+									store.activePage?.favicon ||
+									builderSettings.doc?.favicon ||
+									'/assets/builder/images/frappe_black.png'
+								"
 								alt="Favicon"
 								class="size-6 rounded" />
 						</div>
@@ -132,6 +136,7 @@ import Button from "@/components/Controls/Button.vue";
 import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import Switch from "@/components/Controls/Switch.vue";
 import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
+import { builderSettings } from "@/data/builderSettings";
 import useStore from "@/store";
 import { Tooltip } from "frappe-ui";
 import FeatherIcon from "frappe-ui/src/components/FeatherIcon.vue";
