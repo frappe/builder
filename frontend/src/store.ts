@@ -372,7 +372,7 @@ const useStore = defineStore("store", {
 			}
 			toast.success("Page deleted successfully!");
 		},
-		async publishPage() {
+		async publishPage(openInBrowser = true) {
 			await this.waitTillPageIsSaved();
 			return webPages.runDocMethod
 				.submit({
@@ -385,7 +385,9 @@ const useStore = defineStore("store", {
 						page: this.selectedPage,
 					});
 					this.activePage = await this.fetchActivePage(this.selectedPage as string);
-					this.openPageInBrowser(this.activePage as BuilderPage);
+					if (openInBrowser) {
+						this.openPageInBrowser(this.activePage as BuilderPage);
+					}
 				});
 		},
 		unpublishPage() {

@@ -84,6 +84,7 @@ const classes = computed(() => {
 			"[&>div>input]:bg-surface-gray-2",
 			"[&>div>input]:text-text-icons-gray-8",
 			"text-sm",
+			"[&>p]:text-p-xs",
 			"[&>div>input]:hover:!border-outline-gray-2",
 			"[&>div>input]:hover:!bg-surface-gray-1",
 			"[&>div>input]:focus-visible:bg-surface-gray-1",
