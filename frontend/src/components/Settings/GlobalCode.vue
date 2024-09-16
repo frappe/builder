@@ -3,7 +3,7 @@
 		<CodeEditor
 			label="Client Script"
 			type="JavaScript"
-			description="Note: This script will be executed on all pages of your website."
+			description="Note: This script will be executed on all the pages of your website."
 			:modelValue="builderSettings.doc.script"
 			height="250px"
 			class="shrink-0"
@@ -12,7 +12,7 @@
 		<CodeEditor
 			label="Style"
 			type="CSS"
-			description="Note: This style will be applied to all pages of your website."
+			description="Note: This style will be applied to all the pages of your website."
 			:modelValue="builderSettings.doc.style"
 			height="250px"
 			class="shrink-0"

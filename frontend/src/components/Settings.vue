@@ -29,6 +29,7 @@
 import Button from "@/components/Controls/Button.vue";
 import RedirectIcon from "@/components/Icons/Redirect.vue";
 import GlobalRedirects from "@/components/Settings/GlobalRedirects.vue";
+import PageRedirects from "@/components/Settings/PageRedirects.vue";
 import useStore from "@/store";
 import { computed, onActivated, ref } from "vue";
 import { useRoute } from "vue-router";
@@ -87,6 +88,13 @@ const pageSettings = {
 			component: PageAnalytics,
 			title: "Analytics",
 			icon: ChartIcon,
+		},
+		{
+			label: "Redirects",
+			value: "page_redirects",
+			component: PageRedirects,
+			title: "Redirects",
+			icon: RedirectIcon,
 		},
 	],
 };

@@ -16,11 +16,11 @@
 		<div class="flex flex-col justify-between gap-5">
 			<span class="text-lg font-semibold text-text-icons-gray-9">Favicon</span>
 			<div class="flex flex-1 gap-5">
-				<div class="flex items-center justify-center rounded border border-outline-gray-1 px-16 py-8">
+				<div class="flex items-center justify-center rounded border border-outline-gray-1 px-20 py-5">
 					<img
 						:src="builderSettings.doc?.favicon || '/assets/builder/images/frappe_black.png'"
 						alt="Site Favicon"
-						class="h-7 w-7 rounded" />
+						class="size-6 rounded" />
 				</div>
 				<div class="flex flex-1 flex-col gap-2">
 					<ImageUploader
@@ -29,7 +29,7 @@
 						:image_url="builderSettings.doc?.favicon"
 						@upload="(url: string) => store.updateBuilderSettings('favicon', url)"
 						@remove="() => store.updateBuilderSettings('favicon', '')" />
-					<span class="text-p-base text-text-icons-gray-6">
+					<span class="text-p-sm text-text-icons-gray-6">
 						Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO
 					</span>
 				</div>
@@ -39,7 +39,7 @@
 		<Switch
 			size="sm"
 			label="Auto convert images to WebP"
-			description="All the images uploaded to Canvas will be auto converted to WebP for better page performance."
+			description="All the images uploaded via Builder will be converted to WebP for better page performance"
 			:modelValue="Boolean(builderSettings.doc?.auto_convert_images_to_webp)"
 			@update:modelValue="
 				(val: Boolean) => store.updateBuilderSettings('auto_convert_images_to_webp', val)
