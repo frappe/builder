@@ -87,7 +87,7 @@
 	<!-- page list wrapper -->
 	<section class="m-auto mb-32 flex w-3/4 max-w-5xl flex-col pt-10">
 		<!-- list head -->
-		<div class="mb-6 flex items-center justify-between">
+		<div class="mb-8 flex items-center justify-between">
 			<h1 class="text-xl font-semibold text-text-icons-gray-9">All Pages</h1>
 			<div class="flex gap-2">
 				<div class="relative flex">
@@ -154,7 +154,7 @@
 				<p class="mt-4 text-base text-gray-500">No matching pages found.</p>
 			</div>
 			<!-- grid -->
-			<div class="grid-col grid gap-6 gap-y-8 auto-fill-[220px]" v-if="displayType === 'grid'">
+			<div class="grid-col grid gap-6 auto-fill-[220px]" v-if="displayType === 'grid'">
 				<router-link
 					v-for="page in webPages.data"
 					:key="page.page_name"
