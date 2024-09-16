@@ -4,8 +4,10 @@
 		<div class="overlay absolute" id="overlay" ref="overlay" />
 		<Transition name="fade">
 			<div
-				class="absolute bottom-0 left-0 right-0 top-0 z-40 w-full bg-surface-gray-2 p-10"
-				v-show="store.settingPage"></div>
+				class="absolute bottom-0 left-0 right-0 top-0 z-50 grid w-full place-items-center bg-surface-gray-1 p-10 text-text-icons-gray-5"
+				v-show="store.settingPage">
+				<LoadingIcon></LoadingIcon>
+			</div>
 		</Transition>
 		<BlockSnapGuides></BlockSnapGuides>
 		<div
@@ -73,6 +75,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import LoadingIcon from "@/components/Icons/Loading.vue";
 import builderBlockTemplate from "@/data/builderBlockTemplate";
 import webComponent from "@/data/webComponent";
 import { posthog } from "@/telemetry";
