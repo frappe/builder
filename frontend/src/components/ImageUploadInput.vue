@@ -4,34 +4,33 @@
 			<div class="flex items-center justify-between">
 				<InputLabel v-if="labelPosition === 'left'">{{ label }}</InputLabel>
 				<div class="relative w-full">
-					<div>
-						<Input
-							:class="{
-								'[&>div>input]:pl-8': labelPosition === 'left',
-							}"
-							type="text"
-							:label="labelPosition === 'top' ? label : null"
-							:placeholder="placeholder"
-							:description="description"
-							@update:modelValue="setImageURL"
-							:modelValue="imageURL" />
-						<img
-							v-if="labelPosition === 'left'"
-							:src="imageURL || '/assets/builder/images/fallback.png'"
-							alt=""
-							@click="togglePopover"
-							class="absolute bottom-[6px] left-2 z-10 h-4 w-4 rounded border border-outline-gray-3 shadow-sm"
-							:style="{
-								'object-fit': imageFit || 'contain',
-							}" />
-						<ImageUploader
-							v-if="labelPosition === 'top'"
-							@upload="setImageURL"
-							@remove="setImageURL('')"
-							:image_url="imageURL"
-							class="absolute right-0 top-5 rounded bg-surface-gray-2 px-1"
-							:file_types="['image/*']" />
-					</div>
+					<Input
+						:class="{
+							'[&>div>input]:pl-8': labelPosition === 'left',
+						}"
+						type="text"
+						:label="labelPosition === 'top' ? label : null"
+						:placeholder="placeholder"
+						:description="description"
+						:hideClearButton="labelPosition === 'top'"
+						@update:modelValue="setImageURL"
+						:modelValue="imageURL" />
+					<img
+						v-if="labelPosition === 'left'"
+						:src="imageURL || '/assets/builder/images/fallback.png'"
+						alt=""
+						@click="togglePopover"
+						class="absolute bottom-[6px] left-2 z-10 h-4 w-4 rounded border border-outline-gray-3 shadow-sm"
+						:style="{
+							'object-fit': imageFit || 'contain',
+						}" />
+					<ImageUploader
+						v-if="labelPosition === 'top'"
+						@upload="setImageURL"
+						@remove="setImageURL('')"
+						:image_url="imageURL"
+						class="absolute right-0 top-5 rounded-r-md bg-surface-gray-2 pl-2 dark:bg-gray-900"
+						:file_types="['image/*']" />
 				</div>
 			</div>
 		</template>

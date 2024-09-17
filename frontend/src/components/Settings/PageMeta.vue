@@ -28,7 +28,7 @@
 			</div>
 			<!-- preview -->
 			<div class="flex h-fit w-72 flex-shrink-0 flex-col justify-between gap-1">
-				<span class="text-sm text-text-icons-gray-8">Social Preview</span>
+				<span class="text-sm text-text-icons-gray-5">Social Preview</span>
 				<div class="flex flex-1 flex-col rounded border border-outline-gray-2">
 					<img
 						:src="store.activePage?.meta_image || store.activePage?.preview"
