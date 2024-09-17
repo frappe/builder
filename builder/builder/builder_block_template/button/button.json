@@ -1,14 +1,15 @@
 {
- "block": "{\"blockId\":\"4ur2l2mc6\",\"children\":[{\"blockId\":\"3z5gwjl2f\",\"children\":[],\"baseStyles\":{\"color\":\"var(--neutral-white, #FFF)\",\"fontSize\":\"14px\",\"fontWeight\":\"420\",\"height\":\"fit-content\",\"left\":\"auto\",\"letterSpacing\":\"0.28px\",\"lineHeight\":\"115%\",\"minWidth\":\"30px\",\"position\":\"static\",\"top\":\"auto\",\"width\":\"fit-content\"},\"rawStyles\":{},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[\"__text_block__\"],\"dataKey\":null,\"element\":\"p\",\"innerHTML\":\"<p>Button</p>\",\"customAttributes\":{}}],\"baseStyles\":{\"background\":\"#171717\",\"borderRadius\":\"4px\",\"display\":\"flex\",\"flexDirection\":\"column\",\"height\":\"fit-content\",\"padding\":\"6px 8px\",\"width\":\"fit-content\",\"justifyContent\":\"center\",\"alignItems\":\"center\"},\"rawStyles\":{\"flex-shrink\":\"0\",\"hover:background\":\"#383838\",\"transition\":\"all 0.1s ease-out\"},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{\"href\":\"#\"},\"classes\":[\"__text_block__\"],\"dataKey\":null,\"blockName\":\"container\",\"element\":\"a\",\"customAttributes\":{}}",
+ "block": "{\"attributes\": {\"href\": \"#\"},\"baseStyles\": {\"alignItems\": \"center\",\"background\": \"#171717\",\"borderRadius\": \"4px\",\"display\": \"flex\",\"flexDirection\": \"column\",\"height\": \"fit-content\",\"justifyContent\": \"center\",\"padding\": \"6px 8px\",\"width\": \"fit-content\"},\"blockId\": \"4ur2l2mc6\",\"blockName\": \"button-link\",\"children\": [{\"attributes\": {},\"baseStyles\": {\"color\": \"var(--neutral-white, #FFF)\",\"fontSize\": \"14px\",\"fontWeight\": \"420\",\"height\": \"fit-content\",\"left\": \"auto\",\"letterSpacing\": \"0.28px\",\"lineHeight\": \"115%\",\"minWidth\": \"30px\",\"position\": \"static\",\"top\": \"auto\",\"width\": \"fit-content\"},\"blockId\": \"3z5gwjl2f\",\"children\": [],\"classes\": [\"__text_block__\"],\"customAttributes\": {},\"dataKey\": null,\"element\": \"p\",\"innerHTML\": \"<p>Button</p>\",\"mobileStyles\": {},\"rawStyles\": {},\"tabletStyles\": {}}],\"classes\": [\"__text_block__\"],\"customAttributes\": {},\"dataKey\": null,\"editable\": false,\"element\": \"a\",\"mobileStyles\": {},\"rawStyles\": {\"flex-shrink\": \"0\",\"hover:background\": \"#383838\",\"transition\": \"all 0.1s ease-out\"},\"tabletStyles\": {}}",
  "category": "Basic",
  "creation": "2024-07-10 14:44:08.816465",
  "docstatus": 0,
  "doctype": "Block Template",
  "idx": 0,
- "modified": "2024-09-03 23:28:23.460771",
+ "modified": "2024-09-17 12:08:49.516373",
  "modified_by": "Administrator",
  "name": "Button",
  "owner": "Administrator",
  "preview": "/builder_assets/Button/button.png",
+ "preview_width": 1,
  "template_name": "Button"
 }
