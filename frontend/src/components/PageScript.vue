@@ -50,7 +50,7 @@ import useStore from "@/store";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { Dialog } from "frappe-ui";
-import { ref } from "vue";
+import { defineComponent, ref } from "vue";
 import { toast } from "vue-sonner";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
@@ -76,10 +76,15 @@ const savePageDataScript = (value: string) => {
 			store.setPageData(props.page);
 			toast.success("Data script saved");
 		})
-		.catch((e: { message: string; exc: string }) => {
-			const error_message = e.exc.split("\n").slice(-2)[0];
+		.catch((e: { message: string; exc: string; messages: [string] }) => {
+			let errorMessage = e.exc?.split("\n").slice(-2)[0];
+			if (!errorMessage) {
+				errorMessage = e.messages[0];
+			}
 			toast.error("Failed to save script", {
-				description: error_message,
+				description: defineComponent({
+					template: `<div>${errorMessage}</div>`,
+				}),
 			});
 		});
 };
