@@ -323,7 +323,7 @@ useEventListener(document, "paste", async (e) => {
 			return acc;
 		}, {});
 		Object.entries(styleObj).forEach(([key, value]) => {
-			blockController.setBaseStyle(key as styleProperty, value);
+			blockController.setStyle(key, value);
 		});
 		return;
 	}
