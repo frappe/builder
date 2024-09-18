@@ -7,18 +7,18 @@
 					<span class="w-1/2 pl-2">To URL</span>
 				</div>
 				<div
-					class="group flex items-center rounded-sm border-b border-outline-gray-1 px-2 py-3 text-base text-text-icons-gray-6 hover:bg-surface-gray-2"
+					class="group flex items-center rounded-sm border-b border-outline-gray-1 px-2 py-2 text-base text-text-icons-gray-6 hover:bg-surface-gray-2"
 					v-for="row in rows">
 					<span class="w-1/2">{{ row.from }}</span>
-					<span class="mr-[-8px] w-1/2 pl-2">{{ row.to }}</span>
+					<span class="ml-3 w-1/2 pl-2">{{ row.to }}</span>
 					<FeatherIcon
 						name="trash"
 						class="size-3 cursor-pointer text-text-icons-gray-5"
 						@click="deleteRedirect(row.id)" />
 				</div>
 				<div class="flex gap-4 py-2">
-					<Input type="text" v-model="redirectMap.from" :hideClearButton="true" />
-					<Input type="text" v-model="redirectMap.to" :hideClearButton="true" />
+					<Input type="text" v-model="redirectMap.from" :hideClearButton="true" required placeholder="From" />
+					<Input type="text" v-model="redirectMap.to" :hideClearButton="true" required placeholder="To" />
 				</div>
 				<div
 					class="flex cursor-pointer items-center gap-2 py-1 text-base text-text-icons-gray-5"

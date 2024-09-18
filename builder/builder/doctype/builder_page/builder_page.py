@@ -94,6 +94,8 @@ class BuilderPage(WebsiteGenerator):
 		if not self.page_title:
 			self.page_title = "My Page"
 		if not self.route:
+			if not self.name:
+				self.autoname()
 			self.route = f"pages/{self.name}"
 
 	def on_update(self):
