@@ -5,7 +5,7 @@
 		@click.stop
 		@dblclick.stop
 		:key="editor"
-		class="__text_block__ shrink-0">
+		class="__text_block__">
 		<div v-html="textContent" v-show="!editor && textContent" @click="handleClick"></div>
 		<bubble-menu
 			ref="menu"
