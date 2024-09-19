@@ -7,13 +7,14 @@
 					{{ item.title }}
 				</span>
 				<a
-					@click="() => selectItem(link.value)"
+					@click="!link.disabled && selectItem(link.value)"
 					class="flex cursor-pointer items-center gap-2 rounded p-2 py-[5px] text-base text-text-icons-gray-8"
 					:class="{
 						'bg-surface-selected shadow-sm': selectedItem === link.value,
+						'cursor-not-allowed text-text-icons-gray-3': link.disabled,
 					}"
 					v-for="link in item.items">
-					<component v-if="link?.icon" :is="link?.icon" class="h-4 w-4 text-text-icons-gray-5" />
+					<component v-if="link?.icon" :is="link?.icon" class="h-4 w-4" />
 					{{ link.label }}
 				</a>
 			</div>
@@ -59,6 +60,7 @@ type SidebarItem = {
 	title: string;
 	// prettier-ignore
 	icon?: typeof import("*.vue");
+	disabled?: boolean;
 };
 
 const selectedItemDoc = computed(() => {
@@ -88,6 +90,7 @@ const pageSettings = {
 			component: PageAnalytics,
 			title: "Analytics",
 			icon: ChartIcon,
+			disabled: true,
 		},
 		{
 			label: "Redirects",
@@ -95,6 +98,7 @@ const pageSettings = {
 			component: PageRedirects,
 			title: "Redirects",
 			icon: RedirectIcon,
+			disabled: true,
 		},
 	],
 };
