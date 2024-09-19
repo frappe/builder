@@ -47,15 +47,19 @@
 import builderBlockTemplate from "@/data/builderBlockTemplate";
 import useStore from "@/store";
 import { BlockTemplate } from "@/types/Builder/BlockTemplate";
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
 
 const store = useStore();
 const is_developer_mode = window.is_developer_mode;
-
 const blockTemplateFilter = ref("");
+
+onMounted(() => {
+	builderBlockTemplate.fetch();
+});
+
 const blockTemplates = computed(() => {
-	return builderBlockTemplate.data.filter((d: BlockTemplate) => {
+	return (builderBlockTemplate.data || []).filter((d: BlockTemplate) => {
 		if (blockTemplateFilter.value) {
 			return d.name?.toLowerCase().includes(blockTemplateFilter.value.toLowerCase());
 		} else {

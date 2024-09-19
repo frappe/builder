@@ -291,16 +291,6 @@
 			size="sm">
 			Load More
 		</Button>
-		<Dialog
-			:options="{
-				title: 'Select Template',
-				size: '6xl',
-			}"
-			v-model="showDialog">
-			<template #body-content>
-				<TemplateSelector @templateSelected="showDialog = false"></TemplateSelector>
-			</template>
-		</Dialog>
 	</section>
 </template>
 <script setup lang="ts">
@@ -309,7 +299,6 @@ import Button from "@/components/Controls/Button.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import GlobeIcon from "@/components/Icons/Globe.vue";
 import Settings from "@/components/Settings.vue";
-import TemplateSelector from "@/components/TemplateSelector.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { posthog } from "@/telemetry";

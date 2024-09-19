@@ -9,7 +9,6 @@ const routeRedirects = createListResource({
 	cache: "routeRedirects",
 	start: 0,
 	pageLength: 100,
-	auto: true,
 });
 
 export default routeRedirects;

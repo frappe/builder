@@ -46,17 +46,11 @@
 				</div>
 			</div>
 		</div>
-		<hr class="w-full border-surface-gray-2" />
-		<div class="flex w-full flex-col justify-between gap-3">
-			<span class="text-lg font-semibold text-text-icons-gray-9">Custom Meta Tags</span>
-			<ListView class="h-[150px]" :columns="[]" :rows="[]" />
-		</div>
 	</div>
 </template>
 <script setup lang="ts">
 import ImageUploadInput from "@/components/ImageUploadInput.vue";
 import useStore from "@/store";
-import { ListView } from "frappe-ui";
 // check route for page id
 const store = useStore();
 </script>
