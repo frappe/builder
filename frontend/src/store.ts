@@ -246,7 +246,8 @@ const useStore = defineStore("store", {
 				component.component_name,
 			);
 		},
-		editBlockTemplate(blockTemplateName: string) {
+		async editBlockTemplate(blockTemplateName: string) {
+			await this.fetchBlockTemplate(blockTemplateName);
 			const blockTemplate = this.getBlockTemplate(blockTemplateName);
 			const blockTemplateBlock = this.getBlockTemplateBlock(blockTemplateName);
 			this.editOnCanvas(
