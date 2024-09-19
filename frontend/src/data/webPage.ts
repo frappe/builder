@@ -48,6 +48,5 @@ const templates = createListResource({
 	cache: "templates",
 	orderBy: "modified desc",
 	pageLength: 50,
-	auto: true,
 });
 export { templates, webPages };

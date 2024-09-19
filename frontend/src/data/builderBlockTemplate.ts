@@ -8,7 +8,6 @@ const builderBlockTemplate = createListResource({
 	cache: "blockTemplate",
 	start: 0,
 	pageLength: 100,
-	auto: true,
 });
 
 export default builderBlockTemplate;

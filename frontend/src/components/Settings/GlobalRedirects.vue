@@ -32,15 +32,19 @@
 </template>
 <script setup lang="ts">
 import routeRedirects from "@/data/routeRedirects";
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 
 const redirectMap = ref({
 	from: "",
 	to: "",
 });
 
+onMounted(() => {
+	routeRedirects.fetch();
+});
+
 const rows = computed(() => {
-	return routeRedirects.data.map((redirect: { source: string; target: string; name: string }) => {
+	return (routeRedirects.data || []).map((redirect: { source: string; target: string; name: string }) => {
 		return {
 			from: redirect.source,
 			to: redirect.target,
