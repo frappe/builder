@@ -1,0 +1,17 @@
+{
+ "block": "{\"attributes\": {},\"baseStyles\": {\"display\": \"flex\",\"flexDirection\": \"column\",\"flexShrink\": 0,\"left\": \"auto\",\"overflow\": \"hidden\",\"position\": \"static\",\"top\": \"auto\",\"width\": \"100%\"},\"blockId\": \"udqa5zyxm\",\"children\": [{\"attributes\": {},\"baseStyles\": {\"fontSize\": \"16px\",\"height\": \"fit-content\",\"lineHeight\": \"1.4\",\"minWidth\": \"10px\",\"position\": \"static\",\"width\": \"fit-content\"},\"blockId\": \"98f44tdju\",\"children\": [],\"classes\": [],\"customAttributes\": {},\"dataKey\": null,\"element\": \"p\",\"innerHTML\": \"<p>Words can be like X-rays, if you use them properly\\u2014they\\u2019ll go through anything. You read and you\\u2019re pierced.</p>\",\"mobileStyles\": {},\"rawStyles\": {},\"tabletStyles\": {}},{\"attributes\": {},\"baseStyles\": {\"display\": \"flex\",\"flexDirection\": \"row\",\"flexShrink\": 0,\"gap\": \"6px\",\"height\": \"fit-content\",\"overflow\": \"hidden\",\"position\": \"relative\",\"width\": \"fit-content\"},\"blockId\": \"ztvga4ewc\",\"blockName\": \"container\",\"children\": [{\"attributes\": {},\"baseStyles\": {\"height\": \"fit-content\",\"width\": \"fit-content\"},\"blockId\": \"pxv3ojq7t\",\"children\": [],\"classes\": [],\"customAttributes\": {},\"dataKey\": null,\"element\": \"div\",\"innerHTML\": \"<p>\\u2014Aldous Huxley,\",\"mobileStyles\": {},\"originalElement\": \"__raw_html__\",\"rawStyles\": {},\"tabletStyles\": {}},{\"attributes\": {},\"baseStyles\": {\"background\": \"#e2e2e2\",\"display\": \"flex\",\"flexDirection\": \"column\",\"flexShrink\": 0,\"overflow\": \"hidden\",\"position\": \"static\"},\"blockId\": \"bglu90k42\",\"children\": [],\"classes\": [],\"customAttributes\": {},\"dataKey\": null,\"element\": \"cite\",\"innerHTML\": \"<p>Brave New World</p>\",\"mobileStyles\": {},\"rawStyles\": {},\"tabletStyles\": {}}],\"classes\": [],\"customAttributes\": {},\"dataKey\": null,\"element\": \"div\",\"mobileStyles\": {},\"rawStyles\": {},\"tabletStyles\": {}}],\"classes\": [],\"customAttributes\": {\"cite\": \"https://www.huxley.net/bnw/four.html\"},\"dataKey\": null,\"element\": \"blockquote\",\"mobileStyles\": {},\"rawStyles\": {},\"tabletStyles\": {}}",
+ "category": "Typography",
+ "creation": "2024-09-03 23:17:52.830414",
+ "docstatus": 0,
+ "doctype": "Block Template",
+ "idx": 0,
+ "modified": "2024-09-19 13:10:00.947270",
+ "modified_by": "Administrator",
+ "name": "Blockquote",
+ "order": 13,
+ "owner": "Administrator",
+ "preview": "/builder_assets/Blockquote/blockquote.png",
+ "preview_height": 1,
+ "preview_width": 1,
+ "template_name": "Blockquote"
+}

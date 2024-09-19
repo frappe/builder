@@ -1,9 +1,10 @@
 import colors from "tailwindcss/colors";
 import tailwindConfig from "frappe-ui/src/utils/tailwind.config";
 import plugin from "tailwindcss/plugin";
+import espressoColors from "./espresso_colors";
 
 module.exports = {
-	darkMode: "class",
+	darkMode: ["selector", '[data-theme="dark"]'],
 	presets: [tailwindConfig],
 	content: [
 		"./index.html",
@@ -35,6 +36,7 @@ module.exports = {
 			},
 			colors: {
 				zinc: colors.zinc,
+				...espressoColors,
 			},
 		},
 	},

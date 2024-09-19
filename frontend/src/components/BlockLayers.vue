@@ -14,7 +14,7 @@
 							:data-block-layer-id="element.blockId"
 							:title="element.blockId"
 							@contextmenu.prevent.stop="onContextMenu"
-							class="min-w-24 cursor-pointer overflow-hidden rounded border border-transparent bg-white bg-opacity-50 text-base text-gray-700 dark:bg-zinc-900 dark:text-gray-500"
+							class="min-w-24 cursor-pointer overflow-hidden rounded border border-transparent bg-surface-white bg-opacity-50 text-base text-gray-700 dark:text-gray-500"
 							@click.stop="
 								store.activeCanvas?.history.pause();
 								store.selectBlock(element, $event, false, true);
@@ -30,7 +30,7 @@
 								}">
 								<FeatherIcon
 									:name="isExpanded(element) ? 'chevron-down' : 'chevron-right'"
-									class="h-3 w-3"
+									class="ml-[-18px] h-3 w-3"
 									v-if="element.children && element.children.length && !element.isRoot()"
 									@click.stop="toggleExpanded(element)" />
 								<FeatherIcon

@@ -4,9 +4,11 @@
 import os
 
 import frappe
+from csscompressor import compress
 from frappe.model.document import Document
 from frappe.modules.export_file import export_to_files
 from frappe.utils import get_files_path
+from jsmin import jsmin
 
 
 class BuilderClientScript(Document):
@@ -32,7 +34,12 @@ class BuilderClientScript(Document):
 		file_path = get_files_path(f"{folder_name}/{file_name}")
 		os.makedirs(os.path.dirname(file_path), exist_ok=True)
 		with open(file_path, "w") as f:
-			f.write(self.script)
+			script = self.script or ""
+			if script_type == "JavaScript":
+				script = jsmin(script)
+			if script_type == "CSS":
+				script = compress(script)
+			f.write(script)
 
 		public_url = f"/files/{folder_name}/{file_name}?v={frappe.generate_hash(length=10)}"
 		self.db_set("public_url", public_url, commit=True)

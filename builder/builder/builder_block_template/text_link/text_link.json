@@ -1,0 +1,17 @@
+{
+ "block": "{\"attributes\": {},\"baseStyles\": {\"fontSize\": \"16px\",\"height\": \"fit-content\",\"lineHeight\": \"1.4\",\"minWidth\": \"10px\",\"position\": \"static\",\"width\": \"fit-content\"},\"blockId\": \"z5hw6riip\",\"children\": [],\"classes\": [],\"customAttributes\": {},\"dataKey\": null,\"element\": \"p\",\"innerHTML\": \"<p>Hi, <a target=\\\"_blank\\\" rel=\\\"noopener noreferrer nofollow\\\" href=\\\"https://click.me\\\">click me</a>&nbsp;</p>\",\"mobileStyles\": {},\"rawStyles\": {},\"tabletStyles\": {}}",
+ "category": "Typography",
+ "creation": "2024-09-03 23:08:18.568344",
+ "docstatus": 0,
+ "doctype": "Block Template",
+ "idx": 0,
+ "modified": "2024-09-19 13:09:34.940528",
+ "modified_by": "Administrator",
+ "name": "Text Link",
+ "order": 12,
+ "owner": "Administrator",
+ "preview": "/builder_assets/Text Link/text-link.png",
+ "preview_height": 1,
+ "preview_width": 1,
+ "template_name": "Text Link"
+}

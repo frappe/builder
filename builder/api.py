@@ -5,10 +5,12 @@ from urllib.parse import unquote
 
 import frappe
 import requests
+from frappe.apps import get_apps as get_permitted_apps
 from frappe.core.doctype.file.file import get_local_image
 from frappe.core.doctype.file.utils import delete_file
 from frappe.integrations.utils import make_post_request
 from frappe.model.document import Document
+from frappe.utils.caching import redis_cache
 from frappe.utils.telemetry import POSTHOG_HOST_FIELD, POSTHOG_PROJECT_FIELD
 from PIL import Image
 
@@ -196,3 +198,20 @@ def check_app_permission():
 		return True
 
 	return False
+
+
+@frappe.whitelist()
+@redis_cache()
+def get_apps():
+	apps = get_permitted_apps()
+	app_list = [
+		{
+			"name": "frappe",
+			"logo": "/assets/builder/images/desk.png",
+			"title": "Desk",
+			"route": "/app",
+		}
+	]
+	app_list += filter(lambda app: app.get("name") != "builder", apps)
+
+	return app_list

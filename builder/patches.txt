@@ -8,3 +8,4 @@ builder.builder.doctype.builder_component.patches.set_component_id
 builder.builder.doctype.builder_page.patches.properly_extend_blocks_from_component
 builder.builder.doctype.builder_page.patches.attach_client_script_to_builder_page
 builder.builder.doctype.builder_page.patches.enable_auto_convert_to_webp_by_default
+builder.builder.doctype.builder_client_script.patches.trigger_asset_compression

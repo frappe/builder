@@ -23,15 +23,14 @@
 			}"
 			v-model="showDialog">
 			<template #body-content>
-				<Input
+				<BuilderInput
 					type="text"
 					v-model="componentProperties.componentName"
 					label="Component Name"
-					required
-					class="[&>div>input]:dark:bg-zinc-900 [&>label]:dark:text-zinc-300" />
+					required />
 				<div class="mt-3">
-					<Input
-						class="text-sm [&>label]:dark:text-zinc-300 [&>span]:!text-sm"
+					<BuilderInput
+						class="text-sm [&>span]:!text-sm"
 						type="checkbox"
 						v-model="componentProperties.isGlobalComponent"
 						label="Global Component" />
@@ -51,7 +50,7 @@
 							store.saveBlockTemplate(
 								block,
 								blockTemplateProperties.templateName,
-								'Basic',
+								blockTemplateProperties.category,
 								blockTemplateProperties.previewImage,
 							);
 							showBlockTemplateDialog = false;
@@ -61,21 +60,25 @@
 			}"
 			v-model="showBlockTemplateDialog">
 			<template #body-content>
-				<div class="flex flex-col gap-4">
-					<Input
+				<div class="flex flex-col gap-3">
+					<BuilderInput
 						type="text"
 						v-model="blockTemplateProperties.templateName"
 						label="Template Name"
 						required
-						:hideClearButton="true"
-						class="[&>div>input]:dark:bg-zinc-900 [&>label]:dark:text-zinc-300" />
+						:hideClearButton="true" />
+					<BuilderInput
+						type="select"
+						v-model="blockTemplateProperties.category"
+						label="Category"
+						:options="store.blockTemplateCategoryOptions"
+						:hideClearButton="true" />
 					<div class="relative">
-						<Input
+						<BuilderInput
 							type="text"
 							v-model="blockTemplateProperties.previewImage"
 							label="Preview Image"
-							:hideClearButton="true"
-							class="[&>div>input]:dark:bg-zinc-900 [&>label]:dark:text-zinc-300" />
+							:hideClearButton="true" />
 						<FileUploader
 							file-types="image/*"
 							@success="
@@ -85,7 +88,7 @@
 							">
 							<template v-slot="{ openFileSelector }">
 								<div class="absolute bottom-0 right-0 place-items-center">
-									<Button size="sm" @click="openFileSelector" class="text-sm">Upload</Button>
+									<BuilderButton size="sm" @click="openFileSelector" class="text-sm">Upload</BuilderButton>
 								</div>
 							</template>
 						</FileUploader>
@@ -96,6 +99,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import ContextMenu from "@/components/ContextMenu.vue";
 import webComponent from "@/data/webComponent";
 import useStore from "@/store";
 import { posthog } from "@/telemetry";
@@ -115,8 +119,6 @@ import { useStorage } from "@vueuse/core";
 import { Dialog, FileUploader } from "frappe-ui";
 import { Ref, nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
-import ContextMenu from "./ContextMenu.vue";
-import Input from "./Input.vue";
 
 const store = useStore();
 
@@ -138,7 +140,7 @@ const componentProperties = ref({
 
 const blockTemplateProperties = ref({
 	templateName: "",
-	category: "",
+	category: "" as (typeof store.blockTemplateCategoryOptions)[number],
 	previewImage: "",
 });
 
@@ -266,7 +268,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			const parentBlock = props.block.getParentBlock();
 			if (!parentBlock) return false;
 			const selectedBlocks = store.activeCanvas?.selectedBlocks || [];
-			return selectedBlocks.every((block) => block.getParentBlock() === parentBlock);
+			return selectedBlocks.every((block: Block) => block.getParentBlock() === parentBlock);
 		},
 	},
 	{

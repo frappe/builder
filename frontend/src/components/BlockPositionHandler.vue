@@ -14,14 +14,14 @@
 			]"></OptionToggle>
 		<div class="grid-rows grid grid-cols-3 gap-4" v-if="showHandler">
 			<div class="col-span-1 col-start-2 w-16 self-center">
-				<Input
+				<BuilderInput
 					type="text"
 					placeholder="top"
 					:modelValue="blockController.getStyle('top') as string"
 					@update:modelValue="(value: string) => blockController.setStyle('top', value)" />
 			</div>
 			<div class="col-span-1 col-start-1 w-16 self-center">
-				<Input
+				<BuilderInput
 					type="text"
 					placeholder="left"
 					:modelValue="blockController.getStyle('left') as string"
@@ -30,25 +30,25 @@
 			<div
 				class="grid-col-3 grid h-16 w-16 grid-rows-3 gap-1 self-center justify-self-center rounded bg-gray-50 p-2 dark:bg-zinc-800">
 				<div
-					class="col-span-3 row-start-1 h-2 w-[2px] self-center justify-self-center rounded bg-gray-400 dark:bg-zinc-900"></div>
+					class="col-span-3 row-start-1 h-2 w-[2px] self-center justify-self-center rounded bg-surface-gray-2"></div>
 				<div
-					class="col-span-3 row-start-3 h-2 w-[2px] self-center justify-self-center rounded bg-gray-400 dark:bg-zinc-900"></div>
+					class="col-span-3 row-start-3 h-2 w-[2px] self-center justify-self-center rounded bg-surface-gray-2"></div>
 				<div
-					class="h-5 w-5 self-center justify-self-center rounded bg-gray-400 shadow-md dark:bg-zinc-900"></div>
+					class="surface-grabg-surface-gray-2 h-5 w-5 self-center justify-self-center rounded bg-gray-400"></div>
 				<div
-					class="col-span-1 col-start-1 row-start-2 h-[2px] w-2 self-center justify-self-center rounded bg-gray-400 dark:bg-zinc-900"></div>
+					class="col-span-1 col-start-1 row-start-2 h-[2px] w-2 self-center justify-self-center rounded bg-surface-gray-2"></div>
 				<div
-					class="col-span-1 col-start-3 row-start-2 h-[2px] w-2 self-center justify-self-center rounded bg-gray-400 dark:bg-zinc-900"></div>
+					class="col-span-1 col-start-3 row-start-2 h-[2px] w-2 self-center justify-self-center rounded bg-surface-gray-2"></div>
 			</div>
 			<div class="col-span-1 col-start-3 w-16 self-center">
-				<Input
+				<BuilderInput
 					type="text"
 					placeholder="right"
 					:modelValue="blockController.getStyle('right') as string"
 					@update:modelValue="(value: string) => blockController.setStyle('right', value)" />
 			</div>
 			<div class="col-span-1 col-start-2 w-16 self-center">
-				<Input
+				<BuilderInput
 					type="text"
 					placeholder="bottom"
 					:modelValue="blockController.getStyle('bottom') as string"
@@ -58,10 +58,9 @@
 	</div>
 </template>
 <script setup lang="ts">
+import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import blockController from "@/utils/blockController";
 import { computed, watch } from "vue";
-import Input from "./Input.vue";
-import OptionToggle from "./OptionToggle.vue";
 
 const position = computed({
 	get() {

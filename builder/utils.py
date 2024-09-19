@@ -21,6 +21,7 @@ from frappe.utils.safe_exec import (
 	safe_exec_flags,
 )
 from RestrictedPython import compile_restricted
+from werkzeug.routing import Rule
 
 
 def get_doc_as_dict(doctype, name):
@@ -187,7 +188,7 @@ def make_records(path):
 # 	)
 
 
-def copy_img_to_asset_folder(block, self):
+def copy_img_to_asset_folder(block, page_doc):
 	if block.get("element") == "img":
 		src = block.get("attributes", {}).get("src")
 		site_url = get_url()
@@ -204,11 +205,11 @@ def copy_img_to_asset_folder(block, self):
 			if files:
 				_file = frappe.get_doc("File", files[0].name)
 				# copy physical file to new location
-				assets_folder_path = get_template_assets_folder_path(self)
+				assets_folder_path = get_template_assets_folder_path(page_doc)
 				shutil.copy(_file.get_full_path(), assets_folder_path)
-			block["attributes"]["src"] = f"/builder_assets/{self.name}/{src.split('/')[-1]}"
+			block["attributes"]["src"] = f"/builder_assets/{page_doc.name}/{src.split('/')[-1]}"
 	for child in block.get("children", []):
-		copy_img_to_asset_folder(child, self)
+		copy_img_to_asset_folder(child, page_doc)
 
 
 def get_template_assets_folder_path(page_doc):
@@ -286,3 +287,14 @@ def get_dummy_blocks():
 			],
 		},
 	]
+
+
+class ColonRule(Rule):
+	def __init__(self, string, *args, **kwargs):
+		# Replace ':name' with '<name>' so Werkzeug can process it
+		string = self.convert_colon_to_brackets(string)
+		super().__init__(string, *args, **kwargs)
+
+	@staticmethod
+	def convert_colon_to_brackets(string):
+		return re.sub(r":([a-zA-Z0-9_-]+)", r"<\1>", string)

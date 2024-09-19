@@ -13,7 +13,6 @@ develop_version = "1.x.x-develop"
 
 # Includes in <head>
 # ------------------
-
 # include js, css files in header of desk.html
 # app_include_css = "/assets/builder/css/builder.css"
 app_include_js = "/assets/builder/js/builder.js"

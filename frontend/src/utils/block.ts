@@ -82,6 +82,11 @@ class Block implements BlockOptions {
 			this.draggable = false;
 			this.removeStyle("minHeight");
 		}
+
+		if (this.extendedFromComponent) {
+			const store = useStore();
+			store.fetchComponent(this.extendedFromComponent);
+		}
 	}
 	getStyles(breakpoint: string = "desktop"): BlockStyleMap {
 		let styleObj = {};
@@ -240,7 +245,7 @@ class Block implements BlockOptions {
 		return this.getElement() === "svg" || this.getInnerHTML()?.startsWith("<svg");
 	}
 	isText() {
-		return ["span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6", "label", "a"].includes(
+		return ["span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6", "label", "a", "cite"].includes(
 			this.getElement() as string,
 		);
 	}

@@ -36,11 +36,11 @@
 							class="flex-1 [&>div>div>div]:w-full"
 							placement="right">
 							<template v-slot="{ open }">
-								<Button
+								<BuilderButton
 									class="w-full text-xs dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
 									@click="open">
 									New Script
-								</Button>
+								</BuilderButton>
 							</template>
 						</Dropdown>
 						<Dropdown
@@ -49,11 +49,11 @@
 							size="sm"
 							class="max-w-60 flex-1 [&>div>div>div]:w-full">
 							<template v-slot="{ open }">
-								<Button
+								<BuilderButton
 									class="w-full text-xs dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
 									@click="open">
 									Attach Script
-								</Button>
+								</BuilderButton>
 							</template>
 						</Dropdown>
 					</div>
@@ -65,7 +65,7 @@
 			</div>
 		</div>
 		<div
-			class="flex h-full w-full items-center justify-center rounded bg-gray-100 text-base text-gray-600 dark:bg-zinc-900 dark:text-zinc-500"
+			class="flex h-full w-full items-center justify-center rounded bg-surface-gray-1 text-base text-gray-600 dark:text-zinc-500"
 			v-show="!activeScript">
 			Add Script
 		</div>
@@ -90,7 +90,7 @@ import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { createListResource, createResource, Dropdown } from "frappe-ui";
 import { computed, nextTick, PropType, ref, watch } from "vue";
 import { toast } from "vue-sonner";
-import CodeEditor from "./CodeEditor.vue";
+import CodeEditor from "./Controls/CodeEditor.vue";
 import CSSIcon from "./Icons/CSS.vue";
 import JavaScriptIcon from "./Icons/JavaScript.vue";
 

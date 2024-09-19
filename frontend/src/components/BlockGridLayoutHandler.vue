@@ -212,10 +212,10 @@
 		@update:modelValue="(val: string) => blockController.setStyle('placeSelf', val)" /> -->
 </template>
 <script lang="ts" setup>
+import InlineInput from "@/components/Controls/InlineInput.vue";
+import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
-import InlineInput from "./InlineInput.vue";
-import OptionToggle from "./OptionToggle.vue";
 
 const columns = computed(() => {
 	const template = blockController.getStyle("gridTemplateColumns") as string;

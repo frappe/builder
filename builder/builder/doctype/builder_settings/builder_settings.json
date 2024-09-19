@@ -57,7 +57,7 @@
   },
   {
    "default": "1",
-   "description": "Beta: All the images uploaded to Canvas will be auto converted to WebP for better page performance.",
+   "description": "All the images uploaded to Canvas will be auto converted to WebP for better page performance.",
    "fieldname": "auto_convert_images_to_webp",
    "fieldtype": "Check",
    "label": "Auto convert images to WebP"

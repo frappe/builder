@@ -5,7 +5,7 @@
 		@click.stop
 		@dblclick.stop
 		:key="editor"
-		class="__text_block__ shrink-0">
+		class="__text_block__">
 		<div v-html="textContent" v-show="!editor && textContent" @click="handleClick"></div>
 		<bubble-menu
 			ref="menu"
@@ -27,9 +27,9 @@
 				},
 			}"
 			v-if="editor"
-			class="z-50 rounded-md border border-gray-300 bg-white p-1 text-lg shadow-2xl">
+			class="z-50 rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-text-icons-gray-9 shadow-2xl">
 			<div v-if="settingLink" class="flex">
-				<Input
+				<BuilderInput
 					v-model="textLink"
 					placeholder="https://example.com"
 					class="link-input w-56 text-sm"
@@ -40,10 +40,10 @@
 						}
 					"
 					ref="linkInput" />
-				<Button @click="() => setLink(linkInput?.getInputValue())" class="ml-1">
+				<BuilderButton @click="() => setLink(linkInput?.getInputValue())" class="ml-1">
 					<FeatherIcon class="h-3 w-3" name="check" />
-				</Button>
-				<Button
+				</BuilderButton>
+				<BuilderButton
 					@click="
 						() => {
 							textLink = '';
@@ -52,46 +52,46 @@
 					"
 					class="ml-1">
 					<FeatherIcon class="h-3 w-3" name="x" />
-				</Button>
+				</BuilderButton>
 			</div>
 			<div v-show="!settingLink" class="flex gap-1">
 				<button
 					@click="setHeading(1)"
-					class="rounded px-2 py-1 text-sm hover:bg-gray-100"
-					:class="{ 'bg-gray-200': block.getElement() === 'h1' }">
+					class="rounded px-2 py-1 text-sm hover:bg-surface-gray-2"
+					:class="{ 'bg-surface-gray-3': block.getElement() === 'h1' }">
 					<code>H1</code>
 				</button>
 				<button
 					@click="setHeading(2)"
-					class="rounded px-2 py-1 text-sm hover:bg-gray-100"
-					:class="{ 'bg-gray-200': block.getElement() === 'h2' }">
+					class="rounded px-2 py-1 text-sm hover:bg-surface-gray-2"
+					:class="{ 'bg-surface-gray-3': block.getElement() === 'h2' }">
 					<code>H2</code>
 				</button>
 				<button
 					@click="setHeading(3)"
-					class="rounded px-2 py-1 text-sm hover:bg-gray-100"
-					:class="{ 'bg-gray-200': block.getElement() === 'h3' }">
+					class="rounded px-2 py-1 text-sm hover:bg-surface-gray-2"
+					:class="{ 'bg-surface-gray-3': block.getElement() === 'h3' }">
 					<code>H3</code>
 				</button>
 				<button
 					v-show="!block.isHeader()"
 					@click="editor?.chain().focus().toggleBold().run()"
-					class="rounded px-2 py-1 hover:bg-gray-100"
-					:class="{ 'bg-gray-200': editor.isActive('bold') }">
+					class="rounded px-2 py-1 hover:bg-surface-gray-2"
+					:class="{ 'bg-surface-gray-3': editor.isActive('bold') }">
 					<FeatherIcon class="h-3 w-3" name="bold" />
 				</button>
 				<button
 					v-show="!block.isHeader()"
 					@click="editor?.chain().focus().toggleItalic().run()"
-					class="rounded px-2 py-1 hover:bg-gray-100"
-					:class="{ 'bg-gray-200': editor.isActive('italic') }">
+					class="rounded px-2 py-1 hover:bg-surface-gray-2"
+					:class="{ 'bg-surface-gray-3': editor.isActive('italic') }">
 					<FeatherIcon class="h-3 w-3" name="italic" />
 				</button>
 				<button
 					v-show="!block.isHeader()"
 					@click="editor?.chain().focus().toggleStrike().run()"
-					class="rounded px-2 py-1 hover:bg-gray-100"
-					:class="{ 'bg-gray-200': editor.isActive('strike') }">
+					class="rounded px-2 py-1 hover:bg-surface-gray-2"
+					:class="{ 'bg-surface-gray-3': editor.isActive('strike') }">
 					<StrikeThroughIcon />
 				</button>
 				<button
@@ -102,8 +102,8 @@
 							enableLinkInput();
 						}
 					"
-					class="rounded px-2 py-1 hover:bg-gray-100"
-					:class="{ 'bg-gray-200': editor.isActive('link') }">
+					class="rounded px-2 py-1 hover:bg-surface-gray-2"
+					:class="{ 'bg-surface-gray-3': editor.isActive('link') }">
 					<FeatherIcon class="h-3 w-3" name="link" />
 				</button>
 			</div>
@@ -113,6 +113,7 @@
 			:editor="editor"
 			v-if="editor && showEditor"
 			class="relative z-50"
+			:style="block.getRawStyles()"
 			@keydown="handleKeydown" />
 		<slot />
 	</component>

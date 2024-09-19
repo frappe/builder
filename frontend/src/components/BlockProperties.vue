@@ -1,13 +1,13 @@
 <template>
 	<div v-if="blockController.isBLockSelected()" class="flex select-none flex-col pb-16">
-		<div class="sticky top-9 z-50 mt-[-15px] flex w-full bg-white py-3 dark:bg-zinc-900">
-			<Input
+		<div class="sticky top-[41px] z-50 mt-[-15px] flex w-full bg-surface-white py-3">
+			<BuilderInput
 				ref="searchInput"
 				type="text"
 				placeholder="Search properties"
 				v-model="store.propertyFilter"
 				@input="
-					(value) => {
+					(value: string) => {
 						store.propertyFilter = value;
 					}
 				" />
@@ -15,8 +15,10 @@
 		<div class="flex flex-col gap-3">
 			<CollapsibleSection
 				:sectionName="section.name"
-				v-for="section in filteredSections"
-				:sectionCollapsed="section.collapsed">
+				v-for="section in sections"
+				v-show="showSection(section)"
+				:key="section.name"
+				:sectionCollapsed="toValue(section.collapsed) && !store.propertyFilter">
 				<template v-for="property in getFilteredProperties(section)">
 					<component :is="property.component" v-bind="property.getProps()" v-on="property.events || {}">
 						{{ property.innerText || "" }}
@@ -30,11 +32,14 @@
 	</div>
 </template>
 <script setup lang="ts">
+import InlineInput from "@/components/Controls/InlineInput.vue";
+import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import blockController from "@/utils/blockController";
 import { setFont as _setFont, fontListNames, getFontWeightOptions } from "@/utils/fontManager";
+import { toValue } from "@vueuse/core";
 import { Button, createResource } from "frappe-ui";
 import { Ref, computed, nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
@@ -42,14 +47,12 @@ import BackgroundHandler from "./BackgroundHandler.vue";
 import BlockFlexLayoutHandler from "./BlockFlexLayoutHandler.vue";
 import BlockGridLayoutHandler from "./BlockGridLayoutHandler.vue";
 import BlockPositionHandler from "./BlockPositionHandler.vue";
-import CodeEditor from "./CodeEditor.vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
-import ColorInput from "./ColorInput.vue";
+import CodeEditor from "./Controls/CodeEditor.vue";
+import ColorInput from "./Controls/ColorInput.vue";
 import DimensionInput from "./DimensionInput.vue";
-import InlineInput from "./InlineInput.vue";
-import Input from "./Input.vue";
+import ImageUploadInput from "./ImageUploadInput.vue";
 import ObjectEditor from "./ObjectEditor.vue";
-import OptionToggle from "./OptionToggle.vue";
 
 const store = useStore();
 
@@ -79,18 +82,16 @@ type PropertySection = {
 
 const searchInput = ref(null) as Ref<HTMLElement | null>;
 
-const filteredSections = computed(() => {
-	return sections.filter((section) => {
-		let showSection = true;
-		if (section.condition) {
-			showSection = section.condition();
-		}
-		if (showSection && store.propertyFilter) {
-			showSection = getFilteredProperties(section).length > 0;
-		}
-		return showSection;
-	});
-});
+const showSection = (section: PropertySection) => {
+	let showSection = true;
+	if (section.condition) {
+		showSection = section.condition();
+	}
+	if (showSection && store.propertyFilter) {
+		showSection = getFilteredProperties(section).length > 0;
+	}
+	return showSection;
+};
 
 const getFilteredProperties = (section: PropertySection) => {
 	return section.properties.filter((property) => {
@@ -680,8 +681,11 @@ const optionsSectionProperties = [
 					"nav",
 					"header",
 					"footer",
+					"label",
 					"select",
 					"option",
+					"blockquote",
+					"cite",
 				],
 				modelValue: blockController.getKeyValue("element"),
 			};
@@ -691,80 +695,6 @@ const optionsSectionProperties = [
 		events: {
 			"update:modelValue": (val: string) => blockController.setKeyValue("element", val),
 		},
-	},
-	{
-		component: InlineInput,
-		getProps: () => {
-			return {
-				label: "Image URL",
-				modelValue: blockController.getAttribute("src"),
-			};
-		},
-		searchKeyWords: "Image, URL, Src",
-		events: {
-			"update:modelValue": (val: string) => blockController.setAttribute("src", val),
-		},
-		condition: () => blockController.isImage(),
-	},
-	{
-		component: Button,
-		getProps: () => {
-			return {
-				label: "Convert to WebP",
-				class: "text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700",
-			};
-		},
-		innerText: "Convert to WebP",
-		searchKeyWords: "Convert, webp, Convert to webp, image, src, url",
-		events: {
-			click: () => {
-				const block = blockController.getSelectedBlocks()[0];
-				const convertToWebP = createResource({
-					url: "/api/method/builder.api.convert_to_webp",
-					params: {
-						image_url: block.getAttribute("src"),
-					},
-				});
-				toast.promise(
-					convertToWebP.fetch().then((res: string) => {
-						block.setAttribute("src", res);
-					}),
-					{
-						loading: "Converting...",
-						success: () => "Image converted to WebP",
-						error: () => "Failed to convert image to WebP",
-					},
-				);
-			},
-		},
-		condition: () => {
-			if (!blockController.isImage()) {
-				return false;
-			}
-			if (
-				[".jpg", ".jpeg", ".png"].some((ext) =>
-					((blockController.getAttribute("src") as string) || ("" as string)).toLowerCase().endsWith(ext),
-				)
-			) {
-				return true;
-			}
-		},
-	},
-	{
-		component: InlineInput,
-		getProps: () => {
-			return {
-				label: "Image Fit",
-				type: "select",
-				options: ["fill", "contain", "cover", "none"],
-				modelValue: blockController.getStyle("objectFit"),
-			};
-		},
-		searchKeyWords: "Image, Fit, ObjectFit, Object Fit, Fill, Contain, Cover, None",
-		events: {
-			"update:modelValue": (val: StyleValue) => blockController.setStyle("objectFit", val),
-		},
-		condition: () => blockController.isImage(),
 	},
 	{
 		component: InlineInput,
@@ -867,20 +797,6 @@ const optionsSectionProperties = [
 		events: {
 			"update:modelValue": (val: StyleValue) => blockController.setStyle("overflowY", val),
 		},
-	},
-	{
-		component: InlineInput,
-		getProps: () => {
-			return {
-				label: "Alt Text",
-				modelValue: blockController.getAttribute("alt"),
-			};
-		},
-		searchKeyWords: "Alt, Text, AltText, Alternate Text",
-		events: {
-			"update:modelValue": (val: string) => blockController.setAttribute("alt", val),
-		},
-		condition: () => blockController.isImage(),
 	},
 	{
 		component: InlineInput,
@@ -1140,6 +1056,82 @@ const videoOptionsSectionProperties = [
 	},
 ];
 
+const imageOptionsSectionProperties = [
+	{
+		component: ImageUploadInput,
+		getProps: () => {
+			return {
+				label: "Image URL",
+				imageURL: blockController.getAttribute("src"),
+				imageFit: blockController.getStyle("objectFit"),
+			};
+		},
+		events: {
+			"update:imageURL": (val: string) => blockController.setAttribute("src", val),
+			"update:imageFit": (val: StyleValue) => blockController.setStyle("objectFit", val),
+		},
+		searchKeyWords: "Image, URL, Src, Fit, ObjectFit, Object Fit, Fill, Contain, Cover",
+	},
+	{
+		component: Button,
+		getProps: () => {
+			return {
+				label: "Convert to WebP",
+				class: "text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700",
+			};
+		},
+		innerText: "Convert to WebP",
+		searchKeyWords: "Convert, webp, Convert to webp, image, src, url",
+		events: {
+			click: () => {
+				const block = blockController.getSelectedBlocks()[0];
+				const convertToWebP = createResource({
+					url: "/api/method/builder.api.convert_to_webp",
+					params: {
+						image_url: block.getAttribute("src"),
+					},
+				});
+				toast.promise(
+					convertToWebP.fetch().then((res: string) => {
+						block.setAttribute("src", res);
+					}),
+					{
+						loading: "Converting...",
+						success: () => "Image converted to WebP",
+						error: () => "Failed to convert image to WebP",
+					},
+				);
+			},
+		},
+		condition: () => {
+			if (!blockController.isImage()) {
+				return false;
+			}
+			if (
+				[".jpg", ".jpeg", ".png"].some((ext) =>
+					((blockController.getAttribute("src") as string) || ("" as string)).toLowerCase().endsWith(ext),
+				)
+			) {
+				return true;
+			}
+		},
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Alt Text",
+				modelValue: blockController.getAttribute("alt"),
+			};
+		},
+		searchKeyWords: "Alt, Text, AltText, Alternate Text",
+		events: {
+			"update:modelValue": (val: string) => blockController.setAttribute("alt", val),
+		},
+		condition: () => blockController.isImage(),
+	},
+];
+
 const sections = [
 	{
 		name: "Link",
@@ -1153,6 +1145,16 @@ const sections = [
 		condition: () => !blockController.multipleBlocksSelected(),
 	},
 	{
+		name: "Image Options",
+		properties: imageOptionsSectionProperties,
+		condition: () => blockController.isImage(),
+	},
+	{
+		name: "Video Options",
+		properties: videoOptionsSectionProperties,
+		condition: () => blockController.isVideo(),
+	},
+	{
 		name: "Typography",
 		properties: typographySectionProperties,
 		condition: () => blockController.isText() || blockController.isContainer() || blockController.isInput(),
@@ -1161,12 +1163,6 @@ const sections = [
 		name: "Style",
 		properties: styleSectionProperties,
 	},
-	{
-		name: "Video Options",
-		properties: videoOptionsSectionProperties,
-		condition: () => blockController.isVideo(),
-	},
-
 	{
 		name: "Dimension",
 		properties: dimensionSectionProperties,
@@ -1202,7 +1198,9 @@ const sections = [
 	{
 		name: "Data Key",
 		properties: dataKeySectionProperties,
-		collapsed: false,
+		collapsed: computed(() => {
+			return !blockController.getDataKey("key") && !blockController.isRepeater();
+		}),
 	},
 	{
 		name: "HTML Attributes",
