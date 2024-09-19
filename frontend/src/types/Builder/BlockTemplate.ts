@@ -16,6 +16,12 @@ export interface BlockTemplate{
 	block: any
 	/**	Preview : Data	*/
 	preview: string
+	/**	Preview Width : Int	*/
+	preview_width?: number
+	/**	Preview Height : Int	*/
+	preview_height?: number
 	/**	Category : Select	*/
-	category?: "Basic" | "Structure"
+	category?: "Structure" | "Basic" | "Typography" | "Basic Forms" | "Form parts" | "Media" | "Advanced"
+	/**	Order : Int	*/
+	order?: number
 }

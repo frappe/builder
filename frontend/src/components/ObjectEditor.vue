@@ -1,27 +1,27 @@
 <template>
 	<div ref="objectEditor" class="flex flex-col gap-2" @paste="pasteObj">
 		<div v-for="(value, key) in obj" :key="key" class="flex gap-2">
-			<Input
+			<BuilderInput
 				placeholder="Property"
 				:modelValue="key"
 				@update:modelValue="(val: string) => replaceKey(key, val)"
 				class="rounded-md text-sm text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
-			<Input
+			<BuilderInput
 				placeholder="Value"
 				:modelValue="value"
 				@update:modelValue="(val: string) => updateObjectValue(key, val)"
 				class="rounded-md text-sm text-gray-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700" />
-			<Button
+			<BuilderButton
 				variant="outline"
 				icon="x"
 				class="p-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-gray-100 dark:outline-0 dark:hover:bg-zinc-700 dark:hover:text-gray-100"
-				@click="deleteObjectKey(key as string)"></Button>
+				@click="deleteObjectKey(key as string)"></BuilderButton>
 		</div>
-		<Button
+		<BuilderButton
 			variant="subtle"
 			label="Add"
 			class="dark:bg-zinc-800 dark:text-gray-100"
-			@click="addObjectKey"></Button>
+			@click="addObjectKey"></BuilderButton>
 		<p
 			class="rounded-sm bg-gray-100 p-2 text-2xs text-gray-800 dark:bg-zinc-800 dark:text-zinc-300"
 			v-show="description">
@@ -32,7 +32,6 @@
 <script setup lang="ts">
 import { mapToObject, replaceMapKey } from "@/utils/helpers";
 import { ref } from "vue";
-import Input from "./Input.vue";
 
 const props = defineProps<{
 	obj: Record<string, string>;

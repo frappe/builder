@@ -5,7 +5,7 @@
 				<component :is="Component" />
 			</keep-alive>
 		</router-view>
-		<UseDark></UseDark>
+		<UseDark attribute="data-theme"></UseDark>
 		<Toaster :theme="isDark ? 'dark' : 'light'" richColors />
 		<Dialogs></Dialogs>
 	</div>
@@ -33,7 +33,9 @@ const title = computed(() => {
 
 useTitle(title);
 
-const isDark = useDark();
+const isDark = useDark({
+	attribute: "data-theme",
+});
 </script>
 <style>
 [id^="headlessui-dialog"] {
@@ -41,7 +43,7 @@ const isDark = useDark();
 }
 
 [id^="headlessui-dialog-panel"] {
-	@apply dark:bg-zinc-800;
+	@apply bg-surface-gray-1;
 }
 
 [id^="headlessui-dialog-panel"] > div,
@@ -52,40 +54,6 @@ const isDark = useDark();
 
 [id^="headlessui-dialog-panel"] header h3 {
 	@apply dark:text-white;
-}
-
-[id^="headlessui-dialog-panel"] button svg path {
-	@apply dark:fill-white;
-}
-
-[id^="headlessui-dialog-panel"] button {
-	@apply dark:text-white;
-	@apply dark:hover:bg-zinc-700;
-	@apply dark:bg-zinc-900;
-}
-
-[id^="headlessui-dialog-panel"] input {
-	@apply dark:bg-zinc-900;
-	@apply dark:border-zinc-800;
-	@apply dark:text-gray-50;
-}
-
-[id^="headlessui-dialog-panel"] input:focus {
-	@apply dark:ring-0;
-	@apply dark:border-zinc-700;
-}
-
-[id^="headlessui-dialog-panel"] input[type="checkbox"]:checked {
-	@apply dark:bg-zinc-700;
-}
-
-[id^="headlessui-dialog-panel"] input[type="checkbox"]:focus {
-	@apply dark:ring-zinc-700;
-	@apply dark:ring-offset-0;
-}
-
-[id^="headlessui-dialog-panel"] input[type="checkbox"]:hover {
-	@apply dark:bg-zinc-900;
 }
 
 [id^="headlessui-dialog-panel"] label > span {
@@ -142,7 +110,7 @@ const isDark = useDark();
 }
 
 [data-sonner-toast][data-styled="true"] {
-	@apply dark:bg-zinc-900;
+	@apply bg-surface-white;
 	@apply dark:border-zinc-800;
 }
 </style>

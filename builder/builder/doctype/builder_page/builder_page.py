@@ -24,6 +24,7 @@ from werkzeug.routing import Rule
 from builder.hooks import builder_path
 from builder.html_preview_image import generate_preview
 from builder.utils import (
+	ColonRule,
 	camel_case_to_kebab_case,
 	copy_img_to_asset_folder,
 	escape_single_quotes,
@@ -43,15 +44,26 @@ class BuilderPageRenderer(DocumentPage):
 		if page := find_page_with_path(self.path):
 			self.doctype = "Builder Page"
 			self.docname = page
+			self.validate_access()
 			return True
 
 		for d in get_web_pages_with_dynamic_routes():
-			if evaluate_dynamic_routes([Rule(f"/{d.route}", endpoint=d.name)], self.path):
-				self.doctype = "Builder Page"
-				self.docname = d.name
-				return True
+			try:
+				if evaluate_dynamic_routes([ColonRule(f"/{d.route}", endpoint=d.name)], self.path):
+					self.doctype = "Builder Page"
+					self.docname = d.name
+					self.validate_access()
+					return True
+			except ValueError:
+				return False
 
 		return False
+
+	def validate_access(self):
+		if self.docname:
+			self.doc = frappe.get_cached_doc(self.doctype, self.docname)
+			if self.doc.authenticated_access and frappe.session.user == "Guest":
+				raise frappe.PermissionError("Please log in to view this page.")
 
 
 class BuilderPage(WebsiteGenerator):
@@ -82,9 +94,17 @@ class BuilderPage(WebsiteGenerator):
 		if not self.page_title:
 			self.page_title = "My Page"
 		if not self.route:
+			if not self.name:
+				self.autoname()
 			self.route = f"pages/{self.name}"
 
 	def on_update(self):
+		if self.has_value_changed("route"):
+			if ":" in self.route or "<" in self.route:
+				self.db_set("dynamic_route", 1)
+			else:
+				self.db_set("dynamic_route", 0)
+
 		if (
 			self.has_value_changed("dynamic_route")
 			or self.has_value_changed("route")
@@ -128,8 +148,9 @@ class BuilderPage(WebsiteGenerator):
 		)
 
 	@frappe.whitelist()
-	def publish(self, **kwargs):
-		frappe.form_dict.update(kwargs)
+	def publish(self, route_variables=None):
+		if route_variables:
+			frappe.form_dict.update(frappe.parse_json(route_variables or "{}"))
 		self.published = 1
 		if self.draft_blocks:
 			self.blocks = self.draft_blocks
@@ -152,6 +173,7 @@ class BuilderPage(WebsiteGenerator):
 	def get_context(self, context):
 		# delete default favicon
 		del context.favicon
+		context.disable_indexing = self.disable_indexing
 		page_data = self.get_page_data()
 		if page_data.get("title"):
 			context.title = page_data.get("page_title")
@@ -180,7 +202,6 @@ class BuilderPage(WebsiteGenerator):
 		context.update(page_data)
 		self.set_meta_tags(context=context, page_data=page_data)
 		self.set_favicon(context)
-
 		try:
 			context["content"] = render_template(context.content, context)
 		except TemplateSyntaxError:
@@ -225,10 +246,9 @@ class BuilderPage(WebsiteGenerator):
 			context.setdefault("styles", []).append(builder_settings.style_public_url)
 
 	@frappe.whitelist()
-	def get_page_data(self, args=None):
-		if args:
-			args = frappe.parse_json(args)
-			frappe.form_dict.update(args)
+	def get_page_data(self, route_variables=None):
+		if route_variables:
+			frappe.form_dict.update(frappe.parse_json(route_variables or "{}"))
 		page_data = frappe._dict()
 		if self.page_data_script:
 			_locals = dict(data=frappe._dict())
@@ -574,12 +594,15 @@ def get_web_pages_with_dynamic_routes() -> dict[str, str]:
 
 
 def resolve_path(path):
-	if find_page_with_path(path):
-		return path
-	elif evaluate_dynamic_routes(
-		[Rule(f"/{d.route}", endpoint=d.name) for d in get_web_pages_with_dynamic_routes()],
-		path,
-	):
-		return path
+	try:
+		if find_page_with_path(path):
+			return path
+		elif evaluate_dynamic_routes(
+			[ColonRule(f"/{d.route}", endpoint=d.name) for d in get_web_pages_with_dynamic_routes()],
+			path,
+		):
+			return path
+	except Exception:
+		pass
 
 	return original_resolve_path(path)

@@ -11,7 +11,7 @@
 			:nullable="nullable"
 			:multiple="multiple">
 			<div
-				class="form-input flex h-7 w-full items-center justify-between gap-2 rounded px-2 py-1 pr-5 text-sm transition-colors dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-700">
+				class="form-input flex h-7 w-full items-center justify-between gap-2 rounded border-outline-gray-1 bg-surface-gray-1 p-0 text-sm text-text-icons-gray-8 transition-colors hover:border-outline-gray-2 hover:bg-surface-gray-1">
 				<!-- {{ displayValue }} -->
 				<ComboboxInput
 					autocomplete="off"
@@ -29,10 +29,10 @@
 						}
 					"
 					:placeholder="!modelValue ? placeholder : null"
-					class="h-full w-full border-none bg-transparent p-0 text-base focus:border-none focus:ring-0" />
+					class="h-full w-full rounded border-none bg-transparent p-0 px-2 py-1 pr-5 text-base focus:ring-2 focus:ring-outline-gray-3" />
 			</div>
 			<ComboboxOptions
-				class="absolute right-0 z-50 max-h-[15rem] w-full overflow-y-auto rounded-lg bg-white px-1.5 py-1.5 shadow-2xl"
+				class="absolute right-0 z-50 max-h-[15rem] w-full overflow-y-auto rounded-lg bg-surface-white px-1.5 py-1.5 shadow-2xl"
 				v-show="filteredOptions.length">
 				<ComboboxOption v-if="query" :value="query" class="flex items-center"></ComboboxOption>
 				<ComboboxOption
@@ -53,7 +53,7 @@
 			</ComboboxOptions>
 		</Combobox>
 		<div
-			class="absolute right-[1px] top-[3px] cursor-pointer p-1 text-gray-700 dark:text-zinc-300"
+			class="absolute right-[1px] top-[3px] cursor-pointer p-1 text-text-icons-gray-4 hover:text-text-icons-gray-5"
 			@click="clearValue"
 			v-show="modelValue">
 			<CrossIcon />
@@ -62,9 +62,9 @@
 </template>
 
 <script setup lang="ts">
+import CrossIcon from "@/components/Icons/Cross.vue";
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from "@headlessui/vue";
 import { ComputedRef, PropType, computed, ref } from "vue";
-import CrossIcon from "./Icons/Cross.vue";
 
 type Option = {
 	label: string;

@@ -11,6 +11,7 @@ from frappe.modules import scrub
 from frappe.modules.export_file import export_to_files
 
 from builder.builder.doctype.builder_page.builder_page import get_template_assets_folder_path
+from builder.utils import copy_img_to_asset_folder
 
 
 class BlockTemplate(Document):
@@ -25,6 +26,11 @@ class BlockTemplate(Document):
 			shutil.copy(_file.get_full_path(), assets_folder_path)
 			self.preview = f"/builder_assets/{self.name}/{self.preview.split('/')[-1]}"
 			self.db_set("preview", self.preview)
+
+		block = frappe.parse_json(self.block)
+		if block:
+			copy_img_to_asset_folder(block, self)
+		self.db_set("block", frappe.as_json(block, indent=None))
 
 		export_to_files(
 			record_list=[

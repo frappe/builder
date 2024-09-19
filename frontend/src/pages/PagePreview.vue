@@ -13,7 +13,7 @@
 					v-for="breakpoint in deviceBreakpoints"
 					:key="breakpoint.device"
 					:class="{
-						'bg-white shadow-sm dark:bg-zinc-700': activeBreakpoint === breakpoint.device,
+						'bg-surface-white shadow-sm dark:bg-zinc-700': activeBreakpoint === breakpoint.device,
 					}"
 					@click.stop="() => setWidth(breakpoint.device)">
 					<FeatherIcon
@@ -24,18 +24,24 @@
 						}" />
 				</div>
 			</div>
-			<Button
+			<BuilderButton
 				variant="solid"
+				iconLeft="globe"
 				@click="
 					() => {
 						publishing = true;
 						store.publishPage().finally(() => (publishing = false));
 					}
 				"
-				class="absolute right-5 border-0 text-xs dark:bg-zinc-800"
+				class="absolute right-5 border-0"
+				:class="{
+					'bg-surface-gray-7 !text-text-icons-white hover:bg-surface-gray-6':
+						!publishing && store.activePage?.draft_blocks,
+					'dark:bg-surface-gray-2 dark:text-text-icons-gray-4': !store.activePage?.draft_blocks,
+				}"
 				:loading="publishing">
 				{{ publishing ? "Publishing" : "Publish" }}
-			</Button>
+			</BuilderButton>
 		</div>
 		<div
 			class="relative mt-5 flex h-[85vh] bg-white"
@@ -61,7 +67,7 @@
 				ref="previewWindow"></iframe>
 			<div
 				v-if="loading || resizing"
-				class="absolute flex h-full w-full flex-1 items-center justify-center bg-gray-700 bg-zinc-700 bg-opacity-80 text-xl font-semibold text-gray-400 transition-all dark:bg-opacity-80 dark:text-zinc-400">
+				class="absolute flex h-full w-full flex-1 items-center justify-center bg-gray-700 bg-opacity-80 text-xl font-semibold text-gray-400 transition-all dark:bg-opacity-80 dark:text-zinc-400">
 				{{ loading ? "Loading..." : "Resizing..." }}
 			</div>
 			<PanelResizer

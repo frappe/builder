@@ -1,6 +1,6 @@
 <template>
 	<Menu
-		class="fixed z-50 h-fit w-fit min-w-[120px] rounded-lg bg-white p-1 shadow-xl dark:bg-zinc-900"
+		class="fixed z-50 h-fit w-fit min-w-[120px] rounded-lg bg-surface-white p-1 shadow-xl"
 		:style="{ top: y + 'px', left: x + 'px' }"
 		ref="menu">
 		<MenuItems static class="text-sm">
