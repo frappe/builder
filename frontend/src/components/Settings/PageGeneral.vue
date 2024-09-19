@@ -1,10 +1,4 @@
 <template>
-	<div
-		class="flex w-full items-center gap-3 rounded bg-surface-amber-1 p-3 py-2 text-text-icons-amber-3"
-		v-show="store.activePage?.authenticated_access">
-		<AuthenticatedUserIcon></AuthenticatedUserIcon>
-		<span class="text-sm">This page is only accessible to logged-in users</span>
-	</div>
 	<div class="no-scrollbar flex h-full flex-col items-center gap-6 overflow-y-auto">
 		<div class="flex w-full gap-4">
 			<div class="flex flex-1 flex-col gap-6">
@@ -37,9 +31,23 @@
 								<FeatherIcon
 									name="check-circle"
 									class="size-4 text-text-icons-green-3"
-									v-if="store.activePage?.published" />
-								<FeatherIcon name="alert-circle" class="size-4 text-text-icons-gray-4" v-else />
-								{{ store.activePage?.published ? "Published" : "Unpublished" }}
+									v-if="store.activePage?.published && !store.activePage.authenticated_access" />
+								<AuthenticatedUserIcon
+									class="size-4 text-text-icons-amber-3"
+									v-else-if="
+										store.activePage?.published && store.activePage?.authenticated_access
+									"></AuthenticatedUserIcon>
+								<FeatherIcon
+									name="alert-circle"
+									class="size-4 text-text-icons-gray-4"
+									v-else-if="!store.activePage?.published" />
+								{{
+									store.activePage?.published
+										? store.activePage?.authenticated_access
+											? "Published with limited access"
+											: "Published"
+										: "Draft"
+								}}
 							</span>
 							<Tooltip
 								:text="
@@ -116,6 +124,7 @@
 					<Switch
 						size="sm"
 						label="Authenticated Access"
+						:disabled="store.isHomePage(store.activePage)"
 						description="Only logged-in users can access this page"
 						:modelValue="Boolean(store.activePage?.authenticated_access)"
 						@update:modelValue="(val: Boolean) => store.updateActivePage('authenticated_access', val)" />
