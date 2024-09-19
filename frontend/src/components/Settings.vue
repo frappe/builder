@@ -11,7 +11,7 @@
 					class="flex cursor-pointer items-center gap-2 rounded p-2 py-[5px] text-base text-text-icons-gray-8"
 					:class="{
 						'bg-surface-selected shadow-sm': selectedItem === link.value,
-						'cursor-not-allowed text-text-icons-gray-3': link.disabled,
+						'!text-text-icons-gray-3': link.disabled,
 					}"
 					v-for="link in item.items">
 					<component v-if="link?.icon" :is="link?.icon" class="h-4 w-4" />
