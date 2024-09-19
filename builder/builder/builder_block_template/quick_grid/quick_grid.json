@@ -1,0 +1,17 @@
+{
+ "block": "{\"attributes\": {},\"baseStyles\": {\"display\": \"grid\",\"flexDirection\": \"column\",\"flexShrink\": 0,\"gap\": \"20px\",\"gridTemplateColumns\": \"repeat(2, minmax(200px, 1fr))\",\"height\": \"800px\",\"overflow\": \"hidden\",\"padding\": \"20px\",\"position\": \"static\",\"width\": \"100%\"},\"blockId\": \"9jln72b1t\",\"blockName\": \"grid\",\"children\": [{\"attributes\": {},\"baseStyles\": {\"background\": \"#e2e2e2\",\"borderRadius\": \"10px\",\"display\": \"flex\",\"flexDirection\": \"column\",\"flexShrink\": 0,\"height\": \"100%\",\"overflow\": \"hidden\",\"position\": \"static\",\"width\": \"auto\"},\"blockId\": \"vwf92j0d4\",\"blockName\": \"cell-1\",\"children\": [],\"classes\": [],\"customAttributes\": {},\"dataKey\": null,\"element\": \"div\",\"mobileStyles\": {},\"rawStyles\": {},\"tabletStyles\": {}},{\"attributes\": {},\"baseStyles\": {\"background\": \"#e2e2e2\",\"borderRadius\": \"10px\",\"display\": \"flex\",\"flexDirection\": \"column\",\"flexShrink\": 0,\"height\": \"100%\",\"overflow\": \"hidden\",\"position\": \"static\",\"width\": \"auto\"},\"blockId\": \"2nsk5x26t\",\"blockName\": \"cell-2\",\"children\": [],\"classes\": [],\"customAttributes\": {},\"dataKey\": null,\"element\": \"div\",\"mobileStyles\": {},\"rawStyles\": {},\"tabletStyles\": {}},{\"attributes\": {},\"baseStyles\": {\"background\": \"#e2e2e2\",\"borderRadius\": \"10px\",\"display\": \"flex\",\"flexDirection\": \"column\",\"flexShrink\": 0,\"height\": \"100%\",\"overflow\": \"hidden\",\"position\": \"static\",\"width\": \"auto\"},\"blockId\": \"z19h14huq\",\"blockName\": \"cell-3\",\"children\": [],\"classes\": [],\"customAttributes\": {},\"dataKey\": null,\"element\": \"div\",\"mobileStyles\": {},\"rawStyles\": {},\"tabletStyles\": {}},{\"attributes\": {},\"baseStyles\": {\"background\": \"#e2e2e2\",\"borderRadius\": \"10px\",\"display\": \"flex\",\"flexDirection\": \"column\",\"flexShrink\": 0,\"height\": \"100%\",\"overflow\": \"hidden\",\"position\": \"static\",\"width\": \"auto\"},\"blockId\": \"7ya6tzprf\",\"blockName\": \"cell-4\",\"children\": [],\"classes\": [],\"customAttributes\": {},\"dataKey\": null,\"element\": \"div\",\"mobileStyles\": {},\"rawStyles\": {},\"tabletStyles\": {}}],\"classes\": [],\"customAttributes\": {},\"dataKey\": null,\"element\": \"div\",\"mobileStyles\": {},\"rawStyles\": {},\"tabletStyles\": {}}",
+ "category": "Structure",
+ "creation": "2024-09-19 13:01:06.663112",
+ "docstatus": 0,
+ "doctype": "Block Template",
+ "idx": 0,
+ "modified": "2024-09-19 13:09:25.446243",
+ "modified_by": "Administrator",
+ "name": "Quick Grid",
+ "order": 9,
+ "owner": "Administrator",
+ "preview": "/builder_assets/Quick Grid/quick-grid.png",
+ "preview_height": 1,
+ "preview_width": 1,
+ "template_name": "Quick Grid"
+}

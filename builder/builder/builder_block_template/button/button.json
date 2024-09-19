@@ -5,11 +5,13 @@
  "docstatus": 0,
  "doctype": "Block Template",
  "idx": 0,
- "modified": "2024-09-17 12:08:49.516373",
+ "modified": "2024-09-19 13:08:10.275886",
  "modified_by": "Administrator",
  "name": "Button",
+ "order": 1,
  "owner": "Administrator",
  "preview": "/builder_assets/Button/button.png",
+ "preview_height": 1,
  "preview_width": 1,
  "template_name": "Button"
 }

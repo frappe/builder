@@ -12,7 +12,7 @@
 				" />
 		</div>
 		<CollapsibleSection :sectionName="section.sectionName" v-for="section in sections">
-			<div class="grid auto-rows-[100px] grid-cols-2 gap-4">
+			<div class="grid auto-rows-[80px] grid-cols-2 gap-4">
 				<div
 					v-for="blockTemplate in section.blocks"
 					:key="blockTemplate.name"
@@ -22,7 +22,7 @@
 						'row-span-2': blockTemplate?.preview_height === 2,
 					}">
 					<div
-						class="relative flex h-full w-full translate-x-0 translate-y-0 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden truncate rounded border border-transparent bg-gray-100 px-2 py-1.5 dark:bg-zinc-800"
+						class="relative flex h-full w-full translate-x-0 translate-y-0 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden truncate rounded-md border border-transparent bg-surface-gray-1 p-2 pt-3"
 						draggable="true"
 						@click="selectBlockTemplate(blockTemplate)"
 						@dblclick="is_developer_mode && store.editBlockTemplate(blockTemplate.name)"
@@ -32,9 +32,9 @@
 							:class="{
 								'w-14': !blockTemplate?.preview_width || blockTemplate?.preview_width == 1,
 							}">
-							<img :src="blockTemplate.preview" class="text-gray-800 dark:text-zinc-400" />
+							<img :src="blockTemplate.preview" />
 						</div>
-						<p class="text-sm text-gray-800 dark:text-zinc-400">
+						<p class="text-sm text-text-icons-gray-6">
 							{{ blockTemplate.template_name }}
 						</p>
 					</div>
