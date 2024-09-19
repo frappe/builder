@@ -47,10 +47,14 @@ import webComponent from "@/data/webComponent";
 import useStore from "@/store";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import { confirm } from "@/utils/helpers";
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 
 const store = useStore();
 const componentFilter = ref("");
+
+onMounted(() => {
+	webComponent.fetch();
+});
 
 const components = computed(() =>
 	(webComponent.data || []).filter((d: BuilderComponent) => {

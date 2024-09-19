@@ -13,7 +13,6 @@ import { webPages } from "./data/webPage";
 import { BlockTemplate } from "./types/Builder/BlockTemplate";
 import { BuilderComponent } from "./types/Builder/BuilderComponent";
 import { BuilderPage } from "./types/Builder/BuilderPage";
-import { BuilderSettings } from "./types/Builder/BuilderSettings";
 import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
 import {
@@ -74,6 +73,7 @@ const useStore = defineStore("store", {
 		realtime: new RealTimeHandler(),
 		viewers: <UserInfo[]>[],
 		componentMap: <Map<string, Block>>new Map(),
+		fetchingComponent: new Set(),
 		fragmentData: {
 			block: <Block | null>null,
 			saveAction: <Function | null>null,
@@ -298,6 +298,20 @@ const useStore = defineStore("store", {
 				);
 			}
 			return this.componentMap.get(componentName) as Block;
+		},
+		async fetchComponent(componentName: string) {
+			if (!this.componentMap.has(componentName) && !this.fetchingComponent.has(componentName)) {
+				this.fetchingComponent.add(componentName);
+				const webComponentDoc = await createDocumentResource({
+					doctype: "Builder Component",
+					name: componentName,
+					auto: true,
+				});
+				await webComponentDoc.get.promise;
+				const component = webComponentDoc.doc as BuilderComponent;
+				this.componentMap.set(component.name, getBlockInstance(component.block));
+				this.fetchingComponent.delete(componentName);
+			}
 		},
 		getComponent(componentName: string) {
 			return webComponent.getRow(componentName) as BuilderComponent;

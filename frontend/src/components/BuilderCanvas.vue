@@ -77,7 +77,6 @@
 <script setup lang="ts">
 import LoadingIcon from "@/components/Icons/Loading.vue";
 import builderBlockTemplate from "@/data/builderBlockTemplate";
-import webComponent from "@/data/webComponent";
 import { posthog } from "@/telemetry";
 import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
@@ -188,7 +187,7 @@ function setupHistory() {
 }
 
 const { isOverDropZone } = useDropZone(canvasContainer, {
-	onDrop: (files, ev) => {
+	onDrop: async (files, ev) => {
 		let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
 		let parentBlock = block.value as Block | null;
 		if (element) {
@@ -199,7 +198,9 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 		const componentName = ev.dataTransfer?.getData("componentName");
 		const blockTemplate = ev.dataTransfer?.getData("blockTemplate");
 		if (componentName) {
-			const newBlock = getBlockInstance(webComponent.getRow(componentName).block);
+			await store.fetchComponent(componentName);
+			const component = store.componentMap.get(componentName) as Block;
+			const newBlock = getBlockCopy(component);
 			newBlock.extendFromComponent(componentName);
 			// if shift key is pressed, replace parent block with new block
 			if (ev.shiftKey) {
