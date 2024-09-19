@@ -68,6 +68,7 @@ const classes = computed(() => {
 	} else if (props.type === "textarea") {
 		_classes.push([
 			"[&>textarea]:border-outline-gray-1",
+			"[&>label]:text-text-icons-gray-7",
 			"[&>textarea]:bg-surface-gray-2",
 			"[&>textarea]:text-text-icons-gray-8",
 			"[&>textarea]:focus:border-outline-gray-3",
@@ -80,6 +81,7 @@ const classes = computed(() => {
 		]);
 	} else {
 		_classes.push([
+			"[&>label]:text-text-icons-gray-7",
 			"[&>div>input]:border-outline-gray-1",
 			"[&>div>input]:bg-surface-gray-2",
 			"[&>div>input]:text-text-icons-gray-8",

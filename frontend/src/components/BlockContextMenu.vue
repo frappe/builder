@@ -60,29 +60,25 @@
 			}"
 			v-model="showBlockTemplateDialog">
 			<template #body-content>
-				<div class="flex flex-col gap-4">
+				<div class="flex flex-col gap-3">
 					<BuilderInput
 						type="text"
 						v-model="blockTemplateProperties.templateName"
 						label="Template Name"
 						required
-						:hideClearButton="true"
-						class="[&>div>input]:bg-surface-white [&>label]:dark:text-zinc-300" />
-
+						:hideClearButton="true" />
 					<BuilderInput
 						type="select"
 						v-model="blockTemplateProperties.category"
 						label="Category"
 						:options="store.blockTemplateCategoryOptions"
-						:hideClearButton="true"
-						class="[&>div>input]:bg-surface-white [&>label]:dark:text-zinc-300" />
+						:hideClearButton="true" />
 					<div class="relative">
 						<BuilderInput
 							type="text"
 							v-model="blockTemplateProperties.previewImage"
 							label="Preview Image"
-							:hideClearButton="true"
-							class="[&>div>input]:bg-surface-white [&>label]:dark:text-zinc-300" />
+							:hideClearButton="true" />
 						<FileUploader
 							file-types="image/*"
 							@success="

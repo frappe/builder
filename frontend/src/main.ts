@@ -1,4 +1,4 @@
-import { Dialog, FeatherIcon, FormControl, FrappeUI } from "frappe-ui";
+import { Button, Dialog, FeatherIcon, FormControl, FrappeUI } from "frappe-ui";
 import { createPinia } from "pinia";
 import { createApp } from "vue";
 import "./index.css";
@@ -8,8 +8,8 @@ import "./telemetry";
 import "./utils/arrayFunctions";
 
 import App from "@/App.vue";
+import BuilderButton from "@/components/Controls/Button.vue";
 import Input from "@/components/Controls/Input.vue";
-import Button from "@/components/Controls/Button.vue";
 
 const app = createApp(App);
 const pinia = createPinia();
@@ -20,7 +20,8 @@ app.use(pinia);
 
 window.name = "frappe-builder";
 
-app.component("BuilderButton", Button);
+app.component("Button", Button);
+app.component("BuilderButton", BuilderButton);
 app.component("FormControl", FormControl);
 app.component("Dialog", Dialog);
 app.component("BuilderInput", Input);
