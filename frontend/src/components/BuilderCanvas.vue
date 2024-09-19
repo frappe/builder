@@ -76,7 +76,6 @@
 </template>
 <script setup lang="ts">
 import LoadingIcon from "@/components/Icons/Loading.vue";
-import builderBlockTemplate from "@/data/builderBlockTemplate";
 import { posthog } from "@/telemetry";
 import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
@@ -222,8 +221,8 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 			ev.stopPropagation();
 			posthog.capture("builder_component_used");
 		} else if (blockTemplate) {
-			const templateDoc = builderBlockTemplate.getRow(blockTemplate);
-			const newBlock = getBlockInstance(templateDoc.block, false);
+			await store.fetchBlockTemplate(blockTemplate);
+			const newBlock = getBlockInstance(store.getBlockTemplate(blockTemplate).block, false);
 			// if shift key is pressed, replace parent block with new block
 			if (ev.shiftKey) {
 				while (parentBlock && parentBlock.isChildOfComponent) {

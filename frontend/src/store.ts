@@ -1,4 +1,5 @@
 import { posthog } from "@/telemetry";
+import { BuilderSettings } from "@/types/Builder/BuilderSettings";
 import { UseRefHistoryReturn } from "@vueuse/core";
 import { FileUploadHandler, createDocumentResource } from "frappe-ui";
 import { defineStore } from "pinia";
@@ -73,6 +74,7 @@ const useStore = defineStore("store", {
 		realtime: new RealTimeHandler(),
 		viewers: <UserInfo[]>[],
 		componentMap: <Map<string, Block>>new Map(),
+		blockTemplateMap: <Map<string, BlockTemplate>>new Map(),
 		fetchingComponent: new Set(),
 		fragmentData: {
 			block: <Block | null>null,
@@ -260,7 +262,7 @@ const useStore = defineStore("store", {
 			return getBlockInstance(this.getBlockTemplate(blockTemplateName).block);
 		},
 		getBlockTemplate(blockTemplateName: string) {
-			return builderBlockTemplate.getRow(blockTemplateName) as BlockTemplate;
+			return this.blockTemplateMap.get(blockTemplateName) as BlockTemplate;
 		},
 		isComponentUsed(componentName: string) {
 			// TODO: Refactor or reduce complexity
@@ -311,6 +313,19 @@ const useStore = defineStore("store", {
 				const component = webComponentDoc.doc as BuilderComponent;
 				this.componentMap.set(component.name, getBlockInstance(component.block));
 				this.fetchingComponent.delete(componentName);
+			}
+		},
+		async fetchBlockTemplate(blockTemplateName: string) {
+			const blockTemplate = this.getBlockTemplate(blockTemplateName);
+			if (!blockTemplate) {
+				const webBlockTemplate = await createDocumentResource({
+					doctype: "Block Template",
+					name: blockTemplateName,
+					auto: true,
+				});
+				await webBlockTemplate.get.promise;
+				const blockTemplate = webBlockTemplate.doc as BlockTemplate;
+				this.blockTemplateMap.set(blockTemplateName, blockTemplate);
 			}
 		},
 		getComponent(componentName: string) {
