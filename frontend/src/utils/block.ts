@@ -82,6 +82,11 @@ class Block implements BlockOptions {
 			this.draggable = false;
 			this.removeStyle("minHeight");
 		}
+
+		if (this.extendedFromComponent) {
+			const store = useStore();
+			store.fetchComponent(this.extendedFromComponent);
+		}
 	}
 	getStyles(breakpoint: string = "desktop"): BlockStyleMap {
 		let styleObj = {};

@@ -268,7 +268,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			const parentBlock = props.block.getParentBlock();
 			if (!parentBlock) return false;
 			const selectedBlocks = store.activeCanvas?.selectedBlocks || [];
-			return selectedBlocks.every((block) => block.getParentBlock() === parentBlock);
+			return selectedBlocks.every((block: Block) => block.getParentBlock() === parentBlock);
 		},
 	},
 	{
