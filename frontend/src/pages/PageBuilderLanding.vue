@@ -256,16 +256,21 @@
 								</div>
 								<div class="flex items-baseline gap-2 text-text-icons-gray-6">
 									<UseTimeAgo v-slot="{ timeAgo }" :time="page.modified">
-										<p class="mt-1 block text-sm">Edited {{ timeAgo }}</p>
+										<p class="mt-1 block text-sm">Last updated {{ timeAgo }} by {{ page.modified_by }}</p>
 									</UseTimeAgo>
-									·
-									<Badge theme="green" v-if="page.published" class="dark:bg-green-900 dark:text-green-400">
-										Published
-									</Badge>
 								</div>
 							</span>
 							<div class="flex items-center gap-2">
-								<Avatar :shape="'circle'" :image="null" :label="page.modified_by" size="sm" />
+								<Badge theme="green" v-if="page.published" class="dark:bg-green-900 dark:text-green-400">
+									Published
+								</Badge>
+								<Avatar
+									:shape="'circle'"
+									:image="null"
+									:label="page.modified_by"
+									class="[&>div]:bg-surface-gray-2 [&>div]:text-text-icons-gray-5"
+									size="md"
+									:title="`Created by ${page.owner}`" />
 								<Dropdown
 									:options="[
 										{ label: 'Duplicate', onClick: () => duplicatePage(page), icon: 'copy' },
