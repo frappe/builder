@@ -22,4 +22,6 @@ export interface BlockTemplate{
 	preview_height?: number
 	/**	Category : Select	*/
 	category?: "Structure" | "Basic" | "Typography" | "Basic Forms" | "Form parts" | "Media" | "Advanced"
+	/**	Order : Int	*/
+	order?: number
 }

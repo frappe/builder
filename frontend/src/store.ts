@@ -84,8 +84,8 @@ const useStore = defineStore("store", {
 			fragmentId: <string | null>null,
 		},
 		blockTemplateCategoryOptions: [
-			"Structure",
 			"Basic",
+			"Structure",
 			"Typography",
 			"Basic Forms",
 			"Form parts",
