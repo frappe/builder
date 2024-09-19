@@ -109,6 +109,7 @@ class BuilderPage(WebsiteGenerator):
 			self.has_value_changed("dynamic_route")
 			or self.has_value_changed("route")
 			or self.has_value_changed("published")
+			or self.has_value_changed("disable_indexing")
 		):
 			self.clear_route_cache()
 
