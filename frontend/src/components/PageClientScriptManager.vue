@@ -36,11 +36,11 @@
 							class="flex-1 [&>div>div>div]:w-full"
 							placement="right">
 							<template v-slot="{ open }">
-								<Button
+								<BuilderButton
 									class="w-full text-xs dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
 									@click="open">
 									New Script
-								</Button>
+								</BuilderButton>
 							</template>
 						</Dropdown>
 						<Dropdown
@@ -49,11 +49,11 @@
 							size="sm"
 							class="max-w-60 flex-1 [&>div>div>div]:w-full">
 							<template v-slot="{ open }">
-								<Button
+								<BuilderButton
 									class="w-full text-xs dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
 									@click="open">
 									Attach Script
-								</Button>
+								</BuilderButton>
 							</template>
 						</Dropdown>
 					</div>

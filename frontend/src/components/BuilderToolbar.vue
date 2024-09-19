@@ -14,12 +14,12 @@
 						{ mode: 'text', icon: 'type', description: 'Text (t)' },
 						{ mode: 'image', icon: 'image', description: 'Image (i)' },
 					]">
-					<Button
+					<BuilderButton
 						variant="ghost"
 						:icon="mode.icon"
 						class="!text-gray-700 dark:!text-gray-200 hover:dark:bg-zinc-800 focus:dark:bg-zinc-700 [&[active='true']]:bg-gray-100 [&[active='true']]:!text-gray-900 [&[active='true']]:dark:bg-zinc-700 [&[active='true']]:dark:!text-zinc-50"
 						@click="() => (store.mode = mode.mode as BuilderMode)"
-						:active="store.mode === mode.mode"></Button>
+						:active="store.mode === mode.mode"></BuilderButton>
 				</Tooltip>
 			</div>
 		</div>
@@ -124,7 +124,7 @@
 					<PlayIcon class="h-[18px] w-[18px] cursor-pointer text-text-icons-gray-8"></PlayIcon>
 				</Tooltip>
 			</router-link>
-			<Button
+			<BuilderButton
 				variant="solid"
 				iconLeft="globe"
 				@click="
@@ -141,7 +141,7 @@
 				}"
 				:loading="publishing">
 				{{ publishing ? "Publishing" : "Publish" }}
-			</Button>
+			</BuilderButton>
 		</div>
 	</div>
 </template>

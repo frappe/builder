@@ -24,7 +24,7 @@
 						}" />
 				</div>
 			</div>
-			<Button
+			<BuilderButton
 				variant="solid"
 				iconLeft="globe"
 				@click="
@@ -41,7 +41,7 @@
 				}"
 				:loading="publishing">
 				{{ publishing ? "Publishing" : "Publish" }}
-			</Button>
+			</BuilderButton>
 		</div>
 		<div
 			class="relative mt-5 flex h-[85vh] bg-white"

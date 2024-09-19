@@ -29,7 +29,7 @@
 			v-if="editor"
 			class="z-50 rounded-md border border-gray-300 bg-surface-white p-1 text-lg shadow-2xl">
 			<div v-if="settingLink" class="flex">
-				<Input
+				<BuilderInput
 					v-model="textLink"
 					placeholder="https://example.com"
 					class="link-input w-56 text-sm"
@@ -40,10 +40,10 @@
 						}
 					"
 					ref="linkInput" />
-				<Button @click="() => setLink(linkInput?.getInputValue())" class="ml-1">
+				<BuilderButton @click="() => setLink(linkInput?.getInputValue())" class="ml-1">
 					<FeatherIcon class="h-3 w-3" name="check" />
-				</Button>
-				<Button
+				</BuilderButton>
+				<BuilderButton
 					@click="
 						() => {
 							textLink = '';
@@ -52,7 +52,7 @@
 					"
 					class="ml-1">
 					<FeatherIcon class="h-3 w-3" name="x" />
-				</Button>
+				</BuilderButton>
 			</div>
 			<div v-show="!settingLink" class="flex gap-1">
 				<button

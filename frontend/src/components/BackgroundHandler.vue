@@ -5,7 +5,7 @@
 				<InputLabel>BG Image</InputLabel>
 				<div class="relative w-full">
 					<div>
-						<Input
+						<BuilderInput
 							class="[&>div>input]:pl-8"
 							type="text"
 							placeholder="Set Background"

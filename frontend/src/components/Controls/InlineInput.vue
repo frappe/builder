@@ -20,7 +20,7 @@
 				</template>
 			</Popover>
 		</InputLabel>
-		<Input
+		<BuilderInput
 			:type="type"
 			placeholder="unset"
 			:modelValue="modelValue"

@@ -14,12 +14,12 @@
 			class="mt-1 text-xs leading-4 text-gray-600 dark:text-zinc-400"
 			v-show="description"
 			v-html="description"></span>
-		<Button
+		<BuilderButton
 			v-if="showSaveButton"
 			@click="emit('save', aceEditor?.getValue())"
 			class="mt-3 w-full text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
 			Save
-		</Button>
+		</BuilderButton>
 	</div>
 </template>
 <script setup lang="ts">

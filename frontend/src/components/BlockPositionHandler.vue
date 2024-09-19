@@ -14,14 +14,14 @@
 			]"></OptionToggle>
 		<div class="grid-rows grid grid-cols-3 gap-4" v-if="showHandler">
 			<div class="col-span-1 col-start-2 w-16 self-center">
-				<Input
+				<BuilderInput
 					type="text"
 					placeholder="top"
 					:modelValue="blockController.getStyle('top') as string"
 					@update:modelValue="(value: string) => blockController.setStyle('top', value)" />
 			</div>
 			<div class="col-span-1 col-start-1 w-16 self-center">
-				<Input
+				<BuilderInput
 					type="text"
 					placeholder="left"
 					:modelValue="blockController.getStyle('left') as string"
@@ -41,14 +41,14 @@
 					class="col-span-1 col-start-3 row-start-2 h-[2px] w-2 self-center justify-self-center rounded bg-surface-gray-2"></div>
 			</div>
 			<div class="col-span-1 col-start-3 w-16 self-center">
-				<Input
+				<BuilderInput
 					type="text"
 					placeholder="right"
 					:modelValue="blockController.getStyle('right') as string"
 					@update:modelValue="(value: string) => blockController.setStyle('right', value)" />
 			</div>
 			<div class="col-span-1 col-start-2 w-16 self-center">
-				<Input
+				<BuilderInput
 					type="text"
 					placeholder="bottom"
 					:modelValue="blockController.getStyle('bottom') as string"

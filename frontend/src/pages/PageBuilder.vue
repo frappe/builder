@@ -31,11 +31,11 @@
 							<FeatherIcon name="chevron-right" class="h-3 w-3" />
 							{{ store.fragmentData.fragmentName }}
 						</div>
-						<Button
+						<BuilderButton
 							class="text-xs dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
 							@click="saveAndExitFragmentMode">
 							{{ store.fragmentData.saveActionLabel || "Save" }}
-						</Button>
+						</BuilderButton>
 					</div>
 				</template>
 			</BuilderCanvas>

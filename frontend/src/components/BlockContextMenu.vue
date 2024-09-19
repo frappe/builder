@@ -23,9 +23,13 @@
 			}"
 			v-model="showDialog">
 			<template #body-content>
-				<Input type="text" v-model="componentProperties.componentName" label="Component Name" required />
+				<BuilderInput
+					type="text"
+					v-model="componentProperties.componentName"
+					label="Component Name"
+					required />
 				<div class="mt-3">
-					<Input
+					<BuilderInput
 						class="text-sm [&>span]:!text-sm"
 						type="checkbox"
 						v-model="componentProperties.isGlobalComponent"
@@ -57,7 +61,7 @@
 			v-model="showBlockTemplateDialog">
 			<template #body-content>
 				<div class="flex flex-col gap-4">
-					<Input
+					<BuilderInput
 						type="text"
 						v-model="blockTemplateProperties.templateName"
 						label="Template Name"
@@ -65,7 +69,7 @@
 						:hideClearButton="true"
 						class="[&>div>input]:bg-surface-white [&>label]:dark:text-zinc-300" />
 
-					<Input
+					<BuilderInput
 						type="select"
 						v-model="blockTemplateProperties.category"
 						label="Category"
@@ -73,7 +77,7 @@
 						:hideClearButton="true"
 						class="[&>div>input]:bg-surface-white [&>label]:dark:text-zinc-300" />
 					<div class="relative">
-						<Input
+						<BuilderInput
 							type="text"
 							v-model="blockTemplateProperties.previewImage"
 							label="Preview Image"
@@ -88,7 +92,7 @@
 							">
 							<template v-slot="{ openFileSelector }">
 								<div class="absolute bottom-0 right-0 place-items-center">
-									<Button size="sm" @click="openFileSelector" class="text-sm">Upload</Button>
+									<BuilderButton size="sm" @click="openFileSelector" class="text-sm">Upload</BuilderButton>
 								</div>
 							</template>
 						</FileUploader>

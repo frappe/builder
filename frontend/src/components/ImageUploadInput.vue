@@ -4,7 +4,7 @@
 			<div class="flex items-center justify-between">
 				<InputLabel v-if="labelPosition === 'left'">{{ label }}</InputLabel>
 				<div class="relative w-full">
-					<Input
+					<BuilderInput
 						:class="{
 							'[&>div>input]:pl-8': labelPosition === 'left',
 						}"
@@ -59,12 +59,12 @@
 									'!grid': !imageURL,
 									'group-hover:grid': imageURL,
 								}">
-								<Button
+								<BuilderButton
 									class="rounded bg-gray-200 p-2 text-xs text-gray-900 dark:bg-zinc-700 dark:text-zinc-200"
 									variant="solid"
 									@click="openFileSelector">
 									Upload
-								</Button>
+								</BuilderButton>
 							</div>
 						</div>
 					</template>

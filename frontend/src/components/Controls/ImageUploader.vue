@@ -9,17 +9,16 @@
 		">
 		<template v-slot="{ file, progress, uploading, openFileSelector }">
 			<div class="flex items-end space-x-1">
-				<!-- <Input v-model="url" readonly="true" :hideClearButton="true" :label="label"></Input> -->
-				<Button @click="openFileSelector">
+				<!-- <BuilderInput v-model="url" readonly="true" :hideClearButton="true" :label="label"></BuilderInput> -->
+				<BuilderButton @click="openFileSelector">
 					{{ uploading ? `Uploading ${progress}%` : image_url ? "Change" : "Upload" }}
-				</Button>
-				<Button v-if="image_url" @click="$emit('remove')">Remove</Button>
+				</BuilderButton>
+				<BuilderButton v-if="image_url" @click="$emit('remove')">Remove</BuilderButton>
 			</div>
 		</template>
 	</FileUploader>
 </template>
 <script setup lang="ts">
-import Button from "@/components/Controls/Button.vue";
 import { FileUploader } from "frappe-ui";
 import { computed } from "vue";
 const prop = defineProps({

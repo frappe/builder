@@ -1,7 +1,7 @@
 <template>
 	<div class="flex flex-col gap-3">
 		<div v-show="components.length > 10 || componentFilter">
-			<Input
+			<BuilderInput
 				type="text"
 				placeholder="Search component"
 				v-model="componentFilter"

@@ -1,7 +1,7 @@
 <template>
 	<div class="flex flex-col gap-3">
 		<div v-show="blockTemplates.length > 10 || blockTemplateFilter">
-			<Input
+			<BuilderInput
 				type="text"
 				placeholder="Search Template"
 				v-model="blockTemplateFilter"

@@ -10,7 +10,7 @@
 						:style="{
 							background: value ? value : `url(/assets/builder/images/color-circle.png) center / contain`,
 						}"></div>
-					<Input
+					<BuilderInput
 						type="text"
 						class="[&>div>input]:pl-8"
 						placeholder="Set Color"
