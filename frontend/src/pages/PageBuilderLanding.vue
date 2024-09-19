@@ -268,8 +268,8 @@
 									:shape="'circle'"
 									:image="null"
 									:label="page.modified_by"
-									class="[&>div]:bg-surface-gray-2 [&>div]:text-text-icons-gray-5"
-									size="md"
+									class="[&>div]:bg-surface-gray-2 [&>div]:text-text-icons-gray-4 [&>div]:group-hover:bg-surface-gray-4 [&>div]:group-hover:text-text-icons-gray-6"
+									size="sm"
 									:title="`Created by ${page.owner}`" />
 								<Dropdown
 									:options="[
