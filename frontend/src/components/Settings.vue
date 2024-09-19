@@ -21,13 +21,16 @@
 		</div>
 		<div class="flex flex-1 flex-col gap-5 bg-surface-white p-14 px-16 dark:bg-zinc-900">
 			<h2 class="text-xl font-semibold leading-none">{{ selectedItemDoc?.title }}</h2>
-			<Button icon="x" variant="subtle" @click="$emit('close')" class="absolute right-5 top-5"></Button>
+			<BuilderButton
+				icon="x"
+				variant="subtle"
+				@click="$emit('close')"
+				class="absolute right-5 top-5"></BuilderButton>
 			<component :is="selectedItemDoc?.component" />
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
-import Button from "@/components/Controls/Button.vue";
 import RedirectIcon from "@/components/Icons/Redirect.vue";
 import GlobalRedirects from "@/components/Settings/GlobalRedirects.vue";
 import PageRedirects from "@/components/Settings/PageRedirects.vue";

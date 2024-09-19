@@ -17,8 +17,18 @@
 						@click="deleteRedirect(row.id)" />
 				</div>
 				<div class="flex gap-4 py-2">
-					<Input type="text" v-model="redirectMap.from" :hideClearButton="true" required placeholder="From" />
-					<Input type="text" v-model="redirectMap.to" :hideClearButton="true" required placeholder="To" />
+					<BuilderInput
+						type="text"
+						v-model="redirectMap.from"
+						:hideClearButton="true"
+						required
+						placeholder="From" />
+					<BuilderInput
+						type="text"
+						v-model="redirectMap.to"
+						:hideClearButton="true"
+						required
+						placeholder="To" />
 				</div>
 				<div
 					class="flex cursor-pointer items-center gap-2 py-1 text-base text-text-icons-gray-5"

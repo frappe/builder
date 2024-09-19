@@ -1,13 +1,13 @@
 <template>
 	<div>
 		<div class="flex flex-row flex-wrap gap-4">
-			<Input
+			<BuilderInput
 				label="Page Title"
 				type="text"
 				class="w-full text-sm [&>label]:w-[60%] [&>label]:min-w-[180px]"
 				:modelValue="page.page_title"
 				@update:modelValue="(val: string) => store.updateActivePage('page_title', val)" />
-			<Input
+			<BuilderInput
 				type="text"
 				class="w-full text-sm [&>label]:w-[60%] [&>label]:min-w-[180px] [&>p]:text-p-xs"
 				label="Route"
@@ -21,7 +21,7 @@
 				sectionName="URL Variables"
 				v-if="dynamicVariables.length"
 				class="w-full [&>div>h3]:!text-xs [&>div>h3]:!text-text-icons-gray-5">
-				<Input
+				<BuilderInput
 					v-for="(variable, index) in dynamicVariables"
 					:key="index"
 					type="text"

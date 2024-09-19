@@ -6,7 +6,7 @@
 			</div>
 		</template>
 		<template #actions>
-			<Button class="w-full" v-bind="primaryActionProps" />
+			<BuilderButton class="w-full" v-bind="primaryActionProps" />
 		</template>
 	</Dialog>
 </template>

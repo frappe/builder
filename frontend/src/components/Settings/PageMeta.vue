@@ -4,12 +4,12 @@
 			<!-- meta -->
 			<div class="flex flex-1 flex-col gap-4">
 				<div class="flex flex-1 flex-col gap-4">
-					<Input
+					<BuilderInput
 						type="text"
 						label="Title"
 						:modelValue="store.activePage?.page_title"
 						@update:modelValue="(val: string) => store.updateActivePage('page_title', val)" />
-					<Input
+					<BuilderInput
 						type="textarea"
 						label="Description"
 						:modelValue="store.activePage?.meta_description"

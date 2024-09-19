@@ -76,12 +76,12 @@
 					posthog.capture('builder_new_page_created');
 				}
 			">
-			<Button
+			<BuilderButton
 				variant="solid"
 				iconLeft="plus"
 				class="bg-surface-gray-7 !text-text-icons-white hover:bg-surface-gray-6">
 				New
-			</Button>
+			</BuilderButton>
 		</router-link>
 	</div>
 	<!-- page list wrapper -->
@@ -91,7 +91,7 @@
 			<h1 class="text-xl font-semibold text-text-icons-gray-9">All Pages</h1>
 			<div class="flex gap-2">
 				<div class="relative flex">
-					<Input
+					<BuilderInput
 						class="w-48"
 						type="text"
 						placeholder="Filter by title or route"
@@ -105,10 +105,10 @@
 						<template #prefix>
 							<FeatherIcon name="search" class="size-4 text-text-icons-gray-5"></FeatherIcon>
 						</template>
-					</Input>
+					</BuilderInput>
 				</div>
 				<div class="max-md:hidden">
-					<Input
+					<BuilderInput
 						type="select"
 						class="w-24"
 						v-model="typeFilter"
@@ -120,7 +120,7 @@
 						]" />
 				</div>
 				<div class="max-sm:hidden">
-					<Input
+					<BuilderInput
 						type="select"
 						class="w-32"
 						v-model="orderBy"
@@ -208,7 +208,11 @@
 								size="xs"
 								placement="right">
 								<template v-slot="{ open }">
-									<Button icon="more-horizontal" size="sm" variant="subtle" @click="open"></Button>
+									<BuilderButton
+										icon="more-horizontal"
+										size="sm"
+										variant="subtle"
+										@click="open"></BuilderButton>
 								</template>
 							</Dropdown>
 						</div>
@@ -283,19 +287,18 @@
 				</router-link>
 			</div>
 		</div>
-		<Button
+		<BuilderButton
 			class="m-auto mt-12 w-fit text-sm dark:bg-zinc-900 dark:text-zinc-300"
 			@click="loadMore"
 			v-show="webPages.hasNextPage"
 			variant="subtle"
 			size="sm">
 			Load More
-		</Button>
+		</BuilderButton>
 	</section>
 </template>
 <script setup lang="ts">
 import AppsMenu from "@/components/AppsMenu.vue";
-import Button from "@/components/Controls/Button.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import GlobeIcon from "@/components/Icons/Globe.vue";
 import Settings from "@/components/Settings.vue";

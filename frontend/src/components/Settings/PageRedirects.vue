@@ -2,9 +2,9 @@
 	<div>
 		<div class="flex flex-col justify-between gap-5">
 			<div class="flex items-end gap-4">
-				<Input type="text" label="From URL" v-model="redirectMap.from" :hideClearButton="true" />
+				<BuilderInput type="text" label="From URL" v-model="redirectMap.from" :hideClearButton="true" />
 				<FeatherIcon name="arrow-right" class="mb-1 size-4 text-text-icons-gray-5" />
-				<Input type="text" label="To URL" v-model="redirectMap.to" :hideClearButton="true" />
+				<BuilderInput type="text" label="To URL" v-model="redirectMap.to" :hideClearButton="true" />
 			</div>
 			<div
 				class="flex cursor-pointer items-center gap-2 text-base text-text-icons-gray-5"

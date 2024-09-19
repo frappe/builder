@@ -2,6 +2,7 @@
 	<Button :variant="variant" :class="classes"><slot /></Button>
 </template>
 <script lang="ts" setup>
+import { Button } from "frappe-ui";
 import { computed } from "vue";
 
 const props = defineProps({

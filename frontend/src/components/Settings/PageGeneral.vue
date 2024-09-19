@@ -9,13 +9,13 @@
 		<div class="flex w-full gap-4">
 			<div class="flex flex-1 flex-col gap-6">
 				<div class="flex gap-5">
-					<Input
+					<BuilderInput
 						type="text"
 						label="Page Title"
 						:modelValue="store.activePage?.page_title"
 						:hideClearButton="true"
 						@update:modelValue="(val: string) => store.updateActivePage('page_title', val)" />
-					<Input
+					<BuilderInput
 						type="text"
 						label="Page Route"
 						class="[&>p]:text-p-xs"
@@ -45,11 +45,11 @@
 								:text="
 									store.activePage?.published ? 'Unpublish this page' : 'This page is already unpublished'
 								">
-								<Button
+								<BuilderButton
 									variant="subtle"
 									@click="store.activePage?.published ? store.unpublishPage() : store.publishPage(false)">
 									{{ store.activePage?.published ? "Unpublish" : "Publish" }}
-								</Button>
+								</BuilderButton>
 							</Tooltip>
 						</div>
 					</div>
@@ -97,7 +97,7 @@
 									? 'Unset this page as the homepage'
 									: 'Set this page as the homepage'
 							">
-							<Button
+							<BuilderButton
 								variant="subtle"
 								@click="
 									() => {
@@ -109,7 +109,7 @@
 									}
 								">
 								{{ store.isHomePage(store.activePage) ? "Unset Homepage" : "Set As Homepage" }}
-							</Button>
+							</BuilderButton>
 						</Tooltip>
 					</div>
 					<hr class="w-full border-surface-gray-2" />
@@ -132,7 +132,6 @@
 	</div>
 </template>
 <script setup lang="ts">
-import Button from "@/components/Controls/Button.vue";
 import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import Switch from "@/components/Controls/Switch.vue";
 import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
