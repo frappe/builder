@@ -27,7 +27,7 @@
 				},
 			}"
 			v-if="editor"
-			class="z-50 rounded-md border border-gray-300 bg-surface-white p-1 text-lg shadow-2xl">
+			class="z-50 rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-text-icons-gray-9 shadow-2xl">
 			<div v-if="settingLink" class="flex">
 				<BuilderInput
 					v-model="textLink"
@@ -57,41 +57,41 @@
 			<div v-show="!settingLink" class="flex gap-1">
 				<button
 					@click="setHeading(1)"
-					class="rounded px-2 py-1 text-sm hover:bg-gray-100"
-					:class="{ 'bg-gray-200': block.getElement() === 'h1' }">
+					class="rounded px-2 py-1 text-sm hover:bg-surface-gray-2"
+					:class="{ 'bg-surface-gray-3': block.getElement() === 'h1' }">
 					<code>H1</code>
 				</button>
 				<button
 					@click="setHeading(2)"
-					class="rounded px-2 py-1 text-sm hover:bg-gray-100"
-					:class="{ 'bg-gray-200': block.getElement() === 'h2' }">
+					class="rounded px-2 py-1 text-sm hover:bg-surface-gray-2"
+					:class="{ 'bg-surface-gray-3': block.getElement() === 'h2' }">
 					<code>H2</code>
 				</button>
 				<button
 					@click="setHeading(3)"
-					class="rounded px-2 py-1 text-sm hover:bg-gray-100"
-					:class="{ 'bg-gray-200': block.getElement() === 'h3' }">
+					class="rounded px-2 py-1 text-sm hover:bg-surface-gray-2"
+					:class="{ 'bg-surface-gray-3': block.getElement() === 'h3' }">
 					<code>H3</code>
 				</button>
 				<button
 					v-show="!block.isHeader()"
 					@click="editor?.chain().focus().toggleBold().run()"
-					class="rounded px-2 py-1 hover:bg-gray-100"
-					:class="{ 'bg-gray-200': editor.isActive('bold') }">
+					class="rounded px-2 py-1 hover:bg-surface-gray-2"
+					:class="{ 'bg-surface-gray-3': editor.isActive('bold') }">
 					<FeatherIcon class="h-3 w-3" name="bold" />
 				</button>
 				<button
 					v-show="!block.isHeader()"
 					@click="editor?.chain().focus().toggleItalic().run()"
-					class="rounded px-2 py-1 hover:bg-gray-100"
-					:class="{ 'bg-gray-200': editor.isActive('italic') }">
+					class="rounded px-2 py-1 hover:bg-surface-gray-2"
+					:class="{ 'bg-surface-gray-3': editor.isActive('italic') }">
 					<FeatherIcon class="h-3 w-3" name="italic" />
 				</button>
 				<button
 					v-show="!block.isHeader()"
 					@click="editor?.chain().focus().toggleStrike().run()"
-					class="rounded px-2 py-1 hover:bg-gray-100"
-					:class="{ 'bg-gray-200': editor.isActive('strike') }">
+					class="rounded px-2 py-1 hover:bg-surface-gray-2"
+					:class="{ 'bg-surface-gray-3': editor.isActive('strike') }">
 					<StrikeThroughIcon />
 				</button>
 				<button
@@ -102,8 +102,8 @@
 							enableLinkInput();
 						}
 					"
-					class="rounded px-2 py-1 hover:bg-gray-100"
-					:class="{ 'bg-gray-200': editor.isActive('link') }">
+					class="rounded px-2 py-1 hover:bg-surface-gray-2"
+					:class="{ 'bg-surface-gray-3': editor.isActive('link') }">
 					<FeatherIcon class="h-3 w-3" name="link" />
 				</button>
 			</div>
