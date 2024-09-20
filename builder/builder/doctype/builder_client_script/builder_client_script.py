@@ -36,7 +36,7 @@ class BuilderClientScript(Document):
 		with open(file_path, "w") as f:
 			script = self.script or ""
 			if script_type == "JavaScript":
-				script = jsmin(script)
+				script = jsmin(script, quote_chars="'\"`")
 			if script_type == "CSS":
 				script = compress(script)
 			f.write(script)
