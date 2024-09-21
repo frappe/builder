@@ -30,7 +30,7 @@
 			</div>
 			<div class="h-[calc(100%-115px)] overflow-y-auto">
 				<div
-					class="group flex items-center rounded-sm border-b border-outline-gray-1 px-2 py-2 text-sm text-text-icons-gray-6 hover:bg-surface-gray-2"
+					class="group flex items-center rounded-sm border-b border-outline-gray-1 px-2 py-2 text-sm text-text-icons-gray-7 hover:bg-surface-gray-2"
 					v-for="row in rows">
 					<code class="w-1/2 truncate">{{ row.from }}</code>
 					<code class="ml-3 w-1/2 truncate pl-2">{{ row.to }}</code>
