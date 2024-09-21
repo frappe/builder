@@ -128,7 +128,9 @@ const useStore = defineStore("store", {
 
 			const page = await this.fetchActivePage(pageName);
 			if (!page) {
-				toast.error("Page not found");
+				toast.error("Page not found", {
+					duration: Infinity,
+				});
 				return;
 			}
 			this.activePage = page;

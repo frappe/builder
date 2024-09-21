@@ -112,5 +112,6 @@ const isDark = useDark({
 [data-sonner-toast][data-styled="true"] {
 	@apply bg-surface-white;
 	@apply dark:border-zinc-800;
+	@apply !text-base;
 }
 </style>
