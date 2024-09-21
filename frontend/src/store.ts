@@ -317,7 +317,7 @@ const useStore = defineStore("store", {
 					name: componentName,
 					auto: true,
 				});
-				webComponentDoc.get.promise
+				return webComponentDoc.get.promise
 					.then(() => {
 						const component = webComponentDoc.doc as BuilderComponent;
 						this.componentMap.set(component.name, getBlockInstance(component.block));
