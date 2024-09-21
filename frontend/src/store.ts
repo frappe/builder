@@ -154,7 +154,12 @@ const useStore = defineStore("store", {
 			await this.setPageData(this.activePage);
 			this.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas);
 			nextTick(() => {
-				this.settingPage = false;
+				const interval = setInterval(() => {
+					if (this.fetchingComponent.size === 0) {
+						this.settingPage = false;
+						clearInterval(interval);
+					}
+				}, 100);
 			});
 		},
 		async setActivePage(pageName: string) {
@@ -312,10 +317,14 @@ const useStore = defineStore("store", {
 					name: componentName,
 					auto: true,
 				});
-				await webComponentDoc.get.promise;
-				const component = webComponentDoc.doc as BuilderComponent;
-				this.componentMap.set(component.name, getBlockInstance(component.block));
-				this.fetchingComponent.delete(componentName);
+				webComponentDoc.get.promise
+					.then(() => {
+						const component = webComponentDoc.doc as BuilderComponent;
+						this.componentMap.set(component.name, getBlockInstance(component.block));
+					})
+					.finally(() => {
+						this.fetchingComponent.delete(componentName);
+					});
 			}
 		},
 		async fetchBlockTemplate(blockTemplateName: string) {
