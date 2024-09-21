@@ -36,3 +36,13 @@ p:empty::before {
 		scrollbar-width: none;
 	}
 }
+
+::-webkit-scrollbar {
+	@apply w-2;
+	@apply bg-surface-gray-1;
+}
+
+::-webkit-scrollbar-thumb {
+	@apply rounded-full;
+	@apply bg-surface-gray-3;
+}
