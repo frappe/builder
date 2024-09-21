@@ -154,7 +154,7 @@
 				<p class="mt-4 text-base text-gray-500">No matching pages found.</p>
 			</div>
 			<!-- grid -->
-			<div class="grid-col grid gap-6 auto-fill-[220px]" v-if="displayType === 'grid'">
+			<div class="grid-col grid gap-4 auto-fill-[220px]" v-if="displayType === 'grid'">
 				<router-link
 					v-for="page in webPages.data"
 					:key="page.page_name"
@@ -164,15 +164,16 @@
 						}
 					"
 					:to="{ name: 'builder', params: { pageId: page.page_name } }">
-					<div class="group relative w-full cursor-pointer rounded-md bg-surface-white">
+					<div
+						class="group relative flex w-full cursor-pointer flex-col gap-2 rounded-md bg-surface-white p-2 hover:bg-surface-gray-2">
 						<img
 							width="250"
 							height="140"
 							:src="page.preview"
 							onerror="this.src='/assets/builder/images/fallback.png'"
-							class="w-full overflow-hidden rounded-lg object-cover shadow group-hover:shadow-2xl dark:border dark:border-outline-gray-1" />
+							class="w-full overflow-hidden rounded-lg object-cover shadow dark:border dark:border-outline-gray-1" />
 						<div class="flex items-center justify-between border-outline-gray-2">
-							<span class="inline-block max-w-[160px] py-2">
+							<span class="inline-block max-w-[160px]">
 								<div class="flex items-center gap-1">
 									<p
 										class="truncate text-base font-medium text-text-icons-gray-7 group-hover:text-text-icons-gray-9">
@@ -212,6 +213,7 @@
 										icon="more-horizontal"
 										size="sm"
 										variant="subtle"
+										class="bg-surface-white !text-text-icons-gray-4 hover:!text-text-icons-gray-9"
 										@click="open"></BuilderButton>
 								</template>
 							</Dropdown>
