@@ -267,7 +267,7 @@
 								<Avatar
 									:shape="'circle'"
 									:image="null"
-									:label="page.modified_by"
+									:label="page.owner"
 									class="[&>div]:bg-surface-gray-2 [&>div]:text-text-icons-gray-4 [&>div]:group-hover:bg-surface-gray-4 [&>div]:group-hover:text-text-icons-gray-6"
 									size="sm"
 									:title="`Created by ${page.owner}`" />
