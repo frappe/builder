@@ -17,7 +17,7 @@
 					<BuilderButton
 						variant="ghost"
 						:icon="mode.icon"
-						class="!text-gray-700 dark:!text-gray-200 hover:dark:bg-zinc-800 focus:dark:bg-zinc-700 [&[active='true']]:bg-gray-100 [&[active='true']]:!text-gray-900 [&[active='true']]:dark:bg-zinc-700 [&[active='true']]:dark:!text-zinc-50"
+						class="text-text-icons-gray-7 hover:bg-surface-gray-2 focus:!bg-surface-gray-3 [&[active='true']]:bg-surface-gray-3 [&[active='true']]:text-text-icons-gray-9"
 						@click="() => (store.mode = mode.mode as BuilderMode)"
 						:active="store.mode === mode.mode"></BuilderButton>
 				</Tooltip>
@@ -110,7 +110,7 @@
 			<Tooltip text="Settings" :hoverDelay="0.6">
 				<SettingsGearIcon
 					@click="showSettingsDialog = true"
-					class="h-4 w-4 cursor-pointer text-text-icons-gray-8"></SettingsGearIcon>
+					class="size-4 cursor-pointer text-text-icons-gray-8"></SettingsGearIcon>
 			</Tooltip>
 			<Dialog
 				v-model="showSettingsDialog"

@@ -22,7 +22,7 @@
 						icon: 'grid',
 					},
 					{
-						label: `Switch to ${isDark ? 'light' : 'dark'} mode`,
+						label: `Toggle Theme`,
 						onClick: () => toggleDark(),
 						icon: isDark ? 'sun' : 'moon',
 					},

@@ -40,7 +40,7 @@
 									icon: 'grid',
 								},
 								{
-									label: `Switch to ${isDark ? 'light' : 'dark'} mode`,
+									label: `Toggle Theme`,
 									onClick: () => toggleDark(),
 									icon: isDark ? 'sun' : 'moon',
 								},
@@ -154,7 +154,7 @@
 				<p class="mt-4 text-base text-gray-500">No matching pages found.</p>
 			</div>
 			<!-- grid -->
-			<div class="grid-col grid gap-4 auto-fill-[220px]" v-if="displayType === 'grid'">
+			<div class="grid-col grid gap-3 auto-fill-[220px]" v-if="displayType === 'grid'">
 				<router-link
 					v-for="page in webPages.data"
 					:key="page.page_name"
@@ -165,7 +165,7 @@
 					"
 					:to="{ name: 'builder', params: { pageId: page.page_name } }">
 					<div
-						class="group relative flex w-full cursor-pointer flex-col gap-2 rounded-md bg-surface-white p-2 hover:bg-surface-gray-2">
+						class="group relative flex w-full cursor-pointer flex-col gap-2 rounded-xl bg-surface-white p-3 hover:bg-surface-gray-2">
 						<img
 							width="250"
 							height="140"
@@ -234,7 +234,7 @@
 					"
 					class="col-span-full h-fit w-full flex-grow">
 					<div
-						class="group relative flex w-full gap-3 overflow-hidden border-b-[1px] border-outline-gray-1 p-3 hover:cursor-pointer hover:rounded-md hover:bg-surface-gray-1">
+						class="group relative flex w-full gap-3 overflow-hidden border-b-[1px] border-outline-gray-1 p-3 hover:cursor-pointer hover:rounded-xl hover:bg-surface-gray-1">
 						<img
 							width="140"
 							height="82"
@@ -341,7 +341,7 @@ const orderMap = {
 };
 
 onActivated(() => {
-	posthog.capture("builder_landing_page_visited");
+	posthog.capture("builder_dashboard_page_visited");
 });
 
 watchDebounced(
