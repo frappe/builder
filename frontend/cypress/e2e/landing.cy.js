@@ -1,4 +1,4 @@
-describe("Builder Landing", () => {
+describe("Builder Dashboard", () => {
 	before(() => {
 		cy.login();
 	});

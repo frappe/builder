@@ -62,7 +62,7 @@ const routes = [
 		path: "/home",
 		name: "home",
 		beforeEnter: validateVisit,
-		component: () => import("@/pages/PageBuilderLanding.vue"),
+		component: () => import("@/pages/PageBuilderDashboard.vue"),
 	},
 	{
 		path: "/page/:pageId",

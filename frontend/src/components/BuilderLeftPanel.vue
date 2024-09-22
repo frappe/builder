@@ -4,9 +4,9 @@
 			<button
 				v-for="option of leftPanelOptions"
 				:key="option.value"
-				class="h-8 w-8 rounded text-text-icons-gray-7"
+				class="size-8 rounded text-text-icons-gray-7 hover:bg-surface-gray-2 focus:!bg-surface-gray-3"
 				:class="{
-					'bg-surface-gray-3': store.leftPanelActiveTab === option.value,
+					'bg-surface-gray-3 text-text-icons-gray-9': store.leftPanelActiveTab === option.value,
 				}"
 				@click.stop="setActiveTab(option.value as LeftSidebarTabOption)">
 				<component :is="option.icon" />
