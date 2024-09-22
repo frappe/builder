@@ -31,8 +31,8 @@
 						:name="breakpoint.icon"
 						class="h-8 w-6"
 						:class="{
-							'text-gray-700 dark:text-zinc-50': breakpoint.visible,
-							'text-gray-300 dark:text-zinc-500': !breakpoint.visible,
+							'text-text-icons-gray-8': breakpoint.visible,
+							'text-text-icons-gray-3': !breakpoint.visible,
 						}" />
 				</div>
 			</div>
