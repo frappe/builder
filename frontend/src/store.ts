@@ -229,11 +229,12 @@ const useStore = defineStore("store", {
 				this.activeCanvas?.scrollBlockIntoView(block);
 			}
 		},
-		editComponent(block?: Block | null, componentName?: string) {
+		async editComponent(block?: Block | null, componentName?: string) {
 			if (!block?.isExtendedFromComponent() && !componentName) {
 				return;
 			}
 			componentName = componentName || (block?.extendedFromComponent as string);
+			await this.fetchComponent(componentName);
 			const component = this.getComponent(componentName);
 			const componentBlock = this.getComponentBlock(componentName);
 			this.editOnCanvas(

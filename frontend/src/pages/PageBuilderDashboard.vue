@@ -85,10 +85,10 @@
 		</router-link>
 	</div>
 	<!-- page list wrapper -->
-	<section class="m-auto mb-32 flex w-3/4 max-w-5xl flex-col pt-10">
+	<section class="m-auto mb-32 flex w-3/4 max-w-6xl flex-col pt-10">
 		<!-- list head -->
 		<div class="mb-8 flex items-center justify-between">
-			<h1 class="text-xl font-semibold text-text-icons-gray-9">All Pages</h1>
+			<h1 class="pl-3 text-xl font-semibold text-text-icons-gray-9">All Pages</h1>
 			<div class="flex gap-2">
 				<div class="relative flex">
 					<BuilderInput

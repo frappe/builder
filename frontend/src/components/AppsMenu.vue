@@ -21,9 +21,9 @@
 					key="name"
 					class="flex items-center gap-2 rounded p-1 hover:bg-surface-gray-2">
 					<img class="size-6" :src="app.logo" />
-					<router-link :to="app.route" class="max-w-18 w-full truncate">
+					<span class="max-w-18 w-full truncate">
 						{{ app.title }}
-					</router-link>
+					</span>
 				</a>
 			</div>
 		</template>
