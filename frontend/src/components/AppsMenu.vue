@@ -14,17 +14,17 @@
 		</template>
 		<template #body>
 			<div
-				class="mx-3 grid grid-cols-3 rounded-lg border border-outline-gray-2 bg-surface-white p-2 text-sm text-text-icons-gray-8 shadow-xl dark:bg-surface-gray-1">
-				<div v-for="app in apps.data" key="name">
-					<a
-						:href="app.route"
-						class="flex flex-col items-center justify-center gap-1.5 rounded px-3 py-2 hover:bg-surface-gray-2">
-						<img class="size-8" :src="app.logo" />
-						<router-link :to="app.route">
-							{{ app.title }}
-						</router-link>
-					</a>
-				</div>
+				class="flex w-fit min-w-32 max-w-48 flex-col rounded-lg border border-outline-gray-2 bg-surface-white p-2 text-sm text-text-icons-gray-8 shadow-xl auto-fill-[100px] dark:bg-surface-gray-1">
+				<a
+					:href="app.route"
+					v-for="app in apps.data"
+					key="name"
+					class="flex items-center gap-2 rounded p-1 hover:bg-surface-gray-2">
+					<img class="size-6" :src="app.logo" />
+					<router-link :to="app.route" class="max-w-18 w-full truncate">
+						{{ app.title }}
+					</router-link>
+				</a>
 			</div>
 		</template>
 	</Popover>
