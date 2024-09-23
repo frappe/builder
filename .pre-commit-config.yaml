@@ -33,7 +33,7 @@ repos:
                 .*node_modules.*|
                 .*boilerplate.*|
                 .*src.*.js|
-                builder/public/js/fingerprint.js|
+                builder/public/js/identify.js|
             )$
 
 ci:
