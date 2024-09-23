@@ -10,13 +10,20 @@
 			v-slot="{ open }"
 			:nullable="nullable"
 			:multiple="multiple">
+			<ComboboxButton v-show="false" ref="comboboxButton"></ComboboxButton>
 			<div
 				class="form-input flex h-7 w-full items-center justify-between gap-2 rounded border-outline-gray-1 bg-surface-gray-1 p-0 text-sm text-text-icons-gray-8 transition-colors hover:border-outline-gray-2 hover:bg-surface-gray-1">
 				<!-- {{ displayValue }} -->
 				<ComboboxInput
 					autocomplete="off"
+					@focus="
+						() => {
+							if (!open.value) {
+								$refs.comboboxButton?.$el.click();
+							}
+						}
+					"
 					@change="query = $event.target.value"
-					@focus="() => open"
 					:displayValue="getDisplayValue"
 					:placeholder="!modelValue ? placeholder : null"
 					class="h-full w-full rounded border-none bg-transparent p-0 px-2 py-1 pr-5 text-base focus:ring-2 focus:ring-outline-gray-3" />
@@ -53,7 +60,7 @@
 
 <script setup lang="ts">
 import CrossIcon from "@/components/Icons/Cross.vue";
-import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from "@headlessui/vue";
+import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from "@headlessui/vue";
 import { ComputedRef, PropType, computed, ref, watch } from "vue";
 
 type Option = {
@@ -98,6 +105,9 @@ const getDisplayValue = (option: Option | Option[]) => {
 };
 
 const value = computed(() => {
+	if (!props.modelValue) {
+		return null;
+	}
 	return (
 		filteredOptions.value.find((option) => option.value === props.modelValue) || {
 			label: props.modelValue,
