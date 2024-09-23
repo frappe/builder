@@ -8,7 +8,7 @@ import "./telemetry";
 import "./utils/arrayFunctions";
 
 import App from "@/App.vue";
-import BuilderButton from "@/components/Controls/Button.vue";
+import BuilderButton from "@/components/Controls/BuilderButton.vue";
 import Input from "@/components/Controls/Input.vue";
 
 const app = createApp(App);

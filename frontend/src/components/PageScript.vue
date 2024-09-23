@@ -1,16 +1,8 @@
 <template>
 	<div class="flex flex-col gap-4">
 		<div class="flex gap-2">
-			<BuilderButton
-				@click="showClientScriptEditor()"
-				class="flex-1 bg-surface-gray-2 text-base text-text-icons-gray-8 hover:bg-surface-gray-3">
-				Client Script
-			</BuilderButton>
-			<BuilderButton
-				@click="showServerScriptEditor()"
-				class="flex-1 bg-surface-gray-2 text-base text-text-icons-gray-8 hover:bg-surface-gray-3">
-				Data Script
-			</BuilderButton>
+			<BuilderButton @click="showClientScriptEditor()" class="flex-1">Client Script</BuilderButton>
+			<BuilderButton @click="showServerScriptEditor()" class="flex-1">Data Script</BuilderButton>
 		</div>
 		<CodeEditor v-model="store.pageData" type="JSON" label="Data Preview" :readonly="true"></CodeEditor>
 		<Dialog
