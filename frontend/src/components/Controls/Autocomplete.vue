@@ -17,17 +17,7 @@
 					autocomplete="off"
 					@change="query = $event.target.value"
 					@focus="() => open"
-					:displayValue="
-						(option: Option) => {
-							if (Array.isArray(option)) {
-								return option.map((o) => o.label).join(', ');
-							} else if (option) {
-								return option.label || option.value || '';
-							} else {
-								return '';
-							}
-						}
-					"
+					:displayValue="getDisplayValue"
 					:placeholder="!modelValue ? placeholder : null"
 					class="h-full w-full rounded border-none bg-transparent p-0 px-2 py-1 pr-5 text-base focus:ring-2 focus:ring-outline-gray-3" />
 			</div>
@@ -64,7 +54,7 @@
 <script setup lang="ts">
 import CrossIcon from "@/components/Icons/Cross.vue";
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from "@headlessui/vue";
-import { ComputedRef, PropType, computed, ref } from "vue";
+import { ComputedRef, PropType, computed, ref, watch } from "vue";
 
 type Option = {
 	label: string;
@@ -78,6 +68,9 @@ const props = defineProps({
 		type: Array as PropType<Option[]>,
 		default: () => [],
 	},
+	getOptions: {
+		type: Function as PropType<(filterString: string) => Promise<Option[]>>,
+	},
 	modelValue: {},
 	placeholder: {
 		type: String,
@@ -90,38 +83,50 @@ const props = defineProps({
 });
 
 const query = ref("");
-
 const multiple = computed(() => Array.isArray(props.modelValue));
 const nullable = computed(() => !multiple.value);
+const filteredOptions = ref(props.options);
+
+const getDisplayValue = (option: Option | Option[]) => {
+	if (Array.isArray(option)) {
+		return option.map((o) => o.label).join(", ");
+	} else if (option) {
+		return option.label || option.value || "";
+	} else {
+		return "";
+	}
+};
 
 const value = computed(() => {
 	return (
-		props.options.find((option) => option.value === props.modelValue) || {
+		filteredOptions.value.find((option) => option.value === props.modelValue) || {
 			label: props.modelValue,
 			value: props.modelValue,
 		}
 	);
 }) as ComputedRef<Option>;
 
-const filteredOptions = computed(() => {
-	if (query.value === "") {
-		return props.options;
-	} else {
-		const options = props.options.filter((option) => {
-			return (
-				option.label.toLowerCase().includes(query.value.toLowerCase()) ||
-				option.value.toLowerCase().includes(query.value.toLowerCase())
-			);
-		});
-		if (props.showInputAsOption) {
-			options.unshift({
-				label: query.value,
-				value: query.value,
-			});
+watch(
+	() => query.value || props.options,
+	async () => {
+		if (props.getOptions) {
+			const options = await props.getOptions(query.value);
+			filteredOptions.value = options;
+		} else {
+			if (!query.value) {
+				filteredOptions.value = props.options;
+			} else {
+				filteredOptions.value = props.options.filter((option) => {
+					const label = option.label.toLowerCase();
+					const value = option.label.toLowerCase();
+					const queryLower = query.value.toLowerCase();
+					return label.includes(queryLower) || value.includes(query.value);
+				});
+			}
 		}
-		return options;
-	}
-});
+	},
+	{ immediate: true },
+);
 
 const clearValue = () => emit("update:modelValue", null);
 </script>

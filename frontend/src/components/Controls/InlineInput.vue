@@ -33,6 +33,7 @@
 			placeholder="unset"
 			:modelValue="modelValue"
 			:options="inputOptions"
+			:getOptions="getOptions"
 			@update:modelValue="handleChange"
 			:showInputAsOption="showInputAsOption"
 			class="w-full" />
@@ -90,6 +91,10 @@ const props = defineProps({
 	showInputAsOption: {
 		type: Boolean,
 		default: false,
+	},
+	getOptions: {
+		type: Function as PropType<(filterString: string) => Promise<Option[]>>,
+		default: null,
 	},
 });
 

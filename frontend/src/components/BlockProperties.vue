@@ -38,7 +38,7 @@ import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import blockController from "@/utils/blockController";
-import { setFont as _setFont, fontListNames, getFontWeightOptions } from "@/utils/fontManager";
+import { setFont as _setFont, fontList, getFontWeightOptions } from "@/utils/fontManager";
 import { toValue } from "@vueuse/core";
 import { Button, createResource } from "frappe-ui";
 import { Ref, computed, nextTick, ref } from "vue";
@@ -196,7 +196,21 @@ const typographySectionProperties = [
 			return {
 				label: "Family",
 				type: "autocomplete",
-				options: fontListNames,
+				getOptions: (filterString: string) => {
+					const fontOptions = [] as { label: string; value: string }[];
+					fontList.items.forEach((font) => {
+						if (fontOptions.length >= 20) {
+							return;
+						}
+						if (font.family.toLowerCase().includes(filterString.toLowerCase()) || !filterString) {
+							fontOptions.push({
+								label: font.family,
+								value: font.family,
+							});
+						}
+					});
+					return fontOptions;
+				},
 				modelValue: blockController.getFontFamily(),
 			};
 		},
