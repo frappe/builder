@@ -9,6 +9,7 @@
 							class="[&>div>input]:pl-8"
 							type="text"
 							placeholder="Set Background"
+							@focus="togglePopover"
 							@update:modelValue="updateBG"
 							:modelValue="backgroundURL?.replace(/^'|'$/g, '')" />
 						<div
