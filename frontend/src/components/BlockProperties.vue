@@ -476,7 +476,20 @@ const styleSectionProperties = [
 				label: "Border Style",
 				modelValue: blockController.getStyle("borderStyle"),
 				type: "select",
-				options: ["solid", "dashed", "dotted"],
+				options: [
+					{
+						value: "solid",
+						label: "Solid",
+					},
+					{
+						value: "dashed",
+						label: "Dashed",
+					},
+					{
+						value: "dotted",
+						label: "Dotted",
+					},
+				],
 			};
 		},
 		searchKeyWords: "Border, Style, BorderStyle, Border Style, Solid, Dashed, Dotted",
@@ -786,7 +799,24 @@ const optionsSectionProperties = [
 			return {
 				label: "Overflow X",
 				type: "select",
-				options: ["auto", "visible", "hidden", "scroll"],
+				options: [
+					{
+						label: "Auto",
+						value: "auto",
+					},
+					{
+						label: "Visible",
+						value: "visible",
+					},
+					{
+						label: "Hidden",
+						value: "hidden",
+					},
+					{
+						label: "Scroll",
+						value: "scroll",
+					},
+				],
 				modelValue: blockController.getStyle("overflowX") || blockController.getStyle("overflow"),
 			};
 		},
@@ -802,7 +832,24 @@ const optionsSectionProperties = [
 			return {
 				label: "Overflow Y",
 				type: "select",
-				options: ["auto", "visible", "hidden", "scroll"],
+				options: [
+					{
+						label: "Auto",
+						value: "auto",
+					},
+					{
+						label: "Visible",
+						value: "visible",
+					},
+					{
+						label: "Hidden",
+						value: "hidden",
+					},
+					{
+						label: "Scroll",
+						value: "scroll",
+					},
+				],
 				modelValue: blockController.getStyle("overflowY") || blockController.getStyle("overflow"),
 			};
 		},
