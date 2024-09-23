@@ -1,10 +1,8 @@
+import userFont from "@/data/userFonts";
 import fontList from "@/utils/fontList.json";
 import WebFont from "webfontloader";
 
-// TODO: Remove limit on font list
-const fontListNames = fontList.items.filter((f) => f.variants.length >= 3).map((font) => font.family);
 const requestedFonts = new Set<string>();
-
 const isFontRequested = (font: string) => {
 	return requestedFonts.has(font);
 };
@@ -14,6 +12,7 @@ const setFontRequested = (font: string) => {
 };
 
 const setFont = (font: string | null, weight: string | null) => {
+	let fontId = "";
 	return new Promise((resolve) => {
 		if (!font) {
 			return resolve(font);
@@ -23,19 +22,30 @@ const setFont = (font: string | null, weight: string | null) => {
 		}
 		weight = weight || "400";
 		if (weight && ["100", "200", "300", "400", "500", "600", "700", "800", "900"].includes(weight)) {
-			font = `${font}:${weight}`;
+			fontId = `${font}:${weight}`;
 		}
-		if (isFontRequested(font)) {
-			return resolve(font);
+		if (isFontRequested(fontId)) {
+			return resolve(fontId);
 		}
-		setFontRequested(font);
-		WebFont.load({
-			google: {
-				families: [font],
-				crossOrigin: "anonymous",
-			},
-			active: resolve(font),
-		});
+		setFontRequested(fontId);
+		const customFont = userFont.data.find(
+			(f: { font_name: string; font_file: string }) => f.font_name === font,
+		);
+		if (customFont) {
+			const fontFace = new FontFace(font, `url(${customFont.font_file})`);
+			fontFace.load().then((loadedFont) => {
+				document.fonts.add(loadedFont);
+				resolve(fontId);
+			});
+		} else {
+			WebFont.load({
+				google: {
+					families: [fontId],
+					crossOrigin: "anonymous",
+				},
+				active: resolve(fontId),
+			});
+		}
 	});
 };
 const getFontWeightOptions = (font: string) => {
@@ -121,4 +131,4 @@ function setFontFromHTML(html: string) {
 	}
 }
 
-export { fontListNames, getFontWeightOptions, setFont, setFontFromHTML };
+export { fontList, getFontWeightOptions, setFont, setFontFromHTML };
