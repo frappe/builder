@@ -46,6 +46,13 @@ const isDark = useDark({
 	@apply bg-surface-gray-1;
 }
 
+/* TODO: Remove this when the issue is fixed */
+[id^="headlessui-dialog-panel"] > div > div > div > div.mb-6.flex.items-center.justify-between > button {
+	@apply bg-surface-gray-2;
+	@apply stroke-text-icons-gray-4;
+	@apply stroke-[0.4px];
+}
+
 [id^="headlessui-dialog-panel"] > div,
 [id^="headlessui-dialog-panel"] .space-y-4 > p {
 	@apply dark:bg-zinc-800;
