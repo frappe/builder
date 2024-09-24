@@ -159,15 +159,16 @@ useEventListener(document, "copy", (e) => {
 	if (store.activeCanvas?.selectedBlocks.length) {
 		e.preventDefault();
 		const componentDocuments: BuilderComponent[] = [];
-		store.activeCanvas?.selectedBlocks.forEach((block: Block) => {
+		for (const block of store.activeCanvas?.selectedBlocks) {
 			const components = block.getUsedComponentNames();
-			components.forEach((componentName) => {
+			for (const componentName of components) {
 				const component = store.getComponent(componentName);
 				if (component) {
 					componentDocuments.push(component);
 				}
-			});
-		});
+			}
+		}
+
 		const blocksToCopy = store.activeCanvas?.selectedBlocks.map((block) => {
 			if (!Boolean(block.extendedFromComponent) && block.isChildOfComponent) {
 				return detachBlockFromComponent(block);
