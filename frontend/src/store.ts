@@ -74,6 +74,7 @@ const useStore = defineStore("store", {
 		realtime: new RealTimeHandler(),
 		viewers: <UserInfo[]>[],
 		componentMap: <Map<string, Block>>new Map(),
+		componentDocMap: <Map<string, BuilderComponent>>new Map(),
 		blockTemplateMap: <Map<string, BlockTemplate>>new Map(),
 		fetchingComponent: new Set(),
 		fragmentData: {
@@ -234,7 +235,7 @@ const useStore = defineStore("store", {
 				return;
 			}
 			componentName = componentName || (block?.extendedFromComponent as string);
-			await this.fetchComponent(componentName);
+			await this.loadComponent(componentName);
 			const component = this.getComponent(componentName);
 			const componentBlock = this.getComponentBlock(componentName);
 			this.editOnCanvas(
@@ -246,6 +247,7 @@ const useStore = defineStore("store", {
 							block: getBlockObject(block),
 						})
 						.then((data: BuilderComponent) => {
+							this.componentDocMap.set(data.name, data);
 							this.componentMap.set(data.name, getBlockInstance(data.block));
 							toast.success("Component saved!");
 						});
@@ -310,23 +312,27 @@ const useStore = defineStore("store", {
 			}
 			return this.componentMap.get(componentName) as Block;
 		},
-		async fetchComponent(componentName: string) {
+		async loadComponent(componentName: string) {
 			if (!this.componentMap.has(componentName) && !this.fetchingComponent.has(componentName)) {
 				this.fetchingComponent.add(componentName);
-				const webComponentDoc = await createDocumentResource({
-					doctype: "Builder Component",
-					name: componentName,
-					auto: true,
-				});
-				return webComponentDoc.get.promise
-					.then(() => {
-						const component = webComponentDoc.doc as BuilderComponent;
-						this.componentMap.set(component.name, getBlockInstance(component.block));
+				return this.fetchComponent(componentName)
+					.then((componentDoc) => {
+						this.componentDocMap.set(componentName, componentDoc);
+						this.componentMap.set(componentDoc.name, getBlockInstance(componentDoc.block));
 					})
 					.finally(() => {
 						this.fetchingComponent.delete(componentName);
 					});
 			}
+		},
+		async fetchComponent(componentName: string) {
+			const webComponentDoc = await createDocumentResource({
+				doctype: "Builder Component",
+				name: componentName,
+				auto: true,
+			});
+			await webComponentDoc.get.promise;
+			return webComponentDoc.doc as BuilderComponent;
 		},
 		async fetchBlockTemplate(blockTemplateName: string) {
 			const blockTemplate = this.getBlockTemplate(blockTemplateName);
@@ -342,7 +348,7 @@ const useStore = defineStore("store", {
 			}
 		},
 		getComponent(componentName: string) {
-			return webComponent.getRow(componentName) as BuilderComponent;
+			return this.componentDocMap.get(componentName) as BuilderComponent;
 		},
 		createComponent(obj: BuilderComponent, updateExisting = false) {
 			const component = this.getComponent(obj.name);

@@ -85,7 +85,7 @@ class Block implements BlockOptions {
 
 		if (this.extendedFromComponent) {
 			const store = useStore();
-			store.fetchComponent(this.extendedFromComponent);
+			store.loadComponent(this.extendedFromComponent);
 		}
 	}
 	getStyles(breakpoint: string = "desktop"): BlockStyleMap {

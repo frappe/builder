@@ -198,7 +198,7 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 		const componentName = ev.dataTransfer?.getData("componentName");
 		const blockTemplate = ev.dataTransfer?.getData("blockTemplate");
 		if (componentName) {
-			await store.fetchComponent(componentName);
+			await store.loadComponent(componentName);
 			const component = store.componentMap.get(componentName) as Block;
 			const newBlock = getBlockCopy(component);
 			newBlock.extendFromComponent(componentName);
