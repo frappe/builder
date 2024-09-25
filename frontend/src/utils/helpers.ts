@@ -1,6 +1,7 @@
 import AlertDialog from "@/components/AlertDialog.vue";
-import { confirmDialog } from "frappe-ui";
+import { confirmDialog, FileUploadHandler } from "frappe-ui";
 import { h, reactive, toRaw } from "vue";
+import { toast } from "vue-sonner";
 import Block from "./block";
 
 function getNumberFromPx(px: string | number | null | undefined): number {
@@ -340,6 +341,38 @@ function getRouteVariables(route: string) {
 	return variables;
 }
 
+async function uploadImage(file: File) {
+	const uploader = new FileUploadHandler();
+	let fileDoc = {
+		file_url: "",
+		file_name: "",
+	};
+	const upload = uploader.upload(file, {
+		private: false,
+		folder: "Home/Builder Uploads",
+		optimize: true,
+		upload_endpoint: "/api/method/builder.api.upload_builder_asset",
+	});
+	await new Promise((resolve) => {
+		toast.promise(upload, {
+			loading: "Uploading...",
+			success: (data: { file_name: string; file_url: string }) => {
+				fileDoc.file_name = data.file_name;
+				fileDoc.file_url = data.file_url;
+				resolve(fileDoc);
+				return "Uploaded";
+			},
+			error: () => "Failed to upload",
+			duration: 500,
+		});
+	});
+
+	return {
+		fileURL: fileDoc.file_url,
+		fileName: fileDoc.file_name,
+	};
+}
+
 export {
 	addPxToNumber,
 	alert,
@@ -370,4 +403,5 @@ export {
 	replaceMapKey,
 	RGBToHex,
 	stripExtension,
+	uploadImage,
 };

@@ -87,6 +87,7 @@ import {
 	getNumberFromPx,
 	isCtrlOrCmd,
 	isTargetEditable,
+	uploadImage,
 } from "@/utils/helpers";
 import {
 	UseRefHistoryReturn,
@@ -242,7 +243,7 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 			}
 			posthog.capture("builder_block_template_used", { template: blockTemplate });
 		} else if (files && files.length) {
-			store.uploadFile(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
+			uploadImage(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
 				if (!parentBlock) return;
 
 				if (fileDoc.fileName.match(/\.(mp4|webm|ogg|mov)$/)) {
