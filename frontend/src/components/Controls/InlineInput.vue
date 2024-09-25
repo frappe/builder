@@ -35,6 +35,7 @@
 			:options="inputOptions"
 			:getOptions="getOptions"
 			@update:modelValue="handleChange"
+			:actionButton="actionButton"
 			:showInputAsOption="showInputAsOption"
 			class="w-full" />
 	</div>
@@ -46,6 +47,13 @@ import FeatherIcon from "frappe-ui/src/components/FeatherIcon.vue";
 import { PropType, computed } from "vue";
 import Autocomplete from "./Autocomplete.vue";
 import InputLabel from "./InputLabel.vue";
+
+type Action = {
+	label: String;
+	handler: () => void;
+	icon: string;
+	component?: any;
+};
 
 const props = defineProps({
 	modelValue: {
@@ -94,6 +102,10 @@ const props = defineProps({
 	},
 	getOptions: {
 		type: Function as PropType<(filterString: string) => Promise<Option[]>>,
+		default: null,
+	},
+	actionButton: {
+		type: Object as PropType<Action>,
 		default: null,
 	},
 });

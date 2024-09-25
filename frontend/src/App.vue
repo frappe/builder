@@ -66,7 +66,7 @@ const isDark = useDark({
 
 [id^="headlessui-menu-items"],
 [id^="headlessui-combobox-options"] {
-	@apply dark:bg-zinc-800;
+	@apply bg-surface-gray-1;
 	@apply overflow-y-auto;
 	-ms-overflow-style: none; /* IE and Edge */
 	scrollbar-width: none;
