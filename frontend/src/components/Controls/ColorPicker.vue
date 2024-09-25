@@ -22,7 +22,7 @@
 							hsl(${hue}, 100%, 50%)
 						`,
 					}"
-					@mousedown.stop="handleSelectorMove"
+					@mousedown.prevent="handleSelectorMove"
 					class="relative m-auto h-24 w-44 rounded-md"
 					@click.prevent="setColor">
 					<div
@@ -44,7 +44,7 @@
 					ref="hueMap"
 					class="relative m-auto mt-2 h-3 w-44 rounded-md"
 					@click="setHue"
-					@mousedown="handleHueSelectorMove"
+					@mousedown.prevent="handleHueSelectorMove"
 					:style="{
 						background: `
 							linear-gradient(90deg, hsl(0, 100%, 50%),
