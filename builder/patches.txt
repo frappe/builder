@@ -1,5 +1,5 @@
 [pre_model_sync]
-builder.builder.doctype.builder_page.patches.create_upload_folder_for_builder #
+builder.builder.doctype.builder_page.patches.create_upload_folder_for_builder # 25-09-2024
 builder.builder.patches.rename_web_page_beta_to_builder_page
 builder.builder.patches.rename_web_page_component_to_builder_component
 
