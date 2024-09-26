@@ -32,7 +32,7 @@ const setFont = (font: string | null, weight: string | null) => {
 			(f: { font_name: string; font_file: string }) => f.font_name === font,
 		);
 		if (customFont) {
-			const fontFace = new FontFace(font, `url(${customFont.font_file})`);
+			const fontFace = new FontFace(font, `url("${customFont.font_file}")`);
 			fontFace.load().then((loadedFont) => {
 				document.fonts.add(loadedFont);
 				resolve(fontId);
