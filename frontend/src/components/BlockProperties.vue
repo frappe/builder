@@ -205,10 +205,11 @@ const typographySectionProperties = [
 						if (fontOptions.length >= 20) {
 							return;
 						}
-						if (font.font_name.toLowerCase().includes(filterString.toLowerCase()) || !filterString) {
+						const fontName = font.font_name as string;
+						if (fontName.toLowerCase().includes(filterString.toLowerCase()) || !filterString) {
 							fontOptions.push({
-								label: font.font_name,
-								value: font.font_name,
+								label: fontName,
+								value: fontName,
 							});
 						}
 					});
