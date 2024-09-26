@@ -29,7 +29,7 @@
 					class="h-full w-full rounded border-none bg-transparent pl-2 pr-5 text-base focus:ring-2 focus:ring-outline-gray-3" />
 			</div>
 			<ComboboxOptions
-				class="absolute right-0 z-50 max-h-[12rem] w-full overflow-y-auto rounded-lg border border-outline-gray-2 bg-surface-white p-0 shadow-2xl"
+				class="absolute right-0 z-50 w-full overflow-y-auto rounded-lg border border-outline-gray-2 bg-surface-white p-0 shadow-2xl"
 				v-show="filteredOptions.length">
 				<div class="w-full list-none px-1.5 py-1.5">
 					<ComboboxOption v-if="query" :value="query" class="flex items-center"></ComboboxOption>
@@ -38,9 +38,16 @@
 						v-slot="{ active, selected }"
 						:key="option.value"
 						:value="option"
+						:disabled="option.value === '_separator'"
 						:title="option.label"
 						class="flex items-center">
+						<span
+							v-if="option.value === '_separator'"
+							class="flex w-full items-center gap-2 px-2.5 pb-2 pt-3 text-xs font-medium !text-text-icons-gray-5">
+							{{ option.label }}
+						</span>
 						<li
+							v-else
 							class="w-full select-none truncate rounded px-2.5 py-1.5 text-xs"
 							:class="{
 								'bg-gray-100': active,
@@ -53,7 +60,10 @@
 				<div
 					class="sticky bottom-0 rounded-b-sm border-t border-outline-gray-2 bg-surface-gray-1"
 					v-if="actionButton">
-					<component :is="actionButton.component" v-if="actionButton?.component"></component>
+					<component
+						:is="actionButton.component"
+						v-if="actionButton?.component"
+						@change="updateOptions"></component>
 					<BuilderButton
 						v-else
 						:iconLeft="actionButton.icon"
@@ -143,27 +153,25 @@ const value = computed(() => {
 	);
 }) as ComputedRef<Option>;
 
-watch(
-	() => query.value || props.options,
-	async () => {
-		if (props.getOptions) {
-			const options = await props.getOptions(query.value);
-			filteredOptions.value = options;
+watch(() => query.value || props.options, updateOptions, { immediate: true });
+
+async function updateOptions() {
+	if (props.getOptions) {
+		const options = await props.getOptions(query.value);
+		filteredOptions.value = options;
+	} else {
+		if (!query.value) {
+			filteredOptions.value = props.options;
 		} else {
-			if (!query.value) {
-				filteredOptions.value = props.options;
-			} else {
-				filteredOptions.value = props.options.filter((option) => {
-					const label = option.label.toLowerCase();
-					const value = option.label.toLowerCase();
-					const queryLower = query.value.toLowerCase();
-					return label.includes(queryLower) || value.includes(query.value);
-				});
-			}
+			filteredOptions.value = props.options.filter((option) => {
+				const label = option.label.toLowerCase();
+				const value = option.label.toLowerCase();
+				const queryLower = query.value.toLowerCase();
+				return label.includes(queryLower) || value.includes(query.value);
+			});
 		}
-	},
-	{ immediate: true },
-);
+	}
+}
 
 const clearValue = () => emit("update:modelValue", null);
 </script>

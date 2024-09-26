@@ -212,6 +212,16 @@ const typographySectionProperties = [
 							});
 						}
 					});
+					if (fontOptions.length) {
+						fontOptions.unshift({
+							label: "Custom",
+							value: "_separator",
+						});
+						fontOptions.push({
+							label: "Default",
+							value: "_separator",
+						});
+					}
 					fontList.items.forEach((font) => {
 						if (fontOptions.length >= 20) {
 							return;
