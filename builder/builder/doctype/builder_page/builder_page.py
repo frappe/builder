@@ -480,6 +480,8 @@ def set_fonts(styles, font_map):
 	for style in styles:
 		font = style.get("fontFamily")
 		if font:
+			# escape spaces in font name
+			style["fontFamily"] = font.replace(" ", "\\ ")
 			if font in font_map:
 				if style.get("fontWeight") and style.get("fontWeight") not in font_map[font]["weights"]:
 					font_map[font]["weights"].append(style.get("fontWeight"))
