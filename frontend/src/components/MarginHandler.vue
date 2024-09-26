@@ -249,6 +249,7 @@ enum Position {
 
 const handleMargin = (ev: MouseEvent, position: Position) => {
 	if (props.disableHandlers) return;
+	ev.preventDefault();
 	updating.value = true;
 	const startY = ev.clientY;
 	const startX = ev.clientX;
@@ -311,7 +312,7 @@ const handleMargin = (ev: MouseEvent, position: Position) => {
 			updating.value = false;
 			mouseUpEvent.preventDefault();
 		},
-		{ once: true }
+		{ once: true },
 	);
 };
 </script>
