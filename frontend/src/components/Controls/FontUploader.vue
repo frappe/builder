@@ -1,7 +1,7 @@
 <template>
 	<FileUploader
 		@success="uploadFont"
-		fileTypes="font/ttf,font/otf,font/woff,font/woff2,application/vnd.ms-fontobject"
+		fileTypes="font/woff2"
 		:uploadArgs="{
 			private: false,
 			folder: 'Home/Builder Uploads/Fonts',
