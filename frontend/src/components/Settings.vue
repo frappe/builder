@@ -1,6 +1,6 @@
 <template>
 	<div class="flex h-[90vh] max-h-[800px] overflow-hidden">
-		<div class="flex w-48 shrink-0 flex-col gap-5 bg-surface-menu-bar p-4 px-2">
+		<div class="flex w-48 shrink-0 flex-col gap-5 bg-surface-gray-1 p-4 px-2">
 			<span class="px-2 text-lg font-semibold text-text-icons-gray-9">Settings</span>
 			<div class="flex flex-col" v-for="(item, index) in settingsSidebarItems" :key="index">
 				<span class="mb-2 px-2 text-base font-medium text-text-icons-gray-5">
@@ -19,7 +19,7 @@
 				</a>
 			</div>
 		</div>
-		<div class="flex flex-1 flex-col gap-5 overflow-hidden bg-surface-white p-14 px-16 dark:bg-zinc-900">
+		<div class="flex flex-1 flex-col gap-5 overflow-hidden bg-surface-white p-14 px-16">
 			<h2 class="text-xl font-semibold leading-none">{{ selectedItemDoc?.title }}</h2>
 			<BuilderButton
 				icon="x"
