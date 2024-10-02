@@ -44,19 +44,26 @@ const isDark = useDark({
 
 [id^="headlessui-dialog-panel"] {
 	@apply bg-surface-gray-1;
+	@apply dark:border-outline-gray-1;
+	@apply dark:border;
 }
 
 /* TODO: Remove this when the issue is fixed */
 [id^="headlessui-dialog-panel"] > div > div > div > div.mb-6.flex.items-center.justify-between > button {
-	@apply bg-surface-gray-2;
-	@apply stroke-text-icons-gray-4;
-	@apply stroke-[0.4px];
+	@apply bg-surface-gray-1;
+	@apply hover:bg-surface-gray-3;
+	@apply stroke-text-icons-gray-8;
+	@apply hover:stroke-text-icons-gray-9;
+	> svg {
+		@apply stroke-[0.2px];
+		@apply h-[14px];
+	}
 }
 
 [id^="headlessui-dialog-panel"] > div,
 [id^="headlessui-dialog-panel"] .space-y-4 > p {
-	@apply dark:bg-zinc-800;
-	@apply dark:text-zinc-50;
+	@apply bg-surface-white;
+	@apply text-text-icons-gray-8;
 }
 
 [id^="headlessui-dialog-panel"] header h3 {
@@ -73,7 +80,7 @@ const isDark = useDark({
 
 [id^="headlessui-menu-items"],
 [id^="headlessui-combobox-options"] {
-	@apply dark:bg-zinc-800;
+	@apply dark:bg-gray-800;
 	@apply overflow-y-auto;
 	-ms-overflow-style: none; /* IE and Edge */
 	scrollbar-width: none;
@@ -84,7 +91,7 @@ const isDark = useDark({
 	@apply truncate;
 }
 .divide-gray-100 > :not([hidden]) ~ :not([hidden]) {
-	@apply dark:border-zinc-700;
+	@apply dark:border-gray-700;
 }
 [id^="headlessui-menu-items"] &::webkit-scrollbar {
 	display: none;
@@ -92,24 +99,24 @@ const isDark = useDark({
 
 [id^="headlessui-menu-items"] button,
 [id^="headlessui-combobox-options"] li {
-	@apply dark:text-zinc-200;
-	@apply dark:hover:bg-zinc-700;
+	@apply dark:text-gray-200;
+	@apply dark:hover:bg-gray-700;
 	@apply dark:rounded;
 	@apply break-all;
 }
 
 [data-headlessui-state~="active"] li {
-	@apply dark:bg-zinc-600;
-	@apply dark:text-zinc-200;
+	@apply dark:bg-gray-600;
+	@apply dark:text-gray-200;
 }
 
 [data-headlessui-state="selected"] li {
-	@apply dark:bg-zinc-700;
-	@apply dark:text-zinc-200;
+	@apply dark:bg-gray-700;
+	@apply dark:text-gray-200;
 }
 
 [id^="headlessui-menu-items"] button svg {
-	@apply dark:text-zinc-200;
+	@apply dark:text-gray-200;
 }
 
 [data-sonner-toaster] {
@@ -118,7 +125,7 @@ const isDark = useDark({
 
 [data-sonner-toast][data-styled="true"] {
 	@apply bg-surface-white;
-	@apply dark:border-zinc-800;
+	@apply dark:border-gray-800;
 	@apply !text-base;
 }
 </style>
