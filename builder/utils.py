@@ -75,10 +75,16 @@ def remove_unsafe_fields(fields):
 def get_safer_globals():
 	safe_globals = get_safe_globals()
 
+	form_dict = getattr(frappe.local, "form_dict", frappe._dict())
+
+	if "_" in form_dict:
+		del frappe.local.form_dict["_"]
+
 	out = NamespaceDict(
 		json=safe_globals["json"],
 		as_json=frappe.as_json,
 		dict=safe_globals["dict"],
+		args=form_dict,
 		frappe=NamespaceDict(
 			db=NamespaceDict(
 				count=frappe.db.count,
@@ -87,6 +93,7 @@ def get_safer_globals():
 				get_list=safe_get_list,
 				get_single_value=frappe.db.get_single_value,
 			),
+			form_dict=form_dict,
 			make_get_request=make_safe_get_request,
 			get_doc=get_doc_as_dict,
 			get_cached_doc=get_cached_doc_as_dict,

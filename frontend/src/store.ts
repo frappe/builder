@@ -304,13 +304,10 @@ const useStore = defineStore("store", {
 			this.editingMode = "page";
 		},
 		getComponentBlock(componentName: string) {
-			if (!this.componentMap.has(componentName)) {
-				this.componentMap.set(
-					componentName,
-					getBlockInstance(this.getComponent(componentName)?.block || getBlockTemplate("fallback-component")),
-				);
-			}
-			return this.componentMap.get(componentName) as Block;
+			return (
+				(this.componentMap.get(componentName) as Block) ||
+				getBlockInstance(getBlockTemplate("fallback-component"))
+			);
 		},
 		async loadComponent(componentName: string) {
 			if (!this.componentMap.has(componentName) && !this.fetchingComponent.has(componentName)) {

@@ -2,7 +2,15 @@ import useStore from "@/store";
 import { Editor } from "@tiptap/vue-3";
 import { clamp } from "@vueuse/core";
 import { CSSProperties, markRaw, nextTick, reactive } from "vue";
-import { addPxToNumber, getBlockCopy, getNumberFromPx, getTextContent, kebabToCamelCase } from "./helpers";
+import {
+	addPxToNumber,
+	dataURLtoFile,
+	getBlockCopy,
+	getNumberFromPx,
+	getTextContent,
+	kebabToCamelCase,
+	uploadImage,
+} from "./helpers";
 
 export type styleProperty = keyof CSSProperties | `__${string}`;
 
@@ -86,6 +94,19 @@ class Block implements BlockOptions {
 		if (this.extendedFromComponent) {
 			const store = useStore();
 			store.loadComponent(this.extendedFromComponent);
+		}
+
+		if (this.isImage()) {
+			// if src is base64, convert it to a file
+			const src = this.getAttribute("src") as string;
+			if (src && src.startsWith("data:image")) {
+				this.setAttribute("src", "");
+				options.src = "";
+				const file = dataURLtoFile(src, "image.png");
+				uploadImage(file, true).then((obj) => {
+					this.setAttribute("src", obj.fileURL);
+				});
+			}
 		}
 	}
 	getStyles(breakpoint: string = "desktop"): BlockStyleMap {
