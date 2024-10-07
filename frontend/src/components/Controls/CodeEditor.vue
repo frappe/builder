@@ -1,19 +1,16 @@
 <template>
 	<div
-		class="editor flex flex-col"
+		class="editor flex flex-col gap-1"
 		:style="{
 			height: height,
 		}">
-		<span
-			class="flex h-8 items-center gap-2 rounded-t-sm bg-gray-50 p-3 py-2 text-xs dark:bg-zinc-800 dark:text-zinc-100"
-			v-if="label">
+		<span class="text-p-sm font-medium text-text-icons-gray-8" v-if="label">
 			{{ label }}
 		</span>
-		<div ref="editor" class="h-auto flex-1 overscroll-none border border-gray-200 dark:border-zinc-800" />
-		<span
-			class="mt-1 text-xs leading-4 text-gray-600 dark:text-zinc-400"
-			v-show="description"
-			v-html="description"></span>
+		<div
+			ref="editor"
+			class="h-auto flex-1 overflow-hidden overscroll-none !rounded border border-outline-gray-2 bg-surface-gray-2 dark:bg-gray-900" />
+		<span class="mt-1 text-p-xs text-text-icons-gray-6" v-show="description" v-html="description"></span>
 		<BuilderButton v-if="showSaveButton" @click="emit('save', aceEditor?.getValue())" class="mt-3">
 			Save
 		</BuilderButton>
@@ -177,14 +174,19 @@ defineExpose({ resetEditor });
 	display: none;
 }
 .editor :deep(.ace_search) {
-	@apply dark:bg-zinc-800 dark:text-zinc-200;
-	@apply dark:border-zinc-800;
+	@apply dark:bg-gray-800 dark:text-gray-200;
+	@apply dark:border-gray-800;
 }
 .editor :deep(.ace_searchbtn) {
-	@apply dark:bg-zinc-800 dark:text-zinc-200;
-	@apply dark:border-zinc-800;
+	@apply dark:bg-gray-800 dark:text-gray-200;
+	@apply dark:border-gray-800;
 }
 .editor :deep(.ace_button) {
-	@apply dark:bg-zinc-800 dark:text-zinc-200;
+	@apply dark:bg-gray-800 dark:text-gray-200;
+}
+
+.editor :deep(.ace_search_field) {
+	@apply dark:bg-gray-900 dark:text-gray-200;
+	@apply dark:border-gray-800;
 }
 </style>

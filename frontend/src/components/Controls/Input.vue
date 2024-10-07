@@ -67,17 +67,17 @@ const classes = computed(() => {
 		);
 	} else if (props.type === "textarea") {
 		_classes.push([
-			"[&>textarea]:border-outline-gray-1",
+			"[&>div>textarea]:border-outline-gray-1",
 			"[&>label]:text-text-icons-gray-7",
-			"[&>textarea]:bg-surface-gray-2",
-			"[&>textarea]:text-text-icons-gray-8",
-			"[&>textarea]:focus:border-outline-gray-3",
-			"[&>textarea]:focus:bg-surface-gray-1",
-			"[&>textarea]:hover:!border-outline-gray-2",
-			"[&>textarea]:hover:!bg-surface-gray-1",
-			"focus:[&>textarea]:border-outline-gray-3",
-			"focus:[&>textarea]:bg-surface-gray-1",
-			"focus:[&>textarea]:ring-outline-gray-3",
+			"[&>div>textarea]:!bg-surface-gray-2",
+			"[&>div>textarea]:text-text-icons-gray-8",
+			"[&>div>textarea]:focus:border-outline-gray-3",
+			"[&>div>textarea]:focus:bg-surface-gray-1",
+			"[&>div>textarea]:hover:!border-outline-gray-2",
+			"[&>div>textarea]:hover:!bg-surface-gray-1",
+			"focus:[&>div>textarea]:border-outline-gray-3",
+			"focus:[&>div>textarea]:bg-surface-gray-1",
+			"focus:[&>div>textarea]:ring-outline-gray-3",
 		]);
 	} else {
 		_classes.push([
