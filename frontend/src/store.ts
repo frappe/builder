@@ -1,7 +1,7 @@
 import { posthog } from "@/telemetry";
 import { BuilderSettings } from "@/types/Builder/BuilderSettings";
 import { UseRefHistoryReturn } from "@vueuse/core";
-import { FileUploadHandler, createDocumentResource } from "frappe-ui";
+import { createDocumentResource } from "frappe-ui";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
 import { toast } from "vue-sonner";
