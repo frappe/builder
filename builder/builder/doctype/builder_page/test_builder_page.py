@@ -52,7 +52,7 @@ class TestBuilderPage(FrappeTestCase):
 		from frappe.utils import get_html_for_route
 
 		content = get_html_for_route("/test-page")
-		self.assertTrue("The page you are looking for has gone missing" in content)
+		self.assertTrue("window.is_404 = true;" in content)
 
 		self.page.publish()
 		content = get_response_content("/test-page")
