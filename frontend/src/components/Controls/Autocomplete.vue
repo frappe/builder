@@ -10,46 +10,68 @@
 			v-slot="{ open }"
 			:nullable="nullable"
 			:multiple="multiple">
+			<ComboboxButton v-show="false" ref="comboboxButton"></ComboboxButton>
 			<div
 				class="form-input flex h-7 w-full items-center justify-between gap-2 rounded border-outline-gray-1 bg-surface-gray-1 p-0 text-sm text-text-icons-gray-8 transition-colors hover:border-outline-gray-2 hover:bg-surface-gray-1">
 				<!-- {{ displayValue }} -->
 				<ComboboxInput
 					autocomplete="off"
-					@change="query = $event.target.value"
-					@focus="() => open"
-					:displayValue="
-						(option: Option) => {
-							if (Array.isArray(option)) {
-								return option.map((o) => o.label).join(', ');
-							} else if (option) {
-								return option.label || option.value || '';
-							} else {
-								return '';
+					@focus="
+						() => {
+							if (!open.value) {
+								$refs.comboboxButton?.$el.click();
 							}
 						}
 					"
+					@change="query = $event.target.value"
+					:displayValue="getDisplayValue"
 					:placeholder="!modelValue ? placeholder : null"
-					class="h-full w-full rounded border-none bg-transparent p-0 px-2 py-1 pr-5 text-base focus:ring-2 focus:ring-outline-gray-3" />
+					class="h-full w-full rounded border-none bg-transparent pl-2 pr-5 text-base focus:ring-2 focus:ring-outline-gray-3" />
 			</div>
 			<ComboboxOptions
-				class="absolute right-0 z-50 max-h-[15rem] w-full overflow-y-auto rounded-lg bg-surface-white px-1.5 py-1.5 shadow-2xl"
+				class="absolute right-0 z-50 w-full overflow-y-auto rounded-lg border border-outline-gray-2 bg-surface-white p-0 shadow-2xl"
 				v-show="filteredOptions.length">
-				<ComboboxOption v-if="query" :value="query" class="flex items-center"></ComboboxOption>
-				<ComboboxOption
-					v-slot="{ active, selected }"
-					v-for="option in filteredOptions"
-					:key="option.value"
-					:value="option"
-					class="flex items-center">
-					<li
-						class="w-full select-none rounded px-2.5 py-1.5 text-xs"
-						:class="{
-							'bg-gray-100': active,
-							'bg-gray-300': selected,
-						}">
-						{{ option.label }}
-					</li>
-				</ComboboxOption>
+				<div class="w-full list-none px-1.5 py-1.5">
+					<ComboboxOption v-if="query" :value="query" class="flex items-center"></ComboboxOption>
+					<ComboboxOption
+						v-for="option in filteredOptions"
+						v-slot="{ active, selected }"
+						:key="option.value"
+						:value="option"
+						:disabled="String(option.value).startsWith('_separator')"
+						:title="option.label"
+						class="flex items-center">
+						<span
+							v-if="String(option.value).startsWith('_separator')"
+							class="flex w-full items-center gap-2 px-2.5 pb-2 pt-3 text-xs font-medium !text-text-icons-gray-5">
+							{{ option.label }}
+						</span>
+						<li
+							v-else
+							class="w-full select-none truncate rounded px-2.5 py-1.5 text-xs"
+							:class="{
+								'bg-gray-100': active,
+								'bg-gray-300': selected,
+							}">
+							{{ option.label }}
+						</li>
+					</ComboboxOption>
+				</div>
+				<div
+					class="sticky bottom-0 rounded-b-sm border-t border-outline-gray-2 bg-surface-gray-1"
+					v-if="actionButton">
+					<component
+						:is="actionButton.component"
+						v-if="actionButton?.component"
+						@change="updateOptions"></component>
+					<BuilderButton
+						v-else
+						:iconLeft="actionButton.icon"
+						class="w-full rounded-none text-xs text-text-icons-gray-8"
+						@click="actionButton.handler">
+						{{ actionButton.label }}
+					</BuilderButton>
+				</div>
 			</ComboboxOptions>
 		</Combobox>
 		<div
@@ -62,9 +84,10 @@
 </template>
 
 <script setup lang="ts">
+import BuilderButton from "@/components/Controls/BuilderButton.vue";
 import CrossIcon from "@/components/Icons/Cross.vue";
-import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from "@headlessui/vue";
-import { ComputedRef, PropType, computed, ref } from "vue";
+import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from "@headlessui/vue";
+import { ComputedRef, PropType, computed, ref, watch } from "vue";
 
 type Option = {
 	label: string;
@@ -73,10 +96,20 @@ type Option = {
 
 const emit = defineEmits(["update:modelValue"]);
 
+type Action = {
+	label: String;
+	handler: () => void;
+	icon: string;
+	component?: any;
+};
+
 const props = defineProps({
 	options: {
 		type: Array as PropType<Option[]>,
 		default: () => [],
+	},
+	getOptions: {
+		type: Function as PropType<(filterString: string) => Promise<Option[]>>,
 	},
 	modelValue: {},
 	placeholder: {
@@ -87,41 +120,58 @@ const props = defineProps({
 		type: Boolean,
 		default: false,
 	},
+	actionButton: {
+		type: Object as PropType<Action>,
+		default: null,
+	},
 });
 
 const query = ref("");
-
 const multiple = computed(() => Array.isArray(props.modelValue));
 const nullable = computed(() => !multiple.value);
+const filteredOptions = ref(props.options);
+
+const getDisplayValue = (option: Option | Option[]) => {
+	if (Array.isArray(option)) {
+		return option.map((o) => o.label).join(", ");
+	} else if (option) {
+		return option.label || option.value || "";
+	} else {
+		return "";
+	}
+};
 
 const value = computed(() => {
+	if (!props.modelValue) {
+		return null;
+	}
 	return (
-		props.options.find((option) => option.value === props.modelValue) || {
+		filteredOptions.value.find((option) => option.value === props.modelValue) || {
 			label: props.modelValue,
 			value: props.modelValue,
 		}
 	);
 }) as ComputedRef<Option>;
 
-const filteredOptions = computed(() => {
-	if (query.value === "") {
-		return props.options;
+watch(() => query.value || props.options, updateOptions, { immediate: true });
+
+async function updateOptions() {
+	if (props.getOptions) {
+		const options = await props.getOptions(query.value);
+		filteredOptions.value = options;
 	} else {
-		const options = props.options.filter((option) => {
-			return (
-				option.label.toLowerCase().includes(query.value.toLowerCase()) ||
-				option.value.toLowerCase().includes(query.value.toLowerCase())
-			);
-		});
-		if (props.showInputAsOption) {
-			options.unshift({
-				label: query.value,
-				value: query.value,
+		if (!query.value) {
+			filteredOptions.value = props.options;
+		} else {
+			filteredOptions.value = props.options.filter((option) => {
+				const label = option.label.toLowerCase();
+				const value = option.label.toLowerCase();
+				const queryLower = query.value.toLowerCase();
+				return label.includes(queryLower) || value.includes(query.value);
 			});
 		}
-		return options;
 	}
-});
+}
 
 const clearValue = () => emit("update:modelValue", null);
 </script>

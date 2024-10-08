@@ -189,6 +189,7 @@ class BuilderPage(WebsiteGenerator):
 			blocks = self.draft_blocks
 
 		content, style, fonts = get_block_html(blocks)
+		self.set_custom_font(context, fonts)
 		context.fonts = fonts
 		context.content = content
 		context.style = render_template(style, page_data)
@@ -264,6 +265,15 @@ class BuilderPage(WebsiteGenerator):
 			local_path,
 		)
 		self.db_set("preview", public_path, commit=True, update_modified=False)
+
+	def set_custom_font(self, context, font_map):
+		user_fonts = frappe.get_all(
+			"User Font", fields=["font_name", "font_file"], filters={"name": ("in", list(font_map.keys()))}
+		)
+		if user_fonts:
+			context.custom_fonts = user_fonts
+		for font in user_fonts:
+			del font_map[font.font_name]
 
 
 def save_as_template(page_doc: BuilderPage):
@@ -470,6 +480,8 @@ def set_fonts(styles, font_map):
 	for style in styles:
 		font = style.get("fontFamily")
 		if font:
+			# escape spaces in font name
+			style["fontFamily"] = font.replace(" ", "\\ ")
 			if font in font_map:
 				if style.get("fontWeight") and style.get("fontWeight") not in font_map[font]["weights"]:
 					font_map[font]["weights"].append(style.get("fontWeight"))

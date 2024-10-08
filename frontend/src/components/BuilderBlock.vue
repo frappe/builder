@@ -159,11 +159,16 @@ const styles = computed(() => {
 		}
 	}
 
-	return {
+	const styleMap = {
 		...props.block.getStyles(props.breakpoint),
 		...props.block.getEditorStyles(),
 		...dynamicStyles,
 	} as BlockStyleMap;
+	// escape space in font family
+	if (styleMap.fontFamily) {
+		styleMap.fontFamily = (styleMap.fontFamily as string).replace(/ /g, "\\ ");
+	}
+	return styleMap;
 });
 
 const loadEditor = computed(() => {

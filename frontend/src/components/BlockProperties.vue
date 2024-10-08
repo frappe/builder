@@ -1,6 +1,6 @@
 <template>
 	<div v-if="blockController.isBLockSelected()" class="flex select-none flex-col pb-16">
-		<div class="sticky top-[41px] z-50 mt-[-15px] flex w-full bg-surface-white py-3">
+		<div class="sticky top-[41px] z-50 mt-[-16px] flex w-full bg-surface-white py-3">
 			<BuilderInput
 				ref="searchInput"
 				type="text"
@@ -32,13 +32,16 @@
 	</div>
 </template>
 <script setup lang="ts">
+import FontUploader from "@/components/Controls/FontUploader.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
+import userFonts from "@/data/userFonts";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { UserFont } from "@/types/Builder/UserFont";
 import blockController from "@/utils/blockController";
-import { setFont as _setFont, fontListNames, getFontWeightOptions } from "@/utils/fontManager";
+import { setFont as _setFont, fontList, getFontWeightOptions } from "@/utils/fontManager";
 import { toValue } from "@vueuse/core";
 import { Button, createResource } from "frappe-ui";
 import { Ref, computed, nextTick, ref } from "vue";
@@ -196,7 +199,46 @@ const typographySectionProperties = [
 			return {
 				label: "Family",
 				type: "autocomplete",
-				options: fontListNames,
+				getOptions: (filterString: string) => {
+					const fontOptions = [] as { label: string; value: string }[];
+					userFonts.data.forEach((font: UserFont) => {
+						if (fontOptions.length >= 20) {
+							return;
+						}
+						const fontName = font.font_name as string;
+						if (fontName.toLowerCase().includes(filterString.toLowerCase()) || !filterString) {
+							fontOptions.push({
+								label: fontName,
+								value: fontName,
+							});
+						}
+					});
+					if (fontOptions.length) {
+						fontOptions.unshift({
+							label: "Custom",
+							value: "_separator_1",
+						});
+						fontOptions.push({
+							label: "Default",
+							value: "_separator_2",
+						});
+					}
+					fontList.items.forEach((font) => {
+						if (fontOptions.length >= 20) {
+							return;
+						}
+						if (font.family.toLowerCase().includes(filterString.toLowerCase()) || !filterString) {
+							fontOptions.push({
+								label: font.family,
+								value: font.family,
+							});
+						}
+					});
+					return fontOptions;
+				},
+				actionButton: {
+					component: FontUploader,
+				},
 				modelValue: blockController.getFontFamily(),
 			};
 		},
@@ -462,7 +504,20 @@ const styleSectionProperties = [
 				label: "Border Style",
 				modelValue: blockController.getStyle("borderStyle"),
 				type: "select",
-				options: ["solid", "dashed", "dotted"],
+				options: [
+					{
+						value: "solid",
+						label: "Solid",
+					},
+					{
+						value: "dashed",
+						label: "Dashed",
+					},
+					{
+						value: "dotted",
+						label: "Dotted",
+					},
+				],
 			};
 		},
 		searchKeyWords: "Border, Style, BorderStyle, Border Style, Solid, Dashed, Dotted",
@@ -772,7 +827,24 @@ const optionsSectionProperties = [
 			return {
 				label: "Overflow X",
 				type: "select",
-				options: ["auto", "visible", "hidden", "scroll"],
+				options: [
+					{
+						label: "Auto",
+						value: "auto",
+					},
+					{
+						label: "Visible",
+						value: "visible",
+					},
+					{
+						label: "Hidden",
+						value: "hidden",
+					},
+					{
+						label: "Scroll",
+						value: "scroll",
+					},
+				],
 				modelValue: blockController.getStyle("overflowX") || blockController.getStyle("overflow"),
 			};
 		},
@@ -788,7 +860,24 @@ const optionsSectionProperties = [
 			return {
 				label: "Overflow Y",
 				type: "select",
-				options: ["auto", "visible", "hidden", "scroll"],
+				options: [
+					{
+						label: "Auto",
+						value: "auto",
+					},
+					{
+						label: "Visible",
+						value: "visible",
+					},
+					{
+						label: "Hidden",
+						value: "hidden",
+					},
+					{
+						label: "Scroll",
+						value: "scroll",
+					},
+				],
 				modelValue: blockController.getStyle("overflowY") || blockController.getStyle("overflow"),
 			};
 		},

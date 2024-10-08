@@ -80,12 +80,12 @@ const isDark = useDark({
 
 [id^="headlessui-menu-items"],
 [id^="headlessui-combobox-options"] {
-	@apply dark:bg-gray-800;
+	@apply bg-surface-gray-1;
 	@apply overflow-y-auto;
 	-ms-overflow-style: none; /* IE and Edge */
 	scrollbar-width: none;
 	@apply max-w-60;
-	max-height: min(60vh, 24rem);
+	max-height: min(60vh, 18rem);
 }
 [id^="headlessui-menu-items"] [id^="headlessui-menu-item"] > span {
 	@apply truncate;
