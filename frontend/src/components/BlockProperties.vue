@@ -216,11 +216,11 @@ const typographySectionProperties = [
 					if (fontOptions.length) {
 						fontOptions.unshift({
 							label: "Custom",
-							value: "_separator",
+							value: "_separator_1",
 						});
 						fontOptions.push({
 							label: "Default",
-							value: "_separator",
+							value: "_separator_2",
 						});
 					}
 					fontList.items.forEach((font) => {
