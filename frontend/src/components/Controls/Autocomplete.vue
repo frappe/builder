@@ -38,11 +38,11 @@
 						v-slot="{ active, selected }"
 						:key="option.value"
 						:value="option"
-						:disabled="option.value === '_separator'"
+						:disabled="String(option.value).startsWith('_separator')"
 						:title="option.label"
 						class="flex items-center">
 						<span
-							v-if="option.value === '_separator'"
+							v-if="String(option.value).startsWith('_separator')"
 							class="flex w-full items-center gap-2 px-2.5 pb-2 pt-3 text-xs font-medium !text-text-icons-gray-5">
 							{{ option.label }}
 						</span>
