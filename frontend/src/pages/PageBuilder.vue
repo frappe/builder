@@ -112,6 +112,7 @@ import {
 	isHTMLString,
 	isJSONString,
 	isTargetEditable,
+	uploadImage,
 } from "@/utils/helpers";
 import { useActiveElement, useDebounceFn, useEventListener, useMagicKeys, useStorage } from "@vueuse/core";
 import { Dialog } from "frappe-ui";
@@ -194,7 +195,7 @@ useEventListener(document, "paste", async (e) => {
 		e.preventDefault();
 		const file = clipboardItems.find((item) => item.type.includes("image"))?.getAsFile();
 		if (file) {
-			store.uploadFile(file).then((res: { fileURL: string; fileName: string }) => {
+			uploadImage(file).then((res: { fileURL: string; fileName: string }) => {
 				const selectedBlocks = blockController.getSelectedBlocks();
 				const parentBlock = selectedBlocks.length
 					? selectedBlocks[0]

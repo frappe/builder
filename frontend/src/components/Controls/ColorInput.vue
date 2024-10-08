@@ -1,5 +1,5 @@
 <template>
-	<ColorPicker :modelValue="colorValue" @update:modelValue="(color) => emit('change', color)">
+	<ColorPicker :modelValue="value" @update:modelValue="(color) => emit('change', color)">
 		<template #target="{ togglePopover, isOpen }">
 			<div class="flex items-center justify-between">
 				<InputLabel>{{ label }}</InputLabel>
@@ -14,6 +14,7 @@
 						type="text"
 						class="[&>div>input]:pl-8"
 						placeholder="Set Color"
+						@focus="togglePopover"
 						:modelValue="value"
 						@update:modelValue="
 							(value: string | null) => {
@@ -32,9 +33,9 @@ import { PropType } from "vue";
 import ColorPicker from "./ColorPicker.vue";
 import InputLabel from "./InputLabel.vue";
 
-const props = defineProps({
+defineProps({
 	value: {
-		type: String as PropType<StyleValue | null>,
+		type: String as PropType<HashString | null>,
 		default: null,
 	},
 	label: {
@@ -43,6 +44,5 @@ const props = defineProps({
 	},
 });
 
-const colorValue = props.value as HashString;
 const emit = defineEmits(["change"]);
 </script>

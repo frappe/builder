@@ -57,7 +57,7 @@
 				:resizeSensitivity="2"
 				ref="leftPanelRef"
 				@resize="(val) => (width = val)">
-				<div class="resize-handler-left h-full w-2 rounded-sm bg-gray-300 dark:bg-zinc-600"></div>
+				<div class="resize-handler-left h-full w-2 rounded-sm bg-surface-gray-2"></div>
 			</PanelResizer>
 			<iframe
 				:src="previewRoute"
@@ -65,11 +65,7 @@
 				v-if="previewRoute"
 				class="flex-1 rounded-sm"
 				ref="previewWindow"></iframe>
-			<div
-				v-if="loading || resizing"
-				class="absolute flex h-full w-full flex-1 items-center justify-center bg-gray-700 bg-opacity-80 text-xl font-semibold text-gray-400 transition-all dark:bg-opacity-80 dark:text-zinc-400">
-				{{ loading ? "Loading..." : "Resizing..." }}
-			</div>
+			<div v-if="loading || resizing" class="absolute flex h-full w-full items-center justify-center"></div>
 			<PanelResizer
 				class="mr-[-8px]"
 				side="right"
@@ -79,7 +75,7 @@
 				:resizeSensitivity="2"
 				ref="rightPanelRef"
 				@resize="(val) => (width = val)">
-				<div class="resize-handler-left h-full w-2 rounded-sm bg-gray-300 dark:bg-zinc-600"></div>
+				<div class="resize-handler-left h-full w-2 rounded-sm bg-surface-gray-2"></div>
 			</PanelResizer>
 		</div>
 	</div>
