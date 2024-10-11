@@ -130,7 +130,7 @@ const linkSectionProperties = [
 				label: "Link To",
 				type: "autocomplete",
 				showInputAsOption: true,
-				options: webPages.data
+				options: (webPages.data || [])
 					.filter((page: BuilderPage) => {
 						return page.route && !page.dynamic_route;
 					})
