@@ -38,6 +38,18 @@
 		<hr class="w-full border-surface-gray-2" />
 		<Switch
 			size="sm"
+			label="Enable View Tracking"
+			description="Track the number of views on each page of your website"
+			:modelValue="Boolean(websiteSettings.doc?.enable_view_tracking)"
+			@update:modelValue="
+				(val: Boolean) => {
+					websiteSettings.setValue.submit({
+						enable_view_tracking: val,
+					});
+				}
+			" />
+		<Switch
+			size="sm"
 			label="Auto convert images to WebP"
 			description="All the images uploaded via Builder will be converted to WebP for better page performance"
 			:modelValue="Boolean(builderSettings.doc?.auto_convert_images_to_webp)"
@@ -51,6 +63,7 @@ import InlineInput from "@/components/Controls/InlineInput.vue";
 import Switch from "@/components/Controls/Switch.vue";
 import { builderSettings } from "@/data/builderSettings";
 import { webPages } from "@/data/webPage";
+import { websiteSettings } from "@/data/websiteSettings";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { computed } from "vue";
