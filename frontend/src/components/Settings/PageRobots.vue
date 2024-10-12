@@ -6,7 +6,6 @@
 				:modelValue="websiteSettings.doc.robots_txt"
 				@save="
 					(val) => {
-						console.log(val);
 						websiteSettings.setValue.submit({
 							robots_txt: val,
 						});
