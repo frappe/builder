@@ -393,6 +393,36 @@ function dataURLtoFile(dataurl: string, filename: string) {
 	return new File([u8arr], filename, { type: mime });
 }
 
+declare global {
+	interface Window {
+		Module: {
+			decompress: (arrayBuffer: ArrayBuffer) => Uint8Array;
+		};
+	}
+}
+
+async function getFontArrayBuffer(file_url: string) {
+	const arrayBuffer = await fetch(file_url).then((res) => res.arrayBuffer());
+	if (file_url.endsWith(".woff2")) {
+		const loadScript = (src: string) =>
+			new Promise((onload) =>
+				document.documentElement.append(Object.assign(document.createElement("script"), { src, onload })),
+			);
+		if (!window.Module) {
+			const path = "https://unpkg.com/wawoff2@2.0.1/build/decompress_binding.js";
+			const init = new Promise((done) => (window.Module = { onRuntimeInitialized: done }));
+			await loadScript(path).then(() => init);
+		}
+		return Uint8Array.from(Module.decompress(arrayBuffer)).buffer;
+	}
+	return arrayBuffer;
+}
+
+async function getFontName(file_url: string) {
+	const opentype = await import("opentype.js");
+	return opentype.parse(await getFontArrayBuffer(file_url)).names.fullName.en;
+}
+
 export {
 	addPxToNumber,
 	alert,
@@ -407,6 +437,7 @@ export {
 	getBlockString,
 	getCopyWithoutParent,
 	getDataForKey,
+	getFontName,
 	getNumberFromPx,
 	getRandomColor,
 	getRGB,
