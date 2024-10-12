@@ -9,6 +9,7 @@
 <script lang="ts" setup>
 import userFont from "@/data/userFonts";
 import blockController from "@/utils/blockController";
+import { getFontName } from "@/utils/helpers";
 import { FileUploadHandler } from "frappe-ui";
 const emit = defineEmits(["change"]);
 
@@ -39,9 +40,9 @@ const openFileSelector = () => {
 };
 
 const uploadFont = async (file: FileDoc) => {
-	const fontName = file.file_name.split(".")[0];
+	const fontFamilyName = await getFontName(file.file_url);
 	const fontURL = file.file_url;
-	const fontFace = new FontFace(fontName, `url("${fontURL}")`);
+	const fontFace = new FontFace(fontFamilyName, `url("${fontURL}")`);
 	await fontFace.load();
 	try {
 		await userFont.insert.submit({
