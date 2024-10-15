@@ -194,6 +194,7 @@ class BuilderPage(WebsiteGenerator):
 		context.content = content
 		context.style = render_template(style, page_data)
 		context.editor_link = f"/{builder_path}/page/{self.name}"
+		context.page_name = self.name
 
 		if self.dynamic_route and hasattr(frappe.local, "request"):
 			context.base_url = frappe.utils.get_url(frappe.local.request.path or self.route)
