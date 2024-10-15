@@ -12,7 +12,7 @@ const setFontRequested = (font: string) => {
 };
 
 const setFont = (font: string | null, weight: string | null) => {
-	let fontId = "";
+	let fontId = font || "";
 	return new Promise((resolve) => {
 		if (!font) {
 			return resolve(font);
