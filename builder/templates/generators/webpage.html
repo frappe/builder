@@ -18,14 +18,7 @@
 	{% for (font, options) in fonts.items() %}<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ font }}:wght@{{ ";".join(options.weights) }}&display=swap" media="screen">{% endfor %}
 	{{ style }}
 	{%- if custom_fonts -%}
-		<style>
-			{% for font in custom_fonts %}
-			@font-face {
-				font-family: "{{ font.font_name }}";
-				src: url("{{ font.font_file }}");
-			}
-			{% endfor %}
-		</style>
+	<style>{% for font in custom_fonts %}@font-face {font-family: "{{ font.font_name }}";src: url("{{ font.font_file }}");}{% endfor %}</style>
 	{%- endif -%}
 	{% block style %}
 		{%- if styles -%}
