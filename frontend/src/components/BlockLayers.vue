@@ -14,7 +14,7 @@
 							:data-block-layer-id="element.blockId"
 							:title="element.blockId"
 							@contextmenu.prevent.stop="onContextMenu"
-							class="min-w-24 cursor-pointer overflow-hidden rounded border border-transparent bg-white bg-opacity-50 text-base text-gray-700 dark:bg-zinc-900 dark:text-gray-500"
+							class="min-w-24 cursor-pointer overflow-hidden rounded border border-transparent bg-surface-white bg-opacity-50 text-base text-text-icons-gray-7"
 							@click.stop="
 								store.activeCanvas?.history.pause();
 								store.selectBlock(element, $event, false, true);
@@ -30,7 +30,7 @@
 								}">
 								<FeatherIcon
 									:name="isExpanded(element) ? 'chevron-down' : 'chevron-right'"
-									class="h-3 w-3"
+									class="ml-[-18px] h-3 w-3 text-text-icons-gray-4"
 									v-if="element.children && element.children.length && !element.isRoot()"
 									@click.stop="toggleExpanded(element)" />
 								<FeatherIcon
@@ -67,9 +67,7 @@
 									:name="element.isVisible() ? 'eye' : 'eye-off'"
 									class="ml-auto mr-2 hidden h-3 w-3 group-hover:block"
 									@click.stop="element.toggleVisibility()" />
-								<span
-									v-if="element.isRoot()"
-									class="ml-auto mr-2 text-sm capitalize text-gray-500 dark:text-zinc-500">
+								<span v-if="element.isRoot()" class="ml-auto mr-2 text-sm capitalize text-text-icons-gray-5">
 									{{ store.activeBreakpoint }}
 								</span>
 							</span>

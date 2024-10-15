@@ -5,12 +5,13 @@
 				<InputLabel>BG Image</InputLabel>
 				<div class="relative w-full">
 					<div>
-						<Input
+						<BuilderInput
 							class="[&>div>input]:pl-8"
 							type="text"
 							placeholder="Set Background"
+							@focus="togglePopover"
 							@update:modelValue="updateBG"
-							:value="backgroundURL?.replace(/^'|'$/g, '')" />
+							:modelValue="backgroundURL?.replace(/^'|'$/g, '')" />
 						<div
 							class="absolute left-2 top-[6px] z-10 h-4 w-4 rounded shadow-sm"
 							@click="togglePopover"
@@ -28,7 +29,7 @@
 			</div>
 		</template>
 		<template #body>
-			<div class="rounded-lg bg-white p-3 shadow-lg dark:bg-zinc-900">
+			<div class="rounded-lg bg-surface-white p-3 shadow-lg">
 				<div
 					class="image-preview group relative h-24 w-48 cursor-pointer overflow-hidden rounded bg-gray-200 dark:bg-zinc-700"
 					:style="{
@@ -37,7 +38,14 @@
 						backgroundSize: backgroundSize || `contain`,
 						backgroundRepeat: `no-repeat`,
 					}">
-					<FileUploader @success="setBG">
+					<FileUploader
+						@success="setBG"
+						:uploadArgs="{
+							private: false,
+							folder: 'Home/Builder Uploads',
+							optimize: true,
+							upload_endpoint: '/api/method/builder.api.upload_builder_asset',
+						}">
 						<template v-slot="{ openFileSelector }">
 							<div
 								class="absolute bottom-0 left-0 right-0 top-0 hidden place-items-center bg-gray-500 bg-opacity-20"
@@ -66,12 +74,11 @@
 	</Popover>
 </template>
 <script lang="ts" setup>
+import InlineInput from "@/components/Controls/InlineInput.vue";
+import InputLabel from "@/components/Controls/InputLabel.vue";
 import blockController from "@/utils/blockController";
 import { FileUploader, Popover } from "frappe-ui";
 import { computed } from "vue";
-import InlineInput from "./InlineInput.vue";
-import Input from "./Input.vue";
-import InputLabel from "./InputLabel.vue";
 
 const backgroundURL = computed(() => {
 	const background = blockController?.getStyle("background") as string;
@@ -111,9 +118,7 @@ const parseBackground = (background: string) => {
 };
 
 const updateBG = (value: string) => {
-	blockController?.setStyle(
-		"background",
-		`url('${value}') center / ${backgroundSize.value || "cover"} no-repeat`,
-	);
+	value = value ? `url('${value}') center / ${backgroundSize.value || "cover"} no-repeat` : "";
+	blockController?.setStyle("background", value);
 };
 </script>

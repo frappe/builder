@@ -7,8 +7,8 @@
 						v-for="script in attachedScriptResource.data"
 						href="#"
 						:class="{
-							'text-gray-600 dark:text-gray-500': activeScript !== script,
-							'font-medium dark:text-zinc-200': activeScript === script,
+							'text-text-icons-gray-5': activeScript !== script,
+							'font-medium text-text-icons-gray-8': activeScript === script,
 						}"
 						@click="selectScript(script)"
 						class="group flex items-center justify-between gap-1 text-sm last-of-type:mb-2">
@@ -33,14 +33,9 @@
 								{ label: 'CSS', onClick: () => addScript('CSS') },
 							]"
 							size="sm"
-							class="flex-1 [&>div>div>div]:w-full"
-							placement="right">
+							class="flex-1 [&>div>div>div]:w-full">
 							<template v-slot="{ open }">
-								<Button
-									class="w-full text-xs dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-									@click="open">
-									New Script
-								</Button>
+								<BuilderButton class="w-full text-xs" @click="open">New Script</BuilderButton>
 							</template>
 						</Dropdown>
 						<Dropdown
@@ -49,23 +44,19 @@
 							size="sm"
 							class="max-w-60 flex-1 [&>div>div>div]:w-full">
 							<template v-slot="{ open }">
-								<Button
-									class="w-full text-xs dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-									@click="open">
-									Attach Script
-								</Button>
+								<BuilderButton class="w-full text-xs" @click="open">Attach Script</BuilderButton>
 							</template>
 						</Dropdown>
 					</div>
 				</div>
-				<div class="text-xs text-gray-600 dark:text-zinc-300">
+				<div class="text-xs leading-4 text-text-icons-gray-6">
 					<b>Note:</b>
 					All client scripts are executed in preview mode and on published pages.
 				</div>
 			</div>
 		</div>
 		<div
-			class="flex h-full w-full items-center justify-center rounded bg-gray-100 text-base text-gray-600 dark:bg-zinc-900 dark:text-zinc-500"
+			class="flex h-full w-full items-center justify-center rounded bg-surface-gray-1 text-base text-text-icons-gray-6"
 			v-show="!activeScript">
 			Add Script
 		</div>
@@ -90,7 +81,7 @@ import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { createListResource, createResource, Dropdown } from "frappe-ui";
 import { computed, nextTick, PropType, ref, watch } from "vue";
 import { toast } from "vue-sonner";
-import CodeEditor from "./CodeEditor.vue";
+import CodeEditor from "./Controls/CodeEditor.vue";
 import CSSIcon from "./Icons/CSS.vue";
 import JavaScriptIcon from "./Icons/JavaScript.vue";
 

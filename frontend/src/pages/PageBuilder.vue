@@ -1,10 +1,10 @@
 <template>
-	<div class="page-builder h-screen flex-col overflow-hidden bg-gray-100 dark:bg-zinc-800">
+	<div class="page-builder h-screen flex-col overflow-hidden bg-surface-gray-1">
 		<BuilderToolbar class="relative z-30"></BuilderToolbar>
 		<div>
 			<BuilderLeftPanel
 				v-show="store.showLeftPanel"
-				class="no-scrollbar absolute bottom-0 left-0 top-[var(--toolbar-height)] z-20 overflow-auto border-r-[1px] bg-white shadow-lg dark:border-gray-800 dark:bg-zinc-900"></BuilderLeftPanel>
+				class="absolute bottom-0 left-0 top-[var(--toolbar-height)] z-20 border-r-[1px] border-outline-gray-2 bg-surface-white"></BuilderLeftPanel>
 			<BuilderCanvas
 				ref="fragmentCanvas"
 				:key="store.fragmentData.block?.blockId"
@@ -15,23 +15,27 @@
 					padding: '40px',
 				}"
 				:style="{
-					left: `${store.showLeftPanel ? store.builderLayout.leftPanelWidth : 0}px`,
+					left: `${
+						store.showLeftPanel
+							? store.builderLayout.leftPanelWidth + store.builderLayout.optionsPanelWidth
+							: 0
+					}px`,
 					right: `${store.showRightPanel ? store.builderLayout.rightPanelWidth : 0}px`,
 				}"
-				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-400 p-10 dark:bg-zinc-700">
+				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-surface-gray-2 p-10">
 				<template v-slot:header>
 					<div
-						class="absolute left-0 right-0 top-0 z-20 flex items-center justify-between bg-white p-2 text-sm text-gray-800 dark:bg-zinc-900 dark:text-zinc-400">
+						class="absolute left-0 right-0 top-0 z-20 flex items-center justify-between bg-surface-white p-2 text-sm text-gray-800 dark:text-zinc-400">
 						<div class="flex items-center gap-1 text-xs">
 							<a @click="store.exitFragmentMode" class="cursor-pointer">Page</a>
 							<FeatherIcon name="chevron-right" class="h-3 w-3" />
 							{{ store.fragmentData.fragmentName }}
 						</div>
-						<Button
+						<BuilderButton
 							class="text-xs dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
 							@click="saveAndExitFragmentMode">
 							{{ store.fragmentData.saveActionLabel || "Save" }}
-						</Button>
+						</BuilderButton>
 					</div>
 				</template>
 			</BuilderCanvas>
@@ -44,13 +48,17 @@
 					minHeight: '1000px',
 				}"
 				:style="{
-					left: `${store.showLeftPanel ? store.builderLayout.leftPanelWidth : 0}px`,
+					left: `${
+						store.showLeftPanel
+							? store.builderLayout.leftPanelWidth + store.builderLayout.optionsPanelWidth
+							: 0
+					}px`,
 					right: `${store.showRightPanel ? store.builderLayout.rightPanelWidth : 0}px`,
 				}"
-				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-gray-200 p-10 dark:bg-zinc-800"></BuilderCanvas>
+				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-surface-gray-1 p-10"></BuilderCanvas>
 			<BuilderRightPanel
 				v-show="store.showRightPanel"
-				class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] bg-white shadow-lg dark:border-gray-800 dark:bg-zinc-900"></BuilderRightPanel>
+				class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] border-outline-gray-2 bg-surface-white"></BuilderRightPanel>
 			<Dialog
 				style="z-index: 40"
 				v-model="store.showHTMLDialog"
@@ -104,13 +112,14 @@ import {
 	isHTMLString,
 	isJSONString,
 	isTargetEditable,
+	uploadImage,
 } from "@/utils/helpers";
 import { useActiveElement, useDebounceFn, useEventListener, useMagicKeys, useStorage } from "@vueuse/core";
 import { Dialog } from "frappe-ui";
 import { Ref, computed, onActivated, onDeactivated, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { toast } from "vue-sonner";
-import CodeEditor from "../components/CodeEditor.vue";
+import CodeEditor from "../components/Controls/CodeEditor.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -148,18 +157,19 @@ useEventListener(
 
 useEventListener(document, "copy", (e) => {
 	if (isTargetEditable(e)) return;
-	e.preventDefault();
 	if (store.activeCanvas?.selectedBlocks.length) {
+		e.preventDefault();
 		const componentDocuments: BuilderComponent[] = [];
-		store.activeCanvas?.selectedBlocks.forEach((block: Block) => {
+		for (const block of store.activeCanvas?.selectedBlocks) {
 			const components = block.getUsedComponentNames();
-			components.forEach((componentName) => {
+			for (const componentName of components) {
 				const component = store.getComponent(componentName);
 				if (component) {
 					componentDocuments.push(component);
 				}
-			});
-		});
+			}
+		}
+
 		const blocksToCopy = store.activeCanvas?.selectedBlocks.map((block) => {
 			if (!Boolean(block.extendedFromComponent) && block.isChildOfComponent) {
 				return detachBlockFromComponent(block);
@@ -185,7 +195,7 @@ useEventListener(document, "paste", async (e) => {
 		e.preventDefault();
 		const file = clipboardItems.find((item) => item.type.includes("image"))?.getAsFile();
 		if (file) {
-			store.uploadFile(file).then((res: { fileURL: string; fileName: string }) => {
+			uploadImage(file).then((res: { fileURL: string; fileName: string }) => {
 				const selectedBlocks = blockController.getSelectedBlocks();
 				const parentBlock = selectedBlocks.length
 					? selectedBlocks[0]
@@ -315,7 +325,7 @@ useEventListener(document, "paste", async (e) => {
 			return acc;
 		}, {});
 		Object.entries(styleObj).forEach(([key, value]) => {
-			blockController.setBaseStyle(key as styleProperty, value);
+			blockController.setStyle(key, value);
 		});
 		return;
 	}
@@ -550,7 +560,7 @@ const saveAndExitFragmentMode = (e: Event) => {
 };
 
 onActivated(async () => {
-	store.realtime.on("doc_viewers", async (data) => {
+	store.realtime.on("doc_viewers", async (data: { users: [] }) => {
 		store.viewers = await getUsersInfo(data.users.filter((user: string) => user !== sessionUser.value));
 	});
 	store.realtime.doc_subscribe("Builder Page", route.params.pageId as string);
@@ -563,18 +573,26 @@ onActivated(async () => {
 	}
 	if (route.params.pageId && route.params.pageId !== "new") {
 		store.setPage(route.params.pageId as string);
-	} else {
-		await webPages.insert
-			.submit({
-				page_title: "My Page",
-				draft_blocks: [store.getRootBlock()],
-			})
-			.then((data: BuilderPage) => {
-				router.push({ name: "builder", params: { pageId: data.name }, force: true });
-				store.setPage(data.name);
-			});
 	}
 });
+
+watch(
+	route,
+	(to, from) => {
+		if (to.name === "builder" && to.params.pageId === "new") {
+			webPages.insert
+				.submit({
+					page_title: "My Page",
+					draft_blocks: [store.getRootBlock()],
+				})
+				.then((data: BuilderPage) => {
+					router.push({ name: "builder", params: { pageId: data.name }, force: true });
+					store.setPage(data.name);
+				});
+		}
+	},
+	{ immediate: true },
+);
 
 onDeactivated(() => {
 	store.realtime.doc_close("Builder Page", store.activePage?.name as string);
@@ -639,6 +657,6 @@ watch(
 .page-builder {
 	--left-panel-width: 17rem;
 	--right-panel-width: 20rem;
-	--toolbar-height: 3.5rem;
+	--toolbar-height: 3rem;
 }
 </style>

@@ -5,7 +5,7 @@
     <h2>Frappe Builder</h2>
     <p>Crafting Web Pages Made Effortless!</p>
 
-![Frappe Builder](https://github.com/frappe/builder/assets/13928957/e39f1057-4b60-4d1f-b8e9-049668738da6)
+![Frappe Builder](https://github.com/user-attachments/assets/e906545e-101e-4d55-8a25-2c4f6380ea5e)
 [Web page design credit](https://www.figma.com/community/file/949266436474872912)
 </div>
 

@@ -4,8 +4,10 @@
 		<div class="overlay absolute" id="overlay" ref="overlay" />
 		<Transition name="fade">
 			<div
-				class="absolute bottom-0 left-0 right-0 top-0 z-40 w-full bg-gray-200 p-10 dark:bg-zinc-800"
-				v-show="store.settingPage"></div>
+				class="absolute bottom-0 left-0 right-0 top-0 z-[19] grid w-full place-items-center bg-surface-gray-1 p-10 text-text-icons-gray-5"
+				v-show="store.settingPage">
+				<LoadingIcon></LoadingIcon>
+			</div>
 		</Transition>
 		<BlockSnapGuides></BlockSnapGuides>
 		<div
@@ -18,7 +20,7 @@
 				transformOrigin: 'top center',
 				transform: `scale(${canvasProps.scale}) translate(${canvasProps.translateX}px, ${canvasProps.translateY}px)`,
 			}">
-			<div class="absolute right-0 top-[-60px] flex rounded-md bg-white px-3 dark:bg-zinc-900">
+			<div class="absolute right-0 top-[-60px] flex rounded-md bg-surface-white px-3">
 				<div
 					v-show="!canvasProps.scaling && !canvasProps.panning"
 					class="w-auto cursor-pointer p-2"
@@ -29,13 +31,13 @@
 						:name="breakpoint.icon"
 						class="h-8 w-6"
 						:class="{
-							'text-gray-700 dark:text-zinc-50': breakpoint.visible,
-							'text-gray-300 dark:text-zinc-500': !breakpoint.visible,
+							'text-text-icons-gray-8': breakpoint.visible,
+							'text-text-icons-gray-3': !breakpoint.visible,
 						}" />
 				</div>
 			</div>
 			<div
-				class="canvas relative flex h-full rounded-md bg-white shadow-2xl"
+				class="canvas relative flex h-full rounded-md bg-surface-white shadow-2xl"
 				:style="{
 					...canvasStyles,
 					background: canvasProps.background,
@@ -63,7 +65,7 @@
 			</div>
 		</div>
 		<div
-			class="fixed bottom-12 left-[50%] z-40 flex translate-x-[-50%] cursor-default items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-center text-sm font-semibold text-gray-600 shadow-md dark:bg-zinc-900 dark:text-zinc-400"
+			class="fixed bottom-12 left-[50%] z-40 flex translate-x-[-50%] cursor-default items-center justify-center gap-2 rounded-lg bg-surface-white px-3 py-2 text-center text-sm font-semibold text-gray-600 shadow-md dark:text-zinc-400"
 			v-show="!canvasProps.panning">
 			{{ Math.round(canvasProps.scale * 100) + "%" }}
 			<div class="ml-2 cursor-pointer" @click="setScaleAndTranslate">
@@ -73,8 +75,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import builderBlockTemplate from "@/data/builderBlockTemplate";
-import webComponent from "@/data/webComponent";
+import LoadingIcon from "@/components/Icons/Loading.vue";
 import { posthog } from "@/telemetry";
 import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
@@ -86,6 +87,7 @@ import {
 	getNumberFromPx,
 	isCtrlOrCmd,
 	isTargetEditable,
+	uploadImage,
 } from "@/utils/helpers";
 import {
 	UseRefHistoryReturn,
@@ -185,7 +187,7 @@ function setupHistory() {
 }
 
 const { isOverDropZone } = useDropZone(canvasContainer, {
-	onDrop: (files, ev) => {
+	onDrop: async (files, ev) => {
 		let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
 		let parentBlock = block.value as Block | null;
 		if (element) {
@@ -196,7 +198,9 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 		const componentName = ev.dataTransfer?.getData("componentName");
 		const blockTemplate = ev.dataTransfer?.getData("blockTemplate");
 		if (componentName) {
-			const newBlock = getBlockInstance(webComponent.getRow(componentName).block);
+			await store.loadComponent(componentName);
+			const component = store.componentMap.get(componentName) as Block;
+			const newBlock = getBlockCopy(component);
 			newBlock.extendFromComponent(componentName);
 			// if shift key is pressed, replace parent block with new block
 			if (ev.shiftKey) {
@@ -218,8 +222,8 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 			ev.stopPropagation();
 			posthog.capture("builder_component_used");
 		} else if (blockTemplate) {
-			const templateDoc = builderBlockTemplate.getRow(blockTemplate);
-			const newBlock = getBlockInstance(templateDoc.block, false);
+			await store.fetchBlockTemplate(blockTemplate);
+			const newBlock = getBlockInstance(store.getBlockTemplate(blockTemplate).block, false);
 			// if shift key is pressed, replace parent block with new block
 			if (ev.shiftKey) {
 				while (parentBlock && parentBlock.isChildOfComponent) {
@@ -239,7 +243,7 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 			}
 			posthog.capture("builder_block_template_used", { template: blockTemplate });
 		} else if (files && files.length) {
-			store.uploadFile(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
+			uploadImage(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
 				if (!parentBlock) return;
 
 				if (fileDoc.fileName.match(/\.(mp4|webm|ogg|mov)$/)) {
@@ -525,7 +529,7 @@ onMounted(() => {
 	setScaleAndTranslate();
 	const canvasContainerEl = canvasContainer.value as unknown as HTMLElement;
 	const canvasEl = canvas.value as unknown as HTMLElement;
-	setPanAndZoom(canvasProps, canvasEl, canvasContainerEl);
+	setPanAndZoom(canvasEl, canvasContainerEl, canvasProps);
 	showBlocks.value = true;
 });
 

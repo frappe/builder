@@ -1,0 +1,17 @@
+{
+ "block": "{\"attributes\": {},\"baseStyles\": {\"fontSize\": \"2rem\",\"fontWeight\": \"bold\",\"height\": \"fit-content\",\"lineHeight\": \"1.4\",\"minWidth\": \"10px\",\"position\": \"static\",\"width\": \"fit-content\"},\"blockId\": \"sszefcous\",\"children\": [],\"classes\": [],\"customAttributes\": {},\"dataKey\": null,\"element\": \"h1\",\"innerHTML\": \"Heading\",\"mobileStyles\": {},\"rawStyles\": {},\"tabletStyles\": {}}",
+ "category": "Typography",
+ "creation": "2024-09-03 23:01:48.712698",
+ "docstatus": 0,
+ "doctype": "Block Template",
+ "idx": 0,
+ "modified": "2024-09-19 13:09:29.235170",
+ "modified_by": "Administrator",
+ "name": "Heading",
+ "order": 10,
+ "owner": "Administrator",
+ "preview": "/builder_assets/Heading/heading.png",
+ "preview_height": 1,
+ "preview_width": 1,
+ "template_name": "Heading"
+}

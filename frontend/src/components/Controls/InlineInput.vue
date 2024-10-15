@@ -20,7 +20,7 @@
 				</template>
 			</Popover>
 		</InputLabel>
-		<Input
+		<BuilderInput
 			:type="type"
 			placeholder="unset"
 			:modelValue="modelValue"
@@ -33,9 +33,11 @@
 			placeholder="unset"
 			:modelValue="modelValue"
 			:options="inputOptions"
+			:getOptions="getOptions"
 			@update:modelValue="handleChange"
+			:actionButton="actionButton"
 			:showInputAsOption="showInputAsOption"
-			class="w-full [&>div>select]:text-sm [&>div>select]:text-gray-800 [&>div>select]:dark:border-zinc-700 [&>div>select]:dark:bg-zinc-800 [&>div>select]:dark:text-zinc-200 [&>div>select]:dark:focus:bg-zinc-700" />
+			class="w-full" />
 	</div>
 </template>
 <script setup lang="ts">
@@ -44,8 +46,14 @@ import { Popover } from "frappe-ui";
 import FeatherIcon from "frappe-ui/src/components/FeatherIcon.vue";
 import { PropType, computed } from "vue";
 import Autocomplete from "./Autocomplete.vue";
-import Input from "./Input.vue";
 import InputLabel from "./InputLabel.vue";
+
+type Action = {
+	label: String;
+	handler: () => void;
+	icon: string;
+	component?: any;
+};
 
 const props = defineProps({
 	modelValue: {
@@ -91,6 +99,14 @@ const props = defineProps({
 	showInputAsOption: {
 		type: Boolean,
 		default: false,
+	},
+	getOptions: {
+		type: Function as PropType<(filterString: string) => Promise<Option[]>>,
+		default: null,
+	},
+	actionButton: {
+		type: Object as PropType<Action>,
+		default: null,
 	},
 });
 

@@ -9,7 +9,10 @@
   "template_name",
   "block",
   "preview",
-  "category"
+  "preview_width",
+  "preview_height",
+  "category",
+  "order"
  ],
  "fields": [
   {
@@ -39,13 +42,31 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Category",
-   "options": "Basic\nStructure"
+   "options": "Structure\nBasic\nTypography\nBasic Forms\nForm parts\nMedia\nAdvanced",
+   "search_index": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "preview_width",
+   "fieldtype": "Int",
+   "label": "Preview Width"
+  },
+  {
+   "default": "1",
+   "fieldname": "preview_height",
+   "fieldtype": "Int",
+   "label": "Preview Height"
+  },
+  {
+   "fieldname": "order",
+   "fieldtype": "Int",
+   "label": "Order"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-08-22 21:48:45.695550",
+ "modified": "2024-09-19 13:07:00.935349",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Block Template",

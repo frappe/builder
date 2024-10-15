@@ -12,10 +12,7 @@
 				:isOpen="isOpen"></slot>
 		</template>
 		<template #body="{ close }">
-			<div
-				ref="colorPicker"
-				class="rounded-lg bg-white p-3 shadow-lg dark:bg-zinc-900"
-				v-on-click-outside="close">
+			<div ref="colorPicker" class="rounded-lg bg-surface-white p-3 shadow-lg">
 				<div
 					ref="colorMap"
 					:style="{
@@ -25,13 +22,13 @@
 							hsl(${hue}, 100%, 50%)
 						`,
 					}"
-					@mousedown.stop="handleSelectorMove"
+					@mousedown.prevent="handleSelectorMove"
 					class="relative m-auto h-24 w-44 rounded-md"
 					@click.prevent="setColor">
 					<div
 						ref="colorSelector"
 						@mousedown.stop="handleSelectorMove"
-						class="absolute rounded-full border border-black border-opacity-20 before:absolute before:h-full before:w-full before:rounded-full before:border-2 before:border-white before:bg-[currentColor] after:absolute after:left-[2px] after:top-[2px] after:h-[calc(100%-4px)] after:w-[calc(100%-4px)] after:rounded-full after:border after:border-black after:border-opacity-20 after:bg-transparent"
+						class="!before:bg-[currentColor] absolute rounded-full border border-black border-opacity-20 before:absolute before:h-full before:w-full before:rounded-full before:border-2 before:border-white after:absolute after:left-[2px] after:top-[2px] after:h-[calc(100%-4px)] after:w-[calc(100%-4px)] after:rounded-full after:border after:border-black after:border-opacity-20 after:bg-transparent"
 						:style="
 							{
 								height: '12px',
@@ -47,7 +44,7 @@
 					ref="hueMap"
 					class="relative m-auto mt-2 h-3 w-44 rounded-md"
 					@click="setHue"
-					@mousedown="handleHueSelectorMove"
+					@mousedown.prevent="handleHueSelectorMove"
 					:style="{
 						background: `
 							linear-gradient(90deg, hsl(0, 100%, 50%),
@@ -94,13 +91,12 @@
 	</Popover>
 </template>
 <script setup lang="ts">
+import EyeDropperIcon from "@/components/Icons/EyeDropper.vue";
 import useStore from "@/store";
 import { HSVToHex, HexToHSV, getRGB } from "@/utils/helpers";
-import { vOnClickOutside } from "@vueuse/components";
 import { clamp, useEyeDropper } from "@vueuse/core";
 import { Popover } from "frappe-ui";
 import { PropType, Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
-import EyeDropperIcon from "./Icons/EyeDropper.vue";
 const store = useStore();
 
 const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;

@@ -1,4 +1,5 @@
 @import "frappe-ui/src/style.css";
+@import "./colors.css";
 
 @layer base {
 	ul,
@@ -34,4 +35,14 @@ p:empty::before {
 		-ms-overflow-style: none; /* IE and Edge */
 		scrollbar-width: none;
 	}
+}
+
+::-webkit-scrollbar {
+	@apply w-2;
+	@apply bg-surface-gray-1;
+}
+
+::-webkit-scrollbar-thumb {
+	@apply rounded-full;
+	@apply bg-surface-gray-3;
 }

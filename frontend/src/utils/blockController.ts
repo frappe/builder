@@ -1,11 +1,9 @@
 import useStore from "@/store";
-import { CSSProperties, nextTick } from "vue";
+import { nextTick } from "vue";
 import Block, { BlockDataKey } from "./block";
 import getBlockTemplate from "./blockTemplate";
 
 const store = useStore();
-
-type styleProperty = keyof CSSProperties;
 
 const blockController = {
 	clearSelection: () => {

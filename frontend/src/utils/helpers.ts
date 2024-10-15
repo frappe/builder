@@ -1,5 +1,7 @@
-import { confirmDialog } from "frappe-ui";
-import { reactive, toRaw } from "vue";
+import AlertDialog from "@/components/AlertDialog.vue";
+import { confirmDialog, FileUploadHandler } from "frappe-ui";
+import { h, reactive, toRaw } from "vue";
+import { toast } from "vue-sonner";
 import Block from "./block";
 
 function getNumberFromPx(px: string | number | null | undefined): number {
@@ -97,6 +99,16 @@ async function confirm(message: string, title: string = "Confirm"): Promise<bool
 				resolve(true);
 				hideDialog();
 			},
+		});
+	});
+}
+
+async function alert(message: string, title: string = "Alert"): Promise<boolean> {
+	return new Promise((resolve) => {
+		h(AlertDialog, {
+			title,
+			message,
+			onClick: resolve,
 		});
 	});
 }
@@ -316,10 +328,107 @@ function getCopyWithoutParent(block: BlockOptions | Block): BlockOptions {
 	return blockCopy;
 }
 
+function getRouteVariables(route: string) {
+	const variables = [] as string[];
+	route.split("/").map((part) => {
+		if (part.startsWith(":") && part.length > 1) {
+			variables.push(part.slice(1));
+		}
+		if (part.startsWith("<") && part.length > 1) {
+			variables.push(part.slice(1, -1));
+		}
+	});
+	return variables;
+}
+
+async function uploadImage(file: File, silent = false) {
+	const uploader = new FileUploadHandler();
+	let fileDoc = {
+		file_url: "",
+		file_name: "",
+	};
+	const upload = uploader.upload(file, {
+		private: false,
+		folder: "Home/Builder Uploads",
+		optimize: true,
+		upload_endpoint: "/api/method/builder.api.upload_builder_asset",
+	});
+	await new Promise((resolve) => {
+		if (silent) {
+			upload.then((data: { file_name: string; file_url: string }) => {
+				fileDoc.file_name = data.file_name;
+				fileDoc.file_url = data.file_url;
+				resolve(fileDoc);
+			});
+			return;
+		}
+		toast.promise(upload, {
+			loading: "Uploading...",
+			success: (data: { file_name: string; file_url: string }) => {
+				fileDoc.file_name = data.file_name;
+				fileDoc.file_url = data.file_url;
+				resolve(fileDoc);
+				return "Uploaded";
+			},
+			error: () => "Failed to upload",
+			duration: 500,
+		});
+	});
+
+	return {
+		fileURL: fileDoc.file_url,
+		fileName: fileDoc.file_name,
+	};
+}
+
+function dataURLtoFile(dataurl: string, filename: string) {
+	let arr = dataurl.split(","),
+		mime = arr[0].match(/:(.*?);/)?.[1],
+		bstr = atob(arr[1]),
+		n = bstr.length,
+		u8arr = new Uint8Array(n);
+	while (n--) {
+		u8arr[n] = bstr.charCodeAt(n);
+	}
+	return new File([u8arr], filename, { type: mime });
+}
+
+declare global {
+	interface Window {
+		Module: {
+			decompress: (arrayBuffer: ArrayBuffer) => Uint8Array;
+		};
+	}
+}
+
+async function getFontArrayBuffer(file_url: string) {
+	const arrayBuffer = await fetch(file_url).then((res) => res.arrayBuffer());
+	if (file_url.endsWith(".woff2")) {
+		const loadScript = (src: string) =>
+			new Promise((onload) =>
+				document.documentElement.append(Object.assign(document.createElement("script"), { src, onload })),
+			);
+		if (!window.Module) {
+			const path = "https://unpkg.com/wawoff2@2.0.1/build/decompress_binding.js";
+			const init = new Promise((done) => (window.Module = { onRuntimeInitialized: done }));
+			await loadScript(path).then(() => init);
+		}
+		return Uint8Array.from(Module.decompress(arrayBuffer)).buffer;
+	}
+	return arrayBuffer;
+}
+
+async function getFontName(file_url: string) {
+	const opentype = await import("opentype.js");
+	return opentype.parse(await getFontArrayBuffer(file_url)).names.fullName.en;
+}
+
 export {
 	addPxToNumber,
+	alert,
 	confirm,
 	copyToClipboard,
+	dataURLtoFile,
 	detachBlockFromComponent,
 	findNearestSiblingIndex,
 	getBlockCopy,
@@ -328,9 +437,11 @@ export {
 	getBlockString,
 	getCopyWithoutParent,
 	getDataForKey,
+	getFontName,
 	getNumberFromPx,
 	getRandomColor,
 	getRGB,
+	getRouteVariables,
 	getTextContent,
 	HexToHSV,
 	HSVToHex,
@@ -344,4 +455,5 @@ export {
 	replaceMapKey,
 	RGBToHex,
 	stripExtension,
+	uploadImage,
 };

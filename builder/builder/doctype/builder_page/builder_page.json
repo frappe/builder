@@ -32,7 +32,10 @@
   "page_title",
   "meta_description",
   "meta_image",
-  "set_meta_tags"
+  "set_meta_tags",
+  "options_tab",
+  "authenticated_access",
+  "disable_indexing"
  ],
  "fields": [
   {
@@ -172,11 +175,30 @@
   {
    "fieldname": "column_break_ymjg",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "options_tab",
+   "fieldtype": "Tab Break",
+   "label": "Options"
+  },
+  {
+   "default": "0",
+   "description": "Only allow logged-in users to view this page.",
+   "fieldname": "authenticated_access",
+   "fieldtype": "Check",
+   "label": "Authenticated Access"
+  },
+  {
+   "default": "0",
+   "description": "Prevent search engines from indexing this page",
+   "fieldname": "disable_indexing",
+   "fieldtype": "Check",
+   "label": "Disable Indexing"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-07-02 18:13:15.327787",
+ "modified": "2024-09-02 14:20:24.457766",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

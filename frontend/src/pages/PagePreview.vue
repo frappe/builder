@@ -13,7 +13,7 @@
 					v-for="breakpoint in deviceBreakpoints"
 					:key="breakpoint.device"
 					:class="{
-						'bg-white shadow-sm dark:bg-zinc-700': activeBreakpoint === breakpoint.device,
+						'bg-surface-white shadow-sm dark:bg-zinc-700': activeBreakpoint === breakpoint.device,
 					}"
 					@click.stop="() => setWidth(breakpoint.device)">
 					<FeatherIcon
@@ -24,18 +24,24 @@
 						}" />
 				</div>
 			</div>
-			<Button
+			<BuilderButton
 				variant="solid"
+				iconLeft="globe"
 				@click="
 					() => {
 						publishing = true;
 						store.publishPage().finally(() => (publishing = false));
 					}
 				"
-				class="absolute right-0 border-0 text-xs dark:bg-zinc-800"
+				class="absolute right-5 border-0"
+				:class="{
+					'bg-surface-gray-7 !text-text-icons-white hover:bg-surface-gray-6':
+						!publishing && store.activePage?.draft_blocks,
+					'dark:bg-surface-gray-2 dark:text-text-icons-gray-4': !store.activePage?.draft_blocks,
+				}"
 				:loading="publishing">
 				{{ publishing ? "Publishing" : "Publish" }}
-			</Button>
+			</BuilderButton>
 		</div>
 		<div
 			class="relative mt-5 flex h-[85vh] bg-white"
@@ -49,8 +55,9 @@
 				:minDimension="minWidth"
 				:maxDimension="maxWidth"
 				:resizeSensitivity="2"
+				ref="leftPanelRef"
 				@resize="(val) => (width = val)">
-				<div class="resize-handler-left h-full w-2 rounded-sm bg-gray-200 dark:bg-zinc-600"></div>
+				<div class="resize-handler-left h-full w-2 rounded-sm bg-surface-gray-2"></div>
 			</PanelResizer>
 			<iframe
 				:src="previewRoute"
@@ -58,11 +65,7 @@
 				v-if="previewRoute"
 				class="flex-1 rounded-sm"
 				ref="previewWindow"></iframe>
-			<div
-				v-if="loading"
-				class="absolute flex h-full w-full flex-1 items-center justify-center bg-white bg-opacity-50 text-gray-600">
-				Loading...
-			</div>
+			<div v-if="loading || resizing" class="absolute flex h-full w-full items-center justify-center"></div>
 			<PanelResizer
 				class="mr-[-8px]"
 				side="right"
@@ -70,8 +73,9 @@
 				:minDimension="minWidth"
 				:maxDimension="maxWidth"
 				:resizeSensitivity="2"
+				ref="rightPanelRef"
 				@resize="(val) => (width = val)">
-				<div class="resize-handler-left h-full w-2 rounded-sm bg-gray-200 dark:bg-zinc-600"></div>
+				<div class="resize-handler-left h-full w-2 rounded-sm bg-surface-gray-2"></div>
 			</PanelResizer>
 		</div>
 	</div>
@@ -111,6 +115,11 @@ const deviceBreakpoints = [
 		width: 420,
 	},
 ];
+
+const leftPanelRef = ref<InstanceType<typeof PanelResizer> | null>(null);
+const rightPanelRef = ref<InstanceType<typeof PanelResizer> | null>(null);
+
+const resizing = computed(() => leftPanelRef.value?.dragActive || rightPanelRef.value?.dragActive);
 
 const activeBreakpoint = computed(() => {
 	const tabletBreakpoint = deviceBreakpoints.find((b) => b.device === "tablet");
@@ -169,9 +178,7 @@ const setPreviewURL = () => {
 		page: route.params.pageId,
 		...store.routeVariables,
 	};
-	previewRoute.value = `/api/method/builder.builder.doctype.builder_page.builder_page.get_page_preview_html?${Object.entries(
-		queryParams,
-	)
+	previewRoute.value = `/api/method/builder.api.get_page_preview_html?${Object.entries(queryParams)
 		.map(([key, value]) => `${key}=${value}`)
 		.join("&")}`;
 };

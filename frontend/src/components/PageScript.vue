@@ -1,21 +1,14 @@
 <template>
 	<div class="flex flex-col gap-4">
 		<div class="flex gap-2">
-			<Button
-				@click="showClientScriptEditor()"
-				class="flex-1 text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
-				Client Script
-			</Button>
-			<Button
-				@click="showServerScriptEditor()"
-				class="flex-1 text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
-				Data Script
-			</Button>
+			<BuilderButton @click="showClientScriptEditor()" class="flex-1">Client Script</BuilderButton>
+			<BuilderButton @click="showServerScriptEditor()" class="flex-1">Data Script</BuilderButton>
 		</div>
 		<CodeEditor v-model="store.pageData" type="JSON" label="Data Preview" :readonly="true"></CodeEditor>
 		<Dialog
 			style="z-index: 40"
 			class="overscroll-none"
+			:disableOutsideClickToClose="true"
 			:options="{
 				title: currentScriptEditor == 'data' ? 'Data Script' : 'Client Script',
 				size: '7xl',
@@ -51,7 +44,7 @@ import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { Dialog } from "frappe-ui";
 import { defineComponent, ref } from "vue";
 import { toast } from "vue-sonner";
-import CodeEditor from "./CodeEditor.vue";
+import CodeEditor from "./Controls/CodeEditor.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
 const store = useStore();
 const showDialog = ref(false);

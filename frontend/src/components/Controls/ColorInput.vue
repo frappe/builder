@@ -1,5 +1,5 @@
 <template>
-	<ColorPicker :modelValue="value as HashString" @update:modelValue="(color) => emit('change', color)">
+	<ColorPicker :modelValue="value" @update:modelValue="(color) => emit('change', color)">
 		<template #target="{ togglePopover, isOpen }">
 			<div class="flex items-center justify-between">
 				<InputLabel>{{ label }}</InputLabel>
@@ -10,10 +10,11 @@
 						:style="{
 							background: value ? value : `url(/assets/builder/images/color-circle.png) center / contain`,
 						}"></div>
-					<Input
+					<BuilderInput
 						type="text"
 						class="[&>div>input]:pl-8"
 						placeholder="Set Color"
+						@focus="togglePopover"
 						:modelValue="value"
 						@update:modelValue="
 							(value: string | null) => {
@@ -30,12 +31,11 @@
 import { getRGB } from "@/utils/helpers";
 import { PropType } from "vue";
 import ColorPicker from "./ColorPicker.vue";
-import Input from "./Input.vue";
 import InputLabel from "./InputLabel.vue";
 
 defineProps({
 	value: {
-		type: String as PropType<StyleValue | null>,
+		type: String as PropType<HashString | null>,
 		default: null,
 	},
 	label: {
