@@ -5,9 +5,6 @@
 {% endfor %}
 {%- endif -%}
 {%- endblock %}
-<a class="__editor_link" rel="nofollow" href="{{ editor_link }}" target="frappe-builder" style="position: fixed; bottom: 40px; right: 50px; height: 35px; width: 35px; display: none; opacity: 0.1;">
-	<img src="/assets/builder/frontend/builder_logo.png" style="box-shadow: #bdbdbd 0px 0px 5px; border-radius: 10px;" alt="Frappe" />
-</a>
 <script>window.page_data = {{ (page_data or {})|tojson|safe }}</script>
 <script>if (!window.frappe) window.frappe = {};</script>
 <!-- csrf_token -->
@@ -17,5 +14,5 @@
 </script>
 {% endif %}
 <script>
-if(document.cookie.indexOf("user_id=Guest")===-1){const e=document.querySelector(".__editor_link");e.style.display="block";e.addEventListener("mouseover",()=>e.style.opacity="1");e.addEventListener("mouseout",()=>e.style.opacity="0.1");}else{document.querySelector(".__editor_link")?.remove();}
+if(!document.cookie.includes("user_id=Guest")){const a=Object.assign(document.createElement("a"),{rel:"nofollow",href:"{{ editor_link }}",target:"frappe-builder",style:"position:fixed;bottom:40px;right:50px;height:35px;width:35px;opacity:0.1;",innerHTML:'<img src="/assets/builder/frontend/builder_logo.png" alt="Edit in Builder" style="box-shadow:#bdbdbd 0 0 5px;border-radius:10px;" />'});document.body.appendChild(a),a.addEventListener("mouseover",()=>a.style.opacity="1"),a.addEventListener("mouseout",()=>a.style.opacity="0.1")}
 </script>
