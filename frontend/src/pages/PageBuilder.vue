@@ -560,7 +560,7 @@ const saveAndExitFragmentMode = (e: Event) => {
 };
 
 onActivated(async () => {
-	store.realtime.on("doc_viewers", async (data) => {
+	store.realtime.on("doc_viewers", async (data: { users: [] }) => {
 		store.viewers = await getUsersInfo(data.users.filter((user: string) => user !== sessionUser.value));
 	});
 	store.realtime.doc_subscribe("Builder Page", route.params.pageId as string);
