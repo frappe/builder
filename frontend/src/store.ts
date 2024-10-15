@@ -158,6 +158,7 @@ const useStore = defineStore("store", {
 				const interval = setInterval(() => {
 					if (this.fetchingComponent.size === 0) {
 						this.settingPage = false;
+						window.name = `editor-${pageName}`;
 						clearInterval(interval);
 					}
 				}, 100);
@@ -455,7 +456,8 @@ const useStore = defineStore("store", {
 					}
 				});
 			}
-			window.open(`/${route}`, "builder-preview");
+			const targetWindow = window.open(`/${route}`, "builder-preview");
+			targetWindow?.location.reload();
 		},
 		savePage() {
 			this.pageBlocks = this.getPageBlocks() as Block[];
