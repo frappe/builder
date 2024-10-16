@@ -1,6 +1,6 @@
 <template>
 	<div v-if="blockController.isBLockSelected()" class="flex select-none flex-col pb-16">
-		<div class="sticky top-[41px] z-50 mt-[-16px] flex w-full bg-surface-white py-3">
+		<div class="sticky top-0 z-50 mt-[-16px] flex w-full bg-surface-white py-3">
 			<BuilderInput
 				ref="searchInput"
 				type="text"
