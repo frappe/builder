@@ -26,7 +26,7 @@
 	<div
 		class="pointer-events-auto absolute bottom-[-5px] right-[-5px] h-[12px] w-[12px] cursor-nwse-resize rounded-full border-[2.5px] border-blue-400 bg-white"
 		v-show="!resizing"
-		@mousedown.stop="handleBottomCornerResize" />
+		@mousedown.stop.prevent="handleBottomCornerResize" />
 </template>
 <script setup lang="ts">
 import { getNumberFromPx } from "@/utils/helpers";
