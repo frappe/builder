@@ -29,18 +29,18 @@
 			v-if="editor"
 			class="z-50 rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-text-icons-gray-9 shadow-2xl">
 			<div v-if="settingLink" class="flex">
-				<BuilderInput
+				<TextInput
 					v-model="textLink"
 					placeholder="https://example.com"
-					class="link-input w-56 text-sm"
+					class="link-input w-56 text-sm [&>input]:border-outline-gray-1 [&>input]:bg-surface-gray-2 [&>input]:text-text-icons-gray-8 [&>input]:hover:!border-outline-gray-2 [&>input]:hover:!bg-surface-gray-1 focus:[&>input]:border-outline-gray-3 focus:[&>input]:bg-surface-gray-1 focus:[&>input]:ring-outline-gray-3 [&>input]:focus-visible:bg-surface-gray-1"
 					@keydown.enter="
 						() => {
 							if (!linkInput) return;
-							setLink(linkInput?.getInputValue());
+							setLink(linkInput.el.value);
 						}
 					"
 					ref="linkInput" />
-				<BuilderButton @click="() => setLink(linkInput?.getInputValue())" class="ml-1">
+				<BuilderButton @click="() => setLink(linkInput?.el.value)" class="ml-1" variant="outline">
 					<FeatherIcon class="h-3 w-3" name="check" />
 				</BuilderButton>
 				<BuilderButton
@@ -131,7 +131,7 @@ import { Link } from "@tiptap/extension-link";
 import TextStyle from "@tiptap/extension-text-style";
 import StarterKit from "@tiptap/starter-kit";
 import { BubbleMenu, Editor, EditorContent, Extension } from "@tiptap/vue-3";
-import { Input } from "frappe-ui";
+import { TextInput } from "frappe-ui";
 import { Plugin, PluginKey } from "prosemirror-state";
 import { Ref, computed, inject, nextTick, onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
 import StrikeThroughIcon from "./Icons/StrikeThrough.vue";
@@ -140,7 +140,7 @@ const store = useStore();
 const dataChanged = ref(false);
 const settingLink = ref(false);
 const textLink = ref("");
-const linkInput = ref(null) as Ref<typeof Input | null>;
+const linkInput = ref(null) as Ref<typeof TextInput | null>;
 const component = ref(null) as Ref<HTMLElement | null>;
 const overlayElement = document.querySelector("#overlay") as HTMLElement;
 let editor: Ref<Editor | null> = ref(null);

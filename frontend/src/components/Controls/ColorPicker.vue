@@ -27,8 +27,8 @@
 					@click.prevent="setColor">
 					<div
 						ref="colorSelector"
-						@mousedown.stop="handleSelectorMove"
-						class="!before:bg-[currentColor] absolute rounded-full border border-black border-opacity-20 before:absolute before:h-full before:w-full before:rounded-full before:border-2 before:border-white after:absolute after:left-[2px] after:top-[2px] after:h-[calc(100%-4px)] after:w-[calc(100%-4px)] after:rounded-full after:border after:border-black after:border-opacity-20 after:bg-transparent"
+						@mousedown.stop.prevent="handleSelectorMove"
+						class="absolute rounded-full border border-black border-opacity-20 before:absolute before:h-full before:w-full before:rounded-full before:border-2 before:border-white before:!bg-[currentColor] after:absolute after:left-[2px] after:top-[2px] after:h-[calc(100%-4px)] after:w-[calc(100%-4px)] after:rounded-full after:border after:border-black after:border-opacity-20 after:bg-transparent"
 						:style="
 							{
 								height: '12px',
