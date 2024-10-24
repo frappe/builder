@@ -34,9 +34,22 @@ function setPanAndZoom(
 				};
 				panAndZoomAreaElement.addEventListener("mousemove", clearPinchPoint, { once: true });
 			}
-			// Multiplying with 0.01 to make the zooming less sensitive
+
+			let sensitivity = 0.008;
+			function tooMuchScroll() {
+				if (e.deltaY > 30 || e.deltaY < -30) {
+					return true;
+				}
+			}
+			if (tooMuchScroll()) {
+				// If the user scrolls too much, reduce the sensitivity
+				// this mostly happens when the user uses mouse wheel to scroll
+				// probably not the best way to handle this, but works for now
+				sensitivity = 0.001;
+			}
+
 			// Multiplying with scale to make the zooming feel consistent
-			let scale = props.scale - e.deltaY * 0.008 * props.scale;
+			let scale = props.scale - e.deltaY * sensitivity * props.scale;
 			scale = Math.min(Math.max(scale, zoomLimits.min), zoomLimits.max);
 			props.scale = scale;
 			nextTick(() => {
