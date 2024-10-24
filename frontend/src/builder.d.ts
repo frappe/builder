@@ -68,7 +68,7 @@ declare type HashString = `#${string}`;
 
 declare type RGBString = `rgb(${number}, ${number}, ${number})`;
 
-declare type LeftSidebarTabOption = "Blocks" | "Layers" | "Assets";
+declare type LeftSidebarTabOption = "Blocks" | "Layers" | "Assets" | "Code";
 declare type RightSidebarTabOption = "Properties" | "Script" | "Options";
 
 declare type BuilderMode = "select" | "text" | "container" | "image" | "repeater" | "move";

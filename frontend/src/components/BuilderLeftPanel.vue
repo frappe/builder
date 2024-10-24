@@ -4,12 +4,14 @@
 			<button
 				v-for="option of leftPanelOptions"
 				:key="option.value"
-				class="size-8 rounded text-text-icons-gray-7 hover:bg-surface-gray-2 focus:!bg-surface-gray-3"
+				class="flex size-8 items-center justify-center rounded text-text-icons-gray-7 hover:bg-surface-gray-2 focus:!bg-surface-gray-3"
 				:class="{
 					'bg-surface-gray-3 text-text-icons-gray-9': store.leftPanelActiveTab === option.value,
 				}"
-				@click.stop="setActiveTab(option.value as LeftSidebarTabOption)">
-				<component :is="option.icon" />
+				@click.stop="setActiveTab(option.value as LeftSidebarTabOption)"
+				:title="option.label">
+				<FeatherIcon :name="option.icon" v-if="typeof option.icon === 'string'" class="size-4"></FeatherIcon>
+				<component :is="option.icon" v-else />
 			</button>
 		</div>
 		<div
@@ -55,6 +57,13 @@
 					:blocks="[fragmentCanvas?.getFirstBlock()]"
 					v-if="store.editingMode === 'fragment' && fragmentCanvas" />
 			</div>
+			<div v-show="store.leftPanelActiveTab === 'Code'">
+				<PageScript
+					class="p-4"
+					:key="store.selectedPage"
+					v-if="store.selectedPage && store.activePage"
+					:page="store.activePage" />
+			</div>
 		</div>
 	</div>
 </template>
@@ -72,6 +81,7 @@ import BuilderAssets from "./BuilderAssets.vue";
 import BuilderBlockTemplates from "./BuilderBlockTemplates.vue";
 import BuilderCanvas from "./BuilderCanvas.vue";
 import PanelResizer from "./PanelResizer.vue";
+import PageScript from "@/components/PageScript.vue";
 
 const pageCanvas = inject("pageCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
 const fragmentCanvas = inject("fragmentCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
@@ -107,6 +117,11 @@ const leftPanelOptions = [
 		label: "Components",
 		value: "Assets",
 		icon: ComponentIcon,
+	},
+	{
+		label: "Code",
+		value: "Code",
+		icon: "code",
 	},
 ];
 
