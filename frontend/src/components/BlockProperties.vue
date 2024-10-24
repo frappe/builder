@@ -28,7 +28,9 @@
 		</div>
 	</div>
 	<div v-else>
-		<p class="text-center text-sm text-gray-600 dark:text-zinc-500">Select a block to edit properties.</p>
+		<p class="mt-2 text-center text-sm text-gray-600 dark:text-zinc-500">
+			Select a block to edit properties.
+		</p>
 	</div>
 </template>
 <script setup lang="ts">
