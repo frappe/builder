@@ -111,6 +111,15 @@
 		<editor-content
 			@click="handleClick"
 			:editor="editor"
+			@mousedown="selectionTriggered = true"
+			@mousemove="
+				() => {
+					if (selectionTriggered) {
+						store.preventClick = true;
+					}
+				}
+			"
+			@mouseup="selectionTriggered = false"
 			v-if="editor && showEditor"
 			class="relative z-50"
 			:style="block.getRawStyles()"
@@ -144,6 +153,7 @@ const linkInput = ref(null) as Ref<typeof TextInput | null>;
 const component = ref(null) as Ref<HTMLElement | null>;
 const overlayElement = document.querySelector("#overlay") as HTMLElement;
 let editor: Ref<Editor | null> = ref(null);
+let selectionTriggered = false as boolean;
 
 const props = defineProps({
 	block: {

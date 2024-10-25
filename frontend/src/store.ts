@@ -49,6 +49,7 @@ const useStore = defineStore("store", {
 		autoSave: true,
 		pageBlocks: <Block[]>[],
 		propertyFilter: <string | null>null,
+		preventClick: false,
 		builderLayout: {
 			rightPanelWidth: 275,
 			leftPanelWidth: 250,
