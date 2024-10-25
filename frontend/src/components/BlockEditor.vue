@@ -13,26 +13,14 @@
 			:class="getStyleClasses">
 			<PaddingHandler
 				:data-block-id="block.blockId"
-				v-if="
-					isBlockSelected &&
-					!resizing &&
-					!editable &&
-					!blockController.multipleBlocksSelected() &&
-					!block.isSVG()
-				"
+				v-show="showPaddingHandler"
 				:target-block="block"
 				:target="target"
 				:on-update="updateTracker"
 				:disable-handlers="false"
 				:breakpoint="breakpoint" />
 			<MarginHandler
-				v-if="
-					isBlockSelected &&
-					!block.isRoot() &&
-					!resizing &&
-					!editable &&
-					!blockController.multipleBlocksSelected()
-				"
+				v-show="showMarginHandler"
 				:target-block="block"
 				:target="target"
 				:on-update="updateTracker"
@@ -40,16 +28,7 @@
 				:breakpoint="breakpoint" />
 			<BorderRadiusHandler
 				:data-block-id="block.blockId"
-				v-if="
-					isBlockSelected &&
-					!block.isRoot() &&
-					!block.isText() &&
-					!block.isHTML() &&
-					!block.isSVG() &&
-					!editable &&
-					!resizing &&
-					!blockController.multipleBlocksSelected()
-				"
+				v-if="showBorderRadiusHandler"
 				:target-block="block"
 				:target="target" />
 			<BoxResizer v-if="showResizer" :targetBlock="block" @resizing="resizing = $event" :target="target" />
@@ -113,6 +92,41 @@ const resizing = ref(false);
 const guides = setGuides(props.target, canvasProps);
 const moving = ref(false);
 const preventCLick = ref(false);
+
+const showPaddingHandler = computed(() => {
+	return (
+		isBlockSelected.value &&
+		!resizing.value &&
+		!props.editable &&
+		!blockController.multipleBlocksSelected() &&
+		!props.block.isSVG() &&
+		!props.block.isText()
+	);
+});
+
+const showMarginHandler = computed(() => {
+	return (
+		isBlockSelected.value &&
+		!props.block.isRoot() &&
+		!resizing.value &&
+		!props.editable &&
+		!blockController.multipleBlocksSelected() &&
+		!props.block.isText()
+	);
+});
+
+const showBorderRadiusHandler = computed(() => {
+	return (
+		isBlockSelected &&
+		!props.block.isRoot() &&
+		!props.block.isText() &&
+		!props.block.isHTML() &&
+		!props.block.isSVG() &&
+		!props.editable &&
+		!resizing &&
+		!blockController.multipleBlocksSelected()
+	);
+});
 
 watchEffect(() => {
 	props.block.getStyle("top");
