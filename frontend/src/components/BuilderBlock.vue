@@ -231,6 +231,12 @@ const triggerContextMenu = (e: MouseEvent) => {
 
 const handleClick = (e: MouseEvent) => {
 	if (isEditable.value) return;
+	if (store.preventClick) {
+		e.stopPropagation();
+		e.preventDefault();
+		store.preventClick = false;
+		return;
+	}
 	selectBlock(e);
 	e.stopPropagation();
 	e.preventDefault();
