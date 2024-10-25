@@ -189,6 +189,11 @@ const handleClick = (ev: MouseEvent) => {
 		preventCLick.value = false;
 		return;
 	}
+
+	if (props.block.isText() || props.block.isButton() || props.block.isLink()) {
+		store.editableBlock = props.block;
+	}
+
 	const editorWrapper = editor.value;
 	editorWrapper.classList.add("pointer-events-none");
 	let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
