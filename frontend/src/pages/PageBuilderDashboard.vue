@@ -250,7 +250,13 @@
 										</p>
 									</div>
 									<div class="mt-2 flex items-center gap-2 text-text-icons-gray-6">
-										<GlobeIcon class="h-4 w-4" />
+										<div v-show="page.published">
+											<AuthenticatedUserIcon
+												title="Limited access"
+												class="size-4 text-text-icons-amber-3"
+												v-if="page.authenticated_access" />
+											<GlobeIcon class="size-4" title="Publicly accessible" v-else />
+										</div>
 										<p class="text-sm">
 											{{ page.route }}
 										</p>
@@ -307,6 +313,7 @@
 <script setup lang="ts">
 import AppsMenu from "@/components/AppsMenu.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
+import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import GlobeIcon from "@/components/Icons/Globe.vue";
 import Settings from "@/components/Settings.vue";
 import { webPages } from "@/data/webPage";
