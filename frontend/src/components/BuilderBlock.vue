@@ -27,6 +27,7 @@
 		<!-- prettier-ignore -->
 		<BlockEditor
 			ref="editor"
+			v-show="!isEditable"
 			v-if="loadEditor"
 			:block="block"
 			:breakpoint="breakpoint"
