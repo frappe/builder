@@ -206,7 +206,12 @@ const useStore = defineStore("store", {
 			videoBlock.attributes.src = videoSrc;
 			return videoBlock;
 		},
-		selectBlock(block: Block, e: MouseEvent | null, scrollLayerIntoView = true, scrollBlockIntoView = false) {
+		selectBlock(
+			block: Block,
+			e: MouseEvent | null,
+			scrollLayerIntoView: boolean | ScrollLogicalPosition = true,
+			scrollBlockIntoView = false,
+		) {
 			this.activeCanvas?.history?.pause();
 			if (this.settingPage) {
 				return;
@@ -220,10 +225,11 @@ const useStore = defineStore("store", {
 			}
 			if (scrollLayerIntoView) {
 				// TODO: move to layers?
+				const align = scrollLayerIntoView === true ? "center" : scrollLayerIntoView;
 				nextTick(() => {
 					document
 						.querySelector(`[data-block-layer-id="${block.blockId}"]`)
-						?.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
+						?.scrollIntoView({ behavior: "instant", block: align, inline: "center" });
 				});
 			}
 
