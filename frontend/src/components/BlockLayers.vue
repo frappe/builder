@@ -72,7 +72,7 @@
 								</span>
 							</span>
 							<div v-show="canShowChildLayer(element)">
-								<BlockLayers :blocks="element.children" ref="childLayer" :indent="childIndent" />
+								<BlockLayers :blocks="element.children" :ref="childLayer" :indent="childIndent" />
 							</div>
 						</div>
 					</BlockContextMenu>
@@ -91,8 +91,15 @@ import BlockContextMenu from "./BlockContextMenu.vue";
 import BlockLayers from "./BlockLayers.vue";
 import BlocksIcon from "./Icons/Blocks.vue";
 
+type LayerInstance = InstanceType<typeof BlockLayers>;
+
 const store = useStore();
-const childLayer = ref<InstanceType<typeof BlockLayers> | null>(null);
+const childLayers = ref<LayerInstance[]>([]);
+const childLayer = (el) => {
+	if (el) {
+		childLayers.value.push(el);
+	}
+};
 
 const props = defineProps({
 	blocks: {
@@ -123,17 +130,37 @@ const isExpanded = (block: Block) => {
 	return expandedLayers.value.has(block.blockId);
 };
 
+// TODO: Refactor this!
 const toggleExpanded = (block: Block) => {
-	const blockIndex = props.blocks.findIndex((b) => b.blockId === block.blockId);
-	if (blockIndex === -1) {
-		childLayer.value?.toggleExpanded(block);
+	if (block.isRoot()) {
 		return;
 	}
-	if (isExpanded(block) && !block.isRoot()) {
+	if (!blockExits(block)) {
+		const child = childLayers.value.find((layer) => layer.blockExitsInTree(block)) as LayerInstance;
+		if (child) {
+			child.toggleExpanded(block);
+		}
+	}
+	if (isExpanded(block)) {
 		expandedLayers.value.delete(block.blockId);
 	} else {
 		expandedLayers.value.add(block.blockId);
 	}
+};
+
+// @ts-ignore
+const isExpandedInTree = (block: Block) => {
+	if (!blockExits(block)) {
+		const child = childLayers.value.find((layer) => layer.blockExitsInTree(block)) as LayerInstance;
+		if (child) {
+			return child.isExpandedInTree(block);
+		}
+	}
+	return isExpanded(block);
+};
+
+const blockExits = (block: Block) => {
+	return props.blocks.find((b) => b.blockId === block.blockId);
 };
 
 const canShowChildLayer = (block: Block) => {
@@ -161,15 +188,29 @@ watch(
 	},
 );
 
+// @ts-ignore
 const updateParent = (event) => {
 	event.item.__draggable_context.element.parentBlock = store.activeCanvas?.findBlock(
 		event.to.closest("[data-block-layer-id]").dataset.blockLayerId,
 	);
 };
 
+const blockExitsInTree = (block: Block) => {
+	if (blockExits(block)) {
+		return true;
+	}
+	for (const layer of childLayers.value) {
+		if (layer.blockExitsInTree(block)) {
+			return true;
+		}
+	}
+	return false;
+};
+
 defineExpose({
-	isExpanded,
 	toggleExpanded,
+	isExpandedInTree,
+	blockExitsInTree,
 });
 </script>
 <style>
