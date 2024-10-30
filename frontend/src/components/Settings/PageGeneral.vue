@@ -123,7 +123,7 @@
 					<hr class="w-full border-surface-gray-2" />
 					<Switch
 						size="sm"
-						label="Authenticated Access"
+						label="Protected Page"
 						:disabled="store.isHomePage(store.activePage)"
 						description="Only logged-in users can access this page"
 						:modelValue="Boolean(store.activePage?.authenticated_access)"
