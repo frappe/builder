@@ -427,106 +427,66 @@ function setEvents() {
 	});
 
 	useEventListener(document, "keydown", (ev: KeyboardEvent) => {
-		if (isTargetEditable(ev) || selectedBlocks.value.length !== 1) {
-			return;
-		}
+		if (isTargetEditable(ev) || selectedBlocks.value.length !== 1) return;
+
 		const selectedBlock = selectedBlocks.value[0];
 
-		if (ev.key === "ArrowLeft") {
-			const sibling = selectedBlock.getSiblingBlock("previous");
-			if (store.activeLayers?.isExpandedInTree(selectedBlock)) {
-				store.activeLayers?.toggleExpanded(selectedBlock);
-				return;
-			}
-			if (sibling) {
-				store.selectBlock(sibling, null, true, true);
-			} else {
-				const parentBlock = selectedBlock.getParentBlock();
-				if (parentBlock) {
-					store.selectBlock(parentBlock, null, true, true);
-				}
-			}
-		} else if (ev.key === "ArrowRight") {
-			const hasChildren = selectedBlock.hasChildren();
-			if (hasChildren) {
-				store.activeLayers?.toggleExpanded(selectedBlock);
-				// select first child
-				const child = selectedBlock.children[0];
-				if (child) {
-					store.selectBlock(child, null, true, true);
-				}
-			} else {
-				let sibling = selectedBlock.getSiblingBlock("next");
-				if (sibling) {
-					store.selectBlock(sibling, null, true, true);
-				} else {
-					let parentBlock = selectedBlock.getParentBlock();
-					while (!sibling) {
-						if (!parentBlock) {
-							break;
-						}
-						sibling = parentBlock.getSiblingBlock("next");
-						if (sibling) {
-							store.selectBlock(sibling, null, true, true);
-							break;
-						} else {
-							parentBlock = parentBlock.getParentBlock();
-						}
-					}
-					sibling && store.selectBlock(sibling, null, true, true);
-				}
-			}
-		} else if (ev.key === "ArrowUp") {
-			let sibling = selectedBlock.getSiblingBlock("previous");
-			if (sibling) {
-				let isExpanded = store.activeLayers?.isExpandedInTree(sibling);
-				while (isExpanded) {
-					const lastChild = sibling.getLastChild() as Block;
-					if (lastChild) {
-						sibling = lastChild;
-						isExpanded = store.activeLayers?.isExpandedInTree(lastChild);
-					} else {
-						break;
-					}
-				}
+		const selectBlock = (block: Block | null) => {
+			if (block) store.selectBlock(block, null, true, true);
+			return !!block;
+		};
 
-				store.selectBlock(sibling, null, true, true);
-			} else {
-				const parentBlock = selectedBlock.getParentBlock();
-				if (parentBlock) {
-					store.selectBlock(parentBlock, null, true, true);
-				}
+		const selectSibling = (direction: "previous" | "next", fallback: () => void) => {
+			selectBlock(selectedBlock.getSiblingBlock(direction)) || fallback();
+		};
+
+		const selectParent = () => selectBlock(selectedBlock.getParentBlock());
+
+		const selectFirstChild = () => selectBlock(selectedBlock.children[0]);
+
+		const selectNextSiblingOrParent = () => {
+			let sibling = selectedBlock.getSiblingBlock("next");
+			let parentBlock = selectedBlock.getParentBlock();
+			while (!sibling && parentBlock) {
+				sibling = parentBlock.getSiblingBlock("next");
+				parentBlock = parentBlock.getParentBlock();
 			}
-		} else if (ev.key === "ArrowDown") {
-			const hasChildren = selectedBlock.hasChildren();
-			const isExpanded = store.activeLayers?.isExpandedInTree(selectedBlock);
-			if (hasChildren && isExpanded) {
-				// select first child
-				const child = selectedBlock.children[0];
-				if (child) {
-					store.selectBlock(child, null, true, true);
-				}
-			} else {
-				let sibling = selectedBlock.getSiblingBlock("next");
-				if (sibling) {
-					store.selectBlock(sibling, null, true, true);
-				} else {
-					let parentBlock = selectedBlock.getParentBlock();
-					while (!sibling) {
-						if (!parentBlock) {
-							break;
-						}
-						sibling = parentBlock.getSiblingBlock("next");
-						if (sibling) {
-							store.selectBlock(sibling, null, true, true);
-							break;
-						} else {
-							parentBlock = parentBlock.getParentBlock();
-						}
-					}
-					sibling && store.selectBlock(sibling, null, true, true);
-				}
+			selectBlock(sibling);
+		};
+
+		const selectLastChildInTree = (block: Block) => {
+			let currentBlock = block;
+			while (store.activeLayers?.isExpandedInTree(currentBlock)) {
+				const lastChild = currentBlock.getLastChild() as Block;
+				if (!lastChild) break;
+				currentBlock = lastChild;
 			}
+			selectBlock(currentBlock);
+		};
+
+		switch (ev.key) {
+			case "ArrowLeft":
+				store.activeLayers?.isExpandedInTree(selectedBlock)
+					? store.activeLayers.toggleExpanded(selectedBlock)
+					: selectSibling("previous", selectParent);
+				break;
+			case "ArrowRight":
+				selectedBlock.hasChildren() && selectedBlock.isVisible()
+					? (store.activeLayers?.toggleExpanded(selectedBlock), selectFirstChild())
+					: selectNextSiblingOrParent();
+				break;
+			case "ArrowUp":
+				selectBlock(selectedBlock.getSiblingBlock("previous"))
+					? selectLastChildInTree(selectedBlock.getSiblingBlock("previous") as Block)
+					: selectParent();
+				break;
+			case "ArrowDown":
+				store.activeLayers?.isExpandedInTree(selectedBlock) &&
+				selectedBlock.hasChildren() &&
+				selectedBlock.isVisible()
+					? selectFirstChild()
+					: selectNextSiblingOrParent();
+				break;
 		}
 	});
 }
