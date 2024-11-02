@@ -85,7 +85,6 @@ import {
 	getBlockInstance,
 	getBlockObject,
 	getNumberFromPx,
-	isCtrlOrCmd,
 	isTargetEditable,
 	uploadImage,
 } from "@/utils/helpers";
@@ -428,68 +427,66 @@ function setEvents() {
 	});
 
 	useEventListener(document, "keydown", (ev: KeyboardEvent) => {
-		if (isTargetEditable(ev)) {
-			return;
-		}
-		if (ev.shiftKey && ev.key === "ArrowLeft") {
-			if (isCtrlOrCmd(ev)) {
-				if (selectedBlocks.value.length) {
-					const selectedBlock = selectedBlocks.value[0];
-					store.activeLayers?.toggleExpanded(selectedBlock);
-					return;
-				}
+		if (isTargetEditable(ev) || selectedBlocks.value.length !== 1) return;
+
+		const selectedBlock = selectedBlocks.value[0];
+
+		const selectBlock = (block: Block | null) => {
+			if (block) store.selectBlock(block, null, true, true);
+			return !!block;
+		};
+
+		const selectSibling = (direction: "previous" | "next", fallback: () => void) => {
+			selectBlock(selectedBlock.getSiblingBlock(direction)) || fallback();
+		};
+
+		const selectParent = () => selectBlock(selectedBlock.getParentBlock());
+
+		const selectFirstChild = () => selectBlock(selectedBlock.children[0]);
+
+		const selectNextSiblingOrParent = () => {
+			let sibling = selectedBlock.getSiblingBlock("next");
+			let parentBlock = selectedBlock.getParentBlock();
+			while (!sibling && parentBlock) {
+				sibling = parentBlock.getSiblingBlock("next");
+				parentBlock = parentBlock.getParentBlock();
 			}
-			if (selectedBlocks.value.length) {
-				const selectedBlock = selectedBlocks.value[0];
-				const parentBlock = selectedBlock.getParentBlock();
-				if (parentBlock) {
-					selectionTrail.push(selectedBlock.blockId);
-					maintainTrail = true;
-					store.selectBlock(parentBlock, null, true, true);
-					maintainTrail = false;
-				}
+			selectBlock(sibling);
+		};
+
+		const selectLastChildInTree = (block: Block) => {
+			let currentBlock = block;
+			while (store.activeLayers?.isExpandedInTree(currentBlock)) {
+				const lastChild = currentBlock.getLastChild() as Block;
+				if (!lastChild) break;
+				currentBlock = lastChild;
 			}
-		}
-		if (ev.shiftKey && ev.key === "ArrowRight") {
-			const blockId = selectionTrail.pop();
-			if (blockId) {
-				const block = findBlock(blockId);
-				if (block) {
-					maintainTrail = true;
-					store.selectBlock(block, null, true, true);
-					maintainTrail = false;
-				}
-			} else {
-				if (selectedBlocks.value.length) {
-					const selectedBlock = selectedBlocks.value[0];
-					if (selectedBlock.children && selectedBlock.isVisible()) {
-						let child = selectedBlock.children[0];
-						while (child && !child.isVisible()) {
-							child = child.getSiblingBlock("next") as Block;
-							if (!child) {
-								break;
-							}
-						}
-						child && store.selectBlock(child, null, true, true);
-					}
-				}
-			}
-		}
-		if (ev.shiftKey && ev.key === "ArrowUp") {
-			if (selectedBlocks.value.length) {
-				let sibling = selectedBlocks.value[0].getSiblingBlock("previous");
-				if (sibling) {
-					store.selectBlock(sibling, null, true, true);
-				}
-			}
-		}
-		if (ev.shiftKey && ev.key === "ArrowDown") {
-			if (selectedBlocks.value.length) {
-				let sibling = selectedBlocks.value[0].getSiblingBlock("next");
-				if (sibling) {
-					store.selectBlock(sibling, null, true, true);
-				}
-			}
+			selectBlock(currentBlock);
+		};
+
+		switch (ev.key) {
+			case "ArrowLeft":
+				store.activeLayers?.isExpandedInTree(selectedBlock)
+					? store.activeLayers.toggleExpanded(selectedBlock)
+					: selectSibling("previous", selectParent);
+				break;
+			case "ArrowRight":
+				selectedBlock.hasChildren() && selectedBlock.isVisible()
+					? (store.activeLayers?.toggleExpanded(selectedBlock), selectFirstChild())
+					: selectNextSiblingOrParent();
+				break;
+			case "ArrowUp":
+				selectBlock(selectedBlock.getSiblingBlock("previous"))
+					? selectLastChildInTree(selectedBlock.getSiblingBlock("previous") as Block)
+					: selectParent();
+				break;
+			case "ArrowDown":
+				store.activeLayers?.isExpandedInTree(selectedBlock) &&
+				selectedBlock.hasChildren() &&
+				selectedBlock.isVisible()
+					? selectFirstChild()
+					: selectNextSiblingOrParent();
+				break;
 		}
 	});
 }

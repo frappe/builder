@@ -15,6 +15,7 @@ const webPages = createListResource({
 		"modified_by",
 		"modified",
 		"is_template",
+		"authenticated_access",
 		"owner",
 	],
 	filters: {

@@ -516,6 +516,12 @@ class Block implements BlockOptions {
 		}
 		return null;
 	}
+	getFirstChild() {
+		return this.children[0];
+	}
+	getLastChild() {
+		return this.children[this.children.length - 1];
+	}
 	selectSiblingBlock(direction: "next" | "previous") {
 		const sibling = this.getSiblingBlock(direction);
 		if (sibling) {

@@ -192,7 +192,7 @@
 										group: 'Actions',
 										hideLabel: true,
 										items: [
-											{ label: 'Duplicate', onClick: () => duplicatePage(page), icon: 'copy' },
+											{ label: 'Duplicate', onClick: () => store.duplicatePage(page), icon: 'copy' },
 											{
 												label: 'View in Desk',
 												onClick: () => store.openInDesk(page),
@@ -250,7 +250,13 @@
 										</p>
 									</div>
 									<div class="mt-2 flex items-center gap-2 text-text-icons-gray-6">
-										<GlobeIcon class="h-4 w-4" />
+										<div v-show="page.published">
+											<AuthenticatedUserIcon
+												title="Limited access"
+												class="size-4 text-text-icons-amber-3"
+												v-if="page.authenticated_access" />
+											<GlobeIcon class="size-4" title="Publicly accessible" v-else />
+										</div>
 										<p class="text-sm">
 											{{ page.route }}
 										</p>
@@ -275,7 +281,7 @@
 									:title="`Created by ${page.owner}`" />
 								<Dropdown
 									:options="[
-										{ label: 'Duplicate', onClick: () => duplicatePage(page), icon: 'copy' },
+										{ label: 'Duplicate', onClick: () => store.duplicatePage(page), icon: 'copy' },
 										{ label: 'View in Desk', onClick: () => store.openInDesk(page), icon: 'arrow-up-right' },
 										{ label: 'Delete', onClick: () => store.deletePage(page), icon: 'trash' },
 									]"
@@ -307,15 +313,15 @@
 <script setup lang="ts">
 import AppsMenu from "@/components/AppsMenu.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
+import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import GlobeIcon from "@/components/Icons/Globe.vue";
 import Settings from "@/components/Settings.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { posthog } from "@/telemetry";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { UseTimeAgo } from "@vueuse/components";
 import { useDark, useStorage, useToggle, watchDebounced } from "@vueuse/core";
-import { Avatar, Badge, createDocumentResource, Dropdown } from "frappe-ui";
+import { Avatar, Badge, Dropdown } from "frappe-ui";
 import { onActivated, Ref, ref } from "vue";
 
 const isDark = useDark({
@@ -373,21 +379,6 @@ watchDebounced(
 	},
 	{ debounce: 300, immediate: true },
 );
-
-const duplicatePage = async (page: BuilderPage) => {
-	const webPageResource = await createDocumentResource({
-		doctype: "Builder Page",
-		name: page.page_name,
-		auto: true,
-	});
-	await webPageResource.get.promise;
-
-	const pageCopy = webPageResource.doc as BuilderPage;
-	pageCopy.page_title = `${pageCopy.page_title} (Copy)`;
-	delete pageCopy.page_name;
-	delete pageCopy.route;
-	await webPages.insert.submit(pageCopy);
-};
 
 const loadMore = () => {
 	webPages.next();

@@ -17,9 +17,9 @@
 						icon: 'plus',
 					},
 					{
-						label: `Apps`,
-						component: AppsMenu,
-						icon: 'grid',
+						label: 'Duplicate Page',
+						onClick: () => store.duplicatePage(store.activePage as BuilderPage),
+						icon: 'copy',
 					},
 					{
 						label: `Toggle Theme`,
@@ -27,6 +27,11 @@
 						icon: isDark ? 'sun' : 'moon',
 					},
 					{ label: 'Settings', onClick: () => $emit('showSettings'), icon: 'settings' },
+					{
+						label: 'Apps',
+						component: AppsMenu,
+						icon: 'grid',
+					},
 				],
 			},
 			{
@@ -62,6 +67,7 @@
 <script setup lang="ts">
 import AppsMenu from "@/components/AppsMenu.vue";
 import useStore from "@/store";
+import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { useDark, useToggle } from "@vueuse/core";
 import { Dropdown } from "frappe-ui";
 
