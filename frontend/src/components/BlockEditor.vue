@@ -123,7 +123,7 @@ const showBorderRadiusHandler = computed(() => {
 		!props.block.isHTML() &&
 		!props.block.isSVG() &&
 		!props.editable &&
-		!resizing &&
+		!resizing.value &&
 		!blockController.multipleBlocksSelected()
 	);
 });
