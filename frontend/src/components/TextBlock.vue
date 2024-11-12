@@ -239,14 +239,33 @@ watch(
 
 watch(
 	() => textContent.value,
-	(newValue, oldValue) => {
-		const isSame = newValue === editor.value?.getHTML();
+	(newValue) => {
+		const innerHTML = getInnerHTML(editor.value);
+		const isSame = newValue === innerHTML;
 		if (isSame) {
 			return;
 		}
 		editor.value?.commands.setContent(newValue || "", false);
 	},
 );
+
+const getInnerHTML = (editor: Editor | null) => {
+	if (!editor) {
+		return "";
+	}
+	let innerHTML = editor.isEmpty ? "" : editor.getHTML();
+	if (
+		props.block.isHeader() &&
+		!(
+			editor.isActive("heading", { level: 1 }) ||
+			editor.isActive("heading", { level: 2 }) ||
+			editor.isActive("heading", { level: 3 })
+		)
+	) {
+		innerHTML = editor?.getText();
+	}
+	return innerHTML;
+};
 
 if (!props.preview) {
 	watch(
@@ -268,17 +287,7 @@ if (!props.preview) {
 					],
 					enablePasteRules: false,
 					onUpdate({ editor }) {
-						let innerHTML = editor.isEmpty ? "" : editor.getHTML();
-						if (
-							props.block.isHeader() &&
-							!(
-								editor.isActive("heading", { level: 1 }) ||
-								editor.isActive("heading", { level: 2 }) ||
-								editor.isActive("heading", { level: 3 })
-							)
-						) {
-							innerHTML = editor.getText();
-						}
+						let innerHTML = getInnerHTML(editor as Editor);
 						if (props.block.getInnerHTML() === innerHTML) {
 							return;
 						}
