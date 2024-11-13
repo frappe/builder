@@ -64,6 +64,12 @@ def get_posthog_settings():
 	}
 
 
+@frappe.whitelist(allow_guest=True)
+def get_builder_page(page_name):
+	page = frappe.get_cached_doc("Builder Page", page_name)
+	return page
+
+
 @frappe.whitelist()
 def get_page_preview_html(page: str, **kwarg) -> str:
 	# to load preview without publishing

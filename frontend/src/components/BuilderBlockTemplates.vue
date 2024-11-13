@@ -55,7 +55,7 @@ const is_developer_mode = window.is_developer_mode;
 const blockTemplateFilter = ref("");
 
 onMounted(() => {
-	builderBlockTemplate.fetch();
+	// builderBlockTemplate.fetch();
 });
 
 const blockTemplates = computed(() => {
