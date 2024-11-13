@@ -489,7 +489,7 @@ const useStore = defineStore("store", {
 					builderSettings.reload();
 				});
 		},
-		openPageInBrowser(page: BuilderPage) {
+		openPageInBrowser(page: BuilderPage, sameTab = false) {
 			let route = page.route;
 			if (this.pageData) {
 				const routeVariables = getRouteVariables(route || "");
@@ -504,8 +504,17 @@ const useStore = defineStore("store", {
 					}
 				});
 			}
-			const targetWindow = window.open(`/${route}`, "builder-preview");
-			if (targetWindow?.location.pathname === `/${route}`) {
+
+			const newPath = `/${route}`;
+
+			if (sameTab) {
+				window.history.replaceState({}, "", newPath);
+				window.location.reload();
+				return;
+			}
+
+			const targetWindow = window.open(newPath, "builder-preview");
+			if (targetWindow?.location.pathname === newPath) {
 				targetWindow?.location.reload();
 			}
 		},

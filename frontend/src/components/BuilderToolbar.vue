@@ -57,7 +57,7 @@
 						</div>
 						<FeatherIcon
 							name="external-link"
-							v-if="store.activePage && store.activePage.published"
+							v-if="store.activePage && store.activePage.published && !store.isTrialMode"
 							class="h-[14px] w-[14px] !text-gray-700 dark:!text-gray-200"
 							@click="store.openPageInBrowser(store.activePage as BuilderPage)"></FeatherIcon>
 					</div>
@@ -73,8 +73,19 @@
 		</div>
 		<!-- actions -->
 		<div class="absolute right-3 flex items-center gap-5">
-			<Tooltip text="Trial mode! Changes won’t be saved.">
-				<Badge v-show="store.isTrialMode">Trial Mode</Badge>
+			<Tooltip text="You are in trial mode! Changes won’t be saved.">
+				<Badge
+					theme="blue"
+					size="md"
+					v-show="store.isTrialMode"
+					class="cursor-pointer"
+					@click="store.openPageInBrowser(store.activePage as BuilderPage, true)">
+					Exit Trial
+					<FeatherIcon
+						name="external-link"
+						v-if="store.activePage && store.activePage.published"
+						class="size-3"></FeatherIcon>
+				</Badge>
 			</Tooltip>
 			<Dialog
 				style="z-index: 40"
