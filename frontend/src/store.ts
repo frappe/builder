@@ -487,8 +487,7 @@ const useStore = defineStore("store", {
 					}
 				});
 			}
-			const targetWindow = window.open(`/${route}`, "builder-preview");
-			targetWindow?.location.reload();
+			window.open(`/${route}`, "builder-preview");
 		},
 		savePage() {
 			this.pageBlocks = this.getPageBlocks() as Block[];
