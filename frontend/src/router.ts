@@ -47,6 +47,20 @@ const validateVisit = function (
 	}
 };
 
+const validateTrialModeAndVisit = function (
+	to: RouteLocationNormalized,
+	from: RouteLocationNormalized,
+	next: NavigationGuardNext,
+) {
+	// if route has trial_mode param, allow access
+	if (to.query.trial_mode) {
+		window.trial_mode = true;
+		next();
+	} else {
+		validateVisit(to, from, next);
+	}
+};
+
 const routes = [
 	{
 		path: "/home",
@@ -67,13 +81,13 @@ const routes = [
 	{
 		path: "/page/:pageId",
 		name: "builder",
-		beforeEnter: validateVisit,
+		beforeEnter: validateTrialModeAndVisit,
 		component: () => import("@/pages/PageBuilder.vue"),
 	},
 	{
 		path: "/page/:pageId/preview",
 		name: "preview",
-		beforeEnter: validateVisit,
+		beforeEnter: validateTrialModeAndVisit,
 		component: () => import("@/pages/PagePreview.vue"),
 	},
 ];

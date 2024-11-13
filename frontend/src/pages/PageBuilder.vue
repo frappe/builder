@@ -569,7 +569,7 @@ onActivated(async () => {
 		return;
 	}
 	if (!webPages.data) {
-		await webPages.fetchOne.submit(route.params.pageId as string);
+		// await webPages.fetchOne.submit(route.params.pageId as string);
 	}
 	if (route.params.pageId && route.params.pageId !== "new") {
 		store.setPage(route.params.pageId as string);

@@ -31,7 +31,7 @@ let posthog = {
 createResource({
 	url: "builder.api.get_posthog_settings",
 	method: "GET",
-	auto: true,
+	auto: false,
 	onSuccess: (posthogSettings: PosthogSettings) => {
 		if (!posthogSettings.enable_telemetry || !posthogSettings.posthog_project_id) {
 			return;

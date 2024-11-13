@@ -2,7 +2,7 @@ import router from "@/router";
 import { posthog } from "@/telemetry";
 import { BuilderSettings } from "@/types/Builder/BuilderSettings";
 import { UseRefHistoryReturn, useStorage } from "@vueuse/core";
-import { createDocumentResource } from "frappe-ui";
+import { createDocumentResource, createResource } from "frappe-ui";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
 import { toast } from "vue-sonner";
@@ -171,12 +171,25 @@ const useStore = defineStore("store", {
 		async setActivePage(pageName: string) {
 			this.selectedPage = pageName;
 			const page = await this.fetchActivePage(pageName);
+			console.log(page, "----------------------");
 			if (!page) {
 				return;
 			}
 			this.activePage = page;
 		},
 		async fetchActivePage(pageName: string) {
+			if (window.trial_mode) {
+				const docResource = await createResource({
+					url: "builder.api.get_builder_page",
+					params: {
+						page_name: pageName,
+					},
+					method: "GET",
+					auto: true,
+				});
+				await docResource.promise;
+				return docResource.data;
+			}
 			const webPageResource = await createDocumentResource({
 				doctype: "Builder Page",
 				name: pageName,
