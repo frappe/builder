@@ -67,7 +67,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-05-27 16:54:08.439843",
+ "modified": "2024-11-13 20:08:03.270174",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Settings",
@@ -91,5 +91,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }
