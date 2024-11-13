@@ -74,6 +74,23 @@ def get_builder_page(page_name):
 
 
 @frappe.whitelist(allow_guest=True)
+def get_builder_block_templates():
+	block_templates = frappe.get_all(
+		"Block Template",
+		fields=["template_name", "category", "preview", "name", "preview_width", "preview_height"],
+		order_by="`order`",
+	)
+
+	return block_templates
+
+
+@frappe.whitelist(allow_guest=True)
+def get_builder_block_template(template_name):
+	block_template = frappe.get_cached_doc("Block Template", template_name)
+	return block_template
+
+
+@frappe.whitelist(allow_guest=True)
 def get_page_preview_html(page: str, **kwarg) -> str:
 	# to load preview without publishing
 	frappe.form_dict.update(kwarg)

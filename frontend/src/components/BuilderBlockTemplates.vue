@@ -44,7 +44,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import builderBlockTemplate from "@/data/builderBlockTemplate";
+import builderBlockTemplateList from "@/data/builderBlockTemplateList";
 import useStore from "@/store";
 import { BlockTemplate } from "@/types/Builder/BlockTemplate";
 import { computed, onMounted, ref } from "vue";
@@ -55,11 +55,11 @@ const is_developer_mode = window.is_developer_mode;
 const blockTemplateFilter = ref("");
 
 onMounted(() => {
-	builderBlockTemplate.fetch();
+	builderBlockTemplateList.fetch();
 });
 
 const blockTemplates = computed(() => {
-	return (builderBlockTemplate.data || []).filter((d: BlockTemplate) => {
+	return (builderBlockTemplateList.data || []).filter((d: BlockTemplate) => {
 		if (blockTemplateFilter.value) {
 			return d.name?.toLowerCase().includes(blockTemplateFilter.value.toLowerCase());
 		} else {
