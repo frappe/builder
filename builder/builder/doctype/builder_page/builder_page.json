@@ -36,7 +36,8 @@
   "options_tab",
   "authenticated_access",
   "disable_indexing",
-  "project_folder"
+  "project_folder",
+  "enable_trial_mode"
  ],
  "fields": [
   {
@@ -201,6 +202,12 @@
    "fieldtype": "Link",
    "label": "Project Folder",
    "options": "Builder Project Folder"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_trial_mode",
+   "fieldtype": "Check",
+   "label": "Enable Trial Mode"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -235,6 +242,15 @@
    "role": "Website Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Guest",
+   "share": 1
   }
  ],
  "show_title_field_in_link": 1,
