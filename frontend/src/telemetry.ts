@@ -1,8 +1,5 @@
-import useStore from "@/store.js";
 import { createResource } from "frappe-ui";
 import "../../../frappe/frappe/public/js/lib/posthog.js";
-
-const store = useStore();
 
 declare global {
 	interface Window {
@@ -34,7 +31,7 @@ let posthog = {
 createResource({
 	url: "builder.api.get_posthog_settings",
 	method: "GET",
-	auto: !store.isTrialMode,
+	auto: false,
 	onSuccess: (posthogSettings: PosthogSettings) => {
 		if (!posthogSettings.enable_telemetry || !posthogSettings.posthog_project_id) {
 			return;
