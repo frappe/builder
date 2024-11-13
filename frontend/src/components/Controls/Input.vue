@@ -3,15 +3,7 @@
 		<FormControl
 			:class="classes"
 			:type="type"
-			@change="
-				($event: Event) => {
-					if (type === 'checkbox') {
-						emit('update:modelValue', ($event.target as HTMLInputElement).checked);
-					} else {
-						emit('update:modelValue', ($event.target as HTMLInputElement).value);
-					}
-				}
-			"
+			@change="triggerUpdate"
 			@input="($event: Event) => emit('input', ($event.target as HTMLInputElement).value)"
 			autocomplete="off"
 			v-bind="attrs"
@@ -31,7 +23,7 @@
 </template>
 <script lang="ts" setup>
 import CrossIcon from "@/components/Icons/Cross.vue";
-import { useVModel } from "@vueuse/core";
+import { useDebounceFn, useVModel } from "@vueuse/core";
 import { computed, useAttrs } from "vue";
 
 const props = defineProps(["modelValue", "type", "hideClearButton"]);
@@ -103,4 +95,12 @@ const attrs = useAttrs();
 const clearValue = () => {
 	data.value = "";
 };
+
+const triggerUpdate = useDebounceFn(($event: Event) => {
+	if (props.type === "checkbox") {
+		emit("update:modelValue", ($event.target as HTMLInputElement).checked);
+	} else {
+		emit("update:modelValue", ($event.target as HTMLInputElement).value);
+	}
+}, 100);
 </script>
