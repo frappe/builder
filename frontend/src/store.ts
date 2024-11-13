@@ -81,6 +81,7 @@ const useStore = defineStore("store", {
 		blockTemplateMap: <Map<string, BlockTemplate>>new Map(),
 		fetchingComponent: new Set(),
 		activeFolder: useStorage("activeFolder", ""),
+		isTrialMode: window.trial_mode,
 		fragmentData: {
 			block: <Block | null>null,
 			saveAction: <Function | null>null,
@@ -171,14 +172,13 @@ const useStore = defineStore("store", {
 		async setActivePage(pageName: string) {
 			this.selectedPage = pageName;
 			const page = await this.fetchActivePage(pageName);
-			console.log(page, "----------------------");
 			if (!page) {
 				return;
 			}
 			this.activePage = page;
 		},
 		async fetchActivePage(pageName: string) {
-			if (window.trial_mode) {
+			if (this.isTrialMode) {
 				const docResource = await createResource({
 					url: "builder.api.get_builder_page",
 					params: {
@@ -508,6 +508,9 @@ const useStore = defineStore("store", {
 			}
 		},
 		savePage() {
+			if (this.isTrialMode) {
+				return;
+			}
 			this.pageBlocks = this.getPageBlocks() as Block[];
 			const pageData = JSON.stringify(this.pageBlocks.map((block) => getCopyWithoutParent(block)));
 
@@ -564,7 +567,7 @@ const useStore = defineStore("store", {
 			});
 		},
 		isHomePage(page: BuilderPage | null = null) {
-			return builderSettings.doc.home_page === (page || this.activePage)?.route;
+			return builderSettings?.doc?.home_page === (page || this.activePage)?.route;
 		},
 		setHomePage(route: string) {
 			return builderSettings.setValue

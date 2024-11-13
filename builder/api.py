@@ -70,7 +70,7 @@ def get_builder_page(page_name):
 	return page
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def get_page_preview_html(page: str, **kwarg) -> str:
 	# to load preview without publishing
 	frappe.form_dict.update(kwarg)
@@ -92,7 +92,7 @@ def get_page_preview_html(page: str, **kwarg) -> str:
 	return response
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def upload_builder_asset():
 	from frappe.handler import upload_file
 

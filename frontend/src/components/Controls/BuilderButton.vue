@@ -19,6 +19,8 @@ const classes = computed(() => {
 			"!text-ink-white",
 			"hover:bg-surface-gray-6",
 			"active:bg-surface-gray-5",
+			"disabled:bg-surface-gray-4",
+			"disabled:text-text-icons-gray-4",
 		]);
 	} else if (props.variant === "subtle") {
 		_classes.push([

@@ -53,7 +53,7 @@ const store = useStore();
 const componentFilter = ref("");
 
 onMounted(() => {
-	// webComponent.fetch();
+	!store.isTrialMode && webComponent.fetch();
 });
 
 const components = computed(() =>

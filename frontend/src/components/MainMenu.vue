@@ -5,7 +5,12 @@
 				group: 'Builder',
 				hideLabel: true,
 				items: [
-					{ label: 'Back to Dashboard', onClick: () => $router.push({ name: 'home' }), icon: 'arrow-left' },
+					{
+						label: 'Back to Dashboard',
+						onClick: () => $router.push({ name: 'home' }),
+						icon: 'arrow-left',
+						condition: () => !store.isTrialMode,
+					},
 				],
 			},
 			{
@@ -16,11 +21,13 @@
 						label: 'New Page',
 						onClick: () => $router.push({ name: 'builder', params: { pageId: 'new' } }),
 						icon: 'plus',
+						condition: () => !store.isTrialMode,
 					},
 					{
 						label: 'Duplicate Page',
 						onClick: () => store.duplicatePage(store.activePage as BuilderPage),
 						icon: 'copy',
+						condition: () => !store.isTrialMode,
 					},
 					{
 						label: `Toggle Theme`,
@@ -32,6 +39,7 @@
 						label: 'Apps',
 						component: AppsMenu,
 						icon: 'grid',
+						condition: () => !store.isTrialMode,
 					},
 				],
 			},
@@ -48,6 +56,7 @@
 							});
 						},
 						icon: 'trash-2',
+						condition: () => !store.isTrialMode,
 					},
 				],
 			},

@@ -72,7 +72,7 @@ import ImageUploader from "../Controls/ImageUploader.vue";
 const store = useStore();
 
 const routeOptions = computed(() => {
-	return webPages.data
+	return (webPages.data || [])
 		.filter((page: BuilderPage) => {
 			return page.route && !page.dynamic_route;
 		})
