@@ -201,7 +201,7 @@ const typographySectionProperties = [
 				type: "autocomplete",
 				getOptions: (filterString: string) => {
 					const fontOptions = [] as { label: string; value: string }[];
-					userFonts.data.forEach((font: UserFont) => {
+					(userFonts.data || []).forEach((font: UserFont) => {
 						if (fontOptions.length >= 20) {
 							return;
 						}
@@ -945,6 +945,18 @@ const dataKeySectionProperties = [
 			return {
 				label: "Key",
 				modelValue: blockController.getDataKey("key"),
+				type: "autocomplete",
+				getOptions: (filterString: string) => {
+					const keys = Object.keys(store.pageData).filter((key) => {
+						return key.toLowerCase().includes(filterString.toLowerCase());
+					});
+					return keys.map((key) => {
+						return {
+							value: key,
+							label: key,
+						};
+					});
+				},
 			};
 		},
 		searchKeyWords: "Key, DataKey, Data Key",
@@ -957,7 +969,9 @@ const dataKeySectionProperties = [
 		condition: () => !blockController.isRepeater(),
 		getProps: () => {
 			return {
+				type: "select",
 				label: "Type",
+				options: ["key", "attribute", "style"],
 				modelValue: blockController.getDataKey("type"),
 			};
 		},

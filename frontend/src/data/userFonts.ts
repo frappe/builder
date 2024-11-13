@@ -7,7 +7,6 @@ const userFont = createListResource({
 	cache: "userFonts",
 	start: 0,
 	pageLength: 50,
-	auto: false,
 });
 
 export default userFont;

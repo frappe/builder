@@ -28,7 +28,7 @@ const setFont = (font: string | null, weight: string | null) => {
 			return resolve(fontId);
 		}
 		setFontRequested(fontId);
-		const customFont = userFont.data.find(
+		const customFont = (userFont.data || []).find(
 			(f: { font_name: string; font_file: string }) => f.font_name === font,
 		);
 		if (customFont) {
