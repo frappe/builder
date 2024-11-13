@@ -358,13 +358,15 @@ const useStore = defineStore("store", {
 		async fetchBlockTemplate(blockTemplateName: string) {
 			const blockTemplate = this.getBlockTemplate(blockTemplateName);
 			if (!blockTemplate) {
-				const webBlockTemplate = await createDocumentResource({
-					doctype: "Block Template",
-					name: blockTemplateName,
+				const webBlockTemplate = await createResource({
+					url: "builder.api.get_builder_block_template",
+					params: {
+						template_name: blockTemplateName,
+					},
 					auto: true,
 				});
-				await webBlockTemplate.get.promise;
-				const blockTemplate = webBlockTemplate.doc as BlockTemplate;
+				await webBlockTemplate.promise;
+				const blockTemplate = webBlockTemplate.data as BlockTemplate;
 				this.blockTemplateMap.set(blockTemplateName, blockTemplate);
 			}
 		},
