@@ -7,7 +7,7 @@ from builder.utils import (
 	camel_case_to_kebab_case,
 	escape_single_quotes,
 	execute_script,
-	get_builder_page_preview_paths,
+	get_builder_page_preview_file_paths,
 	get_dummy_blocks,
 	get_template_assets_folder_path,
 	is_component_used,
@@ -33,22 +33,22 @@ class TestBuilderPage(FrappeTestCase):
 		self.assertTrue(is_component_used(dummy_blocks, "component-2"))
 		self.assertFalse(is_component_used(dummy_blocks, "component-3"))
 
-	def test_get_builder_page_preview_paths(self):
+	def test_get_builder_page_preview_file_paths(self):
 		page_doc = frappe._dict(
 			{
 				"name": "test-page",
 				"is_template": False,
 			}
 		)
-		public_path, local_path = get_builder_page_preview_paths(page_doc)
-		self.assertRegex(public_path, r"/files/test-page-preview.jpeg\?v=\w{5}")
-		self.assertEqual(local_path, f"{frappe.local.site_path}/public/files/test-page-preview.jpeg")
+		public_path, local_path = get_builder_page_preview_file_paths(page_doc)
+		self.assertRegex(public_path, r"/files/test-page-preview.webp\?v=\w{5}")
+		self.assertEqual(local_path, f"{frappe.local.site_path}/public/files/test-page-preview.webp")
 
 		page_doc.is_template = True
-		public_path, local_path = get_builder_page_preview_paths(page_doc)
-		self.assertEqual(public_path, "/builder_assets/test-page/preview.jpeg")
+		public_path, local_path = get_builder_page_preview_file_paths(page_doc)
+		self.assertEqual(public_path, "/builder_assets/test-page/preview.webp")
 		self.assertEqual(
-			local_path, f"{frappe.get_app_path('builder')}/www/builder_assets/test-page/preview.jpeg"
+			local_path, f"{frappe.get_app_path('builder')}/www/builder_assets/test-page/preview.webp"
 		)
 
 	def test_get_template_assets_folder_path(self):

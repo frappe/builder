@@ -29,7 +29,7 @@ from builder.utils import (
 	copy_img_to_asset_folder,
 	escape_single_quotes,
 	execute_script,
-	get_builder_page_preview_paths,
+	get_builder_page_preview_file_paths,
 	get_template_assets_folder_path,
 	is_component_used,
 )
@@ -260,7 +260,7 @@ class BuilderPage(WebsiteGenerator):
 		return page_data
 
 	def generate_page_preview_image(self, html=None):
-		public_path, local_path = get_builder_page_preview_paths(self)
+		public_path, local_path = get_builder_page_preview_file_paths(self)
 		generate_preview(
 			html or get_response_content(self.route),
 			local_path,

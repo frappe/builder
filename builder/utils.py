@@ -226,13 +226,13 @@ def get_template_assets_folder_path(page_doc):
 	return path
 
 
-def get_builder_page_preview_paths(page_doc):
+def get_builder_page_preview_file_paths(page_doc):
 	public_path, public_path = None, None
 	if page_doc.is_template:
-		local_path = os.path.join(get_template_assets_folder_path(page_doc), "preview.jpeg")
-		public_path = f"/builder_assets/{page_doc.name}/preview.jpeg"
+		local_path = os.path.join(get_template_assets_folder_path(page_doc), "preview.webp")
+		public_path = f"/builder_assets/{page_doc.name}/preview.webp"
 	else:
-		file_name = f"{page_doc.name}-preview.jpeg"
+		file_name = f"{page_doc.name}-preview.webp"
 		local_path = os.path.join(frappe.local.site_path, "public", "files", file_name)
 		random_hash = frappe.generate_hash(length=5)
 		public_path = f"/files/{file_name}?v={random_hash}"
