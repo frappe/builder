@@ -1,6 +1,7 @@
+import html as html_parser
+
 import frappe
 import requests
-import html as html_parser
 
 # TODO: Find better alternative
 # Note: while working locally, "preview.frappe.cloud" won't be able to generate preview properly since it can't access local server for assets
@@ -14,12 +15,10 @@ PREVIEW_GENERATOR_URL = (
 
 def generate_preview(html, output_path):
 	escaped_html = html_parser.escape(html)
-	response = requests.post(PREVIEW_GENERATOR_URL, json={
-		'html': escaped_html,
-	})
+	response = requests.post(PREVIEW_GENERATOR_URL, json={"html": escaped_html, "format": "webp"})
 	if response.status_code == 200:
-		with open(output_path, 'wb') as f:
+		with open(output_path, "wb") as f:
 			f.write(response.content)
 	else:
-		exception = response.json().get('exc')
+		exception = response.json().get("exc")
 		raise Exception(frappe.parse_json(exception)[0])
