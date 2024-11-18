@@ -67,7 +67,7 @@ def get_posthog_settings():
 @frappe.whitelist(allow_guest=True)
 def get_builder_page(page_name):
 	page = frappe.get_cached_doc("Builder Page", page_name)
-	if page.enable_trial_mode:
+	if page.enable_demo_mode:
 		return page
 	else:
 		raise frappe.PermissionError("You are not allowed access this page.")
