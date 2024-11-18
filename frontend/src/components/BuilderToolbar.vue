@@ -73,14 +73,14 @@
 		</div>
 		<!-- actions -->
 		<div class="absolute right-3 flex items-center gap-5">
-			<Tooltip text="You are in trial mode! Changes won’t be saved.">
+			<Tooltip text="You are in demo mode! Changes won’t be saved.">
 				<Badge
 					theme="blue"
 					size="md"
 					v-show="store.isDemoMode"
 					class="cursor-pointer"
 					@click="store.openPageInBrowser(store.activePage as BuilderPage, true)">
-					Exit Trial
+					Exit Demo
 					<FeatherIcon
 						name="external-link"
 						v-if="store.activePage && store.activePage.published"
