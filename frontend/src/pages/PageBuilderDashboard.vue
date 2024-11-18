@@ -32,6 +32,7 @@
 							],
 						},
 						{
+							group: 'Options',
 							hideLabel: true,
 							items: [
 								{
