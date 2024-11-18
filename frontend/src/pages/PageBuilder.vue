@@ -560,7 +560,7 @@ const saveAndExitFragmentMode = (e: Event) => {
 };
 
 onActivated(async () => {
-	store.isTrialMode = window.trial_mode;
+	store.isDemoMode = window.demo_mode;
 	store.realtime.on("doc_viewers", async (data: { users: [] }) => {
 		store.viewers = await getUsersInfo(data.users.filter((user: string) => user !== sessionUser.value));
 	});
@@ -570,7 +570,7 @@ onActivated(async () => {
 		return;
 	}
 	if (!webPages.data) {
-		!store.isTrialMode && (await webPages.fetchOne.submit(route.params.pageId as string));
+		!store.isDemoMode && (await webPages.fetchOne.submit(route.params.pageId as string));
 	}
 	if (route.params.pageId && route.params.pageId !== "new") {
 		store.setPage(route.params.pageId as string);

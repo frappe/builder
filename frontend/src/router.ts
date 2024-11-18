@@ -52,9 +52,9 @@ const validateTrialModeAndVisit = function (
 	from: RouteLocationNormalized,
 	next: NavigationGuardNext,
 ) {
-	// if route has trial_mode param, allow access
-	if (to.query.trial_mode) {
-		window.trial_mode = true;
+	// if route has demo_mode param, allow access
+	if (to.query.demo_mode) {
+		window.demo_mode = true;
 		next();
 	} else {
 		validateVisit(to, from, next);

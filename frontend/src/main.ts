@@ -32,7 +32,7 @@ app.mount("#app");
 declare global {
 	interface Window {
 		is_developer_mode?: boolean;
-		trial_mode?: boolean;
+		demo_mode?: boolean;
 	}
 }
 window.is_developer_mode = process.env.NODE_ENV === "development";

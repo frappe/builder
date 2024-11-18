@@ -37,7 +37,7 @@
   "authenticated_access",
   "disable_indexing",
   "project_folder",
-  "enable_trial_mode"
+  "enable_demo_mode"
  ],
  "fields": [
   {
@@ -205,9 +205,9 @@
   },
   {
    "default": "0",
-   "fieldname": "enable_trial_mode",
+   "fieldname": "enable_demo_mode",
    "fieldtype": "Check",
-   "label": "Enable Trial Mode"
+   "label": "Enable Demo Mode"
   }
  ],
  "index_web_pages_for_search": 1,

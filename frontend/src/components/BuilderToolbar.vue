@@ -57,7 +57,7 @@
 						</div>
 						<FeatherIcon
 							name="external-link"
-							v-if="store.activePage && store.activePage.published && !store.isTrialMode"
+							v-if="store.activePage && store.activePage.published && !store.isDemoMode"
 							class="h-[14px] w-[14px] !text-gray-700 dark:!text-gray-200"
 							@click="store.openPageInBrowser(store.activePage as BuilderPage)"></FeatherIcon>
 					</div>
@@ -77,7 +77,7 @@
 				<Badge
 					theme="blue"
 					size="md"
-					v-show="store.isTrialMode"
+					v-show="store.isDemoMode"
 					class="cursor-pointer"
 					@click="store.openPageInBrowser(store.activePage as BuilderPage, true)">
 					Exit Trial
@@ -151,7 +151,7 @@
 			<BuilderButton
 				variant="solid"
 				iconLeft="globe"
-				:disabled="store.isTrialMode"
+				:disabled="store.isDemoMode"
 				@click="
 					() => {
 						publishing = true;
