@@ -81,7 +81,7 @@ const useStore = defineStore("store", {
 		blockTemplateMap: <Map<string, BlockTemplate>>new Map(),
 		fetchingComponent: new Set(),
 		activeFolder: useStorage("activeFolder", ""),
-		isTrialMode: window.trial_mode,
+		isDemoMode: window.demo_mode,
 		fragmentData: {
 			block: <Block | null>null,
 			saveAction: <Function | null>null,
@@ -178,7 +178,7 @@ const useStore = defineStore("store", {
 			this.activePage = page;
 		},
 		async fetchActivePage(pageName: string) {
-			if (this.isTrialMode) {
+			if (this.isDemoMode) {
 				const docResource = await createResource({
 					url: "builder.api.get_builder_page",
 					params: {
@@ -519,7 +519,7 @@ const useStore = defineStore("store", {
 			}
 		},
 		savePage() {
-			if (this.isTrialMode) {
+			if (this.isDemoMode) {
 				return;
 			}
 			this.pageBlocks = this.getPageBlocks() as Block[];
