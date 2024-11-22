@@ -1,5 +1,4 @@
 @import "frappe-ui/src/style.css";
-@import "./colors.css";
 
 @layer base {
 	ul,

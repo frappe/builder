@@ -13,7 +13,7 @@
 			</template>
 		</FormControl>
 		<div
-			class="absolute bottom-[3px] right-[1px] cursor-pointer p-1 text-text-icons-gray-4 hover:text-text-icons-gray-5"
+			class="absolute bottom-[3px] right-[1px] cursor-pointer p-1 text-ink-gray-4 hover:text-ink-gray-5"
 			@click="clearValue"
 			v-if="!['select', 'checkbox'].includes(type) && !hideClearButton"
 			v-show="data">
@@ -40,13 +40,13 @@ const classes = computed(() => {
 		_classes.push("[&>div>input]:pr-7");
 	}
 	if (props.type === "checkbox") {
-		_classes.push("[&>label]:text-text-icons-gray-7");
+		_classes.push("[&>label]:text-ink-gray-7");
 	}
 	if (props.type === "select") {
 		_classes.push(
 			...[
-				"[&>div>select]:text-text-icons-gray-8",
-				"[&>label]:text-text-icons-gray-7",
+				"[&>div>select]:text-ink-gray-8",
+				"[&>label]:text-ink-gray-7",
 				"[&>div>select]:border-outline-gray-1",
 				"[&>div>select]:bg-surface-gray-2",
 				"[&>div>select]:pr-7",
@@ -60,9 +60,9 @@ const classes = computed(() => {
 	} else if (props.type === "textarea") {
 		_classes.push([
 			"[&>div>textarea]:border-outline-gray-1",
-			"[&>label]:text-text-icons-gray-7",
+			"[&>label]:text-ink-gray-7",
 			"[&>div>textarea]:!bg-surface-gray-2",
-			"[&>div>textarea]:text-text-icons-gray-8",
+			"[&>div>textarea]:text-ink-gray-8",
 			"[&>div>textarea]:focus:border-outline-gray-3",
 			"[&>div>textarea]:focus:bg-surface-gray-1",
 			"[&>div>textarea]:hover:!border-outline-gray-2",
@@ -73,10 +73,10 @@ const classes = computed(() => {
 		]);
 	} else {
 		_classes.push([
-			"[&>label]:text-text-icons-gray-7",
+			"[&>label]:text-ink-gray-7",
 			"[&>div>input]:border-outline-gray-1",
 			"[&>div>input]:bg-surface-gray-2",
-			"[&>div>input]:text-text-icons-gray-8",
+			"[&>div>input]:text-ink-gray-8",
 			"text-sm",
 			"[&>p]:text-p-xs",
 			"[&>div>input]:hover:!border-outline-gray-2",

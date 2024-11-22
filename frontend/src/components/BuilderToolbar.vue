@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="toolbar flex items-center justify-center border-b-[1px] border-outline-gray-1 bg-surface-white px-2 py-1"
+		class="toolbar bg-out border-outline border-outline flex items-center justify-center border-b-[1px] border-outline-gray-1 bg-surface-white px-2 py-1"
 		ref="toolbar">
 		<div class="absolute left-3 flex items-center gap-5">
 			<MainMenu @showSettings="() => (showSettingsDialog = true)"></MainMenu>
@@ -17,7 +17,7 @@
 					<BuilderButton
 						variant="ghost"
 						:icon="mode.icon"
-						class="text-text-icons-gray-7 hover:bg-surface-gray-2 focus:!bg-surface-gray-3 [&[active='true']]:bg-surface-gray-3 [&[active='true']]:text-text-icons-gray-9"
+						class="text-ink-gray-7 hover:bg-surface-gray-2 focus:!bg-surface-gray-3 [&[active='true']]:bg-surface-gray-3 [&[active='true']]:text-ink-gray-9"
 						@click="() => (store.mode = mode.mode as BuilderMode)"
 						:active="store.mode === mode.mode"></BuilderButton>
 				</Tooltip>
@@ -26,8 +26,8 @@
 		<div>
 			<Popover transition="default" placement="bottom" popoverClass="!absolute top-0 !mt-[20px]">
 				<template #target="{ togglePopover, isOpen }">
-					<div class="flex cursor-pointer items-center gap-2 p-2 text-text-icons-gray-8">
-						<div class="flex h-6 items-center text-base text-text-icons-gray-6" v-if="!store.activePage">
+					<div class="flex cursor-pointer items-center gap-2 p-2 text-ink-gray-8">
+						<div class="flex h-6 items-center text-base text-ink-gray-6" v-if="!store.activePage">
 							Loading...
 						</div>
 						<div @click="togglePopover" v-else class="flex items-center gap-1">
@@ -39,18 +39,16 @@
 							</Tooltip>
 							<Tooltip text="This page has limited access" :hoverDelay="0.6">
 								<AuthenticatedUserIcon
-									class="size-4 text-text-icons-amber-3"
+									class="size-4 text-ink-amber-3"
 									v-if="
 										store.activePage?.published && store.activePage?.authenticated_access
 									"></AuthenticatedUserIcon>
 							</Tooltip>
-							<span class="max-w-48 truncate text-base text-text-icons-gray-8">
+							<span class="max-w-48 truncate text-base text-ink-gray-8">
 								{{ store?.activePage?.page_title || "My Page" }}
 							</span>
 							-
-							<span
-								class="flex max-w-96 truncate text-base text-text-icons-gray-5"
-								v-html="routeString"></span>
+							<span class="flex max-w-96 truncate text-base text-ink-gray-5" v-html="routeString"></span>
 						</div>
 						<FeatherIcon
 							name="external-link"
@@ -110,7 +108,7 @@
 			<Tooltip text="Settings" :hoverDelay="0.6">
 				<SettingsGearIcon
 					@click="showSettingsDialog = true"
-					class="size-4 cursor-pointer text-text-icons-gray-8"></SettingsGearIcon>
+					class="size-4 cursor-pointer text-ink-gray-8"></SettingsGearIcon>
 			</Tooltip>
 			<Dialog
 				v-model="showSettingsDialog"
@@ -128,7 +126,7 @@
 
 			<router-link :to="{ name: 'preview', params: { pageId: store.selectedPage } }" title="Preview">
 				<Tooltip text="Preview" :hoverDelay="0.6">
-					<PlayIcon class="h-[18px] w-[18px] cursor-pointer text-text-icons-gray-8"></PlayIcon>
+					<PlayIcon class="h-[18px] w-[18px] cursor-pointer text-ink-gray-8"></PlayIcon>
 				</Tooltip>
 			</router-link>
 			<BuilderButton
@@ -142,9 +140,9 @@
 				"
 				class="border-0"
 				:class="{
-					'bg-surface-gray-7 !text-text-icons-white hover:bg-surface-gray-6':
+					'bg-surface-gray-7 !text-ink-white hover:bg-surface-gray-6':
 						!publishing && store.activePage?.draft_blocks,
-					'dark:bg-surface-gray-2 dark:text-text-icons-gray-4': !store.activePage?.draft_blocks,
+					'dark:bg-surface-gray-2 dark:text-ink-gray-4': !store.activePage?.draft_blocks,
 				}"
 				:loading="publishing">
 				{{ publishing ? "Publishing" : "Publish" }}

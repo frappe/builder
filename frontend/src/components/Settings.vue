@@ -1,17 +1,17 @@
 <template>
 	<div class="flex h-[90vh] max-h-[800px] overflow-hidden">
 		<div class="flex w-48 shrink-0 flex-col gap-5 bg-surface-gray-1 p-4 px-2">
-			<span class="px-2 text-lg font-semibold text-text-icons-gray-9">Settings</span>
+			<span class="px-2 text-lg font-semibold text-ink-gray-9">Settings</span>
 			<div class="flex flex-col" v-for="(item, index) in settingsSidebarItems" :key="index">
-				<span class="mb-2 px-2 text-base font-medium text-text-icons-gray-5">
+				<span class="mb-2 px-2 text-base font-medium text-ink-gray-5">
 					{{ item.title }}
 				</span>
 				<a
 					@click="!link.disabled && selectItem(link.value)"
-					class="flex cursor-pointer items-center gap-2 rounded p-2 py-[5px] text-base text-text-icons-gray-8"
+					class="flex cursor-pointer items-center gap-2 rounded p-2 py-[5px] text-base text-ink-gray-8"
 					:class="{
 						'bg-surface-selected shadow-sm': selectedItem === link.value,
-						'!text-text-icons-gray-3': link.disabled,
+						'!text-ink-gray-3': link.disabled,
 					}"
 					v-for="link in item.items">
 					<component v-if="link?.icon" :is="link?.icon" class="h-4 w-4" />
