@@ -80,7 +80,7 @@
 			<BuilderButton
 				variant="solid"
 				iconLeft="plus"
-				class="bg-surface-gray-7 !text-text-icons-white hover:bg-surface-gray-6">
+				class="bg-surface-gray-7 !text-ink-white hover:bg-surface-gray-6">
 				New
 			</BuilderButton>
 		</router-link>
@@ -89,7 +89,7 @@
 	<section class="m-auto mb-32 flex w-3/4 max-w-6xl flex-col pt-10">
 		<!-- list head -->
 		<div class="mb-8 flex items-center justify-between px-3">
-			<h1 class="text-xl font-semibold text-text-icons-gray-9">All Pages</h1>
+			<h1 class="text-xl font-semibold text-ink-gray-9">All Pages</h1>
 			<div class="flex gap-2">
 				<div class="relative flex">
 					<BuilderInput
@@ -104,7 +104,7 @@
 							}
 						">
 						<template #prefix>
-							<FeatherIcon name="search" class="size-4 text-text-icons-gray-5"></FeatherIcon>
+							<FeatherIcon name="search" class="size-4 text-ink-gray-5"></FeatherIcon>
 						</template>
 					</BuilderInput>
 				</div>
@@ -176,13 +176,12 @@
 						<div class="flex items-center justify-between border-outline-gray-2">
 							<span class="inline-block max-w-[160px]">
 								<div class="flex items-center gap-1">
-									<p
-										class="truncate text-base font-medium text-text-icons-gray-7 group-hover:text-text-icons-gray-9">
+									<p class="truncate text-base font-medium text-ink-gray-7 group-hover:text-ink-gray-9">
 										{{ page.page_title || page.page_name }}
 									</p>
 								</div>
 								<UseTimeAgo v-slot="{ timeAgo }" :time="page.modified">
-									<p class="mt-1 block text-sm text-text-icons-gray-5 group-hover:text-text-icons-gray-6">
+									<p class="mt-1 block text-sm text-ink-gray-5 group-hover:text-ink-gray-6">
 										Edited {{ timeAgo }}
 									</p>
 								</UseTimeAgo>
@@ -214,7 +213,7 @@
 										icon="more-horizontal"
 										size="sm"
 										variant="subtle"
-										class="bg-surface-white !text-text-icons-gray-5 hover:!text-text-icons-gray-9"
+										class="bg-surface-white !text-ink-gray-5 hover:!text-ink-gray-9"
 										@click="open"></BuilderButton>
 								</template>
 							</Dropdown>
@@ -246,15 +245,15 @@
 							<span class="flex h-full flex-col justify-between text-base text-gray-700 dark:text-zinc-200">
 								<div>
 									<div class="flex items-center gap-1">
-										<p class="truncate font-medium text-text-icons-gray-9">
+										<p class="truncate font-medium text-ink-gray-9">
 											{{ page.page_title || page.page_name }}
 										</p>
 									</div>
-									<div class="mt-2 flex items-center gap-2 text-text-icons-gray-6">
+									<div class="mt-2 flex items-center gap-2 text-ink-gray-6">
 										<div v-show="page.published">
 											<AuthenticatedUserIcon
 												title="Limited access"
-												class="size-4 text-text-icons-amber-3"
+												class="size-4 text-ink-amber-3"
 												v-if="page.authenticated_access" />
 											<GlobeIcon class="size-4" title="Publicly accessible" v-else />
 										</div>
@@ -263,7 +262,7 @@
 										</p>
 									</div>
 								</div>
-								<div class="flex items-baseline gap-2 text-text-icons-gray-6">
+								<div class="flex items-baseline gap-2 text-ink-gray-6">
 									<UseTimeAgo v-slot="{ timeAgo }" :time="page.modified">
 										<p class="mt-1 block text-sm">Last updated {{ timeAgo }} by {{ page.modified_by }}</p>
 									</UseTimeAgo>
@@ -277,7 +276,7 @@
 									:shape="'circle'"
 									:image="null"
 									:label="page.owner"
-									class="[&>div]:bg-surface-gray-2 [&>div]:text-text-icons-gray-4 [&>div]:group-hover:bg-surface-gray-4 [&>div]:group-hover:text-text-icons-gray-6"
+									class="[&>div]:bg-surface-gray-2 [&>div]:text-ink-gray-4 [&>div]:group-hover:bg-surface-gray-4 [&>div]:group-hover:text-ink-gray-6"
 									size="sm"
 									:title="`Created by ${page.owner}`" />
 								<Dropdown
@@ -291,7 +290,7 @@
 									<template v-slot="{ open }">
 										<FeatherIcon
 											name="more-horizontal"
-											class="h-4 w-4 font-bold text-text-icons-gray-6"
+											class="h-4 w-4 font-bold text-ink-gray-6"
 											@click="open"></FeatherIcon>
 									</template>
 								</Dropdown>

@@ -34,7 +34,7 @@
 							}">
 							<img :src="blockTemplate.preview" />
 						</div>
-						<p class="text-sm text-text-icons-gray-6">
+						<p class="text-sm text-ink-gray-6">
 							{{ blockTemplate.template_name }}
 						</p>
 					</div>

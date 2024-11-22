@@ -28,18 +28,18 @@
 			</div>
 			<!-- preview -->
 			<div class="flex h-fit w-72 flex-shrink-0 flex-col justify-between gap-1">
-				<span class="text-sm text-text-icons-gray-7">Social Preview</span>
+				<span class="text-sm text-ink-gray-7">Social Preview</span>
 				<div class="flex flex-1 flex-col rounded border border-outline-gray-2">
 					<img
 						:src="store.activePage?.meta_image || store.activePage?.preview"
 						alt=""
 						class="h-40 w-full rounded-t object-cover" />
 					<div class="flex flex-1 flex-col gap-1 border-t border-outline-gray-2 p-2">
-						<span class="text-base text-text-icons-gray-6">{{ store.activePage?.route }}</span>
-						<span class="mt-2 text-base font-medium text-text-icons-gray-9">
+						<span class="text-base text-ink-gray-6">{{ store.activePage?.route }}</span>
+						<span class="mt-2 text-base font-medium text-ink-gray-9">
 							{{ store.activePage?.page_title }}
 						</span>
-						<span class="text-base leading-5 text-text-icons-gray-6">
+						<span class="text-base leading-5 text-ink-gray-6">
 							{{ store.activePage?.meta_description }}
 						</span>
 					</div>
