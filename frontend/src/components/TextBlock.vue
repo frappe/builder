@@ -27,12 +27,12 @@
 				},
 			}"
 			v-if="editor"
-			class="z-50 rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-text-icons-gray-9 shadow-2xl">
+			class="z-50 rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-ink-gray-9 shadow-2xl">
 			<div v-if="settingLink" class="flex">
 				<TextInput
 					v-model="textLink"
 					placeholder="https://example.com"
-					class="link-input w-56 text-sm [&>input]:border-outline-gray-1 [&>input]:bg-surface-gray-2 [&>input]:text-text-icons-gray-8 [&>input]:hover:!border-outline-gray-2 [&>input]:hover:!bg-surface-gray-1 focus:[&>input]:border-outline-gray-3 focus:[&>input]:bg-surface-gray-1 focus:[&>input]:ring-outline-gray-3 [&>input]:focus-visible:bg-surface-gray-1"
+					class="link-input focus:[&>input]:ring-outline-gray-3 w-56 text-sm [&>input]:border-outline-gray-1 [&>input]:bg-surface-gray-2 [&>input]:text-ink-gray-8 [&>input]:hover:!border-outline-gray-2 [&>input]:hover:!bg-surface-gray-1 focus:[&>input]:border-outline-gray-3 focus:[&>input]:bg-surface-gray-1 [&>input]:focus-visible:bg-surface-gray-1"
 					@keydown.enter="
 						() => {
 							if (!linkInput) return;
