@@ -20,7 +20,7 @@
 			<CollapsibleSection
 				sectionName="URL Variables"
 				v-if="dynamicVariables.length"
-				class="w-full [&>div>h3]:!text-xs [&>div>h3]:!text-text-icons-gray-5">
+				class="w-full [&>div>h3]:!text-xs [&>div>h3]:!text-ink-gray-5">
 				<BuilderInput
 					v-for="(variable, index) in dynamicVariables"
 					:key="index"

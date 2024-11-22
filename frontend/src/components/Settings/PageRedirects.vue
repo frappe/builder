@@ -3,12 +3,10 @@
 		<div class="flex flex-col justify-between gap-5">
 			<div class="flex items-end gap-4">
 				<BuilderInput type="text" label="From URL" v-model="redirectMap.from" :hideClearButton="true" />
-				<FeatherIcon name="arrow-right" class="mb-1 size-4 text-text-icons-gray-5" />
+				<FeatherIcon name="arrow-right" class="mb-1 size-4 text-ink-gray-5" />
 				<BuilderInput type="text" label="To URL" v-model="redirectMap.to" :hideClearButton="true" />
 			</div>
-			<div
-				class="flex cursor-pointer items-center gap-2 text-base text-text-icons-gray-5"
-				@click="addRedirect">
+			<div class="flex cursor-pointer items-center gap-2 text-base text-ink-gray-5" @click="addRedirect">
 				<FeatherIcon name="plus" class="size-4" />
 				<span>Add Redirect</span>
 			</div>

@@ -4,9 +4,9 @@
 			<button
 				v-for="option of leftPanelOptions"
 				:key="option.value"
-				class="flex size-8 items-center justify-center rounded text-text-icons-gray-7 hover:bg-surface-gray-2 focus:!bg-surface-gray-3"
+				class="flex size-8 items-center justify-center rounded text-ink-gray-7 hover:bg-surface-gray-2 focus:!bg-surface-gray-3"
 				:class="{
-					'bg-surface-gray-3 text-text-icons-gray-9': store.leftPanelActiveTab === option.value,
+					'bg-surface-gray-3 text-ink-gray-9': store.leftPanelActiveTab === option.value,
 				}"
 				@click.stop="setActiveTab(option.value as LeftSidebarTabOption)"
 				:title="option.label">
@@ -71,6 +71,7 @@
 import ComponentIcon from "@/components/Icons/Component.vue";
 import LayersIcon from "@/components/Icons/Layers.vue";
 import PlusIcon from "@/components/Icons/Plus.vue";
+import PageScript from "@/components/PageScript.vue";
 import Block from "@/utils/block";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { createResource } from "frappe-ui";
@@ -81,7 +82,6 @@ import BuilderAssets from "./BuilderAssets.vue";
 import BuilderBlockTemplates from "./BuilderBlockTemplates.vue";
 import BuilderCanvas from "./BuilderCanvas.vue";
 import PanelResizer from "./PanelResizer.vue";
-import PageScript from "@/components/PageScript.vue";
 
 const pageCanvas = inject("pageCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
 const fragmentCanvas = inject("fragmentCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;

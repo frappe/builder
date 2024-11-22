@@ -4,7 +4,7 @@
 		<div class="overlay absolute" id="overlay" ref="overlay" />
 		<Transition name="fade">
 			<div
-				class="absolute bottom-0 left-0 right-0 top-0 z-[19] grid w-full place-items-center bg-surface-gray-1 p-10 text-text-icons-gray-5"
+				class="absolute bottom-0 left-0 right-0 top-0 z-[19] grid w-full place-items-center bg-surface-gray-1 p-10 text-ink-gray-5"
 				v-show="store.settingPage">
 				<LoadingIcon></LoadingIcon>
 			</div>
@@ -31,8 +31,8 @@
 						:name="breakpoint.icon"
 						class="h-8 w-6"
 						:class="{
-							'text-text-icons-gray-8': breakpoint.visible,
-							'text-text-icons-gray-3': !breakpoint.visible,
+							'text-ink-gray-8': breakpoint.visible,
+							'text-ink-gray-3': !breakpoint.visible,
 						}" />
 				</div>
 			</div>
