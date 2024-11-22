@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="toolbar bg-out border-outline border-outline flex items-center justify-center border-b-[1px] border-outline-gray-1 bg-surface-white px-2 py-1"
+		class="toolbar border-outline border-outline flex items-center justify-center border-b-[1px] border-outline-gray-1 bg-surface-white px-2 py-1"
 		ref="toolbar">
 		<div class="absolute left-3 flex items-center gap-5">
 			<MainMenu @showSettings="() => (showSettingsDialog = true)"></MainMenu>

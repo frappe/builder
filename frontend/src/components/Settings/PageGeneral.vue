@@ -63,7 +63,7 @@
 					</div>
 				</div>
 				<!-- favicon -->
-				<hr class="border-surface-gray-2 w-full" />
+				<hr class="w-full border-outline-gray-2" />
 
 				<div class="flex flex-col justify-between gap-5">
 					<span class="text-lg font-semibold text-ink-gray-9">Favicon</span>
@@ -92,7 +92,7 @@
 					</div>
 				</div>
 				<div class="flex flex-col gap-4">
-					<hr class="border-surface-gray-2 w-full" />
+					<hr class="w-full border-outline-gray-2" />
 					<!-- homepage -->
 					<div class="flex items-center justify-between">
 						<div class="flex flex-col gap-2">
@@ -110,7 +110,7 @@
 							</Button>
 						</Tooltip>
 					</div>
-					<hr class="border-surface-gray-2 w-full" />
+					<hr class="w-full border-outline-gray-2" />
 					<Switch
 						size="sm"
 						label="Protected Page"
@@ -118,7 +118,7 @@
 						description="Only logged-in users can access this page"
 						:modelValue="Boolean(store.activePage?.authenticated_access)"
 						@update:modelValue="(val: Boolean) => store.updateActivePage('authenticated_access', val)" />
-					<hr class="border-surface-gray-2 w-full" />
+					<hr class="w-full border-outline-gray-2" />
 					<Switch
 						size="sm"
 						label="Disable Indexing"

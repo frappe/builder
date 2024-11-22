@@ -12,7 +12,7 @@
 				}
 			"
 			:options="routeOptions"></InlineInput>
-		<hr class="border-surface-gray-2 w-full" />
+		<hr class="w-full border-outline-gray-2" />
 		<div class="flex flex-col justify-between gap-5">
 			<span class="text-lg font-semibold text-ink-gray-9">Favicon</span>
 			<div class="flex flex-1 gap-5">
@@ -35,7 +35,7 @@
 				</div>
 			</div>
 		</div>
-		<hr class="border-surface-gray-2 w-full" />
+		<hr class="w-full border-outline-gray-2" />
 		<Switch
 			size="sm"
 			label="Enable View Tracking"
