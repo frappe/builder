@@ -1,7 +1,7 @@
 import router from "@/router";
 import { posthog } from "@/telemetry";
 import { BuilderSettings } from "@/types/Builder/BuilderSettings";
-import { UseRefHistoryReturn } from "@vueuse/core";
+import { UseRefHistoryReturn, useStorage } from "@vueuse/core";
 import { createDocumentResource } from "frappe-ui";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
@@ -79,6 +79,7 @@ const useStore = defineStore("store", {
 		componentDocMap: <Map<string, BuilderComponent>>new Map(),
 		blockTemplateMap: <Map<string, BlockTemplate>>new Map(),
 		fetchingComponent: new Set(),
+		activeFolder: useStorage("activeFolder", ""),
 		fragmentData: {
 			block: <Block | null>null,
 			saveAction: <Function | null>null,
