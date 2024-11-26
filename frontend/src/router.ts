@@ -49,14 +49,9 @@ const validateVisit = function (
 
 const routes = [
 	{
-		path: "/",
-		beforeEnter: validateVisit,
-		redirect: "",
-	},
-	{
 		path: "/home",
 		beforeEnter: validateVisit,
-		redirect: "",
+		redirect: "/",
 	},
 	{
 		path: "/page",
@@ -64,7 +59,7 @@ const routes = [
 		redirect: "/home",
 	},
 	{
-		path: "",
+		path: "/",
 		name: "home",
 		beforeEnter: validateVisit,
 		component: () => import("@/pages/PageBuilderDashboard.vue"),

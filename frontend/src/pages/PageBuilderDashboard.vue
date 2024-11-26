@@ -47,6 +47,11 @@
 										icon: isDark ? 'sun' : 'moon',
 									},
 									{
+										label: `Toggle Sidebar`,
+										onClick: () => (store.showDashboardSidebar = !store.showDashboardSidebar),
+										icon: 'sidebar',
+									},
+									{
 										label: 'Settings',
 										onClick: () => (showSettingsDialog = true),
 										icon: 'settings',
@@ -89,8 +94,8 @@
 		<div class="flex w-full flex-1 overflow-hidden">
 			<!-- Sidebar -->
 			<DashboardSidebar
-				@openSettings="showSettingsDialog = true"
-				@setActiveFolder="fetchPages"></DashboardSidebar>
+				v-show="store.showDashboardSidebar"
+				@openSettings="showSettingsDialog = true"></DashboardSidebar>
 			<!-- Main Content -->
 			<div class="flex-1 overflow-auto">
 				<section class="m-auto mb-32 flex h-fit w-3/4 max-w-6xl flex-col pt-10">
@@ -195,7 +200,7 @@ import useStore from "@/store";
 import { posthog } from "@/telemetry";
 import { useDark, useStorage, useToggle, watchDebounced } from "@vueuse/core";
 import { Dropdown } from "frappe-ui";
-import { onActivated, Ref, ref } from "vue";
+import { onActivated, Ref, ref, watch } from "vue";
 
 const isDark = useDark({
 	attribute: "data-theme",
@@ -223,8 +228,12 @@ onActivated(() => {
 	posthog.capture("builder_dashboard_page_visited");
 });
 
+watch(
+	() => store.activeFolder,
+	() => fetchPages(),
+);
+
 const fetchPages = () => {
-	console.log("fetching pages");
 	const filters = {
 		is_template: 0,
 	} as any;
