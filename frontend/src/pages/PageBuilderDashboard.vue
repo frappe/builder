@@ -88,13 +88,15 @@
 		</div>
 		<div class="flex w-full flex-1 overflow-hidden">
 			<!-- Sidebar -->
-			<DashboardSidebar @openSettings="showSettingsDialog = true"></DashboardSidebar>
+			<DashboardSidebar
+				@openSettings="showSettingsDialog = true"
+				@setActiveFolder="fetchPages"></DashboardSidebar>
 			<!-- Main Content -->
 			<div class="flex-1 overflow-auto">
 				<section class="m-auto mb-32 flex h-fit w-3/4 max-w-6xl flex-col pt-10">
 					<!-- list head -->
 					<div class="mb-8 flex items-center justify-between px-3">
-						<h1 class="text-xl font-semibold text-ink-gray-9">All Pages</h1>
+						<h1 class="text-xl font-semibold text-ink-gray-9">{{ store.activeFolder || "All Pages" }}</h1>
 						<div class="flex gap-2">
 							<div class="relative flex">
 								<BuilderInput
@@ -152,7 +154,7 @@
 					<!-- pages -->
 					<div>
 						<div v-if="!webPages.data?.length && !searchFilter && !typeFilter" class="col-span-full">
-							<p class="mt-4 text-base text-gray-500">
+							<p class="mt-4 px-3 text-base text-gray-500">
 								You don't have any pages yet. Click on the "+ New" button to create a new page.
 							</p>
 						</div>
@@ -221,39 +223,43 @@ onActivated(() => {
 	posthog.capture("builder_dashboard_page_visited");
 });
 
-watchDebounced(
-	[searchFilter, typeFilter, orderBy],
-	() => {
-		const filters = {
-			is_template: 0,
-		} as any;
-		if (typeFilter.value) {
-			if (typeFilter.value === "published") {
-				filters["published"] = true;
-			} else if (typeFilter.value === "unpublished") {
-				filters["published"] = false;
-			} else if (typeFilter.value === "draft") {
-				filters["draft_blocks"] = ["is", "set"];
-			}
+const fetchPages = () => {
+	console.log("fetching pages");
+	const filters = {
+		is_template: 0,
+	} as any;
+	if (typeFilter.value) {
+		if (typeFilter.value === "published") {
+			filters["published"] = true;
+		} else if (typeFilter.value === "unpublished") {
+			filters["published"] = false;
+		} else if (typeFilter.value === "draft") {
+			filters["draft_blocks"] = ["is", "set"];
 		}
-		const orFilters = {} as any;
-		if (searchFilter.value) {
-			orFilters["page_title"] = ["like", `%${searchFilter.value}%`];
-			orFilters["route"] = ["like", `%${searchFilter.value}%`];
-		}
-		webPages.update({
-			filters,
-			orFilters,
-			orderBy: orderMap[orderBy.value],
-		});
-		webPages.fetch();
-	},
-	{ debounce: 300, immediate: true },
-);
+	}
+	const orFilters = {} as any;
+	if (searchFilter.value) {
+		orFilters["page_title"] = ["like", `%${searchFilter.value}%`];
+		orFilters["route"] = ["like", `%${searchFilter.value}%`];
+	}
+	filters["project_folder"] = store.activeFolder;
+
+	webPages.update({
+		filters,
+		orFilters,
+		orderBy: orderMap[orderBy.value],
+	});
+	webPages.fetch();
+};
 
 const loadMore = () => {
 	webPages.next();
 };
+
+watchDebounced([searchFilter, typeFilter, orderBy], fetchPages, {
+	debounce: 300,
+	immediate: true,
+});
 
 const showSettingsDialog = ref(false);
 </script>
