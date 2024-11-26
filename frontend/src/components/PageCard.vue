@@ -37,6 +37,11 @@
 									onClick: () => store.openInDesk(page),
 									icon: 'arrow-up-right',
 								},
+								{
+									label: 'Move to Folder',
+									onClick: () => showFolderSelector(page),
+									icon: 'log-out',
+								},
 							],
 						},
 						{
@@ -59,15 +64,45 @@
 			</div>
 		</div>
 	</router-link>
+	<SelectFolder
+		v-model="showFolderSelectorDialog"
+		:currentFolder="targetPage?.project_folder || ''"
+		@folderSelected="
+			async (folder) => {
+				await webPages.setValue
+					.submit({
+						name: targetPage?.page_name,
+						project_folder: folder,
+					})
+					.then(() => {
+						if (targetPage) {
+							targetPage.project_folder = folder;
+							store.activeFolder = folder;
+						}
+					});
+				showFolderSelectorDialog = false;
+			}
+		"></SelectFolder>
 </template>
 <script setup lang="ts">
+import SelectFolder from "@/components/Modals/SelectFolder.vue";
+import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { UseTimeAgo } from "@vueuse/components";
 import { Dropdown } from "frappe-ui";
+import { ref } from "vue";
+
+const showFolderSelectorDialog = ref(false);
+const targetPage = ref<BuilderPage | null>(null);
 
 const store = useStore();
+
+const showFolderSelector = (page: BuilderPage) => {
+	targetPage.value = page;
+	showFolderSelectorDialog.value = true;
+};
 
 defineProps<{
 	page: BuilderPage;

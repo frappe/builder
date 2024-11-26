@@ -58,6 +58,5 @@ const isFolderActive = (folderName: string) => {
 };
 const setFolderActive = (folderName: string) => {
 	store.activeFolder = folderName;
-	emit("setActiveFolder");
 };
 </script>
