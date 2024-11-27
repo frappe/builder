@@ -580,15 +580,18 @@ watch(
 	route,
 	(to, from) => {
 		if (to.name === "builder" && to.params.pageId === "new") {
-			webPages.insert
-				.submit({
-					page_title: "My Page",
-					draft_blocks: [store.getRootBlock()],
-				})
-				.then((data: BuilderPage) => {
-					router.push({ name: "builder", params: { pageId: data.name }, force: true });
-					store.setPage(data.name);
-				});
+			const pageInfo = {
+				page_title: "My Page",
+				draft_blocks: [store.getRootBlock()],
+			} as BuilderPage;
+			console.log("Creating new page", store.activeFolder);
+			if (store.activeFolder) {
+				pageInfo["project_folder"] = store.activeFolder;
+			}
+			webPages.insert.submit(pageInfo).then((data: BuilderPage) => {
+				router.push({ name: "builder", params: { pageId: data.name }, force: true });
+				store.setPage(data.name);
+			});
 		}
 	},
 	{ immediate: true },
