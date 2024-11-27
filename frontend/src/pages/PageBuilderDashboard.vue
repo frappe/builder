@@ -251,7 +251,9 @@ const fetchPages = () => {
 		orFilters["page_title"] = ["like", `%${searchFilter.value}%`];
 		orFilters["route"] = ["like", `%${searchFilter.value}%`];
 	}
-	filters["project_folder"] = store.activeFolder;
+	if (store.activeFolder) {
+		filters["project_folder"] = store.activeFolder;
+	}
 
 	webPages.update({
 		filters,
