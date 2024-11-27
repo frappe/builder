@@ -8,15 +8,21 @@
 		}">
 		<template #body-content>
 			<span
-				class="flex cursor-pointer gap-2 rounded p-2 text-base text-ink-gray-6"
-				@click="$emit('folderSelected', null)">
+				class="flex gap-2 rounded p-2 text-base text-ink-gray-3"
+				:class="{
+					'cursor-pointer text-ink-gray-6 hover:text-ink-gray-9': currentFolder,
+				}"
+				@click="folderSelected('')">
 				<FeatherIcon name="home" class="size-4"></FeatherIcon>
 				Home
 			</span>
 			<span
-				class="flex cursor-pointer gap-2 rounded p-2 text-base text-ink-gray-6"
+				class="flex cursor-pointer gap-2 rounded p-2 text-base text-ink-gray-3"
 				v-for="project in builderProjectFolder.data"
-				@click="$emit('folderSelected', project.folder_name)">
+				:class="{
+					'cursor-pointer text-ink-gray-6 hover:text-ink-gray-9': currentFolder !== project.folder_name,
+				}"
+				@click="folderSelected(project.folder_name)">
 				<FolderIcon class="size-4"></FolderIcon>
 				{{ project.folder_name }}
 			</span>
@@ -27,9 +33,7 @@
 import FolderIcon from "@/components/Icons/Folder.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { useVModel } from "@vueuse/core";
-import { ref } from "vue";
 
-const folderName = ref("");
 const props = defineProps<{
 	currentFolder: string;
 	modelValue: boolean;
@@ -37,4 +41,12 @@ const props = defineProps<{
 
 const emit = defineEmits(["update:modelValue", "folderSelected"]);
 const showModel = useVModel(props, "modelValue", emit);
+
+const folderSelected = (folder: string | null) => {
+	if (folder === props.currentFolder) {
+		return;
+	}
+	emit("folderSelected", folder);
+	showModel.value = false;
+};
 </script>
