@@ -19,7 +19,6 @@
 				@input="folderName = $event"
 				type="Input"
 				label="Folder Name"
-				placeholder="Enter folder name"
 				:required="true"></BuilderInput>
 		</template>
 	</Dialog>
