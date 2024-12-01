@@ -7,9 +7,9 @@
 		"
 		:to="{ name: 'builder', params: { pageId: page.page_name } }">
 		<div
-			class="group relative flex w-full cursor-pointer flex-col gap-2 rounded-2xl bg-surface-white p-3 hover:bg-surface-gray-2"
+			class="group relative flex w-full cursor-pointer flex-col gap-2 rounded-2xl bg-surface-white p-3"
 			:class="{
-				'border-2 border-outline-gray-4': selected,
+				'bg-surface-gray-2': selected,
 			}">
 			<img
 				width="250"

@@ -98,11 +98,18 @@
 				@openSettings="showSettingsDialog = true"></DashboardSidebar>
 			<!-- Main Content -->
 			<div class="flex-1 overflow-auto">
-				<section class="m-auto mb-32 flex h-fit w-3/4 max-w-6xl flex-col">
+				<section class="m-auto mb-32 flex h-fit w-3/4 max-w-6xl flex-col pt-5">
 					<!-- list head -->
-					<div class="mb-8 flex items-center justify-between px-3">
+					<div class="sticky top-0 z-20 mb-8 flex items-center justify-between bg-surface-white px-3 py-5">
 						<h1 class="text-xl font-semibold text-ink-gray-9">{{ store.activeFolder || "All Pages" }}</h1>
 						<div class="flex gap-2">
+							<div>
+								<BuilderButton
+									v-show="selectionMode && selectedPages.size"
+									@click="showFolderSelectorDialog = true">
+									Move To Folder
+								</BuilderButton>
+							</div>
 							<div class="relative flex">
 								<BuilderInput
 									class="w-48"
@@ -198,12 +205,40 @@
 				</section>
 			</div>
 		</div>
+		<SelectFolder
+			v-model="showFolderSelectorDialog"
+			:currentFolder="''"
+			@folderSelected="
+				async (folder: string) => {
+					console.log(selectedPages);
+					for (const pageName of selectedPages) {
+						console.log(pageName);
+						if (!pageName) {
+							continue;
+						}
+						await webPages.setValue
+							.submit({
+								name: pageName,
+								project_folder: folder,
+							})
+							.then(() => {
+								const page = webPages.data?.find((p: BuilderPage) => p.name === pageName);
+								if (page) {
+									page.project_folder = folder;
+								}
+							});
+					}
+					showFolderSelectorDialog = false;
+					store.activeFolder = folder;
+				}
+			"></SelectFolder>
 	</div>
 </template>
 <script setup lang="ts">
 import AppsMenu from "@/components/AppsMenu.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import DashboardSidebar from "@/components/DashboardSidebar.vue";
+import SelectFolder from "@/components/Modals/SelectFolder.vue";
 import PageCard from "@/components/PageCard.vue";
 import PageListItem from "@/components/PageListItem.vue";
 import Settings from "@/components/Settings.vue";
@@ -222,6 +257,7 @@ const isDark = useDark({
 const toggleDark = useToggle(isDark);
 const store = useStore();
 const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list">;
+const showFolderSelectorDialog = ref(false);
 
 const searchFilter = ref("");
 const typeFilter = ref("");
