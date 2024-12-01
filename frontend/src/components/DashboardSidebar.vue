@@ -1,5 +1,6 @@
 <template>
-	<section class="sticky bottom-0 left-0 top-0 flex w-60 flex-col gap-3 bg-surface-gray-1 p-2 max-lg:hidden">
+	<section
+		class="sticky bottom-0 left-0 top-0 flex w-60 flex-col gap-3 bg-surface-gray-1 p-2 shadow-lg max-lg:hidden">
 		<div class="flex flex-col">
 			<span
 				class="flex cursor-pointer gap-2 rounded p-2 text-base text-ink-gray-6"

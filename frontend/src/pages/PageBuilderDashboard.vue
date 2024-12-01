@@ -37,17 +37,17 @@
 								hideLabel: true,
 								items: [
 									{
-										label: `Apps`,
+										label: 'Apps',
 										component: AppsMenu,
 										icon: 'grid',
 									},
 									{
-										label: `Toggle Theme`,
+										label: 'Toggle Theme',
 										onClick: () => toggleDark(),
 										icon: isDark ? 'sun' : 'moon',
 									},
 									{
-										label: `Toggle Sidebar`,
+										label: 'Toggle Sidebar',
 										onClick: () => (store.showDashboardSidebar = !store.showDashboardSidebar),
 										icon: 'sidebar',
 									},
@@ -98,7 +98,7 @@
 				@openSettings="showSettingsDialog = true"></DashboardSidebar>
 			<!-- Main Content -->
 			<div class="flex-1 overflow-auto">
-				<section class="m-auto mb-32 flex h-fit w-3/4 max-w-6xl flex-col pt-10">
+				<section class="m-auto mb-32 flex h-fit w-3/4 max-w-6xl flex-col">
 					<!-- list head -->
 					<div class="mb-8 flex items-center justify-between px-3">
 						<h1 class="text-xl font-semibold text-ink-gray-9">{{ store.activeFolder || "All Pages" }}</h1>
@@ -168,11 +168,23 @@
 						</div>
 						<!-- grid -->
 						<div class="grid-col grid gap-3 auto-fill-[220px]" v-if="displayType === 'grid'">
-							<PageCard v-for="page in webPages.data" :key="page.page_name" :page="page"></PageCard>
+							<PageCard
+								v-for="page in webPages.data"
+								:selected="selectedPages.has(page.name)"
+								@click="($event) => handleClick($event, page)"
+								:key="page.page_name"
+								:page="page"
+								v-on-click-and-hold="() => enableSelectionMode(page)"></PageCard>
 						</div>
 						<!-- list -->
 						<div v-if="displayType === 'list'">
-							<PageListItem v-for="page in webPages.data" :key="page.page_name" :page="page"></PageListItem>
+							<PageListItem
+								@click="($event) => handleClick($event, page)"
+								v-for="page in webPages.data"
+								:selected="selectedPages.has(page.name)"
+								:key="page.page_name"
+								:page="page"
+								v-on-click-and-hold="() => enableSelectionMode(page)"></PageListItem>
 						</div>
 					</div>
 					<BuilderButton
@@ -196,8 +208,10 @@ import PageCard from "@/components/PageCard.vue";
 import PageListItem from "@/components/PageListItem.vue";
 import Settings from "@/components/Settings.vue";
 import { webPages } from "@/data/webPage";
+import vOnClickAndHold from "@/directives/vOnClickAndHold";
 import useStore from "@/store";
 import { posthog } from "@/telemetry";
+import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { useDark, useStorage, useToggle, watchDebounced } from "@vueuse/core";
 import { Dropdown } from "frappe-ui";
 import { onActivated, Ref, ref, watch } from "vue";
@@ -215,14 +229,15 @@ const orderBy = useStorage("orderBy", "creation") as Ref<
 	"creation" | "modified" | "alphabetically_a_z" | "alphabetically_z_a"
 >;
 
-const showDialog = ref(false);
-
 const orderMap = {
 	creation: "creation desc",
 	modified: "modified desc",
 	alphabetically_a_z: "page_title asc",
 	alphabetically_z_a: "page_title desc",
 };
+
+const selectedPages = ref(new Set<string>());
+const selectionMode = ref(false);
 
 onActivated(() => {
 	posthog.capture("builder_dashboard_page_visited");
@@ -265,6 +280,32 @@ const fetchPages = () => {
 
 const loadMore = () => {
 	webPages.next();
+};
+
+const handleClick = (e: MouseEvent, page: BuilderPage) => {
+	if (selectionMode.value) {
+		e.preventDefault();
+		e.stopPropagation();
+		// togglePageSelection(page);
+	}
+};
+
+const enableSelectionMode = (page: BuilderPage) => {
+	if (selectionMode.value) {
+		togglePageSelection(page);
+	} else {
+		selectedPages.value.clear();
+		selectedPages.value.add(page.name);
+		selectionMode.value = true;
+	}
+};
+
+const togglePageSelection = (page: BuilderPage) => {
+	if (selectedPages.value.has(page.name)) {
+		selectedPages.value.delete(page.name);
+	} else {
+		selectedPages.value.add(page.name);
+	}
 };
 
 watchDebounced([searchFilter, typeFilter, orderBy], fetchPages, {
