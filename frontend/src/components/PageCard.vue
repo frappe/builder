@@ -7,7 +7,10 @@
 		"
 		:to="{ name: 'builder', params: { pageId: page.page_name } }">
 		<div
-			class="group relative flex w-full cursor-pointer flex-col gap-2 rounded-2xl bg-surface-white p-3 hover:bg-surface-gray-2">
+			class="group relative flex w-full cursor-pointer flex-col gap-2 rounded-2xl bg-surface-white p-3 hover:bg-surface-gray-2"
+			:class="{
+				'border-2 border-outline-gray-4': selected,
+			}">
 			<img
 				width="250"
 				height="140"
@@ -106,5 +109,6 @@ const showFolderSelector = (page: BuilderPage) => {
 
 defineProps<{
 	page: BuilderPage;
+	selected: boolean;
 }>();
 </script>

@@ -8,7 +8,10 @@
 		"
 		class="col-span-full h-fit w-full flex-grow">
 		<div
-			class="group relative flex w-full gap-3 overflow-hidden border-b-[1px] border-outline-gray-1 p-3 hover:cursor-pointer hover:rounded-2xl hover:bg-surface-gray-1">
+			class="group relative flex w-full gap-3 overflow-hidden rounded-2xl border-b-[1px] border-outline-gray-1 p-3 hover:cursor-pointer hover:bg-surface-gray-1"
+			:class="{
+				'border-2 border-outline-gray-5': selected,
+			}">
 			<img
 				width="140"
 				height="82"
@@ -86,5 +89,6 @@ const store = useStore();
 
 defineProps<{
 	page: BuilderPage;
+	selected: boolean;
 }>();
 </script>
