@@ -105,12 +105,13 @@
 						<div class="flex gap-2">
 							<div>
 								<BuilderButton
+									variant="solid"
 									v-show="selectionMode && selectedPages.size"
 									@click="showFolderSelectorDialog = true">
 									Move To Folder
 								</BuilderButton>
 							</div>
-							<div class="relative flex">
+							<div class="relative flex" v-show="!selectionMode">
 								<BuilderInput
 									class="w-48"
 									type="text"
@@ -127,7 +128,7 @@
 									</template>
 								</BuilderInput>
 							</div>
-							<div class="max-md:hidden">
+							<div class="max-md:hidden" v-show="!selectionMode">
 								<BuilderInput
 									type="select"
 									class="w-24"
@@ -139,7 +140,7 @@
 										{ label: 'Unpublished', value: 'unpublished' },
 									]" />
 							</div>
-							<div class="max-sm:hidden">
+							<div class="max-sm:hidden" v-show="!selectionMode">
 								<BuilderInput
 									type="select"
 									class="w-32"
@@ -178,7 +179,7 @@
 							<PageCard
 								v-for="page in webPages.data"
 								:selected="selectedPages.has(page.name)"
-								@click="($event) => handleClick($event, page)"
+								@click.capture="($event) => handleClick($event, page)"
 								:key="page.page_name"
 								:page="page"
 								v-on-click-and-hold="() => enableSelectionMode(page)"></PageCard>
@@ -186,7 +187,7 @@
 						<!-- list -->
 						<div v-if="displayType === 'list'">
 							<PageListItem
-								@click="($event) => handleClick($event, page)"
+								@click.capture="($event) => handleClick($event, page)"
 								v-for="page in webPages.data"
 								:selected="selectedPages.has(page.name)"
 								:key="page.page_name"
@@ -207,31 +208,8 @@
 		</div>
 		<SelectFolder
 			v-model="showFolderSelectorDialog"
-			:currentFolder="''"
-			@folderSelected="
-				async (folder: string) => {
-					console.log(selectedPages);
-					for (const pageName of selectedPages) {
-						console.log(pageName);
-						if (!pageName) {
-							continue;
-						}
-						await webPages.setValue
-							.submit({
-								name: pageName,
-								project_folder: folder,
-							})
-							.then(() => {
-								const page = webPages.data?.find((p: BuilderPage) => p.name === pageName);
-								if (page) {
-									page.project_folder = folder;
-								}
-							});
-					}
-					showFolderSelectorDialog = false;
-					store.activeFolder = folder;
-				}
-			"></SelectFolder>
+			:currentFolder="store.activeFolder"
+			@folderSelected="setFolder"></SelectFolder>
 	</div>
 </template>
 <script setup lang="ts">
@@ -318,22 +296,47 @@ const loadMore = () => {
 	webPages.next();
 };
 
+const firstHold = ref(false);
+
 const handleClick = (e: MouseEvent, page: BuilderPage) => {
 	if (selectionMode.value) {
 		e.preventDefault();
 		e.stopPropagation();
-		// togglePageSelection(page);
+		if (firstHold.value) {
+			firstHold.value = false;
+			return;
+		}
+		if (e.shiftKey) {
+			const pages = webPages.data || [];
+			// select all pages between the last selected page and the current page
+			const lastSelectedPage = selectedPages.value.size
+				? pages.find((p: BuilderPage) => p.name === Array.from(selectedPages.value)[0])
+				: null;
+			if (lastSelectedPage) {
+				const lastSelectedPageIndex = pages.indexOf(lastSelectedPage);
+				const currentPageIndex = pages.indexOf(page);
+				const start = Math.min(lastSelectedPageIndex, currentPageIndex);
+				const end = Math.max(lastSelectedPageIndex, currentPageIndex);
+				for (let i = start; i <= end; i++) {
+					const p = pages[i];
+					selectedPages.value.add(p.name);
+				}
+			}
+		} else if (e.ctrlKey || e.metaKey) {
+			togglePageSelection(page);
+		} else {
+			selectedPages.value.clear();
+			togglePageSelection(page);
+		}
+	} else {
+		posthog.capture("builder_page_opened", { page_name: page.page_name });
 	}
 };
 
 const enableSelectionMode = (page: BuilderPage) => {
-	if (selectionMode.value) {
-		togglePageSelection(page);
-	} else {
-		selectedPages.value.clear();
-		selectedPages.value.add(page.name);
-		selectionMode.value = true;
-	}
+	selectionMode.value = true;
+	firstHold.value = true;
+	togglePageSelection(page);
 };
 
 const togglePageSelection = (page: BuilderPage) => {
@@ -342,12 +345,38 @@ const togglePageSelection = (page: BuilderPage) => {
 	} else {
 		selectedPages.value.add(page.name);
 	}
+	// Disable selection mode if no pages are selected
+	if (!selectedPages.value.size) {
+		selectionMode.value = false;
+	}
 };
 
 watchDebounced([searchFilter, typeFilter, orderBy], fetchPages, {
 	debounce: 300,
 	immediate: true,
 });
+
+const setFolder = async (folder: string) => {
+	for (const pageName of selectedPages.value) {
+		if (pageName) {
+			await webPages.setValue
+				.submit({
+					name: pageName,
+					project_folder: folder,
+				})
+				.then(() => {
+					const page = webPages.data?.find((p: BuilderPage) => p.name === pageName);
+					if (page) {
+						page.project_folder = folder;
+					}
+				});
+		}
+	}
+	selectedPages.value.clear();
+	selectionMode.value = false;
+	showFolderSelectorDialog.value = false;
+	store.activeFolder = folder;
+};
 
 const showSettingsDialog = ref(false);
 </script>
