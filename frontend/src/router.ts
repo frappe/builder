@@ -49,9 +49,9 @@ const validateVisit = function (
 
 const routes = [
 	{
-		path: "/",
+		path: "/home",
 		beforeEnter: validateVisit,
-		redirect: "/home",
+		redirect: "/",
 	},
 	{
 		path: "/page",
@@ -59,7 +59,7 @@ const routes = [
 		redirect: "/home",
 	},
 	{
-		path: "/home",
+		path: "/",
 		name: "home",
 		beforeEnter: validateVisit,
 		component: () => import("@/pages/PageBuilderDashboard.vue"),
@@ -91,6 +91,15 @@ if (builder_path.startsWith("{{")) {
 const router = createRouter({
 	history: createWebHistory(builder_path),
 	routes,
+});
+
+router.beforeEach((to, from, next) => {
+	if (to.path !== "/" && to.path.endsWith("/")) {
+		const path = to.path.slice(0, -1);
+		next({ path, query: to.query, hash: to.hash }); // Redirect to the path without the slash
+	} else {
+		next();
+	}
 });
 
 export { sessionUser };
