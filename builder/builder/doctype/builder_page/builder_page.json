@@ -35,7 +35,8 @@
   "set_meta_tags",
   "options_tab",
   "authenticated_access",
-  "disable_indexing"
+  "disable_indexing",
+  "project_folder"
  ],
  "fields": [
   {
@@ -194,11 +195,17 @@
    "fieldname": "disable_indexing",
    "fieldtype": "Check",
    "label": "Disable Indexing"
+  },
+  {
+   "fieldname": "project_folder",
+   "fieldtype": "Link",
+   "label": "Project Folder",
+   "options": "Builder Project Folder"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-02 14:20:24.457766",
+ "modified": "2024-11-26 17:03:15.281018",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

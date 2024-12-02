@@ -16,7 +16,7 @@ const classes = computed(() => {
 	if (props.variant === "solid") {
 		_classes.push([
 			"bg-surface-gray-7",
-			"text-ink-white",
+			"!text-ink-white",
 			"hover:bg-surface-gray-6",
 			"active:bg-surface-gray-5",
 		]);
