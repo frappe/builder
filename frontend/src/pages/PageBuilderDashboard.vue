@@ -225,7 +225,7 @@ import vOnClickAndHold from "@/directives/vOnClickAndHold";
 import useStore from "@/store";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { useDark, useStorage, useToggle, watchDebounced } from "@vueuse/core";
+import { useDark, useEventListener, useStorage, useToggle, watchDebounced } from "@vueuse/core";
 import { Dropdown } from "frappe-ui";
 import { onActivated, Ref, ref, watch } from "vue";
 
@@ -261,6 +261,14 @@ watch(
 	() => store.activeFolder,
 	() => fetchPages(),
 );
+
+// remove selection mode when the escape key is pressed
+useEventListener(document, "keydown", (ev) => {
+	if (ev.key === "Escape") {
+		selectedPages.value.clear();
+		selectionMode.value = false;
+	}
+});
 
 const fetchPages = () => {
 	const filters = {
