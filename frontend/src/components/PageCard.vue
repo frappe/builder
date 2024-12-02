@@ -1,15 +1,9 @@
 <template>
-	<router-link
-		@click="
-			() => {
-				posthog.capture('builder_page_opened', { page_name: page.page_name });
-			}
-		"
-		:to="{ name: 'builder', params: { pageId: page.page_name } }">
+	<router-link :to="{ name: 'builder', params: { pageId: page.page_name } }">
 		<div
 			class="group relative flex w-full cursor-pointer flex-col gap-2 rounded-2xl bg-surface-white p-3"
 			:class="{
-				'bg-surface-gray-2': selected,
+				'!bg-surface-gray-2': selected,
 			}">
 			<img
 				width="250"
@@ -67,31 +61,9 @@
 			</div>
 		</div>
 	</router-link>
-	<SelectFolder
-		v-model="showFolderSelectorDialog"
-		:currentFolder="targetPage?.project_folder || ''"
-		@folderSelected="
-			async (folder) => {
-				await webPages.setValue
-					.submit({
-						name: targetPage?.page_name,
-						project_folder: folder,
-					})
-					.then(() => {
-						if (targetPage) {
-							targetPage.project_folder = folder;
-							store.activeFolder = folder;
-						}
-					});
-				showFolderSelectorDialog = false;
-			}
-		"></SelectFolder>
 </template>
 <script setup lang="ts">
-import SelectFolder from "@/components/Modals/SelectFolder.vue";
-import { webPages } from "@/data/webPage";
 import useStore from "@/store";
-import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { UseTimeAgo } from "@vueuse/components";
 import { Dropdown } from "frappe-ui";

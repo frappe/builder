@@ -1,16 +1,11 @@
 <template>
 	<router-link
 		:to="{ name: 'builder', params: { pageId: page.page_name } }"
-		@click="
-			() => {
-				posthog.capture('builder_page_opened', { page_name: page.page_name });
-			}
-		"
 		class="col-span-full h-fit w-full flex-grow">
 		<div
 			class="group relative flex w-full gap-3 overflow-hidden rounded-2xl border-b-[1px] border-outline-gray-1 p-3 hover:cursor-pointer hover:bg-surface-gray-1"
 			:class="{
-				'border-2 border-outline-gray-5': selected,
+				'bg-surface-gray-2': selected,
 			}">
 			<img
 				width="140"
@@ -80,7 +75,6 @@
 import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import GlobeIcon from "@/components/Icons/Globe.vue";
 import useStore from "@/store";
-import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { UseTimeAgo } from "@vueuse/components";
 import { Avatar, Badge, Dropdown } from "frappe-ui";
