@@ -93,14 +93,5 @@ const router = createRouter({
 	routes,
 });
 
-router.beforeEach((to, from, next) => {
-	if (to.path !== "/" && to.path.endsWith("/")) {
-		const path = to.path.slice(0, -1);
-		next({ path, query: to.query, hash: to.hash }); // Redirect to the path without the slash
-	} else {
-		next();
-	}
-});
-
 export { sessionUser };
 export default router;
