@@ -226,7 +226,7 @@ import useStore from "@/store";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { useDark, useEventListener, useStorage, useToggle, watchDebounced } from "@vueuse/core";
-import { Dropdown } from "frappe-ui";
+import { createResource, Dropdown } from "frappe-ui";
 import { onActivated, Ref, ref, watch } from "vue";
 
 const isDark = useDark({
@@ -365,25 +365,26 @@ watchDebounced([searchFilter, typeFilter, orderBy], fetchPages, {
 });
 
 const setFolder = async (folder: string) => {
-	for (const pageName of selectedPages.value) {
-		if (pageName) {
-			await webPages.setValue
-				.submit({
-					name: pageName,
-					project_folder: folder,
-				})
-				.then(() => {
-					const page = webPages.data?.find((p: BuilderPage) => p.name === pageName);
-					if (page) {
-						page.project_folder = folder;
-					}
-				});
-		}
-	}
-	selectedPages.value.clear();
-	selectionMode.value = false;
-	showFolderSelectorDialog.value = false;
-	store.activeFolder = folder;
+	createResource({
+		method: "POST",
+		url: "builder.api.update_page_folder",
+	})
+		.submit({
+			pages: Array.from(selectedPages.value),
+			folder_name: folder,
+		})
+		.then(() => {
+			for (const pageName of selectedPages.value) {
+				const page = webPages.data?.find((p: BuilderPage) => p.name === pageName);
+				if (page) {
+					page.project_folder = folder;
+				}
+			}
+			selectedPages.value.clear();
+			selectionMode.value = false;
+			showFolderSelectorDialog.value = false;
+			store.activeFolder = folder;
+		});
 };
 
 const showSettingsDialog = ref(false);
