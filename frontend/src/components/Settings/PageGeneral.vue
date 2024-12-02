@@ -125,6 +125,23 @@
 						description="Prevent search engines from indexing this page"
 						:modelValue="Boolean(store.activePage?.disable_indexing)"
 						@update:modelValue="(val: Boolean) => store.updateActivePage('disable_indexing', val)" />
+					<hr class="w-full border-outline-gray-2" />
+					<div class="flex items-center justify-between">
+						<div class="flex flex-col gap-2">
+							<span class="text-base font-medium text-ink-gray-9">Folder</span>
+							<p class="text-base text-ink-gray-5">Set folder to organize your page</p>
+						</div>
+						<div>
+							<BuilderInput
+								class="w-fit"
+								type="select"
+								:options="folderOptions"
+								:modelValue="store.activePage?.project_folder"
+								@update:modelValue="
+									(val: string) => store.updateActivePage('project_folder', val)
+								"></BuilderInput>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -134,8 +151,10 @@
 import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import Switch from "@/components/Controls/Switch.vue";
 import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
+import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
 import useStore from "@/store";
+import { BuilderProjectFolder } from "@/types/Builder/BuilderProjectFolder";
 import { Button, Tooltip } from "frappe-ui";
 import FeatherIcon from "frappe-ui/src/components/FeatherIcon.vue";
 import { computed } from "vue";
@@ -145,6 +164,22 @@ const store = useStore();
 const fullURL = computed(
 	() => window.location.origin + (store.activePage?.route ? "/" + store.activePage.route : ""),
 );
+
+const folderOptions = computed(() => {
+	const homeOption = {
+		label: "Home",
+		value: "",
+	};
+
+	const options = builderProjectFolder.data.map((folder: BuilderProjectFolder) => {
+		return {
+			label: folder.folder_name,
+			value: folder.folder_name,
+		};
+	});
+
+	return [homeOption, ...options];
+});
 
 const handleClick = () => {
 	console.log("clicked");
