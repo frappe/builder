@@ -17,10 +17,10 @@
 				Home
 			</span>
 			<span
-				class="flex cursor-pointer gap-2 rounded p-2 text-base text-ink-gray-3"
+				class="flex cursor-default gap-2 rounded p-2 text-base text-ink-gray-2"
 				v-for="project in builderProjectFolder.data"
 				:class="{
-					'cursor-pointer text-ink-gray-6 hover:text-ink-gray-9': currentFolder !== project.folder_name,
+					'cursor-pointer !text-ink-gray-6 hover:!text-ink-gray-9': currentFolder !== project.folder_name,
 				}"
 				@click="folderSelected(project.folder_name)">
 				<FolderIcon class="size-4"></FolderIcon>
