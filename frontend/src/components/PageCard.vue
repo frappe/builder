@@ -34,11 +34,6 @@
 									onClick: () => store.openInDesk(page),
 									icon: 'arrow-up-right',
 								},
-								{
-									label: 'Move to Folder',
-									onClick: () => showFolderSelector(page),
-									icon: 'log-out',
-								},
 							],
 						},
 						{
@@ -67,17 +62,8 @@ import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { UseTimeAgo } from "@vueuse/components";
 import { Dropdown } from "frappe-ui";
-import { ref } from "vue";
-
-const showFolderSelectorDialog = ref(false);
-const targetPage = ref<BuilderPage | null>(null);
 
 const store = useStore();
-
-const showFolderSelector = (page: BuilderPage) => {
-	targetPage.value = page;
-	showFolderSelectorDialog.value = true;
-};
 
 defineProps<{
 	page: BuilderPage;

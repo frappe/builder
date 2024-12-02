@@ -15,12 +15,13 @@
 			</span>
 		</div>
 		<div class="flex flex-col">
-			<div class="flex justify-between p-2 text-base text-ink-gray-6">
+			<div class="flex items-center justify-between p-2 text-base text-ink-gray-6">
 				<span>Folders</span>
-				<FeatherIcon
-					name="plus"
+				<BuilderButton
+					variant="subtle"
+					icon="plus"
 					class="size-4 cursor-pointer hover:text-ink-gray-8"
-					@click="showNewFolderDialog = true"></FeatherIcon>
+					@click="showNewFolderDialog = true"></BuilderButton>
 			</div>
 			<span
 				class="flex cursor-pointer gap-2 rounded p-2 text-base text-ink-gray-6"
@@ -45,7 +46,6 @@ import SettingsIcon from "@/components/Icons/SettingsGear.vue";
 import NewFolder from "@/components/Modals/NewFolder.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import useStore from "@/store";
-import { FeatherIcon } from "frappe-ui";
 import { ref } from "vue";
 
 const store = useStore();
