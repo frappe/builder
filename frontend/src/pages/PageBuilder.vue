@@ -584,7 +584,6 @@ watch(
 				page_title: "My Page",
 				draft_blocks: [store.getRootBlock()],
 			} as BuilderPage;
-			console.log("Creating new page", store.activeFolder);
 			if (store.activeFolder) {
 				pageInfo["project_folder"] = store.activeFolder;
 			}
