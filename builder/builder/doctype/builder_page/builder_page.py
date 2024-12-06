@@ -1,6 +1,7 @@
 # Copyright (c) 2023, asdf and contributors
 # For license information, please see license.txt
 
+import copy
 import os
 import shutil
 
@@ -544,6 +545,7 @@ def extend_block(block, overridden_block):
 		block["innerHTML"] = overridden_block["innerHTML"]
 	component_children = block.get("children", [])
 	overridden_children = overridden_block.get("children", [])
+	extended_children = []
 	for overridden_child in overridden_children:
 		component_child = next(
 			(
@@ -558,9 +560,11 @@ def extend_block(block, overridden_block):
 			None,
 		)
 		if component_child:
-			extend_block(component_child, overridden_child)
+			extended_children.append(extend_block(copy.deepcopy(component_child), overridden_child))
 		else:
-			component_children.insert(overridden_children.index(overridden_child), overridden_child)
+			extended_children.append(overridden_child)
+	block["children"] = extended_children
+	return block
 
 
 def set_dynamic_content_placeholder(block, data_key=False):
