@@ -1,19 +1,28 @@
 <div align="center">
-    <a href="https://frappe.io/products/builder">
-        <img src="https://raw.githubusercontent.com/frappe/builder/master/frontend/public/builder_logo.png" height="80" alt="Frappe Builder Logo">
-    </a>
-    <h2>Frappe Builder</h2>
-    <p>Crafting Web Pages Made Effortless!</p>
+
+<a href="https://frappe.io/products/builder">
+    <img src="https://raw.githubusercontent.com/frappe/builder/master/frontend/public/builder_logo.png" height="100" alt="Frappe Builder Logo">
+</a>
+
+<h1>Frappe Builder</h1>
+
+**Crafting Web Pages Made Effortless!**
+
+
+![GitHub license](https://img.shields.io/github/license/frappe/builder)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/frappe/builder)
+[![codecov](https://codecov.io/github/frappe/builder/branch/develop/graph/badge.svg)](https://codecov.io/github/frappe/builder)
+[![unittests](https://github.com/frappe/builder/actions/workflows/server-tests.yml/badge.svg)](https://github.com/frappe/builder/actions/workflows/server-tests.yml)
 
 ![Frappe Builder](https://github.com/user-attachments/assets/e906545e-101e-4d55-8a25-2c4f6380ea5e)
-[Web page design credit](https://www.figma.com/community/file/949266436474872912)
+[Website](https://frappe.io/builder) - [Documentation](https://docs.frappe.io/builder)
 </div>
 
-# Frappe Builder
+## Frappe Builder
 
 Frappe Builder is a low-code website builder designed for simplicity, speed, and flexibility. Craft beautiful websites effortlessly with an intuitive visual builder. Whether you're a designer looking for ease or a developer seeking customization, Frappe Builder empowers you. It also features a click-to-publish option that gives you the complete end-to-end website creation experience.
 
-## Key Features
+### Key Features
 
 - **Intuitive Visual Builder:** Simplify your workflow with a Figma-like editor.
 - **Responsive Views:** Ensure your sites look great on any device without the fuss.
@@ -27,43 +36,44 @@ Frappe Builder is a low-code website builder designed for simplicity, speed, and
 
 ### Managed Hosting
 
-Get started with your personal or business site with a few clicks on [Frappe Cloud](https://frappecloud.com/builder/signup).
+Get started with your personal or business site with a few clicks on Frappe Cloud - our official hosting service.
+<div>
+	<a href="https://frappecloud.com/builder/signup" target="_blank">
+		<picture>
+			<source media="(prefers-color-scheme: dark)" srcset="https://frappe.io/files/try-on-fc-white.png">
+			<img src="https://frappe.io/files/try-on-fc-black.png" alt="Try on Frappe Cloud" height="28" />
+		</picture>
+	</a>
+</div>
 
-### Docker (Recommended)
 
-The quickest way to set up Frappe Builder and take it for a test ride.
+### Self Hosting
 
-Frappe framework is multi-tenant and supports multiple apps by default. This docker compose is just a standalone version with Frappe Builder pre-installed. Just put it behind your desired reverse-proxy if needed, and you're good to go.  
-  
-If you wish to use multiple Frappe apps or need multi-tenancy. Take a look at our production ready self-hosted workflow, or join us on Frappe Cloud to get first party support and hassle-free hosting.
+Follow these steps to set up Frappe Builder in production:
 
-**Step 1**: Setup folder and download the required files
+**Step 1**: Download the easy install script
 
-    mkdir frappe-builder
-    cd frappe-builder
+```bash
+wget https://frappe.fyi/easy-install.py
+```
 
-**Step 2**: Download the required files
+**Step 2**: Run the deployment command
 
-Docker Compose File:
+```bash
+python3 ./easy-install.py deploy \
+    --project=builder_prod_setup \
+    --email=your_email.example.com \
+    --image=ghcr.io/frappe/builder \
+    --version=stable \
+    --app=builder \
+    --sitename subdomain.domain.tld
+```
 
-    wget -O docker-compose.yml https://raw.githubusercontent.com/frappe/builder/develop/docker/docker-compose.yml
+Replace the following parameters with your values:
+- `your_email.example.com`: Your email address
+- `subdomain.domain.tld`: Your domain name where Insights will be hosted
 
-Frappe Builder bench setup script
-
-    wget -O init.sh https://raw.githubusercontent.com/frappe/builder/develop/docker/init.sh
-
-**Step 3**: Run the container and daemonize it
-
-    docker compose up -d
-
-**Step 4**: The site [http://builder.localhost](http://builder.localhost) should now be available. The default credentials are:
-
-> username: administrator  
-> password: admin
-
-### Self-hosting
-
-If you prefer self-hosting, follow the official [Frappe Bench Installation](https://github.com/frappe/bench#installation) instructions.
+The script will set up a production-ready instance of Frappe Builder with all the necessary configurations in about 5 minutes.
 
 ## Want to just try out or contribute?
 
@@ -94,6 +104,7 @@ https://github.com/frappe/builder/assets/13928957/c96ce2ce-9eb3-4bd5-8e92-0b39d9
     $ bench browse sitename.localhost --user Administrator
     ```
 5. Access the builder page at `sitename.localhost:8000/builder` in your web browser.
+
 
 ## Need help?
 
