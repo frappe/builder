@@ -48,7 +48,7 @@
 								{{ store?.activePage?.page_title || "My Page" }}
 							</span>
 							-
-							<span class="flex max-w-96 truncate text-base text-ink-gray-5" v-html="routeString"></span>
+							<span class="max-w-96 truncate text-base text-ink-gray-5" v-html="routeString"></span>
 						</div>
 						<FeatherIcon
 							name="external-link"
