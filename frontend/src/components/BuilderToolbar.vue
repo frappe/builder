@@ -44,11 +44,16 @@
 										store.activePage?.published && store.activePage?.authenticated_access
 									"></AuthenticatedUserIcon>
 							</Tooltip>
-							<span class="max-w-48 truncate text-base text-ink-gray-8">
+							<span
+								class="max-w-48 truncate text-base text-ink-gray-8"
+								:title="store?.activePage?.page_title || 'My Page'">
 								{{ store?.activePage?.page_title || "My Page" }}
 							</span>
 							-
-							<span class="max-w-96 truncate text-base text-ink-gray-5" v-html="routeString"></span>
+							<span
+								class="max-w-96 truncate text-base text-ink-gray-5"
+								v-html="routeString"
+								:title="getTextContent(routeString)"></span>
 						</div>
 						<FeatherIcon
 							name="external-link"
@@ -156,6 +161,7 @@ import PlayIcon from "@/components/Icons/Play.vue";
 import SettingsGearIcon from "@/components/Icons/SettingsGear.vue";
 import { webPages } from "@/data/webPage";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { getTextContent } from "@/utils/helpers";
 import { Dialog, Tooltip } from "frappe-ui";
 import Popover from "frappe-ui/src/components/Popover.vue";
 import { computed, ref } from "vue";
