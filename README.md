@@ -54,7 +54,7 @@ Follow these steps to set up Frappe Builder in production:
 **Step 1**: Download the easy install script
 
 ```bash
-wget https://frappe.fyi/easy-install.py
+wget https://frappe.io/easy-install.py
 ```
 
 **Step 2**: Run the deployment command
