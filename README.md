@@ -22,6 +22,10 @@
 
 Frappe Builder is a low-code website builder designed for simplicity, speed, and flexibility. Craft beautiful websites effortlessly with an intuitive visual builder. Whether you're a designer looking for ease or a developer seeking customization, Frappe Builder empowers you. It also features a click-to-publish option that gives you the complete end-to-end website creation experience.
 
+### Motivation
+
+Most existing solutions were either too complex, too restrictive, or difficult to integrate with the Frappe ecosystem. Additionally, pages built with these tools were often bloated with unnecessary scripts and styles. I wanted to take a stab at solving this problem while prioritising performance from day one. I aimed to address two major issues with this project: providing an intuitive way to design a web page and enabling one-click publishing. As a web developer, it helps me scratch my own itch, and I hope it helps others too.
+
 ### Key Features
 
 - **Intuitive Visual Builder:** Simplify your workflow with a Figma-like editor.
@@ -32,7 +36,7 @@ Frappe Builder is a low-code website builder designed for simplicity, speed, and
 - **One-Click Publishing:** Instantly share your creations with the world in a single click.
 - **Performance Excellence:** Frappe Builder does not bloat web pages with unnecessary scripts hence pages built with Frappe Builder are highly performant, consistently scoring high on Google Lighthouse tests.
 
-## Getting Started
+## Getting Started (Production)
 
 ### Managed Hosting
 
@@ -62,7 +66,7 @@ wget https://frappe.io/easy-install.py
 ```bash
 python3 ./easy-install.py deploy \
     --project=builder_prod_setup \
-    --email=your_email.example.com \
+    --email=email@example.com \
     --image=ghcr.io/frappe/builder \
     --version=stable \
     --app=builder \
@@ -70,12 +74,12 @@ python3 ./easy-install.py deploy \
 ```
 
 Replace the following parameters with your values:
-- `your_email.example.com`: Your email address
+- `email@example.com`: Your email address
 - `subdomain.domain.tld`: Your domain name where Builder will be hosted
 
 The script will set up a production-ready instance of Frappe Builder with all the necessary configurations in about 5 minutes.
 
-## Want to just try out or contribute?
+## Getting Started (Development)
 
 ### Codespaces
 
@@ -105,11 +109,22 @@ https://github.com/frappe/builder/assets/13928957/c96ce2ce-9eb3-4bd5-8e92-0b39d9
     ```
 5. Access the builder page at `sitename.localhost:8000/builder` in your web browser.
 
+<h2></h2>
 
-## Need help?
+### Need help?
 
-Join our [telegram group](https://t.me/frappebuilder) for instant help.
+- [Telegram Public Group](https://t.me/frappebuilder)
+- [Discuss Forum](https://discuss.frappe.io/c/frappe-builder/83)
+- [Documentation](https://docs.frappe.io/builder)
 
-## License
+<br>
+<hr>
 
-[GNU Affero General Public License v3.0](LICENSE)
+<div align="center">
+	<a href="https://frappe.io" target="_blank">
+		<picture>
+			<source media="(prefers-color-scheme: dark)" srcset="https://frappe.io/files/Frappe-white.png">
+			<img src="https://frappe.io/files/Frappe-black.png" alt="Frappe Technologies" height="28"/>
+		</picture>
+	</a>
+</div>
