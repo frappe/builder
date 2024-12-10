@@ -71,7 +71,7 @@ python3 ./easy-install.py deploy \
 
 Replace the following parameters with your values:
 - `your_email.example.com`: Your email address
-- `subdomain.domain.tld`: Your domain name where Insights will be hosted
+- `subdomain.domain.tld`: Your domain name where Builder will be hosted
 
 The script will set up a production-ready instance of Frappe Builder with all the necessary configurations in about 5 minutes.
 
