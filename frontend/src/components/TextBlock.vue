@@ -32,7 +32,7 @@
 				<TextInput
 					v-model="textLink"
 					placeholder="https://example.com"
-					class="link-input focus:[&>input]:ring-outline-gray-3 w-56 text-sm [&>input]:border-outline-gray-1 [&>input]:bg-surface-gray-2 [&>input]:text-ink-gray-8 [&>input]:hover:!border-outline-gray-2 [&>input]:hover:!bg-surface-gray-1 focus:[&>input]:border-outline-gray-3 focus:[&>input]:bg-surface-gray-1 [&>input]:focus-visible:bg-surface-gray-1"
+					class="link-input w-56 text-sm [&>input]:border-outline-gray-1 [&>input]:bg-surface-gray-2 [&>input]:text-ink-gray-8 [&>input]:hover:!border-outline-gray-2 [&>input]:hover:!bg-surface-gray-1 focus:[&>input]:border-outline-gray-3 focus:[&>input]:bg-surface-gray-1 focus:[&>input]:ring-outline-gray-3 [&>input]:focus-visible:bg-surface-gray-1"
 					@keydown.enter="
 						() => {
 							if (!linkInput) return;
@@ -378,8 +378,12 @@ defineExpose({
 	component,
 });
 </script>
-<style>
-.__text_block__ [contenteditable="true"] {
-	caret-color: currentcolor !important;
+<style scoped>
+.__text_block__ :deep([contenteditable="true"]) {
+	caret-color: currentcolor;
+}
+
+.__text_block__ :deep(.ProseMirror) {
+	word-break: unset;
 }
 </style>
