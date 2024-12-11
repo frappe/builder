@@ -4,17 +4,23 @@
     <img src="https://raw.githubusercontent.com/frappe/builder/master/frontend/public/builder_logo.png" height="100" alt="Frappe Builder Logo">
 </a>
 
+
 <h1>Frappe Builder</h1>
 
-**Crafting Web Pages Made Effortless!**
+**Crafting Web Pages Made Effortless**
 
 
-![GitHub license](https://img.shields.io/github/license/frappe/builder)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/frappe/builder)
 [![codecov](https://codecov.io/github/frappe/builder/branch/develop/graph/badge.svg)](https://codecov.io/github/frappe/builder)
 [![unittests](https://github.com/frappe/builder/actions/workflows/server-tests.yml/badge.svg)](https://github.com/frappe/builder/actions/workflows/server-tests.yml)
 
-![Frappe Builder](https://github.com/user-attachments/assets/e906545e-101e-4d55-8a25-2c4f6380ea5e)
+<div>
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/0de6372c-41cb-4fce-ba74-6a74f13860f3">
+        <img width="1402" alt="Frappe Builder Screenshot" src="https://github.com/user-attachments/assets/dd023230-1550-4a6b-a7d0-a0c2bd5384e2">
+    </picture>
+</div>
+
 [Website](https://frappe.io/builder) - [Documentation](https://docs.frappe.io/builder)
 </div>
 
@@ -118,7 +124,8 @@ The script will set up a production-ready instance of Frappe Builder with all th
 - [Documentation](https://docs.frappe.io/builder)
 - [Figma Plugin (Beta)](https://www.figma.com/community/plugin/1417835732014419099/figma-to-frappe-builder)
 
-<hr>
+<h2></h2>
+<br>
 <div align="center">
 	<a href="https://frappe.io" target="_blank">
 		<picture>
