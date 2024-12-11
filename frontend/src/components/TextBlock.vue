@@ -378,8 +378,12 @@ defineExpose({
 	component,
 });
 </script>
-<style>
-.__text_block__ [contenteditable="true"] {
-	caret-color: currentcolor !important;
+<style scoped>
+.__text_block__ :deep([contenteditable="true"]) {
+	caret-color: currentcolor;
+}
+
+.__text_block__ :deep(.ProseMirror) {
+	word-break: unset;
 }
 </style>
