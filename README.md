@@ -103,7 +103,7 @@ The script will set up a production-ready instance of Frappe Builder with all th
 5. Log in with "Administrator" as the username and "admin" as the password.
 6. Go to `<random-id>.github.dev/builder` to access the builder interface.
 
-**For Frontend Developement**
+**For Frontend Development**
 1. Open a new terminal session and cd into `frappe-bench/apps/builder`, and run the following commands:
     ```
     yarn install
@@ -113,13 +113,18 @@ The script will set up a production-ready instance of Frappe Builder with all th
 
 **Note:** You'll find all the code related to Builder's frontend inside `frappe-bench/apps/builder/frontend`
 
-<h2></h2>
+### Under the hood
 
-### Need help?
+- [Frappe Framework](https://github.com/frappe/frappe): A full-stack web application framework written in Python and Javascript. The framework provides a robust foundation for building web applications, including a database abstraction layer, user authentication, and a REST API.
+- [Frappe UI](https://github.com/frappe/frappe-ui): A Vue-based UI library, to provide a modern user interface. The Frappe UI library provides a variety of components that can be used to build single-page applications on top of the Frappe Framework.
+
+
+### Links
 
 - [Telegram Public Group](https://t.me/frappebuilder)
 - [Discuss Forum](https://discuss.frappe.io/c/frappe-builder/83)
 - [Documentation](https://docs.frappe.io/builder)
+- [Figma Plugin (Beta)](https://www.figma.com/community/plugin/1417835732014419099/figma-to-frappe-builder)
 
 <br>
 <hr>
