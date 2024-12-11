@@ -7,16 +7,15 @@ type CanvasState = {
 	block: string;
 	selectedBlockIds: string[];
 };
-
 type PauseId = string & { __brand: "PauseId" };
 
 const CAPACITY = 200;
-const DEBOUNCE_DELAY = 200;
+const DEBOUNCE_DELAY = 100;
 
 export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<string[]>) {
 	const undoStack = ref([]) as Ref<CanvasState[]>;
 	const redoStack = ref([]) as Ref<CanvasState[]>;
-	const last = ref(createHistoryRecord(source, selectedBlockIds));
+	const last = ref(createHistoryRecord());
 	const pauseIdSet = new Set<PauseId>();
 
 	const {
@@ -31,20 +30,6 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<strin
 		pause: pauseSelectionWatcher,
 		resume: resumeSelectionWatcher,
 	} = pausableFilter();
-
-	function commit() {
-		// console.log("committing...");
-		undoStack.value.unshift(last.value);
-		last.value = createHistoryRecord(source, selectedBlockIds);
-		if (undoStack.value.length > CAPACITY) {
-			undoStack.value.splice(CAPACITY, Number.POSITIVE_INFINITY);
-		}
-		if (redoStack.value.length) {
-			redoStack.value.splice(0, redoStack.value.length);
-		}
-	}
-
-	// const debouncedCommit = useDebounceFn(commit, DEBOUNCE_DELAY);
 
 	const {
 		ignoreUpdates: ignoreBlockUpdates,
@@ -66,6 +51,30 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<strin
 		eventFilter: selectionWatherFilter,
 	});
 
+	function commit() {
+		undoStack.value.unshift(last.value);
+		last.value = createHistoryRecord();
+		if (undoStack.value.length > CAPACITY) {
+			undoStack.value.splice(CAPACITY, Number.POSITIVE_INFINITY);
+		}
+		if (redoStack.value.length) {
+			redoStack.value.splice(0, redoStack.value.length);
+		}
+	}
+
+	function updateSelections() {
+		nextTick(() => {
+			last.value.selectedBlockIds = [...selectedBlockIds.value];
+		});
+	}
+
+	function createHistoryRecord() {
+		return {
+			block: getBlockString(source.value),
+			selectedBlockIds: selectedBlockIds.value,
+		};
+	}
+
 	function setSource(value: CanvasState) {
 		ignorePrevAsyncBlockUpdates();
 		ignoreBlockUpdates(() => {
@@ -86,12 +95,25 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<strin
 		}
 	}
 
+	function canUndo() {
+		return undoStack.value.length > 0;
+	}
+
 	function redo() {
 		const state = redoStack.value.shift();
 		if (state) {
 			undoStack.value.unshift(last.value);
 			setSource(state);
 		}
+	}
+
+	function canRedo() {
+		return redoStack.value.length > 0;
+	}
+
+	function stop() {
+		stopBlockWatcher();
+		stopSelectedBlockUpdates();
 	}
 
 	const clear = () => {
@@ -104,27 +126,17 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<strin
 		clear();
 	}
 
-	function canUndo() {
-		return undoStack.value.length > 0;
-	}
-
-	function canRedo() {
-		return redoStack.value.length > 0;
-	}
-
-	function updateSelections() {
-		nextTick(() => {
-			last.value.selectedBlockIds = [...selectedBlockIds.value];
-		});
-	}
-
 	function pause() {
 		pauseBlockWatcher();
 		pauseSelectionWatcher();
 		const pauseId = generateId() as PauseId;
 		pauseIdSet.add(pauseId);
-		// console.log("\npausing...", pauseId);
 		return pauseId as PauseId;
+	}
+
+	function resumeTracking() {
+		resumeBlockWatcher();
+		resumeSelectionWatcher();
 	}
 
 	function resume(pauseId?: PauseId, commitNow?: boolean, force?: boolean) {
@@ -144,34 +156,23 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<strin
 		});
 	}
 
-	function resumeTracking() {
-		resumeBlockWatcher();
-		resumeSelectionWatcher();
-	}
-
-	function stop() {
-		stopBlockWatcher();
-		stopSelectedBlockUpdates();
+	function batch(callback: () => void) {
+		const pauseId = pause();
+		callback();
+		resume(pauseId, true);
 	}
 
 	return {
 		undo,
 		redo,
-		dispose,
 		pause,
 		resume,
+		batch,
 		canUndo,
 		canRedo,
-		isTracking,
-		batch: () => {},
+		dispose,
 		undoStack,
 		redoStack,
-	};
-}
-
-function createHistoryRecord(source: Ref<Block>, selectedBlockIds: Ref<string[]>) {
-	return {
-		block: getBlockString(source.value),
-		selectedBlockIds: selectedBlockIds.value,
+		isTracking,
 	};
 }
