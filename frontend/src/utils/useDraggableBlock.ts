@@ -34,7 +34,7 @@ export function useDraggableBlock(block: Block, target: HTMLElement, options: { 
 	};
 
 	const handleDrop = (e: DragEvent) => {
-		store.activeCanvas?.history.pause();
+		const pauseId = store.activeCanvas?.history?.pause();
 		// move block to new container
 		if (e.dataTransfer) {
 			const draggingBlockId = e.dataTransfer.getData("draggingBlockId");
@@ -55,7 +55,7 @@ export function useDraggableBlock(block: Block, target: HTMLElement, options: { 
 				e.stopPropagation();
 			}
 		}
-		store.activeCanvas?.history.resume(true);
+		pauseId && store.activeCanvas?.history?.resume(pauseId, true);
 	};
 
 	const handleDragEnd = (e: DragEvent) => {

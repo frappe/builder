@@ -32,7 +32,7 @@
 				<TextInput
 					v-model="textLink"
 					placeholder="https://example.com"
-					class="link-input focus:[&>input]:ring-outline-gray-3 w-56 text-sm [&>input]:border-outline-gray-1 [&>input]:bg-surface-gray-2 [&>input]:text-ink-gray-8 [&>input]:hover:!border-outline-gray-2 [&>input]:hover:!bg-surface-gray-1 focus:[&>input]:border-outline-gray-3 focus:[&>input]:bg-surface-gray-1 [&>input]:focus-visible:bg-surface-gray-1"
+					class="link-input w-56 text-sm [&>input]:border-outline-gray-1 [&>input]:bg-surface-gray-2 [&>input]:text-ink-gray-8 [&>input]:hover:!border-outline-gray-2 [&>input]:hover:!bg-surface-gray-1 focus:[&>input]:border-outline-gray-3 focus:[&>input]:bg-surface-gray-1 focus:[&>input]:ring-outline-gray-3 [&>input]:focus-visible:bg-surface-gray-1"
 					@keydown.enter="
 						() => {
 							if (!linkInput) return;
@@ -227,10 +227,10 @@ watch(
 	(editable) => {
 		editor.value?.setEditable(editable);
 		if (editable) {
-			store.activeCanvas?.history.pause();
+			store.activeCanvas?.history?.pause();
 			editor.value?.commands.focus("all");
 		} else {
-			store.activeCanvas?.history.resume(dataChanged.value);
+			store.activeCanvas?.history?.resume(undefined, dataChanged.value, true);
 			dataChanged.value = false;
 		}
 	},

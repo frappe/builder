@@ -60,10 +60,10 @@ onMounted(() => {
 
 watch(resizing, () => {
 	if (resizing.value) {
-		store.activeCanvas?.history.pause();
+		store.activeCanvas?.history?.pause();
 		emit("resizing", true);
 	} else {
-		store.activeCanvas?.history.resume(true);
+		store.activeCanvas?.history?.resume(undefined, true, true);
 		emit("resizing", false);
 	}
 });

@@ -343,12 +343,12 @@ useEventListener(document, "paste", async (e) => {
 // TODO: Refactor with useMagicKeys
 useEventListener(document, "keydown", (e) => {
 	if (isTargetEditable(e)) return;
-	if (e.key === "z" && isCtrlOrCmd(e) && !e.shiftKey && store.activeCanvas?.history.canUndo) {
+	if (e.key === "z" && isCtrlOrCmd(e) && !e.shiftKey && store.activeCanvas?.history?.canUndo) {
 		store.activeCanvas?.history.undo();
 		e.preventDefault();
 		return;
 	}
-	if (e.key === "z" && e.shiftKey && isCtrlOrCmd(e) && store.activeCanvas?.history.canRedo) {
+	if (e.key === "z" && e.shiftKey && isCtrlOrCmd(e) && store.activeCanvas?.history?.canRedo) {
 		store.activeCanvas?.history.redo();
 		e.preventDefault();
 		return;

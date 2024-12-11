@@ -290,7 +290,7 @@ function setEvents() {
 		if (store.mode === "select") {
 			return;
 		} else {
-			canvasHistory.value?.pause();
+			const pauseId = canvasHistory.value?.pause();
 			ev.stopPropagation();
 			let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
 			let block = getFirstBlock();
@@ -358,7 +358,7 @@ function setEvents() {
 						store.mode = "select";
 					}, 50);
 					if (store.mode === "text") {
-						canvasHistory.value?.resume(true);
+						pauseId && canvasHistory.value?.resume(pauseId, true);
 						store.editableBlock = childBlock;
 						return;
 					}
@@ -373,7 +373,7 @@ function setEvents() {
 							childBlock.setBaseStyle("height", "200px");
 						}
 					}
-					canvasHistory.value?.resume(true);
+					pauseId && canvasHistory.value?.resume(pauseId, true);
 				},
 				{ once: true },
 			);
