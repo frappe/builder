@@ -32,8 +32,7 @@ Most existing solutions were either too complex, too restrictive, or difficult t
 - **Responsive Views:** Ensure your sites look great on any device without the fuss.
 - **Frappe CMS Integration:** Easily fetch data from your database and create dynamic pages.
 - **Scripting Capabilities:** Customize with client scripts, global scripts, and styles.
-- **Efficient Workflow:** Use subtle shortcuts like image dropping and streamlined page copying and more to efficiently develop pages.
-- **One-Click Publishing:** Instantly share your creations with the world in a single click.
+- **One-Click Publishing:** Instantly share your creation with the world in a single click.
 - **Performance Excellence:** Frappe Builder does not bloat web pages with unnecessary scripts hence pages built with Frappe Builder are highly performant, consistently scoring high on Google Lighthouse tests.
 
 ## Getting Started (Production)
@@ -81,9 +80,21 @@ The script will set up a production-ready instance of Frappe Builder with all th
 
 ## Getting Started (Development)
 
-### Codespaces
+### Local Setup
 
-https://github.com/frappe/builder/assets/13928957/c96ce2ce-9eb3-4bd5-8e92-0b39d971cb00
+1. [Setup Bench](https://docs.frappe.io/framework/user/en/installation).
+1. In the frappe-bench directory, run `bench start` and keep it running.
+1. Open a new terminal session and cd into `frappe-bench` directory and run following commands:
+    ```sh
+    $ bench get-app builder
+    $ bench new-site sitename.localhost --install-app builder
+    $ bench browse sitename.localhost --user Administrator
+    ```
+1. Access the builder page at `sitename.localhost:8000/builder` in your web browser.
+
+### Github Codespaces
+
+<!-- [Video Reference](https://github.com/frappe/builder/assets/13928957/c96ce2ce-9eb3-4bd5-8e92-0b39d971cb00) -->
 
 1. Open [this link](https://github.com/codespaces/new?hide_repo_select=true&ref=master&repo=587413812&skip_quickstart=true&machine=standardLinux32gb&devcontainer_path=.devcontainer%2Fdevcontainer.json&geo=SoutheastAsia) and click on "Create Codespace".
 2. Wait for initialization (~15 mins).
@@ -92,22 +103,15 @@ https://github.com/frappe/builder/assets/13928957/c96ce2ce-9eb3-4bd5-8e92-0b39d9
 5. Log in with "Administrator" as the username and "admin" as the password.
 6. Go to `<random-id>.github.dev/builder` to access the builder interface.
 
-### Local Setup
+**For Frontend Developement**
+1. Open a new terminal session and cd into `frappe-bench/apps/builder`, and run the following commands:
+    ```
+    yarn install
+    yarn dev
+    ```
+1. Now, you can access the site on vite dev server at `http://sitename.localhost:8080`
 
-1. [Install Bench](https://github.com/frappe/bench).
-2. Install Frappe Builder app:
-    ```sh
-    $ bench get-app builder
-    ```
-3. Create a site with the builder app:
-    ```sh
-    $ bench --site sitename.localhost install-app builder
-    ```
-4. Open the site in the browser:
-    ```sh
-    $ bench browse sitename.localhost --user Administrator
-    ```
-5. Access the builder page at `sitename.localhost:8000/builder` in your web browser.
+**Note:** You'll find all the code related to Builder's frontend inside `frappe-bench/apps/builder/frontend`
 
 <h2></h2>
 
