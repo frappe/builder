@@ -17,9 +17,10 @@
 <div>
     <picture>
         <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/0de6372c-41cb-4fce-ba74-6a74f13860f3">
-        <img width="1402" alt="Frappe Builder Screenshot" src="https://github.com/user-attachments/assets/dd023230-1550-4a6b-a7d0-a0c2bd5384e2">
+        <img width="1402" alt="Frappe Builder Screenshot" src="https://github.com/user-attachments/assets/5801b6c2-d7f1-4f5f-a42c-075c06183c2b">
     </picture>
 </div>
+
 
 [Website](https://frappe.io/builder) - [Documentation](https://docs.frappe.io/builder)
 </div>
