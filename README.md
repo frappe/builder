@@ -35,6 +35,13 @@ Most existing solutions were either too complex, too restrictive, or difficult t
 - **One-Click Publishing:** Instantly share your creation with the world in a single click.
 - **Performance Excellence:** Frappe Builder does not bloat web pages with unnecessary scripts hence pages built with Frappe Builder are highly performant, consistently scoring high on Google Lighthouse tests.
 
+### Under the hood
+
+- [Frappe Framework](https://github.com/frappe/frappe): A full-stack web application framework.
+- [Frappe UI](https://github.com/frappe/frappe-ui): A Vue-based UI library, to provide a modern user interface.
+
+
+
 ## Getting Started (Production)
 
 ### Managed Hosting
@@ -92,17 +99,6 @@ The script will set up a production-ready instance of Frappe Builder with all th
     ```
 1. Access the builder page at `sitename.localhost:8000/builder` in your web browser.
 
-### Github Codespaces
-
-<!-- [Video Reference](https://github.com/frappe/builder/assets/13928957/c96ce2ce-9eb3-4bd5-8e92-0b39d971cb00) -->
-
-1. Open [this link](https://github.com/codespaces/new?hide_repo_select=true&ref=master&repo=587413812&skip_quickstart=true&machine=standardLinux32gb&devcontainer_path=.devcontainer%2Fdevcontainer.json&geo=SoutheastAsia) and click on "Create Codespace".
-2. Wait for initialization (~15 mins).
-3. Run `bench start` from the terminal tab.
-4. Click on the link beside "8000" port under "Ports" tab.
-5. Log in with "Administrator" as the username and "admin" as the password.
-6. Go to `<random-id>.github.dev/builder` to access the builder interface.
-
 **For Frontend Development**
 1. Open a new terminal session and cd into `frappe-bench/apps/builder`, and run the following commands:
     ```
@@ -113,11 +109,7 @@ The script will set up a production-ready instance of Frappe Builder with all th
 
 **Note:** You'll find all the code related to Builder's frontend inside `frappe-bench/apps/builder/frontend`
 
-### Under the hood
-
-- [Frappe Framework](https://github.com/frappe/frappe): A full-stack web application framework written in Python and Javascript. The framework provides a robust foundation for building web applications, including a database abstraction layer, user authentication, and a REST API.
-- [Frappe UI](https://github.com/frappe/frappe-ui): A Vue-based UI library, to provide a modern user interface. The Frappe UI library provides a variety of components that can be used to build single-page applications on top of the Frappe Framework.
-
+<h2></h2>
 
 ### Links
 
@@ -126,9 +118,7 @@ The script will set up a production-ready instance of Frappe Builder with all th
 - [Documentation](https://docs.frappe.io/builder)
 - [Figma Plugin (Beta)](https://www.figma.com/community/plugin/1417835732014419099/figma-to-frappe-builder)
 
-<br>
 <hr>
-
 <div align="center">
 	<a href="https://frappe.io" target="_blank">
 		<picture>
