@@ -423,6 +423,10 @@ async function getFontName(file_url: string) {
 	return opentype.parse(await getFontArrayBuffer(file_url)).names.fullName.en;
 }
 
+function generateId() {
+	return Math.random().toString(36).substr(2, 9);
+}
+
 export {
 	addPxToNumber,
 	alert,
@@ -431,6 +435,7 @@ export {
 	dataURLtoFile,
 	detachBlockFromComponent,
 	findNearestSiblingIndex,
+	generateId,
 	getBlockCopy,
 	getBlockInstance,
 	getBlockObjectCopy as getBlockObject,

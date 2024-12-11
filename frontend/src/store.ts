@@ -214,7 +214,6 @@ const useStore = defineStore("store", {
 			scrollLayerIntoView: boolean | ScrollLogicalPosition = true,
 			scrollBlockIntoView = false,
 		) {
-			this.activeCanvas?.history?.pause();
 			if (this.settingPage) {
 				return;
 			}
@@ -234,8 +233,6 @@ const useStore = defineStore("store", {
 						?.scrollIntoView({ behavior: "instant", block: align, inline: "center" });
 				});
 			}
-
-			this.activeCanvas?.history?.resume();
 			this.editableBlock = null;
 			if (scrollBlockIntoView) {
 				this.activeCanvas?.scrollBlockIntoView(block);

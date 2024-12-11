@@ -734,7 +734,7 @@ class Block implements BlockOptions {
 			return;
 		}
 		const store = useStore();
-		store.activeCanvas?.history.pause();
+		const pauseId = store.activeCanvas?.history?.pause();
 		const blockCopy = getBlockCopy(this);
 		const parentBlock = this.getParentBlock();
 
@@ -756,8 +756,8 @@ class Block implements BlockOptions {
 			if (child) {
 				child.selectBlock();
 			}
-			store.activeCanvas?.history.resume(true);
 		});
+		pauseId && store.activeCanvas?.history?.resume(pauseId, true);
 	}
 	getPadding() {
 		const padding = this.getStyle("padding") || "0px";

@@ -1,52 +1,82 @@
 import Block from "@/utils/block";
-import { getBlockInstance, getBlockObject } from "@/utils/helpers";
+import { generateId, getBlockInstance, getBlockString } from "@/utils/helpers";
 import { debounceFilter, pausableFilter, watchIgnorable } from "@vueuse/core";
 import { nextTick, ref, Ref } from "vue";
 
 type CanvasState = {
-	block: Block;
+	block: string;
 	selectedBlockIds: string[];
 };
-const CAPACITY = 50;
+
+type PauseId = string & { __brand: "PauseId" };
+
+const CAPACITY = 200;
 const DEBOUNCE_DELAY = 200;
 
 export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<string[]>) {
+	const undoStack = ref([]) as Ref<CanvasState[]>;
+	const redoStack = ref([]) as Ref<CanvasState[]>;
+	const last = ref(createHistoryRecord(source, selectedBlockIds));
+	const pauseIdSet = new Set<PauseId>();
+
 	const {
-		eventFilter: composedFilter,
-		pause,
-		resume: resumeTracking,
+		eventFilter: blockWatcherFilter,
+		pause: pauseBlockWatcher,
+		resume: resumeBlockWatcher,
 		isActive: isTracking,
 	} = pausableFilter(debounceFilter(DEBOUNCE_DELAY));
 
-	const { ignoreUpdates, ignorePrevAsyncUpdates, stop } = watchIgnorable(source, commit, {
+	const {
+		eventFilter: selectionWatherFilter,
+		pause: pauseSelectionWatcher,
+		resume: resumeSelectionWatcher,
+	} = pausableFilter();
+
+	function commit() {
+		// console.log("committing...");
+		undoStack.value.unshift(last.value);
+		last.value = createHistoryRecord(source, selectedBlockIds);
+		if (undoStack.value.length > CAPACITY) {
+			undoStack.value.splice(CAPACITY, Number.POSITIVE_INFINITY);
+		}
+		if (redoStack.value.length) {
+			redoStack.value.splice(0, redoStack.value.length);
+		}
+	}
+
+	// const debouncedCommit = useDebounceFn(commit, DEBOUNCE_DELAY);
+
+	const {
+		ignoreUpdates: ignoreBlockUpdates,
+		ignorePrevAsyncUpdates: ignorePrevAsyncBlockUpdates,
+		stop: stopBlockWatcher,
+	} = watchIgnorable(source, commit, {
 		deep: true,
 		flush: "post",
-		eventFilter: composedFilter,
+		eventFilter: blockWatcherFilter,
 	});
 
-	function setSource(value: string) {
-		const obj = JSON.parse(value) as CanvasState;
-		ignorePrevAsyncUpdates();
-		ignoreUpdates(() => {
-			source.value = getBlockInstance(obj.block);
-			selectedBlockIds.value = obj.selectedBlockIds;
+	const {
+		ignoreUpdates: ignoreSelectedBlockUpdates,
+		ignorePrevAsyncUpdates: ignorePrevSelectedBlockUpdates,
+		stop: stopSelectedBlockUpdates,
+	} = watchIgnorable(selectedBlockIds, updateSelections, {
+		deep: true,
+		flush: "post",
+		eventFilter: selectionWatherFilter,
+	});
+
+	function setSource(value: CanvasState) {
+		ignorePrevAsyncBlockUpdates();
+		ignoreBlockUpdates(() => {
+			source.value = getBlockInstance(value.block);
 		});
-	}
-	const last = ref(createHistoryRecord(source, selectedBlockIds));
-	function commit() {
-		nextTick(() => {
-			undoStack.value.unshift(last.value);
-			last.value = createHistoryRecord(source, selectedBlockIds);
-			if (undoStack.value.length > CAPACITY) {
-				undoStack.value.splice(CAPACITY, Number.POSITIVE_INFINITY);
-			}
-			if (redoStack.value.length) {
-				redoStack.value.splice(0, redoStack.value.length);
-			}
+		ignorePrevSelectedBlockUpdates();
+		ignoreSelectedBlockUpdates(() => {
+			selectedBlockIds.value = [...value.selectedBlockIds];
 		});
+		last.value = value;
 	}
-	const undoStack = ref([]) as Ref<string[]>;
-	const redoStack = ref([]) as Ref<string[]>;
 
 	function undo() {
 		const state = undoStack.value.shift();
@@ -74,11 +104,6 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<strin
 		clear();
 	}
 
-	function resume(commitNow?: boolean) {
-		resumeTracking();
-		if (commitNow) commit();
-	}
-
 	function canUndo() {
 		return undoStack.value.length > 0;
 	}
@@ -87,23 +112,66 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<strin
 		return redoStack.value.length > 0;
 	}
 
+	function updateSelections() {
+		nextTick(() => {
+			last.value.selectedBlockIds = [...selectedBlockIds.value];
+		});
+	}
+
+	function pause() {
+		pauseBlockWatcher();
+		pauseSelectionWatcher();
+		const pauseId = generateId() as PauseId;
+		pauseIdSet.add(pauseId);
+		// console.log("\npausing...", pauseId);
+		return pauseId as PauseId;
+	}
+
+	function resume(pauseId?: PauseId, commitNow?: boolean, force?: boolean) {
+		nextTick(() => {
+			// console.log("resuming...", pauseId);
+			if (pauseId && pauseIdSet.has(pauseId)) {
+				pauseIdSet.delete(pauseId);
+			} else if (!force) {
+				return;
+			}
+
+			if (pauseIdSet.size && !force) {
+				return;
+			}
+			resumeTracking();
+			if (commitNow) commit();
+		});
+	}
+
+	function resumeTracking() {
+		resumeBlockWatcher();
+		resumeSelectionWatcher();
+	}
+
+	function stop() {
+		stopBlockWatcher();
+		stopSelectedBlockUpdates();
+	}
+
 	return {
 		undo,
 		redo,
 		dispose,
 		pause,
-		resumeTracking,
 		resume,
-		isTracking,
 		canUndo,
 		canRedo,
+		isTracking,
 		batch: () => {},
+		undoStack,
+		redoStack,
 	};
 }
 
 function createHistoryRecord(source: Ref<Block>, selectedBlockIds: Ref<string[]>) {
-	return JSON.stringify({
-		block: getBlockObject(source.value),
+	return {
+		block: getBlockString(source.value),
 		selectedBlockIds: selectedBlockIds.value,
-	});
+	};
 }
