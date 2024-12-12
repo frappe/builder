@@ -1,7 +1,7 @@
 <div align="center">
 
 <a href="https://frappe.io/products/builder">
-    <img src="https://raw.githubusercontent.com/frappe/builder/master/frontend/public/builder_logo.png" height="100" alt="Frappe Builder Logo">
+    <img src="https://raw.githubusercontent.com/frappe/builder/master/frontend/public/builder_logo.png" height="80" alt="Frappe Builder Logo">
 </a>
 
 
