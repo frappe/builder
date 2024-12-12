@@ -155,6 +155,7 @@ const setHueSelectorPosition = (color: HashString) => {
 
 const handleSelectorMove = (ev: MouseEvent) => {
 	setColor(ev);
+	const pauseId = store.activeCanvas?.history?.pause();
 	const mouseMove = (mouseMoveEvent: MouseEvent) => {
 		mouseMoveEvent.preventDefault();
 		setColor(mouseMoveEvent);
@@ -165,6 +166,7 @@ const handleSelectorMove = (ev: MouseEvent) => {
 		(mouseUpEvent) => {
 			document.removeEventListener("mousemove", mouseMove);
 			mouseUpEvent.preventDefault();
+			pauseId && store.activeCanvas?.history?.resume(pauseId, true);
 		},
 		{ once: true },
 	);
@@ -172,7 +174,7 @@ const handleSelectorMove = (ev: MouseEvent) => {
 
 const handleHueSelectorMove = (ev: MouseEvent) => {
 	setHue(ev);
-	store.activeCanvas?.history.pause();
+	const pauseId = store.activeCanvas?.history?.pause();
 	const mouseMove = (mouseMoveEvent: MouseEvent) => {
 		mouseMoveEvent.preventDefault();
 		setHue(mouseMoveEvent);
@@ -183,7 +185,7 @@ const handleHueSelectorMove = (ev: MouseEvent) => {
 		(mouseUpEvent) => {
 			document.removeEventListener("mousemove", mouseMove);
 			mouseUpEvent.preventDefault();
-			store.activeCanvas?.history.resume(true);
+			pauseId && store.activeCanvas?.history?.resume(pauseId, true);
 		},
 		{ once: true },
 	);
