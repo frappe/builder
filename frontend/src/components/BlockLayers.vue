@@ -15,11 +15,7 @@
 							:title="element.blockId"
 							@contextmenu.prevent.stop="onContextMenu"
 							class="min-w-24 cursor-pointer overflow-hidden rounded border border-transparent bg-surface-white bg-opacity-50 text-base text-ink-gray-7"
-							@click.stop="
-								store.activeCanvas?.history.pause();
-								store.selectBlock(element, $event, false, true);
-								store.activeCanvas?.history.resume();
-							"
+							@click.stop="selectBlock(element, $event)"
 							@mouseover.stop="store.hoveredBlock = element.blockId"
 							@mouseleave.stop="store.hoveredBlock = null">
 							<span
@@ -205,6 +201,12 @@ const blockExitsInTree = (block: Block) => {
 		}
 	}
 	return false;
+};
+
+const selectBlock = (block: Block, event: MouseEvent) => {
+	const pauseId = store.activeCanvas?.history?.pause();
+	store.selectBlock(block, event, false, true);
+	pauseId && store.activeCanvas?.history?.resume(pauseId);
 };
 
 defineExpose({

@@ -83,19 +83,12 @@ import {
 	addPxToNumber,
 	getBlockCopy,
 	getBlockInstance,
-	getBlockObject,
 	getNumberFromPx,
 	isTargetEditable,
 	uploadImage,
 } from "@/utils/helpers";
-import {
-	UseRefHistoryReturn,
-	clamp,
-	useDebouncedRefHistory,
-	useDropZone,
-	useElementBounding,
-	useEventListener,
-} from "@vueuse/core";
+import { useCanvasHistory } from "@/utils/useCanvasHistory";
+import { clamp, useDropZone, useElementBounding, useEventListener } from "@vueuse/core";
 import { FeatherIcon } from "frappe-ui";
 import { Ref, computed, nextTick, onMounted, provide, reactive, ref, watch } from "vue";
 import { toast } from "vue-sonner";
@@ -161,7 +154,7 @@ const canvasProps = reactive({
 	],
 });
 
-const canvasHistory = ref(null) as Ref<UseRefHistoryReturn<{}, {}>> | Ref<null>;
+const canvasHistory = ref(null) as Ref<ReturnType<typeof useCanvasHistory>> | Ref<null>;
 
 provide("canvasProps", canvasProps);
 
@@ -172,17 +165,7 @@ onMounted(() => {
 });
 
 function setupHistory() {
-	canvasHistory.value = useDebouncedRefHistory(block, {
-		capacity: 50,
-		deep: true,
-		debounce: 200,
-		dump: (obj) => {
-			return getBlockObject(obj);
-		},
-		parse: (obj) => {
-			return getBlockInstance(obj);
-		},
-	});
+	canvasHistory.value = useCanvasHistory(block, selectedBlockIds) as ReturnType<typeof useCanvasHistory>;
 }
 
 const { isOverDropZone } = useDropZone(canvasContainer, {
@@ -307,7 +290,7 @@ function setEvents() {
 		if (store.mode === "select") {
 			return;
 		} else {
-			canvasHistory.value?.pause();
+			const pauseId = canvasHistory.value?.pause();
 			ev.stopPropagation();
 			let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
 			let block = getFirstBlock();
@@ -375,7 +358,7 @@ function setEvents() {
 						store.mode = "select";
 					}, 50);
 					if (store.mode === "text") {
-						canvasHistory.value?.resume(true);
+						pauseId && canvasHistory.value?.resume(pauseId, true);
 						store.editableBlock = childBlock;
 						return;
 					}
@@ -390,7 +373,7 @@ function setEvents() {
 							childBlock.setBaseStyle("height", "200px");
 						}
 					}
-					canvasHistory.value?.resume(true);
+					pauseId && canvasHistory.value?.resume(pauseId, true);
 				},
 				{ once: true },
 			);
@@ -823,7 +806,7 @@ defineExpose({
 	moveCanvas,
 	zoomIn,
 	zoomOut,
-	history: canvasHistory as Ref<UseRefHistoryReturn<{}, {}>>,
+	history: canvasHistory,
 	clearCanvas,
 	getFirstBlock,
 	block,
