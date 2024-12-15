@@ -117,7 +117,7 @@ const showMarginHandler = computed(() => {
 
 const showBorderRadiusHandler = computed(() => {
 	return (
-		isBlockSelected &&
+		isBlockSelected.value &&
 		!props.block.isRoot() &&
 		!props.block.isText() &&
 		!props.block.isHTML() &&
