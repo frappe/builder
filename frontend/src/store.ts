@@ -28,6 +28,7 @@ import {
 } from "./utils/helpers";
 import RealTimeHandler from "./utils/realtimeHandler";
 
+// TODO: REFACTOR! This store is too big
 const useStore = defineStore("store", {
 	state: () => ({
 		editableBlock: <Block | null>null,
@@ -103,7 +104,7 @@ const useStore = defineStore("store", {
 			this.activeCanvas?.clearCanvas();
 		},
 		pushBlocks(blocks: BlockOptions[]) {
-			let parent = this.activeCanvas?.getFirstBlock();
+			let parent = this.activeCanvas?.getRootBlock();
 			let firstBlock = getBlockInstance(blocks[0]);
 			if (this.editingMode === "page" && firstBlock.isRoot() && this.activeCanvas?.block) {
 				this.activeCanvas.setRootBlock(firstBlock);
@@ -113,17 +114,17 @@ const useStore = defineStore("store", {
 				}
 			}
 		},
-		getFirstBlock() {
-			return this.activeCanvas?.getFirstBlock();
+		getRootBlock() {
+			return this.activeCanvas?.getRootBlock();
 		},
 		getBlockCopy(block: BlockOptions | Block, retainId = false): Block {
 			return getBlockCopy(block, retainId);
 		},
-		getRootBlock() {
+		getRootBlockTemplate() {
 			return getBlockInstance(getBlockTemplate("body"));
 		},
 		getPageBlocks() {
-			return [this.activeCanvas?.getFirstBlock()];
+			return [this.activeCanvas?.getRootBlock()];
 		},
 		async setPage(pageName: string, resetCanvas = true) {
 			this.settingPage = true;
@@ -298,7 +299,7 @@ const useStore = defineStore("store", {
 				}
 				return false;
 			};
-			for (const block of this.activeCanvas?.getFirstBlock()?.children || []) {
+			for (const block of this.activeCanvas?.getRootBlock()?.children || []) {
 				if (checkComponent(block)) {
 					return true;
 				}

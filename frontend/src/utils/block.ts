@@ -750,7 +750,7 @@ class Block implements BlockOptions {
 		if (parentBlock) {
 			child = parentBlock.addChildAfter(blockCopy, this);
 		} else {
-			child = store.activeCanvas?.getFirstBlock().addChild(blockCopy) as Block;
+			child = store.activeCanvas?.getRootBlock().addChild(blockCopy) as Block;
 		}
 		nextTick(() => {
 			if (child) {
