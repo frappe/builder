@@ -49,12 +49,12 @@
 					class="no-scrollbar overflow-auto"
 					v-if="pageCanvas"
 					ref="pageLayers"
-					:blocks="[pageCanvas?.getFirstBlock() as Block]"
+					:blocks="[pageCanvas?.getRootBlock() as Block]"
 					v-show="store.editingMode == 'page'" />
 				<BlockLayers
 					class="no-scrollbar overflow-auto"
 					ref="componentLayers"
-					:blocks="[fragmentCanvas?.getFirstBlock()]"
+					:blocks="[fragmentCanvas?.getRootBlock()]"
 					v-if="store.editingMode === 'fragment' && fragmentCanvas" />
 			</div>
 			<div v-show="store.leftPanelActiveTab === 'Code'">

@@ -4,7 +4,7 @@
 		:selected="isSelected"
 		@click="handleClick"
 		@dblclick="handleDoubleClick"
-		@contextmenu="triggerContextMenu($event)"
+		@contextmenu="triggerContextMenu"
 		@mouseover="handleMouseOver"
 		@mouseleave="handleMouseLeave"
 		:data-block-id="block.blockId"
