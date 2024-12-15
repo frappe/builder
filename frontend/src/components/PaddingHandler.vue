@@ -308,7 +308,7 @@ const handlePadding = (ev: MouseEvent, position: Position) => {
 			updating.value = false;
 			mouseUpEvent.preventDefault();
 		},
-		{ once: true }
+		{ once: true },
 	);
 };
 
