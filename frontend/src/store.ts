@@ -322,13 +322,16 @@ const useStore = defineStore("store", {
 				this.fetchingComponent.add(componentName);
 				return this.fetchComponent(componentName)
 					.then((componentDoc) => {
-						this.componentDocMap.set(componentName, componentDoc);
-						this.componentMap.set(componentDoc.name, getBlockInstance(componentDoc.block));
+						this.setComponentMap(componentDoc);
 					})
 					.finally(() => {
 						this.fetchingComponent.delete(componentName);
 					});
 			}
+		},
+		setComponentMap(componentDoc: BuilderComponent) {
+			this.componentDocMap.set(componentDoc.name, componentDoc);
+			this.componentMap.set(componentDoc.name, getBlockInstance(componentDoc.block));
 		},
 		async fetchComponent(componentName: string) {
 			const webComponentDoc = await createDocumentResource({
