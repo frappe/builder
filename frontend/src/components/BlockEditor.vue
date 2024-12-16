@@ -240,6 +240,7 @@ const handleDoubleClick = (ev: MouseEvent) => {
 };
 
 const handleMove = (ev: MouseEvent) => {
+	const pauseId = store.activeCanvas?.history?.pause();
 	if (store.mode === "text") {
 		store.editableBlock = props.block;
 	}
@@ -288,6 +289,7 @@ const handleMove = (ev: MouseEvent) => {
 			document.removeEventListener("mousemove", mousemove);
 			mouseUpEvent.preventDefault();
 			guides.hideX();
+			store.activeCanvas?.history?.resume(pauseId);
 		},
 		{ once: true },
 	);
