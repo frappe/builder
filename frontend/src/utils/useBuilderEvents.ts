@@ -24,13 +24,13 @@ import { Ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { toast } from "vue-sonner";
 const store = useStore();
-const route = useRoute();
-const router = useRouter();
 
 export function useBuilderEvents(
 	pageCanvas: Ref<InstanceType<typeof BuilderCanvas> | null>,
 	fragmentCanvas: Ref<InstanceType<typeof BuilderCanvas> | null>,
 	saveAndExitFragmentMode: (e: KeyboardEvent) => void,
+	route: ReturnType<typeof useRoute>,
+	router: ReturnType<typeof useRouter>,
 ) {
 	// to disable page zoom
 	useEventListener(

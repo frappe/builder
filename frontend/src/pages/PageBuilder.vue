@@ -125,7 +125,7 @@ const fragmentCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 
 provide("pageCanvas", pageCanvas);
 provide("fragmentCanvas", fragmentCanvas);
-useBuilderEvents(pageCanvas, fragmentCanvas, saveAndExitFragmentMode);
+useBuilderEvents(pageCanvas, fragmentCanvas, saveAndExitFragmentMode, route, router);
 
 const activeElement = useActiveElement();
 const notUsingInput = computed(
