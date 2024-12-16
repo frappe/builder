@@ -289,7 +289,7 @@ const handleMove = (ev: MouseEvent) => {
 			document.removeEventListener("mousemove", mousemove);
 			mouseUpEvent.preventDefault();
 			guides.hideX();
-			store.activeCanvas?.history?.resume(pauseId);
+			store.activeCanvas?.history?.resume(pauseId, true);
 		},
 		{ once: true },
 	);
