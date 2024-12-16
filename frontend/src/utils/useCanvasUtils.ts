@@ -280,7 +280,7 @@ export function useCanvasUtils(
 		setScaleAndTranslate,
 		resetZoom,
 		clearCanvas,
-		getRootBlock: getRootBlock,
+		getRootBlock,
 		setupHistory,
 	};
 }
