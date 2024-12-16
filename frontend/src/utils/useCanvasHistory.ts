@@ -9,7 +9,7 @@ type CanvasState = {
 };
 type PauseId = string & { __brand: "PauseId" };
 
-const CAPACITY = 200;
+const CAPACITY = 500;
 const DEBOUNCE_DELAY = 100;
 
 export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<string[]>) {
@@ -37,7 +37,6 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<strin
 		stop: stopBlockWatcher,
 	} = watchIgnorable(source, commit, {
 		deep: true,
-		flush: "post",
 		eventFilter: blockWatcherFilter,
 	});
 
@@ -47,7 +46,6 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<strin
 		stop: stopSelectedBlockUpdates,
 	} = watchIgnorable(selectedBlockIds, updateSelections, {
 		deep: true,
-		flush: "post",
 		eventFilter: selectionWatherFilter,
 	});
 
@@ -63,9 +61,7 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<strin
 	}
 
 	function updateSelections() {
-		nextTick(() => {
-			last.value.selectedBlockIds = [...selectedBlockIds.value];
-		});
+		last.value.selectedBlockIds = [...selectedBlockIds.value];
 	}
 
 	function createHistoryRecord() {
