@@ -2,12 +2,8 @@
 	<component
 		:is="getComponentName(block)"
 		:selected="isSelected"
-		@click="handleClick"
-		@dblclick="handleDoubleClick"
-		@contextmenu="triggerContextMenu"
-		@mouseover="handleMouseOver"
-		@mouseleave="handleMouseLeave"
 		:data-block-id="block.blockId"
+		:data-breakpoint="breakpoint"
 		:draggable="draggable"
 		:class="classes"
 		v-bind="attributes"
@@ -41,7 +37,6 @@ import Block from "@/utils/block";
 import { setFont } from "@/utils/fontManager";
 import { computed, inject, nextTick, onMounted, reactive, ref, useAttrs, watch, watchEffect } from "vue";
 
-import getBlockTemplate from "@/utils/blockTemplate";
 import { getDataForKey } from "@/utils/helpers";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
 import useStore from "../store";
@@ -220,72 +215,6 @@ const selectBlock = (e: MouseEvent | null) => {
 	}
 };
 
-const triggerContextMenu = (e: MouseEvent) => {
-	if (props.block.isRoot() || isEditable.value) return;
-	e.stopPropagation();
-	e.preventDefault();
-	selectBlock(e);
-	nextTick(() => {
-		editor.value?.element.dispatchEvent(new MouseEvent("contextmenu", e));
-	});
-};
-
-const handleClick = (e: MouseEvent) => {
-	if (isEditable.value) return;
-	if (store.preventClick) {
-		e.stopPropagation();
-		e.preventDefault();
-		store.preventClick = false;
-		return;
-	}
-	selectBlock(e);
-	e.stopPropagation();
-	e.preventDefault();
-};
-
-const handleDoubleClick = (e: MouseEvent) => {
-	if (isEditable.value) return;
-	store.editableBlock = null;
-	if (props.block.isText() || props.block.isLink() || props.block.isButton()) {
-		store.editableBlock = props.block;
-		e.stopPropagation();
-	}
-
-	// dblclick on container adds text block or selects text block if only one child
-	let children = props.block.getChildren();
-	if (props.block.isHTML()) {
-		editor.value?.element.dispatchEvent(new MouseEvent("dblclick", e));
-		e.stopPropagation();
-	} else if (props.block.isContainer()) {
-		if (!children.length) {
-			const child = getBlockTemplate("text");
-			props.block.setBaseStyle("alignItems", "center");
-			props.block.setBaseStyle("justifyContent", "center");
-			const childBlock = props.block.addChild(child);
-			childBlock.makeBlockEditable();
-		} else if (children.length === 1 && children[0].isText()) {
-			const child = children[0];
-			child.makeBlockEditable();
-		}
-		e.stopPropagation();
-	}
-};
-
-const handleMouseOver = (e: MouseEvent) => {
-	if (store.mode === "move") return;
-	store.hoveredBlock = props.block.blockId;
-	store.hoveredBreakpoint = props.breakpoint;
-	e.stopPropagation();
-};
-
-const handleMouseLeave = (e: MouseEvent) => {
-	if (store.mode === "move") return;
-	if (store.hoveredBlock === props.block.blockId) {
-		store.hoveredBlock = null;
-		e.stopPropagation();
-	}
-};
-
 const showBlock = computed(() => {
 	// const data = props.block.getVisibilityCondition()
 	// 	? getDataForKey(props.data, props.block.getVisibilityCondition() as string)
@@ -319,4 +248,6 @@ if (!props.preview) {
 		},
 	);
 }
+
+// Note: All the block event listeners are delegated to parent for better scalability
 </script>

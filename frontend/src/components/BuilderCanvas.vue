@@ -78,11 +78,12 @@
 import LoadingIcon from "@/components/Icons/Loading.vue";
 import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
 import Block from "@/utils/block";
-import { useCanvasUtils } from "@/utils/useCanvasUtils";
 import { getBlockCopy } from "@/utils/helpers";
-import { useCanvasEvents } from "@/utils/useCanvasEvents";
+import { useBlockEventHandlers } from "@/utils/useBlockEventHandlers";
 import { useBlockSelection } from "@/utils/useBlockSelection";
 import { useCanvasDropZone } from "@/utils/useCanvasDropZone";
+import { useCanvasEvents } from "@/utils/useCanvasEvents";
+import { useCanvasUtils } from "@/utils/useCanvasUtils";
 import { FeatherIcon } from "frappe-ui";
 import { Ref, computed, onMounted, provide, reactive, ref, watch } from "vue";
 import useStore from "../store";
@@ -202,6 +203,7 @@ onMounted(() => {
 		findBlock,
 	);
 	setPanAndZoom(canvasEl, canvasContainerEl, canvasProps);
+	useBlockEventHandlers();
 });
 
 const handleClick = (ev: MouseEvent) => {

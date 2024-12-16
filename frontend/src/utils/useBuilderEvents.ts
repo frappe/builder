@@ -262,6 +262,12 @@ export function useBuilderEvents(
 			});
 		}
 
+		// command + f should focus on search input
+		if (e.key === "f" && isCtrlOrCmd(e)) {
+			e.preventDefault();
+			document.querySelector(".properties-search-input")?.querySelector("input")?.focus();
+		}
+
 		if (e.key === "c" && isCtrlOrCmd(e) && e.shiftKey) {
 			if (blockController.isBLockSelected() && !blockController.multipleBlocksSelected()) {
 				e.preventDefault();
