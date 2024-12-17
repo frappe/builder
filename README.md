@@ -1,7 +1,7 @@
 <div align="center">
 
 <a href="https://frappe.io/products/builder">
-    <img src="https://raw.githubusercontent.com/frappe/builder/master/frontend/public/builder_logo.png" height="100" alt="Frappe Builder Logo">
+    <img src="https://raw.githubusercontent.com/frappe/builder/master/frontend/public/builder_logo.png" height="80" alt="Frappe Builder Logo">
 </a>
 
 
@@ -16,11 +16,10 @@
 
 <div>
     <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/0de6372c-41cb-4fce-ba74-6a74f13860f3">
-        <img width="1402" alt="Frappe Builder Screenshot" src="https://github.com/user-attachments/assets/5801b6c2-d7f1-4f5f-a42c-075c06183c2b">
+        <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/7b013cc1-fe40-4b3c-a765-d8c3697bf81e">
+        <img width="1402" alt="Frappe Builder Screenshot" src="https://github.com/user-attachments/assets/d20cec8a-9e30-4ad5-9fc0-9c136fffa916">
     </picture>
 </div>
-
 
 [Website](https://frappe.io/builder) - [Documentation](https://docs.frappe.io/builder)
 </div>

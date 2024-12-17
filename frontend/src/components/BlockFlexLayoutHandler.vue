@@ -6,7 +6,7 @@
 			{ label: 'Horizontal', value: 'row', icon: 'arrow-right', hideLabel: true },
 			{ label: 'Vertical', value: 'column', icon: 'arrow-down', hideLabel: true },
 		]"
-		:modelValue="blockController.getStyle('flexDirection') || 'column'"
+		:modelValue="blockController.getStyle('flexDirection') || 'row'"
 		@update:modelValue="
 			(val: string | number) => blockController.setStyle('flexDirection', val)
 		"></OptionToggle>
@@ -17,6 +17,7 @@
 		type="select"
 		label="Distribution"
 		:options="[
+			{ label: '', value: '' },
 			{ label: 'Space Between', value: 'space-between' },
 			{ label: 'Space Around', value: 'space-around' },
 			{ label: 'Space Evenly', value: 'space-evenly' },

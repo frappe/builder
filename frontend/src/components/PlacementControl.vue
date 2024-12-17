@@ -98,9 +98,9 @@ const placementOptions = [
 	"bottom-right",
 ];
 
-const direction = computed(() => blockController.getStyle("flexDirection") as string);
-const justifyContent = computed(() => blockController.getStyle("justifyContent") as string);
-const alignItems = computed(() => blockController.getStyle("alignItems") as string);
+const direction = computed(() => (blockController.getStyle("flexDirection") || "row") as string);
+const justifyContent = computed(() => (blockController.getStyle("justifyContent") || "flex-start") as string);
+const alignItems = computed(() => (blockController.getStyle("alignItems") || "stretch") as string);
 
 const setAlignment = (alignment: string, spaceBetween: boolean = false) => {
 	switch (alignment) {
