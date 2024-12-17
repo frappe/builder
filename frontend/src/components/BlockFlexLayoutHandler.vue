@@ -13,7 +13,7 @@
 	<PlacementControl v-if="blockController.isFlex()"></PlacementControl>
 	<InlineInput
 		v-if="blockController.isFlex()"
-		:modelValue="blockController.getStyle('justifyContent')"
+		:modelValue="blockController.getStyle('justifyContent') ?? ''"
 		type="select"
 		label="Distribution"
 		:options="[
@@ -30,7 +30,7 @@
 		type="text"
 		:enableSlider="true"
 		:unitOptions="['px', 'em', 'rem']"
-		:modelValue="blockController.getStyle('gap')"
+		:modelValue="blockController.getStyle('gap') ?? '0px'"
 		@update:modelValue="(val: string | number) => blockController.setStyle('gap', val)" />
 	<OptionToggle
 		label="Wrap"
