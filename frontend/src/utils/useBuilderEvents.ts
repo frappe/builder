@@ -424,7 +424,7 @@ export function useBuilderEvents(
 	useEventListener(document, "visibilitychange", () => {
 		if (document.visibilityState === "visible" && !fragmentCanvas.value) {
 			if (route.params.pageId && route.params.pageId !== "new") {
-				const currentModified = webPages.getRow(store.activePage?.name as string)?.modified;
+				const currentModified = store.activePage?.modified;
 				webComponent.reload();
 				webPages.fetchOne.submit(store.activePage?.name).then((doc: BuilderPage[]) => {
 					if (currentModified !== doc[0]?.modified) {
