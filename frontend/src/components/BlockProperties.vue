@@ -392,7 +392,7 @@ const layoutSectionProperties = [
 						value: "grid",
 					},
 				],
-				modelValue: blockController.getStyle("display") || "flex",
+				modelValue: blockController.getStyle("display"),
 			};
 		},
 		searchKeyWords: "Layout, Display, Flex, Grid, Flexbox, Flex Box, FlexBox",
