@@ -755,9 +755,9 @@ class Block implements BlockOptions {
 		nextTick(() => {
 			if (child) {
 				child.selectBlock();
+				pauseId && store.activeCanvas?.history?.resume(pauseId, true);
 			}
 		});
-		pauseId && store.activeCanvas?.history?.resume(pauseId, true);
 	}
 	getPadding() {
 		const padding = this.getStyle("padding") || "0px";
