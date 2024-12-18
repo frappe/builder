@@ -454,7 +454,10 @@ class Block implements BlockOptions {
 		newChild.parentBlock = this;
 		const index = this.getChildIndex(child);
 		if (index > -1) {
-			this.children.splice(index, 1, reactive(newChild));
+			// This is not triggering the reactivity even though the child object is reactive
+			// this.children.splice(index, 1, newChild);
+			this.removeChild(child);
+			this.addChild(newChild, index);
 		}
 	}
 	getChildIndex(child: Block) {
