@@ -99,19 +99,23 @@ You need Docker, docker-compose and git setup on your machine. Refer [Docker doc
 
 **Step 1**: Setup folder and download the required files
 
-    mkdir frappe-builder && cd frappe-builder
-    wget -O docker-compose.yml https://raw.githubusercontent.com/frappe/builder/develop/docker/docker-compose.yml
-    wget -O init.sh https://raw.githubusercontent.com/frappe/builder/develop/docker/init.sh
+```bash
+mkdir frappe-builder && cd frappe-builder
+wget -O docker-compose.yml https://raw.githubusercontent.com/frappe/builder/develop/docker/docker-compose.yml
+wget -O init.sh https://raw.githubusercontent.com/frappe/builder/develop/docker/init.sh
+```
 
 **Step 2**: Run the container
 
-    docker compose up
+```bash
+docker compose up
+```
 
 Wait until the setup script creates a site and you see `Current Site set to builder.localhost` in the terminal. Once done, the site [http://builder.localhost:8000](http://builder.localhost:8000) should now be available.
 
-The default credentials are:
-> username: Administrator
-> password: admin
+**Credentials:**
+Username: `Administrator`
+Password: `admin`
 
 ### Local Setup
 
@@ -119,18 +123,18 @@ The default credentials are:
 1. In the frappe-bench directory, run `bench start` and keep it running.
 1. Open a new terminal session and cd into `frappe-bench` directory and run following commands:
 ```bash
-    $ bench get-app builder
-    $ bench new-site builder.localhost --install-app builder
-    $ bench browse builder.localhost --user Administrator
+bench get-app builder
+bench new-site builder.localhost --install-app builder
+bench browse builder.localhost --user Administrator
 ```
 1. Access the builder page at `builder.localhost:8000/builder` in your web browser.
 
 **For Frontend Development**
 1. Open a new terminal session and run the following commands:
 ```bash
-    cd frappe-bench/apps/builder
-    yarn install
-    yarn dev --host
+cd frappe-bench/apps/builder
+yarn install
+yarn dev --host
 ```
 1. Now, you can access the site on vite dev server at `http://builder.localhost:8080`
 
