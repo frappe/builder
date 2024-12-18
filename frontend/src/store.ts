@@ -109,7 +109,7 @@ const useStore = defineStore("store", {
 				this.activeCanvas.setRootBlock(firstBlock);
 			} else {
 				for (let block of blocks) {
-					parent?.children.push(getBlockInstance(block));
+					parent?.addChild(block);
 				}
 			}
 		},

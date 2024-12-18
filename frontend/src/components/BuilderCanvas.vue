@@ -192,8 +192,7 @@ const { isOverDropZone } = useDropZone(canvasContainer, {
 				if (!parentBlock) return;
 				const parentParentBlock = parentBlock.getParentBlock();
 				if (!parentParentBlock) return;
-				const index = parentParentBlock.children.indexOf(parentBlock);
-				parentParentBlock.children.splice(index, 1, newBlock);
+				parentParentBlock.replaceChild(parentBlock, newBlock);
 			} else {
 				while (parentBlock && !parentBlock.canHaveChildren()) {
 					parentBlock = parentBlock.getParentBlock();
