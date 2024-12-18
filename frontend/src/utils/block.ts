@@ -6,6 +6,7 @@ import {
 	addPxToNumber,
 	dataURLtoFile,
 	getBlockCopy,
+	getBlockInstance,
 	getNumberFromPx,
 	getTextContent,
 	kebabToCamelCase,
@@ -71,7 +72,7 @@ class Block implements BlockOptions {
 		}
 		this.children = (options.children || []).map((child: BlockOptions) => {
 			child.parentBlock = this;
-			return reactive(new Block(child));
+			return getBlockInstance(child);
 		});
 
 		this.baseStyles = reactive(options.styles || options.baseStyles || {});
@@ -420,13 +421,13 @@ class Block implements BlockOptions {
 		}
 	}
 	addChild(child: BlockOptions, index?: number | null, select: boolean = true) {
-		child.parentBlock = this;
 		if (index === undefined || index === null) {
 			index = this.children.length;
 		}
 		index = clamp(index, 0, this.children.length);
 
-		const childBlock = reactive(new Block(child));
+		const childBlock = getBlockInstance(child);
+		childBlock.parentBlock = this;
 		this.children.splice(index, 0, childBlock);
 		if (select) {
 			childBlock.selectBlock();
@@ -453,7 +454,10 @@ class Block implements BlockOptions {
 		newChild.parentBlock = this;
 		const index = this.getChildIndex(child);
 		if (index > -1) {
-			this.children.splice(index, 1, newChild);
+			// This is not triggering the reactivity even though the child object is reactive
+			// this.children.splice(index, 1, newChild);
+			this.removeChild(child);
+			this.addChild(newChild, index);
 		}
 	}
 	getChildIndex(child: Block) {
@@ -755,9 +759,9 @@ class Block implements BlockOptions {
 		nextTick(() => {
 			if (child) {
 				child.selectBlock();
+				pauseId && store.activeCanvas?.history?.resume(pauseId, true);
 			}
 		});
-		pauseId && store.activeCanvas?.history?.resume(pauseId, true);
 	}
 	getPadding() {
 		const padding = this.getStyle("padding") || "0px";

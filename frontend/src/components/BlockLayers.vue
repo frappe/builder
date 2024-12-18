@@ -204,9 +204,7 @@ const blockExitsInTree = (block: Block) => {
 };
 
 const selectBlock = (block: Block, event: MouseEvent) => {
-	const pauseId = store.activeCanvas?.history?.pause();
 	store.selectBlock(block, event, false, true);
-	pauseId && store.activeCanvas?.history?.resume(pauseId);
 };
 
 defineExpose({

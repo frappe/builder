@@ -1,6 +1,7 @@
+import { createApp } from "vue";
+
 import { Button, Dialog, FeatherIcon, FormControl, FrappeUI } from "frappe-ui";
 import { createPinia } from "pinia";
-import { createApp } from "vue";
 import "./index.css";
 import router from "./router";
 import "./setupFrappeUIResource";

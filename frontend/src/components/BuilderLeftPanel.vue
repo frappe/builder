@@ -1,5 +1,10 @@
 <template>
 	<div class="flex">
+		<PanelResizer
+			:dimension="store.builderLayout.leftPanelWidth"
+			side="right"
+			:maxDimension="500"
+			@resize="(width) => (store.builderLayout.leftPanelWidth = width)" />
 		<div class="flex min-h-full flex-col items-center gap-3 border-r border-outline-gray-1 p-3">
 			<button
 				v-for="option of leftPanelOptions"
@@ -20,11 +25,6 @@
 				width: `${store.builderLayout.leftPanelWidth}px`,
 			}"
 			@click.stop="store.leftPanelActiveTab === 'Layers' && store.activeCanvas?.clearSelection()">
-			<PanelResizer
-				:dimension="store.builderLayout.leftPanelWidth"
-				side="right"
-				:maxDimension="500"
-				@resize="(width) => (store.builderLayout.leftPanelWidth = width)" />
 			<div v-if="false" class="mb-5 flex flex-col overflow-hidden rounded-lg text-sm">
 				<textarea
 					class="no-scrollbar h-fit resize-none rounded-sm border-0 bg-gray-300 text-sm outline-none dark:bg-zinc-700 dark:text-white"
