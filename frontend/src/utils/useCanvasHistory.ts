@@ -137,16 +137,15 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<strin
 
 	function resume(pauseId?: PauseId, commitNow?: boolean, force?: boolean) {
 		nextTick(() => {
-			// console.log("resuming...", pauseId);
 			if (pauseId && pauseIdSet.has(pauseId)) {
 				pauseIdSet.delete(pauseId);
 			} else if (!force) {
 				return;
 			}
-
 			if (pauseIdSet.size && !force) {
 				return;
 			}
+			pauseIdSet.clear();
 			resumeTracking();
 			if (commitNow) commit();
 		});
