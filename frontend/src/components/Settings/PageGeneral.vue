@@ -49,16 +49,12 @@
 										: "Draft"
 								}}
 							</span>
-							<Tooltip
-								:text="
-									store.activePage?.published ? 'Unpublish this page' : 'This page is already unpublished'
-								">
-								<BuilderButton
-									variant="subtle"
-									@click="store.activePage?.published ? store.unpublishPage() : store.publishPage(false)">
-									{{ store.activePage?.published ? "Unpublish" : "Publish" }}
-								</BuilderButton>
-							</Tooltip>
+
+							<BuilderButton
+								variant="subtle"
+								@click="store.activePage?.published ? store.unpublishPage() : store.publishPage(false)">
+								{{ store.activePage?.published ? "Unpublish" : "Publish" }}
+							</BuilderButton>
 						</div>
 					</div>
 				</div>
@@ -99,16 +95,19 @@
 							<span class="text-base font-medium text-ink-gray-9">Homepage</span>
 							<p class="text-base text-ink-gray-5">Set current page as Homepage</p>
 						</div>
-						<Tooltip
-							:text="
-								store.isHomePage(store.activePage)
-									? 'Unset this page as the homepage'
-									: 'Set this page as the homepage'
+						<BuilderButton
+							variant="subtle"
+							@click="
+								() => {
+									if (store.isHomePage(store.activePage)) {
+										store.unsetHomePage();
+									} else {
+										store.setHomePage(store.activePage?.route as string);
+									}
+								}
 							">
-							<Button variant="outline" @click.stop="handleClick">
-								{{ store.isHomePage(store.activePage) ? "Unset Homepage" : "Set As Homepage" }}
-							</Button>
-						</Tooltip>
+							{{ store.isHomePage(store.activePage) ? "Unset Homepage" : "Set As Homepage" }}
+						</BuilderButton>
 					</div>
 					<hr class="w-full border-outline-gray-2" />
 					<Switch
@@ -155,7 +154,6 @@ import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
 import useStore from "@/store";
 import { BuilderProjectFolder } from "@/types/Builder/BuilderProjectFolder";
-import { Button, Tooltip } from "frappe-ui";
 import FeatherIcon from "frappe-ui/src/components/FeatherIcon.vue";
 import { computed } from "vue";
 // check route for page id
@@ -180,8 +178,4 @@ const folderOptions = computed(() => {
 
 	return [homeOption, ...options];
 });
-
-const handleClick = () => {
-	console.log("clicked");
-};
 </script>
