@@ -315,7 +315,7 @@ const useStore = defineStore("store", {
 		getComponentBlock(componentName: string) {
 			return (
 				(this.componentMap.get(componentName) as Block) ||
-				getBlockInstance(getBlockTemplate("fallback-component"))
+				getBlockInstance(getBlockTemplate("loading-component"))
 			);
 		},
 		async loadComponent(componentName: string) {
@@ -324,6 +324,18 @@ const useStore = defineStore("store", {
 				return this.fetchComponent(componentName)
 					.then((componentDoc) => {
 						this.setComponentMap(componentDoc);
+					})
+					.catch(() => {
+						const missingComponentDoc = {
+							name: componentName,
+							block: JSON.stringify(getBlockTemplate("missing-component")),
+							creation: "",
+							modified: "",
+							owner: "Administrator",
+							modified_by: "Administrator",
+							docstatus: 1 as 0 | 1 | 2,
+						};
+						this.setComponentMap(missingComponentDoc);
 					})
 					.finally(() => {
 						this.fetchingComponent.delete(componentName);
