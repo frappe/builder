@@ -2,10 +2,12 @@ import useStore from "@/store";
 import { posthog } from "@/telemetry";
 import Block from "@/utils/block";
 import { getBlockCopy, getBlockInstance, uploadImage } from "@/utils/helpers";
+import useComponentStore from "@/utils/useComponentStore";
 import { useDropZone } from "@vueuse/core";
 import { Ref } from "vue";
 
 const store = useStore();
+const componentStore = useComponentStore();
 
 export function useCanvasDropZone(
 	canvasContainer: Ref<HTMLElement>,
@@ -24,8 +26,8 @@ export function useCanvasDropZone(
 			const componentName = ev.dataTransfer?.getData("componentName");
 			const blockTemplate = ev.dataTransfer?.getData("blockTemplate");
 			if (componentName) {
-				await store.loadComponent(componentName);
-				const component = store.componentMap.get(componentName) as Block;
+				await componentStore.loadComponent(componentName);
+				const component = componentStore.componentMap.get(componentName) as Block;
 				const newBlock = getBlockCopy(component);
 				newBlock.extendFromComponent(componentName);
 				// if shift key is pressed, replace parent block with new block

@@ -10,10 +10,8 @@ import BlockLayers from "./components/BlockLayers.vue";
 import BuilderCanvas from "./components/BuilderCanvas.vue";
 import builderBlockTemplate from "./data/builderBlockTemplate";
 import { builderSettings } from "./data/builderSettings";
-import webComponent from "./data/webComponent";
 import { webPages } from "./data/webPage";
 import { BlockTemplate } from "./types/Builder/BlockTemplate";
-import { BuilderComponent } from "./types/Builder/BuilderComponent";
 import { BuilderPage } from "./types/Builder/BuilderPage";
 import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
@@ -21,7 +19,6 @@ import {
 	confirm,
 	getBlockCopy,
 	getBlockInstance,
-	getBlockObject,
 	getBlockString,
 	getCopyWithoutParent,
 	getRouteVariables,
@@ -71,16 +68,12 @@ const useStore = defineStore("store", {
 		showDashboardSidebar: useStorage("showDashboardSidebar", true),
 		showRightPanel: <boolean>true,
 		showLeftPanel: <boolean>true,
-		components: <BlockComponent[]>[],
 		showHTMLDialog: false,
 		activePage: <BuilderPage | null>null,
 		savingPage: false,
 		realtime: new RealTimeHandler(),
 		viewers: <UserInfo[]>[],
-		componentMap: <Map<string, Block>>new Map(),
-		componentDocMap: <Map<string, BuilderComponent>>new Map(),
 		blockTemplateMap: <Map<string, BlockTemplate>>new Map(),
-		fetchingComponent: new Set(),
 		activeFolder: useStorage("activeFolder", ""),
 		fragmentData: {
 			block: <Block | null>null,
@@ -161,11 +154,11 @@ const useStore = defineStore("store", {
 			this.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas);
 			nextTick(() => {
 				const interval = setInterval(() => {
-					if (this.fetchingComponent.size === 0) {
-						this.settingPage = false;
-						window.name = `editor-${pageName}`;
-						clearInterval(interval);
-					}
+					// if (this.fetchingComponent.size === 0) {
+					this.settingPage = false;
+					window.name = `editor-${pageName}`;
+					clearInterval(interval);
+					// }
 				}, 100);
 			});
 		},
@@ -239,32 +232,7 @@ const useStore = defineStore("store", {
 				this.activeCanvas?.scrollBlockIntoView(block);
 			}
 		},
-		async editComponent(block?: Block | null, componentName?: string) {
-			if (!block?.isExtendedFromComponent() && !componentName) {
-				return;
-			}
-			componentName = componentName || (block?.extendedFromComponent as string);
-			await this.loadComponent(componentName);
-			const component = this.getComponent(componentName);
-			const componentBlock = this.getComponentBlock(componentName);
-			this.editOnCanvas(
-				componentBlock,
-				(block: Block) => {
-					webComponent.setValue
-						.submit({
-							name: componentName,
-							block: getBlockObject(block),
-						})
-						.then((data: BuilderComponent) => {
-							this.componentDocMap.set(data.name, data);
-							this.componentMap.set(data.name, getBlockInstance(data.block));
-							toast.success("Component saved!");
-						});
-				},
-				"Save Component",
-				component.component_name,
-			);
-		},
+
 		async editBlockTemplate(blockTemplateName: string) {
 			await this.fetchBlockTemplate(blockTemplateName);
 			const blockTemplate = this.getBlockTemplate(blockTemplateName);
@@ -284,76 +252,11 @@ const useStore = defineStore("store", {
 		getBlockTemplate(blockTemplateName: string) {
 			return this.blockTemplateMap.get(blockTemplateName) as BlockTemplate;
 		},
-		isComponentUsed(componentName: string) {
-			// TODO: Refactor or reduce complexity
-			const checkComponent = (block: Block) => {
-				if (block.extendedFromComponent === componentName) {
-					return true;
-				}
-				if (block.children) {
-					for (const child of block.children) {
-						if (checkComponent(child)) {
-							return true;
-						}
-					}
-				}
-				return false;
-			};
-			for (const block of this.activeCanvas?.getRootBlock()?.children || []) {
-				if (checkComponent(block)) {
-					return true;
-				}
-			}
-			return false;
-		},
 		editPage(retainSelection = false) {
 			if (!retainSelection) {
 				this.activeCanvas?.clearSelection();
 			}
 			this.editingMode = "page";
-		},
-		getComponentBlock(componentName: string) {
-			return (
-				(this.componentMap.get(componentName) as Block) ||
-				getBlockInstance(getBlockTemplate("loading-component"))
-			);
-		},
-		async loadComponent(componentName: string) {
-			if (!this.componentMap.has(componentName) && !this.fetchingComponent.has(componentName)) {
-				this.fetchingComponent.add(componentName);
-				return this.fetchComponent(componentName)
-					.then((componentDoc) => {
-						this.setComponentMap(componentDoc);
-					})
-					.catch(() => {
-						const missingComponentDoc = {
-							name: componentName,
-							block: JSON.stringify(getBlockTemplate("missing-component")),
-							creation: "",
-							modified: "",
-							owner: "Administrator",
-							modified_by: "Administrator",
-							docstatus: 1 as 0 | 1 | 2,
-						};
-						this.setComponentMap(missingComponentDoc);
-					})
-					.finally(() => {
-						this.fetchingComponent.delete(componentName);
-					});
-			}
-		},
-		setComponentMap(componentDoc: BuilderComponent) {
-			this.componentDocMap.set(componentDoc.name, componentDoc);
-			this.componentMap.set(componentDoc.name, getBlockInstance(componentDoc.block));
-		},
-		async fetchComponent(componentName: string) {
-			const webComponentDoc = await createDocumentResource({
-				doctype: "Builder Component",
-				name: componentName,
-				auto: true,
-			});
-			await webComponentDoc.get.promise;
-			return webComponentDoc.doc as BuilderComponent;
 		},
 		async fetchBlockTemplate(blockTemplateName: string) {
 			const blockTemplate = this.getBlockTemplate(blockTemplateName);
@@ -367,39 +270,6 @@ const useStore = defineStore("store", {
 				const blockTemplate = webBlockTemplate.doc as BlockTemplate;
 				this.blockTemplateMap.set(blockTemplateName, blockTemplate);
 			}
-		},
-		getComponent(componentName: string) {
-			return this.componentDocMap.get(componentName) as BuilderComponent;
-		},
-		createComponent(obj: BuilderComponent, updateExisting = false) {
-			const component = this.getComponent(obj.name);
-			if (component) {
-				const existingComponent = component.block;
-				const newComponent = obj.block;
-				if (updateExisting && existingComponent !== newComponent) {
-					return webComponent.setValue.submit({
-						name: obj.name,
-						block: obj.block,
-					});
-				} else {
-					return;
-				}
-			}
-			return webComponent.insert
-				.submit(obj)
-				.then(() => {
-					this.componentMap.set(obj.name, getBlockInstance(obj.block));
-				})
-				.catch(() => {
-					console.log(`There was an error while creating ${obj.component_name}`);
-				});
-		},
-		getComponentName(componentId: string) {
-			let componentObj = webComponent.getRow(componentId);
-			if (!componentObj) {
-				return componentId;
-			}
-			return componentObj.component_name;
 		},
 		async duplicatePage(page: BuilderPage) {
 			const webPageResource = await createDocumentResource({

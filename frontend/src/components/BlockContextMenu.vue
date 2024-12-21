@@ -21,12 +21,14 @@ import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { confirm, detachBlockFromComponent, getBlockCopy } from "@/utils/helpers";
+import useComponentStore from "@/utils/useComponentStore";
 import { vOnClickOutside } from "@vueuse/components";
 import { useStorage } from "@vueuse/core";
 import { Ref, nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
 
 const store = useStore();
+const componentStore = useComponentStore();
 
 const props = defineProps<{
 	block: Block;
@@ -206,7 +208,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Edit Component",
 		action: () => {
-			store.editComponent(props.block);
+			componentStore.editComponent(props.block);
 		},
 		condition: () => Boolean(props.block.extendedFromComponent),
 	},
