@@ -31,9 +31,11 @@ import { posthog } from "@/telemetry";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import Block from "@/utils/block";
 import { getBlockCopy, getBlockString } from "@/utils/helpers";
+import useComponentStore from "@/utils/useComponentStore";
 import { ref } from "vue";
 
 const store = useStore();
+const componentStore = useComponentStore();
 
 const props = defineProps<{
 	block: Block;
@@ -57,7 +59,7 @@ const createComponentHandler = (close: () => void) => {
 		})
 		.then(async (data: BuilderComponent) => {
 			posthog.capture("builder_component_created", { component_name: data.name });
-			store.setComponentMap(data);
+			componentStore.setComponentMap(data);
 			const block = store.activeCanvas?.findBlock(props.block.blockId);
 			if (!block) return;
 			block.extendFromComponent(data.name);

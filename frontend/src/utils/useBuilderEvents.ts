@@ -19,11 +19,14 @@ import {
 	isTargetEditable,
 	uploadImage,
 } from "@/utils/helpers";
+import useComponentStore from "@/utils/useComponentStore";
 import { useEventListener, useStorage } from "@vueuse/core";
 import { Ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { toast } from "vue-sonner";
+
 const store = useStore();
+const componentStore = useComponentStore();
 
 export function useBuilderEvents(
 	pageCanvas: Ref<InstanceType<typeof BuilderCanvas> | null>,
@@ -54,7 +57,7 @@ export function useBuilderEvents(
 			for (const block of store.activeCanvas?.selectedBlocks) {
 				const components = block.getUsedComponentNames();
 				for (const componentName of components) {
-					const component = store.getComponent(componentName);
+					const component = componentStore.getComponent(componentName);
 					if (component) {
 						componentDocuments.push(component);
 					}
@@ -110,7 +113,7 @@ export function useBuilderEvents(
 
 			for (const component of dataObj.components) {
 				delete component.for_web_page;
-				await store.createComponent(component, true);
+				await componentStore.createComponent(component, true);
 			}
 
 			if (store.activeCanvas?.selectedBlocks.length && dataObj.blocks[0].blockId !== "root") {

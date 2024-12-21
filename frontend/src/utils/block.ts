@@ -1,4 +1,5 @@
 import useStore from "@/store";
+import useComponentStore from "@/utils/useComponentStore";
 import { Editor } from "@tiptap/vue-3";
 import { clamp } from "@vueuse/core";
 import { CSSProperties, markRaw, nextTick, reactive } from "vue";
@@ -93,8 +94,8 @@ class Block implements BlockOptions {
 		}
 
 		if (this.extendedFromComponent) {
-			const store = useStore();
-			store.loadComponent(this.extendedFromComponent);
+			const componentStore = useComponentStore();
+			componentStore.loadComponent(this.extendedFromComponent);
 		}
 
 		if (this.isImage()) {
@@ -152,11 +153,12 @@ class Block implements BlockOptions {
 	}
 	getComponent() {
 		const store = useStore();
+		const componentStore = useComponentStore();
 		if (this.extendedFromComponent) {
-			return store.getComponentBlock(this.extendedFromComponent as string);
+			return componentStore.getComponentBlock(this.extendedFromComponent as string);
 		}
 		if (this.isChildOfComponent) {
-			const componentBlock = store.getComponentBlock(this.isChildOfComponent as string);
+			const componentBlock = componentStore.getComponentBlock(this.isChildOfComponent as string);
 			return (
 				store.activeCanvas?.findBlock(this.referenceBlockId as string, [componentBlock]) ||
 				store.activeCanvas?.findBlock(this.blockId as string, [componentBlock]) ||
@@ -242,8 +244,8 @@ class Block implements BlockOptions {
 		return description;
 	}
 	getComponentBlockDescription() {
-		const store = useStore();
-		return store.getComponentName(this.extendedFromComponent as string);
+		const componentStore = useComponentStore();
+		return componentStore.getComponentName(this.extendedFromComponent as string);
 	}
 	getTextContent() {
 		return getTextContent(this.getInnerHTML() || "");
