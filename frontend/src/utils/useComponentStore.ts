@@ -6,6 +6,7 @@ import getBlockTemplate from "@/utils/blockTemplate";
 import { alert, getBlockInstance, getBlockObject } from "@/utils/helpers";
 import { createDocumentResource } from "frappe-ui";
 import { defineStore } from "pinia";
+import { markRaw } from "vue";
 import { toast } from "vue-sonner";
 
 const useComponentStore = defineStore("componentStore", {
@@ -35,7 +36,7 @@ const useComponentStore = defineStore("componentStore", {
 						})
 						.then((data: BuilderComponent) => {
 							this.componentDocMap.set(data.name, data);
-							this.componentMap.set(data.name, getBlockInstance(data.block));
+							this.componentMap.set(data.name, markRaw(getBlockInstance(data.block)));
 							toast.success("Component saved!");
 						});
 				},
@@ -98,7 +99,7 @@ const useComponentStore = defineStore("componentStore", {
 		},
 		setComponentMap(componentDoc: BuilderComponent) {
 			this.componentDocMap.set(componentDoc.name, componentDoc);
-			this.componentMap.set(componentDoc.name, getBlockInstance(componentDoc.block));
+			this.componentMap.set(componentDoc.name, markRaw(getBlockInstance(componentDoc.block)));
 		},
 		async fetchComponent(componentName: string) {
 			const webComponentDoc = await createDocumentResource({
