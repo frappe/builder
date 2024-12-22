@@ -62,7 +62,7 @@
 <script setup lang="ts">
 import useStore from "@/store";
 import Block from "@/utils/block";
-import { FileUploader } from "frappe-ui";
+import { Dialog, FileUploader } from "frappe-ui";
 import { ref } from "vue";
 
 const showBlockTemplateDialog = ref(false);
