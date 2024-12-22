@@ -2,7 +2,7 @@ import useStore from "@/store";
 import useComponentStore from "@/utils/useComponentStore";
 import { Editor } from "@tiptap/vue-3";
 import { clamp } from "@vueuse/core";
-import { CSSProperties, markRaw, nextTick, reactive } from "vue";
+import { computed, CSSProperties, markRaw, nextTick, reactive } from "vue";
 import {
 	addPxToNumber,
 	dataURLtoFile,
@@ -47,8 +47,10 @@ class Block implements BlockOptions {
 	visibilityCondition?: string;
 	elementBeforeConversion?: string;
 	parentBlock: Block | null;
+	referenceComponent: Block | null;
 	customAttributes: BlockAttributeMap;
 	constructor(options: BlockOptions) {
+		const componentStore = useComponentStore();
 		this.element = options.element;
 		this.innerHTML = options.innerHTML;
 		this.extendedFromComponent = options.extendedFromComponent;
@@ -57,6 +59,20 @@ class Block implements BlockOptions {
 		this.referenceBlockId = options.referenceBlockId;
 		this.visibilityCondition = options.visibilityCondition;
 		this.parentBlock = options.parentBlock || null;
+		if (this.extendedFromComponent) {
+			componentStore.loadComponent(this.extendedFromComponent);
+		}
+		const store = useStore();
+		this.referenceComponent = computed(() => {
+			if (this.extendedFromComponent) {
+				componentStore.componentMap;
+				return componentStore.getComponentBlock(this.extendedFromComponent as string) || null;
+			} else if (this.isChildOfComponent) {
+				const componentBlock = componentStore.getComponentBlock(this.isChildOfComponent as string);
+				return store.activeCanvas?.findBlock(this.referenceBlockId as string, [componentBlock]) || null;
+			}
+			return null;
+		}) as unknown as Block | null;
 
 		this.dataKey = options.dataKey || null;
 
@@ -91,11 +107,6 @@ class Block implements BlockOptions {
 			this.blockId = "root";
 			this.draggable = false;
 			this.removeStyle("minHeight");
-		}
-
-		if (this.extendedFromComponent) {
-			const componentStore = useComponentStore();
-			componentStore.loadComponent(this.extendedFromComponent);
 		}
 
 		if (this.isImage()) {
@@ -151,24 +162,8 @@ class Block implements BlockOptions {
 			this.tabletStyles = {};
 		}
 	}
-	getComponent() {
-		const store = useStore();
-		const componentStore = useComponentStore();
-		if (this.extendedFromComponent) {
-			return componentStore.getComponentBlock(this.extendedFromComponent as string);
-		}
-		if (this.isChildOfComponent) {
-			const componentBlock = componentStore.getComponentBlock(this.isChildOfComponent as string);
-			return (
-				store.activeCanvas?.findBlock(this.referenceBlockId as string, [componentBlock]) ||
-				store.activeCanvas?.findBlock(this.blockId as string, [componentBlock]) ||
-				new Block({})
-			);
-		}
-		return this;
-	}
 	getComponentStyles(breakpoint: string): BlockStyleMap {
-		return this.getComponent()?.getStyles(breakpoint);
+		return this.referenceComponent?.getStyles(breakpoint) || {};
 	}
 	getAttributes(): BlockAttributeMap {
 		let attributes = {};
@@ -179,7 +174,7 @@ class Block implements BlockOptions {
 		return attributes;
 	}
 	getComponentAttributes() {
-		return this.getComponent()?.attributes || {};
+		return this.referenceComponent?.attributes || {};
 	}
 	getClasses() {
 		let classes = [] as Array<string>;
@@ -190,7 +185,7 @@ class Block implements BlockOptions {
 		return classes;
 	}
 	getComponentClasses() {
-		return this.getComponent()?.classes || [];
+		return this.referenceComponent?.classes || [];
 	}
 	getChildren() {
 		return this.children;
@@ -198,13 +193,10 @@ class Block implements BlockOptions {
 	hasChildren() {
 		return this.getChildren().length > 0;
 	}
-	getComponentChildren() {
-		return this.getComponent()?.children || [];
-	}
 	getCustomAttributes() {
 		let customAttributes = {};
 		if (this.isExtendedFromComponent()) {
-			customAttributes = this.getComponent()?.customAttributes || {};
+			customAttributes = this.referenceComponent?.customAttributes || {};
 		}
 		customAttributes = { ...customAttributes, ...this.customAttributes };
 		return customAttributes;
@@ -212,15 +204,15 @@ class Block implements BlockOptions {
 	getRawStyles() {
 		let rawStyles = {};
 		if (this.isExtendedFromComponent()) {
-			rawStyles = this.getComponent()?.rawStyles || {};
+			rawStyles = this.referenceComponent?.rawStyles || {};
 		}
 		rawStyles = { ...rawStyles, ...this.rawStyles };
 		return rawStyles;
 	}
 	getVisibilityCondition() {
 		let visibilityCondition = this.visibilityCondition;
-		if (this.isExtendedFromComponent() && this.getComponent()?.visibilityCondition) {
-			visibilityCondition = this.getComponent()?.visibilityCondition;
+		if (this.isExtendedFromComponent() && this.referenceComponent?.visibilityCondition) {
+			visibilityCondition = this.referenceComponent?.visibilityCondition;
 		}
 		return visibilityCondition;
 	}
@@ -328,7 +320,7 @@ class Block implements BlockOptions {
 			styleValue = this.baseStyles[style];
 		}
 		if (styleValue === undefined && this.isExtendedFromComponent()) {
-			styleValue = this.getComponent()?.getStyle(style) as StyleValue;
+			styleValue = this.referenceComponent?.getStyle(style) as StyleValue;
 		}
 		return styleValue;
 	}
@@ -387,7 +379,7 @@ class Block implements BlockOptions {
 		return this.getElement() || "div";
 	}
 	getComponentTag() {
-		return this.getComponent()?.getTag() || "div";
+		return this.referenceComponent?.getTag() || "div";
 	}
 	isDiv() {
 		return this.getElement() === "div";
@@ -628,7 +620,7 @@ class Block implements BlockOptions {
 	getDataKey(key: keyof BlockDataKey): string {
 		let dataKey = (this.dataKey && this.dataKey[key]) || "";
 		if (!dataKey && this.isExtendedFromComponent()) {
-			dataKey = this.getComponent()?.getDataKey(key);
+			dataKey = this.referenceComponent?.getDataKey(key) || "";
 		}
 		return dataKey;
 	}
@@ -645,7 +637,7 @@ class Block implements BlockOptions {
 	getInnerHTML(): string {
 		let innerHTML = this.innerHTML || "";
 		if (!innerHTML && this.isExtendedFromComponent()) {
-			innerHTML = this.getComponent().getInnerHTML();
+			innerHTML = this.referenceComponent?.getInnerHTML() || "";
 		}
 		return innerHTML;
 	}
@@ -666,20 +658,22 @@ class Block implements BlockOptions {
 	}
 	extendFromComponent(componentName: string) {
 		this.extendedFromComponent = componentName;
-		const component = this.getComponent();
-		extendWithComponent(this, componentName, component.children);
+		const component = this.referenceComponent as Block;
+		if (component) {
+			extendWithComponent(this, componentName, component.children);
+		}
 	}
 	isChildOfComponentBlock() {
 		return Boolean(this.isChildOfComponent);
 	}
 	resetWithComponent() {
-		const component = this.getComponent();
+		const component = this.referenceComponent;
 		if (component) {
 			resetWithComponent(this, this.extendedFromComponent as string, component.children);
 		}
 	}
 	syncWithComponent() {
-		const component = this.getComponent();
+		const component = this.referenceComponent;
 		if (component) {
 			syncBlockWithComponent(this, this, this.extendedFromComponent as string, component.children);
 		}
@@ -700,12 +694,12 @@ class Block implements BlockOptions {
 	}
 	getElement() {
 		if (this.isExtendedFromComponent()) {
-			return this.getComponent()?.element || this.element;
+			return this.referenceComponent?.element || this.element;
 		}
 		return this.element;
 	}
 	getUsedComponentNames() {
-		const store = useStore();
+		const componentStore = useComponentStore();
 		const componentNames = [] as string[];
 		if (this.extendedFromComponent) {
 			componentNames.push(this.extendedFromComponent);
@@ -718,7 +712,7 @@ class Block implements BlockOptions {
 		});
 
 		componentNames.forEach((name) => {
-			componentNames.push(...store.getComponentBlock(name).getUsedComponentNames());
+			componentNames.push(...componentStore.getComponentBlock(name).getUsedComponentNames());
 		});
 
 		return new Set(componentNames);
@@ -904,7 +898,7 @@ function extendWithComponent(
 		child.isChildOfComponent = extendedFromComponent;
 		let componentChild = componentChildren[index];
 		if (child.extendedFromComponent) {
-			const component = child.getComponent();
+			const component = child.referenceComponent;
 			child.referenceBlockId = componentChild.blockId;
 			extendWithComponent(child, child.extendedFromComponent, component.children, false);
 		} else if (componentChild) {
@@ -928,7 +922,7 @@ function resetWithComponent(
 		blockComponent.referenceBlockId = componentChild.blockId;
 		const childBlock = block.addChild(blockComponent, null, false);
 		if (componentChild.extendedFromComponent) {
-			const component = childBlock.getComponent();
+			const component = childBlock.referenceComponent;
 			resetWithComponent(childBlock, componentChild.extendedFromComponent, component.children, false);
 		} else {
 			resetWithComponent(childBlock, extendedWithComponent, componentChild.children, resetOverrides);
