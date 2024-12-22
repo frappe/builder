@@ -284,7 +284,7 @@ function isCtrlOrCmd(e: KeyboardEvent) {
 
 const detachBlockFromComponent = (block: Block) => {
 	const blockCopy = getBlockCopy(block, true);
-	const component = block.getComponent();
+	const component = block.referenceComponent;
 	blockCopy.element = block?.getElement();
 	blockCopy.attributes = block.getAttributes();
 	blockCopy.classes = block.getClasses();
@@ -325,6 +325,7 @@ function getCopyWithoutParent(block: BlockOptions | Block): BlockOptions {
 	const blockCopy = { ...toRaw(block) };
 	blockCopy.children = blockCopy.children?.map((child) => getCopyWithoutParent(child));
 	delete blockCopy.parentBlock;
+	delete blockCopy.referenceComponent;
 	return blockCopy;
 }
 
