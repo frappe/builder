@@ -62,14 +62,13 @@ class Block implements BlockOptions {
 		if (this.extendedFromComponent) {
 			componentStore.loadComponent(this.extendedFromComponent);
 		}
-		const store = useStore();
 		this.referenceComponent = computed(() => {
 			if (this.extendedFromComponent) {
-				componentStore.componentMap;
-				return componentStore.getComponentBlock(this.extendedFromComponent as string) || null;
+				return markRaw(componentStore.getComponentBlock(this.extendedFromComponent as string)) || null;
 			} else if (this.isChildOfComponent) {
 				const componentBlock = componentStore.getComponentBlock(this.isChildOfComponent as string);
-				return store.activeCanvas?.findBlock(this.referenceBlockId as string, [componentBlock]) || null;
+				const componentBlockInstance = findBlock(this.referenceBlockId as string, [componentBlock]);
+				return componentBlockInstance ? markRaw(componentBlockInstance) : null;
 			}
 			return null;
 		}) as unknown as Block | null;
@@ -995,6 +994,21 @@ function resetBlock(
 			resetBlock(child, resetChildren, !Boolean(child.extendedFromComponent));
 		});
 	}
+}
+
+function findBlock(blockId: string, blocks: Block[]): Block | null {
+	for (const block of blocks) {
+		if (block.blockId === blockId) {
+			return block;
+		}
+		if (block.children) {
+			const found = findBlock(blockId, block.children);
+			if (found) {
+				return found;
+			}
+		}
+	}
+	return null;
 }
 
 export default Block;
