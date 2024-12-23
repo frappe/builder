@@ -1,3 +1,4 @@
+import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import router from "@/router";
 import { posthog } from "@/telemetry";
 import { BuilderSettings } from "@/types/Builder/BuilderSettings";
@@ -38,6 +39,7 @@ const useStore = defineStore("store", {
 		lastMode: <BuilderMode>"select",
 		activeCanvas: <InstanceType<typeof BuilderCanvas> | null>null,
 		activeLayers: <InstanceType<typeof BlockLayers> | null>null,
+		blockContextMenu: <InstanceType<typeof BlockContextMenu> | null>null,
 		history: {
 			pause: () => {},
 			resume: () => {},

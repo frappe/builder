@@ -1,5 +1,6 @@
 <template>
 	<div class="page-builder h-screen flex-col overflow-hidden bg-surface-gray-1">
+		<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
 		<BuilderToolbar class="relative z-30"></BuilderToolbar>
 		<div>
 			<BuilderLeftPanel
@@ -88,6 +89,7 @@
 </template>
 
 <script setup lang="ts">
+import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import BuilderCanvas from "@/components/BuilderCanvas.vue";
 import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
@@ -102,7 +104,7 @@ import { isTargetEditable } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
 import { useActiveElement, useDebounceFn, useMagicKeys } from "@vueuse/core";
 import { Dialog } from "frappe-ui";
-import { computed, onActivated, onDeactivated, provide, ref, watch, watchEffect } from "vue";
+import { computed, onActivated, onDeactivated, provide, ref, toRef, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
 
@@ -131,6 +133,8 @@ const activeElement = useActiveElement();
 const notUsingInput = computed(
 	() => activeElement.value?.tagName !== "INPUT" && activeElement.value?.tagName !== "TEXTAREA",
 );
+
+const blockContextMenu = toRef(store, "blockContextMenu");
 
 const { space } = useMagicKeys({
 	passive: false,

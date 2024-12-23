@@ -7,6 +7,7 @@ import { BuilderPage } from "@/types/Builder/BuilderPage";
 import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
+
 import {
 	addPxToNumber,
 	copyToClipboard,
@@ -434,6 +435,22 @@ export function useBuilderEvents(
 						store.setPage(route.params.pageId as string, false);
 					}
 				});
+			}
+		}
+	});
+
+	// context menu
+	useEventListener(document, "contextmenu", async (e) => {
+		if (isTargetEditable(e)) return;
+		const target =
+			<HTMLElement | null>(e.target as HTMLElement)?.closest("[data-block-layer-id]") ||
+			(e.target as HTMLElement)?.closest("[data-block-id]");
+		if (target) {
+			const blockId = target.dataset.blockLayerId || target.dataset.blockId;
+			const block = store.activeCanvas?.findBlock(blockId as string);
+			if (block) {
+				store.activeCanvas?.selectBlock(block, blockController.multipleBlocksSelected());
+				store.blockContextMenu?.showContextMenu(e, block);
 			}
 		}
 	});
