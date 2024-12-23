@@ -9,69 +9,68 @@
 			:disabled="blocks.length && (blocks[0].isRoot() || blocks[0].isChildOfComponentBlock())">
 			<template #item="{ element }">
 				<div>
-					<BlockContextMenu v-slot="{ onContextMenu }" :block="element" :editable="false">
-						<div
-							:data-block-layer-id="element.blockId"
-							:title="element.blockId"
-							@contextmenu.prevent.stop="onContextMenu"
-							class="min-w-24 cursor-pointer overflow-hidden rounded border border-transparent bg-surface-white bg-opacity-50 text-base text-ink-gray-7"
-							@click.stop="selectBlock(element, $event)"
-							@mouseover.stop="store.hoveredBlock = element.blockId"
-							@mouseleave.stop="store.hoveredBlock = null">
-							<span
-								class="group my-[7px] flex items-center gap-1.5 pr-[2px] font-medium"
-								:style="{ paddingLeft: `${indent}px` }"
+					<!-- <BlockContextMenu v-slot="{ onContextMenu }" :block="element" :editable="false"> -->
+					<div
+						:data-block-layer-id="element.blockId"
+						:title="element.blockId"
+						class="min-w-24 cursor-pointer overflow-hidden rounded border border-transparent bg-surface-white bg-opacity-50 text-base text-ink-gray-7"
+						@click.stop="selectBlock(element, $event)"
+						@mouseover.stop="store.hoveredBlock = element.blockId"
+						@mouseleave.stop="store.hoveredBlock = null">
+						<span
+							class="group my-[7px] flex items-center gap-1.5 pr-[2px] font-medium"
+							:style="{ paddingLeft: `${indent}px` }"
+							:class="{
+								'!opacity-50': !element.isVisible(),
+							}">
+							<FeatherIcon
+								:name="isExpanded(element) ? 'chevron-down' : 'chevron-right'"
+								class="ml-[-18px] h-3 w-3 text-ink-gray-4"
+								v-if="element.children && element.children.length && !element.isRoot()"
+								@click.stop="toggleExpanded(element)" />
+							<FeatherIcon
+								:name="element.getIcon()"
+								class="h-3 w-3"
 								:class="{
-									'!opacity-50': !element.isVisible(),
-								}">
-								<FeatherIcon
-									:name="isExpanded(element) ? 'chevron-down' : 'chevron-right'"
-									class="ml-[-18px] h-3 w-3 text-ink-gray-4"
-									v-if="element.children && element.children.length && !element.isRoot()"
-									@click.stop="toggleExpanded(element)" />
-								<FeatherIcon
-									:name="element.getIcon()"
-									class="h-3 w-3"
-									:class="{
-										'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
-											element.isExtendedFromComponent(),
-									}"
-									v-if="!Boolean(element.extendedFromComponent)" />
-								<BlocksIcon
-									class="mr-1 h-3 w-3"
-									:class="{
-										'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
-											element.isExtendedFromComponent(),
-									}"
-									v-if="Boolean(element.extendedFromComponent)" />
-								<span
-									class="min-h-[1em] min-w-[2em] truncate"
-									:contenteditable="element.editable"
-									:title="element.blockId"
-									:class="{
-										'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
-											element.isExtendedFromComponent(),
-									}"
-									@dblclick="element.editable = true"
-									@keydown.enter.stop.prevent="element.editable = false"
-									@blur="setBlockName($event, element)">
-									{{ element.getBlockDescription() }}
-								</span>
-								<!-- toggle visibility -->
-								<FeatherIcon
-									v-if="!element.isRoot()"
-									:name="element.isVisible() ? 'eye' : 'eye-off'"
-									class="ml-auto mr-2 hidden h-3 w-3 group-hover:block"
-									@click.stop="element.toggleVisibility()" />
-								<span v-if="element.isRoot()" class="ml-auto mr-2 text-sm capitalize text-ink-gray-5">
-									{{ store.activeBreakpoint }}
-								</span>
+									'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
+										element.isExtendedFromComponent(),
+								}"
+								v-if="!Boolean(element.extendedFromComponent)" />
+							<BlocksIcon
+								class="mr-1 h-3 w-3"
+								:class="{
+									'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
+										element.isExtendedFromComponent(),
+								}"
+								v-if="Boolean(element.extendedFromComponent)" />
+							<span
+								class="min-h-[1em] min-w-[2em] truncate"
+								:contenteditable="element.editable"
+								:title="element.blockId"
+								:class="{
+									'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
+										element.isExtendedFromComponent(),
+								}"
+								@dblclick="element.editable = true"
+								@keydown.enter.stop.prevent="element.editable = false"
+								@blur="setBlockName($event, element)">
+								{{ element.getBlockDescription() }}
 							</span>
-							<div v-show="canShowChildLayer(element)">
-								<BlockLayers :blocks="element.children" :ref="childLayer" :indent="childIndent" />
-							</div>
+							<!-- toggle visibility -->
+							<FeatherIcon
+								v-if="!element.isRoot()"
+								:name="element.isVisible() ? 'eye' : 'eye-off'"
+								class="ml-auto mr-2 hidden h-3 w-3 group-hover:block"
+								@click.stop="element.toggleVisibility()" />
+							<span v-if="element.isRoot()" class="ml-auto mr-2 text-sm capitalize text-ink-gray-5">
+								{{ store.activeBreakpoint }}
+							</span>
+						</span>
+						<div v-show="canShowChildLayer(element)">
+							<BlockLayers :blocks="element.children" :ref="childLayer" :indent="childIndent" />
 						</div>
-					</BlockContextMenu>
+					</div>
+					<!-- </BlockContextMenu> -->
 				</div>
 			</template>
 		</draggable>
@@ -83,7 +82,6 @@ import { FeatherIcon } from "frappe-ui";
 import { PropType, ref, watch } from "vue";
 import draggable from "vuedraggable";
 import useStore from "../store";
-import BlockContextMenu from "./BlockContextMenu.vue";
 import BlockLayers from "./BlockLayers.vue";
 import BlocksIcon from "./Icons/Blocks.vue";
 

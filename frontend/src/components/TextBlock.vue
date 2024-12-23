@@ -113,6 +113,16 @@
 					}
 				}
 			"
+			@keydown.esc="
+				() => {
+					store.editableBlock = null;
+				}
+			"
+			v-on-click-outside="
+				() => {
+					store.editableBlock = null;
+				}
+			"
 			@mouseup="selectionTriggered = false"
 			v-if="editor && showEditor"
 			class="relative z-50"
@@ -134,6 +144,7 @@ import { Link } from "@tiptap/extension-link";
 import TextStyle from "@tiptap/extension-text-style";
 import StarterKit from "@tiptap/starter-kit";
 import { BubbleMenu, Editor, EditorContent, Extension } from "@tiptap/vue-3";
+import { vOnClickOutside } from "@vueuse/components";
 import { TextInput } from "frappe-ui";
 import { Plugin, PluginKey } from "prosemirror-state";
 import { Ref, computed, inject, nextTick, onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
