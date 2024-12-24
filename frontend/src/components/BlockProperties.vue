@@ -59,14 +59,6 @@ import ObjectEditor from "./ObjectEditor.vue";
 
 const store = useStore();
 
-// command + f should focus on search input
-window.addEventListener("keydown", (e) => {
-	if (e.key === "f" && (e.metaKey || e.ctrlKey)) {
-		e.preventDefault();
-		document.querySelector(".properties-search-input")?.querySelector("input")?.focus();
-	}
-});
-
 type BlockProperty = {
 	component: any;
 	getProps: () => Record<string, unknown>;

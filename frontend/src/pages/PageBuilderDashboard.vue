@@ -226,7 +226,7 @@ import useStore from "@/store";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { useDark, useEventListener, useStorage, useToggle, watchDebounced } from "@vueuse/core";
-import { createResource, Dropdown } from "frappe-ui";
+import { createResource, Dialog, Dropdown } from "frappe-ui";
 import { onActivated, Ref, ref, watch } from "vue";
 
 const isDark = useDark({

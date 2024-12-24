@@ -145,20 +145,24 @@ useEventListener(document, "keydown", (ev) => {
 watchEffect(() => {
 	if (previewWindow.value) {
 		loading.value = true;
-		previewWindow.value.addEventListener("load", () => {
-			setTimeout(() => {
-				loading.value = false;
-			}, 100);
-			previewWindow.value?.addEventListener("mousedown", (ev) => {
-				document.dispatchEvent(new MouseEvent("mousedown", ev));
-			});
-			previewWindow.value?.contentWindow?.document.addEventListener("mouseup", (ev) => {
-				document.dispatchEvent(new MouseEvent("mouseup", ev));
-			});
-			previewWindow.value?.contentWindow?.document.addEventListener("mousemove", (ev) => {
-				document.dispatchEvent(new MouseEvent("mousemove", ev));
-			});
-		});
+		previewWindow.value.addEventListener(
+			"load",
+			() => {
+				setTimeout(() => {
+					loading.value = false;
+				}, 100);
+				previewWindow.value?.addEventListener("mousedown", (ev) => {
+					document.dispatchEvent(new MouseEvent("mousedown", ev));
+				});
+				previewWindow.value?.contentWindow?.document.addEventListener("mouseup", (ev) => {
+					document.dispatchEvent(new MouseEvent("mouseup", ev));
+				});
+				previewWindow.value?.contentWindow?.document.addEventListener("mousemove", (ev) => {
+					document.dispatchEvent(new MouseEvent("mousemove", ev));
+				});
+			},
+			{ once: true },
+		);
 	}
 });
 

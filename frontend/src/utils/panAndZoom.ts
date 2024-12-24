@@ -21,7 +21,6 @@ function setPanAndZoom(
 			props.scaling = true;
 			if (!pinchPointSet) {
 				// set pinch point before setting new scale value
-				targetBound.update();
 				const middleX = targetBound.left + targetBound.width / 2;
 				const middleY = targetBound.top + targetBound.height / 2;
 				pointFromCenterX = (e.clientX - middleX) / props.scale;
@@ -53,7 +52,6 @@ function setPanAndZoom(
 			scale = Math.min(Math.max(scale, zoomLimits.min), zoomLimits.max);
 			props.scale = scale;
 			nextTick(() => {
-				targetBound.update();
 				const middleX = targetBound.left + targetBound.width / 2;
 				const middleY = targetBound.top + targetBound.height / 2;
 

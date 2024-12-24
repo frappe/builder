@@ -33,6 +33,7 @@
 import FolderIcon from "@/components/Icons/Folder.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { useVModel } from "@vueuse/core";
+import { Dialog } from "frappe-ui";
 
 const props = defineProps<{
 	currentFolder: string;
