@@ -1,7 +1,7 @@
 import Block from "@/utils/block";
 import { generateId, getBlockInstance, getBlockString } from "@/utils/helpers";
 import { debounceFilter, pausableFilter, watchIgnorable } from "@vueuse/core";
-import { nextTick, ref, Ref } from "vue";
+import { ref, Ref } from "vue";
 
 type CanvasState = {
 	block: string;
@@ -136,19 +136,17 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<strin
 	}
 
 	function resume(pauseId?: PauseId, commitNow?: boolean, force?: boolean) {
-		nextTick(() => {
-			if (pauseId && pauseIdSet.has(pauseId)) {
-				pauseIdSet.delete(pauseId);
-			} else if (!force) {
-				return;
-			}
-			if (pauseIdSet.size && !force) {
-				return;
-			}
-			pauseIdSet.clear();
-			resumeTracking();
-			if (commitNow) commit();
-		});
+		if (pauseId && pauseIdSet.has(pauseId)) {
+			pauseIdSet.delete(pauseId);
+		} else if (!force) {
+			return;
+		}
+		if (pauseIdSet.size && !force) {
+			return;
+		}
+		pauseIdSet.clear();
+		resumeTracking();
+		if (commitNow) commit();
 	}
 
 	function batch(callback: () => void) {
