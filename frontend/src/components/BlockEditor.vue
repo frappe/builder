@@ -236,11 +236,11 @@ const handleDoubleClick = (ev: MouseEvent) => {
 };
 
 const handleMove = (ev: MouseEvent) => {
-	const pauseId = store.activeCanvas?.history?.pause();
 	if (store.mode === "text") {
 		store.editableBlock = props.block;
 	}
 	if (!movable.value || props.block.isRoot()) return;
+	const pauseId = store.activeCanvas?.history?.pause();
 	const target = ev.target as HTMLElement;
 	const startX = ev.clientX;
 	const startY = ev.clientY;
