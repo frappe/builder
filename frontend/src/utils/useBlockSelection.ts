@@ -2,7 +2,7 @@ import Block from "@/utils/block";
 import { computed, Ref, ref } from "vue";
 
 export function useBlockSelection(rootBlock: Ref<Block>) {
-	const selectedBlockIds = ref<string[]>([]);
+	const selectedBlockIds = ref<Set<string>>(new Set());
 
 	function findBlock(blockId: string, blocks?: Block[]): Block | null {
 		if (!blocks) {
@@ -23,36 +23,37 @@ export function useBlockSelection(rootBlock: Ref<Block>) {
 	}
 
 	const selectedBlocks = computed(() => {
-		return selectedBlockIds.value.map((id) => findBlock(id)).filter((b) => b) as Block[];
+		return Array.from(selectedBlockIds.value)
+			.map((id: string) => findBlock(id))
+			.filter((b): b is Block => !!b);
 	});
 
 	const isSelected = (block: Block) => {
-		return selectedBlockIds.value.includes(block.blockId);
+		return selectedBlockIds.value.has(block.blockId);
 	};
 
 	const selectBlock = (block: Block, multiSelect = false) => {
 		if (multiSelect) {
-			selectedBlockIds.value.push(block.blockId);
+			selectedBlockIds.value.add(block.blockId);
 		} else {
-			selectedBlockIds.value = [block.blockId];
+			selectedBlockIds.value = new Set([block.blockId]);
 		}
 	};
 
 	const toggleBlockSelection = (block: Block) => {
-		const index = selectedBlockIds.value.indexOf(block.blockId);
-		if (index >= 0) {
-			selectedBlockIds.value.splice(index, 1);
+		if (selectedBlockIds.value.has(block.blockId)) {
+			selectedBlockIds.value.delete(block.blockId);
 		} else {
 			selectBlock(block, true);
 		}
 	};
 
 	const clearSelection = () => {
-		selectedBlockIds.value = [];
+		selectedBlockIds.value = new Set();
 	};
 
 	const selectBlockRange = (newSelectedBlock: Block) => {
-		const lastSelectedBlockId = selectedBlockIds.value[selectedBlockIds.value.length - 1];
+		const lastSelectedBlockId = Array.from(selectedBlockIds.value)[selectedBlockIds.value.size - 1];
 		const lastSelectedBlock = findBlock(lastSelectedBlockId);
 		const lastSelectedBlockParent = lastSelectedBlock?.parentBlock;
 		if (!lastSelectedBlock || !lastSelectedBlockParent) {
@@ -69,8 +70,7 @@ export function useBlockSelection(rootBlock: Ref<Block>) {
 		const end = Math.max(lastSelectedBlockIndex, newSelectedBlockIndex);
 		if (lastSelectedBlockParent === newSelectedBlockParent) {
 			const blocks = lastSelectedBlockParent.children.slice(start, end + 1);
-			selectedBlockIds.value = selectedBlockIds.value.concat(...blocks.map((b) => b.blockId));
-			selectedBlockIds.value = Array.from(new Set(selectedBlockIds.value));
+			blocks.forEach((b) => selectedBlockIds.value.add(b.blockId));
 		}
 	};
 

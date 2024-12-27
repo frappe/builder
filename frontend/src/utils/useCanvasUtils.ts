@@ -13,7 +13,7 @@ export function useCanvasUtils(
 	canvasContainer: Ref<HTMLElement | null>,
 	canvas: Ref<HTMLElement | null>,
 	rootBlock: Ref<Block>,
-	selectedBlockIds: Ref<string[]>,
+	selectedBlockIds: Ref<Set<string>>,
 	canvasHistory: Ref<null | any>,
 ) {
 	const isDirty = ref(false);
@@ -192,9 +192,9 @@ export function useCanvasUtils(
 
 	function selectBlock(_block: Block, multiSelect = false) {
 		if (multiSelect) {
-			selectedBlockIds.value.push(_block.blockId);
+			selectedBlockIds.value.add(_block.blockId);
 		} else {
-			selectedBlockIds.value.splice(0, selectedBlockIds.value.length, _block.blockId);
+			selectedBlockIds.value = new Set([_block.blockId]);
 		}
 	}
 
