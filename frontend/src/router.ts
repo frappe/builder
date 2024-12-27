@@ -10,42 +10,48 @@ function validatePermission(next: NavigationGuardNext) {
 		next();
 	} else {
 		alert("You do not have permission to access this page");
-		window.location.href = "/login";
+		if (isUserLoggedIn()) {
+			window.location.href = "/app";
+		} else {
+			window.location.href = "/login?redirect-to=/builder";
+		}
 	}
 }
 
-const validateVisit = function (
+const validateVisit = async function (
 	to: RouteLocationNormalized,
 	from: RouteLocationNormalized,
 	next: NavigationGuardNext,
 ) {
-	if (document.cookie.includes("user_id") && !document.cookie.includes("user_id=Guest")) {
-		sessionUser.value = decodeURIComponent(document.cookie.split("user_id=")[1].split(";")[0]);
+	if (isUserLoggedIn()) {
+		sessionUser.value = getSessionUser();
 		if (hasPermission === null) {
-			createResource({
-				url: "frappe.client.has_permission",
-				caches: "has_permission",
-			})
-				.submit({
+			try {
+				const response = await createResource({
+					url: "frappe.client.has_permission",
+				}).submit({
 					doctype: "Builder Page",
 					docname: null,
 					perm_type: "write",
-				})
-				.then((res: { has_permission: boolean }) => {
-					hasPermission = res.has_permission;
-					validatePermission(next);
-				})
-				.catch(() => {
-					hasPermission = false;
-					validatePermission(next);
 				});
-		} else {
-			validatePermission(next);
+				hasPermission = response.has_permission;
+				return validatePermission(next);
+			} catch (e) {
+				hasPermission = false;
+				return validatePermission(next);
+			}
 		}
-	} else {
-		validatePermission(next);
 	}
+	return validatePermission(next);
 };
+
+function isUserLoggedIn() {
+	return document.cookie.includes("user_id") && !document.cookie.includes("user_id=Guest");
+}
+
+function getSessionUser() {
+	return decodeURIComponent(document.cookie.split("user_id=")[1].split(";")[0]) || "Guest";
+}
 
 const routes = [
 	{
