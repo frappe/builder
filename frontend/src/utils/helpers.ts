@@ -278,7 +278,7 @@ function getBlockCopy(block: BlockOptions | Block, retainId = false): Block {
 	return getBlockInstance(b, retainId);
 }
 
-function isCtrlOrCmd(e: KeyboardEvent) {
+function isCtrlOrCmd(e: KeyboardEvent | MouseEvent) {
 	return e.ctrlKey || e.metaKey;
 }
 
