@@ -43,7 +43,8 @@
 					background: canvasProps.background,
 					width: `${breakpoint.width}px`,
 				}"
-				v-for="breakpoint in visibleBreakpoints"
+				v-for="breakpoint in renderedBreakpoints"
+				v-show="breakpoint.visible"
 				:key="breakpoint.device">
 				<div
 					class="absolute left-0 cursor-pointer select-none text-3xl text-gray-700 dark:text-zinc-300"
@@ -139,6 +140,7 @@ const canvasProps = reactive({
 			displayName: "Desktop",
 			width: 1400,
 			visible: true,
+			renderedOnce: true,
 		},
 		{
 			icon: "tablet",
@@ -180,10 +182,6 @@ const { isOverDropZone } = useCanvasDropZone(
 	block,
 	findBlock,
 );
-
-const visibleBreakpoints = computed(() => {
-	return canvasProps.breakpoints.filter((breakpoint) => breakpoint.visible);
-});
 
 onMounted(() => {
 	const canvasContainerEl = canvasContainer.value as unknown as HTMLElement;
@@ -280,5 +278,10 @@ function selectBreakpoint(ev: MouseEvent, breakpoint: BreakpointConfig) {
 			breakpoint.visible = true;
 		}
 	}
+	if (breakpoint.visible) {
+		breakpoint.renderedOnce = true;
+	}
 }
+
+const renderedBreakpoints = computed(() => canvasProps.breakpoints.filter((bp) => bp.renderedOnce));
 </script>
