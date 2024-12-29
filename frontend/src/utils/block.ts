@@ -669,6 +669,9 @@ class Block implements BlockOptions {
 		const component = this.referenceComponent;
 		if (component) {
 			resetWithComponent(this, this.extendedFromComponent as string, component.children);
+			// TODO: Remove this
+			const store = useStore();
+			store.activeCanvas?.history?.resume(undefined, true, true);
 		}
 	}
 	syncWithComponent() {
