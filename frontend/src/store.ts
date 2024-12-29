@@ -2,6 +2,7 @@ import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import router from "@/router";
 import { posthog } from "@/telemetry";
 import { BuilderSettings } from "@/types/Builder/BuilderSettings";
+import useComponentStore from "@/utils/useComponentStore";
 import { UseRefHistoryReturn, useStorage } from "@vueuse/core";
 import { createDocumentResource } from "frappe-ui";
 import { defineStore } from "pinia";
@@ -155,13 +156,14 @@ const useStore = defineStore("store", {
 			await this.setPageData(this.activePage);
 			this.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas);
 			nextTick(() => {
+				const componentStore = useComponentStore();
 				const interval = setInterval(() => {
-					// if (this.fetchingComponent.size === 0) {
-					this.settingPage = false;
-					window.name = `editor-${pageName}`;
-					clearInterval(interval);
-					// }
-				}, 100);
+					if (!componentStore.fetchingComponent.size) {
+						this.settingPage = false;
+						window.name = `editor-${pageName}`;
+						clearInterval(interval);
+					}
+				}, 50);
 			});
 		},
 		async setActivePage(pageName: string) {
