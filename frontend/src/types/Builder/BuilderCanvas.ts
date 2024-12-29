@@ -7,6 +7,7 @@ export interface BreakpointConfig {
 	displayName: string;
 	width: number;
 	visible: boolean;
+	renderedOnce: boolean;
 }
 
 export interface CanvasProps {
