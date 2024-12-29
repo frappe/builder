@@ -26,7 +26,7 @@
 					class="w-auto cursor-pointer p-2"
 					v-for="breakpoint in canvasProps.breakpoints"
 					:key="breakpoint.device"
-					@click.stop="breakpoint.visible = !breakpoint.visible">
+					@click.stop="(ev) => selectBreakpoint(ev, breakpoint)">
 					<FeatherIcon
 						:name="breakpoint.icon"
 						class="h-8 w-6"
@@ -46,7 +46,7 @@
 				v-for="breakpoint in visibleBreakpoints"
 				:key="breakpoint.device">
 				<div
-					class="cursor absolute left-0 select-none text-3xl text-gray-700 dark:text-zinc-300"
+					class="absolute left-0 cursor-pointer select-none text-3xl text-gray-700 dark:text-zinc-300"
 					:style="{
 						fontSize: `calc(${12}px * 1/${canvasProps.scale})`,
 						top: `calc(${-20}px * 1/${canvasProps.scale})`,
@@ -78,7 +78,7 @@
 import LoadingIcon from "@/components/Icons/Loading.vue";
 import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
 import Block from "@/utils/block";
-import { getBlockCopy } from "@/utils/helpers";
+import { getBlockCopy, isCtrlOrCmd } from "@/utils/helpers";
 import { useBlockEventHandlers } from "@/utils/useBlockEventHandlers";
 import { useBlockSelection } from "@/utils/useBlockSelection";
 import { useCanvasDropZone } from "@/utils/useCanvasDropZone";
@@ -182,9 +182,7 @@ const { isOverDropZone } = useCanvasDropZone(
 );
 
 const visibleBreakpoints = computed(() => {
-	return canvasProps.breakpoints.filter(
-		(breakpoint) => breakpoint.visible || breakpoint.device === "desktop",
-	);
+	return canvasProps.breakpoints.filter((breakpoint) => breakpoint.visible);
 });
 
 onMounted(() => {
@@ -270,4 +268,17 @@ defineExpose({
 	removeBlock,
 	selectBlockRange,
 });
+
+function selectBreakpoint(ev: MouseEvent, breakpoint: BreakpointConfig) {
+	if (isCtrlOrCmd(ev)) {
+		canvasProps.breakpoints.forEach((bp) => {
+			bp.visible = bp.device === breakpoint.device;
+		});
+	} else {
+		breakpoint.visible = !breakpoint.visible;
+		if (canvasProps.breakpoints.filter((bp) => bp.visible).length === 0) {
+			breakpoint.visible = true;
+		}
+	}
+}
 </script>
