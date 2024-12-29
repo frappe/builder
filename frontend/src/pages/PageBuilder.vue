@@ -1,5 +1,12 @@
 <template>
-	<div class="page-builder h-screen flex-col overflow-hidden bg-surface-gray-1">
+	<div v-show="isSmallScreen" class="grid h-screen w-screen place-content-center gap-4 text-ink-gray-9">
+		<img src="/builder_logo.png" alt="logo" class="h-10" />
+		<div class="flex flex-col">
+			<h1 class="text-p-2xl font-semibold">Screen too small</h1>
+			<p class="text-p-base">Please switch to a larger screen to edit</p>
+		</div>
+	</div>
+	<div v-show="!isSmallScreen" class="page-builder h-screen flex-col overflow-hidden bg-surface-gray-1">
 		<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
 		<BuilderToolbar class="relative z-30"></BuilderToolbar>
 		<div>
@@ -102,11 +109,20 @@ import { getUsersInfo } from "@/usersInfo";
 import blockController from "@/utils/blockController";
 import { isTargetEditable } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
-import { useActiveElement, useDebounceFn, useMagicKeys } from "@vueuse/core";
+import {
+	breakpointsTailwind,
+	useActiveElement,
+	useBreakpoints,
+	useDebounceFn,
+	useMagicKeys,
+} from "@vueuse/core";
 import { Dialog } from "frappe-ui";
 import { computed, onActivated, onDeactivated, provide, ref, toRef, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
+
+const breakpoints = useBreakpoints(breakpointsTailwind);
+const isSmallScreen = breakpoints.smaller("lg");
 
 const route = useRoute();
 const router = useRouter();
