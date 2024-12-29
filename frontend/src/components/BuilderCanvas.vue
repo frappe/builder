@@ -279,6 +279,8 @@ function selectBreakpoint(ev: MouseEvent, breakpoint: BreakpointConfig) {
 		}
 	}
 	if (breakpoint.visible) {
+		store.hoveredBreakpoint = breakpoint.device;
+		store.activeBreakpoint = breakpoint.device;
 		breakpoint.renderedOnce = true;
 	}
 }
