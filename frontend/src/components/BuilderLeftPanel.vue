@@ -75,7 +75,7 @@ import PageScript from "@/components/PageScript.vue";
 import Block from "@/utils/block";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { createResource } from "frappe-ui";
-import { Ref, inject, ref, watch, watchEffect } from "vue";
+import { Ref, inject, nextTick, ref, watch, watchEffect } from "vue";
 import useStore from "../store";
 import BlockLayers from "./BlockLayers.vue";
 import BuilderAssets from "./BuilderAssets.vue";
@@ -159,16 +159,15 @@ watch(
 );
 
 watch(
-	() => store.activeCanvas?.selectedBlocks,
-	() => {
-		document.querySelectorAll(`[data-block-layer-id].block-selected`).forEach((el) => {
-			el.classList.remove("block-selected");
+	() => store.activeCanvas?.selectedBlockIds,
+	async () => {
+		await nextTick();
+		const selectedBlocks = document.querySelectorAll(`[data-block-layer-id].block-selected`);
+		selectedBlocks.forEach((el) => el.classList.remove("block-selected"));
+		Array.from(store.activeCanvas?.selectedBlockIds || new Set([])).forEach((blockId: string) => {
+			const blockElement = document.querySelector(`[data-block-layer-id="${blockId}"]`);
+			blockElement?.classList.add("block-selected");
 		});
-		if (store.activeCanvas?.selectedBlocks.length) {
-			store.activeCanvas?.selectedBlocks.forEach((block: Block) => {
-				document.querySelector(`[data-block-layer-id="${block.blockId}"]`)?.classList.add("block-selected");
-			});
-		}
 	},
 );
 </script>

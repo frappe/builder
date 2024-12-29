@@ -64,7 +64,7 @@
 							{{ store.activeBreakpoint }}
 						</span>
 					</span>
-					<div v-show="canShowChildLayer(element)">
+					<div v-if="canShowChildLayer(element)">
 						<BlockLayers :blocks="element.children" :ref="childLayer" :indent="childIndent" />
 					</div>
 				</div>
@@ -161,7 +161,7 @@ const canShowChildLayer = (block: Block) => {
 };
 
 watch(
-	() => store.activeCanvas?.selectedBlocks,
+	() => store.activeCanvas?.selectedBlockIds,
 	() => {
 		if (store.activeCanvas?.selectedBlocks.length) {
 			store.activeCanvas?.selectedBlocks.forEach((block: Block) => {
@@ -176,6 +176,7 @@ watch(
 			});
 		}
 	},
+	{ immediate: true },
 );
 
 // @ts-ignore
