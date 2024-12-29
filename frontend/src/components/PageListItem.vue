@@ -5,19 +5,19 @@
 			:class="{
 				'bg-surface-gray-2': selected,
 			}">
-			<div class="flex w-[90%] gap-3 overflow-hidden">
+			<div class="flex w-[90%] gap-3">
 				<img
 					width="140"
 					height="82"
 					:src="page.preview"
 					onerror="this.src='/assets/builder/images/fallback.png'"
 					class="block w-36 flex-shrink-0 overflow-hidden rounded-lg bg-surface-gray-1 object-cover shadow-md" />
-				<div class="flex items-start justify-between">
-					<span class="flex h-full flex-col justify-between text-base">
+				<div class="flex flex-1 items-start justify-between overflow-hidden">
+					<span class="flex h-full w-full flex-col justify-between text-base">
 						<div>
 							<div class="flex items-center gap-1">
 								<p
-									class="max-w-[75%] truncate font-medium text-ink-gray-9"
+									class="max-w-[90%] truncate font-medium text-ink-gray-9"
 									:title="page.page_title || page.page_name">
 									{{ page.page_title || page.page_name }}
 								</p>
@@ -30,7 +30,7 @@
 										v-if="page.authenticated_access" />
 									<GlobeIcon class="size-4" title="Publicly accessible" v-else />
 								</div>
-								<p class="max-w-[75%] truncate text-sm">
+								<p class="max-w-[90%] truncate text-sm">
 									{{ page.route }}
 								</p>
 							</div>
