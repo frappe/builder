@@ -26,6 +26,7 @@
 <script setup lang="ts">
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { useVModel } from "@vueuse/core";
+import { Dialog } from "frappe-ui";
 import { ref } from "vue";
 
 const folderName = ref("");

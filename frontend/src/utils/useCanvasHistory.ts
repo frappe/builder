@@ -5,14 +5,14 @@ import { ref, Ref } from "vue";
 
 type CanvasState = {
 	block: string;
-	selectedBlockIds: string[];
+	selectedBlockIds: Set<string>;
 };
 type PauseId = string & { __brand: "PauseId" };
 
 const CAPACITY = 500;
 const DEBOUNCE_DELAY = 100;
 
-export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<string[]>) {
+export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<string>>) {
 	const undoStack = ref([]) as Ref<CanvasState[]>;
 	const redoStack = ref([]) as Ref<CanvasState[]>;
 	const last = ref(createHistoryRecord());
@@ -61,7 +61,7 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<strin
 	}
 
 	function updateSelections() {
-		last.value.selectedBlockIds = [...selectedBlockIds.value];
+		last.value.selectedBlockIds = new Set(selectedBlockIds.value);
 	}
 
 	function createHistoryRecord() {
@@ -78,7 +78,7 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<strin
 		});
 		ignorePrevSelectedBlockUpdates();
 		ignoreSelectedBlockUpdates(() => {
-			selectedBlockIds.value = [...value.selectedBlockIds];
+			selectedBlockIds.value = new Set(value.selectedBlockIds);
 		});
 		last.value = value;
 	}
