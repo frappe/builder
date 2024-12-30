@@ -169,5 +169,6 @@ watch(
 			blockElement?.classList.add("block-selected");
 		});
 	},
+	{ deep: true },
 );
 </script>
