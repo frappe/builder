@@ -278,13 +278,13 @@ function getBlockCopy(block: BlockOptions | Block, retainId = false): Block {
 	return getBlockInstance(b, retainId);
 }
 
-function isCtrlOrCmd(e: KeyboardEvent) {
+function isCtrlOrCmd(e: KeyboardEvent | MouseEvent) {
 	return e.ctrlKey || e.metaKey;
 }
 
 const detachBlockFromComponent = (block: Block) => {
 	const blockCopy = getBlockCopy(block, true);
-	const component = block.getComponent();
+	const component = block.referenceComponent;
 	blockCopy.element = block?.getElement();
 	blockCopy.attributes = block.getAttributes();
 	blockCopy.classes = block.getClasses();
@@ -325,6 +325,7 @@ function getCopyWithoutParent(block: BlockOptions | Block): BlockOptions {
 	const blockCopy = { ...toRaw(block) };
 	blockCopy.children = blockCopy.children?.map((child) => getCopyWithoutParent(child));
 	delete blockCopy.parentBlock;
+	delete blockCopy.referenceComponent;
 	return blockCopy;
 }
 

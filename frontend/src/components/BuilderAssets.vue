@@ -24,7 +24,7 @@
 								selectedComponent === component.component_id,
 						}"
 						@click="selectComponent(component)"
-						@dblclick="store.editComponent(null, component.name)"
+						@dblclick="componentStore.editComponent(null, component.name)"
 						@dragstart="(ev) => setComponentData(ev, component)">
 						<div class="flex items-center gap-2">
 							<FeatherIcon :name="'box'" class="h-4 w-4 text-gray-800 dark:text-zinc-400"></FeatherIcon>
@@ -35,7 +35,7 @@
 						<FeatherIcon
 							name="trash"
 							class="hidden h-3 w-3 cursor-pointer text-gray-800 group-hover:block dark:text-zinc-400"
-							@click.stop.prevent="deleteComponent(component)"></FeatherIcon>
+							@click.stop.prevent="componentStore.deleteComponent(component)"></FeatherIcon>
 					</div>
 				</div>
 			</div>
@@ -46,10 +46,11 @@
 import webComponent from "@/data/webComponent";
 import useStore from "@/store";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
-import { confirm } from "@/utils/helpers";
+import useComponentStore from "@/utils/useComponentStore";
 import { computed, onMounted, ref } from "vue";
 
 const store = useStore();
+const componentStore = useComponentStore();
 const componentFilter = ref("");
 
 onMounted(() => {
@@ -69,21 +70,6 @@ const components = computed(() =>
 	}),
 );
 
-const deleteComponent = async (component: BlockComponent) => {
-	if (store.isComponentUsed(component.name)) {
-		alert("Component is used in current page. You cannot delete it.");
-	} else {
-		const confirmed = await confirm(
-			`Are you sure you want to delete component: ${component.component_name}?`,
-		);
-		if (confirmed) {
-			webComponent.delete.submit(component.name).then(() => {
-				store.componentMap.delete(component.name);
-			});
-		}
-	}
-};
-
 const setComponentData = (ev: DragEvent, component: BlockComponent) => {
 	ev?.dataTransfer?.setData("componentName", component.name);
 };
@@ -93,7 +79,7 @@ const selectComponent = (component: BlockComponent) => {
 	selectedComponent.value = component.component_id;
 	// if in edit mode, open the component in editor
 	if (store.fragmentData.fragmentId) {
-		store.editComponent(null, component.name);
+		componentStore.editComponent(null, component.name);
 	}
 };
 </script>

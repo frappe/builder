@@ -6,7 +6,8 @@ function getBlockTemplate(
 		| "container"
 		| "body"
 		| "fit-container"
-		| "fallback-component"
+		| "missing-component"
+		| "loading-component"
 		| "repeater"
 		| "video",
 ): BlockOptions {
@@ -85,12 +86,23 @@ function getBlockTemplate(
 					overflow: "hidden",
 				} as BlockStyleMap,
 			};
-		case "fallback-component":
+		case "missing-component":
 			return {
 				name: "HTML",
 				element: "p",
 				originalElement: "__raw_html__",
-				innerHTML: `<div style="color: red;background: #f4f4f4;display:flex;flex-direction:column;position:static;top:auto;left:auto;width: 600px;height: 275px;align-items:center;font-size: 30px;justify-content:center"><p>Component missing</p></div>`,
+				innerHTML: `<div style="color:#E86C13;background:#F8F8F8;display:flex;width:300px;height:150px;align-items:center;font-size:16px;justify-content:center"><p>Component Missing</p></div>`,
+				baseStyles: {
+					height: "fit-content",
+					width: "fit-content",
+				} as BlockStyleMap,
+			};
+		case "loading-component":
+			return {
+				name: "HTML",
+				element: "p",
+				originalElement: "__raw_html__",
+				innerHTML: `<div style="color:#525252;background:#F8F8F8;display:flex;width:300px;height:150px;align-items:center;font-size:16px;justify-content:center"><p>Loading...</p></div>`,
 				baseStyles: {
 					height: "fit-content",
 					width: "fit-content",
