@@ -418,7 +418,7 @@ def get_block_html(blocks):
 				if data_key:
 					_key = f"{data_key}.{_key}"
 
-				item_key = f"key_{block.get('blockId')}"
+				item_key = f"key_{_key}"
 				tag.append(f"{{% for {item_key} in {_key} %}}")
 				tag.append(get_tag(block.get("children")[0], soup, item_key))
 				tag.append("{% endfor %}")
