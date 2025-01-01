@@ -298,6 +298,29 @@ const useStore = defineStore("store", {
 				},
 			});
 		},
+		async duplicatePage(page: BuilderPage) {
+			const webPageResource = await createDocumentResource({
+				doctype: "Builder Page",
+				name: page.page_name,
+				auto: true,
+			});
+			await webPageResource.get.promise;
+
+			const pageCopy = webPageResource.doc as BuilderPage;
+			pageCopy.page_title = `${pageCopy.page_title} (Copy)`;
+			delete pageCopy.page_name;
+			delete pageCopy.route;
+			toast.promise(webPages.insert.submit(pageCopy), {
+				loading: "Duplicating page",
+				success: async (page: BuilderPage) => {
+					// load page and refresh
+					router.push({ name: "builder", params: { pageId: page.page_name } }).then(() => {
+						router.go(0);
+					});
+					return "Page duplicated";
+				},
+			});
+		},
 		deletePage: async (page: BuilderPage) => {
 			const confirmed = await confirm(
 				`Are you sure you want to delete page: ${page.page_title || page.page_name}?`,
