@@ -35,9 +35,9 @@
 				"
 				class="absolute right-5 border-0"
 				:class="{
-					'bg-surface-gray-7 !text-text-icons-white hover:bg-surface-gray-6':
+					'bg-surface-gray-7 !text-ink-white hover:bg-surface-gray-6':
 						!publishing && store.activePage?.draft_blocks,
-					'dark:bg-surface-gray-2 dark:text-text-icons-gray-4': !store.activePage?.draft_blocks,
+					'dark:bg-surface-gray-2 dark:text-ink-gray-4': !store.activePage?.draft_blocks,
 				}"
 				:loading="publishing">
 				{{ publishing ? "Publishing" : "Publish" }}
@@ -145,20 +145,24 @@ useEventListener(document, "keydown", (ev) => {
 watchEffect(() => {
 	if (previewWindow.value) {
 		loading.value = true;
-		previewWindow.value.addEventListener("load", () => {
-			setTimeout(() => {
-				loading.value = false;
-			}, 100);
-			previewWindow.value?.addEventListener("mousedown", (ev) => {
-				document.dispatchEvent(new MouseEvent("mousedown", ev));
-			});
-			previewWindow.value?.contentWindow?.document.addEventListener("mouseup", (ev) => {
-				document.dispatchEvent(new MouseEvent("mouseup", ev));
-			});
-			previewWindow.value?.contentWindow?.document.addEventListener("mousemove", (ev) => {
-				document.dispatchEvent(new MouseEvent("mousemove", ev));
-			});
-		});
+		previewWindow.value.addEventListener(
+			"load",
+			() => {
+				setTimeout(() => {
+					loading.value = false;
+				}, 100);
+				previewWindow.value?.addEventListener("mousedown", (ev) => {
+					document.dispatchEvent(new MouseEvent("mousedown", ev));
+				});
+				previewWindow.value?.contentWindow?.document.addEventListener("mouseup", (ev) => {
+					document.dispatchEvent(new MouseEvent("mouseup", ev));
+				});
+				previewWindow.value?.contentWindow?.document.addEventListener("mousemove", (ev) => {
+					document.dispatchEvent(new MouseEvent("mousemove", ev));
+				});
+			},
+			{ once: true },
+		);
 	}
 });
 

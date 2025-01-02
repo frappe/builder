@@ -39,7 +39,7 @@
    "table_fieldname": "client_scripts"
   }
  ],
- "modified": "2023-11-27 13:05:19.427647",
+ "modified": "2024-11-13 20:08:54.615438",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Client Script",
@@ -73,5 +73,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

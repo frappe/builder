@@ -1,11 +1,5 @@
 <template>
-	<component
-		:is="block.getTag()"
-		ref="component"
-		@click.stop
-		@dblclick.stop
-		:key="editor"
-		class="__text_block__">
+	<component :is="block.getTag()" ref="component" :key="editor" class="__text_block__">
 		<div v-html="textContent" v-show="!editor && textContent" @click="handleClick"></div>
 		<bubble-menu
 			ref="menu"
@@ -27,12 +21,12 @@
 				},
 			}"
 			v-if="editor"
-			class="z-50 rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-text-icons-gray-9 shadow-2xl">
+			class="z-50 rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-ink-gray-9 shadow-2xl">
 			<div v-if="settingLink" class="flex">
 				<TextInput
 					v-model="textLink"
 					placeholder="https://example.com"
-					class="link-input w-56 text-sm [&>input]:border-outline-gray-1 [&>input]:bg-surface-gray-2 [&>input]:text-text-icons-gray-8 [&>input]:hover:!border-outline-gray-2 [&>input]:hover:!bg-surface-gray-1 focus:[&>input]:border-outline-gray-3 focus:[&>input]:bg-surface-gray-1 focus:[&>input]:ring-outline-gray-3 [&>input]:focus-visible:bg-surface-gray-1"
+					class="link-input !w-56 text-sm [&>input]:border-outline-gray-1 [&>input]:bg-surface-gray-2 [&>input]:text-ink-gray-8 [&>input]:hover:!border-outline-gray-2 [&>input]:hover:!bg-surface-gray-1 focus:[&>input]:border-outline-gray-3 focus:[&>input]:bg-surface-gray-1 focus:[&>input]:ring-outline-gray-3 [&>input]:focus-visible:bg-surface-gray-1"
 					@keydown.enter="
 						() => {
 							if (!linkInput) return;
@@ -119,6 +113,16 @@
 					}
 				}
 			"
+			@keydown.esc="
+				() => {
+					store.editableBlock = null;
+				}
+			"
+			v-on-click-outside="
+				() => {
+					store.editableBlock = null;
+				}
+			"
 			@mouseup="selectionTriggered = false"
 			v-if="editor && showEditor"
 			class="relative z-50"
@@ -140,6 +144,7 @@ import { Link } from "@tiptap/extension-link";
 import TextStyle from "@tiptap/extension-text-style";
 import StarterKit from "@tiptap/starter-kit";
 import { BubbleMenu, Editor, EditorContent, Extension } from "@tiptap/vue-3";
+import { vOnClickOutside } from "@vueuse/components";
 import { TextInput } from "frappe-ui";
 import { Plugin, PluginKey } from "prosemirror-state";
 import { Ref, computed, inject, nextTick, onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
@@ -227,10 +232,10 @@ watch(
 	(editable) => {
 		editor.value?.setEditable(editable);
 		if (editable) {
-			store.activeCanvas?.history.pause();
+			store.activeCanvas?.history?.pause();
 			editor.value?.commands.focus("all");
 		} else {
-			store.activeCanvas?.history.resume(dataChanged.value);
+			store.activeCanvas?.history?.resume(undefined, dataChanged.value, true);
 			dataChanged.value = false;
 		}
 	},
@@ -239,14 +244,33 @@ watch(
 
 watch(
 	() => textContent.value,
-	(newValue, oldValue) => {
-		const isSame = newValue === editor.value?.getHTML();
+	(newValue) => {
+		const innerHTML = getInnerHTML(editor.value);
+		const isSame = newValue === innerHTML;
 		if (isSame) {
 			return;
 		}
 		editor.value?.commands.setContent(newValue || "", false);
 	},
 );
+
+const getInnerHTML = (editor: Editor | null) => {
+	if (!editor) {
+		return "";
+	}
+	let innerHTML = editor.isEmpty ? "" : editor.getHTML();
+	if (
+		props.block.isHeader() &&
+		!(
+			editor.isActive("heading", { level: 1 }) ||
+			editor.isActive("heading", { level: 2 }) ||
+			editor.isActive("heading", { level: 3 })
+		)
+	) {
+		innerHTML = editor?.getText();
+	}
+	return innerHTML;
+};
 
 if (!props.preview) {
 	watch(
@@ -268,17 +292,7 @@ if (!props.preview) {
 					],
 					enablePasteRules: false,
 					onUpdate({ editor }) {
-						let innerHTML = editor.isEmpty ? "" : editor.getHTML();
-						if (
-							props.block.isHeader() &&
-							!(
-								editor.isActive("heading", { level: 1 }) ||
-								editor.isActive("heading", { level: 2 }) ||
-								editor.isActive("heading", { level: 3 })
-							)
-						) {
-							innerHTML = editor.getText();
-						}
+						let innerHTML = getInnerHTML(editor as Editor);
 						if (props.block.getInnerHTML() === innerHTML) {
 							return;
 						}
@@ -369,8 +383,12 @@ defineExpose({
 	component,
 });
 </script>
-<style>
-.__text_block__ [contenteditable="true"] {
-	caret-color: currentcolor !important;
+<style scoped>
+.__text_block__ :deep([contenteditable="true"]) {
+	caret-color: currentcolor;
+}
+
+.__text_block__ :deep(.ProseMirror) {
+	word-break: unset;
 }
 </style>

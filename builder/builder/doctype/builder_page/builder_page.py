@@ -1,6 +1,7 @@
 # Copyright (c) 2023, asdf and contributors
 # For license information, please see license.txt
 
+import copy
 import os
 import shutil
 
@@ -29,7 +30,7 @@ from builder.utils import (
 	copy_img_to_asset_folder,
 	escape_single_quotes,
 	execute_script,
-	get_builder_page_preview_paths,
+	get_builder_page_preview_file_paths,
 	get_template_assets_folder_path,
 	is_component_used,
 )
@@ -260,7 +261,7 @@ class BuilderPage(WebsiteGenerator):
 		return page_data
 
 	def generate_page_preview_image(self, html=None):
-		public_path, local_path = get_builder_page_preview_paths(self)
+		public_path, local_path = get_builder_page_preview_file_paths(self)
 		generate_preview(
 			html or get_response_content(self.route),
 			local_path,
@@ -544,6 +545,7 @@ def extend_block(block, overridden_block):
 		block["innerHTML"] = overridden_block["innerHTML"]
 	component_children = block.get("children", [])
 	overridden_children = overridden_block.get("children", [])
+	extended_children = []
 	for overridden_child in overridden_children:
 		component_child = next(
 			(
@@ -558,9 +560,11 @@ def extend_block(block, overridden_block):
 			None,
 		)
 		if component_child:
-			extend_block(component_child, overridden_child)
+			extended_children.append(extend_block(copy.deepcopy(component_child), overridden_child))
 		else:
-			component_children.insert(overridden_children.index(overridden_child), overridden_child)
+			extended_children.append(overridden_child)
+	block["children"] = extended_children
+	return block
 
 
 def set_dynamic_content_placeholder(block, data_key=False):

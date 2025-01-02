@@ -1,6 +1,5 @@
 <template>
 	<div>
-		<slot :onContextMenu="showContextMenu" />
 		<ContextMenu
 			v-if="contextMenuVisible"
 			:pos-x="posX"
@@ -8,146 +7,40 @@
 			:options="contextMenuOptions"
 			@select="handleContextMenuSelect"
 			v-on-click-outside="() => (contextMenuVisible = false)" />
-		<Dialog
-			style="z-index: 40"
-			:options="{
-				title: 'New Component',
-				size: 'sm',
-				actions: [
-					{
-						label: 'Save',
-						variant: 'solid',
-						onClick: createComponentHandler,
-					},
-				],
-			}"
-			v-model="showDialog">
-			<template #body-content>
-				<BuilderInput
-					type="text"
-					v-model="componentProperties.componentName"
-					label="Component Name"
-					required />
-				<div class="mt-3">
-					<BuilderInput
-						class="text-sm [&>span]:!text-sm"
-						type="checkbox"
-						v-model="componentProperties.isGlobalComponent"
-						label="Global Component" />
-				</div>
-			</template>
-		</Dialog>
-		<Dialog
-			style="z-index: 40"
-			:options="{
-				title: 'Save as Block Template',
-				size: 'sm',
-				actions: [
-					{
-						label: 'Save',
-						variant: 'solid',
-						onClick: () => {
-							store.saveBlockTemplate(
-								block,
-								blockTemplateProperties.templateName,
-								blockTemplateProperties.category,
-								blockTemplateProperties.previewImage,
-							);
-							showBlockTemplateDialog = false;
-						},
-					},
-				],
-			}"
-			v-model="showBlockTemplateDialog">
-			<template #body-content>
-				<div class="flex flex-col gap-3">
-					<BuilderInput
-						type="text"
-						v-model="blockTemplateProperties.templateName"
-						label="Template Name"
-						required
-						:hideClearButton="true" />
-					<BuilderInput
-						type="select"
-						v-model="blockTemplateProperties.category"
-						label="Category"
-						:options="store.blockTemplateCategoryOptions"
-						:hideClearButton="true" />
-					<div class="relative">
-						<BuilderInput
-							type="text"
-							v-model="blockTemplateProperties.previewImage"
-							label="Preview Image"
-							:hideClearButton="true" />
-						<FileUploader
-							file-types="image/*"
-							@success="
-								(file: FileDoc) => {
-									blockTemplateProperties.previewImage = file.file_url;
-								}
-							">
-							<template v-slot="{ openFileSelector }">
-								<div class="absolute bottom-0 right-0 place-items-center">
-									<BuilderButton size="sm" @click="openFileSelector" class="text-sm">Upload</BuilderButton>
-								</div>
-							</template>
-						</FileUploader>
-					</div>
-				</div>
-			</template>
-		</Dialog>
+		<NewComponent v-if="block" :block="block" v-model="showNewComponentDialog"></NewComponent>
+		<NewBlockTemplate v-if="block" :block="block" v-model="showBlockTemplateDialog"></NewBlockTemplate>
 	</div>
 </template>
 <script setup lang="ts">
 import ContextMenu from "@/components/ContextMenu.vue";
-import webComponent from "@/data/webComponent";
+import NewBlockTemplate from "@/components/Modals/NewBlockTemplate.vue";
+import NewComponent from "@/components/Modals/NewComponent.vue";
 import useStore from "@/store";
-import { posthog } from "@/telemetry";
-import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
-import {
-	confirm,
-	detachBlockFromComponent,
-	getBlockCopy,
-	getBlockInstance,
-	getBlockString,
-} from "@/utils/helpers";
+import { confirm, detachBlockFromComponent, getBlockCopy } from "@/utils/helpers";
+import useComponentStore from "@/utils/useComponentStore";
 import { vOnClickOutside } from "@vueuse/components";
 import { useStorage } from "@vueuse/core";
-import { Dialog, FileUploader } from "frappe-ui";
 import { Ref, nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
 
 const store = useStore();
-
-const props = defineProps<{
-	block: Block;
-	editable: boolean;
-}>();
+const componentStore = useComponentStore();
 
 const contextMenuVisible = ref(false);
 const posX = ref(0);
 const posY = ref(0);
 
-const showDialog = ref(false);
+const block = ref(null) as unknown as Ref<Block>;
 
-const componentProperties = ref({
-	componentName: "",
-	isGlobalComponent: 0,
-});
-
-const blockTemplateProperties = ref({
-	templateName: "",
-	category: "" as (typeof store.blockTemplateCategoryOptions)[number],
-	previewImage: "",
-});
-
+const showNewComponentDialog = ref(false);
 const showBlockTemplateDialog = ref(false);
 
-const showContextMenu = (event: MouseEvent) => {
-	if (props.block.isRoot() || props.editable) return;
+const showContextMenu = (event: MouseEvent, refBlock: Block) => {
+	block.value = refBlock;
+	if (block.value.isRoot()) return;
 	contextMenuVisible.value = true;
 	posX.value = event.pageX;
 	posY.value = event.pageY;
@@ -164,54 +57,33 @@ const copiedStyle = useStorage("copiedStyle", { blockId: "", style: {} }, sessio
 
 const copyStyle = () => {
 	copiedStyle.value = {
-		blockId: props.block.blockId,
-		style: props.block.getStylesCopy(),
+		blockId: block.value.blockId,
+		style: block.value.getStylesCopy(),
 	};
 };
 
 const pasteStyle = () => {
-	props.block.updateStyles(copiedStyle.value?.style as BlockStyleObjects);
+	block.value.updateStyles(copiedStyle.value?.style as BlockStyleObjects);
 };
 
 const duplicateBlock = () => {
-	props.block.duplicateBlock();
-};
-
-const createComponentHandler = (close: () => void) => {
-	const blockCopy = getBlockCopy(props.block, true);
-	blockCopy.removeStyle("left");
-	blockCopy.removeStyle("top");
-	blockCopy.removeStyle("position");
-	webComponent.insert
-		.submit({
-			block: getBlockString(blockCopy),
-			component_name: componentProperties.value.componentName,
-			for_web_page: componentProperties.value.isGlobalComponent ? null : store.selectedPage,
-		})
-		.then(async (data: BuilderComponent) => {
-			posthog.capture("builder_component_created", { component_name: data.name });
-			store.componentMap.set(data.name, getBlockInstance(data.block));
-			const block = store.activeCanvas?.findBlock(props.block.blockId);
-			if (!block) return;
-			block.extendFromComponent(data.name);
-		});
-	close();
+	block.value.duplicateBlock();
 };
 
 const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Edit HTML",
 		action: () => {
-			store.editHTML(props.block);
+			store.editHTML(block.value);
 		},
-		condition: () => props.block.isHTML(),
+		condition: () => block.value.isHTML(),
 	},
 	{ label: "Copy", action: () => document.execCommand("copy") },
 	{ label: "Copy Style", action: copyStyle },
 	{
 		label: "Paste Style",
 		action: pasteStyle,
-		condition: () => Boolean(copiedStyle.value.blockId && copiedStyle.value?.blockId !== props.block.blockId),
+		condition: () => Boolean(copiedStyle.value.blockId && copiedStyle.value?.blockId !== block.value.blockId),
 	},
 	{ label: "Duplicate", action: duplicateBlock },
 	{
@@ -220,16 +92,16 @@ const contextMenuOptions: ContextMenuOption[] = [
 			blockController.convertToLink();
 		},
 		condition: () =>
-			(props.block.isContainer() || props.block.isText() || props.block.isImage()) &&
-			!props.block.isLink() &&
-			!props.block.isExtendedFromComponent() &&
-			!props.block.isRoot(),
+			(block.value.isContainer() || block.value.isText() || block.value.isImage()) &&
+			!block.value.isLink() &&
+			!block.value.isExtendedFromComponent() &&
+			!block.value.isRoot(),
 	},
 	{
 		label: "Wrap In Container",
 		action: () => {
 			const newBlockObj = getBlockTemplate("fit-container");
-			const parentBlock = props.block.getParentBlock();
+			const parentBlock = block.value.getParentBlock();
 			if (!parentBlock) return;
 
 			const selectedBlocks = store.activeCanvas?.selectedBlocks || [];
@@ -262,10 +134,10 @@ const contextMenuOptions: ContextMenuOption[] = [
 			});
 		},
 		condition: () => {
-			if (props.block.isRoot()) return false;
+			if (block.value.isRoot()) return false;
 			if (store.activeCanvas?.selectedBlocks.length === 1) return true;
 			// check if all selected blocks are siblings
-			const parentBlock = props.block.getParentBlock();
+			const parentBlock = block.value.getParentBlock();
 			if (!parentBlock) return false;
 			const selectedBlocks = store.activeCanvas?.selectedBlocks || [];
 			return selectedBlocks.every((block: Block) => block.getParentBlock() === parentBlock);
@@ -273,59 +145,59 @@ const contextMenuOptions: ContextMenuOption[] = [
 	},
 	{
 		label: "Save As Component",
-		action: () => (showDialog.value = true),
-		condition: () => !props.block.isExtendedFromComponent(),
+		action: () => (showNewComponentDialog.value = true),
+		condition: () => !block.value.isExtendedFromComponent(),
 	},
 
 	{
 		label: "Repeat Block",
 		action: () => {
 			const repeaterBlockObj = getBlockTemplate("repeater");
-			const parentBlock = props.block.getParentBlock();
+			const parentBlock = block.value.getParentBlock();
 			if (!parentBlock) return;
-			const repeaterBlock = parentBlock.addChild(repeaterBlockObj, parentBlock.getChildIndex(props.block));
-			repeaterBlock.addChild(getBlockCopy(props.block));
-			parentBlock.removeChild(props.block);
+			const repeaterBlock = parentBlock.addChild(repeaterBlockObj, parentBlock.getChildIndex(block.value));
+			repeaterBlock.addChild(getBlockCopy(block.value));
+			parentBlock.removeChild(block.value);
 			repeaterBlock.selectBlock();
 			store.propertyFilter = "data key";
 			toast.warning("Please set data key for repeater block");
 		},
-		condition: () => !props.block.isRoot() && !props.block.isRepeater(),
+		condition: () => !block.value.isRoot() && !block.value.isRepeater(),
 	},
 	{
 		label: "Reset Overrides",
-		condition: () => props.block.hasOverrides(store.activeBreakpoint),
+		condition: () => block.value.hasOverrides(store.activeBreakpoint),
 		action: () => {
-			props.block.resetOverrides(store.activeBreakpoint);
+			block.value.resetOverrides(store.activeBreakpoint);
 		},
 	},
 	{
 		label: "Reset Changes",
 		action: () => {
-			if (props.block.hasChildren()) {
+			if (block.value.hasChildren()) {
 				confirm("Reset changes in child blocks as well?").then((confirmed) => {
-					props.block.resetChanges(confirmed);
+					block.value.resetChanges(confirmed);
 				});
 			} else {
-				props.block.resetChanges();
+				block.value.resetChanges();
 			}
 		},
-		condition: () => props.block.isExtendedFromComponent(),
+		condition: () => block.value.isExtendedFromComponent(),
 	},
 	{
 		label: "Sync Component",
-		condition: () => Boolean(props.block.extendedFromComponent),
+		condition: () => Boolean(block.value.extendedFromComponent),
 		action: () => {
-			props.block.syncWithComponent();
+			block.value.syncWithComponent();
 		},
 	},
 	{
 		label: "Reset Component",
-		condition: () => Boolean(props.block.extendedFromComponent),
+		condition: () => Boolean(block.value.extendedFromComponent),
 		action: () => {
 			confirm("Are you sure you want to reset?").then((confirmed) => {
 				if (confirmed) {
-					props.block.resetWithComponent();
+					block.value.resetWithComponent();
 				}
 			});
 		},
@@ -333,40 +205,44 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Edit Component",
 		action: () => {
-			store.editComponent(props.block);
+			componentStore.editComponent(block.value);
 		},
-		condition: () => Boolean(props.block.extendedFromComponent),
+		condition: () => Boolean(block.value.extendedFromComponent),
 	},
 	{
 		label: "Save as Block Template",
 		action: () => {
 			showBlockTemplateDialog.value = true;
 		},
-		condition: () => !props.block.isExtendedFromComponent() && Boolean(window.is_developer_mode),
+		condition: () => !block.value.isExtendedFromComponent() && Boolean(window.is_developer_mode),
 	},
 	{
 		label: "Detach Component",
 		action: () => {
-			const newBlock = detachBlockFromComponent(props.block);
+			const newBlock = detachBlockFromComponent(block.value);
 			if (newBlock) {
 				newBlock.selectBlock();
 			}
-			props.block.getParentBlock()?.replaceChild(props.block, newBlock);
+			block.value.getParentBlock()?.replaceChild(block.value, newBlock);
 		},
-		condition: () => Boolean(props.block.extendedFromComponent),
+		condition: () => Boolean(block.value.extendedFromComponent),
 	},
 	{
 		label: "Delete",
 		action: () => {
-			props.block.getParentBlock()?.removeChild(props.block);
+			block.value.getParentBlock()?.removeChild(block.value);
 		},
 		condition: () => {
 			return (
-				!props.block.isRoot() &&
-				!props.block.isChildOfComponentBlock() &&
-				Boolean(props.block.getParentBlock())
+				!block.value.isRoot() &&
+				!block.value.isChildOfComponentBlock() &&
+				Boolean(block.value.getParentBlock())
 			);
 		},
 	},
 ];
+
+defineExpose({
+	showContextMenu,
+});
 </script>

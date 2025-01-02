@@ -7,8 +7,8 @@
 						v-for="script in attachedScriptResource.data"
 						href="#"
 						:class="{
-							'text-text-icons-gray-5': activeScript !== script,
-							'font-medium text-text-icons-gray-8': activeScript === script,
+							'text-ink-gray-5': activeScript !== script,
+							'font-medium text-ink-gray-8': activeScript === script,
 						}"
 						@click="selectScript(script)"
 						class="group flex items-center justify-between gap-1 text-sm last-of-type:mb-2">
@@ -49,14 +49,14 @@
 						</Dropdown>
 					</div>
 				</div>
-				<div class="text-xs leading-4 text-text-icons-gray-6">
+				<div class="text-xs leading-4 text-ink-gray-6">
 					<b>Note:</b>
 					All client scripts are executed in preview mode and on published pages.
 				</div>
 			</div>
 		</div>
 		<div
-			class="flex h-full w-full items-center justify-center rounded bg-surface-gray-1 text-base text-text-icons-gray-6"
+			class="flex h-full w-full items-center justify-center rounded bg-surface-gray-1 text-base text-ink-gray-6"
 			v-show="!activeScript">
 			Add Script
 		</div>

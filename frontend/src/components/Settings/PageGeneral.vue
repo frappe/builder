@@ -19,27 +19,27 @@
 				</div>
 				<div class="flex flex-col gap-3 text-base">
 					<div class="flex">
-						<span class="w-20 text-text-icons-gray-6">URL</span>
-						<a class="font-medium text-text-icons-gray-8 hover:underline" target="_blank" :href="fullURL">
+						<span class="w-20 text-ink-gray-6">URL</span>
+						<a class="font-medium text-ink-gray-8 hover:underline" target="_blank" :href="fullURL">
 							{{ fullURL }}
 						</a>
 					</div>
 					<div class="flex items-center">
-						<span class="w-20 text-text-icons-gray-6">Status</span>
+						<span class="w-20 text-ink-gray-6">Status</span>
 						<div class="flex items-center gap-2">
-							<span class="flex items-center gap-2 text-base text-text-icons-gray-9">
+							<span class="flex items-center gap-2 text-base text-ink-gray-9">
 								<FeatherIcon
 									name="check-circle"
-									class="size-4 text-text-icons-green-3"
+									class="size-4 text-ink-green-3"
 									v-if="store.activePage?.published && !store.activePage.authenticated_access" />
 								<AuthenticatedUserIcon
-									class="size-4 text-text-icons-amber-3"
+									class="size-4 text-ink-amber-3"
 									v-else-if="
 										store.activePage?.published && store.activePage?.authenticated_access
 									"></AuthenticatedUserIcon>
 								<FeatherIcon
 									name="alert-circle"
-									class="size-4 text-text-icons-gray-4"
+									class="size-4 text-ink-gray-4"
 									v-else-if="!store.activePage?.published" />
 								{{
 									store.activePage?.published
@@ -49,26 +49,23 @@
 										: "Draft"
 								}}
 							</span>
-							<Tooltip
-								:text="
-									store.activePage?.published ? 'Unpublish this page' : 'This page is already unpublished'
-								">
-								<BuilderButton
-									variant="subtle"
-									@click="store.activePage?.published ? store.unpublishPage() : store.publishPage(false)">
-									{{ store.activePage?.published ? "Unpublish" : "Publish" }}
-								</BuilderButton>
-							</Tooltip>
+
+							<BuilderButton
+								variant="subtle"
+								@click="store.activePage?.published ? store.unpublishPage() : store.publishPage(false)">
+								{{ store.activePage?.published ? "Unpublish" : "Publish" }}
+							</BuilderButton>
 						</div>
 					</div>
 				</div>
 				<!-- favicon -->
-				<hr class="w-full border-surface-gray-2" />
+				<hr class="w-full border-outline-gray-2" />
 
 				<div class="flex flex-col justify-between gap-5">
-					<span class="text-lg font-semibold text-text-icons-gray-9">Favicon</span>
+					<span class="text-lg font-semibold text-ink-gray-9">Favicon</span>
 					<div class="flex flex-1 gap-5">
-						<div class="flex items-center justify-center rounded border border-outline-gray-1 px-20 py-5">
+						<div
+							class="flex items-center justify-center rounded border border-outline-gray-1 bg-surface-gray-2 px-20 py-5">
 							<img
 								:src="
 									store.activePage?.favicon ||
@@ -85,42 +82,35 @@
 								:image_url="store.activePage?.favicon"
 								@upload="(url: string) => store.updateActivePage('favicon', url)"
 								@remove="() => store.updateActivePage('favicon', '')" />
-							<span class="text-p-sm text-text-icons-gray-6">
+							<span class="text-p-sm text-ink-gray-6">
 								Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO
 							</span>
 						</div>
 					</div>
 				</div>
 				<div class="flex flex-col gap-4">
-					<hr class="w-full border-surface-gray-2" />
+					<hr class="w-full border-outline-gray-2" />
 					<!-- homepage -->
 					<div class="flex items-center justify-between">
 						<div class="flex flex-col gap-2">
-							<span class="text-base font-medium text-text-icons-gray-9">Homepage</span>
-							<p class="text-base text-text-icons-gray-5">Set current page as Homepage</p>
+							<span class="text-base font-medium text-ink-gray-9">Homepage</span>
+							<p class="text-base text-ink-gray-5">Set current page as Homepage</p>
 						</div>
-						<Tooltip
-							:text="
-								store.isHomePage(store.activePage)
-									? 'Unset this page as the homepage'
-									: 'Set this page as the homepage'
-							">
-							<BuilderButton
-								variant="subtle"
-								@click="
-									() => {
-										if (store.isHomePage(store.activePage)) {
-											store.unsetHomePage();
-										} else {
-											store.setHomePage(store.activePage?.route as string);
-										}
+						<BuilderButton
+							variant="subtle"
+							@click="
+								() => {
+									if (store.isHomePage(store.activePage)) {
+										store.unsetHomePage();
+									} else {
+										store.setHomePage(store.activePage?.route as string);
 									}
-								">
-								{{ store.isHomePage(store.activePage) ? "Unset Homepage" : "Set As Homepage" }}
-							</BuilderButton>
-						</Tooltip>
+								}
+							">
+							{{ store.isHomePage(store.activePage) ? "Unset Homepage" : "Set As Homepage" }}
+						</BuilderButton>
 					</div>
-					<hr class="w-full border-surface-gray-2" />
+					<hr class="w-full border-outline-gray-2" />
 					<Switch
 						size="sm"
 						label="Protected Page"
@@ -128,13 +118,30 @@
 						description="Only logged-in users can access this page"
 						:modelValue="Boolean(store.activePage?.authenticated_access)"
 						@update:modelValue="(val: Boolean) => store.updateActivePage('authenticated_access', val)" />
-					<hr class="w-full border-surface-gray-2" />
+					<hr class="w-full border-outline-gray-2" />
 					<Switch
 						size="sm"
 						label="Disable Indexing"
 						description="Prevent search engines from indexing this page"
 						:modelValue="Boolean(store.activePage?.disable_indexing)"
 						@update:modelValue="(val: Boolean) => store.updateActivePage('disable_indexing', val)" />
+					<hr class="w-full border-outline-gray-2" />
+					<div class="flex items-center justify-between">
+						<div class="flex flex-col gap-2">
+							<span class="text-base font-medium text-ink-gray-9">Folder</span>
+							<p class="text-base text-ink-gray-5">Set folder to organize your page</p>
+						</div>
+						<div>
+							<BuilderInput
+								class="w-fit"
+								type="select"
+								:options="folderOptions"
+								:modelValue="store.activePage?.project_folder"
+								@update:modelValue="
+									(val: string) => store.updateActivePage('project_folder', val)
+								"></BuilderInput>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -144,9 +151,10 @@
 import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import Switch from "@/components/Controls/Switch.vue";
 import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
+import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
 import useStore from "@/store";
-import { Tooltip } from "frappe-ui";
+import { BuilderProjectFolder } from "@/types/Builder/BuilderProjectFolder";
 import FeatherIcon from "frappe-ui/src/components/FeatherIcon.vue";
 import { computed } from "vue";
 // check route for page id
@@ -155,4 +163,20 @@ const store = useStore();
 const fullURL = computed(
 	() => window.location.origin + (store.activePage?.route ? "/" + store.activePage.route : ""),
 );
+
+const folderOptions = computed(() => {
+	const homeOption = {
+		label: "Home",
+		value: "",
+	};
+
+	const options = builderProjectFolder.data.map((folder: BuilderProjectFolder) => {
+		return {
+			label: folder.folder_name,
+			value: folder.folder_name,
+		};
+	});
+
+	return [homeOption, ...options];
+});
 </script>

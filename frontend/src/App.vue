@@ -52,8 +52,8 @@ const isDark = useDark({
 [id^="headlessui-dialog-panel"] > div > div > div > div.mb-6.flex.items-center.justify-between > button {
 	@apply bg-surface-gray-1;
 	@apply hover:bg-surface-gray-3;
-	@apply stroke-text-icons-gray-8;
-	@apply hover:stroke-text-icons-gray-9;
+	@apply stroke-ink-gray-8;
+	@apply hover:stroke-ink-gray-9;
 	> svg {
 		@apply stroke-[0.2px];
 		@apply h-[14px];
@@ -63,7 +63,7 @@ const isDark = useDark({
 [id^="headlessui-dialog-panel"] > div,
 [id^="headlessui-dialog-panel"] .space-y-4 > p {
 	@apply bg-surface-white;
-	@apply text-text-icons-gray-8;
+	@apply text-ink-gray-8;
 }
 
 [id^="headlessui-dialog-panel"] header h3 {
@@ -82,7 +82,7 @@ const isDark = useDark({
 [id^="headlessui-combobox-options"] {
 	@apply bg-surface-white;
 	@apply dark:bg-surface-gray-1;
-	@apply text-text-icons-gray-7;
+	@apply text-ink-gray-7;
 
 	@apply overflow-y-auto;
 	-ms-overflow-style: none; /* IE and Edge */

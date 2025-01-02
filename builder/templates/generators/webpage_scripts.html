@@ -14,5 +14,5 @@
 </script>
 {% endif %}
 <script>
-if(!document.cookie.includes("user_id=Guest")){const a=Object.assign(document.createElement("a"),{rel:"nofollow",href:"{{ editor_link }}",target:"editor-{{page_name}}",style:"position:fixed;bottom:40px;right:50px;height:35px;width:35px;opacity:0.1;",innerHTML:'<img src="/assets/builder/frontend/builder_logo.png" alt="Edit in Builder" style="box-shadow:#bdbdbd 0 0 5px;border-radius:10px;" />'});document.body.appendChild(a),a.addEventListener("mouseover",()=>a.style.opacity="1"),a.addEventListener("mouseout",()=>a.style.opacity="0.1")}
+if(window.matchMedia("(min-width:768px)").matches&&document.cookie.includes("user_id=")&&!document.cookie.includes("user_id=Guest")){const a=Object.assign(document.createElement("a"),{rel:"nofollow",href:"{{editor_link}}",target:"editor-{{page_name}}",style:"position:fixed;bottom:40px;right:50px;height:35px;width:35px;opacity:.1",innerHTML:'<img src="/assets/builder/frontend/builder_logo.png" alt="Edit in Builder" style="box-shadow:#bdbdbd 0 0 5px;border-radius:10px"/>'});document.body.appendChild(a),a.addEventListener("mouseover",()=>a.style.opacity="1"),a.addEventListener("mouseout",()=>a.style.opacity=".1")}
 </script>

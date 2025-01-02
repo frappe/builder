@@ -215,3 +215,11 @@ def get_apps():
 	app_list += filter(lambda app: app.get("name") != "builder", apps)
 
 	return app_list
+
+
+@frappe.whitelist()
+def update_page_folder(pages: list[str], folder_name: str) -> None:
+	if not frappe.has_permission("Builder Page", ptype="write"):
+		frappe.throw("You do not have permission to update page folder.")
+	for page in pages:
+		frappe.db.set_value("Builder Page", page, "project_folder", folder_name, update_modified=False)

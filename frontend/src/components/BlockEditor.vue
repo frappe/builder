@@ -1,39 +1,36 @@
 <template>
-	<BlockContextMenu :block="block" :editable="editable" v-slot="{ onContextMenu }">
-		<div
-			class="editor pointer-events-none fixed z-[18] box-content select-none ring-2 ring-inset"
-			ref="editor"
-			:selected="isBlockSelected"
-			@click.stop="handleClick"
-			@dblclick="handleDoubleClick"
-			@mousedown.prevent="handleMove"
-			@drop.prevent.stop="handleDrop"
-			@contextmenu="onContextMenu"
+	<div
+		class="editor pointer-events-none fixed z-[18] box-content select-none ring-2 ring-inset"
+		ref="editor"
+		:selected="isBlockSelected"
+		@click.stop="handleClick"
+		@dblclick="handleDoubleClick"
+		@mousedown.prevent="handleMove"
+		@drop.prevent.stop="handleDrop"
+		:data-block-id="block.blockId"
+		:class="getStyleClasses">
+		<PaddingHandler
 			:data-block-id="block.blockId"
-			:class="getStyleClasses">
-			<PaddingHandler
-				:data-block-id="block.blockId"
-				v-show="showPaddingHandler"
-				:target-block="block"
-				:target="target"
-				:on-update="updateTracker"
-				:disable-handlers="false"
-				:breakpoint="breakpoint" />
-			<MarginHandler
-				v-show="showMarginHandler"
-				:target-block="block"
-				:target="target"
-				:on-update="updateTracker"
-				:disable-handlers="false"
-				:breakpoint="breakpoint" />
-			<BorderRadiusHandler
-				:data-block-id="block.blockId"
-				v-if="showBorderRadiusHandler"
-				:target-block="block"
-				:target="target" />
-			<BoxResizer v-if="showResizer" :targetBlock="block" @resizing="resizing = $event" :target="target" />
-		</div>
-	</BlockContextMenu>
+			v-show="showPaddingHandler"
+			:target-block="block"
+			:target="target"
+			:on-update="updateTracker"
+			:disable-handlers="false"
+			:breakpoint="breakpoint" />
+		<MarginHandler
+			v-show="showMarginHandler"
+			:target-block="block"
+			:target="target"
+			:on-update="updateTracker"
+			:disable-handlers="false"
+			:breakpoint="breakpoint" />
+		<BorderRadiusHandler
+			:data-block-id="block.blockId"
+			v-if="showBorderRadiusHandler"
+			:target-block="block"
+			:target="target" />
+		<BoxResizer v-if="showResizer" :targetBlock="block" @resizing="resizing = $event" :target="target" />
+	</div>
 </template>
 <script setup lang="ts">
 import Block from "@/utils/block";
@@ -44,7 +41,6 @@ import blockController from "@/utils/blockController";
 import useStore from "../store";
 import setGuides from "../utils/guidesTracker";
 import trackTarget from "../utils/trackTarget";
-import BlockContextMenu from "./BlockContextMenu.vue";
 import BorderRadiusHandler from "./BorderRadiusHandler.vue";
 import BoxResizer from "./BoxResizer.vue";
 import MarginHandler from "./MarginHandler.vue";
@@ -117,13 +113,13 @@ const showMarginHandler = computed(() => {
 
 const showBorderRadiusHandler = computed(() => {
 	return (
-		isBlockSelected &&
+		isBlockSelected.value &&
 		!props.block.isRoot() &&
 		!props.block.isText() &&
 		!props.block.isHTML() &&
 		!props.block.isSVG() &&
 		!props.editable &&
-		!resizing &&
+		!resizing.value &&
 		!blockController.multipleBlocksSelected()
 	);
 });
@@ -244,6 +240,7 @@ const handleMove = (ev: MouseEvent) => {
 		store.editableBlock = props.block;
 	}
 	if (!movable.value || props.block.isRoot()) return;
+	const pauseId = store.activeCanvas?.history?.pause();
 	const target = ev.target as HTMLElement;
 	const startX = ev.clientX;
 	const startY = ev.clientY;
@@ -288,6 +285,7 @@ const handleMove = (ev: MouseEvent) => {
 			document.removeEventListener("mousemove", mousemove);
 			mouseUpEvent.preventDefault();
 			guides.hideX();
+			store.activeCanvas?.history?.resume(pauseId, true);
 		},
 		{ once: true },
 	);

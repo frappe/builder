@@ -12,7 +12,7 @@
 			:multiple="multiple">
 			<ComboboxButton v-show="false" ref="comboboxButton"></ComboboxButton>
 			<div
-				class="form-input flex h-7 w-full items-center justify-between gap-2 rounded border-outline-gray-1 bg-surface-gray-1 p-0 text-sm text-text-icons-gray-8 transition-colors hover:border-outline-gray-2 hover:bg-surface-gray-1">
+				class="form-input flex h-7 w-full items-center justify-between gap-2 rounded border-outline-gray-1 bg-surface-gray-1 p-0 text-sm text-ink-gray-8 transition-colors hover:border-outline-gray-2 hover:bg-surface-gray-1">
 				<!-- {{ displayValue }} -->
 				<ComboboxInput
 					autocomplete="off"
@@ -26,7 +26,7 @@
 					@change="query = $event.target.value"
 					:displayValue="getDisplayValue"
 					:placeholder="!modelValue ? placeholder : null"
-					class="h-full w-full rounded border-none bg-transparent pl-2 pr-5 text-base focus:ring-2 focus:ring-outline-gray-3" />
+					class="focus:ring-outline-gray-3 h-full w-full rounded border-none bg-transparent pl-2 pr-5 text-base focus:ring-2" />
 			</div>
 			<ComboboxOptions
 				class="absolute right-0 z-50 w-full overflow-y-auto rounded-lg border border-outline-gray-2 bg-surface-white p-0 shadow-2xl"
@@ -43,7 +43,7 @@
 						class="flex items-center">
 						<span
 							v-if="String(option.value).startsWith('_separator')"
-							class="flex w-full items-center gap-2 px-2.5 pb-2 pt-3 text-xs font-medium !text-text-icons-gray-5">
+							class="flex w-full items-center gap-2 px-2.5 pb-2 pt-3 text-xs font-medium !text-ink-gray-5">
 							{{ option.label }}
 						</span>
 						<li
@@ -67,7 +67,7 @@
 					<BuilderButton
 						v-else
 						:iconLeft="actionButton.icon"
-						class="w-full rounded-none text-xs text-text-icons-gray-8"
+						class="w-full rounded-none text-xs text-ink-gray-8"
 						@click="actionButton.handler">
 						{{ actionButton.label }}
 					</BuilderButton>
@@ -75,7 +75,7 @@
 			</ComboboxOptions>
 		</Combobox>
 		<div
-			class="absolute right-[1px] top-[3px] cursor-pointer p-1 text-text-icons-gray-4 hover:text-text-icons-gray-5"
+			class="absolute right-[1px] top-[3px] cursor-pointer p-1 text-ink-gray-4 hover:text-ink-gray-5"
 			@click="clearValue"
 			v-show="modelValue">
 			<CrossIcon />

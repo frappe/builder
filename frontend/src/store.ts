@@ -1,7 +1,9 @@
+import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import router from "@/router";
 import { posthog } from "@/telemetry";
 import { BuilderSettings } from "@/types/Builder/BuilderSettings";
-import { UseRefHistoryReturn } from "@vueuse/core";
+import useComponentStore from "@/utils/useComponentStore";
+import { UseRefHistoryReturn, useStorage } from "@vueuse/core";
 import { createDocumentResource } from "frappe-ui";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
@@ -10,10 +12,8 @@ import BlockLayers from "./components/BlockLayers.vue";
 import BuilderCanvas from "./components/BuilderCanvas.vue";
 import builderBlockTemplate from "./data/builderBlockTemplate";
 import { builderSettings } from "./data/builderSettings";
-import webComponent from "./data/webComponent";
 import { webPages } from "./data/webPage";
 import { BlockTemplate } from "./types/Builder/BlockTemplate";
-import { BuilderComponent } from "./types/Builder/BuilderComponent";
 import { BuilderPage } from "./types/Builder/BuilderPage";
 import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
@@ -21,13 +21,13 @@ import {
 	confirm,
 	getBlockCopy,
 	getBlockInstance,
-	getBlockObject,
 	getBlockString,
 	getCopyWithoutParent,
 	getRouteVariables,
 } from "./utils/helpers";
 import RealTimeHandler from "./utils/realtimeHandler";
 
+// TODO: REFACTOR! This store is too big
 const useStore = defineStore("store", {
 	state: () => ({
 		editableBlock: <Block | null>null,
@@ -40,6 +40,7 @@ const useStore = defineStore("store", {
 		lastMode: <BuilderMode>"select",
 		activeCanvas: <InstanceType<typeof BuilderCanvas> | null>null,
 		activeLayers: <InstanceType<typeof BlockLayers> | null>null,
+		blockContextMenu: <InstanceType<typeof BlockContextMenu> | null>null,
 		history: {
 			pause: () => {},
 			resume: () => {},
@@ -67,18 +68,16 @@ const useStore = defineStore("store", {
 		},
 		leftPanelActiveTab: <LeftSidebarTabOption>"Layers",
 		rightPanelActiveTab: <RightSidebarTabOption>"Properties",
+		showDashboardSidebar: useStorage("showDashboardSidebar", true),
 		showRightPanel: <boolean>true,
 		showLeftPanel: <boolean>true,
-		components: <BlockComponent[]>[],
 		showHTMLDialog: false,
 		activePage: <BuilderPage | null>null,
 		savingPage: false,
 		realtime: new RealTimeHandler(),
 		viewers: <UserInfo[]>[],
-		componentMap: <Map<string, Block>>new Map(),
-		componentDocMap: <Map<string, BuilderComponent>>new Map(),
 		blockTemplateMap: <Map<string, BlockTemplate>>new Map(),
-		fetchingComponent: new Set(),
+		activeFolder: useStorage("activeFolder", ""),
 		fragmentData: {
 			block: <Block | null>null,
 			saveAction: <Function | null>null,
@@ -101,27 +100,27 @@ const useStore = defineStore("store", {
 			this.activeCanvas?.clearCanvas();
 		},
 		pushBlocks(blocks: BlockOptions[]) {
-			let parent = this.activeCanvas?.getFirstBlock();
+			let parent = this.activeCanvas?.getRootBlock();
 			let firstBlock = getBlockInstance(blocks[0]);
 			if (this.editingMode === "page" && firstBlock.isRoot() && this.activeCanvas?.block) {
 				this.activeCanvas.setRootBlock(firstBlock);
 			} else {
 				for (let block of blocks) {
-					parent?.children.push(getBlockInstance(block));
+					parent?.addChild(block);
 				}
 			}
 		},
-		getFirstBlock() {
-			return this.activeCanvas?.getFirstBlock();
+		getRootBlock() {
+			return this.activeCanvas?.getRootBlock();
 		},
 		getBlockCopy(block: BlockOptions | Block, retainId = false): Block {
 			return getBlockCopy(block, retainId);
 		},
-		getRootBlock() {
+		getRootBlockTemplate() {
 			return getBlockInstance(getBlockTemplate("body"));
 		},
 		getPageBlocks() {
-			return [this.activeCanvas?.getFirstBlock()];
+			return [this.activeCanvas?.getRootBlock()];
 		},
 		async setPage(pageName: string, resetCanvas = true) {
 			this.settingPage = true;
@@ -157,13 +156,14 @@ const useStore = defineStore("store", {
 			await this.setPageData(this.activePage);
 			this.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas);
 			nextTick(() => {
+				const componentStore = useComponentStore();
 				const interval = setInterval(() => {
-					if (this.fetchingComponent.size === 0) {
+					if (!componentStore.fetchingComponent.size) {
 						this.settingPage = false;
 						window.name = `editor-${pageName}`;
 						clearInterval(interval);
 					}
-				}, 100);
+				}, 50);
 			});
 		},
 		async setActivePage(pageName: string) {
@@ -212,7 +212,6 @@ const useStore = defineStore("store", {
 			scrollLayerIntoView: boolean | ScrollLogicalPosition = true,
 			scrollBlockIntoView = false,
 		) {
-			this.activeCanvas?.history?.pause();
 			if (this.settingPage) {
 				return;
 			}
@@ -232,39 +231,12 @@ const useStore = defineStore("store", {
 						?.scrollIntoView({ behavior: "instant", block: align, inline: "center" });
 				});
 			}
-
-			this.activeCanvas?.history?.resume();
 			this.editableBlock = null;
 			if (scrollBlockIntoView) {
 				this.activeCanvas?.scrollBlockIntoView(block);
 			}
 		},
-		async editComponent(block?: Block | null, componentName?: string) {
-			if (!block?.isExtendedFromComponent() && !componentName) {
-				return;
-			}
-			componentName = componentName || (block?.extendedFromComponent as string);
-			await this.loadComponent(componentName);
-			const component = this.getComponent(componentName);
-			const componentBlock = this.getComponentBlock(componentName);
-			this.editOnCanvas(
-				componentBlock,
-				(block: Block) => {
-					webComponent.setValue
-						.submit({
-							name: componentName,
-							block: getBlockObject(block),
-						})
-						.then((data: BuilderComponent) => {
-							this.componentDocMap.set(data.name, data);
-							this.componentMap.set(data.name, getBlockInstance(data.block));
-							toast.success("Component saved!");
-						});
-				},
-				"Save Component",
-				component.component_name,
-			);
-		},
+
 		async editBlockTemplate(blockTemplateName: string) {
 			await this.fetchBlockTemplate(blockTemplateName);
 			const blockTemplate = this.getBlockTemplate(blockTemplateName);
@@ -284,61 +256,11 @@ const useStore = defineStore("store", {
 		getBlockTemplate(blockTemplateName: string) {
 			return this.blockTemplateMap.get(blockTemplateName) as BlockTemplate;
 		},
-		isComponentUsed(componentName: string) {
-			// TODO: Refactor or reduce complexity
-			const checkComponent = (block: Block) => {
-				if (block.extendedFromComponent === componentName) {
-					return true;
-				}
-				if (block.children) {
-					for (const child of block.children) {
-						if (checkComponent(child)) {
-							return true;
-						}
-					}
-				}
-				return false;
-			};
-			for (const block of this.activeCanvas?.getFirstBlock()?.children || []) {
-				if (checkComponent(block)) {
-					return true;
-				}
-			}
-			return false;
-		},
 		editPage(retainSelection = false) {
 			if (!retainSelection) {
 				this.activeCanvas?.clearSelection();
 			}
 			this.editingMode = "page";
-		},
-		getComponentBlock(componentName: string) {
-			return (
-				(this.componentMap.get(componentName) as Block) ||
-				getBlockInstance(getBlockTemplate("fallback-component"))
-			);
-		},
-		async loadComponent(componentName: string) {
-			if (!this.componentMap.has(componentName) && !this.fetchingComponent.has(componentName)) {
-				this.fetchingComponent.add(componentName);
-				return this.fetchComponent(componentName)
-					.then((componentDoc) => {
-						this.componentDocMap.set(componentName, componentDoc);
-						this.componentMap.set(componentDoc.name, getBlockInstance(componentDoc.block));
-					})
-					.finally(() => {
-						this.fetchingComponent.delete(componentName);
-					});
-			}
-		},
-		async fetchComponent(componentName: string) {
-			const webComponentDoc = await createDocumentResource({
-				doctype: "Builder Component",
-				name: componentName,
-				auto: true,
-			});
-			await webComponentDoc.get.promise;
-			return webComponentDoc.doc as BuilderComponent;
 		},
 		async fetchBlockTemplate(blockTemplateName: string) {
 			const blockTemplate = this.getBlockTemplate(blockTemplateName);
@@ -353,38 +275,28 @@ const useStore = defineStore("store", {
 				this.blockTemplateMap.set(blockTemplateName, blockTemplate);
 			}
 		},
-		getComponent(componentName: string) {
-			return this.componentDocMap.get(componentName) as BuilderComponent;
-		},
-		createComponent(obj: BuilderComponent, updateExisting = false) {
-			const component = this.getComponent(obj.name);
-			if (component) {
-				const existingComponent = component.block;
-				const newComponent = obj.block;
-				if (updateExisting && existingComponent !== newComponent) {
-					return webComponent.setValue.submit({
-						name: obj.name,
-						block: obj.block,
+		async duplicatePage(page: BuilderPage) {
+			const webPageResource = await createDocumentResource({
+				doctype: "Builder Page",
+				name: page.page_name,
+				auto: true,
+			});
+			await webPageResource.get.promise;
+
+			const pageCopy = webPageResource.doc as BuilderPage;
+			pageCopy.page_title = `${pageCopy.page_title} (Copy)`;
+			delete pageCopy.page_name;
+			delete pageCopy.route;
+			toast.promise(webPages.insert.submit(pageCopy), {
+				loading: "Duplicating page",
+				success: async (page: BuilderPage) => {
+					// load page and refresh
+					router.push({ name: "builder", params: { pageId: page.page_name } }).then(() => {
+						router.go(0);
 					});
-				} else {
-					return;
-				}
-			}
-			return webComponent.insert
-				.submit(obj)
-				.then(() => {
-					this.componentMap.set(obj.name, getBlockInstance(obj.block));
-				})
-				.catch(() => {
-					console.log(`There was an error while creating ${obj.component_name}`);
-				});
-		},
-		getComponentName(componentId: string) {
-			let componentObj = webComponent.getRow(componentId);
-			if (!componentObj) {
-				return componentId;
-			}
-			return componentObj.component_name;
+					return "Page duplicated";
+				},
+			});
 		},
 		async duplicatePage(page: BuilderPage) {
 			const webPageResource = await createDocumentResource({
@@ -488,7 +400,9 @@ const useStore = defineStore("store", {
 				});
 			}
 			const targetWindow = window.open(`/${route}`, "builder-preview");
-			targetWindow?.location.reload();
+			if (targetWindow?.location.pathname === `/${route}`) {
+				targetWindow?.location.reload();
+			}
 		},
 		savePage() {
 			this.pageBlocks = this.getPageBlocks() as Block[];

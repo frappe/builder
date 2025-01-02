@@ -4,13 +4,13 @@
 		:style="{
 			height: height,
 		}">
-		<span class="text-p-sm font-medium text-text-icons-gray-8" v-if="label">
+		<span class="text-p-sm font-medium text-ink-gray-8" v-if="label">
 			{{ label }}
 		</span>
 		<div
 			ref="editor"
 			class="h-auto flex-1 overflow-hidden overscroll-none !rounded border border-outline-gray-2 bg-surface-gray-2 dark:bg-gray-900" />
-		<span class="mt-1 text-p-xs text-text-icons-gray-6" v-show="description" v-html="description"></span>
+		<span class="mt-1 text-p-xs text-ink-gray-6" v-show="description" v-html="description"></span>
 		<BuilderButton v-if="showSaveButton" @click="emit('save', aceEditor?.getValue())" class="mt-3">
 			Save
 		</BuilderButton>

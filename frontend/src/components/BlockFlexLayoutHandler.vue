@@ -6,17 +6,18 @@
 			{ label: 'Horizontal', value: 'row', icon: 'arrow-right', hideLabel: true },
 			{ label: 'Vertical', value: 'column', icon: 'arrow-down', hideLabel: true },
 		]"
-		:modelValue="blockController.getStyle('flexDirection') || 'column'"
+		:modelValue="blockController.getStyle('flexDirection') || 'row'"
 		@update:modelValue="
 			(val: string | number) => blockController.setStyle('flexDirection', val)
 		"></OptionToggle>
 	<PlacementControl v-if="blockController.isFlex()"></PlacementControl>
 	<InlineInput
 		v-if="blockController.isFlex()"
-		:modelValue="blockController.getStyle('justifyContent')"
+		:modelValue="blockController.getStyle('justifyContent') ?? ''"
 		type="select"
 		label="Distribution"
 		:options="[
+			{ label: '', value: '' },
 			{ label: 'Space Between', value: 'space-between' },
 			{ label: 'Space Around', value: 'space-around' },
 			{ label: 'Space Evenly', value: 'space-evenly' },
@@ -29,7 +30,7 @@
 		type="text"
 		:enableSlider="true"
 		:unitOptions="['px', 'em', 'rem']"
-		:modelValue="blockController.getStyle('gap')"
+		:modelValue="blockController.getStyle('gap') ?? '0px'"
 		@update:modelValue="(val: string | number) => blockController.setStyle('gap', val)" />
 	<OptionToggle
 		label="Wrap"

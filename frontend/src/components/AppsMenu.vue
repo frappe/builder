@@ -7,14 +7,14 @@
 				@click.prevent="togglePopover()">
 				<div class="flex gap-2">
 					<FeatherIcon name="grid" class="size-4" />
-					<span>Apps</span>
+					<span class="text-ink-gray-7">Apps</span>
 				</div>
 				<FeatherIcon name="chevron-right" class="size-4" />
 			</button>
 		</template>
 		<template #body>
 			<div
-				class="flex w-fit min-w-32 max-w-48 flex-col rounded-lg border border-outline-gray-2 bg-surface-white p-1.5 text-sm text-text-icons-gray-8 shadow-xl auto-fill-[100px] dark:bg-surface-gray-1">
+				class="flex w-fit min-w-32 max-w-48 flex-col rounded-lg border border-outline-gray-2 bg-surface-white p-1.5 text-sm text-ink-gray-8 shadow-xl auto-fill-[100px] dark:bg-surface-gray-1">
 				<a
 					:href="app.route"
 					v-for="app in apps.data"
