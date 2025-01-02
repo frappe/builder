@@ -7,7 +7,7 @@
 				@click.prevent="togglePopover()">
 				<div class="flex gap-2">
 					<FeatherIcon name="grid" class="size-4" />
-					<span>Apps</span>
+					<span class="text-ink-gray-7">Apps</span>
 				</div>
 				<FeatherIcon name="chevron-right" class="size-4" />
 			</button>
