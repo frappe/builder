@@ -379,6 +379,11 @@ const useStore = defineStore("store", {
 			const targetWindow = window.open(`/${route}`, "builder-preview");
 			if (targetWindow?.location.pathname === `/${route}`) {
 				targetWindow?.location.reload();
+			} else {
+				setTimeout(() => {
+					// wait for the page to load
+					targetWindow?.location.reload();
+				}, 50);
 			}
 		},
 		savePage() {
