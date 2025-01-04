@@ -1,20 +1,20 @@
 <template>
 	<Menu
-		class="fixed z-50 h-fit w-fit min-w-[120px] rounded-lg bg-surface-white p-1 shadow-xl"
+		class="fixed z-50 h-fit w-fit min-w-[120px] rounded-md bg-surface-white p-1 shadow-xl"
 		:style="{ top: y + 'px', left: x + 'px' }"
 		ref="menu">
 		<MenuItems static class="text-sm">
 			<MenuItem
 				v-slot="{ active, disabled }"
-				class="block cursor-pointer rounded-md px-3 py-1 dark:text-zinc-50"
+				class="block cursor-pointer rounded-sm px-3 py-1 text-ink-gray-9"
 				v-for="(option, index) in options"
 				v-show="!option.condition || option.condition()">
 				<div
 					@click.prevent.stop="(!option.condition || option.condition()) && handleClick(option.action)"
 					:class="{
 						'text-gray-900': !disabled,
-						'bg-gray-200 dark:bg-zinc-700': active,
-						'text-gray-400 dark:text-zinc-500': disabled,
+						'bg-surface-gray-4': active,
+						'text-ink-gray-4': disabled,
 					}">
 					{{ option.label }}
 				</div>

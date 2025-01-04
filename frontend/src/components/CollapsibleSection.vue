@@ -1,11 +1,10 @@
 <template>
 	<div>
-		<div class="flex items-center justify-between text-sm font-medium dark:text-zinc-400">
-			<h3 class="cursor-pointer text-base text-gray-900 dark:text-zinc-300" @click="toggleCollapsed">
+		<div class="flex items-center justify-between text-sm font-medium">
+			<h3 class="cursor-pointer text-base text-ink-gray-9" @click="toggleCollapsed">
 				{{ sectionName }}
 			</h3>
 			<BuilderButton
-				class="dark:text-zinc-400 dark:hover:bg-zinc-700"
 				:icon="collapsed ? 'plus' : 'minus'"
 				:variant="'ghost'"
 				size="sm"

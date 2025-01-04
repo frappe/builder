@@ -80,10 +80,7 @@
 							:style="{
 								background: color,
 							}"></div>
-						<EyeDropperIcon
-							v-if="isSupported"
-							class="text-gray-700 dark:text-zinc-300"
-							@click="() => open()" />
+						<EyeDropperIcon v-if="isSupported" class="text-ink-gray-7" @click="() => open()" />
 					</div>
 				</div>
 			</div>

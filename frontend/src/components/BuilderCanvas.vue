@@ -47,7 +47,7 @@
 				v-show="breakpoint.visible"
 				:key="breakpoint.device">
 				<div
-					class="absolute left-0 cursor-pointer select-none text-3xl text-gray-700 dark:text-zinc-300"
+					class="absolute left-0 cursor-pointer select-none text-3xl text-ink-gray-7"
 					:style="{
 						fontSize: `calc(${12}px * 1/${canvasProps.scale})`,
 						top: `calc(${-20}px * 1/${canvasProps.scale})`,
@@ -66,7 +66,7 @@
 			</div>
 		</div>
 		<div
-			class="fixed bottom-12 left-[50%] z-40 flex translate-x-[-50%] cursor-default items-center justify-center gap-2 rounded-lg bg-surface-white px-3 py-2 text-center text-sm font-semibold text-gray-600 shadow-md dark:text-zinc-400"
+			class="fixed bottom-12 left-[50%] z-40 flex translate-x-[-50%] cursor-default items-center justify-center gap-2 rounded-lg bg-surface-white px-3 py-2 text-center text-sm font-semibold text-ink-gray-7 shadow-md"
 			v-show="!canvasProps.panning">
 			{{ Math.round(canvasProps.scale * 100) + "%" }}
 			<div class="ml-2 cursor-pointer" @click="setScaleAndTranslate">

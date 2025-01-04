@@ -11,7 +11,7 @@
 		}"
 		@mousedown.stop="handleRounded">
 		<div
-			class="absolute left-2 top-2 w-fit rounded-full bg-zinc-800 px-3 py-2 text-xs text-white opacity-60"
+			class="absolute left-2 top-2 w-fit rounded-full bg-gray-800 px-3 py-2 text-xs text-white opacity-60"
 			v-show="updating">
 			{{ borderRadius }}
 		</div>

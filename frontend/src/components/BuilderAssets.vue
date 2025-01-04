@@ -19,22 +19,22 @@
 						class="relative flex translate-x-0 translate-y-0 cursor-pointer items-center justify-between overflow-hidden truncate rounded border border-transparent bg-surface-white px-2 py-1.5"
 						draggable="true"
 						:class="{
-							'!border-gray-400 dark:!border-zinc-600':
+							'!border-outline-gray-4':
 								store.fragmentData.fragmentId === component.name ||
 								selectedComponent === component.component_id,
 						}"
 						@click="selectComponent(component)"
 						@dblclick="componentStore.editComponent(null, component.name)"
 						@dragstart="(ev) => setComponentData(ev, component)">
-						<div class="flex items-center gap-2">
-							<FeatherIcon :name="'box'" class="h-4 w-4 text-gray-800 dark:text-zinc-400"></FeatherIcon>
-							<p class="text-base text-gray-800 dark:text-zinc-400">
+						<div class="flex items-center gap-2 text-ink-gray-5">
+							<FeatherIcon :name="'box'" class="h-4 w-4"></FeatherIcon>
+							<p class="text-base">
 								{{ component.component_name }}
 							</p>
 						</div>
 						<FeatherIcon
 							name="trash"
-							class="hidden h-3 w-3 cursor-pointer text-gray-800 group-hover:block dark:text-zinc-400"
+							class="hidden h-3 w-3 cursor-pointer text-ink-gray-5 group-hover:block"
 							@click.stop.prevent="componentStore.deleteComponent(component)"></FeatherIcon>
 					</div>
 				</div>

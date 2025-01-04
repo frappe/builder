@@ -25,26 +25,13 @@
 				width: `${store.builderLayout.leftPanelWidth}px`,
 			}"
 			@click.stop="store.leftPanelActiveTab === 'Layers' && store.activeCanvas?.clearSelection()">
-			<div v-if="false" class="mb-5 flex flex-col overflow-hidden rounded-lg text-sm">
-				<textarea
-					class="no-scrollbar h-fit resize-none rounded-sm border-0 bg-gray-300 text-sm outline-none dark:bg-zinc-700 dark:text-white"
-					v-model="prompt"
-					:disabled="generating" />
-				<button
-					@click="getPage"
-					type="button"
-					class="bg-gray-300 p-2 text-gray-800 dark:bg-zinc-700 dark:text-zinc-300"
-					:disabled="generating">
-					Generate
-				</button>
-			</div>
 			<div v-show="store.leftPanelActiveTab === 'Blocks'">
 				<BuilderBlockTemplates class="mt-1 p-4 pt-3" />
 			</div>
 			<div v-show="store.leftPanelActiveTab === 'Assets'">
 				<BuilderAssets class="mt-1 p-4 pt-3" />
 			</div>
-			<div v-show="store.leftPanelActiveTab === 'Layers'" class="p-4 pt-3">
+			<div v-show="store.leftPanelActiveTab === 'Layers'" class="p-3">
 				<BlockLayers
 					class="no-scrollbar overflow-auto"
 					v-if="pageCanvas"

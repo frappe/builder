@@ -196,7 +196,7 @@
 						</div>
 					</div>
 					<BuilderButton
-						class="m-auto mt-12 w-fit text-sm dark:bg-zinc-900 dark:text-zinc-300"
+						class="m-auto mt-12 w-fit text-sm"
 						@click="loadMore"
 						v-show="webPages.hasNextPage"
 						variant="subtle"
