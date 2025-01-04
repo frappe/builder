@@ -28,7 +28,7 @@
 		</div>
 	</div>
 	<div v-else>
-		<p class="mt-2 text-center text-sm text-gray-600 dark:text-zinc-500">Select a block to edit properties</p>
+		<p class="mt-2 text-center text-sm text-ink-gray-6">Select a block to edit properties</p>
 	</div>
 </template>
 <script setup lang="ts">
@@ -629,7 +629,7 @@ const dimensionSectionProperties = [
 		component: "hr",
 		getProps: () => {
 			return {
-				class: "dark:border-zinc-700",
+				class: "border-outline-gray-1",
 			};
 		},
 		searchKeyWords: "",
@@ -1158,7 +1158,7 @@ const imageOptionsSectionProperties = [
 		getProps: () => {
 			return {
 				label: "Convert to WebP",
-				class: "text-base dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700",
+				class: "text-base self-end",
 			};
 		},
 		innerText: "Convert to WebP",

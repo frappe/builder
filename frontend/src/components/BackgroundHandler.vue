@@ -16,7 +16,7 @@
 							class="absolute left-2 top-[6px] z-10 h-4 w-4 rounded shadow-sm"
 							@click="togglePopover"
 							:class="{
-								'bg-gray-400 dark:bg-zinc-600': !backgroundURL,
+								'bg-surface-gray-4': !backgroundURL,
 							}"
 							:style="{
 								backgroundImage: backgroundURL ? `url(${backgroundURL})` : '',
@@ -31,7 +31,7 @@
 		<template #body>
 			<div class="rounded-lg bg-surface-white p-3 shadow-lg">
 				<div
-					class="image-preview group relative h-24 w-48 cursor-pointer overflow-hidden rounded bg-gray-200 dark:bg-zinc-700"
+					class="image-preview group relative h-24 w-48 cursor-pointer overflow-hidden rounded bg-surface-gray-3"
 					:style="{
 						backgroundImage: backgroundURL ? `url(${backgroundURL})` : '',
 						backgroundPosition: `center`,
@@ -53,11 +53,7 @@
 									'!grid': !backgroundURL,
 									'group-hover:grid': backgroundURL,
 								}">
-								<div
-									class="rounded bg-gray-200 p-2 text-xs text-gray-900 dark:bg-zinc-700 dark:text-zinc-200"
-									@click="openFileSelector">
-									Upload
-								</div>
+								<BuilderButton @click="openFileSelector">Upload</BuilderButton>
 							</div>
 						</template>
 					</FileUploader>

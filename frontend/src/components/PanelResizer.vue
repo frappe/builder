@@ -8,7 +8,7 @@
 			'right-0': side === 'right',
 			'top-0': side === 'top',
 			'bottom-0': side === 'bottom',
-			'bg-gray-300 dark:bg-zinc-700': dragActive,
+			'bg-surface-gray-3': dragActive,
 		}"
 		@mousedown.prevent="resize">
 		<slot />

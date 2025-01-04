@@ -2,7 +2,7 @@
 	<div class="items-top relative flex justify-between">
 		<InputLabel class="items-center">Placement</InputLabel>
 		<div class="relative h-fit w-fit">
-			<div class="group grid grid-cols-3 rounded-sm bg-gray-200 p-1.5 dark:bg-zinc-800">
+			<div class="group grid grid-cols-3 rounded-sm bg-surface-gray-2 p-1.5">
 				<div
 					v-for="option in placementOptions"
 					:key="option"
@@ -32,19 +32,19 @@
 									(option === 'bottom-left' || option === 'bottom-middle' || option === 'bottom-right')),
 						}">
 						<div
-							class="rounded-sm bg-gray-500 dark:bg-zinc-500"
+							class="rounded-sm bg-surface-gray-5"
 							:class="{
 								'h-2 w-1': direction === 'row',
 								'h-1 w-2': direction === 'column',
 							}"></div>
 						<div
-							class="rounded-sm bg-gray-500 dark:bg-zinc-500"
+							class="rounded-sm bg-surface-gray-5"
 							:class="{
 								'h-3 w-1': direction === 'row',
 								'h-1 w-3': direction === 'column',
 							}"></div>
 						<div
-							class="rounded-sm bg-gray-500 dark:bg-zinc-500"
+							class="rounded-sm bg-surface-gray-5"
 							:class="{
 								'h-2 w-1': direction === 'row',
 								'h-1 w-2': direction === 'column',
@@ -60,19 +60,19 @@
 					'align-items': alignItems,
 				}">
 				<div
-					class="rounded-sm bg-gray-600 dark:bg-zinc-400"
+					class="rounded-sm bg-surface-gray-6"
 					:class="{
 						'h-1 w-2': direction === 'column',
 						'h-2 w-1': direction === 'row',
 					}"></div>
 				<div
-					class="rounded-sm bg-gray-600 dark:bg-zinc-400"
+					class="rounded-sm bg-surface-gray-6"
 					:class="{
 						'h-1 w-3': direction === 'column',
 						'h-3 w-1': direction === 'row',
 					}"></div>
 				<div
-					class="rounded-sm bg-gray-600 dark:bg-zinc-400"
+					class="rounded-sm bg-surface-gray-6"
 					:class="{
 						'h-1 w-2': direction === 'column',
 						'h-2 w-1': direction === 'row',

@@ -107,7 +107,7 @@
 					</Tooltip>
 				</div>
 			</div>
-			<span class="text-sm dark:text-zinc-300" v-if="store.savingPage && store.activePage?.is_template">
+			<span class="text-sm text-ink-gray-3" v-if="store.savingPage && store.activePage?.is_template">
 				Saving template
 			</span>
 			<Tooltip text="Settings" :hoverDelay="0.6">
