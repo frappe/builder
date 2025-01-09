@@ -92,6 +92,7 @@ import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
 import FitScreenIcon from "./Icons/FitScreen.vue";
+const resizingBlock = ref(false);
 
 const store = useStore();
 const canvasContainer = ref(null);
@@ -265,6 +266,7 @@ defineExpose({
 	scrollBlockIntoView,
 	removeBlock,
 	selectBlockRange,
+	resizingBlock,
 });
 
 function selectBreakpoint(ev: MouseEvent, breakpoint: BreakpointConfig) {

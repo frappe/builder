@@ -57,7 +57,7 @@ export function useBlockEventHandlers() {
 
 	function handleMouseOver(e: MouseEvent) {
 		if (!isBlock(e)) return;
-		if (store.mode === "move") return;
+		if (store.mode === "move" || store.activeCanvas?.resizingBlock) return;
 		const block = getBlock(e);
 		const { breakpoint } = getBlockInfo(e);
 		store.hoveredBlock = block?.blockId || null;
