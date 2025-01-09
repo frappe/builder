@@ -60,10 +60,16 @@ onMounted(() => {
 
 watch(resizing, () => {
 	if (resizing.value) {
-		store.activeCanvas?.history?.pause();
+		if (store.activeCanvas) {
+			store.activeCanvas.history?.pause();
+			store.activeCanvas.resizingBlock = true;
+		}
 		emit("resizing", true);
 	} else {
-		store.activeCanvas?.history?.resume(undefined, true, true);
+		if (store.activeCanvas) {
+			store.activeCanvas?.history?.resume(undefined, true, true);
+			store.activeCanvas.resizingBlock = false;
+		}
 		emit("resizing", false);
 	}
 });
