@@ -236,6 +236,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			return (
 				!block.value.isRoot() &&
 				!block.value.isChildOfComponentBlock() &&
+				block.value.isVisible() &&
 				Boolean(block.value.getParentBlock())
 			);
 		},
