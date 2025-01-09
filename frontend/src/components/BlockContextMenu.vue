@@ -230,7 +230,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Delete",
 		action: () => {
-			block.value.getParentBlock()?.removeChild(block.value);
+			store.activeCanvas?.removeBlock(block.value);
 		},
 		condition: () => {
 			return (
