@@ -643,8 +643,8 @@ class Block implements BlockOptions {
 	setInnerHTML(innerHTML: string) {
 		this.innerHTML = innerHTML;
 	}
-	toggleVisibility() {
-		if (this.getStyle("display") === "none") {
+	toggleVisibility(show: boolean | null = null) {
+		if (this.getStyle("display") === "none" || show === false) {
 			this.setStyle("display", this.getStyle("__last_display") || "flex");
 			this.setStyle("__last_display", null);
 		} else {
