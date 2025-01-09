@@ -1251,7 +1251,7 @@ const sections = [
 	{
 		name: "Position",
 		properties: positionSectionProperties,
-		condition: () => !blockController.multipleBlocksSelected(),
+		condition: () => !blockController.multipleBlocksSelected() && !blockController.isRoot(),
 		collapsed: computed(() => {
 			return (
 				!blockController.getStyle("top") &&
