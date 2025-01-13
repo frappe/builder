@@ -58,6 +58,20 @@
 									},
 								],
 							},
+							{
+								group: 'Help',
+								hideLabel: true,
+								items: [
+									{
+										label: 'Help',
+										onClick: () => {
+											// @ts-ignore
+											window.open('https://t.me/frappebuilder');
+										},
+										icon: 'info',
+									},
+								],
+							},
 						]"
 						size="sm"
 						class="flex-1 [&>div>div>div]:w-full"

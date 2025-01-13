@@ -28,10 +28,14 @@
 						icon: isDark ? 'sun' : 'moon',
 					},
 					{ label: 'Settings', onClick: () => $emit('showSettings'), icon: 'settings' },
+
 					{
-						label: 'Apps',
-						component: AppsMenu,
-						icon: 'grid',
+						label: 'Help',
+						onClick: () => {
+							// @ts-ignore
+							window.open('https://t.me/frappebuilder');
+						},
+						icon: 'info',
 					},
 				],
 			},
@@ -66,7 +70,6 @@
 	</Dropdown>
 </template>
 <script setup lang="ts">
-import AppsMenu from "@/components/AppsMenu.vue";
 import useStore from "@/store";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { useDark, useToggle } from "@vueuse/core";
