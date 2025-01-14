@@ -5,7 +5,7 @@
 				{{ sectionName }}
 			</h3>
 			<BuilderButton
-				:icon="collapsed ? 'plus' : 'minus'"
+				:icon="collapsed ? 'chevron-right' : 'chevron-down'"
 				:variant="'ghost'"
 				size="sm"
 				@click="toggleCollapsed"></BuilderButton>
