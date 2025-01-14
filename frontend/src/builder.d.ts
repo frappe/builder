@@ -53,6 +53,7 @@ declare interface ContextMenuOption {
 	label: string;
 	action: CallableFunction;
 	condition?: () => boolean;
+	disabled?: () => boolean;
 }
 
 declare interface ComponentData {

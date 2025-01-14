@@ -140,7 +140,6 @@ const selectScript = (script: attachedScript) => {
 };
 
 const updateScript = (value: string) => {
-	console.log(value);
 	if (!activeScript.value) return;
 	clientScriptResource.setValue
 		.submit({

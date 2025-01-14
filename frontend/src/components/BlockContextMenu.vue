@@ -144,12 +144,6 @@ const contextMenuOptions: ContextMenuOption[] = [
 		},
 	},
 	{
-		label: "Save As Component",
-		action: () => (showNewComponentDialog.value = true),
-		condition: () => !block.value.isExtendedFromComponent(),
-	},
-
-	{
 		label: "Repeat Block",
 		action: () => {
 			const repeaterBlockObj = getBlockTemplate("repeater");
@@ -166,7 +160,8 @@ const contextMenuOptions: ContextMenuOption[] = [
 	},
 	{
 		label: "Reset Overrides",
-		condition: () => block.value.hasOverrides(store.activeBreakpoint),
+		condition: () => store.activeBreakpoint !== "desktop",
+		disabled: () => !block.value?.hasOverrides(store.activeBreakpoint),
 		action: () => {
 			block.value.resetOverrides(store.activeBreakpoint);
 		},
@@ -215,6 +210,11 @@ const contextMenuOptions: ContextMenuOption[] = [
 			showBlockTemplateDialog.value = true;
 		},
 		condition: () => !block.value.isExtendedFromComponent() && Boolean(window.is_developer_mode),
+	},
+	{
+		label: "Save As Component",
+		action: () => (showNewComponentDialog.value = true),
+		condition: () => !block.value.isExtendedFromComponent(),
 	},
 	{
 		label: "Detach Component",
