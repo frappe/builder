@@ -15,6 +15,7 @@ const useComponentStore = defineStore("componentStore", {
 		componentMap: <Map<string, Block>>new Map(),
 		componentDocMap: <Map<string, BuilderComponent>>new Map(),
 		fetchingComponent: new Set(),
+		selectedComponent: null as string | null,
 	}),
 	actions: {
 		async editComponent(block?: Block | null, componentName?: string) {
