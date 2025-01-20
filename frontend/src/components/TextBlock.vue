@@ -119,8 +119,10 @@
 				}
 			"
 			v-on-click-outside="
-				() => {
-					store.editableBlock = null;
+				(e) => {
+					if ((e.target as HTMLElement).closest('.canvas-container')) {
+						store.editableBlock = null;
+					}
 				}
 			"
 			@mouseup="selectionTriggered = false"
