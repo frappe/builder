@@ -96,7 +96,7 @@ const showPaddingHandler = computed(() => {
 		!props.editable &&
 		!blockController.multipleBlocksSelected() &&
 		!props.block.isSVG() &&
-		!props.block.isText()
+		(!props.block.isText() || (props.block.isLink() && props.block.hasChildren()))
 	);
 });
 
@@ -107,7 +107,7 @@ const showMarginHandler = computed(() => {
 		!resizing.value &&
 		!props.editable &&
 		!blockController.multipleBlocksSelected() &&
-		!props.block.isText()
+		(!props.block.isText() || (props.block.isLink() && props.block.hasChildren()))
 	);
 });
 
