@@ -162,7 +162,7 @@ const getStyleClasses = computed(() => {
 	if (movable.value && !props.block.isRoot()) {
 		classes.push("cursor-grab");
 	}
-	if (Boolean(props.block.extendedFromComponent)) {
+	if (props.block.isExtendedFromComponent()) {
 		classes.push("ring-purple-400");
 	} else {
 		classes.push("ring-blue-400");
