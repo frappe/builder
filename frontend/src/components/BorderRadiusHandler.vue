@@ -2,7 +2,10 @@
 	<div
 		ref="handler"
 		class="border-radius-resize pointer-events-auto absolute h-[10px] w-[10px] cursor-pointer rounded-full border-2 border-blue-400 bg-white"
-		:class="{ hidden: !isHandlerVisible }"
+		:class="{
+			hidden: !isHandlerVisible,
+			'border-purple-400': targetBlock.isExtendedFromComponent(),
+		}"
 		:style="handlerPosition"
 		@mousedown.stop="handleRounded">
 		<div
