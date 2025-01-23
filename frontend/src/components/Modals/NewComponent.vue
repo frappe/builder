@@ -62,6 +62,8 @@ const createComponentHandler = async (context: { close: () => void }) => {
 	const block = store.activeCanvas?.findBlock(props.block.blockId);
 	if (!block) return;
 	block.extendFromComponent(componentData.name);
+	componentProperties.value.componentName = "";
+	componentProperties.value.isGlobalComponent = 0;
 	context.close();
 };
 </script>
