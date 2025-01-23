@@ -36,8 +36,7 @@ const useComponentStore = defineStore("componentStore", {
 							block: getBlockObject(block),
 						})
 						.then((data: BuilderComponent) => {
-							this.componentDocMap.set(data.name, data);
-							this.componentMap.set(data.name, markRaw(getBlockInstance(data.block)));
+							this.setComponentMap(data);
 							toast.success("Component saved!");
 						});
 				},
