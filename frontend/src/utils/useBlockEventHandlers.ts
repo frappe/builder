@@ -85,7 +85,7 @@ export function useBlockEventHandlers() {
 		selectBlock(e);
 		nextTick(() => {
 			document
-				.querySelector(`.editor[data-block-id=${blockId}]`)
+				.querySelector(`.editor[data-block-id="${blockId}"]`)
 				?.dispatchEvent(new MouseEvent("contextmenu", e));
 		});
 	}
