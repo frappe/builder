@@ -138,7 +138,7 @@ const useComponentStore = defineStore("componentStore", {
 				});
 		},
 		getComponentName(componentId: string) {
-			let componentObj = webComponent.getRow(componentId);
+			let componentObj = this.componentDocMap.get(componentId);
 			if (!componentObj) {
 				return componentId;
 			}
