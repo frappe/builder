@@ -25,7 +25,7 @@
 								store.fragmentData.fragmentId === component.name ||
 								componentStore.selectedComponent === component.component_id,
 						}">
-						<div class="flex items-center gap-2 text-ink-gray-5">
+						<div class="flex items-center gap-2 text-ink-gray-7">
 							<FeatherIcon :name="'box'" class="h-4 w-4"></FeatherIcon>
 							<p class="text-base">
 								{{ component.component_name }}

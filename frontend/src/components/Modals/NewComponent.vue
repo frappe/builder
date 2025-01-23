@@ -47,24 +47,23 @@ const componentProperties = ref({
 	isGlobalComponent: 0,
 });
 
-const createComponentHandler = (close: () => void) => {
+const createComponentHandler = async (context: { close: () => void }) => {
 	const blockCopy = getBlockCopy(props.block, true);
 	blockCopy.removeStyle("left");
 	blockCopy.removeStyle("top");
 	blockCopy.removeStyle("position");
-	webComponent.insert
-		.submit({
-			block: getBlockString(blockCopy),
-			component_name: componentProperties.value.componentName,
-			for_web_page: componentProperties.value.isGlobalComponent ? null : store.selectedPage,
-		})
-		.then(async (data: BuilderComponent) => {
-			posthog.capture("builder_component_created", { component_name: data.name });
-			componentStore.setComponentMap(data);
-			const block = store.activeCanvas?.findBlock(props.block.blockId);
-			if (!block) return;
-			block.extendFromComponent(data.name);
-		});
-	close();
+	const componentData = (await webComponent.insert.submit({
+		block: getBlockString(blockCopy),
+		component_name: componentProperties.value.componentName,
+		for_web_page: componentProperties.value.isGlobalComponent ? null : store.selectedPage,
+	})) as BuilderComponent;
+	posthog.capture("builder_component_created", { component_name: componentData.name });
+	componentStore.setComponentMap(componentData);
+	const block = store.activeCanvas?.findBlock(props.block.blockId);
+	if (!block) return;
+	block.extendFromComponent(componentData.name);
+	componentProperties.value.componentName = "";
+	componentProperties.value.isGlobalComponent = 0;
+	context.close();
 };
 </script>
