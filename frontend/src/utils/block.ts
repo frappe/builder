@@ -120,12 +120,14 @@ class Block implements BlockOptions {
 			// if src is base64, convert it to a file
 			const src = this.getAttribute("src") as string;
 			if (src && src.startsWith("data:image")) {
-				this.setAttribute("src", "");
-				options.src = "";
 				const file = dataURLtoFile(src, "image.png");
-				uploadImage(file, true).then((obj) => {
-					this.setAttribute("src", obj.fileURL);
-				});
+				if (file) {
+					this.setAttribute("src", "");
+					options.src = "";
+					uploadImage(file, true).then((obj) => {
+						this.setAttribute("src", obj.fileURL);
+					});
+				}
 			}
 		}
 	}
