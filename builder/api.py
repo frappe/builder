@@ -223,3 +223,23 @@ def update_page_folder(pages: list[str], folder_name: str) -> None:
 		frappe.throw("You do not have permission to update page folder.")
 	for page in pages:
 		frappe.db.set_value("Builder Page", page, "project_folder", folder_name, update_modified=False)
+
+
+@frappe.whitelist()
+def duplicate_page(page_name: str):
+	if not frappe.has_permission("Builder Page", ptype="write"):
+		frappe.throw("You do not have permission to duplicate a page.")
+	page = frappe.get_doc("Builder Page", page_name)
+	new_page = frappe.copy_doc(page)
+	del new_page.page_name
+	new_page.route = None
+	client_scripts = page.client_scripts
+	new_page.client_scripts = []
+	for script in client_scripts:
+		builder_script = frappe.get_doc("Builder Client Script", script.builder_script)
+		new_script = frappe.copy_doc(builder_script)
+		new_script.name = f"{builder_script.name}-copy"
+		new_script.insert(ignore_permissions=True)
+		new_page.append("client_scripts", {"builder_script": new_script.name})
+	new_page.insert()
+	return new_page
