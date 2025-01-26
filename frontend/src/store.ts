@@ -94,6 +94,11 @@ const useStore = defineStore("store", {
 			"Media",
 			"Advanced",
 		] as BlockTemplate["category"][],
+		dragTarget: {
+			placeholder: <HTMLElement | null>null,
+			parentBlock: <Block | null>null,
+			index: <number | null>null,
+		}
 	}),
 	actions: {
 		clearBlocks() {
@@ -531,6 +536,47 @@ const useStore = defineStore("store", {
 				fragmentId: null,
 			};
 		},
+		// drag and drop
+		handleDragStart(ev: DragEvent) {
+			if (ev.target && ev.dataTransfer) {
+				const ghostScale = this.activeCanvas?.canvasProps.scale
+				const ghostElement = (ev.target as HTMLElement).cloneNode(true) as HTMLElement
+
+				ghostElement.id = "ghost"
+				ghostElement.style.position = "fixed"
+				ghostElement.style.transform = `scale(${ghostScale || 1})`
+				ghostElement.style.pointerEvents = "none"
+				ghostElement.style.zIndex = "999999"
+				document.body.appendChild(ghostElement)
+
+				// Set the scaled drag image
+				ev.dataTransfer.setDragImage(ghostElement, 0, 0)
+				// Clean up the ghost element
+				setTimeout(() => {
+					document.body.removeChild(ghostElement)
+				}, 0)
+
+				let element = document.createElement("div")
+				element.id = "placeholder"
+
+				const root = document.querySelector(".__builder_component__[data-block-id='root']")
+				if (root) {
+					this.dragTarget.placeholder = root.appendChild(element)
+				}
+			}
+		},
+		handleDragEnd() {
+			const placeholder = document.getElementById("placeholder")
+			if (placeholder) {
+				placeholder.remove()
+			}
+
+			this.dragTarget = {
+				placeholder: null,
+				parentBlock: null,
+				index: null,
+			}
+		}
 	},
 });
 

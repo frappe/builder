@@ -26,7 +26,8 @@
 						draggable="true"
 						@click="selectBlockTemplate(blockTemplate)"
 						@dblclick="is_developer_mode && store.editBlockTemplate(blockTemplate.name)"
-						@dragstart="(ev) => setBlockTemplateData(ev, blockTemplate)">
+						@dragstart="(ev) => setBlockTemplateData(ev, blockTemplate)"
+						@dragend="() => store.handleDragEnd()">
 						<div
 							class="flex h-4/5 items-center justify-center"
 							:class="{
@@ -70,6 +71,7 @@ const blockTemplates = computed(() => {
 
 const setBlockTemplateData = (ev: DragEvent, component: BlockTemplate) => {
 	ev?.dataTransfer?.setData("blockTemplate", component.name);
+	store.handleDragStart(ev);
 };
 
 const selectedBlockTemplate = ref<string | null>(null);
