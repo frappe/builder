@@ -296,4 +296,8 @@ const renderedBreakpoints = computed(() => canvasProps.breakpoints.filter((bp) =
 .fade-leave-to {
 	opacity: 0;
 }
+
+#placeholder {
+	@apply h-auto w-full border-t-2 border-blue-500 transition-all;
+}
 </style>
