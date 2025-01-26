@@ -70,7 +70,7 @@ const blockTemplates = computed(() => {
 });
 
 const setBlockTemplateData = (ev: DragEvent, component: BlockTemplate) => {
-	ev?.dataTransfer?.setData("blockTemplate", component.name);
+	ev.dataTransfer?.setData("blockTemplate", component.name);
 	store.handleDragStart(ev);
 };
 

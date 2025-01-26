@@ -115,6 +115,31 @@ export function useCanvasDropZone(
 				});
 			}
 		},
+
+		onOver: (files, ev) => {
+			if (files && files.length) return;
+
+			const parentBlock = findDropTarget(ev);
+			if (parentBlock) {
+				store.hoveredBlock = parentBlock.blockId;
+			}
+		}
 	});
+
+	const findDropTarget = (ev: DragEvent) => {
+		const element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
+		const targetElement = element.closest(".__builder_component__") as HTMLElement;
+
+		let parentBlock = block.value as Block | null;
+		if (targetElement && targetElement.dataset.blockId) {
+			parentBlock = findBlock(targetElement.dataset.blockId) || parentBlock;
+			while (parentBlock && !parentBlock.canHaveChildren()) {
+				parentBlock = parentBlock.getParentBlock();
+			}
+		}
+
+		return parentBlock;
+	}
+
 	return { isOverDropZone };
 }
