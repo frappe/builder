@@ -11,9 +11,6 @@
 		</Transition>
 		<BlockSnapGuides></BlockSnapGuides>
 		<div
-			v-if="isOverDropZone"
-			class="pointer-events-none absolute bottom-0 left-0 right-0 top-0 z-30 bg-cyan-300 opacity-20"></div>
-		<div
 			class="fixed flex gap-40"
 			ref="canvas"
 			:style="{
