@@ -540,30 +540,39 @@ const useStore = defineStore("store", {
 		// drag and drop
 		handleDragStart(ev: DragEvent) {
 			if (ev.target && ev.dataTransfer) {
-				this.isDragging = true
-				const ghostScale = this.activeCanvas?.canvasProps.scale
-				const ghostElement = (ev.target as HTMLElement).cloneNode(true) as HTMLElement
+				this.isDragging = true;
+				const ghostScale = this.activeCanvas?.canvasProps.scale;
 
-				ghostElement.id = "ghost"
-				ghostElement.style.position = "fixed"
-				ghostElement.style.transform = `scale(${ghostScale || 1})`
-				ghostElement.style.pointerEvents = "none"
-				ghostElement.style.zIndex = "999999"
-				document.body.appendChild(ghostElement)
+				// Clone the entire draggable element
+				const dragElement = (ev.target as HTMLElement)
+				if (!dragElement) return;
+				const ghostDiv = document.createElement("div");
+				const ghostElement = dragElement.cloneNode(true) as HTMLElement;
+				ghostDiv.appendChild(ghostElement);
+				ghostDiv.id = "ghost";
+				ghostDiv.style.position = "fixed";
+				ghostDiv.style.transform = `scale(${ghostScale || 1})`;
+				ghostDiv.style.pointerEvents = "none";
+				ghostDiv.style.zIndex = "99999";
+				// Append the ghostDiv to the DOM
+				document.body.appendChild(ghostDiv);
 
-				// Set the scaled drag image
-				ev.dataTransfer.setDragImage(ghostElement, 0, 0)
-				// Clean up the ghost element
-				setTimeout(() => {
-					document.body.removeChild(ghostElement)
-				}, 0)
+				// Wait for the next frame to ensure the ghostDiv is rendered
+				requestAnimationFrame(() => {
+					ev.dataTransfer?.setDragImage(ghostDiv, 0, 0);
+					// Clean up the ghostDiv after a short delay
+					setTimeout(() => {
+						document.body.removeChild(ghostDiv);
+					}, 0);
+				});
 
-				let element = document.createElement("div")
-				element.id = "placeholder"
+				// Create a placeholder element
+				let element = document.createElement("div");
+				element.id = "placeholder";
 
-				const root = document.querySelector(".__builder_component__[data-block-id='root']")
+				const root = document.querySelector(".__builder_component__[data-block-id='root']");
 				if (root) {
-					this.dragTarget.placeholder = root.appendChild(element)
+					this.dragTarget.placeholder = root.appendChild(element);
 				}
 			}
 		},
