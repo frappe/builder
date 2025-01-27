@@ -72,12 +72,14 @@ export function useCanvasDropZone(
 			const { parentBlock, index, layoutDirection } = findDropTarget(ev);
 			if (parentBlock) {
 				store.hoveredBlock = parentBlock.blockId;
-				updateDropTarget(parentBlock, index, layoutDirection);
+				updateDropTarget(ev, parentBlock, index, layoutDirection);
 			}
 		}
 	});
 
 	const findDropTarget = (ev: DragEvent) => {
+		if (store.dragTarget.x === ev.x && store.dragTarget.y === ev.y) return {}
+
 		const element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
 		const targetElement = element.closest(".__builder_component__") as HTMLElement;
 
@@ -144,7 +146,7 @@ export function useCanvasDropZone(
 		return "column"
 	}
 
-	const updateDropTarget = throttle((parentBlock: Block | null, index: number, layoutDirection: LayoutDirection) => {
+	const updateDropTarget = throttle((ev: DragEvent, parentBlock: Block | null, index: number, layoutDirection: LayoutDirection) => {
 		// append placeholder component to the dom directly
 		// to avoid re-rendering the whole canvas
 		const { placeholder } = store.dragTarget
@@ -172,6 +174,8 @@ export function useCanvasDropZone(
 
 		store.dragTarget.parentBlock = parentBlock
 		store.dragTarget.index = index
+		store.dragTarget.x = ev.x
+		store.dragTarget.y = ev.y
 	}, 130)
 
 	const handleFileDrop = (files: File[], ev: DragEvent) => {

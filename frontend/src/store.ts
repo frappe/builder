@@ -96,6 +96,8 @@ const useStore = defineStore("store", {
 		] as BlockTemplate["category"][],
 		isDragging: false,
 		dragTarget: {
+			x: <number | null>null,
+			y: <number | null>null,
 			placeholder: <HTMLElement | null>null,
 			parentBlock: <Block | null>null,
 			index: <number | null>null,
@@ -583,6 +585,8 @@ const useStore = defineStore("store", {
 			}
 
 			this.dragTarget = {
+				x: null,
+				y: null,
 				placeholder: null,
 				parentBlock: null,
 				index: null,
