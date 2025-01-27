@@ -98,13 +98,12 @@ export function useCanvasDropZone(
 			}
 		}
 
-
 		return { parentBlock, index, layoutDirection };
 	}
 
 	const findDropIndex = (ev: DragEvent, parentElement: HTMLElement, layoutDirection: LayoutDirection): number => {
 		const childElements = Array.from(
-			parentElement.querySelectorAll(":scope > .__builder_component__"),
+			parentElement.querySelectorAll(":scope > .__builder_component__, #placeholder"),
 		) as HTMLElement[]
 		if (childElements.length === 0) return 0
 
@@ -164,8 +163,13 @@ export function useCanvasDropZone(
 			placeholder.classList.add("horizontal-placeholder")
 		}
 
-		// Append the placeholder to the new parent
-		newParent.insertBefore(placeholder, newParent.children[index])
+		// add the placeholder to the new parent
+		if (index >= newParent.children.length) {
+			newParent.appendChild(placeholder)
+		} else {
+			newParent.insertBefore(placeholder, newParent.children[index])
+		}
+
 		store.dragTarget.parentBlock = parentBlock
 		store.dragTarget.index = index
 	}, 130)
