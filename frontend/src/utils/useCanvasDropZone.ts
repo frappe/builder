@@ -144,11 +144,12 @@ export function useCanvasDropZone(
 			}
 
 			if (parentBlock) {
-				const parentElement = document.querySelector(`[data-block-id="${parentBlock.blockId}"]:not(.editor)`) as HTMLElement;
+				const parentElement = document.querySelector(`.__builder_component__[data-block-id="${parentBlock.blockId}"]`) as HTMLElement;
 				layoutDirection = getLayoutDirection(parentElement);
 				index = findDropIndex(ev, parentElement, layoutDirection);
 			}
 		}
+
 
 		return { parentBlock, index, layoutDirection };
 	}
