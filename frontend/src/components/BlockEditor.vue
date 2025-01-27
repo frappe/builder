@@ -151,6 +151,7 @@ watchEffect(() => {
 	store.showRightPanel;
 	store.showLeftPanel;
 	store.activeBreakpoint;
+	store.dragTarget.placeholder;
 	canvasProps.breakpoints.map((bp) => bp.visible);
 	nextTick(() => {
 		updateTracker.value();
