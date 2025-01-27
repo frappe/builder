@@ -22,14 +22,12 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { confirm } from "@/utils/helpers";
-import { useDark, useEventListener } from "@vueuse/core";
+import { useDark } from "@vueuse/core";
 import ace from "ace-builds";
 import "ace-builds/src-min-noconflict/ext-searchbox";
 import "ace-builds/src-min-noconflict/theme-chrome";
 import "ace-builds/src-min-noconflict/theme-twilight";
 import { PropType, onMounted, ref, watch } from "vue";
-import { onBeforeRouteLeave } from "vue-router";
 
 const isDark = useDark({
 	attribute: "data-theme",
@@ -179,26 +177,6 @@ watch(
 		resetEditor(props.modelValue as string);
 	},
 );
-
-onBeforeRouteLeave((to, from, next) => {
-	if (isDirty.value) {
-		confirm("You have unsaved changes. Are you sure you want to leave?").then((res) => {
-			if (res) {
-				next();
-			}
-		});
-	} else {
-		next();
-	}
-});
-
-// on page refresh, warn user if there are unsaved changes
-useEventListener("beforeunload", (e) => {
-	if (isDirty.value) {
-		e.preventDefault();
-		e.returnValue = "You have unsaved changes. Please save before leaving.";
-	}
-});
 
 defineExpose({ resetEditor, isDirty });
 </script>

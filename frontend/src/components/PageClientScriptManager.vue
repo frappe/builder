@@ -85,7 +85,7 @@ import CodeEditor from "./Controls/CodeEditor.vue";
 import CSSIcon from "./Icons/CSS.vue";
 import JavaScriptIcon from "./Icons/JavaScript.vue";
 
-const scriptEditor = ref<typeof CodeEditor | null>(null);
+const scriptEditor = ref<InstanceType<typeof CodeEditor> | null>(null);
 
 type attachedScript = {
 	script: string;
@@ -257,6 +257,8 @@ watch(
 		}
 	},
 );
+
+defineExpose({ scriptEditor });
 </script>
 <style scoped>
 :deep(.editor > .ace_editor) {
