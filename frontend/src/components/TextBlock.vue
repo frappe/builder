@@ -351,13 +351,13 @@ const setLink = (value: string | null) => {
 		editor.value?.chain().focus().unsetLink().run();
 	} else {
 		const href = value || textLink.value;
-		const isExternal = href.startsWith("http") || href.startsWith("//");
+		// const isExternal = href.startsWith("http") || href.startsWith("//");
 		editor.value
 			?.chain()
 			.focus()
 			.setLink({
 				href,
-				target: isExternal ? "_blank" : null,
+				target: null,
 			})
 			.run();
 		textLink.value = "";
