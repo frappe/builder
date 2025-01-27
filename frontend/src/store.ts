@@ -302,8 +302,8 @@ const useStore = defineStore("store", {
 			);
 			if (confirmed) {
 				await webPages.delete.submit(page.name);
+				toast.success("Page deleted successfully");
 			}
-			toast.success("Page deleted successfully");
 		},
 		async publishPage(openInBrowser = true) {
 			await this.waitTillPageIsSaved();

@@ -283,5 +283,6 @@ export function useCanvasUtils(
 		clearCanvas,
 		getRootBlock,
 		setupHistory,
+		isDirty,
 	};
 }
