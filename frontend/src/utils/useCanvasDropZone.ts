@@ -1,7 +1,7 @@
 import useStore from "@/store";
 import { posthog } from "@/telemetry";
 import Block from "@/utils/block";
-import { getBlockCopy, getBlockInstance, uploadImage } from "@/utils/helpers";
+import { getBlockCopy, getBlockInstance, throttle, uploadImage } from "@/utils/helpers";
 import useComponentStore from "@/utils/useComponentStore";
 import { useDropZone } from "@vueuse/core";
 import { Ref } from "vue";
@@ -197,7 +197,7 @@ export function useCanvasDropZone(
 		return "column"
 	}
 
-	const updateDropTarget = (parentBlock: Block | null, index: number, layoutDirection: LayoutDirection) => {
+	const updateDropTarget = throttle((parentBlock: Block | null, index: number, layoutDirection: LayoutDirection) => {
 		// append placeholder component to the dom directly
 		// to avoid re-rendering the whole canvas
 		const { placeholder } = store.dragTarget
@@ -220,7 +220,7 @@ export function useCanvasDropZone(
 		newParent.insertBefore(placeholder, newParent.children[index])
 		store.dragTarget.parentBlock = parentBlock
 		store.dragTarget.index = index
-	}
+	}, 130)
 
 	return { isOverDropZone };
 }
