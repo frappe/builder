@@ -12,7 +12,7 @@
 </template>
 
 <script lang="ts" setup>
-import { Dialog } from "frappe-ui";
+import Dialog from "@/components/Controls/Dialog.vue";
 import { onMounted, ref } from "vue";
 
 const props = defineProps(["title", "message", "onClick"]);

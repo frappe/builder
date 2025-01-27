@@ -24,9 +24,9 @@
 	</Dialog>
 </template>
 <script setup lang="ts">
+import Dialog from "@/components/Controls/Dialog.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { useVModel } from "@vueuse/core";
-import { Dialog } from "frappe-ui";
 import { ref } from "vue";
 
 const folderName = ref("");

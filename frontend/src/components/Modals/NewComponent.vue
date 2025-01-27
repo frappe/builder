@@ -25,6 +25,7 @@
 	</Dialog>
 </template>
 <script setup lang="ts">
+import Dialog from "@/components/Controls/Dialog.vue";
 import webComponent from "@/data/webComponent";
 import useStore from "@/store";
 import { posthog } from "@/telemetry";
@@ -32,7 +33,6 @@ import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import Block from "@/utils/block";
 import { getBlockCopy, getBlockString } from "@/utils/helpers";
 import useComponentStore from "@/utils/useComponentStore";
-import { Dialog } from "frappe-ui";
 import { ref } from "vue";
 
 const store = useStore();

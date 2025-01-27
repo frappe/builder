@@ -37,11 +37,11 @@
 	</div>
 </template>
 <script lang="ts" setup>
+import Dialog from "@/components/Controls/Dialog.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { Dialog } from "frappe-ui";
 import { defineComponent, ref } from "vue";
 import { toast } from "vue-sonner";
 import CodeEditor from "./Controls/CodeEditor.vue";
