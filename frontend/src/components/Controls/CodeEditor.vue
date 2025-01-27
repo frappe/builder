@@ -6,23 +6,30 @@
 		}">
 		<span class="text-p-sm font-medium text-ink-gray-8" v-if="label">
 			{{ label }}
+			<span v-if="isDirty" class="text-[10px] text-gray-600">●</span>
 		</span>
 		<div
 			ref="editor"
 			class="h-auto flex-1 overflow-hidden overscroll-none !rounded border border-outline-gray-2 bg-surface-gray-2 dark:bg-gray-900" />
 		<span class="mt-1 text-p-xs text-ink-gray-6" v-show="description" v-html="description"></span>
-		<BuilderButton v-if="showSaveButton" @click="emit('save', aceEditor?.getValue())" class="mt-3">
+		<BuilderButton
+			v-if="showSaveButton"
+			@click="emit('save', aceEditor?.getValue())"
+			class="mt-3"
+			:disabled="!isDirty">
 			Save
 		</BuilderButton>
 	</div>
 </template>
 <script setup lang="ts">
-import { useDark } from "@vueuse/core";
+import { confirm } from "@/utils/helpers";
+import { useDark, useEventListener } from "@vueuse/core";
 import ace from "ace-builds";
 import "ace-builds/src-min-noconflict/ext-searchbox";
 import "ace-builds/src-min-noconflict/theme-chrome";
 import "ace-builds/src-min-noconflict/theme-twilight";
 import { PropType, onMounted, ref, watch } from "vue";
+import { onBeforeRouteLeave } from "vue-router";
 
 const isDark = useDark({
 	attribute: "data-theme",
@@ -73,6 +80,8 @@ onMounted(() => {
 	setupEditor();
 });
 
+const isDirty = ref(false);
+
 const setupEditor = () => {
 	aceEditor = ace.edit(editor.value as HTMLElement);
 	resetEditor(props.modelValue as string, true);
@@ -104,6 +113,16 @@ const setupEditor = () => {
 			aceEditor?.session.setMode("ace/mode/html");
 		});
 	}
+
+	aceEditor.on("change", () => {
+		if (aceEditor?.getValue() === props.modelValue) {
+			isDirty.value = false;
+			return;
+		} else {
+			isDirty.value = true;
+		}
+	});
+
 	aceEditor.on("blur", () => {
 		try {
 			let value = aceEditor?.getValue() || "";
@@ -161,7 +180,27 @@ watch(
 	},
 );
 
-defineExpose({ resetEditor });
+onBeforeRouteLeave((to, from, next) => {
+	if (isDirty.value) {
+		confirm("You have unsaved changes. Are you sure you want to leave?").then((res) => {
+			if (res) {
+				next();
+			}
+		});
+	} else {
+		next();
+	}
+});
+
+// on page refresh, warn user if there are unsaved changes
+useEventListener("beforeunload", (e) => {
+	if (isDirty.value) {
+		e.preventDefault();
+		e.returnValue = "You have unsaved changes. Please save before leaving.";
+	}
+});
+
+defineExpose({ resetEditor, isDirty });
 </script>
 <style scoped>
 .editor .ace_editor {
