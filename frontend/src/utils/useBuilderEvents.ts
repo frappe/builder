@@ -55,6 +55,7 @@ export function useBuilderEvents(
 	});
 
 	useEventListener(document, "cut", (e) => {
+		if (isTargetEditable(e)) return;
 		copySelectedBlocksToClipboard(e);
 		if (store.activeCanvas?.selectedBlocks.length) {
 			for (const block of store.activeCanvas?.selectedBlocks) {
