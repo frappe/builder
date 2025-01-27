@@ -52,6 +52,7 @@ const showResizer = computed(() => {
 	return (
 		!props.block.isRoot() &&
 		!props.editable &&
+		!store.isDragging &&
 		isBlockSelected.value &&
 		!blockController.multipleBlocksSelected() &&
 		!props.block.getParentBlock()?.isGrid() &&
@@ -93,6 +94,7 @@ const showPaddingHandler = computed(() => {
 	return (
 		isBlockSelected.value &&
 		!resizing.value &&
+		!store.isDragging &&
 		!props.editable &&
 		!blockController.multipleBlocksSelected() &&
 		!props.block.isSVG() &&
@@ -104,6 +106,7 @@ const showMarginHandler = computed(() => {
 	return (
 		isBlockSelected.value &&
 		!props.block.isRoot() &&
+		!store.isDragging &&
 		!resizing.value &&
 		!props.editable &&
 		!blockController.multipleBlocksSelected() &&
@@ -120,6 +123,7 @@ const showBorderRadiusHandler = computed(() => {
 		!props.block.isSVG() &&
 		!props.editable &&
 		!resizing.value &&
+		!store.isDragging &&
 		!blockController.multipleBlocksSelected()
 	);
 });
@@ -167,7 +171,13 @@ const getStyleClasses = computed(() => {
 	} else {
 		classes.push("ring-blue-400");
 	}
-	if (isBlockSelected.value && !props.editable && !props.block.isRoot() && !props.block.isRepeater()) {
+	if (
+		isBlockSelected.value &&
+		!props.editable &&
+		!props.block.isRoot() &&
+		!props.block.isRepeater() &&
+		!store.isDragging
+	) {
 		// make editor interactive
 		classes.push("pointer-events-auto");
 		// Place the block on the top of the stack

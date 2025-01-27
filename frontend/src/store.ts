@@ -94,6 +94,7 @@ const useStore = defineStore("store", {
 			"Media",
 			"Advanced",
 		] as BlockTemplate["category"][],
+		isDragging: false,
 		dragTarget: {
 			placeholder: <HTMLElement | null>null,
 			parentBlock: <Block | null>null,
@@ -539,6 +540,7 @@ const useStore = defineStore("store", {
 		// drag and drop
 		handleDragStart(ev: DragEvent) {
 			if (ev.target && ev.dataTransfer) {
+				this.isDragging = true
 				const ghostScale = this.activeCanvas?.canvasProps.scale
 				const ghostElement = (ev.target as HTMLElement).cloneNode(true) as HTMLElement
 
@@ -576,6 +578,7 @@ const useStore = defineStore("store", {
 				parentBlock: null,
 				index: null,
 			}
+			this.isDragging = false
 		}
 	},
 });
