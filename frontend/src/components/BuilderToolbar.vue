@@ -119,7 +119,6 @@
 				v-model="showSettingsDialog"
 				style="z-index: 40"
 				class="[&>div>div[id^=headlessui-dialog-panel]]:my-3"
-				:disableOutsideClickToClose="true"
 				:options="{
 					title: 'Settings',
 					size: '5xl',
@@ -162,7 +161,8 @@ import SettingsGearIcon from "@/components/Icons/SettingsGear.vue";
 import { webPages } from "@/data/webPage";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { getTextContent } from "@/utils/helpers";
-import { Dialog, Tooltip } from "frappe-ui";
+import { Tooltip } from "frappe-ui";
+import Dialog from "@/components/Controls/Dialog.vue";
 import Popover from "frappe-ui/src/components/Popover.vue";
 import { computed, ref } from "vue";
 import { toast } from "vue-sonner";
