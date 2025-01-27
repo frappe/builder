@@ -62,7 +62,8 @@
 <script setup lang="ts">
 import useStore from "@/store";
 import Block from "@/utils/block";
-import { Dialog, FileUploader } from "frappe-ui";
+import { FileUploader } from "frappe-ui";
+import Dialog from "@/components/Controls/Dialog.vue";
 import { ref } from "vue";
 
 const showBlockTemplateDialog = ref(false);
