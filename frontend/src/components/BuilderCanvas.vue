@@ -298,6 +298,12 @@ const renderedBreakpoints = computed(() => canvasProps.breakpoints.filter((bp) =
 }
 
 #placeholder {
-	@apply h-auto w-full border-t-2 border-blue-500 transition-all;
+	@apply transition-all;
+}
+.vertical-placeholder {
+	@apply w-auto border-l-2 border-blue-500;
+}
+.horizontal-placeholder {
+	@apply h-auto w-full border-t-2 border-blue-500;
 }
 </style>

@@ -206,6 +206,15 @@ export function useCanvasDropZone(
 
 		if (store.dragTarget.parentBlock === parentBlock && store.dragTarget.index === index) return
 
+		// flip placeholder border as per layout direction to avoid shifting elements too much
+		if (layoutDirection === "row") {
+			placeholder.classList.remove("horizontal-placeholder")
+			placeholder.classList.add("vertical-placeholder")
+		} else {
+			placeholder.classList.remove("vertical-placeholder")
+			placeholder.classList.add("horizontal-placeholder")
+		}
+
 		// Append the placeholder to the new parent
 		newParent.insertBefore(placeholder, newParent.children[index])
 		store.dragTarget.parentBlock = parentBlock
