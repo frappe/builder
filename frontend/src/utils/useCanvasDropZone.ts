@@ -13,7 +13,7 @@ type LayoutDirection = "row" | "column"
 
 export function useCanvasDropZone(
 	canvasContainer: Ref<HTMLElement>,
-	block: Ref<Block>,
+	block: Ref<Block | null>,
 	findBlock: (id: string) => Block | null,
 ) {
 	const { isOverDropZone } = useDropZone(canvasContainer, {
@@ -23,7 +23,7 @@ export function useCanvasDropZone(
 			} else {
 				const componentName = ev.dataTransfer?.getData("componentName");
 				const blockTemplate = ev.dataTransfer?.getData("blockTemplate");
-				const { parentBlock, index } = store.dragTarget;
+				let { parentBlock, index } = store.dragTarget;
 				if (!parentBlock) return;
 
 				if (componentName) {
@@ -83,7 +83,7 @@ export function useCanvasDropZone(
 
 		let parentBlock = block.value;
 		let layoutDirection = "column" as LayoutDirection;
-		let index = parentBlock.children.length;
+		let index = parentBlock?.children.length || 0;
 
 		if (targetElement && targetElement.dataset.blockId) {
 			parentBlock = findBlock(targetElement.dataset.blockId) || parentBlock;
