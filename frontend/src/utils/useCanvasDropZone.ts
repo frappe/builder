@@ -9,9 +9,11 @@ import { Ref } from "vue";
 const store = useStore();
 const componentStore = useComponentStore();
 
+type LayoutDirection = "row" | "column"
+
 export function useCanvasDropZone(
 	canvasContainer: Ref<HTMLElement>,
-	block: Ref<Block | null>,
+	block: Ref<Block>,
 	findBlock: (id: string) => Block | null,
 ) {
 	const { isOverDropZone } = useDropZone(canvasContainer, {
@@ -119,9 +121,10 @@ export function useCanvasDropZone(
 		onOver: (files, ev) => {
 			if (files && files.length) return;
 
-			const parentBlock = findDropTarget(ev);
+			const { parentBlock, index, layoutDirection } = findDropTarget(ev);
 			if (parentBlock) {
 				store.hoveredBlock = parentBlock.blockId;
+				updateDropTarget(parentBlock, index, layoutDirection);
 			}
 		}
 	});
@@ -130,15 +133,83 @@ export function useCanvasDropZone(
 		const element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
 		const targetElement = element.closest(".__builder_component__") as HTMLElement;
 
-		let parentBlock = block.value as Block | null;
+		let parentBlock = block.value;
+		let layoutDirection = "column" as LayoutDirection;
+		let index = parentBlock.children.length;
+
 		if (targetElement && targetElement.dataset.blockId) {
 			parentBlock = findBlock(targetElement.dataset.blockId) || parentBlock;
 			while (parentBlock && !parentBlock.canHaveChildren()) {
 				parentBlock = parentBlock.getParentBlock();
 			}
+
+			if (parentBlock) {
+				const parentElement = document.querySelector(`[data-block-id="${parentBlock.blockId}"]:not(.editor)`) as HTMLElement;
+				layoutDirection = getLayoutDirection(parentElement);
+				index = findDropIndex(ev, parentElement, layoutDirection);
+			}
 		}
 
-		return parentBlock;
+		return { parentBlock, index, layoutDirection };
+	}
+
+	const findDropIndex = (ev: DragEvent, parentElement: HTMLElement, layoutDirection: LayoutDirection): number => {
+		const childElements = Array.from(
+			parentElement.querySelectorAll(":scope > .__builder_component__"),
+		) as HTMLElement[]
+		if (childElements.length === 0) return 0
+
+		const mousePos = layoutDirection === "row" ? ev.clientX : ev.clientY
+
+		// Get all child positions
+		const childPositions = childElements.map((child, idx) => {
+			const rect = child.getBoundingClientRect()
+			const midPoint = layoutDirection === "row" ? rect.left + rect.width / 2 : rect.top + rect.height / 2
+			return { midPoint, idx }
+		})
+
+		// Find the closest child to the mouse position
+		let closestIndex = 0
+		let minDistance = Infinity
+
+		childPositions.forEach(({ midPoint, idx }) => {
+			const distance = Math.abs(midPoint - mousePos)
+			if (distance < minDistance) {
+				minDistance = distance
+				closestIndex = idx
+			}
+		})
+
+		// Determine if we should insert before or after the closest child
+		// if mouse is closer to left/top side of the child, insert before, else after
+		return mousePos <= childPositions[closestIndex].midPoint ? closestIndex : closestIndex + 1
+	}
+
+	const getLayoutDirection = (element: HTMLElement): LayoutDirection => {
+		const style = window.getComputedStyle(element)
+		const display = style.display
+		if (display === "flex" || display === "inline-flex") {
+			return style.flexDirection.includes("row") ? "row" : "column"
+		} else if (display === "grid" || display == "inline-grid") {
+			return style.gridAutoFlow.includes("row") ? "row" : "column"
+		}
+		return "column"
+	}
+
+	const updateDropTarget = (parentBlock: Block | null, index: number, layoutDirection: LayoutDirection) => {
+		// append placeholder component to the dom directly
+		// to avoid re-rendering the whole canvas
+		const { placeholder } = store.dragTarget
+		if (!parentBlock || !placeholder) return
+		const newParent = document.querySelector(`.__builder_component__[data-block-id="${parentBlock.blockId}"]`)
+		if (!newParent) return
+
+		if (store.dragTarget.parentBlock === parentBlock && store.dragTarget.index === index) return
+
+		// Append the placeholder to the new parent
+		newParent.insertBefore(placeholder, newParent.children[index])
+		store.dragTarget.parentBlock = parentBlock
+		store.dragTarget.index = index
 	}
 
 	return { isOverDropZone };
