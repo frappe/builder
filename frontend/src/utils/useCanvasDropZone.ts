@@ -23,8 +23,6 @@ export function useCanvasDropZone(
 			} else {
 				const componentName = ev.dataTransfer?.getData("componentName");
 				const blockTemplate = ev.dataTransfer?.getData("blockTemplate");
-				let { parentBlock, index } = store.dragTarget;
-				if (!parentBlock) return;
 
 				if (componentName) {
 					await componentStore.loadComponent(componentName);
@@ -33,6 +31,7 @@ export function useCanvasDropZone(
 					newBlock.extendFromComponent(componentName);
 					// if shift key is pressed, replace parent block with new block
 					if (ev.shiftKey) {
+						let parentBlock = getInitialParentBlock(ev);
 						while (parentBlock && parentBlock.isChildOfComponent) {
 							parentBlock = parentBlock.getParentBlock();
 						}
@@ -41,6 +40,8 @@ export function useCanvasDropZone(
 						if (!parentParentBlock) return;
 						parentParentBlock.replaceChild(parentBlock, newBlock);
 					} else {
+						let { parentBlock, index } = store.dragTarget;
+						if (!parentBlock) return;
 						parentBlock.addChild(newBlock, index);
 					}
 					ev.stopPropagation();
@@ -50,6 +51,7 @@ export function useCanvasDropZone(
 					const newBlock = getBlockInstance(store.getBlockTemplate(blockTemplate).block, false);
 					// if shift key is pressed, replace parent block with new block
 					if (ev.shiftKey) {
+						let parentBlock = getInitialParentBlock(ev);
 						while (parentBlock && parentBlock.isChildOfComponent) {
 							parentBlock = parentBlock.getParentBlock();
 						}
@@ -59,6 +61,8 @@ export function useCanvasDropZone(
 						const index = parentParentBlock.children.indexOf(parentBlock);
 						parentParentBlock.children.splice(index, 1, newBlock);
 					} else {
+						let { parentBlock, index } = store.dragTarget;
+						if (!parentBlock) return;
 						parentBlock.addChild(newBlock, index);
 					}
 					posthog.capture("builder_block_template_used", { template: blockTemplate });
@@ -90,7 +94,6 @@ export function useCanvasDropZone(
 
 	const findDropTarget = (ev: DragEvent) => {
 		if (store.dragTarget.x === ev.x && store.dragTarget.y === ev.y) return {}
-
 		let parentBlock = getInitialParentBlock(ev);
 		let layoutDirection = "column" as LayoutDirection;
 		let index = parentBlock?.children.length || 0;
