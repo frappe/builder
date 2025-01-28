@@ -654,7 +654,7 @@ class Block implements BlockOptions {
 		this.innerHTML = innerHTML;
 	}
 	toggleVisibility(show: boolean | null = null) {
-		if (this.getStyle("display") === "none" || show === true) {
+		if ((this.getStyle("display") === "none" && show !== false) || show === true) {
 			this.setStyle("display", this.getStyle("__last_display") || "flex");
 			this.setStyle("__last_display", null);
 		} else {
