@@ -141,6 +141,7 @@ export function useCanvasDropZone(
 		const placeholder = store.dropTarget.placeholder
 		if (!placeholder) {
 			// File drops don't trigger dragstart so placeholder is never inserted, insert explicitly if not found
+			store.isDragging = true
 			store.insertDropPlaceholder()
 		}
 
