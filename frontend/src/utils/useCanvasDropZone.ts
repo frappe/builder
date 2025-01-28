@@ -21,7 +21,7 @@ export function useCanvasDropZone(
 			if (files && files.length) {
 				handleFileDrop(files, ev);
 			} else {
-				let { parentBlock, index} = store.dragTarget;
+				let { parentBlock, index } = store.dropTarget;
 				const componentName = ev.dataTransfer?.getData("componentName");
 				const blockTemplate = ev.dataTransfer?.getData("blockTemplate");
 
@@ -82,6 +82,12 @@ export function useCanvasDropZone(
 		const element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
 		const targetElement = element.closest(".__builder_component__") as HTMLElement;
 
+		// set the hoveredBreakpoint from the target element to show placeholder at the correct breakpoint canvas
+		const breakpoint = targetElement?.dataset.breakpoint || store.activeBreakpoint;
+		if (breakpoint !== store.hoveredBreakpoint) {
+			store.hoveredBreakpoint = breakpoint;
+		}
+
 		let parentBlock = block.value as Block | null;
 		if (targetElement && targetElement.dataset.blockId) {
 			parentBlock = findBlock(targetElement.dataset.blockId) || parentBlock;
@@ -89,8 +95,13 @@ export function useCanvasDropZone(
 		return parentBlock;
 	}
 
+	const getBlockElement = (block: Block) => {
+		const breakpoint = store.hoveredBreakpoint || store.activeBreakpoint;
+		return document.querySelector(`.__builder_component__[data-block-id="${block.blockId}"][data-breakpoint="${breakpoint}"]`) as HTMLElement;
+	}
+
 	const findDropTarget = (ev: DragEvent) => {
-		if (store.dragTarget.x === ev.x && store.dragTarget.y === ev.y) return {}
+		if (store.dropTarget.x === ev.x && store.dropTarget.y === ev.y) return {}
 		let parentBlock = getInitialParentBlock(ev);
 		let layoutDirection = "column" as LayoutDirection;
 		let index = parentBlock?.children.length || 0;
@@ -100,7 +111,7 @@ export function useCanvasDropZone(
 		}
 
 		if (parentBlock) {
-			const parentElement = document.querySelector(`.__builder_component__[data-block-id="${parentBlock.blockId}"]`) as HTMLElement;
+			const parentElement = getBlockElement(parentBlock);
 			layoutDirection = getLayoutDirection(parentElement);
 			index = findDropIndex(ev, parentElement, layoutDirection);
 		}
@@ -152,17 +163,17 @@ export function useCanvasDropZone(
 	}
 
 	const updateDropTarget = throttle((ev: DragEvent, parentBlock: Block | null, index: number, layoutDirection: LayoutDirection) => {
-		const placeholder = store.dragTarget.placeholder
+		const placeholder = store.dropTarget.placeholder
 		if (!placeholder) {
 			// File drops don't trigger dragstart so placeholder is never inserted, insert explicitly if not found
 			store.insertDropPlaceholder()
 		}
 
 		if (!parentBlock || !placeholder) return
-		const newParent = document.querySelector(`.__builder_component__[data-block-id="${parentBlock.blockId}"]`)
+		const newParent = getBlockElement(parentBlock);
 		if (!newParent) return
 
-		if (store.dragTarget.parentBlock?.blockId === parentBlock.blockId && store.dragTarget.index === index) return
+		if (store.dropTarget.parentBlock?.blockId === parentBlock.blockId && store.dropTarget.index === index) return
 
 		// flip placeholder border as per layout direction to avoid shifting elements too much
 		if (layoutDirection === "row") {
@@ -182,14 +193,14 @@ export function useCanvasDropZone(
 			newParent.insertBefore(placeholder, children[index])
 		}
 
-		store.dragTarget.parentBlock = parentBlock
-		store.dragTarget.index = index
-		store.dragTarget.x = ev.x
-		store.dragTarget.y = ev.y
+		store.dropTarget.parentBlock = parentBlock
+		store.dropTarget.index = index
+		store.dropTarget.x = ev.x
+		store.dropTarget.y = ev.y
 	}, 130)
 
 	const handleFileDrop = (files: File[], ev: DragEvent) => {
-		let { parentBlock, index } = store.dragTarget;
+		let { parentBlock, index } = store.dropTarget;
 		store.removeDropPlaceholder();
 
 		uploadImage(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
