@@ -34,10 +34,7 @@ export function useCanvasDropZone(
 					newBlock.extendFromComponent(componentName);
 					// if shift key is pressed, replace parent block with new block
 					if (ev.shiftKey) {
-						parentBlock = getInitialParentBlock(ev);
-						while (parentBlock && parentBlock.isChildOfComponent) {
-							parentBlock = parentBlock.getParentBlock();
-						}
+						parentBlock = getBlockToReplace(ev);
 						if (!parentBlock) return;
 						const parentParentBlock = parentBlock.getParentBlock();
 						if (!parentParentBlock) return;
@@ -53,10 +50,7 @@ export function useCanvasDropZone(
 					const newBlock = getBlockInstance(store.getBlockTemplate(blockTemplate).block, false);
 					// if shift key is pressed, replace parent block with new block
 					if (ev.shiftKey) {
-						parentBlock = getInitialParentBlock(ev);
-						while (parentBlock && parentBlock.isChildOfComponent) {
-							parentBlock = parentBlock.getParentBlock();
-						}
+						parentBlock = getBlockToReplace(ev);
 						if (!parentBlock) return;
 						const parentParentBlock = parentBlock.getParentBlock();
 						if (!parentParentBlock) return;
@@ -72,10 +66,18 @@ export function useCanvasDropZone(
 		},
 
 		onOver: (files, ev) => {
-			const { parentBlock, index, layoutDirection } = findDropTarget(ev);
-			if (parentBlock) {
-				store.hoveredBlock = parentBlock.blockId;
-				updateDropTarget(ev, parentBlock, index, layoutDirection);
+			if (ev.shiftKey) {
+				const parentBlock = getBlockToReplace(ev);
+				if (parentBlock) {
+					store.hoveredBlock = parentBlock.blockId;
+					store.handleDragEnd();
+				}
+			} else {
+				const { parentBlock, index, layoutDirection } = findDropTarget(ev);
+				if (parentBlock) {
+					store.hoveredBlock = parentBlock.blockId;
+					updateDropTarget(ev, parentBlock, index, layoutDirection);
+				}
 			}
 		},
 	});
@@ -95,6 +97,14 @@ export function useCanvasDropZone(
 			parentBlock = findBlock(targetElement.dataset.blockId) || parentBlock;
 		}
 		return parentBlock;
+	}
+
+	const getBlockToReplace = (ev: DragEvent) => {
+		let parentBlock = getInitialParentBlock(ev);
+		while (parentBlock && parentBlock.isChildOfComponent) {
+			parentBlock = parentBlock.getParentBlock();
+		}
+		return parentBlock
 	}
 
 	const getBlockElement = (block: Block) => {
