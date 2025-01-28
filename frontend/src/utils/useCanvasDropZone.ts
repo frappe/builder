@@ -77,27 +77,32 @@ export function useCanvasDropZone(
 		}
 	});
 
-	const findDropTarget = (ev: DragEvent) => {
-		if (store.dragTarget.x === ev.x && store.dragTarget.y === ev.y) return {}
-
+	const getInitialParentBlock = (ev: DragEvent) => {
 		const element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
 		const targetElement = element.closest(".__builder_component__") as HTMLElement;
 
-		let parentBlock = block.value;
+		let parentBlock = block.value as Block | null;
+		if (targetElement && targetElement.dataset.blockId) {
+			parentBlock = findBlock(targetElement.dataset.blockId) || parentBlock;
+		}
+		return parentBlock;
+	}
+
+	const findDropTarget = (ev: DragEvent) => {
+		if (store.dragTarget.x === ev.x && store.dragTarget.y === ev.y) return {}
+
+		let parentBlock = getInitialParentBlock(ev);
 		let layoutDirection = "column" as LayoutDirection;
 		let index = parentBlock?.children.length || 0;
 
-		if (targetElement && targetElement.dataset.blockId) {
-			parentBlock = findBlock(targetElement.dataset.blockId) || parentBlock;
-			while (parentBlock && !parentBlock.canHaveChildren()) {
-				parentBlock = parentBlock.getParentBlock();
-			}
+		while (parentBlock && !parentBlock.canHaveChildren()) {
+			parentBlock = parentBlock.getParentBlock();
+		}
 
-			if (parentBlock) {
-				const parentElement = document.querySelector(`.__builder_component__[data-block-id="${parentBlock.blockId}"]`) as HTMLElement;
-				layoutDirection = getLayoutDirection(parentElement);
-				index = findDropIndex(ev, parentElement, layoutDirection);
-			}
+		if (parentBlock) {
+			const parentElement = document.querySelector(`.__builder_component__[data-block-id="${parentBlock.blockId}"]`) as HTMLElement;
+			layoutDirection = getLayoutDirection(parentElement);
+			index = findDropIndex(ev, parentElement, layoutDirection);
 		}
 
 		return { parentBlock, index, layoutDirection };
@@ -179,13 +184,7 @@ export function useCanvasDropZone(
 	}, 130)
 
 	const handleFileDrop = (files: File[], ev: DragEvent) => {
-		let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
-		let parentBlock = block.value as Block | null;
-		if (element) {
-			if (element.dataset.blockId) {
-				parentBlock = findBlock(element.dataset.blockId) || parentBlock;
-			}
-		}
+		let parentBlock = getInitialParentBlock(ev);
 		uploadImage(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
 			if (!parentBlock) return;
 
