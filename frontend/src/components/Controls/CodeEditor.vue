@@ -116,7 +116,7 @@ const setupEditor = () => {
 		if (aceEditor?.getValue() === props.modelValue) {
 			isDirty.value = false;
 			return;
-		} else {
+		} else if (!props.readonly) {
 			isDirty.value = true;
 		}
 	});
