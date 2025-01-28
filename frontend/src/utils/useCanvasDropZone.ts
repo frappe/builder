@@ -21,6 +21,7 @@ export function useCanvasDropZone(
 			if (files && files.length) {
 				handleFileDrop(files, ev);
 			} else {
+				let { parentBlock, index} = store.dragTarget;
 				const componentName = ev.dataTransfer?.getData("componentName");
 				const blockTemplate = ev.dataTransfer?.getData("blockTemplate");
 
@@ -31,7 +32,7 @@ export function useCanvasDropZone(
 					newBlock.extendFromComponent(componentName);
 					// if shift key is pressed, replace parent block with new block
 					if (ev.shiftKey) {
-						let parentBlock = getInitialParentBlock(ev);
+						parentBlock = getInitialParentBlock(ev);
 						while (parentBlock && parentBlock.isChildOfComponent) {
 							parentBlock = parentBlock.getParentBlock();
 						}
@@ -40,7 +41,6 @@ export function useCanvasDropZone(
 						if (!parentParentBlock) return;
 						parentParentBlock.replaceChild(parentBlock, newBlock);
 					} else {
-						let { parentBlock, index } = store.dragTarget;
 						if (!parentBlock) return;
 						parentBlock.addChild(newBlock, index);
 					}
@@ -51,7 +51,7 @@ export function useCanvasDropZone(
 					const newBlock = getBlockInstance(store.getBlockTemplate(blockTemplate).block, false);
 					// if shift key is pressed, replace parent block with new block
 					if (ev.shiftKey) {
-						let parentBlock = getInitialParentBlock(ev);
+						parentBlock = getInitialParentBlock(ev);
 						while (parentBlock && parentBlock.isChildOfComponent) {
 							parentBlock = parentBlock.getParentBlock();
 						}
@@ -61,7 +61,6 @@ export function useCanvasDropZone(
 						const index = parentParentBlock.children.indexOf(parentBlock);
 						parentParentBlock.children.splice(index, 1, newBlock);
 					} else {
-						let { parentBlock, index } = store.dragTarget;
 						if (!parentBlock) return;
 						parentBlock.addChild(newBlock, index);
 					}
@@ -71,14 +70,12 @@ export function useCanvasDropZone(
 		},
 
 		onOver: (files, ev) => {
-			if (files && files.length) return;
-
 			const { parentBlock, index, layoutDirection } = findDropTarget(ev);
 			if (parentBlock) {
 				store.hoveredBlock = parentBlock.blockId;
 				updateDropTarget(ev, parentBlock, index, layoutDirection);
 			}
-		}
+		},
 	});
 
 	const getInitialParentBlock = (ev: DragEvent) => {
@@ -155,9 +152,12 @@ export function useCanvasDropZone(
 	}
 
 	const updateDropTarget = throttle((ev: DragEvent, parentBlock: Block | null, index: number, layoutDirection: LayoutDirection) => {
-		// append placeholder component to the dom directly
-		// to avoid re-rendering the whole canvas
-		const { placeholder } = store.dragTarget
+		const placeholder = store.dragTarget.placeholder
+		if (!placeholder) {
+			// File drops don't trigger dragstart so placeholder is never inserted, insert explicitly if not found
+			store.insertDropPlaceholder()
+		}
+
 		if (!parentBlock || !placeholder) return
 		const newParent = document.querySelector(`.__builder_component__[data-block-id="${parentBlock.blockId}"]`)
 		if (!newParent) return
@@ -187,7 +187,9 @@ export function useCanvasDropZone(
 	}, 130)
 
 	const handleFileDrop = (files: File[], ev: DragEvent) => {
-		let parentBlock = getInitialParentBlock(ev);
+		let { parentBlock, index } = store.dragTarget;
+		store.removeDropPlaceholder();
+
 		uploadImage(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
 			if (!parentBlock) return;
 
@@ -195,10 +197,7 @@ export function useCanvasDropZone(
 				if (parentBlock.isVideo()) {
 					parentBlock.setAttribute("src", fileDoc.fileURL);
 				} else {
-					while (parentBlock && !parentBlock.canHaveChildren()) {
-						parentBlock = parentBlock.getParentBlock() as Block;
-					}
-					parentBlock.addChild(store.getVideoBlock(fileDoc.fileURL));
+					parentBlock.addChild(store.getVideoBlock(fileDoc.fileURL), index);
 				}
 				posthog.capture("builder_video_uploaded");
 				return;
@@ -222,10 +221,7 @@ export function useCanvasDropZone(
 					type: "background",
 				});
 			} else {
-				while (parentBlock && !parentBlock.canHaveChildren()) {
-					parentBlock = parentBlock.getParentBlock() as Block;
-				}
-				parentBlock.addChild(store.getImageBlock(fileDoc.fileURL, fileDoc.fileName));
+				parentBlock.addChild(store.getImageBlock(fileDoc.fileURL, fileDoc.fileName), index);
 				posthog.capture("builder_image_uploaded", {
 					type: "new-image",
 				});
