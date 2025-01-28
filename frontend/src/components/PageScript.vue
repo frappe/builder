@@ -97,38 +97,6 @@ const showServerScriptEditor = () => {
 	showDialog.value = true;
 };
 
-const waitingForConfirmation = ref(false);
-
-const toggleModal = async (value: boolean) => {
-	if (value) {
-		showDialog.value = true;
-		return;
-	}
-	if (!showDialog.value || waitingForConfirmation.value) return;
-
-	const handleUnsavedChanges = async (editor: InstanceType<typeof CodeEditor> | null) => {
-		if (!editor?.isDirty) return true;
-
-		waitingForConfirmation.value = true;
-		return await editor.showUnsavedChangesWarning().then((res) => {
-			console.log("res", res);
-			waitingForConfirmation.value = false;
-			return res;
-		});
-	};
-
-	let shouldClose = true;
-	if (currentScriptEditor.value === "data" && dataScriptEditor.value) {
-		shouldClose = await handleUnsavedChanges(dataScriptEditor.value);
-	} else if (currentScriptEditor.value === "client" && clientScriptManager.value?.scriptEditor) {
-		shouldClose = await handleUnsavedChanges(clientScriptManager.value?.scriptEditor);
-	}
-
-	if (shouldClose) {
-		showDialog.value = false;
-	}
-};
-
 const isDirty = computed(() => {
 	if (currentScriptEditor.value === "data" && dataScriptEditor.value) {
 		return dataScriptEditor.value.isDirty;
