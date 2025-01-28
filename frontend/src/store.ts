@@ -567,23 +567,11 @@ const useStore = defineStore("store", {
 						document.body.removeChild(ghostDiv);
 					}, 0);
 				});
-
-				// Create a placeholder element
-				let element = document.createElement("div");
-				element.id = "placeholder";
-
-				const root = document.querySelector(".__builder_component__[data-block-id='root']");
-				if (root) {
-					this.dragTarget.placeholder = root.appendChild(element);
-				}
+				this.insertDropPlaceholder();
 			}
 		},
 		handleDragEnd() {
-			const placeholder = document.getElementById("placeholder")
-			if (placeholder) {
-				placeholder.remove()
-			}
-
+			this.removeDropPlaceholder();
 			this.dragTarget = {
 				x: null,
 				y: null,
@@ -592,6 +580,24 @@ const useStore = defineStore("store", {
 				index: null,
 			}
 			this.isDragging = false
+		},
+		insertDropPlaceholder() {
+			// append placeholder component to the dom directly
+			// to avoid re-rendering the whole canvas
+			let element = document.createElement("div");
+			element.id = "placeholder";
+
+			const root = document.querySelector(".__builder_component__[data-block-id='root']");
+			if (root) {
+				this.dragTarget.placeholder = root.appendChild(element);
+			}
+			return this.dragTarget.placeholder;
+		},
+		removeDropPlaceholder() {
+			const placeholder = document.getElementById("placeholder")
+			if (placeholder) {
+				placeholder.remove()
+			}
 		}
 	},
 });
