@@ -18,6 +18,8 @@ export function useCanvasDropZone(
 ) {
 	const { isOverDropZone } = useDropZone(canvasContainer, {
 		onDrop: async (files, ev) => {
+			store.removeDropPlaceholder()
+
 			if (files && files.length) {
 				handleFileDrop(files, ev);
 			} else {
@@ -201,7 +203,6 @@ export function useCanvasDropZone(
 
 	const handleFileDrop = (files: File[], ev: DragEvent) => {
 		let { parentBlock, index } = store.dropTarget;
-		store.removeDropPlaceholder();
 
 		uploadImage(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
 			if (!parentBlock) return;
