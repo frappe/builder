@@ -18,51 +18,14 @@ export function useCanvasDropZone(
 ) {
 	const { isOverDropZone } = useDropZone(canvasContainer, {
 		onDrop: async (files, ev) => {
-			store.removeDropPlaceholder()
-
+			store.isDropping = true;
 			if (files && files.length) {
 				handleFileDrop(files, ev);
 			} else {
-				let { parentBlock, index } = store.dropTarget;
-				const componentName = ev.dataTransfer?.getData("componentName");
-				const blockTemplate = ev.dataTransfer?.getData("blockTemplate");
-
-				if (componentName) {
-					await componentStore.loadComponent(componentName);
-					const component = componentStore.componentMap.get(componentName) as Block;
-					const newBlock = getBlockCopy(component);
-					newBlock.extendFromComponent(componentName);
-					// if shift key is pressed, replace parent block with new block
-					if (ev.shiftKey) {
-						parentBlock = getBlockToReplace(ev);
-						if (!parentBlock) return;
-						const parentParentBlock = parentBlock.getParentBlock();
-						if (!parentParentBlock) return;
-						parentParentBlock.replaceChild(parentBlock, newBlock);
-					} else {
-						if (!parentBlock) return;
-						parentBlock.addChild(newBlock, index);
-					}
-					ev.stopPropagation();
-					posthog.capture("builder_component_used");
-				} else if (blockTemplate) {
-					await store.fetchBlockTemplate(blockTemplate);
-					const newBlock = getBlockInstance(store.getBlockTemplate(blockTemplate).block, false);
-					// if shift key is pressed, replace parent block with new block
-					if (ev.shiftKey) {
-						parentBlock = getBlockToReplace(ev);
-						if (!parentBlock) return;
-						const parentParentBlock = parentBlock.getParentBlock();
-						if (!parentParentBlock) return;
-						const index = parentParentBlock.children.indexOf(parentBlock);
-						parentParentBlock.children.splice(index, 1, newBlock);
-					} else {
-						if (!parentBlock) return;
-						parentBlock.addChild(newBlock, index);
-					}
-					posthog.capture("builder_block_template_used", { template: blockTemplate });
-				}
+				await handleBlockDrop(ev);
 			}
+			store.isDropping = false;
+			store.resetDropTarget();
 		},
 
 		onOver: (files, ev) => {
@@ -70,7 +33,7 @@ export function useCanvasDropZone(
 				const parentBlock = getBlockToReplace(ev);
 				if (parentBlock) {
 					store.hoveredBlock = parentBlock.blockId;
-					store.handleDragEnd();
+					store.removeDropPlaceholder();
 				}
 			} else {
 				const { parentBlock, index, layoutDirection } = findDropTarget(ev);
@@ -210,6 +173,48 @@ export function useCanvasDropZone(
 		store.dropTarget.x = ev.x
 		store.dropTarget.y = ev.y
 	}, 130)
+
+	const handleBlockDrop = async (ev: DragEvent) => {
+		let { parentBlock, index } = store.dropTarget;
+		const componentName = ev.dataTransfer?.getData("componentName");
+		const blockTemplate = ev.dataTransfer?.getData("blockTemplate");
+
+		if (componentName) {
+			await componentStore.loadComponent(componentName);
+			const component = componentStore.componentMap.get(componentName) as Block;
+			const newBlock = getBlockCopy(component);
+			newBlock.extendFromComponent(componentName);
+			// if shift key is pressed, replace parent block with new block
+			if (ev.shiftKey) {
+				parentBlock = getBlockToReplace(ev);
+				if (!parentBlock) return;
+				const parentParentBlock = parentBlock.getParentBlock();
+				if (!parentParentBlock) return;
+				parentParentBlock.replaceChild(parentBlock, newBlock);
+			} else {
+				if (!parentBlock) return;
+				parentBlock.addChild(newBlock, index);
+			}
+			ev.stopPropagation();
+			posthog.capture("builder_component_used");
+		} else if (blockTemplate) {
+			await store.fetchBlockTemplate(blockTemplate);
+			const newBlock = getBlockInstance(store.getBlockTemplate(blockTemplate).block, false);
+			// if shift key is pressed, replace parent block with new block
+			if (ev.shiftKey) {
+				parentBlock = getBlockToReplace(ev);
+				if (!parentBlock) return;
+				const parentParentBlock = parentBlock.getParentBlock();
+				if (!parentParentBlock) return;
+				const index = parentParentBlock.children.indexOf(parentBlock);
+				parentParentBlock.children.splice(index, 1, newBlock);
+			} else {
+				if (!parentBlock) return;
+				parentBlock.addChild(newBlock, index);
+			}
+			posthog.capture("builder_block_template_used", { template: blockTemplate });
+		}
+	}
 
 	const handleFileDrop = (files: File[], ev: DragEvent) => {
 		let { parentBlock, index } = store.dropTarget;
