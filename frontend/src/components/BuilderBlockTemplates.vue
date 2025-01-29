@@ -32,7 +32,7 @@
 							:class="{
 								'w-14': !blockTemplate?.preview_width || blockTemplate?.preview_width == 1,
 							}">
-							<img :src="blockTemplate.preview" />
+							<img :src="blockTemplate.preview" class="pointer-events-none" />
 						</div>
 						<p class="text-sm text-ink-gray-6">
 							{{ blockTemplate.template_name }}
