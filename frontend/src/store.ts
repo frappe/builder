@@ -94,6 +94,15 @@ const useStore = defineStore("store", {
 			"Media",
 			"Advanced",
 		] as BlockTemplate["category"][],
+		isDragging: false,
+		isDropping: false,
+		dropTarget: {
+			x: <number | null>null,
+			y: <number | null>null,
+			placeholder: <HTMLElement | null>null,
+			parentBlock: <Block | null>null,
+			index: <number | null>null,
+		}
 	}),
 	actions: {
 		clearBlocks() {
@@ -546,6 +555,75 @@ const useStore = defineStore("store", {
 				fragmentId: null,
 			};
 		},
+		// drag and drop
+		handleDragStart(ev: DragEvent) {
+			if (ev.target && ev.dataTransfer) {
+				this.isDragging = true;
+				const ghostScale = this.activeCanvas?.canvasProps.scale;
+
+				// Clone the entire draggable element
+				const dragElement = (ev.target as HTMLElement)
+				if (!dragElement) return;
+				const ghostDiv = document.createElement("div");
+				const ghostElement = dragElement.cloneNode(true) as HTMLElement;
+				ghostDiv.appendChild(ghostElement);
+				ghostDiv.id = "ghost";
+				ghostDiv.style.position = "fixed";
+				ghostDiv.style.transform = `scale(${ghostScale || 1})`;
+				ghostDiv.style.pointerEvents = "none";
+				ghostDiv.style.zIndex = "99999";
+				// Append the ghostDiv to the DOM
+				document.body.appendChild(ghostDiv);
+
+				// Wait for the next frame to ensure the ghostDiv is rendered
+				requestAnimationFrame(() => {
+					ev.dataTransfer?.setDragImage(ghostDiv, 0, 0);
+					// Clean up the ghostDiv after a short delay
+					setTimeout(() => {
+						document.body.removeChild(ghostDiv);
+					}, 0);
+				});
+				this.insertDropPlaceholder();
+			}
+		},
+		handleDragEnd() {
+			// check flag to avoid race condition with async onDrop
+			if (!this.isDropping) {
+				this.resetDropTarget();
+			}
+		},
+		resetDropTarget() {
+			this.removeDropPlaceholder();
+			this.dropTarget = {
+				x: null,
+				y: null,
+				placeholder: null,
+				parentBlock: null,
+				index: null,
+			}
+			this.isDragging = false
+			this.isDropping = false
+		},
+		insertDropPlaceholder() {
+			// append placeholder component to the dom directly
+			// to avoid re-rendering the whole canvas
+			if (this.dropTarget.placeholder) return;
+
+			let element = document.createElement("div");
+			element.id = "placeholder";
+
+			const root = document.querySelector(".__builder_component__[data-block-id='root']");
+			if (root) {
+				this.dropTarget.placeholder = root.appendChild(element);
+			}
+			return this.dropTarget.placeholder;
+		},
+		removeDropPlaceholder() {
+			const placeholder = document.getElementById("placeholder")
+			if (placeholder) {
+				placeholder.remove()
+			}
+		}
 	},
 });
 
