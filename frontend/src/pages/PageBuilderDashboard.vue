@@ -9,7 +9,6 @@
 					v-model="showSettingsDialog"
 					style="z-index: 40"
 					class="[&>div>div[id^=headlessui-dialog-panel]]:my-3"
-					:disableOutsideClickToClose="true"
 					:options="{
 						title: 'Settings',
 						size: '5xl',
@@ -240,7 +239,8 @@ import useStore from "@/store";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { useDark, useEventListener, useStorage, useToggle, watchDebounced } from "@vueuse/core";
-import { createResource, Dialog, Dropdown } from "frappe-ui";
+import { createResource, Dropdown } from "frappe-ui";
+import Dialog from "@/components/Controls/Dialog.vue";
 import { onActivated, Ref, ref, watch } from "vue";
 
 const isDark = useDark({

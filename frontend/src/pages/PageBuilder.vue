@@ -99,6 +99,7 @@ import BuilderCanvas from "@/components/BuilderCanvas.vue";
 import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
+import Dialog from "@/components/Controls/Dialog.vue";
 import { webPages } from "@/data/webPage";
 import { sessionUser } from "@/router";
 import useStore from "@/store";
@@ -114,7 +115,6 @@ import {
 	useDebounceFn,
 	useMagicKeys,
 } from "@vueuse/core";
-import { Dialog } from "frappe-ui";
 import { computed, onActivated, onDeactivated, provide, ref, toRef, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";

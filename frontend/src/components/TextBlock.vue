@@ -350,10 +350,15 @@ const setLink = (value: string | null) => {
 	if (!value && !textLink.value) {
 		editor.value?.chain().focus().unsetLink().run();
 	} else {
+		const href = value || textLink.value;
+		// const isExternal = href.startsWith("http") || href.startsWith("//");
 		editor.value
 			?.chain()
 			.focus()
-			.setLink({ href: value || textLink.value })
+			.setLink({
+				href,
+				target: null,
+			})
 			.run();
 		textLink.value = "";
 	}

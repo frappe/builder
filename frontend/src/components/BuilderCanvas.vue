@@ -100,7 +100,6 @@ const canvasContainer = ref(null);
 const canvas = ref(null);
 const showBlocks = ref(false);
 const overlay = ref(null);
-const isDirty = ref(false);
 
 const props = defineProps({
 	blockData: {
@@ -177,6 +176,7 @@ const {
 	scrollBlockIntoView,
 	removeBlock,
 	findBlock,
+	isDirty,
 } = useCanvasUtils(canvasProps, canvasContainer, canvas, block, selectedBlockIds, history);
 
 const { isOverDropZone } = useCanvasDropZone(
