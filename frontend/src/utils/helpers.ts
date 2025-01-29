@@ -99,6 +99,9 @@ async function confirm(message: string, title: string = "Confirm"): Promise<bool
 				resolve(true);
 				hideDialog();
 			},
+			onCancel: () => {
+				resolve(false);
+			},
 		});
 	});
 }

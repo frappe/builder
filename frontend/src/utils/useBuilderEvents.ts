@@ -55,6 +55,7 @@ export function useBuilderEvents(
 	});
 
 	useEventListener(document, "cut", (e) => {
+		if (isTargetEditable(e)) return;
 		copySelectedBlocksToClipboard(e);
 		if (store.activeCanvas?.selectedBlocks.length) {
 			for (const block of store.activeCanvas?.selectedBlocks) {
@@ -284,7 +285,7 @@ export function useBuilderEvents(
 
 		if ((e.key === "Backspace" || e.key === "Delete") && blockController.isBLockSelected()) {
 			for (const block of blockController.getSelectedBlocks()) {
-				store.activeCanvas?.removeBlock(block);
+				store.activeCanvas?.removeBlock(block, e.shiftKey);
 			}
 			clearSelection();
 			e.stopPropagation();

@@ -242,7 +242,7 @@ export function useCanvasUtils(
 		if (!parentBlock) {
 			return;
 		}
-		const index = parentBlock.children.indexOf(block);
+		const nextSibling = block.getSiblingBlock("next");
 		if (store.activeBreakpoint === "desktop" || force) {
 			parentBlock.removeChild(block);
 		} else {
@@ -250,7 +250,6 @@ export function useCanvasUtils(
 		}
 		nextTick(() => {
 			if (parentBlock.children.length) {
-				const nextSibling = parentBlock.children[index] || parentBlock.children[index - 1];
 				if (nextSibling) {
 					selectBlock(nextSibling);
 				}
@@ -283,5 +282,6 @@ export function useCanvasUtils(
 		clearCanvas,
 		getRootBlock,
 		setupHistory,
+		isDirty,
 	};
 }

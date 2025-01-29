@@ -311,8 +311,8 @@ const useStore = defineStore("store", {
 			);
 			if (confirmed) {
 				await webPages.delete.submit(page.name);
+				toast.success("Page deleted successfully");
 			}
-			toast.success("Page deleted successfully");
 		},
 		async publishPage(openInBrowser = true) {
 			await this.waitTillPageIsSaved();
@@ -332,7 +332,22 @@ const useStore = defineStore("store", {
 					}
 				});
 		},
-		unpublishPage() {
+		async revertChanges() {
+			const confirmed = await confirm(
+				"This will revert all changes made to the page since the last publish. Are you sure you want to continue?",
+			);
+			if (confirmed) {
+				await this.updateActivePage("draft_blocks", null);
+				this.setPage(this.activePage?.name as string);
+			}
+		},
+		async unpublishPage() {
+			const confirmed = await confirm(
+				"Are you sure you want to unpublish this page? It will no longer be accessible on the website.",
+			);
+			if (!confirmed) {
+				return;
+			}
 			return webPages.setValue
 				.submit({
 					name: this.selectedPage,
