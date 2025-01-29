@@ -607,6 +607,8 @@ const useStore = defineStore("store", {
 		insertDropPlaceholder() {
 			// append placeholder component to the dom directly
 			// to avoid re-rendering the whole canvas
+			if (this.dropTarget.placeholder) return;
+
 			let element = document.createElement("div");
 			element.id = "placeholder";
 
