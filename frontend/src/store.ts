@@ -4,7 +4,7 @@ import { posthog } from "@/telemetry";
 import { BuilderSettings } from "@/types/Builder/BuilderSettings";
 import useComponentStore from "@/utils/useComponentStore";
 import { UseRefHistoryReturn, useStorage } from "@vueuse/core";
-import { createDocumentResource } from "frappe-ui";
+import { createDocumentResource, createResource } from "frappe-ui";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
 import { toast } from "vue-sonner";
@@ -276,27 +276,25 @@ const useStore = defineStore("store", {
 			}
 		},
 		async duplicatePage(page: BuilderPage) {
-			const webPageResource = await createDocumentResource({
-				doctype: "Builder Page",
-				name: page.page_name,
-				auto: true,
-			});
-			await webPageResource.get.promise;
-
-			const pageCopy = webPageResource.doc as BuilderPage;
-			pageCopy.page_title = `${pageCopy.page_title} (Copy)`;
-			delete pageCopy.page_name;
-			delete pageCopy.route;
-			toast.promise(webPages.insert.submit(pageCopy), {
-				loading: "Duplicating page",
-				success: async (page: BuilderPage) => {
-					// load page and refresh
-					router.push({ name: "builder", params: { pageId: page.page_name } }).then(() => {
-						router.go(0);
-					});
-					return "Page duplicated";
+			toast.promise(
+				createResource({
+					url: "builder.api.duplicate_page",
+					method: "POST",
+					params: {
+						page_name: page.name,
+					},
+				}).fetch(),
+				{
+					loading: "Duplicating page",
+					success: async (page: BuilderPage) => {
+						// load page and refresh
+						router.push({ name: "builder", params: { pageId: page.page_name } }).then(() => {
+							router.go(0);
+						});
+						return "Page duplicated";
+					},
 				},
-			});
+			);
 		},
 		async duplicatePage(page: BuilderPage) {
 			const webPageResource = await createDocumentResource({
@@ -327,8 +325,8 @@ const useStore = defineStore("store", {
 			);
 			if (confirmed) {
 				await webPages.delete.submit(page.name);
+				toast.success("Page deleted successfully");
 			}
-			toast.success("Page deleted successfully");
 		},
 		async publishPage(openInBrowser = true) {
 			await this.waitTillPageIsSaved();
@@ -348,7 +346,22 @@ const useStore = defineStore("store", {
 					}
 				});
 		},
-		unpublishPage() {
+		async revertChanges() {
+			const confirmed = await confirm(
+				"This will revert all changes made to the page since the last publish. Are you sure you want to continue?",
+			);
+			if (confirmed) {
+				await this.updateActivePage("draft_blocks", null);
+				this.setPage(this.activePage?.name as string);
+			}
+		},
+		async unpublishPage() {
+			const confirmed = await confirm(
+				"Are you sure you want to unpublish this page? It will no longer be accessible on the website.",
+			);
+			if (!confirmed) {
+				return;
+			}
 			return webPages.setValue
 				.submit({
 					name: this.selectedPage,
@@ -402,6 +415,11 @@ const useStore = defineStore("store", {
 			const targetWindow = window.open(`/${route}`, "builder-preview");
 			if (targetWindow?.location.pathname === `/${route}`) {
 				targetWindow?.location.reload();
+			} else {
+				setTimeout(() => {
+					// wait for the page to load
+					targetWindow?.location.reload();
+				}, 50);
 			}
 		},
 		savePage() {

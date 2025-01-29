@@ -8,19 +8,22 @@
 		<Dialog
 			style="z-index: 40"
 			class="overscroll-none"
-			:disableOutsideClickToClose="true"
 			:options="{
 				title: currentScriptEditor == 'data' ? 'Data Script' : 'Client Script',
 				size: '7xl',
 			}"
+			:isDirty="isDirty"
 			v-model="showDialog">
 			<template #body-content>
 				<div v-if="currentScriptEditor == 'client'">
-					<PageClientScriptManager :page="store.activePage as BuilderPage"></PageClientScriptManager>
+					<PageClientScriptManager
+						:page="store.activePage as BuilderPage"
+						ref="clientScriptManager"></PageClientScriptManager>
 				</div>
 				<div v-else>
 					<CodeEditor
 						class="overscroll-none"
+						ref="dataScriptEditor"
 						v-model="page.page_data_script"
 						type="Python"
 						height="65vh"
@@ -37,12 +40,12 @@
 	</div>
 </template>
 <script lang="ts" setup>
+import Dialog from "@/components/Controls/Dialog.vue";
 import { webPages } from "@/data/webPage";
 import useStore from "@/store";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { Dialog } from "frappe-ui";
-import { defineComponent, ref } from "vue";
+import { computed, defineComponent, ref } from "vue";
 import { toast } from "vue-sonner";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
@@ -52,6 +55,9 @@ const showDialog = ref(false);
 const props = defineProps<{
 	page: BuilderPage;
 }>();
+
+const clientScriptManager = ref<null | InstanceType<typeof PageClientScriptManager>>(null);
+const dataScriptEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
 
 const currentScriptEditor = ref<"client" | "data">("client");
 
@@ -90,5 +96,14 @@ const showServerScriptEditor = () => {
 	currentScriptEditor.value = "data";
 	showDialog.value = true;
 };
+
+const isDirty = computed(() => {
+	if (currentScriptEditor.value === "data" && dataScriptEditor.value) {
+		return dataScriptEditor.value.isDirty;
+	} else if (currentScriptEditor.value === "client" && clientScriptManager.value?.scriptEditor) {
+		return clientScriptManager.value?.scriptEditor.isDirty;
+	}
+	return false;
+});
 </script>
 <style></style>

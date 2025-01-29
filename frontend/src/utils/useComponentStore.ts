@@ -15,6 +15,7 @@ const useComponentStore = defineStore("componentStore", {
 		componentMap: <Map<string, Block>>new Map(),
 		componentDocMap: <Map<string, BuilderComponent>>new Map(),
 		fetchingComponent: new Set(),
+		selectedComponent: null as string | null,
 	}),
 	actions: {
 		async editComponent(block?: Block | null, componentName?: string) {
@@ -35,8 +36,7 @@ const useComponentStore = defineStore("componentStore", {
 							block: getBlockObject(block),
 						})
 						.then((data: BuilderComponent) => {
-							this.componentDocMap.set(data.name, data);
-							this.componentMap.set(data.name, markRaw(getBlockInstance(data.block)));
+							this.setComponentMap(data);
 							toast.success("Component saved!");
 						});
 				},
@@ -137,7 +137,7 @@ const useComponentStore = defineStore("componentStore", {
 				});
 		},
 		getComponentName(componentId: string) {
-			let componentObj = webComponent.getRow(componentId);
+			let componentObj = this.componentDocMap.get(componentId);
 			if (!componentObj) {
 				return componentId;
 			}

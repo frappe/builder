@@ -1,47 +1,30 @@
 <template>
-	<div class="flex h-screen flex-col items-center bg-gray-100 p-5 dark:bg-zinc-900">
+	<div class="flex h-screen flex-col items-center bg-surface-white py-2">
 		<div class="relative flex w-full items-center justify-center">
 			<router-link
 				:to="{ name: 'builder', params: { pageId: route.params.pageId || 'new' } }"
-				class="absolute left-5 flex w-fit text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 hover:dark:text-gray-100">
+				class="absolute left-3 flex w-fit text-sm text-ink-gray-7 hover:text-ink-gray-9">
 				<FeatherIcon name="arrow-left" class="mr-4 h-4 w-4 cursor-pointer" />
 				Back to builder
 			</router-link>
-			<div class="flex gap-1 text-gray-500 dark:bg-zinc-900 dark:text-zinc-500">
+			<div class="flex gap-1">
 				<div
 					class="w-auto cursor-pointer rounded-md p-1 px-[8px]"
 					v-for="breakpoint in deviceBreakpoints"
 					:key="breakpoint.device"
 					:class="{
-						'bg-surface-white shadow-sm dark:bg-zinc-700': activeBreakpoint === breakpoint.device,
+						'bg-surface-white': activeBreakpoint === breakpoint.device,
 					}"
 					@click.stop="() => setWidth(breakpoint.device)">
 					<FeatherIcon
 						:name="breakpoint.icon"
-						class="h-6 w-5"
+						class="h-6 w-5 text-ink-gray-4"
 						:class="{
-							'text-gray-700   dark:text-zinc-50': activeBreakpoint === breakpoint.device,
+							'text-ink-gray-9': activeBreakpoint === breakpoint.device,
 						}" />
 				</div>
 			</div>
-			<BuilderButton
-				variant="solid"
-				iconLeft="globe"
-				@click="
-					() => {
-						publishing = true;
-						store.publishPage().finally(() => (publishing = false));
-					}
-				"
-				class="absolute right-5 border-0"
-				:class="{
-					'bg-surface-gray-7 !text-ink-white hover:bg-surface-gray-6':
-						!publishing && store.activePage?.draft_blocks,
-					'dark:bg-surface-gray-2 dark:text-ink-gray-4': !store.activePage?.draft_blocks,
-				}"
-				:loading="publishing">
-				{{ publishing ? "Publishing" : "Publish" }}
-			</BuilderButton>
+			<PublishButton class="absolute right-3 border-0"></PublishButton>
 		</div>
 		<div
 			class="relative mt-5 flex h-[85vh] bg-white"
@@ -82,6 +65,7 @@
 </template>
 <script lang="ts" setup>
 import PanelResizer from "@/components/PanelResizer.vue";
+import PublishButton from "@/components/PublishButton.vue";
 import router from "@/router";
 import useStore from "@/store";
 import { posthog } from "@/telemetry";

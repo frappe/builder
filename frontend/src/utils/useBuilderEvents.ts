@@ -51,32 +51,17 @@ export function useBuilderEvents(
 	);
 
 	useEventListener(document, "copy", (e) => {
-		if (isTargetEditable(e)) return;
-		if (store.activeCanvas?.selectedBlocks.length) {
-			e.preventDefault();
-			const componentDocuments: BuilderComponent[] = [];
-			for (const block of store.activeCanvas?.selectedBlocks) {
-				const components = block.getUsedComponentNames();
-				for (const componentName of components) {
-					const component = componentStore.getComponent(componentName);
-					if (component) {
-						componentDocuments.push(component);
-					}
-				}
-			}
+		copySelectedBlocksToClipboard(e);
+	});
 
-			const blocksToCopy = store.activeCanvas?.selectedBlocks.map((block) => {
-				if (!Boolean(block.extendedFromComponent) && block.isChildOfComponent) {
-					return detachBlockFromComponent(block);
-				}
-				return getCopyWithoutParent(block);
-			});
-			// just copy non components
-			const dataToCopy = {
-				blocks: blocksToCopy,
-				components: componentDocuments,
-			};
-			copyToClipboard(dataToCopy, e, "builder-copied-blocks");
+	useEventListener(document, "cut", (e) => {
+		if (isTargetEditable(e)) return;
+		copySelectedBlocksToClipboard(e);
+		if (store.activeCanvas?.selectedBlocks.length) {
+			for (const block of store.activeCanvas?.selectedBlocks) {
+				store.activeCanvas?.removeBlock(block, true);
+			}
+			clearSelection();
 		}
 	});
 
@@ -300,7 +285,7 @@ export function useBuilderEvents(
 
 		if ((e.key === "Backspace" || e.key === "Delete") && blockController.isBLockSelected()) {
 			for (const block of blockController.getSelectedBlocks()) {
-				store.activeCanvas?.removeBlock(block);
+				store.activeCanvas?.removeBlock(block, e.shiftKey);
 			}
 			clearSelection();
 			e.stopPropagation();
@@ -461,5 +446,36 @@ const clearSelection = () => {
 	store.editableBlock = null;
 	if (document.activeElement instanceof HTMLElement) {
 		document.activeElement.blur();
+	}
+};
+
+const copySelectedBlocksToClipboard = (e: ClipboardEvent) => {
+	if (isTargetEditable(e)) return;
+	if (store.activeCanvas?.selectedBlocks.length) {
+		e.preventDefault();
+		const componentDocuments: BuilderComponent[] = [];
+		for (const block of store.activeCanvas?.selectedBlocks) {
+			const components = block.getUsedComponentNames();
+			for (const componentName of components) {
+				const component = componentStore.getComponent(componentName);
+				if (component) {
+					componentDocuments.push(component);
+				}
+			}
+		}
+
+		const blocksToCopy = store.activeCanvas?.selectedBlocks.map((block) => {
+			if (!Boolean(block.extendedFromComponent) && block.isChildOfComponent) {
+				return detachBlockFromComponent(block, null);
+			}
+			return getCopyWithoutParent(block);
+		});
+
+		// just copy non components
+		const dataToCopy = {
+			blocks: blocksToCopy,
+			components: componentDocuments,
+		};
+		copyToClipboard(dataToCopy, e, "builder-copied-blocks");
 	}
 };

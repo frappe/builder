@@ -47,6 +47,7 @@ class Block implements BlockOptions {
 	visibilityCondition?: string;
 	elementBeforeConversion?: string;
 	parentBlock: Block | null;
+	// @ts-expect-error
 	referenceComponent: Block | null;
 	customAttributes: BlockAttributeMap;
 	constructor(options: BlockOptions) {
@@ -62,16 +63,23 @@ class Block implements BlockOptions {
 		if (this.extendedFromComponent) {
 			componentStore.loadComponent(this.extendedFromComponent);
 		}
-		this.referenceComponent = computed(() => {
-			if (this.extendedFromComponent) {
-				return markRaw(componentStore.getComponentBlock(this.extendedFromComponent as string)) || null;
-			} else if (this.isChildOfComponent) {
-				const componentBlock = componentStore.getComponentBlock(this.isChildOfComponent as string);
-				const componentBlockInstance = findBlock(this.referenceBlockId as string, [componentBlock]);
-				return componentBlockInstance ? markRaw(componentBlockInstance) : null;
-			}
-			return null;
-		}) as unknown as Block | null;
+		// TODO: Investigate this
+		// This fixes a weird case where referenceComponent used to return null even if the extendedFromComponent was set mostyl because of the reactive transformation of block during block instance creation. Still not entirely clear about this weird behavior
+		Object.defineProperty(this, "referenceComponent", {
+			value: computed(() => {
+				if (this.extendedFromComponent) {
+					return markRaw(componentStore.getComponentBlock(this.extendedFromComponent as string)) || null;
+				} else if (this.isChildOfComponent) {
+					const componentBlock = componentStore.getComponentBlock(this.isChildOfComponent as string);
+					const componentBlockInstance = findBlock(this.referenceBlockId as string, [componentBlock]);
+					return componentBlockInstance ? markRaw(componentBlockInstance) : null;
+				}
+				return null;
+			}),
+			writable: false,
+			enumerable: false,
+			configurable: true,
+		});
 
 		this.dataKey = options.dataKey || null;
 
@@ -645,8 +653,8 @@ class Block implements BlockOptions {
 	setInnerHTML(innerHTML: string) {
 		this.innerHTML = innerHTML;
 	}
-	toggleVisibility() {
-		if (this.getStyle("display") === "none") {
+	toggleVisibility(show: boolean | null = null) {
+		if ((this.getStyle("display") === "none" && show !== false) || show === true) {
 			this.setStyle("display", this.getStyle("__last_display") || "flex");
 			this.setStyle("__last_display", null);
 		} else {
@@ -659,6 +667,8 @@ class Block implements BlockOptions {
 	}
 	extendFromComponent(componentName: string) {
 		this.extendedFromComponent = componentName;
+		// @ts-expect-error
+		this.referenceComponent?.effect?.run();
 		const component = this.referenceComponent as Block;
 		if (component) {
 			extendWithComponent(this, componentName, component.children);
@@ -897,7 +907,7 @@ function extendWithComponent(
 	componentChildren: Block[],
 	resetOverrides: boolean = true,
 ) {
-	resetBlock(block, true, resetOverrides);
+	resetBlock(block, false, resetOverrides);
 	block.children?.forEach((child, index) => {
 		child.isChildOfComponent = extendedFromComponent;
 		let componentChild = componentChildren[index];

@@ -25,6 +25,9 @@
 		@mousedown.stop="handleBottomResize" />
 	<div
 		class="pointer-events-auto absolute bottom-[-5px] right-[-5px] h-[12px] w-[12px] cursor-nwse-resize rounded-full border-[2.5px] border-blue-400 bg-white"
+		:class="{
+			'border-purple-400': targetBlock.isExtendedFromComponent(),
+		}"
 		v-show="!resizing"
 		@mousedown.stop.prevent="handleBottomCornerResize" />
 </template>
@@ -60,10 +63,16 @@ onMounted(() => {
 
 watch(resizing, () => {
 	if (resizing.value) {
-		store.activeCanvas?.history?.pause();
+		if (store.activeCanvas) {
+			store.activeCanvas.history?.pause();
+			store.activeCanvas.resizingBlock = true;
+		}
 		emit("resizing", true);
 	} else {
-		store.activeCanvas?.history?.resume(undefined, true, true);
+		if (store.activeCanvas) {
+			store.activeCanvas?.history?.resume(undefined, true, true);
+			store.activeCanvas.resizingBlock = false;
+		}
 		emit("resizing", false);
 	}
 });

@@ -144,12 +144,6 @@ const contextMenuOptions: ContextMenuOption[] = [
 		},
 	},
 	{
-		label: "Save As Component",
-		action: () => (showNewComponentDialog.value = true),
-		condition: () => !block.value.isExtendedFromComponent(),
-	},
-
-	{
 		label: "Repeat Block",
 		action: () => {
 			const repeaterBlockObj = getBlockTemplate("repeater");
@@ -166,7 +160,8 @@ const contextMenuOptions: ContextMenuOption[] = [
 	},
 	{
 		label: "Reset Overrides",
-		condition: () => block.value.hasOverrides(store.activeBreakpoint),
+		condition: () => store.activeBreakpoint !== "desktop",
+		disabled: () => !block.value?.hasOverrides(store.activeBreakpoint),
 		action: () => {
 			block.value.resetOverrides(store.activeBreakpoint);
 		},
@@ -217,6 +212,11 @@ const contextMenuOptions: ContextMenuOption[] = [
 		condition: () => !block.value.isExtendedFromComponent() && Boolean(window.is_developer_mode),
 	},
 	{
+		label: "Save As Component",
+		action: () => (showNewComponentDialog.value = true),
+		condition: () => !block.value.isExtendedFromComponent(),
+	},
+	{
 		label: "Detach Component",
 		action: () => {
 			const newBlock = detachBlockFromComponent(block.value);
@@ -230,12 +230,13 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Delete",
 		action: () => {
-			block.value.getParentBlock()?.removeChild(block.value);
+			store.activeCanvas?.removeBlock(block.value);
 		},
 		condition: () => {
 			return (
 				!block.value.isRoot() &&
 				!block.value.isChildOfComponentBlock() &&
+				block.value.isVisible() &&
 				Boolean(block.value.getParentBlock())
 			);
 		},

@@ -24,7 +24,7 @@
 						<FeatherIcon
 							:name="isExpanded(element) ? 'chevron-down' : 'chevron-right'"
 							class="ml-[-18px] h-3 w-3 text-ink-gray-4"
-							v-if="element.children && element.children.length && !element.isRoot()"
+							v-if="element.children && element.children.length && !element.isRoot() && element.isVisible()"
 							@click.stop="toggleExpanded(element)" />
 						<FeatherIcon
 							:name="element.getIcon()"

@@ -20,6 +20,7 @@ app.use(FrappeUI);
 app.use(pinia);
 
 window.name = "frappe-builder";
+app.config.globalProperties.window = window;
 
 app.component("Button", Button);
 app.component("BuilderButton", BuilderButton);

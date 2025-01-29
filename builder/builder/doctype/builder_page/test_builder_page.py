@@ -17,7 +17,24 @@ class TestBuilderPage(FrappeTestCase):
 				"page_title": "Test Page",
 				"published": 1,
 				"route": "/test-page",
-				"blocks": [{"element": "body", "children": [{"element": "h1", "innerHTML": "Hello World!"}]}],
+				"blocks": [
+					{
+						"element": "body",
+						"baseStyles": {"background": "red", "fontFamily": "Inter"},
+						"customAttributes": {"dir": "ltr"},
+						"children": [
+							{
+								"element": "h1",
+								"innerHTML": "Hello World!",
+								"baseStyles": {
+									"color": "blue",
+									"fontFamily": "Comic Sans MS",
+									"fontWeight": "500",
+								},
+							}
+						],
+					}
+				],
 			}
 		).insert(ignore_if_duplicate=True)
 		cls.page_with_dynamic_route = frappe.get_doc(

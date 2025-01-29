@@ -99,6 +99,9 @@ async function confirm(message: string, title: string = "Confirm"): Promise<bool
 				resolve(true);
 				hideDialog();
 			},
+			onCancel: () => {
+				resolve(false);
+			},
 		});
 	});
 }
@@ -282,8 +285,16 @@ function isCtrlOrCmd(e: KeyboardEvent | MouseEvent) {
 	return e.ctrlKey || e.metaKey;
 }
 
-const detachBlockFromComponent = (block: Block) => {
+const detachBlockFromComponent = (block: Block, componentId: null | string) => {
+	if (!componentId) {
+		componentId = block.extendedFromComponent as string;
+	}
 	const blockCopy = getBlockCopy(block, true);
+
+	if (block.extendedFromComponent && block.extendedFromComponent != componentId) {
+		return blockCopy;
+	}
+
 	const component = block.referenceComponent;
 	blockCopy.element = block?.getElement();
 	blockCopy.attributes = block.getAttributes();
@@ -309,7 +320,7 @@ const detachBlockFromComponent = (block: Block) => {
 	delete blockCopy.extendedFromComponent;
 	delete blockCopy.isChildOfComponent;
 	delete blockCopy.referenceBlockId;
-	blockCopy.children = blockCopy.children.map(detachBlockFromComponent);
+	blockCopy.children = blockCopy.children.map((block) => detachBlockFromComponent(block, componentId));
 	return getBlockInstance(blockCopy);
 };
 

@@ -96,7 +96,7 @@ const showPaddingHandler = computed(() => {
 		!props.editable &&
 		!blockController.multipleBlocksSelected() &&
 		!props.block.isSVG() &&
-		!props.block.isText()
+		(!props.block.isText() || (props.block.isLink() && props.block.hasChildren()))
 	);
 });
 
@@ -107,7 +107,7 @@ const showMarginHandler = computed(() => {
 		!resizing.value &&
 		!props.editable &&
 		!blockController.multipleBlocksSelected() &&
-		!props.block.isText()
+		(!props.block.isText() || (props.block.isLink() && props.block.hasChildren()))
 	);
 });
 
@@ -162,7 +162,7 @@ const getStyleClasses = computed(() => {
 	if (movable.value && !props.block.isRoot()) {
 		classes.push("cursor-grab");
 	}
-	if (Boolean(props.block.extendedFromComponent)) {
+	if (props.block.isExtendedFromComponent()) {
 		classes.push("ring-purple-400");
 	} else {
 		classes.push("ring-blue-400");

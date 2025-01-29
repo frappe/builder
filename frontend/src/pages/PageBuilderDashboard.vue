@@ -9,7 +9,6 @@
 					v-model="showSettingsDialog"
 					style="z-index: 40"
 					class="[&>div>div[id^=headlessui-dialog-panel]]:my-3"
-					:disableOutsideClickToClose="true"
 					:options="{
 						title: 'Settings',
 						size: '5xl',
@@ -55,6 +54,20 @@
 										label: 'Settings',
 										onClick: () => (showSettingsDialog = true),
 										icon: 'settings',
+									},
+								],
+							},
+							{
+								group: 'Help',
+								hideLabel: true,
+								items: [
+									{
+										label: 'Help',
+										onClick: () => {
+											// @ts-ignore
+											window.open('https://t.me/frappebuilder');
+										},
+										icon: 'info',
 									},
 								],
 							},
@@ -196,7 +209,7 @@
 						</div>
 					</div>
 					<BuilderButton
-						class="m-auto mt-12 w-fit text-sm dark:bg-zinc-900 dark:text-zinc-300"
+						class="m-auto mt-12 w-fit text-sm"
 						@click="loadMore"
 						v-show="webPages.hasNextPage"
 						variant="subtle"
@@ -226,7 +239,8 @@ import useStore from "@/store";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { useDark, useEventListener, useStorage, useToggle, watchDebounced } from "@vueuse/core";
-import { createResource, Dialog, Dropdown } from "frappe-ui";
+import { createResource, Dropdown } from "frappe-ui";
+import Dialog from "@/components/Controls/Dialog.vue";
 import { onActivated, Ref, ref, watch } from "vue";
 
 const isDark = useDark({

@@ -38,7 +38,9 @@ export function useBlockEventHandlers() {
 		// dblclick on container adds text block or selects text block if only one child
 		let children = block.getChildren();
 		if (block.isHTML()) {
-			// editor.value?.element.dispatchEvent(new MouseEvent("dblclick", e));
+			document
+				.querySelector(`.editor[data-block-id="${block.blockId}"]`)
+				?.dispatchEvent(new MouseEvent("dblclick", e));
 			e.stopPropagation();
 		} else if (block.isContainer()) {
 			if (!children.length) {
@@ -57,7 +59,7 @@ export function useBlockEventHandlers() {
 
 	function handleMouseOver(e: MouseEvent) {
 		if (!isBlock(e)) return;
-		if (store.mode === "move") return;
+		if (store.mode === "move" || store.activeCanvas?.resizingBlock) return;
 		const block = getBlock(e);
 		const { breakpoint } = getBlockInfo(e);
 		store.hoveredBlock = block?.blockId || null;
@@ -85,7 +87,7 @@ export function useBlockEventHandlers() {
 		selectBlock(e);
 		nextTick(() => {
 			document
-				.querySelector(`.editor[data-block-id=${blockId}]`)
+				.querySelector(`.editor[data-block-id="${blockId}"]`)
 				?.dispatchEvent(new MouseEvent("contextmenu", e));
 		});
 	}

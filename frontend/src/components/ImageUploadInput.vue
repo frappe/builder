@@ -29,7 +29,7 @@
 						@upload="setImageURL"
 						@remove="setImageURL('')"
 						:image_url="imageURL"
-						class="absolute right-0 top-5 rounded-r-md bg-surface-gray-2 pl-2 dark:bg-gray-900"
+						class="absolute right-0 top-5 rounded-r-md bg-surface-gray-2 pl-2 dark:bg-transparent"
 						:file_types="['image/*']" />
 				</div>
 			</div>
@@ -49,7 +49,7 @@
 							<img
 								:src="imageURL || '/assets/builder/images/fallback.png'"
 								alt=""
-								class="image-preview relative h-24 w-48 cursor-pointer bg-gray-200 dark:bg-zinc-700"
+								class="image-preview relative h-24 w-48 cursor-pointer bg-surface-gray-2"
 								:style="{
 									'object-fit': imageFit || 'contain',
 								}" />
@@ -59,12 +59,7 @@
 									'!grid': !imageURL,
 									'group-hover:grid': imageURL,
 								}">
-								<BuilderButton
-									class="rounded bg-gray-200 p-2 text-xs text-gray-900 dark:bg-zinc-700 dark:text-zinc-200"
-									variant="solid"
-									@click="openFileSelector">
-									Upload
-								</BuilderButton>
+								<BuilderButton variant="solid" @click="openFileSelector">Upload</BuilderButton>
 							</div>
 						</div>
 					</template>

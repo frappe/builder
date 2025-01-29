@@ -228,7 +228,7 @@ export function useCanvasUtils(
 		return null;
 	}
 
-	function removeBlock(block: Block) {
+	function removeBlock(block: Block, force: boolean = false) {
 		if (block.blockId === "root") {
 			toast.warning("Warning", {
 				description: "Cannot delete root block",
@@ -236,20 +236,20 @@ export function useCanvasUtils(
 			return;
 		}
 		if (block.isChildOfComponentBlock()) {
-			toast.warning("Warning", {
-				description: "Cannot delete block inside component",
-			});
-			return;
+			block.toggleVisibility(false);
 		}
 		const parentBlock = block.parentBlock;
 		if (!parentBlock) {
 			return;
 		}
-		const index = parentBlock.children.indexOf(block);
-		parentBlock.removeChild(block);
+		const nextSibling = block.getSiblingBlock("next");
+		if (store.activeBreakpoint === "desktop" || force) {
+			parentBlock.removeChild(block);
+		} else {
+			block.toggleVisibility(false);
+		}
 		nextTick(() => {
 			if (parentBlock.children.length) {
-				const nextSibling = parentBlock.children[index] || parentBlock.children[index - 1];
 				if (nextSibling) {
 					selectBlock(nextSibling);
 				}
@@ -282,5 +282,6 @@ export function useCanvasUtils(
 		clearCanvas,
 		getRootBlock,
 		setupHistory,
+		isDirty,
 	};
 }

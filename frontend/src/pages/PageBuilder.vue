@@ -33,15 +33,13 @@
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-surface-gray-2 p-10">
 				<template v-slot:header>
 					<div
-						class="absolute left-0 right-0 top-0 z-20 flex items-center justify-between bg-surface-white p-2 text-sm text-gray-800 dark:text-zinc-400">
+						class="absolute left-0 right-0 top-0 z-20 flex items-center justify-between bg-surface-white p-2 text-sm text-ink-gray-8">
 						<div class="flex items-center gap-1 text-xs">
 							<a @click="store.exitFragmentMode" class="cursor-pointer">Page</a>
 							<FeatherIcon name="chevron-right" class="h-3 w-3" />
 							{{ store.fragmentData.fragmentName }}
 						</div>
-						<BuilderButton
-							class="text-xs dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-							@click="saveAndExitFragmentMode">
+						<BuilderButton class="text-xs" @click="saveAndExitFragmentMode">
 							{{ store.fragmentData.saveActionLabel || "Save" }}
 						</BuilderButton>
 					</div>
@@ -101,6 +99,7 @@ import BuilderCanvas from "@/components/BuilderCanvas.vue";
 import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
+import Dialog from "@/components/Controls/Dialog.vue";
 import { webPages } from "@/data/webPage";
 import { sessionUser } from "@/router";
 import useStore from "@/store";
@@ -116,7 +115,6 @@ import {
 	useDebounceFn,
 	useMagicKeys,
 } from "@vueuse/core";
-import { Dialog } from "frappe-ui";
 import { computed, onActivated, onDeactivated, provide, ref, toRef, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";

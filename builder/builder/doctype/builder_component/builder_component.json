@@ -43,7 +43,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-06-20 08:16:29.611058",
+ "modified": "2025-01-29 09:30:34.896956",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Component",
@@ -78,5 +78,6 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "title_field": "component_name"
+ "title_field": "component_name",
+ "track_changes": 1
 }
