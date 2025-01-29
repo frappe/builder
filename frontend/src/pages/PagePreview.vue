@@ -24,24 +24,7 @@
 						}" />
 				</div>
 			</div>
-			<BuilderButton
-				variant="solid"
-				iconLeft="globe"
-				@click="
-					() => {
-						publishing = true;
-						store.publishPage().finally(() => (publishing = false));
-					}
-				"
-				class="absolute right-3 border-0"
-				:class="{
-					'bg-surface-gray-7 !text-ink-white hover:bg-surface-gray-6':
-						!publishing && store.activePage?.draft_blocks,
-					'dark:bg-surface-gray-2 dark:text-ink-gray-4': !store.activePage?.draft_blocks,
-				}"
-				:loading="publishing">
-				{{ publishing ? "Publishing" : "Publish" }}
-			</BuilderButton>
+			<PublishButton class="absolute right-3 border-0"></PublishButton>
 		</div>
 		<div
 			class="relative mt-5 flex h-[85vh] bg-white"
@@ -82,6 +65,7 @@
 </template>
 <script lang="ts" setup>
 import PanelResizer from "@/components/PanelResizer.vue";
+import PublishButton from "@/components/PublishButton.vue";
 import router from "@/router";
 import useStore from "@/store";
 import { posthog } from "@/telemetry";
