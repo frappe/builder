@@ -1,7 +1,11 @@
 <template>
 	<div ref="canvasContainer" @click="handleClick">
 		<slot name="header"></slot>
-		<div class="overlay absolute" id="overlay" ref="overlay" />
+		<div
+			class="overlay absolute"
+			:class="{ 'pointer-events-none': isOverDropZone }"
+			id="overlay"
+			ref="overlay" />
 		<Transition name="fade">
 			<div
 				class="absolute bottom-0 left-0 right-0 top-0 z-[19] grid w-full place-items-center bg-surface-gray-1 p-10 text-ink-gray-5"
@@ -10,9 +14,6 @@
 			</div>
 		</Transition>
 		<BlockSnapGuides></BlockSnapGuides>
-		<div
-			v-if="isOverDropZone"
-			class="pointer-events-none absolute bottom-0 left-0 right-0 top-0 z-30 bg-cyan-300 opacity-20"></div>
 		<div
 			class="fixed flex gap-40"
 			ref="canvas"
@@ -298,5 +299,15 @@ const renderedBreakpoints = computed(() => canvasProps.breakpoints.filter((bp) =
 .fade-enter-from,
 .fade-leave-to {
 	opacity: 0;
+}
+
+#placeholder {
+	@apply transition-all;
+}
+.vertical-placeholder {
+	@apply mx-4 h-full min-h-5 w-auto border-l-2 border-dashed border-blue-500;
+}
+.horizontal-placeholder {
+	@apply my-4 h-auto w-full border-t-2 border-dashed border-blue-500;
 }
 </style>
