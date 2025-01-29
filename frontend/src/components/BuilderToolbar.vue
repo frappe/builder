@@ -133,36 +133,20 @@
 					<PlayIcon class="h-[18px] w-[18px] cursor-pointer text-ink-gray-8"></PlayIcon>
 				</Tooltip>
 			</router-link>
-			<BuilderButton
-				variant="solid"
-				iconLeft="globe"
-				@click="
-					() => {
-						publishing = true;
-						store.publishPage().finally(() => (publishing = false));
-					}
-				"
-				class="border-0"
-				:class="{
-					'bg-surface-gray-7 !text-ink-white hover:bg-surface-gray-6':
-						!publishing && store.activePage?.draft_blocks,
-					'dark:bg-surface-gray-2 dark:text-ink-gray-4': !store.activePage?.draft_blocks,
-				}"
-				:loading="publishing">
-				{{ publishing ? "Publishing" : "Publish" }}
-			</BuilderButton>
+			<PublishButton></PublishButton>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
+import Dialog from "@/components/Controls/Dialog.vue";
 import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import PlayIcon from "@/components/Icons/Play.vue";
 import SettingsGearIcon from "@/components/Icons/SettingsGear.vue";
+import PublishButton from "@/components/PublishButton.vue";
 import { webPages } from "@/data/webPage";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { getTextContent } from "@/utils/helpers";
 import { Tooltip } from "frappe-ui";
-import Dialog from "@/components/Controls/Dialog.vue";
 import Popover from "frappe-ui/src/components/Popover.vue";
 import { computed, ref } from "vue";
 import { toast } from "vue-sonner";
@@ -176,6 +160,14 @@ const publishing = ref(false);
 const showInfoDialog = ref(false);
 const showSettingsDialog = ref(false);
 const toolbar = ref(null);
+
+const publishButtonLabel = computed(() => {
+	if ((store.activePage?.draft_blocks && !store.activePage?.published) || !store.activePage?.draft_blocks) {
+		return "Publish";
+	} else {
+		return "Publish Changes";
+	}
+});
 
 const currentlyViewedByText = computed(() => {
 	const names = store.viewers.map((viewer) => viewer.fullname).map((name) => name.split(" ")[0]);
