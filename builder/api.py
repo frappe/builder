@@ -238,7 +238,7 @@ def duplicate_page(page_name: str):
 	for script in client_scripts:
 		builder_script = frappe.get_doc("Builder Client Script", script.builder_script)
 		new_script = frappe.copy_doc(builder_script)
-		new_script.name = f"{builder_script.name}-copy"
+		new_script.name = f"{builder_script.name}-{frappe.generate_hash(length=5)}"
 		new_script.insert(ignore_permissions=True)
 		new_page.append("client_scripts", {"builder_script": new_script.name})
 	new_page.insert()
