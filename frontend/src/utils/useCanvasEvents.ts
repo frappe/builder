@@ -2,9 +2,18 @@ import useStore from "@/store";
 import { CanvasHistory } from "@/types/Builder/BuilderCanvas";
 import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { addPxToNumber, getNumberFromPx, isTargetEditable } from "@/utils/helpers";
+import {
+	addPxToNumber,
+	getBlock,
+	getBlockInfo,
+	getNumberFromPx,
+	isBlock,
+	isTargetEditable,
+} from "@/utils/helpers";
 import { clamp, useEventListener } from "@vueuse/core";
 import { Ref } from "vue";
+
+const store = useStore();
 
 export function useCanvasEvents(
 	container: Ref<HTMLElement>,
@@ -15,7 +24,6 @@ export function useCanvasEvents(
 	findBlock: (blockId: string) => Block | null,
 ) {
 	let counter = 0;
-	const store = useStore();
 	useEventListener(container, "mousedown", (ev: MouseEvent) => {
 		if (store.mode === "move") {
 			return;
@@ -207,4 +215,19 @@ export function useCanvasEvents(
 				break;
 		}
 	});
+
+	useEventListener(container, "mouseover", handleMouseOver);
+}
+
+function handleMouseOver(e: MouseEvent) {
+	if (!isBlock(e)) {
+		store.hoveredBlock = null;
+		return;
+	}
+	if (store.mode === "move" || store.activeCanvas?.resizingBlock) return;
+	const block = getBlock(e);
+	const { breakpoint } = getBlockInfo(e);
+	store.hoveredBlock = block?.blockId || null;
+	store.hoveredBreakpoint = breakpoint;
+	e.stopPropagation();
 }

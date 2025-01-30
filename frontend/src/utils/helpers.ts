@@ -1,4 +1,5 @@
 import AlertDialog from "@/components/AlertDialog.vue";
+import useStore from "@/store";
 import { confirmDialog, FileUploadHandler } from "frappe-ui";
 import { h, reactive, toRaw } from "vue";
 import { toast } from "vue-sonner";
@@ -445,28 +446,48 @@ function generateId() {
 }
 
 function throttle<T extends (...args: any[]) => void>(func: T, wait: number = 1000) {
-	let timeout: ReturnType<typeof setTimeout> | null = null
-	let lastArgs: Parameters<T> | null = null
-	let pending = false
+	let timeout: ReturnType<typeof setTimeout> | null = null;
+	let lastArgs: Parameters<T> | null = null;
+	let pending = false;
 
 	const invoke = (...args: Parameters<T>) => {
-		lastArgs = args
+		lastArgs = args;
 		if (timeout) {
-			pending = true
-			return
+			pending = true;
+			return;
 		}
 
 		func(...lastArgs);
 		timeout = setTimeout(() => {
-			timeout = null
+			timeout = null;
 			if (pending && lastArgs) {
-				pending = false
-				invoke(...lastArgs)
+				pending = false;
+				invoke(...lastArgs);
 			}
-		}, wait)
+		}, wait);
 	};
 
-	return invoke
+	return invoke;
+}
+
+function isBlock(e: MouseEvent) {
+	return e.target instanceof HTMLElement && e.target.closest(".__builder_component__");
+}
+
+type BlockInfo = {
+	blockId: string;
+	breakpoint: string;
+};
+
+function getBlockInfo(e: MouseEvent) {
+	const target = (e.target as HTMLElement)?.closest(".__builder_component__") as HTMLElement;
+	return target.dataset as BlockInfo;
+}
+
+function getBlock(e: MouseEvent) {
+	const store = useStore();
+	const blockInfo = getBlockInfo(e);
+	return store.activeCanvas?.findBlock(blockInfo.blockId);
 }
 
 export {
@@ -478,7 +499,9 @@ export {
 	detachBlockFromComponent,
 	findNearestSiblingIndex,
 	generateId,
+	getBlock,
 	getBlockCopy,
+	getBlockInfo,
 	getBlockInstance,
 	getBlockObjectCopy as getBlockObject,
 	getBlockString,
@@ -492,6 +515,7 @@ export {
 	getTextContent,
 	HexToHSV,
 	HSVToHex,
+	isBlock,
 	isCtrlOrCmd,
 	isHTMLString,
 	isJSONString,
@@ -502,6 +526,6 @@ export {
 	replaceMapKey,
 	RGBToHex,
 	stripExtension,
-	uploadImage,
 	throttle,
+	uploadImage,
 };
