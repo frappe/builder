@@ -1,5 +1,6 @@
 import useStore from "@/store";
 import getBlockTemplate from "@/utils/blockTemplate";
+import { getBlock, getBlockInfo, isBlock } from "@/utils/helpers";
 import { useEventListener } from "@vueuse/core";
 import { nextTick } from "vue";
 
@@ -8,8 +9,6 @@ const store = useStore();
 export function useBlockEventHandlers() {
 	useEventListener(document, "click", handleClick);
 	useEventListener(document, "dblclick", handleDoubleClick);
-	useEventListener(document, "mouseover", handleMouseOver);
-	useEventListener(document, "mouseleave", handleMouseLeave);
 	useEventListener(document, "contextmenu", triggerContextMenu);
 
 	function handleClick(e: MouseEvent) {
@@ -57,26 +56,6 @@ export function useBlockEventHandlers() {
 		}
 	}
 
-	function handleMouseOver(e: MouseEvent) {
-		if (!isBlock(e)) return;
-		if (store.mode === "move" || store.activeCanvas?.resizingBlock) return;
-		const block = getBlock(e);
-		const { breakpoint } = getBlockInfo(e);
-		store.hoveredBlock = block?.blockId || null;
-		store.hoveredBreakpoint = breakpoint;
-		e.stopPropagation();
-	}
-
-	function handleMouseLeave(e: MouseEvent) {
-		if (!isBlock(e)) return;
-		if (store.mode === "move") return;
-		const block = getBlock(e);
-		if (store.hoveredBlock === block?.blockId) {
-			store.hoveredBlock = null;
-			e.stopPropagation();
-		}
-	}
-
 	function triggerContextMenu(e: MouseEvent) {
 		if (!isBlock(e) || isEditable(e)) return;
 		const block = getBlock(e);
@@ -93,20 +72,11 @@ export function useBlockEventHandlers() {
 	}
 }
 
-function getBlock(e: MouseEvent) {
-	const blockInfo = getBlockInfo(e);
-	return store.activeCanvas?.findBlock(blockInfo.blockId);
-}
-
 const isEditable = (e: MouseEvent) => {
 	const { blockId, breakpoint } = getBlockInfo(e);
 	// to ensure it is right block and not on different breakpoint
 	return store.editableBlock?.blockId === blockId && store.activeBreakpoint === breakpoint;
 };
-
-function isBlock(e: MouseEvent) {
-	return e.target instanceof HTMLElement && e.target.closest(".__builder_component__");
-}
 
 const selectBlock = (e: MouseEvent) => {
 	if (isEditable(e) || store.mode !== "select") {
@@ -120,14 +90,4 @@ const selectBlock = (e: MouseEvent) => {
 
 	store.leftPanelActiveTab = "Layers";
 	store.rightPanelActiveTab = "Properties";
-};
-
-type BlockInfo = {
-	blockId: string;
-	breakpoint: string;
-};
-
-const getBlockInfo = (e: MouseEvent) => {
-	const target = (e.target as HTMLElement)?.closest(".__builder_component__") as HTMLElement;
-	return target.dataset as BlockInfo;
 };
