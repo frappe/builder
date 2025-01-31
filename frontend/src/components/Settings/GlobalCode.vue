@@ -1,6 +1,15 @@
 <template>
 	<div class="no-scrollbar flex flex-col gap-5 overflow-auto">
 		<CodeEditor
+			label="<head> code"
+			type="HTML"
+			description="Note: This will be appended to the end of head of all pages."
+			:modelValue="builderSettings.doc.head_script"
+			height="250px"
+			class="shrink-0"
+			@update:modelValue="store.updateBuilderSettings('head_script', $event)"
+			:showLineNumbers="true"></CodeEditor>
+		<CodeEditor
 			label="Client Script"
 			type="JavaScript"
 			description="Note: This script will be executed on all the pages of your website."

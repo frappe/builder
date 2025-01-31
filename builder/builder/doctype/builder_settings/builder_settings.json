@@ -5,6 +5,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "head_script",
   "script",
   "script_public_url",
   "style",
@@ -61,13 +62,20 @@
    "fieldname": "auto_convert_images_to_webp",
    "fieldtype": "Check",
    "label": "Auto convert images to WebP"
+  },
+  {
+   "description": "This will be appended at the end of the &lt;head&gt;",
+   "fieldname": "head_script",
+   "fieldtype": "Code",
+   "label": "Head Script",
+   "options": "HTML"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-11-13 20:08:03.270174",
+ "modified": "2025-01-31 17:54:13.745748",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Settings",
