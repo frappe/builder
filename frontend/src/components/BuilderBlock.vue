@@ -33,6 +33,7 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
+import FormHandler from "@/components/FormHandler.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import { setFont } from "@/utils/fontManager";
 import { getDataForKey } from "@/utils/helpers";
@@ -84,6 +85,8 @@ const getComponentName = (block: Block) => {
 		return TextBlock;
 	} else if (block.isHTML()) {
 		return BlockHTML;
+	} else if (block.isForm()) {
+		return FormHandler;
 	} else {
 		return block.getTag();
 	}
@@ -107,6 +110,7 @@ const attributes = computed(() => {
 		props.block.isHTML() ||
 		props.block.isLink() ||
 		props.block.isButton() ||
+		props.block.isForm() ||
 		props.block.isRepeater()
 	) {
 		attribs.block = props.block;

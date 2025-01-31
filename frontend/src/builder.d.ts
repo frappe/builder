@@ -112,3 +112,12 @@ declare interface BlockDataKey {
 declare type BlockDataKeyType = "key" | "attribute" | "style";
 
 declare type CSSVariableName = string | `var(--${string})`;
+
+declare type BlockProperty = {
+	component: any;
+	getProps: () => Record<string, unknown>;
+	events?: Record<string, unknown>;
+	searchKeyWords: string;
+	condition?: () => boolean;
+	innerText?: string;
+};
