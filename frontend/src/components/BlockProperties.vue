@@ -35,6 +35,7 @@
 import customAttributesSection from "@/components/BlockPropertySections/CustomAttributesSection";
 import dataKeySection from "@/components/BlockPropertySections/DataKeySection";
 import dimensionSection from "@/components/BlockPropertySections/DimenstionSection";
+import formOptionsSection from "@/components/BlockPropertySections/FormOptionsSection";
 import imageOptionsSection from "@/components/BlockPropertySections/ImageOptionsSection";
 import layoutSection from "@/components/BlockPropertySections/LayoutSection";
 import linkSection from "@/components/BlockPropertySections/LinkSection";
@@ -52,15 +53,6 @@ import { Ref, ref } from "vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
 
 const builderStore = useBuilderStore();
-
-type BlockProperty = {
-	component: any;
-	getProps: () => Record<string, unknown>;
-	events?: Record<string, unknown>;
-	searchKeyWords: string;
-	condition?: () => boolean;
-	innerText?: string;
-};
 
 type PropertySection = {
 	name: string;
@@ -100,6 +92,7 @@ const getFilteredProperties = (section: PropertySection) => {
 const sections = [
 	linkSection,
 	layoutSection,
+	formOptionsSection,
 	imageOptionsSection,
 	videoOptionsSection,
 	typographySection,

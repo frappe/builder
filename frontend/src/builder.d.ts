@@ -101,3 +101,12 @@ declare type UserInfo = { user: string; fullname: string; image: string };
 declare type FileDoc = {
 	file_url: string;
 };
+
+declare type BlockProperty = {
+	component: any;
+	getProps: () => Record<string, unknown>;
+	events?: Record<string, unknown>;
+	searchKeyWords: string;
+	condition?: () => boolean;
+	innerText?: string;
+};
