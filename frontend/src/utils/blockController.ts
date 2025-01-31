@@ -286,6 +286,9 @@ const blockController = {
 			block.unsetLink();
 		});
 	},
+	isForm: () => {
+		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isForm();
+	},
 };
 
 export default blockController;
