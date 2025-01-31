@@ -243,11 +243,19 @@ class BuilderPage(WebsiteGenerator):
 			else:
 				context.setdefault("styles", []).append(script_doc.public_url)
 
+		if not context.get("_head_scripts"):
+			context._head_scripts = ""
+
+		if self.head_script:
+			context._head_scripts += self.head_script
+
 		builder_settings = frappe.get_cached_doc("Builder Settings", "Builder Settings")
 		if builder_settings.script:
 			context.setdefault("scripts", []).append(builder_settings.script_public_url)
 		if builder_settings.style:
 			context.setdefault("styles", []).append(builder_settings.style_public_url)
+		if builder_settings.head_script:
+			context._head_scripts += builder_settings.head_script
 
 	@frappe.whitelist()
 	def get_page_data(self, route_variables=None):

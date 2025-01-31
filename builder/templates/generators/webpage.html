@@ -27,6 +27,9 @@
 			{% endfor %}
 		{%- endif -%}
 	{%- endblock %}
+	{%- if _head_scripts %}
+	{{ _head_scripts|safe }}
+	{%-endif -%}
 </head>
 {% block page_content %}
 {{ content }}
