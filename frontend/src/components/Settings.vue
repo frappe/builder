@@ -33,6 +33,7 @@
 <script setup lang="ts">
 import RedirectIcon from "@/components/Icons/Redirect.vue";
 import GlobalRedirects from "@/components/Settings/GlobalRedirects.vue";
+import PageCode from "@/components/Settings/PageCode.vue";
 import PageRedirects from "@/components/Settings/PageRedirects.vue";
 import useStore from "@/store";
 import { computed, onActivated, ref } from "vue";
@@ -86,6 +87,7 @@ const pageSettings = {
 			title: "General",
 			icon: SettingsIcon,
 		},
+		{ label: "Code", value: "global_code", component: PageCode, title: "Code", icon: CodeIcon },
 		{ label: "Meta", value: "page_meta", component: PageMeta, title: "Meta", icon: MetaIcon },
 		{
 			label: "Analytics",
