@@ -50,4 +50,5 @@ You can generate using favicon-generator.org	*/
 	disable_indexing?: 0 | 1;
 
 	project_folder?: string;
+	head_script?: string;
 }
