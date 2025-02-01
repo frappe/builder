@@ -87,7 +87,7 @@ const pageSettings = {
 			title: "General",
 			icon: SettingsIcon,
 		},
-		{ label: "Code", value: "global_code", component: PageCode, title: "Code", icon: CodeIcon },
+		{ label: "Code", value: "page_code", component: PageCode, title: "Page Code", icon: CodeIcon },
 		{ label: "Meta", value: "page_meta", component: PageMeta, title: "Meta", icon: MetaIcon },
 		{
 			label: "Analytics",
@@ -118,7 +118,7 @@ const globalSettings = {
 			title: "General",
 			icon: SettingsIcon,
 		},
-		{ label: "Code", value: "global_code", component: GlobalCode, title: "Code", icon: CodeIcon },
+		{ label: "Code", value: "global_code", component: GlobalCode, title: "Global Code", icon: CodeIcon },
 		{
 			label: "Redirects",
 			value: "global_redirects",

@@ -69,7 +69,6 @@ const savePageDataScript = (value: string) => {
 		})
 		.then(() => {
 			posthog.capture("builder_page_data_script_saved");
-			showDialog.value = false;
 			props.page.page_data_script = value;
 			store.setPageData(props.page);
 			toast.success("Data script saved");
