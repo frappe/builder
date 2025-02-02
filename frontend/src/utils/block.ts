@@ -11,6 +11,7 @@ import {
 	getNumberFromPx,
 	getTextContent,
 	kebabToCamelCase,
+	parseAndSetBackground,
 	uploadImage,
 } from "./helpers";
 
@@ -116,6 +117,10 @@ class Block implements BlockOptions {
 			this.removeStyle("minHeight");
 		}
 
+		parseAndSetBackground(this.baseStyles);
+		parseAndSetBackground(this.mobileStyles);
+		parseAndSetBackground(this.tabletStyles);
+
 		if (this.isImage()) {
 			// if src is base64, convert it to a file
 			const src = this.getAttribute("src") as string;
@@ -128,6 +133,20 @@ class Block implements BlockOptions {
 						this.setAttribute("src", obj.fileURL);
 					});
 				}
+			}
+		}
+		const bgImage = this.getStyle("backgroundImage") as string;
+		if (bgImage && /^url\(['"]?data:image/.test(bgImage)) {
+			let bgImage = this.getStyle("backgroundImage") as string;
+			const dataURL = bgImage.match(/url\(['"]?(.*?)['"]?\)/)?.[1];
+
+			const file = dataURLtoFile(dataURL as string, "image.png");
+
+			if (file) {
+				this.setStyle("backgroundImage", "");
+				uploadImage(file, true).then((obj) => {
+					this.setStyle("backgroundImage", `url(${obj.fileURL})`);
+				});
 			}
 		}
 	}
