@@ -5,17 +5,10 @@ import blockController from "@/utils/blockController";
 
 const styleSectionProperties = [
 	{
-		component: ColorInput,
-		getProps: () => {
-			return {
-				label: "BG Color",
-				value: blockController.getStyle("background"),
-			};
-		},
-		searchKeyWords: "Background, BackgroundColor, Background Color, BG, BGColor, BG Color",
-		events: {
-			change: (val: StyleValue) => blockController.setStyle("background", val),
-		},
+		component: BackgroundHandler,
+		getProps: () => {},
+		searchKeyWords:
+			"Background, BackgroundImage, Background Image, Background Position, Background Repeat, Background Size, BG, BGImage, BG Image, BGPosition, BG Position, BGRepeat, BG Repeat, BGSize, BG Size",
 	},
 	{
 		component: ColorInput,
@@ -100,12 +93,7 @@ const styleSectionProperties = [
 		},
 		condition: () => blockController.getStyle("borderColor"),
 	},
-	{
-		component: BackgroundHandler,
-		getProps: () => {},
-		searchKeyWords:
-			"Background, BackgroundImage, Background Image, Background Position, Background Repeat, Background Size, BG, BGImage, BG Image, BGPosition, BG Position, BGRepeat, BG Repeat, BGSize, BG Size",
-	},
+
 	{
 		component: InlineInput,
 		getProps: () => {

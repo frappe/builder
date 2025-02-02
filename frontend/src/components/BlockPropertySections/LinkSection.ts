@@ -78,5 +78,4 @@ export default {
 	name: "Link",
 	properties: linkSectionProperties,
 	collapsed: computed(() => !blockController.isLink()),
-	condition: () => !blockController.multipleBlocksSelected(),
 };
