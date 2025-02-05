@@ -1,14 +1,7 @@
 <template>
 	<div class="relative w-full">
-		<div class="absolute left-[-18px] top-1 z-50">
-			<Dropdown
-				:options="[
-					{ label: 'Duplicate', onClick: () => store.duplicatePage(page), icon: 'copy' },
-					{ label: 'View in Desk', onClick: () => store.openInDesk(page), icon: 'arrow-up-right' },
-					{ label: 'Delete', onClick: () => store.deletePage(page), icon: 'trash' },
-				]"
-				size="sm"
-				placement="right">
+		<div class="absolute left-[-18px] top-1 z-50" v-if="dynamicValueProperty && !dynamicValueAlreadySet">
+			<Dropdown :options="dynamicKeyOptions" size="sm" placement="right">
 				<template v-slot="{ open }">
 					<div
 						class="group flex cursor-pointer items-center gap-1 rounded-lg bg-purple-500 transition-all hover:size-fit hover:p-1.5">
@@ -18,22 +11,6 @@
 				</template>
 			</Dropdown>
 		</div>
-		<!-- <Dropdown
-			:options="[
-				{ label: 'Duplicate', onClick: () => store.duplicatePage(page), icon: 'copy' },
-				{ label: 'View in Desk', onClick: () => store.openInDesk(page), icon: 'arrow-up-right' },
-				{ label: 'Delete', onClick: () => store.deletePage(page), icon: 'trash' },
-			]"
-			size="sm"
-			placement="right">
-			<template v-slot="{ open }">
-				<div
-					class="group flex cursor-pointer items-center gap-1 rounded-lg bg-yellow-500 transition-all hover:size-fit hover:p-1.5">
-					<FeatherIcon name="plus" class="size-3 text-ink-white" @click="open"></FeatherIcon>
-					<span class="hidden text-xs text-ink-white group-hover:block">Set Dynamic Value</span>
-				</div>
-			</template>
-		</Dropdown> -->
 		<FormControl
 			:class="classes"
 			:type="type"
@@ -50,18 +27,20 @@
 			class="absolute bottom-[3px] right-[1px] cursor-pointer p-1 text-ink-gray-4 hover:text-ink-gray-5"
 			@click="clearValue"
 			v-if="!['select', 'checkbox'].includes(type) && !hideClearButton"
-			v-show="data">
+			v-show="data || dynamicValueAlreadySet">
 			<CrossIcon />
 		</div>
 	</div>
 </template>
 <script lang="ts" setup>
 import CrossIcon from "@/components/Icons/Cross.vue";
+import useStore from "@/store";
+import Block from "@/utils/block";
 import { useDebounceFn, useVModel } from "@vueuse/core";
-import { computed, useAttrs } from "vue";
 import { Dropdown } from "frappe-ui";
+import { computed, useAttrs } from "vue";
 
-const props = defineProps(["modelValue", "type", "hideClearButton"]);
+const props = defineProps(["modelValue", "type", "hideClearButton", "dynamicValueProperty"]);
 const emit = defineEmits(["update:modelValue", "input"]);
 const data = useVModel(props, "modelValue", emit);
 
@@ -128,7 +107,11 @@ const classes = computed(() => {
 const attrs = useAttrs();
 
 const clearValue = () => {
-	data.value = "";
+	if (dynamicValueAlreadySet.value) {
+		clearDynamicValue();
+	} else {
+		data.value = "";
+	}
 };
 
 const triggerUpdate = useDebounceFn(($event: Event) => {
@@ -139,9 +122,50 @@ const triggerUpdate = useDebounceFn(($event: Event) => {
 	}
 }, 100);
 
-const canHaveDynamicValue = () => true;
+const store = useStore();
+let dynamicValueAlreadySet = computed(() => {
+	const blocks = store.activeCanvas?.selectedBlocks;
+	console.log(blocks);
+	if (!blocks?.length) return;
+	const dataKeyObj = blocks[0].dynamicValues.find((obj) => {
+		if (obj.type == "style" && obj.property == props.dynamicValueProperty) {
+			return true;
+		}
+	});
+	if (dataKeyObj) {
+		return true;
+	} else {
+		return false;
+	}
+});
 
-const getDynamicValue = () => {
-	// get from page data
+const dynamicKeyOptions = computed(() => {
+	// pick keys from store.pageData
+	return Object.keys({ color: "red" }).map((key) => ({
+		label: key,
+		value: key,
+		onClick: () => {
+			// import blockController from "@/utils/blockController";
+			import("@/utils/blockController").then((blockController) => {
+				blockController.default?.getSelectedBlocks().forEach((block) => {
+					block.dynamicValues.push({
+						type: "style",
+						key,
+						property: props.dynamicValueProperty,
+					});
+				});
+			});
+		},
+	}));
+});
+
+const clearDynamicValue = () => {
+	const blocks = store.activeCanvas?.selectedBlocks as Block[];
+	blocks[0].dynamicValues = blocks[0].dynamicValues.filter((obj) => {
+		if (obj.type == "style" && obj.property == props.dynamicValueProperty) {
+			return false;
+		}
+		return true;
+	});
 };
 </script>

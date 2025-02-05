@@ -53,7 +53,6 @@ class Block implements BlockOptions {
 		this.referenceBlockId = options.referenceBlockId;
 		this.visibilityCondition = options.visibilityCondition;
 		this.parentBlock = options.parentBlock || null;
-		this.dynamicValues = options.dynamicValues || [];
 		if (this.extendedFromComponent) {
 			componentStore.loadComponent(this.extendedFromComponent);
 		}
@@ -99,6 +98,7 @@ class Block implements BlockOptions {
 		this.mobileStyles = reactive(options.mobileStyles || {});
 		this.tabletStyles = reactive(options.tabletStyles || {});
 		this.attributes = reactive(options.attributes || {});
+		this.dynamicValues = reactive(options.dynamicValues || []);
 
 		this.blockName = options.blockName;
 		delete this.attributes.style;

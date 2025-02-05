@@ -16,6 +16,7 @@
 						placeholder="Set Color"
 						@focus="togglePopover"
 						:modelValue="value"
+						:dynamicValueProperty="dynamicValueProperty"
 						@update:modelValue="
 							(value: string | null) => {
 								value = getRGB(value);
@@ -39,6 +40,11 @@ defineProps({
 		default: null,
 	},
 	label: {
+		type: String,
+		default: "",
+	},
+
+	dynamicValueProperty: {
 		type: String,
 		default: "",
 	},

@@ -8,6 +8,7 @@ const styleSectionProperties = [
 		component: ColorInput,
 		getProps: () => {
 			return {
+				dynamicValueProperty: "background",
 				label: "BG Color",
 				value: blockController.getStyle("background"),
 			};

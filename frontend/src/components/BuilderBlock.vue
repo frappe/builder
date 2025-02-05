@@ -143,7 +143,7 @@ const target = computed(() => {
 });
 
 const styles = computed(() => {
-	let dynamicStyles = {};
+	let dynamicStyles = {} as { [key: string]: string };
 	if (props.data) {
 		if (props.block.getDataKey("type") === "style") {
 			dynamicStyles = {
@@ -153,6 +153,10 @@ const styles = computed(() => {
 				),
 			};
 		}
+		props.block.dynamicValues?.forEach((dataKeyObj: BlockDataKey) => {
+			const property = dataKeyObj.property as string;
+			dynamicStyles[property] = getDataForKey(props.data, dataKeyObj.key as string);
+		});
 	}
 
 	const styleMap = {
