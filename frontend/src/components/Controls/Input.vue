@@ -1,5 +1,39 @@
 <template>
 	<div class="relative w-full">
+		<div class="absolute left-[-18px] top-1 z-50">
+			<Dropdown
+				:options="[
+					{ label: 'Duplicate', onClick: () => store.duplicatePage(page), icon: 'copy' },
+					{ label: 'View in Desk', onClick: () => store.openInDesk(page), icon: 'arrow-up-right' },
+					{ label: 'Delete', onClick: () => store.deletePage(page), icon: 'trash' },
+				]"
+				size="sm"
+				placement="right">
+				<template v-slot="{ open }">
+					<div
+						class="group flex cursor-pointer items-center gap-1 rounded-lg bg-purple-500 transition-all hover:size-fit hover:p-1.5">
+						<span class="hidden text-xs text-ink-white group-hover:block">Set Dynamic Value</span>
+						<FeatherIcon name="plus" class="size-3 text-ink-white" @click="open"></FeatherIcon>
+					</div>
+				</template>
+			</Dropdown>
+		</div>
+		<!-- <Dropdown
+			:options="[
+				{ label: 'Duplicate', onClick: () => store.duplicatePage(page), icon: 'copy' },
+				{ label: 'View in Desk', onClick: () => store.openInDesk(page), icon: 'arrow-up-right' },
+				{ label: 'Delete', onClick: () => store.deletePage(page), icon: 'trash' },
+			]"
+			size="sm"
+			placement="right">
+			<template v-slot="{ open }">
+				<div
+					class="group flex cursor-pointer items-center gap-1 rounded-lg bg-yellow-500 transition-all hover:size-fit hover:p-1.5">
+					<FeatherIcon name="plus" class="size-3 text-ink-white" @click="open"></FeatherIcon>
+					<span class="hidden text-xs text-ink-white group-hover:block">Set Dynamic Value</span>
+				</div>
+			</template>
+		</Dropdown> -->
 		<FormControl
 			:class="classes"
 			:type="type"
@@ -25,6 +59,7 @@
 import CrossIcon from "@/components/Icons/Cross.vue";
 import { useDebounceFn, useVModel } from "@vueuse/core";
 import { computed, useAttrs } from "vue";
+import { Dropdown } from "frappe-ui";
 
 const props = defineProps(["modelValue", "type", "hideClearButton"]);
 const emit = defineEmits(["update:modelValue", "input"]);
@@ -103,4 +138,10 @@ const triggerUpdate = useDebounceFn(($event: Event) => {
 		emit("update:modelValue", ($event.target as HTMLInputElement).value);
 	}
 }, 100);
+
+const canHaveDynamicValue = () => true;
+
+const getDynamicValue = () => {
+	// get from page data
+};
 </script>

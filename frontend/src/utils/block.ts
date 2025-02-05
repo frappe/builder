@@ -16,14 +16,6 @@ import {
 
 export type styleProperty = keyof CSSProperties | `__${string}`;
 
-type BlockDataKeyType = "key" | "attribute" | "style";
-
-export interface BlockDataKey {
-	key?: string;
-	type?: BlockDataKeyType;
-	property?: string;
-}
-
 class Block implements BlockOptions {
 	blockId: string;
 	children: Array<Block>;
@@ -47,6 +39,7 @@ class Block implements BlockOptions {
 	visibilityCondition?: string;
 	elementBeforeConversion?: string;
 	parentBlock: Block | null;
+	dynamicValues: Array<BlockDataKey>;
 	// @ts-expect-error
 	referenceComponent: Block | null;
 	customAttributes: BlockAttributeMap;
@@ -60,6 +53,7 @@ class Block implements BlockOptions {
 		this.referenceBlockId = options.referenceBlockId;
 		this.visibilityCondition = options.visibilityCondition;
 		this.parentBlock = options.parentBlock || null;
+		this.dynamicValues = options.dynamicValues || [];
 		if (this.extendedFromComponent) {
 			componentStore.loadComponent(this.extendedFromComponent);
 		}

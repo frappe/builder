@@ -1,3 +1,11 @@
+declare interface BlockDataKey {
+	key?: string;
+	type?: BlockDataKeyType;
+	property?: string;
+}
+
+declare type BlockDataKeyType = "key" | "attribute" | "style";
+
 declare type StyleValue = string | number | null | undefined;
 
 declare type styleProperty = keyof CSSProperties;
@@ -20,6 +28,7 @@ declare interface BlockOptions {
 	attributes?: BlockAttributeMap;
 	classes?: Array<string>;
 	children?: Array<Block | BlockOptions>;
+	dynamicValues?: Array<BlockDataKey>;
 	draggable?: boolean;
 	[key: string]: any;
 }
