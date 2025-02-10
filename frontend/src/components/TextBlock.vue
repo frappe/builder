@@ -22,31 +22,37 @@
 			}"
 			v-if="editor"
 			class="z-50 rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-ink-gray-9 shadow-2xl">
-			<div v-if="settingLink" class="flex">
-				<TextInput
-					v-model="textLink"
-					placeholder="https://example.com"
-					class="link-input !w-56 text-sm [&>input]:border-outline-gray-1 [&>input]:bg-surface-gray-2 [&>input]:text-ink-gray-8 [&>input]:hover:!border-outline-gray-2 [&>input]:hover:!bg-surface-gray-1 focus:[&>input]:border-outline-gray-3 focus:[&>input]:bg-surface-gray-1 focus:[&>input]:ring-outline-gray-3 [&>input]:focus-visible:bg-surface-gray-1"
-					@keydown.enter="
-						() => {
-							if (!linkInput) return;
-							setLink(linkInput.el.value);
-						}
-					"
-					ref="linkInput" />
-				<BuilderButton @click="() => setLink(linkInput?.el.value)" class="ml-1" variant="outline">
-					<FeatherIcon class="h-3 w-3" name="check" />
-				</BuilderButton>
-				<BuilderButton
-					@click="
-						() => {
-							textLink = '';
-							setLink(null);
-						}
-					"
-					class="ml-1">
-					<FeatherIcon class="h-3 w-3" name="x" />
-				</BuilderButton>
+			<div
+				v-if="settingLink"
+				class="flex flex-col gap-2 p-1"
+				v-on-click-outside="
+					() => {
+						nextTick(() => {
+							setLink(null, false);
+						});
+					}
+				">
+				<div class="flex">
+					<Input
+						type="text"
+						v-model="textLink"
+						placeholder="https://example.com"
+						class="link-input !w-56 text-sm"
+						@keydown.enter="
+							() => {
+								if (!linkInput) return;
+								const input = linkInput.$el.querySelector('input') as HTMLInputElement;
+								setLink(input.value);
+							}
+						"
+						ref="linkInput" />
+				</div>
+				<Input
+					type="checkbox"
+					:label="'Open in New Tab'"
+					class="text-xs"
+					v-model="openInNewTab"
+					@change="() => setLink(textLink, false)"></Input>
 			</div>
 			<div v-show="!settingLink" class="flex gap-1">
 				<button
@@ -135,6 +141,7 @@
 </template>
 
 <script setup lang="ts">
+import Input from "@/components/Controls/Input.vue";
 import useStore from "@/store";
 import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
@@ -147,7 +154,6 @@ import TextStyle from "@tiptap/extension-text-style";
 import StarterKit from "@tiptap/starter-kit";
 import { BubbleMenu, Editor, EditorContent, Extension } from "@tiptap/vue-3";
 import { vOnClickOutside } from "@vueuse/components";
-import { TextInput } from "frappe-ui";
 import { Plugin, PluginKey } from "prosemirror-state";
 import { Ref, computed, inject, nextTick, onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
 import StrikeThroughIcon from "./Icons/StrikeThrough.vue";
@@ -156,7 +162,8 @@ const store = useStore();
 const dataChanged = ref(false);
 const settingLink = ref(false);
 const textLink = ref("");
-const linkInput = ref(null) as Ref<typeof TextInput | null>;
+const openInNewTab = ref(false);
+const linkInput = ref(null) as Ref<typeof Input | null>;
 const component = ref(null) as Ref<HTMLElement | null>;
 const overlayElement = document.querySelector("#overlay") as HTMLElement;
 let editor: Ref<Editor | null> = ref(null);
@@ -338,15 +345,18 @@ const enableLinkInput = () => {
 	// check if link is already set on selection
 	const link = editor.value?.isActive("link") ? editor.value?.getAttributes("link").href : null;
 	textLink.value = link || "";
+	openInNewTab.value = editor.value?.isActive("link")
+		? editor.value?.getAttributes("link").target === "_blank"
+		: false;
 	nextTick(() => {
 		if (linkInput.value) {
-			const input = document.querySelector(".link-input") as HTMLInputElement;
+			const input = linkInput.value.$el.querySelector("input") as HTMLInputElement;
 			input.focus();
 		}
 	});
 };
 
-const setLink = (value: string | null) => {
+const setLink = (value: string | null, closeModal = true) => {
 	if (!value && !textLink.value) {
 		editor.value?.chain().focus().unsetLink().run();
 	} else {
@@ -357,12 +367,14 @@ const setLink = (value: string | null) => {
 			.focus()
 			.setLink({
 				href,
-				target: null,
+				target: openInNewTab.value ? "_blank" : "_self",
 			})
 			.run();
+	}
+	if (closeModal) {
+		settingLink.value = false;
 		textLink.value = "";
 	}
-	settingLink.value = false;
 };
 
 const setHeading = (level: 1 | 2 | 3) => {
