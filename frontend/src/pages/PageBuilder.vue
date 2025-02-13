@@ -33,7 +33,7 @@
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-surface-gray-2 p-10">
 				<template v-slot:header>
 					<div
-						class="absolute left-0 right-0 top-0 z-20 flex items-center justify-between bg-surface-white p-2 text-sm text-ink-gray-8">
+						class="absolute left-0 right-0 top-0 z-20 flex items-center justify-between bg-surface-white p-2 text-sm text-ink-gray-8 shadow-sm">
 						<div class="flex items-center gap-1 pl-2 text-xs">
 							<a @click="store.exitFragmentMode" class="cursor-pointer">Page</a>
 							<FeatherIcon name="chevron-right" class="h-3 w-3" />

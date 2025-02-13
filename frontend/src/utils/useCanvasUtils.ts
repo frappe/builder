@@ -169,7 +169,7 @@ export function useCanvasUtils(
 			});
 		}
 		const paddingX = 300;
-		const paddingY = 200;
+		const paddingY = 300;
 
 		await nextTick();
 		canvasBound.update();
