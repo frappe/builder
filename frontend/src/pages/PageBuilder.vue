@@ -12,7 +12,7 @@
 		<div>
 			<BuilderLeftPanel
 				v-show="store.showLeftPanel"
-				class="absolute bottom-0 left-0 top-[var(--toolbar-height)] z-20 border-r-[1px] border-outline-gray-2 bg-surface-white"></BuilderLeftPanel>
+				class="absolute bottom-0 left-0 top-[var(--toolbar-height)] z-[21] border-r-[1px] border-outline-gray-2 bg-surface-white"></BuilderLeftPanel>
 			<BuilderCanvas
 				ref="fragmentCanvas"
 				:key="store.fragmentData.block?.blockId"
@@ -34,7 +34,7 @@
 				<template v-slot:header>
 					<div
 						class="absolute left-0 right-0 top-0 z-20 flex items-center justify-between bg-surface-white p-2 text-sm text-ink-gray-8">
-						<div class="flex items-center gap-1 text-xs">
+						<div class="flex items-center gap-1 pl-2 text-xs">
 							<a @click="store.exitFragmentMode" class="cursor-pointer">Page</a>
 							<FeatherIcon name="chevron-right" class="h-3 w-3" />
 							{{ store.fragmentData.fragmentName }}
