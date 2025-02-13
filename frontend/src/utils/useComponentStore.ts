@@ -22,7 +22,8 @@ const useComponentStore = defineStore("componentStore", {
 			if (!block?.isExtendedFromComponent() && !componentName) {
 				return;
 			}
-			componentName = componentName || (block?.extendedFromComponent as string);
+			componentName =
+				componentName || (block?.extendedFromComponent as string) || (block?.isChildOfComponent as string);
 			await this.loadComponent(componentName);
 			const component = this.getComponent(componentName);
 			const componentBlock = this.getComponentBlock(componentName);
