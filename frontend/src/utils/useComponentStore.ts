@@ -71,7 +71,7 @@ const useComponentStore = defineStore("componentStore", {
 		getComponentBlock(componentName: string) {
 			return (
 				(this.componentMap.get(componentName) as Block) ||
-				getBlockInstance(getBlockTemplate("loading-component"))
+				getBlockInstance(getBlockTemplate("empty-component"))
 			);
 		},
 		async loadComponent(componentName: string) {
