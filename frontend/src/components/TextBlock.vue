@@ -95,7 +95,7 @@
 					<StrikeThroughIcon />
 				</button>
 				<button
-					v-show="!block.isHeader()"
+					v-show="!block.isHeader() && !block.isLink() && !block.isButton()"
 					@click="
 						() => {
 							if (!editor) return;
@@ -156,6 +156,7 @@ import { BubbleMenu, Editor, EditorContent, Extension } from "@tiptap/vue-3";
 import { vOnClickOutside } from "@vueuse/components";
 import { Plugin, PluginKey } from "prosemirror-state";
 import { Ref, computed, inject, nextTick, onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
+import { toast } from "vue-sonner";
 import StrikeThroughIcon from "./Icons/StrikeThrough.vue";
 
 const store = useStore();
@@ -336,7 +337,18 @@ if (!props.preview) {
 
 const handleKeydown = (e: KeyboardEvent) => {
 	if (e.key === "k" && e.metaKey) {
-		enableLinkInput();
+		const blockWarnings = {
+			isHeader: "You cannot make heading a link",
+			isLink: "You cannot add link inside a link block",
+			isButton: "You cannot add link inside a button block",
+		};
+
+		const blockType = Object.entries(blockWarnings).find(([type]) => props.block[type]());
+		if (blockType) {
+			toast.warning(blockType[1]);
+		} else {
+			enableLinkInput();
+		}
 	}
 };
 
