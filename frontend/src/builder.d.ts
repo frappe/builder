@@ -1,6 +1,6 @@
 declare type StyleValue = string | number | null | undefined;
 
-declare type styleProperty = keyof CSSProperties;
+declare type styleProperty = keyof CSSProperties | `__${string}`;
 
 declare interface BlockStyleMap {
 	[key: styleProperty]: StyleValue;

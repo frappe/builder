@@ -42,6 +42,8 @@
 					class="no-scrollbar overflow-auto"
 					ref="componentLayers"
 					:blocks="[fragmentCanvas?.getRootBlock()]"
+					:indent="5"
+					:adjustForRoot="false"
 					v-if="store.editingMode === 'fragment' && fragmentCanvas" />
 			</div>
 			<div v-show="store.leftPanelActiveTab === 'Code'">
