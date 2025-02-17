@@ -15,16 +15,40 @@
 						<div class="flex w-[90%] items-center gap-1">
 							<CSSIcon class="shrink-0" v-if="script.script_type === 'CSS'" />
 							<JavaScriptIcon class="shrink-0" v-if="script.script_type === 'JavaScript'" />
-							<span
-								class="truncate"
-								@blur="updateScriptName($event, script)"
-								@keydown.enter.stop.prevent="script.editable = false"
-								@dblclick.stop="script.editable = true"
-								:contenteditable="script.editable">
+							<EditableSpan
+								v-model="script.script_name"
+								:editable="script.editable"
+								:onChange="
+									async (newName) => {
+										await updateScriptName(newName, script);
+									}
+								"
+								class="w-full truncate">
 								{{ script.script_name }}
-							</span>
+							</EditableSpan>
 						</div>
-						<FeatherIcon name="trash" class="h-3 w-3" @click.stop="deleteScript(script.name)"></FeatherIcon>
+						<Dropdown
+							class="script-options"
+							placement="right"
+							v-if="activeScript === script"
+							:options="[
+								{
+									label: 'Rename',
+									onClick: () => {
+										script.editable = true;
+									},
+									icon: 'edit',
+								},
+								{
+									label: 'Delete Script',
+									onClick: () => deleteScript(script.name),
+									icon: 'trash',
+								},
+							]">
+							<template v-slot="{ open }">
+								<BuilderButton icon="more-horizontal" size="sm" variant="ghost" @click="open"></BuilderButton>
+							</template>
+						</Dropdown>
 					</a>
 					<div class="flex w-full gap-2">
 						<Dropdown
@@ -76,6 +100,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import EditableSpan from "@/components/EditableSpan.vue";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { createListResource, createResource, Dropdown } from "frappe-ui";
@@ -217,10 +242,9 @@ const deleteScript = (scriptName: string) => {
 	});
 };
 
-const updateScriptName = (ev: Event, script: attachedScript) => {
-	const target = ev.target as HTMLElement;
-	const newName = target.innerText.trim();
-	createResource({
+const updateScriptName = async (newName: string, script: attachedScript) => {
+	if (!newName) return;
+	return createResource({
 		url: "frappe.client.rename_doc",
 	})
 		.submit({
@@ -229,13 +253,14 @@ const updateScriptName = (ev: Event, script: attachedScript) => {
 			new_name: newName,
 		})
 		.then(async () => {
-			await attachedScriptResource.reload();
-			await clientScriptResource.reload();
-			attachedScriptResource.data?.forEach((script: attachedScript) => {
-				if (script.script_name === newName) {
-					selectScript(script);
-				}
-			});
+			attachedScriptResource.data = attachedScriptResource.data.map(
+				(s: { script_name: string; script: string }) => {
+					if (s.script_name === script.script_name) {
+						s.script_name = newName;
+					}
+					return s;
+				},
+			);
 		});
 };
 
@@ -264,5 +289,21 @@ defineExpose({ scriptEditor });
 :deep(.editor > .ace_editor) {
 	border-top-left-radius: 0;
 	border-top-right-radius: 0;
+}
+</style>
+<style>
+[id^="headlessui-menu-items"] {
+	@apply text-xs;
+	@apply min-w-28;
+	@apply rounded-md;
+}
+[id^="headlessui-menu-item"] {
+	@apply text-sm;
+}
+[id^="headlessui-menu-item"] button {
+	@apply h-6;
+}
+[id^="headlessui-menu-item"] svg {
+	@apply size-3;
 }
 </style>
