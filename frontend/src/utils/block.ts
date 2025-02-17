@@ -2,7 +2,7 @@ import useStore from "@/store";
 import useComponentStore from "@/utils/useComponentStore";
 import { Editor } from "@tiptap/vue-3";
 import { clamp } from "@vueuse/core";
-import { computed, CSSProperties, markRaw, nextTick, reactive } from "vue";
+import { computed, markRaw, nextTick, reactive } from "vue";
 import {
 	addPxToNumber,
 	dataURLtoFile,
@@ -13,8 +13,6 @@ import {
 	kebabToCamelCase,
 	uploadImage,
 } from "./helpers";
-
-export type styleProperty = keyof CSSProperties | `__${string}`;
 
 type BlockDataKeyType = "key" | "attribute" | "style";
 

@@ -23,7 +23,10 @@
 						}">
 						<FeatherIcon
 							:name="isExpanded(element) ? 'chevron-down' : 'chevron-right'"
-							class="ml-[-18px] h-3 w-3 text-ink-gray-4"
+							class="h-3 w-3 text-ink-gray-4"
+							:class="{
+								'ml-[-18px]': adjustForRoot,
+							}"
 							v-if="element.children && element.children.length && !element.isRoot() && element.isVisible()"
 							@click.stop="toggleExpanded(element)" />
 						<FeatherIcon
@@ -100,13 +103,20 @@ const props = defineProps({
 		type: Number,
 		default: 10,
 	},
+	adjustForRoot: {
+		type: Boolean,
+		default: true,
+	},
 });
 
 interface LayerBlock extends Block {
 	editable: boolean;
 }
 
-const childIndent = props.indent + 16;
+let childIndent = props.indent + 24;
+if (!props.adjustForRoot) {
+	childIndent = props.indent + 32;
+}
 
 const setBlockName = (ev: Event, block: LayerBlock) => {
 	const target = ev.target as HTMLElement;
