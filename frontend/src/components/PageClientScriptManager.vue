@@ -11,7 +11,7 @@
 							'font-medium text-ink-gray-8': activeScript === script,
 						}"
 						@click="selectScript(script)"
-						class="group flex items-center justify-between gap-1 text-sm last-of-type:mb-2">
+						class="group flex h-6 items-center justify-between gap-1 text-sm last-of-type:mb-2">
 						<div class="flex w-[90%] items-center gap-1">
 							<CSSIcon class="shrink-0" v-if="script.script_type === 'CSS'" />
 							<JavaScriptIcon class="shrink-0" v-if="script.script_type === 'JavaScript'" />
@@ -244,6 +244,7 @@ const deleteScript = (scriptName: string) => {
 
 const updateScriptName = async (newName: string, script: attachedScript) => {
 	if (!newName) return;
+	script.editable = false;
 	return createResource({
 		url: "frappe.client.rename_doc",
 	})
@@ -289,21 +290,5 @@ defineExpose({ scriptEditor });
 :deep(.editor > .ace_editor) {
 	border-top-left-radius: 0;
 	border-top-right-radius: 0;
-}
-</style>
-<style>
-[id^="headlessui-menu-items"] {
-	@apply text-xs;
-	@apply min-w-28;
-	@apply rounded-md;
-}
-[id^="headlessui-menu-item"] {
-	@apply text-sm;
-}
-[id^="headlessui-menu-item"] button {
-	@apply h-6;
-}
-[id^="headlessui-menu-item"] svg {
-	@apply size-3;
 }
 </style>
