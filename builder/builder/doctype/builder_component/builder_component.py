@@ -32,10 +32,9 @@ class BuilderComponent(Document):
 				clear_website_cache(page_doc.route)
 
 	def sync_component(self):
-		pages = frappe.get_all("Builder Page", filters={"published": 1}, fields=["name"])
+		pages = frappe.get_all("Builder Page", fields=["name"])
 		for page in pages:
 			page_doc = frappe.get_cached_doc("Builder Page", page.name)
-			print("checking page", page_doc.name, page_doc.is_component_used(self.component_id))
 			if page_doc.is_component_used(self.component_id):
 				ComponentSyncer(page_doc).sync_component(self)
 
@@ -141,41 +140,26 @@ class ComponentSyncer:
 				continue
 			if block.extendedFromComponent == component.component_id:
 				component_block = Block(**frappe.parse_json(component.block))
-				self._sync_single_block(block, block, component.name, component_block.children or [])
+				print("syncing block", component_block)
+				self._sync_single_block(block, component.name, component_block.children or [])
 			else:
 				self._sync_blocks(block.children or [], component)
 		blocks_dict = [block.as_dict() for block in blocks_list]
 		return frappe.as_json(blocks_dict)
 
 	def _sync_single_block(
-		self, parent: Block, block: Block, component_name: str, component_children: list[Block]
+		self, target_block: Block, component_name: str, component_children: list[Block]
 	) -> None:
 		"""Sync a single block with its component template"""
-		parent_children = parent.children or []
-
-		# Add new blocks
+		target_children = target_block.children or []
+		target_block.children = []
 		for index, component_child in enumerate(component_children):
-			if not self._find_component_block(component_child.blockId, parent_children):
+			block_component = self._find_component_block(component_child.blockId, target_children)
+			if block_component:
+				self._sync_single_block(block_component, component_name, component_child.children or [])
+			else:
 				block_component = self._create_component_block(component_child, component_name)
-				if not block.children:
-					block.children = []
-				block.children.insert(index, block_component)
-
-		# Remove deleted blocks
-		for index, child in enumerate(block.children or []):
-			component_child = next(
-				(c for c in component_children if c.blockId == child.referenceBlockId), None
-			)
-			if not component_child:
-				block.children.pop(index)
-
-		# Sync existing blocks recursively
-		for child in block.children or []:
-			component_child = next(
-				(c for c in component_children if c.blockId == child.referenceBlockId), None
-			)
-			if component_child:
-				self._sync_single_block(parent, child, component_name, component_child.children or [])
+			target_block.children.insert(index, block_component)
 
 	@staticmethod
 	def _parse_blocks(blocks: str) -> list[Block]:
