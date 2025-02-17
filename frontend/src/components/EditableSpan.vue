@@ -11,22 +11,19 @@
 
 <script lang="ts" setup>
 import { nextTick, ref, watch } from "vue";
+import { toast } from "vue-sonner";
 
 const props = withDefaults(
 	defineProps<{
 		modelValue?: string;
 		editable?: boolean;
+		onChange?: (value: string) => Promise<void>;
 	}>(),
 	{
 		modelValue: "",
 		editable: false,
 	},
 );
-
-const emit = defineEmits<{
-	(e: "update:modelValue", value: string): void;
-	(e: "change", value: string): void;
-}>();
 
 const editMode = ref(false);
 const editableRef = ref<HTMLElement>();
@@ -40,11 +37,22 @@ function handleBlur() {
 	const text = editableRef.value?.innerText.trim() ?? "";
 	if (text === props.modelValue) return;
 	if (!text) {
-		editableRef.value!.innerText = props.modelValue!;
+		editableRef.value!.innerText = props.modelValue;
+		console.log("text is empty");
 		return;
 	}
-	emit("update:modelValue", text);
-	emit("change", text);
+	if (props.onChange) {
+		props.onChange(text).catch((e) => {
+			let error_message = e.exc.split("\n").slice(-2)[0];
+			if (error_message.includes("Duplicate") || error_message.includes("select another name")) {
+				error_message = "Name already exists";
+			}
+			toast.error("Failed to rename", {
+				description: error_message,
+			});
+			editableRef.value!.innerText = props.modelValue;
+		});
+	}
 }
 
 function handleKeydown(e: KeyboardEvent) {
