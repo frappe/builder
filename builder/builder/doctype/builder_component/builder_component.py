@@ -74,7 +74,7 @@ class Block:
 	element: str | None = None
 	draggable: bool = False
 	innerText: str | None = None
-	innerHtml: str | None = None
+	innerHTML: str | None = None
 	extendedFromComponent: str | None = None
 	originalElement: str | None = None
 	isChildOfComponent: str | None = None
@@ -105,7 +105,7 @@ class Block:
 			"element": self.element,
 			"draggable": self.draggable,
 			"innerText": self.innerText,
-			"innerHtml": self.innerHtml,
+			"innerHTML": self.innerHTML,
 			"extendedFromComponent": self.extendedFromComponent,
 			"originalElement": self.originalElement,
 			"isChildOfComponent": self.isChildOfComponent,
@@ -196,7 +196,7 @@ class ComponentSyncer:
 	@staticmethod
 	def _reset_block_styles(block: Block) -> None:
 		"""Reset block styles to defaults"""
-		block.innerHtml = None
+		block.innerHTML = None
 		block.element = None
 		block.baseStyles = dict()
 		block.rawStyles = dict()
