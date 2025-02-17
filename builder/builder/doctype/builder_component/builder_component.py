@@ -161,6 +161,14 @@ class ComponentSyncer:
 					block.children = []
 				block.children.insert(index, block_component)
 
+		# Remove deleted blocks
+		for index, child in enumerate(block.children or []):
+			component_child = next(
+				(c for c in component_children if c.blockId == child.referenceBlockId), None
+			)
+			if not component_child:
+				block.children.pop(index)
+
 		# Sync existing blocks recursively
 		for child in block.children or []:
 			component_child = next(
