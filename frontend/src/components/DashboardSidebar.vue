@@ -37,7 +37,12 @@
 					<EditableSpan
 						v-model="project.folder_name"
 						:editable="renamingFolder === project.folder_name"
-						:onChange="renameFolder"
+						:onChange="
+							async (newName) => {
+								await renameFolder(newName, project);
+								renamingFolder = '';
+							}
+						"
 						class="w-full">
 						{{ project.folder_name }}
 					</EditableSpan>
@@ -95,25 +100,24 @@ const setFolderActive = (folderName: string) => {
 	store.activeFolder = folderName;
 };
 
-const renameFolder = async (folderName: string) => {
-	if (!folderName) return;
+const renameFolder = async (newFolderName: string, targetFolder: BuilderProjectFolder) => {
+	if (!newFolderName) return;
 	return createResource({
 		url: "frappe.client.rename_doc",
 	})
 		.submit({
 			doctype: "Builder Project Folder",
-			old_name: store.activeFolder,
-			new_name: folderName,
+			old_name: targetFolder.folder_name,
+			new_name: newFolderName,
 		})
 		.then(() => {
 			builderProjectFolder.data = builderProjectFolder.data.map((folder: BuilderProjectFolder) => {
 				if (folder.folder_name === store.activeFolder) {
-					folder.folder_name = folderName;
+					folder.folder_name = newFolderName;
 				}
 				return folder;
 			});
-			renamingFolder.value = "";
-			setFolderActive(folderName);
+			setFolderActive(newFolderName);
 		});
 };
 
