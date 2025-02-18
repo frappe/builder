@@ -496,7 +496,7 @@ const useStore = defineStore("store", {
 		async waitTillPageIsSaved() {
 			// small delay so that all the save requests are triggered
 			if (!this.savingPage) {
-				await new Promise((resolve) => setTimeout(resolve, 250));
+				await new Promise((resolve) => setTimeout(resolve, 300));
 			}
 			return new Promise((resolve) => {
 				const interval = setInterval(() => {
