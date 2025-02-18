@@ -176,6 +176,11 @@ class ComponentSyncer:
 		block.isChildOfComponent = component_name
 		block.referenceBlockId = component_child.blockId
 		reset_block_styles(block)
+
+		# Recursively create children
+		for index, child in enumerate(block.children or []):
+			block.children[index] = ComponentSyncer.create_component_block(child, component_name)
+
 		return block
 
 
@@ -191,7 +196,3 @@ def reset_block_styles(block: Block) -> None:
 	block.customAttributes = dict()
 	block.classes = []
 	block.children = block.children or []
-
-	for child in block.children:
-		if not child.extendedFromComponent:
-			reset_block_styles(child)
