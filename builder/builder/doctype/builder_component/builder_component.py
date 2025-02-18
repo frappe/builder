@@ -20,8 +20,6 @@ class BuilderComponent(Document):
 
 	def on_update(self):
 		self.queue_action("clear_page_cache")
-		print("on update")
-		self.sync_component()
 		self.update_exported_component()
 
 	def clear_page_cache(self):
@@ -99,7 +97,7 @@ class Block:
 			"tabletStyles": self.tabletStyles,
 			"attributes": self.attributes,
 			"classes": self.classes,
-			"dataKey": self.dataKey.__dict__ if self.dataKey else None,
+			"dataKey": self.dataKey,
 			"blockName": self.blockName,
 			"element": self.element,
 			"draggable": self.draggable,
@@ -123,16 +121,16 @@ class ComponentSyncer:
 	def sync_component(self, component) -> None:
 		"""Sync a component across draft and published blocks"""
 		if self._page_doc.draft_blocks:
-			self._page_doc.draft_blocks = self._sync_blocks(self._page_doc.draft_blocks, component)
+			self._page_doc.draft_blocks = self.sync_blocks(self._page_doc.draft_blocks, component)
 		if self._page_doc.blocks:
-			self._page_doc.blocks = self._sync_blocks(self._page_doc.blocks, component)
+			self._page_doc.blocks = self.sync_blocks(self._page_doc.blocks, component)
 		self._page_doc.save()
 
-	def _sync_blocks(self, blocks: str | list[Block], component) -> str:
+	def sync_blocks(self, blocks: str | list[Block], component) -> str:
 		"""Sync component changes in a blocks JSON string"""
 		print("sync component instance")
 		if isinstance(blocks, str):
-			blocks_list = self._parse_blocks(blocks)
+			blocks_list = self.parse_blocks(blocks)
 		else:
 			blocks_list = blocks
 		for block in blocks_list:
@@ -141,63 +139,59 @@ class ComponentSyncer:
 			if block.extendedFromComponent == component.component_id:
 				component_block = Block(**frappe.parse_json(component.block))
 				print("syncing block", component_block)
-				self._sync_single_block(block, component.name, component_block.children or [])
+				self.sync_single_block(block, component.name, component_block.children or [])
 			else:
-				self._sync_blocks(block.children or [], component)
-		blocks_dict = [block.as_dict() for block in blocks_list]
+				self.sync_blocks(block.children or [], component)
+		blocks_dict = [block.as_dict() if isinstance(block, Block) else block for block in blocks_list]
 		return frappe.as_json(blocks_dict)
 
-	def _sync_single_block(
-		self, target_block: Block, component_name: str, component_children: list[Block]
-	) -> None:
+	def sync_single_block(self, target_block: Block, component_name: str, component_children: list[Block]):
 		"""Sync a single block with its component template"""
 		target_children = target_block.children or []
 		target_block.children = []
 		for index, component_child in enumerate(component_children):
-			block_component = self._find_component_block(component_child.blockId, target_children)
+			block_component = self.find_component_block(component_child.blockId, target_children)
 			if block_component:
-				self._sync_single_block(block_component, component_name, component_child.children or [])
+				self.sync_single_block(block_component, component_name, component_child.children or [])
 			else:
-				block_component = self._create_component_block(component_child, component_name)
+				block_component = self.create_component_block(component_child, component_name)
 			target_block.children.insert(index, block_component)
 
-	@staticmethod
-	def _parse_blocks(blocks: str) -> list[Block]:
+	def parse_blocks(blocks: str) -> list[Block]:
 		"""Parse blocks JSON into Block objects"""
 		blocks_list = frappe.parse_json(blocks)
 		if not isinstance(blocks_list, list):
 			blocks_list = [blocks_list]
 		return [Block(**b) if b else b for b in blocks_list]
 
-	@staticmethod
-	def _find_component_block(block_id: str, children: list[Block]) -> Block | None:
+	def find_component_block(block_id: str, children: list[Block]) -> Block | None:
 		"""Find a component block by ID in children"""
 		return next((c for c in children if c.referenceBlockId == block_id), None)
 
-	@staticmethod
-	def _create_component_block(component_child: Block, component_name: str) -> Block:
+	def create_component_block(component_child: Block, component_name: str) -> Block:
 		"""Create a new block from component template"""
 		print("creating new block")
 		block = copy.deepcopy(component_child)
 		block.blockId = frappe.generate_hash(length=8)
 		block.isChildOfComponent = component_name
 		block.referenceBlockId = component_child.blockId
-		ComponentSyncer._reset_block_styles(block)
+		reset_block_styles(block)
 		return block
 
-	@staticmethod
-	def _reset_block_styles(block: Block) -> None:
-		"""Reset block styles to defaults"""
-		block.innerHTML = None
-		block.element = None
-		block.baseStyles = dict()
-		block.rawStyles = dict()
-		block.mobileStyles = dict()
-		block.tabletStyles = dict()
-		block.attributes = dict()
-		block.customAttributes = dict()
-		block.classes = []
 
-		for child in block.children or []:
-			if not child.extendedFromComponent:
-				ComponentSyncer._reset_block_styles(child)
+def reset_block_styles(block: Block) -> None:
+	"""Reset block styles to defaults"""
+	block.innerHTML = None
+	block.element = None
+	block.baseStyles = dict()
+	block.rawStyles = dict()
+	block.mobileStyles = dict()
+	block.tabletStyles = dict()
+	block.attributes = dict()
+	block.customAttributes = dict()
+	block.classes = []
+	block.children = block.children or []
+
+	for child in block.children:
+		if not child.extendedFromComponent:
+			reset_block_styles(child)

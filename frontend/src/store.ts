@@ -102,7 +102,7 @@ const useStore = defineStore("store", {
 			placeholder: <HTMLElement | null>null,
 			parentBlock: <Block | null>null,
 			index: <number | null>null,
-		}
+		},
 	}),
 	actions: {
 		clearBlocks() {
@@ -410,7 +410,7 @@ const useStore = defineStore("store", {
 		},
 		savePage() {
 			this.pageBlocks = this.getPageBlocks() as Block[];
-			const pageData = JSON.stringify(this.pageBlocks.map((block) => getCopyWithoutParent(block)));
+			const pageData = JSON.stringify(this.pageBlocks.map((block: Block) => getCopyWithoutParent(block)));
 
 			const args = {
 				name: this.selectedPage,
@@ -562,7 +562,7 @@ const useStore = defineStore("store", {
 				const ghostScale = this.activeCanvas?.canvasProps.scale;
 
 				// Clone the entire draggable element
-				const dragElement = (ev.target as HTMLElement)
+				const dragElement = ev.target as HTMLElement;
 				if (!dragElement) return;
 				const ghostDiv = document.createElement("div");
 				const ghostElement = dragElement.cloneNode(true) as HTMLElement;
@@ -600,9 +600,9 @@ const useStore = defineStore("store", {
 				placeholder: null,
 				parentBlock: null,
 				index: null,
-			}
-			this.isDragging = false
-			this.isDropping = false
+			};
+			this.isDragging = false;
+			this.isDropping = false;
 		},
 		insertDropPlaceholder() {
 			// append placeholder component to the dom directly
@@ -619,11 +619,11 @@ const useStore = defineStore("store", {
 			return this.dropTarget.placeholder;
 		},
 		removeDropPlaceholder() {
-			const placeholder = document.getElementById("placeholder")
+			const placeholder = document.getElementById("placeholder");
 			if (placeholder) {
-				placeholder.remove()
+				placeholder.remove();
 			}
-		}
+		},
 	},
 });
 
