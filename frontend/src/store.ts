@@ -19,6 +19,7 @@ import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
 import {
 	confirm,
+	generateId,
 	getBlockCopy,
 	getBlockInstance,
 	getBlockString,
@@ -75,6 +76,7 @@ const useStore = defineStore("store", {
 		activePage: <BuilderPage | null>null,
 		savingPage: false,
 		realtime: new RealTimeHandler(),
+		saveId: null,
 		viewers: <UserInfo[]>[],
 		blockTemplateMap: <Map<string, BlockTemplate>>new Map(),
 		activeFolder: useStorage("activeFolder", ""),
@@ -411,7 +413,10 @@ const useStore = defineStore("store", {
 		savePage() {
 			this.pageBlocks = this.getPageBlocks() as Block[];
 			const pageData = JSON.stringify(this.pageBlocks.map((block: Block) => getCopyWithoutParent(block)));
+			const saveId = generateId();
 
+			// more save requests can be triggered till the first one is completed
+			this.saveId = saveId;
 			const args = {
 				name: this.selectedPage,
 				draft_blocks: pageData,
@@ -422,7 +427,10 @@ const useStore = defineStore("store", {
 					this.activePage = page;
 				})
 				.finally(() => {
-					this.savingPage = false;
+					if (this.saveId === saveId) {
+						this.saveId = null;
+						this.savingPage = false;
+					}
 					this.activeCanvas?.toggleDirty(false);
 				});
 		},
@@ -487,7 +495,9 @@ const useStore = defineStore("store", {
 		},
 		async waitTillPageIsSaved() {
 			// small delay so that all the save requests are triggered
-			await new Promise((resolve) => setTimeout(resolve, 100));
+			if (!this.savingPage) {
+				await new Promise((resolve) => setTimeout(resolve, 300));
+			}
 			return new Promise((resolve) => {
 				const interval = setInterval(() => {
 					if (!this.savingPage) {
