@@ -471,7 +471,10 @@ function throttle<T extends (...args: any[]) => void>(func: T, wait: number = 10
 }
 
 function isBlock(e: MouseEvent) {
-	return e.target instanceof HTMLElement && e.target.closest(".__builder_component__");
+	return (
+		(e.target instanceof HTMLElement || e.target instanceof SVGElement) &&
+		e.target.closest(".__builder_component__")
+	);
 }
 
 type BlockInfo = {
