@@ -80,7 +80,7 @@
 import LoadingIcon from "@/components/Icons/Loading.vue";
 import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
 import Block from "@/utils/block";
-import { getBlockCopy, isCtrlOrCmd } from "@/utils/helpers";
+import { getBlockCopy, getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
 import { useBlockEventHandlers } from "@/utils/useBlockEventHandlers";
 import { useBlockSelection } from "@/utils/useBlockSelection";
 import { useCanvasDropZone } from "@/utils/useCanvasDropZone";
@@ -213,6 +213,38 @@ const handleClick = (ev: MouseEvent) => {
 	}
 };
 
+function searchBlock(searchTerm: string, targetBlock: null | Block) {
+	// find nearest block to the search term
+	// convert block to string and search for the term
+	// if found, return the nearest block
+	// else return null
+	if (!targetBlock) {
+		targetBlock = getRootBlock();
+	}
+	console.log("searching block", targetBlock);
+	const blockObject = getBlockObject(targetBlock);
+	const children = blockObject.children || [];
+	delete blockObject.children;
+	let blockId = "";
+
+	if (JSON.stringify(blockObject).toLowerCase().includes(searchTerm.toLowerCase())) {
+		blockId = blockObject.blockId as string;
+	}
+
+	if (blockId) {
+		const block = findBlock(blockId);
+		if (block) {
+			console.log("found block", block);
+			return scrollBlockIntoView(block);
+		}
+	} else {
+		for (const child of children) {
+			return searchBlock(searchTerm, child);
+		}
+	}
+	return null;
+}
+
 watch(
 	() => block,
 	() => {
@@ -268,6 +300,7 @@ defineExpose({
 	removeBlock,
 	selectBlockRange,
 	resizingBlock,
+	searchBlock,
 });
 
 function selectBreakpoint(ev: MouseEvent, breakpoint: BreakpointConfig) {
