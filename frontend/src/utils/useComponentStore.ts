@@ -53,7 +53,12 @@ const useComponentStore = defineStore("componentStore", {
 										});
 										await toast.promise(componentResource.promise, {
 											loading: "Syncing component in all the pages...",
-											success: () => "Component synced in all the pages!",
+											success: () => {
+												store.fetchActivePage().then(() => {
+													store.setPage(store.activePage?.name as string);
+												});
+												return "Component synced in all the pages!";
+											},
 											error: () => "Error syncing component in all the pages!",
 										});
 									},
