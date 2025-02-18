@@ -128,7 +128,6 @@ class ComponentSyncer:
 
 	def sync_blocks(self, blocks: str | list[Block], component) -> str:
 		"""Sync component changes in a blocks JSON string"""
-		print("sync component instance")
 		if isinstance(blocks, str):
 			blocks_list = self.parse_blocks(blocks)
 		else:
@@ -138,7 +137,6 @@ class ComponentSyncer:
 				continue
 			if block.extendedFromComponent == component.component_id:
 				component_block = Block(**frappe.parse_json(component.block))
-				print("syncing block", component_block)
 				self.sync_single_block(block, component.name, component_block.children or [])
 			else:
 				self.sync_blocks(block.children or [], component)
@@ -170,7 +168,6 @@ class ComponentSyncer:
 
 	def create_component_block(component_child: Block, component_name: str) -> Block:
 		"""Create a new block from component template"""
-		print("creating new block")
 		block = copy.deepcopy(component_child)
 		block.blockId = frappe.generate_hash(length=8)
 		block.isChildOfComponent = component_name
