@@ -4,6 +4,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import get_files_path
+from frappe.utils.caching import redis_cache
 
 
 class BuilderSettings(Document):
@@ -84,14 +85,18 @@ def replace_component(target_component: str, replace_with: str, filters=None):
 
 
 @frappe.whitelist()
+@redis_cache()
 def get_component_usage_count(component_id: str, filters=None):
-	return len(
-		frappe.get_all(
-			"Builder Page",
-			filters=filters,
-			or_filters={
-				"blocks": ["like", f"%{component_id}%"],
-				"draft_blocks": ["like", f"%{component_id}%"],
-			},
-		)
+	pages = frappe.get_all(
+		"Builder Page",
+		filters=filters,
+		fields=["name", "page_title", "route", "preview"],
+		or_filters={
+			"blocks": ["like", f"%{component_id}%"],
+			"draft_blocks": ["like", f"%{component_id}%"],
+		},
 	)
+	return {
+		"count": len(pages),
+		"pages": pages,
+	}
