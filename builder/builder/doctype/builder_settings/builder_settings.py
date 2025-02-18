@@ -57,7 +57,7 @@ def get_components():
 
 
 @frappe.whitelist()
-def replace_component(target_component: str, replace_with: str):
+def replace_component(target_component: str, replace_with: str, filters=None):
 	if not target_component or not replace_with:
 		return
 	# check permissions
@@ -72,6 +72,7 @@ def replace_component(target_component: str, replace_with: str):
 	pages = frappe.get_all(
 		"Builder Page",
 		fields=["name"],
+		filters=filters,
 		or_filters={
 			"blocks": ["like", f"%{target_component}%"],
 			"draft_blocks": ["like", f"%{target_component}%"],
@@ -83,10 +84,11 @@ def replace_component(target_component: str, replace_with: str):
 
 
 @frappe.whitelist()
-def get_component_usage_count(component_id: str):
+def get_component_usage_count(component_id: str, filters=None):
 	return len(
 		frappe.get_all(
 			"Builder Page",
+			filters=filters,
 			or_filters={
 				"blocks": ["like", f"%{component_id}%"],
 				"draft_blocks": ["like", f"%{component_id}%"],
