@@ -6,7 +6,7 @@
 			</keep-alive>
 		</router-view>
 		<UseDark attribute="data-theme"></UseDark>
-		<Toaster :theme="isDark ? 'dark' : 'light'" richColors />
+		<Toaster :theme="isDark ? 'dark' : 'light'" richColors closeButton />
 		<Dialogs></Dialogs>
 	</div>
 </template>

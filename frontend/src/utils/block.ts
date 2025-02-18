@@ -1000,6 +1000,7 @@ function resetBlock(
 		block.attributes = {};
 		block.customAttributes = {};
 		block.classes = [];
+		block.dataKey = null;
 	}
 
 	if (resetChildren) {
