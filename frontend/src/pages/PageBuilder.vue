@@ -167,8 +167,8 @@ watch(space, (value) => {
 	}
 });
 
-function saveAndExitFragmentMode(e: Event) {
-	store.fragmentData.saveAction?.(fragmentCanvas.value?.getRootBlock());
+async function saveAndExitFragmentMode(e: Event) {
+	await store.fragmentData.saveAction?.(fragmentCanvas.value?.getRootBlock());
 	fragmentCanvas.value?.toggleDirty(false);
 	store.exitFragmentMode(e);
 }

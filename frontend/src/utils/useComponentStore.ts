@@ -3,8 +3,8 @@ import useStore from "@/store";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { alert, getBlockInstance, getBlockObject } from "@/utils/helpers";
-import { createDocumentResource } from "frappe-ui";
+import { alert, confirm, getBlockInstance, getBlockObject } from "@/utils/helpers";
+import { createDocumentResource, createResource } from "frappe-ui";
 import { defineStore } from "pinia";
 import { markRaw } from "vue";
 import { toast } from "vue-sonner";
@@ -30,20 +30,47 @@ const useComponentStore = defineStore("componentStore", {
 			const store = useStore();
 			store.editOnCanvas(
 				componentBlock,
-				(block: Block) => {
-					webComponent.setValue
-						.submit({
-							name: componentName,
-							block: getBlockObject(block),
-						})
-						.then((data: BuilderComponent) => {
-							this.setComponentMap(data);
-							toast.success("Component saved!");
-						});
-				},
+				(block: Block) => this.saveComponent(block, componentName),
 				"Save Component",
 				component.component_name,
 			);
+		},
+		saveComponent(block: Block, componentName: string) {
+			const store = useStore();
+			return webComponent.setValue
+				.submit({
+					name: componentName,
+					block: getBlockObject(block),
+				})
+				.then(async (data: BuilderComponent) => {
+					this.setComponentMap(data);
+					toast.success("Component saved!", {
+						duration: 5000,
+						action: {
+							label: "Sync in all pages",
+							onClick: async () => {
+								const componentResource = createResource({
+									url: "builder.api.sync_component",
+									method: "POST",
+									params: {
+										component_id: data.name,
+									},
+									auto: true,
+								});
+								await toast.promise(componentResource.promise, {
+									loading: "Syncing component in all the pages...",
+									success: () => {
+										store.fetchActivePage().then(() => {
+											store.setPage(store.activePage?.name as string);
+										});
+										return "Component synced in all the pages!";
+									},
+									error: () => "Error syncing component in all the pages!",
+								});
+							},
+						},
+					});
+				});
 		},
 		isComponentUsed(componentName: string) {
 			// TODO: Refactor or reduce complexity

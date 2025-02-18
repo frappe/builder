@@ -237,6 +237,7 @@ export function useCanvasUtils(
 		}
 		if (block.isChildOfComponentBlock()) {
 			block.toggleVisibility(false);
+			return;
 		}
 		const parentBlock = block.parentBlock;
 		if (!parentBlock) {
