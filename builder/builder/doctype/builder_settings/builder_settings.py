@@ -61,7 +61,7 @@ def replace_component(target_component: str, replace_with: str):
 	if not target_component or not replace_with:
 		return
 	# check permissions
-	if not frappe.has_permission("Builder Component", target_component):
+	if not frappe.has_permission("Builder Page", ptype="write"):
 		frappe.throw(_("You don't have permission to access this component"), frappe.PermissionError)
 
 	# check if the replace_with component exists
