@@ -1,6 +1,7 @@
 import os
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 from frappe.utils import get_files_path
 
@@ -47,3 +48,35 @@ class BuilderSettings(Document):
 def get_website_user_home_page(session_user=None):
 	home_page = frappe.get_cached_value("Builder Settings", None, "home_page")
 	return home_page
+
+
+@frappe.whitelist()
+def get_components():
+	# in label value format
+	return frappe.get_all("Builder Component", fields=["name as value", "component_name as label"])
+
+
+@frappe.whitelist()
+def replace_component(target_component: str, replace_with: str):
+	if not target_component or not replace_with:
+		return
+	# check permissions
+	if not frappe.has_permission("Builder Component", target_component):
+		frappe.throw(_("You don't have permission to access this component"), frappe.PermissionError)
+
+	# check if the replace_with component exists
+	if not frappe.db.exists("Builder Component", replace_with):
+		frappe.throw(_("The component you are trying to replace with does not exist"))
+
+	# go through all the pages and replace the old component with the new component
+	pages = frappe.get_all(
+		"Builder Page",
+		fields=["name"],
+		or_filters={
+			"blocks": ["like", f"%{target_component}%"],
+			"draft_blocks": ["like", f"%{target_component}%"],
+		},
+	)
+	for page in pages:
+		doc = frappe.get_doc("Builder Page", page.name)
+		doc.replace_component(target_component, replace_with)
