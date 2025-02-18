@@ -33,6 +33,7 @@ const useComponentStore = defineStore("componentStore", {
 				(block: Block) => this.saveComponent(block, componentName),
 				"Save Component",
 				component.component_name,
+				component.name,
 			);
 		},
 		saveComponent(block: Block, componentName: string) {

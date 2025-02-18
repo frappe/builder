@@ -76,7 +76,7 @@ const useStore = defineStore("store", {
 		activePage: <BuilderPage | null>null,
 		savingPage: false,
 		realtime: new RealTimeHandler(),
-		saveId: null,
+		saveId: null as string | null,
 		viewers: <UserInfo[]>[],
 		blockTemplateMap: <Map<string, BlockTemplate>>new Map(),
 		activeFolder: useStorage("activeFolder", ""),
@@ -533,13 +533,14 @@ const useStore = defineStore("store", {
 			saveAction: (block: Block) => void,
 			saveActionLabel: string = "Save",
 			fragmentName?: string,
+			fragmentId?: string,
 		) {
 			this.fragmentData = {
 				block,
 				saveAction,
 				saveActionLabel,
 				fragmentName: fragmentName || block.getBlockDescription(),
-				fragmentId: block.blockId,
+				fragmentId: fragmentId || block.blockId,
 			};
 			this.editingMode = "fragment";
 		},

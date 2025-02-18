@@ -225,7 +225,7 @@ class Block implements BlockOptions {
 	}
 	getBlockDescription() {
 		if (this.extendedFromComponent) {
-			return this.getComponentBlockDescription();
+			return this.getComponentBlockDescription() || "";
 		}
 		if (this.isHTML()) {
 			const innerHTML = this.getInnerHTML() || "";
@@ -236,7 +236,7 @@ class Block implements BlockOptions {
 				return "raw";
 			}
 		}
-		let description = this.blockName || this.originalElement || this.getElement();
+		let description = this.blockName || this.originalElement || this.getElement() || "";
 		if (this.getTextContent() && !this.blockName) {
 			description += " | " + this.getTextContent();
 		}
@@ -286,7 +286,7 @@ class Block implements BlockOptions {
 	setStyle(style: styleProperty, value: StyleValue) {
 		const store = useStore();
 		let styleObj = this.baseStyles;
-		style = kebabToCamelCase(style) as styleProperty;
+		style = kebabToCamelCase(style as string) as styleProperty;
 		if (store.activeBreakpoint === "mobile") {
 			styleObj = this.mobileStyles;
 		} else if (store.activeBreakpoint === "tablet") {
@@ -313,7 +313,7 @@ class Block implements BlockOptions {
 		delete this.tabletStyles[style];
 	}
 	setBaseStyle(style: styleProperty, value: StyleValue) {
-		style = kebabToCamelCase(style) as styleProperty;
+		style = kebabToCamelCase(style as string) as styleProperty;
 		this.baseStyles[style] = value;
 	}
 	getStyle(style: styleProperty) {
