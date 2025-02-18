@@ -6,12 +6,12 @@
 			:group="{ name: 'block-tree' }"
 			item-key="blockId"
 			@add="updateParent"
-			:disabled="blocks.length && (blocks[0].isRoot() || blocks[0].isChildOfComponentBlock())">
+			:disabled="disableDraggable">
 			<template #item="{ element }">
 				<div
 					:data-block-layer-id="element.blockId"
 					:title="element.blockId"
-					class="min-w-24 cursor-pointer overflow-hidden rounded border border-transparent bg-surface-white bg-opacity-50 text-base text-ink-gray-7"
+					class="min-w-24 cursor-pointer select-none overflow-hidden rounded border border-transparent bg-surface-white bg-opacity-50 text-base text-ink-gray-7"
 					@click.stop="selectBlock(element, $event)"
 					@mouseover.stop="store.hoveredBlock = element.blockId"
 					@mouseleave.stop="store.hoveredBlock = null">
@@ -68,7 +68,11 @@
 						</span>
 					</span>
 					<div v-if="canShowChildLayer(element)">
-						<BlockLayers :blocks="element.children" :ref="childLayer" :indent="childIndent" />
+						<BlockLayers
+							:blocks="element.children"
+							:ref="childLayer"
+							:indent="childIndent"
+							:disable-draggable="element.children.length && element.children[0].isChildOfComponentBlock()" />
 					</div>
 				</div>
 			</template>
@@ -106,6 +110,10 @@ const props = defineProps({
 	adjustForRoot: {
 		type: Boolean,
 		default: true,
+	},
+	disableDraggable: {
+		type: Boolean,
+		default: false,
 	},
 });
 
