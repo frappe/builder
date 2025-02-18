@@ -39,7 +39,7 @@ const useComponentStore = defineStore("componentStore", {
 						.then(async (data: BuilderComponent) => {
 							this.setComponentMap(data);
 							toast.success("Component saved!", {
-								duration: 2000,
+								duration: 5000,
 								action: {
 									label: "Sync in all pages",
 									onClick: async () => {
