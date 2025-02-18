@@ -80,3 +80,16 @@ def replace_component(target_component: str, replace_with: str):
 	for page in pages:
 		doc = frappe.get_doc("Builder Page", page.name)
 		doc.replace_component(target_component, replace_with)
+
+
+@frappe.whitelist()
+def get_component_usage_count(component_id: str):
+	return len(
+		frappe.get_all(
+			"Builder Page",
+			or_filters={
+				"blocks": ["like", f"%{component_id}%"],
+				"draft_blocks": ["like", f"%{component_id}%"],
+			},
+		)
+	)

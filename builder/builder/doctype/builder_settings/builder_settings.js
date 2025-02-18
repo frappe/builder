@@ -19,6 +19,26 @@ frappe.ui.form.on("Builder Settings", {
                 fieldtype: "Select",
                 options: components,
                 reqd: 1,
+                onchange: function () {
+                  frappe.call({
+                    method:
+                      "builder.builder.doctype.builder_settings.builder_settings.get_component_usage_count",
+                    args: {
+                      component_id: this.get_value(),
+                    },
+                    callback: (r) => {
+                      const field = d.get_field("target_component");
+                      const count = r.message;
+                      const message =
+                        count === 0
+                          ? __("Not used in any page")
+                          : count === 1
+                            ? __("Used in 1 page")
+                            : __("Used in {0} pages", [count]);
+                      field.set_description(message);
+                    },
+                  });
+                },
               },
               {
                 fieldname: "replace_with",

@@ -58,14 +58,14 @@ class BlockDataKey:
 
 @dataclass
 class Block:
-	blockId: str
-	children: list["Block"]
-	baseStyles: dict
-	rawStyles: dict
-	mobileStyles: dict
-	tabletStyles: dict
-	attributes: dict
-	classes: list[str]
+	blockId: str = ""
+	children: list["Block"] = None
+	baseStyles: dict = None
+	rawStyles: dict = None
+	mobileStyles: dict = None
+	tabletStyles: dict = None
+	attributes: dict = None
+	classes: list[str] = None
 	dataKey: BlockDataKey | None = None
 	blockName: str | None = None
 	element: str | None = None
@@ -155,6 +155,7 @@ class ComponentSyncer:
 				block_component = self.create_component_block(component_child, component_name)
 			target_block.children.insert(index, block_component)
 
+	@staticmethod
 	def parse_blocks(blocks: str) -> list[Block]:
 		"""Parse blocks JSON into Block objects"""
 		blocks_list = frappe.parse_json(blocks)
@@ -162,10 +163,12 @@ class ComponentSyncer:
 			blocks_list = [blocks_list]
 		return [Block(**b) if b else b for b in blocks_list]
 
+	@staticmethod
 	def find_component_block(block_id: str, children: list[Block]) -> Block | None:
 		"""Find a component block by ID in children"""
 		return next((c for c in children if c.referenceBlockId == block_id), None)
 
+	@staticmethod
 	def create_component_block(component_child: Block, component_name: str) -> Block:
 		"""Create a new block from component template"""
 		block = copy.deepcopy(component_child)
