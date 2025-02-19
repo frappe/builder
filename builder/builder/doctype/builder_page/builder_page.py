@@ -111,6 +111,7 @@ class BuilderPage(WebsiteGenerator):
 			or self.has_value_changed("route")
 			or self.has_value_changed("published")
 			or self.has_value_changed("disable_indexing")
+			or self.has_value_changed("blocks")
 		):
 			self.clear_route_cache()
 
