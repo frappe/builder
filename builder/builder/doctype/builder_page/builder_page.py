@@ -245,11 +245,27 @@ class BuilderPage(WebsiteGenerator):
 			else:
 				context.setdefault("styles", []).append(script_doc.public_url)
 
+		if not context.get("_head_html"):
+			context._head_html = ""
+
+		if not context.get("_body_html"):
+			context._body_html = ""
+
+		if self.head_html:
+			context._head_html += self.head_html
+
+		if self.body_html:
+			context._body_html += self.body_html
+
 		builder_settings = frappe.get_cached_doc("Builder Settings", "Builder Settings")
 		if builder_settings.script:
 			context.setdefault("scripts", []).append(builder_settings.script_public_url)
 		if builder_settings.style:
 			context.setdefault("styles", []).append(builder_settings.style_public_url)
+		if builder_settings.head_html:
+			context._head_html += builder_settings.head_html
+		if builder_settings.body_html:
+			context._body_html += builder_settings.body_html
 
 	@frappe.whitelist()
 	def get_page_data(self, route_variables=None):

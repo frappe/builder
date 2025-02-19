@@ -31,6 +31,10 @@ export interface BuilderPage{
 <br>
 <b>Note:</b> Each key value of data should be a list.	*/
 	page_data_script?: string
+	/**	Head HTML : Code - This will be appended at the end of the &lt;head&gt;	*/
+	head_html?: string
+	/**	Body HTML : Code - This will be appended at the end of the &lt;body&gt;	*/
+	body_html?: string
 	/**	Client Scripts : Table MultiSelect - Builder Page Client Script	*/
 	client_scripts?: BuilderPageClientScript[]
 	/**	Page Preview : Data	*/
