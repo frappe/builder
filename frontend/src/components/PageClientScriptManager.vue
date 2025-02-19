@@ -40,7 +40,7 @@
 									icon: 'edit',
 								},
 								{
-									label: 'Delete Script',
+									label: 'Remove Script',
 									onClick: () => deleteScript(script.name),
 									icon: 'trash',
 								},
