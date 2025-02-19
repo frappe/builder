@@ -164,6 +164,7 @@ class BuilderPage(WebsiteGenerator):
 			self.name,
 			"generate_page_preview_image",
 			queue="short",
+			enqueue_after_commit=True,
 		)
 
 		return self.route
