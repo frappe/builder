@@ -75,15 +75,18 @@
 				style="z-index: 40"
 				v-model="store.showHTMLDialog"
 				class="overscroll-none"
+				:isDirty="htmlEditor?.isDirty"
 				:options="{
-					title: 'HTML Code',
+					title: 'HTML',
 					size: '6xl',
 				}">
 				<template #body-content>
 					<CodeEditor
 						:modelValue="store.editableBlock?.getInnerHTML()"
+						ref="htmlEditor"
 						type="HTML"
 						height="60vh"
+						label="Edit HTML"
 						:showLineNumbers="true"
 						:showSaveButton="true"
 						@save="
@@ -126,6 +129,8 @@ import { createResource } from "frappe-ui";
 import { computed, onActivated, onDeactivated, provide, ref, toRef, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
+
+const htmlEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
 
 const breakpoints = useBreakpoints(breakpointsTailwind);
 const isSmallScreen = breakpoints.smaller("lg");
