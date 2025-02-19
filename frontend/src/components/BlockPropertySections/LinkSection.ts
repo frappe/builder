@@ -1,6 +1,4 @@
 import InlineInput from "@/components/Controls/InlineInput.vue";
-import { webPages } from "@/data/webPage";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
 import blockController from "@/utils/blockController";
 import { computed, nextTick } from "vue";
 
@@ -10,18 +8,7 @@ const linkSectionProperties = [
 		getProps: () => {
 			return {
 				label: "Link To",
-				type: "autocomplete",
 				showInputAsOption: true,
-				options: (webPages.data || [])
-					.filter((page: BuilderPage) => {
-						return page.route && !page.dynamic_route;
-					})
-					.map((page: BuilderPage) => {
-						return {
-							value: `/${page.route}`,
-							label: `/${page.route}`,
-						};
-					}),
 				modelValue: blockController.getAttribute("href"),
 			};
 		},
@@ -78,5 +65,7 @@ export default {
 	name: "Link",
 	properties: linkSectionProperties,
 	collapsed: computed(() => !blockController.isLink()),
-	condition: () => !blockController.multipleBlocksSelected(),
+	condition: () =>
+		!blockController.multipleBlocksSelected() &&
+		!blockController.getSelectedBlocks()[0].parentBlock?.isLink(),
 };
