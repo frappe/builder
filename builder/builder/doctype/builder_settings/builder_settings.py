@@ -1,8 +1,10 @@
 import os
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 from frappe.utils import get_files_path
+from frappe.utils.caching import redis_cache
 
 
 class BuilderSettings(Document):
@@ -47,3 +49,54 @@ class BuilderSettings(Document):
 def get_website_user_home_page(session_user=None):
 	home_page = frappe.get_cached_value("Builder Settings", None, "home_page")
 	return home_page
+
+
+@frappe.whitelist()
+def get_components():
+	# in label value format
+	return frappe.get_all("Builder Component", fields=["name as value", "component_name as label"])
+
+
+@frappe.whitelist()
+def replace_component(target_component: str, replace_with: str, filters=None):
+	if not target_component or not replace_with:
+		return
+	# check permissions
+	if not frappe.has_permission("Builder Page", ptype="write"):
+		frappe.throw(_("You don't have permission to access this component"), frappe.PermissionError)
+
+	# check if the replace_with component exists
+	if not frappe.db.exists("Builder Component", replace_with):
+		frappe.throw(_("The component you are trying to replace with does not exist"))
+
+	# go through all the pages and replace the old component with the new component
+	pages = frappe.get_all(
+		"Builder Page",
+		fields=["name"],
+		filters=filters,
+		or_filters={
+			"blocks": ["like", f"%{target_component}%"],
+			"draft_blocks": ["like", f"%{target_component}%"],
+		},
+	)
+	for page in pages:
+		doc = frappe.get_doc("Builder Page", page.name)
+		doc.replace_component(target_component, replace_with)
+
+
+@frappe.whitelist()
+@redis_cache()
+def get_component_usage_count(component_id: str, filters=None):
+	pages = frappe.get_all(
+		"Builder Page",
+		filters=filters,
+		fields=["name", "page_title", "route", "preview"],
+		or_filters={
+			"blocks": ["like", f"%{component_id}%"],
+			"draft_blocks": ["like", f"%{component_id}%"],
+		},
+	)
+	return {
+		"count": len(pages),
+		"pages": pages,
+	}
