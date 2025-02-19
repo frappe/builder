@@ -13,7 +13,12 @@
 			],
 		}">
 		<template #body-content>
-			<BuilderInput type="text" v-model="componentName" label="Component Name" required />
+			<BuilderInput
+				type="text"
+				:modelValue="componentName"
+				@input="(value: string) => (componentName = value)"
+				label="Component Name"
+				required />
 			<div class="mt-3">
 				<BuilderInput
 					class="text-sm [&>span]:!text-sm"
