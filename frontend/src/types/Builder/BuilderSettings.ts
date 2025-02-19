@@ -10,8 +10,10 @@ export interface BuilderSettings{
 	parentfield?: string
 	parenttype?: string
 	idx?: number
-	/**	Head Script : Code - This will be appended at the end of the &lt;head&gt;	*/
-	head_script?: string
+	/**	Head HTML : Code - This will be appended at the end of the &lt;head&gt;	*/
+	head_html?: string
+	/**	Body HTML : Code - This will be appended at the end of the &lt;body&gt;	*/
+	body_html?: string
 	/**	Script : Code - Global script that will be loaded with every page built with Frappe Builder	*/
 	script?: string
 	/**	Script Public URL : Read Only	*/

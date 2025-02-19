@@ -1,11 +1,11 @@
 <template>
 	<div class="no-scrollbar flex flex-col gap-6 overflow-auto">
-		<div>
+		<!-- <div>
 			<div class="">
-				<InputLabel>Load Library</InputLabel>
+				<InputLabel>Add Library</InputLabel>
 				<div class="mb-2 flex">
-					<BuilderInput class="w-full"></BuilderInput>
-					<BuilderButton class="ml-2">Load</BuilderButton>
+					<BuilderInput class="w-full" v-model="libraryURL"></BuilderInput>
+					<BuilderButton class="ml-2" :disabled="!libraryURL" @click="addLibraryURL">Add</BuilderButton>
 				</div>
 			</div>
 			<div class="flex flex-col gap-2">
@@ -19,24 +19,41 @@
 					</div>
 				</div>
 			</div>
-		</div>
+		</div> -->
 		<CodeEditor
-			label="<head> code"
+			label="<head> HTML"
 			type="HTML"
-			description="Note: This will be appended to the end of head of all pages."
-			height="250px"
+			description="Add meta tags, styles, and scripts to page head"
+			height="200px"
 			class="shrink-0"
-			:modelValue="store.activePage?.head_script"
-			@update:modelValue="(val) => store.updateActivePage('head_script', val)"
+			:modelValue="store.activePage?.head_html"
+			@update:modelValue="(val) => store.updateActivePage('head_html', val)"
+			:showLineNumbers="true"></CodeEditor>
+		<CodeEditor
+			label="<body> HTML"
+			type="HTML"
+			description="Add scripts to page body"
+			:modelValue="store.activePage?.body_html"
+			height="200px"
+			class="shrink-0"
+			@update:modelValue="store.updateBuilderSettings('body_html', $event)"
 			:showLineNumbers="true"></CodeEditor>
 	</div>
 </template>
 <script setup lang="ts">
-import BuilderButton from "@/components/Controls/BuilderButton.vue";
 import CodeEditor from "@/components/Controls/CodeEditor.vue";
-import InputLabel from "@/components/Controls/InputLabel.vue";
 import useStore from "@/store";
+import { ref } from "vue";
+
+const libraryURL = ref("");
 const store = useStore();
+
+const addLibraryURL = () => {
+	if (libraryURL.value) {
+		store.updateActivePage("libraries", [...store.activePage.libraries, libraryURL.value]);
+		libraryURL.value = "";
+	}
+};
 
 const scripts = [
 	{
