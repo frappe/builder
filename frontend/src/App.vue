@@ -6,7 +6,7 @@
 			</keep-alive>
 		</router-view>
 		<UseDark attribute="data-theme"></UseDark>
-		<Toaster :theme="isDark ? 'dark' : 'light'" richColors />
+		<Toaster :theme="isDark ? 'dark' : 'light'" richColors closeButton />
 		<Dialogs></Dialogs>
 	</div>
 </template>
@@ -130,5 +130,19 @@ const isDark = useDark({
 	@apply bg-surface-white;
 	@apply dark:border-gray-800;
 	@apply !text-base;
+}
+
+[id^="headlessui-menu-items"] {
+	@apply min-w-28;
+	@apply rounded-md;
+}
+[id^="headlessui-menu-item"] {
+	@apply text-base;
+}
+[id^="headlessui-menu-item"] button {
+	@apply rounded;
+}
+[id^="headlessui-menu-item"] svg {
+	@apply size-3;
 }
 </style>

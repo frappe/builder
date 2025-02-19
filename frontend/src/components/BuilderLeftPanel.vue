@@ -35,13 +35,17 @@
 				<BlockLayers
 					class="no-scrollbar overflow-auto"
 					v-if="pageCanvas"
+					:disable-draggable="true"
 					ref="pageLayers"
 					:blocks="[pageCanvas?.getRootBlock() as Block]"
 					v-show="store.editingMode == 'page'" />
 				<BlockLayers
 					class="no-scrollbar overflow-auto"
 					ref="componentLayers"
+					:disable-draggable="true"
 					:blocks="[fragmentCanvas?.getRootBlock()]"
+					:indent="5"
+					:adjustForRoot="false"
 					v-if="store.editingMode === 'fragment' && fragmentCanvas" />
 			</div>
 			<div v-show="store.leftPanelActiveTab === 'Code'">
