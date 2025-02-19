@@ -72,7 +72,9 @@
 							:blocks="element.children"
 							:ref="childLayer"
 							:indent="childIndent"
-							:disable-draggable="element.children.length && element.children[0].isChildOfComponentBlock()" />
+							:disable-draggable="
+								Boolean(element.children.length && element.children[0].isChildOfComponentBlock())
+							" />
 					</div>
 				</div>
 			</template>
