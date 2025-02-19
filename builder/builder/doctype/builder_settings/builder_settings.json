@@ -5,7 +5,8 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "head_script",
+  "head_html",
+  "body_html",
   "script",
   "script_public_url",
   "style",
@@ -65,9 +66,16 @@
   },
   {
    "description": "This will be appended at the end of the &lt;head&gt;",
-   "fieldname": "head_script",
+   "fieldname": "head_html",
    "fieldtype": "Code",
-   "label": "Head Script",
+   "label": "Head HTML",
+   "options": "HTML"
+  },
+  {
+   "description": "This will be appended at the end of the &lt;body&gt;",
+   "fieldname": "body_html",
+   "fieldtype": "Code",
+   "label": "Body HTML",
    "options": "HTML"
   }
  ],
@@ -75,7 +83,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-01-31 17:54:13.745748",
+ "modified": "2025-02-19 14:34:18.392867",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Settings",

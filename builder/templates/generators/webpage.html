@@ -27,8 +27,8 @@
 			{% endfor %}
 		{%- endif -%}
 	{%- endblock %}
-	{%- if _head_scripts %}
-	{{ _head_scripts|safe }}
+	{%- if _head_html %}
+	{{ head_html|safe }}
 	{%-endif -%}
 </head>
 {% block page_content %}

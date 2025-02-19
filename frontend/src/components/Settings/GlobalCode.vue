@@ -1,18 +1,27 @@
 <template>
 	<div class="no-scrollbar flex flex-col gap-5 overflow-auto">
 		<CodeEditor
-			label="<head> code"
+			label="<head> HTML"
 			type="HTML"
-			description="Note: This will be appended to the end of head of all pages."
-			:modelValue="builderSettings.doc.head_script"
-			height="250px"
+			description="Added to end of head. For meta tags, styles, and scripts."
+			:modelValue="builderSettings.doc.head_html"
+			height="150px"
 			class="shrink-0"
-			@update:modelValue="store.updateBuilderSettings('head_script', $event)"
+			@update:modelValue="store.updateBuilderSettings('head_html', $event)"
+			:showLineNumbers="true"></CodeEditor>
+		<CodeEditor
+			label="<body> HTML"
+			type="HTML"
+			description="Added to end of body. For adding scripts."
+			:modelValue="builderSettings.doc.body_html"
+			height="150px"
+			class="shrink-0"
+			@update:modelValue="store.updateBuilderSettings('body_html', $event)"
 			:showLineNumbers="true"></CodeEditor>
 		<CodeEditor
 			label="Client Script"
 			type="JavaScript"
-			description="Note: This script will be executed on all the pages of your website."
+			description="This script will be executed on all the pages of your website."
 			:modelValue="builderSettings.doc.script"
 			height="250px"
 			class="shrink-0"
@@ -21,7 +30,7 @@
 		<CodeEditor
 			label="Style"
 			type="CSS"
-			description="Note: This style will be applied to all the pages of your website."
+			description="Applies to all pages"
 			:modelValue="builderSettings.doc.style"
 			height="250px"
 			class="shrink-0"

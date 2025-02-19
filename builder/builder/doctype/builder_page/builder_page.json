@@ -22,7 +22,8 @@
   "draft_blocks",
   "scripting_tab",
   "page_data_script",
-  "head_script",
+  "head_html",
+  "body_html",
   "client_scripts",
   "settings_tab",
   "section_break_shab",
@@ -205,15 +206,22 @@
   },
   {
    "description": "This will be appended at the end of the &lt;head&gt;",
-   "fieldname": "head_script",
+   "fieldname": "head_html",
    "fieldtype": "Code",
-   "label": "Head Script",
+   "label": "Head HTML",
+   "options": "HTML"
+  },
+  {
+   "description": "This will be appended at the end of the &lt;body&gt;",
+   "fieldname": "body_html",
+   "fieldtype": "Code",
+   "label": "Body HTML",
    "options": "HTML"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-31 17:54:52.046463",
+ "modified": "2025-02-19 14:31:47.360526",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

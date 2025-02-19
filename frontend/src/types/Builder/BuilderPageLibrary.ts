@@ -10,8 +10,10 @@ export interface BuilderPageLibrary{
 	parentfield?: string
 	parenttype?: string
 	idx?: number
+	/**	Library URL : Data	*/
+	library_url: string
+	/**	Builder Page : Link - Builder Page	*/
+	builder_page?: string
 	/**	Library Type : Select	*/
 	library_type?: "CSS" | "JS"
-	/**	Library URL : Data	*/
-	library_url?: string
 }
