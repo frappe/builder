@@ -36,7 +36,7 @@ frappe.ui.form.on("Builder Settings", {
                     },
                     callback: (r) => {
                       const field = d.get_field("target_component");
-                      const count = r.message;
+                      const { count, pages } = r.message;
                       const message =
                         count === 0
                           ? __("Not used in any page")
