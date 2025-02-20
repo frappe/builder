@@ -33,6 +33,7 @@ export function useCanvasDropZone(
 				const parentBlock = getBlockToReplace(ev);
 				if (parentBlock) {
 					store.hoveredBlock = parentBlock.blockId;
+					updateDropTarget(ev, parentBlock, 0, "column");
 					store.removeDropPlaceholder();
 				}
 			} else {
@@ -197,7 +198,6 @@ export function useCanvasDropZone(
 			newBlock.extendFromComponent(componentName);
 			// if shift key is pressed, replace parent block with new block
 			if (ev.shiftKey) {
-				parentBlock = getBlockToReplace(ev);
 				if (!parentBlock) return;
 				const parentParentBlock = parentBlock.getParentBlock();
 				if (!parentParentBlock) return;
