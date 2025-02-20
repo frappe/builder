@@ -363,7 +363,6 @@ async function uploadImage(file: File, silent = false) {
 	const upload = uploader.upload(file, {
 		private: false,
 		folder: "Home/Builder Uploads",
-		optimize: true,
 		upload_endpoint: "/api/method/builder.api.upload_builder_asset",
 	});
 	await new Promise((resolve) => {
