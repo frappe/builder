@@ -116,15 +116,16 @@ class Block:
 
 class ComponentSyncer:
 	def __init__(self, page_doc) -> None:
-		self._page_doc = page_doc
+		self.page_doc = page_doc
 
 	def sync_component(self, component) -> None:
 		"""Sync a component across draft and published blocks"""
-		if self._page_doc.draft_blocks:
-			self._page_doc.draft_blocks = self.sync_blocks(self._page_doc.draft_blocks, component)
-		if self._page_doc.blocks:
-			self._page_doc.blocks = self.sync_blocks(self._page_doc.blocks, component)
-		self._page_doc.save()
+		if self.page_doc.draft_blocks:
+			self.page_doc.draft_blocks = self.sync_blocks(self.page_doc.draft_blocks, component)
+		if self.page_doc.blocks:
+			self.page_doc.blocks = self.sync_blocks(self.page_doc.blocks, component)
+		self.page_doc.save()
+		self.page_doc.clear_route_cache()
 
 	def sync_blocks(self, blocks: str | list[Block], component) -> str:
 		"""Sync component changes in a blocks JSON string"""
