@@ -692,7 +692,7 @@ def reset_with_component(block, extended_with_component, component_children):
 			component = frappe.get_cached_doc("Builder Component", child_block.get("extendedFromComponent"))
 			component_block = frappe.parse_json(component.block)
 			reset_with_component(
-				child_block, child_block.get("extendedFromComponent"), component_block.get("children"), False
+				child_block, child_block.get("extendedFromComponent"), component_block.get("children")
 			)
 		else:
 			reset_with_component(child_block, extended_with_component, child_block.get("children"))
