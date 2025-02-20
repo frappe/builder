@@ -177,7 +177,6 @@ export function useCanvasDropZone(
 			} else {
 				newParent.insertBefore(placeholder, children[index]);
 			}
-			console.log("newParent", parentBlock);
 			store.dropTarget.parentBlock = parentBlock;
 			store.dropTarget.index = index;
 			store.dropTarget.x = ev.x;
@@ -229,7 +228,6 @@ export function useCanvasDropZone(
 
 	const handleFileDrop = (files: File[], ev: DragEvent) => {
 		let { parentBlock, index } = store.dropTarget;
-		console.log("parentBlock", parentBlock);
 		uploadImage(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
 			if (!parentBlock) return;
 
