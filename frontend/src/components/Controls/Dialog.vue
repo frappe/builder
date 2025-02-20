@@ -50,7 +50,6 @@ const showConfirmationDialog = async () => {
 	waitingForResponse = true;
 	if (attrs.isDirty) {
 		return await confirm("You have unsaved changes. Are you sure you want to leave?").then((res) => {
-			console.log("res", res);
 			if (res) {
 				emit("update:modelValue", false);
 			}

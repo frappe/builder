@@ -221,7 +221,7 @@ function searchBlock(searchTerm: string, targetBlock: null | Block) {
 	if (!targetBlock) {
 		targetBlock = getRootBlock();
 	}
-	console.log("searching block", targetBlock);
+
 	const blockObject = getBlockObject(targetBlock);
 	const children = blockObject.children || [];
 	delete blockObject.children;
@@ -234,7 +234,6 @@ function searchBlock(searchTerm: string, targetBlock: null | Block) {
 	if (blockId) {
 		const block = findBlock(blockId);
 		if (block) {
-			console.log("found block", block);
 			return scrollBlockIntoView(block);
 		}
 	} else {

@@ -38,7 +38,6 @@ function handleBlur() {
 	if (text === props.modelValue) return;
 	if (!text) {
 		editableRef.value!.innerText = props.modelValue;
-		console.log("text is empty");
 		return;
 	}
 	if (props.onChange) {
