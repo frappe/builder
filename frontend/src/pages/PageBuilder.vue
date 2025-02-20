@@ -39,12 +39,12 @@
 							<FeatherIcon name="chevron-right" class="h-3 w-3" />
 							<span class="flex items-center gap-2">
 								{{ store.fragmentData.fragmentName }}
-								<a @click="pageListDialog = true" class="cursor-pointer text-ink-gray-3 underline">
+								<a @click="pageListDialog = true" class="cursor-pointer text-ink-gray-4 underline">
 									{{ usageMessage }}
 								</a>
 							</span>
 						</div>
-						<BuilderButton class="text-xs" @click="saveAndExitFragmentMode">
+						<BuilderButton variant="solid" class="text-xs" @click="saveAndExitFragmentMode">
 							{{ store.fragmentData.saveActionLabel || "Save" }}
 						</BuilderButton>
 					</div>
