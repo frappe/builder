@@ -59,6 +59,7 @@ const optionsSectionProperties = [
 					"option",
 					"blockquote",
 					"cite",
+					"canvas",
 				],
 				modelValue: blockController.getKeyValue("element"),
 			};
