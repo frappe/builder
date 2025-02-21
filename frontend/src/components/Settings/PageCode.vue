@@ -36,7 +36,7 @@
 			:modelValue="store.activePage?.body_html"
 			height="200px"
 			class="shrink-0"
-			@update:modelValue="store.updateBuilderSettings('body_html', $event)"
+			@update:modelValue="store.updateActivePage('body_html', $event)"
 			:showLineNumbers="true"></CodeEditor>
 	</div>
 </template>
