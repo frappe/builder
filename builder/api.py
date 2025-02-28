@@ -1,10 +1,13 @@
+import csv
 import json
 import os
+import time
 from io import BytesIO
-from urllib.parse import unquote
+from urllib.parse import unquote, urljoin, urlparse
 
 import frappe
 import requests
+from bs4 import BeautifulSoup
 from frappe.apps import get_apps as get_permitted_apps
 from frappe.core.doctype.file.file import get_local_image
 from frappe.core.doctype.file.utils import delete_file
@@ -265,3 +268,46 @@ def sync_component(component_id: str):
 
 	component = frappe.get_doc("Builder Component", component_id)
 	component.sync_component()
+
+
+@frappe.whitelist()
+def scan_for_broken_links():
+	# start from /
+	# get all published builder pages
+	pages = frappe.get_all("Builder Page", filters={"published": 1}, fields=["name", "route"])
+
+	for page in pages:
+		url = frappe.utils.get_url(page.route)
+		send_update_status(f"Scanning page: {url}")
+		response = requests.get(url)
+		soup = BeautifulSoup(response.content, "html.parser")
+		links = [a.get("href") for a in soup.find_all("a", href=True)]
+		for link in links:
+			if link == "#":
+				continue
+			if link.startswith("#"):
+				# check if it's an anchor link
+				soup = BeautifulSoup(response.content, "html.parser")
+				if not soup.find(id=link[1:]):
+					send_update_status(f"Broken link: {url}{link}")
+				continue
+			elif link.startswith("/"):
+				link = frappe.utils.get_url(link)
+			elif not link.startswith("http") and not link.startswith("mailto"):
+				link = urljoin(url, link)
+
+			try:
+				response = requests.head(link, allow_redirects=True)
+				# if redirect, check the final URL
+				if response.is_redirect:
+					response = requests.head(response.headers.get("location"), allow_redirects=True)
+				if response.status_code != 200:
+					send_update_status(f"Broken link: {link}")
+			except requests.exceptions.MissingSchema:
+				send_update_status(f"Invalid URL: {link}")
+			except requests.exceptions.ConnectionError:
+				send_update_status(f"Connection error: {link}")
+
+
+def send_update_status(message):
+	frappe.publish_realtime("link_scan_status", message, user=frappe.session.user)

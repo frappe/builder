@@ -32,7 +32,9 @@
 </template>
 <script setup lang="ts">
 import RedirectIcon from "@/components/Icons/Redirect.vue";
+import SettingsGear from "@/components/Icons/SettingsGear.vue";
 import GlobalRedirects from "@/components/Settings/GlobalRedirects.vue";
+import GlobalTools from "@/components/Settings/GlobalTools.vue";
 import PageCode from "@/components/Settings/PageCode.vue";
 import PageRedirects from "@/components/Settings/PageRedirects.vue";
 import useStore from "@/store";
@@ -125,6 +127,13 @@ const globalSettings = {
 			component: GlobalRedirects,
 			title: "Redirects",
 			icon: RedirectIcon,
+		},
+		{
+			label: "Tools",
+			value: "global_tools",
+			component: GlobalTools,
+			title: "Tools",
+			icon: SettingsGear,
 		},
 	],
 };
