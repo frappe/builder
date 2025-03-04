@@ -19,6 +19,7 @@ import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
 import {
 	confirm,
+	generateId,
 	getBlockCopy,
 	getBlockInstance,
 	getBlockString,
@@ -75,6 +76,7 @@ const useStore = defineStore("store", {
 		activePage: <BuilderPage | null>null,
 		savingPage: false,
 		realtime: new RealTimeHandler(),
+		saveId: null as string | null,
 		viewers: <UserInfo[]>[],
 		blockTemplateMap: <Map<string, BlockTemplate>>new Map(),
 		activeFolder: useStorage("activeFolder", ""),
@@ -94,6 +96,15 @@ const useStore = defineStore("store", {
 			"Media",
 			"Advanced",
 		] as BlockTemplate["category"][],
+		isDragging: false,
+		isDropping: false,
+		dropTarget: {
+			x: <number | null>null,
+			y: <number | null>null,
+			placeholder: <HTMLElement | null>null,
+			parentBlock: <Block | null>null,
+			index: <number | null>null,
+		},
 	}),
 	actions: {
 		clearBlocks() {
@@ -424,8 +435,11 @@ const useStore = defineStore("store", {
 		},
 		savePage() {
 			this.pageBlocks = this.getPageBlocks() as Block[];
-			const pageData = JSON.stringify(this.pageBlocks.map((block) => getCopyWithoutParent(block)));
+			const pageData = JSON.stringify(this.pageBlocks.map((block: Block) => getCopyWithoutParent(block)));
+			const saveId = generateId();
 
+			// more save requests can be triggered till the first one is completed
+			this.saveId = saveId;
 			const args = {
 				name: this.selectedPage,
 				draft_blocks: pageData,
@@ -436,7 +450,10 @@ const useStore = defineStore("store", {
 					this.activePage = page;
 				})
 				.finally(() => {
-					this.savingPage = false;
+					if (this.saveId === saveId) {
+						this.saveId = null;
+						this.savingPage = false;
+					}
 					this.activeCanvas?.toggleDirty(false);
 				});
 		},
@@ -501,7 +518,9 @@ const useStore = defineStore("store", {
 		},
 		async waitTillPageIsSaved() {
 			// small delay so that all the save requests are triggered
-			await new Promise((resolve) => setTimeout(resolve, 100));
+			if (!this.savingPage) {
+				await new Promise((resolve) => setTimeout(resolve, 300));
+			}
 			return new Promise((resolve) => {
 				const interval = setInterval(() => {
 					if (!this.savingPage) {
@@ -537,13 +556,14 @@ const useStore = defineStore("store", {
 			saveAction: (block: Block) => void,
 			saveActionLabel: string = "Save",
 			fragmentName?: string,
+			fragmentId?: string,
 		) {
 			this.fragmentData = {
 				block,
 				saveAction,
 				saveActionLabel,
 				fragmentName: fragmentName || block.getBlockDescription(),
-				fragmentId: block.blockId,
+				fragmentId: fragmentId || block.blockId,
 			};
 			this.editingMode = "fragment";
 		},
@@ -568,6 +588,75 @@ const useStore = defineStore("store", {
 				fragmentName: null,
 				fragmentId: null,
 			};
+		},
+		// drag and drop
+		handleDragStart(ev: DragEvent) {
+			if (ev.target && ev.dataTransfer) {
+				this.isDragging = true;
+				const ghostScale = this.activeCanvas?.canvasProps.scale;
+
+				// Clone the entire draggable element
+				const dragElement = ev.target as HTMLElement;
+				if (!dragElement) return;
+				const ghostDiv = document.createElement("div");
+				const ghostElement = dragElement.cloneNode(true) as HTMLElement;
+				ghostDiv.appendChild(ghostElement);
+				ghostDiv.id = "ghost";
+				ghostDiv.style.position = "fixed";
+				ghostDiv.style.transform = `scale(${ghostScale || 1})`;
+				ghostDiv.style.pointerEvents = "none";
+				ghostDiv.style.zIndex = "99999";
+				// Append the ghostDiv to the DOM
+				document.body.appendChild(ghostDiv);
+
+				// Wait for the next frame to ensure the ghostDiv is rendered
+				requestAnimationFrame(() => {
+					ev.dataTransfer?.setDragImage(ghostDiv, 0, 0);
+					// Clean up the ghostDiv after a short delay
+					setTimeout(() => {
+						document.body.removeChild(ghostDiv);
+					}, 0);
+				});
+				this.insertDropPlaceholder();
+			}
+		},
+		handleDragEnd() {
+			// check flag to avoid race condition with async onDrop
+			if (!this.isDropping) {
+				this.resetDropTarget();
+			}
+		},
+		resetDropTarget() {
+			this.removeDropPlaceholder();
+			this.dropTarget = {
+				x: null,
+				y: null,
+				placeholder: null,
+				parentBlock: null,
+				index: null,
+			};
+			this.isDragging = false;
+			this.isDropping = false;
+		},
+		insertDropPlaceholder() {
+			// append placeholder component to the dom directly
+			// to avoid re-rendering the whole canvas
+			if (this.dropTarget.placeholder) return;
+
+			let element = document.createElement("div");
+			element.id = "placeholder";
+
+			const root = document.querySelector(".__builder_component__[data-block-id='root']");
+			if (root) {
+				this.dropTarget.placeholder = root.appendChild(element);
+			}
+			return this.dropTarget.placeholder;
+		},
+		removeDropPlaceholder() {
+			const placeholder = document.getElementById("placeholder");
+			if (placeholder) {
+				placeholder.remove();
+			}
 		},
 	},
 });

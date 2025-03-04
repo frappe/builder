@@ -156,7 +156,6 @@ import PageOptions from "./PageOptions.vue";
 import Settings from "./Settings.vue";
 
 const store = useStore();
-const publishing = ref(false);
 const showInfoDialog = ref(false);
 const showSettingsDialog = ref(false);
 const toolbar = ref(null);

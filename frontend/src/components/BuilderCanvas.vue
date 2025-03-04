@@ -1,7 +1,11 @@
 <template>
 	<div ref="canvasContainer" @click="handleClick">
 		<slot name="header"></slot>
-		<div class="overlay absolute" id="overlay" ref="overlay" />
+		<div
+			class="overlay absolute"
+			:class="{ 'pointer-events-none': isOverDropZone }"
+			id="overlay"
+			ref="overlay" />
 		<Transition name="fade">
 			<div
 				class="absolute bottom-0 left-0 right-0 top-0 z-[19] grid w-full place-items-center bg-surface-gray-1 p-10 text-ink-gray-5"
@@ -10,9 +14,6 @@
 			</div>
 		</Transition>
 		<BlockSnapGuides></BlockSnapGuides>
-		<div
-			v-if="isOverDropZone"
-			class="pointer-events-none absolute bottom-0 left-0 right-0 top-0 z-30 bg-cyan-300 opacity-20"></div>
 		<div
 			class="fixed flex gap-40"
 			ref="canvas"
@@ -79,7 +80,7 @@
 import LoadingIcon from "@/components/Icons/Loading.vue";
 import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
 import Block from "@/utils/block";
-import { getBlockCopy, isCtrlOrCmd } from "@/utils/helpers";
+import { getBlockCopy, getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
 import { useBlockEventHandlers } from "@/utils/useBlockEventHandlers";
 import { useBlockSelection } from "@/utils/useBlockSelection";
 import { useCanvasDropZone } from "@/utils/useCanvasDropZone";
@@ -212,6 +213,37 @@ const handleClick = (ev: MouseEvent) => {
 	}
 };
 
+function searchBlock(searchTerm: string, targetBlock: null | Block) {
+	// find nearest block to the search term
+	// convert block to string and search for the term
+	// if found, return the nearest block
+	// else return null
+	if (!targetBlock) {
+		targetBlock = getRootBlock();
+	}
+
+	const blockObject = getBlockObject(targetBlock);
+	const children = blockObject.children || [];
+	delete blockObject.children;
+	let blockId = "";
+
+	if (JSON.stringify(blockObject).toLowerCase().includes(searchTerm.toLowerCase())) {
+		blockId = blockObject.blockId as string;
+	}
+
+	if (blockId) {
+		const block = findBlock(blockId);
+		if (block) {
+			return scrollBlockIntoView(block);
+		}
+	} else {
+		for (const child of children) {
+			return searchBlock(searchTerm, child);
+		}
+	}
+	return null;
+}
+
 watch(
 	() => block,
 	() => {
@@ -267,6 +299,7 @@ defineExpose({
 	removeBlock,
 	selectBlockRange,
 	resizingBlock,
+	searchBlock,
 });
 
 function selectBreakpoint(ev: MouseEvent, breakpoint: BreakpointConfig) {
@@ -298,5 +331,15 @@ const renderedBreakpoints = computed(() => canvasProps.breakpoints.filter((bp) =
 .fade-enter-from,
 .fade-leave-to {
 	opacity: 0;
+}
+
+#placeholder {
+	@apply transition-all;
+}
+.vertical-placeholder {
+	@apply mx-4 h-full min-h-5 w-auto border-l-2 border-dashed border-blue-500;
+}
+.horizontal-placeholder {
+	@apply my-4 h-auto w-full border-t-2 border-dashed border-blue-500;
 }
 </style>

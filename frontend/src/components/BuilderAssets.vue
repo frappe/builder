@@ -89,7 +89,12 @@ useEventListener(componentContainer, "dragstart", (e) => {
 	const component = (e.target as HTMLElement)?.closest(".user-component") as HTMLElement;
 	if (component) {
 		setComponentData(e, component.dataset.componentName as string);
+		store.handleDragStart(e);
 	}
+});
+
+useEventListener(componentContainer, "dragend", () => {
+	store.handleDragEnd();
 });
 
 useEventListener(componentContainer, "dblclick", (e) => {

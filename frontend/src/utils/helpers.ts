@@ -1,4 +1,5 @@
 import AlertDialog from "@/components/AlertDialog.vue";
+import useStore from "@/store";
 import { confirmDialog, FileUploadHandler } from "frappe-ui";
 import { h, reactive, toRaw } from "vue";
 import { toast } from "vue-sonner";
@@ -362,7 +363,6 @@ async function uploadImage(file: File, silent = false) {
 	const upload = uploader.upload(file, {
 		private: false,
 		folder: "Home/Builder Uploads",
-		optimize: true,
 		upload_endpoint: "/api/method/builder.api.upload_builder_asset",
 	});
 	await new Promise((resolve) => {
@@ -444,6 +444,54 @@ function generateId() {
 	return Math.random().toString(36).substr(2, 9);
 }
 
+function throttle<T extends (...args: any[]) => void>(func: T, wait: number = 1000) {
+	let timeout: ReturnType<typeof setTimeout> | null = null;
+	let lastArgs: Parameters<T> | null = null;
+	let pending = false;
+
+	const invoke = (...args: Parameters<T>) => {
+		lastArgs = args;
+		if (timeout) {
+			pending = true;
+			return;
+		}
+
+		func(...lastArgs);
+		timeout = setTimeout(() => {
+			timeout = null;
+			if (pending && lastArgs) {
+				pending = false;
+				invoke(...lastArgs);
+			}
+		}, wait);
+	};
+
+	return invoke;
+}
+
+function isBlock(e: MouseEvent) {
+	return (
+		(e.target instanceof HTMLElement || e.target instanceof SVGElement) &&
+		e.target.closest(".__builder_component__")
+	);
+}
+
+type BlockInfo = {
+	blockId: string;
+	breakpoint: string;
+};
+
+function getBlockInfo(e: MouseEvent) {
+	const target = (e.target as HTMLElement)?.closest(".__builder_component__") as HTMLElement;
+	return target.dataset as BlockInfo;
+}
+
+function getBlock(e: MouseEvent) {
+	const store = useStore();
+	const blockInfo = getBlockInfo(e);
+	return store.activeCanvas?.findBlock(blockInfo.blockId);
+}
+
 export {
 	addPxToNumber,
 	alert,
@@ -453,7 +501,9 @@ export {
 	detachBlockFromComponent,
 	findNearestSiblingIndex,
 	generateId,
+	getBlock,
 	getBlockCopy,
+	getBlockInfo,
 	getBlockInstance,
 	getBlockObjectCopy as getBlockObject,
 	getBlockString,
@@ -467,6 +517,7 @@ export {
 	getTextContent,
 	HexToHSV,
 	HSVToHex,
+	isBlock,
 	isCtrlOrCmd,
 	isHTMLString,
 	isJSONString,
@@ -477,5 +528,6 @@ export {
 	replaceMapKey,
 	RGBToHex,
 	stripExtension,
+	throttle,
 	uploadImage,
 };

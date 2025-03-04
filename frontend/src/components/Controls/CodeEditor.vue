@@ -4,7 +4,7 @@
 		:style="{
 			height: height,
 		}">
-		<span class="text-p-sm font-medium text-ink-gray-8" v-if="label">
+		<span class="text-p-sm font-medium text-ink-gray-8" v-show="label">
 			{{ label }}
 			<span v-if="isDirty" class="text-[10px] text-gray-600">●</span>
 		</span>
@@ -120,6 +120,20 @@ const setupEditor = () => {
 			isDirty.value = true;
 		}
 	});
+
+	if (props.showSaveButton || !props.readonly) {
+		aceEditor.commands.addCommand({
+			name: "save",
+			bindKey: { win: "Ctrl-S", mac: "Cmd-S" },
+			exec: () => {
+				if (props.showSaveButton) {
+					emit("save", aceEditor?.getValue());
+				} else {
+					emit("update:modelValue", aceEditor?.getValue());
+				}
+			},
+		});
+	}
 
 	aceEditor.on("blur", () => {
 		try {
