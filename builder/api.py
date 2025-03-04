@@ -243,3 +243,25 @@ def duplicate_page(page_name: str):
 		new_page.append("client_scripts", {"builder_script": new_script.name})
 	new_page.insert()
 	return new_page
+
+
+@frappe.whitelist()
+def delete_folder(folder_name: str) -> None:
+	if not frappe.has_permission("Builder Project Folder", ptype="write"):
+		frappe.throw("You do not have permission to delete a folder.")
+
+	# remove folder from all pages
+	pages = frappe.get_all("Builder Page", filters={"project_folder": folder_name}, fields=["name"])
+	for page in pages:
+		frappe.db.set_value("Builder Page", page.name, "project_folder", "", update_modified=False)
+
+	frappe.db.delete("Builder Project Folder", folder_name)
+
+
+@frappe.whitelist()
+def sync_component(component_id: str):
+	if not frappe.has_permission("Builder Page", ptype="write"):
+		frappe.throw("You do not have permission to sync a component.")
+
+	component = frappe.get_doc("Builder Component", component_id)
+	component.sync_component()

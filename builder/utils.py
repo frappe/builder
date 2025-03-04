@@ -215,7 +215,7 @@ def copy_img_to_asset_folder(block, page_doc):
 				assets_folder_path = get_template_assets_folder_path(page_doc)
 				shutil.copy(_file.get_full_path(), assets_folder_path)
 			block["attributes"]["src"] = f"/builder_assets/{page_doc.name}/{src.split('/')[-1]}"
-	for child in block.get("children", []):
+	for child in block.get("children", []) or []:
 		copy_img_to_asset_folder(child, page_doc)
 
 

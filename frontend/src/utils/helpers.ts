@@ -363,7 +363,6 @@ async function uploadImage(file: File, silent = false) {
 	const upload = uploader.upload(file, {
 		private: false,
 		folder: "Home/Builder Uploads",
-		optimize: true,
 		upload_endpoint: "/api/method/builder.api.upload_builder_asset",
 	});
 	await new Promise((resolve) => {
@@ -471,7 +470,10 @@ function throttle<T extends (...args: any[]) => void>(func: T, wait: number = 10
 }
 
 function isBlock(e: MouseEvent) {
-	return e.target instanceof HTMLElement && e.target.closest(".__builder_component__");
+	return (
+		(e.target instanceof HTMLElement || e.target instanceof SVGElement) &&
+		e.target.closest(".__builder_component__")
+	);
 }
 
 type BlockInfo = {

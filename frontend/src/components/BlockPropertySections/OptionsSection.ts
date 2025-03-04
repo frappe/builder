@@ -8,6 +8,29 @@ const setClasses = (val: string) => {
 	blockController.setClasses(classes);
 };
 
+const overflowOptions = [
+	{
+		label: "Unset",
+		value: "unset",
+	},
+	{
+		label: "Auto",
+		value: "auto",
+	},
+	{
+		label: "Visible",
+		value: "visible",
+	},
+	{
+		label: "Hidden",
+		value: "hidden",
+	},
+	{
+		label: "Scroll",
+		value: "scroll",
+	},
+];
+
 const optionsSectionProperties = [
 	{
 		component: InlineInput,
@@ -36,6 +59,7 @@ const optionsSectionProperties = [
 					"option",
 					"blockquote",
 					"cite",
+					"canvas",
 				],
 				modelValue: blockController.getKeyValue("element"),
 			};
@@ -122,31 +146,19 @@ const optionsSectionProperties = [
 			return {
 				label: "Overflow X",
 				type: "select",
-				options: [
-					{
-						label: "Auto",
-						value: "auto",
-					},
-					{
-						label: "Visible",
-						value: "visible",
-					},
-					{
-						label: "Hidden",
-						value: "hidden",
-					},
-					{
-						label: "Scroll",
-						value: "scroll",
-					},
-				],
-				modelValue: blockController.getStyle("overflowX") || blockController.getStyle("overflow"),
+				options: overflowOptions,
+				modelValue: blockController.getStyle("overflowX"),
 			};
 		},
 		searchKeyWords:
 			"Overflow, X, OverflowX, Overflow X, Auto, Visible, Hide, Scroll, horizontal scroll, horizontalScroll",
 		events: {
-			"update:modelValue": (val: StyleValue) => blockController.setStyle("overflowX", val),
+			"update:modelValue": (val: StyleValue) => {
+				if (val === "unset") {
+					val = null;
+				}
+				blockController.setStyle("overflowX", val);
+			},
 		},
 	},
 	{
@@ -155,31 +167,19 @@ const optionsSectionProperties = [
 			return {
 				label: "Overflow Y",
 				type: "select",
-				options: [
-					{
-						label: "Auto",
-						value: "auto",
-					},
-					{
-						label: "Visible",
-						value: "visible",
-					},
-					{
-						label: "Hidden",
-						value: "hidden",
-					},
-					{
-						label: "Scroll",
-						value: "scroll",
-					},
-				],
-				modelValue: blockController.getStyle("overflowY") || blockController.getStyle("overflow"),
+				options: overflowOptions,
+				modelValue: blockController.getStyle("overflowY"),
 			};
 		},
 		searchKeyWords:
 			"Overflow, Y, OverflowY, Overflow Y, Auto, Visible, Hide, Scroll, vertical scroll, verticalScroll",
 		events: {
-			"update:modelValue": (val: StyleValue) => blockController.setStyle("overflowY", val),
+			"update:modelValue": (val: StyleValue) => {
+				if (val === "unset") {
+					val = null;
+				}
+				blockController.setStyle("overflowY", val);
+			},
 		},
 	},
 	{
