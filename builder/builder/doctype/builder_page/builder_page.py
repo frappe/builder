@@ -111,6 +111,7 @@ class BuilderPage(WebsiteGenerator):
 			or self.has_value_changed("route")
 			or self.has_value_changed("published")
 			or self.has_value_changed("disable_indexing")
+			or self.has_value_changed("blocks")
 		):
 			self.clear_route_cache()
 
@@ -163,6 +164,7 @@ class BuilderPage(WebsiteGenerator):
 			self.name,
 			"generate_page_preview_image",
 			queue="short",
+			enqueue_after_commit=True,
 		)
 
 		return self.route
@@ -243,11 +245,27 @@ class BuilderPage(WebsiteGenerator):
 			else:
 				context.setdefault("styles", []).append(script_doc.public_url)
 
+		if not context.get("_head_html"):
+			context._head_html = ""
+
+		if not context.get("_body_html"):
+			context._body_html = ""
+
+		if self.head_html:
+			context._head_html += self.head_html
+
+		if self.body_html:
+			context._body_html += self.body_html
+
 		builder_settings = frappe.get_cached_doc("Builder Settings", "Builder Settings")
 		if builder_settings.script:
 			context.setdefault("scripts", []).append(builder_settings.script_public_url)
 		if builder_settings.style:
 			context.setdefault("styles", []).append(builder_settings.style_public_url)
+		if builder_settings.head_html:
+			context._head_html += builder_settings.head_html
+		if builder_settings.body_html:
+			context._body_html += builder_settings.body_html
 
 	@frappe.whitelist()
 	def get_page_data(self, route_variables=None):
@@ -276,6 +294,38 @@ class BuilderPage(WebsiteGenerator):
 			context.custom_fonts = user_fonts
 		for font in user_fonts:
 			del font_map[font.font_name]
+
+	def replace_component(self, target_component, replace_with):
+		if self.blocks:
+			blocks = frappe.parse_json(self.blocks)
+			self.blocks = frappe.as_json(replace_component_in_blocks(blocks, target_component, replace_with))
+			self.db_set("blocks", self.blocks, commit=True, update_modified=False)
+		if self.draft_blocks:
+			draft_blocks = frappe.parse_json(self.draft_blocks)
+			self.draft_blocks = frappe.as_json(
+				replace_component_in_blocks(draft_blocks, target_component, replace_with)
+			)
+			self.db_set("draft_blocks", self.draft_blocks, commit=True, update_modified=False)
+
+		self.clear_route_cache()
+
+
+def replace_component_in_blocks(blocks, target_component, replace_with):
+	for target_block in blocks:
+		if target_block.get("extendedFromComponent") == target_component:
+			new_component_block = frappe.parse_json(
+				frappe.get_cached_value("Builder Component", replace_with, "block")
+			)
+			target_block.clear()
+			target_block.update(new_component_block)
+			target_block["extendedFromComponent"] = replace_with
+			reset_with_component(target_block, replace_with, new_component_block.get("children"))
+		else:
+			target_block["children"] = replace_component_in_blocks(
+				target_block.get("children", []) or [], target_component, replace_with
+			)
+
+	return blocks
 
 
 def save_as_template(page_doc: BuilderPage):
@@ -307,7 +357,7 @@ def save_as_template(page_doc: BuilderPage):
 			if component_doc.block:
 				component_block = frappe.parse_json(component_doc.block)
 				get_component(component_block)
-		for child in block.get("children", []):
+		for child in block.get("children", []) or []:
 			get_component(child)
 
 	for block in blocks:
@@ -423,7 +473,7 @@ def get_block_html(blocks):
 				tag.append(get_tag(block.get("children")[0], soup, item_key))
 				tag.append("{% endfor %}")
 			else:
-				for child in block.get("children", []):
+				for child in block.get("children", []) or []:
 					if child.get("visibilityCondition"):
 						key = child.get("visibilityCondition")
 						if data_key:
@@ -543,8 +593,8 @@ def extend_block(block, overridden_block):
 		block["dataKey"].update({k: v for k, v in dataKey.items() if v is not None})
 	if overridden_block.get("innerHTML"):
 		block["innerHTML"] = overridden_block["innerHTML"]
-	component_children = block.get("children", [])
-	overridden_children = overridden_block.get("children", [])
+	component_children = block.get("children", []) or []
+	overridden_children = overridden_block.get("children", []) or []
 	extended_children = []
 	for overridden_child in overridden_children:
 		component_child = next(
@@ -627,3 +677,37 @@ def resolve_path(path):
 		pass
 
 	return original_resolve_path(path)
+
+
+def reset_with_component(block, extended_with_component, component_children):
+	reset_block(block)
+	block["children"] = []
+	for component_child in component_children:
+		component_child_id = component_child.get("blockId")
+		child_block = reset_block(component_child)
+		child_block["isChildOfComponent"] = extended_with_component
+		child_block["referenceBlockId"] = component_child_id
+		block["children"].append(child_block)
+		if child_block.get("extendedFromComponent"):
+			component = frappe.get_cached_doc("Builder Component", child_block.get("extendedFromComponent"))
+			component_block = frappe.parse_json(component.block)
+			reset_with_component(
+				child_block, child_block.get("extendedFromComponent"), component_block.get("children")
+			)
+		else:
+			reset_with_component(child_block, extended_with_component, child_block.get("children"))
+
+
+def reset_block(block):
+	block["blockId"] = frappe.generate_hash(length=8)
+	block["innerHTML"] = None
+	block["element"] = None
+	block["baseStyles"] = {}
+	block["rawStyles"] = {}
+	block["mobileStyles"] = {}
+	block["tabletStyles"] = {}
+	block["attributes"] = {}
+	block["customAttributes"] = {}
+	block["classes"] = []
+	block["dataKey"] = {}
+	return block

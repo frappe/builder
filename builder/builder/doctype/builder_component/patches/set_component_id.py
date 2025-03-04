@@ -1,5 +1,5 @@
-
 import frappe
+
 
 def execute():
 	"""Set Component ID"""
