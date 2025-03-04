@@ -160,6 +160,14 @@ const showInfoDialog = ref(false);
 const showSettingsDialog = ref(false);
 const toolbar = ref(null);
 
+const publishButtonLabel = computed(() => {
+	if ((store.activePage?.draft_blocks && !store.activePage?.published) || !store.activePage?.draft_blocks) {
+		return "Publish";
+	} else {
+		return "Publish Changes";
+	}
+});
+
 const currentlyViewedByText = computed(() => {
 	const names = store.viewers.map((viewer) => viewer.fullname).map((name) => name.split(" ")[0]);
 	const count = names.length;
