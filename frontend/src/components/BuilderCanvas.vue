@@ -80,7 +80,7 @@
 import LoadingIcon from "@/components/Icons/Loading.vue";
 import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
 import Block from "@/utils/block";
-import { getBlockCopy, getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
+import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
 import { useBlockEventHandlers } from "@/utils/useBlockEventHandlers";
 import { useBlockSelection } from "@/utils/useBlockSelection";
 import { useCanvasDropZone } from "@/utils/useCanvasDropZone";
@@ -104,7 +104,7 @@ const overlay = ref(null);
 const props = defineProps({
 	blockData: {
 		type: Block,
-		default: false,
+		required: true,
 	},
 	canvasStyles: {
 		type: Object,
@@ -112,8 +112,7 @@ const props = defineProps({
 	},
 });
 
-// clone props.block into canvas data to avoid mutating them
-const block = ref(getBlockCopy(props.blockData, true)) as Ref<Block>;
+const block = ref(props.blockData) as Ref<Block>;
 const history = ref(null) as Ref<null> | CanvasHistory;
 
 const {

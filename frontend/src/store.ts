@@ -153,11 +153,6 @@ const useStore = defineStore("store", {
 			if (!Array.isArray(blocks)) {
 				this.pushBlocks([blocks]);
 			}
-			if (blocks.length === 0) {
-				this.pageBlocks = [getBlockInstance(getBlockTemplate("body"))];
-			} else {
-				this.pageBlocks = [getBlockInstance(blocks[0])];
-			}
 			this.pageBlocks = [getBlockInstance(blocks[0] || getBlockTemplate("body"))];
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
@@ -411,8 +406,9 @@ const useStore = defineStore("store", {
 			}
 		},
 		savePage() {
-			this.pageBlocks = this.getPageBlocks() as Block[];
-			const pageData = JSON.stringify(this.pageBlocks.map((block: Block) => getCopyWithoutParent(block)));
+			const pageData = JSON.stringify(
+				this.getPageBlocks().map((block: Block) => getCopyWithoutParent(block)),
+			);
 			const saveId = generateId();
 
 			// more save requests can be triggered till the first one is completed
@@ -535,8 +531,9 @@ const useStore = defineStore("store", {
 			fragmentName?: string,
 			fragmentId?: string,
 		) {
+			const blockCopy = getBlockCopy(block, true);
 			this.fragmentData = {
-				block,
+				block: blockCopy,
 				saveAction,
 				saveActionLabel,
 				fragmentName: fragmentName || block.getBlockDescription(),
