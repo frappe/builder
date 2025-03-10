@@ -12,6 +12,8 @@ from frappe.model.document import Document
 from frappe.modules.export_file import export_to_files
 from frappe.website.utils import clear_website_cache
 
+from builder.utils import Block
+
 
 class BuilderComponent(Document):
 	def before_insert(self):
@@ -47,71 +49,6 @@ class BuilderComponent(Document):
 				record_list=[["Builder Component", self.name, "builder_component"]],
 				record_module="builder",
 			)
-
-
-@dataclass
-class BlockDataKey:
-	key: str
-	property: str
-	type: str
-
-
-@dataclass
-class Block:
-	blockId: str = ""
-	children: list["Block"] = None
-	baseStyles: dict = None
-	rawStyles: dict = None
-	mobileStyles: dict = None
-	tabletStyles: dict = None
-	attributes: dict = None
-	classes: list[str] = None
-	dataKey: BlockDataKey | None = None
-	blockName: str | None = None
-	element: str | None = None
-	draggable: bool = False
-	innerText: str | None = None
-	innerHTML: str | None = None
-	extendedFromComponent: str | None = None
-	originalElement: str | None = None
-	isChildOfComponent: str | None = None
-	referenceBlockId: str | None = None
-	isRepeaterBlock: bool = False
-	visibilityCondition: str | None = None
-	elementBeforeConversion: str | None = None
-	customAttributes: dict | None = None
-
-	def __init__(self, **kwargs) -> None:
-		for key, value in kwargs.items():
-			if key == "children":
-				value = [Block(**b) if b and isinstance(b, dict) else None for b in (value or [])]
-			setattr(self, key, value)
-
-	def as_dict(self):
-		return {
-			"blockId": self.blockId,
-			"children": [child.as_dict() for child in self.children] if self.children else None,
-			"baseStyles": self.baseStyles,
-			"rawStyles": self.rawStyles,
-			"mobileStyles": self.mobileStyles,
-			"tabletStyles": self.tabletStyles,
-			"attributes": self.attributes,
-			"classes": self.classes,
-			"dataKey": self.dataKey,
-			"blockName": self.blockName,
-			"element": self.element,
-			"draggable": self.draggable,
-			"innerText": self.innerText,
-			"innerHTML": self.innerHTML,
-			"extendedFromComponent": self.extendedFromComponent,
-			"originalElement": self.originalElement,
-			"isChildOfComponent": self.isChildOfComponent,
-			"referenceBlockId": self.referenceBlockId,
-			"isRepeaterBlock": self.isRepeaterBlock,
-			"visibilityCondition": self.visibilityCondition,
-			"elementBeforeConversion": self.elementBeforeConversion,
-			"customAttributes": self.customAttributes,
-		}
 
 
 class ComponentSyncer:
