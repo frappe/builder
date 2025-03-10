@@ -61,22 +61,18 @@ class Block implements BlockOptions {
 		if (this.extendedFromComponent) {
 			componentStore.loadComponent(this.extendedFromComponent);
 		}
-		// TODO: Investigate this
-		// This fixes a weird case where referenceComponent used to return null even if the extendedFromComponent was set mostyl because of the reactive transformation of block during block instance creation. Still not entirely clear about this weird behavior
+		// to keep this property out of block reactivity
 		Object.defineProperty(this, "referenceComponent", {
 			value: computed(() => {
 				if (this.extendedFromComponent) {
-					return markRaw(componentStore.getComponentBlock(this.extendedFromComponent as string)) || null;
+					return componentStore.getComponentBlock(this.extendedFromComponent as string) || null;
 				} else if (this.isChildOfComponent) {
 					const componentBlock = componentStore.getComponentBlock(this.isChildOfComponent as string);
-					const componentBlockInstance = findBlock(this.referenceBlockId as string, [componentBlock]);
-					return componentBlockInstance ? markRaw(componentBlockInstance) : null;
+					return findBlock(this.referenceBlockId as string, [componentBlock]);
 				}
 				return null;
 			}),
-			writable: false,
 			enumerable: false,
-			configurable: true,
 		});
 
 		this.dataKey = options.dataKey || null;
