@@ -8,7 +8,6 @@
 		:class="classes"
 		v-bind="attributes"
 		:style="styles"
-		v-if="showBlock"
 		ref="component">
 		<BuilderBlock
 			:data="data"
@@ -17,7 +16,7 @@
 			:preview="preview"
 			:isChildOfComponent="block.isExtendedFromComponent() || isChildOfComponent"
 			:key="child.blockId"
-			v-for="child in block.getChildren()" />
+			v-for="child in block.getChildren().filter((child) => child.isVisible())" />
 	</component>
 	<teleport to="#overlay" v-if="canvasProps?.overlayElement && !preview && Boolean(canvasProps)">
 		<!-- prettier-ignore -->
