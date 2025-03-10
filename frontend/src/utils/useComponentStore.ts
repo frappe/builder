@@ -159,7 +159,7 @@ const useComponentStore = defineStore("componentStore", {
 			return webComponent.insert
 				.submit(obj)
 				.then(() => {
-					this.componentMap.set(obj.name, getBlockInstance(obj.block));
+					this.setComponentMap(obj);
 				})
 				.catch(() => {
 					console.log(`There was an error while creating ${obj.component_name}`);
