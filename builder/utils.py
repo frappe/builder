@@ -4,6 +4,7 @@ import re
 import shutil
 import socket
 import subprocess
+from dataclasses import dataclass
 from os.path import join
 from urllib.parse import unquote, urlparse
 
@@ -22,6 +23,70 @@ from frappe.utils.safe_exec import (
 )
 from RestrictedPython import compile_restricted
 from werkzeug.routing import Rule
+
+
+@dataclass
+class BlockDataKey:
+	key: str
+	property: str
+	type: str
+
+
+class Block:
+	blockId: str = ""
+	children: list["Block"] = None
+	baseStyles: dict = None
+	rawStyles: dict = None
+	mobileStyles: dict = None
+	tabletStyles: dict = None
+	attributes: dict = None
+	classes: list[str] = None
+	dataKey: BlockDataKey | None = None
+	blockName: str | None = None
+	element: str | None = None
+	draggable: bool = False
+	innerText: str | None = None
+	innerHTML: str | None = None
+	extendedFromComponent: str | None = None
+	originalElement: str | None = None
+	isChildOfComponent: str | None = None
+	referenceBlockId: str | None = None
+	isRepeaterBlock: bool = False
+	visibilityCondition: str | None = None
+	elementBeforeConversion: str | None = None
+	customAttributes: dict | None = None
+
+	def __init__(self, **kwargs) -> None:
+		for key, value in kwargs.items():
+			if key == "children":
+				value = [Block(**b) if b and isinstance(b, dict) else None for b in (value or [])]
+			setattr(self, key, value)
+
+	def as_dict(self):
+		return {
+			"blockId": self.blockId,
+			"children": [child.as_dict() for child in self.children] if self.children else None,
+			"baseStyles": self.baseStyles,
+			"rawStyles": self.rawStyles,
+			"mobileStyles": self.mobileStyles,
+			"tabletStyles": self.tabletStyles,
+			"attributes": self.attributes,
+			"classes": self.classes,
+			"dataKey": self.dataKey,
+			"blockName": self.blockName,
+			"element": self.element,
+			"draggable": self.draggable,
+			"innerText": self.innerText,
+			"innerHTML": self.innerHTML,
+			"extendedFromComponent": self.extendedFromComponent,
+			"originalElement": self.originalElement,
+			"isChildOfComponent": self.isChildOfComponent,
+			"referenceBlockId": self.referenceBlockId,
+			"isRepeaterBlock": self.isRepeaterBlock,
+			"visibilityCondition": self.visibilityCondition,
+			"elementBeforeConversion": self.elementBeforeConversion,
+			"customAttributes": self.customAttributes,
+		}
 
 
 def get_doc_as_dict(doctype, name):
@@ -195,7 +260,7 @@ def make_records(path):
 # 	)
 
 
-def copy_img_to_asset_folder(block, page_doc):
+def copy_img_to_asset_folder(block: Block, page_doc):
 	if block.get("element") == "img":
 		src = block.get("attributes", {}).get("src")
 		site_url = get_url()
