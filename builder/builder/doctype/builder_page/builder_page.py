@@ -574,6 +574,9 @@ def extend_block(block, overridden_block):
 	block["mobileStyles"].update(overridden_block["mobileStyles"])
 	block["tabletStyles"].update(overridden_block["tabletStyles"])
 	block["attributes"].update(overridden_block["attributes"])
+	if overridden_block.get("element"):
+		block["element"] = overridden_block["element"]
+
 	if overridden_block.get("visibilityCondition"):
 		block["visibilityCondition"] = overridden_block.get("visibilityCondition")
 

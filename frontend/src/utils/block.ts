@@ -2,7 +2,7 @@ import useStore from "@/store";
 import useComponentStore from "@/utils/useComponentStore";
 import { Editor } from "@tiptap/vue-3";
 import { clamp } from "@vueuse/core";
-import { computed, markRaw, nextTick, reactive } from "vue";
+import { computed, nextTick, reactive } from "vue";
 import {
 	addPxToNumber,
 	dataURLtoFile,
@@ -701,8 +701,8 @@ class Block implements BlockOptions {
 		}
 	}
 	getElement() {
-		if (this.isExtendedFromComponent()) {
-			return this.referenceComponent?.element || this.element;
+		if (!this.element && this.isExtendedFromComponent()) {
+			return this.referenceComponent?.element;
 		}
 		return this.element;
 	}
@@ -984,7 +984,6 @@ function resetBlock(
 	resetChildren: boolean = true,
 	resetOverrides: boolean = true,
 ) {
-	block = markRaw(block);
 	block.blockId = block.generateId();
 	if (resetOverrides) {
 		delete block.innerHTML;
