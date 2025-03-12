@@ -223,7 +223,7 @@ class Block implements BlockOptions {
 		if (this.extendedFromComponent) {
 			return this.getComponentBlockDescription() || "";
 		}
-		if (this.isHTML()) {
+		if (this.isHTML() && !this.blockName) {
 			const innerHTML = this.getInnerHTML() || "";
 			const match = innerHTML.match(/<([a-z]+)[^>]*>/);
 			if (match) {
