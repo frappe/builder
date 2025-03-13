@@ -204,8 +204,9 @@ class BuilderPage(WebsiteGenerator):
 		else:
 			context.base_url = frappe.utils.get_url(self.route)
 
-		self.set_style_and_script(context)
 		context.update(page_data)
+
+		self.set_style_and_script(context)
 		self.set_meta_tags(context=context, page_data=page_data)
 		self.set_favicon(context)
 		try:
@@ -266,6 +267,9 @@ class BuilderPage(WebsiteGenerator):
 			context._head_html += builder_settings.head_html
 		if builder_settings.body_html:
 			context._body_html += builder_settings.body_html
+
+		context["_head_html"] = render_template(context._head_html, context)
+		context["_body_html"] = render_template(context._body_html, context)
 
 	@frappe.whitelist()
 	def get_page_data(self, route_variables=None):
