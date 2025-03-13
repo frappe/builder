@@ -635,4 +635,5 @@ const useStore = defineStore("store", {
 	},
 });
 
+// @ts-ignore: Ignoring circular dependency warning
 export default useStore;
