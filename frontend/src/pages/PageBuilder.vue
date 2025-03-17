@@ -202,7 +202,7 @@ onActivated(async () => {
 		await webPages.fetchOne.submit(route.params.pageId as string);
 	}
 	if (route.params.pageId && route.params.pageId !== "new") {
-		store.setPage(route.params.pageId as string);
+		store.setPage(route.params.pageId as string, true, route.query);
 	}
 });
 

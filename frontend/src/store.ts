@@ -133,7 +133,7 @@ const useStore = defineStore("store", {
 		getPageBlocks() {
 			return [this.activeCanvas?.getRootBlock()];
 		},
-		async setPage(pageName: string, resetCanvas = true) {
+		async setPage(pageName: string, resetCanvas = true, routeParams = null as Object | null) {
 			this.settingPage = true;
 			if (!pageName) {
 				return;
@@ -159,6 +159,9 @@ const useStore = defineStore("store", {
 			this.selectedPage = page.name;
 			const variables = localStorage.getItem(`${page.name}:routeVariables`) || "{}";
 			this.routeVariables = JSON.parse(variables);
+			if (routeParams) {
+				Object.assign(this.routeVariables, routeParams);
+			}
 			await this.setPageData(this.activePage);
 			this.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas);
 			nextTick(() => {
