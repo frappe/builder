@@ -1,6 +1,7 @@
 <template>
 	<div class="flex items-center justify-between [&>div>input]:!bg-red-600 [&>div>input]:pr-6">
 		<InputLabel
+			v-if="label"
 			:class="{
 				'cursor-ns-resize': enableSlider,
 			}"
@@ -22,21 +23,23 @@
 		</InputLabel>
 		<BuilderInput
 			:type="type"
-			placeholder="unset"
+			:placeholder="placeholder"
 			:modelValue="modelValue"
 			:options="inputOptions"
 			v-if="type != 'autocomplete'"
 			@update:modelValue="handleChange"
+			:hideClearButton="hideClearButton"
 			@keydown.stop="handleKeyDown" />
 		<Autocomplete
 			v-if="type == 'autocomplete'"
-			placeholder="unset"
+			:placeholder="placeholder"
 			:modelValue="modelValue"
 			:options="inputOptions"
 			:getOptions="getOptions"
 			@update:modelValue="handleChange"
 			:actionButton="actionButton"
 			:showInputAsOption="showInputAsOption"
+			:hideClearButton="hideClearButton"
 			class="w-full" />
 	</div>
 </template>
@@ -107,6 +110,14 @@ const props = defineProps({
 	actionButton: {
 		type: Object as PropType<Action>,
 		default: null,
+	},
+	placeholder: {
+		type: String,
+		default: "unset",
+	},
+	hideClearButton: {
+		type: Boolean,
+		default: false,
 	},
 });
 
