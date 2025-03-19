@@ -23,6 +23,12 @@ export interface BlockDataKey {
 	property?: string;
 }
 
+interface BlockFormOptions {
+	doctype?: string;
+	fieldComponentMap?: Record<"input" | "select" | "file" | "button", string>;
+	webform?: string;
+}
+
 class Block implements BlockOptions {
 	blockId: string;
 	children: Array<Block>;
@@ -45,6 +51,7 @@ class Block implements BlockOptions {
 	isRepeaterBlock?: boolean;
 	visibilityCondition?: string;
 	elementBeforeConversion?: string;
+	formOptions?: BlockFormOptions;
 	parentBlock: Block | null;
 	// @ts-expect-error
 	referenceComponent: Block | null;
@@ -59,6 +66,7 @@ class Block implements BlockOptions {
 		this.referenceBlockId = options.referenceBlockId;
 		this.visibilityCondition = options.visibilityCondition;
 		this.parentBlock = options.parentBlock || null;
+		this.formOptions = options.formOptions;
 		if (this.extendedFromComponent) {
 			componentStore.loadComponent(this.extendedFromComponent);
 		}
@@ -272,6 +280,9 @@ class Block implements BlockOptions {
 	}
 	isForm() {
 		return this.getElement() === "form";
+	}
+	isWebForm() {
+		return this.getElement() === "form" && this.originalElement === "__webform__";
 	}
 	isButton() {
 		return this.getElement() === "button";
@@ -761,6 +772,18 @@ class Block implements BlockOptions {
 	}
 	isColumn() {
 		return this.isFlex() && this.getStyle("flexDirection") === "column";
+	}
+	getFormOption(option: string) {
+		if (this.formOptions) {
+			return this.formOptions[option];
+		}
+		return "";
+	}
+	setFormOption(option: string, value: string) {
+		if (!this.formOptions) {
+			this.formOptions = {};
+		}
+		this.formOptions[option] = value;
 	}
 	duplicateBlock() {
 		if (this.isRoot()) {
