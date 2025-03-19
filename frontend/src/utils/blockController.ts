@@ -304,6 +304,22 @@ const blockController = {
 	isForm: () => {
 		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isForm();
 	},
+	getFormOption: (option: string) => {
+		let formOption = "__initial__" as StyleValue;
+		store.activeCanvas?.selectedBlocks.forEach((block) => {
+			if (formOption === "__initial__") {
+				formOption = block.getFormOption(option);
+			} else if (formOption !== block.getFormOption(option)) {
+				formOption = "Mixed";
+			}
+		});
+		return formOption;
+	},
+	setFormOption: (option: string, value: string) => {
+		store.activeCanvas?.selectedBlocks.forEach((block) => {
+			block.setFormOption(option, value);
+		});
+	},
 };
 
 export default blockController;

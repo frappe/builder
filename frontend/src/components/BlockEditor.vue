@@ -30,6 +30,15 @@
 			:target-block="block"
 			:target="target" />
 		<BoxResizer v-if="showResizer" :targetBlock="block" @resizing="resizing = $event" :target="target" />
+		<div
+			class="absolute bottom-0 left-0 right-0 top-0 grid place-items-center bg-blue-200 text-sm opacity-25"
+			v-if="block.isWebForm() && isBlockSelected && !block.hasChildren()">
+			Select Web Form
+		</div>
+		<WebFormManager
+			:block="block"
+			v-if="block.isWebForm() && isBlockSelected"
+			class="!absolute bottom-0 left-[50%] translate-x-[-50%] translate-y-[50%]"></WebFormManager>
 	</div>
 </template>
 <script setup lang="ts">
@@ -45,6 +54,7 @@ import BorderRadiusHandler from "./BorderRadiusHandler.vue";
 import BoxResizer from "./BoxResizer.vue";
 import MarginHandler from "./MarginHandler.vue";
 import PaddingHandler from "./PaddingHandler.vue";
+import WebFormManager from "./WebFormManager.vue";
 
 const canvasProps = inject("canvasProps") as CanvasProps;
 const canvasStore = useCanvasStore();

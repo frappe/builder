@@ -10,7 +10,10 @@ function getBlockTemplate(
 		| "loading-component"
 		| "empty-component"
 		| "repeater"
-		| "video",
+		| "video"
+		| "input"
+		| "select",
+	options: { [key: string]: string | number | { [key: string]: string }[] } = {},
 ): BlockOptions {
 	switch (type) {
 		case "html":
@@ -143,6 +146,59 @@ function getBlockTemplate(
 				baseStyles: {
 					objectFit: "cover",
 				} as BlockStyleMap,
+			};
+
+		case "input":
+			return {
+				name: "Input",
+				element: "input",
+				attributes: { placeholder: "Full Name" } as BlockAttributeMap,
+				baseStyles: {
+					borderColor: "#c9c9c9",
+					borderRadius: "4px",
+					borderStyle: "solid",
+					borderWidth: "1px",
+					fontSize: "14px",
+					height: "32px",
+					width: "100%",
+				} as BlockStyleMap,
+				customAttributes: { name: "full_name", required: "true" },
+			};
+
+		case "select":
+			return {
+				name: "Select",
+				element: "select",
+				children: [
+					{
+						name: "Option",
+						element: "option",
+						innerHTML: "Option 1",
+						attributes: { value: "option1" } as BlockAttributeMap,
+					},
+					{
+						name: "Option",
+						element: "option",
+						innerHTML: "Option 2",
+						attributes: { value: "option2" } as BlockAttributeMap,
+					},
+					{
+						name: "Option",
+						element: "option",
+						innerHTML: "Option 3",
+						attributes: { value: "option3" } as BlockAttributeMap,
+					},
+				],
+				baseStyles: {
+					borderColor: "#c9c9c9",
+					borderRadius: "4px",
+					borderStyle: "solid",
+					borderWidth: "1px",
+					fontSize: "14px",
+					height: "32px",
+					width: "100%",
+				} as BlockStyleMap,
+				customAttributes: { name: "select_name", required: "true" },
 			};
 	}
 }
