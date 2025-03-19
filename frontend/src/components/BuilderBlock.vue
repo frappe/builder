@@ -16,7 +16,7 @@
 			:preview="preview"
 			:isChildOfComponent="block.isExtendedFromComponent() || isChildOfComponent"
 			:key="child.blockId"
-			v-for="child in block.getChildren().filter((child) => child.isVisible())" />
+			v-for="child in block.getChildren().filter((child) => child.isVisible(breakpoint))" />
 	</component>
 	<teleport to="#overlay" v-if="canvasProps?.overlayElement && !preview && Boolean(canvasProps)">
 		<!-- prettier-ignore -->
