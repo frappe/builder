@@ -312,18 +312,19 @@ class Block implements BlockOptions {
 		style = kebabToCamelCase(style as string) as styleProperty;
 		this.baseStyles[style] = value;
 	}
-	getStyle(style: styleProperty) {
+	getStyle(style: styleProperty, breakpoint?: string) {
 		const store = useStore();
+		breakpoint = breakpoint || store.activeBreakpoint;
 		let styleValue = undefined as StyleValue;
-		if (store.activeBreakpoint === "mobile") {
+		if (breakpoint === "mobile") {
 			styleValue = this.mobileStyles[style] || this.tabletStyles[style] || this.baseStyles[style];
-		} else if (store.activeBreakpoint === "tablet") {
+		} else if (breakpoint === "tablet") {
 			styleValue = this.tabletStyles[style] || this.baseStyles[style];
 		} else {
 			styleValue = this.baseStyles[style];
 		}
 		if (styleValue === undefined && this.isExtendedFromComponent()) {
-			styleValue = this.referenceComponent?.getStyle(style) as StyleValue;
+			styleValue = this.referenceComponent?.getStyle(style, breakpoint) as StyleValue;
 		}
 		return styleValue;
 	}
@@ -656,8 +657,8 @@ class Block implements BlockOptions {
 			this.setStyle("display", "none");
 		}
 	}
-	isVisible() {
-		return this.getStyle("display") !== "none";
+	isVisible(breakpoint?: string) {
+		return this.getStyle("display", breakpoint) !== "none";
 	}
 	extendFromComponent(componentName: string) {
 		this.extendedFromComponent = componentName;
