@@ -1,6 +1,5 @@
 <template>
 	<div ref="component" class="!relative">
-		Form
 		<slot />
 	</div>
 </template>
