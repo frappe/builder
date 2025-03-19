@@ -19,6 +19,7 @@ import Block from "./utils/block";
 import getBlockTemplate from "./utils/blockTemplate";
 import {
 	confirm,
+	generateId,
 	getBlockCopy,
 	getBlockInstance,
 	getBlockString,
@@ -75,6 +76,7 @@ const useStore = defineStore("store", {
 		activePage: <BuilderPage | null>null,
 		savingPage: false,
 		realtime: new RealTimeHandler(),
+		saveId: null as string | null,
 		viewers: <UserInfo[]>[],
 		blockTemplateMap: <Map<string, BlockTemplate>>new Map(),
 		activeFolder: useStorage("activeFolder", ""),
@@ -102,7 +104,7 @@ const useStore = defineStore("store", {
 			placeholder: <HTMLElement | null>null,
 			parentBlock: <Block | null>null,
 			index: <number | null>null,
-		}
+		},
 	}),
 	actions: {
 		clearBlocks() {
@@ -131,7 +133,7 @@ const useStore = defineStore("store", {
 		getPageBlocks() {
 			return [this.activeCanvas?.getRootBlock()];
 		},
-		async setPage(pageName: string, resetCanvas = true) {
+		async setPage(pageName: string, resetCanvas = true, routeParams = null as Object | null) {
 			this.settingPage = true;
 			if (!pageName) {
 				return;
@@ -151,17 +153,15 @@ const useStore = defineStore("store", {
 			if (!Array.isArray(blocks)) {
 				this.pushBlocks([blocks]);
 			}
-			if (blocks.length === 0) {
-				this.pageBlocks = [getBlockInstance(getBlockTemplate("body"))];
-			} else {
-				this.pageBlocks = [getBlockInstance(blocks[0])];
-			}
 			this.pageBlocks = [getBlockInstance(blocks[0] || getBlockTemplate("body"))];
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
 			this.selectedPage = page.name;
 			const variables = localStorage.getItem(`${page.name}:routeVariables`) || "{}";
 			this.routeVariables = JSON.parse(variables);
+			if (routeParams) {
+				Object.assign(this.routeVariables, routeParams);
+			}
 			await this.setPageData(this.activePage);
 			this.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas);
 			nextTick(() => {
@@ -409,9 +409,13 @@ const useStore = defineStore("store", {
 			}
 		},
 		savePage() {
-			this.pageBlocks = this.getPageBlocks() as Block[];
-			const pageData = JSON.stringify(this.pageBlocks.map((block) => getCopyWithoutParent(block)));
+			const pageData = JSON.stringify(
+				this.getPageBlocks().map((block: Block) => getCopyWithoutParent(block)),
+			);
+			const saveId = generateId();
 
+			// more save requests can be triggered till the first one is completed
+			this.saveId = saveId;
 			const args = {
 				name: this.selectedPage,
 				draft_blocks: pageData,
@@ -422,7 +426,10 @@ const useStore = defineStore("store", {
 					this.activePage = page;
 				})
 				.finally(() => {
-					this.savingPage = false;
+					if (this.saveId === saveId) {
+						this.saveId = null;
+						this.savingPage = false;
+					}
 					this.activeCanvas?.toggleDirty(false);
 				});
 		},
@@ -487,7 +494,9 @@ const useStore = defineStore("store", {
 		},
 		async waitTillPageIsSaved() {
 			// small delay so that all the save requests are triggered
-			await new Promise((resolve) => setTimeout(resolve, 100));
+			if (!this.savingPage) {
+				await new Promise((resolve) => setTimeout(resolve, 300));
+			}
 			return new Promise((resolve) => {
 				const interval = setInterval(() => {
 					if (!this.savingPage) {
@@ -523,13 +532,15 @@ const useStore = defineStore("store", {
 			saveAction: (block: Block) => void,
 			saveActionLabel: string = "Save",
 			fragmentName?: string,
+			fragmentId?: string,
 		) {
+			const blockCopy = getBlockCopy(block, true);
 			this.fragmentData = {
-				block,
+				block: blockCopy,
 				saveAction,
 				saveActionLabel,
 				fragmentName: fragmentName || block.getBlockDescription(),
-				fragmentId: block.blockId,
+				fragmentId: fragmentId || block.blockId,
 			};
 			this.editingMode = "fragment";
 		},
@@ -562,7 +573,7 @@ const useStore = defineStore("store", {
 				const ghostScale = this.activeCanvas?.canvasProps.scale;
 
 				// Clone the entire draggable element
-				const dragElement = (ev.target as HTMLElement)
+				const dragElement = ev.target as HTMLElement;
 				if (!dragElement) return;
 				const ghostDiv = document.createElement("div");
 				const ghostElement = dragElement.cloneNode(true) as HTMLElement;
@@ -600,9 +611,9 @@ const useStore = defineStore("store", {
 				placeholder: null,
 				parentBlock: null,
 				index: null,
-			}
-			this.isDragging = false
-			this.isDropping = false
+			};
+			this.isDragging = false;
+			this.isDropping = false;
 		},
 		insertDropPlaceholder() {
 			// append placeholder component to the dom directly
@@ -619,12 +630,13 @@ const useStore = defineStore("store", {
 			return this.dropTarget.placeholder;
 		},
 		removeDropPlaceholder() {
-			const placeholder = document.getElementById("placeholder")
+			const placeholder = document.getElementById("placeholder");
 			if (placeholder) {
-				placeholder.remove()
+				placeholder.remove();
 			}
-		}
+		},
 	},
 });
 
+// @ts-ignore: Ignoring circular dependency warning
 export default useStore;

@@ -2,7 +2,7 @@ import useStore from "@/store";
 import useComponentStore from "@/utils/useComponentStore";
 import { Editor } from "@tiptap/vue-3";
 import { clamp } from "@vueuse/core";
-import { computed, CSSProperties, markRaw, nextTick, reactive } from "vue";
+import { computed, nextTick, reactive } from "vue";
 import {
 	addPxToNumber,
 	dataURLtoFile,
@@ -13,8 +13,6 @@ import {
 	kebabToCamelCase,
 	uploadImage,
 } from "./helpers";
-
-export type styleProperty = keyof CSSProperties | `__${string}`;
 
 type BlockDataKeyType = "key" | "attribute" | "style";
 
@@ -71,22 +69,18 @@ class Block implements BlockOptions {
 		if (this.extendedFromComponent) {
 			componentStore.loadComponent(this.extendedFromComponent);
 		}
-		// TODO: Investigate this
-		// This fixes a weird case where referenceComponent used to return null even if the extendedFromComponent was set mostyl because of the reactive transformation of block during block instance creation. Still not entirely clear about this weird behavior
+		// to keep this property out of block reactivity
 		Object.defineProperty(this, "referenceComponent", {
 			value: computed(() => {
 				if (this.extendedFromComponent) {
-					return markRaw(componentStore.getComponentBlock(this.extendedFromComponent as string)) || null;
+					return componentStore.getComponentBlock(this.extendedFromComponent as string) || null;
 				} else if (this.isChildOfComponent) {
 					const componentBlock = componentStore.getComponentBlock(this.isChildOfComponent as string);
-					const componentBlockInstance = findBlock(this.referenceBlockId as string, [componentBlock]);
-					return componentBlockInstance ? markRaw(componentBlockInstance) : null;
+					return findBlock(this.referenceBlockId as string, [componentBlock]);
 				}
 				return null;
 			}),
-			writable: false,
 			enumerable: false,
-			configurable: true,
 		});
 
 		this.dataKey = options.dataKey || null;
@@ -235,9 +229,9 @@ class Block implements BlockOptions {
 	}
 	getBlockDescription() {
 		if (this.extendedFromComponent) {
-			return this.getComponentBlockDescription();
+			return this.getComponentBlockDescription() || "";
 		}
-		if (this.isHTML()) {
+		if (this.isHTML() && !this.blockName) {
 			const innerHTML = this.getInnerHTML() || "";
 			const match = innerHTML.match(/<([a-z]+)[^>]*>/);
 			if (match) {
@@ -246,7 +240,7 @@ class Block implements BlockOptions {
 				return "raw";
 			}
 		}
-		let description = this.blockName || this.originalElement || this.getElement();
+		let description = this.blockName || this.originalElement || this.getElement() || "";
 		if (this.getTextContent() && !this.blockName) {
 			description += " | " + this.getTextContent();
 		}
@@ -299,7 +293,7 @@ class Block implements BlockOptions {
 	setStyle(style: styleProperty, value: StyleValue) {
 		const store = useStore();
 		let styleObj = this.baseStyles;
-		style = kebabToCamelCase(style) as styleProperty;
+		style = kebabToCamelCase(style as string) as styleProperty;
 		if (store.activeBreakpoint === "mobile") {
 			styleObj = this.mobileStyles;
 		} else if (store.activeBreakpoint === "tablet") {
@@ -326,7 +320,7 @@ class Block implements BlockOptions {
 		delete this.tabletStyles[style];
 	}
 	setBaseStyle(style: styleProperty, value: StyleValue) {
-		style = kebabToCamelCase(style) as styleProperty;
+		style = kebabToCamelCase(style as string) as styleProperty;
 		this.baseStyles[style] = value;
 	}
 	getStyle(style: styleProperty) {
@@ -718,8 +712,8 @@ class Block implements BlockOptions {
 		}
 	}
 	getElement() {
-		if (this.isExtendedFromComponent()) {
-			return this.referenceComponent?.element || this.element;
+		if (!this.element && this.isExtendedFromComponent()) {
+			return this.referenceComponent?.element;
 		}
 		return this.element;
 	}
@@ -1013,7 +1007,6 @@ function resetBlock(
 	resetChildren: boolean = true,
 	resetOverrides: boolean = true,
 ) {
-	block = markRaw(block);
 	block.blockId = block.generateId();
 	if (resetOverrides) {
 		delete block.innerHTML;
@@ -1025,6 +1018,7 @@ function resetBlock(
 		block.attributes = {};
 		block.customAttributes = {};
 		block.classes = [];
+		block.dataKey = null;
 	}
 
 	if (resetChildren) {

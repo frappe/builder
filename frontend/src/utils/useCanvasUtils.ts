@@ -27,6 +27,9 @@ export function useCanvasUtils(
 	) {
 		// wait for editor to render
 		await new Promise((resolve) => setTimeout(resolve, 100));
+		if (!selectedBlockIds.value.has(blockToFocus.blockId)) {
+			selectBlock(blockToFocus);
+		}
 		await nextTick();
 		if (
 			!canvasContainer.value ||
@@ -39,6 +42,7 @@ export function useCanvasUtils(
 		}
 		const container = canvasContainer.value as HTMLElement;
 		const containerRect = container.getBoundingClientRect();
+		await nextTick();
 		const selectedBlock = document.body.querySelector(
 			`.editor[data-block-id="${blockToFocus.blockId}"][selected=true]`,
 		) as HTMLElement;
@@ -169,7 +173,7 @@ export function useCanvasUtils(
 			});
 		}
 		const paddingX = 300;
-		const paddingY = 200;
+		const paddingY = 300;
 
 		await nextTick();
 		canvasBound.update();
@@ -237,6 +241,7 @@ export function useCanvasUtils(
 		}
 		if (block.isChildOfComponentBlock()) {
 			block.toggleVisibility(false);
+			return;
 		}
 		const parentBlock = block.parentBlock;
 		if (!parentBlock) {

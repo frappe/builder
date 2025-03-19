@@ -19,6 +19,9 @@ const classes = computed(() => {
 			"!text-ink-white",
 			"hover:bg-surface-gray-6",
 			"active:bg-surface-gray-5",
+			// style for disabled button
+			"disabled:bg-surface-gray-4",
+			"disabled:text-ink-gray-8",
 		]);
 	} else if (props.variant === "subtle") {
 		_classes.push([

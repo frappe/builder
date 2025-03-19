@@ -154,7 +154,17 @@ const styleSectionProperties = [
 		},
 		searchKeyWords: "Border, Radius, BorderRadius, Border Radius",
 		events: {
-			"update:modelValue": (val: StyleValue) => blockController.setStyle("borderRadius", val),
+			"update:modelValue": (val: StyleValue) => {
+				blockController.setStyle("borderRadius", val);
+				if (val) {
+					if (!blockController.getStyle("overflowX")) {
+						blockController.setStyle("overflowX", "hidden");
+					}
+					if (!blockController.getStyle("overflowY")) {
+						blockController.setStyle("overflowY", "hidden");
+					}
+				}
+			},
 		},
 	},
 	{

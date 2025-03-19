@@ -29,7 +29,6 @@ export default class RealTimeHandler {
 
 	doc_subscribe(doctype: string, docname: string) {
 		if (this.subscribing) {
-			console.log("throttled");
 			return;
 		}
 		if (this.open_docs.has(`${doctype}:${docname}`)) {

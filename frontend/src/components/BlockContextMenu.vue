@@ -156,7 +156,8 @@ const contextMenuOptions: ContextMenuOption[] = [
 			store.propertyFilter = "data key";
 			toast.warning("Please set data key for repeater block");
 		},
-		condition: () => !block.value.isRoot() && !block.value.isRepeater(),
+		condition: () =>
+			!block.value.isRoot() && !block.value.isRepeater() && !block.value.isChildOfComponentBlock(),
 	},
 	{
 		label: "Reset Overrides",
@@ -202,7 +203,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		action: () => {
 			componentStore.editComponent(block.value);
 		},
-		condition: () => Boolean(block.value.extendedFromComponent),
+		condition: () => block.value.isExtendedFromComponent(),
 	},
 	{
 		label: "Save as Block Template",
@@ -219,7 +220,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Detach Component",
 		action: () => {
-			const newBlock = detachBlockFromComponent(block.value);
+			const newBlock = detachBlockFromComponent(block.value, null);
 			if (newBlock) {
 				newBlock.selectBlock();
 			}

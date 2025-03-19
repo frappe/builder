@@ -26,7 +26,7 @@
 					@change="query = $event.target.value"
 					:displayValue="getDisplayValue"
 					:placeholder="!modelValue ? placeholder : null"
-					class="focus:ring-outline-gray-3 h-full w-full rounded border-none bg-transparent pl-2 pr-5 text-base focus:ring-2" />
+					class="h-full w-full rounded border-none bg-transparent pl-2 pr-5 text-base focus:ring-2 focus:ring-outline-gray-3" />
 			</div>
 			<ComboboxOptions
 				class="absolute right-0 z-50 w-full overflow-y-auto rounded-lg border border-outline-gray-2 bg-surface-white p-0 shadow-2xl"

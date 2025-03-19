@@ -80,7 +80,7 @@
 import LoadingIcon from "@/components/Icons/Loading.vue";
 import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
 import Block from "@/utils/block";
-import { getBlockCopy, isCtrlOrCmd } from "@/utils/helpers";
+import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
 import { useBlockEventHandlers } from "@/utils/useBlockEventHandlers";
 import { useBlockSelection } from "@/utils/useBlockSelection";
 import { useCanvasDropZone } from "@/utils/useCanvasDropZone";
@@ -104,7 +104,7 @@ const overlay = ref(null);
 const props = defineProps({
 	blockData: {
 		type: Block,
-		default: false,
+		required: true,
 	},
 	canvasStyles: {
 		type: Object,
@@ -112,8 +112,7 @@ const props = defineProps({
 	},
 });
 
-// clone props.block into canvas data to avoid mutating them
-const block = ref(getBlockCopy(props.blockData, true)) as Ref<Block>;
+const block = ref(props.blockData) as Ref<Block>;
 const history = ref(null) as Ref<null> | CanvasHistory;
 
 const {
@@ -213,6 +212,37 @@ const handleClick = (ev: MouseEvent) => {
 	}
 };
 
+function searchBlock(searchTerm: string, targetBlock: null | Block) {
+	// find nearest block to the search term
+	// convert block to string and search for the term
+	// if found, return the nearest block
+	// else return null
+	if (!targetBlock) {
+		targetBlock = getRootBlock();
+	}
+
+	const blockObject = getBlockObject(targetBlock);
+	const children = blockObject.children || [];
+	delete blockObject.children;
+	let blockId = "";
+
+	if (JSON.stringify(blockObject).toLowerCase().includes(searchTerm.toLowerCase())) {
+		blockId = blockObject.blockId as string;
+	}
+
+	if (blockId) {
+		const block = findBlock(blockId);
+		if (block) {
+			return scrollBlockIntoView(block);
+		}
+	} else {
+		for (const child of children) {
+			return searchBlock(searchTerm, child);
+		}
+	}
+	return null;
+}
+
 watch(
 	() => block,
 	() => {
@@ -268,6 +298,7 @@ defineExpose({
 	removeBlock,
 	selectBlockRange,
 	resizingBlock,
+	searchBlock,
 });
 
 function selectBreakpoint(ev: MouseEvent, breakpoint: BreakpointConfig) {

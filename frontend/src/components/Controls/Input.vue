@@ -12,13 +12,14 @@
 				<slot name="prefix" />
 			</template>
 		</FormControl>
-		<div
+		<button
 			class="absolute bottom-[3px] right-[1px] cursor-pointer p-1 text-ink-gray-4 hover:text-ink-gray-5"
+			tabindex="-1"
 			@click="clearValue"
 			v-if="!['select', 'checkbox'].includes(type) && !hideClearButton"
 			v-show="data">
 			<CrossIcon />
-		</div>
+		</button>
 	</div>
 </template>
 <script lang="ts" setup>

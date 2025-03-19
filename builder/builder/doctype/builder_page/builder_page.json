@@ -22,6 +22,8 @@
   "draft_blocks",
   "scripting_tab",
   "page_data_script",
+  "head_html",
+  "body_html",
   "client_scripts",
   "settings_tab",
   "section_break_shab",
@@ -201,11 +203,25 @@
    "fieldtype": "Link",
    "label": "Project Folder",
    "options": "Builder Project Folder"
+  },
+  {
+   "description": "This will be appended at the end of the &lt;head&gt;",
+   "fieldname": "head_html",
+   "fieldtype": "Code",
+   "label": "Head HTML",
+   "options": "HTML"
+  },
+  {
+   "description": "This will be appended at the end of the &lt;body&gt;",
+   "fieldname": "body_html",
+   "fieldtype": "Code",
+   "label": "Body HTML",
+   "options": "HTML"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-11-26 17:03:15.281018",
+ "modified": "2025-02-19 14:31:47.360526",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

@@ -102,6 +102,31 @@ export function useBuilderEvents(
 				await componentStore.createComponent(component, true);
 			}
 
+			if (
+				blockController.isBLockSelected() &&
+				!blockController.multipleBlocksSelected() &&
+				dataObj.blocks.length === 1
+			) {
+				// replace svg with copied svg
+				const selectedBlock = blockController.getSelectedBlocks()[0];
+				const copiedBlock = getBlockCopy(dataObj.blocks[0]);
+				if (selectedBlock.isSVG() && copiedBlock.isSVG()) {
+					const svgBlock = copiedBlock;
+					console.log(svgBlock);
+					if (!svgBlock.innerHTML) return;
+					const svgContent = new DOMParser()
+						.parseFromString(svgBlock.innerHTML, "text/html")
+						.body.querySelector("svg");
+					console.log(svgContent);
+					if (svgContent) {
+						svgContent.removeAttribute("width");
+						svgContent.removeAttribute("height");
+						selectedBlock.setInnerHTML(svgContent.outerHTML);
+						return;
+					}
+				}
+			}
+
 			if (store.activeCanvas?.selectedBlocks.length && dataObj.blocks[0].blockId !== "root") {
 				let parentBlock = store.activeCanvas.selectedBlocks[0];
 				while (parentBlock && !parentBlock.canHaveChildren()) {

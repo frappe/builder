@@ -8,7 +8,6 @@
 		:class="classes"
 		v-bind="attributes"
 		:style="styles"
-		v-if="showBlock"
 		ref="component">
 		<BuilderBlock
 			:data="data"
@@ -17,7 +16,7 @@
 			:preview="preview"
 			:isChildOfComponent="block.isExtendedFromComponent() || isChildOfComponent"
 			:key="child.blockId"
-			v-for="child in block.getChildren()" />
+			v-for="child in block.getChildren().filter((child) => child.isVisible())" />
 	</component>
 	<teleport to="#overlay" v-if="canvasProps?.overlayElement && !preview && Boolean(canvasProps)">
 		<!-- prettier-ignore -->
@@ -102,7 +101,14 @@ const getComponentName = (block: Block) => {
 };
 
 const classes = computed(() => {
-	return [attrs.class, "__builder_component__", "outline-none", "select-none", ...props.block.getClasses()];
+	return [
+		attrs.class,
+		"__builder_component__",
+		"outline-none",
+		"select-none",
+		...props.block.getClasses(),
+		hiddenDueToVisibilityCondition.value ? "opacity-10" : "",
+	];
 });
 
 const attributes = computed(() => {
@@ -206,24 +212,10 @@ const isEditable = computed(() => {
 	return store.editableBlock === props.block && store.activeBreakpoint === props.breakpoint;
 });
 
-const selectBlock = (e: MouseEvent | null) => {
-	if (store.editableBlock === props.block || store.mode !== "select" || props.preview) {
-		return;
-	}
-	store.selectBlock(props.block, e);
-	store.activeBreakpoint = props.breakpoint;
-
-	if (!props.preview) {
-		store.leftPanelActiveTab = "Layers";
-		store.rightPanelActiveTab = "Properties";
-	}
-};
-
-const showBlock = computed(() => {
-	// const data = props.block.getVisibilityCondition()
-	// 	? getDataForKey(props.data, props.block.getVisibilityCondition() as string)
-	// 	: true;
-	return true;
+const hiddenDueToVisibilityCondition = computed(() => {
+	return props.block.getVisibilityCondition()
+		? !Boolean(getDataForKey(props.data, props.block.getVisibilityCondition() as string))
+		: false;
 });
 
 if (!props.preview) {

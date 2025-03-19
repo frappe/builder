@@ -80,7 +80,6 @@ let previewRoute = ref("");
 const width = ref(maxWidth);
 const loading = ref(false);
 const store = useStore();
-const publishing = ref(false);
 
 const deviceBreakpoints = [
 	{

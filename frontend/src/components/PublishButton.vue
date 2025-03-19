@@ -2,6 +2,7 @@
 	<div class="flex items-center">
 		<BuilderButton
 			variant="solid"
+			:disabled="store.editingMode === 'fragment'"
 			@click="
 				() => {
 					publishing = true;
@@ -10,13 +11,13 @@
 			"
 			class="border-0"
 			:class="{
-				'rounded-br-none rounded-tr-none': store.activePage?.published,
+				'rounded-br-none rounded-tr-none': showDropdown,
 			}"
 			:loading="publishing">
 			{{ publishButtonLabel }}
 		</BuilderButton>
 		<Dropdown
-			v-if="store.activePage?.published"
+			v-show="showDropdown"
 			:options="[
 				{
 					label: 'Revert Changes',
@@ -52,6 +53,9 @@ import { computed, ref } from "vue";
 
 const store = useStore();
 const publishing = ref(false);
+const showDropdown = computed(() => {
+	return Boolean(store.activePage?.published) && store.editingMode !== "fragment";
+});
 
 const publishButtonLabel = computed(() => {
 	if ((store.activePage?.draft_blocks && !store.activePage?.published) || !store.activePage?.draft_blocks) {

@@ -8,6 +8,7 @@ function getBlockTemplate(
 		| "fit-container"
 		| "missing-component"
 		| "loading-component"
+		| "empty-component"
 		| "repeater"
 		| "video"
 		| "input"
@@ -109,6 +110,15 @@ function getBlockTemplate(
 				baseStyles: {
 					height: "fit-content",
 					width: "fit-content",
+				} as BlockStyleMap,
+			};
+		case "empty-component":
+			return {
+				name: "HTML",
+				element: "div",
+				baseStyles: {
+					height: "100px",
+					width: "100px",
 				} as BlockStyleMap,
 			};
 		case "repeater":
