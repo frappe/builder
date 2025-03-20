@@ -11,21 +11,18 @@
 <script setup lang="ts">
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import { TabButtons } from "frappe-ui";
-import { PropType } from "vue";
 
-defineProps({
-	modelValue: {
-		type: [String, Number, Boolean],
+withDefaults(
+	defineProps<{
+		modelValue?: string | number | boolean | null;
+		options?: { label: string; value: string | number; icon?: string; hideLabel?: boolean }[];
+		label?: string;
+	}>(),
+	{
+		options: () => [],
+		label: "",
 	},
-	options: {
-		type: Array as PropType<{ label: string; value: string | number; icon?: string; hideLabel?: boolean }[]>,
-		default: () => [],
-	},
-	label: {
-		type: String,
-		default: "",
-	},
-});
+);
 
 const emit = defineEmits(["update:modelValue"]);
 </script>

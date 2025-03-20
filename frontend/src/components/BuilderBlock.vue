@@ -16,7 +16,7 @@
 			:preview="preview"
 			:isChildOfComponent="block.isExtendedFromComponent() || isChildOfComponent"
 			:key="child.blockId"
-			v-for="child in block.getChildren().filter((child) => child.isVisible())" />
+			v-for="child in block.getChildren().filter((child) => child.isVisible(breakpoint))" />
 	</component>
 	<teleport to="#overlay" v-if="canvasProps?.overlayElement && !preview && Boolean(canvasProps)">
 		<!-- prettier-ignore -->
@@ -32,46 +32,40 @@
 	</teleport>
 </template>
 <script setup lang="ts">
-import Block from "@/utils/block";
-import { setFont } from "@/utils/fontManager";
-import { computed, inject, nextTick, onMounted, reactive, ref, useAttrs, watch, watchEffect } from "vue";
-
+import type Block from "@/block";
 import FormHandler from "@/components/FormHandler.vue";
+import useBuilderStore from "@/stores/builderStore";
+import useCanvasStore from "@/stores/canvasStore";
+import { setFont } from "@/utils/fontManager";
 import { getDataForKey } from "@/utils/helpers";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
-import useStore from "../store";
+import { computed, inject, nextTick, onMounted, reactive, ref, useAttrs, watch, watchEffect } from "vue";
 import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
 import DataLoaderBlock from "./DataLoaderBlock.vue";
 import TextBlock from "./TextBlock.vue";
 
+const canvasStore = useCanvasStore();
+const builderStore = useBuilderStore();
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
 const attrs = useAttrs();
-const store = useStore();
 const editor = ref<InstanceType<typeof BlockEditor> | null>(null);
 
-const props = defineProps({
-	block: {
-		type: Block,
-		required: true,
+const props = withDefaults(
+	defineProps<{
+		block: Block;
+		isChildOfComponent?: boolean;
+		breakpoint?: string;
+		preview?: boolean;
+		data?: Record<string, any> | null;
+	}>(),
+	{
+		isChildOfComponent: false,
+		breakpoint: "desktop",
+		preview: false,
+		data: null,
 	},
-	isChildOfComponent: {
-		type: Boolean,
-		default: false,
-	},
-	breakpoint: {
-		type: String,
-		default: "desktop",
-	},
-	preview: {
-		type: Boolean,
-		default: false,
-	},
-	data: {
-		type: Object,
-		default: null,
-	},
-});
+);
 
 defineOptions({
 	inheritAttrs: false,
@@ -181,8 +175,8 @@ const loadEditor = computed(() => {
 	return (
 		target.value &&
 		props.block.getStyle("display") !== "none" &&
-		((isSelected.value && props.breakpoint === store.activeBreakpoint) ||
-			(isHovered.value && store.hoveredBreakpoint === props.breakpoint)) &&
+		((isSelected.value && props.breakpoint === canvasStore.activeCanvas?.activeBreakpoint) ||
+			(isHovered.value && canvasStore.activeCanvas?.hoveredBreakpoint === props.breakpoint)) &&
 		!canvasProps?.scaling &&
 		!canvasProps?.panning
 	);
@@ -209,18 +203,21 @@ onMounted(async () => {
 
 const isEditable = computed(() => {
 	// to ensure it is right block and not on different breakpoint
-	return store.editableBlock === props.block && store.activeBreakpoint === props.breakpoint;
+	return (
+		canvasStore.editableBlock === props.block &&
+		canvasStore.activeCanvas?.activeBreakpoint === props.breakpoint
+	);
 });
 
 const hiddenDueToVisibilityCondition = computed(() => {
 	return props.block.getVisibilityCondition()
-		? !Boolean(getDataForKey(props.data, props.block.getVisibilityCondition() as string))
+		? !Boolean(getDataForKey(props.data || {}, props.block.getVisibilityCondition() as string))
 		: false;
 });
 
 if (!props.preview) {
 	watch(
-		() => store.hoveredBlock,
+		() => canvasStore.activeCanvas?.hoveredBlock,
 		(newValue, oldValue) => {
 			if (newValue === props.block.blockId) {
 				isHovered.value = true;
@@ -230,9 +227,9 @@ if (!props.preview) {
 		},
 	);
 	watch(
-		() => store.activeCanvas?.selectedBlockIds,
+		() => canvasStore.activeCanvas?.selectedBlockIds,
 		() => {
-			if (store.activeCanvas?.isSelected(props.block)) {
+			if (canvasStore.activeCanvas?.isSelected(props.block)) {
 				isSelected.value = true;
 			} else {
 				isSelected.value = false;

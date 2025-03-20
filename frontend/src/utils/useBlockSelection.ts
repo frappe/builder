@@ -1,4 +1,4 @@
-import Block from "@/utils/block";
+import type Block from "@/block";
 import { computed, Ref, ref } from "vue";
 
 export function useBlockSelection(rootBlock: Ref<Block>) {

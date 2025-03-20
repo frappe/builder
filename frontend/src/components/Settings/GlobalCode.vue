@@ -7,7 +7,7 @@
 			:modelValue="builderSettings.doc.head_html"
 			height="150px"
 			class="shrink-0"
-			@update:modelValue="store.updateBuilderSettings('head_html', $event)"
+			@update:modelValue="builderStore.updateBuilderSettings('head_html', $event)"
 			:showLineNumbers="true"></CodeEditor>
 		<CodeEditor
 			label="<body> HTML"
@@ -16,7 +16,7 @@
 			:modelValue="builderSettings.doc.body_html"
 			height="150px"
 			class="shrink-0"
-			@update:modelValue="store.updateBuilderSettings('body_html', $event)"
+			@update:modelValue="builderStore.updateBuilderSettings('body_html', $event)"
 			:showLineNumbers="true"></CodeEditor>
 		<CodeEditor
 			label="Client Script"
@@ -25,7 +25,7 @@
 			:modelValue="builderSettings.doc.script"
 			height="250px"
 			class="shrink-0"
-			@update:modelValue="store.updateBuilderSettings('script', $event)"
+			@update:modelValue="builderStore.updateBuilderSettings('script', $event)"
 			:showLineNumbers="true"></CodeEditor>
 		<CodeEditor
 			label="Style"
@@ -34,14 +34,14 @@
 			:modelValue="builderSettings.doc.style"
 			height="250px"
 			class="shrink-0"
-			@update:modelValue="store.updateBuilderSettings('style', $event)"
+			@update:modelValue="builderStore.updateBuilderSettings('style', $event)"
 			:showLineNumbers="true"></CodeEditor>
 	</div>
 </template>
 <script setup lang="ts">
 import CodeEditor from "@/components/Controls/CodeEditor.vue";
 import { builderSettings } from "@/data/builderSettings";
-import useStore from "@/store";
+import useBuilderStore from "@/stores/builderStore";
 
-const store = useStore();
+const builderStore = useBuilderStore();
 </script>

@@ -42,12 +42,12 @@
 	</div>
 </template>
 <script setup lang="ts">
-import Block from "@/utils/block";
+import type Block from "@/block";
+import useBuilderStore from "@/stores/builderStore";
+import useCanvasStore from "@/stores/canvasStore";
+import blockController from "@/utils/blockController";
 import { addPxToNumber } from "@/utils/helpers";
 import { Ref, computed, inject, nextTick, onMounted, ref, watch, watchEffect } from "vue";
-
-import blockController from "@/utils/blockController";
-import useStore from "../store";
 import setGuides from "../utils/guidesTracker";
 import trackTarget from "../utils/trackTarget";
 import BorderRadiusHandler from "./BorderRadiusHandler.vue";
@@ -57,12 +57,14 @@ import PaddingHandler from "./PaddingHandler.vue";
 import WebFormManager from "./WebFormManager.vue";
 
 const canvasProps = inject("canvasProps") as CanvasProps;
+const canvasStore = useCanvasStore();
+const builderStore = useBuilderStore();
 
 const showResizer = computed(() => {
 	return (
 		!props.block.isRoot() &&
 		!props.editable &&
-		!store.isDragging &&
+		!canvasStore.isDragging &&
 		isBlockSelected.value &&
 		!blockController.multipleBlocksSelected() &&
 		!props.block.getParentBlock()?.isGrid() &&
@@ -70,29 +72,21 @@ const showResizer = computed(() => {
 	);
 });
 
-const props = defineProps({
-	block: {
-		type: Block,
-		required: true,
+const props = withDefaults(
+	defineProps<{
+		block: Block;
+		breakpoint?: string;
+		target: HTMLElement | SVGElement;
+		editable?: boolean;
+		isSelected?: boolean;
+	}>(),
+	{
+		breakpoint: "desktop",
+		editable: false,
+		isSelected: false,
 	},
-	breakpoint: {
-		type: String,
-		default: "desktop",
-	},
-	target: {
-		type: [HTMLElement, SVGElement],
-		required: true,
-	},
-	editable: {
-		type: Boolean,
-		default: false,
-	},
-	isSelected: {
-		type: Boolean,
-		default: false,
-	},
-});
-const store = useStore();
+);
+
 const editor = ref(null) as unknown as Ref<HTMLElement>;
 const updateTracker = ref(() => {});
 const resizing = ref(false);
@@ -104,7 +98,7 @@ const showPaddingHandler = computed(() => {
 	return (
 		isBlockSelected.value &&
 		!resizing.value &&
-		!store.isDragging &&
+		!canvasStore.isDragging &&
 		!props.editable &&
 		!blockController.multipleBlocksSelected() &&
 		!props.block.isSVG() &&
@@ -116,7 +110,7 @@ const showMarginHandler = computed(() => {
 	return (
 		isBlockSelected.value &&
 		!props.block.isRoot() &&
-		!store.isDragging &&
+		!canvasStore.isDragging &&
 		!resizing.value &&
 		!props.editable &&
 		!blockController.multipleBlocksSelected() &&
@@ -133,7 +127,7 @@ const showBorderRadiusHandler = computed(() => {
 		!props.block.isSVG() &&
 		!props.editable &&
 		!resizing.value &&
-		!store.isDragging &&
+		!canvasStore.isDragging &&
 		!blockController.multipleBlocksSelected()
 	);
 });
@@ -156,12 +150,12 @@ watchEffect(() => {
 	parentBlock?.getStyle("paddingRight");
 	parentBlock?.getStyle("margin");
 	parentBlock?.getChildIndex(props.block);
-	store.builderLayout.leftPanelWidth;
-	store.builderLayout.rightPanelWidth;
-	store.showRightPanel;
-	store.showLeftPanel;
-	store.activeBreakpoint;
-	store.dropTarget.placeholder;
+	builderStore.builderLayout.leftPanelWidth;
+	builderStore.builderLayout.rightPanelWidth;
+	builderStore.showRightPanel;
+	builderStore.showLeftPanel;
+	canvasStore.activeCanvas?.activeBreakpoint;
+	canvasStore.dropTarget.placeholder;
 	canvasProps.breakpoints.map((bp) => bp.visible);
 	nextTick(() => {
 		updateTracker.value();
@@ -169,7 +163,7 @@ watchEffect(() => {
 });
 
 const isBlockSelected = computed(() => {
-	return props.isSelected && props.breakpoint === store.activeBreakpoint;
+	return props.isSelected && props.breakpoint === canvasStore.activeCanvas?.activeBreakpoint;
 });
 
 const getStyleClasses = computed(() => {
@@ -187,7 +181,7 @@ const getStyleClasses = computed(() => {
 		!props.editable &&
 		!props.block.isRoot() &&
 		!props.block.isRepeater() &&
-		!store.isDragging
+		!canvasStore.isDragging
 	) {
 		// make editor interactive
 		classes.push("pointer-events-auto");
@@ -198,7 +192,7 @@ const getStyleClasses = computed(() => {
 });
 
 watch(
-	() => store.activeCanvas?.block,
+	() => canvasStore.activeCanvas?.block,
 	() => {
 		nextTick(() => {
 			updateTracker.value();
@@ -222,7 +216,7 @@ const handleClick = (ev: MouseEvent) => {
 	}
 
 	if (props.block.isText() || props.block.isButton() || props.block.isLink()) {
-		store.editableBlock = props.block;
+		canvasStore.editableBlock = props.block;
 	}
 
 	const editorWrapper = editor.value;
@@ -247,26 +241,26 @@ const handleDrop = (ev: DragEvent) => {
 
 const handleDoubleClick = (ev: MouseEvent) => {
 	if (props.block.isHTML()) {
-		store.editHTML(props.block);
+		canvasStore.editHTML(props.block);
 		return;
 	}
 	if (props.editable) return;
 	if (props.block.isText() || props.block.isButton() || props.block.isLink()) {
-		store.editableBlock = props.block;
+		canvasStore.editableBlock = props.block;
 	}
 };
 
 const handleMove = (ev: MouseEvent) => {
-	if (store.mode === "text") {
-		store.editableBlock = props.block;
+	if (builderStore.mode === "text") {
+		canvasStore.editableBlock = props.block;
 	}
 	if (!movable.value || props.block.isRoot()) return;
-	const pauseId = store.activeCanvas?.history?.pause();
+	const pauseId = canvasStore.activeCanvas?.history?.pause();
 	const target = ev.target as HTMLElement;
 	const startX = ev.clientX;
 	const startY = ev.clientY;
-	const startLeft = props.target.offsetLeft || 0;
-	const startTop = props.target.offsetTop || 0;
+	const startLeft = (props.target as HTMLElement).offsetLeft || 0;
+	const startTop = (props.target as HTMLElement).offsetTop || 0;
 
 	moving.value = true;
 	guides.showX();
@@ -306,7 +300,7 @@ const handleMove = (ev: MouseEvent) => {
 			document.removeEventListener("mousemove", mousemove);
 			mouseUpEvent.preventDefault();
 			guides.hideX();
-			store.activeCanvas?.history?.resume(pauseId, true);
+			canvasStore.activeCanvas?.history?.resume(pauseId, true);
 		},
 		{ once: true },
 	);

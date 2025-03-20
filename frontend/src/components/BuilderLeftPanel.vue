@@ -1,17 +1,17 @@
 <template>
 	<div class="flex">
 		<PanelResizer
-			:dimension="store.builderLayout.leftPanelWidth"
+			:dimension="builderStore.builderLayout.leftPanelWidth"
 			side="right"
 			:maxDimension="500"
-			@resize="(width) => (store.builderLayout.leftPanelWidth = width)" />
+			@resize="(width) => (builderStore.builderLayout.leftPanelWidth = width)" />
 		<div class="flex min-h-full flex-col items-center gap-3 border-r border-outline-gray-1 p-3">
 			<button
 				v-for="option of leftPanelOptions"
 				:key="option.value"
 				class="flex size-8 items-center justify-center rounded text-ink-gray-7 hover:bg-surface-gray-2 focus:!bg-surface-gray-3"
 				:class="{
-					'bg-surface-gray-3 text-ink-gray-9': store.leftPanelActiveTab === option.value,
+					'bg-surface-gray-3 text-ink-gray-9': builderStore.leftPanelActiveTab === option.value,
 				}"
 				@click.stop="setActiveTab(option.value as LeftSidebarTabOption)"
 				:title="option.label">
@@ -22,23 +22,25 @@
 		<div
 			class="no-scrollbar relative min-h-full overflow-auto"
 			:style="{
-				width: `${store.builderLayout.leftPanelWidth}px`,
+				width: `${builderStore.builderLayout.leftPanelWidth}px`,
 			}"
-			@click.stop="store.leftPanelActiveTab === 'Layers' && store.activeCanvas?.clearSelection()">
-			<div v-show="store.leftPanelActiveTab === 'Blocks'">
+			@click.stop="
+				builderStore.leftPanelActiveTab === 'Layers' && canvasStore.activeCanvas?.clearSelection()
+			">
+			<div v-show="builderStore.leftPanelActiveTab === 'Blocks'">
 				<BuilderBlockTemplates class="mt-1 p-4 pt-3" />
 			</div>
-			<div v-show="store.leftPanelActiveTab === 'Assets'">
+			<div v-show="builderStore.leftPanelActiveTab === 'Assets'">
 				<BuilderAssets class="mt-1 p-4 pt-3" />
 			</div>
-			<div v-show="store.leftPanelActiveTab === 'Layers'" class="p-3">
+			<div v-show="builderStore.leftPanelActiveTab === 'Layers'" class="p-3">
 				<BlockLayers
 					class="no-scrollbar overflow-auto"
 					v-if="pageCanvas"
 					:disable-draggable="true"
 					ref="pageLayers"
 					:blocks="[pageCanvas?.getRootBlock() as Block]"
-					v-show="store.editingMode == 'page'" />
+					v-show="canvasStore.editingMode == 'page'" />
 				<BlockLayers
 					class="no-scrollbar overflow-auto"
 					ref="componentLayers"
@@ -46,50 +48,53 @@
 					:blocks="[fragmentCanvas?.getRootBlock()]"
 					:indent="5"
 					:adjustForRoot="false"
-					v-if="store.editingMode === 'fragment' && fragmentCanvas" />
+					v-if="canvasStore.editingMode === 'fragment' && fragmentCanvas" />
 			</div>
-			<div v-show="store.leftPanelActiveTab === 'Code'">
+			<div v-show="builderStore.leftPanelActiveTab === 'Code'">
 				<PageScript
 					class="p-4"
-					:key="store.selectedPage"
-					v-if="store.selectedPage && store.activePage"
-					:page="store.activePage" />
+					:key="pageStore.selectedPage"
+					v-if="pageStore.selectedPage && pageStore.activePage"
+					:page="pageStore.activePage" />
 			</div>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
+import type Block from "@/block";
 import ComponentIcon from "@/components/Icons/Component.vue";
 import LayersIcon from "@/components/Icons/Layers.vue";
 import PlusIcon from "@/components/Icons/Plus.vue";
 import PageScript from "@/components/PageScript.vue";
-import Block from "@/utils/block";
+import useBuilderStore from "@/stores/builderStore";
+import useCanvasStore from "@/stores/canvasStore";
+import usePageStore from "@/stores/pageStore";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { createResource } from "frappe-ui";
 import { Ref, inject, nextTick, ref, watch, watchEffect } from "vue";
-import useStore from "../store";
 import BlockLayers from "./BlockLayers.vue";
 import BuilderAssets from "./BuilderAssets.vue";
 import BuilderBlockTemplates from "./BuilderBlockTemplates.vue";
 import BuilderCanvas from "./BuilderCanvas.vue";
 import PanelResizer from "./PanelResizer.vue";
 
+const canvasStore = useCanvasStore();
+const builderStore = useBuilderStore();
+const pageStore = usePageStore();
+
 const pageCanvas = inject("pageCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
 const fragmentCanvas = inject("fragmentCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
 
 const prompt = ref(null) as unknown as Ref<string>;
-
-const store = useStore();
 const generating = ref(false);
-
 const pageLayers = ref<InstanceType<typeof BlockLayers> | null>(null);
 const componentLayers = ref<InstanceType<typeof BlockLayers> | null>(null);
 
 watchEffect(() => {
 	if (pageLayers.value) {
-		store.activeLayers = pageLayers.value;
+		builderStore.activeLayers = pageLayers.value;
 	} else if (componentLayers.value) {
-		store.activeLayers = componentLayers.value;
+		builderStore.activeLayers = componentLayers.value;
 	}
 });
 
@@ -121,9 +126,9 @@ const getPage = () => {
 	createResource({
 		url: "builder.api.get_blocks",
 		onSuccess(html: string) {
-			store.clearBlocks();
+			canvasStore.clearBlocks();
 			const blocks = convertHTMLToBlocks(html);
-			store.pushBlocks([blocks]);
+			canvasStore.pushBlocks([blocks]);
 			generating.value = false;
 		},
 	}).submit({
@@ -132,30 +137,32 @@ const getPage = () => {
 };
 
 const setActiveTab = (tab: LeftSidebarTabOption) => {
-	store.leftPanelActiveTab = tab;
+	builderStore.leftPanelActiveTab = tab;
 };
 
 // moved out of BlockLayers for performance
 // TODO: Find a better way to do this
 watch(
-	() => store.hoveredBlock,
+	() => canvasStore.activeCanvas?.hoveredBlock,
 	() => {
 		document.querySelectorAll(`[data-block-layer-id].hovered-block`).forEach((el) => {
 			el.classList.remove("hovered-block");
 		});
-		if (store.hoveredBlock) {
-			document.querySelector(`[data-block-layer-id="${store.hoveredBlock}"]`)?.classList.add("hovered-block");
+		if (canvasStore.activeCanvas?.hoveredBlock) {
+			document
+				.querySelector(`[data-block-layer-id="${canvasStore.activeCanvas.hoveredBlock}"]`)
+				?.classList.add("hovered-block");
 		}
 	},
 );
 
 watch(
-	() => store.activeCanvas?.selectedBlockIds,
+	() => canvasStore.activeCanvas?.selectedBlockIds,
 	async () => {
 		await nextTick();
 		const selectedBlocks = document.querySelectorAll(`[data-block-layer-id].block-selected`);
 		selectedBlocks.forEach((el) => el.classList.remove("block-selected"));
-		Array.from(store.activeCanvas?.selectedBlockIds || new Set([])).forEach((blockId: string) => {
+		Array.from(canvasStore.activeCanvas?.selectedBlockIds || new Set([])).forEach((blockId: string) => {
 			const blockElement = document.querySelector(`[data-block-layer-id="${blockId}"]`);
 			blockElement?.classList.add("block-selected");
 		});

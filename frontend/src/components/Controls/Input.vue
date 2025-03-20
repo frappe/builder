@@ -27,7 +27,16 @@ import CrossIcon from "@/components/Icons/Cross.vue";
 import { useDebounceFn, useVModel } from "@vueuse/core";
 import { computed, useAttrs } from "vue";
 
-const props = defineProps(["modelValue", "type", "hideClearButton"]);
+const props = withDefaults(
+	defineProps<{
+		modelValue?: string | number | boolean | null;
+		type?: string;
+		hideClearButton?: boolean;
+	}>(),
+	{
+		type: "text",
+	},
+);
 const emit = defineEmits(["update:modelValue", "input"]);
 const data = useVModel(props, "modelValue", emit);
 

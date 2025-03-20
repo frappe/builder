@@ -28,7 +28,7 @@
 							group: 'Actions',
 							hideLabel: true,
 							items: [
-								{ label: 'Duplicate', onClick: () => store.duplicatePage(page), icon: 'copy' },
+								{ label: 'Duplicate', onClick: () => pageStore.duplicatePage(page), icon: 'copy' },
 								{
 									label: 'View in Desk',
 									onClick: () => store.openInDesk(page),
@@ -39,7 +39,7 @@
 						{
 							group: 'Delete',
 							hideLabel: true,
-							items: [{ label: 'Delete', onClick: () => store.deletePage(page), icon: 'trash' }],
+							items: [{ label: 'Delete', onClick: () => pageStore.deletePage(page), icon: 'trash' }],
 						},
 					]"
 					size="xs"
@@ -58,12 +58,12 @@
 	</router-link>
 </template>
 <script setup lang="ts">
-import useStore from "@/store";
+import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { UseTimeAgo } from "@vueuse/components";
 import { Dropdown } from "frappe-ui";
 
-const store = useStore();
+const pageStore = usePageStore();
 
 defineProps<{
 	page: BuilderPage;

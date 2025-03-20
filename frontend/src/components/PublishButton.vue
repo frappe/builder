@@ -2,11 +2,11 @@
 	<div class="flex items-center">
 		<BuilderButton
 			variant="solid"
-			:disabled="store.editingMode === 'fragment'"
+			:disabled="canvasStore.editingMode === 'fragment'"
 			@click="
 				() => {
 					publishing = true;
-					store.publishPage().finally(() => (publishing = false));
+					pageStore.publishPage().finally(() => (publishing = false));
 				}
 			"
 			class="border-0"
@@ -21,14 +21,14 @@
 			:options="[
 				{
 					label: 'Revert Changes',
-					onClick: () => store.revertChanges(),
-					condition: () => store.activePage?.draft_blocks,
+					onClick: () => pageStore.revertChanges(),
+					condition: () => pageStore.activePage?.draft_blocks,
 					icon: 'refresh-cw',
 				},
 				{
 					label: 'Unpublish',
-					onClick: () => store.unpublishPage(),
-					condition: () => store.activePage?.published,
+					onClick: () => pageStore.unpublishPage(),
+					condition: () => Boolean(pageStore.activePage?.published),
 					icon: 'cloud-off',
 				},
 			]"
@@ -39,7 +39,7 @@
 				<BuilderButton
 					variant="solid"
 					@click="open"
-					:disabled="Boolean(store.activePage?.is_template)"
+					:disabled="Boolean(pageStore.activePage?.is_template)"
 					icon="chevron-down"
 					class="!w-6 justify-start rounded-bl-none rounded-tl-none border-0 pr-0 text-xs"></BuilderButton>
 			</template>
@@ -47,18 +47,24 @@
 	</div>
 </template>
 <script lang="ts" setup>
-import useStore from "@/store";
+import useCanvasStore from "@/stores/canvasStore";
+import usePageStore from "@/stores/pageStore";
 import { Dropdown } from "frappe-ui";
 import { computed, ref } from "vue";
 
-const store = useStore();
+const pageStore = usePageStore();
+const canvasStore = useCanvasStore();
+
 const publishing = ref(false);
 const showDropdown = computed(() => {
-	return Boolean(store.activePage?.published) && store.editingMode !== "fragment";
+	return Boolean(pageStore.activePage?.published) && canvasStore.editingMode !== "fragment";
 });
 
 const publishButtonLabel = computed(() => {
-	if ((store.activePage?.draft_blocks && !store.activePage?.published) || !store.activePage?.draft_blocks) {
+	if (
+		(pageStore.activePage?.draft_blocks && !pageStore.activePage?.published) ||
+		!pageStore.activePage?.draft_blocks
+	) {
 		return "Publish";
 	} else {
 		return "Publish Changes";
