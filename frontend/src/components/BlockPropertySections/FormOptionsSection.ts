@@ -37,13 +37,22 @@ const formOptionsSectionProperties = [
 				const webForm = webFormResource.doc;
 				console.log(webForm);
 				block.children = [];
-				for (const key in webForm.web_form_fields) {
-					block.addChild(
-						getBlockTemplate("input", {
-							type: "text",
-						}),
-					);
-				}
+				webForm.web_form_fields.forEach(
+					(df: { fieldname: string; label: string; fieldtype: string; options: string; reqd: boolean }) => {
+						const field_map = {
+							Data: "input",
+							Select: "select",
+							Link: "select",
+							"Small Text": "input",
+						} as any;
+						const field = field_map[df.fieldtype] || "input";
+						block.addChild(
+							getBlockTemplate(field, {
+								type: "text",
+							}),
+						);
+					},
+				);
 				blockController.setFormOption("enquire", webform);
 			},
 		},

@@ -292,7 +292,7 @@ const blockController = {
 	},
 	getFormOption: (option: string) => {
 		let formOption = "__initial__" as StyleValue;
-		store.activeCanvas?.selectedBlocks.forEach((block) => {
+		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 			if (formOption === "__initial__") {
 				formOption = block.getFormOption(option);
 			} else if (formOption !== block.getFormOption(option)) {
@@ -302,7 +302,7 @@ const blockController = {
 		return formOption;
 	},
 	setFormOption: (option: string, value: string) => {
-		store.activeCanvas?.selectedBlocks.forEach((block) => {
+		canvasStore.activeCanvas?.selectedBlocks.forEach((block: Block) => {
 			block.setFormOption(option, value);
 		});
 	},
