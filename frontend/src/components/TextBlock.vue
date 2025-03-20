@@ -143,7 +143,6 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import Input from "@/components/Controls/Input.vue";
-import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
 import { setFontFromHTML } from "@/utils/fontManager";
@@ -160,7 +159,6 @@ import { Ref, computed, inject, nextTick, onBeforeMount, onBeforeUnmount, ref, w
 import { toast } from "vue-sonner";
 import StrikeThroughIcon from "./Icons/StrikeThrough.vue";
 
-const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
 const dataChanged = ref(false);

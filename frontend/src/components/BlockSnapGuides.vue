@@ -16,6 +16,5 @@
 </template>
 <script setup lang="ts">
 import useCanvasStore from "@/stores/canvasStore";
-
 const canvasStore = useCanvasStore();
 </script>

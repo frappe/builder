@@ -187,7 +187,7 @@ watch(space, (value) => {
 	if (value && !canvasStore.editableBlock) {
 		builderStore.mode = "move";
 	} else if (builderStore.mode === "move") {
-		builderStore.mode = canvasStore.lastMode !== "move" ? canvasStore.lastMode : "select";
+		builderStore.mode = builderStore.lastMode !== "move" ? builderStore.lastMode : "select";
 	}
 });
 
