@@ -86,7 +86,7 @@ import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { FeatherIcon } from "frappe-ui";
-import { PropType, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import draggable from "vuedraggable";
 import BlockLayers from "./BlockLayers.vue";
 import BlocksIcon from "./Icons/Blocks.vue";
@@ -103,24 +103,20 @@ const childLayer = (el: LayerInstance) => {
 	}
 };
 
-const props = defineProps({
-	blocks: {
-		type: Array as PropType<Block[]>,
-		default: () => [],
+const props = withDefaults(
+	defineProps<{
+		blocks: Block[];
+		indent?: number;
+		adjustForRoot?: boolean;
+		disableDraggable?: boolean;
+	}>(),
+	{
+		blocks: () => [],
+		indent: 10,
+		adjustForRoot: true,
+		disableDraggable: false,
 	},
-	indent: {
-		type: Number,
-		default: 10,
-	},
-	adjustForRoot: {
-		type: Boolean,
-		default: true,
-	},
-	disableDraggable: {
-		type: Boolean,
-		default: false,
-	},
-});
+);
 
 interface LayerBlock extends Block {
 	editable: boolean;

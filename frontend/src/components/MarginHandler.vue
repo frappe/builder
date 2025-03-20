@@ -117,28 +117,19 @@ import type Block from "@/block";
 import { clamp } from "@vueuse/core";
 import { computed, inject, ref, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
-const props = defineProps({
-	targetBlock: {
-		type: Block,
-		required: true,
+const props = withDefaults(
+	defineProps<{
+		targetBlock: Block;
+		target: HTMLElement | SVGElement;
+		disableHandlers?: boolean;
+		onUpdate?: () => void;
+		breakpoint?: string;
+	}>(),
+	{
+		disableHandlers: false,
+		breakpoint: "desktop",
 	},
-	target: {
-		type: [HTMLElement, SVGElement],
-		required: true,
-	},
-	disableHandlers: {
-		type: Boolean,
-		default: false,
-	},
-	onUpdate: {
-		type: Function,
-		default: null,
-	},
-	breakpoint: {
-		type: String,
-		default: "desktop",
-	},
-});
+);
 
 const updating = ref(false);
 const emit = defineEmits(["update"]);

@@ -80,31 +80,23 @@ import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import { FileUploader, Popover } from "frappe-ui";
-import { PropType } from "vue";
 
-defineProps({
-	imageURL: String,
-	label: {
-		type: String,
-		default: "Image",
+withDefaults(
+	defineProps<{
+		imageURL?: string;
+		label?: string;
+		labelPosition?: "top" | "left";
+		placeholder?: string;
+		imageFit?: "contain" | "cover" | "fill" | "none";
+		description?: string;
+	}>(),
+	{
+		label: "Image",
+		labelPosition: "left",
+		placeholder: "Set Image",
+		imageFit: "contain",
 	},
-	labelPosition: {
-		type: String as PropType<"top" | "left">,
-		default: "left",
-	},
-	placeholder: {
-		type: String,
-		default: "Set Image",
-	},
-	imageFit: {
-		type: String as PropType<"contain" | "cover" | "fill" | "none">,
-		default: "contain",
-	},
-	description: {
-		type: String,
-		default: "",
-	},
-});
+);
 
 const emit = defineEmits(["update:imageURL", "update:imageFit"]);
 

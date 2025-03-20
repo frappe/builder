@@ -93,7 +93,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import { HSVToHex, HexToHSV, getRGB } from "@/utils/helpers";
 import { clamp, useEyeDropper } from "@vueuse/core";
 import { Popover } from "frappe-ui";
-import { PropType, Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
+import { Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
 
 const canvasStore = useCanvasStore();
 const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;
@@ -107,12 +107,14 @@ let currentColor = "#FFF" as HashString;
 
 const { isSupported, sRGBHex, open } = useEyeDropper();
 
-const props = defineProps({
-	modelValue: {
-		type: String as PropType<HashString | RGBString | null>,
-		default: null,
+const props = withDefaults(
+	defineProps<{
+		modelValue?: HashString | RGBString | null;
+	}>(),
+	{
+		modelValue: null,
 	},
-});
+);
 
 const modelColor = computed(() => {
 	return getRGB(props.modelValue);

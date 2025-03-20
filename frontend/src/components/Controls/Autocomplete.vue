@@ -87,7 +87,7 @@
 import BuilderButton from "@/components/Controls/BuilderButton.vue";
 import CrossIcon from "@/components/Icons/Cross.vue";
 import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from "@headlessui/vue";
-import { ComputedRef, PropType, computed, ref, watch } from "vue";
+import { ComputedRef, computed, ref, watch } from "vue";
 
 type Option = {
 	label: string;
@@ -103,28 +103,21 @@ type Action = {
 	component?: any;
 };
 
-const props = defineProps({
-	options: {
-		type: Array as PropType<Option[]>,
-		default: () => [],
+const props = withDefaults(
+	defineProps<{
+		options?: Option[];
+		getOptions?: (filterString: string) => Promise<Option[]>;
+		modelValue?: any;
+		placeholder?: string;
+		showInputAsOption?: boolean;
+		actionButton?: Action;
+	}>(),
+	{
+		options: () => [],
+		placeholder: "Search",
+		showInputAsOption: false,
 	},
-	getOptions: {
-		type: Function as PropType<(filterString: string) => Promise<Option[]>>,
-	},
-	modelValue: {},
-	placeholder: {
-		type: String,
-		default: "Search",
-	},
-	showInputAsOption: {
-		type: Boolean,
-		default: false,
-	},
-	actionButton: {
-		type: Object as PropType<Action>,
-		default: null,
-	},
-});
+);
 
 const query = ref("");
 const multiple = computed(() => Array.isArray(props.modelValue));

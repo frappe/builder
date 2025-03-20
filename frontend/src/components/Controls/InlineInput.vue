@@ -47,7 +47,7 @@
 import { isNumber } from "@tiptap/vue-3";
 import { Popover } from "frappe-ui";
 import FeatherIcon from "frappe-ui/src/components/FeatherIcon.vue";
-import { PropType, computed } from "vue";
+import { computed } from "vue";
 import Autocomplete from "./Autocomplete.vue";
 import InputLabel from "./InputLabel.vue";
 
@@ -58,68 +58,39 @@ type Action = {
 	component?: any;
 };
 
-const props = defineProps({
-	modelValue: {
-		type: [String, Number],
-		default: null,
+const props = withDefaults(
+	defineProps<{
+		modelValue?: string | number;
+		label?: string;
+		description?: string;
+		type?: string;
+		unitOptions?: string[];
+		options?: any[];
+		enableSlider?: boolean;
+		changeFactor?: number;
+		minValue?: number;
+		maxValue?: number | null;
+		showInputAsOption?: boolean;
+		getOptions?: (filterString: string) => Promise<Option[]>;
+		actionButton?: Action;
+		placeholder?: string;
+		hideClearButton?: boolean;
+	}>(),
+	{
+		label: "",
+		description: "",
+		type: "text",
+		unitOptions: () => [],
+		options: () => [],
+		enableSlider: false,
+		changeFactor: 1,
+		minValue: 0,
+		maxValue: null,
+		showInputAsOption: false,
+		placeholder: "unset",
+		hideClearButton: false,
 	},
-	label: {
-		type: String,
-		default: "",
-	},
-	description: {
-		type: String,
-		default: "",
-	},
-	type: {
-		type: String,
-		default: "text",
-	},
-	unitOptions: {
-		type: Array as PropType<string[]>,
-		default: () => [],
-	},
-	options: {
-		type: Array,
-		default: () => [],
-	},
-	enableSlider: {
-		type: Boolean,
-		default: false,
-	},
-	changeFactor: {
-		type: Number,
-		default: 1,
-	},
-	minValue: {
-		type: Number,
-		default: 0,
-	},
-	maxValue: {
-		type: Number,
-		default: null,
-	},
-	showInputAsOption: {
-		type: Boolean,
-		default: false,
-	},
-	getOptions: {
-		type: Function as PropType<(filterString: string) => Promise<Option[]>>,
-		default: null,
-	},
-	actionButton: {
-		type: Object as PropType<Action>,
-		default: null,
-	},
-	placeholder: {
-		type: String,
-		default: "unset",
-	},
-	hideClearButton: {
-		type: Boolean,
-		default: false,
-	},
-});
+);
 
 const emit = defineEmits(["update:modelValue"]);
 

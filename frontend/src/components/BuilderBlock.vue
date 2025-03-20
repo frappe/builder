@@ -50,28 +50,21 @@ const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null)
 const attrs = useAttrs();
 const editor = ref<InstanceType<typeof BlockEditor> | null>(null);
 
-const props = defineProps({
-	block: {
-		type: Block,
-		required: true,
+const props = withDefaults(
+	defineProps<{
+		block: Block;
+		isChildOfComponent?: boolean;
+		breakpoint?: string;
+		preview?: boolean;
+		data?: Record<string, any> | null;
+	}>(),
+	{
+		isChildOfComponent: false,
+		breakpoint: "desktop",
+		preview: false,
+		data: null,
 	},
-	isChildOfComponent: {
-		type: Boolean,
-		default: false,
-	},
-	breakpoint: {
-		type: String,
-		default: "desktop",
-	},
-	preview: {
-		type: Boolean,
-		default: false,
-	},
-	data: {
-		type: Object,
-		default: null,
-	},
-});
+);
 
 defineOptions({
 	inheritAttrs: false,

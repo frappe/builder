@@ -24,16 +24,9 @@
 <script setup lang="ts">
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import blockController from "@/utils/blockController";
-import { PropType } from "vue";
 
-const props = defineProps({
-	property: {
-		type: String as PropType<styleProperty>,
-		required: true,
-	},
-	label: {
-		type: String,
-		required: true,
-	},
-});
+const props = defineProps<{
+	property: styleProperty;
+	label: string;
+}>();
 </script>

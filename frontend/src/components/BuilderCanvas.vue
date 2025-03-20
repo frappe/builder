@@ -104,16 +104,15 @@ const canvas = ref(null);
 const showBlocks = ref(false);
 const overlay = ref(null);
 
-const props = defineProps({
-	blockData: {
-		type: Block,
-		required: true,
+const props = withDefaults(
+	defineProps<{
+		blockData: Block;
+		canvasStyles?: Record<string, any>;
+	}>(),
+	{
+		canvasStyles: () => ({}),
 	},
-	canvasStyles: {
-		type: Object,
-		default: () => ({}),
-	},
-});
+);
 
 const block = ref(props.blockData) as Ref<Block>;
 const history = ref(null) as Ref<null> | CanvasHistory;
