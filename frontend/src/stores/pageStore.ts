@@ -206,7 +206,10 @@ const usePageStore = defineStore("pageStore", {
 		savePage() {
 			const canvasStore = useCanvasStore();
 			const pageData = JSON.stringify(
-				canvasStore.getPageBlocks().map((block: Block) => getCopyWithoutParent(block)),
+				canvasStore
+					.getPageBlocks()
+					.filter((block): block is Block => block !== undefined)
+					.map((block: Block) => getCopyWithoutParent(block)),
 			);
 			const saveId = generateId();
 

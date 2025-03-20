@@ -45,13 +45,12 @@ import spacingSection from "@/components/BlockPropertySections/SpacingSection";
 import styleSection from "@/components/BlockPropertySections/StyleSection";
 import typographySection from "@/components/BlockPropertySections/TypographySection";
 import videoOptionsSection from "@/components/BlockPropertySections/VideoOptionsSection";
+import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
 import { toValue } from "@vueuse/core";
 import { Ref, ref } from "vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
-import useCanvasStore from "@/stores/canvasStore";
-import useBuilderStore from "@/stores/builderStore";
-const canvasStore = useCanvasStore();
+
 const builderStore = useBuilderStore();
 
 type BlockProperty = {
