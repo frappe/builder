@@ -1,9 +1,7 @@
-import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { useEventListener } from "@vueuse/core";
 import Block from "./block";
 import { findNearestSiblingIndex } from "./helpers";
-const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
 export function useDraggableBlock(block: Block, target: HTMLElement, options: { ghostScale?: number }) {
