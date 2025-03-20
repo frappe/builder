@@ -1,6 +1,6 @@
 import type Block from "@/block";
 import type BuilderCanvas from "@/components/BuilderCanvas.vue";
-import { getBlockCopy, getBlockInstance } from "@/utils/helpers";
+import { confirm, getBlockCopy, getBlockInstance } from "@/utils/helpers";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
 
