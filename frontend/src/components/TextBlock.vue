@@ -173,20 +173,17 @@ const overlayElement = document.querySelector("#overlay") as HTMLElement;
 let editor: Ref<Editor | null> = ref(null);
 let selectionTriggered = false as boolean;
 
-const props = defineProps({
-	block: {
-		type: Block,
-		required: true,
+const props = withDefaults(
+	defineProps<{
+		block: Block;
+		preview?: boolean;
+		data?: Record<string, any>;
+	}>(),
+	{
+		preview: false,
+		data: () => ({}),
 	},
-	preview: {
-		type: Boolean,
-		default: false,
-	},
-	data: {
-		type: Object,
-		default: () => ({}),
-	},
-});
+);
 
 const canvasProps = !props.preview ? (inject("canvasProps") as CanvasProps) : null;
 

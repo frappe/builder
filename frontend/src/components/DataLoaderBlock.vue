@@ -24,24 +24,18 @@ import BuilderBlock from "./BuilderBlock.vue";
 
 const pageStore = usePageStore();
 
-const props = defineProps({
-	block: {
-		type: Block,
-		required: true,
+const props = withDefaults(
+	defineProps<{
+		block: Block;
+		preview?: boolean;
+		breakpoint?: string;
+		data?: Record<string, any> | null;
+	}>(),
+	{
+		preview: false,
+		breakpoint: "desktop",
 	},
-	preview: {
-		type: Boolean,
-		default: false,
-	},
-	breakpoint: {
-		type: String,
-		default: "desktop",
-	},
-	data: {
-		type: Object,
-		default: null,
-	},
-});
+);
 
 const component = ref(null) as Ref<HTMLElement | null>;
 

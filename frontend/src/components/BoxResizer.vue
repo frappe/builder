@@ -40,16 +40,10 @@ import { computed, inject, onMounted, ref, watch } from "vue";
 import guidesTracker from "../utils/guidesTracker";
 
 const canvasStore = useCanvasStore();
-const props = defineProps({
-	targetBlock: {
-		type: Block,
-		default: null,
-	},
-	target: {
-		type: [HTMLElement, SVGElement],
-		default: null,
-	},
-});
+const props = defineProps<{
+	targetBlock: Block;
+	target: HTMLElement | SVGElement;
+}>();
 
 const emit = defineEmits(["resizing"]);
 const resizing = ref(false);

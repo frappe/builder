@@ -62,28 +62,21 @@ const showResizer = computed(() => {
 	);
 });
 
-const props = defineProps({
-	block: {
-		type: Block,
-		required: true,
+const props = withDefaults(
+	defineProps<{
+		block: Block;
+		breakpoint?: string;
+		target: HTMLElement | SVGElement;
+		editable?: boolean;
+		isSelected?: boolean;
+	}>(),
+	{
+		breakpoint: "desktop",
+		editable: false,
+		isSelected: false,
 	},
-	breakpoint: {
-		type: String,
-		default: "desktop",
-	},
-	target: {
-		type: [HTMLElement, SVGElement],
-		required: true,
-	},
-	editable: {
-		type: Boolean,
-		default: false,
-	},
-	isSelected: {
-		type: Boolean,
-		default: false,
-	},
-});
+);
+
 const editor = ref(null) as unknown as Ref<HTMLElement>;
 const updateTracker = ref(() => {});
 const resizing = ref(false);
