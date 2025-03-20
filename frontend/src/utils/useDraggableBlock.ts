@@ -1,6 +1,6 @@
+import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { useEventListener } from "@vueuse/core";
-import Block from "./block";
 import { findNearestSiblingIndex } from "./helpers";
 const canvasStore = useCanvasStore();
 

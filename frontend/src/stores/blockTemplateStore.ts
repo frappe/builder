@@ -1,6 +1,6 @@
+import type Block from "@/block";
 import builderBlockTemplate from "@/data/builderBlockTemplate";
 import { BlockTemplate } from "@/types/Builder/BlockTemplate";
-import Block from "@/utils/block";
 import { getBlockInstance, getBlockString } from "@/utils/helpers";
 import { createDocumentResource } from "frappe-ui";
 import { defineStore } from "pinia";

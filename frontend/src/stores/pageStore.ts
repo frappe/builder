@@ -1,3 +1,4 @@
+import type Block from "@/block";
 import { builderSettings } from "@/data/builderSettings";
 import { webPages } from "@/data/webPage";
 import router from "@/router";
@@ -5,7 +6,6 @@ import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore.js";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { generateId, getBlockInstance, getCopyWithoutParent, getRouteVariables } from "@/utils/helpers";
 import { createDocumentResource, createResource } from "frappe-ui";

@@ -23,7 +23,6 @@
 </template>
 <script setup lang="ts">
 import InlineInput from "@/components/Controls/InlineInput.vue";
-import { styleProperty } from "@/utils/block";
 import blockController from "@/utils/blockController";
 import { PropType } from "vue";
 

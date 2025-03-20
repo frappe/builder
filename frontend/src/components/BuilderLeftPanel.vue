@@ -61,6 +61,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import type Block from "@/block";
 import ComponentIcon from "@/components/Icons/Component.vue";
 import LayersIcon from "@/components/Icons/Layers.vue";
 import PlusIcon from "@/components/Icons/Plus.vue";
@@ -68,7 +69,6 @@ import PageScript from "@/components/PageScript.vue";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
-import Block from "@/utils/block";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
 import { createResource } from "frappe-ui";
 import { Ref, inject, nextTick, ref, watch, watchEffect } from "vue";

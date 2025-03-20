@@ -60,9 +60,9 @@
 	</Dialog>
 </template>
 <script setup lang="ts">
+import type Block from "@/block";
 import Dialog from "@/components/Controls/Dialog.vue";
 import useBlockTemplateStore from "@/stores/blockTemplateStore";
-import Block from "@/utils/block";
 import { FileUploader } from "frappe-ui";
 import { ref } from "vue";
 

@@ -30,6 +30,7 @@
 	</Dialog>
 </template>
 <script setup lang="ts">
+import type Block from "@/block";
 import Dialog from "@/components/Controls/Dialog.vue";
 import webComponent from "@/data/webComponent";
 import useBuilderStore from "@/stores/builderStore";
@@ -37,7 +38,6 @@ import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import { posthog } from "@/telemetry";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
-import Block from "@/utils/block";
 import { getBlockCopy, getBlockString } from "@/utils/helpers";
 import { ref } from "vue";
 

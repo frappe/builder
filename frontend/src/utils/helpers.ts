@@ -1,3 +1,4 @@
+import Block from "@/block";
 import AlertDialog from "@/components/AlertDialog.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
@@ -5,7 +6,6 @@ import getBlockTemplate from "@/utils/blockTemplate";
 import { confirmDialog, FileUploadHandler } from "frappe-ui";
 import { h, reactive, toRaw } from "vue";
 import { toast } from "vue-sonner";
-import Block from "./block";
 
 function getNumberFromPx(px: string | number | null | undefined): number {
 	if (!px) {

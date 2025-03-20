@@ -1,8 +1,8 @@
+import type Block from "@/block";
 import webComponent from "@/data/webComponent";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
-import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { alert, confirm, getBlockInstance, getBlockObject } from "@/utils/helpers";
 import { createDocumentResource, createResource } from "frappe-ui";

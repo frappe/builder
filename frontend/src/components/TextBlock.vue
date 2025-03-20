@@ -141,10 +141,10 @@
 </template>
 
 <script setup lang="ts">
+import type Block from "@/block";
 import Input from "@/components/Controls/Input.vue";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
-import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
 import { setFontFromHTML } from "@/utils/fontManager";
 import { getDataForKey } from "@/utils/helpers";

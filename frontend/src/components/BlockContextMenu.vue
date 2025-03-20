@@ -12,13 +12,13 @@
 	</div>
 </template>
 <script setup lang="ts">
+import type Block from "@/block";
 import ContextMenu from "@/components/ContextMenu.vue";
 import NewBlockTemplate from "@/components/Modals/NewBlockTemplate.vue";
 import NewComponent from "@/components/Modals/NewComponent.vue";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
-import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { confirm, detachBlockFromComponent, getBlockCopy } from "@/utils/helpers";

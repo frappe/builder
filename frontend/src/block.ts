@@ -1,8 +1,5 @@
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
-import { Editor } from "@tiptap/vue-3";
-import { clamp } from "@vueuse/core";
-import { computed, nextTick, reactive } from "vue";
 import {
 	addPxToNumber,
 	dataURLtoFile,
@@ -12,7 +9,10 @@ import {
 	getTextContent,
 	kebabToCamelCase,
 	uploadImage,
-} from "./helpers";
+} from "@/utils/helpers";
+import { Editor } from "@tiptap/vue-3";
+import { clamp } from "@vueuse/core";
+import { computed, nextTick, reactive } from "vue";
 
 type BlockDataKeyType = "key" | "attribute" | "style";
 

@@ -1,3 +1,4 @@
+import type Block from "@/block";
 import BuilderCanvas from "@/components/BuilderCanvas.vue";
 import webComponent from "@/data/webComponent";
 import { webPages } from "@/data/webPage";
@@ -7,7 +8,6 @@ import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 

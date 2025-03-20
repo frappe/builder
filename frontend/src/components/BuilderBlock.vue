@@ -32,9 +32,9 @@
 	</teleport>
 </template>
 <script setup lang="ts">
+import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
-import Block from "@/utils/block";
 import { setFont } from "@/utils/fontManager";
 import { getDataForKey } from "@/utils/helpers";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";

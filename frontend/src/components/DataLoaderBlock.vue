@@ -17,8 +17,8 @@
 </template>
 
 <script setup lang="ts">
+import type Block from "@/block";
 import usePageStore from "@/stores/pageStore";
-import Block from "@/utils/block";
 import { Ref, computed, ref } from "vue";
 import BuilderBlock from "./BuilderBlock.vue";
 
