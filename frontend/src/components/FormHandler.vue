@@ -4,7 +4,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import Block from "@/utils/block";
+import Block from "@/block";
 import { ref } from "vue";
 
 const component = ref<HTMLElement | null>(null);
