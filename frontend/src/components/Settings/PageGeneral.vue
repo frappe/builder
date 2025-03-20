@@ -103,9 +103,9 @@
 							@click="
 								() => {
 									if (pageStore.isHomePage(pageStore.activePage)) {
-										store.unsetHomePage();
+										builderStore.unsetHomePage();
 									} else {
-										pageStore.setHomePage(pageStore.activePage?.route as string);
+										builderStore.setHomePage(pageStore.activePage?.route as string);
 									}
 								}
 							">
@@ -116,7 +116,7 @@
 					<Switch
 						size="sm"
 						label="Protected Page"
-						:disabled="store.isHomePage(pageStore.activePage)"
+						:disabled="pageStore.isHomePage(pageStore.activePage)"
 						description="Only logged-in users can access this page"
 						:modelValue="Boolean(pageStore.activePage?.authenticated_access)"
 						@update:modelValue="(val: Boolean) => pageStore.updateActivePage('authenticated_access', val)" />
@@ -155,13 +155,14 @@ import Switch from "@/components/Controls/Switch.vue";
 import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
+import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderProjectFolder } from "@/types/Builder/BuilderProjectFolder";
 import FeatherIcon from "frappe-ui/src/components/FeatherIcon.vue";
 import { computed } from "vue";
-// check route for page id
 
 const pageStore = usePageStore();
+const builderStore = useBuilderStore();
 const fullURL = computed(
 	() => window.location.origin + (pageStore.activePage?.route ? "/" + pageStore.activePage.route : ""),
 );

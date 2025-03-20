@@ -12,7 +12,7 @@ import { useVModel } from "@vueuse/core";
 import { Switch } from "frappe-ui";
 
 const props = defineProps<{
-	modelValue: Boolean;
+	modelValue: boolean;
 }>();
 const emit = defineEmits(["update:modelValue"]);
 const value = useVModel(props, "modelValue", emit);

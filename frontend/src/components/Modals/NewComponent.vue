@@ -33,7 +33,7 @@
 import type Block from "@/block";
 import Dialog from "@/components/Controls/Dialog.vue";
 import webComponent from "@/data/webComponent";
-import useBuilderStore from "@/stores/builderStore";
+import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import { posthog } from "@/telemetry";
@@ -41,8 +41,8 @@ import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import { getBlockCopy, getBlockString } from "@/utils/helpers";
 import { ref } from "vue";
 
-const builderStore = useBuilderStore();
 const componentStore = useComponentStore();
+const canvasStore = useCanvasStore();
 const pageStore = usePageStore();
 
 const props = defineProps<{

@@ -34,7 +34,6 @@ const props = defineProps<{
 	modelValue: boolean;
 }>();
 const emit = defineEmits(["update:modelValue"]);
-
 const showModel = useVModel(props, "modelValue", emit);
 
 const createFolder = () => {

@@ -11,8 +11,8 @@
 	</div>
 </template>
 <script setup lang="ts">
-import usePageStore from "@/stores/pageStore";
 import useBuilderStore from "@/stores/builderStore";
+import usePageStore from "@/stores/pageStore";
 import { UseDark } from "@vueuse/components";
 import { useDark, useTitle } from "@vueuse/core";
 import { Dialogs } from "frappe-ui";
@@ -21,9 +21,13 @@ import { useRoute } from "vue-router";
 import { Toaster } from "vue-sonner";
 import { sessionUser } from "./router";
 
-const pageStore = usePageStore();
+// do not remove this
 const builderStore = useBuilderStore();
+const pageStore = usePageStore();
 const route = useRoute();
+const isDark = useDark({
+	attribute: "data-theme",
+});
 
 provide("sessionUser", sessionUser);
 
@@ -34,10 +38,6 @@ const title = computed(() => {
 });
 
 useTitle(title);
-
-const isDark = useDark({
-	attribute: "data-theme",
-});
 </script>
 <style>
 [id^="headlessui-dialog"] {

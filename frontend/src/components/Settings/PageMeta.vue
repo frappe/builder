@@ -53,6 +53,5 @@
 <script setup lang="ts">
 import ImageUploadInput from "@/components/ImageUploadInput.vue";
 import usePageStore from "@/stores/pageStore";
-// check route for page id
 const pageStore = usePageStore();
 </script>

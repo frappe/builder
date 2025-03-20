@@ -164,9 +164,9 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Reset Overrides",
 		condition: () => canvasStore.activeCanvas?.activeBreakpoint !== "desktop",
-		disabled: () => !block.value?.hasOverrides(canvasStore.activeCanvas?.activeBreakpoint),
+		disabled: () => !block.value?.hasOverrides(canvasStore.activeCanvas?.activeBreakpoint || "desktop"),
 		action: () => {
-			block.value.resetOverrides(canvasStore.activeCanvas?.activeBreakpoint);
+			block.value.resetOverrides(canvasStore.activeCanvas?.activeBreakpoint || "desktop");
 		},
 	},
 	{
