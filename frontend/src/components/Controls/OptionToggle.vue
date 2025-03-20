@@ -14,7 +14,7 @@ import { TabButtons } from "frappe-ui";
 
 withDefaults(
 	defineProps<{
-		modelValue: string | number | boolean;
+		modelValue?: string | number | boolean | null;
 		options?: { label: string; value: string | number; icon?: string; hideLabel?: boolean }[];
 		label?: string;
 	}>(),

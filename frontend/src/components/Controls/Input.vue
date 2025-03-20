@@ -29,7 +29,7 @@ import { computed, useAttrs } from "vue";
 
 const props = withDefaults(
 	defineProps<{
-		modelValue: string | number | boolean;
+		modelValue?: string | number | boolean | null;
 		type?: string;
 		hideClearButton?: boolean;
 	}>(),
