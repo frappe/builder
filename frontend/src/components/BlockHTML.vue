@@ -2,7 +2,7 @@
 	<div ref="component" class="!relative" v-html="html"></div>
 </template>
 <script setup lang="ts">
-import Block from "@/utils/block";
+import type Block from "@/block";
 import { computed, ref } from "vue";
 
 const component = ref<HTMLElement | null>(null);

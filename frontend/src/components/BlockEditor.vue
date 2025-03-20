@@ -33,9 +33,9 @@
 	</div>
 </template>
 <script setup lang="ts">
+import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
-import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
 import { addPxToNumber } from "@/utils/helpers";
 import { Ref, computed, inject, nextTick, onMounted, ref, watch, watchEffect } from "vue";

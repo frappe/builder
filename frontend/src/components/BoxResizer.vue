@@ -32,11 +32,11 @@
 		@mousedown.stop.prevent="handleBottomCornerResize" />
 </template>
 <script setup lang="ts">
+import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { getNumberFromPx } from "@/utils/helpers";
 import { clamp } from "@vueuse/core";
 import { computed, inject, onMounted, ref, watch } from "vue";
-import Block from "../utils/block";
 import guidesTracker from "../utils/guidesTracker";
 
 const canvasStore = useCanvasStore();

@@ -1,7 +1,7 @@
+import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { CanvasHistory } from "@/types/Builder/BuilderCanvas";
-import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
 import {
 	addPxToNumber,

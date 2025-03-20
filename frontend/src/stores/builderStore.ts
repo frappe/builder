@@ -1,10 +1,10 @@
+import type Block from "@/block";
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import type BuilderCanvas from "@/components/BuilderCanvas.vue";
 import { builderSettings } from "@/data/builderSettings";
 import { BuilderSettings } from "@/types/Builder/BuilderSettings";
-import type Block from "@/utils/block";
 import RealTimeHandler from "@/utils/realtimeHandler";
-import { UseRefHistoryReturn, useStorage } from "@vueuse/core";
+import { useStorage } from "@vueuse/core";
 import { defineStore } from "pinia";
 import { toast } from "vue-sonner";
 import BlockLayers from "./components/BlockLayers.vue";
@@ -19,10 +19,6 @@ const useBuilderStore = defineStore("builderStore", {
 		mode: <BuilderMode>"select", // check setEvents in BuilderCanvas for usage
 		lastMode: <BuilderMode>"select",
 		autoSave: true,
-		history: {
-			pause: () => {},
-			resume: () => {},
-		} as UseRefHistoryReturn<{}, {}>,
 		builderLayout: {
 			rightPanelWidth: 275,
 			leftPanelWidth: 250,

@@ -1,8 +1,8 @@
+import type Block from "@/block";
 import useBlockTemplateStore from "@/stores/blockTemplateStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import { posthog } from "@/telemetry";
-import Block from "@/utils/block";
 import {
 	getBlockCopy,
 	getBlockInstance,

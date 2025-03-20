@@ -1,6 +1,6 @@
+import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { CanvasProps } from "@/types/Builder/BuilderCanvas";
-import Block from "@/utils/block";
 import { getRootBlockTemplate } from "@/utils/helpers";
 import { useCanvasHistory } from "@/utils/useCanvasHistory";
 import { useElementBounding } from "@vueuse/core";

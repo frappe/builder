@@ -109,9 +109,9 @@
 	</div>
 </template>
 <script setup lang="ts">
+import type Block from "@/block";
 import { clamp } from "@vueuse/core";
 import { computed, inject, ref, watchEffect } from "vue";
-import Block from "../utils/block";
 import { getNumberFromPx } from "../utils/helpers";
 
 import { toast } from "vue-sonner";
