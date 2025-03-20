@@ -11,6 +11,8 @@
 	</div>
 </template>
 <script setup lang="ts">
+import usePageStore from "@/stores/pageStore";
+import useBuilderStore from "@/stores/builderStore";
 import { UseDark } from "@vueuse/components";
 import { useDark, useTitle } from "@vueuse/core";
 import { Dialogs } from "frappe-ui";
@@ -18,16 +20,16 @@ import { computed, provide } from "vue";
 import { useRoute } from "vue-router";
 import { Toaster } from "vue-sonner";
 import { sessionUser } from "./router";
-import useStore from "./store";
 
-const store = useStore();
+const pageStore = usePageStore();
+const builderStore = useBuilderStore();
 const route = useRoute();
 
 provide("sessionUser", sessionUser);
 
 const title = computed(() => {
-	return store.activePage && route.name !== "home"
-		? `${store.activePage.page_title || "Untitled"} | Builder`
+	return pageStore.activePage && route.name !== "home"
+		? `${pageStore.activePage.page_title || "Untitled"} | Builder`
 		: "Frappe Builder";
 });
 

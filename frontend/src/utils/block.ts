@@ -1,5 +1,5 @@
-import useStore from "@/store";
-import useComponentStore from "@/utils/useComponentStore";
+import useCanvasStore from "@/stores/canvasStore";
+import useComponentStore from "@/stores/componentStore";
 import { Editor } from "@tiptap/vue-3";
 import { clamp } from "@vueuse/core";
 import { computed, nextTick, reactive } from "vue";
@@ -280,12 +280,12 @@ class Block implements BlockOptions {
 		);
 	}
 	setStyle(style: styleProperty, value: StyleValue) {
-		const store = useStore();
+		const canvasStore = useCanvasStore();
 		let styleObj = this.baseStyles;
 		style = kebabToCamelCase(style as string) as styleProperty;
-		if (store.activeBreakpoint === "mobile") {
+		if (canvasStore.activeCanvas?.activeBreakpoint === "mobile") {
 			styleObj = this.mobileStyles;
-		} else if (store.activeBreakpoint === "tablet") {
+		} else if (canvasStore.activeCanvas?.activeBreakpoint === "tablet") {
 			styleObj = this.tabletStyles;
 		}
 		if (value === null || value === "") {
@@ -312,9 +312,9 @@ class Block implements BlockOptions {
 		style = kebabToCamelCase(style as string) as styleProperty;
 		this.baseStyles[style] = value;
 	}
-	getStyle(style: styleProperty, breakpoint?: string) {
-		const store = useStore();
-		breakpoint = breakpoint || store.activeBreakpoint;
+	getStyle(style: styleProperty, breakpoint?: string | null) {
+		const canvasStore = useCanvasStore();
+		breakpoint = breakpoint || canvasStore.activeCanvas?.activeBreakpoint;
 		let styleValue = undefined as StyleValue;
 		if (breakpoint === "mobile") {
 			styleValue = this.mobileStyles[style] || this.tabletStyles[style] || this.baseStyles[style];
@@ -329,11 +329,11 @@ class Block implements BlockOptions {
 		return styleValue;
 	}
 	getNativeStyle(style: styleProperty) {
-		const store = useStore();
-		if (store.activeBreakpoint === "mobile") {
+		const canvasStore = useCanvasStore();
+		if (canvasStore.activeCanvas?.activeBreakpoint === "mobile") {
 			return this.mobileStyles[style];
 		}
-		if (store.activeBreakpoint === "tablet") {
+		if (canvasStore.activeCanvas?.activeBreakpoint === "tablet") {
 			return this.tabletStyles[style];
 		}
 		return this.baseStyles[style];
@@ -488,9 +488,9 @@ class Block implements BlockOptions {
 		return styles;
 	}
 	selectBlock() {
-		const store = useStore();
+		const canvasStore = useCanvasStore();
 		nextTick(() => {
-			store.selectBlock(this, null);
+			canvasStore.selectBlock(this, null);
 		});
 	}
 	getParentBlock(): Block | null {
@@ -591,9 +591,9 @@ class Block implements BlockOptions {
 		return this.innerHTML?.startsWith("<iframe");
 	}
 	makeBlockEditable() {
-		const store = useStore();
+		const canvasStore = useCanvasStore();
 		this.selectBlock();
-		store.editableBlock = this;
+		canvasStore.editableBlock = this;
 		nextTick(() => {
 			this.getEditor()?.commands.focus("all");
 		});
@@ -677,8 +677,8 @@ class Block implements BlockOptions {
 		if (component) {
 			resetWithComponent(this, this.extendedFromComponent as string, component.children);
 			// TODO: Remove this
-			const store = useStore();
-			store.activeCanvas?.history?.resume(undefined, true, true);
+			const canvasStore = useCanvasStore();
+			canvasStore.activeCanvas?.history?.resume(undefined, true, true);
 		}
 	}
 	syncWithComponent() {
@@ -742,8 +742,8 @@ class Block implements BlockOptions {
 		if (this.isRoot()) {
 			return;
 		}
-		const store = useStore();
-		const pauseId = store.activeCanvas?.history?.pause();
+		const canvasStore = useCanvasStore();
+		const pauseId = canvasStore.activeCanvas?.history?.pause();
 		const blockCopy = getBlockCopy(this);
 		const parentBlock = this.getParentBlock();
 
@@ -759,12 +759,12 @@ class Block implements BlockOptions {
 		if (parentBlock) {
 			child = parentBlock.addChildAfter(blockCopy, this);
 		} else {
-			child = store.activeCanvas?.getRootBlock().addChild(blockCopy) as Block;
+			child = canvasStore.activeCanvas?.getRootBlock().addChild(blockCopy) as Block;
 		}
 		nextTick(() => {
 			if (child) {
 				child.selectBlock();
-				pauseId && store.activeCanvas?.history?.resume(pauseId, true);
+				pauseId && canvasStore.activeCanvas?.history?.resume(pauseId, true);
 			}
 		});
 	}

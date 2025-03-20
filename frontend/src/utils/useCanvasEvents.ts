@@ -1,4 +1,5 @@
-import useStore from "@/store";
+import useBuilderStore from "@/stores/builderStore";
+import useCanvasStore from "@/stores/canvasStore";
 import { CanvasHistory } from "@/types/Builder/BuilderCanvas";
 import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
@@ -13,7 +14,8 @@ import {
 import { clamp, useEventListener } from "@vueuse/core";
 import { Ref } from "vue";
 
-const store = useStore();
+const builderStore = useBuilderStore();
+const canvasStore = useCanvasStore();
 
 export function useCanvasEvents(
 	container: Ref<HTMLElement>,
@@ -25,12 +27,12 @@ export function useCanvasEvents(
 ) {
 	let counter = 0;
 	useEventListener(container, "mousedown", (ev: MouseEvent) => {
-		if (store.mode === "move") {
+		if (builderStore.mode === "move") {
 			return;
 		}
 		const initialX = ev.clientX;
 		const initialY = ev.clientY;
-		if (store.mode === "select") {
+		if (builderStore.mode === "select") {
 			return;
 		} else {
 			const pauseId = canvasHistory.value?.pause();
@@ -49,7 +51,7 @@ export function useCanvasEvents(
 					parentBlock = parentBlock.getParentBlock() || getRootBlock();
 				}
 			}
-			const child = getBlockTemplate(store.mode);
+			const child = getBlockTemplate(builderStore.mode);
 			const parentElement = document.body.querySelector(
 				`.canvas [data-block-id="${parentBlock.blockId}"]`,
 			) as HTMLElement;
@@ -67,14 +69,14 @@ export function useCanvasEvents(
 			childBlock.setBaseStyle("position", "absolute");
 			childBlock.setBaseStyle("top", addPxToNumber(y));
 			childBlock.setBaseStyle("left", addPxToNumber(x));
-			if (store.mode === "container" || store.mode === "repeater") {
+			if (builderStore.mode === "container" || builderStore.mode === "repeater") {
 				const colors = ["#ededed", "#e2e2e2", "#c7c7c7"];
 				childBlock.setBaseStyle("background", colors[counter % colors.length]);
 				counter++;
 			}
 
 			const mouseMoveHandler = (mouseMoveEvent: MouseEvent) => {
-				if (store.mode === "text") {
+				if (builderStore.mode === "text") {
 					return;
 				} else {
 					mouseMoveEvent.preventDefault();
@@ -98,11 +100,11 @@ export function useCanvasEvents(
 					childBlock.setBaseStyle("top", "auto");
 					childBlock.setBaseStyle("left", "auto");
 					setTimeout(() => {
-						store.mode = "select";
+						builderStore.mode = "select";
 					}, 50);
-					if (store.mode === "text") {
+					if (builderStore.mode === "text") {
 						pauseId && canvasHistory.value?.resume(pauseId, true);
-						store.editableBlock = childBlock;
+						canvasStore.editableBlock = childBlock;
 						return;
 					}
 					if (parentBlock.isGrid()) {
@@ -124,7 +126,7 @@ export function useCanvasEvents(
 	});
 
 	useEventListener(container, "mousedown", (ev: MouseEvent) => {
-		if (store.mode === "move") {
+		if (builderStore.mode === "move") {
 			container.value.style.cursor = "grabbing";
 			const initialX = ev.clientX;
 			const initialY = ev.clientY;
@@ -158,7 +160,7 @@ export function useCanvasEvents(
 		const selectedBlock = selectedBlocks.value[0];
 
 		const selectBlock = (block: Block | null) => {
-			if (block) store.selectBlock(block, null, true, true);
+			if (block) canvasStore.selectBlock(block, null, true, true);
 			return !!block;
 		};
 
@@ -182,7 +184,7 @@ export function useCanvasEvents(
 
 		const selectLastChildInTree = (block: Block) => {
 			let currentBlock = block;
-			while (store.activeLayers?.isExpandedInTree(currentBlock)) {
+			while (builderStore.activeLayers?.isExpandedInTree(currentBlock)) {
 				const lastChild = currentBlock.getLastChild() as Block;
 				if (!lastChild) break;
 				currentBlock = lastChild;
@@ -192,13 +194,13 @@ export function useCanvasEvents(
 
 		switch (ev.key) {
 			case "ArrowLeft":
-				store.activeLayers?.isExpandedInTree(selectedBlock)
-					? store.activeLayers.toggleExpanded(selectedBlock)
+				builderStore.activeLayers?.isExpandedInTree(selectedBlock)
+					? builderStore.activeLayers.toggleExpanded(selectedBlock)
 					: selectSibling("previous", selectParent);
 				break;
 			case "ArrowRight":
 				selectedBlock.hasChildren() && selectedBlock.isVisible()
-					? (store.activeLayers?.toggleExpanded(selectedBlock), selectFirstChild())
+					? (builderStore.activeLayers?.toggleExpanded(selectedBlock), selectFirstChild())
 					: selectNextSiblingOrParent();
 				break;
 			case "ArrowUp":
@@ -207,7 +209,7 @@ export function useCanvasEvents(
 					: selectParent();
 				break;
 			case "ArrowDown":
-				store.activeLayers?.isExpandedInTree(selectedBlock) &&
+				builderStore.activeLayers?.isExpandedInTree(selectedBlock) &&
 				selectedBlock.hasChildren() &&
 				selectedBlock.isVisible()
 					? selectFirstChild()
@@ -221,13 +223,13 @@ export function useCanvasEvents(
 
 function handleMouseOver(e: MouseEvent) {
 	if (!isBlock(e)) {
-		store.hoveredBlock = null;
+		canvasStore.activeCanvas?.setHoveredBlock(null);
 		return;
 	}
-	if (store.mode === "move" || store.activeCanvas?.resizingBlock) return;
+	if (builderStore.mode === "move" || canvasStore.activeCanvas?.resizingBlock) return;
 	const block = getBlock(e);
 	const { breakpoint } = getBlockInfo(e);
-	store.hoveredBlock = block?.blockId || null;
-	store.hoveredBreakpoint = breakpoint;
+	canvasStore.activeCanvas?.setHoveredBlock(block?.blockId || null);
+	canvasStore.activeCanvas?.setHoveredBreakpoint(breakpoint);
 	e.stopPropagation();
 }

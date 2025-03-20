@@ -9,7 +9,7 @@
 		<Transition name="fade">
 			<div
 				class="absolute bottom-0 left-0 right-0 top-0 z-[19] grid w-full place-items-center bg-surface-gray-1 p-10 text-ink-gray-5"
-				v-show="store.settingPage">
+				v-show="pageStore.settingPage">
 				<LoadingIcon></LoadingIcon>
 			</div>
 		</Transition>
@@ -54,7 +54,7 @@
 						top: `calc(${-20}px * 1/${canvasProps.scale})`,
 					}"
 					v-show="!canvasProps.scaling && !canvasProps.panning"
-					@click="store.activeBreakpoint = breakpoint.device">
+					@click="activeBreakpoint = breakpoint.device">
 					{{ breakpoint.displayName }}
 				</div>
 				<BuilderBlock
@@ -63,7 +63,7 @@
 					:key="block.blockId"
 					v-if="showBlocks"
 					:breakpoint="breakpoint.device"
-					:data="store.pageData" />
+					:data="pageStore.pageData" />
 			</div>
 		</div>
 		<div
@@ -78,6 +78,8 @@
 </template>
 <script setup lang="ts">
 import LoadingIcon from "@/components/Icons/Loading.vue";
+import useBuilderStore from "@/stores/builderStore";
+import usePageStore from "@/stores/pageStore";
 import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
 import Block from "@/utils/block";
 import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
@@ -88,14 +90,15 @@ import { useCanvasEvents } from "@/utils/useCanvasEvents";
 import { useCanvasUtils } from "@/utils/useCanvasUtils";
 import { FeatherIcon } from "frappe-ui";
 import { Ref, computed, onMounted, provide, reactive, ref, watch } from "vue";
-import useStore from "../store";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
 import FitScreenIcon from "./Icons/FitScreen.vue";
-const resizingBlock = ref(false);
 
-const store = useStore();
+const builderStore = useBuilderStore();
+const pageStore = usePageStore();
+
+const resizingBlock = ref(false);
 const canvasContainer = ref(null);
 const canvas = ref(null);
 const showBlocks = ref(false);
@@ -114,6 +117,10 @@ const props = defineProps({
 
 const block = ref(props.blockData) as Ref<Block>;
 const history = ref(null) as Ref<null> | CanvasHistory;
+
+const activeBreakpoint = ref("desktop") as Ref<string | null>;
+const hoveredBreakpoint = ref("desktop") as Ref<string | null>;
+const hoveredBlock = ref(null) as Ref<string | null>;
 
 const {
 	clearSelection,
@@ -243,6 +250,18 @@ function searchBlock(searchTerm: string, targetBlock: null | Block) {
 	return null;
 }
 
+function setActiveBreakpoint(breakpoint: string | null) {
+	activeBreakpoint.value = breakpoint;
+}
+
+function setHoveredBreakpoint(breakpoint: string | null) {
+	hoveredBreakpoint.value = breakpoint;
+}
+
+function setHoveredBlock(blockId: string | null) {
+	hoveredBlock.value = blockId;
+}
+
 watch(
 	() => block,
 	() => {
@@ -264,10 +283,10 @@ watch(
 );
 
 watch(
-	() => store.mode,
+	() => builderStore.mode,
 	(newValue, oldValue) => {
-		store.lastMode = oldValue;
-		toggleMode(store.mode);
+		builderStore.lastMode = oldValue;
+		toggleMode(builderStore.mode);
 	},
 );
 
@@ -299,6 +318,12 @@ defineExpose({
 	selectBlockRange,
 	resizingBlock,
 	searchBlock,
+	activeBreakpoint,
+	hoveredBreakpoint,
+	hoveredBlock,
+	setActiveBreakpoint,
+	setHoveredBreakpoint,
+	setHoveredBlock,
 });
 
 function selectBreakpoint(ev: MouseEvent, breakpoint: BreakpointConfig) {
@@ -313,8 +338,8 @@ function selectBreakpoint(ev: MouseEvent, breakpoint: BreakpointConfig) {
 		}
 	}
 	if (breakpoint.visible) {
-		store.hoveredBreakpoint = breakpoint.device;
-		store.activeBreakpoint = breakpoint.device;
+		hoveredBreakpoint.value = breakpoint.device;
+		activeBreakpoint.value = breakpoint.device;
 		breakpoint.renderedOnce = true;
 	}
 }
