@@ -8,7 +8,7 @@
 			:modelValue="builderSettings.doc?.home_page"
 			@update:modelValue="
 				(val) => {
-					store.updateBuilderSettings('home_page', val);
+					builderStore.updateBuilderSettings('home_page', val);
 				}
 			"
 			:options="routeOptions"></InlineInput>
@@ -28,8 +28,8 @@
 						label="Favicon"
 						image_type="image/ico"
 						:image_url="builderSettings.doc?.favicon"
-						@upload="(url: string) => store.updateBuilderSettings('favicon', url)"
-						@remove="() => store.updateBuilderSettings('favicon', '')" />
+						@upload="(url: string) => builderStore.updateBuilderSettings('favicon', url)"
+						@remove="() => builderStore.updateBuilderSettings('favicon', '')" />
 					<span class="text-p-sm text-ink-gray-6">
 						Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO
 					</span>
@@ -55,7 +55,7 @@
 			description="All the images uploaded via Builder will be converted to WebP for better page performance"
 			:modelValue="Boolean(builderSettings.doc?.auto_convert_images_to_webp)"
 			@update:modelValue="
-				(val: Boolean) => store.updateBuilderSettings('auto_convert_images_to_webp', val)
+				(val: Boolean) => builderStore.updateBuilderSettings('auto_convert_images_to_webp', val)
 			" />
 	</div>
 </template>
@@ -65,12 +65,12 @@ import Switch from "@/components/Controls/Switch.vue";
 import { builderSettings } from "@/data/builderSettings";
 import { webPages } from "@/data/webPage";
 import { websiteSettings } from "@/data/websiteSettings";
-import useStore from "@/store";
+import useBuilderStore from "@/stores/builderStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { computed } from "vue";
 import ImageUploader from "../Controls/ImageUploader.vue";
 
-const store = useStore();
+const builderStore = useBuilderStore();
 
 const routeOptions = computed(() => {
 	return webPages.data

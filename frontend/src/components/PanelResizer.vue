@@ -16,29 +16,22 @@
 </template>
 <script setup lang="ts">
 import { ref } from "vue";
-const props = defineProps({
-	maxDimension: {
-		type: Number,
-		default: 350,
+const props = withDefaults(
+	defineProps<{
+		maxDimension?: number;
+		minDimension?: number;
+		dimension?: number;
+		side?: "left" | "right" | "top" | "bottom";
+		resizeSensitivity?: number;
+	}>(),
+	{
+		maxDimension: 350,
+		minDimension: 280,
+		dimension: 300,
+		side: "right",
+		resizeSensitivity: 1,
 	},
-	minDimension: {
-		type: Number,
-		default: 280,
-	},
-	dimension: {
-		type: Number,
-		default: 300,
-	},
-	side: {
-		type: String,
-		default: "right",
-		validator: (value: string) => ["left", "right", "top", "bottom"].includes(value),
-	},
-	resizeSensitivity: {
-		type: Number,
-		default: 1,
-	},
-});
+);
 
 const emit = defineEmits({
 	resize: (width) => width,

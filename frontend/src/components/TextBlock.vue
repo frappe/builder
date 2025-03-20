@@ -115,19 +115,19 @@
 			@mousemove="
 				() => {
 					if (selectionTriggered) {
-						store.preventClick = true;
+						canvasStore.preventClick = true;
 					}
 				}
 			"
 			@keydown.esc="
 				() => {
-					store.editableBlock = null;
+					canvasStore.editableBlock = null;
 				}
 			"
 			v-on-click-outside="
 				(e) => {
 					if ((e.target as HTMLElement).closest('.canvas-container')) {
-						store.editableBlock = null;
+						canvasStore.editableBlock = null;
 					}
 				}
 			"
@@ -141,9 +141,9 @@
 </template>
 
 <script setup lang="ts">
+import type Block from "@/block";
 import Input from "@/components/Controls/Input.vue";
-import useStore from "@/store";
-import Block from "@/utils/block";
+import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
 import { setFontFromHTML } from "@/utils/fontManager";
 import { getDataForKey } from "@/utils/helpers";
@@ -159,7 +159,8 @@ import { Ref, computed, inject, nextTick, onBeforeMount, onBeforeUnmount, ref, w
 import { toast } from "vue-sonner";
 import StrikeThroughIcon from "./Icons/StrikeThrough.vue";
 
-const store = useStore();
+const canvasStore = useCanvasStore();
+
 const dataChanged = ref(false);
 const settingLink = ref(false);
 const textLink = ref("");
@@ -170,20 +171,17 @@ const overlayElement = document.querySelector("#overlay") as HTMLElement;
 let editor: Ref<Editor | null> = ref(null);
 let selectionTriggered = false as boolean;
 
-const props = defineProps({
-	block: {
-		type: Block,
-		required: true,
+const props = withDefaults(
+	defineProps<{
+		block: Block;
+		preview?: boolean;
+		data?: Record<string, any>;
+	}>(),
+	{
+		preview: false,
+		data: () => ({}),
 	},
-	preview: {
-		type: Boolean,
-		default: false,
-	},
-	data: {
-		type: Object,
-		default: () => ({}),
-	},
-});
+);
 
 const canvasProps = !props.preview ? (inject("canvasProps") as CanvasProps) : null;
 
@@ -225,7 +223,7 @@ const textContent = computed(() => {
 });
 
 const isEditable = computed(() => {
-	return store.editableBlock === props.block;
+	return canvasStore.editableBlock === props.block;
 });
 
 const showEditor = computed(() => {
@@ -242,10 +240,10 @@ watch(
 	(editable) => {
 		editor.value?.setEditable(editable);
 		if (editable) {
-			store.activeCanvas?.history?.pause();
+			canvasStore.activeCanvas?.history?.pause();
 			editor.value?.commands.focus("all");
 		} else {
-			store.activeCanvas?.history?.resume(undefined, dataChanged.value, true);
+			canvasStore.activeCanvas?.history?.resume(undefined, dataChanged.value, true);
 			dataChanged.value = false;
 		}
 	},
@@ -284,10 +282,10 @@ const getInnerHTML = (editor: Editor | null) => {
 
 if (!props.preview) {
 	watch(
-		() => store.activeCanvas?.isSelected(props.block),
+		() => canvasStore.activeCanvas?.isSelected(props.block),
 		() => {
 			// only load editor if block is selected for performance reasons
-			if (store.activeCanvas?.isSelected(props.block) && !blockController.multipleBlocksSelected()) {
+			if (canvasStore.activeCanvas?.isSelected(props.block) && !blockController.multipleBlocksSelected()) {
 				editor.value = new Editor({
 					content: textContent.value,
 					extensions: [

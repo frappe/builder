@@ -22,7 +22,7 @@
 						:data-component-name="component.name"
 						:class="{
 							'!border-outline-gray-4':
-								store.fragmentData.fragmentId === component.name ||
+								canvasStore.fragmentData.fragmentId === component.name ||
 								componentStore.selectedComponent === component.component_id,
 						}">
 						<div class="flex items-center gap-2 text-ink-gray-7">
@@ -43,14 +43,17 @@
 </template>
 <script setup lang="ts">
 import webComponent from "@/data/webComponent";
-import useStore from "@/store";
+import useCanvasStore from "@/stores/canvasStore";
+import useComponentStore from "@/stores/componentStore";
+import usePageStore from "@/stores/pageStore";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
-import useComponentStore from "@/utils/useComponentStore";
 import { useEventListener } from "@vueuse/core";
 import { computed, onMounted, ref } from "vue";
 
-const store = useStore();
+const canvasStore = useCanvasStore();
 const componentStore = useComponentStore();
+const pageStore = usePageStore();
+
 const componentFilter = ref("");
 const componentContainer = ref(null);
 
@@ -60,7 +63,7 @@ onMounted(() => {
 
 const components = computed(() =>
 	(webComponent.data || []).filter((d: BuilderComponent) => {
-		if (d.for_web_page && d.for_web_page !== store.selectedPage) {
+		if (d.for_web_page && d.for_web_page !== pageStore.selectedPage) {
 			return false;
 		}
 		if (componentFilter.value) {
@@ -79,7 +82,7 @@ useEventListener(componentContainer, "click", (e) => {
 		const componentName = component.dataset.componentName as string;
 		componentStore.selectedComponent = componentId;
 		// if in edit mode, open the component in editor
-		if (store.fragmentData.fragmentId) {
+		if (canvasStore.fragmentData.fragmentId) {
 			componentStore.editComponent(null, componentName);
 		}
 	}
@@ -89,12 +92,12 @@ useEventListener(componentContainer, "dragstart", (e) => {
 	const component = (e.target as HTMLElement)?.closest(".user-component") as HTMLElement;
 	if (component) {
 		setComponentData(e, component.dataset.componentName as string);
-		store.handleDragStart(e);
+		canvasStore.handleDragStart(e);
 	}
 });
 
 useEventListener(componentContainer, "dragend", () => {
-	store.handleDragEnd();
+	canvasStore.handleDragEnd();
 });
 
 useEventListener(componentContainer, "dblclick", (e) => {

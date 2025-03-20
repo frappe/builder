@@ -19,16 +19,15 @@
 import { toValue } from "@vueuse/core";
 import { ref, watch } from "vue";
 
-const props = defineProps({
-	sectionName: {
-		type: String,
-		required: true,
+const props = withDefaults(
+	defineProps<{
+		sectionName: string;
+		sectionCollapsed?: boolean;
+	}>(),
+	{
+		sectionCollapsed: false,
 	},
-	sectionCollapsed: {
-		type: Boolean,
-		default: false,
-	},
-});
+);
 
 const collapsed = ref(false);
 
