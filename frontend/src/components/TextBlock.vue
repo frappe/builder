@@ -115,19 +115,19 @@
 			@mousemove="
 				() => {
 					if (selectionTriggered) {
-						store.preventClick = true;
+						canvasStore.preventClick = true;
 					}
 				}
 			"
 			@keydown.esc="
 				() => {
-					store.editableBlock = null;
+					canvasStore.editableBlock = null;
 				}
 			"
 			v-on-click-outside="
 				(e) => {
 					if ((e.target as HTMLElement).closest('.canvas-container')) {
-						store.editableBlock = null;
+						canvasStore.editableBlock = null;
 					}
 				}
 			"
@@ -142,7 +142,8 @@
 
 <script setup lang="ts">
 import Input from "@/components/Controls/Input.vue";
-import useStore from "@/store";
+import useBuilderStore from "@/stores/builderStore";
+import useCanvasStore from "@/stores/canvasStore";
 import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
 import { setFontFromHTML } from "@/utils/fontManager";
@@ -159,7 +160,9 @@ import { Ref, computed, inject, nextTick, onBeforeMount, onBeforeUnmount, ref, w
 import { toast } from "vue-sonner";
 import StrikeThroughIcon from "./Icons/StrikeThrough.vue";
 
-const store = useStore();
+const builderStore = useBuilderStore();
+const canvasStore = useCanvasStore();
+
 const dataChanged = ref(false);
 const settingLink = ref(false);
 const textLink = ref("");
@@ -225,7 +228,7 @@ const textContent = computed(() => {
 });
 
 const isEditable = computed(() => {
-	return store.editableBlock === props.block;
+	return canvasStore.editableBlock === props.block;
 });
 
 const showEditor = computed(() => {
@@ -242,10 +245,10 @@ watch(
 	(editable) => {
 		editor.value?.setEditable(editable);
 		if (editable) {
-			store.activeCanvas?.history?.pause();
+			canvasStore.activeCanvas?.history?.pause();
 			editor.value?.commands.focus("all");
 		} else {
-			store.activeCanvas?.history?.resume(undefined, dataChanged.value, true);
+			canvasStore.activeCanvas?.history?.resume(undefined, dataChanged.value, true);
 			dataChanged.value = false;
 		}
 	},
@@ -284,10 +287,10 @@ const getInnerHTML = (editor: Editor | null) => {
 
 if (!props.preview) {
 	watch(
-		() => store.activeCanvas?.isSelected(props.block),
+		() => canvasStore.activeCanvas?.isSelected(props.block),
 		() => {
 			// only load editor if block is selected for performance reasons
-			if (store.activeCanvas?.isSelected(props.block) && !blockController.multipleBlocksSelected()) {
+			if (canvasStore.activeCanvas?.isSelected(props.block) && !blockController.multipleBlocksSelected()) {
 				editor.value = new Editor({
 					content: textContent.value,
 					extensions: [

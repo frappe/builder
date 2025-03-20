@@ -6,16 +6,16 @@
 					<BuilderInput
 						type="text"
 						label="Page Title"
-						:modelValue="store.activePage?.page_title"
+						:modelValue="pageStore.activePage?.page_title"
 						:hideClearButton="true"
-						@update:modelValue="(val: string) => store.updateActivePage('page_title', val)" />
+						@update:modelValue="(val: string) => pageStore.updateActivePage('page_title', val)" />
 					<BuilderInput
 						type="text"
 						label="Page Route"
 						class="[&>p]:text-p-xs"
-						:modelValue="store.activePage?.route"
+						:modelValue="pageStore.activePage?.route"
 						:hideClearButton="true"
-						@update:modelValue="(val: string) => store.updateActivePage('route', val)" />
+						@update:modelValue="(val: string) => pageStore.updateActivePage('route', val)" />
 				</div>
 				<div class="flex flex-col gap-3 text-base">
 					<div class="flex">
@@ -31,19 +31,19 @@
 								<FeatherIcon
 									name="check-circle"
 									class="size-4 text-ink-green-3"
-									v-if="store.activePage?.published && !store.activePage.authenticated_access" />
+									v-if="pageStore.activePage?.published && !pageStore.activePage.authenticated_access" />
 								<AuthenticatedUserIcon
 									class="size-4 text-ink-amber-3"
 									v-else-if="
-										store.activePage?.published && store.activePage?.authenticated_access
+										pageStore.activePage?.published && pageStore.activePage?.authenticated_access
 									"></AuthenticatedUserIcon>
 								<FeatherIcon
 									name="alert-circle"
 									class="size-4 text-ink-gray-4"
-									v-else-if="!store.activePage?.published" />
+									v-else-if="!pageStore.activePage?.published" />
 								{{
-									store.activePage?.published
-										? store.activePage?.authenticated_access
+									pageStore.activePage?.published
+										? pageStore.activePage?.authenticated_access
 											? "Published with limited access"
 											: "Published"
 										: "Draft"
@@ -52,8 +52,10 @@
 
 							<BuilderButton
 								variant="subtle"
-								@click="store.activePage?.published ? store.unpublishPage() : store.publishPage(false)">
-								{{ store.activePage?.published ? "Unpublish" : "Publish" }}
+								@click="
+									pageStore.activePage?.published ? pageStore.unpublishPage() : pageStore.publishPage(false)
+								">
+								{{ pageStore.activePage?.published ? "Unpublish" : "Publish" }}
 							</BuilderButton>
 						</div>
 					</div>
@@ -68,7 +70,7 @@
 							class="flex items-center justify-center rounded border border-outline-gray-1 bg-surface-gray-2 px-20 py-5">
 							<img
 								:src="
-									store.activePage?.favicon ||
+									pageStore.activePage?.favicon ||
 									builderSettings.doc?.favicon ||
 									'/assets/builder/images/frappe_black.png'
 								"
@@ -79,9 +81,9 @@
 							<ImageUploader
 								label="Favicon"
 								image_type="image/ico"
-								:image_url="store.activePage?.favicon"
-								@upload="(url: string) => store.updateActivePage('favicon', url)"
-								@remove="() => store.updateActivePage('favicon', '')" />
+								:image_url="pageStore.activePage?.favicon"
+								@upload="(url: string) => pageStore.updateActivePage('favicon', url)"
+								@remove="() => pageStore.updateActivePage('favicon', '')" />
 							<span class="text-p-sm text-ink-gray-6">
 								Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO
 							</span>
@@ -100,31 +102,31 @@
 							variant="subtle"
 							@click="
 								() => {
-									if (store.isHomePage(store.activePage)) {
+									if (pageStore.isHomePage(pageStore.activePage)) {
 										store.unsetHomePage();
 									} else {
-										store.setHomePage(store.activePage?.route as string);
+										pageStore.setHomePage(pageStore.activePage?.route as string);
 									}
 								}
 							">
-							{{ store.isHomePage(store.activePage) ? "Unset Homepage" : "Set As Homepage" }}
+							{{ pageStore.isHomePage(pageStore.activePage) ? "Unset Homepage" : "Set As Homepage" }}
 						</BuilderButton>
 					</div>
 					<hr class="w-full border-outline-gray-2" />
 					<Switch
 						size="sm"
 						label="Protected Page"
-						:disabled="store.isHomePage(store.activePage)"
+						:disabled="store.isHomePage(pageStore.activePage)"
 						description="Only logged-in users can access this page"
-						:modelValue="Boolean(store.activePage?.authenticated_access)"
-						@update:modelValue="(val: Boolean) => store.updateActivePage('authenticated_access', val)" />
+						:modelValue="Boolean(pageStore.activePage?.authenticated_access)"
+						@update:modelValue="(val: Boolean) => pageStore.updateActivePage('authenticated_access', val)" />
 					<hr class="w-full border-outline-gray-2" />
 					<Switch
 						size="sm"
 						label="Disable Indexing"
 						description="Prevent search engines from indexing this page"
-						:modelValue="Boolean(store.activePage?.disable_indexing)"
-						@update:modelValue="(val: Boolean) => store.updateActivePage('disable_indexing', val)" />
+						:modelValue="Boolean(pageStore.activePage?.disable_indexing)"
+						@update:modelValue="(val: Boolean) => pageStore.updateActivePage('disable_indexing', val)" />
 					<hr class="w-full border-outline-gray-2" />
 					<div class="flex items-center justify-between">
 						<div class="flex flex-col gap-2">
@@ -136,9 +138,9 @@
 								class="w-fit"
 								type="select"
 								:options="folderOptions"
-								:modelValue="store.activePage?.project_folder"
+								:modelValue="pageStore.activePage?.project_folder"
 								@update:modelValue="
-									(val: string) => store.updateActivePage('project_folder', val)
+									(val: string) => pageStore.updateActivePage('project_folder', val)
 								"></BuilderInput>
 						</div>
 					</div>
@@ -153,15 +155,15 @@ import Switch from "@/components/Controls/Switch.vue";
 import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
-import useStore from "@/store";
+import usePageStore from "@/stores/pageStore";
 import { BuilderProjectFolder } from "@/types/Builder/BuilderProjectFolder";
 import FeatherIcon from "frappe-ui/src/components/FeatherIcon.vue";
 import { computed } from "vue";
 // check route for page id
 
-const store = useStore();
+const pageStore = usePageStore();
 const fullURL = computed(
-	() => window.location.origin + (store.activePage?.route ? "/" + store.activePage.route : ""),
+	() => window.location.origin + (pageStore.activePage?.route ? "/" + pageStore.activePage.route : ""),
 );
 
 const folderOptions = computed(() => {

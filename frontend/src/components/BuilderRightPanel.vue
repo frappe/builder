@@ -1,13 +1,13 @@
 <template>
 	<div
 		:style="{
-			width: `${store.builderLayout.rightPanelWidth}px`,
+			width: `${builderStore.builderLayout.rightPanelWidth}px`,
 		}">
 		<div class="relative min-h-full">
 			<PanelResizer
-				:dimension="store.builderLayout.rightPanelWidth"
+				:dimension="builderStore.builderLayout.rightPanelWidth"
 				side="left"
-				@resize="(width) => (store.builderLayout.rightPanelWidth = width)"
+				@resize="(width) => (builderStore.builderLayout.rightPanelWidth = width)"
 				:min-dimension="275"
 				:max-dimension="400" />
 			<BlockProperties class="p-3" />
@@ -15,8 +15,8 @@
 	</div>
 </template>
 <script setup lang="ts">
-import useStore from "@/store";
+import useBuilderStore from "@/stores/builderStore";
 import BlockProperties from "./BlockProperties.vue";
 import PanelResizer from "./PanelResizer.vue";
-const store = useStore();
+const builderStore = useBuilderStore();
 </script>

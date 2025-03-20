@@ -32,13 +32,14 @@
 		@mousedown.stop.prevent="handleBottomCornerResize" />
 </template>
 <script setup lang="ts">
+import useCanvasStore from "@/stores/canvasStore";
 import { getNumberFromPx } from "@/utils/helpers";
 import { clamp } from "@vueuse/core";
 import { computed, inject, onMounted, ref, watch } from "vue";
-import useStore from "../store";
 import Block from "../utils/block";
 import guidesTracker from "../utils/guidesTracker";
 
+const canvasStore = useCanvasStore();
 const props = defineProps({
 	targetBlock: {
 		type: Block,
@@ -51,7 +52,6 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["resizing"]);
-const store = useStore();
 const resizing = ref(false);
 let guides = null as unknown as ReturnType<typeof guidesTracker>;
 
@@ -63,15 +63,15 @@ onMounted(() => {
 
 watch(resizing, () => {
 	if (resizing.value) {
-		if (store.activeCanvas) {
-			store.activeCanvas.history?.pause();
-			store.activeCanvas.resizingBlock = true;
+		if (canvasStore.activeCanvas) {
+			canvasStore.activeCanvas.history?.pause();
+			canvasStore.activeCanvas.resizingBlock = true;
 		}
 		emit("resizing", true);
 	} else {
-		if (store.activeCanvas) {
-			store.activeCanvas?.history?.resume(undefined, true, true);
-			store.activeCanvas.resizingBlock = false;
+		if (canvasStore.activeCanvas) {
+			canvasStore.activeCanvas?.history?.resume(undefined, true, true);
+			canvasStore.activeCanvas.resizingBlock = false;
 		}
 		emit("resizing", false);
 	}
@@ -94,8 +94,8 @@ const fontSize = computed(() => {
 
 const handleRightResize = (ev: MouseEvent) => {
 	const startX = ev.clientX;
-	const startHeight = props.target.offsetHeight;
-	const startWidth = props.target.offsetWidth;
+	const startHeight = (props.target as HTMLElement).offsetHeight;
+	const startWidth = (props.target as HTMLElement).offsetWidth;
 	const blockStartWidth = props.targetBlock.getStyle("width") as string;
 	const blockStartHeight = props.targetBlock.getStyle("height") as string;
 	const startFontSize = fontSize.value || 0;
@@ -133,8 +133,8 @@ const handleRightResize = (ev: MouseEvent) => {
 
 const handleBottomResize = (ev: MouseEvent) => {
 	const startY = ev.clientY;
-	const startHeight = props.target.offsetHeight;
-	const startWidth = props.target.offsetWidth;
+	const startHeight = (props.target as HTMLElement).offsetHeight;
+	const startWidth = (props.target as HTMLElement).offsetWidth;
 	const blockStartWidth = props.targetBlock.getStyle("width") as string;
 	const blockStartHeight = props.targetBlock.getStyle("height") as string;
 	const startFontSize = fontSize.value || 0;
@@ -175,8 +175,8 @@ const handleBottomResize = (ev: MouseEvent) => {
 const handleBottomCornerResize = (ev: MouseEvent) => {
 	const startX = ev.clientX;
 	const startY = ev.clientY;
-	const startHeight = props.target.offsetHeight;
-	const startWidth = props.target.offsetWidth;
+	const startHeight = (props.target as HTMLElement).offsetHeight;
+	const startWidth = (props.target as HTMLElement).offsetWidth;
 	const blockStartWidth = props.targetBlock.getStyle("width") as string;
 	const blockStartHeight = props.targetBlock.getStyle("height") as string;
 	const startFontSize = fontSize.value || 0;

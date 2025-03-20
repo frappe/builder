@@ -1,5 +1,6 @@
 import webComponent from "@/data/webComponent";
-import useStore from "@/store";
+import useCanvasStore from "@/stores/canvasStore";
+import usePageStore from "@/stores/pageStore";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
@@ -27,8 +28,8 @@ const useComponentStore = defineStore("componentStore", {
 			await this.loadComponent(componentName);
 			const component = this.getComponent(componentName);
 			const componentBlock = this.getComponentBlock(componentName);
-			const store = useStore();
-			store.editOnCanvas(
+			const canvasStore = useCanvasStore();
+			canvasStore.editOnCanvas(
 				componentBlock,
 				(block: Block) => this.saveComponent(block, componentName),
 				"Save Component",
@@ -37,7 +38,7 @@ const useComponentStore = defineStore("componentStore", {
 			);
 		},
 		saveComponent(block: Block, componentName: string) {
-			const store = useStore();
+			const pageStore = usePageStore();
 			return webComponent.setValue
 				.submit({
 					name: componentName,
@@ -61,8 +62,8 @@ const useComponentStore = defineStore("componentStore", {
 								await toast.promise(componentResource.promise, {
 									loading: "Syncing component in all the pages...",
 									success: () => {
-										store.fetchActivePage().then(() => {
-											store.setPage(store.activePage?.name as string);
+										pageStore.fetchActivePage().then(() => {
+											pageStore.setPage(pageStore.activePage?.name as string);
 										});
 										return "Component synced in all the pages!";
 									},
@@ -88,8 +89,8 @@ const useComponentStore = defineStore("componentStore", {
 				}
 				return false;
 			};
-			const store = useStore();
-			for (const block of store.activeCanvas?.getRootBlock()?.children || []) {
+			const canvasStore = useCanvasStore();
+			for (const block of canvasStore.activeCanvas?.getRootBlock()?.children || []) {
 				if (checkComponent(block)) {
 					return true;
 				}

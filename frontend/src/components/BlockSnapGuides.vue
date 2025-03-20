@@ -2,19 +2,20 @@
 	<div>
 		<div
 			class="x fixed bottom-0 top-0 z-10 w-[1px] bg-pink-600"
-			v-if="store.guides.showX"
+			v-if="canvasStore.guides.showX"
 			:style="{
-				left: store.guides.x + 'px',
+				left: canvasStore.guides.x + 'px',
 			}"></div>
 		<div
 			class="y fixed left-0 right-0 z-10 h-[1px] bg-pink-600"
-			v-if="store.guides.showY"
+			v-if="canvasStore.guides.showY"
 			:style="{
-				top: store.guides.y + 'px',
+				top: canvasStore.guides.y + 'px',
 			}"></div>
 	</div>
 </template>
 <script setup lang="ts">
-import useStore from "../store";
-const store = useStore();
+import useCanvasStore from "@/stores/canvasStore";
+
+const canvasStore = useCanvasStore();
 </script>

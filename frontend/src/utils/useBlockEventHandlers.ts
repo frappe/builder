@@ -1,10 +1,12 @@
-import useStore from "@/store";
+import useBuilderStore from "@/stores/builderStore";
+import useCanvasStore from "@/stores/canvasStore";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { getBlock, getBlockInfo, isBlock } from "@/utils/helpers";
 import { useEventListener } from "@vueuse/core";
 import { nextTick } from "vue";
 
-const store = useStore();
+const builderStore = useBuilderStore();
+const canvasStore = useCanvasStore();
 
 export function useBlockEventHandlers() {
 	useEventListener(document, "click", handleClick);
@@ -13,10 +15,10 @@ export function useBlockEventHandlers() {
 
 	function handleClick(e: MouseEvent) {
 		if (!isBlock(e) || isEditable(e)) return;
-		if (store.preventClick) {
+		if (canvasStore.preventClick) {
 			e.stopPropagation();
 			e.preventDefault();
-			store.preventClick = false;
+			canvasStore.preventClick = false;
 			return;
 		}
 		selectBlock(e);
@@ -26,11 +28,11 @@ export function useBlockEventHandlers() {
 
 	function handleDoubleClick(e: MouseEvent) {
 		if (!isBlock(e) || isEditable(e)) return;
-		store.editableBlock = null;
+		canvasStore.editableBlock = null;
 		const block = getBlock(e);
 		if (!block) return;
 		if (block.isText() || block.isLink() || block.isButton()) {
-			store.editableBlock = block;
+			canvasStore.editableBlock = block;
 			e.stopPropagation();
 		}
 
@@ -75,19 +77,22 @@ export function useBlockEventHandlers() {
 const isEditable = (e: MouseEvent) => {
 	const { blockId, breakpoint } = getBlockInfo(e);
 	// to ensure it is right block and not on different breakpoint
-	return store.editableBlock?.blockId === blockId && store.activeBreakpoint === breakpoint;
+	return (
+		canvasStore.editableBlock?.blockId === blockId &&
+		canvasStore.activeCanvas?.activeBreakpoint === breakpoint
+	);
 };
 
 const selectBlock = (e: MouseEvent) => {
-	if (isEditable(e) || store.mode !== "select") {
+	if (isEditable(e) || builderStore.mode !== "select") {
 		return;
 	}
 	const block = getBlock(e);
 	const { breakpoint } = getBlockInfo(e);
 	if (!block) return;
-	store.selectBlock(block, e);
-	store.activeBreakpoint = breakpoint;
+	canvasStore.selectBlock(block, e);
+	canvasStore.activeCanvas?.setActiveBreakpoint(breakpoint);
 
-	store.leftPanelActiveTab = "Layers";
-	store.rightPanelActiveTab = "Properties";
+	builderStore.leftPanelActiveTab = "Layers";
+	builderStore.rightPanelActiveTab = "Properties";
 };
