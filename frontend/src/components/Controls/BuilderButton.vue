@@ -5,12 +5,15 @@
 import { Button } from "frappe-ui";
 import { computed } from "vue";
 
-const props = defineProps({
-	variant: {
-		type: String,
-		default: "subtle",
+const props = withDefaults(
+	defineProps<{
+		variant?: string;
+	}>(),
+	{
+		variant: "subtle",
 	},
-});
+);
+
 const classes = computed(() => {
 	const _classes = [];
 	if (props.variant === "solid") {

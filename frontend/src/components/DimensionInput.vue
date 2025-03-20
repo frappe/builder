@@ -17,24 +17,16 @@
 				value: '100%',
 			},
 		]"
-		:modelValue="blockController.getStyle(props.property)"
+		:modelValue="blockController.getStyle(props.property) || 'auto'"
 		:unitOptions="['px', '%', 'vw', 'vh']"
 		@update:modelValue="(val) => blockController.setStyle(property, val)"></InlineInput>
 </template>
 <script setup lang="ts">
 import InlineInput from "@/components/Controls/InlineInput.vue";
-import { styleProperty } from "@/utils/block";
 import blockController from "@/utils/blockController";
-import { PropType } from "vue";
 
-const props = defineProps({
-	property: {
-		type: String as PropType<styleProperty>,
-		required: true,
-	},
-	label: {
-		type: String,
-		required: true,
-	},
-});
+const props = defineProps<{
+	property: styleProperty;
+	label: string;
+}>();
 </script>

@@ -35,7 +35,7 @@ import RedirectIcon from "@/components/Icons/Redirect.vue";
 import GlobalRedirects from "@/components/Settings/GlobalRedirects.vue";
 import PageCode from "@/components/Settings/PageCode.vue";
 import PageRedirects from "@/components/Settings/PageRedirects.vue";
-import useStore from "@/store";
+import usePageStore from "@/stores/pageStore";
 import { computed, onActivated, ref } from "vue";
 import { useRoute } from "vue-router";
 import ChartIcon from "./Icons/Chart.vue";
@@ -53,7 +53,7 @@ const props = defineProps<{
 }>();
 
 const route = useRoute();
-const store = useStore();
+const pageStore = usePageStore();
 const emit = defineEmits(["close"]);
 const selectedItem = ref<string>(props.onlyGlobal ? "global_general" : "page_general");
 
@@ -137,9 +137,9 @@ const selectItem = (value: string) => {
 };
 
 onActivated(() => {
-	if (route.params.pageId === store.activePage?.name) return;
+	if (route.params.pageId === pageStore.activePage?.name) return;
 	else if (route.params.pageId) {
-		store.setActivePage(route.params.pageId as string);
+		pageStore.setActivePage(route.params.pageId as string);
 	}
 });
 </script>

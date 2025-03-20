@@ -88,13 +88,13 @@
 </template>
 <script setup lang="ts">
 import { webPages } from "@/data/webPage";
-import useStore from "@/store";
+import useBuilderStore from "@/stores/builderStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { confirm } from "@/utils/helpers";
+import { confirm, openInDesk } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
 import { Badge, Dropdown, createDocumentResource } from "frappe-ui";
 
-const store = useStore();
+const builderStore = useBuilderStore();
 
 const props = defineProps<{
 	page: BuilderPage;
@@ -132,7 +132,7 @@ const actions = [
 	},
 	{
 		label: "View in Desk",
-		onClick: () => store.openInDesk(props.page),
+		onClick: () => openInDesk(props.page),
 		icon: "arrow-up-right",
 	},
 	{
