@@ -67,7 +67,7 @@
 import PanelResizer from "@/components/PanelResizer.vue";
 import PublishButton from "@/components/PublishButton.vue";
 import router from "@/router";
-import useStore from "@/store";
+import usePageStore from "@/stores/pageStore";
 import { posthog } from "@/telemetry";
 import { useEventListener } from "@vueuse/core";
 import { Ref, computed, onActivated, ref, watch, watchEffect } from "vue";
@@ -79,8 +79,7 @@ const minWidth = 400;
 let previewRoute = ref("");
 const width = ref(maxWidth);
 const loading = ref(false);
-const store = useStore();
-const publishing = ref(false);
+const pageStore = usePageStore();
 
 const deviceBreakpoints = [
 	{
@@ -164,7 +163,7 @@ const setWidth = (device: string) => {
 const setPreviewURL = () => {
 	let queryParams = {
 		page: route.params.pageId,
-		...store.routeVariables,
+		...pageStore.routeVariables,
 	};
 	previewRoute.value = `/api/method/builder.api.get_page_preview_html?${Object.entries(queryParams)
 		.map(([key, value]) => `${key}=${value}`)

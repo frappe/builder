@@ -1,5 +1,5 @@
 <template>
-	<Popover transition="default" placement="left" class="!block w-full" popoverClass="!min-w-fit !mr-[30px]">
+	<Popover placement="left" class="!block w-full" popoverClass="!min-w-fit !mr-[30px]">
 		<template #target="{ togglePopover, isOpen }">
 			<slot
 				name="target"
@@ -89,13 +89,13 @@
 </template>
 <script setup lang="ts">
 import EyeDropperIcon from "@/components/Icons/EyeDropper.vue";
-import useStore from "@/store";
+import useCanvasStore from "@/stores/canvasStore";
 import { HSVToHex, HexToHSV, getRGB } from "@/utils/helpers";
 import { clamp, useEyeDropper } from "@vueuse/core";
 import { Popover } from "frappe-ui";
-import { PropType, Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
-const store = useStore();
+import { Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
 
+const canvasStore = useCanvasStore();
 const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;
 const colorMap = ref(null) as unknown as Ref<HTMLDivElement>;
 const hueSelector = ref(null) as unknown as Ref<HTMLDivElement>;
@@ -107,12 +107,14 @@ let currentColor = "#FFF" as HashString;
 
 const { isSupported, sRGBHex, open } = useEyeDropper();
 
-const props = defineProps({
-	modelValue: {
-		type: String as PropType<HashString | RGBString | null>,
-		default: null,
+const props = withDefaults(
+	defineProps<{
+		modelValue?: HashString | RGBString | null;
+	}>(),
+	{
+		modelValue: null,
 	},
-});
+);
 
 const modelColor = computed(() => {
 	return getRGB(props.modelValue);
@@ -152,7 +154,7 @@ const setHueSelectorPosition = (color: HashString) => {
 
 const handleSelectorMove = (ev: MouseEvent) => {
 	setColor(ev);
-	const pauseId = store.activeCanvas?.history?.pause();
+	const pauseId = canvasStore.activeCanvas?.history?.pause();
 	const mouseMove = (mouseMoveEvent: MouseEvent) => {
 		mouseMoveEvent.preventDefault();
 		setColor(mouseMoveEvent);
@@ -163,7 +165,7 @@ const handleSelectorMove = (ev: MouseEvent) => {
 		(mouseUpEvent) => {
 			document.removeEventListener("mousemove", mouseMove);
 			mouseUpEvent.preventDefault();
-			pauseId && store.activeCanvas?.history?.resume(pauseId, true);
+			pauseId && canvasStore.activeCanvas?.history?.resume(pauseId, true);
 		},
 		{ once: true },
 	);
@@ -171,7 +173,7 @@ const handleSelectorMove = (ev: MouseEvent) => {
 
 const handleHueSelectorMove = (ev: MouseEvent) => {
 	setHue(ev);
-	const pauseId = store.activeCanvas?.history?.pause();
+	const pauseId = canvasStore.activeCanvas?.history?.pause();
 	const mouseMove = (mouseMoveEvent: MouseEvent) => {
 		mouseMoveEvent.preventDefault();
 		setHue(mouseMoveEvent);
@@ -182,7 +184,7 @@ const handleHueSelectorMove = (ev: MouseEvent) => {
 		(mouseUpEvent) => {
 			document.removeEventListener("mousemove", mouseMove);
 			mouseUpEvent.preventDefault();
-			pauseId && store.activeCanvas?.history?.resume(pauseId, true);
+			pauseId && canvasStore.activeCanvas?.history?.resume(pauseId, true);
 		},
 		{ once: true },
 	);

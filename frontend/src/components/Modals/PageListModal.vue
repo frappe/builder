@@ -35,7 +35,7 @@ import Dialog from "@/components/Controls/Dialog.vue";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { ref } from "vue";
 const showModel = ref(true);
-const props = defineProps<{
+defineProps<{
 	pages: BuilderPage[];
 }>();
 </script>

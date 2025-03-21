@@ -21,17 +21,17 @@
 <script setup lang="ts">
 import { FileUploader } from "frappe-ui";
 import { computed } from "vue";
-const prop = defineProps({
-	image_url: String,
-	image_type: {
-		type: String,
-		default: "image/*",
+const prop = withDefaults(
+	defineProps<{
+		image_url?: string;
+		image_type?: string;
+		label?: string;
+	}>(),
+	{
+		image_type: "image/*",
+		label: "",
 	},
-	label: {
-		type: String,
-		default: "",
-	},
-});
+);
 const emit = defineEmits(["upload", "remove"]);
 const url = computed(() => prop.image_url);
 </script>

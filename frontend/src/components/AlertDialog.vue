@@ -15,7 +15,12 @@
 import Dialog from "@/components/Controls/Dialog.vue";
 import { ref } from "vue";
 
-const props = defineProps(["title", "message", "onClick"]);
+const props = defineProps<{
+	title: string;
+	message: string;
+	onClick: () => void;
+}>();
+
 const showDialog = ref(true);
 showDialog.value = true;
 

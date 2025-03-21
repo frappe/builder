@@ -30,18 +30,20 @@
 	</Dialog>
 </template>
 <script setup lang="ts">
+import type Block from "@/block";
 import Dialog from "@/components/Controls/Dialog.vue";
 import webComponent from "@/data/webComponent";
-import useStore from "@/store";
+import useCanvasStore from "@/stores/canvasStore";
+import useComponentStore from "@/stores/componentStore";
+import usePageStore from "@/stores/pageStore";
 import { posthog } from "@/telemetry";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
-import Block from "@/utils/block";
 import { getBlockCopy, getBlockString } from "@/utils/helpers";
-import useComponentStore from "@/utils/useComponentStore";
 import { ref } from "vue";
 
-const store = useStore();
 const componentStore = useComponentStore();
+const canvasStore = useCanvasStore();
+const pageStore = usePageStore();
 
 const props = defineProps<{
 	block: Block;
@@ -58,11 +60,11 @@ const createComponentHandler = async (context: { close: () => void }) => {
 	const componentData = (await webComponent.insert.submit({
 		block: getBlockString(blockCopy),
 		component_name: componentName.value,
-		for_web_page: isGlobalComponent.value ? null : store.selectedPage,
+		for_web_page: isGlobalComponent.value ? null : pageStore.selectedPage,
 	})) as BuilderComponent;
 	posthog.capture("builder_component_created", { component_name: componentData.name });
 	componentStore.setComponentMap(componentData);
-	const block = store.activeCanvas?.findBlock(props.block.blockId);
+	const block = canvasStore.activeCanvas?.findBlock(props.block.blockId);
 	if (!block) return;
 	block.extendFromComponent(componentData.name);
 	componentName.value = "";

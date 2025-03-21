@@ -17,11 +17,11 @@
 </template>
 
 <script setup lang="ts">
+import type Block from "@/block";
 import { getNumberFromPx } from "@/utils/helpers";
 import { useElementBounding } from "@vueuse/core";
 import type { Ref } from "vue";
 import { computed, inject, onMounted, reactive, ref, watchEffect } from "vue";
-import Block from "../utils/block";
 
 const props = defineProps<{
 	targetBlock: Block;

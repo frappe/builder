@@ -25,9 +25,9 @@
 						class="relative flex h-full w-full translate-x-0 translate-y-0 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden truncate rounded-md border border-transparent bg-surface-gray-1 p-2 pt-3"
 						draggable="true"
 						@click="selectBlockTemplate(blockTemplate)"
-						@dblclick="is_developer_mode && store.editBlockTemplate(blockTemplate.name)"
+						@dblclick="is_developer_mode && blockTemplateStore.editBlockTemplate(blockTemplate.name)"
 						@dragstart="(ev) => setBlockTemplateData(ev, blockTemplate)"
-						@dragend="() => store.handleDragEnd()">
+						@dragend="() => canvasStore.handleDragEnd()">
 						<div
 							class="flex h-4/5 items-center justify-center"
 							:class="{
@@ -46,12 +46,14 @@
 </template>
 <script setup lang="ts">
 import builderBlockTemplate from "@/data/builderBlockTemplate";
-import useStore from "@/store";
+import useBlockTemplateStore from "@/stores/blockTemplateStore";
+import useCanvasStore from "@/stores/canvasStore";
 import { BlockTemplate } from "@/types/Builder/BlockTemplate";
 import { computed, onMounted, ref } from "vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
 
-const store = useStore();
+const canvasStore = useCanvasStore();
+const blockTemplateStore = useBlockTemplateStore();
 const is_developer_mode = window.is_developer_mode;
 const blockTemplateFilter = ref("");
 
@@ -71,14 +73,14 @@ const blockTemplates = computed(() => {
 
 const setBlockTemplateData = (ev: DragEvent, component: BlockTemplate) => {
 	ev.dataTransfer?.setData("blockTemplate", component.name);
-	store.handleDragStart(ev);
+	canvasStore.handleDragStart(ev);
 };
 
 const selectedBlockTemplate = ref<string | null>(null);
 const selectBlockTemplate = (blockTemplate: BlockTemplate) => {
 	selectedBlockTemplate.value = blockTemplate.name;
-	if (is_developer_mode && store.fragmentData.fragmentId) {
-		store.editBlockTemplate(blockTemplate.name);
+	if (is_developer_mode && canvasStore.fragmentData.fragmentId) {
+		blockTemplateStore.editBlockTemplate(blockTemplate.name);
 	}
 };
 
@@ -87,7 +89,7 @@ const getFilteredBlockTemplates = (section: string) => {
 };
 
 const sections = computed(() => {
-	const categories = store.blockTemplateCategoryOptions as string[];
+	const categories = blockTemplateStore.blockTemplateCategoryOptions as string[];
 	return categories
 		.map((category) => {
 			return {

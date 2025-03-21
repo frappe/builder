@@ -18,8 +18,8 @@
 						variant="ghost"
 						:icon="mode.icon"
 						class="text-ink-gray-7 hover:bg-surface-gray-2 focus:!bg-surface-gray-3 [&[active='true']]:bg-surface-gray-3 [&[active='true']]:text-ink-gray-9"
-						@click="() => (store.mode = mode.mode as BuilderMode)"
-						:active="store.mode === mode.mode"></BuilderButton>
+						@click="() => (builderStore.mode = mode.mode as BuilderMode)"
+						:active="builderStore.mode === mode.mode"></BuilderButton>
 				</Tooltip>
 			</div>
 		</div>
@@ -27,7 +27,7 @@
 			<Popover transition="default" placement="bottom" popoverClass="!absolute top-0 !mt-[20px]">
 				<template #target="{ togglePopover, isOpen }">
 					<div class="flex cursor-pointer items-center gap-2 p-2 text-ink-gray-8">
-						<div class="flex h-6 items-center text-base text-ink-gray-6" v-if="!store.activePage">
+						<div class="flex h-6 items-center text-base text-ink-gray-6" v-if="!pageStore.activePage">
 							Loading...
 						</div>
 						<div @click="togglePopover" v-else class="flex items-center gap-1">
@@ -35,19 +35,19 @@
 								<FeatherIcon
 									name="home"
 									class="h-[14px] w-4"
-									v-if="store.isHomePage(store.activePage)"></FeatherIcon>
+									v-if="pageStore.isHomePage(pageStore.activePage)"></FeatherIcon>
 							</Tooltip>
 							<Tooltip text="This page has limited access" :hoverDelay="0.6">
 								<AuthenticatedUserIcon
 									class="size-4 text-ink-amber-3"
 									v-if="
-										store.activePage?.published && store.activePage?.authenticated_access
+										pageStore.activePage?.published && pageStore.activePage?.authenticated_access
 									"></AuthenticatedUserIcon>
 							</Tooltip>
 							<span
 								class="max-w-48 truncate text-base text-ink-gray-8"
-								:title="store?.activePage?.page_title || 'My Page'">
-								{{ store?.activePage?.page_title || "My Page" }}
+								:title="pageStore?.activePage?.page_title || 'My Page'">
+								{{ pageStore?.activePage?.page_title || "My Page" }}
 							</span>
 							-
 							<span
@@ -57,16 +57,16 @@
 						</div>
 						<FeatherIcon
 							name="external-link"
-							v-if="store.activePage && store.activePage.published"
+							v-if="pageStore.activePage && pageStore.activePage.published"
 							class="h-[14px] w-[14px] !text-gray-700 dark:!text-gray-200"
-							@click="store.openPageInBrowser(store.activePage as BuilderPage)"></FeatherIcon>
+							@click="pageStore.openPageInBrowser(pageStore.activePage as BuilderPage)"></FeatherIcon>
 					</div>
 				</template>
 				<template #body="{ close }">
 					<div
 						class="flex w-72 flex-col gap-3 rounded bg-surface-white p-4 shadow-lg"
-						v-if="store.activePage">
-						<PageOptions v-if="store.activePage" :page="store.activePage"></PageOptions>
+						v-if="pageStore.activePage">
+						<PageOptions v-if="pageStore.activePage" :page="pageStore.activePage"></PageOptions>
 					</div>
 				</template>
 			</Popover>
@@ -89,8 +89,8 @@
 						allowfullscreen></iframe>
 				</template>
 			</Dialog>
-			<div class="group flex hover:gap-1" v-if="store.viewers.length">
-				<div v-for="user in store.viewers">
+			<div class="group flex hover:gap-1" v-if="builderStore.viewers.length">
+				<div v-for="user in builderStore.viewers">
 					<Tooltip :text="currentlyViewedByText" :hoverDelay="0.6">
 						<div class="ml-[-10px] h-6 w-6 cursor-pointer transition-all group-hover:ml-0">
 							<img
@@ -107,7 +107,7 @@
 					</Tooltip>
 				</div>
 			</div>
-			<span class="text-sm text-ink-gray-3" v-if="store.savingPage && store.activePage?.is_template">
+			<span class="text-sm text-ink-gray-3" v-if="pageStore.savingPage && pageStore.activePage?.is_template">
 				Saving template
 			</span>
 			<Tooltip text="Settings" :hoverDelay="0.6">
@@ -128,7 +128,7 @@
 				</template>
 			</Dialog>
 
-			<router-link :to="{ name: 'preview', params: { pageId: store.selectedPage } }" title="Preview">
+			<router-link :to="{ name: 'preview', params: { pageId: pageStore.selectedPage } }" title="Preview">
 				<Tooltip text="Preview" :hoverDelay="0.6">
 					<PlayIcon class="h-[18px] w-[18px] cursor-pointer text-ink-gray-8"></PlayIcon>
 				</Tooltip>
@@ -144,24 +144,29 @@ import PlayIcon from "@/components/Icons/Play.vue";
 import SettingsGearIcon from "@/components/Icons/SettingsGear.vue";
 import PublishButton from "@/components/PublishButton.vue";
 import { webPages } from "@/data/webPage";
+import useBuilderStore from "@/stores/builderStore";
+import useCanvasStore from "@/stores/canvasStore";
+import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { getTextContent } from "@/utils/helpers";
 import { Tooltip } from "frappe-ui";
 import Popover from "frappe-ui/src/components/Popover.vue";
 import { computed, ref } from "vue";
 import { toast } from "vue-sonner";
-import useStore from "../store";
 import MainMenu from "./MainMenu.vue";
 import PageOptions from "./PageOptions.vue";
 import Settings from "./Settings.vue";
 
-const store = useStore();
+const canvasStore = useCanvasStore();
+const builderStore = useBuilderStore();
+const pageStore = usePageStore();
+
 const showInfoDialog = ref(false);
 const showSettingsDialog = ref(false);
 const toolbar = ref(null);
 
 const currentlyViewedByText = computed(() => {
-	const names = store.viewers.map((viewer) => viewer.fullname).map((name) => name.split(" ")[0]);
+	const names = builderStore.viewers.map((viewer) => viewer.fullname).map((name) => name.split(" ")[0]);
 	const count = names.length;
 	if (count === 0) {
 		return "";
@@ -181,7 +186,7 @@ declare global {
 }
 
 const routeString = computed(() => {
-	const route = store.activePage?.route || "/";
+	const route = pageStore.activePage?.route || "/";
 	const routeStringToReturn = route.split("/").map((part) => {
 		let variable = "";
 
@@ -192,7 +197,7 @@ const routeString = computed(() => {
 			part = `&lt;${variable}&gt;`;
 		}
 		if (variable) {
-			const previewValue = store.routeVariables[variable];
+			const previewValue = pageStore.routeVariables[variable];
 			return `<span class="${
 				previewValue ? "bg-purple-100 dark:bg-purple-900" : "bg-gray-100 dark:bg-gray-800"
 			} rounded-sm px-[5px] pb-[2px] text-sm">${previewValue || part}</span>`;
@@ -216,14 +221,14 @@ const transitionTheme = (toggleDark: () => void) => {
 const saveAsTemplate = async () => {
 	toast.promise(
 		webPages.setValue.submit({
-			name: store.activePage?.name,
+			name: pageStore.activePage?.name,
 			is_template: true,
 		}),
 		{
 			loading: "Saving as template",
 			success: () => {
-				store.fetchActivePage(store.selectedPage as string).then((page) => {
-					store.activePage = page;
+				pageStore.fetchActivePage(pageStore.selectedPage as string).then((page) => {
+					pageStore.activePage = page;
 				});
 				return "Page saved as template";
 			},

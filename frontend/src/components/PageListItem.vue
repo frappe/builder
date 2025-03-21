@@ -49,16 +49,15 @@
 				</Badge>
 				<Avatar
 					:shape="'circle'"
-					:image="null"
 					:label="page.owner"
 					class="[&>div]:bg-surface-gray-2 [&>div]:text-ink-gray-4 [&>div]:group-hover:bg-surface-gray-4 [&>div]:group-hover:text-ink-gray-6"
 					size="sm"
 					:title="`Created by ${page.owner}`" />
 				<Dropdown
 					:options="[
-						{ label: 'Duplicate', onClick: () => store.duplicatePage(page), icon: 'copy' },
-						{ label: 'View in Desk', onClick: () => store.openInDesk(page), icon: 'arrow-up-right' },
-						{ label: 'Delete', onClick: () => store.deletePage(page), icon: 'trash' },
+						{ label: 'Duplicate', onClick: () => pageStore.duplicatePage(page), icon: 'copy' },
+						{ label: 'View in Desk', onClick: () => openInDesk(page), icon: 'arrow-up-right' },
+						{ label: 'Delete', onClick: () => pageStore.deletePage(page), icon: 'trash' },
 					]"
 					size="sm"
 					placement="right">
@@ -76,12 +75,13 @@
 <script setup lang="ts">
 import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import GlobeIcon from "@/components/Icons/Globe.vue";
-import useStore from "@/store";
+import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { openInDesk } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
 import { Avatar, Badge, Dropdown } from "frappe-ui";
 
-const store = useStore();
+const pageStore = usePageStore();
 
 defineProps<{
 	page: BuilderPage;
