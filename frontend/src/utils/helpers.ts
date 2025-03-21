@@ -571,7 +571,10 @@ function parseBackground(cssText: string): BackgroundValue {
 	// Parse color value
 	function isColor(value: string): boolean {
 		return (
-			/^(#|rgb|hsl|[a-z]+$)/.test(value) && !["center", "top", "bottom", "left", "right"].includes(value)
+			/^(#|rgb|hsl|[a-z]+$)/.test(value) &&
+			!["center", "top", "bottom", "left", "right", "fixed", "local", "scroll", "contain", "repeat"].includes(
+				value,
+			)
 		);
 	}
 
@@ -620,7 +623,12 @@ function parseBackground(cssText: string): BackgroundValue {
 
 			// Check for size after '/'
 			if (i + 2 < tokens.length && tokens[i + 1] === "/" && isSize(tokens[i + 2])) {
-				result.size = tokens[i + 2];
+				let size = [tokens[i + 2]];
+				if (i + 3 < tokens.length && isSize(tokens[i + 3])) {
+					size.push(tokens[i + 3]);
+					i++;
+				}
+				result.size = size.join(" ");
 				i += 2;
 			}
 
@@ -662,7 +670,6 @@ function parseBackground(cssText: string): BackgroundValue {
 const parseAndSetBackground = (styles: BlockStyleMap) => {
 	if (styles.background) {
 		const { color, image, position, size, repeat } = parseBackground(styles.background as string);
-		console.log({ color, image, position, size, repeat });
 		delete styles.background;
 		if (color) styles.backgroundColor = color;
 		if (image) styles.backgroundImage = image;
