@@ -80,5 +80,6 @@ export default {
 	condition: () =>
 		!blockController.multipleBlocksSelected() &&
 		!blockController.getSelectedBlocks()[0].parentBlock?.isLink() &&
-		!blockController.isHTML(),
+		!blockController.isHTML() &&
+		!blockController.isForm(),
 };

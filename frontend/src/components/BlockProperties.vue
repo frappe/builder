@@ -106,8 +106,8 @@ const getFilteredProperties = (section: PropertySection) => {
 const sections = [
 	collectionOptionsSection,
 	linkSection,
-	layoutSection,
 	formOptionsSection,
+	layoutSection,
 	imageOptionsSection,
 	HTMLOptionsSection,
 	videoOptionsSection,
