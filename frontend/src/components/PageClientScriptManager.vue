@@ -157,7 +157,7 @@ const clientScriptResource = createListResource({
 const selectScript = (script: attachedScript) => {
 	activeScript.value = script;
 	nextTick(() => {
-		scriptEditor.value?.resetEditor(script.script, true);
+		scriptEditor.value?.resetEditor(true);
 	});
 };
 
