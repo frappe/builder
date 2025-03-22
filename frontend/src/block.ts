@@ -15,20 +15,6 @@ import { Editor } from "@tiptap/vue-3";
 import { clamp } from "@vueuse/core";
 import { computed, nextTick, reactive, toRaw } from "vue";
 
-type BlockDataKeyType = "key" | "attribute" | "style";
-
-export interface BlockDataKey {
-	key?: string;
-	type?: BlockDataKeyType;
-	property?: string;
-}
-
-interface BlockFormOptions {
-	doctype?: string;
-	fieldComponentMap?: Record<"input" | "select" | "file" | "button", string>;
-	webform?: string;
-}
-
 class Block implements BlockOptions {
 	blockId: string;
 	children: Array<Block>;
@@ -49,6 +35,7 @@ class Block implements BlockOptions {
 	isChildOfComponent?: string;
 	referenceBlockId?: string;
 	isRepeaterBlock?: boolean;
+	repeaterData?: object[];
 	visibilityCondition?: string;
 	elementBeforeConversion?: string;
 	formOptions?: BlockFormOptions;
@@ -108,6 +95,7 @@ class Block implements BlockOptions {
 		this.mobileStyles = reactive(options.mobileStyles || {});
 		this.tabletStyles = reactive(options.tabletStyles || {});
 		this.attributes = reactive(options.attributes || {});
+		this.repeaterData = reactive(options.repeaterData || []);
 
 		this.blockName = options.blockName;
 		delete this.attributes.style;
@@ -282,7 +270,7 @@ class Block implements BlockOptions {
 		return this.getElement() === "form";
 	}
 	isWebForm() {
-		return this.getElement() === "form" && this.originalElement === "__webform__";
+		return this.getElement() === "form" && this.getFormOption("based_on") === "webform";
 	}
 	isButton() {
 		return this.getElement() === "button";
@@ -663,7 +651,7 @@ class Block implements BlockOptions {
 		}
 		return dataKey;
 	}
-	setDataKey(key: keyof BlockDataKey, value: BlockDataKeyType) {
+	setDataKey<K extends keyof BlockDataKey>(key: K, value: BlockDataKey[K]) {
 		if (!this.dataKey || !this.dataKey[key]) {
 			this.dataKey = {
 				key: "",
@@ -773,13 +761,13 @@ class Block implements BlockOptions {
 	isColumn() {
 		return this.isFlex() && this.getStyle("flexDirection") === "column";
 	}
-	getFormOption(option: string) {
+	getFormOption(option: keyof BlockFormOptions) {
 		if (this.formOptions) {
 			return this.formOptions[option];
 		}
 		return "";
 	}
-	setFormOption(option: string, value: string) {
+	setFormOption<T extends keyof BlockFormOptions>(option: T, value: BlockFormOptions[T]) {
 		if (!this.formOptions) {
 			this.formOptions = {};
 		}

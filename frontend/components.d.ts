@@ -57,6 +57,7 @@ declare module 'vue' {
     FitScreen: typeof import('./src/components/Icons/FitScreen.vue')['default']
     Folder: typeof import('./src/components/Icons/Folder.vue')['default']
     FontUploader: typeof import('./src/components/Controls/FontUploader.vue')['default']
+    FormFieldManager: typeof import('./src/components/FormFieldManager.vue')['default']
     FormHandler: typeof import('./src/components/FormHandler.vue')['default']
     GlobalAnalytics: typeof import('./src/components/Settings/GlobalAnalytics.vue')['default']
     GlobalCode: typeof import('./src/components/Settings/GlobalCode.vue')['default']
@@ -112,5 +113,6 @@ declare module 'vue' {
     TemplatePagePreview: typeof import('./src/components/TemplatePagePreview.vue')['default']
     TemplateSelector: typeof import('./src/components/TemplateSelector.vue')['default']
     TextBlock: typeof import('./src/components/TextBlock.vue')['default']
+    WebFormManager: typeof import('./src/components/WebFormManager.vue')['default']
   }
 }

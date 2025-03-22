@@ -93,7 +93,6 @@ const styleSectionProperties = [
 		},
 		condition: () => blockController.getStyle("borderColor"),
 	},
-
 	{
 		component: InlineInput,
 		getProps: () => {

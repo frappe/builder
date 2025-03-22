@@ -110,3 +110,16 @@ declare type BlockProperty = {
 	condition?: () => boolean;
 	innerText?: string;
 };
+
+declare interface BlockFormOptions {
+	based_on?: "doctype" | "webform" | "custom";
+	reference_document?: string;
+}
+
+declare type BlockDataKeyType = "key" | "attribute" | "style";
+
+declare interface BlockDataKey {
+	key?: string;
+	type?: BlockDataKeyType;
+	property?: string;
+}

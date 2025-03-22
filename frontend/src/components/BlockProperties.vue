@@ -83,7 +83,7 @@ const getFilteredProperties = (section: PropertySection) => {
 		if (showProperty && builderStore.propertyFilter) {
 			showProperty =
 				section.name.toLowerCase().includes(builderStore.propertyFilter.toLowerCase()) ||
-				property.searchKeyWords.toLowerCase().includes(builderStore.propertyFilter.toLowerCase());
+				property.searchKeyWords?.toLowerCase().includes(builderStore.propertyFilter.toLowerCase());
 		}
 		return showProperty;
 	});

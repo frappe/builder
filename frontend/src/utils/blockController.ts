@@ -1,10 +1,11 @@
 import type Block from "@/block";
-import type { BlockDataKey } from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { nextTick } from "vue";
 import getBlockTemplate from "./blockTemplate";
 
 const canvasStore = useCanvasStore();
+
+type EditableBlockKeys = keyof Pick<Block, "element" | "innerHTML" | "visibilityCondition" | "repeaterData">;
 
 const blockController = {
 	clearSelection: () => {
@@ -105,8 +106,8 @@ const blockController = {
 			block.removeAttribute(attribute);
 		});
 	},
-	getKeyValue: (key: "element" | "innerHTML" | "visibilityCondition") => {
-		let keyValue = "__initial__" as StyleValue | undefined;
+	getKeyValue: (key: EditableBlockKeys) => {
+		let keyValue = "__initial__" as string | Object[] | undefined;
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 			if (keyValue === "__initial__") {
 				keyValue = block[key];
@@ -116,7 +117,7 @@ const blockController = {
 		});
 		return keyValue;
 	},
-	setKeyValue: (key: "element" | "innerHTML" | "visibilityCondition", value: string) => {
+	setKeyValue: <T extends EditableBlockKeys>(key: T, value: Block[T]) => {
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 			if (key === "element" && block.blockName === "container") {
 				// reset blockName since it will not be a container anymore
@@ -212,7 +213,7 @@ const blockController = {
 	getTextContent: () => {
 		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().getTextContent();
 	},
-	setDataKey: (key: keyof BlockDataKey, value: string) => {
+	setDataKey: <T extends keyof BlockDataKey>(key: T, value: BlockDataKey[T]) => {
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 			block.setDataKey(key, value);
 		});
@@ -290,21 +291,11 @@ const blockController = {
 	isForm: () => {
 		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isForm();
 	},
-	getFormOption: (option: string) => {
-		let formOption = "__initial__" as StyleValue;
-		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
-			if (formOption === "__initial__") {
-				formOption = block.getFormOption(option);
-			} else if (formOption !== block.getFormOption(option)) {
-				formOption = "Mixed";
-			}
-		});
-		return formOption;
+	getFormOption: (option: keyof BlockFormOptions) => {
+		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().getFormOption(option);
 	},
-	setFormOption: (option: string, value: string) => {
-		canvasStore.activeCanvas?.selectedBlocks.forEach((block: Block) => {
-			block.setFormOption(option, value);
-		});
+	setFormOption: (option: keyof BlockFormOptions, value: string) => {
+		blockController.getFirstSelectedBlock().setFormOption(option, value);
 	},
 };
 
