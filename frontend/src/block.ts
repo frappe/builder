@@ -43,6 +43,7 @@ class Block implements BlockOptions {
 	isChildOfComponent?: string;
 	referenceBlockId?: string;
 	isRepeaterBlock?: boolean;
+	repeaterData?: object[];
 	visibilityCondition?: string;
 	elementBeforeConversion?: string;
 	formOptions?: BlockFormOptions;
@@ -105,6 +106,7 @@ class Block implements BlockOptions {
 		this.tabletStyles = reactive(options.tabletStyles || {});
 		this.attributes = reactive(options.attributes || {});
 		this.dynamicValues = reactive(options.dynamicValues || []);
+		this.repeaterData = reactive(options.repeaterData || []);
 
 		this.blockName = options.blockName;
 		delete this.attributes.style;
@@ -290,7 +292,7 @@ class Block implements BlockOptions {
 		return this.getElement() === "form";
 	}
 	isWebForm() {
-		return this.getElement() === "form" && this.originalElement === "__webform__";
+		return this.getElement() === "form" && this.getFormOption("based_on") === "webform";
 	}
 	isButton() {
 		return this.getElement() === "button";
@@ -693,7 +695,7 @@ class Block implements BlockOptions {
 		}
 		return dataKey;
 	}
-	setDataKey(key: keyof BlockDataKey, value: BlockDataKeyType) {
+	setDataKey<K extends keyof BlockDataKey>(key: K, value: BlockDataKey[K]) {
 		if (!this.dataKey || !this.dataKey[key]) {
 			this.dataKey = {
 				key: "",
@@ -814,13 +816,13 @@ class Block implements BlockOptions {
 	isColumn() {
 		return this.isFlex() && this.getStyle("flexDirection") === "column";
 	}
-	getFormOption(option: string) {
+	getFormOption(option: keyof BlockFormOptions) {
 		if (this.formOptions) {
 			return this.formOptions[option];
 		}
 		return "";
 	}
-	setFormOption(option: string, value: string) {
+	setFormOption<T extends keyof BlockFormOptions>(option: T, value: BlockFormOptions[T]) {
 		if (!this.formOptions) {
 			this.formOptions = {};
 		}
