@@ -15,7 +15,7 @@ const useBuilderStore = defineStore("builderStore", {
 		activeLayers: <InstanceType<typeof BlockLayers> | null>null,
 		blockContextMenu: <InstanceType<typeof BlockContextMenu> | null>null,
 		editableBlock: <Block | null>null,
-		propertyFilter: <string | null>null,
+		propertyFilter: <string | null>"",
 		mode: <BuilderMode>"select", // check setEvents in BuilderCanvas for usage
 		lastMode: <BuilderMode>"select",
 		autoSave: true,

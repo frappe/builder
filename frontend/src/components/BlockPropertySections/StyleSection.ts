@@ -104,7 +104,7 @@ const styleSectionProperties = [
 		component: BackgroundHandler,
 		getProps: () => {},
 		searchKeyWords:
-			"Background, BackgroundImage, Background Image, Background Position, Background Repeat, Background Size, BG, BGImage, BG Image, BGPosition, BG Position, BGRepeat, BG Repeat, BGSize, BG Size",
+			"Background, BackgroundImage, Background Image, Background Position, Background Size, BG, BGImage, BG Image, BGPosition, BG Position, BGSize, BG Size",
 	},
 	{
 		component: InlineInput,
