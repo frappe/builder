@@ -41,6 +41,9 @@ const props = withDefaults(
 const component = ref(null) as Ref<HTMLElement | null>;
 
 const blockData = computed(() => {
+	if (props.block.repeaterData) {
+		return props.block.repeaterData;
+	}
 	const pageData = props.data || pageStore.pageData;
 	if (pageData && props.block.getDataKey("key")) {
 		const data = getDataForKey(pageData, props.block.getDataKey("key"));
