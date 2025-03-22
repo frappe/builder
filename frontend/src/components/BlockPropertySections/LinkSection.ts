@@ -67,5 +67,6 @@ export default {
 	collapsed: computed(() => !blockController.isLink()),
 	condition: () =>
 		!blockController.multipleBlocksSelected() &&
-		!blockController.getSelectedBlocks()[0].parentBlock?.isLink(),
+		!blockController.getSelectedBlocks()[0].parentBlock?.isLink() &&
+		!blockController.isForm(),
 };
