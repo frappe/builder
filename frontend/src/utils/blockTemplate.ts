@@ -148,12 +148,12 @@ function getBlockTemplate(
 					objectFit: "cover",
 				} as BlockStyleMap,
 			};
-
-		case "input":
+		case "input": {
+			const attr = getAttributesFromDocumentField(options);
 			return {
 				name: "Input",
 				element: "input",
-				attributes: { placeholder: "Full Name" } as BlockAttributeMap,
+				attributes: attr.attributes,
 				baseStyles: {
 					borderColor: "#c9c9c9",
 					borderRadius: "4px",
@@ -163,33 +163,17 @@ function getBlockTemplate(
 					height: "32px",
 					width: "100%",
 				} as BlockStyleMap,
-				customAttributes: { name: "full_name", required: "true" },
+				customAttributes: attr.customAttributes,
 			};
-
-		case "select":
+		}
+		case "select": {
+			const selectOptions = getSelectOptionsFromDocumentField(options);
+			const attr = getAttributesFromDocumentField(options);
 			return {
 				name: "Select",
 				element: "select",
-				children: [
-					{
-						name: "Option",
-						element: "option",
-						innerHTML: "Option 1",
-						attributes: { value: "option1" } as BlockAttributeMap,
-					},
-					{
-						name: "Option",
-						element: "option",
-						innerHTML: "Option 2",
-						attributes: { value: "option2" } as BlockAttributeMap,
-					},
-					{
-						name: "Option",
-						element: "option",
-						innerHTML: "Option 3",
-						attributes: { value: "option3" } as BlockAttributeMap,
-					},
-				],
+				children: selectOptions,
+				attributes: attr.attributes,
 				baseStyles: {
 					borderColor: "#c9c9c9",
 					borderRadius: "4px",
@@ -199,9 +183,52 @@ function getBlockTemplate(
 					height: "32px",
 					width: "100%",
 				} as BlockStyleMap,
-				customAttributes: { name: "select_name", required: "true" },
+				customAttributes: attr.customAttributes,
 			};
+		}
+		case "textarea": {
+			const { attributes, customAttributes } = getAttributesFromDocumentField(options);
+			return {
+				name: "Textarea",
+				element: "textarea",
+				attributes,
+				baseStyles: {
+					borderColor: "#c9c9c9",
+					borderRadius: "4px",
+					borderStyle: "solid",
+					borderWidth: "1px",
+					fontSize: "14px",
+					height: "100px",
+					width: "100%",
+				} as BlockStyleMap,
+				customAttributes,
+			};
+		}
 	}
 }
 
 export default getBlockTemplate;
+
+function getAttributesFromDocumentField(df: any) {
+	const attributes = {
+		type: df.input_type || "text",
+		placeholder: df.label,
+	} as BlockAttributeMap;
+	const customAttributes = {
+		name: df.fieldname,
+		required: df.reqd ? "true" : "false",
+		"data-fieldname": df.fieldname,
+	} as BlockAttributeMap;
+	return { attributes, customAttributes };
+}
+
+function getSelectOptionsFromDocumentField(df: any) {
+	return df.options.split("\n").map((option: string) => {
+		return {
+			element: "option",
+			innerHTML: option,
+			attributes: { value: option } as BlockAttributeMap,
+		};
+	});
+}
+

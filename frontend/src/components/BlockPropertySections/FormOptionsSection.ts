@@ -7,6 +7,31 @@ const formOptionsSectionProperties = [
 	{
 		component: InlineInput,
 		getProps: () => {
+			// form based on
+			return {
+				label: "Based On",
+				type: "select",
+				options: [
+					{
+						value: "doctype",
+						label: "DocType",
+					},
+					{
+						value: "webform",
+						label: "Web Form",
+					},
+					{
+						value: "custom",
+						label: "Custom",
+					},
+				],
+				modelValue: blockController.getFormOption("based_on") || "custom",
+			};
+		},
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
 			return {
 				label: "Webform",
 				type: "select",
@@ -20,10 +45,10 @@ const formOptionsSectionProperties = [
 						label: "Update Profile",
 					},
 				],
-				modelValue: blockController.getFormOption("enquire"),
+				modelValue: blockController.getFormOption("reference_document"),
 			};
 		},
-		searchKeyWords: "Action, URL",
+		searchKeyWords: "Form, Webform, Web Form, Reference Form",
 		events: {
 			"update:modelValue": async (webform: string) => {
 				const block = blockController.getFirstSelectedBlock();
@@ -38,29 +63,42 @@ const formOptionsSectionProperties = [
 				console.log(webForm);
 				block.children = [];
 				webForm.web_form_fields.forEach(
-					(df: { fieldname: string; label: string; fieldtype: string; options: string; reqd: boolean }) => {
+					(df: {
+						fieldname: string;
+						label: string;
+						fieldtype: string;
+						options: string;
+						reqd: boolean;
+						input_type?: string;
+					}) => {
 						const field_map = {
 							Data: "input",
 							Select: "select",
 							Link: "select",
-							"Small Text": "input",
+							"Small Text": "textarea",
+							"Long Text": "textarea",
+							int: "input",
 						} as any;
 						const field = field_map[df.fieldtype] || "input";
-						block.addChild(
-							getBlockTemplate(field, {
-								type: "text",
-							}),
-						);
+						if (field === "input") {
+							df.input_type =
+								df.fieldtype === "int"
+									? "number"
+									: df.fieldtype === "Data" && df.options === "Email"
+									? "email"
+									: "text";
+						}
+						block.addChild(getBlockTemplate(field, df));
 					},
 				);
-				blockController.setFormOption("enquire", webform);
+				blockController.setFormOption("reference_document", webform);
 			},
 		},
 	},
 ] as BlockProperty[];
 
 export default {
-	name: "Web Form Options",
+	name: "Form Options",
 	properties: formOptionsSectionProperties,
-	condition: () => blockController.isForm(),
+	condition: () => blockController.isForm() && !blockController.multipleBlocksSelected(),
 };
