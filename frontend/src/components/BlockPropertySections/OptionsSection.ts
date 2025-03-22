@@ -1,7 +1,5 @@
-import CodeEditor from "@/components/Controls/CodeEditor.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import blockController from "@/utils/blockController";
-import PropertyControl from "../Controls/PropertyControl.vue";
 
 const setClasses = (val: string) => {
 	const classes = val.split(",").map((c) => c.trim());
@@ -26,7 +24,6 @@ const optionsSectionProperties = [
 					"a",
 					"input",
 					"hr",
-					"form",
 					"textarea",
 					"nav",
 					"header",
@@ -46,7 +43,7 @@ const optionsSectionProperties = [
 		events: {
 			"update:modelValue": (val: string) => blockController.setKeyValue("element", val),
 		},
-		condition: () => !blockController.isRoot(),
+		condition: () => !blockController.isRoot() && !blockController.isForm(),
 	},
 	{
 		component: InlineInput,

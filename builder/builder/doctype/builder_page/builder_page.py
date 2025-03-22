@@ -255,8 +255,9 @@ class BuilderPage(WebsiteGenerator):
 		context.css_variables = css_variables
 		context.dark_mode_css_variables = dark_mode_css_variables
 
-		content, style, fonts = get_block_html(blocks)
+		content, style, fonts, options = parse_block_content(blocks)
 		self.set_custom_font(context, fonts)
+		context.update(options)
 		context.fonts = fonts
 		context.__content = content
 		context.style = render_template(style, page_data)
@@ -497,13 +498,14 @@ def save_as_template(page_doc: BuilderPage):
 		)
 
 
-def get_block_html(blocks):
+def parse_block_content(blocks):
 	blocks = frappe.parse_json(blocks)
 	if not isinstance(blocks, list):
 		blocks = [blocks]
 	soup = bs.BeautifulSoup("", "html.parser")
 	style_tag = soup.new_tag("style")
-	font_map = {}
+	font_map = frappe._dict()
+	options = frappe._dict()
 
 	def get_html(blocks, soup):
 		html = ""
@@ -512,6 +514,9 @@ def get_block_html(blocks):
 			block = extend_with_component(block)
 			set_dynamic_content_placeholder(block, data_key)
 			element = block.get("originalElement") or block.get("element")
+
+			if element == "form" and block.get("formOptions", {}).get("based_on") in ["doctype", "webform"]:
+				options.load_form_handler = True
 
 			if not element:
 				return ""
@@ -612,7 +617,7 @@ def get_block_html(blocks):
 		for block in blocks:
 			html += str(get_tag(block, soup))
 
-		return html, str(style_tag), font_map
+		return html, str(style_tag), font_map, options
 
 	data = get_html(blocks, soup)
 	return data
