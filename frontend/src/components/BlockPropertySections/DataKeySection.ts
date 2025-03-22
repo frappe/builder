@@ -1,8 +1,25 @@
+import CodeEditor from "@/components/Controls/CodeEditor.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
 
 const dataKeySectionProperties = [
+	{
+		component: CodeEditor,
+		getProps: () => {
+			return {
+				label: "Repeater Data",
+				type: "JSON",
+				autofocus: false,
+				modelValue: blockController.getKeyValue("repeaterData"),
+			};
+		},
+		searchKeyWords: "Repeater, Data, RepeaterData, Repeater Data",
+		events: {
+			"update:modelValue": (val: object[]) => blockController.setKeyValue("repeaterData", val),
+		},
+		condition: () => blockController.isRepeater(),
+	},
 	{
 		component: InlineInput,
 		getProps: () => {
@@ -11,7 +28,7 @@ const dataKeySectionProperties = [
 				modelValue: blockController.getDataKey("key"),
 			};
 		},
-		searchKeyWords: "Key, DataKey, Data Key",
+		searchKeyWords: "Key, DataKey, Data Key, Repeater Key",
 		events: {
 			"update:modelValue": (val: string) => blockController.setDataKey("key", val),
 		},

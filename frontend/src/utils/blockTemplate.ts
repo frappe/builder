@@ -12,8 +12,9 @@ function getBlockTemplate(
 		| "repeater"
 		| "video"
 		| "input"
-		| "select",
-	options: { [key: string]: string | number | { [key: string]: string }[] } = {},
+		| "select"
+		| "textarea",
+	options: { [key: string]: string | number | boolean | { [key: string]: string }[] } = {},
 ): BlockOptions {
 	switch (type) {
 		case "html":
@@ -231,3 +232,22 @@ function getSelectOptionsFromDocumentField(df: any) {
 	});
 }
 
+// repeater with child
+function getRepeaterBlockWithChild(child: BlockOptions, repeaterData: object[]) {
+	return {
+		name: "Repeater",
+		element: "div",
+		blockName: "repeater",
+		baseStyles: {
+			display: "flex",
+			flexDirection: "column",
+			width: "100%",
+			flexShrink: 0,
+			minHeight: "300px",
+			overflow: "hidden",
+		} as BlockStyleMap,
+		isRepeaterBlock: true,
+		repeaterData,
+		children: [child],
+	};
+}
