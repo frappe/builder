@@ -1,11 +1,11 @@
 {
- "block": "{\"attributes\": {},\"baseStyles\": {\"background\": \"#f0f0f0\",\"display\": \"flex\",\"flexDirection\": \"column\",\"flexShrink\": 0,\"gap\": \"15px\",\"left\": \"auto\",\"maxWidth\": \"400px\",\"minHeight\": \"200px\",\"overflow\": \"hidden\",\"paddingBottom\": \"20px\",\"paddingLeft\": \"20px\",\"paddingRight\": \"20px\",\"paddingTop\": \"20px\",\"position\": \"static\",\"top\": \"auto\",\"width\": \"100%\"},\"blockId\": \"zo0sod6jn\",\"blockName\": \"Web Form\",\"children\": [],\"classes\": [],\"customAttributes\": {},\"dataKey\": null,\"editable\": false,\"element\": \"form\",\"mobileStyles\": {},\"originalElement\": \"__webform__\",\"rawStyles\": {},\"tabletStyles\": {}}",
+ "block": "{\"attributes\": {},\"baseStyles\": {\"background\": \"#f0f0f0\",\"display\": \"flex\",\"flexDirection\": \"column\",\"flexShrink\": 0,\"gap\": \"15px\",\"left\": \"auto\",\"maxWidth\": \"400px\",\"minHeight\": \"200px\",\"overflow\": \"hidden\",\"paddingBottom\": \"20px\",\"paddingLeft\": \"20px\",\"paddingRight\": \"20px\",\"paddingTop\": \"20px\",\"position\": \"static\",\"top\": \"auto\",\"width\": \"100%\"},\"blockId\": \"zo0sod6jn\",\"blockName\": \"Web Form\",\"children\": [],\"classes\": [],\"customAttributes\": {},\"dataKey\": null,\"editable\": false,\"element\": \"form\",\"mobileStyles\": {},\"rawStyles\": {},\"tabletStyles\": {}, \"formOptions\": {\"based_on\": \"webform\"}}",
  "category": "Basic Forms",
  "creation": "2025-02-01 17:37:39.279534",
  "docstatus": 0,
  "doctype": "Block Template",
  "idx": 0,
- "modified": "2025-02-01 18:02:03.165958",
+ "modified": "2025-02-01 18:02:03.165961",
  "modified_by": "Administrator",
  "name": "Web Form",
  "order": 0,

@@ -49,7 +49,6 @@ const optionsSectionProperties = [
 					"a",
 					"input",
 					"hr",
-					"form",
 					"textarea",
 					"nav",
 					"header",
@@ -69,6 +68,7 @@ const optionsSectionProperties = [
 		events: {
 			"update:modelValue": (val: string) => blockController.setKeyValue("element", val),
 		},
+		condition: () => !blockController.isForm(),
 	},
 	{
 		component: InlineInput,
