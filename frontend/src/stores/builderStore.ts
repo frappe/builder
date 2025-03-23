@@ -1,6 +1,4 @@
-import type Block from "@/block";
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
-import type BuilderCanvas from "@/components/BuilderCanvas.vue";
 import { builderSettings } from "@/data/builderSettings";
 import { BuilderSettings } from "@/types/Builder/BuilderSettings";
 import RealTimeHandler from "@/utils/realtimeHandler";
@@ -11,10 +9,8 @@ import BlockLayers from "./components/BlockLayers.vue";
 
 const useBuilderStore = defineStore("builderStore", {
 	state: () => ({
-		activeCanvas: <InstanceType<typeof BuilderCanvas> | null>null,
 		activeLayers: <InstanceType<typeof BlockLayers> | null>null,
 		blockContextMenu: <InstanceType<typeof BlockContextMenu> | null>null,
-		editableBlock: <Block | null>null,
 		propertyFilter: <string | null>null,
 		mode: <BuilderMode>"select", // check setEvents in BuilderCanvas for usage
 		lastMode: <BuilderMode>"select",

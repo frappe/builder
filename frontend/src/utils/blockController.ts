@@ -1,6 +1,7 @@
+import type Block from "@/block";
+import type { BlockDataKey } from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { nextTick } from "vue";
-import Block, { BlockDataKey } from "./block";
 import getBlockTemplate from "./blockTemplate";
 
 const canvasStore = useCanvasStore();
