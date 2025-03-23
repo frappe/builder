@@ -19,6 +19,7 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import usePageStore from "@/stores/pageStore";
+import { getDataForKey } from "@/utils/helpers";
 import { Ref, computed, ref } from "vue";
 import BuilderBlock from "./BuilderBlock.vue";
 
@@ -42,7 +43,7 @@ const component = ref(null) as Ref<HTMLElement | null>;
 const blockData = computed(() => {
 	const pageData = props.data || pageStore.pageData;
 	if (pageData && props.block.getDataKey("key")) {
-		const data = pageData[props.block.getDataKey("key")];
+		const data = getDataForKey(pageData, props.block.getDataKey("key"));
 		if (Array.isArray(data)) {
 			return data.slice(0, 100);
 		}
