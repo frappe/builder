@@ -114,7 +114,7 @@ async function alert(message: string, title: string = "Alert"): Promise<boolean>
 		h(AlertDialog, {
 			title,
 			message,
-			onClick: resolve,
+			onClick: () => resolve(true),
 		});
 	});
 }
