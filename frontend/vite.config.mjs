@@ -17,15 +17,13 @@ export default defineConfig({
 		}),
 		vue(),
 	],
-	buildConfig: {
-		indexHtmlPath: "../builder/www/_builder.html",
-		outDir: `../builder/public/frontend`,
-		baseUrl: "/assets/builder/frontend/",
-		emptyOutDir: true,
-		target: "es2015",
-	},
+	buildConfig: false,
 	build: {
 		chunkSizeWarningLimit: 1500,
+		outDir: `../builder/public/frontend`,
+		emptyOutDir: true,
+		target: "es2015",
+		sourcemap: true,
 	},
 	resolve: {
 		alias: {
