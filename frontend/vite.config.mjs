@@ -8,18 +8,32 @@ export default defineConfig({
 	define: {
 		__VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
 	},
-	plugins: [frappeui({ source: "^/(app|login|api|assets|files|pages|builder_assets)" }), vue()],
+	plugins: [
+		frappeui({
+			frappeProxy: {
+				port: 8080,
+				source: "^/(app|login|api|assets|files|pages|builder_assets)",
+			},
+		}),
+		vue(),
+	],
+	buildConfig: {
+		indexHtmlPath: "../builder/www/_builder.html",
+		outDir: `../builder/public/frontend`,
+		baseUrl: "/assets/builder/frontend/",
+		emptyOutDir: true,
+		target: "es2015",
+	},
+	build: {
+		chunkSizeWarningLimit: 1500,
+	},
 	resolve: {
 		alias: {
 			"@": path.resolve(__dirname, "src"),
 		},
 	},
-	build: {
-		outDir: `../builder/public/frontend`,
-		emptyOutDir: true,
-		target: "es2015",
-		sourcemap: true,
-		chunkSizeWarningLimit: 1000,
+	server: {
+		allowedHosts: true,
 	},
 	optimizeDeps: {
 		include: ["frappe-ui > feather-icons", "showdown", "engine.io-client"],
