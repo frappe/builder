@@ -130,9 +130,6 @@ class Block implements BlockOptions {
 		if (this.isExtendedFromComponent()) {
 			styleObj = this.getComponentStyles(breakpoint);
 		}
-		if (this.isDialog()) {
-			this.removeStyle("display");
-		}
 		styleObj = { ...styleObj, ...this.baseStyles };
 		if (["mobile", "tablet"].includes(breakpoint)) {
 			styleObj = { ...styleObj, ...this.tabletStyles };
@@ -491,9 +488,9 @@ class Block implements BlockOptions {
 		}
 
 		if (this.isDialog()) {
-			styles.display = "flex";
+			styles.zIndex = "1000";
 		}
-
+		
 		styles.transition = "unset";
 
 		return styles;
