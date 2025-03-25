@@ -130,6 +130,9 @@ class Block implements BlockOptions {
 		if (this.isExtendedFromComponent()) {
 			styleObj = this.getComponentStyles(breakpoint);
 		}
+		if (this.isDialog()) {
+			this.removeStyle("display");
+		}
 		styleObj = { ...styleObj, ...this.baseStyles };
 		if (["mobile", "tablet"].includes(breakpoint)) {
 			styleObj = { ...styleObj, ...this.tabletStyles };
@@ -278,6 +281,9 @@ class Block implements BlockOptions {
 		return (
 			this.originalElement === "input" || this.getElement() === "input" || this.getElement() === "textarea"
 		);
+	}
+	isDialog() {
+		return this.getElement() === "dialog";
 	}
 	setStyle(style: styleProperty, value: StyleValue) {
 		const canvasStore = useCanvasStore();
@@ -483,6 +489,11 @@ class Block implements BlockOptions {
 			styles.alignItems = "center";
 			styles.justifyContent = "center";
 		}
+
+		if (this.isDialog()) {
+			styles.display = "flex";
+		}
+
 		styles.transition = "unset";
 
 		return styles;
