@@ -1,9 +1,9 @@
 <template>
-	<div class="relative" v-if="modelValue">
+	<div class="relative" v-if="modelValue" ref="popover">
 		<div class="fixed z-50" @mousedown.stop>
 			<div
 				ref="popoverContent"
-				class="fixed flex flex-col gap-1 overflow-hidden rounded-lg border-gray-700 bg-surface-white shadow-lg"
+				class="fixed flex flex-col gap-1 overflow-hidden rounded-lg border border-gray-700 border-outline-gray-2 bg-surface-white shadow-xl"
 				:style="{
 					width: width + 'px',
 					minHeight: height + 'px',
@@ -11,13 +11,13 @@
 					top: popupTop + 'px',
 				}">
 				<div
-					class="text-ink-grainset-y-9 flex cursor-grab select-none items-center justify-between px-3 py-1 pr-1 text-sm"
+					class="flex cursor-grab select-none items-center justify-between px-3 py-1 pr-1 text-sm text-ink-gray-9"
 					:class="{ 'cursor-grabbing': isDragging }"
 					@mousedown="startDrag">
 					<slot name="header">Search Block</slot>
 					<Button @click="togglePopup" icon="x" variant="ghost"></Button>
 				</div>
-				<div class="px-3 pb-3">
+				<div class="flex-1 px-3 pb-3">
 					<slot name="content"></slot>
 				</div>
 			</div>
@@ -26,20 +26,27 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, Ref, ref } from "vue";
+import { useEventListener } from "@vueuse/core";
+import { nextTick, onMounted, Ref, ref } from "vue";
+
+const popover = ref(null) as Ref<HTMLElement | null>;
 
 const props = withDefaults(
 	defineProps<{
 		modelValue: boolean;
 		width?: number;
 		height?: number;
-		placement?: "top" | "bottom" | "left" | "right";
+		placement?: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center";
+		placementOffset?: number;
 		clickOutsideToClose?: boolean;
+		container?: HTMLElement | null;
 	}>(),
 	{
 		width: 300,
 		height: 200,
 		clickOutsideToClose: false,
+		placement: "top-left",
+		placementOffset: 0,
 	},
 );
 
@@ -55,15 +62,13 @@ let startY = 0;
 let startLeft = 0;
 let startTop = 0;
 
+onMounted(async () => {
+	await nextTick();
+	setPosition();
+});
+
 const togglePopup = () => {
 	emit("update:modelValue", !props.modelValue);
-	if (props.modelValue) {
-		console.log("open");
-		// nextTick(() => {
-		// 	popupLeft.value = 0;
-		// 	popupTop.value = 0;
-		// });
-	}
 };
 
 const startDrag = (event: MouseEvent) => {
@@ -96,15 +101,44 @@ const handleClickOutside = (event: Event) => {
 	}
 };
 
-onMounted(() => {
-	if (props.clickOutsideToClose) {
-		document.addEventListener("click", handleClickOutside);
+const setPosition = () => {
+	if (props.container) {
+		const { left, top, right, bottom } = props.container.getBoundingClientRect();
+		switch (props.placement) {
+			case "top-left":
+				popupLeft.value = left + props.placementOffset;
+				popupTop.value = top + props.placementOffset;
+				break;
+			case "top-right":
+				popupLeft.value = right - props.width - props.placementOffset;
+				popupTop.value = top + props.placementOffset;
+				break;
+			case "bottom-left":
+				popupLeft.value = left + props.placementOffset;
+				popupTop.value = bottom - props.height - props.placementOffset;
+				break;
+			case "bottom-right":
+				popupLeft.value = right - props.width - props.placementOffset;
+				popupTop.value = bottom - props.height - props.placementOffset;
+				break;
+			case "center":
+				popupLeft.value = left + (right - left) / 2 - props.width / 2;
+				popupTop.value = top + (bottom - top) / 2 - props.height / 2;
+				break;
+		}
+	} else {
+		const { innerWidth, innerHeight } = window;
+		popupLeft.value = innerWidth / 2 - props.width / 2;
+		popupTop.value = innerHeight / 2 - props.height / 2;
 	}
-});
+};
 
-onUnmounted(() => {
-	if (props.clickOutsideToClose) {
-		document.removeEventListener("click", handleClickOutside);
-	}
-});
+if (props.clickOutsideToClose) {
+	useEventListener(document, "click", handleClickOutside, {
+		capture: true,
+		passive: true,
+	});
+}
+
+useEventListener(window, "resize", setPosition);
 </script>

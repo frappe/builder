@@ -74,10 +74,23 @@
 				<FitScreenIcon />
 			</div>
 		</div>
+		<DraggablePopup
+			v-model="builderStore.showSearchBlock"
+			:container="canvasContainer"
+			placement="top-right"
+			:placementOffset="20"
+			v-if="builderStore.showSearchBlock">
+			<template #header>Search Block</template>
+			<template #content>
+				<SearchBlock></SearchBlock>
+			</template>
+		</DraggablePopup>
 	</div>
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
+import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
+import SearchBlock from "@/components/Controls/SearchBlock.vue";
 import LoadingIcon from "@/components/Icons/Loading.vue";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
@@ -99,7 +112,7 @@ const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 
 const resizingBlock = ref(false);
-const canvasContainer = ref(null);
+const canvasContainer = ref(null) as Ref<HTMLElement | null>;
 const canvas = ref(null);
 const showBlocks = ref(false);
 const overlay = ref(null);
