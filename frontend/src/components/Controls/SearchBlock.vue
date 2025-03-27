@@ -1,10 +1,9 @@
 <template>
-	<div>
+	<div ref="searchBlock">
 		<BuilderInput
 			class="query"
 			type="text"
 			placeholder="Search"
-			autofocus
 			v-model="query"
 			@input="setQuery"></BuilderInput>
 		<!-- <div class="flex w-full gap-2 text-sm">
@@ -35,11 +34,11 @@
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { watchDebounced } from "@vueuse/core";
-import Badge from "frappe-ui/src/components/Badge.vue";
-import { Ref, ref } from "vue";
+import { nextTick, onMounted, Ref, ref } from "vue";
 
 const canvasStore = useCanvasStore();
 
+const searchBlock = ref(null) as Ref<HTMLInputElement | null>;
 const query = ref("");
 const results = ref([]) as Ref<Block[]>;
 const filters = ref([
@@ -64,6 +63,12 @@ const filters = ref([
 const setQuery = (value: string) => {
 	query.value = value;
 };
+
+onMounted(async () => {
+	await nextTick();
+	const input = searchBlock.value?.querySelector("input");
+	input?.focus();
+});
 
 watchDebounced(
 	query,
