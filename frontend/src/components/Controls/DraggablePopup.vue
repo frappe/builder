@@ -3,7 +3,7 @@
 		<div class="fixed z-50" @mousedown.stop>
 			<div
 				ref="popoverContent"
-				class="fixed flex flex-col gap-1 overflow-hidden rounded-lg border border-gray-700 border-outline-gray-2 bg-surface-white shadow-xl"
+				class="fixed flex flex-col gap-1 overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-white shadow-xl"
 				:style="{
 					width: width + 'px',
 					minHeight: height + 'px',
@@ -14,7 +14,7 @@
 					class="flex cursor-grab select-none items-center justify-between px-3 py-1 pr-1 text-sm text-ink-gray-9"
 					:class="{ 'cursor-grabbing': isDragging }"
 					@mousedown="startDrag">
-					<slot name="header">Search Block</slot>
+					<slot name="header"></slot>
 					<Button @click="togglePopup" icon="x" variant="ghost"></Button>
 				</div>
 				<div class="flex-1 px-3 pb-3">
