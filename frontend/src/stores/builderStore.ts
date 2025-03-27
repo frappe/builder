@@ -15,6 +15,7 @@ const useBuilderStore = defineStore("builderStore", {
 		mode: <BuilderMode>"select", // check setEvents in BuilderCanvas for usage
 		lastMode: <BuilderMode>"select",
 		autoSave: true,
+		showSearchBlock: false,
 		builderLayout: {
 			rightPanelWidth: 275,
 			leftPanelWidth: 250,
