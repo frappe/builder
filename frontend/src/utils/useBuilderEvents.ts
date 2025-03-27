@@ -286,6 +286,11 @@ export function useBuilderEvents(
 			document.querySelector(".properties-search-input")?.querySelector("input")?.focus();
 		}
 
+		if (e.key === "f" && isCtrlOrCmd(e) && e.shiftKey) {
+			e.preventDefault();
+			builderStore.showSearchBlock = true;
+		}
+
 		if (e.key === "c" && isCtrlOrCmd(e) && e.shiftKey) {
 			if (blockController.isBLockSelected() && !blockController.multipleBlocksSelected()) {
 				e.preventDefault();
