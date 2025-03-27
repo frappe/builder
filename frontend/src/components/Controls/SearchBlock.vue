@@ -20,12 +20,14 @@
 				class="mt-2 flex cursor-pointer rounded px-2 py-1 text-sm text-ink-gray-7 hover:bg-surface-gray-1"
 				@mouseover.stop="canvasStore.activeCanvas?.setHoveredBlock(result.blockId)"
 				@click="canvasStore.activeCanvas?.scrollBlockIntoView(result)">
-				{{ result.getBlockDescription() }}
+				<div class="line-clamp-2">
+					{{ result.getBlockDescription() }}
+				</div>
 			</div>
 		</div>
 		<div
 			v-if="results.length === 0 && query"
-			class="mt-4 flex h-full w-full items-center justify-center text-sm text-ink-gray-3">
+			class="mt-4 flex h-full w-full items-center justify-center text-sm text-ink-gray-4">
 			No results found
 		</div>
 	</div>
