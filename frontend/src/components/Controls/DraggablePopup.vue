@@ -1,5 +1,5 @@
 <template>
-	<div class="relative" v-if="modelValue" ref="popover">
+	<div class="relative" ref="popover">
 		<div class="fixed z-50" @mousedown.stop>
 			<div
 				ref="popoverContent"
