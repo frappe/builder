@@ -218,35 +218,31 @@ const handleClick = (ev: MouseEvent) => {
 	}
 };
 
-function searchBlock(searchTerm: string, targetBlock: null | Block) {
-	// find nearest block to the search term
-	// convert block to string and search for the term
-	// if found, return the nearest block
-	// else return null
+function searchBlock(searchTerm: string, targetBlock: null | Block, limit: number = 5): Block[] {
+	const results: Block[] = [];
+
+	function search(block: Block) {
+		if (results.length >= limit) return;
+
+		const blockObject = getBlockObject(block);
+		const children = blockObject.children || [];
+		delete blockObject.children;
+
+		if (JSON.stringify(blockObject).toLowerCase().includes(searchTerm.toLowerCase())) {
+			results.push(findBlock(block.blockId) as Block);
+		}
+
+		for (const child of children) {
+			search(child);
+		}
+	}
+
 	if (!targetBlock) {
 		targetBlock = getRootBlock();
 	}
 
-	const blockObject = getBlockObject(targetBlock);
-	const children = blockObject.children || [];
-	delete blockObject.children;
-	let blockId = "";
-
-	if (JSON.stringify(blockObject).toLowerCase().includes(searchTerm.toLowerCase())) {
-		blockId = blockObject.blockId as string;
-	}
-
-	if (blockId) {
-		const block = findBlock(blockId);
-		if (block) {
-			return scrollBlockIntoView(block);
-		}
-	} else {
-		for (const child of children) {
-			return searchBlock(searchTerm, child);
-		}
-	}
-	return null;
+	search(targetBlock);
+	return results;
 }
 
 function setActiveBreakpoint(breakpoint: string | null) {

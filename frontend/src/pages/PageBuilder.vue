@@ -102,6 +102,12 @@
 			</Dialog>
 		</div>
 	</div>
+	<DraggablePopup v-model="builderStore.showSearchBlock">
+		<template #header>Search Block</template>
+		<template #content>
+			<SearchBlock></SearchBlock>
+		</template>
+	</DraggablePopup>
 </template>
 
 <script setup lang="ts">
@@ -111,13 +117,13 @@ import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
+import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
+import SearchBlock from "@/components/Controls/SearchBlock.vue";
 import PageListModal from "@/components/Modals/PageListModal.vue";
 import { webPages } from "@/data/webPage";
 import { sessionUser } from "@/router";
-import useBlockTemplateStore from "@/stores/blockTemplateStore";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
-import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { getUsersInfo } from "@/usersInfo";
@@ -145,9 +151,7 @@ const route = useRoute();
 const router = useRouter();
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
-const componentStore = useComponentStore();
 const canvasStore = useCanvasStore();
-const blockTemplateStore = useBlockTemplateStore();
 const usageCount = ref(0);
 const componentUsedInPages = ref<BuilderPage[]>([]);
 const pageListDialog = ref(false);
