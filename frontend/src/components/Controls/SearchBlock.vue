@@ -4,18 +4,10 @@
 			class="query"
 			type="text"
 			placeholder="Search"
+			autofocus
 			v-model="query"
 			@input="setQuery"></BuilderInput>
-		<div class="flex w-full gap-2 text-sm">
-			<!-- <div
-				v-for="filter in filters"
-				class="mt-2 flex cursor-pointer items-center justify-center rounded bg-gray-100 px-2 py-1"
-				:class="{
-					'bg-gray-100 hover:bg-gray-200': filter.selected,
-					'hover:bg-gray-100': !filter.selected,
-				}">
-				{{ filter.name }}
-			</div> -->
+		<!-- <div class="flex w-full gap-2 text-sm">
 			<Badge
 				v-for="filter in filters"
 				:label="filter.name"
@@ -23,14 +15,19 @@
 				:variant="filter.selected ? 'solid' : 'outline'"
 				size="md"
 				class="mt-2 cursor-pointer" />
-		</div>
+		</div> -->
 		<div v-for="result in results">
 			<div
-				class="mt-2 flex cursor-pointer rounded px-2 py-1 text-sm text-ink-gray-7 hover:bg-gray-100"
-				@mouseover="canvasStore.activeCanvas?.setHoveredBlock(result.blockId)"
+				class="mt-2 flex cursor-pointer rounded px-2 py-1 text-sm text-ink-gray-7 hover:bg-surface-gray-1"
+				@mouseover.stop="canvasStore.activeCanvas?.setHoveredBlock(result.blockId)"
 				@click="canvasStore.activeCanvas?.scrollBlockIntoView(result)">
 				{{ result.getBlockDescription() }}
 			</div>
+		</div>
+		<div
+			v-if="results.length === 0 && query"
+			class="mt-4 flex h-full w-full items-center justify-center text-sm text-ink-gray-3">
+			No results found
 		</div>
 	</div>
 </template>
@@ -73,8 +70,7 @@ watchDebounced(
 	(val) => {
 		results.value = [];
 		if (val) {
-			const filteredBlocks = canvasStore.activeCanvas?.searchBlock(val, null);
-			console.log(filteredBlocks);
+			const filteredBlocks = canvasStore.activeCanvas?.searchBlock(val, null, 20);
 			if (filteredBlocks?.length) {
 				results.value = filteredBlocks;
 			}
