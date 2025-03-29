@@ -13,7 +13,7 @@ import {
 } from "@/utils/helpers";
 import { Editor } from "@tiptap/vue-3";
 import { clamp } from "@vueuse/core";
-import { computed, nextTick, reactive } from "vue";
+import { computed, nextTick, reactive, toRaw } from "vue";
 
 type BlockDataKeyType = "key" | "attribute" | "style";
 
@@ -942,6 +942,7 @@ function resetWithComponent(
 	componentChildren: Block[],
 	resetOverrides: boolean = true,
 ) {
+	block = toRaw(block);
 	resetBlock(block, true, resetOverrides);
 	block.children?.splice(0, block.children.length);
 	componentChildren.forEach((componentChild) => {
