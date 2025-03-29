@@ -17,7 +17,9 @@
 		<template #body-content>
 			<BuilderInput
 				@input="folderName = $event"
+				:modelValue="folderName"
 				type="Input"
+				:autofocus="true"
 				label="Folder Name"
 				:required="true"></BuilderInput>
 		</template>
