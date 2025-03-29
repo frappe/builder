@@ -6,6 +6,7 @@
 			@change="triggerUpdate"
 			@input="($event: Event) => emit('input', ($event.target as HTMLInputElement).value)"
 			autocomplete="off"
+			:autofocus="autofocus"
 			v-bind="attrs"
 			:modelValue="data">
 			<template #prefix v-if="$slots.prefix">
@@ -32,9 +33,11 @@ const props = withDefaults(
 		modelValue?: string | number | boolean | null;
 		type?: string;
 		hideClearButton?: boolean;
+		autofocus?: boolean;
 	}>(),
 	{
 		type: "text",
+		modelValue: "",
 	},
 );
 const emit = defineEmits(["update:modelValue", "input"]);
