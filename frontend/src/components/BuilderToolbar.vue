@@ -145,7 +145,6 @@ import SettingsGearIcon from "@/components/Icons/SettingsGear.vue";
 import PublishButton from "@/components/PublishButton.vue";
 import { webPages } from "@/data/webPage";
 import useBuilderStore from "@/stores/builderStore";
-import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { getTextContent } from "@/utils/helpers";
@@ -157,7 +156,6 @@ import MainMenu from "./MainMenu.vue";
 import PageOptions from "./PageOptions.vue";
 import Settings from "./Settings.vue";
 
-const canvasStore = useCanvasStore();
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 
