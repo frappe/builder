@@ -26,7 +26,7 @@
 						ref="dataScriptEditor"
 						v-model="page.page_data_script"
 						type="Python"
-						height="65vh"
+						height="60vh"
 						@save="savePageDataScript"
 						:showSaveButton="true"
 						description='Use Data Script to provide dynamic data to your web page.<br>
