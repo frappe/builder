@@ -14,7 +14,7 @@
 		<span class="mt-1 text-p-xs text-ink-gray-6" v-show="description" v-html="description"></span>
 		<BuilderButton
 			v-if="showSaveButton"
-			@click="emit('save', aceEditor?.getValue())"
+			@click="emit('save', getEditorValue())"
 			class="mt-3"
 			:disabled="!isDirty">
 			Save
@@ -27,48 +27,34 @@ import ace from "ace-builds";
 import "ace-builds/src-min-noconflict/ext-searchbox";
 import "ace-builds/src-min-noconflict/theme-chrome";
 import "ace-builds/src-min-noconflict/theme-twilight";
-import { PropType, onMounted, ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 
 const isDark = useDark({
 	attribute: "data-theme",
 });
-const props = defineProps({
-	modelValue: {
-		type: [Object, String, Array],
+const props = withDefaults(
+	defineProps<{
+		modelValue?: Object | String | Array<any>;
+		type?: "JSON" | "HTML" | "Python" | "JavaScript" | "CSS";
+		label?: string;
+		readonly?: boolean;
+		height?: string;
+		showLineNumbers?: boolean;
+		autofocus?: boolean;
+		showSaveButton?: boolean;
+		description?: string;
+	}>(),
+	{
+		type: "JSON",
+		label: "",
+		readonly: false,
+		height: "250px",
+		showLineNumbers: false,
+		autofocus: true,
+		showSaveButton: false,
+		description: "",
 	},
-	type: {
-		type: String as PropType<"JSON" | "HTML" | "Python" | "JavaScript" | "CSS">,
-		default: "JSON",
-	},
-	label: {
-		type: String,
-		default: "",
-	},
-	readonly: {
-		type: Boolean,
-		default: false,
-	},
-	height: {
-		type: String,
-		default: "250px",
-	},
-	showLineNumbers: {
-		type: Boolean,
-		default: false,
-	},
-	autofocus: {
-		type: Boolean,
-		default: true,
-	},
-	showSaveButton: {
-		type: Boolean,
-		default: false,
-	},
-	description: {
-		type: String,
-		default: "",
-	},
-});
+);
 
 const emit = defineEmits(["save", "update:modelValue"]);
 const editor = ref<HTMLElement | null>(null);
@@ -82,7 +68,7 @@ const isDirty = ref(false);
 
 const setupEditor = () => {
 	aceEditor = ace.edit(editor.value as HTMLElement);
-	resetEditor(props.modelValue as string, true);
+	resetEditor(true);
 	aceEditor.setReadOnly(props.readonly);
 	aceEditor.setOptions({
 		fontSize: "12px",
@@ -113,7 +99,7 @@ const setupEditor = () => {
 	}
 
 	aceEditor.on("change", () => {
-		if (aceEditor?.getValue() === props.modelValue) {
+		if (aceEditor?.getValue() === getModelValue()) {
 			isDirty.value = false;
 			return;
 		} else if (!props.readonly) {
@@ -126,10 +112,11 @@ const setupEditor = () => {
 			name: "save",
 			bindKey: { win: "Ctrl-S", mac: "Cmd-S" },
 			exec: () => {
+				const value = getEditorValue();
 				if (props.showSaveButton) {
-					emit("save", aceEditor?.getValue());
+					emit("save", value);
 				} else {
-					emit("update:modelValue", aceEditor?.getValue());
+					emit("update:modelValue", value);
 				}
 			},
 		});
@@ -137,10 +124,7 @@ const setupEditor = () => {
 
 	aceEditor.on("blur", () => {
 		try {
-			let value = aceEditor?.getValue() || "";
-			if (props.type === "JSON") {
-				value = JSON.parse(value);
-			}
+			let value = getEditorValue();
 			if (value === props.modelValue) return;
 			if (!props.showSaveButton && !props.readonly) {
 				emit("update:modelValue", value);
@@ -152,7 +136,7 @@ const setupEditor = () => {
 };
 
 const getModelValue = () => {
-	let value = props.modelValue || "";
+	let value = props.modelValue ?? "";
 	try {
 		if (props.type === "JSON" || typeof value === "object") {
 			value = JSON.stringify(value, null, 2);
@@ -163,8 +147,16 @@ const getModelValue = () => {
 	return value as string;
 };
 
-function resetEditor(value: string, resetHistory = false) {
-	value = getModelValue();
+const getEditorValue = () => {
+	let value = aceEditor?.getValue();
+	if (props.type === "JSON" && value) {
+		value = JSON.parse(value);
+	}
+	return value;
+};
+
+function resetEditor(resetHistory = false) {
+	const value = getModelValue();
 	aceEditor?.setValue(value);
 	aceEditor?.clearSelection();
 	aceEditor?.setTheme(isDark.value ? "ace/theme/twilight" : "ace/theme/chrome");
@@ -188,7 +180,7 @@ watch(
 watch(
 	() => props.modelValue,
 	() => {
-		resetEditor(props.modelValue as string);
+		resetEditor();
 	},
 );
 

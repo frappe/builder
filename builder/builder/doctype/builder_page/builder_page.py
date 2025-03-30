@@ -197,6 +197,10 @@ class BuilderPage(WebsiteGenerator):
 		context.content = content
 		context.style = render_template(style, page_data)
 		context.editor_link = f"/{builder_path}/page/{self.name}"
+		if frappe.form_dict and self.dynamic_route:
+			query_string = "&".join([f"{k}={v}" for k, v in frappe.form_dict.items()])
+			context.editor_link += f"?{query_string}"
+
 		context.page_name = self.name
 
 		if self.dynamic_route and hasattr(frappe.local, "request"):
@@ -204,8 +208,9 @@ class BuilderPage(WebsiteGenerator):
 		else:
 			context.base_url = frappe.utils.get_url(self.route)
 
-		self.set_style_and_script(context)
 		context.update(page_data)
+
+		self.set_style_and_script(context)
 		self.set_meta_tags(context=context, page_data=page_data)
 		self.set_favicon(context)
 		try:
@@ -266,6 +271,9 @@ class BuilderPage(WebsiteGenerator):
 			context._head_html += builder_settings.head_html
 		if builder_settings.body_html:
 			context._body_html += builder_settings.body_html
+
+		context["_head_html"] = render_template(context._head_html, context)
+		context["_body_html"] = render_template(context._body_html, context)
 
 	@frappe.whitelist()
 	def get_page_data(self, route_variables=None):
@@ -574,6 +582,9 @@ def extend_block(block, overridden_block):
 	block["mobileStyles"].update(overridden_block["mobileStyles"])
 	block["tabletStyles"].update(overridden_block["tabletStyles"])
 	block["attributes"].update(overridden_block["attributes"])
+	if overridden_block.get("element"):
+		block["element"] = overridden_block["element"]
+
 	if overridden_block.get("visibilityCondition"):
 		block["visibilityCondition"] = overridden_block.get("visibilityCondition")
 

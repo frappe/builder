@@ -1,3 +1,4 @@
+// @ts-ignore
 Array.prototype.add = function (...itemsToAdd: any[]) {
 	itemsToAdd.forEach((item) => {
 		if (!this.includes(item)) {
@@ -6,6 +7,7 @@ Array.prototype.add = function (...itemsToAdd: any[]) {
 	});
 };
 
+// @ts-ignore
 Array.prototype.remove = function (...itemsToRemove: any[]) {
 	itemsToRemove.forEach((item) => {
 		const index = this.indexOf(item);

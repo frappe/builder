@@ -104,7 +104,7 @@ import EditableSpan from "@/components/EditableSpan.vue";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { createListResource, createResource, Dropdown } from "frappe-ui";
-import { computed, nextTick, PropType, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { toast } from "vue-sonner";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import CSSIcon from "./Icons/CSS.vue";
@@ -122,12 +122,9 @@ type attachedScript = {
 
 const activeScript = ref<attachedScript | null>(null);
 
-const props = defineProps({
-	page: {
-		type: Object as PropType<BuilderPage>,
-		required: true,
-	},
-});
+const props = defineProps<{
+	page: BuilderPage;
+}>();
 
 const attachedScriptResource = createListResource({
 	doctype: "Builder Page Client Script",
@@ -160,7 +157,7 @@ const clientScriptResource = createListResource({
 const selectScript = (script: attachedScript) => {
 	activeScript.value = script;
 	nextTick(() => {
-		scriptEditor.value?.resetEditor(script.script, true);
+		scriptEditor.value?.resetEditor(true);
 	});
 };
 

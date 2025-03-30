@@ -17,37 +17,33 @@
 </template>
 
 <script setup lang="ts">
-import useStore from "@/store";
-import Block from "@/utils/block";
+import type Block from "@/block";
+import usePageStore from "@/stores/pageStore";
+import { getDataForKey } from "@/utils/helpers";
 import { Ref, computed, ref } from "vue";
 import BuilderBlock from "./BuilderBlock.vue";
-const store = useStore();
 
-const props = defineProps({
-	block: {
-		type: Block,
-		required: true,
+const pageStore = usePageStore();
+
+const props = withDefaults(
+	defineProps<{
+		block: Block;
+		preview?: boolean;
+		breakpoint?: string;
+		data?: Record<string, any> | null;
+	}>(),
+	{
+		preview: false,
+		breakpoint: "desktop",
 	},
-	preview: {
-		type: Boolean,
-		default: false,
-	},
-	breakpoint: {
-		type: String,
-		default: "desktop",
-	},
-	data: {
-		type: Object,
-		default: null,
-	},
-});
+);
 
 const component = ref(null) as Ref<HTMLElement | null>;
 
 const blockData = computed(() => {
-	const pageData = props.data || store.pageData;
+	const pageData = props.data || pageStore.pageData;
 	if (pageData && props.block.getDataKey("key")) {
-		const data = pageData[props.block.getDataKey("key")];
+		const data = getDataForKey(pageData, props.block.getDataKey("key"));
 		if (Array.isArray(data)) {
 			return data.slice(0, 100);
 		}

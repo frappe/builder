@@ -1,10 +1,13 @@
+import type Block from "@/block";
 import BuilderCanvas from "@/components/BuilderCanvas.vue";
 import webComponent from "@/data/webComponent";
 import { webPages } from "@/data/webPage";
-import useStore from "@/store";
+import useBuilderStore from "@/stores/builderStore";
+import useCanvasStore from "@/stores/canvasStore";
+import useComponentStore from "@/stores/componentStore";
+import usePageStore from "@/stores/pageStore";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import Block from "@/utils/block";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 
@@ -20,14 +23,15 @@ import {
 	isTargetEditable,
 	uploadImage,
 } from "@/utils/helpers";
-import useComponentStore from "@/utils/useComponentStore";
 import { useEventListener, useStorage } from "@vueuse/core";
 import { Ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { toast } from "vue-sonner";
 
-const store = useStore();
+const builderStore = useBuilderStore();
 const componentStore = useComponentStore();
+const canvasStore = useCanvasStore();
+const pageStore = usePageStore();
 
 export function useBuilderEvents(
 	pageCanvas: Ref<InstanceType<typeof BuilderCanvas> | null>,
@@ -57,9 +61,9 @@ export function useBuilderEvents(
 	useEventListener(document, "cut", (e) => {
 		if (isTargetEditable(e)) return;
 		copySelectedBlocksToClipboard(e);
-		if (store.activeCanvas?.selectedBlocks.length) {
-			for (const block of store.activeCanvas?.selectedBlocks) {
-				store.activeCanvas?.removeBlock(block, true);
+		if (canvasStore.activeCanvas?.selectedBlocks.length) {
+			for (const block of canvasStore.activeCanvas?.selectedBlocks) {
+				canvasStore.activeCanvas?.removeBlock(block, true);
 			}
 			clearSelection();
 		}
@@ -79,7 +83,7 @@ export function useBuilderEvents(
 					const selectedBlocks = blockController.getSelectedBlocks();
 					const parentBlock = selectedBlocks.length
 						? selectedBlocks[0]
-						: (store.activeCanvas?.getRootBlock() as Block);
+						: (canvasStore.activeCanvas?.getRootBlock() as Block);
 					let imageBlock = null as unknown as Block;
 					if (parentBlock.isImage()) {
 						imageBlock = parentBlock;
@@ -127,8 +131,8 @@ export function useBuilderEvents(
 				}
 			}
 
-			if (store.activeCanvas?.selectedBlocks.length && dataObj.blocks[0].blockId !== "root") {
-				let parentBlock = store.activeCanvas.selectedBlocks[0];
+			if (canvasStore.activeCanvas?.selectedBlocks.length && dataObj.blocks[0].blockId !== "root") {
+				let parentBlock = canvasStore.activeCanvas.selectedBlocks[0];
 				while (parentBlock && !parentBlock.canHaveChildren()) {
 					parentBlock = parentBlock.getParentBlock() as Block;
 				}
@@ -136,7 +140,7 @@ export function useBuilderEvents(
 					parentBlock.addChild(getBlockCopy(block), null, true);
 				});
 			} else {
-				store.pushBlocks(dataObj.blocks);
+				canvasStore.pushBlocks(dataObj.blocks);
 			}
 
 			// check if data is from builder and a list of blocks and components
@@ -187,13 +191,13 @@ export function useBuilderEvents(
 				if (parentBlock) {
 					parentBlock.addChild(block);
 				} else {
-					store.pushBlocks([block]);
+					canvasStore.pushBlocks([block]);
 				}
 			}
 			return;
 		}
 		// try pasting figma text styles
-		if (text.includes(":") && !store.editableBlock) {
+		if (text.includes(":") && !canvasStore.editableBlock) {
 			e.preventDefault();
 			// strip out all comments: line-height: 115%; /* 12.65px */ -> line-height: 115%;
 			const strippedText = text.replace(/\/\*.*?\*\//g, "").replace(/\n/g, "");
@@ -249,16 +253,16 @@ export function useBuilderEvents(
 		if (e.key === "\\" && isCtrlOrCmd(e)) {
 			e.preventDefault();
 			if (e.shiftKey) {
-				store.showLeftPanel = !store.showLeftPanel;
+				builderStore.showLeftPanel = !builderStore.showLeftPanel;
 			} else {
-				store.showRightPanel = !store.showRightPanel;
-				store.showLeftPanel = store.showRightPanel;
+				builderStore.showRightPanel = !builderStore.showRightPanel;
+				builderStore.showLeftPanel = builderStore.showRightPanel;
 			}
 		}
 		// save page or component
 		if (e.key === "s" && isCtrlOrCmd(e)) {
 			e.preventDefault();
-			if (store.editingMode === "fragment") {
+			if (canvasStore.editingMode === "fragment") {
 				saveAndExitFragmentMode(e);
 				e.stopPropagation();
 			}
@@ -267,11 +271,11 @@ export function useBuilderEvents(
 
 		if (e.key === "p" && isCtrlOrCmd(e)) {
 			e.preventDefault();
-			store.savePage();
+			pageStore.savePage();
 			router.push({
 				name: "preview",
 				params: {
-					pageId: store.selectedPage as string,
+					pageId: pageStore.selectedPage as string,
 				},
 			});
 		}
@@ -280,6 +284,11 @@ export function useBuilderEvents(
 		if (e.key === "f" && isCtrlOrCmd(e)) {
 			e.preventDefault();
 			document.querySelector(".properties-search-input")?.querySelector("input")?.focus();
+		}
+
+		if (e.key === "f" && isCtrlOrCmd(e) && e.shiftKey) {
+			e.preventDefault();
+			builderStore.showSearchBlock = true;
 		}
 
 		if (e.key === "c" && isCtrlOrCmd(e) && e.shiftKey) {
@@ -310,7 +319,7 @@ export function useBuilderEvents(
 
 		if ((e.key === "Backspace" || e.key === "Delete") && blockController.isBLockSelected()) {
 			for (const block of blockController.getSelectedBlocks()) {
-				store.activeCanvas?.removeBlock(block, e.shiftKey);
+				canvasStore.activeCanvas?.removeBlock(block, e.shiftKey);
 			}
 			clearSelection();
 			e.stopPropagation();
@@ -318,7 +327,7 @@ export function useBuilderEvents(
 		}
 
 		if (e.key === "Escape") {
-			store.exitFragmentMode(e);
+			canvasStore.exitFragmentMode(e);
 		}
 
 		// handle arrow keys
@@ -333,13 +342,13 @@ export function useBuilderEvents(
 	// TODO: Refactor with useMagicKeys
 	useEventListener(document, "keydown", (e) => {
 		if (isTargetEditable(e)) return;
-		if (e.key === "z" && isCtrlOrCmd(e) && !e.shiftKey && store.activeCanvas?.history?.canUndo) {
-			store.activeCanvas?.history.undo();
+		if (e.key === "z" && isCtrlOrCmd(e) && !e.shiftKey && canvasStore.activeCanvas?.history?.canUndo) {
+			canvasStore.activeCanvas?.history.undo();
 			e.preventDefault();
 			return;
 		}
-		if (e.key === "z" && e.shiftKey && isCtrlOrCmd(e) && store.activeCanvas?.history?.canRedo) {
-			store.activeCanvas?.history.redo();
+		if (e.key === "z" && e.shiftKey && isCtrlOrCmd(e) && canvasStore.activeCanvas?.history?.canRedo) {
+			canvasStore.activeCanvas?.history.redo();
 			e.preventDefault();
 			return;
 		}
@@ -409,27 +418,27 @@ export function useBuilderEvents(
 		}
 
 		if (e.key === "c") {
-			store.mode = "container";
+			builderStore.mode = "container";
 			return;
 		}
 
 		if (e.key === "i") {
-			store.mode = "image";
+			builderStore.mode = "image";
 			return;
 		}
 
 		if (e.key === "t") {
-			store.mode = "text";
+			builderStore.mode = "text";
 			return;
 		}
 
 		if (e.key === "v") {
-			store.mode = "select";
+			builderStore.mode = "select";
 			return;
 		}
 
 		if (e.key === "h") {
-			store.mode = "move";
+			builderStore.mode = "move";
 			return;
 		}
 	});
@@ -438,11 +447,11 @@ export function useBuilderEvents(
 	useEventListener(document, "visibilitychange", () => {
 		if (document.visibilityState === "visible" && !fragmentCanvas.value) {
 			if (route.params.pageId && route.params.pageId !== "new") {
-				const currentModified = store.activePage?.modified;
+				const currentModified = pageStore.activePage?.modified;
 				webComponent.reload();
-				webPages.fetchOne.submit(store.activePage?.name).then((doc: BuilderPage[]) => {
+				webPages.fetchOne.submit(pageStore.activePage?.name).then((doc: BuilderPage[]) => {
 					if (currentModified !== doc[0]?.modified) {
-						store.setPage(route.params.pageId as string, false);
+						pageStore.setPage(route.params.pageId as string, false);
 					}
 				});
 			}
@@ -457,10 +466,10 @@ export function useBuilderEvents(
 			(e.target as HTMLElement)?.closest("[data-block-id]");
 		if (target) {
 			const blockId = target.dataset.blockLayerId || target.dataset.blockId;
-			const block = store.activeCanvas?.findBlock(blockId as string);
+			const block = canvasStore.activeCanvas?.findBlock(blockId as string);
 			if (block) {
-				store.activeCanvas?.selectBlock(block, blockController.multipleBlocksSelected());
-				store.blockContextMenu?.showContextMenu(e, block);
+				canvasStore.activeCanvas?.selectBlock(block, blockController.multipleBlocksSelected());
+				builderStore.blockContextMenu?.showContextMenu(e, block);
 			}
 		}
 	});
@@ -468,7 +477,7 @@ export function useBuilderEvents(
 
 const clearSelection = () => {
 	blockController.clearSelection();
-	store.editableBlock = null;
+	canvasStore.editableBlock = null;
 	if (document.activeElement instanceof HTMLElement) {
 		document.activeElement.blur();
 	}
@@ -476,10 +485,10 @@ const clearSelection = () => {
 
 const copySelectedBlocksToClipboard = (e: ClipboardEvent) => {
 	if (isTargetEditable(e)) return;
-	if (store.activeCanvas?.selectedBlocks.length) {
+	if (canvasStore.activeCanvas?.selectedBlocks.length) {
 		e.preventDefault();
 		const componentDocuments: BuilderComponent[] = [];
-		for (const block of store.activeCanvas?.selectedBlocks) {
+		for (const block of canvasStore.activeCanvas?.selectedBlocks) {
 			const components = block.getUsedComponentNames();
 			for (const componentName of components) {
 				const component = componentStore.getComponent(componentName);
@@ -489,7 +498,7 @@ const copySelectedBlocksToClipboard = (e: ClipboardEvent) => {
 			}
 		}
 
-		const blocksToCopy = store.activeCanvas?.selectedBlocks.map((block) => {
+		const blocksToCopy = canvasStore.activeCanvas?.selectedBlocks.map((block) => {
 			if (!Boolean(block.extendedFromComponent) && block.isChildOfComponent) {
 				return detachBlockFromComponent(block, null);
 			}

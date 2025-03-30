@@ -11,7 +11,6 @@ app_license = "GNU Affero General Public License v3.0"
 
 # Includes in <head>
 # ------------------
-
 # include js, css files in header of desk.html
 # app_include_css = "/assets/builder/css/builder.css"
 app_include_js = "/assets/builder/js/builder.js"
