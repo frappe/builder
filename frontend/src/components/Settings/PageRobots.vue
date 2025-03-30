@@ -12,7 +12,7 @@
 					}
 				"
 				type="Python"
-				height="65vh"
+				height="60vh"
 				label="robot.txt"
 				:showSaveButton="true"
 				description='Specify rules to control how search engines interact with your site.

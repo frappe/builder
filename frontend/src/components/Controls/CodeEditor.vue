@@ -1,19 +1,19 @@
 <template>
-	<div
-		class="editor flex flex-col gap-1"
-		:style="{
-			height: height,
-		}">
+	<div class="editor flex flex-col gap-1">
 		<span class="text-p-sm font-medium text-ink-gray-8" v-show="label">
 			{{ label }}
 			<span v-if="isDirty" class="text-[10px] text-gray-600">●</span>
 		</span>
 		<div
 			ref="editor"
-			class="h-auto flex-1 overflow-hidden overscroll-none !rounded border border-outline-gray-2 bg-surface-gray-2 dark:bg-gray-900" />
+			:style="{
+				'min-height': height,
+			}"
+			class="h-auto resize-y overflow-hidden overscroll-none !rounded border border-outline-gray-2 bg-surface-gray-2 dark:bg-gray-900" />
 		<span class="mt-1 text-p-xs text-ink-gray-6" v-show="description" v-html="description"></span>
 		<BuilderButton
 			v-if="showSaveButton"
+			variant="solid"
 			@click="emit('save', getEditorValue())"
 			class="mt-3"
 			:disabled="!isDirty">
@@ -125,7 +125,7 @@ const setupEditor = () => {
 	aceEditor.on("blur", () => {
 		try {
 			let value = getEditorValue();
-			if (value === props.modelValue) return;
+			if (value === getModelValue()) return;
 			if (!props.showSaveButton && !props.readonly) {
 				emit("update:modelValue", value);
 			}
@@ -164,6 +164,7 @@ function resetEditor(resetHistory = false) {
 	if (resetHistory) {
 		aceEditor?.session.getUndoManager().reset();
 	}
+	isDirty.value = false;
 }
 
 watch(isDark, () => {
