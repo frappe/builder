@@ -1,5 +1,5 @@
 <template>
-	<div class="flex h-[70vh] gap-5">
+	<div class="flex gap-5">
 		<div class="flex flex-col gap-3">
 			<div class="flex h-full w-48 flex-col justify-between gap-1">
 				<div class="flex flex-col gap-1">
@@ -80,7 +80,7 @@
 			</div>
 		</div>
 		<div
-			class="flex h-full w-full items-center justify-center rounded bg-surface-gray-1 text-base text-ink-gray-6"
+			class="flex h-[60vh] w-full items-center justify-center rounded bg-surface-gray-1 text-base text-ink-gray-6"
 			v-show="!activeScript">
 			Add Script
 		</div>
@@ -91,7 +91,7 @@
 				:label="activeScript.script_name"
 				:type="activeScript.script_type as 'JavaScript' | 'CSS'"
 				class="flex-1"
-				height="auto"
+				height="55vh"
 				:autofocus="false"
 				:show-save-button="true"
 				@save="updateScript"
