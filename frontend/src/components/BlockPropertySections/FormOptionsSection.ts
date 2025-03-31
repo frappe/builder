@@ -91,6 +91,7 @@ const formOptionsSectionProperties = [
 						block.addChild(getBlockTemplate(field, df));
 					},
 				);
+				block.addChild(getBlockTemplate("button"));
 				blockController.setFormOption("reference_document", webform);
 			},
 		},
