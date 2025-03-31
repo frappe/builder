@@ -16,7 +16,7 @@
 				Settings
 			</span>
 		</div>
-		<div class="flex flex-col">
+		<div class="flex flex-1 flex-col">
 			<div class="flex items-center justify-between p-2 text-base text-ink-gray-6">
 				<span>Folders</span>
 				<BuilderButton
@@ -73,6 +73,7 @@
 			</span>
 		</div>
 		<NewFolder v-model="showNewFolderDialog"></NewFolder>
+		<TrialBanner v-if="builderStore.isFCSite"></TrialBanner>
 	</section>
 </template>
 <script lang="ts" setup>
@@ -87,6 +88,7 @@ import useBuilderStore from "@/stores/builderStore";
 import { BuilderProjectFolder } from "@/types/Builder/BuilderProjectFolder";
 import { confirm } from "@/utils/helpers";
 import { createResource } from "frappe-ui";
+import { TrialBanner } from "frappe-ui/frappe";
 import Dropdown from "frappe-ui/src/components/Dropdown.vue";
 import { ref } from "vue";
 

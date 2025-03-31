@@ -5,7 +5,7 @@
 			type="HTML"
 			description="Added to end of head. For meta tags, styles, and scripts."
 			:modelValue="builderSettings.doc.head_html"
-			height="150px"
+			height="100px"
 			class="shrink-0"
 			@update:modelValue="builderStore.updateBuilderSettings('head_html', $event)"
 			:showLineNumbers="true"></CodeEditor>
@@ -14,7 +14,7 @@
 			type="HTML"
 			description="Added to end of body. For adding scripts."
 			:modelValue="builderSettings.doc.body_html"
-			height="150px"
+			height="100px"
 			class="shrink-0"
 			@update:modelValue="builderStore.updateBuilderSettings('body_html', $event)"
 			:showLineNumbers="true"></CodeEditor>
@@ -23,7 +23,7 @@
 			type="JavaScript"
 			description="This script will be executed on all the pages of your website."
 			:modelValue="builderSettings.doc.script"
-			height="250px"
+			height="100px"
 			class="shrink-0"
 			@update:modelValue="builderStore.updateBuilderSettings('script', $event)"
 			:showLineNumbers="true"></CodeEditor>
@@ -32,7 +32,7 @@
 			type="CSS"
 			description="Applies to all pages"
 			:modelValue="builderSettings.doc.style"
-			height="250px"
+			height="100px"
 			class="shrink-0"
 			@update:modelValue="builderStore.updateBuilderSettings('style', $event)"
 			:showLineNumbers="true"></CodeEditor>

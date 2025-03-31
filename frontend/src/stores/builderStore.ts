@@ -7,6 +7,12 @@ import { defineStore } from "pinia";
 import { toast } from "vue-sonner";
 import BlockLayers from "./components/BlockLayers.vue";
 
+declare global {
+	interface Window {
+		is_fc_site?: boolean | string;
+	}
+}
+
 const useBuilderStore = defineStore("builderStore", {
 	state: () => ({
 		activeLayers: <InstanceType<typeof BlockLayers> | null>null,
@@ -15,6 +21,7 @@ const useBuilderStore = defineStore("builderStore", {
 		mode: <BuilderMode>"select", // check setEvents in BuilderCanvas for usage
 		lastMode: <BuilderMode>"select",
 		autoSave: true,
+		showSearchBlock: false,
 		builderLayout: {
 			rightPanelWidth: 275,
 			leftPanelWidth: 250,
@@ -29,6 +36,7 @@ const useBuilderStore = defineStore("builderStore", {
 		showHTMLDialog: false,
 		realtime: new RealTimeHandler(),
 		viewers: <UserInfo[]>[],
+		isFCSite: window.is_fc_site === "{{ is_fc_site }}" ? false : window.is_fc_site,
 		activeFolder: useStorage("activeFolder", ""),
 	}),
 	actions: {
