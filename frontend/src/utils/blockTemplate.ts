@@ -13,7 +13,8 @@ function getBlockTemplate(
 		| "video"
 		| "input"
 		| "select"
-		| "textarea",
+		| "textarea"
+		| "button",
 	options: { [key: string]: string | number | boolean | { [key: string]: string }[] } = {},
 ): BlockOptions {
 	switch (type) {
@@ -185,6 +186,25 @@ function getBlockTemplate(
 					width: "100%",
 				} as BlockStyleMap,
 				customAttributes: attr.customAttributes,
+			};
+		}
+		case "button": {
+			return {
+				name: "Button",
+				element: "button",
+				attributes: {
+					type: "submit",
+				},
+				baseStyles: {
+					borderColor: "#c9c9c9",
+					borderRadius: "4px",
+					borderStyle: "solid",
+					borderWidth: "1px",
+					fontSize: "14px",
+					height: "32px",
+					width: "100%",
+				} as BlockStyleMap,
+				innerHTML: "Submit",
 			};
 		}
 		case "textarea": {
