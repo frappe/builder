@@ -216,7 +216,7 @@ const textContent = computed(() => {
 	let innerHTML = props.block.getInnerHTML();
 	if (props.data) {
 		if (props.block.getDataKey("property") === "innerHTML") {
-			innerHTML = getDataForKey(props.data, props.block.getDataKey("key")) || innerHTML;
+			innerHTML = getDataForKey(props.data, props.block.getDataKey("key")) ?? innerHTML;
 		}
 	}
 	return String(innerHTML ?? "");

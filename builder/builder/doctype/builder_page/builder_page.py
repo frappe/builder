@@ -654,7 +654,9 @@ def set_dynamic_content_placeholder(block, data_key=False):
 				"style"
 			] += f"{css_property}: {{{{ {key} or '{escape_single_quotes(block['baseStyles'].get(_property, '') or '')}' }}}};"
 		elif _type == "key" and not block.get("isRepeaterBlock"):
-			block[_property] = f"{{{{ {key} or '{escape_single_quotes(block.get(_property, ''))}' }}}}"
+			block[
+				_property
+			] = f"{{{{ {key} if {key} is not none else '{escape_single_quotes(block.get(_property, ''))}' }}}}"
 
 
 @redis_cache(ttl=60 * 60)
