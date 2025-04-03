@@ -34,13 +34,13 @@ Most existing solutions were either too complex, too restrictive, or difficult t
 
 ### Key Features
 
-- ✨ **Intuitive Visual Builder:** Simplify your workflow with a Figma-like editor.
-- 📱 **Responsive Views:** Ensure your sites look great on any device without the fuss.
-- 🛠️ **Frappe CMS Integration:** Easily fetch data from your database and create dynamic pages.
-- 🧑‍💻 **Scripting Capabilities:** Customize with client scripts, global scripts, and styles.
-- 🚀 **One-Click Publishing:** Instantly share your creation with the world in a single click.
-- ⚡ **Performance Excellence:** Frappe Builder does not bloat web pages with unnecessary scripts hence pages are highly performant, consistently scoring high on Google Lighthouse tests.
-- 🧰 **Production Ready**: [Frappe.io](https://frappe.io) built on Frappe Builder, stands as a testament to its reliability in delivering production-ready solutions.
+- **Intuitive Visual Builder:** Simplify your workflow with a Figma-like editor.
+- **Responsive Views:** Ensure your sites look great on any device without the fuss.
+- **Frappe CMS Integration:** Easily fetch data from your database and create dynamic pages.
+- **Scripting Capabilities:** Customize with client scripts, global scripts, and styles.
+- **One-Click Publishing:** Instantly share your creation with the world in a single click.
+- **Performance Excellence:** Frappe Builder does not bloat web pages with unnecessary scripts hence pages are highly performant, consistently scoring high on Google Lighthouse tests.
+- **Production Ready**: [Frappe.io](https://frappe.io) built on Frappe Builder, stands as a testament to its reliability in delivering production-ready solutions.
 
 ### Under the Hood
 
