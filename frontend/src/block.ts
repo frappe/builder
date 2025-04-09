@@ -279,6 +279,9 @@ class Block implements BlockOptions {
 			this.originalElement === "input" || this.getElement() === "input" || this.getElement() === "textarea"
 		);
 	}
+	isDialog() {
+		return this.getElement() === "dialog";
+	}
 	setStyle(style: styleProperty, value: StyleValue) {
 		const canvasStore = useCanvasStore();
 		let styleObj = this.baseStyles;
@@ -483,6 +486,11 @@ class Block implements BlockOptions {
 			styles.alignItems = "center";
 			styles.justifyContent = "center";
 		}
+
+		if (this.isDialog()) {
+			styles.zIndex = "1000";
+		}
+		
 		styles.transition = "unset";
 
 		return styles;
