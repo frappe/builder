@@ -6,6 +6,7 @@ from frappe.tests.utils import FrappeTestCase
 from builder.utils import (
 	ColonRule,
 	camel_case_to_kebab_case,
+	clean_data,
 	escape_single_quotes,
 	execute_script,
 	get_builder_page_preview_file_paths,
@@ -132,3 +133,15 @@ class TestBuilderUtils(FrappeTestCase):
 		rule3 = ColonRule("/test/:name/:id", endpoint="test_endpoint")
 		self.assertEqual(rule3.rule, "/test/<name>/<id>")
 		self.assertEqual(rule3.endpoint, "test_endpoint")
+
+	def test_clean_data(self):
+		data = {
+			"test": "value",
+			"test2": "value2",
+			"test3": lambda x: x,
+			"test4": None,
+			"test5": frappe._dict(),
+			"test6": {}.items,
+		}
+		cleaned_data = clean_data(data)
+		self.assertEqual(cleaned_data, {"test": "value", "test2": "value2", "test4": None, "test5": {}})
