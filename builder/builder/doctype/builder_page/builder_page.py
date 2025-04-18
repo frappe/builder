@@ -27,6 +27,7 @@ from builder.html_preview_image import generate_preview
 from builder.utils import (
 	ColonRule,
 	camel_case_to_kebab_case,
+	clean_data,
 	copy_img_to_asset_folder,
 	escape_single_quotes,
 	execute_script,
@@ -213,6 +214,7 @@ class BuilderPage(WebsiteGenerator):
 		self.set_style_and_script(context)
 		self.set_meta_tags(context=context, page_data=page_data)
 		self.set_favicon(context)
+		context.page_data = clean_data(context.page_data)
 		try:
 			context["content"] = render_template(context.content, context)
 		except TemplateSyntaxError:

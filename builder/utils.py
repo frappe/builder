@@ -1,4 +1,5 @@
 import glob
+import inspect
 import os
 import re
 import shutil
@@ -359,6 +360,18 @@ def get_dummy_blocks():
 			],
 		},
 	]
+
+
+def clean_data(data):
+	if isinstance(data, dict):
+		return {
+			k: clean_data(v)
+			for k, v in data.items()
+			if not inspect.isbuiltin(v) and not inspect.isfunction(v) and not inspect.ismethod(v)
+		}
+	elif isinstance(data, list):
+		return [clean_data(i) for i in data]
+	return data
 
 
 class ColonRule(Rule):
