@@ -86,7 +86,6 @@ class BuilderPage(WebsiteGenerator):
 		self.process_blocks()
 		self.set_preview()
 		self.set_default_values()
-		self.set_route()
 
 	def process_blocks(self):
 		for block_type in ["blocks", "draft_blocks"]:
@@ -104,8 +103,6 @@ class BuilderPage(WebsiteGenerator):
 	def set_default_values(self):
 		if not self.page_title:
 			self.page_title = "My Page"
-
-	def set_route(self):
 		if not self.route:
 			if not self.name:
 				self.autoname()
