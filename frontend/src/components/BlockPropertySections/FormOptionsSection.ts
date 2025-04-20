@@ -88,10 +88,11 @@ const formOptionsSectionProperties = [
 									? "email"
 									: "text";
 						}
-						block.addChild(getBlockTemplate(field, df));
+						block.addChild(getBlockTemplate(field, df), null, false);
 					},
 				);
-				block.addChild(getBlockTemplate("button"));
+				block.addChild(getBlockTemplate("button"), null, false);
+				block.setAttribute("data-web-form", webform);
 				blockController.setFormOption("reference_document", webform);
 			},
 		},
