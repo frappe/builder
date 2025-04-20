@@ -20,7 +20,7 @@
 	</Dropdown>
 </template>
 <script setup lang="ts">
-import Block from "@/utils/block";
+import Block from "@/block";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { Dropdown } from "frappe-ui";
 
@@ -38,16 +38,7 @@ const addField = (type: string) => {
 	} else if (type === "select") {
 		props.block.addChild(
 			getBlockTemplate("select", {
-				options: [
-					{
-						label: "Option 1",
-						value: "option_1",
-					},
-					{
-						label: "Option 2",
-						value: "option_2",
-					},
-				],
+				options: "Option 1\nOption 2",
 			}),
 		);
 	}
