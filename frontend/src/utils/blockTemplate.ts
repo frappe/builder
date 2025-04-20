@@ -161,7 +161,6 @@ function getBlockTemplate(
 					borderStyle: "solid",
 					borderWidth: "1px",
 					fontSize: "14px",
-					height: "32px",
 					width: "100%",
 				} as BlockStyleMap,
 				customAttributes: attr.customAttributes,
@@ -181,7 +180,6 @@ function getBlockTemplate(
 					borderStyle: "solid",
 					borderWidth: "1px",
 					fontSize: "14px",
-					height: "32px",
 					width: "100%",
 				} as BlockStyleMap,
 				customAttributes: attr.customAttributes,
@@ -234,6 +232,9 @@ function getAttributesFromDocumentField(df: any) {
 		type: df.input_type || "text",
 		placeholder: df.label,
 	} as BlockAttributeMap;
+	if (!df.input_type) {
+		delete attributes.type;
+	}
 	const customAttributes = {
 		name: df.fieldname,
 		required: df.reqd ? "true" : "false",
