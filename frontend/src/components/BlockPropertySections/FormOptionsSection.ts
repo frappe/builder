@@ -51,8 +51,8 @@ const formOptionsSectionProperties = [
 		searchKeyWords: "Form, Webform, Web Form, Reference Form",
 		events: {
 			"update:modelValue": async (webform: string) => {
-				const block = blockController.getFirstSelectedBlock();
-				if (!block) return;
+				const formBlock = blockController.getFirstSelectedBlock();
+				if (!formBlock) return;
 				const webFormResource = await createDocumentResource({
 					doctype: "Web Form",
 					name: webform,
@@ -61,7 +61,9 @@ const formOptionsSectionProperties = [
 				await webFormResource.get.promise;
 				const webForm = webFormResource.doc;
 				console.log(webForm);
-				block.children = [];
+				formBlock.children = [];
+				let section = formBlock.addChild(getBlockTemplate("section"), null, false);
+				let column = section.addChild(getBlockTemplate("column"), null, false);
 				webForm.web_form_fields.forEach(
 					(df: {
 						fieldname: string;
@@ -79,20 +81,30 @@ const formOptionsSectionProperties = [
 							"Long Text": "textarea",
 							int: "input",
 						} as any;
-						const field = field_map[df.fieldtype] || "input";
-						if (field === "input") {
-							df.input_type =
-								df.fieldtype === "int"
-									? "number"
-									: df.fieldtype === "Data" && df.options === "Email"
-									? "email"
-									: "text";
+						// create structure based on sectionbreak and column break
+						// on section break, there should be a wrapping div with flex-direction: column
+						// on column break, parent should be a div with flex-direction: column
+						if (df.fieldtype === "Section Break") {
+							section = formBlock.addChild(getBlockTemplate("section"), null, false);
+							column = section.addChild(getBlockTemplate("column"), null, false);
+						} else if (df.fieldtype === "Column Break") {
+							column = section.addChild(getBlockTemplate("column"), null, false);
+						} else {
+							const field = field_map[df.fieldtype] || "input";
+							if (field === "input") {
+								df.input_type =
+									df.fieldtype === "int"
+										? "number"
+										: df.fieldtype === "Data" && df.options === "Email"
+										? "email"
+										: "text";
+							}
+							column.addChild(getBlockTemplate(field, df), null, false);
 						}
-						block.addChild(getBlockTemplate(field, df), null, false);
 					},
 				);
-				block.addChild(getBlockTemplate("button"), null, false);
-				block.setAttribute("data-web-form", webform);
+				formBlock.addChild(getBlockTemplate("button"), null, false);
+				formBlock.setAttribute("data-web-form", webform);
 				blockController.setFormOption("reference_document", webform);
 			},
 		},
