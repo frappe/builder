@@ -4,6 +4,8 @@ function getBlockTemplate(
 		| "text"
 		| "image"
 		| "container"
+		| "section"
+		| "column"
 		| "body"
 		| "fit-container"
 		| "missing-component"
@@ -61,6 +63,33 @@ function getBlockTemplate(
 					flexDirection: "column",
 					flexShrink: 0,
 					overflow: "hidden",
+				} as BlockStyleMap,
+			};
+		case "section":
+			return {
+				name: "Section",
+				element: "div",
+				blockName: "section",
+				baseStyles: {
+					display: "flex",
+					flexShrink: 0,
+					overflow: "hidden",
+					gap: "10px",
+					width: "100%",
+					flexDirection: "row",
+				} as BlockStyleMap,
+			};
+		case "column":
+			return {
+				name: "Column",
+				element: "div",
+				blockName: "column",
+				baseStyles: {
+					display: "flex",
+					flexDirection: "column",
+					gap: "10px",
+					overflow: "hidden",
+					width: "100%",
 				} as BlockStyleMap,
 			};
 		case "body":

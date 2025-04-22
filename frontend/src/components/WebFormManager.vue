@@ -33,12 +33,18 @@ const addField = (type: string) => {
 		props.block.addChild(
 			getBlockTemplate("input", {
 				type: "text",
+				label: "Text",
+				name: "text",
+				reqd: 1,
 			}),
 		);
 	} else if (type === "select") {
 		props.block.addChild(
 			getBlockTemplate("select", {
 				options: "Option 1\nOption 2",
+				label: "Select",
+				name: "select",
+				reqd: 1,
 			}),
 		);
 	}
