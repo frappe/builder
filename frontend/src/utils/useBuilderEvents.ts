@@ -103,7 +103,7 @@ export function useBuilderEvents(
 
 			for (const component of dataObj.components) {
 				delete component.for_web_page;
-				await componentStore.createComponent(component, true);
+				await componentStore.createComponent(component, false);
 			}
 
 			if (
