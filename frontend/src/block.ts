@@ -601,6 +601,11 @@ class Block implements BlockOptions {
 			editor.chain().setColor(color).run();
 		} else {
 			this.setStyle("color", color);
+			const innerHTMLDOM = new DOMParser().parseFromString(this.innerHTML || "", "text/html");
+			innerHTMLDOM.querySelectorAll("*").forEach((el) => {
+				el.style.color = "";
+			});
+			this.innerHTML = innerHTMLDOM.body.innerHTML;
 		}
 	}
 	isHTML() {
