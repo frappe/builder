@@ -109,36 +109,27 @@
 	</div>
 </template>
 <script setup lang="ts">
+import type Block from "@/block";
 import { clamp } from "@vueuse/core";
 import { computed, inject, ref, watchEffect } from "vue";
-import Block from "../utils/block";
 import { getNumberFromPx } from "../utils/helpers";
 
 import { toast } from "vue-sonner";
 const canvasProps = inject("canvasProps") as CanvasProps;
 
-const props = defineProps({
-	targetBlock: {
-		type: Block,
-		required: true,
+const props = withDefaults(
+	defineProps<{
+		targetBlock: Block;
+		disableHandlers?: boolean;
+		onUpdate?: () => void;
+		breakpoint?: string;
+		target: HTMLElement | SVGElement;
+	}>(),
+	{
+		disableHandlers: false,
+		breakpoint: "desktop",
 	},
-	disableHandlers: {
-		type: Boolean,
-		default: false,
-	},
-	onUpdate: {
-		type: Function,
-		default: null,
-	},
-	breakpoint: {
-		type: String,
-		default: "desktop",
-	},
-	target: {
-		type: [HTMLElement, SVGElement],
-		required: true,
-	},
-});
+);
 
 const updating = ref(false);
 const emit = defineEmits(["update"]);

@@ -1,9 +1,11 @@
+import Block from "@/block";
 import AlertDialog from "@/components/AlertDialog.vue";
-import useStore from "@/store";
+import useCanvasStore from "@/stores/canvasStore";
+import { BuilderPage } from "@/types/Builder/BuilderPage";
+import getBlockTemplate from "@/utils/blockTemplate";
 import { confirmDialog, FileUploadHandler } from "frappe-ui";
 import { h, reactive, toRaw } from "vue";
 import { toast } from "vue-sonner";
-import Block from "./block";
 
 function getNumberFromPx(px: string | number | null | undefined): number {
 	if (!px) {
@@ -112,7 +114,7 @@ async function alert(message: string, title: string = "Alert"): Promise<boolean>
 		h(AlertDialog, {
 			title,
 			message,
-			onClick: resolve,
+			onClick: () => resolve(true),
 		});
 	});
 }
@@ -487,9 +489,35 @@ function getBlockInfo(e: MouseEvent) {
 }
 
 function getBlock(e: MouseEvent) {
-	const store = useStore();
+	const canvasStore = useCanvasStore();
 	const blockInfo = getBlockInfo(e);
-	return store.activeCanvas?.findBlock(blockInfo.blockId);
+	return canvasStore.activeCanvas?.findBlock(blockInfo.blockId);
+}
+
+function getRootBlockTemplate() {
+	return getBlockInstance(getBlockTemplate("body"));
+}
+
+function getImageBlock(imageSrc: string, imageAlt: string = "") {
+	const imageBlock = getBlockTemplate("image");
+	if (!imageBlock.attributes) {
+		imageBlock.attributes = {};
+	}
+	imageBlock.attributes.src = imageSrc;
+	return imageBlock;
+}
+
+function getVideoBlock(videoSrc: string) {
+	const videoBlock = getBlockTemplate("video");
+	if (!videoBlock.attributes) {
+		videoBlock.attributes = {};
+	}
+	videoBlock.attributes.src = videoSrc;
+	return videoBlock;
+}
+
+function openInDesk(page: BuilderPage) {
+	window.open(`/app/builder-page/${page.page_name}`, "_blank");
 }
 
 interface BackgroundValue {
@@ -697,11 +725,14 @@ export {
 	getCopyWithoutParent,
 	getDataForKey,
 	getFontName,
+	getImageBlock,
 	getNumberFromPx,
 	getRandomColor,
 	getRGB,
+	getRootBlockTemplate,
 	getRouteVariables,
 	getTextContent,
+	getVideoBlock,
 	HexToHSV,
 	HSVToHex,
 	isBlock,
@@ -712,6 +743,7 @@ export {
 	kebabToCamelCase,
 	logObjectDiff,
 	mapToObject,
+	openInDesk,
 	parseAndSetBackground,
 	parseBackground,
 	replaceMapKey,

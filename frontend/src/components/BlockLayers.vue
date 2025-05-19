@@ -13,8 +13,8 @@
 					:title="element.blockId"
 					class="min-w-24 cursor-pointer select-none overflow-hidden rounded border border-transparent bg-surface-white bg-opacity-50 text-base text-ink-gray-7"
 					@click.stop="selectBlock(element, $event)"
-					@mouseover.stop="store.hoveredBlock = element.blockId"
-					@mouseleave.stop="store.hoveredBlock = null">
+					@mouseover.stop="canvasStore.activeCanvas?.setHoveredBlock(element.blockId)"
+					@mouseleave.stop="canvasStore.activeCanvas?.setHoveredBlock(null)">
 					<span
 						class="group my-[7px] flex items-center gap-1.5 pr-[2px] font-medium"
 						:style="{ paddingLeft: `${indent}px` }"
@@ -64,7 +64,7 @@
 							class="ml-auto mr-2 hidden h-3 w-3 group-hover:block"
 							@click.stop="element.toggleVisibility()" />
 						<span v-if="element.isRoot()" class="ml-auto mr-2 text-sm capitalize text-ink-gray-5">
-							{{ store.activeBreakpoint }}
+							{{ canvasStore.activeCanvas?.activeBreakpoint }}
 						</span>
 					</span>
 					<div v-if="canShowChildLayer(element)">
@@ -82,17 +82,20 @@
 	</div>
 </template>
 <script setup lang="ts">
-import Block from "@/utils/block";
+import type Block from "@/block";
+import useBuilderStore from "@/stores/builderStore";
+import useCanvasStore from "@/stores/canvasStore";
 import { FeatherIcon } from "frappe-ui";
-import { PropType, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import draggable from "vuedraggable";
-import useStore from "../store";
 import BlockLayers from "./BlockLayers.vue";
 import BlocksIcon from "./Icons/Blocks.vue";
 
 type LayerInstance = InstanceType<typeof BlockLayers>;
 
-const store = useStore();
+const canvasStore = useCanvasStore();
+const builderStore = useBuilderStore();
+
 const childLayers = ref<LayerInstance[]>([]);
 const childLayer = (el: LayerInstance) => {
 	if (el) {
@@ -100,24 +103,20 @@ const childLayer = (el: LayerInstance) => {
 	}
 };
 
-const props = defineProps({
-	blocks: {
-		type: Array as PropType<Block[]>,
-		default: () => [],
+const props = withDefaults(
+	defineProps<{
+		blocks: Block[];
+		indent?: number;
+		adjustForRoot?: boolean;
+		disableDraggable?: boolean;
+	}>(),
+	{
+		blocks: () => [],
+		indent: 10,
+		adjustForRoot: true,
+		disableDraggable: false,
 	},
-	indent: {
-		type: Number,
-		default: 10,
-	},
-	adjustForRoot: {
-		type: Boolean,
-		default: true,
-	},
-	disableDraggable: {
-		type: Boolean,
-		default: false,
-	},
-});
+);
 
 interface LayerBlock extends Block {
 	editable: boolean;
@@ -181,10 +180,10 @@ const canShowChildLayer = (block: Block) => {
 };
 
 watch(
-	() => store.activeCanvas?.selectedBlockIds,
+	() => canvasStore.activeCanvas?.selectedBlockIds,
 	() => {
-		if (store.activeCanvas?.selectedBlocks.length) {
-			store.activeCanvas?.selectedBlocks.forEach((block: Block) => {
+		if (canvasStore.activeCanvas?.selectedBlocks.length) {
+			canvasStore.activeCanvas?.selectedBlocks.forEach((block: Block) => {
 				if (block) {
 					let parentBlock = block.getParentBlock();
 					// open all parent blocks
@@ -201,7 +200,7 @@ watch(
 
 // @ts-ignore
 const updateParent = (event) => {
-	event.item.__draggable_context.element.parentBlock = store.activeCanvas?.findBlock(
+	event.item.__draggable_context.element.parentBlock = canvasStore.activeCanvas?.findBlock(
 		event.to.closest("[data-block-layer-id]").dataset.blockLayerId,
 	);
 };
@@ -219,7 +218,7 @@ const blockExitsInTree = (block: Block) => {
 };
 
 const selectBlock = (block: Block, event: MouseEvent) => {
-	store.selectBlock(block, event, false, true);
+	canvasStore.selectBlock(block, event, false, true);
 };
 
 defineExpose({

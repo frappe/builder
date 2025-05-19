@@ -29,20 +29,19 @@
 </template>
 <script setup lang="ts">
 import { getRGB } from "@/utils/helpers";
-import { PropType } from "vue";
 import ColorPicker from "./ColorPicker.vue";
 import InputLabel from "./InputLabel.vue";
 
-defineProps({
-	value: {
-		type: String as PropType<HashString | null>,
-		default: null,
+withDefaults(
+	defineProps<{
+		value?: HashString | null;
+		label?: string;
+	}>(),
+	{
+		value: null,
+		label: "",
 	},
-	label: {
-		type: String,
-		default: "",
-	},
-});
+);
 
 const emit = defineEmits(["change"]);
 </script>

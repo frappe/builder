@@ -29,17 +29,16 @@ import { computed, ref } from "vue";
 
 const menu = ref(null) as unknown as typeof Menu;
 
-const props = defineProps({
-	posX: {
-		type: Number,
-		required: true,
+const props = withDefaults(
+	defineProps<{
+		posX: number;
+		posY: number;
+		options: ContextMenuOption[];
+	}>(),
+	{
+		options: () => [],
 	},
-	posY: {
-		type: Number,
-		required: true,
-	},
-	options: Array as () => ContextMenuOption[],
-});
+);
 
 const x = computed(() => {
 	const menuWidth = menu.value?.$el.clientWidth;

@@ -1,12 +1,13 @@
-import useStore from "@/store";
+import type Block from "@/block";
+import useCanvasStore from "@/stores/canvasStore";
 import { CanvasProps } from "@/types/Builder/BuilderCanvas";
-import Block from "@/utils/block";
+import { getRootBlockTemplate } from "@/utils/helpers";
 import { useCanvasHistory } from "@/utils/useCanvasHistory";
 import { useElementBounding } from "@vueuse/core";
 import { nextTick, reactive, ref, Ref } from "vue";
 import { toast } from "vue-sonner";
 
-const store = useStore();
+const canvasStore = useCanvasStore();
 
 export function useCanvasUtils(
 	canvasProps: CanvasProps,
@@ -115,7 +116,7 @@ export function useCanvasUtils(
 	};
 
 	const clearCanvas = () => {
-		rootBlock.value = store.getRootBlockTemplate();
+		rootBlock.value = getRootBlockTemplate();
 	};
 
 	const moveCanvas = (direction: "up" | "down" | "right" | "left") => {
@@ -248,7 +249,7 @@ export function useCanvasUtils(
 			return;
 		}
 		const nextSibling = block.getSiblingBlock("next");
-		if (store.activeBreakpoint === "desktop" || force) {
+		if (canvasStore.activeCanvas?.activeBreakpoint === "desktop" || force) {
 			parentBlock.removeChild(block);
 		} else {
 			block.toggleVisibility(false);

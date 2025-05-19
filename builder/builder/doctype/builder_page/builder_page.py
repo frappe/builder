@@ -27,6 +27,7 @@ from builder.html_preview_image import generate_preview
 from builder.utils import (
 	ColonRule,
 	camel_case_to_kebab_case,
+	clean_data,
 	copy_img_to_asset_folder,
 	escape_single_quotes,
 	execute_script,
@@ -82,16 +83,24 @@ class BuilderPage(WebsiteGenerator):
 			self.name = f"page-{frappe.generate_hash(length=8)}"
 
 	def before_insert(self):
-		if isinstance(self.blocks, list):
-			self.blocks = frappe.as_json(self.blocks, indent=None)
-		if isinstance(self.draft_blocks, list):
-			self.draft_blocks = frappe.as_json(self.draft_blocks, indent=None)
+		self.process_blocks()
+		self.set_preview()
+		self.set_default_values()
+
+	def process_blocks(self):
+		for block_type in ["blocks", "draft_blocks"]:
+			if isinstance(getattr(self, block_type), list):
+				setattr(self, block_type, frappe.as_json(getattr(self, block_type), indent=None))
 		if not self.blocks:
 			self.blocks = "[]"
-		if self.preview:
-			self.flags.skip_preview = True
-		else:
+
+	def set_preview(self):
+		if not self.preview:
 			self.preview = "/assets/builder/images/fallback.png"
+		else:
+			self.flags.skip_preview = True
+
+	def set_default_values(self):
 		if not self.page_title:
 			self.page_title = "My Page"
 		if not self.route:
@@ -197,6 +206,10 @@ class BuilderPage(WebsiteGenerator):
 		context.content = content
 		context.style = render_template(style, page_data)
 		context.editor_link = f"/{builder_path}/page/{self.name}"
+		if frappe.form_dict and self.dynamic_route:
+			query_string = "&".join([f"{k}={v}" for k, v in frappe.form_dict.items()])
+			context.editor_link += f"?{query_string}"
+
 		context.page_name = self.name
 
 		if self.dynamic_route and hasattr(frappe.local, "request"):
@@ -204,10 +217,12 @@ class BuilderPage(WebsiteGenerator):
 		else:
 			context.base_url = frappe.utils.get_url(self.route)
 
-		self.set_style_and_script(context)
 		context.update(page_data)
+
+		self.set_style_and_script(context)
 		self.set_meta_tags(context=context, page_data=page_data)
 		self.set_favicon(context)
+		context.page_data = clean_data(context.page_data)
 		try:
 			context["content"] = render_template(context.content, context)
 		except TemplateSyntaxError:
@@ -266,6 +281,9 @@ class BuilderPage(WebsiteGenerator):
 			context._head_html += builder_settings.head_html
 		if builder_settings.body_html:
 			context._body_html += builder_settings.body_html
+
+		context["_head_html"] = render_template(context._head_html, context)
+		context["_body_html"] = render_template(context._body_html, context)
 
 	@frappe.whitelist()
 	def get_page_data(self, route_variables=None):
@@ -574,6 +592,9 @@ def extend_block(block, overridden_block):
 	block["mobileStyles"].update(overridden_block["mobileStyles"])
 	block["tabletStyles"].update(overridden_block["tabletStyles"])
 	block["attributes"].update(overridden_block["attributes"])
+	if overridden_block.get("element"):
+		block["element"] = overridden_block["element"]
+
 	if overridden_block.get("visibilityCondition"):
 		block["visibilityCondition"] = overridden_block.get("visibilityCondition")
 
@@ -643,7 +664,9 @@ def set_dynamic_content_placeholder(block, data_key=False):
 				"style"
 			] += f"{css_property}: {{{{ {key} or '{escape_single_quotes(block['baseStyles'].get(_property, '') or '')}' }}}};"
 		elif _type == "key" and not block.get("isRepeaterBlock"):
-			block[_property] = f"{{{{ {key} or '{escape_single_quotes(block.get(_property, ''))}' }}}}"
+			block[
+				_property
+			] = f"{{{{ {key} if {key} or {key} in ['', 0] else '{escape_single_quotes(block.get(_property, ''))}' }}}}"
 
 
 @redis_cache(ttl=60 * 60)
