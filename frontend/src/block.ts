@@ -343,7 +343,7 @@ class Block implements BlockOptions {
 			styleValue = this.baseStyles[style];
 		}
 		if (styleValue === undefined && this.isExtendedFromComponent()) {
-			styleValue = this.referenceComponent?.getStyle(style, breakpoint) as StyleValue;
+			styleValue = this.referenceComponent?.getStyle?.(style, breakpoint) as StyleValue;
 		}
 		return styleValue;
 	}
