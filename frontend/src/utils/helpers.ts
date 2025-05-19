@@ -520,6 +520,193 @@ function openInDesk(page: BuilderPage) {
 	window.open(`/app/builder-page/${page.page_name}`, "_blank");
 }
 
+interface BackgroundValue {
+	image?: string;
+	position?: string;
+	size?: string;
+	repeat?: string;
+	attachment?: string;
+	origin?: string;
+	clip?: string;
+	color?: string;
+}
+
+// Based on WebKit and Gecko parsing implementations
+function parseBackground(cssText: string): BackgroundValue {
+	if (!cssText || typeof cssText !== "string") {
+		return {};
+	}
+
+	// Tokenize the input preserving quoted strings and functions
+	function tokenize(input: string): string[] {
+		const tokens: string[] = [];
+		let current = "";
+		let parenDepth = 0;
+		let inQuote: string | null = null;
+
+		for (let i = 0; i < input.length; i++) {
+			const char = input[i];
+
+			if (inQuote) {
+				current += char;
+				if (char === inQuote && input[i - 1] !== "\\") {
+					inQuote = null;
+				}
+				continue;
+			}
+
+			if (char === '"' || char === "'") {
+				current += char;
+				inQuote = char;
+				continue;
+			}
+
+			if (char === "(") {
+				parenDepth++;
+				current += char;
+				continue;
+			}
+
+			if (char === ")") {
+				parenDepth--;
+				current += char;
+				continue;
+			}
+
+			if (parenDepth > 0) {
+				current += char;
+				continue;
+			}
+
+			if (char === " " || char === "\t" || char === "\n") {
+				if (current) {
+					tokens.push(current);
+					current = "";
+				}
+				continue;
+			}
+
+			current += char;
+		}
+
+		if (current) {
+			tokens.push(current);
+		}
+
+		return tokens;
+	}
+
+	// Parse color value
+	function isColor(value: string): boolean {
+		return (
+			/^(#|rgb|hsl|[a-z]+$)/.test(value) &&
+			!["center", "top", "bottom", "left", "right", "fixed", "local", "scroll", "contain", "repeat"].includes(
+				value,
+			)
+		);
+	}
+
+	// Parse position values
+	function isPosition(value: string): boolean {
+		return /^(center|top|bottom|left|right|[-\d.]+(%|px|em|rem|vh|vw)?)$/.test(value);
+	}
+
+	// Parse size values
+	function isSize(value: string): boolean {
+		return /^(cover|contain|auto|[-\d.]+(%|px|em|rem|vh|vw)?)$/.test(value);
+	}
+
+	const result: BackgroundValue = {};
+	const tokens = tokenize(cssText.trim());
+	let i = 0;
+
+	while (i < tokens.length) {
+		const token = tokens[i];
+
+		// Handle url() and gradients
+		if (token.startsWith("url(") || token.includes("gradient")) {
+			result.image = token;
+			i++;
+			continue;
+		}
+
+		// Handle color
+		if (isColor(token)) {
+			result.color = token;
+			i++;
+			continue;
+		}
+
+		// Handle position and size
+		if (isPosition(token)) {
+			let position = [token];
+
+			// Check for second position value
+			if (i + 1 < tokens.length && isPosition(tokens[i + 1])) {
+				position.push(tokens[i + 1]);
+				i++;
+			}
+
+			result.position = position.join(" ");
+
+			// Check for size after '/'
+			if (i + 2 < tokens.length && tokens[i + 1] === "/" && isSize(tokens[i + 2])) {
+				let size = [tokens[i + 2]];
+				if (i + 3 < tokens.length && isSize(tokens[i + 3])) {
+					size.push(tokens[i + 3]);
+					i++;
+				}
+				result.size = size.join(" ");
+				i += 2;
+			}
+
+			i++;
+			continue;
+		}
+
+		// Handle repeat
+		if (/^(no-repeat|repeat(-[xy])?|round|space)$/.test(token)) {
+			result.repeat = token;
+			i++;
+			continue;
+		}
+
+		// Handle attachment
+		if (/^(fixed|local|scroll)$/.test(token)) {
+			result.attachment = token;
+			i++;
+			continue;
+		}
+
+		// Handle origin/clip
+		if (/^(border|padding|content)-box$/.test(token)) {
+			if (!result.origin) {
+				result.origin = token;
+			} else {
+				result.clip = token;
+			}
+			i++;
+			continue;
+		}
+
+		i++;
+	}
+
+	return result;
+}
+
+const parseAndSetBackground = (styles: BlockStyleMap) => {
+	if (styles.background) {
+		const { color, image, position, size, repeat } = parseBackground(styles.background as string);
+		delete styles.background;
+		if (color) styles.backgroundColor = color;
+		if (image) styles.backgroundImage = image;
+		if (position) styles.backgroundPosition = position;
+		if (size) styles.backgroundSize = size;
+		if (repeat) styles.backgroundRepeat = repeat;
+	}
+};
+
 export {
 	addPxToNumber,
 	alert,
@@ -557,6 +744,8 @@ export {
 	logObjectDiff,
 	mapToObject,
 	openInDesk,
+	parseAndSetBackground,
+	parseBackground,
 	replaceMapKey,
 	RGBToHex,
 	stripExtension,
