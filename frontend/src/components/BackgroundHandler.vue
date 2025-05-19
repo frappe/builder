@@ -1,6 +1,5 @@
 <template>
-	<ColorInput label="BG Color" :value="backgroundColor as HashString" @change="setBGColor" />
-	<Popover transition="default" placement="left" class="!block w-full" popoverClass="!min-w-fit !mr-[30px]">
+	<Popover placement="left" class="!block w-full" popoverClass="!min-w-fit !mr-[30px]">
 		<template #target="{ togglePopover }">
 			<div class="flex items-center justify-between">
 				<InputLabel>BG Image</InputLabel>
@@ -8,7 +7,7 @@
 					<BuilderInput
 						class="[&>div>input]:pl-8"
 						type="text"
-						placeholder="Set Background Image"
+						placeholder="Set Background"
 						@focus="togglePopover"
 						:modelValue="backgroundImage"
 						@update:modelValue="setBGImageURL" />
@@ -71,6 +70,7 @@
 			</div>
 		</template>
 	</Popover>
+	<ColorInput label="BG Color" :value="backgroundColor as HashString" @change="setBGColor" />
 </template>
 
 <script lang="ts" setup>
