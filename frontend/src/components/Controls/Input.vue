@@ -6,19 +6,21 @@
 			@change="triggerUpdate"
 			@input="($event: Event) => emit('input', ($event.target as HTMLInputElement).value)"
 			autocomplete="off"
+			:autofocus="autofocus"
 			v-bind="attrs"
 			:modelValue="data">
 			<template #prefix v-if="$slots.prefix">
 				<slot name="prefix" />
 			</template>
 		</FormControl>
-		<div
+		<button
 			class="absolute bottom-[3px] right-[1px] cursor-pointer p-1 text-ink-gray-4 hover:text-ink-gray-5"
+			tabindex="-1"
 			@click="clearValue"
 			v-if="!['select', 'checkbox'].includes(type) && !hideClearButton"
 			v-show="data">
 			<CrossIcon />
-		</div>
+		</button>
 	</div>
 </template>
 <script lang="ts" setup>
@@ -26,7 +28,18 @@ import CrossIcon from "@/components/Icons/Cross.vue";
 import { useDebounceFn, useVModel } from "@vueuse/core";
 import { computed, useAttrs } from "vue";
 
-const props = defineProps(["modelValue", "type", "hideClearButton"]);
+const props = withDefaults(
+	defineProps<{
+		modelValue?: string | number | boolean | null;
+		type?: string;
+		hideClearButton?: boolean;
+		autofocus?: boolean;
+	}>(),
+	{
+		type: "text",
+		modelValue: "",
+	},
+);
 const emit = defineEmits(["update:modelValue", "input"]);
 const data = useVModel(props, "modelValue", emit);
 

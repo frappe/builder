@@ -1,5 +1,5 @@
 <template>
-	<div class="flex h-[70vh] gap-5">
+	<div class="flex gap-5">
 		<div class="flex flex-col gap-3">
 			<div class="flex h-full w-48 flex-col justify-between gap-1">
 				<div class="flex flex-col gap-1">
@@ -80,7 +80,7 @@
 			</div>
 		</div>
 		<div
-			class="flex h-full w-full items-center justify-center rounded bg-surface-gray-1 text-base text-ink-gray-6"
+			class="flex h-[60vh] w-full items-center justify-center rounded bg-surface-gray-1 text-base text-ink-gray-6"
 			v-show="!activeScript">
 			Add Script
 		</div>
@@ -91,7 +91,7 @@
 				:label="activeScript.script_name"
 				:type="activeScript.script_type as 'JavaScript' | 'CSS'"
 				class="flex-1"
-				height="auto"
+				height="55vh"
 				:autofocus="false"
 				:show-save-button="true"
 				@save="updateScript"
@@ -104,7 +104,7 @@ import EditableSpan from "@/components/EditableSpan.vue";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { createListResource, createResource, Dropdown } from "frappe-ui";
-import { computed, nextTick, PropType, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { toast } from "vue-sonner";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import CSSIcon from "./Icons/CSS.vue";
@@ -122,12 +122,9 @@ type attachedScript = {
 
 const activeScript = ref<attachedScript | null>(null);
 
-const props = defineProps({
-	page: {
-		type: Object as PropType<BuilderPage>,
-		required: true,
-	},
-});
+const props = defineProps<{
+	page: BuilderPage;
+}>();
 
 const attachedScriptResource = createListResource({
 	doctype: "Builder Page Client Script",
@@ -160,7 +157,7 @@ const clientScriptResource = createListResource({
 const selectScript = (script: attachedScript) => {
 	activeScript.value = script;
 	nextTick(() => {
-		scriptEditor.value?.resetEditor(script.script, true);
+		scriptEditor.value?.resetEditor(true);
 	});
 };
 

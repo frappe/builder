@@ -4,7 +4,7 @@
 			<BuilderButton @click="showClientScriptEditor()" class="flex-1">Client Script</BuilderButton>
 			<BuilderButton @click="showServerScriptEditor()" class="flex-1">Data Script</BuilderButton>
 		</div>
-		<CodeEditor v-model="store.pageData" type="JSON" label="Data Preview" :readonly="true"></CodeEditor>
+		<CodeEditor v-model="pageStore.pageData" type="JSON" label="Data Preview" :readonly="true"></CodeEditor>
 		<Dialog
 			style="z-index: 40"
 			class="overscroll-none"
@@ -17,7 +17,7 @@
 			<template #body-content>
 				<div v-if="currentScriptEditor == 'client'">
 					<PageClientScriptManager
-						:page="store.activePage as BuilderPage"
+						:page="pageStore.activePage as BuilderPage"
 						ref="clientScriptManager"></PageClientScriptManager>
 				</div>
 				<div v-else>
@@ -26,7 +26,7 @@
 						ref="dataScriptEditor"
 						v-model="page.page_data_script"
 						type="Python"
-						height="65vh"
+						height="60vh"
 						@save="savePageDataScript"
 						:showSaveButton="true"
 						description='Use Data Script to provide dynamic data to your web page.<br>
@@ -42,14 +42,15 @@
 <script lang="ts" setup>
 import Dialog from "@/components/Controls/Dialog.vue";
 import { webPages } from "@/data/webPage";
-import useStore from "@/store";
+import usePageStore from "@/stores/pageStore";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { computed, defineComponent, ref } from "vue";
 import { toast } from "vue-sonner";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
-const store = useStore();
+
+const pageStore = usePageStore();
 const showDialog = ref(false);
 
 const props = defineProps<{
@@ -70,7 +71,7 @@ const savePageDataScript = (value: string) => {
 		.then(() => {
 			posthog.capture("builder_page_data_script_saved");
 			props.page.page_data_script = value;
-			store.setPageData(props.page);
+			pageStore.setPageData(props.page);
 			toast.success("Data script saved");
 		})
 		.catch((e: { message: string; exc: string; messages: [string] }) => {

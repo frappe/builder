@@ -5,10 +5,10 @@
 				ref="searchInput"
 				type="text"
 				placeholder="Search properties"
-				v-model="store.propertyFilter"
+				v-model="builderStore.propertyFilter"
 				@input="
 					(value: string) => {
-						store.propertyFilter = value;
+						builderStore.propertyFilter = value;
 					}
 				" />
 		</div>
@@ -18,7 +18,7 @@
 				v-for="section in sections"
 				v-show="showSection(section)"
 				:key="section.name"
-				:sectionCollapsed="toValue(section.collapsed) && !store.propertyFilter">
+				:sectionCollapsed="toValue(section.collapsed) && !builderStore.propertyFilter">
 				<template v-for="property in getFilteredProperties(section)">
 					<component :is="property.component" v-bind="property.getProps()" v-on="property.events || {}">
 						{{ property.innerText || "" }}
@@ -45,13 +45,13 @@ import spacingSection from "@/components/BlockPropertySections/SpacingSection";
 import styleSection from "@/components/BlockPropertySections/StyleSection";
 import typographySection from "@/components/BlockPropertySections/TypographySection";
 import videoOptionsSection from "@/components/BlockPropertySections/VideoOptionsSection";
-import useStore from "@/store";
+import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
 import { toValue } from "@vueuse/core";
 import { Ref, ref } from "vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
 
-const store = useStore();
+const builderStore = useBuilderStore();
 
 type BlockProperty = {
 	component: any;
@@ -76,7 +76,7 @@ const showSection = (section: PropertySection) => {
 	if (section.condition) {
 		showSection = section.condition();
 	}
-	if (showSection && store.propertyFilter) {
+	if (showSection && builderStore.propertyFilter) {
 		showSection = getFilteredProperties(section).length > 0;
 	}
 	return showSection;
@@ -88,10 +88,10 @@ const getFilteredProperties = (section: PropertySection) => {
 		if (property.condition) {
 			showProperty = property.condition();
 		}
-		if (showProperty && store.propertyFilter) {
+		if (showProperty && builderStore.propertyFilter) {
 			showProperty =
-				section.name.toLowerCase().includes(store.propertyFilter.toLowerCase()) ||
-				property.searchKeyWords.toLowerCase().includes(store.propertyFilter.toLowerCase());
+				section.name.toLowerCase().includes(builderStore.propertyFilter.toLowerCase()) ||
+				property.searchKeyWords.toLowerCase().includes(builderStore.propertyFilter.toLowerCase());
 		}
 		return showProperty;
 	});

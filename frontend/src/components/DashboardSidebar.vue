@@ -5,7 +5,9 @@
 			<span
 				class="flex cursor-pointer gap-2 rounded p-2 text-base text-ink-gray-6"
 				@click="() => setFolderActive('')"
-				:class="{ 'bg-surface-modal text-ink-gray-8 shadow-sm dark:bg-surface-gray-2': !store.activeFolder }">
+				:class="{
+					'bg-surface-modal text-ink-gray-8 shadow-sm dark:bg-surface-gray-2': !builderStore.activeFolder,
+				}">
 				<FilesIcon class="size-4"></FilesIcon>
 				All Pages
 			</span>
@@ -14,7 +16,7 @@
 				Settings
 			</span>
 		</div>
-		<div class="flex flex-col">
+		<div class="flex flex-1 flex-col">
 			<div class="flex items-center justify-between p-2 text-base text-ink-gray-6">
 				<span>Folders</span>
 				<BuilderButton
@@ -71,6 +73,7 @@
 			</span>
 		</div>
 		<NewFolder v-model="showNewFolderDialog"></NewFolder>
+		<TrialBanner v-if="builderStore.isFCSite"></TrialBanner>
 	</section>
 </template>
 <script lang="ts" setup>
@@ -81,23 +84,24 @@ import FolderIcon from "@/components/Icons/Folder.vue";
 import SettingsIcon from "@/components/Icons/SettingsGear.vue";
 import NewFolder from "@/components/Modals/NewFolder.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
-import useStore from "@/store";
+import useBuilderStore from "@/stores/builderStore";
 import { BuilderProjectFolder } from "@/types/Builder/BuilderProjectFolder";
 import { confirm } from "@/utils/helpers";
 import { createResource } from "frappe-ui";
+import { TrialBanner } from "frappe-ui/frappe";
 import Dropdown from "frappe-ui/src/components/Dropdown.vue";
 import { ref } from "vue";
 
-const store = useStore();
+const builderStore = useBuilderStore();
 const renamingFolder = ref("");
 const emit = defineEmits(["openSettings"]);
 const showNewFolderDialog = ref(false);
 
 const isFolderActive = (folderName: string) => {
-	return store.activeFolder === folderName;
+	return builderStore.activeFolder === folderName;
 };
 const setFolderActive = (folderName: string) => {
-	store.activeFolder = folderName;
+	builderStore.activeFolder = folderName;
 };
 
 const renameFolder = async (newFolderName: string, targetFolder: BuilderProjectFolder) => {
@@ -112,7 +116,7 @@ const renameFolder = async (newFolderName: string, targetFolder: BuilderProjectF
 		})
 		.then(() => {
 			builderProjectFolder.data = builderProjectFolder.data.map((folder: BuilderProjectFolder) => {
-				if (folder.folder_name === store.activeFolder) {
+				if (folder.folder_name === builderStore.activeFolder) {
 					folder.folder_name = newFolderName;
 				}
 				return folder;

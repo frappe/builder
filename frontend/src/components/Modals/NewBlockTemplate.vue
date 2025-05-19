@@ -9,7 +9,7 @@
 					label: 'Save',
 					variant: 'solid',
 					onClick: (close: () => void) => {
-						store.saveBlockTemplate(
+						blockTemplateStore.saveBlockTemplate(
 							block,
 							blockTemplateProperties.templateName,
 							blockTemplateProperties.category,
@@ -33,7 +33,7 @@
 					type="select"
 					v-model="blockTemplateProperties.category"
 					label="Category"
-					:options="store.blockTemplateCategoryOptions"
+					:options="blockTemplateStore.blockTemplateCategoryOptions"
 					:hideClearButton="true" />
 				<div class="relative">
 					<BuilderInput
@@ -60,10 +60,10 @@
 	</Dialog>
 </template>
 <script setup lang="ts">
-import useStore from "@/store";
-import Block from "@/utils/block";
-import { FileUploader } from "frappe-ui";
+import type Block from "@/block";
 import Dialog from "@/components/Controls/Dialog.vue";
+import useBlockTemplateStore from "@/stores/blockTemplateStore";
+import { FileUploader } from "frappe-ui";
 import { ref } from "vue";
 
 const showBlockTemplateDialog = ref(false);
@@ -71,10 +71,10 @@ defineProps<{
 	block: Block;
 }>();
 
-const store = useStore();
+const blockTemplateStore = useBlockTemplateStore();
 const blockTemplateProperties = ref({
 	templateName: "",
-	category: "" as (typeof store.blockTemplateCategoryOptions)[number],
+	category: "" as (typeof blockTemplateStore.blockTemplateCategoryOptions)[number],
 	previewImage: "",
 });
 </script>

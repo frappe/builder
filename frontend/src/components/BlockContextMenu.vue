@@ -12,22 +12,24 @@
 	</div>
 </template>
 <script setup lang="ts">
+import type Block from "@/block";
 import ContextMenu from "@/components/ContextMenu.vue";
 import NewBlockTemplate from "@/components/Modals/NewBlockTemplate.vue";
 import NewComponent from "@/components/Modals/NewComponent.vue";
-import useStore from "@/store";
-import Block from "@/utils/block";
+import useBuilderStore from "@/stores/builderStore";
+import useCanvasStore from "@/stores/canvasStore";
+import useComponentStore from "@/stores/componentStore";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { confirm, detachBlockFromComponent, getBlockCopy } from "@/utils/helpers";
-import useComponentStore from "@/utils/useComponentStore";
 import { vOnClickOutside } from "@vueuse/components";
 import { useStorage } from "@vueuse/core";
 import { Ref, nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
 
-const store = useStore();
 const componentStore = useComponentStore();
+const canvasStore = useCanvasStore();
+const builderStore = useBuilderStore();
 
 const contextMenuVisible = ref(false);
 const posX = ref(0);
@@ -74,7 +76,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Edit HTML",
 		action: () => {
-			store.editHTML(block.value);
+			canvasStore.editHTML(block.value);
 		},
 		condition: () => block.value.isHTML(),
 	},
@@ -104,15 +106,15 @@ const contextMenuOptions: ContextMenuOption[] = [
 			const parentBlock = block.value.getParentBlock();
 			if (!parentBlock) return;
 
-			const selectedBlocks = store.activeCanvas?.selectedBlocks || [];
+			const selectedBlocks = canvasStore.activeCanvas?.selectedBlocks || [];
 			const blockPosition = Math.min(...selectedBlocks.map(parentBlock.getChildIndex.bind(parentBlock)));
 			const newBlock = parentBlock?.addChild(newBlockObj, blockPosition);
 
 			let width = null as string | null;
 			// move selected blocks to newBlock
 			selectedBlocks
-				.sort((a, b) => parentBlock.getChildIndex(a) - parentBlock.getChildIndex(b))
-				.forEach((block) => {
+				.sort((a: Block, b: Block) => parentBlock.getChildIndex(a) - parentBlock.getChildIndex(b))
+				.forEach((block: Block) => {
 					parentBlock?.removeChild(block);
 					newBlock?.addChild(block);
 					if (!width) {
@@ -135,11 +137,11 @@ const contextMenuOptions: ContextMenuOption[] = [
 		},
 		condition: () => {
 			if (block.value.isRoot()) return false;
-			if (store.activeCanvas?.selectedBlocks.length === 1) return true;
+			if (canvasStore.activeCanvas?.selectedBlocks.length === 1) return true;
 			// check if all selected blocks are siblings
 			const parentBlock = block.value.getParentBlock();
 			if (!parentBlock) return false;
-			const selectedBlocks = store.activeCanvas?.selectedBlocks || [];
+			const selectedBlocks = canvasStore.activeCanvas?.selectedBlocks || [];
 			return selectedBlocks.every((block: Block) => block.getParentBlock() === parentBlock);
 		},
 	},
@@ -153,7 +155,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			repeaterBlock.addChild(getBlockCopy(block.value));
 			parentBlock.removeChild(block.value);
 			repeaterBlock.selectBlock();
-			store.propertyFilter = "data key";
+			builderStore.propertyFilter = "data key";
 			toast.warning("Please set data key for repeater block");
 		},
 		condition: () =>
@@ -161,10 +163,10 @@ const contextMenuOptions: ContextMenuOption[] = [
 	},
 	{
 		label: "Reset Overrides",
-		condition: () => store.activeBreakpoint !== "desktop",
-		disabled: () => !block.value?.hasOverrides(store.activeBreakpoint),
+		condition: () => canvasStore.activeCanvas?.activeBreakpoint !== "desktop",
+		disabled: () => !block.value?.hasOverrides(canvasStore.activeCanvas?.activeBreakpoint || "desktop"),
 		action: () => {
-			block.value.resetOverrides(store.activeBreakpoint);
+			block.value.resetOverrides(canvasStore.activeCanvas?.activeBreakpoint || "desktop");
 		},
 	},
 	{
@@ -231,7 +233,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Delete",
 		action: () => {
-			store.activeCanvas?.removeBlock(block.value);
+			canvasStore.activeCanvas?.removeBlock(block.value);
 		},
 		condition: () => {
 			return (
