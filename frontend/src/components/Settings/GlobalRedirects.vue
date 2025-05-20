@@ -25,8 +25,8 @@
 				</button>
 			</form>
 		</div>
-		<div class="flex h-[100%] items-center justify-center text-ink-gray-5" v-if="rows.length == 0">
-			<span class="text-base">No redirects set</span>
+		<div class="flex h-[100%] flex-col items-center justify-center text-ink-gray-5" v-if="rows.length == 0">
+			<div class="flex h-28 align-top text-base text-ink-gray-4">No redirects set</div>
 		</div>
 		<div class="h-full text-sm" v-else>
 			<div
