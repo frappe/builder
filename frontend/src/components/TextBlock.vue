@@ -176,10 +176,12 @@ const props = withDefaults(
 		block: Block;
 		preview?: boolean;
 		data?: Record<string, any>;
+		breakpoint?: string;
 	}>(),
 	{
 		preview: false,
 		data: () => ({}),
+		breakpoint: "desktop",
 	},
 );
 
@@ -223,7 +225,10 @@ const textContent = computed(() => {
 });
 
 const isEditable = computed(() => {
-	return canvasStore.editableBlock === props.block;
+	return (
+		canvasStore.editableBlock === props.block &&
+		canvasStore.activeCanvas?.activeBreakpoint === props.breakpoint
+	);
 });
 
 const showEditor = computed(() => {

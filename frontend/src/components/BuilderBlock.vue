@@ -33,7 +33,6 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
-import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { setFont } from "@/utils/fontManager";
 import { getDataForKey } from "@/utils/helpers";
@@ -45,7 +44,6 @@ import DataLoaderBlock from "./DataLoaderBlock.vue";
 import TextBlock from "./TextBlock.vue";
 
 const canvasStore = useCanvasStore();
-const builderStore = useBuilderStore();
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
 const attrs = useAttrs();
 const editor = ref<InstanceType<typeof BlockEditor> | null>(null);
@@ -207,7 +205,7 @@ const isEditable = computed(() => {
 
 const hiddenDueToVisibilityCondition = computed(() => {
 	return props.block.getVisibilityCondition()
-		? !Boolean(getDataForKey(props.data, props.block.getVisibilityCondition() as string))
+		? !Boolean(getDataForKey(props.data || {}, props.block.getVisibilityCondition() as string))
 		: false;
 });
 
