@@ -17,13 +17,13 @@ const blockController = {
 		return canvasStore.activeCanvas?.selectedBlocks || [];
 	},
 	isRoot() {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isRoot();
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isRoot();
 	},
 	isFlex() {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isFlex();
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isFlex();
 	},
 	isGrid() {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isGrid();
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isGrid();
 	},
 	setStyle: (style: styleProperty, value: StyleValue) => {
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
@@ -57,32 +57,32 @@ const blockController = {
 		});
 		return styleValue;
 	},
-	isBLockSelected: () => {
+	isBlockSelected: () => {
 		return canvasStore.activeCanvas?.selectedBlocks.length || 0 > 0;
 	},
 	multipleBlocksSelected: () => {
 		return canvasStore.activeCanvas?.selectedBlocks && canvasStore.activeCanvas?.selectedBlocks.length > 1;
 	},
 	isText: () => {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isText();
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isText();
 	},
 	isContainer: () => {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isContainer();
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isContainer();
 	},
 	isImage: () => {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isImage();
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isImage();
 	},
 	isVideo: () => {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isVideo();
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isVideo();
 	},
 	isButton: () => {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isButton();
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isButton();
 	},
 	isLink: () => {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isLink();
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isLink();
 	},
 	isInput: () => {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isInput();
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isInput();
 	},
 	getAttribute: (attribute: string) => {
 		let attributeValue = "__initial__" as StyleValue;
@@ -127,7 +127,7 @@ const blockController = {
 	},
 	getClasses: () => {
 		let classes = [] as string[];
-		if (blockController.isBLockSelected()) {
+		if (blockController.isBlockSelected()) {
 			classes = blockController.getFirstSelectedBlock().getClasses() || [];
 		}
 		return classes;
@@ -138,7 +138,7 @@ const blockController = {
 		block.classes = classes;
 	},
 	getRawStyles: () => {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().getRawStyles();
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().getRawStyles();
 	},
 	setRawStyles: (rawStyles: BlockStyleMap) => {
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
@@ -151,7 +151,7 @@ const blockController = {
 		});
 	},
 	getCustomAttributes: () => {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().getCustomAttributes();
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().getCustomAttributes();
 	},
 	setCustomAttributes: (customAttributes: BlockAttributeMap) => {
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
@@ -199,10 +199,10 @@ const blockController = {
 		return fontFamily;
 	},
 	isHTML: () => {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isHTML();
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isHTML();
 	},
 	getInnerHTML: () => {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().getInnerHTML();
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().getInnerHTML();
 	},
 	setInnerHTML: (value: string) => {
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
@@ -210,7 +210,7 @@ const blockController = {
 		});
 	},
 	getTextContent: () => {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().getTextContent();
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().getTextContent();
 	},
 	setDataKey: (key: keyof BlockDataKey, value: string) => {
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
@@ -218,10 +218,10 @@ const blockController = {
 		});
 	},
 	getDataKey: (key: keyof BlockDataKey) => {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().getDataKey(key);
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().getDataKey(key);
 	},
 	isRepeater: () => {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isRepeater();
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isRepeater();
 	},
 	getPadding: () => {
 		let padding = "__initial__" as StyleValue;

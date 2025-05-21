@@ -107,7 +107,7 @@ export function useBuilderEvents(
 			}
 
 			if (
-				blockController.isBLockSelected() &&
+				blockController.isBlockSelected() &&
 				!blockController.multipleBlocksSelected() &&
 				dataObj.blocks.length === 1
 			) {
@@ -292,7 +292,7 @@ export function useBuilderEvents(
 		}
 
 		if (e.key === "c" && isCtrlOrCmd(e) && e.shiftKey) {
-			if (blockController.isBLockSelected() && !blockController.multipleBlocksSelected()) {
+			if (blockController.isBlockSelected() && !blockController.multipleBlocksSelected()) {
 				e.preventDefault();
 				const block = blockController.getSelectedBlocks()[0];
 				const copiedStyle = useStorage(
@@ -308,7 +308,7 @@ export function useBuilderEvents(
 		}
 
 		if (e.key === "d" && isCtrlOrCmd(e)) {
-			if (blockController.isBLockSelected() && !blockController.multipleBlocksSelected()) {
+			if (blockController.isBlockSelected() && !blockController.multipleBlocksSelected()) {
 				e.preventDefault();
 				const block = blockController.getSelectedBlocks()[0];
 				block.duplicateBlock();
@@ -317,7 +317,7 @@ export function useBuilderEvents(
 
 		if (isTargetEditable(e)) return;
 
-		if ((e.key === "Backspace" || e.key === "Delete") && blockController.isBLockSelected()) {
+		if ((e.key === "Backspace" || e.key === "Delete") && blockController.isBlockSelected()) {
 			for (const block of blockController.getSelectedBlocks()) {
 				canvasStore.activeCanvas?.removeBlock(block, e.shiftKey);
 			}
@@ -331,7 +331,7 @@ export function useBuilderEvents(
 		}
 
 		// handle arrow keys
-		if (e.key.startsWith("Arrow") && blockController.isBLockSelected()) {
+		if (e.key.startsWith("Arrow") && blockController.isBlockSelected()) {
 			const key = e.key.replace("Arrow", "").toLowerCase() as "up" | "down" | "left" | "right";
 			for (const block of blockController.getSelectedBlocks()) {
 				block.move(key);
@@ -365,7 +365,7 @@ export function useBuilderEvents(
 			return;
 		}
 
-		if (e.key === "ArrowRight" && !blockController.isBLockSelected()) {
+		if (e.key === "ArrowRight" && !blockController.isBlockSelected()) {
 			e.preventDefault();
 			if (pageCanvas.value) {
 				pageCanvas.value.moveCanvas("right");
@@ -373,7 +373,7 @@ export function useBuilderEvents(
 			return;
 		}
 
-		if (e.key === "ArrowLeft" && !blockController.isBLockSelected()) {
+		if (e.key === "ArrowLeft" && !blockController.isBlockSelected()) {
 			e.preventDefault();
 			if (pageCanvas.value) {
 				pageCanvas.value.moveCanvas("left");
@@ -381,7 +381,7 @@ export function useBuilderEvents(
 			return;
 		}
 
-		if (e.key === "ArrowUp" && !blockController.isBLockSelected()) {
+		if (e.key === "ArrowUp" && !blockController.isBlockSelected()) {
 			e.preventDefault();
 			if (pageCanvas.value) {
 				pageCanvas.value.moveCanvas("up");
@@ -389,7 +389,7 @@ export function useBuilderEvents(
 			return;
 		}
 
-		if (e.key === "ArrowDown" && !blockController.isBLockSelected()) {
+		if (e.key === "ArrowDown" && !blockController.isBlockSelected()) {
 			e.preventDefault();
 			if (pageCanvas.value) {
 				pageCanvas.value.moveCanvas("down");
