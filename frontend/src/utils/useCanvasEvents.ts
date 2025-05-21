@@ -71,7 +71,7 @@ export function useCanvasEvents(
 			childBlock.setBaseStyle("left", addPxToNumber(x));
 			if (builderStore.mode === "container" || builderStore.mode === "repeater") {
 				const colors = ["#ededed", "#e2e2e2", "#c7c7c7"];
-				childBlock.setBaseStyle("background", colors[counter % colors.length]);
+				childBlock.setBaseStyle("backgroundColor", colors[counter % colors.length]);
 				counter++;
 			}
 
