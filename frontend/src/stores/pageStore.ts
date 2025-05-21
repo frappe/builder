@@ -7,7 +7,13 @@ import useComponentStore from "@/stores/componentStore.js";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { generateId, getBlockInstance, getCopyWithoutParent, getRouteVariables } from "@/utils/helpers";
+import {
+	confirm,
+	generateId,
+	getBlockInstance,
+	getCopyWithoutParent,
+	getRouteVariables,
+} from "@/utils/helpers";
 import { createDocumentResource, createResource } from "frappe-ui";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
@@ -134,8 +140,15 @@ const usePageStore = defineStore("pageStore", {
 				`Are you sure you want to delete page: ${page.page_title || page.page_name}?`,
 			);
 			if (confirmed) {
-				await webPages.delete.submit(page.name);
-				toast.success("Page deleted successfully");
+				await toast.promise(webPages.delete.submit(page.name), {
+					loading: "Deleting page",
+					success: () => {
+						return "Page deleted";
+					},
+					error: (e) => {
+						return "Page deletion failed";
+					},
+				});
 			}
 		},
 
