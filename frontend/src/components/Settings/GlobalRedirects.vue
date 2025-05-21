@@ -1,5 +1,5 @@
 <template>
-	<div class="flex-1">
+	<div class="flex-1 overflow-y-hidden">
 		<div class="mb-5">
 			<form onsubmit="return false;">
 				<div class="flex gap-2 px-[2px] py-2">
@@ -30,7 +30,7 @@
 		</div>
 		<div class="h-full text-sm" v-else>
 			<div
-				class="sticky top-0 flex gap-2 rounded-t-md border-b border-outline-gray-1 bg-surface-gray-1 text-ink-gray-5">
+				class="sticky top-0 flex gap-2 rounded-t-md border-b border-outline-gray-1 bg-surface-gray-1 px-[2px] text-ink-gray-5">
 				<span class="w-1/2">
 					<BuilderInput
 						type="text"
