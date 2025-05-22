@@ -66,7 +66,7 @@ const uploadFont = async (file: FileDoc) => {
 	await userFont.fetch();
 	emit("change");
 	await nextTick();
-	if (blockController.isBLockSelected()) {
+	if (blockController.isBlockSelected()) {
 		blockController.setFontFamily(fontFace.family);
 	}
 };
