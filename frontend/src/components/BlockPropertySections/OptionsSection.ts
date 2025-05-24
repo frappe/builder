@@ -60,6 +60,7 @@ const optionsSectionProperties = [
 					"blockquote",
 					"cite",
 					"canvas",
+					"dialog",
 				],
 				modelValue: blockController.getKeyValue("element"),
 			};
