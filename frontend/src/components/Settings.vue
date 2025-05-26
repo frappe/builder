@@ -34,7 +34,6 @@
 import RedirectIcon from "@/components/Icons/Redirect.vue";
 import GlobalRedirects from "@/components/Settings/GlobalRedirects.vue";
 import PageCode from "@/components/Settings/PageCode.vue";
-import PageRedirects from "@/components/Settings/PageRedirects.vue";
 import usePageStore from "@/stores/pageStore";
 import { computed, onActivated, ref } from "vue";
 import { useRoute } from "vue-router";
@@ -97,14 +96,6 @@ const pageSettings = {
 			icon: ChartIcon,
 			disabled: true,
 		},
-		{
-			label: "Redirects",
-			value: "page_redirects",
-			component: PageRedirects,
-			title: "Redirects",
-			icon: RedirectIcon,
-			disabled: true,
-		},
 	],
 };
 
@@ -117,6 +108,7 @@ const globalSettings = {
 			component: GlobalGeneral,
 			title: "General",
 			icon: SettingsIcon,
+			disabled: false,
 		},
 		{ label: "Code", value: "global_code", component: GlobalCode, title: "Global Code", icon: CodeIcon },
 		{
