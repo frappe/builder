@@ -158,7 +158,7 @@ import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderProjectFolder } from "@/types/Builder/BuilderProjectFolder";
-import FeatherIcon from "frappe-ui/src/components/FeatherIcon.vue";
+import { FeatherIcon } from "frappe-ui";
 import { computed } from "vue";
 
 const pageStore = usePageStore();
