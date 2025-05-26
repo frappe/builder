@@ -87,9 +87,8 @@ import builderProjectFolder from "@/data/builderProjectFolder";
 import useBuilderStore from "@/stores/builderStore";
 import { BuilderProjectFolder } from "@/types/Builder/BuilderProjectFolder";
 import { confirm } from "@/utils/helpers";
-import { createResource } from "frappe-ui";
+import { createResource, Dropdown } from "frappe-ui";
 import { TrialBanner } from "frappe-ui/frappe";
-import Dropdown from "frappe-ui/src/components/Dropdown.vue";
 import { ref } from "vue";
 
 const builderStore = useBuilderStore();

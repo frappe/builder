@@ -35,14 +35,14 @@
 			</div>
 			<div v-show="builderStore.leftPanelActiveTab === 'Layers'" class="p-3">
 				<BlockLayers
-					class="no-scrollbar overflow-auto"
+					class="no-scrollbar block-layers overflow-auto"
 					v-if="pageCanvas"
 					:disable-draggable="true"
 					ref="pageLayers"
 					:blocks="[pageCanvas?.getRootBlock() as Block]"
 					v-show="canvasStore.editingMode == 'page'" />
 				<BlockLayers
-					class="no-scrollbar overflow-auto"
+					class="no-scrollbar block-layers overflow-auto"
 					ref="componentLayers"
 					:disable-draggable="true"
 					:blocks="[fragmentCanvas?.getRootBlock()]"

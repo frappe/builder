@@ -45,14 +45,21 @@
 							}"
 							v-if="Boolean(element.extendedFromComponent)" />
 						<span
-							class="min-h-[1em] min-w-[2em] truncate"
+							class="layer-label min-h-[1em] min-w-[2em] truncate"
 							:contenteditable="element.editable"
 							:title="element.blockId"
 							:class="{
 								'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
 									element.isExtendedFromComponent(),
 							}"
-							@dblclick="element.editable = true"
+							@dblclick="
+								(ev) => {
+									element.editable = true;
+									// focus
+									const target = ev.target as HTMLElement;
+									target.focus();
+								}
+							"
 							@keydown.enter.stop.prevent="element.editable = false"
 							@blur="setBlockName($event, element)">
 							{{ element.getBlockDescription() }}

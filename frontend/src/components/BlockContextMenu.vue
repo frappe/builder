@@ -34,14 +34,21 @@ const builderStore = useBuilderStore();
 const contextMenuVisible = ref(false);
 const posX = ref(0);
 const posY = ref(0);
+const triggeredFromLayersPanel = ref(false);
 
 const block = ref(null) as unknown as Ref<Block>;
 
 const showNewComponentDialog = ref(false);
 const showBlockTemplateDialog = ref(false);
+const target = ref(null) as unknown as Ref<HTMLElement>;
 
 const showContextMenu = (event: MouseEvent, refBlock: Block) => {
 	block.value = refBlock;
+	// check if the event is triggered from layers panel
+	target.value = event.target as HTMLElement;
+	const layersPanel = target.value.closest(".block-layers");
+	triggeredFromLayersPanel.value = Boolean(layersPanel);
+
 	if (block.value.isRoot()) return;
 	contextMenuVisible.value = true;
 	posX.value = event.pageX;
@@ -229,6 +236,27 @@ const contextMenuOptions: ContextMenuOption[] = [
 			block.value.getParentBlock()?.replaceChild(block.value, newBlock);
 		},
 		condition: () => Boolean(block.value.extendedFromComponent),
+	},
+	{
+		label: "Rename",
+		action: () => {
+			const layerLabel = target.value?.closest("[data-block-layer-id]")?.querySelector(".layer-label");
+			if (layerLabel) {
+				layerLabel.dispatchEvent(new Event("dblclick"));
+				nextTick(() => {
+					// selct all text in the layerLabel
+					const range = document.createRange();
+					range.selectNodeContents(layerLabel);
+					const selection = window.getSelection();
+					if (selection) {
+						selection.removeAllRanges();
+						selection.addRange(range);
+					}
+				});
+			}
+		},
+		condition: () =>
+			!block.value.isRoot() && !block.value.isChildOfComponentBlock() && triggeredFromLayersPanel.value,
 	},
 	{
 		label: "Delete",
