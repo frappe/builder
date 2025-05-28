@@ -1,8 +1,13 @@
 <template>
+
 	<div class="flex gap-5">
+
 		<div class="flex flex-col gap-3">
+
 			<div class="flex h-full w-48 flex-col justify-between gap-1">
+
 				<div class="flex flex-col gap-1">
+
 					<a
 						v-for="script in attachedScriptResource.data"
 						href="#"
@@ -12,9 +17,13 @@
 						}"
 						@click="selectScript(script)"
 						class="group flex h-6 items-center justify-between gap-1 text-sm last-of-type:mb-2">
+
 						<div class="flex w-[90%] items-center gap-1">
+
 							<CSSIcon class="shrink-0" v-if="script.script_type === 'CSS'" />
+
 							<JavaScriptIcon class="shrink-0" v-if="script.script_type === 'JavaScript'" />
+
 							<EditableSpan
 								v-model="script.script_name"
 								:editable="script.editable"
@@ -24,9 +33,11 @@
 									}
 								"
 								class="w-full truncate">
-								{{ script.script_name }}
+								 {{ script.script_name }}
 							</EditableSpan>
+
 						</div>
+
 						<Dropdown
 							class="script-options"
 							placement="right"
@@ -45,12 +56,19 @@
 									icon: 'trash',
 								},
 							]">
+
 							<template v-slot="{ open }">
+
 								<BuilderButton icon="more-horizontal" size="sm" variant="ghost" @click="open"></BuilderButton>
+
 							</template>
+
 						</Dropdown>
+
 					</a>
+
 					<div class="flex w-full gap-2">
+
 						<Dropdown
 							:options="[
 								{ label: 'JavaScript', onClick: () => addScript('JavaScript') },
@@ -58,33 +76,52 @@
 							]"
 							size="sm"
 							class="flex-1 [&>div>div>div]:w-full">
+
 							<template v-slot="{ open }">
+
 								<BuilderButton class="w-full text-xs" @click="open">New Script</BuilderButton>
+
 							</template>
+
 						</Dropdown>
-						<Dropdown
+
+						<Autocomplete
 							v-if="clientScriptResource.data && clientScriptResource.data.length > 0"
 							:options="clientScriptOptions"
-							size="sm"
-							class="max-w-60 flex-1 [&>div>div>div]:w-full">
-							<template v-slot="{ open }">
+							class="[&>div>div>div]:overflow-hidden"
+							@update:modelValue="(option: Option) => attachScript(option.value)"
+							placeholder="Attach Script">
+
+							<template v-slot:target="{ open }">
+
 								<BuilderButton class="w-full text-xs" @click="open">Attach Script</BuilderButton>
+
 							</template>
-						</Dropdown>
+
+						</Autocomplete>
+
 					</div>
+
 				</div>
+
 				<div class="text-xs leading-4 text-ink-gray-6">
+
 					<b>Note:</b>
-					All client scripts are executed in preview mode and on published pages.
+					 All client scripts are executed in preview mode and on published pages.
 				</div>
+
 			</div>
+
 		</div>
+
 		<div
 			class="flex h-[60vh] w-full items-center justify-center rounded bg-surface-gray-1 text-base text-ink-gray-6"
 			v-show="!activeScript">
-			Add Script
+			 Add Script
 		</div>
+
 		<div v-if="activeScript" class="flex h-full w-full flex-col">
+
 			<CodeEditor
 				ref="scriptEditor"
 				:modelValue="activeScript.script"
@@ -96,14 +133,18 @@
 				:show-save-button="true"
 				@save="updateScript"
 				:show-line-numbers="true"></CodeEditor>
+
 		</div>
+
 	</div>
+
 </template>
+
 <script setup lang="ts">
 import EditableSpan from "@/components/EditableSpan.vue";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { createListResource, createResource, Dropdown } from "frappe-ui";
+import { Autocomplete, createListResource, createResource, Dropdown } from "frappe-ui";
 import { computed, nextTick, ref, watch } from "vue";
 import { toast } from "vue-sonner";
 import CodeEditor from "./Controls/CodeEditor.vue";
@@ -118,6 +159,11 @@ type attachedScript = {
 	name: string;
 	script_name: string;
 	editable: boolean;
+};
+
+type Option = {
+	label: string;
+	value: string;
 };
 
 const activeScript = ref<attachedScript | null>(null);
@@ -264,8 +310,8 @@ const updateScriptName = async (newName: string, script: attachedScript) => {
 
 const clientScriptOptions = computed(() =>
 	clientScriptResource.data?.map((script: { name: string; script_type: string }) => ({
-		label: script.name,
-		onClick: () => attachScript(script.name),
+		label: `${script.name}.${script.script_type == "JavaScript" ? "js" : script.script_type.toLowerCase()}`,
+		value: script.name,
 	})),
 );
 
@@ -283,9 +329,11 @@ watch(
 
 defineExpose({ scriptEditor });
 </script>
+
 <style scoped>
 :deep(.editor > .ace_editor) {
 	border-top-left-radius: 0;
 	border-top-right-radius: 0;
 }
 </style>
+
