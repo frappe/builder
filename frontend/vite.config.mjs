@@ -14,6 +14,7 @@ export default defineConfig({
 				port: 8080,
 				source: "^/(app|login|api|assets|files|pages|builder_assets)",
 			},
+			lucideIcons: true,
 		}),
 		vue(),
 	],
