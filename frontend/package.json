@@ -2,6 +2,7 @@
   "private": true,
   "version": "0.0.0",
   "name": "builder-ui",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build --base=/assets/builder/frontend/ && yarn copy-html-entry",
