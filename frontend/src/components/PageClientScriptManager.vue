@@ -1,13 +1,8 @@
 <template>
-
 	<div class="flex gap-5">
-
 		<div class="flex flex-col gap-3">
-
 			<div class="flex h-full w-48 flex-col justify-between gap-1">
-
 				<div class="flex flex-col gap-1">
-
 					<a
 						v-for="script in attachedScriptResource.data"
 						href="#"
@@ -17,9 +12,7 @@
 						}"
 						@click="selectScript(script)"
 						class="group flex h-6 items-center justify-between gap-1 text-sm last-of-type:mb-2">
-
 						<div class="flex w-[90%] items-center gap-1">
-
 							<CSSIcon class="shrink-0" v-if="script.script_type === 'CSS'" />
 
 							<JavaScriptIcon class="shrink-0" v-if="script.script_type === 'JavaScript'" />
@@ -33,9 +26,8 @@
 									}
 								"
 								class="w-full truncate">
-								 {{ script.script_name }}
+								{{ script.script_name }}
 							</EditableSpan>
-
 						</div>
 
 						<Dropdown
@@ -56,19 +48,13 @@
 									icon: 'trash',
 								},
 							]">
-
 							<template v-slot="{ open }">
-
 								<BuilderButton icon="more-horizontal" size="sm" variant="ghost" @click="open"></BuilderButton>
-
 							</template>
-
 						</Dropdown>
-
 					</a>
 
 					<div class="flex w-full gap-2">
-
 						<Dropdown
 							:options="[
 								{ label: 'JavaScript', onClick: () => addScript('JavaScript') },
@@ -76,13 +62,9 @@
 							]"
 							size="sm"
 							class="flex-1 [&>div>div>div]:w-full">
-
 							<template v-slot="{ open }">
-
 								<BuilderButton class="w-full text-xs" @click="open">New Script</BuilderButton>
-
 							</template>
-
 						</Dropdown>
 
 						<Autocomplete
@@ -91,37 +73,27 @@
 							class="[&>div>div>div]:overflow-hidden"
 							@update:modelValue="(option: Option) => attachScript(option.value)"
 							placeholder="Attach Script">
-
 							<template v-slot:target="{ open }">
-
 								<BuilderButton class="w-full text-xs" @click="open">Attach Script</BuilderButton>
-
 							</template>
-
 						</Autocomplete>
-
 					</div>
-
 				</div>
 
 				<div class="text-xs leading-4 text-ink-gray-6">
-
 					<b>Note:</b>
-					 All client scripts are executed in preview mode and on published pages.
+					All client scripts are executed in preview mode and on published pages.
 				</div>
-
 			</div>
-
 		</div>
 
 		<div
 			class="flex h-[60vh] w-full items-center justify-center rounded bg-surface-gray-1 text-base text-ink-gray-6"
 			v-show="!activeScript">
-			 Add Script
+			Add Script
 		</div>
 
 		<div v-if="activeScript" class="flex h-full w-full flex-col">
-
 			<CodeEditor
 				ref="scriptEditor"
 				:modelValue="activeScript.script"
@@ -133,11 +105,8 @@
 				:show-save-button="true"
 				@save="updateScript"
 				:show-line-numbers="true"></CodeEditor>
-
 		</div>
-
 	</div>
-
 </template>
 
 <script setup lang="ts">
@@ -336,4 +305,3 @@ defineExpose({ scriptEditor });
 	border-top-right-radius: 0;
 }
 </style>
-
