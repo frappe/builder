@@ -4,27 +4,18 @@
 			<div class="flex items-center justify-between">
 				<InputLabel>BG Image</InputLabel>
 				<div class="relative w-full">
-					<div>
-						<BuilderInput
-							class="[&>div>input]:pl-8"
-							type="text"
-							placeholder="Set Background"
-							@focus="togglePopover"
-							@update:modelValue="updateBG"
-							:modelValue="backgroundURL?.replace(/^'|'$/g, '')" />
-						<div
-							class="absolute left-2 top-[6px] z-10 h-4 w-4 rounded shadow-sm"
-							@click="togglePopover"
-							:class="{
-								'bg-surface-gray-4': !backgroundURL,
-							}"
-							:style="{
-								backgroundImage: backgroundURL ? `url(${backgroundURL})` : '',
-								backgroundPosition: `center`,
-								backgroundSize: `contain`,
-								backgroundRepeat: `no-repeat`,
-							}"></div>
-					</div>
+					<BuilderInput
+						class="[&>div>input]:pl-8"
+						type="text"
+						placeholder="Set Background"
+						@focus="togglePopover"
+						:modelValue="backgroundImage"
+						@update:modelValue="setBGImageURL" />
+					<div
+						class="absolute left-2 top-[6px] z-10 h-4 w-4 cursor-pointer rounded shadow-sm"
+						@click="togglePopover"
+						:class="{ 'bg-surface-gray-4': !Boolean(backgroundImage) }"
+						:style="previewStyle" />
 				</div>
 			</div>
 		</template>
@@ -32,14 +23,9 @@
 			<div class="rounded-lg bg-surface-white p-3 shadow-lg">
 				<div
 					class="image-preview group relative h-24 w-48 cursor-pointer overflow-hidden rounded bg-surface-gray-3"
-					:style="{
-						backgroundImage: backgroundURL ? `url(${backgroundURL})` : '',
-						backgroundPosition: `center`,
-						backgroundSize: backgroundSize || `contain`,
-						backgroundRepeat: `no-repeat`,
-					}">
+					:style="previewStyle">
 					<FileUploader
-						@success="setBG"
+						@success="setBGImage"
 						:uploadArgs="{
 							private: false,
 							folder: 'Home/Builder Uploads',
@@ -50,71 +36,125 @@
 							<div
 								class="absolute bottom-0 left-0 right-0 top-0 hidden place-items-center bg-gray-500 bg-opacity-20"
 								:class="{
-									'!grid': !backgroundURL,
-									'group-hover:grid': backgroundURL,
+									'!grid': !backgroundImage,
+									'group-hover:grid': backgroundImage,
 								}">
 								<BuilderButton @click="openFileSelector">Upload</BuilderButton>
 							</div>
 						</template>
 					</FileUploader>
 				</div>
-				<InlineInput
-					label="Size"
-					class="mt-4"
-					:modelValue="backgroundSize"
-					type="select"
-					:options="['contain', 'cover']"
-					@update:modelValue="setBGSize" />
+				<div class="mt-4 space-y-2">
+					<InlineInput
+						label="Size"
+						:modelValue="backgroundSize"
+						type="select"
+						:options="sizeOptions"
+						@update:modelValue="setBGSize" />
+					<InlineInput
+						label="Position"
+						:modelValue="backgroundPosition"
+						type="select"
+						:options="positionOptions"
+						@update:modelValue="setBGPosition" />
+					<InlineInput
+						label="Repeat"
+						:modelValue="backgroundRepeat"
+						type="select"
+						:options="repeatOptions"
+						@update:modelValue="setBGRepeat" />
+				</div>
+				<BuilderButton v-if="backgroundImage" class="mt-3 w-full" variant="subtle" @click="clearBGImage">
+					Clear Image
+				</BuilderButton>
 			</div>
 		</template>
 	</Popover>
+	<ColorInput label="BG Color" :value="backgroundColor as HashString" @change="setBGColor" />
 </template>
+
 <script lang="ts" setup>
+import ColorInput from "@/components/Controls/ColorInput.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import blockController from "@/utils/blockController";
 import { FileUploader, Popover } from "frappe-ui";
 import { computed } from "vue";
 
-const backgroundURL = computed(() => {
-	const background = blockController?.getStyle("background") as string;
-	if (background) {
-		const { bgImageURL } = parseBackground(background);
-		return bgImageURL;
-	}
-	return null;
+const backgroundColor = computed(() => blockController.getStyle("backgroundColor"));
+const backgroundImage = computed(() => {
+	const bgImage = blockController.getStyle("backgroundImage") as string;
+	return bgImage ? bgImage.replace(/^url\(['"]?|['"]?\)$/g, "") : null;
 });
+const backgroundSize = computed(() => blockController.getStyle("backgroundSize") as string);
+const backgroundPosition = computed(() => blockController.getStyle("backgroundPosition") as string);
+const backgroundRepeat = computed(() => blockController.getStyle("backgroundRepeat") as string);
 
-const backgroundSize = computed(() => {
-	const background = blockController?.getStyle("background") as string;
-	if (background) {
-		const { bgSize } = parseBackground(background);
-		return bgSize;
+const previewStyle = computed(() => ({
+	backgroundImage: (backgroundImage.value ? `url(${backgroundImage.value})` : "") as string,
+	backgroundPosition: backgroundPosition.value,
+	backgroundSize: backgroundSize.value,
+	backgroundRepeat: backgroundRepeat.value,
+}));
+
+const sizeOptions = [
+	{ label: "Contain", value: "contain" },
+	{ label: "Cover", value: "cover" },
+	{ label: "Auto", value: "auto" },
+];
+
+const positionOptions = [
+	{ label: "Center", value: "center" },
+	{ label: "Top", value: "top" },
+	{ label: "Bottom", value: "bottom" },
+	{ label: "Left", value: "left" },
+	{ label: "Right", value: "right" },
+];
+
+const repeatOptions = [
+	{ label: "No Repeat", value: "no-repeat" },
+	{ label: "Repeat", value: "repeat" },
+	{ label: "Repeat X", value: "repeat-x" },
+	{ label: "Repeat Y", value: "repeat-y" },
+];
+
+const setBGColor = (color: string) => {
+	blockController.setStyle("backgroundColor", color);
+};
+
+const setBGImage = (file: { file_url: string }) => {
+	blockController.setStyle("backgroundImage", `url(${file.file_url})`);
+	if (!blockController.getStyle("backgroundSize")) {
+		blockController.setStyle("backgroundSize", "cover");
 	}
-});
+	if (!blockController.getStyle("backgroundPosition")) {
+		blockController.setStyle("backgroundPosition", "center");
+	}
+	if (!blockController.getStyle("backgroundRepeat")) {
+		blockController.setStyle("backgroundRepeat", "no-repeat");
+	}
+};
 
-const setBG = (file: { file_url: string }) => {
-	const url = window.location.origin + file.file_url;
-	blockController?.setStyle(
-		"background",
-		`url('${url}') center / ${backgroundSize.value || "cover"} no-repeat`,
-	);
+const setBGImageURL = (url: string) => {
+	blockController.setStyle("backgroundImage", url ? `url(${url})` : null);
 };
 
 const setBGSize = (value: string) => {
-	blockController?.setStyle("background", `url(${backgroundURL.value}) center / ${value} no-repeat`);
+	blockController.setStyle("backgroundSize", value);
 };
 
-const parseBackground = (background: string) => {
-	const bgImageURL = background.match(/url\((.*?)\)/)?.[1];
-	const bgPosition = background.match(/center|top|bottom|left|right/g)?.[0];
-	const bgSize = background.match(/contain|cover/g)?.[0];
-	const bgRepeat = background.match(/repeat|no-repeat/g)?.[0];
-	return { bgImageURL, bgPosition, bgSize, bgRepeat };
+const setBGPosition = (value: string) => {
+	blockController.setStyle("backgroundPosition", value);
 };
 
-const updateBG = (value: string) => {
-	value = value ? `url('${value}') center / ${backgroundSize.value || "cover"} no-repeat` : "";
-	blockController?.setStyle("background", value);
+const setBGRepeat = (value: string) => {
+	blockController.setStyle("backgroundRepeat", value);
+};
+
+const clearBGImage = () => {
+	blockController.setStyle("backgroundImage", null);
+	blockController.setStyle("backgroundSize", null);
+	blockController.setStyle("backgroundPosition", null);
+	blockController.setStyle("backgroundRepeat", null);
 };
 </script>

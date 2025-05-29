@@ -27,6 +27,7 @@ from builder.html_preview_image import generate_preview
 from builder.utils import (
 	ColonRule,
 	camel_case_to_kebab_case,
+	clean_data,
 	copy_img_to_asset_folder,
 	escape_single_quotes,
 	execute_script,
@@ -82,16 +83,24 @@ class BuilderPage(WebsiteGenerator):
 			self.name = f"page-{frappe.generate_hash(length=8)}"
 
 	def before_insert(self):
-		if isinstance(self.blocks, list):
-			self.blocks = frappe.as_json(self.blocks, indent=None)
-		if isinstance(self.draft_blocks, list):
-			self.draft_blocks = frappe.as_json(self.draft_blocks, indent=None)
+		self.process_blocks()
+		self.set_preview()
+		self.set_default_values()
+
+	def process_blocks(self):
+		for block_type in ["blocks", "draft_blocks"]:
+			if isinstance(getattr(self, block_type), list):
+				setattr(self, block_type, frappe.as_json(getattr(self, block_type), indent=None))
 		if not self.blocks:
 			self.blocks = "[]"
-		if self.preview:
-			self.flags.skip_preview = True
-		else:
+
+	def set_preview(self):
+		if not self.preview:
 			self.preview = "/assets/builder/images/fallback.png"
+		else:
+			self.flags.skip_preview = True
+
+	def set_default_values(self):
 		if not self.page_title:
 			self.page_title = "My Page"
 		if not self.route:
@@ -213,6 +222,7 @@ class BuilderPage(WebsiteGenerator):
 		self.set_style_and_script(context)
 		self.set_meta_tags(context=context, page_data=page_data)
 		self.set_favicon(context)
+		context.page_data = clean_data(context.page_data)
 		try:
 			context["content"] = render_template(context.content, context)
 		except TemplateSyntaxError:

@@ -28,10 +28,14 @@
 							group: 'Actions',
 							hideLabel: true,
 							items: [
-								{ label: 'Duplicate', onClick: () => pageStore.duplicatePage(page), icon: 'copy' },
+								{
+									label: 'Duplicate',
+									onClick: () => pageStore.duplicatePage(page),
+									icon: 'copy',
+								},
 								{
 									label: 'View in Desk',
-									onClick: () => store.openInDesk(page),
+									onClick: () => openInDesk(page),
 									icon: 'arrow-up-right',
 								},
 							],
@@ -60,6 +64,7 @@
 <script setup lang="ts">
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { openInDesk } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
 import { Dropdown } from "frappe-ui";
 

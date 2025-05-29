@@ -1,33 +1,54 @@
 <template>
-	<div class="overflow-hidden">
+	<div class="flex-1 overflow-y-hidden">
 		<div class="mb-5">
-			<div class="flex gap-4 px-[2px] py-2">
-				<BuilderInput
-					type="text"
-					v-model="redirectMap.from"
-					:hideClearButton="true"
-					required
-					placeholder="From" />
-				<BuilderInput
-					type="text"
-					v-model="redirectMap.to"
-					:hideClearButton="true"
-					required
-					placeholder="To" />
-			</div>
-			<button
-				class="flex w-fit cursor-pointer items-center gap-2 px-[2px] py-1 text-base text-ink-gray-5"
-				@click="addRedirect">
-				<FeatherIcon name="plus" class="size-4" />
-				<span>Add Redirect</span>
-			</button>
+			<form onsubmit="return false;">
+				<div class="flex gap-2 px-[2px] py-2">
+					<BuilderInput
+						type="text"
+						v-model="redirectMap.from"
+						:hideClearButton="true"
+						required
+						placeholder="From" />
+					<BuilderInput
+						type="text"
+						v-model="redirectMap.to"
+						:hideClearButton="true"
+						required
+						placeholder="To" />
+				</div>
+				<button
+					type="submit"
+					class="flex w-fit cursor-pointer items-center gap-2 justify-self-end px-[2px] py-1 text-base text-ink-gray-5 hover:text-ink-gray-9"
+					@click="addRedirect">
+					<FeatherIcon name="plus" class="size-4" />
+					<span>Add Redirect</span>
+				</button>
+			</form>
 		</div>
-		<div class="h-full overflow-hidden text-sm">
+		<div class="flex h-[100%] flex-col items-center justify-center text-ink-gray-5" v-if="rows.length == 0">
+			<div class="flex h-28 align-top text-base text-ink-gray-4">No redirects set</div>
+		</div>
+		<div class="h-full text-sm" v-else>
 			<div
-				class="sticky top-0 flex rounded-t-md border-b border-outline-gray-1 bg-surface-gray-1 py-2 text-ink-gray-5">
-				<span class="w-1/2 pl-2">From URL</span>
-				<span class="w-1/2 pl-2">To URL</span>
+				class="sticky top-0 flex gap-2 rounded-t-md border-b border-outline-gray-1 bg-surface-gray-1 px-[2px] text-ink-gray-5">
+				<span class="w-1/2">
+					<BuilderInput
+						type="text"
+						:disabled="rows.length === 0 && !searchQuery.from"
+						v-model="searchQuery.from"
+						@input="(val: string) => (searchQuery.from = val)"
+						placeholder="From URL" />
+				</span>
+				<span class="w-1/2">
+					<BuilderInput
+						type="text"
+						:disabled="rows.length === 0 && !searchQuery.to"
+						v-model="searchQuery.to"
+						@input="(val: string) => (searchQuery.to = val)"
+						placeholder="To URL" />
+				</span>
 			</div>
+
 			<div class="h-[calc(100%-115px)] overflow-y-auto">
 				<div
 					class="group flex items-center rounded-sm border-b border-outline-gray-1 px-2 py-2 text-sm text-ink-gray-7 hover:bg-surface-gray-2"
@@ -36,7 +57,7 @@
 					<code class="ml-3 w-1/2 truncate pl-2">{{ row.to }}</code>
 					<FeatherIcon
 						name="trash"
-						class="size-3 cursor-pointer text-ink-gray-5"
+						class="size-3 cursor-pointer text-ink-gray-5 hover:text-ink-gray-9"
 						@click="deleteRedirect(row.id)" />
 				</div>
 			</div>
@@ -46,8 +67,14 @@
 <script setup lang="ts">
 import routeRedirects from "@/data/routeRedirects";
 import { computed, onMounted, ref } from "vue";
+import { toast } from "vue-sonner";
 
 const redirectMap = ref({
+	from: "",
+	to: "",
+});
+
+const searchQuery = ref({
 	from: "",
 	to: "",
 });
@@ -57,30 +84,56 @@ onMounted(() => {
 });
 
 const rows = computed(() => {
-	return (routeRedirects.data || []).map((redirect: { source: string; target: string; name: string }) => {
-		return {
-			from: redirect.source,
-			to: redirect.target,
-			id: redirect.name,
-		};
-	});
+	return (routeRedirects.data || [])
+		.map((redirect: { source: string; target: string; name: string }) => {
+			return {
+				from: redirect.source,
+				to: redirect.target,
+				id: redirect.name,
+			};
+		})
+		.filter((row: { from: string; to: string; id: string }) => {
+			return (
+				row.from.toLowerCase().includes(searchQuery.value.from.toLowerCase()) &&
+				row.to.toLowerCase().includes(searchQuery.value.to.toLowerCase())
+			);
+		});
 });
 
 const addRedirect = () => {
-	routeRedirects.insert
-		.submit({
+	if (!redirectMap.value.from || !redirectMap.value.to) {
+		return;
+	}
+	toast.promise(
+		routeRedirects.insert.submit({
 			source: redirectMap.value.from,
 			target: redirectMap.value.to,
 			parenttype: "Website Settings",
 			parentfield: "route_redirects",
 			parent: "Website Settings",
-		})
-		.then(() => {
-			redirectMap.value = { from: "", to: "" };
-		});
+		}),
+		{
+			loading: "Adding redirect...",
+			success: () => {
+				redirectMap.value = { from: "", to: "" };
+				return "Redirect added";
+			},
+			error: (err) => {
+				return `Error adding redirect: ${err}`;
+			},
+		},
+	);
 };
 
 const deleteRedirect = (id: string) => {
-	routeRedirects.delete.submit(id);
+	toast.promise(routeRedirects.delete.submit(id), {
+		loading: "Deleting redirect...",
+		success: () => {
+			return "Redirect deleted";
+		},
+		error: (err) => {
+			return `Error deleting redirect: ${err}`;
+		},
+	});
 };
 </script>
