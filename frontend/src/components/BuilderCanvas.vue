@@ -219,7 +219,7 @@ onMounted(() => {
 		findBlock,
 	);
 	setPanAndZoom(canvasEl, canvasContainerEl, canvasProps);
-	useBlockEventHandlers();
+	useBlockEventHandlers(canvasContainerEl);
 });
 
 const handleClick = (ev: MouseEvent) => {
