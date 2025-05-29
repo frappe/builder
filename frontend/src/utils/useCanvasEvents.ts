@@ -155,7 +155,10 @@ export function useCanvasEvents(
 	});
 
 	useEventListener(document, "keydown", (ev: KeyboardEvent) => {
-		if (isTargetEditable(ev) || selectedBlocks.value.length !== 1) return;
+		// make sure reference container is not hidden or not editable
+		if (!container.value.offsetParent || isTargetEditable(ev) || selectedBlocks.value.length !== 1) {
+			return;
+		}
 
 		const selectedBlock = selectedBlocks.value[0];
 
