@@ -2,7 +2,7 @@ import colors from "tailwindcss/colors";
 import frappeUIPreset from "frappe-ui/src/tailwind/preset.js";
 import plugin from "tailwindcss/plugin";
 
-module.exports = {
+export default {
 	presets: [frappeUIPreset],
 	content: [
 		"./index.html",

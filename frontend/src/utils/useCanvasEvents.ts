@@ -155,11 +155,15 @@ export function useCanvasEvents(
 	});
 
 	useEventListener(document, "keydown", (ev: KeyboardEvent) => {
-		if (isTargetEditable(ev) || selectedBlocks.value.length !== 1) return;
+		// make sure reference container is not hidden or not editable
+		if (!container.value.offsetParent || isTargetEditable(ev) || selectedBlocks.value.length !== 1) {
+			return;
+		}
 
 		const selectedBlock = selectedBlocks.value[0];
 
 		const selectBlock = (block: Block | null) => {
+			// TODO: Use canvas's selectBlock instead of canvasStore's to avoid mixup with other canvas
 			if (block) canvasStore.selectBlock(block, null, true, true);
 			return !!block;
 		};

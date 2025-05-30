@@ -1,5 +1,5 @@
 <template>
-	<div class="editor flex flex-col gap-1">
+	<div class="code-editor flex flex-col gap-1">
 		<span class="text-p-sm font-medium text-ink-gray-8" v-show="label">
 			{{ label }}
 			<span v-if="isDirty" class="text-[10px] text-gray-600">●</span>

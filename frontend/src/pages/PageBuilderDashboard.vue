@@ -14,7 +14,7 @@
 						size: '5xl',
 					}">
 					<template #body>
-						<Settings @close="showSettingsDialog = false" :onlyGlobal="true"></Settings>
+						<BuilderSettings @close="showSettingsDialog = false" :onlyGlobal="true"></BuilderSettings>
 					</template>
 				</Dialog>
 				<div class="flex items-center">
@@ -26,7 +26,11 @@
 								items: [
 									{
 										label: 'New Page',
-										onClick: () => $router.push({ name: 'builder', params: { pageId: 'new' } }),
+										onClick: () =>
+											$router.push({
+												name: 'builder',
+												params: { pageId: 'new' },
+											}),
 										icon: 'plus',
 									},
 								],
@@ -164,16 +168,32 @@
 										{ label: 'Sort', value: '', disabled: true },
 										{ label: 'Last Created', value: 'creation' },
 										{ label: 'Last Modified', value: 'modified' },
-										{ label: 'Alphabetically (A-Z)', value: 'alphabetically_a_z' },
-										{ label: 'Alphabetically (Z-A)', value: 'alphabetically_z_a' },
+										{
+											label: 'Alphabetically (A-Z)',
+											value: 'alphabetically_a_z',
+										},
+										{
+											label: 'Alphabetically (Z-A)',
+											value: 'alphabetically_z_a',
+										},
 									]" />
 							</div>
 							<div class="max-md:hidden">
 								<OptionToggle
 									class="[&>div]:min-w-0"
 									:options="[
-										{ label: 'Grid', value: 'grid', icon: 'grid', hideLabel: true },
-										{ label: 'List', value: 'list', icon: 'list', hideLabel: true },
+										{
+											label: 'Grid',
+											value: 'grid',
+											icon: 'grid',
+											hideLabel: true,
+										},
+										{
+											label: 'List',
+											value: 'list',
+											icon: 'list',
+											hideLabel: true,
+										},
 									]"
 									v-model="displayType"></OptionToggle>
 							</div>
@@ -229,13 +249,13 @@
 </template>
 <script setup lang="ts">
 import AppsMenu from "@/components/AppsMenu.vue";
+import BuilderSettings from "@/components/BuilderSettings.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import DashboardSidebar from "@/components/DashboardSidebar.vue";
 import SelectFolder from "@/components/Modals/SelectFolder.vue";
 import PageCard from "@/components/PageCard.vue";
 import PageListItem from "@/components/PageListItem.vue";
-import Settings from "@/components/Settings.vue";
 import { webPages } from "@/data/webPage";
 import vOnClickAndHold from "@/directives/vOnClickAndHold";
 import useBuilderStore from "@/stores/builderStore";

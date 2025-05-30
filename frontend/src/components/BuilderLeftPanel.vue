@@ -33,16 +33,16 @@
 			<div v-show="builderStore.leftPanelActiveTab === 'Assets'">
 				<BuilderAssets class="mt-1 p-4 pt-3" />
 			</div>
-			<div v-show="builderStore.leftPanelActiveTab === 'Layers'" class="p-3">
+			<div v-show="builderStore.leftPanelActiveTab === 'Layers'" class="p-3 pr-0">
 				<BlockLayers
-					class="no-scrollbar block-layers overflow-auto"
+					class="no-scrollbar block-layers w-fit min-w-full pr-3"
 					v-if="pageCanvas"
 					:disable-draggable="true"
 					ref="pageLayers"
 					:blocks="[pageCanvas?.getRootBlock() as Block]"
 					v-show="canvasStore.editingMode == 'page'" />
 				<BlockLayers
-					class="no-scrollbar block-layers overflow-auto"
+					class="no-scrollbar block-layers w-fit min-w-full pr-3"
 					ref="componentLayers"
 					:disable-draggable="true"
 					:blocks="[fragmentCanvas?.getRootBlock()]"

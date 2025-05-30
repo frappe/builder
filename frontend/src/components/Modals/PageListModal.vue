@@ -18,7 +18,10 @@
 							},
 						}">
 						<div class="flex items-start space-x-4 rounded p-2 hover:bg-surface-gray-2">
-							<img :src="page.preview" :alt="page.page_title" class="w-26 h-16 rounded-lg" />
+							<img
+								:src="page.preview"
+								:alt="page.page_title"
+								class="w-26 h-16 rounded-lg border border-outline-gray-1" />
 							<div>
 								<div class="font-bold">{{ page.page_title }}</div>
 								<div class="text-sm text-gray-500">{{ page.route }}</div>

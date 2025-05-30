@@ -8,10 +8,10 @@ import { nextTick } from "vue";
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
-export function useBlockEventHandlers() {
-	useEventListener(document, "click", handleClick);
-	useEventListener(document, "dblclick", handleDoubleClick);
-	useEventListener(document, "contextmenu", triggerContextMenu);
+export function useBlockEventHandlers(target: HTMLElement) {
+	useEventListener(target, "click", handleClick);
+	useEventListener(target, "dblclick", handleDoubleClick);
+	useEventListener(target, "contextmenu", triggerContextMenu);
 
 	function handleClick(e: MouseEvent) {
 		if (!isBlock(e) || isEditable(e)) return;
