@@ -44,7 +44,7 @@ export function useCanvasUtils(
 		const container = canvasContainer.value as HTMLElement;
 		const containerRect = container.getBoundingClientRect();
 		await nextTick();
-		const selectedBlock = document.body.querySelector(
+		const selectedBlock = canvasContainer.value.querySelector(
 			`.editor[data-block-id="${blockToFocus.blockId}"][selected=true]`,
 		) as HTMLElement;
 		if (!selectedBlock) {
