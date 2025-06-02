@@ -304,10 +304,10 @@ const blockController = {
 		});
 	},
 	isForm: () => {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().isForm();
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isForm();
 	},
 	getFormOption: (option: keyof BlockFormOptions) => {
-		return blockController.isBLockSelected() && blockController.getFirstSelectedBlock().getFormOption(option);
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().getFormOption(option);
 	},
 	setFormOption: (option: keyof BlockFormOptions, value: string) => {
 		blockController.getFirstSelectedBlock().setFormOption(option, value);
