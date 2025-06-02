@@ -31,13 +31,26 @@ p:empty::before {
 	}
 
 	.no-scrollbar {
-		-ms-overflow-style: none; /* IE and Edge */
+		-ms-overflow-style: none;
 		scrollbar-width: none;
+	}
+
+	.show-scrollbar::-webkit-scrollbar {
+		display: block;
+	}
+	.show-scrollbar {
+		-ms-overflow-style: auto;
+		scrollbar-width: auto;
 	}
 }
 
 ::-webkit-scrollbar {
 	@apply w-2;
+	@apply h-2;
+	@apply bg-surface-gray-1;
+}
+
+::-webkit-scrollbar-corner {
 	@apply bg-surface-gray-1;
 }
 
