@@ -1,6 +1,8 @@
 <template>
 	<div class="relative w-full">
-		<div class="absolute left-[-18px] top-1 z-50" v-if="dynamicValueProperty && !dynamicValueAlreadySet">
+		<div
+			class="absolute left-[-18px] top-1 z-50 hover:top-0"
+			v-if="dynamicValueProperty && !dynamicValueAlreadySet">
 			<Dropdown :options="dynamicKeyOptions" size="sm" placement="right">
 				<template v-slot="{ open }">
 					<div
@@ -24,8 +26,13 @@
 				<slot name="prefix" />
 			</template>
 		</FormControl>
+		<div
+			class="absolute bottom-0 left-0 right-0 top-0 z-10 rounded bg-surface-violet-1 px-2 py-0.5 text-ink-violet-1"
+			v-if="dynamicValueAlreadySet">
+			{{ dynamicValue }}
+		</div>
 		<button
-			class="absolute bottom-[3px] right-[1px] cursor-pointer p-1 text-ink-gray-4 hover:text-ink-gray-5"
+			class="absolute bottom-[3px] right-[1px] z-20 cursor-pointer p-1 text-ink-gray-4 hover:text-ink-gray-5"
 			tabindex="-1"
 			@click="clearValue"
 			v-if="!['select', 'checkbox'].includes(type) && !hideClearButton"
@@ -141,7 +148,6 @@ const triggerUpdate = useDebounceFn(($event: Event) => {
 const canvasStore = useCanvasStore();
 let dynamicValueAlreadySet = computed(() => {
 	const blocks = canvasStore.activeCanvas?.selectedBlocks;
-	console.log(blocks);
 	if (!blocks?.length) return;
 	const dataKeyObj = blocks[0].dynamicValues.find((obj) => {
 		if (obj.type == "style" && obj.property == props.dynamicValueProperty) {
@@ -152,6 +158,21 @@ let dynamicValueAlreadySet = computed(() => {
 		return true;
 	} else {
 		return false;
+	}
+});
+
+const dynamicValue = computed(() => {
+	const blocks = canvasStore.activeCanvas?.selectedBlocks;
+	if (!blocks?.length) return;
+	const dataKeyObj = blocks[0].dynamicValues.find((obj) => {
+		if (obj.type == "style" && obj.property == props.dynamicValueProperty) {
+			return true;
+		}
+	});
+	if (dataKeyObj) {
+		return dataKeyObj.key;
+	} else {
+		return "";
 	}
 });
 

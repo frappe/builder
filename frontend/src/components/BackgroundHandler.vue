@@ -70,7 +70,11 @@
 			</div>
 		</template>
 	</Popover>
-	<ColorInput label="BG Color" :value="backgroundColor as HashString" @change="setBGColor" />
+	<ColorInput
+		label="BG Color"
+		:value="(backgroundColor as HashString)"
+		@change="setBGColor"
+		:dynamicValueProperty="'backgroundColor'" />
 </template>
 
 <script lang="ts" setup>
