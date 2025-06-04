@@ -5,18 +5,10 @@ import blockController from "@/utils/blockController";
 
 const styleSectionProperties = [
 	{
-		component: ColorInput,
-		getProps: () => {
-			return {
-				dynamicValueProperty: "background",
-				label: "BG Color",
-				value: blockController.getStyle("background"),
-			};
-		},
-		searchKeyWords: "Background, BackgroundColor, Background Color, BG, BGColor, BG Color",
-		events: {
-			change: (val: StyleValue) => blockController.setStyle("background", val),
-		},
+		component: BackgroundHandler,
+		getProps: () => {},
+		searchKeyWords:
+			"Background, BackgroundImage, Background Image, Background Position, Background Repeat, Background Size, BG, BGImage, BG Image, BGPosition, BG Position, BGRepeat, BG Repeat, BGSize, BG Size",
 	},
 	{
 		component: ColorInput,
@@ -101,12 +93,7 @@ const styleSectionProperties = [
 		},
 		condition: () => blockController.getStyle("borderColor"),
 	},
-	{
-		component: BackgroundHandler,
-		getProps: () => {},
-		searchKeyWords:
-			"Background, BackgroundImage, Background Image, Background Position, Background Repeat, Background Size, BG, BGImage, BG Image, BGPosition, BG Position, BGRepeat, BG Repeat, BGSize, BG Size",
-	},
+
 	{
 		component: InlineInput,
 		getProps: () => {
@@ -120,18 +107,15 @@ const styleSectionProperties = [
 					},
 					{
 						label: "Small",
-						value:
-							"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 1px 2px 0px, rgba(0, 0, 0, 0.05) 0px 1px 3px 0px",
+						value: "rgba(0, 0, 0, 0.05) 0px 1px 2px 0px, rgba(0, 0, 0, 0.05) 0px 1px 3px 0px",
 					},
 					{
 						label: "Medium",
-						value:
-							"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.1) 0px 4px 6px -4px",
+						value: "rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.1) 0px 4px 6px -4px",
 					},
 					{
 						label: "Large",
-						value:
-							"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.1) 0px 10px 10px -5px",
+						value: "rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.1) 0px 10px 10px -5px",
 					},
 				],
 				modelValue: blockController.getStyle("boxShadow"),
@@ -155,7 +139,17 @@ const styleSectionProperties = [
 		},
 		searchKeyWords: "Border, Radius, BorderRadius, Border Radius",
 		events: {
-			"update:modelValue": (val: StyleValue) => blockController.setStyle("borderRadius", val),
+			"update:modelValue": (val: StyleValue) => {
+				blockController.setStyle("borderRadius", val);
+				if (val) {
+					if (!blockController.getStyle("overflowX")) {
+						blockController.setStyle("overflowX", "hidden");
+					}
+					if (!blockController.getStyle("overflowY")) {
+						blockController.setStyle("overflowY", "hidden");
+					}
+				}
+			},
 		},
 	},
 	{

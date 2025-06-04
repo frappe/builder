@@ -1,6 +1,6 @@
 <template>
 	<div ref="objectEditor" class="flex flex-col gap-2" @paste="pasteObj">
-		<div v-for="(value, key) in obj" :key="key" class="flex gap-2">
+		<div v-for="(value, key, index) in obj" :key="index" class="flex gap-2">
 			<BuilderInput
 				placeholder="Property"
 				:modelValue="key"
@@ -23,7 +23,7 @@
 </template>
 <script setup lang="ts">
 import { mapToObject, replaceMapKey } from "@/utils/helpers";
-import { ref } from "vue";
+import { nextTick, ref } from "vue";
 
 const props = defineProps<{
 	obj: Record<string, string>;
@@ -34,10 +34,16 @@ const emit = defineEmits({
 	"update:obj": (obj: Record<string, string>) => true,
 });
 
-const addObjectKey = () => {
+const addObjectKey = async () => {
 	const map = new Map(Object.entries(props.obj));
 	map.set("", "");
 	emit("update:obj", mapToObject(map));
+	await nextTick();
+	const inputs = objectEditor.value?.querySelectorAll("input");
+	if (inputs) {
+		const lastInput = inputs[inputs.length - 2];
+		lastInput.focus();
+	}
 };
 
 const updateObjectValue = (key: string, value: string) => {

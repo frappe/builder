@@ -33,8 +33,8 @@
 <script setup lang="ts">
 import RedirectIcon from "@/components/Icons/Redirect.vue";
 import GlobalRedirects from "@/components/Settings/GlobalRedirects.vue";
-import PageRedirects from "@/components/Settings/PageRedirects.vue";
-import useStore from "@/store";
+import PageCode from "@/components/Settings/PageCode.vue";
+import usePageStore from "@/stores/pageStore";
 import { computed, onActivated, ref } from "vue";
 import { useRoute } from "vue-router";
 import ChartIcon from "./Icons/Chart.vue";
@@ -52,7 +52,7 @@ const props = defineProps<{
 }>();
 
 const route = useRoute();
-const store = useStore();
+const pageStore = usePageStore();
 const emit = defineEmits(["close"]);
 const selectedItem = ref<string>(props.onlyGlobal ? "global_general" : "page_general");
 
@@ -86,6 +86,7 @@ const pageSettings = {
 			title: "General",
 			icon: SettingsIcon,
 		},
+		{ label: "Code", value: "page_code", component: PageCode, title: "Page Code", icon: CodeIcon },
 		{ label: "Meta", value: "page_meta", component: PageMeta, title: "Meta", icon: MetaIcon },
 		{
 			label: "Analytics",
@@ -93,14 +94,6 @@ const pageSettings = {
 			component: PageAnalytics,
 			title: "Analytics",
 			icon: ChartIcon,
-			disabled: true,
-		},
-		{
-			label: "Redirects",
-			value: "page_redirects",
-			component: PageRedirects,
-			title: "Redirects",
-			icon: RedirectIcon,
 			disabled: true,
 		},
 	],
@@ -115,8 +108,9 @@ const globalSettings = {
 			component: GlobalGeneral,
 			title: "General",
 			icon: SettingsIcon,
+			disabled: false,
 		},
-		{ label: "Code", value: "global_code", component: GlobalCode, title: "Code", icon: CodeIcon },
+		{ label: "Code", value: "global_code", component: GlobalCode, title: "Global Code", icon: CodeIcon },
 		{
 			label: "Redirects",
 			value: "global_redirects",
@@ -135,9 +129,9 @@ const selectItem = (value: string) => {
 };
 
 onActivated(() => {
-	if (route.params.pageId === store.activePage?.name) return;
+	if (route.params.pageId === pageStore.activePage?.name) return;
 	else if (route.params.pageId) {
-		store.setActivePage(route.params.pageId as string);
+		pageStore.setActivePage(route.params.pageId as string);
 	}
 });
 </script>

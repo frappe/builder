@@ -1,0 +1,47 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-02-06 02:35:57.585869",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "library_url",
+  "builder_page",
+  "library_type"
+ ],
+ "fields": [
+  {
+   "fieldname": "library_type",
+   "fieldtype": "Select",
+   "label": "Library Type",
+   "options": "CSS\nJS"
+  },
+  {
+   "fieldname": "library_url",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Library URL",
+   "options": "URL",
+   "reqd": 1
+  },
+  {
+   "fieldname": "builder_page",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Builder Page",
+   "options": "Builder Page"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-02-19 13:17:39.784753",
+ "modified_by": "Administrator",
+ "module": "Builder",
+ "name": "Builder Page Library",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

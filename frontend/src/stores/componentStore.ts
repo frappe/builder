@@ -1,10 +1,11 @@
+import type Block from "@/block";
 import webComponent from "@/data/webComponent";
-import useStore from "@/store";
+import useCanvasStore from "@/stores/canvasStore";
+import usePageStore from "@/stores/pageStore";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
-import Block from "@/utils/block";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { alert, getBlockInstance, getBlockObject } from "@/utils/helpers";
-import { createDocumentResource } from "frappe-ui";
+import { alert, confirm, getBlockInstance, getBlockObject } from "@/utils/helpers";
+import { createDocumentResource, createResource } from "frappe-ui";
 import { defineStore } from "pinia";
 import { markRaw } from "vue";
 import { toast } from "vue-sonner";
@@ -22,27 +23,56 @@ const useComponentStore = defineStore("componentStore", {
 			if (!block?.isExtendedFromComponent() && !componentName) {
 				return;
 			}
-			componentName = componentName || (block?.extendedFromComponent as string);
+			componentName =
+				componentName || (block?.extendedFromComponent as string) || (block?.isChildOfComponent as string);
 			await this.loadComponent(componentName);
 			const component = this.getComponent(componentName);
 			const componentBlock = this.getComponentBlock(componentName);
-			const store = useStore();
-			store.editOnCanvas(
+			const canvasStore = useCanvasStore();
+			canvasStore.editOnCanvas(
 				componentBlock,
-				(block: Block) => {
-					webComponent.setValue
-						.submit({
-							name: componentName,
-							block: getBlockObject(block),
-						})
-						.then((data: BuilderComponent) => {
-							this.setComponentMap(data);
-							toast.success("Component saved!");
-						});
-				},
+				(block: Block) => this.saveComponent(block, componentName),
 				"Save Component",
 				component.component_name,
+				component.name,
 			);
+		},
+		saveComponent(block: Block, componentName: string) {
+			const pageStore = usePageStore();
+			return webComponent.setValue
+				.submit({
+					name: componentName,
+					block: getBlockObject(block),
+				})
+				.then(async (data: BuilderComponent) => {
+					this.setComponentMap(data);
+					toast.success("Component saved!", {
+						duration: 5000,
+						action: {
+							label: "Sync in all pages",
+							onClick: async () => {
+								const componentResource = createResource({
+									url: "builder.api.sync_component",
+									method: "POST",
+									params: {
+										component_id: data.name,
+									},
+									auto: true,
+								});
+								await toast.promise(componentResource.promise, {
+									loading: "Syncing component in all the pages...",
+									success: () => {
+										pageStore.fetchActivePage().then(() => {
+											pageStore.setPage(pageStore.activePage?.name as string);
+										});
+										return "Component synced in all the pages!";
+									},
+									error: () => "Error syncing component in all the pages!",
+								});
+							},
+						},
+					});
+				});
 		},
 		isComponentUsed(componentName: string) {
 			// TODO: Refactor or reduce complexity
@@ -59,8 +89,8 @@ const useComponentStore = defineStore("componentStore", {
 				}
 				return false;
 			};
-			const store = useStore();
-			for (const block of store.activeCanvas?.getRootBlock()?.children || []) {
+			const canvasStore = useCanvasStore();
+			for (const block of canvasStore.activeCanvas?.getRootBlock()?.children || []) {
 				if (checkComponent(block)) {
 					return true;
 				}
@@ -70,7 +100,7 @@ const useComponentStore = defineStore("componentStore", {
 		getComponentBlock(componentName: string) {
 			return (
 				(this.componentMap.get(componentName) as Block) ||
-				getBlockInstance(getBlockTemplate("loading-component"))
+				getBlockInstance(getBlockTemplate("empty-component"))
 			);
 		},
 		async loadComponent(componentName: string) {
@@ -124,13 +154,14 @@ const useComponentStore = defineStore("componentStore", {
 						block: obj.block,
 					});
 				} else {
+					console.log("Skipping component update", obj.name, existingComponent, newComponent);
 					return;
 				}
 			}
 			return webComponent.insert
 				.submit(obj)
 				.then(() => {
-					this.componentMap.set(obj.name, getBlockInstance(obj.block));
+					this.setComponentMap(obj);
 				})
 				.catch(() => {
 					console.log(`There was an error while creating ${obj.component_name}`);

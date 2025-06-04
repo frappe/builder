@@ -26,7 +26,7 @@
 					@change="query = $event.target.value"
 					:displayValue="getDisplayValue"
 					:placeholder="!modelValue ? placeholder : null"
-					class="focus:ring-outline-gray-3 h-full w-full rounded border-none bg-transparent pl-2 pr-5 text-base focus:ring-2" />
+					class="h-full w-full rounded border-none bg-transparent pl-2 pr-5 text-base focus:ring-2 focus:ring-outline-gray-3" />
 			</div>
 			<ComboboxOptions
 				class="absolute right-0 z-50 w-full overflow-y-auto rounded-lg border border-outline-gray-2 bg-surface-white p-0 shadow-2xl"
@@ -87,7 +87,7 @@
 import BuilderButton from "@/components/Controls/BuilderButton.vue";
 import CrossIcon from "@/components/Icons/Cross.vue";
 import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from "@headlessui/vue";
-import { ComputedRef, PropType, computed, ref, watch } from "vue";
+import { ComputedRef, computed, ref, watch } from "vue";
 
 type Option = {
 	label: string;
@@ -103,28 +103,21 @@ type Action = {
 	component?: any;
 };
 
-const props = defineProps({
-	options: {
-		type: Array as PropType<Option[]>,
-		default: () => [],
+const props = withDefaults(
+	defineProps<{
+		options?: Option[];
+		getOptions?: (filterString: string) => Promise<Option[]>;
+		modelValue?: any;
+		placeholder?: string;
+		showInputAsOption?: boolean;
+		actionButton?: Action;
+	}>(),
+	{
+		options: () => [],
+		placeholder: "Search",
+		showInputAsOption: false,
 	},
-	getOptions: {
-		type: Function as PropType<(filterString: string) => Promise<Option[]>>,
-	},
-	modelValue: {},
-	placeholder: {
-		type: String,
-		default: "Search",
-	},
-	showInputAsOption: {
-		type: Boolean,
-		default: false,
-	},
-	actionButton: {
-		type: Object as PropType<Action>,
-		default: null,
-	},
-});
+);
 
 const query = ref("");
 const multiple = computed(() => Array.isArray(props.modelValue));

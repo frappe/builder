@@ -1,15 +1,17 @@
-import useStore from "@/store";
+import type Block from "@/block";
+import useBlockTemplateStore from "@/stores/blockTemplateStore";
+import useCanvasStore from "@/stores/canvasStore";
+import useComponentStore from "@/stores/componentStore";
 import { posthog } from "@/telemetry";
-import Block from "@/utils/block";
-import { getBlockCopy, getBlockInstance, throttle, uploadImage } from "@/utils/helpers";
-import useComponentStore from "@/utils/useComponentStore";
+import { getBlockCopy, getBlockInstance, getImageBlock, getVideoBlock, uploadImage } from "@/utils/helpers";
 import { useDropZone } from "@vueuse/core";
 import { Ref } from "vue";
 
-const store = useStore();
+const canvasStore = useCanvasStore();
 const componentStore = useComponentStore();
+const blockTemplateStore = useBlockTemplateStore();
 
-type LayoutDirection = "row" | "column"
+type LayoutDirection = "row" | "column";
 
 export function useCanvasDropZone(
 	canvasContainer: Ref<HTMLElement>,
@@ -18,27 +20,28 @@ export function useCanvasDropZone(
 ) {
 	const { isOverDropZone } = useDropZone(canvasContainer, {
 		onDrop: async (files, ev) => {
-			store.isDropping = true;
+			canvasStore.isDropping = true;
 			if (files && files.length) {
 				handleFileDrop(files, ev);
 			} else {
 				await handleBlockDrop(ev);
 			}
-			store.isDropping = false;
-			store.resetDropTarget();
+			canvasStore.isDropping = false;
+			canvasStore.resetDropTarget();
 		},
 
 		onOver: (files, ev) => {
 			if (ev.shiftKey) {
 				const parentBlock = getBlockToReplace(ev);
 				if (parentBlock) {
-					store.hoveredBlock = parentBlock.blockId;
-					store.removeDropPlaceholder();
+					canvasStore.activeCanvas?.setHoveredBlock(parentBlock.blockId);
+					updateDropTarget(ev, parentBlock, 0, "column");
+					canvasStore.removeDropPlaceholder();
 				}
 			} else {
 				const { parentBlock, index, layoutDirection } = findDropTarget(ev);
 				if (parentBlock) {
-					store.hoveredBlock = parentBlock.blockId;
+					canvasStore.activeCanvas?.setHoveredBlock(parentBlock.blockId);
 					updateDropTarget(ev, parentBlock, index, layoutDirection);
 				}
 			}
@@ -50,9 +53,10 @@ export function useCanvasDropZone(
 		const targetElement = element.closest(".__builder_component__") as HTMLElement;
 
 		// set the hoveredBreakpoint from the target element to show placeholder at the correct breakpoint canvas
-		const breakpoint = targetElement?.dataset.breakpoint || store.activeBreakpoint;
-		if (breakpoint !== store.hoveredBreakpoint) {
-			store.hoveredBreakpoint = breakpoint;
+		const breakpoint =
+			targetElement?.dataset.breakpoint || canvasStore.activeCanvas?.activeBreakpoint || null;
+		if (breakpoint !== canvasStore.activeCanvas?.hoveredBreakpoint) {
+			canvasStore.activeCanvas?.setHoveredBreakpoint(breakpoint);
 		}
 
 		let parentBlock = block.value as Block | null;
@@ -60,23 +64,26 @@ export function useCanvasDropZone(
 			parentBlock = findBlock(targetElement.dataset.blockId) || parentBlock;
 		}
 		return parentBlock;
-	}
+	};
 
 	const getBlockToReplace = (ev: DragEvent) => {
 		let parentBlock = getInitialParentBlock(ev);
 		while (parentBlock && parentBlock.isChildOfComponent) {
 			parentBlock = parentBlock.getParentBlock();
 		}
-		return parentBlock
-	}
+		return parentBlock;
+	};
 
 	const getBlockElement = (block: Block) => {
-		const breakpoint = store.hoveredBreakpoint || store.activeBreakpoint;
-		return document.querySelector(`.__builder_component__[data-block-id="${block.blockId}"][data-breakpoint="${breakpoint}"]`) as HTMLElement;
-	}
+		const breakpoint =
+			canvasStore.activeCanvas?.hoveredBreakpoint || canvasStore.activeCanvas?.activeBreakpoint;
+		return document.querySelector(
+			`.__builder_component__[data-block-id="${block.blockId}"][data-breakpoint="${breakpoint}"]`,
+		) as HTMLElement;
+	};
 
 	const findDropTarget = (ev: DragEvent) => {
-		if (store.dropTarget.x === ev.x && store.dropTarget.y === ev.y) return {}
+		if (canvasStore.dropTarget.x === ev.x && canvasStore.dropTarget.y === ev.y) return {};
 		let parentBlock = getInitialParentBlock(ev);
 		let layoutDirection = "column" as LayoutDirection;
 		let index = parentBlock?.children.length || 0;
@@ -92,91 +99,98 @@ export function useCanvasDropZone(
 		}
 
 		return { parentBlock, index, layoutDirection };
-	}
+	};
 
-	const findDropIndex = (ev: DragEvent, parentElement: HTMLElement, layoutDirection: LayoutDirection): number => {
+	const findDropIndex = (
+		ev: DragEvent,
+		parentElement: HTMLElement,
+		layoutDirection: LayoutDirection,
+	): number => {
 		const childElements = Array.from(
 			parentElement.querySelectorAll(":scope > .__builder_component__, #placeholder"),
-		) as HTMLElement[]
-		if (childElements.length === 0) return 0
+		) as HTMLElement[];
+		if (childElements.length === 0) return 0;
 
-		const mousePos = layoutDirection === "row" ? ev.clientX : ev.clientY
+		const mousePos = layoutDirection === "row" ? ev.clientX : ev.clientY;
 
 		// Get all child positions
 		const childPositions = childElements.map((child, idx) => {
-			const rect = child.getBoundingClientRect()
-			const midPoint = layoutDirection === "row" ? rect.left + rect.width / 2 : rect.top + rect.height / 2
-			return { midPoint, idx }
-		})
+			const rect = child.getBoundingClientRect();
+			const midPoint = layoutDirection === "row" ? rect.left + rect.width / 2 : rect.top + rect.height / 2;
+			return { midPoint, idx };
+		});
 
 		// Find the closest child to the mouse position
-		let closestIndex = 0
-		let minDistance = Infinity
+		let closestIndex = 0;
+		let minDistance = Infinity;
 
 		childPositions.forEach(({ midPoint, idx }) => {
-			const distance = Math.abs(midPoint - mousePos)
+			const distance = Math.abs(midPoint - mousePos);
 			if (distance < minDistance) {
-				minDistance = distance
-				closestIndex = idx
+				minDistance = distance;
+				closestIndex = idx;
 			}
-		})
+		});
 
 		// Determine if we should insert before or after the closest child
 		// if mouse is closer to left/top side of the child, insert before, else after
-		return mousePos <= childPositions[closestIndex].midPoint ? closestIndex : closestIndex + 1
-	}
+		return mousePos <= childPositions[closestIndex].midPoint ? closestIndex : closestIndex + 1;
+	};
 
 	const getLayoutDirection = (element: HTMLElement): LayoutDirection => {
-		const style = window.getComputedStyle(element)
-		const display = style.display
+		const style = window.getComputedStyle(element);
+		const display = style.display;
 		if (display === "flex" || display === "inline-flex") {
-			return style.flexDirection.includes("row") ? "row" : "column"
+			return style.flexDirection.includes("row") ? "row" : "column";
 		} else if (display === "grid" || display == "inline-grid") {
-			return style.gridAutoFlow.includes("row") ? "row" : "column"
+			return style.gridAutoFlow.includes("row") ? "row" : "column";
 		}
-		return "column"
-	}
+		return "column";
+	};
 
-	const updateDropTarget = throttle((ev: DragEvent, parentBlock: Block | null, index: number, layoutDirection: LayoutDirection) => {
-		const placeholder = store.dropTarget.placeholder
+	const updateDropTarget = (
+		ev: DragEvent,
+		parentBlock: Block | null,
+		index: number,
+		layoutDirection: LayoutDirection,
+	) => {
+		const placeholder = canvasStore.dropTarget.placeholder;
 		if (!placeholder) {
 			// File drops don't trigger dragstart so placeholder is never inserted, insert explicitly if not found
-			store.isDragging = true
-			store.insertDropPlaceholder()
+			canvasStore.isDragging = true;
+			canvasStore.insertDropPlaceholder();
 		}
 
-		if (!parentBlock || !placeholder) return
+		if (!parentBlock || !placeholder) return;
 		const newParent = getBlockElement(parentBlock);
-		if (!newParent) return
+		if (!newParent) return;
 
-		if (store.dropTarget.parentBlock?.blockId === parentBlock.blockId && store.dropTarget.index === index) return
+		if (
+			canvasStore.dropTarget.parentBlock?.blockId === parentBlock.blockId &&
+			canvasStore.dropTarget.index === index
+		)
+			return;
 
-		// flip placeholder border as per layout direction to avoid shifting elements too much
-		if (layoutDirection === "row") {
-			placeholder.classList.remove("horizontal-placeholder")
-			placeholder.classList.add("vertical-placeholder")
-		} else {
-			placeholder.classList.remove("vertical-placeholder")
-			placeholder.classList.add("horizontal-placeholder")
-		}
+		placeholder.classList.toggle("vertical-placeholder", layoutDirection === "row");
+		placeholder.classList.toggle("horizontal-placeholder", layoutDirection === "column");
 
 		// add the placeholder to the new parent
 		// exclude placeholder as its going to move with this update
-		const children = Array.from(newParent.children).filter((child) => child.id !== "placeholder")
+		const children = Array.from(newParent.children).filter((child) => child.id !== "placeholder");
 		if (index >= children.length) {
-			newParent.appendChild(placeholder)
+			newParent.appendChild(placeholder);
 		} else {
-			newParent.insertBefore(placeholder, children[index])
+			newParent.insertBefore(placeholder, children[index]);
 		}
 
-		store.dropTarget.parentBlock = parentBlock
-		store.dropTarget.index = index
-		store.dropTarget.x = ev.x
-		store.dropTarget.y = ev.y
-	}, 130)
+		canvasStore.dropTarget.parentBlock = parentBlock;
+		canvasStore.dropTarget.index = index;
+		canvasStore.dropTarget.x = ev.x;
+		canvasStore.dropTarget.y = ev.y;
+	};
 
 	const handleBlockDrop = async (ev: DragEvent) => {
-		let { parentBlock, index } = store.dropTarget;
+		let { parentBlock, index } = canvasStore.dropTarget;
 		const componentName = ev.dataTransfer?.getData("componentName");
 		const blockTemplate = ev.dataTransfer?.getData("blockTemplate");
 
@@ -187,7 +201,6 @@ export function useCanvasDropZone(
 			newBlock.extendFromComponent(componentName);
 			// if shift key is pressed, replace parent block with new block
 			if (ev.shiftKey) {
-				parentBlock = getBlockToReplace(ev);
 				if (!parentBlock) return;
 				const parentParentBlock = parentBlock.getParentBlock();
 				if (!parentParentBlock) return;
@@ -199,8 +212,8 @@ export function useCanvasDropZone(
 			ev.stopPropagation();
 			posthog.capture("builder_component_used");
 		} else if (blockTemplate) {
-			await store.fetchBlockTemplate(blockTemplate);
-			const newBlock = getBlockInstance(store.getBlockTemplate(blockTemplate).block, false);
+			await blockTemplateStore.fetchBlockTemplate(blockTemplate);
+			const newBlock = getBlockInstance(blockTemplateStore.getBlockTemplate(blockTemplate).block, false);
 			// if shift key is pressed, replace parent block with new block
 			if (ev.shiftKey) {
 				parentBlock = getBlockToReplace(ev);
@@ -215,11 +228,10 @@ export function useCanvasDropZone(
 			}
 			posthog.capture("builder_block_template_used", { template: blockTemplate });
 		}
-	}
+	};
 
 	const handleFileDrop = (files: File[], ev: DragEvent) => {
-		let { parentBlock, index } = store.dropTarget;
-
+		let { parentBlock, index } = canvasStore.dropTarget;
 		uploadImage(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
 			if (!parentBlock) return;
 
@@ -227,7 +239,7 @@ export function useCanvasDropZone(
 				if (parentBlock.isVideo()) {
 					parentBlock.setAttribute("src", fileDoc.fileURL);
 				} else {
-					parentBlock.addChild(store.getVideoBlock(fileDoc.fileURL), index);
+					parentBlock.addChild(getVideoBlock(fileDoc.fileURL), index);
 				}
 				posthog.capture("builder_video_uploaded");
 				return;
@@ -239,7 +251,7 @@ export function useCanvasDropZone(
 					type: "image-replace",
 				});
 			} else if (parentBlock.isSVG()) {
-				const imageBlock = store.getImageBlock(fileDoc.fileURL, fileDoc.fileName);
+				const imageBlock = getImageBlock(fileDoc.fileURL, fileDoc.fileName);
 				const parentParentBlock = parentBlock.getParentBlock();
 				parentParentBlock?.replaceChild(parentBlock, getBlockInstance(imageBlock));
 				posthog.capture("builder_image_uploaded", {
@@ -251,13 +263,13 @@ export function useCanvasDropZone(
 					type: "background",
 				});
 			} else {
-				parentBlock.addChild(store.getImageBlock(fileDoc.fileURL, fileDoc.fileName), index);
+				parentBlock.addChild(getImageBlock(fileDoc.fileURL, fileDoc.fileName), index);
 				posthog.capture("builder_image_uploaded", {
 					type: "new-image",
 				});
 			}
 		});
-	}
+	};
 
 	return { isOverDropZone };
 }

@@ -31,7 +31,7 @@ const validateVisit = async function (
 					url: "frappe.client.has_permission",
 				}).submit({
 					doctype: "Builder Page",
-					docname: null,
+					docname: "",
 					perm_type: "write",
 				});
 				hasPermission = response.has_permission;

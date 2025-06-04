@@ -8,42 +8,73 @@ import frappe
 url_start = "pages/"
 replace_url_start = ""
 
+
 def update_block_href(blocks):
 	for block in blocks:
-		if block.get("attributes") and block.get("attributes").get("href") and block.get("attributes").get("href").startswith(f'/{url_start}'):
+		if (
+			block.get("attributes")
+			and block.get("attributes").get("href")
+			and block.get("attributes").get("href").startswith(f"/{url_start}")
+		):
 			print(block.get("attributes").get("href"))
 			block["attributes"]["href"] = block["attributes"]["href"].replace(url_start, replace_url_start)
 
 		if "children" in block:
 			update_block_href(block["children"])
 
+
 def execute():
-	pages = frappe.get_all("Builder Page", fields=["name", "route", "blocks", "draft_blocks", "page_data_script"])
+	pages = frappe.get_all(
+		"Builder Page", fields=["name", "route", "blocks", "draft_blocks", "page_data_script"]
+	)
 	for page in pages:
-		frappe.db.set_value("Builder Page", page.name, "route", page.route.replace(url_start, replace_url_start), update_modified=False)
+		frappe.db.set_value(
+			"Builder Page",
+			page.name,
+			"route",
+			page.route.replace(url_start, replace_url_start),
+			update_modified=False,
+		)
 		blocks = frappe.parse_json(page.get("blocks"))
 		if blocks:
 			update_block_href(blocks)
-			frappe.db.set_value("Builder Page", page.name, "blocks", frappe.as_json(blocks, indent=None), update_modified=False)
+			frappe.db.set_value(
+				"Builder Page",
+				page.name,
+				"blocks",
+				frappe.as_json(blocks, indent=None),
+				update_modified=False,
+			)
 
 		draft_blocks = frappe.parse_json(page.get("draft_blocks"))
 		if draft_blocks:
 			update_block_href(draft_blocks)
-			frappe.db.set_value("Builder Page", page.name, "draft_blocks", frappe.as_json(draft_blocks, indent=None), update_modified=False)
+			frappe.db.set_value(
+				"Builder Page",
+				page.name,
+				"draft_blocks",
+				frappe.as_json(draft_blocks, indent=None),
+				update_modified=False,
+			)
 
 		if page.page_data_script:
 			page_data_script = page.page_data_script.replace(url_start, replace_url_start)
-			frappe.db.set_value("Builder Page", page.name, "page_data_script", page_data_script, update_modified=False)
-
+			frappe.db.set_value(
+				"Builder Page", page.name, "page_data_script", page_data_script, update_modified=False
+			)
 
 	components = frappe.get_all("Builder Component", fields=["name", "block"])
 	for component in components:
 		component_block = frappe.parse_json(component.get("block"))
 		if component_block:
 			update_block_href([component_block])
-			frappe.db.set_value("Builder Component", component.name, "block", frappe.as_json(component_block, indent=None), update_modified=False)
-
-
+			frappe.db.set_value(
+				"Builder Component",
+				component.name,
+				"block",
+				frappe.as_json(component_block, indent=None),
+				update_modified=False,
+			)
 
 
 # def extend_with_component(block, extended_from_component, component_children):

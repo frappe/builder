@@ -1,8 +1,8 @@
-import useStore from "@/store";
+import type Block from "@/block";
+import useCanvasStore from "@/stores/canvasStore";
 import { useEventListener } from "@vueuse/core";
-import Block from "./block";
 import { findNearestSiblingIndex } from "./helpers";
-const store = useStore();
+const canvasStore = useCanvasStore();
 
 export function useDraggableBlock(block: Block, target: HTMLElement, options: { ghostScale?: number }) {
 	let ghostElement = null as HTMLElement | null;
@@ -34,11 +34,11 @@ export function useDraggableBlock(block: Block, target: HTMLElement, options: { 
 	};
 
 	const handleDrop = (e: DragEvent) => {
-		const pauseId = store.activeCanvas?.history?.pause();
+		const pauseId = canvasStore.activeCanvas?.history?.pause();
 		// move block to new container
 		if (e.dataTransfer) {
 			const draggingBlockId = e.dataTransfer.getData("draggingBlockId");
-			const draggingBlock = store.activeCanvas?.findBlock(draggingBlockId) as Block;
+			const draggingBlock = canvasStore.activeCanvas?.findBlock(draggingBlockId) as Block;
 			const nearestElementIndex = findNearestSiblingIndex(e);
 			if (draggingBlock) {
 				const newParent = block;
@@ -50,12 +50,12 @@ export function useDraggableBlock(block: Block, target: HTMLElement, options: { 
 						oldParent.removeChild(draggingBlock);
 					}
 					newParent.addChild(draggingBlock, nearestElementIndex);
-					store.selectBlock(draggingBlock, e);
+					canvasStore.selectBlock(draggingBlock, e);
 				}
 				e.stopPropagation();
 			}
 		}
-		pauseId && store.activeCanvas?.history?.resume(pauseId, true);
+		pauseId && canvasStore.activeCanvas?.history?.resume(pauseId, true);
 	};
 
 	const handleDragEnd = (e: DragEvent) => {

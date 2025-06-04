@@ -12,34 +12,43 @@
 	</div>
 </template>
 <script setup lang="ts">
+import type Block from "@/block";
 import ContextMenu from "@/components/ContextMenu.vue";
 import NewBlockTemplate from "@/components/Modals/NewBlockTemplate.vue";
 import NewComponent from "@/components/Modals/NewComponent.vue";
-import useStore from "@/store";
-import Block from "@/utils/block";
+import useBuilderStore from "@/stores/builderStore";
+import useCanvasStore from "@/stores/canvasStore";
+import useComponentStore from "@/stores/componentStore";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { confirm, detachBlockFromComponent, getBlockCopy } from "@/utils/helpers";
-import useComponentStore from "@/utils/useComponentStore";
 import { vOnClickOutside } from "@vueuse/components";
 import { useStorage } from "@vueuse/core";
 import { Ref, nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
 
-const store = useStore();
 const componentStore = useComponentStore();
+const canvasStore = useCanvasStore();
+const builderStore = useBuilderStore();
 
 const contextMenuVisible = ref(false);
 const posX = ref(0);
 const posY = ref(0);
+const triggeredFromLayersPanel = ref(false);
 
 const block = ref(null) as unknown as Ref<Block>;
 
 const showNewComponentDialog = ref(false);
 const showBlockTemplateDialog = ref(false);
+const target = ref(null) as unknown as Ref<HTMLElement>;
 
 const showContextMenu = (event: MouseEvent, refBlock: Block) => {
 	block.value = refBlock;
+	// check if the event is triggered from layers panel
+	target.value = event.target as HTMLElement;
+	const layersPanel = target.value.closest(".block-layers");
+	triggeredFromLayersPanel.value = Boolean(layersPanel);
+
 	if (block.value.isRoot()) return;
 	contextMenuVisible.value = true;
 	posX.value = event.pageX;
@@ -74,7 +83,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Edit HTML",
 		action: () => {
-			store.editHTML(block.value);
+			canvasStore.editHTML(block.value);
 		},
 		condition: () => block.value.isHTML(),
 	},
@@ -104,15 +113,15 @@ const contextMenuOptions: ContextMenuOption[] = [
 			const parentBlock = block.value.getParentBlock();
 			if (!parentBlock) return;
 
-			const selectedBlocks = store.activeCanvas?.selectedBlocks || [];
+			const selectedBlocks = canvasStore.activeCanvas?.selectedBlocks || [];
 			const blockPosition = Math.min(...selectedBlocks.map(parentBlock.getChildIndex.bind(parentBlock)));
 			const newBlock = parentBlock?.addChild(newBlockObj, blockPosition);
 
 			let width = null as string | null;
 			// move selected blocks to newBlock
 			selectedBlocks
-				.sort((a, b) => parentBlock.getChildIndex(a) - parentBlock.getChildIndex(b))
-				.forEach((block) => {
+				.sort((a: Block, b: Block) => parentBlock.getChildIndex(a) - parentBlock.getChildIndex(b))
+				.forEach((block: Block) => {
 					parentBlock?.removeChild(block);
 					newBlock?.addChild(block);
 					if (!width) {
@@ -135,11 +144,11 @@ const contextMenuOptions: ContextMenuOption[] = [
 		},
 		condition: () => {
 			if (block.value.isRoot()) return false;
-			if (store.activeCanvas?.selectedBlocks.length === 1) return true;
+			if (canvasStore.activeCanvas?.selectedBlocks.length === 1) return true;
 			// check if all selected blocks are siblings
 			const parentBlock = block.value.getParentBlock();
 			if (!parentBlock) return false;
-			const selectedBlocks = store.activeCanvas?.selectedBlocks || [];
+			const selectedBlocks = canvasStore.activeCanvas?.selectedBlocks || [];
 			return selectedBlocks.every((block: Block) => block.getParentBlock() === parentBlock);
 		},
 	},
@@ -153,17 +162,18 @@ const contextMenuOptions: ContextMenuOption[] = [
 			repeaterBlock.addChild(getBlockCopy(block.value));
 			parentBlock.removeChild(block.value);
 			repeaterBlock.selectBlock();
-			store.propertyFilter = "data key";
+			builderStore.propertyFilter = "data key";
 			toast.warning("Please set data key for repeater block");
 		},
-		condition: () => !block.value.isRoot() && !block.value.isRepeater(),
+		condition: () =>
+			!block.value.isRoot() && !block.value.isRepeater() && !block.value.isChildOfComponentBlock(),
 	},
 	{
 		label: "Reset Overrides",
-		condition: () => store.activeBreakpoint !== "desktop",
-		disabled: () => !block.value?.hasOverrides(store.activeBreakpoint),
+		condition: () => canvasStore.activeCanvas?.activeBreakpoint !== "desktop",
+		disabled: () => !block.value?.hasOverrides(canvasStore.activeCanvas?.activeBreakpoint || "desktop"),
 		action: () => {
-			block.value.resetOverrides(store.activeBreakpoint);
+			block.value.resetOverrides(canvasStore.activeCanvas?.activeBreakpoint || "desktop");
 		},
 	},
 	{
@@ -202,7 +212,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		action: () => {
 			componentStore.editComponent(block.value);
 		},
-		condition: () => Boolean(block.value.extendedFromComponent),
+		condition: () => block.value.isExtendedFromComponent(),
 	},
 	{
 		label: "Save as Block Template",
@@ -219,7 +229,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Detach Component",
 		action: () => {
-			const newBlock = detachBlockFromComponent(block.value);
+			const newBlock = detachBlockFromComponent(block.value, null);
 			if (newBlock) {
 				newBlock.selectBlock();
 			}
@@ -228,9 +238,30 @@ const contextMenuOptions: ContextMenuOption[] = [
 		condition: () => Boolean(block.value.extendedFromComponent),
 	},
 	{
+		label: "Rename",
+		action: () => {
+			const layerLabel = target.value?.closest("[data-block-layer-id]")?.querySelector(".layer-label");
+			if (layerLabel) {
+				layerLabel.dispatchEvent(new Event("dblclick"));
+				nextTick(() => {
+					// selct all text in the layerLabel
+					const range = document.createRange();
+					range.selectNodeContents(layerLabel);
+					const selection = window.getSelection();
+					if (selection) {
+						selection.removeAllRanges();
+						selection.addRange(range);
+					}
+				});
+			}
+		},
+		condition: () =>
+			!block.value.isRoot() && !block.value.isChildOfComponentBlock() && triggeredFromLayersPanel.value,
+	},
+	{
 		label: "Delete",
 		action: () => {
-			store.activeCanvas?.removeBlock(block.value);
+			canvasStore.activeCanvas?.removeBlock(block.value);
 		},
 		condition: () => {
 			return (

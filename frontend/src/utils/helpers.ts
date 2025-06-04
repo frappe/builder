@@ -1,9 +1,11 @@
+import Block from "@/block";
 import AlertDialog from "@/components/AlertDialog.vue";
-import useStore from "@/store";
+import useCanvasStore from "@/stores/canvasStore";
+import { BuilderPage } from "@/types/Builder/BuilderPage";
+import getBlockTemplate from "@/utils/blockTemplate";
 import { confirmDialog, FileUploadHandler } from "frappe-ui";
 import { h, reactive, toRaw } from "vue";
 import { toast } from "vue-sonner";
-import Block from "./block";
 
 function getNumberFromPx(px: string | number | null | undefined): number {
 	if (!px) {
@@ -112,7 +114,7 @@ async function alert(message: string, title: string = "Alert"): Promise<boolean>
 		h(AlertDialog, {
 			title,
 			message,
-			onClick: resolve,
+			onClick: () => resolve(true),
 		});
 	});
 }
@@ -363,7 +365,6 @@ async function uploadImage(file: File, silent = false) {
 	const upload = uploader.upload(file, {
 		private: false,
 		folder: "Home/Builder Uploads",
-		optimize: true,
 		upload_endpoint: "/api/method/builder.api.upload_builder_asset",
 	});
 	await new Promise((resolve) => {
@@ -471,7 +472,10 @@ function throttle<T extends (...args: any[]) => void>(func: T, wait: number = 10
 }
 
 function isBlock(e: MouseEvent) {
-	return e.target instanceof HTMLElement && e.target.closest(".__builder_component__");
+	return (
+		(e.target instanceof HTMLElement || e.target instanceof SVGElement) &&
+		e.target.closest(".__builder_component__")
+	);
 }
 
 type BlockInfo = {
@@ -485,10 +489,223 @@ function getBlockInfo(e: MouseEvent) {
 }
 
 function getBlock(e: MouseEvent) {
-	const store = useStore();
+	const canvasStore = useCanvasStore();
 	const blockInfo = getBlockInfo(e);
-	return store.activeCanvas?.findBlock(blockInfo.blockId);
+	return canvasStore.activeCanvas?.findBlock(blockInfo.blockId);
 }
+
+function getRootBlockTemplate() {
+	return getBlockInstance(getBlockTemplate("body"));
+}
+
+function getImageBlock(imageSrc: string, imageAlt: string = "") {
+	const imageBlock = getBlockTemplate("image");
+	if (!imageBlock.attributes) {
+		imageBlock.attributes = {};
+	}
+	imageBlock.attributes.src = imageSrc;
+	return imageBlock;
+}
+
+function getVideoBlock(videoSrc: string) {
+	const videoBlock = getBlockTemplate("video");
+	if (!videoBlock.attributes) {
+		videoBlock.attributes = {};
+	}
+	videoBlock.attributes.src = videoSrc;
+	return videoBlock;
+}
+
+function openInDesk(page: BuilderPage) {
+	window.open(`/app/builder-page/${page.page_name}`, "_blank");
+}
+
+interface BackgroundValue {
+	image?: string;
+	position?: string;
+	size?: string;
+	repeat?: string;
+	attachment?: string;
+	origin?: string;
+	clip?: string;
+	color?: string;
+}
+
+// Based on WebKit and Gecko parsing implementations
+function parseBackground(cssText: string): BackgroundValue {
+	if (!cssText || typeof cssText !== "string") {
+		return {};
+	}
+
+	// Tokenize the input preserving quoted strings and functions
+	function tokenize(input: string): string[] {
+		const tokens: string[] = [];
+		let current = "";
+		let parenDepth = 0;
+		let inQuote: string | null = null;
+
+		for (let i = 0; i < input.length; i++) {
+			const char = input[i];
+
+			if (inQuote) {
+				current += char;
+				if (char === inQuote && input[i - 1] !== "\\") {
+					inQuote = null;
+				}
+				continue;
+			}
+
+			if (char === '"' || char === "'") {
+				current += char;
+				inQuote = char;
+				continue;
+			}
+
+			if (char === "(") {
+				parenDepth++;
+				current += char;
+				continue;
+			}
+
+			if (char === ")") {
+				parenDepth--;
+				current += char;
+				continue;
+			}
+
+			if (parenDepth > 0) {
+				current += char;
+				continue;
+			}
+
+			if (char === " " || char === "\t" || char === "\n") {
+				if (current) {
+					tokens.push(current);
+					current = "";
+				}
+				continue;
+			}
+
+			current += char;
+		}
+
+		if (current) {
+			tokens.push(current);
+		}
+
+		return tokens;
+	}
+
+	// Parse color value
+	function isColor(value: string): boolean {
+		return (
+			/^(#|rgb|hsl|[a-z]+$)/.test(value) &&
+			!["center", "top", "bottom", "left", "right", "fixed", "local", "scroll", "contain", "repeat"].includes(
+				value,
+			)
+		);
+	}
+
+	// Parse position values
+	function isPosition(value: string): boolean {
+		return /^(center|top|bottom|left|right|[-\d.]+(%|px|em|rem|vh|vw)?)$/.test(value);
+	}
+
+	// Parse size values
+	function isSize(value: string): boolean {
+		return /^(cover|contain|auto|[-\d.]+(%|px|em|rem|vh|vw)?)$/.test(value);
+	}
+
+	const result: BackgroundValue = {};
+	const tokens = tokenize(cssText.trim());
+	let i = 0;
+
+	while (i < tokens.length) {
+		const token = tokens[i];
+
+		// Handle url() and gradients
+		if (token.startsWith("url(") || token.includes("gradient")) {
+			result.image = token;
+			i++;
+			continue;
+		}
+
+		// Handle color
+		if (isColor(token)) {
+			result.color = token;
+			i++;
+			continue;
+		}
+
+		// Handle position and size
+		if (isPosition(token)) {
+			let position = [token];
+
+			// Check for second position value
+			if (i + 1 < tokens.length && isPosition(tokens[i + 1])) {
+				position.push(tokens[i + 1]);
+				i++;
+			}
+
+			result.position = position.join(" ");
+
+			// Check for size after '/'
+			if (i + 2 < tokens.length && tokens[i + 1] === "/" && isSize(tokens[i + 2])) {
+				let size = [tokens[i + 2]];
+				if (i + 3 < tokens.length && isSize(tokens[i + 3])) {
+					size.push(tokens[i + 3]);
+					i++;
+				}
+				result.size = size.join(" ");
+				i += 2;
+			}
+
+			i++;
+			continue;
+		}
+
+		// Handle repeat
+		if (/^(no-repeat|repeat(-[xy])?|round|space)$/.test(token)) {
+			result.repeat = token;
+			i++;
+			continue;
+		}
+
+		// Handle attachment
+		if (/^(fixed|local|scroll)$/.test(token)) {
+			result.attachment = token;
+			i++;
+			continue;
+		}
+
+		// Handle origin/clip
+		if (/^(border|padding|content)-box$/.test(token)) {
+			if (!result.origin) {
+				result.origin = token;
+			} else {
+				result.clip = token;
+			}
+			i++;
+			continue;
+		}
+
+		i++;
+	}
+
+	return result;
+}
+
+const parseAndSetBackground = (styles: BlockStyleMap) => {
+	if (styles.background) {
+		const { color, image, position, size, repeat } = parseBackground(styles.background as string);
+		delete styles.background;
+		if (color) styles.backgroundColor = color;
+		if (image) styles.backgroundImage = image;
+		if (position) styles.backgroundPosition = position;
+		if (size) styles.backgroundSize = size;
+		if (repeat) styles.backgroundRepeat = repeat;
+	}
+};
 
 export {
 	addPxToNumber,
@@ -508,11 +725,14 @@ export {
 	getCopyWithoutParent,
 	getDataForKey,
 	getFontName,
+	getImageBlock,
 	getNumberFromPx,
 	getRandomColor,
 	getRGB,
+	getRootBlockTemplate,
 	getRouteVariables,
 	getTextContent,
+	getVideoBlock,
 	HexToHSV,
 	HSVToHex,
 	isBlock,
@@ -523,6 +743,9 @@ export {
 	kebabToCamelCase,
 	logObjectDiff,
 	mapToObject,
+	openInDesk,
+	parseAndSetBackground,
+	parseBackground,
 	replaceMapKey,
 	RGBToHex,
 	stripExtension,

@@ -5,12 +5,15 @@
 import { Button } from "frappe-ui";
 import { computed } from "vue";
 
-const props = defineProps({
-	variant: {
-		type: String,
-		default: "subtle",
+const props = withDefaults(
+	defineProps<{
+		variant?: string;
+	}>(),
+	{
+		variant: "subtle",
 	},
-});
+);
+
 const classes = computed(() => {
 	const _classes = [];
 	if (props.variant === "solid") {
@@ -19,6 +22,9 @@ const classes = computed(() => {
 			"!text-ink-white",
 			"hover:bg-surface-gray-6",
 			"active:bg-surface-gray-5",
+			// style for disabled button
+			"disabled:bg-surface-gray-4",
+			"disabled:text-ink-gray-8",
 		]);
 	} else if (props.variant === "subtle") {
 		_classes.push([

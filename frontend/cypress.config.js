@@ -1,7 +1,7 @@
-const { defineConfig } = require("cypress");
+import { defineConfig } from "cypress";
 
-module.exports = defineConfig({
-  projectId: "jvejd7",
+export default defineConfig({
+	projectId: "jvejd7",
 	e2e: {
 		baseUrl: "http://builder.test:8000",
 		adminPassword: "admin",

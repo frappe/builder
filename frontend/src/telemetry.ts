@@ -21,11 +21,18 @@ type PosthogSettings = {
 	posthog_identify: string;
 };
 
-let posthog = {
-	init: (projectToken: string, options: any) => {},
-	identify: (userId: string) => {},
+type Posthog = {
+	init: (projectToken: string, options: any) => void;
+	identify: (userId: string) => void;
+	startSessionRecording: () => void;
+	capture: (eventName: string, data?: any) => void;
+};
+
+let posthog: Posthog = {
+	init: () => {},
+	identify: () => {},
 	startSessionRecording: () => {},
-	capture: (eventName: string, data?: any) => {},
+	capture: () => {},
 };
 
 createResource({

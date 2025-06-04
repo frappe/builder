@@ -1,12 +1,13 @@
-import useStore from "@/store";
+import type Block from "@/block";
+import useCanvasStore from "@/stores/canvasStore";
 import { CanvasProps } from "@/types/Builder/BuilderCanvas";
-import Block from "@/utils/block";
+import { getRootBlockTemplate } from "@/utils/helpers";
 import { useCanvasHistory } from "@/utils/useCanvasHistory";
 import { useElementBounding } from "@vueuse/core";
 import { nextTick, reactive, ref, Ref } from "vue";
 import { toast } from "vue-sonner";
 
-const store = useStore();
+const canvasStore = useCanvasStore();
 
 export function useCanvasUtils(
 	canvasProps: CanvasProps,
@@ -27,6 +28,9 @@ export function useCanvasUtils(
 	) {
 		// wait for editor to render
 		await new Promise((resolve) => setTimeout(resolve, 100));
+		if (!selectedBlockIds.value.has(blockToFocus.blockId)) {
+			selectBlock(blockToFocus);
+		}
 		await nextTick();
 		if (
 			!canvasContainer.value ||
@@ -39,7 +43,8 @@ export function useCanvasUtils(
 		}
 		const container = canvasContainer.value as HTMLElement;
 		const containerRect = container.getBoundingClientRect();
-		const selectedBlock = document.body.querySelector(
+		await nextTick();
+		const selectedBlock = canvasContainer.value.querySelector(
 			`.editor[data-block-id="${blockToFocus.blockId}"][selected=true]`,
 		) as HTMLElement;
 		if (!selectedBlock) {
@@ -111,7 +116,7 @@ export function useCanvasUtils(
 	};
 
 	const clearCanvas = () => {
-		rootBlock.value = store.getRootBlockTemplate();
+		rootBlock.value = getRootBlockTemplate();
 	};
 
 	const moveCanvas = (direction: "up" | "down" | "right" | "left") => {
@@ -169,7 +174,7 @@ export function useCanvasUtils(
 			});
 		}
 		const paddingX = 300;
-		const paddingY = 200;
+		const paddingY = 300;
 
 		await nextTick();
 		canvasBound.update();
@@ -237,13 +242,14 @@ export function useCanvasUtils(
 		}
 		if (block.isChildOfComponentBlock()) {
 			block.toggleVisibility(false);
+			return;
 		}
 		const parentBlock = block.parentBlock;
 		if (!parentBlock) {
 			return;
 		}
 		const nextSibling = block.getSiblingBlock("next");
-		if (store.activeBreakpoint === "desktop" || force) {
+		if (canvasStore.activeCanvas?.activeBreakpoint === "desktop" || force) {
 			parentBlock.removeChild(block);
 		} else {
 			block.toggleVisibility(false);

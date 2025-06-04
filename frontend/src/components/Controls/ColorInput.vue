@@ -30,25 +30,21 @@
 </template>
 <script setup lang="ts">
 import { getRGB } from "@/utils/helpers";
-import { PropType } from "vue";
 import ColorPicker from "./ColorPicker.vue";
 import InputLabel from "./InputLabel.vue";
 
-defineProps({
-	value: {
-		type: String as PropType<HashString | null>,
-		default: null,
+withDefaults(
+	defineProps<{
+		value?: HashString | null;
+		label?: string;
+		dynamicValueProperty?: string;
+	}>(),
+	{
+		value: null,
+		label: "",
+		dynamicValueProperty: "",
 	},
-	label: {
-		type: String,
-		default: "",
-	},
-
-	dynamicValueProperty: {
-		type: String,
-		default: "",
-	},
-});
+);
 
 const emit = defineEmits(["change"]);
 </script>

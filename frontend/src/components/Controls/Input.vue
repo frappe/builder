@@ -17,30 +17,46 @@
 			@change="triggerUpdate"
 			@input="($event: Event) => emit('input', ($event.target as HTMLInputElement).value)"
 			autocomplete="off"
+			:autofocus="autofocus"
 			v-bind="attrs"
 			:modelValue="data">
 			<template #prefix v-if="$slots.prefix">
 				<slot name="prefix" />
 			</template>
 		</FormControl>
-		<div
+		<button
 			class="absolute bottom-[3px] right-[1px] cursor-pointer p-1 text-ink-gray-4 hover:text-ink-gray-5"
+			tabindex="-1"
 			@click="clearValue"
 			v-if="!['select', 'checkbox'].includes(type) && !hideClearButton"
 			v-show="data || dynamicValueAlreadySet">
 			<CrossIcon />
-		</div>
+		</button>
 	</div>
 </template>
 <script lang="ts" setup>
+import Block from "@/block";
 import CrossIcon from "@/components/Icons/Cross.vue";
-import useStore from "@/store";
-import Block from "@/utils/block";
+import useCanvasStore from "@/stores/canvasStore";
+import usePageStore from "@/stores/pageStore";
+
 import { useDebounceFn, useVModel } from "@vueuse/core";
 import { Dropdown } from "frappe-ui";
 import { computed, useAttrs } from "vue";
 
-const props = defineProps(["modelValue", "type", "hideClearButton", "dynamicValueProperty"]);
+const props = withDefaults(
+	defineProps<{
+		modelValue?: string | number | boolean | null;
+		type?: string;
+		hideClearButton?: boolean;
+		autofocus?: boolean;
+		dynamicValueProperty?: string;
+	}>(),
+	{
+		type: "text",
+		modelValue: "",
+	},
+);
 const emit = defineEmits(["update:modelValue", "input"]);
 const data = useVModel(props, "modelValue", emit);
 
@@ -122,9 +138,9 @@ const triggerUpdate = useDebounceFn(($event: Event) => {
 	}
 }, 100);
 
-const store = useStore();
+const canvasStore = useCanvasStore();
 let dynamicValueAlreadySet = computed(() => {
-	const blocks = store.activeCanvas?.selectedBlocks;
+	const blocks = canvasStore.activeCanvas?.selectedBlocks;
 	console.log(blocks);
 	if (!blocks?.length) return;
 	const dataKeyObj = blocks[0].dynamicValues.find((obj) => {
@@ -139,9 +155,10 @@ let dynamicValueAlreadySet = computed(() => {
 	}
 });
 
+const pageStore = usePageStore();
 const dynamicKeyOptions = computed(() => {
 	// pick keys from store.pageData
-	return Object.keys(store.pageData).map((key) => ({
+	return Object.keys(pageStore.pageData).map((key) => ({
 		label: key,
 		value: key,
 		onClick: () => {
@@ -160,7 +177,7 @@ const dynamicKeyOptions = computed(() => {
 });
 
 const clearDynamicValue = () => {
-	const blocks = store.activeCanvas?.selectedBlocks as Block[];
+	const blocks = canvasStore.activeCanvas?.selectedBlocks as Block[];
 	blocks[0].dynamicValues = blocks[0].dynamicValues.filter((obj) => {
 		if (obj.type == "style" && obj.property == props.dynamicValueProperty) {
 			return false;
