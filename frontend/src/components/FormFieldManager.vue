@@ -3,12 +3,10 @@
 		:options="[
 			{
 				label: 'Text',
-				value: 'text',
 				onClick: () => addField('text'),
 			},
 			{
 				label: 'Select',
-				value: 'select',
 				onClick: () => addField('select'),
 			},
 		]">
