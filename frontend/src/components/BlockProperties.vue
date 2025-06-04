@@ -39,6 +39,7 @@ import dimensionSection from "@/components/BlockPropertySections/DimenstionSecti
 import formOptionsSection from "@/components/BlockPropertySections/FormOptionsSection";
 import HTMLOptionsSection from "@/components/BlockPropertySections/HTMLOptionsSection";
 import imageOptionsSection from "@/components/BlockPropertySections/ImageOptionsSection";
+import inputPropertiesSection from "@/components/BlockPropertySections/InputPropertiesSection";
 import layoutSection from "@/components/BlockPropertySections/LayoutSection";
 import linkSection from "@/components/BlockPropertySections/LinkSection";
 import optionsSection from "@/components/BlockPropertySections/OptionsSection";
@@ -108,6 +109,7 @@ const sections = [
 	linkSection,
 	formOptionsSection,
 	layoutSection,
+	inputPropertiesSection,
 	imageOptionsSection,
 	HTMLOptionsSection,
 	videoOptionsSection,

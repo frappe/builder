@@ -1,5 +1,6 @@
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import blockController from "@/utils/blockController";
+import OptionToggle from "../Controls/OptionToggle.vue";
 
 const setClasses = (val: string) => {
 	const classes = val.split(",").map((c) => c.trim());
@@ -61,6 +62,44 @@ const optionsSectionProperties = [
 			"update:modelValue": (val: string) => blockController.setAttribute("type", val),
 		},
 		condition: () => blockController.isInput(),
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Content",
+				// @ts-ignore
+				modelValue: blockController.getSelectedBlocks()[0]?.__proto__?.editor?.getText(),
+			};
+		},
+		searchKeyWords: "Content, Text, ContentText, Content Text",
+		events: {
+			"update:modelValue": (val: string) => blockController.setKeyValue("innerHTML", val),
+		},
+		condition: () => blockController.isText() || blockController.isButton(),
+	},
+	{
+		component: OptionToggle,
+		getProps: () => {
+			return {
+				label: "Visibility",
+				options: [
+					{
+						label: "Visible",
+						value: "flex",
+					},
+					{
+						label: "Hidden",
+						value: "none",
+					},
+				],
+				modelValue: blockController.getStyle("display") || "flex",
+			};
+		},
+		searchKeyWords: "Visibility, Display, Visible, Hidden, Flex, None, hide, show",
+		events: {
+			"update:modelValue": (val: StyleValue) => blockController.setStyle("display", val),
+		},
 	},
 	{
 		component: InlineInput,
