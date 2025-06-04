@@ -568,32 +568,36 @@ def extend_block(block, overridden_block):
 
 
 def set_dynamic_content_placeholder(block, data_key=False):
-	block_data_key = block.get("dataKey")
-	if block_data_key and block_data_key.get("key"):
-		key = f"{data_key}.{block_data_key.get('key')}" if data_key else block_data_key.get("key")
-		if data_key:
-			# convert a.b to (a or {}).get('b', {})
-			# to avoid undefined error in jinja
-			keys = key.split(".")
-			key = f"({keys[0]} or {{}})"
-			for k in keys[1:]:
-				key = f"{key}.get('{k}', {{}})"
+	block_data_key = block.get("dataKey", {}) or {}
+	dynamic_values = block.get("dynamicValues", []) or []
+	dynamic_values += block_data_key
 
-		_property = block_data_key.get("property")
-		_type = block_data_key.get("type")
-		if _type == "attribute":
-			block["attributes"][
-				_property
-			] = f"{{{{ {key} or '{escape_single_quotes(block['attributes'].get(_property, ''))}' }}}}"
-		elif _type == "style":
-			if not block["attributes"].get("style"):
-				block["attributes"]["style"] = ""
-			css_property = camel_case_to_kebab_case(_property)
-			block["attributes"][
-				"style"
-			] += f"{css_property}: {{{{ {key} or '{escape_single_quotes(block['baseStyles'].get(_property, '') or '')}' }}}};"
-		elif _type == "key" and not block.get("isRepeaterBlock"):
-			block[_property] = f"{{{{ {key} or '{escape_single_quotes(block.get(_property, ''))}' }}}}"
+	for dynamic_value_doc in dynamic_values:
+		if dynamic_value_doc and dynamic_value_doc.get("key"):
+			key = f"{data_key}.{dynamic_value_doc.get('key')}" if data_key else dynamic_value_doc.get("key")
+			if data_key:
+				# convert a.b to (a or {}).get('b', {})
+				# to avoid undefined error in jinja
+				keys = key.split(".")
+				key = f"({keys[0]} or {{}})"
+				for k in keys[1:]:
+					key = f"{key}.get('{k}', {{}})"
+
+			_property = dynamic_value_doc.get("property")
+			_type = dynamic_value_doc.get("type")
+			if _type == "attribute":
+				block["attributes"][
+					_property
+				] = f"{{{{ {key} or '{escape_single_quotes(block['attributes'].get(_property, ''))}' }}}}"
+			elif _type == "style":
+				if not block["attributes"].get("style"):
+					block["attributes"]["style"] = ""
+				css_property = camel_case_to_kebab_case(_property)
+				block["attributes"][
+					"style"
+				] += f"{css_property}: {{{{ {key} or '{escape_single_quotes(block['baseStyles'].get(_property, '') or '')}' }}}};"
+			elif _type == "key" and not block.get("isRepeaterBlock"):
+				block[_property] = f"{{{{ {key} or '{escape_single_quotes(block.get(_property, ''))}' }}}}"
 
 
 @redis_cache(ttl=60 * 60)

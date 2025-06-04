@@ -141,7 +141,7 @@ let dynamicValueAlreadySet = computed(() => {
 
 const dynamicKeyOptions = computed(() => {
 	// pick keys from store.pageData
-	return Object.keys({ color: "red" }).map((key) => ({
+	return Object.keys(store.pageData).map((key) => ({
 		label: key,
 		value: key,
 		onClick: () => {
