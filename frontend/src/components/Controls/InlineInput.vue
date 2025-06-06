@@ -26,6 +26,8 @@
 			:placeholder="placeholder"
 			:modelValue="modelValue"
 			:options="inputOptions"
+			:dynamicValueProperty="dynamicValueProperty"
+			:dynamicValuePropertyType="dynamicValuePropertyType"
 			v-if="type != 'autocomplete'"
 			@update:modelValue="handleChange"
 			:hideClearButton="hideClearButton"
@@ -45,7 +47,7 @@
 </template>
 <script setup lang="ts">
 import { isNumber } from "@tiptap/vue-3";
-import { Popover, FeatherIcon } from "frappe-ui";
+import { FeatherIcon, Popover } from "frappe-ui";
 import { computed } from "vue";
 import Autocomplete from "./Autocomplete.vue";
 import InputLabel from "./InputLabel.vue";
@@ -74,6 +76,8 @@ const props = withDefaults(
 		actionButton?: Action;
 		placeholder?: string;
 		hideClearButton?: boolean;
+		dynamicValueProperty?: string;
+		dynamicValuePropertyType?: BlockDataKeyType;
 	}>(),
 	{
 		label: "",

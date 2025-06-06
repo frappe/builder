@@ -121,6 +121,15 @@ const attributes = computed(() => {
 				getDataForKey(props.data, props.block.getDataKey("key")) ??
 				attribs[props.block.getDataKey("property") as string];
 		}
+		props.block.dynamicValues
+			?.filter((dataKeyObj: BlockDataKey) => {
+				return dataKeyObj.type === "attribute";
+			})
+			?.forEach((dataKeyObj: BlockDataKey) => {
+				const property = dataKeyObj.property as string;
+				attribs[property] =
+					getDataForKey(props.data as Object, dataKeyObj.key as string) ?? attribs[property];
+			});
 	}
 
 	if (props.block.isInput()) {
@@ -151,10 +160,14 @@ const styles = computed(() => {
 				),
 			};
 		}
-		props.block.dynamicValues?.forEach((dataKeyObj: BlockDataKey) => {
-			const property = dataKeyObj.property as string;
-			dynamicStyles[property] = getDataForKey(props.data, dataKeyObj.key as string);
-		});
+		props.block.dynamicValues
+			?.filter((dataKeyObj: BlockDataKey) => {
+				return dataKeyObj.type === "style";
+			})
+			?.forEach((dataKeyObj: BlockDataKey) => {
+				const property = dataKeyObj.property as string;
+				dynamicStyles[property] = getDataForKey(props.data as Object, dataKeyObj.key as string);
+			});
 	}
 
 	const styleMap = {

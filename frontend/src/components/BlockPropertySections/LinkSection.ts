@@ -10,6 +10,8 @@ const linkSectionProperties = [
 				label: "Link To",
 				showInputAsOption: true,
 				modelValue: blockController.getAttribute("href"),
+				dynamicValueProperty: "href",
+				dynamicValuePropertyType: "attribute",
 			};
 		},
 		searchKeyWords: "Link, Href, URL",

@@ -3,7 +3,7 @@
 		<div
 			class="absolute left-[-18px] top-1 z-50 hover:top-0"
 			v-if="dynamicValueProperty && !dynamicValueAlreadySet">
-			<Dropdown :options="dynamicKeyOptions" size="sm" placement="right">
+			<Dropdown :options="dynamicKeyOptions" size="sm" placement="center">
 				<template v-slot="{ open }">
 					<div
 						class="group flex cursor-pointer items-center gap-1 rounded-lg bg-purple-500 transition-all hover:size-fit hover:p-1.5">
@@ -58,10 +58,12 @@ const props = withDefaults(
 		hideClearButton?: boolean;
 		autofocus?: boolean;
 		dynamicValueProperty?: string;
+		dynamicValuePropertyType?: BlockDataKeyType;
 	}>(),
 	{
 		type: "text",
 		modelValue: "",
+		dynamicValuePropertyType: "style",
 	},
 );
 const emit = defineEmits(["update:modelValue", "input"]);
@@ -150,7 +152,7 @@ let dynamicValueAlreadySet = computed(() => {
 	const blocks = canvasStore.activeCanvas?.selectedBlocks;
 	if (!blocks?.length) return;
 	const dataKeyObj = blocks[0].dynamicValues.find((obj) => {
-		if (obj.type == "style" && obj.property == props.dynamicValueProperty) {
+		if (obj.type == props.dynamicValuePropertyType && obj.property == props.dynamicValueProperty) {
 			return true;
 		}
 	});
@@ -165,7 +167,7 @@ const dynamicValue = computed(() => {
 	const blocks = canvasStore.activeCanvas?.selectedBlocks;
 	if (!blocks?.length) return;
 	const dataKeyObj = blocks[0].dynamicValues.find((obj) => {
-		if (obj.type == "style" && obj.property == props.dynamicValueProperty) {
+		if (obj.type == props.dynamicValuePropertyType && obj.property == props.dynamicValueProperty) {
 			return true;
 		}
 	});
@@ -187,7 +189,7 @@ const dynamicKeyOptions = computed(() => {
 			import("@/utils/blockController").then((blockController) => {
 				blockController.default?.getSelectedBlocks().forEach((block) => {
 					block.dynamicValues.push({
-						type: "style",
+						type: props.dynamicValuePropertyType,
 						key,
 						property: props.dynamicValueProperty,
 					});
@@ -200,7 +202,7 @@ const dynamicKeyOptions = computed(() => {
 const clearDynamicValue = () => {
 	const blocks = canvasStore.activeCanvas?.selectedBlocks as Block[];
 	blocks[0].dynamicValues = blocks[0].dynamicValues.filter((obj) => {
-		if (obj.type == "style" && obj.property == props.dynamicValueProperty) {
+		if (obj.type == props.dynamicValuePropertyType && obj.property == props.dynamicValueProperty) {
 			return false;
 		}
 		return true;

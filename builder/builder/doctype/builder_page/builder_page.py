@@ -642,7 +642,6 @@ def set_dynamic_content_placeholder(block, data_key=False):
 	block_data_key = block.get("dataKey", {}) or {}
 	dynamic_values = block.get("dynamicValues", []) or []
 	dynamic_values += block_data_key
-
 	for dynamic_value_doc in dynamic_values:
 		if dynamic_value_doc and dynamic_value_doc.get("key"):
 			key = f"{data_key}.{dynamic_value_doc.get('key')}" if data_key else dynamic_value_doc.get("key")
