@@ -25,7 +25,9 @@
 				</button>
 			</form>
 		</div>
-		<div class="flex h-[100%] flex-col items-center justify-center text-ink-gray-5" v-if="rows.length == 0">
+		<div
+			class="flex h-full flex-col items-center justify-center text-ink-gray-5"
+			v-if="rows.length == 0 && !searchQuery.from && !searchQuery.to">
 			<div class="flex h-28 align-top text-base text-ink-gray-4">No redirects set</div>
 		</div>
 		<div class="h-full text-sm" v-else>
@@ -34,7 +36,6 @@
 				<span class="w-1/2">
 					<BuilderInput
 						type="text"
-						:disabled="rows.length === 0 && !searchQuery.from"
 						v-model="searchQuery.from"
 						@input="(val: string) => (searchQuery.from = val)"
 						placeholder="From URL" />
@@ -42,7 +43,6 @@
 				<span class="w-1/2">
 					<BuilderInput
 						type="text"
-						:disabled="rows.length === 0 && !searchQuery.to"
 						v-model="searchQuery.to"
 						@input="(val: string) => (searchQuery.to = val)"
 						placeholder="To URL" />

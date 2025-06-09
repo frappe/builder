@@ -10,7 +10,7 @@
 **Crafting Web Pages Made Effortless**
 
 
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/frappe/builder)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/frappe/builder)](https://github.com/frappe/builder/releases)
 [![codecov](https://codecov.io/github/frappe/builder/branch/develop/graph/badge.svg)](https://codecov.io/github/frappe/builder)
 [![unittests](https://github.com/frappe/builder/actions/workflows/server-tests.yml/badge.svg)](https://github.com/frappe/builder/actions/workflows/server-tests.yml)
 
