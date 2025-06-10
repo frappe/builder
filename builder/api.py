@@ -1,5 +1,6 @@
 import json
 import os
+from collections import defaultdict
 from io import BytesIO
 from urllib.parse import unquote
 
@@ -265,3 +266,53 @@ def sync_component(component_id: str):
 
 	component = frappe.get_doc("Builder Component", component_id)
 	component.sync_component()
+
+
+@frappe.whitelist()
+def get_page_analytics(route: str, interval: str = "month"):
+	"""
+	Retrieve page analytics for a specific route.
+	:param route: The route of the page to get analytics for.
+	:param interval: The time interval for the analytics data (e.g., "day", "week", "month").
+	:return: A dictionary containing total unique views, total views, and a list of data points with intervals and view counts.
+	"""
+	intervals = {
+		"day": (-6, "days", "%b %d, %Y"),
+		"week": (-6, "weeks", "Week of %b %d"),
+		"month": (-6, "months", "%b %Y"),
+	}
+	to = frappe.utils.now_datetime()
+	delta, unit, fmt = intervals.get(interval, intervals["month"])
+	_from = frappe.utils.add_to_date(to, **{unit: delta})
+
+	datum = frappe.get_all(
+		"Web Page View",
+		filters={"path": "pages/page-245b1607", "creation": [">=", _from]},
+		fields=["creation", "is_unique"],
+	)
+
+	grouped_data = defaultdict(lambda: {"total_page_views": 0, "unique_page_views": 0})
+	current = _from
+	while current <= to:
+		interval_key = f"Week of {current.strftime(fmt)}" if unit == "weeks" else current.strftime(fmt)
+		grouped_data[interval_key] = {"total_page_views": 0, "unique_page_views": 0}
+		current = frappe.utils.add_to_date(current, **{unit: 1})
+
+	for d in datum:
+		creation = frappe.utils.get_datetime(d.creation)
+		key = f"Week of {creation.strftime(fmt)}" if unit == "weeks" else creation.strftime(fmt)
+		grouped_data[key]["total_page_views"] += 1
+		grouped_data[key]["unique_page_views"] += frappe.utils.cint(d.is_unique)
+
+	return {
+		"total_unique_views": sum(frappe.utils.cint(d.is_unique) for d in datum),
+		"total_views": len(datum),
+		"data": [
+			{
+				"interval": k,
+				"total_page_views": v["total_page_views"],
+				"unique_page_views": v["unique_page_views"],
+			}
+			for k, v in sorted(grouped_data.items())
+		],
+	}
