@@ -297,6 +297,9 @@ class Block implements BlockOptions {
 			this.originalElement === "input" || this.getElement() === "input" || this.getElement() === "textarea"
 		);
 	}
+	isSelect() {
+		return this.getElement() === "select";
+	}
 	setStyle(style: styleProperty, value: StyleValue) {
 		const canvasStore = useCanvasStore();
 		let styleObj = this.baseStyles;
@@ -395,9 +398,10 @@ class Block implements BlockOptions {
 		return this.originalElement === "body";
 	}
 	getTag(): string {
-		if (this.isButton() || this.isLink()) {
+		if (this.isButton() || this.isLink() || this.isSelect()) {
 			return "div";
 		}
+
 		return this.getElement() || "div";
 	}
 	getComponentTag() {
@@ -554,6 +558,7 @@ class Block implements BlockOptions {
 			this.isSVG() ||
 			this.isInput() ||
 			this.isVideo() ||
+			this.isSelect() ||
 			(this.isText() && !this.isLink()) ||
 			this.isExtendedFromComponent()
 		);
