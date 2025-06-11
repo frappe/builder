@@ -1,27 +1,47 @@
 <template>
 	<div class="my-5 flex flex-col gap-4 text-ink-gray-9">
-		<div class="flex justify-between">
+		<div class="flex items-center justify-between gap-4">
 			<span class="text-lg font-medium">Overview</span>
-			<Select
-				size="sm"
-				:options="[
-					{
-						label: 'Today',
-						value: 'today',
-					},
-					{
-						label: 'Last 30 Days',
-						value: 'last-30-days',
-					},
-					{
-						label: 'Last 7 Days',
-						value: 'last-7-days',
-					},
-					{
-						label: 'This Year',
-						value: 'this-year',
-					},
-				]" />
+			<div class="flex gap-2">
+				<Select
+					size="sm"
+					v-model="interval"
+					:options="[
+						{
+							label: 'Daily',
+							value: 'daily',
+						},
+						{
+							label: 'Weekly',
+							value: 'weekly',
+						},
+						{
+							label: 'Monthly',
+							value: 'monthly',
+						},
+					]" />
+				<Select
+					size="sm"
+					v-model="range"
+					:options="[
+						{
+							label: 'Today',
+							value: 'today',
+						},
+						{
+							label: 'Last 30 Days',
+							value: 'last-30-days',
+						},
+						{
+							label: 'Last 7 Days',
+							value: 'last-7-days',
+						},
+						{
+							label: 'This Year',
+							value: 'this-year',
+						},
+					]" />
+			</div>
 		</div>
 		<div class="flex gap-8">
 			<div class="flex flex-col gap-2">
@@ -38,12 +58,15 @@
 		<AxisChart :config="chartConfig" />
 	</div>
 </template>
+
 <script setup lang="ts">
 import usePageStore from "@/stores/pageStore";
 import { AxisChart, Select, createResource } from "frappe-ui";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 
 const pageStore = usePageStore();
+const range = ref("last-30-days");
+const interval = ref("weekly");
 const analyticsData = ref({
 	total_unique_views: 0,
 	total_views: 0,
@@ -55,9 +78,7 @@ const chartConfig = computed(() => ({
 	title: "",
 	xAxis: {
 		key: "interval",
-		type: "value",
-		title: "Month",
-		timeGrain: "month",
+		type: "category",
 	},
 	yAxis: {
 		title: "Timeline",
@@ -76,15 +97,29 @@ const analytics = createResource({
 	url: "builder.api.get_page_analytics",
 	params: {
 		route: pageStore.activePage?.route,
-		interval: "month",
+		range: range.value,
+		interval: interval.value,
 	},
 	auto: true,
 });
-
 analytics.promise
 	.then((res) => {
 		console.log("Analytics Data:", res);
 		analyticsData.value = res;
 	})
 	.catch(console.error);
+
+watch([range, interval], ([newRange, newInterval]) => {
+	analytics
+		.fetch({
+			route: pageStore.activePage?.route,
+			range: newRange,
+			interval: newInterval,
+		})
+		.then((res) => {
+			console.log("Updated Analytics Data:", res);
+			analyticsData.value = res;
+		})
+		.catch(console.error);
+});
 </script>
