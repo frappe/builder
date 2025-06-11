@@ -269,38 +269,56 @@ def sync_component(component_id: str):
 
 
 @frappe.whitelist()
-def get_page_analytics(route: str, interval: str = "month"):
+def get_page_analytics(route: str, range: str = "last_30_days", interval=None):
 	"""
 	Retrieve page analytics for a specific route.
 	:param route: The route of the page to get analytics for.
-	:param interval: The time interval for the analytics data (e.g., "day", "week", "month").
-	:return: A dictionary containing total unique views, total views, and a list of data points with intervals and view counts.
+	:param range: The time range for analytics data (e.g., "today", "this_week", "last_7_days", "last_30_days").
+	:param interval: The interval for data grouping ("hourly", "daily", "weekly", "monthly"). If not specified, defaults based on range.
+	:return: A dictionary containing total unique views, total views, and a list of data points.
 	"""
-	intervals = {
-		"day": (-6, "days", "%b %d, %Y"),
-		"week": (-6, "weeks", "Week of %b %d"),
-		"month": (-6, "months", "%b %Y"),
+	ranges = {
+		"today": (-24, "hours", "hourly", "%I %p"),
+		"this_week": (-7, "days", "daily", "%a"),
+		"last_7_days": (-7, "days", "daily", "%a"),
+		"last_30_days": (-30, "days", "daily", "%b %d"),
+		"last_90_days": (-90, "days", "weekly", "%b %d"),
+		"last_180_days": (-180, "days", "weekly", "%b %d"),
 	}
+
+	if range not in ranges:
+		range = "last_30_days"
+
+	delta, unit, default_interval, fmt = ranges[range]
+	interval = interval or default_interval
+
 	to = frappe.utils.now_datetime()
-	delta, unit, fmt = intervals.get(interval, intervals["month"])
 	_from = frappe.utils.add_to_date(to, **{unit: delta})
 
 	datum = frappe.get_all(
 		"Web Page View",
-		filters={"path": "pages/page-245b1607", "creation": [">=", _from]},
+		filters={"path": route, "creation": [">=", _from]},
 		fields=["creation", "is_unique"],
 	)
 
 	grouped_data = defaultdict(lambda: {"total_page_views": 0, "unique_page_views": 0})
 	current = _from
+
+	interval_deltas = {
+		"hourly": {"hours": 1},
+		"daily": {"days": 1},
+		"weekly": {"days": 7},
+		"monthly": {"months": 1},
+	}
+
 	while current <= to:
-		interval_key = f"Week of {current.strftime(fmt)}" if unit == "weeks" else current.strftime(fmt)
+		interval_key = current.strftime(fmt)
 		grouped_data[interval_key] = {"total_page_views": 0, "unique_page_views": 0}
-		current = frappe.utils.add_to_date(current, **{unit: 1})
+		current = frappe.utils.add_to_date(current, **interval_deltas[interval])
 
 	for d in datum:
 		creation = frappe.utils.get_datetime(d.creation)
-		key = f"Week of {creation.strftime(fmt)}" if unit == "weeks" else creation.strftime(fmt)
+		key = creation.strftime(fmt)
 		grouped_data[key]["total_page_views"] += 1
 		grouped_data[key]["unique_page_views"] += frappe.utils.cint(d.is_unique)
 
