@@ -1,5 +1,6 @@
 import json
 import os
+from collections import defaultdict
 from io import BytesIO
 from urllib.parse import unquote
 
@@ -265,3 +266,106 @@ def sync_component(component_id: str):
 
 	component = frappe.get_doc("Builder Component", component_id)
 	component.sync_component()
+
+
+@frappe.whitelist()
+def get_page_analytics(route: str, range: str = "last_30_days", interval=None):
+	"""
+	Retrieve page analytics for a specific route.
+	:param route: The route of the page to get analytics for.
+	:param range: The time range for analytics data (e.g., "today", "this_week", "last_7_days", "last_30_days", "this_year).
+	:param interval: The interval for data grouping ("hourly", "daily", "weekly", "monthly"). If not specified, defaults based on range.
+	:return: A dictionary containing total unique views, total views, and a list of data points.
+	"""
+	import bisect
+
+	formats = {
+		"hourly": "%H:00",
+		"daily": "%Y-%m-%d",
+		"weekly": "%Y-%m-%d",
+		"monthly": "%Y-%m",
+	}
+
+	ranges = {
+		"today": (-24, "hours", "hourly"),
+		"this_week": (-7, "days", "daily"),
+		"last_7_days": (-7, "days", "daily"),
+		"last_30_days": (-30, "days", "daily"),
+		"last_90_days": (-90, "days", "weekly"),
+		"last_180_days": (-180, "days", "weekly"),
+		"this_year": (None, None, "monthly"),
+	}
+
+	if range not in ranges:
+		range = "last_30_days"  # Default fallback
+
+	to = frappe.utils.now_datetime()
+
+	if range == "this_year":
+		current_year = to.year
+		_from = frappe.utils.get_datetime(f"{current_year}-01-01")
+		_, _, default_interval = ranges[range]
+	else:
+		delta, unit, default_interval = ranges[range]
+		_from = frappe.utils.add_to_date(to, **{unit: delta})
+
+	interval = interval or default_interval
+	fmt = formats[interval]
+
+	datum = frappe.get_all(
+		"Web Page View",
+		filters={"path": route, "creation": [">=", _from]},
+		fields=["creation", "is_unique"],
+	)
+
+	interval_deltas = {
+		"hourly": {"hours": 1},
+		"daily": {"days": 1},
+		"weekly": {"days": 7},
+		"monthly": {"months": 1},
+	}
+
+	interval_starts = []
+	current_interval_start = _from
+	while current_interval_start <= to:
+		interval_starts.append(current_interval_start)
+		current_interval_start = frappe.utils.add_to_date(current_interval_start, **interval_deltas[interval])
+
+	if not interval_starts and _from <= to:
+		interval_starts.append(_from)
+
+	grouped_data = {
+		dt.strftime(fmt): {"total_page_views": 0, "unique_page_views": 0} for dt in interval_starts
+	}
+
+	if not interval_starts:
+		return {"total_unique_views": 0, "total_views": 0, "data": []}
+
+	for d in datum:
+		creation_dt = frappe.utils.get_datetime(d.creation)
+
+		# Find the interval this data point belongs to
+		# bisect_right returns an insertion point which comes after (to the right of) any existing entries of x in a
+		# and before (to the left of) any entries of x that are greater than x.
+		# We need the index of the interval_start that is <= creation_dt.
+		idx = bisect.bisect_right(interval_starts, creation_dt) - 1
+
+		if idx >= 0:
+			bucket_start_dt = interval_starts[idx]
+			key = bucket_start_dt.strftime(fmt)
+			if key in grouped_data:
+				grouped_data[key]["total_page_views"] += 1
+				grouped_data[key]["unique_page_views"] += frappe.utils.cint(d.is_unique)
+
+	return {
+		"total_unique_views": sum(frappe.utils.cint(d.is_unique) for d in datum),
+		"total_views": len(datum),
+		"data": [
+			{
+				"interval": k,
+				"total_page_views": v["total_page_views"],
+				"unique_page_views": v["unique_page_views"],
+			}
+			for k, v in sorted(grouped_data.items())
+		],
+	}
