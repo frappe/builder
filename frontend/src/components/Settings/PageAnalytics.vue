@@ -8,6 +8,10 @@
 					v-model="interval"
 					:options="[
 						{
+							label: 'Hourly',
+							value: 'hourly',
+						},
+						{
 							label: 'Daily',
 							value: 'daily',
 						},
@@ -29,16 +33,16 @@
 							value: 'today',
 						},
 						{
-							label: 'Last 30 Days',
-							value: 'last-30-days',
+							label: 'Last 7 Days',
+							value: 'last_7_days',
 						},
 						{
-							label: 'Last 7 Days',
-							value: 'last-7-days',
+							label: 'Last 30 Days',
+							value: 'last_30_days',
 						},
 						{
 							label: 'This Year',
-							value: 'this-year',
+							value: 'this_year',
 						},
 					]" />
 			</div>
@@ -65,7 +69,7 @@ import { AxisChart, Select, createResource } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
 const pageStore = usePageStore();
-const range = ref("last-30-days");
+const range = ref("last_30_days");
 const interval = ref("weekly");
 const analyticsData = ref({
 	total_unique_views: 0,
@@ -101,25 +105,17 @@ const analytics = createResource({
 		interval: interval.value,
 	},
 	auto: true,
-});
-analytics.promise
-	.then((res) => {
+	onSuccess(res) {
 		console.log("Analytics Data:", res);
 		analyticsData.value = res;
-	})
-	.catch(console.error);
+	},
+});
 
-watch([range, interval], ([newRange, newInterval]) => {
-	analytics
-		.fetch({
-			route: pageStore.activePage?.route,
-			range: newRange,
-			interval: newInterval,
-		})
-		.then((res) => {
-			console.log("Updated Analytics Data:", res);
-			analyticsData.value = res;
-		})
-		.catch(console.error);
+watch([range, interval], () => {
+	analytics.submit({
+		route: pageStore.activePage?.route,
+		range: range.value,
+		interval: interval.value,
+	});
 });
 </script>
