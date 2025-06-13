@@ -105,8 +105,7 @@ const analytics = createResource({
 		interval: interval.value,
 	},
 	auto: true,
-	onSuccess(res) {
-		console.log("Analytics Data:", res);
+	onSuccess(res: { total_unique_views: number; total_views: number; data: [] }) {
 		analyticsData.value = res;
 	},
 });
