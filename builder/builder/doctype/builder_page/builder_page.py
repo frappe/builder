@@ -239,6 +239,8 @@ class BuilderPage(WebsiteGenerator):
 		}
 		metatags.update(page_data.get("metatags", {}))
 		context.metatags = metatags
+		# Set canonical URL if specified, otherwise use the current page URL
+		context.canonical_url = self.canonical_url
 
 	def set_favicon(self, context):
 		if not context.get("favicon"):
@@ -653,20 +655,20 @@ def set_dynamic_content_placeholder(block, data_key=False):
 		_property = block_data_key.get("property")
 		_type = block_data_key.get("type")
 		if _type == "attribute":
-			block["attributes"][
-				_property
-			] = f"{{{{ {key} or '{escape_single_quotes(block['attributes'].get(_property, ''))}' }}}}"
+			block["attributes"][_property] = (
+				f"{{{{ {key} or '{escape_single_quotes(block['attributes'].get(_property, ''))}' }}}}"
+			)
 		elif _type == "style":
 			if not block["attributes"].get("style"):
 				block["attributes"]["style"] = ""
 			css_property = camel_case_to_kebab_case(_property)
-			block["attributes"][
-				"style"
-			] += f"{css_property}: {{{{ {key} or '{escape_single_quotes(block['baseStyles'].get(_property, '') or '')}' }}}};"
+			block["attributes"]["style"] += (
+				f"{css_property}: {{{{ {key} or '{escape_single_quotes(block['baseStyles'].get(_property, '') or '')}' }}}};"
+			)
 		elif _type == "key" and not block.get("isRepeaterBlock"):
-			block[
-				_property
-			] = f"{{{{ {key} if {key} or {key} in ['', 0] else '{escape_single_quotes(block.get(_property, ''))}' }}}}"
+			block[_property] = (
+				f"{{{{ {key} if {key} or {key} in ['', 0] else '{escape_single_quotes(block.get(_property, ''))}' }}}}"
+			)
 
 
 @redis_cache(ttl=60 * 60)
