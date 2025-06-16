@@ -94,7 +94,6 @@ const pageSettings = {
 			component: PageAnalytics,
 			title: "Analytics",
 			icon: ChartIcon,
-			disabled: true,
 		},
 	],
 };
