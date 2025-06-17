@@ -96,7 +96,7 @@ import { AxisChart, createResource, ListView, Select } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
 const pageStore = usePageStore();
-const range = ref("this_year");
+const range = ref("last_30_days");
 const interval = ref("weekly");
 const analyticsData = ref<AnalyticsResponse>({
 	total_unique_views: 0,
