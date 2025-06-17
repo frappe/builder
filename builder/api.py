@@ -333,7 +333,12 @@ def _get_page_views(route, from_date):
 
 
 def _group_analytics_data(views_data, from_date, to_date, interval):
-	formats = {"hourly": "%H:00", "daily": "%Y-%m-%d", "weekly": "%Y-%m-%d", "monthly": "%Y-%m"}
+	formats = {
+		"hourly": "%I %p",  # 01 PM
+		"daily": "%d %b",  # 25 Jan
+		"weekly": "%d %b, Week %W",  # Week of Jan
+		"monthly": "%b %Y",  # Jan 2024
+	}
 
 	interval_deltas = {
 		"hourly": {"hours": 1},
@@ -350,7 +355,7 @@ def _group_analytics_data(views_data, from_date, to_date, interval):
 	current_date = from_date
 	while current_date <= to_date:
 		key = current_date.strftime(fmt)
-		grouped_data[key] = {"total_page_views": 0, "unique_page_views": 0}
+		grouped_data[key] = {"total_page_views": 0, "unique_page_views": 0, "timestamp": current_date}
 		current_date = frappe.utils.add_to_date(current_date, **delta)
 
 	# Fill in actual data where it exists
@@ -360,13 +365,14 @@ def _group_analytics_data(views_data, from_date, to_date, interval):
 			grouped_data[key]["total_page_views"] += 1
 			grouped_data[key]["unique_page_views"] += frappe.utils.cint(view.is_unique)
 
+	sorted_data = sorted(grouped_data.items(), key=lambda x: x[1]["timestamp"])
 	return [
 		{
 			"interval": k,
 			"total_page_views": v["total_page_views"],
 			"unique_page_views": v["unique_page_views"],
 		}
-		for k, v in sorted(grouped_data.items())
+		for k, v in sorted_data
 	]
 
 
