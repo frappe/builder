@@ -269,54 +269,71 @@ def sync_component(component_id: str):
 
 
 @frappe.whitelist()
-def get_page_analytics(route: str, range: str = "last_30_days", interval=None):
-	"""
-	Retrieve page analytics for a specific route.
-	:param route: The route of the page to get analytics for.
-	:param range: The time range for analytics data (e.g., "today", "this_week", "last_7_days", "last_30_days", "this_year).
-	:param interval: The interval for data grouping ("hourly", "daily", "weekly", "monthly"). If not specified, defaults based on range.
-	:return: A dictionary containing total unique views, total views, and a list of data points.
-	"""
-	import bisect
+def get_page_analytics(route=None, date_range: str = "last_30_days", interval=None):
+	"""Get analytics data for a specific page route or all pages."""
+	try:
+		if not route and not frappe.has_permission("Web Page View", "read"):
+			return _get_empty_analytics()
 
-	formats = {
-		"hourly": "%H:00",
-		"daily": "%Y-%m-%d",
-		"weekly": "%Y-%m-%d",
-		"monthly": "%Y-%m",
+		date_config = _get_date_config(date_range)
+		if not date_config:
+			return _get_empty_analytics()
+
+		to_date = frappe.utils.now_datetime()
+		from_date = _calculate_from_date(to_date, date_config)
+		interval = interval or date_config["default_interval"]
+
+		views_data = _get_page_views(route, from_date)
+		grouped_data = _group_analytics_data(views_data, from_date, to_date, interval)
+
+		return {
+			"total_unique_views": sum(frappe.utils.cint(d.get("is_unique", 0)) for d in views_data),
+			"total_views": len(views_data),
+			"data": grouped_data,
+		}
+	except Exception as e:
+		frappe.log_error("Analytics Error", str(e))
+		return _get_empty_analytics()
+
+
+def _get_empty_analytics():
+	return {"total_unique_views": 0, "total_views": 0, "data": []}
+
+
+def _get_date_config(date_range):
+	return {
+		"today": {"delta": -24, "unit": "hours", "default_interval": "hourly"},
+		"this_week": {"delta": -7, "unit": "days", "default_interval": "daily"},
+		"last_7_days": {"delta": -7, "unit": "days", "default_interval": "daily"},
+		"last_30_days": {"delta": -30, "unit": "days", "default_interval": "daily"},
+		"last_90_days": {"delta": -90, "unit": "days", "default_interval": "weekly"},
+		"last_180_days": {"delta": -180, "unit": "days", "default_interval": "weekly"},
+		"this_year": {"delta": None, "unit": None, "default_interval": "monthly"},
+	}.get(date_range)
+
+
+def _calculate_from_date(to_date, config):
+	if config["delta"] is None:  # Handle "this_year" case
+		return frappe.utils.get_datetime(f"{to_date.year}-01-01")
+	return frappe.utils.add_to_date(to_date, **{config["unit"]: config["delta"]})
+
+
+def _get_page_views(route, from_date):
+	filters = {
+		"creation": [">=", from_date],
 	}
+	if route:
+		filters["path"] = route
 
-	ranges = {
-		"today": (-24, "hours", "hourly"),
-		"this_week": (-7, "days", "daily"),
-		"last_7_days": (-7, "days", "daily"),
-		"last_30_days": (-30, "days", "daily"),
-		"last_90_days": (-90, "days", "weekly"),
-		"last_180_days": (-180, "days", "weekly"),
-		"this_year": (None, None, "monthly"),
-	}
-
-	if range not in ranges:
-		range = "last_30_days"  # Default fallback
-
-	to = frappe.utils.now_datetime()
-
-	if range == "this_year":
-		current_year = to.year
-		_from = frappe.utils.get_datetime(f"{current_year}-01-01")
-		_, _, default_interval = ranges[range]
-	else:
-		delta, unit, default_interval = ranges[range]
-		_from = frappe.utils.add_to_date(to, **{unit: delta})
-
-	interval = interval or default_interval
-	fmt = formats[interval]
-
-	datum = frappe.get_all(
+	return frappe.get_all(
 		"Web Page View",
-		filters={"path": route, "creation": [">=", _from]},
-		fields=["creation", "is_unique"],
+		filters=filters,
+		fields=["creation", "is_unique", "path"],
 	)
+
+
+def _group_analytics_data(views_data, from_date, to_date, interval):
+	formats = {"hourly": "%H:00", "daily": "%Y-%m-%d", "weekly": "%Y-%m-%d", "monthly": "%Y-%m"}
 
 	interval_deltas = {
 		"hourly": {"hours": 1},
@@ -325,47 +342,61 @@ def get_page_analytics(route: str, range: str = "last_30_days", interval=None):
 		"monthly": {"months": 1},
 	}
 
-	interval_starts = []
-	current_interval_start = _from
-	while current_interval_start <= to:
-		interval_starts.append(current_interval_start)
-		current_interval_start = frappe.utils.add_to_date(current_interval_start, **interval_deltas[interval])
+	fmt = formats[interval]
+	delta = interval_deltas[interval]
 
-	if not interval_starts and _from <= to:
-		interval_starts.append(_from)
+	# Initialize all dates in range with zero counts
+	grouped_data = {}
+	current_date = from_date
+	while current_date <= to_date:
+		key = current_date.strftime(fmt)
+		grouped_data[key] = {"total_page_views": 0, "unique_page_views": 0}
+		current_date = frappe.utils.add_to_date(current_date, **delta)
 
-	grouped_data = {
-		dt.strftime(fmt): {"total_page_views": 0, "unique_page_views": 0} for dt in interval_starts
-	}
+	# Fill in actual data where it exists
+	for view in views_data:
+		key = view.creation.strftime(fmt)
+		if key in grouped_data:
+			grouped_data[key]["total_page_views"] += 1
+			grouped_data[key]["unique_page_views"] += frappe.utils.cint(view.is_unique)
 
-	if not interval_starts:
-		return {"total_unique_views": 0, "total_views": 0, "data": []}
+	return [
+		{
+			"interval": k,
+			"total_page_views": v["total_page_views"],
+			"unique_page_views": v["unique_page_views"],
+		}
+		for k, v in sorted(grouped_data.items())
+	]
 
-	for d in datum:
-		creation_dt = frappe.utils.get_datetime(d.creation)
 
-		# Find the interval this data point belongs to
-		# bisect_right returns an insertion point which comes after (to the right of) any existing entries of x in a
-		# and before (to the left of) any entries of x that are greater than x.
-		# We need the index of the interval_start that is <= creation_dt.
-		idx = bisect.bisect_right(interval_starts, creation_dt) - 1
+@frappe.whitelist()
+def get_overall_analytics(date_range: str = "last_30_days", interval=None):
+	"""Get overall site analytics with top pages."""
+	analytics = get_page_analytics(None, date_range, interval)
+	analytics["top_pages"] = _get_top_pages(date_range=date_range)
+	return analytics
 
-		if idx >= 0:
-			bucket_start_dt = interval_starts[idx]
-			key = bucket_start_dt.strftime(fmt)
-			if key in grouped_data:
-				grouped_data[key]["total_page_views"] += 1
-				grouped_data[key]["unique_page_views"] += frappe.utils.cint(d.is_unique)
 
-	return {
-		"total_unique_views": sum(frappe.utils.cint(d.is_unique) for d in datum),
-		"total_views": len(datum),
-		"data": [
-			{
-				"interval": k,
-				"total_page_views": v["total_page_views"],
-				"unique_page_views": v["unique_page_views"],
-			}
-			for k, v in sorted(grouped_data.items())
-		],
-	}
+def _get_top_pages(date_range: str = "last_30_days"):
+	from frappe.query_builder.functions import Count, Sum
+
+	date_config = _get_date_config(date_range)
+	from_date = _calculate_from_date(frappe.utils.now_datetime(), date_config)
+	WebPageView = frappe.qb.DocType("Web Page View")
+	pages = (
+		frappe.qb.from_(WebPageView)
+		.select(
+			WebPageView.path.as_("route"),
+			Count(WebPageView.path).as_("view_count"),
+			Sum(frappe.qb.terms.Case().when(WebPageView.is_unique == "1", 1).else_(0)).as_(
+				"unique_view_count"
+			),
+		)
+		.where(WebPageView.creation >= from_date)
+		.groupby(WebPageView.path)
+		.orderby("view_count", order=frappe.qb.desc)
+		.limit(10)
+		.run(as_dict=True)
+	)
+	return pages
