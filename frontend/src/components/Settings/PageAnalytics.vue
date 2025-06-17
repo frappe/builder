@@ -101,7 +101,7 @@ const analytics = createResource({
 	url: "builder.api.get_page_analytics",
 	params: {
 		route: pageStore.activePage?.route,
-		range: range.value,
+		date_range: range.value,
 		interval: interval.value,
 	},
 	auto: true,
@@ -113,7 +113,7 @@ const analytics = createResource({
 watch([range, interval], () => {
 	analytics.submit({
 		route: pageStore.activePage?.route,
-		range: range.value,
+		date_range: range.value,
 		interval: interval.value,
 	});
 });
