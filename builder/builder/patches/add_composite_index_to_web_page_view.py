@@ -1,5 +1,5 @@
-import frappe
+from builder.utils import add_composite_index_to_web_page_view
 
 
 def execute():
-	frappe.db.add_index("Web Page View", ["creation", "is_unique", "path"])
+	add_composite_index_to_web_page_view()
