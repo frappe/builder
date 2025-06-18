@@ -83,6 +83,7 @@
 				]"
 				:options="{
 					selectable: false,
+					emptyState: {},
 				}"
 				:rows="analyticsData.top_pages"
 				row-key="route" />
