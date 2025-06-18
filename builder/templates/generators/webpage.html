@@ -11,8 +11,6 @@
 	{% endif %}
 	{% if canonical_url %}
 	<link rel="canonical" href="{{ canonical_url }}" />
-	{% else %}
-	<link rel="canonical" href="{{ frappe.utils.get_url(route) }}" />
 	{% endif %}
 	<title>{{title}}</title>
 	<link rel="icon" href="{{ favicon_light or favicon or '/assets/builder/images/frappe_black.png' }}"  media="(prefers-color-scheme: light)"/>
