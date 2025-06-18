@@ -67,6 +67,21 @@ class BuilderPageRenderer(DocumentPage):
 			if self.doc.authenticated_access and frappe.session.user == "Guest":
 				raise frappe.PermissionError("Please log in to view this page.")
 
+	def set_canonical_url(self):
+		if not self.doc:
+			return
+		context = getattr(self, "context", frappe._dict())
+		if self.doc.is_home_page():
+			context.canonical_url = frappe.utils.get_url()
+		elif self.doc.canonical_url:
+			context.canonical_url = render_template(self.doc.canonical_url, context)
+		else:
+			context.canonical_url = frappe.utils.get_url(self.path)
+		self.context = context
+
+	def set_missing_values(self):
+		self.set_canonical_url()
+
 
 class BuilderPage(WebsiteGenerator):
 	def onload(self):
@@ -326,6 +341,10 @@ class BuilderPage(WebsiteGenerator):
 			self.db_set("draft_blocks", self.draft_blocks, commit=True, update_modified=False)
 
 		self.clear_route_cache()
+
+	def is_home_page(self):
+		"""Check if this page is set as the home page in Builder Settings."""
+		return frappe.get_cached_value("Builder Settings", None, "home_page") == self.route
 
 
 def replace_component_in_blocks(blocks, target_component, replace_with):

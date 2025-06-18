@@ -48,6 +48,17 @@
 				</div>
 			</div>
 		</div>
+		<hr class="w-full border-outline-gray-2" />
+		<div class="flex w-full flex-col gap-5">
+			<BuilderInput
+				type="text"
+				label="Canonical URL"
+				description="Optional. Set this to specify a preferred version of this page for search engines."
+				placeholder="https://example.com/preferred-page-url"
+				:modelValue="pageStore.activePage?.canonical_url"
+				:hideClearButton="true"
+				@update:modelValue="(val: string) => pageStore.updateActivePage('canonical_url', val)" />
+		</div>
 	</div>
 </template>
 <script setup lang="ts">
