@@ -643,6 +643,9 @@ def set_dynamic_content_placeholder(block, data_key=False):
 	dynamic_values = block.get("dynamicValues", []) or []
 	dynamic_values += block_data_key
 	for dynamic_value_doc in dynamic_values:
+		if not isinstance(dynamic_value_doc, dict):
+			# if dynamic_value_doc is a string, convert it to dict
+			dynamic_value_doc = {"key": dynamic_value_doc, "type": "key", "property": dynamic_value_doc}
 		if dynamic_value_doc and dynamic_value_doc.get("key"):
 			key = f"{data_key}.{dynamic_value_doc.get('key')}" if data_key else dynamic_value_doc.get("key")
 			if data_key:
@@ -656,20 +659,20 @@ def set_dynamic_content_placeholder(block, data_key=False):
 			_property = dynamic_value_doc.get("property")
 			_type = dynamic_value_doc.get("type")
 			if _type == "attribute":
-				block["attributes"][
-					_property
-				] = f"{{{{ {key} or '{escape_single_quotes(block['attributes'].get(_property, ''))}' }}}}"
+				block["attributes"][_property] = (
+					f"{{{{ {key} or '{escape_single_quotes(block['attributes'].get(_property, ''))}' }}}}"
+				)
 			elif _type == "style":
 				if not block["attributes"].get("style"):
 					block["attributes"]["style"] = ""
 				css_property = camel_case_to_kebab_case(_property)
-				block["attributes"][
-					"style"
-				] += f"{css_property}: {{{{ {key} or '{escape_single_quotes(block['baseStyles'].get(_property, '') or '')}' }}}};"
+				block["attributes"]["style"] += (
+					f"{css_property}: {{{{ {key} or '{escape_single_quotes(block['baseStyles'].get(_property, '') or '')}' }}}};"
+				)
 			elif _type == "key" and not block.get("isRepeaterBlock"):
-				block[
-					_property
-				] = f"{{{{ {key} if {key} or {key} in ['', 0] else '{escape_single_quotes(block.get(_property, ''))}' }}}}"
+				block[_property] = (
+					f"{{{{ {key} if {key} or {key} in ['', 0] else '{escape_single_quotes(block.get(_property, ''))}' }}}}"
+				)
 
 
 @redis_cache(ttl=60 * 60)
