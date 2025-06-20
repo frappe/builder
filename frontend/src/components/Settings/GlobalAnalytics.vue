@@ -50,22 +50,33 @@
 			</div>
 			<div class="flex gap-8">
 				<div class="flex flex-col gap-2">
-					<span class="text-3xl">{{ analyticsData.total_unique_views }}</span>
+					<span class="text-3xl">{{ analytics.loading ? "-" : analyticsData.total_unique_views }}</span>
 					<span class="text-sm text-ink-gray-7">Unique Visitors</span>
 				</div>
 				<div class="flex flex-col gap-2">
-					<span class="text-3xl">{{ analyticsData.total_views }}</span>
+					<span class="text-3xl">{{ analytics.loading ? "-" : analyticsData.total_views }}</span>
 					<span class="text-sm text-ink-gray-7">Total Pageviews</span>
 				</div>
 			</div>
 		</div>
-		<div v-if="analyticsData.data.length">
+		<div
+			v-if="analytics.loading"
+			class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">
+			Loading...
+		</div>
+		<div v-else-if="analyticsData.data.length">
 			<AxisChart :config="chartConfig" />
 		</div>
 
 		<div class="mt-8">
 			<h3 class="mb-4 text-lg font-medium">Top Pages</h3>
+			<div
+				v-if="analytics.loading"
+				class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">
+				Loading...
+			</div>
 			<ListView
+				v-else
 				:columns="[
 					{
 						label: 'Route',
