@@ -1,5 +1,5 @@
 <template>
-	<div class="no-scrollbar flex h-full w-full flex-col items-center gap-5 overflow-y-auto">
+	<div class="no-scrollbar flex h-full w-full flex-col items-center gap-5 overflow-y-auto px-[2px]">
 		<div class="flex w-full gap-5">
 			<!-- meta -->
 			<div class="flex flex-1 flex-col gap-4">
@@ -10,6 +10,7 @@
 						:modelValue="pageStore.activePage?.page_title"
 						@update:modelValue="(val: string) => pageStore.updateActivePage('page_title', val)" />
 					<BuilderInput
+						class="[&>div>textarea]:h-28"
 						type="textarea"
 						label="Description"
 						:modelValue="pageStore.activePage?.meta_description"
@@ -41,7 +42,7 @@
 						<span class="mt-2 text-base font-medium text-ink-gray-9">
 							{{ pageStore.activePage?.page_title }}
 						</span>
-						<span class="text-base leading-5 text-ink-gray-6">
+						<span class="line-clamp-3 text-base leading-5 text-ink-gray-6">
 							{{ pageStore.activePage?.meta_description }}
 						</span>
 					</div>
