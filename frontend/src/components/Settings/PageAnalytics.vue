@@ -49,17 +49,22 @@
 		</div>
 		<div class="flex gap-8">
 			<div class="flex flex-col gap-2">
-				<span class="text-3xl">{{ analyticsData.total_unique_views }}</span>
+				<span class="text-3xl">{{ analytics.loading ? "-" : analyticsData.total_unique_views }}</span>
 				<span class="text-sm text-ink-gray-7">Unique Visitors</span>
 			</div>
 			<div class="flex flex-col gap-2">
-				<span class="text-3xl">{{ analyticsData.total_views }}</span>
+				<span class="text-3xl">{{ analytics.loading ? "-" : analyticsData.total_views }}</span>
 				<span class="text-sm text-ink-gray-7">Total Pageviews</span>
 			</div>
 		</div>
 	</div>
-	<div class="mx-[-16px]" v-if="analyticsData.data.length">
-		<AxisChart :config="chartConfig" />
+	<div class="mx-[-16px]">
+		<div
+			v-if="analytics.loading"
+			class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">
+			Loading...
+		</div>
+		<AxisChart v-else-if="analyticsData.data.length" :config="chartConfig" />
 	</div>
 </template>
 
