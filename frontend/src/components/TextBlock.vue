@@ -393,8 +393,6 @@ const setLink = (value: string | null, closeModal = true) => {
 };
 
 const setHeading = (level: 1 | 2 | 3) => {
-	props.block.setBaseStyle("font-size", level === 1 ? "2rem" : level === 2 ? "1.5rem" : "1.25rem");
-	props.block.setBaseStyle("font-weight", "bold");
 	const tag = `h${level}`;
 	if (props.block.element === tag) {
 		props.block.element = "p";
