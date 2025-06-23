@@ -83,7 +83,7 @@ useTitle(title);
 [id^="headlessui-menu-items"],
 [id^="headlessui-combobox-options"] {
 	@apply bg-surface-white;
-	@apply dark:bg-surface-gray-1;
+	@apply dark:bg-surface-gray-2;
 	@apply text-ink-gray-7;
 
 	@apply overflow-y-auto;
