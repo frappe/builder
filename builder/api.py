@@ -402,7 +402,7 @@ def _get_top_pages(date_range: str = "last_30_days"):
 		.where(WebPageView.creation >= from_date)
 		.groupby(WebPageView.path)
 		.orderby("view_count", order=frappe.qb.desc)
-		.limit(10)
+		.limit(20)
 		.run(as_dict=True)
 	)
 	return pages
