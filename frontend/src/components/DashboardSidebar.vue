@@ -81,7 +81,11 @@
 										open && builderStore.showDashboardSidebar,
 									'!p-2 hover:bg-surface-gray-2': builderStore.showDashboardSidebar,
 								}">
-								<div class="flex w-full cursor-pointer items-center gap-2">
+								<div
+									class="flex w-full cursor-pointer items-center gap-2"
+									:class="{
+										'justify-center': !builderStore.showDashboardSidebar,
+									}">
 									<img src="/builder_logo.png" alt="logo" class="h-7" />
 									<h1
 										class="text-md mt-[2px] font-semibold leading-5 text-gray-800 dark:text-gray-200"
