@@ -707,6 +707,15 @@ const parseAndSetBackground = (styles: BlockStyleMap) => {
 	}
 };
 
+function shortenNumber(num: number): string {
+	if (num < 1000) return num.toString();
+	const units = ["", "k", "M", "B", "T"];
+	const order = Math.floor(Math.log10(num) / 3);
+	const unitname = units[order];
+	const shortNum = num / Math.pow(1000, order);
+	return shortNum % 1 === 0 ? shortNum.toFixed(0) + unitname : shortNum.toFixed(1) + unitname;
+}
+
 export {
 	addPxToNumber,
 	alert,
@@ -748,6 +757,7 @@ export {
 	parseBackground,
 	replaceMapKey,
 	RGBToHex,
+	shortenNumber,
 	stripExtension,
 	throttle,
 	uploadImage,
