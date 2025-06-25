@@ -78,14 +78,14 @@
 					@click="editor?.chain().focus().toggleBold().run()"
 					class="rounded px-2 py-1 hover:bg-surface-gray-2"
 					:class="{ 'bg-surface-gray-3': editor.isActive('bold') }">
-					<FeatherIcon class="h-3 w-3" name="bold" />
+					<FeatherIcon class="h-3 w-3" name="bold" :stroke-width="2" />
 				</button>
 				<button
 					v-show="!block.isHeader()"
 					@click="editor?.chain().focus().toggleItalic().run()"
 					class="rounded px-2 py-1 hover:bg-surface-gray-2"
 					:class="{ 'bg-surface-gray-3': editor.isActive('italic') }">
-					<FeatherIcon class="h-3 w-3" name="italic" />
+					<FeatherIcon class="h-3 w-3" name="italic" :stroke-width="2" />
 				</button>
 				<button
 					v-show="!block.isHeader()"
@@ -104,7 +104,7 @@
 					"
 					class="rounded px-2 py-1 hover:bg-surface-gray-2"
 					:class="{ 'bg-surface-gray-3': editor.isActive('link') }">
-					<FeatherIcon class="h-3 w-3" name="link" />
+					<FeatherIcon class="h-3 w-3" name="link" :stroke-width="2" />
 				</button>
 			</div>
 		</bubble-menu>
@@ -151,6 +151,7 @@ import { Color } from "@tiptap/extension-color";
 import { FontFamily } from "@tiptap/extension-font-family";
 import { Link } from "@tiptap/extension-link";
 import TextStyle from "@tiptap/extension-text-style";
+import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { BubbleMenu, Editor, EditorContent, Extension } from "@tiptap/vue-3";
 import { vOnClickOutside } from "@vueuse/components";
@@ -301,6 +302,7 @@ if (!props.preview) {
 						Link.configure({
 							openOnClick: false,
 						}),
+						Underline,
 						FontFamilyPasteRule,
 					],
 					enablePasteRules: false,
