@@ -48,6 +48,8 @@ You can generate using favicon-generator.org	*/
 	meta_description?: string
 	/**	Image : Attach Image	*/
 	meta_image?: string
+	/**	Canonical URL : Data - The preferred URL version of this page for search engines. If not set, the current page URL will be used.	*/
+	canonical_url?: string
 	/**	Authenticated Access : Check - Only allow logged-in users to view this page.	*/
 	authenticated_access?: 0 | 1
 	/**	Disable Indexing : Check - Prevent search engines from indexing this page	*/

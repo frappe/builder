@@ -34,6 +34,7 @@
   "page_title",
   "meta_description",
   "meta_image",
+  "canonical_url",
   "set_meta_tags",
   "options_tab",
   "authenticated_access",
@@ -143,6 +144,13 @@
    "label": "Description"
   },
   {
+   "fieldname": "canonical_url",
+   "fieldtype": "Data",
+   "label": "Canonical URL",
+   "description": "The preferred URL version of this page for search engines. If not set, the current page URL will be used.",
+   "options": "URL"
+  },
+  {
    "fieldname": "client_scripts",
    "fieldtype": "Table MultiSelect",
    "label": "Client Scripts",
@@ -221,7 +229,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-02-19 14:31:47.360526",
+ "modified": "2025-06-13 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

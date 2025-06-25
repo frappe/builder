@@ -383,3 +383,11 @@ class ColonRule(Rule):
 	@staticmethod
 	def convert_colon_to_brackets(string):
 		return re.sub(r":([a-zA-Z0-9_-]+)", r"<\1>", string)
+
+
+def add_composite_index_to_web_page_view():
+	"""
+	Add a composite index to the Web Page View table.
+	This is used to speed up queries that filter by creation, is_unique, and path.
+	"""
+	frappe.db.add_index("Web Page View", ["creation", "is_unique", "path"])

@@ -41,6 +41,7 @@ import ChartIcon from "./Icons/Chart.vue";
 import CodeIcon from "./Icons/Code.vue";
 import MetaIcon from "./Icons/Meta.vue";
 import SettingsIcon from "./Icons/Settings.vue";
+import GlobalAnalytics from "./Settings/GlobalAnalytics.vue";
 import GlobalCode from "./Settings/GlobalCode.vue";
 import GlobalGeneral from "./Settings/GlobalGeneral.vue";
 import PageAnalytics from "./Settings/PageAnalytics.vue";
@@ -94,7 +95,6 @@ const pageSettings = {
 			component: PageAnalytics,
 			title: "Analytics",
 			icon: ChartIcon,
-			disabled: true,
 		},
 	],
 };
@@ -117,6 +117,13 @@ const globalSettings = {
 			component: GlobalRedirects,
 			title: "Redirects",
 			icon: RedirectIcon,
+		},
+		{
+			label: "Analytics",
+			value: "global_analytics",
+			component: GlobalAnalytics,
+			title: "Analytics",
+			icon: ChartIcon,
 		},
 	],
 };
