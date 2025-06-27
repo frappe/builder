@@ -315,7 +315,7 @@ const usePageStore = defineStore("pageStore", {
 			});
 		},
 		isHomePage(page: BuilderPage | null = null) {
-			return builderSettings.doc.home_page === (page || this.activePage)?.route;
+			return builderSettings.doc?.home_page === (page || this.activePage)?.route;
 		},
 	},
 });

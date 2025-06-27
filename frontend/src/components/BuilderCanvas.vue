@@ -38,7 +38,7 @@
 				</div>
 			</div>
 			<div
-				class="canvas relative flex h-full bg-surface-white shadow-2xl contain-layout"
+				class="canvas relative flex h-full bg-surface-white shadow-2xl contain-layout selection:!bg-gray-200"
 				:style="{
 					...canvasStyles,
 					background: canvasProps.background,
@@ -219,7 +219,7 @@ onMounted(() => {
 		findBlock,
 	);
 	setPanAndZoom(canvasEl, canvasContainerEl, canvasProps);
-	useBlockEventHandlers();
+	useBlockEventHandlers(canvasContainerEl);
 });
 
 const handleClick = (ev: MouseEvent) => {

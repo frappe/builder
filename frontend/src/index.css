@@ -31,19 +31,31 @@ p:empty::before {
 	}
 
 	.no-scrollbar {
-		-ms-overflow-style: none; /* IE and Edge */
+		-ms-overflow-style: none;
 		scrollbar-width: none;
+	}
+
+	.show-scrollbar::-webkit-scrollbar {
+		display: block;
+	}
+	.show-scrollbar {
+		-ms-overflow-style: auto;
+		scrollbar-width: auto;
 	}
 }
 
-::-webkit-scrollbar {
-	@apply w-2;
-	@apply bg-surface-gray-1;
-}
+*:not(.canvas, .canvas *) {
+	&::-webkit-scrollbar {
+		@apply w-2 h-2 bg-surface-gray-1;
+	}
 
-::-webkit-scrollbar-thumb {
-	@apply rounded-full;
-	@apply bg-surface-gray-3;
+	&::-webkit-scrollbar-corner {
+		@apply bg-surface-gray-1;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		@apply rounded-full bg-surface-gray-3;
+	}
 }
 
 [data-theme='dark'] img {

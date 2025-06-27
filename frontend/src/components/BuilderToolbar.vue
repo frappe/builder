@@ -24,7 +24,7 @@
 			</div>
 		</div>
 		<div>
-			<Popover transition="default" placement="bottom" popoverClass="!absolute top-0 !mt-[20px]">
+			<Popover placement="bottom" popoverClass="!absolute top-0 !mt-[20px]">
 				<template #target="{ togglePopover, isOpen }">
 					<div class="flex cursor-pointer items-center gap-2 p-2 text-ink-gray-8">
 						<div class="flex h-6 items-center text-base text-ink-gray-6" v-if="!pageStore.activePage">
@@ -124,7 +124,7 @@
 					size: '5xl',
 				}">
 				<template #body>
-					<Settings @close="showSettingsDialog = false"></Settings>
+					<BuilderSettings @close="showSettingsDialog = false"></BuilderSettings>
 				</template>
 			</Dialog>
 
@@ -148,12 +148,12 @@ import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { getTextContent } from "@/utils/helpers";
-import { Tooltip, Popover } from "frappe-ui";
+import { Popover, Tooltip } from "frappe-ui";
 import { computed, ref } from "vue";
 import { toast } from "vue-sonner";
+import BuilderSettings from "./BuilderSettings.vue";
 import MainMenu from "./MainMenu.vue";
 import PageOptions from "./PageOptions.vue";
-import Settings from "./Settings.vue";
 
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
