@@ -30,6 +30,7 @@
 					Loading...
 				</div>
 				<ListView
+					class="!w-auto"
 					v-else
 					:columns="[
 						{ label: 'Route', key: 'route', width: '60%' },
@@ -53,6 +54,7 @@
 				</div>
 				<ListView
 					v-else
+					class="!w-auto"
 					:columns="[
 						{
 							label: 'Domain',
