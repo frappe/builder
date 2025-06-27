@@ -32,7 +32,7 @@
 				<ListView
 					v-else
 					:columns="[
-						{ label: 'Route', key: 'route', width: '70%' },
+						{ label: 'Route', key: 'route', width: '60%' },
 						{ label: 'Views', key: 'view_count', align: 'right' },
 					]"
 					:options="{
@@ -57,7 +57,7 @@
 						{
 							label: 'Domain',
 							key: 'domain',
-							width: '70%',
+							width: '60%',
 							prefix: ({ row }) => {
 								return h('img', {
 									src: `https://${row.domain}/favicon.ico`,
@@ -100,7 +100,7 @@ const processedAnalyticsData = computed(() => {
 	return {
 		top_referrers: analyticsData.value.top_referrers?.map((referrer) => ({
 			...referrer,
-			unique_view_count: shortenNumber(referrer.unique_view_count),
+			count: shortenNumber(referrer.count),
 		})),
 		top_pages: analyticsData.value.top_pages?.map((page) => ({
 			...page,

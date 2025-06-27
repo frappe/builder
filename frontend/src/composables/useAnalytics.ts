@@ -11,9 +11,8 @@ export interface AnalyticsResponse {
 		unique_view_count: number;
 	}>;
 	top_referrers?: Array<{
-		referrer: string;
-		view_count: number;
-		unique_view_count: number;
+		domain: string;
+		count: number;
 	}>;
 }
 
