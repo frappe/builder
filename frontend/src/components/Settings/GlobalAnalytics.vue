@@ -21,7 +21,7 @@
 					@update:range="(val) => (range = val)" />
 			</template>
 		</AnalyticsOverview>
-		<div class="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
+		<div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
 			<div>
 				<h3 class="mb-4 text-lg font-medium">Top Pages</h3>
 				<div
@@ -30,19 +30,13 @@
 					Loading...
 				</div>
 				<ListView
-					class="!w-auto"
 					v-else
 					:columns="[
 						{ label: 'Route', key: 'route', width: '70%' },
-						{ label: 'Views', key: 'view_count', align: 'right' },
+						{ label: 'Total Views', key: 'view_count' },
 					]"
-					:options="{
-						selectable: false,
-						emptyState: {},
-						showTooltip: false,
-						onRowClick: onPageRowClick,
-					}"
-					:rows="processedAnalyticsData.top_pages"
+					:options="{ selectable: false, emptyState: {} }"
+					:rows="analyticsData.top_pages"
 					row-key="route" />
 			</div>
 			<div>
