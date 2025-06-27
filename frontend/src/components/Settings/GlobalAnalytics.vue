@@ -33,7 +33,7 @@
 					class="!w-auto"
 					v-else
 					:columns="[
-						{ label: 'Route', key: 'route', width: '60%' },
+						{ label: 'Route', key: 'route', width: '70%' },
 						{ label: 'Views', key: 'view_count', align: 'right' },
 					]"
 					:options="{
@@ -102,7 +102,7 @@ const processedAnalyticsData = computed(() => {
 	return {
 		top_referrers: analyticsData.value.top_referrers?.map((referrer) => ({
 			...referrer,
-			count: shortenNumber(referrer.count),
+			unique_view_count: shortenNumber(referrer.unique_view_count),
 		})),
 		top_pages: analyticsData.value.top_pages?.map((page) => ({
 			...page,
