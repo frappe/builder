@@ -1,6 +1,6 @@
+import base64
 import json
 import os
-from collections import defaultdict
 from io import BytesIO
 from urllib.parse import unquote
 
@@ -376,11 +376,42 @@ def _group_analytics_data(views_data, from_date, to_date, interval):
 	]
 
 
+def _get_top_referrers(date_range: str = "last_30_days"):
+	from urllib.parse import urlparse
+
+	date_config = _get_date_config(date_range)
+	from_date = _calculate_from_date(frappe.utils.now_datetime(), date_config)
+	WebPageView = frappe.qb.DocType("Web Page View")
+	# Get all referrers in the date range
+	referrers = (
+		frappe.qb.from_(WebPageView)
+		.select(WebPageView.referrer)
+		.where(WebPageView.creation >= from_date)
+		.run(as_dict=True)
+	)
+	# Count by domain
+	domain_counts = {}
+	for row in referrers:
+		ref = row.get("referrer")
+		if not ref:
+			continue
+		try:
+			domain = urlparse(ref).netloc.lower()
+			if domain:
+				domain_counts[domain] = domain_counts.get(domain, 0) + 1
+		except Exception:
+			continue
+	# Sort and return top 20
+	top_domains = sorted(domain_counts.items(), key=lambda x: x[1], reverse=True)[:20]
+	return [{"domain": d, "count": c} for d, c in top_domains]
+
+
 @frappe.whitelist()
 def get_overall_analytics(date_range: str = "last_30_days", interval=None):
-	"""Get overall site analytics with top pages."""
+	"""Get overall site analytics with top pages and top referrers."""
 	analytics = get_page_analytics(None, date_range, interval)
 	analytics["top_pages"] = _get_top_pages(date_range=date_range)
+	analytics["top_referrers"] = _get_top_referrers(date_range=date_range)
 	return analytics
 
 

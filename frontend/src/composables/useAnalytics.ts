@@ -10,6 +10,10 @@ export interface AnalyticsResponse {
 		view_count: number;
 		unique_view_count: number;
 	}>;
+	top_referrers?: Array<{
+		domain: string;
+		count: number;
+	}>;
 }
 
 export function useAnalytics({
@@ -32,6 +36,7 @@ export function useAnalytics({
 		total_views: 0,
 		data: [],
 		top_pages: [],
+		top_referrers: [],
 	});
 
 	const chartConfig = computed(() => ({
