@@ -21,7 +21,7 @@
 					@update:range="(val) => (range = val)" />
 			</template>
 		</AnalyticsOverview>
-		<div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+		<div class="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
 			<div>
 				<h3 class="mb-4 text-lg font-medium">Top Pages</h3>
 				<div
@@ -33,10 +33,15 @@
 					v-else
 					:columns="[
 						{ label: 'Route', key: 'route', width: '70%' },
-						{ label: 'Total Views', key: 'view_count' },
+						{ label: 'Views', key: 'view_count', align: 'right' },
 					]"
-					:options="{ selectable: false, emptyState: {} }"
-					:rows="analyticsData.top_pages"
+					:options="{
+						selectable: false,
+						emptyState: {},
+						showTooltip: false,
+						onRowClick: onPageRowClick,
+					}"
+					:rows="processedAnalyticsData.top_pages"
 					row-key="route" />
 			</div>
 			<div>
@@ -67,10 +72,10 @@
 								});
 							},
 						},
-						{ label: 'Count', key: 'count' },
+						{ label: 'Count', key: 'count', align: 'right' },
 					]"
 					:options="{ selectable: false, emptyState: {} }"
-					:rows="analyticsData.top_referrers"
+					:rows="processedAnalyticsData.top_referrers"
 					row-key="domain" />
 			</div>
 		</div>
@@ -81,12 +86,30 @@
 import AnalyticsFilters from "@/components/Settings/AnalyticsFilters.vue";
 import AnalyticsOverview from "@/components/Settings/AnalyticsOverview.vue";
 import { useAnalytics } from "@/composables/useAnalytics";
+import { shortenNumber } from "@/utils/helpers";
 import { ListView } from "frappe-ui";
-import { h } from "vue";
+import { computed, h } from "vue";
 
 const { range, interval, analyticsData, chartConfig, analytics } = useAnalytics({
 	apiUrl: "builder.api.get_overall_analytics",
 	initialRange: "last_7_days",
 	initialInterval: "daily",
 });
+
+const processedAnalyticsData = computed(() => {
+	return {
+		top_referrers: analyticsData.value.top_referrers?.map((referrer) => ({
+			...referrer,
+			unique_view_count: shortenNumber(referrer.unique_view_count),
+		})),
+		top_pages: analyticsData.value.top_pages?.map((page) => ({
+			...page,
+			view_count: shortenNumber(page.view_count),
+		})),
+	};
+});
+
+const onPageRowClick = (row: { route: string }) => {
+	window.open(`/${row.route}`, "_blank");
+};
 </script>
