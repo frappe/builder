@@ -1,3 +1,5 @@
+import { showToast } from "./toast.js";
+
 class FormHandler {
 	constructor(formSelector) {
 		this.form = document.querySelector(formSelector);
@@ -64,12 +66,14 @@ class FormHandler {
 					) {
 						// Show custom success message or redirect
 						if (this.webFormDoc.success_message) {
-							alert(this.webFormDoc.success_message);
+							showToast(this.webFormDoc.success_message, "success");
 						} else if (this.webFormDoc.success_title) {
-							alert(this.webFormDoc.success_title);
+							showToast(this.webFormDoc.success_title, "success");
 						}
 						if (this.webFormDoc.success_url) {
-							window.location.href = this.webFormDoc.success_url;
+							setTimeout(() => {
+								window.location.href = this.webFormDoc.success_url;
+							}, 2000); // 2 second delay
 							return;
 						}
 					} else {
