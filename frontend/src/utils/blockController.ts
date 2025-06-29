@@ -309,7 +309,7 @@ const blockController = {
 	getFormOption: (option: keyof BlockFormOptions) => {
 		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().getFormOption(option);
 	},
-	setFormOption: (option: keyof BlockFormOptions, value: string) => {
+	setFormOption: (option: keyof BlockFormOptions, value: string | undefined) => {
 		blockController.getFirstSelectedBlock().setFormOption(option, value);
 	},
 };
