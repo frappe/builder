@@ -1,66 +1,46 @@
-import InlineInput from "@/components/Controls/InlineInput.vue";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { createDocumentResource } from "frappe-ui";
+import { createDocumentResource, createListResource } from "frappe-ui";
+import Autocomplete from "../Controls/Autocomplete.vue";
 
 const formOptionsSectionProperties = [
 	{
-		component: InlineInput,
-		getProps: () => {
-			// form based on
-			return {
-				label: "Based On",
-				type: "select",
-				options: [
-					{
-						value: "doctype",
-						label: "DocType",
-					},
-					{
-						value: "webform",
-						label: "Web Form",
-					},
-					{
-						value: "custom",
-						label: "Custom",
-					},
-				],
-				modelValue: blockController.getFormOption("based_on") || "custom",
-			};
-		},
-	},
-	{
-		component: InlineInput,
+		component: Autocomplete,
 		getProps: () => {
 			return {
 				label: "Webform",
-				type: "select",
-				options: [
-					{
-						value: "enquire",
-						label: "Enquire",
-					},
-					{
-						value: "edit-profile",
-						label: "Update Profile",
-					},
-				],
+				placeholder: "Select a Web Form",
+				getOptions: async () => {
+					const webForms = await createListResource({
+						doctype: "Web Form",
+						fields: ["name", "title"],
+						limit: 100,
+						orderBy: "title",
+					});
+					webForms.fetch();
+					await webForms.list.promise;
+					return webForms.data.map((doc: { title: string; name: string }) => ({
+						label: doc.title,
+						value: doc.name,
+					}));
+				},
 				modelValue: blockController.getFormOption("reference_document"),
 			};
 		},
 		searchKeyWords: "Form, Webform, Web Form, Reference Form",
 		events: {
-			"update:modelValue": async (webform: string) => {
+			"update:modelValue": async (webform: { label: string; value: string } | null) => {
 				const formBlock = blockController.getFirstSelectedBlock();
-				if (!formBlock) return;
+				formBlock.setAttribute("data-web-form", webform?.value);
+				blockController.setFormOption("reference_document", webform?.value);
+				if (!formBlock || !webform) return;
 				const webFormResource = await createDocumentResource({
 					doctype: "Web Form",
-					name: webform,
+					name: webform?.value,
 					auto: true,
 				});
 				await webFormResource.get.promise;
 				const webForm = webFormResource.doc;
-				console.log(webForm);
 				formBlock.children = [];
 				let section = formBlock.addChild(getBlockTemplate("section"), null, false);
 				let column = section.addChild(getBlockTemplate("column"), null, false);
@@ -104,8 +84,6 @@ const formOptionsSectionProperties = [
 					},
 				);
 				formBlock.addChild(getBlockTemplate("button"), null, false);
-				formBlock.setAttribute("data-web-form", webform);
-				blockController.setFormOption("reference_document", webform);
 			},
 		},
 	},
