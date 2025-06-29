@@ -35,10 +35,6 @@
 			v-if="block.isWebForm() && isBlockSelected && !block.hasChildren()">
 			Select Web Form
 		</div>
-		<WebFormManager
-			:block="block"
-			v-if="block.isWebForm() && isBlockSelected"
-			class="!absolute bottom-0 left-[50%] translate-x-[-50%] translate-y-[50%]"></WebFormManager>
 	</div>
 </template>
 <script setup lang="ts">
