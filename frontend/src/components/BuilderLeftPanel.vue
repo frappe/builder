@@ -6,18 +6,20 @@
 			:maxDimension="500"
 			@resize="(width) => (builderStore.builderLayout.leftPanelWidth = width)" />
 		<div class="flex min-h-full flex-col items-center gap-3 border-r border-outline-gray-1 p-3">
-			<button
-				v-for="option of leftPanelOptions"
-				:key="option.value"
-				class="flex size-8 items-center justify-center rounded text-ink-gray-7 hover:bg-surface-gray-2 focus:!bg-surface-gray-3"
-				:class="{
-					'bg-surface-gray-3 text-ink-gray-9': builderStore.leftPanelActiveTab === option.value,
-				}"
-				@click.stop="setActiveTab(option.value as LeftSidebarTabOption)"
-				:title="option.label">
-				<FeatherIcon :name="option.icon" v-if="typeof option.icon === 'string'" class="size-4"></FeatherIcon>
-				<component :is="option.icon" v-else />
-			</button>
+			<Tooltip v-for="option of leftPanelOptions" :key="option.value" :text="option.label" placement="right">
+				<button
+					class="flex size-8 items-center justify-center rounded text-ink-gray-7 hover:bg-surface-gray-2 focus:!bg-surface-gray-3"
+					:class="{
+						'bg-surface-gray-3 text-ink-gray-9': builderStore.leftPanelActiveTab === option.value,
+					}"
+					@click.stop="setActiveTab(option.value as LeftSidebarTabOption)">
+					<FeatherIcon
+						:name="option.icon"
+						v-if="typeof option.icon === 'string'"
+						class="size-4"></FeatherIcon>
+					<component :is="option.icon" v-else />
+				</button>
+			</Tooltip>
 		</div>
 		<div
 			class="no-scrollbar hover:show-scrollbar relative min-h-full overflow-auto"
@@ -70,8 +72,8 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
-import { createResource } from "frappe-ui";
-import { Ref, inject, nextTick, ref, watch, watchEffect } from "vue";
+import { createResource, Tooltip } from "frappe-ui";
+import { inject, nextTick, Ref, ref, watch, watchEffect } from "vue";
 import BlockLayers from "./BlockLayers.vue";
 import BuilderAssets from "./BuilderAssets.vue";
 import BuilderBlockTemplates from "./BuilderBlockTemplates.vue";
@@ -100,7 +102,7 @@ watchEffect(() => {
 
 const leftPanelOptions = [
 	{
-		label: "Blocks",
+		label: "Insert",
 		value: "Blocks",
 		icon: PlusIcon,
 	},

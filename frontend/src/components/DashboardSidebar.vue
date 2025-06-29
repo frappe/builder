@@ -1,7 +1,107 @@
 <template>
 	<section
-		class="sticky bottom-0 left-0 top-0 flex w-60 flex-col gap-3 bg-surface-gray-1 p-2 shadow-lg max-lg:hidden">
+		class="sticky bottom-0 left-0 top-0 flex flex-col gap-3 bg-surface-gray-1 p-2 shadow-lg max-lg:hidden"
+		:class="[builderStore.showDashboardSidebar ? 'w-60' : 'w-auto']">
 		<div class="flex flex-col">
+			<div class="mb-2 flex gap-2">
+				<Dialog
+					v-model="showSettingsDialog"
+					style="z-index: 40"
+					class="[&>div>div[id^=headlessui-dialog-panel]]:my-3"
+					:options="{
+						title: 'Settings',
+						size: '5xl',
+					}">
+					<template #body>
+						<BuilderSettings @close="showSettingsDialog = false" :onlyGlobal="true"></BuilderSettings>
+					</template>
+				</Dialog>
+				<div class="flex w-full items-center">
+					<Dropdown
+						:options="[
+							{
+								group: 'Builder',
+								hideLabel: true,
+								items: [
+									{
+										label: 'New Page',
+										onClick: () =>
+											$router.push({
+												name: 'builder',
+												params: { pageId: 'new' },
+											}),
+										icon: 'plus',
+									},
+								],
+							},
+							{
+								group: 'Options',
+								hideLabel: true,
+								items: [
+									{
+										label: 'Apps',
+										component: AppsMenu,
+										icon: 'grid',
+									},
+									{
+										label: 'Toggle Theme',
+										onClick: () => toggleDark(),
+										icon: isDark ? 'sun' : 'moon',
+									},
+									{
+										label: 'Settings',
+										onClick: () => (showSettingsDialog = true),
+										icon: 'settings',
+									},
+								],
+							},
+							{
+								group: 'Help',
+								hideLabel: true,
+								items: [
+									{
+										label: 'Help',
+										onClick: () => {
+											// @ts-ignore
+											window.open('https://t.me/frappebuilder');
+										},
+										icon: 'info',
+									},
+								],
+							},
+						]"
+						size="sm"
+						class="flex-1 [&>div>div>div]:w-full"
+						placement="right">
+						<template v-slot="{ open }">
+							<div
+								class="flex items-center justify-between rounded py-1"
+								:class="{
+									'!bg-surface-white shadow-sm dark:!bg-surface-gray-2':
+										open && builderStore.showDashboardSidebar,
+									'!p-2 hover:bg-surface-gray-2': builderStore.showDashboardSidebar,
+								}">
+								<div
+									class="flex w-full cursor-pointer items-center gap-2"
+									:class="{
+										'justify-center': !builderStore.showDashboardSidebar,
+									}">
+									<img src="/builder_logo.png" alt="logo" class="h-7" />
+									<h1
+										class="text-md mt-[2px] font-semibold leading-5 text-gray-800 dark:text-gray-200"
+										v-show="builderStore.showDashboardSidebar">
+										Builder
+									</h1>
+								</div>
+								<FeatherIcon
+									:name="open ? 'chevron-up' : 'chevron-down'"
+									class="h-4 w-4 !text-gray-700 dark:!text-gray-200"
+									v-show="builderStore.showDashboardSidebar"></FeatherIcon>
+							</div>
+						</template>
+					</Dropdown>
+				</div>
+			</div>
 			<span
 				class="flex cursor-pointer gap-2 rounded p-2 text-base text-ink-gray-6"
 				@click="() => setFolderActive('')"
@@ -9,15 +109,19 @@
 					'bg-surface-modal text-ink-gray-8 shadow-sm dark:bg-surface-gray-2': !builderStore.activeFolder,
 				}">
 				<FilesIcon class="size-4"></FilesIcon>
-				All Pages
+				<span v-show="builderStore.showDashboardSidebar">All Pages</span>
 			</span>
-			<span class="flex cursor-pointer gap-2 p-2 text-base text-ink-gray-6" @click="emit('openSettings')">
+			<span
+				class="flex cursor-pointer gap-2 p-2 text-base text-ink-gray-6"
+				@click="showSettingsDialog = true">
 				<SettingsIcon class="size-4"></SettingsIcon>
-				Settings
+				<span v-show="builderStore.showDashboardSidebar">Settings</span>
 			</span>
 		</div>
 		<div class="flex flex-1 flex-col">
-			<div class="flex items-center justify-between p-2 text-base text-ink-gray-6">
+			<div
+				class="flex items-center justify-between p-2 text-base text-ink-gray-6"
+				v-show="builderStore.showDashboardSidebar">
 				<span>Folders</span>
 				<BuilderButton
 					variant="subtle"
@@ -27,6 +131,7 @@
 			</div>
 			<span
 				class="flex h-8 w-full cursor-pointer items-center justify-between gap-2 rounded p-2 py-1 text-base text-ink-gray-6"
+				v-show="builderStore.showDashboardSidebar"
 				v-for="project in builderProjectFolder.data"
 				:class="{
 					'bg-surface-modal text-ink-gray-8 shadow-sm dark:bg-surface-gray-2': isFolderActive(
@@ -72,11 +177,21 @@
 				</Dropdown>
 			</span>
 		</div>
+		<div
+			class="flex cursor-pointer items-center gap-2 rounded p-2 text-base text-ink-gray-6 hover:bg-surface-gray-2"
+			@click="() => (builderStore.showDashboardSidebar = !builderStore.showDashboardSidebar)">
+			<FeatherIcon
+				:name="builderStore.showDashboardSidebar ? 'chevrons-left' : 'chevrons-right'"
+				class="h-4 w-4" />
+			<span v-show="builderStore.showDashboardSidebar">Collapse</span>
+		</div>
 		<NewFolder v-model="showNewFolderDialog"></NewFolder>
 		<TrialBanner v-if="builderStore.isFCSite"></TrialBanner>
 	</section>
 </template>
 <script lang="ts" setup>
+import AppsMenu from "@/components/AppsMenu.vue";
+import BuilderSettings from "@/components/BuilderSettings.vue";
 import BuilderButton from "@/components/Controls/BuilderButton.vue";
 import EditableSpan from "@/components/EditableSpan.vue";
 import FilesIcon from "@/components/Icons/Files.vue";
@@ -87,13 +202,16 @@ import builderProjectFolder from "@/data/builderProjectFolder";
 import useBuilderStore from "@/stores/builderStore";
 import { BuilderProjectFolder } from "@/types/Builder/BuilderProjectFolder";
 import { confirm } from "@/utils/helpers";
-import { createResource, Dropdown } from "frappe-ui";
+import { useDark, useToggle } from "@vueuse/core";
+import { createResource, Dialog, Dropdown } from "frappe-ui";
 import { TrialBanner } from "frappe-ui/frappe";
 import { ref } from "vue";
-
+const isDark = useDark({
+	attribute: "data-theme",
+});
+const toggleDark = useToggle(isDark);
 const builderStore = useBuilderStore();
 const renamingFolder = ref("");
-const emit = defineEmits(["openSettings"]);
 const showNewFolderDialog = ref(false);
 
 const isFolderActive = (folderName: string) => {
@@ -142,4 +260,5 @@ const deleteFolder = async (folderName: string) => {
 	);
 	setFolderActive("");
 };
+const showSettingsDialog = ref(false);
 </script>
