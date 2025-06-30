@@ -17,7 +17,8 @@
 				value: '100%',
 			},
 		]"
-		:modelValue="blockController.getStyle(props.property) || 'auto'"
+		:modelValue="blockController.getStyle(props.property, true)"
+		:placeholder="blockController.getStyle(props.property, false, true)"
 		:unitOptions="['px', '%', 'vw', 'vh']"
 		@update:modelValue="(val) => blockController.setStyle(property, val)"></InlineInput>
 </template>
