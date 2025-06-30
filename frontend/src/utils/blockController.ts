@@ -35,12 +35,12 @@ const blockController = {
 			block.setBaseStyle(style, value);
 		});
 	},
-	getStyle: (style: styleProperty) => {
+	getStyle: (style: styleProperty, nativeOnly?: boolean, cascading?: boolean) => {
 		let styleValue = "__initial__" as StyleValue;
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 			if (styleValue === "__initial__") {
-				styleValue = block.getStyle(style);
-			} else if (styleValue !== block.getStyle(style)) {
+				styleValue = block.getStyle(style, undefined, nativeOnly, cascading);
+			} else if (styleValue !== block.getStyle(style, undefined, nativeOnly, cascading)) {
 				styleValue = "Mixed";
 			}
 		});
@@ -50,8 +50,19 @@ const blockController = {
 		let styleValue = "__initial__" as StyleValue;
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 			if (styleValue === "__initial__") {
-				styleValue = block.getNativeStyle(style);
-			} else if (styleValue !== block.getNativeStyle(style)) {
+				styleValue = block.getStyle(style, undefined, true);
+			} else if (styleValue !== block.getStyle(style, undefined, true)) {
+				styleValue = "Mixed";
+			}
+		});
+		return styleValue;
+	},
+	getCascadingStyle: (style: styleProperty) => {
+		let styleValue = "__initial__" as StyleValue;
+		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
+			if (styleValue === "__initial__") {
+				styleValue = block.getStyle(style, undefined, false, true);
+			} else if (styleValue !== block.getStyle(style, undefined, false, true)) {
 				styleValue = "Mixed";
 			}
 		});
@@ -223,12 +234,13 @@ const blockController = {
 	isRepeater: () => {
 		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isRepeater();
 	},
-	getPadding: () => {
+	getPadding: (opts?: { nativeOnly?: boolean; cascading?: boolean }) => {
 		let padding = "__initial__" as StyleValue;
 		blockController.getSelectedBlocks().forEach((block) => {
+			const val = block.getPadding(opts);
 			if (padding === "__initial__") {
-				padding = block.getPadding();
-			} else if (padding !== block.getPadding()) {
+				padding = val;
+			} else if (padding !== val) {
 				padding = "Mixed";
 			}
 		});
@@ -239,12 +251,13 @@ const blockController = {
 			block.setPadding(value);
 		});
 	},
-	getMargin: () => {
+	getMargin: (opts?: { nativeOnly?: boolean; cascading?: boolean }) => {
 		let margin = "__initial__" as StyleValue;
 		blockController.getSelectedBlocks().forEach((block) => {
+			const val = block.getMargin(opts);
 			if (margin === "__initial__") {
-				margin = block.getMargin();
-			} else if (margin !== block.getMargin()) {
+				margin = val;
+			} else if (margin !== val) {
 				margin = "Mixed";
 			}
 		});
