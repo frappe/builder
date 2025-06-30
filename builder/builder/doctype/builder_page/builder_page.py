@@ -12,7 +12,6 @@ from frappe.modules import scrub
 from frappe.modules.export_file import export_to_files
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
-from frappe.utils.safe_exec import is_safe_exec_enabled, safe_exec
 from frappe.website.page_renderers.document_page import DocumentPage
 from frappe.website.path_resolver import evaluate_dynamic_routes
 from frappe.website.path_resolver import resolve_path as original_resolve_path
@@ -20,7 +19,6 @@ from frappe.website.serve import get_response_content
 from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
 from jinja2.exceptions import TemplateSyntaxError
-from werkzeug.routing import Rule
 
 from builder.hooks import builder_path
 from builder.html_preview_image import generate_preview
@@ -34,6 +32,7 @@ from builder.utils import (
 	get_builder_page_preview_file_paths,
 	get_template_assets_folder_path,
 	is_component_used,
+	split_styles,
 )
 
 MOBILE_BREAKPOINT = 576
@@ -469,27 +468,34 @@ def get_block_html(blocks):
 
 			if block.get("baseStyles", {}):
 				style_class = f"fb-{frappe.generate_hash(length=8)}"
-				base_styles = block.get("baseStyles", {})
-				mobile_styles = block.get("mobileStyles", {})
-				tablet_styles = block.get("tabletStyles", {})
-				set_fonts([base_styles, mobile_styles, tablet_styles], font_map)
-				append_style(block.get("baseStyles", {}), style_tag, style_class)
-				plain_styles = {k: v for k, v in block.get("rawStyles", {}).items() if ":" not in k}
-				state_styles = {k: v for k, v in block.get("rawStyles", {}).items() if ":" in k}
-				append_style(plain_styles, style_tag, style_class)
-				append_state_style(state_styles, style_tag, style_class)
-				append_style(
-					block.get("tabletStyles", {}),
-					style_tag,
-					style_class,
-					device="tablet",
+				styles = {
+					"base": split_styles(block.get("baseStyles", {})),
+					"mobile": split_styles(block.get("mobileStyles", {})),
+					"tablet": split_styles(block.get("tabletStyles", {})),
+					"raw": split_styles(block.get("rawStyles", {})),
+				}
+
+				set_fonts(
+					[
+						styles["base"]["regular"],
+						styles["mobile"]["regular"],
+						styles["tablet"]["regular"],
+						styles["raw"]["regular"],
+					],
+					font_map,
 				)
-				append_style(
-					block.get("mobileStyles", {}),
-					style_tag,
-					style_class,
-					device="mobile",
-				)
+
+				append_style(styles["base"]["regular"], style_tag, style_class)
+				append_style(styles["raw"]["regular"], style_tag, style_class)
+				append_state_style(styles["raw"]["state"], style_tag, style_class)
+				append_state_style(styles["base"]["state"], style_tag, style_class)
+
+				append_style(styles["tablet"]["regular"], style_tag, style_class, device="tablet")
+				append_state_style(styles["tablet"]["state"], style_tag, style_class, device="tablet")
+
+				append_style(styles["mobile"]["regular"], style_tag, style_class, device="mobile")
+				append_state_style(styles["mobile"]["state"], style_tag, style_class, device="mobile")
+
 				classes.insert(0, style_class)
 
 			tag.attrs["class"] = " ".join(classes)
@@ -546,23 +552,29 @@ def get_style(style_obj):
 	)
 
 
+def wrap_with_media_query(style_string, device):
+	if device == "mobile":
+		return f"@media only screen and (max-width: {MOBILE_BREAKPOINT}px) {{ {style_string} }}"
+	elif device == "tablet":
+		return f"@media only screen and (max-width: {DESKTOP_BREAKPOINT - 1}px) {{ {style_string} }}"
+	return style_string
+
+
 def append_style(style_obj, style_tag, style_class, device="desktop"):
 	style = get_style(style_obj)
 	if not style:
 		return
-
 	style_string = f".{style_class} {{ {style} }}"
-	if device == "mobile":
-		style_string = f"@media only screen and (max-width: {MOBILE_BREAKPOINT}px) {{ {style_string} }}"
-	elif device == "tablet":
-		style_string = f"@media only screen and (max-width: {DESKTOP_BREAKPOINT - 1}px) {{ {style_string} }}"
-	style_tag.append(style_string)
+	style_tag.append(wrap_with_media_query(style_string, device))
 
 
-def append_state_style(style_obj, style_tag, style_class):
+def append_state_style(style_obj, style_tag, style_class, device="desktop"):
 	for key, value in style_obj.items():
-		state, property = key.split(":", 1)
-		style_tag.append(f".{style_class}:{state} {{ {property}: {value} }}")
+		if ":" in key:
+			state, property = key.split(":", 1)
+			css_property = camel_case_to_kebab_case(property)
+			style_string = f".{style_class}:{state} {{ {css_property}: {value}; }}"
+			style_tag.append(wrap_with_media_query(style_string, device))
 
 
 def set_fonts(styles, font_map):
