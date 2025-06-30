@@ -7,8 +7,8 @@
 					<BuilderInput
 						type="text"
 						class="[&>div>input]:pl-8"
-						placeholder="Set Color"
 						@focus="togglePopover"
+						:placeholder="placeholder"
 						:modelValue="value"
 						@update:modelValue="
 							(value: string | null) => {
@@ -39,10 +39,12 @@ withDefaults(
 	defineProps<{
 		value?: HashString | null;
 		label?: string;
+		placeholder?: string;
 	}>(),
 	{
 		value: null,
 		label: "",
+		placeholder: "Set Color",
 	},
 );
 

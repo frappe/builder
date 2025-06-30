@@ -5,10 +5,12 @@ import {
 	dataURLtoFile,
 	getBlockCopy,
 	getBlockInstance,
+	getBoxSpacing,
 	getNumberFromPx,
 	getTextContent,
 	kebabToCamelCase,
 	parseAndSetBackground,
+	setBoxSpacing,
 	uploadImage,
 } from "@/utils/helpers";
 import { Editor } from "@tiptap/vue-3";
@@ -331,10 +333,34 @@ class Block implements BlockOptions {
 		style = kebabToCamelCase(style as string) as styleProperty;
 		this.baseStyles[style] = value;
 	}
-	getStyle(style: styleProperty, breakpoint?: string | null) {
+	getStyle(
+		style: styleProperty,
+		breakpoint?: string | null,
+		nativeOnly: boolean = false,
+		cascading: boolean = false,
+	): StyleValue | undefined {
 		const canvasStore = useCanvasStore();
 		breakpoint = breakpoint || canvasStore.activeCanvas?.activeBreakpoint;
-		let styleValue = undefined as StyleValue;
+		let styleValue: StyleValue = undefined;
+		if (nativeOnly) {
+			if (breakpoint === "mobile") {
+				styleValue = this.mobileStyles[style];
+			} else if (breakpoint === "tablet") {
+				styleValue = this.tabletStyles[style];
+			} else {
+				styleValue = this.baseStyles[style];
+			}
+			return styleValue;
+		}
+		if (cascading) {
+			if (breakpoint === "mobile") {
+				return this.getStyle(style, "tablet") ?? this.getStyle(style, "desktop");
+			}
+			if (breakpoint === "tablet") {
+				return this.getStyle(style, "desktop");
+			}
+			return this.getStyle(style, "desktop");
+		}
 		if (breakpoint === "mobile") {
 			styleValue = this.mobileStyles[style] || this.tabletStyles[style] || this.baseStyles[style];
 		} else if (breakpoint === "tablet") {
@@ -343,19 +369,17 @@ class Block implements BlockOptions {
 			styleValue = this.baseStyles[style];
 		}
 		if (styleValue === undefined && this.isExtendedFromComponent()) {
-			styleValue = this.referenceComponent?.getStyle?.(style, breakpoint) as StyleValue;
+			styleValue = this.referenceComponent?.getStyle?.(
+				style,
+				breakpoint,
+				nativeOnly,
+				cascading,
+			) as StyleValue;
 		}
 		return styleValue;
 	}
 	getNativeStyle(style: styleProperty) {
-		const canvasStore = useCanvasStore();
-		if (canvasStore.activeCanvas?.activeBreakpoint === "mobile") {
-			return this.mobileStyles[style];
-		}
-		if (canvasStore.activeCanvas?.activeBreakpoint === "tablet") {
-			return this.tabletStyles[style];
-		}
-		return this.baseStyles[style];
+		return this.getStyle(style, undefined, true);
 	}
 	generateId() {
 		return Math.random().toString(36).substr(2, 9);
@@ -603,7 +627,7 @@ class Block implements BlockOptions {
 			this.setStyle("color", color);
 			const innerHTMLDOM = new DOMParser().parseFromString(this.innerHTML || "", "text/html");
 			innerHTMLDOM.querySelectorAll("*").forEach((el) => {
-				el.style.color = "";
+				(el as HTMLElement).style.color = "";
 			});
 			this.innerHTML = innerHTMLDOM.body.innerHTML;
 		}
@@ -792,131 +816,17 @@ class Block implements BlockOptions {
 			}
 		});
 	}
-	getPadding() {
-		const padding = this.getStyle("padding") || "0px";
-
-		const paddingTop = this.getStyle("paddingTop");
-		const paddingBottom = this.getStyle("paddingBottom");
-		const paddingLeft = this.getStyle("paddingLeft");
-		const paddingRight = this.getStyle("paddingRight");
-
-		if (!paddingTop && !paddingBottom && !paddingLeft && !paddingRight) {
-			return padding;
-		}
-
-		if (
-			paddingTop &&
-			paddingBottom &&
-			paddingTop === paddingBottom &&
-			paddingTop === paddingRight &&
-			paddingTop === paddingLeft
-		) {
-			return paddingTop;
-		}
-
-		if (paddingTop && paddingLeft && paddingTop === paddingBottom && paddingLeft === paddingRight) {
-			return `${paddingTop} ${paddingLeft}`;
-		} else {
-			return `${paddingTop || padding} ${paddingRight || padding} ${paddingBottom || padding} ${
-				paddingLeft || padding
-			}`;
-		}
-	}
 	setPadding(padding: string) {
-		// reset padding
-		this.setStyle("padding", null);
-		this.setStyle("paddingTop", null);
-		this.setStyle("paddingBottom", null);
-		this.setStyle("paddingLeft", null);
-		this.setStyle("paddingRight", null);
-
-		if (!padding) {
-			return;
-		}
-
-		const paddingArray = padding.split(" ");
-
-		if (paddingArray.length === 1) {
-			this.setStyle("padding", paddingArray[0]);
-		} else if (paddingArray.length === 2) {
-			this.setStyle("paddingTop", paddingArray[0]);
-			this.setStyle("paddingBottom", paddingArray[0]);
-			this.setStyle("paddingLeft", paddingArray[1]);
-			this.setStyle("paddingRight", paddingArray[1]);
-		} else if (paddingArray.length === 3) {
-			this.setStyle("paddingTop", paddingArray[0]);
-			this.setStyle("paddingLeft", paddingArray[1]);
-			this.setStyle("paddingRight", paddingArray[1]);
-			this.setStyle("paddingBottom", paddingArray[2]);
-		} else if (paddingArray.length === 4) {
-			this.setStyle("paddingTop", paddingArray[0]);
-			this.setStyle("paddingRight", paddingArray[1]);
-			this.setStyle("paddingBottom", paddingArray[2]);
-			this.setStyle("paddingLeft", paddingArray[3]);
-		}
+		setBoxSpacing(this, "padding", padding);
+	}
+	getPadding(opts?: { nativeOnly?: boolean; cascading?: boolean }) {
+		return getBoxSpacing(this, "padding", opts);
 	}
 	setMargin(margin: string) {
-		// reset margin
-		this.setStyle("margin", null);
-		this.setStyle("marginTop", null);
-		this.setStyle("marginBottom", null);
-		this.setStyle("marginLeft", null);
-		this.setStyle("marginRight", null);
-
-		if (!margin) {
-			return;
-		}
-
-		const marginArray = margin.split(" ");
-
-		if (marginArray.length === 1) {
-			this.setStyle("margin", marginArray[0]);
-		} else if (marginArray.length === 2) {
-			this.setStyle("marginTop", marginArray[0]);
-			this.setStyle("marginBottom", marginArray[0]);
-			this.setStyle("marginLeft", marginArray[1]);
-			this.setStyle("marginRight", marginArray[1]);
-		} else if (marginArray.length === 3) {
-			this.setStyle("marginTop", marginArray[0]);
-			this.setStyle("marginLeft", marginArray[1]);
-			this.setStyle("marginRight", marginArray[1]);
-			this.setStyle("marginBottom", marginArray[2]);
-		} else if (marginArray.length === 4) {
-			this.setStyle("marginTop", marginArray[0]);
-			this.setStyle("marginRight", marginArray[1]);
-			this.setStyle("marginBottom", marginArray[2]);
-			this.setStyle("marginLeft", marginArray[3]);
-		}
+		setBoxSpacing(this, "margin", margin);
 	}
-	getMargin() {
-		const margin = this.getStyle("margin") || "0px";
-
-		const marginTop = this.getStyle("marginTop");
-		const marginBottom = this.getStyle("marginBottom");
-		const marginLeft = this.getStyle("marginLeft");
-		const marginRight = this.getStyle("marginRight");
-
-		if (!marginTop && !marginBottom && !marginLeft && !marginRight) {
-			return margin;
-		}
-
-		if (
-			marginTop &&
-			marginBottom &&
-			marginTop === marginBottom &&
-			marginTop === marginRight &&
-			marginTop === marginLeft
-		) {
-			return marginTop;
-		}
-
-		if (marginTop && marginLeft && marginTop === marginBottom && marginLeft === marginRight) {
-			return `${marginTop} ${marginLeft}`;
-		} else {
-			return `${marginTop || margin} ${marginRight || margin} ${marginBottom || margin} ${
-				marginLeft || margin
-			}`;
-		}
+	getMargin(opts?: { nativeOnly?: boolean; cascading?: boolean }) {
+		return getBoxSpacing(this, "margin", opts);
 	}
 }
 
