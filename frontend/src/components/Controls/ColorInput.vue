@@ -4,12 +4,6 @@
 			<div class="flex items-center justify-between">
 				<InputLabel>{{ label }}</InputLabel>
 				<div class="relative w-full">
-					<div
-						class="absolute left-2 top-[6px] z-10 h-4 w-4 rounded shadow-sm"
-						@click="togglePopover"
-						:style="{
-							background: value ? value : `url(/assets/builder/images/color-circle.png) center / contain`,
-						}"></div>
 					<BuilderInput
 						type="text"
 						class="[&>div>input]:pl-8"
@@ -21,7 +15,16 @@
 								value = getRGB(value);
 								emit('change', value);
 							}
-						" />
+						">
+						<template #prefix>
+							<div
+								class="h-4 w-4 rounded shadow-sm"
+								@click="togglePopover"
+								:style="{
+									background: value ? value : `url(/assets/builder/images/color-circle.png) center / contain`,
+								}"></div>
+						</template>
+					</BuilderInput>
 				</div>
 			</div>
 		</template>
