@@ -12,15 +12,18 @@
 			<template #prefix v-if="$slots.prefix">
 				<slot name="prefix" />
 			</template>
+			<template #suffix v-if="$slots.suffix">
+				<slot name="suffix" />
+			</template>
+			<template #suffix v-else-if="!['select', 'checkbox'].includes(type) && !hideClearButton && data">
+				<button
+					class="cursor-pointer text-ink-gray-4 hover:text-ink-gray-5"
+					tabindex="-1"
+					@click="clearValue">
+					<CrossIcon />
+				</button>
+			</template>
 		</FormControl>
-		<button
-			class="absolute bottom-[3px] right-[1px] cursor-pointer p-1 text-ink-gray-4 hover:text-ink-gray-5"
-			tabindex="-1"
-			@click="clearValue"
-			v-if="!['select', 'checkbox'].includes(type) && !hideClearButton"
-			v-show="data">
-			<CrossIcon />
-		</button>
 	</div>
 </template>
 <script lang="ts" setup>
