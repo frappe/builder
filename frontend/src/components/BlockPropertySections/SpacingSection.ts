@@ -1,15 +1,18 @@
-import InlineInput from "@/components/Controls/InlineInput.vue";
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
+import StyleControl from "../Controls/StyleControl.vue";
 
 const spacingSectionProperties = [
 	{
-		component: InlineInput,
+		component: StyleControl,
 		searchKeyWords: "Margin, Top, MarginTop, Margin Top",
 		getProps: () => {
 			return {
 				label: "Margin",
-				modelValue: blockController.getMargin(),
+				getModelValue: () => blockController.getMargin({ nativeOnly: true }),
+				getPlaceholder: () => blockController.getMargin({ cascading: true }),
+				setModelValue: (val: string) => blockController.setMargin(val),
+				styleProperty: "margin",
 			};
 		},
 		events: {
@@ -18,16 +21,16 @@ const spacingSectionProperties = [
 		condition: () => !blockController.isRoot(),
 	},
 	{
-		component: InlineInput,
+		component: StyleControl,
 		searchKeyWords: "Padding, Top, PaddingTop, Padding Top",
 		getProps: () => {
 			return {
 				label: "Padding",
-				modelValue: blockController.getPadding(),
+				getModelValue: () => blockController.getPadding({ nativeOnly: true }),
+				getPlaceholder: () => blockController.getPadding({ cascading: true }),
+				setModelValue: (val: string) => blockController.setPadding(val),
+				styleProperty: "padding",
 			};
-		},
-		events: {
-			"update:modelValue": (val: string) => blockController.setPadding(val),
 		},
 	},
 ];
