@@ -391,3 +391,13 @@ def add_composite_index_to_web_page_view():
 	This is used to speed up queries that filter by creation, is_unique, and path.
 	"""
 	frappe.db.add_index("Web Page View", ["creation", "is_unique", "path"])
+
+
+def split_styles(styles):
+	if not styles:
+		return {"regular": {}, "state": {}}
+
+	return {
+		"regular": {k: v for k, v in styles.items() if ":" not in k},
+		"state": {k: v for k, v in styles.items() if ":" in k},
+	}

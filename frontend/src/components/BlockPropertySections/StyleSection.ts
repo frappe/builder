@@ -111,6 +111,7 @@ const styleSectionProperties = [
 			return {
 				label: "Radius",
 				modelValue: blockController.getStyle("borderRadius"),
+				hoverStyle: blockController.getStyle("hover:borderRadius"),
 				enableSlider: true,
 				unitOptions: ["px", "%"],
 				minValue: 0,
@@ -128,6 +129,9 @@ const styleSectionProperties = [
 						blockController.setStyle("overflowY", "hidden");
 					}
 				}
+			},
+			setHoverStyle: (val: StyleValue) => {
+				blockController.setStyle("hover:borderRadius", val);
 			},
 		},
 	},

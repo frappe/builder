@@ -162,6 +162,13 @@ const styles = computed(() => {
 	if (styleMap.fontFamily) {
 		styleMap.fontFamily = (styleMap.fontFamily as string).replace(/ /g, "\\ ");
 	}
+
+	Object.keys(styleMap).forEach((key) => {
+		if (key.startsWith("hover:")) {
+			delete styleMap[key];
+		}
+	});
+
 	return styleMap;
 });
 
