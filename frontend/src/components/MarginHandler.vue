@@ -141,13 +141,15 @@ watchEffect(() => {
 });
 
 const blockStyles = computed(() => {
-	let styleObj = props.targetBlock.baseStyles;
-	if (props.breakpoint === "mobile") {
-		styleObj = { ...styleObj, ...props.targetBlock.mobileStyles };
-	} else if (props.breakpoint === "tablet") {
-		styleObj = { ...styleObj, ...props.targetBlock.tabletStyles };
+	const baseStyles = { ...props.targetBlock.baseStyles };
+	let styles = baseStyles;
+	if (props.breakpoint === "mobile" || props.breakpoint === "tablet") {
+		styles = { ...styles, ...props.targetBlock.mobileStyles };
 	}
-	return styleObj;
+	if (props.breakpoint === "tablet") {
+		styles = { ...styles, ...props.targetBlock.tabletStyles };
+	}
+	return styles;
 });
 
 const topMarginHandlerHeight = computed(() => {
