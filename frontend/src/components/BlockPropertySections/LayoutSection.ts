@@ -6,6 +6,7 @@ import blockController from "@/utils/blockController";
 const layoutSectionProperties = [
 	{
 		component: OptionToggle,
+		condition: () => !blockController.isText(),
 		getProps: () => {
 			return {
 				label: "Type",

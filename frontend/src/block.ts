@@ -596,7 +596,7 @@ class Block implements BlockOptions {
 		if (this.isText() && editor && editor.isFocused) {
 			return editor.getAttributes("textStyle").fontFamily;
 		}
-		return this.getStyle("fontFamily");
+		return this.getStyle("fontFamily", undefined, true);
 	}
 	setFontFamily(fontFamily: string) {
 		const editor = this.getEditor();

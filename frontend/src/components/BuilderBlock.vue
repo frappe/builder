@@ -159,7 +159,7 @@ const styles = computed(() => {
 		...dynamicStyles,
 	} as BlockStyleMap;
 	// escape space in font family
-	if (styleMap.fontFamily) {
+	if (styleMap.fontFamily && typeof styleMap.fontFamily === "string") {
 		styleMap.fontFamily = (styleMap.fontFamily as string).replace(/ /g, "\\ ");
 	}
 
