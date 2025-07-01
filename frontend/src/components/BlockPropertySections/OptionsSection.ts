@@ -69,6 +69,7 @@ const optionsSectionProperties = [
 		events: {
 			"update:modelValue": (val: string) => blockController.setKeyValue("element", val),
 		},
+		condition: () => !blockController.isRoot(),
 	},
 	{
 		component: InlineInput,
@@ -139,6 +140,7 @@ const optionsSectionProperties = [
 		events: {
 			"update:modelValue": (val: StyleValue) => blockController.setStyle("display", val),
 		},
+		condition: () => !blockController.isRoot(),
 	},
 	{
 		component: InlineInput,
@@ -232,6 +234,7 @@ const optionsSectionProperties = [
 		events: {
 			"update:modelValue": (val: string) => blockController.setKeyValue("visibilityCondition", val),
 		},
+		condition: () => !blockController.isRoot(),
 	},
 ];
 
