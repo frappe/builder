@@ -4,7 +4,11 @@
 		<BuilderInput
 			:modelValue="modelValue"
 			:hideClearButton="true"
-			@update:modelValue="$emit('update:modelValue', $event)"></BuilderInput>
+			type="number"
+			:min="min"
+			:max="max"
+			:step="step"
+			@input="$emit('update:modelValue', $event)"></BuilderInput>
 		<input
 			type="range"
 			:max="max"
@@ -42,36 +46,29 @@ watch(() => props.modelValue, updatePercent);
 </script>
 <style scoped>
 .range-input {
-	height: 2px;
-	width: 100%;
-	appearance: none;
-	background: transparent;
-	border: none;
-	cursor: pointer;
-	border-radius: 9999px;
+	@apply h-0.5 w-full cursor-pointer appearance-none rounded-full border-none bg-transparent;
 	--percent: 0%;
 }
 /* Webkit (Chrome, Safari, Edge) */
 .range-input::-webkit-slider-runnable-track {
-	height: 2px;
+	@apply h-0.5 rounded-full;
 	background: linear-gradient(
 		to right,
-		#000 0%,
-		#000 calc(var(--percent, 0%) + 0.1%),
-		#b9b9b9 calc(var(--percent, 0%) + 0.1%),
-		#bcbcbc 100%
+		var(--surface-gray-7) 0%,
+		var(--surface-gray-7) calc(var(--percent, 0%) + 0.1%),
+		var(--surface-gray-4) calc(var(--percent, 0%) + 0.1%),
+		var(--surface-gray-4) 100%
 	);
-	border-radius: 9999px;
 }
+
 .range-input::-webkit-slider-thumb {
-	appearance: none;
-	height: 14px;
-	width: 14px;
-	border-radius: 50%;
-	background: #000;
-	margin-top: -6px;
-	box-shadow: 0 0 0 1px #0001;
-	border: none;
+	@apply h-[14px] w-[14px] appearance-none rounded-full border-none bg-surface-gray-7 shadow-md;
+	@apply -mt-[6px];
+	transition: box-shadow 0.2s;
+}
+.range-input:active::-webkit-slider-thumb {
+	@apply shadow-lg;
+	@apply bg-surface-gray-4;
 }
 .range-input::-webkit-slider-thumb {
 	border: none;
@@ -79,48 +76,44 @@ watch(() => props.modelValue, updatePercent);
 
 /* Firefox */
 .range-input::-moz-range-track {
-	height: 2px;
-	background: #bcbcbc;
-	border-radius: 9999px;
+	@apply h-0.5 rounded-full bg-surface-gray-2;
 }
 .range-input::-moz-range-progress {
-	height: 2px;
-	background: #000;
-	border-radius: 9999px;
+	@apply h-0.5 rounded-full bg-surface-gray-7;
 }
 .range-input::-moz-range-thumb {
-	height: 14px;
-	width: 14px;
-	border-radius: 50%;
-	background: #000;
-	border: none;
+	@apply h-[14px] w-[14px] rounded-full border-none bg-surface-gray-7 shadow-sm;
+	transition: box-shadow 0.2s;
+}
+.range-input:active::-moz-range-thumb {
+	@apply shadow-lg;
+	@apply bg-surface-gray-4;
 }
 
 /* IE/Edge */
 .range-input::-ms-fill-lower {
-	background: #000;
-	border-radius: 9999px;
+	@apply rounded-full bg-surface-gray-7;
 }
 .range-input::-ms-fill-upper {
-	background: #bcbcbc;
-	border-radius: 9999px;
+	@apply rounded-full bg-surface-gray-2;
 }
 .range-input::-ms-thumb {
-	height: 14px;
-	width: 14px;
-	border-radius: 50%;
-	background: #000;
-	border: none;
+	@apply h-[14px] w-[14px] rounded-full border-none bg-surface-gray-7 shadow-sm;
+	transition: box-shadow 0.2s;
+}
+.range-input:active::-ms-thumb {
+	@apply shadow-lg;
+	@apply bg-surface-gray-4;
 }
 .range-input:focus {
-	outline: none;
+	@apply outline-none;
 }
 
 /* Hide outline for all browsers */
 .range-input::-webkit-slider-thumb:focus {
-	outline: none;
+	@apply outline-none;
 }
 .range-input::-moz-focus-outer {
-	border: 0;
+	@apply border-0;
 }
 </style>
