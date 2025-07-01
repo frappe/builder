@@ -45,7 +45,7 @@
 </template>
 <script setup lang="ts">
 import { isNumber } from "@tiptap/vue-3";
-import { Popover, FeatherIcon } from "frappe-ui";
+import { FeatherIcon, Popover } from "frappe-ui";
 import { computed } from "vue";
 import Autocomplete from "./Autocomplete.vue";
 import InputLabel from "./InputLabel.vue";
@@ -59,7 +59,7 @@ type Action = {
 
 const props = withDefaults(
 	defineProps<{
-		modelValue?: string | number;
+		modelValue?: StyleValue;
 		label?: string;
 		description?: string;
 		type?: string;
@@ -72,7 +72,7 @@ const props = withDefaults(
 		showInputAsOption?: boolean;
 		getOptions?: (filterString: string) => Promise<Option[]>;
 		actionButton?: Action;
-		placeholder?: string;
+		placeholder?: StyleValue;
 		hideClearButton?: boolean;
 	}>(),
 	{

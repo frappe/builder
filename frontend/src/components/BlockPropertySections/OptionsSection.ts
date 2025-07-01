@@ -149,7 +149,8 @@ const optionsSectionProperties = [
 				label: "Overflow X",
 				type: "select",
 				options: overflowOptions,
-				modelValue: blockController.getStyle("overflowX"),
+				modelValue: blockController.getStyle("overflowX", true),
+				placeholder: blockController.getStyle("overflowX", false, true),
 			};
 		},
 		searchKeyWords:
@@ -170,7 +171,8 @@ const optionsSectionProperties = [
 				label: "Overflow Y",
 				type: "select",
 				options: overflowOptions,
-				modelValue: blockController.getStyle("overflowY"),
+				modelValue: blockController.getStyle("overflowY", true),
+				placeholder: blockController.getStyle("overflowY", false, true),
 			};
 		},
 		searchKeyWords:
