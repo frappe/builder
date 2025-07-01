@@ -11,27 +11,22 @@
 			(val: string | number) => blockController.setStyle('flexDirection', val)
 		"></OptionToggle>
 	<PlacementControl v-if="blockController.isFlex()"></PlacementControl>
-	<InlineInput
+	<StyleControl
 		v-if="blockController.isFlex()"
-		:modelValue="blockController.getStyle('justifyContent') ?? ''"
+		styleProperty="justifyContent"
 		type="select"
 		label="Distribution"
 		:options="[
-			{ label: '', value: '' },
 			{ label: 'Space Between', value: 'space-between' },
 			{ label: 'Space Around', value: 'space-around' },
 			{ label: 'Space Evenly', value: 'space-evenly' },
-		]"
-		@update:modelValue="(val: string | number) => blockController.setStyle('justifyContent', val)" />
-
-	<InlineInput
-		label="Gap"
+		]" />
+	<StyleControl
 		v-if="blockController.isFlex()"
-		type="text"
+		label="Gap"
+		styleProperty="gap"
 		:enableSlider="true"
-		:unitOptions="['px', 'em', 'rem']"
-		:modelValue="blockController.getStyle('gap') ?? '0px'"
-		@update:modelValue="(val: string | number) => blockController.setStyle('gap', val)" />
+		:unitOptions="['px', 'em', 'rem']" />
 	<OptionToggle
 		label="Wrap"
 		v-if="blockController.isFlex()"
@@ -63,8 +58,8 @@
 	</div>
 </template>
 <script lang="ts" setup>
-import InlineInput from "@/components/Controls/InlineInput.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
+import StyleControl from "@/components/Controls/StyleControl.vue";
 import blockController from "@/utils/blockController";
 import PlacementControl from "./PlacementControl.vue";
 </script>
