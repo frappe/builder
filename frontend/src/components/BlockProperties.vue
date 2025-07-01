@@ -48,13 +48,14 @@ import videoOptionsSection from "@/components/BlockPropertySections/VideoOptions
 import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
 import { toValue } from "@vueuse/core";
+import type { Component } from "vue";
 import { Ref, ref } from "vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
 
 const builderStore = useBuilderStore();
 
 type BlockProperty = {
-	component: any;
+	component: Component;
 	getProps: () => Record<string, unknown>;
 	events?: Record<string, unknown>;
 	searchKeyWords: string;
