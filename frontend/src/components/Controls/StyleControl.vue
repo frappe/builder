@@ -1,5 +1,5 @@
 <template>
-	<div class="flex w-full items-center gap-2 overflow-hidden">
+	<div class="flex w-full items-center gap-2">
 		<InputLabel
 			class="w-[80px] shrink-0 truncate"
 			:class="{ 'cursor-ns-resize': enableSlider }"
@@ -12,6 +12,7 @@
 			v-bind="controlAttrs"
 			v-on="props.events || {}"
 			:modelValue="modelValue"
+			:defaultValue="defaultValue"
 			:placeholder="placeholderValue"
 			@update:modelValue="updateValue"
 			@keydown.stop="handleKeyDown"
@@ -41,7 +42,7 @@ const props = withDefaults(
 		hideClearButton?: boolean;
 		component?: Component;
 		events?: Record<string, unknown>;
-		defaultValue?: string | number | { label: string; value: string };
+		defaultValue?: string | number;
 	}>(),
 	{
 		placeholder: "unset",
@@ -63,12 +64,12 @@ const controlAttrs = computed(() => {
 	return Object.fromEntries(Object.entries(attrs).filter(([key]) => !propKeys.includes(key)));
 });
 
+const defaultValue = computed(() => {
+	return blockController.getCascadingStyle(props.styleProperty) ?? props.defaultValue;
+});
+
 const modelValue = computed(
-	() =>
-		props.getModelValue?.() ??
-		blockController.getNativeStyle(props.styleProperty) ??
-		props.defaultValue ??
-		"",
+	() => props.getModelValue?.() ?? blockController.getNativeStyle(props.styleProperty) ?? "",
 );
 
 const placeholderValue = computed(
