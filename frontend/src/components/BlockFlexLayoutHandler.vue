@@ -27,34 +27,35 @@
 		styleProperty="gap"
 		:enableSlider="true"
 		:unitOptions="['px', 'em', 'rem']" />
-	<OptionToggle
+	<StyleControl
+		styleProperty="flexWrap"
+		:component="OptionToggle"
 		label="Wrap"
 		v-if="blockController.isFlex()"
 		:options="[
 			{ label: 'No Wrap', value: 'nowrap' },
 			{ label: 'Wrap', value: 'wrap' },
 		]"
-		:modelValue="blockController.getStyle('flexWrap') || 'nowrap'"
-		@update:modelValue="(val: string | number) => blockController.setStyle('flexWrap', val)"></OptionToggle>
+		defaultValue="nowrap"></StyleControl>
 	<div class="flex flex-col gap-3" v-if="blockController.getParentBlock()?.isFlex()">
-		<OptionToggle
+		<StyleControl
 			label="Grow"
+			styleProperty="flexGrow"
+			:component="OptionToggle"
 			:options="[
 				{ label: 'Yes', value: 1 },
 				{ label: 'No', value: 0 },
 			]"
-			:modelValue="blockController.getStyle('flexGrow') || 0"
-			@update:modelValue="(val: string | number) => blockController.setStyle('flexGrow', val)"></OptionToggle>
-		<OptionToggle
+			:defaultValue="0" />
+		<StyleControl
 			label="Shrink"
+			styleProperty="flexShrink"
+			:component="OptionToggle"
 			:options="[
 				{ label: 'Yes', value: 1 },
 				{ label: 'No', value: 0 },
 			]"
-			:modelValue="blockController.getStyle('flexShrink') ?? 1"
-			@update:modelValue="
-				(val: string | number) => blockController.setStyle('flexShrink', val)
-			"></OptionToggle>
+			:defaultValue="1" />
 	</div>
 </template>
 <script lang="ts" setup>
