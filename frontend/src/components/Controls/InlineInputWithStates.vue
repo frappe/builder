@@ -1,26 +1,47 @@
 <template>
 	<div class="flex items-center justify-between [&>div>input]:!bg-red-600 [&>div>input]:pr-6">
-		<InputLabel
-			v-if="label"
-			:class="{
-				'cursor-ns-resize': enableSlider,
-			}"
-			@mousedown="handleMouseDown">
-			{{ label }}
+		<div class="flex w-1/2 min-w-20 max-w-40 items-center justify-between">
+			<Dropdown
+				size="sm"
+				:options="[
+					{
+						label: 'On Hover',
+						onClick: () => {
+							setHoverStyle = true;
+						},
+					},
+				]">
+				<template v-slot="{ open }">
+					<FeatherIcon
+						name="plus-circle"
+						class="mr-2 h-3 w-3 cursor-pointer text-ink-gray-7 hover:text-ink-gray-9"
+						@click="open" />
+				</template>
+			</Dropdown>
+			<InputLabel
+				v-if="label"
+				:class="{
+					'cursor-ns-resize': enableSlider,
+				}"
+				class="w-auto"
+				@mousedown="handleMouseDown">
+				{{ label }}
 
-			<Popover trigger="hover" v-if="description" placement="top">
-				<template #target>
-					<FeatherIcon name="info" class="ml-1 h-[12px] w-[12px] text-gray-500" />
-				</template>
-				<template #body>
-					<slot name="body">
-						<div
-							class="w-fit max-w-52 rounded bg-gray-800 px-2 py-1 text-center text-xs text-white shadow-xl"
-							v-html="description"></div>
-					</slot>
-				</template>
-			</Popover>
-		</InputLabel>
+				<Popover trigger="hover" v-if="description" placement="top">
+					<template #target>
+						<FeatherIcon name="info" class="ml-1 h-[12px] w-[12px] text-gray-500" />
+					</template>
+					<template #body>
+						<slot name="body">
+							<div
+								class="w-fit max-w-52 rounded bg-gray-800 px-2 py-1 text-center text-xs text-white shadow-xl"
+								v-html="description"></div>
+						</slot>
+					</template>
+				</Popover>
+			</InputLabel>
+		</div>
+
 		<BuilderInput
 			:type="type"
 			:placeholder="placeholder"
@@ -41,22 +62,10 @@
 			:showInputAsOption="showInputAsOption"
 			:hideClearButton="hideClearButton"
 			class="w-full" />
-		<Dropdown
-			size="sm"
-			:options="[
-				{
-					label: 'On Hover',
-				},
-			]"
-			:button="{
-				icon: 'plus',
-				variant: 'ghost',
-				size: 'sm',
-			}"
-			class="ml-2"></Dropdown>
 	</div>
 	<div
-		class="ml-[5px] flex items-center justify-between before:-mt-7 before:h-7 before:w-[1px] before:bg-surface-gray-4 before:content-['_'] after:absolute after:left-3.5 after:h-1.5 after:w-1.5 after:rounded-full after:bg-surface-gray-4 [&>div>input]:!bg-red-600 [&>div>input]:pr-6">
+		class="ml-[5px] flex items-center justify-between before:-mt-7 before:h-7 before:w-[1px] before:bg-surface-gray-4 before:content-['_'] after:absolute after:left-3.5 after:h-1.5 after:w-1.5 after:rounded-full after:bg-surface-gray-4 [&>div>input]:!bg-red-600 [&>div>input]:pr-6"
+		v-if="setHoverStyle">
 		<InputLabel
 			v-if="label"
 			:class="{
@@ -80,11 +89,11 @@
 		</InputLabel>
 		<BuilderInput
 			:type="type"
-			:placeholder="placeholder"
-			:modelValue="modelValue"
+			:placeholder="modelValue ? modelValue : placeholder"
+			:modelValue="hoverStyle"
 			:options="inputOptions"
 			v-if="type != 'autocomplete'"
-			@update:modelValue="handleChange"
+			@update:modelValue="handleHoverStyle"
 			:hideClearButton="hideClearButton"
 			@keydown.stop="handleKeyDown" />
 		<Autocomplete
@@ -103,9 +112,11 @@
 <script setup lang="ts">
 import { isNumber } from "@tiptap/vue-3";
 import { Dropdown, FeatherIcon, Popover } from "frappe-ui";
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import Autocomplete from "./Autocomplete.vue";
 import InputLabel from "./InputLabel.vue";
+
+const setHoverStyle = ref(false);
 
 type Action = {
 	label: String;
@@ -117,6 +128,7 @@ type Action = {
 const props = withDefaults(
 	defineProps<{
 		modelValue?: string | number;
+		hoverStyle?: string | number;
 		label?: string;
 		description?: string;
 		type?: string;
@@ -148,7 +160,7 @@ const props = withDefaults(
 	},
 );
 
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue", "setHoverStyle"]);
 
 type Option = {
 	label: string;
@@ -180,6 +192,20 @@ const handleChange = (value: string | number | null | { label: string; value: st
 	}
 
 	emit("update:modelValue", value);
+};
+
+const handleHoverStyle = (value: string | number | null | { label: string; value: string }) => {
+	if (typeof value === "object" && value !== null && "value" in value) {
+		value = value.value;
+	}
+	if (value && typeof value === "string") {
+		let [_, number, unit] = value.match(/([0-9]+)([a-z%]*)/) || ["", "", ""];
+		if (!unit && props.unitOptions.length && number) {
+			value = number + props.unitOptions[0];
+		}
+	}
+
+	emit("setHoverStyle", value);
 };
 
 const handleMouseDown = (e: MouseEvent) => {
