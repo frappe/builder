@@ -7,30 +7,29 @@
 			@mousedown="handleMouseDown">
 			{{ label }}
 		</InputLabel>
-		<BuilderInput
-			:type="type"
+		<component
+			:is="props.component"
+			v-bind="controlAttrs"
+			v-on="props.events || {}"
 			:modelValue="modelValue"
 			:placeholder="placeholderValue"
 			@update:modelValue="updateValue"
-			:options="options"
-			:unitOptions="unitOptions"
-			:hideClearButton="hideClearButton"
 			@keydown.stop="handleKeyDown"
 			class="w-full" />
 	</div>
 </template>
 <script lang="ts" setup>
+import Input from "@/components/Controls/Input.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import blockController from "@/utils/blockController";
-import { computed } from "vue";
+import type { Component } from "vue";
+import { computed, useAttrs } from "vue";
 
 const props = withDefaults(
 	defineProps<{
 		styleProperty: string;
 		label: string;
-		type?: string;
 		placeholder?: string;
-		options?: Record<string, string> | Array<{ label: string; value: string }>;
 		getModelValue?: () => string;
 		getPlaceholder?: () => string;
 		setModelValue?: (value: string) => void;
@@ -40,6 +39,9 @@ const props = withDefaults(
 		minValue?: number;
 		maxValue?: number | null;
 		hideClearButton?: boolean;
+		component?: Component;
+		events?: Record<string, unknown>;
+		defaultValue?: string | number | { label: string; value: string };
 	}>(),
 	{
 		placeholder: "unset",
@@ -50,11 +52,23 @@ const props = withDefaults(
 		minValue: 0,
 		maxValue: null,
 		hideClearButton: false,
+		component: Input,
 	},
 );
 
+const controlAttrs = computed(() => {
+	const attrs = useAttrs();
+	const propKeys = Object.keys(props);
+	propKeys.push("style");
+	return Object.fromEntries(Object.entries(attrs).filter(([key]) => !propKeys.includes(key)));
+});
+
 const modelValue = computed(
-	() => props.getModelValue?.() ?? blockController.getNativeStyle(props.styleProperty) ?? "",
+	() =>
+		props.getModelValue?.() ??
+		blockController.getNativeStyle(props.styleProperty) ??
+		props.defaultValue ??
+		"",
 );
 
 const placeholderValue = computed(
