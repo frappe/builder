@@ -12,7 +12,7 @@
 					}
 				" />
 		</div>
-		<div class="flex flex-col gap-3">
+		<div class="mt-1 flex flex-col gap-3">
 			<CollapsibleSection
 				:sectionName="section.name"
 				v-for="section in sections"

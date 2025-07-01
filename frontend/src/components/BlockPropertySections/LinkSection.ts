@@ -8,7 +8,6 @@ const linkSectionProperties = [
 		getProps: () => {
 			return {
 				label: "Link To",
-				showInputAsOption: true,
 				modelValue: blockController.getAttribute("href"),
 			};
 		},

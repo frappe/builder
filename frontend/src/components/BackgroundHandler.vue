@@ -70,7 +70,11 @@
 			</div>
 		</template>
 	</Popover>
-	<ColorInput label="BG Color" :value="backgroundColor as HashString" @change="setBGColor" />
+	<ColorInput
+		label="BG Color"
+		:value="backgroundColor as HashString"
+		:placeholder="String(blockController.getStyle('backgroundColor', false, true) || 'Set Color')"
+		@change="setBGColor" />
 </template>
 
 <script lang="ts" setup>
@@ -81,7 +85,7 @@ import blockController from "@/utils/blockController";
 import { FileUploader, Popover } from "frappe-ui";
 import { computed } from "vue";
 
-const backgroundColor = computed(() => blockController.getStyle("backgroundColor"));
+const backgroundColor = computed(() => blockController.getNativeStyle("backgroundColor"));
 const backgroundImage = computed(() => {
 	const bgImage = blockController.getStyle("backgroundImage") as string;
 	return bgImage ? bgImage.replace(/^url\(['"]?|['"]?\)$/g, "") : null;
