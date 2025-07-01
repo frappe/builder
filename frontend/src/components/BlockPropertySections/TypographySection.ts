@@ -5,6 +5,7 @@ import userFonts from "@/data/userFonts";
 import { UserFont } from "@/types/Builder/UserFont";
 import blockController from "@/utils/blockController";
 import { setFont as _setFont, fontList, getFontWeightOptions } from "@/utils/fontManager";
+import StyleControl from "../Controls/StyleControl.vue";
 
 const setFont = (font: string) => {
 	_setFont(font, null).then(() => {
@@ -84,55 +85,46 @@ const typographySectionProperties = [
 		},
 	},
 	{
-		component: InlineInput,
+		component: StyleControl,
 		getProps: () => {
 			return {
 				label: "Size",
-				modelValue: blockController.getStyle("fontSize"),
+				styleProperty: "fontSize",
 				enableSlider: true,
 				minValue: 1,
 			};
 		},
 		searchKeyWords: "Font, Size, FontSize",
-		events: {
-			"update:modelValue": (val: StyleValue) => blockController.setStyle("fontSize", val),
-		},
 		condition: () => blockController.isText() || blockController.isInput(),
 	},
 	{
-		component: InlineInput,
+		component: StyleControl,
 		getProps: () => {
 			return {
 				label: "Height",
-				modelValue: blockController.getStyle("lineHeight"),
+				styleProperty: "lineHeight",
 			};
 		},
 		searchKeyWords: "Font, Height, LineHeight, Line Height",
-		events: {
-			"update:modelValue": (val: StyleValue) => blockController.setStyle("lineHeight", val),
-		},
 		condition: () => blockController.isText(),
 	},
 	{
-		component: InlineInput,
+		component: StyleControl,
 		getProps: () => {
 			return {
 				label: "Letter",
-				modelValue: blockController.getStyle("letterSpacing"),
+				styleProperty: "letterSpacing",
 			};
-		},
-		events: {
-			"update:modelValue": (val: StyleValue) => blockController.setStyle("letterSpacing", val),
 		},
 		searchKeyWords: "Font, Letter, LetterSpacing, Letter Spacing",
 		condition: () => blockController.isText(),
 	},
 	{
-		component: InlineInput,
+		component: StyleControl,
 		getProps: () => {
 			return {
 				label: "Transform",
-				modelValue: blockController.getStyle("textTransform"),
+				styleProperty: "textTransform",
 				type: "select",
 				options: [
 					{
@@ -155,9 +147,6 @@ const typographySectionProperties = [
 			};
 		},
 		searchKeyWords: "Font, Transform, TextTransform, Text Transform, Capitalize, Uppercase, Lowercase",
-		events: {
-			"update:modelValue": (val: StyleValue) => blockController.setStyle("textTransform", val),
-		},
 		condition: () => blockController.isText(),
 	},
 	{
