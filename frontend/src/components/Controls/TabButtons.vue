@@ -10,7 +10,7 @@
 				<button
 					:class="[
 						active ? 'ring-outline-gray-2 focus-visible:ring' : '',
-						!modelValue && checked ? ' border border-dotted border-outline-gray-4' : '',
+						!modelValue && checked ? 'border border-dashed border-outline-gray-3' : '',
 						modelValue && checked ? 'bg-surface-white text-ink-gray-9 shadow' : 'text-ink-gray-7',
 						'flex flex-1 justify-center gap-2 whitespace-nowrap rounded-[7px] px-3 py-[5px] leading-none transition-colors focus:outline-none',
 					]">
