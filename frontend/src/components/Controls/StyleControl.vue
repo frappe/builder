@@ -1,12 +1,12 @@
 <template>
 	<div class="flex w-full flex-col gap-2">
 		<div class="flex w-full items-center gap-2">
-			<div class="flex w-[80px] shrink-0 items-center">
+			<div class="flex w-[88px] shrink-0 items-center">
 				<Dropdown v-if="enableStates" size="sm" :options="stateOptions">
 					<template v-slot="{ open }">
 						<FeatherIcon
 							name="plus-circle"
-							class="mr-2 h-3 w-3 cursor-pointer text-ink-gray-7 hover:text-ink-gray-9"
+							class="mr-1.5 h-3 w-3 cursor-pointer text-ink-gray-7 hover:text-ink-gray-9"
 							@click="open" />
 					</template>
 				</Dropdown>
