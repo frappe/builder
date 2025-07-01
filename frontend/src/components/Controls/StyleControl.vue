@@ -1,7 +1,7 @@
 <template>
 	<div class="flex w-full flex-col gap-2">
 		<div class="relative flex w-full items-center gap-2">
-			<div class="flex w-[88px] shrink-0 items-center">
+			<div class="flex w-[88px] shrink-0 items-center" v-if="enableStates || label">
 				<Dropdown v-if="enableStates" size="sm" :options="stateOptions">
 					<template v-slot="{ open }">
 						<FeatherIcon

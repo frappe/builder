@@ -70,22 +70,18 @@
 			</div>
 		</template>
 	</Popover>
-	<ColorInput
-		label="BG Color"
-		:value="backgroundColor as HashString"
-		:placeholder="String(blockController.getStyle('backgroundColor', false, true) || 'Set Color')"
-		@change="setBGColor" />
+	<StyleControl label="BG Color" styleProperty="backgroundColor" :component="ColorInput" />
 </template>
 
 <script lang="ts" setup>
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
+import StyleControl from "@/components/Controls/StyleControl.vue";
 import blockController from "@/utils/blockController";
 import { FileUploader, Popover } from "frappe-ui";
 import { computed } from "vue";
 
-const backgroundColor = computed(() => blockController.getNativeStyle("backgroundColor"));
 const backgroundImage = computed(() => {
 	const bgImage = blockController.getStyle("backgroundImage") as string;
 	return bgImage ? bgImage.replace(/^url\(['"]?|['"]?\)$/g, "") : null;
@@ -121,10 +117,6 @@ const repeatOptions = [
 	{ label: "Repeat X", value: "repeat-x" },
 	{ label: "Repeat Y", value: "repeat-y" },
 ];
-
-const setBGColor = (color: string) => {
-	blockController.setStyle("backgroundColor", color);
-};
 
 const setBGImage = (file: { file_url: string }) => {
 	blockController.setStyle("backgroundImage", `url(${file.file_url})`);

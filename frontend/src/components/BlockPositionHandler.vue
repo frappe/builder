@@ -6,6 +6,7 @@
 			:getModelValue="() => position"
 			:setModelValue="(val) => (position = val)"
 			defaultValue="static"
+			:enableStates="false"
 			:options="[
 				{ label: 'Auto', value: 'static' },
 				{ label: 'Free', value: 'absolute' },

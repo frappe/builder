@@ -1,7 +1,6 @@
 import BackgroundHandler from "@/components/BackgroundHandler.vue";
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import blockController from "@/utils/blockController";
-import InlineInputWithStates from "../Controls/InlineInputWithStates.vue";
 import StyleControl from "../Controls/StyleControl.vue";
 
 const styleSectionProperties = [
@@ -12,29 +11,31 @@ const styleSectionProperties = [
 			"Background, BackgroundImage, Background Image, Background Position, Background Repeat, Background Size, BG, BGImage, BG Image, BGPosition, BG Position, BGRepeat, BG Repeat, BGSize, BG Size",
 	},
 	{
-		component: ColorInput,
+		component: StyleControl,
 		getProps: () => {
 			return {
+				styleProperty: "color",
+				component: ColorInput,
 				label: "Text Color",
-				value: blockController.getTextColor(),
 			};
 		},
 		searchKeyWords: "Text, Color, TextColor, Text Color",
 		events: {
-			change: (val: string) => blockController.setTextColor(val),
+			"update:modelValue": (val: string) => blockController.setTextColor(val),
 		},
 	},
 	{
-		component: ColorInput,
+		component: StyleControl,
 		getProps: () => {
 			return {
+				component: ColorInput,
+				styleProperty: "borderColor",
 				label: "Border Color",
-				value: blockController.getStyle("borderColor"),
 			};
 		},
 		searchKeyWords: "Border, Color, BorderColor, Border Color",
 		events: {
-			change: (val: StyleValue) => {
+			"update:modelValue": (val: StyleValue) => {
 				blockController.setStyle("borderColor", val);
 				if (val) {
 					if (!blockController.getStyle("borderWidth")) {
@@ -106,12 +107,11 @@ const styleSectionProperties = [
 		searchKeyWords: "Shadow, BoxShadow, Box Shadow",
 	},
 	{
-		component: InlineInputWithStates,
+		component: StyleControl,
 		getProps: () => {
 			return {
 				label: "Radius",
-				modelValue: blockController.getStyle("borderRadius"),
-				hoverStyle: blockController.getStyle("hover:borderRadius"),
+				styleProperty: "borderRadius",
 				enableSlider: true,
 				unitOptions: ["px", "%"],
 				minValue: 0,
@@ -129,9 +129,6 @@ const styleSectionProperties = [
 						blockController.setStyle("overflowY", "hidden");
 					}
 				}
-			},
-			setHoverStyle: (val: StyleValue) => {
-				blockController.setStyle("hover:borderRadius", val);
 			},
 		},
 	},
