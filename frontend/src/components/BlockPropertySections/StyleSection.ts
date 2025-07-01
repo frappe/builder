@@ -2,6 +2,7 @@ import BackgroundHandler from "@/components/BackgroundHandler.vue";
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import blockController from "@/utils/blockController";
+import InlineInputWithStates from "../Controls/InlineInputWithStates.vue";
 
 const styleSectionProperties = [
 	{
@@ -127,7 +128,7 @@ const styleSectionProperties = [
 		},
 	},
 	{
-		component: InlineInput,
+		component: InlineInputWithStates,
 		getProps: () => {
 			return {
 				label: "Radius",
