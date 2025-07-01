@@ -172,7 +172,7 @@ const typographySectionProperties = [
 						hideLabel: true,
 					},
 				],
-				default: "left",
+				defaultValue: "left",
 			};
 		},
 		searchKeyWords: "Font, Align, TextAlign, Text Align, Left, Center, Right, Justify",
