@@ -29,7 +29,7 @@ import { computed, useAttrs } from "vue";
 const props = withDefaults(
 	defineProps<{
 		styleProperty: string;
-		label: string;
+		label?: string;
 		placeholder?: string;
 		getModelValue?: () => string;
 		getPlaceholder?: () => string;
