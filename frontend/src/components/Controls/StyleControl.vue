@@ -1,6 +1,6 @@
 <template>
 	<div class="flex w-full flex-col gap-2">
-		<div class="flex w-full items-center gap-2">
+		<div class="relative flex w-full items-center gap-2">
 			<div class="flex w-[88px] shrink-0 items-center">
 				<Dropdown v-if="enableStates" size="sm" :options="stateOptions">
 					<template v-slot="{ open }">
@@ -38,7 +38,12 @@
 					@click="clearState(state)">
 					<FeatherIcon name="x" class="h-3 w-3" />
 				</button>
-				<InputLabel class="ml-3 w-[80px] shrink-0">{{ stateLabels[String(state)] }}</InputLabel>
+				<InputLabel
+					class="ml-3 w-[80px] shrink-0"
+					:class="{ 'cursor-ns-resize': enableSlider }"
+					@mousedown="(ev) => handleStateMouseDown(ev, state)">
+					{{ stateLabels[String(state)] }}
+				</InputLabel>
 				<component
 					:is="props.component"
 					v-bind="controlAttrs"
@@ -48,7 +53,7 @@
 					:placeholder="placeholderValue"
 					@update:modelValue="(v: any) => updateStateValue(state, v)"
 					@keydown.stop="(e: KeyboardEvent) => handleKeyDown(e, state)"
-					class="shrink-1 w-auto" />
+					class="shrink-1 w-full" />
 			</div>
 		</template>
 	</div>
@@ -210,6 +215,23 @@ const handleKeyDown = (e: KeyboardEvent, state?: string) => {
 		}
 		e.preventDefault();
 	}
+};
+
+const handleStateMouseDown = (e: MouseEvent, state: string) => {
+	if (!props.enableSlider) return;
+	const number = ((getStateValue(state) + "" || "") as string).match(/([0-9]+)/)?.[0] || "0";
+	const startY = e.clientY;
+	const startValue = Number(number);
+	const handleMouseMove = (e: MouseEvent) => {
+		let diff = (startY - e.clientY) * props.changeFactor;
+		diff = Math.round(diff);
+		incrementOrDecrementState(state, diff, startValue);
+	};
+	const handleMouseUp = () => {
+		window.removeEventListener("mousemove", handleMouseMove);
+	};
+	window.addEventListener("mousemove", handleMouseMove);
+	window.addEventListener("mouseup", handleMouseUp, { once: true });
 };
 
 const incrementOrDecrement = (step: number, initialValue: null | number = null) => {
