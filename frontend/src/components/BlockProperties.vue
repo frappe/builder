@@ -43,6 +43,7 @@ import positionSection from "@/components/BlockPropertySections/PositionSection"
 import rawStyleSection from "@/components/BlockPropertySections/RawStyleSection";
 import spacingSection from "@/components/BlockPropertySections/SpacingSection";
 import styleSection from "@/components/BlockPropertySections/StyleSection";
+import transitionSection from "@/components/BlockPropertySections/TransitionSection";
 import typographySection from "@/components/BlockPropertySections/TypographySection";
 import videoOptionsSection from "@/components/BlockPropertySections/VideoOptionsSection";
 import useBuilderStore from "@/stores/builderStore";
@@ -108,6 +109,7 @@ const sections = [
 	dimensionSection,
 	positionSection,
 	spacingSection,
+	transitionSection,
 	optionsSection,
 	dataKeySection,
 	customAttributesSection,
