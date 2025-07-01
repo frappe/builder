@@ -12,13 +12,13 @@ const rawStyleSectionProperties = [
 					<b>Note:</b>
 					<br />
 					<br />
-					- Raw styles get applied across all devices
+					• Raw styles get applied across all devices
 					<br />
-					- State based styles are supported (e.g. hover, focus, visited)
+					• State based styles are supported (e.g. hover, focus, visited)
 					<br />
 					Syntax: hover:color, focus:color, etc.
 					<br />
-					- State styles are only activated in preview mode
+					• State styles are only activated in preview mode
 				`,
 			};
 		},
