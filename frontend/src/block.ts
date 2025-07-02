@@ -48,6 +48,7 @@ class Block implements BlockOptions {
 	visibilityCondition?: string;
 	elementBeforeConversion?: string;
 	parentBlock: Block | null;
+	activeState?: string | null = null;
 	// @ts-expect-error
 	referenceComponent: Block | null;
 	customAttributes: BlockAttributeMap;
@@ -168,6 +169,17 @@ class Block implements BlockOptions {
 		// });
 
 		return styleObj;
+	}
+	getStateStyles(state: string, breakpoint: string = "desktop"): BlockStyleMap {
+		const styles = this.getStyles(breakpoint);
+		const stateStyles = {} as BlockStyleMap;
+		Object.keys(styles).forEach((style) => {
+			if (style.startsWith(`${state}:`)) {
+				const newStyle = style.replace(`${state}:`, "");
+				stateStyles[newStyle as styleProperty] = styles[style];
+			}
+		});
+		return stateStyles;
 	}
 	hasOverrides(breakpoint: string) {
 		if (breakpoint === "mobile") {
