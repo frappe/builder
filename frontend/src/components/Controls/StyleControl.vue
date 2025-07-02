@@ -51,6 +51,8 @@
 					:modelValue="getStateValue(state)"
 					:defaultValue="defaultValue"
 					:placeholder="placeholderValue"
+					@focus="enableStyle"
+					@blur="disableStyle"
 					@update:modelValue="(v: any) => updateStateValue(state, v)"
 					@keydown.stop="(e: KeyboardEvent) => handleKeyDown(e, state)"
 					class="shrink-1 w-full" />
@@ -264,5 +266,17 @@ const incrementOrDecrementState = (state: string, step: number, initialValue: nu
 		newValue = props.maxValue;
 	}
 	updateStateValue(state, newValue + "" + unit);
+};
+
+const enableStyle = () => {
+	blockController.getSelectedBlocks().forEach((block) => {
+		block.activeState = `hover:${props.styleProperty}`;
+	});
+};
+
+const disableStyle = () => {
+	blockController.getSelectedBlocks().forEach((block) => {
+		block.activeState = null;
+	});
 };
 </script>
