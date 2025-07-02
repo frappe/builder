@@ -1,16 +1,20 @@
 <template>
-	<OptionToggle
+	<StyleControl
+		styleProperty="flexDirection"
+		defaultValue="row"
+		:component="OptionToggle"
 		label="Direction"
 		v-if="blockController.isFlex()"
 		:options="[
 			{ label: 'Horizontal', value: 'row', icon: 'arrow-right', hideLabel: true },
 			{ label: 'Vertical', value: 'column', icon: 'arrow-down', hideLabel: true },
-		]"
-		:modelValue="blockController.getStyle('flexDirection') || 'row'"
-		@update:modelValue="
-			(val: string | number) => blockController.setStyle('flexDirection', val)
-		"></OptionToggle>
-	<PlacementControl v-if="blockController.isFlex()"></PlacementControl>
+		]"></StyleControl>
+	<StyleControl
+		styleProperty="alignItems"
+		label="Placement"
+		:enableStates="false"
+		v-if="blockController.isFlex()"
+		:component="PlacementControl"></StyleControl>
 	<StyleControl
 		v-if="blockController.isFlex()"
 		styleProperty="justifyContent"
