@@ -14,6 +14,7 @@
 						<BuilderInput
 							type="text"
 							class="[&>div>input]:pl-8"
+							v-bind="events"
 							@focus="togglePopover"
 							:placeholder="placeholder"
 							:modelValue="modelValue"
@@ -42,8 +43,14 @@
 </template>
 <script setup lang="ts">
 import { getRGB } from "@/utils/helpers";
+import { useAttrs } from "vue";
 import ColorPicker from "./ColorPicker.vue";
 import InputLabel from "./InputLabel.vue";
+
+const attrs = useAttrs();
+const events = Object.fromEntries(
+	Object.entries(attrs).filter(([key]) => key.startsWith("onFocus") || key.startsWith("onBlur")),
+);
 
 withDefaults(
 	defineProps<{

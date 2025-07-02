@@ -48,7 +48,6 @@ const props = defineProps<{
 }>();
 
 const value = computed(() => {
-	console.log(props.modelValue, props.defaultValue, props.modelValue ?? props.defaultValue);
 	return props.modelValue || props.defaultValue;
 });
 
