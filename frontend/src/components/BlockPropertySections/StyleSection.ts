@@ -3,6 +3,29 @@ import ColorInput from "@/components/Controls/ColorInput.vue";
 import blockController from "@/utils/blockController";
 import StyleControl from "../Controls/StyleControl.vue";
 
+const overflowOptions = [
+	{
+		label: "Unset",
+		value: "unset",
+	},
+	{
+		label: "Auto",
+		value: "auto",
+	},
+	{
+		label: "Visible",
+		value: "visible",
+	},
+	{
+		label: "Hidden",
+		value: "hidden",
+	},
+	{
+		label: "Scroll",
+		value: "scroll",
+	},
+];
+
 const styleSectionProperties = [
 	{
 		component: BackgroundHandler,
@@ -145,6 +168,45 @@ const styleSectionProperties = [
 			!blockController.multipleBlocksSelected() &&
 			!blockController.isRoot() &&
 			blockController.getStyle("position") !== "static",
+	},
+	{
+		component: StyleControl,
+		getProps: () => {
+			return {
+				label: "Overflow X",
+				type: "select",
+				styleProperty: "overflowX",
+				options: overflowOptions,
+				setModelValue: (val: StyleValue) => {
+					if (val === "unset") {
+						val = null;
+					}
+					blockController.setStyle("overflowX", val);
+				},
+			};
+		},
+		searchKeyWords:
+			"Overflow, X, OverflowX, Overflow X, Auto, Visible, Hide, Scroll, horizontal scroll, horizontalScroll",
+	},
+	{
+		component: StyleControl,
+		getProps: () => {
+			return {
+				label: "Overflow Y",
+				styleProperty: "overflowY",
+				type: "select",
+				options: overflowOptions,
+				setModelValue: (val: StyleValue) => {
+					console.log("Setting overflowY to", val);
+					if (val === "unset") {
+						val = null;
+					}
+					blockController.setStyle("overflowY", val);
+				},
+			};
+		},
+		searchKeyWords:
+			"Overflow, Y, OverflowY, Overflow Y, Auto, Visible, Hide, Scroll, vertical scroll, verticalScroll",
 	},
 ];
 
