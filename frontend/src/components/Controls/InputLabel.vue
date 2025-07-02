@@ -17,7 +17,6 @@
 </template>
 <script lang="ts" setup>
 import { FeatherIcon, Popover } from "frappe-ui";
-import { withDefaults } from "vue";
 const props = withDefaults(
 	defineProps<{
 		description?: string;
