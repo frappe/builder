@@ -17,14 +17,6 @@ import { Editor } from "@tiptap/vue-3";
 import { clamp } from "@vueuse/core";
 import { computed, nextTick, reactive, toRaw } from "vue";
 
-type BlockDataKeyType = "key" | "attribute" | "style";
-
-export interface BlockDataKey {
-	key?: string;
-	type?: BlockDataKeyType;
-	property?: string;
-}
-
 class Block implements BlockOptions {
 	blockId: string;
 	children: Array<Block>;
@@ -49,6 +41,7 @@ class Block implements BlockOptions {
 	elementBeforeConversion?: string;
 	parentBlock: Block | null;
 	activeState?: string | null = null;
+	dynamicValues: Array<BlockDataKey>;
 	// @ts-expect-error
 	referenceComponent: Block | null;
 	customAttributes: BlockAttributeMap;
@@ -103,6 +96,7 @@ class Block implements BlockOptions {
 		this.mobileStyles = reactive(options.mobileStyles || {});
 		this.tabletStyles = reactive(options.tabletStyles || {});
 		this.attributes = reactive(options.attributes || {});
+		this.dynamicValues = reactive(options.dynamicValues || []);
 
 		this.blockName = options.blockName;
 		delete this.attributes.style;
