@@ -88,7 +88,7 @@
 		</div>
 
 		<div
-			class="flex h-[60vh] w-full items-center justify-center rounded bg-surface-gray-1 text-base text-ink-gray-6"
+			class="flex h-[70vh] w-full items-center justify-center rounded bg-surface-gray-1 text-base text-ink-gray-6"
 			v-show="!activeScript">
 			Add Script
 		</div>
@@ -100,7 +100,7 @@
 				:label="activeScript.script_name"
 				:type="activeScript.script_type as 'JavaScript' | 'CSS'"
 				class="flex-1"
-				height="55vh"
+				height="65vh"
 				:autofocus="false"
 				:show-save-button="true"
 				@save="updateScript"
