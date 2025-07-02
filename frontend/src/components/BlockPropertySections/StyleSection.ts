@@ -1,6 +1,7 @@
 import BackgroundHandler from "@/components/BackgroundHandler.vue";
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import blockController from "@/utils/blockController";
+import RangeInput from "../Controls/RangeInput.vue";
 import StyleControl from "../Controls/StyleControl.vue";
 
 const overflowOptions = [
@@ -27,6 +28,25 @@ const overflowOptions = [
 ];
 
 const styleSectionProperties = [
+	{
+		component: StyleControl,
+		getProps: () => {
+			return {
+				label: "Opacity",
+				styleProperty: "opacity",
+				enableSlider: false,
+				component: RangeInput,
+				getModelValue: () => {
+					return blockController.getStyle("opacity") || 1;
+				},
+				min: 0,
+				max: 1,
+				step: 0.01,
+				default: 1,
+			};
+		},
+		condition: () => !blockController.multipleBlocksSelected() && !blockController.isRoot(),
+	},
 	{
 		component: BackgroundHandler,
 		getProps: () => {},
