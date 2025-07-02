@@ -23,7 +23,7 @@
 <script setup lang="ts">
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 
-const props = defineProps<{
+defineProps<{
 	property: styleProperty;
 	label: string;
 }>();
