@@ -13,6 +13,7 @@ const layoutSectionProperties = [
 				styleProperty: "display",
 				component: OptionToggle,
 				label: "Type",
+				enableStates: false,
 				options: [
 					{
 						label: "Stack",
