@@ -181,6 +181,13 @@ const styles = computed(() => {
 
 	Object.keys(styleMap).forEach((key) => {
 		if (key.startsWith("hover:")) {
+			// state style preview on hover
+			// if (!isHovered.value) {
+			// 	delete styleMap[key];
+			// } else {
+			// 	styleMap[key.replace("hover:", "")] = styleMap[key];
+			// 	delete styleMap[key];
+			// }
 			delete styleMap[key];
 		}
 	});

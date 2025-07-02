@@ -1,6 +1,8 @@
 <template>
 	<div>
 		<ColorPicker
+			@open="events.onFocus"
+			@close="handleClose"
 			:modelValue="modelValue"
 			@update:modelValue="
 				(color) => {
@@ -15,6 +17,7 @@
 							type="text"
 							class="[&>div>input]:pl-8"
 							v-bind="events"
+							ref="colorInput"
 							@focus="togglePopover"
 							:placeholder="placeholder"
 							:modelValue="modelValue"
@@ -43,7 +46,7 @@
 </template>
 <script setup lang="ts">
 import { getRGB } from "@/utils/helpers";
-import { useAttrs } from "vue";
+import { ref, useAttrs } from "vue";
 import ColorPicker from "./ColorPicker.vue";
 import InputLabel from "./InputLabel.vue";
 
@@ -51,6 +54,8 @@ const attrs = useAttrs();
 const events = Object.fromEntries(
 	Object.entries(attrs).filter(([key]) => key.startsWith("onFocus") || key.startsWith("onBlur")),
 );
+
+const colorInput = ref<HTMLInputElement | null>(null);
 
 withDefaults(
 	defineProps<{
@@ -65,4 +70,13 @@ withDefaults(
 );
 
 const emit = defineEmits(["update:modelValue"]);
+
+const handleClose = () => {
+	if (colorInput.value && typeof colorInput.value.blur === "function") {
+		colorInput.value.blur();
+	}
+	if (typeof events.onBlur === "function") {
+		events.onBlur();
+	}
+};
 </script>
