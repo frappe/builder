@@ -834,6 +834,37 @@ class Block implements BlockOptions {
 	getMargin(opts?: { nativeOnly?: boolean; cascading?: boolean }) {
 		return getBoxSpacing(this, "margin", opts);
 	}
+	setDynamicValue(
+		property: BlockDataKey["property"],
+		type: BlockDataKeyType,
+		key: BlockDataKey["key"] | null = null,
+	) {
+		const existingKey = this.getDynamicKey(property, type);
+		if (existingKey) {
+			this.dynamicValues = this.dynamicValues.map((v) => {
+				if (v.property === property && v.type === type) {
+					return { ...v, key: key || "" };
+				}
+				return v;
+			});
+		} else {
+			this.dynamicValues.push({
+				property,
+				type,
+				key: key || "",
+			});
+		}
+	}
+	removeDynamicValue(property: BlockDataKey["property"], type: BlockDataKeyType) {
+		this.dynamicValues = this.dynamicValues.filter((v) => !(v.property === property && v.type === type));
+	}
+	getDynamicKey(property: BlockDataKey["property"], type: BlockDataKeyType): BlockDataKey["key"] | null {
+		const dynamicValue = this.dynamicValues.find((v) => v.property === property && v.type === type);
+		if (dynamicValue) {
+			return dynamicValue.key;
+		}
+		return null;
+	}
 }
 
 function extendWithComponent(
