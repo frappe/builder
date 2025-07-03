@@ -52,6 +52,7 @@ declare module 'vue' {
     Dialog: typeof import('./src/components/Controls/Dialog.vue')['default']
     DimensionInput: typeof import('./src/components/DimensionInput.vue')['default']
     DraggablePopup: typeof import('./src/components/Controls/DraggablePopup.vue')['default']
+    DynamicValueHandler: typeof import('./src/components/Controls/DynamicValueHandler.vue')['default']
     EditableSpan: typeof import('./src/components/EditableSpan.vue')['default']
     EyeDropper: typeof import('./src/components/Icons/EyeDropper.vue')['default']
     Files: typeof import('./src/components/Icons/Files.vue')['default']

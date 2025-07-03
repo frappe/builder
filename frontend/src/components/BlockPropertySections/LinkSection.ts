@@ -1,28 +1,41 @@
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import blockController from "@/utils/blockController";
-import { computed, nextTick } from "vue";
+import { computed } from "vue";
+import StyleControl from "../Controls/StyleControl.vue";
 
 const linkSectionProperties = [
 	{
-		component: InlineInput,
+		component: StyleControl,
 		getProps: () => {
 			return {
 				label: "Link To",
-				modelValue: blockController.getAttribute("href"),
+				styleProperty: "href",
+				enableStates: false,
+				allowDynamicValue: true,
+				controlType: "attribute",
+				getModelValue: () => blockController.getAttribute("href"),
+				setModelValue: (val: string) => {
+					if (val && !blockController.isLink()) {
+						blockController.convertToLink();
+					}
+					if (!val && blockController.isLink()) {
+						blockController.unsetLink();
+					} else {
+						blockController.setAttribute("href", val);
+					}
+				},
 			};
 		},
 		searchKeyWords: "Link, Href, URL",
 		events: {
-			"update:modelValue": async (val: string) => {
-				if (val && !blockController.isLink()) {
+			setDynamicValue: () => {
+				if (!blockController.isLink()) {
 					blockController.convertToLink();
-					await nextTick();
-					await nextTick();
 				}
-				if (!val && blockController.isLink()) {
+			},
+			clearDynamicValue: () => {
+				if (blockController.isLink() && !blockController.getAttribute("href")) {
 					blockController.unsetLink();
-				} else {
-					blockController.setAttribute("href", val);
 				}
 			},
 		},

@@ -2,9 +2,23 @@
 	<div class="flex w-full flex-col gap-2">
 		<div class="relative flex w-full items-center gap-2">
 			<div class="flex w-[88px] shrink-0 items-center" v-if="enableStates || label">
-				<Dropdown v-if="enableStates" size="sm" :options="stateOptions">
+				<!-- <DynamicValueHandler v-if="showDynamicValueModal"></DynamicValueHandler> -->
+				<DraggablePopup
+					v-model="showDynamicValueModal"
+					:container="dropdownTrigger?.$el"
+					placement="middle-right"
+					:clickOutsideToClose="false"
+					:placementOffset="20"
+					v-if="showDynamicValueModal">
+					<template #header>Set Dynamic Value</template>
+					<template #content>
+						<DynamicValueHandler @setDynamicValue="setDynamicValue" :selectedValue="dynamicValue" />
+					</template>
+				</DraggablePopup>
+				<Dropdown v-if="enableStates || allowDynamicValue" size="sm" :options="stateOptions">
 					<template v-slot="{ open }">
 						<FeatherIcon
+							ref="dropdownTrigger"
 							name="plus-circle"
 							class="mr-1.5 h-3 w-3 cursor-pointer text-ink-gray-7 hover:text-ink-gray-9"
 							@click="open" />
@@ -18,16 +32,30 @@
 					{{ label }}
 				</InputLabel>
 			</div>
-			<component
-				:is="props.component"
-				v-bind="controlAttrs"
-				v-on="props.events || {}"
-				:modelValue="modelValue"
-				:defaultValue="defaultValue"
-				:placeholder="placeholderValue"
-				@update:modelValue="updateValue"
-				@keydown.stop="handleKeyDown"
-				class="w-full" />
+			<div class="relative w-full">
+				<component
+					:is="props.component"
+					v-bind="controlAttrs"
+					v-on="props.events || {}"
+					:modelValue="modelValue"
+					:defaultValue="defaultValue"
+					:placeholder="placeholderValue"
+					@update:modelValue="updateValue"
+					@keydown.stop="handleKeyDown"
+					class="w-full" />
+				<div
+					class="absolute bottom-0 left-0 right-0 top-0 z-20 flex items-center rounded bg-surface-violet-1 px-3 py-0.5 text-sm text-ink-violet-1"
+					v-if="dynamicValue">
+					{{ dynamicValue }}
+				</div>
+				<button
+					class="absolute right-1 top-1 z-20 cursor-pointer p-1 text-ink-gray-4 hover:text-ink-gray-5"
+					tabindex="-1"
+					v-show="dynamicValue"
+					@click="clearDynamicValue">
+					<CrossIcon />
+				</button>
+			</div>
 		</div>
 		<template v-if="enableStates" v-for="state in statesToShow" :key="String(state)">
 			<div
@@ -41,7 +69,7 @@
 				<InputLabel
 					class="ml-3 w-[80px] shrink-0"
 					:class="{ 'cursor-ns-resize': enableSlider }"
-					@mousedown="(ev) => handleStateMouseDown(ev, state)">
+					@mousedown="(ev: MouseEvent) => handleStateMouseDown(ev, state)">
 					{{ stateLabels[String(state)] }}
 				</InputLabel>
 				<component
@@ -61,18 +89,27 @@
 	</div>
 </template>
 <script lang="ts" setup>
+import DynamicValueHandler from "@/components/Controls/DynamicValueHandler.vue";
 import Input from "@/components/Controls/Input.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
+import CrossIcon from "@/components/Icons/Cross.vue";
 import blockController from "@/utils/blockController";
 import { Dropdown, FeatherIcon } from "frappe-ui";
 import type { Component } from "vue";
-import { computed, useAttrs } from "vue";
+import { computed, ref, useAttrs } from "vue";
+
+const dropdownTrigger = ref<typeof FeatherIcon | null>(null);
+const emit = defineEmits<{
+	(setDynamicValue: string): void;
+	(clearDynamicValue: void): void;
+}>();
 
 const props = withDefaults(
 	defineProps<{
 		styleProperty: string;
 		label?: string;
 		placeholder?: string;
+		controlType?: "style" | "attribute";
 		getModelValue?: () => string;
 		getPlaceholder?: () => string;
 		setModelValue?: (value: string) => void;
@@ -86,11 +123,13 @@ const props = withDefaults(
 		events?: Record<string, unknown>;
 		defaultValue?: string | number;
 		enableStates?: boolean;
+		allowDynamicValue?: boolean;
 		enabledStates?: string[];
 	}>(),
 	{
 		placeholder: "unset",
 		type: "text",
+		controlType: "style",
 		enableSlider: false,
 		unitOptions: () => [],
 		changeFactor: 1,
@@ -99,6 +138,7 @@ const props = withDefaults(
 		hideClearButton: false,
 		component: Input,
 		enableStates: true,
+		allowDynamicValue: false,
 		enabledStates: () => ["hover", "active", "focus"],
 	},
 );
@@ -188,16 +228,33 @@ const clearState = (state: string) => {
 	blockController.setStyle(`${state}:${props.styleProperty}`, null);
 };
 
-const stateOptions = computed(() =>
-	props.enabledStates
-		.filter((state: string) => !getStateValue(state))
-		.map((state: string) => ({
-			label: stateLabels[state] || state,
+const showDynamicValueModal = ref(false);
+
+const stateOptions = computed(() => {
+	const options = [];
+	if (props.enableStates) {
+		options.push(
+			...props.enabledStates
+				.filter((state: string) => !getStateValue(state))
+				.map((state: string) => ({
+					label: stateLabels[state] || state,
+					onClick: () => {
+						blockController.setStyle(`${state}:${props.styleProperty}`, modelValue.value);
+					},
+				})),
+		);
+	}
+
+	if (props.allowDynamicValue) {
+		options.unshift({
+			label: "Set Dynamic Value",
 			onClick: () => {
-				blockController.setStyle(`${state}:${props.styleProperty}`, modelValue.value);
+				showDynamicValueModal.value = true;
 			},
-		})),
-);
+		});
+	}
+	return options;
+});
 
 const statesToShow = computed(() => {
 	if (!props.enableStates) return [];
@@ -280,5 +337,38 @@ const disableStyle = (state: string) => {
 			block.activeState = null;
 		}
 	});
+};
+
+function setDynamicValue(value: string) {
+	blockController.getSelectedBlocks().forEach((block) => {
+		block.dynamicValues.push({
+			type: props.controlType,
+			key: value,
+			property: props.styleProperty,
+		});
+	});
+	showDynamicValueModal.value = false;
+	emit("setDynamicValue");
+}
+
+const dynamicValue = computed(() => {
+	const blocks = blockController.getSelectedBlocks();
+	if (!blocks?.length) return;
+	const dataKeyObj = blocks[0].dynamicValues.find((obj) => {
+		return obj.type === props.controlType && obj.property === props.styleProperty;
+	});
+	if (dataKeyObj) {
+		return dataKeyObj.key;
+	} else {
+		return "";
+	}
+});
+
+const clearDynamicValue = () => {
+	const blocks = blockController.getSelectedBlocks();
+	blocks.forEach((block) => {
+		block.removeDynamicValue(props.styleProperty, props.controlType);
+	});
+	emit("clearDynamicValue");
 };
 </script>
