@@ -215,6 +215,9 @@ const blockController = {
 	getInnerHTML: () => {
 		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().getInnerHTML();
 	},
+	getText: () => {
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().getText();
+	},
 	setInnerHTML: (value: string) => {
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 			block.setInnerHTML(value);

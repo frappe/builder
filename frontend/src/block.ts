@@ -699,6 +699,13 @@ class Block implements BlockOptions {
 		}
 		return innerHTML;
 	}
+	getText(): string {
+		const editor = this.getEditor();
+		if (editor && editor.isEditable) {
+			return editor.getText();
+		}
+		return this.getTextContent() || "";
+	}
 	setInnerHTML(innerHTML: string) {
 		this.innerHTML = innerHTML;
 	}
