@@ -18,6 +18,24 @@ const typographySectionProperties = [
 		component: StyleControl,
 		getProps: () => {
 			return {
+				label: "Content",
+				controlType: "key",
+				styleProperty: "innerHTML",
+				// @ts-ignore
+				allowDynamicValue: true,
+				getModelValue: () => blockController.getSelectedBlocks()[0]?.__proto__?.editor?.getText(),
+				setModelValue: (val: string) => {
+					blockController.setKeyValue("innerHTML", val);
+				},
+			};
+		},
+		searchKeyWords: "Content, Text, ContentText, Content Text",
+		condition: () => blockController.isText() || blockController.isButton(),
+	},
+	{
+		component: StyleControl,
+		getProps: () => {
+			return {
 				label: "Family",
 				component: Autocomplete,
 				styleProperty: "fontFamily",
