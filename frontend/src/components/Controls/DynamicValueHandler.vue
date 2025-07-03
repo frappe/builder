@@ -56,8 +56,10 @@
 </template>
 
 <script setup lang="ts">
+import Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
+import blockController from "@/utils/blockController";
 import { computed, ref } from "vue";
 
 const pageStore = usePageStore();
@@ -65,6 +67,7 @@ const builderStore = useBuilderStore();
 
 const props = defineProps<{
 	selectedValue?: string;
+	block?: Block;
 }>();
 
 const emit = defineEmits(["setDynamicValue"]);
@@ -72,6 +75,29 @@ const searchQuery = ref("");
 
 const dataArray = computed(() => {
 	const result: string[] = [];
+	if (
+		blockController.getFirstSelectedBlock()?.isInsideRepeater() &&
+		blockController.getFirstSelectedBlock()?.getRepeaterParent()
+	) {
+		const repeaterBlock = blockController.getFirstSelectedBlock().getRepeaterParent();
+		const collectionKey = repeaterBlock?.getDataKey("key") || "";
+		if (
+			collectionKey &&
+			typeof pageStore.pageData[collectionKey] !== "undefined" &&
+			Array.isArray(pageStore.pageData[collectionKey]) &&
+			pageStore.pageData[collectionKey].length > 0
+		) {
+			const firstItem = pageStore.pageData[collectionKey][0];
+			if (firstItem && typeof firstItem === "object" && firstItem !== null) {
+				Object.entries(firstItem as Record<string, unknown>).forEach(([key, value]) => {
+					if (!Array.isArray(value) && (typeof value !== "object" || value === null)) {
+						result.push(key);
+					}
+				});
+				return result;
+			}
+		}
+	}
 
 	function processObject(obj: Record<string, any>, prefix = "") {
 		Object.entries(obj).forEach(([key, value]) => {
@@ -90,6 +116,21 @@ const dataArray = computed(() => {
 });
 
 const getValue = (path: string): any => {
+	if (
+		blockController.getFirstSelectedBlock()?.isInsideRepeater() &&
+		blockController.getFirstSelectedBlock()?.getRepeaterParent()
+	) {
+		const repeaterBlock = blockController.getFirstSelectedBlock().getRepeaterParent();
+		const collectionKey = repeaterBlock?.getDataKey("key") || "";
+		const collection = pageStore.pageData[collectionKey];
+
+		if (collection && Array.isArray(collection) && collection.length > 0) {
+			const firstItem = collection[0];
+			if (firstItem && typeof firstItem === "object" && firstItem !== null) {
+				return (firstItem as Record<string, unknown>)[path];
+			}
+		}
+	}
 	return path.split(".").reduce((obj: Record<string, any>, key: string) => obj?.[key], pageStore.pageData);
 };
 

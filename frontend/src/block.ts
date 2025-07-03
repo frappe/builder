@@ -690,7 +690,11 @@ class Block implements BlockOptions {
 				property: this.isLink() ? "href" : this.isImage() ? "src" : "innerHTML",
 			};
 		}
-		this.dataKey[key] = value;
+		if (!value && key === "key") {
+			this.dataKey = {};
+		} else {
+			this.dataKey[key] = value;
+		}
 	}
 	getInnerHTML(): string {
 		let innerHTML = this.innerHTML || "";
@@ -871,6 +875,18 @@ class Block implements BlockOptions {
 			return dynamicValue.key;
 		}
 		return null;
+	}
+	getRepeaterParent(): Block | null {
+		if (this.isRepeater()) {
+			return this;
+		}
+		if (this.parentBlock) {
+			return this.parentBlock.getRepeaterParent();
+		}
+		return null;
+	}
+	isInsideRepeater(): boolean {
+		return Boolean(this.getRepeaterParent());
 	}
 }
 
