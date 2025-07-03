@@ -21,19 +21,29 @@
 						ref="clientScriptManager"></PageClientScriptManager>
 				</div>
 				<div v-else>
-					<CodeEditor
-						class="overscroll-none"
-						ref="dataScriptEditor"
-						v-model="page.page_data_script"
-						type="Python"
-						height="60vh"
-						@save="savePageDataScript"
-						:showSaveButton="true"
-						description='Use Data Script to provide dynamic data to your web page.<br>
-						<b>Example:</b> data.events = frappe.get_list("Event")<br><br>
-						For more details on how to write data script, refer to <b><a class="underline" href="https://docs.frappe.io/builder/data-script" target="_blank">this documentation</a></b>.
-						'
-						:show-line-numbers="true"></CodeEditor>
+					<div class="flex gap-4">
+						<CodeEditor
+							class="w-full overscroll-none"
+							ref="dataScriptEditor"
+							v-model="page.page_data_script"
+							type="Python"
+							height="60vh"
+							:autofocus="true"
+							@save="savePageDataScript"
+							:showSaveButton="true"
+							:show-line-numbers="true"></CodeEditor>
+						<CodeEditor
+							v-model="pageStore.pageData"
+							type="JSON"
+							label="Data Preview"
+							class="-mt-5 w-1/3 [&>div>div]:bg-surface-white"
+							height="calc(100% - 200px)"
+							description='Use Data Script to provide dynamic data to your web page.<br>
+								<b>Example:</b> data.events = frappe.get_list("Event")<br><br>
+								For more details on how to write data script, refer to <b><a class="underline" href="https://docs.frappe.io/builder/data-script" target="_blank">this documentation</a></b>.
+								'
+							:readonly="true"></CodeEditor>
+					</div>
 				</div>
 			</template>
 		</Dialog>
