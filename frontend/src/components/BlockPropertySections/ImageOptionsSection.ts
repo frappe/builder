@@ -1,4 +1,4 @@
-import InlineInput from "@/components/Controls/InlineInput.vue";
+import StyleControl from "@/components/Controls/StyleControl.vue";
 import ImageUploadInput from "@/components/ImageUploadInput.vue";
 import blockController from "@/utils/blockController";
 import { Button, createResource } from "frappe-ui";
@@ -6,10 +6,15 @@ import { toast } from "vue-sonner";
 
 const imageOptionsSectionProperties = [
 	{
-		component: ImageUploadInput,
+		component: StyleControl,
 		getProps: () => {
 			return {
+				component: ImageUploadInput,
+				controlType: "attribute",
+				styleProperty: "src",
 				label: "Image URL",
+				allowDynamicValue: true,
+				enableStates: false,
 				imageURL: blockController.getAttribute("src"),
 				imageFit: blockController.getStyle("objectFit"),
 			};
@@ -65,17 +70,17 @@ const imageOptionsSectionProperties = [
 		},
 	},
 	{
-		component: InlineInput,
+		component: StyleControl,
 		getProps: () => {
 			return {
+				controlType: "attribute",
+				styleProperty: "alt",
 				label: "Alt Text",
-				modelValue: blockController.getAttribute("alt"),
+				allowDynamicValue: true,
+				enableStates: false,
 			};
 		},
 		searchKeyWords: "Alt, Text, AltText, Alternate Text",
-		events: {
-			"update:modelValue": (val: string) => blockController.setAttribute("alt", val),
-		},
 		condition: () => blockController.isImage(),
 	},
 ];
