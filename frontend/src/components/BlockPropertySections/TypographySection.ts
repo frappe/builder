@@ -23,14 +23,15 @@ const typographySectionProperties = [
 				styleProperty: "innerHTML",
 				// @ts-ignore
 				allowDynamicValue: true,
-				getModelValue: () => blockController.getSelectedBlocks()[0]?.__proto__?.editor?.getText(),
+				getModelValue: () => blockController.getText(),
 				setModelValue: (val: string) => {
-					blockController.setKeyValue("innerHTML", val);
+					blockController.setInnerHTML(val);
 				},
 			};
 		},
 		searchKeyWords: "Content, Text, ContentText, Content Text",
-		condition: () => blockController.isText() || blockController.isButton(),
+		condition: () =>
+			(blockController.isText() || blockController.isButton()) && !blockController.multipleBlocksSelected(),
 	},
 	{
 		component: StyleControl,
