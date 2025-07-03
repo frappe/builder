@@ -2,7 +2,6 @@
 	<div class="flex w-full flex-col gap-2">
 		<div class="relative flex w-full items-center gap-2">
 			<div class="flex w-[88px] shrink-0 items-center" v-if="enableStates || label">
-				<!-- <DynamicValueHandler v-if="showDynamicValueModal"></DynamicValueHandler> -->
 				<DraggablePopup
 					v-model="showDynamicValueModal"
 					:container="dropdownTrigger?.$el"
@@ -44,8 +43,9 @@
 					@keydown.stop="handleKeyDown"
 					class="w-full" />
 				<div
-					class="absolute bottom-0 left-0 right-0 top-0 z-20 flex items-center rounded bg-surface-violet-1 px-3 py-0.5 pr-6 text-sm text-ink-violet-1"
+					class="absolute bottom-0 left-0 right-0 top-0 z-20 flex items-center gap-2 rounded bg-surface-violet-1 py-0.5 pl-2.5 pr-6 text-sm text-ink-violet-1"
 					v-if="dynamicValue">
+					<FeatherIcon name="zap" class="size-3"></FeatherIcon>
 					<span class="truncate">{{ dynamicValue }}</span>
 				</div>
 				<button

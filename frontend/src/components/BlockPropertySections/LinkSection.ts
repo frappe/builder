@@ -1,4 +1,3 @@
-import InlineInput from "@/components/Controls/InlineInput.vue";
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
 import StyleControl from "../Controls/StyleControl.vue";
@@ -41,11 +40,23 @@ const linkSectionProperties = [
 		},
 	},
 	{
-		component: InlineInput,
+		component: StyleControl,
 		getProps: () => {
 			return {
 				label: "Opens in",
+				controlType: "attribute",
 				type: "select",
+				styleProperty: "target",
+				enableStates: false,
+				allowDynamicValue: false,
+				getModelValue: () => blockController.getAttribute("target") || "_self",
+				setModelValue: (val: string) => {
+					if (val === "_self") {
+						blockController.removeAttribute("target");
+					} else {
+						blockController.setAttribute("target", val);
+					}
+				},
 				options: [
 					{
 						value: "_self",
@@ -56,19 +67,9 @@ const linkSectionProperties = [
 						label: "New Tab",
 					},
 				],
-				modelValue: blockController.getAttribute("target") || "_self",
 			};
 		},
 		searchKeyWords: "Link, Target, Opens in, OpensIn, Opens In, New Tab",
-		events: {
-			"update:modelValue": (val: string) => {
-				if (val === "_self") {
-					blockController.removeAttribute("target");
-				} else {
-					blockController.setAttribute("target", val);
-				}
-			},
-		},
 		condition: () => blockController.getAttribute("href"),
 	},
 ];
