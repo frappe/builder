@@ -36,7 +36,16 @@ const props = withDefaults(
 		modelValue: boolean;
 		width?: number;
 		height?: number;
-		placement?: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center";
+		placement?:
+			| "top-left"
+			| "top-right"
+			| "bottom-left"
+			| "bottom-right"
+			| "center"
+			| "top-middle"
+			| "bottom-middle"
+			| "middle-left"
+			| "middle-right";
 		placementOffset?: number;
 		clickOutsideToClose?: boolean;
 		container?: HTMLElement | null;
@@ -123,6 +132,22 @@ const setPosition = () => {
 				break;
 			case "center":
 				popupLeft.value = left + (right - left) / 2 - props.width / 2;
+				popupTop.value = top + (bottom - top) / 2 - props.height / 2;
+				break;
+			case "top-middle":
+				popupLeft.value = left + (right - left) / 2 - props.width / 2;
+				popupTop.value = top + props.placementOffset;
+				break;
+			case "bottom-middle":
+				popupLeft.value = left + (right - left) / 2 - props.width / 2;
+				popupTop.value = bottom - props.height - props.placementOffset;
+				break;
+			case "middle-left":
+				popupLeft.value = left + props.placementOffset;
+				popupTop.value = top + (bottom - top) / 2 - props.height / 2;
+				break;
+			case "middle-right":
+				popupLeft.value = right - props.width - props.placementOffset;
 				popupTop.value = top + (bottom - top) / 2 - props.height / 2;
 				break;
 		}
