@@ -162,8 +162,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			repeaterBlock.addChild(getBlockCopy(block.value));
 			parentBlock.removeChild(block.value);
 			repeaterBlock.selectBlock();
-			builderStore.propertyFilter = "data key";
-			toast.warning("Please set data key for repeater block");
+			toast.warning("Please select a collection");
 		},
 		condition: () =>
 			!block.value.isRoot() && !block.value.isRepeater() && !block.value.isChildOfComponentBlock(),
