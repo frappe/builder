@@ -44,9 +44,9 @@
 					@keydown.stop="handleKeyDown"
 					class="w-full" />
 				<div
-					class="absolute bottom-0 left-0 right-0 top-0 z-20 flex items-center rounded bg-surface-violet-1 px-3 py-0.5 text-sm text-ink-violet-1"
+					class="absolute bottom-0 left-0 right-0 top-0 z-20 flex items-center rounded bg-surface-violet-1 px-3 py-0.5 pr-6 text-sm text-ink-violet-1"
 					v-if="dynamicValue">
-					{{ dynamicValue }}
+					<span class="truncate">{{ dynamicValue }}</span>
 				</div>
 				<button
 					class="absolute right-1 top-1 z-20 cursor-pointer p-1 text-ink-gray-4 hover:text-ink-gray-5"
@@ -341,11 +341,7 @@ const disableStyle = (state: string) => {
 
 function setDynamicValue(value: string) {
 	blockController.getSelectedBlocks().forEach((block) => {
-		block.dynamicValues.push({
-			type: props.controlType,
-			key: value,
-			property: props.styleProperty,
-		});
+		block.setDynamicValue(props.styleProperty, props.controlType, value);
 	});
 	showDynamicValueModal.value = false;
 	emit("setDynamicValue");
