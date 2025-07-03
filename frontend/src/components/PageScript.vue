@@ -42,15 +42,17 @@
 <script lang="ts" setup>
 import Dialog from "@/components/Controls/Dialog.vue";
 import { webPages } from "@/data/webPage";
+import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { computed, defineComponent, ref } from "vue";
+import { computed, defineComponent, ref, watch } from "vue";
 import { toast } from "vue-sonner";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
 
 const pageStore = usePageStore();
+const builderStore = useBuilderStore();
 const showDialog = ref(false);
 
 const props = defineProps<{
@@ -105,5 +107,15 @@ const isDirty = computed(() => {
 	}
 	return false;
 });
+
+watch(
+	() => builderStore.showDataScriptDialog,
+	() => {
+		// if showDataScriptDialog is true, open the dialog
+		if (builderStore.showDataScriptDialog) {
+			showServerScriptEditor();
+			builderStore.showDataScriptDialog = false; // reset the flag
+		}
+	},
+);
 </script>
-<style></style>
