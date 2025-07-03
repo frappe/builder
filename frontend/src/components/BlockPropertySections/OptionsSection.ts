@@ -83,21 +83,6 @@ const optionsSectionProperties = [
 		component: InlineInput,
 		getProps: () => {
 			return {
-				label: "Content",
-				// @ts-ignore
-				modelValue: blockController.getSelectedBlocks()[0]?.__proto__?.editor?.getText(),
-			};
-		},
-		searchKeyWords: "Content, Text, ContentText, Content Text",
-		events: {
-			"update:modelValue": (val: string) => blockController.setKeyValue("innerHTML", val),
-		},
-		condition: () => blockController.isText() || blockController.isButton(),
-	},
-	{
-		component: InlineInput,
-		getProps: () => {
-			return {
 				label: "Class",
 				modelValue: blockController.getClasses().join(", "),
 			};

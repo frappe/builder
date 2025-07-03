@@ -109,7 +109,7 @@ const props = withDefaults(
 		styleProperty: string;
 		label?: string;
 		placeholder?: string;
-		controlType?: "style" | "attribute";
+		controlType?: "style" | "attribute" | "key";
 		getModelValue?: () => string;
 		getPlaceholder?: () => string;
 		setModelValue?: (value: string) => void;

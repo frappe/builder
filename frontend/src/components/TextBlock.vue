@@ -221,6 +221,13 @@ const textContent = computed(() => {
 		if (props.block.getDataKey("property") === "innerHTML") {
 			innerHTML = getDataForKey(props.data, props.block.getDataKey("key")) ?? innerHTML;
 		}
+		props.block.dynamicValues
+			?.filter((dataKeyObj: BlockDataKey) => {
+				return dataKeyObj.property === "innerHTML" && dataKeyObj.type === "key";
+			})
+			?.forEach((dataKeyObj: BlockDataKey) => {
+				innerHTML = getDataForKey(props.data as Object, dataKeyObj.key as string) ?? innerHTML;
+			});
 	}
 	return String(innerHTML ?? "");
 });
