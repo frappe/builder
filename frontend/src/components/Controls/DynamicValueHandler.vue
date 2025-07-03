@@ -3,11 +3,11 @@
 		<ul class="m-0 list-none p-0">
 			<li v-for="(item, index) in dataArray" :key="index">
 				<div
-					class="w-full truncate rounded p-2 text-left text-base text-ink-gray-7 hover:bg-surface-gray-2"
+					class="w-full truncate rounded p-2 text-left font-mono text-p-sm text-ink-gray-7 hover:bg-surface-gray-2"
 					:class="{ 'bg-surface-gray-3 text-ink-gray-9': selectedKey === item }"
 					@click.stop="selectKey(item)">
 					{{ item }}
-					<p class="truncate text-sm text-ink-gray-5" :class="{ italic: pageStore.pageData[item] == null }">
+					<p class="truncate text-xs text-ink-gray-5" :class="{ italic: pageStore.pageData[item] == null }">
 						{{ pageStore.pageData[item] == null ? "No Value Set" : pageStore.pageData[item] }}
 					</p>
 				</div>
@@ -26,14 +26,7 @@
 				</div>
 			</li>
 		</ul>
-		<div class="flex items-center justify-between gap-2" v-if="dataArray.length !== 0">
-			<span
-				class="text-sm text-ink-gray-5"
-				:class="{
-					invisible: !selectedKey,
-				}">
-				Selected: {{ selectedKey }}
-			</span>
+		<div class="flex items-center justify-end gap-2" v-if="dataArray.length !== 0">
 			<div class="flex gap-2">
 				<Button variant="subtle" @click="builderStore.showDataScriptDialog = true">Edit Code</Button>
 				<Button variant="solid" @click="saveSelection" :disabled="!selectedKey">Set</Button>
