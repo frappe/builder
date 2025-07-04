@@ -111,6 +111,7 @@ declare module 'vue' {
     SettingsGear: typeof import('./src/components/Icons/SettingsGear.vue')['default']
     StrikeThrough: typeof import('./src/components/Icons/StrikeThrough.vue')['default']
     StyleControl: typeof import('./src/components/Controls/StyleControl.vue')['default']
+    StyleTokens: typeof import('./src/components/StyleTokens.vue')['default']
     Switch: typeof import('./src/components/Controls/Switch.vue')['default']
     TabButtons: typeof import('./src/components/Controls/TabButtons.vue')['default']
     TemplatePagePreview: typeof import('./src/components/TemplatePagePreview.vue')['default']
