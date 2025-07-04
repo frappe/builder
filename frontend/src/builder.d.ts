@@ -110,3 +110,5 @@ declare interface BlockDataKey {
 }
 
 declare type BlockDataKeyType = "key" | "attribute" | "style";
+
+declare type CSSVariableValue = string | `var(--${string})`;
