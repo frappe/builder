@@ -1,0 +1,14 @@
+{
+ "creation": "2025-07-03 20:26:52.684401",
+ "docstatus": 0,
+ "doctype": "Style Token",
+ "idx": 0,
+ "is_standard": 1,
+ "modified": "2025-07-04 15:19:30.464224",
+ "modified_by": "Administrator",
+ "name": "gray-900",
+ "owner": "Administrator",
+ "token_name": "gray-900",
+ "type": "Color",
+ "value": "#171717"
+}
