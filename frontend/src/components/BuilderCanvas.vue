@@ -60,6 +60,7 @@
 				<BuilderBlock
 					class="h-full min-h-[inherit]"
 					:block="block"
+					:style="cssVariables"
 					:key="block.blockId"
 					v-if="showBlocks"
 					:breakpoint="breakpoint.device"
@@ -92,10 +93,11 @@ import type Block from "@/block";
 import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
 import SearchBlock from "@/components/Controls/SearchBlock.vue";
 import LoadingIcon from "@/components/Icons/Loading.vue";
+import styleTokens from "@/data/styleTokens";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
-import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
+import { getBlockObject, isCtrlOrCmd, toKebabCase } from "@/utils/helpers";
 import { useBlockEventHandlers } from "@/utils/useBlockEventHandlers";
 import { useBlockSelection } from "@/utils/useBlockSelection";
 import { useCanvasDropZone } from "@/utils/useCanvasDropZone";
@@ -133,6 +135,25 @@ const history = ref(null) as Ref<null> | CanvasHistory;
 const activeBreakpoint = ref("desktop") as Ref<string | null>;
 const hoveredBreakpoint = ref("desktop") as Ref<string | null>;
 const hoveredBlock = ref(null) as Ref<string | null>;
+
+interface StyleToken {
+	name: string;
+	variable_name: string;
+	token_name: string;
+	value: string;
+}
+
+interface StyleTokensData {
+	data: StyleToken[];
+}
+
+const cssVariables = computed(() => {
+	return (styleTokens as StyleTokensData).data.reduce((obj: Record<string, string>, token: StyleToken) => {
+		const cssVariableName = toKebabCase(token.token_name || "");
+		obj[`--${cssVariableName}`] = token.value;
+		return obj;
+	}, {});
+});
 
 const {
 	clearSelection,
