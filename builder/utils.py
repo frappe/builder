@@ -226,6 +226,12 @@ def sync_block_templates():
 	make_records(builder_block_template_path)
 
 
+def sync_style_tokens():
+	print("Syncing Builder Style Tokens")
+	style_token_path = frappe.get_module_path("builder", "builder_style_token")
+	make_records(style_token_path)
+
+
 def make_records(path):
 	if not os.path.isdir(path):
 		return

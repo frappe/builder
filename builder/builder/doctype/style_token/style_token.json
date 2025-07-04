@@ -1,10 +1,10 @@
 {
  "actions": [],
- "autoname": "format:VAR-{#####}",
  "creation": "2025-07-03 20:15:35.907300",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "is_standard",
   "token_name",
   "type",
   "value"
@@ -22,23 +22,31 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Value"
+   "label": "Value",
+   "reqd": 1
   },
   {
    "fieldname": "token_name",
    "fieldtype": "Data",
-   "label": "Token Name"
+   "label": "Token Name",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_standard",
+   "fieldtype": "Check",
+   "label": "Is Standard"
   }
  ],
  "grid_page_length": 50,
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-03 20:49:11.714882",
+ "modified": "2025-07-04 15:05:12.630580",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Style Token",
- "naming_rule": "Expression",
+ "naming_rule": "By script",
  "owner": "Administrator",
  "permissions": [
   {
