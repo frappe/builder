@@ -1,5 +1,5 @@
 <template>
-	<Popover placement="left" class="!block w-full" popoverClass="!min-w-fit !mr-[30px]">
+	<Popover :placement="placement" class="!block w-full" popoverClass="!min-w-fit !mr-[30px]">
 		<template #target="{ togglePopover, isOpen }">
 			<slot
 				name="target"
@@ -90,10 +90,13 @@
 <script setup lang="ts">
 import EyeDropperIcon from "@/components/Icons/EyeDropper.vue";
 import useCanvasStore from "@/stores/canvasStore";
+import { getCSSVariableValue } from "@/utils/cssVariables";
 import { HSVToHex, HexToHSV, getRGB } from "@/utils/helpers";
 import { clamp, useEyeDropper } from "@vueuse/core";
 import { Popover } from "frappe-ui";
 import { Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
+
+type CSSColorValue = HashString | RGBString | `var(--${string})`;
 
 const canvasStore = useCanvasStore();
 const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;
@@ -109,15 +112,20 @@ const { isSupported, sRGBHex, open } = useEyeDropper();
 
 const props = withDefaults(
 	defineProps<{
-		modelValue?: HashString | RGBString | null;
+		modelValue?: CSSColorValue | null;
+		placement?: string;
 	}>(),
 	{
 		modelValue: null,
+		placement: "left",
 	},
 );
 
 const modelColor = computed(() => {
-	return getRGB(props.modelValue);
+	const color = props.modelValue;
+	if (!color) return null;
+	const resolvedColor = getCSSVariableValue(color);
+	return getRGB(resolvedColor);
 });
 
 const emit = defineEmits(["update:modelValue"]);
@@ -137,17 +145,17 @@ if (!isSupported.value) {
 	colors.push("#B34D4D");
 }
 
-const setColorSelectorPosition = (color: HashString) => {
+const setColorSelectorPosition = (color: string) => {
 	const { width, height } = colorMap.value.getBoundingClientRect();
-	const { s, v } = HexToHSV(color);
+	const { s, v } = HexToHSV(color as HashString);
 	let x = clamp(s * width, 0, width);
 	let y = clamp((1 - v) * height, 0, height);
 	colorSelectorPosition.value = { x, y };
 };
 
-const setHueSelectorPosition = (color: HashString) => {
+const setHueSelectorPosition = (color: string) => {
 	const { width } = hueMap.value.getBoundingClientRect();
-	const { h } = HexToHSV(color);
+	const { h } = HexToHSV(color as HashString);
 	const left = (h / 360) * width;
 	hueSelectorPosition.value = { x: left, y: 0 };
 };
@@ -219,9 +227,11 @@ function setSelectorPosition(color: HashString | null) {
 		hueSelectorPosition.value = { x: 0, y: 0 };
 		return;
 	}
+	const resolvedColor = getCSSVariableValue(color);
+	console.log("Setting color selector position for:", resolvedColor);
 	nextTick(() => {
-		setColorSelectorPosition(color);
-		setHueSelectorPosition(color);
+		setColorSelectorPosition(resolvedColor);
+		setHueSelectorPosition(resolvedColor);
 	});
 }
 

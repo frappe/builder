@@ -1,6 +1,7 @@
 <template>
 	<div>
 		<ColorPicker
+			:placement="placement"
 			@open="events.onFocus"
 			@close="handleClose"
 			:modelValue="modelValue"
@@ -62,10 +63,12 @@ withDefaults(
 		modelValue?: HashString | null;
 		label?: string;
 		placeholder?: string;
+		placement?: string;
 	}>(),
 	{
 		modelValue: null,
 		placeholder: "Set Color",
+		placement: "left",
 	},
 );
 
