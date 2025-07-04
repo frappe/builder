@@ -14,41 +14,47 @@
 				<div class="flex items-center justify-between">
 					<InputLabel v-if="label">{{ label }}</InputLabel>
 					<div class="relative w-full">
-						<Autocomplete
-							class="[&>div>input]:pl-8"
-							v-bind="events"
-							ref="colorInput"
-							@focus="togglePopover"
-							:placeholder="placeholder"
-							:modelValue="modelValue"
-							:getOptions="getOptions"
-							@update:modelValue="
-								(val) => {
-									// if value is object, extract the value
-									if (typeof val === 'object' && val !== null) {
-										val = val.value;
+						<Tooltip :text="isCssVariable ? resolvedColor : null">
+							<Autocomplete
+								class="[&>div>input]:pl-8"
+								:class="{
+									'[&>div>input]:font-mono [&>div>input]:text-xs [&>div>input]:text-ink-violet-1':
+										isCssVariable,
+								}"
+								v-bind="events"
+								ref="colorInput"
+								@focus="togglePopover"
+								:placeholder="placeholder"
+								:modelValue="modelValue"
+								:getOptions="getOptions"
+								@update:modelValue="
+									(val) => {
+										// if value is object, extract the value
+										if (typeof val === 'object' && val !== null) {
+											val = val.value;
+										}
+										// If it's a CSS variable, preserve it
+										if (typeof val === 'string' && (val.startsWith('var(--') || val.startsWith('--'))) {
+											emit('update:modelValue', val.startsWith('var(--') ? val : `var(${val})`);
+										} else {
+											// For direct color values, convert to RGB
+											const color = getRGB(val);
+											emit('update:modelValue', color);
+										}
 									}
-									// If it's a CSS variable, preserve it
-									if (typeof val === 'string' && (val.startsWith('var(--') || val.startsWith('--'))) {
-										emit('update:modelValue', val.startsWith('var(--') ? val : `var(${val})`);
-									} else {
-										// For direct color values, convert to RGB
-										const color = getRGB(val);
-										emit('update:modelValue', color);
-									}
-								}
-							">
-							<template #prefix>
-								<div
-									class="h-4 w-4 rounded shadow-sm"
-									@click="togglePopover"
-									:style="{
-										background: modelValue
-											? resolvedColor
-											: `url(/assets/builder/images/color-circle.png) center / contain`,
-									}"></div>
-							</template>
-						</Autocomplete>
+								">
+								<template #prefix>
+									<div
+										class="h-4 w-4 rounded shadow-sm"
+										@click="togglePopover"
+										:style="{
+											background: modelValue
+												? resolvedColor
+												: `url(/assets/builder/images/color-circle.png) center / contain`,
+										}"></div>
+								</template>
+							</Autocomplete>
+						</Tooltip>
 					</div>
 				</div>
 			</template>
@@ -60,6 +66,7 @@ import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import { StyleToken } from "@/types/Builder/StyleToken";
 import { getRGB, toKebabCase } from "@/utils/helpers";
 import { useStyleToken } from "@/utils/useStyleToken";
+import { Tooltip } from "frappe-ui";
 import { computed, ref, useAttrs } from "vue";
 import ColorPicker from "./ColorPicker.vue";
 import InputLabel from "./InputLabel.vue";
