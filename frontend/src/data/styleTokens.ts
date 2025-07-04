@@ -8,6 +8,7 @@ const styleTokens = createListResource({
 	start: 0,
 	pageLength: 50,
 	auto: true,
+	orderBy: "token_name",
 });
 
 export default styleTokens;

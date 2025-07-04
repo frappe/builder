@@ -10,10 +10,12 @@ export interface StyleToken{
 	parentfield?: string
 	parenttype?: string
 	idx?: number
+	/**	Is Standard : Check	*/
+	is_standard?: 0 | 1
 	/**	Token Name : Data	*/
-	token_name?: string
+	token_name: string
 	/**	Type : Select	*/
 	type?: "Color" | "Spacing"
 	/**	Value : Data	*/
-	value?: string
+	value: string
 }
