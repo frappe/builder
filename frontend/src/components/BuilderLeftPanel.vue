@@ -59,6 +59,9 @@
 					v-if="pageStore.selectedPage && pageStore.activePage"
 					:page="pageStore.activePage" />
 			</div>
+			<div v-show="builderStore.leftPanelActiveTab === 'tokens'" class="p-4">
+				<StyleTokens />
+			</div>
 		</div>
 	</div>
 </template>
@@ -68,6 +71,7 @@ import ComponentIcon from "@/components/Icons/Component.vue";
 import LayersIcon from "@/components/Icons/Layers.vue";
 import PlusIcon from "@/components/Icons/Plus.vue";
 import PageScript from "@/components/PageScript.vue";
+import StyleTokens from "@/components/StyleTokens.vue";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
@@ -120,6 +124,11 @@ const leftPanelOptions = [
 		label: "Code",
 		value: "Code",
 		icon: "code",
+	},
+	{
+		label: "Style Tokens",
+		value: "tokens",
+		icon: "aperture",
 	},
 ];
 
