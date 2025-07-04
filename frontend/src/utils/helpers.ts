@@ -227,9 +227,16 @@ function isTargetEditable(e: Event) {
 	const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA";
 	return isEditable || isInput;
 }
+
 function getDataForKey(datum: Object, key: string) {
 	const data = Object.assign({}, datum);
-	return key.split(".").reduce((d, key) => (d ? d[key] : null), data) as string;
+	const value = key
+		.split(".")
+		.reduce(
+			(d: Record<string, any> | null, key) => (d && typeof d === "object" ? d[key] : null),
+			data as Record<string, any>,
+		);
+	return value;
 }
 
 function replaceMapKey(map: Map<any, any>, oldKey: string, newKey: string) {
@@ -246,7 +253,7 @@ function replaceMapKey(map: Map<any, any>, oldKey: string, newKey: string) {
 
 const mapToObject = (map: Map<any, any>) => Object.fromEntries(map.entries());
 
-function logObjectDiff(obj1: { [key: string]: {} }, obj2: { [key: string]: {} }, path = []) {
+function logObjectDiff(obj1: Record<string, any>, obj2: Record<string, any>, path: string[] = []) {
 	if (!obj1 || !obj2) return;
 	for (const key in obj1) {
 		const newPath = path.concat(key);
@@ -424,6 +431,7 @@ declare global {
 	interface Window {
 		Module: {
 			decompress: (arrayBuffer: ArrayBuffer) => Uint8Array;
+			onRuntimeInitialized?: () => void;
 		};
 	}
 }
@@ -437,10 +445,11 @@ async function getFontArrayBuffer(file_url: string) {
 			);
 		if (!window.Module) {
 			const path = "https://unpkg.com/wawoff2@2.0.1/build/decompress_binding.js";
+			// @ts-ignore
 			const init = new Promise((done) => (window.Module = { onRuntimeInitialized: done }));
 			await loadScript(path).then(() => init);
 		}
-		return Uint8Array.from(Module.decompress(arrayBuffer)).buffer;
+		return Uint8Array.from(window.Module.decompress(arrayBuffer)).buffer;
 	}
 	return arrayBuffer;
 }
