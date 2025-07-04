@@ -96,7 +96,6 @@ import LoadingIcon from "@/components/Icons/Loading.vue";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
-import { isCSSVariable } from "@/utils/cssVariables";
 import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
 import { useBlockEventHandlers } from "@/utils/useBlockEventHandlers";
 import { useBlockSelection } from "@/utils/useBlockSelection";
@@ -114,16 +113,7 @@ import FitScreenIcon from "./Icons/FitScreen.vue";
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 
-const { cssVariables, resolveTokenValue } = useStyleToken();
-
-const canvasStyles = computed(() => {
-	const styles: Record<string, string> = {};
-	if (canvasProps.background) {
-		const bg = canvasProps.background;
-		styles.background = isCSSVariable(bg) ? resolveTokenValue(bg) : bg;
-	}
-	return styles;
-});
+const { cssVariables } = useStyleToken();
 
 const resizingBlock = ref(false);
 const canvasContainer = ref(null) as Ref<HTMLElement | null>;

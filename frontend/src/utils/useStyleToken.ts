@@ -2,13 +2,11 @@ import styleTokenStore from "@/data/styleTokens";
 import { StyleToken } from "@/types/Builder/StyleToken";
 import { toKebabCase } from "@/utils/helpers";
 import { computed, ComputedRef, ref } from "vue";
-import { createStyleTokenVariable, getStyleTokenValue } from "./cssVariables";
 
 interface StyleTokenComposable {
 	cssVariables: ComputedRef<Record<string, string>>;
-	resolveTokenValue: (value: CSSVariableValue) => string;
+	resolveTokenValue: (value: CSSVariableName) => string;
 	getTokenByName: (name: string) => StyleToken | undefined;
-	createTokenVariable: (name: string) => string;
 	createToken: (token: Partial<StyleToken>) => Promise<void>;
 	updateToken: (token: Partial<StyleToken>) => Promise<void>;
 	deleteToken: (name: string) => Promise<void>;
@@ -24,7 +22,6 @@ export const defaultToken: Partial<StyleToken> = {
 let instance: StyleTokenComposable | null = null;
 
 export function useStyleToken(): StyleTokenComposable {
-	// Singleton pattern: return existing instance if already created
 	if (instance) return instance;
 
 	const isLoading = ref(false);
@@ -40,22 +37,28 @@ export function useStyleToken(): StyleTokenComposable {
 		}, {});
 	});
 
-	const resolveTokenValue = (value: CSSVariableValue): string => {
-		const token = styleTokenStore.data.find((t: StyleToken) => t.value === value);
-		if (token) {
-			return getStyleTokenValue(token);
+	const resolveTokenValue = (value: CSSVariableName): string => {
+		if (typeof value === "string" && value.startsWith("#")) {
+			return value;
 		}
-		return value;
+		let variableName = value;
+		if (typeof variableName === "string") {
+			if (variableName.startsWith("var(--")) {
+				const match = variableName.match(/^var\(\s*([^) ,]+)[^)]*\)/);
+				if (match) {
+					variableName = match[1];
+				}
+			} else if (variableName.startsWith("--")) {
+				// keep as is
+			} else {
+				variableName = `--${toKebabCase(variableName)}`;
+			}
+		}
+		return cssVariables.value[variableName] ?? value;
 	};
 
 	const getTokenByName = (name: string): StyleToken | undefined => {
 		return styleTokenStore.data.find((token: StyleToken) => token.token_name === name);
-	};
-
-	const createTokenVariable = (name: string): string => {
-		const token = getTokenByName(name);
-		if (!token) return "";
-		return createStyleTokenVariable(token);
 	};
 
 	const createToken = async (token: Partial<StyleToken>): Promise<void> => {
@@ -101,7 +104,6 @@ export function useStyleToken(): StyleTokenComposable {
 		cssVariables,
 		resolveTokenValue,
 		getTokenByName,
-		createTokenVariable,
 		createToken,
 		updateToken,
 		deleteToken,

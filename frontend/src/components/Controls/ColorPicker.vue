@@ -90,13 +90,15 @@
 <script setup lang="ts">
 import EyeDropperIcon from "@/components/Icons/EyeDropper.vue";
 import useCanvasStore from "@/stores/canvasStore";
-import { getCSSVariableValue } from "@/utils/cssVariables";
 import { HSVToHex, HexToHSV, getRGB } from "@/utils/helpers";
+import { useStyleToken } from "@/utils/useStyleToken";
 import { clamp, useEyeDropper } from "@vueuse/core";
 import { Popover } from "frappe-ui";
 import { Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
 
 type CSSColorValue = HashString | RGBString | `var(--${string})`;
+
+const { resolveTokenValue } = useStyleToken();
 
 const canvasStore = useCanvasStore();
 const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;
@@ -124,7 +126,7 @@ const props = withDefaults(
 const modelColor = computed(() => {
 	const color = props.modelValue;
 	if (!color) return null;
-	const resolvedColor = getCSSVariableValue(color);
+	const resolvedColor = resolveTokenValue(color);
 	return getRGB(resolvedColor);
 });
 
@@ -227,7 +229,7 @@ function setSelectorPosition(color: HashString | null) {
 		hueSelectorPosition.value = { x: 0, y: 0 };
 		return;
 	}
-	const resolvedColor = getCSSVariableValue(color);
+	const resolvedColor = resolveTokenValue(color);
 	console.log("Setting color selector position for:", resolvedColor);
 	nextTick(() => {
 		setColorSelectorPosition(resolvedColor);
