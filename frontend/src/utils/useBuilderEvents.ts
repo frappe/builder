@@ -6,21 +6,19 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 
+import { copyBuilderBlocks, pasteBuilderBlocks } from "@/utils/builderBlockCopyPaste";
 import {
 	addPxToNumber,
-	copyToClipboard,
-	detachBlockFromComponent,
 	getBlockCopy,
-	getCopyWithoutParent,
 	isCtrlOrCmd,
 	isHTMLString,
-	isJSONString,
 	isTargetEditable,
+	showDialog,
+	triggerCopyEvent,
 	uploadImage,
 } from "@/utils/helpers";
 import { useEventListener, useStorage } from "@vueuse/core";
@@ -96,58 +94,7 @@ export function useBuilderEvents(
 			return;
 		}
 
-		const data = e.clipboardData?.getData("builder-copied-blocks") as string;
-		// paste blocks directly
-		if (data && isJSONString(data)) {
-			const dataObj = JSON.parse(data) as { blocks: Block[]; components: BuilderComponent[] };
-
-			for (const component of dataObj.components) {
-				delete component.for_web_page;
-				await componentStore.createComponent(component, false);
-			}
-
-			if (
-				blockController.isBlockSelected() &&
-				!blockController.multipleBlocksSelected() &&
-				dataObj.blocks.length === 1
-			) {
-				// replace svg with copied svg
-				const selectedBlock = blockController.getSelectedBlocks()[0];
-				const copiedBlock = getBlockCopy(dataObj.blocks[0]);
-				if (selectedBlock.isSVG() && copiedBlock.isSVG()) {
-					const svgBlock = copiedBlock;
-					console.log(svgBlock);
-					if (!svgBlock.innerHTML) return;
-					const svgContent = new DOMParser()
-						.parseFromString(svgBlock.innerHTML, "text/html")
-						.body.querySelector("svg");
-					console.log(svgContent);
-					if (svgContent) {
-						svgContent.removeAttribute("width");
-						svgContent.removeAttribute("height");
-						selectedBlock.setInnerHTML(svgContent.outerHTML);
-						return;
-					}
-				}
-			}
-
-			if (canvasStore.activeCanvas?.selectedBlocks.length && dataObj.blocks[0].blockId !== "root") {
-				let parentBlock = canvasStore.activeCanvas.selectedBlocks[0];
-				while (parentBlock && !parentBlock.canHaveChildren()) {
-					parentBlock = parentBlock.getParentBlock() as Block;
-				}
-				dataObj.blocks.forEach((block: BlockOptions) => {
-					parentBlock.addChild(getBlockCopy(block), null, true);
-				});
-			} else {
-				canvasStore.pushBlocks(dataObj.blocks);
-			}
-
-			// check if data is from builder and a list of blocks and components
-			// if yes then create components and then blocks
-
-			return;
-		}
+		await pasteBuilderBlocks(e, window.location.origin);
 
 		let text = e.clipboardData?.getData("text/plain") as string;
 		if (!text) {
@@ -485,31 +432,39 @@ const clearSelection = () => {
 
 const copySelectedBlocksToClipboard = (e: ClipboardEvent) => {
 	if (isTargetEditable(e)) return;
-	if (canvasStore.activeCanvas?.selectedBlocks.length) {
-		e.preventDefault();
-		const componentDocuments: BuilderComponent[] = [];
-		for (const block of canvasStore.activeCanvas?.selectedBlocks) {
-			const components = block.getUsedComponentNames();
-			for (const componentName of components) {
-				const component = componentStore.getComponent(componentName);
-				if (component) {
-					componentDocuments.push(component);
-				}
-			}
-		}
-
-		const blocksToCopy = canvasStore.activeCanvas?.selectedBlocks.map((block) => {
-			if (!Boolean(block.extendedFromComponent) && block.isChildOfComponent) {
-				return detachBlockFromComponent(block, null);
-			}
-			return getCopyWithoutParent(block);
+	if (
+		canvasStore.activeCanvas?.selectedBlocks.length === 1 &&
+		canvasStore.activeCanvas.selectedBlocks[0].isRoot() &&
+		canvasStore.requiresConfirmationForCopyingEntirePage
+	) {
+		// Handle dialog first and wait for response
+		showDialog({
+			title: "Copy entire page?",
+			message: "Do you want to copy the entire page including settings and scripts?",
+			actions: [
+				{
+					label: "Yes",
+					variant: "solid",
+					onClick: () => {
+						canvasStore.requiresConfirmationForCopyingEntirePage = false;
+						canvasStore.copyEntirePage = true;
+						triggerCopyEvent();
+					},
+				},
+				{
+					label: "No, just blocks",
+					variant: "subtle",
+					onClick: () => {
+						canvasStore.requiresConfirmationForCopyingEntirePage = false;
+						canvasStore.copyEntirePage = false;
+						triggerCopyEvent();
+					},
+				},
+			],
+			size: "md",
 		});
-
-		// just copy non components
-		const dataToCopy = {
-			blocks: blocksToCopy,
-			components: componentDocuments,
-		};
-		copyToClipboard(dataToCopy, e, "builder-copied-blocks");
+	} else {
+		copyBuilderBlocks(e, window.location.origin, canvasStore.copyEntirePage);
+		canvasStore.requiresConfirmationForCopyingEntirePage = true;
 	}
 };
