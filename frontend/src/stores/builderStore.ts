@@ -5,6 +5,7 @@ import RealTimeHandler from "@/utils/realtimeHandler";
 import { useStorage } from "@vueuse/core";
 import { defineStore } from "pinia";
 import { toast } from "vue-sonner";
+import type Dialog from "../components/Controls/Dialog.vue";
 import BlockLayers from "./components/BlockLayers.vue";
 
 declare global {
@@ -16,6 +17,7 @@ declare global {
 const useBuilderStore = defineStore("builderStore", {
 	state: () => ({
 		activeLayers: <InstanceType<typeof BlockLayers> | null>null,
+		appDialogs: <(typeof Dialog)[]>[],
 		blockContextMenu: <InstanceType<typeof BlockContextMenu> | null>null,
 		propertyFilter: <string | null>null,
 		mode: <BuilderMode>"select", // check setEvents in BuilderCanvas for usage
