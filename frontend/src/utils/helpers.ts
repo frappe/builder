@@ -1,11 +1,13 @@
 import Block from "@/block";
 import AlertDialog from "@/components/AlertDialog.vue";
+import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { confirmDialog, FileUploadHandler } from "frappe-ui";
-import { h, reactive, toRaw } from "vue";
+import { defineComponent, h, markRaw, reactive, ref, toRaw } from "vue";
 import { toast } from "vue-sonner";
+import Dialog from "../components/Controls/Dialog.vue";
 
 function getNumberFromPx(px: string | number | null | undefined): number {
 	if (!px) {
@@ -800,6 +802,83 @@ function getBoxSpacing(
 	return `${sTop} ${sRight} ${sBottom} ${sLeft}`;
 }
 
+interface DialogAction {
+	label: string;
+	variant?: "solid" | "subtle" | "outline" | "ghost";
+	theme?: "gray" | "blue" | "green" | "red";
+	onClick?: () => void | Promise<void>;
+}
+
+interface DialogOptions {
+	title?: string;
+	message: string;
+	icon?: {
+		name: string;
+		appearance?: "warning" | "info" | "danger" | "success";
+	};
+	actions?: DialogAction[];
+	size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl" | "6xl" | "7xl";
+}
+
+function showDialog(options: DialogOptions): Promise<void> {
+	return new Promise((resolve) => {
+		const isOpen = ref(true);
+		const dialogOptions = {
+			title: options.title || "",
+			message: options.message,
+			icon: options.icon,
+			size: options.size || "md",
+			actions: (options.actions || []).map((action) => ({
+				label: action.label,
+				variant: action.variant || "subtle",
+				theme: action.theme || "gray",
+				onClick: async ({ close }: { close: () => void }) => {
+					if (action.onClick) {
+						await action.onClick();
+					}
+					close();
+				},
+			})),
+		};
+
+		const DialogComponent = markRaw(
+			defineComponent({
+				name: "DynamicDialog",
+				setup() {
+					const handleClose = () => {
+						isOpen.value = false;
+						// Remove dialog from appDialogs after animation
+						setTimeout(() => {
+							const builderStore = useBuilderStore();
+							const index = builderStore.appDialogs.indexOf(DialogComponent);
+							if (index > -1) {
+								builderStore.appDialogs.splice(index, 1);
+							}
+							resolve();
+						}, 200);
+					};
+
+					return () =>
+						h(Dialog, {
+							modelValue: isOpen.value,
+							"onUpdate:modelValue": (val: boolean) => {
+								isOpen.value = val;
+								if (!val) handleClose();
+							},
+							options: dialogOptions,
+						});
+				},
+			}),
+		) as typeof Dialog;
+
+		const builderStore = useBuilderStore();
+		builderStore.appDialogs.push(DialogComponent);
+	});
+}
+
+function triggerCopyEvent() {
+	document.execCommand("copy");
+}
 export {
 	addPxToNumber,
 	alert,
@@ -844,8 +923,10 @@ export {
 	RGBToHex,
 	setBoxSpacing,
 	shortenNumber,
+	showDialog,
 	stripExtension,
 	throttle,
 	toKebabCase,
+	triggerCopyEvent,
 	uploadImage,
 };
