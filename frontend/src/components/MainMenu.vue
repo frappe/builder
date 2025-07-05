@@ -18,6 +18,12 @@
 						icon: 'plus',
 					},
 					{
+						label: 'Copy To Clipboard',
+						onClick: handleCopyPage,
+						icon: 'clipboard',
+						condition: () => Boolean(pageStore.activePage),
+					},
+					{
 						label: 'Duplicate Page',
 						onClick: () => pageStore.duplicatePage(pageStore.activePage as BuilderPage),
 						icon: 'copy',
@@ -70,8 +76,11 @@
 	</Dropdown>
 </template>
 <script setup lang="ts">
+import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { triggerCopyEvent } from "@/utils/helpers";
+
 import { useDark, useToggle } from "@vueuse/core";
 import { Dropdown } from "frappe-ui";
 
@@ -80,4 +89,12 @@ const isDark = useDark({
 	attribute: "data-theme",
 });
 const toggleDark = useToggle(isDark);
+const canvasStore = useCanvasStore();
+
+const handleCopyPage = () => {
+	if (!pageStore.activePage) return;
+	canvasStore.copyEntirePage = true;
+	canvasStore.requiresConfirmationForCopyingEntirePage = false;
+	triggerCopyEvent();
+};
 </script>

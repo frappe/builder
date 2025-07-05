@@ -154,7 +154,7 @@ const useComponentStore = defineStore("componentStore", {
 						block: obj.block,
 					});
 				} else {
-					console.log("Skipping component update", obj.name, existingComponent, newComponent);
+					console.log("Skipping component update", obj.name);
 					return;
 				}
 			}
