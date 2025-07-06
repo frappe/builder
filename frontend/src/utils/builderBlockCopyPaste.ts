@@ -309,7 +309,7 @@ function updateURLsInBlock(block: Block, currentSiteURL: string): void {
 	// Update image and video sources to absolute URLs
 	if (block.isImage() || block.isVideo()) {
 		const src = block.getAttribute("src");
-		if (src && typeof src === "string" && !src.startsWith("http")) {
+		if (src && typeof src === "string" && src.startsWith("/")) {
 			block.setAttribute("src", `${currentSiteURL}${src}`);
 		}
 	}
@@ -319,7 +319,7 @@ function updateURLsInBlock(block: Block, currentSiteURL: string): void {
 		const bgSrc = block.getStyle("backgroundImage");
 		if (bgSrc && typeof bgSrc === "string" && bgSrc.startsWith("url(")) {
 			const urlMatch = bgSrc.match(/url\(["']?([^"']+)["']?\)/);
-			if (urlMatch && urlMatch[1] && !urlMatch[1].startsWith("http")) {
+			if (urlMatch && urlMatch[1] && urlMatch[1].startsWith("/")) {
 				block.setStyle("backgroundImage", `url(${currentSiteURL}${urlMatch[1]})`);
 			}
 		}
