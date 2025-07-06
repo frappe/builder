@@ -263,7 +263,7 @@ async function handlePageScripts(clipboardData: BuilderClipboardData, currentSit
 
 	const pageScriptIdMap = new Map<string, string>();
 	for (const script of clipboardData.pageScripts || []) {
-		const newScriptId = generateHash(script.name, clipboardData.sourceURL);
+		const newScriptId = generateHash(script.name, clipboardData.sourceURL, true);
 		pageScriptIdMap.set(script.name, newScriptId);
 
 		const scriptDoc: BuilderClientScriptDocument = {
@@ -275,9 +275,14 @@ async function handlePageScripts(clipboardData: BuilderClipboardData, currentSit
 			doctype: "Builder Client Script",
 		});
 		try {
-			console.log("Inserting script", scriptDoc);
 			await clientScriptResource.insert.submit(scriptDoc);
-		} catch (error) {
+		} catch (error: { response?: { status: number } } | any) {
+			if (error?.response?.status === 409) {
+				// If script already exists, update it
+				await clientScriptResource.setValue.submit(scriptDoc);
+			} else {
+				console.error("Error inserting client script:", error);
+			}
 			// pass
 		}
 
@@ -289,6 +294,7 @@ async function handlePageScripts(clipboardData: BuilderClipboardData, currentSit
 }
 
 function updateBlockComponentReferences(block: BlockOptions, componentIdMap: Map<string, string>): void {
+	if (!componentIdMap.size) return;
 	if (block.extendedFromComponent && componentIdMap.has(block.extendedFromComponent)) {
 		block.extendedFromComponent = componentIdMap.get(block.extendedFromComponent);
 	}
@@ -331,16 +337,25 @@ function updateURLsInBlock(block: Block, currentSiteURL: string): void {
 	block.children.forEach((child) => updateURLsInBlock(child, currentSiteURL));
 }
 
-function generateHash(componentId: string, siteURL: string): string {
-	// Generate a deterministic hash with the same length as componentId, using siteURL for uniqueness
-	const str = `${componentId}_${siteURL}`;
-	let hash = 5381;
-	for (let i = 0; i < str.length; i++) {
-		hash = (hash << 5) + hash + str.charCodeAt(i); // djb2 hash
+function generateHash(initialId: string, siteURL: string, appendHash = false): string {
+	if (!appendHash) {
+		// Original behavior: Generate a deterministic hash with the same length as initialId
+		const str = `${initialId}_${siteURL}`;
+		let hash = 5381;
+		for (let i = 0; i < str.length; i++) {
+			hash = (hash << 5) + hash + str.charCodeAt(i); // djb2 hash
+		}
+		const hashStr = Math.abs(hash).toString(36);
+		const targetLength = initialId.length;
+		return hashStr.repeat(Math.ceil(targetLength / hashStr.length)).slice(0, targetLength);
+	} else {
+		// New behavior: Retain initialId and append a short hash
+		const str = `${initialId}_${siteURL}`;
+		let hash = 5381;
+		for (let i = 0; i < str.length; i++) {
+			hash = (hash << 5) + hash + str.charCodeAt(i);
+		}
+		const shortHash = Math.abs(hash).toString(36).slice(0, 8);
+		return `${initialId}_${shortHash}`;
 	}
-	const hashStr = Math.abs(hash).toString(36);
-	// Pad or trim the hash to match the original componentId length
-	const targetLength = componentId.length;
-	const padded = hashStr.repeat(Math.ceil(targetLength / hashStr.length)).slice(0, targetLength);
-	return padded;
 }
