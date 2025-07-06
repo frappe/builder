@@ -21,7 +21,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { confirm, detachBlockFromComponent, getBlockCopy } from "@/utils/helpers";
+import { confirm, detachBlockFromComponent, getBlockCopy, triggerCopyEvent } from "@/utils/helpers";
 import { vOnClickOutside } from "@vueuse/components";
 import { useStorage } from "@vueuse/core";
 import { Ref, nextTick, ref } from "vue";
@@ -87,7 +87,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		},
 		condition: () => block.value.isHTML(),
 	},
-	{ label: "Copy", action: () => document.execCommand("copy") },
+	{ label: "Copy", action: () => triggerCopyEvent() },
 	{ label: "Copy Style", action: copyStyle },
 	{
 		label: "Paste Style",
