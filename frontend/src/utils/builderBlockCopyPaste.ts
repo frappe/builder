@@ -250,13 +250,6 @@ async function insertBlocks(blocks: (Block | BlockOptions)[]) {
 }
 
 async function handlePageScripts(clipboardData: BuilderClipboardData, currentSiteURL: string): Promise<void> {
-	console.log(
-		"Handling page scripts",
-		clipboardData.pageScripts,
-		clipboardData.sourceURL,
-		currentSiteURL,
-		clipboardData.pageDoc,
-	);
 	if (!clipboardData.pageDoc || !clipboardData.sourceURL || clipboardData.sourceURL === currentSiteURL) {
 		return;
 	}
