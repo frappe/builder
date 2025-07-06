@@ -18,7 +18,7 @@
 						icon: 'plus',
 					},
 					{
-						label: 'Copy To Clipboard',
+						label: 'Copy Page',
 						onClick: handleCopyPage,
 						icon: 'clipboard',
 						condition: () => Boolean(pageStore.activePage),
