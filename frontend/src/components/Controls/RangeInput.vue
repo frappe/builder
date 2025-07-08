@@ -1,6 +1,6 @@
 <template>
 	<div class="flex items-center gap-2">
-		<InputLabel>{{ label }}</InputLabel>
+		<InputLabel v-if="label">{{ label }}</InputLabel>
 		<BuilderInput
 			:modelValue="modelValue"
 			:hideClearButton="true"
@@ -8,6 +8,8 @@
 			:min="min"
 			:max="max"
 			:step="step"
+			@focus="$emit('focus')"
+			@blur="$emit('blur')"
 			@input="$emit('update:modelValue', $event)"></BuilderInput>
 		<input
 			type="range"
@@ -15,6 +17,9 @@
 			:min="min"
 			:step="step"
 			:value="modelValue"
+			:placeholder="placeholder"
+			@focus="$emit('focus')"
+			@blur="$emit('blur')"
 			@input="(ev: Event) => $emit('update:modelValue', (ev.target as HTMLInputElement).value)"
 			ref="inputRef"
 			class="range-input" />
@@ -29,8 +34,9 @@ const props = defineProps<{
 	min?: number;
 	max?: number;
 	step?: number;
+	placeholder?: string;
 }>();
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue", "focus", "blur"]);
 const inputRef = ref<HTMLInputElement | null>(null);
 async function updatePercent() {
 	await nextTick();

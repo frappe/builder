@@ -5,11 +5,13 @@
 			:class="{
 				'cursor-ns-resize': enableSlider,
 			}"
+			class="w-[88px] shrink-0"
 			:description="description"
 			@mousedown="handleMouseDown">
 			{{ label }}
 		</InputLabel>
 		<BuilderInput
+			class="w-full"
 			:type="type"
 			:placeholder="placeholder"
 			:modelValue="modelValue"

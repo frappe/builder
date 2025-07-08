@@ -8,6 +8,7 @@
 		<UseDark attribute="data-theme"></UseDark>
 		<Toaster :theme="isDark ? 'dark' : 'light'" richColors />
 		<Dialogs></Dialogs>
+		<component v-for="dialog in builderStore.appDialogs" :is="dialog"></component>
 	</div>
 </template>
 <script setup lang="ts">
