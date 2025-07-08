@@ -36,6 +36,16 @@
 				<BuilderAssets class="mt-1 p-4 pt-3" />
 			</div>
 			<div v-show="builderStore.leftPanelActiveTab === 'Layers'" class="p-3 pr-0">
+				<span class="flex items-center gap-2 py-1 pb-2 text-sm capitalize text-ink-gray-4">
+					<FeatherIcon
+						:name="
+							canvasStore.activeCanvas?.canvasProps.breakpoints.find(
+								(b) => b.device === canvasStore.activeCanvas?.activeBreakpoint,
+							)?.icon || 'monitor'
+						"
+						class="size-3" />
+					{{ canvasStore.activeCanvas?.activeBreakpoint }}
+				</span>
 				<BlockLayers
 					class="block-layers w-fit min-w-full pr-3"
 					v-if="pageCanvas"
