@@ -19,6 +19,22 @@ const transitionSectionProperties = [
 				],
 			};
 		},
+		events: {
+			"update:modelValue": (val: string) => {
+				blockController.setStyle("transitionDuration", val);
+				if (val) {
+					if (!blockController.getStyle("transitionTimingFunction")) {
+						blockController.setStyle("transitionTimingFunction", "ease");
+					}
+					if (!blockController.getStyle("transitionProperty")) {
+						blockController.setStyle("transitionProperty", "all");
+					}
+				} else {
+					blockController.setStyle("transitionTimingFunction", null);
+					blockController.setStyle("transitionProperty", null);
+				}
+			},
+		},
 		searchKeyWords: "Transition, Duration, Speed, Animation Time",
 	},
 	{
