@@ -105,6 +105,9 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 
 	CONVERTIBLE_IMAGE_EXTENSIONS = ["png", "jpeg", "jpg"]
 
+	def is_external_image(image_url):
+		return image_url.startswith("http") or image_url.startswith("https")
+
 	def can_convert_image(extn):
 		return extn.lower() in CONVERTIBLE_IMAGE_EXTENSIONS
 
@@ -142,7 +145,7 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 		image = Image.open(BytesIO(response.content))
 		filename = image_url.split("/")[-1]
 		extn = get_extension(filename)
-		if can_convert_image(extn):
+		if can_convert_image(extn) or is_external_image(image_url):
 			_file = frappe.get_doc(
 				{
 					"doctype": "File",
