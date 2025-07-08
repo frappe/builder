@@ -12,7 +12,7 @@
 				:isOpen="isOpen"></slot>
 		</template>
 		<template #body="{ close }">
-			<div ref="colorPicker" class="rounded-lg bg-surface-white p-3 shadow-lg">
+			<div ref="colorPicker" class="flex flex-col gap-2 rounded-lg bg-surface-white p-3 shadow-lg">
 				<div
 					ref="colorMap"
 					:style="{
@@ -42,7 +42,7 @@
 				</div>
 				<div
 					ref="hueMap"
-					class="relative m-auto mt-2 h-3 w-44 rounded-md"
+					class="relative m-auto h-3 w-44 rounded-md"
 					@click="setHue"
 					@mousedown.prevent="handleHueSelectorMove"
 					:style="{
@@ -66,7 +66,7 @@
 						}"></div>
 				</div>
 				<div ref="colorPalette">
-					<div class="mt-3 flex flex-wrap gap-1.5">
+					<div class="flex flex-wrap gap-1.5">
 						<div
 							v-for="color in colors"
 							:key="color"
@@ -83,6 +83,22 @@
 						<EyeDropperIcon v-if="isSupported" class="text-ink-gray-7" @click="() => open()" />
 					</div>
 				</div>
+				<Input
+					v-if="showInput"
+					type="text"
+					:modelValue="modelValue"
+					class="mt-2 w-44 text-sm"
+					placeholder="Set Color"
+					@update:modelValue="
+						(color: HashString) => {
+							if (!color) {
+								emit('update:modelValue', null);
+								return;
+							}
+							setSelectorPosition(color);
+							updateColor();
+						}
+					" />
 			</div>
 		</template>
 	</Popover>
@@ -114,12 +130,12 @@ const { isSupported, sRGBHex, open } = useEyeDropper();
 
 const props = withDefaults(
 	defineProps<{
-		modelValue?: CSSColorValue | null;
-		placement?: string;
+		modelValue?: HashString | RGBString | null;
+		showInput?: boolean;
 	}>(),
 	{
 		modelValue: null,
-		placement: "left",
+		showInput: false,
 	},
 );
 
