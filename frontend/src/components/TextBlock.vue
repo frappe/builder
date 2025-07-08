@@ -23,18 +23,7 @@
 			}"
 			v-if="editor"
 			class="z-50 rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-ink-gray-9 shadow-2xl"
-			:should-show="
-				() => {
-					if (showColorPicker) return true;
-					return Boolean(
-						editor?.isActive('bold') ||
-							editor?.isActive('italic') ||
-							editor?.isActive('strike') ||
-							editor?.isActive('link') ||
-							editor?.isActive('textStyle'),
-					);
-				}
-			">
+			:should-show="() => true">
 			<div
 				v-if="settingLink"
 				class="flex flex-col gap-2 p-1"
@@ -67,37 +56,7 @@
 					v-model="openInNewTab"
 					@change="() => setLink(textLink, false)"></Input>
 			</div>
-			<div v-else-if="showColorPicker" class="p-1">
-				<ColorPicker
-					:modelValue="selectedColor"
-					@update:modelValue="setTextColor"
-					:appendTo="overlayElement"
-					popoverClass="!min-w-fit">
-					<template #target="{ togglePopover, isOpen }">
-						<div class="flex items-center gap-2">
-							<div
-								class="h-5 w-5 shrink-0 cursor-pointer rounded-full border border-outline-gray-3"
-								:style="{ backgroundColor: selectedColor }"
-								@click="togglePopover()" />
-							<Input
-								type="text"
-								:modelValue="selectedColor"
-								class="!w-32 text-sm"
-								@update:modelValue="setTextColor" />
-							<button
-								class="rounded bg-surface-gray-3 p-2 text-sm hover:bg-surface-gray-2"
-								@click="
-									() => {
-										showColorPicker = false;
-									}
-								">
-								<FeatherIcon class="size-3" name="x" :stroke-width="2" />
-							</button>
-						</div>
-					</template>
-				</ColorPicker>
-			</div>
-			<div v-show="!settingLink && !showColorPicker" class="flex gap-1">
+			<div v-show="!settingLink" class="flex gap-1">
 				<button
 					@click="setHeading(1)"
 					class="rounded px-2 py-1 text-sm hover:bg-surface-gray-2"
@@ -150,24 +109,41 @@
 					:class="{ 'bg-surface-gray-3': editor.isActive('link') }">
 					<FeatherIcon class="h-3 w-3" name="link" :stroke-width="2" />
 				</button>
-				<button
+				<ColorPicker
+					:modelValue="selectedColor"
+					@update:modelValue="setTextColor"
+					:show-input="true"
+					placement="top"
+					:appendTo="overlayElement"
 					v-show="!block.isHeader()"
-					@click="
-						() => {
-							console.log('showColorPicker', showColorPicker);
-							showColorPicker = true;
-						}
-					"
-					class="rounded px-2 py-1 hover:bg-surface-gray-2">
-					<div
-						class="h-4 w-4 rounded shadow-sm"
-						:style="{
-							background:
-								editor?.isActive('textStyle') && editor?.getAttributes('textStyle').color
-									? editor?.getAttributes('textStyle').color
-									: `url(/assets/builder/images/color-circle.png) center / contain`,
-						}"></div>
-				</button>
+					popoverClass="!min-w-fit !mb-3">
+					<template #target="{ togglePopover, isOpen }">
+						<button v-show="!block.isHeader()" class="rounded px-2 py-1 hover:bg-surface-gray-2">
+							<div class="p-1">
+								<div
+									class="h-4 w-4 rounded shadow-sm"
+									@click="
+										() => {
+											togglePopover();
+										}
+									"
+									:style="{
+										background:
+											editor?.isActive('textStyle') && editor?.getAttributes('textStyle').color
+												? editor?.getAttributes('textStyle').color
+												: `url(/assets/builder/images/color-circle.png) center / contain`,
+									}"></div>
+							</div>
+						</button>
+					</template>
+					<template>
+						<Input
+							type="text"
+							:modelValue="selectedColor"
+							class="!w-32 text-sm"
+							@update:modelValue="setTextColor" />
+					</template>
+				</ColorPicker>
 			</div>
 		</bubble-menu>
 		<editor-content
@@ -230,7 +206,6 @@ const dataChanged = ref(false);
 const settingLink = ref(false);
 const textLink = ref("");
 const openInNewTab = ref(false);
-const showColorPicker = ref(false);
 const linkInput = ref(null) as Ref<typeof Input | null>;
 const component = ref(null) as Ref<HTMLElement | null>;
 const overlayElement = document.querySelector("#overlay") as HTMLElement;
@@ -241,7 +216,6 @@ const selectedColor = computed(() => {
 	if (editor.value?.isActive("textStyle")) {
 		return editor.value.getAttributes("textStyle").color || "#000000";
 	}
-	return "#000000";
 });
 
 const props = withDefaults(
