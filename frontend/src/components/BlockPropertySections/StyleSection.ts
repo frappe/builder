@@ -1,6 +1,7 @@
 import BackgroundHandler from "@/components/BackgroundHandler.vue";
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import blockController from "@/utils/blockController";
+import { computed } from "vue";
 import RangeInput from "../Controls/RangeInput.vue";
 import StyleControl from "../Controls/StyleControl.vue";
 
@@ -60,12 +61,12 @@ const styleSectionProperties = [
 				styleProperty: "color",
 				component: ColorInput,
 				label: "Text Color",
+				enableState: computed(() => {
+					return !blockController.getFirstSelectedBlock()?.getEditor();
+				}),
 			};
 		},
 		searchKeyWords: "Text, Color, TextColor, Text Color",
-		events: {
-			"update:modelValue": (val: string) => blockController.setTextColor(val),
-		},
 	},
 	{
 		component: StyleControl,

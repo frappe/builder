@@ -6,6 +6,7 @@
 			:editor="editor"
 			:tippy-options="{
 				appendTo: overlayElement,
+				interactive: true,
 				onCreate: (instance) => {
 					watch(
 						() => canvasProps,
@@ -21,7 +22,19 @@
 				},
 			}"
 			v-if="editor"
-			class="z-50 rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-ink-gray-9 shadow-2xl">
+			class="z-50 rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-ink-gray-9 shadow-2xl"
+			:should-show="
+				() => {
+					if (showColorPicker) return true;
+					return Boolean(
+						editor?.isActive('bold') ||
+							editor?.isActive('italic') ||
+							editor?.isActive('strike') ||
+							editor?.isActive('link') ||
+							editor?.isActive('textStyle'),
+					);
+				}
+			">
 			<div
 				v-if="settingLink"
 				class="flex flex-col gap-2 p-1"
@@ -54,7 +67,37 @@
 					v-model="openInNewTab"
 					@change="() => setLink(textLink, false)"></Input>
 			</div>
-			<div v-show="!settingLink" class="flex gap-1">
+			<div v-else-if="showColorPicker" class="p-1">
+				<ColorPicker
+					:modelValue="selectedColor"
+					@update:modelValue="setTextColor"
+					:appendTo="overlayElement"
+					popoverClass="!min-w-fit">
+					<template #target="{ togglePopover, isOpen }">
+						<div class="flex items-center gap-2">
+							<div
+								class="h-5 w-5 shrink-0 cursor-pointer rounded-full border border-outline-gray-3"
+								:style="{ backgroundColor: selectedColor }"
+								@click="togglePopover()" />
+							<Input
+								type="text"
+								:modelValue="selectedColor"
+								class="!w-32 text-sm"
+								@update:modelValue="setTextColor" />
+							<button
+								class="rounded bg-surface-gray-3 p-2 text-sm hover:bg-surface-gray-2"
+								@click="
+									() => {
+										showColorPicker = false;
+									}
+								">
+								<FeatherIcon class="size-3" name="x" :stroke-width="2" />
+							</button>
+						</div>
+					</template>
+				</ColorPicker>
+			</div>
+			<div v-show="!settingLink && !showColorPicker" class="flex gap-1">
 				<button
 					@click="setHeading(1)"
 					class="rounded px-2 py-1 text-sm hover:bg-surface-gray-2"
@@ -94,6 +137,7 @@
 					:class="{ 'bg-surface-gray-3': editor.isActive('strike') }">
 					<StrikeThroughIcon />
 				</button>
+
 				<button
 					v-show="!block.isHeader() && !block.isLink() && !block.isButton()"
 					@click="
@@ -105,6 +149,24 @@
 					class="rounded px-2 py-1 hover:bg-surface-gray-2"
 					:class="{ 'bg-surface-gray-3': editor.isActive('link') }">
 					<FeatherIcon class="h-3 w-3" name="link" :stroke-width="2" />
+				</button>
+				<button
+					v-show="!block.isHeader()"
+					@click="
+						() => {
+							console.log('showColorPicker', showColorPicker);
+							showColorPicker = true;
+						}
+					"
+					class="rounded px-2 py-1 hover:bg-surface-gray-2">
+					<div
+						class="h-4 w-4 rounded shadow-sm"
+						:style="{
+							background:
+								editor?.isActive('textStyle') && editor?.getAttributes('textStyle').color
+									? editor?.getAttributes('textStyle').color
+									: `url(/assets/builder/images/color-circle.png) center / contain`,
+						}"></div>
 				</button>
 			</div>
 		</bubble-menu>
@@ -142,6 +204,7 @@
 
 <script setup lang="ts">
 import type Block from "@/block";
+import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import Input from "@/components/Controls/Input.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
@@ -155,6 +218,7 @@ import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { BubbleMenu, Editor, EditorContent, Extension } from "@tiptap/vue-3";
 import { vOnClickOutside } from "@vueuse/components";
+import { debounce } from "frappe-ui";
 import { Plugin, PluginKey } from "prosemirror-state";
 import { Ref, computed, inject, nextTick, onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
 import { toast } from "vue-sonner";
@@ -166,11 +230,19 @@ const dataChanged = ref(false);
 const settingLink = ref(false);
 const textLink = ref("");
 const openInNewTab = ref(false);
+const showColorPicker = ref(false);
 const linkInput = ref(null) as Ref<typeof Input | null>;
 const component = ref(null) as Ref<HTMLElement | null>;
 const overlayElement = document.querySelector("#overlay") as HTMLElement;
 let editor: Ref<Editor | null> = ref(null);
 let selectionTriggered = false as boolean;
+
+const selectedColor = computed(() => {
+	if (editor.value?.isActive("textStyle")) {
+		return editor.value.getAttributes("textStyle").color || "#000000";
+	}
+	return "#000000";
+});
 
 const props = withDefaults(
 	defineProps<{
@@ -430,6 +502,30 @@ const handleClick = (e: MouseEvent) => {
 		e.stopPropagation();
 	}
 };
+
+const isEntireTextSelected = () => {
+	if (!editor.value) return false;
+	const { from, to } = editor.value.state.selection;
+	const textContent = editor.value.state.doc.textContent;
+	const textLength = textContent.length;
+	return from === 0 && to >= textLength;
+};
+
+const setTextColor = debounce((color: string | undefined) => {
+	const colorValue = color as string;
+	if (!colorValue) {
+		editor.value?.chain().focus().setColor(colorValue).run();
+		if (isEntireTextSelected()) {
+			props.block.setStyle("color", "");
+		}
+		return;
+	}
+
+	editor.value?.chain().focus().setColor(colorValue).run();
+	if (isEntireTextSelected()) {
+		props.block.setStyle("color", colorValue);
+	}
+}, 50);
 
 defineExpose({
 	component,
