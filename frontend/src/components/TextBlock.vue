@@ -116,7 +116,7 @@
 					placement="top"
 					:appendTo="overlayElement"
 					v-show="!block.isHeader()"
-					popoverClass="!min-w-fit !mb-3">
+					popoverClass="!min-w-fit">
 					<template #target="{ togglePopover, isOpen }">
 						<button v-show="!block.isHeader()" class="rounded px-2 py-1 hover:bg-surface-gray-2">
 							<div class="p-1">
