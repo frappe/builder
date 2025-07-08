@@ -12,7 +12,7 @@
 					}
 				" />
 		</div>
-		<div class="flex flex-col gap-3">
+		<div class="mt-1 flex flex-col gap-3">
 			<CollapsibleSection
 				:sectionName="section.name"
 				v-for="section in sections"
@@ -43,18 +43,20 @@ import positionSection from "@/components/BlockPropertySections/PositionSection"
 import rawStyleSection from "@/components/BlockPropertySections/RawStyleSection";
 import spacingSection from "@/components/BlockPropertySections/SpacingSection";
 import styleSection from "@/components/BlockPropertySections/StyleSection";
+import transitionSection from "@/components/BlockPropertySections/TransitionSection";
 import typographySection from "@/components/BlockPropertySections/TypographySection";
 import videoOptionsSection from "@/components/BlockPropertySections/VideoOptionsSection";
 import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
 import { toValue } from "@vueuse/core";
+import type { Component } from "vue";
 import { Ref, ref } from "vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
 
 const builderStore = useBuilderStore();
 
 type BlockProperty = {
-	component: any;
+	component: Component;
 	getProps: () => Record<string, unknown>;
 	events?: Record<string, unknown>;
 	searchKeyWords: string;
@@ -107,6 +109,7 @@ const sections = [
 	dimensionSection,
 	positionSection,
 	spacingSection,
+	transitionSection,
 	optionsSection,
 	dataKeySection,
 	customAttributesSection,

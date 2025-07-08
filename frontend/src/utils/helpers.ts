@@ -718,6 +718,53 @@ function shortenNumber(num: number): string {
 	return shortNum % 1 === 0 ? shortNum.toFixed(0) + unitname : shortNum.toFixed(1) + unitname;
 }
 
+function setBoxSpacing(block: Block, type: "padding" | "margin", value: string) {
+	const props = [type, `${type}Top`, `${type}Right`, `${type}Bottom`, `${type}Left`];
+	props.forEach((prop) => block.setStyle(prop, null));
+	if (!value) return;
+	const arr = value.split(" ");
+	if (arr.length === 1) {
+		block.setStyle(type, arr[0]);
+	} else if (arr.length === 2) {
+		block.setStyle(`${type}Top`, arr[0]);
+		block.setStyle(`${type}Bottom`, arr[0]);
+		block.setStyle(`${type}Left`, arr[1]);
+		block.setStyle(`${type}Right`, arr[1]);
+	} else if (arr.length === 3) {
+		block.setStyle(`${type}Top`, arr[0]);
+		block.setStyle(`${type}Left`, arr[1]);
+		block.setStyle(`${type}Right`, arr[1]);
+		block.setStyle(`${type}Bottom`, arr[2]);
+	} else if (arr.length === 4) {
+		block.setStyle(`${type}Top`, arr[0]);
+		block.setStyle(`${type}Right`, arr[1]);
+		block.setStyle(`${type}Bottom`, arr[2]);
+		block.setStyle(`${type}Left`, arr[3]);
+	}
+}
+
+function getBoxSpacing(
+	block: Block,
+	type: "padding" | "margin",
+	opts?: { nativeOnly?: boolean; cascading?: boolean },
+): string {
+	const nativeOnly = opts?.nativeOnly ?? false;
+	const cascading = opts?.cascading ?? false;
+	const base = String(block.getStyle(type, undefined, nativeOnly, cascading) ?? "0px");
+	const top = block.getStyle(`${type}Top`, undefined, nativeOnly, cascading) ?? base;
+	const bottom = block.getStyle(`${type}Bottom`, undefined, nativeOnly, cascading) ?? base;
+	const left = block.getStyle(`${type}Left`, undefined, nativeOnly, cascading) ?? base;
+	const right = block.getStyle(`${type}Right`, undefined, nativeOnly, cascading) ?? base;
+	const sTop = String(top);
+	const sBottom = String(bottom);
+	const sLeft = String(left);
+	const sRight = String(right);
+	if (sTop === base && sBottom === base && sLeft === base && sRight === base) return base;
+	if (sTop === sBottom && sTop === sRight && sTop === sLeft) return sTop;
+	if (sTop === sBottom && sLeft === sRight) return `${sTop} ${sLeft}`;
+	return `${sTop} ${sRight} ${sBottom} ${sLeft}`;
+}
+
 interface DialogAction {
 	label: string;
 	variant?: "solid" | "subtle" | "outline" | "ghost";
@@ -811,6 +858,7 @@ export {
 	getBlockInstance,
 	getBlockObjectCopy as getBlockObject,
 	getBlockString,
+	getBoxSpacing,
 	getCopyWithoutParent,
 	getDataForKey,
 	getFontName,
@@ -837,6 +885,7 @@ export {
 	parseBackground,
 	replaceMapKey,
 	RGBToHex,
+	setBoxSpacing,
 	shortenNumber,
 	showDialog,
 	stripExtension,

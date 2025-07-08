@@ -21,8 +21,11 @@
 							if (!open.value) {
 								$refs.comboboxButton?.$el.click();
 							}
+							emit('focus');
+							return false;
 						}
 					"
+					@blur="emit('blur')"
 					@change="query = $event.target.value"
 					:displayValue="getDisplayValue"
 					:placeholder="!modelValue ? placeholder : null"
@@ -94,7 +97,7 @@ type Option = {
 	value: string;
 };
 
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue", "focus", "blur"]);
 
 type Action = {
 	label: String;

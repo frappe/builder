@@ -158,10 +158,40 @@ const styles = computed(() => {
 		...props.block.getEditorStyles(),
 		...dynamicStyles,
 	} as BlockStyleMap;
+
+	if (props.block.activeState) {
+		const [state, property] = props.block.activeState.split(":");
+
+		if (canvasStore.activeCanvas?.activeBreakpoint === props.breakpoint) {
+			const stateStyles = props.block.getStateStyles(state, props.breakpoint);
+			if (stateStyles) {
+				Object.keys(stateStyles).forEach((key) => {
+					if (key === property) {
+						styleMap[key] = stateStyles[key];
+					}
+				});
+			}
+		}
+	}
+
 	// escape space in font family
-	if (styleMap.fontFamily) {
+	if (styleMap.fontFamily && typeof styleMap.fontFamily === "string") {
 		styleMap.fontFamily = (styleMap.fontFamily as string).replace(/ /g, "\\ ");
 	}
+
+	Object.keys(styleMap).forEach((key) => {
+		if (key.startsWith("hover:")) {
+			// state style preview on hover
+			// if (!isHovered.value) {
+			// 	delete styleMap[key];
+			// } else {
+			// 	styleMap[key.replace("hover:", "")] = styleMap[key];
+			// 	delete styleMap[key];
+			// }
+			delete styleMap[key];
+		}
+	});
+
 	return styleMap;
 });
 

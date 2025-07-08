@@ -5,23 +5,13 @@
 			:class="{
 				'cursor-ns-resize': enableSlider,
 			}"
+			class="w-[88px] shrink-0"
+			:description="description"
 			@mousedown="handleMouseDown">
 			{{ label }}
-
-			<Popover trigger="hover" v-if="description" placement="top">
-				<template #target>
-					<FeatherIcon name="info" class="ml-1 h-[12px] w-[12px] text-gray-500" />
-				</template>
-				<template #body>
-					<slot name="body">
-						<div
-							class="w-fit max-w-52 rounded bg-gray-800 px-2 py-1 text-center text-xs text-white shadow-xl"
-							v-html="description"></div>
-					</slot>
-				</template>
-			</Popover>
 		</InputLabel>
 		<BuilderInput
+			class="w-full"
 			:type="type"
 			:placeholder="placeholder"
 			:modelValue="modelValue"
@@ -45,7 +35,6 @@
 </template>
 <script setup lang="ts">
 import { isNumber } from "@tiptap/vue-3";
-import { Popover, FeatherIcon } from "frappe-ui";
 import { computed } from "vue";
 import Autocomplete from "./Autocomplete.vue";
 import InputLabel from "./InputLabel.vue";
@@ -59,7 +48,7 @@ type Action = {
 
 const props = withDefaults(
 	defineProps<{
-		modelValue?: string | number;
+		modelValue?: StyleValue;
 		label?: string;
 		description?: string;
 		type?: string;
@@ -72,7 +61,7 @@ const props = withDefaults(
 		showInputAsOption?: boolean;
 		getOptions?: (filterString: string) => Promise<Option[]>;
 		actionButton?: Action;
-		placeholder?: string;
+		placeholder?: StyleValue;
 		hideClearButton?: boolean;
 	}>(),
 	{

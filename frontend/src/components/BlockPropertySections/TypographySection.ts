@@ -1,6 +1,7 @@
+import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import FontUploader from "@/components/Controls/FontUploader.vue";
-import InlineInput from "@/components/Controls/InlineInput.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
+import StyleControl from "@/components/Controls/StyleControl.vue";
 import userFonts from "@/data/userFonts";
 import { UserFont } from "@/types/Builder/UserFont";
 import blockController from "@/utils/blockController";
@@ -14,11 +15,12 @@ const setFont = (font: string) => {
 
 const typographySectionProperties = [
 	{
-		component: InlineInput,
+		component: StyleControl,
 		getProps: () => {
 			return {
 				label: "Family",
-				type: "autocomplete",
+				component: Autocomplete,
+				styleProperty: "fontFamily",
 				getOptions: (filterString: string) => {
 					const fontOptions = [] as { label: string; value: string }[];
 					userFonts.data.forEach((font: UserFont) => {
@@ -59,80 +61,66 @@ const typographySectionProperties = [
 				actionButton: {
 					component: FontUploader,
 				},
-				modelValue: blockController.getFontFamily(),
+				getModelValue: () => blockController.getFontFamily(),
+				setModelValue: (val: string) => setFont(val),
 			};
 		},
 		searchKeyWords: "Font, Family, FontFamily",
-		events: {
-			"update:modelValue": (val: string) => setFont(val),
-		},
 		condition: () => blockController.isText() || blockController.isContainer(),
 	},
 	{
-		component: InlineInput,
+		component: StyleControl,
 		getProps: () => {
 			return {
 				label: "Weight",
-				modelValue: blockController.getStyle("fontWeight"),
-				type: "autocomplete",
+				styleProperty: "fontWeight",
+				component: Autocomplete,
 				options: getFontWeightOptions((blockController.getStyle("fontFamily") || "Inter") as string),
 			};
 		},
 		searchKeyWords: "Font, Weight, FontWeight",
-		events: {
-			"update:modelValue": (val: StyleValue) => blockController.setStyle("fontWeight", val),
-		},
 	},
 	{
-		component: InlineInput,
+		component: StyleControl,
 		getProps: () => {
 			return {
 				label: "Size",
-				modelValue: blockController.getStyle("fontSize"),
+				styleProperty: "fontSize",
 				enableSlider: true,
 				minValue: 1,
 			};
 		},
 		searchKeyWords: "Font, Size, FontSize",
-		events: {
-			"update:modelValue": (val: StyleValue) => blockController.setStyle("fontSize", val),
-		},
 		condition: () => blockController.isText() || blockController.isInput(),
 	},
 	{
-		component: InlineInput,
+		component: StyleControl,
 		getProps: () => {
 			return {
 				label: "Height",
-				modelValue: blockController.getStyle("lineHeight"),
+				styleProperty: "lineHeight",
 			};
 		},
 		searchKeyWords: "Font, Height, LineHeight, Line Height",
-		events: {
-			"update:modelValue": (val: StyleValue) => blockController.setStyle("lineHeight", val),
-		},
 		condition: () => blockController.isText(),
 	},
 	{
-		component: InlineInput,
+		component: StyleControl,
 		getProps: () => {
 			return {
 				label: "Letter",
-				modelValue: blockController.getStyle("letterSpacing"),
+				styleProperty: "letterSpacing",
 			};
-		},
-		events: {
-			"update:modelValue": (val: StyleValue) => blockController.setStyle("letterSpacing", val),
 		},
 		searchKeyWords: "Font, Letter, LetterSpacing, Letter Spacing",
 		condition: () => blockController.isText(),
 	},
 	{
-		component: InlineInput,
+		component: StyleControl,
 		getProps: () => {
 			return {
 				label: "Transform",
-				modelValue: blockController.getStyle("textTransform"),
+				styleProperty: "textTransform",
 				type: "select",
 				options: [
 					{
@@ -155,16 +143,15 @@ const typographySectionProperties = [
 			};
 		},
 		searchKeyWords: "Font, Transform, TextTransform, Text Transform, Capitalize, Uppercase, Lowercase",
-		events: {
-			"update:modelValue": (val: StyleValue) => blockController.setStyle("textTransform", val),
-		},
 		condition: () => blockController.isText(),
 	},
 	{
-		component: OptionToggle,
+		component: StyleControl,
 		getProps: () => {
 			return {
 				label: "Align",
+				styleProperty: "textAlign",
+				component: OptionToggle,
 				options: [
 					{
 						label: "Left",
@@ -185,13 +172,10 @@ const typographySectionProperties = [
 						hideLabel: true,
 					},
 				],
-				modelValue: blockController.getStyle("textAlign") || "left",
+				defaultValue: "left",
 			};
 		},
 		searchKeyWords: "Font, Align, TextAlign, Text Align, Left, Center, Right, Justify",
-		events: {
-			"update:modelValue": (val: StyleValue) => blockController.setStyle("textAlign", val),
-		},
 		condition: () => blockController.isText(),
 	},
 ];

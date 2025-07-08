@@ -1,6 +1,7 @@
 <template>
-	<InlineInput
-		type="autocomplete"
+	<StyleControl
+		:component="Autocomplete"
+		:styleProperty="property"
 		:label="label"
 		:enableSlider="true"
 		:options="[
@@ -17,15 +18,12 @@
 				value: '100%',
 			},
 		]"
-		:modelValue="blockController.getStyle(props.property) || 'auto'"
-		:unitOptions="['px', '%', 'vw', 'vh']"
-		@update:modelValue="(val) => blockController.setStyle(property, val)"></InlineInput>
+		:unitOptions="['px', '%', 'vw', 'vh']"></StyleControl>
 </template>
 <script setup lang="ts">
-import InlineInput from "@/components/Controls/InlineInput.vue";
-import blockController from "@/utils/blockController";
+import Autocomplete from "@/components/Controls/Autocomplete.vue";
 
-const props = defineProps<{
+defineProps<{
 	property: styleProperty;
 	label: string;
 }>();
