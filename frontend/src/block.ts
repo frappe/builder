@@ -673,7 +673,7 @@ class Block implements BlockOptions {
 		}
 	}
 	isRepeater() {
-		return this.isRepeaterBlock;
+		return Boolean(this.isRepeaterBlock);
 	}
 	getDataKey(key: keyof BlockDataKey): string {
 		let dataKey = (this.dataKey && this.dataKey[key]) || "";
