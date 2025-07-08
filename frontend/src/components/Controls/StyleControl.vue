@@ -1,7 +1,7 @@
 <template>
 	<div class="flex w-full flex-col gap-2">
 		<div class="relative flex w-full items-center gap-2">
-			<div class="flex w-[88px] shrink-0 items-center" v-if="enableStates || label">
+			<div class="flex w-[88px] shrink-0 items-center" v-if="enableStateControls || label">
 				<DraggablePopup
 					v-model="showDynamicValueModal"
 					:container="dropdownTrigger?.$el"
@@ -14,7 +14,7 @@
 						<DynamicValueHandler @setDynamicValue="setDynamicValue" :selectedValue="dynamicValue" />
 					</template>
 				</DraggablePopup>
-				<Dropdown v-if="enableStates || allowDynamicValue" size="sm" :options="stateOptions">
+				<Dropdown v-if="enableStateControls || allowDynamicValue" size="sm" :options="stateOptions">
 					<template v-slot="{ open }">
 						<FeatherIcon
 							ref="dropdownTrigger"
@@ -41,9 +41,15 @@
 					:placeholder="placeholderValue"
 					@update:modelValue="updateValue"
 					@keydown.stop="handleKeyDown"
-					class="w-full" />
+					class="w-full">
+					<template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
+						<slot :name="name" v-bind="slotData || {}" />
+					</template>
+				</component>
+
 				<div
-					class="absolute bottom-0 left-0 right-0 top-0 z-20 flex items-center gap-2 rounded bg-surface-violet-1 py-0.5 pl-2.5 pr-6 text-sm text-ink-violet-1"
+					class="absolute bottom-0 left-0 right-0 top-0 z-20 flex cursor-pointer items-center gap-2 rounded bg-surface-violet-1 py-0.5 pl-2.5 pr-6 text-sm text-ink-violet-1"
+					@click.stop="showDynamicValueModal = true"
 					v-if="dynamicValue">
 					<FeatherIcon name="zap" class="size-3"></FeatherIcon>
 					<span class="truncate">{{ dynamicValue }}</span>
@@ -57,7 +63,7 @@
 				</button>
 			</div>
 		</div>
-		<template v-if="enableStates" v-for="state in statesToShow" :key="String(state)">
+		<template v-if="enableStateControls" v-for="state in statesToShow" :key="String(state)">
 			<div
 				class="group ml-[5px] flex items-center justify-between before:-mt-7 before:h-7 before:w-[1px] before:bg-surface-gray-4 before:content-['_'] after:absolute after:left-3.5 after:h-1.5 after:w-1.5 after:rounded-full after:bg-surface-gray-4 hover:after:hidden">
 				<button
@@ -83,7 +89,11 @@
 					@blur="() => disableStyle(state)"
 					@update:modelValue="(v: any) => updateStateValue(state, v)"
 					@keydown.stop="(e: KeyboardEvent) => handleKeyDown(e, state)"
-					class="shrink-1 w-full" />
+					class="shrink-1 w-full">
+					<template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
+						<slot :name="name" v-bind="slotData || {}" />
+					</template>
+				</component>
 			</div>
 		</template>
 	</div>
@@ -137,11 +147,15 @@ const props = withDefaults(
 		maxValue: null,
 		hideClearButton: false,
 		component: Input,
-		enableStates: true,
 		allowDynamicValue: false,
 		enabledStates: () => ["hover", "active", "focus"],
+		enableStates: undefined,
 	},
 );
+
+const enableStateControls = computed(() => {
+	return props.enableStates ?? props.controlType === "style";
+});
 
 const stateLabels: Record<string, string> = {
 	hover: "On Hover",
@@ -232,7 +246,7 @@ const showDynamicValueModal = ref(false);
 
 const stateOptions = computed(() => {
 	const options = [];
-	if (props.enableStates) {
+	if (enableStateControls.value) {
 		options.push(
 			...props.enabledStates
 				.filter((state: string) => !getStateValue(state))
@@ -257,7 +271,7 @@ const stateOptions = computed(() => {
 });
 
 const statesToShow = computed(() => {
-	if (!props.enableStates) return [];
+	if (!enableStateControls.value) return [];
 	return props.enabledStates.filter((state: string) => {
 		return blockController.getNativeStyle(`${state}:${props.styleProperty}`) !== undefined;
 	});
