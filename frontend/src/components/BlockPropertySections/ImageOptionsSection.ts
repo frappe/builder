@@ -15,7 +15,6 @@ const imageOptionsSectionProperties = [
 				styleProperty: "src",
 				label: "Image URL",
 				allowDynamicValue: true,
-				enableStates: false,
 				imageURL: blockController.getAttribute("src"),
 				imageFit: blockController.getStyle("objectFit"),
 			};
@@ -98,7 +97,6 @@ const imageOptionsSectionProperties = [
 				styleProperty: "alt",
 				label: "Alt Text",
 				allowDynamicValue: true,
-				enableStates: false,
 			};
 		},
 		searchKeyWords: "Alt, Text, AltText, Alternate Text",
