@@ -221,7 +221,12 @@ class BuilderPage(WebsiteGenerator):
 		context.style = render_template(style, page_data)
 		context.editor_link = f"/{builder_path}/page/{self.name}"
 		if frappe.form_dict and self.dynamic_route:
-			query_string = "&".join([f"{k}={v}" for k, v in frappe.form_dict.items()])
+			query_string = "&".join(
+				[
+					f"{k}={frappe.utils.escape_html(frappe.utils.quote(v))}"
+					for k, v in frappe.form_dict.items()
+				]
+			)
 			context.editor_link += f"?{query_string}"
 
 		context.page_name = self.name
