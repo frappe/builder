@@ -8,7 +8,7 @@
  "modified_by": "Administrator",
  "name": "gray-400",
  "owner": "Administrator",
- "token_name": "gray-400",
+ "variable_name": "gray-400",
  "type": "Color",
  "value": "#C7C7C7"
 }

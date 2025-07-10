@@ -114,7 +114,7 @@ import { Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
 
 type CSSColorValue = HashString | RGBString | `var(--${string})`;
 
-const { resolveTokenValue } = useBuilderVariable();
+const { resolveVariableValue } = useBuilderVariable();
 
 const canvasStore = useCanvasStore();
 const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;
@@ -144,7 +144,7 @@ const props = withDefaults(
 const modelColor = computed(() => {
 	const color = props.modelValue;
 	if (!color) return null;
-	const resolvedColor = resolveTokenValue(color);
+	const resolvedColor = resolveVariableValue(color);
 	return getRGB(resolvedColor);
 });
 
@@ -247,7 +247,7 @@ function setSelectorPosition(color: HashString | null) {
 		hueSelectorPosition.value = { x: 0, y: 0 };
 		return;
 	}
-	const resolvedColor = resolveTokenValue(color);
+	const resolvedColor = resolveVariableValue(color);
 	console.log("Setting color selector position for:", resolvedColor);
 	nextTick(() => {
 		setColorSelectorPosition(resolvedColor);

@@ -9,28 +9,28 @@
 		<div v-if="isLoading" class="flex justify-center py-4">
 			<FeatherIcon name="loader" class="size-5 animate-spin text-ink-gray-7" />
 		</div>
-		<div v-else-if="!tokens.length" class="py-2 text-sm italic text-ink-gray-6">No Variables found</div>
+		<div v-else-if="!variables.length" class="py-2 text-sm italic text-ink-gray-6">No Variables found</div>
 		<div v-else class="flex flex-col">
 			<div
-				v-for="token in tokens"
-				:key="token.name"
+				v-for="variable in variables"
+				:key="variable.name"
 				class="group flex cursor-pointer items-center justify-between rounded py-1"
-				@click="openDialog(token)">
+				@click="openDialog(variable)">
 				<div class="flex items-center gap-2">
 					<div
 						class="size-4 rounded-full border border-outline-gray-2"
-						:style="{ backgroundColor: resolveTokenValue(token.value || '') }"></div>
+						:style="{ backgroundColor: resolveVariableValue(variable.value || '') }"></div>
 					<div class="flex flex-col">
 						<span class="text-p-sm font-medium text-ink-gray-9">
-							{{ token.token_name }}
+							{{ variable.variable_name }}
 						</span>
 						<span class="text-xs text-ink-gray-6">
-							{{ token.value }}
+							{{ variable.value }}
 						</span>
 					</div>
 				</div>
 				<div class="flex gap-2 opacity-0 group-hover:opacity-100">
-					<button class="text-ink-gray-7 hover:text-red-600" @click.stop="handleDeleteToken(token)">
+					<button class="text-ink-gray-7 hover:text-red-600" @click.stop="handleDelete(variable)">
 						<FeatherIcon name="trash" class="size-3" />
 					</button>
 				</div>
@@ -47,7 +47,7 @@
 						label: dialogMode === 'edit' ? 'Update' : 'Create',
 						variant: 'solid',
 						loading: isLoading,
-						onClick: handleSaveToken,
+						onClick: handleSave,
 					},
 				],
 			}">
@@ -55,15 +55,15 @@
 				<div class="flex flex-col gap-4">
 					<BuilderInput
 						type="text"
-						v-model="activeToken.token_name"
-						label="Token Name"
+						v-model="activeBuilderVariable.variable_name"
+						label="Variable Name"
 						required
 						:autofocus="true"
 						placeholder="e.g., primary, accent, background"
 						:hideClearButton="true" />
 					<div class="flex flex-col gap-1.5">
 						<InputLabel>Color Value</InputLabel>
-						<ColorInput v-model="activeToken.value" class="relative" />
+						<ColorInput v-model="activeBuilderVariable.value" class="relative" />
 					</div>
 				</div>
 			</template>
@@ -75,54 +75,55 @@
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import { BuilderVariable } from "@/types/Builder/BuilderVariable";
 import { confirm } from "@/utils/helpers";
-import { defaultToken, useBuilderVariable } from "@/utils/useBuilderVariable";
+import { defaultBuilderVariable, useBuilderVariable } from "@/utils/useBuilderVariable";
 import { Dialog, FeatherIcon } from "frappe-ui";
 import { ref } from "vue";
 import { toast } from "vue-sonner";
 import ColorInput from "./Controls/ColorInput.vue";
 
-const { resolveTokenValue, createToken, updateToken, deleteToken, isLoading, tokens } = useBuilderVariable();
+const { resolveVariableValue, createVariable, updateVariable, deleteVariable, isLoading, variables } =
+	useBuilderVariable();
 
 const showDialog = ref(false);
 const dialogMode = ref<"add" | "edit">("add");
-const activeToken = ref<Partial<BuilderVariable>>({ ...defaultToken });
+const activeBuilderVariable = ref<Partial<BuilderVariable>>({ ...defaultBuilderVariable });
 
-const openDialog = (token?: BuilderVariable) => {
-	if (token) {
+const openDialog = (builderVariable?: BuilderVariable) => {
+	if (builderVariable) {
 		dialogMode.value = "edit";
-		activeToken.value = { ...token };
+		activeBuilderVariable.value = { ...builderVariable };
 	} else {
 		dialogMode.value = "add";
-		activeToken.value = { ...defaultToken };
+		activeBuilderVariable.value = { ...defaultBuilderVariable };
 	}
 	showDialog.value = true;
 };
 
-const handleSaveToken = async () => {
+const handleSave = async () => {
 	try {
 		if (dialogMode.value === "edit") {
-			await updateToken(activeToken.value);
-			toast.success("Color token updated");
+			await updateVariable(activeBuilderVariable.value);
+			toast.success("Variable updated");
 		} else {
-			await createToken(activeToken.value);
-			toast.success("Color token created");
+			await createVariable(activeBuilderVariable.value);
+			toast.success("New Variable created");
 		}
 		showDialog.value = false;
-		activeToken.value = { ...defaultToken };
+		activeBuilderVariable.value = { ...defaultBuilderVariable };
 	} catch (error) {
-		toast.error((error as Error).message || `Failed to ${dialogMode.value} color token`);
+		toast.error((error as Error).message || `Failed to ${dialogMode.value} Variable`);
 	}
 };
 
-const handleDeleteToken = async (token: BuilderVariable) => {
-	const confirmed = await confirm("Are you sure you want to delete this token?");
+const handleDelete = async (builderVariable: BuilderVariable) => {
+	const confirmed = await confirm("Are you sure you want to delete this Variable?");
 	if (!confirmed) return;
 
 	try {
-		await deleteToken(token.name as string);
-		toast.success("Color token deleted");
+		await deleteVariable(builderVariable.name as string);
+		toast.success("Variable deleted");
 	} catch (error) {
-		toast.error((error as Error).message || "Failed to delete color token");
+		toast.error((error as Error).message || "Failed to delete Variable");
 	}
 };
 </script>

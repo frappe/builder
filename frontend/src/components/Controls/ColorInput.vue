@@ -102,8 +102,8 @@ const isCssVariable = computed(() => {
 const resolvedColor = computed(() => {
 	if (!props.modelValue) return "";
 	if (isCssVariable.value) {
-		const { resolveTokenValue } = useBuilderVariable();
-		return resolveTokenValue(props.modelValue);
+		const { resolveVariableValue } = useBuilderVariable();
+		return resolveVariableValue(props.modelValue);
 	}
 	return props.modelValue;
 });
@@ -124,13 +124,13 @@ const getOptions = async (query: string) => {
 	processedQuery = processedQuery.replace(/^--|\(|\s+/g, "");
 	processedQuery = toKebabCase(processedQuery);
 	const options = useBuilderVariable()
-		.tokens.value.filter((token: BuilderVariable) => {
-			return token.token_name?.includes(processedQuery);
+		.variables.value.filter((builderVariable: BuilderVariable) => {
+			return builderVariable.variable_name?.includes(processedQuery);
 		})
-		.map((token: BuilderVariable) => {
+		.map((builderVariable: BuilderVariable) => {
 			return {
-				label: `${token?.token_name || ""}`,
-				value: `var(--${toKebabCase(token?.token_name || "")})`,
+				label: `${builderVariable?.variable_name || ""}`,
+				value: `var(--${toKebabCase(builderVariable?.variable_name || "")})`,
 			};
 		});
 	return options;

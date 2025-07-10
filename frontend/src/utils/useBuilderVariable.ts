@@ -5,17 +5,16 @@ import { computed, ComputedRef, ref } from "vue";
 
 interface builderVariableComposable {
 	cssVariables: ComputedRef<Record<string, string>>;
-	resolveTokenValue: (value: CSSVariableName) => string;
-	getTokenByName: (name: string) => BuilderVariable | undefined;
-	createToken: (token: Partial<BuilderVariable>) => Promise<void>;
-	updateToken: (token: Partial<BuilderVariable>) => Promise<void>;
-	deleteToken: (name: string) => Promise<void>;
+	resolveVariableValue: (value: CSSVariableName) => string;
+	createVariable: (builderVariable: Partial<BuilderVariable>) => Promise<void>;
+	updateVariable: (builderVariable: Partial<BuilderVariable>) => Promise<void>;
+	deleteVariable: (name: string) => Promise<void>;
 	isLoading: ComputedRef<boolean>;
-	tokens: ComputedRef<BuilderVariable[]>;
+	variables: ComputedRef<BuilderVariable[]>;
 }
 
-export const defaultToken: Partial<BuilderVariable> = {
-	token_name: "",
+export const defaultBuilderVariable: Partial<BuilderVariable> = {
+	variable_name: "",
 	value: "#000000",
 };
 
@@ -27,17 +26,20 @@ export function useBuilderVariable(): builderVariableComposable {
 	const isLoading = ref(false);
 
 	const cssVariables = computed(() => {
-		return builderVariableStore.data.reduce((obj: Record<string, string>, token: BuilderVariable) => {
-			if (!token.token_name) return obj;
-			const cssVariableName = toKebabCase(token.token_name);
-			if (token.value) {
-				obj[`--${cssVariableName}`] = token.value;
-			}
-			return obj;
-		}, {});
+		return builderVariableStore.data.reduce(
+			(obj: Record<string, string>, builderVariable: BuilderVariable) => {
+				if (!builderVariable.variable_name) return obj;
+				const cssVariableName = toKebabCase(builderVariable.variable_name);
+				if (builderVariable.value) {
+					obj[`--${cssVariableName}`] = builderVariable.value;
+				}
+				return obj;
+			},
+			{},
+		);
 	});
 
-	const resolveTokenValue = (value: CSSVariableName): string => {
+	const resolveVariableValue = (value: CSSVariableName): string => {
 		if (typeof value === "string" && value.startsWith("#")) {
 			return value;
 		}
@@ -57,38 +59,34 @@ export function useBuilderVariable(): builderVariableComposable {
 		return cssVariables.value[variableName] ?? value;
 	};
 
-	const getTokenByName = (name: string): BuilderVariable | undefined => {
-		return builderVariableStore.data.find((token: BuilderVariable) => token.token_name === name);
-	};
-
-	const createToken = async (token: Partial<BuilderVariable>): Promise<void> => {
-		if (!token.token_name || !token.value) {
+	const createVariable = async (builderVariable: Partial<BuilderVariable>): Promise<void> => {
+		if (!builderVariable.variable_name || !builderVariable.value) {
 			throw new Error("Token name and value are required");
 		}
 		isLoading.value = true;
 		try {
 			await builderVariableStore.insert.submit({
-				...token,
-				type: token.type || "Color",
+				...builderVariable,
+				type: builderVariable.type || "Color",
 			});
 		} finally {
 			isLoading.value = false;
 		}
 	};
 
-	const updateToken = async (token: Partial<BuilderVariable>): Promise<void> => {
-		if (!token.name || !token.token_name || !token.value) {
+	const updateVariable = async (builderVariable: Partial<BuilderVariable>): Promise<void> => {
+		if (!builderVariable.name || !builderVariable.variable_name || !builderVariable.value) {
 			throw new Error("Token name, id and value are required");
 		}
 		isLoading.value = true;
 		try {
-			await builderVariableStore.setValue.submit(token);
+			await builderVariableStore.setValue.submit(builderVariable);
 		} finally {
 			isLoading.value = false;
 		}
 	};
 
-	const deleteToken = async (name: string): Promise<void> => {
+	const deleteVariable = async (name: string): Promise<void> => {
 		if (!name) {
 			throw new Error("Token name is required");
 		}
@@ -102,13 +100,12 @@ export function useBuilderVariable(): builderVariableComposable {
 
 	instance = {
 		cssVariables,
-		resolveTokenValue,
-		getTokenByName,
-		createToken,
-		updateToken,
-		deleteToken,
+		resolveVariableValue,
+		createVariable,
+		updateVariable,
+		deleteVariable,
 		isLoading: computed(() => isLoading.value || builderVariableStore.loading),
-		tokens: computed(() => builderVariableStore.data || []),
+		variables: computed(() => builderVariableStore.data || []),
 	};
 
 	return instance;

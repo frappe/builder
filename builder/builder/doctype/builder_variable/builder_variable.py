@@ -9,7 +9,7 @@ from frappe.modules.export_file import delete_folder, export_to_files
 
 class BuilderVariable(Document):
 	def autoname(self):
-		self.name = append_number_if_name_exists("Builder Variable", frappe.scrub(self.token_name))
+		self.name = append_number_if_name_exists("Builder Variable", frappe.scrub(self.variable_name))
 
 	def on_update(self):
 		if self.is_standard:
