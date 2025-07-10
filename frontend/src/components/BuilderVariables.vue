@@ -61,7 +61,6 @@
 					{
 						label: dialogMode === 'edit' ? 'Update' : 'Create',
 						variant: 'solid',
-						loading: isLoading,
 						onClick: handleSave,
 					},
 				],
@@ -98,7 +97,7 @@ import { ref } from "vue";
 import { toast } from "vue-sonner";
 import ColorInput from "./Controls/ColorInput.vue";
 
-const { resolveVariableValue, createVariable, updateVariable, deleteVariable, isLoading, variables } =
+const { resolveVariableValue, createVariable, updateVariable, deleteVariable, variables } =
 	useBuilderVariable();
 
 const showDialog = ref(false);

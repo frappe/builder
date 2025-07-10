@@ -8,7 +8,7 @@ const builderVariables = createListResource({
 	start: 0,
 	pageLength: 50,
 	auto: true,
-	orderBy: "variable_name",
+	orderBy: "creation desc",
 });
 
 export default builderVariables;
