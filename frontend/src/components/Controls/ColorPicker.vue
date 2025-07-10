@@ -246,7 +246,6 @@ function setSelectorPosition(color: HashString | null) {
 		return;
 	}
 	const resolvedColor = resolveVariableValue(color);
-	console.log("Setting color selector position for:", resolvedColor);
 	nextTick(() => {
 		setColorSelectorPosition(resolvedColor);
 		setHueSelectorPosition(resolvedColor);
