@@ -70,9 +70,6 @@
 							:name="element.isVisible() ? 'eye' : 'eye-off'"
 							class="invisible ml-auto mr-2 h-3 w-3 group-hover:visible"
 							@click.stop="element.toggleVisibility()" />
-						<span v-if="element.isRoot()" class="ml-auto mr-2 text-sm capitalize text-ink-gray-5">
-							{{ canvasStore.activeCanvas?.activeBreakpoint }}
-						</span>
 					</span>
 					<div v-if="canShowChildLayer(element)">
 						<BlockLayers
