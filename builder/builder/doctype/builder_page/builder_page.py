@@ -218,7 +218,7 @@ class BuilderPage(WebsiteGenerator):
 		css_variables = {}
 		for builder_variable in builder_variables:
 			if builder_variable.variable_name and builder_variable.value:
-				variable_name = f"--{camel_case_to_kebab_case(builder_variable.variable_name)}"
+				variable_name = f"--{camel_case_to_kebab_case(builder_variable.variable_name, True)}"
 				css_variables[variable_name] = builder_variable.value
 		context.css_variables = css_variables
 
