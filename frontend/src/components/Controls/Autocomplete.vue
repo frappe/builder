@@ -178,4 +178,7 @@ async function updateOptions() {
 }
 
 const clearValue = () => emit("update:modelValue", null);
+defineExpose({
+	updateOptions,
+});
 </script>

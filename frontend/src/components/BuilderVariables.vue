@@ -52,83 +52,29 @@
 			</div>
 		</div>
 
-		<Dialog
-			v-model="showDialog"
-			:options="{
-				title: dialogMode === 'edit' ? 'Edit Variable' : 'New Variable',
-				size: 'sm',
-				actions: [
-					{
-						label: dialogMode === 'edit' ? 'Update' : 'Create',
-						variant: 'solid',
-						onClick: handleSave,
-					},
-				],
-			}">
-			<template #body-content>
-				<div class="flex flex-col gap-4">
-					<BuilderInput
-						type="text"
-						v-model="activeBuilderVariable.variable_name"
-						label="Variable Name"
-						required
-						:autofocus="true"
-						placeholder="e.g., primary, accent, background"
-						:hideClearButton="true" />
-					<div class="flex flex-col gap-1.5">
-						<InputLabel>Color Value</InputLabel>
-						<ColorInput v-model="activeBuilderVariable.value" class="relative" />
-					</div>
-				</div>
-			</template>
-		</Dialog>
+		<NewBuilderVariable v-model="showDialog" :variable="activeBuilderVariable" />
 	</div>
 </template>
 
 <script setup lang="ts">
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
-import InputLabel from "@/components/Controls/InputLabel.vue";
+import NewBuilderVariable from "@/components/Modals/NewBuilderVariable.vue";
 import { BuilderVariable } from "@/types/Builder/BuilderVariable";
 import { confirm } from "@/utils/helpers";
-import { defaultBuilderVariable, useBuilderVariable } from "@/utils/useBuilderVariable";
+import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useDebounceFn } from "@vueuse/core";
-import { Dialog, FeatherIcon } from "frappe-ui";
+import { FeatherIcon } from "frappe-ui";
 import { ref } from "vue";
 import { toast } from "vue-sonner";
-import ColorInput from "./Controls/ColorInput.vue";
 
-const { resolveVariableValue, createVariable, updateVariable, deleteVariable, variables } =
-	useBuilderVariable();
+const { resolveVariableValue, updateVariable, deleteVariable, variables } = useBuilderVariable();
 
 const showDialog = ref(false);
-const dialogMode = ref<"add" | "edit">("add");
-const activeBuilderVariable = ref<Partial<BuilderVariable>>({ ...defaultBuilderVariable });
+const activeBuilderVariable = ref<Partial<BuilderVariable> | null>(null);
 
 const openDialog = (builderVariable?: BuilderVariable) => {
-	if (builderVariable) {
-		dialogMode.value = "edit";
-		activeBuilderVariable.value = { ...builderVariable };
-	} else {
-		dialogMode.value = "add";
-		activeBuilderVariable.value = { ...defaultBuilderVariable };
-	}
+	activeBuilderVariable.value = builderVariable || null;
 	showDialog.value = true;
-};
-
-const handleSave = async () => {
-	try {
-		if (dialogMode.value === "edit") {
-			await updateVariable(activeBuilderVariable.value);
-			toast.success("Variable updated");
-		} else {
-			await createVariable(activeBuilderVariable.value);
-			toast.success("New Variable created");
-		}
-		showDialog.value = false;
-		activeBuilderVariable.value = { ...defaultBuilderVariable };
-	} catch (error) {
-		toast.error((error as Error).message || `Failed to ${dialogMode.value} Variable`);
-	}
 };
 
 const handleDelete = async (builderVariable: BuilderVariable) => {

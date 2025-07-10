@@ -1,26 +1,17 @@
 import builderVariableStore from "@/data/builderVariable";
 import { BuilderVariable } from "@/types/Builder/BuilderVariable";
 import { toKebabCase } from "@/utils/helpers";
-import { computed, ComputedRef } from "vue";
+import { computed } from "vue";
 
-interface builderVariableComposable {
-	cssVariables: ComputedRef<Record<string, string>>;
-	resolveVariableValue: (value: CSSVariableName) => string;
-	createVariable: (builderVariable: Partial<BuilderVariable>) => Promise<void>;
-	updateVariable: (builderVariable: Partial<BuilderVariable>) => Promise<void>;
-	deleteVariable: (name: string) => Promise<void>;
-	variables: ComputedRef<BuilderVariable[]>;
-}
-
-export const defaultBuilderVariable: Partial<BuilderVariable> = {
+export const defaultBuilderVariable = {
 	variable_name: "",
 	value: "#000000",
+	type: "Color" as const,
 };
 
-let instance: builderVariableComposable | null = null;
+let instance: ReturnType<typeof builderVariableComposable> | null = null;
 
-export function useBuilderVariable(): builderVariableComposable {
-	if (instance) return instance;
+function builderVariableComposable() {
 	const cssVariables = computed(() => {
 		return builderVariableStore.data.reduce(
 			(obj: Record<string, string>, builderVariable: BuilderVariable) => {
@@ -35,51 +26,47 @@ export function useBuilderVariable(): builderVariableComposable {
 		);
 	});
 
-	const resolveVariableValue = (value: CSSVariableName): string => {
-		if (typeof value === "string" && value.startsWith("#")) {
+	const resolveVariableValue = (value: string): string => {
+		if (value.startsWith("#")) {
 			return value;
 		}
+
 		let variableName = value;
-		if (typeof variableName === "string") {
-			if (variableName.startsWith("var(--")) {
-				const match = variableName.match(/^var\(\s*([^) ,]+)[^)]*\)/);
-				if (match) {
-					variableName = match[1];
-				}
-			} else if (variableName.startsWith("--")) {
-				// keep as is
-			} else {
-				variableName = `--${toKebabCase(variableName)}`;
-			}
+		if (variableName.startsWith("var(--")) {
+			const match = variableName.match(/^var\(\s*([^) ,]+)/);
+			variableName = match ? match[1] : variableName;
+		} else if (!variableName.startsWith("--")) {
+			variableName = `--${toKebabCase(variableName)}`;
 		}
+
 		return cssVariables.value[variableName] ?? value;
 	};
 
-	const createVariable = async (builderVariable: Partial<BuilderVariable>): Promise<void> => {
+	const createVariable = async (builderVariable: Partial<BuilderVariable>) => {
 		if (!builderVariable.variable_name || !builderVariable.value) {
-			throw new Error("Token name and value are required");
+			throw new Error("Variable name and value are required");
 		}
-		await builderVariableStore.insert.submit({
+		return await builderVariableStore.insert.submit({
+			...defaultBuilderVariable,
 			...builderVariable,
-			type: builderVariable.type || "Color",
 		});
 	};
 
-	const updateVariable = async (builderVariable: Partial<BuilderVariable>): Promise<void> => {
+	const updateVariable = async (builderVariable: Partial<BuilderVariable>) => {
 		if (!builderVariable.name || !builderVariable.variable_name || !builderVariable.value) {
-			throw new Error("Token name, id and value are required");
+			throw new Error("Variable name, id and value are required");
 		}
 		await builderVariableStore.setValue.submit(builderVariable);
 	};
 
-	const deleteVariable = async (name: string): Promise<void> => {
+	const deleteVariable = async (name: string) => {
 		if (!name) {
-			throw new Error("Token name is required");
+			throw new Error("Variable name is required");
 		}
 		await builderVariableStore.delete.submit(name);
 	};
 
-	instance = {
+	return {
 		cssVariables,
 		resolveVariableValue,
 		createVariable,
@@ -87,6 +74,10 @@ export function useBuilderVariable(): builderVariableComposable {
 		deleteVariable,
 		variables: computed(() => builderVariableStore.data || []),
 	};
+}
 
+export function useBuilderVariable() {
+	if (instance) return instance;
+	instance = builderVariableComposable();
 	return instance;
 }

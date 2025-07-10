@@ -14,7 +14,7 @@
 				<div class="flex items-center justify-between">
 					<InputLabel v-if="label">{{ label }}</InputLabel>
 					<div class="relative w-full">
-						<Tooltip :text="isCssVariable ? resolvedColor : null">
+						<Tooltip :text="isCssVariable ? resolvedColor : undefined">
 							<Autocomplete
 								class="[&>div>input]:pl-8"
 								:class="{
@@ -27,6 +27,15 @@
 								:placeholder="placeholder"
 								:modelValue="modelValue"
 								:getOptions="getOptions"
+								:actionButton="
+									modelValue && !isCssVariable
+										? {
+												label: 'Save as Variable',
+												icon: 'plus',
+												handler: openVariableDialog,
+											}
+										: undefined
+								"
 								@update:modelValue="
 									(val) => {
 										// if value is object, extract the value
@@ -59,15 +68,17 @@
 				</div>
 			</template>
 		</ColorPicker>
+		<NewBuilderVariable v-model="showVariableDialog" :variable="newVariable" @success="handleVariableSaved" />
 	</div>
 </template>
 <script setup lang="ts">
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
+import NewBuilderVariable from "@/components/Modals/NewBuilderVariable.vue";
 import { BuilderVariable } from "@/types/Builder/BuilderVariable";
 import { getRGB, toKebabCase } from "@/utils/helpers";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { Tooltip } from "frappe-ui";
-import { computed, ref, useAttrs } from "vue";
+import { computed, ref, useAttrs, watch } from "vue";
 import ColorPicker from "./ColorPicker.vue";
 import InputLabel from "./InputLabel.vue";
 
@@ -76,7 +87,10 @@ const events = Object.fromEntries(
 	Object.entries(attrs).filter(([key]) => key.startsWith("onFocus") || key.startsWith("onBlur")),
 );
 
-const colorInput = ref<HTMLInputElement | null>(null);
+const colorInput = ref<typeof Autocomplete | null>(null);
+const showVariableDialog = ref(false);
+const newVariable = ref<Partial<BuilderVariable> | null>(null);
+const { variables, resolveVariableValue } = useBuilderVariable();
 
 const props = withDefaults(
 	defineProps<{
@@ -102,7 +116,6 @@ const isCssVariable = computed(() => {
 const resolvedColor = computed(() => {
 	if (!props.modelValue) return "";
 	if (isCssVariable.value) {
-		const { resolveVariableValue } = useBuilderVariable();
 		return resolveVariableValue(props.modelValue);
 	}
 	return props.modelValue;
@@ -119,12 +132,23 @@ const handleClose = () => {
 	}
 };
 
+const openVariableDialog = () => {
+	newVariable.value = {
+		value: props.modelValue || "",
+	};
+	showVariableDialog.value = true;
+};
+
+const handleVariableSaved = (savedVariable: BuilderVariable) => {
+	emit("update:modelValue", `var(--${toKebabCase(savedVariable.variable_name || "")})`);
+};
+
 const getOptions = async (query: string) => {
 	let processedQuery = query.replace(/^(--|var|\s+)/, "");
 	processedQuery = processedQuery.replace(/^--|\(|\s+/g, "");
 	processedQuery = toKebabCase(processedQuery);
-	const options = useBuilderVariable()
-		.variables.value.filter((builderVariable: BuilderVariable) => {
+	const options = variables.value
+		.filter((builderVariable: BuilderVariable) => {
 			return builderVariable.variable_name?.includes(processedQuery);
 		})
 		.map((builderVariable: BuilderVariable) => {
@@ -132,7 +156,12 @@ const getOptions = async (query: string) => {
 				label: `${builderVariable?.variable_name || ""}`,
 				value: `var(--${toKebabCase(builderVariable?.variable_name || "")})`,
 			};
-		});
+		})
+		.slice(0, 8);
 	return options;
 };
+
+watch(variables, () => {
+	colorInput.value?.updateOptions();
+});
 </script>
