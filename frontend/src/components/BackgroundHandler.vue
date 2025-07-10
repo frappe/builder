@@ -1,22 +1,25 @@
 <template>
 	<Popover placement="left" class="!block w-full" popoverClass="!min-w-fit !mr-[30px]">
 		<template #target="{ togglePopover }">
-			<div class="flex items-center justify-between">
-				<InputLabel class="w-[95px] shrink-0">BG Image</InputLabel>
-				<div class="relative w-full">
-					<BuilderInput
-						class="[&>div>input]:pl-8"
-						type="text"
-						placeholder="Set Background"
-						@focus="togglePopover"
-						:modelValue="backgroundImage"
-						@update:modelValue="setBGImageURL" />
-					<div
-						class="absolute left-2 top-[6px] z-10 h-4 w-4 cursor-pointer rounded shadow-sm"
-						@click="togglePopover"
-						:class="{ 'bg-surface-gray-4': !Boolean(backgroundImage) }"
-						:style="previewStyle" />
-				</div>
+			<div class="flex w-full items-center justify-between">
+				<StyleControl
+					styleProperty="backgroundImage"
+					:component="Input"
+					label="BG Image"
+					:enableStates="false"
+					:allowDynamicValue="true"
+					placeholder="Set Background"
+					@focus="togglePopover"
+					:modelValue="backgroundImage"
+					@update:modelValue="setBGImageURL">
+					<template #prefix>
+						<div
+							class="absolute left-2 top-[6px] z-10 h-4 w-4 cursor-pointer rounded shadow-sm"
+							@click="togglePopover"
+							:class="{ 'bg-surface-gray-4': !Boolean(backgroundImage) }"
+							:style="previewStyle" />
+					</template>
+				</StyleControl>
 			</div>
 		</template>
 		<template #body>
@@ -76,7 +79,7 @@
 <script lang="ts" setup>
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
-import InputLabel from "@/components/Controls/InputLabel.vue";
+import Input from "@/components/Controls/Input.vue";
 import StyleControl from "@/components/Controls/StyleControl.vue";
 import blockController from "@/utils/blockController";
 import { FileUploader, Popover } from "frappe-ui";

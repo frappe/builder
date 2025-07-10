@@ -23,7 +23,7 @@
 			}"
 			v-if="editor"
 			class="z-50 rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-ink-gray-9 shadow-2xl"
-			:should-show="() => true">
+			:should-show="() => isEditable">
 			<div
 				v-if="settingLink"
 				class="flex flex-col gap-2 p-1"

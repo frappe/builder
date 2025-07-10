@@ -47,7 +47,6 @@ const linkSectionProperties = [
 				controlType: "attribute",
 				type: "select",
 				styleProperty: "target",
-				enableStates: false,
 				allowDynamicValue: false,
 				getModelValue: () => blockController.getAttribute("target") || "_self",
 				setModelValue: (val: string) => {
