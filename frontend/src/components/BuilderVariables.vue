@@ -11,8 +11,7 @@
 			<div
 				v-for="variable in variables"
 				:key="variable.name"
-				class="group flex cursor-pointer items-center justify-between rounded py-1"
-				@click="openDialog(variable)">
+				class="group flex cursor-pointer items-center justify-between rounded py-1">
 				<div class="flex items-center gap-2">
 					<ColorPicker
 						v-model="variable.value"
@@ -29,7 +28,7 @@
 							<div
 								class="size-4 cursor-pointer rounded-full border border-outline-gray-2"
 								:style="{ backgroundColor: resolveVariableValue(variable.value || '') }"
-								@click.stop="togglePopover"></div>
+								@click.stop="() => (!variable.is_standard ? togglePopover() : null)"></div>
 						</template>
 					</ColorPicker>
 					<div class="flex flex-col">
@@ -42,12 +41,20 @@
 					</div>
 				</div>
 				<div class="flex gap-2 opacity-0 group-hover:opacity-100">
-					<button
-						v-if="!variable.is_standard"
-						class="text-ink-gray-7 hover:text-red-600"
-						@click.stop="handleDelete(variable)">
-						<FeatherIcon name="trash" class="size-3" />
-					</button>
+					<template v-if="!variable.is_standard">
+						<button
+							class="text-ink-gray-7 hover:text-ink-gray-9"
+							@click.stop="openDialog(variable)"
+							title="Edit Variable">
+							<FeatherIcon name="edit" class="size-3" />
+						</button>
+						<button
+							class="text-ink-gray-7 hover:text-red-600"
+							@click.stop="handleDelete(variable)"
+							title="Delete Variable">
+							<FeatherIcon name="trash" class="size-3" />
+						</button>
+					</template>
 				</div>
 			</div>
 		</div>
