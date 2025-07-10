@@ -1,7 +1,7 @@
 import builderVariableStore from "@/data/builderVariable";
 import { BuilderVariable } from "@/types/Builder/BuilderVariable";
 import { toKebabCase } from "@/utils/helpers";
-import { computed, ComputedRef, ref } from "vue";
+import { computed, ComputedRef } from "vue";
 
 interface builderVariableComposable {
 	cssVariables: ComputedRef<Record<string, string>>;
@@ -9,7 +9,6 @@ interface builderVariableComposable {
 	createVariable: (builderVariable: Partial<BuilderVariable>) => Promise<void>;
 	updateVariable: (builderVariable: Partial<BuilderVariable>) => Promise<void>;
 	deleteVariable: (name: string) => Promise<void>;
-	isLoading: ComputedRef<boolean>;
 	variables: ComputedRef<BuilderVariable[]>;
 }
 
@@ -22,9 +21,6 @@ let instance: builderVariableComposable | null = null;
 
 export function useBuilderVariable(): builderVariableComposable {
 	if (instance) return instance;
-
-	const isLoading = ref(false);
-
 	const cssVariables = computed(() => {
 		return builderVariableStore.data.reduce(
 			(obj: Record<string, string>, builderVariable: BuilderVariable) => {
@@ -63,39 +59,24 @@ export function useBuilderVariable(): builderVariableComposable {
 		if (!builderVariable.variable_name || !builderVariable.value) {
 			throw new Error("Token name and value are required");
 		}
-		isLoading.value = true;
-		try {
-			await builderVariableStore.insert.submit({
-				...builderVariable,
-				type: builderVariable.type || "Color",
-			});
-		} finally {
-			isLoading.value = false;
-		}
+		await builderVariableStore.insert.submit({
+			...builderVariable,
+			type: builderVariable.type || "Color",
+		});
 	};
 
 	const updateVariable = async (builderVariable: Partial<BuilderVariable>): Promise<void> => {
 		if (!builderVariable.name || !builderVariable.variable_name || !builderVariable.value) {
 			throw new Error("Token name, id and value are required");
 		}
-		isLoading.value = true;
-		try {
-			await builderVariableStore.setValue.submit(builderVariable);
-		} finally {
-			isLoading.value = false;
-		}
+		await builderVariableStore.setValue.submit(builderVariable);
 	};
 
 	const deleteVariable = async (name: string): Promise<void> => {
 		if (!name) {
 			throw new Error("Token name is required");
 		}
-		isLoading.value = true;
-		try {
-			await builderVariableStore.delete.submit(name);
-		} finally {
-			isLoading.value = false;
-		}
+		await builderVariableStore.delete.submit(name);
 	};
 
 	instance = {
@@ -104,7 +85,6 @@ export function useBuilderVariable(): builderVariableComposable {
 		createVariable,
 		updateVariable,
 		deleteVariable,
-		isLoading: computed(() => isLoading.value || builderVariableStore.loading),
 		variables: computed(() => builderVariableStore.data || []),
 	};
 
