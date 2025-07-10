@@ -214,9 +214,9 @@ class BuilderPage(WebsiteGenerator):
 		if frappe.flags.show_preview and self.draft_blocks:
 			blocks = self.draft_blocks
 
-		style_tokens = frappe.get_all("Style Token", fields=["token_name", "value"])
+		builder_variables = frappe.get_all("Builder Variable", fields=["token_name", "value"])
 		css_variables = {}
-		for token in style_tokens:
+		for token in builder_variables:
 			if token.token_name and token.value:
 				variable_name = f"--{camel_case_to_kebab_case(token.token_name)}"
 				css_variables[variable_name] = token.value

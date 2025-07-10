@@ -45,7 +45,7 @@
  "modified": "2025-07-04 15:05:12.630580",
  "modified_by": "Administrator",
  "module": "Builder",
- "name": "Style Token",
+ "name": "Builder Variable",
  "naming_rule": "By script",
  "owner": "Administrator",
  "permissions": [

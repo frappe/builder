@@ -63,9 +63,9 @@
 </template>
 <script setup lang="ts">
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
-import { StyleToken } from "@/types/Builder/StyleToken";
+import { BuilderVariable } from "@/types/Builder/BuilderVariable";
 import { getRGB, toKebabCase } from "@/utils/helpers";
-import { useStyleToken } from "@/utils/useStyleToken";
+import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { Tooltip } from "frappe-ui";
 import { computed, ref, useAttrs } from "vue";
 import ColorPicker from "./ColorPicker.vue";
@@ -102,7 +102,7 @@ const isCssVariable = computed(() => {
 const resolvedColor = computed(() => {
 	if (!props.modelValue) return "";
 	if (isCssVariable.value) {
-		const { resolveTokenValue } = useStyleToken();
+		const { resolveTokenValue } = useBuilderVariable();
 		return resolveTokenValue(props.modelValue);
 	}
 	return props.modelValue;
@@ -120,23 +120,19 @@ const handleClose = () => {
 };
 
 const getOptions = async (query: string) => {
-	if (query.startsWith("--") || query.startsWith("var")) {
-		let processedQuery = query.replace(/^(--|var|\s+)/, "");
-		processedQuery = processedQuery.replace(/^--|\s+/g, "");
-		processedQuery = toKebabCase(processedQuery);
-		const options = useStyleToken()
-			.tokens.value.filter((token: StyleToken) => {
-				return token.token_name?.includes(processedQuery);
-			})
-			.map((token: StyleToken) => {
-				return {
-					label: `--${toKebabCase(token?.token_name || "")}`,
-					value: `var(--${toKebabCase(token?.token_name || "")})`,
-				};
-			});
-		return options;
-	} else {
-		return [];
-	}
+	let processedQuery = query.replace(/^(--|var|\s+)/, "");
+	processedQuery = processedQuery.replace(/^--|\(|\s+/g, "");
+	processedQuery = toKebabCase(processedQuery);
+	const options = useBuilderVariable()
+		.tokens.value.filter((token: BuilderVariable) => {
+			return token.token_name?.includes(processedQuery);
+		})
+		.map((token: BuilderVariable) => {
+			return {
+				label: `${token?.token_name || ""}`,
+				value: `var(--${toKebabCase(token?.token_name || "")})`,
+			};
+		});
+	return options;
 };
 </script>

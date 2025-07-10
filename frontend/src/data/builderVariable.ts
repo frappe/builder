@@ -1,8 +1,8 @@
 import { createListResource } from "frappe-ui";
 
-const styleTokens = createListResource({
+const builderVariables = createListResource({
 	method: "GET",
-	doctype: "Style Token",
+	doctype: "Builder Variable",
 	fields: ["name", "token_name", "value", "type"],
 	cache: "cssVariabless",
 	start: 0,
@@ -11,4 +11,4 @@ const styleTokens = createListResource({
 	orderBy: "token_name",
 });
 
-export default styleTokens;
+export default builderVariables;

@@ -60,18 +60,18 @@
 					:page="pageStore.activePage" />
 			</div>
 			<div v-show="builderStore.leftPanelActiveTab === 'tokens'" class="p-4">
-				<StyleTokens />
+				<BuilderVariables />
 			</div>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
+import BuilderVariables from "@/components/BuilderVariables.vue";
 import ComponentIcon from "@/components/Icons/Component.vue";
 import LayersIcon from "@/components/Icons/Layers.vue";
 import PlusIcon from "@/components/Icons/Plus.vue";
 import PageScript from "@/components/PageScript.vue";
-import StyleTokens from "@/components/StyleTokens.vue";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
@@ -126,7 +126,7 @@ const leftPanelOptions = [
 		icon: "code",
 	},
 	{
-		label: "Style Tokens",
+		label: "Variables",
 		value: "tokens",
 		icon: "aperture",
 	},
