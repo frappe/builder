@@ -29,25 +29,45 @@ function addPxToNumber(number: number, round: boolean = true): string {
 }
 
 function HexToHSV(color: HashString): { h: number; s: number; v: number } {
-	const [r, g, b] = color
-		.replace("#", "")
-		.match(/.{1,2}/g)
-		?.map((x) => parseInt(x, 16)) || [0, 0, 0];
+	// Remove hash and normalize length
+	let hex = color.replace("#", "").trim();
+
+	// Expand short hex (#abc -> #aabbcc)
+	if (hex.length === 3) {
+		hex = hex
+			.split("")
+			.map((c) => c + c)
+			.join("");
+	}
+
+	// If not valid hex, return black
+	if (!/^[0-9a-fA-F]{6}$/.test(hex)) {
+		return { h: 0, s: 0, v: 0 };
+	}
+
+	const r = parseInt(hex.slice(0, 2), 16);
+	const g = parseInt(hex.slice(2, 4), 16);
+	const b = parseInt(hex.slice(4, 6), 16);
 
 	const max = Math.max(r, g, b);
 	const min = Math.min(r, g, b);
 	const v = max / 255;
 	const d = max - min;
 	const s = max === 0 ? 0 : d / max;
-	const h =
-		max === min
-			? 0
-			: max === r
-			? (g - b) / d + (g < b ? 6 : 0)
-			: max === g
-			? (b - r) / d + 2
-			: (r - g) / d + 4;
-	return { h: h * 60, s, v };
+
+	let h = 0;
+	if (d !== 0) {
+		if (max === r) {
+			h = (g - b) / d + (g < b ? 6 : 0);
+		} else if (max === g) {
+			h = (b - r) / d + 2;
+		} else {
+			h = (r - g) / d + 4;
+		}
+		h *= 60;
+	}
+
+	return { h, s, v };
 }
 
 function HSVToHex(h: number, s: number, v: number): HashString {
@@ -206,6 +226,14 @@ function kebabToCamelCase(str: string) {
 	});
 }
 
+function toKebabCase(str: string) {
+	return str
+		.replace(/([a-z])([A-Z])/g, "$1-$2")
+		.replace(/([A-Z])([A-Z][a-z])/g, "$1-$2")
+		.toLowerCase()
+		.replace(/\s+/g, "-");
+}
+
 function isJSONString(str: string) {
 	try {
 		JSON.parse(str);
@@ -221,9 +249,16 @@ function isTargetEditable(e: Event) {
 	const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA";
 	return isEditable || isInput;
 }
+
 function getDataForKey(datum: Object, key: string) {
 	const data = Object.assign({}, datum);
-	return key.split(".").reduce((d, key) => (d ? d[key] : null), data) as string;
+	const value = key
+		.split(".")
+		.reduce(
+			(d: Record<string, any> | null, key) => (d && typeof d === "object" ? d[key] : null),
+			data as Record<string, any>,
+		);
+	return value;
 }
 
 function replaceMapKey(map: Map<any, any>, oldKey: string, newKey: string) {
@@ -240,7 +275,7 @@ function replaceMapKey(map: Map<any, any>, oldKey: string, newKey: string) {
 
 const mapToObject = (map: Map<any, any>) => Object.fromEntries(map.entries());
 
-function logObjectDiff(obj1: { [key: string]: {} }, obj2: { [key: string]: {} }, path = []) {
+function logObjectDiff(obj1: Record<string, any>, obj2: Record<string, any>, path: string[] = []) {
 	if (!obj1 || !obj2) return;
 	for (const key in obj1) {
 		const newPath = path.concat(key);
@@ -418,6 +453,7 @@ declare global {
 	interface Window {
 		Module: {
 			decompress: (arrayBuffer: ArrayBuffer) => Uint8Array;
+			onRuntimeInitialized?: () => void;
 		};
 	}
 }
@@ -431,10 +467,11 @@ async function getFontArrayBuffer(file_url: string) {
 			);
 		if (!window.Module) {
 			const path = "https://unpkg.com/wawoff2@2.0.1/build/decompress_binding.js";
+			// @ts-ignore
 			const init = new Promise((done) => (window.Module = { onRuntimeInitialized: done }));
 			await loadScript(path).then(() => init);
 		}
-		return Uint8Array.from(Module.decompress(arrayBuffer)).buffer;
+		return Uint8Array.from(window.Module.decompress(arrayBuffer)).buffer;
 	}
 	return arrayBuffer;
 }
@@ -890,6 +927,7 @@ export {
 	showDialog,
 	stripExtension,
 	throttle,
+	toKebabCase,
 	triggerCopyEvent,
 	uploadImage,
 };

@@ -69,11 +69,15 @@
 					v-if="pageStore.selectedPage && pageStore.activePage"
 					:page="pageStore.activePage" />
 			</div>
+			<div v-show="builderStore.leftPanelActiveTab === 'variables'" class="p-4">
+				<BuilderVariables />
+			</div>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
+import BuilderVariables from "@/components/BuilderVariables.vue";
 import ComponentIcon from "@/components/Icons/Component.vue";
 import LayersIcon from "@/components/Icons/Layers.vue";
 import PlusIcon from "@/components/Icons/Plus.vue";
@@ -130,6 +134,11 @@ const leftPanelOptions = [
 		label: "Code",
 		value: "Code",
 		icon: "code",
+	},
+	{
+		label: "Variables",
+		value: "variables",
+		icon: "aperture",
 	},
 ];
 

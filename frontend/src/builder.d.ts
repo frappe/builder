@@ -70,7 +70,7 @@ declare type HashString = `#${string}`;
 
 declare type RGBString = `rgb(${number}, ${number}, ${number})`;
 
-declare type LeftSidebarTabOption = "Blocks" | "Layers" | "Assets" | "Code";
+declare type LeftSidebarTabOption = "Blocks" | "Layers" | "Assets" | "Code" | "variables";
 declare type RightSidebarTabOption = "Properties" | "Script" | "Options";
 
 declare type BuilderMode = "select" | "text" | "container" | "image" | "repeater" | "move";
@@ -110,3 +110,5 @@ declare interface BlockDataKey {
 }
 
 declare type BlockDataKeyType = "key" | "attribute" | "style";
+
+declare type CSSVariableName = string | `var(--${string})`;

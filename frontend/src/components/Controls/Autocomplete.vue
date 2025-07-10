@@ -14,6 +14,11 @@
 			<div
 				class="form-input flex h-7 w-full items-center justify-between gap-2 rounded border-outline-gray-1 bg-surface-gray-1 p-0 text-sm text-ink-gray-8 transition-colors hover:border-outline-gray-2 hover:bg-surface-gray-1">
 				<!-- {{ displayValue }} -->
+				<template v-if="$slots.prefix">
+					<div class="absolute left-2 top-1.5 z-10 flex items-center">
+						<slot name="prefix" />
+					</div>
+				</template>
 				<ComboboxInput
 					autocomplete="off"
 					@focus="
@@ -29,7 +34,10 @@
 					@change="query = $event.target.value"
 					:displayValue="getDisplayValue"
 					:placeholder="!modelValue ? placeholder : null"
-					class="h-full w-full rounded border-none bg-transparent pl-2 pr-5 text-base focus:ring-2 focus:ring-outline-gray-3" />
+					:class="[
+						'h-full w-full rounded border-none bg-transparent pr-5.5 text-base focus:ring-2 focus:ring-outline-gray-3',
+						$slots.prefix ? 'pl-1' : 'pl-2',
+					]"></ComboboxInput>
 			</div>
 			<ComboboxOptions
 				class="absolute right-0 z-50 w-full overflow-y-auto rounded-lg border border-outline-gray-2 bg-surface-white p-0 shadow-2xl"
@@ -170,4 +178,7 @@ async function updateOptions() {
 }
 
 const clearValue = () => emit("update:modelValue", null);
+defineExpose({
+	updateOptions,
+});
 </script>

@@ -60,6 +60,7 @@
 				<BuilderBlock
 					class="h-full min-h-[inherit]"
 					:block="block"
+					:style="cssVariables"
 					:key="block.blockId"
 					v-if="showBlocks"
 					:breakpoint="breakpoint.device"
@@ -98,6 +99,7 @@ import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
 import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
 import { useBlockEventHandlers } from "@/utils/useBlockEventHandlers";
 import { useBlockSelection } from "@/utils/useBlockSelection";
+import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useCanvasDropZone } from "@/utils/useCanvasDropZone";
 import { useCanvasEvents } from "@/utils/useCanvasEvents";
 import { useCanvasUtils } from "@/utils/useCanvasUtils";
@@ -110,6 +112,8 @@ import FitScreenIcon from "./Icons/FitScreen.vue";
 
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
+
+const { cssVariables } = useBuilderVariable();
 
 const resizingBlock = ref(false);
 const canvasContainer = ref(null) as Ref<HTMLElement | null>;

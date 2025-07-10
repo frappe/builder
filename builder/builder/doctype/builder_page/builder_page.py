@@ -214,6 +214,14 @@ class BuilderPage(WebsiteGenerator):
 		if frappe.flags.show_preview and self.draft_blocks:
 			blocks = self.draft_blocks
 
+		builder_variables = frappe.get_all("Builder Variable", fields=["variable_name", "value"])
+		css_variables = {}
+		for builder_variable in builder_variables:
+			if builder_variable.variable_name and builder_variable.value:
+				variable_name = f"--{camel_case_to_kebab_case(builder_variable.variable_name, True)}"
+				css_variables[variable_name] = builder_variable.value
+		context.css_variables = css_variables
+
 		content, style, fonts = get_block_html(blocks)
 		self.set_custom_font(context, fonts)
 		context.fonts = fonts

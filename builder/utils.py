@@ -226,6 +226,12 @@ def sync_block_templates():
 	make_records(builder_block_template_path)
 
 
+def sync_builder_variables():
+	print("Syncing Builder Builder Variables")
+	builder_variable_path = frappe.get_module_path("builder", "builder_variable")
+	make_records(builder_variable_path)
+
+
 def make_records(path):
 	if not os.path.isdir(path):
 		return
