@@ -6,10 +6,7 @@
 				<FeatherIcon name="plus" class="size-4" />
 			</button>
 		</div>
-		<div v-if="isLoading" class="flex justify-center py-4">
-			<FeatherIcon name="loader" class="size-5 animate-spin text-ink-gray-7" />
-		</div>
-		<div v-else-if="!variables.length" class="py-2 text-sm italic text-ink-gray-6">No Variables found</div>
+		<div v-if="!variables.length" class="py-2 text-sm italic text-ink-gray-6">No Variables found</div>
 		<div v-else class="flex flex-col">
 			<div
 				v-for="variable in variables"
@@ -17,9 +14,24 @@
 				class="group flex cursor-pointer items-center justify-between rounded py-1"
 				@click="openDialog(variable)">
 				<div class="flex items-center gap-2">
-					<div
-						class="size-4 rounded-full border border-outline-gray-2"
-						:style="{ backgroundColor: resolveVariableValue(variable.value || '') }"></div>
+					<ColorPicker
+						v-model="variable.value"
+						placement="bottom-end"
+						:showInput="true"
+						popoverClass="!ml-2"
+						@update:modelValue="
+							(value) => {
+								variable.value = value;
+								debounceUpdate(value, variable);
+							}
+						">
+						<template #target="{ togglePopover }">
+							<div
+								class="size-4 cursor-pointer rounded-full border border-outline-gray-2"
+								:style="{ backgroundColor: resolveVariableValue(variable.value || '') }"
+								@click.stop="togglePopover"></div>
+						</template>
+					</ColorPicker>
 					<div class="flex flex-col">
 						<span class="text-p-sm font-medium text-ink-gray-9">
 							{{ variable.variable_name }}
@@ -30,7 +42,10 @@
 					</div>
 				</div>
 				<div class="flex gap-2 opacity-0 group-hover:opacity-100">
-					<button class="text-ink-gray-7 hover:text-red-600" @click.stop="handleDelete(variable)">
+					<button
+						v-if="!variable.is_standard"
+						class="text-ink-gray-7 hover:text-red-600"
+						@click.stop="handleDelete(variable)">
 						<FeatherIcon name="trash" class="size-3" />
 					</button>
 				</div>
@@ -72,10 +87,12 @@
 </template>
 
 <script setup lang="ts">
+import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import { BuilderVariable } from "@/types/Builder/BuilderVariable";
 import { confirm } from "@/utils/helpers";
 import { defaultBuilderVariable, useBuilderVariable } from "@/utils/useBuilderVariable";
+import { useDebounceFn } from "@vueuse/core";
 import { Dialog, FeatherIcon } from "frappe-ui";
 import { ref } from "vue";
 import { toast } from "vue-sonner";
@@ -126,4 +143,12 @@ const handleDelete = async (builderVariable: BuilderVariable) => {
 		toast.error((error as Error).message || "Failed to delete Variable");
 	}
 };
+
+const debounceUpdate = useDebounceFn(async (value: `#${string}`, variable: BuilderVariable) => {
+	try {
+		await updateVariable({ ...variable, value });
+	} catch (error) {
+		console.error("Failed to update variable:", error);
+	}
+}, 300);
 </script>
