@@ -1,5 +1,5 @@
 
-export interface StyleToken{
+export interface BuilderVariable{
 	creation: string
 	name: string
 	modified: string

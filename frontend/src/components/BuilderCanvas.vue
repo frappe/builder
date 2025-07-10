@@ -99,10 +99,10 @@ import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
 import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
 import { useBlockEventHandlers } from "@/utils/useBlockEventHandlers";
 import { useBlockSelection } from "@/utils/useBlockSelection";
+import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useCanvasDropZone } from "@/utils/useCanvasDropZone";
 import { useCanvasEvents } from "@/utils/useCanvasEvents";
 import { useCanvasUtils } from "@/utils/useCanvasUtils";
-import { useStyleToken } from "@/utils/useStyleToken";
 import { FeatherIcon } from "frappe-ui";
 import { Ref, computed, onMounted, provide, reactive, ref, watch } from "vue";
 import setPanAndZoom from "../utils/panAndZoom";
@@ -113,7 +113,7 @@ import FitScreenIcon from "./Icons/FitScreen.vue";
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 
-const { cssVariables } = useStyleToken();
+const { cssVariables } = useBuilderVariable();
 
 const resizingBlock = ref(false);
 const canvasContainer = ref(null) as Ref<HTMLElement | null>;

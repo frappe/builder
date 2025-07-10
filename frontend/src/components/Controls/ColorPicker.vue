@@ -91,14 +91,14 @@
 import EyeDropperIcon from "@/components/Icons/EyeDropper.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import { HSVToHex, HexToHSV, getRGB } from "@/utils/helpers";
-import { useStyleToken } from "@/utils/useStyleToken";
+import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { clamp, useEyeDropper } from "@vueuse/core";
 import { Popover } from "frappe-ui";
 import { Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
 
 type CSSColorValue = HashString | RGBString | `var(--${string})`;
 
-const { resolveTokenValue } = useStyleToken();
+const { resolveTokenValue } = useBuilderVariable();
 
 const canvasStore = useCanvasStore();
 const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;

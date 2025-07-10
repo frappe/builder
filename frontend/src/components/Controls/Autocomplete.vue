@@ -35,7 +35,7 @@
 					:displayValue="getDisplayValue"
 					:placeholder="!modelValue ? placeholder : null"
 					:class="[
-						'h-full w-full rounded border-none bg-transparent text-base focus:ring-2 focus:ring-outline-gray-3',
+						'h-full w-full rounded border-none bg-transparent pr-5.5 text-base focus:ring-2 focus:ring-outline-gray-3',
 						$slots.prefix ? 'pl-1' : 'pl-2',
 					]"></ComboboxInput>
 			</div>
