@@ -69,7 +69,7 @@
 					v-if="pageStore.selectedPage && pageStore.activePage"
 					:page="pageStore.activePage" />
 			</div>
-			<div v-show="builderStore.leftPanelActiveTab === 'tokens'" class="p-4">
+			<div v-show="builderStore.leftPanelActiveTab === 'variables'" class="p-4">
 				<BuilderVariables />
 			</div>
 		</div>
@@ -137,7 +137,7 @@ const leftPanelOptions = [
 	},
 	{
 		label: "Variables",
-		value: "tokens",
+		value: "variables",
 		icon: "aperture",
 	},
 ];

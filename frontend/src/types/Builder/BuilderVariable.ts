@@ -12,8 +12,8 @@ export interface BuilderVariable{
 	idx?: number
 	/**	Is Standard : Check	*/
 	is_standard?: 0 | 1
-	/**	Token Name : Data	*/
-	token_name: string
+	/**	Variable Name : Data	*/
+	variable_name: string
 	/**	Type : Select	*/
 	type?: "Color" | "Spacing"
 	/**	Value : Data	*/
