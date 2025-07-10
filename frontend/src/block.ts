@@ -17,14 +17,6 @@ import { Editor } from "@tiptap/vue-3";
 import { clamp } from "@vueuse/core";
 import { computed, nextTick, reactive, toRaw } from "vue";
 
-type BlockDataKeyType = "key" | "attribute" | "style";
-
-export interface BlockDataKey {
-	key?: string;
-	type?: BlockDataKeyType;
-	property?: string;
-}
-
 class Block implements BlockOptions {
 	blockId: string;
 	children: Array<Block>;
@@ -49,6 +41,7 @@ class Block implements BlockOptions {
 	elementBeforeConversion?: string;
 	parentBlock: Block | null;
 	activeState?: string | null = null;
+	dynamicValues: Array<BlockDataKey>;
 	// @ts-expect-error
 	referenceComponent: Block | null;
 	customAttributes: BlockAttributeMap;
@@ -103,6 +96,7 @@ class Block implements BlockOptions {
 		this.mobileStyles = reactive(options.mobileStyles || {});
 		this.tabletStyles = reactive(options.tabletStyles || {});
 		this.attributes = reactive(options.attributes || {});
+		this.dynamicValues = reactive(options.dynamicValues || []);
 
 		this.blockName = options.blockName;
 		delete this.attributes.style;
@@ -679,7 +673,7 @@ class Block implements BlockOptions {
 		}
 	}
 	isRepeater() {
-		return this.isRepeaterBlock;
+		return Boolean(this.isRepeaterBlock);
 	}
 	getDataKey(key: keyof BlockDataKey): string {
 		let dataKey = (this.dataKey && this.dataKey[key]) || "";
@@ -696,7 +690,11 @@ class Block implements BlockOptions {
 				property: this.isLink() ? "href" : this.isImage() ? "src" : "innerHTML",
 			};
 		}
-		this.dataKey[key] = value;
+		if (!value && key === "key") {
+			this.dataKey = {};
+		} else {
+			this.dataKey[key] = value;
+		}
 	}
 	getInnerHTML(): string {
 		let innerHTML = this.innerHTML || "";
@@ -704,6 +702,13 @@ class Block implements BlockOptions {
 			innerHTML = this.referenceComponent?.getInnerHTML() || "";
 		}
 		return innerHTML;
+	}
+	getText(): string {
+		const editor = this.getEditor();
+		if (editor && editor.isEditable) {
+			return editor.getText();
+		}
+		return this.getTextContent() || "";
 	}
 	setInnerHTML(innerHTML: string) {
 		this.innerHTML = innerHTML;
@@ -839,6 +844,49 @@ class Block implements BlockOptions {
 	}
 	getMargin(opts?: { nativeOnly?: boolean; cascading?: boolean }) {
 		return getBoxSpacing(this, "margin", opts);
+	}
+	setDynamicValue(
+		property: BlockDataKey["property"],
+		type: BlockDataKeyType,
+		key: BlockDataKey["key"] | null = null,
+	) {
+		const existingKey = this.getDynamicKey(property, type);
+		if (existingKey) {
+			this.dynamicValues = this.dynamicValues.map((v) => {
+				if (v.property === property && v.type === type) {
+					return { ...v, key: key || "" };
+				}
+				return v;
+			});
+		} else {
+			this.dynamicValues.push({
+				property,
+				type,
+				key: key || "",
+			});
+		}
+	}
+	removeDynamicValue(property: BlockDataKey["property"], type: BlockDataKeyType) {
+		this.dynamicValues = this.dynamicValues.filter((v) => !(v.property === property && v.type === type));
+	}
+	getDynamicKey(property: BlockDataKey["property"], type: BlockDataKeyType): BlockDataKey["key"] | null {
+		const dynamicValue = this.dynamicValues.find((v) => v.property === property && v.type === type);
+		if (dynamicValue) {
+			return dynamicValue.key;
+		}
+		return null;
+	}
+	getRepeaterParent(): Block | null {
+		if (this.isRepeater()) {
+			return this;
+		}
+		if (this.parentBlock) {
+			return this.parentBlock.getRepeaterParent();
+		}
+		return null;
+	}
+	isInsideRepeater(): boolean {
+		return Boolean(this.getRepeaterParent());
 	}
 }
 

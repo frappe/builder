@@ -32,7 +32,7 @@
 <script lang="ts" setup>
 import { RadioGroup, RadioGroupLabel, RadioGroupOption } from "@headlessui/vue";
 import { FeatherIcon } from "frappe-ui";
-import { computed, defineEmits, defineProps } from "vue";
+import { computed } from "vue";
 
 interface Button {
 	label: string;

@@ -23,7 +23,7 @@
 			}"
 			v-if="editor"
 			class="z-50 rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-ink-gray-9 shadow-2xl"
-			:should-show="() => true">
+			:should-show="() => isEditable">
 			<div
 				v-if="settingLink"
 				class="flex flex-col gap-2 p-1"
@@ -264,12 +264,28 @@ const FontFamilyPasteRule = Extension.create({
 const textContent = computed(() => {
 	let innerHTML = props.block.getInnerHTML();
 	if (props.data) {
-		if (props.block.getDataKey("property") === "innerHTML") {
-			innerHTML = getDataForKey(props.data, props.block.getDataKey("key")) ?? innerHTML;
+		const dynamicContent = getDynamicContent();
+		if (dynamicContent) {
+			innerHTML = dynamicContent;
 		}
 	}
 	return String(innerHTML ?? "");
 });
+
+const getDynamicContent = () => {
+	let innerHTML = null as string | null;
+	if (props.block.getDataKey("property") === "innerHTML") {
+		innerHTML = getDataForKey(props.data, props.block.getDataKey("key")) ?? innerHTML;
+	}
+	props.block.dynamicValues
+		?.filter((dataKeyObj: BlockDataKey) => {
+			return dataKeyObj.property === "innerHTML" && dataKeyObj.type === "key";
+		})
+		?.forEach((dataKeyObj: BlockDataKey) => {
+			innerHTML = getDataForKey(props.data as Object, dataKeyObj.key as string) ?? innerHTML;
+		});
+	return innerHTML;
+};
 
 const isEditable = computed(() => {
 	return (
@@ -304,7 +320,7 @@ watch(
 
 watch(
 	() => textContent.value,
-	(newValue) => {
+	(newValue: string) => {
 		const innerHTML = getInnerHTML(editor.value);
 		const isSame = newValue === innerHTML;
 		if (isSame) {
@@ -358,7 +374,9 @@ if (!props.preview) {
 							return;
 						}
 						dataChanged.value = true;
-						props.block.setInnerHTML(innerHTML);
+						if (!getDynamicContent()) {
+							props.block.setInnerHTML(innerHTML);
+						}
 					},
 					onSelectionUpdate: ({ editor }) => {
 						settingLink.value = false;

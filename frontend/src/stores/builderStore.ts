@@ -36,6 +36,7 @@ const useBuilderStore = defineStore("builderStore", {
 		showRightPanel: <boolean>true,
 		showLeftPanel: <boolean>true,
 		showHTMLDialog: false,
+		showDataScriptDialog: false,
 		realtime: new RealTimeHandler(),
 		viewers: <UserInfo[]>[],
 		isFCSite: window.is_fc_site === "{{ is_fc_site }}" ? false : window.is_fc_site,

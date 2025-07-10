@@ -32,6 +32,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import collectionOptionsSection from "@/components/BlockPropertySections/CollectionOptionsSection";
 import customAttributesSection from "@/components/BlockPropertySections/CustomAttributesSection";
 import dataKeySection from "@/components/BlockPropertySections/DataKeySection";
 import dimensionSection from "@/components/BlockPropertySections/DimenstionSection";
@@ -100,6 +101,7 @@ const getFilteredProperties = (section: PropertySection) => {
 };
 
 const sections = [
+	collectionOptionsSection,
 	linkSection,
 	layoutSection,
 	imageOptionsSection,
@@ -107,10 +109,10 @@ const sections = [
 	typographySection,
 	styleSection,
 	dimensionSection,
-	positionSection,
 	spacingSection,
 	transitionSection,
 	optionsSection,
+	positionSection,
 	dataKeySection,
 	customAttributesSection,
 	rawStyleSection,

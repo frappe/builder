@@ -1,10 +1,23 @@
 <template>
 	<div class="flex w-full flex-col gap-2">
 		<div class="relative flex w-full items-center gap-2">
-			<div class="flex w-[88px] shrink-0 items-center" v-if="enableStates || label">
-				<Dropdown v-if="enableStates" size="sm" :options="stateOptions">
+			<div class="flex w-[88px] shrink-0 items-center" v-if="enableStateControls || label">
+				<DraggablePopup
+					v-model="showDynamicValueModal"
+					:container="dropdownTrigger?.$el"
+					placement="middle-right"
+					:clickOutsideToClose="false"
+					:placementOffset="20"
+					v-if="showDynamicValueModal">
+					<template #header>Set Dynamic Value</template>
+					<template #content>
+						<DynamicValueHandler @setDynamicValue="setDynamicValue" :selectedValue="dynamicValue" />
+					</template>
+				</DraggablePopup>
+				<Dropdown v-if="enableStateControls || allowDynamicValue" size="sm" :options="stateOptions">
 					<template v-slot="{ open }">
 						<FeatherIcon
+							ref="dropdownTrigger"
 							name="plus-circle"
 							class="mr-1.5 h-3 w-3 cursor-pointer text-ink-gray-7 hover:text-ink-gray-9"
 							@click="open" />
@@ -18,18 +31,39 @@
 					{{ label }}
 				</InputLabel>
 			</div>
-			<component
-				:is="props.component"
-				v-bind="controlAttrs"
-				v-on="props.events || {}"
-				:modelValue="modelValue"
-				:defaultValue="defaultValue"
-				:placeholder="placeholderValue"
-				@update:modelValue="updateValue"
-				@keydown.stop="handleKeyDown"
-				class="w-full" />
+			<div class="relative w-full">
+				<component
+					:is="props.component"
+					v-bind="controlAttrs"
+					v-on="props.events || {}"
+					:modelValue="modelValue"
+					:defaultValue="defaultValue"
+					:placeholder="placeholderValue"
+					@update:modelValue="updateValue"
+					@keydown.stop="handleKeyDown"
+					class="w-full">
+					<template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
+						<slot :name="name" v-bind="slotData || {}" />
+					</template>
+				</component>
+
+				<div
+					class="absolute bottom-0 left-0 right-0 top-0 z-20 flex cursor-pointer items-center gap-2 rounded bg-surface-violet-1 py-0.5 pl-2.5 pr-6 text-sm text-ink-violet-1"
+					@click.stop="showDynamicValueModal = true"
+					v-if="dynamicValue">
+					<FeatherIcon name="zap" class="size-3"></FeatherIcon>
+					<span class="truncate">{{ dynamicValue }}</span>
+				</div>
+				<button
+					class="absolute right-1 top-1 z-20 cursor-pointer p-1 text-ink-gray-4 hover:text-ink-gray-5"
+					tabindex="-1"
+					v-show="dynamicValue"
+					@click="clearDynamicValue">
+					<CrossIcon />
+				</button>
+			</div>
 		</div>
-		<template v-if="enableStates" v-for="state in statesToShow" :key="String(state)">
+		<template v-if="enableStateControls" v-for="state in statesToShow" :key="String(state)">
 			<div
 				class="group ml-[5px] flex items-center justify-between before:-mt-7 before:h-7 before:w-[1px] before:bg-surface-gray-4 before:content-['_'] after:absolute after:left-3.5 after:h-1.5 after:w-1.5 after:rounded-full after:bg-surface-gray-4 hover:after:hidden">
 				<button
@@ -41,7 +75,7 @@
 				<InputLabel
 					class="ml-3 w-[80px] shrink-0"
 					:class="{ 'cursor-ns-resize': enableSlider }"
-					@mousedown="(ev) => handleStateMouseDown(ev, state)">
+					@mousedown="(ev: MouseEvent) => handleStateMouseDown(ev, state)">
 					{{ stateLabels[String(state)] }}
 				</InputLabel>
 				<component
@@ -55,24 +89,37 @@
 					@blur="() => disableStyle(state)"
 					@update:modelValue="(v: any) => updateStateValue(state, v)"
 					@keydown.stop="(e: KeyboardEvent) => handleKeyDown(e, state)"
-					class="shrink-1 w-full" />
+					class="shrink-1 w-full">
+					<template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
+						<slot :name="name" v-bind="slotData || {}" />
+					</template>
+				</component>
 			</div>
 		</template>
 	</div>
 </template>
 <script lang="ts" setup>
+import DynamicValueHandler from "@/components/Controls/DynamicValueHandler.vue";
 import Input from "@/components/Controls/Input.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
+import CrossIcon from "@/components/Icons/Cross.vue";
 import blockController from "@/utils/blockController";
 import { Dropdown, FeatherIcon } from "frappe-ui";
 import type { Component } from "vue";
-import { computed, useAttrs } from "vue";
+import { computed, ref, useAttrs } from "vue";
+
+const dropdownTrigger = ref<typeof FeatherIcon | null>(null);
+const emit = defineEmits<{
+	(setDynamicValue: string): void;
+	(clearDynamicValue: void): void;
+}>();
 
 const props = withDefaults(
 	defineProps<{
 		styleProperty: string;
 		label?: string;
 		placeholder?: string;
+		controlType?: "style" | "attribute" | "key";
 		getModelValue?: () => string;
 		getPlaceholder?: () => string;
 		setModelValue?: (value: string) => void;
@@ -86,11 +133,13 @@ const props = withDefaults(
 		events?: Record<string, unknown>;
 		defaultValue?: string | number;
 		enableStates?: boolean;
+		allowDynamicValue?: boolean;
 		enabledStates?: string[];
 	}>(),
 	{
 		placeholder: "unset",
 		type: "text",
+		controlType: "style",
 		enableSlider: false,
 		unitOptions: () => [],
 		changeFactor: 1,
@@ -98,10 +147,15 @@ const props = withDefaults(
 		maxValue: null,
 		hideClearButton: false,
 		component: Input,
-		enableStates: true,
+		allowDynamicValue: false,
 		enabledStates: () => ["hover", "active", "focus"],
+		enableStates: undefined,
 	},
 );
+
+const enableStateControls = computed(() => {
+	return props.enableStates ?? props.controlType === "style";
+});
 
 const stateLabels: Record<string, string> = {
 	hover: "On Hover",
@@ -188,19 +242,36 @@ const clearState = (state: string) => {
 	blockController.setStyle(`${state}:${props.styleProperty}`, null);
 };
 
-const stateOptions = computed(() =>
-	props.enabledStates
-		.filter((state: string) => !getStateValue(state))
-		.map((state: string) => ({
-			label: stateLabels[state] || state,
+const showDynamicValueModal = ref(false);
+
+const stateOptions = computed(() => {
+	const options = [];
+	if (enableStateControls.value) {
+		options.push(
+			...props.enabledStates
+				.filter((state: string) => !getStateValue(state))
+				.map((state: string) => ({
+					label: stateLabels[state] || state,
+					onClick: () => {
+						blockController.setStyle(`${state}:${props.styleProperty}`, modelValue.value);
+					},
+				})),
+		);
+	}
+
+	if (props.allowDynamicValue) {
+		options.unshift({
+			label: "Set Dynamic Value",
 			onClick: () => {
-				blockController.setStyle(`${state}:${props.styleProperty}`, modelValue.value);
+				showDynamicValueModal.value = true;
 			},
-		})),
-);
+		});
+	}
+	return options;
+});
 
 const statesToShow = computed(() => {
-	if (!props.enableStates) return [];
+	if (!enableStateControls.value) return [];
 	return props.enabledStates.filter((state: string) => {
 		return blockController.getNativeStyle(`${state}:${props.styleProperty}`) !== undefined;
 	});
@@ -280,5 +351,34 @@ const disableStyle = (state: string) => {
 			block.activeState = null;
 		}
 	});
+};
+
+function setDynamicValue(value: string) {
+	blockController.getSelectedBlocks().forEach((block) => {
+		block.setDynamicValue(props.styleProperty, props.controlType, value);
+	});
+	showDynamicValueModal.value = false;
+	emit("setDynamicValue");
+}
+
+const dynamicValue = computed(() => {
+	const blocks = blockController.getSelectedBlocks();
+	if (!blocks?.length) return;
+	const dataKeyObj = blocks[0].dynamicValues.find((obj) => {
+		return obj.type === props.controlType && obj.property === props.styleProperty;
+	});
+	if (dataKeyObj) {
+		return dataKeyObj.key;
+	} else {
+		return "";
+	}
+});
+
+const clearDynamicValue = () => {
+	const blocks = blockController.getSelectedBlocks();
+	blocks.forEach((block) => {
+		block.removeDynamicValue(props.styleProperty, props.controlType);
+	});
+	emit("clearDynamicValue");
 };
 </script>
