@@ -17,23 +17,24 @@ const transitionSectionProperties = [
 					{ value: "500ms", label: "Slow" },
 					{ value: "1000ms", label: "Very Slow" },
 				],
+				setModelValue: (val: string | null) => {
+					if (val === "None") {
+						val = null;
+					}
+					blockController.setStyle("transitionDuration", val);
+					if (val) {
+						if (!blockController.getStyle("transitionTimingFunction")) {
+							blockController.setStyle("transitionTimingFunction", "ease");
+						}
+						if (!blockController.getStyle("transitionProperty")) {
+							blockController.setStyle("transitionProperty", "all");
+						}
+					} else {
+						blockController.setStyle("transitionTimingFunction", null);
+						blockController.setStyle("transitionProperty", null);
+					}
+				},
 			};
-		},
-		events: {
-			"update:modelValue": (val: string) => {
-				blockController.setStyle("transitionDuration", val);
-				if (val) {
-					if (!blockController.getStyle("transitionTimingFunction")) {
-						blockController.setStyle("transitionTimingFunction", "ease");
-					}
-					if (!blockController.getStyle("transitionProperty")) {
-						blockController.setStyle("transitionProperty", "all");
-					}
-				} else {
-					blockController.setStyle("transitionTimingFunction", null);
-					blockController.setStyle("transitionProperty", null);
-				}
-			},
 		},
 		searchKeyWords: "Transition, Duration, Speed, Animation Time",
 	},
