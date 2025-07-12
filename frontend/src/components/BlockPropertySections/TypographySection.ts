@@ -1,7 +1,7 @@
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import FontUploader from "@/components/Controls/FontUploader.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
-import StyleControl from "@/components/Controls/StyleControl.vue";
+import PropertyControl from "@/components/Controls/PropertyControl.vue";
 import userFonts from "@/data/userFonts";
 import { UserFont } from "@/types/Builder/UserFont";
 import blockController from "@/utils/blockController";
@@ -15,7 +15,7 @@ const setFont = (font: string) => {
 
 const typographySectionProperties = [
 	{
-		component: StyleControl,
+		component: PropertyControl,
 		getProps: () => {
 			return {
 				label: "Content",
@@ -34,7 +34,7 @@ const typographySectionProperties = [
 			(blockController.isText() || blockController.isButton()) && !blockController.multipleBlocksSelected(),
 	},
 	{
-		component: StyleControl,
+		component: PropertyControl,
 		getProps: () => {
 			return {
 				label: "Family",
@@ -88,7 +88,7 @@ const typographySectionProperties = [
 		condition: () => blockController.isText() || blockController.isContainer(),
 	},
 	{
-		component: StyleControl,
+		component: PropertyControl,
 		getProps: () => {
 			return {
 				label: "Weight",
@@ -100,7 +100,7 @@ const typographySectionProperties = [
 		searchKeyWords: "Font, Weight, FontWeight",
 	},
 	{
-		component: StyleControl,
+		component: PropertyControl,
 		getProps: () => {
 			return {
 				label: "Size",
@@ -113,7 +113,7 @@ const typographySectionProperties = [
 		condition: () => blockController.isText() || blockController.isInput(),
 	},
 	{
-		component: StyleControl,
+		component: PropertyControl,
 		getProps: () => {
 			return {
 				label: "Height",
@@ -124,7 +124,7 @@ const typographySectionProperties = [
 		condition: () => blockController.isText(),
 	},
 	{
-		component: StyleControl,
+		component: PropertyControl,
 		getProps: () => {
 			return {
 				label: "Letter",
@@ -135,7 +135,7 @@ const typographySectionProperties = [
 		condition: () => blockController.isText(),
 	},
 	{
-		component: StyleControl,
+		component: PropertyControl,
 		getProps: () => {
 			return {
 				label: "Transform",
@@ -165,7 +165,7 @@ const typographySectionProperties = [
 		condition: () => blockController.isText(),
 	},
 	{
-		component: StyleControl,
+		component: PropertyControl,
 		getProps: () => {
 			return {
 				label: "Align",

@@ -2,11 +2,11 @@ import BlockFlexLayoutHandler from "@/components/BlockFlexLayoutHandler.vue";
 import BlockGridLayoutHandler from "@/components/BlockGridLayoutHandler.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import blockController from "@/utils/blockController";
-import StyleControl from "../Controls/StyleControl.vue";
+import PropertyControl from "../Controls/PropertyControl.vue";
 
 const layoutSectionProperties = [
 	{
-		component: StyleControl,
+		component: PropertyControl,
 		condition: () => !blockController.isText(),
 		getProps: () => {
 			return {

@@ -2,7 +2,7 @@
 	<Popover placement="left" class="!block w-full" popoverClass="!min-w-fit !mr-[30px]">
 		<template #target="{ togglePopover }">
 			<div class="flex w-full items-center justify-between">
-				<StyleControl
+				<PropertyControl
 					styleProperty="backgroundImage"
 					:component="Input"
 					label="BG Image"
@@ -19,7 +19,7 @@
 							:class="{ 'bg-surface-gray-4': !Boolean(backgroundImage) }"
 							:style="previewStyle" />
 					</template>
-				</StyleControl>
+				</PropertyControl>
 			</div>
 		</template>
 		<template #body>
@@ -73,14 +73,14 @@
 			</div>
 		</template>
 	</Popover>
-	<StyleControl label="BG Color" styleProperty="backgroundColor" :component="ColorInput" />
+	<PropertyControl label="BG Color" styleProperty="backgroundColor" :component="ColorInput" />
 </template>
 
 <script lang="ts" setup>
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import Input from "@/components/Controls/Input.vue";
-import StyleControl from "@/components/Controls/StyleControl.vue";
+import PropertyControl from "@/components/Controls/PropertyControl.vue";
 import blockController from "@/utils/blockController";
 import { FileUploader, Popover } from "frappe-ui";
 import { computed } from "vue";

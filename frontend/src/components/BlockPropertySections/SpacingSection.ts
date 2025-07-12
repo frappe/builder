@@ -1,10 +1,10 @@
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
-import StyleControl from "../Controls/StyleControl.vue";
+import PropertyControl from "../Controls/PropertyControl.vue";
 
 const spacingSectionProperties = [
 	{
-		component: StyleControl,
+		component: PropertyControl,
 		searchKeyWords: "Margin, Top, MarginTop, Margin Top",
 		getProps: () => {
 			return {
@@ -21,7 +21,7 @@ const spacingSectionProperties = [
 		condition: () => !blockController.isRoot(),
 	},
 	{
-		component: StyleControl,
+		component: PropertyControl,
 		searchKeyWords: "Padding, Top, PaddingTop, Padding Top",
 		getProps: () => {
 			return {

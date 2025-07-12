@@ -45,7 +45,7 @@
 		type="text"
 		:modelValue="height"
 		@update:modelValue="setHeight" />
-	<StyleControl
+	<PropertyControl
 		styleProperty="gap"
 		label="Gap"
 		v-if="blockController.isGrid()"
@@ -212,7 +212,7 @@
 <script lang="ts" setup>
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
-import StyleControl from "@/components/Controls/StyleControl.vue";
+import PropertyControl from "@/components/Controls/PropertyControl.vue";
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
 
