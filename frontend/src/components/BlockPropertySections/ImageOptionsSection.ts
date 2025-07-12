@@ -1,4 +1,4 @@
-import StyleControl from "@/components/Controls/StyleControl.vue";
+import PropertyControl from "@/components/Controls/PropertyControl.vue";
 import ImageUploadInput from "@/components/ImageUploadInput.vue";
 import blockController from "@/utils/blockController";
 import { Button, createResource } from "frappe-ui";
@@ -7,7 +7,7 @@ import { toast } from "vue-sonner";
 
 const imageOptionsSectionProperties = [
 	{
-		component: StyleControl,
+		component: PropertyControl,
 		getProps: () => {
 			return {
 				component: ImageUploadInput,
@@ -90,7 +90,7 @@ const imageOptionsSectionProperties = [
 		},
 	},
 	{
-		component: StyleControl,
+		component: PropertyControl,
 		getProps: () => {
 			return {
 				controlType: "attribute",

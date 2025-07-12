@@ -1,10 +1,10 @@
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
-import StyleControl from "../Controls/StyleControl.vue";
+import PropertyControl from "../Controls/PropertyControl.vue";
 
 const linkSectionProperties = [
 	{
-		component: StyleControl,
+		component: PropertyControl,
 		getProps: () => {
 			return {
 				label: "Link To",
@@ -40,7 +40,7 @@ const linkSectionProperties = [
 		},
 	},
 	{
-		component: StyleControl,
+		component: PropertyControl,
 		getProps: () => {
 			return {
 				label: "Opens in",
