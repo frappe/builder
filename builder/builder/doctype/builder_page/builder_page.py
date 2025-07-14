@@ -206,12 +206,12 @@ class BuilderPage(WebsiteGenerator):
 			context.title = page_data.get("page_title")
 
 		blocks = self.blocks
-		context.preview = frappe.flags.show_preview
+		context.preview = frappe.flags.for_preview
 
 		if self.dynamic_route or page_data:
 			context.no_cache = 1
 
-		if frappe.flags.show_preview and self.draft_blocks:
+		if frappe.flags.for_preview and self.draft_blocks:
 			blocks = self.draft_blocks
 
 		builder_variables = frappe.get_all("Builder Variable", fields=["variable_name", "value"])
@@ -238,11 +238,11 @@ class BuilderPage(WebsiteGenerator):
 			context.editor_link += f"?{query_string}"
 
 		context.page_name = self.name
-
-		if self.dynamic_route and hasattr(frappe.local, "request"):
-			context.base_url = frappe.utils.get_url(frappe.local.request.path or self.route)
-		else:
-			context.base_url = frappe.utils.get_url(self.route)
+		if frappe.form_dict.get("for_preview") or frappe.flags.for_preview:
+			if self.dynamic_route and hasattr(frappe.local, "request"):
+				context.base_url = frappe.utils.get_url(frappe.local.request.path or self.route)
+			else:
+				context.base_url = frappe.utils.get_url(self.route)
 
 		context.update(page_data)
 
@@ -326,7 +326,7 @@ class BuilderPage(WebsiteGenerator):
 	def generate_page_preview_image(self, html=None):
 		public_path, local_path = get_builder_page_preview_file_paths(self)
 		generate_preview(
-			html or get_response_content(self.route),
+			html or get_response_content(self.route + "?for_preview=1"),
 			local_path,
 		)
 		self.db_set("preview", public_path, commit=True, update_modified=False)
