@@ -72,7 +72,6 @@ def get_page_preview_html(page: str, **kwarg) -> str:
 	renderer = BuilderPageRenderer(path="")
 	renderer.docname = page
 	renderer.doctype = "Builder Page"
-	frappe.flags.for_preview = True
 	frappe.local.no_cache = 1
 	renderer.init_context()
 	response = renderer.render()
