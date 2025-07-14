@@ -42,7 +42,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-04 15:05:12.630580",
+ "modified": "2025-07-14 14:34:25.798033",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Variable",
@@ -59,6 +59,13 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Website Manager",
    "write": 1
   }
  ],
