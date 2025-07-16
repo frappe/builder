@@ -3,7 +3,6 @@ import os
 import duckdb
 import frappe
 
-DUCKDB_PATH = os.path.join(frappe.get_site_path(), "builder_analytics.duckdb")
 DUCKDB_TABLE = "web_page_views"
 
 
@@ -14,7 +13,8 @@ class DuckDBConnection:
 		self.db = None
 
 	def __enter__(self):
-		self.db = duckdb.connect(DUCKDB_PATH)
+		duckdb_path = os.path.join(frappe.get_site_path(), "builder_analytics.duckdb")
+		self.db = duckdb.connect(duckdb_path)
 		return self.db
 
 	def __exit__(self, exc_type, exc_val, exc_tb):
@@ -22,10 +22,10 @@ class DuckDBConnection:
 			self.db.close()
 
 
-def _create_duckdb_table(db):
+def _create_duckdb_table(db, table_name=DUCKDB_TABLE):
 	"""Create DuckDB table with the standard schema"""
 	db.execute(f"""
-		CREATE TABLE IF NOT EXISTS {DUCKDB_TABLE} (
+		CREATE TABLE IF NOT EXISTS {table_name} (
 			creation TIMESTAMP,
 			is_unique INTEGER,
 			path TEXT,
@@ -67,23 +67,23 @@ def _calculate_from_date(to_date, config):
 	return frappe.utils.add_to_date(to_date, **{config["unit"]: config["delta"]})
 
 
-def reset_duckdb_table():
+def reset_duckdb_table(table_name=DUCKDB_TABLE):
 	"""Reset DuckDB table by dropping and recreating it"""
 	if not frappe.has_permission("Builder Page", ptype="write"):
 		frappe.throw("You do not have permission to reset analytics data.")
 
 	with DuckDBConnection() as db:
-		db.execute(f"DROP TABLE IF EXISTS {DUCKDB_TABLE}")
-		_create_duckdb_table(db)
+		db.execute(f"DROP TABLE IF EXISTS {table_name}")
+		_create_duckdb_table(db, table_name)
 
 	# Re-ingest all data
-	ingest_web_page_views_to_duckdb()
+	ingest_web_page_views_to_duckdb(table_name)
 
 
-def ingest_web_page_views_to_duckdb():
+def ingest_web_page_views_to_duckdb(table_name=DUCKDB_TABLE):
 	with DuckDBConnection() as db:
-		_create_duckdb_table(db)
-		last_record = db.execute(f"SELECT MAX(creation) FROM {DUCKDB_TABLE}").fetchone()[0]
+		_create_duckdb_table(db, table_name)
+		last_record = db.execute(f"SELECT MAX(creation) FROM {table_name}").fetchone()[0]
 
 		filters = {"creation": [">", last_record]} if last_record else {}
 		records = frappe.get_all(
@@ -95,12 +95,12 @@ def ingest_web_page_views_to_duckdb():
 
 		if records:
 			db.executemany(
-				f"INSERT INTO {DUCKDB_TABLE} (creation, is_unique, path, referrer) VALUES (?, ?, ?, ?)",
+				f"INSERT INTO {table_name} (creation, is_unique, path, referrer) VALUES (?, ?, ?, ?)",
 				records,
 			)
 
 
-def get_page_analytics(route=None, date_range: str = "last_30_days", interval=None):
+def get_page_analytics(route=None, date_range: str = "last_30_days", interval=None, table_name=DUCKDB_TABLE):
 	"""Get analytics data for a specific page route or all pages"""
 	try:
 		date_config = _get_date_config(date_range)
@@ -126,7 +126,7 @@ def get_page_analytics(route=None, date_range: str = "last_30_days", interval=No
 				strftime('{fmt}', creation) as interval,
 				COUNT(*) as total_page_views,
 				SUM(is_unique) as unique_page_views
-			FROM {DUCKDB_TABLE}
+			FROM {table_name}
 			WHERE {where}
 			GROUP BY interval
 			ORDER BY interval
@@ -134,7 +134,7 @@ def get_page_analytics(route=None, date_range: str = "last_30_days", interval=No
 			rows = db.execute(q).fetchall()
 
 			# Total views
-			q2 = f"SELECT COUNT(*), SUM(is_unique) FROM {DUCKDB_TABLE} WHERE {where}"
+			q2 = f"SELECT COUNT(*), SUM(is_unique) FROM {table_name} WHERE {where}"
 			total_views, total_unique_views = db.execute(q2).fetchone()
 
 		return {
@@ -147,12 +147,12 @@ def get_page_analytics(route=None, date_range: str = "last_30_days", interval=No
 		return _get_empty_analytics()
 
 
-def get_top_pages(date_range: str = "last_30_days"):
+def get_top_pages(date_range: str = "last_30_days", table_name=DUCKDB_TABLE):
 	where, _, _ = _get_date_range_filter(date_range)
 	with DuckDBConnection() as db:
 		q = f"""
 			SELECT path as route, COUNT(*) as view_count, SUM(is_unique) as unique_view_count
-			FROM {DUCKDB_TABLE}
+			FROM {table_name}
 			WHERE {where}
 			GROUP BY path
 			ORDER BY view_count DESC
@@ -162,7 +162,7 @@ def get_top_pages(date_range: str = "last_30_days"):
 		return [{"route": r[0], "view_count": r[1], "unique_view_count": r[2]} for r in rows]
 
 
-def get_top_referrers(date_range: str = "last_30_days"):
+def get_top_referrers(date_range: str = "last_30_days", table_name=DUCKDB_TABLE):
 	"""Get top referrers from analytics data using SQL for domain extraction"""
 	try:
 		where, _, _ = _get_date_range_filter(date_range)
@@ -177,7 +177,7 @@ def get_top_referrers(date_range: str = "last_30_days"):
 							ELSE 'direct'
 						END as domain,
 						is_unique
-					FROM {DUCKDB_TABLE}
+					FROM {table_name}
 					WHERE {where}
 				)
 				SELECT
@@ -196,9 +196,9 @@ def get_top_referrers(date_range: str = "last_30_days"):
 		return []
 
 
-def get_overall_analytics(date_range: str = "last_30_days", interval=None):
+def get_overall_analytics(date_range: str = "last_30_days", interval=None, table_name=DUCKDB_TABLE):
 	"""Get overall site analytics with top pages and referrers"""
-	analytics = get_page_analytics(None, date_range, interval)
-	analytics["top_pages"] = get_top_pages(date_range=date_range)
-	analytics["top_referrers"] = get_top_referrers(date_range=date_range)
+	analytics = get_page_analytics(None, date_range, interval, table_name)
+	analytics["top_pages"] = get_top_pages(date_range=date_range, table_name=table_name)
+	analytics["top_referrers"] = get_top_referrers(date_range=date_range, table_name=table_name)
 	return analytics
