@@ -637,6 +637,7 @@ def extend_block(block, overridden_block):
 	block["mobileStyles"].update(overridden_block["mobileStyles"])
 	block["tabletStyles"].update(overridden_block["tabletStyles"])
 	block["attributes"].update(overridden_block["attributes"])
+	block["dynamicValues"] = block.get("dynamicValues", []) + overridden_block.get("dynamicValues", [])
 	if overridden_block.get("element"):
 		block["element"] = overridden_block["element"]
 
@@ -685,8 +686,8 @@ def extend_block(block, overridden_block):
 
 def set_dynamic_content_placeholder(block, data_key=False):
 	block_data_key = block.get("dataKey", {}) or {}
-	dynamic_values = block.get("dynamicValues", []) or []
-	dynamic_values.append(block_data_key)
+	dynamic_values = [block_data_key] if block_data_key else []
+	dynamic_values += block.get("dynamicValues", []) or []
 	for dynamic_value_doc in dynamic_values:
 		if not isinstance(dynamic_value_doc, dict):
 			# if dynamic_value_doc is a string, convert it to dict
