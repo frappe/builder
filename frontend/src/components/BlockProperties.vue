@@ -92,9 +92,10 @@ const getFilteredProperties = (section: PropertySection) => {
 			showProperty = property.condition();
 		}
 		if (showProperty && builderStore.propertyFilter) {
+			const searchTerm = builderStore.propertyFilter.toLowerCase();
 			showProperty =
-				section.name.toLowerCase().includes(builderStore.propertyFilter.toLowerCase()) ||
-				property.searchKeyWords.toLowerCase().includes(builderStore.propertyFilter.toLowerCase());
+				section.name?.toLowerCase().includes(searchTerm) ||
+				property.searchKeyWords?.toLowerCase().includes(searchTerm);
 		}
 		return showProperty;
 	});
