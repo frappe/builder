@@ -1,5 +1,5 @@
 <template>
-	<div class="no-scrollbar h-full overflow-y-auto">
+	<div class="no-scrollbar h-full overflow-y-auto overflow-x-hidden">
 		<AnalyticsOverview :data="analyticsData" :chartConfig="chartConfig" :loading="analytics.loading">
 			<template #filters>
 				<AnalyticsFilters
