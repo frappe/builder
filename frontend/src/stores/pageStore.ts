@@ -305,7 +305,7 @@ const usePageStore = defineStore("pageStore", {
 		},
 
 		getResolvedPageURL(prependSlash = true, page: BuilderPage | null = null) {
-			let route = page?.route;
+			let route = page?.route || this.activePage?.route || "/";
 			if (this.pageData) {
 				const routeVariables = getRouteVariables(route || "");
 				routeVariables.forEach((variable: string) => {
