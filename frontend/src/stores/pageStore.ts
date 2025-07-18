@@ -292,7 +292,20 @@ const usePageStore = defineStore("pageStore", {
 		},
 
 		openPageInBrowser(page: BuilderPage) {
-			let route = page.route;
+			const pageURL = this.getResolvedPageURL(true, page);
+			const targetWindow = window.open(pageURL, "builder-preview");
+			if (targetWindow?.location.pathname === pageURL) {
+				targetWindow?.location.reload();
+			} else {
+				setTimeout(() => {
+					// wait for the page to load
+					targetWindow?.location.reload();
+				}, 50);
+			}
+		},
+
+		getResolvedPageURL(prependSlash = true, page: BuilderPage | null = null) {
+			let route = page?.route || this.activePage?.route || "/";
 			if (this.pageData) {
 				const routeVariables = getRouteVariables(route || "");
 				routeVariables.forEach((variable: string) => {
@@ -306,15 +319,7 @@ const usePageStore = defineStore("pageStore", {
 					}
 				});
 			}
-			const targetWindow = window.open(`/${route}`, "builder-preview");
-			if (targetWindow?.location.pathname === `/${route}`) {
-				targetWindow?.location.reload();
-			} else {
-				setTimeout(() => {
-					// wait for the page to load
-					targetWindow?.location.reload();
-				}, 50);
-			}
+			return `${prependSlash ? "/" : ""}${route}`;
 		},
 
 		async waitTillPageIsSaved() {

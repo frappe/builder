@@ -33,6 +33,6 @@ const { range, interval, analyticsData, chartConfig, analytics } = useAnalytics(
 	apiUrl: "builder.api.get_page_analytics",
 	initialRange: "last_30_days",
 	initialInterval: "weekly",
-	extraParams: { route: pageStore.activePage?.route },
+	extraParams: { route: pageStore.getResolvedPageURL(false) },
 });
 </script>
