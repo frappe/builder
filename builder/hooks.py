@@ -112,23 +112,11 @@ after_migrate = "builder.install.after_migrate"
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# "all": [
-# "builder.tasks.all"
-# ],
-# "daily": [
-# "builder.tasks.daily"
-# ],
-# "hourly": [
-# "builder.tasks.hourly"
-# ],
-# "weekly": [
-# "builder.tasks.weekly"
-# ],
-# "monthly": [
-# "builder.tasks.monthly"
-# ],
-# }
+scheduler_events = {
+	"hourly": [
+		"builder.builder_analytics.ingest_web_page_views_to_duckdb",
+	],
+}
 
 # Testing
 # -------
