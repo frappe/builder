@@ -202,3 +202,10 @@ def get_overall_analytics(date_range: str = "last_30_days", interval=None, table
 	analytics["top_pages"] = get_top_pages(date_range=date_range, table_name=table_name)
 	analytics["top_referrers"] = get_top_referrers(date_range=date_range, table_name=table_name)
 	return analytics
+
+
+def enqueue_web_page_view_ingesion():
+	frappe.enqueue(
+		"builder.builder_analytics.ingest_web_page_views_to_duckdb",
+		queue="long",
+	)
