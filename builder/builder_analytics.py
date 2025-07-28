@@ -2,13 +2,12 @@ import os
 
 import duckdb
 import frappe
+import frappe.utils
 
 DUCKDB_TABLE = "web_page_views"
 
 
 class DuckDBConnection:
-	"""Context manager for DuckDB connections"""
-
 	def __init__(self):
 		self.db = None
 
@@ -23,7 +22,6 @@ class DuckDBConnection:
 
 
 def _create_duckdb_table(db, table_name=DUCKDB_TABLE):
-	"""Create DuckDB table with the standard schema"""
 	db.execute(f"""
 		CREATE TABLE IF NOT EXISTS {table_name} (
 			creation TIMESTAMP,
@@ -35,7 +33,6 @@ def _create_duckdb_table(db, table_name=DUCKDB_TABLE):
 
 
 def _get_date_range_filter(date_range: str = "last_30_days"):
-	"""Get date range filter for queries"""
 	date_config = _get_date_config(date_range)
 	if not date_config:
 		return "", None, None
@@ -68,10 +65,6 @@ def _calculate_from_date(to_date, config):
 
 
 def reset_duckdb_table(table_name=DUCKDB_TABLE):
-	"""Reset DuckDB table by dropping and recreating it"""
-	if not frappe.has_permission("Builder Page", ptype="write"):
-		frappe.throw("You do not have permission to reset analytics data.")
-
 	with DuckDBConnection() as db:
 		db.execute(f"DROP TABLE IF EXISTS {table_name}")
 		_create_duckdb_table(db, table_name)
@@ -83,21 +76,36 @@ def reset_duckdb_table(table_name=DUCKDB_TABLE):
 def ingest_web_page_views_to_duckdb(table_name=DUCKDB_TABLE):
 	with DuckDBConnection() as db:
 		_create_duckdb_table(db, table_name)
-		last_record = db.execute(f"SELECT MAX(creation) FROM {table_name}").fetchone()[0]
+		result = db.execute(f"SELECT MAX(creation) FROM {table_name}").fetchone()
+		last_record = result[0] if result and result[0] else None
 
 		filters = {"creation": [">", last_record]} if last_record else {}
-		records = frappe.get_all(
-			"Web Page View",
-			filters=filters,
-			fields=["creation", "is_unique", "path", "referrer"],
-			as_list=True,
-		)
+		page_size = 1_000_000
+		start = 0
 
-		if records:
+		while True:
+			records = frappe.get_all(
+				"Web Page View",
+				filters=filters,
+				fields=["creation", "is_unique", "path", "referrer"],
+				as_list=True,
+				limit_start=start,
+				limit_page_length=page_size,
+				order_by="creation asc",
+			)
+
+			if not records:
+				break
+
 			db.executemany(
 				f"INSERT INTO {table_name} (creation, is_unique, path, referrer) VALUES (?, ?, ?, ?)",
 				records,
 			)
+
+			if len(records) < page_size:
+				break
+
+			start += page_size
 
 
 def get_page_analytics(route=None, date_range: str = "last_30_days", interval=None, table_name=DUCKDB_TABLE):
@@ -135,7 +143,7 @@ def get_page_analytics(route=None, date_range: str = "last_30_days", interval=No
 
 			# Total views
 			q2 = f"SELECT COUNT(*), SUM(is_unique) FROM {table_name} WHERE {where}"
-			total_views, total_unique_views = db.execute(q2).fetchone()
+			total_views, total_unique_views = db.execute(q2).fetchone() or (0, 0)
 
 		return {
 			"total_unique_views": total_unique_views or 0,
