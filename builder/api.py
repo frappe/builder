@@ -4,6 +4,7 @@ from io import BytesIO
 from urllib.parse import unquote
 
 import frappe
+import frappe.utils
 import requests
 from frappe.apps import get_apps as get_permitted_apps
 from frappe.core.doctype.file.file import get_local_image
@@ -258,7 +259,7 @@ def delete_folder(folder_name: str) -> None:
 	for page in pages:
 		frappe.db.set_value("Builder Page", page.name, "project_folder", "", update_modified=False)
 
-	frappe.db.delete("Builder Project Folder", folder_name)
+	frappe.db.delete("Builder Project Folder", {"folder_name": folder_name})
 
 
 @frappe.whitelist()
@@ -272,11 +273,9 @@ def sync_component(component_id: str):
 
 @frappe.whitelist()
 def get_page_analytics(route=None, date_range: str = "last_30_days", interval=None):
-	"""Get analytics data for a specific page route or all pages using DuckDB."""
 	return builder_analytics.get_page_analytics(route, date_range, interval)
 
 
 @frappe.whitelist()
 def get_overall_analytics(date_range: str = "last_30_days", interval=None):
-	"""Get overall site analytics with top pages"""
 	return builder_analytics.get_overall_analytics(date_range, interval)
