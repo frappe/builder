@@ -225,7 +225,7 @@ class BuilderPage(WebsiteGenerator):
 		content, style, fonts = get_block_html(blocks)
 		self.set_custom_font(context, fonts)
 		context.fonts = fonts
-		context.content = content
+		context.__content = content
 		context.style = render_template(style, page_data)
 		context.editor_link = f"/{builder_path}/page/{self.name}"
 		if frappe.form_dict and self.dynamic_route:
@@ -251,7 +251,7 @@ class BuilderPage(WebsiteGenerator):
 		self.set_favicon(context)
 		context.page_data = clean_data(context.page_data)
 		try:
-			context["content"] = render_template(context.content, context)
+			context["__content"] = render_template(context.__content, context)
 		except TemplateSyntaxError:
 			raise
 
@@ -321,6 +321,10 @@ class BuilderPage(WebsiteGenerator):
 			_locals = dict(data=frappe._dict())
 			execute_script(self.page_data_script, _locals, self.name)
 			page_data.update(_locals["data"])
+
+		# do not let users replace __content
+		page_data.pop("__content", None)
+
 		return page_data
 
 	def generate_page_preview_image(self, html=None):
