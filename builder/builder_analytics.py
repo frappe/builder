@@ -80,17 +80,27 @@ def ingest_web_page_views_to_duckdb(table_name=DUCKDB_TABLE):
 		last_record = result[0] if result and result[0] else None
 
 		filters = {"creation": [">", last_record]} if last_record else {}
-		page_size = 1_000_000
+
+		total_count = frappe.db.count("Web Page View", filters=filters)
+		print(f"Starting ingestion of {total_count} records...")
+
+		page_size = 10000
 		start = 0
+		processed = 0
+
+		db.begin()
 
 		while True:
+			result = db.execute(f"SELECT MAX(creation) FROM {table_name}").fetchone()
+			last_record = result[0] if result and result[0] else None
+
+			filters = {"creation": [">", last_record]} if last_record else {}
 			records = frappe.get_all(
 				"Web Page View",
 				filters=filters,
 				fields=["creation", "is_unique", "path", "referrer"],
 				as_list=True,
-				limit_start=start,
-				limit_page_length=page_size,
+				limit=page_size,
 				order_by="creation asc",
 			)
 
@@ -102,10 +112,17 @@ def ingest_web_page_views_to_duckdb(table_name=DUCKDB_TABLE):
 				records,
 			)
 
+			processed += len(records)
+			progress = (processed / total_count) * 100 if total_count > 0 else 100
+			print(f"Progress: {processed}/{total_count} ({progress:.1f}%) records ingested")
+
 			if len(records) < page_size:
 				break
 
 			start += page_size
+
+		db.commit()
+		print(f"Successfully ingested {processed} records into DuckDB")
 
 
 def get_page_analytics(route=None, date_range: str = "last_30_days", interval=None, table_name=DUCKDB_TABLE):
