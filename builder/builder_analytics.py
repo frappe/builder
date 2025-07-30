@@ -138,14 +138,23 @@ def get_page_analytics(route=None, date_range: str = "last_30_days", interval=No
 
 		interval = interval or date_config["default_interval"]
 		fmt = {
-			"hourly": "%Y-%m-%d %H:00:00",
-			"daily": "%Y-%m-%d",
-			"weekly": "%Y-%W",
-			"monthly": "%Y-%m",
+			"hourly": "%b %d, %I:00 %p",
+			"daily": "%b %d, %Y",
+			"weekly": "Week %W, %Y",
+			"monthly": "%b %Y",
 		}[interval]
 
 		with DuckDBConnection() as db:
-			# Group by interval
+			sort_formats = {
+				"hourly": "%Y-%m-%d %H:00:00",
+				"daily": "%Y-%m-%d",
+				"weekly": "%Y-%W",
+				"monthly": "%Y-%m",
+			}
+
+			sort_fmt = sort_formats.get(interval, fmt)
+
+			# Use sort format for ordering when different from display format
 			q = f"""
 			SELECT
 				strftime('{fmt}', creation) as interval,
@@ -153,8 +162,8 @@ def get_page_analytics(route=None, date_range: str = "last_30_days", interval=No
 				SUM(is_unique) as unique_page_views
 			FROM {table_name}
 			WHERE {where}
-			GROUP BY interval
-			ORDER BY interval
+			GROUP BY interval, strftime('{sort_fmt}', creation)
+			ORDER BY strftime('{sort_fmt}', creation)
 			"""
 			rows = db.execute(q).fetchall()
 
