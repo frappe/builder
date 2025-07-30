@@ -132,10 +132,12 @@ const props = withDefaults(
 	defineProps<{
 		modelValue?: HashString | RGBString | null;
 		showInput?: boolean;
+		placement?: string;
 	}>(),
 	{
 		modelValue: null,
 		showInput: false,
+		placement: "left",
 	},
 );
 
