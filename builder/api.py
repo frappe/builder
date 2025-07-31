@@ -70,6 +70,7 @@ def get_posthog_settings():
 def get_page_preview_html(page: str, **kwarg) -> str:
 	# to load preview without publishing
 	frappe.form_dict.update(kwarg)
+	frappe.local.request.for_preview = True
 	renderer = BuilderPageRenderer(path="")
 	renderer.docname = page
 	renderer.doctype = "Builder Page"
