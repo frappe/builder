@@ -43,7 +43,7 @@ def _get_date_range_filter(date_range: str = "last_30_days"):
 
 
 def _get_empty_analytics():
-	return {"total_unique_views": 0, "total_views": 0, "data": []}
+	return {"total_unique_views": 0, "total_views": 0, "data": [], "top_referrers": []}
 
 
 def _get_date_config(date_range):
@@ -125,6 +125,71 @@ def ingest_web_page_views_to_duckdb(table_name=DUCKDB_TABLE):
 		print(f"Successfully ingested {processed} records into DuckDB")
 
 
+def _get_interval_formats(interval):
+	"""Get display and sort formats for time intervals"""
+	display_formats = {
+		"hourly": "%b %d, %I:00 %p",
+		"daily": "%b %d, %Y",
+		"weekly": "Week %W, %Y",
+		"monthly": "%b %Y",
+	}
+
+	sort_formats = {
+		"hourly": "%Y-%m-%d %H:00:00",
+		"daily": "%Y-%m-%d",
+		"weekly": "%Y-%W",
+		"monthly": "%Y-%m",
+	}
+
+	return display_formats[interval], sort_formats.get(interval, display_formats[interval])
+
+
+def _get_aggregated_views_query(where_clause, table_name=DUCKDB_TABLE):
+	"""Get query for total and unique view counts"""
+	return f"SELECT COUNT(*) as total_views, SUM(is_unique) as unique_views FROM {table_name} WHERE {where_clause}"
+
+
+def _get_interval_views_query(where_clause, interval, table_name=DUCKDB_TABLE):
+	"""Get query for views grouped by time interval"""
+	display_fmt, sort_fmt = _get_interval_formats(interval)
+	return f"""
+		SELECT
+			strftime('{display_fmt}', creation) as interval,
+			COUNT(*) as total_page_views,
+			SUM(is_unique) as unique_page_views
+		FROM {table_name}
+		WHERE {where_clause}
+		GROUP BY interval, strftime('{sort_fmt}', creation)
+		ORDER BY strftime('{sort_fmt}', creation)
+	"""
+
+
+def _get_referrer_domain_query(where_clause, limit=10, table_name=DUCKDB_TABLE):
+	"""Get query for top referrer domains with counts"""
+	return f"""
+		WITH parsed_referrers AS (
+			SELECT
+				CASE
+					WHEN referrer IS NULL OR referrer = '' THEN 'direct'
+					WHEN REGEXP_MATCHES(referrer, '^https?://([^/]+)') THEN
+						REGEXP_EXTRACT(referrer, '^https?://([^/]+)', 1)
+					ELSE 'direct'
+				END as domain,
+				is_unique
+			FROM {table_name}
+			WHERE {where_clause}
+		)
+		SELECT
+			domain,
+			COUNT(*) as total_count,
+			SUM(is_unique) as unique_count
+		FROM parsed_referrers
+		GROUP BY domain
+		ORDER BY total_count DESC
+		LIMIT {limit}
+	"""
+
+
 def get_page_analytics(route=None, date_range: str = "last_30_days", interval=None, table_name=DUCKDB_TABLE):
 	"""Get analytics data for a specific page route or all pages"""
 	try:
@@ -137,44 +202,25 @@ def get_page_analytics(route=None, date_range: str = "last_30_days", interval=No
 			where += f" AND path = '{route}'"
 
 		interval = interval or date_config["default_interval"]
-		fmt = {
-			"hourly": "%b %d, %I:00 %p",
-			"daily": "%b %d, %Y",
-			"weekly": "Week %W, %Y",
-			"monthly": "%b %Y",
-		}[interval]
 
 		with DuckDBConnection() as db:
-			sort_formats = {
-				"hourly": "%Y-%m-%d %H:00:00",
-				"daily": "%Y-%m-%d",
-				"weekly": "%Y-%W",
-				"monthly": "%Y-%m",
-			}
+			# Get interval-based data
+			interval_query = _get_interval_views_query(where, interval, table_name)
+			rows = db.execute(interval_query).fetchall()
 
-			sort_fmt = sort_formats.get(interval, fmt)
+			# Get total views
+			total_query = _get_aggregated_views_query(where, table_name)
+			total_views, total_unique_views = db.execute(total_query).fetchone() or (0, 0)
 
-			# Use sort format for ordering when different from display format
-			q = f"""
-			SELECT
-				strftime('{fmt}', creation) as interval,
-				COUNT(*) as total_page_views,
-				SUM(is_unique) as unique_page_views
-			FROM {table_name}
-			WHERE {where}
-			GROUP BY interval, strftime('{sort_fmt}', creation)
-			ORDER BY strftime('{sort_fmt}', creation)
-			"""
-			rows = db.execute(q).fetchall()
-
-			# Total views
-			q2 = f"SELECT COUNT(*), SUM(is_unique) FROM {table_name} WHERE {where}"
-			total_views, total_unique_views = db.execute(q2).fetchone() or (0, 0)
+			# Get top referrers for this specific page/route
+			referrer_query = _get_referrer_domain_query(where, 10, table_name)
+			referrer_rows = db.execute(referrer_query).fetchall()
 
 		return {
 			"total_unique_views": total_unique_views or 0,
 			"total_views": total_views or 0,
 			"data": [{"interval": r[0], "total_page_views": r[1], "unique_page_views": r[2]} for r in rows],
+			"top_referrers": [{"domain": r[0], "count": r[1]} for r in referrer_rows],
 		}
 	except Exception as e:
 		frappe.log_error("DuckDB Analytics Error", str(e))
@@ -201,29 +247,8 @@ def get_top_referrers(date_range: str = "last_30_days", table_name=DUCKDB_TABLE)
 	try:
 		where, _, _ = _get_date_range_filter(date_range)
 		with DuckDBConnection() as db:
-			q = f"""
-				WITH parsed_referrers AS (
-					SELECT
-						CASE
-							WHEN referrer IS NULL OR referrer = '' THEN 'direct'
-							WHEN REGEXP_MATCHES(referrer, '^https?://([^/]+)') THEN
-								REGEXP_EXTRACT(referrer, '^https?://([^/]+)', 1)
-							ELSE 'direct'
-						END as domain,
-						is_unique
-					FROM {table_name}
-					WHERE {where}
-				)
-				SELECT
-					domain,
-					COUNT(*) as total_count,
-					SUM(is_unique) as unique_count
-				FROM parsed_referrers
-				GROUP BY domain
-				ORDER BY total_count DESC
-				LIMIT 20
-			"""
-			rows = db.execute(q).fetchall()
+			referrer_query = _get_referrer_domain_query(where, 20, table_name)
+			rows = db.execute(referrer_query).fetchall()
 			return [{"domain": r[0], "count": r[1], "unique_count": r[2]} for r in rows]
 	except Exception as e:
 		frappe.log_error("DuckDB Analytics Error in top referrers", str(e))
