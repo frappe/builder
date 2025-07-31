@@ -330,6 +330,8 @@ class BuilderPage(WebsiteGenerator):
 
 	def generate_page_preview_image(self, html=None):
 		public_path, local_path = get_builder_page_preview_file_paths(self)
+		if not hasattr(frappe.local, "request"):
+			frappe.local.request = frappe._dict()
 		frappe.local.request.for_preview = True
 		generate_preview(
 			html or get_response_content(self.route),
