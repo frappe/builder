@@ -210,7 +210,7 @@ class BuilderPage(WebsiteGenerator):
 		if self.dynamic_route or page_data:
 			context.no_cache = 1
 
-		context.preview = getattr(frappe.local.request, "for_preview", None)
+		context.preview = getattr(getattr(frappe.local, "request", None), "for_preview", None)
 
 		if context.preview and self.draft_blocks:
 			blocks = self.draft_blocks
