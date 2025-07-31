@@ -210,7 +210,9 @@ class BuilderPage(WebsiteGenerator):
 		if self.dynamic_route or page_data:
 			context.no_cache = 1
 
-		if getattr(frappe.local.request, "for_preview", None) and self.draft_blocks:
+		context.preview = getattr(frappe.local.request, "for_preview", None)
+
+		if context.preview and self.draft_blocks:
 			blocks = self.draft_blocks
 
 		builder_variables = frappe.get_all("Builder Variable", fields=["variable_name", "value"])
@@ -237,7 +239,7 @@ class BuilderPage(WebsiteGenerator):
 			context.editor_link += f"?{query_string}"
 
 		context.page_name = self.name
-		if getattr(frappe.local.request, "for_preview", None):
+		if context.preview:
 			if self.dynamic_route and hasattr(frappe.local, "request"):
 				context.base_url = frappe.utils.get_url(frappe.local.request.path or self.route)
 			else:
