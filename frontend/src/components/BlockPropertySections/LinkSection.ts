@@ -1,5 +1,5 @@
 import blockController from "@/utils/blockController";
-import { computed } from "vue";
+import { computed, nextTick } from "vue";
 import PropertyControl from "../Controls/PropertyControl.vue";
 
 const linkSectionProperties = [
@@ -13,13 +13,15 @@ const linkSectionProperties = [
 				allowDynamicValue: true,
 				controlType: "attribute",
 				getModelValue: () => blockController.getAttribute("href"),
-				setModelValue: (val: string) => {
+				setModelValue: async (val: string) => {
 					if (val && !blockController.isLink()) {
 						blockController.convertToLink();
+						await nextTick();
 					}
 					if (!val && blockController.isLink()) {
 						blockController.unsetLink();
 					} else {
+						await nextTick();
 						blockController.setAttribute("href", val);
 					}
 				},
