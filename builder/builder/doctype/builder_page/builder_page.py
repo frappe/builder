@@ -10,6 +10,7 @@ import frappe
 import frappe.utils
 from frappe.modules import scrub
 from frappe.modules.export_file import export_to_files
+from frappe.utils import set_request
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
 from frappe.website.page_renderers.document_page import DocumentPage
@@ -330,11 +331,13 @@ class BuilderPage(WebsiteGenerator):
 
 	def generate_page_preview_image(self, html=None):
 		public_path, local_path = get_builder_page_preview_file_paths(self)
-		if not hasattr(frappe.local, "request"):
-			frappe.local.request = frappe._dict()
-		frappe.local.request.for_preview = True
+		if not html:
+			set_request(method="GET", path=self.route)
+			frappe.local.request.for_preview = True
+			html = get_response_content()
+
 		generate_preview(
-			html or get_response_content(self.route),
+			html,
 			local_path,
 		)
 		self.db_set("preview", public_path, commit=True, update_modified=False)
