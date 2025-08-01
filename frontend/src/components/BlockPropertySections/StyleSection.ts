@@ -80,7 +80,6 @@ const styleSectionProperties = [
 		searchKeyWords: "Border, Color, BorderColor, Border Color",
 		events: {
 			"update:modelValue": (val: StyleValue) => {
-				blockController.setStyle("borderColor", val);
 				if (val) {
 					if (!blockController.getStyle("borderWidth")) {
 						blockController.setStyle("borderWidth", "1px");

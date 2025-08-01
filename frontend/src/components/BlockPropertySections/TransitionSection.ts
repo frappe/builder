@@ -6,7 +6,7 @@ const transitionSectionProperties = [
 		component: PropertyControl,
 		getProps: () => {
 			return {
-				label: "Duration",
+				label: "Speed",
 				styleProperty: "transitionDuration",
 				type: "select",
 				enableStates: false,
