@@ -12,9 +12,24 @@ const collectionOptions = [
 				placeholder: "Select a collection",
 				getOptions() {
 					const pageStore = usePageStore();
-					const keys = Object.keys(pageStore.pageData).filter((key) =>
-						Array.isArray(pageStore.pageData[key]),
-					);
+
+					function getNestedArrayKeys(obj: any, prefix = ""): string[] {
+						const keys: string[] = [];
+
+						for (const [key, value] of Object.entries(obj)) {
+							const fullKey = prefix ? `${prefix}.${key}` : key;
+
+							if (Array.isArray(value)) {
+								keys.push(fullKey);
+							} else if (value && typeof value === "object") {
+								keys.push(...getNestedArrayKeys(value, fullKey));
+							}
+						}
+
+						return keys;
+					}
+
+					const keys = getNestedArrayKeys(pageStore.pageData);
 					return keys.map((key) => ({
 						label: key,
 						value: key,
