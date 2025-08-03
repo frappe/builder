@@ -5,20 +5,12 @@
 				<AnalyticsFilters
 					:interval="interval"
 					:range="range"
-					:intervalOptions="[
-						{ label: 'Hourly', value: 'hourly' },
-						{ label: 'Daily', value: 'daily' },
-						{ label: 'Weekly', value: 'weekly' },
-						{ label: 'Monthly', value: 'monthly' },
-					]"
-					:rangeOptions="[
-						{ label: 'Today', value: 'today' },
-						{ label: 'Last 7 Days', value: 'last_7_days' },
-						{ label: 'Last 30 Days', value: 'last_30_days' },
-						{ label: 'This Year', value: 'this_year' },
-					]"
+					:route="route"
+					:customDateRange="customDateRange"
 					@update:interval="(val) => (interval = val)"
-					@update:range="(val) => (range = val)" />
+					@update:range="(val) => (range = val)"
+					@update:route="(val) => (route = val?.value)"
+					@update:customDateRange="(val) => (customDateRange = val)" />
 			</template>
 		</AnalyticsOverview>
 		<div class="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -60,7 +52,7 @@
 							label: 'Domain',
 							key: 'domain',
 							width: '60%',
-							prefix: ({ row }) => {
+							prefix: ({ row }: { row: any }) => {
 								return h('img', {
 									src: `https://${row.domain}/favicon.ico`,
 									alt: row.domain,
@@ -92,7 +84,7 @@ import { shortenNumber } from "@/utils/helpers";
 import { ListView } from "frappe-ui";
 import { computed, h } from "vue";
 
-const { range, interval, analyticsData, chartConfig, analytics } = useAnalytics({
+const { range, interval, route, customDateRange, analyticsData, chartConfig, analytics } = useAnalytics({
 	apiUrl: "builder.api.get_overall_analytics",
 	initialRange: "last_7_days",
 	initialInterval: "daily",

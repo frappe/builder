@@ -5,20 +5,12 @@
 				<AnalyticsFilters
 					:interval="interval"
 					:range="range"
-					:intervalOptions="[
-						{ label: 'Hourly', value: 'hourly' },
-						{ label: 'Daily', value: 'daily' },
-						{ label: 'Weekly', value: 'weekly' },
-						{ label: 'Monthly', value: 'monthly' },
-					]"
-					:rangeOptions="[
-						{ label: 'Today', value: 'today' },
-						{ label: 'Last 7 Days', value: 'last_7_days' },
-						{ label: 'Last 30 Days', value: 'last_30_days' },
-						{ label: 'This Year', value: 'this_year' },
-					]"
+					:route="route"
+					:customDateRange="customDateRange"
 					@update:interval="(val) => (interval = val)"
-					@update:range="(val) => (range = val)" />
+					@update:range="(val) => (range = val)"
+					@update:route="(val) => (route = val?.value)"
+					@update:customDateRange="(val) => (customDateRange = val)" />
 			</template>
 		</AnalyticsOverview>
 		<div class="mt-8">
@@ -69,11 +61,12 @@ import { ListView } from "frappe-ui";
 import { computed, h } from "vue";
 
 const pageStore = usePageStore();
-const { range, interval, analyticsData, chartConfig, analytics } = useAnalytics({
+const { range, interval, route, customDateRange, analyticsData, chartConfig, analytics } = useAnalytics({
 	apiUrl: "builder.api.get_page_analytics",
 	initialRange: "last_30_days",
 	initialInterval: "weekly",
-	extraParams: { route: pageStore.getResolvedPageURL(false) },
+	initialRouteFilterType: "exact",
+	initialRoute: pageStore.getResolvedPageURL(false),
 });
 
 const processedAnalyticsData = computed(() => {
