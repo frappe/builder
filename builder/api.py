@@ -273,10 +273,26 @@ def sync_component(component_id: str):
 
 
 @frappe.whitelist()
-def get_page_analytics(route=None, date_range: str = "last_30_days", interval=None):
-	return builder_analytics.get_page_analytics(route, date_range, interval)
+def get_page_analytics(
+	route=None, interval: str = "daily", from_date=None, to_date=None, route_filter_type: str = "wildcard"
+):
+	return builder_analytics.get_page_analytics(
+		route=route,
+		interval=interval,
+		from_date=from_date,
+		to_date=to_date,
+		route_filter_type=route_filter_type,
+	)
 
 
 @frappe.whitelist()
-def get_overall_analytics(date_range: str = "last_30_days", interval=None):
-	return builder_analytics.get_overall_analytics(date_range, interval)
+def get_overall_analytics(
+	interval: str = "daily", route=None, from_date=None, to_date=None, route_filter_type: str = "wildcard"
+):
+	return builder_analytics.get_overall_analytics(
+		interval=interval,
+		route=route,
+		from_date=from_date,
+		to_date=to_date,
+		route_filter_type=route_filter_type,
+	)
