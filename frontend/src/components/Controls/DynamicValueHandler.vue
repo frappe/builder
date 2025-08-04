@@ -60,6 +60,7 @@ import Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
+import { getCollectionKeys, getDataForKey } from "@/utils/helpers";
 import { computed, ref } from "vue";
 
 const pageStore = usePageStore();
@@ -75,28 +76,13 @@ const searchQuery = ref("");
 
 const dataArray = computed(() => {
 	const result: string[] = [];
-	if (
-		blockController.getFirstSelectedBlock()?.isInsideRepeater() &&
-		blockController.getFirstSelectedBlock()?.getRepeaterParent()
-	) {
-		const repeaterBlock = blockController.getFirstSelectedBlock().getRepeaterParent();
-		const collectionKey = repeaterBlock?.getDataKey("key") || "";
-		if (
-			collectionKey &&
-			typeof pageStore.pageData[collectionKey] !== "undefined" &&
-			Array.isArray(pageStore.pageData[collectionKey]) &&
-			pageStore.pageData[collectionKey].length > 0
-		) {
-			const firstItem = pageStore.pageData[collectionKey][0];
-			if (firstItem && typeof firstItem === "object" && firstItem !== null) {
-				Object.entries(firstItem as Record<string, unknown>).forEach(([key, value]) => {
-					if (!Array.isArray(value) && (typeof value !== "object" || value === null)) {
-						result.push(key);
-					}
-				});
-				return result;
-			}
-		}
+	let collectionObject = pageStore.pageData;
+	if (blockController.getFirstSelectedBlock()?.isInsideRepeater()) {
+		const keys = getCollectionKeys(blockController.getFirstSelectedBlock());
+		collectionObject = keys.reduce((acc: any, key: string) => {
+			const data = getDataForKey(acc, key);
+			return Array.isArray(data) && data.length > 0 ? data[0] : data;
+		}, collectionObject);
 	}
 
 	function processObject(obj: Record<string, any>, prefix = "") {
@@ -111,27 +97,22 @@ const dataArray = computed(() => {
 		});
 	}
 
-	processObject(pageStore.pageData);
+	processObject(collectionObject);
 	return result;
 });
 
 const getValue = (path: string): any => {
-	if (
-		blockController.getFirstSelectedBlock()?.isInsideRepeater() &&
-		blockController.getFirstSelectedBlock()?.getRepeaterParent()
-	) {
-		const repeaterBlock = blockController.getFirstSelectedBlock().getRepeaterParent();
-		const collectionKey = repeaterBlock?.getDataKey("key") || "";
-		const collection = pageStore.pageData[collectionKey];
+	let collectionObject = pageStore.pageData;
 
-		if (collection && Array.isArray(collection) && collection.length > 0) {
-			const firstItem = collection[0];
-			if (firstItem && typeof firstItem === "object" && firstItem !== null) {
-				return (firstItem as Record<string, unknown>)[path];
-			}
-		}
+	if (blockController.getFirstSelectedBlock()?.isInsideRepeater()) {
+		const keys = getCollectionKeys(blockController.getFirstSelectedBlock());
+		collectionObject = keys.reduce((acc: any, key: string) => {
+			const data = getDataForKey(acc, key);
+			return Array.isArray(data) && data.length > 0 ? data[0] : data;
+		}, collectionObject);
 	}
-	return path.split(".").reduce((obj: Record<string, any>, key: string) => obj?.[key], pageStore.pageData);
+
+	return path.split(".").reduce((obj: Record<string, any>, key: string) => obj?.[key], collectionObject);
 };
 
 const filteredItems = computed(() => {
