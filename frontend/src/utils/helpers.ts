@@ -876,6 +876,23 @@ function showDialog(options: DialogOptions): Promise<void> {
 	});
 }
 
+function getCollectionKeys(block: any): string[] {
+	// traverse up the block to get list of dataKeys set
+	const repeaterBlock = block.getRepeaterParent();
+	const keys: string[] = [];
+	if (repeaterBlock) {
+		const collectionKey = repeaterBlock.getDataKey("key");
+		if (collectionKey) {
+			keys.push(collectionKey);
+		}
+		const parentKeys: string[] = getCollectionKeys(repeaterBlock);
+		if (parentKeys.length > 0) {
+			keys.unshift(...parentKeys);
+		}
+	}
+	return keys;
+}
+
 function triggerCopyEvent() {
 	document.execCommand("copy");
 }
@@ -895,6 +912,7 @@ export {
 	getBlockObjectCopy as getBlockObject,
 	getBlockString,
 	getBoxSpacing,
+	getCollectionKeys,
 	getCopyWithoutParent,
 	getDataForKey,
 	getFontName,
