@@ -877,11 +877,12 @@ class Block implements BlockOptions {
 		return null;
 	}
 	getRepeaterParent(): Block | null {
-		if (this.isRepeater()) {
-			return this;
-		}
-		if (this.parentBlock) {
-			return this.parentBlock.getRepeaterParent();
+		let parent = this.parentBlock;
+		while (parent) {
+			if (parent.isRepeater()) {
+				return parent;
+			}
+			parent = parent.parentBlock;
 		}
 		return null;
 	}
