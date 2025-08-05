@@ -1,6 +1,7 @@
 import CodeEditor from "@/components/Controls/CodeEditor.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import blockController from "@/utils/blockController";
+import PropertyControl from "../Controls/PropertyControl.vue";
 
 const setClasses = (val: string) => {
 	const classes = val.split(",").map((c) => c.trim());
@@ -94,21 +95,22 @@ const optionsSectionProperties = [
 		condition: () => !blockController.multipleBlocksSelected(),
 	},
 	{
-		component: CodeEditor,
+		component: PropertyControl,
 		getProps: () => {
 			return {
+				component: CodeEditor,
 				label: "HTML",
 				type: "HTML",
 				autofocus: false,
-				modelValue: blockController.getInnerHTML() || "",
+				controlType: "key",
+				styleProperty: "innerHTML",
+				labelPlacement: "top",
+				getModelValue: () => blockController.getInnerHTML() || "",
+				setModelValue: (val: string) => blockController.setInnerHTML(val),
+				allowDynamicValue: true,
 			};
 		},
 		searchKeyWords: "HTML, InnerHTML, Inner HTML",
-		events: {
-			"update:modelValue": (val: string) => {
-				blockController.setInnerHTML(val);
-			},
-		},
 		condition: () =>
 			blockController.isHTML() || (blockController.getInnerHTML() && !blockController.isText()),
 	},

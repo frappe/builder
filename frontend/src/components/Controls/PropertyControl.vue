@@ -1,19 +1,29 @@
 <template>
 	<div class="flex w-full flex-col gap-2">
-		<div class="relative flex w-full items-center gap-2">
-			<div class="flex w-[88px] shrink-0 items-center" v-if="enableStateControls || label">
-				<DraggablePopup
-					v-model="showDynamicValueModal"
-					:container="dropdownTrigger?.$el"
-					placement="middle-right"
-					:clickOutsideToClose="false"
-					:placementOffset="20"
-					v-if="showDynamicValueModal">
-					<template #header>Set Dynamic Value</template>
-					<template #content>
-						<DynamicValueHandler @setDynamicValue="setDynamicValue" :selectedValue="dynamicValue" />
-					</template>
-				</DraggablePopup>
+		<!-- Top label placement -->
+		<div v-if="labelPlacement === 'top' && label" class="flex items-center gap-2">
+			<Dropdown v-if="enableStateControls || allowDynamicValue" size="sm" :options="stateOptions">
+				<template v-slot="{ open }">
+					<FeatherIcon
+						ref="dropdownTrigger"
+						name="plus-circle"
+						class="h-3 w-3 cursor-pointer text-ink-gray-7 hover:text-ink-gray-9"
+						@click="open" />
+				</template>
+			</Dropdown>
+			<InputLabel class="truncate" :class="{ 'cursor-ns-resize': enableSlider }" @mousedown="handleMouseDown">
+				{{ label }}
+			</InputLabel>
+		</div>
+
+		<!-- Control container with conditional layout -->
+		<div
+			class="relative flex w-full gap-2"
+			:class="labelPlacement === 'top' ? 'items-start' : 'items-center'">
+			<!-- Left label placement (original layout) -->
+			<div
+				class="flex w-[88px] shrink-0 items-center"
+				v-if="labelPlacement === 'left' && (enableStateControls || label)">
 				<Dropdown v-if="enableStateControls || allowDynamicValue" size="sm" :options="stateOptions">
 					<template v-slot="{ open }">
 						<FeatherIcon
@@ -31,6 +41,21 @@
 					{{ label }}
 				</InputLabel>
 			</div>
+
+			<!-- Hidden popup for dynamic values -->
+			<DraggablePopup
+				v-model="showDynamicValueModal"
+				:container="dropdownTrigger?.$el"
+				placement="middle-right"
+				:clickOutsideToClose="false"
+				:placementOffset="20"
+				v-if="showDynamicValueModal">
+				<template #header>Set Dynamic Value</template>
+				<template #content>
+					<DynamicValueHandler @setDynamicValue="setDynamicValue" :selectedValue="dynamicValue" />
+				</template>
+			</DraggablePopup>
+
 			<div class="relative w-full">
 				<component
 					:is="props.component"
@@ -64,7 +89,41 @@
 			</div>
 		</div>
 		<template v-if="enableStateControls" v-for="state in statesToShow" :key="String(state)">
+			<div v-if="labelPlacement === 'top'" class="flex flex-col gap-1">
+				<InputLabel
+					class="text-sm"
+					:class="{ 'cursor-ns-resize': enableSlider }"
+					@mousedown="(ev: MouseEvent) => handleStateMouseDown(ev, state)">
+					{{ stateLabels[String(state)] }}
+				</InputLabel>
+				<div class="relative">
+					<component
+						:is="props.component"
+						v-bind="controlAttrs"
+						v-on="props.events || {}"
+						:modelValue="getStateValue(state)"
+						:defaultValue="defaultValue"
+						:placeholder="placeholderValue"
+						@focus="() => enableStyle(state)"
+						@blur="() => disableStyle(state)"
+						@update:modelValue="(v: any) => updateStateValue(state, v)"
+						@keydown.stop="(e: KeyboardEvent) => handleKeyDown(e, state)"
+						class="w-full">
+						<template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
+							<slot :name="name" v-bind="slotData || {}" />
+						</template>
+					</component>
+					<button
+						type="button"
+						class="absolute right-1 top-1 z-10 text-ink-gray-7 hover:text-ink-gray-9"
+						@click="clearState(state)">
+						<FeatherIcon name="x" class="h-3 w-3" />
+					</button>
+				</div>
+			</div>
+
 			<div
+				v-else
 				class="group ml-[5px] flex items-center justify-between before:-mt-7 before:h-7 before:w-[1px] before:bg-surface-gray-4 before:content-['_'] after:absolute after:left-3.5 after:h-1.5 after:w-1.5 after:rounded-full after:bg-surface-gray-4 hover:after:hidden">
 				<button
 					type="button"
@@ -135,6 +194,7 @@ const props = withDefaults(
 		enableStates?: boolean;
 		allowDynamicValue?: boolean;
 		enabledStates?: string[];
+		labelPlacement?: "left" | "top";
 	}>(),
 	{
 		placeholder: "unset",
@@ -150,6 +210,7 @@ const props = withDefaults(
 		allowDynamicValue: false,
 		enabledStates: () => ["hover", "active", "focus"],
 		enableStates: undefined,
+		labelPlacement: "left",
 	},
 );
 
