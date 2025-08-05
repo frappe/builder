@@ -269,7 +269,10 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Delete",
 		action: () => {
-			canvasStore.activeCanvas?.removeBlock(block.value);
+			const selectedBlocks = canvasStore.activeCanvas?.selectedBlocks || [];
+			selectedBlocks.forEach((selectedBlock: Block) => {
+				canvasStore.activeCanvas?.removeBlock(selectedBlock);
+			});
 		},
 		condition: () => {
 			return (
