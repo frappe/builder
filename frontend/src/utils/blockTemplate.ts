@@ -128,7 +128,6 @@ function getBlockTemplate(
 					flexDirection: "column",
 					width: "100%",
 					flexShrink: 0,
-					minHeight: "300px",
 					overflow: "hidden",
 				} as BlockStyleMap,
 				isRepeaterBlock: true,
