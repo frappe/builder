@@ -22,6 +22,7 @@
 </template>
 <script setup lang="ts">
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
+import PropertyControl from "@/components/Controls/PropertyControl.vue";
 
 defineProps<{
 	property: styleProperty;

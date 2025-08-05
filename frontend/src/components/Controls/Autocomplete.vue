@@ -62,6 +62,10 @@
 						</li>
 					</ComboboxOption>
 					<ComboboxOption
+						v-if="query && !showInputAsOption"
+						:value="query"
+						class="flex items-center"></ComboboxOption>
+					<ComboboxOption
 						v-for="option in filteredOptions"
 						v-slot="{ active, selected }"
 						:key="option.value"
@@ -152,7 +156,7 @@ const multiple = computed(() => Array.isArray(props.modelValue));
 const nullable = computed(() => !multiple.value);
 const filteredOptions = ref(props.options);
 
-const getDisplayValue = (option: any) => {
+const getDisplayValue = (option: Option | Option[]) => {
 	if (Array.isArray(option)) {
 		return option.map((o) => o.label).join(", ");
 	} else if (option) {
