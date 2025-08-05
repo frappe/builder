@@ -18,6 +18,10 @@ const keyOptions = computed(() => {
 	}
 
 	function processObject(obj: Record<string, any>, prefix = "") {
+		if (!obj || typeof obj !== "object") {
+			return;
+		}
+
 		Object.entries(obj).forEach(([key, value]) => {
 			const path = prefix ? `${prefix}.${key}` : key;
 
