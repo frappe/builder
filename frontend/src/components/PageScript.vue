@@ -36,8 +36,9 @@
 							v-model="pageStore.pageData"
 							type="JSON"
 							label="Data Preview"
-							class="-mt-5 w-1/3 [&>div>div]:bg-surface-white"
-							height="calc(100% - 200px)"
+							:showLineNumbers="true"
+							class="-mt-5 w-2/3 [&>div>div]:bg-surface-white"
+							height="calc(100% - 110px)"
 							description='Use Data Script to provide dynamic data to your web page.<br>
 								<b>Example:</b> data.events = frappe.get_list("Event")<br><br>
 								For more details on how to write data script, refer to <b><a class="underline" href="https://docs.frappe.io/builder/data-script" target="_blank">this documentation</a></b>.
