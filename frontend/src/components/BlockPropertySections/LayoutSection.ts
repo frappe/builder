@@ -63,5 +63,5 @@ const layoutSectionProperties = [
 export default {
 	name: "Layout",
 	properties: layoutSectionProperties,
-	condition: () => !blockController.multipleBlocksSelected(),
+	condition: () => !blockController.multipleBlocksSelected() && !blockController.isHTML(),
 };

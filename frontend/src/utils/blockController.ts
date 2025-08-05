@@ -1,7 +1,6 @@
 import type Block from "@/block";
 import type { BlockDataKey } from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
-import { nextTick } from "vue";
 import getBlockTemplate from "./blockTemplate";
 
 const canvasStore = useCanvasStore();
@@ -280,23 +279,22 @@ const blockController = {
 			}
 		});
 	},
-	convertToLink: () => {
-		blockController.getSelectedBlocks().forEach((block: Block) => {
+	convertToLink: async () => {
+		const blocks = blockController.getSelectedBlocks();
+		for (const block of blocks) {
 			if (block.isSVG() || block.isImage()) {
 				const parentBlock = block.getParentBlock();
-				if (!parentBlock) return;
+				if (!parentBlock) continue;
 				const newBlockObj = getBlockTemplate("fit-container");
 				const newBlock = parentBlock.addChild(newBlockObj, parentBlock.getChildIndex(block));
 				newBlock.addChild(block);
 				parentBlock.removeChild(block);
-				newBlock.convertToLink();
-				nextTick(() => {
-					newBlock.selectBlock();
-				});
+				await newBlock.convertToLink();
+				newBlock.selectBlock();
 			} else {
-				block.convertToLink();
+				await block.convertToLink();
 			}
-		});
+		}
 	},
 	unsetLink: () => {
 		blockController.getSelectedBlocks().forEach((block) => {

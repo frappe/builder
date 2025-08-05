@@ -1,5 +1,5 @@
 import blockController from "@/utils/blockController";
-import { computed, nextTick } from "vue";
+import { computed } from "vue";
 import PropertyControl from "../Controls/PropertyControl.vue";
 
 const linkSectionProperties = [
@@ -15,13 +15,11 @@ const linkSectionProperties = [
 				getModelValue: () => blockController.getAttribute("href"),
 				setModelValue: async (val: string) => {
 					if (val && !blockController.isLink()) {
-						blockController.convertToLink();
-						await nextTick();
+						await blockController.convertToLink();
 					}
 					if (!val && blockController.isLink()) {
 						blockController.unsetLink();
 					} else {
-						await nextTick();
 						blockController.setAttribute("href", val);
 					}
 				},
@@ -81,5 +79,6 @@ export default {
 	collapsed: computed(() => !blockController.isLink()),
 	condition: () =>
 		!blockController.multipleBlocksSelected() &&
-		!blockController.getSelectedBlocks()[0].parentBlock?.isLink(),
+		!blockController.getSelectedBlocks()[0].parentBlock?.isLink() &&
+		!blockController.isHTML(),
 };

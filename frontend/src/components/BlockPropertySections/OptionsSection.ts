@@ -95,26 +95,6 @@ const optionsSectionProperties = [
 		condition: () => !blockController.multipleBlocksSelected(),
 	},
 	{
-		component: PropertyControl,
-		getProps: () => {
-			return {
-				component: CodeEditor,
-				label: "HTML",
-				type: "HTML",
-				autofocus: false,
-				controlType: "key",
-				styleProperty: "innerHTML",
-				labelPlacement: "top",
-				getModelValue: () => blockController.getInnerHTML() || "",
-				setModelValue: (val: string) => blockController.setInnerHTML(val),
-				allowDynamicValue: true,
-			};
-		},
-		searchKeyWords: "HTML, InnerHTML, Inner HTML",
-		condition: () =>
-			blockController.isHTML() || (blockController.getInnerHTML() && !blockController.isText()),
-	},
-	{
 		component: InlineInput,
 		getProps: () => {
 			return {
