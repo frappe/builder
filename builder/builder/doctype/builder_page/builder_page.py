@@ -10,9 +10,9 @@ import frappe
 import frappe.utils
 from frappe.modules import scrub
 from frappe.modules.export_file import export_to_files
+from frappe.utils import set_request
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
-from frappe.utils.safe_exec import is_safe_exec_enabled, safe_exec
 from frappe.website.page_renderers.document_page import DocumentPage
 from frappe.website.path_resolver import evaluate_dynamic_routes
 from frappe.website.path_resolver import resolve_path as original_resolve_path
@@ -20,7 +20,6 @@ from frappe.website.serve import get_response_content
 from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
 from jinja2.exceptions import TemplateSyntaxError
-from werkzeug.routing import Rule
 
 from builder.hooks import builder_path
 from builder.html_preview_image import generate_preview
@@ -34,6 +33,7 @@ from builder.utils import (
 	get_builder_page_preview_file_paths,
 	get_template_assets_folder_path,
 	is_component_used,
+	split_styles,
 )
 
 MOBILE_BREAKPOINT = 576
@@ -207,30 +207,44 @@ class BuilderPage(WebsiteGenerator):
 			context.title = page_data.get("page_title")
 
 		blocks = self.blocks
-		context.preview = frappe.flags.show_preview
 
 		if self.dynamic_route or page_data:
 			context.no_cache = 1
 
-		if frappe.flags.show_preview and self.draft_blocks:
+		context.preview = getattr(getattr(frappe.local, "request", None), "for_preview", None)
+
+		if context.preview and self.draft_blocks:
 			blocks = self.draft_blocks
+
+		builder_variables = frappe.get_all("Builder Variable", fields=["variable_name", "value"])
+		css_variables = {}
+		for builder_variable in builder_variables:
+			if builder_variable.variable_name and builder_variable.value:
+				variable_name = f"--{camel_case_to_kebab_case(builder_variable.variable_name, True)}"
+				css_variables[variable_name] = builder_variable.value
+		context.css_variables = css_variables
 
 		content, style, fonts = get_block_html(blocks)
 		self.set_custom_font(context, fonts)
 		context.fonts = fonts
-		context.content = content
+		context.__content = content
 		context.style = render_template(style, page_data)
 		context.editor_link = f"/{builder_path}/page/{self.name}"
 		if frappe.form_dict and self.dynamic_route:
-			query_string = "&".join([f"{k}={v}" for k, v in frappe.form_dict.items()])
+			query_string = "&".join(
+				[
+					f"{k}={frappe.utils.escape_html(frappe.utils.quote(v))}"
+					for k, v in frappe.form_dict.items()
+				]
+			)
 			context.editor_link += f"?{query_string}"
 
 		context.page_name = self.name
-
-		if self.dynamic_route and hasattr(frappe.local, "request"):
-			context.base_url = frappe.utils.get_url(frappe.local.request.path or self.route)
-		else:
-			context.base_url = frappe.utils.get_url(self.route)
+		if context.preview:
+			if self.dynamic_route and hasattr(frappe.local, "request"):
+				context.base_url = frappe.utils.get_url(frappe.local.request.path or self.route)
+			else:
+				context.base_url = frappe.utils.get_url(self.route)
 
 		context.update(page_data)
 
@@ -239,7 +253,7 @@ class BuilderPage(WebsiteGenerator):
 		self.set_favicon(context)
 		context.page_data = clean_data(context.page_data)
 		try:
-			context["content"] = render_template(context.content, context)
+			context["__content"] = render_template(context.__content, context)
 		except TemplateSyntaxError:
 			raise
 
@@ -309,12 +323,21 @@ class BuilderPage(WebsiteGenerator):
 			_locals = dict(data=frappe._dict())
 			execute_script(self.page_data_script, _locals, self.name)
 			page_data.update(_locals["data"])
+
+		# do not let users replace __content
+		page_data.pop("__content", None)
+
 		return page_data
 
 	def generate_page_preview_image(self, html=None):
 		public_path, local_path = get_builder_page_preview_file_paths(self)
+		if not html:
+			set_request(method="GET", path=self.route)
+			frappe.local.request.for_preview = True
+			html = get_response_content()
+
 		generate_preview(
-			html or get_response_content(self.route),
+			html,
 			local_path,
 		)
 		self.db_set("preview", public_path, commit=True, update_modified=False)
@@ -469,27 +492,34 @@ def get_block_html(blocks):
 
 			if block.get("baseStyles", {}):
 				style_class = f"fb-{frappe.generate_hash(length=8)}"
-				base_styles = block.get("baseStyles", {})
-				mobile_styles = block.get("mobileStyles", {})
-				tablet_styles = block.get("tabletStyles", {})
-				set_fonts([base_styles, mobile_styles, tablet_styles], font_map)
-				append_style(block.get("baseStyles", {}), style_tag, style_class)
-				plain_styles = {k: v for k, v in block.get("rawStyles", {}).items() if ":" not in k}
-				state_styles = {k: v for k, v in block.get("rawStyles", {}).items() if ":" in k}
-				append_style(plain_styles, style_tag, style_class)
-				append_state_style(state_styles, style_tag, style_class)
-				append_style(
-					block.get("tabletStyles", {}),
-					style_tag,
-					style_class,
-					device="tablet",
+				styles = {
+					"base": split_styles(block.get("baseStyles", {})),
+					"mobile": split_styles(block.get("mobileStyles", {})),
+					"tablet": split_styles(block.get("tabletStyles", {})),
+					"raw": split_styles(block.get("rawStyles", {})),
+				}
+
+				set_fonts(
+					[
+						styles["base"]["regular"],
+						styles["mobile"]["regular"],
+						styles["tablet"]["regular"],
+						styles["raw"]["regular"],
+					],
+					font_map,
 				)
-				append_style(
-					block.get("mobileStyles", {}),
-					style_tag,
-					style_class,
-					device="mobile",
-				)
+
+				append_style(styles["base"]["regular"], style_tag, style_class)
+				append_style(styles["raw"]["regular"], style_tag, style_class)
+				append_state_style(styles["raw"]["state"], style_tag, style_class)
+				append_state_style(styles["base"]["state"], style_tag, style_class)
+
+				append_style(styles["tablet"]["regular"], style_tag, style_class, device="tablet")
+				append_state_style(styles["tablet"]["state"], style_tag, style_class, device="tablet")
+
+				append_style(styles["mobile"]["regular"], style_tag, style_class, device="mobile")
+				append_state_style(styles["mobile"]["state"], style_tag, style_class, device="mobile")
+
 				classes.insert(0, style_class)
 
 			tag.attrs["class"] = " ".join(classes)
@@ -546,23 +576,29 @@ def get_style(style_obj):
 	)
 
 
+def wrap_with_media_query(style_string, device):
+	if device == "mobile":
+		return f"@media only screen and (max-width: {MOBILE_BREAKPOINT}px) {{ {style_string} }}"
+	elif device == "tablet":
+		return f"@media only screen and (max-width: {DESKTOP_BREAKPOINT - 1}px) {{ {style_string} }}"
+	return style_string
+
+
 def append_style(style_obj, style_tag, style_class, device="desktop"):
 	style = get_style(style_obj)
 	if not style:
 		return
-
 	style_string = f".{style_class} {{ {style} }}"
-	if device == "mobile":
-		style_string = f"@media only screen and (max-width: {MOBILE_BREAKPOINT}px) {{ {style_string} }}"
-	elif device == "tablet":
-		style_string = f"@media only screen and (max-width: {DESKTOP_BREAKPOINT - 1}px) {{ {style_string} }}"
-	style_tag.append(style_string)
+	style_tag.append(wrap_with_media_query(style_string, device))
 
 
-def append_state_style(style_obj, style_tag, style_class):
+def append_state_style(style_obj, style_tag, style_class, device="desktop"):
 	for key, value in style_obj.items():
-		state, property = key.split(":", 1)
-		style_tag.append(f".{style_class}:{state} {{ {property}: {value} }}")
+		if ":" in key:
+			state, property = key.split(":", 1)
+			css_property = camel_case_to_kebab_case(property)
+			style_string = f".{style_class}:{state} {{ {css_property}: {value}; }}"
+			style_tag.append(wrap_with_media_query(style_string, device))
 
 
 def set_fonts(styles, font_map):
@@ -611,6 +647,7 @@ def extend_block(block, overridden_block):
 	block["mobileStyles"].update(overridden_block["mobileStyles"])
 	block["tabletStyles"].update(overridden_block["tabletStyles"])
 	block["attributes"].update(overridden_block["attributes"])
+	block["dynamicValues"] = block.get("dynamicValues", []) + overridden_block.get("dynamicValues", [])
 	if overridden_block.get("element"):
 		block["element"] = overridden_block["element"]
 
@@ -658,34 +695,40 @@ def extend_block(block, overridden_block):
 
 
 def set_dynamic_content_placeholder(block, data_key=False):
-	block_data_key = block.get("dataKey")
-	if block_data_key and block_data_key.get("key"):
-		key = f"{data_key}.{block_data_key.get('key')}" if data_key else block_data_key.get("key")
-		if data_key:
-			# convert a.b to (a or {}).get('b', {})
-			# to avoid undefined error in jinja
-			keys = key.split(".")
-			key = f"({keys[0]} or {{}})"
-			for k in keys[1:]:
-				key = f"{key}.get('{k}', {{}})"
+	block_data_key = block.get("dataKey", {}) or {}
+	dynamic_values = [block_data_key] if block_data_key else []
+	dynamic_values += block.get("dynamicValues", []) or []
+	for dynamic_value_doc in dynamic_values:
+		if not isinstance(dynamic_value_doc, dict):
+			# if dynamic_value_doc is a string, convert it to dict
+			dynamic_value_doc = {"key": dynamic_value_doc, "type": "key", "property": dynamic_value_doc}
+		if dynamic_value_doc and dynamic_value_doc.get("key"):
+			key = f"{data_key}.{dynamic_value_doc.get('key')}" if data_key else dynamic_value_doc.get("key")
+			if data_key:
+				# convert a.b to (a or {}).get('b', {})
+				# to avoid undefined error in jinja
+				keys = key.split(".")
+				key = f"({keys[0]} or {{}})"
+				for k in keys[1:]:
+					key = f"{key}.get('{k}', {{}})"
 
-		_property = block_data_key.get("property")
-		_type = block_data_key.get("type")
-		if _type == "attribute":
-			block["attributes"][_property] = (
-				f"{{{{ {key} or '{escape_single_quotes(block['attributes'].get(_property, ''))}' }}}}"
-			)
-		elif _type == "style":
-			if not block["attributes"].get("style"):
-				block["attributes"]["style"] = ""
-			css_property = camel_case_to_kebab_case(_property)
-			block["attributes"]["style"] += (
-				f"{css_property}: {{{{ {key} or '{escape_single_quotes(block['baseStyles'].get(_property, '') or '')}' }}}};"
-			)
-		elif _type == "key" and not block.get("isRepeaterBlock"):
-			block[_property] = (
-				f"{{{{ {key} if {key} or {key} in ['', 0] else '{escape_single_quotes(block.get(_property, ''))}' }}}}"
-			)
+			_property = dynamic_value_doc.get("property")
+			_type = dynamic_value_doc.get("type")
+			if _type == "attribute":
+				block["attributes"][_property] = (
+					f"{{{{ {key} or '{escape_single_quotes(block['attributes'].get(_property, ''))}' }}}}"
+				)
+			elif _type == "style":
+				if not block["attributes"].get("style"):
+					block["attributes"]["style"] = ""
+				css_property = camel_case_to_kebab_case(_property)
+				block["attributes"]["style"] += (
+					f"{css_property}: {{{{ {key} or '{escape_single_quotes(block['baseStyles'].get(_property, '') or '')}' }}}};"
+				)
+			elif _type == "key" and not block.get("isRepeaterBlock"):
+				block[_property] = (
+					f"{{{{ {key} if {key} or {key} in ['', 0] else '{escape_single_quotes(block.get(_property, ''))}' }}}}"
+				)
 
 
 @redis_cache(ttl=60 * 60)

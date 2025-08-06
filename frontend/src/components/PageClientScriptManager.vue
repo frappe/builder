@@ -1,6 +1,6 @@
 <template>
 	<div class="flex gap-5">
-		<div class="flex flex-col gap-3">
+		<div class="flex flex-col gap-3 pt-6">
 			<div class="flex h-full w-48 flex-col justify-between gap-1">
 				<div class="flex flex-col gap-1">
 					<a
@@ -88,7 +88,7 @@
 		</div>
 
 		<div
-			class="flex h-[60vh] w-full items-center justify-center rounded bg-surface-gray-1 text-base text-ink-gray-6"
+			class="flex h-[70vh] w-full items-center justify-center rounded bg-surface-gray-1 text-base text-ink-gray-6"
 			v-show="!activeScript">
 			Add Script
 		</div>
@@ -100,7 +100,7 @@
 				:label="activeScript.script_name"
 				:type="activeScript.script_type as 'JavaScript' | 'CSS'"
 				class="flex-1"
-				height="55vh"
+				height="65vh"
 				:autofocus="false"
 				:show-save-button="true"
 				@save="updateScript"
@@ -111,7 +111,9 @@
 
 <script setup lang="ts">
 import EditableSpan from "@/components/EditableSpan.vue";
+import usePageStore from "@/stores/pageStore";
 import { posthog } from "@/telemetry";
+import { BuilderClientScript } from "@/types/Builder/BuilderClientScript";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { Autocomplete, createListResource, createResource, Dropdown } from "frappe-ui";
 import { computed, nextTick, ref, watch } from "vue";
@@ -121,6 +123,7 @@ import CSSIcon from "./Icons/CSS.vue";
 import JavaScriptIcon from "./Icons/JavaScript.vue";
 
 const scriptEditor = ref<InstanceType<typeof CodeEditor> | null>(null);
+const pageStore = usePageStore();
 
 type attachedScript = {
 	script: string;
@@ -153,7 +156,7 @@ const attachedScriptResource = createListResource({
 		"builder_script.name as script_name",
 		"name",
 	],
-	orderBy: "`tabBuilder Page Client Script`.creation asc",
+	orderBy: "`tabBuilder Page Client Script`.idx asc",
 	auto: true,
 	onSuccess: (data: attachedScript[]) => {
 		if (data && data.length > 0 && !activeScript.value) {
@@ -178,6 +181,14 @@ const selectScript = (script: attachedScript) => {
 
 const updateScript = (value: string) => {
 	if (!activeScript.value) return;
+
+	pageStore.activePageScripts = pageStore.activePageScripts.map((script: BuilderClientScript) => {
+		if (script.name === activeScript.value?.script_name) {
+			script.script = value;
+		}
+		return script;
+	});
+
 	clientScriptResource.setValue
 		.submit({
 			name: activeScript.value.script_name,
@@ -206,7 +217,7 @@ const addScript = (scriptType: "JavaScript" | "CSS") => {
 			script_type: scriptType,
 			script: scriptType === "JavaScript" ? "// Write your script here\n" : "/* Write your CSS here */\n",
 		})
-		.then((res: { name: string; script_type: string; script: string }) => {
+		.then((res: BuilderClientScript) => {
 			attachedScriptResource.insert
 				.submit({
 					parent: props.page.name,
@@ -224,6 +235,7 @@ const addScript = (scriptType: "JavaScript" | "CSS") => {
 							selectScript(script);
 						}
 					});
+					pageStore.activePageScripts.push(res);
 				});
 		});
 };
@@ -252,11 +264,20 @@ const deleteScript = (scriptName: string) => {
 	attachedScriptResource.delete.submit(scriptName).then(() => {
 		attachedScriptResource.reload();
 	});
+	pageStore.activePageScripts = pageStore.activePageScripts.filter(
+		(script: BuilderClientScript) => script.name !== scriptName,
+	);
 };
 
 const updateScriptName = async (newName: string, script: attachedScript) => {
 	if (!newName) return;
 	script.editable = false;
+	pageStore.activePageScripts = pageStore.activePageScripts.map((_script: BuilderClientScript) => {
+		if (_script.name === script.name) {
+			script.name = newName;
+		}
+		return script;
+	});
 	return createResource({
 		url: "frappe.client.rename_doc",
 	})

@@ -1,8 +1,12 @@
 <template>
 	<div class="flex w-full flex-col items-center gap-5">
-		<OptionToggle
-			:modelValue="position"
-			@update:modelValue="position = $event"
+		<PropertyControl
+			styleProperty="position"
+			:component="OptionToggle"
+			:getModelValue="() => position"
+			:setModelValue="(val) => (position = val)"
+			defaultValue="static"
+			:enableStates="false"
 			:options="[
 				{ label: 'Auto', value: 'static' },
 				{ label: 'Free', value: 'absolute' },
@@ -11,7 +15,7 @@
 					value: 'fixed',
 				},
 				{ label: 'Sticky', value: 'sticky' },
-			]"></OptionToggle>
+			]"></PropertyControl>
 		<div class="grid-rows grid grid-cols-3 gap-4" v-if="showHandler">
 			<div class="col-span-1 col-start-2 w-16 self-center">
 				<InlineInput
@@ -42,19 +46,21 @@
 					class="col-span-1 col-start-3 row-start-2 h-[2px] w-2 self-center justify-self-center rounded bg-surface-gray-4"></div>
 			</div>
 			<div class="col-span-1 col-start-3 w-16 self-center">
+				<!-- prettier-ignore -->
 				<InlineInput
 					placeholder="Right"
 					:unitOptions="['px', '%']"
 					:hideClearButton="true"
-					:modelValue="blockController.getStyle('right') as string"
+					:modelValue="(blockController.getStyle('right') as string)"
 					@update:modelValue="(value: string) => blockController.setStyle('right', value)" />
 			</div>
 			<div class="col-span-1 col-start-2 w-16 self-center">
+				<!-- prettier-ignore -->
 				<InlineInput
 					placeholder="Bottom"
 					:unitOptions="['px', '%']"
 					:hideClearButton="true"
-					:modelValue="blockController.getStyle('bottom') as string"
+					:modelValue="(blockController.getStyle('bottom') as string)"
 					@update:modelValue="(value: string) => blockController.setStyle('bottom', value)" />
 			</div>
 		</div>
@@ -63,6 +69,7 @@
 <script setup lang="ts">
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
+import PropertyControl from "@/components/Controls/PropertyControl.vue";
 import blockController from "@/utils/blockController";
 import { computed, watch } from "vue";
 

@@ -5,23 +5,17 @@ import {
 	dataURLtoFile,
 	getBlockCopy,
 	getBlockInstance,
+	getBoxSpacing,
 	getNumberFromPx,
 	getTextContent,
 	kebabToCamelCase,
 	parseAndSetBackground,
+	setBoxSpacing,
 	uploadImage,
 } from "@/utils/helpers";
 import { Editor } from "@tiptap/vue-3";
 import { clamp } from "@vueuse/core";
 import { computed, nextTick, reactive, toRaw } from "vue";
-
-type BlockDataKeyType = "key" | "attribute" | "style";
-
-export interface BlockDataKey {
-	key?: string;
-	type?: BlockDataKeyType;
-	property?: string;
-}
 
 class Block implements BlockOptions {
 	blockId: string;
@@ -46,6 +40,8 @@ class Block implements BlockOptions {
 	visibilityCondition?: string;
 	elementBeforeConversion?: string;
 	parentBlock: Block | null;
+	activeState?: string | null = null;
+	dynamicValues: Array<BlockDataKey>;
 	// @ts-expect-error
 	referenceComponent: Block | null;
 	customAttributes: BlockAttributeMap;
@@ -100,6 +96,7 @@ class Block implements BlockOptions {
 		this.mobileStyles = reactive(options.mobileStyles || {});
 		this.tabletStyles = reactive(options.tabletStyles || {});
 		this.attributes = reactive(options.attributes || {});
+		this.dynamicValues = reactive(options.dynamicValues || []);
 
 		this.blockName = options.blockName;
 		delete this.attributes.style;
@@ -166,6 +163,17 @@ class Block implements BlockOptions {
 		// });
 
 		return styleObj;
+	}
+	getStateStyles(state: string, breakpoint: string = "desktop"): BlockStyleMap {
+		const styles = this.getStyles(breakpoint);
+		const stateStyles = {} as BlockStyleMap;
+		Object.keys(styles).forEach((style) => {
+			if (style.startsWith(`${state}:`)) {
+				const newStyle = style.replace(`${state}:`, "");
+				stateStyles[newStyle as styleProperty] = styles[style];
+			}
+		});
+		return stateStyles;
 	}
 	hasOverrides(breakpoint: string) {
 		if (breakpoint === "mobile") {
@@ -331,10 +339,34 @@ class Block implements BlockOptions {
 		style = kebabToCamelCase(style as string) as styleProperty;
 		this.baseStyles[style] = value;
 	}
-	getStyle(style: styleProperty, breakpoint?: string | null) {
+	getStyle(
+		style: styleProperty,
+		breakpoint?: string | null,
+		nativeOnly: boolean = false,
+		cascading: boolean = false,
+	): StyleValue | undefined {
 		const canvasStore = useCanvasStore();
 		breakpoint = breakpoint || canvasStore.activeCanvas?.activeBreakpoint;
-		let styleValue = undefined as StyleValue;
+		let styleValue: StyleValue = undefined;
+		if (nativeOnly) {
+			if (breakpoint === "mobile") {
+				styleValue = this.mobileStyles[style];
+			} else if (breakpoint === "tablet") {
+				styleValue = this.tabletStyles[style];
+			} else {
+				styleValue = this.baseStyles[style];
+			}
+			return styleValue;
+		}
+		if (cascading) {
+			if (breakpoint === "mobile") {
+				return this.getStyle(style, "tablet") ?? this.getStyle(style, "desktop");
+			}
+			if (breakpoint === "tablet") {
+				return this.getStyle(style, "desktop");
+			}
+			return this.getStyle(style, "desktop");
+		}
 		if (breakpoint === "mobile") {
 			styleValue = this.mobileStyles[style] || this.tabletStyles[style] || this.baseStyles[style];
 		} else if (breakpoint === "tablet") {
@@ -343,19 +375,17 @@ class Block implements BlockOptions {
 			styleValue = this.baseStyles[style];
 		}
 		if (styleValue === undefined && this.isExtendedFromComponent()) {
-			styleValue = this.referenceComponent?.getStyle?.(style, breakpoint) as StyleValue;
+			styleValue = this.referenceComponent?.getStyle?.(
+				style,
+				breakpoint,
+				nativeOnly,
+				cascading,
+			) as StyleValue;
 		}
 		return styleValue;
 	}
 	getNativeStyle(style: styleProperty) {
-		const canvasStore = useCanvasStore();
-		if (canvasStore.activeCanvas?.activeBreakpoint === "mobile") {
-			return this.mobileStyles[style];
-		}
-		if (canvasStore.activeCanvas?.activeBreakpoint === "tablet") {
-			return this.tabletStyles[style];
-		}
-		return this.baseStyles[style];
+		return this.getStyle(style, undefined, true);
 	}
 	generateId() {
 		return Math.random().toString(36).substr(2, 9);
@@ -572,7 +602,7 @@ class Block implements BlockOptions {
 		if (this.isText() && editor && editor.isFocused) {
 			return editor.getAttributes("textStyle").fontFamily;
 		}
-		return this.getStyle("fontFamily");
+		return this.getStyle("fontFamily", undefined, true);
 	}
 	setFontFamily(fontFamily: string) {
 		const editor = this.getEditor();
@@ -603,7 +633,7 @@ class Block implements BlockOptions {
 			this.setStyle("color", color);
 			const innerHTMLDOM = new DOMParser().parseFromString(this.innerHTML || "", "text/html");
 			innerHTMLDOM.querySelectorAll("*").forEach((el) => {
-				el.style.color = "";
+				(el as HTMLElement).style.color = "";
 			});
 			this.innerHTML = innerHTMLDOM.body.innerHTML;
 		}
@@ -643,7 +673,7 @@ class Block implements BlockOptions {
 		}
 	}
 	isRepeater() {
-		return this.isRepeaterBlock;
+		return Boolean(this.isRepeaterBlock);
 	}
 	getDataKey(key: keyof BlockDataKey): string {
 		let dataKey = (this.dataKey && this.dataKey[key]) || "";
@@ -660,7 +690,11 @@ class Block implements BlockOptions {
 				property: this.isLink() ? "href" : this.isImage() ? "src" : "innerHTML",
 			};
 		}
-		this.dataKey[key] = value;
+		if (!value && key === "key") {
+			this.dataKey = {};
+		} else {
+			this.dataKey[key] = value;
+		}
 	}
 	getInnerHTML(): string {
 		let innerHTML = this.innerHTML || "";
@@ -668,6 +702,13 @@ class Block implements BlockOptions {
 			innerHTML = this.referenceComponent?.getInnerHTML() || "";
 		}
 		return innerHTML;
+	}
+	getText(): string {
+		const editor = this.getEditor();
+		if (editor && editor.isEditable) {
+			return editor.getText();
+		}
+		return this.getTextContent() || "";
 	}
 	setInnerHTML(innerHTML: string) {
 		this.innerHTML = innerHTML;
@@ -792,131 +833,61 @@ class Block implements BlockOptions {
 			}
 		});
 	}
-	getPadding() {
-		const padding = this.getStyle("padding") || "0px";
-
-		const paddingTop = this.getStyle("paddingTop");
-		const paddingBottom = this.getStyle("paddingBottom");
-		const paddingLeft = this.getStyle("paddingLeft");
-		const paddingRight = this.getStyle("paddingRight");
-
-		if (!paddingTop && !paddingBottom && !paddingLeft && !paddingRight) {
-			return padding;
-		}
-
-		if (
-			paddingTop &&
-			paddingBottom &&
-			paddingTop === paddingBottom &&
-			paddingTop === paddingRight &&
-			paddingTop === paddingLeft
-		) {
-			return paddingTop;
-		}
-
-		if (paddingTop && paddingLeft && paddingTop === paddingBottom && paddingLeft === paddingRight) {
-			return `${paddingTop} ${paddingLeft}`;
-		} else {
-			return `${paddingTop || padding} ${paddingRight || padding} ${paddingBottom || padding} ${
-				paddingLeft || padding
-			}`;
-		}
-	}
 	setPadding(padding: string) {
-		// reset padding
-		this.setStyle("padding", null);
-		this.setStyle("paddingTop", null);
-		this.setStyle("paddingBottom", null);
-		this.setStyle("paddingLeft", null);
-		this.setStyle("paddingRight", null);
-
-		if (!padding) {
-			return;
-		}
-
-		const paddingArray = padding.split(" ");
-
-		if (paddingArray.length === 1) {
-			this.setStyle("padding", paddingArray[0]);
-		} else if (paddingArray.length === 2) {
-			this.setStyle("paddingTop", paddingArray[0]);
-			this.setStyle("paddingBottom", paddingArray[0]);
-			this.setStyle("paddingLeft", paddingArray[1]);
-			this.setStyle("paddingRight", paddingArray[1]);
-		} else if (paddingArray.length === 3) {
-			this.setStyle("paddingTop", paddingArray[0]);
-			this.setStyle("paddingLeft", paddingArray[1]);
-			this.setStyle("paddingRight", paddingArray[1]);
-			this.setStyle("paddingBottom", paddingArray[2]);
-		} else if (paddingArray.length === 4) {
-			this.setStyle("paddingTop", paddingArray[0]);
-			this.setStyle("paddingRight", paddingArray[1]);
-			this.setStyle("paddingBottom", paddingArray[2]);
-			this.setStyle("paddingLeft", paddingArray[3]);
-		}
+		setBoxSpacing(this, "padding", padding);
+	}
+	getPadding(opts?: { nativeOnly?: boolean; cascading?: boolean }) {
+		return getBoxSpacing(this, "padding", opts);
 	}
 	setMargin(margin: string) {
-		// reset margin
-		this.setStyle("margin", null);
-		this.setStyle("marginTop", null);
-		this.setStyle("marginBottom", null);
-		this.setStyle("marginLeft", null);
-		this.setStyle("marginRight", null);
-
-		if (!margin) {
-			return;
-		}
-
-		const marginArray = margin.split(" ");
-
-		if (marginArray.length === 1) {
-			this.setStyle("margin", marginArray[0]);
-		} else if (marginArray.length === 2) {
-			this.setStyle("marginTop", marginArray[0]);
-			this.setStyle("marginBottom", marginArray[0]);
-			this.setStyle("marginLeft", marginArray[1]);
-			this.setStyle("marginRight", marginArray[1]);
-		} else if (marginArray.length === 3) {
-			this.setStyle("marginTop", marginArray[0]);
-			this.setStyle("marginLeft", marginArray[1]);
-			this.setStyle("marginRight", marginArray[1]);
-			this.setStyle("marginBottom", marginArray[2]);
-		} else if (marginArray.length === 4) {
-			this.setStyle("marginTop", marginArray[0]);
-			this.setStyle("marginRight", marginArray[1]);
-			this.setStyle("marginBottom", marginArray[2]);
-			this.setStyle("marginLeft", marginArray[3]);
+		setBoxSpacing(this, "margin", margin);
+	}
+	getMargin(opts?: { nativeOnly?: boolean; cascading?: boolean }) {
+		return getBoxSpacing(this, "margin", opts);
+	}
+	setDynamicValue(
+		property: BlockDataKey["property"],
+		type: BlockDataKeyType,
+		key: BlockDataKey["key"] | null = null,
+	) {
+		const existingKey = this.getDynamicKey(property, type);
+		if (existingKey) {
+			this.dynamicValues = this.dynamicValues.map((v) => {
+				if (v.property === property && v.type === type) {
+					return { ...v, key: key || "" };
+				}
+				return v;
+			});
+		} else {
+			this.dynamicValues.push({
+				property,
+				type,
+				key: key || "",
+			});
 		}
 	}
-	getMargin() {
-		const margin = this.getStyle("margin") || "0px";
-
-		const marginTop = this.getStyle("marginTop");
-		const marginBottom = this.getStyle("marginBottom");
-		const marginLeft = this.getStyle("marginLeft");
-		const marginRight = this.getStyle("marginRight");
-
-		if (!marginTop && !marginBottom && !marginLeft && !marginRight) {
-			return margin;
+	removeDynamicValue(property: BlockDataKey["property"], type: BlockDataKeyType) {
+		this.dynamicValues = this.dynamicValues.filter((v) => !(v.property === property && v.type === type));
+	}
+	getDynamicKey(property: BlockDataKey["property"], type: BlockDataKeyType): BlockDataKey["key"] | null {
+		const dynamicValue = this.dynamicValues.find((v) => v.property === property && v.type === type);
+		if (dynamicValue) {
+			return dynamicValue.key;
 		}
-
-		if (
-			marginTop &&
-			marginBottom &&
-			marginTop === marginBottom &&
-			marginTop === marginRight &&
-			marginTop === marginLeft
-		) {
-			return marginTop;
+		return null;
+	}
+	getRepeaterParent(): Block | null {
+		let parent = this.parentBlock;
+		while (parent) {
+			if (parent.isRepeater()) {
+				return parent;
+			}
+			parent = parent.parentBlock;
 		}
-
-		if (marginTop && marginLeft && marginTop === marginBottom && marginLeft === marginRight) {
-			return `${marginTop} ${marginLeft}`;
-		} else {
-			return `${marginTop || margin} ${marginRight || margin} ${marginBottom || margin} ${
-				marginLeft || margin
-			}`;
-		}
+		return null;
+	}
+	isInsideRepeater(): boolean {
+		return Boolean(this.getRepeaterParent());
 	}
 }
 

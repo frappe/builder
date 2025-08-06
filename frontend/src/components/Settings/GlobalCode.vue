@@ -25,7 +25,7 @@
 			:modelValue="builderSettings.doc?.script"
 			height="100px"
 			class="shrink-0"
-			@update:modelValue="builderStore.updateBuilderSettings('script', $event)"
+			@update:modelValue="(code) => builderStore.updateBuilderSettings('script', code)"
 			:showLineNumbers="true"></CodeEditor>
 		<CodeEditor
 			label="Style"
@@ -34,7 +34,7 @@
 			:modelValue="builderSettings.doc?.style"
 			height="100px"
 			class="shrink-0"
-			@update:modelValue="builderStore.updateBuilderSettings('style', $event)"
+			@update:modelValue="(code) => builderStore.updateBuilderSettings('style', code)"
 			:showLineNumbers="true"></CodeEditor>
 	</div>
 </template>

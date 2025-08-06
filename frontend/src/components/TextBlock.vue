@@ -6,6 +6,7 @@
 			:editor="editor"
 			:tippy-options="{
 				appendTo: overlayElement,
+				interactive: true,
 				onCreate: (instance) => {
 					watch(
 						() => canvasProps,
@@ -21,7 +22,8 @@
 				},
 			}"
 			v-if="editor"
-			class="z-50 rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-ink-gray-9 shadow-2xl">
+			class="z-50 rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-ink-gray-9 shadow-2xl"
+			:should-show="() => isEditable">
 			<div
 				v-if="settingLink"
 				class="flex flex-col gap-2 p-1"
@@ -94,6 +96,7 @@
 					:class="{ 'bg-surface-gray-3': editor.isActive('strike') }">
 					<StrikeThroughIcon />
 				</button>
+
 				<button
 					v-show="!block.isHeader() && !block.isLink() && !block.isButton()"
 					@click="
@@ -106,6 +109,41 @@
 					:class="{ 'bg-surface-gray-3': editor.isActive('link') }">
 					<FeatherIcon class="h-3 w-3" name="link" :stroke-width="2" />
 				</button>
+				<ColorPicker
+					:modelValue="selectedColor"
+					@update:modelValue="setTextColor"
+					:show-input="true"
+					placement="top"
+					:appendTo="overlayElement"
+					v-show="!block.isHeader()"
+					popoverClass="!min-w-fit">
+					<template #target="{ togglePopover, isOpen }">
+						<button v-show="!block.isHeader()" class="rounded px-2 py-1 hover:bg-surface-gray-2">
+							<div class="p-1">
+								<div
+									class="h-4 w-4 rounded shadow-sm"
+									@click="
+										() => {
+											togglePopover();
+										}
+									"
+									:style="{
+										background:
+											editor?.isActive('textStyle') && editor?.getAttributes('textStyle').color
+												? editor?.getAttributes('textStyle').color
+												: `url(/assets/builder/images/color-circle.png) center / contain`,
+									}"></div>
+							</div>
+						</button>
+					</template>
+					<template>
+						<Input
+							type="text"
+							:modelValue="selectedColor"
+							class="!w-32 text-sm"
+							@update:modelValue="setTextColor" />
+					</template>
+				</ColorPicker>
 			</div>
 		</bubble-menu>
 		<editor-content
@@ -142,6 +180,7 @@
 
 <script setup lang="ts">
 import type Block from "@/block";
+import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import Input from "@/components/Controls/Input.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
@@ -155,6 +194,7 @@ import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { BubbleMenu, Editor, EditorContent, Extension } from "@tiptap/vue-3";
 import { vOnClickOutside } from "@vueuse/components";
+import { debounce } from "frappe-ui";
 import { Plugin, PluginKey } from "prosemirror-state";
 import { Ref, computed, inject, nextTick, onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
 import { toast } from "vue-sonner";
@@ -171,6 +211,12 @@ const component = ref(null) as Ref<HTMLElement | null>;
 const overlayElement = document.querySelector("#overlay") as HTMLElement;
 let editor: Ref<Editor | null> = ref(null);
 let selectionTriggered = false as boolean;
+
+const selectedColor = computed(() => {
+	if (editor.value?.isActive("textStyle")) {
+		return editor.value.getAttributes("textStyle").color || "#000000";
+	}
+});
 
 const props = withDefaults(
 	defineProps<{
@@ -218,12 +264,28 @@ const FontFamilyPasteRule = Extension.create({
 const textContent = computed(() => {
 	let innerHTML = props.block.getInnerHTML();
 	if (props.data) {
-		if (props.block.getDataKey("property") === "innerHTML") {
-			innerHTML = getDataForKey(props.data, props.block.getDataKey("key")) ?? innerHTML;
+		const dynamicContent = getDynamicContent();
+		if (dynamicContent) {
+			innerHTML = dynamicContent;
 		}
 	}
 	return String(innerHTML ?? "");
 });
+
+const getDynamicContent = () => {
+	let innerHTML = null as string | null;
+	if (props.block.getDataKey("property") === "innerHTML") {
+		innerHTML = getDataForKey(props.data, props.block.getDataKey("key")) ?? innerHTML;
+	}
+	props.block.dynamicValues
+		?.filter((dataKeyObj: BlockDataKey) => {
+			return dataKeyObj.property === "innerHTML" && dataKeyObj.type === "key";
+		})
+		?.forEach((dataKeyObj: BlockDataKey) => {
+			innerHTML = getDataForKey(props.data as Object, dataKeyObj.key as string) ?? innerHTML;
+		});
+	return innerHTML;
+};
 
 const isEditable = computed(() => {
 	return (
@@ -258,7 +320,7 @@ watch(
 
 watch(
 	() => textContent.value,
-	(newValue) => {
+	(newValue: string) => {
 		const innerHTML = getInnerHTML(editor.value);
 		const isSame = newValue === innerHTML;
 		if (isSame) {
@@ -312,7 +374,9 @@ if (!props.preview) {
 							return;
 						}
 						dataChanged.value = true;
-						props.block.setInnerHTML(innerHTML);
+						if (!getDynamicContent()) {
+							props.block.setInnerHTML(innerHTML);
+						}
 					},
 					onSelectionUpdate: ({ editor }) => {
 						settingLink.value = false;
@@ -412,6 +476,30 @@ const handleClick = (e: MouseEvent) => {
 		e.stopPropagation();
 	}
 };
+
+const isEntireTextSelected = () => {
+	if (!editor.value) return false;
+	const { from, to } = editor.value.state.selection;
+	const textContent = editor.value.state.doc.textContent;
+	const textLength = textContent.length;
+	return from === 0 && to >= textLength;
+};
+
+const setTextColor = debounce((color: string | undefined) => {
+	const colorValue = color as string;
+	if (!colorValue) {
+		editor.value?.chain().focus().setColor(colorValue).run();
+		if (isEntireTextSelected()) {
+			props.block.setStyle("color", "");
+		}
+		return;
+	}
+
+	editor.value?.chain().focus().setColor(colorValue).run();
+	if (isEntireTextSelected()) {
+		props.block.setStyle("color", colorValue);
+	}
+}, 50);
 
 defineExpose({
 	component,

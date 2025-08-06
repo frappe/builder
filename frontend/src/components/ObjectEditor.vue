@@ -16,7 +16,7 @@
 				@click="deleteObjectKey(key as string)"></BuilderButton>
 		</div>
 		<BuilderButton variant="subtle" label="Add" @click="addObjectKey"></BuilderButton>
-		<p class="rounded-sm bg-surface-gray-1 p-2 text-2xs text-ink-gray-7" v-show="description">
+		<p class="rounded-sm bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
 			<span v-html="description"></span>
 		</p>
 	</div>

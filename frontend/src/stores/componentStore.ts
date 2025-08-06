@@ -154,7 +154,7 @@ const useComponentStore = defineStore("componentStore", {
 						block: obj.block,
 					});
 				} else {
-					console.log("Skipping component update", obj.name, existingComponent, newComponent);
+					console.log("Skipping component update", obj.name);
 					return;
 				}
 			}
@@ -163,8 +163,15 @@ const useComponentStore = defineStore("componentStore", {
 				.then(() => {
 					this.setComponentMap(obj);
 				})
-				.catch(() => {
-					console.log(`There was an error while creating ${obj.component_name}`);
+				.catch((e: { response: { status: number } }) => {
+					if (e?.response?.status === 409) {
+						if (updateExisting) {
+							return webComponent.setValue.submit({
+								name: obj.name,
+								block: obj.block,
+							});
+						}
+					}
 				});
 		},
 		getComponentName(componentId: string) {

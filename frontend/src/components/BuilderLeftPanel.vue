@@ -36,6 +36,16 @@
 				<BuilderAssets class="mt-1 p-4 pt-3" />
 			</div>
 			<div v-show="builderStore.leftPanelActiveTab === 'Layers'" class="p-3 pr-0">
+				<span class="flex items-center gap-2 py-1 pb-2 text-sm capitalize text-ink-gray-4">
+					<FeatherIcon
+						:name="
+							canvasStore.activeCanvas?.canvasProps.breakpoints.find(
+								(b) => b.device === canvasStore.activeCanvas?.activeBreakpoint,
+							)?.icon || 'monitor'
+						"
+						class="size-3" />
+					{{ canvasStore.activeCanvas?.activeBreakpoint }}
+				</span>
 				<BlockLayers
 					class="block-layers w-fit min-w-full pr-3"
 					v-if="pageCanvas"
@@ -59,11 +69,15 @@
 					v-if="pageStore.selectedPage && pageStore.activePage"
 					:page="pageStore.activePage" />
 			</div>
+			<div v-show="builderStore.leftPanelActiveTab === 'variables'" class="p-4">
+				<BuilderVariables />
+			</div>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
+import BuilderVariables from "@/components/BuilderVariables.vue";
 import ComponentIcon from "@/components/Icons/Component.vue";
 import LayersIcon from "@/components/Icons/Layers.vue";
 import PlusIcon from "@/components/Icons/Plus.vue";
@@ -120,6 +134,11 @@ const leftPanelOptions = [
 		label: "Code",
 		value: "Code",
 		icon: "code",
+	},
+	{
+		label: "Variables",
+		value: "variables",
+		icon: "aperture",
 	},
 ];
 

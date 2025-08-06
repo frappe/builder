@@ -1,70 +1,70 @@
 <template>
-	<OptionToggle
+	<PropertyControl
+		styleProperty="flexDirection"
+		defaultValue="row"
+		:component="OptionToggle"
 		label="Direction"
 		v-if="blockController.isFlex()"
 		:options="[
 			{ label: 'Horizontal', value: 'row', icon: 'arrow-right', hideLabel: true },
 			{ label: 'Vertical', value: 'column', icon: 'arrow-down', hideLabel: true },
-		]"
-		:modelValue="blockController.getStyle('flexDirection') || 'row'"
-		@update:modelValue="
-			(val: string | number) => blockController.setStyle('flexDirection', val)
-		"></OptionToggle>
-	<PlacementControl v-if="blockController.isFlex()"></PlacementControl>
-	<InlineInput
+		]"></PropertyControl>
+	<PropertyControl
+		styleProperty="alignItems"
+		label="Placement"
+		:enableStates="false"
 		v-if="blockController.isFlex()"
-		:modelValue="blockController.getStyle('justifyContent') ?? ''"
+		:component="PlacementControl"></PropertyControl>
+	<PropertyControl
+		v-if="blockController.isFlex()"
+		styleProperty="justifyContent"
 		type="select"
 		label="Distribution"
 		:options="[
-			{ label: '', value: '' },
 			{ label: 'Space Between', value: 'space-between' },
 			{ label: 'Space Around', value: 'space-around' },
 			{ label: 'Space Evenly', value: 'space-evenly' },
-		]"
-		@update:modelValue="(val: string | number) => blockController.setStyle('justifyContent', val)" />
-
-	<InlineInput
-		label="Gap"
+		]" />
+	<PropertyControl
 		v-if="blockController.isFlex()"
-		type="text"
+		label="Gap"
+		styleProperty="gap"
 		:enableSlider="true"
-		:unitOptions="['px', 'em', 'rem']"
-		:modelValue="blockController.getStyle('gap') ?? '0px'"
-		@update:modelValue="(val: string | number) => blockController.setStyle('gap', val)" />
-	<OptionToggle
+		:unitOptions="['px', 'em', 'rem']" />
+	<PropertyControl
+		styleProperty="flexWrap"
+		:component="OptionToggle"
 		label="Wrap"
 		v-if="blockController.isFlex()"
 		:options="[
 			{ label: 'No Wrap', value: 'nowrap' },
 			{ label: 'Wrap', value: 'wrap' },
 		]"
-		:modelValue="blockController.getStyle('flexWrap') || 'nowrap'"
-		@update:modelValue="(val: string | number) => blockController.setStyle('flexWrap', val)"></OptionToggle>
+		defaultValue="nowrap"></PropertyControl>
 	<div class="flex flex-col gap-3" v-if="blockController.getParentBlock()?.isFlex()">
-		<OptionToggle
+		<PropertyControl
 			label="Grow"
+			styleProperty="flexGrow"
+			:component="OptionToggle"
 			:options="[
 				{ label: 'Yes', value: 1 },
 				{ label: 'No', value: 0 },
 			]"
-			:modelValue="blockController.getStyle('flexGrow') || 0"
-			@update:modelValue="(val: string | number) => blockController.setStyle('flexGrow', val)"></OptionToggle>
-		<OptionToggle
+			:defaultValue="0" />
+		<PropertyControl
 			label="Shrink"
+			styleProperty="flexShrink"
+			:component="OptionToggle"
 			:options="[
 				{ label: 'Yes', value: 1 },
 				{ label: 'No', value: 0 },
 			]"
-			:modelValue="blockController.getStyle('flexShrink') ?? 1"
-			@update:modelValue="
-				(val: string | number) => blockController.setStyle('flexShrink', val)
-			"></OptionToggle>
+			:defaultValue="1" />
 	</div>
 </template>
 <script lang="ts" setup>
-import InlineInput from "@/components/Controls/InlineInput.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
+import PropertyControl from "@/components/Controls/PropertyControl.vue";
 import blockController from "@/utils/blockController";
 import PlacementControl from "./PlacementControl.vue";
 </script>

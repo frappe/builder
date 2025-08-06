@@ -1,9 +1,53 @@
 import BackgroundHandler from "@/components/BackgroundHandler.vue";
 import ColorInput from "@/components/Controls/ColorInput.vue";
-import InlineInput from "@/components/Controls/InlineInput.vue";
 import blockController from "@/utils/blockController";
+import { computed } from "vue";
+import PropertyControl from "../Controls/PropertyControl.vue";
+import RangeInput from "../Controls/RangeInput.vue";
+
+const overflowOptions = [
+	{
+		label: "Unset",
+		value: "unset",
+	},
+	{
+		label: "Auto",
+		value: "auto",
+	},
+	{
+		label: "Visible",
+		value: "visible",
+	},
+	{
+		label: "Hidden",
+		value: "hidden",
+	},
+	{
+		label: "Scroll",
+		value: "scroll",
+	},
+];
 
 const styleSectionProperties = [
+	{
+		component: PropertyControl,
+		getProps: () => {
+			return {
+				label: "Opacity",
+				styleProperty: "opacity",
+				enableSlider: false,
+				component: RangeInput,
+				getModelValue: () => {
+					return blockController.getStyle("opacity") || 1;
+				},
+				min: 0,
+				max: 1,
+				step: 0.01,
+				default: 1,
+			};
+		},
+		condition: () => !blockController.multipleBlocksSelected() && !blockController.isRoot(),
+	},
 	{
 		component: BackgroundHandler,
 		getProps: () => {},
@@ -11,30 +55,31 @@ const styleSectionProperties = [
 			"Background, BackgroundImage, Background Image, Background Position, Background Repeat, Background Size, BG, BGImage, BG Image, BGPosition, BG Position, BGRepeat, BG Repeat, BGSize, BG Size",
 	},
 	{
-		component: ColorInput,
+		component: PropertyControl,
 		getProps: () => {
 			return {
+				styleProperty: "color",
+				component: ColorInput,
 				label: "Text Color",
-				value: blockController.getTextColor(),
+				enableState: computed(() => {
+					return !blockController.getFirstSelectedBlock()?.getEditor();
+				}),
 			};
 		},
 		searchKeyWords: "Text, Color, TextColor, Text Color",
-		events: {
-			change: (val: string) => blockController.setTextColor(val),
-		},
 	},
 	{
-		component: ColorInput,
+		component: PropertyControl,
 		getProps: () => {
 			return {
+				component: ColorInput,
+				styleProperty: "borderColor",
 				label: "Border Color",
-				value: blockController.getStyle("borderColor"),
 			};
 		},
 		searchKeyWords: "Border, Color, BorderColor, Border Color",
 		events: {
-			change: (val: StyleValue) => {
-				blockController.setStyle("borderColor", val);
+			"update:modelValue": (val: StyleValue) => {
 				if (val) {
 					if (!blockController.getStyle("borderWidth")) {
 						blockController.setStyle("borderWidth", "1px");
@@ -48,63 +93,45 @@ const styleSectionProperties = [
 		},
 	},
 	{
-		component: InlineInput,
+		component: PropertyControl,
 		getProps: () => {
 			return {
 				label: "Border Width",
-				modelValue: blockController.getStyle("borderWidth"),
+				styleProperty: "borderWidth",
 				enableSlider: true,
 				unitOptions: ["px", "%", "em", "rem"],
 				minValue: 0,
 			};
 		},
 		searchKeyWords: "Border, Width, BorderWidth, Border Width",
-		events: {
-			"update:modelValue": (val: StyleValue) => blockController.setStyle("borderWidth", val),
-		},
 		condition: () => blockController.getStyle("borderColor") || blockController.getStyle("borderWidth"),
 	},
 	{
-		component: InlineInput,
+		component: PropertyControl,
 		getProps: () => {
 			return {
 				label: "Border Style",
-				modelValue: blockController.getStyle("borderStyle"),
+				styleProperty: "borderStyle",
 				type: "select",
 				options: [
-					{
-						value: "solid",
-						label: "Solid",
-					},
-					{
-						value: "dashed",
-						label: "Dashed",
-					},
-					{
-						value: "dotted",
-						label: "Dotted",
-					},
+					{ value: "solid", label: "Solid" },
+					{ value: "dashed", label: "Dashed" },
+					{ value: "dotted", label: "Dotted" },
 				],
 			};
 		},
 		searchKeyWords: "Border, Style, BorderStyle, Border Style, Solid, Dashed, Dotted",
-		events: {
-			"update:modelValue": (val: StyleValue) => blockController.setStyle("borderStyle", val),
-		},
 		condition: () => blockController.getStyle("borderColor"),
 	},
-
 	{
-		component: InlineInput,
+		component: PropertyControl,
 		getProps: () => {
 			return {
 				label: "Shadow",
+				styleProperty: "boxShadow",
 				type: "select",
 				options: [
-					{
-						value: null,
-						label: "None",
-					},
+					{ value: null, label: "None" },
 					{
 						label: "Small",
 						value: "rgba(0, 0, 0, 0.05) 0px 1px 2px 0px, rgba(0, 0, 0, 0.05) 0px 1px 3px 0px",
@@ -118,20 +145,16 @@ const styleSectionProperties = [
 						value: "rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.1) 0px 10px 10px -5px",
 					},
 				],
-				modelValue: blockController.getStyle("boxShadow"),
 			};
 		},
 		searchKeyWords: "Shadow, BoxShadow, Box Shadow",
-		events: {
-			"update:modelValue": (val: StyleValue) => blockController.setStyle("boxShadow", val),
-		},
 	},
 	{
-		component: InlineInput,
+		component: PropertyControl,
 		getProps: () => {
 			return {
 				label: "Radius",
-				modelValue: blockController.getStyle("borderRadius"),
+				styleProperty: "borderRadius",
 				enableSlider: true,
 				unitOptions: ["px", "%"],
 				minValue: 0,
@@ -153,21 +176,57 @@ const styleSectionProperties = [
 		},
 	},
 	{
-		component: InlineInput,
+		component: PropertyControl,
 		getProps: () => {
 			return {
 				label: "Z-Index",
-				modelValue: blockController.getStyle("zIndex"),
+				styleProperty: "zIndex",
 			};
 		},
 		searchKeyWords: "Z, Index, ZIndex, Z Index",
-		events: {
-			"update:modelValue": (val: StyleValue) => blockController.setStyle("zIndex", val),
-		},
 		condition: () =>
 			!blockController.multipleBlocksSelected() &&
 			!blockController.isRoot() &&
 			blockController.getStyle("position") !== "static",
+	},
+	{
+		component: PropertyControl,
+		getProps: () => {
+			return {
+				label: "Overflow X",
+				type: "select",
+				styleProperty: "overflowX",
+				options: overflowOptions,
+				setModelValue: (val: StyleValue) => {
+					if (val === "unset") {
+						val = null;
+					}
+					blockController.setStyle("overflowX", val);
+				},
+			};
+		},
+		searchKeyWords:
+			"Overflow, X, OverflowX, Overflow X, Auto, Visible, Hide, Scroll, horizontal scroll, horizontalScroll",
+	},
+	{
+		component: PropertyControl,
+		getProps: () => {
+			return {
+				label: "Overflow Y",
+				styleProperty: "overflowY",
+				type: "select",
+				options: overflowOptions,
+				setModelValue: (val: StyleValue) => {
+					console.log("Setting overflowY to", val);
+					if (val === "unset") {
+						val = null;
+					}
+					blockController.setStyle("overflowY", val);
+				},
+			};
+		},
+		searchKeyWords:
+			"Overflow, Y, OverflowY, Overflow Y, Auto, Visible, Hide, Scroll, vertical scroll, verticalScroll",
 	},
 ];
 

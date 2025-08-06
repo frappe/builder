@@ -10,6 +10,7 @@ dynamic = ["version"]
 dependencies = [
     "jsmin>=3.0.1",
     "csscompressor>=0.9.5",
+    "duckdb>=0.9.0",
 ]
 
 [project.urls]

@@ -14,10 +14,11 @@ import {
 	getCopyWithoutParent,
 	getRouteVariables,
 } from "@/utils/helpers";
-import { createDocumentResource, createResource } from "frappe-ui";
+import { createDocumentResource, createListResource, createResource } from "frappe-ui";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
 import { toast } from "vue-sonner";
+import { BuilderClientScript } from "../types/Builder/BuilderClientScript";
 
 const usePageStore = defineStore("pageStore", {
 	state: () => ({
@@ -29,6 +30,7 @@ const usePageStore = defineStore("pageStore", {
 		pageBlocks: <Block[]>[],
 		saveId: null as string | null,
 		activePage: <BuilderPage | null>null,
+		activePageScripts: <BuilderClientScript[]>[],
 		savingPage: false,
 		settingPage: false,
 	}),
@@ -67,6 +69,21 @@ const usePageStore = defineStore("pageStore", {
 
 			const canvasStore = useCanvasStore();
 			canvasStore.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas);
+
+			if (page.client_scripts?.length) {
+				// Fetch full script documents for each script
+				const scriptsResource = createListResource({
+					doctype: "Builder Client Script",
+					fields: ["script_type", "name", "script"],
+					filters: [["name", "in", page.client_scripts.map((script) => script.builder_script)]],
+					auto: true,
+				});
+
+				await scriptsResource.list.promise;
+				this.activePageScripts = scriptsResource.data as BuilderClientScript[];
+			} else {
+				this.activePageScripts = [];
+			}
 
 			nextTick(() => {
 				const componentStore = useComponentStore();
@@ -275,7 +292,20 @@ const usePageStore = defineStore("pageStore", {
 		},
 
 		openPageInBrowser(page: BuilderPage) {
-			let route = page.route;
+			const pageURL = this.getResolvedPageURL(true, page);
+			const targetWindow = window.open(pageURL, "builder-preview");
+			if (targetWindow?.location.pathname === pageURL) {
+				targetWindow?.location.reload();
+			} else {
+				setTimeout(() => {
+					// wait for the page to load
+					targetWindow?.location.reload();
+				}, 50);
+			}
+		},
+
+		getResolvedPageURL(prependSlash = true, page: BuilderPage | null = null) {
+			let route = page?.route || this.activePage?.route || "/";
 			if (this.pageData) {
 				const routeVariables = getRouteVariables(route || "");
 				routeVariables.forEach((variable: string) => {
@@ -289,15 +319,7 @@ const usePageStore = defineStore("pageStore", {
 					}
 				});
 			}
-			const targetWindow = window.open(`/${route}`, "builder-preview");
-			if (targetWindow?.location.pathname === `/${route}`) {
-				targetWindow?.location.reload();
-			} else {
-				setTimeout(() => {
-					// wait for the page to load
-					targetWindow?.location.reload();
-				}, 50);
-			}
+			return `${prependSlash ? "/" : ""}${route}`;
 		},
 
 		async waitTillPageIsSaved() {

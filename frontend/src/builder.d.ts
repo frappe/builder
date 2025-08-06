@@ -20,6 +20,7 @@ declare interface BlockOptions {
 	attributes?: BlockAttributeMap;
 	classes?: Array<string>;
 	children?: Array<Block | BlockOptions>;
+	dynamicValues?: Array<BlockDataKey>;
 	draggable?: boolean;
 	[key: string]: any;
 }
@@ -69,7 +70,7 @@ declare type HashString = `#${string}`;
 
 declare type RGBString = `rgb(${number}, ${number}, ${number})`;
 
-declare type LeftSidebarTabOption = "Blocks" | "Layers" | "Assets" | "Code";
+declare type LeftSidebarTabOption = "Blocks" | "Layers" | "Assets" | "Code" | "variables";
 declare type RightSidebarTabOption = "Properties" | "Script" | "Options";
 
 declare type BuilderMode = "select" | "text" | "container" | "image" | "repeater" | "move";
@@ -101,3 +102,13 @@ declare type UserInfo = { user: string; fullname: string; image: string };
 declare type FileDoc = {
 	file_url: string;
 };
+
+declare interface BlockDataKey {
+	key?: string;
+	type?: BlockDataKeyType;
+	property?: string;
+}
+
+declare type BlockDataKeyType = "key" | "attribute" | "style";
+
+declare type CSSVariableName = string | `var(--${string})`;

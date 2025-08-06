@@ -12,7 +12,7 @@
 					}
 				" />
 		</div>
-		<div class="flex flex-col gap-3">
+		<div class="mt-1 flex flex-col gap-3">
 			<CollapsibleSection
 				:sectionName="section.name"
 				v-for="section in sections"
@@ -32,9 +32,11 @@
 	</div>
 </template>
 <script setup lang="ts">
+import collectionOptionsSection from "@/components/BlockPropertySections/CollectionOptionsSection";
 import customAttributesSection from "@/components/BlockPropertySections/CustomAttributesSection";
 import dataKeySection from "@/components/BlockPropertySections/DataKeySection";
 import dimensionSection from "@/components/BlockPropertySections/DimenstionSection";
+import HTMLOptionsSection from "@/components/BlockPropertySections/HTMLOptionsSection";
 import imageOptionsSection from "@/components/BlockPropertySections/ImageOptionsSection";
 import layoutSection from "@/components/BlockPropertySections/LayoutSection";
 import linkSection from "@/components/BlockPropertySections/LinkSection";
@@ -43,18 +45,20 @@ import positionSection from "@/components/BlockPropertySections/PositionSection"
 import rawStyleSection from "@/components/BlockPropertySections/RawStyleSection";
 import spacingSection from "@/components/BlockPropertySections/SpacingSection";
 import styleSection from "@/components/BlockPropertySections/StyleSection";
+import transitionSection from "@/components/BlockPropertySections/TransitionSection";
 import typographySection from "@/components/BlockPropertySections/TypographySection";
 import videoOptionsSection from "@/components/BlockPropertySections/VideoOptionsSection";
 import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
 import { toValue } from "@vueuse/core";
+import type { Component } from "vue";
 import { Ref, ref } from "vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
 
 const builderStore = useBuilderStore();
 
 type BlockProperty = {
-	component: any;
+	component: Component;
 	getProps: () => Record<string, unknown>;
 	events?: Record<string, unknown>;
 	searchKeyWords: string;
@@ -89,25 +93,29 @@ const getFilteredProperties = (section: PropertySection) => {
 			showProperty = property.condition();
 		}
 		if (showProperty && builderStore.propertyFilter) {
+			const searchTerm = builderStore.propertyFilter.toLowerCase();
 			showProperty =
-				section.name.toLowerCase().includes(builderStore.propertyFilter.toLowerCase()) ||
-				property.searchKeyWords.toLowerCase().includes(builderStore.propertyFilter.toLowerCase());
+				section.name?.toLowerCase().includes(searchTerm) ||
+				property.searchKeyWords?.toLowerCase().includes(searchTerm);
 		}
 		return showProperty;
 	});
 };
 
 const sections = [
+	collectionOptionsSection,
 	linkSection,
 	layoutSection,
 	imageOptionsSection,
+	HTMLOptionsSection,
 	videoOptionsSection,
 	typographySection,
 	styleSection,
 	dimensionSection,
-	positionSection,
 	spacingSection,
+	transitionSection,
 	optionsSection,
+	positionSection,
 	dataKeySection,
 	customAttributesSection,
 	rawStyleSection,

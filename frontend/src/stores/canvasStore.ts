@@ -7,6 +7,8 @@ import { nextTick } from "vue";
 const useCanvasStore = defineStore("canvasStore", {
 	state: () => ({
 		activeCanvas: <InstanceType<typeof BuilderCanvas> | null>null,
+		requiresConfirmationForCopyingEntirePage: <boolean>true,
+		copyEntirePage: <boolean>false,
 		preventClick: false,
 		guides: {
 			showX: false,

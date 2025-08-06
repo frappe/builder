@@ -1,6 +1,5 @@
 <template>
-	<div class="items-top relative flex justify-between">
-		<InputLabel class="items-center">Placement</InputLabel>
+	<div class="items-top relative flex justify-center">
 		<div class="relative h-fit w-fit">
 			<div class="group grid grid-cols-3 rounded-sm bg-surface-gray-2 p-1.5">
 				<div

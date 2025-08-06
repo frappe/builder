@@ -19,9 +19,8 @@ import NewComponent from "@/components/Modals/NewComponent.vue";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
-import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { confirm, detachBlockFromComponent, getBlockCopy } from "@/utils/helpers";
+import { confirm, detachBlockFromComponent, getBlockCopy, triggerCopyEvent } from "@/utils/helpers";
 import { vOnClickOutside } from "@vueuse/components";
 import { useStorage } from "@vueuse/core";
 import { Ref, nextTick, ref } from "vue";
@@ -87,7 +86,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		},
 		condition: () => block.value.isHTML(),
 	},
-	{ label: "Copy", action: () => document.execCommand("copy") },
+	{ label: "Copy", action: () => triggerCopyEvent() },
 	{ label: "Copy Style", action: copyStyle },
 	{
 		label: "Paste Style",
@@ -96,15 +95,25 @@ const contextMenuOptions: ContextMenuOption[] = [
 	},
 	{ label: "Duplicate", action: duplicateBlock },
 	{
-		label: "Convert To Link",
+		label: "Convert To Collection",
 		action: () => {
-			blockController.convertToLink();
+			block.value.isRepeaterBlock = true;
+			toast.warning("Please select a collection");
 		},
 		condition: () =>
-			(block.value.isContainer() || block.value.isText() || block.value.isImage()) &&
-			!block.value.isLink() &&
-			!block.value.isExtendedFromComponent() &&
-			!block.value.isRoot(),
+			block.value.isContainer() &&
+			!block.value.isRoot() &&
+			!block.value.isRepeater() &&
+			!block.value.isChildOfComponentBlock() &&
+			!block.value.isExtendedFromComponent(),
+	},
+	{
+		label: "Remove Collection",
+		action: () => {
+			block.value.isRepeaterBlock = false;
+			block.value.dataKey = {};
+		},
+		condition: () => block.value.isRepeater(),
 	},
 	{
 		label: "Wrap In Container",
@@ -162,8 +171,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			repeaterBlock.addChild(getBlockCopy(block.value));
 			parentBlock.removeChild(block.value);
 			repeaterBlock.selectBlock();
-			builderStore.propertyFilter = "data key";
-			toast.warning("Please set data key for repeater block");
+			toast.warning("Please select a collection");
 		},
 		condition: () =>
 			!block.value.isRoot() && !block.value.isRepeater() && !block.value.isChildOfComponentBlock(),
@@ -261,7 +269,10 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Delete",
 		action: () => {
-			canvasStore.activeCanvas?.removeBlock(block.value);
+			const selectedBlocks = canvasStore.activeCanvas?.selectedBlocks || [];
+			selectedBlocks.forEach((selectedBlock: Block) => {
+				canvasStore.activeCanvas?.removeBlock(selectedBlock);
+			});
 		},
 		condition: () => {
 			return (

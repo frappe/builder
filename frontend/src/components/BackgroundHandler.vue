@@ -1,22 +1,25 @@
 <template>
 	<Popover placement="left" class="!block w-full" popoverClass="!min-w-fit !mr-[30px]">
 		<template #target="{ togglePopover }">
-			<div class="flex items-center justify-between">
-				<InputLabel>BG Image</InputLabel>
-				<div class="relative w-full">
-					<BuilderInput
-						class="[&>div>input]:pl-8"
-						type="text"
-						placeholder="Set Background"
-						@focus="togglePopover"
-						:modelValue="backgroundImage"
-						@update:modelValue="setBGImageURL" />
-					<div
-						class="absolute left-2 top-[6px] z-10 h-4 w-4 cursor-pointer rounded shadow-sm"
-						@click="togglePopover"
-						:class="{ 'bg-surface-gray-4': !Boolean(backgroundImage) }"
-						:style="previewStyle" />
-				</div>
+			<div class="flex w-full items-center justify-between">
+				<PropertyControl
+					styleProperty="backgroundImage"
+					:component="Input"
+					label="BG Image"
+					:enableStates="false"
+					:allowDynamicValue="true"
+					placeholder="Set Background"
+					@focus="togglePopover"
+					:modelValue="backgroundImage"
+					@update:modelValue="setBGImageURL">
+					<template #prefix>
+						<div
+							class="absolute left-2 top-[6px] z-10 h-4 w-4 cursor-pointer rounded shadow-sm"
+							@click="togglePopover"
+							:class="{ 'bg-surface-gray-4': !Boolean(backgroundImage) }"
+							:style="previewStyle" />
+					</template>
+				</PropertyControl>
 			</div>
 		</template>
 		<template #body>
@@ -70,18 +73,18 @@
 			</div>
 		</template>
 	</Popover>
-	<ColorInput label="BG Color" :value="backgroundColor as HashString" @change="setBGColor" />
+	<PropertyControl label="BG Color" styleProperty="backgroundColor" :component="ColorInput" />
 </template>
 
 <script lang="ts" setup>
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
-import InputLabel from "@/components/Controls/InputLabel.vue";
+import Input from "@/components/Controls/Input.vue";
+import PropertyControl from "@/components/Controls/PropertyControl.vue";
 import blockController from "@/utils/blockController";
 import { FileUploader, Popover } from "frappe-ui";
 import { computed } from "vue";
 
-const backgroundColor = computed(() => blockController.getStyle("backgroundColor"));
 const backgroundImage = computed(() => {
 	const bgImage = blockController.getStyle("backgroundImage") as string;
 	return bgImage ? bgImage.replace(/^url\(['"]?|['"]?\)$/g, "") : null;
@@ -117,10 +120,6 @@ const repeatOptions = [
 	{ label: "Repeat X", value: "repeat-x" },
 	{ label: "Repeat Y", value: "repeat-y" },
 ];
-
-const setBGColor = (color: string) => {
-	blockController.setStyle("backgroundColor", color);
-};
 
 const setBGImage = (file: { file_url: string }) => {
 	blockController.setStyle("backgroundImage", `url(${file.file_url})`);

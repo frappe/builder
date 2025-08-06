@@ -2,13 +2,18 @@ import BlockFlexLayoutHandler from "@/components/BlockFlexLayoutHandler.vue";
 import BlockGridLayoutHandler from "@/components/BlockGridLayoutHandler.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import blockController from "@/utils/blockController";
+import PropertyControl from "../Controls/PropertyControl.vue";
 
 const layoutSectionProperties = [
 	{
-		component: OptionToggle,
+		component: PropertyControl,
+		condition: () => !blockController.isText(),
 		getProps: () => {
 			return {
+				styleProperty: "display",
+				component: OptionToggle,
 				label: "Type",
+				enableStates: false,
 				options: [
 					{
 						label: "Stack",
@@ -19,7 +24,6 @@ const layoutSectionProperties = [
 						value: "grid",
 					},
 				],
-				modelValue: blockController.getStyle("display"),
 			};
 		},
 		searchKeyWords: "Layout, Display, Flex, Grid, Flexbox, Flex Box, FlexBox",
@@ -59,5 +63,5 @@ const layoutSectionProperties = [
 export default {
 	name: "Layout",
 	properties: layoutSectionProperties,
-	condition: () => !blockController.multipleBlocksSelected(),
+	condition: () => !blockController.multipleBlocksSelected() && !blockController.isHTML(),
 };
