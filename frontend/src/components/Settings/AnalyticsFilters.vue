@@ -124,28 +124,18 @@ const formatDate = (date: string) => {
 };
 
 const getRouteOptions = async (query: string) => {
-	// Load pages if not already loaded
-	if (!webPages.data || webPages.data.length === 0) {
+	if (!webPages.data?.length) {
 		await webPages.fetch();
 	}
 
-	const routes = webPages.data
-		.filter((page: BuilderPage) => {
-			return page.route && !page.dynamic_route;
-		})
-		.map((page: BuilderPage) => ({
-			value: `${page.route}`,
-			label: `${page.route}`,
-		}));
+	const queryLower = query?.toLowerCase() || "";
 
-	if (!query) {
-		return routes;
-	}
-
-	return routes.filter((option: { value: string; label: string }) => {
-		const label = option.label.toLowerCase();
-		const queryLower = query.toLowerCase();
-		return label.includes(queryLower);
-	});
+	return webPages.data
+		.filter((page: BuilderPage) => page.route && !page.dynamic_route)
+		.map((page: BuilderPage) => ({ value: page.route, label: page.route }))
+		.filter(
+			(option: { value: string; label: string }) =>
+				!queryLower || option.label.toLowerCase().includes(queryLower),
+		);
 };
 </script>
