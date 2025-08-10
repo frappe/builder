@@ -1,3 +1,4 @@
+import { shortenNumber } from "@/utils/helpers";
 import { createResource } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
@@ -31,7 +32,7 @@ export interface RouteFilter {
 export function useAnalytics({
 	apiUrl,
 	initialRange = "last_30_days",
-	initialInterval = "weekly",
+	initialInterval = "daily",
 	initialRoute = "",
 	initialRouteFilterType = "wildcard",
 	extraParams = {},
@@ -77,6 +78,34 @@ export function useAnalytics({
 		],
 	}));
 
+	const chartConfigWithEvents = computed(() => ({
+		...chartConfig.value,
+		events: {
+			click: (params: any) => {
+				if (interval.value !== "hourly") {
+					drillDown({ interval: params.name });
+				}
+			},
+		},
+	}));
+
+	const processedAnalyticsData = computed(() => {
+		return {
+			top_referrers: analyticsData.value.top_referrers?.map((referrer) => ({
+				...referrer,
+				count: shortenNumber(referrer.count),
+			})),
+			top_pages: analyticsData.value.top_pages?.map((page) => ({
+				...page,
+				view_count: shortenNumber(page.view_count),
+			})),
+		};
+	});
+
+	const onPageRowClick = (row: { route: string }) => {
+		window.open(`/${row.route}`, "_blank");
+	};
+
 	const getDateRangeFromPreset = (preset: string): CustomDateRange => {
 		const toDate = new Date();
 		const fromDate = new Date();
@@ -120,7 +149,11 @@ export function useAnalytics({
 		};
 	};
 
-	const getDefaultInterval = (preset: string): string => {
+	const getDefaultInterval = (preset: string, customRange?: CustomDateRange): string => {
+		if (customRange) {
+			return getIntervalFromDateRange(customRange.from_date, customRange.to_date);
+		}
+
 		const intervalMap: Record<string, string> = {
 			today: "hourly",
 			this_week: "daily",
@@ -131,6 +164,21 @@ export function useAnalytics({
 			this_year: "monthly",
 		};
 		return intervalMap[preset] || "daily";
+	};
+
+	const getIntervalFromDateRange = (fromDate: string, toDate: string): string => {
+		const from = new Date(fromDate);
+		const to = new Date(toDate);
+		const diffInMs = to.getTime() - from.getTime();
+		const diffInDays = Math.ceil(diffInMs / (1000 * 60 * 60 * 24));
+
+		if (diffInDays <= 1) {
+			return "hourly";
+		} else if (diffInDays <= 31) {
+			return "daily";
+		} else {
+			return "monthly";
+		}
 	};
 
 	const getDefaultDateRange = (): CustomDateRange => {
@@ -156,6 +204,44 @@ export function useAnalytics({
 		} else {
 			range.value = "custom";
 		}
+	};
+
+	const drillDown = (dataPoint: { interval: string; [key: string]: any }) => {
+		const currentInterval =
+			interval.value ||
+			getIntervalFromDateRange(
+				range.value === "custom" && customDateRange.value
+					? parseCustomDateRange(customDateRange.value)?.from_date || ""
+					: getDateRangeFromPreset(range.value).from_date,
+				range.value === "custom" && customDateRange.value
+					? parseCustomDateRange(customDateRange.value)?.to_date || ""
+					: getDateRangeFromPreset(range.value).to_date,
+			);
+
+		const clickedDate = new Date(dataPoint.interval);
+
+		let newFromDate: string;
+		let newToDate: string;
+		let newInterval: string;
+
+		if (currentInterval === "monthly") {
+			newFromDate = new Date(clickedDate.getFullYear(), clickedDate.getMonth(), 1)
+				.toISOString()
+				.split("T")[0];
+			newToDate = new Date(clickedDate.getFullYear(), clickedDate.getMonth() + 1, 0)
+				.toISOString()
+				.split("T")[0];
+			newInterval = "daily";
+		} else if (currentInterval === "daily") {
+			newFromDate = clickedDate.toISOString().split("T")[0];
+			newToDate = clickedDate.toISOString().split("T")[0];
+			newInterval = "hourly";
+		} else {
+			return;
+		}
+
+		setCustomDateRange(newFromDate, newToDate);
+		interval.value = newInterval;
 	};
 
 	const parseCustomDateRange = (dateRangeString: string): CustomDateRange | null => {
@@ -202,9 +288,13 @@ export function useAnalytics({
 		params.from_date = dateRange.from_date;
 		params.to_date = dateRange.to_date;
 
-		if (!interval.value) {
-			params.interval = getDefaultInterval(range.value);
+		if (range.value === "custom" && customDateRange.value) {
+			params.interval = getIntervalFromDateRange(dateRange.from_date, dateRange.to_date);
 		} else {
+			params.interval = getDefaultInterval(range.value, dateRange);
+		}
+
+		if (interval.value) {
 			params.interval = interval.value;
 		}
 
@@ -230,7 +320,10 @@ export function useAnalytics({
 
 	watch(
 		[range, interval, route, routeFilterType, customDateRange],
-		() => {
+		(newValues, oldValues) => {
+			if (newValues[0] !== oldValues?.[0] && newValues[0] !== "custom") {
+				interval.value = "";
+			}
 			analytics.submit(getParams());
 		},
 		{ deep: true },
@@ -244,6 +337,8 @@ export function useAnalytics({
 		customDateRange,
 		analyticsData,
 		chartConfig,
+		chartConfigWithEvents,
+		processedAnalyticsData,
 		analytics,
 		setCustomDateRange,
 		clearCustomDateRange,
@@ -254,5 +349,8 @@ export function useAnalytics({
 		getDefaultDateRange,
 		getDateRangeFromPreset,
 		getDefaultInterval,
+		getIntervalFromDateRange,
+		drillDown,
+		onPageRowClick,
 	};
 }

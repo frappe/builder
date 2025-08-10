@@ -21,7 +21,7 @@
 		<div v-if="loading" class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">
 			Loading...
 		</div>
-		<AxisChart v-else-if="data.data && data.data.length" :config="chartConfig" />
+		<AxisChart v-else-if="data.data && data.data.length" :config="chartConfigData" :events="chartEvents" />
 	</div>
 </template>
 
@@ -29,10 +29,20 @@
 import type { AnalyticsResponse } from "@/composables/useAnalytics";
 import { shortenNumber } from "@/utils/helpers";
 import { AxisChart } from "frappe-ui";
+import { computed } from "vue";
 
-defineProps<{
+const props = defineProps<{
 	data: AnalyticsResponse;
 	chartConfig: any;
 	loading: boolean;
 }>();
+
+const chartConfigData = computed(() => {
+	const { events, ...config } = props.chartConfig;
+	return config;
+});
+
+const chartEvents = computed(() => {
+	return props.chartConfig.events;
+});
 </script>

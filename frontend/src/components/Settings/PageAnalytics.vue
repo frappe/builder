@@ -1,13 +1,14 @@
 <template>
 	<div class="no-scrollbar h-full overflow-y-auto overflow-x-hidden pr-1">
-		<AnalyticsOverview :data="analyticsData" :chartConfig="chartConfig" :loading="analytics.loading">
+		<AnalyticsOverview
+			:data="analyticsData"
+			:chartConfig="chartConfigWithEvents"
+			:loading="analytics.loading">
 			<template #filters>
 				<AnalyticsFilters
-					:interval="interval"
 					:range="range"
 					:route="route"
 					:customDateRange="customDateRange"
-					@update:interval="(val) => (interval = val)"
 					@update:range="(val) => (range = val)"
 					@update:route="(val) => (route = val?.value)"
 					@update:customDateRange="(val) => (customDateRange = val)" />
@@ -56,25 +57,23 @@ import AnalyticsFilters from "@/components/Settings/AnalyticsFilters.vue";
 import AnalyticsOverview from "@/components/Settings/AnalyticsOverview.vue";
 import { useAnalytics } from "@/composables/useAnalytics";
 import usePageStore from "@/stores/pageStore";
-import { shortenNumber } from "@/utils/helpers";
 import { ListView } from "frappe-ui";
-import { computed, h } from "vue";
+import { h } from "vue";
 
 const pageStore = usePageStore();
-const { range, interval, route, customDateRange, analyticsData, chartConfig, analytics } = useAnalytics({
+const {
+	range,
+	interval,
+	route,
+	customDateRange,
+	analyticsData,
+	chartConfigWithEvents,
+	processedAnalyticsData,
+	analytics,
+} = useAnalytics({
 	apiUrl: "builder.api.get_page_analytics",
 	initialRange: "last_30_days",
-	initialInterval: "weekly",
 	initialRouteFilterType: "exact",
 	initialRoute: pageStore.getResolvedPageURL(false),
-});
-
-const processedAnalyticsData = computed(() => {
-	return {
-		top_referrers: analyticsData.value.top_referrers?.map((referrer: any) => ({
-			...referrer,
-			count: shortenNumber(referrer.count),
-		})),
-	};
 });
 </script>
