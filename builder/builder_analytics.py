@@ -168,7 +168,7 @@ def _get_referrer_domain_query(where_clause, limit=10, table_name=DUCKDB_TABLE):
 				CASE
 					WHEN referrer IS NULL OR referrer = '' THEN 'direct'
 					WHEN REGEXP_MATCHES(referrer, '^https?://([^/]+)') THEN
-						REGEXP_EXTRACT(referrer, '^https?://([^/]+)', 1)
+						REGEXP_REPLACE(REGEXP_EXTRACT(referrer, '^https?://([^/]+)', 1), '^www\\.', '')
 					ELSE 'direct'
 				END as domain,
 				is_unique
