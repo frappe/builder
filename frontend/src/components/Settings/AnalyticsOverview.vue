@@ -17,7 +17,7 @@
 			</div>
 		</div>
 	</div>
-	<div class="mx-[-16px]">
+	<div class="mx-[-16px] [&>div]:h-[250px] [&>div]:!min-h-[200px]">
 		<div v-if="loading" class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">
 			Loading...
 		</div>

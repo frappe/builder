@@ -59,6 +59,23 @@ export function useAnalytics({
 		top_referrers: [],
 	});
 
+	const themeColors = {
+		textColor: "var(--ink-gray-5)",
+		axisLineColor: "var(--ink-gray-4)",
+		gridLineColor: "var(--outline-gray-1)",
+		backgroundColor: "transparent",
+		tooltipBg: "var(--surface-white)",
+		tooltipBorder: "var(--outline-gray-1)",
+		tooltipText: "var(--ink-gray-7)",
+	};
+
+	const getAxisStyle = () => ({
+		axisLine: { lineStyle: { color: themeColors.axisLineColor } },
+		axisTick: { lineStyle: { color: themeColors.axisLineColor } },
+		axisLabel: { color: themeColors.textColor },
+		splitLine: { lineStyle: { color: themeColors.gridLineColor } },
+	});
+
 	const chartConfig = computed(() => ({
 		data: analyticsData.value.data,
 		title: "",
@@ -73,9 +90,30 @@ export function useAnalytics({
 			title: "Total Views",
 		},
 		series: [
-			{ name: "total_page_views", type: "area", axis: "y2" },
-			{ name: "unique_page_views", type: "area", axis: "y2" },
+			{
+				name: "total_page_views",
+				type: "area",
+				axis: "y2",
+			},
+			{
+				name: "unique_page_views",
+				type: "area",
+				axis: "y2",
+			},
 		],
+		echartOptions: {
+			backgroundColor: themeColors.backgroundColor,
+			textStyle: { color: themeColors.textColor },
+			grid: { borderColor: themeColors.gridLineColor },
+			xAxis: getAxisStyle(),
+			yAxis: [getAxisStyle(), getAxisStyle()],
+			tooltip: {
+				backgroundColor: themeColors.tooltipBg,
+				borderColor: themeColors.tooltipBorder,
+				textStyle: { color: themeColors.tooltipText },
+			},
+			legend: { textStyle: { color: themeColors.textColor } },
+		},
 	}));
 
 	const chartConfigWithEvents = computed(() => ({
