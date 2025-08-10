@@ -32,7 +32,7 @@ export interface RouteFilter {
 export function useAnalytics({
 	apiUrl,
 	initialRange = "last_30_days",
-	initialInterval = "weekly",
+	initialInterval = "daily",
 	initialRoute = "",
 	initialRouteFilterType = "wildcard",
 	extraParams = {},

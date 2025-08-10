@@ -95,6 +95,6 @@ const {
 	onPageRowClick,
 } = useAnalytics({
 	apiUrl: "builder.api.get_overall_analytics",
-	initialRange: "last_7_days",
+	initialRange: "last_30_days",
 });
 </script>
