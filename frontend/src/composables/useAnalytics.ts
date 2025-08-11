@@ -144,6 +144,13 @@ export function useAnalytics({
 		window.open(`/${row.route}`, "_blank");
 	};
 
+	const formatDateToString = (date: Date): string => {
+		const year = date.getFullYear();
+		const month = String(date.getMonth() + 1).padStart(2, "0");
+		const day = String(date.getDate()).padStart(2, "0");
+		return `${year}-${month}-${day}`;
+	};
+
 	const getDateRangeFromPreset = (preset: string): CustomDateRange => {
 		const toDate = new Date();
 		const fromDate = new Date();
@@ -182,8 +189,8 @@ export function useAnalytics({
 		}
 
 		return {
-			from_date: fromDate.toISOString().split("T")[0],
-			to_date: toDate.toISOString().split("T")[0],
+			from_date: formatDateToString(fromDate),
+			to_date: formatDateToString(toDate),
 		};
 	};
 
@@ -263,16 +270,16 @@ export function useAnalytics({
 		let newInterval: string;
 
 		if (currentInterval === "monthly") {
-			newFromDate = new Date(clickedDate.getFullYear(), clickedDate.getMonth(), 1)
-				.toISOString()
-				.split("T")[0];
-			newToDate = new Date(clickedDate.getFullYear(), clickedDate.getMonth() + 1, 0)
-				.toISOString()
-				.split("T")[0];
+			const firstDayOfMonth = new Date(clickedDate.getFullYear(), clickedDate.getMonth(), 1);
+			const lastDayOfMonth = new Date(clickedDate.getFullYear(), clickedDate.getMonth() + 1, 0);
+
+			newFromDate = formatDateToString(firstDayOfMonth);
+			newToDate = formatDateToString(lastDayOfMonth);
 			newInterval = "daily";
 		} else if (currentInterval === "daily") {
-			newFromDate = clickedDate.toISOString().split("T")[0];
-			newToDate = clickedDate.toISOString().split("T")[0];
+			const exactDate = new Date(clickedDate.getFullYear(), clickedDate.getMonth(), clickedDate.getDate());
+			newFromDate = formatDateToString(exactDate);
+			newToDate = formatDateToString(exactDate);
 			newInterval = "hourly";
 		} else {
 			return;
