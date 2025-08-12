@@ -180,7 +180,7 @@ const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list">;
 const showFolderSelectorDialog = ref(false);
 
 const searchFilter = ref("");
-const typeFilter = ref("");
+const typeFilter = useStorage("typeFilter", "") as Ref<"" | "draft" | "published" | "unpublished">;
 const orderBy = useStorage("orderBy", "creation") as Ref<
 	"creation" | "modified" | "alphabetically_a_z" | "alphabetically_z_a"
 >;
