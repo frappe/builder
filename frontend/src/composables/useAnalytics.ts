@@ -1,5 +1,5 @@
 import { shortenNumber } from "@/utils/helpers";
-import { createResource } from "frappe-ui";
+import { createResource, debounce } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
 export interface AnalyticsResponse {
@@ -235,22 +235,6 @@ export function useAnalytics({
 		range.value = "custom";
 	};
 
-	const clearCustomDateRange = () => {
-		customDateRange.value = "";
-		if (range.value === "custom") {
-			range.value = "last_30_days";
-		}
-	};
-
-	const setCustomRangeWithDefault = () => {
-		if (!customDateRange.value) {
-			const defaultRange = getDefaultDateRange();
-			setCustomDateRange(defaultRange.from_date, defaultRange.to_date);
-		} else {
-			range.value = "custom";
-		}
-	};
-
 	const drillDown = (dataPoint: { interval: string; [key: string]: any }) => {
 		const currentInterval =
 			interval.value ||
@@ -295,11 +279,6 @@ export function useAnalytics({
 		}
 		const [from_date, to_date] = dateRangeString.split(",");
 		return { from_date: from_date.trim(), to_date: to_date.trim() };
-	};
-
-	const setRouteFilter = (routeValue: string, filterType: RouteFilterType = "wildcard") => {
-		route.value = routeValue;
-		routeFilterType.value = filterType;
 	};
 
 	const getFormattedRoute = () => {
@@ -363,13 +342,17 @@ export function useAnalytics({
 		},
 	});
 
+	const debouncedSubmit = debounce(() => {
+		analytics.submit(getParams());
+	}, 100);
+
 	watch(
 		[range, interval, route, routeFilterType, customDateRange],
 		(newValues, oldValues) => {
 			if (newValues[0] !== oldValues?.[0] && newValues[0] !== "custom") {
 				interval.value = "";
 			}
-			analytics.submit(getParams());
+			debouncedSubmit();
 		},
 		{ deep: true },
 	);
