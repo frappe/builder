@@ -667,7 +667,7 @@ def extend_block(block, overridden_block):
 	if not block.get("dataKey"):
 		block["dataKey"] = {}
 	if dataKey:
-		block["dataKey"].update({k: v for k, v in dataKey.items() if v is not None})
+		block["dataKey"].update({k: v for k, v in dataKey.items() if v is not None and v != ""})
 	if overridden_block.get("innerHTML"):
 		block["innerHTML"] = overridden_block["innerHTML"]
 	component_children = block.get("children", []) or []
