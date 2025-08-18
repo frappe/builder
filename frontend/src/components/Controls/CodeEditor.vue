@@ -1,9 +1,17 @@
 <template>
-	<div class="code-editor flex flex-col gap-1">
+	<div class="code-editor relative flex flex-col gap-1">
 		<span class="text-p-sm font-medium text-ink-gray-8" v-show="label">
 			{{ label }}
 			<span v-if="isDirty" class="text-[10px] text-gray-600">●</span>
 		</span>
+		<div v-if="actionButton" class="absolute bottom-1.5 right-1.5 z-10 flex gap-1">
+			<BuilderButton
+				@click="actionButton?.handler"
+				variant="subtle"
+				class="!h-6 !w-6 border !border-outline-gray-2 bg-surface-white [&>svg]:!h-3.5 [&>svg]:!w-3.5"
+				:icon="actionButton.icon"
+				:title="actionButton.label"></BuilderButton>
+		</div>
 		<div
 			ref="editor"
 			:style="{
@@ -43,6 +51,11 @@ const props = withDefaults(
 		autofocus?: boolean;
 		showSaveButton?: boolean;
 		description?: string;
+		actionButton?: {
+			label: string;
+			icon: string;
+			handler: () => void;
+		};
 	}>(),
 	{
 		type: "JSON",
