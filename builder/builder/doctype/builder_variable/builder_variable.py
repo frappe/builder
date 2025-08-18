@@ -16,6 +16,7 @@ class BuilderVariable(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		dark_value: DF.Data | None
 		is_standard: DF.Check
 		type: DF.Literal["Color", "Spacing"]
 		value: DF.Data

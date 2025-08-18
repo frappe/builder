@@ -119,5 +119,6 @@ declare module 'vue' {
     TemplatePagePreview: typeof import('./src/components/TemplatePagePreview.vue')['default']
     TemplateSelector: typeof import('./src/components/TemplateSelector.vue')['default']
     TextBlock: typeof import('./src/components/TextBlock.vue')['default']
+    ThemeColorPicker: typeof import('./src/components/Controls/ThemeColorPicker.vue')['default']
   }
 }

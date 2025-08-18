@@ -13,7 +13,38 @@
 				:key="variable.name"
 				class="group flex cursor-pointer items-center justify-between rounded py-1">
 				<div class="flex items-center gap-2">
+					<ThemeColorPicker
+						v-if="variable.type === 'Color' && !variable.is_standard"
+						:lightValue="variable.value"
+						:darkValue="variable.dark_value || variable.value"
+						placement="bottom-start"
+						@update:lightValue="(value) => handleThemeColorUpdate(variable, value, 'light')"
+						@update:darkValue="(value) => handleThemeColorUpdate(variable, value, 'dark')"
+						@click.stop>
+						<template #target="{ togglePopover }">
+							<div
+								class="relative size-4 cursor-pointer overflow-hidden rounded-full border border-outline-gray-2"
+								@click.stop="togglePopover"
+								title="Edit light and dark colors">
+								<!-- Light color (left half) -->
+								<div
+									class="absolute left-0 top-0 h-full w-1/2"
+									:style="{
+										backgroundColor: resolveVariableValue(variable.value || '#ffffff'),
+									}"></div>
+								<!-- Dark color (right half) -->
+								<div
+									class="absolute right-0 top-0 h-full w-1/2"
+									:style="{
+										backgroundColor: resolveVariableValue(variable.dark_value || variable.value || '#000000'),
+									}"></div>
+							</div>
+						</template>
+					</ThemeColorPicker>
+
+					<!-- Regular Color Picker for other cases -->
 					<ColorPicker
+						v-else
 						v-model="variable.value"
 						placement="bottom-end"
 						:showInput="true"
@@ -36,7 +67,7 @@
 							{{ variable.variable_name }}
 						</span>
 						<span class="text-xs text-ink-gray-6">
-							{{ variable.value }}
+							{{ variable.dark_value ? `${variable.value} / ${variable.dark_value}` : variable.value }}
 						</span>
 					</div>
 				</div>
@@ -65,6 +96,7 @@
 
 <script setup lang="ts">
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
+import ThemeColorPicker from "@/components/Controls/ThemeColorPicker.vue";
 import NewBuilderVariable from "@/components/Modals/NewBuilderVariable.vue";
 import { BuilderVariable } from "@/types/Builder/BuilderVariable";
 import { confirm } from "@/utils/helpers";
@@ -103,4 +135,20 @@ const debounceUpdate = useDebounceFn(async (value: `#${string}`, variable: Build
 		console.error("Failed to update variable:", error);
 	}
 }, 300);
+
+const handleThemeColorUpdate = useDebounceFn(
+	async (variable: BuilderVariable, value: string | null, theme = "light") => {
+		try {
+			if (theme === "light") {
+				variable.value = value || variable.value;
+			} else {
+				variable.dark_value = value || undefined;
+			}
+			await updateVariable(variable);
+		} catch (error) {
+			console.error("Failed to update variable colors:", error);
+		}
+	},
+	300,
+);
 </script>

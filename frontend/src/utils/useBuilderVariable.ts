@@ -7,6 +7,7 @@ export const defaultBuilderVariable = {
 	variable_name: "",
 	value: "#000000",
 	type: "Color" as const,
+	dark_value: undefined as string | undefined,
 };
 
 let instance: ReturnType<typeof builderVariableComposable> | null = null;
@@ -26,7 +27,21 @@ function builderVariableComposable() {
 		);
 	});
 
-	const resolveVariableValue = (value: string): string => {
+	const darkCssVariables = computed(() => {
+		return builderVariableStore.data.reduce(
+			(obj: Record<string, string>, builderVariable: BuilderVariable) => {
+				if (!builderVariable.variable_name) return obj;
+				const cssVariableName = toKebabCase(builderVariable.variable_name);
+				if (builderVariable.dark_value) {
+					obj[`--${cssVariableName}`] = builderVariable.dark_value;
+				}
+				return obj;
+			},
+			{},
+		);
+	});
+
+	const resolveVariableValue = (value: string, isDarkMode = false): string => {
 		if (value.startsWith("#")) {
 			return value;
 		}
@@ -39,7 +54,8 @@ function builderVariableComposable() {
 			variableName = `--${toKebabCase(variableName)}`;
 		}
 
-		return cssVariables.value[variableName] ?? value;
+		const variables = isDarkMode ? darkCssVariables.value : cssVariables.value;
+		return variables[variableName] ?? cssVariables.value[variableName] ?? value;
 	};
 
 	const createVariable = async (builderVariable: Partial<BuilderVariable>) => {
@@ -68,6 +84,7 @@ function builderVariableComposable() {
 
 	return {
 		cssVariables,
+		darkCssVariables,
 		resolveVariableValue,
 		createVariable,
 		updateVariable,

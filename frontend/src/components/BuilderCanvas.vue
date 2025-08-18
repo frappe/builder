@@ -60,7 +60,7 @@
 				<BuilderBlock
 					class="h-full min-h-[inherit]"
 					:block="block"
-					:style="cssVariables"
+					:style="variables"
 					:key="block.blockId"
 					v-if="showBlocks"
 					:breakpoint="breakpoint.device"
@@ -103,6 +103,7 @@ import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useCanvasDropZone } from "@/utils/useCanvasDropZone";
 import { useCanvasEvents } from "@/utils/useCanvasEvents";
 import { useCanvasUtils } from "@/utils/useCanvasUtils";
+import { useDark } from "@vueuse/core";
 import { FeatherIcon } from "frappe-ui";
 import { Ref, computed, onMounted, provide, reactive, ref, watch } from "vue";
 import setPanAndZoom from "../utils/panAndZoom";
@@ -113,7 +114,17 @@ import FitScreenIcon from "./Icons/FitScreen.vue";
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 
-const { cssVariables } = useBuilderVariable();
+const { cssVariables, darkCssVariables } = useBuilderVariable();
+const isDark = useDark({
+	attribute: "data-theme",
+});
+
+const variables = computed(() => {
+	return {
+		...cssVariables.value,
+		...(isDark.value ? darkCssVariables.value : {}),
+	};
+});
 
 const resizingBlock = ref(false);
 const canvasContainer = ref(null) as Ref<HTMLElement | null>;

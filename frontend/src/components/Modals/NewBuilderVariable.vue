@@ -24,9 +24,18 @@
 					:autofocus="true"
 					placeholder="e.g., primary, accent, background"
 					:hideClearButton="true" />
-				<div class="flex flex-col gap-1.5">
-					<InputLabel>Color Value</InputLabel>
-					<ColorInput v-model="activeBuilderVariable.value" class="relative" />
+				<div v-if="activeBuilderVariable.type === 'Color'" class="flex flex-col gap-3">
+					<div class="flex flex-col gap-1.5">
+						<InputLabel>Color</InputLabel>
+						<ColorInput v-model="activeBuilderVariable.value" class="relative" />
+					</div>
+					<div class="flex flex-col gap-1.5">
+						<InputLabel>Dark Mode Color</InputLabel>
+						<ColorInput
+							:modelValue="activeBuilderVariable.dark_value || activeBuilderVariable.value"
+							@update:modelValue="activeBuilderVariable.dark_value = $event"
+							class="relative" />
+					</div>
 				</div>
 			</div>
 		</template>
@@ -44,7 +53,7 @@ import { toast } from "vue-sonner";
 
 const props = defineProps<{
 	modelValue: boolean;
-	variable?: BuilderVariable | null;
+	variable?: Partial<BuilderVariable> | null;
 }>();
 
 const emit = defineEmits(["update:modelValue", "success"]);

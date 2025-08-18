@@ -73,6 +73,14 @@
 		</div>
 		<!-- actions -->
 		<div class="absolute right-3 flex items-center gap-5">
+			<!-- show dark mode toggle -->
+			<Tooltip text="Toggle Dark Mode" :hoverDelay="0.6">
+				<FeatherIcon
+					:name="isDark ? 'sun' : 'moon'"
+					class="h-4 w-4 cursor-pointer text-ink-gray-8 outline-none"
+					@click="() => transitionTheme(toggleDark)"></FeatherIcon>
+			</Tooltip>
+
 			<Dialog
 				style="z-index: 40"
 				:options="{
@@ -148,12 +156,19 @@ import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { getTextContent } from "@/utils/helpers";
+import { useDark, useToggle } from "@vueuse/core";
 import { Popover, Tooltip } from "frappe-ui";
 import { computed, ref } from "vue";
 import { toast } from "vue-sonner";
 import BuilderSettings from "./BuilderSettings.vue";
 import MainMenu from "./MainMenu.vue";
 import PageOptions from "./PageOptions.vue";
+
+const isDark = useDark({
+	attribute: "data-theme",
+});
+
+const toggleDark = useToggle(isDark);
 
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();

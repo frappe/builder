@@ -7,7 +7,8 @@
   "is_standard",
   "variable_name",
   "type",
-  "value"
+  "value",
+  "dark_value"
  ],
  "fields": [
   {
@@ -36,13 +37,19 @@
    "fieldname": "is_standard",
    "fieldtype": "Check",
    "label": "Is Standard"
+  },
+  {
+   "depends_on": "eval:doc.type == \"Color\"",
+   "fieldname": "dark_value",
+   "fieldtype": "Data",
+   "label": "Dark Value"
   }
  ],
  "grid_page_length": 50,
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-14 14:34:25.798033",
+ "modified": "2025-08-18 19:54:11.776268",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Variable",
