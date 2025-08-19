@@ -28,7 +28,7 @@
 								:modelValue="modelValue"
 								:getOptions="getOptions"
 								:actionButton="
-									modelValue && !isCssVariable
+									modelValue && !isCssVariable && props.showColorVariableOptions
 										? {
 												label: 'Save as Variable',
 												icon: 'plus',
@@ -77,10 +77,15 @@ import NewBuilderVariable from "@/components/Modals/NewBuilderVariable.vue";
 import { BuilderVariable } from "@/types/Builder/BuilderVariable";
 import { getRGB, toKebabCase } from "@/utils/helpers";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
+import { useDark } from "@vueuse/core";
 import { Tooltip } from "frappe-ui";
-import { computed, ref, useAttrs, watch } from "vue";
+import { computed, defineComponent, h, ref, useAttrs, watch } from "vue";
 import ColorPicker from "./ColorPicker.vue";
 import InputLabel from "./InputLabel.vue";
+
+const isDark = useDark({
+	attribute: "data-theme",
+});
 
 const attrs = useAttrs();
 const events = Object.fromEntries(
@@ -98,11 +103,13 @@ const props = withDefaults(
 		label?: string;
 		placeholder?: string;
 		placement?: string;
+		showColorVariableOptions?: boolean;
 	}>(),
 	{
 		modelValue: null,
 		placeholder: "Set Color",
 		placement: "left",
+		showColorVariableOptions: true,
 	},
 );
 
@@ -116,7 +123,7 @@ const isCssVariable = computed(() => {
 const resolvedColor = computed(() => {
 	if (!props.modelValue) return "";
 	if (isCssVariable.value) {
-		return resolveVariableValue(props.modelValue);
+		return resolveVariableValue(props.modelValue, isDark.value);
 	}
 	return props.modelValue;
 });
@@ -144,6 +151,10 @@ const handleVariableSaved = (savedVariable: BuilderVariable) => {
 };
 
 const getOptions = async (query: string) => {
+	if (!props.showColorVariableOptions) {
+		return [];
+	}
+
 	let processedQuery = query.replace(/^(--|var|\s+)/, "");
 	processedQuery = processedQuery.replace(/^--|\(|\s+/g, "");
 	processedQuery = toKebabCase(processedQuery);
@@ -152,9 +163,21 @@ const getOptions = async (query: string) => {
 			return builderVariable.variable_name?.includes(processedQuery);
 		})
 		.map((builderVariable: BuilderVariable) => {
+			const varName = `var(--${toKebabCase(builderVariable?.variable_name || "")})`;
+			const resolvedLightColor = resolveVariableValue(varName);
+			const resolvedDarkColor = resolveVariableValue(varName, true);
 			return {
 				label: `${builderVariable?.variable_name || ""}`,
-				value: `var(--${toKebabCase(builderVariable?.variable_name || "")})`,
+				value: varName,
+				prefix: defineComponent({
+					setup() {
+						return () =>
+							h("div", {
+								class: "h-4 w-4 rounded shadow-sm border border-outline-gray-2 flex-shrink-0",
+								style: { background: isDark.value ? resolvedDarkColor : resolvedLightColor },
+							});
+					},
+				}),
 			};
 		})
 		.slice(0, 8);

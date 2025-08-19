@@ -26,13 +26,17 @@
 					:hideClearButton="true" />
 				<div v-if="activeBuilderVariable.type === 'Color'" class="flex flex-col gap-3">
 					<div class="flex flex-col gap-1.5">
-						<InputLabel>Color</InputLabel>
-						<ColorInput v-model="activeBuilderVariable.value" class="relative" />
+						<InputLabel>Light Mode Color</InputLabel>
+						<ColorInput
+							v-model="activeBuilderVariable.value"
+							class="relative"
+							:show-color-variable-options="false" />
 					</div>
 					<div class="flex flex-col gap-1.5">
 						<InputLabel>Dark Mode Color</InputLabel>
 						<ColorInput
 							:modelValue="activeBuilderVariable.dark_value || activeBuilderVariable.value"
+							:show-color-variable-options="false"
 							@update:modelValue="activeBuilderVariable.dark_value = $event"
 							class="relative" />
 					</div>
