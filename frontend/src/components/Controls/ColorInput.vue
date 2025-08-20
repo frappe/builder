@@ -179,8 +179,7 @@ const getOptions = async (query: string) => {
 					},
 				}),
 			};
-		})
-		.slice(0, 8);
+		});
 	return options;
 };
 

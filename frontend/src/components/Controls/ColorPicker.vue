@@ -352,7 +352,6 @@ watch(sRGBHex, () => {
 watch(
 	() => props.modelValue,
 	(color) => {
-		console.log("Updating color selector position", color, currentColor);
 		if (color === currentColor) return;
 		setSelectorPosition(getRGB(color));
 	},

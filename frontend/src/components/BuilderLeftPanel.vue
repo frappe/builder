@@ -69,18 +69,17 @@
 					v-if="pageStore.selectedPage && pageStore.activePage"
 					:page="pageStore.activePage" />
 			</div>
-			<div v-show="builderStore.leftPanelActiveTab === 'variables'" class="p-4">
-				<BuilderVariables />
-			</div>
 		</div>
+
+		<VariableManager v-model="showVariableManager" />
 	</div>
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
-import BuilderVariables from "@/components/BuilderVariables.vue";
 import ComponentIcon from "@/components/Icons/Component.vue";
 import LayersIcon from "@/components/Icons/Layers.vue";
 import PlusIcon from "@/components/Icons/Plus.vue";
+import VariableManager from "@/components/Modals/VariableManager.vue";
 import PageScript from "@/components/PageScript.vue";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
@@ -93,6 +92,8 @@ import BuilderAssets from "./BuilderAssets.vue";
 import BuilderBlockTemplates from "./BuilderBlockTemplates.vue";
 import BuilderCanvas from "./BuilderCanvas.vue";
 import PanelResizer from "./PanelResizer.vue";
+
+const showVariableManager = ref(false);
 
 const canvasStore = useCanvasStore();
 const builderStore = useBuilderStore();
@@ -158,7 +159,11 @@ const getPage = () => {
 };
 
 const setActiveTab = (tab: LeftSidebarTabOption) => {
-	builderStore.leftPanelActiveTab = tab;
+	if (tab === "variables") {
+		showVariableManager.value = true;
+	} else {
+		builderStore.leftPanelActiveTab = tab;
+	}
 };
 
 // moved out of BlockLayers for performance
