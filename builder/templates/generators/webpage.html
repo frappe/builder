@@ -29,6 +29,15 @@
 			{{ key }}: {{ value }};
 			{% endfor %}
 		}
+		{%- if dark_mode_css_variables -%}
+		@media (prefers-color-scheme: dark) {
+			:root {
+				{% for key, value in dark_mode_css_variables.items() %}
+				{{ key }}: {{ value }};
+				{% endfor %}
+			}
+		}
+		{%- endif -%}
 	</style>
 	{%- endif -%}
 	{%- if custom_fonts -%}

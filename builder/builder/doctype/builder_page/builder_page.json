@@ -144,10 +144,10 @@
    "label": "Description"
   },
   {
+   "description": "The preferred URL version of this page for search engines. If not set, the current page URL will be used.",
    "fieldname": "canonical_url",
    "fieldtype": "Data",
    "label": "Canonical URL",
-   "description": "The preferred URL version of this page for search engines. If not set, the current page URL will be used.",
    "options": "URL"
   },
   {
@@ -229,7 +229,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-06-13 10:00:00.000000",
+ "modified": "2025-08-20 12:22:40.697232",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",
@@ -261,6 +261,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
