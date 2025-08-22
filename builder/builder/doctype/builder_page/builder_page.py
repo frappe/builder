@@ -84,6 +84,41 @@ class BuilderPageRenderer(DocumentPage):
 
 
 class BuilderPage(WebsiteGenerator):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		from builder.builder.doctype.builder_page_client_script.builder_page_client_script import (
+			BuilderPageClientScript,
+		)
+
+		authenticated_access: DF.Check
+		blocks: DF.JSON | None
+		body_html: DF.Code | None
+		canonical_url: DF.Data | None
+		client_scripts: DF.TableMultiSelect[BuilderPageClientScript]
+		disable_indexing: DF.Check
+		draft_blocks: DF.JSON | None
+		dynamic_route: DF.Check
+		favicon: DF.AttachImage | None
+		head_html: DF.Code | None
+		is_template: DF.Check
+		meta_description: DF.SmallText | None
+		meta_image: DF.AttachImage | None
+		page_data_script: DF.Code | None
+		page_name: DF.Data | None
+		page_title: DF.Data | None
+		preview: DF.Data | None
+		project_folder: DF.Link | None
+		published: DF.Check
+		route: DF.Data | None
+		template_name: DF.Data | None
+	# end: auto-generated types
+
 	def onload(self):
 		self.set_onload("builder_path", builder_path)
 

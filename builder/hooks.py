@@ -15,6 +15,8 @@ app_license = "GNU Affero General Public License v3.0"
 # app_include_css = "/assets/builder/css/builder.css"
 app_include_js = "/assets/builder/js/builder.js"
 
+export_python_type_annotations = True
+
 # include js, css files in header of web template
 # web_include_css = "/assets/builder/css/builder.css"
 # web_include_js = "/assets/builder/js/builder.js"
