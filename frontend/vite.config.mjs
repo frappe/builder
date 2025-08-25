@@ -12,7 +12,7 @@ export default defineConfig({
 		frappeui({
 			frappeProxy: {
 				port: 8080,
-				source: "^/(?!builder$).*",
+				source: "^/(app|login|api|assets|files|pages|builder_assets)",
 			},
 			lucideIcons: true,
 		}),
