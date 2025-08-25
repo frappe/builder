@@ -12,6 +12,19 @@ from jsmin import jsmin
 
 
 class BuilderClientScript(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		public_url: DF.ReadOnly | None
+		script: DF.Code
+		script_type: DF.Autocomplete
+	# end: auto-generated types
+
 	def before_insert(self):
 		if not self.name:
 			self.name = f"{self.script_type}-{frappe.generate_hash(length=5)}"
@@ -29,7 +42,8 @@ class BuilderClientScript(Document):
 		file_name = self.get_file_name_from_url()
 		file_extension = "js" if script_type == "JavaScript" else "css"
 		if not file_name:
-			file_name = f"{self.name.strip()}-{frappe.generate_hash(length=10)}.{file_extension}"
+			name = self.name.strip() if self.name else "unnamed"
+			file_name = f"{name}-{frappe.generate_hash(length=10)}.{file_extension}"
 		folder_name = "page_scripts" if script_type == "JavaScript" else "page_styles"
 		file_path = get_files_path(f"{folder_name}/{file_name}")
 		os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -62,7 +76,7 @@ class BuilderClientScript(Document):
 		if not frappe.conf.developer_mode:
 			return
 		script_path = os.path.join(
-			frappe.get_app_path("builder"), "builder", "builder_client_script", self.name
+			frappe.get_app_path("builder"), "builder", "builder_client_script", self.name or ""
 		)
 		if os.path.exists(script_path):
 			export_to_files(

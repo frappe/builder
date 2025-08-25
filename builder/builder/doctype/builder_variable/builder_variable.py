@@ -8,6 +8,20 @@ from frappe.modules.export_file import delete_folder, export_to_files
 
 
 class BuilderVariable(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		is_standard: DF.Check
+		type: DF.Literal["Color", "Spacing"]
+		value: DF.Data
+		variable_name: DF.Data
+	# end: auto-generated types
+
 	def autoname(self):
 		self.name = append_number_if_name_exists("Builder Variable", frappe.scrub(self.variable_name))
 
