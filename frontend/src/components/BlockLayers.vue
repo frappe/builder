@@ -21,6 +21,9 @@
 						:class="{
 							'!opacity-50': !element.isVisible(),
 						}">
+						<div>
+							<div class="scroll-into-view-anchor absolute ml-20"></div>
+						</div>
 						<FeatherIcon
 							:name="isExpanded(element) ? 'chevron-down' : 'chevron-right'"
 							class="h-3 w-3 text-ink-gray-4"
