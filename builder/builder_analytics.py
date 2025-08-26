@@ -1,8 +1,10 @@
 import os
+import time
+from typing import cast
 
 import duckdb
 import frappe
-import frappe.utils
+import pandas as pd
 
 DUCKDB_TABLE = "web_page_views"
 
@@ -19,17 +21,6 @@ class DuckDBConnection:
 	def __exit__(self, exc_type, exc_val, exc_tb):
 		if self.db:
 			self.db.close()
-
-
-def _create_duckdb_table(db, table_name=DUCKDB_TABLE):
-	db.execute(f"""
-		CREATE TABLE IF NOT EXISTS {table_name} (
-			creation TIMESTAMP,
-			is_unique INTEGER,
-			path TEXT,
-			referrer TEXT
-		)
-	""")
 
 
 def _get_date_filter(from_date: str | None = None, to_date: str | None = None):
@@ -60,18 +51,30 @@ def _get_route_filter(route: str | None = None, route_filter_type: str = "wildca
 		return f"path LIKE '%{route}%'"
 
 
-def reset_duckdb_table(table_name=DUCKDB_TABLE):
+def setup_duckdb_table(table_name=DUCKDB_TABLE):
 	with DuckDBConnection() as db:
-		db.execute(f"DROP TABLE IF EXISTS {table_name}")
-		_create_duckdb_table(db, table_name)
-
-	# Re-ingest all data
-	ingest_web_page_views_to_duckdb(table_name)
+		sql_connection = frappe.db.get_connection()
+		df = pd.read_sql(
+			"SELECT creation, is_unique, path, referrer, time_zone, user_agent FROM `tabWeb Page View`",
+			sql_connection,  # type: ignore
+		)
+		db.register("df", df)
+		db.execute(
+			f"CREATE OR REPLACE TABLE {table_name} AS SELECT creation, CAST(is_unique AS INTEGER) as \
+			is_unique, path, referrer, time_zone, user_agent FROM df"
+		)
+		print(f"Successfully ingested {len(df)} records into DuckDB")
 
 
 def ingest_web_page_views_to_duckdb(table_name=DUCKDB_TABLE):
 	with DuckDBConnection() as db:
-		_create_duckdb_table(db, table_name)
+		table_exists = db.execute(
+			f"SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '{table_name}'"
+		).fetchone()
+		if table_exists and table_exists[0] == 0:
+			setup_duckdb_table(table_name)
+			return
+
 		result = db.execute(f"SELECT MAX(creation) FROM {table_name}").fetchone()
 		last_record = result[0] if result and result[0] else None
 
@@ -80,7 +83,7 @@ def ingest_web_page_views_to_duckdb(table_name=DUCKDB_TABLE):
 		total_count = frappe.db.count("Web Page View", filters=filters)
 		print(f"Starting ingestion of {total_count} records...")
 
-		page_size = 10000
+		page_size = 20000
 		start = 0
 		processed = 0
 
@@ -94,7 +97,7 @@ def ingest_web_page_views_to_duckdb(table_name=DUCKDB_TABLE):
 			records = frappe.get_all(
 				"Web Page View",
 				filters=filters,
-				fields=["creation", "is_unique", "path", "referrer"],
+				fields=["creation", "is_unique", "path", "referrer", "time_zone", "user_agent"],
 				as_list=True,
 				limit=page_size,
 				order_by="creation asc",
@@ -104,7 +107,7 @@ def ingest_web_page_views_to_duckdb(table_name=DUCKDB_TABLE):
 				break
 
 			db.executemany(
-				f"INSERT INTO {table_name} (creation, is_unique, path, referrer) VALUES (?, ?, ?, ?)",
+				f"INSERT INTO {table_name} (creation, is_unique, path, referrer, time_zone, user_agent) VALUES (?, CAST(? AS INTEGER), ?, ?, ?, ?)",
 				records,
 			)
 
