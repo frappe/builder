@@ -54,9 +54,15 @@ def _get_route_filter(route: str | None = None, route_filter_type: str = "wildca
 def setup_duckdb_table(table_name=DUCKDB_TABLE):
 	with DuckDBConnection() as db:
 		sql_connection = frappe.db.get_connection()
-		df = pd.read_sql("SELECT * FROM `tabWeb Page View`", sql_connection)  # type: ignore
+		df = pd.read_sql(
+			"SELECT creation, is_unique, path, referrer, time_zone, user_agent FROM `tabWeb Page View`",
+			sql_connection,  # type: ignore
+		)
 		db.register("df", df)
-		db.execute(f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM df")
+		db.execute(
+			f"CREATE OR REPLACE TABLE {table_name} AS SELECT creation, CAST(is_unique AS INTEGER) as \
+			is_unique, path, referrer, time_zone, user_agent FROM df"
+		)
 		print(f"Successfully ingested {len(df)} records into DuckDB")
 
 
@@ -101,7 +107,7 @@ def ingest_web_page_views_to_duckdb(table_name=DUCKDB_TABLE):
 				break
 
 			db.executemany(
-				f"INSERT INTO {table_name} (creation, is_unique, path, referrer, time_zone, user_agent) VALUES (?, ?, ?, ?, ?, ?)",
+				f"INSERT INTO {table_name} (creation, is_unique, path, referrer, time_zone, user_agent) VALUES (?, CAST(? AS INTEGER), ?, ?, ?, ?)",
 				records,
 			)
 
@@ -139,7 +145,7 @@ def _get_interval_formats(interval):
 
 def _get_aggregated_views_query(where_clause, table_name=DUCKDB_TABLE):
 	"""Get query for total and unique view counts"""
-	return f"SELECT COUNT(*) as total_views, SUM(CAST(is_unique AS INTEGER)) as unique_views FROM {table_name} WHERE {where_clause}"
+	return f"SELECT COUNT(*) as total_views, SUM(is_unique) as unique_views FROM {table_name} WHERE {where_clause}"
 
 
 def _get_interval_views_query(where_clause, interval, table_name=DUCKDB_TABLE):
@@ -149,7 +155,7 @@ def _get_interval_views_query(where_clause, interval, table_name=DUCKDB_TABLE):
 		SELECT
 			strftime('{display_fmt}', creation) as interval,
 			COUNT(*) as total_page_views,
-			SUM(CAST(is_unique AS INTEGER)) as unique_page_views
+			SUM(is_unique) as unique_page_views
 		FROM {table_name}
 		WHERE {where_clause}
 		GROUP BY interval, strftime('{sort_fmt}', creation)
@@ -168,7 +174,7 @@ def _get_referrer_domain_query(where_clause, limit=10, table_name=DUCKDB_TABLE):
 						REGEXP_REPLACE(REGEXP_EXTRACT(referrer, '^https?://([^/]+)', 1), '^www\\.', '')
 					ELSE 'direct'
 				END as domain,
-				CAST(is_unique AS INTEGER) as is_unique
+				is_unique
 			FROM {table_name}
 			WHERE {where_clause}
 		)
@@ -259,7 +265,7 @@ def get_top_pages(
 
 	with DuckDBConnection() as db:
 		q = f"""
-			SELECT path as route, COUNT(*) as view_count, SUM(CAST(is_unique AS INTEGER)) as unique_view_count
+			SELECT path as route, COUNT(*) as view_count, SUM(is_unique) as unique_view_count
 			FROM {table_name}
 			{where_clause}
 			GROUP BY path
