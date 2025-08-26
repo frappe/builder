@@ -23,13 +23,6 @@ class DuckDBConnection:
 			self.db.close()
 
 
-def _create_duckdb_table(db, table_name=DUCKDB_TABLE):
-	sql_connection = frappe.db.get_connection()
-	df = pd.read_sql("SELECT * FROM `tabWeb Page View` LIMIT 0", sql_connection)
-	db.register("df", df)
-	db.execute(f"CREATE TABLE IF NOT EXISTS {table_name} AS SELECT * FROM df")
-
-
 def _get_date_filter(from_date: str | None = None, to_date: str | None = None):
 	if not from_date or not to_date:
 		return ""
@@ -58,28 +51,24 @@ def _get_route_filter(route: str | None = None, route_filter_type: str = "wildca
 		return f"path LIKE '%{route}%'"
 
 
-def reset_duckdb_table(table_name=DUCKDB_TABLE):
+def setup_duckdb_table(table_name=DUCKDB_TABLE):
 	with DuckDBConnection() as db:
-		print("Reading Web Page View data from Frappe database...")
-		start_time = time.time()
 		sql_connection = frappe.db.get_connection()
-		df = pd.read_sql("SELECT * FROM `tabWeb Page View`", sql_connection)
-
-		read_time = time.time()
-		print(f"Read {len(df)} records in {read_time - start_time:.2f} seconds")
-
-		print(f"Creating DuckDB table '{table_name}' from DataFrame...")
+		df = pd.read_sql("SELECT * FROM `tabWeb Page View`", sql_connection)  # type: ignore
 		db.register("df", df)
 		db.execute(f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM df")
-
-		insert_time = time.time()
-		print(f"Created table in {insert_time - read_time:.2f} seconds")
 		print(f"Successfully ingested {len(df)} records into DuckDB")
 
 
 def ingest_web_page_views_to_duckdb(table_name=DUCKDB_TABLE):
 	with DuckDBConnection() as db:
-		_create_duckdb_table(db, table_name)
+		table_exists = db.execute(
+			f"SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '{table_name}'"
+		).fetchone()
+		if table_exists and table_exists[0] == 0:
+			setup_duckdb_table(table_name)
+			return
+
 		result = db.execute(f"SELECT MAX(creation) FROM {table_name}").fetchone()
 		last_record = result[0] if result and result[0] else None
 
@@ -99,7 +88,6 @@ def ingest_web_page_views_to_duckdb(table_name=DUCKDB_TABLE):
 			last_record = result[0] if result and result[0] else None
 
 			filters = {"creation": [">", last_record]} if last_record else {}
-			start_time = time.time()
 			records = frappe.get_all(
 				"Web Page View",
 				filters=filters,
@@ -108,19 +96,14 @@ def ingest_web_page_views_to_duckdb(table_name=DUCKDB_TABLE):
 				limit=page_size,
 				order_by="creation asc",
 			)
-			end_time = time.time()
-			print(f"Query execution time: {end_time - start_time:.2f} seconds")
 
 			if not records:
 				break
 
-			start_insert_time = time.time()
 			db.executemany(
 				f"INSERT INTO {table_name} (creation, is_unique, path, referrer, time_zone, user_agent) VALUES (?, ?, ?, ?, ?, ?)",
 				records,
 			)
-			end_insert_time = time.time()
-			print(f"Insert execution time: {end_insert_time - start_insert_time:.2f} seconds")
 
 			processed += len(records)
 			progress = (processed / total_count) * 100 if total_count > 0 else 100
