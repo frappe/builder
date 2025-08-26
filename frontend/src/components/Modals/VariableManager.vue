@@ -8,125 +8,136 @@
 				<div class="mb-6 flex items-center justify-between">
 					<div>
 						<h2>Manage Variables</h2>
-						<p class="mt-1 text-sm text-ink-gray-6">
-							Upload CSV with columns: Variable Name, Light Mode, Dark Mode (optional)
-							<button
-								@click="downloadSampleCSV"
-								variant="subtle"
-								class="ml-2 text-xs text-blue-600 underline hover:text-blue-700">
-								Download sample
-							</button>
-						</p>
 					</div>
 					<div class="flex items-center gap-2">
-						<input ref="csvFileInput" type="file" accept=".csv" @change="handleCSVUpload" class="hidden" />
-						<Button @click="triggerCSVUpload" variant="outline" theme="gray" size="sm" icon-left="upload">
-							Upload CSV
-						</Button>
 						<Button @click="addNewVariable" variant="solid" theme="gray" size="sm" icon-left="plus">
 							Add Variable
 						</Button>
 					</div>
 				</div>
+
 				<ListView
 					:columns="columns"
 					:rows="listViewRows"
 					row-key="id"
 					:options="listViewOptions"
-					class="max-h-[60vh]">
+					class="max-h-[60vh]"
+					@click="stopEditing">
 					<template #cell="{ column, row }">
-						<div v-if="column.key === 'variable_name'" class="flex items-center gap-2">
+						<div v-if="column.key === 'variable_name'" class="flex cursor-pointer items-center gap-2">
 							<Tooltip
-								v-if="row._originalVariable.is_standard && !row._originalVariable.isOverride"
-								text="This is a standard variable. Create an override to customize it."
+								v-if="row.is_standard"
+								text="This is a standard variable. It cannot be modified or deleted."
 								placement="top">
 								<FeatherIcon name="info" class="h-4 w-4 text-ink-gray-5" />
 							</Tooltip>
 							<BuilderInput
-								v-model="row._originalVariable.variable_name"
+								v-if="isEditing('name', row.id) || row.isNew"
+								v-model="row.variable_name"
 								type="text"
 								placeholder="Enter variable name"
-								class="w-fit"
-								:class="{
-									'opacity-60': row._originalVariable.is_standard && !row._originalVariable.isOverride,
-								}"
-								:hideClearButton="
-									Boolean(row._originalVariable.is_standard && !row._originalVariable.isOverride)
-								"
-								:disabled="Boolean(row._originalVariable.is_standard && !row._originalVariable.isOverride)"
-								@input="(value: string) => handleVariableNameChange(row._originalVariable, value)" />
-						</div>
+								@blur="stopEditing"
+								@keyup.enter="stopEditing"
+								@click.stop
+								autofocus />
 
-						<div v-else-if="column.key === 'light_color'" class="flex items-center gap-3">
-							<ColorPicker
-								:modelValue="(row._originalVariable.value as HashString) || '#ffffff'"
-								placement="bottom-start"
-								:showInput="true"
-								@update:modelValue="(value) => handleColorUpdate(row._originalVariable, value, 'light')">
-								<template #target="{ togglePopover }">
-									<div
-										class="h-5 w-5 cursor-pointer rounded-full border border-outline-gray-2"
-										:style="{ backgroundColor: resolveVariableValue(row._originalVariable.value || '') }"
-										@click="togglePopover"
-										title="Click to edit light mode color"></div>
-								</template>
-							</ColorPicker>
-							<span class="text-sm text-ink-gray-7">{{ row._originalVariable.value || "#ffffff" }}</span>
-						</div>
-
-						<div v-else-if="column.key === 'dark_color'" class="flex items-center gap-3">
-							<ColorPicker
-								:modelValue="
-									(row._originalVariable.dark_value as HashString) ||
-									(row._originalVariable.value as HashString) ||
-									'#000000'
-								"
-								placement="bottom-start"
-								:showInput="true"
-								@update:modelValue="(value) => handleColorUpdate(row._originalVariable, value, 'dark')">
-								<template #target="{ togglePopover }">
-									<div
-										class="h-5 w-5 cursor-pointer rounded-full border border-outline-gray-2"
-										:style="{
-											backgroundColor: resolveVariableValue(
-												row._originalVariable.dark_value || row._originalVariable.value || '',
-											),
-										}"
-										@click="togglePopover"
-										title="Click to edit dark mode color"></div>
-								</template>
-							</ColorPicker>
-							<span class="text-sm text-ink-gray-7">
-								{{ row._originalVariable.dark_value || row._originalVariable.value || "#000000" }}
+							<span
+								v-else
+								class="rounded px-2 py-1 text-sm"
+								:class="getNameDisplayClasses(row)"
+								@click.stop="startEditing('name', row.id, row.is_standard)"
+								:title="getNameTooltip(row)">
+								{{ row.variable_name || "Enter variable name" }}
 							</span>
 						</div>
 
-						<div v-else-if="column.key === 'actions'" class="flex items-center justify-center gap-1">
-							<template v-if="row._originalVariable.is_standard && !row._originalVariable.isOverride">
-								<Tooltip text="Create override to customize this standard variable" placement="top">
-									<BuilderButton
-										variant="subtle"
-										class="text-ink-gray-6 hover:text-ink-gray-9"
-										@click="createOverride(row._originalVariable)"
-										title="Override Standard Variable">
-										<FeatherIcon name="copy" class="h-3 w-3" />
-									</BuilderButton>
-								</Tooltip>
-							</template>
+						<!-- Light Color Column -->
+						<div v-else-if="column.key === 'light_color'" class="flex items-center gap-3">
+							<ColorInput
+								v-if="isEditing('light', row.id)"
+								:show-picker-on-mount="true"
+								:modelValue="row.value || '#ffffff'"
+								@update:modelValue="(value) => updateColor(row, value, 'light')"
+								:show-color-variable-options="false"
+								@blur="stopEditing"
+								@keyup.enter="stopEditing"
+								@click.stop
+								class="w-full" />
+
 							<template v-else>
+								<div
+									v-if="!row.is_standard"
+									class="h-5 w-5 cursor-pointer rounded-full border border-outline-gray-2"
+									:style="{ backgroundColor: resolveVariableValue(row.value || '') }"
+									@click.stop="startEditing('light', row.id, row.is_standard)"
+									:title="'Click to open color picker or edit'"></div>
+								<div
+									v-else
+									class="h-5 w-5 rounded-full border border-outline-gray-2"
+									:style="{ backgroundColor: resolveVariableValue(row.value || '') }"
+									:title="'Standard variable (read-only)'"></div>
+								<span
+									class="cursor-pointer rounded py-1 text-sm text-ink-gray-7"
+									:class="{ 'cursor-not-allowed opacity-60': row.is_standard }"
+									@click.stop="startEditing('light', row.id, row.is_standard)"
+									:title="row.is_standard ? 'Standard variable (read-only)' : 'Click to edit'">
+									{{ row.value || "#ffffff" }}
+								</span>
+							</template>
+						</div>
+
+						<!-- Dark Color Column -->
+						<div v-else-if="column.key === 'dark_color'" class="flex items-center gap-3">
+							<ColorInput
+								v-if="isEditing('dark', row.id)"
+								:show-picker-on-mount="true"
+								:modelValue="row.dark_value || row.value || '#000000'"
+								@update:modelValue="(value) => updateColor(row, value, 'dark')"
+								:show-color-variable-options="false"
+								@blur="stopEditing"
+								@keyup.enter="stopEditing"
+								@click.stop
+								class="w-full" />
+
+							<template v-else>
+								<div
+									v-if="!row.is_standard"
+									class="h-5 w-5 cursor-pointer rounded-full border border-outline-gray-2"
+									:style="{ backgroundColor: resolveVariableValue(row.dark_value || row.value || '') }"
+									@click.stop="startEditing('dark', row.id, row.is_standard)"
+									:title="'Click to open color picker or edit'"></div>
+
+								<div
+									v-else
+									class="h-5 w-5 rounded-full border border-outline-gray-2"
+									:style="{ backgroundColor: resolveVariableValue(row.dark_value || row.value || '') }"
+									:title="'Standard variable (read-only)'"></div>
+
+								<span
+									class="cursor-pointer rounded py-1 text-sm text-ink-gray-7"
+									:class="{ 'cursor-not-allowed opacity-60': row.is_standard }"
+									@click.stop="startEditing('dark', row.id, row.is_standard)"
+									:title="row.is_standard ? 'Standard variable (read-only)' : 'Click to edit'">
+									{{ row.dark_value || row.value || "#000000" }}
+								</span>
+							</template>
+						</div>
+
+						<!-- Actions Column -->
+						<div v-else-if="column.key === 'actions'" class="flex items-center justify-center gap-1">
+							<template v-if="!row.is_standard">
 								<BuilderButton
-									v-if="!row._originalVariable.name"
+									v-if="row.isNew"
 									variant="subtle"
-									class="text-ink-gray-6 hover:text-green-600"
-									@click="createVariable(row._originalVariable)"
-									:disabled="!canSaveVariable(row._originalVariable)"
+									class="text-ink-gray-6"
+									@click="createVariable(row)"
 									title="Create Variable">
-									<FeatherIcon name="plus" class="h-3 w-3" />
+									<FeatherIcon name="check" class="h-3 w-3" />
 								</BuilderButton>
 								<BuilderButton
 									variant="subtle"
 									class="text-ink-gray-6 hover:text-red-600"
-									@click="deleteVariableRow(row._originalVariable, row._index)"
+									@click="deleteVariableRow(row)"
 									title="Delete Variable">
 									<FeatherIcon name="trash-2" class="h-3 w-3" />
 								</BuilderButton>
@@ -134,6 +145,18 @@
 						</div>
 					</template>
 				</ListView>
+				<div class="flex items-center pt-4">
+					<input ref="csvFileInput" type="file" accept=".csv" @change="handleCSVUpload" class="hidden" />
+					<Button @click="triggerCSVUpload" variant="outline" theme="gray" size="sm" icon-left="upload">
+						Upload CSV
+					</Button>
+					<button
+						@click="downloadSampleCSV"
+						variant="subtle"
+						class="ml-2 text-xs text-blue-600 underline hover:text-blue-700">
+						Download sample
+					</button>
+				</div>
 			</div>
 		</template>
 	</Dialog>
@@ -141,17 +164,16 @@
 
 <script setup lang="ts">
 import BuilderButton from "@/components/Controls/BuilderButton.vue";
-import ColorPicker from "@/components/Controls/ColorPicker.vue";
+import ColorInput from "@/components/Controls/ColorInput.vue";
 import { BuilderVariable } from "@/types/Builder/BuilderVariable";
 import { confirm } from "@/utils/helpers";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useDebounceFn } from "@vueuse/core";
 import { Button, Dialog, FeatherIcon, ListView, Tooltip } from "frappe-ui";
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { toast } from "vue-sonner";
 
 interface EditableVariable extends Partial<BuilderVariable> {
-	isOverride?: boolean;
 	isNew?: boolean;
 }
 
@@ -178,39 +200,23 @@ const isOpen = computed({
 
 const editableVariables = ref<EditableVariable[]>([]);
 const csvFileInput = ref<HTMLInputElement>();
+const editingCell = ref<string | null>(null);
+const nextNewId = ref(1);
 
 // ListView configuration
 const columns = [
-	{
-		label: "Variable Name",
-		key: "variable_name",
-		width: "4fr",
-	},
-	{
-		label: "Light Mode",
-		key: "light_color",
-		width: "1fr",
-	},
-	{
-		label: "Dark Mode",
-		key: "dark_color",
-		width: "1fr",
-	},
-	{
-		label: "Actions",
-		key: "actions",
-		width: "80px",
-	},
+	{ label: "Variable Name", key: "variable_name" },
+	{ label: "Light Mode", key: "light_color" },
+	{ label: "Dark Mode", key: "dark_color" },
+	{ label: "Actions", key: "actions", width: "80px" },
 ];
 
-const listViewRows = computed(() => {
-	return editableVariables.value.map((variable, index) => ({
+const listViewRows = computed(() =>
+	editableVariables.value.map((variable) => ({
 		...variable,
-		id: variable.name || `new-${index}`,
-		_originalVariable: variable,
-		_index: index,
-	}));
-});
+		id: variable.name || variable.id || `new-${nextNewId.value}`,
+	})),
+);
 
 const listViewOptions = {
 	selectable: false,
@@ -222,39 +228,167 @@ const listViewOptions = {
 	},
 };
 
-// Initialize editable variables when dialog opens
+// Initialize variables when dialog opens
 watch(
 	isOpen,
 	(open) => {
 		if (open) {
-			initializeVariables();
+			editableVariables.value = [
+				...variables.value.map((variable: BuilderVariable) => ({
+					...variable,
+					isNew: false,
+				})),
+			];
 		}
 	},
 	{ immediate: true },
 );
 
-const initializeVariables = () => {
-	editableVariables.value = variables.value.map((variable: BuilderVariable) => ({
-		...variable,
-		isOverride: false,
-		isNew: false,
-	}));
+// Watch for changes in the original variables and sync
+watch(
+	variables,
+	(newVariables) => {
+		if (isOpen.value) {
+			// Merge existing variables with new ones, preserving any unsaved new variables
+			const existingNewVars = editableVariables.value.filter((v) => v.isNew);
+			const syncedVars = newVariables.map((variable: BuilderVariable) => ({
+				...variable,
+				isNew: false,
+			}));
+			editableVariables.value = [...existingNewVars, ...syncedVars];
+		}
+	},
+	{ deep: true },
+);
+
+// Editing helpers
+const isEditing = (type: string, id: string) => editingCell.value === `${type}-${id}`;
+const stopEditing = () => (editingCell.value = null);
+const startEditing = (type: string, id: string, isStandard: boolean) => {
+	if (!isStandard) editingCell.value = `${type}-${id}`;
 };
 
-const addNewVariable = () => {
-	// Add new variable at the top of the list
-	editableVariables.value.unshift({
+const getNameDisplayClasses = (row: EditableVariable) => ({
+	"opacity-60": row.is_standard,
+	"cursor-not-allowed": row.is_standard,
+});
+
+const getNameTooltip = (row: EditableVariable) =>
+	row.is_standard ? "Standard variable (read-only)" : "Click to edit";
+
+const addNewVariable = async () => {
+	const newId = `new-${nextNewId.value}`;
+	nextNewId.value++;
+
+	const newVariable: EditableVariable = {
+		id: newId,
 		variable_name: "",
 		value: "#ffffff",
 		dark_value: "",
 		type: "Color",
 		isNew: true,
-	});
+	};
+
+	editableVariables.value.unshift(newVariable);
+
+	// Auto-focus on the new variable name field
+	await nextTick();
+	editingCell.value = `name-${newId}`;
 };
 
-const triggerCSVUpload = () => {
-	csvFileInput.value?.click();
+const updateColor = useDebounceFn(
+	async (variable: EditableVariable, value: string | null, mode: "light" | "dark") => {
+		if (mode === "light") {
+			variable.value = value || "";
+		} else {
+			variable.dark_value = value || "";
+		}
+
+		// Auto-save for existing variables
+		if (variable.name && !variable.isNew) {
+			try {
+				await saveVariable(variable);
+			} catch (error) {
+				console.error("Failed to update variable:", error);
+			}
+		}
+	},
+	300,
+);
+
+const createVariable = async (variable: EditableVariable) => {
+	if (!variable.variable_name?.trim()) {
+		toast.error("Variable name is required");
+		return;
+	}
+
+	try {
+		const newVar = await createVar({
+			variable_name: variable.variable_name!,
+			value: variable.value!,
+			dark_value: variable.dark_value || undefined,
+			type: variable.type || "Color",
+		});
+
+		// Find the variable in our list and update it
+		const index = editableVariables.value.findIndex((v) => v.id === variable.id);
+		if (index !== -1) {
+			editableVariables.value[index] = { ...newVar, isNew: false };
+		}
+
+		toast.success("Variable created successfully");
+	} catch (error) {
+		toast.error((error as Error).message || "Failed to create variable");
+	}
 };
+
+const saveVariable = async (variable: EditableVariable) => {
+	if (!variable.name) return;
+
+	try {
+		await updateVariable({
+			name: variable.name,
+			variable_name: variable.variable_name!,
+			value: variable.value!,
+			dark_value: variable.dark_value || undefined,
+			type: variable.type || "Color",
+		});
+		toast.success("Variable updated successfully");
+	} catch (error) {
+		toast.error((error as Error).message || "Failed to update variable");
+	}
+};
+
+const deleteVariableRow = async (variable: EditableVariable) => {
+	if (variable.isNew) {
+		const index = editableVariables.value.findIndex((v) => v.id === variable.id);
+		if (index !== -1) {
+			editableVariables.value.splice(index, 1);
+		}
+		return;
+	}
+
+	if (!variable.name) return;
+
+	const confirmed = await confirm(
+		`Are you sure you want to delete the variable "${variable.variable_name}"?`,
+	);
+	if (!confirmed) return;
+
+	try {
+		await deleteVariable(variable.name);
+		const index = editableVariables.value.findIndex((v) => v.id === variable.id || v.name === variable.name);
+		if (index !== -1) {
+			editableVariables.value.splice(index, 1);
+		}
+		toast.success("Variable deleted successfully");
+	} catch (error) {
+		toast.error((error as Error).message || "Failed to delete variable");
+	}
+};
+
+// CSV handling
+const triggerCSVUpload = () => csvFileInput.value?.click();
 
 const handleCSVUpload = (event: Event) => {
 	const file = (event.target as HTMLInputElement).files?.[0];
@@ -289,22 +423,21 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 		return;
 	}
 
-	// Parse and validate variables first
 	const newVariables: EditableVariable[] = [];
 	let duplicateCount = 0;
 	let invalidCount = 0;
 
 	for (let i = 1; i < lines.length; i++) {
-		const values = lines[i].split(",").map((v) => v.trim());
-		const variableName = values[nameIndex]?.replace(/"/g, "");
-		const lightValue = values[lightIndex]?.replace(/"/g, "");
-		const darkValue = darkIndex !== -1 ? values[darkIndex]?.replace(/"/g, "") : "";
+		const values = lines[i].split(",").map((v) => v.trim().replace(/"/g, ""));
+		const variableName = values[nameIndex];
+		const lightValue = values[lightIndex];
+		const darkValue = darkIndex !== -1 ? values[darkIndex] : "";
 
 		if (variableName && lightValue) {
-			// Check if variable already exists
 			const exists = editableVariables.value.some((v) => v.variable_name === variableName);
 			if (!exists) {
 				newVariables.push({
+					id: `csv-${nextNewId.value++}`,
 					variable_name: variableName,
 					value: lightValue,
 					dark_value: darkValue,
@@ -319,38 +452,25 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 	}
 
 	if (newVariables.length === 0) {
-		if (duplicateCount > 0) {
-			toast.warning(`All ${duplicateCount} variables already exist`);
-		}
-		if (invalidCount > 0) {
-			toast.error(`${invalidCount} entries were invalid (missing name or light mode color)`);
-		}
-		// Reset file input
-		if (csvFileInput.value) {
-			csvFileInput.value.value = "";
-		}
+		if (duplicateCount > 0) toast.warning(`All ${duplicateCount} variables already exist`);
+		if (invalidCount > 0) toast.error(`${invalidCount} entries were invalid`);
+		if (csvFileInput.value) csvFileInput.value.value = "";
 		return;
 	}
 
-	// Show confirmation dialog
 	const confirmed = await confirm(
-		`Do you want to create ${newVariables.length} new variable(s)?${
-			duplicateCount > 0 ? ` (${duplicateCount} duplicates will be skipped)` : ""
-		}${invalidCount > 0 ? ` (${invalidCount} invalid entries will be skipped)` : ""}`,
+		`Create ${newVariables.length} new variable(s)?${
+			duplicateCount > 0 ? ` (${duplicateCount} duplicates skipped)` : ""
+		}${invalidCount > 0 ? ` (${invalidCount} invalid entries skipped)` : ""}`,
 	);
 
 	if (!confirmed) {
-		// Reset file input
-		if (csvFileInput.value) {
-			csvFileInput.value.value = "";
-		}
+		if (csvFileInput.value) csvFileInput.value.value = "";
 		return;
 	}
 
-	// Create variables directly
 	let successCount = 0;
 	let errorCount = 0;
-	const createdVariables: EditableVariable[] = [];
 
 	for (const variable of newVariables) {
 		try {
@@ -361,10 +481,8 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 				type: variable.type || "Color",
 			});
 
-			createdVariables.push({
-				...newVar,
-				isNew: false,
-			});
+			// Add to our editable variables list
+			editableVariables.value.push({ ...newVar, isNew: false });
 			successCount++;
 		} catch (error) {
 			console.error("Failed to create variable:", variable.variable_name, error);
@@ -372,29 +490,13 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 		}
 	}
 
-	// Add created variables to the top of the list
-	if (createdVariables.length > 0) {
-		editableVariables.value = [...createdVariables, ...editableVariables.value];
-	}
-
 	// Show results
-	if (successCount > 0) {
-		toast.success(`Successfully created ${successCount} variables`);
-	}
-	if (errorCount > 0) {
-		toast.error(`Failed to create ${errorCount} variables`);
-	}
-	if (duplicateCount > 0) {
-		toast.warning(`Skipped ${duplicateCount} duplicate entries`);
-	}
-	if (invalidCount > 0) {
-		toast.warning(`Skipped ${invalidCount} invalid entries`);
-	}
+	if (successCount > 0) toast.success(`Successfully created ${successCount} variables`);
+	if (errorCount > 0) toast.error(`Failed to create ${errorCount} variables`);
+	if (duplicateCount > 0) toast.warning(`Skipped ${duplicateCount} duplicate entries`);
+	if (invalidCount > 0) toast.warning(`Skipped ${invalidCount} invalid entries`);
 
-	// Reset file input
-	if (csvFileInput.value) {
-		csvFileInput.value.value = "";
-	}
+	if (csvFileInput.value) csvFileInput.value.value = "";
 };
 
 const downloadSampleCSV = () => {
@@ -419,118 +521,5 @@ const downloadSampleCSV = () => {
 	document.body.removeChild(link);
 
 	toast.success("Sample CSV downloaded");
-};
-
-const createOverride = (standardVariable: EditableVariable) => {
-	const override: EditableVariable = {
-		variable_name: standardVariable.variable_name,
-		value: standardVariable.value,
-		dark_value: standardVariable.dark_value || "",
-		type: standardVariable.type || "Color",
-		isOverride: true,
-		isNew: true,
-	};
-
-	editableVariables.value.push(override);
-	toast.info("Override created. Modify the values and save to customize this standard variable.");
-};
-
-const handleVariableNameChange = (variable: EditableVariable, value: string) => {
-	variable.variable_name = value;
-};
-
-const handleColorUpdate = useDebounceFn(
-	async (variable: EditableVariable, value: string | null, mode: "light" | "dark") => {
-		if (mode === "light") {
-			variable.value = value || "";
-		} else {
-			variable.dark_value = value || "";
-		}
-
-		// Auto-save for existing variables
-		if (variable.name && !variable.isNew) {
-			try {
-				await saveVariable(variable);
-			} catch (error) {
-				console.error("Failed to update variable:", error);
-			}
-		}
-	},
-	300,
-);
-
-const canSaveVariable = (variable: EditableVariable): boolean => {
-	return !!(variable.variable_name?.trim() && variable.value?.trim());
-};
-
-const createVariable = async (variable: EditableVariable) => {
-	if (!canSaveVariable(variable)) {
-		toast.error("Variable name and light mode color are required");
-		return;
-	}
-
-	try {
-		const newVar = await createVar({
-			variable_name: variable.variable_name!,
-			value: variable.value!,
-			dark_value: variable.dark_value || undefined,
-			type: variable.type || "Color",
-		});
-
-		// Update the local variable with the created data
-		Object.assign(variable, newVar, { isNew: false });
-		toast.success("Variable created successfully");
-	} catch (error) {
-		toast.error((error as Error).message || "Failed to create variable");
-	}
-};
-
-const saveVariable = async (variable: EditableVariable) => {
-	if (!variable.name || !canSaveVariable(variable)) {
-		toast.error("Cannot save variable: missing required fields");
-		return;
-	}
-
-	try {
-		await updateVariable({
-			name: variable.name,
-			variable_name: variable.variable_name!,
-			value: variable.value!,
-			dark_value: variable.dark_value || undefined,
-			type: variable.type || "Color",
-		});
-		toast.success("Variable updated successfully");
-	} catch (error) {
-		toast.error((error as Error).message || "Failed to update variable");
-	}
-};
-
-const deleteVariableRow = async (variable: EditableVariable, index: number) => {
-	if (variable.isNew) {
-		// Just remove from local array if it's a new unsaved variable
-		const actualIndex = editableVariables.value.findIndex((v) => v === variable);
-		if (actualIndex !== -1) {
-			editableVariables.value.splice(actualIndex, 1);
-		}
-		return;
-	}
-
-	if (!variable.name) return;
-
-	const confirmed = await confirm(
-		`Are you sure you want to delete the variable "${variable.variable_name}"?`,
-	);
-	if (!confirmed) return;
-
-	try {
-		await deleteVariable(variable.name);
-		const actualIndex = editableVariables.value.findIndex((v) => v === variable);
-		if (actualIndex !== -1) {
-			editableVariables.value.splice(actualIndex, 1);
-		}
-		toast.success("Variable deleted successfully");
-	} catch (error) {
-		toast.error((error as Error).message || "Failed to delete variable");
-	}
 };
 </script>

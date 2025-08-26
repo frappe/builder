@@ -1,5 +1,6 @@
 <template>
 	<Popover
+		ref="colorPickerPopover"
 		v-if="renderMode === 'popover'"
 		:placement="placement"
 		class="!block w-full"
@@ -133,6 +134,8 @@ const colorMap = ref(null) as unknown as Ref<HTMLDivElement>;
 const hueSelector = ref(null) as unknown as Ref<HTMLDivElement>;
 const colorSelector = ref(null) as unknown as Ref<HTMLDivElement>;
 const colorPicker = ref(null) as unknown as Ref<HTMLDivElement>;
+
+const colorPickerPopover = ref<InstanceType<typeof Popover> | null>(null);
 
 const colorSelectorPosition = ref({ x: 0, y: 0 });
 const hueSelectorPosition = ref({ x: 0, y: 0 });
@@ -357,4 +360,14 @@ watch(
 	},
 	{ immediate: true },
 );
+
+function togglePopover() {
+	if (colorPickerPopover.value) {
+		colorPickerPopover.value.open();
+	}
+}
+
+defineExpose({
+	togglePopover,
+});
 </script>

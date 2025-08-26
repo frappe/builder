@@ -1,6 +1,7 @@
 <template>
 	<div>
 		<ColorPicker
+			ref="colorPickerRef"
 			:placement="placement"
 			@open="events.onFocus"
 			@close="handleClose"
@@ -79,7 +80,7 @@ import { getRGB, toKebabCase } from "@/utils/helpers";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useDark } from "@vueuse/core";
 import { Tooltip } from "frappe-ui";
-import { computed, defineComponent, h, ref, useAttrs, watch } from "vue";
+import { computed, defineComponent, h, onMounted, ref, useAttrs, watch } from "vue";
 import ColorPicker from "./ColorPicker.vue";
 import InputLabel from "./InputLabel.vue";
 
@@ -93,6 +94,7 @@ const events = Object.fromEntries(
 );
 
 const colorInput = ref<typeof Autocomplete | null>(null);
+const colorPickerRef = ref<typeof ColorPicker | null>(null);
 const showVariableDialog = ref(false);
 const newVariable = ref<Partial<BuilderVariable> | null>(null);
 const { variables, resolveVariableValue } = useBuilderVariable();
@@ -104,12 +106,14 @@ const props = withDefaults(
 		placeholder?: string;
 		placement?: string;
 		showColorVariableOptions?: boolean;
+		showPickerOnMount?: boolean;
 	}>(),
 	{
 		modelValue: null,
 		placeholder: "Set Color",
 		placement: "left",
 		showColorVariableOptions: true,
+		showPickerOnMount: false,
 	},
 );
 
@@ -185,5 +189,14 @@ const getOptions = async (query: string) => {
 
 watch(variables, () => {
 	colorInput.value?.updateOptions();
+});
+onMounted(() => {
+	if (
+		props.showPickerOnMount &&
+		colorPickerRef.value &&
+		typeof colorPickerRef.value.togglePopover === "function"
+	) {
+		colorPickerRef.value.togglePopover();
+	}
 });
 </script>
