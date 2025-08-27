@@ -33,13 +33,20 @@
 							</Tooltip>
 							<BuilderInput
 								v-if="isEditing('name', row.id) || row.isNew"
-								v-model="row.variable_name"
+								:modelValue="row.variable_name"
+								@update:modelValue="
+									(val: string) => {
+										updateVariable({
+											name: row.name,
+											variable_name: val,
+										});
+										stopEditing();
+									}
+								"
 								type="text"
 								placeholder="Enter variable name"
-								@blur="stopEditing"
-								@keyup.enter="stopEditing"
 								@click.stop
-								class="w-[150px]"
+								class="w-[130px]"
 								autofocus />
 
 							<span
@@ -60,7 +67,6 @@
 								:modelValue="row.value || '#ffffff'"
 								@update:modelValue="(value) => updateColor(row, value, 'light')"
 								:show-color-variable-options="false"
-								@blur="stopEditing"
 								@keyup.enter="stopEditing"
 								@click.stop
 								class="w-[120px]" />
@@ -95,7 +101,6 @@
 								:modelValue="row.dark_value || row.value || '#000000'"
 								@update:modelValue="(value) => updateColor(row, value, 'dark')"
 								:show-color-variable-options="false"
-								@blur="stopEditing"
 								@keyup.enter="stopEditing"
 								@click.stop
 								class="w-[120px]" />

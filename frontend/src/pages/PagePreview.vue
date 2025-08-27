@@ -1,9 +1,9 @@
 <template>
 	<div class="flex h-screen flex-col items-center bg-surface-white py-2">
-		<div class="relative flex w-full items-center justify-center">
+		<div class="space-between relative flex w-full items-center justify-between px-3 py-1">
 			<router-link
 				:to="{ name: 'builder', params: { pageId: route.params.pageId || 'new' } }"
-				class="absolute left-3 flex w-fit text-sm text-ink-gray-7 hover:text-ink-gray-9">
+				class="flex w-fit text-sm text-ink-gray-7 hover:text-ink-gray-9">
 				<FeatherIcon name="arrow-left" class="mr-4 h-4 w-4 cursor-pointer" />
 				Back to builder
 			</router-link>
@@ -24,10 +24,18 @@
 						}" />
 				</div>
 			</div>
-			<PublishButton class="absolute right-3 border-0"></PublishButton>
+			<div class="flex items-center gap-4">
+				<Tooltip text="Toggle Dark Mode" :hoverDelay="0.6">
+					<FeatherIcon
+						:name="isDark ? 'sun' : 'moon'"
+						class="h-4 w-4 cursor-pointer text-ink-gray-8 outline-none"
+						@click="() => transitionTheme(toggleDark)" />
+				</Tooltip>
+				<PublishButton></PublishButton>
+			</div>
 		</div>
 		<div
-			class="relative mt-5 flex h-[85vh] bg-white"
+			class="relative mt-5 flex h-[calc(100vh-100px)] bg-white"
 			:style="{
 				width: width + 'px',
 			}">
@@ -69,8 +77,9 @@ import PublishButton from "@/components/PublishButton.vue";
 import router from "@/router";
 import usePageStore from "@/stores/pageStore";
 import { posthog } from "@/telemetry";
-import { useEventListener } from "@vueuse/core";
-import { Ref, computed, onActivated, ref, watchEffect } from "vue";
+import { useDark, useEventListener, useToggle } from "@vueuse/core";
+import { Tooltip } from "frappe-ui";
+import { Ref, computed, onActivated, ref, watch, watchEffect } from "vue";
 import { useRoute } from "vue-router";
 
 const route = useRoute();
@@ -117,6 +126,22 @@ const activeBreakpoint = computed(() => {
 });
 
 const previewWindow = ref(null) as Ref<HTMLIFrameElement | null>;
+const isDark = useDark({
+	attribute: "data-theme",
+});
+
+const toggleDark = useToggle(isDark);
+
+const transitionTheme = (toggle: () => void) => {
+	const doc: any = document;
+	if (doc.startViewTransition && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+		doc.startViewTransition(() => {
+			toggle();
+		});
+	} else {
+		toggle();
+	}
+};
 
 useEventListener(document, "keydown", (ev) => {
 	if (ev.key === "Escape" && router.currentRoute.value.name === "preview") {
@@ -124,7 +149,18 @@ useEventListener(document, "keydown", (ev) => {
 	}
 });
 
-// hack to relay mouseup event from iframe to parent
+const applyColorSchemeToIframe = (scheme: "dark" | "light") => {
+	try {
+		const win = previewWindow.value?.contentWindow;
+		const doc = win?.document;
+		if (doc && doc.documentElement) {
+			doc.documentElement.setAttribute("data-prefers-color-scheme", scheme);
+		}
+	} catch (e) {
+		// ignore cross-origin or timing errors
+	}
+};
+
 watchEffect(() => {
 	if (previewWindow.value) {
 		loading.value = true;
@@ -143,10 +179,19 @@ watchEffect(() => {
 				previewWindow.value?.contentWindow?.document.addEventListener("mousemove", (ev) => {
 					document.dispatchEvent(new MouseEvent("mousemove", ev));
 				});
+
+				applyColorSchemeToIframe(isDark.value ? "dark" : "light");
 			},
 			{ once: true },
 		);
 	}
+});
+
+watch(isDark, async (val) => {
+	setPreviewURL();
+	setTimeout(() => {
+		applyColorSchemeToIframe(val ? "dark" : "light");
+	}, 100);
 });
 
 const setWidth = (device: string) => {
@@ -161,9 +206,10 @@ const setWidth = (device: string) => {
 };
 
 const setPreviewURL = () => {
-	let queryParams = {
+	let queryParams: Record<string, any> = {
 		page: route.params.pageId,
 		...pageStore.routeVariables,
+		prefers_color_scheme: isDark.value ? "dark" : "light",
 	};
 	previewRoute.value = `/api/method/builder.api.get_page_preview_html?${Object.entries(queryParams)
 		.map(([key, value]) => `${key}=${value}`)
