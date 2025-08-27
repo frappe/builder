@@ -5,7 +5,9 @@
 			side="right"
 			:maxDimension="500"
 			@resize="(width) => (builderStore.builderLayout.leftPanelWidth = width)" />
-		<div class="flex min-h-full flex-col items-center gap-3 border-r border-outline-gray-1 p-3">
+		<div
+			class="flex min-h-full flex-col items-center gap-3 border-r border-outline-gray-1 p-3"
+			ref="miniSidebar">
 			<Tooltip v-for="option of leftPanelOptions" :key="option.value" :text="option.label" placement="right">
 				<button
 					class="flex size-8 items-center justify-center rounded text-ink-gray-7 hover:bg-surface-gray-2 focus:!bg-surface-gray-3"
@@ -71,7 +73,7 @@
 			</div>
 		</div>
 
-		<VariableManager v-model="showVariableManager" />
+		<VariableManager v-model="showVariableManager" :container="miniSidebar" />
 	</div>
 </template>
 <script setup lang="ts">
@@ -94,6 +96,7 @@ import BuilderCanvas from "./BuilderCanvas.vue";
 import PanelResizer from "./PanelResizer.vue";
 
 const showVariableManager = ref(false);
+const miniSidebar = ref(null) as Ref<HTMLElement | null>;
 
 const canvasStore = useCanvasStore();
 const builderStore = useBuilderStore();

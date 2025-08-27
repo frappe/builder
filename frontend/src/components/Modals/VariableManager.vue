@@ -1,27 +1,27 @@
 <template>
-	<Dialog
-		v-model="isOpen"
-		:options="{ title: 'Variables', size: '6xl' }"
-		:disable-outside-click-to-close="true">
-		<template #body-content>
+	<DraggablePopup
+		:modelValue="modelValue"
+		@update:modelValue="
+			(val) => {
+				emit('update:modelValue', val);
+			}
+		"
+		:width="500"
+		:container="container"
+		v-if="modelValue"
+		:placement-offset="20"
+		action-label="Add Variable"
+		:action-handler="addNewVariable"
+		placement="top-left">
+		<template #header><h2 class="py-2 text-lg font-semibold">Manage Variables</h2></template>
+		<template #content>
 			<div>
-				<div class="mb-6 flex items-center justify-between">
-					<div>
-						<h2>Manage Variables</h2>
-					</div>
-					<div class="flex items-center gap-2">
-						<Button @click="addNewVariable" variant="solid" theme="gray" size="sm" icon-left="plus">
-							Add Variable
-						</Button>
-					</div>
-				</div>
-
 				<ListView
 					:columns="columns"
 					:rows="listViewRows"
 					row-key="id"
 					:options="listViewOptions"
-					class="max-h-[60vh]"
+					class="max-h-[60vh] w-full"
 					@click="stopEditing">
 					<template #cell="{ column, row }">
 						<div v-if="column.key === 'variable_name'" class="flex cursor-pointer items-center gap-2">
@@ -39,6 +39,7 @@
 								@blur="stopEditing"
 								@keyup.enter="stopEditing"
 								@click.stop
+								class="w-[150px]"
 								autofocus />
 
 							<span
@@ -62,7 +63,7 @@
 								@blur="stopEditing"
 								@keyup.enter="stopEditing"
 								@click.stop
-								class="w-full" />
+								class="w-[120px]" />
 
 							<template v-else>
 								<div
@@ -97,7 +98,7 @@
 								@blur="stopEditing"
 								@keyup.enter="stopEditing"
 								@click.stop
-								class="w-full" />
+								class="w-[120px]" />
 
 							<template v-else>
 								<div
@@ -128,14 +129,14 @@
 							<template v-if="!row.is_standard">
 								<BuilderButton
 									v-if="row.isNew"
-									variant="subtle"
+									variant="ghost"
 									class="text-ink-gray-6"
 									@click="createVariable(row)"
 									title="Create Variable">
 									<FeatherIcon name="check" class="h-3 w-3" />
 								</BuilderButton>
 								<BuilderButton
-									variant="subtle"
+									variant="ghost"
 									class="text-ink-gray-6 hover:text-red-600"
 									@click="deleteVariableRow(row)"
 									title="Delete Variable">
@@ -159,26 +160,24 @@
 				</div>
 			</div>
 		</template>
-	</Dialog>
+	</DraggablePopup>
 </template>
 
 <script setup lang="ts">
 import BuilderButton from "@/components/Controls/BuilderButton.vue";
 import ColorInput from "@/components/Controls/ColorInput.vue";
+import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
 import { BuilderVariable } from "@/types/Builder/BuilderVariable";
 import { confirm } from "@/utils/helpers";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useDebounceFn } from "@vueuse/core";
-import { Button, Dialog, FeatherIcon, ListView, Tooltip } from "frappe-ui";
-import { computed, nextTick, ref, watch } from "vue";
+import { Button, FeatherIcon, ListView, Tooltip } from "frappe-ui";
+import { computed, nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
 
-interface EditableVariable extends Partial<BuilderVariable> {
-	isNew?: boolean;
-}
-
-const props = defineProps<{
+defineProps<{
 	modelValue: boolean;
+	container?: HTMLElement | null;
 }>();
 
 const emit = defineEmits<{
@@ -193,30 +192,36 @@ const {
 	variables,
 } = useBuilderVariable();
 
-const isOpen = computed({
-	get: () => props.modelValue,
-	set: (value) => emit("update:modelValue", value),
-});
-
-const editableVariables = ref<EditableVariable[]>([]);
 const csvFileInput = ref<HTMLInputElement>();
 const editingCell = ref<string | null>(null);
 const nextNewId = ref(1);
+const newVariable = ref<Partial<BuilderVariable> | null>(null);
 
-// ListView configuration
 const columns = [
 	{ label: "Variable Name", key: "variable_name" },
 	{ label: "Light Mode", key: "light_color" },
 	{ label: "Dark Mode", key: "dark_color" },
-	{ label: "Actions", key: "actions", width: "80px" },
+	{ label: "", key: "actions", width: "40px" },
 ];
 
-const listViewRows = computed(() =>
-	editableVariables.value.map((variable) => ({
+type ListViewRow = Partial<BuilderVariable> & { id: string; isNew: Boolean };
+
+const listViewRows = computed(() => {
+	const rows: ListViewRow[] = variables.value.map((variable) => ({
 		...variable,
-		id: variable.name || variable.id || `new-${nextNewId.value}`,
-	})),
-);
+		id: variable.name || `new-${nextNewId.value}`,
+		isNew: false,
+	}));
+	if (newVariable.value) {
+		rows.unshift({
+			...newVariable.value,
+			id: `new-${nextNewId.value}`,
+			isNew: true,
+		});
+	}
+
+	return rows;
+});
 
 const listViewOptions = {
 	selectable: false,
@@ -228,39 +233,6 @@ const listViewOptions = {
 	},
 };
 
-// Initialize variables when dialog opens
-watch(
-	isOpen,
-	(open) => {
-		if (open) {
-			editableVariables.value = [
-				...variables.value.map((variable: BuilderVariable) => ({
-					...variable,
-					isNew: false,
-				})),
-			];
-		}
-	},
-	{ immediate: true },
-);
-
-// Watch for changes in the original variables and sync
-watch(
-	variables,
-	(newVariables) => {
-		if (isOpen.value) {
-			// Merge existing variables with new ones, preserving any unsaved new variables
-			const existingNewVars = editableVariables.value.filter((v) => v.isNew);
-			const syncedVars = newVariables.map((variable: BuilderVariable) => ({
-				...variable,
-				isNew: false,
-			}));
-			editableVariables.value = [...existingNewVars, ...syncedVars];
-		}
-	},
-	{ deep: true },
-);
-
 // Editing helpers
 const isEditing = (type: string, id: string) => editingCell.value === `${type}-${id}`;
 const stopEditing = () => (editingCell.value = null);
@@ -268,90 +240,75 @@ const startEditing = (type: string, id: string, isStandard: boolean) => {
 	if (!isStandard) editingCell.value = `${type}-${id}`;
 };
 
-const getNameDisplayClasses = (row: EditableVariable) => ({
+const getNameDisplayClasses = (row: BuilderVariable) => ({
 	"opacity-60": row.is_standard,
 	"cursor-not-allowed": row.is_standard,
 });
 
-const getNameTooltip = (row: EditableVariable) =>
+const getNameTooltip = (row: BuilderVariable) =>
 	row.is_standard ? "Standard variable (read-only)" : "Click to edit";
 
 const addNewVariable = async () => {
-	const newId = `new-${nextNewId.value}`;
 	nextNewId.value++;
-
-	const newVariable: EditableVariable = {
-		id: newId,
+	newVariable.value = {
 		variable_name: "",
 		value: "#ffffff",
 		dark_value: "",
 		type: "Color",
-		isNew: true,
 	};
-
-	editableVariables.value.unshift(newVariable);
-
-	// Auto-focus on the new variable name field
 	await nextTick();
-	editingCell.value = `name-${newId}`;
 };
 
-const updateColor = useDebounceFn(
-	async (variable: EditableVariable, value: string | null, mode: "light" | "dark") => {
-		if (mode === "light") {
-			variable.value = value || "";
-		} else {
-			variable.dark_value = value || "";
-		}
+const updateColor = async (row: ListViewRow, value: string | null, mode: "light" | "dark") => {
+	if (mode === "light") {
+		row.value = value || "";
+	} else {
+		row.dark_value = value || "";
+	}
 
-		// Auto-save for existing variables
-		if (variable.name && !variable.isNew) {
-			try {
-				await saveVariable(variable);
-			} catch (error) {
-				console.error("Failed to update variable:", error);
-			}
-		}
-	},
-	300,
-);
+	if (row.name && !row.isNew) {
+		debouncedSaveVariable(row);
+	}
+};
 
-const createVariable = async (variable: EditableVariable) => {
+const debouncedSaveVariable = useDebounceFn(async (row: ListViewRow) => {
+	try {
+		await saveVariable(row);
+	} catch (error) {
+		console.error("Failed to update variable:", error);
+	}
+}, 300);
+
+const createVariable = async (variable: BuilderVariable) => {
 	if (!variable.variable_name?.trim()) {
 		toast.error("Variable name is required");
 		return;
 	}
 
 	try {
-		const newVar = await createVar({
+		await createVar({
 			variable_name: variable.variable_name!,
 			value: variable.value!,
 			dark_value: variable.dark_value || undefined,
 			type: variable.type || "Color",
 		});
-
-		// Find the variable in our list and update it
-		const index = editableVariables.value.findIndex((v) => v.id === variable.id);
-		if (index !== -1) {
-			editableVariables.value[index] = { ...newVar, isNew: false };
-		}
-
+		newVariable.value = null;
 		toast.success("Variable created successfully");
 	} catch (error) {
 		toast.error((error as Error).message || "Failed to create variable");
 	}
 };
 
-const saveVariable = async (variable: EditableVariable) => {
-	if (!variable.name) return;
+const saveVariable = async (row: ListViewRow) => {
+	if (!row.name) return;
 
 	try {
 		await updateVariable({
-			name: variable.name,
-			variable_name: variable.variable_name!,
-			value: variable.value!,
-			dark_value: variable.dark_value || undefined,
-			type: variable.type || "Color",
+			name: row.name,
+			variable_name: row.variable_name!,
+			value: row.value!,
+			dark_value: row.dark_value || undefined,
+			type: row.type || "Color",
 		});
 		toast.success("Variable updated successfully");
 	} catch (error) {
@@ -359,28 +316,20 @@ const saveVariable = async (variable: EditableVariable) => {
 	}
 };
 
-const deleteVariableRow = async (variable: EditableVariable) => {
-	if (variable.isNew) {
-		const index = editableVariables.value.findIndex((v) => v.id === variable.id);
-		if (index !== -1) {
-			editableVariables.value.splice(index, 1);
-		}
+const deleteVariableRow = async (row: ListViewRow) => {
+	console.log("delete", row);
+	if (row.isNew) {
+		newVariable.value = null;
 		return;
 	}
 
-	if (!variable.name) return;
+	if (!row.name) return;
 
-	const confirmed = await confirm(
-		`Are you sure you want to delete the variable "${variable.variable_name}"?`,
-	);
+	const confirmed = await confirm(`Are you sure you want to delete the variable "${row.variable_name}"?`);
 	if (!confirmed) return;
 
 	try {
-		await deleteVariable(variable.name);
-		const index = editableVariables.value.findIndex((v) => v.id === variable.id || v.name === variable.name);
-		if (index !== -1) {
-			editableVariables.value.splice(index, 1);
-		}
+		await deleteVariable(row.name);
 		toast.success("Variable deleted successfully");
 	} catch (error) {
 		toast.error((error as Error).message || "Failed to delete variable");
@@ -423,8 +372,8 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 		return;
 	}
 
-	const newVariables: EditableVariable[] = [];
-	let duplicateCount = 0;
+	const newVariables: Partial<BuilderVariable>[] = [];
+	const updateVariables: Partial<BuilderVariable & { name?: string }>[] = [];
 	let invalidCount = 0;
 
 	for (let i = 1; i < lines.length; i++) {
@@ -434,34 +383,41 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 		const darkValue = darkIndex !== -1 ? values[darkIndex] : "";
 
 		if (variableName && lightValue) {
-			const exists = editableVariables.value.some((v) => v.variable_name === variableName);
-			if (!exists) {
+			const existing = variables.value.find((v) => v.variable_name === variableName);
+			if (!existing) {
 				newVariables.push({
-					id: `csv-${nextNewId.value++}`,
 					variable_name: variableName,
 					value: lightValue,
 					dark_value: darkValue,
 					type: "Color",
 				});
 			} else {
-				duplicateCount++;
+				updateVariables.push({
+					name: existing.name,
+					variable_name: variableName,
+					value: lightValue,
+					dark_value: darkValue,
+					type: existing.type || "Color",
+				});
 			}
 		} else {
 			invalidCount++;
 		}
 	}
 
-	if (newVariables.length === 0) {
-		if (duplicateCount > 0) toast.warning(`All ${duplicateCount} variables already exist`);
+	if (newVariables.length === 0 && updateVariables.length === 0) {
 		if (invalidCount > 0) toast.error(`${invalidCount} entries were invalid`);
 		if (csvFileInput.value) csvFileInput.value.value = "";
 		return;
 	}
 
+	// Warn user that existing variables will be updated
 	const confirmed = await confirm(
-		`Create ${newVariables.length} new variable(s)?${
-			duplicateCount > 0 ? ` (${duplicateCount} duplicates skipped)` : ""
-		}${invalidCount > 0 ? ` (${invalidCount} invalid entries skipped)` : ""}`,
+		`Create ${newVariables.length} new variable(s) and update ${
+			updateVariables.length
+		} existing variable(s)?${
+			invalidCount > 0 ? ` (${invalidCount} invalid entries skipped)` : ""
+		}\n\nWARNING: Updating will overwrite the existing values for the listed variables.`,
 	);
 
 	if (!confirmed) {
@@ -469,31 +425,46 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 		return;
 	}
 
-	let successCount = 0;
-	let errorCount = 0;
+	let createdCount = 0;
+	let updatedCount = 0;
+	let createErrors = 0;
+	let updateErrors = 0;
 
-	for (const variable of newVariables) {
+	for (const variable of updateVariables) {
 		try {
-			const newVar = await createVar({
+			await updateVariable({
+				name: variable.name!,
 				variable_name: variable.variable_name!,
 				value: variable.value!,
 				dark_value: variable.dark_value || undefined,
 				type: variable.type || "Color",
 			});
-
-			// Add to our editable variables list
-			editableVariables.value.push({ ...newVar, isNew: false });
-			successCount++;
+			updatedCount++;
 		} catch (error) {
-			console.error("Failed to create variable:", variable.variable_name, error);
-			errorCount++;
+			console.error("Failed to update variable:", variable.variable_name, error);
+			updateErrors++;
 		}
 	}
 
-	// Show results
-	if (successCount > 0) toast.success(`Successfully created ${successCount} variables`);
-	if (errorCount > 0) toast.error(`Failed to create ${errorCount} variables`);
-	if (duplicateCount > 0) toast.warning(`Skipped ${duplicateCount} duplicate entries`);
+	for (const variable of newVariables) {
+		try {
+			await createVar({
+				variable_name: variable.variable_name!,
+				value: variable.value!,
+				dark_value: variable.dark_value || undefined,
+				type: variable.type || "Color",
+			});
+			createdCount++;
+		} catch (error) {
+			console.error("Failed to create variable:", variable.variable_name, error);
+			createErrors++;
+		}
+	}
+
+	if (createdCount > 0) toast.success(`Successfully created ${createdCount} variable(s)`);
+	if (updatedCount > 0) toast.success(`Successfully updated ${updatedCount} variable(s)`);
+	if (createErrors > 0) toast.error(`Failed to create ${createErrors} variable(s)`);
+	if (updateErrors > 0) toast.error(`Failed to update ${updateErrors} variable(s)`);
 	if (invalidCount > 0) toast.warning(`Skipped ${invalidCount} invalid entries`);
 
 	if (csvFileInput.value) csvFileInput.value.value = "";

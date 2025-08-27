@@ -89,7 +89,7 @@ function builderVariableComposable() {
 		createVariable,
 		updateVariable,
 		deleteVariable,
-		variables: computed(() => builderVariableStore.data || []),
+		variables: computed(() => (builderVariableStore.data as BuilderVariable[]) || []),
 	};
 }
 
