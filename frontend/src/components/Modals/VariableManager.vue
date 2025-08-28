@@ -6,7 +6,7 @@
 				emit('update:modelValue', val);
 			}
 		"
-		:width="540"
+		:width="520"
 		:container="container"
 		v-if="modelValue"
 		:placement-offset="20"
@@ -36,11 +36,15 @@
 								:modelValue="row.variable_name"
 								@update:modelValue="
 									(val: string) => {
-										updateVariable({
-											name: row.name,
-											variable_name: val,
-										});
-										stopEditing();
+										if (!row.isNew) {
+											updateVariable({
+												name: row.name,
+												variable_name: val,
+											});
+											stopEditing();
+										} else {
+											row.variable_name = val;
+										}
 									}
 								"
 								type="text"
