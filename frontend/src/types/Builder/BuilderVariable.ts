@@ -18,4 +18,6 @@ export interface BuilderVariable{
 	type?: "Color" | "Spacing"
 	/**	Value : Data	*/
 	value: string
+	/**	Dark Value : Data	*/
+	dark_value?: string
 }

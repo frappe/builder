@@ -62,12 +62,21 @@
 						</span>
 						<li
 							v-else
-							class="w-full select-none truncate rounded px-2.5 py-1.5 text-xs"
+							class="flex w-full select-none items-center gap-2 truncate rounded px-2.5 py-1.5 text-xs"
 							:class="{
 								'bg-gray-100': active,
 								'bg-gray-300': selected,
 							}">
-							{{ option.label }}
+							<component v-if="option.prefix" :is="option.prefix" />
+							<span class="truncate">
+								{{ option.label }}
+							</span>
+							<component
+								class="ml-auto"
+								v-if="option.suffix"
+								:is="option.suffix"
+								@mousedown.stop.prevent
+								@click.stop.prevent />
 						</li>
 					</ComboboxOption>
 				</div>
@@ -106,6 +115,8 @@ import { ComputedRef, computed, ref, watch } from "vue";
 type Option = {
 	label: string;
 	value: string;
+	prefix?: any;
+	suffix?: any;
 };
 
 const emit = defineEmits(["update:modelValue", "focus", "blur"]);

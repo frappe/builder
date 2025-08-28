@@ -1,10 +1,11 @@
 <template>
 	<div>
 		<ColorPicker
+			ref="colorPickerRef"
 			:placement="placement"
 			@open="events.onFocus"
 			@close="handleClose"
-			:modelValue="modelValue"
+			:modelValue="resolvedColor"
 			@update:modelValue="
 				(color) => {
 					emit('update:modelValue', color);
@@ -28,7 +29,7 @@
 								:modelValue="modelValue"
 								:getOptions="getOptions"
 								:actionButton="
-									modelValue && !isCssVariable
+									modelValue && !isCssVariable && props.showColorVariableOptions
 										? {
 												label: 'Save as Variable',
 												icon: 'plus',
@@ -77,10 +78,15 @@ import NewBuilderVariable from "@/components/Modals/NewBuilderVariable.vue";
 import { BuilderVariable } from "@/types/Builder/BuilderVariable";
 import { getRGB, toKebabCase } from "@/utils/helpers";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
+import { useDark } from "@vueuse/core";
 import { Tooltip } from "frappe-ui";
-import { computed, ref, useAttrs, watch } from "vue";
+import { computed, ComputedRef, defineComponent, h, onMounted, ref, shallowRef, useAttrs, watch } from "vue";
 import ColorPicker from "./ColorPicker.vue";
 import InputLabel from "./InputLabel.vue";
+
+const isDark = useDark({
+	attribute: "data-theme",
+});
 
 const attrs = useAttrs();
 const events = Object.fromEntries(
@@ -88,6 +94,7 @@ const events = Object.fromEntries(
 );
 
 const colorInput = ref<typeof Autocomplete | null>(null);
+const colorPickerRef = ref<typeof ColorPicker | null>(null);
 const showVariableDialog = ref(false);
 const newVariable = ref<Partial<BuilderVariable> | null>(null);
 const { variables, resolveVariableValue } = useBuilderVariable();
@@ -98,11 +105,15 @@ const props = withDefaults(
 		label?: string;
 		placeholder?: string;
 		placement?: string;
+		showColorVariableOptions?: boolean;
+		showPickerOnMount?: boolean;
 	}>(),
 	{
 		modelValue: null,
 		placeholder: "Set Color",
 		placement: "left",
+		showColorVariableOptions: true,
+		showPickerOnMount: false,
 	},
 );
 
@@ -116,10 +127,10 @@ const isCssVariable = computed(() => {
 const resolvedColor = computed(() => {
 	if (!props.modelValue) return "";
 	if (isCssVariable.value) {
-		return resolveVariableValue(props.modelValue);
+		return resolveVariableValue(props.modelValue, isDark.value);
 	}
 	return props.modelValue;
-});
+}) as ComputedRef<HashString | RGBString>;
 
 const emit = defineEmits(["update:modelValue"]);
 
@@ -144,6 +155,10 @@ const handleVariableSaved = (savedVariable: BuilderVariable) => {
 };
 
 const getOptions = async (query: string) => {
+	if (!props.showColorVariableOptions) {
+		return [];
+	}
+
 	let processedQuery = query.replace(/^(--|var|\s+)/, "");
 	processedQuery = processedQuery.replace(/^--|\(|\s+/g, "");
 	processedQuery = toKebabCase(processedQuery);
@@ -152,16 +167,62 @@ const getOptions = async (query: string) => {
 			return builderVariable.variable_name?.includes(processedQuery);
 		})
 		.map((builderVariable: BuilderVariable) => {
+			const varName = `var(--${toKebabCase(builderVariable?.variable_name || "")})`;
+			const resolvedLightColor = resolveVariableValue(varName);
+			const resolvedDarkColor = resolveVariableValue(varName, true);
 			return {
 				label: `${builderVariable?.variable_name || ""}`,
-				value: `var(--${toKebabCase(builderVariable?.variable_name || "")})`,
+				value: varName,
+				prefix: shallowRef(
+					defineComponent({
+						setup() {
+							return () =>
+								h("div", {
+									class: "h-4 w-4 rounded shadow-sm border border-outline-gray-1 flex-shrink-0",
+									style: { background: isDark.value ? resolvedDarkColor : resolvedLightColor },
+								});
+						},
+					}),
+				),
+				// edit
+				suffix: !builderVariable.is_standard
+					? shallowRef(
+							defineComponent({
+								setup() {
+									const openEdit = () => {
+										newVariable.value = { ...builderVariable };
+										showVariableDialog.value = true;
+									};
+									return () =>
+										h(
+											"Button",
+											{
+												onClick: (e: Event) => {
+													colorPickerRef.value?.togglePopover(false);
+													openEdit();
+												},
+											},
+											"Edit",
+										);
+								},
+							}),
+						)
+					: undefined,
 			};
-		})
-		.slice(0, 8);
+		});
 	return options;
 };
 
 watch(variables, () => {
 	colorInput.value?.updateOptions();
+});
+onMounted(() => {
+	if (
+		props.showPickerOnMount &&
+		colorPickerRef.value &&
+		typeof colorPickerRef.value.togglePopover === "function"
+	) {
+		colorPickerRef.value.togglePopover();
+	}
 });
 </script>

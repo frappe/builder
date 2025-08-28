@@ -119,7 +119,7 @@ const props = withDefaults(
 	}>(),
 	{
 		blocks: () => [],
-		indent: 10,
+		indent: 0,
 		adjustForRoot: true,
 		disableDraggable: false,
 	},
