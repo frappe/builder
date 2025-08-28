@@ -62,7 +62,7 @@
 						</span>
 						<li
 							v-else
-							class="flex w-full select-none items-center gap-2 truncate rounded px-2.5 py-1.5 text-xs"
+							class="group flex w-full select-none items-center gap-2 truncate rounded px-2.5 py-1.5 text-xs"
 							:class="{
 								'bg-gray-100': active,
 								'bg-gray-300': selected,
