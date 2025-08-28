@@ -13,6 +13,7 @@
   "style_public_url",
   "favicon",
   "auto_convert_images_to_webp",
+  "default_language",
   "landing_page_section",
   "home_page"
  ],
@@ -63,6 +64,13 @@
    "fieldname": "auto_convert_images_to_webp",
    "fieldtype": "Check",
    "label": "Auto convert images to WebP"
+  },
+  {
+   "default": "en",
+   "description": "Default language code for HTML lang attribute (e.g., en, es, fr, de)",
+   "fieldname": "default_language",
+   "fieldtype": "Data",
+   "label": "Default Language"
   },
   {
    "description": "This will be appended at the end of the &lt;head&gt;",

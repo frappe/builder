@@ -282,6 +282,7 @@ class BuilderPage(WebsiteGenerator):
 		self.set_style_and_script(context)
 		self.set_meta_tags(context=context, page_data=page_data)
 		self.set_favicon(context)
+		self.set_language(context)
 		context.page_data = clean_data(context.page_data)
 		try:
 			context["__content"] = render_template(context.__content, context)
@@ -305,6 +306,14 @@ class BuilderPage(WebsiteGenerator):
 			context.favicon = self.favicon
 		if not context.get("favicon"):
 			context.favicon = frappe.get_cached_value("Builder Settings", None, "favicon")
+
+	def set_language(self, context):
+		# Set page-specific language or fall back to default language from Builder Settings
+		context.language = self.language
+		if not context.language:
+			context.default_language = frappe.get_cached_value("Builder Settings", None, "default_language") or "en"
+		else:
+			context.default_language = frappe.get_cached_value("Builder Settings", None, "default_language") or "en"
 
 	def is_component_used(self, component_id):
 		if self.blocks and is_component_used(self.blocks, component_id):

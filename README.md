@@ -79,12 +79,12 @@ wget https://frappe.io/easy-install.py
 ```bash
 python3 ./easy-install.py deploy \
     --project=builder_prod_setup \
-    --email=email@example.com \
+    --email=email@example.com  \
     --image=ghcr.io/frappe/builder \
     --version=stable \
     --app=builder \
     --sitename subdomain.domain.tld
-```
+	```
 
 Replace the following parameters with your values:
 - `email@example.com`: Your email address

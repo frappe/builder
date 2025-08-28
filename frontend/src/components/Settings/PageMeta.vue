@@ -59,6 +59,14 @@
 				:modelValue="pageStore.activePage?.canonical_url"
 				:hideClearButton="true"
 				@update:modelValue="(val: string) => pageStore.updateActivePage('canonical_url', val)" />
+			<BuilderInput
+				type="text"
+				label="Language"
+				description="Language code for HTML lang attribute (e.g., en, es, fr, de, zh, ja). If not set, the default language from Builder Settings will be used."
+				placeholder="en"
+				:modelValue="pageStore.activePage?.language"
+				:hideClearButton="true"
+				@update:modelValue="(val: string) => pageStore.updateActivePage('language', val)" />
 		</div>
 	</div>
 </template>
