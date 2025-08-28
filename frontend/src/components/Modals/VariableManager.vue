@@ -6,7 +6,7 @@
 				emit('update:modelValue', val);
 			}
 		"
-		:width="500"
+		:width="540"
 		:container="container"
 		v-if="modelValue"
 		:placement-offset="20"

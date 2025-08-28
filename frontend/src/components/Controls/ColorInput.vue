@@ -5,7 +5,7 @@
 			:placement="placement"
 			@open="events.onFocus"
 			@close="handleClose"
-			:modelValue="modelValue"
+			:modelValue="resolvedColor"
 			@update:modelValue="
 				(color) => {
 					emit('update:modelValue', color);
@@ -80,7 +80,7 @@ import { getRGB, toKebabCase } from "@/utils/helpers";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useDark } from "@vueuse/core";
 import { Tooltip } from "frappe-ui";
-import { computed, defineComponent, h, onMounted, ref, useAttrs, watch } from "vue";
+import { computed, ComputedRef, defineComponent, h, onMounted, ref, shallowRef, useAttrs, watch } from "vue";
 import ColorPicker from "./ColorPicker.vue";
 import InputLabel from "./InputLabel.vue";
 
@@ -130,7 +130,7 @@ const resolvedColor = computed(() => {
 		return resolveVariableValue(props.modelValue, isDark.value);
 	}
 	return props.modelValue;
-});
+}) as ComputedRef<HashString | RGBString>;
 
 const emit = defineEmits(["update:modelValue"]);
 
@@ -173,15 +173,41 @@ const getOptions = async (query: string) => {
 			return {
 				label: `${builderVariable?.variable_name || ""}`,
 				value: varName,
-				prefix: defineComponent({
-					setup() {
-						return () =>
-							h("div", {
-								class: "h-4 w-4 rounded shadow-sm border border-outline-gray-2 flex-shrink-0",
-								style: { background: isDark.value ? resolvedDarkColor : resolvedLightColor },
-							});
-					},
-				}),
+				prefix: shallowRef(
+					defineComponent({
+						setup() {
+							return () =>
+								h("div", {
+									class: "h-4 w-4 rounded shadow-sm border border-outline-gray-1 flex-shrink-0",
+									style: { background: isDark.value ? resolvedDarkColor : resolvedLightColor },
+								});
+						},
+					}),
+				),
+				// edit
+				suffix: !builderVariable.is_standard
+					? shallowRef(
+							defineComponent({
+								setup() {
+									const openEdit = () => {
+										newVariable.value = { ...builderVariable };
+										showVariableDialog.value = true;
+									};
+									return () =>
+										h(
+											"Button",
+											{
+												onClick: (e: Event) => {
+													colorPickerRef.value?.togglePopover(false);
+													openEdit();
+												},
+											},
+											"Edit",
+										);
+								},
+							}),
+						)
+					: undefined,
 			};
 		});
 	return options;

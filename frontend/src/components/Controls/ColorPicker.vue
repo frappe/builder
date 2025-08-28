@@ -361,9 +361,11 @@ watch(
 	{ immediate: true },
 );
 
-function togglePopover() {
-	if (colorPickerPopover.value) {
-		colorPickerPopover.value.open();
+function togglePopover(open?: boolean) {
+	if (open === undefined || open) {
+		colorPickerPopover.value?.open();
+	} else {
+		colorPickerPopover.value?.close();
 	}
 }
 

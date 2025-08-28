@@ -67,13 +67,16 @@
 								'bg-gray-100': active,
 								'bg-gray-300': selected,
 							}">
+							<component v-if="option.prefix" :is="option.prefix" />
+							<span class="truncate">
+								{{ option.label }}
+							</span>
 							<component
-								v-if="option.prefix"
-								:is="option.prefix"
-								:option="option"
-								:active="active"
-								:selected="selected" />
-							{{ option.label }}
+								class="ml-auto"
+								v-if="option.suffix"
+								:is="option.suffix"
+								@mousedown.stop.prevent
+								@click.stop.prevent />
 						</li>
 					</ComboboxOption>
 				</div>
@@ -113,6 +116,7 @@ type Option = {
 	label: string;
 	value: string;
 	prefix?: any;
+	suffix?: any;
 };
 
 const emit = defineEmits(["update:modelValue", "focus", "blur"]);

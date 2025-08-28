@@ -84,7 +84,6 @@ watch(
 );
 
 const handleSave = async () => {
-	debugger;
 	try {
 		let savedVariable;
 		if (dialogMode.value === "edit") {

@@ -72,7 +72,7 @@ function builderVariableComposable() {
 		if (!builderVariable.name || !builderVariable.variable_name || !builderVariable.value) {
 			throw new Error("Variable name, id and value are required");
 		}
-		await builderVariableStore.setValue.submit(builderVariable);
+		return await builderVariableStore.setValue.submit(builderVariable);
 	};
 
 	const deleteVariable = async (name: string) => {
