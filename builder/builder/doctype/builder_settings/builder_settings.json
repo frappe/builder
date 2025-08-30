@@ -67,7 +67,7 @@
   },
   {
    "default": "en",
-   "description": "Default language code for HTML lang attribute (e.g., en, es, fr, de)",
+   "description": "Default HTML lang code (e.g., en, es, fr)",
    "fieldname": "default_language",
    "fieldtype": "Data",
    "label": "Default Language"
