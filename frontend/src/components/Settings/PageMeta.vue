@@ -62,7 +62,7 @@
 			<BuilderInput
 				type="text"
 				label="Language"
-				description="Language code for HTML lang attribute (e.g., en, es, fr, de, zh, ja). If not set, the default language from Builder Settings will be used."
+				description="Language code for HTML (e.g., en, es, fr, de). Uses default if unset."
 				placeholder="en"
 				:modelValue="pageStore.activePage?.language"
 				:hideClearButton="true"
