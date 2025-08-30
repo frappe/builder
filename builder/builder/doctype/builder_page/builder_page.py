@@ -312,8 +312,6 @@ class BuilderPage(WebsiteGenerator):
 		context.language = self.language
 		if not context.language:
 			context.default_language = frappe.get_cached_value("Builder Settings", None, "default_language") or "en"
-		else:
-			context.default_language = frappe.get_cached_value("Builder Settings", None, "default_language") or "en"
 
 	def is_component_used(self, component_id):
 		if self.blocks and is_component_used(self.blocks, component_id):
