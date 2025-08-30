@@ -15,7 +15,7 @@
 		<InlineInput
 			type="text"
 			label="Default Language"
-			description="Default language code for HTML lang attribute (e.g., en, es, fr, de, zh, ja)"
+			description="Default HTML lang code (e.g., en, es, fr)"
 			class="w-1/2"
 			placeholder="en"
 			:modelValue="builderSettings.doc?.default_language || 'en'"
