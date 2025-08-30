@@ -152,7 +152,7 @@
    "options": "URL"
   },
   {
-   "description": "Language code for HTML lang attribute (e.g., en, es, fr, de). If not set, the default language from Builder Settings will be used.",
+   "description": "Language code for HTML (e.g., en, es, fr, de). Uses default if unset.",
    "fieldname": "language",
    "fieldtype": "Data",
    "label": "Language"
