@@ -84,7 +84,6 @@ python3 ./easy-install.py deploy \
     --version=stable \
     --app=builder \
     --sitename subdomain.domain.tld
-	```
 
 Replace the following parameters with your values:
 - `email@example.com`: Your email address
