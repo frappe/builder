@@ -197,6 +197,7 @@ const getOptions = async (query: string) => {
 										h(
 											"Button",
 											{
+												class: "hidden group-hover:inline-block",
 												onClick: (e: Event) => {
 													colorPickerRef.value?.togglePopover(false);
 													openEdit();
