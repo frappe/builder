@@ -85,6 +85,7 @@ python3 ./easy-install.py deploy \
     --app=builder \
     --sitename subdomain.domain.tld
 ```
+
 Replace the following parameters with your values:
 - `email@example.com`: Your email address
 - `subdomain.domain.tld`: Your domain name where Builder will be hosted
