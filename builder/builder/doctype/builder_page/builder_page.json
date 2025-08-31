@@ -35,6 +35,7 @@
   "meta_description",
   "meta_image",
   "canonical_url",
+  "language",
   "set_meta_tags",
   "options_tab",
   "authenticated_access",
@@ -149,6 +150,12 @@
    "fieldtype": "Data",
    "label": "Canonical URL",
    "options": "URL"
+  },
+  {
+   "description": "Language code for HTML (e.g., en, es, fr, de). Uses default if unset.",
+   "fieldname": "language",
+   "fieldtype": "Data",
+   "label": "Language"
   },
   {
    "fieldname": "client_scripts",
