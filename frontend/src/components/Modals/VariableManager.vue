@@ -73,20 +73,17 @@
 								:show-color-variable-options="false"
 								@keyup.enter="stopEditing"
 								@click.stop
-								class="w-[120px]" />
+								class="-ml-2 w-[120px]" />
 
 							<template v-else>
 								<div
-									v-if="!row.is_standard"
-									class="h-5 w-5 cursor-pointer rounded-full border border-outline-gray-2"
+									class="h-4.5 w-4.5 rounded-full border border-outline-gray-2"
+									:class="{ 'cursor-pointer': !row.is_standard }"
 									:style="{ backgroundColor: resolveVariableValue(row.value || '') }"
-									@click.stop="startEditing('light', row.id, row.is_standard)"
-									:title="'Click to open color picker or edit'"></div>
-								<div
-									v-else
-									class="h-5 w-5 rounded-full border border-outline-gray-2"
-									:style="{ backgroundColor: resolveVariableValue(row.value || '') }"
-									:title="'Standard variable (read-only)'"></div>
+									@click.stop="!row.is_standard && startEditing('light', row.id, row.is_standard)"
+									:title="
+										row.is_standard ? 'Standard variable (read-only)' : 'Click to open color picker or edit'
+									"></div>
 								<span
 									class="cursor-pointer rounded py-1 text-sm text-ink-gray-7"
 									:class="{ 'cursor-not-allowed opacity-60': row.is_standard }"
@@ -107,21 +104,17 @@
 								:show-color-variable-options="false"
 								@keyup.enter="stopEditing"
 								@click.stop
-								class="w-[120px]" />
+								class="-ml-2 w-[120px]" />
 
 							<template v-else>
 								<div
-									v-if="!row.is_standard"
-									class="h-5 w-5 cursor-pointer rounded-full border border-outline-gray-2"
+									class="h-4.5 w-4.5 rounded-full border border-outline-gray-2"
+									:class="{ 'cursor-pointer': !row.is_standard }"
 									:style="{ backgroundColor: resolveVariableValue(row.dark_value || row.value || '') }"
-									@click.stop="startEditing('dark', row.id, row.is_standard)"
-									:title="'Click to open color picker or edit'"></div>
-
-								<div
-									v-else
-									class="h-5 w-5 rounded-full border border-outline-gray-2"
-									:style="{ backgroundColor: resolveVariableValue(row.dark_value || row.value || '') }"
-									:title="'Standard variable (read-only)'"></div>
+									@click.stop="!row.is_standard && startEditing('dark', row.id, row.is_standard)"
+									:title="
+										row.is_standard ? 'Standard variable (read-only)' : 'Click to open color picker or edit'
+									"></div>
 
 								<span
 									class="cursor-pointer rounded py-1 text-sm text-ink-gray-7"
@@ -207,9 +200,9 @@ const nextNewId = ref(1);
 const newVariable = ref<Partial<BuilderVariable> | null>(null);
 
 const columns = [
-	{ label: "Variable Name", key: "variable_name" },
-	{ label: "Light Mode", key: "light_color" },
-	{ label: "Dark Mode", key: "dark_color" },
+	{ label: "Name", key: "variable_name" },
+	{ label: "Light", key: "light_color" },
+	{ label: "Dark", key: "dark_color" },
 	{ label: "", key: "actions", width: "40px" },
 ];
 
