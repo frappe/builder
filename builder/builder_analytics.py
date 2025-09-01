@@ -60,7 +60,7 @@ def setup_duckdb_table(table_name=DUCKDB_TABLE):
 		)
 		db.register("df", df)
 		db.execute(
-			f"CREATE OR REPLACE TABLE {table_name} AS SELECT creation, CAST(CASE WHEN is_unique = '' OR is_unique IS NULL THEN 0 ELSE is_unique END AS INTEGER) as is_unique, path, referrer, time_zone, user_agent FROM df"
+			f"CREATE OR REPLACE TABLE {table_name} AS SELECT creation, CAST(CASE WHEN is_unique = '' OR is_unique IS NULL THEN '0' ELSE CAST(is_unique AS VARCHAR) END AS INTEGER) as is_unique, path, referrer, time_zone, user_agent FROM df"
 		)
 		print(f"Successfully ingested {len(df)} records into DuckDB")
 
