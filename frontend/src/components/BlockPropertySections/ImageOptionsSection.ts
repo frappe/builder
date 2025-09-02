@@ -97,6 +97,8 @@ const imageOptionsSectionProperties = [
 				styleProperty: "alt",
 				label: "Alt Text",
 				allowDynamicValue: true,
+				getModelValue: () => blockController.getAttribute("alt") || "",
+				setModelValue: (val: string) => blockController.setAttribute("alt", val),
 			};
 		},
 		searchKeyWords: "Alt, Text, AltText, Alternate Text",
