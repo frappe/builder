@@ -115,6 +115,27 @@ const propertyHandlers = [
 		replace: () => false,
 	},
 	{
+		// dynamicValues and dataKey
+		key: "data",
+		name: "Data",
+		matches: (block: Block, term: string) => {
+			if (block.dynamicValues) {
+				block.dynamicValues.forEach((dv: BlockDataKey) => {
+					if (dv.key?.toLowerCase().includes(term)) {
+						return true;
+					}
+				});
+			}
+			if (block.dataKey) {
+				if (block.dataKey.key?.toLowerCase().includes(term)) {
+					return true;
+				}
+			}
+			return false;
+		},
+		replace: (block: Block, searchTerm: string, replaceTerm: string) => {},
+	},
+	{
 		key: "content",
 		name: "Content",
 		matches: (block: Block, term: string) => block.getInnerHTML()?.toLowerCase().includes(term),
