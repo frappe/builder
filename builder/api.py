@@ -95,7 +95,7 @@ def upload_builder_asset():
 
 	image_file = upload_file()
 	if image_file.file_url.endswith((".png", ".jpeg", ".jpg")) and frappe.get_cached_value(
-		"Builder Settings", None, "auto_convert_images_to_webp"
+		"Builder Settings", "Builder Settings", "auto_convert_images_to_webp"
 	):
 		convert_to_webp(file_doc=image_file)
 	return image_file
@@ -171,6 +171,7 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 				return update_file_doc_with_webp(file_doc, image, extn)
 		return file_doc.file_url
 
+	image_url = image_url or ""
 	if image_url.startswith("/files"):
 		image, filename, extn = get_local_image(image_url)
 		if can_convert_image(extn):
@@ -297,3 +298,74 @@ def get_overall_analytics(
 		to_date=to_date,
 		route_filter_type=route_filter_type,
 	)
+
+
+@frappe.whitelist()
+@redis_cache()
+def get_apps_for_export():
+	"""Get list of apps where standard pages can be exported"""
+	installed_apps = frappe.get_all_apps()
+	apps = []
+	for app in installed_apps:
+		try:
+			app_hooks = frappe.get_hooks(app_name=app)
+			apps.append(
+				{
+					"name": app,
+					"title": app_hooks.get("app_title", [app])[0],
+				}
+			)
+		except Exception:
+			pass
+	return apps
+
+
+@frappe.whitelist()
+def export_page_as_standard(page_name, target_app="builder", export_name=None):
+	from builder.builder.doctype.builder_page.builder_page import export_page_as_standard
+
+	return export_page_as_standard(page_name, target_app, export_name)
+
+
+@frappe.whitelist()
+def duplicate_standard_page(app_name, page_folder_name, new_page_name=None):
+	from builder.builder.doctype.builder_page.builder_page import duplicate_standard_page
+
+	return duplicate_standard_page(app_name, page_folder_name, new_page_name)
+
+
+@frappe.whitelist()
+def get_standard_pages(app_name):
+	import os
+
+	app_path = frappe.get_app_path(app_name)
+	if not app_path:
+		return []
+
+	pages_path = os.path.join(app_path, "builder_files", "pages")
+	if not os.path.exists(pages_path):
+		return []
+
+	standard_pages = []
+	for folder_name in os.listdir(pages_path):
+		folder_path = os.path.join(pages_path, folder_name)
+		config_path = os.path.join(folder_path, "config.json")
+		if os.path.isdir(folder_path) and os.path.exists(config_path):
+			try:
+				with open(config_path) as f:
+					config = json.load(f)
+
+				standard_pages.append(
+					{
+						"folder_name": folder_name,
+						"page_name": config.get("page_name", folder_name),
+						"page_title": config.get("page_title", folder_name),
+						"route": config.get("route"),
+						"modified": config.get("modified"),
+					}
+				)
+			except Exception:
+				# Skip invalid config files
+				continue
+
+	return standard_pages

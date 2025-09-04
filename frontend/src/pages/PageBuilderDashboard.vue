@@ -6,20 +6,25 @@
 			<div
 				class="toolbar sticky top-0 z-10 flex h-12 items-center justify-end border-b-[1px] border-outline-gray-1 bg-surface-white p-2 px-3 py-1"
 				ref="toolbar">
-				<router-link
-					:to="{ name: 'builder', params: { pageId: 'new' } }"
-					@click="
-						() => {
-							posthog.capture('builder_new_page_created');
-						}
-					">
-					<BuilderButton
-						variant="solid"
-						iconLeft="plus"
-						class="bg-surface-gray-7 !text-ink-white hover:bg-surface-gray-6">
-						New
+				<div class="flex gap-2">
+					<BuilderButton variant="ghost" iconLeft="download" @click="showImportModal = true">
+						Import Standard
 					</BuilderButton>
-				</router-link>
+					<router-link
+						:to="{ name: 'builder', params: { pageId: 'new' } }"
+						@click="
+							() => {
+								posthog.capture('builder_new_page_created');
+							}
+						">
+						<BuilderButton
+							variant="solid"
+							iconLeft="plus"
+							class="bg-surface-gray-7 !text-ink-white hover:bg-surface-gray-6">
+							New
+						</BuilderButton>
+					</router-link>
+				</div>
 			</div>
 			<!-- Sidebar -->
 			<!-- Main Content -->
@@ -154,11 +159,13 @@
 			v-model="showFolderSelectorDialog"
 			:currentFolder="builderStore.activeFolder"
 			@folderSelected="setFolder"></SelectFolder>
+		<ImportStandardPageModal v-model="showImportModal" />
 	</div>
 </template>
 <script setup lang="ts">
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import DashboardSidebar from "@/components/DashboardSidebar.vue";
+import ImportStandardPageModal from "@/components/Modals/ImportStandardPageModal.vue";
 import SelectFolder from "@/components/Modals/SelectFolder.vue";
 import PageCard from "@/components/PageCard.vue";
 import PageListItem from "@/components/PageListItem.vue";
@@ -178,6 +185,7 @@ const toggleDark = useToggle(isDark);
 const builderStore = useBuilderStore();
 const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list">;
 const showFolderSelectorDialog = ref(false);
+const showImportModal = ref(false);
 
 const searchFilter = ref("");
 const typeFilter = useStorage("typeFilter", "") as Ref<"" | "draft" | "published" | "unpublished">;

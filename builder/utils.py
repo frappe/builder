@@ -1,10 +1,10 @@
 import glob
 import inspect
+import json
 import os
 import re
 import shutil
 import socket
-import subprocess
 from dataclasses import dataclass
 from os.path import join
 from urllib.parse import unquote, urlparse
@@ -35,13 +35,15 @@ class BlockDataKey:
 
 class Block:
 	blockId: str = ""
-	children: list["Block"] = None
-	baseStyles: dict = None
-	rawStyles: dict = None
-	mobileStyles: dict = None
-	tabletStyles: dict = None
-	attributes: dict = None
-	classes: list[str] = None
+	from typing import ClassVar
+
+	children: ClassVar[list["Block"]] = []
+	baseStyles: ClassVar[dict] = {}
+	rawStyles: ClassVar[dict] = {}
+	mobileStyles: ClassVar[dict] = {}
+	tabletStyles: ClassVar[dict] = {}
+	attributes: ClassVar[dict] = {}
+	classes: ClassVar[list[str]] = []
 	dataKey: BlockDataKey | None = None
 	blockName: str | None = None
 	element: str | None = None
@@ -105,7 +107,7 @@ def get_cached_doc_as_dict(doctype, name):
 def make_safe_get_request(url, **kwargs):
 	parsed = urlparse(url)
 	parsed_ip = socket.gethostbyname(parsed.hostname)
-	if parsed_ip.startswith("127", "10", "192", "172"):
+	if parsed_ip.startswith(("127", "10", "192", "172")):
 		return
 
 	return frappe.integrations.utils.make_get_request(url, **kwargs)
@@ -286,7 +288,7 @@ def copy_img_to_asset_folder(block: Block, page_doc):
 				# copy physical file to new location
 				assets_folder_path = get_template_assets_folder_path(page_doc)
 				shutil.copy(_file.get_full_path(), assets_folder_path)
-			block["attributes"]["src"] = f"/builder_assets/{page_doc.name}/{src.split('/')[-1]}"
+			block.get("attributes", {})["src"] = f"/builder_assets/{page_doc.name}/{src.split('/')[-1]}"
 	for child in block.get("children", []) or []:
 		copy_img_to_asset_folder(child, page_doc)
 
@@ -407,3 +409,168 @@ def split_styles(styles):
 		"regular": {k: v for k, v in styles.items() if ":" not in k},
 		"state": {k: v for k, v in styles.items() if ":" in k},
 	}
+
+
+def copy_assets_from_blocks(blocks, assets_path):
+	if not isinstance(blocks, list):
+		blocks = [blocks]
+
+	for block in blocks:
+		if isinstance(block, dict):
+			process_block_assets(block, assets_path)
+			children = block.get("children")
+			if children and isinstance(children, list):
+				copy_assets_from_blocks(children, assets_path)
+
+
+def process_block_assets(block, assets_path):
+	"""Process assets for a single block"""
+	if block.get("element") in ("img", "video"):
+		src = block.get("attributes", {}).get("src")
+		if src:
+			new_location = copy_asset_file(src, assets_path)
+			if new_location:
+				block["attributes"]["src"] = new_location
+
+
+def copy_asset_file(file_url, assets_path):
+	"""Copy a file from the source to assets directory and return new public path"""
+	if not file_url or not isinstance(file_url, str):
+		return None
+
+	try:
+		if file_url.startswith("/files/"):
+			return copy_from_site_files(file_url, assets_path)
+		elif file_url.startswith("/builder_assets/"):
+			return copy_from_builder_assets(file_url, assets_path)
+	except Exception as e:
+		frappe.log_error(f"Failed to copy asset {file_url}: {e!s}")
+	return None
+
+
+def copy_from_site_files(file_url, assets_path):
+	"""Copy file from site files directory"""
+	source_path = os.path.join(frappe.local.site_path, "public", file_url.lstrip("/"))
+	if os.path.exists(source_path):
+		return copy_file_to_assets(source_path, file_url, assets_path)
+	return None
+
+
+def copy_from_builder_assets(file_url, assets_path):
+	"""Copy file from builder assets directory"""
+	source_path = os.path.join(frappe.get_app_path("builder"), "www", file_url.lstrip("/"))
+	if os.path.exists(source_path):
+		return copy_file_to_assets(source_path, file_url, assets_path)
+	return None
+
+
+def copy_file_to_assets(source_path, file_url, assets_path):
+	"""Copy file to assets directory and return public path"""
+	filename = os.path.basename(file_url)
+	dest_path = os.path.join(assets_path, filename)
+	shutil.copy2(source_path, dest_path)
+	return f"/builder_assets/page_{os.path.basename(assets_path)}/{filename}"
+
+
+def extract_components_from_blocks(blocks):
+	"""Extract component IDs from blocks recursively"""
+	components = set()
+	if not isinstance(blocks, list):
+		blocks = [blocks]
+
+	for block in blocks:
+		if isinstance(block, dict):
+			if block.get("extendedFromComponent"):
+				components.add(block["extendedFromComponent"])
+			children = block.get("children")
+			if children and isinstance(children, list):
+				components.update(extract_components_from_blocks(children))
+
+	return components
+
+
+def export_client_scripts(page_doc, client_scripts_path):
+	"""Export client scripts for a page"""
+	for script_row in page_doc.client_scripts:
+		script_doc = frappe.get_doc("Builder Client Script", script_row.builder_script)
+		script_config = {
+			"script_name": script_doc.name,
+			"script_type": script_doc.script_type,
+			"script": script_doc.script,
+		}
+		script_file_path = os.path.join(client_scripts_path, f"{frappe.scrub(str(script_doc.name))}.json")
+
+		with open(script_file_path, "w") as f:
+			json.dump(script_config, f, indent=2)
+
+
+def export_components(components, components_path):
+	"""Export components to files"""
+	for component_id in components:
+		try:
+			component_doc = frappe.get_doc("Builder Component", component_id)
+			component_config = create_component_config(component_doc)
+			component_file_path = os.path.join(
+				components_path, f"{frappe.scrub(component_doc.component_name)}.json"
+			)
+
+			with open(component_file_path, "w") as f:
+				json.dump(component_config, f, indent=2)
+		except Exception as e:
+			frappe.log_error(f"Failed to export component {component_id}: {e!s}")
+
+
+def create_component_config(component_doc):
+	"""Create configuration dictionary for a component"""
+	return {
+		"component_name": component_doc.component_name,
+		"block": frappe.parse_json(component_doc.block or "{}"),
+		"preview": component_doc.preview,
+		"for_web_page": component_doc.for_web_page,
+		"creation": str(component_doc.creation),
+		"modified": str(component_doc.modified),
+		"owner": component_doc.owner,
+		"modified_by": component_doc.modified_by,
+	}
+
+
+def create_export_directories(app_path, export_name):
+	"""Create necessary directories for export and return paths"""
+	paths = get_export_paths(app_path, export_name)
+	setup_assets_symlink(app_path, paths["assets_path"])
+	for path in paths.values():
+		os.makedirs(path, exist_ok=True)
+
+	return paths
+
+
+def get_export_paths(app_path, export_name):
+	"""Get all export directory paths"""
+	builder_files_path = os.path.join(app_path, "builder_files")
+	pages_path = os.path.join(builder_files_path, "pages")
+
+	return {
+		"page_path": os.path.join(pages_path, export_name),
+		"assets_path": os.path.join(builder_files_path, "assets"),
+		"client_scripts_path": os.path.join(builder_files_path, "client_scripts"),
+		"components_path": os.path.join(builder_files_path, "components"),
+		"builder_files_path": builder_files_path,
+		"pages_path": pages_path,
+	}
+
+
+def setup_assets_symlink(app_path, assets_path):
+	symlink_path = os.path.join(app_path, "www", "builder_assets", "page_assets")
+	os.makedirs(os.path.dirname(symlink_path), exist_ok=True)
+	os.makedirs(assets_path, exist_ok=True)
+	if not os.path.islink(symlink_path):
+		remove_existing_path(symlink_path)
+		os.symlink(assets_path, symlink_path)
+
+
+def remove_existing_path(path):
+	if os.path.exists(path):
+		if os.path.isdir(path):
+			shutil.rmtree(path)
+		else:
+			os.remove(path)

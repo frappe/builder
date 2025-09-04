@@ -15,8 +15,9 @@
   "route",
   "dynamic_route",
   "column_break_ymjg",
+  "is_standard",
   "is_template",
-  "template_name",
+  "display_name",
   "section_break_ujsp",
   "blocks",
   "draft_blocks",
@@ -170,13 +171,6 @@
    "label": "Is Template"
   },
   {
-   "depends_on": "is_template",
-   "fieldname": "template_name",
-   "fieldtype": "Data",
-   "label": "Template Name",
-   "mandatory_depends_on": "is_template"
-  },
-  {
    "fieldname": "section_break_shab",
    "fieldtype": "Section Break"
   },
@@ -232,11 +226,24 @@
    "fieldtype": "Code",
    "label": "Body HTML",
    "options": "HTML"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_standard",
+   "fieldtype": "Check",
+   "label": "Is Standard"
+  },
+  {
+   "depends_on": "eval:doc.is_template || doc.is_standard",
+   "fieldname": "display_name",
+   "fieldtype": "Data",
+   "label": "Display Name",
+   "mandatory_depends_on": "eval:doc.is_template || doc.is_standard"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-20 12:22:40.697232",
+ "modified": "2025-08-25 15:30:29.945954",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

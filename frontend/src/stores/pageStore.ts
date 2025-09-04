@@ -152,6 +152,32 @@ const usePageStore = defineStore("pageStore", {
 			);
 		},
 
+		async duplicateStandardPage(appName: string, pageFolderName: string, newPageName?: string) {
+			toast.promise(
+				createResource({
+					url: "builder.api.duplicate_standard_page",
+					method: "POST",
+					params: {
+						app_name: appName,
+						page_folder_name: pageFolderName,
+						new_page_name: newPageName,
+					},
+				}).fetch(),
+				{
+					loading: "Duplicating standard page",
+					success: async (response: any) => {
+						// refresh page list and navigate to new page
+						await webPages.reload();
+						router.push({ name: "builder", params: { pageId: response.page_name } });
+						return "Standard page duplicated successfully";
+					},
+					error: (error) => {
+						return `Failed to duplicate standard page: ${error.message}`;
+					},
+				},
+			);
+		},
+
 		deletePage: async (page: BuilderPage) => {
 			const confirmed = await confirm(
 				`Are you sure you want to delete page: ${page.page_title || page.page_name}?`,
