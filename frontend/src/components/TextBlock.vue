@@ -513,4 +513,8 @@ defineExpose({
 .__text_block__ :deep(.ProseMirror) {
 	word-break: unset;
 }
+
+.__text_block__ :deep(br + .ProseMirror-trailingBreak) {
+	display: none;
+}
 </style>
