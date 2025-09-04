@@ -117,13 +117,13 @@ const propertyHandlers = [
 	{
 		key: "content",
 		name: "Content",
-		matches: (block: Block, term: string) => block.getTextContent()?.toLowerCase().includes(term),
+		matches: (block: Block, term: string) => block.getInnerHTML()?.toLowerCase().includes(term),
 		replace: (block: Block, searchTerm: string, replaceTerm: string) => {
-			if (block.isText() && block.getTextContent()) {
+			const innerHTML = block.getInnerHTML();
+			if (innerHTML) {
 				const regex = new RegExp(escapeRegExp(searchTerm), "gi");
-				if (regex.test(block.getTextContent())) {
-					const newContent = block.getTextContent().replace(regex, replaceTerm);
-					block.setInnerHTML(newContent);
+				if (regex.test(innerHTML)) {
+					block.setInnerHTML(innerHTML.replace(regex, replaceTerm));
 					return true;
 				}
 			}
