@@ -891,11 +891,10 @@ def export_page_as_standard(page_name, target_app="builder", export_name=None):
 	# Export all fields except child tables
 	page_config = {}
 	for field in page_doc.meta.fields:
-		if field.fieldtype not in ("Table", "Table MultiSelect"):
-			value = page_doc.get(field.fieldname)
-			if field.fieldtype in ("Datetime", "Date") and value is not None:
-				value = str(value)
-			page_config[field.fieldname] = value
+		value = page_doc.get(field.fieldname)
+		if field.fieldtype in ("Datetime", "Date") and value is not None:
+			value = str(value)
+		page_config[field.fieldname] = value
 
 	# Add some standard metadata fields
 	for key in ["creation", "modified", "owner", "modified_by"]:
@@ -916,16 +915,18 @@ def export_page_as_standard(page_name, target_app="builder", export_name=None):
 	if page_doc.meta_image:
 		page_config["meta_image"] = copy_asset_file(page_doc.meta_image, paths["assets_path"])
 
-	with open(config_file_path, "w") as f:
-		json.dump(page_config, f, indent=2)
+	page_config = frappe.as_json(page_config, ensure_ascii=False)
 
-	# # Export client scripts
-	# export_client_scripts(page_doc, paths["client_scripts_path"])
+	with open(config_file_path, "w", encoding="utf-8") as f:
+		f.write(page_config)
+
+	# Export client scripts
+	export_client_scripts(page_doc, paths["client_scripts_path"])
 
 	# # Export components used in the page
-	# if blocks:
-	# 	components = extract_components_from_blocks(blocks)
-	# 	export_components(components, paths["components_path"])
+	if blocks:
+		components = extract_components_from_blocks(blocks)
+		export_components(components, paths["components_path"])
 
 	return {
 		"success": True,
@@ -957,38 +958,44 @@ def duplicate_standard_page(app_name, page_folder_name, new_page_name=None):
 
 	# Create new builder page
 	new_page = frappe.new_doc("Builder Page")
-	new_page.page_name = new_page_name or f"{config.get('page_name', page_folder_name)} Copy"
-	new_page.page_title = config.get("page_title", new_page.page_name)
-	new_page.blocks = json.dumps(config.get("blocks", []))
-	new_page.page_data_script = config.get("page_data_script")
-	new_page.head_html = config.get("head_html")
-	new_page.body_html = config.get("body_html")
-	new_page.dynamic_route = config.get("dynamic_route", 0)
-	new_page.disable_indexing = config.get("disable_indexing", 0)
-	new_page.authenticated_access = config.get("authenticated_access", 0)
-	new_page.meta_description = config.get("meta_description")
-	new_page.meta_image = config.get("meta_image")
-	new_page.canonical_url = config.get("canonical_url")
-	new_page.favicon = config.get("favicon")
+	for field in [
+		"page_name",
+		"page_title",
+		"blocks",
+		"page_data_script",
+		"head_html",
+		"body_html",
+		"dynamic_route",
+		"disable_indexing",
+		"authenticated_access",
+		"meta_description",
+		"meta_image",
+		"canonical_url",
+		"favicon",
+	]:
+		value = config.get(field)
+		if field == "blocks":
+			value = json.dumps(value or [])
+		setattr(new_page, field, value)
 	new_page.published = 0  # Start as unpublished
 
+	# Import client scripts
 	# Import client scripts
 	client_scripts_path = os.path.join(app_path, "builder_files", "client_scripts")
 	if os.path.exists(client_scripts_path):
 		for script_file in os.listdir(client_scripts_path):
 			if script_file.endswith(".json"):
-				script_path = os.path.join(client_scripts_path, script_file)
-				with open(script_path) as f:
+				with open(os.path.join(client_scripts_path, script_file)) as f:
 					script_config = json.load(f)
-
-				# Create new client script
-				client_script = frappe.new_doc("Builder Client Script")
-				client_script.script_name = script_config.get("script_name")
-				client_script.script_type = script_config.get("script_type", "JavaScript")
-				client_script.script = script_config.get("script")
+				client_script = frappe.get_doc(
+					{
+						"doctype": "Builder Client Script",
+						"script_name": script_config.get("script_name"),
+						"script_type": script_config.get("script_type", "JavaScript"),
+						"script": script_config.get("script"),
+					}
+				)
 				client_script.insert(ignore_permissions=True)
-
-				# Link to page
 				new_page.append("client_scripts", {"builder_script": client_script.name})
 
 	# Import components (this would require the components to be available in the system)

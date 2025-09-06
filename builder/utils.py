@@ -481,6 +481,11 @@ def extract_components_from_blocks(blocks):
 	for block in blocks:
 		if isinstance(block, dict):
 			if block.get("extendedFromComponent"):
+				component_doc = frappe.get_cached_doc("Builder Component", block["extendedFromComponent"])
+				if component_doc:
+					components.update(
+						extract_components_from_blocks(frappe.parse_json(component_doc.block or "{}"))
+					)
 				components.add(block["extendedFromComponent"])
 			children = block.get("children")
 			if children and isinstance(children, list):
@@ -509,29 +514,15 @@ def export_components(components, components_path):
 	for component_id in components:
 		try:
 			component_doc = frappe.get_doc("Builder Component", component_id)
-			component_config = create_component_config(component_doc)
 			component_file_path = os.path.join(
 				components_path, f"{frappe.scrub(component_doc.component_name)}.json"
 			)
 
 			with open(component_file_path, "w") as f:
-				json.dump(component_config, f, indent=2)
+				f.write(frappe.as_json(component_doc.as_dict()))
 		except Exception as e:
+			print(e)
 			frappe.log_error(f"Failed to export component {component_id}: {e!s}")
-
-
-def create_component_config(component_doc):
-	"""Create configuration dictionary for a component"""
-	return {
-		"component_name": component_doc.component_name,
-		"block": frappe.parse_json(component_doc.block or "{}"),
-		"preview": component_doc.preview,
-		"for_web_page": component_doc.for_web_page,
-		"creation": str(component_doc.creation),
-		"modified": str(component_doc.modified),
-		"owner": component_doc.owner,
-		"modified_by": component_doc.modified_by,
-	}
 
 
 def create_export_directories(app_path, export_name):
