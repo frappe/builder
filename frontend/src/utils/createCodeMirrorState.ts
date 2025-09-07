@@ -129,7 +129,7 @@ export const createStartingState = async ({
 			extensions.push(
 				python(),
 				pythonLanguage.data.of({
-					autocomplete: (context: any) => customPythonCompletions(context, pythonCompletions.value),
+					autocomplete: (context: any) => customPythonCompletions(context, pythonCompletions),
 				}),
 			);
 			break;
