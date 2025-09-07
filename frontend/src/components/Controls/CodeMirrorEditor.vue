@@ -153,5 +153,9 @@ defineExpose({
 	outline: none !important;
 }
 
+.cm-activeLine {
+	background-color: rgb(191 191 191 / 16%) !important;
+}
+
 /* TODO make the search bar better looking */
 </style>
