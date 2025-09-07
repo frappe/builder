@@ -1,0 +1,149 @@
+import { Compartment, EditorState, Extension } from "@codemirror/state";
+import { EditorView } from "codemirror";
+import {
+	crosshairCursor,
+	drawSelection,
+	dropCursor,
+	highlightActiveLine,
+	highlightActiveLineGutter,
+	highlightSpecialChars,
+	keymap,
+	lineNumbers,
+	rectangularSelection,
+	ViewUpdate,
+} from "@codemirror/view";
+import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
+import {
+	autocompletion,
+	completionKeymap,
+	closeBrackets,
+	closeBracketsKeymap,
+} from "@codemirror/autocomplete";
+import {
+	bracketMatching,
+	defaultHighlightStyle,
+	foldGutter,
+	foldKeymap,
+	indentOnInput,
+	syntaxHighlighting,
+} from "@codemirror/language";
+import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
+
+// theme imports
+import { oneDark } from "@codemirror/theme-one-dark";
+
+// language imports
+import { python, pythonLanguage } from "@codemirror/lang-python";
+import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
+import { html } from "@codemirror/lang-html";
+import { css } from "@codemirror/lang-css";
+import { json } from "@codemirror/lang-json";
+
+// code completion imports
+import jsCompletionsFromGlobalScope from "./jsGlobalCompletion";
+import customPythonCompletions from "./pythonCustomCompletion";
+
+// TODO: get params as obj for better readability
+export const createStartingState = async (
+	props: any,
+	pythonCompletions: any,
+	onSaveCallback: any,
+	onChangeCallback: any,
+    initialValue = "", // to override initial value without recreating state (eg: when resetting)
+) => {
+	console.log("Creating starting state for ", props);
+	const updateEmitter = EditorView.updateListener.of((update: ViewUpdate) => {
+		if (update.docChanged) onChangeCallback();
+	});
+	// collection of basic extensions: https://github.com/codemirror/basic-setup/blob/main/src/codemirror.ts
+	const basicSetup: Extension = (() => [
+		props.showLineNumbers ? lineNumbers() : [],
+		props.readonly ? highlightActiveLineGutter() : [],
+		highlightSpecialChars(),
+		history(),
+		foldGutter(),
+		drawSelection(),
+		dropCursor(),
+		EditorState.allowMultipleSelections.of(true),
+		indentOnInput(),
+		syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+		bracketMatching(),
+		closeBrackets(),
+		autocompletion({
+			activateOnTyping: true,
+		}),
+		rectangularSelection(),
+		crosshairCursor(),
+		highlightActiveLine(),
+		highlightSelectionMatches(),
+        // indentWithTab,
+		keymap.of([
+			...closeBracketsKeymap,
+			...defaultKeymap,
+			...searchKeymap,
+			...historyKeymap,
+			...foldKeymap,
+			...completionKeymap,
+		]),
+	])();
+
+	const theme = new Compartment();
+	const extensions = [
+		basicSetup,
+		EditorState.readOnly.of(props.readonly),
+		// EditorView.editable.of(!props.readonly), // removes cursor but also disables search // TODO: use https://codemirror.net/docs/ref/#search.openSearchPanel
+		updateEmitter,
+		theme.of(oneDark),
+        keymap.of([indentWithTab]), // enable indent with tab // TODO: better tab handling
+	];
+
+	// register Ctrl+S / Cmd+S for save
+	if (props.allowSave) {
+		extensions.push(
+			keymap.of([
+				{
+					key: "Ctrl-s",
+					mac: "Cmd-s",
+					run: () => {
+						onSaveCallback();
+						return true;
+					},
+				},
+			]),
+		);
+	}
+	// TODO: reconfigure with Compartments instead of switch...case
+	switch (props.type) {
+		case "JavaScript":
+			extensions.push(
+				javascript(),
+				javascriptLanguage.data.of({
+					autocomplete: jsCompletionsFromGlobalScope,
+				}),
+			);
+			break;
+		case "Python":
+			extensions.push(
+				python(),
+				pythonLanguage.data.of({
+					autocomplete: (context: any) => customPythonCompletions(context, pythonCompletions.value),
+				}),
+			);
+			break;
+		case "HTML":
+			extensions.push(html());
+			break;
+		case "CSS":
+			extensions.push(css());
+			break;
+		case "JSON":
+			extensions.push(json());
+			break;
+	}
+
+	let startState = EditorState.create({
+		doc: props.initialValue || initialValue ||"",
+		extensions,
+	});
+	return { startState, theme };
+};

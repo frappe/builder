@@ -2,6 +2,8 @@ import json
 import os
 from io import BytesIO
 from urllib.parse import unquote
+from types import FunctionType, MethodType, ModuleType
+from typing import TYPE_CHECKING, Any
 
 import frappe
 import frappe.utils
@@ -19,6 +21,7 @@ from werkzeug.wrappers import Response
 from builder import builder_analytics
 from builder.builder.doctype.builder_page.builder_page import BuilderPageRenderer
 
+from frappe.utils.safe_exec import NamespaceDict, get_safe_globals
 
 @frappe.whitelist()
 def get_blocks(prompt):
@@ -297,3 +300,52 @@ def get_overall_analytics(
 		to_date=to_date,
 		route_filter_type=route_filter_type,
 	)
+
+def get_keys_for_autocomplete(
+    key: str,
+    value: Any,
+    depth: int = 0,
+    max_depth: int | None = None,
+):
+    if max_depth and depth > max_depth:
+        return None  # Or some other sentinel value to indicate termination
+    full_key = key
+    if key.startswith("_"):
+        return None
+
+    if isinstance(value, NamespaceDict | dict) and value:
+        result = {}
+        for k, v in value.items():
+            nested_result = get_keys_for_autocomplete(
+                k,
+                v,
+                depth + 1,
+                max_depth=max_depth,
+            )
+            if nested_result is not None:  # Only add if not terminated
+                result[k] = nested_result
+        return result if result else None # Return None if the dictionary is empty
+
+    else:
+        if isinstance(value, type) and issubclass(value, Exception):
+            var_type = "type"  # Exceptions are types
+        elif isinstance(value, ModuleType):
+            var_type = "namespace"
+        elif isinstance(value, FunctionType | MethodType):
+            var_type = "function"
+        elif isinstance(value, type):
+            var_type = "type"
+        elif isinstance(value, dict):
+            var_type = "property" # Assuming dict should be mapped to other
+        else:
+            var_type = "property"  # Default to text if no other type matches
+        return {"true_type": type(value).__name__ , "type" : var_type}
+
+
+@frappe.whitelist(allow_guest=True)
+def get_codemirror_completions():
+    return get_keys_for_autocomplete(
+        key="",
+        value=get_safe_globals(),
+    )
+

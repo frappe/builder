@@ -13,11 +13,20 @@
 				:title="actionButton.label"></BuilderButton>
 		</div>
 		<div
-			ref="editor"
 			:style="{
 				'min-height': height,
 			}"
-			class="h-auto resize-y overflow-hidden overscroll-none !rounded border border-outline-gray-2 bg-surface-gray-2 dark:bg-gray-900" />
+			class="h-auto resize-y overflow-hidden overscroll-none !rounded border border-outline-gray-2 bg-surface-gray-2 dark:bg-gray-900">
+			<CodeMirrorEditor
+				ref="editor"
+				:type
+				:readonly
+				:allow-save="showSaveButton"
+				:show-line-numbers
+				:initial-value="getModelValue()"
+				@change="handleChange"
+				@save="handleSave" />
+		</div>
 		<span class="mt-1 text-p-xs text-ink-gray-6" v-show="description" v-html="description"></span>
 		<BuilderButton
 			v-if="showSaveButton"
@@ -31,11 +40,13 @@
 </template>
 <script setup lang="ts">
 import { useDark } from "@vueuse/core";
-import ace from "ace-builds";
-import "ace-builds/src-min-noconflict/ext-searchbox";
-import "ace-builds/src-min-noconflict/theme-chrome";
-import "ace-builds/src-min-noconflict/theme-twilight";
-import { onMounted, ref, watch } from "vue";
+// import ace from "ace-builds";
+// import "ace-builds/src-min-noconflict/ext-searchbox";
+// import "ace-builds/src-min-noconflict/theme-chrome";
+// import "ace-builds/src-min-noconflict/theme-twilight";
+import { ref, watch } from "vue";
+import CodeMirrorEditor from "./CodeMirrorEditor.vue";
+import { VNodeRef } from "vue";
 
 const isDark = useDark({
 	attribute: "data-theme",
@@ -70,83 +81,22 @@ const props = withDefaults(
 );
 
 const emit = defineEmits(["save", "update:modelValue"]);
-const editor = ref<HTMLElement | null>(null);
-let aceEditor = null as ace.Ace.Editor | null;
-
-onMounted(() => {
-	setupEditor();
-});
+const editor = ref<VNodeRef | null>(null);
 
 const isDirty = ref(false);
 
-const setupEditor = () => {
-	aceEditor = ace.edit(editor.value as HTMLElement);
-	resetEditor(true);
-	aceEditor.setReadOnly(props.readonly);
-	aceEditor.setOptions({
-		fontSize: "12px",
-		useWorker: false,
-		showGutter: props.showLineNumbers,
-		wrap: props.showLineNumbers,
-	});
-	if (props.type === "CSS") {
-		import("ace-builds/src-noconflict/mode-css").then(() => {
-			aceEditor?.session.setMode("ace/mode/css");
-		});
-	} else if (props.type === "JavaScript") {
-		import("ace-builds/src-noconflict/mode-javascript").then(() => {
-			aceEditor?.session.setMode("ace/mode/javascript");
-		});
-	} else if (props.type === "Python") {
-		import("ace-builds/src-noconflict/mode-python").then(() => {
-			aceEditor?.session.setMode("ace/mode/python");
-		});
-	} else if (props.type === "JSON") {
-		import("ace-builds/src-noconflict/mode-json").then(() => {
-			aceEditor?.session.setMode("ace/mode/json");
-		});
-	} else {
-		import("ace-builds/src-noconflict/mode-html").then(() => {
-			aceEditor?.session.setMode("ace/mode/html");
-		});
-	}
-
-	aceEditor.on("change", () => {
-		if (aceEditor?.getValue() === getModelValue()) {
-			isDirty.value = false;
-			return;
-		} else if (!props.readonly) {
-			isDirty.value = true;
-		}
-	});
-
-	if (props.showSaveButton || !props.readonly) {
-		aceEditor.commands.addCommand({
-			name: "save",
-			bindKey: { win: "Ctrl-S", mac: "Cmd-S" },
-			exec: () => {
-				const value = getEditorValue();
-				if (props.showSaveButton) {
-					emit("save", value);
-				} else {
-					emit("update:modelValue", value);
-				}
-			},
-		});
-	}
-
-	aceEditor.on("blur", () => {
-		try {
-			let value = getEditorValue();
-			if (value === getModelValue()) return;
-			if (!props.showSaveButton && !props.readonly) {
-				emit("update:modelValue", value);
-			}
-		} catch (e) {
-			// do nothing
-		}
-	});
-};
+// TODO: implemet onBlur event for codemirror
+// aceEditor.on("blur", () => {
+// 	try {
+// 		let value = getEditorValue();
+// 		if (value === getModelValue()) return;
+// 		if (!props.showSaveButton && !props.readonly) {
+// 			emit("update:modelValue", value);
+// 		}
+// 	} catch (e) {
+// 		// do nothing
+// 	}
+// });
 
 const getModelValue = () => {
 	let value = props.modelValue ?? "";
@@ -161,35 +111,45 @@ const getModelValue = () => {
 };
 
 const getEditorValue = () => {
-	let value = aceEditor?.getValue();
-	if (props.type === "JSON" && value) {
-		value = JSON.parse(value);
+	if (editor.value && editor.value.editor) {
+		let value = editor.value.editor.state.doc.toString();
+		if (props.type === "JSON" && value) {
+			value = JSON.parse(value);
+		}
+		return value;
 	}
-	return value;
+};
+
+const handleChange = () => {
+	if (getEditorValue() === getModelValue()) {
+		isDirty.value = false;
+		return;
+	} else if (!props.readonly) {
+		isDirty.value = true;
+	}
+};
+
+const handleSave = () => {
+	const value = getEditorValue();
+	if (props.showSaveButton) {
+		emit("save", value);
+	} else {
+		emit("update:modelValue", value);
+	}
 };
 
 function resetEditor(resetHistory = false) {
 	const value = getModelValue();
-	aceEditor?.setValue(value);
-	aceEditor?.clearSelection();
-	aceEditor?.setTheme(isDark.value ? "ace/theme/twilight" : "ace/theme/chrome");
-	props.autofocus && aceEditor?.focus();
-	if (resetHistory) {
-		aceEditor?.session.getUndoManager().reset();
+	if (editor.value && editor.value.resetEditor) {
+		// reset from inside the editor component to avoid recreating state
+		editor.value.resetEditor({ content: value, resetHistory, autofocus: props.autofocus });
+		isDirty.value = false;
+	} else {
+		console.error("Editor not available!");
 	}
+	// aceEditor?.clearSelection(); // TODO: implement in codemirror
 	isDirty.value = false;
 }
-
-watch(isDark, () => {
-	aceEditor?.setTheme(isDark.value ? "ace/theme/twilight" : "ace/theme/chrome");
-});
-
-watch(
-	() => props.type,
-	() => {
-		setupEditor();
-	},
-);
 
 watch(
 	() => props.modelValue,
@@ -200,30 +160,3 @@ watch(
 
 defineExpose({ resetEditor, isDirty });
 </script>
-<style scoped>
-.editor .ace_editor {
-	height: 100%;
-	width: 100%;
-	border-radius: 5px;
-	overscroll-behavior: none;
-}
-.editor :deep(.ace_scrollbar-h) {
-	display: none;
-}
-.editor :deep(.ace_search) {
-	@apply dark:bg-gray-800 dark:text-gray-200;
-	@apply dark:border-gray-800;
-}
-.editor :deep(.ace_searchbtn) {
-	@apply dark:bg-gray-800 dark:text-gray-200;
-	@apply dark:border-gray-800;
-}
-.editor :deep(.ace_button) {
-	@apply dark:bg-gray-800 dark:text-gray-200;
-}
-
-.editor :deep(.ace_search_field) {
-	@apply dark:bg-gray-900 dark:text-gray-200;
-	@apply dark:border-gray-800;
-}
-</style>
