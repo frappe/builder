@@ -31,7 +31,7 @@
 		<BuilderButton
 			v-if="showSaveButton"
 			variant="solid"
-			@click="emit('save', getEditorValue())"
+			@click="emit('save', editor.getEditorValue())"
 			class="mt-3"
 			:disabled="!isDirty">
 			Save

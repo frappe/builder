@@ -127,6 +127,7 @@ onMounted(async () => {
 
 defineExpose({
 	resetEditor,
+	getEditorValue,
 });
 </script>
 
