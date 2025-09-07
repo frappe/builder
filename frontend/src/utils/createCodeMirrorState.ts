@@ -57,7 +57,6 @@ export const createStartingState = async ({
 	onChangeCallback,
     initialValue = "", // to override initial value without recreating state (eg: when resetting)
 }: CreateStateParams) => {
-	console.log("Creating starting state for ", props);
 	const updateEmitter = EditorView.updateListener.of((update: ViewUpdate) => {
 		if (update.docChanged) onChangeCallback();
 	});

@@ -72,7 +72,6 @@ const resetEditor = async (params: { content: string; resetHistory: boolean; aut
 watch(
 	() => props.type,
 	async (newType) => {
-		console.log(newType, "changed type");
 		editor.value?.destroy();
 
 		if (editorContainer.value) {
@@ -94,7 +93,6 @@ watch(
 );
 
 watch(isDark, (newVal) => {
-	console.log("theme changed", newVal);
 	if (editor.value) {
 		editor.value.dispatch({
 			effects: theme.reconfigure(newVal ? oneDark : tomorrow),

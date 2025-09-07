@@ -19,8 +19,6 @@ function getAllProperties(obj:Object) {
 
 // Usage
 const allDocumentProps = getAllProperties(document);
-console.log(allDocumentProps.includes('addEventListener')); // ✅ true
-console.log(allDocumentProps.includes('querySelector')); // ✅ true
 
 const completePropertyAfter = ['PropertyName', '.', '?.'];
 const dontCompleteIn = [
@@ -34,7 +32,6 @@ const dontCompleteIn = [
 export default function jsCompletionsFromGlobalScope(context: any) {
   let nodeBefore = syntaxTree(context.state).resolveInner(context.pos, -1);
 
-  console.log({nodeBefore})
   if (
     completePropertyAfter.includes(nodeBefore.name) &&
     nodeBefore.parent?.name == 'MemberExpression'
@@ -43,12 +40,10 @@ export default function jsCompletionsFromGlobalScope(context: any) {
     if (object?.name == 'VariableName') {
       let from = /\./.test(nodeBefore.name) ? nodeBefore.to : nodeBefore.from;
       let variableName = context.state.sliceDoc(object.from, object.to);
-      console.log({variableName})
       if (typeof window[variableName] == 'object')
         return completeProperties(from, window[variableName]);
     }
   } else if (nodeBefore.name == 'VariableName') {
-    console.log({nodeBefore, window})
     return completeProperties(nodeBefore.from, window);
   } else if (context.explicit && !dontCompleteIn.includes(nodeBefore.name)) {
     return completeProperties(context.pos, window);
@@ -58,7 +53,6 @@ export default function jsCompletionsFromGlobalScope(context: any) {
 
 function completeProperties(from: any, object: any) {
   let options = [];
-  console.log({object})
   for (let name of getAllProperties(object)) {
     options.push({
       label: name,
