@@ -49,7 +49,6 @@ interface CreateStateParams {
     initialValue?: string;
 }
 
-// TODO: get params as obj for better readability
 export const createStartingState = async ({
     props,
     extraExtensions = [], // to add extra extensions without recreating state (eg: linting)

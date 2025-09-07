@@ -148,4 +148,6 @@ defineExpose({
 .cm-focused {
 	outline: none !important;
 }
+
+/* TODO make the search bar better looking */
 </style>
