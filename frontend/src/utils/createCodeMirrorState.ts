@@ -101,7 +101,7 @@ export const createStartingState = async ({
 	];
 
 	// register Ctrl+S / Cmd+S for save
-	if (props.allowSave) {
+	if (props.allowSave || !props.readOnly) {
 		extensions.push(
 			keymap.of([
 				{
