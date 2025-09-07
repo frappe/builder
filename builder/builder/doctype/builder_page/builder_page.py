@@ -998,8 +998,23 @@ def duplicate_standard_page(app_name, page_folder_name, new_page_name=None):
 				client_script.insert(ignore_permissions=True)
 				new_page.append("client_scripts", {"builder_script": client_script.name})
 
-	# Import components (this would require the components to be available in the system)
-	# For now, we'll just save the page and let the user handle missing components
+	# find all components under builder_files/components and import them
+	components_path = os.path.join(app_path, "builder_files", "components")
+	if os.path.exists(components_path):
+		# pick only json files and import them
+		for component_file in os.listdir(components_path):
+			if component_file.endswith(".json"):
+				with open(os.path.join(components_path, component_file)) as f:
+					component_config = json.load(f)
+				component = frappe.get_doc(
+					{
+						"doctype": "Builder Component",
+						"component_name": component_config.get("component_name"),
+						"block": component_config.get("block"),
+						"component_id": component_config.get("component_id"),
+					}
+				)
+				component.insert(ignore_permissions=True)
 
 	new_page.insert(ignore_permissions=True)
 
