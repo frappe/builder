@@ -16,7 +16,7 @@
 			:style="{
 				'min-height': height,
 			}"
-			class="h-auto resize-y overflow-hidden overscroll-none !rounded border border-outline-gray-2 bg-surface-gray-2 dark:bg-gray-900">
+			class="h-auto flex resize-y overflow-hidden overscroll-none !rounded border border-outline-gray-2 bg-surface-gray-2 dark:bg-gray-900">
 			<CodeMirrorEditor
 				ref="editor"
 				:type

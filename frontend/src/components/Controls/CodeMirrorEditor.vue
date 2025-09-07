@@ -3,7 +3,7 @@ import { ref, onMounted, watch } from "vue";
 
 import { EditorView } from "codemirror";
 import { oneDark } from "@codemirror/theme-one-dark";
-
+import { tomorrow } from "thememirror";
 import { useDark } from "@vueuse/core";
 import { createResource } from "frappe-ui";
 import { createStartingState } from "@/utils/createCodeMirrorState";
@@ -19,7 +19,7 @@ const props = defineProps<{
 
 const editorContainer = ref<HTMLDivElement | null>(null);
 const editor = ref<EditorView | null>(null);
-const themeRef = ref<Compartment>();
+const theme = new Compartment();
 
 const emit = defineEmits<{
 	(e: "change"): void;
@@ -44,13 +44,14 @@ const resetEditor = async (params: { content: string; resetHistory: boolean; aut
 		if (params.resetHistory) {
 			editor.value.setState(
 				(
-					await createStartingState(
+					await createStartingState({
 						props,
-						await getPythonCompletions(),
-						() => emit("save"),
-						() => emit("change"),
-						params.content,
-					)
+						pythonCompletions: await getPythonCompletions(),
+						onSaveCallback: () => emit("save"),
+						onChangeCallback: () => emit("change"),
+						initialValue: params.content,
+						extraExtensions: [theme.of(isDark.value ? tomorrow : oneDark)],
+					})
 				).startState,
 			);
 		} else {
@@ -75,17 +76,17 @@ watch(
 		editor.value?.destroy();
 
 		if (editorContainer.value) {
-			const { startState, theme } = await createStartingState(
+			const { startState } = await createStartingState({
 				props,
-				await getPythonCompletions(),
-				() => emit("save"),
-				() => emit("change"),
-			);
+				pythonCompletions: await getPythonCompletions(),
+				onSaveCallback: () => emit("save"),
+				onChangeCallback: () => emit("change"),
+				extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
+			});
 			editor.value = new EditorView({
 				state: startState,
 				parent: editorContainer.value,
 			});
-			themeRef.value = theme;
 		} else {
 			console.error("Editor container not found");
 		}
@@ -93,26 +94,27 @@ watch(
 );
 
 watch(isDark, (newVal) => {
+	console.log("theme changed", newVal);
 	if (editor.value) {
 		editor.value.dispatch({
-			effects: themeRef.value?.reconfigure(newVal ? oneDark : []),
+			effects: theme.reconfigure(newVal ? oneDark : tomorrow),
 		});
 	}
 });
 
 onMounted(async () => {
 	if (editorContainer.value) {
-		const { startState, theme } = await createStartingState(
+		const { startState } = await createStartingState({
 			props,
-			await getPythonCompletions(),
-			() => emit("save"),
-			() => emit("change"),
-		);
+			pythonCompletions: await getPythonCompletions(),
+			onSaveCallback: () => emit("save"),
+			onChangeCallback: () => emit("change"),
+			extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
+		});
 		editor.value = new EditorView({
 			state: startState,
 			parent: editorContainer.value,
 		});
-		themeRef.value = theme;
 	} else {
 		console.error("Editor container not found");
 	}
@@ -125,20 +127,22 @@ defineExpose({
 </script>
 
 <template>
-	<div class="code-mirror-editor" style="height: 100%" ref="editorContainer"></div>
+	<div class="code-mirror-editor" ref="editorContainer"></div>
 </template>
 
 <style>
 .code-mirror-editor {
-	height: 100%;
 	width: 100%;
 	border-radius: 5px;
 	overscroll-behavior: none;
+	display: flex;
+	flex: 1;
 }
 
 .cm-editor {
 	height: 100%;
 	width: 100%;
+	flex: 1;
 }
 
 .cm-focused {

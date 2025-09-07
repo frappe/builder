@@ -29,9 +29,6 @@ import {
 } from "@codemirror/language";
 import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
 
-// theme imports
-import { oneDark } from "@codemirror/theme-one-dark";
-
 // language imports
 import { python, pythonLanguage } from "@codemirror/lang-python";
 import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
@@ -43,14 +40,24 @@ import { json } from "@codemirror/lang-json";
 import jsCompletionsFromGlobalScope from "./jsGlobalCompletion";
 import customPythonCompletions from "./pythonCustomCompletion";
 
+interface CreateStateParams {
+    props: any;
+    extraExtensions?: Extension[];
+    pythonCompletions: any;
+    onSaveCallback: any;
+    onChangeCallback: any;
+    initialValue?: string;
+}
+
 // TODO: get params as obj for better readability
-export const createStartingState = async (
-	props: any,
-	pythonCompletions: any,
-	onSaveCallback: any,
-	onChangeCallback: any,
+export const createStartingState = async ({
+    props,
+    extraExtensions = [], // to add extra extensions without recreating state (eg: linting)
+	pythonCompletions,
+	onSaveCallback,
+	onChangeCallback,
     initialValue = "", // to override initial value without recreating state (eg: when resetting)
-) => {
+}: CreateStateParams) => {
 	console.log("Creating starting state for ", props);
 	const updateEmitter = EditorView.updateListener.of((update: ViewUpdate) => {
 		if (update.docChanged) onChangeCallback();
@@ -86,14 +93,12 @@ export const createStartingState = async (
 			...completionKeymap,
 		]),
 	])();
-
-	const theme = new Compartment();
 	const extensions = [
 		basicSetup,
 		EditorState.readOnly.of(props.readonly),
 		// EditorView.editable.of(!props.readonly), // removes cursor but also disables search // TODO: use https://codemirror.net/docs/ref/#search.openSearchPanel
 		updateEmitter,
-		theme.of(oneDark),
+		...extraExtensions,
         keymap.of([indentWithTab]), // enable indent with tab // TODO: better tab handling
 	];
 
@@ -145,5 +150,5 @@ export const createStartingState = async (
 		doc: props.initialValue || initialValue ||"",
 		extensions,
 	});
-	return { startState, theme };
+	return { startState };
 };
