@@ -18,12 +18,12 @@ const props = defineProps<{
 }>();
 
 const editorContainer = ref<HTMLDivElement | null>(null);
-const editor = ref<EditorView | null>(null);
+let editor: EditorView | null = null;
 const theme = new Compartment();
 
 const emit = defineEmits<{
-	(e: "change"): void;
-	(e: "save"): void;
+	(e: "change", value: string): void;
+	(e: "save", value: string): void;
 }>();
 
 const isDark = useDark({
@@ -39,62 +39,69 @@ const getPythonCompletions = async () => {
 	return completionsResource.data || {};
 };
 
+const getEditorValue = () => {
+	if (editor) {
+		return editor.state.doc.toString();
+	}
+	return "";
+};
+
 const resetEditor = async (params: { content: string; resetHistory: boolean; autofocus: boolean }) => {
-	if (editor.value) {
+	if (editor) {
 		if (params.resetHistory) {
-			editor.value.setState(
+			editor.setState(
 				(
 					await createStartingState({
 						props,
 						pythonCompletions: await getPythonCompletions(),
-						onSaveCallback: () => emit("save"),
-						onChangeCallback: () => emit("change"),
+						onSaveCallback: () => emit("save", getEditorValue()),
+						onChangeCallback: () => emit("change", getEditorValue()),
 						initialValue: params.content,
-						extraExtensions: [theme.of(isDark.value ? tomorrow : oneDark)],
+						extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
 					})
 				).startState,
 			);
 		} else {
-			editor.value.dispatch({
+			editor.dispatch({
 				changes: {
 					from: 0,
-					to: editor.value.state.doc.length,
+					to: editor.state.doc.length,
 					insert: params.content,
 				},
 			});
 		}
-		params.autofocus && editor.value.focus();
+		params.autofocus && editor.focus();
 	} else {
 		console.error("Editor not available!");
 	}
 };
 
-watch(
-	() => props.type,
-	async (newType) => {
-		editor.value?.destroy();
+// watch(
+// 	() => props.type,
+// 	async (newType) => {
+// 		editor?.destroy();
 
-		if (editorContainer.value) {
-			const { startState } = await createStartingState({
-				props,
-				pythonCompletions: await getPythonCompletions(),
-				onSaveCallback: () => emit("save"),
-				onChangeCallback: () => emit("change"),
-				extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
-			});
-			editor.value = new EditorView({
-				state: startState,
-				parent: editorContainer.value,
-			});
-		} else {
-			console.error("Editor container not found");
-		}
-	},
-);
+// 		if (editorContainer.value) {
+// 			const { startState } = await createStartingState({
+// 				props,
+// 				pythonCompletions: await getPythonCompletions(),
+// 				onSaveCallback: () => emit("save"),
+// 				onChangeCallback: () => emit("change"),
+// 				extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
+// 			});
+// 			editor = new EditorView({
+// 				state: startState,
+// 				parent: editorContainer.value,
+// 			});
+// 		} else {
+// 			console.error("Editor container not found");
+// 		}
+// 	},
+// );
 
 watch(isDark, (newVal) => {
-	if (editor.value) {
-		editor.value.dispatch({
+	if (editor) {
+		editor.dispatch({
 			effects: theme.reconfigure(newVal ? oneDark : tomorrow),
 		});
 	}
@@ -105,11 +112,11 @@ onMounted(async () => {
 		const { startState } = await createStartingState({
 			props,
 			pythonCompletions: await getPythonCompletions(),
-			onSaveCallback: () => emit("save"),
-			onChangeCallback: () => emit("change"),
+			onSaveCallback: () => emit("save", getEditorValue()),
+			onChangeCallback: () => emit("change", getEditorValue()),
 			extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
 		});
-		editor.value = new EditorView({
+		editor = new EditorView({
 			state: startState,
 			parent: editorContainer.value,
 		});
@@ -119,7 +126,6 @@ onMounted(async () => {
 });
 
 defineExpose({
-	editor,
 	resetEditor,
 });
 </script>

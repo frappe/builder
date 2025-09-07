@@ -16,7 +16,7 @@
 			:style="{
 				'min-height': height,
 			}"
-			class="h-auto flex resize-y overflow-hidden overscroll-none !rounded border border-outline-gray-2 bg-surface-gray-2 dark:bg-gray-900">
+			class="flex h-auto resize-y overflow-hidden overscroll-none !rounded border border-outline-gray-2 bg-surface-gray-2 dark:bg-gray-900">
 			<CodeMirrorEditor
 				ref="editor"
 				:type
@@ -110,18 +110,11 @@ const getModelValue = () => {
 	return value as string;
 };
 
-const getEditorValue = () => {
-	if (editor.value && editor.value.editor) {
-		let value = editor.value.editor.state.doc.toString();
-		if (props.type === "JSON" && value) {
-			value = JSON.parse(value);
-		}
-		return value;
+const handleChange = (value: string) => {
+	if (props.type === "JSON" && value) {
+		value = JSON.parse(value);
 	}
-};
-
-const handleChange = () => {
-	if (getEditorValue() === getModelValue()) {
+	if (value === getModelValue()) {
 		isDirty.value = false;
 		return;
 	} else if (!props.readonly) {
@@ -129,8 +122,10 @@ const handleChange = () => {
 	}
 };
 
-const handleSave = () => {
-	const value = getEditorValue();
+const handleSave = (value: string) => {
+	if (props.type === "JSON" && value) {
+		value = JSON.parse(value);
+	}
 	if (props.showSaveButton) {
 		emit("save", value);
 	} else {
