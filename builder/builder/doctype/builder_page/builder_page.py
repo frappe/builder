@@ -872,14 +872,9 @@ def reset_block(block):
 	return block
 
 
-@frappe.whitelist()
-def export_page_as_standard(page_name, target_app="builder", export_name=None):
+def export_page_as_standard(page_name, target_app, export_name=None):
 	"""Export a builder page as standard files to the specified app"""
-	if not frappe.has_permission("Builder Page", ptype="write"):
-		frappe.throw("You do not have permission to export pages.")
-
 	page_doc = frappe.get_doc("Builder Page", page_name)
-
 	if not export_name:
 		export_name = page_doc.page_name or page_name
 
@@ -894,27 +889,15 @@ def export_page_as_standard(page_name, target_app="builder", export_name=None):
 	# Create directories and get paths
 	paths = create_export_directories(app_path, export_name)
 
-	# Export all fields except child tables
-	page_config = {}
-	for field in page_doc.meta.fields:
-		value = page_doc.get(field.fieldname)
-		if field.fieldtype in ("Datetime", "Date") and value is not None:
-			value = str(value)
-		page_config[field.fieldname] = value
-
-	# Add some standard metadata fields
-	for key in ["creation", "modified", "owner", "modified_by"]:
-		value = getattr(page_doc, key, None)
-		if key in ["creation", "modified"] and value is not None:
-			value = str(value)
-		page_config[key] = value
+	page_config = page_doc.as_dict()
 
 	config_file_path = os.path.join(paths["page_path"], "config.json")
 
-	blocks = frappe.parse_json(page_config["blocks"])
+	blocks = frappe.parse_json(page_config["draft_blocks"] or page_config["blocks"])
 	if blocks:
 		copy_assets_from_blocks(blocks, paths["assets_path"])
 		page_config["blocks"] = blocks
+		page_config["draft_blocks"] = None
 
 	if page_doc.favicon:
 		page_config["favicon"] = copy_asset_file(page_doc.favicon, paths["assets_path"])
@@ -933,12 +916,6 @@ def export_page_as_standard(page_name, target_app="builder", export_name=None):
 	if blocks:
 		components = extract_components_from_blocks(blocks)
 		export_components(components, paths["components_path"])
-
-	return {
-		"success": True,
-		"message": f"Page exported successfully to {target_app}",
-		"export_path": paths["page_path"],
-	}
 
 
 @frappe.whitelist()
