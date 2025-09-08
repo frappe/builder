@@ -29,12 +29,6 @@
 						icon: 'copy',
 					},
 					{
-						label: 'Export as Standard',
-						onClick: () => (showExportModal = true),
-						icon: 'download',
-						condition: () => Boolean(pageStore.activePage),
-					},
-					{
 						label: `Toggle Theme`,
 						onClick: () => toggleDark(),
 						icon: isDark ? 'sun' : 'moon',
@@ -80,9 +74,6 @@
 			</div>
 		</template>
 	</Dropdown>
-
-	<!-- Export Modal -->
-	<ExportPageModal v-model="showExportModal" :page-name="pageStore.activePage?.name" />
 </template>
 <script setup lang="ts">
 import useCanvasStore from "@/stores/canvasStore";
@@ -92,8 +83,6 @@ import { triggerCopyEvent } from "@/utils/helpers";
 
 import { useDark, useToggle } from "@vueuse/core";
 import { Dropdown } from "frappe-ui";
-import { ref } from "vue";
-import ExportPageModal from "./Modals/ExportPageModal.vue";
 
 const pageStore = usePageStore();
 const isDark = useDark({
@@ -101,8 +90,6 @@ const isDark = useDark({
 });
 const toggleDark = useToggle(isDark);
 const canvasStore = useCanvasStore();
-
-const showExportModal = ref(false);
 
 const emit = defineEmits(["showSettings"]);
 

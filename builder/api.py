@@ -301,33 +301,6 @@ def get_overall_analytics(
 
 
 @frappe.whitelist()
-@redis_cache()
-def get_apps_for_export():
-	"""Get list of apps where standard pages can be exported"""
-	installed_apps = frappe.get_all_apps()
-	apps = []
-	for app in installed_apps:
-		try:
-			app_hooks = frappe.get_hooks(app_name=app)
-			apps.append(
-				{
-					"name": app,
-					"title": app_hooks.get("app_title", [app])[0],
-				}
-			)
-		except Exception:
-			pass
-	return apps
-
-
-@frappe.whitelist()
-def export_page_as_standard(page_name, target_app="builder", export_name=None):
-	from builder.builder.doctype.builder_page.builder_page import export_page_as_standard
-
-	return export_page_as_standard(page_name, target_app, export_name)
-
-
-@frappe.whitelist()
 def duplicate_standard_page(app_name, page_folder_name, new_page_name=None):
 	from builder.builder.doctype.builder_page.builder_page import duplicate_standard_page
 

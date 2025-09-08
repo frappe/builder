@@ -109,15 +109,16 @@ class BuilderPage(WebsiteGenerator):
 		canonical_url: DF.Data | None
 		client_scripts: DF.TableMultiSelect[BuilderPageClientScript]
 		disable_indexing: DF.Check
-		display_name: DF.Data | None
 		draft_blocks: DF.JSON | None
 		dynamic_route: DF.Check
 		favicon: DF.AttachImage | None
 		head_html: DF.Code | None
 		is_standard: DF.Check
 		is_template: DF.Check
+		language: DF.Data | None
 		meta_description: DF.SmallText | None
 		meta_image: DF.AttachImage | None
+		module: DF.Link | None
 		page_data_script: DF.Code | None
 		page_name: DF.Data | None
 		page_title: DF.Data | None
@@ -189,6 +190,13 @@ class BuilderPage(WebsiteGenerator):
 
 		if frappe.conf.developer_mode and self.is_template:
 			save_as_template(self)
+
+		if frappe.conf.developer_mode and self.is_standard and self.module:
+			from frappe.modules.utils import get_module_app
+
+			app = get_module_app(self.module)
+			if app:
+				export_page_as_standard(self.name, target_app=app)
 
 	def clear_route_cache(self):
 		get_web_pages_with_dynamic_routes.clear_cache()
@@ -867,8 +875,6 @@ def reset_block(block):
 @frappe.whitelist()
 def export_page_as_standard(page_name, target_app="builder", export_name=None):
 	"""Export a builder page as standard files to the specified app"""
-	import json
-
 	if not frappe.has_permission("Builder Page", ptype="write"):
 		frappe.throw("You do not have permission to export pages.")
 
