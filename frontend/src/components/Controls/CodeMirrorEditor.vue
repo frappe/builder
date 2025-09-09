@@ -155,8 +155,26 @@ defineExpose({
 }
 
 .cm-activeLine {
-	background-color: rgb(191 191 191 / 16%) !important;
+	background-color: rgb(190 190 190 / 15%) !important;
 }
 
+@media (prefers-color-scheme: dark) {
+	.cm-editor {
+		background-color: var(--surface-white, #FFFFFF) !important;
+	}
+	
+	.cm-gutters {
+		background-color: var(--surface-white, #FFFFFF) !important;
+		border: none;
+	}
+	
+	.cm-activeLineGutter {
+		background-color: #222227 !important;
+	}
+	
+	.cm-activeLine {
+		background-color: #6699ff0b !important;
+	}
+}
 /* TODO make the search bar better looking */
 </style>

@@ -48,9 +48,6 @@ import { ref, watch } from "vue";
 import CodeMirrorEditor from "./CodeMirrorEditor.vue";
 import { VNodeRef } from "vue";
 
-const isDark = useDark({
-	attribute: "data-theme",
-});
 const props = withDefaults(
 	defineProps<{
 		modelValue?: Object | String | Array<any>;
