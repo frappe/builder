@@ -23,7 +23,7 @@
 				<div v-else>
 					<div class="flex gap-4">
 						<CodeEditor
-							class="w-full overscroll-none"
+							class="w-2/3 overscroll-none"
 							ref="dataScriptEditor"
 							v-model="page.page_data_script"
 							type="Python"
@@ -37,7 +37,7 @@
 							type="JSON"
 							label="Data Preview"
 							:showLineNumbers="true"
-							class="-mt-5 w-2/3 [&>div>div]:bg-surface-white"
+							class="-mt-5 w-1/3 [&>div>div]:bg-surface-white"
 							height="calc(100% - 110px)"
 							description='Use Data Script to provide dynamic data to your web page.<br>
 								<b>Example:</b> data.events = frappe.get_list("Event")<br><br>

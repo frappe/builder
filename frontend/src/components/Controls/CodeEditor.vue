@@ -39,14 +39,8 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { useDark } from "@vueuse/core";
-// import ace from "ace-builds";
-// import "ace-builds/src-min-noconflict/ext-searchbox";
-// import "ace-builds/src-min-noconflict/theme-chrome";
-// import "ace-builds/src-min-noconflict/theme-twilight";
-import { ref, watch } from "vue";
+import { ref, VNodeRef, watch } from "vue";
 import CodeMirrorEditor from "./CodeMirrorEditor.vue";
-import { VNodeRef } from "vue";
 
 const props = withDefaults(
 	defineProps<{

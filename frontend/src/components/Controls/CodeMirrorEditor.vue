@@ -1,13 +1,16 @@
+<template>
+	<div class="code-mirror-editor" ref="editorContainer"></div>
+</template>
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 
-import { EditorView } from "codemirror";
-import { oneDark } from "@codemirror/theme-one-dark";
-import { tomorrow } from "thememirror";
-import { useDark } from "@vueuse/core";
-import { createResource } from "frappe-ui";
 import { createStartingState } from "@/utils/createCodeMirrorState";
-import { Compartment, EditorState } from "@codemirror/state";
+import { Compartment } from "@codemirror/state";
+import { oneDark } from "@codemirror/theme-one-dark";
+import { useDark } from "@vueuse/core";
+import { EditorView } from "codemirror";
+import { createResource } from "frappe-ui";
+import { tomorrow } from "thememirror";
 
 const props = defineProps<{
 	type: "Python" | "JavaScript" | "HTML" | "CSS" | "JSON";
@@ -76,29 +79,6 @@ const resetEditor = async (params: { content: string; resetHistory: boolean; aut
 	}
 };
 
-// watch(
-// 	() => props.type,
-// 	async (newType) => {
-// 		editor?.destroy();
-
-// 		if (editorContainer.value) {
-// 			const { startState } = await createStartingState({
-// 				props,
-// 				pythonCompletions: await getPythonCompletions(),
-// 				onSaveCallback: () => emit("save"),
-// 				onChangeCallback: () => emit("change"),
-// 				extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
-// 			});
-// 			editor = new EditorView({
-// 				state: startState,
-// 				parent: editorContainer.value,
-// 			});
-// 		} else {
-// 			console.error("Editor container not found");
-// 		}
-// 	},
-// );
-
 watch(isDark, (newVal) => {
 	if (editor) {
 		editor.dispatch({
@@ -131,10 +111,6 @@ defineExpose({
 });
 </script>
 
-<template>
-	<div class="code-mirror-editor" ref="editorContainer"></div>
-</template>
-
 <style>
 .code-mirror-editor {
 	width: 100%;
@@ -160,20 +136,20 @@ defineExpose({
 
 @media (prefers-color-scheme: dark) {
 	.cm-editor {
-		background-color: var(--surface-white, #FFFFFF) !important;
+		background-color: var(--surface-gray-1, #ffffff) !important;
 	}
-	
+
 	.cm-gutters {
-		background-color: var(--surface-white, #FFFFFF) !important;
+		background-color: var(--surface-gray-2) !important;
 		border: none;
 	}
-	
+
 	.cm-activeLineGutter {
-		background-color: #222227 !important;
+		background-color: var(--surface-gray-2) !important;
 	}
-	
+
 	.cm-activeLine {
-		background-color: #6699ff0b !important;
+		background-color: var(--surface-gray-2) !important;
 	}
 }
 /* TODO make the search bar better looking */
