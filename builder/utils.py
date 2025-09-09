@@ -10,6 +10,7 @@ from os.path import join
 from urllib.parse import unquote, urlparse
 
 import frappe
+from frappe.modules.export_file import export_to_files
 from frappe.modules.import_file import import_file_by_path
 from frappe.utils import get_site_base_path, get_site_path, get_url
 from frappe.utils.safe_exec import (
@@ -496,17 +497,20 @@ def extract_components_from_blocks(blocks):
 
 def export_client_scripts(page_doc, client_scripts_path):
 	"""Export client scripts for a page"""
+	from frappe.modules.export_file import strip_default_fields
+
 	for script_row in page_doc.client_scripts:
 		script_doc = frappe.get_doc("Builder Client Script", script_row.builder_script)
-		script_config = {
-			"script_name": script_doc.name,
-			"script_type": script_doc.script_type,
-			"script": script_doc.script,
-		}
-		script_file_path = os.path.join(client_scripts_path, f"{frappe.scrub(str(script_doc.name))}.json")
+		script_config = script_doc.as_dict(no_nulls=True)
+		script_config = strip_default_fields(script_doc, script_config)
+		fname = frappe.scrub(str(script_doc.name))
+		# ensure the target directory exists before writing the file
+		script_dir = os.path.join(client_scripts_path, fname)
+		os.makedirs(script_dir, exist_ok=True)
+		script_file_path = os.path.join(script_dir, f"{fname}.json")
 
-		with open(script_file_path, "w") as f:
-			json.dump(script_config, f, indent=2)
+		with open(script_file_path, "w", encoding="utf-8") as f:
+			f.write(frappe.as_json(script_config, ensure_ascii=False))
 
 
 def export_components(components, components_path):
@@ -565,3 +569,20 @@ def remove_existing_path(path):
 			shutil.rmtree(path)
 		else:
 			os.remove(path)
+
+
+def sync_standard_builder_pages():
+	print("Syncing Standard Builder Pages")
+	# fetch pages from all apps under builder_files/pages
+	# import components first
+
+	for app in frappe.get_installed_apps():
+		app_path = frappe.get_app_path(app)
+		pages_path = os.path.join(app_path, "builder_files", "pages")
+		client_scripts_path = os.path.join(app_path, "builder_files", "client_scripts")
+		if os.path.exists(client_scripts_path):
+			print(f"Importing components from {client_scripts_path}")
+			make_records(client_scripts_path)
+		if os.path.exists(pages_path):
+			print(f"Importing page from {pages_path}")
+			make_records(pages_path)

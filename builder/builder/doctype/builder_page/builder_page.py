@@ -9,7 +9,7 @@ import bs4 as bs
 import frappe
 import frappe.utils
 from frappe.modules import scrub
-from frappe.modules.export_file import export_to_files
+from frappe.modules.export_file import export_to_files, strip_default_fields
 from frappe.utils import set_request
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
@@ -889,11 +889,12 @@ def export_page_as_standard(page_name, target_app, export_name=None):
 	# Create directories and get paths
 	paths = create_export_directories(app_path, export_name)
 
-	page_config = page_doc.as_dict()
+	page_config = page_doc.as_dict(no_nulls=True)
+	page_config = strip_default_fields(page_doc, page_config)
 
-	config_file_path = os.path.join(paths["page_path"], "config.json")
+	config_file_path = os.path.join(paths["page_path"], f"{export_name}.json")
 
-	blocks = frappe.parse_json(page_config["draft_blocks"] or page_config["blocks"])
+	blocks = frappe.parse_json(page_config.get("draft_blocks") or page_config["blocks"])
 	if blocks:
 		copy_assets_from_blocks(blocks, paths["assets_path"])
 		page_config["blocks"] = blocks

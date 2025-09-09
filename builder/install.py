@@ -6,6 +6,7 @@ from builder.utils import (
 	sync_block_templates,
 	sync_builder_variables,
 	sync_page_templates,
+	sync_standard_builder_pages,
 )
 
 
@@ -16,9 +17,11 @@ def after_install():
 	sync_block_templates()
 	sync_builder_variables()
 	add_composite_index_to_web_page_view()
+	sync_standard_builder_pages()
 
 
 def after_migrate():
 	sync_page_templates()
 	sync_block_templates()
 	sync_builder_variables()
+	sync_standard_builder_pages()
