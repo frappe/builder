@@ -39,27 +39,25 @@
 					</BuilderButton>
 				</template>
 				<template #body>
-					<div class="w-48 rounded-lg bg-white py-2 shadow-lg ring-1 ring-black ring-opacity-5">
+					<div class="w-48 rounded-lg bg-surface-white py-2 shadow-lg ring-1 ring-black ring-opacity-5">
 						<div class="px-3 py-2 text-xs font-medium text-ink-gray-5">Filter search results by:</div>
 						<div class="space-y-1 px-2">
 							<label
 								v-for="filter in filters"
 								:key="filter.name"
-								class="flex cursor-pointer items-center rounded px-2 py-1.5 text-sm hover:bg-surface-gray-1">
+								class="flex cursor-pointer items-center rounded px-2 py-1.5 text-sm text-ink-gray-8 hover:bg-surface-gray-1">
 								<Input
 									type="checkbox"
 									:checked="filter.selected"
 									@change="toggleFilter(filter)"
-									class="focus:ring-ink-gray-5 mr-3 size-4 rounded border-gray-300 text-ink-gray-7" />
+									class="focus:ring-ink-gray-5 mr-3 size-4 rounded border-outline-gray-1 text-ink-gray-7" />
 								<span>{{ filter.name }}</span>
 							</label>
 						</div>
-						<div class="border-surface-gray-3 border-t px-2 pt-2">
-							<button
-								@click="clearAllFilters"
-								class="w-full rounded px-2 py-1.5 text-left text-sm text-ink-gray-5 hover:bg-surface-gray-1">
+						<div class="border-surface-gray-3 mt-1 border-t px-2 pt-2">
+							<BuilderButton @click="clearAllFilters" variant="subtle" class="w-full">
 								Clear all filters
-							</button>
+							</BuilderButton>
 						</div>
 					</div>
 				</template>
