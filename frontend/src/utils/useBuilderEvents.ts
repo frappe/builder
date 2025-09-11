@@ -279,6 +279,7 @@ export function useBuilderEvents(
 
 		// handle arrow keys
 		if (e.key.startsWith("Arrow") && blockController.isBlockSelected()) {
+			e.stopImmediatePropagation();
 			const key = e.key.replace("Arrow", "").toLowerCase() as "up" | "down" | "left" | "right";
 			for (const block of blockController.getSelectedBlocks()) {
 				block.move(key);
