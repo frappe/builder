@@ -1,5 +1,25 @@
-import { Compartment, EditorState, Extension } from "@codemirror/state";
-import { EditorView } from "codemirror";
+import {
+	autocompletion,
+	closeBrackets,
+	closeBracketsKeymap,
+	completionKeymap,
+} from "@codemirror/autocomplete";
+import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
+import { css } from "@codemirror/lang-css";
+import { html } from "@codemirror/lang-html";
+import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
+import { json } from "@codemirror/lang-json";
+import { python, pythonLanguage } from "@codemirror/lang-python";
+import {
+	bracketMatching,
+	defaultHighlightStyle,
+	foldGutter,
+	foldKeymap,
+	indentOnInput,
+	syntaxHighlighting,
+} from "@codemirror/language";
+import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
+import { EditorState, Extension } from "@codemirror/state";
 import {
 	crosshairCursor,
 	drawSelection,
@@ -12,54 +32,42 @@ import {
 	rectangularSelection,
 	ViewUpdate,
 } from "@codemirror/view";
-import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
-import {
-	autocompletion,
-	completionKeymap,
-	closeBrackets,
-	closeBracketsKeymap,
-} from "@codemirror/autocomplete";
-import {
-	bracketMatching,
-	defaultHighlightStyle,
-	foldGutter,
-	foldKeymap,
-	indentOnInput,
-	syntaxHighlighting,
-} from "@codemirror/language";
-import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
-
-// language imports
-import { python, pythonLanguage } from "@codemirror/lang-python";
-import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
-import { html } from "@codemirror/lang-html";
-import { css } from "@codemirror/lang-css";
-import { json } from "@codemirror/lang-json";
-
-// code completion imports
+import { EditorView } from "codemirror";
 import jsCompletionsFromGlobalScope from "./jsGlobalCompletion";
 import customPythonCompletions from "./pythonCustomCompletion";
 
 interface CreateStateParams {
-    props: any;
-    extraExtensions?: Extension[];
-    pythonCompletions: any;
-    onSaveCallback: any;
-    onChangeCallback: any;
-    initialValue?: string;
+	props: any;
+	extraExtensions?: Extension[];
+	pythonCompletions: any;
+	onSaveCallback: any;
+	onChangeCallback: any;
+	onBlurCallback?: any;
+	initialValue?: string;
 }
 
 export const createStartingState = async ({
-    props,
-    extraExtensions = [], // to add extra extensions without recreating state (eg: linting)
+	props,
+	extraExtensions = [], // to add extra extensions without recreating state (eg: linting)
 	pythonCompletions,
 	onSaveCallback,
 	onChangeCallback,
-    initialValue = "", // to override initial value without recreating state (eg: when resetting)
+	onBlurCallback,
+	initialValue = "", // to override initial value without recreating state (eg: when resetting)
 }: CreateStateParams) => {
 	const updateEmitter = EditorView.updateListener.of((update: ViewUpdate) => {
 		if (update.docChanged) onChangeCallback();
 	});
+
+	// Create blur event listener if callback is provided
+	const blurListener = onBlurCallback
+		? EditorView.domEventHandlers({
+				blur: (event, view) => {
+					onBlurCallback(view.state.doc.toString());
+					return false; // Don't prevent default
+				},
+		  })
+		: [];
 	// collection of basic extensions: https://github.com/codemirror/basic-setup/blob/main/src/codemirror.ts
 	const basicSetup: Extension = (() => [
 		props.showLineNumbers ? lineNumbers() : [],
@@ -81,7 +89,7 @@ export const createStartingState = async ({
 		crosshairCursor(),
 		highlightActiveLine(),
 		highlightSelectionMatches(),
-        // indentWithTab,
+		// indentWithTab,
 		keymap.of([
 			...closeBracketsKeymap,
 			...defaultKeymap,
@@ -96,8 +104,9 @@ export const createStartingState = async ({
 		EditorState.readOnly.of(props.readonly),
 		// EditorView.editable.of(!props.readonly), // removes cursor but also disables search // TODO: use https://codemirror.net/docs/ref/#search.openSearchPanel
 		updateEmitter,
+		blurListener,
 		...extraExtensions,
-        keymap.of([indentWithTab]), // enable indent with tab // TODO: better tab handling
+		keymap.of([indentWithTab]), // enable indent with tab // TODO: better tab handling
 	];
 
 	// register Ctrl+S / Cmd+S for save
@@ -145,7 +154,7 @@ export const createStartingState = async ({
 	}
 
 	let startState = EditorState.create({
-		doc: props.initialValue || initialValue ||"",
+		doc: props.initialValue || initialValue || "",
 		extensions,
 	});
 	return { startState };

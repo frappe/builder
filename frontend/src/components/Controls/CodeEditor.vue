@@ -25,7 +25,8 @@
 				:show-line-numbers
 				:initial-value="getModelValue()"
 				@change="handleChange"
-				@save="handleSave" />
+				@save="handleSave"
+				@blur="handleBlur" />
 		</div>
 		<span class="mt-1 text-p-xs text-ink-gray-6" v-show="description" v-html="description"></span>
 		<BuilderButton
@@ -76,18 +77,25 @@ const editor = ref<VNodeRef | null>(null);
 
 const isDirty = ref(false);
 
-// TODO: implemet onBlur event for codemirror
-// aceEditor.on("blur", () => {
-// 	try {
-// 		let value = getEditorValue();
-// 		if (value === getModelValue()) return;
-// 		if (!props.showSaveButton && !props.readonly) {
-// 			emit("update:modelValue", value);
-// 		}
-// 	} catch (e) {
-// 		// do nothing
-// 	}
-// });
+const handleBlur = (value: string) => {
+	try {
+		let processedValue = value;
+		if (props.type === "JSON" && value) {
+			processedValue = JSON.parse(value);
+		}
+
+		// Compare the raw string values instead of processed vs model
+		if (value === getModelValue()) {
+			return;
+		}
+		if (!props.showSaveButton && !props.readonly) {
+			emit("update:modelValue", processedValue);
+			isDirty.value = false; // Reset dirty state after blur save
+		}
+	} catch (e) {
+		// Silently handle JSON parse errors or other issues
+	}
+};
 
 const getModelValue = () => {
 	let value = props.modelValue ?? "";

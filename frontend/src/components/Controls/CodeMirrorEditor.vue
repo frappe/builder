@@ -27,6 +27,7 @@ const theme = new Compartment();
 const emit = defineEmits<{
 	(e: "change", value: string): void;
 	(e: "save", value: string): void;
+	(e: "blur", value: string): void;
 }>();
 
 const isDark = useDark({
@@ -59,6 +60,7 @@ const resetEditor = async (params: { content: string; resetHistory: boolean; aut
 						pythonCompletions: await getPythonCompletions(),
 						onSaveCallback: () => emit("save", getEditorValue()),
 						onChangeCallback: () => emit("change", getEditorValue()),
+						onBlurCallback: (value: string) => emit("blur", value),
 						initialValue: params.content,
 						extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
 					})
@@ -94,6 +96,7 @@ onMounted(async () => {
 			pythonCompletions: await getPythonCompletions(),
 			onSaveCallback: () => emit("save", getEditorValue()),
 			onChangeCallback: () => emit("change", getEditorValue()),
+			onBlurCallback: (value: string) => emit("blur", value),
 			extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
 		});
 		editor = new EditorView({
