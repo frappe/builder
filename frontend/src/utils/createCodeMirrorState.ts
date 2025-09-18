@@ -4,12 +4,12 @@ import {
 	closeBracketsKeymap,
 	completionKeymap,
 } from "@codemirror/autocomplete";
-import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
-import { css } from "@codemirror/lang-css";
-import { html } from "@codemirror/lang-html";
-import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
-import { json } from "@codemirror/lang-json";
-import { python, pythonLanguage } from "@codemirror/lang-python";
+import {
+	defaultKeymap,
+	history,
+	historyKeymap,
+	indentWithTab,
+} from "@codemirror/commands";
 import {
 	bracketMatching,
 	defaultHighlightStyle,
@@ -66,7 +66,7 @@ export const createStartingState = async ({
 					onBlurCallback(view.state.doc.toString());
 					return false; // Don't prevent default
 				},
-		  })
+			})
 		: [];
 	// collection of basic extensions: https://github.com/codemirror/basic-setup/blob/main/src/codemirror.ts
 	const basicSetup: Extension = (() => [
@@ -126,7 +126,10 @@ export const createStartingState = async ({
 	}
 	// TODO: reconfigure with Compartments instead of switch...case
 	switch (props.type) {
-		case "JavaScript":
+		case "JavaScript": {
+			const { javascript, javascriptLanguage } = await import(
+				"@codemirror/lang-javascript"
+			);
 			extensions.push(
 				javascript(),
 				javascriptLanguage.data.of({
@@ -134,23 +137,35 @@ export const createStartingState = async ({
 				}),
 			);
 			break;
-		case "Python":
+		}
+		case "Python": {
+			const { python, pythonLanguage } = await import(
+				"@codemirror/lang-python"
+			);
 			extensions.push(
 				python(),
 				pythonLanguage.data.of({
-					autocomplete: (context: any) => customPythonCompletions(context, pythonCompletions),
+					autocomplete: (context: any) =>
+						customPythonCompletions(context, pythonCompletions),
 				}),
 			);
 			break;
-		case "HTML":
+		}
+		case "HTML": {
+			const { html } = await import("@codemirror/lang-html");
 			extensions.push(html());
 			break;
-		case "CSS":
+		}
+		case "CSS": {
+			const { css } = await import("@codemirror/lang-css");
 			extensions.push(css());
 			break;
-		case "JSON":
+		}
+		case "JSON": {
+			const { json } = await import("@codemirror/lang-json");
 			extensions.push(json());
 			break;
+		}
 	}
 
 	let startState = EditorState.create({
