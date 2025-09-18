@@ -16,6 +16,16 @@
 		<template #header><h2 class="py-2 text-lg font-semibold">Manage Variables</h2></template>
 		<template #content>
 			<div>
+				<div class="mb-4">
+					<BuilderInput
+						:modelValue="searchQuery"
+						@input="(val: string) => (searchQuery = val)"
+						@update:modelValue="(val: string) => (searchQuery = val)"
+						type="text"
+						placeholder="Search variables"
+						class="w-full"
+						icon-left="search" />
+				</div>
 				<ListView
 					:columns="columns"
 					:rows="listViewRows"
@@ -198,6 +208,7 @@ const csvFileInput = ref<HTMLInputElement>();
 const editingCell = ref<string | null>(null);
 const nextNewId = ref(1);
 const newVariable = ref<Partial<BuilderVariable> | null>(null);
+const searchQuery = ref("");
 
 const columns = [
 	{ label: "Name", key: "variable_name" },
@@ -209,7 +220,15 @@ const columns = [
 type ListViewRow = Partial<BuilderVariable> & { id: string; isNew: Boolean };
 
 const listViewRows = computed(() => {
-	const rows: ListViewRow[] = variables.value.map((variable) => ({
+	let filteredVariables = variables.value;
+	if (searchQuery.value.trim()) {
+		const query = searchQuery.value.toLowerCase().trim();
+		filteredVariables = variables.value.filter((variable) =>
+			variable.variable_name?.toLowerCase().includes(query),
+		);
+	}
+
+	const rows: ListViewRow[] = filteredVariables.map((variable) => ({
 		...variable,
 		id: variable.name || `new-${nextNewId.value}`,
 		isNew: false,
@@ -230,8 +249,12 @@ const listViewOptions = {
 	showTooltip: false,
 	resizeColumn: false,
 	emptyState: {
-		title: "No Variables",
-		description: "No variables found. Click 'Add Variable' to create your first one.",
+		title: computed(() => (searchQuery.value.trim() ? "No Variables Found" : "No Variables")),
+		description: computed(() =>
+			searchQuery.value.trim()
+				? `No variables match "${searchQuery.value}". Try a different search term.`
+				: "No variables found. Click 'Add Variable' to create your first one.",
+		),
 	},
 };
 
@@ -262,6 +285,16 @@ const addNewVariable = async () => {
 };
 
 const updateColor = async (row: ListViewRow, value: string | null, mode: "light" | "dark") => {
+	variables.value = variables.value.map((v) =>
+		v.name === row.name
+			? {
+					...v,
+					value: mode === "light" ? value || "" : v.value,
+					dark_value: mode === "dark" ? value || "" : v.dark_value,
+				}
+			: v,
+	);
+
 	if (mode === "light") {
 		row.value = value || "";
 	} else {
@@ -312,7 +345,6 @@ const saveVariable = async (row: ListViewRow) => {
 			dark_value: row.dark_value || undefined,
 			type: row.type || "Color",
 		});
-		toast.success("Variable updated successfully");
 	} catch (error) {
 		toast.error((error as Error).message || "Failed to update variable");
 	}

@@ -127,6 +127,7 @@ Password: `admin`
 bench get-app builder
 bench new-site builder.localhost --install-app builder
 bench browse builder.localhost --user Administrator
+bench --site builder.localhost set-config ignore_csrf 1 # prevents CSRFToken errors while using the vite dev server
 ```
 1. Access the builder page at `builder.localhost:8000/builder` in your web browser.
 

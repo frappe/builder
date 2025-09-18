@@ -161,10 +161,11 @@ const getOptions = async (query: string) => {
 
 	let processedQuery = query.replace(/^(--|var|\s+)/, "");
 	processedQuery = processedQuery.replace(/^--|\(|\s+/g, "");
-	processedQuery = toKebabCase(processedQuery);
 	const options = variables.value
 		.filter((builderVariable: BuilderVariable) => {
-			return builderVariable.variable_name?.includes(processedQuery);
+			const name = (builderVariable.variable_name || "").toLowerCase();
+			const queryLower = processedQuery.toLowerCase();
+			return queryLower === "" || name.includes(queryLower);
 		})
 		.map((builderVariable: BuilderVariable) => {
 			const varName = `var(--${toKebabCase(builderVariable?.variable_name || "")})`;

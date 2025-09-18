@@ -1,56 +1,100 @@
 <template>
-	<div ref="searchBlock">
+	<div ref="searchBlock" class="focus-within:outline-none" @keydown="handleKeydown">
+		<div class="mb-4">
+			<OptionToggle
+				v-model="searchMode"
+				:options="[
+					{ label: 'Search', value: 'search', icon: 'search' },
+					{ label: 'Find & Replace', value: 'replace', icon: 'edit-3' },
+				]" />
+		</div>
+
 		<div class="mb-4 flex gap-2">
 			<BuilderInput
+				ref="searchInput"
 				class="flex-1"
 				type="text"
-				:placeholder="searchMode === 'replace' ? 'Find...' : 'Search'"
+				:placeholder="searchMode === 'replace' ? 'Find...' : 'Search blocks...'"
 				v-model="query"
-				@input="setQuery" />
+				@input="setQuery"
+				@keydown.enter="handlePrimaryAction" />
+
+			<Popover class="relative inline-block text-left">
+				<template #target="{ isOpen, togglePopover }">
+					<BuilderButton
+						@click="togglePopover"
+						variant="outline"
+						icon="filter"
+						label="Filters"
+						:class="[
+							'flex items-center gap-2 text-sm',
+							selectedFiltersCount > 0 ? 'border-ink-gray-6 bg-ink-gray-1' : '',
+						]">
+						<span
+							v-if="selectedFiltersCount > 0"
+							class="bg-ink-gray-7 ml-1 rounded-full px-2 py-0.5 text-xs text-white">
+							{{ selectedFiltersCount }}
+						</span>
+						<FeatherIcon :name="isOpen ? 'chevron-up' : 'chevron-down'" class="size-4" />
+					</BuilderButton>
+				</template>
+				<template #body>
+					<div class="w-48 rounded-lg bg-surface-white py-2 shadow-lg ring-1 ring-black ring-opacity-5">
+						<div class="px-3 py-2 text-xs font-medium text-ink-gray-5">Filter search results by:</div>
+						<div class="space-y-1 px-2">
+							<label
+								v-for="filter in filters"
+								:key="filter.name"
+								class="flex cursor-pointer items-center rounded px-2 py-1.5 text-sm text-ink-gray-8 hover:bg-surface-gray-1">
+								<Input
+									type="checkbox"
+									:checked="filter.selected"
+									@change="toggleFilter(filter)"
+									class="focus:ring-ink-gray-5 mr-3 size-4 rounded border-outline-gray-1 text-ink-gray-7" />
+								<span>{{ filter.name }}</span>
+							</label>
+						</div>
+						<div class="border-surface-gray-3 mt-1 border-t px-2 pt-2">
+							<BuilderButton @click="clearAllFilters" variant="subtle" class="w-full">
+								Clear all filters
+							</BuilderButton>
+						</div>
+					</div>
+				</template>
+			</Popover>
+		</div>
+
+		<div v-if="searchMode === 'replace'" class="mb-4">
+			<BuilderInput
+				class="w-full"
+				type="text"
+				placeholder="Replace with..."
+				v-model="replaceQuery"
+				@keydown.enter="handlePrimaryAction" />
+		</div>
+
+		<div
+			v-if="query && (searchMode === 'search' || (searchMode === 'replace' && results.length > 0))"
+			class="mb-4">
 			<BuilderButton
-				@click="toggleSearchMode"
-				:variant="searchMode === 'replace' ? 'solid' : 'outline'"
-				icon="repeat"
-				:title="
-					searchMode === 'replace' ? 'Switch to Search mode' : 'Switch to Find & Replace mode'
-				"></BuilderButton>
-		</div>
-
-		<BuilderInput
-			v-if="searchMode === 'replace'"
-			class="mb-4"
-			type="text"
-			placeholder="Replace with..."
-			v-model="replaceQuery" />
-
-		<div class="mb-4 flex flex-wrap gap-2 text-sm">
-			<Badge
-				v-for="filter in filters"
-				:key="filter.name"
-				:label="filter.name"
-				theme="gray"
-				:variant="filter.selected ? 'solid' : 'outline'"
-				size="sm"
-				class="cursor-pointer"
-				@click="toggleFilter(filter)" />
-		</div>
-
-		<div v-if="searchMode === 'replace' && results.length > 0" class="mb-4 space-y-3">
-			<BuilderButton @click="replaceAll" variant="solid" class="w-full" :disabled="!replaceQuery">
+				v-if="searchMode === 'replace'"
+				@click="handlePrimaryAction"
+				variant="solid"
+				class="w-full"
+				:disabled="!replaceQuery">
 				Replace All ({{ results.length }} matches)
 			</BuilderButton>
-			<div class="text-xs text-ink-gray-5">
-				{{ replacedCount > 0 ? `${replacedCount} replacements made` : "" }}
+			<div v-if="searchMode === 'replace' && replacedCount > 0" class="mt-2 text-xs text-ink-gray-5">
+				{{ replacedCount }} replacements made
 			</div>
 		</div>
 
 		<div v-if="!query" class="mt-6 text-center">
-			<!-- Empty State -->
 			<div class="flex flex-col items-center justify-center py-8">
-				<FeatherIcon name="search" class="mb-4 size-8 text-ink-gray-4" />
-				<p class="mb-4 text-p-xs text-ink-gray-5">
-					Find blocks by content, styles, attributes, or element type.
-				</p>
+				<div class="mb-4 flex size-16 items-center justify-center rounded-full bg-surface-gray-2">
+					<FeatherIcon name="search" class="size-8 text-ink-gray-4" />
+				</div>
+				<h3 class="mb-2 text-sm font-medium text-ink-gray-6">Search your blocks</h3>
 			</div>
 		</div>
 
@@ -93,14 +137,17 @@
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { watchDebounced } from "@vueuse/core";
-import { Badge, FeatherIcon } from "frappe-ui";
-import { nextTick, onMounted, Ref, ref } from "vue";
+import { FeatherIcon, Popover } from "frappe-ui";
+import Input from "frappe-ui/src/components/Input.vue";
+import { computed, nextTick, onMounted, Ref, ref } from "vue";
 import { toast } from "vue-sonner";
 import BuilderButton from "./BuilderButton.vue";
+import OptionToggle from "./OptionToggle.vue";
 
 const canvasStore = useCanvasStore();
 
 const searchBlock = ref(null) as Ref<HTMLInputElement | null>;
+const searchInput = ref(null) as Ref<HTMLInputElement | null>;
 const query = ref("");
 const replaceQuery = ref("");
 const searchMode = ref<"search" | "replace">("search");
@@ -210,17 +257,48 @@ const filters = ref(
 	})),
 );
 
+const selectedFiltersCount = computed(() => {
+	return filters.value.filter((f) => f.selected).length;
+});
+
 const setQuery = (value: string) => {
 	query.value = value;
 	replacedCount.value = 0;
 };
 
-const toggleSearchMode = () => {
-	searchMode.value = searchMode.value === "search" ? "replace" : "search";
+const handlePrimaryAction = () => {
+	if (searchMode.value === "search") {
+		performSearch();
+	} else if (searchMode.value === "replace" && results.value.length > 0) {
+		replaceAll();
+	}
+};
+
+const handleKeydown = (event: KeyboardEvent) => {
+	// Cmd+F or Ctrl+F for quick search
+	if ((event.metaKey || event.ctrlKey) && event.key === "f") {
+		event.preventDefault();
+		const input = searchInput.value?.querySelector?.("input") || searchInput.value;
+		if (input && "focus" in input && typeof input.focus === "function") {
+			input.focus();
+		}
+	}
+	// Escape to clear search
+	if (event.key === "Escape") {
+		query.value = "";
+		replaceQuery.value = "";
+	}
 };
 
 const toggleFilter = (filter: any) => {
 	filter.selected = !filter.selected;
+	performSearch();
+};
+
+const clearAllFilters = () => {
+	filters.value.forEach((filter) => {
+		filter.selected = false;
+	});
 	performSearch();
 };
 
@@ -351,8 +429,10 @@ const searchWithFilters = (searchTerm: string): Block[] => {
 
 onMounted(async () => {
 	await nextTick();
-	const input = searchBlock.value?.querySelector("input");
-	input?.focus();
+	const input = searchInput.value?.querySelector?.("input") || searchInput.value;
+	if (input && "focus" in input && typeof input.focus === "function") {
+		input.focus();
+	}
 });
 
 watchDebounced(query, performSearch, {
@@ -362,4 +442,13 @@ watchDebounced(query, performSearch, {
 watchDebounced(() => filters.value.map((f) => f.selected).join(","), performSearch, {
 	debounce: 300,
 });
+
+// Reset replaced count when switching modes
+watchDebounced(
+	searchMode,
+	() => {
+		replacedCount.value = 0;
+	},
+	{ debounce: 100 },
+);
 </script>
