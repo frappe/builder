@@ -26,6 +26,7 @@ export default {
 				},
 			);
 		}),
+	  	require('@tailwindcss/container-queries'),
 	],
 	theme: {
 		extend: {

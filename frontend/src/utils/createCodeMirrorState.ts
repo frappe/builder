@@ -18,7 +18,7 @@ import {
 	indentOnInput,
 	syntaxHighlighting,
 } from "@codemirror/language";
-import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
+import { highlightSelectionMatches, searchKeymap, search } from "@codemirror/search";
 import { EditorState, Extension } from "@codemirror/state";
 import {
 	crosshairCursor,
@@ -35,6 +35,9 @@ import {
 import { EditorView } from "codemirror";
 import jsCompletionsFromGlobalScope from "./jsGlobalCompletion";
 import customPythonCompletions from "./pythonCustomCompletion";
+
+import { createApp } from "vue";
+import CustomSearchPanel from "@/components/Controls/CodeMirror/CustomSearchPanel.vue";
 
 interface CreateStateParams {
 	props: any;
@@ -107,6 +110,22 @@ export const createStartingState = async ({
 		blurListener,
 		...extraExtensions,
 		keymap.of([indentWithTab]), // enable indent with tab // TODO: better tab handling
+		search({
+			createPanel(view) {
+				const dom = document.createElement("div");
+				dom.classList.add("@container");
+
+				const app = createApp(CustomSearchPanel);
+				app.provide("view", view);
+				app.provide("enableReplace", !props.readonly);
+				app.mount(dom);
+
+				return {
+					dom,
+					top: true,
+				};
+			},
+		}),
 	];
 
 	// register Ctrl+S / Cmd+S for save

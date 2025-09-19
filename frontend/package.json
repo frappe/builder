@@ -52,6 +52,7 @@
     "webfontloader": "^1.6.28"
   },
   "devDependencies": {
+    "@tailwindcss/container-queries": "^0.1.1",
     "@types/opentype.js": "^1.3.8",
     "cypress": "^13.3.2",
     "eslint": "^8.38.0",

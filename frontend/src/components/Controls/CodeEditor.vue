@@ -41,7 +41,7 @@
 </template>
 <script setup lang="ts">
 import { ref, VNodeRef, watch } from "vue";
-import CodeMirrorEditor from "./CodeMirrorEditor.vue";
+import CodeMirrorEditor from "./CodeMirror/CodeMirrorEditor.vue";
 
 const props = withDefaults(
 	defineProps<{
