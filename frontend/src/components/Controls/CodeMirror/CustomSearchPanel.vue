@@ -65,8 +65,6 @@ function toggleWholeWord() {
 }
 
 onMounted(() => {
-	// Hack to focus custom input
-	// https://discuss.codemirror.net/t/automatic-search-input-focus-only-works-when-panel-already-exists/5628/2
 	nextTick(() => {
 		inputRef.value?.select();
 	});

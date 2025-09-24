@@ -92,7 +92,6 @@ export const createStartingState = async ({
 		crosshairCursor(),
 		highlightActiveLine(),
 		highlightSelectionMatches(),
-		// indentWithTab,
 		keymap.of([
 			...closeBracketsKeymap,
 			...defaultKeymap,
@@ -128,7 +127,6 @@ export const createStartingState = async ({
 		}),
 	];
 
-	// register Ctrl+S / Cmd+S for save
 	if (props.allowSave || !props.readOnly) {
 		extensions.push(
 			keymap.of([
