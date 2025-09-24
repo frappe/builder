@@ -74,16 +74,16 @@ onMounted(() => {
 </script>
 
 <template>
-	<div class="flex w-full bg-surface-gray-1" @keydown.esc.stop="closeSearchPanel(view)">
+	<div class="flex w-full justify-between bg-surface-gray-1" @keydown.esc.stop="closeSearchPanel(view)">
 		<div v-if="enableReplace" class="flex items-center justify-center px-2 py-1.5">
 			<Button id="matchCase" variant="ghost" size="sm" class="h-full" @click="toggleReplace">
 				<LucideChevronRight v-if="!showReplace" class="h-4 w-4 cursor-pointer outline-none" />
 				<LucideChevronDown v-else class="h-4 w-4 cursor-pointer outline-none" />
 			</Button>
 		</div>
-		<div class="flex w-full flex-col">
-			<div class="relative flex flex-col items-center gap-2 px-2 py-1.5 @md:flex-row">
-				<div class="flex w-full rounded border border-gray-500 p-1">
+		<div class="flex w-full max-w-lg flex-col">
+			<div class="relative flex flex-col items-center gap-2 px-2.5 py-2 @md:flex-row">
+				<div class="flex w-full gap-1 rounded border border-gray-500">
 					<SearchInput
 						ref="inputRef"
 						v-model="search"
@@ -91,8 +91,8 @@ onMounted(() => {
 						@onchange="commit"
 						@keyup="commit"
 						@keydown.enter.prevent="enter" />
-					<div class="dark:bg-slate-700 flex shrink-0 items-center gap-1 bg-[]">
-						<div class="text-gray-10 flex items-center gap-1">
+					<div class="flex shrink-0 items-center gap-1">
+						<div class="flex items-center text-ink-gray-8">
 							<Button
 								id="matchCase"
 								:variant="caseSensitive ? 'outline' : 'ghost'"
@@ -101,12 +101,12 @@ onMounted(() => {
 								<LucideCaseSensitive class="h-4 w-4 cursor-pointer outline-none" />
 							</Button>
 						</div>
-						<div class="text-gray-10 flex items-center gap-1">
+						<div class="flex items-center text-ink-gray-8">
 							<Button id="isRegexp" :variant="regexp ? 'outline' : 'ghost'" size="sm" @click="toggleIsRegexp">
 								<LucideRegex class="h-4 w-4 cursor-pointer outline-none" />
 							</Button>
 						</div>
-						<div class="text-gray-10 flex items-center gap-1">
+						<div class="flex items-center text-ink-gray-8">
 							<Button
 								id="wholeWord"
 								:variant="wholeWord ? 'outline' : 'ghost'"
@@ -117,7 +117,7 @@ onMounted(() => {
 						</div>
 					</div>
 				</div>
-				<div class="flex items-center gap-1 justify-between w-full @md:w-auto">
+				<div class="flex w-full items-center justify-between gap-1 @md:w-auto">
 					<Button size="sm" variant="ghost" @click.prevent="findNext(view)" title="Find Next (Enter)">
 						<LucideArrowUp class="h-4 w-4 cursor-pointer text-ink-gray-8 outline-none" />
 					</Button>
@@ -144,8 +144,8 @@ onMounted(() => {
 					</Button>
 				</div>
 			</div>
-			<div v-if="enableReplace && showReplace" class="relative flex items-center gap-2 px-2 py-1.5 @md:pr-20">
-				<div class="flex w-full rounded border border-gray-500 p-1">
+			<div v-if="enableReplace && showReplace" class="relative flex items-center gap-2 px-2.5 py-2 @md:pr-20">
+				<div class="flex w-full rounded border border-gray-500">
 					<SearchInput
 						ref="inputRef"
 						v-model="replaceWith"
