@@ -7,9 +7,6 @@
 				class="toolbar sticky top-0 z-10 flex h-12 items-center justify-end border-b-[1px] border-outline-gray-1 bg-surface-white p-2 px-3 py-1"
 				ref="toolbar">
 				<div class="flex gap-2">
-					<BuilderButton variant="ghost" iconLeft="download" @click="showImportModal = true">
-						Import Standard
-					</BuilderButton>
 					<router-link
 						:to="{ name: 'builder', params: { pageId: 'new' } }"
 						@click="
@@ -116,7 +113,7 @@
 					<!-- pages -->
 					<div>
 						<div v-if="!webPages.data?.length && !searchFilter && !typeFilter" class="col-span-full">
-							<p class="mt-4 px-3 text-base text-gray-500">
+							<p class="px-3 text-base text-gray-500">
 								You don't have any pages yet. Click on the "+ New" button to create a new page.
 							</p>
 						</div>
@@ -159,13 +156,11 @@
 			v-model="showFolderSelectorDialog"
 			:currentFolder="builderStore.activeFolder"
 			@folderSelected="setFolder"></SelectFolder>
-		<ImportStandardPageModal v-model="showImportModal" />
 	</div>
 </template>
 <script setup lang="ts">
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import DashboardSidebar from "@/components/DashboardSidebar.vue";
-import ImportStandardPageModal from "@/components/Modals/ImportStandardPageModal.vue";
 import SelectFolder from "@/components/Modals/SelectFolder.vue";
 import PageCard from "@/components/PageCard.vue";
 import PageListItem from "@/components/PageListItem.vue";
