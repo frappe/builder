@@ -1,29 +1,31 @@
 <template>
 	<div class="flex flex-col gap-5">
-		<InlineInput
-			type="autocomplete"
-			label="Set Homepage"
-			:showInputAsOption="true"
-			class="w-1/2"
-			:modelValue="builderSettings.doc?.home_page"
-			@update:modelValue="
-				(val) => {
-					builderStore.updateBuilderSettings('home_page', val);
-				}
-			"
-			:options="routeOptions"></InlineInput>
-		<InlineInput
-			type="text"
-			label="Default Language"
-			description="Default HTML lang code (e.g., en, es, fr)"
-			class="w-1/2"
-			placeholder="en"
-			:modelValue="builderSettings.doc?.default_language || 'en'"
-			@update:modelValue="
-				(val) => {
-					builderStore.updateBuilderSettings('default_language', val);
-				}
-			"></InlineInput>
+		<div class="flex flex-col gap-3">
+			<InlineInput
+				type="autocomplete"
+				label="Homepage"
+				:showInputAsOption="true"
+				class="w-1/2"
+				:modelValue="builderSettings.doc?.home_page"
+				@update:modelValue="
+					(val) => {
+						builderStore.updateBuilderSettings('home_page', val);
+					}
+				"
+				:options="routeOptions"></InlineInput>
+			<InlineInput
+				type="text"
+				label="Language"
+				description="Default HTML lang code (e.g., en, es, fr)"
+				class="w-1/2"
+				placeholder="en"
+				:modelValue="builderSettings.doc?.default_language || 'en'"
+				@update:modelValue="
+					(val) => {
+						builderStore.updateBuilderSettings('default_language', val);
+					}
+				"></InlineInput>
+		</div>
 		<hr class="w-full border-outline-gray-2" />
 		<div class="flex flex-col justify-between gap-5">
 			<span class="text-lg font-semibold text-ink-gray-9">Favicon</span>

@@ -129,6 +129,9 @@
 					class="size-4 cursor-pointer hover:text-ink-gray-8"
 					@click="showNewFolderDialog = true"></BuilderButton>
 			</div>
+			<div class="flex p-2" v-show="builderStore.showDashboardSidebar && !builderProjectFolder.data.length">
+				<p class="text-sm text-ink-gray-5">No folders yet</p>
+			</div>
 			<span
 				class="flex h-8 w-full cursor-pointer items-center justify-between gap-2 rounded p-2 py-1 text-base text-ink-gray-6"
 				v-show="builderStore.showDashboardSidebar"

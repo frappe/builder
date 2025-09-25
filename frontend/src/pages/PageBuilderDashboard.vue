@@ -111,12 +111,12 @@
 					<!-- pages -->
 					<div>
 						<div v-if="!webPages.data?.length && !searchFilter && !typeFilter" class="col-span-full">
-							<p class="mt-4 px-3 text-base text-gray-500">
+							<p class="px-3 text-base text-gray-500">
 								You don't have any pages yet. Click on the "+ New" button to create a new page.
 							</p>
 						</div>
 						<div v-else-if="!webPages.data?.length" class="col-span-full">
-							<p class="mt-4 text-base text-gray-500">No matching pages found.</p>
+							<p class="text-base text-gray-500">No matching pages found.</p>
 						</div>
 						<!-- grid -->
 						<div class="grid-col grid gap-3 auto-fill-[220px]" v-if="displayType === 'grid'">
