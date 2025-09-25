@@ -35,7 +35,6 @@
     "@vitejs/plugin-vue": "5",
     "@vueuse/components": "^10.2.1",
     "@vueuse/core": "^10.2.1",
-    "ace-builds": "^1.22.0",
     "autoprefixer": "^10.4.2",
     "codemirror": "^6.0.2",
     "frappe-ui": "0.1.152",
@@ -62,7 +61,5 @@
     "prettier-plugin-tailwindcss": "^0.2.8",
     "tslib": "^2.5.0"
   },
-  "peerDependencies": {
-    "ace-builds": "^1.22.0"
-  }
+  "peerDependencies": {}
 }
