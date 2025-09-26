@@ -31,7 +31,7 @@
 					:rows="listViewRows"
 					row-key="id"
 					:options="listViewOptions"
-					class="max-h-[60vh] w-full"
+					class="list-view max-h-[60vh] w-full"
 					@click="stopEditing">
 					<template #cell="{ column, row }">
 						<div v-if="column.key === 'variable_name'" class="flex cursor-pointer items-center gap-2">
@@ -44,19 +44,8 @@
 							<BuilderInput
 								v-if="isEditing('name', row.id) || row.isNew"
 								:modelValue="row.variable_name"
-								@update:modelValue="
-									(val: string) => {
-										if (!row.isNew) {
-											updateVariable({
-												name: row.name,
-												variable_name: val,
-											});
-											stopEditing();
-										} else {
-											row.variable_name = val;
-										}
-									}
-								"
+								@update:modelValue="(val: string) => setVariableName(val, row)"
+								@input="(val: string) => setVariableName(val, row)"
 								type="text"
 								placeholder="Enter variable name"
 								@click.stop
@@ -274,6 +263,9 @@ const getNameTooltip = (row: BuilderVariable) =>
 	row.is_standard ? "Standard variable (read-only)" : "Click to edit";
 
 const addNewVariable = async () => {
+	// scroll to top of list
+	const listViewElement = document.querySelector(".list-view > .h-full");
+	if (listViewElement) listViewElement.scrollTop = 0;
 	nextNewId.value++;
 	newVariable.value = {
 		variable_name: "",
@@ -523,7 +515,18 @@ const downloadSampleCSV = () => {
 	document.body.appendChild(link);
 	link.click();
 	document.body.removeChild(link);
-
 	toast.success("Sample CSV downloaded");
+};
+
+const setVariableName = (value: string, row: ListViewRow) => {
+	if (!row.isNew) {
+		updateVariable({
+			name: row.name,
+			variable_name: value,
+		});
+		stopEditing();
+	} else {
+		row.variable_name = value;
+	}
 };
 </script>

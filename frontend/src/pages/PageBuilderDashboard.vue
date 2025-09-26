@@ -118,7 +118,7 @@
 							</p>
 						</div>
 						<div v-else-if="!webPages.data?.length" class="col-span-full">
-							<p class="mt-4 text-base text-gray-500">No matching pages found.</p>
+							<p class="text-base text-gray-500">No matching pages found.</p>
 						</div>
 						<!-- grid -->
 						<div class="grid-col grid gap-3 auto-fill-[220px]" v-if="displayType === 'grid'">
