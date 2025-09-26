@@ -1,5 +1,8 @@
 <template>
-	<div class="code-mirror-editor" ref="editorContainer"></div>
+	<div
+		class="code-mirror-editor relative @container/editor"
+		ref="editorContainer"
+		@keydown="handleKeyDown"></div>
 </template>
 <script setup lang="ts">
 import { onMounted, ref, watch } from "vue";
@@ -11,6 +14,7 @@ import { useDark } from "@vueuse/core";
 import { EditorView } from "codemirror";
 import { createResource } from "frappe-ui";
 import { tomorrow } from "thememirror";
+import { openSearchPanel } from "@codemirror/search";
 
 const props = defineProps<{
 	type: "Python" | "JavaScript" | "HTML" | "CSS" | "JSON";
@@ -76,8 +80,22 @@ const resetEditor = async (params: { content: string; resetHistory: boolean; aut
 			});
 		}
 		params.autofocus && editor.focus();
+		(editor.dom.querySelector(".cm-content") as HTMLElement)?.classList.remove("@md/editor:!pt-10", "!pt-20");
 	} else {
 		console.error("Editor not available!");
+	}
+};
+
+const handleKeyDown = (e: KeyboardEvent) => {
+	if ((e.ctrlKey || e.metaKey) && e.key === "f") {
+		e.stopImmediatePropagation();
+		e.preventDefault();
+		const closestCmEditor = (e?.target as HTMLElement)?.closest(".cm-editor") as HTMLElement;
+		const closestCmContent = closestCmEditor.querySelector(".cm-content") as HTMLElement;
+		closestCmContent?.classList.add("@md/editor:!pt-10", "!pt-20");
+		if (editor) {
+			openSearchPanel(editor);
+		}
 	}
 };
 
