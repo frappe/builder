@@ -137,23 +137,21 @@ defineExpose({
 	background-color: rgb(190 190 190 / 15%) !important;
 }
 
-@media (prefers-color-scheme: dark) {
-	.cm-editor {
-		background-color: var(--surface-gray-1, #ffffff) !important;
-	}
+.cm-editor {
+	background-color: var(--surface-gray-1, #ffffff) !important;
+}
 
-	.cm-gutters {
-		background-color: var(--surface-gray-2) !important;
-		border: none;
-	}
+.cm-gutters {
+	background-color: var(--surface-gray-2) !important;
+	border: none;
+}
 
-	.cm-activeLineGutter {
-		background-color: var(--surface-gray-2) !important;
-	}
+.cm-activeLineGutter {
+	background-color: var(--surface-gray-4) !important;
+}
 
-	.cm-activeLine {
-		background-color: var(--surface-gray-2) !important;
-	}
+.cm-gutters {
+	color: var(--ink-gray-4) !important;
 }
 /* TODO make the search bar better looking */
 </style>
