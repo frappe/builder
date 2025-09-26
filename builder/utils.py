@@ -518,8 +518,10 @@ def export_components(components, components_path):
 	for component_id in components:
 		try:
 			component_doc = frappe.get_doc("Builder Component", component_id)
+			component_dir = os.path.join(components_path, frappe.scrub(component_doc.component_name))
+			os.makedirs(component_dir, exist_ok=True)
 			component_file_path = os.path.join(
-				components_path, f"{frappe.scrub(component_doc.component_name)}.json"
+				component_dir, f"{frappe.scrub(component_doc.component_name)}.json"
 			)
 
 			with open(component_file_path, "w") as f:
@@ -579,10 +581,10 @@ def sync_standard_builder_pages():
 	for app in frappe.get_installed_apps():
 		app_path = frappe.get_app_path(app)
 		pages_path = os.path.join(app_path, "builder_files", "pages")
-		client_scripts_path = os.path.join(app_path, "builder_files", "client_scripts")
-		if os.path.exists(client_scripts_path):
-			print(f"Importing components from {client_scripts_path}")
-			make_records(client_scripts_path)
+		components_path = os.path.join(app_path, "builder_files", "components")
+		if os.path.exists(components_path):
+			print(f"Importing components from {components_path}")
+			make_records(components_path)
 		if os.path.exists(pages_path):
 			print(f"Importing page from {pages_path}")
 			make_records(pages_path)
