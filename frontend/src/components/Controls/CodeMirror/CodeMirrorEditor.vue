@@ -8,13 +8,13 @@
 import { onMounted, ref, watch } from "vue";
 
 import { createStartingState } from "@/utils/createCodeMirrorState";
+import { openSearchPanel } from "@codemirror/search";
 import { Compartment } from "@codemirror/state";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { useDark } from "@vueuse/core";
 import { EditorView } from "codemirror";
 import { createResource } from "frappe-ui";
 import { tomorrow } from "thememirror";
-import { openSearchPanel } from "@codemirror/search";
 
 const props = defineProps<{
 	type: "Python" | "JavaScript" | "HTML" | "CSS" | "JSON";
@@ -81,8 +81,6 @@ const resetEditor = async (params: { content: string; resetHistory: boolean; aut
 		}
 		params.autofocus && editor.focus();
 		(editor.dom.querySelector(".cm-content") as HTMLElement)?.classList.remove("@md/editor:!pt-10", "!pt-20");
-	} else {
-		console.error("Editor not available!");
 	}
 };
 
