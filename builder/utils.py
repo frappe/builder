@@ -582,9 +582,13 @@ def sync_standard_builder_pages():
 		app_path = frappe.get_app_path(app)
 		pages_path = os.path.join(app_path, "builder_files", "pages")
 		components_path = os.path.join(app_path, "builder_files", "components")
+		scripts_path = os.path.join(app_path, "builder_files", "client_scripts")
 		if os.path.exists(components_path):
 			print(f"Importing components from {components_path}")
 			make_records(components_path)
+		if os.path.exists(scripts_path):
+			print(f"Importing scripts from {scripts_path}")
+			make_records(scripts_path)
 		if os.path.exists(pages_path):
 			print(f"Importing page from {pages_path}")
 			make_records(pages_path)
