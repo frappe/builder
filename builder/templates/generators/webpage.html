@@ -22,28 +22,10 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	{% for (font, options) in fonts.items() %}<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ font }}:wght@{{ ";".join(options.weights) }}&display=swap" media="screen">{% endfor %}
 	{{ style }}
-	{%- if css_variables -%}
-	<style>:root {
-	{% for key, value in css_variables.items() %}{{ key }}: {{ value }};{% endfor %}
-	}
-	{%- if dark_mode_css_variables -%}
-	@media (prefers-color-scheme: dark) {:root {
-	{% for key, value in dark_mode_css_variables.items() %}{{ key }}: {{ value }};{% endfor %}
-	}
-	}
-	{%- endif -%}
-	{%- if preview -%}
-	[data-prefers-color-scheme="dark"] {
-	{% for key, value in dark_mode_css_variables.items() %}{{ key }}: {{ value }};{% endfor %}
-	}
-	{%- if dark_mode_css_variables -%}
-	[data-prefers-color-scheme="light"] {
-	{% for key, value in css_variables.items() %}{{ key }}: {{ value }};{% endfor %}
-	}
-	{%- endif -%}
-	{%- endif -%}
-	</style>
-	{%- endif -%}
+	<link rel="stylesheet" href="/builder_assets/variables.css" media="screen">
+	{% if preview %}
+	<link rel="stylesheet" href="/builder_assets/color_scheme_variables.css" media="screen">
+	{% endif %}
 	{%- if custom_fonts -%}
 	<style>{% for font in custom_fonts %}@font-face {font-family: "{{ font.font_name }}";src: url("{{ font.font_file }}");}{% endfor %}</style>
 	{%- endif -%}

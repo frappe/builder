@@ -268,10 +268,6 @@ class BuilderPage(WebsiteGenerator):
 		if context.preview and self.draft_blocks:
 			blocks = self.draft_blocks
 
-		css_variables, dark_mode_css_variables = get_css_variables()
-		context.css_variables = css_variables
-		context.dark_mode_css_variables = dark_mode_css_variables
-
 		content, style, fonts = get_block_html(blocks)
 		self.set_custom_font(context, fonts)
 		context.fonts = fonts
@@ -426,22 +422,6 @@ class BuilderPage(WebsiteGenerator):
 	def is_home_page(self):
 		"""Check if this page is set as the home page in Builder Settings."""
 		return frappe.get_cached_value("Builder Settings", "Builder Settings", "home_page") == self.route
-
-
-def get_css_variables():
-	builder_variables = frappe.get_all("Builder Variable", fields=["variable_name", "value", "dark_value"])
-	css_variables = {}
-	dark_mode_css_variables = {}
-
-	for builder_variable in builder_variables:
-		if builder_variable.variable_name and builder_variable.value:
-			variable_name = f"--{camel_case_to_kebab_case(builder_variable.variable_name, True)}"
-			css_variables[variable_name] = builder_variable.value
-
-			if hasattr(builder_variable, "dark_value") and builder_variable.dark_value:
-				dark_mode_css_variables[variable_name] = builder_variable.dark_value
-
-	return css_variables, dark_mode_css_variables
 
 
 def replace_component_in_blocks(blocks, target_component, replace_with) -> list[dict]:
