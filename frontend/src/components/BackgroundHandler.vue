@@ -67,6 +67,9 @@
 						:options="repeatOptions"
 						@update:modelValue="setBGRepeat" />
 				</div>
+				<BuilderButton v-if="showServeLocallyButton" class="mt-3 w-full" @click="serveBackgroundImageLocally">
+					{{ serveLocallyButtonText }}
+				</BuilderButton>
 				<BuilderButton v-if="backgroundImage" class="mt-3 w-full" variant="subtle" @click="clearBGImage">
 					Clear Image
 				</BuilderButton>
@@ -82,6 +85,7 @@ import InlineInput from "@/components/Controls/InlineInput.vue";
 import Input from "@/components/Controls/Input.vue";
 import PropertyControl from "@/components/Controls/PropertyControl.vue";
 import blockController from "@/utils/blockController";
+import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
 import { FileUploader, Popover } from "frappe-ui";
 import { computed } from "vue";
 
@@ -155,5 +159,21 @@ const clearBGImage = () => {
 	blockController.setStyle("backgroundSize", null);
 	blockController.setStyle("backgroundPosition", null);
 	blockController.setStyle("backgroundRepeat", null);
+};
+
+const showServeLocallyButton = computed(() => shouldShowOptimizeButton(backgroundImage.value));
+const serveLocallyButtonText = computed(() => getOptimizeButtonText(backgroundImage.value));
+
+const serveBackgroundImageLocally = () => {
+	if (!backgroundImage.value) {
+		return;
+	}
+
+	return optimizeImage({
+		imageUrl: backgroundImage.value,
+		onSuccess: (newUrl: string) => {
+			blockController.setStyle("backgroundImage", `url(${newUrl})`);
+		},
+	});
 };
 </script>
