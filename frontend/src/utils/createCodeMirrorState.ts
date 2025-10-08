@@ -109,7 +109,25 @@ export const createStartingState = async ({
 		updateEmitter,
 		blurListener,
 		...extraExtensions,
-		keymap.of([indentWithTab]), // enable indent with tab // TODO: better tab handling
+		keymap.of([
+			{
+				key: "Tab",
+				run: (view) => {
+					const spaces = "    "; // 4 spaces
+					view.dispatch({
+						changes: {
+							from: view.state.selection.main.from,
+							to: view.state.selection.main.to,
+							insert: spaces,
+						},
+						selection: {
+							anchor: view.state.selection.main.from + spaces.length,
+						},
+					});
+					return true;
+				},
+			},
+		]),
 		EditorView.domEventHandlers({
 			cut: (event, view) => {
 				// this is to prevent the cut event from propagating to document and trigger cutting the block
