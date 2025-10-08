@@ -109,6 +109,12 @@ export const createStartingState = async ({
 		blurListener,
 		...extraExtensions,
 		keymap.of([indentWithTab]), // enable indent with tab // TODO: better tab handling
+		EditorView.domEventHandlers({
+			cut: (event, view) => {
+				// this is to prevent the cut event from propagating to document and trigger cutting the block
+				event.stopPropagation();
+			},
+		}),
 		search({
 			createPanel(view) {
 				const dom = document.createElement("div");
