@@ -8,7 +8,6 @@ import {
 	defaultKeymap,
 	history,
 	historyKeymap,
-	indentWithTab,
 } from "@codemirror/commands";
 import {
 	bracketMatching,
@@ -38,6 +37,7 @@ import customPythonCompletions from "./pythonCustomCompletion";
 
 import { createApp } from "vue";
 import CustomSearchPanel from "@/components/Controls/CodeMirror/CustomSearchPanel.vue";
+import { indentationMarkers } from '@replit/codemirror-indentation-markers';
 
 interface CreateStateParams {
 	props: any;
@@ -74,6 +74,7 @@ export const createStartingState = async ({
 	// collection of basic extensions: https://github.com/codemirror/basic-setup/blob/main/src/codemirror.ts
 	const basicSetup: Extension = (() => [
 		props.showLineNumbers ? lineNumbers() : [],
+		props.showLineNumbers ? EditorView.lineWrapping : [],
 		props.readonly ? highlightActiveLineGutter() : [],
 		highlightSpecialChars(),
 		history(),
@@ -108,7 +109,31 @@ export const createStartingState = async ({
 		updateEmitter,
 		blurListener,
 		...extraExtensions,
-		keymap.of([indentWithTab]), // enable indent with tab // TODO: better tab handling
+		keymap.of([
+			{
+				key: "Tab",
+				run: (view) => {
+					const spaces = "	";
+					view.dispatch({
+						changes: {
+							from: view.state.selection.main.from,
+							to: view.state.selection.main.to,
+							insert: spaces,
+						},
+						selection: {
+							anchor: view.state.selection.main.from + spaces.length,
+						},
+					});
+					return true;
+				},
+			},
+		]),
+		EditorView.domEventHandlers({
+			cut: (event, view) => {
+				// this is to prevent the cut event from propagating to document and trigger cutting the block
+				event.stopPropagation();
+			},
+		}),
 		search({
 			createPanel(view) {
 				const dom = document.createElement("div");
@@ -125,6 +150,7 @@ export const createStartingState = async ({
 				};
 			},
 		}),
+		indentationMarkers(),
 	];
 
 	if (props.allowSave || !props.readOnly) {
