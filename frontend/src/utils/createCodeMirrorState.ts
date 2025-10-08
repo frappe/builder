@@ -37,6 +37,7 @@ import customPythonCompletions from "./pythonCustomCompletion";
 
 import { createApp } from "vue";
 import CustomSearchPanel from "@/components/Controls/CodeMirror/CustomSearchPanel.vue";
+import { indentationMarkers } from '@replit/codemirror-indentation-markers';
 
 interface CreateStateParams {
 	props: any;
@@ -149,6 +150,7 @@ export const createStartingState = async ({
 				};
 			},
 		}),
+		indentationMarkers(),
 	];
 
 	if (props.allowSave || !props.readOnly) {
