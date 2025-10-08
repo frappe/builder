@@ -74,6 +74,7 @@ export const createStartingState = async ({
 	// collection of basic extensions: https://github.com/codemirror/basic-setup/blob/main/src/codemirror.ts
 	const basicSetup: Extension = (() => [
 		props.showLineNumbers ? lineNumbers() : [],
+		props.showLineNumbers ? EditorView.lineWrapping : [],
 		props.readonly ? highlightActiveLineGutter() : [],
 		highlightSpecialChars(),
 		history(),
