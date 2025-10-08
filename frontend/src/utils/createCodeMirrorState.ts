@@ -112,7 +112,7 @@ export const createStartingState = async ({
 			{
 				key: "Tab",
 				run: (view) => {
-					const spaces = "    "; // 4 spaces
+					const spaces = "	";
 					view.dispatch({
 						changes: {
 							from: view.state.selection.main.from,
