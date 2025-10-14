@@ -8,6 +8,25 @@ from frappe.utils.caching import redis_cache
 
 
 class BuilderSettings(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		auto_convert_images_to_webp: DF.Check
+		body_html: DF.Code | None
+		favicon: DF.AttachImage | None
+		head_html: DF.Code | None
+		home_page: DF.Data | None
+		script: DF.Code | None
+		script_public_url: DF.ReadOnly | None
+		style: DF.Code | None
+		style_public_url: DF.ReadOnly | None
+	# end: auto-generated types
+
 	def on_update(self):
 		self.handle_script_update("script", "JavaScript", "js", "page_scripts")
 		self.handle_script_update("style", "css", "css", "page_styles")

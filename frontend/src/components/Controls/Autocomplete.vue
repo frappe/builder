@@ -4,11 +4,7 @@
 			:modelValue="value"
 			@update:modelValue="
 				(val) => {
-					if (showInputAsOption && typeof val === 'string') {
-						emit('update:modelValue', val);
-					} else {
-						emit('update:modelValue', val);
-					}
+					emit('update:modelValue', val);
 				}
 			"
 			v-slot="{ open }"
@@ -28,7 +24,7 @@
 					@focus="
 						() => {
 							if (!open.value) {
-								$refs.comboboxButton?.$el.click();
+								comboboxButton?.$el.click();
 							}
 							emit('focus');
 							return false;
@@ -48,20 +44,6 @@
 				v-show="filteredOptions.length || (showInputAsOption && query)">
 				<div class="w-full list-none px-1.5 py-1.5">
 					<ComboboxOption
-						v-if="showInputAsOption && query"
-						:value="{ label: query, value: query }"
-						v-slot="{ active, selected }"
-						class="flex items-center">
-						<li
-							class="w-full select-none truncate rounded px-2.5 py-1.5 text-xs"
-							:class="{
-								'bg-gray-100': active,
-								'bg-gray-300': selected,
-							}">
-							{{ query }}
-						</li>
-					</ComboboxOption>
-					<ComboboxOption
 						v-if="query && !showInputAsOption"
 						:value="query"
 						class="flex items-center"></ComboboxOption>
@@ -80,12 +62,21 @@
 						</span>
 						<li
 							v-else
-							class="w-full select-none truncate rounded px-2.5 py-1.5 text-xs"
+							class="group flex w-full select-none items-center gap-2 truncate rounded px-2.5 py-1.5 text-xs"
 							:class="{
 								'bg-gray-100': active,
 								'bg-gray-300': selected,
 							}">
-							{{ option.label }}
+							<component v-if="option.prefix" :is="option.prefix" />
+							<span class="truncate">
+								{{ option.label }}
+							</span>
+							<component
+								class="ml-auto"
+								v-if="option.suffix"
+								:is="option.suffix"
+								@mousedown.stop.prevent
+								@click.stop.prevent />
 						</li>
 					</ComboboxOption>
 				</div>
@@ -124,6 +115,8 @@ import { ComputedRef, computed, ref, watch } from "vue";
 type Option = {
 	label: string;
 	value: string;
+	prefix?: any;
+	suffix?: any;
 };
 
 const emit = defineEmits(["update:modelValue", "focus", "blur"]);
@@ -154,7 +147,33 @@ const props = withDefaults(
 const query = ref("");
 const multiple = computed(() => Array.isArray(props.modelValue));
 const nullable = computed(() => !multiple.value);
-const filteredOptions = ref(props.options);
+const asyncOptions = ref<Option[]>([]);
+const comboboxButton = ref<HTMLElement | null>(null);
+
+const filteredOptions = computed(() => {
+	const sourceOptions = props.getOptions ? asyncOptions.value : props.options;
+	let options: Option[] = [];
+
+	if (!query.value) {
+		options = sourceOptions;
+	} else {
+		options = sourceOptions.filter((option) => {
+			const label = option.label.toLowerCase();
+			const value = option.value.toLowerCase();
+			const queryLower = query.value.toLowerCase();
+			return label.includes(queryLower) || value.includes(queryLower);
+		});
+	}
+
+	if (props.showInputAsOption && query.value) {
+		const existingOption = options.find((option) => option.value === query.value);
+		if (!existingOption) {
+			options.unshift({ label: query.value, value: query.value });
+		}
+	}
+
+	return options;
+});
 
 const getDisplayValue = (option: Option | Option[]) => {
 	if (Array.isArray(option)) {
@@ -191,23 +210,21 @@ const value = computed(() => {
 	);
 }) as ComputedRef<Option>;
 
-watch(() => query.value || props.options, updateOptions, { immediate: true });
+watch(() => query.value, updateOptions, { immediate: true });
+watch(
+	() => props.options,
+	() => {
+		if (!props.getOptions) {
+			asyncOptions.value = props.options;
+		}
+	},
+	{ immediate: true },
+);
 
 async function updateOptions() {
 	if (props.getOptions) {
 		const options = await props.getOptions(query.value);
-		filteredOptions.value = options;
-	} else {
-		if (!query.value) {
-			filteredOptions.value = props.options;
-		} else {
-			filteredOptions.value = props.options.filter((option) => {
-				const label = option.label.toLowerCase();
-				const value = option.label.toLowerCase();
-				const queryLower = query.value.toLowerCase();
-				return label.includes(queryLower) || value.includes(query.value);
-			});
-		}
+		asyncOptions.value = options;
 	}
 }
 

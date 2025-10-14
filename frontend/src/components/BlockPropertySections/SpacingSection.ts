@@ -13,6 +13,8 @@ const spacingSectionProperties = [
 				getPlaceholder: () => blockController.getMargin({ cascading: true }),
 				setModelValue: (val: string) => blockController.setMargin(val),
 				styleProperty: "margin",
+				enableSlider: true,
+				unitOptions: ["px", "em", "rem"],
 			};
 		},
 		events: {
@@ -26,6 +28,8 @@ const spacingSectionProperties = [
 		getProps: () => {
 			return {
 				label: "Padding",
+				enableSlider: true,
+				unitOptions: ["px", "em", "rem"],
 				getModelValue: () => blockController.getPadding({ nativeOnly: true }),
 				getPlaceholder: () => blockController.getPadding({ cascading: true }),
 				setModelValue: (val: string) => blockController.setPadding(val),

@@ -5,7 +5,9 @@
 			side="right"
 			:maxDimension="500"
 			@resize="(width) => (builderStore.builderLayout.leftPanelWidth = width)" />
-		<div class="flex min-h-full flex-col items-center gap-3 border-r border-outline-gray-1 p-3">
+		<div
+			class="flex min-h-full flex-col items-center gap-3 border-r border-outline-gray-1 p-3"
+			ref="miniSidebar">
 			<Tooltip v-for="option of leftPanelOptions" :key="option.value" :text="option.label" placement="right">
 				<button
 					class="flex size-8 items-center justify-center rounded text-ink-gray-7 hover:bg-surface-gray-2 focus:!bg-surface-gray-3"
@@ -69,18 +71,17 @@
 					v-if="pageStore.selectedPage && pageStore.activePage"
 					:page="pageStore.activePage" />
 			</div>
-			<div v-show="builderStore.leftPanelActiveTab === 'variables'" class="p-4">
-				<BuilderVariables />
-			</div>
 		</div>
+
+		<VariableManager v-model="showVariableManager" :container="miniSidebar" />
 	</div>
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
-import BuilderVariables from "@/components/BuilderVariables.vue";
 import ComponentIcon from "@/components/Icons/Component.vue";
 import LayersIcon from "@/components/Icons/Layers.vue";
 import PlusIcon from "@/components/Icons/Plus.vue";
+import VariableManager from "@/components/Modals/VariableManager.vue";
 import PageScript from "@/components/PageScript.vue";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
@@ -93,6 +94,9 @@ import BuilderAssets from "./BuilderAssets.vue";
 import BuilderBlockTemplates from "./BuilderBlockTemplates.vue";
 import BuilderCanvas from "./BuilderCanvas.vue";
 import PanelResizer from "./PanelResizer.vue";
+
+const showVariableManager = ref(false);
+const miniSidebar = ref(null) as Ref<HTMLElement | null>;
 
 const canvasStore = useCanvasStore();
 const builderStore = useBuilderStore();
@@ -158,7 +162,11 @@ const getPage = () => {
 };
 
 const setActiveTab = (tab: LeftSidebarTabOption) => {
-	builderStore.leftPanelActiveTab = tab;
+	if (tab === "variables") {
+		showVariableManager.value = true;
+	} else {
+		builderStore.leftPanelActiveTab = tab;
+	}
 };
 
 // moved out of BlockLayers for performance

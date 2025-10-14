@@ -32,6 +32,9 @@ export function useCanvasUtils(
 			selectBlock(blockToFocus);
 		}
 		await nextTick();
+		// single nextTick is not enough, adding this to ensure the DOM is updated after selection
+		await nextTick();
+
 		if (
 			!canvasContainer.value ||
 			!canvas.value ||

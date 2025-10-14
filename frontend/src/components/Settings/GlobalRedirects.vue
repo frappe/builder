@@ -16,13 +16,14 @@
 						required
 						placeholder="To" />
 				</div>
-				<button
-					type="submit"
-					class="flex w-fit cursor-pointer items-center gap-2 justify-self-end px-[2px] py-1 text-base text-ink-gray-5 hover:text-ink-gray-9"
-					@click="addRedirect">
-					<FeatherIcon name="plus" class="size-4" />
-					<span>Add Redirect</span>
-				</button>
+				<div class="justify-self-end py-1">
+					<Button
+						type="submit"
+						label="Add Redirect"
+						variant="ghost"
+						iconLeft="plus"
+						@click="addRedirect"></Button>
+				</div>
 			</form>
 		</div>
 		<div

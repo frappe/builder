@@ -84,6 +84,41 @@ class BuilderPageRenderer(DocumentPage):
 
 
 class BuilderPage(WebsiteGenerator):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		from builder.builder.doctype.builder_page_client_script.builder_page_client_script import (
+			BuilderPageClientScript,
+		)
+
+		authenticated_access: DF.Check
+		blocks: DF.JSON | None
+		body_html: DF.Code | None
+		canonical_url: DF.Data | None
+		client_scripts: DF.TableMultiSelect[BuilderPageClientScript]
+		disable_indexing: DF.Check
+		draft_blocks: DF.JSON | None
+		dynamic_route: DF.Check
+		favicon: DF.AttachImage | None
+		head_html: DF.Code | None
+		is_template: DF.Check
+		meta_description: DF.SmallText | None
+		meta_image: DF.AttachImage | None
+		page_data_script: DF.Code | None
+		page_name: DF.Data | None
+		page_title: DF.Data | None
+		preview: DF.Data | None
+		project_folder: DF.Link | None
+		published: DF.Check
+		route: DF.Data | None
+		template_name: DF.Data | None
+	# end: auto-generated types
+
 	def onload(self):
 		self.set_onload("builder_path", builder_path)
 
@@ -216,14 +251,6 @@ class BuilderPage(WebsiteGenerator):
 		if context.preview and self.draft_blocks:
 			blocks = self.draft_blocks
 
-		builder_variables = frappe.get_all("Builder Variable", fields=["variable_name", "value"])
-		css_variables = {}
-		for builder_variable in builder_variables:
-			if builder_variable.variable_name and builder_variable.value:
-				variable_name = f"--{camel_case_to_kebab_case(builder_variable.variable_name, True)}"
-				css_variables[variable_name] = builder_variable.value
-		context.css_variables = css_variables
-
 		content, style, fonts = get_block_html(blocks)
 		self.set_custom_font(context, fonts)
 		context.fonts = fonts
@@ -251,6 +278,7 @@ class BuilderPage(WebsiteGenerator):
 		self.set_style_and_script(context)
 		self.set_meta_tags(context=context, page_data=page_data)
 		self.set_favicon(context)
+		self.set_language(context)
 		context.page_data = clean_data(context.page_data)
 		try:
 			context["__content"] = render_template(context.__content, context)
@@ -274,6 +302,14 @@ class BuilderPage(WebsiteGenerator):
 			context.favicon = self.favicon
 		if not context.get("favicon"):
 			context.favicon = frappe.get_cached_value("Builder Settings", None, "favicon")
+
+	def set_language(self, context):
+		# Set page-specific language or fall back to default language from Builder Settings
+		context.language = self.language
+		if not context.language:
+			context.default_language = (
+				frappe.get_cached_value("Builder Settings", None, "default_language") or "en"
+			)
 
 	def is_component_used(self, component_id):
 		if self.blocks and is_component_used(self.blocks, component_id):
@@ -367,7 +403,7 @@ class BuilderPage(WebsiteGenerator):
 
 	def is_home_page(self):
 		"""Check if this page is set as the home page in Builder Settings."""
-		return frappe.get_cached_value("Builder Settings", None, "home_page") == self.route
+		return frappe.get_cached_value("Builder Settings", "Builder Settings", "home_page") == self.route
 
 
 def replace_component_in_blocks(blocks, target_component, replace_with):
@@ -667,7 +703,7 @@ def extend_block(block, overridden_block):
 	if not block.get("dataKey"):
 		block["dataKey"] = {}
 	if dataKey:
-		block["dataKey"].update({k: v for k, v in dataKey.items() if v is not None})
+		block["dataKey"].update({k: v for k, v in dataKey.items() if v is not None and v != ""})
 	if overridden_block.get("innerHTML"):
 		block["innerHTML"] = overridden_block["innerHTML"]
 	component_children = block.get("children", []) or []

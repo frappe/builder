@@ -26,6 +26,8 @@ export interface BuilderSettings{
 	favicon?: string
 	/**	Auto convert images to WebP : Check - All the images uploaded to Canvas will be auto converted to WebP for better page performance.	*/
 	auto_convert_images_to_webp?: 0 | 1
+	/**	Default Language : Data - Default language code for HTML lang attribute (e.g., en, es, fr, de)	*/
+	default_language?: string
 	/**	Home Page : Data	*/
 	home_page?: string
 }

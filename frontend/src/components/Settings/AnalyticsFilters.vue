@@ -7,7 +7,6 @@
 			:getOptions="getRouteOptions"
 			:showInputAsOption="true"
 			class="w-44" />
-		<Select size="sm" v-model="modelInterval" class="!w-22 pr-6" :options="intervalOptions" />
 		<Select size="sm" v-model="modelRange" class="!w-32 pr-6" :options="rangeOptions" />
 		<DateRangePicker
 			v-if="modelRange === 'custom'"
@@ -15,7 +14,7 @@
 			placeholder="Select date range"
 			:formatter="formatDate"
 			size="sm"
-			class="w-28" />
+			class="!w-56" />
 	</div>
 </template>
 
@@ -32,10 +31,6 @@ interface SelectOption {
 }
 
 const props = defineProps({
-	interval: {
-		type: String,
-		required: true,
-	},
 	range: {
 		type: String,
 		required: true,
@@ -47,16 +42,6 @@ const props = defineProps({
 	customDateRange: {
 		type: String,
 		default: "",
-	},
-	intervalOptions: {
-		type: Array as () => SelectOption[],
-		required: false,
-		default: () => [
-			{ label: "Hourly", value: "hourly" },
-			{ label: "Daily", value: "daily" },
-			{ label: "Weekly", value: "weekly" },
-			{ label: "Monthly", value: "monthly" },
-		],
 	},
 	rangeOptions: {
 		type: Array as () => SelectOption[],
@@ -70,12 +55,7 @@ const props = defineProps({
 		],
 	},
 });
-const emit = defineEmits(["update:interval", "update:range", "update:route", "update:customDateRange"]);
-
-const modelInterval = computed({
-	get: () => props.interval,
-	set: (val) => emit("update:interval", val),
-});
+const emit = defineEmits(["update:range", "update:route", "update:customDateRange"]);
 
 const modelRange = computed({
 	get: () => props.range,
@@ -124,28 +104,18 @@ const formatDate = (date: string) => {
 };
 
 const getRouteOptions = async (query: string) => {
-	// Load pages if not already loaded
-	if (!webPages.data || webPages.data.length === 0) {
+	if (!webPages.data?.length) {
 		await webPages.fetch();
 	}
 
-	const routes = webPages.data
-		.filter((page: BuilderPage) => {
-			return page.route && !page.dynamic_route;
-		})
-		.map((page: BuilderPage) => ({
-			value: `${page.route}`,
-			label: `${page.route}`,
-		}));
+	const queryLower = query?.toLowerCase() || "";
 
-	if (!query) {
-		return routes;
-	}
-
-	return routes.filter((option: { value: string; label: string }) => {
-		const label = option.label.toLowerCase();
-		const queryLower = query.toLowerCase();
-		return label.includes(queryLower);
-	});
+	return webPages.data
+		.filter((page: BuilderPage) => page.route && !page.dynamic_route)
+		.map((page: BuilderPage) => ({ value: page.route, label: page.route }))
+		.filter(
+			(option: { value: string; label: string }) =>
+				!queryLower || option.label.toLowerCase().includes(queryLower),
+		);
 };
 </script>

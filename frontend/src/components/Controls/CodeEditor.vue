@@ -1,20 +1,38 @@
 <template>
-	<div class="code-editor flex flex-col gap-1">
+	<div class="code-editor relative flex flex-col gap-1">
 		<span class="text-p-sm font-medium text-ink-gray-8" v-show="label">
 			{{ label }}
 			<span v-if="isDirty" class="text-[10px] text-gray-600">●</span>
 		</span>
+		<div v-if="actionButton" class="absolute bottom-1.5 right-1.5 z-10 flex gap-1">
+			<BuilderButton
+				@click="actionButton?.handler"
+				variant="subtle"
+				class="!h-6 !w-6 border !border-outline-gray-2 bg-surface-white [&>svg]:!h-3.5 [&>svg]:!w-3.5"
+				:icon="actionButton.icon"
+				:title="actionButton.label"></BuilderButton>
+		</div>
 		<div
-			ref="editor"
 			:style="{
 				'min-height': height,
 			}"
-			class="h-auto resize-y overflow-hidden overscroll-none !rounded border border-outline-gray-2 bg-surface-gray-2 dark:bg-gray-900" />
+			class="flex h-[30vh] max-h-[80vh] resize-y overflow-hidden overscroll-none !rounded border border-outline-gray-2 bg-surface-gray-2">
+			<CodeMirrorEditor
+				ref="editor"
+				:type
+				:readonly
+				:allow-save="showSaveButton"
+				:show-line-numbers
+				:initial-value="getModelValue()"
+				@change="handleChange"
+				@save="handleSave"
+				@blur="handleBlur" />
+		</div>
 		<span class="mt-1 text-p-xs text-ink-gray-6" v-show="description" v-html="description"></span>
 		<BuilderButton
 			v-if="showSaveButton"
 			variant="solid"
-			@click="emit('save', getEditorValue())"
+			@click="emit('save', editor.getEditorValue())"
 			class="mt-3"
 			:disabled="!isDirty">
 			Save
@@ -22,16 +40,9 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { useDark } from "@vueuse/core";
-import ace from "ace-builds";
-import "ace-builds/src-min-noconflict/ext-searchbox";
-import "ace-builds/src-min-noconflict/theme-chrome";
-import "ace-builds/src-min-noconflict/theme-twilight";
-import { onMounted, ref, watch } from "vue";
+import { ref, VNodeRef, watch } from "vue";
+import CodeMirrorEditor from "./CodeMirror/CodeMirrorEditor.vue";
 
-const isDark = useDark({
-	attribute: "data-theme",
-});
 const props = withDefaults(
 	defineProps<{
 		modelValue?: Object | String | Array<any>;
@@ -43,6 +54,11 @@ const props = withDefaults(
 		autofocus?: boolean;
 		showSaveButton?: boolean;
 		description?: string;
+		actionButton?: {
+			label: string;
+			icon: string;
+			handler: () => void;
+		};
 	}>(),
 	{
 		type: "JSON",
@@ -57,82 +73,28 @@ const props = withDefaults(
 );
 
 const emit = defineEmits(["save", "update:modelValue"]);
-const editor = ref<HTMLElement | null>(null);
-let aceEditor = null as ace.Ace.Editor | null;
-
-onMounted(() => {
-	setupEditor();
-});
+const editor = ref<VNodeRef | null>(null);
 
 const isDirty = ref(false);
 
-const setupEditor = () => {
-	aceEditor = ace.edit(editor.value as HTMLElement);
-	resetEditor(true);
-	aceEditor.setReadOnly(props.readonly);
-	aceEditor.setOptions({
-		fontSize: "12px",
-		useWorker: false,
-		showGutter: props.showLineNumbers,
-		wrap: props.showLineNumbers,
-	});
-	if (props.type === "CSS") {
-		import("ace-builds/src-noconflict/mode-css").then(() => {
-			aceEditor?.session.setMode("ace/mode/css");
-		});
-	} else if (props.type === "JavaScript") {
-		import("ace-builds/src-noconflict/mode-javascript").then(() => {
-			aceEditor?.session.setMode("ace/mode/javascript");
-		});
-	} else if (props.type === "Python") {
-		import("ace-builds/src-noconflict/mode-python").then(() => {
-			aceEditor?.session.setMode("ace/mode/python");
-		});
-	} else if (props.type === "JSON") {
-		import("ace-builds/src-noconflict/mode-json").then(() => {
-			aceEditor?.session.setMode("ace/mode/json");
-		});
-	} else {
-		import("ace-builds/src-noconflict/mode-html").then(() => {
-			aceEditor?.session.setMode("ace/mode/html");
-		});
-	}
+const handleBlur = (value: string) => {
+	try {
+		let processedValue = value;
+		if (props.type === "JSON" && value) {
+			processedValue = JSON.parse(value);
+		}
 
-	aceEditor.on("change", () => {
-		if (aceEditor?.getValue() === getModelValue()) {
-			isDirty.value = false;
+		// Compare the raw string values instead of processed vs model
+		if (value === getModelValue()) {
 			return;
-		} else if (!props.readonly) {
-			isDirty.value = true;
 		}
-	});
-
-	if (props.showSaveButton || !props.readonly) {
-		aceEditor.commands.addCommand({
-			name: "save",
-			bindKey: { win: "Ctrl-S", mac: "Cmd-S" },
-			exec: () => {
-				const value = getEditorValue();
-				if (props.showSaveButton) {
-					emit("save", value);
-				} else {
-					emit("update:modelValue", value);
-				}
-			},
-		});
+		if (!props.showSaveButton && !props.readonly) {
+			emit("update:modelValue", processedValue);
+			isDirty.value = false; // Reset dirty state after blur save
+		}
+	} catch (e) {
+		// Silently handle JSON parse errors or other issues
 	}
-
-	aceEditor.on("blur", () => {
-		try {
-			let value = getEditorValue();
-			if (value === getModelValue()) return;
-			if (!props.showSaveButton && !props.readonly) {
-				emit("update:modelValue", value);
-			}
-		} catch (e) {
-			// do nothing
-		}
-	});
 };
 
 const getModelValue = () => {
@@ -147,36 +109,41 @@ const getModelValue = () => {
 	return value as string;
 };
 
-const getEditorValue = () => {
-	let value = aceEditor?.getValue();
+const handleChange = (value: string) => {
 	if (props.type === "JSON" && value) {
 		value = JSON.parse(value);
 	}
-	return value;
+	if (value === getModelValue()) {
+		isDirty.value = false;
+		return;
+	} else if (!props.readonly) {
+		isDirty.value = true;
+	}
+};
+
+const handleSave = (value: string) => {
+	if (props.type === "JSON" && value) {
+		value = JSON.parse(value);
+	}
+	if (props.showSaveButton) {
+		emit("save", value);
+	} else {
+		emit("update:modelValue", value);
+	}
 };
 
 function resetEditor(resetHistory = false) {
 	const value = getModelValue();
-	aceEditor?.setValue(value);
-	aceEditor?.clearSelection();
-	aceEditor?.setTheme(isDark.value ? "ace/theme/twilight" : "ace/theme/chrome");
-	props.autofocus && aceEditor?.focus();
-	if (resetHistory) {
-		aceEditor?.session.getUndoManager().reset();
+	if (editor.value && editor.value.resetEditor) {
+		// reset from inside the editor component to avoid recreating state
+		editor.value.resetEditor({ content: value, resetHistory, autofocus: props.autofocus });
+		isDirty.value = false;
+	} else {
+		console.error("Editor not available!");
 	}
+	// aceEditor?.clearSelection(); // TODO: implement in codemirror
 	isDirty.value = false;
 }
-
-watch(isDark, () => {
-	aceEditor?.setTheme(isDark.value ? "ace/theme/twilight" : "ace/theme/chrome");
-});
-
-watch(
-	() => props.type,
-	() => {
-		setupEditor();
-	},
-);
 
 watch(
 	() => props.modelValue,
@@ -187,30 +154,3 @@ watch(
 
 defineExpose({ resetEditor, isDirty });
 </script>
-<style scoped>
-.editor .ace_editor {
-	height: 100%;
-	width: 100%;
-	border-radius: 5px;
-	overscroll-behavior: none;
-}
-.editor :deep(.ace_scrollbar-h) {
-	display: none;
-}
-.editor :deep(.ace_search) {
-	@apply dark:bg-gray-800 dark:text-gray-200;
-	@apply dark:border-gray-800;
-}
-.editor :deep(.ace_searchbtn) {
-	@apply dark:bg-gray-800 dark:text-gray-200;
-	@apply dark:border-gray-800;
-}
-.editor :deep(.ace_button) {
-	@apply dark:bg-gray-800 dark:text-gray-200;
-}
-
-.editor :deep(.ace_search_field) {
-	@apply dark:bg-gray-900 dark:text-gray-200;
-	@apply dark:border-gray-800;
-}
-</style>

@@ -38,10 +38,10 @@ declare module 'vue' {
     BuilderRightPanel: typeof import('./src/components/BuilderRightPanel.vue')['default']
     BuilderSettings: typeof import('./src/components/BuilderSettings.vue')['default']
     BuilderToolbar: typeof import('./src/components/BuilderToolbar.vue')['default']
-    BuilderVariables: typeof import('./src/components/BuilderVariables.vue')['default']
     Chart: typeof import('./src/components/Icons/Chart.vue')['default']
     Code: typeof import('./src/components/Icons/Code.vue')['default']
     CodeEditor: typeof import('./src/components/Controls/CodeEditor.vue')['default']
+    CodeMirrorEditor: typeof import('./src/components/Controls/CodeMirror/CodeMirrorEditor.vue')['default']
     CollapsibleSection: typeof import('./src/components/CollapsibleSection.vue')['default']
     ColorInput: typeof import('./src/components/Controls/ColorInput.vue')['default']
     ColorPicker: typeof import('./src/components/Controls/ColorPicker.vue')['default']
@@ -49,6 +49,7 @@ declare module 'vue' {
     ContextMenu: typeof import('./src/components/ContextMenu.vue')['default']
     Cross: typeof import('./src/components/Icons/Cross.vue')['default']
     CSS: typeof import('./src/components/Icons/CSS.vue')['default']
+    CustomSearchPanel: typeof import('./src/components/Controls/CodeMirror/CustomSearchPanel.vue')['default']
     DashboardSidebar: typeof import('./src/components/DashboardSidebar.vue')['default']
     DataLoaderBlock: typeof import('./src/components/DataLoaderBlock.vue')['default']
     Dialog: typeof import('./src/components/Controls/Dialog.vue')['default']
@@ -119,5 +120,6 @@ declare module 'vue' {
     TemplatePagePreview: typeof import('./src/components/TemplatePagePreview.vue')['default']
     TemplateSelector: typeof import('./src/components/TemplateSelector.vue')['default']
     TextBlock: typeof import('./src/components/TextBlock.vue')['default']
+    VariableManager: typeof import('./src/components/Modals/VariableManager.vue')['default']
   }
 }

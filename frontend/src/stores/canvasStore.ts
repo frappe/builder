@@ -83,7 +83,7 @@ const useCanvasStore = defineStore("canvasStore", {
 				const align = scrollLayerIntoView === true ? "center" : scrollLayerIntoView;
 				nextTick(() => {
 					document
-						.querySelector(`[data-block-layer-id="${block.blockId}"]`)
+						.querySelector(`[data-block-layer-id="${block.blockId}"] .scroll-into-view-anchor`)
 						?.scrollIntoView({ behavior: "instant", block: align, inline: "center" });
 				});
 			}

@@ -1,0 +1,7 @@
+{%- if css_variables -%}:root {
+{%- for key, value in css_variables.items() %}{{ key }}: {{ value }};
+{%- endfor %}}{%- endif -%}
+
+{%- if dark_mode_css_variables -%}@media (prefers-color-scheme: dark) {:root {
+{%- for key, value in dark_mode_css_variables.items() %}{{ key }}: {{ value }};
+{%- endfor %}}}{%- endif -%}

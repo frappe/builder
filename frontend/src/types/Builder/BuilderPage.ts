@@ -50,6 +50,8 @@ You can generate using favicon-generator.org	*/
 	meta_image?: string
 	/**	Canonical URL : Data - The preferred URL version of this page for search engines. If not set, the current page URL will be used.	*/
 	canonical_url?: string
+	/**	Language : Data - Language code for HTML lang attribute (e.g., en, es, fr, de). If not set, the default language from Builder Settings will be used.	*/
+	language?: string
 	/**	Authenticated Access : Check - Only allow logged-in users to view this page.	*/
 	authenticated_access?: 0 | 1
 	/**	Disable Indexing : Check - Prevent search engines from indexing this page	*/

@@ -196,29 +196,34 @@ export function useCanvasEvents(
 			selectBlock(currentBlock);
 		};
 
-		switch (ev.key) {
-			case "ArrowLeft":
+		const arrowKeyHandlers = {
+			ArrowLeft: () => {
 				builderStore.activeLayers?.isExpandedInTree(selectedBlock)
 					? builderStore.activeLayers.toggleExpanded(selectedBlock)
 					: selectSibling("previous", selectParent);
-				break;
-			case "ArrowRight":
+			},
+			ArrowRight: () => {
 				selectedBlock.hasChildren() && selectedBlock.isVisible()
 					? (builderStore.activeLayers?.toggleExpanded(selectedBlock), selectFirstChild())
 					: selectNextSiblingOrParent();
-				break;
-			case "ArrowUp":
-				selectBlock(selectedBlock.getSiblingBlock("previous"))
-					? selectLastChildInTree(selectedBlock.getSiblingBlock("previous") as Block)
-					: selectParent();
-				break;
-			case "ArrowDown":
+			},
+			ArrowUp: () => {
+				const previousSibling = selectedBlock.getSiblingBlock("previous");
+				previousSibling ? selectLastChildInTree(previousSibling) : selectParent();
+			},
+			ArrowDown: () => {
 				builderStore.activeLayers?.isExpandedInTree(selectedBlock) &&
 				selectedBlock.hasChildren() &&
 				selectedBlock.isVisible()
 					? selectFirstChild()
 					: selectNextSiblingOrParent();
-				break;
+			},
+		};
+
+		const handler = arrowKeyHandlers[ev.key as keyof typeof arrowKeyHandlers];
+		if (handler) {
+			handler();
+			ev.preventDefault();
 		}
 	});
 

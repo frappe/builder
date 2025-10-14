@@ -80,14 +80,14 @@
 				:isDirty="htmlEditor?.isDirty"
 				:options="{
 					title: 'HTML',
-					size: '6xl',
+					size: '7xl',
 				}">
 				<template #body-content>
 					<CodeEditor
 						:modelValue="canvasStore.editableBlock?.getInnerHTML()"
 						ref="htmlEditor"
 						type="HTML"
-						height="60vh"
+						height="68vh"
 						label="Edit HTML"
 						:showLineNumbers="true"
 						:showSaveButton="true"
