@@ -129,8 +129,14 @@ export const createStartingState = async ({
 			},
 		]),
 		EditorView.domEventHandlers({
+			// to avoid interfering with builder clipboard events
 			cut: (event, view) => {
-				// this is to prevent the cut event from propagating to document and trigger cutting the block
+				event.stopPropagation();
+			},
+			copy: (event, view) => {
+				event.stopPropagation();
+			},
+			paste: (event, view) => {
 				event.stopPropagation();
 			},
 		}),
