@@ -343,7 +343,6 @@ const saveVariable = async (row: ListViewRow) => {
 };
 
 const deleteVariableRow = async (row: ListViewRow) => {
-	console.log("delete", row);
 	if (row.isNew) {
 		newVariable.value = null;
 		return;
