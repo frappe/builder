@@ -301,6 +301,49 @@ const blockController = {
 			block.unsetLink();
 		});
 	},
+	getBlockScript: () => {
+		return blockController.getSelectedBlocks()[0]?.getBlockScript(); // TODO: change to first selected block
+	},
+	setBlockScript: (script: string) => {
+		blockController.getSelectedBlocks()[0]?.setBlockScript(script);
+	},
+	getBlockProps: () => {
+		return blockController.getSelectedBlocks()[0]?.getBlockProps();
+	},
+	setBlockProps: (props: BlockProps) => {
+		blockController.getSelectedBlocks()[0]?.setBlockProps(props);
+	},
+	// TODO: should go in other file?
+	updateBlockPropsDependencyForAncestor: (
+		propKey: string,
+		ancestorBlockId: string,
+		action: "add" | "remove",
+	) => {
+		let currentBlock = blockController.getFirstSelectedBlock();
+		// go up the tree
+		let parentBlock: Block | null = currentBlock.getParentBlock();
+		while (parentBlock?.blockId != ancestorBlockId) {
+			parentBlock = parentBlock?.getParentBlock() || null;
+		}
+		if (parentBlock) {
+			let props = parentBlock.props;
+			if (props) {
+				let usedBy = props[propKey]["usedBy"];
+				if (action === "add") {
+					usedBy = [...new Set([...(usedBy || []), currentBlock.blockId])];
+				} else {
+					usedBy = usedBy?.filter((blockId) => blockId != currentBlock.blockId);
+				}
+				parentBlock.setBlockProps({
+					...props,
+					[propKey]: {
+						...props[propKey],
+						usedBy,
+					},
+				});
+			}
+		}
+	},
 };
 
 export default blockController;

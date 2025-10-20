@@ -488,6 +488,7 @@ def get_block_html(blocks):
 	font_map = {}
 
 	def get_html(blocks, soup):
+		map_of_inherited_props = {} # block_id -> ancestor_block_id -> prop_key -> prop_value
 		html = ""
 
 		def get_tag(block, soup, data_key=None):
@@ -565,6 +566,33 @@ def get_block_html(blocks):
 				inner_soup = bs.BeautifulSoup(innerContent, "html.parser")
 				set_fonts_from_html(inner_soup, font_map)
 				tag.append(inner_soup)
+			script_tag = soup.new_tag("script")
+			props_obj = False
+			if block.get("props"):
+				props = []
+				for key, value in block.get("props", {}).items():
+					prop_value = ""
+					if value["type"] == "dynamic":
+						if data_key:
+							prop_value = f"{{{{ {data_key}.{value['value']} }}}}"
+						else:
+							prop_value = f"{{{{ {value['value']} }}}}"
+					elif value["type"] == "static":
+						prop_value = f"{value['value']}"
+					elif value["type"] == "inherited":
+						ancestor_id = value.get("ancestorBlockId")
+						if ancestor_id and block.get("blockId") in map_of_inherited_props:
+							prop_value = map_of_inherited_props[block.get('blockId')].get(ancestor_id, '').get(value['value'], '') 
+					props.append(f"{key}: {prop_value}")
+					if value.get('usedBy'):
+						for child_block_id in value.get('usedBy'):
+							if child_block_id in map_of_inherited_props:
+								map_of_ancestor_props_for_block_id = map_of_inherited_props.get(child_block_id, {})
+								map_of_ancestor_props_for_block_id[block.get("blockId")] = {key: prop_value}
+							else:
+								map_of_inherited_props[child_block_id] = {block.get("blockId"): {key: prop_value}}
+
+				props_obj = f"{{ {', '.join(props)} }}"
 
 			if block.get("isRepeaterBlock") and block.get("children") and block.get("dataKey"):
 				_key = block.get("dataKey").get("key")
@@ -588,6 +616,14 @@ def get_block_html(blocks):
 
 			if element == "body":
 				tag.append("{% include 'templates/generators/webpage_scripts.html' %}")
+
+			if block.get("blockScript"):
+				block_unique_id = f"{block.get('blockId')}-{frappe.generate_hash(length=3)}"
+				script_content = f"(function (props){{ {block.get('blockScript')} }}).call(document.querySelector('[data-block-id=\"{block_unique_id}\"]'), {props_obj or '{}'});"
+				print("Script content: ", script_content)
+				script_tag.string = script_content
+				tag.attrs["data-block-id"] = block_unique_id
+				tag.append(script_tag)
 
 			return tag
 
@@ -699,6 +735,14 @@ def extend_block(block, overridden_block):
 	block["rawStyles"].update(overridden_block.get("rawStyles", {}))
 
 	block["classes"].extend(overridden_block["classes"])
+
+	if not block.get("props"):
+		block["props"] = {}
+	block["props"].update(overridden_block.get("props", {}))
+	
+	if overridden_block.get("blockScript"):
+		block["blockScript"] = overridden_block.get("blockScript")
+ 
 	dataKey = overridden_block.get("dataKey", {})
 	if not block.get("dataKey"):
 		block["dataKey"] = {}

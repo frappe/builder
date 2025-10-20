@@ -6,6 +6,16 @@ declare interface BlockStyleMap {
 	[key: styleProperty]: StyleValue;
 }
 
+declare type BlockProps = Record<
+	string,
+	{
+		type: "dynamic" | "static" | "inherited";
+		value: string?;
+		usedBy?: Array<string>;
+		ancestorBlockId?: string;
+	}
+>;
+
 declare interface BlockAttributeMap {
 	[key: string]: string | number | null | undefined;
 }

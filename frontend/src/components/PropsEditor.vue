@@ -1,0 +1,254 @@
+<template>
+	<div ref="propsEditor" class="flex flex-col gap-2">
+		<div v-for="(value, key, index) in obj" :key="index" class="flex gap-2">
+			<BuilderInput
+				placeholder="Property"
+				:modelValue="key"
+				@update:modelValue="(val: string) => replaceKey(key, val)" />
+			<Autocomplete
+				class="w-full [&>.form-input]:border-none [&>.form-input]:hover:border-none [&>div>input]:font-mono [&>div>input]:text-xs"
+				:class="{
+					'[&>div>input]:pl-8': value.value,
+					'[&>div>input]:text-ink-gray-7': !value.value,
+					'[&>.form-input]:bg-surface-violet-1 [&>div>input]:text-ink-violet-1':
+						value.type == 'dynamic' && value.value,
+					'[&>.form-input]:bg-surface-blue-1 [&>div>input]:text-ink-blue-3':
+						value.type == 'static' && value.value,
+					'[&>.form-input]:bg-surface-green-1 [&>div>input]:text-ink-green-3':
+						value.type == 'inherited' && value.value,
+				}"
+				v-bind="events"
+				ref="autoCompleteRef"
+				placeholder="undefined"
+				:modelValue="value.value"
+				:getOptions="getOptions"
+				@update:modelValue="
+					(option) => {
+						(autoCompleteRef?.value?.[index] as any)?.blur();
+						updateObjectValue(
+							key,
+							typeof option == 'string'
+								? `static--${blockController.getFirstSelectedBlock()?.blockId}--${option}`
+								: option?.value,
+						);
+					}
+				">
+				<template #prefix v-if="value.value">
+					<LucideZap v-if="value.type == 'dynamic'" class="absolute left-0 top-0 h-4 w-4 text-ink-violet-1" />
+					<LucideCaseSensitive
+						v-else-if="value.type == 'static'"
+						class="absolute left-0 top-0 h-4 w-4 text-ink-blue-3" />
+					<LucideListTree
+						v-else-if="value.type == 'inherited'"
+						class="absolute left-0 top-0 h-4 w-4 text-ink-green-3" />
+				</template>
+			</Autocomplete>
+			<BuilderButton
+				class="flex-shrink-0 text-xs"
+				variant="subtle"
+				icon="x"
+				@click="deleteObjectKey(key as string)" />
+		</div>
+		<BuilderButton variant="subtle" label="Add" @click="addObjectKey"></BuilderButton>
+		<p class="rounded-sm bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
+			<span v-html="description"></span>
+		</p>
+	</div>
+</template>
+<script setup lang="ts">
+import { getCollectionKeys, getDataForKey, mapToObject, replaceMapKey } from "@/utils/helpers";
+import { computed, defineComponent, h, nextTick, ref, shallowRef, useAttrs, watch, watchEffect } from "vue";
+import Autocomplete from "@/components/Controls/Autocomplete.vue";
+import usePageStore from "@/stores/pageStore";
+import blockController from "@/utils/blockController";
+import Block from "@/block";
+// @ts-ignore
+import LucideZap from "~icons/lucide/zap";
+// @ts-ignore
+import LucideCaseSensitive from "~icons/lucide/case-sensitive";
+// @ts-ignore
+import LucideListTree from "~icons/lucide/list-tree";
+
+const attrs = useAttrs();
+const events = Object.fromEntries(
+	Object.entries(attrs).filter(([key]) => key.startsWith("onFocus") || key.startsWith("onBlur")),
+);
+
+const autoCompleteRef = ref<typeof Autocomplete | null>(null);
+
+const pageStore = usePageStore();
+
+const props = defineProps<{
+	obj: BlockProps;
+	description?: string;
+}>();
+
+const propsEditor = ref<HTMLElement | null>(null);
+
+const emit = defineEmits({
+	"update:obj": (obj: BlockProps) => true,
+	"update:ancestorUpdateDependency": (propKey: string, ancestorBlockId: string, action: "add" | "remove") =>
+		true,
+});
+// better name
+type PropOptions = { path: string; type: "dynamic" | "inherited" | "static"; blockId?: string | null };
+
+// why computed? no dependency tracking needed right?
+const dataArray = computed(() => {
+	const result: PropOptions[] = [];
+	let collectionObject = pageStore.pageData;
+	if (blockController.getFirstSelectedBlock()?.isInsideRepeater()) {
+		const keys = getCollectionKeys(blockController.getFirstSelectedBlock());
+		collectionObject = keys.reduce((acc: any, key: string) => {
+			const data = getDataForKey(acc, key);
+			return Array.isArray(data) && data.length > 0 ? data[0] : data;
+		}, collectionObject);
+	}
+
+	function processObject(obj: Record<string, any>, prefix = "") {
+		Object.entries(obj).forEach(([key, value]) => {
+			const path = prefix ? `${prefix}.${key}` : key;
+
+			if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+				processObject(value, path);
+			} else if (["string", "number", "boolean"].includes(typeof value)) {
+				result.push({ path, type: "dynamic" });
+			}
+		});
+	}
+
+	processObject(collectionObject);
+	return result;
+});
+
+const getParentProps = (baseBlock: Block, baseProps: PropOptions[]): PropOptions[] => {
+	const parentBlock = baseBlock.getParentBlock();
+	if (parentBlock) {
+		const parentProps: PropOptions[] = Object.keys(parentBlock.getBlockProps()).map((key) => ({
+			path: key,
+			type: "inherited",
+			blockId: parentBlock.blockId,
+		}));
+		const combinedProps = [...baseProps, ...parentProps];
+		return getParentProps(parentBlock, combinedProps);
+	} else {
+		return baseProps;
+	}
+};
+
+const getOptions = async (query: string) => {
+	const parentPropsArray = getParentProps(blockController.getFirstSelectedBlock()!, []);
+
+	const options = [
+		...new Set([...parentPropsArray, ...dataArray.value]),
+		...(query ? [{ path: query, type: "static", blockId: null } as PropOptions] : []),
+	]
+		.filter((prop) => prop.path.toLowerCase().includes(query.toLowerCase()))
+		.map((prop) => ({
+			label: prop.path || "",
+			value: `${prop.type}--${
+				blockController.getFirstSelectedBlock()?.blockId +
+				(prop.type === "inherited" ? "." + prop.blockId : "")
+			}--${prop.path}`,
+			suffix: h(
+				prop.type === "dynamic" ? LucideZap : prop.type === "static" ? LucideCaseSensitive : LucideListTree,
+				{
+					class: "ml-2 rounded px-1 py-0.5 text-xs text-ink-gray-6 shrink-0",
+				},
+			),
+		}));
+
+	return options;
+};
+
+const addObjectKey = async () => {
+	const map = new Map(Object.entries(props.obj));
+	map.set("", { type: "static", value: "" });
+	emit("update:obj", mapToObject(map));
+	await nextTick();
+	const inputs = propsEditor.value?.querySelectorAll("input");
+	if (inputs) {
+		const lastInput = inputs[inputs.length - 2];
+		lastInput.focus();
+	}
+};
+
+const clearObjectValue = (key: string) => {
+	const map = new Map(Object.entries(props.obj));
+	const oldValue = map.get(key);
+	const oldPath = oldValue?.value;
+	const oldAncestor = oldValue?.ancestorBlockId;
+	
+	map.set(key, {
+		...oldValue!,
+		value: null,
+		type: "static",
+	});
+	
+	emit("update:obj", mapToObject(map));
+	
+	if (oldAncestor && oldPath) {
+		emit("update:ancestorUpdateDependency", oldPath, oldAncestor, "remove");
+	}
+};
+
+const updateObjectValue = (key: string, value: string | null) => {
+	if (!value) {
+		clearObjectValue(key);
+		return;
+	}
+	
+	const map = new Map(Object.entries(props.obj));
+	const splitValue = value.split("--");
+	const [type, id, ...pathParts] = splitValue;
+	const path = pathParts.join("--") || null;
+	
+	
+	const ancestor = type === "inherited" ? id?.split(".")[1] : null;
+	const oldPath = map.get(key)?.value;
+	const oldAncestor = map.get(key)?.ancestorBlockId;
+	
+	map.set(key, {
+		...map.get(key)!,
+		...(type === "inherited" ? { ancestorBlockId: id?.split(".")[1] } : {}),
+		value: type === "static" ? JSON.stringify(path) : path,
+		type: type as BlockProps[string]["type"],
+	});
+	
+	emit("update:obj", mapToObject(map));
+	
+	if (ancestor && path) {
+		emit("update:ancestorUpdateDependency", path, ancestor, "add");
+	} else if (oldAncestor && oldPath) {
+		emit("update:ancestorUpdateDependency", oldPath, oldAncestor, "remove");
+	}
+};
+
+const replaceKey = (oldKey: string, newKey: string) => {
+	const map = new Map(Object.entries(props.obj));
+	emit("update:obj", mapToObject(replaceMapKey(map, oldKey, newKey)));
+};
+
+const deleteObjectKey = (key: string) => {
+	const map = new Map(Object.entries(props.obj));
+	const value = map.get(key);
+	const path = value?.value;
+	const ancestor = value?.ancestorBlockId;
+	map.delete(key);
+	emit("update:obj", mapToObject(map));
+	if (path && ancestor) emit("update:ancestorUpdateDependency", path, ancestor, "remove");
+};
+
+watch(
+	[() => props.obj, () => blockController.getSelectedBlocks(), () => pageStore.pageData],
+	() => {
+		if (Array.isArray(autoCompleteRef.value)) {
+			autoCompleteRef.value.forEach((ref) => {
+				ref?.updateOptions();
+			});
+		}
+	},
+	{ immediate: true },
+);
+
+</script>

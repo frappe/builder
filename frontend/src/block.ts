@@ -42,6 +42,8 @@ class Block implements BlockOptions {
 	parentBlock: Block | null;
 	activeState?: string | null = null;
 	dynamicValues: Array<BlockDataKey>;
+	blockScript?: string;
+	props?: BlockProps;
 	// @ts-expect-error
 	referenceComponent: Block | null;
 	customAttributes: BlockAttributeMap;
@@ -97,6 +99,8 @@ class Block implements BlockOptions {
 		this.tabletStyles = reactive(options.tabletStyles || {});
 		this.attributes = reactive(options.attributes || {});
 		this.dynamicValues = reactive(options.dynamicValues || []);
+		this.blockScript = options.blockScript || "";
+		this.props = options.props || {};
 
 		this.blockName = options.blockName;
 		delete this.attributes.style;
@@ -888,6 +892,30 @@ class Block implements BlockOptions {
 	}
 	isInsideRepeater(): boolean {
 		return Boolean(this.getRepeaterParent());
+	}
+	getBlockScript(): string {
+		let blockScript =  "";
+		if(this.isExtendedFromComponent() && !this.blockScript){
+			blockScript = this.referenceComponent?.getBlockScript() || "";
+		} else {
+			blockScript = this.blockScript || "";
+		}
+		return blockScript;
+	}
+	setBlockScript(script: string) {
+		this.blockScript = script;
+	}
+	getBlockProps(): BlockProps {
+		let blockProps = {};
+		if(this.isExtendedFromComponent() && !Object.keys(this.props || {}).length){
+			blockProps = this.referenceComponent?.getBlockProps() || {};
+		} else {
+			blockProps = this.props || {};
+		}
+		return blockProps;
+	}
+	setBlockProps(props: BlockProps){
+		this.props = props;
 	}
 }
 
