@@ -61,6 +61,8 @@ import { computed, defineComponent, h, nextTick, ref, shallowRef, useAttrs, watc
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
+import { toast } from "vue-sonner";
+
 import Block from "@/block";
 // @ts-ignore
 import LucideZap from "~icons/lucide/zap";
@@ -193,6 +195,10 @@ const clearObjectValue = (key: string) => {
 };
 
 const updateObjectValue = (key: string, value: string | null) => {
+	if(!key){
+		toast.error("Property name cannot be empty.");
+		return;
+	}
 	if (!value) {
 		clearObjectValue(key);
 		return;
