@@ -2,7 +2,7 @@ import PropsEditor from "../PropsEditor.vue";
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
 
-const rawStyleSectionProperties = [
+const propsSection = [
 	{
 		component: PropsEditor,
 		getProps: () => {
@@ -32,7 +32,7 @@ const rawStyleSectionProperties = [
 
 export default {
 	name: "Props",
-	properties: rawStyleSectionProperties,
+	properties: propsSection,
 	collapsed: computed(() => {
 		return Object.keys(blockController.getBlockProps()).length === 0;
 	}),
