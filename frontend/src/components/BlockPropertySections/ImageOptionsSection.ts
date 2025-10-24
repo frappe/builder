@@ -1,9 +1,9 @@
 import PropertyControl from "@/components/Controls/PropertyControl.vue";
 import ImageUploadInput from "@/components/ImageUploadInput.vue";
 import blockController from "@/utils/blockController";
-import { Button, createResource } from "frappe-ui";
+import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
+import { Button } from "frappe-ui";
 import { computed } from "vue";
-import { toast } from "vue-sonner";
 
 const imageOptionsSectionProperties = [
 	{
@@ -35,41 +35,21 @@ const imageOptionsSectionProperties = [
 		innerText: computed(() => {
 			const block = blockController.getSelectedBlocks()[0];
 			const imageUrl = (block?.getAttribute("src") as string) || "";
-			const isExternal = imageUrl.startsWith("http://") || imageUrl.startsWith("https://");
-			const isConvertibleToWebP = [".jpg", ".jpeg", ".png"].some((ext) =>
-				imageUrl.toLowerCase().endsWith(ext),
-			);
-			if (isExternal) {
-				return "Serve Locally";
-			} else if (isConvertibleToWebP) {
-				return "Convert to WebP";
-			}
+			return getOptimizeButtonText(imageUrl);
 		}),
 		searchKeyWords:
 			"Image, Local, Copy, Server, Download, Host, Store, Convert, webp, Convert to webp, image, src, url",
 		events: {
 			click: () => {
 				const block = blockController.getSelectedBlocks()[0];
-				const convertToWebP = createResource({
-					url: "/api/method/builder.api.convert_to_webp",
-					params: {
-						image_url: block.getAttribute("src"),
+				const imageUrl = block.getAttribute("src") as string;
+
+				return optimizeImage({
+					imageUrl,
+					onSuccess: (newUrl: string) => {
+						block.setAttribute("src", newUrl);
 					},
 				});
-
-				const imageUrl = block.getAttribute("src") as string;
-				const isExternal = imageUrl.startsWith("http://") || imageUrl.startsWith("https://");
-
-				return toast.promise(
-					convertToWebP.fetch().then((res: string) => {
-						block.setAttribute("src", res);
-					}),
-					{
-						loading: isExternal ? "Pulling..." : "Converting...",
-						success: () => (isExternal ? "Image pulled to local" : "Image converted to WebP"),
-						error: () => (isExternal ? "Failed to pull image to local" : "Failed to convert image to WebP"),
-					},
-				);
 			},
 		},
 		condition: () => {
@@ -77,16 +57,7 @@ const imageOptionsSectionProperties = [
 				return false;
 			}
 			const imageUrl = blockController.getAttribute("src") as string;
-			if (!imageUrl) {
-				return false;
-			}
-
-			const isExternal = imageUrl.startsWith("http://") || imageUrl.startsWith("https://");
-			const isConvertibleToWebP = [".jpg", ".jpeg", ".png"].some((ext) =>
-				imageUrl.toLowerCase().endsWith(ext),
-			);
-
-			return isExternal || isConvertibleToWebP;
+			return shouldShowOptimizeButton(imageUrl);
 		},
 	},
 	{
