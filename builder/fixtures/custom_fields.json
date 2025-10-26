@@ -1,0 +1,75 @@
+[
+	{
+		"doctype": "Custom Field",
+		"dt": "Builder Page",
+		"fieldname": "modula_section",
+		"fieldtype": "Section Break",
+		"label": "Modula Integration",
+		"insert_after": "published",
+		"collapsible": 1
+	},
+	{
+		"doctype": "Custom Field",
+		"dt": "Builder Page",
+		"fieldname": "modula_project_id",
+		"fieldtype": "Data",
+		"label": "Modula Project ID",
+		"insert_after": "modula_section",
+		"description": "Unique identifier from Modula/Forge system"
+	},
+	{
+		"doctype": "Custom Field",
+		"dt": "Builder Page",
+		"fieldname": "modula_build_code",
+		"fieldtype": "Data",
+		"label": "Build Code",
+		"insert_after": "modula_project_id",
+		"description": "Unique build identifier (e.g., b_abc123)",
+		"read_only": 1
+	},
+	{
+		"doctype": "Custom Field",
+		"dt": "Builder Page",
+		"fieldname": "modula_build_type",
+		"fieldtype": "Select",
+		"label": "Build Type",
+		"insert_after": "modula_build_code",
+		"options": "profile_tab\nwidget\npage\ncomponent\nlayout\ncard",
+		"default": "component"
+	},
+	{
+		"doctype": "Custom Field",
+		"dt": "Builder Page",
+		"fieldname": "modula_column_break",
+		"fieldtype": "Column Break",
+		"insert_after": "modula_build_type"
+	},
+	{
+		"doctype": "Custom Field",
+		"dt": "Builder Page",
+		"fieldname": "modula_version",
+		"fieldtype": "Data",
+		"label": "Version",
+		"insert_after": "modula_column_break",
+		"default": "1.0.0",
+		"description": "Semantic version (e.g., 1.0.1)"
+	},
+	{
+		"doctype": "Custom Field",
+		"dt": "Builder Page",
+		"fieldname": "modula_published_at",
+		"fieldtype": "Datetime",
+		"label": "Last Published At",
+		"insert_after": "modula_version",
+		"read_only": 1
+	},
+	{
+		"doctype": "Custom Field",
+		"dt": "Builder Page",
+		"fieldname": "modula_callback_url",
+		"fieldtype": "Data",
+		"label": "Callback URL",
+		"insert_after": "modula_published_at",
+		"description": "Modula endpoint to notify on publish"
+	}
+]
