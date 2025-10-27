@@ -270,9 +270,33 @@ def make_records(path):
 # 	)
 
 
-def copy_img_to_asset_folder(block: Block, page_doc):
-	if block.element == "img":
-		src = getattr(block.attributes, "src", None) if block.attributes else None
+def copy_img_to_asset_folder(block, page_doc):
+	# Helper function to safely get attribute from block (dict or object)
+	def safe_get(obj, attr, default=None):
+		if isinstance(obj, dict):
+			return obj.get(attr, default)
+		else:
+			return getattr(obj, attr, default)
+
+	# Convert dict to frappe._dict for consistent access
+	if isinstance(block, dict):
+		block = frappe._dict(block)
+		# Also convert children to frappe._dict for consistent access
+		children = block.get("children", [])
+		if children and isinstance(children, list):
+			block.children = [frappe._dict(child) if isinstance(child, dict) else child for child in children]
+
+	# Get element safely
+	element = safe_get(block, "element")
+
+	if element == "img":
+		# Get attributes safely
+		attributes = safe_get(block, "attributes")
+		src = None
+
+		if attributes:
+			src = safe_get(attributes, "src")
+
 		site_url = get_url()
 
 		if src and (src.startswith(f"{site_url}/files") or src.startswith("/files")):
@@ -287,9 +311,17 @@ def copy_img_to_asset_folder(block: Block, page_doc):
 				# copy physical file to new location
 				assets_folder_path = get_template_assets_folder_path(page_doc)
 				shutil.copy(_file.get_full_path(), assets_folder_path)
-			if block.attributes:
-				block.attributes["src"] = f"/builder_assets/{page_doc.name}/{src.split('/')[-1]}"
-	for child in block.children or []:
+
+			new_src = f"/builder_assets/{page_doc.name}/{src.split('/')[-1]}"
+			if attributes:
+				if isinstance(attributes, dict):
+					attributes["src"] = new_src
+				else:
+					attributes.src = new_src
+
+	# Process children safely
+	children = safe_get(block, "children", [])
+	for child in children or []:
 		copy_img_to_asset_folder(child, page_doc)
 
 
