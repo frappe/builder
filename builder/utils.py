@@ -549,11 +549,11 @@ def export_components(components, components_path):
 	for component_id in components:
 		try:
 			component_doc = frappe.get_doc("Builder Component", component_id)
-			component_dir = os.path.join(components_path, frappe.scrub(component_doc.component_name))
+			# Replace forward slashes with underscores to create valid directory names
+			safe_component_name = frappe.scrub(component_doc.component_name).replace("/", "_")
+			component_dir = os.path.join(components_path, safe_component_name)
 			os.makedirs(component_dir, exist_ok=True)
-			component_file_path = os.path.join(
-				component_dir, f"{frappe.scrub(component_doc.component_name)}.json"
-			)
+			component_file_path = os.path.join(component_dir, f"{safe_component_name}.json")
 
 			with open(component_file_path, "w") as f:
 				f.write(frappe.as_json(component_doc.as_dict()))
