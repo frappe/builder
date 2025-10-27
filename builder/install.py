@@ -25,3 +25,7 @@ def after_migrate():
 	sync_block_templates()
 	sync_builder_variables()
 	sync_standard_builder_pages()
+
+
+def after_app_install(app_name=None):
+	sync_standard_builder_pages(app_name)

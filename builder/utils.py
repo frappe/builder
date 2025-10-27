@@ -604,12 +604,14 @@ def remove_existing_path(path):
 			os.remove(path)
 
 
-def sync_standard_builder_pages():
+def sync_standard_builder_pages(app_name=None):
 	print("Syncing Standard Builder Pages")
 	# fetch pages from all apps under builder_files/pages
 	# import components first
 
-	for app in frappe.get_installed_apps():
+	apps_to_sync = [app_name] if app_name else frappe.get_installed_apps()
+
+	for app in apps_to_sync:
 		app_path = frappe.get_app_path(app)
 		pages_path = os.path.join(app_path, "builder_files", "pages")
 		components_path = os.path.join(app_path, "builder_files", "components")
