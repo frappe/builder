@@ -24,13 +24,7 @@
 				:getOptions="getOptions"
 				@update:modelValue="
 					(option) => {
-						(autoCompleteRef?.value?.[index] as any)?.blur();
-						updateObjectValue(
-							key,
-							typeof option == 'string'
-								? `static--${blockController.getFirstSelectedBlock()?.blockId}--${option}`
-								: option?.value,
-						);
+						updateObjectValue(key, typeof option == 'string' ? option : option?.value);
 					}
 				">
 				<template #prefix v-if="value.value">
@@ -89,11 +83,10 @@ const propsEditor = ref<HTMLElement | null>(null);
 
 const emit = defineEmits({
 	"update:obj": (obj: BlockProps) => true,
-	"update:ancestorUpdateDependency": (propKey: string, ancestorBlockId: string, action: "add" | "remove") =>
-		true,
+	"update:ancestorUpdateDependency": (propKey: string, action: "add" | "remove") => true,
 });
 // better name
-type PropOptions = { path: string; type: "dynamic" | "inherited" | "static"; blockId?: string | null };
+type PropOptions = { path: string; type: "dynamic" | "inherited" | "static" };
 
 // why computed? no dependency tracking needed right?
 const dataArray = computed(() => {
@@ -129,9 +122,15 @@ const getParentProps = (baseBlock: Block, baseProps: PropOptions[]): PropOptions
 		const parentProps: PropOptions[] = Object.keys(parentBlock.getBlockProps()).map((key) => ({
 			path: key,
 			type: "inherited",
-			blockId: parentBlock.blockId,
 		}));
-		const combinedProps = [...baseProps, ...parentProps];
+		const combinedProps = [...baseProps, ...parentProps].reduce((acc, prop) => {
+			if (
+				!acc.find((p: PropOptions) => p.path === prop.path && p.type === prop.type && p.type === "inherited")
+			) {
+				acc.push(prop);
+			}
+			return acc;
+		}, [] as PropOptions[]);
 		return getParentProps(parentBlock, combinedProps);
 	} else {
 		return baseProps;
@@ -143,15 +142,12 @@ const getOptions = async (query: string) => {
 
 	const options = [
 		...new Set([...parentPropsArray, ...dataArray.value]),
-		...(query ? [{ path: query, type: "static", blockId: null } as PropOptions] : []),
+		...(query ? [{ path: query, type: "static" } as PropOptions] : []),
 	]
 		.filter((prop) => prop.path.toLowerCase().includes(query.toLowerCase()))
 		.map((prop) => ({
 			label: prop.path || "",
-			value: `${prop.type}--${
-				blockController.getFirstSelectedBlock()?.blockId +
-				(prop.type === "inherited" ? "." + prop.blockId : "")
-			}--${prop.path}`,
+			value: `${prop.type}--${prop.path}`,
 			suffix: h(
 				prop.type === "dynamic" ? LucideZap : prop.type === "static" ? LucideCaseSensitive : LucideListTree,
 				{
@@ -178,24 +174,22 @@ const addObjectKey = async () => {
 const clearObjectValue = (key: string) => {
 	const map = new Map(Object.entries(props.obj));
 	const oldValue = map.get(key);
-	const oldPath = oldValue?.value;
-	const oldAncestor = oldValue?.ancestorBlockId;
-	
+
 	map.set(key, {
 		...oldValue!,
 		value: null,
 		type: "static",
 	});
-	
+
 	emit("update:obj", mapToObject(map));
-	
-	if (oldAncestor && oldPath) {
-		emit("update:ancestorUpdateDependency", oldPath, oldAncestor, "remove");
+
+	if (oldValue?.type == "inherited" && oldValue?.value) {
+		emit("update:ancestorUpdateDependency", oldValue.value, "remove");
 	}
 };
 
 const updateObjectValue = (key: string, value: string | null) => {
-	if(!key){
+	if (!key) {
 		toast.error("Property name cannot be empty.");
 		return;
 	}
@@ -203,30 +197,31 @@ const updateObjectValue = (key: string, value: string | null) => {
 		clearObjectValue(key);
 		return;
 	}
-	
+
 	const map = new Map(Object.entries(props.obj));
 	const splitValue = value.split("--");
-	const [type, id, ...pathParts] = splitValue;
-	const path = pathParts.join("--") || null;
-	
-	
-	const ancestor = type === "inherited" ? id?.split(".")[1] : null;
+	let type, path;
+	if (splitValue.length >= 2 && ["dynamic", "inherited", "static"].includes(splitValue[0])) {
+		type = splitValue[0];
+		path = splitValue.slice(1).join("--");
+	} else {
+		type = "static";
+		path = value;
+	}
 	const oldPath = map.get(key)?.value;
-	const oldAncestor = map.get(key)?.ancestorBlockId;
-	
+
 	map.set(key, {
 		...map.get(key)!,
-		...(type === "inherited" ? { ancestorBlockId: id?.split(".")[1] } : {}),
 		value: type === "static" ? JSON.stringify(path) : path,
 		type: type as BlockProps[string]["type"],
 	});
-	
+
 	emit("update:obj", mapToObject(map));
-	
-	if (ancestor && path) {
-		emit("update:ancestorUpdateDependency", path, ancestor, "add");
-	} else if (oldAncestor && oldPath) {
-		emit("update:ancestorUpdateDependency", oldPath, oldAncestor, "remove");
+
+	if (path) {
+		emit("update:ancestorUpdateDependency", path, "add");
+	} else if (oldPath) {
+		emit("update:ancestorUpdateDependency", oldPath, "remove");
 	}
 };
 
@@ -239,10 +234,9 @@ const deleteObjectKey = (key: string) => {
 	const map = new Map(Object.entries(props.obj));
 	const value = map.get(key);
 	const path = value?.value;
-	const ancestor = value?.ancestorBlockId;
 	map.delete(key);
 	emit("update:obj", mapToObject(map));
-	if (path && ancestor) emit("update:ancestorUpdateDependency", path, ancestor, "remove");
+	if (path) emit("update:ancestorUpdateDependency", path, "remove");
 };
 
 watch(
@@ -256,5 +250,4 @@ watch(
 	},
 	{ immediate: true },
 );
-
 </script>

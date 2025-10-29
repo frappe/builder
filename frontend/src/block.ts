@@ -100,7 +100,7 @@ class Block implements BlockOptions {
 		this.attributes = reactive(options.attributes || {});
 		this.dynamicValues = reactive(options.dynamicValues || []);
 		this.blockScript = options.blockScript || "";
-		this.props = options.props || {};
+		this.props = reactive(options.props || {});
 
 		this.blockName = options.blockName;
 		delete this.attributes.style;
@@ -894,8 +894,8 @@ class Block implements BlockOptions {
 		return Boolean(this.getRepeaterParent());
 	}
 	getBlockScript(): string {
-		let blockScript =  "";
-		if(this.isExtendedFromComponent() && !this.blockScript){
+		let blockScript = "";
+		if (this.isExtendedFromComponent() && !this.blockScript) {
 			blockScript = this.referenceComponent?.getBlockScript() || "";
 		} else {
 			blockScript = this.blockScript || "";
@@ -907,14 +907,14 @@ class Block implements BlockOptions {
 	}
 	getBlockProps(): BlockProps {
 		let blockProps = {};
-		if(this.isExtendedFromComponent() && !Object.keys(this.props || {}).length){
+		if (this.isExtendedFromComponent() && !Object.keys(this.props || {}).length) {
 			blockProps = this.referenceComponent?.getBlockProps() || {};
 		} else {
 			blockProps = this.props || {};
 		}
 		return blockProps;
 	}
-	setBlockProps(props: BlockProps){
+	setBlockProps(props: BlockProps) {
 		this.props = props;
 	}
 }
@@ -1021,6 +1021,8 @@ function resetBlock(
 		block.customAttributes = {};
 		block.classes = [];
 		block.dataKey = null;
+		block.props = {};
+		block.blockScript = "";
 	}
 
 	if (resetChildren) {

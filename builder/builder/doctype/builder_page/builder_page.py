@@ -488,7 +488,7 @@ def get_block_html(blocks):
 	font_map = {}
 
 	def get_html(blocks, soup):
-		map_of_inherited_props = {} # block_id -> ancestor_block_id -> prop_key -> prop_value
+		map_of_inherited_props = {} # prop_name -> array<values>
 		html = ""
 
 		def get_tag(block, soup, data_key=None):
@@ -566,31 +566,34 @@ def get_block_html(blocks):
 				inner_soup = bs.BeautifulSoup(innerContent, "html.parser")
 				set_fonts_from_html(inner_soup, font_map)
 				tag.append(inner_soup)
+
 			script_tag = soup.new_tag("script")
-			props_obj = False
+			props_obj = {}
+			props_with_successors = []
 			if block.get("props"):
 				props = []
 				for key, value in block.get("props", {}).items():
-					prop_value = ""
-					if value["type"] == "dynamic":
-						if data_key:
-							prop_value = f"{{{{ {data_key}.{value['value']} }}}}"
-						else:
-							prop_value = f"{{{{ {value['value']} }}}}"
-					elif value["type"] == "static":
-						prop_value = f"{value['value']}"
-					elif value["type"] == "inherited":
-						ancestor_id = value.get("ancestorBlockId")
-						if ancestor_id and block.get("blockId") in map_of_inherited_props:
-							prop_value = map_of_inherited_props[block.get('blockId')].get(ancestor_id, '').get(value['value'], '') 
-					props.append(f"{key}: {prop_value}")
-					if value.get('usedBy'):
-						for child_block_id in value.get('usedBy'):
-							if child_block_id in map_of_inherited_props:
-								map_of_ancestor_props_for_block_id = map_of_inherited_props.get(child_block_id, {})
-								map_of_ancestor_props_for_block_id[block.get("blockId")] = {key: prop_value}
-							else:
-								map_of_inherited_props[child_block_id] = {block.get("blockId"): {key: prop_value}}
+        
+					prop_value = value["value"]
+					prop_type = value["type"]
+					interpreted_value = ""
+     
+					if prop_value == "" or prop_value is None:
+						prop_value = "undefined"
+
+					if prop_type == "dynamic":
+						interpreted_value = f"{{{{ {data_key}.{prop_value} }}}}" if data_key else f"{{{{ {prop_value} }}}}"
+					elif prop_type == "static":
+						interpreted_value = f"{prop_value}"
+					elif prop_type == "inherited":
+						values = map_of_inherited_props.get(prop_value, [])
+						interpreted_value = values[0] if values else "undefined"
+      
+					props.append(f"{key}: {interpreted_value}")
+     
+					if value.get('usedByCount', 0) > 0:
+						props_with_successors.append(key)
+						map_of_inherited_props.setdefault(key, []).append(interpreted_value)
 
 				props_obj = f"{{ {', '.join(props)} }}"
 
@@ -616,6 +619,9 @@ def get_block_html(blocks):
 
 			if element == "body":
 				tag.append("{% include 'templates/generators/webpage_scripts.html' %}")
+
+			for props in props_with_successors:
+				map_of_inherited_props[props].pop()
 
 			if block.get("blockScript"):
 				block_unique_id = f"{block.get('blockId')}-{frappe.generate_hash(length=3)}"

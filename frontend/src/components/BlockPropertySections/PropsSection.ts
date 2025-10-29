@@ -23,9 +23,8 @@ const propsSection = [
 			"update:obj": (obj: BlockProps) => blockController.setBlockProps(obj), // TODO: race condition?
 			"update:ancestorUpdateDependency": (
 				propKey: string,
-				ancestorBlockId: string,
 				action: "add" | "remove", // TODO: better name?
-			) => blockController.updateBlockPropsDependencyForAncestor(propKey, ancestorBlockId, action),
+			) => blockController.updateBlockPropsDependencyForAncestor(propKey, action),
 		},
 	},
 ];
