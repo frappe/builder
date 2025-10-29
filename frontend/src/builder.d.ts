@@ -11,8 +11,7 @@ declare type BlockProps = Record<
 	{
 		type: "dynamic" | "static" | "inherited";
 		value: string?;
-		usedBy?: Array<string>;
-		ancestorBlockId?: string;
+		usedByCount?: number;
 	}
 >;
 
