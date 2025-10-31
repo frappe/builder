@@ -104,6 +104,7 @@ declare module 'vue' {
     Play: typeof import('./src/components/Icons/Play.vue')['default']
     Plus: typeof import('./src/components/Icons/Plus.vue')['default']
     PropertyControl: typeof import('./src/components/Controls/PropertyControl.vue')['default']
+    PropsEditor: typeof import('./src/components/PropsEditor.vue')['default']
     PublishButton: typeof import('./src/components/PublishButton.vue')['default']
     RangeInput: typeof import('./src/components/Controls/RangeInput.vue')['default']
     Redirect: typeof import('./src/components/Icons/Redirect.vue')['default']
