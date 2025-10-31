@@ -70,6 +70,7 @@ declare module 'vue' {
     Globe: typeof import('./src/components/Icons/Globe.vue')['default']
     ImageUploader: typeof import('./src/components/Controls/ImageUploader.vue')['default']
     ImageUploadInput: typeof import('./src/components/ImageUploadInput.vue')['default']
+    ImportStandardPageModal: typeof import('./src/components/Modals/ImportStandardPageModal.vue')['default']
     InlineInput: typeof import('./src/components/Controls/InlineInput.vue')['default']
     Input: typeof import('./src/components/Controls/Input.vue')['default']
     InputLabel: typeof import('./src/components/Controls/InputLabel.vue')['default']

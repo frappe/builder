@@ -33,7 +33,7 @@
 						onClick: () => toggleDark(),
 						icon: isDark ? 'sun' : 'moon',
 					},
-					{ label: 'Settings', onClick: () => $emit('showSettings'), icon: 'settings' },
+					{ label: 'Settings', onClick: () => emit('showSettings'), icon: 'settings' },
 
 					{
 						label: 'Help',
@@ -90,6 +90,8 @@ const isDark = useDark({
 });
 const toggleDark = useToggle(isDark);
 const canvasStore = useCanvasStore();
+
+const emit = defineEmits(["showSettings"]);
 
 const handleCopyPage = () => {
 	if (!pageStore.activePage) return;
