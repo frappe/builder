@@ -8,9 +8,9 @@
 			<img
 				width="250"
 				height="140"
-				:src="page.preview"
+				:src="page.meta_image || page.preview"
 				onerror="this.src='/assets/builder/images/fallback.png'"
-				class="w-full overflow-hidden rounded-md object-cover shadow dark:border dark:border-outline-gray-1" />
+				class="aspect-video w-full overflow-hidden rounded-md object-cover shadow dark:border dark:border-outline-gray-1" />
 			<div class="flex items-center justify-between border-outline-gray-2">
 				<span class="inline-block max-w-[160px]">
 					<div class="flex items-center gap-1">
