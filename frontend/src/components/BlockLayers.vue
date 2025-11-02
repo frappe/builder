@@ -6,6 +6,8 @@
 			:group="{ name: 'block-tree' }"
 			item-key="blockId"
 			@add="updateParent"
+			@end="handleDragEnd"
+			:move="handleDragMove"
 			:disabled="disableDraggable">
 			<template #item="{ element }">
 				<div
@@ -94,10 +96,11 @@ import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { FeatherIcon } from "frappe-ui";
-import { ref, watch } from "vue";
+import { nextTick, ref, watch } from "vue";
 import draggable from "vuedraggable";
 import BlockLayers from "./BlockLayers.vue";
 import BlocksIcon from "./Icons/Blocks.vue";
+import blockController from "@/utils/blockController";
 
 type LayerInstance = InstanceType<typeof BlockLayers>;
 
@@ -226,6 +229,52 @@ const blockExitsInTree = (block: Block) => {
 
 const selectBlock = (block: Block, event: MouseEvent) => {
 	canvasStore.selectBlock(block, event, false, true);
+};
+
+const currentlyDraggingBlock = ref<Block | null>(null);
+
+const handleDragMove = (event: any) => {
+	const draggedBlock: Block = event.draggedContext.element;
+	if (!currentlyDraggingBlock.value) {
+		currentlyDraggingBlock.value = draggedBlock;
+
+		const canvasStore = useCanvasStore();
+		const pauseId = canvasStore.activeCanvas?.history?.pause();
+		
+		const listOfInheritedProps = [];
+		for (const propKey in draggedBlock.props) {
+			if (draggedBlock.props[propKey].type === "inherited" && draggedBlock.props[propKey].value) {
+				listOfInheritedProps.push(draggedBlock.props[propKey].value);
+			}
+		}
+		blockController.updateBlockPropsDependencyForAncestor(listOfInheritedProps, "remove", draggedBlock);
+
+		nextTick(() => {
+			pauseId && canvasStore.activeCanvas?.history?.resume(pauseId);
+		});
+	}
+	return true; // Allow the move
+};
+
+const handleDragEnd = async () => {
+	await nextTick();
+	if (currentlyDraggingBlock.value) {
+		const listOfInheritedProps = [];
+		for (const propKey in currentlyDraggingBlock.value.props) {
+			if (
+				currentlyDraggingBlock.value.props[propKey].type === "inherited" &&
+				currentlyDraggingBlock.value.props[propKey].value
+			) {
+				listOfInheritedProps.push(currentlyDraggingBlock.value.props[propKey].value);
+			}
+		}
+		blockController.updateBlockPropsDependencyForAncestor(
+			listOfInheritedProps,
+			"add",
+			currentlyDraggingBlock.value,
+		);
+		currentlyDraggingBlock.value = null;
+	}
 };
 
 defineExpose({

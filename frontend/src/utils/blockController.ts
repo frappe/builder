@@ -324,33 +324,34 @@ const blockController = {
 	},
 	// TODO: should go in other file?
 	updateBlockPropsDependencyForAncestor: (
-		propKey: string,
-		ancestorBlockId: string,
+		propKeys: string | string[],
 		action: "add" | "remove",
+		forSpecificBlock?: Block,
 	) => {
-		let currentBlock = blockController.getFirstSelectedBlock();
-		// go up the tree
-		let parentBlock: Block | null = currentBlock.getParentBlock();
-		while (parentBlock && !parentBlock.props?.[propKey]) {
-			parentBlock = parentBlock?.getParentBlock() || null;
-		}
-		if (parentBlock) {
-			// we can ignore props which are derived from components already having usedByCount
-			let props = parentBlock.props;
-			if (props) {
-				let usedByCount = props[propKey]["usedByCount"];
-				if (action === "add") {
-					usedByCount = (usedByCount || 0) + 1;
-				} else {
-					usedByCount = Math.max((usedByCount || 0) - 1, 0);
+		for (const propKey of Array.isArray(propKeys) ? propKeys : [propKeys]) {
+			let currentBlock = forSpecificBlock || blockController.getFirstSelectedBlock();
+			// go up the tree
+			let parentBlock: Block | null = currentBlock.getParentBlock();
+			while (parentBlock && !parentBlock.props?.[propKey]) {
+				parentBlock = parentBlock?.getParentBlock() || null;
+			}
+			if (parentBlock) {
+				let props = parentBlock.props;
+				if (props) {
+					let usedByCount = props[propKey]["usedByCount"];
+					if (action === "add") {
+						usedByCount = (usedByCount || 0) + 1;
+					} else {
+						usedByCount = Math.max((usedByCount || 0) - 1, 0);
+					}
+					parentBlock.setBlockProps({
+						...props,
+						[propKey]: {
+							...props[propKey],
+							usedByCount: usedByCount,
+						},
+					});
 				}
-				parentBlock.setBlockProps({
-					...props,
-					[propKey]: {
-						...props[propKey],
-						usedByCount: usedByCount,
-					},
-				});
 			}
 		}
 	},

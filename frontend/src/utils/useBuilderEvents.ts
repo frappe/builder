@@ -61,6 +61,13 @@ export function useBuilderEvents(
 		copySelectedBlocksToClipboard(e);
 		if (canvasStore.activeCanvas?.selectedBlocks.length) {
 			for (const block of canvasStore.activeCanvas?.selectedBlocks) {
+				const listOfInheritedProps = [];
+				for (const propKey in block.props) {
+					if (block.props[propKey].type === "inherited" && block.props[propKey].value) {
+						listOfInheritedProps.push(block.props[propKey].value);
+					}
+				}
+				blockController.updateBlockPropsDependencyForAncestor(listOfInheritedProps, "remove", block);
 				canvasStore.activeCanvas?.removeBlock(block, true);
 			}
 			clearSelection();

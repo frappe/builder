@@ -19,6 +19,7 @@ import { nextTick } from "vue";
 import { toast } from "vue-sonner";
 import { webPages } from "../data/webPage";
 import { BuilderClientScript } from "../types/Builder/BuilderClientScript";
+import blockController from "./blockController";
 
 type BuilderPageClientScriptRef = { builder_script: string; idx?: number };
 
@@ -243,7 +244,18 @@ async function insertBlocks(blocks: (Block | BlockOptions)[]) {
 		while (parentBlock && !parentBlock.canHaveChildren()) {
 			parentBlock = parentBlock.getParentBlock() as Block;
 		}
-		blocks.forEach((block) => parentBlock.addChild(getBlockCopy(block), null, true));
+		const addedChildBlocks: Block[] = [];
+		blocks.forEach((block) => addedChildBlocks.push(parentBlock.addChild(getBlockCopy(block), null, true)));
+		await nextTick();
+		addedChildBlocks.forEach((block) => {
+			const listOfInheritedProps = [];
+			for (const propKey in block.props) {
+				if (block.props[propKey].type === "inherited" && block.props[propKey].value) {
+					listOfInheritedProps.push(block.props[propKey].value);
+				}
+			}
+			blockController.updateBlockPropsDependencyForAncestor(listOfInheritedProps, "add", block);
+		});
 	} else {
 		canvasStore.pushBlocks(blocks);
 	}
