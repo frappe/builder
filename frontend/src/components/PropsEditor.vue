@@ -15,7 +15,9 @@
 					'[&>.form-input]:bg-surface-blue-1 [&>div>input]:text-ink-blue-3':
 						value.type == 'static' && value.value,
 					'[&>.form-input]:bg-surface-green-1 [&>div>input]:text-ink-green-3':
-						value.type == 'inherited' && value.value,
+						value.type == 'inherited' && value.value && listOfAvailablePropsToInherit.includes(value.value),
+					'[&>.form-input]:bg-surface-red-1 [&>div>input]:text-ink-red-3':
+						value.type == 'inherited' && value.value && !listOfAvailablePropsToInherit.includes(value.value),
 				}"
 				v-bind="events"
 				ref="autoCompleteRef"
@@ -34,7 +36,11 @@
 						class="absolute left-0 top-0 h-4 w-4 text-ink-blue-3" />
 					<LucideListTree
 						v-else-if="value.type == 'inherited'"
-						class="absolute left-0 top-0 h-4 w-4 text-ink-green-3" />
+						class="absolute left-0 top-0 h-4 w-4"
+						:class="{
+							'text-ink-green-3': listOfAvailablePropsToInherit.includes(value.value),
+							'text-ink-red-3': !listOfAvailablePropsToInherit.includes(value.value),
+						}" />
 				</template>
 			</Autocomplete>
 			<BuilderButton
@@ -116,6 +122,7 @@ const dataArray = computed(() => {
 	return result;
 });
 
+const listOfAvailablePropsToInherit = ref<string[]>([]);
 const getParentProps = (baseBlock: Block, baseProps: PropOptions[]): PropOptions[] => {
 	const parentBlock = baseBlock.getParentBlock();
 	if (parentBlock) {
@@ -247,6 +254,9 @@ watch(
 				ref?.updateOptions();
 			});
 		}
+		listOfAvailablePropsToInherit.value = getParentProps(blockController.getFirstSelectedBlock()!, []).map(
+			(prop) => prop.path,
+		);
 	},
 	{ immediate: true },
 );
