@@ -4,6 +4,7 @@
 			<BuilderInput
 				placeholder="Property"
 				:modelValue="key"
+				:disabled="value.usedByCount || false"
 				@update:modelValue="(val: string) => replaceKey(key, val)" />
 			<Autocomplete
 				class="w-full [&>.form-input]:border-none [&>.form-input]:hover:border-none [&>div>input]:font-mono [&>div>input]:text-xs"
@@ -47,6 +48,7 @@
 				class="flex-shrink-0 text-xs"
 				variant="subtle"
 				icon="x"
+				:disabled="value.usedByCount || false"
 				@click="deleteObjectKey(key as string)" />
 		</div>
 		<BuilderButton variant="subtle" label="Add" @click="addObjectKey"></BuilderButton>
