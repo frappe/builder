@@ -52,6 +52,7 @@
 					class="block-layers w-fit min-w-full pr-3"
 					v-if="pageCanvas"
 					:disable-draggable="true"
+					:readonly="readonly"
 					ref="pageLayers"
 					:blocks="[pageCanvas?.getRootBlock() as Block]"
 					v-show="canvasStore.editingMode == 'page'" />
@@ -59,6 +60,7 @@
 					class="block-layers w-fit min-w-full pr-3"
 					ref="componentLayers"
 					:disable-draggable="true"
+					:readonly="readonly"
 					:blocks="[fragmentCanvas?.getRootBlock()]"
 					:indent="5"
 					:adjustForRoot="false"
@@ -86,8 +88,7 @@ import PageScript from "@/components/PageScript.vue";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
-import convertHTMLToBlocks from "@/utils/convertHTMLToBlocks";
-import { createResource, Tooltip } from "frappe-ui";
+import { Tooltip } from "frappe-ui";
 import { inject, nextTick, Ref, ref, watch, watchEffect } from "vue";
 import BlockLayers from "./BlockLayers.vue";
 import BuilderAssets from "./BuilderAssets.vue";
@@ -95,8 +96,19 @@ import BuilderBlockTemplates from "./BuilderBlockTemplates.vue";
 import BuilderCanvas from "./BuilderCanvas.vue";
 import PanelResizer from "./PanelResizer.vue";
 
+const props = withDefaults(
+	defineProps<{
+		readonly?: boolean;
+	}>(),
+	{
+		readonly: false,
+	},
+);
+
 const showVariableManager = ref(false);
 const miniSidebar = ref(null) as Ref<HTMLElement | null>;
+const pageLayers = ref<InstanceType<typeof BlockLayers> | null>(null);
+const componentLayers = ref<InstanceType<typeof BlockLayers> | null>(null);
 
 const canvasStore = useCanvasStore();
 const builderStore = useBuilderStore();
@@ -104,19 +116,6 @@ const pageStore = usePageStore();
 
 const pageCanvas = inject("pageCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
 const fragmentCanvas = inject("fragmentCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
-
-const prompt = ref(null) as unknown as Ref<string>;
-const generating = ref(false);
-const pageLayers = ref<InstanceType<typeof BlockLayers> | null>(null);
-const componentLayers = ref<InstanceType<typeof BlockLayers> | null>(null);
-
-watchEffect(() => {
-	if (pageLayers.value) {
-		builderStore.activeLayers = pageLayers.value;
-	} else if (componentLayers.value) {
-		builderStore.activeLayers = componentLayers.value;
-	}
-});
 
 const leftPanelOptions = [
 	{
@@ -146,21 +145,6 @@ const leftPanelOptions = [
 	},
 ];
 
-const getPage = () => {
-	generating.value = true;
-	createResource({
-		url: "builder.api.get_blocks",
-		onSuccess(html: string) {
-			canvasStore.clearBlocks();
-			const blocks = convertHTMLToBlocks(html);
-			canvasStore.pushBlocks([blocks]);
-			generating.value = false;
-		},
-	}).submit({
-		prompt: prompt.value,
-	});
-};
-
 const setActiveTab = (tab: LeftSidebarTabOption) => {
 	if (tab === "variables") {
 		showVariableManager.value = true;
@@ -168,6 +152,14 @@ const setActiveTab = (tab: LeftSidebarTabOption) => {
 		builderStore.leftPanelActiveTab = tab;
 	}
 };
+
+watchEffect(() => {
+	if (pageLayers.value) {
+		builderStore.activeLayers = pageLayers.value;
+	} else if (componentLayers.value) {
+		builderStore.activeLayers = componentLayers.value;
+	}
+});
 
 // moved out of BlockLayers for performance
 // TODO: Find a better way to do this

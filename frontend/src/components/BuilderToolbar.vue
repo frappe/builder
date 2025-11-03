@@ -66,7 +66,10 @@
 					<div
 						class="flex w-72 flex-col gap-3 rounded bg-surface-white p-4 shadow-lg"
 						v-if="pageStore.activePage">
-						<PageOptions v-if="pageStore.activePage" :page="pageStore.activePage"></PageOptions>
+						<PageOptions
+							v-if="pageStore.activePage"
+							:page="pageStore.activePage"
+							:readonly="readonly"></PageOptions>
 					</div>
 				</template>
 			</Popover>
@@ -74,6 +77,7 @@
 		<!-- actions -->
 		<div class="absolute right-3 flex items-center gap-5">
 			<!-- show dark mode toggle -->
+			<Badge variant="subtle" theme="orange" v-if="readonly">Read Only</Badge>
 			<Tooltip text="Toggle Dark Mode" :hoverDelay="0.6">
 				<FeatherIcon
 					:name="isDark ? 'sun' : 'moon'"
@@ -141,7 +145,7 @@
 					<PlayIcon class="h-[18px] w-[18px] cursor-pointer text-ink-gray-8"></PlayIcon>
 				</Tooltip>
 			</router-link>
-			<PublishButton></PublishButton>
+			<PublishButton :disabled="readonly"></PublishButton>
 		</div>
 	</div>
 </template>
@@ -157,12 +161,16 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { getTextContent } from "@/utils/helpers";
 import { useDark, useToggle } from "@vueuse/core";
-import { Popover, Tooltip } from "frappe-ui";
+import { Badge, Popover, Tooltip } from "frappe-ui";
 import { computed, ref } from "vue";
 import { toast } from "vue-sonner";
 import BuilderSettings from "./BuilderSettings.vue";
 import MainMenu from "./MainMenu.vue";
 import PageOptions from "./PageOptions.vue";
+
+defineProps<{
+	readonly?: boolean;
+}>();
 
 const isDark = useDark({
 	attribute: "data-theme",

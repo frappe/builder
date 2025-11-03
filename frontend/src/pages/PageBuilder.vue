@@ -8,10 +8,11 @@
 	</div>
 	<div v-show="!isSmallScreen" class="page-builder h-screen flex-col overflow-hidden bg-surface-gray-1">
 		<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
-		<BuilderToolbar class="relative z-30"></BuilderToolbar>
+		<BuilderToolbar :readonly="readonly" class="relative z-30"></BuilderToolbar>
 		<div>
 			<BuilderLeftPanel
 				v-show="builderStore.showLeftPanel"
+				:readonly="readonly"
 				class="absolute bottom-0 left-0 top-[var(--toolbar-height)] z-[21] border-r-[1px] border-outline-gray-2 bg-surface-white"></BuilderLeftPanel>
 			<BuilderCanvas
 				ref="fragmentCanvas"
@@ -57,6 +58,7 @@
 				ref="pageCanvas"
 				v-if="pageStore.pageBlocks[0]"
 				:block-data="pageStore.pageBlocks[0]"
+				:readonly="readonly"
 				:canvas-styles="{
 					minHeight: '1000px',
 				}"
@@ -71,6 +73,7 @@
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-surface-gray-1 p-10"></BuilderCanvas>
 			<BuilderRightPanel
 				v-show="builderStore.showRightPanel"
+				:readonly="readonly"
 				class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] border-outline-gray-2 bg-surface-white"></BuilderRightPanel>
 			<PageListModal v-model="pageListDialog" :pages="componentUsedInPages"></PageListModal>
 			<Dialog
@@ -147,6 +150,10 @@ const canvasStore = useCanvasStore();
 const usageCount = ref(0);
 const componentUsedInPages = ref<BuilderPage[]>([]);
 const pageListDialog = ref(false);
+
+const readonly = computed(
+	() => canvasStore.editingMode === "page" && Boolean(pageStore.activePage?.is_standard),
+);
 
 declare global {
 	interface Window {

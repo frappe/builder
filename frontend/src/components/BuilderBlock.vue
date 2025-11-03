@@ -14,6 +14,7 @@
 			:block="child"
 			:breakpoint="breakpoint"
 			:preview="preview"
+			:readonly="readonly"
 			:isChildOfComponent="block.isExtendedFromComponent() || isChildOfComponent"
 			:key="child.blockId"
 			v-for="child in block.getChildren().filter((child) => child.isVisible(breakpoint))" />
@@ -28,6 +29,7 @@
 			:breakpoint="breakpoint"
 			:editable="isEditable"
 			:isSelected="isSelected"
+			:readonly="readonly"
 			:target="(target as HTMLElement)" />
 	</teleport>
 </template>
@@ -54,12 +56,14 @@ const props = withDefaults(
 		isChildOfComponent?: boolean;
 		breakpoint?: string;
 		preview?: boolean;
+		readonly?: boolean;
 		data?: Record<string, any> | null;
 	}>(),
 	{
 		isChildOfComponent: false,
 		breakpoint: "desktop",
 		preview: false,
+		readonly: false,
 		data: null,
 	},
 );
