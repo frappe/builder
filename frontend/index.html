@@ -18,7 +18,7 @@
 			window.builder_path = "{{ builder_path }}";
 			window.site_name = "{{ site_name }}";
 			window.is_fc_site = "{{ is_fc_site }}";
-			window.is_developer_mode = {{ is_developer_mode }};
+			window.is_developer_mode = Boolean("{{ is_developer_mode }}");
 		</script>
 		<script type="module" src="/src/main.ts"></script>
 	</body>
