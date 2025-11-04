@@ -7,6 +7,7 @@
 			@input="($event: Event) => emit('input', ($event.target as HTMLInputElement).value)"
 			autocomplete="off"
 			:autofocus="autofocus"
+			:disabled="disabled"
 			v-bind="attrs"
 			:modelValue="data">
 			<template #prefix v-if="$slots.prefix">
@@ -15,7 +16,9 @@
 			<template #suffix v-if="$slots.suffix">
 				<slot name="suffix" />
 			</template>
-			<template #suffix v-else-if="!['select', 'checkbox'].includes(type) && !hideClearButton && data">
+			<template
+				#suffix
+				v-else-if="!['select', 'checkbox'].includes(type) && !hideClearButton && data && !disabled">
 				<button
 					class="cursor-pointer text-ink-gray-4 hover:text-ink-gray-5"
 					tabindex="-1"
@@ -37,6 +40,7 @@ const props = withDefaults(
 		type?: string;
 		hideClearButton?: boolean;
 		autofocus?: boolean;
+		disabled?: boolean;
 	}>(),
 	{
 		type: "text",
