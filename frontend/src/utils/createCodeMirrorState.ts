@@ -169,6 +169,7 @@ export const createStartingState = async ({
 						onSaveCallback();
 						return true;
 					},
+					stopPropagation: true,
 				},
 			]),
 		);
