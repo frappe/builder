@@ -490,6 +490,7 @@ def get_block_html(blocks):
 	def get_html(blocks, soup):
 		map_of_inherited_props = {} # prop_name -> array<values>
 		html = ""
+		all_block_scripts = []
 
 		def get_tag(block, soup, data_key=None):
 			block = extend_with_component(block)
@@ -567,7 +568,6 @@ def get_block_html(blocks):
 				set_fonts_from_html(inner_soup, font_map)
 				tag.append(inner_soup)
 
-			script_tag = soup.new_tag("script")
 			props_obj = {}
 			props_with_successors = []
 			if block.get("props"):
@@ -627,9 +627,13 @@ def get_block_html(blocks):
 				block_unique_id = f"{block.get('blockId')}-{frappe.generate_hash(length=3)}"
 				script_content = f"(function (props){{ {block.get('blockScript')} }}).call(document.querySelector('[data-block-id=\"{block_unique_id}\"]'), {props_obj or '{}'});"
 				print("Script content: ", script_content)
-				script_tag.string = script_content
+				all_block_scripts.append(script_content)
 				tag.attrs["data-block-id"] = block_unique_id
-				tag.append(script_tag)
+			if block.get("blockId") == "root":
+				for script in all_block_scripts:
+					script_tag = soup.new_tag("script")
+					script_tag.string = script
+					tag.append(script_tag)
 
 			return tag
 
