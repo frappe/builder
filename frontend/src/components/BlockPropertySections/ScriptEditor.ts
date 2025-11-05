@@ -1,6 +1,7 @@
 import { computed } from "vue";
 import CodeEditor from "../Controls/CodeEditor.vue";
 import blockController from "@/utils/blockController";
+import useCanvasStore from "@/stores/canvasStore";
 
 const blockScriptProperties = [
 	{
@@ -8,19 +9,25 @@ const blockScriptProperties = [
 		getProps: () => {
 			return {
 				modelValue: blockController.getBlockScript(),
+				getModelValue: () => blockController.getBlockScript() || "",
 				type: "JavaScript",
 				readonly: false,
 				height: "200px",
 				showLineNumbers: true,
 				autofocus: true,
-				showSaveButton: true,
-				description:
-					"Add custom scripts to enhance block functionality.",
+				actionButton: {
+					label: "Expand",
+					icon: "maximize-2",
+					handler: () => {
+						useCanvasStore().editBlockScript(blockController.getSelectedBlocks()[0]);
+					},
+				},
 			};
 		},
 		searchKeyWords: "Block Script, Script, JS, JavaScript, Custom Script",
 		events: {
 			save: (script: string) => blockController.setBlockScript(script),
+			"update:modelValue": (script: string) => blockController.setBlockScript(script),
 		},
 	},
 ];
@@ -28,6 +35,6 @@ const blockScriptProperties = [
 export default {
 	name: "Block Script",
 	properties: blockScriptProperties,
-	collapsed: !blockController.getBlockScript()?.trim(),
+	collapsed: false,
 	condition: () => !blockController.multipleBlocksSelected(),
 };
