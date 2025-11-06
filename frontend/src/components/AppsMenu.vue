@@ -5,7 +5,7 @@
 				class="flex h-7 w-full items-center justify-between rounded px-2 text-base hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-2': isOpen }"
 				@click.prevent="togglePopover()">
-				<div class="flex gap-2">
+				<div class="flex items-center gap-2">
 					<FeatherIcon name="grid" class="size-4" />
 					<span class="text-ink-gray-7">Apps</span>
 				</div>
