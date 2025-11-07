@@ -573,22 +573,7 @@ def get_block_html(blocks):
 			if block.get("props"):
 				props = []
 				for key, value in block.get("props", {}).items():
-        
-					prop_value = value["value"]
-					prop_type = value["type"]
-					interpreted_value = ""
-     
-					if prop_value == "" or prop_value is None:
-						prop_value = "undefined"
-
-					if prop_type == "dynamic":
-						interpreted_value = f"{{{{ {data_key}.{prop_value} }}}}" if data_key else f"{{{{ {prop_value} }}}}"
-					elif prop_type == "static":
-						interpreted_value = f"{prop_value}"
-					elif prop_type == "inherited":
-						values = map_of_inherited_props.get(prop_value, [])
-						interpreted_value = values[0] if values else "undefined"
-      
+					interpreted_value = get_interpreted_prop_value(value, data_key, map_of_inherited_props)
 					props.append(f"{key}: {interpreted_value}")
      
 					if value.get('usedByCount', 0) > 0:
@@ -853,6 +838,20 @@ def resolve_path(path):
 
 	return original_resolve_path(path)
 
+
+def get_interpreted_prop_value(prop, data_key, map_of_inherited_props):
+	prop_value = prop["value"]
+	prop_type = prop["type"]
+
+	if prop_value == "" or prop_value is None:
+		return "undefined"
+	if prop_type == "dynamic":
+		return f"'{{{{ {data_key}.{prop_value} }}}}'" if data_key else f"'{{{{ {prop_value} }}}}'"
+	elif prop_type == "static":
+		return f"{prop_value}"
+	elif prop_type == "inherited":
+		values = map_of_inherited_props.get(prop_value, [])
+		return values[0] if values else "undefined"
 
 def reset_with_component(block, extended_with_component, component_children):
 	reset_block(block)
