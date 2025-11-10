@@ -35,6 +35,7 @@ const useCanvasStore = defineStore("canvasStore", {
 			saveActionLabel: <string | null>null,
 			fragmentName: <string | null>null,
 			fragmentId: <string | null>null,
+			showUsageCount: false,
 		},
 	}),
 	actions: {
@@ -108,6 +109,7 @@ const useCanvasStore = defineStore("canvasStore", {
 			saveActionLabel: string = "Save",
 			fragmentName?: string,
 			fragmentId?: string,
+			showUsageCount?: boolean,
 		) {
 			const blockCopy = getBlockCopy(block, true);
 			this.fragmentData = {
@@ -116,6 +118,7 @@ const useCanvasStore = defineStore("canvasStore", {
 				saveActionLabel,
 				fragmentName: fragmentName || block.getBlockDescription(),
 				fragmentId: fragmentId || block.blockId,
+				showUsageCount: showUsageCount || false,
 			};
 			this.editingMode = "fragment";
 		},
