@@ -126,6 +126,7 @@
 			<Dialog
 				v-model="showSettingsDialog"
 				style="z-index: 40"
+				:disableOutsideClickToClose="true"
 				class="[&>div>div[id^=headlessui-dialog-panel]]:my-3"
 				:options="{
 					title: 'Settings',
