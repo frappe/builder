@@ -1,6 +1,6 @@
 <template>
 	<div class="flex gap-5">
-		<div class="flex flex-col gap-3 pt-6">
+		<div class="flex flex-col gap-3">
 			<div class="flex h-full w-48 flex-col justify-between gap-1">
 				<div class="flex flex-col gap-1">
 					<a
@@ -11,7 +11,7 @@
 							'font-medium text-ink-gray-8': activeScript === script,
 						}"
 						@click="selectScript(script)"
-						class="group flex h-6 items-center justify-between gap-1 text-sm last-of-type:mb-2">
+						class="group flex h-6 items-center justify-between gap-1 text-sm first-of-type:mt-6 last-of-type:mb-2">
 						<div class="flex w-[90%] items-center gap-1">
 							<CSSIcon class="shrink-0" v-if="script.script_type === 'CSS'" />
 
