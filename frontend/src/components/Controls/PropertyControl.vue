@@ -314,6 +314,13 @@ const stateOptions = computed(() => {
 				.map((state: string) => ({
 					label: stateLabels[state] || state,
 					onClick: () => {
+						blockController.getSelectedBlocks().forEach((block) => {
+							if (!block.getStyle("transitionDuration")) {
+								block.setStyle("transitionDuration", "300ms");
+								block.setStyle("transitionTimingFunction", "ease");
+								block.setStyle("transitionProperty", "all");
+							}
+						});
 						blockController.setStyle(`${state}:${props.styleProperty}`, modelValue.value);
 					},
 				})),
