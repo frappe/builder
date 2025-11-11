@@ -23,8 +23,6 @@
 					</router-link>
 				</div>
 			</div>
-			<!-- Sidebar -->
-			<!-- Main Content -->
 			<div class="flex-1 overflow-auto">
 				<section class="m-auto mb-32 flex h-fit w-3/4 max-w-6xl flex-col pt-5">
 					<!-- list head -->
@@ -125,7 +123,7 @@
 							<PageCard
 								v-for="page in webPages.data"
 								:selected="selectedPages.has(page.name)"
-								@click.capture="($event) => handleClick($event, page)"
+								@click.capture="($event: MouseEvent) => handleClick($event, page)"
 								:key="page.page_name"
 								:page="page"
 								v-on-click-and-hold="() => enableSelectionMode(page)"></PageCard>
@@ -133,7 +131,7 @@
 						<!-- list -->
 						<div v-if="displayType === 'list'">
 							<PageListItem
-								@click.capture="($event) => handleClick($event, page)"
+								@click.capture="($event: MouseEvent) => handleClick($event, page)"
 								v-for="page in webPages.data"
 								:selected="selectedPages.has(page.name)"
 								:key="page.page_name"
