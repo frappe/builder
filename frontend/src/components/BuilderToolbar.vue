@@ -66,10 +66,7 @@
 					<div
 						class="flex w-72 flex-col gap-3 rounded bg-surface-white p-4 shadow-lg"
 						v-if="pageStore.activePage">
-						<PageOptions
-							v-if="pageStore.activePage"
-							:page="pageStore.activePage"
-							:readonly="readonly"></PageOptions>
+						<PageOptions v-if="pageStore.activePage" :page="pageStore.activePage"></PageOptions>
 					</div>
 				</template>
 			</Popover>
@@ -77,7 +74,7 @@
 		<!-- actions -->
 		<div class="absolute right-3 flex items-center gap-5">
 			<!-- show dark mode toggle -->
-			<Badge variant="subtle" theme="orange" v-if="readonly">Read Only</Badge>
+			<Badge variant="subtle" theme="orange" v-if="builderStore.readOnlyMode">Read Only</Badge>
 			<Tooltip text="Toggle Dark Mode" :hoverDelay="0.6">
 				<FeatherIcon
 					:name="isDark ? 'sun' : 'moon'"
@@ -146,7 +143,7 @@
 					<PlayIcon class="h-[18px] w-[18px] cursor-pointer text-ink-gray-8"></PlayIcon>
 				</Tooltip>
 			</router-link>
-			<PublishButton :disabled="readonly"></PublishButton>
+			<PublishButton :disabled="builderStore.readOnlyMode"></PublishButton>
 		</div>
 	</div>
 </template>
@@ -169,16 +166,11 @@ import BuilderSettings from "./BuilderSettings.vue";
 import MainMenu from "./MainMenu.vue";
 import PageOptions from "./PageOptions.vue";
 
-defineProps<{
-	readonly?: boolean;
-}>();
-
 const isDark = useDark({
 	attribute: "data-theme",
 });
 
 const toggleDark = useToggle(isDark);
-
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 

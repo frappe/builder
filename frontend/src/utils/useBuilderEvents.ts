@@ -4,7 +4,6 @@ import webComponent from "@/data/webComponent";
 import { webPages } from "@/data/webPage";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
-import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import blockController from "@/utils/blockController";
@@ -27,7 +26,6 @@ import { useRoute, useRouter } from "vue-router";
 import { toast } from "vue-sonner";
 
 const builderStore = useBuilderStore();
-const componentStore = useComponentStore();
 const canvasStore = useCanvasStore();
 const pageStore = usePageStore();
 
@@ -58,6 +56,7 @@ export function useBuilderEvents(
 
 	useEventListener(document, "cut", (e) => {
 		if (isTargetEditable(e)) return;
+		if (builderStore.readOnlyMode) return;
 		copySelectedBlocksToClipboard(e);
 		if (canvasStore.activeCanvas?.selectedBlocks.length) {
 			for (const block of canvasStore.activeCanvas?.selectedBlocks) {
@@ -69,6 +68,7 @@ export function useBuilderEvents(
 
 	useEventListener(document, "paste", async (e) => {
 		if (isTargetEditable(e)) return;
+		if (builderStore.readOnlyMode) return;
 		e.stopPropagation();
 		const clipboardItems = Array.from(e.clipboardData?.items || []);
 
@@ -261,6 +261,7 @@ export function useBuilderEvents(
 		}
 
 		if (e.key === "d" && isCtrlOrCmd(e)) {
+			if (builderStore.readOnlyMode) return;
 			if (blockController.isBlockSelected() && !blockController.multipleBlocksSelected()) {
 				e.preventDefault();
 				const block = blockController.getSelectedBlocks()[0];
@@ -271,6 +272,7 @@ export function useBuilderEvents(
 		if (isTargetEditable(e)) return;
 
 		if ((e.key === "Backspace" || e.key === "Delete") && blockController.isBlockSelected()) {
+			if (builderStore.readOnlyMode) return;
 			for (const block of blockController.getSelectedBlocks()) {
 				canvasStore.activeCanvas?.removeBlock(block, e.shiftKey);
 			}
@@ -376,16 +378,19 @@ export function useBuilderEvents(
 		}
 
 		if (e.key === "c") {
+			if (builderStore.readOnlyMode) return;
 			builderStore.mode = "container";
 			return;
 		}
 
 		if (e.key === "i") {
+			if (builderStore.readOnlyMode) return;
 			builderStore.mode = "image";
 			return;
 		}
 
 		if (e.key === "t") {
+			if (builderStore.readOnlyMode) return;
 			builderStore.mode = "text";
 			return;
 		}

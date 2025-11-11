@@ -52,7 +52,7 @@
 					class="block-layers w-fit min-w-full pr-3"
 					v-if="pageCanvas"
 					:disable-draggable="true"
-					:readonly="readonly"
+					:readonly="builderStore.readOnlyMode"
 					ref="pageLayers"
 					:blocks="[pageCanvas?.getRootBlock() as Block]"
 					v-show="canvasStore.editingMode == 'page'" />
@@ -60,7 +60,7 @@
 					class="block-layers w-fit min-w-full pr-3"
 					ref="componentLayers"
 					:disable-draggable="true"
-					:readonly="readonly"
+					:readonly="builderStore.readOnlyMode"
 					:blocks="[fragmentCanvas?.getRootBlock()]"
 					:indent="5"
 					:adjustForRoot="false"
@@ -95,15 +95,6 @@ import BuilderAssets from "./BuilderAssets.vue";
 import BuilderBlockTemplates from "./BuilderBlockTemplates.vue";
 import BuilderCanvas from "./BuilderCanvas.vue";
 import PanelResizer from "./PanelResizer.vue";
-
-const props = withDefaults(
-	defineProps<{
-		readonly?: boolean;
-	}>(),
-	{
-		readonly: false,
-	},
-);
 
 const showVariableManager = ref(false);
 const miniSidebar = ref(null) as Ref<HTMLElement | null>;

@@ -38,11 +38,15 @@ const useBuilderStore = defineStore("builderStore", {
 		showHTMLDialog: false,
 		showDataScriptDialog: false,
 		realtime: new RealTimeHandler(),
+		readOnlyMode: false,
 		viewers: <UserInfo[]>[],
 		isFCSite: window.is_fc_site === "{{ is_fc_site }}" ? false : window.is_fc_site,
 		activeFolder: useStorage("activeFolder", ""),
 	}),
 	actions: {
+		toggleReadOnlyMode(readonly: boolean | null = null) {
+			this.readOnlyMode = readonly ?? !this.readOnlyMode;
+		},
 		setHomePage(route: string) {
 			return builderSettings.setValue
 				.submit({

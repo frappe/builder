@@ -10,6 +10,7 @@ import type Block from "@/block";
 import ContextMenu from "@/components/ContextMenu.vue";
 import NewBlockTemplate from "@/components/Modals/NewBlockTemplate.vue";
 import NewComponent from "@/components/Modals/NewComponent.vue";
+import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import getBlockTemplate from "@/utils/blockTemplate";
@@ -18,6 +19,7 @@ import { useStorage } from "@vueuse/core";
 import { Ref, nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
 
+const builderStore = useBuilderStore();
 const componentStore = useComponentStore();
 const canvasStore = useCanvasStore();
 
@@ -71,8 +73,13 @@ const contextMenuOptions: ContextMenuOption[] = [
 		label: "Paste Style",
 		action: pasteStyle,
 		condition: () => Boolean(copiedStyle.value.blockId && copiedStyle.value?.blockId !== block.value.blockId),
+		disabled: () => builderStore.readOnlyMode,
 	},
-	{ label: "Duplicate", action: duplicateBlock },
+	{
+		label: "Duplicate",
+		action: duplicateBlock,
+		disabled: () => builderStore.readOnlyMode,
+	},
 	{
 		label: "Convert To Collection",
 		action: () => {
@@ -85,6 +92,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			!block.value.isRepeater() &&
 			!block.value.isChildOfComponentBlock() &&
 			!block.value.isExtendedFromComponent(),
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Remove Collection",
@@ -93,6 +101,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			block.value.dataKey = {};
 		},
 		condition: () => block.value.isRepeater(),
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Wrap In Container",
@@ -139,6 +148,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			const selectedBlocks = canvasStore.activeCanvas?.selectedBlocks || [];
 			return selectedBlocks.every((block: Block) => block.getParentBlock() === parentBlock);
 		},
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Repeat Block",
@@ -154,11 +164,14 @@ const contextMenuOptions: ContextMenuOption[] = [
 		},
 		condition: () =>
 			!block.value.isRoot() && !block.value.isRepeater() && !block.value.isChildOfComponentBlock(),
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Reset Overrides",
 		condition: () => canvasStore.activeCanvas?.activeBreakpoint !== "desktop",
-		disabled: () => !block.value?.hasOverrides(canvasStore.activeCanvas?.activeBreakpoint || "desktop"),
+		disabled: () =>
+			builderStore.readOnlyMode ||
+			!block.value?.hasOverrides(canvasStore.activeCanvas?.activeBreakpoint || "desktop"),
 		action: () => {
 			block.value.resetOverrides(canvasStore.activeCanvas?.activeBreakpoint || "desktop");
 		},
@@ -175,6 +188,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			}
 		},
 		condition: () => block.value.isExtendedFromComponent(),
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Sync Component",
@@ -182,6 +196,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		action: () => {
 			block.value.syncWithComponent();
 		},
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Reset Component",
@@ -193,6 +208,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 				}
 			});
 		},
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Edit Component",
@@ -200,6 +216,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			componentStore.editComponent(block.value);
 		},
 		condition: () => block.value.isExtendedFromComponent(),
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Save as Block Template",
@@ -207,11 +224,13 @@ const contextMenuOptions: ContextMenuOption[] = [
 			showBlockTemplateDialog.value = true;
 		},
 		condition: () => !block.value.isExtendedFromComponent() && Boolean(window.is_developer_mode),
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Save As Component",
 		action: () => (showNewComponentDialog.value = true),
 		condition: () => !block.value.isExtendedFromComponent(),
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Detach Component",
@@ -223,6 +242,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			block.value.getParentBlock()?.replaceChild(block.value, newBlock);
 		},
 		condition: () => Boolean(block.value.extendedFromComponent),
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Rename",
@@ -244,6 +264,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		},
 		condition: () =>
 			!block.value.isRoot() && !block.value.isChildOfComponentBlock() && triggeredFromLayersPanel.value,
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Delete",
@@ -261,6 +282,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 				Boolean(block.value.getParentBlock())
 			);
 		},
+		disabled: () => builderStore.readOnlyMode,
 	},
 ];
 

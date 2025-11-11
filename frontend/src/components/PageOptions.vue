@@ -6,7 +6,7 @@
 				type="text"
 				class="w-full text-sm [&>label]:w-[60%] [&>label]:min-w-[180px]"
 				:modelValue="page.page_title"
-				:disabled="readonly"
+				:disabled="builderStore.readOnlyMode"
 				@update:modelValue="(val: string) => pageStore.updateActivePage('page_title', val)" />
 			<BuilderInput
 				type="text"
@@ -15,7 +15,7 @@
 				description="The URL path for this page. For variables, use colon (e.g. /users/:id)"
 				@input="(val: string) => (page.route = val)"
 				:modelValue="page.route"
-				:disabled="readonly"
+				:disabled="builderStore.readOnlyMode"
 				:hideClearButton="true"
 				@update:modelValue="(val: string) => pageStore.updateActivePage('route', val)" />
 			<!-- Dynamic Route Variables -->
@@ -36,17 +36,19 @@
 	</div>
 </template>
 <script setup lang="ts">
+import useBuilderStore from "@/stores/builderStore";
 import usepageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { getRouteVariables } from "@/utils/helpers";
 import { computed } from "vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
 
+const builderStore = useBuilderStore();
 const pageStore = usepageStore();
 const props = defineProps<{
 	page: BuilderPage;
-	readonly?: boolean;
 }>();
+
 const dynamicVariables = computed(() => {
 	return getRouteVariables(props.page.route || "");
 });
