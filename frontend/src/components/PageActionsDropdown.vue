@@ -11,16 +11,23 @@
 						icon: 'copy',
 					},
 					{
+						label: 'View Page',
+						onClick: () => pageStore.openPageInBrowser(props.page),
+						icon: 'globe',
+						condition: () => Boolean(props.page.published),
+					},
+					{
 						label: 'View in Desk',
 						onClick: () => openInDesk(props.page),
 						icon: 'arrow-up-right',
 					},
+					{
+						label: 'Delete',
+						onClick: () => pageStore.deletePage(props.page),
+						icon: 'trash',
+						condition: () => !props.page.is_standard,
+					},
 				],
-			},
-			{
-				group: 'Delete',
-				hideLabel: true,
-				items: [{ label: 'Delete', onClick: () => pageStore.deletePage(props.page), icon: 'trash' }],
 			},
 		]"
 		:size="size"
