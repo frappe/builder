@@ -1,12 +1,6 @@
 <template>
 	<div>
-		<ContextMenu
-			v-if="contextMenuVisible"
-			:pos-x="posX"
-			:pos-y="posY"
-			:options="contextMenuOptions"
-			@select="handleContextMenuSelect"
-			v-on-click-outside="() => (contextMenuVisible = false)" />
+		<ContextMenu ref="contextMenu" :options="contextMenuOptions" />
 		<NewComponent v-if="block" :block="block" v-model="showNewComponentDialog"></NewComponent>
 		<NewBlockTemplate v-if="block" :block="block" v-model="showBlockTemplateDialog"></NewBlockTemplate>
 	</div>
@@ -16,23 +10,18 @@ import type Block from "@/block";
 import ContextMenu from "@/components/ContextMenu.vue";
 import NewBlockTemplate from "@/components/Modals/NewBlockTemplate.vue";
 import NewComponent from "@/components/Modals/NewComponent.vue";
-import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { confirm, detachBlockFromComponent, getBlockCopy, triggerCopyEvent } from "@/utils/helpers";
-import { vOnClickOutside } from "@vueuse/components";
 import { useStorage } from "@vueuse/core";
 import { Ref, nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
 
 const componentStore = useComponentStore();
 const canvasStore = useCanvasStore();
-const builderStore = useBuilderStore();
 
-const contextMenuVisible = ref(false);
-const posX = ref(0);
-const posY = ref(0);
+const contextMenu = ref(null) as unknown as Ref<InstanceType<typeof ContextMenu>>;
 const triggeredFromLayersPanel = ref(false);
 
 const block = ref(null) as unknown as Ref<Block>;
@@ -47,18 +36,8 @@ const showContextMenu = (event: MouseEvent, refBlock: Block) => {
 	target.value = event.target as HTMLElement;
 	const layersPanel = target.value.closest(".block-layers");
 	triggeredFromLayersPanel.value = Boolean(layersPanel);
-
 	if (block.value.isRoot()) return;
-	contextMenuVisible.value = true;
-	posX.value = event.pageX;
-	posY.value = event.pageY;
-	event.preventDefault();
-	event.stopPropagation();
-};
-
-const handleContextMenuSelect = (action: CallableFunction) => {
-	action();
-	contextMenuVisible.value = false;
+	contextMenu.value?.show(event);
 };
 
 const copiedStyle = useStorage("copiedStyle", { blockId: "", style: {} }, sessionStorage) as Ref<StyleCopy>;

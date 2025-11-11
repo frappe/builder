@@ -90,7 +90,6 @@ const handleClick = (action: CallableFunction) => {
 	emit("select", action);
 };
 
-// Public methods
 const show = (event: MouseEvent) => {
 	internalPosX.value = event.pageX;
 	internalPosY.value = event.pageY;
@@ -104,7 +103,6 @@ const hide = () => {
 	emit("hide");
 };
 
-// Expose public methods
 defineExpose({
 	show,
 	hide,
