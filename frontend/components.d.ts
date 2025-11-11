@@ -33,7 +33,6 @@ declare module 'vue' {
     BuilderBlockTemplates: typeof import('./src/components/BuilderBlockTemplates.vue')['default']
     BuilderButton: typeof import('./src/components/Controls/BuilderButton.vue')['default']
     BuilderCanvas: typeof import('./src/components/BuilderCanvas.vue')['default']
-    BuilderInput: typeof import('./src/components/BuilderInput.vue')['default']
     BuilderLeftPanel: typeof import('./src/components/BuilderLeftPanel.vue')['default']
     BuilderRightPanel: typeof import('./src/components/BuilderRightPanel.vue')['default']
     BuilderSettings: typeof import('./src/components/BuilderSettings.vue')['default']
