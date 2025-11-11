@@ -62,7 +62,7 @@
 					:block="block"
 					:style="variables"
 					:key="block.blockId"
-					:readonly="readonly"
+					:readonly="builderStore.readOnlyMode"
 					v-if="showBlocks"
 					:breakpoint="breakpoint.device"
 					:data="pageStore.pageData" />
@@ -137,11 +137,9 @@ const props = withDefaults(
 	defineProps<{
 		blockData: Block;
 		canvasStyles?: Record<string, any>;
-		readonly?: boolean;
 	}>(),
 	{
 		canvasStyles: () => ({}),
-		readonly: false,
 	},
 );
 

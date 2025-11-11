@@ -7,6 +7,7 @@
 		:draggable="draggable"
 		:class="classes"
 		v-bind="attributes"
+		:readonly="readonly"
 		:style="styles"
 		ref="component">
 		<BuilderBlock
