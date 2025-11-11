@@ -134,7 +134,13 @@ export function useBuilderEvents(
 
 				block.innerHTML = text;
 
-				const parentBlock = blockController.getSelectedBlocks()[0];
+				const selectedBlocks = blockController.getSelectedBlocks();
+				let parentBlock = selectedBlocks.length ? selectedBlocks[0] : null;
+
+				while (parentBlock && !parentBlock.canHaveChildren()) {
+					parentBlock = parentBlock.getParentBlock();
+				}
+
 				if (parentBlock) {
 					parentBlock.addChild(block);
 				} else {

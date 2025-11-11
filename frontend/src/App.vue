@@ -6,7 +6,7 @@
 			</keep-alive>
 		</router-view>
 		<UseDark attribute="data-theme"></UseDark>
-		<Toaster :theme="isDark ? 'dark' : 'light'" richColors />
+		<Toaster :theme="isDark ? 'dark' : 'light'" richColors class="mr-10" />
 		<Dialogs></Dialogs>
 		<component v-for="dialog in builderStore.appDialogs" :is="dialog"></component>
 	</div>

@@ -59,6 +59,7 @@ class Block:
 	visibilityCondition: str | None = None
 	elementBeforeConversion: str | None = None
 	customAttributes: dict | None = None
+	dynamicValues: list[BlockDataKey] | None = None
 
 	def __init__(self, **kwargs) -> None:
 		for key, value in kwargs.items():
@@ -90,6 +91,7 @@ class Block:
 			"visibilityCondition": self.visibilityCondition,
 			"elementBeforeConversion": self.elementBeforeConversion,
 			"customAttributes": self.customAttributes,
+			"dynamicValues": self.dynamicValues,
 		}
 
 
