@@ -21,6 +21,7 @@
 				</template>
 				<ComboboxInput
 					autocomplete="off"
+					ref="comboboxInput"
 					@focus="
 						() => {
 							if (!open.value) {
@@ -39,63 +40,67 @@
 						$slots.prefix ? 'pl-1' : 'pl-2',
 					]"></ComboboxInput>
 			</div>
-			<ComboboxOptions
-				class="absolute right-0 z-50 w-full overflow-y-auto rounded-lg border border-outline-gray-2 bg-surface-white p-0 shadow-2xl"
-				v-show="filteredOptions.length || (showInputAsOption && query)">
-				<div class="w-full list-none px-1.5 py-1.5">
-					<ComboboxOption
-						v-if="query && !showInputAsOption"
-						:value="query"
-						class="flex items-center"></ComboboxOption>
-					<ComboboxOption
-						v-for="option in filteredOptions"
-						v-slot="{ active, selected }"
-						:key="option.value"
-						:value="option"
-						:disabled="String(option.value).startsWith('_separator')"
-						:title="option.label"
-						class="flex items-center">
-						<span
-							v-if="String(option.value).startsWith('_separator')"
-							class="flex w-full items-center gap-2 px-2.5 pb-2 pt-3 text-xs font-medium !text-ink-gray-5">
-							{{ option.label }}
-						</span>
-						<li
-							v-else
-							class="group flex w-full select-none items-center gap-2 truncate rounded px-2.5 py-1.5 text-xs"
-							:class="{
-								'bg-gray-100': active,
-								'bg-gray-300': selected,
-							}">
-							<component v-if="option.prefix" :is="option.prefix" />
-							<span class="truncate">
+			<Teleport :disabled="!isTeleported" :to="teleportedTo">
+				<ComboboxOptions
+					:style="teleportedStyle"
+					@mousedown="(ev: Event) => (isTeleported ? ev.stopPropagation() : null)"
+					class="absolute right-0 z-50 w-full overflow-y-auto rounded-lg border border-outline-gray-2 bg-surface-white p-0 shadow-2xl"
+					v-show="filteredOptions.length || (showInputAsOption && query)">
+					<div class="w-full list-none px-1.5 py-1.5">
+						<ComboboxOption
+							v-if="query && !showInputAsOption"
+							:value="query"
+							class="flex items-center"></ComboboxOption>
+						<ComboboxOption
+							v-for="option in filteredOptions"
+							v-slot="{ active, selected }"
+							:key="option.value"
+							:value="option"
+							:disabled="String(option.value).startsWith('_separator')"
+							:title="option.label"
+							class="flex items-center">
+							<span
+								v-if="String(option.value).startsWith('_separator')"
+								class="flex w-full items-center gap-2 px-2.5 pb-2 pt-3 text-xs font-medium !text-ink-gray-5">
 								{{ option.label }}
 							</span>
-							<component
-								class="ml-auto"
-								v-if="option.suffix"
-								:is="option.suffix"
-								@mousedown.stop.prevent
-								@click.stop.prevent />
-						</li>
-					</ComboboxOption>
-				</div>
-				<div
-					class="sticky bottom-0 rounded-b-sm border-t border-outline-gray-2 bg-surface-gray-1"
-					v-if="actionButton">
-					<component
-						:is="actionButton.component"
-						v-if="actionButton?.component"
-						@change="updateOptions"></component>
-					<BuilderButton
-						v-else
-						:iconLeft="actionButton.icon"
-						class="w-full rounded-none text-xs text-ink-gray-8"
-						@click="actionButton.handler">
-						{{ actionButton.label }}
-					</BuilderButton>
-				</div>
-			</ComboboxOptions>
+							<li
+								v-else
+								class="group flex w-full select-none items-center gap-2 truncate rounded px-2.5 py-1.5 text-xs"
+								:class="{
+									'bg-gray-100': active,
+									'bg-gray-300': selected,
+								}">
+								<component v-if="option.prefix" :is="option.prefix" />
+								<span class="truncate">
+									{{ option.label }}
+								</span>
+								<component
+									class="ml-auto"
+									v-if="option.suffix"
+									:is="option.suffix"
+									@mousedown.stop.prevent
+									@click.stop.prevent />
+							</li>
+						</ComboboxOption>
+					</div>
+					<div
+						class="sticky bottom-0 rounded-b-sm border-t border-outline-gray-2 bg-surface-gray-1"
+						v-if="actionButton">
+						<component
+							:is="actionButton.component"
+							v-if="actionButton?.component"
+							@change="updateOptions"></component>
+						<BuilderButton
+							v-else
+							:iconLeft="actionButton.icon"
+							class="w-full rounded-none text-xs text-ink-gray-8"
+							@click="actionButton.handler">
+							{{ actionButton.label }}
+						</BuilderButton>
+					</div>
+				</ComboboxOptions>
+			</Teleport>
 		</Combobox>
 		<div
 			class="absolute right-[1px] top-[3px] cursor-pointer p-1 text-ink-gray-4 hover:text-ink-gray-5"
@@ -110,7 +115,7 @@
 import BuilderButton from "@/components/Controls/BuilderButton.vue";
 import CrossIcon from "@/components/Icons/Cross.vue";
 import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from "@headlessui/vue";
-import { ComputedRef, computed, ref, watch } from "vue";
+import { ComputedRef, computed, onMounted, ref, watch } from "vue";
 
 type Option = {
 	label: string;
@@ -136,11 +141,14 @@ const props = withDefaults(
 		placeholder?: string;
 		showInputAsOption?: boolean;
 		actionButton?: Action;
+		isTeleported?: boolean;
+		teleportedTo?: string;
 	}>(),
 	{
 		options: () => [],
 		placeholder: "Search",
 		showInputAsOption: false,
+		isTeleported: false,
 	},
 );
 
@@ -149,6 +157,8 @@ const multiple = computed(() => Array.isArray(props.modelValue));
 const nullable = computed(() => !multiple.value);
 const asyncOptions = ref<Option[]>([]);
 const comboboxButton = ref<HTMLElement | null>(null);
+const comboboxInput = ref<HTMLElement | null>(null);
+const teleportedStyle = ref({});
 
 const filteredOptions = computed(() => {
 	const sourceOptions = props.getOptions ? asyncOptions.value : props.options;
@@ -210,6 +220,27 @@ const value = computed(() => {
 	);
 }) as ComputedRef<Option>;
 
+const getTeleportedStyle = () => {
+	if (!props.isTeleported) {
+		return {};
+	} else {
+		const teleportingToRect = document.querySelector(props.teleportedTo || "body")?.getBoundingClientRect();
+		const comboboxInputRect = comboboxInput.value?.$el.getBoundingClientRect();
+		
+		if (!teleportingToRect || !comboboxInputRect) {
+			return {};
+		}
+		return {
+			position: "absolute",
+			top: comboboxInputRect.top - teleportingToRect.top + comboboxInputRect.height + "px",
+			left: comboboxInputRect.left - teleportingToRect.left + "px",
+			width: comboboxInputRect.width + "px",
+			minWidth: "fit-content",
+			zIndex: "10",
+		};
+	}
+};
+
 watch(() => query.value, updateOptions, { immediate: true });
 watch(
 	() => props.options,
@@ -227,6 +258,13 @@ async function updateOptions() {
 		asyncOptions.value = options;
 	}
 }
+
+onMounted(() => {
+	teleportedStyle.value = getTeleportedStyle();
+	document.querySelector(props.teleportedTo || "body")?.addEventListener("scroll", () => {
+		teleportedStyle.value = getTeleportedStyle();
+	});
+});
 
 const clearValue = () => emit("update:modelValue", null);
 defineExpose({

@@ -51,7 +51,14 @@
 				:disabled="value.usedByCount || false"
 				@click="deleteObjectKey(key as string)" />
 		</div>
-		<BuilderButton variant="subtle" label="Add" @click="addObjectKey"></BuilderButton>
+		<Popover popoverClass="!mr-[20px]" placement="left">
+			<template #target="{ togglePopover }">
+				<BuilderButton class="w-full" variant="subtle" label="Add" @click="togglePopover()"></BuilderButton>
+			</template>
+			<template #body>
+				<PropsPopoverContent />
+			</template>
+		</Popover>
 		<p class="rounded-sm bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
 			<span v-html="description"></span>
 		</p>
@@ -72,6 +79,8 @@ import LucideZap from "~icons/lucide/zap";
 import LucideCaseSensitive from "~icons/lucide/case-sensitive";
 // @ts-ignore
 import LucideListTree from "~icons/lucide/list-tree";
+import { Popover } from "frappe-ui";
+import PropsPopoverContent from "./PropsPopoverContent.vue";
 
 const attrs = useAttrs();
 const events = Object.fromEntries(

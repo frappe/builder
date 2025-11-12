@@ -121,7 +121,7 @@ const sections = [
 	dataKeySection,
 	customAttributesSection,
 	rawStyleSection,
-	blockScriptSection,
 	blockPropsSection,
+	blockScriptSection,
 ] as PropertySection[];
 </script>
