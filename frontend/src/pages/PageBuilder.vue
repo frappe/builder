@@ -153,7 +153,9 @@ const pageListDialog = ref(false);
 
 watch([() => canvasStore.editableBlock, () => pageStore.activePage?.is_standard], () => {
 	builderStore.toggleReadOnlyMode(
-		canvasStore.editingMode === "page" && Boolean(pageStore.activePage?.is_standard),
+		canvasStore.editingMode === "page" &&
+			Boolean(pageStore.activePage?.is_standard) &&
+			!window.is_developer_mode,
 	);
 });
 

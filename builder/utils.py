@@ -625,5 +625,12 @@ def sync_standard_builder_pages(app_name=None):
 			print(f"Importing scripts from {scripts_path}")
 			make_records(scripts_path)
 		if os.path.exists(pages_path):
+			frappe.get_doc(
+				{
+					"doctype": "Builder Project Folder",
+					"folder_name": app,
+					"is_standard": 1,
+				}
+			).insert(ignore_if_duplicate=True)
 			print(f"Importing page from {pages_path}")
 			make_records(pages_path)

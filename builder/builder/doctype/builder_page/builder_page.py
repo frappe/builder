@@ -885,6 +885,7 @@ def export_page_as_standard(page_name, target_app, export_name=None):
 	if page_doc.meta_image:
 		page_config["meta_image"] = copy_asset_file(page_doc.meta_image, paths["assets_path"])
 
+	page_config["project_folder"] = target_app
 	page_config = frappe.as_json(page_config, ensure_ascii=False)
 
 	with open(config_file_path, "w", encoding="utf-8") as f:
