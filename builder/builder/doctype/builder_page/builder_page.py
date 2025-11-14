@@ -897,7 +897,7 @@ def export_page_as_standard(page_name, target_app, export_name=None):
 	# # Export components used in the page
 	if blocks:
 		components = extract_components_from_blocks(blocks)
-		export_components(components, paths["components_path"])
+		export_components(components, paths["components_path"], paths["assets_path"])
 
 
 @frappe.whitelist()

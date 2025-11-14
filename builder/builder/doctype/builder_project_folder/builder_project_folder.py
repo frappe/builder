@@ -42,4 +42,10 @@ class BuilderProjectFolder(Document):
 
 
 def is_system_activity():
-	return frappe.flags.in_import or frappe.flags.in_patch or frappe.flags.in_migrate or frappe.in_test
+	return (
+		frappe.flags.in_import
+		or frappe.flags.in_patch
+		or frappe.flags.in_migrate
+		or frappe.in_test
+		or frappe.flags.in_install
+	)

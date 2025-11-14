@@ -546,11 +546,16 @@ def export_client_scripts(page_doc, client_scripts_path):
 			f.write(frappe.as_json(script_config, ensure_ascii=False))
 
 
-def export_components(components, components_path):
+def export_components(components, components_path, assets_path):
 	"""Export components to files"""
 	for component_id in components:
 		try:
 			component_doc = frappe.get_doc("Builder Component", component_id)
+			# replace assets in component blocks
+			component_blocks = frappe.parse_json(component_doc.block or "[]")
+			copy_assets_from_blocks(component_blocks, assets_path)
+			component_doc.block = frappe.as_json(component_blocks)
+
 			# Replace forward slashes with underscores to create valid directory names
 			safe_component_name = frappe.scrub(component_doc.component_name).replace("/", "_")
 			component_dir = os.path.join(components_path, safe_component_name)
