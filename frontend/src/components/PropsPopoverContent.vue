@@ -17,11 +17,18 @@
 					},
 				]"
 				:model-value="isStandard"
-				@update:model-value="(val) => (isStandard = val)" />
+				@update:model-value="handleIsStandardChange" />
 		</div>
 		<div class="flex items-center justify-between">
 			<InputLabel>Name</InputLabel>
-			<Input v-model="name" placeholder="Enter prop name"></Input>
+			<Input
+				v-model="name"
+				placeholder="Enter prop name"
+				@input="
+					(val) => {
+						name = val;
+					}
+				"></Input>
 		</div>
 		<div class="flex items-center justify-between">
 			<InputLabel>Type</InputLabel>
@@ -30,19 +37,23 @@
 				type="select"
 				:options="propTypes"
 				:model-value="selectedPropType"
-				@update:model-value="
-					(option) => {
-						setPropType(option);
-					}
-				"></Input>
+				@update:model-value="handleTypeChange"></Input>
 		</div>
 		<div v-if="!isStandardBool" class="flex items-center justify-between">
 			<InputLabel v-model="value">Value</InputLabel>
-			<Input v-if="selectedPropType == 'static'" v-model="value" placeholder="Enter prop name"></Input>
+			<Input
+				v-if="selectedPropType == 'static'"
+				v-model="value"
+				placeholder="Enter prop name"
+				@input="
+					(val) => {
+						value = val;
+					}
+				"></Input>
 			<Autocomplete
 				v-else
-				:is-teleported="true"
-				teleported-to=".props-popover-content"
+				:make-fixed="true"
+				fix-to=".props-popover-content"
 				class="w-full [&>.form-input]:border-none [&>.form-input]:hover:border-none"
 				ref="autoCompleteRef"
 				placeholder="Choose prop value"
@@ -88,10 +99,21 @@
 							value: 'false',
 						},
 					]"
-					:model-value="standardPropOptions.isRequired"
-					@update:model-value="(val) => (standardPropOptions.isRequired = val)" />
+					:model-value="String(standardPropOptions.isRequired)"
+					@update:model-value="(val) => (standardPropOptions.isRequired = val === 'true')" />
 			</div>
-			<component :is="componentMapping[selectedStandardPropType as keyof typeof componentMapping]" />
+			<component
+				:is="componentMapping[standardPropOptions.type as keyof typeof componentMapping]"
+				:options="standardPropOptions"
+				@update:options="(option: any) => {
+					console.log('option', option);
+					standardPropOptions = {
+						isRequired: standardPropOptions.isRequired,
+						type: standardPropOptions.type,
+						dependencies: standardPropOptions.dependencies,
+						...option,
+					};
+				}" />
 		</template>
 		<div v-if="isStandardBool" class="flex flex-col gap-2">
 			<InputLabel>Depends on</InputLabel>
@@ -106,46 +128,81 @@
 				:obj="standardPropDependencyMap"
 				@update:obj="(obj) => (standardPropDependencyMap = obj)" />
 		</div>
-		<hr />
-		<div class="flex items-center justify-between">
-			<BuilderButton class="w-full">Save</BuilderButton>
-		</div>
+		<BuilderButton label="Save" variant="subtle" class="w-full flex-shrink-0" @click="save" />
 	</div>
 </template>
 
 <script setup lang="ts">
+import Block from "@/block";
+
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import Input from "@/components/Controls/Input.vue";
-import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
-import NumberOptions from "@/components/PropsOptions/NumberOptions.vue";
-import StringOptions from "@/components/PropsOptions/StringOptions.vue";
-import ArrayOptions from "@/components/PropsOptions/ArrayOptions.vue";
+import BuilderButton from "@/components/Controls/BuilderButton.vue";
+import Autocomplete from "@/components/Controls/Autocomplete.vue";
+
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+
 import PropsDependencyEditor from "@/components/PropsDependencyEditor.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
+
+import NumberOptions from "@/components/PropsOptions/NumberOptions.vue";
+import StringOptions from "@/components/PropsOptions/StringOptions.vue";
+import ArrayOptions from "@/components/PropsOptions/ArrayOptions.vue";
 import ObjectOptions from "@/components/PropsOptions/ObjectOptions.vue";
 import BooleanOptions from "@/components/PropsOptions/BooleanOptions.vue";
-import BuilderButton from "./Controls/BuilderButton.vue";
-import Autocomplete from "./Controls/Autocomplete.vue";
+
 import usePageStore from "@/stores/pageStore";
 import { getCollectionKeys, getDataForKey } from "@/utils/helpers";
-import Block from "@/block";
+
+const props = withDefaults(
+	defineProps<{
+		mode: "add" | "edit";
+		propName?: string | null;
+		propDetails?: BlockProps[string] | null;
+	}>(),
+	{
+		mode: "add",
+	},
+);
 
 const canvasStore = useCanvasStore();
 
-const isStandard = ref("false");
+const isStandard = ref(props.propDetails?.isStandard ? "true" : "false");
 const isStandardBool = computed(() => isStandard.value === "true");
-const isEditable = ref("false");
-const name = ref("");
-const value = ref("");
-const selectedNonStandardPropType = ref("static");
-const selectedStandardPropType = ref("string");
-const standardPropOptions = ref<{ isRequired: string; [key: string]: any }>({
-	isRequired: "false",
-});
-const standardPropDependencyMap = ref<{ [key: string]: any }>({});
+const isEditable = ref("false"); // TODO: required?
+const name = ref(props.propName ?? "");
+const value = ref(props.propDetails?.value ?? "");
+const selectedNonStandardPropType = ref(
+	props.propDetails && !props.propDetails.isStandard ? props.propDetails.type : "static",
+);
+const standardPropOptions = ref<BlockPropsStandardOptions>(
+	props.propDetails && props.propDetails.isStandard
+		? {
+				...props.propDetails.standardOptions,
+				isRequired: Boolean(props.propDetails.standardOptions?.isRequired),
+				type: props.propDetails.standardOptions?.type || "string",
+		  }
+		: {
+				isRequired: false,
+				type: "string",
+				defaultValue: "",
+				options: [],
+				dependencies: {},
+		  },
+);
+const standardPropDependencyMap = ref<{ [key: string]: any }>(
+	props.propDetails && props.propDetails.isStandard
+		? props.propDetails.standardOptions?.dependencies || {}
+		: {},
+);
 const autoCompleteRef = ref<typeof Autocomplete | null>(null);
+
+const emit = defineEmits({
+	"add:prop": (name: string, prop: BlockProps[string]) => true,
+	"update:prop": (oldPropName: string, newName: string, newProp: BlockProps[string]) => true,
+});
 
 const propTypes = computed(() => {
 	if (isStandardBool.value) {
@@ -199,20 +256,24 @@ const isInFragmentMode = computed(() => {
 
 const selectedPropType = computed(() => {
 	if (isStandardBool.value) {
-		return selectedStandardPropType.value;
+		console.log("standardPropOptions.value.type", standardPropOptions.value.type);
+		return standardPropOptions.value.type;
 	} else {
 		return selectedNonStandardPropType.value;
 	}
 });
 
+const STANDARD_PROP_TYPES = ["string", "number", "boolean", "array", "object"];
+
 const setPropType = (type: string) => {
-	if (isStandardBool.value) {
-		selectedStandardPropType.value = type;
+	if (isStandardBool.value && STANDARD_PROP_TYPES.includes(type)) {
+		standardPropOptions.value.type = type as "string" | "number" | "boolean" | "array" | "object";
 	} else {
-		selectedNonStandardPropType.value = type;
+		selectedNonStandardPropType.value = type as "static" | "inherited" | "dynamic";
 	}
 };
 
+// TODO: reuse this from dynamic value handler
 const dataArray = computed(() => {
 	const result: string[] = [];
 	let collectionObject = usePageStore().pageData;
@@ -280,15 +341,96 @@ const componentMapping = {
 	object: ObjectOptions,
 };
 
+const handleIsStandardChange = async (newVal: string) => {
+	isStandard.value = newVal;
+	await nextTick();
+	reset({
+		keepName: true,
+		keepIsStandard: true,
+		keepProps: false,
+		keepType: false,
+	});
+};
+
+const handleTypeChange = async (newVal: string) => {
+	setPropType(newVal);
+	await nextTick();
+	reset({
+		keepName: true,
+		keepIsStandard: true,
+		keepProps: false,
+		keepType: true,
+	});
+};
+
+const reset = async (keepParams: {
+	keepName: boolean;
+	keepIsStandard: boolean;
+	keepProps: boolean;
+	keepType: boolean;
+}) => {
+	const { keepName, keepIsStandard, keepProps, keepType } = keepParams;
+	if (!keepName) name.value = props.propName ?? "";
+	const propDetails = keepProps ? props.propDetails : null;
+	if (!keepIsStandard) isStandard.value = propDetails?.isStandard ? "true" : "false";
+	value.value = propDetails?.value ?? "";
+	console.trace("val", keepParams, propDetails?.value ?? "hello");
+	if (propDetails?.isStandard) {
+		standardPropOptions.value = {
+			...propDetails.standardOptions,
+			isRequired: Boolean(propDetails.standardOptions?.isRequired),
+			...(keepType
+				? { type: standardPropOptions.value.type }
+				: { type: propDetails.standardOptions?.type || "string" }),
+		};
+		standardPropDependencyMap.value = propDetails.standardOptions?.dependencies || {};
+	} else {
+		if (!keepType) selectedNonStandardPropType.value = propDetails?.type || "static";
+	}
+};
+
+watch(
+	[() => props.propName, () => props.propDetails],
+	() =>
+		reset({
+			keepName: false,
+			keepIsStandard: false,
+			keepProps: true,
+			keepType: false,
+		}),
+	{
+		immediate: true,
+		deep: true,
+	},
+);
+
 watch(
 	selectedPropType,
 	() => {
-		if (Array.isArray(autoCompleteRef.value)) {
-			autoCompleteRef.value.forEach((ref) => {
-				ref?.updateOptions();
-			});
-		}
+		autoCompleteRef.value?.updateOptions();
 	},
 	{ immediate: true },
 );
+
+const save = async () => {
+	await nextTick();
+	const propValue: BlockProps[string] = {
+		isStandard: isStandardBool.value,
+		type: isStandardBool.value ? "static" : selectedNonStandardPropType.value,
+		value: isStandardBool.value ? null : value.value,
+		standardOptions: isStandardBool.value
+			? {
+					...standardPropOptions.value,
+					dependencies: standardPropDependencyMap.value,
+			  }
+			: undefined,
+	};
+	if (props.mode === "add") {
+		emit("add:prop", name.value, propValue);
+	} else {
+		emit("update:prop", props.propName!, name.value, propValue);
+	}
+};
+
+defineExpose({ reset });
 </script>

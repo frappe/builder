@@ -2,8 +2,8 @@
 	<div ref="propsEditor" class="flex flex-col gap-2">
 		<div v-for="(value, key, index) in obj" :key="index" class="flex gap-2">
 			<Autocomplete
-				:isTeleported="true"
-				teleportedTo=".props-popover-content"
+				:make-fixed="true"
+				fix-to=".props-popover-content"
 				class="w-full [&>.form-input]:border-none [&>.form-input]:hover:border-none [&>div>input]:text-xs"
 				v-bind="events"
 				ref="autoCompleteRef"
