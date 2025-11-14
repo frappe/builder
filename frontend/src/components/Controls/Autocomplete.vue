@@ -20,12 +20,14 @@
 					</div>
 				</template>
 				<ComboboxInput
+					ref="comboboxInput"
 					autocomplete="off"
 					@focus="
 						() => {
 							if (!open.value) {
 								comboboxButton?.$el.click();
 							}
+							fixedStyles = getFixedStyles();
 							emit('focus');
 							return false;
 						}
@@ -40,7 +42,9 @@
 					]"></ComboboxInput>
 			</div>
 			<ComboboxOptions
-				class="absolute right-0 z-50 w-full overflow-y-auto rounded-lg border border-outline-gray-2 bg-surface-white p-0 shadow-2xl"
+				:class="makeFixed ? 'fixed' : 'absolute'"
+				:style="fixedStyles"
+				class="right-0 z-50 w-full overflow-y-auto rounded-lg border border-outline-gray-2 bg-surface-white p-0 shadow-2xl"
 				v-show="filteredOptions.length || (showInputAsOption && query)">
 				<div class="w-full list-none px-1.5 py-1.5">
 					<ComboboxOption
@@ -110,7 +114,7 @@
 import BuilderButton from "@/components/Controls/BuilderButton.vue";
 import CrossIcon from "@/components/Icons/Cross.vue";
 import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from "@headlessui/vue";
-import { ComputedRef, computed, ref, watch } from "vue";
+import { ComputedRef, computed, onMounted, ref, watch } from "vue";
 
 type Option = {
 	label: string;
@@ -136,11 +140,14 @@ const props = withDefaults(
 		placeholder?: string;
 		showInputAsOption?: boolean;
 		actionButton?: Action;
+		makeFixed?: boolean;
+		fixTo?: string;
 	}>(),
 	{
 		options: () => [],
 		placeholder: "Search",
 		showInputAsOption: false,
+		makeFixed: false,
 	},
 );
 
@@ -149,6 +156,8 @@ const multiple = computed(() => Array.isArray(props.modelValue));
 const nullable = computed(() => !multiple.value);
 const asyncOptions = ref<Option[]>([]);
 const comboboxButton = ref<HTMLElement | null>(null);
+const comboboxInput = ref<HTMLElement | null>(null);
+const fixedStyles = ref({});
 
 const filteredOptions = computed(() => {
 	const sourceOptions = props.getOptions ? asyncOptions.value : props.options;
@@ -227,6 +236,40 @@ async function updateOptions() {
 		asyncOptions.value = options;
 	}
 }
+
+// in Popver, absolute positioning keeps all options within the popver taking extra space
+// making it fixed makes it float above Popver container
+const getFixedStyles = () => {
+	if (props.makeFixed && props.fixTo) {
+		console.log(
+			"calculating fixed styles",
+			comboboxInput.value,
+			comboboxInput.value?.$el.closest(props.fixTo),
+		);
+		const fixedToElRect = (
+			comboboxInput.value?.$el.closest(props.fixTo) as HTMLElement
+		)?.getBoundingClientRect();
+		const comboboxInputRect = comboboxInput.value?.$el.getBoundingClientRect();
+		console.log({ fixedToElRect, comboboxInputRect });
+		if (!fixedToElRect || !comboboxInputRect) {
+			return {};
+		}
+		return {
+			top: comboboxInputRect.top - fixedToElRect.top + comboboxInputRect.height + "px",
+			left: comboboxInputRect.left - fixedToElRect.left + "px",
+			width: comboboxInputRect.width + "px",
+			minWidth: "fit-content",
+			zIndex: "10",
+		};
+	}
+	return {};
+};
+
+onMounted(() => {
+	if (props.makeFixed) {
+		fixedStyles.value = getFixedStyles();
+	}
+});
 
 const clearValue = () => emit("update:modelValue", null);
 defineExpose({

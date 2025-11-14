@@ -53,7 +53,19 @@ const componentName = ref("");
 const isGlobalComponent = ref(0);
 
 const createComponentHandler = async (context: { close: () => void }) => {
-	const blockCopy = getBlockCopy(props.block, true);
+	// clean block with inherited or dynamic props
+	const cleanBlock = props.block;
+	if (props.block.props) {
+		const cleanProps = cleanBlock.props || {};
+		Object.entries(props.block.props).forEach(([key, value]) => {
+			if (value.type === 'inherited' || value.type === 'dynamic') {
+				cleanProps[key] = {...value, type: 'static' , value: null};
+			}
+		});
+		cleanBlock.props = cleanProps;
+	}
+
+	const blockCopy = getBlockCopy(cleanBlock, true);
 	blockCopy.removeStyle("left");
 	blockCopy.removeStyle("top");
 	blockCopy.removeStyle("position");

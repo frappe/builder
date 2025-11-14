@@ -301,6 +301,60 @@ const blockController = {
 			block.unsetLink();
 		});
 	},
+	getBlockScript: () => {
+		return blockController.getSelectedBlocks()[0]?.getBlockScript(); // TODO: change to first selected block
+	},
+	setBlockScript: (script: string) => {
+		blockController.getSelectedBlocks()[0]?.setBlockScript(script);
+	},
+	getBlockProps: () => {
+		return blockController.getSelectedBlocks()[0]?.getBlockProps();
+	},
+	setBlockProps: (props: BlockProps) => {
+		const block = blockController.getFirstSelectedBlock();
+		if (!block.props) {
+			block.props = {};
+		}
+		Object.keys(block.props).forEach((key) => {
+			if (!props[key]) {
+				delete block.props?.[key];
+			}
+		});
+		Object.assign(block.props, props);
+	},
+	// TODO: should go in other file?
+	updateBlockPropsDependencyForAncestor: (
+		propKeys: string | string[],
+		action: "add" | "remove",
+		forSpecificBlock?: Block,
+	) => {
+		for (const propKey of Array.isArray(propKeys) ? propKeys : [propKeys]) {
+			let currentBlock = forSpecificBlock || blockController.getFirstSelectedBlock();
+			// go up the tree
+			let parentBlock: Block | null = currentBlock.getParentBlock();
+			while (parentBlock && !parentBlock.props?.[propKey]) {
+				parentBlock = parentBlock?.getParentBlock() || null;
+			}
+			if (parentBlock) {
+				let props = parentBlock.props;
+				if (props) {
+					let usedByCount = props[propKey]["usedByCount"];
+					if (action === "add") {
+						usedByCount = (usedByCount || 0) + 1;
+					} else {
+						usedByCount = Math.max((usedByCount || 0) - 1, 0);
+					}
+					parentBlock.setBlockProps({
+						...props,
+						[propKey]: {
+							...props[propKey],
+							usedByCount: usedByCount,
+						},
+					});
+				}
+			}
+		}
+	},
 };
 
 export default blockController;
