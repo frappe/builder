@@ -6,6 +6,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "is_standard",
   "folder_name"
  ],
  "fields": [
@@ -14,11 +15,18 @@
    "fieldtype": "Data",
    "label": "Folder Name",
    "unique": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_standard",
+   "fieldtype": "Check",
+   "label": "Is Standard"
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-11-26 17:04:15.337801",
+ "modified": "2025-11-11 11:51:16.422175",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Project Folder",
@@ -50,6 +58,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": []

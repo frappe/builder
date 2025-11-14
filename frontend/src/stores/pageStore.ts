@@ -2,6 +2,7 @@ import type Block from "@/block";
 import { builderSettings } from "@/data/builderSettings";
 import { webPages } from "@/data/webPage";
 import router from "@/router";
+import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore.js";
 import { posthog } from "@/telemetry";
@@ -152,6 +153,32 @@ const usePageStore = defineStore("pageStore", {
 			);
 		},
 
+		async duplicateStandardPage(appName: string, pageFolderName: string, newPageName?: string) {
+			toast.promise(
+				createResource({
+					url: "builder.api.duplicate_standard_page",
+					method: "POST",
+					params: {
+						app_name: appName,
+						page_folder_name: pageFolderName,
+						new_page_name: newPageName,
+					},
+				}).fetch(),
+				{
+					loading: "Duplicating standard page",
+					success: async (response: any) => {
+						// refresh page list and navigate to new page
+						await webPages.reload();
+						router.push({ name: "builder", params: { pageId: response.page_name } });
+						return "Standard page duplicated successfully";
+					},
+					error: (error) => {
+						return `Failed to duplicate standard page: ${error.message}`;
+					},
+				},
+			);
+		},
+
 		deletePage: async (page: BuilderPage) => {
 			const confirmed = await confirm(
 				`Are you sure you want to delete page: ${page.page_title || page.page_name}?`,
@@ -234,6 +261,9 @@ const usePageStore = defineStore("pageStore", {
 		},
 
 		savePage() {
+			const builderStore = useBuilderStore();
+			if (builderStore.readOnlyMode) return;
+
 			const canvasStore = useCanvasStore();
 			const pageData = JSON.stringify(
 				canvasStore

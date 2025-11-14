@@ -2,7 +2,7 @@
 	<div class="flex items-center">
 		<BuilderButton
 			variant="solid"
-			:disabled="canvasStore.editingMode === 'fragment'"
+			:disabled="disabled"
 			@click="
 				() => {
 					publishing = true;
@@ -51,6 +51,10 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { Dropdown } from "frappe-ui";
 import { computed, ref } from "vue";
+
+defineProps<{
+	disabled?: boolean;
+}>();
 
 const pageStore = usePageStore();
 const canvasStore = useCanvasStore();

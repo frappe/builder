@@ -127,6 +127,31 @@
 						description="Prevent search engines from indexing this page"
 						:modelValue="Boolean(pageStore.activePage?.disable_indexing)"
 						@update:modelValue="(val: Boolean) => pageStore.updateActivePage('disable_indexing', val)" />
+					<template v-if="isDeveloperMode">
+						<hr class="w-full border-outline-gray-2" />
+						<Switch
+							size="sm"
+							label="Standard Page"
+							description="Make this page a standard page that can be exported to an app"
+							:modelValue="Boolean(pageStore.activePage?.is_standard)"
+							@update:modelValue="(val: Boolean) => pageStore.updateActivePage('is_standard', val)" />
+						<div v-if="pageStore.activePage?.is_standard" class="flex items-center justify-between">
+							<div class="flex flex-col gap-2">
+								<span class="text-base font-medium text-ink-gray-9">Module</span>
+								<p class="text-base text-ink-gray-5">Select the module for this standard page</p>
+							</div>
+							<div>
+								<BuilderInput
+									class="w-fit"
+									type="select"
+									:options="moduleOptions"
+									:modelValue="pageStore.activePage?.module"
+									@update:modelValue="
+										(val: string) => pageStore.updateActivePage('module', val)
+									"></BuilderInput>
+							</div>
+						</div>
+					</template>
 					<hr class="w-full border-outline-gray-2" />
 					<div class="flex items-center justify-between">
 						<div class="flex flex-col gap-2">
@@ -155,6 +180,7 @@ import Switch from "@/components/Controls/Switch.vue";
 import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
+import moduleDef from "@/data/moduleDef";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderProjectFolder } from "@/types/Builder/BuilderProjectFolder";
@@ -163,6 +189,7 @@ import { computed } from "vue";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
+const isDeveloperMode = computed(() => Boolean(window.is_developer_mode));
 const fullURL = computed(
 	() => window.location.origin + (pageStore.activePage?.route ? "/" + pageStore.activePage.route : ""),
 );
@@ -181,5 +208,22 @@ const folderOptions = computed(() => {
 	});
 
 	return [homeOption, ...options];
+});
+
+const moduleOptions = computed(() => {
+	const defaultOption = {
+		label: "Select Module",
+		value: "",
+	};
+
+	const options =
+		moduleDef.data?.map((module: { name: string; module_name: string }) => {
+			return {
+				label: module.module_name,
+				value: module.name,
+			};
+		}) || [];
+
+	return [defaultOption, ...options];
 });
 </script>

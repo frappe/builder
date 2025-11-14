@@ -35,4 +35,3 @@ declare global {
 		is_developer_mode?: boolean;
 	}
 }
-window.is_developer_mode = process.env.NODE_ENV === "development";

@@ -10,7 +10,8 @@
 				variant="subtle"
 				class="!h-6 !w-6 border !border-outline-gray-2 bg-surface-white [&>svg]:!h-3.5 [&>svg]:!w-3.5"
 				:icon="actionButton.icon"
-				:title="actionButton.label"></BuilderButton>
+				:title="actionButton.label"
+				:disabled="readonly"></BuilderButton>
 		</div>
 		<div
 			:style="{
@@ -20,7 +21,7 @@
 			<CodeMirrorEditor
 				ref="editor"
 				:type
-				:readonly
+				:readonly="readonly"
 				:allow-save="showSaveButton"
 				:show-line-numbers
 				:initial-value="getModelValue()"
@@ -34,7 +35,7 @@
 			variant="solid"
 			@click="emit('save', editor.getEditorValue())"
 			class="mt-3"
-			:disabled="!isDirty">
+			:disabled="!isDirty || readonly">
 			Save
 		</BuilderButton>
 	</div>
@@ -122,6 +123,8 @@ const handleChange = (value: string) => {
 };
 
 const handleSave = (value: string) => {
+	if (props.readonly) return;
+
 	if (props.type === "JSON" && value) {
 		value = JSON.parse(value);
 	}

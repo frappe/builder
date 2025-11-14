@@ -28,6 +28,7 @@
 							v-model="page.page_data_script"
 							type="Python"
 							height="60vh"
+							:readonly="builderStore.readOnlyMode"
 							:autofocus="true"
 							@save="savePageDataScript"
 							:showSaveButton="true"

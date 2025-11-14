@@ -9,7 +9,7 @@ import bs4 as bs
 import frappe
 import frappe.utils
 from frappe.modules import scrub
-from frappe.modules.export_file import export_to_files
+from frappe.modules.export_file import export_to_files, strip_default_fields
 from frappe.utils import set_request
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
@@ -24,12 +24,19 @@ from jinja2.exceptions import TemplateSyntaxError
 from builder.hooks import builder_path
 from builder.html_preview_image import generate_preview
 from builder.utils import (
+	Block,
 	ColonRule,
 	camel_case_to_kebab_case,
 	clean_data,
+	copy_asset_file,
+	copy_assets_from_blocks,
 	copy_img_to_asset_folder,
+	create_export_directories,
 	escape_single_quotes,
 	execute_script,
+	export_client_scripts,
+	export_components,
+	extract_components_from_blocks,
 	get_builder_page_preview_file_paths,
 	get_template_assets_folder_path,
 	is_component_used,
@@ -72,11 +79,11 @@ class BuilderPageRenderer(DocumentPage):
 			return
 		context = getattr(self, "context", frappe._dict())
 		if self.doc.is_home_page():
-			context.canonical_url = frappe.utils.get_url()
+			context["canonical_url"] = frappe.utils.get_url()
 		elif self.doc.canonical_url:
-			context.canonical_url = render_template(self.doc.canonical_url, context)
+			context["canonical_url"] = render_template(self.doc.canonical_url, context)
 		else:
-			context.canonical_url = frappe.utils.get_url(self.path)
+			context["canonical_url"] = frappe.utils.get_url(self.path)
 		self.context = context
 
 	def set_missing_values(self):
@@ -106,9 +113,12 @@ class BuilderPage(WebsiteGenerator):
 		dynamic_route: DF.Check
 		favicon: DF.AttachImage | None
 		head_html: DF.Code | None
+		is_standard: DF.Check
 		is_template: DF.Check
+		language: DF.Data | None
 		meta_description: DF.SmallText | None
 		meta_image: DF.AttachImage | None
+		module: DF.Link | None
 		page_data_script: DF.Code | None
 		page_name: DF.Data | None
 		page_title: DF.Data | None
@@ -116,7 +126,6 @@ class BuilderPage(WebsiteGenerator):
 		project_folder: DF.Link | None
 		published: DF.Check
 		route: DF.Data | None
-		template_name: DF.Data | None
 	# end: auto-generated types
 
 	def onload(self):
@@ -140,7 +149,7 @@ class BuilderPage(WebsiteGenerator):
 	def process_blocks(self):
 		for block_type in ["blocks", "draft_blocks"]:
 			if isinstance(getattr(self, block_type), list):
-				setattr(self, block_type, frappe.as_json(getattr(self, block_type), indent=None))
+				setattr(self, block_type, frappe.as_json(getattr(self, block_type), indent=0))
 		if not self.blocks:
 			self.blocks = "[]"
 
@@ -160,7 +169,7 @@ class BuilderPage(WebsiteGenerator):
 
 	def on_update(self):
 		if self.has_value_changed("route"):
-			if ":" in self.route or "<" in self.route:
+			if self.route and (":" in self.route or "<" in self.route):
 				self.db_set("dynamic_route", 1)
 			else:
 				self.db_set("dynamic_route", 0)
@@ -176,11 +185,18 @@ class BuilderPage(WebsiteGenerator):
 
 		if self.has_value_changed("published") and not self.published:
 			# if this is homepage then clear homepage from builder settings
-			if frappe.get_cached_value("Builder Settings", None, "home_page") == self.route:
-				frappe.db.set_value("Builder Settings", None, "home_page", None)
+			if frappe.get_cached_value("Builder Settings", "Builder Settings", "home_page") == self.route:
+				frappe.db.set_value("Builder Settings", "Builder Settings", "home_page", None)
 
 		if frappe.conf.developer_mode and self.is_template:
 			save_as_template(self)
+
+		if frappe.conf.developer_mode and self.is_standard and self.module:
+			from frappe.modules.utils import get_module_app
+
+			app = get_module_app(self.module)
+			if app:
+				export_page_as_standard(self.name, target_app=app)
 
 	def clear_route_cache(self):
 		get_web_pages_with_dynamic_routes.clear_cache()
@@ -190,7 +206,7 @@ class BuilderPage(WebsiteGenerator):
 	def on_trash(self):
 		if self.is_template and frappe.conf.developer_mode:
 			page_template_folder = os.path.join(
-				frappe.get_app_path("builder"), "builder", "builder_page_template", scrub(self.name)
+				frappe.get_app_path("builder"), "builder", "builder_page_template", scrub(str(self.name))
 			)
 			if os.path.exists(page_template_folder):
 				shutil.rmtree(page_template_folder)
@@ -212,7 +228,8 @@ class BuilderPage(WebsiteGenerator):
 	@frappe.whitelist()
 	def publish(self, route_variables=None):
 		if route_variables:
-			frappe.form_dict.update(frappe.parse_json(route_variables or "{}"))
+			for k, v in frappe.parse_json(route_variables or "{}").items():
+				frappe.form_dict[k] = v
 		self.published = 1
 		if self.draft_blocks:
 			self.blocks = self.draft_blocks
@@ -301,14 +318,14 @@ class BuilderPage(WebsiteGenerator):
 		if not context.get("favicon"):
 			context.favicon = self.favicon
 		if not context.get("favicon"):
-			context.favicon = frappe.get_cached_value("Builder Settings", None, "favicon")
+			context.favicon = frappe.get_cached_value("Builder Settings", "Builder Settings", "favicon")
 
 	def set_language(self, context):
 		# Set page-specific language or fall back to default language from Builder Settings
 		context.language = self.language
 		if not context.language:
 			context.default_language = (
-				frappe.get_cached_value("Builder Settings", None, "default_language") or "en"
+				frappe.get_cached_value("Builder Settings", "Builder Settings", "default_language") or "en"
 			)
 
 	def is_component_used(self, component_id):
@@ -318,7 +335,8 @@ class BuilderPage(WebsiteGenerator):
 			return True
 
 	def set_style_and_script(self, context):
-		for script in self.get("client_scripts", []):
+		client_scripts = self.get("client_scripts") or []
+		for script in client_scripts:
 			script_doc = frappe.get_cached_doc("Builder Client Script", script.builder_script)
 			if script_doc.script_type == "JavaScript":
 				context.setdefault("scripts", []).append(script_doc.public_url)
@@ -353,7 +371,7 @@ class BuilderPage(WebsiteGenerator):
 	@frappe.whitelist()
 	def get_page_data(self, route_variables=None):
 		if route_variables:
-			frappe.form_dict.update(frappe.parse_json(route_variables or "{}"))
+			frappe.form_dict.update(dict(frappe.parse_json(route_variables or "{}").items()))
 		page_data = frappe._dict()
 		if self.page_data_script:
 			_locals = dict(data=frappe._dict())
@@ -406,7 +424,7 @@ class BuilderPage(WebsiteGenerator):
 		return frappe.get_cached_value("Builder Settings", "Builder Settings", "home_page") == self.route
 
 
-def replace_component_in_blocks(blocks, target_component, replace_with):
+def replace_component_in_blocks(blocks, target_component, replace_with) -> list[dict]:
 	for target_block in blocks:
 		if target_block.get("extendedFromComponent") == target_component:
 			new_component_block = frappe.parse_json(
@@ -431,12 +449,12 @@ def save_as_template(page_doc: BuilderPage):
 	if not page_doc.template_name:
 		page_doc.template_name = page_doc.page_title
 
-	blocks = frappe.parse_json(page_doc.blocks)
+	blocks: list[Block] = frappe.parse_json(page_doc.blocks or "[]")  # type: ignore
 	for block in blocks:
 		copy_img_to_asset_folder(block, page_doc)
 
 	page_doc.db_set("draft_blocks", None)
-	page_doc.db_set("blocks", frappe.as_json(blocks, indent=None))
+	page_doc.db_set("blocks", frappe.as_json(blocks, indent=0))
 	page_doc.reload()
 	export_to_files(
 		record_list=[["Builder Page", page_doc.name, "builder_page_template"]], record_module="builder"
@@ -730,7 +748,7 @@ def extend_block(block, overridden_block):
 	return block
 
 
-def set_dynamic_content_placeholder(block, data_key=False):
+def set_dynamic_content_placeholder(block, data_key=None):
 	block_data_key = block.get("dataKey", {}) or {}
 	dynamic_values = [block_data_key] if block_data_key else []
 	dynamic_values += block.get("dynamicValues", []) or []
@@ -743,7 +761,7 @@ def set_dynamic_content_placeholder(block, data_key=False):
 			if data_key:
 				# convert a.b to (a or {}).get('b', {})
 				# to avoid undefined error in jinja
-				keys = key.split(".")
+				keys = (key or "").split(".")
 				key = f"({keys[0]} or {{}})"
 				for k in keys[1:]:
 					key = f"{key}.get('{k}', {{}})"
@@ -776,7 +794,7 @@ def find_page_with_path(route):
 
 
 @redis_cache(ttl=60 * 60)
-def get_web_pages_with_dynamic_routes() -> dict[str, str]:
+def get_web_pages_with_dynamic_routes() -> list[BuilderPage]:
 	return frappe.get_all(
 		"Builder Page",
 		fields=["name", "route", "modified"],
@@ -832,3 +850,137 @@ def reset_block(block):
 	block["classes"] = []
 	block["dataKey"] = {}
 	return block
+
+
+def export_page_as_standard(page_name, target_app, export_name=None):
+	"""Export a builder page as standard files to the specified app"""
+	page_doc = frappe.get_doc("Builder Page", page_name)
+	if not export_name:
+		export_name = page_doc.page_name or page_name
+
+	# Clean the export name to be filesystem-safe
+	export_name = frappe.scrub(export_name)
+
+	# Get app path
+	app_path = frappe.get_app_path(target_app)
+	if not app_path:
+		frappe.throw(f"App '{target_app}' not found")
+
+	# Create directories and get paths
+	paths = create_export_directories(app_path, export_name)
+
+	page_config = page_doc.as_dict(no_nulls=True)
+	page_config = strip_default_fields(page_doc, page_config)
+
+	config_file_path = os.path.join(paths["page_path"], f"{export_name}.json")
+
+	blocks = frappe.parse_json(page_config.get("draft_blocks") or page_config["blocks"])
+	if blocks:
+		copy_assets_from_blocks(blocks, paths["assets_path"])
+		page_config["blocks"] = blocks
+		page_config["draft_blocks"] = None
+
+	if page_doc.favicon:
+		page_config["favicon"] = copy_asset_file(page_doc.favicon, paths["assets_path"])
+	if page_doc.meta_image:
+		page_config["meta_image"] = copy_asset_file(page_doc.meta_image, paths["assets_path"])
+
+	page_config["project_folder"] = target_app
+	page_config = frappe.as_json(page_config, ensure_ascii=False)
+
+	with open(config_file_path, "w", encoding="utf-8") as f:
+		f.write(page_config)
+
+	# Export client scripts
+	export_client_scripts(page_doc, paths["client_scripts_path"])
+
+	# # Export components used in the page
+	if blocks:
+		components = extract_components_from_blocks(blocks)
+		export_components(components, paths["components_path"], paths["assets_path"])
+
+
+@frappe.whitelist()
+def duplicate_standard_page(app_name, page_folder_name, new_page_name=None):
+	"""Duplicate a standard page into a new builder page"""
+	import json
+
+	if not frappe.has_permission("Builder Page", ptype="write"):
+		frappe.throw("You do not have permission to create pages.")
+
+	# Get the standard page config
+	app_path = frappe.get_app_path(app_name)
+	if not app_path:
+		frappe.throw(f"App '{app_name}' not found")
+
+	config_path = os.path.join(app_path, "builder_files", "pages", page_folder_name, "config.json")
+
+	if not os.path.exists(config_path):
+		frappe.throw(f"Standard page '{page_folder_name}' not found in app '{app_name}'")
+
+	with open(config_path) as f:
+		config = json.load(f)
+
+	# Create new builder page
+	new_page = frappe.new_doc("Builder Page")
+	for field in [
+		"page_name",
+		"page_title",
+		"blocks",
+		"page_data_script",
+		"head_html",
+		"body_html",
+		"dynamic_route",
+		"disable_indexing",
+		"authenticated_access",
+		"meta_description",
+		"meta_image",
+		"canonical_url",
+		"favicon",
+	]:
+		value = config.get(field)
+		if field == "blocks":
+			value = json.dumps(value or [])
+		setattr(new_page, field, value)
+	new_page.published = 0  # Start as unpublished
+
+	# Import client scripts
+	# Import client scripts
+	client_scripts_path = os.path.join(app_path, "builder_files", "client_scripts")
+	if os.path.exists(client_scripts_path):
+		for script_file in os.listdir(client_scripts_path):
+			if script_file.endswith(".json"):
+				with open(os.path.join(client_scripts_path, script_file)) as f:
+					script_config = json.load(f)
+				client_script = frappe.get_doc(
+					{
+						"doctype": "Builder Client Script",
+						"script_name": script_config.get("script_name"),
+						"script_type": script_config.get("script_type", "JavaScript"),
+						"script": script_config.get("script"),
+					}
+				)
+				client_script.insert(ignore_permissions=True)
+				new_page.append("client_scripts", {"builder_script": client_script.name})
+
+	# find all components under builder_files/components and import them
+	components_path = os.path.join(app_path, "builder_files", "components")
+	if os.path.exists(components_path):
+		# pick only json files and import them
+		for component_file in os.listdir(components_path):
+			if component_file.endswith(".json"):
+				with open(os.path.join(components_path, component_file)) as f:
+					component_config = json.load(f)
+				component = frappe.get_doc(
+					{
+						"doctype": "Builder Component",
+						"component_name": component_config.get("component_name"),
+						"block": component_config.get("block"),
+						"component_id": component_config.get("component_id"),
+					}
+				)
+				component.insert(ignore_permissions=True)
+
+	new_page.insert(ignore_permissions=True)
+
+	return {"success": True, "message": "Standard page duplicated successfully", "page_name": new_page.name}
