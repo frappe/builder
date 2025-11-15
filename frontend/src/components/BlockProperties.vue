@@ -48,6 +48,7 @@ import styleSection from "@/components/BlockPropertySections/StyleSection";
 import transitionSection from "@/components/BlockPropertySections/TransitionSection";
 import typographySection from "@/components/BlockPropertySections/TypographySection";
 import videoOptionsSection from "@/components/BlockPropertySections/VideoOptionsSection";
+import accessibilitySection from "@/components/BlockPropertySections/AccessibilitySection";
 import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
 import { toValue } from "@vueuse/core";
@@ -119,5 +120,6 @@ const sections = [
 	dataKeySection,
 	customAttributesSection,
 	rawStyleSection,
+	accessibilitySection,
 ] as PropertySection[];
 </script>
