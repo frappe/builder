@@ -1,19 +1,19 @@
 <template>
 	<div class="flex items-center justify-between">
-		<InputLabel>True Option</InputLabel>
+		<InputLabel>True Label</InputLabel>
 		<Input
-			:model-value="trueOption"
-			@update:model-value="handleTrueOptionChange"
-			@input="handleTrueOptionChange"
-			placeholder="Enter true option display"></Input>
+			:model-value="trueLabel"
+			@update:model-value="handleTrueLabelChange"
+			@input="handleTrueLabelChange"
+			placeholder="Enter true Label display"></Input>
 	</div>
 	<div class="flex items-center justify-between">
-		<InputLabel>False Option</InputLabel>
+		<InputLabel>False Label</InputLabel>
 		<Input
-			:model-value="falseOption"
-			@update:model-value="handleFalseOptionChange"
-			@input="handleFalseOptionChange"
-			placeholder="Enter false option display"></Input>
+			:model-value="falseLabel"
+			@update:model-value="handleFalseLabelChange"
+			@input="handleFalseLabelChange"
+			placeholder="Enter false Label display"></Input>
 	</div>
 	<div class="flex items-center justify-between">
 		<InputLabel>Default Value</InputLabel>
@@ -65,22 +65,22 @@ function useBooleanOption(key: string) {
 		value.value = val;
 		await nextTick();
 		emit("update:options", {
-			trueOption,
-			falseOption,
-			defaultValue,
+			trueLabel: trueLabel.value,
+			falseLabel: falseLabel.value,
+			defaultValue: defaultValue.value,
 		});
 	}
 
 	return { value, reset, handleChange };
 }
 
-const { value: trueOption, reset: resetTrueOption, handleChange: handleTrueOptionChange } = useBooleanOption("trueOption");
-const { value: falseOption, reset: resetFalseOption, handleChange: handleFalseOptionChange } = useBooleanOption("falseOption");
+const { value: trueLabel, reset: resetTrueLabel, handleChange: handleTrueLabelChange } = useBooleanOption("trueLabel");
+const { value: falseLabel, reset: resetFalseLabel, handleChange: handleFalseLabelChange } = useBooleanOption("falseLabel");
 const { value: defaultValue, reset: resetDefaultValue, handleChange: handleDefaultValueChange } = useBooleanOption("defaultValue");
 
 const reset = (toProps: boolean = false) => {
-	resetTrueOption(toProps);
-	resetFalseOption(toProps);
+	resetTrueLabel(toProps);
+	resetFalseLabel(toProps);
 	resetDefaultValue(toProps);
 };
 

@@ -5,7 +5,11 @@
 	</div>
 	<div class="flex items-center justify-between">
 		<InputLabel>Default Value</InputLabel>
-		<Input type="select" :options="optionsAvailable" @update:model-value="handleDefaultValueChange" placeholder="Select default value"></Input>
+		<Input
+			type="select"
+			:options="optionsAvailable"
+			@update:model-value="handleDefaultValueChange"
+			placeholder="Select default value"></Input>
 	</div>
 </template>
 
@@ -59,13 +63,19 @@ function useSelectOption(key: string, isString: boolean = false) {
 
 	async function handleStringChange(val: string) {
 		stringValue.value = val;
-		emit("update:options", {});
+		emit("update:options", {
+			options: options.value,
+			defaultValue: defaultValue.value,
+		});
 	}
 
 	async function handleArrayChange(val: any[]) {
 		arrayValue.value = val;
 		await nextTick();
-		emit("update:options", {});
+		emit("update:options", {
+			options: options.value,
+			defaultValue: defaultValue.value,
+		});
 	}
 
 	return isString
@@ -73,16 +83,8 @@ function useSelectOption(key: string, isString: boolean = false) {
 		: { value: arrayValue, handleChange: handleArrayChange, reset: resetArray };
 }
 
-const {
-	value: options,
-	handleChange: handleOptionsChange,
-	reset: resetOptions,
-} = useSelectOption("options") as StringArrayRef;
-const {
-	value: defaultValue,
-	handleChange: handleDefaultValueChange,
-	reset: resetDefaultValue,
-} = useSelectOption("defaultValue", true) as StringRef;
+const { value: options, handleChange: handleOptionsChange, reset: resetOptions } = useSelectOption("options") as StringArrayRef;
+const { value: defaultValue, handleChange: handleDefaultValueChange, reset: resetDefaultValue } = useSelectOption("defaultValue", true) as StringRef;
 
 const optionsAvailable = computed(() => {
 	return options.value.map((opt) => ({ label: opt, value: opt }));
