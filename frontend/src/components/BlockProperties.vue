@@ -32,6 +32,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import accessibilitySection from "@/components/BlockPropertySections/AccessibilitySection";
 import collectionOptionsSection from "@/components/BlockPropertySections/CollectionOptionsSection";
 import customAttributesSection from "@/components/BlockPropertySections/CustomAttributesSection";
 import dataKeySection from "@/components/BlockPropertySections/DataKeySection";
@@ -48,7 +49,6 @@ import styleSection from "@/components/BlockPropertySections/StyleSection";
 import transitionSection from "@/components/BlockPropertySections/TransitionSection";
 import typographySection from "@/components/BlockPropertySections/TypographySection";
 import videoOptionsSection from "@/components/BlockPropertySections/VideoOptionsSection";
-import accessibilitySection from "@/components/BlockPropertySections/AccessibilitySection";
 import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
 import { toValue } from "@vueuse/core";
@@ -118,8 +118,8 @@ const sections = [
 	optionsSection,
 	positionSection,
 	dataKeySection,
+	accessibilitySection,
 	customAttributesSection,
 	rawStyleSection,
-	accessibilitySection,
 ] as PropertySection[];
 </script>

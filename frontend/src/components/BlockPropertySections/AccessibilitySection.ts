@@ -1,5 +1,6 @@
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import blockController from "@/utils/blockController";
+import { computed } from "vue";
 
 const accessibilitySectionProperties = [
 	{
@@ -86,7 +87,6 @@ const accessibilitySectionProperties = [
 					? blockController.setAttribute("aria-label", val.trim())
 					: blockController.removeAttribute("aria-label"),
 		},
-		
 	},
 	{
 		component: InlineInput,
@@ -110,7 +110,7 @@ const accessibilitySectionProperties = [
 				"tab",
 				"tabpanel",
 				"presentation",
-				"region"
+				"region",
 			],
 			modelValue: blockController.getAttribute("role"),
 		}),
@@ -118,8 +118,8 @@ const accessibilitySectionProperties = [
 		events: {
 			"update:modelValue": (val: string) => {
 				blockController.setAttribute("role", val);
-			}	
-		},		
+			},
+		},
 	},
 	{
 		component: InlineInput,
@@ -131,14 +131,18 @@ const accessibilitySectionProperties = [
 		}),
 		searchKeyWords: "TabIndex, Keyboard Focus, Focus Order, Accessibility",
 		events: {
-			"update:modelValue": (val: string) =>
-				blockController.setAttribute("tabindex", val),
+			"update:modelValue": (val: string) => blockController.setAttribute("tabindex", val),
 		},
 	},
 ];
 
-
 export default {
 	name: "Accessibility",
 	properties: accessibilitySectionProperties,
+	collapsed: computed(
+		() =>
+			!blockController.getAttribute("aria-label") &&
+			!blockController.getAttribute("role") &&
+			!blockController.getAttribute("tabindex"),
+	),
 };
