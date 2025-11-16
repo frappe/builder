@@ -1,20 +1,92 @@
-import Input from "@/components/Controls/Input.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import blockController from "@/utils/blockController";
 
 const accessibilitySectionProperties = [
 	{
-		component: Input,
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Tag",
+				type: "select",
+				options: [
+					"aside",
+					"article",
+					"span",
+					"div",
+					"section",
+					"button",
+					"p",
+					"a",
+					"input",
+					"hr",
+					"form",
+					"textarea",
+					"nav",
+					"header",
+					"footer",
+					"label",
+					"select",
+					"option",
+					"blockquote",
+					"cite",
+					"canvas",
+				],
+				modelValue: blockController.getKeyValue("element"),
+			};
+		},
+		searchKeyWords:
+			"Tag, Element, TagName, Tag Name, ElementName, Element Name, header, footer, nav, input, form, textarea, button, p, a, div, span, section, hr, TagType, Tag Type, ElementType, Element Type",
+		events: {
+			"update:modelValue": (val: string) => blockController.setKeyValue("element", val),
+		},
+		condition: () => !blockController.isRoot(),
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Input Type",
+				type: "select",
+				options: ["text", "number", "email", "password", "date", "time", "search", "tel", "url", "color"],
+				modelValue: blockController.getAttribute("type") || "text",
+			};
+		},
+		searchKeyWords:
+			"Input, Type, InputType, Input Type, Text, Number, Email, Password, Date, Time, Search, Tel, Url, Color, tag",
+		events: {
+			"update:modelValue": (val: string) => blockController.setAttribute("type", val),
+		},
+		condition: () => blockController.isInput(),
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: "Placeholder",
+				modelValue: blockController.getAttribute("placeholder"),
+			};
+		},
+		searchKeyWords:
+			"Placeholder, Input, PlaceholderText, Placeholder Text, form, input, text, number, email, password, date, time, search, tel, url, color, tag",
+		events: {
+			"update:modelValue": (val: string) => blockController.setAttribute("placeholder", val),
+		},
+		condition: () => blockController.isInput(),
+	},
+	{
+		component: InlineInput,
 		getProps: () => ({
-			label: "Label Text (Aria-Label)",
-			placeholder: "Custom label for accessibility",
+			label: "Aria Label",
 			modelValue: blockController.getAttribute("aria-label"),
 		}),
 		searchKeyWords: "AriaLabel, Aria Label, Label, Accessibility Label, Aria",
 		events: {
 			"update:modelValue": (val: string) =>
-				blockController.setAttribute("aria-label", val),
+				val?.trim()
+					? blockController.setAttribute("aria-label", val.trim())
+					: blockController.removeAttribute("aria-label"),
 		},
+		
 	},
 	{
 		component: InlineInput,
@@ -46,24 +118,15 @@ const accessibilitySectionProperties = [
 		events: {
 			"update:modelValue": (val: string) => {
 				blockController.setAttribute("role", val);
-			}
-
-			
-		},
-
-		
+			}	
+		},		
 	},
-
 	{
 		component: InlineInput,
 		getProps: () => ({
 			label: "Tab Index",
-			type: "select",
-			options: [
-			  { label: "Default (0)", value: "0" },
-			  { label: "Skip Focus (-1)", value: "-1" },
-			  { label: "Custom Focus (1)", value: "1" },
-			],
+			type: "number",
+			min: -1,
 			modelValue: blockController.getAttribute("tabindex"),
 		}),
 		searchKeyWords: "TabIndex, Keyboard Focus, Focus Order, Accessibility",
