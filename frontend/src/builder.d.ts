@@ -6,12 +6,22 @@ declare interface BlockStyleMap {
 	[key: styleProperty]: StyleValue;
 }
 
+type BlockPropsStandardOptions = {
+	type: "number" | "string" | "boolean" | "select" | "array" | "object";
+	isRequired?: boolean;
+	defaultValue?: any;
+	options?: Record<string, any>;
+	dependencies?: { [key: string]: any };
+}
+
 declare type BlockProps = Record<
 	string,
 	{
 		type: "dynamic" | "static" | "inherited";
 		value: string?;
 		usedByCount?: number;
+		isStandard?: boolean;
+		standardOptions?: BlockPropsStandardOptions;
 	}
 >;
 

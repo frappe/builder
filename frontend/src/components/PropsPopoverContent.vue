@@ -24,6 +24,11 @@
 			<Input
 				v-model="name"
 				placeholder="Enter prop name"
+				@update:model-value="
+					(val) => {
+						name = val;
+					}
+				"
 				@input="
 					(val) => {
 						name = val;
@@ -45,6 +50,11 @@
 				v-if="selectedPropType == 'static'"
 				v-model="value"
 				placeholder="Enter prop name"
+				@update:model-value="
+					(val) => {
+						value = val;
+					}
+				"
 				@input="
 					(val) => {
 						value = val;
@@ -105,14 +115,14 @@
 			<component
 				:is="componentMapping[standardPropOptions.type as keyof typeof componentMapping]"
 				:options="standardPropOptions"
+				ref="optionsComponentRef"
 				@update:options="(option: any) => {
-					console.log('option', option);
-					standardPropOptions = {
+					Object.assign(standardPropOptions, {
 						isRequired: standardPropOptions.isRequired,
 						type: standardPropOptions.type,
 						dependencies: standardPropOptions.dependencies,
 						...option,
-					};
+					});
 				}" />
 		</template>
 		<div v-if="isStandardBool" class="flex flex-col gap-2">
@@ -141,7 +151,7 @@ import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import BuilderButton from "@/components/Controls/BuilderButton.vue";
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, nextTick, reactive, ref, watch } from "vue";
 
 import PropsDependencyEditor from "@/components/PropsDependencyEditor.vue";
 import useCanvasStore from "@/stores/canvasStore";
@@ -152,6 +162,7 @@ import StringOptions from "@/components/PropsOptions/StringOptions.vue";
 import ArrayOptions from "@/components/PropsOptions/ArrayOptions.vue";
 import ObjectOptions from "@/components/PropsOptions/ObjectOptions.vue";
 import BooleanOptions from "@/components/PropsOptions/BooleanOptions.vue";
+import SelectOptions from "@/components/PropsOptions/SelectOptions.vue";
 
 import usePageStore from "@/stores/pageStore";
 import { getCollectionKeys, getDataForKey } from "@/utils/helpers";
@@ -177,7 +188,7 @@ const value = ref(props.propDetails?.value ?? "");
 const selectedNonStandardPropType = ref(
 	props.propDetails && !props.propDetails.isStandard ? props.propDetails.type : "static",
 );
-const standardPropOptions = ref<BlockPropsStandardOptions>(
+const standardPropOptions = reactive<BlockPropsStandardOptions>(
 	props.propDetails && props.propDetails.isStandard
 		? {
 				...props.propDetails.standardOptions,
@@ -192,12 +203,13 @@ const standardPropOptions = ref<BlockPropsStandardOptions>(
 				dependencies: {},
 		  },
 );
-const standardPropDependencyMap = ref<{ [key: string]: any }>(
+const standardPropDependencyMap = reactive<{ [key: string]: any }>(
 	props.propDetails && props.propDetails.isStandard
 		? props.propDetails.standardOptions?.dependencies || {}
 		: {},
 );
 const autoCompleteRef = ref<typeof Autocomplete | null>(null);
+const optionsComponentRef = ref<any>(null);
 
 const emit = defineEmits({
 	"add:prop": (name: string, prop: BlockProps[string]) => true,
@@ -218,6 +230,10 @@ const propTypes = computed(() => {
 			{
 				label: "Boolean",
 				value: "boolean",
+			},
+			{
+				label: "Select",
+				value: "select",
 			},
 			{
 				label: "Array",
@@ -256,18 +272,17 @@ const isInFragmentMode = computed(() => {
 
 const selectedPropType = computed(() => {
 	if (isStandardBool.value) {
-		console.log("standardPropOptions.value.type", standardPropOptions.value.type);
-		return standardPropOptions.value.type;
+		return standardPropOptions.type;
 	} else {
 		return selectedNonStandardPropType.value;
 	}
 });
 
-const STANDARD_PROP_TYPES = ["string", "number", "boolean", "array", "object"];
+const STANDARD_PROP_TYPES = ["string", "number", "boolean", "select", "array", "object"];
 
 const setPropType = (type: string) => {
 	if (isStandardBool.value && STANDARD_PROP_TYPES.includes(type)) {
-		standardPropOptions.value.type = type as "string" | "number" | "boolean" | "array" | "object";
+		standardPropOptions.type = type as "string" | "number" | "boolean" | "select" | "array" | "object";
 	} else {
 		selectedNonStandardPropType.value = type as "static" | "inherited" | "dynamic";
 	}
@@ -336,8 +351,9 @@ const getOptions = async (query: string) => {
 const componentMapping = {
 	string: StringOptions,
 	number: NumberOptions,
-	array: ArrayOptions,
 	boolean: BooleanOptions,
+	select: SelectOptions,
+	array: ArrayOptions,
 	object: ObjectOptions,
 };
 
@@ -370,23 +386,47 @@ const reset = async (keepParams: {
 	keepType: boolean;
 }) => {
 	const { keepName, keepIsStandard, keepProps, keepType } = keepParams;
+
+	const details = keepProps ? props.propDetails ?? null : null;
+
 	if (!keepName) name.value = props.propName ?? "";
-	const propDetails = keepProps ? props.propDetails : null;
-	if (!keepIsStandard) isStandard.value = propDetails?.isStandard ? "true" : "false";
-	value.value = propDetails?.value ?? "";
-	console.trace("val", keepParams, propDetails?.value ?? "hello");
-	if (propDetails?.isStandard) {
-		standardPropOptions.value = {
-			...propDetails.standardOptions,
-			isRequired: Boolean(propDetails.standardOptions?.isRequired),
-			...(keepType
-				? { type: standardPropOptions.value.type }
-				: { type: propDetails.standardOptions?.type || "string" }),
-		};
-		standardPropDependencyMap.value = propDetails.standardOptions?.dependencies || {};
+	if (!keepIsStandard) isStandard.value = details?.isStandard ? "true" : "false";
+
+	value.value = details?.value ?? "";
+
+	if (details?.isStandard) {
+		const nextType = keepType ? standardPropOptions.type : details?.standardOptions?.type ?? "string";
+
+		Object.assign(standardPropOptions, {
+			...details?.standardOptions,
+			isRequired: Boolean(details?.standardOptions?.isRequired),
+			type: nextType,
+		});
+
+		const deps = details?.standardOptions?.dependencies ?? {};
+		Object.keys(standardPropDependencyMap).forEach((k) => delete standardPropDependencyMap[k]);
+		Object.assign(standardPropDependencyMap, deps);
+	} else if (isStandardBool.value) {
+		if (!keepType) {
+			standardPropOptions.type = "string";
+		}
+
+		Object.assign(standardPropOptions, {
+			isRequired: false,
+			type: standardPropOptions.type,
+			defaultValue: "",
+			options: [],
+			dependencies: {},
+		});
+
+		Object.assign(standardPropDependencyMap, {});
 	} else {
-		if (!keepType) selectedNonStandardPropType.value = propDetails?.type || "static";
+		if (!keepType) {
+			selectedNonStandardPropType.value = details?.type || "static";
+		}
 	}
+
+	optionsComponentRef.value?.reset(!!keepProps);
 };
 
 watch(
@@ -416,11 +456,11 @@ const save = async () => {
 	await nextTick();
 	const propValue: BlockProps[string] = {
 		isStandard: isStandardBool.value,
-		type: isStandardBool.value ? "static" : selectedNonStandardPropType.value,
+		type: isStandardBool.value ? "static" : selectedNonStandardPropType.value, // all standard props are static by default
 		value: isStandardBool.value ? null : value.value,
 		standardOptions: isStandardBool.value
 			? {
-					...standardPropOptions.value,
+					...standardPropOptions,
 					dependencies: standardPropDependencyMap.value,
 			  }
 			: undefined,
@@ -431,6 +471,5 @@ const save = async () => {
 		emit("update:prop", props.propName!, name.value, propValue);
 	}
 };
-
 defineExpose({ reset });
 </script>

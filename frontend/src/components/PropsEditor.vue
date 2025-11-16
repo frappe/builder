@@ -21,11 +21,29 @@
 												}[value.type] || LucideZap
 											"
 											class="h-4 w-4 text-ink-gray-6" />
-										<LucideChevronsLeftRightEllipsis v-else class="h-4 w-4 text-ink-gray-6" />
+										<component
+											v-if="value.isStandard && value.standardOptions?.type"
+											:is="
+												{
+													number: LucideNumber,
+													string: LucideString,
+													boolean: LucideBoolean,
+													select: LucideSelect,
+													object: LucideObject,
+													array: LucideArray,
+												}[value.standardOptions?.type] || LucideZap
+											"
+											class="h-4 w-4 text-ink-gray-6" />
 									</div>
 									<div class="flex flex-col gap-1">
-										<p class="text-sm font-medium text-ink-gray-8">{{ key }}</p>
-										<p class="text-xs text-ink-gray-6">
+										<p class="text-sm font-medium text-ink-gray-8">
+											{{ key }}
+										</p>											<sup v-if="value.isStandard && value.standardOptions?.isRequired">*</sup>
+
+										<p v-if="value.isStandard" class="text-xs text-ink-gray-6">
+											Std. - {{ value.standardOptions?.isRequired ? "Required" : "Optional" }}
+										</p>
+										<p v-else class="text-xs text-ink-gray-6">
 											{{ value.value }}
 										</p>
 									</div>
@@ -38,6 +56,7 @@
 										:disabled="Boolean(value.usedByCount) || false"
 										@click.stop="
 											() => {
+												popupMode = 'edit';
 												popoverContentItemsRef[index]?.reset({
 													keepName: false,
 													keepIsStandard: false,
@@ -61,7 +80,7 @@
 							<PropsPopoverContent
 								ref="popoverContentItemsRef"
 								mode="edit"
-								:propName="key"
+								:propName="key as string"
 								:propDetails="value"
 								@update:prop="updateProp" />
 						</template>
@@ -117,7 +136,17 @@ import LucideCaseSensitive from "~icons/lucide/case-sensitive";
 // @ts-ignore
 import LucideListTree from "~icons/lucide/list-tree";
 // @ts-ignore
-import LucideChevronsLeftRightEllipsis from "~icons/lucide/chevrons-left-right-ellipsis";
+import LucideNumber from "~icons/lucide/pi";
+// @ts-ignore
+import LucideString from "~icons/lucide/type";
+// @ts-ignore
+import LucideBoolean from "~icons/lucide/toggle-right";
+// @ts-ignore
+import LucideSelect from "~icons/lucide/chevrons-up-down";
+// @ts-ignore
+import LucideArray from "~icons/lucide/brackets";
+// @ts-ignore
+import LucideObject from "~icons/lucide/braces";
 
 import { Popover } from "frappe-ui";
 import PropsPopoverContent from "./PropsPopoverContent.vue";
@@ -174,8 +203,7 @@ const addProp = async (name: string, value: BlockProps[string]) => {
 	return map;
 };
 
-const clearObjectValue = (key: string) => {
-	const map = new Map(Object.entries(props.obj));
+const clearObjectValue = (map: Map<string, BlockProps[string]>, key: string) => {
 	const oldValue = map.get(key);
 
 	map.set(key, {
@@ -198,7 +226,7 @@ const updateObjectValue = (
 ) => {
 	const path = value;
 	if (!path) {
-		return clearObjectValue(key);
+		return clearObjectValue(map, key);
 	}
 
 	const oldPath = map.get(key)?.value;
