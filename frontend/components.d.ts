@@ -13,6 +13,7 @@ declare module 'vue' {
     AnalyticsOverview: typeof import('./src/components/Settings/AnalyticsOverview.vue')['default']
     AppsMenu: typeof import('./src/components/AppsMenu.vue')['default']
     ArrayEditor: typeof import('./src/components/ArrayEditor.vue')['default']
+    ArrayInput: typeof import('./src/components/ArrayInput.vue')['default']
     ArrayOptions: typeof import('./src/components/PropsOptions/ArrayOptions.vue')['default']
     AuthenticatedUser: typeof import('./src/components/Icons/AuthenticatedUser.vue')['default']
     Autocomplete: typeof import('./src/components/Controls/Autocomplete.vue')['default']

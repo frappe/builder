@@ -38,8 +38,7 @@
 									<div class="flex flex-col gap-1">
 										<p class="text-sm font-medium text-ink-gray-8">
 											{{ key }}
-										</p>											<sup v-if="value.isStandard && value.standardOptions?.isRequired">*</sup>
-
+										</p>
 										<p v-if="value.isStandard" class="text-xs text-ink-gray-6">
 											Std. - {{ value.standardOptions?.isRequired ? "Required" : "Optional" }}
 										</p>
@@ -172,7 +171,7 @@ const props = defineProps<{
 
 const sortedObj = computed(() => {
 	// Sort props: standard props at the front, then non-standard props
-	const entries = Object.entries(props.obj);
+	const entries = Object.entries(props.obj || {});
 	entries.sort((a, b) => {
 		const aIsStandard = a[1].isStandard ? 1 : 0;
 		const bIsStandard = b[1].isStandard ? 1 : 0;

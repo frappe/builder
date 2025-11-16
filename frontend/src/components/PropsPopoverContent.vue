@@ -114,15 +114,10 @@
 			</div>
 			<component
 				:is="componentMapping[standardPropOptions.type as keyof typeof componentMapping]"
-				:options="standardPropOptions"
+				:options="standardPropOptions.options || {}"
 				ref="optionsComponentRef"
-				@update:options="(option: any) => {
-					Object.assign(standardPropOptions, {
-						isRequired: standardPropOptions.isRequired,
-						type: standardPropOptions.type,
-						dependencies: standardPropOptions.dependencies,
-						...option,
-					});
+				@update:options="(options: any) => {
+					standardPropOptions.options = options;
 				}" />
 		</template>
 		<div v-if="isStandardBool" class="flex flex-col gap-2">
