@@ -609,33 +609,3 @@ def remove_existing_path(path):
 			shutil.rmtree(path)
 		else:
 			os.remove(path)
-
-
-def sync_standard_builder_pages(app_name=None):
-	print("Syncing Standard Builder Pages")
-	# fetch pages from all apps under builder_files/pages
-	# import components first
-
-	apps_to_sync = [app_name] if app_name else frappe.get_installed_apps()
-
-	for app in apps_to_sync:
-		app_path = frappe.get_app_path(app)
-		pages_path = os.path.join(app_path, "builder_files", "pages")
-		components_path = os.path.join(app_path, "builder_files", "components")
-		scripts_path = os.path.join(app_path, "builder_files", "client_scripts")
-		if os.path.exists(components_path):
-			print(f"Importing components from {components_path}")
-			make_records(components_path)
-		if os.path.exists(scripts_path):
-			print(f"Importing scripts from {scripts_path}")
-			make_records(scripts_path)
-		if os.path.exists(pages_path):
-			frappe.get_doc(
-				{
-					"doctype": "Builder Project Folder",
-					"folder_name": app,
-					"is_standard": 1,
-				}
-			).insert(ignore_if_duplicate=True)
-			print(f"Importing page from {pages_path}")
-			make_records(pages_path)

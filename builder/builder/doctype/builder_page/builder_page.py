@@ -9,7 +9,7 @@ import bs4 as bs
 import frappe
 import frappe.utils
 from frappe.modules import scrub
-from frappe.modules.export_file import export_to_files, strip_default_fields
+from frappe.modules.export_file import export_to_files
 from frappe.utils import set_request
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
@@ -21,6 +21,7 @@ from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
 from jinja2.exceptions import TemplateSyntaxError
 
+from builder.export_import_standard_page import export_page_as_standard
 from builder.hooks import builder_path
 from builder.html_preview_image import generate_preview
 from builder.utils import (
@@ -28,15 +29,9 @@ from builder.utils import (
 	ColonRule,
 	camel_case_to_kebab_case,
 	clean_data,
-	copy_asset_file,
-	copy_assets_from_blocks,
 	copy_img_to_asset_folder,
-	create_export_directories,
 	escape_single_quotes,
 	execute_script,
-	export_client_scripts,
-	export_components,
-	extract_components_from_blocks,
 	get_builder_page_preview_file_paths,
 	get_template_assets_folder_path,
 	is_component_used,
@@ -850,54 +845,6 @@ def reset_block(block):
 	block["classes"] = []
 	block["dataKey"] = {}
 	return block
-
-
-def export_page_as_standard(page_name, target_app, export_name=None):
-	"""Export a builder page as standard files to the specified app"""
-	page_doc = frappe.get_doc("Builder Page", page_name)
-	if not export_name:
-		export_name = page_doc.page_name or page_name
-
-	# Clean the export name to be filesystem-safe
-	export_name = frappe.scrub(export_name)
-
-	# Get app path
-	app_path = frappe.get_app_path(target_app)
-	if not app_path:
-		frappe.throw(f"App '{target_app}' not found")
-
-	# Create directories and get paths
-	paths = create_export_directories(app_path, export_name)
-
-	page_config = page_doc.as_dict(no_nulls=True)
-	page_config = strip_default_fields(page_doc, page_config)
-
-	config_file_path = os.path.join(paths["page_path"], f"{export_name}.json")
-
-	blocks = frappe.parse_json(page_config.get("draft_blocks") or page_config["blocks"])
-	if blocks:
-		copy_assets_from_blocks(blocks, paths["assets_path"])
-		page_config["blocks"] = blocks
-		page_config["draft_blocks"] = None
-
-	if page_doc.favicon:
-		page_config["favicon"] = copy_asset_file(page_doc.favicon, paths["assets_path"])
-	if page_doc.meta_image:
-		page_config["meta_image"] = copy_asset_file(page_doc.meta_image, paths["assets_path"])
-
-	page_config["project_folder"] = target_app
-	page_config = frappe.as_json(page_config, ensure_ascii=False)
-
-	with open(config_file_path, "w", encoding="utf-8") as f:
-		f.write(page_config)
-
-	# Export client scripts
-	export_client_scripts(page_doc, paths["client_scripts_path"])
-
-	# # Export components used in the page
-	if blocks:
-		components = extract_components_from_blocks(blocks)
-		export_components(components, paths["components_path"], paths["assets_path"])
 
 
 @frappe.whitelist()
