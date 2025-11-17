@@ -1,6 +1,4 @@
-import glob
 import inspect
-import json
 import os
 import re
 import shutil
@@ -10,9 +8,8 @@ from os.path import join
 from urllib.parse import unquote, urlparse
 
 import frappe
-from frappe.modules.export_file import export_to_files
 from frappe.modules.import_file import import_file_by_path
-from frappe.utils import get_site_base_path, get_site_path, get_url
+from frappe.utils import get_url
 from frappe.utils.safe_exec import (
 	SERVER_SCRIPT_FILE_PREFIX,
 	FrappeTransformer,
@@ -570,7 +567,6 @@ def export_components(components, components_path, assets_path):
 
 
 def create_export_directories(app_path, export_name):
-	"""Create necessary directories for export and return paths"""
 	paths = get_export_paths(app_path, export_name)
 	setup_assets_symlink(app_path, paths["assets_path"])
 	for path in paths.values():

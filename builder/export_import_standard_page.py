@@ -14,21 +14,15 @@ from builder.utils import (
 )
 
 
-def export_page_as_standard(page_name, target_app, export_name=None):
+def export_page_as_standard(page_name, target_app):
 	"""Export a builder page as standard files to the specified app"""
 	page_doc = frappe.get_doc("Builder Page", page_name)
-	if not export_name:
-		export_name = page_doc.page_name or page_name
+	export_name = frappe.scrub(page_doc.page_name)
 
-	# Clean the export name to be filesystem-safe
-	export_name = frappe.scrub(export_name)
-
-	# Get app path
 	app_path = frappe.get_app_path(target_app)
 	if not app_path:
 		frappe.throw(f"App '{target_app}' not found")
 
-	# Create directories and get paths
 	paths = create_export_directories(app_path, export_name)
 
 	page_config = page_doc.as_dict(no_nulls=True)
@@ -53,10 +47,8 @@ def export_page_as_standard(page_name, target_app, export_name=None):
 	with open(config_file_path, "w", encoding="utf-8") as f:
 		f.write(page_config)
 
-	# Export client scripts
 	export_client_scripts(page_doc, paths["client_scripts_path"])
 
-	# # Export components used in the page
 	if blocks:
 		components = extract_components_from_blocks(blocks)
 		export_components(components, paths["components_path"], paths["assets_path"])
@@ -64,8 +56,6 @@ def export_page_as_standard(page_name, target_app, export_name=None):
 
 def sync_standard_builder_pages(app_name=None):
 	print("Syncing Standard Builder Pages")
-	# fetch pages from all apps under builder_files/pages
-	# import components first
 
 	apps_to_sync = [app_name] if app_name else frappe.get_installed_apps()
 
