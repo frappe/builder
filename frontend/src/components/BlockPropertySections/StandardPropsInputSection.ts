@@ -47,6 +47,13 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 	}
 	map = {
 		label: propName,
+		setModelValue: (val: any) => {
+			blockController.setBlockProp(propName, val);
+		},
+		getModelValue: () => {
+			const value = blockController.getFirstSelectedBlock().props?.[propName]?.value;
+			return value;
+		},
 		...map,
 	};
 	return map;
@@ -90,5 +97,7 @@ export default {
 	name: "Standard Props",
 	properties: getStandardPropsInputSection,
 	collapsed: false,
-	condition: () => blockController.getFirstSelectedBlock().isExtendedFromComponent(),
+	condition: () =>
+		Boolean(blockController.getFirstSelectedBlock().extendedFromComponent) &&
+		Object.keys(getStandardProps(blockController.getBlockProps())).length > 0,
 };

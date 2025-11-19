@@ -310,6 +310,18 @@ const blockController = {
 	getBlockProps: () => {
 		return blockController.getSelectedBlocks()[0]?.getBlockProps();
 	},
+	setBlockProp: (key: string, value: string) => {
+		const allProps = blockController.getBlockProps();
+		if(!allProps) return;
+		const updatedProps = {
+			...allProps,
+			[key]: {
+				...allProps[key],
+				value: value,
+			},
+		};
+		blockController.setBlockProps(updatedProps);
+	},
 	setBlockProps: (props: BlockProps) => {
 		const block = blockController.getFirstSelectedBlock();
 		if (!block.props) {
