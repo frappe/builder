@@ -26,11 +26,7 @@
                 </div>
 				<ArrayEditor
 					:arr
-					@update:arr="
-						(newArr) => {
-							arr = newArr;
-						}
-					" />
+					@update:arr="updateModelValue" />
 			</div>
 		</template>
 	</Popover>
@@ -45,11 +41,34 @@ import BuilderButton from "./Controls/BuilderButton.vue";
 
 const props = defineProps<{
 	label: string;
-	modelValue?: string[];
+	getModelValue: () => string;
+	setModelValue: (value: string) => void;
 }>();
 
 const emit = defineEmits({
-	"update:modelValue": (value: string[]) => true,
+	"update:modelValue": (value: string) => true,
 });
-const arr = ref<string[]>([]);
+
+const getPassedArray = () => {
+	try {
+		const value = props.getModelValue();
+		const parsed = JSON.parse(value);
+		if (Array.isArray(parsed)) {
+			return parsed;
+		}
+		return [];
+	} catch {
+		return [];
+	}
+};
+
+const arr = ref<any[]>(getPassedArray());
+
+const updateModelValue = (value: string[]) => {
+	arr.value = value;
+	props.setModelValue(JSON.stringify(value));
+	emit("update:modelValue", JSON.stringify(value));
+};
+
+
 </script>
