@@ -488,7 +488,9 @@ def get_block_html(blocks):
 	font_map = {}
 
 	def get_html(blocks, soup):
+		map_of_inherited_props = {} # prop_name -> array<values>
 		html = ""
+		all_block_scripts = []
 
 		def get_tag(block, soup, data_key=None):
 			block = extend_with_component(block)
@@ -566,6 +568,20 @@ def get_block_html(blocks):
 				set_fonts_from_html(inner_soup, font_map)
 				tag.append(inner_soup)
 
+			props_obj = {}
+			props_with_successors = []
+			if block.get("props"):
+				props = []
+				for key, value in block.get("props", {}).items():
+					interpreted_value = get_interpreted_prop_value(value, data_key, map_of_inherited_props)
+					props.append(f"{key}: {interpreted_value}")
+     
+					if value.get('usedByCount', 0) > 0:
+						props_with_successors.append(key)
+						map_of_inherited_props.setdefault(key, []).append(interpreted_value)
+
+				props_obj = f"{{ {', '.join(props)} }}"
+
 			if block.get("isRepeaterBlock") and block.get("children") and block.get("dataKey"):
 				_key = block.get("dataKey").get("key")
 				if data_key:
@@ -588,6 +604,21 @@ def get_block_html(blocks):
 
 			if element == "body":
 				tag.append("{% include 'templates/generators/webpage_scripts.html' %}")
+
+			for props in props_with_successors:
+				map_of_inherited_props[props].pop()
+
+			if block.get("blockScript"):
+				block_unique_id = f"{block.get('blockId')}-{frappe.generate_hash(length=3)}"
+				script_content = f"(function (props){{ {block.get('blockScript')} }}).call(document.querySelector('[data-block-id=\"{block_unique_id}\"]'), {props_obj or '{}'});"
+				print("Script content: ", script_content)
+				all_block_scripts.append(script_content)
+				tag.attrs["data-block-id"] = block_unique_id
+			if block.get("blockId") == "root":
+				for script in all_block_scripts:
+					script_tag = soup.new_tag("script")
+					script_tag.string = script
+					tag.append(script_tag)
 
 			return tag
 
@@ -699,6 +730,14 @@ def extend_block(block, overridden_block):
 	block["rawStyles"].update(overridden_block.get("rawStyles", {}))
 
 	block["classes"].extend(overridden_block["classes"])
+
+	if not block.get("props"):
+		block["props"] = {}
+	block["props"].update(overridden_block.get("props", {}))
+	
+	if overridden_block.get("blockScript"):
+		block["blockScript"] = overridden_block.get("blockScript")
+ 
 	dataKey = overridden_block.get("dataKey", {})
 	if not block.get("dataKey"):
 		block["dataKey"] = {}
@@ -799,6 +838,20 @@ def resolve_path(path):
 
 	return original_resolve_path(path)
 
+
+def get_interpreted_prop_value(prop, data_key, map_of_inherited_props):
+	prop_value = prop["value"]
+	prop_type = prop["type"]
+
+	if prop_value == "" or prop_value is None:
+		return "undefined"
+	if prop_type == "dynamic":
+		return f"'{{{{ {data_key}.{prop_value} }}}}'" if data_key else f"'{{{{ {prop_value} }}}}'"
+	elif prop_type == "static":
+		return f"{prop_value}"
+	elif prop_type == "inherited":
+		values = map_of_inherited_props.get(prop_value, [])
+		return values[0] if values else "undefined"
 
 def reset_with_component(block, extended_with_component, component_children):
 	reset_block(block)

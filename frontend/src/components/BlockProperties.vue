@@ -14,6 +14,17 @@
 		</div>
 		<div class="mt-1 flex flex-col gap-3">
 			<CollapsibleSection
+				:sectionName="standardPropsInputSection.name"
+				v-if="showSectionDynamic(standardPropsInputSection)"
+				:key="standardPropsInputSection.name"
+				:sectionCollapsed="toValue(standardPropsInputSection.collapsed) && !builderStore.propertyFilter">
+				<template v-for="property in getFilteredPropertiesDynamic(standardPropsInputSection)">
+					<component :is="property.component" v-bind="property.getProps()" v-on="property.events || {}">
+						{{ property.innerText || "" }}
+					</component>
+				</template>
+			</CollapsibleSection>
+			<CollapsibleSection
 				:sectionName="section.name"
 				v-for="section in sections"
 				v-show="showSection(section)"
@@ -49,6 +60,9 @@ import styleSection from "@/components/BlockPropertySections/StyleSection";
 import transitionSection from "@/components/BlockPropertySections/TransitionSection";
 import typographySection from "@/components/BlockPropertySections/TypographySection";
 import videoOptionsSection from "@/components/BlockPropertySections/VideoOptionsSection";
+import blockScriptSection from "@/components/BlockPropertySections/ScriptEditor";
+import blockPropsSection from "@/components/BlockPropertySections/PropsSection";
+import standardPropsInputSection from "@/components/BlockPropertySections/StandardPropsInputSection";
 import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
 import { toValue } from "@vueuse/core";
@@ -72,6 +86,10 @@ type PropertySection = {
 	properties: BlockProperty[];
 	condition?: () => boolean;
 	collapsed?: boolean;
+};
+
+type PropertySectionDynamic = Omit<PropertySection, "properties"> & {
+	properties: () => BlockProperty[];
 };
 
 const searchInput = ref(null) as Ref<HTMLElement | null>;
@@ -103,6 +121,22 @@ const getFilteredProperties = (section: PropertySection) => {
 	});
 };
 
+const getFilteredPropertiesDynamic = (section: PropertySectionDynamic) => {
+	const staticSection: PropertySection = {
+		...section,
+		properties: section.properties(),
+	};
+	return getFilteredProperties(staticSection);
+};
+
+const showSectionDynamic = (section: PropertySectionDynamic) => {
+	const staticSection: PropertySection = {
+		...section,
+		properties: section.properties(),
+	};
+	return showSection(staticSection);
+};
+
 const sections = [
 	collectionOptionsSection,
 	linkSection,
@@ -121,5 +155,7 @@ const sections = [
 	accessibilitySection,
 	customAttributesSection,
 	rawStyleSection,
+	blockPropsSection,
+	blockScriptSection,
 ] as PropertySection[];
 </script>

@@ -6,6 +6,7 @@ import { useCanvasHistory } from "@/utils/useCanvasHistory";
 import { useElementBounding } from "@vueuse/core";
 import { nextTick, reactive, ref, Ref } from "vue";
 import { toast } from "vue-sonner";
+import blockController from "./blockController";
 
 const canvasStore = useCanvasStore();
 
@@ -253,6 +254,13 @@ export function useCanvasUtils(
 		}
 		const nextSibling = block.getSiblingBlock("next");
 		if (canvasStore.activeCanvas?.activeBreakpoint === "desktop" || force) {
+			const listOfInheritedProps = [];
+			for (const prop in block.props) {
+				if (block.props[prop].type === "inherited" && block.props[prop].value) {
+					listOfInheritedProps.push(block.props[prop].value);
+				}
+			}
+			blockController.updateBlockPropsDependencyForAncestor(listOfInheritedProps, "remove", block);
 			parentBlock.removeChild(block);
 		} else {
 			block.toggleVisibility(false);
