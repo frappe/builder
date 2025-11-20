@@ -9,29 +9,33 @@
 				placeholder="Search..." />
 			<div class="max-h-[60vh] overflow-y-auto">
 				<ul class="m-0 list-none p-0">
-					<li v-if="selectedKey && !filteredItems.includes(selectedKey)">
+					<li
+						v-if="selectedItem?.key && !filteredItems.some(i => i.key === selectedItem!.key && i.comesFrom === selectedItem!.comesFrom)">
 						<div
 							class="w-full truncate rounded bg-surface-gray-3 p-2 text-left font-mono text-p-sm text-ink-gray-9"
-							@click.stop="selectKey(selectedKey)">
-							{{ selectedKey }}
-							<p class="truncate text-xs text-ink-gray-5" :class="{ italic: getValue(selectedKey) == null }">
-								{{ getValue(selectedKey) == null ? "No Value Set" : getValue(selectedKey) }}
+							@click.stop="selectItem(selectedItem)">
+							{{ selectedItem.key }}
+							<p class="truncate text-xs text-ink-gray-5" :class="{ italic: getValue(selectedItem) == null }">
+								{{ getValue(selectedItem) == null ? "No Value Set" : getValue(selectedItem) }}
 							</p>
 						</div>
 					</li>
 					<li v-for="(item, index) in filteredItems" :key="index">
 						<div
 							class="w-full truncate rounded p-2 text-left font-mono text-p-sm text-ink-gray-7 hover:bg-surface-gray-2"
-							:class="{ 'bg-surface-gray-3 text-ink-gray-9': selectedKey === item }"
-							@click.stop="selectKey(item)">
-							{{ item }}
+							:class="{
+								'bg-surface-gray-3 text-ink-gray-9':
+									selectedItem?.key === item.key && selectedItem?.comesFrom === item.comesFrom,
+							}"
+							@click.stop="selectItem(item)">
+							{{ item.key }}
 							<p class="truncate text-xs text-ink-gray-5" :class="{ italic: getValue(item) == null }">
 								{{ getValue(item) == null ? "No Value Set" : getValue(item) }}
 							</p>
 						</div>
 					</li>
 					<li
-						v-if="filteredItems.length === 0 && !selectedKey"
+						v-if="filteredItems.length === 0 && !selectedItem"
 						class="flex flex-col items-center justify-center p-10 text-center text-sm text-ink-gray-5">
 						<div>
 							No dynamic values found. Please add using
@@ -49,7 +53,7 @@
 		<div class="flex items-center justify-end gap-2" v-if="dataArray.length !== 0">
 			<div class="flex gap-2">
 				<Button variant="subtle" @click="builderStore.showDataScriptDialog = true">Edit Code</Button>
-				<Button variant="solid" @click="saveSelection" :disabled="!selectedKey">Set</Button>
+				<Button variant="solid" @click="saveSelection" :disabled="!selectedItem">Set</Button>
 			</div>
 		</div>
 	</div>
@@ -60,14 +64,19 @@ import Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
-import { getCollectionKeys, getDataForKey } from "@/utils/helpers";
+import { getCollectionKeys, getDataForKey, getPropValue } from "@/utils/helpers";
 import { computed, ref } from "vue";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
 
+type DynamicValueItem = {
+	key: string;
+	comesFrom: BlockDataKey["comesFrom"];
+};
+
 const props = defineProps<{
-	selectedValue?: string;
+	selectedValue?: DynamicValueItem;
 	block?: Block;
 }>();
 
@@ -101,7 +110,13 @@ const dataArray = computed(() => {
 	return result;
 });
 
-const getValue = (path: string): any => {
+const getValue = (item: DynamicValueItem): any => {
+	if (item.comesFrom == "dataScript") return getDatScriptValue(item.key);
+	else
+		return getPropValue(item.key, props.block || blockController.getFirstSelectedBlock(), getDatScriptValue);
+};
+
+const getDatScriptValue = (path: string): any => {
 	let collectionObject = pageStore.pageData;
 
 	if (blockController.getFirstSelectedBlock()?.isInsideRepeater()) {
@@ -115,24 +130,40 @@ const getValue = (path: string): any => {
 	return path.split(".").reduce((obj: Record<string, any>, key: string) => obj?.[key], collectionObject);
 };
 
+const blockProps = computed(() => {
+	return props.block
+		? props.block.getBlockProps()
+		: blockController.getFirstSelectedBlock()?.getBlockProps() || {};
+});
+
 const filteredItems = computed(() => {
-	if (!searchQuery.value) return dataArray.value;
+	const dataArrayItems = dataArray.value.map((item) => ({ key: item, comesFrom: "dataScript" }));
+	const propItems = Object.keys(blockProps.value).map((item) => ({ key: item, comesFrom: "props" }));
+	const allItems = [...dataArrayItems, ...propItems] as DynamicValueItem[];
+	if (!searchQuery.value) return allItems;
 	const query = searchQuery.value.toLowerCase();
-	return dataArray.value.filter(
-		(item) => item.toLowerCase().includes(query) || String(getValue(item)).toLowerCase().includes(query),
+	return allItems.filter(
+		(item) =>
+			item.key.toLowerCase().includes(query) ||
+			String(getDatScriptValue(item.key)).toLowerCase().includes(query) ||
+			String(
+				getPropValue(item.key, props.block || blockController.getFirstSelectedBlock(), getDatScriptValue),
+			)
+				.toLowerCase()
+				.includes(query),
 	);
 });
 
-const selectedKey = ref<string | null>(props.selectedValue || null);
+const selectedItem = ref<DynamicValueItem | null>(props.selectedValue || null);
 
-function selectKey(key: string) {
-	selectedKey.value = key;
+function selectItem(item: DynamicValueItem) {
+	selectedItem.value = item;
 }
 
 function saveSelection() {
-	if (selectedKey.value) {
-		emit("setDynamicValue", selectedKey.value);
-		selectedKey.value = null;
+	if (selectedItem.value) {
+		emit("setDynamicValue", selectedItem.value);
+		selectedItem.value = null;
 	}
 }
 </script>

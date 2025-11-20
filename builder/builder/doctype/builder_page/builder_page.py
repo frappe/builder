@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import copy
+import re
 import os
 import shutil
 
@@ -494,6 +495,35 @@ def get_block_html(blocks):
 
 		def get_tag(block, soup, data_key=None):
 			block = extend_with_component(block)
+			# not real objs, string templates to be used in jinja
+			props_obj_jinja = "{}" # to be passed as the prop obj in jinja template for dynamic values
+			props_obj_js = "{}" # to be passed as the prop obj in block script
+			props_with_successors = []
+   
+			if block.get("props"):
+       
+				# collect all key:value pairs
+				props_js = []
+				props_jinja = []
+    
+				for key, value in block.get("props", {}).items():
+					interpreted_value = get_interpreted_prop_value(value, data_key, map_of_inherited_props)
+					props_js.append(f"'{key}': '{interpreted_value}'")
+					if has_jinja_variable(interpreted_value):
+						# dynamic values beng used inside {% with props = ... %} should not have braces {{ ... }} or be literals '...'
+						stripped_jinja_braces = re.sub(r'{{\s*(.*?)\s*}}', r'\1', interpreted_value)
+						props_jinja.append(f"'{key}': {stripped_jinja_braces}")
+					else:
+						props_jinja.append(f"'{key}': '{interpreted_value}'")
+					
+     
+					if value.get('usedByCount', 0) > 0:
+						props_with_successors.append(key)
+						map_of_inherited_props.setdefault(key, []).append(interpreted_value)
+
+				props_obj_js = f"{{ {', '.join(props_js)} }}"
+				props_obj_jinja = f"{{ {', '.join(props_jinja)} }}" if props_jinja else "{}"
+
 			set_dynamic_content_placeholder(block, data_key)
 			element = block.get("originalElement") or block.get("element")
 
@@ -568,20 +598,6 @@ def get_block_html(blocks):
 				set_fonts_from_html(inner_soup, font_map)
 				tag.append(inner_soup)
 
-			props_obj = {}
-			props_with_successors = []
-			if block.get("props"):
-				props = []
-				for key, value in block.get("props", {}).items():
-					interpreted_value = get_interpreted_prop_value(value, data_key, map_of_inherited_props)
-					props.append(f"{key}: {interpreted_value}")
-     
-					if value.get('usedByCount', 0) > 0:
-						props_with_successors.append(key)
-						map_of_inherited_props.setdefault(key, []).append(interpreted_value)
-
-				props_obj = f"{{ {', '.join(props)} }}"
-
 			if block.get("isRepeaterBlock") and block.get("children") and block.get("dataKey"):
 				_key = block.get("dataKey").get("key")
 				if data_key:
@@ -589,7 +605,10 @@ def get_block_html(blocks):
 
 				item_key = f"key_{_key.replace('.', '__')}"
 				tag.append(f"{{% for {item_key} in {_key} %}}")
-				tag.append(get_tag(block.get("children")[0], soup, item_key))
+				child_tag, child_tag_props = get_tag(block.get("children")[0], soup, item_key)
+				tag.append(f"{{% with props = {child_tag_props} %}}")
+				tag.append(child_tag)
+				tag.append("{% endwith %}")
 				tag.append("{% endfor %}")
 			else:
 				for child in block.get("children", []) or []:
@@ -598,7 +617,10 @@ def get_block_html(blocks):
 						if data_key:
 							key = f"{data_key}.{key}"
 						tag.append(f"{{% if {key} %}}")
-					tag.append(get_tag(child, soup, data_key=data_key))
+					child_tag, child_tag_props = get_tag(child, soup, data_key=data_key)
+					tag.append(f"{{% with props = {child_tag_props} %}}")
+					tag.append(child_tag)
+					tag.append("{% endwith %}")
 					if child.get("visibilityCondition"):
 						tag.append("{% endif %}")
 
@@ -610,7 +632,7 @@ def get_block_html(blocks):
 
 			if block.get("blockScript"):
 				block_unique_id = f"{block.get('blockId')}-{frappe.generate_hash(length=3)}"
-				script_content = f"(function (props){{ {block.get('blockScript')} }}).call(document.querySelector('[data-block-id=\"{block_unique_id}\"]'), {props_obj or '{}'});"
+				script_content = f"(function (props){{ {block.get('blockScript')} }}).call(document.querySelector('[data-block-id=\"{block_unique_id}\"]'), {props_obj_js or '{}'});"
 				print("Script content: ", script_content)
 				all_block_scripts.append(script_content)
 				tag.attrs["data-block-id"] = block_unique_id
@@ -620,10 +642,11 @@ def get_block_html(blocks):
 					script_tag.string = script
 					tag.append(script_tag)
 
-			return tag
+			return tag, props_obj_jinja
 
 		for block in blocks:
-			html += str(get_tag(block, soup))
+			tag, props = get_tag(block, soup)
+			html += f"{{% with props = {props} %}}{str(tag)}{{% endwith %}}"
 
 		return html, str(style_tag), font_map
 
@@ -769,6 +792,9 @@ def extend_block(block, overridden_block):
 	return block
 
 
+def has_jinja_variable(s):
+    return re.search(r'{{.*?}}', s) is not None
+
 def set_dynamic_content_placeholder(block, data_key=False):
 	block_data_key = block.get("dataKey", {}) or {}
 	dynamic_values = [block_data_key] if block_data_key else []
@@ -778,14 +804,18 @@ def set_dynamic_content_placeholder(block, data_key=False):
 			# if dynamic_value_doc is a string, convert it to dict
 			dynamic_value_doc = {"key": dynamic_value_doc, "type": "key", "property": dynamic_value_doc}
 		if dynamic_value_doc and dynamic_value_doc.get("key"):
-			key = f"{data_key}.{dynamic_value_doc.get('key')}" if data_key else dynamic_value_doc.get("key")
-			if data_key:
-				# convert a.b to (a or {}).get('b', {})
-				# to avoid undefined error in jinja
-				keys = key.split(".")
-				key = f"({keys[0]} or {{}})"
-				for k in keys[1:]:
-					key = f"{key}.get('{k}', {{}})"
+			key = ""
+			if(dynamic_value_doc.get("comesFrom") == "props"):
+				key = f"props['{dynamic_value_doc.get('key')}']"
+			else:
+				key = f"{data_key}.{dynamic_value_doc.get('key')}" if data_key else dynamic_value_doc.get("key")
+				if data_key:
+					# convert a.b to (a or {}).get('b', {})
+					# to avoid undefined error in jinja
+					keys = key.split(".")
+					key = f"({keys[0]} or {{}})"
+					for k in keys[1:]:
+						key = f"{key}.get('{k}', {{}})"
 
 			_property = dynamic_value_doc.get("property")
 			_type = dynamic_value_doc.get("type")
@@ -846,7 +876,7 @@ def get_interpreted_prop_value(prop, data_key, map_of_inherited_props):
 	if prop_value == "" or prop_value is None:
 		return "undefined"
 	if prop_type == "dynamic":
-		return f"'{{{{ {data_key}.{prop_value} }}}}'" if data_key else f"'{{{{ {prop_value} }}}}'"
+		return f"{{{{ {data_key}.{prop_value} }}}}" if data_key else f"{{{{ {prop_value} }}}}"
 	elif prop_type == "static":
 		return f"{prop_value}"
 	elif prop_type == "inherited":

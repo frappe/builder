@@ -185,7 +185,7 @@ import Input from "@/components/Controls/Input.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
 import { setFontFromHTML } from "@/utils/fontManager";
-import { getDataForKey } from "@/utils/helpers";
+import { getDataForKey, getPropValue } from "@/utils/helpers";
 import { Color } from "@tiptap/extension-color";
 import { FontFamily } from "@tiptap/extension-font-family";
 import { Link } from "@tiptap/extension-link";
@@ -274,15 +274,31 @@ const textContent = computed(() => {
 
 const getDynamicContent = () => {
 	let innerHTML = null as string | null;
+	const getDataScriptValue = (path: string): any => {
+		return getDataForKey(props.data, path);
+	};
 	if (props.block.getDataKey("property") === "innerHTML") {
-		innerHTML = getDataForKey(props.data, props.block.getDataKey("key")) ?? innerHTML;
+		let value;
+		if (props.block.getDataKey("comesFrom") === "props") {
+			// props are checked first as unavailablity of comesFrom means it comes from dataScript (legacy)
+			value = getPropValue(props.block.getDataKey("key"), props.block, getDataScriptValue);
+		} else {
+			value = getDataScriptValue(props.block.getDataKey("key"));
+		}
+		innerHTML = value ?? innerHTML;
 	}
 	props.block.dynamicValues
 		?.filter((dataKeyObj: BlockDataKey) => {
 			return dataKeyObj.property === "innerHTML" && dataKeyObj.type === "key";
 		})
 		?.forEach((dataKeyObj: BlockDataKey) => {
-			innerHTML = getDataForKey(props.data as Object, dataKeyObj.key as string) ?? innerHTML;
+			let value;
+			if (dataKeyObj.comesFrom === "props") {
+				value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue);
+			} else {
+				value = getDataScriptValue(dataKeyObj.key as string);
+			}
+			innerHTML = value ?? innerHTML;
 		});
 	return innerHTML;
 };

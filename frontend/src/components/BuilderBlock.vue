@@ -35,7 +35,7 @@
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { setFont } from "@/utils/fontManager";
-import { getDataForKey } from "@/utils/helpers";
+import { getDataForKey, getPropValue } from "@/utils/helpers";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
 import { computed, inject, nextTick, onMounted, reactive, ref, useAttrs, watch, watchEffect } from "vue";
 import BlockEditor from "./BlockEditor.vue";
@@ -116,10 +116,19 @@ const attributes = computed(() => {
 	}
 
 	if (props.data) {
+		const data = props.data; // to "freeze" props.data for getDataScriptValue
+		const getDataScriptValue = (path: string): any => {
+			return getDataForKey(data, path);
+		};
 		if (props.block.getDataKey("type") === "attribute") {
+			let value;
+			if (props.block.getDataKey("comesFrom") === "dataScript") {
+				value = getDataScriptValue(props.block.getDataKey("key") as string);
+			} else {
+				value = getPropValue(props.block.getDataKey("key") as string, props.block, getDataScriptValue);
+			}
 			attribs[props.block.getDataKey("property") as string] =
-				getDataForKey(props.data, props.block.getDataKey("key")) ??
-				attribs[props.block.getDataKey("property") as string];
+				value ?? attribs[props.block.getDataKey("property") as string];
 		}
 		props.block.dynamicValues
 			?.filter((dataKeyObj: BlockDataKey) => {
@@ -127,8 +136,13 @@ const attributes = computed(() => {
 			})
 			?.forEach((dataKeyObj: BlockDataKey) => {
 				const property = dataKeyObj.property as string;
-				attribs[property] =
-					getDataForKey(props.data as Object, dataKeyObj.key as string) ?? attribs[property];
+				let value;
+				if (dataKeyObj.comesFrom === "dataScript") {
+					value = getDataScriptValue(dataKeyObj.key as string);
+				} else {
+					value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue);
+				}
+				attribs[property] = value ?? attribs[property];
 			});
 	}
 

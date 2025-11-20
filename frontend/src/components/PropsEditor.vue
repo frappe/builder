@@ -9,7 +9,7 @@
 					<Popover popoverClass="!mr-[25px]" placement="left-start">
 						<template #target="{ open }">
 							<div class="flex w-full items-center justify-between">
-								<div class="flex w-full items-center gap-2 pl-2">
+								<div class="flex w-fit max-w-[60%] items-center gap-2 pl-2">
 									<div class="icon">
 										<component
 											v-if="!value.isStandard"
@@ -35,14 +35,14 @@
 											"
 											class="h-4 w-4 text-ink-gray-6" />
 									</div>
-									<div class="flex flex-col gap-1">
+									<div class="flex max-w-full flex-col gap-1">
 										<p class="text-sm font-medium text-ink-gray-8">
 											{{ key }}
 										</p>
 										<p v-if="value.isStandard" class="text-xs text-ink-gray-6">
 											Std. - {{ value.standardOptions?.isRequired ? "Required" : "Optional" }}
 										</p>
-										<p v-else class="text-xs text-ink-gray-6">
+										<p v-else class="max-w-full truncate text-ellipsis text-xs text-ink-gray-6">
 											{{ value.value }}
 										</p>
 									</div>
@@ -199,6 +199,9 @@ const addProp = async (name: string, value: BlockProps[string]) => {
 	popupMode.value = "edit";
 	keyBeingEdited.value = name;
 	emit("update:obj", mapToObject(map));
+	if (value.type === "inherited" && value.value) {
+		emit("update:ancestorUpdateDependency", value.value, "add");
+	}
 	return map;
 };
 
@@ -230,6 +233,10 @@ const updateObjectValue = (
 
 	const oldPath = map.get(key)?.value;
 	const oldType = map.get(key)?.type;
+
+	if (path === oldPath && type === oldType) {
+		return map;
+	}
 
 	map.set(key, {
 		...map.get(key)!,

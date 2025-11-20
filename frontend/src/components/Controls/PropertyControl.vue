@@ -75,14 +75,15 @@
 				<div
 					class="absolute bottom-0 left-0 right-0 top-0 z-20 flex cursor-pointer items-center gap-2 rounded bg-surface-violet-1 py-0.5 pl-2.5 pr-6 text-sm text-ink-violet-1"
 					@click.stop="showDynamicValueModal = true"
-					v-if="dynamicValue">
-					<FeatherIcon name="zap" class="size-3"></FeatherIcon>
-					<span class="truncate">{{ dynamicValue }}</span>
+					v-if="dynamicValue?.key">
+					<FeatherIcon v-if="dynamicValue?.comesFrom == 'dataScript'" name="zap" class="size-3"></FeatherIcon>
+					<FeatherIcon v-else name="git-commit" class="size-3"></FeatherIcon>
+					<span class="truncate">{{ dynamicValue.key }}</span>
 				</div>
 				<button
 					class="absolute right-1 top-1 z-20 cursor-pointer p-1 text-ink-gray-4 hover:text-ink-gray-5"
 					tabindex="-1"
-					v-show="dynamicValue"
+					v-show="dynamicValue?.key"
 					@click="clearDynamicValue">
 					<CrossIcon />
 				</button>
@@ -414,9 +415,10 @@ const disableStyle = (state: string) => {
 	});
 };
 
-function setDynamicValue(value: string) {
+function setDynamicValue({ key, comesFrom }: { key: string; comesFrom?: BlockDataKey["comesFrom"] }) {
+	if (!comesFrom) comesFrom = "dataScript";
 	blockController.getSelectedBlocks().forEach((block) => {
-		block.setDynamicValue(props.styleProperty, props.controlType, value);
+		block.setDynamicValue(props.styleProperty, props.controlType, key, comesFrom);
 	});
 	showDynamicValueModal.value = false;
 	emit("setDynamicValue");
@@ -428,10 +430,14 @@ const dynamicValue = computed(() => {
 	const dataKeyObj = blocks[0].dynamicValues.find((obj) => {
 		return obj.type === props.controlType && obj.property === props.styleProperty;
 	});
+
 	if (dataKeyObj) {
-		return dataKeyObj.key;
+		return {
+			key: dataKeyObj.key || "",
+			comesFrom: dataKeyObj.comesFrom || ("dataScript" as BlockDataKey["comesFrom"]),
+		};
 	} else {
-		return "";
+		return { key: "", comesFrom: "dataScript" as BlockDataKey["comesFrom"] };
 	}
 });
 

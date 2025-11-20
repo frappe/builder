@@ -853,12 +853,13 @@ class Block implements BlockOptions {
 		property: BlockDataKey["property"],
 		type: BlockDataKeyType,
 		key: BlockDataKey["key"] | null = null,
+		comesFrom: BlockDataKey["comesFrom"] = "dataScript",
 	) {
 		const existingKey = this.getDynamicKey(property, type);
 		if (existingKey) {
 			this.dynamicValues = this.dynamicValues.map((v) => {
 				if (v.property === property && v.type === type) {
-					return { ...v, key: key || "" };
+					return { ...v, key: key || "", comesFrom };
 				}
 				return v;
 			});
@@ -867,6 +868,7 @@ class Block implements BlockOptions {
 				property,
 				type,
 				key: key || "",
+				comesFrom,
 			});
 		}
 	}

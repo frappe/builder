@@ -3,7 +3,7 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
-import { getDataForKey } from "@/utils/helpers";
+import { getDataForKey, getPropValue } from "@/utils/helpers";
 import { computed, ref } from "vue";
 
 const component = ref<HTMLElement | null>(null);
@@ -14,18 +14,33 @@ const props = defineProps<{
 
 const getDynamicContent = () => {
 	let innerHTML = null as string | null;
-	if (props.data && props.block.getDataKey("property") === "innerHTML") {
-		const dataValue = getDataForKey(props.data, props.block.getDataKey("key"));
-		innerHTML = typeof dataValue === "string" ? dataValue : innerHTML;
-	}
 	if (props.data) {
+		const data = props.data; // to "freeze" props.data for getDataScriptValue
+		const getDataScriptValue = (path: string): any => {
+			return getDataForKey(data, path);
+		};
+		if (props.block.getDataKey("property") === "innerHTML") {
+			let value;
+			if (props.block.getDataKey("comesFrom") === "props") {
+				// props are checked first as unavailablity of comesFrom means it comes from dataScript (legacy)
+				value = getPropValue(props.block.getDataKey("key"), props.block, getDataScriptValue);
+			} else {
+				value = getDataScriptValue(props.block.getDataKey("key"));
+			}
+			innerHTML = value ?? innerHTML;
+		}
 		props.block.dynamicValues
 			?.filter((dataKeyObj: BlockDataKey) => {
 				return dataKeyObj.property === "innerHTML" && dataKeyObj.type === "key";
 			})
 			?.forEach((dataKeyObj: BlockDataKey) => {
-				const dataValue = getDataForKey(props.data as Record<string, any>, dataKeyObj.key as string);
-				innerHTML = typeof dataValue === "string" ? dataValue : innerHTML;
+				let value;
+				if (dataKeyObj.comesFrom === "props") {
+					value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue);
+				} else {
+					value = getDataScriptValue(dataKeyObj.key as string);
+				}
+				innerHTML = value ?? innerHTML;
 			});
 	}
 	return innerHTML;

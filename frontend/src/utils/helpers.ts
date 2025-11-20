@@ -896,6 +896,45 @@ function getCollectionKeys(block: any): string[] {
 function triggerCopyEvent() {
 	document.execCommand("copy");
 }
+
+const getValueForInheritedProp = (propName: string, block: Block, getDatScriptValue: (path: string) => any): any => {
+	let parent = block.getParentBlock();
+	while (parent) {
+		const parentProps = parent.getBlockProps();
+		const matchingProp = parentProps[propName];
+		if (matchingProp) {
+			if (matchingProp.type !== "inherited") {
+				if (matchingProp.type === "dynamic" && matchingProp.value) {
+					return getDatScriptValue(matchingProp.value);
+				} else {
+					return matchingProp.value;
+				}
+			} else {
+				return getValueForInheritedProp(propName, parent, getDatScriptValue);
+			}
+		}
+		parent = parent.getParentBlock();
+	}
+	return undefined;
+};
+
+const getPropValue = (propName: string, block: Block, getDatScriptValue: (path: string) => any): any => {
+	const blockProps = block.getBlockProps();
+	if (blockProps[propName]) {
+		const prop = blockProps[propName];
+		if (prop.type === "dynamic" && prop.value) {
+			return getDatScriptValue(prop.value);
+		} else if (prop.type === "inherited") {
+			if (prop.value) {
+				return getValueForInheritedProp(prop.value, block, getDatScriptValue);
+			}
+		} else {
+			return prop.value;
+		}
+	}
+	return undefined;
+};
+
 export {
 	addPxToNumber,
 	alert,
@@ -947,4 +986,5 @@ export {
 	toKebabCase,
 	triggerCopyEvent,
 	uploadImage,
+	getPropValue,
 };
