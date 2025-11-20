@@ -19,9 +19,10 @@
 					autocomplete="off"
 					@focus="handleFocus"
 					@blur="handleBlur"
+					@change="handleBlur"
 					@keydown="handleKeydown"
 					:display-value="getDisplayValue"
-					:placeholder="placeholder"
+					:placeholder="isFocused ? '' : placeholder"
 					class="h-full w-full flex-1 border-none bg-transparent px-0 text-base placeholder:text-ink-gray-4 focus:outline-none focus:ring-0"
 					:class="{
 						'pl-2': !$slots.prefix,
@@ -46,7 +47,7 @@
 							{{ option.label }}
 						</ComboboxLabel>
 						<ComboboxItem
-							v-else
+							v-else-if="option.value !== '_no_highlight_'"
 							:value="option"
 							:disabled="option.disabled"
 							:text-value="option.label"
@@ -137,6 +138,7 @@ const isOpen = ref(false);
 const userCleared = ref(false);
 const preventSelection = ref(false);
 const inputKey = ref(0);
+const isFocused = ref(false);
 
 const multiple = computed(() => Array.isArray(props.modelValue));
 const hasValue = computed(() => {
@@ -159,6 +161,10 @@ const filteredOptions = computed(() => {
 		!options.some((opt) => opt.value === searchQuery.value)
 	) {
 		options = [{ label: searchQuery.value, value: searchQuery.value }, ...options];
+	}
+
+	if (!searchQuery.value && options.length > 0) {
+		options = [{ label: "", value: "_no_highlight_", disabled: true }, ...options];
 	}
 
 	return options;
@@ -201,12 +207,20 @@ const resetFlags = () => {
 
 const handleFocus = () => {
 	resetFlags();
+	isFocused.value = true;
+	refreshOptions();
 	emit("focus");
 };
 const handleBlur = () => {
+	isFocused.value = false;
 	if (userCleared.value && !searchQuery.value) {
 		preventSelection.value = true;
 		isOpen.value = false;
+	}
+	// If user has manually cleared the input (empty search query) and there's a current value,
+	// clear the selection to set it to empty
+	if (!searchQuery.value && hasValue.value) {
+		selectedValue.value = multiple.value ? [] : null;
 	}
 	emit("blur");
 };
