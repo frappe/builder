@@ -167,8 +167,8 @@ const attachedScriptResource = createListResource({
 
 const clientScriptResource = createListResource({
 	doctype: "Builder Client Script",
-	fields: ["script", "script_type", "name"],
-	pageLength: 500,
+	fields: ["script_type", "name"],
+	pageLength: 10000,
 	auto: true,
 });
 

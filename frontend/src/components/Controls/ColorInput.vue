@@ -19,7 +19,7 @@
 							<Autocomplete
 								class="[&>div>input]:pl-8"
 								:class="{
-									'[&>div>input]:font-mono [&>div>input]:text-xs [&>div>input]:text-ink-violet-1':
+									'[&>div>div>input]:text-xs [&>div>div>input]:text-ink-violet-1 [&>div>input]:font-mono':
 										isCssVariable,
 								}"
 								v-bind="events"
