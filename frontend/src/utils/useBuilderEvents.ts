@@ -53,11 +53,12 @@ export function useBuilderEvents(
 	);
 
 	useEventListener(document, "copy", (e) => {
+		if (isTargetEditable(e) || canvasStore.editableBlock) return;
 		copySelectedBlocksToClipboard(e);
 	});
 
 	useEventListener(document, "cut", (e) => {
-		if (isTargetEditable(e)) return;
+		if (isTargetEditable(e) || canvasStore.editableBlock) return;
 		copySelectedBlocksToClipboard(e);
 		if (canvasStore.activeCanvas?.selectedBlocks.length) {
 			for (const block of canvasStore.activeCanvas?.selectedBlocks) {
