@@ -1,8 +1,8 @@
-import PropsEditor from "../PropsEditor.vue";
 import blockController from "@/utils/blockController";
 import OptionToggle from "../Controls/OptionToggle.vue";
 import PropertyControl from "../Controls/PropertyControl.vue";
 import ArrayInput from "../ArrayInput.vue";
+import ObjectInput from "../ObjectInput.vue";
 
 const componentMap = {
 	string: PropertyControl,
@@ -10,7 +10,7 @@ const componentMap = {
 	boolean: PropertyControl,
 	select: PropertyControl,
 	array: ArrayInput,
-	object: PropsEditor,
+	object: ObjectInput,
 };
 
 const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
