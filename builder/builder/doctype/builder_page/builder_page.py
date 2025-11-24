@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import copy
+import json
 import re
 import os
 import shutil
@@ -495,34 +496,19 @@ def get_block_html(blocks):
 
 		def get_tag(block, soup, data_key=None):
 			block = extend_with_component(block)
-			# not real objs, string templates to be used in jinja
-			props_obj_jinja = "{}" # to be passed as the prop obj in jinja template for dynamic values
-			props_obj_js = "{}" # to be passed as the prop obj in block script
+
+			props_obj = {}
 			props_with_successors = []
    
 			if block.get("props"):
-       
-				# collect all key:value pairs
-				props_js = []
-				props_jinja = []
     
 				for key, value in block.get("props", {}).items():
 					interpreted_value = get_interpreted_prop_value(value, data_key, map_of_inherited_props)
-					props_js.append(f"'{key}': '{interpreted_value}'")
-					if has_jinja_variable(interpreted_value):
-						# dynamic values beng used inside {% with props = ... %} should not have braces {{ ... }} or be literals '...'
-						stripped_jinja_braces = re.sub(r'{{\s*(.*?)\s*}}', r'\1', interpreted_value)
-						props_jinja.append(f"'{key}': {stripped_jinja_braces}")
-					else:
-						props_jinja.append(f"'{key}': '{interpreted_value}'")
-					
+					props_obj[key] = interpreted_value
      
 					if value.get('usedByCount', 0) > 0:
 						props_with_successors.append(key)
 						map_of_inherited_props.setdefault(key, []).append(interpreted_value)
-
-				props_obj_js = f"{{ {', '.join(props_js)} }}"
-				props_obj_jinja = f"{{ {', '.join(props_jinja)} }}" if props_jinja else "{}"
 
 			set_dynamic_content_placeholder(block, data_key)
 			element = block.get("originalElement") or block.get("element")
@@ -632,7 +618,8 @@ def get_block_html(blocks):
 
 			if block.get("blockScript"):
 				block_unique_id = f"{block.get('blockId')}-{frappe.generate_hash(length=3)}"
-				script_content = f"(function (props){{ {block.get('blockScript')} }}).call(document.querySelector('[data-block-id=\"{block_unique_id}\"]'), {props_obj_js or '{}'});"
+				print("probps obj js: ", props_obj)
+				script_content = f"(function (props){{ {block.get('blockScript')} }}).call(document.querySelector('[data-block-id=\"{block_unique_id}\"]'), {json.dumps(props_obj) or '{}'});"
 				print("Script content: ", script_content)
 				all_block_scripts.append(script_content)
 				tag.attrs["data-block-id"] = block_unique_id
@@ -642,12 +629,13 @@ def get_block_html(blocks):
 					script_tag.string = script
 					tag.append(script_tag)
 
-			return tag, props_obj_jinja
+			return tag, to_jinja_literal(props_obj)
 
 		for block in blocks:
 			tag, props = get_tag(block, soup)
 			html += f"{{% with props = {props} %}}{str(tag)}{{% endwith %}}"
 
+		print("Final HTML: ", html)
 		return html, str(style_tag), font_map
 
 	data = get_html(blocks, soup)
@@ -791,9 +779,35 @@ def extend_block(block, overridden_block):
 	block["children"] = extended_children
 	return block
 
+def to_jinja_literal(obj):
+    # 1. Detect Jinja expressions inside strings (e.g. "{{ sample }}")
+    if isinstance(obj, str):
+        stripped = obj.strip()
+        if re.fullmatch(r"{{\s*.*?\s*}}", stripped):
+            # remove the {{ }} so Jinja receives the variable
+            inner = stripped[2:-2].strip()
+            return inner  # <-- returned unquoted
+        return repr(obj)  # normal python string
 
-def has_jinja_variable(s):
-    return re.search(r'{{.*?}}', s) is not None
+    # 2. Booleans / None
+    if obj is True: return "True"
+    if obj is False: return "False"
+    if obj is None: return "None"
+
+    # 3. Dict
+    if isinstance(obj, dict):
+        parts = []
+        for k, v in obj.items():
+            parts.append(f"{to_jinja_literal(k)}: {to_jinja_literal(v)}")
+        return "{ " + ", ".join(parts) + " }"
+
+    # 4. List / tuple
+    if isinstance(obj, (list, tuple)):
+        return "[ " + ", ".join(to_jinja_literal(i) for i in obj) + " ]"
+
+    # 5. Numbers or other primitives
+    return repr(obj)
+
 
 def set_dynamic_content_placeholder(block, data_key=False):
 	block_data_key = block.get("dataKey", {}) or {}
@@ -868,17 +882,56 @@ def resolve_path(path):
 
 	return original_resolve_path(path)
 
+def parse_static_value(value: str, prop_type: str):
+	match prop_type:
+		case "string":
+			return f"{value}"
+		case "number":
+			try:
+				return float(value)
+			except ValueError:
+				return None
+		case "boolean":
+			if value is True or value is False:
+				return value
+			if value.lower() in ["true", "1"]:
+				return True
+			elif value.lower() in ["false", "0"]:
+				return False
+			else:
+				return None
+		case "array":
+			try:
+				return frappe.parse_json(value)
+			except Exception:
+				return None
+		case "object":
+			try:
+				return frappe.parse_json(value)
+			except Exception:
+				return None
+		case "select":
+			return f"{value}"
+		case _:
+			return f"{value}"
+
 
 def get_interpreted_prop_value(prop, data_key, map_of_inherited_props):
-	prop_value = prop["value"]
 	prop_type = prop["type"]
+	prop_is_standard = prop.get("isStandard", False)
+	prop_value = prop.get("value")
 
 	if prop_value == "" or prop_value is None:
 		return "undefined"
 	if prop_type == "dynamic":
 		return f"{{{{ {data_key}.{prop_value} }}}}" if data_key else f"{{{{ {prop_value} }}}}"
 	elif prop_type == "static":
-		return f"{prop_value}"
+		if prop_is_standard:
+			# standard props are static only as of now
+			prop_value = parse_static_value(
+				prop.get("value"), prop.get("standardOptions", {}).get("type")
+			)
+		return prop_value
 	elif prop_type == "inherited":
 		values = map_of_inherited_props.get(prop_value, [])
 		return values[0] if values else "undefined"
