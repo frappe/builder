@@ -2,7 +2,6 @@
 	<ComboboxRoot
 		v-model="selectedValue"
 		v-model:open="isOpen"
-		:multiple="multiple"
 		:by="compareValues"
 		open-on-click
 		open-on-focus
@@ -109,14 +108,14 @@ interface ActionButton {
 interface Props {
 	options?: Option[];
 	getOptions?: (query: string) => Promise<Option[]>;
-	modelValue?: string | string[] | null;
+	modelValue?: string | null;
 	placeholder?: string;
 	showInputAsOption?: boolean;
 	actionButton?: ActionButton;
 }
 
 interface Emits {
-	"update:modelValue": [value: string | string[] | null];
+	"update:modelValue": [value: string | null];
 	focus: [];
 	blur: [];
 }
@@ -138,11 +137,7 @@ const preventSelection = ref(false);
 const inputKey = ref(0);
 const isFocused = ref(false);
 
-const multiple = computed(() => Array.isArray(props.modelValue));
 const hasValue = computed(() => {
-	if (multiple.value) {
-		return Array.isArray(props.modelValue) && props.modelValue.length > 0;
-	}
 	return props.modelValue != null && props.modelValue !== "";
 });
 
@@ -189,12 +184,9 @@ const compareValues = (a: any, b: any): boolean => {
 };
 
 const getDisplayValue = (item: any): string => {
-	const getValue = (val: any) => {
-		if (typeof val === "object") return val.label || val.value || "";
-		const found = allOptions.value.find((opt) => opt.value === val);
-		return found?.label || val || "";
-	};
-	return Array.isArray(item) ? item.map(getValue).join(", ") : getValue(item);
+	if (typeof item === "object") return item.label || item.value || "";
+	const found = allOptions.value.find((opt) => opt.value === item);
+	return found?.label || item || "";
 };
 
 const resetFlags = () => {
@@ -216,9 +208,9 @@ const handleBlur = () => {
 		isOpen.value = false;
 	}
 	if (searchQuery.value) {
-		selectedValue.value = multiple.value ? [searchQuery.value] : searchQuery.value;
+		selectedValue.value = searchQuery.value;
 	} else if (hasValue.value) {
-		selectedValue.value = multiple.value ? [] : null;
+		selectedValue.value = null;
 	}
 	emit("blur");
 };
@@ -234,7 +226,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 const clearSelection = () => {
 	userCleared.value = true;
 	preventSelection.value = true;
-	selectedValue.value = multiple.value ? [] : null;
+	selectedValue.value = null;
 	searchQuery.value = "";
 	nextTick(() => {
 		isOpen.value = false;
@@ -270,7 +262,7 @@ watch(
 );
 watch(selectedValue, (newValue) => {
 	if (preventSelection.value && newValue != null) {
-		selectedValue.value = multiple.value ? [] : null;
+		selectedValue.value = null;
 		resetFlags();
 	}
 });
