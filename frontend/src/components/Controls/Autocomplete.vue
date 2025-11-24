@@ -34,11 +34,9 @@
 			</div>
 
 			<ComboboxContent
-				class="absolute z-50 mt-1 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-white shadow-xl">
-				<div v-if="!filteredOptions.length" class="px-3 py-2 text-center text-sm text-ink-gray-5">
-					{{ searchQuery ? "No results found" : "No options available" }}
-				</div>
-				<div v-else class="overflow-y-auto p-1">
+				class="absolute z-50 mt-1 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-white shadow-xl"
+				v-if="filteredOptions.length">
+				<div class="overflow-y-auto p-1">
 					<template v-for="(option, index) in filteredOptions" :key="getOptionKey(option, index)">
 						<ComboboxSeparator v-if="isSeparatorLine(option)" class="bg-outline-gray-2 mx-2 my-1 h-px" />
 						<ComboboxLabel
@@ -166,7 +164,6 @@ const filteredOptions = computed(() => {
 	if (!searchQuery.value && options.length > 0) {
 		options = [{ label: "", value: "_no_highlight_", disabled: true }, ...options];
 	}
-
 	return options;
 });
 
@@ -211,19 +208,21 @@ const handleFocus = () => {
 	refreshOptions();
 	emit("focus");
 };
+
 const handleBlur = () => {
 	isFocused.value = false;
 	if (userCleared.value && !searchQuery.value) {
 		preventSelection.value = true;
 		isOpen.value = false;
 	}
-	// If user has manually cleared the input (empty search query) and there's a current value,
-	// clear the selection to set it to empty
-	if (!searchQuery.value && hasValue.value) {
+	if (searchQuery.value) {
+		selectedValue.value = multiple.value ? [searchQuery.value] : searchQuery.value;
+	} else if (hasValue.value) {
 		selectedValue.value = multiple.value ? [] : null;
 	}
 	emit("blur");
 };
+
 const handleKeydown = (event: KeyboardEvent) => {
 	if (event.key !== "Tab" && event.key !== "Escape") resetFlags();
 	if (event.key === "Escape") {
