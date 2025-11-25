@@ -182,6 +182,11 @@ const selectScript = (script: attachedScript) => {
 const updateScript = (value: string) => {
 	if (!activeScript.value) return;
 
+	if (!value || !value.trim()) {
+		toast.warning("Script cannot be empty");
+		return;
+	}
+
 	pageStore.activePageScripts = pageStore.activePageScripts.map((script: BuilderClientScript) => {
 		if (script.name === activeScript.value?.script_name) {
 			script.script = value;
