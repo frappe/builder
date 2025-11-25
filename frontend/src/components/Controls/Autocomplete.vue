@@ -2,7 +2,6 @@
 	<ComboboxRoot
 		v-model="selectedValue"
 		v-model:open="isOpen"
-		:by="compareValues"
 		open-on-click
 		open-on-focus
 		:reset-search-term-on-blur="false">
@@ -13,15 +12,13 @@
 					<slot name="prefix" />
 				</div>
 				<ComboboxInput
-					:key="inputKey"
 					v-model="searchQuery"
 					autocomplete="off"
-					@focus="handleFocus"
+					@focus="emit('focus')"
 					@blur="handleBlur"
-					@change="handleBlur"
-					@keydown="handleKeydown"
+					@keydown.enter="handleEnter"
 					:display-value="getDisplayValue"
-					:placeholder="isFocused ? '' : placeholder"
+					:placeholder="placeholder"
 					class="h-full w-full flex-1 border-none bg-transparent px-0 text-base placeholder:text-ink-gray-4 focus:outline-none focus:ring-0"
 					:class="{
 						'pl-2': !$slots.prefix,
@@ -33,21 +30,21 @@
 			</div>
 
 			<ComboboxContent
-				class="absolute z-50 mt-1 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-white shadow-xl"
-				v-if="filteredOptions.length">
+				class="absolute z-50 mt-1 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-white shadow-xl">
 				<div class="overflow-y-auto p-1">
-					<template v-for="(option, index) in filteredOptions" :key="getOptionKey(option, index)">
-						<ComboboxSeparator v-if="isSeparatorLine(option)" class="bg-outline-gray-2 mx-2 my-1 h-px" />
+					<template v-for="(option, index) in displayOptions" :key="`${option.value}-${index}`">
+						<ComboboxSeparator
+							v-if="option.value.startsWith('_separator_line')"
+							class="bg-outline-gray-2 mx-2 my-1 h-px" />
 						<ComboboxLabel
-							v-else-if="isSeparatorLabel(option)"
+							v-else-if="option.value.startsWith('_separator')"
 							class="px-2 py-1 text-xs font-semibold text-ink-gray-5">
 							{{ option.label }}
 						</ComboboxLabel>
 						<ComboboxItem
-							v-else-if="option.value !== '_no_highlight_'"
+							v-else
 							:value="option"
 							:disabled="option.disabled"
-							:text-value="option.label"
 							class="group flex cursor-default select-none items-center gap-2 rounded px-2 py-1.5 text-sm text-ink-gray-9 transition-colors data-[disabled]:pointer-events-none data-[highlighted]:bg-surface-gray-1 data-[disabled]:opacity-50">
 							<component v-if="option.prefix" :is="option.prefix" class="h-4 w-4 flex-shrink-0" />
 							<span class="w-full flex-1 truncate">{{ option.label }}</span>
@@ -88,7 +85,7 @@ import {
 	ComboboxSeparator,
 } from "reka-ui";
 import type { Component } from "vue";
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 
 interface Option {
 	label: string;
@@ -112,42 +109,30 @@ interface Props {
 	placeholder?: string;
 	showInputAsOption?: boolean;
 	actionButton?: ActionButton;
-}
-
-interface Emits {
-	"update:modelValue": [value: string | null];
-	focus: [];
-	blur: [];
+	allowArbitraryValue?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
 	options: () => [],
 	placeholder: "Search",
 	showInputAsOption: false,
+	allowArbitraryValue: true,
 });
 
-const emit = defineEmits<Emits>();
+const emit = defineEmits<{
+	"update:modelValue": [value: string | null];
+	focus: [];
+	blur: [];
+}>();
 
+const isOpen = ref(false);
 const searchQuery = ref("");
 const asyncOptions = ref<Option[]>([]);
-const isLoading = ref(false);
-const isOpen = ref(false);
-const userCleared = ref(false);
-const preventSelection = ref(false);
-const inputKey = ref(0);
-const isFocused = ref(false);
+const hasValue = computed(() => props.modelValue != null && props.modelValue !== "");
+const allOptions = computed(() => (props.getOptions ? asyncOptions.value : props.options));
 
-const hasValue = computed(() => {
-	return props.modelValue != null && props.modelValue !== "";
-});
-
-const allOptions = computed(() => {
-	return props.getOptions ? asyncOptions.value : props.options;
-});
-
-const filteredOptions = computed(() => {
+const displayOptions = computed(() => {
 	let options = allOptions.value;
-
 	if (
 		props.showInputAsOption &&
 		searchQuery.value &&
@@ -155,33 +140,16 @@ const filteredOptions = computed(() => {
 	) {
 		options = [{ label: searchQuery.value, value: searchQuery.value }, ...options];
 	}
-
-	if (!searchQuery.value && options.length > 0) {
-		options = [{ label: "", value: "_no_highlight_", disabled: true }, ...options];
-	}
 	return options;
 });
 
 const selectedValue = computed({
-	get() {
-		return props.modelValue;
-	},
-	set(value) {
+	get: () => props.modelValue,
+	set: (value) => {
 		emit("update:modelValue", value ?? null);
+		isOpen.value = false;
 	},
 });
-
-const isSeparatorLine = (option: Option) => option.value.startsWith("_separator_line");
-const isSeparatorLabel = (option: Option) =>
-	option.value.startsWith("_separator") && !isSeparatorLine(option);
-const getOptionKey = (option: Option, index: number) => `${option.value}-${index}`;
-
-const compareValues = (a: any, b: any): boolean => {
-	if (typeof a === "object" && typeof b === "object") {
-		return a?.value === b?.value;
-	}
-	return a === b;
-};
 
 const getDisplayValue = (item: any): string => {
 	if (typeof item === "object") return item.label || item.value || "";
@@ -189,87 +157,52 @@ const getDisplayValue = (item: any): string => {
 	return found?.label || item || "";
 };
 
-const resetFlags = () => {
-	userCleared.value = false;
-	preventSelection.value = false;
-};
-
-const handleFocus = () => {
-	resetFlags();
-	isFocused.value = true;
-	refreshOptions();
-	emit("focus");
-};
-
-const handleBlur = () => {
-	isFocused.value = false;
-	if (userCleared.value && !searchQuery.value) {
-		preventSelection.value = true;
-		isOpen.value = false;
-	}
-	if (searchQuery.value) {
-		selectedValue.value = searchQuery.value;
-	} else if (hasValue.value) {
-		selectedValue.value = null;
-	}
-	emit("blur");
-};
-
-const handleKeydown = (event: KeyboardEvent) => {
-	if (event.key !== "Tab" && event.key !== "Escape") resetFlags();
-	if (event.key === "Escape") {
-		isOpen.value = false;
-		event.preventDefault();
+const refreshOptions = async (query = "") => {
+	if (!props.getOptions) return;
+	try {
+		asyncOptions.value = await props.getOptions(query);
+	} catch (error) {
+		console.error("Failed to load options:", error);
 	}
 };
 
 const clearSelection = () => {
-	userCleared.value = true;
-	preventSelection.value = true;
-	selectedValue.value = null;
-	searchQuery.value = "";
-	nextTick(() => {
-		isOpen.value = false;
-	});
+	emit("update:modelValue", null);
 };
 
-const refreshOptions = async (query = "") => {
-	if (!props.getOptions) return;
+const handleEnter = (event: KeyboardEvent) => {
+	if (!props.allowArbitraryValue) return;
 
-	isLoading.value = true;
-	try {
-		const options = await props.getOptions(query);
-		asyncOptions.value = options;
-	} catch (error) {
-		console.error("Failed to load options:", error);
-	} finally {
-		isLoading.value = false;
+	const inputValue = (event.target as HTMLInputElement)?.value?.trim();
+	if (inputValue) {
+		event.preventDefault();
+		event.stopPropagation();
+		emit("update:modelValue", inputValue);
+		isOpen.value = false;
 	}
 };
 
-watch(searchQuery, (newQuery) => props.getOptions && refreshOptions(newQuery), { immediate: true });
+const handleBlur = (event: FocusEvent) => {
+	if (props.allowArbitraryValue) {
+		const inputValue = (event.target as HTMLInputElement)?.value?.trim();
+		if (inputValue) {
+			emit("update:modelValue", inputValue);
+		}
+	}
+	emit("blur");
+};
+
+watch(searchQuery, (newQuery) => props.getOptions && refreshOptions(newQuery));
 
 watch(
-	allOptions,
-	() => {
-		if (hasValue.value && !isOpen.value) {
-			nextTick(() => {
-				inputKey.value++;
-			});
-		}
+	() => props.modelValue,
+	(newValue) => {
+		searchQuery.value = newValue ?? "";
 	},
-	{ deep: true },
 );
-watch(selectedValue, (newValue) => {
-	if (preventSelection.value && newValue != null) {
-		selectedValue.value = null;
-		resetFlags();
-	}
-});
-watch(isOpen, (newOpen) => !newOpen && setTimeout(() => !isOpen.value && resetFlags(), 100));
 
 if (props.getOptions) {
-	nextTick(() => refreshOptions());
+	refreshOptions();
 }
 
 defineExpose({
