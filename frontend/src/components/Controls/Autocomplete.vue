@@ -152,7 +152,7 @@ const selectedValue = computed({
 });
 
 const getDisplayValue = (item: any): string => {
-	if (typeof item === "object") return item.label || item.value || "";
+	if (typeof item === "object") return item?.label || item?.value || "";
 	const found = allOptions.value.find((opt) => opt.value === item);
 	return found?.label || item || "";
 };
