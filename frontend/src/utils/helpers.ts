@@ -802,6 +802,55 @@ function getBoxSpacing(
 	return `${sTop} ${sRight} ${sBottom} ${sLeft}`;
 }
 
+/**
+ * Extracts the numeric value and unit from a CSS value string
+ * @param value - CSS value string (e.g., "10px", "1.5em", "20")
+ * @returns Object containing the number and unit parts
+ */
+function extractNumberAndUnit(value: string): { number: string; unit: string } {
+	const match = value.match(/([0-9.]+)([a-z%]*)/) || ["", "0", ""];
+	return { number: match[1], unit: match[2] };
+}
+
+/**
+ * Adds a unit to a number if it doesn't already have one
+ * @param numberStr - String containing a number with or without a unit
+ * @param unit - Default unit to add if none exists
+ * @returns String with unit attached
+ */
+function addUnitToNumber(numberStr: string, unit: string): string {
+	const match = numberStr.match(/^([0-9.]+)([a-z%]*)$/);
+	if (match) {
+		const [, number, existingUnit] = match;
+		return existingUnit ? numberStr : number + unit;
+	}
+	return numberStr;
+}
+
+/**
+ * Normalizes CSS values by adding default units where missing
+ * Handles both single values and spacing properties with multiple values
+ * @param value - CSS value string
+ * @param unitOptions - Array of possible units, first is used as default
+ * @param styleProperty - CSS property name (used to detect spacing properties)
+ * @returns Normalized value string with units added
+ */
+function normalizeValueWithUnits(value: string, unitOptions: string[], styleProperty: string): string {
+	if (!unitOptions.length) return value;
+
+	const defaultUnit = unitOptions[0];
+	const isSpacingProperty = styleProperty === "margin" || styleProperty === "padding";
+
+	if (isSpacingProperty) {
+		const parts = value.trim().split(/\s+/);
+		if (parts.length > 1) {
+			return parts.map((part) => addUnitToNumber(part, defaultUnit)).join(" ");
+		}
+	}
+
+	return addUnitToNumber(value, defaultUnit);
+}
+
 interface DialogAction {
 	label: string;
 	variant?: "solid" | "subtle" | "outline" | "ghost";
@@ -898,11 +947,13 @@ function triggerCopyEvent() {
 }
 export {
 	addPxToNumber,
+	addUnitToNumber,
 	alert,
 	confirm,
 	copyToClipboard,
 	dataURLtoFile,
 	detachBlockFromComponent,
+	extractNumberAndUnit,
 	findNearestSiblingIndex,
 	generateId,
 	getBlock,
@@ -934,6 +985,7 @@ export {
 	kebabToCamelCase,
 	logObjectDiff,
 	mapToObject,
+	normalizeValueWithUnits,
 	openInDesk,
 	parseAndSetBackground,
 	parseBackground,
