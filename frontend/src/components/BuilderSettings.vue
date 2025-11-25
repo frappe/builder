@@ -26,19 +26,32 @@
 				variant="subtle"
 				@click="$emit('close')"
 				class="absolute right-5 top-5"></BuilderButton>
-			<component :is="selectedItemDoc?.component" />
+			<component :is="selectedItemDoc?.component" v-if="settingsLoaded" />
+			<div v-else class="flex items-center justify-center">
+				<span class="text-ink-gray-5">Loading...</span>
+			</div>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
 import RedirectIcon from "@/components/Icons/Redirect.vue";
+import GlobalRedirects from "@/components/Settings/GlobalRedirects.vue";
+import PageCode from "@/components/Settings/PageCode.vue";
+import builderProjectFolder from "@/data/builderProjectFolder";
+import { builderSettings } from "@/data/builderSettings";
 import usePageStore from "@/stores/pageStore";
-import { computed, defineAsyncComponent, onActivated, ref } from "vue";
+import { computed, onActivated, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import ChartIcon from "./Icons/Chart.vue";
 import CodeIcon from "./Icons/Code.vue";
 import MetaIcon from "./Icons/Meta.vue";
 import SettingsIcon from "./Icons/Settings.vue";
+import GlobalAnalytics from "./Settings/GlobalAnalytics.vue";
+import GlobalCode from "./Settings/GlobalCode.vue";
+import GlobalGeneral from "./Settings/GlobalGeneral.vue";
+import PageAnalytics from "./Settings/PageAnalytics.vue";
+import PageGeneral from "./Settings/PageGeneral.vue";
+import PageMeta from "./Settings/PageMeta.vue";
 
 const props = defineProps<{
 	onlyGlobal?: boolean;
@@ -48,6 +61,19 @@ const route = useRoute();
 const pageStore = usePageStore();
 const emit = defineEmits(["close"]);
 const selectedItem = ref<string>(props.onlyGlobal ? "global_general" : "page_general");
+const settingsLoaded = ref(false);
+
+onMounted(async () => {
+	const promises = [];
+	if (!builderSettings.doc) {
+		promises.push(builderSettings.reload());
+	}
+	if (!builderProjectFolder.data) {
+		promises.push(builderProjectFolder.fetch());
+	}
+	await Promise.all(promises);
+	settingsLoaded.value = true;
+});
 
 type SidebarItem = {
 	label: string;
@@ -75,28 +101,16 @@ const pageSettings = {
 		{
 			label: "General",
 			value: "page_general",
-			component: defineAsyncComponent(() => import("@/components/Settings/PageGeneral.vue")),
+			component: PageGeneral,
 			title: "General",
 			icon: SettingsIcon,
 		},
-		{
-			label: "Code",
-			value: "page_code",
-			component: defineAsyncComponent(() => import("@/components/Settings/PageCode.vue")),
-			title: "Page Code",
-			icon: CodeIcon,
-		},
-		{
-			label: "Meta",
-			value: "page_meta",
-			component: defineAsyncComponent(() => import("@/components/Settings/PageMeta.vue")),
-			title: "Meta",
-			icon: MetaIcon,
-		},
+		{ label: "Code", value: "page_code", component: PageCode, title: "Page Code", icon: CodeIcon },
+		{ label: "Meta", value: "page_meta", component: PageMeta, title: "Meta", icon: MetaIcon },
 		{
 			label: "Analytics",
 			value: "page_analytics",
-			component: defineAsyncComponent(() => import("@/components/Settings/PageAnalytics.vue")),
+			component: PageAnalytics,
 			title: "Page Views",
 			icon: ChartIcon,
 		},
@@ -109,29 +123,23 @@ const globalSettings = {
 		{
 			label: "General",
 			value: "global_general",
-			component: defineAsyncComponent(() => import("@/components/Settings/GlobalGeneral.vue")),
+			component: GlobalGeneral,
 			title: "General",
 			icon: SettingsIcon,
 			disabled: false,
 		},
-		{
-			label: "Code",
-			value: "global_code",
-			component: defineAsyncComponent(() => import("@/components/Settings/GlobalCode.vue")),
-			title: "Global Code",
-			icon: CodeIcon,
-		},
+		{ label: "Code", value: "global_code", component: GlobalCode, title: "Global Code", icon: CodeIcon },
 		{
 			label: "Redirects",
 			value: "global_redirects",
-			component: defineAsyncComponent(() => import("@/components/Settings/GlobalRedirects.vue")),
+			component: GlobalRedirects,
 			title: "Redirects",
 			icon: RedirectIcon,
 		},
 		{
 			label: "Analytics",
 			value: "global_analytics",
-			component: defineAsyncComponent(() => import("@/components/Settings/GlobalAnalytics.vue")),
+			component: GlobalAnalytics,
 			title: "Site Views",
 			icon: ChartIcon,
 		},
