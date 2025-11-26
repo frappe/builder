@@ -149,9 +149,16 @@ const defaultProps = computed(() => {
 });
 
 const getValue = (item: DynamicValueItem): any => {
-	if (item.comesFrom == "dataScript") return getDatScriptValue(item.key);
-	else
-		return getPropValue(item.key, props.block || blockController.getFirstSelectedBlock(), getDatScriptValue, defaultProps.value);
+	if (item.comesFrom == "props") {
+		return getPropValue(
+			item.key,
+			props.block || blockController.getFirstSelectedBlock(),
+			getDatScriptValue,
+			defaultProps.value,
+		);
+	} else {
+		return getDatScriptValue(item.key);
+	}
 };
 
 const getDatScriptValue = (path: string): any => {
@@ -177,7 +184,10 @@ const blockProps = computed(() => {
 const filteredItems = computed(() => {
 	const dataArrayItems = dataArray.value.map((item) => ({ key: item, comesFrom: "dataScript" }));
 	const propItems = Object.keys(blockProps.value).map((item) => ({ key: item, comesFrom: "props" }));
-	const defaultPropsKeys = Object.keys(defaultProps.value || {}).map((item) => ({ key: item, comesFrom: "props" }));
+	const defaultPropsKeys = Object.keys(defaultProps.value || {}).map((item) => ({
+		key: item,
+		comesFrom: "props",
+	}));
 	const allItems = [...dataArrayItems, ...propItems, ...defaultPropsKeys] as DynamicValueItem[];
 	if (!searchQuery.value) return allItems;
 	const query = searchQuery.value.toLowerCase();

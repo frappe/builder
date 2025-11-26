@@ -126,10 +126,10 @@ const attributes = computed(() => {
 		};
 		if (props.block.getDataKey("type") === "attribute") {
 			let value;
-			if (props.block.getDataKey("comesFrom") === "dataScript") {
-				value = getDataScriptValue(props.block.getDataKey("key") as string);
-			} else {
+			if (props.block.getDataKey("comesFrom") === "props") {
 				value = getPropValue(props.block.getDataKey("key") as string, props.block, getDataScriptValue);
+			} else {
+				value = getDataScriptValue(props.block.getDataKey("key") as string);
 			}
 			attribs[props.block.getDataKey("property") as string] =
 				value ?? attribs[props.block.getDataKey("property") as string];
@@ -141,10 +141,10 @@ const attributes = computed(() => {
 			?.forEach((dataKeyObj: BlockDataKey) => {
 				const property = dataKeyObj.property as string;
 				let value;
-				if (dataKeyObj.comesFrom === "dataScript") {
-					value = getDataScriptValue(dataKeyObj.key as string);
-				} else {
+				if (dataKeyObj.comesFrom === "props") {
 					value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue);
+				} else {
+					value = getDataScriptValue(dataKeyObj.key as string);
 				}
 				attribs[property] = value ?? attribs[property];
 			});

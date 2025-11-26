@@ -43,7 +43,7 @@ const props = withDefaults(
 const component = ref(null) as Ref<HTMLElement | null>;
 
 const repeatingFrom = computed(() => {
-	return props.block.getDataKey("comesFrom");
+	return props.block.getDataKey("comesFrom") || "dataScript";
 });
 
 const blockData = computed(() => {
