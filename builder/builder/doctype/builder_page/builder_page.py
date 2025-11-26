@@ -674,14 +674,10 @@ def get_block_html(blocks):
 				block_unique_id = f"{block.get('blockId')}-{frappe.generate_hash(length=3)}"
 				print("probps obj js: ", props_obj)
 				script_content = f"(function (props){{ {block.get('blockScript')} }}).call(document.querySelector('[data-block-id=\"{block_unique_id}\"]'), {json.dumps(props_obj) or '{}'});"
-				print("Script content: ", script_content)
-				all_block_scripts.append(script_content)
 				tag.attrs["data-block-id"] = block_unique_id
-			if block.get("blockId") == "root":
-				for script in all_block_scripts:
-					script_tag = soup.new_tag("script")
-					script_tag.string = script
-					tag.append(script_tag)
+				script_tag = soup.new_tag("script")
+				script_tag.string = script_content
+				tag.append(script_tag)
 
 			return tag, to_jinja_literal(props_obj), to_jinja_literal(std_props_obj) if std_props_obj else None
 
