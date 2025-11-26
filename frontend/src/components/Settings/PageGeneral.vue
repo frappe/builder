@@ -200,12 +200,13 @@ const folderOptions = computed(() => {
 		value: "",
 	};
 
-	const options = builderProjectFolder.data.map((folder: BuilderProjectFolder) => {
-		return {
-			label: folder.folder_name,
-			value: folder.folder_name,
-		};
-	});
+	const options =
+		builderProjectFolder.data?.map((folder: BuilderProjectFolder) => {
+			return {
+				label: folder.folder_name,
+				value: folder.folder_name,
+			};
+		}) || [];
 
 	return [homeOption, ...options];
 });

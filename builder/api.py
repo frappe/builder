@@ -2,7 +2,7 @@ import json
 import os
 from io import BytesIO
 from types import FunctionType, MethodType, ModuleType
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from urllib.parse import unquote
 
 import frappe
@@ -395,3 +395,15 @@ def get_codemirror_completions():
 		key="",
 		value=get_safe_globals(),
 	)
+
+
+@frappe.whitelist()
+def reorder_client_scripts(script_order):
+	if not frappe.has_permission("Builder Page", ptype="write"):
+		frappe.throw("You do not have permission to reorder client scripts")
+
+	if isinstance(script_order, str):
+		script_order = frappe.parse_json(script_order)
+
+	for idx, script_name in enumerate(script_order, start=1):
+		frappe.db.set_value("Builder Page Client Script", script_name, "idx", idx)

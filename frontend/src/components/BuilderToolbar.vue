@@ -160,11 +160,12 @@ import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { getTextContent } from "@/utils/helpers";
 import { useDark, useToggle } from "@vueuse/core";
 import { Badge, Popover, Tooltip } from "frappe-ui";
-import { computed, ref } from "vue";
+import { computed, defineAsyncComponent, ref } from "vue";
 import { toast } from "vue-sonner";
-import BuilderSettings from "./BuilderSettings.vue";
 import MainMenu from "./MainMenu.vue";
 import PageOptions from "./PageOptions.vue";
+
+const BuilderSettings = defineAsyncComponent(() => import("./BuilderSettings.vue"));
 
 const isDark = useDark({
 	attribute: "data-theme",
