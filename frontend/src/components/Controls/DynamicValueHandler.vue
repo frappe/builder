@@ -153,15 +153,15 @@ const getValue = (item: DynamicValueItem): any => {
 		return getPropValue(
 			item.key,
 			props.block || blockController.getFirstSelectedBlock(),
-			getDatScriptValue,
+			getDataScriptValue,
 			defaultProps.value,
 		);
 	} else {
-		return getDatScriptValue(item.key);
+		return getDataScriptValue(item.key);
 	}
 };
 
-const getDatScriptValue = (path: string): any => {
+const getDataScriptValue = (path: string): any => {
 	let collectionObject = pageStore.pageData;
 
 	if (blockController.getFirstSelectedBlock()?.isInsideRepeater()) {
@@ -194,9 +194,9 @@ const filteredItems = computed(() => {
 	return allItems.filter(
 		(item) =>
 			item.key.toLowerCase().includes(query) ||
-			String(getDatScriptValue(item.key)).toLowerCase().includes(query) ||
+			String(getDataScriptValue(item.key)).toLowerCase().includes(query) ||
 			String(
-				getPropValue(item.key, props.block || blockController.getFirstSelectedBlock(), getDatScriptValue),
+				getPropValue(item.key, props.block || blockController.getFirstSelectedBlock(), getDataScriptValue),
 			)
 				.toLowerCase()
 				.includes(query),
