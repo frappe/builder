@@ -7,7 +7,8 @@
 		</div>
 		<BuilderBlock
 			v-else
-			:data="_data"
+			:data="repeatingFrom == 'dataScript' ? _data : {}"
+			:defaultProps="repeatingFrom == 'props' ? _data : null"
 			:block="block.children[0]"
 			:preview="index !== 0 || preview"
 			:breakpoint="breakpoint"
@@ -19,9 +20,10 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import usePageStore from "@/stores/pageStore";
-import { getDataForKey } from "@/utils/helpers";
+import { getDataForKey, getStandardPropValue } from "@/utils/helpers";
 import { Ref, computed, ref } from "vue";
 import BuilderBlock from "./BuilderBlock.vue";
+import blockController from "@/utils/blockController";
 
 const pageStore = usePageStore();
 
@@ -40,14 +42,53 @@ const props = withDefaults(
 
 const component = ref(null) as Ref<HTMLElement | null>;
 
+const repeatingFrom = computed(() => {
+	return props.block.getDataKey("comesFrom");
+});
+
 const blockData = computed(() => {
 	const pageData = props.data || pageStore.pageData;
-	if (pageData && props.block.getDataKey("key")) {
-		const data = getDataForKey(pageData, props.block.getDataKey("key"));
+	const key = props.block.getDataKey("key");
+	if (pageData && repeatingFrom.value === "dataScript" && key) {
+		const data = getDataForKey(pageData, key);
 		if (Array.isArray(data)) {
 			return data.slice(0, 100);
 		}
 		return data;
+	} else if (repeatingFrom.value == "props" && key) {
+		const defaultProps: BlockProps[] = [];
+		const componentRoot = blockController.getComponentRootBlock(props.block);
+		const parsedValue = getStandardPropValue(key, componentRoot)?.value;
+		if (Array.isArray(parsedValue)) {
+			parsedValue.slice(0, 100).forEach((item: any) =>
+				defaultProps.push({
+					item: {
+						value: item,
+						isStandard: false,
+						type: "static",
+					},
+				}),
+			);
+		} else if (typeof parsedValue === "object" && parsedValue !== null) {
+			Object.entries(parsedValue)
+				.slice(0, 100)
+				.forEach(([key, value]) => {
+					defaultProps.push({
+						key: {
+							value: key,
+							isStandard: false,
+							type: "static",
+						},
+						value: {
+							value: typeof value !== "string" ? JSON.stringify(value) : value,
+							isStandard: false,
+							type: "static",
+						},
+					});
+				});
+		}
+
+		return defaultProps;
 	} else {
 		return [{}];
 	}

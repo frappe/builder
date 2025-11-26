@@ -11,6 +11,7 @@
 		ref="component">
 		<BuilderBlock
 			:data="data"
+			:defaultProps="defaultProps"
 			:block="child"
 			:breakpoint="breakpoint"
 			:preview="preview"
@@ -55,12 +56,14 @@ const props = withDefaults(
 		breakpoint?: string;
 		preview?: boolean;
 		data?: Record<string, any> | null;
+		defaultProps?: Record<string, any> | null;
 	}>(),
 	{
 		isChildOfComponent: false,
 		breakpoint: "desktop",
 		preview: false,
 		data: null,
+		defaultProps: null,
 	},
 );
 
@@ -113,6 +116,7 @@ const attributes = computed(() => {
 		attribs.preview = props.preview;
 		attribs.breakpoint = props.breakpoint;
 		attribs.data = props.data;
+		attribs.defaultProps = props.defaultProps;
 	}
 
 	if (props.data) {

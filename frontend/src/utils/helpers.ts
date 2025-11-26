@@ -882,7 +882,8 @@ function getCollectionKeys(block: any): string[] {
 	const keys: string[] = [];
 	if (repeaterBlock) {
 		const collectionKey = repeaterBlock.getDataKey("key");
-		if (collectionKey) {
+		const comesFrom = repeaterBlock.getDataKey("comesFrom");
+		if (collectionKey && comesFrom == "dataScript") {
 			keys.push(collectionKey);
 		}
 		const parentKeys: string[] = getCollectionKeys(repeaterBlock);
@@ -918,7 +919,15 @@ const getValueForInheritedProp = (propName: string, block: Block, getDatScriptVa
 	return undefined;
 };
 
-const getPropValue = (propName: string, block: Block, getDatScriptValue: (path: string) => any): any => {
+const getPropValue = (
+	propName: string,
+	block: Block,
+	getDatScriptValue: (path: string) => any,
+	defaultProps?: Record<string, any> | null,
+): any => {
+	if (defaultProps && defaultProps[propName] !== undefined) {
+		return defaultProps[propName].value;
+	}
 	const blockProps = block.getBlockProps();
 	if (blockProps[propName]) {
 		const prop = blockProps[propName];
@@ -933,6 +942,36 @@ const getPropValue = (propName: string, block: Block, getDatScriptValue: (path: 
 		}
 	}
 	return undefined;
+};
+
+const getStandardPropValue = (
+	propName: string,
+	componentRoot: Block,
+): { value: any; options: Record<string, any> } | undefined => {
+	const propsOfComponentRoot = componentRoot.getBlockProps();
+	if (propsOfComponentRoot) {
+		for (const [name, value] of Object.entries(propsOfComponentRoot)) {
+			if (propName === name && value.isStandard) {
+				if (value.standardOptions?.type !== "string" && value.standardOptions?.type !== "select") {
+					const parsedValue = value.value
+						? JSON.parse(value.value)
+						: value.standardOptions?.options?.defaultValue || null;
+					return {
+						value: parsedValue,
+						options: value.standardOptions?.options || {},
+					};
+				} else {
+					return {
+						value: value.value || value.standardOptions?.options?.defaultValue || null,
+						options: value.standardOptions?.options || {},
+					};
+				}
+			}
+		}
+		return undefined;
+	} else {
+		return undefined;
+	}
 };
 
 export {
@@ -987,4 +1026,5 @@ export {
 	triggerCopyEvent,
 	uploadImage,
 	getPropValue,
+	getStandardPropValue,
 };

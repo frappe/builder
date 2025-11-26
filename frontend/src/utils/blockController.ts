@@ -301,6 +301,25 @@ const blockController = {
 			block.unsetLink();
 		});
 	},
+	getComponentRootBlock: (block?: Block) : Block => {
+		if (!block) {
+			block = blockController.getFirstSelectedBlock();
+		}
+		const editingMode = canvasStore.editingMode;
+
+		if (editingMode == "fragment") {
+			while (block && block.getParentBlock()) {
+				block = block.getParentBlock()!;
+			}
+			return block;
+		} else {
+			while (block && block.isExtendedFromComponent()) {
+				if (block.extendedFromComponent) break;
+				block = block.getParentBlock()!;
+			}
+			return block;
+		}
+	},
 	getBlockScript: () => {
 		return blockController.getSelectedBlocks()[0]?.getBlockScript(); // TODO: change to first selected block
 	},
@@ -312,7 +331,7 @@ const blockController = {
 	},
 	setBlockProp: (key: string, value: string) => {
 		const allProps = blockController.getBlockProps();
-		if(!allProps) return;
+		if (!allProps) return;
 		const updatedProps = {
 			...allProps,
 			[key]: {

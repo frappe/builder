@@ -50,7 +50,7 @@
 				</ul>
 			</div>
 		</div>
-		<div class="flex items-center justify-end gap-2" v-if="dataArray.length !== 0">
+		<div class="flex items-center justify-end gap-2" v-if="filteredItems.length !== 0">
 			<div class="flex gap-2">
 				<Button variant="subtle" @click="builderStore.showDataScriptDialog = true">Edit Code</Button>
 				<Button variant="solid" @click="saveSelection" :disabled="!selectedItem">Set</Button>
@@ -64,7 +64,7 @@ import Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
-import { getCollectionKeys, getDataForKey, getPropValue } from "@/utils/helpers";
+import { getCollectionKeys, getDataForKey, getPropValue, getStandardPropValue } from "@/utils/helpers";
 import { computed, ref } from "vue";
 
 const pageStore = usePageStore();
@@ -110,10 +110,48 @@ const dataArray = computed(() => {
 	return result;
 });
 
+const defaultProps = computed(() => {
+	const currentBlock = props.block || blockController.getFirstSelectedBlock();
+	const isCurrentBlockInRepeater = currentBlock?.isInsideRepeater();
+	const repeaterRoot = isCurrentBlockInRepeater ? currentBlock?.getRepeaterParent() : null;
+	if (repeaterRoot) {
+		const key = repeaterRoot.getDataKey("key");
+		const comesFrom = repeaterRoot.getDataKey("comesFrom");
+		if (key && comesFrom === "props") {
+			const componentRoot = blockController.getComponentRootBlock(repeaterRoot);
+			const parsedValue = getStandardPropValue(key, componentRoot)?.value;
+			if (!parsedValue) return {};
+			if (Array.isArray(parsedValue)) {
+				return {
+					item: {
+						value: parsedValue[0],
+						isStandard: false,
+						type: "static",
+					},
+				};
+			} else if (typeof parsedValue === "object") {
+				return {
+					key: {
+						value: Object.keys(parsedValue)[0],
+						isStandard: false,
+						type: "static",
+					},
+					value: {
+						value: parsedValue[Object.keys(parsedValue)[0]],
+						isStandard: false,
+						type: "static",
+					},
+				};
+			}
+		}
+	}
+	return {};
+});
+
 const getValue = (item: DynamicValueItem): any => {
 	if (item.comesFrom == "dataScript") return getDatScriptValue(item.key);
 	else
-		return getPropValue(item.key, props.block || blockController.getFirstSelectedBlock(), getDatScriptValue);
+		return getPropValue(item.key, props.block || blockController.getFirstSelectedBlock(), getDatScriptValue, defaultProps.value);
 };
 
 const getDatScriptValue = (path: string): any => {
@@ -139,7 +177,8 @@ const blockProps = computed(() => {
 const filteredItems = computed(() => {
 	const dataArrayItems = dataArray.value.map((item) => ({ key: item, comesFrom: "dataScript" }));
 	const propItems = Object.keys(blockProps.value).map((item) => ({ key: item, comesFrom: "props" }));
-	const allItems = [...dataArrayItems, ...propItems] as DynamicValueItem[];
+	const defaultPropsKeys = Object.keys(defaultProps.value || {}).map((item) => ({ key: item, comesFrom: "props" }));
+	const allItems = [...dataArrayItems, ...propItems, ...defaultPropsKeys] as DynamicValueItem[];
 	if (!searchQuery.value) return allItems;
 	const query = searchQuery.value.toLowerCase();
 	return allItems.filter(

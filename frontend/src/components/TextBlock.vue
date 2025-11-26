@@ -223,11 +223,13 @@ const props = withDefaults(
 		block: Block;
 		preview?: boolean;
 		data?: Record<string, any>;
+		defaultProps?: Record<string, any> | null;
 		breakpoint?: string;
 	}>(),
 	{
 		preview: false,
 		data: () => ({}),
+		defaultProps: null,
 		breakpoint: "desktop",
 	},
 );
@@ -263,7 +265,7 @@ const FontFamilyPasteRule = Extension.create({
 
 const textContent = computed(() => {
 	let innerHTML = props.block.getInnerHTML();
-	if (props.data) {
+	if (props.data || props.defaultProps) {
 		const dynamicContent = getDynamicContent();
 		if (dynamicContent) {
 			innerHTML = dynamicContent;
@@ -281,7 +283,7 @@ const getDynamicContent = () => {
 		let value;
 		if (props.block.getDataKey("comesFrom") === "props") {
 			// props are checked first as unavailablity of comesFrom means it comes from dataScript (legacy)
-			value = getPropValue(props.block.getDataKey("key"), props.block, getDataScriptValue);
+			value = getPropValue(props.block.getDataKey("key"), props.block, getDataScriptValue, props.defaultProps);
 		} else {
 			value = getDataScriptValue(props.block.getDataKey("key"));
 		}
@@ -294,7 +296,7 @@ const getDynamicContent = () => {
 		?.forEach((dataKeyObj: BlockDataKey) => {
 			let value;
 			if (dataKeyObj.comesFrom === "props") {
-				value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue);
+				value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue, props.defaultProps);
 			} else {
 				value = getDataScriptValue(dataKeyObj.key as string);
 			}

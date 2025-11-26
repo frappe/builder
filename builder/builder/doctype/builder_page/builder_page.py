@@ -491,20 +491,31 @@ def get_block_html(blocks):
 
 	def get_html(blocks, soup):
 		map_of_inherited_props = {} # prop_name -> array<values>
+		map_of_std_props_info = {} # prop_name -> array<values>
 		html = ""
 		all_block_scripts = []
 
-		def get_tag(block, soup, data_key=None):
+		def get_tag(block, soup, data_key=None, default_props=None):
 			block = extend_with_component(block)
 
+			# to be used in {% with %} statements
 			props_obj = {}
+			std_props_obj = {}
+
+			# to be used to pop last values from their resp maps
 			props_with_successors = []
+			std_props = []
    
 			if block.get("props"):
     
 				for key, value in block.get("props", {}).items():
 					interpreted_value = get_interpreted_prop_value(value, data_key, map_of_inherited_props)
 					props_obj[key] = interpreted_value
+     
+					if value.get('isStandard', False):
+						std_props_obj[key] = interpreted_value
+						std_props.append(key)
+						map_of_std_props_info.setdefault(key, []).append(value)
      
 					if value.get('usedByCount', 0) > 0:
 						props_with_successors.append(key)
@@ -583,38 +594,81 @@ def get_block_html(blocks):
 				inner_soup = bs.BeautifulSoup(innerContent, "html.parser")
 				set_fonts_from_html(inner_soup, font_map)
 				tag.append(inner_soup)
+    
+			if default_props:
+				for prop in default_props:
+					props_obj[prop] = f"{{{{ {prop} }}}}"
 
-			if block.get("isRepeaterBlock") and block.get("children") and block.get("dataKey"):
+			if block.get("isRepeaterBlock") and block.get("children") and block.get("dataKey"):    
 				_key = block.get("dataKey").get("key")
-				if data_key:
-					_key = f"{data_key}.{_key}"
+				item_key = ""
+				next_data_key = None
+				next_default_props = None
+    
+				if block.get("dataKey").get("comesFrom", "dataScript") == "dataScript":
+					if data_key:
+						_key = f"{extract_data_key(data_key)}.{_key}"
+					item_key = f"key_{_key.replace('.', '__')}"
+					next_data_key = {"key": item_key, "comesFrom": "dataScript"}
+     
+				if block.get("dataKey").get("comesFrom") == "props":
+					next_data_key = None
+					looping_vars = get_looping_vars(map_of_std_props_info, _key)
+					next_default_props = looping_vars
+					item_key = ", ".join(looping_vars)
+					_key = f"std_props['{_key}']"
+					if len(looping_vars) > 1: # object repeater
+						_key = f"{_key}.items()"
 
-				item_key = f"key_{_key.replace('.', '__')}"
+				if  default_props: # carried over from parent repeater
+					next_default_props = default_props + (next_default_props or [])
+
 				tag.append(f"{{% for {item_key} in {_key} %}}")
-				child_tag, child_tag_props = get_tag(block.get("children")[0], soup, item_key)
+    
+				child_tag, child_tag_props, child_tag_std_props = get_tag(block.get("children")[0], soup, next_data_key, next_default_props)
+    
+				if child_tag_std_props:
+					tag.append(f"{{% with std_props = {child_tag_std_props} %}}")
+     
 				tag.append(f"{{% with props = {child_tag_props} %}}")
 				tag.append(child_tag)
 				tag.append("{% endwith %}")
+    
+				if child_tag_std_props:
+					tag.append("{% endwith %}")
+     
 				tag.append("{% endfor %}")
 			else:
 				for child in block.get("children", []) or []:
 					if child.get("visibilityCondition"):
 						key = child.get("visibilityCondition")
+						# TODO: enable props based visibility conditions
 						if data_key:
-							key = f"{data_key}.{key}"
+							key = f"{extract_data_key(data_key)}.{key}"
 						tag.append(f"{{% if {key} %}}")
-					child_tag, child_tag_props = get_tag(child, soup, data_key=data_key)
+
+					child_tag, child_tag_props, child_tag_std_props = get_tag(child, soup, data_key=data_key, default_props=default_props)
+
+					if child_tag_std_props:
+						tag.append(f"{{% with std_props = {child_tag_std_props} %}}")
+
 					tag.append(f"{{% with props = {child_tag_props} %}}")
 					tag.append(child_tag)
 					tag.append("{% endwith %}")
+
+					if child_tag_std_props:
+						tag.append("{% endwith %}")
+
 					if child.get("visibilityCondition"):
 						tag.append("{% endif %}")
 
 			if element == "body":
 				tag.append("{% include 'templates/generators/webpage_scripts.html' %}")
 
-			for props in props_with_successors:
-				map_of_inherited_props[props].pop()
+			for prop in props_with_successors:
+				map_of_inherited_props[prop].pop()
+			for prop in std_props:
+				map_of_std_props_info[prop].pop()
 
 			if block.get("blockScript"):
 				block_unique_id = f"{block.get('blockId')}-{frappe.generate_hash(length=3)}"
@@ -629,11 +683,13 @@ def get_block_html(blocks):
 					script_tag.string = script
 					tag.append(script_tag)
 
-			return tag, to_jinja_literal(props_obj)
+			return tag, to_jinja_literal(props_obj), to_jinja_literal(std_props_obj) if std_props_obj else None
 
 		for block in blocks:
-			tag, props = get_tag(block, soup)
+			tag, props, std_props = get_tag(block, soup)
 			html += f"{{% with props = {props} %}}{str(tag)}{{% endwith %}}"
+			if std_props:
+				html = f"{{% with std_props = {std_props} %}}{html}{{% endwith %}}"
 
 		print("Final HTML: ", html)
 		return html, str(style_tag), font_map
@@ -822,7 +878,7 @@ def set_dynamic_content_placeholder(block, data_key=False):
 			if(dynamic_value_doc.get("comesFrom") == "props"):
 				key = f"props['{dynamic_value_doc.get('key')}']"
 			else:
-				key = f"{data_key}.{dynamic_value_doc.get('key')}" if data_key else dynamic_value_doc.get("key")
+				key = f"{extract_data_key(data_key)}.{dynamic_value_doc.get('key')}" if data_key else dynamic_value_doc.get("key")
 				if data_key:
 					# convert a.b to (a or {}).get('b', {})
 					# to avoid undefined error in jinja
@@ -921,20 +977,39 @@ def get_interpreted_prop_value(prop, data_key, map_of_inherited_props):
 	prop_is_standard = prop.get("isStandard", False)
 	prop_value = prop.get("value")
 
-	if prop_value == "" or prop_value is None:
+	if prop_value is None and not prop_is_standard:
 		return "undefined"
 	if prop_type == "dynamic":
-		return f"{{{{ {data_key}.{prop_value} }}}}" if data_key else f"{{{{ {prop_value} }}}}"
+		return f"{{{{ {extract_data_key(data_key)}.{prop_value} }}}}" if data_key else f"{{{{ {prop_value} }}}}"
 	elif prop_type == "static":
 		if prop_is_standard:
 			# standard props are static only as of now
 			prop_value = parse_static_value(
-				prop.get("value"), prop.get("standardOptions", {}).get("type")
+				prop.get("value") or prop.get("standardOptions", {}).get("options", {}).get("defaultValue"),
+				prop.get("standardOptions", {}).get("type")
 			)
 		return prop_value
 	elif prop_type == "inherited":
 		values = map_of_inherited_props.get(prop_value, [])
-		return values[0] if values else "undefined"
+		return values[-1] if values else "undefined"
+
+
+def get_looping_vars(map_of_std_props_info, key):
+	if key in map_of_std_props_info:
+		std_prop_info = map_of_std_props_info[key][-1]
+		standard_options = std_prop_info.get("standardOptions", {})
+		if standard_options.get("type") == "array":
+			return ["item"] # TODO: allow custom item name
+		elif standard_options.get("type") == "object":
+			return ["key", "value"] # TODO: allow custom key, value names
+	return []
+
+def extract_data_key(data_key):
+	if isinstance(data_key, str):
+		return data_key
+	elif isinstance(data_key, dict):
+		return data_key.get("key")
+	return None
 
 def reset_with_component(block, extended_with_component, component_children):
 	reset_block(block)

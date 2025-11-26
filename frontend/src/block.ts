@@ -692,6 +692,7 @@ class Block implements BlockOptions {
 				key: "",
 				type: this.isImage() || this.isLink() ? "attribute" : "key",
 				property: this.isLink() ? "href" : this.isImage() ? "src" : "innerHTML",
+				comesFrom: "dataScript",
 			};
 		}
 		if (!value && key === "key") {

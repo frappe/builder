@@ -1,12 +1,15 @@
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
+import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
 import { getCollectionKeys, getDataForKey } from "@/utils/helpers";
-import { computed } from "vue";
+import { FeatherIcon } from "frappe-ui";
+import { computed, h } from "vue";
 
 const keyOptions = computed(() => {
 	const pageStore = usePageStore();
-	const result: string[] = [];
+	let result: { label: string; value: string; prefix: any }[] = [];
+	const repeatableDataKeys: string[] = [];
 	let collectionObject = pageStore.pageData;
 
 	if (blockController.getFirstSelectedBlock()?.isInsideRepeater()) {
@@ -26,7 +29,7 @@ const keyOptions = computed(() => {
 			const path = prefix ? `${prefix}.${key}` : key;
 
 			if (Array.isArray(value)) {
-				result.push(path);
+				repeatableDataKeys.push(path);
 			} else if (typeof value === "object" && value !== null) {
 				processObject(value, path);
 			}
@@ -34,10 +37,48 @@ const keyOptions = computed(() => {
 	}
 
 	processObject(collectionObject);
-	return result.map((key) => ({
-		label: key,
-		value: key,
-	}));
+
+	const repeatableProps: string[] = [];
+	
+	const isInsideRepeater = blockController.getFirstSelectedBlock()?.isInsideRepeater();
+	const isPropsBasedRepeater =
+		isInsideRepeater &&
+		blockController.getFirstSelectedBlock()?.getRepeaterParent()?.getDataKey("comesFrom") === "props";
+	const propsOfComponentRoot = blockController.getComponentRootBlock()?.getBlockProps();
+	
+	if (propsOfComponentRoot && !isPropsBasedRepeater) {
+		Object.entries(propsOfComponentRoot).forEach(([key, value]) => {
+			if (
+				value.isStandard &&
+				(value.standardOptions?.type == "array" || value.standardOptions?.type == "object")
+			) {
+				repeatableProps.push(key);
+			}
+		});
+	}
+
+	repeatableDataKeys.forEach((item) => {
+		result.push({
+			label: item,
+			value: item,
+			prefix: h(FeatherIcon, {
+				name: "zap",
+				class: "size-3",
+			}),
+		});
+	});
+	repeatableProps.forEach((prop) => {
+		result.push({
+			label: prop,
+			value: `${prop}-from-std-prop`,
+			prefix: h(FeatherIcon, {
+				name: "git-commit",
+				class: "size-3",
+			}),
+		});
+	});
+
+	return result;
 });
 
 const collectionOptions = [
@@ -54,7 +95,20 @@ const collectionOptions = [
 		searchKeyWords: "Collection, Repeater, Dynamic Collection, Dynamic Repeater",
 		events: {
 			"update:modelValue": (selectedOption: { label: string; value: string }) => {
-				blockController.setDataKey("key", selectedOption?.value);
+				let value = selectedOption?.value;
+				let comesFrom: BlockDataKey["comesFrom"] | "" = "dataScript";
+				if (
+					selectedOption?.label != selectedOption?.value &&
+					selectedOption?.value?.endsWith("-from-std-prop")
+				) {
+					value = selectedOption.value.replace("-from-std-prop", "");
+					comesFrom = "props";
+				}
+				if (!value && useCanvasStore().editingMode != "fragment") {
+					comesFrom = "";
+				}
+				blockController.setDataKey("key", value);
+				blockController.setDataKey("comesFrom", comesFrom);
 			},
 		},
 	},
