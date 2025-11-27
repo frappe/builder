@@ -193,8 +193,8 @@ const standardPropOptions = reactive<BlockPropsStandardOptions>(
 		: {
 				isRequired: false,
 				type: "string",
-				defaultValue: "",
-				options: [],
+				// defaultValue: "",
+				options: {},
 				dependencies: {},
 		  },
 );
@@ -409,8 +409,8 @@ const reset = async (keepParams: {
 		Object.assign(standardPropOptions, {
 			isRequired: false,
 			type: standardPropOptions.type,
-			defaultValue: "",
-			options: [],
+			// defaultValue: "",
+			options: {},
 			dependencies: {},
 		});
 

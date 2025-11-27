@@ -25,8 +25,9 @@ const emit = defineEmits<{
 const defaultValue = ref(props.options?.defaultValue);
 
 const handleDefaultValueChange = (value: string) => {
+	defaultValue.value = value;
 	emit("update:options", {
-		defaultValue: defaultValue.value,
+		defaultValue: value,
 	});
 };
 

@@ -908,6 +908,19 @@ const getValueForInheritedProp = (propName: string, block: Block, getDatScriptVa
 				if (matchingProp.type === "dynamic" && matchingProp.value) {
 					return getDatScriptValue(matchingProp.value);
 				} else {
+					if (matchingProp.isStandard && matchingProp.standardOptions) {
+						if (matchingProp.standardOptions.type !== "string" && matchingProp.standardOptions.type !== "select") {
+							return matchingProp.value
+								? JSON.parse(matchingProp.value)
+								: matchingProp.standardOptions?.options?.defaultValue || null;
+						} else {
+							return (
+								matchingProp.value ||
+								matchingProp.standardOptions?.options?.defaultValue ||
+								null
+							);
+						}
+					}
 					return matchingProp.value;
 				}
 			} else {
@@ -938,6 +951,13 @@ const getPropValue = (
 				return getValueForInheritedProp(prop.value, block, getDatScriptValue);
 			}
 		} else {
+			if (prop.isStandard && prop.standardOptions) {
+				if (prop.standardOptions.type !== "string" && prop.standardOptions.type !== "select") {
+					return prop.value ? JSON.parse(prop.value) : prop.standardOptions?.options?.defaultValue || null;
+				} else {
+					return prop.value || prop.standardOptions?.options?.defaultValue || null;
+				}
+			}
 			return prop.value;
 		}
 	}

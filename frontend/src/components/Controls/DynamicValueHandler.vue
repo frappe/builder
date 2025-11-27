@@ -35,7 +35,7 @@
 						</div>
 					</li>
 					<li
-						v-if="filteredItems.length === 0 && !selectedItem"
+						v-if="filteredItems.length === 0 && !selectedItem?.key"
 						class="flex flex-col items-center justify-center p-10 text-center text-sm text-ink-gray-5">
 						<div>
 							No dynamic values found. Please add using
@@ -43,8 +43,9 @@
 								href="#"
 								@click="builderStore.showDataScriptDialog = true"
 								class="text-ink-gray-5 underline hover:text-ink-gray-7">
-								Data Script
+								Data Script,
 							</a>
+							or block props.
 						</div>
 					</li>
 				</ul>
@@ -53,7 +54,7 @@
 		<div class="flex items-center justify-end gap-2" v-if="filteredItems.length !== 0">
 			<div class="flex gap-2">
 				<Button variant="subtle" @click="builderStore.showDataScriptDialog = true">Edit Code</Button>
-				<Button variant="solid" @click="saveSelection" :disabled="!selectedItem">Set</Button>
+				<Button variant="solid" @click="saveSelection" :disabled="!selectedItem?.key">Set</Button>
 			</div>
 		</div>
 	</div>
