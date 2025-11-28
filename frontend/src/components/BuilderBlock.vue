@@ -3,6 +3,7 @@
 		:is="getComponentName(block)"
 		:selected="isSelected"
 		:data-block-id="block.blockId"
+		:data-block-uid="uid"
 		:data-breakpoint="breakpoint"
 		:draggable="draggable"
 		:class="classes"
@@ -43,6 +44,7 @@ import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
 import DataLoaderBlock from "./DataLoaderBlock.vue";
 import TextBlock from "./TextBlock.vue";
+import { builderSettings } from "@/data/builderSettings";
 
 const canvasStore = useCanvasStore();
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
@@ -78,6 +80,8 @@ const draggable = computed(() => {
 
 const isHovered = ref(false);
 const isSelected = ref(false);
+
+const uid = `builder-block-${props.block.blockId}-${Math.random().toString(36).substr(2, 9)}`;
 
 const getComponentName = (block: Block) => {
 	if (block.isRepeater()) {
@@ -259,6 +263,51 @@ onMounted(async () => {
 		);
 	}
 });
+
+const allResolvedProps = computed(() => {
+	return {
+		...props.defaultProps,
+		...Object.fromEntries(
+			Object.entries(props.block.getBlockProps()).map(([key, prop]) => {
+				return [
+					key,
+					getPropValue(key, props.block, (path: string) => {
+						return getDataForKey(props.data || {}, path);
+					}),
+				];
+			}),
+		),
+	};
+});
+
+watch(
+	[
+		component,
+		allResolvedProps,
+		() => props.block.getBlockScript(),
+		() => Boolean(builderSettings.doc?.execute_block_scripts_in_editor),
+	],
+	() => {
+		if (Boolean(builderSettings.doc?.execute_block_scripts_in_editor)) {
+			const scriptContent = `(function (props){ ${props.block.getBlockScript()} }).call(document.querySelector('[data-block-uid="${uid}"]'), ${
+				JSON.stringify(allResolvedProps.value) || "{}"
+			});`;
+			const script = document.createElement("script");
+			script.type = "text/javascript";
+			script.innerHTML = scriptContent;
+			script.id = `block-script-${uid}`;
+			const componentRef = component.value?.$el || component.value;
+			if (componentRef instanceof HTMLElement) {
+				const previousScript = componentRef.querySelector(`#block-script-${uid}`);
+				if (previousScript) {
+					componentRef.removeChild(previousScript);
+				}
+				componentRef.appendChild(script);
+			}
+		}
+	},
+	{ immediate: true, deep: true },
+);
 
 const isEditable = computed(() => {
 	// to ensure it is right block and not on different breakpoint
