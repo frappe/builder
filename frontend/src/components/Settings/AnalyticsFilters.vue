@@ -5,6 +5,7 @@
 			placeholder="Filter by route"
 			v-model="modelRoute"
 			:getOptions="getRouteOptions"
+			:allowArbitraryValue="true"
 			:showInputAsOption="true"
 			class="w-44" />
 		<Select size="sm" v-model="modelRange" class="!w-32 pr-6" :options="rangeOptions" />
