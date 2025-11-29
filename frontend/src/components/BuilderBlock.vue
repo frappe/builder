@@ -37,7 +37,7 @@
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { setFont } from "@/utils/fontManager";
-import { getDataForKey, getPropValue } from "@/utils/helpers";
+import { getDataForKey, getPropValue, saferExecuteBlockScript } from "@/utils/helpers";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
 import { computed, inject, nextTick, onMounted, reactive, ref, useAttrs, watch, watchEffect } from "vue";
 import BlockEditor from "./BlockEditor.vue";
@@ -288,26 +288,16 @@ watch(
 		() => Boolean(builderSettings.doc?.execute_block_scripts_in_editor),
 	],
 	() => {
-		if (Boolean(builderSettings.doc?.execute_block_scripts_in_editor)) {
-			const scriptContent = `(function (props){ ${props.block.getBlockScript()} }).call(document.querySelector('[data-block-uid="${uid}"]'), ${
-				JSON.stringify(allResolvedProps.value) || "{}"
-			});`;
-			const script = document.createElement("script");
-			script.type = "text/javascript";
-			script.innerHTML = scriptContent;
-			script.id = `block-script-${uid}`;
-			const componentRef = component.value?.$el || component.value;
-			if (componentRef instanceof HTMLElement) {
-				const previousScript = componentRef.querySelector(`#block-script-${uid}`);
-				if (previousScript) {
-					componentRef.removeChild(previousScript);
-				}
-				componentRef.appendChild(script);
-			}
-		}
+		saferExecuteBlockScript(props.block.blockId, props.block.getBlockScript(), allResolvedProps);
 	},
-	{ immediate: true, deep: true },
+	{ deep: true },
 );
+
+onMounted(() => {
+	if (builderSettings.doc?.execute_block_scripts_in_editor) {
+		saferExecuteBlockScript(props.block.blockId, props.block.getBlockScript(), allResolvedProps);
+	}
+});
 
 const isEditable = computed(() => {
 	// to ensure it is right block and not on different breakpoint
