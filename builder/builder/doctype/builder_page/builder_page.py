@@ -490,36 +490,42 @@ def get_block_html(blocks):
 	font_map = {}
 
 	def get_html(blocks, soup):
-		map_of_inherited_props = {} # prop_name -> array<values>
-		map_of_std_props_info = {} # prop_name -> array<values>
+
+		# global map of inherited prop values
+     	# prop_name -> array<values>
+		# prop names act as variables and blocks provide scope, i.e., if a child block (inner scope) re-defines a prop with the same name as its parent (outer scope),
+		# for the child block and its children, the value from the child block will be used, and once the child block is processed, the value from the parent block will be restored.
+		# the array of values act as a stack to achieve this scoping behavior.
+		map_of_inherited_props = {}
+		
+		# same as above but for std. props info (not values), used to idenitfy the type of looping vars (array or object) in repeaters
+		map_of_std_props_info = {}
 		html = ""
-		all_block_scripts = []
 
 		def get_tag(block, soup, data_key=None, default_props=None):
 			block = extend_with_component(block)
 
-			# to be used in {% with %} statements
 			props_obj = {}
-			std_props_obj = {}
-
-			# to be used to pop last values from their resp maps
-			props_with_successors = []
-			std_props = []
    
 			if block.get("props"):
     
-				for key, value in block.get("props", {}).items():
-					interpreted_value = get_interpreted_prop_value(value, data_key, map_of_inherited_props)
-					props_obj[key] = interpreted_value
+				for prop_name, prop_info in block.get("props").items():
+        
+					is_inherited = prop_info.get('usedByCount', 0) > 0
+					is_standard = prop_info.get('isStandard', False)
+					interpreted_value = get_interpreted_prop_value(prop_info, data_key, map_of_inherited_props)
      
-					if value.get('isStandard', False):
-						std_props_obj[key] = interpreted_value
-						std_props.append(key)
-						map_of_std_props_info.setdefault(key, []).append(value)
-     
-					if value.get('usedByCount', 0) > 0:
-						props_with_successors.append(key)
-						map_of_inherited_props.setdefault(key, []).append(interpreted_value)
+					if is_standard:
+						map_of_std_props_info.setdefault(prop_name, []).append(prop_info)
+					if is_inherited:
+						map_of_inherited_props.setdefault(prop_name, []).append(interpreted_value)
+
+					props_obj[prop_name] = {"value": interpreted_value, "is_inherited": is_inherited, "is_standard": is_standard }
+			
+			# when inside props repeater, child blocks get the loop vars as their default props
+			if default_props:
+				for prop in default_props:
+					props_obj[prop] = {"value": f"{{{{ {prop} }}}}", "is_inherited": False, "is_standard": True}
 
 			set_dynamic_content_placeholder(block, data_key)
 			element = block.get("originalElement") or block.get("element")
@@ -595,47 +601,35 @@ def get_block_html(blocks):
 				set_fonts_from_html(inner_soup, font_map)
 				tag.append(inner_soup)
     
-			if default_props:
-				for prop in default_props:
-					props_obj[prop] = f"{{{{ {prop} }}}}"
 
 			if block.get("isRepeaterBlock") and block.get("children") and block.get("dataKey"):    
 				_key = block.get("dataKey").get("key")
-				item_key = ""
+				loop_var = ""
 				next_data_key = None
 				next_default_props = None
-    
-				if block.get("dataKey").get("comesFrom", "dataScript") == "dataScript":
+					
+				if block.get("dataKey").get("comesFrom", "dataScript") == "props":
+					loop_vars = get_loop_vars(map_of_std_props_info, _key)
+					next_default_props = loop_vars
+
+					loop_var = ", ".join(loop_vars) # `item` for array and `key, value` for object
+					_key = f"std_props['{_key}']"
+
+					if len(loop_vars) > 1: # object repeater
+						_key = f"{_key}.items()"
+				else:
 					if data_key:
 						_key = f"{extract_data_key(data_key)}.{_key}"
-					item_key = f"key_{_key.replace('.', '__')}"
-					next_data_key = {"key": item_key, "comesFrom": "dataScript"}
-     
-				if block.get("dataKey").get("comesFrom") == "props":
-					next_data_key = None
-					looping_vars = get_looping_vars(map_of_std_props_info, _key)
-					next_default_props = looping_vars
-					item_key = ", ".join(looping_vars)
-					_key = f"std_props['{_key}']"
-					if len(looping_vars) > 1: # object repeater
-						_key = f"{_key}.items()"
+					loop_var = f"key_{_key.replace('.', '__')}"
+					next_data_key = {"key": loop_var, "comesFrom": "dataScript"}
 
 				if  default_props: # carried over from parent repeater
 					next_default_props = default_props + (next_default_props or [])
 
-				tag.append(f"{{% for {item_key} in {_key} %}}")
+				tag.append(f"{{% for {loop_var} in {_key} %}}")
     
 				child_tag, child_tag_props, child_tag_std_props = get_tag(block.get("children")[0], soup, next_data_key, next_default_props)
-    
-				if child_tag_std_props:
-					tag.append(f"{{% with std_props = {child_tag_std_props} %}}")
-     
-				tag.append(f"{{% with props = {child_tag_props} %}}")
-				tag.append(child_tag)
-				tag.append("{% endwith %}")
-    
-				if child_tag_std_props:
-					tag.append("{% endwith %}")
+				append_child_tag_with_props(tag, child_tag, child_tag_props, child_tag_std_props)
      
 				tag.append("{% endfor %}")
 			else:
@@ -648,16 +642,7 @@ def get_block_html(blocks):
 						tag.append(f"{{% if {key} %}}")
 
 					child_tag, child_tag_props, child_tag_std_props = get_tag(child, soup, data_key=data_key, default_props=default_props)
-
-					if child_tag_std_props:
-						tag.append(f"{{% with std_props = {child_tag_std_props} %}}")
-
-					tag.append(f"{{% with props = {child_tag_props} %}}")
-					tag.append(child_tag)
-					tag.append("{% endwith %}")
-
-					if child_tag_std_props:
-						tag.append("{% endwith %}")
+					append_child_tag_with_props(tag, child_tag, child_tag_props, child_tag_std_props)
 
 					if child.get("visibilityCondition"):
 						tag.append("{% endif %}")
@@ -665,21 +650,24 @@ def get_block_html(blocks):
 			if element == "body":
 				tag.append("{% include 'templates/generators/webpage_scripts.html' %}")
 
-			for prop in props_with_successors:
-				map_of_inherited_props[prop].pop()
-			for prop in std_props:
-				map_of_std_props_info[prop].pop()
+			for prop_name, prop_info in props_obj.items():
+				if prop_info.get("is_inherited"):
+					map_of_inherited_props[prop_name].pop()
+				if prop_info.get("is_standard"):
+					map_of_std_props_info[prop_name].pop()
+    
+			normal_props = {k: v["value"] for k, v in props_obj.items() if not v.get("is_standard")}
+			std_props = {k: v["value"] for k, v in props_obj.items() if v.get("is_standard")}
 
 			if block.get("blockScript"):
-				block_unique_id = f"{block.get('blockId')}-{frappe.generate_hash(length=3)}"
-				print("probps obj js: ", props_obj)
-				script_content = f"(function (props){{ {block.get('blockScript')} }}).call(document.querySelector('[data-block-id=\"{block_unique_id}\"]'), {json.dumps(props_obj) or '{}'});"
+				block_unique_id = f"{block.get('blockId')}-{frappe.generate_hash(length=3)}" # extra hash as repeating blocks have same blockId
+				script_content = f"(function (props){{ {block.get('blockScript')} }}).call(document.querySelector('[data-block-id=\"{block_unique_id}\"]'), {json.dumps(normal_props) or '{}'});"
 				tag.attrs["data-block-id"] = block_unique_id
 				script_tag = soup.new_tag("script")
 				script_tag.string = script_content
 				tag.append(script_tag)
 
-			return tag, to_jinja_literal(props_obj), to_jinja_literal(std_props_obj) if std_props_obj else None
+			return tag, to_jinja_literal(normal_props), to_jinja_literal(std_props) if std_props else None
 
 		for block in blocks:
 			tag, props, std_props = get_tag(block, soup)
@@ -831,33 +819,40 @@ def extend_block(block, overridden_block):
 	block["children"] = extended_children
 	return block
 
+def append_child_tag_with_props(tag, child_tag, child_tag_props, child_tag_std_props):
+	if child_tag_std_props:
+		tag.append(f"{{% with std_props = {child_tag_std_props} %}}")
+  
+	tag.append(f"{{% with props = {child_tag_props} %}}")
+	tag.append(child_tag)
+	tag.append("{% endwith %}")
+ 
+	if child_tag_std_props:
+		tag.append("{% endwith %}")
+
 def to_jinja_literal(obj):
-    # 1. Detect Jinja expressions inside strings (e.g. "{{ sample }}")
+    # detect Jinja expressions inside strings (e.g. "{{ sample }}")
     if isinstance(obj, str):
         stripped = obj.strip()
         if re.fullmatch(r"{{\s*.*?\s*}}", stripped):
             # remove the {{ }} so Jinja receives the variable
             inner = stripped[2:-2].strip()
-            return inner  # <-- returned unquoted
-        return repr(obj)  # normal python string
+            return inner  # returned unquoted
+        return repr(obj)
 
-    # 2. Booleans / None
     if obj is True: return "True"
     if obj is False: return "False"
     if obj is None: return "None"
 
-    # 3. Dict
     if isinstance(obj, dict):
         parts = []
         for k, v in obj.items():
             parts.append(f"{to_jinja_literal(k)}: {to_jinja_literal(v)}")
         return "{ " + ", ".join(parts) + " }"
 
-    # 4. List / tuple
     if isinstance(obj, (list, tuple)):
         return "[ " + ", ".join(to_jinja_literal(i) for i in obj) + " ]"
 
-    # 5. Numbers or other primitives
     return repr(obj)
 
 
@@ -990,7 +985,7 @@ def get_interpreted_prop_value(prop, data_key, map_of_inherited_props):
 		return values[-1] if values else "undefined"
 
 
-def get_looping_vars(map_of_std_props_info, key):
+def get_loop_vars(map_of_std_props_info, key):
 	if key in map_of_std_props_info:
 		std_prop_info = map_of_std_props_info[key][-1]
 		standard_options = std_prop_info.get("standardOptions", {})
