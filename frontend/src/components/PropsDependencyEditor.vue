@@ -77,7 +77,6 @@ const props = defineProps<{
 
 const emit = defineEmits({
 	"update:obj": (obj: BlockProps) => true,
-	"update:ancestorUpdateDependency": (propKey: string, action: "add" | "remove") => true,
 });
 
 const setSelectedOperator = (key: string, operator: string) => {

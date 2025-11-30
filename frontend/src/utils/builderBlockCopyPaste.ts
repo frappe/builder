@@ -244,18 +244,7 @@ async function insertBlocks(blocks: (Block | BlockOptions)[]) {
 		while (parentBlock && !parentBlock.canHaveChildren()) {
 			parentBlock = parentBlock.getParentBlock() as Block;
 		}
-		const addedChildBlocks: Block[] = [];
-		blocks.forEach((block) => addedChildBlocks.push(parentBlock.addChild(getBlockCopy(block), null, true)));
-		await nextTick();
-		addedChildBlocks.forEach((block) => {
-			const listOfInheritedProps = [];
-			for (const propKey in block.props) {
-				if (block.props[propKey].type === "inherited" && block.props[propKey].value) {
-					listOfInheritedProps.push(block.props[propKey].value);
-				}
-			}
-			blockController.updateBlockPropsDependencyForAncestor(listOfInheritedProps, "add", block);
-		});
+		blocks.forEach((block) => parentBlock.addChild(getBlockCopy(block), null, true));
 	} else {
 		canvasStore.pushBlocks(blocks);
 	}

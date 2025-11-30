@@ -301,7 +301,7 @@ const blockController = {
 			block.unsetLink();
 		});
 	},
-	getComponentRootBlock: (block?: Block) : Block => {
+	getComponentRootBlock: (block?: Block): Block => {
 		if (!block) {
 			block = blockController.getFirstSelectedBlock();
 		}
@@ -352,39 +352,6 @@ const blockController = {
 			}
 		});
 		Object.assign(block.props, props);
-	},
-	// TODO: should go in other file?
-	updateBlockPropsDependencyForAncestor: (
-		propKeys: string | string[],
-		action: "add" | "remove",
-		forSpecificBlock?: Block,
-	) => {
-		for (const propKey of Array.isArray(propKeys) ? propKeys : [propKeys]) {
-			let currentBlock = forSpecificBlock || blockController.getFirstSelectedBlock();
-			// go up the tree
-			let parentBlock: Block | null = currentBlock.getParentBlock();
-			while (parentBlock && !parentBlock.props?.[propKey]) {
-				parentBlock = parentBlock?.getParentBlock() || null;
-			}
-			if (parentBlock) {
-				let props = parentBlock.props;
-				if (props) {
-					let usedByCount = props[propKey]["usedByCount"];
-					if (action === "add") {
-						usedByCount = (usedByCount || 0) + 1;
-					} else {
-						usedByCount = Math.max((usedByCount || 0) - 1, 0);
-					}
-					parentBlock.setBlockProps({
-						...props,
-						[propKey]: {
-							...props[propKey],
-							usedByCount: usedByCount,
-						},
-					});
-				}
-			}
-		}
 	},
 };
 

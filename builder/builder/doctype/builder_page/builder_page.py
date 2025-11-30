@@ -491,12 +491,12 @@ def get_block_html(blocks):
 
 	def get_html(blocks, soup):
 
-		# global map of inherited prop values
+		# global map of prop values
      	# prop_name -> array<values>
 		# prop names act as variables and blocks provide scope, i.e., if a child block (inner scope) re-defines a prop with the same name as its parent (outer scope),
 		# for the child block and its children, the value from the child block will be used, and once the child block is processed, the value from the parent block will be restored.
 		# the array of values act as a stack to achieve this scoping behavior.
-		map_of_inherited_props = {}
+		map_of_prop_values = {}
 		
 		# same as above but for std. props info (not values), used to idenitfy the type of looping vars (array or object) in repeaters
 		map_of_std_props_info = {}
@@ -511,21 +511,19 @@ def get_block_html(blocks):
     
 				for prop_name, prop_info in block.get("props").items():
         
-					is_inherited = prop_info.get('usedByCount', 0) > 0
 					is_standard = prop_info.get('isStandard', False)
-					interpreted_value = get_interpreted_prop_value(prop_info, data_key, map_of_inherited_props)
-     
+					interpreted_value = get_interpreted_prop_value(prop_info, data_key, map_of_prop_values)
+
+					map_of_prop_values.setdefault(prop_name, []).append(interpreted_value)
 					if is_standard:
 						map_of_std_props_info.setdefault(prop_name, []).append(prop_info)
-					if is_inherited:
-						map_of_inherited_props.setdefault(prop_name, []).append(interpreted_value)
 
-					props_obj[prop_name] = {"value": interpreted_value, "is_inherited": is_inherited, "is_standard": is_standard }
+					props_obj[prop_name] = {"value": interpreted_value, "is_standard": is_standard }
 			
 			# when inside props repeater, child blocks get the loop vars as their default props
 			if default_props:
 				for prop in default_props:
-					props_obj[prop] = {"value": f"{{{{ {prop} }}}}", "is_inherited": False, "is_standard": True}
+					props_obj[prop] = {"value": f"{{{{ {prop} }}}}", "is_standard": True}
 
 			set_dynamic_content_placeholder(block, data_key)
 			element = block.get("originalElement") or block.get("element")
@@ -651,8 +649,7 @@ def get_block_html(blocks):
 				tag.append("{% include 'templates/generators/webpage_scripts.html' %}")
 
 			for prop_name, prop_info in props_obj.items():
-				if prop_info.get("is_inherited"):
-					map_of_inherited_props[prop_name].pop()
+				map_of_prop_values[prop_name].pop()
 				if prop_info.get("is_standard"):
 					map_of_std_props_info[prop_name].pop()
     
@@ -963,7 +960,7 @@ def parse_static_value(value: str, prop_type: str):
 			return f"{value}"
 
 
-def get_interpreted_prop_value(prop, data_key, map_of_inherited_props):
+def get_interpreted_prop_value(prop, data_key, map_of_prop_values):
 	prop_type = prop["type"]
 	prop_is_standard = prop.get("isStandard", False)
 	prop_value = prop.get("value")
@@ -981,7 +978,7 @@ def get_interpreted_prop_value(prop, data_key, map_of_inherited_props):
 			)
 		return prop_value
 	elif prop_type == "inherited":
-		values = map_of_inherited_props.get(prop_value, [])
+		values = map_of_prop_values.get(prop_value, [])
 		return values[-1] if values else "undefined"
 
 

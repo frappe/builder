@@ -254,13 +254,6 @@ export function useCanvasUtils(
 		}
 		const nextSibling = block.getSiblingBlock("next");
 		if (canvasStore.activeCanvas?.activeBreakpoint === "desktop" || force) {
-			const listOfInheritedProps = [];
-			for (const prop in block.props) {
-				if (block.props[prop].type === "inherited" && block.props[prop].value) {
-					listOfInheritedProps.push(block.props[prop].value);
-				}
-			}
-			blockController.updateBlockPropsDependencyForAncestor(listOfInheritedProps, "remove", block);
 			parentBlock.removeChild(block);
 		} else {
 			block.toggleVisibility(false);

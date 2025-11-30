@@ -52,7 +52,6 @@
 										class="flex-shrink-0 bg-transparent text-xs"
 										variant="subtle"
 										icon="edit-2"
-										:disabled="Boolean(value.usedByCount) || false"
 										@click.stop="
 											() => {
 												popupMode = 'edit';
@@ -70,7 +69,6 @@
 										class="flex-shrink-0 bg-transparent text-xs"
 										variant="subtle"
 										icon="x"
-										:disabled="Boolean(value.usedByCount) || false"
 										@click="deleteObjectKey(key as string)" />
 								</div>
 							</div>
@@ -190,7 +188,6 @@ const propsEditor = ref<HTMLElement | null>(null);
 
 const emit = defineEmits({
 	"update:obj": (obj: BlockProps) => true,
-	"update:ancestorUpdateDependency": (propKey: string, action: "add" | "remove") => true,
 });
 
 const addProp = async (name: string, value: BlockProps[string]) => {
@@ -199,9 +196,6 @@ const addProp = async (name: string, value: BlockProps[string]) => {
 	popupMode.value = "edit";
 	keyBeingEdited.value = name;
 	emit("update:obj", mapToObject(map));
-	if (value.type === "inherited" && value.value) {
-		emit("update:ancestorUpdateDependency", value.value, "add");
-	}
 	return map;
 };
 
@@ -213,10 +207,6 @@ const clearObjectValue = (map: Map<string, BlockProps[string]>, key: string) => 
 		value: null,
 		type: "static",
 	});
-
-	if (oldValue?.type == "inherited" && oldValue?.value) {
-		emit("update:ancestorUpdateDependency", oldValue.value, "remove");
-	}
 
 	return map;
 };
@@ -244,12 +234,6 @@ const updateObjectValue = (
 		type: type as BlockProps[string]["type"],
 	});
 
-	if (path && type === "inherited") {
-		emit("update:ancestorUpdateDependency", path, "add");
-	}
-	if (oldPath && oldType === "inherited") {
-		emit("update:ancestorUpdateDependency", oldPath, "remove");
-	}
 	return map;
 };
 
@@ -301,7 +285,6 @@ const deleteObjectKey = (key: string) => {
 	const path = value?.value;
 	map.delete(key);
 	emit("update:obj", mapToObject(map));
-	if (path) emit("update:ancestorUpdateDependency", path, "remove");
 };
 
 watch([keyBeingEdited, () => props.obj], () => {

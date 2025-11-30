@@ -19,7 +19,6 @@ declare type BlockProps = Record<
 	{
 		type: "dynamic" | "static" | "inherited";
 		value: string?;
-		usedByCount?: number;
 		isStandard?: boolean;
 		standardOptions?: BlockPropsStandardOptions;
 	}

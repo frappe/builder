@@ -21,10 +21,6 @@ const propsSection = [
 		searchKeyWords: "Props, Interface Props, Properties, Block Props, Block Properties",
 		events: {
 			"update:obj": (obj: BlockProps) => blockController.setBlockProps(obj), // TODO: race condition?
-			"update:ancestorUpdateDependency": (
-				propKey: string,
-				action: "add" | "remove", // TODO: better name?
-			) => blockController.updateBlockPropsDependencyForAncestor(propKey, action),
 		},
 	},
 ];
