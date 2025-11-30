@@ -53,11 +53,12 @@ export function useBuilderEvents(
 	);
 
 	useEventListener(document, "copy", (e) => {
+		if (isTargetEditable(e) || canvasStore.editableBlock) return;
 		copySelectedBlocksToClipboard(e);
 	});
 
 	useEventListener(document, "cut", (e) => {
-		if (isTargetEditable(e)) return;
+		if (isTargetEditable(e) || canvasStore.editableBlock) return;
 		copySelectedBlocksToClipboard(e);
 		if (canvasStore.activeCanvas?.selectedBlocks.length) {
 			for (const block of canvasStore.activeCanvas?.selectedBlocks) {
@@ -134,7 +135,13 @@ export function useBuilderEvents(
 
 				block.innerHTML = text;
 
-				const parentBlock = blockController.getSelectedBlocks()[0];
+				const selectedBlocks = blockController.getSelectedBlocks();
+				let parentBlock = selectedBlocks.length ? selectedBlocks[0] : null;
+
+				while (parentBlock && !parentBlock.canHaveChildren()) {
+					parentBlock = parentBlock.getParentBlock();
+				}
+
 				if (parentBlock) {
 					parentBlock.addChild(block);
 				} else {
@@ -403,7 +410,7 @@ export function useBuilderEvents(
 				webComponent.reload();
 				webPages.fetchOne.submit(pageStore.activePage?.name).then((doc: BuilderPage[]) => {
 					if (currentModified !== doc[0]?.modified) {
-						pageStore.setPage(route.params.pageId as string, false);
+						pageStore.setPage(route.params.pageId as string, false, route.query);
 					}
 				});
 			}

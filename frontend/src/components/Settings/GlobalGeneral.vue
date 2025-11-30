@@ -76,8 +76,8 @@
 <script setup lang="ts">
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import Switch from "@/components/Controls/Switch.vue";
+import { allWebPages } from "@/data/allWebPages";
 import { builderSettings } from "@/data/builderSettings";
-import { webPages } from "@/data/webPage";
 import { websiteSettings } from "@/data/websiteSettings";
 import useBuilderStore from "@/stores/builderStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
@@ -87,8 +87,8 @@ import ImageUploader from "../Controls/ImageUploader.vue";
 const builderStore = useBuilderStore();
 
 const routeOptions = computed(() => {
-	return webPages.data
-		.filter((page: BuilderPage) => {
+	return allWebPages.data
+		?.filter((page: BuilderPage) => {
 			return page.route && !page.dynamic_route;
 		})
 		.map((page: BuilderPage) => {
