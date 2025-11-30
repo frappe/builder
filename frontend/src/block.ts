@@ -99,7 +99,7 @@ class Block implements BlockOptions {
 		this.tabletStyles = reactive(options.tabletStyles || {});
 		this.attributes = reactive(options.attributes || {});
 		this.dynamicValues = reactive(options.dynamicValues || []);
-		this.blockScript = options.blockScript || "";
+		this.blockScript = reactive(options.blockScript || "");
 		this.props = reactive(options.props || {});
 
 		this.blockName = options.blockName;
