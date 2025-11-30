@@ -613,7 +613,7 @@ def get_block_html(blocks):
 					next_default_props = loop_vars
 
 					loop_var = ", ".join(loop_vars) # `item` for array and `key, value` for object
-					_key = f"std_props['{_key}']"
+					_key = f"std_props['{escape_single_quotes(_key)}']"
 
 					if len(loop_vars) > 1: # object repeater
 						_key = f"{_key}.items()"
@@ -867,7 +867,7 @@ def set_dynamic_content_placeholder(block, data_key=False):
 		if dynamic_value_doc and dynamic_value_doc.get("key"):
 			key = ""
 			if(dynamic_value_doc.get("comesFrom") == "props"):
-				key = f"props['{dynamic_value_doc.get('key')}']"
+				key = f"props['{escape_single_quotes(dynamic_value_doc.get('key'))}']"
 			else:
 				key = f"{extract_data_key(data_key)}.{dynamic_value_doc.get('key')}" if data_key else dynamic_value_doc.get("key")
 				if data_key:
