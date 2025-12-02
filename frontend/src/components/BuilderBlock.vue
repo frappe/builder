@@ -288,14 +288,16 @@ watch(
 		() => Boolean(builderSettings.doc?.execute_block_scripts_in_editor),
 	],
 	() => {
-		saferExecuteBlockScript(props.block.blockId, props.block.getBlockScript(), allResolvedProps);
+		if (builderSettings.doc?.execute_block_scripts_in_editor) {
+			saferExecuteBlockScript(props.block.blockId, props.block.getBlockScript(), allResolvedProps.value);
+		}
 	},
 	{ deep: true },
 );
 
 onMounted(() => {
 	if (builderSettings.doc?.execute_block_scripts_in_editor) {
-		saferExecuteBlockScript(props.block.blockId, props.block.getBlockScript(), allResolvedProps);
+		saferExecuteBlockScript(props.block.blockId, props.block.getBlockScript(), allResolvedProps.value);
 	}
 });
 
