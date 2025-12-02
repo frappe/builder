@@ -53,8 +53,8 @@ const collectionOptions = [
 		},
 		searchKeyWords: "Collection, Repeater, Dynamic Collection, Dynamic Repeater",
 		events: {
-			"update:modelValue": (selectedOption: { label: string; value: string }) => {
-				blockController.setDataKey("key", selectedOption?.value);
+			"update:modelValue": (selectedOption: string) => {
+				blockController.setDataKey("key", selectedOption);
 			},
 		},
 	},
