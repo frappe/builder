@@ -11,7 +11,7 @@
 				<ul class="m-0 list-none p-0">
 					<li v-if="selectedKey && !filteredItems.includes(selectedKey)">
 						<div
-							class="w-full truncate rounded bg-surface-gray-3 p-2 text-left font-mono text-p-sm text-ink-gray-9"
+							class="w-full cursor-pointer truncate rounded bg-surface-gray-3 p-2 text-left font-mono text-p-sm text-ink-gray-9"
 							@click.stop="selectAndSetKey(selectedKey)">
 							{{ selectedKey }}
 							<p class="truncate text-xs text-ink-gray-5" :class="{ italic: getValue(selectedKey) == null }">
@@ -21,7 +21,7 @@
 					</li>
 					<li v-for="(item, index) in filteredItems" :key="index">
 						<div
-							class="w-full truncate rounded p-2 text-left font-mono text-p-sm text-ink-gray-7 hover:bg-surface-gray-2"
+							class="w-full cursor-pointer truncate rounded p-2 text-left font-mono text-p-sm text-ink-gray-7 hover:bg-surface-gray-2"
 							:class="{ 'bg-surface-gray-3 text-ink-gray-9': selectedKey === item }"
 							@click.stop="selectAndSetKey(item)">
 							{{ item }}

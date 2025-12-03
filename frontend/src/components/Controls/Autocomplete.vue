@@ -5,7 +5,7 @@
 		open-on-click
 		open-on-focus
 		:reset-search-term-on-blur="false">
-		<div class="relative">
+		<div class="relative" ref="containerRef">
 			<div
 				class="group form-input flex h-7 flex-1 items-center gap-2 rounded border-outline-gray-1 bg-surface-gray-1 p-0 text-sm text-ink-gray-8 transition-colors focus-within:ring-2 focus-within:ring-outline-gray-3 hover:border-outline-gray-2">
 				<div v-if="$slots.prefix" class="flex items-center pl-2">
@@ -43,7 +43,7 @@
 						</ComboboxLabel>
 						<ComboboxItem
 							v-else
-							:value="option"
+							:value="option.value"
 							:disabled="option.disabled"
 							class="group flex cursor-default select-none items-center gap-2 rounded px-2 py-1.5 text-sm text-ink-gray-9 transition-colors data-[disabled]:pointer-events-none data-[highlighted]:bg-surface-gray-1 data-[disabled]:opacity-50">
 							<component v-if="option.prefix" :is="option.prefix" class="h-4 w-4 flex-shrink-0" />
@@ -125,6 +125,7 @@ const emit = defineEmits<{
 	blur: [];
 }>();
 
+const containerRef = ref<HTMLElement | null>(null);
 const isOpen = ref(false);
 const searchQuery = ref("");
 const asyncOptions = ref<Option[]>([]);
@@ -173,6 +174,10 @@ const clearSelection = () => {
 const handleEnter = (event: KeyboardEvent) => {
 	if (!props.allowArbitraryValue) return;
 
+	if (containerRef.value?.querySelector("[data-highlighted]")) {
+		return;
+	}
+
 	const inputValue = (event.target as HTMLInputElement)?.value?.trim();
 	if (inputValue) {
 		event.preventDefault();
@@ -192,7 +197,7 @@ const handleBlur = (event: FocusEvent) => {
 	emit("blur");
 };
 
-watch(searchQuery, (newQuery) => props.getOptions && refreshOptions(newQuery));
+watch(searchQuery, (newQuery: string) => props.getOptions && refreshOptions(newQuery));
 
 watch(
 	() => props.modelValue,

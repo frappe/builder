@@ -415,7 +415,7 @@ export function useBuilderEvents(
 				webComponent.reload();
 				webPages.fetchOne.submit(pageStore.activePage?.name).then((doc: BuilderPage[]) => {
 					if (currentModified !== doc[0]?.modified) {
-						pageStore.setPage(route.params.pageId as string, false);
+						pageStore.setPage(route.params.pageId as string, false, route.query);
 					}
 				});
 			}
