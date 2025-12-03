@@ -7,7 +7,7 @@ type CanvasState = {
 	block: string;
 	selectedBlockIds: Set<string>;
 };
-type PauseId = string & { __brand: "PauseId" };
+export type PauseId = string & { __brand: "PauseId" };
 
 const CAPACITY = 500;
 const DEBOUNCE_DELAY = 100;

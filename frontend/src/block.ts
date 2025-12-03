@@ -829,7 +829,7 @@ class Block implements BlockOptions {
 		nextTick(() => {
 			if (child) {
 				child.selectBlock();
-				pauseId && canvasStore.activeCanvas?.history?.resume(pauseId, true);
+				pauseId && canvasStore.activeCanvas?.history?.resume(pauseId, true, true);
 			}
 		});
 	}
