@@ -35,4 +35,10 @@ declare global {
 		is_developer_mode?: boolean;
 	}
 }
-window.is_developer_mode = process.env.NODE_ENV === "development";
+
+if (window.is_developer_mode && typeof window.is_developer_mode === "string") {
+	window.is_developer_mode =
+		window.is_developer_mode === "1" ||
+		window.is_developer_mode === "True" ||
+		(window.is_developer_mode as string).startsWith("{{");
+}

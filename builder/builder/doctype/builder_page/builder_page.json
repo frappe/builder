@@ -15,8 +15,9 @@
   "route",
   "dynamic_route",
   "column_break_ymjg",
+  "is_standard",
   "is_template",
-  "template_name",
+  "module",
   "section_break_ujsp",
   "blocks",
   "draft_blocks",
@@ -104,7 +105,7 @@
   },
   {
    "default": "0",
-   "description": "Map route parameters into form variables. Example <code>/profile/&lt;user&gt;</code>",
+   "description": "Map route parameters into form variables. Example <code>/profile/:user</code>",
    "fieldname": "dynamic_route",
    "fieldtype": "Check",
    "label": "Dynamic Route"
@@ -170,13 +171,6 @@
    "label": "Is Template"
   },
   {
-   "depends_on": "is_template",
-   "fieldname": "template_name",
-   "fieldtype": "Data",
-   "label": "Template Name",
-   "mandatory_depends_on": "is_template"
-  },
-  {
    "fieldname": "section_break_shab",
    "fieldtype": "Section Break"
   },
@@ -232,11 +226,25 @@
    "fieldtype": "Code",
    "label": "Body HTML",
    "options": "HTML"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_standard",
+   "fieldtype": "Check",
+   "label": "Is Standard"
+  },
+  {
+   "depends_on": "is_standard",
+   "fieldname": "module",
+   "fieldtype": "Link",
+   "label": "Module",
+   "mandatory_depends_on": "is_standard",
+   "options": "Module Def"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-20 12:22:40.697232",
+ "modified": "2025-09-08 19:12:34.734581",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

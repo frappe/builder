@@ -54,6 +54,7 @@ const showResizer = computed(() => {
 	return (
 		!props.block.isRoot() &&
 		!props.editable &&
+		!props.readonly &&
 		!canvasStore.isDragging &&
 		isBlockSelected.value &&
 		!blockController.multipleBlocksSelected() &&
@@ -69,11 +70,13 @@ const props = withDefaults(
 		target: HTMLElement | SVGElement;
 		editable?: boolean;
 		isSelected?: boolean;
+		readonly?: boolean;
 	}>(),
 	{
 		breakpoint: "desktop",
 		editable: false,
 		isSelected: false,
+		readonly: false,
 	},
 );
 
@@ -90,6 +93,7 @@ const showPaddingHandler = computed(() => {
 		!resizing.value &&
 		!canvasStore.isDragging &&
 		!props.editable &&
+		!props.readonly &&
 		!blockController.multipleBlocksSelected() &&
 		!props.block.isSVG() &&
 		(!props.block.isText() || (props.block.isLink() && props.block.hasChildren()))
@@ -103,6 +107,7 @@ const showMarginHandler = computed(() => {
 		!canvasStore.isDragging &&
 		!resizing.value &&
 		!props.editable &&
+		!props.readonly &&
 		!blockController.multipleBlocksSelected() &&
 		(!props.block.isText() || (props.block.isLink() && props.block.hasChildren()))
 	);
@@ -116,6 +121,7 @@ const showBorderRadiusHandler = computed(() => {
 		!props.block.isHTML() &&
 		!props.block.isSVG() &&
 		!props.editable &&
+		!props.readonly &&
 		!resizing.value &&
 		!canvasStore.isDragging &&
 		!blockController.multipleBlocksSelected()
@@ -170,6 +176,7 @@ const getStyleClasses = computed(() => {
 	if (
 		isBlockSelected.value &&
 		!props.editable &&
+		!props.readonly &&
 		!props.block.isRoot() &&
 		!props.block.isRepeater() &&
 		!canvasStore.isDragging
@@ -192,7 +199,7 @@ watch(
 );
 
 const movable = computed(() => {
-	return props.block.isMovable();
+	return props.block.isMovable() && !props.readonly;
 });
 
 onMounted(() => {
@@ -200,7 +207,7 @@ onMounted(() => {
 });
 
 const handleClick = (ev: MouseEvent) => {
-	if (props.editable) return;
+	if (props.editable || props.readonly) return;
 	if (preventCLick.value) {
 		preventCLick.value = false;
 		return;
@@ -225,12 +232,13 @@ const handleClick = (ev: MouseEvent) => {
 
 // dispatch drop event to the target block
 const handleDrop = (ev: DragEvent) => {
-	if (props.editable) return;
+	if (props.editable || props.readonly) return;
 	const dropEvent = new DragEvent("drop", ev);
 	props.target.dispatchEvent(dropEvent);
 };
 
 const handleDoubleClick = (ev: MouseEvent) => {
+	if (props.readonly) return;
 	if (props.block.isHTML()) {
 		canvasStore.editHTML(props.block);
 		return;
@@ -242,6 +250,7 @@ const handleDoubleClick = (ev: MouseEvent) => {
 };
 
 const handleMove = (ev: MouseEvent) => {
+	if (props.readonly) return;
 	if (builderStore.mode === "text") {
 		canvasStore.editableBlock = props.block;
 	}
