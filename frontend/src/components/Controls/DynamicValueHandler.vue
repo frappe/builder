@@ -197,7 +197,7 @@ const filteredItems = computed(() => {
 			item.key.toLowerCase().includes(query) ||
 			String(getDataScriptValue(item.key)).toLowerCase().includes(query) ||
 			String(
-				getPropValue(item.key, props.block || blockController.getFirstSelectedBlock(), getDataScriptValue),
+				getPropValue(item.key, props.block || blockController.getFirstSelectedBlock(), getDataScriptValue, defaultProps.value),
 			)
 				.toLowerCase()
 				.includes(query),

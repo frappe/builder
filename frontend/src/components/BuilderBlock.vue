@@ -107,6 +107,10 @@ const classes = computed(() => {
 	];
 });
 
+const hasBlockProps = computed(() => {
+	return props.defaultProps || Object.keys(props.block.getBlockProps()).length > 0;
+});
+
 const attributes = computed(() => {
 	const attribs = { ...props.block.getAttributes(), ...attrs } as { [key: string]: any };
 	if (
@@ -123,15 +127,15 @@ const attributes = computed(() => {
 		attribs.defaultProps = props.defaultProps;
 	}
 
-	if (props.data) {
-		const data = props.data; // to "freeze" props.data for getDataScriptValue
+	if (props.data || hasBlockProps.value) {
+		const data = props.data || {}; // to "freeze" props.data for getDataScriptValue
 		const getDataScriptValue = (path: string): any => {
 			return getDataForKey(data, path);
 		};
 		if (props.block.getDataKey("type") === "attribute") {
 			let value;
 			if (props.block.getDataKey("comesFrom") === "props") {
-				value = getPropValue(props.block.getDataKey("key") as string, props.block, getDataScriptValue);
+				value = getPropValue(props.block.getDataKey("key") as string, props.block, getDataScriptValue, props.defaultProps);
 			} else {
 				value = getDataScriptValue(props.block.getDataKey("key") as string);
 			}
@@ -146,7 +150,7 @@ const attributes = computed(() => {
 				const property = dataKeyObj.property as string;
 				let value;
 				if (dataKeyObj.comesFrom === "props") {
-					value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue);
+					value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue, props.defaultProps);
 				} else {
 					value = getDataScriptValue(dataKeyObj.key as string);
 				}
@@ -173,13 +177,18 @@ const target = computed(() => {
 
 const styles = computed(() => {
 	let dynamicStyles = {} as { [key: string]: string };
-	if (props.data) {
+	if (props.data || hasBlockProps.value) {
 		if (props.block.getDataKey("type") === "style") {
+			let value;
+			if (props.block.getDataKey("comesFrom") === "props") {
+				value = getPropValue(props.block.getDataKey("key") as string, props.block, (path: string) => {
+					return getDataForKey(props.data as Object, path);
+				}, props.defaultProps);
+			} else {
+				value = getDataForKey(props.data as Object, props.block.getDataKey("key") as string);
+			}
 			dynamicStyles = {
-				[props.block.getDataKey("property") as string]: getDataForKey(
-					props.data,
-					props.block.getDataKey("key"),
-				),
+				[props.block.getDataKey("property") as string]: value,
 			};
 		}
 		props.block.dynamicValues
@@ -188,7 +197,15 @@ const styles = computed(() => {
 			})
 			?.forEach((dataKeyObj: BlockDataKey) => {
 				const property = dataKeyObj.property as string;
-				dynamicStyles[property] = getDataForKey(props.data as Object, dataKeyObj.key as string);
+				let value;
+				if (dataKeyObj.comesFrom === "props") {
+					value = getPropValue(dataKeyObj.key as string, props.block, (path: string) => {
+						return getDataForKey(props.data as Object, path);
+					}, props.defaultProps);
+				} else {
+					value = getDataForKey(props.data as Object, dataKeyObj.key as string);
+				}
+				dynamicStyles[property] = value ?? dynamicStyles[property];
 			});
 	}
 

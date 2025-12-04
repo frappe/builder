@@ -13,9 +13,13 @@ const props = defineProps<{
 	defaultProps?: Record<string, unknown> | null;
 }>();
 
+const hasBlockProps = computed(() => {
+	return props.defaultProps || Object.keys(props.block.getBlockProps()).length > 0;
+});
+
 const getDynamicContent = () => {
 	let innerHTML = null as string | null;
-	if (props.data || props.defaultProps) {
+	if (props.data || hasBlockProps.value) {
 		const data = props.data; // to "freeze" props.data for getDataScriptValue
 		const getDataScriptValue = (path: string): any => {
 			return getDataForKey(data || {}, path);

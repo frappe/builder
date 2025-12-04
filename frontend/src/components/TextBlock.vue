@@ -263,9 +263,13 @@ const FontFamilyPasteRule = Extension.create({
 	},
 });
 
+const hasBlockProps = computed(() => {
+	return props.defaultProps || Object.keys(props.block.getBlockProps()).length > 0;
+});
+
 const textContent = computed(() => {
 	let innerHTML = props.block.getInnerHTML();
-	if (props.data || props.defaultProps) {
+	if (props.data || hasBlockProps.value) {
 		const dynamicContent = getDynamicContent();
 		if (dynamicContent) {
 			innerHTML = dynamicContent;
