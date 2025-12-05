@@ -13,6 +13,7 @@ import {
 } from "@/utils/helpers";
 import { useDropZone } from "@vueuse/core";
 import { Ref } from "vue";
+import blockController from "./blockController";
 
 const canvasStore = useCanvasStore();
 const componentStore = useComponentStore();
@@ -288,6 +289,9 @@ export function useCanvasDropZone(
 
 	const handleFontFileDrop = async (file: File) => {
 		const result = await uploadUserFont(file, { confirmBeforeUpload: true });
+		if (result && blockController.isBlockSelected()) {
+			blockController.setFontFamily(result.fontName);
+		}
 		if (result?.uploaded) {
 			posthog.capture("builder_font_uploaded");
 		}
