@@ -19,7 +19,7 @@ import {
 	isTargetEditable,
 	showDialog,
 	triggerCopyEvent,
-	uploadImage,
+	uploadBuilderAsset,
 } from "@/utils/helpers";
 import { useEventListener, useStorage } from "@vueuse/core";
 import { Ref } from "vue";
@@ -78,7 +78,7 @@ export function useBuilderEvents(
 			e.preventDefault();
 			const file = clipboardItems.find((item) => item.type.includes("image"))?.getAsFile();
 			if (file) {
-				uploadImage(file).then((res: { fileURL: string; fileName: string }) => {
+				uploadBuilderAsset(file).then((res: { fileURL: string; fileName: string }) => {
 					const selectedBlocks = blockController.getSelectedBlocks();
 					const parentBlock = selectedBlocks.length
 						? selectedBlocks[0]

@@ -3,9 +3,17 @@ import useBlockTemplateStore from "@/stores/blockTemplateStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import { posthog } from "@/telemetry";
-import { getBlockCopy, getBlockInstance, getImageBlock, getVideoBlock, uploadImage } from "@/utils/helpers";
+import {
+	getBlockCopy,
+	getBlockInstance,
+	getImageBlock,
+	getVideoBlock,
+	uploadBuilderAsset,
+	uploadUserFont,
+} from "@/utils/helpers";
 import { useDropZone } from "@vueuse/core";
 import { Ref } from "vue";
+import blockController from "./blockController";
 
 const canvasStore = useCanvasStore();
 const componentStore = useComponentStore();
@@ -232,7 +240,15 @@ export function useCanvasDropZone(
 
 	const handleFileDrop = (files: File[], ev: DragEvent) => {
 		let { parentBlock, index } = canvasStore.dropTarget;
-		uploadImage(files[0]).then((fileDoc: { fileURL: string; fileName: string }) => {
+		const file = files[0];
+
+		// Handle font files separately
+		if (file.name.match(/\.(woff2?|ttf|otf|eot)$/)) {
+			handleFontFileDrop(file);
+			return;
+		}
+
+		uploadBuilderAsset(file).then((fileDoc: { fileURL: string; fileName: string }) => {
 			if (!parentBlock) return;
 
 			if (fileDoc.fileName.match(/\.(mp4|webm|ogg|mov)$/)) {
@@ -245,7 +261,7 @@ export function useCanvasDropZone(
 				return;
 			}
 
-			if (parentBlock.isImage()) {
+			if (parentBlock.isImage() && files[0].type.startsWith("image/")) {
 				parentBlock.setAttribute("src", fileDoc.fileURL);
 				posthog.capture("builder_image_uploaded", {
 					type: "image-replace",
@@ -269,6 +285,16 @@ export function useCanvasDropZone(
 				});
 			}
 		});
+	};
+
+	const handleFontFileDrop = async (file: File) => {
+		const result = await uploadUserFont(file, { confirmBeforeUpload: true });
+		if (result && blockController.isBlockSelected()) {
+			blockController.setFontFamily(result.fontName);
+		}
+		if (result?.uploaded) {
+			posthog.capture("builder_font_uploaded");
+		}
 	};
 
 	return { isOverDropZone };
