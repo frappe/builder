@@ -241,11 +241,6 @@ async function updateOptions() {
 // making it fixed makes it float above Popver container
 const getFixedStyles = () => {
 	if (props.makeFixed && props.fixTo) {
-		console.log(
-			"calculating fixed styles",
-			comboboxInput.value,
-			comboboxInput.value?.$el.closest(props.fixTo),
-		);
 		const fixedToElRect = (
 			comboboxInput.value?.$el.closest(props.fixTo) as HTMLElement
 		)?.getBoundingClientRect();
