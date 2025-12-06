@@ -898,7 +898,7 @@ function triggerCopyEvent() {
 	document.execCommand("copy");
 }
 
-const getValueForInheritedProp = (propName: string, block: Block, getDatScriptValue: (path: string) => any): any => {
+const getValueForInheritedProp = (propName: string, block: Block, getDataScriptValue: (path: string) => any): any => {
 	let parent = block.getParentBlock();
 	while (parent) {
 		const parentProps = parent.getBlockProps();
@@ -906,7 +906,7 @@ const getValueForInheritedProp = (propName: string, block: Block, getDatScriptVa
 		if (matchingProp) {
 			if (matchingProp.type !== "inherited") {
 				if (matchingProp.type === "dynamic" && matchingProp.value) {
-					return getDatScriptValue(matchingProp.value);
+					return getDataScriptValue(matchingProp.value);
 				} else {
 					if (matchingProp.isStandard && matchingProp.standardOptions) {
 						if (matchingProp.standardOptions.type !== "string" && matchingProp.standardOptions.type !== "select") {
@@ -924,7 +924,7 @@ const getValueForInheritedProp = (propName: string, block: Block, getDatScriptVa
 					return matchingProp.value;
 				}
 			} else {
-				return getValueForInheritedProp(propName, parent, getDatScriptValue);
+				return getValueForInheritedProp(propName, parent, getDataScriptValue);
 			}
 		}
 		parent = parent.getParentBlock();
@@ -935,7 +935,7 @@ const getValueForInheritedProp = (propName: string, block: Block, getDatScriptVa
 const getPropValue = (
 	propName: string,
 	block: Block,
-	getDatScriptValue: (path: string) => any,
+	getDataScriptValue: (path: string) => any,
 	defaultProps?: Record<string, any> | null,
 ): any => {
 	if (defaultProps && defaultProps[propName] !== undefined) {
@@ -945,10 +945,10 @@ const getPropValue = (
 	if (blockProps[propName]) {
 		const prop = blockProps[propName];
 		if (prop.type === "dynamic" && prop.value) {
-			return getDatScriptValue(prop.value);
+			return getDataScriptValue(prop.value);
 		} else if (prop.type === "inherited") {
 			if (prop.value) {
-				return getValueForInheritedProp(prop.value, block, getDatScriptValue);
+				return getValueForInheritedProp(prop.value, block, getDataScriptValue);
 			}
 		} else {
 			if (prop.isStandard && prop.standardOptions) {
