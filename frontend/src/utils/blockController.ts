@@ -319,13 +319,13 @@ const blockController = {
 		return block;
 	},
 	getBlockScript: () => {
-		return blockController.getSelectedBlocks()[0]?.getBlockScript(); // TODO: change to first selected block
+		return blockController.getFirstSelectedBlock()?.getBlockScript();
 	},
 	setBlockScript: (script: string) => {
-		blockController.getSelectedBlocks()[0]?.setBlockScript(script);
+		blockController.getFirstSelectedBlock()?.setBlockScript(script);
 	},
 	getBlockProps: () => {
-		return blockController.getSelectedBlocks()[0]?.getBlockProps();
+		return blockController.getFirstSelectedBlock()?.getBlockProps();
 	},
 	setBlockProp: (key: string, value: string) => {
 		const allProps = blockController.getBlockProps();
