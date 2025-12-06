@@ -60,27 +60,22 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 };
 
 const getStandardProps = (allProps: BlockProps) => {
-	console.log("all props: ", allProps);
 	const standardProps: BlockProps = {};
 	for (const [propKey, propDetails] of Object.entries(allProps || {})) {
 		if (propDetails.isStandard) {
 			standardProps[propKey] = propDetails;
 		}
 	}
-	console.log("standard props: ", standardProps);
 	return standardProps;
 };
 
 const getStandardPropsInputSection = () => {
 	const standardProps = getStandardProps(blockController.getBlockProps());
-	console;
 	const sections = [];
 	for (const [propKey, propDetails] of Object.entries(standardProps)) {
-		console.log({ propKey, propDetails });
 		const component = componentMap[propDetails.standardOptions?.type || "string"] || PropertyControl;
 		const getProps = () => {
 			const props = getPropsMap(propKey, propDetails);
-			console.log("props for standard prop input: ", props);
 			return props;
 		};
 		sections.push({
@@ -89,7 +84,6 @@ const getStandardPropsInputSection = () => {
 			searchKeyWords: propKey,
 		});
 	}
-	console.log("standard props sections: ", sections);
 	return sections;
 };
 
