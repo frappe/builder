@@ -6,7 +6,6 @@ import { useCanvasHistory } from "@/utils/useCanvasHistory";
 import { useElementBounding } from "@vueuse/core";
 import { nextTick, reactive, ref, Ref } from "vue";
 import { toast } from "vue-sonner";
-import blockController from "./blockController";
 
 const canvasStore = useCanvasStore();
 
