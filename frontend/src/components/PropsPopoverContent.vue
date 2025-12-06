@@ -120,19 +120,6 @@
 					standardPropOptions.options = options;
 				}" />
 		</template>
-		<div v-if="isStandardBool" class="flex flex-col gap-2">
-			<InputLabel>Depends on</InputLabel>
-			<PropsDependencyEditor
-				:available-std-props="{
-					sample_prop: 'string',
-					another_prop: 'number',
-					one_more_prop: 'boolean',
-					list_prop: 'array',
-					obj_prop: 'object',
-				}"
-				:obj="standardPropDependencyMap"
-				@update:obj="(obj) => (standardPropDependencyMap = obj)" />
-		</div>
 		<BuilderButton label="Save" variant="subtle" class="w-full flex-shrink-0" @click="save" />
 	</div>
 </template>
@@ -148,7 +135,6 @@ import Autocomplete from "@/components/Controls/Autocomplete.vue";
 
 import { computed, nextTick, reactive, ref, watch } from "vue";
 
-import PropsDependencyEditor from "@/components/PropsDependencyEditor.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
 
@@ -167,6 +153,7 @@ const props = withDefaults(
 		mode: "add" | "edit";
 		propName?: string | null;
 		propDetails?: BlockProps[string] | null;
+		closePopover?: () => void;
 	}>(),
 	{
 		mode: "add",
