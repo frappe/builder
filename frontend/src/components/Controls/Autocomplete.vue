@@ -245,7 +245,6 @@ const getFixedStyles = () => {
 			comboboxInput.value?.$el.closest(props.fixTo) as HTMLElement
 		)?.getBoundingClientRect();
 		const comboboxInputRect = comboboxInput.value?.$el.getBoundingClientRect();
-		console.log({ fixedToElRect, comboboxInputRect });
 		if (!fixedToElRect || !comboboxInputRect) {
 			return {};
 		}
