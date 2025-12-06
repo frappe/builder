@@ -1007,7 +1007,7 @@ const getStandardPropValue = (
  */
 
 function saferExecuteBlockScript(
-	blockId: string,
+	blockUid: string,
 	userScript: string,
 	props: Record<string, any> = {},
 ) {
@@ -1090,7 +1090,7 @@ function saferExecuteBlockScript(
 	};
 
 	const sandboxRoot = document.querySelector("[data-block-id='root']") as HTMLElement;
-	const thisElement = document.querySelector(`[data-block-id='${blockId}']`) as HTMLElement;
+	const thisElement = document.querySelector(`[data-block-uid='${blockUid}']`) as HTMLElement;
 
 	const proxiedRoot = wrap(sandboxRoot);
 	const proxiedThis = wrap(thisElement);

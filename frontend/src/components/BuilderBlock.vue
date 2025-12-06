@@ -305,7 +305,7 @@ watch(
 	],
 	() => {
 		if (builderSettings.doc?.execute_block_scripts_in_editor) {
-			saferExecuteBlockScript(props.block.blockId, props.block.getBlockScript(), allResolvedProps.value);
+			saferExecuteBlockScript(uid, props.block.getBlockScript(), allResolvedProps.value);
 		}
 	},
 	{ deep: true },
@@ -313,7 +313,7 @@ watch(
 
 onMounted(() => {
 	if (builderSettings.doc?.execute_block_scripts_in_editor) {
-		saferExecuteBlockScript(props.block.blockId, props.block.getBlockScript(), allResolvedProps.value);
+		saferExecuteBlockScript(uid, props.block.getBlockScript(), allResolvedProps.value);
 	}
 });
 
