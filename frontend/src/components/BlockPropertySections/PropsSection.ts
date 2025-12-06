@@ -26,7 +26,7 @@ const propsSection = [
 ];
 
 export default {
-	name: "Props",
+	name: "Block Props",
 	properties: propsSection,
 	collapsed: computed(() => {
 		return Object.keys(blockController.getBlockProps()).length === 0;

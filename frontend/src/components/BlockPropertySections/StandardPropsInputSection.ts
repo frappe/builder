@@ -94,7 +94,7 @@ const getStandardPropsInputSection = () => {
 };
 
 export default {
-	name: "Standard Props",
+	name: "Component Options",
 	properties: getStandardPropsInputSection,
 	collapsed: false,
 	condition: () =>
