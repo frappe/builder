@@ -14,17 +14,6 @@
 		</div>
 		<div class="mt-1 flex flex-col gap-3">
 			<CollapsibleSection
-				:sectionName="standardPropsInputSection.name"
-				v-if="showSectionDynamic(standardPropsInputSection)"
-				:key="standardPropsInputSection.name"
-				:sectionCollapsed="toValue(standardPropsInputSection.collapsed) && !builderStore.propertyFilter">
-				<template v-for="property in getFilteredPropertiesDynamic(standardPropsInputSection)">
-					<component :is="property.component" v-bind="property.getProps()" v-on="property.events || {}">
-						{{ property.innerText || "" }}
-					</component>
-				</template>
-			</CollapsibleSection>
-			<CollapsibleSection
 				:sectionName="section.name"
 				v-for="section in sections"
 				v-show="showSection(section)"
@@ -82,13 +71,9 @@ type BlockProperty = {
 
 type PropertySection = {
 	name: string;
-	properties: BlockProperty[];
+	properties: BlockProperty[] | (() => BlockProperty[]);
 	condition?: () => boolean;
 	collapsed?: boolean;
-};
-
-type PropertySectionDynamic = Omit<PropertySection, "properties"> & {
-	properties: () => BlockProperty[];
 };
 
 const searchInput = ref(null) as Ref<HTMLElement | null>;
@@ -105,7 +90,8 @@ const showSection = (section: PropertySection) => {
 };
 
 const getFilteredProperties = (section: PropertySection) => {
-	return section.properties.filter((property) => {
+	const properties = typeof section.properties === "function" ? section.properties() : section.properties;
+	return properties.filter((property) => {
 		let showProperty = true;
 		if (property.condition) {
 			showProperty = property.condition();
@@ -120,23 +106,9 @@ const getFilteredProperties = (section: PropertySection) => {
 	});
 };
 
-const getFilteredPropertiesDynamic = (section: PropertySectionDynamic) => {
-	const staticSection: PropertySection = {
-		...section,
-		properties: section.properties(),
-	};
-	return getFilteredProperties(staticSection);
-};
-
-const showSectionDynamic = (section: PropertySectionDynamic) => {
-	const staticSection: PropertySection = {
-		...section,
-		properties: section.properties(),
-	};
-	return showSection(staticSection);
-};
 
 const sections = [
+	standardPropsInputSection,
 	collectionOptionsSection,
 	linkSection,
 	layoutSection,
