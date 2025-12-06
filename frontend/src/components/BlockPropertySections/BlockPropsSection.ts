@@ -2,7 +2,7 @@ import PropsEditor from "../PropsEditor.vue";
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
 
-const propsSection = [
+const blockPropsSection = [
 	{
 		component: PropsEditor,
 		getProps: () => {
@@ -27,7 +27,7 @@ const propsSection = [
 
 export default {
 	name: "Block Props",
-	properties: propsSection,
+	properties: blockPropsSection,
 	collapsed: computed(() => {
 		return Object.keys(blockController.getBlockProps()).length === 0;
 	}),
