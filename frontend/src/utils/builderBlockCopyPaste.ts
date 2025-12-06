@@ -19,7 +19,6 @@ import { nextTick } from "vue";
 import { toast } from "vue-sonner";
 import { webPages } from "../data/webPage";
 import { BuilderClientScript } from "../types/Builder/BuilderClientScript";
-import blockController from "./blockController";
 
 type BuilderPageClientScriptRef = { builder_script: string; idx?: number };
 
