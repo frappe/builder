@@ -178,12 +178,13 @@ const target = computed(() => {
 const styles = computed(() => {
 	let dynamicStyles = {} as { [key: string]: string };
 	if (props.data || hasBlockProps.value) {
+		const getDataScriptValue = (path: string): any => {
+			return getDataForKey(props.data || {}, path);
+		};
 		if (props.block.getDataKey("type") === "style") {
 			let value;
 			if (props.block.getDataKey("comesFrom") === "props") {
-				value = getPropValue(props.block.getDataKey("key") as string, props.block, (path: string) => {
-					return getDataForKey(props.data as Object, path);
-				}, props.defaultProps);
+				value = getPropValue(props.block.getDataKey("key") as string, props.block, getDataScriptValue, props.defaultProps);
 			} else {
 				value = getDataForKey(props.data as Object, props.block.getDataKey("key") as string);
 			}
@@ -199,9 +200,7 @@ const styles = computed(() => {
 				const property = dataKeyObj.property as string;
 				let value;
 				if (dataKeyObj.comesFrom === "props") {
-					value = getPropValue(dataKeyObj.key as string, props.block, (path: string) => {
-						return getDataForKey(props.data as Object, path);
-					}, props.defaultProps);
+					value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue, props.defaultProps);
 				} else {
 					value = getDataForKey(props.data as Object, dataKeyObj.key as string);
 				}
