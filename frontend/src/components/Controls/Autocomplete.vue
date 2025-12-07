@@ -118,8 +118,8 @@ interface Props {
 	placeholder?: string;
 	showInputAsOption?: boolean;
 	actionButton?: ActionButton;
-		makeFixed?: boolean;
-		fixTo?: string;
+	makeFixed?: boolean;
+	fixTo?: string;
 	allowArbitraryValue?: boolean;
 }
 
@@ -127,7 +127,7 @@ const props = withDefaults(defineProps<Props>(), {
 	options: () => [],
 	placeholder: "Search",
 	showInputAsOption: false,
-		makeFixed: false,
+	makeFixed: false,
 	allowArbitraryValue: true,
 });
 
