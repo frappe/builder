@@ -1,7 +1,7 @@
 <template>
 	<div ref="propsEditor" class="flex flex-col gap-2">
 		<div class="flex flex-col gap-2 rounded-lg">
-			<template v-for="(value, key, index) in sortedObj" :key="index">
+			<template v-for="(value, key, index) in sortedProps" :key="index">
 				<div
 					:key="index"
 					class="prop-list-item relative flex w-full flex-col rounded-sm bg-surface-gray-2 p-2"
@@ -73,13 +73,18 @@
 								</div>
 							</div>
 						</template>
-						<template #body>
+						<template #body="{ open, close }">
 							<PropsPopoverContent
 								ref="popoverContentItemsRef"
 								mode="edit"
 								:propName="key as string"
 								:propDetails="value"
-								@update:prop="updateProp" />
+								@update:prop="
+									(prop) => {
+										updateProp(prop);
+										close();
+									}
+								" />
 						</template>
 					</Popover>
 				</div>
@@ -105,13 +110,13 @@
 						}
 					"></BuilderButton>
 			</template>
-			<template #body>
+			<template #body="{ open, close }">
 				<PropsPopoverContent
 					ref="popoverContentAddRef"
 					:mode="popupMode"
 					:propName="keyBeingEdited"
 					:propDetails="propDetailsOfKeyBeingEdited"
-					@add:prop="addProp"
+					@add:prop="(prop) => { addProp(prop); close(); }"
 					@update:prop="updateProp" />
 			</template>
 		</Popover>
@@ -167,7 +172,7 @@ const props = defineProps<{
 	description?: string;
 }>();
 
-const sortedObj = computed(() => {
+const sortedProps = computed(() => {
 	// Sort props: standard props at the front, then non-standard props
 	const entries = Object.entries(props.obj || {});
 	entries.sort((a, b) => {
@@ -190,11 +195,10 @@ const emit = defineEmits({
 	"update:obj": (obj: BlockProps) => true,
 });
 
-const addProp = async (name: string, value: BlockProps[string]) => {
+const addProp = async ({ name, value }: { name: string; value: BlockProps[string] }) => {
 	const map = new Map(Object.entries(props.obj));
 	map.set(name, value);
 	popupMode.value = "edit";
-	keyBeingEdited.value = name;
 	emit("update:obj", mapToObject(map));
 	return map;
 };
@@ -260,20 +264,27 @@ const updateStandardOptions = (map: Map<string, BlockProps[string]>, key: string
 	return map;
 };
 
-const updateProp = async (oldKey: string, newKey: string, value: BlockProps[string]) => {
+const updateProp = async ({
+	oldPropName,
+	newName,
+	newValue,
+}: {
+	oldPropName: string;
+	newName: string;
+	newValue: BlockProps[string];
+}) => {
 	let map = new Map(Object.entries(props.obj));
 
-	if (oldKey !== newKey) {
-		map = new Map(Object.entries(replaceKey(map, oldKey, newKey)));
+	if (oldPropName !== newName) {
+		map = new Map(Object.entries(replaceKey(map, oldPropName, newName)));
 	}
 
-	map = updateObjectValue(map, newKey, {
-		value: value.value,
-		type: value.type,
+	map = updateObjectValue(map, newName, {
+		value: newValue.value,
+		type: newValue.type,
 	});
-	map = updateIsStandard(map, newKey, value.isStandard || false);
-	map = updateStandardOptions(map, newKey, value.standardOptions || {});
-
+	map = updateIsStandard(map, newName, newValue.isStandard || false);
+	map = updateStandardOptions(map, newName, newValue.standardOptions || {});
 	emit("update:obj", mapToObject(map));
 
 	return map;

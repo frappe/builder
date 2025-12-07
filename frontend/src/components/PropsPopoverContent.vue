@@ -194,8 +194,8 @@ const autoCompleteRef = ref<typeof Autocomplete | null>(null);
 const optionsComponentRef = ref<any>(null);
 
 const emit = defineEmits({
-	"add:prop": (name: string, prop: BlockProps[string]) => true,
-	"update:prop": (oldPropName: string, newName: string, newProp: BlockProps[string]) => true,
+	"add:prop": ({ name, value }: { name: string; value: BlockProps[string] }) => true,
+	"update:prop": ({ oldPropName, newName, newValue }: {oldPropName: string, newName: string, newValue: BlockProps[string]}) => true,
 });
 
 const propTypes = computed(() => {
@@ -448,9 +448,9 @@ const save = async () => {
 			: undefined,
 	};
 	if (props.mode === "add") {
-		emit("add:prop", name.value, propValue);
+		emit("add:prop", { name: name.value, value: propValue });
 	} else {
-		emit("update:prop", props.propName!, name.value, propValue);
+		emit("update:prop", { oldPropName: props.propName!, newName: name.value, newValue: propValue });
 	}
 };
 defineExpose({ reset });
