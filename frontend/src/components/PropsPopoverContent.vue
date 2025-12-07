@@ -79,7 +79,8 @@
 					}
 				" />
 		</div>
-		<div v-if="!isStandardBool && isInFragmentMode" class="flex items-center justify-between">
+		<!-- Disabled for now-->
+		<div v-if="false && !isStandardBool && isInFragmentMode" class="flex items-center justify-between">
 			<InputLabel>Is Editable</InputLabel>
 			<OptionToggle
 				:options="[
