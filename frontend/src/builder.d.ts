@@ -9,7 +9,7 @@ declare interface BlockStyleMap {
 type BlockPropsStandardOptions = {
 	type: "number" | "string" | "boolean" | "select" | "array" | "object";
 	isRequired?: boolean;
-	defaultValue?: any;
+	// defaultValue?: any;
 	options?: Record<string, any>;
 	dependencies?: { [key: string]: any };
 }
