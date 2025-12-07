@@ -11,7 +11,7 @@ import {
 	kebabToCamelCase,
 	parseAndSetBackground,
 	setBoxSpacing,
-	uploadImage,
+	uploadBuilderAsset,
 } from "@/utils/helpers";
 import { Editor } from "@tiptap/vue-3";
 import { clamp } from "@vueuse/core";
@@ -124,7 +124,7 @@ class Block implements BlockOptions {
 				if (file) {
 					this.setAttribute("src", "");
 					options.src = "";
-					uploadImage(file, true).then((obj) => {
+					uploadBuilderAsset(file, true).then((obj) => {
 						this.setAttribute("src", obj.fileURL);
 					});
 				}
@@ -139,7 +139,7 @@ class Block implements BlockOptions {
 
 			if (file) {
 				this.setStyle("backgroundImage", "");
-				uploadImage(file, true).then((obj) => {
+				uploadBuilderAsset(file, true).then((obj) => {
 					this.setStyle("backgroundImage", `url(${obj.fileURL})`);
 				});
 			}
@@ -833,7 +833,7 @@ class Block implements BlockOptions {
 		nextTick(() => {
 			if (child) {
 				child.selectBlock();
-				pauseId && canvasStore.activeCanvas?.history?.resume(pauseId, true);
+				pauseId && canvasStore.activeCanvas?.history?.resume(pauseId, true, true);
 			}
 		});
 	}

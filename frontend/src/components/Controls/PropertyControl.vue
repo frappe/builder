@@ -163,6 +163,7 @@ import Input from "@/components/Controls/Input.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import CrossIcon from "@/components/Icons/Cross.vue";
 import blockController from "@/utils/blockController";
+import { extractNumberAndUnit, normalizeValueWithUnits } from "@/utils/helpers";
 import { Dropdown, FeatherIcon } from "frappe-ui";
 import type { Component } from "vue";
 import { computed, ref, useAttrs } from "vue";
@@ -250,10 +251,7 @@ const updateValue = (value: string | number | null | { label: string; value: str
 		value = value.value;
 	}
 	if (value && typeof value === "string") {
-		let [_, number, unit] = value.match(/([0-9]+)([a-z%]*)/) || ["", "", ""];
-		if (!unit && props.unitOptions.length && number) {
-			value = number + props.unitOptions[0];
-		}
+		value = normalizeValueWithUnits(value, props.unitOptions, props.styleProperty);
 	}
 	if (props.setModelValue) {
 		props.setModelValue(value as string);
@@ -264,7 +262,7 @@ const updateValue = (value: string | number | null | { label: string; value: str
 
 const handleMouseDown = (e: MouseEvent) => {
 	if (!props.enableSlider) return;
-	const number = ((modelValue.value + "" || "") as string).match(/([0-9]+)/)?.[0] || "0";
+	const { number } = extractNumberAndUnit(String(modelValue.value || ""));
 	const startY = e.clientY;
 	const startValue = Number(number);
 	const handleMouseMove = (e: MouseEvent) => {
@@ -291,10 +289,7 @@ const updateStateValue = (
 		value = value.value;
 	}
 	if (value && typeof value === "string") {
-		let [_, number, unit] = value.match(/([0-9]+)([a-z%]*)/) || ["", "", ""];
-		if (!unit && props.unitOptions.length && number) {
-			value = number + props.unitOptions[0];
-		}
+		value = normalizeValueWithUnits(value, props.unitOptions, props.styleProperty);
 	}
 	blockController.setStyle(`${state}:${props.styleProperty}`, value as string);
 };
@@ -314,6 +309,13 @@ const stateOptions = computed(() => {
 				.map((state: string) => ({
 					label: stateLabels[state] || state,
 					onClick: () => {
+						blockController.getSelectedBlocks().forEach((block) => {
+							if (!block.getStyle("transitionDuration")) {
+								block.setStyle("transitionDuration", "300ms");
+								block.setStyle("transitionTimingFunction", "ease");
+								block.setStyle("transitionProperty", "all");
+							}
+						});
 						blockController.setStyle(`${state}:${props.styleProperty}`, modelValue.value);
 					},
 				})),
@@ -353,7 +355,7 @@ const handleKeyDown = (e: KeyboardEvent, state?: string) => {
 
 const handleStateMouseDown = (e: MouseEvent, state: string) => {
 	if (!props.enableSlider) return;
-	const number = ((getStateValue(state) + "" || "") as string).match(/([0-9]+)/)?.[0] || "0";
+	const { number } = extractNumberAndUnit(String(getStateValue(state) || ""));
 	const startY = e.clientY;
 	const startValue = Number(number);
 	const handleMouseMove = (e: MouseEvent) => {
@@ -369,11 +371,10 @@ const handleStateMouseDown = (e: MouseEvent, state: string) => {
 };
 
 const incrementOrDecrement = (step: number, initialValue: null | number = null) => {
-	const value = modelValue.value + "" || "";
-	let [_, number, unit] = value.match(/([0-9]+)([a-z%]*)/) || ["", "", ""];
-	if (!unit && props.unitOptions.length && !isNaN(Number(number))) {
-		unit = props.unitOptions[0];
-	}
+	const value = String(modelValue.value || "");
+	const { number, unit: existingUnit } = extractNumberAndUnit(value);
+	const unit =
+		existingUnit || (props.unitOptions.length && !isNaN(Number(number)) ? props.unitOptions[0] : "");
 	let newValue = (initialValue != null ? Number(initialValue) : Number(number)) + step;
 	if (typeof props.minValue === "number" && newValue <= props.minValue) {
 		newValue = props.minValue;
@@ -385,11 +386,10 @@ const incrementOrDecrement = (step: number, initialValue: null | number = null) 
 };
 
 const incrementOrDecrementState = (state: string, step: number, initialValue: null | number = null) => {
-	const value = getStateValue(state) + "" || "";
-	let [_, number, unit] = value.match(/([0-9]+)([a-z%]*)/) || ["", "", ""];
-	if (!unit && props.unitOptions.length && !isNaN(Number(number))) {
-		unit = props.unitOptions[0];
-	}
+	const value = String(getStateValue(state) || "");
+	const { number, unit: existingUnit } = extractNumberAndUnit(value);
+	const unit =
+		existingUnit || (props.unitOptions.length && !isNaN(Number(number)) ? props.unitOptions[0] : "");
 	let newValue = (initialValue != null ? Number(initialValue) : Number(number)) + step;
 	if (typeof props.minValue === "number" && newValue <= props.minValue) {
 		newValue = props.minValue;

@@ -7,13 +7,13 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from "vue";
 
+import codeCompletions from "@/data/codeCompletions";
 import { createStartingState } from "@/utils/createCodeMirrorState";
 import { openSearchPanel } from "@codemirror/search";
 import { Compartment } from "@codemirror/state";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { useDark } from "@vueuse/core";
 import { EditorView } from "codemirror";
-import { createResource } from "frappe-ui";
 import { tomorrow } from "thememirror";
 
 const props = defineProps<{
@@ -39,12 +39,7 @@ const isDark = useDark({
 });
 
 const getPythonCompletions = async () => {
-	let completionsResource = createResource({
-		url: "builder.api.get_codemirror_completions",
-		method: "GET",
-	});
-	await completionsResource.fetch();
-	return completionsResource.data || {};
+	return codeCompletions.data || {};
 };
 
 const getEditorValue = () => {

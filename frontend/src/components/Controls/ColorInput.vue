@@ -19,7 +19,7 @@
 							<Autocomplete
 								class="[&>div>input]:pl-8"
 								:class="{
-									'[&>div>input]:font-mono [&>div>input]:text-xs [&>div>input]:text-ink-violet-1':
+									'[&>div>div>input]:text-xs [&>div>div>input]:text-ink-violet-1 [&>div>input]:font-mono':
 										isCssVariable,
 								}"
 								v-bind="events"
@@ -38,16 +38,10 @@
 										: undefined
 								"
 								@update:modelValue="
-									(val) => {
-										// if value is object, extract the value
-										if (typeof val === 'object' && val !== null) {
-											val = val.value;
-										}
-										// If it's a CSS variable, preserve it
+									(val: string | null) => {
 										if (typeof val === 'string' && (val.startsWith('var(--') || val.startsWith('--'))) {
 											emit('update:modelValue', val.startsWith('var(--') ? val : `var(${val})`);
 										} else {
-											// For direct color values, convert to RGB
 											const color = getRGB(val);
 											emit('update:modelValue', color);
 										}

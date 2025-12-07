@@ -9,6 +9,7 @@ const webPages = createListResource({
 		"page_name",
 		"preview",
 		"page_title",
+		"meta_image",
 		"creation",
 		"published",
 		"dynamic_route",

@@ -10,7 +10,7 @@
 					:route="route"
 					:customDateRange="customDateRange"
 					@update:range="(val) => (range = val)"
-					@update:route="(val) => (route = val?.value)"
+					@update:route="(val) => (route = val)"
 					@update:customDateRange="(val) => (customDateRange = val)" />
 			</template>
 		</AnalyticsOverview>
