@@ -1,7 +1,7 @@
 <template>
 	<div ref="propsEditor" class="flex flex-col gap-2">
 		<div class="flex flex-col gap-2 rounded-lg">
-			<template v-for="(value, key, index) in sortedProps" :key="index">
+			<template v-for="(value, name, index) in sortedProps" :key="index">
 				<div
 					:key="index"
 					class="prop-list-item relative flex w-full flex-col rounded-sm bg-surface-gray-2 p-2"
@@ -37,7 +37,7 @@
 									</div>
 									<div class="flex max-w-full flex-col gap-1">
 										<p class="text-sm font-medium text-ink-gray-8">
-											{{ key }}
+											{{ name }}
 										</p>
 										<p v-if="value.isStandard" class="text-xs text-ink-gray-6">
 											Std. - {{ value.standardOptions?.isRequired ? "Required" : "Optional" }}
@@ -61,7 +61,7 @@
 													keepProps: true,
 													keepType: false,
 												});
-												keyBeingEdited = key as string;
+												keyBeingEdited = name as string;
 												open();
 											}
 										" />
@@ -69,7 +69,7 @@
 										class="flex-shrink-0 bg-transparent text-xs"
 										variant="subtle"
 										icon="x"
-										@click="deleteObjectKey(key as string)" />
+										@click="deleteObjectKey(name as string)" />
 								</div>
 							</div>
 						</template>
@@ -77,7 +77,7 @@
 							<PropsPopoverContent
 								ref="popoverContentItemsRef"
 								mode="edit"
-								:propName="key as string"
+								:propName="name as string"
 								:propDetails="value"
 								@update:prop="
 									(prop) => {
