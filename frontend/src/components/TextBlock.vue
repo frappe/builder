@@ -186,6 +186,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
 import { setFontFromHTML } from "@/utils/fontManager";
 import { getDataForKey, getPropValue } from "@/utils/helpers";
+import type { PauseId } from "@/utils/useCanvasHistory";
 import { Color } from "@tiptap/extension-color";
 import { FontFamily } from "@tiptap/extension-font-family";
 import { Link } from "@tiptap/extension-link";
@@ -325,16 +326,19 @@ onBeforeMount(() => {
 	setFontFromHTML(html);
 });
 
+let pauseId: PauseId | undefined = undefined;
+
 watch(
 	() => isEditable.value,
 	(editable) => {
 		editor.value?.setEditable(editable);
 		if (editable) {
-			canvasStore.activeCanvas?.history?.pause();
+			pauseId = canvasStore.activeCanvas?.history?.pause();
 			editor.value?.commands.focus("all");
 		} else {
-			canvasStore.activeCanvas?.history?.resume(undefined, dataChanged.value, true);
+			canvasStore.activeCanvas?.history?.resume(pauseId, dataChanged.value, pauseId === undefined);
 			dataChanged.value = false;
+			pauseId = undefined;
 		}
 	},
 	{ immediate: true },

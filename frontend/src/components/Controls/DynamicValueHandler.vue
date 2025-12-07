@@ -12,8 +12,8 @@
 					<li
 						v-if="selectedItem?.key && !filteredItems.some(i => i.key === selectedItem!.key && i.comesFrom === selectedItem!.comesFrom)">
 						<div
-							class="w-full truncate rounded bg-surface-gray-3 p-2 text-left font-mono text-p-sm text-ink-gray-9"
-							@click.stop="selectItem(selectedItem)">
+							class="w-full cursor-pointer truncate rounded bg-surface-gray-3 p-2 text-left font-mono text-p-sm text-ink-gray-9"
+							@click.stop="selectAndSetItem(selectedItem)">
 							{{ selectedItem.key }}
 							<p class="truncate text-xs text-ink-gray-5" :class="{ italic: getValue(selectedItem) == null }">
 								{{ getValue(selectedItem) == null ? "No Value Set" : getValue(selectedItem) }}
@@ -22,12 +22,12 @@
 					</li>
 					<li v-for="(item, index) in filteredItems" :key="index">
 						<div
-							class="w-full truncate rounded p-2 text-left font-mono text-p-sm text-ink-gray-7 hover:bg-surface-gray-2"
+							class="w-full cursor-pointer truncate rounded p-2 text-left font-mono text-p-sm text-ink-gray-7 hover:bg-surface-gray-2"
 							:class="{
 								'bg-surface-gray-3 text-ink-gray-9':
 									selectedItem?.key === item.key && selectedItem?.comesFrom === item.comesFrom,
 							}"
-							@click.stop="selectItem(item)">
+							@click.stop="selectAndSetItem(item)">
 							{{ item.key }}
 							<p class="truncate text-xs text-ink-gray-5" :class="{ italic: getValue(item) == null }">
 								{{ getValue(item) == null ? "No Value Set" : getValue(item) }}
@@ -54,7 +54,6 @@
 		<div class="flex items-center justify-end gap-2" v-if="filteredItems.length !== 0">
 			<div class="flex gap-2">
 				<Button variant="subtle" @click="builderStore.showDataScriptDialog = true">Edit Code</Button>
-				<Button variant="solid" @click="saveSelection" :disabled="!selectedItem?.key">Set</Button>
 			</div>
 		</div>
 	</div>
@@ -206,14 +205,9 @@ const filteredItems = computed(() => {
 
 const selectedItem = ref<DynamicValueItem | null>(props.selectedValue || null);
 
-function selectItem(item: DynamicValueItem) {
+function selectAndSetItem(item: DynamicValueItem) {
 	selectedItem.value = item;
-}
-
-function saveSelection() {
-	if (selectedItem.value) {
-		emit("setDynamicValue", selectedItem.value);
-		selectedItem.value = null;
-	}
+	emit("setDynamicValue", item);
+	selectedItem.value = null;
 }
 </script>

@@ -26,7 +26,10 @@
 				variant="subtle"
 				@click="$emit('close')"
 				class="absolute right-5 top-5"></BuilderButton>
-			<component :is="selectedItemDoc?.component" />
+			<component :is="selectedItemDoc?.component" v-if="settingsLoaded" />
+			<div v-else class="flex items-center justify-center">
+				<span class="text-ink-gray-5">Loading...</span>
+			</div>
 		</div>
 	</div>
 </template>
@@ -34,8 +37,10 @@
 import RedirectIcon from "@/components/Icons/Redirect.vue";
 import GlobalRedirects from "@/components/Settings/GlobalRedirects.vue";
 import PageCode from "@/components/Settings/PageCode.vue";
+import builderProjectFolder from "@/data/builderProjectFolder";
+import { builderSettings } from "@/data/builderSettings";
 import usePageStore from "@/stores/pageStore";
-import { computed, onActivated, ref } from "vue";
+import { computed, onActivated, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import ChartIcon from "./Icons/Chart.vue";
 import CodeIcon from "./Icons/Code.vue";
@@ -59,6 +64,19 @@ const route = useRoute();
 const pageStore = usePageStore();
 const emit = defineEmits(["close"]);
 const selectedItem = ref<string>(props.onlyGlobal ? "global_general" : "page_general");
+const settingsLoaded = ref(false);
+
+onMounted(async () => {
+	const promises = [];
+	if (!builderSettings.doc) {
+		promises.push(builderSettings.reload());
+	}
+	if (!builderProjectFolder.data) {
+		promises.push(builderProjectFolder.fetch());
+	}
+	await Promise.all(promises);
+	settingsLoaded.value = true;
+});
 
 type SidebarItem = {
 	label: string;

@@ -72,6 +72,7 @@ declare module 'vue' {
     GlobalMeta: typeof import('./src/components/Settings/GlobalMeta.vue')['default']
     GlobalRedirects: typeof import('./src/components/Settings/GlobalRedirects.vue')['default']
     Globe: typeof import('./src/components/Icons/Globe.vue')['default']
+    GripVertical: typeof import('./src/components/Icons/GripVertical.vue')['default']
     ImageUploader: typeof import('./src/components/Controls/ImageUploader.vue')['default']
     ImageUploadInput: typeof import('./src/components/ImageUploadInput.vue')['default']
     InlineInput: typeof import('./src/components/Controls/InlineInput.vue')['default']

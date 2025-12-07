@@ -35,6 +35,7 @@ const useComponentStore = defineStore("componentStore", {
 				"Save Component",
 				component.component_name,
 				component.name,
+				true,
 			);
 		},
 		saveComponent(block: Block, componentName: string) {

@@ -7,6 +7,7 @@
 				<Dialog
 					v-model="showSettingsDialog"
 					style="z-index: 40"
+					:disableOutsideClickToClose="true"
 					class="[&>div>div[id^=headlessui-dialog-panel]]:my-3"
 					:options="{
 						title: 'Settings',
@@ -194,7 +195,6 @@
 </template>
 <script lang="ts" setup>
 import AppsMenu from "@/components/AppsMenu.vue";
-import BuilderSettings from "@/components/BuilderSettings.vue";
 import BuilderButton from "@/components/Controls/BuilderButton.vue";
 import EditableSpan from "@/components/EditableSpan.vue";
 import FilesIcon from "@/components/Icons/Files.vue";
@@ -208,7 +208,9 @@ import { confirm } from "@/utils/helpers";
 import { useDark, useToggle } from "@vueuse/core";
 import { createResource, Dialog, Dropdown } from "frappe-ui";
 import { TrialBanner } from "frappe-ui/frappe";
-import { ref } from "vue";
+import { defineAsyncComponent, ref } from "vue";
+
+const BuilderSettings = defineAsyncComponent(() => import("@/components/BuilderSettings.vue"));
 const isDark = useDark({
 	attribute: "data-theme",
 });

@@ -393,7 +393,7 @@ function getRouteVariables(route: string) {
 	return variables;
 }
 
-async function uploadImage(file: File, silent = false) {
+async function uploadBuilderAsset(file: File, silent = false) {
 	const uploader = new FileUploadHandler();
 	let fileDoc = {
 		file_url: "",
@@ -479,6 +479,97 @@ async function getFontArrayBuffer(file_url: string) {
 async function getFontName(file_url: string) {
 	const opentype = await import("opentype.js");
 	return opentype.parse(await getFontArrayBuffer(file_url)).names.fullName.en;
+}
+
+async function getFontNameFromFile(file: File): Promise<string> {
+	const arrayBuffer = await file.arrayBuffer();
+	let buffer = arrayBuffer;
+	if (file.name.endsWith(".woff2")) {
+		const loadScript = (src: string) =>
+			new Promise((onload) =>
+				document.documentElement.append(Object.assign(document.createElement("script"), { src, onload })),
+			);
+		if (!window.Module) {
+			const path = "https://unpkg.com/wawoff2@2.0.1/build/decompress_binding.js";
+			// @ts-ignore
+			const init = new Promise((done) => (window.Module = { onRuntimeInitialized: done }));
+			await loadScript(path).then(() => init);
+		}
+		buffer = Uint8Array.from(window.Module.decompress(arrayBuffer)).buffer;
+	}
+	const opentype = await import("opentype.js");
+	return opentype.parse(buffer).names.fullName.en;
+}
+
+type UploadUserFontOptions = {
+	confirmBeforeUpload?: boolean;
+};
+
+type UploadUserFontResult = {
+	uploaded: boolean;
+	fontName: string;
+	alreadyExists?: boolean;
+};
+
+async function uploadUserFont(
+	file: File,
+	options: UploadUserFontOptions = {},
+): Promise<UploadUserFontResult | null> {
+	const { default: userFont } = await import("@/data/userFonts");
+
+	const fontName = await getFontNameFromFile(file);
+
+	// Check if font already exists
+	const existingFont = userFont.data?.find((f: { font_name: string }) => f.font_name === fontName);
+
+	if (existingFont) {
+		toast.info(`Font "${fontName}" already exists in the project`);
+		return { uploaded: false, fontName, alreadyExists: true };
+	}
+
+	// Confirm before uploading if requested
+	if (options.confirmBeforeUpload) {
+		const confirmed = await confirm(`Do you want to upload the font "${fontName}"?`, "Upload Font");
+		if (!confirmed) {
+			return null;
+		}
+	}
+
+	const uploadPromise = (async (): Promise<UploadUserFontResult> => {
+		const fileUploadHandler = new FileUploadHandler();
+		const uploadedFile = await fileUploadHandler.upload(file, {
+			private: false,
+			folder: "Home/Builder Uploads/Fonts",
+		});
+
+		// Load the font
+		const fontFace = new FontFace(fontName, `url("${uploadedFile.file_url}")`);
+		const loadedFont = await fontFace.load();
+		document.fonts.add(loadedFont);
+
+		// Save to User Font doctype
+		try {
+			await userFont.insert.submit({
+				font_name: fontName,
+				font_file: uploadedFile.file_url,
+			});
+		} catch (e: any) {
+			if (!e?.message?.includes("DuplicateEntryError")) {
+				throw e;
+			}
+		}
+
+		await userFont.fetch();
+		return { uploaded: true, fontName };
+	})();
+
+	toast.promise(uploadPromise, {
+		loading: "Uploading font...",
+		success: `Font "${fontName}" uploaded successfully`,
+		error: "Failed to upload font",
+	});
+
+	return uploadPromise;
 }
 
 function generateId() {
@@ -800,6 +891,55 @@ function getBoxSpacing(
 	if (sTop === sBottom && sTop === sRight && sTop === sLeft) return sTop;
 	if (sTop === sBottom && sLeft === sRight) return `${sTop} ${sLeft}`;
 	return `${sTop} ${sRight} ${sBottom} ${sLeft}`;
+}
+
+/**
+ * Extracts the numeric value and unit from a CSS value string
+ * @param value - CSS value string (e.g., "10px", "1.5em", "20")
+ * @returns Object containing the number and unit parts
+ */
+function extractNumberAndUnit(value: string): { number: string; unit: string } {
+	const match = value.match(/([0-9.]+)([a-z%]*)/) || ["", "0", ""];
+	return { number: match[1], unit: match[2] };
+}
+
+/**
+ * Adds a unit to a number if it doesn't already have one
+ * @param numberStr - String containing a number with or without a unit
+ * @param unit - Default unit to add if none exists
+ * @returns String with unit attached
+ */
+function addUnitToNumber(numberStr: string, unit: string): string {
+	const match = numberStr.match(/^([0-9.]+)([a-z%]*)$/);
+	if (match) {
+		const [, number, existingUnit] = match;
+		return existingUnit ? numberStr : number + unit;
+	}
+	return numberStr;
+}
+
+/**
+ * Normalizes CSS values by adding default units where missing
+ * Handles both single values and spacing properties with multiple values
+ * @param value - CSS value string
+ * @param unitOptions - Array of possible units, first is used as default
+ * @param styleProperty - CSS property name (used to detect spacing properties)
+ * @returns Normalized value string with units added
+ */
+function normalizeValueWithUnits(value: string, unitOptions: string[], styleProperty: string): string {
+	if (!unitOptions.length) return value;
+
+	const defaultUnit = unitOptions[0];
+	const isSpacingProperty = styleProperty === "margin" || styleProperty === "padding";
+
+	if (isSpacingProperty) {
+		const parts = value.trim().split(/\s+/);
+		if (parts.length > 1) {
+			return parts.map((part) => addUnitToNumber(part, defaultUnit)).join(" ");
+		}
+	}
+
+	return addUnitToNumber(value, defaultUnit);
 }
 
 interface DialogAction {
@@ -1124,11 +1264,13 @@ function saferExecuteBlockScript(
 
 export {
 	addPxToNumber,
+	addUnitToNumber,
 	alert,
 	confirm,
 	copyToClipboard,
 	dataURLtoFile,
 	detachBlockFromComponent,
+	extractNumberAndUnit,
 	findNearestSiblingIndex,
 	generateId,
 	getBlock,
@@ -1160,6 +1302,7 @@ export {
 	kebabToCamelCase,
 	logObjectDiff,
 	mapToObject,
+	normalizeValueWithUnits,
 	openInDesk,
 	parseAndSetBackground,
 	parseBackground,
@@ -1172,7 +1315,8 @@ export {
 	throttle,
 	toKebabCase,
 	triggerCopyEvent,
-	uploadImage,
+	uploadBuilderAsset,
+	uploadUserFont,
 	getPropValue,
 	getStandardPropValue,
 	saferExecuteBlockScript,

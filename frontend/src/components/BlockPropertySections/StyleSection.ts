@@ -228,6 +228,25 @@ const styleSectionProperties = [
 		searchKeyWords:
 			"Overflow, Y, OverflowY, Overflow Y, Auto, Visible, Hide, Scroll, vertical scroll, verticalScroll",
 	},
+	{
+		component: PropertyControl,
+		getProps: () => {
+			return {
+				label: "Cursor",
+				styleProperty: "cursor",
+				type: "select",
+				options: [
+					{ value: null, label: "Default" },
+					{ value: "pointer", label: "Pointer" },
+					{ value: "move", label: "Move" },
+					{ value: "text", label: "Text" },
+					{ value: "crosshair", label: "Crosshair" },
+					{ value: "not-allowed", label: "Not Allowed" },
+				],
+			};
+		},
+		searchKeyWords: "Cursor, Pointer, Move, Text, Crosshair, NotAllowed, Not Allowed",
+	},
 ];
 
 export default {
