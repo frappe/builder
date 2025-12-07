@@ -15,7 +15,13 @@
 					ref="comboboxInput"
 					v-model="searchQuery"
 					autocomplete="off"
-					@focus="emit('focus')"
+					@focus="
+						() => {
+							fixedStyles = getFixedStyles();
+							emit('focus');
+							return false;
+						}
+					"
 					@blur="handleBlur"
 					@keydown.enter="handleEnter"
 					:display-value="getDisplayValue"
