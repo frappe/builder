@@ -653,18 +653,18 @@ def get_block_html(blocks):
 				if prop_info.get("is_standard"):
 					map_of_std_props_info[prop_name].pop()
     
-			normal_props = {k: v["value"] for k, v in props_obj.items() if not v.get("is_standard")}
+			all_props = {k: v["value"] for k, v in props_obj.items()}
 			std_props = {k: v["value"] for k, v in props_obj.items() if v.get("is_standard")}
 
 			if block.get("blockScript"):
 				block_unique_id = f"{block.get('blockId')}-{frappe.generate_hash(length=3)}" # extra hash as repeating blocks have same blockId
-				script_content = f"(function (props){{ {block.get('blockScript')} }}).call(document.querySelector('[data-block-id=\"{block_unique_id}\"]'), {json.dumps(normal_props) or '{}'});"
+				script_content = f"(function (props){{ {block.get('blockScript')} }}).call(document.querySelector('[data-block-id=\"{block_unique_id}\"]'), {json.dumps(all_props) or '{}'});"
 				tag.attrs["data-block-id"] = block_unique_id
 				script_tag = soup.new_tag("script")
 				script_tag.string = script_content
 				tag.append(script_tag)
 
-			return tag, to_jinja_literal(normal_props), to_jinja_literal(std_props) if std_props else None
+			return tag, to_jinja_literal(all_props), to_jinja_literal(std_props) if std_props else None
 
 		for block in blocks:
 			tag, props, std_props = get_tag(block, soup)
