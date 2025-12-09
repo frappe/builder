@@ -167,48 +167,41 @@ const refreshOptions = async (query = "") => {
 	}
 };
 
-const clearSelection = () => {
-	emit("update:modelValue", null);
+const clearSelection = () => emit("update:modelValue", null);
+
+const getInputValue = (event: Event) => (event.target as HTMLInputElement)?.value?.trim();
+
+const submitArbitraryValue = (inputValue: string) => {
+	if (!inputValue) return;
+	const matchingOption = allOptions.value.find((opt) => opt.label.toLowerCase() === inputValue.toLowerCase());
+	emit("update:modelValue", matchingOption?.value ?? inputValue);
+	isOpen.value = false;
 };
 
 const handleEnter = (event: KeyboardEvent) => {
-	if (!props.allowArbitraryValue) return;
-
-	if (containerRef.value?.querySelector("[data-highlighted]")) {
-		return;
-	}
-
-	const inputValue = (event.target as HTMLInputElement)?.value?.trim();
-	if (inputValue) {
-		event.preventDefault();
-		event.stopPropagation();
-		emit("update:modelValue", inputValue);
-		isOpen.value = false;
-	}
+	if (!props.allowArbitraryValue || containerRef.value?.querySelector("[data-highlighted]")) return;
+	event.preventDefault();
+	event.stopPropagation();
+	submitArbitraryValue(getInputValue(event));
 };
 
 const handleBlur = (event: FocusEvent) => {
-	if (props.allowArbitraryValue) {
-		const inputValue = (event.target as HTMLInputElement)?.value?.trim();
-		if (inputValue) {
-			emit("update:modelValue", inputValue);
-		}
+	const relatedTarget = event.relatedTarget as HTMLElement;
+	if (relatedTarget && containerRef.value?.contains(relatedTarget)) {
+		emit("blur");
+		return;
 	}
+	if (props.allowArbitraryValue) submitArbitraryValue(getInputValue(event));
 	emit("blur");
 };
 
-watch(searchQuery, (newQuery: string) => props.getOptions && refreshOptions(newQuery));
-
+watch(searchQuery, (query) => props.getOptions && refreshOptions(query));
 watch(
 	() => props.modelValue,
-	(newValue) => {
-		searchQuery.value = newValue ?? "";
-	},
+	(val) => (searchQuery.value = val ?? ""),
+	{ immediate: true },
 );
-
-if (props.getOptions) {
-	refreshOptions();
-}
+if (props.getOptions) refreshOptions();
 
 defineExpose({
 	refreshOptions,

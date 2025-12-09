@@ -393,7 +393,7 @@ function getRouteVariables(route: string) {
 	return variables;
 }
 
-async function uploadImage(file: File, silent = false) {
+async function uploadBuilderAsset(file: File, silent = false) {
 	const uploader = new FileUploadHandler();
 	let fileDoc = {
 		file_url: "",
@@ -479,6 +479,97 @@ async function getFontArrayBuffer(file_url: string) {
 async function getFontName(file_url: string) {
 	const opentype = await import("opentype.js");
 	return opentype.parse(await getFontArrayBuffer(file_url)).names.fullName.en;
+}
+
+async function getFontNameFromFile(file: File): Promise<string> {
+	const arrayBuffer = await file.arrayBuffer();
+	let buffer = arrayBuffer;
+	if (file.name.endsWith(".woff2")) {
+		const loadScript = (src: string) =>
+			new Promise((onload) =>
+				document.documentElement.append(Object.assign(document.createElement("script"), { src, onload })),
+			);
+		if (!window.Module) {
+			const path = "https://unpkg.com/wawoff2@2.0.1/build/decompress_binding.js";
+			// @ts-ignore
+			const init = new Promise((done) => (window.Module = { onRuntimeInitialized: done }));
+			await loadScript(path).then(() => init);
+		}
+		buffer = Uint8Array.from(window.Module.decompress(arrayBuffer)).buffer;
+	}
+	const opentype = await import("opentype.js");
+	return opentype.parse(buffer).names.fullName.en;
+}
+
+type UploadUserFontOptions = {
+	confirmBeforeUpload?: boolean;
+};
+
+type UploadUserFontResult = {
+	uploaded: boolean;
+	fontName: string;
+	alreadyExists?: boolean;
+};
+
+async function uploadUserFont(
+	file: File,
+	options: UploadUserFontOptions = {},
+): Promise<UploadUserFontResult | null> {
+	const { default: userFont } = await import("@/data/userFonts");
+
+	const fontName = await getFontNameFromFile(file);
+
+	// Check if font already exists
+	const existingFont = userFont.data?.find((f: { font_name: string }) => f.font_name === fontName);
+
+	if (existingFont) {
+		toast.info(`Font "${fontName}" already exists in the project`);
+		return { uploaded: false, fontName, alreadyExists: true };
+	}
+
+	// Confirm before uploading if requested
+	if (options.confirmBeforeUpload) {
+		const confirmed = await confirm(`Do you want to upload the font "${fontName}"?`, "Upload Font");
+		if (!confirmed) {
+			return null;
+		}
+	}
+
+	const uploadPromise = (async (): Promise<UploadUserFontResult> => {
+		const fileUploadHandler = new FileUploadHandler();
+		const uploadedFile = await fileUploadHandler.upload(file, {
+			private: false,
+			folder: "Home/Builder Uploads/Fonts",
+		});
+
+		// Load the font
+		const fontFace = new FontFace(fontName, `url("${uploadedFile.file_url}")`);
+		const loadedFont = await fontFace.load();
+		document.fonts.add(loadedFont);
+
+		// Save to User Font doctype
+		try {
+			await userFont.insert.submit({
+				font_name: fontName,
+				font_file: uploadedFile.file_url,
+			});
+		} catch (e: any) {
+			if (!e?.message?.includes("DuplicateEntryError")) {
+				throw e;
+			}
+		}
+
+		await userFont.fetch();
+		return { uploaded: true, fontName };
+	})();
+
+	toast.promise(uploadPromise, {
+		loading: "Uploading font...",
+		success: `Font "${fontName}" uploaded successfully`,
+		error: "Failed to upload font",
+	});
+
+	return uploadPromise;
 }
 
 function generateId() {
@@ -998,5 +1089,6 @@ export {
 	throttle,
 	toKebabCase,
 	triggerCopyEvent,
-	uploadImage,
+	uploadBuilderAsset,
+	uploadUserFont,
 };
