@@ -6,7 +6,7 @@
 			:group="{ name: 'block-tree' }"
 			item-key="blockId"
 			@add="updateParent"
-			:disabled="disableDraggable">
+			:disabled="disableDraggable || readonly">
 			<template #item="{ element }">
 				<div
 					:data-block-layer-id="element.blockId"
@@ -49,7 +49,7 @@
 							v-if="Boolean(element.extendedFromComponent)" />
 						<span
 							class="layer-label min-h-[1em] min-w-[2em] max-w-64 truncate"
-							:contenteditable="element.editable"
+							:contenteditable="element.editable && !readonly"
 							:title="element.blockId"
 							:class="{
 								'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
@@ -57,10 +57,12 @@
 							}"
 							@dblclick="
 								(ev) => {
-									element.editable = true;
-									// focus
-									const target = ev.target as HTMLElement;
-									target.focus();
+									if (!readonly) {
+										element.editable = true;
+										// focus
+										const target = ev.target as HTMLElement;
+										target.focus();
+									}
 								}
 							"
 							@keydown.enter.stop.prevent="element.editable = false"
@@ -69,7 +71,7 @@
 						</span>
 						<!-- toggle visibility -->
 						<FeatherIcon
-							v-if="!element.isRoot() && !isParentHidden"
+							v-if="!element.isRoot() && !isParentHidden && !readonly"
 							:name="element.isVisible() ? 'eye' : 'eye-off'"
 							class="invisible ml-auto mr-2 h-3 w-3 group-hover:visible"
 							@click.stop="element.toggleVisibility()" />
@@ -80,6 +82,7 @@
 							:ref="childLayer"
 							:is-parent-hidden="isParentHidden || !element.isVisible()"
 							:indent="childIndent"
+							:readonly="readonly"
 							:disable-draggable="
 								Boolean(element.children.length && element.children[0].isChildOfComponentBlock())
 							" />
@@ -91,7 +94,6 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
-import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { FeatherIcon } from "frappe-ui";
 import { ref, watch } from "vue";
@@ -102,7 +104,6 @@ import BlocksIcon from "./Icons/Blocks.vue";
 type LayerInstance = InstanceType<typeof BlockLayers>;
 
 const canvasStore = useCanvasStore();
-const builderStore = useBuilderStore();
 
 const childLayers = ref<LayerInstance[]>([]);
 const childLayer = (el: LayerInstance) => {
@@ -118,6 +119,7 @@ const props = withDefaults(
 		adjustForRoot?: boolean;
 		disableDraggable?: boolean;
 		isParentHidden?: boolean;
+		readonly?: boolean;
 	}>(),
 	{
 		blocks: () => [],
@@ -125,6 +127,7 @@ const props = withDefaults(
 		adjustForRoot: true,
 		disableDraggable: false,
 		isParentHidden: false,
+		readonly: false,
 	},
 );
 
@@ -138,6 +141,7 @@ if (!props.adjustForRoot) {
 }
 
 const setBlockName = (ev: Event, block: LayerBlock) => {
+	if (props.readonly) return;
 	const target = ev.target as HTMLElement;
 	block.blockName = target.innerText.trim();
 	block.editable = false;

@@ -98,7 +98,7 @@ def upload_builder_asset():
 
 	image_file = upload_file()
 	if image_file.file_url.endswith((".png", ".jpeg", ".jpg")) and frappe.get_cached_value(
-		"Builder Settings", None, "auto_convert_images_to_webp"
+		"Builder Settings", "Builder Settings", "auto_convert_images_to_webp"
 	):
 		convert_to_webp(file_doc=image_file)
 	return image_file
@@ -174,6 +174,7 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 				return update_file_doc_with_webp(file_doc, image, extn)
 		return file_doc.file_url
 
+	image_url = image_url or ""
 	if image_url.startswith("/files"):
 		image, filename, extn = get_local_image(image_url)
 		if can_convert_image(extn):

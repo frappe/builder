@@ -17,12 +17,14 @@ export interface BuilderPage{
 	page_name?: string
 	/**	Route : Data	*/
 	route?: string
-	/**	Dynamic Route : Check - Map route parameters into form variables. Example <code>/profile/&lt;user&gt;</code>	*/
+	/**	Dynamic Route : Check - Map route parameters into form variables. Example <code>/profile/:user</code>	*/
 	dynamic_route?: 0 | 1
+	/**	Is Standard : Check	*/
+	is_standard?: 0 | 1
 	/**	Is Template : Check	*/
 	is_template?: 0 | 1
-	/**	Template Name : Data	*/
-	template_name?: string
+	/**	Module : Link - Module Def	*/
+	module?: string
 	/**	Blocks : JSON	*/
 	blocks?: any
 	/**	Draft Blocks : JSON	*/
@@ -50,7 +52,7 @@ You can generate using favicon-generator.org	*/
 	meta_image?: string
 	/**	Canonical URL : Data - The preferred URL version of this page for search engines. If not set, the current page URL will be used.	*/
 	canonical_url?: string
-	/**	Language : Data - Language code for HTML lang attribute (e.g., en, es, fr, de). If not set, the default language from Builder Settings will be used.	*/
+	/**	Language : Data - Language code for HTML (e.g., en, es, fr, de). Uses default if unset.	*/
 	language?: string
 	/**	Authenticated Access : Check - Only allow logged-in users to view this page.	*/
 	authenticated_access?: 0 | 1

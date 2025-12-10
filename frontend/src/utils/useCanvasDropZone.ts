@@ -1,5 +1,6 @@
 import type Block from "@/block";
 import useBlockTemplateStore from "@/stores/blockTemplateStore";
+import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import { posthog } from "@/telemetry";
@@ -15,6 +16,7 @@ import { useDropZone } from "@vueuse/core";
 import { Ref } from "vue";
 import blockController from "./blockController";
 
+const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 const componentStore = useComponentStore();
 const blockTemplateStore = useBlockTemplateStore();
@@ -28,6 +30,7 @@ export function useCanvasDropZone(
 ) {
 	const { isOverDropZone } = useDropZone(canvasContainer, {
 		onDrop: async (files, ev) => {
+			if (builderStore.readOnlyMode) return;
 			canvasStore.isDropping = true;
 			if (files && files.length) {
 				handleFileDrop(files, ev);
@@ -39,6 +42,7 @@ export function useCanvasDropZone(
 		},
 
 		onOver: (files, ev) => {
+			if (builderStore.readOnlyMode) return;
 			if (ev.shiftKey) {
 				const parentBlock = getBlockToReplace(ev);
 				if (parentBlock) {

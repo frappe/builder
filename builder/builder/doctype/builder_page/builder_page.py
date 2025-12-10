@@ -21,9 +21,11 @@ from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
 from jinja2.exceptions import TemplateSyntaxError
 
+from builder.export_import_standard_page import export_page_as_standard
 from builder.hooks import builder_path
 from builder.html_preview_image import generate_preview
 from builder.utils import (
+	Block,
 	ColonRule,
 	camel_case_to_kebab_case,
 	clean_data,
@@ -72,11 +74,11 @@ class BuilderPageRenderer(DocumentPage):
 			return
 		context = getattr(self, "context", frappe._dict())
 		if self.doc.is_home_page():
-			context.canonical_url = frappe.utils.get_url()
+			context["canonical_url"] = frappe.utils.get_url()
 		elif self.doc.canonical_url:
-			context.canonical_url = render_template(self.doc.canonical_url, context)
+			context["canonical_url"] = render_template(self.doc.canonical_url, context)
 		else:
-			context.canonical_url = frappe.utils.get_url(self.path)
+			context["canonical_url"] = frappe.utils.get_url(self.path)
 		self.context = context
 
 	def set_missing_values(self):
@@ -106,9 +108,12 @@ class BuilderPage(WebsiteGenerator):
 		dynamic_route: DF.Check
 		favicon: DF.AttachImage | None
 		head_html: DF.Code | None
+		is_standard: DF.Check
 		is_template: DF.Check
+		language: DF.Data | None
 		meta_description: DF.SmallText | None
 		meta_image: DF.AttachImage | None
+		module: DF.Link | None
 		page_data_script: DF.Code | None
 		page_name: DF.Data | None
 		page_title: DF.Data | None
@@ -116,7 +121,6 @@ class BuilderPage(WebsiteGenerator):
 		project_folder: DF.Link | None
 		published: DF.Check
 		route: DF.Data | None
-		template_name: DF.Data | None
 	# end: auto-generated types
 
 	def onload(self):
@@ -140,7 +144,7 @@ class BuilderPage(WebsiteGenerator):
 	def process_blocks(self):
 		for block_type in ["blocks", "draft_blocks"]:
 			if isinstance(getattr(self, block_type), list):
-				setattr(self, block_type, frappe.as_json(getattr(self, block_type), indent=None))
+				setattr(self, block_type, frappe.as_json(getattr(self, block_type), indent=0))
 		if not self.blocks:
 			self.blocks = "[]"
 
@@ -160,7 +164,7 @@ class BuilderPage(WebsiteGenerator):
 
 	def on_update(self):
 		if self.has_value_changed("route"):
-			if ":" in self.route or "<" in self.route:
+			if self.route and (":" in self.route or "<" in self.route):
 				self.db_set("dynamic_route", 1)
 			else:
 				self.db_set("dynamic_route", 0)
@@ -176,11 +180,18 @@ class BuilderPage(WebsiteGenerator):
 
 		if self.has_value_changed("published") and not self.published:
 			# if this is homepage then clear homepage from builder settings
-			if frappe.get_cached_value("Builder Settings", None, "home_page") == self.route:
-				frappe.db.set_value("Builder Settings", None, "home_page", None)
+			if frappe.get_cached_value("Builder Settings", "Builder Settings", "home_page") == self.route:
+				frappe.db.set_value("Builder Settings", "Builder Settings", "home_page", None)
 
 		if frappe.conf.developer_mode and self.is_template:
 			save_as_template(self)
+
+		if frappe.conf.developer_mode and self.is_standard and self.module:
+			from frappe.modules.utils import get_module_app
+
+			app = get_module_app(self.module)
+			if app:
+				export_page_as_standard(self.name, target_app=app)
 
 	def clear_route_cache(self):
 		get_web_pages_with_dynamic_routes.clear_cache()
@@ -190,7 +201,7 @@ class BuilderPage(WebsiteGenerator):
 	def on_trash(self):
 		if self.is_template and frappe.conf.developer_mode:
 			page_template_folder = os.path.join(
-				frappe.get_app_path("builder"), "builder", "builder_page_template", scrub(self.name)
+				frappe.get_app_path("builder"), "builder", "builder_page_template", scrub(str(self.name))
 			)
 			if os.path.exists(page_template_folder):
 				shutil.rmtree(page_template_folder)
@@ -212,7 +223,8 @@ class BuilderPage(WebsiteGenerator):
 	@frappe.whitelist()
 	def publish(self, route_variables=None):
 		if route_variables:
-			frappe.form_dict.update(frappe.parse_json(route_variables or "{}"))
+			for k, v in frappe.parse_json(route_variables or "{}").items():
+				frappe.form_dict[k] = v
 		self.published = 1
 		if self.draft_blocks:
 			self.blocks = self.draft_blocks
@@ -301,14 +313,14 @@ class BuilderPage(WebsiteGenerator):
 		if not context.get("favicon"):
 			context.favicon = self.favicon
 		if not context.get("favicon"):
-			context.favicon = frappe.get_cached_value("Builder Settings", None, "favicon")
+			context.favicon = frappe.get_cached_value("Builder Settings", "Builder Settings", "favicon")
 
 	def set_language(self, context):
 		# Set page-specific language or fall back to default language from Builder Settings
 		context.language = self.language
 		if not context.language:
 			context.default_language = (
-				frappe.get_cached_value("Builder Settings", None, "default_language") or "en"
+				frappe.get_cached_value("Builder Settings", "Builder Settings", "default_language") or "en"
 			)
 
 	def is_component_used(self, component_id):
@@ -318,7 +330,8 @@ class BuilderPage(WebsiteGenerator):
 			return True
 
 	def set_style_and_script(self, context):
-		for script in self.get("client_scripts", []):
+		client_scripts = self.get("client_scripts") or []
+		for script in client_scripts:
 			script_doc = frappe.get_cached_doc("Builder Client Script", script.builder_script)
 			if script_doc.script_type == "JavaScript":
 				context.setdefault("scripts", []).append(script_doc.public_url)
@@ -353,7 +366,7 @@ class BuilderPage(WebsiteGenerator):
 	@frappe.whitelist()
 	def get_page_data(self, route_variables=None):
 		if route_variables:
-			frappe.form_dict.update(frappe.parse_json(route_variables or "{}"))
+			frappe.form_dict.update(dict(frappe.parse_json(route_variables or "{}").items()))
 		page_data = frappe._dict()
 		if self.page_data_script:
 			_locals = dict(data=frappe._dict())
@@ -380,12 +393,14 @@ class BuilderPage(WebsiteGenerator):
 
 	def set_custom_font(self, context, font_map):
 		user_fonts = frappe.get_all(
-			"User Font", fields=["font_name", "font_file"], filters={"name": ("in", list(font_map.keys()))}
+			"User Font",
+			fields=["font_name", "font_file"],
+			filters={"font_name": ("in", list(font_map.keys()))},
 		)
 		if user_fonts:
 			context.custom_fonts = user_fonts
 		for font in user_fonts:
-			del font_map[font.font_name]
+			font_map.pop(font.font_name, None)
 
 	def replace_component(self, target_component, replace_with):
 		if self.blocks:
@@ -406,7 +421,7 @@ class BuilderPage(WebsiteGenerator):
 		return frappe.get_cached_value("Builder Settings", "Builder Settings", "home_page") == self.route
 
 
-def replace_component_in_blocks(blocks, target_component, replace_with):
+def replace_component_in_blocks(blocks, target_component, replace_with) -> list[dict]:
 	for target_block in blocks:
 		if target_block.get("extendedFromComponent") == target_component:
 			new_component_block = frappe.parse_json(
@@ -431,12 +446,12 @@ def save_as_template(page_doc: BuilderPage):
 	if not page_doc.template_name:
 		page_doc.template_name = page_doc.page_title
 
-	blocks = frappe.parse_json(page_doc.blocks)
+	blocks: list[Block] = frappe.parse_json(page_doc.blocks or "[]")  # type: ignore
 	for block in blocks:
 		copy_img_to_asset_folder(block, page_doc)
 
 	page_doc.db_set("draft_blocks", None)
-	page_doc.db_set("blocks", frappe.as_json(blocks, indent=None))
+	page_doc.db_set("blocks", frappe.as_json(blocks, indent=0))
 	page_doc.reload()
 	export_to_files(
 		record_list=[["Builder Page", page_doc.name, "builder_page_template"]], record_module="builder"
@@ -730,7 +745,7 @@ def extend_block(block, overridden_block):
 	return block
 
 
-def set_dynamic_content_placeholder(block, data_key=False):
+def set_dynamic_content_placeholder(block, data_key=None):
 	block_data_key = block.get("dataKey", {}) or {}
 	dynamic_values = [block_data_key] if block_data_key else []
 	dynamic_values += block.get("dynamicValues", []) or []
@@ -743,7 +758,7 @@ def set_dynamic_content_placeholder(block, data_key=False):
 			if data_key:
 				# convert a.b to (a or {}).get('b', {})
 				# to avoid undefined error in jinja
-				keys = key.split(".")
+				keys = (key or "").split(".")
 				key = f"({keys[0]} or {{}})"
 				for k in keys[1:]:
 					key = f"{key}.get('{k}', {{}})"
@@ -776,7 +791,7 @@ def find_page_with_path(route):
 
 
 @redis_cache(ttl=60 * 60)
-def get_web_pages_with_dynamic_routes() -> dict[str, str]:
+def get_web_pages_with_dynamic_routes() -> list[BuilderPage]:
 	return frappe.get_all(
 		"Builder Page",
 		fields=["name", "route", "modified"],

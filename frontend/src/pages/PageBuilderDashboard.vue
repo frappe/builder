@@ -6,23 +6,23 @@
 			<div
 				class="toolbar sticky top-0 z-10 flex h-12 items-center justify-end border-b-[1px] border-outline-gray-1 bg-surface-white p-2 px-3 py-1"
 				ref="toolbar">
-				<router-link
-					:to="{ name: 'builder', params: { pageId: 'new' } }"
-					@click="
-						() => {
-							posthog.capture('builder_new_page_created');
-						}
-					">
-					<BuilderButton
-						variant="solid"
-						iconLeft="plus"
-						class="bg-surface-gray-7 !text-ink-white hover:bg-surface-gray-6">
-						New
-					</BuilderButton>
-				</router-link>
+				<div class="flex gap-2">
+					<router-link
+						:to="{ name: 'builder', params: { pageId: 'new' } }"
+						@click="
+							() => {
+								posthog.capture('builder_new_page_created');
+							}
+						">
+						<BuilderButton
+							variant="solid"
+							iconLeft="plus"
+							class="bg-surface-gray-7 !text-ink-white hover:bg-surface-gray-6">
+							New
+						</BuilderButton>
+					</router-link>
+				</div>
 			</div>
-			<!-- Sidebar -->
-			<!-- Main Content -->
 			<div class="flex-1 overflow-auto">
 				<section class="m-auto mb-32 flex h-fit w-3/4 max-w-6xl flex-col pt-5">
 					<!-- list head -->
@@ -123,7 +123,7 @@
 							<PageCard
 								v-for="page in webPages.data"
 								:selected="selectedPages.has(page.name)"
-								@click.capture="($event) => handleClick($event, page)"
+								@click.capture="($event: MouseEvent) => handleClick($event, page)"
 								:key="page.page_name"
 								:page="page"
 								v-on-click-and-hold="() => enableSelectionMode(page)"></PageCard>
@@ -131,7 +131,7 @@
 						<!-- list -->
 						<div v-if="displayType === 'list'">
 							<PageListItem
-								@click.capture="($event) => handleClick($event, page)"
+								@click.capture="($event: MouseEvent) => handleClick($event, page)"
 								v-for="page in webPages.data"
 								:selected="selectedPages.has(page.name)"
 								:key="page.page_name"
@@ -178,6 +178,7 @@ const toggleDark = useToggle(isDark);
 const builderStore = useBuilderStore();
 const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list">;
 const showFolderSelectorDialog = ref(false);
+const showImportModal = ref(false);
 
 const searchFilter = ref("");
 const typeFilter = useStorage("typeFilter", "") as Ref<"" | "draft" | "published" | "unpublished">;

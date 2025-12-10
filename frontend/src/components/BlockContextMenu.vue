@@ -1,12 +1,6 @@
 <template>
 	<div>
-		<ContextMenu
-			v-if="contextMenuVisible"
-			:pos-x="posX"
-			:pos-y="posY"
-			:options="contextMenuOptions"
-			@select="handleContextMenuSelect"
-			v-on-click-outside="() => (contextMenuVisible = false)" />
+		<ContextMenu ref="contextMenu" :options="contextMenuOptions" />
 		<NewComponent v-if="block" :block="block" v-model="showNewComponentDialog"></NewComponent>
 		<NewBlockTemplate v-if="block" :block="block" v-model="showBlockTemplateDialog"></NewBlockTemplate>
 	</div>
@@ -21,18 +15,15 @@ import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { confirm, detachBlockFromComponent, getBlockCopy, triggerCopyEvent } from "@/utils/helpers";
-import { vOnClickOutside } from "@vueuse/components";
 import { useStorage } from "@vueuse/core";
 import { Ref, nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
 
+const builderStore = useBuilderStore();
 const componentStore = useComponentStore();
 const canvasStore = useCanvasStore();
-const builderStore = useBuilderStore();
 
-const contextMenuVisible = ref(false);
-const posX = ref(0);
-const posY = ref(0);
+const contextMenu = ref(null) as unknown as Ref<InstanceType<typeof ContextMenu>>;
 const triggeredFromLayersPanel = ref(false);
 
 const block = ref(null) as unknown as Ref<Block>;
@@ -47,18 +38,8 @@ const showContextMenu = (event: MouseEvent, refBlock: Block) => {
 	target.value = event.target as HTMLElement;
 	const layersPanel = target.value.closest(".block-layers");
 	triggeredFromLayersPanel.value = Boolean(layersPanel);
-
 	if (block.value.isRoot()) return;
-	contextMenuVisible.value = true;
-	posX.value = event.pageX;
-	posY.value = event.pageY;
-	event.preventDefault();
-	event.stopPropagation();
-};
-
-const handleContextMenuSelect = (action: CallableFunction) => {
-	action();
-	contextMenuVisible.value = false;
+	contextMenu.value?.show(event);
 };
 
 const copiedStyle = useStorage("copiedStyle", { blockId: "", style: {} }, sessionStorage) as Ref<StyleCopy>;
@@ -92,8 +73,13 @@ const contextMenuOptions: ContextMenuOption[] = [
 		label: "Paste Style",
 		action: pasteStyle,
 		condition: () => Boolean(copiedStyle.value.blockId && copiedStyle.value?.blockId !== block.value.blockId),
+		disabled: () => builderStore.readOnlyMode,
 	},
-	{ label: "Duplicate", action: duplicateBlock },
+	{
+		label: "Duplicate",
+		action: duplicateBlock,
+		disabled: () => builderStore.readOnlyMode,
+	},
 	{
 		label: "Convert To Collection",
 		action: () => {
@@ -106,6 +92,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			!block.value.isRepeater() &&
 			!block.value.isChildOfComponentBlock() &&
 			!block.value.isExtendedFromComponent(),
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Remove Collection",
@@ -114,6 +101,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			block.value.dataKey = {};
 		},
 		condition: () => block.value.isRepeater(),
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Wrap In Container",
@@ -160,6 +148,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			const selectedBlocks = canvasStore.activeCanvas?.selectedBlocks || [];
 			return selectedBlocks.every((block: Block) => block.getParentBlock() === parentBlock);
 		},
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Repeat Block",
@@ -175,11 +164,14 @@ const contextMenuOptions: ContextMenuOption[] = [
 		},
 		condition: () =>
 			!block.value.isRoot() && !block.value.isRepeater() && !block.value.isChildOfComponentBlock(),
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Reset Overrides",
 		condition: () => canvasStore.activeCanvas?.activeBreakpoint !== "desktop",
-		disabled: () => !block.value?.hasOverrides(canvasStore.activeCanvas?.activeBreakpoint || "desktop"),
+		disabled: () =>
+			builderStore.readOnlyMode ||
+			!block.value?.hasOverrides(canvasStore.activeCanvas?.activeBreakpoint || "desktop"),
 		action: () => {
 			block.value.resetOverrides(canvasStore.activeCanvas?.activeBreakpoint || "desktop");
 		},
@@ -196,6 +188,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			}
 		},
 		condition: () => block.value.isExtendedFromComponent(),
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Sync Component",
@@ -203,6 +196,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		action: () => {
 			block.value.syncWithComponent();
 		},
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Reset Component",
@@ -214,6 +208,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 				}
 			});
 		},
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Edit Component",
@@ -221,6 +216,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			componentStore.editComponent(block.value);
 		},
 		condition: () => block.value.isExtendedFromComponent(),
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Save as Block Template",
@@ -228,11 +224,13 @@ const contextMenuOptions: ContextMenuOption[] = [
 			showBlockTemplateDialog.value = true;
 		},
 		condition: () => !block.value.isExtendedFromComponent() && Boolean(window.is_developer_mode),
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Save As Component",
 		action: () => (showNewComponentDialog.value = true),
 		condition: () => !block.value.isExtendedFromComponent(),
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Detach Component",
@@ -244,6 +242,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			block.value.getParentBlock()?.replaceChild(block.value, newBlock);
 		},
 		condition: () => Boolean(block.value.extendedFromComponent),
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Rename",
@@ -265,6 +264,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		},
 		condition: () =>
 			!block.value.isRoot() && !block.value.isChildOfComponentBlock() && triggeredFromLayersPanel.value,
+		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Delete",
@@ -282,6 +282,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 				Boolean(block.value.getParentBlock())
 			);
 		},
+		disabled: () => builderStore.readOnlyMode,
 	},
 ];
 
