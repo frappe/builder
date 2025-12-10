@@ -8,6 +8,7 @@ from os.path import join
 from urllib.parse import unquote, urlparse
 
 import frappe
+from frappe.modules.import_file import import_file_by_path
 from frappe.utils import get_url
 from frappe.utils.safe_exec import (
 	SERVER_SCRIPT_FILE_PREFIX,
@@ -238,34 +239,7 @@ def make_records(path):
 		return
 	for fname in os.listdir(path):
 		if os.path.isdir(join(path, fname)) and fname != "__pycache__":
-			file_path = f"{path}/{fname}/{fname}.json"
-			if not os.path.exists(file_path):
-				continue
-
-			with open(file_path) as f:
-				doc = frappe.parse_json(f.read())
-
-			if not doc.get("name"):
-				doc["name"] = fname
-
-			import_doc(doc)
-
-
-def import_doc(doc):
-	doctype = doc.get("doctype")
-	name = doc.get("name")
-
-	if not doctype or not name:
-		return
-
-	if frappe.db.exists(doctype, name):
-		return
-
-	try:
-		new_doc = frappe.get_doc(doc)
-		new_doc.insert(ignore_permissions=True)
-	except Exception as e:
-		frappe.log_error(f"Failed to import {doctype} {name}: {e!s}")
+			import_file_by_path(f"{path}/{fname}/{fname}.json")
 
 
 # def generate_tailwind_css_file_from_html(html):
