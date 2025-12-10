@@ -211,6 +211,7 @@ def export_fonts(fonts, builder_files_path, assets_path, target_app="builder"):
 
 			font_config = {
 				"doctype": "User Font",
+				"name": font_doc.name,
 				"font_name": font_doc.font_name,
 				"font_file": font_doc.get("font_file"),
 			}
@@ -297,6 +298,7 @@ def export_variables(variables, builder_files_path):
 
 			var_config = {
 				"doctype": "Builder Variable",
+				"name": var_doc.name,
 				"variable_name": var_doc.variable_name,
 				"type": var_doc.type,
 				"value": var_doc.value,
