@@ -168,7 +168,8 @@
    "default": "0",
    "fieldname": "is_template",
    "fieldtype": "Check",
-   "label": "Is Template"
+   "label": "Is Template",
+   "no_copy": 1
   },
   {
    "fieldname": "section_break_shab",
@@ -231,7 +232,8 @@
    "default": "0",
    "fieldname": "is_standard",
    "fieldtype": "Check",
-   "label": "Is Standard"
+   "label": "Is Standard",
+   "no_copy": 1
   },
   {
    "depends_on": "is_standard",
@@ -239,12 +241,13 @@
    "fieldtype": "Link",
    "label": "Module",
    "mandatory_depends_on": "is_standard",
+   "no_copy": 1,
    "options": "Module Def"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-08 19:12:34.734581",
+ "modified": "2025-12-10 11:59:00.908359",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

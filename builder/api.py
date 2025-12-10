@@ -304,13 +304,6 @@ def get_overall_analytics(
 
 
 @frappe.whitelist()
-def duplicate_standard_page(app_name, page_folder_name, new_page_name=None):
-	from builder.builder.doctype.builder_page.builder_page import duplicate_standard_page
-
-	return duplicate_standard_page(app_name, page_folder_name, new_page_name)
-
-
-@frappe.whitelist()
 def get_standard_pages(app_name):
 	import os
 
