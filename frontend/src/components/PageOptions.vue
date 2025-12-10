@@ -29,7 +29,7 @@
 					type="text"
 					:label="variable.replace(/_/g, ' ')"
 					:modelValue="pageStore.routeVariables[variable]"
-					:disabled="readonly"
+					:disabled="builderStore.readOnlyMode"
 					@update:modelValue="(val: string) => pageStore.setRouteVariable(variable, val)" />
 			</CollapsibleSection>
 		</div>
