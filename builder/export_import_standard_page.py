@@ -62,6 +62,7 @@ def export_page_as_standard(page_name, target_app):
 			try:
 				component_doc = frappe.get_cached_doc("Builder Component", component_id)
 				component_blocks = frappe.parse_json(component_doc.block or "[]")
+				copy_assets_from_blocks(component_blocks, paths["assets_path"], target_app)
 				fonts.update(extract_fonts_from_blocks(component_blocks))
 				variables.update(extract_variables_from_blocks(component_blocks))
 			except Exception:
