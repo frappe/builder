@@ -22,32 +22,7 @@
 						<p class="mt-1 block text-sm text-ink-gray-5 group-hover:text-ink-gray-6">Edited {{ timeAgo }}</p>
 					</UseTimeAgo>
 				</span>
-				<Dropdown
-					:options="[
-						{
-							group: 'Actions',
-							hideLabel: true,
-							items: [
-								{
-									label: 'Duplicate',
-									onClick: () => pageStore.duplicatePage(page),
-									icon: 'copy',
-								},
-								{
-									label: 'View in Desk',
-									onClick: () => openInDesk(page),
-									icon: 'arrow-up-right',
-								},
-							],
-						},
-						{
-							group: 'Delete',
-							hideLabel: true,
-							items: [{ label: 'Delete', onClick: () => pageStore.deletePage(page), icon: 'trash' }],
-						},
-					]"
-					size="xs"
-					placement="right">
+				<PageActionsDropdown :page="page" size="xs" placement="right">
 					<template v-slot="{ open }">
 						<BuilderButton
 							icon="more-horizontal"
@@ -56,19 +31,15 @@
 							class="bg-surface-white !text-ink-gray-5 hover:!text-ink-gray-9"
 							@click="open"></BuilderButton>
 					</template>
-				</Dropdown>
+				</PageActionsDropdown>
 			</div>
 		</div>
 	</router-link>
 </template>
 <script setup lang="ts">
-import usePageStore from "@/stores/pageStore";
+import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { openInDesk } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
-import { Dropdown } from "frappe-ui";
-
-const pageStore = usePageStore();
 
 defineProps<{
 	page: BuilderPage;

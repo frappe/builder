@@ -62,6 +62,7 @@
 					:block="block"
 					:style="variables"
 					:key="block.blockId"
+					:readonly="builderStore.readOnlyMode"
 					v-if="showBlocks"
 					:breakpoint="breakpoint.device"
 					:data="pageStore.pageData" />

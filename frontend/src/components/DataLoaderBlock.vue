@@ -10,7 +10,8 @@
 			:data="repeatingFrom == 'dataScript' ? _data : {}"
 			:defaultProps="repeatingFrom == 'props' ? _data : null"
 			:block="block.children[0]"
-			:preview="index !== 0 || preview"
+			:preview="Number(index) !== 0 || preview"
+			:readonly="readonly"
 			:breakpoint="breakpoint"
 			:isChildOfComponent="block.isExtendedFromComponent()"
 			v-for="(_data, index) in blockData" />
@@ -33,10 +34,12 @@ const props = withDefaults(
 		preview?: boolean;
 		breakpoint?: string;
 		data?: Record<string, any> | null;
+		readonly?: boolean;
 	}>(),
 	{
 		preview: false,
 		breakpoint: "desktop",
+		readonly: false,
 	},
 );
 

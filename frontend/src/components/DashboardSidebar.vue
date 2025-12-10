@@ -158,9 +158,15 @@
 						{{ project.folder_name }}
 					</EditableSpan>
 				</span>
+				<Tooltip
+					v-if="isFolderActive(project.folder_name) && project.is_standard"
+					placement="top"
+					text="System generated folder cannot be edited or deleted">
+					<FeatherIcon name="info" class="size-4 text-gray-500" />
+				</Tooltip>
 				<Dropdown
 					placement="right"
-					v-if="isFolderActive(project.folder_name)"
+					v-else-if="isFolderActive(project.folder_name)"
 					:options="[
 						{
 							label: 'Rename',
@@ -206,7 +212,7 @@ import useBuilderStore from "@/stores/builderStore";
 import { BuilderProjectFolder } from "@/types/Builder/BuilderProjectFolder";
 import { confirm } from "@/utils/helpers";
 import { useDark, useToggle } from "@vueuse/core";
-import { createResource, Dialog, Dropdown } from "frappe-ui";
+import { createResource, Dialog, Dropdown, Tooltip } from "frappe-ui";
 import { TrialBanner } from "frappe-ui/frappe";
 import { defineAsyncComponent, ref } from "vue";
 

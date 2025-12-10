@@ -74,6 +74,7 @@
 		<!-- actions -->
 		<div class="absolute right-3 flex items-center gap-5">
 			<!-- show dark mode toggle -->
+			<Badge variant="subtle" theme="orange" v-if="builderStore.readOnlyMode">Read Only</Badge>
 			<Tooltip text="Toggle Dark Mode" :hoverDelay="0.6">
 				<FeatherIcon
 					:name="isDark ? 'sun' : 'moon'"
@@ -142,7 +143,7 @@
 					<PlayIcon class="h-[18px] w-[18px] cursor-pointer text-ink-gray-8"></PlayIcon>
 				</Tooltip>
 			</router-link>
-			<PublishButton></PublishButton>
+			<PublishButton :disabled="builderStore.readOnlyMode"></PublishButton>
 		</div>
 	</div>
 </template>
@@ -158,7 +159,7 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { getTextContent } from "@/utils/helpers";
 import { useDark, useToggle } from "@vueuse/core";
-import { Popover, Tooltip } from "frappe-ui";
+import { Badge, Popover, Tooltip } from "frappe-ui";
 import { computed, defineAsyncComponent, ref } from "vue";
 import { toast } from "vue-sonner";
 import MainMenu from "./MainMenu.vue";
@@ -171,7 +172,6 @@ const isDark = useDark({
 });
 
 const toggleDark = useToggle(isDark);
-
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 

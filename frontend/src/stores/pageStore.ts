@@ -2,6 +2,7 @@ import type Block from "@/block";
 import { builderSettings } from "@/data/builderSettings";
 import { webPages } from "@/data/webPage";
 import router from "@/router";
+import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore.js";
 import { posthog } from "@/telemetry";
@@ -151,7 +152,6 @@ const usePageStore = defineStore("pageStore", {
 				},
 			);
 		},
-
 		deletePage: async (page: BuilderPage) => {
 			const confirmed = await confirm(
 				`Are you sure you want to delete page: ${page.page_title || page.page_name}?`,
@@ -234,6 +234,9 @@ const usePageStore = defineStore("pageStore", {
 		},
 
 		savePage() {
+			const builderStore = useBuilderStore();
+			if (builderStore.readOnlyMode) return;
+
 			const canvasStore = useCanvasStore();
 			const pageData = JSON.stringify(
 				canvasStore
