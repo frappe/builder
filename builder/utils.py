@@ -270,26 +270,21 @@ def make_records(path):
 
 
 def copy_img_to_asset_folder(block, page_doc):
-	# Helper function to safely get attribute from block (dict or object)
 	def safe_get(obj, attr, default=None):
 		if isinstance(obj, dict):
 			return obj.get(attr, default)
 		else:
 			return getattr(obj, attr, default)
 
-	# Convert dict to frappe._dict for consistent access
 	if isinstance(block, dict):
 		block = frappe._dict(block)
-		# Also convert children to frappe._dict for consistent access
 		children = block.get("children", [])
 		if children and isinstance(children, list):
 			block.children = [frappe._dict(child) if isinstance(child, dict) else child for child in children]
 
-	# Get element safely
 	element = safe_get(block, "element")
 
 	if element == "img":
-		# Get attributes safely
 		attributes = safe_get(block, "attributes")
 		src = None
 
@@ -299,15 +294,12 @@ def copy_img_to_asset_folder(block, page_doc):
 		site_url = get_url()
 
 		if src and (src.startswith(f"{site_url}/files") or src.startswith("/files")):
-			# find file doc
 			if src.startswith(f"{site_url}/files"):
 				src = src.split(f"{site_url}")[1]
-			# url decode
 			src = unquote(src)
 			files = frappe.get_all("File", filters={"file_url": src}, fields=["name"])
 			if files:
 				_file = frappe.get_doc("File", files[0].name)
-				# copy physical file to new location
 				assets_folder_path = get_template_assets_folder_path(page_doc)
 				shutil.copy(_file.get_full_path(), assets_folder_path)
 
@@ -318,7 +310,6 @@ def copy_img_to_asset_folder(block, page_doc):
 				else:
 					attributes.src = new_src
 
-	# Process children safely
 	children = safe_get(block, "children", [])
 	for child in children or []:
 		copy_img_to_asset_folder(child, page_doc)
@@ -596,11 +587,3 @@ def get_export_paths(app_path, export_name):
 		"builder_files_path": builder_files_path,
 		"pages_path": pages_path,
 	}
-
-
-def remove_existing_path(path):
-	if os.path.exists(path):
-		if os.path.isdir(path):
-			shutil.rmtree(path)
-		else:
-			os.remove(path)
