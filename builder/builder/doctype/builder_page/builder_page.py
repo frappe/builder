@@ -393,12 +393,14 @@ class BuilderPage(WebsiteGenerator):
 
 	def set_custom_font(self, context, font_map):
 		user_fonts = frappe.get_all(
-			"User Font", fields=["font_name", "font_file"], filters={"name": ("in", list(font_map.keys()))}
+			"User Font",
+			fields=["font_name", "font_file"],
+			filters={"font_name": ("in", list(font_map.keys()))},
 		)
 		if user_fonts:
 			context.custom_fonts = user_fonts
 		for font in user_fonts:
-			del font_map[font.font_name]
+			font_map.pop(font.font_name, None)
 
 	def replace_component(self, target_component, replace_with):
 		if self.blocks:

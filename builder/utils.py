@@ -442,65 +442,73 @@ def split_styles(styles):
 	}
 
 
-def copy_assets_from_blocks(blocks, assets_path):
+def copy_assets_from_blocks(blocks, assets_path, target_app="builder"):
 	if not isinstance(blocks, list):
 		blocks = [blocks]
 
 	for block in blocks:
 		if isinstance(block, dict):
-			process_block_assets(block, assets_path)
+			process_block_assets(block, assets_path, target_app)
 			children = block.get("children")
 			if children and isinstance(children, list):
-				copy_assets_from_blocks(children, assets_path)
+				copy_assets_from_blocks(children, assets_path, target_app)
 
 
-def process_block_assets(block, assets_path):
+def process_block_assets(block, assets_path, target_app="builder"):
 	"""Process assets for a single block"""
 	if block.get("element") in ("img", "video"):
 		src = block.get("attributes", {}).get("src")
 		if src:
-			new_location = copy_asset_file(src, assets_path)
+			new_location = copy_asset_file(src, assets_path, target_app)
 			if new_location:
 				block["attributes"]["src"] = new_location
 
 
-def copy_asset_file(file_url, assets_path):
+def copy_asset_file(file_url, assets_path, target_app="builder"):
 	"""Copy a file from the source to assets directory and return new public path"""
 	if not file_url or not isinstance(file_url, str):
 		return None
 
 	try:
 		if file_url.startswith("/files/"):
-			return copy_from_site_files(file_url, assets_path)
-		elif file_url.startswith("/builder_assets/"):
-			return copy_from_builder_assets(file_url, assets_path)
+			return copy_from_site_files(file_url, assets_path, target_app)
+		elif file_url.startswith("/builder_assets/") or (
+			file_url.startswith("/assets/") and "/builder_files/" in file_url
+		):
+			return copy_from_builder_assets(file_url, assets_path, target_app)
 	except Exception as e:
 		frappe.log_error(f"Failed to copy asset {file_url}: {e!s}")
 	return None
 
 
-def copy_from_site_files(file_url, assets_path):
+def copy_from_site_files(file_url, assets_path, target_app="builder"):
 	"""Copy file from site files directory"""
 	source_path = os.path.join(frappe.local.site_path, "public", file_url.lstrip("/"))
 	if os.path.exists(source_path):
-		return copy_file_to_assets(source_path, file_url, assets_path)
+		return copy_file_to_assets(source_path, file_url, assets_path, target_app)
 	return None
 
 
-def copy_from_builder_assets(file_url, assets_path):
+def copy_from_builder_assets(file_url, assets_path, target_app="builder"):
 	"""Copy file from builder assets directory"""
-	source_path = os.path.join(frappe.get_app_path("builder"), "www", file_url.lstrip("/"))
+	if file_url.startswith("/assets/") and "/builder_files/" in file_url:
+		parts = file_url.split("/")
+		if len(parts) >= 3:
+			app_name = parts[2]
+			source_path = os.path.join(frappe.get_app_path(app_name), "public", "/".join(parts[3:]))
+	else:
+		source_path = os.path.join(frappe.get_app_path("builder"), "www", file_url.lstrip("/"))
 	if os.path.exists(source_path):
-		return copy_file_to_assets(source_path, file_url, assets_path)
+		return copy_file_to_assets(source_path, file_url, assets_path, target_app)
 	return None
 
 
-def copy_file_to_assets(source_path, file_url, assets_path):
+def copy_file_to_assets(source_path, file_url, assets_path, target_app="builder"):
 	"""Copy file to assets directory and return public path"""
 	filename = os.path.basename(file_url)
 	dest_path = os.path.join(assets_path, filename)
 	shutil.copy2(source_path, dest_path)
-	return f"/builder_assets/page_{os.path.basename(assets_path)}/{filename}"
+	return f"/assets/{target_app}/builder_files/assets/{filename}"
 
 
 def extract_components_from_blocks(blocks):
@@ -543,14 +551,14 @@ def export_client_scripts(page_doc, client_scripts_path):
 			f.write(frappe.as_json(script_config, ensure_ascii=False))
 
 
-def export_components(components, components_path, assets_path):
+def export_components(components, components_path, assets_path, target_app="builder"):
 	"""Export components to files"""
 	for component_id in components:
 		try:
 			component_doc = frappe.get_doc("Builder Component", component_id)
 			# replace assets in component blocks
 			component_blocks = frappe.parse_json(component_doc.block or "[]")
-			copy_assets_from_blocks(component_blocks, assets_path)
+			copy_assets_from_blocks(component_blocks, assets_path, target_app)
 			component_doc.block = frappe.as_json(component_blocks)
 
 			# Replace forward slashes with underscores to create valid directory names
@@ -568,7 +576,6 @@ def export_components(components, components_path, assets_path):
 
 def create_export_directories(app_path, export_name):
 	paths = get_export_paths(app_path, export_name)
-	setup_assets_symlink(app_path, paths["assets_path"])
 	for path in paths.values():
 		os.makedirs(path, exist_ok=True)
 
@@ -579,24 +586,16 @@ def get_export_paths(app_path, export_name):
 	"""Get all export directory paths"""
 	builder_files_path = os.path.join(app_path, "builder_files")
 	pages_path = os.path.join(builder_files_path, "pages")
+	public_builder_files_path = os.path.join(app_path, "public", "builder_files")
 
 	return {
 		"page_path": os.path.join(pages_path, export_name),
-		"assets_path": os.path.join(builder_files_path, "assets"),
+		"assets_path": os.path.join(public_builder_files_path, "assets"),
 		"client_scripts_path": os.path.join(builder_files_path, "client_scripts"),
 		"components_path": os.path.join(builder_files_path, "components"),
 		"builder_files_path": builder_files_path,
 		"pages_path": pages_path,
 	}
-
-
-def setup_assets_symlink(app_path, assets_path):
-	symlink_path = os.path.join(app_path, "www", "builder_assets", "page_assets")
-	os.makedirs(os.path.dirname(symlink_path), exist_ok=True)
-	os.makedirs(assets_path, exist_ok=True)
-	if not os.path.islink(symlink_path):
-		remove_existing_path(symlink_path)
-		os.symlink(assets_path, symlink_path)
 
 
 def remove_existing_path(path):
