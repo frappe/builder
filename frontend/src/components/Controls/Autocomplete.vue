@@ -179,10 +179,21 @@ const submitArbitraryValue = (inputValue: string) => {
 };
 
 const handleEnter = (event: KeyboardEvent) => {
-	if (!props.allowArbitraryValue || containerRef.value?.querySelector("[data-highlighted]")) return;
+	if (!props.allowArbitraryValue) return;
+	const highlightedItem = containerRef.value?.querySelector("[data-highlighted]");
+	const inputValue = getInputValue(event);
+	// If there's a highlighted item and user hasn't typed anything different, let the combobox handle it
+	if (highlightedItem && !inputValue) return;
+	// If user typed something, check if it matches the highlighted item's value
+	if (highlightedItem && inputValue) {
+		const highlightedValue = highlightedItem.getAttribute("data-value");
+		const matchingOption = allOptions.value.find((opt) => opt.value === highlightedValue);
+		// If input matches highlighted item's label, let combobox handle it
+		if (matchingOption && matchingOption.label.toLowerCase() === inputValue.toLowerCase()) return;
+	}
 	event.preventDefault();
 	event.stopPropagation();
-	submitArbitraryValue(getInputValue(event));
+	submitArbitraryValue(inputValue);
 };
 
 const handleBlur = (event: FocusEvent) => {
