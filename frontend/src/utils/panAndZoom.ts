@@ -15,6 +15,47 @@ function setPanAndZoom(
 	let pinchPointSet = false;
 	let wheeling: undefined | NodeJS.Timeout;
 
+	const setZoom = (scale: number, pinchPoint: { x: number; y: number } | "center" = "center") => {
+		const clampedScale = Math.min(Math.max(scale, zoomLimits.min), zoomLimits.max);
+		const oldScale = props.scale;
+
+		let pinchX: number;
+		let pinchY: number;
+
+		if (pinchPoint === "center") {
+			const areaBound = panAndZoomAreaElement.getBoundingClientRect();
+			pinchX = areaBound.left + areaBound.width / 2;
+			pinchY = areaBound.top + areaBound.height / 2;
+		} else {
+			pinchX = pinchPoint.x;
+			pinchY = pinchPoint.y;
+		}
+
+		const middleX = targetBound.left + targetBound.width / 2;
+		const middleY = targetBound.top + targetBound.height / 2;
+		const pointFromCenterX = (pinchX - middleX) / oldScale;
+		const pointFromCenterY = (pinchY - middleY) / oldScale;
+
+		props.scale = clampedScale;
+
+		nextTick(() => {
+			// Recalculate the middle after scale change
+			const newMiddleX = targetBound.left + targetBound.width / 2;
+			const newMiddleY = targetBound.top + targetBound.height / 2;
+
+			// Calculate where the pinch point ended up after scaling
+			const pinchLocationX = newMiddleX + pointFromCenterX * clampedScale;
+			const pinchLocationY = newMiddleY + pointFromCenterY * clampedScale;
+
+			// Adjust translation to keep the pinch point in place
+			const diffX = pinchX - pinchLocationX;
+			const diffY = pinchY - pinchLocationY;
+
+			props.translateX += diffX / clampedScale;
+			props.translateY += diffY / clampedScale;
+		});
+	};
+
 	const updatePanAndZoom = (e: WheelEvent) => {
 		clearTimeout(wheeling);
 		if (e.ctrlKey || e.metaKey) {
@@ -85,6 +126,8 @@ function setPanAndZoom(
 		},
 		{ passive: false },
 	);
+
+	return { setZoom };
 }
 
 export default setPanAndZoom;

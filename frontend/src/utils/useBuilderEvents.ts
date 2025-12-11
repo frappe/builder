@@ -320,7 +320,7 @@ export function useBuilderEvents(
 				if (e.shiftKey) {
 					pageCanvas.value.setScaleAndTranslate();
 				} else {
-					pageCanvas.value.resetZoom();
+					pageCanvas.value.setCanvasZoom?.(1, "center");
 				}
 			}
 			return;
