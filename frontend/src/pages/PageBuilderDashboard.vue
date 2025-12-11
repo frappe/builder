@@ -142,7 +142,7 @@
 					<BuilderButton
 						class="m-auto mt-12 w-fit text-sm"
 						@click="loadMore"
-						v-show="webPages.hasNextPage"
+						v-show="webPages.data.length && webPages.hasNextPage"
 						variant="subtle"
 						size="sm">
 						Load More
