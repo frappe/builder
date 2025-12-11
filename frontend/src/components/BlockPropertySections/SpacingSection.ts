@@ -1,5 +1,4 @@
 import blockController from "@/utils/blockController";
-import { computed } from "vue";
 import PropertyControl from "../Controls/PropertyControl.vue";
 
 const spacingSectionProperties = [
@@ -42,11 +41,4 @@ const spacingSectionProperties = [
 export default {
 	name: "Spacing",
 	properties: spacingSectionProperties,
-	collapsed: computed(
-		() =>
-			!blockController.getStyle("marginTop") &&
-			!blockController.getStyle("paddingTop") &&
-			!blockController.getStyle("marginBottom") &&
-			!blockController.getStyle("paddingBottom"),
-	),
 };
