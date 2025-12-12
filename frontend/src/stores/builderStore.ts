@@ -32,7 +32,6 @@ const useBuilderStore = defineStore("builderStore", {
 		},
 		leftPanelActiveTab: <LeftSidebarTabOption>"Layers",
 		rightPanelActiveTab: <RightSidebarTabOption>"Properties",
-		showDashboardSidebar: useStorage("showDashboardSidebar", true),
 		showRightPanel: <boolean>true,
 		showLeftPanel: <boolean>true,
 		showHTMLDialog: false,
