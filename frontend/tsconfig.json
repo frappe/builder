@@ -39,6 +39,5 @@
   ],
   "exclude": [
     "node_modules",
-    "../public/js/posthog.js"
   ]
 }

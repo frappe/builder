@@ -1,5 +1,5 @@
 import { createResource } from "frappe-ui";
-import "../public/js/posthog.js";
+import "../../builder/public/js/posthog.js";
 
 declare global {
 	interface Window {
