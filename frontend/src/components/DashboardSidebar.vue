@@ -1,6 +1,6 @@
 <template>
 	<section
-		class="sticky bottom-0 left-0 top-0 flex flex-col gap-3 bg-surface-gray-1 p-2 shadow-lg max-lg:hidden"
+		class="sticky bottom-0 left-0 top-0 flex min-h-fit flex-col gap-3 bg-surface-gray-1 p-2 shadow-lg max-lg:hidden"
 		:class="[builderStore.showDashboardSidebar ? 'w-60' : 'w-auto']">
 		<div class="flex flex-col">
 			<div class="mb-2 flex gap-2">
