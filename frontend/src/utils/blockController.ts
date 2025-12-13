@@ -211,6 +211,9 @@ const blockController = {
 	isHTML: () => {
 		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isHTML();
 	},
+	isSVG() {
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isSVG();
+	},
 	getInnerHTML: () => {
 		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().getInnerHTML();
 	},
