@@ -105,7 +105,7 @@ const useCanvasStore = defineStore("canvasStore", {
 			});
 		},
 
-		editBlockScript(block: Block) {
+		editBlockClientScript(block: Block) {
 			this.editableBlock = block;
 			this.editingContentType = "js";
 			nextTick(() => {

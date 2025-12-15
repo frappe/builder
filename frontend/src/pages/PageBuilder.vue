@@ -217,7 +217,7 @@ function getExpandedEditorContent() {
 	if (canvasStore.editingContentType === "html") {
 		return canvasStore.editableBlock?.getInnerHTML();
 	} else if (canvasStore.editingContentType === "js") {
-		return canvasStore.editableBlock?.getBlockScript();
+		return canvasStore.editableBlock?.getBlockClientScript();
 	}
 }
 
@@ -225,7 +225,7 @@ async function saveExpandedEditorContent(val: string) {
 	if (canvasStore.editingContentType === "html") {
 		canvasStore.editableBlock?.setInnerHTML(val);
 	} else if (canvasStore.editingContentType === "js") {
-		canvasStore.editableBlock?.setBlockScript(val);
+		canvasStore.editableBlock?.setBlockClientScript(val);
 	}
 	canvasStore.showExpandedEditorDialog = false;
 }

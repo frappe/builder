@@ -318,11 +318,11 @@ const blockController = {
 		}
 		return block;
 	},
-	getBlockScript: () => {
-		return blockController.getFirstSelectedBlock()?.getBlockScript();
+	getBlockClientScript: () => {
+		return blockController.getFirstSelectedBlock()?.getBlockClientScript();
 	},
-	setBlockScript: (script: string) => {
-		blockController.getFirstSelectedBlock()?.setBlockScript(script);
+	setBlockClientScript: (script: string) => {
+		blockController.getFirstSelectedBlock()?.setBlockClientScript(script);
 	},
 	getBlockProps: () => {
 		return blockController.getFirstSelectedBlock()?.getBlockProps();

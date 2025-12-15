@@ -42,7 +42,7 @@ class Block implements BlockOptions {
 	parentBlock: Block | null;
 	activeState?: string | null = null;
 	dynamicValues: Array<BlockDataKey>;
-	blockScript?: string;
+	blockClientScript?: string;
 	props?: BlockProps;
 	// @ts-expect-error
 	referenceComponent: Block | null;
@@ -99,7 +99,7 @@ class Block implements BlockOptions {
 		this.tabletStyles = reactive(options.tabletStyles || {});
 		this.attributes = reactive(options.attributes || {});
 		this.dynamicValues = reactive(options.dynamicValues || []);
-		this.blockScript = reactive(options.blockScript || "");
+		this.blockClientScript = reactive(options.blockClientScript || "");
 		this.props = reactive(options.props || {});
 
 		this.blockName = options.blockName;
@@ -896,17 +896,17 @@ class Block implements BlockOptions {
 	isInsideRepeater(): boolean {
 		return Boolean(this.getRepeaterParent());
 	}
-	getBlockScript(): string {
-		let blockScript = "";
-		if (this.isExtendedFromComponent() && !this.blockScript) {
-			blockScript = this.referenceComponent?.getBlockScript() || "";
+	getBlockClientScript(): string {
+		let blockClientScript = "";
+		if (this.isExtendedFromComponent() && !this.blockClientScript) {
+			blockClientScript = this.referenceComponent?.getBlockClientScript() || "";
 		} else {
-			blockScript = this.blockScript || "";
+			blockClientScript = this.blockClientScript || "";
 		}
-		return blockScript;
+		return blockClientScript;
 	}
-	setBlockScript(script: string) {
-		this.blockScript = script;
+	setBlockClientScript(script: string) {
+		this.blockClientScript = script;
 	}
 	getBlockProps(): BlockProps {
 		let blockProps = {};
@@ -1025,7 +1025,7 @@ function resetBlock(
 		block.classes = [];
 		block.dataKey = null;
 		block.props = {};
-		block.blockScript = "";
+		block.blockClientScript = "";
 	}
 
 	if (resetChildren) {

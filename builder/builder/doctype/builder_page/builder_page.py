@@ -671,9 +671,9 @@ def get_block_html(blocks):
 			all_props = {k: v["value"] for k, v in props_obj.items()}
 			std_props = {k: v["value"] for k, v in props_obj.items() if v.get("is_standard")}
 
-			if block.get("blockScript"):
+			if block.get("blockClientScript"):
 				block_unique_id = f"{block.get('blockId')}-{frappe.generate_hash(length=3)}"  # extra hash as repeating blocks have same blockId
-				script_content = f"(function (props){{ {block.get('blockScript')} }}).call(document.querySelector('[data-block-id=\"{block_unique_id}\"]'), {json.dumps(all_props) or '{}'});"
+				script_content = f"(function (props){{ {block.get('blockClientScript')} }}).call(document.querySelector('[data-block-id=\"{block_unique_id}\"]'), {json.dumps(all_props) or '{}'});"
 				tag.attrs["data-block-id"] = block_unique_id
 				script_tag = soup.new_tag("script")
 				script_tag.string = script_content
@@ -798,8 +798,8 @@ def extend_block(block, overridden_block):
 		block["props"] = {}
 	block["props"].update(overridden_block.get("props", {}))
 
-	if overridden_block.get("blockScript"):
-		block["blockScript"] = overridden_block.get("blockScript")
+	if overridden_block.get("blockClientScript"):
+		block["blockClientScript"] = overridden_block.get("blockClientScript")
 
 	dataKey = overridden_block.get("dataKey", {})
 	if not block.get("dataKey"):

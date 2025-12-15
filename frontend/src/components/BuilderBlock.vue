@@ -40,7 +40,7 @@
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { setFont } from "@/utils/fontManager";
-import { getDataForKey, getPropValue, saferExecuteBlockScript } from "@/utils/helpers";
+import { getDataForKey, getPropValue, saferExecuteBlockClientScript } from "@/utils/helpers";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
 import { computed, inject, nextTick, onMounted, reactive, ref, useAttrs, watch, watchEffect } from "vue";
 import BlockEditor from "./BlockEditor.vue";
@@ -305,12 +305,12 @@ watch(
 	[
 		component,
 		allResolvedProps,
-		() => props.block.getBlockScript(),
+		() => props.block.getBlockClientScript(),
 		() => Boolean(builderSettings.doc?.execute_block_scripts_in_editor),
 	],
 	() => {
 		if (builderSettings.doc?.execute_block_scripts_in_editor) {
-			saferExecuteBlockScript(uid, props.block.getBlockScript(), allResolvedProps.value);
+			saferExecuteBlockClientScript(uid, props.block.getBlockClientScript(), allResolvedProps.value);
 		}
 	},
 	{ deep: true },
@@ -318,7 +318,7 @@ watch(
 
 onMounted(() => {
 	if (builderSettings.doc?.execute_block_scripts_in_editor) {
-		saferExecuteBlockScript(uid, props.block.getBlockScript(), allResolvedProps.value);
+		saferExecuteBlockClientScript(uid, props.block.getBlockClientScript(), allResolvedProps.value);
 	}
 });
 

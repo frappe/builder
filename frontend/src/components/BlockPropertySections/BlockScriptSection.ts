@@ -8,8 +8,8 @@ const blockScriptProperties = [
 		component: CodeEditor,
 		getProps: () => {
 			return {
-				modelValue: blockController.getBlockScript(),
-				getModelValue: () => blockController.getBlockScript() || "",
+				modelValue: blockController.getBlockClientScript(),
+				getModelValue: () => blockController.getBlockClientScript() || "",
 				type: "JavaScript",
 				readonly: false,
 				height: "200px",
@@ -19,15 +19,15 @@ const blockScriptProperties = [
 					label: "Expand",
 					icon: "maximize-2",
 					handler: () => {
-						useCanvasStore().editBlockScript(blockController.getSelectedBlocks()[0]);
+						useCanvasStore().editBlockClientScript(blockController.getSelectedBlocks()[0]);
 					},
 				},
 			};
 		},
 		searchKeyWords: "Block Script, Script, JS, JavaScript, Custom Script",
 		events: {
-			save: (script: string) => blockController.setBlockScript(script),
-			"update:modelValue": (script: string) => blockController.setBlockScript(script),
+			save: (script: string) => blockController.setBlockClientScript(script),
+			"update:modelValue": (script: string) => blockController.setBlockClientScript(script),
 		},
 	},
 ];

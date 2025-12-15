@@ -1146,7 +1146,7 @@ const getStandardPropValue = (
  * @param props - An optional object containing properties to be made available in the script's context.
  */
 
-function saferExecuteBlockScript(
+function saferExecuteBlockClientScript(
 	blockUid: string,
 	userScript: string,
 	props: Record<string, any> = {},
@@ -1319,5 +1319,5 @@ export {
 	uploadUserFont,
 	getPropValue,
 	getStandardPropValue,
-	saferExecuteBlockScript,
+	saferExecuteBlockClientScript,
 };
