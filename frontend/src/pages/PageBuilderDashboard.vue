@@ -329,6 +329,4 @@ const setFolder = async (folder: string) => {
 			builderStore.activeFolder = folder;
 		});
 };
-
-const showSettingsDialog = ref(false);
 </script>
