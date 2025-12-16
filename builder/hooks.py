@@ -55,10 +55,9 @@ website_generators = ["Builder Page"]
 # ----------
 
 # add methods and filters to jinja environment
-# jinja = {
-# "methods": "builder.utils.jinja_methods",
-# "filters": "builder.utils.jinja_filters"
-# }
+jinja = {
+	"filters": ["builder.utils.combine"]
+}
 
 # Installation
 # ------------

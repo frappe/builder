@@ -67,15 +67,12 @@
 				class="w-full [&>.form-input]:border-none [&>.form-input]:hover:border-none"
 				ref="autoCompleteRef"
 				placeholder="Choose prop value"
+				:allow-arbitrary-value="false"
 				:modelValue="value"
 				:getOptions="getOptions"
 				@update:modelValue="
 					(option) => {
-						if (typeof option === 'string') {
-							return;
-						} else {
-							value = option?.value;
-						}
+						value = option || '';
 					}
 				" />
 		</div>
@@ -430,7 +427,7 @@ watch(
 watch(
 	selectedPropType,
 	() => {
-		autoCompleteRef.value?.updateOptions();
+		autoCompleteRef.value?.refreshOptions();
 	},
 	{ immediate: true },
 );

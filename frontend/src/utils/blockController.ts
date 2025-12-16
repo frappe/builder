@@ -324,6 +324,18 @@ const blockController = {
 	setBlockClientScript: (script: string) => {
 		blockController.getFirstSelectedBlock()?.setBlockClientScript(script);
 	},
+	getBlockDataScript: () => {
+		return blockController.getFirstSelectedBlock()?.getBlockDataScript();
+	},
+	setBlockDataScript: (script: string) => {
+		blockController.getFirstSelectedBlock()?.setBlockDataScript(script);
+	},
+	getBlockData: () => {
+		return blockController.getFirstSelectedBlock()?.getBlockData();
+	},
+	setBlockData: (data: Record<string, any>) => {
+		blockController.getFirstSelectedBlock()?.setBlockData(data);
+	},
 	getBlockProps: () => {
 		return blockController.getFirstSelectedBlock()?.getBlockProps();
 	},

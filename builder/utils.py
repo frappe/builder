@@ -587,3 +587,13 @@ def get_export_paths(app_path, export_name):
 		"builder_files_path": builder_files_path,
 		"pages_path": pages_path,
 	}
+
+
+def combine(a, b):
+    if a is None:
+        return b
+    if b is None:
+        return a
+    res = dict(a)
+    res.update(b)
+    return res

@@ -2,19 +2,22 @@ import { computed } from "vue";
 import CodeEditor from "../Controls/CodeEditor.vue";
 import blockController from "@/utils/blockController";
 import useCanvasStore from "@/stores/canvasStore";
+import GenericControl from "../Controls/GenericControl.vue";
 
 const blockScriptProperties = [
 	{
-		component: CodeEditor,
+		component: GenericControl,
 		getProps: () => {
 			return {
-				modelValue: blockController.getBlockClientScript(),
-				getModelValue: () => blockController.getBlockClientScript() || "",
+				component: CodeEditor,
 				type: "JavaScript",
-				readonly: false,
-				height: "200px",
-				showLineNumbers: true,
-				autofocus: true,
+				label: "Block Client Script",
+				autofocus: false,
+				height: "60px",
+				controlType: "key",
+				labelPlacement: "top",
+				getModelValue: () => blockController.getBlockClientScript() || "",
+				setModelValue: (val: string) => blockController.setBlockClientScript(val),
 				actionButton: {
 					label: "Expand",
 					icon: "maximize-2",
@@ -24,11 +27,31 @@ const blockScriptProperties = [
 				},
 			};
 		},
-		searchKeyWords: "Block Script, Script, JS, JavaScript, Custom Script",
-		events: {
-			save: (script: string) => blockController.setBlockClientScript(script),
-			"update:modelValue": (script: string) => blockController.setBlockClientScript(script),
+		searchKeyWords: "Block Client Script, Client Script, JS, JavaScript, Custom Script"
+	},
+	{
+		component: GenericControl,
+		getProps: () => {
+			return {
+				component: CodeEditor,
+				type: "Python",
+				label: "Block Data Script",
+				autofocus: false,
+				height: "60px",
+				controlType: "key",
+				labelPlacement: "top",
+				getModelValue: () => blockController.getBlockDataScript() || "",
+				setModelValue: (val: string) => blockController.setBlockDataScript(val),
+				actionButton: {
+					label: "Expand",
+					icon: "maximize-2",
+					handler: () => {
+						useCanvasStore().editBlockDataScript(blockController.getSelectedBlocks()[0]);
+					},
+				},
+			};
 		},
+		searchKeyWords: "Block Data Script, Data Script, Python, Py, Custom Script",
 	},
 ];
 

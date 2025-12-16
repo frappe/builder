@@ -224,12 +224,14 @@ const props = withDefaults(
 		block: Block;
 		preview?: boolean;
 		data?: Record<string, any>;
+		blockData?: Record<string, any> | null;
 		defaultProps?: Record<string, any> | null;
 		breakpoint?: string;
 	}>(),
 	{
 		preview: false,
 		data: () => ({}),
+		blockData: null,
 		defaultProps: null,
 		breakpoint: "desktop",
 	},
@@ -284,11 +286,21 @@ const getDynamicContent = () => {
 	const getDataScriptValue = (path: string): any => {
 		return getDataForKey(props.data, path);
 	};
+	const getBlockDataScriptValue = (path: string): any => {
+		return getDataForKey(props.blockData || {}, path);
+	};
 	if (props.block.getDataKey("property") === "innerHTML") {
 		let value;
 		if (props.block.getDataKey("comesFrom") === "props") {
 			// props are checked first as unavailablity of comesFrom means it comes from dataScript (legacy)
-			value = getPropValue(props.block.getDataKey("key"), props.block, getDataScriptValue, props.defaultProps);
+			value = getPropValue(
+				props.block.getDataKey("key"),
+				props.block,
+				getDataScriptValue,
+				props.defaultProps,
+			);
+		} else if (props.block.getDataKey("comesFrom") === "blockDataScript") {
+			value = getBlockDataScriptValue(props.block.getDataKey("key"));
 		} else {
 			value = getDataScriptValue(props.block.getDataKey("key"));
 		}
@@ -302,6 +314,8 @@ const getDynamicContent = () => {
 			let value;
 			if (dataKeyObj.comesFrom === "props") {
 				value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue, props.defaultProps);
+			} else if (dataKeyObj.comesFrom === "blockDataScript") {
+				value = getBlockDataScriptValue(dataKeyObj.key as string);
 			} else {
 				value = getDataScriptValue(dataKeyObj.key as string);
 			}

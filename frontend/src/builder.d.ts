@@ -124,7 +124,7 @@ declare type FileDoc = {
 declare interface BlockDataKey {
 	key?: string;
 	type?: BlockDataKeyType;
-	comesFrom?: "props" | "dataScript";
+	comesFrom?: "props" | "dataScript" | "blockDataScript";
 	property?: string;
 }
 

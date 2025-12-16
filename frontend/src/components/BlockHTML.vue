@@ -10,6 +10,7 @@ const component = ref<HTMLElement | null>(null);
 const props = defineProps<{
 	block: Block;
 	data?: Record<string, unknown> | null;
+	blockData?: Record<string, unknown> | null;
 	defaultProps?: Record<string, unknown> | null;
 }>();
 
@@ -19,16 +20,21 @@ const hasBlockProps = computed(() => {
 
 const getDynamicContent = () => {
 	let innerHTML = null as string | null;
-	if (props.data || hasBlockProps.value) {
+	if (props.data || props.blockData || hasBlockProps.value) {
 		const data = props.data; // to "freeze" props.data for getDataScriptValue
 		const getDataScriptValue = (path: string): any => {
 			return getDataForKey(data || {}, path);
+		};
+		const getBlockDataScriptValue = (path: string): any => {
+			return getDataForKey(props.blockData || {}, path);
 		};
 		if (props.block.getDataKey("property") === "innerHTML") {
 			let value;
 			if (props.block.getDataKey("comesFrom") === "props") {
 				// props are checked first as unavailablity of comesFrom means it comes from dataScript (legacy)
 				value = getPropValue(props.block.getDataKey("key"), props.block, getDataScriptValue, props.defaultProps);
+			} else if (props.block.getDataKey("comesFrom") === "blockDataScript") {
+				value = getBlockDataScriptValue(props.block.getDataKey("key"));
 			} else {
 				value = getDataScriptValue(props.block.getDataKey("key"));
 			}
@@ -42,6 +48,8 @@ const getDynamicContent = () => {
 				let value;
 				if (dataKeyObj.comesFrom === "props") {
 					value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue, props.defaultProps);
+				} else if (dataKeyObj.comesFrom === "blockDataScript") {
+					value = getBlockDataScriptValue(dataKeyObj.key as string);
 				} else {
 					value = getDataScriptValue(dataKeyObj.key as string);
 				}

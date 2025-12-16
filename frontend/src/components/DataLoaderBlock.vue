@@ -7,14 +7,15 @@
 		</div>
 		<BuilderBlock
 			v-else
-			:data="repeatingFrom == 'dataScript' ? _data : {}"
+			:data="repeatingFrom == 'dataScript' ? _data : data"
+			:block-data="repeatingFrom == 'blockDataScript' ? _data : blockData"
 			:defaultProps="repeatingFrom == 'props' ? _data : null"
 			:block="block.children[0]"
 			:preview="Number(index) !== 0 || preview"
 			:readonly="readonly"
 			:breakpoint="breakpoint"
 			:isChildOfComponent="block.isExtendedFromComponent()"
-			v-for="(_data, index) in blockData" />
+			v-for="(_data, index) in blockRepeaterData" />
 	</div>
 </template>
 
@@ -34,6 +35,7 @@ const props = withDefaults(
 		preview?: boolean;
 		breakpoint?: string;
 		data?: Record<string, any> | null;
+		blockData?: Record<string, any> | null;
 		readonly?: boolean;
 	}>(),
 	{
@@ -46,14 +48,22 @@ const props = withDefaults(
 const component = ref(null) as Ref<HTMLElement | null>;
 
 const repeatingFrom = computed(() => {
+	console.log("Repeating from:", props.block.getDataKey("comesFrom"));
 	return props.block.getDataKey("comesFrom") || "dataScript";
 });
 
-const blockData = computed(() => {
+const blockRepeaterData = computed(() => {
 	const pageData = props.data || pageStore.pageData;
+	const blockData = props.block.getBlockData() || {};
 	const key = props.block.getDataKey("key");
 	if (pageData && repeatingFrom.value === "dataScript" && key) {
 		const data = getDataForKey(pageData, key);
+		if (Array.isArray(data)) {
+			return data.slice(0, 100);
+		}
+		return data;
+	} else if (pageData && repeatingFrom.value === "blockDataScript" && key) {
+		const data = getDataForKey(blockData, key);
 		if (Array.isArray(data)) {
 			return data.slice(0, 100);
 		}

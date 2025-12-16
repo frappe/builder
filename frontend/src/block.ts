@@ -43,6 +43,8 @@ class Block implements BlockOptions {
 	activeState?: string | null = null;
 	dynamicValues: Array<BlockDataKey>;
 	blockClientScript?: string;
+	blockDataScript?: string;
+	blockData: Record<string, any> = {};
 	props?: BlockProps;
 	// @ts-expect-error
 	referenceComponent: Block | null;
@@ -99,7 +101,8 @@ class Block implements BlockOptions {
 		this.tabletStyles = reactive(options.tabletStyles || {});
 		this.attributes = reactive(options.attributes || {});
 		this.dynamicValues = reactive(options.dynamicValues || []);
-		this.blockClientScript = reactive(options.blockClientScript || "");
+		this.blockClientScript = options.blockClientScript || "";
+		this.blockDataScript = options.blockDataScript || "";
 		this.props = reactive(options.props || {});
 
 		this.blockName = options.blockName;
@@ -907,6 +910,24 @@ class Block implements BlockOptions {
 	}
 	setBlockClientScript(script: string) {
 		this.blockClientScript = script;
+	}
+	getBlockDataScript(): string {
+		let blockDataScript = "";
+		if (this.isExtendedFromComponent() && !this.blockDataScript) {
+			blockDataScript = this.referenceComponent?.getBlockDataScript() || "";
+		} else {
+			blockDataScript = this.blockDataScript || "";
+		}
+		return blockDataScript;
+	}
+	setBlockDataScript(script: string) {
+		this.blockDataScript = script;
+	}
+	getBlockData(): any {
+		return this.blockData;
+	}
+	setBlockData(data: Record<string, any>) {
+		this.blockData = data;
 	}
 	getBlockProps(): BlockProps {
 		let blockProps = {};

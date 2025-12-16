@@ -9,18 +9,34 @@ import { computed, h } from "vue";
 const keyOptions = computed(() => {
 	const pageStore = usePageStore();
 	let result: { label: string; value: string; prefix: any }[] = [];
-	const repeatableDataKeys: string[] = [];
-	let collectionObject = pageStore.pageData;
 
-	if (blockController.getFirstSelectedBlock()?.isInsideRepeater()) {
-		const keys = getCollectionKeys(blockController.getFirstSelectedBlock());
+	const repeatableDataKeys: string[] = [];
+	const repeatableBlockDataKeys: string[] = [];
+
+	let pageDataCollectionObject = pageStore.pageData;
+	let blockDataCollectionObject = blockController.getFirstSelectedBlock()?.getBlockData() || {};
+	let collectionObject = {};
+
+	const isInsideRepeater = blockController.getFirstSelectedBlock()?.isInsideRepeater();
+	const repeaterDataKeyComesFrom: BlockDataKey["comesFrom"] | undefined = blockController
+		.getFirstSelectedBlock()
+		?.getRepeaterParent()
+		?.getDataKey("comesFrom") as BlockDataKey["comesFrom"] | undefined;
+
+	if (isInsideRepeater) {
+		const keys = getCollectionKeys(
+			blockController.getFirstSelectedBlock(),
+			repeaterDataKeyComesFrom || "dataScript",
+		);
+		collectionObject =
+			repeaterDataKeyComesFrom == "dataScript" ? pageDataCollectionObject : blockDataCollectionObject;
 		collectionObject = keys.reduce((acc: any, key: string) => {
 			const data = getDataForKey(acc, key);
 			return Array.isArray(data) && data.length > 0 ? data[0] : data;
 		}, collectionObject);
 	}
 
-	function processObject(obj: Record<string, any>, prefix = "") {
+	function processObject(obj: Record<string, any>, prefix = "", resultArray: string[] = []) {
 		if (!obj || typeof obj !== "object") {
 			return;
 		}
@@ -29,23 +45,29 @@ const keyOptions = computed(() => {
 			const path = prefix ? `${prefix}.${key}` : key;
 
 			if (Array.isArray(value)) {
-				repeatableDataKeys.push(path);
+				resultArray.push(path);
 			} else if (typeof value === "object" && value !== null) {
-				processObject(value, path);
+				processObject(value, path, resultArray);
 			}
 		});
 	}
 
-	processObject(collectionObject);
+	if (isInsideRepeater) {
+		if (repeaterDataKeyComesFrom == "dataScript") {
+			processObject(collectionObject, "", repeatableDataKeys);
+		} else if (repeaterDataKeyComesFrom == "blockDataScript") {
+			processObject(collectionObject, "", repeatableBlockDataKeys);
+		}
+	} else {
+		processObject(pageDataCollectionObject, "", repeatableDataKeys);
+		processObject(blockDataCollectionObject, "", repeatableBlockDataKeys);
+	}
 
+	const isPropsBasedRepeater = isInsideRepeater && repeaterDataKeyComesFrom == "props";
 	const repeatableProps: string[] = [];
-	
-	const isInsideRepeater = blockController.getFirstSelectedBlock()?.isInsideRepeater();
-	const isPropsBasedRepeater =
-		isInsideRepeater &&
-		blockController.getFirstSelectedBlock()?.getRepeaterParent()?.getDataKey("comesFrom") === "props";
+
 	const propsOfComponentRoot = blockController.getComponentRootBlock()?.getBlockProps();
-	
+
 	if (propsOfComponentRoot && !isPropsBasedRepeater) {
 		Object.entries(propsOfComponentRoot).forEach(([key, value]) => {
 			if (
@@ -60,7 +82,17 @@ const keyOptions = computed(() => {
 	repeatableDataKeys.forEach((item) => {
 		result.push({
 			label: item,
-			value: item,
+			value: `${item}--pgdata`,
+			prefix: h(FeatherIcon, {
+				name: "zap",
+				class: "size-3",
+			}),
+		});
+	});
+	repeatableBlockDataKeys.forEach((item) => {
+		result.push({
+			label: item,
+			value: `${item}--bldata`,
 			prefix: h(FeatherIcon, {
 				name: "zap",
 				class: "size-3",
@@ -70,7 +102,7 @@ const keyOptions = computed(() => {
 	repeatableProps.forEach((prop) => {
 		result.push({
 			label: prop,
-			value: `${prop}-from-std-prop`,
+			value: `${prop}--stprop`,
 			prefix: h(FeatherIcon, {
 				name: "git-commit",
 				class: "size-3",
@@ -94,18 +126,17 @@ const collectionOptions = [
 		},
 		searchKeyWords: "Collection, Repeater, Dynamic Collection, Dynamic Repeater",
 		events: {
-			"update:modelValue": (selectedOption: { label: string; value: string }) => {
-				let value = selectedOption?.value;
+			"update:modelValue": (selectedOption: string) => {
+				let value = selectedOption.slice(0, -8);
+				let comesFromShort = selectedOption.slice(-6);
 				let comesFrom: BlockDataKey["comesFrom"] | "" = "dataScript";
-				if (
-					selectedOption?.label != selectedOption?.value &&
-					selectedOption?.value?.endsWith("-from-std-prop")
-				) {
-					value = selectedOption.value.replace("-from-std-prop", "");
-					comesFrom = "props";
-				}
 				if (!value && useCanvasStore().editingMode != "fragment") {
 					comesFrom = "";
+				}
+				if (comesFromShort == "bldata") {
+					comesFrom = "blockDataScript";
+				} else if (comesFromShort == "stprop") {
+					comesFrom = "props";
 				}
 				blockController.setDataKey("key", value);
 				blockController.setDataKey("comesFrom", comesFrom);

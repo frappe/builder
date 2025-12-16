@@ -201,14 +201,22 @@ async function saveAndExitFragmentMode(e: Event) {
 
 let expandedEditorOptions = computed(() => {
 	let title, label;
-	let type: "HTML" | "JavaScript" | "CSS" = "HTML";
+	let type: "HTML" | "JavaScript" | "CSS" | "Python" = "HTML";
 	if (canvasStore.editingContentType === "html") {
 		title = "HTML";
 		label = "Edit HTML";
 	} else if (canvasStore.editingContentType === "js") {
-		title = "Blockscript";
-		label = "Edit Blockscript";
+		title = "Block Client Script";
+		label = "Edit Block Client Script";
 		type = "JavaScript";
+	} else if (canvasStore.editingContentType === "css") {
+		title = "CSS";
+		label = "Edit CSS";
+		type = "CSS";
+	} else if (canvasStore.editingContentType === "python") {
+		title = "Block Data Script";
+		label = "Edit Block Data Script";
+		type = "Python";
 	}
 	return { title, label, type };
 });
@@ -218,6 +226,8 @@ function getExpandedEditorContent() {
 		return canvasStore.editableBlock?.getInnerHTML();
 	} else if (canvasStore.editingContentType === "js") {
 		return canvasStore.editableBlock?.getBlockClientScript();
+	} else if (canvasStore.editingContentType === "python") {
+		return canvasStore.editableBlock?.getBlockDataScript();
 	}
 }
 
@@ -226,6 +236,8 @@ async function saveExpandedEditorContent(val: string) {
 		canvasStore.editableBlock?.setInnerHTML(val);
 	} else if (canvasStore.editingContentType === "js") {
 		canvasStore.editableBlock?.setBlockClientScript(val);
+	} else if (canvasStore.editingContentType === "python") {
+		canvasStore.editableBlock?.setBlockDataScript(val);
 	}
 	canvasStore.showExpandedEditorDialog = false;
 }

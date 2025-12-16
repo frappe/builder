@@ -265,7 +265,7 @@ class BuilderPage(WebsiteGenerator):
 		if context.preview and self.draft_blocks:
 			blocks = self.draft_blocks
 
-		content, style, fonts = get_block_html(blocks)
+		content, style, fonts = get_block_html(blocks, page_data)
 		self.set_custom_font(context, fonts)
 		context.fonts = fonts
 		context.__content = content
@@ -495,8 +495,29 @@ def save_as_template(page_doc: BuilderPage):
 			record_module="builder",
 		)
 
+def resolve_dynamic_props(props, page_data):
+	resolved_props = {}
+	for key, value in props.items():
+		if isinstance(value, str):
+			stripped = value.strip()
+		if re.fullmatch(r"{{\s*.*?\s*}}", stripped):
+			# remove the {{ }} so Jinja receives the variable
+			inner = stripped[2:-2].strip()
+			value = page_data.get(inner, "")
+		resolved_props[key] = value
+	return resolved_props
 
-def get_block_html(blocks):
+
+@frappe.whitelist()
+def get_block_data(block_id, block_data_script, props):
+	props = frappe._dict(frappe.parse_json(props or "{}"))
+	block_data = frappe._dict()
+	_locals = dict(block=frappe._dict(), props=props)
+	execute_script(block_data_script, _locals, block_id)
+	block_data.update(_locals["block"])
+	return block_data
+
+def get_block_html(blocks, page_data=None):
 	blocks = frappe.parse_json(blocks)
 	if not isinstance(blocks, list):
 		blocks = [blocks]
@@ -626,6 +647,13 @@ def get_block_html(blocks):
 
 					if len(loop_vars) > 1:  # object repeater
 						_key = f"{_key}.items()"
+				elif block.get("dataKey").get("comesFrom") == "blockDataScript":
+					if data_key:
+						_key = f"{extract_data_key(data_key)}.{escape_single_quotes(_key)}"
+					else:
+						_key = f"block.{escape_single_quotes(_key)}"
+					loop_var = f"key_{_key.replace('.', '__')}"
+					next_data_key = {"key": loop_var, "comesFrom": "blockDataScript"}
 				else:
 					if data_key:
 						_key = f"{extract_data_key(data_key)}.{_key}"
@@ -637,10 +665,10 @@ def get_block_html(blocks):
 
 				tag.append(f"{{% for {loop_var} in {_key} %}}")
 
-				child_tag, child_tag_props, child_tag_std_props = get_tag(
+				child_tag, child_tag_props, child_tag_std_props, child_tag_data = get_tag(
 					block.get("children")[0], soup, next_data_key, next_default_props
 				)
-				append_child_tag_with_props(tag, child_tag, child_tag_props, child_tag_std_props)
+				append_child_tag_with_props(tag, child_tag, child_tag_props, child_tag_std_props, child_tag_data)
 
 				tag.append("{% endfor %}")
 			else:
@@ -652,10 +680,10 @@ def get_block_html(blocks):
 							key = f"{extract_data_key(data_key)}.{key}"
 						tag.append(f"{{% if {key} %}}")
 
-					child_tag, child_tag_props, child_tag_std_props = get_tag(
+					child_tag, child_tag_props, child_tag_std_props, child_tag_data = get_tag(
 						child, soup, data_key=data_key, default_props=default_props
 					)
-					append_child_tag_with_props(tag, child_tag, child_tag_props, child_tag_std_props)
+					append_child_tag_with_props(tag, child_tag, child_tag_props, child_tag_std_props, child_tag_data)
 
 					if child.get("visibilityCondition"):
 						tag.append("{% endif %}")
@@ -679,11 +707,17 @@ def get_block_html(blocks):
 				script_tag.string = script_content
 				tag.append(script_tag)
 
-			return tag, to_jinja_literal(all_props), to_jinja_literal(std_props) if std_props else None
+			block_data = {}
+			if block.get("blockDataScript"):
+				block_data = get_block_data(block.get("blockId"), block.get("blockDataScript"), resolve_dynamic_props(all_props, page_data or {}))
+				print("Block Data Script Output: ", block_data)
+
+			return tag, to_jinja_literal(all_props), to_jinja_literal(std_props) if std_props else None, to_jinja_literal(block_data) if block_data else None
 
 		for block in blocks:
-			tag, props, std_props = get_tag(block, soup)
-			html += f"{{% with props = {props} %}}{tag!s}{{% endwith %}}"
+			tag, props, std_props, block_data = get_tag(block, soup)
+			html += f"{{% with block = {block_data if block_data else '{}'} %}}{tag!s}{{% endwith %}}"
+			html = f"{{% with props = {props} %}}{html}{{% endwith %}}"
 			if std_props:
 				html = f"{{% with std_props = {std_props} %}}{html}{{% endwith %}}"
 
@@ -801,6 +835,9 @@ def extend_block(block, overridden_block):
 	if overridden_block.get("blockClientScript"):
 		block["blockClientScript"] = overridden_block.get("blockClientScript")
 
+	if overridden_block.get("blockDataScript"):
+		block["blockDataScript"] = overridden_block.get("blockDataScript")
+
 	dataKey = overridden_block.get("dataKey", {})
 	if not block.get("dataKey"):
 		block["dataKey"] = {}
@@ -832,12 +869,16 @@ def extend_block(block, overridden_block):
 	return block
 
 
-def append_child_tag_with_props(tag, child_tag, child_tag_props, child_tag_std_props):
+def append_child_tag_with_props(tag, child_tag, child_tag_props, child_tag_std_props, child_tag_data):
 	if child_tag_std_props:
 		tag.append(f"{{% with std_props = {child_tag_std_props} %}}")
 
 	tag.append(f"{{% with props = {child_tag_props} %}}")
+	if child_tag_data:
+		tag.append(f"{{% with block = block | combine({child_tag_data}) %}}")
 	tag.append(child_tag)
+	if child_tag_data:
+		tag.append("{% endwith %}")
 	tag.append("{% endwith %}")
 
 	if child_tag_std_props:
@@ -878,6 +919,7 @@ def set_dynamic_content_placeholder(block, data_key=None):
 	dynamic_values = [block_data_key] if block_data_key else []
 	dynamic_values += block.get("dynamicValues", []) or []
 	for dynamic_value_doc in dynamic_values:
+		original_key = escape_single_quotes(dynamic_value_doc.get("key", ""))
 		if not isinstance(dynamic_value_doc, dict):
 			# if dynamic_value_doc is a string, convert it to dict
 			dynamic_value_doc = {"key": dynamic_value_doc, "type": "key", "property": dynamic_value_doc}
@@ -885,9 +927,15 @@ def set_dynamic_content_placeholder(block, data_key=None):
 			key = ""
 			if dynamic_value_doc.get("comesFrom") == "props":
 				key = f"props['{escape_single_quotes(dynamic_value_doc.get('key'))}']"
+			elif dynamic_value_doc.get("comesFrom") == "blockDataScript":
+				#TODO: do what the next else does?
+				if data_key:
+					key = f"{extract_data_key(data_key)}.{(dynamic_value_doc.get('key'))}"
+				else:
+					key = f"block.{original_key}"
 			else:
 				key = (
-					f"{data_key}.{dynamic_value_doc.get('key')}" if data_key else dynamic_value_doc.get("key")
+					f"{extract_data_key(data_key)}.{dynamic_value_doc.get('key')}" if data_key else dynamic_value_doc.get("key")
 				)
 				if data_key:
 					# convert a.b to (a or {}).get('b', {})
@@ -901,18 +949,18 @@ def set_dynamic_content_placeholder(block, data_key=None):
 			_type = dynamic_value_doc.get("type")
 			if _type == "attribute":
 				block["attributes"][_property] = (
-					f"{{{{ {key} or '{escape_single_quotes(block['attributes'].get(_property, ''))}' }}}}"
+					f"{{{{ {key} or block['{original_key}'] or '{escape_single_quotes(block['attributes'].get(_property, ''))}' }}}}"
 				)
 			elif _type == "style":
 				if not block["attributes"].get("style"):
 					block["attributes"]["style"] = ""
 				css_property = camel_case_to_kebab_case(_property)
 				block["attributes"]["style"] += (
-					f"{css_property}: {{{{ {key} or '{escape_single_quotes(block['baseStyles'].get(_property, '') or '')}' }}}};"
+					f"{css_property}: {{{{ {key} or block['{original_key}'] or '{escape_single_quotes(block['baseStyles'].get(_property, '') or '')}' }}}};"
 				)
 			elif _type == "key" and not block.get("isRepeaterBlock"):
 				block[_property] = (
-					f"{{{{ {key} if {key} or {key} in ['', 0] else '{escape_single_quotes(block.get(_property, ''))}' }}}}"
+					f"{{{{ {key} if {key} or {key} in ['', 0] else block['{original_key}'] if block['{original_key}'] is defined else '{escape_single_quotes(block.get(_property, ''))}' }}}}"
 				)
 
 

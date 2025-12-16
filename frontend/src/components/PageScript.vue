@@ -4,7 +4,8 @@
 			<BuilderButton @click="showClientScriptEditor()" class="flex-1">Client Script</BuilderButton>
 			<BuilderButton @click="showServerScriptEditor()" class="flex-1">Data Script</BuilderButton>
 		</div>
-		<CodeEditor v-model="pageStore.pageData" type="JSON" label="Data Preview" :readonly="true"></CodeEditor>
+		<CodeEditor v-model="pageStore.pageData" type="JSON" label="Page Data Preview" :readonly="true"></CodeEditor>
+		<CodeEditor v-model="blockData" type="JSON" label="Block Data Preview" :readonly="true"></CodeEditor>
 		<Dialog
 			style="z-index: 40"
 			class="overscroll-none"
@@ -62,6 +63,7 @@ import { computed, defineComponent, ref, watch } from "vue";
 import { toast } from "vue-sonner";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
+import blockController from "@/utils/blockController";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
@@ -130,4 +132,8 @@ watch(
 		}
 	},
 );
+
+const blockData = computed(() => {
+	return blockController.getFirstSelectedBlock()?.getBlockData() || "{}";
+});
 </script>

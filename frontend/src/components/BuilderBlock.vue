@@ -13,6 +13,7 @@
 		ref="component">
 		<BuilderBlock
 			:data="data"
+			:block-data="cumulativeBlockData"
 			:defaultProps="defaultProps"
 			:block="child"
 			:breakpoint="breakpoint"
@@ -48,11 +49,14 @@ import BlockHTML from "./BlockHTML.vue";
 import DataLoaderBlock from "./DataLoaderBlock.vue";
 import TextBlock from "./TextBlock.vue";
 import { builderSettings } from "@/data/builderSettings";
+import getBlockData from "@/data/blockData";
+import usePageStore from "@/stores/pageStore";
 
 const canvasStore = useCanvasStore();
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
 const attrs = useAttrs();
 const editor = ref<InstanceType<typeof BlockEditor> | null>(null);
+const pageStore = usePageStore();
 
 const props = withDefaults(
 	defineProps<{
@@ -62,6 +66,7 @@ const props = withDefaults(
 		preview?: boolean;
 		readonly?: boolean;
 		data?: Record<string, any> | null;
+		blockData?: Record<string, any> | null;
 		defaultProps?: Record<string, any> | null;
 	}>(),
 	{
@@ -70,6 +75,7 @@ const props = withDefaults(
 		preview: false,
 		readonly: false,
 		data: null,
+		blockData: null,
 		defaultProps: null,
 	},
 );
@@ -129,6 +135,7 @@ const attributes = computed(() => {
 		attribs.preview = props.preview;
 		attribs.breakpoint = props.breakpoint;
 		attribs.data = props.data;
+		attribs.blockData = cumulativeBlockData.value;
 		attribs.defaultProps = props.defaultProps;
 	}
 
@@ -137,10 +144,20 @@ const attributes = computed(() => {
 		const getDataScriptValue = (path: string): any => {
 			return getDataForKey(data, path);
 		};
+		const getBlockDataScriptValue = (path: string): any => {
+			return getDataForKey(cumulativeBlockData.value || {}, path);
+		};
 		if (props.block.getDataKey("type") === "attribute") {
 			let value;
 			if (props.block.getDataKey("comesFrom") === "props") {
-				value = getPropValue(props.block.getDataKey("key") as string, props.block, getDataScriptValue, props.defaultProps);
+				value = getPropValue(
+					props.block.getDataKey("key") as string,
+					props.block,
+					getDataScriptValue,
+					props.defaultProps,
+				);
+			} else if (props.block.getDataKey("comesFrom") === "blockDataScript") {
+				value = getBlockDataScriptValue(props.block.getDataKey("key") as string);
 			} else {
 				value = getDataScriptValue(props.block.getDataKey("key") as string);
 			}
@@ -156,6 +173,8 @@ const attributes = computed(() => {
 				let value;
 				if (dataKeyObj.comesFrom === "props") {
 					value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue, props.defaultProps);
+				} else if (dataKeyObj.comesFrom === "blockDataScript") {
+					value = getBlockDataScriptValue(dataKeyObj.key as string);
 				} else {
 					value = getDataScriptValue(dataKeyObj.key as string);
 				}
@@ -186,10 +205,20 @@ const styles = computed(() => {
 		const getDataScriptValue = (path: string): any => {
 			return getDataForKey(props.data || {}, path);
 		};
+		const getBlockDataScriptValue = (path: string): any => {
+			return getDataForKey(cumulativeBlockData.value || {}, path);
+		};
 		if (props.block.getDataKey("type") === "style") {
 			let value;
 			if (props.block.getDataKey("comesFrom") === "props") {
-				value = getPropValue(props.block.getDataKey("key") as string, props.block, getDataScriptValue, props.defaultProps);
+				value = getPropValue(
+					props.block.getDataKey("key") as string,
+					props.block,
+					getDataScriptValue,
+					props.defaultProps,
+				);
+			} else if (props.block.getDataKey("comesFrom") === "blockDataScript") {
+				value = getBlockDataScriptValue(props.block.getDataKey("key") as string);
 			} else {
 				value = getDataForKey(props.data as Object, props.block.getDataKey("key") as string);
 			}
@@ -206,6 +235,8 @@ const styles = computed(() => {
 				let value;
 				if (dataKeyObj.comesFrom === "props") {
 					value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue, props.defaultProps);
+				} else if (dataKeyObj.comesFrom === "blockDataScript") {
+					value = getBlockDataScriptValue(dataKeyObj.key as string);
 				} else {
 					value = getDataForKey(props.data as Object, dataKeyObj.key as string);
 				}
@@ -307,8 +338,10 @@ watch(
 		allResolvedProps,
 		() => props.block.getBlockClientScript(),
 		() => Boolean(builderSettings.doc?.execute_block_scripts_in_editor),
+		() => pageStore.settingPage,
 	],
 	() => {
+		if (pageStore.settingPage) return;
 		if (builderSettings.doc?.execute_block_scripts_in_editor) {
 			saferExecuteBlockClientScript(uid, props.block.getBlockClientScript(), allResolvedProps.value);
 		}
@@ -316,11 +349,35 @@ watch(
 	{ deep: true },
 );
 
-onMounted(() => {
-	if (builderSettings.doc?.execute_block_scripts_in_editor) {
-		saferExecuteBlockClientScript(uid, props.block.getBlockClientScript(), allResolvedProps.value);
-	}
-});
+const cumulativeBlockData = ref<Record<string, any>>({});
+
+watch(
+	[
+		component,
+		allResolvedProps,
+		() => props.block.getBlockDataScript(),
+		() => pageStore.settingPage,
+		() => props.block.getParentBlock()?.blockData,
+	],
+	() => {
+		if (pageStore.settingPage) return;
+		getBlockData
+			.fetch({
+				block_id: props.block.blockId,
+				block_data_script: props.block.getBlockDataScript(),
+				props: JSON.stringify(allResolvedProps.value),
+			})
+			.then((res: any) => {
+				props.block.setBlockData({ ...(props.blockData || {}), ...res });
+				cumulativeBlockData.value = { ...(props.blockData || {}), ...res };
+				console.log("Cumulative Block Data for block", props.block.blockId, ":", props.blockData, res);
+			})
+			.catch((err: any) => {
+				console.error("Error fetching block data:", err);
+			});
+	},
+	{ deep: true },
+);
 
 const isEditable = computed(() => {
 	// to ensure it is right block and not on different breakpoint

@@ -377,6 +377,7 @@ function getCopyWithoutParent(block: BlockOptions | Block): BlockOptions {
 	blockCopy.children = blockCopy.children?.map((child) => getCopyWithoutParent(child));
 	delete blockCopy.parentBlock;
 	delete blockCopy.referenceComponent;
+	delete blockCopy.blockData;
 	return blockCopy;
 }
 
@@ -1016,17 +1017,17 @@ function showDialog(options: DialogOptions): Promise<void> {
 	});
 }
 
-function getCollectionKeys(block: any): string[] {
+function getCollectionKeys(block: any, type : BlockDataKey["comesFrom"] = "dataScript"): string[] {
 	// traverse up the block to get list of dataKeys set
 	const repeaterBlock = block.getRepeaterParent();
 	const keys: string[] = [];
 	if (repeaterBlock) {
 		const collectionKey = repeaterBlock.getDataKey("key");
 		const comesFrom = repeaterBlock.getDataKey("comesFrom");
-		if (collectionKey && comesFrom == "dataScript") {
+		if (collectionKey && comesFrom == type) {
 			keys.push(collectionKey);
 		}
-		const parentKeys: string[] = getCollectionKeys(repeaterBlock);
+		const parentKeys: string[] = getCollectionKeys(repeaterBlock, type);
 		if (parentKeys.length > 0) {
 			keys.unshift(...parentKeys);
 		}
@@ -1132,6 +1133,15 @@ const getStandardPropValue = (
 	} else {
 		return undefined;
 	}
+};
+
+const getCumulativeBlockData = (block: Block): Record<string, any> => {
+	const parentBlock = block.getParentBlock();
+	if (parentBlock) {
+		const parentBlockData = getCumulativeBlockData(parentBlock);
+		return { ...parentBlockData, ...(block.blockData || {}) };
+	}
+	return { ...(block.blockData || {}) };
 };
 
 /**
@@ -1319,5 +1329,6 @@ export {
 	uploadUserFont,
 	getPropValue,
 	getStandardPropValue,
+	getCumulativeBlockData,
 	saferExecuteBlockClientScript,
 };

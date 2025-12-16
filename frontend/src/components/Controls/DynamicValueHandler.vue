@@ -83,15 +83,15 @@ const props = defineProps<{
 const emit = defineEmits(["setDynamicValue"]);
 const searchQuery = ref("");
 
-const dataArray = computed(() => {
+const dataArray = (collectionObject: Record<string, any>, comesFrom: BlockDataKey["comesFrom"]) => {
 	const result: string[] = [];
-	let collectionObject = pageStore.pageData;
-	if (blockController.getFirstSelectedBlock()?.isInsideRepeater()) {
-		const keys = getCollectionKeys(blockController.getFirstSelectedBlock());
-		collectionObject = keys.reduce((acc: any, key: string) => {
+	let collectionObjectCopy = { ...collectionObject };
+	if (blockController.getFirstSelectedBlock()?.isInsideRepeater() && comesFrom == "dataScript") {
+		const keys = getCollectionKeys(blockController.getFirstSelectedBlock(), comesFrom);
+		collectionObjectCopy = keys.reduce((acc: any, key: string) => {
 			const data = getDataForKey(acc, key);
 			return Array.isArray(data) && data.length > 0 ? data[0] : data;
-		}, collectionObject);
+		}, collectionObjectCopy);
 	}
 
 	function processObject(obj: Record<string, any>, prefix = "") {
@@ -106,8 +106,20 @@ const dataArray = computed(() => {
 		});
 	}
 
-	processObject(collectionObject);
+	processObject(collectionObjectCopy);
 	return result;
+};
+
+const pageDataArray = computed(() => {
+	return dataArray(pageStore.pageData, "dataScript");
+});
+
+const blockDataArray = computed(() => {
+	const currentBlock = props.block || blockController.getFirstSelectedBlock();
+	if (currentBlock) {
+		return dataArray(currentBlock.blockData || {}, "blockDataScript");
+	}
+	return [];
 });
 
 const defaultProps = computed(() => {
@@ -156,6 +168,8 @@ const getValue = (item: DynamicValueItem): any => {
 			getDataScriptValue,
 			defaultProps.value,
 		);
+	} else if (item.comesFrom == "blockDataScript") {
+		return getBlockDataScriptValue(item.key);
 	} else {
 		return getDataScriptValue(item.key);
 	}
@@ -175,6 +189,14 @@ const getDataScriptValue = (path: string): any => {
 	return path.split(".").reduce((obj: Record<string, any>, key: string) => obj?.[key], collectionObject);
 };
 
+const getBlockDataScriptValue = (path: string): any => {
+	let collectionObject = props.block
+		? props.block.getBlockData() || {}
+		: blockController.getFirstSelectedBlock()?.getBlockData() || {};
+
+	return path.split(".").reduce((obj: Record<string, any>, key: string) => obj?.[key], collectionObject);
+};
+
 const blockProps = computed(() => {
 	return props.block
 		? props.block.getBlockProps()
@@ -182,13 +204,22 @@ const blockProps = computed(() => {
 });
 
 const filteredItems = computed(() => {
-	const dataArrayItems = dataArray.value.map((item) => ({ key: item, comesFrom: "dataScript" }));
+	const pageDataArrayItems = pageDataArray.value.map((item) => ({ key: item, comesFrom: "dataScript" }));
+	const blockDataArrayItems = blockDataArray.value.map((item) => ({
+		key: item,
+		comesFrom: "blockDataScript",
+	}));
 	const propItems = Object.keys(blockProps.value).map((item) => ({ key: item, comesFrom: "props" }));
 	const defaultPropsKeys = Object.keys(defaultProps.value || {}).map((item) => ({
 		key: item,
 		comesFrom: "props",
 	}));
-	const allItems = [...dataArrayItems, ...propItems, ...defaultPropsKeys] as DynamicValueItem[];
+	const allItems = [
+		...pageDataArrayItems,
+		...blockDataArrayItems,
+		...propItems,
+		...defaultPropsKeys,
+	] as DynamicValueItem[];
 	if (!searchQuery.value) return allItems;
 	const query = searchQuery.value.toLowerCase();
 	return allItems.filter(
@@ -196,7 +227,12 @@ const filteredItems = computed(() => {
 			item.key.toLowerCase().includes(query) ||
 			String(getDataScriptValue(item.key)).toLowerCase().includes(query) ||
 			String(
-				getPropValue(item.key, props.block || blockController.getFirstSelectedBlock(), getDataScriptValue, defaultProps.value),
+				getPropValue(
+					item.key,
+					props.block || blockController.getFirstSelectedBlock(),
+					getDataScriptValue,
+					defaultProps.value,
+				),
 			)
 				.toLowerCase()
 				.includes(query),
