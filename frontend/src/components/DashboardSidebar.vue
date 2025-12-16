@@ -3,19 +3,6 @@
 		class="sticky bottom-0 left-0 top-0 flex min-h-fit w-60 flex-col gap-3 bg-surface-gray-1 p-2 shadow-lg max-lg:hidden">
 		<div class="flex flex-col">
 			<div class="mb-2 flex gap-2">
-				<Dialog
-					v-model="showSettingsDialog"
-					style="z-index: 40"
-					:disableOutsideClickToClose="true"
-					class="[&>div>div[id^=headlessui-dialog-panel]]:my-3"
-					:options="{
-						title: 'Settings',
-						size: '5xl',
-					}">
-					<template #body>
-						<BuilderSettings @close="showSettingsDialog = false" :onlyGlobal="true"></BuilderSettings>
-					</template>
-				</Dialog>
 				<div class="flex w-full items-center">
 					<Dropdown
 						:options="[
@@ -179,6 +166,19 @@
 		<NewFolder v-model="showNewFolderDialog"></NewFolder>
 		<TrialBanner v-if="builderStore.isFCSite"></TrialBanner>
 	</section>
+	<Dialog
+		v-model="showSettingsDialog"
+		style="z-index: 40"
+		:disableOutsideClickToClose="true"
+		class="[&>div>div[id^=headlessui-dialog-panel]]:my-3"
+		:options="{
+			title: 'Settings',
+			size: '5xl',
+		}">
+		<template #body>
+			<BuilderSettings @close="showSettingsDialog = false" :onlyGlobal="true"></BuilderSettings>
+		</template>
+	</Dialog>
 </template>
 <script lang="ts" setup>
 import AppsMenu from "@/components/AppsMenu.vue";

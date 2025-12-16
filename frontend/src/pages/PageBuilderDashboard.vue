@@ -1,10 +1,10 @@
 <template>
 	<div class="flex h-screen">
 		<!-- toolbar -->
-		<DashboardSidebar class="z-30"></DashboardSidebar>
+		<DashboardSidebar></DashboardSidebar>
 		<div class="flex w-full flex-1 flex-col overflow-hidden">
 			<div
-				class="toolbar sticky top-0 z-10 flex h-12 items-center justify-end border-b-[1px] border-outline-gray-1 bg-surface-white p-2 px-3 py-1"
+				class="toolbar sticky top-0 flex h-12 items-center justify-end border-b-[1px] border-outline-gray-1 bg-surface-white p-2 px-3 py-1"
 				ref="toolbar">
 				<div class="flex gap-2">
 					<router-link
@@ -25,19 +25,59 @@
 			</div>
 			<div class="flex-1 overflow-auto">
 				<section class="m-auto mb-32 flex h-fit w-3/4 max-w-6xl flex-col pt-5">
+					<!-- pages -->
+					<div>
+						<div v-if="!webPages.data?.length && !searchFilter && !typeFilter" class="col-span-full">
+							<p class="px-3 text-base text-gray-500">
+								You don't have any pages yet. Click on the "+ New" button to create a new page.
+							</p>
+						</div>
+						<div v-else-if="!webPages.data?.length" class="col-span-full">
+							<p class="text-base text-gray-500">No matching pages found.</p>
+						</div>
+						<!-- grid -->
+						<div class="grid-col grid gap-3 auto-fill-[220px]" v-if="displayType === 'grid'">
+							<PageCard
+								v-for="page in webPages.data"
+								:selected="selectedPages.has(page.name)"
+								@click.capture="($event: MouseEvent) => handleClick($event, page)"
+								:key="page.page_name"
+								:page="page"
+								v-on-click-and-hold="() => enableSelectionMode(page)"></PageCard>
+						</div>
+						<!-- list -->
+						<div v-if="displayType === 'list'">
+							<PageListItem
+								@click.capture="($event: MouseEvent) => handleClick($event, page)"
+								v-for="page in webPages.data"
+								:selected="selectedPages.has(page.name)"
+								:key="page.page_name"
+								:page="page"
+								v-on-click-and-hold="() => enableSelectionMode(page)"></PageListItem>
+						</div>
+					</div>
+					<BuilderButton
+						class="m-auto mt-12 w-fit text-sm"
+						@click="loadMore"
+						v-if="webPages.data.length && webPages.hasNextPage"
+						variant="subtle"
+						size="sm">
+						Load More
+					</BuilderButton>
 					<!-- list head -->
-					<div class="sticky top-0 z-20 mb-8 flex items-center justify-between bg-surface-white px-3 py-5">
+					<div
+						class="sticky top-0 order-[-1] mb-8 flex items-center justify-between bg-surface-white px-3 py-5">
 						<h1 class="text-xl font-semibold text-ink-gray-9">
 							{{ builderStore.activeFolder || "All Pages" }}
 						</h1>
 						<div class="flex gap-2">
 							<div>
-								<BuilderButton
+								<Button
 									variant="solid"
-									v-show="selectionMode && selectedPages.size"
+									v-if="selectionMode && selectedPages.size"
 									@click="showFolderSelectorDialog = true">
 									Move To Folder
-								</BuilderButton>
+								</Button>
 							</div>
 							<div class="relative flex" v-show="!selectionMode">
 								<BuilderInput
@@ -57,9 +97,7 @@
 								</BuilderInput>
 							</div>
 							<div class="max-md:hidden" v-show="!selectionMode">
-								<BuilderInput
-									type="select"
-									class="w-24"
+								<Select
 									v-model="typeFilter"
 									:options="[
 										{ label: 'All', value: '' },
@@ -69,9 +107,7 @@
 									]" />
 							</div>
 							<div class="max-sm:hidden" v-show="!selectionMode">
-								<BuilderInput
-									type="select"
-									class="w-32"
+								<Select
 									v-model="orderBy"
 									:options="[
 										{ label: 'Sort', value: '', disabled: true },
@@ -108,45 +144,6 @@
 							</div>
 						</div>
 					</div>
-					<!-- pages -->
-					<div>
-						<div v-if="!webPages.data?.length && !searchFilter && !typeFilter" class="col-span-full">
-							<p class="px-3 text-base text-gray-500">
-								You don't have any pages yet. Click on the "+ New" button to create a new page.
-							</p>
-						</div>
-						<div v-else-if="!webPages.data?.length" class="col-span-full">
-							<p class="text-base text-gray-500">No matching pages found.</p>
-						</div>
-						<!-- grid -->
-						<div class="grid-col grid gap-3 auto-fill-[220px]" v-if="displayType === 'grid'">
-							<PageCard
-								v-for="page in webPages.data"
-								:selected="selectedPages.has(page.name)"
-								@click.capture="($event: MouseEvent) => handleClick($event, page)"
-								:key="page.page_name"
-								:page="page"
-								v-on-click-and-hold="() => enableSelectionMode(page)"></PageCard>
-						</div>
-						<!-- list -->
-						<div v-if="displayType === 'list'">
-							<PageListItem
-								@click.capture="($event: MouseEvent) => handleClick($event, page)"
-								v-for="page in webPages.data"
-								:selected="selectedPages.has(page.name)"
-								:key="page.page_name"
-								:page="page"
-								v-on-click-and-hold="() => enableSelectionMode(page)"></PageListItem>
-						</div>
-					</div>
-					<BuilderButton
-						class="m-auto mt-12 w-fit text-sm"
-						@click="loadMore"
-						v-show="webPages.data.length && webPages.hasNextPage"
-						variant="subtle"
-						size="sm">
-						Load More
-					</BuilderButton>
 				</section>
 			</div>
 		</div>
@@ -167,18 +164,13 @@ import vOnClickAndHold from "@/directives/vOnClickAndHold";
 import useBuilderStore from "@/stores/builderStore";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { useDark, useEventListener, useStorage, useToggle, watchDebounced } from "@vueuse/core";
-import { createResource } from "frappe-ui";
+import { useEventListener, useStorage, watchDebounced } from "@vueuse/core";
+import { Button, createResource, Select } from "frappe-ui";
 import { onActivated, Ref, ref, watch } from "vue";
 
-const isDark = useDark({
-	attribute: "data-theme",
-});
-const toggleDark = useToggle(isDark);
 const builderStore = useBuilderStore();
 const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list">;
 const showFolderSelectorDialog = ref(false);
-const showImportModal = ref(false);
 
 const searchFilter = ref("");
 const typeFilter = useStorage("typeFilter", "") as Ref<"" | "draft" | "published" | "unpublished">;
