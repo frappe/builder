@@ -60,7 +60,7 @@ const keyOptions = computed(() => {
 	repeatableDataKeys.forEach((item) => {
 		result.push({
 			label: item,
-			value: item,
+			value: `${item}--pgdata`,
 			prefix: h(FeatherIcon, {
 				name: "zap",
 				class: "size-3",
@@ -70,7 +70,7 @@ const keyOptions = computed(() => {
 	repeatableProps.forEach((prop) => {
 		result.push({
 			label: prop,
-			value: `${prop}-from-std-prop`,
+			value: `${prop}--stprop`,
 			prefix: h(FeatherIcon, {
 				name: "git-commit",
 				class: "size-3",
@@ -94,18 +94,15 @@ const collectionOptions = [
 		},
 		searchKeyWords: "Collection, Repeater, Dynamic Collection, Dynamic Repeater",
 		events: {
-			"update:modelValue": (selectedOption: { label: string; value: string }) => {
-				let value = selectedOption?.value;
+			"update:modelValue": (selectedOption: string) => {
+				let value = selectedOption.slice(0, -8);
+				let comesFromShort = selectedOption.slice(-6);
 				let comesFrom: BlockDataKey["comesFrom"] | "" = "dataScript";
-				if (
-					selectedOption?.label != selectedOption?.value &&
-					selectedOption?.value?.endsWith("-from-std-prop")
-				) {
-					value = selectedOption.value.replace("-from-std-prop", "");
-					comesFrom = "props";
-				}
 				if (!value && useCanvasStore().editingMode != "fragment") {
 					comesFrom = "";
+				}
+				if (comesFromShort == "stprop") {
+					comesFrom = "props";
 				}
 				blockController.setDataKey("key", value);
 				blockController.setDataKey("comesFrom", comesFrom);
