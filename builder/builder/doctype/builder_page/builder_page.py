@@ -887,7 +887,7 @@ def set_dynamic_content_placeholder(block, data_key=None):
 				key = f"props['{escape_single_quotes(dynamic_value_doc.get('key'))}']"
 			else:
 				key = (
-					f"{data_key}.{dynamic_value_doc.get('key')}" if data_key else dynamic_value_doc.get("key")
+					f"{extract_data_key(data_key)}.{dynamic_value_doc.get('key')}" if data_key else dynamic_value_doc.get("key")
 				)
 				if data_key:
 					# convert a.b to (a or {}).get('b', {})
