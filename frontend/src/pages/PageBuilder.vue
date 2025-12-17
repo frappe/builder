@@ -6,105 +6,106 @@
 			<p class="text-p-base">Please switch to a larger screen to edit</p>
 		</div>
 	</div>
-	<div v-show="!isSmallScreen" class="page-builder h-screen flex-col overflow-hidden bg-surface-gray-1">
-		<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
-		<BuilderToolbar class="relative z-30"></BuilderToolbar>
-		<div>
-			<BuilderLeftPanel
-				v-show="builderStore.showLeftPanel"
-				class="absolute bottom-0 left-0 top-[var(--toolbar-height)] z-[21] border-r-[1px] border-outline-gray-2 bg-surface-white"></BuilderLeftPanel>
-			<BuilderCanvas
-				ref="fragmentCanvas"
-				:key="canvasStore.fragmentData.block?.blockId"
-				v-if="canvasStore.editingMode === 'fragment' && canvasStore.fragmentData.block"
-				:block-data="canvasStore.fragmentData.block"
-				:canvas-styles="{
-					width: (canvasStore.fragmentData.block.getStyle('width') + '').endsWith('px')
-						? '!fit-content'
-						: null,
-					padding: '40px',
-				}"
-				:style="{
-					left: `${
-						builderStore.showLeftPanel
-							? builderStore.builderLayout.leftPanelWidth + builderStore.builderLayout.optionsPanelWidth
-							: 0
-					}px`,
-					right: `${builderStore.showRightPanel ? builderStore.builderLayout.rightPanelWidth : 0}px`,
-				}"
-				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-surface-gray-2 p-10">
-				<template v-slot:header>
-					<div
-						class="absolute left-0 right-0 top-0 z-20 flex items-center justify-between bg-surface-white p-2 text-sm text-ink-gray-8 shadow-sm">
-						<div class="flex items-center gap-1 pl-2 text-xs">
-							<a @click="canvasStore.exitFragmentMode" class="cursor-pointer">Page</a>
-							<FeatherIcon name="chevron-right" class="h-3 w-3" />
-							<span class="flex items-center gap-2">
-								{{ canvasStore.fragmentData.fragmentName }}
-								<a
-									@click="pageListDialog = true"
-									class="cursor-pointer text-ink-gray-4 underline"
-									v-if="canvasStore.fragmentData.showUsageCount">
-									{{ usageMessage }}
-								</a>
-							</span>
-						</div>
-						<BuilderButton variant="solid" class="text-xs" @click="saveAndExitFragmentMode">
-							{{ canvasStore.fragmentData.saveActionLabel || "Save" }}
-						</BuilderButton>
+	<div v-show="!isSmallScreen" class="page-builder relative h-screen overflow-hidden bg-surface-gray-1">
+		<!-- Canvas layer (bottom) - comes first in DOM -->
+		<BuilderCanvas
+			ref="fragmentCanvas"
+			:key="canvasStore.fragmentData.block?.blockId"
+			v-if="canvasStore.editingMode === 'fragment' && canvasStore.fragmentData.block"
+			:block-data="canvasStore.fragmentData.block"
+			:canvas-styles="{
+				width: (canvasStore.fragmentData.block.getStyle('width') + '').endsWith('px') ? '!fit-content' : null,
+				padding: '40px',
+			}"
+			:style="{
+				top: 'var(--toolbar-height)',
+				left: `${
+					builderStore.showLeftPanel
+						? builderStore.builderLayout.leftPanelWidth + builderStore.builderLayout.optionsPanelWidth
+						: 0
+				}px`,
+				right: `${builderStore.showRightPanel ? builderStore.builderLayout.rightPanelWidth : 0}px`,
+			}"
+			class="canvas-container absolute bottom-0 flex justify-center overflow-hidden bg-surface-gray-2 p-10">
+			<template v-slot:header>
+				<div class="flex items-center justify-between bg-surface-white p-2 text-sm text-ink-gray-8 shadow-sm">
+					<div class="flex items-center gap-1 pl-2 text-xs">
+						<a @click="canvasStore.exitFragmentMode" class="cursor-pointer">Page</a>
+						<FeatherIcon name="chevron-right" class="h-3 w-3" />
+						<span class="flex items-center gap-2">
+							{{ canvasStore.fragmentData.fragmentName }}
+							<a
+								@click="pageListDialog = true"
+								class="cursor-pointer text-ink-gray-4 underline"
+								v-if="canvasStore.fragmentData.showUsageCount">
+								{{ usageMessage }}
+							</a>
+						</span>
 					</div>
-				</template>
-			</BuilderCanvas>
-			<BuilderCanvas
-				v-show="canvasStore.editingMode === 'page'"
-				ref="pageCanvas"
-				v-if="pageStore.pageBlocks[0]"
-				:block-data="pageStore.pageBlocks[0]"
-				:canvas-styles="{
-					minHeight: '1000px',
-				}"
-				:style="{
-					left: `${
-						builderStore.showLeftPanel
-							? builderStore.builderLayout.leftPanelWidth + builderStore.builderLayout.optionsPanelWidth
-							: 0
-					}px`,
-					right: `${builderStore.showRightPanel ? builderStore.builderLayout.rightPanelWidth : 0}px`,
-				}"
-				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-surface-gray-1 p-10"></BuilderCanvas>
-			<BuilderRightPanel
-				v-show="builderStore.showRightPanel"
-				class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] border-outline-gray-2 bg-surface-white"></BuilderRightPanel>
-			<PageListModal v-model="pageListDialog" :pages="componentUsedInPages"></PageListModal>
-			<Dialog
-				style="z-index: 40"
-				v-model="canvasStore.showHTMLDialog"
-				class="overscroll-none"
-				:isDirty="htmlEditor?.isDirty"
-				:options="{
-					title: 'HTML',
-					size: '7xl',
-				}">
-				<template #body-content>
-					<CodeEditor
-						:modelValue="canvasStore.editableBlock?.getInnerHTML()"
-						ref="htmlEditor"
-						type="HTML"
-						height="68vh"
-						label="Edit HTML"
-						:showLineNumbers="true"
-						:showSaveButton="true"
-						@save="
-							(val) => {
-								canvasStore.editableBlock?.setInnerHTML(val);
-								canvasStore.showHTMLDialog = false;
-							}
-						"
-						required />
-				</template>
-			</Dialog>
-		</div>
+					<BuilderButton variant="solid" class="text-xs" @click="saveAndExitFragmentMode">
+						{{ canvasStore.fragmentData.saveActionLabel || "Save" }}
+					</BuilderButton>
+				</div>
+			</template>
+		</BuilderCanvas>
+		<BuilderCanvas
+			v-show="canvasStore.editingMode === 'page'"
+			ref="pageCanvas"
+			v-if="pageStore.pageBlocks[0]"
+			:block-data="pageStore.pageBlocks[0]"
+			:canvas-styles="{
+				minHeight: '1000px',
+			}"
+			:style="{
+				top: 'var(--toolbar-height)',
+				left: `${
+					builderStore.showLeftPanel
+						? builderStore.builderLayout.leftPanelWidth + builderStore.builderLayout.optionsPanelWidth
+						: 0
+				}px`,
+				right: `${builderStore.showRightPanel ? builderStore.builderLayout.rightPanelWidth : 0}px`,
+			}"
+			class="canvas-container absolute bottom-0 flex justify-center overflow-hidden bg-surface-gray-1 p-10"></BuilderCanvas>
+
+		<!-- Panels layer (middle) - comes after canvas in DOM -->
+		<BuilderLeftPanel
+			v-show="builderStore.showLeftPanel"
+			class="absolute bottom-0 left-0 top-[var(--toolbar-height)] w-fit border-r-[1px] border-outline-gray-2 bg-surface-white"></BuilderLeftPanel>
+		<BuilderRightPanel
+			v-show="builderStore.showRightPanel"
+			class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] overflow-auto border-l-[1px] border-outline-gray-2 bg-surface-white"></BuilderRightPanel>
+
+		<!-- Toolbar layer (top) - comes last in DOM -->
+		<BuilderToolbar class="absolute left-0 right-0 top-0"></BuilderToolbar>
 	</div>
+	<PageListModal v-model="pageListDialog" :pages="componentUsedInPages"></PageListModal>
+	<Dialog
+		v-model="canvasStore.showHTMLDialog"
+		class="overscroll-none"
+		:isDirty="htmlEditor?.isDirty"
+		:options="{
+			title: 'HTML',
+			size: '7xl',
+		}">
+		<template #body-content>
+			<CodeEditor
+				:modelValue="canvasStore.editableBlock?.getInnerHTML()"
+				ref="htmlEditor"
+				type="HTML"
+				height="68vh"
+				label="Edit HTML"
+				:showLineNumbers="true"
+				:showSaveButton="true"
+				@save="
+					(val) => {
+						canvasStore.editableBlock?.setInnerHTML(val);
+						canvasStore.showHTMLDialog = false;
+					}
+				"
+				required />
+		</template>
+	</Dialog>
+	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
 </template>
 
 <script setup lang="ts">
@@ -133,7 +134,7 @@ import {
 	useMagicKeys,
 } from "@vueuse/core";
 import { createResource } from "frappe-ui";
-import { computed, onActivated, onDeactivated, provide, ref, toRef, watch, watchEffect } from "vue";
+import { computed, onActivated, onDeactivated, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
 
@@ -178,8 +179,6 @@ const activeElement = useActiveElement();
 const notUsingInput = computed(
 	() => activeElement.value?.tagName !== "INPUT" && activeElement.value?.tagName !== "TEXTAREA",
 );
-
-const blockContextMenu = toRef(builderStore, "blockContextMenu");
 
 const { space } = useMagicKeys({
 	passive: false,
