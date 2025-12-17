@@ -650,9 +650,10 @@ def get_block_html(blocks, page_data=None):
 				elif block.get("dataKey").get("comesFrom") == "blockDataScript":
 					if data_key:
 						_key = f"{extract_data_key(data_key)}.{escape_single_quotes(_key)}"
+						loop_var = f"key_{_key.replace('.', '__')}"
 					else:
-						_key = f"block.{escape_single_quotes(_key)}"
-					loop_var = f"key_{_key.replace('.', '__')}"
+						loop_var = f"key_{_key}"
+						_key = f"block['{escape_single_quotes(_key)}']"
 					next_data_key = {"key": loop_var, "comesFrom": "blockDataScript"}
 				else:
 					if data_key:
@@ -933,6 +934,13 @@ def set_dynamic_content_placeholder(block, data_key=None):
 					key = f"{extract_data_key(data_key)}.{(dynamic_value_doc.get('key'))}"
 				else:
 					key = f"block.{original_key}"
+				if data_key:
+					# convert a.b to (a or {}).get('b', {})
+					# to avoid undefined error in jinja
+					keys = (key or "").split(".")
+					key = f"({keys[0]} or {{}})"
+					for k in keys[1:]:
+						key = f"{key}.get('{k}', {{}})"
 			else:
 				key = (
 					f"{extract_data_key(data_key)}.{dynamic_value_doc.get('key')}" if data_key else dynamic_value_doc.get("key")
