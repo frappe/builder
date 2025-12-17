@@ -19,6 +19,7 @@
 							<Autocomplete
 								class="[&>div>input]:pl-8"
 								:class="{
+									'border border-red-500 ring-1 ring-red-500': isInvalid,
 									'[&>div>div>input]:text-xs [&>div>div>input]:text-ink-violet-1 [&>div>input]:font-mono':
 										isCssVariable,
 								}"
@@ -39,6 +40,9 @@
 								"
 								@update:modelValue="
 									(val: string | null) => {
+										isInvalid = !!val && !isValidColorInput(val);
+										if (isInvalid) return;
+										
 										if (typeof val === 'string' && (val.startsWith('var(--') || val.startsWith('--'))) {
 											emit('update:modelValue', val.startsWith('var(--') ? val : `var(${val})`);
 										} else {
@@ -92,6 +96,22 @@ const colorPickerRef = ref<typeof ColorPicker | null>(null);
 const showVariableDialog = ref(false);
 const newVariable = ref<Partial<BuilderVariable> | null>(null);
 const { variables, resolveVariableValue } = useBuilderVariable();
+const isInvalid = ref(false);
+
+const isValidColorInput = (val: string | null) => {
+	if (!val) return true;
+
+	// rgb / rgba
+	if (/^rgba?\(/.test(val)) return true;
+
+	// hex: #RGB or #RRGGBB
+	if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(val)) return true;
+
+	// CSS variable
+	if (val.startsWith("var(--") || val.startsWith("--")) return true;
+
+	return false;
+};
 
 const props = withDefaults(
 	defineProps<{
