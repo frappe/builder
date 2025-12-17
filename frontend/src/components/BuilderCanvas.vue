@@ -1,14 +1,9 @@
 <template>
 	<div ref="canvasContainer" @click="handleClick">
 		<slot name="header"></slot>
-		<div
-			class="overlay absolute"
-			:class="{ 'pointer-events-none': isOverDropZone }"
-			id="overlay"
-			ref="overlay" />
 		<Transition name="fade">
 			<div
-				class="absolute bottom-0 left-0 right-0 top-0 z-[19] grid w-full place-items-center bg-surface-gray-1 p-10 text-ink-gray-5"
+				class="absolute bottom-0 left-0 right-0 top-0 grid w-full place-items-center bg-surface-gray-1 p-10 text-ink-gray-5"
 				v-show="pageStore.settingPage">
 				<LoadingIcon></LoadingIcon>
 			</div>
@@ -69,13 +64,18 @@
 			</div>
 		</div>
 		<div
-			class="fixed bottom-12 left-[50%] z-40 flex translate-x-[-50%] cursor-default items-center justify-center gap-2 rounded-lg bg-surface-white px-3 py-2 text-center text-sm font-semibold text-ink-gray-7 shadow-md"
+			class="fixed bottom-12 left-[50%] flex translate-x-[-50%] cursor-default items-center justify-center gap-2 rounded-lg bg-surface-white px-3 py-2 text-center text-sm font-semibold text-ink-gray-7 shadow-md"
 			v-show="!canvasProps.panning">
 			{{ Math.round(canvasProps.scale * 100) + "%" }}
 			<div class="ml-2 cursor-pointer" @click="setScaleAndTranslate">
 				<FitScreenIcon />
 			</div>
 		</div>
+		<div
+			class="overlay absolute"
+			:class="{ 'pointer-events-none': isOverDropZone }"
+			id="overlay"
+			ref="overlay" />
 		<DraggablePopup
 			v-model="builderStore.showSearchBlock"
 			:container="canvasContainer"

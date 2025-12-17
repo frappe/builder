@@ -1,6 +1,5 @@
 <template>
 	<div
-		class="absolute z-20"
 		:class="{
 			'top-0 h-full w-1 hover:cursor-ew-resize': side === 'left' || side === 'right',
 			'left-0 right-0 h-1 hover:cursor-ns-resize': side === 'top' || side === 'bottom',

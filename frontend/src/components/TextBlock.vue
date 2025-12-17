@@ -22,7 +22,7 @@
 				},
 			}"
 			v-if="editor"
-			class="z-50 rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-ink-gray-9 shadow-2xl"
+			class="rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-ink-gray-9 shadow-2xl"
 			:should-show="() => isEditable">
 			<div
 				v-if="settingLink"
@@ -171,7 +171,7 @@
 			"
 			@mouseup="selectionTriggered = false"
 			v-if="editor && showEditor"
-			class="relative z-50"
+			class="relative"
 			:style="block.getRawStyles()"
 			@keydown="handleKeydown" />
 		<slot />

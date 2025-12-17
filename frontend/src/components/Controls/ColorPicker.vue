@@ -147,13 +147,21 @@ const props = withDefaults(
 	defineProps<{
 		modelValue?: CSSColorValue | null;
 		showInput?: boolean;
-		placement?: string;
+		placement?:
+			| "bottom-start"
+			| "top-start"
+			| "top-end"
+			| "bottom-end"
+			| "right-start"
+			| "right-end"
+			| "left-start"
+			| "left-end";
 		renderMode?: "popover" | "inline";
 	}>(),
 	{
 		modelValue: null,
 		showInput: false,
-		placement: "left",
+		placement: "left-start",
 		renderMode: "popover",
 	},
 );
@@ -240,7 +248,7 @@ const handleInputChange = (color: HashString) => {
 };
 
 const setColorSelectorPosition = (color: string) => {
-	const { width, height } = colorMap.value.getBoundingClientRect();
+	const { width, height } = colorMap.value?.getBoundingClientRect();
 	const { s, v } = HexToHSV(color as HashString);
 	let x = clamp(s * width, 0, width);
 	let y = clamp((1 - v) * height, 0, height);

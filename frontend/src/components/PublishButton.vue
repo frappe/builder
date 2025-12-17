@@ -17,7 +17,7 @@
 			{{ publishButtonLabel }}
 		</BuilderButton>
 		<Dropdown
-			v-show="showDropdown"
+			v-if="showDropdown"
 			:options="[
 				{
 					label: 'Revert Changes',

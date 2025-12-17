@@ -4,7 +4,7 @@
 			{{ label }}
 			<span v-if="isDirty" class="text-[10px] text-gray-600">●</span>
 		</span>
-		<div v-if="actionButton" class="absolute bottom-1.5 right-1.5 z-10 flex gap-1">
+		<div v-if="actionButton" class="absolute bottom-1.5 right-1.5 flex gap-1">
 			<BuilderButton
 				@click="actionButton?.handler"
 				variant="subtle"

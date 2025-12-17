@@ -30,7 +30,7 @@
 			</div>
 
 			<ComboboxContent
-				class="absolute z-50 mt-1 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-white shadow-xl">
+				class="absolute z-10 mt-1 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-white shadow-xl">
 				<div class="overflow-y-auto p-1">
 					<template v-for="(option, index) in displayOptions" :key="`${option.value}-${index}`">
 						<ComboboxSeparator

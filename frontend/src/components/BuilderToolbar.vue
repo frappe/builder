@@ -75,7 +75,7 @@
 		<div class="absolute right-3 flex items-center gap-5">
 			<!-- show dark mode toggle -->
 			<Badge variant="subtle" theme="orange" v-if="builderStore.readOnlyMode">Read Only</Badge>
-			<Tooltip text="Toggle Dark Mode" :hoverDelay="0.6">
+			<Tooltip text="Toggle Dark Mode" :hoverDelay="0.6" arrow-class="mb-3">
 				<FeatherIcon
 					:name="isDark ? 'sun' : 'moon'"
 					class="h-4 w-4 cursor-pointer text-ink-gray-8 outline-none"
@@ -83,7 +83,6 @@
 			</Tooltip>
 
 			<Dialog
-				style="z-index: 40"
 				:options="{
 					title: 'Get Started',
 					size: '4xl',
@@ -100,7 +99,7 @@
 			</Dialog>
 			<div class="group flex hover:gap-1" v-if="builderStore.viewers.length">
 				<div v-for="user in builderStore.viewers">
-					<Tooltip :text="currentlyViewedByText" :hoverDelay="0.6">
+					<Tooltip :text="currentlyViewedByText" :hoverDelay="0.6" arrow-class="mb-3">
 						<div class="ml-[-10px] h-6 w-6 cursor-pointer transition-all group-hover:ml-0">
 							<img
 								class="h-full w-full rounded-full border-2 border-orange-400 object-cover shadow-sm"
@@ -119,14 +118,13 @@
 			<span class="text-sm text-ink-gray-3" v-if="pageStore.savingPage && pageStore.activePage?.is_template">
 				Saving template
 			</span>
-			<Tooltip text="Settings" :hoverDelay="0.6">
+			<Tooltip text="Settings" :hoverDelay="0.6" arrow-class="mb-3">
 				<SettingsGearIcon
 					@click="showSettingsDialog = true"
 					class="size-4 cursor-pointer text-ink-gray-8"></SettingsGearIcon>
 			</Tooltip>
 			<Dialog
 				v-model="showSettingsDialog"
-				style="z-index: 40"
 				:disableOutsideClickToClose="true"
 				class="[&>div>div[id^=headlessui-dialog-panel]]:my-3"
 				:options="{
@@ -139,7 +137,7 @@
 			</Dialog>
 
 			<router-link :to="{ name: 'preview', params: { pageId: pageStore.selectedPage } }" title="Preview">
-				<Tooltip text="Preview" :hoverDelay="0.6">
+				<Tooltip text="Preview" :hoverDelay="0.6" arrow-class="mb-3">
 					<PlayIcon class="h-[18px] w-[18px] cursor-pointer text-ink-gray-8"></PlayIcon>
 				</Tooltip>
 			</router-link>
@@ -250,9 +248,3 @@ const saveAsTemplate = async () => {
 	);
 };
 </script>
-<style>
-[data-radix-popper-content-wrapper] {
-	margin-top: 15px !important;
-	z-index: 20 !important;
-}
-</style>
