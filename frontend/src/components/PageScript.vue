@@ -7,29 +7,34 @@
 			</div>
 
 			<div class="h-full" v-if="mode == 'page'">
-				<CodeEditor
-					class="max-h-[80%]"
-					v-model="pageStore.pageData"
-					type="JSON"
-					label="Page Data Preview"
-					:readonly="true" />
+				<CodeEditor v-model="pageStore.pageData" type="JSON" label="Page Data Preview" :readonly="true" />
 			</div>
-			<div class="h-full" v-if="mode == 'block'">
-				<CodeEditor
-					v-if="isBlockSelected"
-					class="max-h-[80%]"
-					v-model="blockData"
-					type="JSON"
-					label="Block Data Preview"
-					:readonly="true"></CodeEditor>
-				<div v-if="isBlockSelected" class="flex w-full items-center justify-between py-4">
-					<div class="text-sm text-ink-gray-6">Show cumulative data</div>
-					<Switch :model-value="showCumulativeBlockData" @update:model-value="(val) => showCumulativeBlockData = val" />
+			<div class="box-border h-full overflow-y-auto pb-12" v-if="mode == 'block'">
+				<div class="flex min-h-full w-full flex-col" v-if="isBlockSelected">
+					<CodeEditor
+						v-model="blockData"
+						class="max-h-[70%]"
+						type="JSON"
+						label="Block Data Preview"
+						:readonly="true"></CodeEditor>
+					<div class="flex w-full items-center justify-between py-4">
+						<div class="text-sm text-ink-gray-6">Show cumulative data</div>
+						<Switch
+							:model-value="showCumulativeBlockData"
+							@update:model-value="(val) => (showCumulativeBlockData = val)" />
+					</div>
+					<div class="my-3 mt-4 text-sm text-ink-gray-8">Block Props</div>
+					<PropsEditor
+						:obj="blockController.getBlockProps()"
+						@update:obj="(obj: BlockProps) => blockController.setBlockProps(obj)" />
 				</div>
-				<div v-else class="w-full py-4 text-center text-xs">Select a block to preview data.</div>
+				<div v-else class="w-full py-4 text-center text-xs text-ink-gray-5">
+					Select a block to preview data.
+				</div>
 			</div>
 		</div>
-		<div class="box-border flex items-center justify-between border-t p-4 py-2">
+		<div
+			class="absolute bottom-0 left-0 box-border flex w-full items-center justify-between border-t bg-surface-white p-4 py-2">
 			<h2 class="text-base text-ink-gray-6">Mode</h2>
 			<TabButtons
 				class="w-fit"
@@ -149,6 +154,7 @@ import PageClientScriptManager from "./PageClientScriptManager.vue";
 import blockController from "@/utils/blockController";
 import TabButtons from "./Controls/TabButtons.vue";
 import Switch from "./Controls/Switch.vue";
+import PropsEditor from "./PropsEditor.vue";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();

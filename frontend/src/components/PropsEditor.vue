@@ -4,11 +4,24 @@
 			<template v-for="(value, name, index) in sortedProps" :key="index">
 				<div
 					:key="index"
-					class="prop-list-item relative flex w-full flex-col rounded-sm bg-surface-gray-2 p-2"
+					class="prop-list-item relative flex w-full flex-col rounded bg-surface-gray-1 p-2 text-ink-gray-6"
 					v-if="value.isStandard !== true || shouldDisplayStandardProps">
-					<Popover popoverClass="!mr-[25px] !min-w-fit" placement="left">
+					<Popover popoverClass="!ml-[25px] !min-w-fit" placement="right">
 						<template #target="{ open }">
-							<div class="flex w-full items-center justify-between">
+							<div
+								class="flex w-full items-center justify-between cursor-pointer"
+								@click.stop="
+											() => {
+												popupMode = 'edit';
+												popoverContentItemsRef[index]?.reset({
+													keepName: false,
+													keepIsStandard: false,
+													keepProps: true,
+													keepType: false,
+												});
+												keyBeingEdited = name as string;
+												open();
+											}">
 								<div class="flex w-fit max-w-[60%] items-center gap-2 pl-2">
 									<div class="icon">
 										<component
@@ -20,7 +33,7 @@
 													dynamic: LucideZap,
 												}[value.type] || LucideZap
 											"
-											class="h-4 w-4 text-ink-gray-6" />
+											class="h-4 w-4 text-ink-gray-4" />
 										<component
 											v-if="value.isStandard && value.standardOptions?.type"
 											:is="
@@ -33,40 +46,23 @@
 													array: LucideArray,
 												}[value.standardOptions?.type] || LucideZap
 											"
-											class="h-4 w-4 text-ink-gray-6" />
+											class="h-4 w-4 text-ink-gray-4" />
 									</div>
 									<div class="flex max-w-full flex-col gap-1">
-										<p class="text-sm font-medium text-ink-gray-8">
+										<p class="text-sm font-medium">
 											{{ name }}
 										</p>
-										<p v-if="value.isStandard" class="text-xs text-ink-gray-6">
+										<p v-if="value.isStandard" class="text-xs text-ink-gray-4">
 											Std. - {{ value.standardOptions?.isRequired ? "Required" : "Optional" }}
 										</p>
-										<p v-else class="max-w-full truncate text-ellipsis text-xs text-ink-gray-6">
+										<p v-else class="max-w-full truncate text-ellipsis text-xs text-ink-gray-4">
 											{{ value.value }}
 										</p>
 									</div>
 								</div>
 								<div class="flex-shrink-0 gap-1 rounded">
 									<BuilderButton
-										class="flex-shrink-0 bg-transparent text-xs"
-										variant="subtle"
-										icon="edit-2"
-										@click.stop="
-											() => {
-												popupMode = 'edit';
-												popoverContentItemsRef[index]?.reset({
-													keepName: false,
-													keepIsStandard: false,
-													keepProps: true,
-													keepType: false,
-												});
-												keyBeingEdited = name as string;
-												open();
-											}
-										" />
-									<BuilderButton
-										class="flex-shrink-0 bg-transparent text-xs"
+										class="flex-shrink-0 bg-transparent text-xs text-ink-gray-6"
 										variant="subtle"
 										icon="x"
 										@click="deleteObjectKey(name as string)" />
@@ -90,7 +86,7 @@
 				</div>
 			</template>
 		</div>
-		<Popover ref="popOverRef" popoverClass="!mr-[17px] !min-w-fit" placement="left">
+		<Popover ref="popOverRef" popoverClass="!ml-[17px] !min-w-fit" placement="right">
 			<template #target="{ open }">
 				<BuilderButton
 					class="w-full"
@@ -116,7 +112,12 @@
 					:mode="popupMode"
 					:propName="keyBeingEdited"
 					:propDetails="propDetailsOfKeyBeingEdited"
-					@add:prop="(prop) => { addProp(prop); close(); }"
+					@add:prop="
+						(prop) => {
+							addProp(prop);
+							close();
+						}
+					"
 					@update:prop="updateProp" />
 			</template>
 		</Popover>
@@ -130,7 +131,6 @@ import { mapToObject, replaceMapKey } from "@/utils/helpers";
 import { computed, ref, useAttrs, watch } from "vue";
 
 import { toast } from "vue-sonner";
-
 
 // @ts-ignore
 import LucideZap from "~icons/lucide/zap";

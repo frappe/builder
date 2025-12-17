@@ -49,8 +49,6 @@ import styleSection from "@/components/BlockPropertySections/StyleSection";
 import transitionSection from "@/components/BlockPropertySections/TransitionSection";
 import typographySection from "@/components/BlockPropertySections/TypographySection";
 import videoOptionsSection from "@/components/BlockPropertySections/VideoOptionsSection";
-import blockScriptSection from "@/components/BlockPropertySections/BlockScriptSection";
-import blockPropsSection from "@/components/BlockPropertySections/BlockPropsSection";
 import standardPropsInputSection from "@/components/BlockPropertySections/StandardPropsInputSection";
 import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
@@ -127,6 +125,5 @@ const sections = [
 	accessibilitySection,
 	customAttributesSection,
 	rawStyleSection,
-	blockPropsSection,
 ] as PropertySection[];
 </script>
