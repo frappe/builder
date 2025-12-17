@@ -128,6 +128,5 @@ const sections = [
 	customAttributesSection,
 	rawStyleSection,
 	blockPropsSection,
-	blockScriptSection,
 ] as PropertySection[];
 </script>

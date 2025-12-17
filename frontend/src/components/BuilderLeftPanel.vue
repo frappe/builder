@@ -66,9 +66,8 @@
 					:adjustForRoot="false"
 					v-if="canvasStore.editingMode === 'fragment' && fragmentCanvas" />
 			</div>
-			<div v-show="builderStore.leftPanelActiveTab === 'Code'">
+			<div class="h-full" v-show="builderStore.leftPanelActiveTab === 'Code'">
 				<PageScript
-					class="p-4"
 					:key="pageStore.selectedPage"
 					v-if="pageStore.selectedPage && pageStore.activePage"
 					:page="pageStore.activePage" />

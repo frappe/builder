@@ -1,51 +1,130 @@
 <template>
-	<div class="flex flex-col gap-4">
-		<div class="flex gap-2">
-			<BuilderButton @click="showClientScriptEditor()" class="flex-1">Client Script</BuilderButton>
-			<BuilderButton @click="showServerScriptEditor()" class="flex-1">Data Script</BuilderButton>
+	<div class="flex h-full flex-col justify-between">
+		<div class="flex h-full flex-col gap-4 p-4">
+			<div class="flex gap-2" v-if="mode == 'page' || isBlockSelected">
+				<BuilderButton @click="showClientScriptEditor()" class="flex-1">Client Script</BuilderButton>
+				<BuilderButton @click="showServerScriptEditor()" class="flex-1">Data Script</BuilderButton>
+			</div>
+
+			<div class="h-full" v-if="mode == 'page'">
+				<CodeEditor
+					class="max-h-[80%]"
+					v-model="pageStore.pageData"
+					type="JSON"
+					label="Page Data Preview"
+					:readonly="true" />
+			</div>
+			<div class="h-full" v-if="mode == 'block'">
+				<CodeEditor
+					v-if="isBlockSelected"
+					class="max-h-[80%]"
+					v-model="blockData"
+					type="JSON"
+					label="Block Data Preview"
+					:readonly="true"></CodeEditor>
+				<div v-else class="w-full py-4 text-center text-xs">Select a block to preview data.</div>
+			</div>
 		</div>
-		<CodeEditor v-model="pageStore.pageData" type="JSON" label="Page Data Preview" :readonly="true"></CodeEditor>
-		<CodeEditor v-model="blockData" type="JSON" label="Block Data Preview" :readonly="true"></CodeEditor>
+		<div class="box-border flex items-center justify-between border-t p-4 py-2">
+			<h2 class="text-base">Mode</h2>
+			<TabButtons
+				class="w-fit"
+				:buttons="[
+					{ label: 'Page', icon: 'layout', hideLabel: true, value: 'page' },
+					{ label: 'Block', icon: 'layers', hideLabel: true, value: 'block' },
+				]"
+				v-model="mode" />
+		</div>
 		<Dialog
 			style="z-index: 40"
 			class="overscroll-none"
 			:options="{
-				title: currentScriptEditor == 'data' ? 'Data Script' : 'Client Script',
+				title:
+					currentScriptEditor == 'data'
+						? `${mode.charAt(0).toUpperCase() + mode.slice(1)} Data Script`
+						: `${mode.charAt(0).toUpperCase() + mode.slice(1)} Client Script`,
 				size: '7xl',
 			}"
 			:isDirty="isDirty"
 			v-model="showDialog">
 			<template #body-content>
-				<div v-if="currentScriptEditor == 'client'">
-					<PageClientScriptManager
-						:page="pageStore.activePage as BuilderPage"
-						ref="clientScriptManager"></PageClientScriptManager>
-				</div>
-				<div v-else>
-					<div class="flex gap-4">
-						<CodeEditor
-							class="w-2/3 overscroll-none"
-							ref="dataScriptEditor"
-							v-model="page.page_data_script"
-							type="Python"
-							height="60vh"
-							:readonly="builderStore.readOnlyMode"
-							:autofocus="true"
-							@save="savePageDataScript"
-							:showSaveButton="true"
-							:show-line-numbers="true"></CodeEditor>
-						<CodeEditor
-							v-model="pageStore.pageData"
-							type="JSON"
-							label="Data Preview"
-							:showLineNumbers="true"
-							class="-mt-5 w-1/3 [&>div>div]:bg-surface-white"
-							height="calc(100% - 110px)"
-							description='Use Data Script to provide dynamic data to your web page.<br>
+				<div v-if="mode == 'page'">
+					<div v-if="currentScriptEditor == 'client'">
+						<PageClientScriptManager
+							:page="pageStore.activePage as BuilderPage"
+							ref="clientScriptManager"></PageClientScriptManager>
+					</div>
+					<div v-else>
+						<div class="flex gap-4">
+							<CodeEditor
+								class="w-2/3 overscroll-none"
+								ref="dataScriptEditor"
+								v-model="page.page_data_script"
+								type="Python"
+								height="60vh"
+								:readonly="builderStore.readOnlyMode"
+								:autofocus="true"
+								@save="savePageDataScript"
+								:showSaveButton="true"
+								:show-line-numbers="true"></CodeEditor>
+							<CodeEditor
+								v-model="pageStore.pageData"
+								type="JSON"
+								label="Data Preview"
+								:showLineNumbers="true"
+								class="-mt-5 w-1/3 [&>div>div]:bg-surface-white"
+								height="calc(100% - 110px)"
+								description='Use Data Script to provide dynamic data to your web page.<br>
 								<b>Example:</b> data.events = frappe.get_list("Event")<br><br>
 								For more details on how to write data script, refer to <b><a class="underline" href="https://docs.frappe.io/builder/data-script" target="_blank">this documentation</a></b>.
 								'
-							:readonly="true"></CodeEditor>
+								:readonly="true"></CodeEditor>
+						</div>
+					</div>
+				</div>
+				<div v-if="mode == 'block'">
+					<div v-if="currentScriptEditor == 'client'">
+						<CodeEditor
+							class="overscroll-none"
+							ref="blockClientScriptEditor"
+							v-model="blockClientScript"
+							type="JavaScript"
+							height="60vh"
+							:readonly="builderStore.readOnlyMode"
+							:autofocus="true"
+							@save="saveBlockClientScript"
+							:showSaveButton="true"
+							:show-line-numbers="true"
+							description='Use Block Client Script to add interactivity to your block. You can access the current DOM node using the keyword `this`. All Block props are accessible using the read-only `props` object.<br>
+							<b>Example:</b> <pre style="display:inline; font-size: 11px;">this.addEventListener("click", () => { console.log(props) })</pre><br><br>
+							For more details on how to write data script, refer to <b><a class="underline" href="https://docs.frappe.io/builder/data-script" target="_blank">this documentation</a></b>.'></CodeEditor>
+					</div>
+					<div v-else>
+						<div class="flex gap-4">
+							<CodeEditor
+								class="w-2/3 overscroll-none"
+								ref="dataScriptEditor"
+								v-model="blockDataScript"
+								type="Python"
+								height="60vh"
+								:readonly="builderStore.readOnlyMode"
+								:autofocus="true"
+								@save="saveBlockDataScript"
+								:showSaveButton="true"
+								:show-line-numbers="true"></CodeEditor>
+							<CodeEditor
+								v-model="blockData"
+								type="JSON"
+								label="Data Preview"
+								:showLineNumbers="true"
+								class="-mt-5 w-1/3 [&>div>div]:bg-surface-white"
+								height="calc(100% - 110px)"
+								description='Use Block Data Script to provide dynamic data to your block.<br>
+								<b>Example:</b> block.events = frappe.get_list("Event")<br><br>
+								For more details on how to write block data script, refer to <b><a class="underline" href="https://docs.frappe.io/builder/data-script" target="_blank">this documentation</a></b>.
+								'
+								:readonly="true"></CodeEditor>
+						</div>
 					</div>
 				</div>
 			</template>
@@ -64,10 +143,12 @@ import { toast } from "vue-sonner";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
 import blockController from "@/utils/blockController";
+import TabButtons from "./Controls/TabButtons.vue";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
 const showDialog = ref(false);
+const mode = ref<"page" | "block">("block");
 
 const props = defineProps<{
 	page: BuilderPage;
@@ -77,6 +158,27 @@ const clientScriptManager = ref<null | InstanceType<typeof PageClientScriptManag
 const dataScriptEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
 
 const currentScriptEditor = ref<"client" | "data">("client");
+const isBlockSelected = computed(() => {
+	return blockController.getFirstSelectedBlock();
+});
+
+const blockClientScript = computed(() => {
+	if (isBlockSelected.value) {
+		return blockController.getFirstSelectedBlock()?.getBlockClientScript() || "";
+	}
+	return "";
+});
+
+const blockDataScript = computed(() => {
+	if (isBlockSelected.value) {
+		return blockController.getFirstSelectedBlock()?.getBlockDataScript() || "";
+	}
+	return "";
+});
+
+const blockData = computed(() => {
+	return blockController.getFirstSelectedBlock()?.getBlockData() || {};
+});
 
 const savePageDataScript = (value: string) => {
 	webPages.setValue
@@ -101,6 +203,18 @@ const savePageDataScript = (value: string) => {
 				}),
 			});
 		});
+};
+
+const saveBlockClientScript = (value: string) => {
+	if (isBlockSelected.value) {
+		blockController.getFirstSelectedBlock()?.setBlockClientScript(value);
+	}
+};
+
+const saveBlockDataScript = (value: string) => {
+	if (isBlockSelected.value) {
+		blockController.getFirstSelectedBlock()?.setBlockDataScript(value);
+	}
 };
 
 const showClientScriptEditor = () => {
@@ -132,8 +246,4 @@ watch(
 		}
 	},
 );
-
-const blockData = computed(() => {
-	return blockController.getFirstSelectedBlock()?.getBlockData() || "{}";
-});
 </script>
