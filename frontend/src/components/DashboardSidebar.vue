@@ -1,6 +1,6 @@
 <template>
 	<section
-		class="sticky bottom-0 left-0 top-0 flex min-h-fit w-60 flex-col gap-3 bg-surface-gray-1 p-2 shadow-lg max-lg:hidden">
+		class="sticky bottom-0 left-0 top-0 flex min-h-fit w-60 flex-col gap-3 border-r border-outline-gray-1 bg-surface-gray-1 p-2 max-lg:hidden dark:bg-surface-white">
 		<div class="flex flex-col">
 			<div class="mb-2 flex gap-2">
 				<div class="flex w-full items-center">
@@ -27,8 +27,8 @@
 								items: [
 									{
 										label: 'Apps',
-										component: AppsMenu,
 										icon: 'grid',
+										submenu: appsSubmenu,
 									},
 									{
 										label: 'Toggle Theme',
@@ -57,12 +57,11 @@
 								],
 							},
 						]"
-						size="sm"
-						class="flex-1 [&>div>div>div]:w-full"
-						placement="right">
+						:offset="8"
+						size="sm">
 						<template v-slot="{ open }">
 							<div
-								class="flex items-center justify-between rounded py-1"
+								class="flex w-full items-center justify-between rounded py-1"
 								:class="{
 									'!bg-surface-white shadow-sm dark:!bg-surface-gray-2': open,
 									'!p-2 hover:bg-surface-gray-2': true,
@@ -168,7 +167,6 @@
 	</section>
 	<Dialog
 		v-model="showSettingsDialog"
-		style="z-index: 40"
 		:disableOutsideClickToClose="true"
 		class="[&>div>div[id^=headlessui-dialog-panel]]:my-3"
 		:options="{
@@ -181,7 +179,6 @@
 	</Dialog>
 </template>
 <script lang="ts" setup>
-import AppsMenu from "@/components/AppsMenu.vue";
 import BuilderButton from "@/components/Controls/BuilderButton.vue";
 import EditableSpan from "@/components/EditableSpan.vue";
 import FilesIcon from "@/components/Icons/Files.vue";
@@ -195,7 +192,7 @@ import { confirm } from "@/utils/helpers";
 import { useDark, useToggle } from "@vueuse/core";
 import { createResource, Dialog, Dropdown, Tooltip } from "frappe-ui";
 import { TrialBanner } from "frappe-ui/frappe";
-import { defineAsyncComponent, ref } from "vue";
+import { computed, defineAsyncComponent, h, ref } from "vue";
 
 const BuilderSettings = defineAsyncComponent(() => import("@/components/BuilderSettings.vue"));
 const isDark = useDark({
@@ -205,6 +202,20 @@ const toggleDark = useToggle(isDark);
 const builderStore = useBuilderStore();
 const renamingFolder = ref("");
 const showNewFolderDialog = ref(false);
+
+const apps = createResource({
+	url: "builder.api.get_apps",
+	cache: "other_apps",
+	auto: true,
+});
+
+const appsSubmenu = computed(() => {
+	return (apps.data || []).map((app: { route: string; logo: string; title: string }) => ({
+		label: app.title,
+		icon: h("img", { src: app.logo }),
+		onClick: () => window.open(app.route, "_self"),
+	}));
+});
 
 const isFolderActive = (folderName: string) => {
 	return builderStore.activeFolder === folderName;
