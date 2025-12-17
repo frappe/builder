@@ -49,8 +49,9 @@ import BlockHTML from "./BlockHTML.vue";
 import DataLoaderBlock from "./DataLoaderBlock.vue";
 import TextBlock from "./TextBlock.vue";
 import { builderSettings } from "@/data/builderSettings";
-import getBlockData from "@/data/blockData";
+import fetchBlockData from "@/data/blockData";
 import usePageStore from "@/stores/pageStore";
+import { toast } from "vue-sonner";
 
 const canvasStore = useCanvasStore();
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
@@ -357,23 +358,27 @@ watch(
 		allResolvedProps,
 		() => props.block.getBlockDataScript(),
 		() => pageStore.settingPage,
-		() => props.block.getParentBlock()?.blockData,
+		() => props.block.getParentBlock()?.getBlockData(),
 	],
 	() => {
 		if (pageStore.settingPage) return;
-		getBlockData
+		fetchBlockData
 			.fetch({
 				block_id: props.block.blockId,
 				block_data_script: props.block.getBlockDataScript(),
 				props: JSON.stringify(allResolvedProps.value),
 			})
 			.then((res: any) => {
-				props.block.setBlockData({ ...(props.blockData || {}), ...res });
+				props.block.setBlockData(props.blockData || {}, "passedDown");
+				props.block.setBlockData(res, "own");
 				cumulativeBlockData.value = { ...(props.blockData || {}), ...res };
 				console.log("Cumulative Block Data for block", props.block.blockId, ":", props.blockData, res);
 			})
-			.catch((err: any) => {
-				console.error("Error fetching block data:", err);
+			.catch((e: { exc: string | null }) => {
+				const error_message = e.exc?.split("\n").slice(-2)[0];
+				toast.error("There was an error while fetching page data", {
+					description: error_message,
+				});
 			});
 	},
 	{ deep: true },

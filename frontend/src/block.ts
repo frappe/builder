@@ -44,7 +44,8 @@ class Block implements BlockOptions {
 	dynamicValues: Array<BlockDataKey>;
 	blockClientScript?: string;
 	blockDataScript?: string;
-	blockData: Record<string, any> = {};
+	ownBlockData: Record<string, any> = {};
+	passedDownBlockData: Record<string, any> = {};
 	props?: BlockProps;
 	// @ts-expect-error
 	referenceComponent: Block | null;
@@ -923,11 +924,25 @@ class Block implements BlockOptions {
 	setBlockDataScript(script: string) {
 		this.blockDataScript = script;
 	}
-	getBlockData(): any {
-		return this.blockData;
+	getBlockData(filter: "all" | "passedDown" | "own" = "all"): any {
+		switch (filter) {
+			case "all":
+				return { ...this.passedDownBlockData, ...this.ownBlockData };
+			case "passedDown":
+				return this.passedDownBlockData;
+			case "own":
+				return this.ownBlockData;
+		}
 	}
-	setBlockData(data: Record<string, any>) {
-		this.blockData = data;
+	setBlockData(data: Record<string, any>, filter: "passedDown" | "own" = "own") {
+		switch (filter) {
+			case "passedDown":
+				this.passedDownBlockData = data;
+				break;
+			case "own":
+				this.ownBlockData = data;
+				break;
+		}
 	}
 	getBlockProps(): BlockProps {
 		let blockProps = {};
