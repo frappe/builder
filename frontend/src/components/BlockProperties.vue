@@ -39,6 +39,7 @@ import dataKeySection from "@/components/BlockPropertySections/DataKeySection";
 import dimensionSection from "@/components/BlockPropertySections/DimenstionSection";
 import HTMLOptionsSection from "@/components/BlockPropertySections/HTMLOptionsSection";
 import imageOptionsSection from "@/components/BlockPropertySections/ImageOptionsSection";
+import inputOptionsSection from "@/components/BlockPropertySections/InputOptionsSection";
 import layoutSection from "@/components/BlockPropertySections/LayoutSection";
 import linkSection from "@/components/BlockPropertySections/LinkSection";
 import optionsSection from "@/components/BlockPropertySections/OptionsSection";
@@ -110,6 +111,7 @@ const sections = [
 	imageOptionsSection,
 	HTMLOptionsSection,
 	videoOptionsSection,
+	inputOptionsSection,
 	typographySection,
 	styleSection,
 	dimensionSection,

@@ -1,5 +1,4 @@
 import InlineInput from "@/components/Controls/InlineInput.vue";
-import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
 
@@ -42,99 +41,6 @@ const accessibilitySectionProperties = [
 			"update:modelValue": (val: string) => blockController.setKeyValue("element", val),
 		},
 		condition: () => !blockController.isRoot(),
-	},
-	{
-		component: InlineInput,
-		getProps: () => {
-			return {
-				label: "Input Type",
-				type: "select",
-				options: ["text", "number", "email", "password", "date", "time", "search", "tel", "url", "color", "radio"],
-				modelValue: blockController.getAttribute("type") || "text",
-			};
-		},
-		searchKeyWords:
-			"Input, Type, InputType, Input Type, Text, Number, Email, Password, Date, Time, Search, Tel, Url, Color, Radio, tag",
-		events: {
-			"update:modelValue": (val: string) => blockController.setAttribute("type", val),
-		},
-		condition: () => blockController.isInput(),
-	},
-	{
-		component: InlineInput,
-		getProps: () => {
-			return {
-				label: "Placeholder",
-				modelValue: blockController.getAttribute("placeholder"),
-			};
-		},
-		searchKeyWords:
-			"Placeholder, Input, PlaceholderText, Placeholder Text, form, input, text, number, email, password, date, time, search, tel, url, color, tag",
-		events: {
-			"update:modelValue": (val: string) => blockController.setAttribute("placeholder", val),
-		},
-		condition: () => blockController.isInput(),
-	},
-	// Radio button specific properties
-	{
-		component: InlineInput,
-		getProps: () => {
-			return {
-				label: "Radio Group Name",
-				modelValue: blockController.getAttribute("name") || "",
-				description:
-					"The group name for this radio button. Radio buttons with the same name are grouped together, allowing only one to be selected at a time.",
-			};
-		},
-		searchKeyWords: "Radio, Name, Group, RadioName, Radio Name, Group Name, input, radio button",
-		events: {
-			"update:modelValue": (val: string) => blockController.setAttribute("name", val),
-		},
-		condition: () =>
-			blockController.getKeyValue("element") === "input" && blockController.getAttribute("type") === "radio",
-	},
-	{
-		component: InlineInput,
-		getProps: () => {
-			return {
-				label: "Radio Value",
-				modelValue: blockController.getAttribute("value") || "",
-				description:
-					"The value assigned to this radio button. When selected, this value will be submitted with the form.",
-			};
-		},
-		searchKeyWords: "Radio, Value, RadioValue, Radio Value, input, radio button",
-		events: {
-			"update:modelValue": (val: string) => blockController.setAttribute("value", val),
-		},
-		condition: () =>
-			blockController.getKeyValue("element") === "input" && blockController.getAttribute("type") === "radio",
-	},
-	{
-		component: OptionToggle,
-		getProps: () => {
-			return {
-				label: "Initially Checked",
-				options: [
-					{ label: "Yes", value: true },
-					{ label: "No", value: false },
-				],
-				modelValue:
-					blockController.getAttribute("checked") === "" || blockController.getAttribute("checked") === "checked",
-			};
-		},
-		searchKeyWords: "Checked, Radio, DefaultValue, Default Value, Selected, Initially Checked",
-		events: {
-			"update:modelValue": (val: boolean) => {
-				if (val) {
-					blockController.setAttribute("checked", "checked");
-				} else {
-					blockController.removeAttribute("checked");
-				}
-			},
-		},
-		condition: () =>
-			blockController.getKeyValue("element") === "input" && blockController.getAttribute("type") === "radio",
 	},
 	{
 		component: InlineInput,
