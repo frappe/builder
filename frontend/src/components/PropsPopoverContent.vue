@@ -70,11 +70,7 @@
 				:allow-arbitrary-value="false"
 				:modelValue="value"
 				:getOptions="getOptions"
-				@update:modelValue="
-					(option) => {
-						value = option || '';
-					}
-				" />
+				@update:modelValue="handleValueSelection" />
 		</div>
 		<!-- Disabled for now-->
 		<div v-if="false && !isStandardBool && isInFragmentMode" class="flex items-center justify-between">
@@ -144,7 +140,7 @@ import BooleanOptions from "@/components/PropsOptions/BooleanOptions.vue";
 import SelectOptions from "@/components/PropsOptions/SelectOptions.vue";
 
 import usePageStore from "@/stores/pageStore";
-import { getCollectionKeys, getDataForKey } from "@/utils/helpers";
+import { getCollectionKeys, getDataArray, getDataForKey } from "@/utils/helpers";
 
 const props = withDefaults(
 	defineProps<{
@@ -165,8 +161,9 @@ const isStandardBool = computed(() => isStandard.value === "true");
 const isEditable = ref("false"); // TODO: required?
 const name = ref(props.propName ?? "");
 const value = ref(props.propDetails?.value ?? "");
+const comesFrom = ref<BlockProps[string]["comesFrom"]>(props.propDetails?.comesFrom ?? null);
 const selectedNonStandardPropType = ref(
-	props.propDetails && !props.propDetails.isStandard ? props.propDetails.type : "static",
+	props.propDetails && !props.propDetails.isStandard ? !props.propDetails.isDynamic : "static",
 );
 const standardPropOptions = reactive<BlockPropsStandardOptions>(
 	props.propDetails && props.propDetails.isStandard
@@ -193,7 +190,15 @@ const optionsComponentRef = ref<any>(null);
 
 const emit = defineEmits({
 	"add:prop": ({ name, value }: { name: string; value: BlockProps[string] }) => true,
-	"update:prop": ({ oldPropName, newName, newValue }: {oldPropName: string, newName: string, newValue: BlockProps[string]}) => true,
+	"update:prop": ({
+		oldPropName,
+		newName,
+		newValue,
+	}: {
+		oldPropName: string;
+		newName: string;
+		newValue: BlockProps[string];
+	}) => true,
 });
 
 const propTypes = computed(() => {
@@ -231,10 +236,6 @@ const propTypes = computed(() => {
 				value: "static",
 			},
 			{
-				label: "Inherited",
-				value: "inherited",
-			},
-			{
 				label: "Dynamic",
 				value: "dynamic",
 			},
@@ -264,36 +265,20 @@ const setPropType = (type: string) => {
 	if (isStandardBool.value && STANDARD_PROP_TYPES.includes(type)) {
 		standardPropOptions.type = type as "string" | "number" | "boolean" | "select" | "array" | "object";
 	} else {
-		selectedNonStandardPropType.value = type as "static" | "inherited" | "dynamic";
+		selectedNonStandardPropType.value = type as "static" | "dynamic";
 	}
 };
 
-// TODO: reuse this from dynamic value handler
-const dataArray = computed(() => {
-	const result: string[] = [];
-	let collectionObject = usePageStore().pageData;
-	if (blockController.getFirstSelectedBlock()?.isInsideRepeater()) {
-		const keys = getCollectionKeys(blockController.getFirstSelectedBlock());
-		collectionObject = keys.reduce((acc: any, key: string) => {
-			const data = getDataForKey(acc, key);
-			return Array.isArray(data) && data.length > 0 ? data[0] : data;
-		}, collectionObject);
+const pageDataArray = computed(() => {
+	return getDataArray(blockController.getFirstSelectedBlock(), usePageStore().pageData, "dataScript");
+});
+
+const blockDataArray = computed(() => {
+	const currentBlock = blockController.getFirstSelectedBlock();
+	if (currentBlock) {
+		return getDataArray(currentBlock, currentBlock.getBlockData("passedDown"), "blockDataScript");
 	}
-
-	function processObject(obj: Record<string, any>, prefix = "") {
-		Object.entries(obj).forEach(([key, value]) => {
-			const path = prefix ? `${prefix}.${key}` : key;
-
-			if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-				processObject(value, path);
-			} else if (["string", "number", "boolean"].includes(typeof value)) {
-				result.push(path);
-			}
-		});
-	}
-
-	processObject(collectionObject);
-	return result;
+	return [];
 });
 
 const getParentProps = (baseBlock: Block, baseProps: string[]): string[] => {
@@ -313,19 +298,33 @@ const getParentProps = (baseBlock: Block, baseProps: string[]): string[] => {
 };
 
 const getOptions = async (query: string) => {
-	let options: string[];
-	if (selectedPropType.value == "inherited") {
-		options = getParentProps(blockController.getFirstSelectedBlock()!, []);
-	} else {
-		options = dataArray.value;
-	}
+	let options: { label: string; value: string }[] = [];
+	getParentProps(blockController.getFirstSelectedBlock()!, []).map((prop) => {
+		if (prop.toLowerCase().includes(query.toLowerCase())) {
+			options.push({
+				label: prop,
+				value: `${prop}--props`,
+			});
+		}
+	});
+	pageDataArray.value.map((prop) => {
+		if (prop.toLowerCase().includes(query.toLowerCase())) {
+			options.push({
+				label: prop,
+				value: `${prop}--dataScript`,
+			});
+		}
+	});
+	blockDataArray.value.map((prop) => {
+		if (prop.toLowerCase().includes(query.toLowerCase())) {
+			options.push({
+				label: prop,
+				value: `${prop}--blockDataScript`,
+			});
+		}
+	});
 
-	return options
-		.filter((prop) => prop.toLowerCase().includes(query.toLowerCase()))
-		.map((prop) => ({
-			label: prop,
-			value: prop,
-		}));
+	return options;
 };
 
 const componentMapping = {
@@ -357,6 +356,16 @@ const handleTypeChange = async (newVal: string) => {
 		keepProps: false,
 		keepType: true,
 	});
+};
+
+const handleValueSelection = (option: string | null) => {
+	if (option) {
+		comesFrom.value = option.split("--").slice(-1)[0] as BlockProps[string]["comesFrom"];
+		value.value = option.split("--").slice(0, -1).join("--");
+	} else {
+		comesFrom.value = null;
+		value.value = "";
+	}
 };
 
 const reset = async (keepParams: {
@@ -402,7 +411,7 @@ const reset = async (keepParams: {
 		Object.assign(standardPropDependencyMap, {});
 	} else {
 		if (!keepType) {
-			selectedNonStandardPropType.value = details?.type || "static";
+			selectedNonStandardPropType.value = details?.isDynamic ? "dynamic" : "static";
 		}
 	}
 
@@ -436,7 +445,8 @@ const save = async () => {
 	await nextTick();
 	const propValue: BlockProps[string] = {
 		isStandard: isStandardBool.value,
-		type: isStandardBool.value ? "static" : selectedNonStandardPropType.value, // all standard props are static by default
+		isDynamic: isStandardBool.value ? false : selectedNonStandardPropType.value === "dynamic", // all standard props are static by default
+		comesFrom: comesFrom.value,
 		value: isStandardBool.value ? null : value.value,
 		standardOptions: isStandardBool.value
 			? {

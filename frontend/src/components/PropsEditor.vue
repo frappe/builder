@@ -9,7 +9,7 @@
 					<Popover popoverClass="!ml-[25px] !min-w-fit" placement="right">
 						<template #target="{ open }">
 							<div
-								class="flex w-full items-center justify-between cursor-pointer"
+								class="flex w-full cursor-pointer items-center justify-between"
 								@click.stop="
 											() => {
 												popupMode = 'edit';
@@ -26,13 +26,7 @@
 									<div class="icon">
 										<component
 											v-if="!value.isStandard"
-											:is="
-												{
-													static: LucideCaseSensitive,
-													inherited: LucideListTree,
-													dynamic: LucideZap,
-												}[value.type] || LucideZap
-											"
+											:is="value.isDynamic ? LucideZap : LucideCaseSensitive"
 											class="h-4 w-4 text-ink-gray-4" />
 										<component
 											v-if="value.isStandard && value.standardOptions?.type"
@@ -210,7 +204,8 @@ const clearObjectValue = (map: Map<string, BlockProps[string]>, key: string) => 
 	map.set(key, {
 		...oldValue!,
 		value: null,
-		type: "static",
+		isDynamic: false,
+		comesFrom: null,
 	});
 
 	return map;
@@ -219,7 +214,11 @@ const clearObjectValue = (map: Map<string, BlockProps[string]>, key: string) => 
 const updateObjectValue = (
 	map: Map<string, BlockProps[string]>,
 	key: string,
-	{ value, type }: { value: string | null; type: string },
+	{
+		value,
+		isDynamic,
+		comesFrom,
+	}: { value: string | null; isDynamic: boolean; comesFrom: BlockProps[string]["comesFrom"] },
 ) => {
 	const path = value;
 	if (!path) {
@@ -227,16 +226,18 @@ const updateObjectValue = (
 	}
 
 	const oldPath = map.get(key)?.value;
-	const oldType = map.get(key)?.type;
+	const wasDynamic = map.get(key)?.isDynamic;
+	const cameFrom = map.get(key)?.comesFrom;
 
-	if (path === oldPath && type === oldType) {
+	if (path === oldPath && isDynamic === wasDynamic && comesFrom === cameFrom) {
 		return map;
 	}
 
 	map.set(key, {
 		...map.get(key)!,
-		value: type === "static" && typeof path !== "string" ? JSON.stringify(path) : path,
-		type: type as BlockProps[string]["type"],
+		value: !isDynamic && typeof path !== "string" ? JSON.stringify(path) : path,
+		isDynamic,
+		comesFrom,
 	});
 
 	return map;
@@ -282,7 +283,8 @@ const updateProp = async ({
 
 	map = updateObjectValue(map, newName, {
 		value: newValue.value,
-		type: newValue.type,
+		isDynamic: newValue.isDynamic,
+		comesFrom: newValue.comesFrom,
 	});
 	map = updateIsStandard(map, newName, newValue.isStandard || false);
 	map = updateStandardOptions(map, newName, newValue.standardOptions || {});

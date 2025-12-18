@@ -1017,7 +1017,7 @@ function showDialog(options: DialogOptions): Promise<void> {
 	});
 }
 
-function getCollectionKeys(block: any, type : BlockDataKey["comesFrom"] = "dataScript"): string[] {
+function getCollectionKeys(block: any, type: BlockDataKey["comesFrom"] = "dataScript"): string[] {
 	// traverse up the block to get list of dataKeys set
 	const repeaterBlock = block.getRepeaterParent();
 	const keys: string[] = [];
@@ -1039,33 +1039,38 @@ function triggerCopyEvent() {
 	document.execCommand("copy");
 }
 
-const getValueForInheritedProp = (propName: string, block: Block, getDataScriptValue: (path: string) => any): any => {
+const getValueForInheritedProp = (
+	propName: string,
+	block: Block,
+	getDataScriptValue: (path: string) => any,
+): any => {
 	let parent = block.getParentBlock();
 	while (parent) {
 		const parentProps = parent.getBlockProps();
 		const matchingProp = parentProps[propName];
 		if (matchingProp) {
-			if (matchingProp.type !== "inherited") {
-				if (matchingProp.type === "dynamic" && matchingProp.value) {
+			if (matchingProp.isDynamic) {
+				if (matchingProp.comesFrom === "dataScript" && matchingProp.value) {
 					return getDataScriptValue(matchingProp.value);
+				} else if (matchingProp.comesFrom === "blockDataScript" && matchingProp.value) {
+					return block.getBlockData("passedDown")[matchingProp.value];
 				} else {
-					if (matchingProp.isStandard && matchingProp.standardOptions) {
-						if (matchingProp.standardOptions.type !== "string" && matchingProp.standardOptions.type !== "select") {
-							return matchingProp.value
-								? JSON.parse(matchingProp.value)
-								: matchingProp.standardOptions?.options?.defaultValue || null;
-						} else {
-							return (
-								matchingProp.value ||
-								matchingProp.standardOptions?.options?.defaultValue ||
-								null
-							);
-						}
-					}
-					return matchingProp.value;
+					return getValueForInheritedProp(propName, parent, getDataScriptValue);
 				}
 			} else {
-				return getValueForInheritedProp(propName, parent, getDataScriptValue);
+				if (matchingProp.isStandard && matchingProp.standardOptions) {
+					if (
+						matchingProp.standardOptions.type !== "string" &&
+						matchingProp.standardOptions.type !== "select"
+					) {
+						return matchingProp.value
+							? JSON.parse(matchingProp.value)
+							: matchingProp.standardOptions?.options?.defaultValue || null;
+					} else {
+						return matchingProp.value || matchingProp.standardOptions?.options?.defaultValue || null;
+					}
+				}
+				return matchingProp.value;
 			}
 		}
 		parent = parent.getParentBlock();
@@ -1085,11 +1090,15 @@ const getPropValue = (
 	const blockProps = block.getBlockProps();
 	if (blockProps[propName]) {
 		const prop = blockProps[propName];
-		if (prop.type === "dynamic" && prop.value) {
-			return getDataScriptValue(prop.value);
-		} else if (prop.type === "inherited") {
-			if (prop.value) {
-				return getValueForInheritedProp(prop.value, block, getDataScriptValue);
+		if (prop.isDynamic) {
+			if (prop.comesFrom === "dataScript" && prop.value) {
+				return getDataScriptValue(prop.value);
+			} else if (prop.comesFrom === "blockDataScript" && prop.value) {
+				return block.getBlockData("passedDown")[prop.value];
+			} else {
+				if (prop.value) {
+					return getValueForInheritedProp(prop.value, block, getDataScriptValue);
+				}
 			}
 		} else {
 			if (prop.isStandard && prop.standardOptions) {
