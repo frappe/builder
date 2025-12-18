@@ -8,6 +8,8 @@ import {
 	defaultKeymap,
 	history,
 	historyKeymap,
+	indentMore,
+	indentLess,
 } from "@codemirror/commands";
 import {
 	bracketMatching,
@@ -112,20 +114,8 @@ export const createStartingState = async ({
 		keymap.of([
 			{
 				key: "Tab",
-				run: (view) => {
-					const spaces = "	";
-					view.dispatch({
-						changes: {
-							from: view.state.selection.main.from,
-							to: view.state.selection.main.to,
-							insert: spaces,
-						},
-						selection: {
-							anchor: view.state.selection.main.from + spaces.length,
-						},
-					});
-					return true;
-				},
+				run: indentMore,
+				shift: indentLess,
 			},
 		]),
 		EditorView.domEventHandlers({
