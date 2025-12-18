@@ -26,7 +26,13 @@
 									<div class="icon">
 										<component
 											v-if="!value.isStandard"
-											:is="value.isDynamic ? LucideZap : LucideCaseSensitive"
+											:is="
+												value.isDynamic
+													? value.comesFrom == 'props'
+														? LucideGitCommit
+														: LucideZap
+													: LucideCaseSensitive
+											"
 											class="h-4 w-4 text-ink-gray-4" />
 										<component
 											v-if="value.isStandard && value.standardOptions?.type"
@@ -131,7 +137,7 @@ import LucideZap from "~icons/lucide/zap";
 // @ts-ignore
 import LucideCaseSensitive from "~icons/lucide/case-sensitive";
 // @ts-ignore
-import LucideListTree from "~icons/lucide/list-tree";
+import LucideGitCommit from "~icons/lucide/git-commit-horizontal";
 // @ts-ignore
 import LucideNumber from "~icons/lucide/pi";
 // @ts-ignore

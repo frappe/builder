@@ -267,6 +267,8 @@ const setPropType = (type: string) => {
 	} else {
 		selectedNonStandardPropType.value = type as "static" | "dynamic";
 	}
+	comesFrom.value = null;
+	value.value = "";
 };
 
 const pageDataArray = computed(() => {

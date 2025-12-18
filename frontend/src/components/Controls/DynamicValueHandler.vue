@@ -81,9 +81,17 @@ type DynamicValueItem = {
 	comesFrom: BlockDataKey["comesFrom"];
 };
 
+type DynamicValueFilterOptions = {
+	excludePassedDownProps?: boolean;
+	excludePassedDownBlockData?: boolean;
+	excludeOwnProps?: boolean;
+	excludeOwnBlockData?: boolean;
+};
+
 const props = defineProps<{
 	selectedValue?: DynamicValueItem;
 	block?: Block;
+	options?: DynamicValueFilterOptions;
 }>();
 
 const emit = defineEmits(["setDynamicValue"]);
@@ -95,9 +103,16 @@ const pageDataArray = computed(() => {
 });
 
 const blockDataArray = computed(() => {
+	if (props.options?.excludeOwnBlockData && props.options.excludePassedDownBlockData) return [];
 	const currentBlock = props.block || blockController.getFirstSelectedBlock();
+	let filter: "all" | "own" | "passedDown" = "all";
+	if (props.options?.excludeOwnBlockData) {
+		filter = "passedDown";
+	} else if (props.options?.excludePassedDownBlockData) {
+		filter = "own";
+	}
 	if (currentBlock) {
-		return getDataArray(currentBlock, currentBlock.getBlockData() || {}, "blockDataScript");
+		return getDataArray(currentBlock, currentBlock.getBlockData(filter) || {}, "blockDataScript");
 	}
 	return [];
 });
@@ -140,6 +155,91 @@ const defaultProps = computed(() => {
 	return {};
 });
 
+const filteredBlockProps = computed(() => {
+	let ownBlockProps: string[];
+	if (props.options?.excludeOwnProps) {
+		ownBlockProps = [];
+	} else {
+		ownBlockProps = Object.keys(
+			props.block
+				? props.block.getBlockProps()
+				: blockController.getFirstSelectedBlock()?.getBlockProps() || {},
+		);
+	}
+	let parentProps: string[];
+	if (props.options?.excludePassedDownProps) {
+		parentProps = [];
+	} else {
+		const currentBlock = props.block || blockController.getFirstSelectedBlock();
+		if (currentBlock) {
+			parentProps = getParentProps(currentBlock, []);
+		} else {
+			parentProps = [];
+		}
+	}
+	const combinedProps = [...ownBlockProps, ...parentProps].reduce((acc, prop) => {
+		if (!acc.find((p: string) => p === prop)) {
+			acc.push(prop);
+		}
+		return acc;
+	}, [] as string[]);
+	return combinedProps;
+});
+
+const filteredItems = computed(() => {
+	const pageDataArrayItems = pageDataArray.value.map((item) => ({ key: item, comesFrom: "dataScript" }));
+	const blockDataArrayItems = blockDataArray.value.map((item) => ({
+		key: item,
+		comesFrom: "blockDataScript",
+	}));
+	const propItems = filteredBlockProps.value.map((item) => ({ key: item, comesFrom: "props" }));
+	const defaultPropsKeys = Object.keys(defaultProps.value || {}).map((item) => ({
+		key: item,
+		comesFrom: "props",
+	}));
+	const allItems = [
+		...pageDataArrayItems,
+		...blockDataArrayItems,
+		...propItems,
+		...defaultPropsKeys,
+	] as DynamicValueItem[];
+	if (!searchQuery.value) return allItems;
+	const query = searchQuery.value.toLowerCase();
+	return allItems.filter(
+		(item) =>
+			item.key.toLowerCase().includes(query) ||
+			String(getDataScriptValue(item.key)).toLowerCase().includes(query) ||
+			String(
+				getPropValue(
+					item.key,
+					props.block || blockController.getFirstSelectedBlock(),
+					getDataScriptValue,
+					defaultProps.value,
+				),
+			)
+				.toLowerCase()
+				.includes(query),
+	);
+});
+
+const selectedItem = ref<DynamicValueItem | null>(props.selectedValue || null);
+
+const getParentProps = (baseBlock: Block, baseProps: string[]): string[] => {
+	const parentBlock = baseBlock.getParentBlock();
+	if (parentBlock) {
+		const parentProps: string[] = Object.keys(parentBlock.getBlockProps()).map((key) => key);
+		const combinedProps = [...baseProps, ...parentProps].reduce((acc, prop) => {
+			if (!acc.find((p: string) => p === prop)) {
+				acc.push(prop);
+			}
+			return acc;
+		}, [] as string[]);
+		return getParentProps(parentBlock, combinedProps);
+	} else {
+		return baseProps;
+	}
+};
+
 const getValue = (item: DynamicValueItem): any => {
 	if (item.comesFrom == "props") {
 		return getPropValue(
@@ -176,51 +276,6 @@ const getBlockDataScriptValue = (path: string): any => {
 
 	return path.split(".").reduce((obj: Record<string, any>, key: string) => obj?.[key], collectionObject);
 };
-
-const blockProps = computed(() => {
-	return props.block
-		? props.block.getBlockProps()
-		: blockController.getFirstSelectedBlock()?.getBlockProps() || {};
-});
-
-const filteredItems = computed(() => {
-	const pageDataArrayItems = pageDataArray.value.map((item) => ({ key: item, comesFrom: "dataScript" }));
-	const blockDataArrayItems = blockDataArray.value.map((item) => ({
-		key: item,
-		comesFrom: "blockDataScript",
-	}));
-	const propItems = Object.keys(blockProps.value).map((item) => ({ key: item, comesFrom: "props" }));
-	const defaultPropsKeys = Object.keys(defaultProps.value || {}).map((item) => ({
-		key: item,
-		comesFrom: "props",
-	}));
-	const allItems = [
-		...pageDataArrayItems,
-		...blockDataArrayItems,
-		...propItems,
-		...defaultPropsKeys,
-	] as DynamicValueItem[];
-	if (!searchQuery.value) return allItems;
-	const query = searchQuery.value.toLowerCase();
-	return allItems.filter(
-		(item) =>
-			item.key.toLowerCase().includes(query) ||
-			String(getDataScriptValue(item.key)).toLowerCase().includes(query) ||
-			String(
-				getPropValue(
-					item.key,
-					props.block || blockController.getFirstSelectedBlock(),
-					getDataScriptValue,
-					defaultProps.value,
-				),
-			)
-				.toLowerCase()
-				.includes(query),
-	);
-});
-
-const selectedItem = ref<DynamicValueItem | null>(props.selectedValue || null);
-
 function selectAndSetItem(item: DynamicValueItem) {
 	selectedItem.value = item;
 	emit("setDynamicValue", item);

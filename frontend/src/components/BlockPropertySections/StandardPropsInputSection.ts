@@ -1,14 +1,14 @@
 import blockController from "@/utils/blockController";
 import OptionToggle from "../Controls/OptionToggle.vue";
-import PropertyControl from "../Controls/PropertyControl.vue";
+import GenericControl from "../Controls/GenericControl.vue";
 import ArrayInput from "../ArrayInput.vue";
 import ObjectInput from "../ObjectInput.vue";
 
 const componentMap = {
-	string: PropertyControl,
-	number: PropertyControl,
-	boolean: PropertyControl,
-	select: PropertyControl,
+	string: GenericControl,
+	number: GenericControl,
+	boolean: GenericControl,
+	select: GenericControl,
 	array: ArrayInput,
 	object: ObjectInput,
 };
@@ -21,12 +21,14 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 		case "number":
 			map = {
 				enableStates: false,
+				allowDynamicValue: true,
 			};
 			break;
 		case "boolean":
 			map = {
 				component: OptionToggle,
 				enableStates: false,
+				allowDynamicValue: true,
 				options: [
 					{ label: propDetails.standardOptions?.options?.trueLabel || "True", value: true },
 					{ label: propDetails.standardOptions?.options?.falseLabel || "False", value: false },
@@ -47,12 +49,30 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 	}
 	map = {
 		label: propName,
-		setModelValue: (val: any) => {
-			blockController.setBlockProp(propName, val);
+		dynamicValueFilterOptions: {
+			excludeOwnProps: true,
+			excludeOwnBlockData: true,
+		},
+		getDynamicValue: () => {
+			if (propDetails.isDynamic) {
+				return {
+					key: propDetails.value,
+					comesFrom: propDetails.comesFrom,
+				};
+			}
+		},
+		setDynamicValue: (key: string | null, comesFrom: BlockProps[string]["comesFrom"]) => {
+			blockController.setBlockProp(propName, { value: key || "", isDynamic: Boolean(key), comesFrom });
+		},
+		setModelValue: (value: any) => {
+			blockController.setBlockProp(propName, { value });
 		},
 		getModelValue: () => {
 			const value = blockController.getFirstSelectedBlock().props?.[propName]?.value;
 			return value;
+		},
+		getPlaceholder: () => {
+			return propDetails.standardOptions?.options?.defaultValue || null;
 		},
 		...map,
 	};
@@ -73,7 +93,7 @@ const getStandardPropsInputSection = () => {
 	const standardProps = getStandardProps(blockController.getBlockProps());
 	const sections = [];
 	for (const [propKey, propDetails] of Object.entries(standardProps)) {
-		const component = componentMap[propDetails.standardOptions?.type || "string"] || PropertyControl;
+		const component = componentMap[propDetails.standardOptions?.type || "string"] || GenericControl;
 		const getProps = () => {
 			const props = getPropsMap(propKey, propDetails);
 			return props;

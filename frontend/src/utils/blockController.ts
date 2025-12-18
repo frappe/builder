@@ -339,14 +339,14 @@ const blockController = {
 	getBlockProps: () => {
 		return blockController.getFirstSelectedBlock()?.getBlockProps();
 	},
-	setBlockProp: (key: string, value: string) => {
+	setBlockProp: (key: string, value: Record<string, any>) => {
 		const allProps = blockController.getBlockProps();
 		if (!allProps) return;
 		const updatedProps = {
 			...allProps,
 			[key]: {
 				...allProps[key],
-				value: value,
+				...value,
 			},
 		};
 		blockController.setBlockProps(updatedProps);

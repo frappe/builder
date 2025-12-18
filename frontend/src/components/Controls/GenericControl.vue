@@ -52,7 +52,7 @@
 				v-if="showDynamicValueModal">
 				<template #header>Set Dynamic Value</template>
 				<template #content>
-					<DynamicValueHandler @setDynamicValue="setDynamicValue" :selectedValue="dynamicValue" />
+					<DynamicValueHandler @setDynamicValue="setDynamicValue" :selectedValue="dynamicValue" :options="dynamicValueFilterOptions" />
 				</template>
 			</DraggablePopup>
 
@@ -76,7 +76,10 @@
 					class="absolute bottom-0 left-0 right-0 top-0 z-20 flex cursor-pointer items-center gap-2 rounded bg-surface-violet-1 py-0.5 pl-2.5 pr-6 text-sm text-ink-violet-1"
 					@click.stop="showDynamicValueModal = true"
 					v-if="dynamicValue?.key">
-					<FeatherIcon v-if="dynamicValue?.comesFrom == 'props'" name="git-commit" class="size-3"></FeatherIcon>
+					<FeatherIcon
+						v-if="dynamicValue?.comesFrom == 'props'"
+						name="git-commit"
+						class="size-3"></FeatherIcon>
 					<FeatherIcon v-else name="zap" class="size-3"></FeatherIcon>
 					<span class="truncate">{{ dynamicValue.key }}</span>
 				</div>
@@ -116,7 +119,9 @@ const props = withDefaults(
 		controlType?: "style" | "attribute" | "key";
 		getModelValue?: () => string;
 		getPlaceholder?: () => string;
+		getDynamicValue?: () => { key: string; comesFrom: BlockDataKey["comesFrom"] } | undefined;
 		setModelValue?: (value: string) => void;
+		setDynamicValue?: (key: string | null, comesFrom: BlockDataKey["comesFrom"] | null) => void;
 		enableSlider?: boolean;
 		unitOptions?: string[];
 		changeFactor?: number;
@@ -130,6 +135,12 @@ const props = withDefaults(
 		allowDynamicValue?: boolean;
 		enabledStates?: string[];
 		labelPlacement?: "left" | "top";
+		dynamicValueFilterOptions?: {
+			excludePassedDownProps?: boolean;
+			excludePassedDownBlockData?: boolean;
+			excludeOwnProps?: boolean;
+			excludeOwnBlockData?: boolean;
+		};
 	}>(),
 	{
 		placeholder: "unset",
@@ -170,15 +181,9 @@ const defaultValue = computed(() => {
 	return props.defaultValue;
 });
 
-const modelValue = computed(
-	() => props.getModelValue?.() ?? "",
-);
+const modelValue = computed(() => props.getModelValue?.() ?? "");
 
-const placeholderValue = computed(
-	() =>
-		props.getPlaceholder?.() ??
-		String(props.placeholder),
-);
+const placeholderValue = computed(() => props.getPlaceholder?.() ?? String(props.placeholder));
 
 const updateValue = (value: string | number | null | { label: string; value: string }) => {
 	if (typeof value === "object" && value !== null && "value" in value) {
@@ -247,16 +252,23 @@ const options = computed(() => {
 
 function setDynamicValue({ key, comesFrom }: { key: string; comesFrom?: BlockDataKey["comesFrom"] }) {
 	if (!comesFrom) comesFrom = "dataScript";
-	blockController.getSelectedBlocks().forEach((block) => {
-		block.setDynamicValue(props.property, props.controlType, key, comesFrom);
-	});
+	if (props.setDynamicValue) {
+		props.setDynamicValue(key, comesFrom);
+	} else {
+		blockController.getSelectedBlocks().forEach((block) => {
+			block.setDynamicValue(props.property, props.controlType, key, comesFrom);
+		});
+	}
 	showDynamicValueModal.value = false;
 	emit("setDynamicValue");
 }
 
 const dynamicValue = computed(() => {
+	if (props.getDynamicValue) {
+		return props.getDynamicValue();
+	}
 	const blocks = blockController.getSelectedBlocks();
-	if (!blocks?.length) return;
+	if (!blocks?.length) return undefined;
 	const dataKeyObj = blocks[0].dynamicValues.find((obj) => {
 		return obj.type === props.controlType && obj.property === props.property;
 	});
@@ -272,10 +284,14 @@ const dynamicValue = computed(() => {
 });
 
 const clearDynamicValue = () => {
-	const blocks = blockController.getSelectedBlocks();
-	blocks.forEach((block) => {
-		block.removeDynamicValue(props.property, props.controlType);
-	});
+	if (props.setDynamicValue) {
+		props.setDynamicValue(null, null);
+	} else {
+		const blocks = blockController.getSelectedBlocks();
+		blocks.forEach((block) => {
+			block.removeDynamicValue(props.property, props.controlType);
+		});
+	}
 	emit("clearDynamicValue");
 };
 </script>

@@ -52,7 +52,10 @@
 				v-if="showDynamicValueModal">
 				<template #header>Set Dynamic Value</template>
 				<template #content>
-					<DynamicValueHandler @setDynamicValue="setDynamicValue" :selectedValue="dynamicValue" />
+					<DynamicValueHandler
+						@setDynamicValue="setDynamicValue"
+						:selectedValue="dynamicValue"
+						:options="{ excludePassedDownProps: true}" />
 				</template>
 			</DraggablePopup>
 
@@ -76,7 +79,10 @@
 					class="absolute bottom-0 left-0 right-0 top-0 z-20 flex cursor-pointer items-center gap-2 rounded bg-surface-violet-1 py-0.5 pl-2.5 pr-6 text-sm text-ink-violet-1"
 					@click.stop="showDynamicValueModal = true"
 					v-if="dynamicValue?.key">
-					<FeatherIcon v-if="dynamicValue?.comesFrom == 'props'" name="git-commit" class="size-3"></FeatherIcon>
+					<FeatherIcon
+						v-if="dynamicValue?.comesFrom == 'props'"
+						name="git-commit"
+						class="size-3"></FeatherIcon>
 					<FeatherIcon v-else name="zap" class="size-3"></FeatherIcon>
 					<span class="truncate">{{ dynamicValue.key }}</span>
 				</div>
