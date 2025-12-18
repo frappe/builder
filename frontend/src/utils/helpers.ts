@@ -377,7 +377,8 @@ function getCopyWithoutParent(block: BlockOptions | Block): BlockOptions {
 	blockCopy.children = blockCopy.children?.map((child) => getCopyWithoutParent(child));
 	delete blockCopy.parentBlock;
 	delete blockCopy.referenceComponent;
-	delete blockCopy.blockData;
+	delete blockCopy.ownBlockData;
+	delete blockCopy.passedDownBlockData;
 	return blockCopy;
 }
 
@@ -1144,13 +1145,35 @@ const getStandardPropValue = (
 	}
 };
 
-const getCumulativeBlockData = (block: Block): Record<string, any> => {
-	const parentBlock = block.getParentBlock();
-	if (parentBlock) {
-		const parentBlockData = getCumulativeBlockData(parentBlock);
-		return { ...parentBlockData, ...(block.blockData || {}) };
+const getDataArray = (
+	block: Block,
+	collectionObject: Record<string, any>,
+	comesFrom: BlockDataKey["comesFrom"],
+) => {
+	const result: string[] = [];
+	let collectionObjectCopy = { ...collectionObject };
+	if (block.isInsideRepeater() && comesFrom == "dataScript") {
+		const keys = getCollectionKeys(block, comesFrom);
+		collectionObjectCopy = keys.reduce((acc: any, key: string) => {
+			const data = getDataForKey(acc, key);
+			return Array.isArray(data) && data.length > 0 ? data[0] : data;
+		}, collectionObjectCopy);
 	}
-	return { ...(block.blockData || {}) };
+
+	function processObject(obj: Record<string, any>, prefix = "") {
+		Object.entries(obj).forEach(([key, value]) => {
+			const path = prefix ? `${prefix}.${key}` : key;
+
+			if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+				processObject(value, path);
+			} else if (["string", "number", "boolean"].includes(typeof value)) {
+				result.push(path);
+			}
+		});
+	}
+
+	processObject(collectionObjectCopy);
+	return result;
 };
 
 /**
@@ -1159,7 +1182,7 @@ const getCumulativeBlockData = (block: Block): Record<string, any> => {
  * It tries to restrict escape hatches which could be used to access the global window or document objects.
  * It tries to `wrap` all returned DOM nodes and collections to ensure they are also proxied.
  * The `wrap` function creates proxies for DOM elements to intercept property access and method calls.
- * 
+ *
  * @param blockId - The ID of the block element to which the script is associated.
  * @param userScript - The user-provided JavaScript code to execute.
  * @param props - An optional object containing properties to be made available in the script's context.
@@ -1184,10 +1207,7 @@ function saferExecuteBlockClientScript(
 		"outerHTML",
 	]);
 
-	const BLOCKED_SET = new Set([
-		"innerHTML",
-		"outerHTML",
-	]);
+	const BLOCKED_SET = new Set(["innerHTML", "outerHTML"]);
 
 	function wrap(value: Element | Node) {
 		if (value === null || typeof value !== "object") return value;
@@ -1200,7 +1220,6 @@ function saferExecuteBlockClientScript(
 
 	const handler = {
 		get(target: Element, prop: string, receiver: any) {
-
 			if (BLOCKED_GET.has(prop)) return undefined;
 
 			let val = Reflect.get(target, prop, receiver);
@@ -1338,6 +1357,6 @@ export {
 	uploadUserFont,
 	getPropValue,
 	getStandardPropValue,
-	getCumulativeBlockData,
+	getDataArray,
 	saferExecuteBlockClientScript,
 };

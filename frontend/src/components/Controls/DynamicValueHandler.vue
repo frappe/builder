@@ -2,7 +2,7 @@
 	<div class="flex min-h-36 flex-col justify-between gap-2">
 		<div class="flex flex-col gap-2">
 			<BuilderInput
-				v-if="dataArray.length > 5"
+				v-if="pageDataArray.length + blockDataArray.length > 5"
 				v-model="searchQuery"
 				@input="(val: string) => (searchQuery = val)"
 				type="text"
@@ -64,7 +64,13 @@ import Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
-import { getCollectionKeys, getDataForKey, getPropValue, getStandardPropValue } from "@/utils/helpers";
+import {
+	getCollectionKeys,
+	getDataArray,
+	getDataForKey,
+	getPropValue,
+	getStandardPropValue,
+} from "@/utils/helpers";
 import { computed, ref } from "vue";
 
 const pageStore = usePageStore();
@@ -83,41 +89,15 @@ const props = defineProps<{
 const emit = defineEmits(["setDynamicValue"]);
 const searchQuery = ref("");
 
-const dataArray = (collectionObject: Record<string, any>, comesFrom: BlockDataKey["comesFrom"]) => {
-	const result: string[] = [];
-	let collectionObjectCopy = { ...collectionObject };
-	if (blockController.getFirstSelectedBlock()?.isInsideRepeater() && comesFrom == "dataScript") {
-		const keys = getCollectionKeys(blockController.getFirstSelectedBlock(), comesFrom);
-		collectionObjectCopy = keys.reduce((acc: any, key: string) => {
-			const data = getDataForKey(acc, key);
-			return Array.isArray(data) && data.length > 0 ? data[0] : data;
-		}, collectionObjectCopy);
-	}
-
-	function processObject(obj: Record<string, any>, prefix = "") {
-		Object.entries(obj).forEach(([key, value]) => {
-			const path = prefix ? `${prefix}.${key}` : key;
-
-			if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-				processObject(value, path);
-			} else if (["string", "number", "boolean"].includes(typeof value)) {
-				result.push(path);
-			}
-		});
-	}
-
-	processObject(collectionObjectCopy);
-	return result;
-};
-
 const pageDataArray = computed(() => {
-	return dataArray(pageStore.pageData, "dataScript");
+	const currentBlock = props.block || blockController.getFirstSelectedBlock();
+	return getDataArray(currentBlock, pageStore.pageData, "dataScript");
 });
 
 const blockDataArray = computed(() => {
 	const currentBlock = props.block || blockController.getFirstSelectedBlock();
 	if (currentBlock) {
-		return dataArray(currentBlock.blockData || {}, "blockDataScript");
+		return getDataArray(currentBlock, currentBlock.getBlockData() || {}, "blockDataScript");
 	}
 	return [];
 });
