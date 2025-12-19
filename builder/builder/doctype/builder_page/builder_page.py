@@ -702,7 +702,7 @@ def get_block_html(blocks, page_data=None):
 
 			if block.get("blockClientScript"):
 				block_unique_id = f"{block.get('blockId')}-{frappe.generate_hash(length=3)}"  # extra hash as repeating blocks have same blockId
-				script_content = f"(function (props){{ {block.get('blockClientScript')} }}).call(document.querySelector('[data-block-id=\"{block_unique_id}\"]'), {json.dumps(all_props) or '{}'});"
+				script_content = f"(function (props){{ {block.get('blockClientScript')} }}).call(document.querySelector('[data-block-id=\"{block_unique_id}\"]'), {{{{ {to_jinja_literal(all_props) + '| tojson'} }}}});"
 				tag.attrs["data-block-id"] = block_unique_id
 				script_tag = soup.new_tag("script")
 				script_tag.string = script_content
@@ -934,6 +934,7 @@ def set_dynamic_content_placeholder(block, data_key=None):
 					key = f"{extract_data_key(data_key)}.{(dynamic_value_doc.get('key'))}"
 				else:
 					key = f"block.{original_key}"
+				# TODO: repeating code
 				if data_key:
 					# convert a.b to (a or {}).get('b', {})
 					# to avoid undefined error in jinja
@@ -1040,27 +1041,45 @@ def parse_static_value(value: str, prop_type: str):
 
 
 def get_interpreted_prop_value(prop, data_key, map_of_prop_values):
-	prop_type = prop["type"]
+	prop_is_dynamic = prop.get("isDynamic", False)
+	prop_comes_from = prop.get("comesFrom", "props")
 	prop_is_standard = prop.get("isStandard", False)
 	prop_value = prop.get("value")
-
-	if prop_value is None and not prop_is_standard:
-		return "undefined"
-	if prop_type == "dynamic":
-		return (
-			f"{{{{ {extract_data_key(data_key)}.{prop_value} }}}}" if data_key else f"{{{{ {prop_value} }}}}"
-		)
-	elif prop_type == "static":
+	
+	default_value = None
+	if prop_is_standard:
+		default_value = prop.get("standardOptions", {}).get("options", {}).get("defaultValue")
+	if prop_value is None:
+		return default_value if prop_is_standard else "undefined"
+	if prop_is_dynamic:
+		if prop_comes_from == "dataScript":
+			key = f"{extract_data_key(data_key)}.{prop_value}" if data_key else prop_value
+			return (
+				f"{{{{ {key} or '{escape_single_quotes(default_value) if default_value is not None else 'undefined'}' }}}}"
+			)
+		elif prop_comes_from == "blockDataScript":
+			key = (
+					f"{extract_data_key(data_key)}.{prop_value}" if data_key else prop_value
+				)
+			if data_key:
+				# convert a.b to (a or {}).get('b', {})
+				# to avoid undefined error in jinja
+				keys = (key or "").split(".")
+				key = f"({keys[0]} or {{}})"
+				for k in keys[1:]:
+					key = f"{key}.get('{k}', {{}})"
+			return f"{{{{ {key} or block['{escape_single_quotes(prop_value)}'] or '{escape_single_quotes(default_value) if default_value is not None else 'undefined'}' }}}}"
+		elif prop_comes_from == "props":
+			values = map_of_prop_values.get(prop_value, [])
+			return values[-1] if values else default_value if default_value is not None else "undefined"
+	else:
 		if prop_is_standard:
 			# standard props are static only as of now
 			prop_value = parse_static_value(
-				prop.get("value") or prop.get("standardOptions", {}).get("options", {}).get("defaultValue"),
+				prop.get("value") or default_value,
 				prop.get("standardOptions", {}).get("type"),
 			)
 		return prop_value
-	elif prop_type == "inherited":
-		values = map_of_prop_values.get(prop_value, [])
-		return values[-1] if values else "undefined"
 
 
 def get_loop_vars(map_of_std_props_info, key):
