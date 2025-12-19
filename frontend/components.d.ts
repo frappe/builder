@@ -76,7 +76,6 @@ declare module 'vue' {
     JavaScript: typeof import('./src/components/Icons/JavaScript.vue')['default']
     Layers: typeof import('./src/components/Icons/Layers.vue')['default']
     Loading: typeof import('./src/components/Icons/Loading.vue')['default']
-    LucideCalendar: typeof import('~icons/lucide/calendar')['default']
     MainMenu: typeof import('./src/components/MainMenu.vue')['default']
     MarginHandler: typeof import('./src/components/MarginHandler.vue')['default']
     Meta: typeof import('./src/components/Icons/Meta.vue')['default']

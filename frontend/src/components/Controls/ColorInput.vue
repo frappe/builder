@@ -40,6 +40,12 @@
 								"
 								@update:modelValue="
 									(val: string | null) => {
+										//auto strip extra hashes
+										if (typeof val == 'string') {
+											val = normalizeColorInput(val);
+										}
+
+										//last valid value is retained
 										isInvalid = !!val && !isValidColorInput(val);
 										if (isInvalid) return;
 										
@@ -97,6 +103,14 @@ const showVariableDialog = ref(false);
 const newVariable = ref<Partial<BuilderVariable> | null>(null);
 const { variables, resolveVariableValue } = useBuilderVariable();
 const isInvalid = ref(false);
+
+const normalizeColorInput = (val: string) => {
+	// turn multiple leading hashes into one 
+	if (/^#+/.test(val)) {
+		return "#" + val.replace(/^#+/,"");
+	}
+	return val;
+};
 
 const isValidColorInput = (val: string | null) => {
 	if (!val) return true;
