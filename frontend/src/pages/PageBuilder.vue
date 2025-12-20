@@ -134,7 +134,7 @@ import {
 	useMagicKeys,
 } from "@vueuse/core";
 import { createResource } from "frappe-ui";
-import { computed, onActivated, onDeactivated, provide, ref, watch, watchEffect } from "vue";
+import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
 
@@ -151,6 +151,7 @@ const canvasStore = useCanvasStore();
 const usageCount = ref(0);
 const componentUsedInPages = ref<BuilderPage[]>([]);
 const pageListDialog = ref(false);
+const blockContextMenu = ref<InstanceType<typeof BlockContextMenu> | null>(null);
 
 watch([() => canvasStore.editableBlock, () => pageStore.activePage?.is_standard], () => {
 	builderStore.toggleReadOnlyMode(
@@ -246,6 +247,10 @@ onDeactivated(() => {
 	builderStore.realtime.doc_close("Builder Page", pageStore.activePage?.name as string);
 	builderStore.realtime.off("doc_viewers", () => {});
 	builderStore.viewers = [];
+});
+
+onMounted(() => {
+	builderStore.blockContextMenu = blockContextMenu.value;
 });
 
 watchEffect(() => {
