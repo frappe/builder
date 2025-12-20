@@ -357,6 +357,7 @@ watch(
 		component,
 		allResolvedProps,
 		() => props.block.getBlockDataScript(),
+		() => props.blockData,
 		() => pageStore.settingPage,
 	],
 	() => {
