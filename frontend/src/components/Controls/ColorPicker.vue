@@ -155,7 +155,11 @@ const props = withDefaults(
 			| "right-start"
 			| "right-end"
 			| "left-start"
-			| "left-end";
+			| "left-end"
+			| "bottom"
+			| "top"
+			| "right"
+			| "left";
 		renderMode?: "popover" | "inline";
 	}>(),
 	{

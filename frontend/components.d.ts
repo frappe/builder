@@ -11,7 +11,6 @@ declare module 'vue' {
     AlertDialog: typeof import('./src/components/AlertDialog.vue')['default']
     AnalyticsFilters: typeof import('./src/components/Settings/AnalyticsFilters.vue')['default']
     AnalyticsOverview: typeof import('./src/components/Settings/AnalyticsOverview.vue')['default']
-    AppsMenu: typeof import('./src/components/AppsMenu.vue')['default']
     AuthenticatedUser: typeof import('./src/components/Icons/AuthenticatedUser.vue')['default']
     Autocomplete: typeof import('./src/components/Controls/Autocomplete.vue')['default']
     BackgroundHandler: typeof import('./src/components/BackgroundHandler.vue')['default']

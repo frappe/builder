@@ -163,7 +163,7 @@
 				}
 			"
 			v-on-click-outside="
-				(e) => {
+				(e: MouseEvent) => {
 					if ((e.target as HTMLElement).closest('.canvas-container')) {
 						canvasStore.editableBlock = null;
 					}

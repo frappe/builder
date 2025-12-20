@@ -135,7 +135,7 @@ const overlay = ref(null);
 
 const props = withDefaults(
 	defineProps<{
-		blockData: Block;
+		blockData: Block | BlockOptions;
 		canvasStyles?: Record<string, any>;
 	}>(),
 	{
