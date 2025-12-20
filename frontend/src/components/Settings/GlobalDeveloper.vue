@@ -2,12 +2,22 @@
 	<div class="flex flex-col gap-5">
 		<Switch
 			size="sm"
-			label="Execute Block Scripts in Editor"
+			label="Execute Block Client Scripts in Editor"
 			description="Tries to best emulate how blocks will look like on the live site."
 			:modelValue="Boolean(builderSettings.doc?.execute_block_scripts_in_editor)"
 			@update:modelValue="
 				(val: Boolean) => {
 					builderStore.updateBuilderSettings('execute_block_scripts_in_editor', val);
+				}
+			" />
+		<Switch
+			size="sm"
+			label="Prevent Click Emulation"
+			description="Prevents click events from being emulated in the editor for blocks with Block Client Scripts."
+			:modelValue="Boolean(builderSettings.doc?.block_click_handlers)"
+			@update:modelValue="
+				(val: Boolean) => {
+					builderStore.updateBuilderSettings('block_click_handlers', val);
 				}
 			" />
 		<div class="flex flex-col gap-2">

@@ -8,6 +8,7 @@ import { confirmDialog, FileUploadHandler } from "frappe-ui";
 import { defineComponent, h, markRaw, reactive, ref, toRaw } from "vue";
 import { toast } from "vue-sonner";
 import Dialog from "../components/Controls/Dialog.vue";
+import { builderSettings } from "@/data/builderSettings";
 
 function getNumberFromPx(px: string | number | null | undefined): number {
 	if (!px) {
@@ -1235,6 +1236,19 @@ function saferExecuteBlockClientScript(
 
 			// Wrap functions (methods)
 			if (typeof val === "function") {
+				// disallow eventListeners
+				if (prop === "addEventListener" || prop === "removeEventListener") {
+					// disallow clicks
+					return (...args: any[]) => {
+						const eventType = args[0];
+						const disallowClicks = Boolean(builderSettings.doc?.block_click_handlers)
+						if (disallowClicks && (eventType === "click" || eventType === "dblclick")) {
+							throw new Error(`Blocked: cannot add/remove ${eventType} event listeners`);
+						}
+						const realArgs = args.map((a) => cache.get(a) || a);
+						return val.apply(target, realArgs);
+					};
+				}
 				return (...args) => {
 					const realArgs = args.map((a) => cache.get(a) || a);
 
@@ -1297,6 +1311,7 @@ function saferExecuteBlockClientScript(
 		fn.call(proxiedThis, context);
 	} catch (e) {
 		console.error("Error in user script:", e);
+		toast.warning("An error occurred while executing block script: " + (e instanceof Error ? e.message : ""));
 	}
 }
 

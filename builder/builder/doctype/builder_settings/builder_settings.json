@@ -17,7 +17,8 @@
   "landing_page_section",
   "home_page",
   "developer_options_section",
-  "execute_block_scripts_in_editor"
+  "execute_block_scripts_in_editor",
+  "block_click_handlers"
  ],
  "fields": [
   {
@@ -94,17 +95,23 @@
    "label": "Developer Options"
   },
   {
-   "default": "1",
+   "default": "0",
    "fieldname": "execute_block_scripts_in_editor",
    "fieldtype": "Check",
    "label": "Execute Block Scripts in Editor"
+  },
+  {
+   "default": "1",
+   "fieldname": "block_click_handlers",
+   "fieldtype": "Check",
+   "label": "Block Click Handlers"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-11-28 20:08:12.409061",
+ "modified": "2025-12-20 13:31:34.606833",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Settings",
