@@ -120,6 +120,7 @@ declare module 'vue' {
     TemplatePagePreview: typeof import('./src/components/TemplatePagePreview.vue')['default']
     TemplateSelector: typeof import('./src/components/TemplateSelector.vue')['default']
     TextBlock: typeof import('./src/components/TextBlock.vue')['default']
+    TextBlockBubbleMenu: typeof import('./src/components/TextBlockBubbleMenu.vue')['default']
     VariableManager: typeof import('./src/components/Modals/VariableManager.vue')['default']
   }
 }
