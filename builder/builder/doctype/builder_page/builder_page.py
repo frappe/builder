@@ -495,18 +495,6 @@ def save_as_template(page_doc: BuilderPage):
 			record_module="builder",
 		)
 
-def resolve_dynamic_props(props, page_data):
-	resolved_props = {}
-	for key, value in props.items():
-		if isinstance(value, str):
-			stripped = value.strip()
-		if re.fullmatch(r"{{\s*.*?\s*}}", stripped):
-			# remove the {{ }} so Jinja receives the variable
-			inner = stripped[2:-2].strip()
-			value = page_data.get(inner, "")
-		resolved_props[key] = value
-	return resolved_props
-
 
 @frappe.whitelist()
 def get_block_data(block_id, block_data_script, props):
@@ -666,10 +654,10 @@ def get_block_html(blocks, page_data=None):
 
 				tag.append(f"{{% for {loop_var} in {_key} %}}")
 
-				child_tag, child_tag_props, child_tag_std_props, child_tag_data = get_tag(
+				child_tag, child_tag_props, child_tag_std_props, child_tag_block_script = get_tag(
 					block.get("children")[0], soup, next_data_key, next_default_props
 				)
-				append_child_tag_with_props(tag, child_tag, child_tag_props, child_tag_std_props, child_tag_data)
+				append_child_tag(tag, child_tag, child_tag_props, child_tag_std_props, child_tag_block_script)
 
 				tag.append("{% endfor %}")
 			else:
@@ -681,10 +669,10 @@ def get_block_html(blocks, page_data=None):
 							key = f"{extract_data_key(data_key)}.{key}"
 						tag.append(f"{{% if {key} %}}")
 
-					child_tag, child_tag_props, child_tag_std_props, child_tag_data = get_tag(
+					child_tag, child_tag_props, child_tag_std_props, child_tag_block_script = get_tag(
 						child, soup, data_key=data_key, default_props=default_props
 					)
-					append_child_tag_with_props(tag, child_tag, child_tag_props, child_tag_std_props, child_tag_data)
+					append_child_tag(tag, child_tag, child_tag_props, child_tag_std_props, child_tag_block_script)
 
 					if child.get("visibilityCondition"):
 						tag.append("{% endif %}")
@@ -708,16 +696,11 @@ def get_block_html(blocks, page_data=None):
 				script_tag.string = script_content
 				tag.append(script_tag)
 
-			block_data = {}
-			if block.get("blockDataScript"):
-				block_data = get_block_data(block.get("blockId"), block.get("blockDataScript"), resolve_dynamic_props(all_props, page_data or {}))
-				print("Block Data Script Output: ", block_data)
-
-			return tag, to_jinja_literal(all_props), to_jinja_literal(std_props) if std_props else None, to_jinja_literal(block_data) if block_data else None
+			return tag, to_jinja_literal(all_props), to_jinja_literal(std_props) if std_props else None, block.get('blockDataScript', None)
 
 		for block in blocks:
-			tag, props, std_props, block_data = get_tag(block, soup)
-			html += f"{{% with block = {block_data if block_data else '{}'} %}}{tag!s}{{% endwith %}}"
+			tag, props, std_props, block_script = get_tag(block, soup)
+			html += f"{{% with block = {{ }} | execute_script_and_combine('{escape_single_quotes(block_script)}', {(props)}) %}}{tag!s}{{% endwith %}}"
 			html = f"{{% with props = {props} %}}{html}{{% endwith %}}"
 			if std_props:
 				html = f"{{% with std_props = {std_props} %}}{html}{{% endwith %}}"
@@ -870,15 +853,15 @@ def extend_block(block, overridden_block):
 	return block
 
 
-def append_child_tag_with_props(tag, child_tag, child_tag_props, child_tag_std_props, child_tag_data):
+def append_child_tag(tag, child_tag, child_tag_props, child_tag_std_props, child_tag_block_script):
 	if child_tag_std_props:
 		tag.append(f"{{% with std_props = {child_tag_std_props} %}}")
 
 	tag.append(f"{{% with props = {child_tag_props} %}}")
-	if child_tag_data:
-		tag.append(f"{{% with block = block | combine({child_tag_data}) %}}")
+	if child_tag_block_script:
+		tag.append(f"{{% with block = block | execute_script_and_combine('{escape_single_quotes(child_tag_block_script)}', {(child_tag_props)}) %}}")
 	tag.append(child_tag)
-	if child_tag_data:
+	if child_tag_block_script:
 		tag.append("{% endwith %}")
 	tag.append("{% endwith %}")
 

@@ -597,3 +597,11 @@ def combine(a, b):
     res = dict(a)
     res.update(b)
     return res
+
+def execute_script_and_combine(prev_block_data, block_data_script, props):
+	props = frappe._dict(frappe.parse_json(props or "{}"))
+	block_data = frappe._dict()
+	_locals = dict(block=frappe._dict(), props=props)
+	execute_script(block_data_script, _locals, "sample")
+	block_data.update(_locals["block"])
+	return combine(prev_block_data, block_data)
