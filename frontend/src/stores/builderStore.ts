@@ -39,7 +39,7 @@ const useBuilderStore = defineStore("builderStore", {
 		realtime: new RealTimeHandler(),
 		readOnlyMode: false,
 		viewers: <UserInfo[]>[],
-		isFCSite: window.is_fc_site === "{{ is_fc_site }}" ? false : window.is_fc_site,
+		isFCSite: window.is_fc_site === "True" ? true : false,
 		activeFolder: useStorage("activeFolder", ""),
 	}),
 	actions: {
