@@ -1311,7 +1311,7 @@ function saferExecuteBlockClientScript(
 		fn.call(proxiedThis, context);
 	} catch (e) {
 		console.error("Error in user script:", e);
-		toast.warning("An error occurred while executing block script: " + (e instanceof Error ? e.message : ""));
+		// toast.warning("An error occurred while executing block script: " + (e instanceof Error ? e.message : ""));
 	}
 }
 
