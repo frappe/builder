@@ -1098,6 +1098,9 @@ const getPropValue = (
 			} else if (prop.comesFrom === "blockDataScript" && prop.value) {
 				return block.getBlockData("passedDown")[prop.value];
 			} else {
+				if (prop.value && defaultProps && defaultProps[prop.value] !== undefined) {
+					return defaultProps[prop.value].value;
+				}
 				if (prop.value) {
 					return getValueForInheritedProp(prop.value, block, getDataScriptValue);
 				}
@@ -1241,7 +1244,7 @@ function saferExecuteBlockClientScript(
 					// disallow clicks
 					return (...args: any[]) => {
 						const eventType = args[0];
-						const disallowClicks = Boolean(builderSettings.doc?.block_click_handlers)
+						const disallowClicks = Boolean(builderSettings.doc?.block_click_handlers);
 						if (disallowClicks && (eventType === "click" || eventType === "dblclick")) {
 							throw new Error(`Blocked: cannot add/remove ${eventType} event listeners`);
 						}

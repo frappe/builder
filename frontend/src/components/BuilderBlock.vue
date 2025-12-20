@@ -326,7 +326,7 @@ const allResolvedProps = computed(() => {
 					key,
 					getPropValue(key, props.block, (path: string) => {
 						return getDataForKey(props.data || {}, path);
-					}),
+					}, props.defaultProps),
 				];
 			}),
 		),

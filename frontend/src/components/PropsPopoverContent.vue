@@ -140,7 +140,7 @@ import BooleanOptions from "@/components/PropsOptions/BooleanOptions.vue";
 import SelectOptions from "@/components/PropsOptions/SelectOptions.vue";
 
 import usePageStore from "@/stores/pageStore";
-import { getCollectionKeys, getDataArray, getDataForKey } from "@/utils/helpers";
+import { getCollectionKeys, getDataArray, getStandardPropValue } from "@/utils/helpers";
 
 const props = withDefaults(
 	defineProps<{
@@ -283,9 +283,48 @@ const blockDataArray = computed(() => {
 	return [];
 });
 
+const defaultProps = computed(() => {
+	const currentBlock = blockController.getFirstSelectedBlock();
+	const isCurrentBlockInRepeater = currentBlock?.isInsideRepeater();
+	const repeaterRoot = isCurrentBlockInRepeater ? currentBlock?.getRepeaterParent() : null;
+	if (repeaterRoot) {
+		const key = repeaterRoot.getDataKey("key");
+		const comesFrom = repeaterRoot.getDataKey("comesFrom");
+		if (key && comesFrom === "props") {
+			const componentRoot = blockController.getComponentRootBlock(repeaterRoot);
+			const parsedValue = getStandardPropValue(key, componentRoot)?.value;
+			if (!parsedValue) return {};
+			if (Array.isArray(parsedValue)) {
+				return {
+					item: {
+						value: parsedValue[0],
+						isStandard: false,
+						type: "static",
+					},
+				};
+			} else if (typeof parsedValue === "object") {
+				return {
+					key: {
+						value: Object.keys(parsedValue)[0],
+						isStandard: false,
+						type: "static",
+					},
+					value: {
+						value: parsedValue[Object.keys(parsedValue)[0]],
+						isStandard: false,
+						type: "static",
+					},
+				};
+			}
+		}
+	}
+	return {};
+});
+
 const getParentProps = (baseBlock: Block, baseProps: string[]): string[] => {
 	const parentBlock = baseBlock.getParentBlock();
 	if (parentBlock) {
+		// TODO: disallow array and obj props from parent blocks
 		const parentProps: string[] = Object.keys(parentBlock.getBlockProps()).map((key) => key);
 		const combinedProps = [...baseProps, ...parentProps].reduce((acc, prop) => {
 			if (!acc.find((p: string) => p === prop)) {
@@ -302,6 +341,14 @@ const getParentProps = (baseBlock: Block, baseProps: string[]): string[] => {
 const getOptions = async (query: string) => {
 	let options: { label: string; value: string }[] = [];
 	getParentProps(blockController.getFirstSelectedBlock()!, []).map((prop) => {
+		if (prop.toLowerCase().includes(query.toLowerCase())) {
+			options.push({
+				label: prop,
+				value: `${prop}--props`,
+			});
+		}
+	});
+	Object.keys(defaultProps.value || {}).map((prop) => {
 		if (prop.toLowerCase().includes(query.toLowerCase())) {
 			options.push({
 				label: prop,
