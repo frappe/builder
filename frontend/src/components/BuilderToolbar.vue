@@ -24,7 +24,7 @@
 			</div>
 		</div>
 		<div>
-			<Popover placement="bottom" popoverClass="!absolute top-0 !mt-[20px]">
+			<Popover placement="bottom-start" popoverClass="!absolute top-0 !mt-[20px]">
 				<template #target="{ togglePopover, isOpen }">
 					<div class="flex cursor-pointer items-center gap-2 p-2 text-ink-gray-8">
 						<div class="flex h-6 items-center text-base text-ink-gray-6" v-if="!pageStore.activePage">
