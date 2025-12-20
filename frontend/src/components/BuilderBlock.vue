@@ -363,7 +363,9 @@ watch(
 		if (pageStore.settingPage) return;
 		if (props.block.getBlockDataScript().trim() === "") {
 			// If no data script, just use parent's cumulative data
-			cumulativeBlockData.value = props.block.getParentBlock()?.getBlockData() || {};
+			cumulativeBlockData.value = props.blockData || {};
+			props.block.setBlockData(props.blockData || {}, "passedDown");
+			props.block.setBlockData({}, "own");
 			return;
 		}
 		fetchBlockData
