@@ -358,10 +358,14 @@ watch(
 		allResolvedProps,
 		() => props.block.getBlockDataScript(),
 		() => pageStore.settingPage,
-		() => props.block.getParentBlock()?.getBlockData(),
 	],
 	() => {
 		if (pageStore.settingPage) return;
+		if (props.block.getBlockDataScript().trim() === "") {
+			// If no data script, just use parent's cumulative data
+			cumulativeBlockData.value = props.block.getParentBlock()?.getBlockData() || {};
+			return;
+		}
 		fetchBlockData
 			.fetch({
 				block_id: props.block.blockId,
@@ -372,7 +376,6 @@ watch(
 				props.block.setBlockData(props.blockData || {}, "passedDown");
 				props.block.setBlockData(res, "own");
 				cumulativeBlockData.value = { ...(props.blockData || {}), ...res };
-				console.log("Cumulative Block Data for block", props.block.blockId, ":", props.blockData, res);
 			})
 			.catch((e: { exc: string | null }) => {
 				const error_message = e.exc?.split("\n").slice(-2)[0];
