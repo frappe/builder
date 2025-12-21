@@ -96,7 +96,6 @@
 				<Tooltip text="Toggle Dark Mode" :hoverDelay="0.6" arrow-class="mb-3">
 					<Button
 						variant="ghost"
-						class="!p-1"
 						@click="() => transitionTheme(toggleDark)"
 						:icon="isDark ? 'sun' : 'moon'"></Button>
 				</Tooltip>
@@ -106,15 +105,11 @@
 					Saving template
 				</span>
 				<Tooltip text="Settings" :hoverDelay="0.6" arrow-class="mb-3">
-					<Button
-						variant="ghost"
-						@click="showSettingsDialog = true"
-						class="!p-1"
-						:icon="SettingsGearIcon"></Button>
+					<Button variant="ghost" @click="showSettingsDialog = true" :icon="SettingsGearIcon"></Button>
 				</Tooltip>
 				<router-link :to="{ name: 'preview', params: { pageId: pageStore.selectedPage } }" title="Preview">
 					<Tooltip text="Preview" :hoverDelay="0.6" arrow-class="mb-3">
-						<Button variant="ghost" class="!p-1" :icon="PlayIcon"></Button>
+						<Button variant="ghost" :icon="PlayIcon"></Button>
 					</Tooltip>
 				</router-link>
 			</div>
