@@ -61,3 +61,7 @@ p:empty::before {
 [data-theme='dark'] img {
 	filter: revert;
 }
+
+[role='dialog'] .bg-surface-modal {
+	background-color: var(--surface-white);
+}
