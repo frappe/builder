@@ -62,6 +62,6 @@ p:empty::before {
 	filter: revert;
 }
 
-[role='dialog'] .bg-surface-modal {
+[role='dialog'].bg-surface-modal, [role='dialog'] .bg-surface-modal {
 	background-color: var(--surface-white);
 }
