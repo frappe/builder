@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="editor pointer-events-none fixed z-[18] box-content select-none ring-2 ring-inset"
+		class="editor pointer-events-none fixed box-content select-none ring-2 ring-inset"
 		ref="editor"
 		:selected="isBlockSelected"
 		@click.stop="handleClick"
@@ -183,8 +183,6 @@ const getStyleClasses = computed(() => {
 	) {
 		// make editor interactive
 		classes.push("pointer-events-auto");
-		// Place the block on the top of the stack
-		classes.push("!z-[19]");
 	}
 	return classes;
 });

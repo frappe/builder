@@ -1,6 +1,5 @@
 <template>
 	<Dialog
-		style="z-index: 40"
 		:options="{
 			title: 'New Component',
 			size: 'sm',

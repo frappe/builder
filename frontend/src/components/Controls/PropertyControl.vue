@@ -73,14 +73,14 @@
 				</component>
 
 				<div
-					class="absolute bottom-0 left-0 right-0 top-0 z-20 flex cursor-pointer items-center gap-2 rounded bg-surface-violet-1 py-0.5 pl-2.5 pr-6 text-sm text-ink-violet-1"
+					class="absolute bottom-0 left-0 right-0 top-0 flex cursor-pointer items-center gap-2 rounded bg-surface-violet-1 py-0.5 pl-2.5 pr-6 text-sm text-ink-violet-1"
 					@click.stop="showDynamicValueModal = true"
 					v-if="dynamicValue">
 					<FeatherIcon name="zap" class="size-3"></FeatherIcon>
 					<span class="truncate">{{ dynamicValue }}</span>
 				</div>
 				<button
-					class="absolute right-1 top-1 z-20 cursor-pointer p-1 text-ink-gray-4 hover:text-ink-gray-5"
+					class="absolute right-1 top-1 cursor-pointer p-1 text-ink-gray-4 hover:text-ink-gray-5"
 					tabindex="-1"
 					v-show="dynamicValue"
 					@click="clearDynamicValue">
@@ -115,7 +115,7 @@
 					</component>
 					<button
 						type="button"
-						class="absolute right-1 top-1 z-10 text-ink-gray-7 hover:text-ink-gray-9"
+						class="absolute right-1 top-1 text-ink-gray-7 hover:text-ink-gray-9"
 						@click="clearState(state)">
 						<FeatherIcon name="x" class="h-3 w-3" />
 					</button>
@@ -127,7 +127,7 @@
 				class="group ml-[5px] flex items-center justify-between before:-mt-7 before:h-7 before:w-[1px] before:bg-surface-gray-4 before:content-['_'] after:absolute after:left-3.5 after:h-1.5 after:w-1.5 after:rounded-full after:bg-surface-gray-4 hover:after:hidden">
 				<button
 					type="button"
-					class="absolute left-[11px] z-10 hidden text-ink-gray-7 hover:text-ink-gray-9 group-hover:block"
+					class="absolute left-[11px] hidden text-ink-gray-7 hover:text-ink-gray-9 group-hover:block"
 					@click="clearState(state)">
 					<FeatherIcon name="x" class="h-3 w-3" />
 				</button>

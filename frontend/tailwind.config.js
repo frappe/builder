@@ -1,5 +1,5 @@
 import colors from "tailwindcss/colors";
-import frappeUIPreset from "frappe-ui/src/tailwind/preset.js";
+import frappeUIPreset from "frappe-ui/tailwind";
 import plugin from "tailwindcss/plugin";
 
 export default {
@@ -26,7 +26,7 @@ export default {
 				},
 			);
 		}),
-	  	require('@tailwindcss/container-queries'),
+		require("@tailwindcss/container-queries"),
 	],
 	theme: {
 		extend: {

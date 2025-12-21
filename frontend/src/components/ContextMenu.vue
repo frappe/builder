@@ -1,7 +1,7 @@
 <template>
 	<Menu
 		v-if="visible"
-		class="fixed z-50 h-fit w-fit min-w-[120px] rounded-md bg-surface-white p-1 shadow-xl"
+		class="fixed h-fit w-fit min-w-[120px] rounded-md bg-surface-white p-1 shadow-xl"
 		:style="{ top: y + 'px', left: x + 'px' }"
 		ref="menu"
 		v-on-click-outside="hide">
