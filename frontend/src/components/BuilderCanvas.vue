@@ -1,6 +1,5 @@
 <template>
 	<div ref="canvasContainer" @click="handleClick">
-		<slot name="header"></slot>
 		<Transition name="fade">
 			<div
 				class="absolute bottom-0 left-0 right-0 top-0 grid w-full place-items-center bg-surface-gray-1 p-10 text-ink-gray-5"
@@ -76,6 +75,9 @@
 			:class="{ 'pointer-events-none': isOverDropZone }"
 			id="overlay"
 			ref="overlay" />
+		<div class="absolute top-0 order-1 w-full">
+			<slot name="header"></slot>
+		</div>
 		<DraggablePopup
 			v-model="builderStore.showSearchBlock"
 			:container="canvasContainer"
