@@ -26,9 +26,10 @@
 			</div>
 			<div class="flex items-center gap-4">
 				<Tooltip text="Toggle Dark Mode" :hoverDelay="0.6">
-					<FeatherIcon
-						:name="isDark ? 'sun' : 'moon'"
-						class="h-4 w-4 cursor-pointer text-ink-gray-8 outline-none"
+					<Button
+						variant="ghost"
+						:icon="isDark ? 'sun' : 'moon'"
+						class="h-8 w-8 cursor-pointer text-ink-gray-8 outline-none"
 						@click="() => transitionTheme(toggleDark)" />
 				</Tooltip>
 				<PublishButton></PublishButton>

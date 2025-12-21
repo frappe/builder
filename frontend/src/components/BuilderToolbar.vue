@@ -71,38 +71,14 @@
 				</template>
 			</Popover>
 		</div>
-		<!-- actions -->
-		<div class="absolute right-3 flex items-center gap-5">
-			<!-- show dark mode toggle -->
-			<Badge variant="subtle" theme="orange" v-if="builderStore.readOnlyMode">Read Only</Badge>
-			<Tooltip text="Toggle Dark Mode" :hoverDelay="0.6" arrow-class="mb-3">
-				<FeatherIcon
-					:name="isDark ? 'sun' : 'moon'"
-					class="h-4 w-4 cursor-pointer text-ink-gray-8 outline-none"
-					@click="() => transitionTheme(toggleDark)"></FeatherIcon>
-			</Tooltip>
-
-			<Dialog
-				:options="{
-					title: 'Get Started',
-					size: '4xl',
-				}"
-				v-model="showInfoDialog">
-				<template #body-content>
-					<iframe
-						class="h-[60vh] w-full rounded-sm"
-						src="https://www.youtube-nocookie.com/embed/videoseries?si=8NvOFXFq6ntafauO&amp;controls=0&amp;list=PL3lFfCEoMxvwZsBfCgk6vLKstZx204xe3"
-						title="Frappe Builder - Get Started"
-						frameborder="0"
-						allowfullscreen></iframe>
-				</template>
-			</Dialog>
-			<div class="group flex hover:gap-1" v-if="builderStore.viewers.length">
+		<div class="absolute right-3 flex items-center gap-4">
+			<div class="group flex hover:gap-1">
 				<div v-for="user in builderStore.viewers">
 					<Tooltip :text="currentlyViewedByText" :hoverDelay="0.6" arrow-class="mb-3">
 						<div class="ml-[-10px] h-6 w-6 cursor-pointer transition-all group-hover:ml-0">
 							<img
 								class="h-full w-full rounded-full border-2 border-orange-400 object-cover shadow-sm"
+								:title="user.fullname"
 								:src="user.image"
 								v-if="user.image" />
 							<div
@@ -115,34 +91,62 @@
 					</Tooltip>
 				</div>
 			</div>
-			<span class="text-sm text-ink-gray-3" v-if="pageStore.savingPage && pageStore.activePage?.is_template">
-				Saving template
-			</span>
-			<Tooltip text="Settings" :hoverDelay="0.6" arrow-class="mb-3">
-				<SettingsGearIcon
-					@click="showSettingsDialog = true"
-					class="size-4 cursor-pointer text-ink-gray-8"></SettingsGearIcon>
-			</Tooltip>
-			<Dialog
-				v-model="showSettingsDialog"
-				:disableOutsideClickToClose="true"
-				class="[&>div>div[id^=headlessui-dialog-panel]]:my-3"
-				:options="{
-					title: 'Settings',
-					size: '5xl',
-				}">
-				<template #body>
-					<BuilderSettings @close="showSettingsDialog = false"></BuilderSettings>
-				</template>
-			</Dialog>
-
-			<router-link :to="{ name: 'preview', params: { pageId: pageStore.selectedPage } }" title="Preview">
-				<Tooltip text="Preview" :hoverDelay="0.6" arrow-class="mb-3">
-					<PlayIcon class="h-[18px] w-[18px] cursor-pointer text-ink-gray-8"></PlayIcon>
+			<Badge variant="subtle" theme="orange" v-if="builderStore.readOnlyMode">Read Only</Badge>
+			<div class="flex gap-2">
+				<Tooltip text="Toggle Dark Mode" :hoverDelay="0.6" arrow-class="mb-3">
+					<Button
+						variant="ghost"
+						class="!p-1"
+						@click="() => transitionTheme(toggleDark)"
+						:icon="isDark ? 'sun' : 'moon'"></Button>
 				</Tooltip>
-			</router-link>
+				<span
+					class="text-sm text-ink-gray-3"
+					v-if="pageStore.savingPage && pageStore.activePage?.is_template">
+					Saving template
+				</span>
+				<Tooltip text="Settings" :hoverDelay="0.6" arrow-class="mb-3">
+					<Button
+						variant="ghost"
+						@click="showSettingsDialog = true"
+						class="!p-1"
+						:icon="SettingsGearIcon"></Button>
+				</Tooltip>
+				<router-link :to="{ name: 'preview', params: { pageId: pageStore.selectedPage } }" title="Preview">
+					<Tooltip text="Preview" :hoverDelay="0.6" arrow-class="mb-3">
+						<Button variant="ghost" class="!p-1" :icon="PlayIcon"></Button>
+					</Tooltip>
+				</router-link>
+			</div>
 			<PublishButton :disabled="builderStore.readOnlyMode"></PublishButton>
 		</div>
+		<Dialog
+			:options="{
+				title: 'Get Started',
+				size: '4xl',
+			}"
+			v-model="showInfoDialog">
+			<template #body-content>
+				<iframe
+					class="h-[60vh] w-full rounded-sm"
+					src="https://www.youtube-nocookie.com/embed/videoseries?si=8NvOFXFq6ntafauO&amp;controls=0&amp;list=PL3lFfCEoMxvwZsBfCgk6vLKstZx204xe3"
+					title="Frappe Builder - Get Started"
+					frameborder="0"
+					allowfullscreen></iframe>
+			</template>
+		</Dialog>
+		<Dialog
+			v-model="showSettingsDialog"
+			:disableOutsideClickToClose="true"
+			class="[&>div>div[id^=headlessui-dialog-panel]]:my-3"
+			:options="{
+				title: 'Settings',
+				size: '5xl',
+			}">
+			<template #body>
+				<BuilderSettings @close="showSettingsDialog = false"></BuilderSettings>
+			</template>
+		</Dialog>
 	</div>
 </template>
 <script setup lang="ts">
@@ -175,7 +179,6 @@ const pageStore = usePageStore();
 
 const showInfoDialog = ref(false);
 const showSettingsDialog = ref(false);
-const toolbar = ref(null);
 
 const currentlyViewedByText = computed(() => {
 	const names = builderStore.viewers.map((viewer) => viewer.fullname).map((name) => name.split(" ")[0]);
