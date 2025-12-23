@@ -162,7 +162,7 @@ const usePageStore = defineStore("pageStore", {
 					success: () => {
 						return "Page deleted";
 					},
-					error: (e) => {
+					error: () => {
 						return "Page deletion failed";
 					},
 				});

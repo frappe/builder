@@ -20,7 +20,7 @@
 						:src="imageURL || '/assets/builder/images/fallback.png'"
 						alt=""
 						@click="togglePopover"
-						class="absolute bottom-[6px] left-2 z-10 h-4 w-4 rounded border border-outline-gray-3 shadow-sm"
+						class="absolute bottom-[6px] left-2 h-4 w-4 rounded border border-outline-gray-3 shadow-sm"
 						:style="{
 							'object-fit': imageFit || 'contain',
 						}" />
