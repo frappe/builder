@@ -7,7 +7,7 @@
 		:reset-search-term-on-blur="false">
 		<div class="relative" ref="containerRef">
 			<div
-				class="group form-input flex h-7 flex-1 items-center gap-2 rounded border-outline-gray-1 bg-surface-gray-1 p-0 text-sm text-ink-gray-8 transition-colors focus-within:ring-2 focus-within:ring-outline-gray-3 hover:border-outline-gray-2">
+				class="group form-input flex h-7 flex-1 items-center gap-2 rounded bg-surface-gray-2 p-0 text-sm text-ink-gray-8 transition-colors focus-within:bg-surface-white focus-within:ring-2 focus-within:ring-outline-gray-3">
 				<div v-if="$slots.prefix" class="flex items-center pl-2">
 					<slot name="prefix" />
 				</div>
@@ -30,7 +30,7 @@
 			</div>
 
 			<ComboboxContent
-				class="absolute z-50 mt-1 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-white shadow-xl">
+				class="absolute z-10 mt-1 max-h-80 w-full overflow-hidden rounded-lg border bg-surface-white shadow-xl">
 				<div class="overflow-y-auto p-1">
 					<template v-for="(option, index) in displayOptions" :key="`${option.value}-${index}`">
 						<ComboboxSeparator
@@ -167,48 +167,52 @@ const refreshOptions = async (query = "") => {
 	}
 };
 
-const clearSelection = () => {
-	emit("update:modelValue", null);
+const clearSelection = () => emit("update:modelValue", null);
+
+const getInputValue = (event: Event) => (event.target as HTMLInputElement)?.value?.trim();
+
+const submitArbitraryValue = (inputValue: string) => {
+	if (!inputValue) return;
+	const matchingOption = allOptions.value.find((opt) => opt.label.toLowerCase() === inputValue.toLowerCase());
+	emit("update:modelValue", matchingOption?.value ?? inputValue);
+	isOpen.value = false;
 };
 
 const handleEnter = (event: KeyboardEvent) => {
 	if (!props.allowArbitraryValue) return;
-
-	if (containerRef.value?.querySelector("[data-highlighted]")) {
-		return;
+	const highlightedItem = containerRef.value?.querySelector("[data-highlighted]");
+	const inputValue = getInputValue(event);
+	// If there's a highlighted item and user hasn't typed anything different, let the combobox handle it
+	if (highlightedItem && !inputValue) return;
+	// If user typed something, check if it matches the highlighted item's value
+	if (highlightedItem && inputValue) {
+		const highlightedValue = highlightedItem.getAttribute("data-value");
+		const matchingOption = allOptions.value.find((opt) => opt.value === highlightedValue);
+		// If input matches highlighted item's label, let combobox handle it
+		if (matchingOption && matchingOption.label.toLowerCase() === inputValue.toLowerCase()) return;
 	}
-
-	const inputValue = (event.target as HTMLInputElement)?.value?.trim();
-	if (inputValue) {
-		event.preventDefault();
-		event.stopPropagation();
-		emit("update:modelValue", inputValue);
-		isOpen.value = false;
-	}
+	event.preventDefault();
+	event.stopPropagation();
+	submitArbitraryValue(inputValue);
 };
 
 const handleBlur = (event: FocusEvent) => {
-	if (props.allowArbitraryValue) {
-		const inputValue = (event.target as HTMLInputElement)?.value?.trim();
-		if (inputValue) {
-			emit("update:modelValue", inputValue);
-		}
+	const relatedTarget = event.relatedTarget as HTMLElement;
+	if (relatedTarget && containerRef.value?.contains(relatedTarget)) {
+		emit("blur");
+		return;
 	}
+	if (props.allowArbitraryValue) submitArbitraryValue(getInputValue(event));
 	emit("blur");
 };
 
-watch(searchQuery, (newQuery: string) => props.getOptions && refreshOptions(newQuery));
-
+watch(searchQuery, (query) => props.getOptions && refreshOptions(query));
 watch(
 	() => props.modelValue,
-	(newValue) => {
-		searchQuery.value = newValue ?? "";
-	},
+	(val) => (searchQuery.value = val ?? ""),
+	{ immediate: true },
 );
-
-if (props.getOptions) {
-	refreshOptions();
-}
+if (props.getOptions) refreshOptions();
 
 defineExpose({
 	refreshOptions,

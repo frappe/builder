@@ -147,6 +147,7 @@ const useCanvasStore = defineStore("canvasStore", {
 				saveActionLabel: null,
 				fragmentName: null,
 				fragmentId: null,
+				showUsageCount: false,
 			};
 		},
 

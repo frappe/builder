@@ -14,7 +14,7 @@
 					@update:modelValue="setBGImageURL">
 					<template #prefix>
 						<div
-							class="absolute left-2 top-[6px] z-10 h-4 w-4 cursor-pointer rounded shadow-sm"
+							class="absolute left-2 top-[6px] h-4 w-4 cursor-pointer rounded shadow-sm"
 							@click="togglePopover"
 							:class="{ 'bg-surface-gray-4': !Boolean(backgroundImage) }"
 							:style="previewStyle" />

@@ -10,6 +10,8 @@ export interface BuilderProjectFolder{
 	parentfield?: string
 	parenttype?: string
 	idx?: number
+	/**	Is Standard : Check	*/
+	is_standard?: 0 | 1
 	/**	Folder Name : Data	*/
 	folder_name?: string
 }

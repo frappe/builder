@@ -1,22 +1,8 @@
 <template>
 	<section
-		class="sticky bottom-0 left-0 top-0 flex flex-col gap-3 bg-surface-gray-1 p-2 shadow-lg max-lg:hidden"
-		:class="[builderStore.showDashboardSidebar ? 'w-60' : 'w-auto']">
+		class="sticky bottom-0 left-0 top-0 flex min-h-fit w-60 flex-col gap-3 border-r border-outline-gray-1 bg-surface-gray-1 p-2 max-lg:hidden dark:bg-surface-white">
 		<div class="flex flex-col">
 			<div class="mb-2 flex gap-2">
-				<Dialog
-					v-model="showSettingsDialog"
-					style="z-index: 40"
-					:disableOutsideClickToClose="true"
-					class="[&>div>div[id^=headlessui-dialog-panel]]:my-3"
-					:options="{
-						title: 'Settings',
-						size: '5xl',
-					}">
-					<template #body>
-						<BuilderSettings @close="showSettingsDialog = false" :onlyGlobal="true"></BuilderSettings>
-					</template>
-				</Dialog>
 				<div class="flex w-full items-center">
 					<Dropdown
 						:options="[
@@ -41,8 +27,8 @@
 								items: [
 									{
 										label: 'Apps',
-										component: AppsMenu,
 										icon: 'grid',
+										submenu: appsSubmenu,
 									},
 									{
 										label: 'Toggle Theme',
@@ -71,33 +57,24 @@
 								],
 							},
 						]"
-						size="sm"
-						class="flex-1 [&>div>div>div]:w-full"
-						placement="right">
+						:offset="8"
+						size="sm">
 						<template v-slot="{ open }">
 							<div
-								class="flex items-center justify-between rounded py-1"
+								class="flex w-full items-center justify-between rounded py-1"
 								:class="{
-									'!bg-surface-white shadow-sm dark:!bg-surface-gray-2':
-										open && builderStore.showDashboardSidebar,
-									'!p-2 hover:bg-surface-gray-2': builderStore.showDashboardSidebar,
+									'!bg-surface-white shadow-sm dark:!bg-surface-gray-2': open,
+									'!p-2 hover:bg-surface-gray-2': true,
 								}">
-								<div
-									class="flex w-full cursor-pointer items-center gap-2"
-									:class="{
-										'justify-center': !builderStore.showDashboardSidebar,
-									}">
+								<div class="flex w-full cursor-pointer items-center gap-2">
 									<img src="/builder_logo.png" alt="logo" class="h-7" />
-									<h1
-										class="text-md mt-[2px] font-semibold leading-5 text-gray-800 dark:text-gray-200"
-										v-show="builderStore.showDashboardSidebar">
+									<h1 class="text-md mt-[2px] font-semibold leading-5 text-gray-800 dark:text-gray-200">
 										Builder
 									</h1>
 								</div>
 								<FeatherIcon
 									:name="open ? 'chevron-up' : 'chevron-down'"
-									class="h-4 w-4 !text-gray-700 dark:!text-gray-200"
-									v-show="builderStore.showDashboardSidebar"></FeatherIcon>
+									class="h-4 w-4 !text-gray-700 dark:!text-gray-200"></FeatherIcon>
 							</div>
 						</template>
 					</Dropdown>
@@ -110,19 +87,17 @@
 					'bg-surface-modal text-ink-gray-8 shadow-sm dark:bg-surface-gray-2': !builderStore.activeFolder,
 				}">
 				<FilesIcon class="size-4"></FilesIcon>
-				<span v-show="builderStore.showDashboardSidebar">All Pages</span>
+				<span>All Pages</span>
 			</span>
 			<span
 				class="flex cursor-pointer gap-2 p-2 text-base text-ink-gray-6"
 				@click="showSettingsDialog = true">
 				<SettingsIcon class="size-4"></SettingsIcon>
-				<span v-show="builderStore.showDashboardSidebar">Settings</span>
+				<span>Settings</span>
 			</span>
 		</div>
 		<div class="flex flex-1 flex-col">
-			<div
-				class="flex items-center justify-between p-2 text-base text-ink-gray-6"
-				v-show="builderStore.showDashboardSidebar">
+			<div class="flex items-center justify-between p-2 text-base text-ink-gray-6">
 				<span>Folders</span>
 				<BuilderButton
 					variant="subtle"
@@ -130,12 +105,11 @@
 					class="size-4 cursor-pointer hover:text-ink-gray-8"
 					@click="showNewFolderDialog = true"></BuilderButton>
 			</div>
-			<div class="flex p-2" v-show="builderStore.showDashboardSidebar && !builderProjectFolder.data?.length">
+			<div class="flex p-2" v-show="!builderProjectFolder.data?.length">
 				<p class="text-sm text-ink-gray-5">No folders yet</p>
 			</div>
 			<span
 				class="flex h-8 w-full cursor-pointer items-center justify-between gap-2 rounded p-2 py-1 text-base text-ink-gray-6"
-				v-show="builderStore.showDashboardSidebar"
 				v-for="project in builderProjectFolder.data"
 				:class="{
 					'bg-surface-modal text-ink-gray-8 shadow-sm dark:bg-surface-gray-2': isFolderActive(
@@ -158,9 +132,15 @@
 						{{ project.folder_name }}
 					</EditableSpan>
 				</span>
+				<Tooltip
+					v-if="isFolderActive(project.folder_name) && project.is_standard"
+					placement="top"
+					text="System generated folder cannot be edited or deleted">
+					<FeatherIcon name="info" class="size-4 text-gray-500" />
+				</Tooltip>
 				<Dropdown
 					placement="right"
-					v-if="isFolderActive(project.folder_name)"
+					v-else-if="isFolderActive(project.folder_name)"
 					:options="[
 						{
 							label: 'Rename',
@@ -181,20 +161,24 @@
 				</Dropdown>
 			</span>
 		</div>
-		<div
-			class="flex cursor-pointer items-center gap-2 rounded p-2 text-base text-ink-gray-6 hover:bg-surface-gray-2"
-			@click="() => (builderStore.showDashboardSidebar = !builderStore.showDashboardSidebar)">
-			<FeatherIcon
-				:name="builderStore.showDashboardSidebar ? 'chevrons-left' : 'chevrons-right'"
-				class="h-4 w-4" />
-			<span v-show="builderStore.showDashboardSidebar">Collapse</span>
-		</div>
+		<p class="mt-2 p-2 text-center text-sm text-ink-gray-4">Version: {{ window.builder_version }}</p>
 		<NewFolder v-model="showNewFolderDialog"></NewFolder>
 		<TrialBanner v-if="builderStore.isFCSite"></TrialBanner>
 	</section>
+	<Dialog
+		v-model="showSettingsDialog"
+		:disableOutsideClickToClose="true"
+		class="[&>div>div[id^=headlessui-dialog-panel]]:my-3"
+		:options="{
+			title: 'Settings',
+			size: '5xl',
+		}">
+		<template #body>
+			<BuilderSettings @close="showSettingsDialog = false" :onlyGlobal="true"></BuilderSettings>
+		</template>
+	</Dialog>
 </template>
 <script lang="ts" setup>
-import AppsMenu from "@/components/AppsMenu.vue";
 import BuilderButton from "@/components/Controls/BuilderButton.vue";
 import EditableSpan from "@/components/EditableSpan.vue";
 import FilesIcon from "@/components/Icons/Files.vue";
@@ -206,9 +190,9 @@ import useBuilderStore from "@/stores/builderStore";
 import { BuilderProjectFolder } from "@/types/Builder/BuilderProjectFolder";
 import { confirm } from "@/utils/helpers";
 import { useDark, useToggle } from "@vueuse/core";
-import { createResource, Dialog, Dropdown } from "frappe-ui";
+import { createResource, Dialog, Dropdown, Tooltip } from "frappe-ui";
 import { TrialBanner } from "frappe-ui/frappe";
-import { defineAsyncComponent, ref } from "vue";
+import { computed, defineAsyncComponent, h, ref } from "vue";
 
 const BuilderSettings = defineAsyncComponent(() => import("@/components/BuilderSettings.vue"));
 const isDark = useDark({
@@ -218,6 +202,20 @@ const toggleDark = useToggle(isDark);
 const builderStore = useBuilderStore();
 const renamingFolder = ref("");
 const showNewFolderDialog = ref(false);
+
+const apps = createResource({
+	url: "builder.api.get_apps",
+	cache: "other_apps",
+	auto: true,
+});
+
+const appsSubmenu = computed(() => {
+	return (apps.data || []).map((app: { route: string; logo: string; title: string }) => ({
+		label: app.title,
+		icon: h("img", { src: app.logo }),
+		onClick: () => window.open(app.route, "_self"),
+	}));
+});
 
 const isFolderActive = (folderName: string) => {
 	return builderStore.activeFolder === folderName;

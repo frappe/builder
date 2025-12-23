@@ -4,14 +4,6 @@
 			{{ label }}
 			<span v-if="isDirty" class="text-[10px] text-gray-600">●</span>
 		</span>
-		<div v-if="actionButton" class="absolute bottom-1.5 right-1.5 z-10 flex gap-1">
-			<BuilderButton
-				@click="actionButton?.handler"
-				variant="subtle"
-				class="!h-6 !w-6 border !border-outline-gray-2 bg-surface-white [&>svg]:!h-3.5 [&>svg]:!w-3.5"
-				:icon="actionButton.icon"
-				:title="actionButton.label"></BuilderButton>
-		</div>
 		<div
 			:style="{
 				'min-height': height,
@@ -20,7 +12,7 @@
 			<CodeMirrorEditor
 				ref="editor"
 				:type
-				:readonly
+				:readonly="readonly"
 				:allow-save="showSaveButton"
 				:show-line-numbers
 				:initial-value="getModelValue()"
@@ -28,13 +20,22 @@
 				@save="handleSave"
 				@blur="handleBlur" />
 		</div>
+		<div v-if="actionButton" class="absolute bottom-1.5 right-1.5 flex gap-1">
+			<BuilderButton
+				@click="actionButton?.handler"
+				variant="subtle"
+				class="!h-6 !w-6 border !border-outline-gray-2 bg-surface-white [&>svg]:!h-3.5 [&>svg]:!w-3.5"
+				:icon="actionButton.icon"
+				:title="actionButton.label"
+				:disabled="readonly"></BuilderButton>
+		</div>
 		<span class="mt-1 text-p-xs text-ink-gray-6" v-show="description" v-html="description"></span>
 		<BuilderButton
 			v-if="showSaveButton"
 			variant="solid"
 			@click="emit('save', editor.getEditorValue())"
 			class="mt-3"
-			:disabled="!isDirty">
+			:disabled="!isDirty || readonly">
 			Save
 		</BuilderButton>
 	</div>
@@ -122,6 +123,8 @@ const handleChange = (value: string) => {
 };
 
 const handleSave = (value: string) => {
+	if (props.readonly) return;
+
 	if (props.type === "JSON" && value) {
 		value = JSON.parse(value);
 	}
