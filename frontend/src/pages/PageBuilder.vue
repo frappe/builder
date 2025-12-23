@@ -80,28 +80,23 @@
 	</div>
 	<PageListModal v-model="pageListDialog" :pages="componentUsedInPages"></PageListModal>
 	<Dialog
-		v-model="canvasStore.showHTMLDialog"
+		v-model="canvasStore.showExpandedEditorDialog"
 		class="overscroll-none"
-		:isDirty="htmlEditor?.isDirty"
+		:isDirty="expandedEditor?.isDirty"
 		:options="{
 			title: 'HTML',
 			size: '7xl',
 		}">
 		<template #body-content>
 			<CodeEditor
-				:modelValue="canvasStore.editableBlock?.getInnerHTML()"
-				ref="htmlEditor"
-				type="HTML"
+				:modelValue="getExpandedEditorContent()"
+				ref="expandedEditor"
+				:type="expandedEditorOptions.type"
 				height="68vh"
-				label="Edit HTML"
+				:label="expandedEditorOptions.label"
 				:showLineNumbers="true"
 				:showSaveButton="true"
-				@save="
-					(val) => {
-						canvasStore.editableBlock?.setInnerHTML(val);
-						canvasStore.showHTMLDialog = false;
-					}
-				"
+				@save="saveExpandedEditorContent"
 				required />
 		</template>
 	</Dialog>
