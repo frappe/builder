@@ -141,6 +141,7 @@ import SelectOptions from "@/components/PropsOptions/SelectOptions.vue";
 
 import usePageStore from "@/stores/pageStore";
 import { getCollectionKeys, getDataArray, getStandardPropValue } from "@/utils/helpers";
+import useBlockDataStore from "@/stores/blockDataStore";
 
 const props = withDefaults(
 	defineProps<{
@@ -155,6 +156,7 @@ const props = withDefaults(
 );
 
 const canvasStore = useCanvasStore();
+const blockDataStore = useBlockDataStore();
 
 const isStandard = ref(props.propDetails?.isStandard ? "true" : "false");
 const isStandardBool = computed(() => isStandard.value === "true");
@@ -278,7 +280,11 @@ const pageDataArray = computed(() => {
 const blockDataArray = computed(() => {
 	const currentBlock = blockController.getFirstSelectedBlock();
 	if (currentBlock) {
-		return getDataArray(currentBlock, currentBlock.getBlockData("passedDown"), "blockDataScript");
+		return getDataArray(
+			currentBlock,
+			blockDataStore.getBlockData(currentBlock.blockId, "passedDown") || {},
+			"blockDataScript",
+		);
 	}
 	return [];
 });
@@ -341,7 +347,7 @@ const getParentProps = (baseBlock: Block, baseProps: string[]): string[] => {
 const getOptions = async (query: string) => {
 	let options: { label: string; value: string }[] = [];
 	getParentProps(blockController.getFirstSelectedBlock()!, []).map((prop) => {
-		if (prop.toLowerCase().includes(query.toLowerCase())) {
+		if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
 			options.push({
 				label: prop,
 				value: `${prop}--props`,
@@ -349,7 +355,7 @@ const getOptions = async (query: string) => {
 		}
 	});
 	Object.keys(defaultProps.value || {}).map((prop) => {
-		if (prop.toLowerCase().includes(query.toLowerCase())) {
+		if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
 			options.push({
 				label: prop,
 				value: `${prop}--props`,
@@ -357,7 +363,7 @@ const getOptions = async (query: string) => {
 		}
 	});
 	pageDataArray.value.map((prop) => {
-		if (prop.toLowerCase().includes(query.toLowerCase())) {
+		if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
 			options.push({
 				label: prop,
 				value: `${prop}--dataScript`,
@@ -365,14 +371,14 @@ const getOptions = async (query: string) => {
 		}
 	});
 	blockDataArray.value.map((prop) => {
-		if (prop.toLowerCase().includes(query.toLowerCase())) {
+		if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
 			options.push({
 				label: prop,
 				value: `${prop}--blockDataScript`,
 			});
 		}
 	});
-
+	console.log("Options: ", options, blockDataArray.value);
 	return options;
 };
 
@@ -397,6 +403,7 @@ const handleIsStandardChange = async (newVal: string) => {
 };
 
 const handleTypeChange = async (newVal: string) => {
+	console.log("Changing to: ", newVal);
 	setPropType(newVal);
 	await nextTick();
 	reset({
@@ -485,6 +492,7 @@ watch(
 watch(
 	selectedPropType,
 	() => {
+		console.log("Changed value detected!");
 		autoCompleteRef.value?.refreshOptions();
 	},
 	{ immediate: true },

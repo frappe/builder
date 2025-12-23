@@ -61,6 +61,7 @@
 
 <script setup lang="ts">
 import Block from "@/block";
+import useBlockDataStore from "@/stores/blockDataStore";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
@@ -75,6 +76,7 @@ import { computed, ref } from "vue";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
+const blockDataStore = useBlockDataStore();
 
 type DynamicValueItem = {
 	key: string;
@@ -112,7 +114,11 @@ const blockDataArray = computed(() => {
 		filter = "own";
 	}
 	if (currentBlock) {
-		return getDataArray(currentBlock, currentBlock.getBlockData(filter) || {}, "blockDataScript");
+		return getDataArray(
+			currentBlock,
+			blockDataStore.getBlockData(currentBlock.blockId, filter) || {},
+			"blockDataScript",
+		);
 	}
 	return [];
 });
@@ -214,6 +220,7 @@ const filteredItems = computed(() => {
 					item.key,
 					props.block || blockController.getFirstSelectedBlock(),
 					getDataScriptValue,
+					getBlockDataScriptValue,
 					defaultProps.value,
 				),
 			)
@@ -246,6 +253,7 @@ const getValue = (item: DynamicValueItem): any => {
 			item.key,
 			props.block || blockController.getFirstSelectedBlock(),
 			getDataScriptValue,
+			getBlockDataScriptValue,
 			defaultProps.value,
 		);
 	} else if (item.comesFrom == "blockDataScript") {
@@ -271,8 +279,8 @@ const getDataScriptValue = (path: string): any => {
 
 const getBlockDataScriptValue = (path: string): any => {
 	let collectionObject = props.block
-		? props.block.getBlockData() || {}
-		: blockController.getFirstSelectedBlock()?.getBlockData() || {};
+		? blockDataStore.getBlockData(props.block.blockId) || {}
+		: blockDataStore.getBlockData(blockController.getFirstSelectedBlock()?.blockId || "") || {};
 
 	return path.split(".").reduce((obj: Record<string, any>, key: string) => obj?.[key], collectionObject);
 };

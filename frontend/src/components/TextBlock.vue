@@ -115,14 +115,16 @@ const textContent = computed(() => {
 	return String(innerHTML ?? "");
 });
 
+const getDataScriptValue = (path: string): any => {
+	return getDataForKey(props.data, path);
+};
+const getBlockDataScriptValue = (path: string): any => {
+	return getDataForKey(props.blockData || {}, path);
+};
+
 const getDynamicContent = () => {
 	let innerHTML = null as string | null;
-	const getDataScriptValue = (path: string): any => {
-		return getDataForKey(props.data, path);
-	};
-	const getBlockDataScriptValue = (path: string): any => {
-		return getDataForKey(props.blockData || {}, path);
-	};
+
 	if (props.block.getDataKey("property") === "innerHTML") {
 		let value;
 		if (props.block.getDataKey("comesFrom") === "props") {
@@ -131,6 +133,7 @@ const getDynamicContent = () => {
 				props.block.getDataKey("key"),
 				props.block,
 				getDataScriptValue,
+				getBlockDataScriptValue,
 				props.defaultProps,
 			);
 		} else if (props.block.getDataKey("comesFrom") === "blockDataScript") {
@@ -147,7 +150,13 @@ const getDynamicContent = () => {
 		?.forEach((dataKeyObj: BlockDataKey) => {
 			let value;
 			if (dataKeyObj.comesFrom === "props") {
-				value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue, props.defaultProps);
+				value = getPropValue(
+					dataKeyObj.key as string,
+					props.block,
+					getDataScriptValue,
+					getBlockDataScriptValue,
+					props.defaultProps,
+				);
 			} else if (dataKeyObj.comesFrom === "blockDataScript") {
 				value = getBlockDataScriptValue(dataKeyObj.key as string);
 			} else {

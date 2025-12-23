@@ -154,9 +154,12 @@ import blockController from "@/utils/blockController";
 import TabButtons from "./Controls/TabButtons.vue";
 import Switch from "./Controls/Switch.vue";
 import PropsEditor from "./PropsEditor.vue";
+import useBlockDataStore from "@/stores/blockDataStore";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
+const blockDataStore = useBlockDataStore();
+
 const showDialog = ref(false);
 const mode = ref<"page" | "block">("block");
 const showCumulativeBlockData = ref(false);
@@ -188,9 +191,12 @@ const blockDataScript = computed(() => {
 });
 
 const blockData = computed(() => {
-	return (
-		blockController.getFirstSelectedBlock()?.getBlockData(showCumulativeBlockData.value ? "all" : "own") || {}
-	);
+	return isBlockSelected.value
+		? blockDataStore.getBlockData(
+				blockController.getFirstSelectedBlock().blockId,
+				showCumulativeBlockData.value ? "all" : "own",
+		  ) || {}
+		: {};
 });
 
 const savePageDataScript = (value: string) => {

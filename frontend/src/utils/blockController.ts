@@ -333,12 +333,6 @@ const blockController = {
 	setBlockDataScript: (script: string) => {
 		blockController.getFirstSelectedBlock()?.setBlockDataScript(script);
 	},
-	getBlockData: (filter: "passedDown" | "own" | "all" = "all") => {
-		return blockController.getFirstSelectedBlock()?.getBlockData(filter);
-	},
-	setBlockData: (data: Record<string, any>, filter: "passedDown" | "own" = "own") => {
-		blockController.getFirstSelectedBlock()?.setBlockData(data, filter);
-	},
 	getBlockProps: () => {
 		return blockController.getFirstSelectedBlock()?.getBlockProps();
 	},

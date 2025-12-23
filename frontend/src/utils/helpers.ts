@@ -378,8 +378,6 @@ function getCopyWithoutParent(block: BlockOptions | Block): BlockOptions {
 	blockCopy.children = blockCopy.children?.map((child) => getCopyWithoutParent(child));
 	delete blockCopy.parentBlock;
 	delete blockCopy.referenceComponent;
-	delete blockCopy.ownBlockData;
-	delete blockCopy.passedDownBlockData;
 	return blockCopy;
 }
 
@@ -1045,6 +1043,7 @@ const getValueForInheritedProp = (
 	propName: string,
 	block: Block,
 	getDataScriptValue: (path: string) => any,
+	getBlockScriptValue: (path: string) => any,
 ): any => {
 	let parent = block.getParentBlock();
 	while (parent) {
@@ -1055,9 +1054,9 @@ const getValueForInheritedProp = (
 				if (matchingProp.comesFrom === "dataScript" && matchingProp.value) {
 					return getDataScriptValue(matchingProp.value);
 				} else if (matchingProp.comesFrom === "blockDataScript" && matchingProp.value) {
-					return block.getBlockData("passedDown")[matchingProp.value];
+					return getBlockScriptValue(matchingProp.value);
 				} else {
-					return getValueForInheritedProp(propName, parent, getDataScriptValue);
+					return getValueForInheritedProp(propName, parent, getDataScriptValue, getBlockScriptValue);
 				}
 			} else {
 				if (matchingProp.isStandard && matchingProp.standardOptions) {
@@ -1084,6 +1083,7 @@ const getPropValue = (
 	propName: string,
 	block: Block,
 	getDataScriptValue: (path: string) => any,
+	getBlockScriptValue: (path: string) => any,
 	defaultProps?: Record<string, any> | null,
 ): any => {
 	if (defaultProps && defaultProps[propName] !== undefined) {
@@ -1096,13 +1096,13 @@ const getPropValue = (
 			if (prop.comesFrom === "dataScript" && prop.value) {
 				return getDataScriptValue(prop.value);
 			} else if (prop.comesFrom === "blockDataScript" && prop.value) {
-				return block.getBlockData("passedDown")[prop.value];
+				return getBlockScriptValue(prop.value);
 			} else {
 				if (prop.value && defaultProps && defaultProps[prop.value] !== undefined) {
 					return defaultProps[prop.value].value;
 				}
 				if (prop.value) {
-					return getValueForInheritedProp(prop.value, block, getDataScriptValue);
+					return getValueForInheritedProp(prop.value, block, getDataScriptValue, getBlockScriptValue);
 				}
 			}
 		} else {

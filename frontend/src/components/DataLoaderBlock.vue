@@ -26,8 +26,10 @@ import { getDataForKey, getStandardPropValue } from "@/utils/helpers";
 import { Ref, computed, ref } from "vue";
 import BuilderBlock from "./BuilderBlock.vue";
 import blockController from "@/utils/blockController";
+import useBlockDataStore from "@/stores/blockDataStore";
 
 const pageStore = usePageStore();
+const blockDataStore = useBlockDataStore();
 
 const props = withDefaults(
 	defineProps<{
@@ -54,7 +56,7 @@ const repeatingFrom = computed(() => {
 
 const blockRepeaterData = computed(() => {
 	const pageData = props.data || pageStore.pageData;
-	const blockData = props.block.getBlockData() || {};
+	const blockData = blockDataStore.getBlockData(props.block.blockId) || {};
 	const key = props.block.getDataKey("key");
 	if (pageData && repeatingFrom.value === "dataScript" && key) {
 		const data = getDataForKey(pageData, key);
@@ -78,7 +80,8 @@ const blockRepeaterData = computed(() => {
 					item: {
 						value: item,
 						isStandard: false,
-						type: "static",
+						isDynamic: true,
+						comesFrom: "props",
 					},
 				}),
 			);
@@ -90,12 +93,14 @@ const blockRepeaterData = computed(() => {
 						key: {
 							value: key,
 							isStandard: false,
-							type: "static",
+							isDynamic: true,
+							comesFrom: "props",
 						},
 						value: {
 							value: typeof value !== "string" ? JSON.stringify(value) : value,
 							isStandard: false,
-							type: "static",
+							isDynamic: true,
+							comesFrom: "props",
 						},
 					});
 				});

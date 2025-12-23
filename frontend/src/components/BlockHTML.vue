@@ -18,21 +18,28 @@ const hasBlockProps = computed(() => {
 	return props.defaultProps || Object.keys(props.block.getBlockProps()).length > 0;
 });
 
+const getDataScriptValue = (path: string): any => {
+	return getDataForKey(props.data || {}, path);
+};
+const getBlockDataScriptValue = (path: string): any => {
+	return getDataForKey(props.blockData || {}, path);
+};
+
 const getDynamicContent = () => {
 	let innerHTML = null as string | null;
 	if (props.data || props.blockData || hasBlockProps.value) {
 		const data = props.data; // to "freeze" props.data for getDataScriptValue
-		const getDataScriptValue = (path: string): any => {
-			return getDataForKey(data || {}, path);
-		};
-		const getBlockDataScriptValue = (path: string): any => {
-			return getDataForKey(props.blockData || {}, path);
-		};
 		if (props.block.getDataKey("property") === "innerHTML") {
 			let value;
 			if (props.block.getDataKey("comesFrom") === "props") {
 				// props are checked first as unavailablity of comesFrom means it comes from dataScript (legacy)
-				value = getPropValue(props.block.getDataKey("key"), props.block, getDataScriptValue, props.defaultProps);
+				value = getPropValue(
+					props.block.getDataKey("key"),
+					props.block,
+					getDataScriptValue,
+					getBlockDataScriptValue,
+					props.defaultProps,
+				);
 			} else if (props.block.getDataKey("comesFrom") === "blockDataScript") {
 				value = getBlockDataScriptValue(props.block.getDataKey("key"));
 			} else {
@@ -47,7 +54,13 @@ const getDynamicContent = () => {
 			?.forEach((dataKeyObj: BlockDataKey) => {
 				let value;
 				if (dataKeyObj.comesFrom === "props") {
-					value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue, props.defaultProps);
+					value = getPropValue(
+						dataKeyObj.key as string,
+						props.block,
+						getDataScriptValue,
+						getBlockDataScriptValue,
+						props.defaultProps,
+					);
 				} else if (dataKeyObj.comesFrom === "blockDataScript") {
 					value = getBlockDataScriptValue(dataKeyObj.key as string);
 				} else {

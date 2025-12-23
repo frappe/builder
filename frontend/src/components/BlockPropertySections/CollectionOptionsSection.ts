@@ -1,4 +1,5 @@
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
+import useBlockDataStore from "@/stores/blockDataStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
@@ -8,13 +9,15 @@ import { computed, h } from "vue";
 
 const keyOptions = computed(() => {
 	const pageStore = usePageStore();
+	const blockDataStore = useBlockDataStore();
 	let result: { label: string; value: string; prefix: any }[] = [];
 
 	const repeatableDataKeys: string[] = [];
 	const repeatableBlockDataKeys: string[] = [];
 
 	let pageDataCollectionObject = pageStore.pageData;
-	let blockDataCollectionObject = blockController.getFirstSelectedBlock()?.getBlockData() || {};
+	let blockDataCollectionObject =
+		blockDataStore.getBlockData(blockController.getFirstSelectedBlock()?.blockId || "") || {};
 	let collectionObject = {};
 
 	const isInsideRepeater = blockController.getFirstSelectedBlock()?.isInsideRepeater();

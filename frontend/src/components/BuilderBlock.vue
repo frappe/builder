@@ -52,12 +52,14 @@ import { builderSettings } from "@/data/builderSettings";
 import fetchBlockData from "@/data/blockData";
 import usePageStore from "@/stores/pageStore";
 import { toast } from "vue-sonner";
+import useBlockDataStore from "@/stores/blockDataStore";
 
 const canvasStore = useCanvasStore();
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
 const attrs = useAttrs();
 const editor = ref<InstanceType<typeof BlockEditor> | null>(null);
 const pageStore = usePageStore();
+const blockDataStore = useBlockDataStore();
 
 const props = withDefaults(
 	defineProps<{
@@ -92,6 +94,7 @@ const draggable = computed(() => {
 
 const isHovered = ref(false);
 const isSelected = ref(false);
+const ownBlockData = ref<Record<string, any>>({});
 
 const uid = `builder-block-${props.block.blockId}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -123,6 +126,20 @@ const hasBlockProps = computed(() => {
 	return props.defaultProps || Object.keys(props.block.getBlockProps()).length > 0;
 });
 
+const cumulativeBlockData = computed(() => {
+	return {
+		...props.blockData,
+		...ownBlockData.value,
+	};
+});
+
+const getDataScriptValue = (path: string): any => {
+	return getDataForKey(props.data || {}, path);
+};
+const getBlockDataScriptValue = (path: string): any => {
+	return getDataForKey(cumulativeBlockData.value, path);
+};
+
 const attributes = computed(() => {
 	const attribs = { ...props.block.getAttributes(), ...attrs } as { [key: string]: any };
 	if (
@@ -141,13 +158,6 @@ const attributes = computed(() => {
 	}
 
 	if (props.data || hasBlockProps.value) {
-		const data = props.data || {}; // to "freeze" props.data for getDataScriptValue
-		const getDataScriptValue = (path: string): any => {
-			return getDataForKey(data, path);
-		};
-		const getBlockDataScriptValue = (path: string): any => {
-			return getDataForKey(cumulativeBlockData.value || {}, path);
-		};
 		if (props.block.getDataKey("type") === "attribute") {
 			let value;
 			if (props.block.getDataKey("comesFrom") === "props") {
@@ -155,6 +165,7 @@ const attributes = computed(() => {
 					props.block.getDataKey("key") as string,
 					props.block,
 					getDataScriptValue,
+					getBlockDataScriptValue,
 					props.defaultProps,
 				);
 			} else if (props.block.getDataKey("comesFrom") === "blockDataScript") {
@@ -173,7 +184,13 @@ const attributes = computed(() => {
 				const property = dataKeyObj.property as string;
 				let value;
 				if (dataKeyObj.comesFrom === "props") {
-					value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue, props.defaultProps);
+					value = getPropValue(
+						dataKeyObj.key as string,
+						props.block,
+						getDataScriptValue,
+						getBlockDataScriptValue,
+						props.defaultProps,
+					);
 				} else if (dataKeyObj.comesFrom === "blockDataScript") {
 					value = getBlockDataScriptValue(dataKeyObj.key as string);
 				} else {
@@ -203,12 +220,6 @@ const target = computed(() => {
 const styles = computed(() => {
 	let dynamicStyles = {} as { [key: string]: string };
 	if (props.data || hasBlockProps.value) {
-		const getDataScriptValue = (path: string): any => {
-			return getDataForKey(props.data || {}, path);
-		};
-		const getBlockDataScriptValue = (path: string): any => {
-			return getDataForKey(cumulativeBlockData.value || {}, path);
-		};
 		if (props.block.getDataKey("type") === "style") {
 			let value;
 			if (props.block.getDataKey("comesFrom") === "props") {
@@ -216,6 +227,7 @@ const styles = computed(() => {
 					props.block.getDataKey("key") as string,
 					props.block,
 					getDataScriptValue,
+					getBlockDataScriptValue,
 					props.defaultProps,
 				);
 			} else if (props.block.getDataKey("comesFrom") === "blockDataScript") {
@@ -235,7 +247,13 @@ const styles = computed(() => {
 				const property = dataKeyObj.property as string;
 				let value;
 				if (dataKeyObj.comesFrom === "props") {
-					value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue, props.defaultProps);
+					value = getPropValue(
+						dataKeyObj.key as string,
+						props.block,
+						getDataScriptValue,
+						getBlockDataScriptValue,
+						props.defaultProps,
+					);
 				} else if (dataKeyObj.comesFrom === "blockDataScript") {
 					value = getBlockDataScriptValue(dataKeyObj.key as string);
 				} else {
@@ -324,9 +342,13 @@ const allResolvedProps = computed(() => {
 			Object.entries(props.block.getBlockProps()).map(([key, prop]) => {
 				return [
 					key,
-					getPropValue(key, props.block, (path: string) => {
-						return getDataForKey(props.data || {}, path);
-					}, props.defaultProps),
+					getPropValue(
+						key,
+						props.block,
+						getDataScriptValue,
+						(path: string) => ({ ...props.blockData }[path]), // block props can not refer to own block data items
+						props.defaultProps,
+					),
 				];
 			}),
 		),
@@ -350,23 +372,20 @@ watch(
 	{ deep: true },
 );
 
-const cumulativeBlockData = ref<Record<string, any>>({});
+watch(
+	() => props.blockData,
+	() => {
+		blockDataStore.setBlockData(props.block.blockId, props.blockData || {}, "passedDown");
+	},
+);
 
 watch(
-	[
-		component,
-		allResolvedProps,
-		() => props.block.getBlockDataScript(),
-		() => props.blockData,
-		() => pageStore.settingPage,
-	],
+	[component, allResolvedProps, () => props.block.getBlockDataScript(), () => pageStore.settingPage],
 	() => {
 		if (pageStore.settingPage) return;
 		if (props.block.getBlockDataScript().trim() === "") {
-			// If no data script, just use parent's cumulative data
-			cumulativeBlockData.value = props.blockData || {};
-			props.block.setBlockData(props.blockData || {}, "passedDown");
-			props.block.setBlockData({}, "own");
+			ownBlockData.value = {};
+			blockDataStore.setBlockData(props.block.blockId, {}, "own");
 			return;
 		}
 		fetchBlockData
@@ -376,9 +395,8 @@ watch(
 				props: JSON.stringify(allResolvedProps.value),
 			})
 			.then((res: any) => {
-				props.block.setBlockData(props.blockData || {}, "passedDown");
-				props.block.setBlockData(res, "own");
-				cumulativeBlockData.value = { ...(props.blockData || {}), ...res };
+				ownBlockData.value = res || {};
+				blockDataStore.setBlockData(props.block.blockId, res || {}, "own");
 			})
 			.catch((e: { exc: string | null }) => {
 				const error_message = e.exc?.split("\n").slice(-2)[0];
