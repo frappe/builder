@@ -66,6 +66,7 @@ declare module 'vue' {
     FitScreen: typeof import('./src/components/Icons/FitScreen.vue')['default']
     Folder: typeof import('./src/components/Icons/Folder.vue')['default']
     FontUploader: typeof import('./src/components/Controls/FontUploader.vue')['default']
+    GenericControl: typeof import('./src/components/Controls/GenericControl.vue')['default']
     GlobalAnalytics: typeof import('./src/components/Settings/GlobalAnalytics.vue')['default']
     GlobalCode: typeof import('./src/components/Settings/GlobalCode.vue')['default']
     GlobalDeveloper: typeof import('./src/components/Settings/GlobalDeveloper.vue')['default']
