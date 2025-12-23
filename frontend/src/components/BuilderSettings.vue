@@ -20,7 +20,7 @@
 			</div>
 		</div>
 		<div class="flex flex-1 flex-col gap-5 overflow-hidden bg-surface-white p-14 px-16">
-			<h2 class="text-xl font-semibold leading-none">{{ selectedItemDoc?.title }}</h2>
+			<h2 class="text-xl font-semibold leading-none text-ink-gray-9">{{ selectedItemDoc?.title }}</h2>
 			<BuilderButton
 				icon="x"
 				variant="subtle"

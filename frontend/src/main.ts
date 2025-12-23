@@ -33,6 +33,7 @@ app.mount("#app");
 declare global {
 	interface Window {
 		is_developer_mode?: boolean;
+		builder_version: string;
 	}
 }
 
@@ -41,4 +42,8 @@ if (window.is_developer_mode && typeof window.is_developer_mode === "string") {
 		window.is_developer_mode === "1" ||
 		window.is_developer_mode === "True" ||
 		(window.is_developer_mode as string).startsWith("{{");
+}
+
+if (window.builder_version && window.builder_version.startsWith("{{")) {
+	window.builder_version = "develop";
 }
