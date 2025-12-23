@@ -72,12 +72,12 @@ const triggerUpdate = useDebounceFn(($event: Event) => {
 	}
 }, 100);
 
-const handleFocus = ($event: Event) =>{
-	if(props.selectOnFocus && !props.disabled && props.type !== "checkbox"){
+const handleFocus = ($event: Event) => {
+	if (props.selectOnFocus && !props.disabled && props.type !== "checkbox") {
 		const target = $event.target as HTMLInputElement;
-		setTimeout(()=>{
+		setTimeout(() => {
 			target.select();
 		}, 0);
 	}
-}
+};
 </script>
