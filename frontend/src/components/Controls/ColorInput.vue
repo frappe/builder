@@ -98,7 +98,7 @@ const props = withDefaults(
 		modelValue?: HashString | null;
 		label?: string;
 		placeholder?: string;
-		placement?: string;
+		placement?: "top" | "bottom" | "left" | "right";
 		showColorVariableOptions?: boolean;
 		showPickerOnMount?: boolean;
 	}>(),

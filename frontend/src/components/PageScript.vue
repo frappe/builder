@@ -45,7 +45,6 @@
 				v-model="mode" />
 		</div>
 		<Dialog
-			style="z-index: 40"
 			class="overscroll-none"
 			:options="{
 				title:

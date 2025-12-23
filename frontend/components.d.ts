@@ -11,7 +11,6 @@ declare module 'vue' {
     AlertDialog: typeof import('./src/components/AlertDialog.vue')['default']
     AnalyticsFilters: typeof import('./src/components/Settings/AnalyticsFilters.vue')['default']
     AnalyticsOverview: typeof import('./src/components/Settings/AnalyticsOverview.vue')['default']
-    AppsMenu: typeof import('./src/components/AppsMenu.vue')['default']
     ArrayEditor: typeof import('./src/components/ArrayEditor.vue')['default']
     ArrayInput: typeof import('./src/components/ArrayInput.vue')['default']
     ArrayOptions: typeof import('./src/components/PropsOptions/ArrayOptions.vue')['default']
@@ -53,7 +52,9 @@ declare module 'vue' {
     Cross: typeof import('./src/components/Icons/Cross.vue')['default']
     CSS: typeof import('./src/components/Icons/CSS.vue')['default']
     CustomSearchPanel: typeof import('./src/components/Controls/CodeMirror/CustomSearchPanel.vue')['default']
+    DashboardContent: typeof import('./src/components/DashboardContent.vue')['default']
     DashboardSidebar: typeof import('./src/components/DashboardSidebar.vue')['default']
+    DashboardToolbar: typeof import('./src/components/DashboardToolbar.vue')['default']
     DataLoaderBlock: typeof import('./src/components/DataLoaderBlock.vue')['default']
     Dialog: typeof import('./src/components/Controls/Dialog.vue')['default']
     DimensionInput: typeof import('./src/components/DimensionInput.vue')['default']
@@ -131,6 +132,7 @@ declare module 'vue' {
     TemplatePagePreview: typeof import('./src/components/TemplatePagePreview.vue')['default']
     TemplateSelector: typeof import('./src/components/TemplateSelector.vue')['default']
     TextBlock: typeof import('./src/components/TextBlock.vue')['default']
+    TextBlockBubbleMenu: typeof import('./src/components/TextBlockBubbleMenu.vue')['default']
     VariableManager: typeof import('./src/components/Modals/VariableManager.vue')['default']
   }
 }

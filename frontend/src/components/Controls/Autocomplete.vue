@@ -7,7 +7,7 @@
 		:reset-search-term-on-blur="false">
 		<div class="relative" ref="containerRef">
 			<div
-				class="group form-input flex h-7 flex-1 items-center gap-2 rounded border-outline-gray-1 bg-surface-gray-1 p-0 text-sm text-ink-gray-8 transition-colors focus-within:ring-2 focus-within:ring-outline-gray-3 hover:border-outline-gray-2">
+				class="group form-input flex h-7 flex-1 items-center gap-2 rounded bg-surface-gray-2 p-0 text-sm text-ink-gray-8 transition-colors focus-within:bg-surface-white focus-within:ring-2 focus-within:ring-outline-gray-3">
 				<div v-if="$slots.prefix" class="flex items-center pl-2">
 					<slot name="prefix" />
 				</div>
@@ -193,10 +193,21 @@ const submitArbitraryValue = (inputValue: string) => {
 };
 
 const handleEnter = (event: KeyboardEvent) => {
-	if (!props.allowArbitraryValue || containerRef.value?.querySelector("[data-highlighted]")) return;
+	if (!props.allowArbitraryValue) return;
+	const highlightedItem = containerRef.value?.querySelector("[data-highlighted]");
+	const inputValue = getInputValue(event);
+	// If there's a highlighted item and user hasn't typed anything different, let the combobox handle it
+	if (highlightedItem && !inputValue) return;
+	// If user typed something, check if it matches the highlighted item's value
+	if (highlightedItem && inputValue) {
+		const highlightedValue = highlightedItem.getAttribute("data-value");
+		const matchingOption = allOptions.value.find((opt) => opt.value === highlightedValue);
+		// If input matches highlighted item's label, let combobox handle it
+		if (matchingOption && matchingOption.label.toLowerCase() === inputValue.toLowerCase()) return;
+	}
 	event.preventDefault();
 	event.stopPropagation();
-	submitArbitraryValue(getInputValue(event));
+	submitArbitraryValue(inputValue);
 };
 
 const handleBlur = (event: FocusEvent) => {

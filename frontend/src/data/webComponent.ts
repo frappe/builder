@@ -1,4 +1,4 @@
-import { createListResource } from "frappe-ui/src/resources/listResource";
+import { createListResource } from "frappe-ui";
 
 const webComponent = createListResource({
 	method: "GET",

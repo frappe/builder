@@ -354,43 +354,70 @@ class Block implements BlockOptions {
 		cascading: boolean = false,
 	): StyleValue | undefined {
 		const canvasStore = useCanvasStore();
-		breakpoint = breakpoint || canvasStore.activeCanvas?.activeBreakpoint;
-		let styleValue: StyleValue = undefined;
+		const currentBreakpoint = breakpoint || canvasStore.activeCanvas?.activeBreakpoint || "desktop";
+
 		if (nativeOnly) {
-			if (breakpoint === "mobile") {
-				styleValue = this.mobileStyles[style];
-			} else if (breakpoint === "tablet") {
-				styleValue = this.tabletStyles[style];
-			} else {
-				styleValue = this.baseStyles[style];
-			}
-			return styleValue;
+			const styleMap = this.getStyleMapForBreakpoint(currentBreakpoint);
+			return styleMap[style];
 		}
+
 		if (cascading) {
-			if (breakpoint === "mobile") {
-				return this.getStyle(style, "tablet") ?? this.getStyle(style, "desktop");
-			}
-			if (breakpoint === "tablet") {
-				return this.getStyle(style, "desktop");
-			}
-			return this.getStyle(style, "desktop");
+			return this.getStyleWithCascading(style, currentBreakpoint);
 		}
-		if (breakpoint === "mobile") {
-			styleValue = this.mobileStyles[style] || this.tabletStyles[style] || this.baseStyles[style];
-		} else if (breakpoint === "tablet") {
-			styleValue = this.tabletStyles[style] || this.baseStyles[style];
-		} else {
-			styleValue = this.baseStyles[style];
+
+		const styleValue = this.getInheritedStyleValue(style, currentBreakpoint);
+
+		return styleValue ?? this.getComponentStyleFallback(style, currentBreakpoint, nativeOnly, cascading);
+	}
+
+	private getStyleMapForBreakpoint(breakpoint: string) {
+		const styleMap = {
+			mobile: this.mobileStyles,
+			tablet: this.tabletStyles,
+			desktop: this.baseStyles,
+		};
+		return styleMap[breakpoint as keyof typeof styleMap] || this.baseStyles;
+	}
+
+	private getStyleWithCascading(style: styleProperty, breakpoint: string): StyleValue | undefined {
+		if (this.isExtendedFromComponent()) {
+			const componentValue = this.referenceComponent?.getStyle(style, breakpoint, true, false);
+			if (componentValue) return componentValue;
 		}
-		if (styleValue === undefined && this.isExtendedFromComponent()) {
-			styleValue = this.referenceComponent?.getStyle?.(
-				style,
-				breakpoint,
-				nativeOnly,
-				cascading,
-			) as StyleValue;
+
+		const fallbackBreakpoints = {
+			mobile: ["tablet", "desktop"],
+			tablet: ["desktop"],
+		};
+
+		const fallbacks = fallbackBreakpoints[breakpoint as keyof typeof fallbackBreakpoints] || [];
+		for (const fallbackBreakpoint of fallbacks) {
+			const value = this.getStyle(style, fallbackBreakpoint);
+			if (value) return value;
 		}
-		return styleValue;
+
+		return this.getStyle(style, "desktop");
+	}
+
+	private getInheritedStyleValue(style: styleProperty, breakpoint: string): StyleValue | undefined {
+		switch (breakpoint) {
+			case "mobile":
+				return this.mobileStyles[style] || this.tabletStyles[style] || this.baseStyles[style];
+			case "tablet":
+				return this.tabletStyles[style] || this.baseStyles[style];
+			default:
+				return this.baseStyles[style];
+		}
+	}
+
+	private getComponentStyleFallback(
+		style: styleProperty,
+		breakpoint: string,
+		nativeOnly: boolean,
+		cascading: boolean,
+	): StyleValue | undefined {
+		if (!this.isExtendedFromComponent()) return undefined;
+		return this.referenceComponent?.getStyle?.(style, breakpoint, nativeOnly, cascading);
 	}
 	getNativeStyle(style: styleProperty) {
 		return this.getStyle(style, undefined, true);

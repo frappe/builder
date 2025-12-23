@@ -5,7 +5,7 @@
     "strict": true,
     "jsx": "preserve",
     "importHelpers": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "experimentalDecorators": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -39,6 +39,5 @@
   ],
   "exclude": [
     "node_modules",
-    "../frappe/frappe/public/js/lib/posthog.js"
   ]
 }

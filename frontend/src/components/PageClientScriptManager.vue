@@ -14,10 +14,10 @@
 								href="#"
 								:class="{
 									'text-ink-gray-5': activeScript !== script,
-									'font-medium text-ink-gray-8': activeScript === script,
+									'font-medium !text-ink-gray-8': activeScript === script,
 								}"
 								@click="selectScript(script)"
-								class="group flex h-6 items-center justify-between gap-1 text-sm first-of-type:mt-6 last-of-type:mb-2">
+								class="group flex h-6 items-center justify-between gap-1 text-sm first-of-type:mt-6 last-of-type:mb-2 hover:text-ink-gray-7">
 								<div class="flex w-[90%] items-center gap-1">
 									<GripVertical class="drag-handle cursor-grab text-ink-gray-5 hover:text-ink-gray-8" />
 									<CSSIcon class="shrink-0" v-if="script.script_type === 'CSS'" />
@@ -67,14 +67,21 @@
 						</template>
 					</draggable>
 
-					<div class="flex w-full gap-2" v-if="!builderStore.readOnlyMode">
+					<div
+						class="grid w-full grid-cols-1 gap-2"
+						v-if="!builderStore.readOnlyMode"
+						:class="
+							clientScriptResource.data && clientScriptResource.data.length > 0
+								? 'grid-cols-2'
+								: 'grid-cols-1'
+						">
 						<Dropdown
 							:options="[
 								{ label: 'JavaScript', onClick: () => addScript('JavaScript') },
 								{ label: 'CSS', onClick: () => addScript('CSS') },
 							]"
 							size="sm"
-							class="flex-1 [&>div>div>div]:w-full">
+							class="[&>div>div>div]:w-full">
 							<template v-slot="{ open }">
 								<BuilderButton class="w-full text-xs" @click="open">New Script</BuilderButton>
 							</template>
@@ -83,7 +90,7 @@
 						<Autocomplete
 							v-if="clientScriptResource.data && clientScriptResource.data.length > 0"
 							:options="clientScriptOptions"
-							class="[&>div>div>div]:overflow-hidden"
+							bodyClasses="overflow-hidden [&>ul]:!bg-surface-white"
 							@update:modelValue="(option: Option) => attachScript(option.value)"
 							placeholder="Attach Script">
 							<template v-slot:target="{ open }">
