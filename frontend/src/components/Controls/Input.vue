@@ -2,6 +2,7 @@
 	<div class="relative w-full">
 		<FormControl
 			:type="type"
+			@update:modelValue="($event: string | number | boolean) => emit('update:modelValue', $event)"
 			@change="triggerUpdate"
 			@paste="triggerUpdate"
 			@cut="triggerUpdate"
