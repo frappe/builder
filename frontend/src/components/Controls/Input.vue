@@ -1,8 +1,14 @@
 <template>
 	<div class="relative w-full">
+		<Select
+			v-if="type === 'select'"
+			:modelValue="data as string"
+			@update:modelValue="(value) => (data = value as typeof data)"
+			:disabled="disabled"
+			v-bind="attrs" />
 		<FormControl
+			v-else
 			:type="type"
-			@update:modelValue="($event: string | number | boolean) => emit('update:modelValue', $event)"
 			@change="triggerUpdate"
 			@paste="triggerUpdate"
 			@cut="triggerUpdate"
@@ -35,6 +41,7 @@
 <script lang="ts" setup>
 import CrossIcon from "@/components/Icons/Cross.vue";
 import { useDebounceFn, useVModel } from "@vueuse/core";
+import { Select } from "frappe-ui";
 import { useAttrs } from "vue";
 
 const props = withDefaults(
