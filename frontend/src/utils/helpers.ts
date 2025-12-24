@@ -1079,6 +1079,24 @@ const getValueForInheritedProp = (
 	return undefined;
 };
 
+const getParentProps = (baseBlock: Block, baseProps: BlockProps): BlockProps => {
+	const parentBlock = baseBlock.getParentBlock();
+	if (parentBlock) {
+		const parentProps: BlockProps = {};
+		Object.entries(parentBlock.getBlockProps())
+			.filter(([_, propDetails]) => {
+				return propDetails.isPassedDown;
+			})
+			.map(([propName, propDetails]) => {
+				parentProps[propName] = propDetails;
+			});
+		const combinedProps = { ...baseProps, ...parentProps };
+		return getParentProps(parentBlock, combinedProps);
+	} else {
+		return baseProps;
+	}
+};
+
 const getPropValue = (
 	propName: string,
 	block: Block,
@@ -1101,9 +1119,6 @@ const getPropValue = (
 				if (prop.value && defaultProps && defaultProps[prop.value] !== undefined) {
 					return defaultProps[prop.value].value;
 				}
-				if (prop.value) {
-					return getValueForInheritedProp(prop.value, block, getDataScriptValue, getBlockScriptValue);
-				}
 			}
 		} else {
 			if (prop.isStandard && prop.standardOptions) {
@@ -1115,8 +1130,9 @@ const getPropValue = (
 			}
 			return prop.value;
 		}
+	} else {
+		return getParentProps(block, {})[propName]?.value;
 	}
-	return undefined;
 };
 
 const getStandardPropValue = (
@@ -1373,6 +1389,7 @@ export {
 	triggerCopyEvent,
 	uploadBuilderAsset,
 	uploadUserFont,
+	getParentProps,
 	getPropValue,
 	getStandardPropValue,
 	getDataArray,

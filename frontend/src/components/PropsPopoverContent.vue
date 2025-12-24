@@ -72,6 +72,22 @@
 				:getOptions="getOptions"
 				@update:modelValue="handleValueSelection" />
 		</div>
+		<div v-if="!isStandardBool" class="flex items-center justify-between">
+			<InputLabel>Pass Down</InputLabel>
+			<OptionToggle
+				:options="[
+					{
+						label: 'Yes',
+						value: 'true',
+					},
+					{
+						label: 'No',
+						value: 'false',
+					},
+				]"
+				:model-value="isPassedDown"
+				@update:model-value="(val) => (isPassedDown = val)" />
+		</div>
 		<!-- Disabled for now-->
 		<div v-if="false && !isStandardBool && isInFragmentMode" class="flex items-center justify-between">
 			<InputLabel>Is Editable</InputLabel>
@@ -161,6 +177,7 @@ const blockDataStore = useBlockDataStore();
 const isStandard = ref(props.propDetails?.isStandard ? "true" : "false");
 const isStandardBool = computed(() => isStandard.value === "true");
 const isEditable = ref("false"); // TODO: required?
+const isPassedDown = ref(props.propDetails?.isPassedDown ? "true" : "false");
 const name = ref(props.propName ?? "");
 const value = ref(props.propDetails?.value ?? "");
 const comesFrom = ref<BlockProps[string]["comesFrom"]>(props.propDetails?.comesFrom ?? null);
@@ -289,79 +306,8 @@ const blockDataArray = computed(() => {
 	return [];
 });
 
-const defaultProps = computed(() => {
-	const currentBlock = blockController.getFirstSelectedBlock();
-	const isCurrentBlockInRepeater = currentBlock?.isInsideRepeater();
-	const repeaterRoot = isCurrentBlockInRepeater ? currentBlock?.getRepeaterParent() : null;
-	if (repeaterRoot) {
-		const key = repeaterRoot.getDataKey("key");
-		const comesFrom = repeaterRoot.getDataKey("comesFrom");
-		if (key && comesFrom === "props") {
-			const componentRoot = blockController.getComponentRootBlock(repeaterRoot);
-			const parsedValue = getStandardPropValue(key, componentRoot)?.value;
-			if (!parsedValue) return {};
-			if (Array.isArray(parsedValue)) {
-				return {
-					item: {
-						value: parsedValue[0],
-						isStandard: false,
-						type: "static",
-					},
-				};
-			} else if (typeof parsedValue === "object") {
-				return {
-					key: {
-						value: Object.keys(parsedValue)[0],
-						isStandard: false,
-						type: "static",
-					},
-					value: {
-						value: parsedValue[Object.keys(parsedValue)[0]],
-						isStandard: false,
-						type: "static",
-					},
-				};
-			}
-		}
-	}
-	return {};
-});
-
-const getParentProps = (baseBlock: Block, baseProps: string[]): string[] => {
-	const parentBlock = baseBlock.getParentBlock();
-	if (parentBlock) {
-		// TODO: disallow array and obj props from parent blocks
-		const parentProps: string[] = Object.keys(parentBlock.getBlockProps()).map((key) => key);
-		const combinedProps = [...baseProps, ...parentProps].reduce((acc, prop) => {
-			if (!acc.find((p: string) => p === prop)) {
-				acc.push(prop);
-			}
-			return acc;
-		}, [] as string[]);
-		return getParentProps(parentBlock, combinedProps);
-	} else {
-		return baseProps;
-	}
-};
-
 const getOptions = async (query: string) => {
 	let options: { label: string; value: string }[] = [];
-	getParentProps(blockController.getFirstSelectedBlock()!, []).map((prop) => {
-		if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
-			options.push({
-				label: prop,
-				value: `${prop}--props`,
-			});
-		}
-	});
-	Object.keys(defaultProps.value || {}).map((prop) => {
-		if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
-			options.push({
-				label: prop,
-				value: `${prop}--props`,
-			});
-		}
-	});
 	pageDataArray.value.map((prop) => {
 		if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
 			options.push({
@@ -403,7 +349,6 @@ const handleIsStandardChange = async (newVal: string) => {
 };
 
 const handleTypeChange = async (newVal: string) => {
-	console.log("Changing to: ", newVal);
 	setPropType(newVal);
 	await nextTick();
 	reset({
@@ -492,7 +437,6 @@ watch(
 watch(
 	selectedPropType,
 	() => {
-		console.log("Changed value detected!");
 		autoCompleteRef.value?.refreshOptions();
 	},
 	{ immediate: true },
@@ -500,9 +444,24 @@ watch(
 
 const save = async () => {
 	await nextTick();
+	console.log("Saving prop:", {
+		name: name.value,
+		isStandard: isStandardBool.value,
+		isDynamic: isStandardBool.value ? false : selectedNonStandardPropType.value === "dynamic",
+		isPassedDown: isPassedDown.value === "true",
+		comesFrom: comesFrom.value,
+		value: isStandardBool.value ? null : value.value,
+		standardOptions: isStandardBool.value
+			? {
+					...standardPropOptions,
+					dependencies: standardPropDependencyMap.value,
+			  }
+			: undefined,
+	});
 	const propValue: BlockProps[string] = {
 		isStandard: isStandardBool.value,
-		isDynamic: isStandardBool.value ? false : selectedNonStandardPropType.value === "dynamic", // all standard props are static by default
+		isDynamic: isStandardBool.value ? false : selectedNonStandardPropType.value === "dynamic",
+		isPassedDown: isPassedDown.value === "true",
 		comesFrom: comesFrom.value,
 		value: isStandardBool.value ? null : value.value,
 		standardOptions: isStandardBool.value

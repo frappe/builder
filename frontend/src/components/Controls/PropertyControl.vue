@@ -54,8 +54,7 @@
 				<template #content>
 					<DynamicValueHandler
 						@setDynamicValue="setDynamicValue"
-						:selectedValue="dynamicValue"
-						:options="{ excludePassedDownProps: true}" />
+						:selectedValue="dynamicValue" />
 				</template>
 			</DraggablePopup>
 

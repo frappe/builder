@@ -265,7 +265,7 @@ class BuilderPage(WebsiteGenerator):
 		if context.preview and self.draft_blocks:
 			blocks = self.draft_blocks
 
-		content, style, fonts = get_block_html(blocks, page_data)
+		content, style, fonts = get_block_html(blocks)
 		self.set_custom_font(context, fonts)
 		context.fonts = fonts
 		context.__content = content
@@ -505,7 +505,7 @@ def get_block_data(block_id, block_data_script, props):
 	block_data.update(_locals["block"])
 	return block_data
 
-def get_block_html(blocks, page_data=None):
+def get_block_html(blocks):
 	blocks = frappe.parse_json(blocks)
 	if not isinstance(blocks, list):
 		blocks = [blocks]
@@ -514,12 +514,6 @@ def get_block_html(blocks, page_data=None):
 	font_map = {}
 
 	def get_html(blocks, soup):
-		# global map of prop values
-		# prop_name -> array<values>
-		# prop names act as variables and blocks provide scope, i.e., if a child block (inner scope) re-defines a prop with the same name as its parent (outer scope),
-		# for the child block and its children, the value from the child block will be used, and once the child block is processed, the value from the parent block will be restored.
-		# the array of values act as a stack to achieve this scoping behavior.
-		map_of_prop_values = {}
 
 		# same as above but for std. props info (not values), used to idenitfy the type of looping vars (array or object) in repeaters
 		map_of_std_props_info = {}
@@ -533,19 +527,18 @@ def get_block_html(blocks, page_data=None):
 			if block.get("props"):
 				for prop_name, prop_info in block.get("props").items():
 					is_standard = prop_info.get("isStandard", False)
-					interpreted_value = get_interpreted_prop_value(prop_info, data_key, map_of_prop_values)
+					is_passed_down = prop_info.get("isPassedDown", False)
+					interpreted_value = get_interpreted_prop_value(prop_info, data_key)
 
-					map_of_prop_values.setdefault(prop_name, []).append(interpreted_value)
 					if is_standard:
 						map_of_std_props_info.setdefault(prop_name, []).append(prop_info)
-
-					props_obj[prop_name] = {"value": interpreted_value, "is_standard": is_standard}
+					
+					props_obj[prop_name] = {"value": interpreted_value, "is_standard": is_standard, "is_passed_down": is_passed_down}
 
 			# when inside props repeater, child blocks get the loop vars as their default props
 			if default_props:
 				for prop in default_props:
-					props_obj[prop] = {"value": f"{{{{ {prop} }}}}", "is_standard": False}
-					map_of_prop_values.setdefault(prop, []).append(f"{{{{ {prop} }}}}")
+					props_obj[prop] = {"value": f"{{{{ {prop} }}}}", "is_standard": False, "is_passed_down": True}
 
 			set_dynamic_content_placeholder(block, data_key)
 			element = block.get("originalElement") or block.get("element")
@@ -655,10 +648,10 @@ def get_block_html(blocks, page_data=None):
 
 				tag.append(f"{{% for {loop_var} in {_key} %}}")
 
-				child_tag, child_tag_props, child_tag_std_props, child_tag_block_script = get_tag(
+				child_tag, child_tag_props, child_passed_down_props, child_tag_std_props, child_tag_block_script = get_tag(
 					block.get("children")[0], soup, next_data_key, next_default_props
 				)
-				append_child_tag(tag, child_tag, child_tag_props, child_tag_std_props, child_tag_block_script)
+				append_child_tag(tag, child_tag, child_tag_props, child_passed_down_props, child_tag_std_props, child_tag_block_script)
 
 				tag.append("{% endfor %}")
 			else:
@@ -670,10 +663,10 @@ def get_block_html(blocks, page_data=None):
 							key = f"{extract_data_key(data_key)}.{key}"
 						tag.append(f"{{% if {key} %}}")
 
-					child_tag, child_tag_props, child_tag_std_props, child_tag_block_script = get_tag(
+					child_tag, child_tag_props, child_passed_down_props, child_tag_std_props, child_tag_block_script = get_tag(
 						child, soup, data_key=data_key, default_props=default_props
 					)
-					append_child_tag(tag, child_tag, child_tag_props, child_tag_std_props, child_tag_block_script)
+					append_child_tag(tag, child_tag, child_tag_props, child_passed_down_props, child_tag_std_props, child_tag_block_script)
 
 					if child.get("visibilityCondition"):
 						tag.append("{% endif %}")
@@ -682,27 +675,28 @@ def get_block_html(blocks, page_data=None):
 				tag.append("{% include 'templates/generators/webpage_scripts.html' %}")
 
 			for prop_name, prop_info in props_obj.items():
-				map_of_prop_values[prop_name].pop()
 				if prop_info.get("is_standard"):
 					map_of_std_props_info[prop_name].pop()
 
 			all_props = {k: v["value"] for k, v in props_obj.items()}
 			std_props = {k: v["value"] for k, v in props_obj.items() if v.get("is_standard")}
+			passed_down_props = {k: v["value"] for k, v in props_obj.items() if v.get("is_passed_down")}
 
 			if block.get("blockClientScript"):
 				block_unique_id = f"{block.get('blockId')}-{frappe.generate_hash(length=3)}"  # extra hash as repeating blocks have same blockId
-				script_content = f"(function (props){{ {block.get('blockClientScript')} }}).call(document.querySelector('[data-block-id=\"{block_unique_id}\"]'), {{{{ {to_jinja_literal(all_props) + '| tojson'} }}}});"
+				script_content = f"(function (props){{ {block.get('blockClientScript')} }}).call(document.querySelector('[data-block-id=\"{block_unique_id}\"]'), {{{{ props | tojson }}}});"
 				tag.attrs["data-block-id"] = block_unique_id
 				script_tag = soup.new_tag("script")
 				script_tag.string = script_content
 				tag.append(script_tag)
 
-			return tag, to_jinja_literal(all_props), to_jinja_literal(std_props) if std_props else None, block.get('blockDataScript', None)
+			return tag, to_jinja_literal(all_props), to_jinja_literal(passed_down_props), to_jinja_literal(std_props) if std_props else None, block.get('blockDataScript', None)
 
 		for block in blocks:
-			tag, props, std_props, block_script = get_tag(block, soup)
+			tag, props, passed_down_props, std_props, block_script = get_tag(block, soup)
 			html += f"{{% with block = {{ }} | execute_script_and_combine('{escape_single_quotes(block_script)}', {(props)}) %}}{tag!s}{{% endwith %}}"
 			html = f"{{% with props = {props} %}}{html}{{% endwith %}}"
+			html = f"{{% with passed_down_props = {passed_down_props} %}}{html}{{% endwith %}}"
 			if std_props:
 				html = f"{{% with std_props = {std_props} %}}{html}{{% endwith %}}"
 
@@ -854,16 +848,18 @@ def extend_block(block, overridden_block):
 	return block
 
 
-def append_child_tag(tag, child_tag, child_tag_props, child_tag_std_props, child_tag_block_script):
+def append_child_tag(tag, child_tag, child_tag_props, child_passed_down_props, child_tag_std_props, child_tag_block_script):
 	if child_tag_std_props:
 		tag.append(f"{{% with std_props = {child_tag_std_props} %}}")
 
-	tag.append(f"{{% with props = {child_tag_props} %}}")
+	tag.append(f"{{% with props = {child_tag_props} | combine(passed_down_props) %}}")
+	tag.append(f"{{% with passed_down_props = passed_down_props | combine({child_passed_down_props}) %}}")
 	if child_tag_block_script:
 		tag.append(f"{{% with block = block | execute_script_and_combine('{escape_single_quotes(child_tag_block_script)}', {(child_tag_props)}) %}}")
 	tag.append(child_tag)
 	if child_tag_block_script:
 		tag.append("{% endwith %}")
+	tag.append("{% endwith %}")
 	tag.append("{% endwith %}")
 
 	if child_tag_std_props:
@@ -1024,7 +1020,7 @@ def parse_static_value(value: str, prop_type: str):
 			return f"{value}"
 
 
-def get_interpreted_prop_value(prop, data_key, map_of_prop_values):
+def get_interpreted_prop_value(prop, data_key):
 	prop_is_dynamic = prop.get("isDynamic", False)
 	prop_comes_from = prop.get("comesFrom", "props")
 	prop_is_standard = prop.get("isStandard", False)
@@ -1053,9 +1049,6 @@ def get_interpreted_prop_value(prop, data_key, map_of_prop_values):
 				for k in keys[1:]:
 					key = f"{key}.get('{k}', {{}})"
 			return f"{{{{ {key} or block['{escape_single_quotes(prop_value)}'] or '{escape_single_quotes(default_value) if default_value is not None else 'undefined'}' }}}}"
-		elif prop_comes_from == "props":
-			values = map_of_prop_values.get(prop_value, [])
-			return values[-1] if values else default_value if default_value is not None else "undefined"
 	else:
 		if prop_is_standard:
 			# standard props are static only as of now

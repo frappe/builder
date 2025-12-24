@@ -190,8 +190,6 @@ const shouldDisplayStandardProps = computed(() => {
 	);
 });
 
-const propsEditor = ref<HTMLElement | null>(null);
-
 const emit = defineEmits({
 	"update:obj": (obj: BlockProps) => true,
 });
@@ -224,7 +222,13 @@ const updateObjectValue = (
 		value,
 		isDynamic,
 		comesFrom,
-	}: { value: string | null; isDynamic: boolean; comesFrom: BlockProps[string]["comesFrom"] },
+		isPassedDown,
+	}: {
+		value: string | null;
+		isDynamic: boolean;
+		comesFrom: BlockProps[string]["comesFrom"];
+		isPassedDown: boolean;
+	},
 ) => {
 	const path = value;
 	if (!path) {
@@ -234,8 +238,14 @@ const updateObjectValue = (
 	const oldPath = map.get(key)?.value;
 	const wasDynamic = map.get(key)?.isDynamic;
 	const cameFrom = map.get(key)?.comesFrom;
+	const wasPassedDown = map.get(key)?.isPassedDown;
 
-	if (path === oldPath && isDynamic === wasDynamic && comesFrom === cameFrom) {
+	if (
+		path === oldPath &&
+		isDynamic === wasDynamic &&
+		comesFrom === cameFrom &&
+		isPassedDown === wasPassedDown
+	) {
 		return map;
 	}
 
@@ -244,6 +254,7 @@ const updateObjectValue = (
 		value: !isDynamic && typeof path !== "string" ? JSON.stringify(path) : path,
 		isDynamic,
 		comesFrom,
+		isPassedDown,
 	});
 
 	return map;
@@ -291,6 +302,7 @@ const updateProp = async ({
 		value: newValue.value,
 		isDynamic: newValue.isDynamic,
 		comesFrom: newValue.comesFrom,
+		isPassedDown: newValue.isPassedDown || false,
 	});
 	map = updateIsStandard(map, newName, newValue.isStandard || false);
 	map = updateStandardOptions(map, newName, newValue.standardOptions || {});

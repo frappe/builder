@@ -18,6 +18,7 @@ declare type BlockProps = Record<
 	string,
 	{
 		isDynamic: boolean;
+		isPassedDown: boolean;
 		comesFrom: "props" | "dataScript" | "blockDataScript" | null;
 		value: string?;
 		isStandard?: boolean;

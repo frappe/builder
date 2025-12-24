@@ -69,6 +69,7 @@ import {
 	getCollectionKeys,
 	getDataArray,
 	getDataForKey,
+	getParentProps,
 	getPropValue,
 	getStandardPropValue,
 } from "@/utils/helpers";
@@ -178,7 +179,7 @@ const filteredBlockProps = computed(() => {
 	} else {
 		const currentBlock = props.block || blockController.getFirstSelectedBlock();
 		if (currentBlock) {
-			parentProps = getParentProps(currentBlock, []);
+			parentProps = Object.keys(getParentProps(currentBlock, {}));
 		} else {
 			parentProps = [];
 		}
@@ -231,21 +232,7 @@ const filteredItems = computed(() => {
 
 const selectedItem = ref<DynamicValueItem | null>(props.selectedValue || null);
 
-const getParentProps = (baseBlock: Block, baseProps: string[]): string[] => {
-	const parentBlock = baseBlock.getParentBlock();
-	if (parentBlock) {
-		const parentProps: string[] = Object.keys(parentBlock.getBlockProps()).map((key) => key);
-		const combinedProps = [...baseProps, ...parentProps].reduce((acc, prop) => {
-			if (!acc.find((p: string) => p === prop)) {
-				acc.push(prop);
-			}
-			return acc;
-		}, [] as string[]);
-		return getParentProps(parentBlock, combinedProps);
-	} else {
-		return baseProps;
-	}
-};
+
 
 const getValue = (item: DynamicValueItem): any => {
 	if (item.comesFrom == "props") {
