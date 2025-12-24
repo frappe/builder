@@ -2,9 +2,10 @@
 	<div class="relative w-full">
 		<FormControl
 			:type="type"
-			@change="triggerUpdate"
-			@paste="triggerUpdate"
-			@cut="triggerUpdate"
+			@change="triggerChange"
+			@paste="triggerChange"
+			@cut="triggerChange"
+			@update:modelValue="triggerUpdate"
 			@focus="handleFocus"
 			@input="($event: Event) => emit('input', ($event.target as HTMLInputElement).value)"
 			autocomplete="off"
@@ -64,12 +65,16 @@ const clearValue = () => {
 	data.value = "";
 };
 
-const triggerUpdate = useDebounceFn(($event: Event) => {
+const triggerChange = useDebounceFn(($event: Event) => {
 	if (props.type === "checkbox") {
 		emit("update:modelValue", ($event.target as HTMLInputElement).checked);
 	} else {
 		emit("update:modelValue", ($event.target as HTMLInputElement).value);
 	}
+}, 100);
+
+const triggerUpdate = useDebounceFn(($event: any) => {
+	emit("update:modelValue", $event);
 }, 100);
 
 const handleFocus = ($event: Event) => {
