@@ -6,7 +6,7 @@
 					:key="index"
 					class="prop-list-item relative flex w-full flex-col rounded bg-surface-gray-1 p-2 text-ink-gray-6"
 					v-if="value.isStandard !== true || shouldDisplayStandardProps">
-					<Popover popoverClass="!ml-[25px] !min-w-fit" placement="right">
+					<Popover popoverClass="!ml-[25px] !min-w-fit" placement="right-start">
 						<template #target="{ open }">
 							<div
 								class="flex w-full cursor-pointer items-center justify-between"
@@ -86,7 +86,7 @@
 				</div>
 			</template>
 		</div>
-		<Popover ref="popOverRef" popoverClass="!ml-[17px] !min-w-fit" placement="right">
+		<Popover ref="popOverRef" popoverClass="!ml-[17px] !min-w-fit" placement="right-start">
 			<template #target="{ open }">
 				<BuilderButton
 					class="w-full"
