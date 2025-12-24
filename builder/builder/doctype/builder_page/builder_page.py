@@ -544,7 +544,8 @@ def get_block_html(blocks, page_data=None):
 			# when inside props repeater, child blocks get the loop vars as their default props
 			if default_props:
 				for prop in default_props:
-					props_obj[prop] = {"value": f"{{{{ {prop} }}}}", "is_standard": True}
+					props_obj[prop] = {"value": f"{{{{ {prop} }}}}", "is_standard": False}
+					map_of_prop_values.setdefault(prop, []).append(f"{{{{ {prop} }}}}")
 
 			set_dynamic_content_placeholder(block, data_key)
 			element = block.get("originalElement") or block.get("element")
@@ -952,7 +953,7 @@ def set_dynamic_content_placeholder(block, data_key=None):
 				)
 			elif _type == "key" and not block.get("isRepeaterBlock"):
 				block[_property] = (
-					f"{{{{ {key} if {key} or {key} in ['', 0] else block['{original_key}'] if block['{original_key}'] is defined else '{escape_single_quotes(block.get(_property, ''))}' }}}}"
+					f"{{{{ {key} if {key} or {key} in ['', 0] else block['{original_key}'] if block['{original_key}'] is defined else props['{original_key}'] if props['{original_key}'] is defined else '{escape_single_quotes(block.get(_property, ''))}' }}}}"
 				)
 
 

@@ -377,6 +377,7 @@ watch(
 	() => {
 		blockDataStore.setBlockData(props.block.blockId, props.blockData || {}, "passedDown");
 	},
+	{ immediate: true, deep: true },
 );
 
 watch(
