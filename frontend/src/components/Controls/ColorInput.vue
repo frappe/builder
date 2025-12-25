@@ -19,12 +19,12 @@
 							<Autocomplete
 								class="[&>div>input]:pl-8"
 								:class="{
-									'border border-red-500 ring-1 ring-red-500': isInvalid,
 									'[&>div>div>input]:text-xs [&>div>div>input]:text-ink-violet-1 [&>div>input]:font-mono':
 										isCssVariable,
 								}"
 								v-bind="events"
 								ref="colorInput"
+								@keydown.enter="handleEnter"
 								@focus="togglePopover"
 								:placeholder="placeholder"
 								:modelValue="modelValue"
@@ -46,9 +46,21 @@
 										}
 
 										//last valid value is retained
-										isInvalid = !!val && !isValidColorInput(val);
-										if (isInvalid) return;
-										
+										const isInvalid = !!val && !isValidColorInput(val);
+										if (isInvalid) {
+											
+											const lastValidValue = props.modelValue;
+											// step 1: clear input
+											emit('update:modelValue', null);
+
+											// step 2: restore last valid value after render
+											nextTick(() => {
+												emit('update:modelValue', lastValidValue ?? null);
+											});
+											
+											return;
+										}
+
 										if (typeof val === 'string' && (val.startsWith('var(--') || val.startsWith('--'))) {
 											emit('update:modelValue', val.startsWith('var(--') ? val : `var(${val})`);
 										} else {
@@ -84,7 +96,7 @@ import { getRGB, toKebabCase } from "@/utils/helpers";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useDark } from "@vueuse/core";
 import { Tooltip } from "frappe-ui";
-import { computed, ComputedRef, defineComponent, h, onMounted, ref, shallowRef, useAttrs, watch } from "vue";
+import { computed, ComputedRef, defineComponent, h, onMounted, ref, shallowRef, useAttrs, watch, nextTick } from "vue";
 import ColorPicker from "./ColorPicker.vue";
 import InputLabel from "./InputLabel.vue";
 
@@ -103,6 +115,15 @@ const showVariableDialog = ref(false);
 const newVariable = ref<Partial<BuilderVariable> | null>(null);
 const { variables, resolveVariableValue } = useBuilderVariable();
 const isInvalid = ref(false);
+
+const handleEnter = () => {
+	const val = props.modelValue;
+
+	// if current value is invalid, clear it
+	if (typeof val === "string" && !isValidColorInput(val)) {
+		emit("update:modelValue", null);
+	}
+};
 
 const normalizeColorInput = (val: string) => {
 	// turn multiple leading hashes into one 
@@ -142,6 +163,17 @@ const props = withDefaults(
 		placement: "left",
 		showColorVariableOptions: true,
 		showPickerOnMount: false,
+	},
+);
+const lastValidValue = ref<string | null>(props.modelValue ?? null);
+
+watch(
+	() => props.modelValue,
+	(val) => {
+		// keep track of the last valid value so we can restore it when user types invalid input
+		if (isValidColorInput(val as string | null)) {
+			lastValidValue.value = (val as string) ?? null;
+		}
 	},
 );
 
