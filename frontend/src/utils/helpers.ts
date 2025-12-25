@@ -1131,7 +1131,14 @@ const getPropValue = (
 			return prop.value;
 		}
 	} else {
-		return getParentProps(block, {})[propName]?.value;
+		const parentMatchingProp = getParentProps(block, {})[propName]
+		if(parentMatchingProp) {
+			if (parentMatchingProp.isStandard)
+			{
+				return parentMatchingProp.value || parentMatchingProp.standardOptions?.options?.defaultValue;
+			}
+			return parentMatchingProp.value
+		}
 	}
 };
 
