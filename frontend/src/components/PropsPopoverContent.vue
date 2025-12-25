@@ -460,7 +460,7 @@ const save = async () => {
 	const propValue: BlockProps[string] = {
 		isStandard: isStandardBool.value,
 		isDynamic: isStandardBool.value ? false : selectedNonStandardPropType.value === "dynamic",
-		isPassedDown: isPassedDown.value === "true",
+		isPassedDown: isStandardBool.value || isPassedDown.value === "true",
 		comesFrom: comesFrom.value,
 		value: isStandardBool.value ? null : value.value,
 		standardOptions: isStandardBool.value
