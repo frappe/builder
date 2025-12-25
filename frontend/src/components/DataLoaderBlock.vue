@@ -82,6 +82,7 @@ const blockRepeaterData = computed(() => {
 						isStandard: false,
 						isDynamic: true,
 						comesFrom: "props",
+						isPassedDown: true,
 					},
 				}),
 			);
@@ -95,12 +96,14 @@ const blockRepeaterData = computed(() => {
 							isStandard: false,
 							isDynamic: true,
 							comesFrom: "props",
+							isPassedDown: true,
 						},
 						value: {
 							value: typeof value !== "string" ? JSON.stringify(value) : value,
 							isStandard: false,
 							isDynamic: true,
 							comesFrom: "props",
+							isPassedDown: true,
 						},
 					});
 				});

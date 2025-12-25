@@ -43,7 +43,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import { setFont } from "@/utils/fontManager";
 import { getDataForKey, getPropValue, saferExecuteBlockClientScript } from "@/utils/helpers";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
-import { computed, inject, nextTick, onMounted, reactive, ref, useAttrs, watch, watchEffect } from "vue";
+import { computed, inject, nextTick, onMounted, onUnmounted, reactive, ref, useAttrs, watch, watchEffect } from "vue";
 import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
 import DataLoaderBlock from "./DataLoaderBlock.vue";
@@ -373,8 +373,9 @@ watch(
 );
 
 watch(
-	() => props.blockData,
+	[component, () => props.blockData, () => props.data],
 	() => {
+		blockDataStore.setPageData(props.block.blockId, props.data || {});
 		blockDataStore.setBlockData(props.block.blockId, props.blockData || {}, "passedDown");
 	},
 	{ immediate: true, deep: true },
@@ -406,7 +407,7 @@ watch(
 				});
 			});
 	},
-	{ deep: true },
+	{ deep: true, immediate: true },
 );
 
 const isEditable = computed(() => {
@@ -449,6 +450,11 @@ if (!props.preview) {
 		},
 	);
 }
+
+onUnmounted(() => {
+	blockDataStore.clearBlockData(props.block.blockId);
+	blockDataStore.clearPageData(props.block.blockId);
+});
 
 // Note: All the block event listeners are delegated to parent for better scalability
 </script>

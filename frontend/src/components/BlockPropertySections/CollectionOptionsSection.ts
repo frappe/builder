@@ -1,24 +1,21 @@
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import useBlockDataStore from "@/stores/blockDataStore";
 import useCanvasStore from "@/stores/canvasStore";
-import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
-import { getCollectionKeys, getDataForKey } from "@/utils/helpers";
 import { FeatherIcon } from "frappe-ui";
 import { computed, h } from "vue";
 
 const keyOptions = computed(() => {
-	const pageStore = usePageStore();
 	const blockDataStore = useBlockDataStore();
 	let result: { label: string; value: string; prefix: any }[] = [];
 
 	const repeatableDataKeys: string[] = [];
 	const repeatableBlockDataKeys: string[] = [];
 
-	let pageDataCollectionObject = pageStore.pageData;
+	let pageDataCollectionObject =
+		blockDataStore.getPageData(blockController.getFirstSelectedBlock()?.blockId || "") || {};
 	let blockDataCollectionObject =
 		blockDataStore.getBlockData(blockController.getFirstSelectedBlock()?.blockId || "") || {};
-	let collectionObject = {};
 
 	const isInsideRepeater = blockController.getFirstSelectedBlock()?.isInsideRepeater();
 	const repeaterDataKeyComesFrom: BlockDataKey["comesFrom"] | undefined = blockController
@@ -26,18 +23,6 @@ const keyOptions = computed(() => {
 		?.getRepeaterParent()
 		?.getDataKey("comesFrom") as BlockDataKey["comesFrom"] | undefined;
 
-	if (isInsideRepeater) {
-		const keys = getCollectionKeys(
-			blockController.getFirstSelectedBlock(),
-			repeaterDataKeyComesFrom || "dataScript",
-		);
-		collectionObject =
-			repeaterDataKeyComesFrom == "dataScript" ? pageDataCollectionObject : blockDataCollectionObject;
-		collectionObject = keys.reduce((acc: any, key: string) => {
-			const data = getDataForKey(acc, key);
-			return Array.isArray(data) && data.length > 0 ? data[0] : data;
-		}, collectionObject);
-	}
 
 	function processObject(obj: Record<string, any>, prefix = "", resultArray: string[] = []) {
 		if (!obj || typeof obj !== "object") {
@@ -55,16 +40,8 @@ const keyOptions = computed(() => {
 		});
 	}
 
-	if (isInsideRepeater) {
-		if (repeaterDataKeyComesFrom == "dataScript") {
-			processObject(collectionObject, "", repeatableDataKeys);
-		} else if (repeaterDataKeyComesFrom == "blockDataScript") {
-			processObject(collectionObject, "", repeatableBlockDataKeys);
-		}
-	} else {
-		processObject(pageDataCollectionObject, "", repeatableDataKeys);
-		processObject(blockDataCollectionObject, "", repeatableBlockDataKeys);
-	}
+	processObject(pageDataCollectionObject, "", repeatableDataKeys);
+	processObject(blockDataCollectionObject, "", repeatableBlockDataKeys);
 
 	const isPropsBasedRepeater = isInsideRepeater && repeaterDataKeyComesFrom == "props";
 	const repeatableProps: string[] = [];

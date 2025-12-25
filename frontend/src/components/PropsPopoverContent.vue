@@ -155,8 +155,7 @@ import ObjectOptions from "@/components/PropsOptions/ObjectOptions.vue";
 import BooleanOptions from "@/components/PropsOptions/BooleanOptions.vue";
 import SelectOptions from "@/components/PropsOptions/SelectOptions.vue";
 
-import usePageStore from "@/stores/pageStore";
-import { getCollectionKeys, getDataArray, getStandardPropValue } from "@/utils/helpers";
+import { getDataArray } from "@/utils/helpers";
 import useBlockDataStore from "@/stores/blockDataStore";
 
 const props = withDefaults(
@@ -291,7 +290,15 @@ const setPropType = (type: string) => {
 };
 
 const pageDataArray = computed(() => {
-	return getDataArray(blockController.getFirstSelectedBlock(), usePageStore().pageData, "dataScript");
+	const currentBlock = blockController.getFirstSelectedBlock();
+	if (currentBlock) {
+		return getDataArray(
+			blockController.getFirstSelectedBlock(),
+			blockDataStore.getPageData(currentBlock.blockId) || {},
+			"dataScript",
+		);
+	}
+	return [];
 });
 
 const blockDataArray = computed(() => {

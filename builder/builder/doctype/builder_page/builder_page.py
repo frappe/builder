@@ -519,7 +519,7 @@ def get_block_html(blocks):
 		map_of_std_props_info = {}
 		html = ""
 
-		def get_tag(block, soup, data_key=None, default_props=None):
+		def get_tag(block, soup, data_key=None, default_props=None, reset_block_data_to=None):
 			block = extend_with_component(block)
 
 			props_obj = {}
@@ -619,6 +619,7 @@ def get_block_html(blocks):
 				loop_var = ""
 				next_data_key = None
 				next_default_props = None
+				new_block_data = None
 
 				if block.get("dataKey").get("comesFrom", "dataScript") == "props":
 					loop_vars = get_loop_vars(map_of_std_props_info, _key)
@@ -629,14 +630,12 @@ def get_block_html(blocks):
 
 					if len(loop_vars) > 1:  # object repeater
 						_key = f"{_key}.items()"
-				elif block.get("dataKey").get("comesFrom") == "blockDataScript":
-					if data_key:
-						_key = f"{extract_data_key(data_key)}.{escape_single_quotes(_key)}"
-						loop_var = f"key_{_key.replace('.', '__')}"
-					else:
-						loop_var = f"key_{_key}"
-						_key = f"block['{escape_single_quotes(_key)}']"
-					next_data_key = {"key": loop_var, "comesFrom": "blockDataScript"}
+
+				elif block.get("dataKey").get("comesFrom") == "blockDataScript":		
+					loop_var = f"block_key_{_key}"
+					_key = f"block['{escape_single_quotes(_key)}']"
+					new_block_data = loop_var
+					next_data_key = data_key
 				else:
 					if data_key:
 						_key = f"{extract_data_key(data_key)}.{_key}"
@@ -648,10 +647,10 @@ def get_block_html(blocks):
 
 				tag.append(f"{{% for {loop_var} in {_key} %}}")
 
-				child_tag, child_tag_props, child_passed_down_props, child_tag_std_props, child_tag_block_script = get_tag(
-					block.get("children")[0], soup, next_data_key, next_default_props
+				child_tag, child_tag_details = get_tag(
+					block.get("children")[0], soup, next_data_key, next_default_props, new_block_data
 				)
-				append_child_tag(tag, child_tag, child_tag_props, child_passed_down_props, child_tag_std_props, child_tag_block_script)
+				append_child_tag(tag, child_tag, child_tag_details)
 
 				tag.append("{% endfor %}")
 			else:
@@ -663,10 +662,10 @@ def get_block_html(blocks):
 							key = f"{extract_data_key(data_key)}.{key}"
 						tag.append(f"{{% if {key} %}}")
 
-					child_tag, child_tag_props, child_passed_down_props, child_tag_std_props, child_tag_block_script = get_tag(
+					child_tag, child_tag_details = get_tag(
 						child, soup, data_key=data_key, default_props=default_props
 					)
-					append_child_tag(tag, child_tag, child_tag_props, child_passed_down_props, child_tag_std_props, child_tag_block_script)
+					append_child_tag(tag, child_tag, child_tag_details)
 
 					if child.get("visibilityCondition"):
 						tag.append("{% endif %}")
@@ -689,18 +688,30 @@ def get_block_html(blocks):
 				script_tag = soup.new_tag("script")
 				script_tag.string = script_content
 				tag.append(script_tag)
+			
+			tag_details = {
+				"all_props": to_jinja_literal(all_props),
+				"passed_down_props": to_jinja_literal(passed_down_props),
+				"std_props": to_jinja_literal(std_props) if std_props else None,
+				"block_data_script": block.get("blockDataScript", None),
+				"new_block_data": reset_block_data_to,
+			}
 
-			return tag, to_jinja_literal(all_props), to_jinja_literal(passed_down_props), to_jinja_literal(std_props) if std_props else None, block.get('blockDataScript', None)
+			return tag, tag_details
 
 		for block in blocks:
-			tag, props, passed_down_props, std_props, block_script = get_tag(block, soup)
-			html += f"{{% with block = {{ }} | execute_script_and_combine('{escape_single_quotes(block_script)}', {(props)}) %}}{tag!s}{{% endwith %}}"
-			html = f"{{% with props = {props} %}}{html}{{% endwith %}}"
-			html = f"{{% with passed_down_props = {passed_down_props} %}}{html}{{% endwith %}}"
-			if std_props:
-				html = f"{{% with std_props = {std_props} %}}{html}{{% endwith %}}"
+			tag, tag_details = get_tag(block, soup)
+
+			html += f"{{% with block = {{ }} | execute_script_and_combine('{escape_single_quotes(tag_details.get('block_data_script', ''))}', {(tag_details.get('all_props', '{}'))}) %}}{tag!s}{{% endwith %}}"
+			html = f"{{% with props = {tag_details.get('all_props', '{}')} %}}{html}{{% endwith %}}"
+			html = f"{{% with passed_down_props = {tag_details.get('passed_down_props', '{}')} %}}{html}{{% endwith %}}"
+			if tag_details.get('std_props'):
+				html = f"{{% with std_props = {tag_details.get('std_props')} %}}{html}{{% endwith %}}"
 
 		print("Final HTML: ", html)
+		# write to file
+		with open("output.html", "w") as f:
+			f.write(html)
 		return html, str(style_tag), font_map
 
 	data = get_html(blocks, soup)
@@ -848,16 +859,24 @@ def extend_block(block, overridden_block):
 	return block
 
 
-def append_child_tag(tag, child_tag, child_tag_props, child_passed_down_props, child_tag_std_props, child_tag_block_script):
+def append_child_tag(tag, child_tag, child_tag_details: dict):
+	child_tag_props = child_tag_details.get('all_props')
+	child_passed_down_props = child_tag_details.get('passed_down_props')
+	child_tag_std_props = child_tag_details.get('std_props')
+	child_tag_block_script = child_tag_details.get('block_data_script')
+	new_block_data = child_tag_details.get('new_block_data', None)
+
 	if child_tag_std_props:
 		tag.append(f"{{% with std_props = {child_tag_std_props} %}}")
 
 	tag.append(f"{{% with props = {child_tag_props} | combine(passed_down_props) %}}")
 	tag.append(f"{{% with passed_down_props = passed_down_props | combine({child_passed_down_props}) %}}")
-	if child_tag_block_script:
-		tag.append(f"{{% with block = block | execute_script_and_combine('{escape_single_quotes(child_tag_block_script)}', {(child_tag_props)}) %}}")
+	if child_tag_block_script or new_block_data is not None:
+		block_value = new_block_data if new_block_data is not None else "block"
+		script_suffix = f"| execute_script_and_combine('{escape_single_quotes(child_tag_block_script)}', props)" if child_tag_block_script else ""
+		tag.append(f"{{% with block = {block_value} {script_suffix} %}}")
 	tag.append(child_tag)
-	if child_tag_block_script:
+	if child_tag_block_script or new_block_data is not None:
 		tag.append("{% endwith %}")
 	tag.append("{% endwith %}")
 	tag.append("{% endwith %}")
@@ -909,19 +928,7 @@ def set_dynamic_content_placeholder(block, data_key=None):
 			if dynamic_value_doc.get("comesFrom") == "props":
 				key = f"props['{escape_single_quotes(dynamic_value_doc.get('key'))}']"
 			elif dynamic_value_doc.get("comesFrom") == "blockDataScript":
-				#TODO: do what the next else does?
-				if data_key:
-					key = f"{extract_data_key(data_key)}.{(dynamic_value_doc.get('key'))}"
-				else:
-					key = f"block.{original_key}"
-				# TODO: repeating code
-				if data_key:
-					# convert a.b to (a or {}).get('b', {})
-					# to avoid undefined error in jinja
-					keys = (key or "").split(".")
-					key = f"({keys[0]} or {{}})"
-					for k in keys[1:]:
-						key = f"{key}.get('{k}', {{}})"
+				key = f"block['{original_key}']"
 			else:
 				key = (
 					f"{extract_data_key(data_key)}.{dynamic_value_doc.get('key')}" if data_key else dynamic_value_doc.get("key")
@@ -1038,17 +1045,7 @@ def get_interpreted_prop_value(prop, data_key):
 				f"{{{{ {key} or '{escape_single_quotes(default_value) if default_value is not None else 'undefined'}' }}}}"
 			)
 		elif prop_comes_from == "blockDataScript":
-			key = (
-					f"{extract_data_key(data_key)}.{prop_value}" if data_key else prop_value
-				)
-			if data_key:
-				# convert a.b to (a or {}).get('b', {})
-				# to avoid undefined error in jinja
-				keys = (key or "").split(".")
-				key = f"({keys[0]} or {{}})"
-				for k in keys[1:]:
-					key = f"{key}.get('{k}', {{}})"
-			return f"{{{{ {key} or block['{escape_single_quotes(prop_value)}'] or '{escape_single_quotes(default_value) if default_value is not None else 'undefined'}' }}}}"
+			return f"{{{{ block['{escape_single_quotes(prop_value)}'] or '{escape_single_quotes(default_value) if default_value is not None else 'undefined'}' }}}}"
 	else:
 		if prop_is_standard:
 			# standard props are static only as of now

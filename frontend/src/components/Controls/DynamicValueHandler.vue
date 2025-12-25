@@ -66,9 +66,7 @@ import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
 import {
-	getCollectionKeys,
 	getDataArray,
-	getDataForKey,
 	getParentProps,
 	getPropValue,
 	getStandardPropValue,
@@ -251,15 +249,10 @@ const getValue = (item: DynamicValueItem): any => {
 };
 
 const getDataScriptValue = (path: string): any => {
-	let collectionObject = pageStore.pageData;
-
-	if (blockController.getFirstSelectedBlock()?.isInsideRepeater()) {
-		const keys = getCollectionKeys(blockController.getFirstSelectedBlock());
-		collectionObject = keys.reduce((acc: any, key: string) => {
-			const data = getDataForKey(acc, key);
-			return Array.isArray(data) && data.length > 0 ? data[0] : data;
-		}, collectionObject);
-	}
+	let collectionObject = props.block
+		? blockDataStore.getPageData(props.block.blockId) || {}
+		: blockDataStore.getPageData(blockController.getFirstSelectedBlock()?.blockId || "") || {};
+	collectionObject = collectionObject || pageStore.pageData || {};
 
 	return path.split(".").reduce((obj: Record<string, any>, key: string) => obj?.[key], collectionObject);
 };
