@@ -633,7 +633,7 @@ def get_block_html(blocks):
 
 				elif block.get("dataKey").get("comesFrom") == "blockDataScript":		
 					loop_var = f"block_key_{_key}"
-					_key = f"block['{escape_single_quotes(_key)}']"
+					_key = jinja_safe_key(f"block.{_key}")
 					new_block_data = loop_var
 					next_data_key = data_key
 				else:
@@ -666,9 +666,10 @@ def get_block_html(blocks):
 						else:
 							key = visibility_condition.get("key")
 							if visibility_condition.get("comesFrom") == "props":
-								visibility_key = f"props['{escape_single_quotes(key)}']"
+								visibility_key = f"props.{key}"
 							else:
-								visibility_key = f"block['{escape_single_quotes(key)}']"
+								visibility_key = f"block.{key}"
+						visibility_key = jinja_safe_key(visibility_key)
 
 					child_tag, child_tag_details = get_tag(
 						child, soup, data_key=data_key, default_props=default_props
@@ -928,44 +929,39 @@ def set_dynamic_content_placeholder(block, data_key=None):
 	dynamic_values = [block_data_key] if block_data_key else []
 	dynamic_values += block.get("dynamicValues", []) or []
 	for dynamic_value_doc in dynamic_values:
-		original_key = escape_single_quotes(dynamic_value_doc.get("key", ""))
+		original_key = dynamic_value_doc.get("key", "")
 		if not isinstance(dynamic_value_doc, dict):
 			# if dynamic_value_doc is a string, convert it to dict
 			dynamic_value_doc = {"key": dynamic_value_doc, "type": "key", "property": dynamic_value_doc}
 		if dynamic_value_doc and dynamic_value_doc.get("key"):
 			key = ""
 			if dynamic_value_doc.get("comesFrom") == "props":
-				key = f"props['{escape_single_quotes(dynamic_value_doc.get('key'))}']"
+				key = jinja_safe_key(f"props.{original_key}")
 			elif dynamic_value_doc.get("comesFrom") == "blockDataScript":
-				key = f"block['{original_key}']"
+				key = jinja_safe_key(f"block.{original_key}")
 			else:
 				key = (
 					f"{extract_data_key(data_key)}.{dynamic_value_doc.get('key')}" if data_key else dynamic_value_doc.get("key")
 				)
 				if data_key:
-					# convert a.b to (a or {}).get('b', {})
-					# to avoid undefined error in jinja
-					keys = (key or "").split(".")
-					key = f"({keys[0]} or {{}})"
-					for k in keys[1:]:
-						key = f"{key}.get('{k}', {{}})"
+					key = jinja_safe_key(key)
 
 			_property = dynamic_value_doc.get("property")
 			_type = dynamic_value_doc.get("type")
 			if _type == "attribute":
 				block["attributes"][_property] = (
-					f"{{{{ {key} or block['{original_key}'] or '{escape_single_quotes(block['attributes'].get(_property, ''))}' }}}}"
+					f"{{{{ {key} or '{escape_single_quotes(block['attributes'].get(_property, ''))}' }}}}"
 				)
 			elif _type == "style":
 				if not block["attributes"].get("style"):
 					block["attributes"]["style"] = ""
 				css_property = camel_case_to_kebab_case(_property)
 				block["attributes"]["style"] += (
-					f"{css_property}: {{{{ {key} or block['{original_key}'] or '{escape_single_quotes(block['baseStyles'].get(_property, '') or '')}' }}}};"
+					f"{css_property}: {{{{ {key} or '{escape_single_quotes(block['baseStyles'].get(_property, '') or '')}' }}}};"
 				)
 			elif _type == "key" and not block.get("isRepeaterBlock"):
 				block[_property] = (
-					f"{{{{ {key} if {key} or {key} in ['', 0] else block['{original_key}'] if block['{original_key}'] is defined else props['{original_key}'] if props['{original_key}'] is defined else '{escape_single_quotes(block.get(_property, ''))}' }}}}"
+					f"{{{{ {key} if {key} or {key} in ['', 0] else {jinja_safe_key(f'block.{original_key}')} if {jinja_safe_key(f'block.{original_key}')} is defined else {jinja_safe_key(f'props.{original_key}')} if {jinja_safe_key(f'props.{original_key}')} is defined else '{escape_single_quotes(block.get(_property, ''))}' }}}}"
 				)
 
 
@@ -1049,12 +1045,13 @@ def get_interpreted_prop_value(prop, data_key):
 		return default_value if prop_is_standard else "undefined"
 	if prop_is_dynamic:
 		if prop_comes_from == "dataScript":
-			key = f"{extract_data_key(data_key)}.{prop_value}" if data_key else prop_value
+			key = jinja_safe_key(f"{extract_data_key(data_key)}.{prop_value}") if data_key else prop_value
 			return (
 				f"{{{{ {key} or '{escape_single_quotes(default_value) if default_value is not None else 'undefined'}' }}}}"
 			)
 		elif prop_comes_from == "blockDataScript":
-			return f"{{{{ block['{escape_single_quotes(prop_value)}'] or '{escape_single_quotes(default_value) if default_value is not None else 'undefined'}' }}}}"
+			key = jinja_safe_key(f"block.{prop_value}")
+			return f"{{{{ {key} or '{escape_single_quotes(default_value) if default_value is not None else 'undefined'}' }}}}"
 	else:
 		if prop_is_standard:
 			# standard props are static only as of now
@@ -1083,6 +1080,14 @@ def extract_data_key(data_key):
 		return data_key.get("key")
 	return None
 
+def jinja_safe_key(key):
+    # convert a.b to (a or {}).get('b', {})
+	# to avoid undefined error in jinja
+	keys = (key or "").split(".")
+	key = f"({keys[0]} or {{}})"
+	for k in keys[1:]:
+		key = f"{key}.get('{k}', {{}})"
+	return key
 
 def reset_with_component(block, extended_with_component, component_children):
 	reset_block(block)
