@@ -1165,20 +1165,9 @@ const getStandardPropValue = (
 	}
 };
 
-const getDataArray = (
-	block: Block,
-	collectionObject: Record<string, any>,
-	comesFrom: BlockDataKey["comesFrom"],
-) => {
+const getDataArray = (collectionObject: Record<string, any>) => {
 	const result: string[] = [];
 	let collectionObjectCopy = { ...collectionObject };
-	if (block.isInsideRepeater() && comesFrom == "dataScript") {
-		const keys = getCollectionKeys(block, comesFrom);
-		collectionObjectCopy = keys.reduce((acc: any, key: string) => {
-			const data = getDataForKey(acc, key);
-			return Array.isArray(data) && data.length > 0 ? data[0] : data;
-		}, collectionObjectCopy);
-	}
 
 	function processObject(obj: Record<string, any>, prefix = "") {
 		Object.entries(obj).forEach(([key, value]) => {

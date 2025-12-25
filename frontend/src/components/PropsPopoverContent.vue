@@ -292,11 +292,7 @@ const setPropType = (type: string) => {
 const pageDataArray = computed(() => {
 	const currentBlock = blockController.getFirstSelectedBlock();
 	if (currentBlock) {
-		return getDataArray(
-			blockController.getFirstSelectedBlock(),
-			blockDataStore.getPageData(currentBlock.blockId) || {},
-			"dataScript",
-		);
+		return getDataArray(blockDataStore.getPageData(currentBlock.blockId) || {});
 	}
 	return [];
 });
@@ -304,11 +300,7 @@ const pageDataArray = computed(() => {
 const blockDataArray = computed(() => {
 	const currentBlock = blockController.getFirstSelectedBlock();
 	if (currentBlock) {
-		return getDataArray(
-			currentBlock,
-			blockDataStore.getBlockData(currentBlock.blockId, "passedDown") || {},
-			"blockDataScript",
-		);
+		return getDataArray(blockDataStore.getBlockData(currentBlock.blockId, "passedDown") || {});
 	}
 	return [];
 });

@@ -65,12 +65,7 @@ import useBlockDataStore from "@/stores/blockDataStore";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
-import {
-	getDataArray,
-	getParentProps,
-	getPropValue,
-	getStandardPropValue,
-} from "@/utils/helpers";
+import { getDataArray, getParentProps, getPropValue, getStandardPropValue } from "@/utils/helpers";
 import { computed, ref } from "vue";
 
 const pageStore = usePageStore();
@@ -100,7 +95,7 @@ const searchQuery = ref("");
 
 const pageDataArray = computed(() => {
 	const currentBlock = props.block || blockController.getFirstSelectedBlock();
-	return getDataArray(currentBlock, pageStore.pageData, "dataScript");
+	return getDataArray(blockDataStore.getPageData(currentBlock?.blockId) || pageStore.pageData);
 });
 
 const blockDataArray = computed(() => {
@@ -113,11 +108,7 @@ const blockDataArray = computed(() => {
 		filter = "own";
 	}
 	if (currentBlock) {
-		return getDataArray(
-			currentBlock,
-			blockDataStore.getBlockData(currentBlock.blockId, filter) || {},
-			"blockDataScript",
-		);
+		return getDataArray(blockDataStore.getBlockData(currentBlock.blockId, filter) || {});
 	}
 	return [];
 });
@@ -229,8 +220,6 @@ const filteredItems = computed(() => {
 });
 
 const selectedItem = ref<DynamicValueItem | null>(props.selectedValue || null);
-
-
 
 const getValue = (item: DynamicValueItem): any => {
 	if (item.comesFrom == "props") {

@@ -38,18 +38,9 @@ const getOptions = async (query: string) => {
 	}
 
 	if (currentBlock) {
+		pageDataArray = getDataArray(blockDataStore.getPageData(currentBlock.blockId) || {});
 
-		pageDataArray = getDataArray(
-			currentBlock,
-			blockDataStore.getPageData(currentBlock.blockId) || {},
-			"dataScript",
-		);
-
-		blockDataArray = getDataArray(
-			currentBlock,
-			blockDataStore.getBlockData(currentBlock.blockId) || {},
-			"blockDataScript",
-		);
+		blockDataArray = getDataArray(blockDataStore.getBlockData(currentBlock.blockId) || {});
 
 		ownProps = Object.keys(currentBlock.getBlockProps());
 
