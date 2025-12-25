@@ -22,7 +22,7 @@
 			:class="labelPlacement === 'top' ? 'items-start' : 'items-center'">
 			<!-- Left label placement (original layout) -->
 			<div
-				class="flex w-[88px] shrink-0 items-center"
+				class="flex w-fit max-w-[88px] shrink-0 items-center"
 				v-if="labelPlacement === 'left' && (enableStateControls || label)">
 				<Dropdown v-if="enableStateControls || allowDynamicValue" size="sm" :options="options">
 					<template v-slot="{ open }">
@@ -145,7 +145,7 @@ const props = withDefaults(
 	{
 		placeholder: "unset",
 		type: "text",
-		controlType: "style",
+		controlType: "key",
 		enableSlider: false,
 		unitOptions: () => [],
 		changeFactor: 1,

@@ -43,7 +43,18 @@ import useCanvasStore from "@/stores/canvasStore";
 import { setFont } from "@/utils/fontManager";
 import { getDataForKey, getPropValue, saferExecuteBlockClientScript } from "@/utils/helpers";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
-import { computed, inject, nextTick, onMounted, onUnmounted, reactive, ref, useAttrs, watch, watchEffect } from "vue";
+import {
+	computed,
+	inject,
+	nextTick,
+	onMounted,
+	onUnmounted,
+	reactive,
+	ref,
+	useAttrs,
+	watch,
+	watchEffect,
+} from "vue";
 import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
 import DataLoaderBlock from "./DataLoaderBlock.vue";
@@ -419,9 +430,26 @@ const isEditable = computed(() => {
 });
 
 const hiddenDueToVisibilityCondition = computed(() => {
-	return props.block.getVisibilityCondition()
-		? !Boolean(getDataForKey(props.data || {}, props.block.getVisibilityCondition() as string))
-		: false;
+	const visibilityCondition = props.block.getVisibilityCondition();
+	const key = visibilityCondition?.key;
+	const comesFrom = visibilityCondition?.comesFrom || "dataScript";
+	if(!key) return false;
+	if (comesFrom == "blockDataScript") {
+		const value = getBlockDataScriptValue(key as string);
+		return !Boolean(value);
+	} else if (comesFrom == "dataScript") {
+		const value = getDataScriptValue(key as string);
+		return !Boolean(value);
+	} else {
+		const value = getPropValue(
+			key as string,
+			props.block,
+			getDataScriptValue,
+			getBlockDataScriptValue,
+			props.defaultProps,
+		);
+		return !Boolean(value);
+	}
 });
 
 if (!props.preview) {

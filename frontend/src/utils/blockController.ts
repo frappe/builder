@@ -116,17 +116,39 @@ const blockController = {
 		});
 	},
 	getKeyValue: (key: "element" | "innerHTML" | "visibilityCondition") => {
-		let keyValue = "__initial__" as StyleValue | undefined;
-		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
-			if (keyValue === "__initial__") {
-				keyValue = block[key];
-			} else if (keyValue !== block[key]) {
-				keyValue = "Mixed";
-			}
-		});
-		return keyValue;
+		if (key !== "visibilityCondition") {
+			let keyValue = "__initial__" as StyleValue | undefined;
+			canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
+				if (keyValue === "__initial__") {
+					keyValue = block[key];
+				} else if (keyValue !== block[key]) {
+					keyValue = "Mixed";
+				}
+			});
+			return keyValue;
+		} else {
+			// TODO: handle it better
+			let key: string | undefined = "__initial__";
+			let comesFrom: "props" | "dataScript" | "blockDataScript" | undefined = undefined;
+			canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
+				const condition: BlockVisibilityCondition | undefined = block.getVisibilityCondition();
+				if (key === "__initial__") {
+					if (condition) {
+						key = condition.key;
+						comesFrom = condition.comesFrom;
+					} else {
+						key = undefined;
+						comesFrom = undefined;
+					}
+				} else if (condition?.comesFrom !== comesFrom || condition?.key !== key) {
+					key = "Mixed";
+					comesFrom = undefined;
+				}
+			});
+			return { key, comesFrom };
+		}
 	},
-	setKeyValue: (key: "element" | "innerHTML" | "visibilityCondition", value: string) => {
+	setKeyValue: (key: "element" | "innerHTML" | "visibilityCondition", value: any) => {
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 			if (key === "element" && block.blockName === "container") {
 				// reset blockName since it will not be a container anymore

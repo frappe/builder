@@ -37,7 +37,7 @@ class Block implements BlockOptions {
 	isChildOfComponent?: string;
 	referenceBlockId?: string;
 	isRepeaterBlock?: boolean;
-	visibilityCondition?: string;
+	visibilityCondition?: BlockVisibilityCondition;
 	elementBeforeConversion?: string;
 	parentBlock: Block | null;
 	activeState?: string | null = null;
@@ -56,7 +56,6 @@ class Block implements BlockOptions {
 		this.isRepeaterBlock = options.isRepeaterBlock;
 		this.isChildOfComponent = options.isChildOfComponent;
 		this.referenceBlockId = options.referenceBlockId;
-		this.visibilityCondition = options.visibilityCondition;
 		this.parentBlock = options.parentBlock || null;
 		if (this.extendedFromComponent) {
 			componentStore.loadComponent(this.extendedFromComponent);
@@ -79,6 +78,15 @@ class Block implements BlockOptions {
 
 		if (options.innerText) {
 			this.innerHTML = options.innerText;
+		}
+
+		if (typeof options.visibilityCondition == "string") {
+			this.visibilityCondition = {
+				key: options.visibilityCondition,
+				comesFrom: "dataScript",
+			};
+		} else {
+			this.visibilityCondition = options.visibilityCondition;
 		}
 
 		this.originalElement = options.originalElement;

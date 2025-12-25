@@ -26,6 +26,11 @@ declare type BlockProps = Record<
 	}
 >;
 
+declare type BlockVisibilityCondition = {
+	key: string | undefined;
+	comesFrom: "props" | "dataScript" | "blockDataScript" | undefined;
+};
+
 declare interface BlockAttributeMap {
 	[key: string]: string | number | null | undefined;
 }

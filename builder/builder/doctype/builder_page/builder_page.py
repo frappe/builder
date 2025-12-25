@@ -655,20 +655,25 @@ def get_block_html(blocks):
 				tag.append("{% endfor %}")
 			else:
 				for child in block.get("children", []) or []:
+					visibility_key = None
 					if child.get("visibilityCondition"):
-						key = child.get("visibilityCondition")
-						# TODO: enable props based visibility conditions
-						if data_key:
-							key = f"{extract_data_key(data_key)}.{key}"
-						tag.append(f"{{% if {key} %}}")
+						visibility_condition = child.get("visibilityCondition")
+						if type(visibility_condition) == str or visibility_condition.get("comesFrom", "dataScript") == "dataScript":
+							if data_key:
+								visibility_key = f"{extract_data_key(data_key)}.{key}"
+							else:
+								visibility_key = visibility_condition.get("key")
+						else:
+							key = visibility_condition.get("key")
+							if visibility_condition.get("comesFrom") == "props":
+								visibility_key = f"props['{escape_single_quotes(key)}']"
+							else:
+								visibility_key = f"block['{escape_single_quotes(key)}']"
 
 					child_tag, child_tag_details = get_tag(
 						child, soup, data_key=data_key, default_props=default_props
 					)
-					append_child_tag(tag, child_tag, child_tag_details)
-
-					if child.get("visibilityCondition"):
-						tag.append("{% endif %}")
+					append_child_tag(tag, child_tag, child_tag_details, visibility_key)
 
 			if element == "body":
 				tag.append("{% include 'templates/generators/webpage_scripts.html' %}")
@@ -859,7 +864,7 @@ def extend_block(block, overridden_block):
 	return block
 
 
-def append_child_tag(tag, child_tag, child_tag_details: dict):
+def append_child_tag(tag, child_tag, child_tag_details, visibility_key=None):
 	child_tag_props = child_tag_details.get('all_props')
 	child_passed_down_props = child_tag_details.get('passed_down_props')
 	child_tag_std_props = child_tag_details.get('std_props')
@@ -875,7 +880,11 @@ def append_child_tag(tag, child_tag, child_tag_details: dict):
 		block_value = new_block_data if new_block_data is not None else "block"
 		script_suffix = f"| execute_script_and_combine('{escape_single_quotes(child_tag_block_script)}', props)" if child_tag_block_script else ""
 		tag.append(f"{{% with block = {block_value} {script_suffix} %}}")
+	if visibility_key:
+		tag.append(f"{{% if {visibility_key} %}}")
 	tag.append(child_tag)
+	if visibility_key:
+		tag.append("{% endif %}")
 	if child_tag_block_script or new_block_data is not None:
 		tag.append("{% endwith %}")
 	tag.append("{% endwith %}")
