@@ -256,9 +256,8 @@ class BuilderPage(WebsiteGenerator):
 			context.title = page_data.get("page_title")
 
 		blocks = self.blocks
-
-		if self.dynamic_route or page_data:
-			context.no_cache = 1
+		# detect dynamic_route or block/page data, forcing true for now
+		context.no_cache = 1
 
 		context.preview = getattr(getattr(frappe.local, "request", None), "for_preview", None)
 
@@ -714,10 +713,10 @@ def get_block_html(blocks):
 			if tag_details.get('std_props'):
 				html = f"{{% with std_props = {tag_details.get('std_props')} %}}{html}{{% endwith %}}"
 
-		print("Final HTML: ", html)
-		# write to file
-		with open("output.html", "w") as f:
-			f.write(html)
+		# print("Final HTML: ", html)
+		# # write to file
+		# with open("output.html", "w") as f:
+		# 	f.write(html)
 		return html, str(style_tag), font_map
 
 	data = get_html(blocks, soup)
