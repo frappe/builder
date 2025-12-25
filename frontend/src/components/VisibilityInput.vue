@@ -1,17 +1,28 @@
 <template>
-	<GenericControl
-		:component="Autocomplete"
-		:label="label"
-		:getOptions="getOptions"
-		:getModelValue="getModelValue"
-		@update:modelValue="handleModelValueUpdate" />
+	<div class="flex w-full flex-col gap-2">
+		<div class="relative flex w-full items-center gap-2">
+			<div class="flex w-fit max-w-[88px] shrink-0 items-center">
+				<InputLabel class="truncate" v-if="label">
+					{{ label }}
+				</InputLabel>
+			</div>
+
+			<div class="relative w-full">
+				<Autocomplete
+					ref="autocompleteRef"
+					:modelValue="getModelValue()"
+					:getOptions="getOptions"
+					@update:modelValue="handleModelValueUpdate" />
+			</div>
+		</div>
+	</div>
 </template>
 <script setup lang="ts">
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
-import GenericControl from "@/components/Controls/GenericControl.vue";
 import useBlockDataStore from "@/stores/blockDataStore";
 import blockController from "@/utils/blockController";
 import { getDataArray, getParentProps, getStandardPropValue } from "@/utils/helpers";
+import { computed, ref, watch } from "vue";
 
 const props = defineProps<{
 	property: styleProperty;
@@ -20,60 +31,66 @@ const props = defineProps<{
 	setModelValue: (value: BlockVisibilityCondition) => void;
 }>();
 
-const getOptions = async (query: string) => {
-	const blockDataStore = useBlockDataStore();
+const blockDataStore = useBlockDataStore();
 
-	let options: { label: string; value: string }[] = [];
+const autocompleteRef = ref<InstanceType<typeof Autocomplete> | null>(null);
 
-	let pageDataArray: string[] = [];
-	let blockDataArray: string[] = [];
-	let ownProps: string[] = [];
-	let parentProps: string[] = [];
-	let defaultProps: string[] = [];
-
+const pageDataArray = computed(() => {
 	const currentBlock = blockController.getFirstSelectedBlock();
-
 	if (!currentBlock) {
-		return options;
+		return [];
 	}
-
-	if (currentBlock) {
-		pageDataArray = getDataArray(blockDataStore.getPageData(currentBlock.blockId) || {});
-
-		blockDataArray = getDataArray(blockDataStore.getBlockData(currentBlock.blockId) || {});
-
-		ownProps = Object.keys(currentBlock.getBlockProps());
-
-		parentProps = Object.keys(getParentProps(currentBlock, {}));
-
-		const isCurrentBlockInRepeater = currentBlock?.isInsideRepeater();
-		const repeaterRoot = isCurrentBlockInRepeater ? currentBlock?.getRepeaterParent() : null;
-		if (repeaterRoot) {
-			const key = repeaterRoot.getDataKey("key");
-			const comesFrom = repeaterRoot.getDataKey("comesFrom");
-			if (key && comesFrom === "props") {
-				const componentRoot = blockController.getComponentRootBlock(repeaterRoot);
-				const parsedValue = getStandardPropValue(key, componentRoot)?.value;
-				if (!parsedValue) return {};
+	return getDataArray(blockDataStore.getPageData(currentBlock.blockId) || {});
+});
+const blockDataArray = computed(() => {
+	const currentBlock = blockController.getFirstSelectedBlock();
+	if (!currentBlock) {
+		return [];
+	}
+	return getDataArray(blockDataStore.getBlockData(currentBlock.blockId) || {});
+});
+const ownProps = computed(() => {
+	const currentBlock = blockController.getFirstSelectedBlock();
+	if (!currentBlock) {
+		return [];
+	}
+	return Object.keys(currentBlock.getBlockProps());
+});
+const parentProps = computed(() => {
+	const currentBlock = blockController.getFirstSelectedBlock();
+	if (!currentBlock) {
+		return [];
+	}
+	return Object.keys(getParentProps(currentBlock, {}));
+});
+const defaultProps = computed(() => {
+	const currentBlock = blockController.getFirstSelectedBlock();
+	if (!currentBlock) {
+		return [];
+	}
+	const isCurrentBlockInRepeater = currentBlock?.isInsideRepeater();
+	const repeaterRoot = isCurrentBlockInRepeater ? currentBlock?.getRepeaterParent() : null;
+	if (repeaterRoot) {
+		const key = repeaterRoot.getDataKey("key");
+		const comesFrom = repeaterRoot.getDataKey("comesFrom");
+		if (key && comesFrom === "props") {
+			const componentRoot = blockController.getComponentRootBlock(repeaterRoot);
+			const parsedValue = getStandardPropValue(key, componentRoot)?.value;
+			if (parsedValue) {
 				if (Array.isArray(parsedValue)) {
-					defaultProps = ["item"];
+					return ["item"];
 				} else if (typeof parsedValue === "object") {
-					defaultProps = ["key", "value"];
+					return ["key", "value"];
 				}
 			}
 		}
 	}
+	return [];
+});
+const getOptions = async (query: string) => {
+	let options: { label: string; value: string }[] = [];
 
-	const combinedProps = [...ownProps, ...parentProps].reduce((acc, prop) => {
-		if (!acc.find((p: string) => p === prop)) {
-			acc.push(prop);
-		}
-		return acc;
-	}, [] as string[]);
-
-	console.log({ pageDataArray, blockDataArray, combinedProps }, query);
-
-	pageDataArray.map((prop) => {
+	pageDataArray.value.map((prop) => {
 		if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
 			options.push({
 				label: prop,
@@ -81,7 +98,7 @@ const getOptions = async (query: string) => {
 			});
 		}
 	});
-	blockDataArray.map((prop) => {
+	blockDataArray.value.map((prop) => {
 		if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
 			options.push({
 				label: prop,
@@ -89,6 +106,7 @@ const getOptions = async (query: string) => {
 			});
 		}
 	});
+	const combinedProps = [...new Set([...ownProps.value, ...parentProps.value])];
 
 	combinedProps.map((prop) => {
 		if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
@@ -98,7 +116,7 @@ const getOptions = async (query: string) => {
 			});
 		}
 	});
-	defaultProps.map((prop) => {
+	defaultProps.value.map((prop) => {
 		if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
 			options.push({
 				label: prop,
@@ -119,4 +137,12 @@ const handleModelValueUpdate = (value: string | null) => {
 	const comesFrom = value.split("--").slice(-1)[0];
 	props.setModelValue({ key, comesFrom: comesFrom as BlockVisibilityCondition["comesFrom"] });
 };
+
+watch(
+	[pageDataArray, blockDataArray, ownProps, parentProps, defaultProps],
+	() => {
+		autocompleteRef.value?.refreshOptions();
+	},
+	{ immediate: true },
+);
 </script>
