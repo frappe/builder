@@ -28,7 +28,6 @@ const getBlockDataScriptValue = (path: string): any => {
 const getDynamicContent = () => {
 	let innerHTML = null as string | null;
 	if (props.data || props.blockData || hasBlockProps.value) {
-		const data = props.data; // to "freeze" props.data for getDataScriptValue
 		if (props.block.getDataKey("property") === "innerHTML") {
 			let value;
 			if (props.block.getDataKey("comesFrom") === "props") {
