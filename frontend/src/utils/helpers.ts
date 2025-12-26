@@ -1104,42 +1104,51 @@ const getPropValue = (
 	getBlockScriptValue: (path: string) => any,
 	defaultProps?: Record<string, any> | null,
 ): any => {
-	if (defaultProps && defaultProps[propName] !== undefined) {
+	// Check default props first
+	if (defaultProps?.[propName] !== undefined) {
 		return defaultProps[propName].value;
 	}
+
+	// Find matching prop from block or parent
 	const blockProps = block.getBlockProps();
-	if (blockProps[propName]) {
-		const prop = blockProps[propName];
-		if (prop.isDynamic) {
-			if (prop.comesFrom === "dataScript" && prop.value) {
-				return getDataScriptValue(prop.value);
-			} else if (prop.comesFrom === "blockDataScript" && prop.value) {
-				return getBlockScriptValue(prop.value);
-			} else {
-				if (prop.value && defaultProps && defaultProps[prop.value] !== undefined) {
-					return defaultProps[prop.value].value;
-				}
-			}
-		} else {
-			if (prop.isStandard && prop.standardOptions) {
-				if (prop.standardOptions.type !== "string" && prop.standardOptions.type !== "select") {
-					return prop.value ? JSON.parse(prop.value) : prop.standardOptions?.options?.defaultValue || null;
-				} else {
-					return prop.value || prop.standardOptions?.options?.defaultValue || null;
-				}
-			}
-			return prop.value;
-		}
-	} else {
-		const parentMatchingProp = getParentProps(block, {})[propName]
-		if(parentMatchingProp) {
-			if (parentMatchingProp.isStandard)
-			{
-				return parentMatchingProp.value || parentMatchingProp.standardOptions?.options?.defaultValue;
-			}
-			return parentMatchingProp.value
-		}
+	const matchingProp = blockProps[propName] ?? getParentProps(block, {})[propName];
+
+	if (!matchingProp) {
+		return undefined;
 	}
+
+	// Handle dynamic props
+	if (matchingProp.isDynamic) {
+		
+		if (matchingProp.comesFrom === "dataScript" && matchingProp.value) {
+			return getDataScriptValue(matchingProp.value);
+		}
+		
+		if (matchingProp.comesFrom === "blockDataScript" && matchingProp.value) {
+			return getBlockScriptValue(matchingProp.value);
+		}
+		
+		// Fallback to default props
+		if (matchingProp.value && defaultProps?.[matchingProp.value] !== undefined) {
+			return defaultProps[matchingProp.value].value;
+		}
+		
+		return undefined;
+	}
+
+	// Handle standard props
+	if (matchingProp.isStandard && matchingProp.standardOptions) {
+		const { type, options } = matchingProp.standardOptions;
+		const defaultValue = options?.defaultValue ?? null;
+		
+		if (type !== "string" && type !== "select") {
+			return matchingProp.value ? JSON.parse(matchingProp.value) : defaultValue;
+		}
+		
+		return matchingProp.value || defaultValue;
+	}
+
+	return matchingProp.value;
 };
 
 const getStandardPropValue = (

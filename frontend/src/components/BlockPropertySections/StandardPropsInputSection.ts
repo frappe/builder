@@ -62,7 +62,7 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 			}
 		},
 		setDynamicValue: (key: string | null, comesFrom: BlockProps[string]["comesFrom"]) => {
-			blockController.setBlockProp(propName, { value: key || "", isDynamic: Boolean(key), comesFrom });
+			blockController.setBlockProp(propName, { value: key || "", isDynamic: key !== null, comesFrom });
 		},
 		setModelValue: (value: any) => {
 			blockController.setBlockProp(propName, { value });

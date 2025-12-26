@@ -106,7 +106,7 @@ const hasBlockProps = computed(() => {
 
 const textContent = computed(() => {
 	let innerHTML = props.block.getInnerHTML();
-	if (props.data || hasBlockProps.value) {
+	if (props.data || props.blockData || hasBlockProps.value) {
 		const dynamicContent = getDynamicContent();
 		if (dynamicContent) {
 			innerHTML = dynamicContent;
