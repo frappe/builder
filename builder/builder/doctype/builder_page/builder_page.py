@@ -518,7 +518,7 @@ def get_block_html(blocks):
 		map_of_std_props_info = {}
 		html = ""
 
-		def get_tag(block, soup, data_key=None, default_props=None):
+		def get_tag(block, soup, data_key=None):
 			block = extend_with_component(block)
 
 			props_obj = {}
@@ -533,11 +533,6 @@ def get_block_html(blocks):
 						map_of_std_props_info.setdefault(prop_name, []).append(prop_info)
 					
 					props_obj[prop_name] = {"value": interpreted_value, "is_standard": is_standard, "is_passed_down": is_passed_down}
-
-			# when inside props repeater, child blocks get the loop vars as their default props
-			if default_props:
-				for prop in default_props:
-					props_obj[prop] = {"value": f"{{{{ {prop} }}}}", "is_standard": False, "is_passed_down": True}
 
 			set_dynamic_content_placeholder(block, data_key)
 			element = block.get("originalElement") or block.get("element")
@@ -617,12 +612,9 @@ def get_block_html(blocks):
 				_key = block.get("dataKey").get("key")
 				loop_var = ""
 				next_data_key = None
-				next_default_props = None
-				new_block_data = None
 
 				if block.get("dataKey").get("comesFrom", "dataScript") == "props":
 					loop_vars = get_loop_vars(map_of_std_props_info, _key)
-					next_default_props = loop_vars
 
 					loop_var = ", ".join(loop_vars)  # `item` for array and `key, value` for object
 					_key = f"std_props['{escape_single_quotes(_key)}']"
@@ -635,7 +627,6 @@ def get_block_html(blocks):
 					# this way they do not inherit the parent block's data script context, but get their own from the loop var
 					loop_var = f"block"
 					_key = jinja_safe_key(f"block.{_key}")
-					new_block_data = loop_var
 					next_data_key = data_key
 				else:
 					if data_key:
@@ -643,16 +634,23 @@ def get_block_html(blocks):
 					loop_var = f"key_{_key.replace('.', '__')}"
 					next_data_key = {"key": loop_var, "comesFrom": "dataScript"}
 
-				if default_props:  # carried over from parent repeater
-					next_default_props = default_props + (next_default_props or [])
 
 				tag.append(f"{{% for {loop_var} in {_key} %}}")
 
+				if block.get("dataKey").get("comesFrom", "dataScript") == "props":
+					loop_vars = get_loop_vars(map_of_std_props_info, block.get("dataKey").get("key"))
+					default_props = ", ".join(
+						[f"'{var}': {var}" for var in loop_vars]
+					)
+					tag.append(f"{{% with props = props | combine({{ {default_props} }}) %}}")
+					tag.append(f"{{% with passed_down_props = passed_down_props | combine({{ {default_props} }}) %}}")
+
 				child_tag, child_tag_details = get_tag(
-					block.get("children")[0], soup, next_data_key, next_default_props
+					block.get("children")[0], soup, next_data_key
 				)
 				append_child_tag(tag, child_tag, child_tag_details)
-
+				if block.get("dataKey").get("comesFrom", "dataScript") == "props":
+					tag.append("{% endwith %}{% endwith %}")
 				tag.append("{% endfor %}")
 			else:
 				for child in block.get("children", []) or []:
@@ -673,7 +671,7 @@ def get_block_html(blocks):
 						visibility_key = jinja_safe_key(visibility_key)
 
 					child_tag, child_tag_details = get_tag(
-						child, soup, data_key=data_key, default_props=default_props
+						child, soup, data_key=data_key
 					)
 					append_child_tag(tag, child_tag, child_tag_details, visibility_key)
 
@@ -871,11 +869,10 @@ def append_child_tag(tag, child_tag, child_tag_details, visibility_key=None):
 	child_tag_std_props = child_tag_details.get('std_props')
 	child_tag_block_script = child_tag_details.get('block_data_script')
 
-	if child_tag_std_props:
-		tag.append(f"{{% with std_props = {child_tag_std_props} %}}")
-
 	tag.append(f"{{% with props = {child_tag_props} | combine(passed_down_props) %}}")
 	tag.append(f"{{% with passed_down_props = passed_down_props | combine({child_passed_down_props}) %}}")
+	if child_tag_std_props:
+		tag.append(f"{{% with std_props = {child_tag_std_props} %}}")
 	if child_tag_block_script:
 		tag.append(f"{{% with block = block | execute_script_and_combine('{escape_single_quotes(child_tag_block_script)}', props) %}}")
 	if visibility_key:
@@ -885,11 +882,10 @@ def append_child_tag(tag, child_tag, child_tag_details, visibility_key=None):
 		tag.append("{% endif %}")
 	if child_tag_block_script:
 		tag.append("{% endwith %}")
-	tag.append("{% endwith %}")
-	tag.append("{% endwith %}")
-
 	if child_tag_std_props:
 		tag.append("{% endwith %}")
+	tag.append("{% endwith %}")
+	tag.append("{% endwith %}")
 
 
 def to_jinja_literal(obj):
@@ -1048,6 +1044,9 @@ def get_interpreted_prop_value(prop, data_key):
 			)
 		elif prop_comes_from == "blockDataScript":
 			key = jinja_safe_key(f"block.{prop_value}")
+			return f"{{{{ {key} or '{escape_single_quotes(default_value) if default_value is not None else 'undefined'}' }}}}"
+		elif prop_comes_from == "props":
+			key = jinja_safe_key(f"props.{prop_value}")
 			return f"{{{{ {key} or '{escape_single_quotes(default_value) if default_value is not None else 'undefined'}' }}}}"
 	else:
 		if prop_is_standard:
