@@ -1075,6 +1075,7 @@ function resetBlock(
 		block.dataKey = null;
 		block.props = {};
 		block.blockClientScript = "";
+		block.blockDataScript = "";
 	}
 
 	if (resetChildren) {
