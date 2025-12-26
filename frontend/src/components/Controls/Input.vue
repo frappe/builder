@@ -1,8 +1,18 @@
 <template>
 	<div class="relative w-full">
+		<Select
+			v-if="type === 'select'"
+			:modelValue="data as string"
+			@update:modelValue="(value) => (data = value as typeof data)"
+			:disabled="disabled"
+			v-bind="attrs" />
 		<FormControl
+			v-else
 			:type="type"
 			@change="triggerUpdate"
+			@paste="triggerUpdate"
+			@cut="triggerUpdate"
+			@focus="handleFocus"
 			@input="($event: Event) => emit('input', ($event.target as HTMLInputElement).value)"
 			autocomplete="off"
 			:autofocus="autofocus"
@@ -32,6 +42,7 @@
 <script lang="ts" setup>
 import CrossIcon from "@/components/Icons/Cross.vue";
 import { useDebounceFn, useVModel } from "@vueuse/core";
+import { Select } from "frappe-ui";
 import { useAttrs } from "vue";
 
 const props = withDefaults(
@@ -41,10 +52,12 @@ const props = withDefaults(
 		hideClearButton?: boolean;
 		autofocus?: boolean;
 		disabled?: boolean;
+		selectOnFocus?: boolean;
 	}>(),
 	{
 		type: "text",
 		modelValue: "",
+		selectOnFocus: true,
 	},
 );
 const emit = defineEmits(["update:modelValue", "input"]);
@@ -67,4 +80,13 @@ const triggerUpdate = useDebounceFn(($event: Event) => {
 		emit("update:modelValue", ($event.target as HTMLInputElement).value);
 	}
 }, 100);
+
+const handleFocus = ($event: Event) => {
+	if (props.selectOnFocus && !props.disabled && props.type !== "checkbox") {
+		const target = $event.target as HTMLInputElement;
+		setTimeout(() => {
+			target.select();
+		}, 0);
+	}
+};
 </script>

@@ -332,6 +332,12 @@ class BuilderPage(WebsiteGenerator):
 			return True
 
 	def set_style_and_script(self, context):
+		builder_settings = frappe.get_cached_doc("Builder Settings", "Builder Settings")
+		if builder_settings.script:
+			context.setdefault("scripts", []).append(builder_settings.script_public_url)
+		if builder_settings.style:
+			context.setdefault("styles", []).append(builder_settings.style_public_url)
+
 		client_scripts = self.get("client_scripts") or []
 		for script in client_scripts:
 			script_doc = frappe.get_cached_doc("Builder Client Script", script.builder_script)
@@ -346,21 +352,15 @@ class BuilderPage(WebsiteGenerator):
 		if not context.get("_body_html"):
 			context._body_html = ""
 
-		if self.head_html:
-			context._head_html += self.head_html
-
-		if self.body_html:
-			context._body_html += self.body_html
-
-		builder_settings = frappe.get_cached_doc("Builder Settings", "Builder Settings")
-		if builder_settings.script:
-			context.setdefault("scripts", []).append(builder_settings.script_public_url)
-		if builder_settings.style:
-			context.setdefault("styles", []).append(builder_settings.style_public_url)
 		if builder_settings.head_html:
 			context._head_html += builder_settings.head_html
 		if builder_settings.body_html:
 			context._body_html += builder_settings.body_html
+
+		if self.head_html:
+			context._head_html += self.head_html
+		if self.body_html:
+			context._body_html += self.body_html
 
 		context["_head_html"] = render_template(context._head_html, context)
 		context["_body_html"] = render_template(context._body_html, context)

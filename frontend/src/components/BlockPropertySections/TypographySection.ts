@@ -107,6 +107,7 @@ const typographySectionProperties = [
 				styleProperty: "fontSize",
 				enableSlider: true,
 				minValue: 1,
+				unitOptions: ["px", "em", "rem"],
 			};
 		},
 		searchKeyWords: "Font, Size, FontSize",
