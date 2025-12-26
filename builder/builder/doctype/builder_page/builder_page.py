@@ -2,7 +2,6 @@
 # For license information, please see license.txt
 
 import copy
-import json
 import os
 import re
 import shutil
@@ -514,7 +513,6 @@ def get_block_html(blocks):
 
 	def get_html(blocks, soup):
 
-		# same as above but for std. props info (not values), used to idenitfy the type of looping vars (array or object) in repeaters
 		map_of_std_props_info = {}
 		html = ""
 
@@ -612,8 +610,9 @@ def get_block_html(blocks):
 				_key = block.get("dataKey").get("key")
 				loop_var = ""
 				next_data_key = None
+				comes_from = block.get("dataKey").get("comesFrom", "dataScript")
 
-				if block.get("dataKey").get("comesFrom", "dataScript") == "props":
+				if comes_from == "props":
 					loop_vars = get_loop_vars(map_of_std_props_info, _key)
 
 					loop_var = ", ".join(loop_vars)  # `item` for array and `key, value` for object
@@ -622,10 +621,10 @@ def get_block_html(blocks):
 					if len(loop_vars) > 1:  # object repeater
 						_key = f"{_key}.items()"
 
-				elif block.get("dataKey").get("comesFrom") == "blockDataScript":		
+				elif comes_from == "blockDataScript":		
 					# using 'block' as loop var to reset the block data script context for repeater children
 					# this way they do not inherit the parent block's data script context, but get their own from the loop var
-					loop_var = f"block"
+					loop_var = "block"
 					_key = jinja_safe_key(f"block.{_key}")
 					next_data_key = data_key
 				else:
@@ -637,27 +636,25 @@ def get_block_html(blocks):
 
 				tag.append(f"{{% for {loop_var} in {_key} %}}")
 
-				if block.get("dataKey").get("comesFrom", "dataScript") == "props":
+				if comes_from == "props":
 					loop_vars = get_loop_vars(map_of_std_props_info, block.get("dataKey").get("key"))
-					default_props = ", ".join(
-						[f"'{var}': {var}" for var in loop_vars]
-					)
+					default_props = ", ".join([f"'{var}': {var}" for var in loop_vars])
 					tag.append(f"{{% with props = props | combine({{ {default_props} }}) %}}")
 					tag.append(f"{{% with passed_down_props = passed_down_props | combine({{ {default_props} }}) %}}")
 
-				child_tag, child_tag_details = get_tag(
-					block.get("children")[0], soup, next_data_key
-				)
+				child_tag, child_tag_details = get_tag(block.get("children")[0], soup, next_data_key)
 				append_child_tag(tag, child_tag, child_tag_details)
-				if block.get("dataKey").get("comesFrom", "dataScript") == "props":
+    
+				if comes_from == "props":
 					tag.append("{% endwith %}{% endwith %}")
+     
 				tag.append("{% endfor %}")
 			else:
 				for child in block.get("children", []) or []:
 					visibility_key = None
 					if child.get("visibilityCondition"):
 						visibility_condition = child.get("visibilityCondition")
-						if type(visibility_condition) == str or visibility_condition.get("comesFrom", "dataScript") == "dataScript":
+						if isinstance(visibility_condition, str) or visibility_condition.get("comesFrom", "dataScript") == "dataScript":
 							if data_key:
 								visibility_key = f"{extract_data_key(data_key)}.{key}"
 							else:
@@ -670,9 +667,7 @@ def get_block_html(blocks):
 								visibility_key = f"block.{key}"
 						visibility_key = jinja_safe_key(visibility_key)
 
-					child_tag, child_tag_details = get_tag(
-						child, soup, data_key=data_key
-					)
+					child_tag, child_tag_details = get_tag(child, soup, data_key=data_key)
 					append_child_tag(tag, child_tag, child_tag_details, visibility_key)
 
 			if element == "body":
@@ -714,8 +709,8 @@ def get_block_html(blocks):
 
 		# print("Final HTML: ", html)
 		# write to file
-		with open("output.html", "w") as f:
-			f.write(html)
+		# with open("output.html", "w") as f:
+		# 	f.write(html)
 		return html, str(style_tag), font_map
 
 	data = get_html(blocks, soup)
@@ -864,6 +859,7 @@ def extend_block(block, overridden_block):
 
 
 def append_child_tag(tag, child_tag, child_tag_details, visibility_key=None):
+	
 	child_tag_props = child_tag_details.get('all_props')
 	child_passed_down_props = child_tag_details.get('passed_down_props')
 	child_tag_std_props = child_tag_details.get('std_props')
@@ -871,19 +867,23 @@ def append_child_tag(tag, child_tag, child_tag_details, visibility_key=None):
 
 	tag.append(f"{{% with props = {child_tag_props} | combine(passed_down_props) %}}")
 	tag.append(f"{{% with passed_down_props = passed_down_props | combine({child_passed_down_props}) %}}")
+	
 	if child_tag_std_props:
 		tag.append(f"{{% with std_props = {child_tag_std_props} %}}")
 	if child_tag_block_script:
 		tag.append(f"{{% with block = block | execute_script_and_combine('{escape_single_quotes(child_tag_block_script)}', props) %}}")
 	if visibility_key:
 		tag.append(f"{{% if {visibility_key} %}}")
+	
 	tag.append(child_tag)
+	
 	if visibility_key:
 		tag.append("{% endif %}")
 	if child_tag_block_script:
 		tag.append("{% endwith %}")
 	if child_tag_std_props:
 		tag.append("{% endwith %}")
+
 	tag.append("{% endwith %}")
 	tag.append("{% endwith %}")
 
@@ -1031,31 +1031,28 @@ def get_interpreted_prop_value(prop, data_key):
 	prop_is_standard = prop.get("isStandard", False)
 	prop_value = prop.get("value")
 	
-	default_value = None
-	if prop_is_standard:
-		default_value = prop.get("standardOptions", {}).get("options", {}).get("defaultValue")
+	default_value = prop.get("standardOptions", {}).get("options", {}).get("defaultValue") if prop_is_standard else None
+	
 	if prop_value is None:
 		return default_value if prop_is_standard else "undefined"
+	
 	if prop_is_dynamic:
-		if prop_comes_from == "dataScript":
-			key = jinja_safe_key(f"{extract_data_key(data_key)}.{prop_value}") if data_key else prop_value
-			return (
-				f"{{{{ {key} or '{escape_single_quotes(default_value) if default_value is not None else 'undefined'}' }}}}"
-			)
-		elif prop_comes_from == "blockDataScript":
-			key = jinja_safe_key(f"block.{prop_value}")
-			return f"{{{{ {key} or '{escape_single_quotes(default_value) if default_value is not None else 'undefined'}' }}}}"
-		elif prop_comes_from == "props":
-			key = jinja_safe_key(f"props.{prop_value}")
-			return f"{{{{ {key} or '{escape_single_quotes(default_value) if default_value is not None else 'undefined'}' }}}}"
-	else:
-		if prop_is_standard:
-			# standard props are static only as of now
-			prop_value = parse_static_value(
-				prop.get("value") or default_value,
-				prop.get("standardOptions", {}).get("type"),
-			)
-		return prop_value
+		key_mapping = {
+			"dataScript": jinja_safe_key(f"{extract_data_key(data_key)}.{prop_value}") if data_key else prop_value,
+			"blockDataScript": jinja_safe_key(f"block.{prop_value}"),
+			"props": jinja_safe_key(f"props.{prop_value}")
+		}
+		key = key_mapping.get(prop_comes_from, prop_value)
+		fallback = escape_single_quotes(default_value) if default_value is not None else 'undefined'
+		return f"{{{{ {key} or '{fallback}' }}}}"
+	
+	if prop_is_standard:
+		prop_value = parse_static_value(
+			prop_value or default_value,
+			prop.get("standardOptions", {}).get("type"),
+		)
+	
+	return prop_value
 
 
 def get_loop_vars(map_of_std_props_info, key):
