@@ -1,5 +1,5 @@
 import type Block from "@/block";
-import type { BlockDataKey } from "@/block";
+import type BlockDataKey from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import getBlockTemplate from "./blockTemplate";
 

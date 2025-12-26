@@ -41,10 +41,6 @@ const title = computed(() => {
 useTitle(title);
 </script>
 <style>
-[id^="headlessui-dialog"] {
-	@apply z-50;
-}
-
 [id^="headlessui-dialog-panel"] {
 	@apply bg-surface-gray-1;
 	@apply dark:border-outline-gray-1;

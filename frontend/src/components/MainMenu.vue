@@ -1,5 +1,5 @@
 <template>
-	<Dropdown :options="mainMenuOptions" size="sm" class="flex-1 [&>div>div>div]:w-full" placement="right">
+	<Dropdown :options="mainMenuOptions" size="sm" placement="left" :offset="18">
 		<template v-slot="{ open }">
 			<div class="flex cursor-pointer items-center gap-2">
 				<img src="/builder_logo.png" alt="logo" class="h-7" />

@@ -1,9 +1,18 @@
 <template>
 	<div class="relative w-full">
+		<Select
+			v-if="type === 'select'"
+			:modelValue="data as string"
+			@update:modelValue="(value) => (data = value as typeof data)"
+			:disabled="disabled"
+			v-bind="attrs" />
 		<FormControl
-			:class="classes"
+			v-else
 			:type="type"
 			@change="triggerUpdate"
+			@paste="triggerUpdate"
+			@cut="triggerUpdate"
+			@focus="handleFocus"
 			@input="($event: Event) => emit('input', ($event.target as HTMLInputElement).value)"
 			autocomplete="off"
 			:autofocus="autofocus"
@@ -32,7 +41,8 @@
 <script lang="ts" setup>
 import CrossIcon from "@/components/Icons/Cross.vue";
 import { useDebounceFn, useVModel } from "@vueuse/core";
-import { computed, useAttrs } from "vue";
+import { Select } from "frappe-ui";
+import { useAttrs } from "vue";
 
 const props = withDefaults(
 	defineProps<{
@@ -41,10 +51,12 @@ const props = withDefaults(
 		hideClearButton?: boolean;
 		autofocus?: boolean;
 		disabled?: boolean;
+		selectOnFocus?: boolean;
 	}>(),
 	{
 		type: "text",
 		modelValue: "",
+		selectOnFocus: true,
 	},
 );
 const emit = defineEmits(["update:modelValue", "input"]);
@@ -52,62 +64,6 @@ const data = useVModel(props, "modelValue", emit);
 
 defineOptions({
 	inheritAttrs: false,
-});
-
-const classes = computed(() => {
-	const _classes = [];
-	if (!["select", "checkbox"].includes(props.type) && !props.hideClearButton && props.modelValue) {
-		_classes.push("[&>div>input]:pr-7");
-	}
-	if (props.type === "checkbox") {
-		_classes.push("[&>label]:text-ink-gray-7");
-	}
-	if (props.type === "select") {
-		_classes.push(
-			...[
-				"[&>div>select]:text-ink-gray-8",
-				"[&>label]:text-ink-gray-7",
-				"[&>div>select]:border-outline-gray-1",
-				"[&>div>select]:bg-surface-gray-2",
-				"[&>div>select]:pr-7",
-				"[&>div>select]:hover:border-outline-gray-2",
-				"[&>div>select]:hover:bg-surface-gray-1",
-				"focus:[&>div>select]:bg-surface-gray-1",
-				"focus:[&>div>select]:border-outline-gray-3",
-				"focus:[&>div>select]:ring-outline-gray-3",
-			],
-		);
-	} else if (props.type === "textarea") {
-		_classes.push([
-			"[&>div>textarea]:border-outline-gray-1",
-			"[&>label]:text-ink-gray-7",
-			"[&>div>textarea]:!bg-surface-gray-2",
-			"[&>div>textarea]:text-ink-gray-8",
-			"[&>div>textarea]:focus:border-outline-gray-3",
-			"[&>div>textarea]:focus:bg-surface-gray-1",
-			"[&>div>textarea]:hover:!border-outline-gray-2",
-			"[&>div>textarea]:hover:!bg-surface-gray-1",
-			"focus:[&>div>textarea]:border-outline-gray-3",
-			"focus:[&>div>textarea]:bg-surface-gray-1",
-			"focus:[&>div>textarea]:ring-outline-gray-3",
-		]);
-	} else {
-		_classes.push([
-			"[&>label]:text-ink-gray-7",
-			"[&>div>input]:border-outline-gray-1",
-			"[&>div>input]:bg-surface-gray-2",
-			"[&>div>input]:text-ink-gray-8",
-			"text-sm",
-			"[&>p]:text-p-xs",
-			"[&>div>input]:hover:!border-outline-gray-2",
-			"[&>div>input]:hover:!bg-surface-gray-1",
-			"[&>div>input]:focus-visible:bg-surface-gray-1",
-			"focus:[&>div>input]:border-outline-gray-3",
-			"focus:[&>div>input]:bg-surface-gray-1",
-			"focus:[&>div>input]:ring-outline-gray-3",
-		]);
-	}
-	return _classes;
 });
 
 const attrs = useAttrs();
@@ -123,4 +79,13 @@ const triggerUpdate = useDebounceFn(($event: Event) => {
 		emit("update:modelValue", ($event.target as HTMLInputElement).value);
 	}
 }, 100);
+
+const handleFocus = ($event: Event) => {
+	if (props.selectOnFocus && !props.disabled && props.type !== "checkbox") {
+		const target = $event.target as HTMLInputElement;
+		setTimeout(() => {
+			target.select();
+		}, 0);
+	}
+};
 </script>

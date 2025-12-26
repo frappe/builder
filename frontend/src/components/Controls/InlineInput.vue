@@ -22,8 +22,8 @@
 			@keydown.stop="handleKeyDown" />
 		<Autocomplete
 			v-if="type == 'autocomplete'"
-			:placeholder="placeholder"
-			:modelValue="modelValue"
+			:placeholder="placeholder ? String(placeholder) : undefined"
+			:modelValue="String(modelValue || '')"
 			:options="inputOptions"
 			:getOptions="getOptions"
 			@update:modelValue="handleChange"
@@ -41,7 +41,7 @@ import Autocomplete from "./Autocomplete.vue";
 import InputLabel from "./InputLabel.vue";
 
 type Action = {
-	label: String;
+	label: string;
 	handler: () => void;
 	icon: string;
 	component?: any;

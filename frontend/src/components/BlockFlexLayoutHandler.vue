@@ -43,6 +43,14 @@
 		defaultValue="nowrap"></PropertyControl>
 	<div class="flex flex-col gap-3" v-if="blockController.getParentBlock()?.isFlex()">
 		<PropertyControl
+			label="Order"
+			styleProperty="order"
+			:enableSlider="true"
+			:min="-99"
+			:max="99"
+			:step="1"
+			:defaultValue="0" />
+		<PropertyControl
 			label="Grow"
 			styleProperty="flexGrow"
 			:component="OptionToggle"
