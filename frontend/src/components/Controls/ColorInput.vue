@@ -38,37 +38,7 @@
 											}
 										: undefined
 								"
-								@update:modelValue="
-									(val: string | null) => {
-										//auto strip extra hashes
-										if (typeof val == 'string') {
-											val = normalizeColorInput(val);
-										}
-
-										//last valid value is retained
-										const isInvalid = !!val && !isValidColorInput(val);
-										if (isInvalid) {
-											
-											const lastValidValue = props.modelValue;
-											// step 1: clear input
-											emit('update:modelValue', null);
-
-											// step 2: restore last valid value after render
-											nextTick(() => {
-												emit('update:modelValue', lastValidValue ?? null);
-											});
-											
-											return;
-										}
-
-										if (typeof val === 'string' && (val.startsWith('var(--') || val.startsWith('--'))) {
-											emit('update:modelValue', val.startsWith('var(--') ? val : `var(${val})`);
-										} else {
-											const color = getRGB(val);
-											emit('update:modelValue', color);
-										}
-									}
-								">
+								@update:modelValue="handleColorUpdate">
 								<template #prefix>
 									<div
 										class="h-4 w-4 rounded shadow-sm"
@@ -96,7 +66,18 @@ import { getRGB, toKebabCase } from "@/utils/helpers";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useDark } from "@vueuse/core";
 import { Tooltip } from "frappe-ui";
-import { computed, ComputedRef, defineComponent, h, onMounted, ref, shallowRef, useAttrs, watch, nextTick } from "vue";
+import {
+	computed,
+	ComputedRef,
+	defineComponent,
+	h,
+	nextTick,
+	onMounted,
+	ref,
+	shallowRef,
+	useAttrs,
+	watch,
+} from "vue";
 import ColorPicker from "./ColorPicker.vue";
 import InputLabel from "./InputLabel.vue";
 
@@ -114,7 +95,6 @@ const colorPickerRef = ref<typeof ColorPicker | null>(null);
 const showVariableDialog = ref(false);
 const newVariable = ref<Partial<BuilderVariable> | null>(null);
 const { variables, resolveVariableValue } = useBuilderVariable();
-const isInvalid = ref(false);
 
 const handleEnter = () => {
 	const val = props.modelValue;
@@ -125,10 +105,39 @@ const handleEnter = () => {
 	}
 };
 
+const handleColorUpdate = (val: string | null) => {
+	//auto strip extra hashes
+	if (typeof val == "string") {
+		val = normalizeColorInput(val);
+	}
+
+	//last valid value is retained
+	const isInvalid = !!val && !isValidColorInput(val);
+	if (isInvalid) {
+		const lastValidValue = props.modelValue;
+		// step 1: clear input
+		emit("update:modelValue", null);
+
+		// step 2: restore last valid value after render
+		nextTick(() => {
+			emit("update:modelValue", lastValidValue ?? null);
+		});
+
+		return;
+	}
+
+	if (typeof val === "string" && (val.startsWith("var(--") || val.startsWith("--"))) {
+		emit("update:modelValue", val.startsWith("var(--") ? val : `var(${val})`);
+	} else {
+		const color = getRGB(val);
+		emit("update:modelValue", color);
+	}
+};
+
 const normalizeColorInput = (val: string) => {
-	// turn multiple leading hashes into one 
+	// turn multiple leading hashes into one
 	if (/^#+/.test(val)) {
-		return "#" + val.replace(/^#+/,"");
+		return "#" + val.replace(/^#+/, "");
 	}
 	return val;
 };
