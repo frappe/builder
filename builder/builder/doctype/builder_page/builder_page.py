@@ -186,12 +186,8 @@ class BuilderPage(WebsiteGenerator):
 		if frappe.conf.developer_mode and self.is_template:
 			save_as_template(self)
 
-		if frappe.conf.developer_mode and self.is_standard and self.module:
-			from frappe.modules.utils import get_module_app
-
-			app = get_module_app(self.module)
-			if app:
-				export_page_as_standard(self.name, target_app=app)
+		if frappe.conf.developer_mode and self.is_standard and self.app:
+			export_page_as_standard(self.name, target_app=self.app)
 
 	def clear_route_cache(self):
 		get_web_pages_with_dynamic_routes.clear_cache()

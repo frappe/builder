@@ -238,11 +238,10 @@
   {
    "depends_on": "is_standard",
    "fieldname": "module",
-   "fieldtype": "Link",
-   "label": "Module",
+   "fieldtype": "Select",
+   "label": "App",
    "mandatory_depends_on": "is_standard",
-   "no_copy": 1,
-   "options": "Module Def"
+   "no_copy": 1
   }
  ],
  "index_web_pages_for_search": 1,
