@@ -194,7 +194,7 @@ export function useBuilderEvents(
 		}
 
 		// if selected block is container, create a new text block inside it and set the text
-		if (blockController.isContainer()) {
+		if (blockController.canHaveChildren() && blockController.isContainer()) {
 			e.preventDefault();
 			const block = getBlockTemplate("text");
 			block.innerHTML = text;
