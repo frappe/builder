@@ -106,7 +106,8 @@
 				@update:model-value="(val) => (isEditable = val)" />
 		</div>
 		<template v-if="isStandardBool">
-			<div class="flex items-center justify-between">
+			<!-- Disabled for now -->
+			<div v-if="false" class="flex items-center justify-between">
 				<InputLabel>Is Required</InputLabel>
 				<OptionToggle
 					:options="[
@@ -130,7 +131,7 @@
 					standardPropOptions.options = options;
 				}" />
 		</template>
-		<BuilderButton label="Save" variant="subtle" class="w-full flex-shrink-0" @click="save" />
+		<BuilderButton :disabled="!name.trim().length" label="Save" variant="subtle" class="w-full flex-shrink-0" @click="save" />
 	</div>
 </template>
 

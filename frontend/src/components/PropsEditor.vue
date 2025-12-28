@@ -52,8 +52,16 @@
 										<p class="text-sm font-medium">
 											{{ name }}
 										</p>
-										<p v-if="value.isStandard" class="text-xs text-ink-gray-4">
-											Std. - {{ value.standardOptions?.isRequired ? "Required" : "Optional" }}
+										<p
+											v-if="value.isStandard"
+											class="max-w-24 truncate text-ellipsis text-xs text-ink-gray-4">
+											{{
+												value.standardOptions?.options?.defaultValue
+													? ["array", "object"].includes(value.standardOptions.options.type)
+														? JSON.stringify(value.standardOptions?.options?.defaultValue)
+														: value.standardOptions?.options?.defaultValue
+													: "No Default Value"
+											}}
 										</p>
 										<p v-else class="max-w-full truncate text-ellipsis text-xs text-ink-gray-4">
 											{{ value.value }}

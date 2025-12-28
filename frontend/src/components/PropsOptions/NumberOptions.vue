@@ -1,5 +1,5 @@
 <template>
-	<div class="flex items-center justify-between">
+	<div v-if="false" class="flex items-center justify-between">
 		<InputLabel>Min. Value</InputLabel>
 		<Input
 			:model-value="minValue"
@@ -7,7 +7,7 @@
 			@input="handleMinValueChange"
 			placeholder="Enter min value"></Input>
 	</div>
-	<div class="flex items-center justify-between">
+	<div v-if="false" class="flex items-center justify-between">
 		<InputLabel>Max. Value</InputLabel>
 		<Input
 			:model-value="maxValue"
