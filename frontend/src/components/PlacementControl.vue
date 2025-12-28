@@ -15,7 +15,11 @@
 					<div
 						@click="setAlignment(option)"
 						@dblclick="setAlignment(option, true)"
-						class="hidden gap-[2px] opacity-0 hover:opacity-100 group-hover/option:flex"
+						class="flex size-1 items-center justify-center rounded-full bg-surface-gray-5 opacity-50 group-hover/option:hidden"></div>
+					<div
+						@click="setAlignment(option)"
+						@dblclick="setAlignment(option, true)"
+						class="hidden gap-[2px] hover:opacity-100 group-hover/option:flex"
 						:class="{
 							'flex-row': direction === 'row',
 							'flex-col': direction === 'column',
@@ -81,7 +85,6 @@
 	</div>
 </template>
 <script setup lang="ts">
-import InputLabel from "@/components/Controls/InputLabel.vue";
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
 
