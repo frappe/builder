@@ -7,7 +7,12 @@
 			</div>
 
 			<div class="h-full" v-if="mode == 'page'">
-				<CodeEditor v-model="pageStore.pageData" type="JSON" label="Page Data Preview" :readonly="true" />
+				<CodeEditor
+					v-model="pageStore.pageData"
+					type="JSON"
+					label="Page Data Preview"
+					:autofocus="false"
+					:readonly="true" />
 			</div>
 			<div class="box-border h-full overflow-y-auto pb-12" v-if="mode == 'block'">
 				<div class="flex min-h-full w-full flex-col" v-if="isBlockSelected">
@@ -16,6 +21,7 @@
 						class="max-h-[70%]"
 						type="JSON"
 						label="Block Data Preview"
+						:autofocus="false"
 						:readonly="true"></CodeEditor>
 					<div class="flex w-full items-center justify-between py-4">
 						<div class="text-sm text-ink-gray-6">Show cumulative data</div>
