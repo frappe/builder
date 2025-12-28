@@ -41,19 +41,27 @@
 							No dynamic values found. Please add using
 							<a
 								href="#"
-								@click="builderStore.showDataScriptDialog = true"
+								@click="builderStore.showDataScriptDialog = 'page'"
 								class="text-ink-gray-5 underline hover:text-ink-gray-7">
-								Data Script,
+								Page
 							</a>
-							or block props.
+							<a
+								href="#"
+								@click="builderStore.showDataScriptDialog = 'block'"
+								class="text-ink-gray-5 underline hover:text-ink-gray-7">
+								/ Block
+							</a>
+							Data Scripts.
 						</div>
 					</li>
 				</ul>
 			</div>
 		</div>
-		<div class="flex items-center justify-end gap-2" v-if="filteredItems.length !== 0">
+		<div
+			class="flex items-center justify-end gap-2"
+			v-if="filteredItems.length !== 0 && builderStore.leftPanelActiveTab !== 'Code'">
 			<div class="flex gap-2">
-				<Button variant="subtle" @click="builderStore.showDataScriptDialog = true">Edit Code</Button>
+				<Button variant="subtle" @click="builderStore.leftPanelActiveTab = 'Code'">Open Code Tab</Button>
 			</div>
 		</div>
 	</div>

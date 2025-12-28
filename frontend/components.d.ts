@@ -49,7 +49,6 @@ declare module 'vue' {
     ColorPicker: typeof import('./src/components/Controls/ColorPicker.vue')['default']
     Component: typeof import('./src/components/Icons/Component.vue')['default']
     ContextMenu: typeof import('./src/components/ContextMenu.vue')['default']
-    copy: typeof import('./src/components/DimensionInput copy.vue')['default']
     Cross: typeof import('./src/components/Icons/Cross.vue')['default']
     CSS: typeof import('./src/components/Icons/CSS.vue')['default']
     CustomSearchPanel: typeof import('./src/components/Controls/CodeMirror/CustomSearchPanel.vue')['default']

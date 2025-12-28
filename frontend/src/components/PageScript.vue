@@ -259,9 +259,10 @@ watch(
 	() => builderStore.showDataScriptDialog,
 	() => {
 		// if showDataScriptDialog is true, open the dialog
-		if (builderStore.showDataScriptDialog) {
+		if (builderStore.showDataScriptDialog !== null) {
+			mode.value = builderStore.showDataScriptDialog;
 			showServerScriptEditor();
-			builderStore.showDataScriptDialog = false; // reset the flag
+			builderStore.showDataScriptDialog = null; // reset the flag
 		}
 	},
 );
