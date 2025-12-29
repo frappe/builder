@@ -17,7 +17,7 @@
   "column_break_ymjg",
   "is_standard",
   "is_template",
-  "module",
+  "app",
   "section_break_ujsp",
   "blocks",
   "draft_blocks",
@@ -237,7 +237,7 @@
   },
   {
    "depends_on": "is_standard",
-   "fieldname": "module",
+   "fieldname": "app",
    "fieldtype": "Select",
    "label": "App",
    "mandatory_depends_on": "is_standard",
