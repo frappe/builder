@@ -80,6 +80,7 @@ const resetEditor = async (params: { content: string; resetHistory: boolean; aut
 };
 
 const handleKeyDown = (e: KeyboardEvent) => {
+	e.stopImmediatePropagation();
 	if ((e.ctrlKey || e.metaKey) && e.key === "f") {
 		e.stopImmediatePropagation();
 		e.preventDefault();
