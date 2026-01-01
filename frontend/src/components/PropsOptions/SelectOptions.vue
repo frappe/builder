@@ -8,6 +8,7 @@
 		<Input
 			type="select"
 			:options="optionsAvailable"
+			:model-value="defaultValue"
 			@update:model-value="handleDefaultValueChange"
 			placeholder="Select default value"></Input>
 	</div>

@@ -29,6 +29,7 @@
 					value: 'false',
 				},
 			]"
+			:model-value="defaultValue"
 			@update:model-value="handleDefaultValueChange"
 			placeholder="Enter default value"></Input>
 	</div>
