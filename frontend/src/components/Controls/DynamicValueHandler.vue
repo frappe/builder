@@ -73,7 +73,12 @@ import useBlockDataStore from "@/stores/blockDataStore";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
-import { getDataArray, getParentProps, getPropValue, getStandardPropValue } from "@/utils/helpers";
+import {
+	getDataArray,
+	getDefaultPropsList,
+	getParentProps,
+	getPropValue,
+} from "@/utils/helpers";
 import { computed, ref } from "vue";
 
 const pageStore = usePageStore();
@@ -123,40 +128,7 @@ const blockDataArray = computed(() => {
 
 const defaultProps = computed(() => {
 	const currentBlock = props.block || blockController.getFirstSelectedBlock();
-	const isCurrentBlockInRepeater = currentBlock?.isInsideRepeater();
-	const repeaterRoot = isCurrentBlockInRepeater ? currentBlock?.getRepeaterParent() : null;
-	if (repeaterRoot) {
-		const key = repeaterRoot.getDataKey("key");
-		const comesFrom = repeaterRoot.getDataKey("comesFrom");
-		if (key && comesFrom === "props") {
-			const componentRoot = blockController.getComponentRootBlock(repeaterRoot);
-			const parsedValue = getStandardPropValue(key, componentRoot)?.value;
-			if (!parsedValue) return {};
-			if (Array.isArray(parsedValue)) {
-				return {
-					item: {
-						value: parsedValue[0],
-						isStandard: false,
-						type: "static",
-					},
-				};
-			} else if (typeof parsedValue === "object") {
-				return {
-					key: {
-						value: Object.keys(parsedValue)[0],
-						isStandard: false,
-						type: "static",
-					},
-					value: {
-						value: parsedValue[Object.keys(parsedValue)[0]],
-						isStandard: false,
-						type: "static",
-					},
-				};
-			}
-		}
-	}
-	return {};
+	return getDefaultPropsList(currentBlock!, blockController);
 });
 
 const filteredBlockProps = computed(() => {

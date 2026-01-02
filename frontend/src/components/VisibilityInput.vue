@@ -22,7 +22,7 @@
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import useBlockDataStore from "@/stores/blockDataStore";
 import blockController from "@/utils/blockController";
-import { getDataArray, getParentProps, getStandardPropValue } from "@/utils/helpers";
+import { getDataArray, getDefaultPropsList, getParentProps, getStandardPropValue } from "@/utils/helpers";
 import { computed, ref, watch } from "vue";
 
 const props = defineProps<{
@@ -69,24 +69,7 @@ const defaultProps = computed(() => {
 	if (!currentBlock) {
 		return [];
 	}
-	const isCurrentBlockInRepeater = currentBlock?.isInsideRepeater();
-	const repeaterRoot = isCurrentBlockInRepeater ? currentBlock?.getRepeaterParent() : null;
-	if (repeaterRoot) {
-		const key = repeaterRoot.getDataKey("key");
-		const comesFrom = repeaterRoot.getDataKey("comesFrom");
-		if (key && comesFrom === "props") {
-			const componentRoot = blockController.getComponentRootBlock(repeaterRoot);
-			const parsedValue = getStandardPropValue(key, componentRoot)?.value;
-			if (parsedValue) {
-				if (Array.isArray(parsedValue)) {
-					return ["item"];
-				} else if (typeof parsedValue === "object") {
-					return ["key", "value"];
-				}
-			}
-		}
-	}
-	return [];
+	return Object.keys(getDefaultPropsList(currentBlock, blockController));
 });
 const getOptions = async (query: string) => {
 	let options: { label: string; value: string }[] = [];

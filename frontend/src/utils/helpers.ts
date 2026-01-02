@@ -1097,6 +1097,50 @@ const getParentProps = (baseBlock: Block, baseProps: BlockProps): BlockProps => 
 	}
 };
 
+const getDefaultPropsList = (block: Block, blockController: any): BlockProps => {
+	// we need to pass blockController because during initialization phase, blockController can't use canvasStore
+	const isCurrentBlockInRepeater = block?.isInsideRepeater();
+	const repeaterRoot = isCurrentBlockInRepeater ? block?.getRepeaterParent() : null;
+	if (repeaterRoot) {
+		const key = repeaterRoot.getDataKey("key");
+		const comesFrom = repeaterRoot.getDataKey("comesFrom");
+		if (key && comesFrom === "props") {
+			const componentRoot = blockController.getComponentRootBlock(repeaterRoot);
+			const parsedValue = getStandardPropValue(key, componentRoot)?.value;
+			if (!parsedValue) return {};
+			if (Array.isArray(parsedValue)) {
+				return {
+					item: {
+						value: parsedValue[0],
+						isStandard: false,
+						isDynamic: true,
+						comesFrom: "props",
+						isPassedDown: true,
+					},
+				};
+			} else if (typeof parsedValue === "object") {
+				return {
+					key: {
+						value: Object.keys(parsedValue)[0],
+						isStandard: false,
+						isDynamic: true,
+						comesFrom: "props",
+						isPassedDown: true,
+					},
+					value: {
+						value: parsedValue[Object.keys(parsedValue)[0]],
+						isStandard: false,
+						isDynamic: true,
+						comesFrom: "props",
+						isPassedDown: true,
+					},
+				};
+			}
+		}
+	}
+	return {};
+};
+
 const getPropValue = (
 	propName: string,
 	block: Block,
@@ -1119,20 +1163,19 @@ const getPropValue = (
 
 	// Handle dynamic props
 	if (matchingProp.isDynamic) {
-		
 		if (matchingProp.comesFrom === "dataScript" && matchingProp.value) {
 			return getDataScriptValue(matchingProp.value);
 		}
-		
+
 		if (matchingProp.comesFrom === "blockDataScript" && matchingProp.value) {
 			return getBlockScriptValue(matchingProp.value);
 		}
-		
+
 		// Fallback to default props
 		if (matchingProp.value && defaultProps?.[matchingProp.value] !== undefined) {
 			return defaultProps[matchingProp.value].value;
 		}
-		
+
 		return undefined;
 	}
 
@@ -1140,11 +1183,11 @@ const getPropValue = (
 	if (matchingProp.isStandard && matchingProp.standardOptions) {
 		const { type, options } = matchingProp.standardOptions;
 		const defaultValue = options?.defaultValue ?? null;
-		
+
 		if (type !== "string" && type !== "select") {
 			return matchingProp.value ? JSON.parse(matchingProp.value) : defaultValue;
 		}
-		
+
 		return matchingProp.value || defaultValue;
 	}
 
@@ -1395,6 +1438,7 @@ export {
 	uploadBuilderAsset,
 	uploadUserFont,
 	getParentProps,
+	getDefaultPropsList,
 	getPropValue,
 	getStandardPropValue,
 	getDataArray,
