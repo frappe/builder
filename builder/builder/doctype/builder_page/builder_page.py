@@ -947,7 +947,7 @@ def set_dynamic_content_placeholder(block, data_key=None):
 				)
 			elif _type == "key" and not block.get("isRepeaterBlock"):
 				block[_property] = (
-					f"{{{{ {key} if {key} or {key} in ['', 0] else {jinja_safe_key(f'block.{original_key}')} if {jinja_safe_key(f'block.{original_key}')} is defined else {jinja_safe_key(f'props.{original_key}')} if {jinja_safe_key(f'props.{original_key}')} is defined else '{escape_single_quotes(block.get(_property, ''))}' }}}}"
+					f"{{{{ {key} if {key} or {key} in ['', 0] else '{escape_single_quotes(block.get(_property, ''))}' }}}}"
 				)
 
 
@@ -1045,7 +1045,7 @@ def get_interpreted_prop_value(prop, data_key):
 			prop.get("standardOptions", {}).get("type"),
 		)
 	
-	return prop_value
+	return prop_value if prop_value is not None else "undefined"
 
 
 def get_loop_vars(map_of_std_props_info, key):
