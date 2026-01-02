@@ -9,6 +9,7 @@
 
 			<div class="relative w-full">
 				<Autocomplete
+					placeholder="unset"
 					ref="autocompleteRef"
 					:modelValue="getModelValue()"
 					:getOptions="getOptions"

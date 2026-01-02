@@ -1037,7 +1037,7 @@ def get_interpreted_prop_value(prop, data_key):
 		}
 		key = key_mapping.get(prop_comes_from, prop_value)
 		fallback = escape_single_quotes(default_value) if default_value is not None else 'undefined'
-		return f"{{{{ {key} or '{fallback}' }}}}"
+		return f"{{{{ {key} if {key} is defined else '{fallback}' }}}}"
 	
 	if prop_is_standard:
 		prop_value = parse_static_value(
