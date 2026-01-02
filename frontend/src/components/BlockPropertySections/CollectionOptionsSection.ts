@@ -9,7 +9,7 @@ const keyOptions = computed(() => {
 	const blockDataStore = useBlockDataStore();
 	let result: { label: string; value: string; prefix: any }[] = [];
 
-	const repeatableDataKeys: string[] = [];
+	const repeatablePageDataKeys: string[] = [];
 	const repeatableBlockDataKeys: string[] = [];
 
 	let pageDataCollectionObject =
@@ -40,7 +40,7 @@ const keyOptions = computed(() => {
 		});
 	}
 
-	processObject(pageDataCollectionObject, "", repeatableDataKeys);
+	processObject(pageDataCollectionObject, "", repeatablePageDataKeys);
 	processObject(blockDataCollectionObject, "", repeatableBlockDataKeys);
 
 	const isPropsBasedRepeater = isInsideRepeater && repeaterDataKeyComesFrom == "props";
@@ -59,7 +59,7 @@ const keyOptions = computed(() => {
 		});
 	}
 
-	repeatableDataKeys.forEach((item) => {
+	repeatablePageDataKeys.forEach((item) => {
 		result.push({
 			label: item,
 			value: `${item}--dataScript`,
