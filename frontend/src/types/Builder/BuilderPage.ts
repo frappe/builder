@@ -23,7 +23,7 @@ export interface BuilderPage{
 	is_standard?: 0 | 1
 	/**	Is Template : Check	*/
 	is_template?: 0 | 1
-	/**	Module : Link - Module Def	*/
+	/**	App : Link - Installed Application	*/
 	module?: string
 	/**	Blocks : JSON	*/
 	blocks?: any

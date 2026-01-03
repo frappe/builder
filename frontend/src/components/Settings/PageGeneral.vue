@@ -137,14 +137,14 @@
 							@update:modelValue="(val: Boolean) => pageStore.updateActivePage('is_standard', val)" />
 						<div v-if="pageStore.activePage?.is_standard" class="flex items-center justify-between">
 							<div class="flex flex-col gap-2">
-								<span class="text-base font-medium text-ink-gray-9">Module</span>
-								<p class="text-base text-ink-gray-5">Select the module for this standard page</p>
+								<span class="text-base font-medium text-ink-gray-9">App</span>
+								<p class="text-base text-ink-gray-5">Select the app for this standard page</p>
 							</div>
 							<div>
 								<BuilderInput
 									class="w-fit"
 									type="select"
-									:options="moduleOptions"
+									:options="appOptions"
 									:modelValue="pageStore.activePage?.module"
 									@update:modelValue="
 										(val: string) => pageStore.updateActivePage('module', val)
@@ -180,11 +180,10 @@ import Switch from "@/components/Controls/Switch.vue";
 import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
-import moduleDef from "@/data/moduleDef";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderProjectFolder } from "@/types/Builder/BuilderProjectFolder";
-import { FeatherIcon } from "frappe-ui";
+import { createResource, FeatherIcon } from "frappe-ui";
 import { computed } from "vue";
 
 const pageStore = usePageStore();
@@ -211,19 +210,27 @@ const folderOptions = computed(() => {
 	return [homeOption, ...options];
 });
 
-const moduleOptions = computed(() => {
+const installedAppsResource = createResource({
+	url: "frappe.core.doctype.module_def.module_def.get_installed_apps",
+	cache: "installed_apps",
+	auto: true,
+	transform: (data: string) => {
+		return JSON.parse(data);
+	},
+});
+
+const appOptions = computed(() => {
 	const defaultOption = {
-		label: "Select Module",
+		label: "Select App",
 		value: "",
 	};
 
-	const options =
-		moduleDef.data?.map((module: { name: string; module_name: string }) => {
-			return {
-				label: module.module_name,
-				value: module.name,
-			};
-		}) || [];
+	const options = (installedAppsResource.data || []).map((app: string) => {
+		return {
+			label: app.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+			value: app,
+		};
+	});
 
 	return [defaultOption, ...options];
 });

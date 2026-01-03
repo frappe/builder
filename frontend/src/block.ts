@@ -627,6 +627,7 @@ class Block implements BlockOptions {
 			this.isInput() ||
 			this.isVideo() ||
 			(this.isText() && !this.isLink()) ||
+			this.isHTML() ||
 			this.isExtendedFromComponent()
 		);
 	}

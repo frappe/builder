@@ -304,6 +304,9 @@ const blockController = {
 			}
 		});
 	},
+	canHaveChildren: () => {
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().canHaveChildren();
+	},
 	convertToLink: async () => {
 		const blocks = blockController.getSelectedBlocks();
 		for (const block of blocks) {
