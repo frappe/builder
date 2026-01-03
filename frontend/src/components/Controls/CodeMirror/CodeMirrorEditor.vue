@@ -5,7 +5,7 @@
 		@keydown="handleKeyDown"></div>
 </template>
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 
 import codeCompletions from "@/data/codeCompletions";
 import { createStartingState } from "@/utils/createCodeMirrorState";
@@ -15,9 +15,12 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import { useDark } from "@vueuse/core";
 import { EditorView } from "codemirror";
 import { tomorrow } from "thememirror";
+import blockController from "@/utils/blockController";
+import { getDefaultPropsList, getParentProps } from "@/utils/helpers";
 
 const props = defineProps<{
 	type: "Python" | "JavaScript" | "HTML" | "CSS" | "JSON";
+	mode?: "block" | "page";
 	initialValue?: string;
 	readonly: boolean;
 	allowSave: boolean;
@@ -62,6 +65,8 @@ const resetEditor = async (params: { content: string; resetHistory: boolean; aut
 						onBlurCallback: (value: string) => emit("blur", value),
 						initialValue: params.content,
 						extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
+						mode: props.mode,
+						blockProps: allBlockProps.value,
 					})
 				).startState,
 			);
@@ -100,6 +105,20 @@ watch(isDark, (newVal) => {
 	}
 });
 
+const allBlockProps = computed(() => {
+	const currentBlock = blockController.getFirstSelectedBlock();
+	if (currentBlock) {
+		const ownBlockProps = currentBlock.getBlockProps();
+		const inheritedBlockProps = getParentProps(currentBlock, {});
+		const defaultProps = getDefaultPropsList(currentBlock, blockController);
+		return {
+			...defaultProps,
+			...inheritedBlockProps,
+			...ownBlockProps,
+		};
+	}
+});
+
 onMounted(async () => {
 	if (editorContainer.value) {
 		const { startState } = await createStartingState({
@@ -109,6 +128,8 @@ onMounted(async () => {
 			onChangeCallback: () => emit("change", getEditorValue()),
 			onBlurCallback: (value: string) => emit("blur", value),
 			extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
+			mode: props.mode,
+			blockProps: allBlockProps.value,
 		});
 		editor = new EditorView({
 			state: startState,

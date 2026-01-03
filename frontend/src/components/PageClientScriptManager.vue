@@ -120,6 +120,7 @@
 				:label="activeScript.script_name"
 				:type="activeScript.script_type as 'JavaScript' | 'CSS'"
 				class="flex-1"
+				mode="page"
 				height="65vh"
 				:readonly="builderStore.readOnlyMode"
 				:autofocus="false"

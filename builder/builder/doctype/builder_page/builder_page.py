@@ -370,9 +370,10 @@ class BuilderPage(WebsiteGenerator):
 			frappe.form_dict.update(dict(frappe.parse_json(route_variables or "{}").items()))
 		page_data = frappe._dict()
 		if self.page_data_script:
-			_locals = dict(data=frappe._dict())
+			_locals = dict(data=frappe._dict(), page=frappe._dict())
 			execute_script(self.page_data_script, _locals, self.name)
 			page_data.update(_locals["data"])
+			page_data.update(_locals["page"])
 
 		# do not let users replace __content
 		page_data.pop("__content", None)
