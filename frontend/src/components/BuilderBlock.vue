@@ -348,7 +348,11 @@ onMounted(async () => {
 
 const allResolvedProps = computed(() => {
 	return {
-		...props.defaultProps,
+		...Object.fromEntries(
+			Object.entries(props.defaultProps || {}).map(([key, value]) => {
+				return [key, value.value];
+			}),
+		),
 		...Object.fromEntries(
 			Object.entries(props.block.getBlockProps()).map(([key, prop]) => {
 				return [
