@@ -605,67 +605,28 @@ def get_block_html(blocks):
 				tag.append(inner_soup)
 
 			if block.get("isRepeaterBlock") and block.get("children") and block.get("dataKey"):
-				iterator_key = block.get("dataKey").get("key")
-				loop_var = ""
 				comes_from = block.get("dataKey").get("comesFrom", "dataScript")
+				default_props = None
 
-				if comes_from == "props":
-					loop_vars = get_loop_vars(map_of_std_props_info, iterator_key)
-
-					loop_var = ", ".join(loop_vars)  # `item` for array and `key, value` for object
-					iterator_key = jinja_safe_key(f"props.{iterator_key}")
-
-					if len(loop_vars) > 1:  # object repeater
-						iterator_key = f"{iterator_key}.items()"
-
-				elif comes_from == "blockDataScript":		
-					# using 'block' as loop var to reset the block data script context for repeater children
-					# this way they do not inherit the parent block's data script context, but get their own from the loop var
-					loop_var = "block"
-					iterator_key = jinja_safe_key(f"block.{iterator_key}")
-				else:
-					if data_key:
-						iterator_key = f"{extract_data_key(data_key)}.{iterator_key}"
-					loop_var = f"key_{iterator_key.replace('.', '__')}"
-					iterator_key = jinja_safe_key(iterator_key)
-					data_key = {"key": loop_var, "comesFrom": "dataScript"}
-
+				loop_var, iterator_key, data_key = get_iterator_info(block, data_key, map_of_std_props_info)
 
 				tag.append(f"{{% for {loop_var} in {iterator_key} %}}")
 
-				if comes_from == "props":
-					loop_vars = get_loop_vars(map_of_std_props_info, block.get("dataKey").get("key"))
-					default_props = ", ".join([f"'{var}': {var}" for var in loop_vars])
-					tag.append(f"{{% with passed_down_props = passed_down_props | combine({{ {default_props} }}) %}}")
-					tag.append("{% with props = passed_down_props %}")
-
 				child_tag, child_tag_details = get_tag(block.get("children")[0], soup, data_key)
-				append_child_tag(tag, child_tag, child_tag_details)
-    
+				
 				if comes_from == "props":
-					tag.append("{% endwith %}{% endwith %}")
+					default_props = get_loop_vars(map_of_std_props_info, block.get("dataKey").get("key"))
+					child_tag_details['default_props'] = default_props
+
+				append_child_tag(tag, child_tag, child_tag_details)
      
 				tag.append("{% endfor %}")
 			else:
 				for child in block.get("children", []) or []:
-					visibility_key = None
-					if child.get("visibilityCondition"):
-						visibility_condition = child.get("visibilityCondition")
-						if isinstance(visibility_condition, str) or visibility_condition.get("comesFrom", "dataScript") == "dataScript":
-							if data_key:
-								visibility_key = f"{extract_data_key(data_key)}.{key}"
-							else:
-								visibility_key = visibility_condition.get("key")
-						else:
-							key = visibility_condition.get("key")
-							if visibility_condition.get("comesFrom") == "props":
-								visibility_key = f"props.{key}"
-							else:
-								visibility_key = f"block.{key}"
-						visibility_key = jinja_safe_key(visibility_key)
-
+					visibility_key = get_visibility_key(child, data_key)
 					child_tag, child_tag_details = get_tag(child, soup, data_key=data_key)
-					append_child_tag(tag, child_tag, child_tag_details, visibility_key)
+					child_tag_details['visibility_key'] = visibility_key
+					append_child_tag(tag, child_tag, child_tag_details)
 
 			if element == "body":
 				tag.append("{% include 'templates/generators/webpage_scripts.html' %}")
@@ -702,8 +663,8 @@ def get_block_html(blocks):
 			
 		# print("Final HTML: ", html)
 		# write to file
-		# with open("output.html", "w") as f:
-		# 	f.write(html)
+		with open("output.html", "w") as f:
+			f.write(html)
 		return html, str(style_tag), font_map
 
 	data = get_html(blocks, soup)
@@ -851,11 +812,18 @@ def extend_block(block, overridden_block):
 	return block
 
 
-def append_child_tag(tag, child_tag, child_tag_details, visibility_key=None):
+def append_child_tag(tag, child_tag, child_tag_details):
 	
 	child_tag_props = child_tag_details.get('all_props')
 	child_passed_down_props = child_tag_details.get('passed_down_props')
 	child_tag_block_script = child_tag_details.get('block_data_script')
+	visibility_key = child_tag_details.get('visibility_key')
+	default_props = child_tag_details.get('default_props')
+
+	if default_props:
+		default_props = ", ".join([f"'{var}': {var}" for var in default_props])
+		tag.append(f"{{% with passed_down_props = passed_down_props | combine({{ {default_props} }}) %}}")
+		tag.append("{% with props = passed_down_props %}") # resetting props for repeater blocks and for props deriving from repeater loop vars
 
 	tag.append(f"{{% with props = {child_tag_props} | combine(passed_down_props) %}}")
 	tag.append(f"{{% with passed_down_props = passed_down_props | combine({child_passed_down_props}) %}}")
@@ -876,6 +844,9 @@ def append_child_tag(tag, child_tag, child_tag_details, visibility_key=None):
 
 	tag.append("{% endwith %}")
 	tag.append("{% endwith %}")
+
+	if default_props:
+		tag.append("{% endwith %}{% endwith %}")
 
 
 def to_jinja_literal(obj):
@@ -1044,6 +1015,49 @@ def get_interpreted_prop_value(prop, data_key):
 	
 	return prop_value if prop_value is not None else "undefined"
 
+def get_iterator_info(block, data_key, map_of_std_props_info):
+	iterator_key = block.get("dataKey").get("key")
+	loop_var = ""
+	comes_from = block.get("dataKey").get("comesFrom", "dataScript")
+
+	if comes_from == "props":
+		loop_vars = get_loop_vars(map_of_std_props_info, iterator_key)
+
+		loop_var = ", ".join(loop_vars)  # `item` for array and `key, value` for object
+		iterator_key = jinja_safe_key(f"props.{iterator_key}")
+
+		if len(loop_vars) > 1:  # object repeater
+			iterator_key = f"{iterator_key}.items()"
+
+	elif comes_from == "blockDataScript":		
+		# resetting block_data for repeater blocks by reassigning loop_var to "block"
+		loop_var = "block"
+		iterator_key = jinja_safe_key(f"block.{iterator_key}")
+	else:
+		if data_key:
+			iterator_key = f"{extract_data_key(data_key)}.{iterator_key}"
+		loop_var = f"key_{iterator_key.replace('.', '__')}"
+		iterator_key = jinja_safe_key(iterator_key)
+		data_key = {"key": loop_var, "comesFrom": "dataScript"}
+	return loop_var, iterator_key, data_key
+
+def get_visibility_key(block, data_key):
+	if block.get("visibilityCondition"):
+		visibility_condition = block.get("visibilityCondition")
+		if isinstance(visibility_condition, str) or visibility_condition.get("comesFrom", "dataScript") == "dataScript":
+			if data_key:
+				visibility_key = f"{extract_data_key(data_key)}.{key}"
+			else:
+				visibility_key = visibility_condition.get("key")
+		else:
+			key = visibility_condition.get("key")
+			if visibility_condition.get("comesFrom") == "props":
+				visibility_key = f"props.{key}"
+			else:
+				visibility_key = f"block.{key}"
+			visibility_key = jinja_safe_key(visibility_key)
+		return visibility_key
+	return None
 
 def get_loop_vars(map_of_std_props_info, key):
 	if key in map_of_std_props_info:
