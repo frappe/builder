@@ -358,6 +358,22 @@ const detachBlockFromComponent = (block: Block, componentId: null | string) => {
 	blockCopy.isRepeaterBlock = component?.isRepeaterBlock || block.isRepeaterBlock;
 	blockCopy.visibilityCondition = component?.visibilityCondition || block.visibilityCondition;
 	blockCopy.innerHTML = block.innerHTML || component?.innerHTML;
+	blockCopy.props = Object.fromEntries(
+		Object.entries(block.getBlockProps()).map(([key, prop]) => {
+			if (prop.isStandard) {
+				let value = prop.value || prop.standardOptions?.options?.defaultValue;
+				if (!["string", "select"].includes(prop.standardOptions?.type!)) {
+					prop.value = JSON.stringify(value);
+				} else {
+					prop.value = value;
+				}
+				prop.isStandard = false;
+				prop.standardOptions = undefined;
+			}
+			return [key, prop];
+		}),
+	);
+
 	delete blockCopy.extendedFromComponent;
 	delete blockCopy.isChildOfComponent;
 	delete blockCopy.referenceBlockId;
