@@ -682,6 +682,88 @@ def get_style(style_obj):
 		else ""
 	)
 
+def get_interpreted_prop_value(prop, data_key):
+	prop_is_dynamic = prop.get("isDynamic", False)
+	prop_comes_from = prop.get("comesFrom", "props")
+	prop_is_standard = prop.get("isStandard", False)
+	prop_value = prop.get("value")
+	
+	default_value = prop.get("standardOptions", {}).get("options", {}).get("defaultValue") if prop_is_standard else None
+	
+	if prop_value is None:
+		return default_value if prop_is_standard else "undefined"
+	
+	if prop_is_dynamic:
+		key_mapping = {
+			"dataScript": jinja_safe_key(f"{extract_data_key(data_key)}.{prop_value}") if data_key else prop_value,
+			"blockDataScript": jinja_safe_key(f"block.{prop_value}"),
+			"props": jinja_safe_key(f"props.{prop_value}")
+		}
+		key = key_mapping.get(prop_comes_from, prop_value)
+		fallback = escape_single_quotes(default_value) if default_value is not None else 'undefined'
+		return f"{{{{ {key} if {key} is defined else '{fallback}' }}}}"
+	
+	if prop_is_standard:
+		prop_value = parse_static_value(
+			prop_value or default_value,
+			prop.get("standardOptions", {}).get("type"),
+		)
+	
+	return prop_value if prop_value is not None else "undefined"
+
+def get_iterator_info(block, data_key, map_of_std_props_info):
+	iterator_key = block.get("dataKey").get("key")
+	loop_var = ""
+	comes_from = block.get("dataKey").get("comesFrom", "dataScript")
+
+	if comes_from == "props":
+		loop_vars = get_loop_vars(map_of_std_props_info, iterator_key)
+
+		loop_var = ", ".join(loop_vars)  # `item` for array and `key, value` for object
+		iterator_key = jinja_safe_key(f"props.{iterator_key}")
+
+		if len(loop_vars) > 1:  # object repeater
+			iterator_key = f"{iterator_key}.items()"
+
+	elif comes_from == "blockDataScript":		
+		# resetting block_data for repeater blocks by reassigning loop_var to "block"
+		loop_var = "block"
+		iterator_key = jinja_safe_key(f"block.{iterator_key}")
+	else:
+		if data_key:
+			iterator_key = f"{extract_data_key(data_key)}.{iterator_key}"
+		loop_var = f"key_{iterator_key.replace('.', '__')}"
+		iterator_key = jinja_safe_key(iterator_key)
+		data_key = {"key": loop_var, "comesFrom": "dataScript"}
+	return loop_var, iterator_key, data_key
+
+def get_visibility_key(block, data_key):
+	if block.get("visibilityCondition"):
+		visibility_condition = block.get("visibilityCondition")
+		if isinstance(visibility_condition, str) or visibility_condition.get("comesFrom", "dataScript") == "dataScript":
+			if data_key:
+				visibility_key = f"{extract_data_key(data_key)}.{key}"
+			else:
+				visibility_key = visibility_condition.get("key")
+		else:
+			key = visibility_condition.get("key")
+			if visibility_condition.get("comesFrom") == "props":
+				visibility_key = f"props.{key}"
+			else:
+				visibility_key = f"block.{key}"
+			visibility_key = jinja_safe_key(visibility_key)
+		return visibility_key
+	return None
+
+def get_loop_vars(map_of_std_props_info, key):
+	if key in map_of_std_props_info:
+		std_prop_info = map_of_std_props_info[key][-1]
+		standard_options = std_prop_info.get("standardOptions", {})
+		if standard_options.get("type") == "array":
+			return ["item"]  # TODO: allow custom item name
+		elif standard_options.get("type") == "object":
+			return ["key", "value"]  # TODO: allow custom key, value names
+	return []
 
 def wrap_with_media_query(style_string, device):
 	if device == "mobile":
@@ -849,35 +931,6 @@ def append_child_tag(tag, child_tag, child_tag_details):
 		tag.append("{% endwith %}{% endwith %}")
 
 
-def to_jinja_literal(obj):
-	# detect Jinja expressions inside strings (e.g. "{{ sample }}")
-	if isinstance(obj, str):
-		stripped = obj.strip()
-		if re.fullmatch(r"{{\s*.*?\s*}}", stripped):
-			# remove the {{ }} so Jinja receives the variable
-			inner = stripped[2:-2].strip()
-			return inner  # returned unquoted
-		return repr(obj)
-
-	if obj is True:
-		return "True"
-	if obj is False:
-		return "False"
-	if obj is None:
-		return "None"
-
-	if isinstance(obj, dict):
-		parts = []
-		for k, v in obj.items():
-			parts.append(f"{to_jinja_literal(k)}: {to_jinja_literal(v)}")
-		return "{ " + ", ".join(parts) + " }"
-
-	if isinstance(obj, list | tuple):
-		return "[ " + ", ".join(str(to_jinja_literal(i)) for i in obj) + " ]"
-
-	return repr(obj)
-
-
 def set_dynamic_content_placeholder(block, data_key=None):
 	block_data_key = block.get("dataKey", {}) or {}
 	dynamic_values = [block_data_key] if block_data_key else []
@@ -951,141 +1004,6 @@ def resolve_path(path):
 
 	return original_resolve_path(path)
 
-
-def parse_static_value(value: str, prop_type: str):
-	match prop_type:
-		case "string":
-			return f"{value}"
-		case "number":
-			try:
-				return float(value)
-			except ValueError:
-				return None
-		case "boolean":
-			if value is True or value is False:
-				return value
-			if value.lower() in ["true", "1"]:
-				return True
-			elif value.lower() in ["false", "0"]:
-				return False
-			else:
-				return None
-		case "array":
-			try:
-				return frappe.parse_json(value)
-			except Exception:
-				return None
-		case "object":
-			try:
-				return frappe.parse_json(value)
-			except Exception:
-				return None
-		case "select":
-			return f"{value}"
-		case _:
-			return f"{value}"
-
-
-def get_interpreted_prop_value(prop, data_key):
-	prop_is_dynamic = prop.get("isDynamic", False)
-	prop_comes_from = prop.get("comesFrom", "props")
-	prop_is_standard = prop.get("isStandard", False)
-	prop_value = prop.get("value")
-	
-	default_value = prop.get("standardOptions", {}).get("options", {}).get("defaultValue") if prop_is_standard else None
-	
-	if prop_value is None:
-		return default_value if prop_is_standard else "undefined"
-	
-	if prop_is_dynamic:
-		key_mapping = {
-			"dataScript": jinja_safe_key(f"{extract_data_key(data_key)}.{prop_value}") if data_key else prop_value,
-			"blockDataScript": jinja_safe_key(f"block.{prop_value}"),
-			"props": jinja_safe_key(f"props.{prop_value}")
-		}
-		key = key_mapping.get(prop_comes_from, prop_value)
-		fallback = escape_single_quotes(default_value) if default_value is not None else 'undefined'
-		return f"{{{{ {key} if {key} is defined else '{fallback}' }}}}"
-	
-	if prop_is_standard:
-		prop_value = parse_static_value(
-			prop_value or default_value,
-			prop.get("standardOptions", {}).get("type"),
-		)
-	
-	return prop_value if prop_value is not None else "undefined"
-
-def get_iterator_info(block, data_key, map_of_std_props_info):
-	iterator_key = block.get("dataKey").get("key")
-	loop_var = ""
-	comes_from = block.get("dataKey").get("comesFrom", "dataScript")
-
-	if comes_from == "props":
-		loop_vars = get_loop_vars(map_of_std_props_info, iterator_key)
-
-		loop_var = ", ".join(loop_vars)  # `item` for array and `key, value` for object
-		iterator_key = jinja_safe_key(f"props.{iterator_key}")
-
-		if len(loop_vars) > 1:  # object repeater
-			iterator_key = f"{iterator_key}.items()"
-
-	elif comes_from == "blockDataScript":		
-		# resetting block_data for repeater blocks by reassigning loop_var to "block"
-		loop_var = "block"
-		iterator_key = jinja_safe_key(f"block.{iterator_key}")
-	else:
-		if data_key:
-			iterator_key = f"{extract_data_key(data_key)}.{iterator_key}"
-		loop_var = f"key_{iterator_key.replace('.', '__')}"
-		iterator_key = jinja_safe_key(iterator_key)
-		data_key = {"key": loop_var, "comesFrom": "dataScript"}
-	return loop_var, iterator_key, data_key
-
-def get_visibility_key(block, data_key):
-	if block.get("visibilityCondition"):
-		visibility_condition = block.get("visibilityCondition")
-		if isinstance(visibility_condition, str) or visibility_condition.get("comesFrom", "dataScript") == "dataScript":
-			if data_key:
-				visibility_key = f"{extract_data_key(data_key)}.{key}"
-			else:
-				visibility_key = visibility_condition.get("key")
-		else:
-			key = visibility_condition.get("key")
-			if visibility_condition.get("comesFrom") == "props":
-				visibility_key = f"props.{key}"
-			else:
-				visibility_key = f"block.{key}"
-			visibility_key = jinja_safe_key(visibility_key)
-		return visibility_key
-	return None
-
-def get_loop_vars(map_of_std_props_info, key):
-	if key in map_of_std_props_info:
-		std_prop_info = map_of_std_props_info[key][-1]
-		standard_options = std_prop_info.get("standardOptions", {})
-		if standard_options.get("type") == "array":
-			return ["item"]  # TODO: allow custom item name
-		elif standard_options.get("type") == "object":
-			return ["key", "value"]  # TODO: allow custom key, value names
-	return []
-
-
-def extract_data_key(data_key):
-	if isinstance(data_key, str):
-		return data_key
-	elif isinstance(data_key, dict):
-		return data_key.get("key")
-	return None
-
-def jinja_safe_key(key):
-    # convert a.b to (a or {}).get('b', {})
-	# to avoid undefined error in jinja
-	keys = (key or "").split(".")
-	key = f"({keys[0]} or {{}})"
-	for k in keys[1:]:
-		key = f"{key}.get('{k}', {{}})"
-	return key
-
 def reset_with_component(block, extended_with_component, component_children):
 	reset_block(block)
 	block["children"] = []
@@ -1121,3 +1039,80 @@ def reset_block(block):
 	block["blockClientScript"] = None
 	block["blockDataScript"] = None
 	return block
+
+def extract_data_key(data_key):
+	if isinstance(data_key, str):
+		return data_key
+	elif isinstance(data_key, dict):
+		return data_key.get("key")
+	return None
+
+def jinja_safe_key(key):
+    # convert a.b to (a or {}).get('b', {})
+	# to avoid undefined error in jinja
+	keys = (key or "").split(".")
+	key = f"({keys[0]} or {{}})"
+	for k in keys[1:]:
+		key = f"{key}.get('{k}', {{}})"
+	return key
+
+def to_jinja_literal(obj):
+	# detect Jinja expressions inside strings (e.g. "{{ sample }}")
+	if isinstance(obj, str):
+		stripped = obj.strip()
+		if re.fullmatch(r"{{\s*.*?\s*}}", stripped):
+			# remove the {{ }} so Jinja receives the variable
+			inner = stripped[2:-2].strip()
+			return inner  # returned unquoted
+		return repr(obj)
+
+	if obj is True:
+		return "True"
+	if obj is False:
+		return "False"
+	if obj is None:
+		return "None"
+
+	if isinstance(obj, dict):
+		parts = []
+		for k, v in obj.items():
+			parts.append(f"{to_jinja_literal(k)}: {to_jinja_literal(v)}")
+		return "{ " + ", ".join(parts) + " }"
+
+	if isinstance(obj, list | tuple):
+		return "[ " + ", ".join(str(to_jinja_literal(i)) for i in obj) + " ]"
+
+	return repr(obj)
+
+def parse_static_value(value: str, prop_type: str):
+	match prop_type:
+		case "string":
+			return f"{value}"
+		case "number":
+			try:
+				return float(value)
+			except ValueError:
+				return None
+		case "boolean":
+			if value is True or value is False:
+				return value
+			if value.lower() in ["true", "1"]:
+				return True
+			elif value.lower() in ["false", "0"]:
+				return False
+			else:
+				return None
+		case "array":
+			try:
+				return frappe.parse_json(value)
+			except Exception:
+				return None
+		case "object":
+			try:
+				return frappe.parse_json(value)
+			except Exception:
+				return None
+		case "select":
+			return f"{value}"
+		case _:
+			return f"{value}"
