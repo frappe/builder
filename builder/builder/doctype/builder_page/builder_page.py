@@ -98,13 +98,14 @@ class BuilderPage(WebsiteGenerator):
 			BuilderPageClientScript,
 		)
 
+		app: DF.Literal[None]
 		authenticated_access: DF.Check
-		blocks: DF.JSON | None
+		blocks: DF.LongText | None
 		body_html: DF.Code | None
 		canonical_url: DF.Data | None
 		client_scripts: DF.TableMultiSelect[BuilderPageClientScript]
 		disable_indexing: DF.Check
-		draft_blocks: DF.JSON | None
+		draft_blocks: DF.LongText | None
 		dynamic_route: DF.Check
 		favicon: DF.AttachImage | None
 		head_html: DF.Code | None
@@ -113,7 +114,6 @@ class BuilderPage(WebsiteGenerator):
 		language: DF.Data | None
 		meta_description: DF.SmallText | None
 		meta_image: DF.AttachImage | None
-		module: DF.Link | None
 		page_data_script: DF.Code | None
 		page_name: DF.Data | None
 		page_title: DF.Data | None

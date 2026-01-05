@@ -69,7 +69,7 @@
   },
   {
    "fieldname": "blocks",
-   "fieldtype": "JSON",
+   "fieldtype": "Long Text",
    "label": "Blocks",
    "read_only": 1
   },
@@ -116,7 +116,7 @@
   },
   {
    "fieldname": "draft_blocks",
-   "fieldtype": "JSON",
+   "fieldtype": "Long Text",
    "label": "Draft Blocks",
    "read_only": 1
   },
@@ -246,7 +246,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-10 11:59:00.908359",
+ "modified": "2026-01-05 16:23:52.605250",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",
