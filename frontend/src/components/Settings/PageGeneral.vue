@@ -145,10 +145,8 @@
 									class="w-fit"
 									type="select"
 									:options="appOptions"
-									:modelValue="pageStore.activePage?.module"
-									@update:modelValue="
-										(val: string) => pageStore.updateActivePage('module', val)
-									"></BuilderInput>
+									:modelValue="pageStore.activePage?.app"
+									@update:modelValue="(val: string) => pageStore.updateActivePage('app', val)"></BuilderInput>
 							</div>
 						</div>
 					</template>
