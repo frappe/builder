@@ -482,7 +482,7 @@ def copy_from_site_files(file_url, assets_path, target_app="builder"):
 
 def copy_from_builder_assets(file_url, assets_path, target_app="builder"):
 	"""Copy file from builder assets directory"""
-	if file_url.startswith("/assets/") and "/builder_files/" in file_url:
+	if file_url.startswith("/assets/") and "/builder_assets/" in file_url:
 		parts = file_url.split("/")
 		if len(parts) >= 3:
 			app_name = parts[2]
@@ -499,7 +499,7 @@ def copy_file_to_assets(source_path, file_url, assets_path, target_app="builder"
 	filename = os.path.basename(file_url)
 	dest_path = os.path.join(assets_path, filename)
 	shutil.copy2(source_path, dest_path)
-	return f"/assets/{target_app}/builder_files/assets/{filename}"
+	return f"/assets/{target_app}/builder_assets/{filename}"
 
 
 def extract_components_from_blocks(blocks):
@@ -577,11 +577,11 @@ def get_export_paths(app_path, export_name):
 	"""Get all export directory paths"""
 	builder_files_path = os.path.join(app_path, "builder_files")
 	pages_path = os.path.join(builder_files_path, "pages")
-	public_builder_files_path = os.path.join(app_path, "public", "builder_files")
+	public_builder_files_path = os.path.join(app_path, "public", "builder_assets")
 
 	return {
 		"page_path": os.path.join(pages_path, export_name),
-		"assets_path": os.path.join(public_builder_files_path, "assets"),
+		"assets_path": public_builder_files_path,
 		"client_scripts_path": os.path.join(builder_files_path, "client_scripts"),
 		"components_path": os.path.join(builder_files_path, "components"),
 		"builder_files_path": builder_files_path,
