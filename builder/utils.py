@@ -464,7 +464,7 @@ def copy_asset_file(file_url, assets_path, target_app="builder"):
 		if file_url.startswith("/files/"):
 			return copy_from_site_files(file_url, assets_path, target_app)
 		elif file_url.startswith("/builder_assets/") or (
-			file_url.startswith("/assets/") and "/builder_files/" in file_url
+			file_url.startswith("/assets/") and "/builder_assets/" in file_url
 		):
 			return copy_from_builder_assets(file_url, assets_path, target_app)
 	except Exception as e:

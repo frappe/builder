@@ -117,7 +117,7 @@
 					),
 				}"
 				@click="setFolderActive(project.folder_name)">
-				<span class="flex flex-1 gap-1">
+				<span class="flex flex-1 gap-2">
 					<FolderIcon class="size-4"></FolderIcon>
 					<EditableSpan
 						v-model="project.folder_name"
@@ -128,7 +128,7 @@
 								renamingFolder = '';
 							}
 						"
-						class="w-full">
+						class="w-full capitalize">
 						{{ project.folder_name }}
 					</EditableSpan>
 				</span>
