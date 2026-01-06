@@ -74,6 +74,10 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 		getPlaceholder: () => {
 			return propDetails.standardOptions?.options?.defaultValue || null;
 		},
+		defaultValue:
+			type == "boolean"
+				? propDetails.standardOptions?.options?.defaultValue == "true"
+				: propDetails.standardOptions?.options?.defaultValue,
 		...map,
 	};
 	return map;
