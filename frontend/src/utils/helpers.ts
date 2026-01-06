@@ -364,17 +364,18 @@ const detachBlockFromComponent = (block: Block, componentId: null | string) => {
 	blockCopy.innerHTML = block.innerHTML || component?.innerHTML;
 	blockCopy.props = Object.fromEntries(
 		Object.entries(block.getBlockProps()).map(([key, prop]) => {
-			if (prop.isStandard) {
-				let value = prop.value || prop.standardOptions?.options?.defaultValue;
-				if (!["string", "select"].includes(prop.standardOptions?.type!)) {
-					prop.value = JSON.stringify(value);
+			const propCopy = { ...prop }; // creating copy to avoid mutating original prop
+			if (propCopy.isStandard) {
+				let value = propCopy.value || propCopy.standardOptions?.options?.defaultValue;
+				if (!["string", "select"].includes(propCopy.standardOptions?.type!)) {
+					propCopy.value = JSON.stringify(value);
 				} else {
-					prop.value = value;
+					propCopy.value = value;
 				}
-				prop.isStandard = false;
-				prop.standardOptions = undefined;
+				propCopy.isStandard = false;
+				propCopy.standardOptions = undefined;
 			}
-			return [key, prop];
+			return [key, propCopy];
 		}),
 	);
 
