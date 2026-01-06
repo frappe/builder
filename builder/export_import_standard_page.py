@@ -237,7 +237,6 @@ def copy_font_file(file_url, assets_path, target_app="builder"):
 		if file_url.startswith("/files/"):
 			source_path = os.path.join(frappe.local.site_path, "public", file_url.lstrip("/"))
 		elif file_url.startswith("/assets/") and "/builder_files/" in file_url:
-			# Extract app name from URL like /assets/{app}/builder_files/assets/file.png
 			parts = file_url.split("/")
 			if len(parts) >= 3:
 				app_name = parts[2]
@@ -245,7 +244,6 @@ def copy_font_file(file_url, assets_path, target_app="builder"):
 			else:
 				return None
 		elif file_url.startswith("/builder_assets/"):
-			# Legacy path - check www folder
 			source_path = os.path.join(frappe.get_app_path("builder"), "www", file_url.lstrip("/"))
 		else:
 			return None
@@ -254,7 +252,7 @@ def copy_font_file(file_url, assets_path, target_app="builder"):
 			filename = os.path.basename(file_url)
 			dest_path = os.path.join(assets_path, filename)
 			shutil.copy2(source_path, dest_path)
-			return f"/assets/{target_app}/builder_files/assets/{filename}"
+			return f"/assets/{target_app}/builder_assets/{filename}"
 	except Exception as e:
 		frappe.log_error(f"Failed to copy font file {file_url}: {e!s}")
 

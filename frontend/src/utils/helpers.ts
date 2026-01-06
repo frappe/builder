@@ -116,6 +116,10 @@ function getRandomColor() {
 	return HSVToHex(Math.random() * 360, 25, 100);
 }
 
+function toTitleCase(str: string): string {
+	return str.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+}
+
 async function confirm(message: string, title: string = "Confirm"): Promise<boolean> {
 	return new Promise((resolve) => {
 		confirmDialog({
@@ -1450,6 +1454,7 @@ export {
 	stripExtension,
 	throttle,
 	toKebabCase,
+	toTitleCase,
 	triggerCopyEvent,
 	uploadBuilderAsset,
 	uploadUserFont,

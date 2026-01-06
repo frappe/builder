@@ -80,16 +80,24 @@ export function useBuilderEvents(
 			if (file) {
 				uploadBuilderAsset(file).then((res: { fileURL: string; fileName: string }) => {
 					const selectedBlocks = blockController.getSelectedBlocks();
-					const parentBlock = selectedBlocks.length
+					let parentBlock = selectedBlocks.length
 						? selectedBlocks[0]
 						: (canvasStore.activeCanvas?.getRootBlock() as Block);
+
 					let imageBlock = null as unknown as Block;
 					if (parentBlock.isImage()) {
 						imageBlock = parentBlock;
+						imageBlock.setAttribute("src", res.fileURL);
 					} else {
-						imageBlock = parentBlock.addChild(getBlockCopy(getBlockTemplate("image")));
+						while (parentBlock && !parentBlock.canHaveChildren()) {
+							parentBlock = parentBlock.getParentBlock();
+						}
+
+						if (parentBlock) {
+							imageBlock = parentBlock.addChild(getBlockCopy(getBlockTemplate("image")));
+							imageBlock.setAttribute("src", res.fileURL);
+						}
 					}
-					imageBlock.setAttribute("src", res.fileURL);
 				});
 			}
 			return;
