@@ -598,6 +598,9 @@ def combine(a, b):
     res.update(b)
     return res
 
+def hash(s):
+    return f"{frappe.generate_hash(length=6)}-{s}"
+
 def execute_script_and_combine(prev_block_data, block_data_script, props):
 	props = frappe._dict(frappe.parse_json(props or "{}"))
 	block_data = frappe._dict()

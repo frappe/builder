@@ -639,9 +639,9 @@ def get_block_html(blocks):
 			passed_down_props = {k: v["value"] for k, v in props_obj.items() if v.get("is_passed_down")}
 
 			if block.get("blockClientScript"):
-				block_unique_id = f"{block.get('blockId')}-{frappe.generate_hash(length=3)}"  # extra hash as repeating blocks have same blockId
-				script_content = f"(function (props){{ {block.get('blockClientScript')} }}).call(document.querySelector('[data-block-id=\"{block_unique_id}\"]'), {{{{ props | tojson }}}});"
-				tag.attrs["data-block-id"] = block_unique_id
+				block_unique_id = f"{block.get('blockId')}"  # extra hash as repeating blocks have same blockId
+				script_content = f"(function (props){{ {block.get('blockClientScript')} }}).call(document.querySelector('[data-block-id=\"{{{{ unique_hash }}}}\"]'), {{{{ props | tojson }}}});"
+				tag.attrs["data-block-id"] = f"{{{{ unique_hash }}}}"
 				script_tag = soup.new_tag("script")
 				script_tag.string = script_content
 				tag.append(script_tag)
@@ -901,6 +901,8 @@ def append_child_tag(tag, child_tag, child_tag_details):
 	child_tag_block_script = child_tag_details.get('block_data_script')
 	visibility_key = child_tag_details.get('visibility_key')
 	default_props = child_tag_details.get('default_props')
+ 
+	tag.append("{% with unique_hash = (loop.index if loop is defined else 0) | hash %}")
 
 	if default_props:
 		default_props = ", ".join([f"'{var}': {var}" for var in default_props])
@@ -929,6 +931,8 @@ def append_child_tag(tag, child_tag, child_tag_details):
 
 	if default_props:
 		tag.append("{% endwith %}{% endwith %}")
+
+	tag.append("{% endwith %}")
 
 
 def set_dynamic_content_placeholder(block, data_key=None):
