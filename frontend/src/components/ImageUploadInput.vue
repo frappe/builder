@@ -41,7 +41,6 @@
 					:uploadArgs="{
 						private: false,
 						folder: 'Home/Builder Uploads',
-						optimize: true,
 						upload_endpoint: '/api/method/builder.api.upload_builder_asset',
 					}">
 					<template v-slot="{ openFileSelector }">
