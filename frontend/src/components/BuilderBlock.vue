@@ -398,6 +398,7 @@ watch(
 
 watch(
 	[
+		component,
 		allResolvedProps,
 		() => props.blockData,
 		() => props.block.getBlockDataScript(),
@@ -413,7 +414,7 @@ watch(
 		console.log("Fetching block data for", allResolvedProps.value, props.blockData);
 		fetchBlockData
 			.fetch({
-				block_id: props.block.blockId,
+				block_id: uid,
 				block_data_script: props.block.getBlockDataScript(),
 				props: JSON.stringify(allResolvedProps.value),
 			})
