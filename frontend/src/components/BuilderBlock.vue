@@ -361,7 +361,7 @@ const allResolvedProps = computed(() => {
 						key,
 						props.block,
 						getDataScriptValue,
-						(path: string) => getDataForKey({...props.blockData}, path), // block props can not refer to own block data items
+						(path: string) => getDataForKey({ ...props.blockData }, path), // block props can not refer to own block data items
 						props.defaultProps,
 					),
 				];
@@ -397,7 +397,12 @@ watch(
 );
 
 watch(
-	[component, allResolvedProps, () => props.block.getBlockDataScript(), () => pageStore.settingPage],
+	[
+		allResolvedProps,
+		() => props.blockData,
+		() => props.block.getBlockDataScript(),
+		() => pageStore.settingPage,
+	],
 	() => {
 		if (pageStore.settingPage) return;
 		if (props.block.getBlockDataScript().trim() === "") {
@@ -438,7 +443,7 @@ const hiddenDueToVisibilityCondition = computed(() => {
 	const visibilityCondition = props.block.getVisibilityCondition();
 	const key = visibilityCondition?.key;
 	const comesFrom = visibilityCondition?.comesFrom || "dataScript";
-	if(!key) return false;
+	if (!key) return false;
 	if (comesFrom == "blockDataScript") {
 		const value = getBlockDataScriptValue(key as string);
 		return !Boolean(value);
