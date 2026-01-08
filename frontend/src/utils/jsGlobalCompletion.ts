@@ -37,6 +37,9 @@ export default function jsCompletionsFromGlobalScope(context: any, blockProps: R
 
 	if (completePropertyAfter.includes(nodeBefore.name) && nodeBefore.parent?.name == "MemberExpression") {
 		let object = nodeBefore.parent.getChild("Expression");
+		if(object?.name == "this") {
+			return completeProperties(nodeBefore.from, document.body);
+		}
 		if (object?.name == "VariableName") {
 			let from = /\./.test(nodeBefore.name) ? nodeBefore.to : nodeBefore.from;
 			let variableName = context.state.sliceDoc(object.from, object.to);
