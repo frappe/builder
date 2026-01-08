@@ -1,6 +1,6 @@
 import { syntaxTree } from "@codemirror/language";
 
-const completePropertyAfter = ["PropertyName", ".", "?.", "["];
+const completePropertyAfter = ["PropertyName", ".", "?.", "[", "("];
 const dontCompleteIn = [
 	"TemplateString",
 	"LineComment",
@@ -21,6 +21,37 @@ export default function customPythonCompletions(
 ) {
 	let nodeBefore = syntaxTree(context.state).resolveInner(context.pos, -1);
 	const hasProps = Object.keys(blockProps).length > 0;
+	const propCompletions = {
+		from: context.pos,
+		options: Object.keys(blockProps).map((key) => {
+			return {
+				label: key,
+				displayLabel: `${key}`,
+				apply: `"${key}"`,
+				type: "property",
+			};
+		}),
+	};
+
+	if (nodeBefore.name === "(" && nodeBefore.parent?.name === "ArgList") {
+		let callExpression = nodeBefore.parent.parent;
+		if (callExpression?.name === "CallExpression") {
+			let memberExpr = callExpression.getChild("MemberExpression");
+			if (memberExpr) {
+				let object = memberExpr.getChild("Expression");
+				let property = memberExpr.getChild("PropertyName");
+
+				if (object?.name === "VariableName" && property) {
+					let objectName = context.state.sliceDoc(object.from, object.to);
+					let propertyName = context.state.sliceDoc(property.from, property.to);
+
+					if (objectName === "props" && propertyName === "get" && hasProps) {
+						return propCompletions;
+					}
+				}
+			}
+		}
+	}
 	if (completePropertyAfter.includes(nodeBefore.name) && nodeBefore.parent?.name == "MemberExpression") {
 		let object = nodeBefore.parent.getChild("Expression");
 
@@ -28,21 +59,10 @@ export default function customPythonCompletions(
 			let from = /\./.test(nodeBefore.name) ? nodeBefore.to : nodeBefore.from;
 			let variableName = context.state.sliceDoc(object.from, object.to);
 			if (variableName === "props") {
-
 				let isBracket = nodeBefore.name === "[";
 				if (!hasProps || !isBracket) return null;
 				console.log(variableName, blockProps, isBracket);
-				return {
-					from: context.pos,
-					options: Object.keys(blockProps).map((key) => {
-						return {
-							label: key,
-							displayLabel: `${key}`,
-							apply: `"${key}"`,
-							type: "property",
-						};
-					}),
-				};
+				return propCompletions;
 			}
 
 			if (Object.keys(customCompletions).includes(variableName)) {
