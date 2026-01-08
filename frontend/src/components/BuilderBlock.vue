@@ -361,7 +361,7 @@ const allResolvedProps = computed(() => {
 						key,
 						props.block,
 						getDataScriptValue,
-						(path: string) => ({ ...props.blockData }[path]), // block props can not refer to own block data items
+						(path: string) => getDataForKey({...props.blockData}, path), // block props can not refer to own block data items
 						props.defaultProps,
 					),
 				];
@@ -405,6 +405,7 @@ watch(
 			blockDataStore.setBlockData(props.block.blockId, {}, "own");
 			return;
 		}
+		console.log("Fetching block data for", allResolvedProps.value, props.blockData);
 		fetchBlockData
 			.fetch({
 				block_id: props.block.blockId,
