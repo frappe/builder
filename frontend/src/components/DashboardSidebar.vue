@@ -1,8 +1,8 @@
 <template>
 	<section
-		class="sticky bottom-0 left-0 top-0 flex min-h-fit w-60 flex-col gap-3 border-r border-outline-gray-1 bg-surface-gray-1 p-2 max-lg:hidden dark:bg-surface-white">
+		class="sticky bottom-0 left-0 top-0 flex min-h-fit w-60 flex-col gap-2 border-r border-outline-gray-1 bg-surface-gray-1 p-1 max-lg:hidden dark:bg-surface-white">
 		<div class="flex flex-col">
-			<div class="mb-2 flex gap-2">
+			<div class="flex gap-2">
 				<div class="flex w-full items-center">
 					<Dropdown
 						:options="[
@@ -61,10 +61,9 @@
 						size="sm">
 						<template v-slot="{ open }">
 							<div
-								class="flex w-full items-center justify-between rounded py-1"
+								class="mx-0.5 flex w-full items-center justify-between rounded p-1.5 dark:hover:bg-surface-gray-2"
 								:class="{
-									'!bg-surface-white shadow-sm dark:!bg-surface-gray-2': open,
-									'!p-2 hover:bg-surface-gray-2': true,
+									'bg-surface-white shadow-sm': open,
 								}">
 								<div class="flex w-full cursor-pointer items-center gap-2">
 									<img src="/builder_logo.png" alt="logo" class="h-7" />
@@ -80,6 +79,8 @@
 					</Dropdown>
 				</div>
 			</div>
+		</div>
+		<div class="flex flex-1 flex-col p-1">
 			<span
 				class="flex cursor-pointer gap-2 rounded p-2 text-base text-ink-gray-6"
 				@click="() => setFolderActive('')"
@@ -95,8 +96,6 @@
 				<SettingsIcon class="size-4"></SettingsIcon>
 				<span>Settings</span>
 			</span>
-		</div>
-		<div class="flex flex-1 flex-col">
 			<div class="flex items-center justify-between p-2 text-base text-ink-gray-6">
 				<span>Folders</span>
 				<BuilderButton
