@@ -601,6 +601,9 @@ def combine(a, b):
 def hash(s):
     return f"{frappe.generate_hash(length=6)}-{s}"
 
+def to_safe_json(data):
+	return frappe.as_json(data)
+
 def execute_script_and_combine(prev_block_data, block_data_script, props):
 	props = frappe._dict(frappe.parse_json(props or "{}"))
 	block_data = frappe._dict()
