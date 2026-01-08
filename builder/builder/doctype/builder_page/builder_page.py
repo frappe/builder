@@ -639,9 +639,8 @@ def get_block_html(blocks):
 			passed_down_props = {k: v["value"] for k, v in props_obj.items() if v.get("is_passed_down")}
 
 			if block.get("blockClientScript"):
-				block_unique_id = f"{block.get('blockId')}"  # extra hash as repeating blocks have same blockId
 				script_content = f"(function (props){{ {block.get('blockClientScript')} }}).call(document.querySelector('[data-block-id=\"{{{{ unique_hash }}}}\"]'), {{{{ props | tojson }}}});"
-				tag.attrs["data-block-id"] = f"{{{{ unique_hash }}}}"
+				tag.attrs["data-block-id"] = f"{{{{ unique_hash }}}}" # unique hash as repeating blocks have same blockId / class
 				script_tag = soup.new_tag("script")
 				script_tag.string = script_content
 				tag.append(script_tag)
