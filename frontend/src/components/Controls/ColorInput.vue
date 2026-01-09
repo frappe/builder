@@ -19,7 +19,7 @@
 							<Autocomplete
 								class="[&>div>input]:pl-8"
 								:class="{
-									'[&>div>div>input]:text-xs [&>div>div>input]:text-ink-violet-1 [&>div>input]:font-mono':
+									'[&>div>div>input]:text-sm [&>div>div>input]:text-ink-violet-1 [&>div>input]:font-mono':
 										isCssVariable,
 								}"
 								v-bind="events"
@@ -285,7 +285,7 @@ const getOptions = async (query: string) => {
 };
 
 watch(variables, () => {
-	colorInput.value?.updateOptions();
+	colorInput.value?.refreshOptions();
 });
 onMounted(() => {
 	if (
