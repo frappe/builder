@@ -696,9 +696,9 @@ def extend_block(block, overridden_block):
 	block["attributes"].update(overridden_block["attributes"])
 
 	dynamicValues = overridden_block.get("dynamicValues", [])
-	dynamicValuesProperty = [dv.get("property") for dv in dynamicValues]
+	dynamicValuesProperties = [dv.get("property") for dv in dynamicValues]
 	for dv in block.get("dynamicValues", []):
-		if dv.get("property") in dynamicValuesProperty:
+		if dv.get("property") in dynamicValuesProperties:
 			continue
 		dynamicValues.append(dv)
 	block["dynamicValues"] = dynamicValues
