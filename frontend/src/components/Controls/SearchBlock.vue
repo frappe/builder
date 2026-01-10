@@ -177,8 +177,8 @@ const propertyHandlers = [
 		key: "data",
 		name: "Data",
 		matches: (block: Block, term: string) => {
-			if (block.dynamicValues) {
-				block.dynamicValues.forEach((dv: BlockDataKey) => {
+			if (block.getDynamicValues()) {
+				block.getDynamicValues().forEach((dv: BlockDataKey) => {
 					if (dv.key?.toLowerCase().includes(term)) {
 						return true;
 					}
