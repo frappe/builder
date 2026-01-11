@@ -9,7 +9,8 @@
 		:width="520"
 		:container="container"
 		v-if="modelValue"
-		:placement-offset="20"
+		:placement-offset-top="8"
+		:placement-offset-left="65"
 		action-label="Add Variable"
 		:action-handler="addNewVariable"
 		placement="top-left">

@@ -57,6 +57,8 @@ const props = withDefaults(
 			| "middle-left"
 			| "middle-right";
 		placementOffset?: number;
+		placementOffsetLeft?: number;
+		placementOffsetTop?: number;
 		clickOutsideToClose?: boolean;
 		container?: HTMLElement | null;
 		actionLabel?: string;
@@ -130,22 +132,24 @@ const handleClickOutside = (event: Event) => {
 const setPosition = () => {
 	if (props.container) {
 		const { left, top, right, bottom } = props.container.getBoundingClientRect();
+		const horizontalOffset = props.placementOffsetLeft ?? props.placementOffset;
+		const verticalOffset = props.placementOffsetTop ?? props.placementOffset;
 		switch (props.placement) {
 			case "top-left":
-				popupLeft.value = left + props.placementOffset;
-				popupTop.value = top + props.placementOffset;
+				popupLeft.value = left + horizontalOffset;
+				popupTop.value = top + verticalOffset;
 				break;
 			case "top-right":
-				popupLeft.value = right - props.width - props.placementOffset;
-				popupTop.value = top + props.placementOffset;
+				popupLeft.value = right - props.width - horizontalOffset;
+				popupTop.value = top + verticalOffset;
 				break;
 			case "bottom-left":
-				popupLeft.value = left + props.placementOffset;
-				popupTop.value = bottom - props.height - props.placementOffset;
+				popupLeft.value = left + horizontalOffset;
+				popupTop.value = bottom - props.height - verticalOffset;
 				break;
 			case "bottom-right":
-				popupLeft.value = right - props.width - props.placementOffset;
-				popupTop.value = bottom - props.height - props.placementOffset;
+				popupLeft.value = right - props.width - horizontalOffset;
+				popupTop.value = bottom - props.height - verticalOffset;
 				break;
 			case "center":
 				popupLeft.value = left + (right - left) / 2 - props.width / 2;
@@ -153,18 +157,18 @@ const setPosition = () => {
 				break;
 			case "top-middle":
 				popupLeft.value = left + (right - left) / 2 - props.width / 2;
-				popupTop.value = top + props.placementOffset;
+				popupTop.value = top + verticalOffset;
 				break;
 			case "bottom-middle":
 				popupLeft.value = left + (right - left) / 2 - props.width / 2;
-				popupTop.value = bottom - props.height - props.placementOffset;
+				popupTop.value = bottom - props.height - verticalOffset;
 				break;
 			case "middle-left":
-				popupLeft.value = left + props.placementOffset;
+				popupLeft.value = left + horizontalOffset;
 				popupTop.value = top + (bottom - top) / 2 - props.height / 2;
 				break;
 			case "middle-right":
-				popupLeft.value = right - props.width - props.placementOffset;
+				popupLeft.value = right - props.width - horizontalOffset;
 				popupTop.value = top + (bottom - top) / 2 - props.height / 2;
 				break;
 		}
