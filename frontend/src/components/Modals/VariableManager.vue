@@ -50,6 +50,8 @@
 								type="text"
 								placeholder="Enter variable name"
 								@click.stop
+								@blur="() => row.isNew && createVariable(row)"
+								@keydown.enter.prevent="() => row.isNew && createVariable(row)"
 								class="w-[130px]"
 								autofocus />
 
@@ -130,14 +132,6 @@
 						<div v-else-if="column.key === 'actions'" class="flex items-center justify-center gap-1">
 							<template v-if="!row.is_standard">
 								<BuilderButton
-									v-if="row.isNew"
-									variant="ghost"
-									class="text-ink-gray-6"
-									@click="createVariable(row)"
-									title="Create Variable">
-									<FeatherIcon name="check" class="h-3 w-3" />
-								</BuilderButton>
-								<BuilderButton
 									variant="ghost"
 									class="text-ink-gray-6 hover:text-red-600"
 									@click="deleteVariableRow(row)"
@@ -199,6 +193,7 @@ const editingCell = ref<string | null>(null);
 const nextNewId = ref(1);
 const newVariable = ref<Partial<BuilderVariable> | null>(null);
 const searchQuery = ref("");
+const isCreating = ref(false);
 
 const columns = [
 	{ label: "Name", key: "variable_name" },
@@ -294,7 +289,9 @@ const updateColor = async (row: ListViewRow, value: string | null, mode: "light"
 		row.dark_value = value || "";
 	}
 
-	if (row.name && !row.isNew) {
+	if (row.isNew) {
+		await createVariable(row);
+	} else if (row.name) {
 		debouncedSaveVariable(row);
 	}
 };
@@ -307,23 +304,25 @@ const debouncedSaveVariable = useDebounceFn(async (row: ListViewRow) => {
 	}
 }, 300);
 
-const createVariable = async (variable: BuilderVariable) => {
-	if (!variable.variable_name?.trim()) {
-		toast.error("Variable name is required");
-		return;
-	}
+const createVariable = async (row: ListViewRow) => {
+	if (!row.isNew || !row.variable_name?.trim() || isCreating.value) return;
 
+	isCreating.value = true;
 	try {
-		await createVar({
-			variable_name: variable.variable_name!,
-			value: variable.value!,
-			dark_value: variable.dark_value || undefined,
-			type: variable.type || "Color",
+		const createdVariable = await createVar({
+			variable_name: row.variable_name!,
+			value: row.value || "#ffffff",
+			dark_value: row.dark_value || undefined,
+			type: row.type || "Color",
 		});
 		newVariable.value = null;
+		await nextTick();
 		toast.success("Variable created successfully");
+		return createdVariable;
 	} catch (error) {
 		toast.error((error as Error).message || "Failed to create variable");
+	} finally {
+		isCreating.value = false;
 	}
 };
 
