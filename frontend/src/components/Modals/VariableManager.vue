@@ -16,7 +16,7 @@
 		placement="top-left">
 		<template #header><h2 class="py-2 text-lg font-semibold">Manage Variables</h2></template>
 		<template #content>
-			<div>
+			<div @click.stop="stopEditing">
 				<div class="mb-4">
 					<BuilderInput
 						:modelValue="searchQuery"
@@ -50,8 +50,8 @@
 								type="text"
 								placeholder="Enter variable name"
 								@click.stop
-								@blur="() => row.isNew && createVariable(row)"
-								@keydown.enter.prevent="() => row.isNew && createVariable(row)"
+								@blur="() => (row.isNew ? createVariable(row) : stopEditing())"
+								@keydown.enter.prevent="() => (row.isNew ? createVariable(row) : stopEditing())"
 								class="w-[130px]"
 								autofocus />
 
@@ -233,6 +233,7 @@ const listViewOptions = {
 	selectable: false,
 	showTooltip: false,
 	resizeColumn: false,
+	enableActive: false,
 	emptyState: {
 		title: computed(() => (searchQuery.value.trim() ? "No Variables Found" : "No Variables")),
 		description: computed(() =>
@@ -520,11 +521,8 @@ const downloadSampleCSV = () => {
 
 const setVariableName = (value: string, row: ListViewRow) => {
 	if (!row.isNew) {
-		updateVariable({
-			name: row.name,
-			variable_name: value,
-		});
-		stopEditing();
+		row.variable_name = value;
+		debouncedSaveVariable(row);
 	} else {
 		row.variable_name = value;
 	}
