@@ -52,12 +52,12 @@
 								@click.stop
 								@blur="() => (row.isNew ? createVariable(row) : stopEditing())"
 								@keydown.enter.prevent="() => (row.isNew ? createVariable(row) : stopEditing())"
-								class="w-[130px]"
+								class="w-[160px]"
 								autofocus />
 
 							<span
 								v-else
-								class="rounded px-2 py-1 text-sm"
+								class="truncate rounded px-2 py-1 text-sm"
 								:class="getNameDisplayClasses(row)"
 								@click.stop="startEditing('name', row.id, row.is_standard)"
 								:title="getNameTooltip(row)">
@@ -196,7 +196,7 @@ const searchQuery = ref("");
 const isCreating = ref(false);
 
 const columns = [
-	{ label: "Name", key: "variable_name" },
+	{ label: "Name", key: "variable_name", width: "180px" },
 	{ label: "Light", key: "light_color" },
 	{ label: "Dark", key: "dark_color" },
 	{ label: "", key: "actions", width: "40px" },
