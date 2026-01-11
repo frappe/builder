@@ -1,5 +1,5 @@
 <template>
-	<teleport to="body">
+	<teleport to="#popovers">
 		<div class="relative" ref="popover">
 			<div class="fixed" @mousedown.stop>
 				<div
