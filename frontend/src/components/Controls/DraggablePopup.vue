@@ -1,6 +1,6 @@
 <template>
 	<teleport to="body">
-		<div class="relative" v-show="!isHidden" ref="popover">
+		<div class="relative" ref="popover">
 			<div class="fixed" @mousedown.stop>
 				<div
 					ref="popoverContent"
@@ -35,7 +35,6 @@
 </template>
 
 <script setup lang="ts">
-import { useDomAttr } from "@/composables/useDomAttr";
 import { useEventListener } from "@vueuse/core";
 import { nextTick, onMounted, Ref, ref } from "vue";
 
@@ -72,11 +71,6 @@ const props = withDefaults(
 		placementOffset: 0,
 	},
 );
-
-const isHidden = useDomAttr(popover, "data-aria-hidden", {
-	immediate: true,
-	transform: (v) => v === "true",
-});
 
 const emit = defineEmits(["update:modelValue"]);
 
