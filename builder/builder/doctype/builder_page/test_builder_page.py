@@ -24,11 +24,7 @@ data.update({
 })
 """
 
-custom_data_script = """
-data.update({
-	"name_new": "Jane Doe",
-})
-"""
+custom_data_script = "data.update({\"name_new\": \"Jane Doe\",})"
 
 
 class TestBuilderPage(FrappeTestCase):
@@ -234,7 +230,7 @@ class TestBuilderPage(FrappeTestCase):
 			}
 		).insert()
 
-		page_no_overrides = frappe.get_doc(
+		page_with_component_no_overrides = frappe.get_doc(
 			{
 				"doctype": "Builder Page",
 				"page_title": "Component Dynamic Values Test",
@@ -272,7 +268,7 @@ class TestBuilderPage(FrappeTestCase):
 			}
 		).insert()
 
-		page_with_overrides = frappe.get_doc(
+		page_with_component_having_overrides = frappe.get_doc(
 			{
 				"doctype": "Builder Page",
 				"page_title": "Component Dynamic Values Test",
@@ -309,7 +305,7 @@ class TestBuilderPage(FrappeTestCase):
 			}
 		).insert()
 
-		page_with_bad_overrides = frappe.get_doc(
+		page_with_component_having_bad_overrides = frappe.get_doc(
 			{
 				"doctype": "Builder Page",
 				"page_title": "Component Dynamic Values Test",
@@ -347,17 +343,17 @@ class TestBuilderPage(FrappeTestCase):
 		).insert()
 
 		try:
-			content_no_overrides = get_response_content("/component-dynamic-values-test-no-overrides")
+			content_with_no_overrides = get_response_content("/component-dynamic-values-test-no-overrides")
 			content_with_overrides = get_response_content("/component-dynamic-values-test-with-overrides")
 			content_with_bad_overrides = get_response_content("/component-dynamic-values-test-with-bad-overrides")
 	
-			self.assertTrue("John Doe" == get_html_for(content_no_overrides, "tag", "h1", only_content=True))
+			self.assertTrue("John Doe" == get_html_for(content_with_no_overrides, "tag", "h1", only_content=True))
 			self.assertTrue("Jane Doe" == get_html_for(content_with_overrides, "tag", "h1", only_content=True))
 			self.assertTrue("Hello" == get_html_for(content_with_bad_overrides, "tag", "h1", only_content=True))
 		finally:
-			page_no_overrides.delete()
-			page_with_overrides.delete()
-			page_with_bad_overrides.delete()
+			page_with_component_no_overrides.delete()
+			page_with_component_having_overrides.delete()
+			page_with_component_having_bad_overrides.delete()
 			component.delete()
 
 	@classmethod
