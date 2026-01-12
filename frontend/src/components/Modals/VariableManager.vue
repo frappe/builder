@@ -9,13 +9,14 @@
 		:width="520"
 		:container="container"
 		v-if="modelValue"
-		:placement-offset="20"
+		:placement-offset-top="8"
+		:placement-offset-left="65"
 		action-label="Add Variable"
 		:action-handler="addNewVariable"
 		placement="top-left">
 		<template #header><h2 class="py-2 text-lg font-semibold">Manage Variables</h2></template>
 		<template #content>
-			<div>
+			<div @click.stop="stopEditing">
 				<div class="mb-4">
 					<BuilderInput
 						:modelValue="searchQuery"
@@ -49,12 +50,14 @@
 								type="text"
 								placeholder="Enter variable name"
 								@click.stop
-								class="w-[130px]"
+								@blur="() => (row.isNew ? createVariable(row) : stopEditing())"
+								@keydown.enter.prevent="() => (row.isNew ? createVariable(row) : stopEditing())"
+								class="w-[160px]"
 								autofocus />
 
 							<span
 								v-else
-								class="rounded px-2 py-1 text-sm"
+								class="truncate rounded px-2 py-1 text-sm"
 								:class="getNameDisplayClasses(row)"
 								@click.stop="startEditing('name', row.id, row.is_standard)"
 								:title="getNameTooltip(row)">
@@ -129,14 +132,6 @@
 						<div v-else-if="column.key === 'actions'" class="flex items-center justify-center gap-1">
 							<template v-if="!row.is_standard">
 								<BuilderButton
-									v-if="row.isNew"
-									variant="ghost"
-									class="text-ink-gray-6"
-									@click="createVariable(row)"
-									title="Create Variable">
-									<FeatherIcon name="check" class="h-3 w-3" />
-								</BuilderButton>
-								<BuilderButton
 									variant="ghost"
 									class="text-ink-gray-6 hover:text-red-600"
 									@click="deleteVariableRow(row)"
@@ -198,9 +193,10 @@ const editingCell = ref<string | null>(null);
 const nextNewId = ref(1);
 const newVariable = ref<Partial<BuilderVariable> | null>(null);
 const searchQuery = ref("");
+const isCreating = ref(false);
 
 const columns = [
-	{ label: "Name", key: "variable_name" },
+	{ label: "Name", key: "variable_name", width: "180px" },
 	{ label: "Light", key: "light_color" },
 	{ label: "Dark", key: "dark_color" },
 	{ label: "", key: "actions", width: "40px" },
@@ -237,6 +233,7 @@ const listViewOptions = {
 	selectable: false,
 	showTooltip: false,
 	resizeColumn: false,
+	enableActive: false,
 	emptyState: {
 		title: computed(() => (searchQuery.value.trim() ? "No Variables Found" : "No Variables")),
 		description: computed(() =>
@@ -293,7 +290,9 @@ const updateColor = async (row: ListViewRow, value: string | null, mode: "light"
 		row.dark_value = value || "";
 	}
 
-	if (row.name && !row.isNew) {
+	if (row.isNew) {
+		await createVariable(row);
+	} else if (row.name) {
 		debouncedSaveVariable(row);
 	}
 };
@@ -306,23 +305,25 @@ const debouncedSaveVariable = useDebounceFn(async (row: ListViewRow) => {
 	}
 }, 300);
 
-const createVariable = async (variable: BuilderVariable) => {
-	if (!variable.variable_name?.trim()) {
-		toast.error("Variable name is required");
-		return;
-	}
+const createVariable = async (row: ListViewRow) => {
+	if (!row.isNew || !row.variable_name?.trim() || isCreating.value) return;
 
+	isCreating.value = true;
 	try {
-		await createVar({
-			variable_name: variable.variable_name!,
-			value: variable.value!,
-			dark_value: variable.dark_value || undefined,
-			type: variable.type || "Color",
+		const createdVariable = await createVar({
+			variable_name: row.variable_name!,
+			value: row.value || "#ffffff",
+			dark_value: row.dark_value || undefined,
+			type: row.type || "Color",
 		});
 		newVariable.value = null;
+		await nextTick();
 		toast.success("Variable created successfully");
+		return createdVariable;
 	} catch (error) {
 		toast.error((error as Error).message || "Failed to create variable");
+	} finally {
+		isCreating.value = false;
 	}
 };
 
@@ -520,11 +521,8 @@ const downloadSampleCSV = () => {
 
 const setVariableName = (value: string, row: ListViewRow) => {
 	if (!row.isNew) {
-		updateVariable({
-			name: row.name,
-			variable_name: value,
-		});
-		stopEditing();
+		row.variable_name = value;
+		debouncedSaveVariable(row);
 	} else {
 		row.variable_name = value;
 	}

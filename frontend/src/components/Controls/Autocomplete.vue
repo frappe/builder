@@ -24,7 +24,7 @@
 						'pl-2': !$slots.prefix,
 						'pr-2': !hasValue,
 					}" />
-				<Button v-if="hasValue" variant="ghost" @click.stop="clearSelection">
+				<Button v-if="hasValue" variant="ghost" @click.stop="clearSelection" class="-ml-2">
 					<CrossIcon class="h-3 w-3" />
 				</Button>
 			</div>

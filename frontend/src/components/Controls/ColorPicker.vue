@@ -3,8 +3,9 @@
 		ref="colorPickerPopover"
 		v-if="renderMode === 'popover'"
 		:placement="placement"
+		:offset="offset"
 		class="!block w-full"
-		popoverClass="!min-w-fit !mr-[30px]">
+		popoverClass="!min-w-fit">
 		<template #target="{ togglePopover, isOpen }">
 			<slot
 				name="target"
@@ -131,9 +132,6 @@ const { resolveVariableValue } = useBuilderVariable();
 const canvasStore = useCanvasStore();
 const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;
 const colorMap = ref(null) as unknown as Ref<HTMLDivElement>;
-const hueSelector = ref(null) as unknown as Ref<HTMLDivElement>;
-const colorSelector = ref(null) as unknown as Ref<HTMLDivElement>;
-const colorPicker = ref(null) as unknown as Ref<HTMLDivElement>;
 
 const colorPickerPopover = ref<InstanceType<typeof Popover> | null>(null);
 
@@ -161,12 +159,14 @@ const props = withDefaults(
 			| "right"
 			| "left";
 		renderMode?: "popover" | "inline";
+		offset?: number;
 	}>(),
 	{
 		modelValue: null,
 		showInput: false,
 		placement: "left-start",
 		renderMode: "popover",
+		offset: 10,
 	},
 );
 
