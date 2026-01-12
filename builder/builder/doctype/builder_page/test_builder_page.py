@@ -24,6 +24,12 @@ data.update({
 })
 """
 
+custom_data_script = """
+data.update({
+	"name_new": "Jane Doe",
+})
+"""
+
 
 class TestBuilderPage(FrappeTestCase):
 	@classmethod
@@ -198,13 +204,169 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
+	def test_component_dynamic_values(self):
+		component = frappe.get_doc(
+			{
+				"doctype": "Builder Component",
+				"block": 
+					{
+						"blockId": "comp-block-1",
+						"element": "div",
+						"attributes": {"style": "background: #f0f0f0;"},
+						"baseStyles": {},
+						"mobileStyles": {},
+						"tabletStyles": {},
+						"classes": [],
+						"children": [
+							{
+								"blockId": "comp-block-1-1",
+								"element": "h1",
+								"innerHTML": "Hello",
+								"attributes": {"style": "background: #f0f0f0;"},
+								"baseStyles": {},
+								"mobileStyles": {},
+								"tabletStyles": {},
+								"classes": [],
+								"dynamicValues": [{"key": "name", "type": "key", "property": "innerHTML"}],
+							},
+						],
+					}
+			}
+		).insert()
+
+		page_no_overrides = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Component Dynamic Values Test",
+				"published": 1,
+				"route": "/component-dynamic-values-test-no-overrides",
+				"page_data_script": page_data_script,
+				"blocks": [
+					{
+						"element": "body",
+						"children": [
+							{
+								"extendedFromComponent": component.name,
+								"baseStyles": {},
+								"mobileStyles": {},
+								"tabletStyles": {},
+								"attributes": {},
+								"classes": [],
+								"children": [
+									{
+										"isChildOfComponent": component.name,
+										"referenceBlockId": "comp-block-1-1",
+										"dynamicValues": [],
+										"baseStyles": {},
+										"mobileStyles": {},
+										"tabletStyles": {},
+										"attributes": {},
+										"classes": []
+									},
+								
+								],
+							}
+						],
+					}
+				],
+			}
+		).insert()
+
+		page_with_overrides = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Component Dynamic Values Test",
+				"published": 1,
+				"route": "/component-dynamic-values-test-with-overrides",
+				"page_data_script": custom_data_script,
+				"blocks": [
+					{
+						"element": "body",
+						"children": [
+							{
+								"extendedFromComponent": component.name,
+								"baseStyles": {},
+								"mobileStyles": {},
+								"tabletStyles": {},
+								"attributes": {},
+								"classes": [],
+								"children": [
+									{
+										"isChildOfComponent": component.name,
+										"referenceBlockId": "comp-block-1-1",
+										"dynamicValues": [{"key": "name_new", "type": "key", "property": "innerHTML"}],
+										"baseStyles": {},
+										"mobileStyles": {},
+										"tabletStyles": {},
+										"attributes": {},
+										"classes": []
+									},
+								],
+							}
+						],
+					}
+				],
+			}
+		).insert()
+
+		page_with_bad_overrides = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Component Dynamic Values Test",
+				"published": 1,
+				"route": "/component-dynamic-values-test-with-bad-overrides",
+				"page_data_script": custom_data_script,
+				"blocks": [
+					{
+						"element": "body",
+						"children": [
+							{
+								"extendedFromComponent": component.name,
+								"baseStyles": {},
+								"mobileStyles": {},
+								"tabletStyles": {},
+								"attributes": {},
+								"classes": [],
+								"children": [
+									{
+										"isChildOfComponent": component.name,
+										"referenceBlockId": "comp-block-1-1",
+										"dynamicValues": [{"key": "non_existent_key", "type": "key", "property": "innerHTML"}],
+										"baseStyles": {},
+										"mobileStyles": {},
+										"tabletStyles": {},
+										"attributes": {},
+										"classes": []
+									}
+],
+							}
+						],
+					}
+				],
+			}
+		).insert()
+
+		try:
+			content_no_overrides = get_response_content("/component-dynamic-values-test-no-overrides")
+			content_with_overrides = get_response_content("/component-dynamic-values-test-with-overrides")
+			content_with_bad_overrides = get_response_content("/component-dynamic-values-test-with-bad-overrides")
+	
+			self.assertTrue("John Doe" == get_html_for(content_no_overrides, "tag", "h1", only_content=True))
+			self.assertTrue("Jane Doe" == get_html_for(content_with_overrides, "tag", "h1", only_content=True))
+			self.assertTrue("Hello" == get_html_for(content_with_bad_overrides, "tag", "h1", only_content=True))
+		finally:
+			page_no_overrides.delete()
+			page_with_overrides.delete()
+			page_with_bad_overrides.delete()
+			component.delete()
+
 	@classmethod
 	def tearDownClass(cls):
 		cls.page.delete()
 		cls.page_with_dynamic_route.delete()
 
 
-def get_html_for(html, type, value, index=None):
+def get_html_for(html, type, value, index=None, only_content=False):
 	from bs4 import BeautifulSoup
 
 	soup = BeautifulSoup(html, "html.parser")
@@ -213,6 +375,8 @@ def get_html_for(html, type, value, index=None):
 		result = (
 			results[index] if index is not None and index < len(results) else results[0] if results else None
 		)
+		if only_content and result:
+			return result.decode_contents()
 		return str(result) if result else ""
 	if type == "attribute":
 		results = soup.find_all(attrs=value)
