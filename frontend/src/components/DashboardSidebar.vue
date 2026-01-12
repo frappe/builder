@@ -60,7 +60,7 @@
 						:offset="8"
 						size="sm">
 						<template v-slot="{ open }">
-							<div
+							<button
 								class="mx-0.5 flex w-full items-center justify-between rounded p-1.5 dark:hover:bg-surface-gray-2"
 								:class="{
 									'bg-surface-white shadow-sm': open,
@@ -74,7 +74,7 @@
 								<FeatherIcon
 									:name="open ? 'chevron-up' : 'chevron-down'"
 									class="h-4 w-4 !text-gray-700 dark:!text-gray-200"></FeatherIcon>
-							</div>
+							</button>
 						</template>
 					</Dropdown>
 				</div>
