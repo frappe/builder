@@ -3,6 +3,7 @@
 		<ColorPicker
 			ref="colorPickerRef"
 			:placement="placement"
+			:offset="popoverOffset"
 			@open="events.onFocus"
 			@close="handleClose"
 			:modelValue="resolvedColor"
@@ -165,6 +166,7 @@ const props = withDefaults(
 		placement?: "top" | "bottom" | "left" | "right";
 		showColorVariableOptions?: boolean;
 		showPickerOnMount?: boolean;
+		popoverOffset?: number;
 	}>(),
 	{
 		modelValue: null,
