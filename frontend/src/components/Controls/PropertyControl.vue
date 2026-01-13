@@ -425,7 +425,7 @@ function setDynamicValue(value: string) {
 const dynamicValue = computed(() => {
 	const blocks = blockController.getSelectedBlocks();
 	if (!blocks?.length) return;
-	const dataKeyObj = blocks[0].dynamicValues.find((obj) => {
+	const dataKeyObj = blocks[0].getDynamicValues().find((obj) => {
 		return obj.type === props.controlType && obj.property === props.styleProperty;
 	});
 	if (dataKeyObj) {

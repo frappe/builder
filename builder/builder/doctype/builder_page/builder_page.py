@@ -694,7 +694,15 @@ def extend_block(block, overridden_block):
 	block["mobileStyles"].update(overridden_block["mobileStyles"])
 	block["tabletStyles"].update(overridden_block["tabletStyles"])
 	block["attributes"].update(overridden_block["attributes"])
-	block["dynamicValues"] = block.get("dynamicValues", []) + overridden_block.get("dynamicValues", [])
+
+	dynamicValues = overridden_block.get("dynamicValues", [])
+	dynamicValuesProperties = [dv.get("property") for dv in dynamicValues]
+	for dv in block.get("dynamicValues", []):
+		if dv.get("property") in dynamicValuesProperties:
+			continue
+		dynamicValues.append(dv)
+	block["dynamicValues"] = dynamicValues
+
 	if overridden_block.get("element"):
 		block["element"] = overridden_block["element"]
 
@@ -842,4 +850,5 @@ def reset_block(block):
 	block["customAttributes"] = {}
 	block["classes"] = []
 	block["dataKey"] = {}
+	block["dynamicValues"] = []
 	return block

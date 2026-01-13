@@ -873,6 +873,19 @@ class Block implements BlockOptions {
 	getMargin(opts?: { nativeOnly?: boolean; cascading?: boolean }) {
 		return getBoxSpacing(this, "margin", opts);
 	}
+	getDynamicValues() {
+		let dynamicValues = this.dynamicValues;
+		const dynamicValueProperties = dynamicValues.map((v) => v.property);
+		if (this.isExtendedFromComponent()) {
+			const componentDynamicValues = this.referenceComponent?.getDynamicValues() || [];
+			componentDynamicValues.forEach((v) => {
+				if (!dynamicValueProperties.includes(v.property)) {
+					dynamicValues.push(v);
+				}
+			});
+		}
+		return dynamicValues;
+	}
 	setDynamicValue(
 		property: BlockDataKey["property"],
 		type: BlockDataKeyType,
@@ -1021,6 +1034,7 @@ function resetBlock(
 		block.customAttributes = {};
 		block.classes = [];
 		block.dataKey = null;
+		block.dynamicValues = [];
 	}
 
 	if (resetChildren) {
