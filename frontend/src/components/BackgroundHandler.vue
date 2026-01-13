@@ -76,7 +76,11 @@
 			</div>
 		</template>
 	</Popover>
-	<PropertyControl label="BG Color" styleProperty="backgroundColor" :component="ColorInput" />
+	<PropertyControl
+		label="BG Color"
+		styleProperty="backgroundColor"
+		:component="ColorInput"
+		:popoverOffset="120" />
 </template>
 
 <script lang="ts" setup>

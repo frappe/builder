@@ -3,6 +3,7 @@
 		<ColorPicker
 			ref="colorPickerRef"
 			:placement="placement"
+			:offset="popoverOffset"
 			@open="events.onFocus"
 			@close="handleClose"
 			:modelValue="resolvedColor"
@@ -19,7 +20,7 @@
 							<Autocomplete
 								class="[&>div>input]:pl-8"
 								:class="{
-									'[&>div>div>input]:text-xs [&>div>div>input]:text-ink-violet-1 [&>div>input]:font-mono':
+									'[&>div>div>input]:text-sm [&>div>div>input]:text-ink-violet-1 [&>div>input]:font-mono':
 										isCssVariable,
 								}"
 								v-bind="events"
@@ -165,6 +166,7 @@ const props = withDefaults(
 		placement?: "top" | "bottom" | "left" | "right";
 		showColorVariableOptions?: boolean;
 		showPickerOnMount?: boolean;
+		popoverOffset?: number;
 	}>(),
 	{
 		modelValue: null,
@@ -285,7 +287,7 @@ const getOptions = async (query: string) => {
 };
 
 watch(variables, () => {
-	colorInput.value?.updateOptions();
+	colorInput.value?.refreshOptions();
 });
 onMounted(() => {
 	if (

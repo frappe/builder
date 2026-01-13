@@ -187,7 +187,7 @@ const attributes = computed(() => {
 			attribs[props.block.getDataKey("property") as string] =
 				value ?? attribs[props.block.getDataKey("property") as string];
 		}
-		props.block.dynamicValues
+		props.block.getDynamicValues()
 			?.filter((dataKeyObj: BlockDataKey) => {
 				return dataKeyObj.type === "attribute";
 			})
@@ -250,7 +250,7 @@ const styles = computed(() => {
 				[props.block.getDataKey("property") as string]: value,
 			};
 		}
-		props.block.dynamicValues
+		props.block.getDynamicValues()
 			?.filter((dataKeyObj: BlockDataKey) => {
 				return dataKeyObj.type === "style";
 			})
