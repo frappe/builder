@@ -131,7 +131,12 @@
 					standardPropOptions.options = options;
 				}" />
 		</template>
-		<BuilderButton :disabled="!name.trim().length" label="Save" variant="subtle" class="w-full flex-shrink-0" @click="save" />
+		<BuilderButton
+			:disabled="!name.trim().length"
+			label="Save"
+			variant="subtle"
+			class="w-full flex-shrink-0"
+			@click="save" />
 	</div>
 </template>
 
@@ -376,11 +381,14 @@ const reset = async (keepParams: {
 	keepType: boolean;
 }) => {
 	const { keepName, keepIsStandard, keepProps, keepType } = keepParams;
+	const isStandardByDefault = isInFragmentMode.value && props.mode == "add";
 
 	const details = keepProps ? props.propDetails ?? null : null;
 
 	if (!keepName) name.value = props.propName ?? "";
-	if (!keepIsStandard) isStandard.value = details?.isStandard ? "true" : "false";
+	if (!keepIsStandard)
+		isStandard.value =
+			details?.isStandard || isStandardByDefault ? "true" : "false";
 
 	value.value = details?.value ?? "";
 
