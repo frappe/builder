@@ -2,7 +2,7 @@
 	<RadioGroup :modelValue="value" @update:modelValue="emit('update:modelValue', $event)">
 		<div class="box-border flex space-x-1 rounded bg-surface-gray-2 p-0.5 text-sm">
 			<RadioGroupOption
-				as="template"
+				class="contents"
 				v-for="button in buttons"
 				:key="button.label"
 				:value="button.value ?? button.label"
@@ -16,14 +16,14 @@
 							'flex flex-1 justify-center gap-2 whitespace-nowrap rounded-[7px] px-3 py-[5px] leading-none transition-colors focus:outline-none',
 						]">
 						<FeatherIcon
-							class="h-4 w-4"
+							class="size-4"
 							v-if="button.icon"
 							:name="button.icon"
 							:label="button.label"
 							:aria-label="button.label" />
 						<RadioGroupLabel
 							as="span"
-							class="flex h-4 items-center"
+							class="flex items-center"
 							v-show="button.label && !button.hideLabel">
 							{{ button.label }}
 						</RadioGroupLabel>
