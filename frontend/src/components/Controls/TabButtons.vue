@@ -7,7 +7,7 @@
 				:key="button.label"
 				:value="button.value ?? button.label"
 				v-slot="{ active, checked }">
-				<Tooltip :disabled="!button.hideLabel" :text="button.label" placement="top">
+				<Tooltip :disabled="!button.showTooltip" :text="button.label" placement="top">
 					<button
 						:class="[
 							active ? 'ring-outline-gray-2 focus-visible:ring' : '',
@@ -44,6 +44,7 @@ interface Button {
 	value?: string | number | boolean;
 	icon?: string;
 	hideLabel?: boolean;
+	showTooltip?: boolean;
 }
 
 const props = defineProps<{

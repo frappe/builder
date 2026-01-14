@@ -45,8 +45,8 @@
 			<TabButtons
 				class="w-fit"
 				:buttons="[
-					{ label: 'Page', icon: 'layout', hideLabel: true, value: 'page' },
-					{ label: 'Block', icon: 'layers', hideLabel: true, value: 'block' },
+					{ label: 'Page', icon: 'layout', hideLabel: true, value: 'page', showTooltip: true },
+					{ label: 'Block', icon: 'layers', hideLabel: true, value: 'block', showTooltip: true },
 				]"
 				v-model="mode" />
 		</div>
