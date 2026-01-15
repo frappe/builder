@@ -1,5 +1,5 @@
 <template>
-	<Popover placement="left" class="!block w-full" popoverClass="!min-w-fit !mr-[30px]">
+	<Popover placement="left" class="!block w-full" :offset="25">
 		<template #target="{ togglePopover }">
 			<div class="flex w-full items-center justify-between">
 				<PropertyControl
