@@ -55,13 +55,17 @@ class Block:
 	isRepeaterBlock: bool = False
 	visibilityCondition: str | None = None
 	elementBeforeConversion: str | None = None
-	customAttributes: dict | None = None
-	dynamicValues: list[BlockDataKey] | None = None
+	customAttributes: ClassVar[dict] = {}
+	dynamicValues: ClassVar[list[BlockDataKey]] = []
+	blockClientScript: str = ""
+	blockDataScript: str = ""
+	props: ClassVar[dict] = {}
 
 	def __init__(self, **kwargs) -> None:
 		for key, value in kwargs.items():
 			if key == "children":
-				value = [Block(**b) if b and isinstance(b, dict) else None for b in (value or [])]
+				value = [b if isinstance(b, Block) else Block(**b) if b and isinstance(b, dict) else None for b in (value or [])]
+
 			setattr(self, key, value)
 
 	def as_dict(self):
@@ -89,6 +93,9 @@ class Block:
 			"elementBeforeConversion": self.elementBeforeConversion,
 			"customAttributes": self.customAttributes,
 			"dynamicValues": self.dynamicValues,
+			"blockClientScript": self.blockClientScript,
+			"blockDataScript": self.blockDataScript,
+			"props": self.props,
 		}
 
 
