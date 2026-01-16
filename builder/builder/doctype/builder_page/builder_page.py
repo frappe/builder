@@ -5,6 +5,7 @@ import copy
 import os
 import re
 import shutil
+from typing import Any, Optional
 
 import bs4 as bs
 import frappe
@@ -251,16 +252,16 @@ class BuilderPage(WebsiteGenerator):
 			context.title = page_data.get("page_title")
 
 		blocks = self.blocks
-		
-		# TODO: detect dynamic_route or block/page data
-		context.no_cache = 1
-
 		context.preview = getattr(getattr(frappe.local, "request", None), "for_preview", None)
 
 		if context.preview and self.draft_blocks:
 			blocks = self.draft_blocks
 
-		content, style, fonts = get_block_html(blocks)
+		content, style, fonts, has_block_script = get_block_html(blocks)
+
+		if self.dynamic_route or page_data or has_block_script:
+			context.no_cache = 1
+
 		self.set_custom_font(context, fonts)
 		context.fonts = fonts
 		context.__content = content
@@ -501,173 +502,576 @@ def get_block_data(block_id, block_data_script, props):
 	block_data.update(_locals["block"])
 	return block_data
 
-def get_block_html(blocks):
+
+def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
+	"""
+	Main entry point for converting blocks to HTML.
+
+	#### Args:
+		blocks: JSON string or list of block dictionaries
+
+	#### Returns:
+		Tuple of (`html_content`, `css_styles`, `font_map`, `has_block_script`)
+	"""
 	blocks = frappe.parse_json(blocks)
 	if not isinstance(blocks, list):
 		blocks = [blocks]
+
 	soup = bs.BeautifulSoup("", "html.parser")
 	style_tag = soup.new_tag("style")
 	font_map = {}
 
-	def get_html(blocks, soup):
+	# Shared state during rendering
+	shared_state = {
+		"soup": soup,
+		"style_tag": style_tag,
+		"font_map": font_map,
+		"has_block_script": False,
+		"standard_props_stack": {},  # prop_name -> list of prop_info
+		"global_script_tag": soup.new_tag("script"),
+		"used_block_scripts": set(),
+	}
 
-		map_of_std_props_info = {} # prop_name -> list of prop_info stack
-		html = ""
+	html_parts = []
 
-		def get_tag(block, soup, data_key=None):
-			block = extend_with_component(block)
+	for block in blocks:
+		block = extend_block_with_component(block)
+		props = process_block_props(block, None, shared_state["standard_props_stack"])
+		block_context = get_block_context(block, props)
 
-			props_obj = {}
+		shared_state["has_block_script"] = block_context["block_data_script"] is not None
 
-			if block.get("props"):
-				for prop_name, prop_info in block.get("props").items():
-					is_standard = prop_info.get("isStandard", False)
-					is_passed_down = prop_info.get("isPassedDown", False)
-					interpreted_value = get_interpreted_prop_value(prop_info, data_key)
+		tag = build_tag(block, shared_state)
+		# Add global script to the top
+		tag.insert(0, shared_state["global_script_tag"])
 
-					if is_standard:
-						map_of_std_props_info.setdefault(prop_name, []).append(prop_info)
-					
-					props_obj[prop_name] = {"value": interpreted_value, "is_standard": is_standard, "is_passed_down": is_passed_down}
-
-			set_dynamic_content_placeholder(block, data_key)
-			element = block.get("originalElement") or block.get("element")
-
-			if not element:
-				return ""
-
-			classes = block.get("classes", [])
-			if element in (
-				"span",
-				"h1",
-				"p",
-				"b",
-				"h2",
-				"h3",
-				"h4",
-				"h5",
-				"h6",
-				"label",
-				"a",
-			):
-				classes.insert(0, "__text_block__")
-
-			# temp fix: since p inside p is illegal
-			if element in ["p", "__raw_html__"]:
-				element = "div"
-
-			tag = soup.new_tag(element)
-			tag.attrs = block.get("attributes", {})
-
-			customAttributes = block.get("customAttributes", {})
-			if customAttributes:
-				for key, value in customAttributes.items():
-					tag[key] = value
-
-			if block.get("baseStyles", {}):
-				style_class = f"fb-{frappe.generate_hash(length=8)}"
-				styles = {
-					"base": split_styles(block.get("baseStyles", {})),
-					"mobile": split_styles(block.get("mobileStyles", {})),
-					"tablet": split_styles(block.get("tabletStyles", {})),
-					"raw": split_styles(block.get("rawStyles", {})),
-				}
-
-				set_fonts(
-					[
-						styles["base"]["regular"],
-						styles["mobile"]["regular"],
-						styles["tablet"]["regular"],
-						styles["raw"]["regular"],
-					],
-					font_map,
-				)
-
-				append_style(styles["base"]["regular"], style_tag, style_class)
-				append_style(styles["raw"]["regular"], style_tag, style_class)
-				append_state_style(styles["raw"]["state"], style_tag, style_class)
-				append_state_style(styles["base"]["state"], style_tag, style_class)
-
-				append_style(styles["tablet"]["regular"], style_tag, style_class, device="tablet")
-				append_state_style(styles["tablet"]["state"], style_tag, style_class, device="tablet")
-
-				append_style(styles["mobile"]["regular"], style_tag, style_class, device="mobile")
-				append_state_style(styles["mobile"]["state"], style_tag, style_class, device="mobile")
-
-				classes.insert(0, style_class)
-
-			tag.attrs["class"] = " ".join(classes)
-
-			innerContent = block.get("innerHTML")
-			if innerContent:
-				inner_soup = bs.BeautifulSoup(innerContent, "html.parser")
-				set_fonts_from_html(inner_soup, font_map)
-				tag.append(inner_soup)
-
-			if block.get("isRepeaterBlock") and block.get("children") and block.get("dataKey"):
-				comes_from = block.get("dataKey").get("comesFrom", "dataScript")
-				default_props = None
-
-				loop_var, iterator_key, data_key = get_iterator_info(block, data_key, map_of_std_props_info)
-
-				tag.append(f"{{% for {loop_var} in {iterator_key} %}}")
-
-				child_tag, child_tag_details = get_tag(block.get("children")[0], soup, data_key)
-				
-				if comes_from == "props":
-					default_props = get_loop_vars(map_of_std_props_info, block.get("dataKey").get("key"))
-					child_tag_details['default_props'] = default_props
-
-				append_child_tag(tag, child_tag, child_tag_details)
-     
-				tag.append("{% endfor %}")
-			else:
-				for child in block.get("children", []) or []:
-					visibility_key = get_visibility_key(child, data_key)
-					child_tag, child_tag_details = get_tag(child, soup, data_key=data_key)
-					child_tag_details['visibility_key'] = visibility_key
-					append_child_tag(tag, child_tag, child_tag_details)
-
-			if element == "body":
-				tag.append("{% include 'templates/generators/webpage_scripts.html' %}")
-
-			for prop_name, prop_info in props_obj.items():
-				if prop_info.get("is_standard"):
-					map_of_std_props_info[prop_name].pop()
-
-			all_props = {k: v["value"] for k, v in props_obj.items()}
-			passed_down_props = {k: v["value"] for k, v in props_obj.items() if v.get("is_passed_down")}
-
-			if block.get("blockClientScript"):
-				script_content = f"(function (props){{ {block.get('blockClientScript')} }}).call(document.querySelector('[data-block-id=\"{{{{ unique_hash }}}}\"]'), {{{{ props | to_safe_json }}}});"
-				tag.attrs["data-block-id"] = f"{{{{ unique_hash }}}}" # unique hash as repeating blocks have same blockId / class
-				script_tag = soup.new_tag("script")
-				script_tag.string = script_content
-				tag.append(script_tag)
-			
-			tag_details = {
-				"all_props": to_jinja_literal(all_props),
-				"passed_down_props": to_jinja_literal(passed_down_props),
-				"block_data_script": block.get("blockDataScript", None),
-			}
-
-			return tag, tag_details
-
-		for block in blocks:
-			tag, tag_details = get_tag(block, soup)
-
-			html += f"{{% with block = {{ }} | execute_script_and_combine('{escape_single_quotes(tag_details.get('block_data_script', ''))}', {(tag_details.get('all_props', '{}'))}) %}}{tag!s}{{% endwith %}}"
-			html = f"{{% with props = {tag_details.get('all_props', '{}')} %}}{html}{{% endwith %}}"
-			html = f"{{% with passed_down_props = {tag_details.get('passed_down_props', '{}')} %}}{html}{{% endwith %}}"
-			
-		# print("Final HTML: ", html)
-		# write to file
+		html = wrap_html_with_context(str(tag), block_context)
+		# Write html to a file for debugging
 		with open("output.html", "w") as f:
 			f.write(html)
-		return html, str(style_tag), font_map
+		html_parts.append(html)
 
-	data = get_html(blocks, soup)
-	return data
+	return "".join(html_parts), str(style_tag), font_map, shared_state["has_block_script"]
+
+
+def build_tag(block: dict, state: dict, data_key: Optional[dict] = None) -> bs.Tag:
+	"""
+	Transforms a single block to an HTML tag.
+
+	#### Returns:
+		BeautifulSoup tag element
+	"""
+
+	props = process_block_props(block, data_key, state["standard_props_stack"])
+
+	set_dynamic_content_placeholders(block, data_key)
+
+	tag = create_html_tag(block, state)
+
+	if is_repeater_block(block):
+		render_repeater_children(tag, block, data_key, state)
+	else:
+		render_children(tag, block, data_key, state)
+
+	attach_client_script(tag, block, state)
+
+	# Add body scripts for body element
+	if block.get("element") == "body":
+		tag.append("{% include 'templates/generators/webpage_scripts.html' %}")
+
+	cleanup_props_stack(props, state["standard_props_stack"])
+
+	return tag
+
+
+def get_block_context(block: dict, props: dict) -> dict:
+	"""
+	Get the Jinja template context for a block.
+
+	#### Returns:
+		Dict with keys: { `all_props`, `passed_down_props`, `block_data_script` }
+	"""
+	all_props = {name: info["value"] for name, info in props.items()}
+	passed_down_props = {name: info["value"] for name, info in props.items() if info["is_passed_down"]}
+
+	return {
+		"all_props": all_props,
+		"passed_down_props": passed_down_props,
+		"block_data_script": block.get("blockDataScript"),
+	}
+
+
+def cleanup_props_stack(props: dict, props_stack: dict):
+	"""Remove standard props from the stack after processing."""
+	for name, info in props.items():
+		if info["is_standard"] and name in props_stack:
+			props_stack[name].pop()
+
+
+def process_block_props(block: dict, data_key: Optional[dict], props_stack: dict) -> dict:
+	"""
+	Process all properties of a block. Also adds standard props info to the props stack if applicable.
+
+	#### Returns:
+		Dict with keys: { `value`, `is_standard`, `is_passed_down` }
+	"""
+	props = {}
+
+	for prop_name, prop_config in block.get("props", {}).items():
+		is_standard = prop_config.get("isStandard", False)
+		is_passed_down = prop_config.get("isPassedDown", False)
+
+		value = interpret_prop_value(prop_config, data_key)
+
+		# Track standard properties in stack
+		if is_standard:
+			props_stack.setdefault(prop_name, []).append(prop_config)
+
+		props[prop_name] = {"value": value, "is_standard": is_standard, "is_passed_down": is_passed_down}
+
+	return props
+
+
+def interpret_prop_value(prop_config: dict, data_key: Optional[dict]) -> Any:
+	"""Interpret prop value based on its configuration (static or dynamic)."""
+	is_dynamic = prop_config.get("isDynamic", False)
+	comes_from = prop_config.get("comesFrom", "props")
+	is_standard = prop_config.get("isStandard", False)
+	value = prop_config.get("value")
+
+	default_value = None
+	if is_standard:
+		default_value = prop_config.get("standardOptions", {}).get("options", {}).get("defaultValue")
+
+	if value is None:
+		return default_value if is_standard else "undefined"
+
+	if is_dynamic:
+		return get_dynamic_props_template(value, comes_from, data_key, default_value)
+
+	if is_standard:
+		prop_type = prop_config.get("standardOptions", {}).get("type")
+		value = parse_static_value(value or default_value, prop_type)
+
+	return value if value is not None else "undefined"
+
+
+def get_dynamic_props_template(
+	prop_value: str, comes_from: str, data_key: Optional[dict], default_value: Any
+) -> str:
+	"""Get a Jinja template reference for dynamic properties."""
+	if comes_from == "blockDataScript":
+		key = jinja_safe_key(f"block.{prop_value}")
+	elif comes_from == "props":
+		key = jinja_safe_key(f"props.{prop_value}")
+	else:  # dataScript
+		if data_key:
+			base_key = extract_data_key(data_key)
+			key = jinja_safe_key(f"{base_key}.{prop_value}")
+		else:
+			key = prop_value
+
+	fallback = escape_single_quotes(default_value) if default_value is not None else "undefined"
+	return f"{{{{ {key} if {key} is defined else '{fallback}' }}}}"
+
+
+def create_html_tag(block: dict, state: dict) -> bs.Tag:
+	"""Create HTML tag element with attributes, classes, and styling."""
+	soup = state["soup"]
+
+	element = block.get("originalElement") or block.get("element") or "div"
+
+	# fix: since p inside p is illegal
+	if element in ["p", "__raw_html__"]:
+		element = "div"
+
+	tag = soup.new_tag(element)
+
+	tag.attrs = block.get("attributes", {}).copy()
+
+	for key, value in block.get("customAttributes", {}).items():
+		tag[key] = value
+
+	classes = build_tag_classes(block, state)
+	tag.attrs["class"] = " ".join(classes)
+
+	add_inner_html_content(tag, block, state)
+
+	return tag
+
+
+def build_tag_classes(block: dict, state: dict) -> list[str]:
+	"""Build list of CSS classes for the tag."""
+	classes = block.get("classes", []).copy()
+	element = block.get("originalElement") or block.get("element")
+
+	text_elements = {"span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6", "label", "a"}
+	if element in text_elements:
+		classes.insert(0, "__text_block__")
+
+	if block.get("baseStyles"):
+		style_class = generate_and_apply_styles(block, state)
+		classes.insert(0, style_class)
+
+	return classes
+
+
+def generate_and_apply_styles(block: dict, state: dict) -> str:
+	"""Generate a unique style class and append all styles to the style tag."""
+	style_class = f"fb-{frappe.generate_hash(length=8)}"
+	style_tag = state["style_tag"]
+	font_map = state["font_map"]
+
+	styles = {
+		"base": split_styles(block.get("baseStyles", {})),
+		"mobile": split_styles(block.get("mobileStyles", {})),
+		"tablet": split_styles(block.get("tabletStyles", {})),
+		"raw": split_styles(block.get("rawStyles", {})),
+	}
+
+	style_list = [
+		styles["base"]["regular"],
+		styles["mobile"]["regular"],
+		styles["tablet"]["regular"],
+		styles["raw"]["regular"],
+	]
+	set_fonts(style_list, font_map)
+
+	# Append styles for different states and devices
+	# Base and raw
+	append_style(styles["base"]["regular"], style_tag, style_class)
+	append_style(styles["raw"]["regular"], style_tag, style_class)
+	append_state_style(styles["raw"]["state"], style_tag, style_class)
+	append_state_style(styles["base"]["state"], style_tag, style_class)
+
+	# Tablet
+	append_style(styles["tablet"]["regular"], style_tag, style_class, device="tablet")
+	append_state_style(styles["tablet"]["state"], style_tag, style_class, device="tablet")
+
+	# Mobile
+	append_style(styles["mobile"]["regular"], style_tag, style_class, device="mobile")
+	append_state_style(styles["mobile"]["state"], style_tag, style_class, device="mobile")
+
+	return style_class
+
+
+def add_inner_html_content(tag: bs.Tag, block: dict, state: dict):
+	"""Add inner HTML content to the tag."""
+	inner_content = block.get("innerHTML")
+	if inner_content:
+		inner_soup = bs.BeautifulSoup(inner_content, "html.parser")
+		set_fonts_from_html(inner_soup, state["font_map"])
+		tag.append(inner_soup)
+
+
+def is_repeater_block(block: dict) -> bool:
+	"""Check if block is a repeater (loop) block."""
+	return bool(block.get("isRepeaterBlock") and block.get("children") and block.get("dataKey"))
+
+
+def render_children(tag: bs.Tag, block: dict, data_key: Optional[dict], state: dict):
+	"""Render (non-repeater) children."""
+	for child in block.get("children", []) or []:
+		child = extend_block_with_component(child)
+		child_props = process_block_props(child, data_key, state["standard_props_stack"])
+		child_context = get_block_context(child, child_props)
+		child_context["visibility_key"] = get_visibility_condition_key(child, data_key)
+
+		state["has_block_script"] = child_context["block_data_script"] is not None
+
+		child_tag = build_tag(child, state, data_key)
+
+		append_child_with_context(tag, child_tag, child_context)
+
+
+def render_repeater_children(tag: bs.Tag, block: dict, data_key: Optional[dict], state: dict):
+	"""Render children for repeater blocks (with for loops)."""
+	loop_info = get_loop_info(block, data_key, state["standard_props_stack"])
+
+	tag.append(f"{{% for {loop_info['loop_var']} in {loop_info['iterator_key']} %}}")
+
+	child = block.get("children")[0]
+	child = extend_block_with_component(child)
+
+	child_props = process_block_props(child, loop_info["data_key"], state["standard_props_stack"])
+	child_context = get_block_context(child, child_props)
+
+	state["has_block_script"] = child_context["block_data_script"] is not None
+
+	if block.get("dataKey", {}).get("comesFrom") == "props":
+		data_key_key = block.get("dataKey").get("key")
+		child_context["default_props"] = extract_loop_variables(data_key_key, state["standard_props_stack"])
+
+	child_tag = build_tag(child, state, loop_info["data_key"])
+
+	append_child_with_context(tag, child_tag, child_context)
+
+	tag.append("{% endfor %}")
+
+
+def get_loop_info(block: dict, data_key: Optional[dict], props_stack: dict) -> dict:
+	"""
+	Get loop information (variable name, iterator, data_key).
+
+	Returns:
+	    Dict with keys: loop_var, iterator_key, data_key
+	"""
+	data_key_config = block.get("dataKey", {})
+	iterator_key = data_key_config.get("key")
+	comes_from = data_key_config.get("comesFrom", "dataScript")
+
+	if comes_from == "props":
+		loop_vars = extract_loop_variables(iterator_key, props_stack)
+		loop_var = ", ".join(loop_vars)  # "item" or "key, value"
+		safe_key = jinja_safe_key(f"props.{iterator_key}")
+
+		# For objects, iterate over items()
+		if len(loop_vars) > 1:
+			safe_key = f"{safe_key}.items()"
+
+		return {"loop_var": loop_var, "iterator_key": safe_key, "data_key": data_key}
+
+	elif comes_from == "blockDataScript":
+		return {
+			"loop_var": "block",
+			"iterator_key": jinja_safe_key(f"block.{iterator_key}"),
+			"data_key": data_key,
+		}
+
+	else:  # dataScript
+		if data_key:
+			full_key = f"{extract_data_key(data_key)}.{iterator_key}"
+		else:
+			full_key = iterator_key
+
+		loop_var = f"key_{full_key.replace('.', '__')}"
+
+		return {
+			"loop_var": loop_var,
+			"iterator_key": jinja_safe_key(full_key),
+			"data_key": {"key": loop_var, "comesFrom": "dataScript"},
+		}
+
+
+def extract_loop_variables(key: str, props_stack: dict) -> list[str]:
+	"""Extract loop variable names based on prop type (array or object)."""
+	if key not in props_stack:
+		return []
+
+	prop_info = props_stack[key][-1]
+	standard_options = prop_info.get("standardOptions", {})
+	prop_type = standard_options.get("type")
+
+	if prop_type == "array":
+		return ["item"]  # TODO: allow custom item name
+	elif prop_type == "object":
+		return ["key", "value"]  # TODO: allow custom key/value names
+
+	return []
+
+
+def get_visibility_condition_key(block: dict, data_key: Optional[dict]) -> Optional[str]:
+	"""Get the Jinja key for visibility condition."""
+	visibility_condition = block.get("visibilityCondition")
+	if not visibility_condition:
+		return None
+
+	# Handle string format (legacy)
+	if isinstance(visibility_condition, str):
+		key = visibility_condition
+		comes_from = "dataScript"
+	else:
+		key = visibility_condition.get("key")
+		comes_from = visibility_condition.get("comesFrom", "dataScript")
+
+	# Get key based on source
+	if comes_from == "props":
+		return jinja_safe_key(f"props.{key}")
+	elif comes_from == "blockDataScript":
+		return jinja_safe_key(f"block.{key}")
+	else:  # dataScript
+		if data_key:
+			return f"{extract_data_key(data_key)}.{key}"
+		return key
+
+
+def attach_client_script(tag: bs.Tag, block: dict, state: dict):
+	"""Attach client-side JavaScript to the block."""
+	script = block.get("blockClientScript")
+	if not script:
+		return
+
+	# Generate unique identifier for the script
+	script_unique_id = block.get("blockId")
+	if block.get("isBlockClientScriptOverridden"):
+		script_unique_id = frappe.generate_hash(length=8)
+
+	# Add global function definition (only once)
+	if script_unique_id not in state["used_block_scripts"]:
+		state["global_script_tag"].append(f"function {script_unique_id}(props) {{{script}}}\n")
+		state["used_block_scripts"].add(script_unique_id)
+
+	# Add data attribute for selecting this specific block
+	tag.attrs["data-block-id"] = "{{ unique_hash }}"
+
+	# Add local script to call the function
+	local_script = state["soup"].new_tag("script")
+	local_script.string = (
+		f"({script_unique_id}).call("
+		f"document.querySelector('[data-block-id=\"{{{{ unique_hash }}}}\"]'), "
+		f"{{{{ props | to_safe_json }}}}"
+		f");"
+	)
+	tag.append(local_script)
+
+
+def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
+	"""Append child tag with proper Jinja context wrapping."""
+	# Generate unique hash for this block instance
+	# This is unique for each block irrespective of loops or components
+	parent.append("{% with unique_hash = (loop.index if loop is defined else 0) | hash %}")
+
+	if context.get("default_props"):
+		props_str = ", ".join([f"'{var}': {var}" for var in context["default_props"]])
+		parent.append(f"{{% with passed_down_props = passed_down_props | combine({{ {props_str} }}) %}}")
+		parent.append("{% with props = passed_down_props %}")
+
+	all_props_literal = to_jinja_literal(context["all_props"])
+	passed_down_literal = to_jinja_literal(context["passed_down_props"])
+
+	parent.append(f"{{% with props = {all_props_literal} | combine(passed_down_props) %}}")
+	parent.append(f"{{% with passed_down_props = passed_down_props | combine({passed_down_literal}) %}}")
+
+	if context.get("block_data_script"):
+		escaped_script = escape_single_quotes(context["block_data_script"])
+		parent.append(f"{{% with block = block | execute_script_and_combine('{escaped_script}', props) %}}")
+
+	if context.get("visibility_key"):
+		parent.append(f"{{% if {context['visibility_key']} %}}")
+
+	parent.append(child)
+
+	if context.get("visibility_key"):
+		parent.append("{% endif %}")
+
+	if context.get("block_data_script"):
+		parent.append("{% endwith %}")
+
+	parent.append("{% endwith %}")
+	parent.append("{% endwith %}")
+
+	if context.get("default_props"):
+		parent.append("{% endwith %}{% endwith %}")
+
+	parent.append("{% endwith %}")
+
+
+def set_dynamic_content_placeholders(block: dict, data_key: Optional[dict] = None):
+	"""Apply dynamic content placeholders to block attributes and styles."""
+	block_data_key = block.get("dataKey", {}) or {}
+	dynamic_values = [block_data_key] if block_data_key else []
+	dynamic_values += block.get("dynamicValues", []) or []
+
+	for dynamic_value_doc in dynamic_values:
+		original_key = dynamic_value_doc.get("key", "")
+
+		if not isinstance(dynamic_value_doc, dict):
+			dynamic_value_doc = {"key": dynamic_value_doc, "type": "key", "property": dynamic_value_doc}
+
+		if not dynamic_value_doc or not dynamic_value_doc.get("key"):
+			continue
+
+		key = get_dynamic_value_key(dynamic_value_doc, original_key, data_key)
+
+		property_name = dynamic_value_doc.get("property")
+		value_type = dynamic_value_doc.get("type")
+
+		if value_type == "attribute":
+			current_value = block["attributes"].get(property_name, "")
+			block["attributes"][property_name] = f"{{{{ {key} or '{escape_single_quotes(current_value)}' }}}}"
+
+		elif value_type == "style":
+			if not block["attributes"].get("style"):
+				block["attributes"]["style"] = ""
+
+			css_property = camel_case_to_kebab_case(property_name)
+			current_value = block["baseStyles"].get(property_name, "") or ""
+			block["attributes"]["style"] += (
+				f"{css_property}: {{{{ {key} or '{escape_single_quotes(current_value)}' }}}};"
+			)
+
+		elif value_type == "key" and not block.get("isRepeaterBlock"):
+			current_value = block.get(property_name, "")
+			block[property_name] = (
+				f"{{{{ {key} if {key} or {key} in ['', 0] else '{escape_single_quotes(current_value)}' }}}}"
+			)
+
+
+def get_dynamic_value_key(dynamic_value_doc: dict, original_key: str, data_key: Optional[dict]) -> str:
+	"""Get the Jinja key for a dynamic value."""
+	comes_from = dynamic_value_doc.get("comesFrom", "dataScript")
+
+	if comes_from == "props":
+		return jinja_safe_key(f"props.{original_key}")
+	elif comes_from == "blockDataScript":
+		return jinja_safe_key(f"block.{original_key}")
+	else:  # dataScript
+		key = dynamic_value_doc.get("key")
+		if data_key:
+			key = f"{extract_data_key(data_key)}.{key}"
+			return jinja_safe_key(key)
+		return key
+
+
+def wrap_html_with_context(html: str, context: dict) -> str:
+	"""
+	Wrap HTML with Jinja context variables.
+
+	#### Returns:
+	    HTML string
+	"""
+	all_props_literal = to_jinja_literal(context["all_props"])
+	passed_down_literal = to_jinja_literal(context["passed_down_props"])
+
+	script_escaped = escape_single_quotes(context.get("block_data_script") or "")
+	html = (
+		f"{{% with block = {{}} | execute_script_and_combine('{script_escaped}', {all_props_literal}) %}}"
+		f"{html}"
+		f"{{% endwith %}}"
+	)
+
+	# Set props contexts
+	html = f"{{% with props = {all_props_literal} %}}{html}{{% endwith %}}"
+	html = f"{{% with passed_down_props = {passed_down_literal} %}}{html}{{% endwith %}}"
+
+	return html
+
+
+def extend_block_with_component(block: dict) -> dict:
+	if not block.get("extendedFromComponent"):
+		return block
+
+	component = frappe.get_cached_value(
+		"Builder Component",
+		block["extendedFromComponent"],
+		["block", "name"],
+		as_dict=True,
+	)
+
+	component_block = frappe.parse_json(component.block if component else "{}")
+	if component_block:
+		extend_block(component_block, block)
+		return component_block
+
+	return block
+
+
+def wrap_with_media_query(style_string, device):
+	if device == "mobile":
+		return f"@media only screen and (max-width: {MOBILE_BREAKPOINT}px) {{ {style_string} }}"
+	elif device == "tablet":
+		return f"@media only screen and (max-width: {DESKTOP_BREAKPOINT - 1}px) {{ {style_string} }}"
+	return style_string
 
 
 def get_style(style_obj):
@@ -680,96 +1084,6 @@ def get_style(style_obj):
 		if style_obj
 		else ""
 	)
-
-def get_interpreted_prop_value(prop, data_key):
-	prop_is_dynamic = prop.get("isDynamic", False)
-	prop_comes_from = prop.get("comesFrom", "props")
-	prop_is_standard = prop.get("isStandard", False)
-	prop_value = prop.get("value")
-	
-	default_value = prop.get("standardOptions", {}).get("options", {}).get("defaultValue") if prop_is_standard else None
-	
-	if prop_value is None:
-		return default_value if prop_is_standard else "undefined"
-	
-	if prop_is_dynamic:
-		key_mapping = {
-			"dataScript": jinja_safe_key(f"{extract_data_key(data_key)}.{prop_value}") if data_key else prop_value,
-			"blockDataScript": jinja_safe_key(f"block.{prop_value}"),
-			"props": jinja_safe_key(f"props.{prop_value}")
-		}
-		key = key_mapping.get(prop_comes_from, prop_value)
-		fallback = escape_single_quotes(default_value) if default_value is not None else 'undefined'
-		return f"{{{{ {key} if {key} is defined else '{fallback}' }}}}"
-	
-	if prop_is_standard:
-		prop_value = parse_static_value(
-			prop_value or default_value,
-			prop.get("standardOptions", {}).get("type"),
-		)
-	
-	return prop_value if prop_value is not None else "undefined"
-
-def get_iterator_info(block, data_key, map_of_std_props_info):
-	iterator_key = block.get("dataKey").get("key")
-	loop_var = ""
-	comes_from = block.get("dataKey").get("comesFrom", "dataScript")
-
-	if comes_from == "props":
-		loop_vars = get_loop_vars(map_of_std_props_info, iterator_key)
-
-		loop_var = ", ".join(loop_vars)  # `item` for array and `key, value` for object
-		iterator_key = jinja_safe_key(f"props.{iterator_key}")
-
-		if len(loop_vars) > 1:  # object repeater
-			iterator_key = f"{iterator_key}.items()"
-
-	elif comes_from == "blockDataScript":		
-		# resetting block_data for repeater blocks by reassigning loop_var to "block"
-		loop_var = "block"
-		iterator_key = jinja_safe_key(f"block.{iterator_key}")
-	else:
-		if data_key:
-			iterator_key = f"{extract_data_key(data_key)}.{iterator_key}"
-		loop_var = f"key_{iterator_key.replace('.', '__')}"
-		iterator_key = jinja_safe_key(iterator_key)
-		data_key = {"key": loop_var, "comesFrom": "dataScript"}
-	return loop_var, iterator_key, data_key
-
-def get_visibility_key(block, data_key):
-	if block.get("visibilityCondition"):
-		visibility_condition = block.get("visibilityCondition")
-		if isinstance(visibility_condition, str) or visibility_condition.get("comesFrom", "dataScript") == "dataScript":
-			if data_key:
-				visibility_key = f"{extract_data_key(data_key)}.{key}"
-			else:
-				visibility_key = visibility_condition.get("key")
-		else:
-			key = visibility_condition.get("key")
-			if visibility_condition.get("comesFrom") == "props":
-				visibility_key = f"props.{key}"
-			else:
-				visibility_key = f"block.{key}"
-			visibility_key = jinja_safe_key(visibility_key)
-		return visibility_key
-	return None
-
-def get_loop_vars(map_of_std_props_info, key):
-	if key in map_of_std_props_info:
-		std_prop_info = map_of_std_props_info[key][-1]
-		standard_options = std_prop_info.get("standardOptions", {})
-		if standard_options.get("type") == "array":
-			return ["item"]  # TODO: allow custom item name
-		elif standard_options.get("type") == "object":
-			return ["key", "value"]  # TODO: allow custom key, value names
-	return []
-
-def wrap_with_media_query(style_string, device):
-	if device == "mobile":
-		return f"@media only screen and (max-width: {MOBILE_BREAKPOINT}px) {{ {style_string} }}"
-	elif device == "tablet":
-		return f"@media only screen and (max-width: {DESKTOP_BREAKPOINT - 1}px) {{ {style_string} }}"
-	return style_string
 
 
 def append_style(style_obj, style_tag, style_class, device="desktop"):
@@ -814,22 +1128,6 @@ def set_fonts_from_html(soup, font_map):
 					font_map[font] = {"weights": ["400"]}
 
 
-def extend_with_component(block):
-	if block.get("extendedFromComponent"):
-		component = frappe.get_cached_value(
-			"Builder Component",
-			block["extendedFromComponent"],
-			["block", "name"],
-			as_dict=True,
-		)
-		component_block = frappe.parse_json(component.block if component else "{}")
-		if component_block:
-			extend_block(component_block, block)
-			block = component_block
-
-	return block
-
-
 def extend_block(block, overridden_block):
 	block["baseStyles"].update(overridden_block["baseStyles"])
 	block["mobileStyles"].update(overridden_block["mobileStyles"])
@@ -866,6 +1164,7 @@ def extend_block(block, overridden_block):
 
 	if overridden_block.get("blockClientScript"):
 		block["blockClientScript"] = overridden_block.get("blockClientScript")
+		block["isBlockClientScriptOverridden"] = True
 
 	if overridden_block.get("blockDataScript"):
 		block["blockDataScript"] = overridden_block.get("blockDataScript")
@@ -901,88 +1200,6 @@ def extend_block(block, overridden_block):
 	return block
 
 
-def append_child_tag(tag, child_tag, child_tag_details):
-	
-	child_tag_props = child_tag_details.get('all_props')
-	child_passed_down_props = child_tag_details.get('passed_down_props')
-	child_tag_block_script = child_tag_details.get('block_data_script')
-	visibility_key = child_tag_details.get('visibility_key')
-	default_props = child_tag_details.get('default_props')
- 
-	tag.append("{% with unique_hash = (loop.index if loop is defined else 0) | hash %}")
-
-	if default_props:
-		default_props = ", ".join([f"'{var}': {var}" for var in default_props])
-		tag.append(f"{{% with passed_down_props = passed_down_props | combine({{ {default_props} }}) %}}")
-		tag.append("{% with props = passed_down_props %}") # resetting props for repeater blocks and for props deriving from repeater loop vars
-
-	tag.append(f"{{% with props = {child_tag_props} | combine(passed_down_props) %}}")
-	tag.append(f"{{% with passed_down_props = passed_down_props | combine({child_passed_down_props}) %}}")
-	
-	if child_tag_block_script:
-		tag.append(f"{{% with block = block | execute_script_and_combine('{escape_single_quotes(child_tag_block_script)}', props) %}}")
-	
-	if visibility_key:
-		tag.append(f"{{% if {visibility_key} %}}")
-	
-	tag.append(child_tag)
-	
-	if visibility_key:
-		tag.append("{% endif %}")
-  
-	if child_tag_block_script:
-		tag.append("{% endwith %}")
-
-	tag.append("{% endwith %}")
-	tag.append("{% endwith %}")
-
-	if default_props:
-		tag.append("{% endwith %}{% endwith %}")
-
-	tag.append("{% endwith %}")
-
-
-def set_dynamic_content_placeholder(block, data_key=None):
-	block_data_key = block.get("dataKey", {}) or {}
-	dynamic_values = [block_data_key] if block_data_key else []
-	dynamic_values += block.get("dynamicValues", []) or []
-	for dynamic_value_doc in dynamic_values:
-		original_key = dynamic_value_doc.get("key", "")
-		if not isinstance(dynamic_value_doc, dict):
-			# if dynamic_value_doc is a string, convert it to dict
-			dynamic_value_doc = {"key": dynamic_value_doc, "type": "key", "property": dynamic_value_doc}
-		if dynamic_value_doc and dynamic_value_doc.get("key"):
-			key = ""
-			if dynamic_value_doc.get("comesFrom") == "props":
-				key = jinja_safe_key(f"props.{original_key}")
-			elif dynamic_value_doc.get("comesFrom") == "blockDataScript":
-				key = jinja_safe_key(f"block.{original_key}")
-			else:
-				key = (
-					f"{extract_data_key(data_key)}.{dynamic_value_doc.get('key')}" if data_key else dynamic_value_doc.get("key")
-				)
-				if data_key:
-					key = jinja_safe_key(key)
-
-			_property = dynamic_value_doc.get("property")
-			_type = dynamic_value_doc.get("type")
-			if _type == "attribute":
-				block["attributes"][_property] = (
-					f"{{{{ {key} or '{escape_single_quotes(block['attributes'].get(_property, ''))}' }}}}"
-				)
-			elif _type == "style":
-				if not block["attributes"].get("style"):
-					block["attributes"]["style"] = ""
-				css_property = camel_case_to_kebab_case(_property)
-				block["attributes"]["style"] += (
-					f"{css_property}: {{{{ {key} or '{escape_single_quotes(block['baseStyles'].get(_property, '') or '')}' }}}};"
-				)
-			elif _type == "key" and not block.get("isRepeaterBlock"):
-				block[_property] = (
-					f"{{{{ {key} if {key} or {key} in ['', 0] else '{escape_single_quotes(block.get(_property, ''))}' }}}}"
-				)
-
-
 @redis_cache(ttl=60 * 60)
 def find_page_with_path(route):
 	try:
@@ -1014,6 +1231,7 @@ def resolve_path(path):
 		pass
 
 	return original_resolve_path(path)
+
 
 def reset_with_component(block, extended_with_component, component_children):
 	reset_block(block)
@@ -1052,6 +1270,7 @@ def reset_block(block):
 	block["dynamicValues"] = []
 	return block
 
+
 def extract_data_key(data_key):
 	if isinstance(data_key, str):
 		return data_key
@@ -1059,14 +1278,16 @@ def extract_data_key(data_key):
 		return data_key.get("key")
 	return None
 
+
 def jinja_safe_key(key):
-    # convert a.b to (a or {}).get('b', {})
+	# convert a.b to (a or {}).get('b', {})
 	# to avoid undefined error in jinja
 	keys = (key or "").split(".")
 	key = f"({keys[0]} or {{}})"
 	for k in keys[1:]:
 		key = f"{key}.get('{k}', {{}})"
 	return key
+
 
 def to_jinja_literal(obj):
 	# detect Jinja expressions inside strings (e.g. "{{ sample }}")
@@ -1096,35 +1317,29 @@ def to_jinja_literal(obj):
 
 	return repr(obj)
 
-def parse_static_value(value: str, prop_type: str):
+
+def parse_static_value(value: str, prop_type: str) -> Any:
+	"""Parse static value based on property type."""
 	match prop_type:
-		case "string":
-			return f"{value}"
+		case "string" | "select":
+			return str(value)
 		case "number":
 			try:
 				return float(value)
-			except ValueError:
+			except (ValueError, TypeError):
 				return None
 		case "boolean":
-			if value is True or value is False:
+			if isinstance(value, bool):
 				return value
-			if value.lower() in ["true", "1"]:
+			if str(value).lower() in ["true", "1"]:
 				return True
-			elif value.lower() in ["false", "0"]:
+			elif str(value).lower() in ["false", "0"]:
 				return False
-			else:
-				return None
-		case "array":
+			return None
+		case "array" | "object":
 			try:
 				return frappe.parse_json(value)
 			except Exception:
 				return None
-		case "object":
-			try:
-				return frappe.parse_json(value)
-			except Exception:
-				return None
-		case "select":
-			return f"{value}"
 		case _:
-			return f"{value}"
+			return str(value)
