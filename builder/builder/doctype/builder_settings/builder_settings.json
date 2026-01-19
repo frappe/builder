@@ -104,14 +104,14 @@
    "default": "1",
    "fieldname": "block_click_handlers",
    "fieldtype": "Check",
-   "label": "Block Click Handlers"
+   "label": "Restrict Click Handlers"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-12-20 13:31:34.606833",
+ "modified": "2026-01-19 22:13:08.784598",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Settings",
