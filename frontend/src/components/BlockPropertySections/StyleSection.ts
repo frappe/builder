@@ -185,7 +185,7 @@ const styleSectionProperties = [
 				styleProperty: "zIndex",
 			};
 		},
-		searchKeyWords: "Z, Index, ZIndex, Z Index",
+		searchKeyWords: "Z, Index, ZIndex, Z Index, Z-index, Z-Index",
 		condition: () =>
 			!blockController.multipleBlocksSelected() &&
 			!blockController.isRoot() &&
