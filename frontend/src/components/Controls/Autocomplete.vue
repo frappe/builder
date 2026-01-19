@@ -228,8 +228,8 @@ watch(
 );
 if (props.getOptions) refreshOptions();
 
-// in Popver, absolute positioning keeps all options within the popver taking extra space
-// making it fixed makes it float above Popver container
+// in Popover, absolute positioning keeps all options within the Popover taking extra space
+// making it fixed makes it float above Popover container
 const getFixedStyles = () => {
 	if (props.makeFixed && props.fixTo) {
 		const fixedToElRect = (
