@@ -529,8 +529,31 @@ def get_block_html(blocks):
 			if element in ["p", "__raw_html__"]:
 				element = "div"
 
-			tag = soup.new_tag(element)
-			tag.attrs = block.get("attributes", {})
+			if element == "img":
+				attributes = block.get("attributes", {})
+				dark_src = (
+					frappe.utils.quote(attributes.get("darkSrc")) if attributes.get("darkSrc") else None
+				)
+				light_src = frappe.utils.quote(attributes.get("src")) if attributes.get("src") else None
+				if dark_src and light_src:
+					picture_tag = soup.new_tag("picture")
+
+					# Add source for dark mode
+					dark_source = soup.new_tag("source")
+					dark_source["srcset"] = dark_src
+					dark_source["media"] = "(prefers-color-scheme: dark)"
+					picture_tag.append(dark_source)
+
+					tag = soup.new_tag("img")
+					tag.attrs = {k: v for k, v in attributes.items() if k != "darkSrc"}
+				else:
+					tag = soup.new_tag(element)
+					tag.attrs = block.get("attributes", {})
+					picture_tag = None
+			else:
+				tag = soup.new_tag(element)
+				tag.attrs = block.get("attributes", {})
+				picture_tag = None
 
 			customAttributes = block.get("customAttributes", {})
 			if customAttributes:
@@ -599,6 +622,10 @@ def get_block_html(blocks):
 
 			if element == "body":
 				tag.append("{% include 'templates/generators/webpage_scripts.html' %}")
+
+			if picture_tag is not None:
+				picture_tag.append(tag)
+				return picture_tag
 
 			return tag
 

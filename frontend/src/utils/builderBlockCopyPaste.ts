@@ -305,6 +305,13 @@ function updateURLsInBlock(block: Block, currentSiteURL: string): void {
 		if (src && typeof src === "string" && src.startsWith("/")) {
 			block.setAttribute("src", `${currentSiteURL}${src}`);
 		}
+
+		if (block.isImage()) {
+			const darkSrc = block.getAttribute("darkSrc");
+			if (darkSrc && typeof darkSrc === "string" && darkSrc.startsWith("/")) {
+				block.setAttribute("darkSrc", `${currentSiteURL}${darkSrc}`);
+			}
+		}
 	}
 
 	// Update background image URLs

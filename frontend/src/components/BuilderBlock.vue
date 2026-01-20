@@ -40,11 +40,16 @@ import useCanvasStore from "@/stores/canvasStore";
 import { setFont } from "@/utils/fontManager";
 import { getDataForKey } from "@/utils/helpers";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
+import { useDark } from "@vueuse/core";
 import { computed, inject, nextTick, onMounted, reactive, ref, useAttrs, watch, watchEffect } from "vue";
 import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
 import DataLoaderBlock from "./DataLoaderBlock.vue";
 import TextBlock from "./TextBlock.vue";
+
+const isDark = useDark({
+	attribute: "data-theme",
+});
 
 const canvasStore = useCanvasStore();
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
@@ -107,6 +112,14 @@ const classes = computed(() => {
 
 const attributes = computed(() => {
 	const attribs = { ...props.block.getAttributes(), ...attrs } as { [key: string]: any };
+
+	if (props.block.isImage() && !props.preview) {
+		if (isDark.value && attribs.darkSrc) {
+			attribs.src = attribs.darkSrc;
+		}
+		delete attribs.darkSrc;
+	}
+
 	if (
 		props.block.isText() ||
 		props.block.isHTML() ||
@@ -126,7 +139,8 @@ const attributes = computed(() => {
 				getDataForKey(props.data, props.block.getDataKey("key")) ??
 				attribs[props.block.getDataKey("property") as string];
 		}
-		props.block.getDynamicValues()
+		props.block
+			.getDynamicValues()
 			?.filter((dataKeyObj: BlockDataKey) => {
 				return dataKeyObj.type === "attribute";
 			})
@@ -165,7 +179,8 @@ const styles = computed(() => {
 				),
 			};
 		}
-		props.block.getDynamicValues()
+		props.block
+			.getDynamicValues()
 			?.filter((dataKeyObj: BlockDataKey) => {
 				return dataKeyObj.type === "style";
 			})

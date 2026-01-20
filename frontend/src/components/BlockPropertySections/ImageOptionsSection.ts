@@ -27,6 +27,27 @@ const imageOptionsSectionProperties = [
 		searchKeyWords: "Image, URL, Src, Fit, ObjectFit, Object Fit, Fill, Contain, Cover",
 	},
 	{
+		component: PropertyControl,
+		getProps: () => {
+			return {
+				component: ImageUploadInput,
+				controlType: "attribute",
+				styleProperty: "darkSrc",
+				label: "Dark Image",
+				allowDynamicValue: true,
+				popoverOffset: 120,
+				imageURL: blockController.getAttribute("darkSrc"),
+				imageFit: blockController.getStyle("objectFit"),
+			};
+		},
+		events: {
+			"update:imageURL": (val: string) => blockController.setAttribute("darkSrc", val),
+			"update:imageFit": (val: StyleValue) => blockController.setStyle("objectFit", val),
+		},
+		searchKeyWords: "Dark, Mode, Image, URL, Src, Dark Mode, Theme",
+		condition: () => blockController.isImage(),
+	},
+	{
 		component: Button,
 		getProps: () => {
 			return {
@@ -58,6 +79,41 @@ const imageOptionsSectionProperties = [
 				return false;
 			}
 			const imageUrl = blockController.getAttribute("src") as string;
+			return shouldShowOptimizeButton(imageUrl);
+		},
+	},
+	{
+		component: Button,
+		getProps: () => {
+			return {
+				class: "text-base self-end",
+			};
+		},
+		innerText: computed(() => {
+			const block = blockController.getSelectedBlocks()[0];
+			const imageUrl = (block?.getAttribute("darkSrc") as string) || "";
+			return getOptimizeButtonText(imageUrl);
+		}),
+		searchKeyWords:
+			"Dark, Mode, Image, Local, Copy, Server, Download, Host, Store, Convert, webp, Convert to webp, image, darkSrc, url",
+		events: {
+			click: () => {
+				const block = blockController.getSelectedBlocks()[0];
+				const imageUrl = block.getAttribute("darkSrc") as string;
+
+				return optimizeImage({
+					imageUrl,
+					onSuccess: (newUrl: string) => {
+						block.setAttribute("darkSrc", newUrl);
+					},
+				});
+			},
+		},
+		condition: () => {
+			if (!blockController.isImage()) {
+				return false;
+			}
+			const imageUrl = blockController.getAttribute("darkSrc") as string;
 			return shouldShowOptimizeButton(imageUrl);
 		},
 	},

@@ -453,6 +453,19 @@ function dataURLtoFile(dataurl: string, filename: string) {
 	}
 }
 
+function handleBase64Attribute(block: Block, attrName: string, fileName: string) {
+	const attrValue = block.getAttribute(attrName) as string;
+	if (attrValue?.startsWith("data:image")) {
+		const file = dataURLtoFile(attrValue, fileName);
+		if (file) {
+			block.setAttribute(attrName, "");
+			uploadBuilderAsset(file, true).then((obj) => {
+				block.setAttribute(attrName, obj.fileURL);
+			});
+		}
+	}
+}
+
 declare global {
 	interface Window {
 		Module: {
@@ -1070,6 +1083,7 @@ export {
 	getRouteVariables,
 	getTextContent,
 	getVideoBlock,
+	handleBase64Attribute,
 	HexToHSV,
 	HSVToHex,
 	isBlock,
