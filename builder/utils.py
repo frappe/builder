@@ -64,9 +64,35 @@ class Block:
 	def __init__(self, **kwargs) -> None:
 		for key, value in kwargs.items():
 			if key == "children":
-				value = [b if isinstance(b, Block) else Block(**b) if b and isinstance(b, dict) else None for b in (value or [])]
+				value = [
+					b if isinstance(b, Block) else Block(**b) if b and isinstance(b, dict) else None
+					for b in (value or [])
+				]
 
 			setattr(self, key, value)
+
+	@classmethod
+	def from_block(cls, block: "Block") -> "Block":
+		return cls(**block.as_dict())
+
+	def attach_dynamic_values(self, *dynamic_values: BlockDataKey):
+		if not self.dynamicValues:
+			self.dynamicValues = []
+		self.dynamicValues.extend(dynamic_values)
+
+	def clear_dynamic_values(self):
+		self.dynamicValues = []
+
+	def attach_data_key(self, key: str, property: str, type: str = "key"):
+		self.dataKey = {"key": key, "property": property, "type": type}
+
+	def clear_data_key(self):
+		self.dataKey = None
+
+	def attach_children(self, *children: "Block"):
+		if not self.children:
+			self.children = []
+		self.children.extend(children)
 
 	def as_dict(self):
 		return {
@@ -97,6 +123,9 @@ class Block:
 			"blockDataScript": self.blockDataScript,
 			"props": self.props,
 		}
+
+	def as_json(self, wrap_in_array=False):
+		return frappe.as_json([self.as_dict()]) if wrap_in_array else frappe.as_json(self.as_dict())
 
 
 def get_doc_as_dict(doctype, name):
@@ -597,19 +626,22 @@ def get_export_paths(app_path, export_name):
 
 
 def combine(a, b):
-    if a is None:
-        return b
-    if b is None:
-        return a
-    res = dict(a)
-    res.update(b)
-    return res
+	if a is None:
+		return b
+	if b is None:
+		return a
+	res = dict(a)
+	res.update(b)
+	return res
+
 
 def hash(s):
-    return f"{frappe.generate_hash(length=6)}-{s}"
+	return f"{frappe.generate_hash(length=6)}-{s}"
+
 
 def to_safe_json(data):
 	return frappe.as_json(data)
+
 
 def execute_script_and_combine(prev_block_data, block_data_script, props):
 	props = frappe._dict(frappe.parse_json(props or "{}"))

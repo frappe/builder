@@ -106,6 +106,20 @@ class TestBuilderPage(FrappeTestCase):
 		self.assertTrue("Hello World!" in content)
 
 	def test_dynamic_values(self):
+		body = Block(element="body")
+		header = Block(element="h1", innerHTML="Hello")
+		sub_header = Block(element="h2", innerHTML="Content")
+		link = Block(element="a", innerHTML="Link")
+
+		header.attach_dynamic_values({"key": "name", "type": "key", "property": "innerHTML"})
+		sub_header.attach_dynamic_values(
+			{"key": "color", "type": "style", "property": "color"},
+			{"key": "padding", "type": "style", "property": "padding"},
+		)
+		link.attach_dynamic_values({"key": "link", "type": "attribute", "property": "href"})
+
+		body.attach_children(header, sub_header, link)
+
 		page = frappe.get_doc(
 			{
 				"doctype": "Builder Page",
@@ -113,36 +127,7 @@ class TestBuilderPage(FrappeTestCase):
 				"published": 1,
 				"route": "/dynamic-values-test",
 				"page_data_script": page_data_script,
-				"blocks": json.dumps(
-					[
-						Block(
-							element="body",
-							attributes={"style": "background: #f0f0f0;"},
-							children=[
-								Block(
-									element="h1",
-									innerHTML="Hello",
-									attributes={"style": "background: #f0f0f0;"},
-									dynamicValues=[{"key": "name", "type": "key", "property": "innerHTML"}],
-								),
-								Block(
-									element="h2",
-									innerHTML="Content",
-									attributes={"style": "background: #f0f0f0;"},
-									dynamicValues=[
-										{"key": "color", "type": "style", "property": "color"},
-										{"key": "padding", "type": "style", "property": "padding"},
-									],
-								),
-								Block(
-									element="a",
-									innerHTML="Link",
-									dynamicValues=[{"key": "link", "type": "attribute", "property": "href"}],
-								),
-							],
-						).as_dict()
-					]
-				),
+				"blocks": body.as_json(wrap_in_array=True),
 			}
 		).insert()
 
@@ -155,6 +140,20 @@ class TestBuilderPage(FrappeTestCase):
 			page.delete()
 
 	def test_repeater_block_dynamic_values(self):
+		body = Block(element="body")
+		repeater_block = Block(element="div", isRepeaterBlock=True)
+		wrapper_div = Block(element="div")
+		item_name = Block(element="h2")
+		item_price = Block(element="span")
+
+		repeater_block.attach_data_key("items", "dataKey")
+		item_name.attach_dynamic_values({"key": "name", "type": "key", "property": "innerHTML"})
+		item_price.attach_dynamic_values({"key": "price", "type": "key", "property": "innerHTML"})
+
+		wrapper_div.attach_children(item_name, item_price)
+		repeater_block.attach_children(wrapper_div)
+		body.attach_children(repeater_block)
+
 		page = frappe.get_doc(
 			{
 				"doctype": "Builder Page",
@@ -162,47 +161,7 @@ class TestBuilderPage(FrappeTestCase):
 				"published": 1,
 				"route": "/repeater-block-test",
 				"page_data_script": repeater_page_data_script,
-				"blocks": json.dumps(
-					[
-						Block(
-							element="body",
-							children=[
-								Block(
-									element="div",
-									isRepeaterBlock=True,
-									dataKey={"key": "items", "type": "key", "property": "dataKey"},
-									children=[
-										Block(
-											element="div",
-											children=[
-												Block(
-													element="h2",
-													dynamicValues=[
-														{
-															"key": "name",
-															"type": "key",
-															"property": "innerHTML",
-														}
-													],
-												),
-												Block(
-													element="span",
-													dynamicValues=[
-														{
-															"key": "price",
-															"type": "key",
-															"property": "innerHTML",
-														}
-													],
-												),
-											],
-										)
-									],
-								)
-							],
-						).as_dict()
-					]
-				),
+				"blocks": body.as_json(wrap_in_array=True),
 			}
 		).insert()
 
@@ -217,27 +176,24 @@ class TestBuilderPage(FrappeTestCase):
 			page.delete()
 
 	def test_component_dynamic_values(self):
+		comp_root = Block(element="div", blockId="comp-block-1")
+		comp_name = Block(element="h1", blockId="comp-block-1-1", innerHTML="Hello")
+
+		comp_name.attach_dynamic_values({"key": "name", "type": "key", "property": "innerHTML"})
+		comp_root.attach_children(comp_name)
 		component = frappe.get_doc(
 			{
 				"doctype": "Builder Component",
-				"block": json.dumps(
-					Block(
-						blockId="comp-block-1",
-						element="div",
-						attributes={"style": "background: #f0f0f0;"},
-						children=[
-							Block(
-								blockId="comp-block-1-1",
-								element="h1",
-								innerHTML="Hello",
-								attributes={"style": "background: #f0f0f0;"},
-								dynamicValues=[{"key": "name", "type": "key", "property": "innerHTML"}],
-							),
-						],
-					).as_dict()
-				),
+				"block": comp_root.as_json(),
 			}
 		).insert()
+
+		body = Block(element="body")
+		comp_root_copy = Block(extendedFromComponent=component.name)
+		comp_name_copy = Block(isChildOfComponent=component.name, referenceBlockId="comp-block-1-1")
+
+		comp_root_copy.attach_children(comp_name_copy)
+		body.attach_children(comp_root_copy)
 
 		page_with_component_no_overrides = frappe.get_doc(
 			{
@@ -246,26 +202,11 @@ class TestBuilderPage(FrappeTestCase):
 				"published": 1,
 				"route": "/component-dynamic-values-test-no-overrides",
 				"page_data_script": page_data_script,
-				"blocks": json.dumps(
-					[
-						Block(
-							element="body",
-							children=[
-								Block(
-									extendedFromComponent=component.name,
-									children=[
-										Block(
-											isChildOfComponent=component.name,
-											referenceBlockId="comp-block-1-1",
-										),
-									],
-								)
-							],
-						).as_dict()
-					]
-				),
+				"blocks": body.as_json(wrap_in_array=True),
 			}
 		).insert()
+
+		comp_name_copy.attach_dynamic_values({"key": "name_new", "type": "key", "property": "innerHTML"})
 
 		page_with_component_having_overrides = frappe.get_doc(
 			{
@@ -274,29 +215,14 @@ class TestBuilderPage(FrappeTestCase):
 				"published": 1,
 				"route": "/component-dynamic-values-test-with-overrides",
 				"page_data_script": custom_data_script,
-				"blocks": json.dumps(
-					[
-						Block(
-							element="body",
-							children=[
-								Block(
-									extendedFromComponent=component.name,
-									children=[
-										Block(
-											isChildOfComponent=component.name,
-											referenceBlockId="comp-block-1-1",
-											dynamicValues=[
-												{"key": "name_new", "type": "key", "property": "innerHTML"}
-											],
-										),
-									],
-								)
-							],
-						).as_dict()
-					]
-				),
+				"blocks": body.as_json(wrap_in_array=True),
 			}
 		).insert()
+
+		comp_name_copy.clear_dynamic_values()
+		comp_name_copy.attach_dynamic_values(
+			{"key": "non_existent_key", "type": "key", "property": "innerHTML"}
+		)
 
 		page_with_component_having_bad_overrides = frappe.get_doc(
 			{
@@ -305,31 +231,7 @@ class TestBuilderPage(FrappeTestCase):
 				"published": 1,
 				"route": "/component-dynamic-values-test-with-bad-overrides",
 				"page_data_script": custom_data_script,
-				"blocks": json.dumps(
-					[
-						Block(
-							element="body",
-							children=[
-								Block(
-									extendedFromComponent=component.name,
-									children=[
-										Block(
-											isChildOfComponent=component.name,
-											referenceBlockId="comp-block-1-1",
-											dynamicValues=[
-												{
-													"key": "non_existent_key",
-													"type": "key",
-													"property": "innerHTML",
-												}
-											],
-										)
-									],
-								)
-							],
-						).as_dict()
-					]
-				),
+				"blocks": body.as_json(wrap_in_array=True),
 			}
 		).insert()
 
