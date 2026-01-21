@@ -30,6 +30,16 @@ data.update({
 
 custom_data_script = 'data.update({"name_new": "Jane Doe",})'
 
+block_data_script = """
+block.update({
+	"content": "Custom Block Data",
+	"items": [
+		{"name": "Item 1", "price": "$10"},
+		{"name": "Item 2", "price": "$20"}
+	]
+})
+"""
+
 
 class TestBuilderPage(FrappeTestCase):
 	@classmethod
@@ -253,6 +263,110 @@ class TestBuilderPage(FrappeTestCase):
 			page_with_component_having_overrides.delete()
 			page_with_component_having_bad_overrides.delete()
 			component.delete()
+
+	def test_block_data(self):
+		body = Block(element="body")
+		wrapper = Block(element="div", blockDataScript=block_data_script)
+		content_dynamic = Block(element="h4", innerHTML="Block Content")
+		content_fallback = Block(element="h4", innerHTML="Block Content")
+
+		content_dynamic.attach_dynamic_values(
+			{"key": "content", "type": "key", "property": "innerHTML", "comesFrom": "blockDataScript"},
+		)
+		content_fallback.attach_dynamic_values(
+			{"key": "no_key", "type": "key", "property": "innerHTML", "comesFrom": "blockDataScript"},
+		)
+
+		wrapper.attach_children(content_dynamic, content_fallback)
+		body.attach_children(wrapper)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Block Data Test",
+				"published": 1,
+				"route": "/block-data-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/block-data-test")
+			self.assertEqual("Custom Block Data", get_html_for(content, "tag", "h4", only_content=True))
+			self.assertEqual("Block Content", get_html_for(content, "tag", "h4", index=1, only_content=True))
+		finally:
+			page.delete()
+
+	def test_block_props(self):
+		body = Block(element="body")
+		div_wrapper = Block(
+			element="div",
+			props={
+				"first_name": {
+					"isDynamic": False,
+					"isPassedDown": True,
+					"value": "John",
+					"isStandard": False,
+				},
+				"last_name": {
+					"isDynamic": False,
+					"isPassedDown": False,
+					"value": "Doe",
+					"isStandard": False,
+				},
+			},
+			blockDataScript=block_data_script,
+		)
+		content_static_prop = Block(element="h4", innerHTML="Block Props Content")
+		content_dynamic_prop = Block(
+			element="h4",
+			innerHTML="Block Props Content",
+			props={
+				"content": {
+					"isDynamic": True,
+					"comesFrom": "blockDataScript",
+					"isPassedDown": True,
+					"value": "content",
+					"isStandard": False,
+				},
+			},
+		)
+		content_fallback = Block(element="h4", innerHTML="Block Props Content")
+
+		content_static_prop.attach_dynamic_values(
+			{"key": "first_name", "type": "key", "property": "innerHTML", "comesFrom": "props"},
+		)
+		content_dynamic_prop.attach_dynamic_values(
+			{"key": "content", "type": "key", "property": "innerHTML", "comesFrom": "props"},
+		)
+		content_fallback.attach_dynamic_values(
+			{"key": "last_name", "type": "key", "property": "innerHTML", "comesFrom": "props"},
+		)
+
+		div_wrapper.attach_children(content_static_prop, content_dynamic_prop, content_fallback)
+		body.attach_children(div_wrapper)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Block Props Test",
+				"published": 1,
+				"route": "/block-props-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/block-props-test")
+			self.assertEqual("John", get_html_for(content, "tag", "h4", only_content=True))
+			self.assertEqual(
+				"Custom Block Data", get_html_for(content, "tag", "h4", index=1, only_content=True)
+			)
+			self.assertEqual(
+				"Block Props Content", get_html_for(content, "tag", "h4", index=2, only_content=True)
+			)
+		finally:
+			page.delete()
 
 	@classmethod
 	def tearDownClass(cls):
