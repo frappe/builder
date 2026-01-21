@@ -210,46 +210,40 @@ const addProp = async ({ name, value }: { name: string; value: BlockProps[string
 	return map;
 };
 
-const clearObjectValue = (map: Map<string, BlockProps[string]>, key: string) => {
-	const oldValue = map.get(key);
-
-	map.set(key, {
-		...oldValue!,
-		value: null,
-		isDynamic: false,
-		comesFrom: null,
-	});
-
-	return map;
-};
-
 const updateObjectValue = (
 	map: Map<string, BlockProps[string]>,
 	key: string,
 	{
+		label,
 		value,
 		isDynamic,
 		comesFrom,
 		isPassedDown,
 	}: {
+		label: string;
 		value: string | null;
 		isDynamic: boolean;
 		comesFrom: BlockProps[string]["comesFrom"];
 		isPassedDown: boolean;
 	},
 ) => {
-	const path = value;
-	if (!path) {
-		return clearObjectValue(map, key);
+	if (!value) {
+		value = null;
+		isDynamic = false;
+		comesFrom = null;
+	} else {
+		value = !isDynamic && typeof value !== "string" ? JSON.stringify(value) : value;
 	}
 
-	const oldPath = map.get(key)?.value;
+	const oldValue = map.get(key)?.value;
+	const oldLabel = map.get(key)?.label;
 	const wasDynamic = map.get(key)?.isDynamic;
 	const cameFrom = map.get(key)?.comesFrom;
 	const wasPassedDown = map.get(key)?.isPassedDown;
 
 	if (
-		path === oldPath &&
+		value === oldValue &&
+		label === oldLabel &&
 		isDynamic === wasDynamic &&
 		comesFrom === cameFrom &&
 		isPassedDown === wasPassedDown
@@ -259,7 +253,8 @@ const updateObjectValue = (
 
 	map.set(key, {
 		...map.get(key)!,
-		value: !isDynamic && typeof path !== "string" ? JSON.stringify(path) : path,
+		label,
+		value,
 		isDynamic,
 		comesFrom,
 		isPassedDown,
@@ -301,12 +296,14 @@ const updateProp = async ({
 	newValue: BlockProps[string];
 }) => {
 	let map = new Map(Object.entries(props.obj));
+	console.log({ oldPropName, newName, newValue });
 
 	if (oldPropName !== newName) {
 		map = new Map(Object.entries(replaceKey(map, oldPropName, newName)));
 	}
 
 	map = updateObjectValue(map, newName, {
+		label: newValue.label,
 		value: newValue.value,
 		isDynamic: newValue.isDynamic,
 		comesFrom: newValue.comesFrom,

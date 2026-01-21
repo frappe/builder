@@ -34,7 +34,7 @@
 					</template>
 				</Dropdown>
 				<InputLabel
-					class="truncate"
+					class="pr-2"
 					:class="{ 'cursor-ns-resize': enableSlider }"
 					v-if="label"
 					@mousedown="handleMouseDown">
