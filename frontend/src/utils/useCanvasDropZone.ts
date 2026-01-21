@@ -31,12 +31,19 @@ export function useCanvasDropZone(
 		},
 
 		onOver: (files, ev) => {
-			if (ev.shiftKey) {
-				const parentBlock = getBlockToReplace(ev);
+			const initialBlock = getInitialParentBlock(ev);
+			const shouldReplaceImage = initialBlock?.isImage();
+
+			if (ev.shiftKey || shouldReplaceImage) {
+				const parentBlock = shouldReplaceImage ? initialBlock : getBlockToReplace(ev);
 				if (parentBlock) {
 					canvasStore.activeCanvas?.setHoveredBlock(parentBlock.blockId);
-					updateDropTarget(ev, parentBlock, 0, "column");
 					canvasStore.removeDropPlaceholder();
+
+					canvasStore.dropTarget.parentBlock = parentBlock;
+					canvasStore.dropTarget.index = 0;
+					canvasStore.dropTarget.x = ev.x;
+					canvasStore.dropTarget.y = ev.y;
 				}
 			} else {
 				const { parentBlock, index, layoutDirection } = findDropTarget(ev);
