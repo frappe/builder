@@ -50,7 +50,7 @@
 									</div>
 									<div class="flex max-w-full flex-col gap-1">
 										<p class="text-sm font-medium">
-											{{ name }}
+											{{ value.label || name }}
 										</p>
 										<p
 											v-if="value.isStandard"

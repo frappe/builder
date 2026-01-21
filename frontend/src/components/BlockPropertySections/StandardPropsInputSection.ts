@@ -48,7 +48,7 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 			break;
 	}
 	map = {
-		label: propName,
+		label: propDetails.label || propName,
 		dynamicValueFilterOptions: {
 			excludeOwnProps: true,
 			excludeOwnBlockData: true,

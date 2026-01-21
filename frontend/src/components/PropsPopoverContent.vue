@@ -10,13 +10,21 @@
 				:model-value="isStandard"
 				@update:model-value="handleIsStandardChange" />
 		</div>
-		<div class="flex items-center justify-between">
-			<InputLabel>Name</InputLabel>
+		<div v-if="isStandardBool" class="flex items-center justify-between">
+			<InputLabel>Label</InputLabel>
 			<Input
-				v-model="name"
-				placeholder="Enter prop name"
-				@update:model-value="(val) => (name = val)"
-				@input="(val) => (name = val)"></Input>
+				v-model="label"
+				placeholder="Enter prop label"
+				@update:model-value="(val) => (label = val)"
+				@input="(val) => (label = val)"></Input>
+		</div>
+		<div class="flex items-center justify-between">
+			<InputLabel>Key</InputLabel>
+			<Input
+				v-model="key"
+				:placeholder="computedKey || 'Enter prop key'"
+				@update:model-value="(val) => (key = val)"
+				@input="(val) => (key = val)"></Input>
 		</div>
 		<div class="flex items-center justify-between">
 			<InputLabel>Type</InputLabel>
@@ -32,7 +40,7 @@
 			<Input
 				v-if="isStaticProp"
 				v-model="value"
-				placeholder="Enter prop name"
+				placeholder="Enter prop value"
 				@update:model-value="(val) => (value = val)"
 				@input="(val) => (value = val)"></Input>
 			<Autocomplete
@@ -78,7 +86,7 @@
 				@update:options="updateStandardPropOptions" />
 		</template>
 		<BuilderButton
-			:disabled="!name.trim().length"
+			:disabled="!key.trim().length && !label.trim().length"
 			label="Save"
 			variant="subtle"
 			class="w-full flex-shrink-0"
@@ -107,7 +115,7 @@ import ObjectOptions from "@/components/PropsOptions/ObjectOptions.vue";
 import BooleanOptions from "@/components/PropsOptions/BooleanOptions.vue";
 import SelectOptions from "@/components/PropsOptions/SelectOptions.vue";
 
-import { getDataArray } from "@/utils/helpers";
+import { getDataArray, toKebabCase } from "@/utils/helpers";
 import useBlockDataStore from "@/stores/blockDataStore";
 
 const props = withDefaults(
@@ -143,7 +151,8 @@ const TOGGLE_OPTIONS: { label: string; value: string }[] = [
 const isStandard = ref(props.propDetails?.isStandard ? "true" : "false");
 const isEditable = ref("false");
 const isPassedDown = ref(props.propDetails?.isPassedDown ? "true" : "false");
-const name = ref(props.propName ?? "");
+const label = ref(props.propDetails?.label ?? "");
+const key = ref(props.propName ?? "");
 const value = ref(props.propDetails?.value ?? "");
 const comesFrom = ref<BlockProps[string]["comesFrom"]>(props.propDetails?.comesFrom ?? null);
 const selectedNonStandardPropType = ref(getInitialNonStandardPropType());
@@ -163,6 +172,13 @@ const emit = defineEmits({
 		newName: string;
 		newValue: BlockProps[string];
 	}) => true,
+});
+
+const computedKey = computed({
+	get: () => (key.value ? key.value : toKebabCase(label.value).replaceAll("-", "_")),
+	set: (val) => {
+		key.value = val;
+	},
 });
 
 const isStandardBool = computed(() => isStandard.value === "true");
@@ -376,7 +392,8 @@ const resetState = async (params: ResetParams) => {
 	const details = keepProps ? props.propDetails : null;
 
 	if (!keepName) {
-		name.value = props.propName ?? "";
+		key.value = props.propName ?? "";
+		label.value = details?.label ?? "";
 	}
 
 	if (!keepIsStandard) {
@@ -396,6 +413,7 @@ const resetState = async (params: ResetParams) => {
 
 function buildPropValue(): BlockProps[string] {
 	return {
+		label: label.value,
 		isStandard: isStandardBool.value,
 		isDynamic: isStandardBool.value ? false : selectedNonStandardPropType.value === "dynamic",
 		isPassedDown: isStandardBool.value || isPassedDown.value === "true",
@@ -415,11 +433,11 @@ const save = async () => {
 	const propValue = buildPropValue();
 
 	if (props.mode === "add") {
-		emit("add:prop", { name: name.value, value: propValue });
+		emit("add:prop", { name: computedKey.value, value: propValue });
 	} else {
 		emit("update:prop", {
 			oldPropName: props.propName!,
-			newName: name.value,
+			newName: computedKey.value,
 			newValue: propValue,
 		});
 	}
