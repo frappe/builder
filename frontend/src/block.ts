@@ -819,6 +819,35 @@ class Block implements BlockOptions {
 
 		return new Set(componentNames);
 	}
+	getUsedVariableNames() {
+		const variableNames = [] as string[];
+		const varPattern = /var\(--([a-zA-Z0-9_-]+)/g;
+
+		const extractVarsFromValue = (value: any) => {
+			if (!value || typeof value !== "string") return;
+			const matches = value.matchAll(varPattern);
+			for (const match of matches) {
+				variableNames.push(match[1]);
+			}
+		};
+
+		const styleObjects = [this.baseStyles, this.mobileStyles, this.tabletStyles, this.rawStyles];
+		styleObjects.forEach((styleObj) => {
+			if (styleObj) {
+				Object.values(styleObj).forEach(extractVarsFromValue);
+			}
+		});
+
+		if (this.innerHTML) {
+			extractVarsFromValue(this.innerHTML);
+		}
+
+		this.children.forEach((child) => {
+			variableNames.push(...child.getUsedVariableNames());
+		});
+
+		return new Set(variableNames);
+	}
 	isFlex() {
 		return this.getStyle("display") === "flex";
 	}
