@@ -1,5 +1,5 @@
 <template>
-	<Popover placement="left" class="!block w-full" popoverClass="!min-w-fit !mr-[30px]">
+	<Popover placement="left" class="!block w-full" :offset="popoverOffset">
 		<template #target="{ togglePopover, isOpen }">
 			<div class="flex items-center justify-between">
 				<InputLabel v-if="label && labelPosition === 'left'">{{ label }}</InputLabel>
@@ -53,12 +53,12 @@
 									'object-fit': imageFit || 'contain',
 								}" />
 							<div
-								class="absolute bottom-0 left-0 right-0 top-0 hidden place-items-center bg-gray-500 bg-opacity-20"
+								class="absolute bottom-0 left-0 right-0 top-0 hidden place-items-center bg-surface-gray-4 bg-opacity-20"
 								:class="{
 									'!grid': !imageURL,
 									'group-hover:grid': imageURL,
 								}">
-								<BuilderButton variant="solid" @click="openFileSelector">Upload</BuilderButton>
+								<BuilderButton variant="subtle" @click="openFileSelector">Upload</BuilderButton>
 							</div>
 						</div>
 					</template>
@@ -88,11 +88,13 @@ withDefaults(
 		placeholder?: string;
 		imageFit?: "contain" | "cover" | "fill" | "none";
 		description?: string;
+		popoverOffset?: number;
 	}>(),
 	{
 		labelPosition: "left",
 		placeholder: "Set Image",
 		imageFit: "contain",
+		popoverOffset: 10,
 	},
 );
 

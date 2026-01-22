@@ -15,6 +15,7 @@ const imageOptionsSectionProperties = [
 				styleProperty: "src",
 				label: "Image URL",
 				allowDynamicValue: true,
+				popoverOffset: 120,
 				imageURL: blockController.getAttribute("src"),
 				imageFit: blockController.getStyle("objectFit"),
 			};
