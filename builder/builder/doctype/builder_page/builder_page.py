@@ -554,7 +554,7 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 	return "".join(html_parts), str(style_tag), font_map, shared_state["has_block_script"]
 
 
-def build_tag(block: dict, state: dict, data_key: Optional[dict] = None) -> bs.Tag:
+def build_tag(block: dict, state: dict, data_key: dict | None = None) -> bs.Tag:
 	"""
 	Transforms a single block to an HTML tag.
 
@@ -608,7 +608,7 @@ def cleanup_props_stack(props: dict, props_stack: dict):
 			props_stack[name].pop()
 
 
-def process_block_props(block: dict, data_key: Optional[dict], props_stack: dict) -> dict:
+def process_block_props(block: dict, data_key: dict | None, props_stack: dict) -> dict:
 	"""
 	Process all properties of a block. Also adds standard props info to the props stack if applicable.
 
@@ -632,7 +632,7 @@ def process_block_props(block: dict, data_key: Optional[dict], props_stack: dict
 	return props
 
 
-def interpret_prop_value(prop_config: dict, data_key: Optional[dict]) -> Any:
+def interpret_prop_value(prop_config: dict, data_key: dict | None) -> Any:
 	"""Interpret prop value based on its configuration (static or dynamic)."""
 	is_dynamic = prop_config.get("isDynamic", False)
 	comes_from = prop_config.get("comesFrom", "props")
@@ -657,7 +657,7 @@ def interpret_prop_value(prop_config: dict, data_key: Optional[dict]) -> Any:
 
 
 def get_dynamic_props_template(
-	prop_value: str, comes_from: str, data_key: Optional[dict], default_value: Any
+	prop_value: str, comes_from: str, data_key: dict | None, default_value: Any
 ) -> str:
 	"""Get a Jinja template reference for dynamic properties."""
 	if comes_from == "blockDataScript":
@@ -769,7 +769,7 @@ def is_repeater_block(block: dict) -> bool:
 	return bool(block.get("isRepeaterBlock") and block.get("children") and block.get("dataKey"))
 
 
-def render_children(tag: bs.Tag, block: dict, data_key: Optional[dict], state: dict):
+def render_children(tag: bs.Tag, block: dict, data_key: dict | None, state: dict):
 	"""Render (non-repeater) children."""
 	for child in block.get("children", []) or []:
 		child = extend_block_with_component(child)
@@ -784,7 +784,7 @@ def render_children(tag: bs.Tag, block: dict, data_key: Optional[dict], state: d
 		append_child_with_context(tag, child_tag, child_context)
 
 
-def render_repeater_children(tag: bs.Tag, block: dict, data_key: Optional[dict], state: dict):
+def render_repeater_children(tag: bs.Tag, block: dict, data_key: dict | None, state: dict):
 	"""Render children for repeater blocks (with for loops)."""
 	loop_info = get_loop_info(block, data_key, state["standard_props_stack"])
 
@@ -809,7 +809,7 @@ def render_repeater_children(tag: bs.Tag, block: dict, data_key: Optional[dict],
 	tag.append("{% endfor %}")
 
 
-def get_loop_info(block: dict, data_key: Optional[dict], props_stack: dict) -> dict:
+def get_loop_info(block: dict, data_key: dict | None, props_stack: dict) -> dict:
 	"""
 	Get loop information (variable name, iterator, data_key).
 
@@ -870,7 +870,7 @@ def extract_loop_variables(key: str, props_stack: dict) -> list[str]:
 	return []
 
 
-def get_visibility_condition_key(block: dict, data_key: Optional[dict]) -> Optional[str]:
+def get_visibility_condition_key(block: dict, data_key: dict | None) -> str | None:
 	"""Get the Jinja key for visibility condition."""
 	visibility_condition = block.get("visibilityCondition")
 	if not visibility_condition:
@@ -966,7 +966,7 @@ def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
 	parent.append("{% endwith %}")
 
 
-def set_dynamic_content_placeholders(block: dict, data_key: Optional[dict] = None):
+def set_dynamic_content_placeholders(block: dict, data_key: dict | None = None):
 	"""Apply dynamic content placeholders to block attributes and styles."""
 	block_data_key = block.get("dataKey", {}) or {}
 	dynamic_values = [block_data_key] if block_data_key else []
@@ -1007,7 +1007,7 @@ def set_dynamic_content_placeholders(block: dict, data_key: Optional[dict] = Non
 			)
 
 
-def get_dynamic_value_key(dynamic_value_doc: dict, original_key: str, data_key: Optional[dict]) -> str:
+def get_dynamic_value_key(dynamic_value_doc: dict, original_key: str, data_key: dict | None) -> str:
 	"""Get the Jinja key for a dynamic value."""
 	comes_from = dynamic_value_doc.get("comesFrom", "dataScript")
 
