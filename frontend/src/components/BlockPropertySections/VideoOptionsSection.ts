@@ -1,6 +1,6 @@
+import AttributePropertyControl from "@/components/Controls/AttributePropertyControl.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
-import PropertyControl from "@/components/Controls/PropertyControl.vue";
 import ImageUploadInput from "@/components/ImageUploadInput.vue";
 import blockController from "@/utils/blockController";
 
@@ -19,18 +19,13 @@ const videoOptionsSectionProperties = [
 		},
 	},
 	{
-		component: PropertyControl,
+		component: AttributePropertyControl,
 		getProps: () => {
 			return {
 				component: ImageUploadInput,
-				controlType: "attribute",
 				styleProperty: "poster",
 				label: "Poster",
-				imageURL: blockController.getAttribute("poster"),
 			};
-		},
-		events: {
-			"update:imageURL": (val: string) => blockController.setAttribute("poster", val),
 		},
 		searchKeyWords: "Poster, Image, Thumbnail, Preview",
 	},

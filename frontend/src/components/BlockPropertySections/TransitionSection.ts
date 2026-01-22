@@ -1,9 +1,9 @@
+import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
-import PropertyControl from "../Controls/PropertyControl.vue";
 
 const transitionSectionProperties = [
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				label: "Speed",
@@ -39,7 +39,7 @@ const transitionSectionProperties = [
 		searchKeyWords: "Transition, Duration, Speed, Animation Time",
 	},
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				label: "Timing",
@@ -59,7 +59,7 @@ const transitionSectionProperties = [
 		condition: () => blockController.getStyle("transitionDuration"),
 	},
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				label: "Properties",

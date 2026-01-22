@@ -1,5 +1,5 @@
 <template>
-	<PropertyControl
+	<StylePropertyControl
 		:component="Autocomplete"
 		:styleProperty="property"
 		:label="label"
@@ -18,11 +18,11 @@
 				value: '100%',
 			},
 		]"
-		:unitOptions="['px', '%', 'vw', 'vh']"></PropertyControl>
+		:unitOptions="['px', '%', 'vw', 'vh']"></StylePropertyControl>
 </template>
 <script setup lang="ts">
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
-import PropertyControl from "@/components/Controls/PropertyControl.vue";
+import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 
 defineProps<{
 	property: styleProperty;

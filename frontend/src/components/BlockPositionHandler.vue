@@ -1,6 +1,6 @@
 <template>
 	<div class="flex w-full flex-col items-center gap-5">
-		<PropertyControl
+		<StylePropertyControl
 			styleProperty="position"
 			:component="OptionToggle"
 			:getModelValue="() => position"
@@ -15,7 +15,7 @@
 					value: 'fixed',
 				},
 				{ label: 'Sticky', value: 'sticky' },
-			]"></PropertyControl>
+			]"></StylePropertyControl>
 		<div class="grid-rows grid grid-cols-3 gap-4" v-if="showHandler">
 			<div class="col-span-1 col-start-2 w-16 self-center">
 				<InlineInput
@@ -69,7 +69,7 @@
 <script setup lang="ts">
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
-import PropertyControl from "@/components/Controls/PropertyControl.vue";
+import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
 import { computed, watch } from "vue";
 

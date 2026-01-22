@@ -1,5 +1,5 @@
 <template>
-	<PropertyControl
+	<StylePropertyControl
 		styleProperty="flexDirection"
 		defaultValue="row"
 		:component="OptionToggle"
@@ -8,14 +8,14 @@
 		:options="[
 			{ label: 'Horizontal', value: 'row', icon: 'arrow-right', hideLabel: true },
 			{ label: 'Vertical', value: 'column', icon: 'arrow-down', hideLabel: true },
-		]"></PropertyControl>
-	<PropertyControl
+		]"></StylePropertyControl>
+	<StylePropertyControl
 		styleProperty="alignItems"
 		label="Placement"
 		:enableStates="false"
 		v-if="blockController.isFlex()"
-		:component="PlacementControl"></PropertyControl>
-	<PropertyControl
+		:component="PlacementControl"></StylePropertyControl>
+	<StylePropertyControl
 		v-if="blockController.isFlex()"
 		styleProperty="justifyContent"
 		type="select"
@@ -25,13 +25,13 @@
 			{ label: 'Space Around', value: 'space-around' },
 			{ label: 'Space Evenly', value: 'space-evenly' },
 		]" />
-	<PropertyControl
+	<StylePropertyControl
 		v-if="blockController.isFlex()"
 		label="Gap"
 		styleProperty="gap"
 		:enableSlider="true"
 		:unitOptions="['px', 'em', 'rem']" />
-	<PropertyControl
+	<StylePropertyControl
 		styleProperty="flexWrap"
 		:component="OptionToggle"
 		label="Wrap"
@@ -40,9 +40,9 @@
 			{ label: 'No Wrap', value: 'nowrap' },
 			{ label: 'Wrap', value: 'wrap' },
 		]"
-		defaultValue="nowrap"></PropertyControl>
+		defaultValue="nowrap"></StylePropertyControl>
 	<div class="flex flex-col gap-3" v-if="blockController.getParentBlock()?.isFlex()">
-		<PropertyControl
+		<StylePropertyControl
 			label="Order"
 			styleProperty="order"
 			:enableSlider="true"
@@ -50,7 +50,7 @@
 			:max="99"
 			:step="1"
 			:defaultValue="0" />
-		<PropertyControl
+		<StylePropertyControl
 			label="Grow"
 			styleProperty="flexGrow"
 			:component="OptionToggle"
@@ -59,7 +59,7 @@
 				{ label: 'No', value: 0 },
 			]"
 			:defaultValue="0" />
-		<PropertyControl
+		<StylePropertyControl
 			label="Shrink"
 			styleProperty="flexShrink"
 			:component="OptionToggle"
@@ -72,7 +72,7 @@
 </template>
 <script lang="ts" setup>
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
-import PropertyControl from "@/components/Controls/PropertyControl.vue";
+import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
 import PlacementControl from "./PlacementControl.vue";
 </script>

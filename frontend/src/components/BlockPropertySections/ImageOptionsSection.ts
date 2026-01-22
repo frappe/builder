@@ -1,4 +1,4 @@
-import PropertyControl from "@/components/Controls/PropertyControl.vue";
+import AttributePropertyControl from "@/components/Controls/AttributePropertyControl.vue";
 import ImageUploadInput from "@/components/ImageUploadInput.vue";
 import blockController from "@/utils/blockController";
 import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
@@ -7,45 +7,24 @@ import { computed } from "vue";
 
 const imageOptionsSectionProperties = [
 	{
-		component: PropertyControl,
+		component: AttributePropertyControl,
 		getProps: () => {
 			return {
 				component: ImageUploadInput,
-				controlType: "attribute",
 				styleProperty: "src",
 				label: "Image URL",
 				allowDynamicValue: true,
 				popoverOffset: 120,
-				imageURL: blockController.getAttribute("src"),
 				imageFit: blockController.getStyle("objectFit"),
+				variants: [{ name: "dark", property: "darkSrc", label: "Dark Mode" }],
 			};
 		},
 		events: {
 			"update:imageURL": (val: string) => blockController.setAttribute("src", val),
 			"update:imageFit": (val: StyleValue) => blockController.setStyle("objectFit", val),
 		},
-		searchKeyWords: "Image, URL, Src, Fit, ObjectFit, Object Fit, Fill, Contain, Cover",
-	},
-	{
-		component: PropertyControl,
-		getProps: () => {
-			return {
-				component: ImageUploadInput,
-				controlType: "attribute",
-				styleProperty: "darkSrc",
-				label: "Dark Image",
-				allowDynamicValue: true,
-				popoverOffset: 120,
-				imageURL: blockController.getAttribute("darkSrc"),
-				imageFit: blockController.getStyle("objectFit"),
-			};
-		},
-		events: {
-			"update:imageURL": (val: string) => blockController.setAttribute("darkSrc", val),
-			"update:imageFit": (val: StyleValue) => blockController.setStyle("objectFit", val),
-		},
-		searchKeyWords: "Dark, Mode, Image, URL, Src, Dark Mode, Theme",
-		condition: () => blockController.isImage(),
+		searchKeyWords:
+			"Image, URL, Src, Fit, ObjectFit, Object Fit, Fill, Contain, Cover, Dark, Mode, Dark Mode, Theme",
 	},
 	{
 		component: Button,
@@ -83,45 +62,9 @@ const imageOptionsSectionProperties = [
 		},
 	},
 	{
-		component: Button,
+		component: AttributePropertyControl,
 		getProps: () => {
 			return {
-				class: "text-base self-end",
-			};
-		},
-		innerText: computed(() => {
-			const block = blockController.getSelectedBlocks()[0];
-			const imageUrl = (block?.getAttribute("darkSrc") as string) || "";
-			return getOptimizeButtonText(imageUrl);
-		}),
-		searchKeyWords:
-			"Dark, Mode, Image, Local, Copy, Server, Download, Host, Store, Convert, webp, Convert to webp, image, darkSrc, url",
-		events: {
-			click: () => {
-				const block = blockController.getSelectedBlocks()[0];
-				const imageUrl = block.getAttribute("darkSrc") as string;
-
-				return optimizeImage({
-					imageUrl,
-					onSuccess: (newUrl: string) => {
-						block.setAttribute("darkSrc", newUrl);
-					},
-				});
-			},
-		},
-		condition: () => {
-			if (!blockController.isImage()) {
-				return false;
-			}
-			const imageUrl = blockController.getAttribute("darkSrc") as string;
-			return shouldShowOptimizeButton(imageUrl);
-		},
-	},
-	{
-		component: PropertyControl,
-		getProps: () => {
-			return {
-				controlType: "attribute",
 				styleProperty: "alt",
 				label: "Alt Text",
 				allowDynamicValue: true,

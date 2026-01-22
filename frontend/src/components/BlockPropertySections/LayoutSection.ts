@@ -2,18 +2,17 @@ import BlockFlexLayoutHandler from "@/components/BlockFlexLayoutHandler.vue";
 import BlockGridLayoutHandler from "@/components/BlockGridLayoutHandler.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import blockController from "@/utils/blockController";
-import PropertyControl from "../Controls/PropertyControl.vue";
+import StylePropertyControl from "../Controls/StylePropertyControl.vue";
 
 const layoutSectionProperties = [
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		condition: () => !blockController.isText(),
 		getProps: () => {
 			return {
 				styleProperty: "display",
 				component: OptionToggle,
 				label: "Type",
-				enableStates: false,
 				options: [
 					{
 						label: "Stack",

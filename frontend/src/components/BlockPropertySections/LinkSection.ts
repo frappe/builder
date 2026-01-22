@@ -1,17 +1,15 @@
+import AttributePropertyControl from "@/components/Controls/AttributePropertyControl.vue";
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
-import PropertyControl from "../Controls/PropertyControl.vue";
 
 const linkSectionProperties = [
 	{
-		component: PropertyControl,
+		component: AttributePropertyControl,
 		getProps: () => {
 			return {
 				label: "Link To",
 				styleProperty: "href",
-				enableStates: false,
 				allowDynamicValue: true,
-				controlType: "attribute",
 				getModelValue: () => blockController.getAttribute("href"),
 				setModelValue: async (val: string) => {
 					if (val && !blockController.isLink()) {
@@ -40,11 +38,10 @@ const linkSectionProperties = [
 		},
 	},
 	{
-		component: PropertyControl,
+		component: AttributePropertyControl,
 		getProps: () => {
 			return {
 				label: "Opens in",
-				controlType: "attribute",
 				type: "select",
 				styleProperty: "target",
 				allowDynamicValue: false,

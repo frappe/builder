@@ -1,8 +1,7 @@
 import BackgroundHandler from "@/components/BackgroundHandler.vue";
 import ColorInput from "@/components/Controls/ColorInput.vue";
+import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
-import { computed } from "vue";
-import PropertyControl from "../Controls/PropertyControl.vue";
 import RangeInput from "../Controls/RangeInput.vue";
 
 const overflowOptions = [
@@ -30,7 +29,7 @@ const overflowOptions = [
 
 const styleSectionProperties = [
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				label: "Opacity",
@@ -55,22 +54,19 @@ const styleSectionProperties = [
 			"Background, BackgroundImage, Background Image, Background Position, Background Repeat, Background Size, BG, BGImage, BG Image, BGPosition, BG Position, BGRepeat, BG Repeat, BGSize, BG Size",
 	},
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				styleProperty: "color",
 				component: ColorInput,
 				label: "Text Color",
 				popoverOffset: 120,
-				enableState: computed(() => {
-					return !blockController.getFirstSelectedBlock()?.getEditor();
-				}),
 			};
 		},
 		searchKeyWords: "Text, Color, TextColor, Text Color",
 	},
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				component: ColorInput,
@@ -95,7 +91,7 @@ const styleSectionProperties = [
 		},
 	},
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				label: "Border Width",
@@ -109,7 +105,7 @@ const styleSectionProperties = [
 		condition: () => blockController.getStyle("borderColor") || blockController.getStyle("borderWidth"),
 	},
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				label: "Border Style",
@@ -126,7 +122,7 @@ const styleSectionProperties = [
 		condition: () => blockController.getStyle("borderColor"),
 	},
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				label: "Shadow",
@@ -152,7 +148,7 @@ const styleSectionProperties = [
 		searchKeyWords: "Shadow, BoxShadow, Box Shadow",
 	},
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				label: "Radius",
@@ -178,7 +174,7 @@ const styleSectionProperties = [
 		},
 	},
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				label: "Z-Index",
@@ -192,7 +188,7 @@ const styleSectionProperties = [
 			blockController.getStyle("position") !== "static",
 	},
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				label: "Overflow X",
@@ -211,7 +207,7 @@ const styleSectionProperties = [
 			"Overflow, X, OverflowX, Overflow X, Auto, Visible, Hide, Scroll, horizontal scroll, horizontalScroll",
 	},
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				label: "Overflow Y",
@@ -231,7 +227,7 @@ const styleSectionProperties = [
 			"Overflow, Y, OverflowY, Overflow Y, Auto, Visible, Hide, Scroll, vertical scroll, verticalScroll",
 	},
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				label: "Cursor",
