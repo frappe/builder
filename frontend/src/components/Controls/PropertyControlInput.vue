@@ -44,7 +44,7 @@ defineProps<{
 	component: Component;
 	controlAttrs?: Record<string, unknown>;
 	events?: Record<string, unknown>;
-	modelValue: string;
+	modelValue: string | number;
 	defaultValue?: string | number;
 	placeholder?: string;
 	dynamicValue?: string;

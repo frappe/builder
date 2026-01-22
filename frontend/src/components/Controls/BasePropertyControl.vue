@@ -109,7 +109,6 @@ const props = withDefaults(
 		changeFactor?: number;
 		minValue?: number;
 		maxValue?: number | null;
-		hideClearButton?: boolean;
 		component?: Component;
 		events?: Record<string, unknown>;
 		defaultValue?: string | number;
@@ -121,14 +120,12 @@ const props = withDefaults(
 	}>(),
 	{
 		placeholder: "unset",
-		type: "text",
 		controlType: "style",
 		enableSlider: false,
 		unitOptions: () => [],
 		changeFactor: 1,
 		minValue: 0,
 		maxValue: null,
-		hideClearButton: false,
 		component: Input,
 		allowDynamicValue: false,
 		labelPlacement: "left",
