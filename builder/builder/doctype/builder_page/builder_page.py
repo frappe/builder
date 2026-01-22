@@ -543,6 +543,7 @@ def get_block_html(blocks):
 					dark_source["srcset"] = dark_src
 					dark_source["media"] = "(prefers-color-scheme: dark)"
 					picture_tag.append(dark_source)
+					picture_tag.attrs["style"] = "display: contents;"
 
 					tag = soup.new_tag("img")
 					tag.attrs = {k: v for k, v in attributes.items() if k != "darkSrc"}
