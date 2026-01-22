@@ -1162,6 +1162,8 @@ const getDefaultPropsList = (block: Block, blockController: any): BlockProps => 
 	return {};
 };
 
+const PARSEABLE_STANDARD_TYPES = ["number", "boolean", "object", "array"];
+
 const getPropValue = (
 	propName: string,
 	block: Block,
@@ -1205,7 +1207,7 @@ const getPropValue = (
 		const { type, options } = matchingProp.standardOptions;
 		const defaultValue = options?.defaultValue ?? null;
 
-		if (type !== "string" && type !== "select") {
+		if (PARSEABLE_STANDARD_TYPES.includes(type)) {
 			return matchingProp.value ? JSON.parse(matchingProp.value) : defaultValue;
 		}
 
@@ -1223,7 +1225,7 @@ const getStandardPropValue = (
 	if (propsOfComponentRoot) {
 		for (const [name, value] of Object.entries(propsOfComponentRoot)) {
 			if (propName === name && value.isStandard) {
-				if (value.standardOptions?.type !== "string" && value.standardOptions?.type !== "select") {
+				if (PARSEABLE_STANDARD_TYPES.includes(value.standardOptions?.type || 'string')) {
 					const parsedValue = value.value
 						? JSON.parse(value.value)
 						: value.standardOptions?.options?.defaultValue || null;

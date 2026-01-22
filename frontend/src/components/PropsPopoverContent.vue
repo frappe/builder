@@ -117,6 +117,8 @@ import SelectOptions from "@/components/PropsOptions/SelectOptions.vue";
 
 import { getDataArray, toKebabCase } from "@/utils/helpers";
 import useBlockDataStore from "@/stores/blockDataStore";
+import ColorOptions from "./PropsOptions/ColorOptions.vue";
+import ImageOptions from "./PropsOptions/ImageOptions.vue";
 
 const props = withDefaults(
 	defineProps<{
@@ -133,7 +135,16 @@ const props = withDefaults(
 const canvasStore = useCanvasStore();
 const blockDataStore = useBlockDataStore();
 
-const STANDARD_PROP_TYPES = ["string", "number", "boolean", "select", "array", "object"] as const;
+const STANDARD_PROP_TYPES = [
+	"string",
+	"number",
+	"boolean",
+	"select",
+	"array",
+	"object",
+	"image",
+	"color",
+] as const;
 const COMPONENT_MAPPING = {
 	string: StringOptions,
 	number: NumberOptions,
@@ -141,6 +152,8 @@ const COMPONENT_MAPPING = {
 	select: SelectOptions,
 	array: ArrayOptions,
 	object: ObjectOptions,
+	image: ImageOptions,
+	color: ColorOptions,
 } as const;
 
 const TOGGLE_OPTIONS: { label: string; value: string }[] = [
@@ -256,6 +269,8 @@ function getStandardPropTypes() {
 		{ label: "Select", value: "select" },
 		{ label: "Array", value: "array" },
 		{ label: "Object", value: "object" },
+		{ label: "Image", value: "image" },
+		{ label: "Color", value: "color" },
 	];
 }
 

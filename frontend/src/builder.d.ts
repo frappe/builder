@@ -7,7 +7,7 @@ declare interface BlockStyleMap {
 }
 
 type BlockPropsStandardOptions = {
-	type: "number" | "string" | "boolean" | "select" | "array" | "object";
+	type: "number" | "string" | "boolean" | "select" | "array" | "object" | "image" | "color";
 	isRequired?: boolean;
 	// defaultValue?: any;
 	options?: Record<string, any>;
@@ -17,7 +17,7 @@ type BlockPropsStandardOptions = {
 declare type BlockProps = Record<
 	string,
 	{
-		label: string;
+		label?: string;
 		isDynamic: boolean;
 		isPassedDown: boolean;
 		comesFrom: "props" | "dataScript" | "blockDataScript" | null;

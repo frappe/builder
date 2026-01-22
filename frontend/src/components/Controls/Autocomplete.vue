@@ -17,7 +17,6 @@
 					autocomplete="off"
 					@focus="
 						() => {
-							fixedStyles = getFixedStyles();
 							emit('focus');
 							return false;
 						}
@@ -37,8 +36,14 @@
 			</div>
 
 			<ComboboxContent
+				@after-enter="
+					() => {
+						fixedStyles = getFixedStyles();
+					}
+				"
 				:class="makeFixed ? 'fixed' : 'absolute'"
 				:style="fixedStyles"
+				ref="contentRef"
 				class="z-50 mt-1 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-white shadow-xl">
 				<div class="overflow-y-auto p-1">
 					<template v-for="(option, index) in displayOptions" :key="`${option.value}-${index}`">
@@ -93,7 +98,7 @@ import {
 	ComboboxRoot,
 	ComboboxSeparator,
 } from "reka-ui";
-import type { Component } from "vue";
+import type { Component, ComponentPublicInstance } from "vue";
 import { computed, onMounted, ref, watch } from "vue";
 
 interface Option {
@@ -142,7 +147,8 @@ const isOpen = ref(false);
 const searchQuery = ref("");
 const asyncOptions = ref<Option[]>([]);
 const hasValue = computed(() => props.modelValue != null && props.modelValue !== "");
-const comboboxInput = ref<HTMLElement | null>(null);
+const comboboxInput = ref<ComponentPublicInstance | null>(null);
+const contentRef = ref<ComponentPublicInstance | null>(null);
 const fixedStyles = ref({});
 const allOptions = computed(() => (props.getOptions ? asyncOptions.value : props.options));
 
@@ -217,6 +223,7 @@ const handleBlur = (event: FocusEvent) => {
 		return;
 	}
 	if (props.allowArbitraryValue) submitArbitraryValue(getInputValue(event));
+	fixedStyles.value = {};
 	emit("blur");
 };
 
@@ -236,11 +243,19 @@ const getFixedStyles = () => {
 			comboboxInput.value?.$el.closest(props.fixTo) as HTMLElement
 		)?.getBoundingClientRect();
 		const comboboxInputRect = comboboxInput.value?.$el.getBoundingClientRect();
+		const contentRect = contentRef.value?.$el?.getBoundingClientRect
+			? contentRef.value.$el.getBoundingClientRect()
+			: null;
 		if (!fixedToElRect || !comboboxInputRect) {
 			return {};
 		}
+		// Calculate top position based on available space: if there's not enough space below, position it above
+		const top =
+			contentRect && contentRect.top + contentRect?.height > window.innerHeight
+				? (fixedToElRect.bottom - comboboxInputRect.top + comboboxInputRect.height + 12) * -1
+				: comboboxInputRect.top - fixedToElRect.top + comboboxInputRect.height;
 		return {
-			top: comboboxInputRect.top - fixedToElRect.top + comboboxInputRect.height + "px",
+			top: top + "px",
 			left: comboboxInputRect.left - fixedToElRect.left + "px",
 			width: comboboxInputRect.width + "px",
 			minWidth: "fit-content",
@@ -249,12 +264,6 @@ const getFixedStyles = () => {
 	}
 	return {};
 };
-
-onMounted(() => {
-	if (props.makeFixed) {
-		fixedStyles.value = getFixedStyles();
-	}
-});
 
 defineExpose({
 	refreshOptions,

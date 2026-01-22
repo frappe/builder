@@ -6,7 +6,7 @@
 					:key="index"
 					class="prop-list-item relative flex w-full flex-col rounded bg-surface-gray-1 p-2 text-ink-gray-6"
 					v-if="value.isStandard !== true || shouldDisplayStandardProps">
-					<Popover popoverClass="!ml-[30px] !min-w-fit" placement="right-start">
+					<Popover popoverClass="!ml-[34px] !min-w-fit" placement="right">
 						<template #target="{ open }">
 							<div
 								class="flex w-full cursor-pointer items-center justify-between"
@@ -44,6 +44,8 @@
 													select: LucideSelect,
 													object: LucideObject,
 													array: LucideArray,
+													color: LucideColor,
+													image: LucideImage,
 												}[value.standardOptions?.type] || LucideZap
 											"
 											class="h-4 w-4 text-ink-gray-4" />
@@ -94,7 +96,7 @@
 				</div>
 			</template>
 		</div>
-		<Popover ref="popOverRef" popoverClass="!ml-[22px] !min-w-fit" placement="right-start">
+		<Popover ref="popOverRef" popoverClass="!ml-[24px] !min-w-fit" placement="right-start">
 			<template #target="{ open }">
 				<BuilderButton
 					class="w-full"
@@ -158,6 +160,10 @@ import LucideSelect from "~icons/lucide/chevrons-up-down";
 import LucideArray from "~icons/lucide/brackets";
 // @ts-ignore
 import LucideObject from "~icons/lucide/braces";
+// @ts-ignore
+import LucideColor from "~icons/lucide/palette";
+// @ts-ignore
+import LucideImage from "~icons/lucide/image";
 
 import { Popover } from "frappe-ui";
 import PropsPopoverContent from "./PropsPopoverContent.vue";

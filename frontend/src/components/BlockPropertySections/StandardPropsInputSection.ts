@@ -3,12 +3,10 @@ import OptionToggle from "../Controls/OptionToggle.vue";
 import GenericControl from "../Controls/GenericControl.vue";
 import ArrayInput from "../ArrayInput.vue";
 import ObjectInput from "../ObjectInput.vue";
+import ImageUploadInput from "../ImageUploadInput.vue";
+import ColorInput from "../Controls/ColorInput.vue";
 
 const componentMap = {
-	string: GenericControl,
-	number: GenericControl,
-	boolean: GenericControl,
-	select: GenericControl,
 	array: ArrayInput,
 	object: ObjectInput,
 };
@@ -44,6 +42,22 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 						label: item,
 						value: item,
 					})) || [],
+			};
+			break;
+		case "image":
+			map = {
+				component: ImageUploadInput,
+				enableStates: false,
+				allowDynamicValue: true,
+				imageURL: blockController.getBlockProps()[propName].value as string,
+				imageFit:
+					propDetails.standardOptions?.options?.imageFit ||
+					(propDetails.standardOptions?.options?.defaultImageFit as StyleValue),
+			};
+			break;
+		case "color":
+			map = {
+				component: ColorInput,
 			};
 			break;
 	}
@@ -83,6 +97,23 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 	return map;
 };
 
+const getEventsMap = (propName: string, propDetails: BlockProps[string]) => {
+	let events: Record<string, Function> = {};
+	const type = propDetails.standardOptions?.type || "string";
+	switch (type) {
+		case "image":
+			events = {
+				"update:imageURL": (val: string) => blockController.setBlockProp(propName, { value: val }),
+				"update:imageFit": (val: StyleValue) =>
+					blockController.setBlockProp(propName, {
+						standardOptions: { options: { ...propDetails.standardOptions?.options, imageFit: val } },
+					}),
+			};
+			break;
+	}
+	return events;
+};
+
 const getStandardProps = (allProps: BlockProps) => {
 	const standardProps: BlockProps = {};
 	for (const [propKey, propDetails] of Object.entries(allProps || {})) {
@@ -97,15 +128,19 @@ const getStandardPropsInputSection = () => {
 	const standardProps = getStandardProps(blockController.getBlockProps());
 	const sections = [];
 	for (const [propKey, propDetails] of Object.entries(standardProps)) {
-		const component = componentMap[propDetails.standardOptions?.type || "string"] || GenericControl;
+		const propType = propDetails.standardOptions?.type;
+		const component =
+			(propType === "array" || propType === "object" ? componentMap[propType] : undefined) || GenericControl;
 		const getProps = () => {
 			const props = getPropsMap(propKey, propDetails);
 			return props;
 		};
+		const events = getEventsMap(propKey, propDetails);
 		sections.push({
 			component,
 			getProps,
-			searchKeyWords: propKey,
+			events,
+			searchKeyWords: [propKey, propDetails.label].join(", "),
 		});
 	}
 	return sections;

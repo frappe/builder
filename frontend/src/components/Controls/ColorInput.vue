@@ -25,6 +25,8 @@
 								}"
 								v-bind="events"
 								ref="colorInput"
+								:makeFixed
+								:fixTo
 								@keydown.enter="handleEnter"
 								@focus="togglePopover"
 								:placeholder="placeholder"
@@ -167,6 +169,8 @@ const props = withDefaults(
 		showColorVariableOptions?: boolean;
 		showPickerOnMount?: boolean;
 		popoverOffset?: number;
+		makeFixed?: boolean;
+		fixTo?: string;
 	}>(),
 	{
 		modelValue: null,
@@ -174,6 +178,7 @@ const props = withDefaults(
 		placement: "left",
 		showColorVariableOptions: true,
 		showPickerOnMount: false,
+		makeFixed: false,
 	},
 );
 const lastValidValue = ref<string | null>(props.modelValue ?? null);
