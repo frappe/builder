@@ -264,6 +264,64 @@ class TestBuilderPage(FrappeTestCase):
 			page_with_component_having_bad_overrides.delete()
 			component.delete()
 
+	def test_visibility_key_page_data(self):
+		body = Block(element="body")
+		header = Block(element="h1", innerHTML="Visible Header")
+		hidden_header = Block(element="h2", innerHTML="Hidden Header")
+
+		header.attach_visibility_condition({"key": "is_header_visible", "comesFrom": "dataScript"})
+		hidden_header.attach_visibility_condition("is_hidden_header_visible")
+
+		body.attach_children(header, hidden_header)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Visibility Key Test",
+				"published": 1,
+				"route": "/visibility-key-test",
+				"page_data_script": 'data.update({"is_header_visible": True,"is_hidden_header_visible": False})',
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+		try:
+			content = get_response_content("/visibility-key-test")
+			self.assertTrue("Visible Header" in get_html_for(content, "tag", "h1"))
+			self.assertFalse("Hidden Header" in get_html_for(content, "tag", "h2"))
+		finally:
+			page.delete()
+
+	def test_visibility_key_block_data(self):
+		body = Block(
+			element="body",
+			blockDataScript='block.update({"is_header_visible": True,"is_hidden_header_visible": False})',
+		)
+		header = Block(element="h1", innerHTML="Visible Header")
+		hidden_header = Block(element="h2", innerHTML="Hidden Header")
+
+		header.attach_visibility_condition({"key": "is_header_visible", "comesFrom": "blockDataScript"})
+		hidden_header.attach_visibility_condition(
+			{"key": "is_hidden_header_visible", "comesFrom": "blockDataScript"}
+		)
+
+		body.attach_children(header, hidden_header)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Visibility Key Test",
+				"published": 1,
+				"route": "/visibility-key-test-block-data",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+		try:
+			content = get_response_content("/visibility-key-test-block-data")
+			self.assertTrue("Visible Header" in get_html_for(content, "tag", "h1"))
+			self.assertFalse("Hidden Header" in get_html_for(content, "tag", "h2"))
+		finally:
+			page.delete()
+
 	def test_block_data(self):
 		body = Block(element="body")
 		wrapper = Block(element="div", blockDataScript=block_data_script)
@@ -294,6 +352,74 @@ class TestBuilderPage(FrappeTestCase):
 			content = get_response_content("/block-data-test")
 			self.assertEqual("Custom Block Data", get_html_for(content, "tag", "h4", only_content=True))
 			self.assertEqual("Block Content", get_html_for(content, "tag", "h4", index=1, only_content=True))
+		finally:
+			page.delete()
+
+	def test_block_data_repeater(self):
+		body = Block(element="body")
+		repeater_block = Block(element="div", isRepeaterBlock=True, blockDataScript=block_data_script)
+		wrapper_div = Block(element="div")
+		item_name = Block(element="h2")
+		item_price = Block(element="span")
+
+		repeater_block.attach_data_key("items", "dataKey", comesFrom="blockDataScript")
+		item_name.attach_dynamic_values(
+			{"key": "name", "type": "key", "property": "innerHTML", "comesFrom": "blockDataScript"}
+		)
+		item_price.attach_dynamic_values(
+			{"key": "price", "type": "key", "property": "innerHTML", "comesFrom": "blockDataScript"}
+		)
+
+		wrapper_div.attach_children(item_name, item_price)
+		repeater_block.attach_children(wrapper_div)
+		body.attach_children(repeater_block)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Block Data Repeater Test",
+				"published": 1,
+				"route": "/block-data-repeater-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/block-data-repeater-test")
+			self.assertTrue("Item 1" in get_html_for(content, "tag", "h2"))
+			self.assertTrue("$10" in get_html_for(content, "tag", "span"))
+			self.assertTrue("Item 2" in get_html_for(content, "tag", "h2", index=1))
+			self.assertTrue("$20" in get_html_for(content, "tag", "span", index=1))
+
+		finally:
+			page.delete()
+
+	def test_block_client_script(self):
+		body = Block(element="body")
+		div_wrapper = Block(
+			element="div",
+			blockClientScript='console.log("Block Client Script Executed");\n',
+		)
+		content = Block(element="h4", innerHTML="Block Content")
+
+		div_wrapper.attach_children(content)
+		body.attach_children(div_wrapper)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Block Client Script Test",
+				"published": 1,
+				"route": "/block-client-script-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/block-client-script-test")
+			self.assertTrue(
+				'console.log("Block Client Script Executed");' in get_html_for(content, "tag", "script")
+			)
 		finally:
 			page.delete()
 
@@ -367,6 +493,93 @@ class TestBuilderPage(FrappeTestCase):
 			)
 		finally:
 			page.delete()
+
+	def test_std_props_repeater(self):
+		comp_root = Block(
+			blockId="navbar-wrapper-block",
+			element="header",
+			blockName="navbar",
+			props={
+				"links": {
+					"label": "Links",
+					"isStandard": True,
+					"isDynamic": False,
+					"isPassedDown": True,
+					"comesFrom": None,
+					"value": None,
+					"standardOptions": {
+						"isRequired": False,
+						"type": "object",
+						"options": {
+							"minItems": None,
+							"maxItems": None,
+							"defaultValue": {
+								"1. Home": "/",
+								"2. Products": "/products",
+								"3. About Us": "/about",
+							},
+						},
+					},
+				}
+			},
+		)
+		comp_repeater_block = Block(
+			blockId="repeater-block",
+			element="nav",
+			blockName="nav",
+			isRepeaterBlock=True,
+		)
+		comp_repeater_block.attach_data_key("links", "innerHTML", type="key", comesFrom="props")
+		comp_link_block = Block(
+			blockId="link-block", element="a", innerHTML="Home", attributes={"href": "/home"}
+		)
+		comp_link_block.attach_dynamic_values(
+			{"property": "innerHTML", "type": "key", "key": "key", "comesFrom": "props"},
+			{"property": "href", "type": "attribute", "key": "value", "comesFrom": "props"},
+		)
+
+		comp_repeater_block.attach_children(comp_link_block)
+		comp_root.attach_children(comp_repeater_block)
+
+		component = frappe.get_doc(
+			{
+				"doctype": "Builder Component",
+				"block": comp_root.as_json(),
+			}
+		).insert()
+
+		body = Block(element="body")
+		comp_root_copy = Block(extendedFromComponent=component.name)
+		comp_repeater_block_copy = Block(
+			isChildOfComponent=component.name, referenceBlockId="repeater-block", isReapeaterBlock=True
+		)
+		comp_link_block_copy = Block(isChildOfComponent=component.name, referenceBlockId="link-block")
+		comp_repeater_block_copy.attach_children(comp_link_block_copy)
+		comp_root_copy.attach_children(comp_repeater_block_copy)
+		body.attach_children(comp_root_copy)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Std Props Repeater Test",
+				"published": 1,
+				"route": "/block-std-props-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+		try:
+			content = get_response_content("/block-std-props-test")
+			self.assertEqual("1. Home", get_html_for(content, "tag", "a", only_content=True))
+			self.assertTrue('href="/"' in get_html_for(content, "tag", "a", only_content=False))
+			self.assertEqual("2. Products", get_html_for(content, "tag", "a", index=1, only_content=True))
+			self.assertTrue(
+				'href="/products"' in get_html_for(content, "tag", "a", index=1, only_content=False)
+			)
+			self.assertEqual("3. About Us", get_html_for(content, "tag", "a", index=2, only_content=True))
+			self.assertTrue('href="/about"' in get_html_for(content, "tag", "a", index=2, only_content=False))
+		finally:
+			page.delete()
+			component.delete()
 
 	@classmethod
 	def tearDownClass(cls):

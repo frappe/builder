@@ -29,7 +29,11 @@ class BlockDataKey:
 	key: str
 	property: str
 	type: str
+	comesFrom: str
 
+class VisibilityCondition:
+	key: str
+	comesFrom: str
 
 class Block:
 	blockId: str = ""
@@ -53,7 +57,7 @@ class Block:
 	isChildOfComponent: str | None = None
 	referenceBlockId: str | None = None
 	isRepeaterBlock: bool = False
-	visibilityCondition: str | None = None
+	visibilityCondition: str | VisibilityCondition | None = None
 	elementBeforeConversion: str | None = None
 	customAttributes: ClassVar[dict] = {}
 	dynamicValues: ClassVar[list[BlockDataKey]] = []
@@ -83,8 +87,8 @@ class Block:
 	def clear_dynamic_values(self):
 		self.dynamicValues = []
 
-	def attach_data_key(self, key: str, property: str, type: str = "key"):
-		self.dataKey = {"key": key, "property": property, "type": type}
+	def attach_data_key(self, key: str, property: str, type: str = "key", comesFrom: str = "dataScript"):
+		self.dataKey = {"key": key, "property": property, "type": type, "comesFrom": comesFrom}
 
 	def clear_data_key(self):
 		self.dataKey = None
@@ -93,6 +97,9 @@ class Block:
 		if not self.children:
 			self.children = []
 		self.children.extend(children)
+
+	def attach_visibility_condition(self, condition: VisibilityCondition | str):
+		self.visibilityCondition = condition
 
 	def as_dict(self):
 		return {
