@@ -4,7 +4,9 @@ import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderVariable } from "@/types/Builder/BuilderVariable";
 
+import builderVariables from "@/data/builderVariable";
 import {
 	copyToClipboard,
 	detachBlockFromComponent,
@@ -27,8 +29,6 @@ type BuilderPageSettings = Pick<
 	| "page_name"
 	| "route"
 	| "dynamic_route"
-	| "is_template"
-	| "template_name"
 	| "page_data_script"
 	| "head_html"
 	| "body_html"
@@ -47,6 +47,7 @@ type BuilderPageSettings = Pick<
 interface BuilderClipboardData {
 	blocks: (Block | BlockOptions)[];
 	components: BuilderComponent[];
+	variables?: BuilderVariable[];
 	sourceURL?: string;
 	pageDoc?: BuilderPageSettings;
 	pageScripts?: BuilderClientScript[];
@@ -72,6 +73,7 @@ export function copyBuilderBlocks(
 	) as Block[];
 
 	const componentDocuments: BuilderComponent[] = [];
+	const variableNames = new Set<string>();
 	const blocksToCopy = blocks.map((block) => {
 		// Collect all used components
 		const components = block.getUsedComponentNames();
@@ -80,6 +82,11 @@ export function copyBuilderBlocks(
 			if (component) {
 				componentDocuments.push(component);
 			}
+		}
+
+		const variables = block.getUsedVariableNames();
+		for (const variableName of variables) {
+			variableNames.add(variableName);
 		}
 
 		// Handle component children and create copy
@@ -93,9 +100,21 @@ export function copyBuilderBlocks(
 		return blockCopy;
 	});
 
+	const variableDocuments: BuilderVariable[] = [];
+	for (const variableName of variableNames) {
+		const variable = builderVariables.data?.find(
+			(v: BuilderVariable) =>
+				v.variable_name?.replace(/[\s_]/g, "-").toLowerCase() === variableName.toLowerCase(),
+		);
+		if (variable) {
+			variableDocuments.push(variable);
+		}
+	}
+
 	const dataToCopy: BuilderClipboardData = {
 		blocks: blocksToCopy,
 		components: componentDocuments,
+		variables: variableDocuments,
 		sourceURL: currentSiteURL,
 	};
 
@@ -138,14 +157,17 @@ export async function pasteBuilderBlocks(e: ClipboardEvent, currentSiteURL: stri
 	if (clipboardData.pageDoc) {
 		await handlePagePaste(clipboardData, crossSitePaste, currentSiteURL);
 	} else {
-		if (clipboardData.components.length) {
+		if (clipboardData.components.length || clipboardData.variables?.length) {
 			toast.loading("Pasting...", {
 				id: "paste-blocks",
 			});
 			await handleComponents(clipboardData, crossSitePaste);
+			if (clipboardData.variables?.length) {
+				await handleVariables(clipboardData, crossSitePaste);
+			}
 		}
 		await insertBlocks(clipboardData.blocks);
-		clipboardData.components.length &&
+		(clipboardData.components.length || clipboardData.variables?.length) &&
 			toast.success("Done", {
 				id: "paste-blocks",
 			});
@@ -204,6 +226,36 @@ async function handlePagePaste(
 		],
 		size: "md",
 	});
+}
+
+async function handleVariables(clipboardData: BuilderClipboardData, crossSitePaste: boolean) {
+	for (const variable of clipboardData.variables || []) {
+		if (crossSitePaste) {
+			const originalName = variable.name;
+			const newName = generateHash(originalName, clipboardData.sourceURL || "");
+			variable.name = newName;
+			try {
+				await builderVariables.insert.submit(variable);
+			} catch (error: any) {
+				if (error?.response?.status === 409) {
+					await builderVariables.setValue.submit(variable);
+				}
+			}
+		} else {
+			const existingVariable = builderVariables.data?.find(
+				(v: BuilderVariable) => v.variable_name === variable.variable_name,
+			);
+			if (!existingVariable) {
+				try {
+					await builderVariables.insert.submit(variable);
+				} catch (error: any) {
+					if (error?.response?.status !== 409) {
+						console.error("Error inserting variable:", error);
+					}
+				}
+			}
+		}
+	}
 }
 
 async function handleComponents(clipboardData: BuilderClipboardData, crossSitePaste: boolean) {
