@@ -105,9 +105,6 @@ class Block:
 			self.children = []
 		self.children.extend(children)
 
-	def attach_visibility_condition(self, condition: VisibilityCondition | str):
-		self.visibilityCondition = condition
-
 	def as_dict(self):
 		return {
 			"blockId": self.blockId,
