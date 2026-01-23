@@ -36,21 +36,18 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
+import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { setFont } from "@/utils/fontManager";
 import { getDataForKey } from "@/utils/helpers";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
-import { useDark } from "@vueuse/core";
 import { computed, inject, nextTick, onMounted, reactive, ref, useAttrs, watch, watchEffect } from "vue";
 import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
 import DataLoaderBlock from "./DataLoaderBlock.vue";
 import TextBlock from "./TextBlock.vue";
 
-const isDark = useDark({
-	attribute: "data-theme",
-});
-
+const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
 const attrs = useAttrs();
@@ -114,7 +111,7 @@ const attributes = computed(() => {
 	const attribs = { ...props.block.getAttributes(), ...attrs } as { [key: string]: any };
 
 	if (props.block.isImage() && !props.preview) {
-		if (isDark.value && attribs.darkSrc) {
+		if (builderStore.isDark && attribs.darkSrc) {
 			attribs.src = attribs.darkSrc;
 		}
 		delete attribs.darkSrc;
