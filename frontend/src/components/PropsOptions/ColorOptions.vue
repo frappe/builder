@@ -1,11 +1,10 @@
 <template>
 	<div class="flex items-center justify-between">
-		<InputLabel>Default Value</InputLabel>
 		<ColorInput
 			class="w-full"
-			fix-to=".props-popover-content"
+			label="Default Value"
+			anchorSelector=".props-popover-content"
 			placement="right"
-			:make-fixed="true"
 			:model-value="options.defaultValue"
 			@update:model-value="handleDefaultValueChange"
 			placeholder="Select default color"></ColorInput>
@@ -13,7 +12,6 @@
 </template>
 
 <script setup lang="ts">
-import InputLabel from "@/components/Controls/InputLabel.vue";
 import { ref } from "vue";
 import ColorInput from "../Controls/ColorInput.vue";
 

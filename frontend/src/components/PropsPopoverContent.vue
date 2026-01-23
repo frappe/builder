@@ -45,8 +45,7 @@
 				@input="(val) => (value = val)"></Input>
 			<Autocomplete
 				v-else
-				:make-fixed="true"
-				fix-to=".props-popover-content"
+				anchorSelector=".props-popover-content"
 				class="w-full [&>.form-input]:border-none [&>.form-input]:hover:border-none"
 				ref="autoCompleteRef"
 				placeholder="Choose prop value"

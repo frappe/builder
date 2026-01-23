@@ -38,11 +38,16 @@
 			<ComboboxContent
 				@after-enter="
 					() => {
-						fixedStyles = getFixedStyles();
+						fixedPositionStyles = getFixedPositionStyles();
 					}
 				"
-				:class="makeFixed ? 'fixed' : 'absolute'"
-				:style="fixedStyles"
+				@after-leave="
+					() => {
+						fixedPositionStyles = {};
+					}
+				"
+				:class="anchorSelector ? 'fixed' : 'absolute'"
+				:style="fixedPositionStyles"
 				ref="contentRef"
 				class="z-50 mt-1 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-white shadow-xl">
 				<div class="overflow-y-auto p-1">
@@ -123,8 +128,7 @@ interface Props {
 	placeholder?: string;
 	showInputAsOption?: boolean;
 	actionButton?: ActionButton;
-	makeFixed?: boolean;
-	fixTo?: string;
+	anchorSelector?: string;
 	allowArbitraryValue?: boolean;
 }
 
@@ -132,7 +136,6 @@ const props = withDefaults(defineProps<Props>(), {
 	options: () => [],
 	placeholder: "Search",
 	showInputAsOption: false,
-	makeFixed: false,
 	allowArbitraryValue: true,
 });
 
@@ -149,7 +152,7 @@ const asyncOptions = ref<Option[]>([]);
 const hasValue = computed(() => props.modelValue != null && props.modelValue !== "");
 const comboboxInput = ref<ComponentPublicInstance | null>(null);
 const contentRef = ref<ComponentPublicInstance | null>(null);
-const fixedStyles = ref({});
+const fixedPositionStyles = ref({});
 const allOptions = computed(() => (props.getOptions ? asyncOptions.value : props.options));
 
 const displayOptions = computed(() => {
@@ -223,7 +226,6 @@ const handleBlur = (event: FocusEvent) => {
 		return;
 	}
 	if (props.allowArbitraryValue) submitArbitraryValue(getInputValue(event));
-	fixedStyles.value = {};
 	emit("blur");
 };
 
@@ -237,10 +239,10 @@ if (props.getOptions) refreshOptions();
 
 // in Popover, absolute positioning keeps all options within the Popover taking extra space
 // making it fixed makes it float above Popover container
-const getFixedStyles = () => {
-	if (props.makeFixed && props.fixTo) {
+const getFixedPositionStyles = () => {
+	if (props.anchorSelector) {
 		const fixedToElRect = (
-			comboboxInput.value?.$el.closest(props.fixTo) as HTMLElement
+			comboboxInput.value?.$el.closest(props.anchorSelector) as HTMLElement
 		)?.getBoundingClientRect();
 		const comboboxInputRect = comboboxInput.value?.$el.getBoundingClientRect();
 		const contentRect = contentRef.value?.$el?.getBoundingClientRect
@@ -252,13 +254,16 @@ const getFixedStyles = () => {
 		// Calculate top position based on available space: if there's not enough space below, position it above
 		const top =
 			contentRect && contentRect.top + contentRect?.height > window.innerHeight
-				? (fixedToElRect.bottom - comboboxInputRect.top + comboboxInputRect.height + 12) * -1
-				: comboboxInputRect.top - fixedToElRect.top + comboboxInputRect.height;
+				? "unset"
+				: comboboxInputRect.top - fixedToElRect.top + comboboxInputRect.height + "px";
+		const bottom =
+			contentRect && contentRect.top + contentRect?.height > window.innerHeight
+				? fixedToElRect.bottom - comboboxInputRect.top + 8 + "px"
+				: "unset";
 		return {
-			top: top + "px",
-			left: comboboxInputRect.left - fixedToElRect.left + "px",
+			top,
+			bottom,
 			width: comboboxInputRect.width + "px",
-			minWidth: "fit-content",
 			zIndex: "10",
 		};
 	}
