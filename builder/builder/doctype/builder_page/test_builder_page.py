@@ -474,8 +474,176 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
+	def test_std_props(self):
+		component_root = Block(
+			blockId="header-block",
+			element="header",
+			blockName="header",
+			props={
+				"title": {
+					"label": "Title",
+					"isStandard": True,
+					"isDynamic": False,
+					"isPassedDown": True,
+					"comesFrom": None,
+					"value": None,
+					"standardOptions": {
+						"isRequired": False,
+						"type": "string",
+						"options": {"defaultValue": "Default Header Title"},
+					},
+				},
+				"age": {
+					"label": "Age",
+					"isStandard": True,
+					"isDynamic": False,
+					"isPassedDown": True,
+					"comesFrom": None,
+					"value": None,
+					"standardOptions": {
+						"isRequired": False,
+						"type": "number",
+						"options": {"defaultValue": 25},
+					},
+				},
+				"show_badge": {
+					"label": "Show Badge",
+					"isStandard": True,
+					"isDynamic": False,
+					"isPassedDown": True,
+					"comesFrom": None,
+					"value": None,
+					"standardOptions": {
+						"isRequired": False,
+						"type": "boolean",
+						"options": {"defaultValue": False},
+					},
+				},
+			},
+		)
+
+		component_title_block = Block(blockId="title-block", element="h1", innerHTML="Header Title")
+		component_title_block.set_dynamic_value("title", "key", "innerHTML", "props")
+
+		component_age_block = Block(blockId="age-block", element="h4", innerHTML="Age")
+		component_age_block.set_dynamic_value("age", "key", "innerHTML", "props")
+
+		component_badge_block = Block(blockId="badge-block", element="h6", innerHTML="Badge")
+		component_badge_block.visibilityCondition = {
+			"key": "show_badge",
+			"comesFrom": "props",
+		}
+
+		component_root.attach_children(component_title_block, component_age_block, component_badge_block)
+		component = frappe.get_doc(
+			{
+				"doctype": "Builder Component",
+				"block": component_root.as_json(),
+			}
+		).insert()
+
+		body = Block(element="body")
+
+		component_root_copy = Block(extendedFromComponent=component.name)
+		component_title_block_copy = Block(isChildOfComponent=component.name, referenceBlockId="title-block")
+		component_age_block_copy = Block(isChildOfComponent=component.name, referenceBlockId="age-block")
+		component_badge_block_copy = Block(isChildOfComponent=component.name, referenceBlockId="badge-block")
+
+		component_root_copy.attach_children(
+			component_title_block_copy, component_age_block_copy, component_badge_block_copy
+		)
+		body.attach_children(component_root_copy)
+
+		page_with_default_values = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Std Props Test",
+				"published": 1,
+				"route": "/block-std-props-test-no-overrides",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		component_root_copy.props = {
+			"title": {
+				"label": "Title",
+				"isStandard": True,
+				"isDynamic": False,
+				"isPassedDown": True,
+				"comesFrom": None,
+				"value": "Overridden Header Title",
+				"standardOptions": {
+					"isRequired": False,
+					"type": "string",
+					"options": {"defaultValue": "Default Header Title"},
+				},
+			},
+			"age": {
+				"label": "Age",
+				"isStandard": True,
+				"isDynamic": False,
+				"isPassedDown": True,
+				"comesFrom": None,
+				"value": 29,
+				"standardOptions": {
+					"isRequired": False,
+					"type": "number",
+					"options": {"defaultValue": 25},
+				},
+			},
+			"show_badge": {
+				"label": "Show Badge",
+				"isStandard": True,
+				"isDynamic": False,
+				"isPassedDown": True,
+				"comesFrom": None,
+				"value": True,
+				"standardOptions": {
+					"isRequired": False,
+					"type": "boolean",
+					"options": {"defaultValue": False},
+				},
+			},
+		}
+
+		page_with_overridden_values = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Std Props Test With Overrides",
+				"published": 1,
+				"route": "/block-std-props-test-overrides",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content_with_default_values = get_response_content("/block-std-props-test-no-overrides")
+			content_with_overridden_values = get_response_content("/block-std-props-test-overrides")
+
+			self.assertEqual(
+				"Default Header Title",
+				get_html_for(content_with_default_values, "tag", "h1", only_content=True),
+			)
+			self.assertEqual(
+				"25.0", get_html_for(content_with_default_values, "tag", "h4", only_content=True)
+			)
+			self.assertFalse("Badge" in get_html_for(content_with_default_values, "tag", "h6"))
+
+			self.assertEqual(
+				"Overridden Header Title",
+				get_html_for(content_with_overridden_values, "tag", "h1", only_content=True),
+			)
+			self.assertEqual(
+				"29.0", get_html_for(content_with_overridden_values, "tag", "h4", only_content=True)
+			)
+			self.assertTrue("Badge" in get_html_for(content_with_overridden_values, "tag", "h6"))
+		finally:
+			page_with_default_values.delete()
+			page_with_overridden_values.delete()
+			component.delete()
+
 	def test_repeater_from_std_props(self):
-		comp_root = Block(
+		component_root = Block(
 			blockId="navbar-wrapper-block",
 			element="header",
 			blockName="navbar",
@@ -503,38 +671,38 @@ class TestBuilderPage(FrappeTestCase):
 				}
 			},
 		)
-		comp_repeater_block = Block(
+		component_repeater_block = Block(
 			blockId="repeater-block",
 			element="nav",
 			blockName="nav",
 			isRepeaterBlock=True,
 		)
-		comp_repeater_block.attach_data_key("links", "innerHTML", type="key", comesFrom="props")
-		comp_link_block = Block(
+		component_repeater_block.attach_data_key("links", "innerHTML", type="key", comesFrom="props")
+		component_link_block = Block(
 			blockId="link-block", element="a", innerHTML="Home", attributes={"href": "/home"}
 		)
-		comp_link_block.set_dynamic_value("key", "key", "innerHTML")
-		comp_link_block.set_dynamic_value("value", "attribute", "href")
+		component_link_block.set_dynamic_value("key", "key", "innerHTML")
+		component_link_block.set_dynamic_value("value", "attribute", "href")
 
-		comp_repeater_block.attach_children(comp_link_block)
-		comp_root.attach_children(comp_repeater_block)
+		component_repeater_block.attach_children(component_link_block)
+		component_root.attach_children(component_repeater_block)
 
 		component = frappe.get_doc(
 			{
 				"doctype": "Builder Component",
-				"block": comp_root.as_json(),
+				"block": component_root.as_json(),
 			}
 		).insert()
 
 		body = Block(element="body")
-		comp_root_copy = Block(extendedFromComponent=component.name)
-		comp_repeater_block_copy = Block(
-			isChildOfComponent=component.name, referenceBlockId="repeater-block", isReapeaterBlock=True
+		component_root_copy = Block(extendedFromComponent=component.name)
+		component_repeater_block_copy = Block(
+			isChildOfComponent=component.name, referenceBlockId="repeater-block", isRepeaterBlock=True
 		)
-		comp_link_block_copy = Block(isChildOfComponent=component.name, referenceBlockId="link-block")
-		comp_repeater_block_copy.attach_children(comp_link_block_copy)
-		comp_root_copy.attach_children(comp_repeater_block_copy)
-		body.attach_children(comp_root_copy)
+		component_link_block_copy = Block(isChildOfComponent=component.name, referenceBlockId="link-block")
+		component_repeater_block_copy.attach_children(component_link_block_copy)
+		component_root_copy.attach_children(component_repeater_block_copy)
+		body.attach_children(component_root_copy)
 
 		page = frappe.get_doc(
 			{
