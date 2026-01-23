@@ -641,7 +641,10 @@ def interpret_prop_value(prop_config: dict, data_key: dict | None) -> Any:
 
 	default_value = None
 	if is_standard:
-		default_value = prop_config.get("standardOptions", {}).get("options", {}).get("defaultValue")
+		prop_type = prop_config.get("standardOptions", {}).get("type")
+		default_value = parse_static_value(
+			prop_config.get("standardOptions", {}).get("options", {}).get("defaultValue"), prop_type
+		)
 
 	if value is None:
 		return default_value if is_standard else "undefined"
@@ -651,7 +654,7 @@ def interpret_prop_value(prop_config: dict, data_key: dict | None) -> Any:
 
 	if is_standard:
 		prop_type = prop_config.get("standardOptions", {}).get("type")
-		value = parse_static_value(value or default_value, prop_type)
+		value = parse_static_value(value, prop_type)
 
 	return value if value is not None else "undefined"
 
