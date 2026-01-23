@@ -51,26 +51,22 @@ class TestBuilderPage(FrappeTestCase):
 				"page_title": "Test Page",
 				"published": 1,
 				"route": "/test-page",
-				"blocks": json.dumps(
-					[
+				"blocks": Block(
+					element="body",
+					baseStyles={"background": "red", "fontFamily": "Inter"},
+					customAttributes={"dir": "ltr"},
+					children=[
 						Block(
-							element="body",
-							baseStyles={"background": "red", "fontFamily": "Inter"},
-							customAttributes={"dir": "ltr"},
-							children=[
-								Block(
-									element="h1",
-									innerHTML="Hello World!",
-									baseStyles={
-										"color": "blue",
-										"fontFamily": "Comic Sans MS",
-										"fontWeight": "500",
-									},
-								)
-							],
-						).as_dict()
-					]
-				),
+							element="h1",
+							innerHTML="Hello World!",
+							baseStyles={
+								"color": "blue",
+								"fontFamily": "Comic Sans MS",
+								"fontWeight": "500",
+							},
+						)
+					],
+				).as_json(wrap_in_array=True),
 			}
 		).insert(ignore_if_duplicate=True)
 		cls.page_with_dynamic_route = frappe.get_doc(
@@ -80,13 +76,9 @@ class TestBuilderPage(FrappeTestCase):
 				"published": 1,
 				"route": "/test-page-dynamic-route/<name>",
 				"dynamic_route": 1,
-				"blocks": json.dumps(
-					[
-						Block(
-							element="body", children=[Block(element="h1", innerHTML="Dynamic Content!")]
-						).as_dict()
-					]
-				),
+				"blocks": Block(
+					element="body", children=[Block(element="h1", innerHTML="Dynamic Content!")]
+				).as_json(wrap_in_array=True),
 			}
 		).insert(ignore_if_duplicate=True)
 
@@ -121,13 +113,12 @@ class TestBuilderPage(FrappeTestCase):
 		sub_header = Block(element="h2", innerHTML="Content")
 		link = Block(element="a", innerHTML="Link")
 
-		header.attach_dynamic_values({"key": "name", "type": "key", "property": "innerHTML"})
-		sub_header.attach_dynamic_values(
-			{"key": "color", "type": "style", "property": "color"},
-			{"key": "padding", "type": "style", "property": "padding"},
-		)
-		link.attach_dynamic_values({"key": "link", "type": "attribute", "property": "href"})
+		header.set_dynamic_value("name", "key", "innerHTML")
 
+		sub_header.set_dynamic_value("color", "style", "color")
+		sub_header.set_dynamic_value("padding", "style", "padding")
+
+		link.set_dynamic_value("link", "attribute", "href")
 		body.attach_children(header, sub_header, link)
 
 		page = frappe.get_doc(
@@ -157,8 +148,8 @@ class TestBuilderPage(FrappeTestCase):
 		item_price = Block(element="span")
 
 		repeater_block.attach_data_key("items", "dataKey")
-		item_name.attach_dynamic_values({"key": "name", "type": "key", "property": "innerHTML"})
-		item_price.attach_dynamic_values({"key": "price", "type": "key", "property": "innerHTML"})
+		item_name.set_dynamic_value("name", "key", "innerHTML")
+		item_price.set_dynamic_value("price", "key", "innerHTML")
 
 		wrapper_div.attach_children(item_name, item_price)
 		repeater_block.attach_children(wrapper_div)
@@ -186,25 +177,27 @@ class TestBuilderPage(FrappeTestCase):
 			page.delete()
 
 	def test_component_dynamic_values(self):
-		comp_root = Block(element="div", blockId="comp-block-1")
-		comp_name = Block(element="h1", blockId="comp-block-1-1", innerHTML="Hello")
+		"Test if dynamic values in component are overridden correctly by the page using it"
+		component_root = Block(element="div", blockId="comp-block-1")
+		component_header = Block(element="h1", blockId="comp-block-1-1", innerHTML="Fallback Content")
 
-		comp_name.attach_dynamic_values({"key": "name", "type": "key", "property": "innerHTML"})
-		comp_root.attach_children(comp_name)
+		component_header.set_dynamic_value("name", "key", "innerHTML")
+		component_root.attach_children(component_header)
 		component = frappe.get_doc(
 			{
 				"doctype": "Builder Component",
-				"block": comp_root.as_json(),
+				"block": component_root.as_json(),
 			}
 		).insert()
 
 		body = Block(element="body")
-		comp_root_copy = Block(extendedFromComponent=component.name)
-		comp_name_copy = Block(isChildOfComponent=component.name, referenceBlockId="comp-block-1-1")
+		component_root_copy = Block(extendedFromComponent=component.name)
+		component_header_copy = Block(isChildOfComponent=component.name, referenceBlockId="comp-block-1-1")
 
-		comp_root_copy.attach_children(comp_name_copy)
-		body.attach_children(comp_root_copy)
+		component_root_copy.attach_children(component_header_copy)
+		body.attach_children(component_root_copy)
 
+		# Using a component with dynamic values without any overrides
 		page_with_component_no_overrides = frappe.get_doc(
 			{
 				"doctype": "Builder Page",
@@ -216,7 +209,8 @@ class TestBuilderPage(FrappeTestCase):
 			}
 		).insert()
 
-		comp_name_copy.attach_dynamic_values({"key": "name_new", "type": "key", "property": "innerHTML"})
+		# Using a component with dynamic values with valid overrides to the dynamic values
+		component_header_copy.set_dynamic_value("name_new", "key", "innerHTML")
 
 		page_with_component_having_overrides = frappe.get_doc(
 			{
@@ -229,10 +223,9 @@ class TestBuilderPage(FrappeTestCase):
 			}
 		).insert()
 
-		comp_name_copy.clear_dynamic_values()
-		comp_name_copy.attach_dynamic_values(
-			{"key": "non_existent_key", "type": "key", "property": "innerHTML"}
-		)
+		# Using a component with dynamic values with invalid overrides to the dynamic values
+		component_header_copy.clear_dynamic_values()
+		component_header_copy.set_dynamic_value("non_existent_key", "key", "innerHTML")
 
 		page_with_component_having_bad_overrides = frappe.get_doc(
 			{
@@ -256,7 +249,7 @@ class TestBuilderPage(FrappeTestCase):
 			)
 			self.assertEqual("Jane Doe", get_html_for(content_with_overrides, "tag", "h1", only_content=True))
 			self.assertEqual(
-				"Hello", get_html_for(content_with_bad_overrides, "tag", "h1", only_content=True)
+				"Fallback Content", get_html_for(content_with_bad_overrides, "tag", "h1", only_content=True)
 			)
 		finally:
 			page_with_component_no_overrides.delete()
@@ -264,13 +257,13 @@ class TestBuilderPage(FrappeTestCase):
 			page_with_component_having_bad_overrides.delete()
 			component.delete()
 
-	def test_visibility_key_page_data(self):
+	def test_visibility_condition_from_page_data(self):
 		body = Block(element="body")
 		header = Block(element="h1", innerHTML="Visible Header")
 		hidden_header = Block(element="h2", innerHTML="Hidden Header")
 
-		header.attach_visibility_condition({"key": "is_header_visible", "comesFrom": "dataScript"})
-		hidden_header.attach_visibility_condition("is_hidden_header_visible")
+		header.visibilityCondition = {"key": "is_header_visible", "comesFrom": "dataScript"}
+		hidden_header.visibilityCondition = {"key": "is_hidden_header_visible", "comesFrom": "dataScript"}
 
 		body.attach_children(header, hidden_header)
 
@@ -291,7 +284,7 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
-	def test_visibility_key_block_data(self):
+	def test_visibility_condition_from_block_data(self):
 		body = Block(
 			element="body",
 			blockDataScript='block.update({"is_header_visible": True,"is_hidden_header_visible": False})',
@@ -299,10 +292,11 @@ class TestBuilderPage(FrappeTestCase):
 		header = Block(element="h1", innerHTML="Visible Header")
 		hidden_header = Block(element="h2", innerHTML="Hidden Header")
 
-		header.attach_visibility_condition({"key": "is_header_visible", "comesFrom": "blockDataScript"})
-		hidden_header.attach_visibility_condition(
-			{"key": "is_hidden_header_visible", "comesFrom": "blockDataScript"}
-		)
+		header.visibilityCondition = {"key": "is_header_visible", "comesFrom": "blockDataScript"}
+		hidden_header.visibilityCondition = {
+			"key": "is_hidden_header_visible",
+			"comesFrom": "blockDataScript",
+		}
 
 		body.attach_children(header, hidden_header)
 
@@ -328,12 +322,8 @@ class TestBuilderPage(FrappeTestCase):
 		content_dynamic = Block(element="h4", innerHTML="Block Content")
 		content_fallback = Block(element="h4", innerHTML="Block Content")
 
-		content_dynamic.attach_dynamic_values(
-			{"key": "content", "type": "key", "property": "innerHTML", "comesFrom": "blockDataScript"},
-		)
-		content_fallback.attach_dynamic_values(
-			{"key": "no_key", "type": "key", "property": "innerHTML", "comesFrom": "blockDataScript"},
-		)
+		content_dynamic.set_dynamic_value("content", "key", "innerHTML", "blockDataScript")
+		content_fallback.set_dynamic_value("no_key", "key", "innerHTML", "blockDataScript")
 
 		wrapper.attach_children(content_dynamic, content_fallback)
 		body.attach_children(wrapper)
@@ -355,7 +345,7 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
-	def test_block_data_repeater(self):
+	def test_repeater_from_block_data(self):
 		body = Block(element="body")
 		repeater_block = Block(element="div", isRepeaterBlock=True, blockDataScript=block_data_script)
 		wrapper_div = Block(element="div")
@@ -363,12 +353,8 @@ class TestBuilderPage(FrappeTestCase):
 		item_price = Block(element="span")
 
 		repeater_block.attach_data_key("items", "dataKey", comesFrom="blockDataScript")
-		item_name.attach_dynamic_values(
-			{"key": "name", "type": "key", "property": "innerHTML", "comesFrom": "blockDataScript"}
-		)
-		item_price.attach_dynamic_values(
-			{"key": "price", "type": "key", "property": "innerHTML", "comesFrom": "blockDataScript"}
-		)
+		item_name.set_dynamic_value("name", "key", "innerHTML", "blockDataScript")
+		item_price.set_dynamic_value("price", "key", "innerHTML", "blockDataScript")
 
 		wrapper_div.attach_children(item_name, item_price)
 		repeater_block.attach_children(wrapper_div)
@@ -459,15 +445,9 @@ class TestBuilderPage(FrappeTestCase):
 		)
 		content_fallback = Block(element="h4", innerHTML="Block Props Content")
 
-		content_static_prop.attach_dynamic_values(
-			{"key": "first_name", "type": "key", "property": "innerHTML", "comesFrom": "props"},
-		)
-		content_dynamic_prop.attach_dynamic_values(
-			{"key": "content", "type": "key", "property": "innerHTML", "comesFrom": "props"},
-		)
-		content_fallback.attach_dynamic_values(
-			{"key": "last_name", "type": "key", "property": "innerHTML", "comesFrom": "props"},
-		)
+		content_static_prop.set_dynamic_value("first_name", "key", "innerHTML", "props")
+		content_dynamic_prop.set_dynamic_value("content", "key", "innerHTML", "props")
+		content_fallback.set_dynamic_value("last_name", "key", "innerHTML", "props")
 
 		div_wrapper.attach_children(content_static_prop, content_dynamic_prop, content_fallback)
 		body.attach_children(div_wrapper)
@@ -494,7 +474,7 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
-	def test_std_props_repeater(self):
+	def test_repeater_from_std_props(self):
 		comp_root = Block(
 			blockId="navbar-wrapper-block",
 			element="header",
@@ -533,10 +513,8 @@ class TestBuilderPage(FrappeTestCase):
 		comp_link_block = Block(
 			blockId="link-block", element="a", innerHTML="Home", attributes={"href": "/home"}
 		)
-		comp_link_block.attach_dynamic_values(
-			{"property": "innerHTML", "type": "key", "key": "key", "comesFrom": "props"},
-			{"property": "href", "type": "attribute", "key": "value", "comesFrom": "props"},
-		)
+		comp_link_block.set_dynamic_value("key", "key", "innerHTML")
+		comp_link_block.set_dynamic_value("value", "attribute", "href")
 
 		comp_repeater_block.attach_children(comp_link_block)
 		comp_root.attach_children(comp_repeater_block)

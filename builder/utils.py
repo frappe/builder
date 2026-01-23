@@ -31,9 +31,11 @@ class BlockDataKey:
 	type: str
 	comesFrom: str
 
+
 class VisibilityCondition:
 	key: str
 	comesFrom: str
+
 
 class Block:
 	blockId: str = ""
@@ -75,14 +77,19 @@ class Block:
 
 			setattr(self, key, value)
 
-	@classmethod
-	def from_block(cls, block: "Block") -> "Block":
-		return cls(**block.as_dict())
-
-	def attach_dynamic_values(self, *dynamic_values: BlockDataKey):
+	def set_dynamic_value(self, key: str, type: str, property: str, comesFrom: str = "dataScript"):
 		if not self.dynamicValues:
 			self.dynamicValues = []
-		self.dynamicValues.extend(dynamic_values)
+		for i, dv in enumerate(self.dynamicValues):
+			if dv["property"] == property and dv["type"] == type:
+				self.dynamicValues[i] = {
+					"key": key,
+					"type": type,
+					"property": property,
+					"comesFrom": comesFrom,
+				}
+				return
+		self.dynamicValues.append({"key": key, "type": type, "property": property, "comesFrom": comesFrom})
 
 	def clear_dynamic_values(self):
 		self.dynamicValues = []
