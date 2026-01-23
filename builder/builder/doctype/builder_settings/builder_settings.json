@@ -18,7 +18,7 @@
   "home_page",
   "developer_options_section",
   "execute_block_scripts_in_editor",
-  "block_click_handlers"
+  "restrict_click_handlers"
  ],
  "fields": [
   {
@@ -102,7 +102,7 @@
   },
   {
    "default": "1",
-   "fieldname": "block_click_handlers",
+   "fieldname": "restrict_click_handlers",
    "fieldtype": "Check",
    "label": "Restrict Click Handlers"
   }
