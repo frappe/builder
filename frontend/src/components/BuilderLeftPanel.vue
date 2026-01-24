@@ -88,6 +88,7 @@ import PageScript from "@/components/PageScript.vue";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
+import type { UserAwareness } from "@/utils/yjsHelpers";
 import { Tooltip } from "frappe-ui";
 import { inject, nextTick, Ref, ref, watch, watchEffect } from "vue";
 import BlockLayers from "./BlockLayers.vue";
@@ -107,6 +108,7 @@ const pageStore = usePageStore();
 
 const pageCanvas = inject("pageCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
 const fragmentCanvas = inject("fragmentCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
+const remoteUsers = inject("remoteUsers") as Ref<Map<number, UserAwareness>> | undefined;
 
 const leftPanelOptions = [
 	{
@@ -178,6 +180,36 @@ watch(
 			const blockElement = document.querySelector(`[data-block-layer-id="${blockId}"]`);
 			blockElement?.classList.add("block-selected");
 		});
+	},
+	{ deep: true },
+);
+
+// Watch for remote users' selections and highlight their selected blocks
+watch(
+	() => remoteUsers?.value,
+	async () => {
+		await nextTick();
+		// Clear all remote selection highlights
+		document.querySelectorAll(`[data-block-layer-id].remote-selected`).forEach((el) => {
+			el.classList.remove("remote-selected");
+			(el as HTMLElement).style.removeProperty("--remote-user-color");
+		});
+
+		// Add highlights for each remote user's selection
+		if (remoteUsers?.value) {
+			remoteUsers.value.forEach((user) => {
+				if (user.selection?.blockIds) {
+					user.selection.blockIds.forEach((blockId: string) => {
+						const blockElement = document.querySelector(`[data-block-layer-id="${blockId}"]`);
+						if (blockElement) {
+							blockElement.classList.add("remote-selected");
+							// Set CSS variable for the user's color
+							(blockElement as HTMLElement).style.setProperty("--remote-user-color", user.userColor);
+						}
+					});
+				}
+			});
+		}
 	},
 	{ deep: true },
 );

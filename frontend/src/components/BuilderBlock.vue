@@ -30,6 +30,7 @@
 			:breakpoint="breakpoint"
 			:editable="isEditable"
 			:isSelected="isSelected"
+			:isSelectedByRemoteUser="isBlockSelectedByRemoteUser"
 			:readonly="readonly"
 			:target="(target as HTMLElement)" />
 	</teleport>
@@ -40,6 +41,8 @@ import useCanvasStore from "@/stores/canvasStore";
 import { setFont } from "@/utils/fontManager";
 import { getDataForKey } from "@/utils/helpers";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
+import type { UserAwareness } from "@/utils/yjsHelpers";
+import type { Ref } from "vue";
 import { computed, inject, nextTick, onMounted, reactive, ref, useAttrs, watch, watchEffect } from "vue";
 import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
@@ -47,6 +50,7 @@ import DataLoaderBlock from "./DataLoaderBlock.vue";
 import TextBlock from "./TextBlock.vue";
 
 const canvasStore = useCanvasStore();
+const remoteUsers = inject<Ref<Map<number, UserAwareness>>>("remoteUsers", ref(new Map()));
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
 const attrs = useAttrs();
 const editor = ref<InstanceType<typeof BlockEditor> | null>(null);
@@ -80,6 +84,17 @@ const draggable = computed(() => {
 
 const isHovered = ref(false);
 const isSelected = ref(false);
+const isBlockSelectedByRemoteUser = computed(() => {
+	if (!remoteUsers.value || remoteUsers.value.size === 0) return false;
+
+	// Find the first remote user who has this block selected
+	for (const [_, user] of remoteUsers.value.entries()) {
+		if (user.selection?.blockIds?.includes(props.block.blockId)) {
+			return Boolean(user);
+		}
+	}
+	return false;
+});
 
 const getComponentName = (block: Block) => {
 	if (block.isRepeater()) {
@@ -224,7 +239,8 @@ const loadEditor = computed(() => {
 		target.value &&
 		props.block.getStyle("display") !== "none" &&
 		((isSelected.value && props.breakpoint === canvasStore.activeCanvas?.activeBreakpoint) ||
-			(isHovered.value && canvasStore.activeCanvas?.hoveredBreakpoint === props.breakpoint)) &&
+			(isHovered.value && canvasStore.activeCanvas?.hoveredBreakpoint === props.breakpoint) ||
+			isBlockSelectedByRemoteUser.value) &&
 		!canvasProps?.scaling &&
 		!canvasProps?.panning
 	);

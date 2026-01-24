@@ -71,12 +71,14 @@ const props = withDefaults(
 		editable?: boolean;
 		isSelected?: boolean;
 		readonly?: boolean;
+		isSelectedByRemoteUser?: boolean;
 	}>(),
 	{
 		breakpoint: "desktop",
 		editable: false,
 		isSelected: false,
 		readonly: false,
+		isSelectedByRemoteUser: false,
 	},
 );
 
@@ -168,7 +170,9 @@ const getStyleClasses = computed(() => {
 	if (movable.value && !props.block.isRoot()) {
 		classes.push("cursor-grab");
 	}
-	if (props.block.isExtendedFromComponent()) {
+	if (props.isSelectedByRemoteUser) {
+		classes.push("ring-yellow-400");
+	} else if (props.block.isExtendedFromComponent()) {
 		classes.push("ring-purple-400");
 	} else {
 		classes.push("ring-blue-400");

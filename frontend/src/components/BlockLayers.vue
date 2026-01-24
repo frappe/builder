@@ -245,4 +245,9 @@ defineExpose({
 .block-selected {
 	@apply border-blue-400 text-gray-900 dark:border-blue-700 dark:text-gray-200;
 }
+.remote-selected {
+	border-color: var(--remote-user-color) !important;
+	@apply text-gray-700 dark:text-gray-300;
+	opacity: 0.7;
+}
 </style>
