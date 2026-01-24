@@ -73,19 +73,31 @@
 		</div>
 		<div class="absolute right-3 flex items-center gap-4">
 			<div class="group flex hover:gap-1">
-				<div v-for="user in builderStore.viewers">
-					<Tooltip :text="currentlyViewedByText" :hoverDelay="0.6" arrow-class="mb-3">
-						<div class="ml-[-10px] h-6 w-6 cursor-pointer transition-all group-hover:ml-0">
+				<div v-for="[clientId, user] in remoteUsers" :key="clientId">
+					<Tooltip :text="user.userName" :hoverDelay="0.6" arrow-class="mb-3">
+						<div
+							class="ml-[-10px] h-6 w-6 cursor-pointer transition-all group-hover:ml-0"
+							@click="emit('followUser', clientId)">
 							<img
-								class="h-full w-full rounded-full border-2 border-orange-400 object-cover shadow-sm"
-								:title="user.fullname"
-								:src="user.image"
-								v-if="user.image" />
+								v-if="user.userImage"
+								class="h-full w-full rounded-full border-2 object-cover shadow-sm transition-all"
+								:class="{ 'ring-2 ring-offset-1': followingUserId === clientId }"
+								:style="{
+									borderColor: user.userColor,
+									'--tw-ring-color': followingUserId === clientId ? user.userColor : undefined,
+								}"
+								:title="user.userName"
+								:src="user.userImage" />
 							<div
 								v-else
-								:title="user.fullname"
-								class="grid h-full w-full place-items-center rounded-full border-2 border-orange-400 bg-gray-400 text-sm text-gray-700 shadow-sm">
-								{{ user.fullname.charAt(0) }}
+								:title="user.userName"
+								:style="{
+									borderColor: user.userColor,
+									'--tw-ring-color': followingUserId === clientId ? user.userColor : undefined,
+								}"
+								class="grid h-full w-full place-items-center rounded-full border-2 bg-surface-gray-1 text-2xs text-ink-gray-8 shadow-sm transition-all"
+								:class="{ 'ring-2 ring-offset-1': followingUserId === clientId }">
+								{{ getUserInitials(user.userName) }}
 							</div>
 						</div>
 					</Tooltip>
@@ -155,14 +167,30 @@ import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { getTextContent } from "@/utils/helpers";
+import { UserAwareness } from "@/utils/yjsHelpers";
 import { useDark, useToggle } from "@vueuse/core";
 import { Badge, Popover, Tooltip } from "frappe-ui";
-import { computed, defineAsyncComponent, ref } from "vue";
+import { computed, defineAsyncComponent, PropType, ref } from "vue";
 import { toast } from "vue-sonner";
 import MainMenu from "./MainMenu.vue";
 import PageOptions from "./PageOptions.vue";
 
 const BuilderSettings = defineAsyncComponent(() => import("./BuilderSettings.vue"));
+
+defineProps({
+	remoteUsers: {
+		type: Map as PropType<Map<number, UserAwareness>>,
+		default: () => new Map(),
+	},
+	followingUserId: {
+		type: Number as PropType<number | null>,
+		default: null,
+	},
+});
+
+const emit = defineEmits<{
+	followUser: [clientId: number];
+}>();
 
 const isDark = useDark({
 	attribute: "data-theme",
@@ -175,19 +203,13 @@ const pageStore = usePageStore();
 const showInfoDialog = ref(false);
 const showSettingsDialog = ref(false);
 
-const currentlyViewedByText = computed(() => {
-	const names = builderStore.viewers.map((viewer) => viewer.fullname).map((name) => name.split(" ")[0]);
-	const count = names.length;
-	if (count === 0) {
-		return "";
-	} else if (count === 1) {
-		return `${names[0]}`;
-	} else if (count === 2) {
-		return `${names.join(" & ")}`;
-	} else {
-		return `${names.slice(0, 2).join(", ")} & ${count - 2} others`;
-	}
-});
+function getUserInitials(name: string | undefined): string {
+	if (!name) return "?";
+	const parts = name.split(/[\s@._-]+/).filter(Boolean);
+	if (parts.length === 0) return "?";
+	if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+	return (parts[0][0] + parts[1][0]).toUpperCase();
+}
 
 declare global {
 	interface Document {

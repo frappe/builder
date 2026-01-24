@@ -49,7 +49,10 @@
     "vue-router": "^4.0.12",
     "vue-sonner": "^1.0.2",
     "vuedraggable": "^4.1.0",
-    "webfontloader": "^1.6.28"
+    "webfontloader": "^1.6.28",
+    "y-protocols": "^1.0.7",
+    "y-websocket": "^3.0.0",
+    "yjs": "^13.6.29"
   },
   "devDependencies": {
     "@tailwindcss/container-queries": "^0.1.1",

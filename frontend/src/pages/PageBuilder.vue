@@ -53,6 +53,8 @@
 			ref="pageCanvas"
 			v-if="pageStore.pageBlocks[0]"
 			:block-data="pageStore.pageBlocks[0]"
+			:remote-users="remoteUsers"
+			:is-collaboration-enabled="isCollaborationEnabled"
 			:canvas-styles="{
 				minHeight: '1000px',
 			}"
@@ -76,7 +78,11 @@
 			class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] overflow-auto border-l-[1px] border-outline-gray-2 bg-surface-white"></BuilderRightPanel>
 
 		<!-- Toolbar layer (top) - comes last in DOM -->
-		<BuilderToolbar class="absolute left-0 right-0 top-0"></BuilderToolbar>
+		<BuilderToolbar
+			class="absolute left-0 right-0 top-0"
+			:remote-users="remoteUsers"
+			:following-user-id="followingUserId"
+			@follow-user="handleFollowUser"></BuilderToolbar>
 	</div>
 	<PageListModal v-model="pageListDialog" :pages="componentUsedInPages"></PageListModal>
 	<Dialog
@@ -124,8 +130,10 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { getUsersInfo } from "@/usersInfo";
 import blockController from "@/utils/blockController";
-import { getRootBlockTemplate, isTargetEditable } from "@/utils/helpers";
+import { getBlockInstance, getBlockString, getRootBlockTemplate, isTargetEditable } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
+import { useYjsCollaboration } from "@/utils/useYjsCollaboration";
+import { UserAwareness } from "@/utils/yjsHelpers";
 import {
 	breakpointsTailwind,
 	useActiveElement,
@@ -152,6 +160,13 @@ const usageCount = ref(0);
 const componentUsedInPages = ref<BuilderPage[]>([]);
 const pageListDialog = ref(false);
 const blockContextMenu = ref<InstanceType<typeof BlockContextMenu> | null>(null);
+
+// Yjs Collaborative Editing
+const yjsCollaboration = ref<ReturnType<typeof useYjsCollaboration> | null>(null);
+const remoteUsers = ref<Map<number, UserAwareness>>(new Map());
+const isCollaborationEnabled = ref(false);
+const isRemoteUpdate = ref(false);
+const followingUserId = ref<number | null>(null);
 
 watch([() => canvasStore.editableBlock, () => pageStore.activePage?.is_standard], () => {
 	builderStore.toggleReadOnlyMode(
@@ -198,10 +213,150 @@ watch(space, (value) => {
 	}
 });
 
+// Track mouse movement for collaborative cursors
+const debouncedCursorUpdate = useDebounceFn((e: MouseEvent) => {
+	if (isCollaborationEnabled.value && yjsCollaboration.value && pageCanvas.value) {
+		// Stop following when user moves their cursor
+		// if (followingUserId.value !== null) {
+		// 	followingUserId.value = null;
+		// }
+
+		// Get the actual canvas element (the one with fixed width, e.g., 1400px)
+		const canvasElement = document.querySelector(".canvas:not([style*='display: none'])") as HTMLElement;
+
+		if (canvasElement) {
+			// Get the canvas element's bounding rect (already accounts for parent transforms)
+			const canvasRect = canvasElement.getBoundingClientRect();
+
+			// Get the current scale from the page canvas
+			const currentScale = pageCanvas.value?.canvasProps?.scale || 1;
+
+			// Calculate position relative to the canvas element (visual coordinates)
+			const visualX = e.clientX - canvasRect.left;
+			const visualY = e.clientY - canvasRect.top;
+
+			// Convert visual coordinates to logical coordinates (independent of scale)
+			// This ensures cursors point to the same logical position regardless of zoom
+			const logicalX = visualX / currentScale;
+			const logicalY = visualY / currentScale;
+
+			// Store logical canvas coordinates (same logical position for all users)
+			yjsCollaboration.value.updateLocalCursor(null, {
+				x: logicalX,
+				y: logicalY,
+			});
+		}
+	}
+}, 16);
+
 async function saveAndExitFragmentMode(e: Event) {
 	await canvasStore.fragmentData.saveAction?.(fragmentCanvas.value?.getRootBlock());
 	fragmentCanvas.value?.toggleDirty(false);
 	canvasStore.exitFragmentMode(e);
+}
+
+// Handle following a user's cursor
+function handleFollowUser(clientId: number) {
+	if (followingUserId.value === clientId) {
+		// Toggle off if clicking the same user
+		followingUserId.value = null;
+	} else {
+		followingUserId.value = clientId;
+	}
+}
+
+// Watch the followed user's cursor and pan canvas to follow
+watch(
+	[remoteUsers, followingUserId],
+	() => {
+		if (followingUserId.value === null || !pageCanvas.value) return;
+
+		const followedUser = remoteUsers.value.get(followingUserId.value);
+		if (!followedUser?.cursor?.position) return;
+
+		const canvasElement = document.querySelector(".canvas:not([style*='display: none'])") as HTMLElement;
+		if (!canvasElement) return;
+
+		const canvasRect = canvasElement.getBoundingClientRect();
+		const currentScale = pageCanvas.value?.canvasProps?.scale || 1;
+
+		// Get the followed user's cursor position (logical coordinates)
+		const logicalX = followedUser.cursor.position.x;
+		const logicalY = followedUser.cursor.position.y;
+
+		// Convert to visual coordinates
+		const visualX = logicalX * currentScale;
+		const visualY = logicalY * currentScale;
+
+		// Calculate center of viewport
+		const viewportCenterX = window.innerWidth / 2;
+		const viewportCenterY = window.innerHeight / 2;
+
+		// Calculate required translate to center the cursor
+		// The canvas is scaled first, then translated
+		const currentTranslateX = pageCanvas.value?.canvasProps?.translateX || 0;
+		const currentTranslateY = pageCanvas.value?.canvasProps?.translateY || 0;
+
+		// Calculate canvas center position in screen space
+		const canvasScreenX = canvasRect.left + visualX;
+		const canvasScreenY = canvasRect.top + visualY;
+
+		// Calculate how much to adjust translate
+		const deltaX = (viewportCenterX - canvasScreenX) / currentScale;
+		const deltaY = (viewportCenterY - canvasScreenY) / currentScale;
+
+		// Update canvas translate to follow cursor
+		if (pageCanvas.value.canvasProps) {
+			pageCanvas.value.canvasProps.translateX = currentTranslateX + deltaX;
+			pageCanvas.value.canvasProps.translateY = currentTranslateY + deltaY;
+		}
+	},
+	{ deep: true },
+);
+
+// Initialize Yjs collaborative editing
+function initializeCollaboration(pageId: string) {
+	if (!sessionUser.value || !pageId || pageId === "new") {
+		return;
+	}
+
+	try {
+		// Get user image from frappe boot if available
+		const userImage = (window as any).frappe?.boot?.user_info?.[sessionUser.value]?.image;
+
+		yjsCollaboration.value = useYjsCollaboration({
+			documentName: `builder-page-${pageId}`,
+			userId: sessionUser.value,
+			userName: sessionUser.value.split("@")[0] || sessionUser.value,
+			userImage: userImage || undefined,
+			onRemoteUpdate: (data) => {
+				// Handle remote updates from other users
+				if (data.blocks && canvasStore.editingMode === "page") {
+					isRemoteUpdate.value = true;
+					try {
+						const blockInstance = getBlockInstance(data.blocks);
+						if (pageCanvas.value && blockInstance) {
+							pageCanvas.value.setRootBlock(blockInstance);
+						}
+					} catch (error) {
+						console.error("Error applying remote update:", error);
+					} finally {
+						setTimeout(() => {
+							isRemoteUpdate.value = false;
+						}, 100);
+					}
+				}
+			},
+			onAwarenessChange: (users) => {
+				// Update remote users for cursor display
+				remoteUsers.value = users;
+			},
+		});
+		isCollaborationEnabled.value = true;
+	} catch (error) {
+		console.error("Failed to initialize Yjs collaboration:", error);
+		isCollaborationEnabled.value = false;
+	}
 }
 
 onActivated(async () => {
@@ -220,6 +375,8 @@ onActivated(async () => {
 	}
 	if (route.params.pageId && route.params.pageId !== "new") {
 		pageStore.setPage(route.params.pageId as string, true, route.query);
+		// Initialize Yjs collaboration for the page
+		initializeCollaboration(route.params.pageId as string);
 	}
 });
 
@@ -243,10 +400,33 @@ watch(
 	{ immediate: true },
 );
 
+onMounted(() => {
+	builderStore.blockContextMenu = blockContextMenu.value;
+	// Add mouse move listener for cursor tracking
+	document.addEventListener("mousemove", debouncedCursorUpdate);
+});
+
+// Watch for canvas panning to update cursor position
+watch(
+	() => pageCanvas.value?.canvasProps.panning,
+	() => {
+		debouncedCursorUpdate(
+			new MouseEvent("mousemove", {
+				clientX: window.innerWidth / 2,
+				clientY: window.innerHeight / 2,
+			}),
+		);
+	},
+	{ deep: true },
+);
+
 onDeactivated(() => {
 	builderStore.realtime.doc_close("Builder Page", pageStore.activePage?.name as string);
 	builderStore.realtime.off("doc_viewers", () => {});
 	builderStore.viewers = [];
+
+	// Remove mouse move listener
+	document.removeEventListener("mousemove", debouncedCursorUpdate);
 });
 
 onMounted(() => {
@@ -284,6 +464,25 @@ watch(
 		) {
 			pageStore.savingPage = true;
 			debouncedPageSave();
+
+			// Sync local changes with Yjs if collaboration is enabled and this is not a remote update
+			if (
+				isCollaborationEnabled.value &&
+				!isRemoteUpdate.value &&
+				yjsCollaboration.value &&
+				pageCanvas.value?.block
+			) {
+				try {
+					const blockData = getBlockString(pageCanvas.value.block);
+					yjsCollaboration.value.updateLocalData({
+						blocks: blockData,
+						lastModified: new Date().toISOString(),
+						modifiedBy: sessionUser.value,
+					});
+				} catch (error) {
+					console.error("Error syncing with Yjs:", error);
+				}
+			}
 		}
 	},
 	{

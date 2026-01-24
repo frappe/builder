@@ -8,13 +8,19 @@
     "scripts": {
         "postinstall": "cd frontend && yarn install",
         "dev": "cd frontend && yarn dev",
-        "build": "cd frontend && yarn build"
+        "build": "cd frontend && yarn build",
+        "yjs-server": "node yjs-server.cjs"
     },
     "version": "0.0.0",
     "engines": {
         "node": ">=18.0.0"
     },
-    "dependencies": {},
+    "dependencies": {
+        "ws": "^8.18.0",
+        "yjs": "^13.6.29",
+        "y-protocols": "^1.0.7",
+        "lib0": "^0.2.103"
+    },
     "resolutions": {
         "lint-staged": "^15.2.10"
     }

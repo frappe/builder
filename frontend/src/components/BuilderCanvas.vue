@@ -41,6 +41,12 @@
 				v-for="breakpoint in renderedBreakpoints"
 				v-show="breakpoint.visible"
 				:key="breakpoint.device">
+				<!-- Remote cursors positioned relative to canvas content -->
+				<RemoteCursors
+					v-if="isCollaborationEnabled"
+					:remote-users="remoteUsers"
+					:canvas-scale="canvasProps.scale"></RemoteCursors>
+
 				<div
 					class="absolute left-0 cursor-pointer select-none text-3xl text-ink-gray-7"
 					:style="{
@@ -113,6 +119,7 @@ import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
 import FitScreenIcon from "./Icons/FitScreen.vue";
+import RemoteCursors from "./RemoteCursors.vue";
 
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
@@ -139,9 +146,13 @@ const props = withDefaults(
 	defineProps<{
 		blockData: Block | BlockOptions;
 		canvasStyles?: Record<string, any>;
+		remoteUsers?: Map<number, any>;
+		isCollaborationEnabled?: boolean;
 	}>(),
 	{
 		canvasStyles: () => ({}),
+		remoteUsers: () => new Map(),
+		isCollaborationEnabled: false,
 	},
 );
 
