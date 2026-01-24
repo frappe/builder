@@ -65,7 +65,6 @@ const pasteArray = (e: ClipboardEvent) => {
 			if (Array.isArray(parsed)) {
 				const stringArray = parsed.map(item => String(item));
 				emit("update:arr", [...passedArr, ...stringArray]);
-				console.log("Pasted JSON array:", [...passedArr, ...stringArray]);
 				return;
 			}
 		} catch (e) {

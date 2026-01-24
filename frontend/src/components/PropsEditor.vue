@@ -302,7 +302,6 @@ const updateProp = async ({
 	newValue: BlockProps[string];
 }) => {
 	let map = new Map(Object.entries(props.obj));
-	console.log({ oldPropName, newName, newValue });
 
 	if (oldPropName !== newName) {
 		map = new Map(Object.entries(replaceKey(map, oldPropName, newName)));

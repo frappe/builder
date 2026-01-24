@@ -51,7 +51,6 @@ const props = withDefaults(
 const component = ref(null) as Ref<HTMLElement | null>;
 
 const repeatingFrom = computed(() => {
-	console.log("Repeating from:", props.block.getDataKey("comesFrom"));
 	return props.block.getDataKey("comesFrom") || "dataScript";
 });
 
