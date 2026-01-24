@@ -15,6 +15,7 @@
 			:readonly="readonly"
 			:breakpoint="breakpoint"
 			:isChildOfComponent="block.isExtendedFromComponent()"
+			:repeater-index="index"
 			v-for="(_data, index) in blockRepeaterData" />
 	</div>
 </template>

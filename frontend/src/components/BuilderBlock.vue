@@ -88,6 +88,7 @@ const props = withDefaults(
 		data?: Record<string, any> | null;
 		blockData?: Record<string, any> | null;
 		defaultProps?: Record<string, any> | null;
+		repeaterIndex?: string | number | null;
 	}>(),
 	{
 		isChildOfComponent: false,
@@ -97,6 +98,7 @@ const props = withDefaults(
 		data: null,
 		blockData: null,
 		defaultProps: null,
+		repeaterIndex: null,
 	},
 );
 
@@ -403,6 +405,7 @@ watch(
 watch(
 	[component, () => props.blockData, () => props.data],
 	() => {
+		if (props.repeaterIndex) return;
 		blockDataStore.setPageData(props.block.blockId, props.data || {});
 		blockDataStore.setBlockData(props.block.blockId, props.blockData || {}, "passedDown");
 	},
@@ -418,7 +421,7 @@ watch(
 		() => pageStore.settingPage,
 	],
 	() => {
-		if (pageStore.settingPage) return;
+		if (pageStore.settingPage || props.repeaterIndex) return;
 		if (props.block.getBlockDataScript().trim() === "") {
 			ownBlockData.value = {};
 			blockDataStore.setBlockData(props.block.blockId, {}, "own");
@@ -503,8 +506,10 @@ if (!props.preview) {
 }
 
 onUnmounted(() => {
-	blockDataStore.clearBlockData(props.block.blockId);
-	blockDataStore.clearPageData(props.block.blockId);
+	if (props.repeaterIndex) {
+		blockDataStore.clearBlockData(props.block.blockId);
+		blockDataStore.clearPageData(props.block.blockId);
+	}
 });
 
 // Note: All the block event listeners are delegated to parent for better scalability
