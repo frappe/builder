@@ -189,6 +189,7 @@ const fragmentCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 
 provide("pageCanvas", pageCanvas);
 provide("fragmentCanvas", fragmentCanvas);
+provide("remoteUsers", remoteUsers);
 useBuilderEvents(pageCanvas, fragmentCanvas, saveAndExitFragmentMode, route, router);
 
 const activeElement = useActiveElement();
@@ -265,7 +266,7 @@ function handleFollowUser(clientId: number) {
 	}
 }
 
-// Watch the followed user's cursor and pan canvas to follow
+// Watch the followed user's cursor and pan canvas to keep it in viewport
 watch(
 	[remoteUsers, followingUserId],
 	() => {
@@ -288,25 +289,47 @@ watch(
 		const visualX = logicalX * currentScale;
 		const visualY = logicalY * currentScale;
 
-		// Calculate center of viewport
-		const viewportCenterX = window.innerWidth / 2;
-		const viewportCenterY = window.innerHeight / 2;
-
-		// Calculate required translate to center the cursor
-		// The canvas is scaled first, then translated
-		const currentTranslateX = pageCanvas.value?.canvasProps?.translateX || 0;
-		const currentTranslateY = pageCanvas.value?.canvasProps?.translateY || 0;
-
-		// Calculate canvas center position in screen space
+		// Calculate cursor position in screen space
 		const canvasScreenX = canvasRect.left + visualX;
 		const canvasScreenY = canvasRect.top + visualY;
 
-		// Calculate how much to adjust translate
-		const deltaX = (viewportCenterX - canvasScreenX) / currentScale;
-		const deltaY = (viewportCenterY - canvasScreenY) / currentScale;
+		// Define viewport bounds with padding to avoid edge placement
+		const padding = 50; // pixels of padding from edges
+		const viewportLeft =
+			padding + builderStore.builderLayout.leftPanelWidth + builderStore.builderLayout.optionsPanelWidth;
+		const viewportRight = window.innerWidth - padding - builderStore.builderLayout.rightPanelWidth;
+		const viewportTop = padding;
+		const viewportBottom = window.innerHeight - padding;
 
-		// Update canvas translate to follow cursor
-		if (pageCanvas.value.canvasProps) {
+		// Check if cursor is outside viewport
+		const isOutOfView =
+			canvasScreenX < viewportLeft ||
+			canvasScreenX > viewportRight ||
+			canvasScreenY < viewportTop ||
+			canvasScreenY > viewportBottom;
+
+		// Only adjust canvas position if cursor is out of view
+		if (isOutOfView && pageCanvas.value.canvasProps) {
+			const currentTranslateX = pageCanvas.value.canvasProps.translateX || 0;
+			const currentTranslateY = pageCanvas.value.canvasProps.translateY || 0;
+
+			let deltaX = 0;
+			let deltaY = 0;
+
+			// Calculate minimal adjustment to bring cursor into view
+			if (canvasScreenX < viewportLeft) {
+				deltaX = (viewportLeft - canvasScreenX) / currentScale;
+			} else if (canvasScreenX > viewportRight) {
+				deltaX = (viewportRight - canvasScreenX) / currentScale;
+			}
+
+			if (canvasScreenY < viewportTop) {
+				deltaY = (viewportTop - canvasScreenY) / currentScale;
+			} else if (canvasScreenY > viewportBottom) {
+				deltaY = (viewportBottom - canvasScreenY) / currentScale;
+			}
+
+			// Update canvas translate to bring cursor into view
 			pageCanvas.value.canvasProps.translateX = currentTranslateX + deltaX;
 			pageCanvas.value.canvasProps.translateY = currentTranslateY + deltaY;
 		}
@@ -416,6 +439,18 @@ watch(
 				clientY: window.innerHeight / 2,
 			}),
 		);
+	},
+	{ deep: true },
+);
+
+// Watch for block selection changes to sync with Yjs
+watch(
+	() => pageCanvas.value?.selectedBlockIds,
+	(selectedIds) => {
+		if (isCollaborationEnabled.value && yjsCollaboration.value && selectedIds) {
+			// Convert Set to Array for Yjs
+			yjsCollaboration.value.updateLocalSelection(Array.from(selectedIds));
+		}
 	},
 	{ deep: true },
 );
