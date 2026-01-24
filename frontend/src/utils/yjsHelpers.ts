@@ -85,11 +85,7 @@ export function syncYMapWithObject(ymap: Y.Map<any>, obj: any) {
 			}
 			syncYMapWithObject(nestedMap, value);
 		} else {
-			// For primitive values and arrays, directly set the value
-			const currentValue = ymap.get(key);
-			if (JSON.stringify(currentValue) !== JSON.stringify(value)) {
-				ymap.set(key, value);
-			}
+			ymap.set(key, value);
 		}
 	});
 }

@@ -1,7 +1,6 @@
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import { builderSettings } from "@/data/builderSettings";
 import { BuilderSettings } from "@/types/Builder/BuilderSettings";
-import RealTimeHandler from "@/utils/realtimeHandler";
 import { useStorage } from "@vueuse/core";
 import { defineStore } from "pinia";
 import { toast } from "vue-sonner";
@@ -36,9 +35,7 @@ const useBuilderStore = defineStore("builderStore", {
 		showLeftPanel: <boolean>true,
 		showHTMLDialog: false,
 		showDataScriptDialog: false,
-		realtime: new RealTimeHandler(),
 		readOnlyMode: false,
-		viewers: <UserInfo[]>[],
 		isFCSite: window.is_fc_site === "True" ? true : false,
 		activeFolder: useStorage("activeFolder", ""),
 	}),

@@ -128,7 +128,6 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { getUsersInfo } from "@/usersInfo";
 import blockController from "@/utils/blockController";
 import { getBlockInstance, getBlockString, getRootBlockTemplate, isTargetEditable } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
@@ -383,13 +382,6 @@ function initializeCollaboration(pageId: string) {
 }
 
 onActivated(async () => {
-	builderStore.realtime.on("doc_viewers", async (data: { users: [] }) => {
-		builderStore.viewers = await getUsersInfo(
-			data.users.filter((user: string) => user !== sessionUser.value),
-		);
-	});
-	builderStore.realtime.doc_subscribe("Builder Page", route.params.pageId as string);
-	builderStore.realtime.doc_open("Builder Page", route.params.pageId as string);
 	if (route.params.pageId === pageStore.selectedPage) {
 		return;
 	}
@@ -456,10 +448,6 @@ watch(
 );
 
 onDeactivated(() => {
-	builderStore.realtime.doc_close("Builder Page", pageStore.activePage?.name as string);
-	builderStore.realtime.off("doc_viewers", () => {});
-	builderStore.viewers = [];
-
 	// Remove mouse move listener
 	document.removeEventListener("mousemove", debouncedCursorUpdate);
 });
@@ -491,6 +479,10 @@ const usageMessage = computed(() => {
 watch(
 	() => pageCanvas.value?.block,
 	() => {
+		if (isRemoteUpdate.value) {
+			return;
+		}
+
 		if (
 			pageStore.selectedPage &&
 			!pageStore.settingPage &&
@@ -500,13 +492,8 @@ watch(
 			pageStore.savingPage = true;
 			debouncedPageSave();
 
-			// Sync local changes with Yjs if collaboration is enabled and this is not a remote update
-			if (
-				isCollaborationEnabled.value &&
-				!isRemoteUpdate.value &&
-				yjsCollaboration.value &&
-				pageCanvas.value?.block
-			) {
+			// Sync local changes with Yjs if collaboration is enabled
+			if (isCollaborationEnabled.value && yjsCollaboration.value && pageCanvas.value?.block) {
 				try {
 					const blockData = getBlockString(pageCanvas.value.block);
 					yjsCollaboration.value.updateLocalData({

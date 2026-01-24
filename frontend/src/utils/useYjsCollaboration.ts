@@ -136,7 +136,7 @@ export function useYjsCollaboration(options: UseYjsCollaborationOptions): UseYjs
 		// Reset flag after a short delay
 		setTimeout(() => {
 			isLocalUpdate = false;
-		}, 100);
+		}, 10);
 	};
 
 	/**
