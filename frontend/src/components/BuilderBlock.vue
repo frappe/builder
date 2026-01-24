@@ -354,18 +354,20 @@ const allResolvedProps = computed(() => {
 			}),
 		),
 		...Object.fromEntries(
-			Object.entries(props.block.getBlockProps()).map(([key, prop]) => {
-				return [
-					key,
-					getPropValue(
+			Object.entries({ ...props.block.getBlockProps(), ...getParentProps(props.block) }).map(
+				([key, prop]) => {
+					return [
 						key,
-						props.block,
-						getDataScriptValue,
-						(path: string) => getDataForKey({ ...props.blockData }, path), // block props can not refer to own block data items
-						props.defaultProps,
-					),
-				];
-			}),
+						getPropValue(
+							key,
+							props.block,
+							getDataScriptValue,
+							(path: string) => getDataForKey({ ...props.blockData }, path), // block props can not refer to own block data items
+							props.defaultProps,
+						),
+					];
+				},
+			),
 		),
 	};
 });
