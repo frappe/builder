@@ -17,7 +17,7 @@
 				type="text"
 				:modelValue="componentName"
 				@input="(value: string) => (componentName = value)"
-				@keyup.enter.prevent="handleEnterKey"
+				@keydown.enter.prevent="handleEnterKey"
 				label="Component Name"
 				required />
 			<div class="mt-3">
