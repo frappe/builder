@@ -1100,7 +1100,7 @@ const getValueForInheritedProp = (
 	return undefined;
 };
 
-const getParentProps = (baseBlock: Block, baseProps: BlockProps): BlockProps => {
+const getParentProps = (baseBlock: Block, baseProps: BlockProps = {}): BlockProps => {
 	const parentBlock = baseBlock.getParentBlock();
 	if (parentBlock) {
 		const parentProps: BlockProps = {};
@@ -1225,7 +1225,7 @@ const getStandardPropValue = (
 	if (propsOfComponentRoot) {
 		for (const [name, value] of Object.entries(propsOfComponentRoot)) {
 			if (propName === name && value.isStandard) {
-				if (PARSEABLE_STANDARD_TYPES.includes(value.standardOptions?.type || 'string')) {
+				if (PARSEABLE_STANDARD_TYPES.includes(value.standardOptions?.type || "string")) {
 					const parsedValue = value.value
 						? JSON.parse(value.value)
 						: value.standardOptions?.options?.defaultValue || null;
@@ -1267,6 +1267,49 @@ const getDataArray = (collectionObject: Record<string, any>) => {
 	return result;
 };
 
+function executeBlockClientScriptUnrestricted(
+	blockUid: string,
+	userScript: string,
+	props: Record<string, any> = {},
+) {
+	const thisElement = document.querySelector(`[data-block-uid='${blockUid}']`) as HTMLElement;
+	const safeCreateElement = (tagName: string): HTMLElement => {
+		// Restrict to only allow creating elements within the thisElement
+		const el = document.createElement(tagName);
+		el.dataset.createdBy = blockUid;
+		return el;
+	};
+	const documentProxy = new Proxy(document, {
+		get(target, prop: string) {
+			if (prop === "createElement") {
+				return safeCreateElement;
+			}
+			return Reflect.get(target, prop);
+		},
+	});
+	const context = {
+		document: documentProxy,
+		thisRef: thisElement,
+		props,
+	};
+
+	const fn = new Function(
+		"context",
+		`with (context) {
+			return (function() { ${userScript} }).call(thisRef);
+		}`,
+	);
+
+	try {
+		document.querySelectorAll(`[data-created-by='${blockUid}']`).forEach(el => el.remove());
+		fn.call(thisElement, context);
+		console.log("Executed unrestricted user script");
+	} catch (e) {
+		console.error("Error in user script 2:", e);
+		// toast.warning("An error occurred while executing block script: " + (e instanceof Error ? e.message : ""));
+	}
+}
+
 /**
  * Tries to execute user-provided script in a safer environment, (but not guarantee) restricting access to certain DOM properties and methods.
  * It makes the editor canvas as the root (document), and thus limits the script's ability to manipulate the broader document.
@@ -1279,7 +1322,7 @@ const getDataArray = (collectionObject: Record<string, any>) => {
  * @param props - An optional object containing properties to be made available in the script's context.
  */
 
-function saferExecuteBlockClientScript(
+function executeBlockClientScriptRestricted(
 	blockUid: string,
 	userScript: string,
 	props: Record<string, any> = {},
@@ -1466,5 +1509,6 @@ export {
 	getPropValue,
 	getStandardPropValue,
 	getDataArray,
-	saferExecuteBlockClientScript,
+	executeBlockClientScriptUnrestricted,
+	executeBlockClientScriptRestricted,
 };

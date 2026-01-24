@@ -95,10 +95,11 @@
    "label": "Developer Options"
   },
   {
-   "default": "0",
+   "default": "Restricted",
    "fieldname": "execute_block_scripts_in_editor",
-   "fieldtype": "Check",
-   "label": "Execute Block Scripts in Editor"
+   "fieldtype": "Select",
+   "label": "Execute Block Scripts in Editor",
+   "options": "Don't Execute\nRestricted\nUnrestricted"
   },
   {
    "default": "1",
@@ -111,7 +112,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-01-19 22:13:08.784598",
+ "modified": "2026-01-24 12:49:59.610151",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Settings",

@@ -19,7 +19,7 @@ class BuilderSettings(Document):
 		auto_convert_images_to_webp: DF.Check
 		body_html: DF.Code | None
 		default_language: DF.Data | None
-		execute_block_scripts_in_editor: DF.Check
+		execute_block_scripts_in_editor: DF.Literal["Don't Execute", "Restricted", "Unrestricted"]
 		favicon: DF.AttachImage | None
 		head_html: DF.Code | None
 		home_page: DF.Data | None

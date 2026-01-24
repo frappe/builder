@@ -41,7 +41,13 @@
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { setFont } from "@/utils/fontManager";
-import { getDataForKey, getPropValue, saferExecuteBlockClientScript } from "@/utils/helpers";
+import {
+	executeBlockClientScriptRestricted,
+	executeBlockClientScriptUnrestricted,
+	getDataForKey,
+	getParentProps,
+	getPropValue,
+} from "@/utils/helpers";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
 import {
 	computed,
@@ -187,7 +193,8 @@ const attributes = computed(() => {
 			attribs[props.block.getDataKey("property") as string] =
 				value ?? attribs[props.block.getDataKey("property") as string];
 		}
-		props.block.getDynamicValues()
+		props.block
+			.getDynamicValues()
 			?.filter((dataKeyObj: BlockDataKey) => {
 				return dataKeyObj.type === "attribute";
 			})
@@ -250,7 +257,8 @@ const styles = computed(() => {
 				[props.block.getDataKey("property") as string]: value,
 			};
 		}
-		props.block.getDynamicValues()
+		props.block
+			.getDynamicValues()
 			?.filter((dataKeyObj: BlockDataKey) => {
 				return dataKeyObj.type === "style";
 			})
@@ -377,13 +385,16 @@ watch(
 		component,
 		allResolvedProps,
 		() => props.block.getBlockClientScript(),
-		() => Boolean(builderSettings.doc?.execute_block_scripts_in_editor),
+		() => builderSettings.doc?.execute_block_scripts_in_editor,
 		() => pageStore.settingPage,
 	],
 	() => {
-		if (pageStore.settingPage) return;
-		if (builderSettings.doc?.execute_block_scripts_in_editor) {
-			saferExecuteBlockClientScript(uid, props.block.getBlockClientScript(), allResolvedProps.value);
+		if (pageStore.settingPage || !props.block.getBlockClientScript().trim()) return;
+		if (builderSettings.doc?.execute_block_scripts_in_editor !== "Don't Execute") {
+			if (builderSettings.doc?.execute_block_scripts_in_editor === "Restricted")
+				executeBlockClientScriptRestricted(uid, props.block.getBlockClientScript(), allResolvedProps.value);
+			else
+				executeBlockClientScriptUnrestricted(uid, props.block.getBlockClientScript(), allResolvedProps.value);
 		}
 	},
 	{ deep: true },
@@ -413,7 +424,6 @@ watch(
 			blockDataStore.setBlockData(props.block.blockId, {}, "own");
 			return;
 		}
-		console.log("Fetching block data for", allResolvedProps.value, props.blockData);
 		fetchBlockData
 			.fetch({
 				block_id: uid,
