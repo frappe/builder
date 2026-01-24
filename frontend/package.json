@@ -51,7 +51,6 @@
     "vuedraggable": "^4.1.0",
     "webfontloader": "^1.6.28",
     "y-protocols": "^1.0.7",
-    "y-websocket": "^3.0.0",
     "yjs": "^13.6.29"
   },
   "devDependencies": {

@@ -1,9 +1,9 @@
-import { onBeforeUnmount, onMounted, ref, Ref } from "vue";
-import { WebsocketProvider } from "y-websocket";
+import { getCurrentInstance, onBeforeUnmount, onMounted, ref, Ref } from "vue";
 import * as Y from "yjs";
+import { FrappeSocketProvider } from "./FrappeSocketProvider";
 import {
 	cleanupYjs,
-	createWebsocketProvider,
+	createFrappeSocketProvider,
 	createYjsDocument,
 	generateUserColor,
 	getRemoteUsers,
@@ -20,14 +20,13 @@ export interface UseYjsCollaborationOptions {
 	userId: string;
 	userName: string;
 	userImage?: string;
-	websocketUrl?: string;
 	onRemoteUpdate?: (data: any) => void;
 	onAwarenessChange?: (users: Map<number, UserAwareness>) => void;
 }
 
 export interface UseYjsCollaborationReturn {
 	ydoc: Ref<Y.Doc | null>;
-	provider: Ref<WebsocketProvider | null>;
+	provider: Ref<FrappeSocketProvider | null>;
 	isConnected: Ref<boolean>;
 	isSynced: Ref<boolean>;
 	remoteUsers: Ref<Map<number, UserAwareness>>;
@@ -43,7 +42,7 @@ export interface UseYjsCollaborationReturn {
 export function useYjsCollaboration(options: UseYjsCollaborationOptions): UseYjsCollaborationReturn {
 	console.log("useYjsCollaboration called with options:", options);
 	const ydoc = ref<Y.Doc | null>(null);
-	const provider = ref<WebsocketProvider | null>(null);
+	const provider = ref<FrappeSocketProvider | null>(null);
 	const isConnected = ref(false);
 	const isSynced = ref(false);
 	const remoteUsers = ref<Map<number, UserAwareness>>(new Map());
@@ -57,16 +56,29 @@ export function useYjsCollaboration(options: UseYjsCollaborationOptions): UseYjs
 	 * Initialize Yjs document and provider
 	 */
 	const initialize = () => {
+		// Get Frappe's existing socket from Vue global properties
+		const instance = getCurrentInstance();
+		const $socket = instance?.appContext.config.globalProperties.$socket;
+
+		if (!$socket) {
+			console.error("Frappe socket ($socket) not available");
+			return;
+		}
+
 		// Create Yjs document
 		console.log("Initializing Yjs collaboration for document:", options.documentName);
 		ydoc.value = createYjsDocument();
 		ymap = ydoc.value.getMap("pageData");
 
-		// Create WebSocket provider
-		provider.value = createWebsocketProvider(ydoc.value, options.documentName, options.websocketUrl);
+		// Create Frappe Socket.IO provider with existing socket
+		provider.value = createFrappeSocketProvider(
+			ydoc.value,
+			options.documentName,
+			$socket, // Pass Frappe's existing socket
+		) as FrappeSocketProvider;
 
 		// Set up awareness for user presence
-		if (provider.value.awareness) {
+		if (provider.value?.awareness) {
 			setupAwareness(
 				provider.value.awareness,
 				options.userId,
@@ -77,12 +89,12 @@ export function useYjsCollaboration(options: UseYjsCollaborationOptions): UseYjs
 		}
 
 		// Listen to connection status
-		provider.value.on("status", (event: { status: string }) => {
+		provider.value?.on("status", (event: { status: string }) => {
 			isConnected.value = event.status === "connected";
 		});
 
 		// Listen to sync status
-		provider.value.on("sync", (syncStatus: boolean) => {
+		provider.value?.on("synced", (syncStatus: boolean) => {
 			isSynced.value = syncStatus;
 		});
 
@@ -95,7 +107,7 @@ export function useYjsCollaboration(options: UseYjsCollaborationOptions): UseYjs
 		});
 
 		// Listen to awareness changes (user presence)
-		if (provider.value.awareness) {
+		if (provider.value?.awareness) {
 			provider.value.awareness.on("change", () => {
 				if (provider.value?.awareness) {
 					remoteUsers.value = getRemoteUsers(provider.value.awareness);
@@ -160,11 +172,12 @@ export function useYjsCollaboration(options: UseYjsCollaborationOptions): UseYjs
 	// Cleanup function
 	const cleanup = () => {
 		if (provider.value && ydoc.value) {
+			const prov = provider.value as FrappeSocketProvider;
 			// Set local awareness state to null before destroying to signal disconnect
-			if (provider.value.awareness) {
-				provider.value.awareness.setLocalState(null);
+			if (prov.awareness) {
+				prov.awareness.setLocalState(null);
 			}
-			cleanupYjs(provider.value, ydoc.value);
+			cleanupYjs(prov, ydoc.value);
 		}
 	};
 
@@ -181,7 +194,7 @@ export function useYjsCollaboration(options: UseYjsCollaborationOptions): UseYjs
 
 	return {
 		ydoc,
-		provider,
+		provider: provider as Ref<FrappeSocketProvider | null>,
 		isConnected,
 		isSynced,
 		remoteUsers,

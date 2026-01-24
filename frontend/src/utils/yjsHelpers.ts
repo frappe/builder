@@ -1,12 +1,7 @@
+import { Socket } from "socket.io-client";
 import { Awareness } from "y-protocols/awareness";
-import { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
-
-export interface YjsConfig {
-	documentName: string;
-	websocketUrl?: string;
-	awareness?: Awareness;
-}
+import { FrappeSocketProvider } from "./FrappeSocketProvider";
 
 export interface UserAwareness {
 	userId: string;
@@ -49,34 +44,24 @@ export function createYjsDocument(): Y.Doc {
 }
 
 /**
- * Create a WebSocket provider for Yjs
- * This connects to a WebSocket server for syncing the document
+ * Create a Frappe Socket.IO provider for Yjs
+ * This connects to Frappe's realtime socket.io service for syncing the document
  */
-export function createWebsocketProvider(
+export function createFrappeSocketProvider(
 	doc: Y.Doc,
 	documentName: string,
-	websocketUrl?: string,
-): WebsocketProvider {
-	// Default to the Frappe websocket if not provided
-	const wsUrl = "ws://localhost:1234" || getDefaultWebsocketUrl();
-
-	const provider = new WebsocketProvider(wsUrl, documentName, doc, {
-		connect: true,
+	socket: Socket,
+): FrappeSocketProvider {
+	const provider = new FrappeSocketProvider(documentName, doc, socket, {
+		autoConnect: true,
 		awareness: new Awareness(doc),
+		resyncInterval: 5000,
 	});
 
 	return provider;
 }
 
-/**
- * Get the default WebSocket URL from the current window location
- */
-function getDefaultWebsocketUrl(): string {
-	const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-	const host = window.location.host;
-	console.log("Default WebSocket URL:", `${protocol}//${host}`);
-	return `${protocol}//${host}`;
-}
+// Remove unused getDefaultSocketUrl function
 
 /**
  * Sync Yjs Map with a JavaScript object
@@ -197,8 +182,9 @@ export function getRemoteUsers(awareness: Awareness): Map<number, UserAwareness>
 /**
  * Clean up Yjs resources
  */
-export function cleanupYjs(provider: WebsocketProvider, doc: Y.Doc): void {
+export function cleanupYjs(provider: FrappeSocketProvider, doc: Y.Doc): void {
 	provider.awareness?.destroy();
+	provider.disconnect();
 	provider.destroy();
 	doc.destroy();
 }
