@@ -10,12 +10,14 @@
 					onClick: createComponentHandler,
 				},
 			],
-		}">
+		}" 
+		v-model="showDialog">
 		<template #body-content>
 			<BuilderInput
 				type="text"
 				:modelValue="componentName"
 				@input="(value: string) => (componentName = value)"
+				@keyup.enter.prevent="handleEnterKey"
 				label="Component Name"
 				required />
 			<div class="mt-3">
@@ -50,6 +52,14 @@ const props = defineProps<{
 
 const componentName = ref("");
 const isGlobalComponent = ref(0);
+
+const showDialog = defineModel<boolean>();
+
+const handleEnterKey = () => {
+	if (componentName.value.trim()) {
+		createComponentHandler({ close: () => (showDialog.value = false) });
+	}
+};
 
 const createComponentHandler = async (context: { close: () => void }) => {
 	const blockCopy = getBlockCopy(props.block, true);
