@@ -129,7 +129,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import blockController from "@/utils/blockController";
-import { getBlockInstance, getBlockString, getRootBlockTemplate, isTargetEditable } from "@/utils/helpers";
+import { getBlockInstance, getBlockObject, getRootBlockTemplate, isTargetEditable } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
 import { useYjsCollaboration } from "@/utils/useYjsCollaboration";
 import { UserAwareness } from "@/utils/yjsHelpers";
@@ -335,10 +335,11 @@ function initializeCollaboration(pageId: string) {
 			userImage: undefined,
 			onRemoteUpdate: (data) => {
 				// Handle remote updates from other users
-				if (data.blocks && canvasStore.editingMode === "page") {
+				const clonedBlocks = JSON.parse(JSON.stringify(data.blocks));
+				if (clonedBlocks && canvasStore.editingMode === "page") {
 					isRemoteUpdate.value = true;
 					try {
-						const blockInstance = getBlockInstance(data.blocks);
+						const blockInstance = getBlockInstance(clonedBlocks);
 						if (pageCanvas.value && blockInstance) {
 							pageCanvas.value.setRootBlock(blockInstance);
 						}
@@ -356,6 +357,7 @@ function initializeCollaboration(pageId: string) {
 				remoteUsers.value = users;
 			},
 		});
+
 		isCollaborationEnabled.value = true;
 	} catch (error) {
 		console.error("Failed to initialize Yjs collaboration:", error);
@@ -442,6 +444,19 @@ watchEffect(() => {
 });
 
 const debouncedPageSave = useDebounceFn(pageStore.savePage, 300);
+const debouncedYjsSync = useDebounceFn((blockData: BlockOptions) => {
+	if (isCollaborationEnabled.value && yjsCollaboration.value) {
+		try {
+			yjsCollaboration.value.updateLocalData({
+				blocks: blockData,
+				lastModified: new Date().toISOString(),
+				modifiedBy: sessionUser.value,
+			});
+		} catch (error) {
+			console.error("Error syncing with Yjs:", error);
+		}
+	}
+}, 50);
 
 const usageMessage = computed(() => {
 	if (usageCount.value === 0) {
@@ -469,17 +484,10 @@ watch(
 			pageStore.savingPage = true;
 			debouncedPageSave();
 
-			if (isCollaborationEnabled.value && yjsCollaboration.value && pageCanvas.value?.block) {
-				try {
-					const blockData = getBlockString(pageCanvas.value.block);
-					yjsCollaboration.value.updateLocalData({
-						blocks: blockData,
-						lastModified: new Date().toISOString(),
-						modifiedBy: sessionUser.value,
-					});
-				} catch (error) {
-					console.error("Error syncing with Yjs:", error);
-				}
+			if (pageCanvas.value?.block) {
+				const blockData = getBlockObject(pageCanvas.value.block);
+				console.log("Local change detected, syncing with Yjs:", blockData);
+				debouncedYjsSync(blockData);
 			}
 		}
 	},

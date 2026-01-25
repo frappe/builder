@@ -85,7 +85,8 @@ export function useYjsCollaboration(options: UseYjsCollaborationOptions): UseYjs
 
 		ymap.observe((event, transaction) => {
 			if (transaction.origin !== "local" && options.onRemoteUpdate) {
-				const data = yMapToObject(ymap!);
+				const data = event.target.toJSON();
+				console.log("Remote Yjs update received:", data);
 				options.onRemoteUpdate(data);
 			}
 		});
