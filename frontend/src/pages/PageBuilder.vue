@@ -247,7 +247,7 @@ const debouncedCursorUpdate = useDebounceFn((e: MouseEvent) => {
 			});
 		}
 	}
-}, 16);
+}, 10);
 
 async function saveAndExitFragmentMode(e: Event) {
 	await canvasStore.fragmentData.saveAction?.(fragmentCanvas.value?.getRootBlock());
@@ -441,7 +441,8 @@ watch(
 	(selectedIds) => {
 		if (isCollaborationEnabled.value && yjsCollaboration.value && selectedIds) {
 			// Convert Set to Array for Yjs
-			yjsCollaboration.value.updateLocalSelection(Array.from(selectedIds));
+			const activeBreakpoint = pageCanvas.value?.activeBreakpoint || "desktop";
+			yjsCollaboration.value.updateLocalSelection(Array.from(selectedIds), activeBreakpoint);
 		}
 	},
 	{ deep: true },

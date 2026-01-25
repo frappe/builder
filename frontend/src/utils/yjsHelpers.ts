@@ -14,6 +14,7 @@ export interface UserAwareness {
 	};
 	selection?: {
 		blockIds: Set<string>;
+		activeBreakpoint?: string;
 	};
 }
 
@@ -26,7 +27,6 @@ export function generateUserColor(): string {
 		"#4ECDC4",
 		"#45B7D1",
 		"#FFA07A",
-		"#98D8C8",
 		"#F7DC6F",
 		"#BB8FCE",
 		"#85C1E2",
@@ -123,7 +123,7 @@ export function setupAwareness(
 		userColor: color,
 		userImage,
 		cursor: null,
-		selection: { blockIds: [] },
+		selection: { blockIds: [], activeBreakpoint: "desktop" },
 	});
 }
 
@@ -148,12 +148,13 @@ export function updateCursor(
 /**
  * Update user's selection in awareness
  */
-export function updateSelection(awareness: Awareness, blockIds: string[]): void {
+export function updateSelection(awareness: Awareness, blockIds: string[], activeBreakpoint?: string): void {
 	const currentState = awareness.getLocalState();
 	awareness.setLocalState({
 		...currentState,
 		selection: {
 			blockIds,
+			activeBreakpoint: activeBreakpoint || "desktop",
 		},
 	});
 }

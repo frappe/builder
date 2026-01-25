@@ -32,7 +32,7 @@ export interface UseYjsCollaborationReturn {
 	remoteUsers: Ref<Map<number, UserAwareness>>;
 	updateLocalData: (data: any) => void;
 	updateLocalCursor: (blockId: string | null, position: { x: number; y: number } | null) => void;
-	updateLocalSelection: (blockIds: string[]) => void;
+	updateLocalSelection: (blockIds: string[], activeBreakpoint?: string) => void;
 	getData: () => any;
 }
 
@@ -151,9 +151,9 @@ export function useYjsCollaboration(options: UseYjsCollaborationOptions): UseYjs
 	/**
 	 * Update local selection
 	 */
-	const updateLocalSelection = (blockIds: string[]) => {
+	const updateLocalSelection = (blockIds: string[], activeBreakpoint?: string) => {
 		if (provider.value?.awareness) {
-			updateSelection(provider.value.awareness, blockIds);
+			updateSelection(provider.value.awareness, blockIds, activeBreakpoint);
 		}
 	};
 

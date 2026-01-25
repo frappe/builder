@@ -87,9 +87,12 @@ const isSelected = ref(false);
 const isBlockSelectedByRemoteUser = computed(() => {
 	if (!remoteUsers.value || remoteUsers.value.size === 0) return false;
 
-	// Find the first remote user who has this block selected
+	// Find the first remote user who has this block selected on the same breakpoint
 	for (const [_, user] of remoteUsers.value.entries()) {
-		if (user.selection?.blockIds?.includes(props.block.blockId)) {
+		if (
+			user.selection?.blockIds?.includes(props.block.blockId) &&
+			user.selection?.activeBreakpoint === props.breakpoint
+		) {
 			return Boolean(user);
 		}
 	}
