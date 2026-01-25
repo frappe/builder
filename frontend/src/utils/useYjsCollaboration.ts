@@ -43,7 +43,7 @@ export function useYjsCollaboration(options: UseYjsCollaborationOptions): UseYjs
 	const isConnected = ref(false);
 	const isSynced = ref(false);
 	const remoteUsers = ref<Map<number, UserAwareness>>(new Map());
-	const userColor = ref(generateUserColor());
+	const userColor = ref(generateUserColor(options.userId));
 
 	let ymap: Y.Map<any> | null = null;
 

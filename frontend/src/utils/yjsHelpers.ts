@@ -8,6 +8,7 @@ export interface UserAwareness {
 	userName: string;
 	userColor: string;
 	userImage?: string;
+	lastActive?: number; // Timestamp to track the most recently active tab
 	cursor?: {
 		blockId: string | null;
 		position: { x: number; y: number } | null;
@@ -18,7 +19,7 @@ export interface UserAwareness {
 	};
 }
 
-export function generateUserColor(): string {
+export function generateUserColor(userId?: string): string {
 	const colors = [
 		"#FF6B6B",
 		"#4ECDC4",
@@ -30,20 +31,22 @@ export function generateUserColor(): string {
 		"#F8B739",
 		"#52B788",
 	];
+
+	if (userId) {
+		let hash = 0;
+		for (let i = 0; i < userId.length; i++) {
+			hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+		}
+		return colors[Math.abs(hash) % colors.length];
+	}
+
 	return colors[Math.floor(Math.random() * colors.length)];
 }
 
-/**
- * Create a new Yjs document
- */
 export function createYjsDocument(): Y.Doc {
 	return new Y.Doc();
 }
 
-/**
- * Create a Frappe Socket.IO provider for Yjs
- * This connects to Frappe's realtime socket.io service for syncing the document
- */
 export function createFrappeSocketProvider(
 	doc: Y.Doc,
 	documentName: string,
@@ -59,7 +62,6 @@ export function createFrappeSocketProvider(
 }
 
 export function syncYMapWithObject(ymap: Y.Map<any>, obj: any) {
-	// Remove keys that don't exist in the object
 	ymap.forEach((value, key) => {
 		if (!(key in obj)) {
 			ymap.delete(key);
@@ -106,6 +108,7 @@ export function setupAwareness(
 		userName,
 		userColor: color,
 		userImage,
+		lastActive: Date.now(),
 		cursor: null,
 		selection: { blockIds: [], activeBreakpoint: "desktop" },
 	});
@@ -119,6 +122,7 @@ export function updateCursor(
 	const currentState = awareness.getLocalState();
 	awareness.setLocalState({
 		...currentState,
+		lastActive: Date.now(),
 		cursor: {
 			blockId,
 			position,
@@ -130,6 +134,7 @@ export function updateSelection(awareness: Awareness, blockIds: string[], active
 	const currentState = awareness.getLocalState();
 	awareness.setLocalState({
 		...currentState,
+		lastActive: Date.now(),
 		selection: {
 			blockIds,
 			activeBreakpoint: activeBreakpoint || "desktop",
@@ -138,17 +143,38 @@ export function updateSelection(awareness: Awareness, blockIds: string[], active
 }
 
 export function getRemoteUsers(awareness: Awareness): Map<number, UserAwareness> {
-	const remoteStates = new Map<number, UserAwareness>();
-	const states = awareness.getStates();
+	const localUserId = (awareness.getLocalState() as UserAwareness)?.userId;
+	const userMap = new Map<string, { clientId: number; state: UserAwareness }>();
 
-	states.forEach((state, clientId) => {
-		// Skip local client and clients with null/undefined state (disconnected)
-		if (clientId !== awareness.clientID && state && Object.keys(state).length > 0) {
-			remoteStates.set(clientId, state as UserAwareness);
+	awareness.getStates().forEach((state, clientId) => {
+		const userState = state as UserAwareness;
+
+		const isLocalClient = clientId === awareness.clientID;
+		const isEmptyState = !state || Object.keys(state).length === 0;
+		const isCurrentUser = userState.userId === localUserId;
+
+		if (isLocalClient || isEmptyState || isCurrentUser) {
+			return;
+		}
+
+		if (!userState.userId) {
+			return;
+		}
+
+		const existing = userMap.get(userState.userId);
+		const isMoreRecent = !existing || (userState.lastActive || 0) > (existing.state.lastActive || 0);
+
+		if (isMoreRecent) {
+			userMap.set(userState.userId, { clientId, state: userState });
 		}
 	});
 
-	return remoteStates;
+	const result = new Map<number, UserAwareness>();
+	userMap.forEach(({ clientId, state }) => {
+		result.set(clientId, state);
+	});
+
+	return result;
 }
 
 export function cleanupYjs(provider: FrappeSocketProvider, doc: Y.Doc): void {
