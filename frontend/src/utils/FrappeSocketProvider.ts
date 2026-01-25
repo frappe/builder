@@ -31,6 +31,8 @@ export class FrappeSocketProvider {
 	private resyncInterval: number;
 	private resyncTimer: ReturnType<typeof setInterval> | null = null;
 	private eventHandlers: Map<string, Set<(...args: any[]) => void>> = new Map();
+	private updateThrottleTimer: ReturnType<typeof setTimeout> | null = null;
+	private pendingUpdate: Uint8Array | null = null;
 
 	constructor(roomName: string, doc: Y.Doc, socket: Socket, options: FrappeSocketProviderOptions = {}) {
 		this.roomName = roomName;
@@ -80,6 +82,11 @@ export class FrappeSocketProvider {
 		if (this.resyncTimer) {
 			clearInterval(this.resyncTimer);
 			this.resyncTimer = null;
+		}
+
+		if (this.updateThrottleTimer) {
+			clearTimeout(this.updateThrottleTimer);
+			this.updateThrottleTimer = null;
 		}
 
 		// Remove our event listeners but don't disconnect the socket
@@ -171,7 +178,7 @@ export class FrappeSocketProvider {
 	};
 
 	/**
-	 * Handle document updates
+	 * Handle document updates (throttled for performance)
 	 */
 	private onDocUpdate = (update: Uint8Array, origin: any): void => {
 		// Don't send updates that came from the socket
@@ -179,13 +186,28 @@ export class FrappeSocketProvider {
 			return;
 		}
 
-		// Encode and send the update
-		const encoder = encoding.createEncoder();
-		encoding.writeVarUint(encoder, MESSAGE_SYNC);
-		syncProtocol.writeUpdate(encoder, update);
-		const message = encoding.toUint8Array(encoder);
+		// Store the latest update
+		this.pendingUpdate = update;
 
-		this.socket.emit("yjs-message", Array.from(message));
+		// Clear existing timer
+		if (this.updateThrottleTimer) {
+			clearTimeout(this.updateThrottleTimer);
+		}
+
+		// Throttle updates to batch rapid changes (~60fps for near-instant feel)
+		this.updateThrottleTimer = setTimeout(() => {
+			if (this.pendingUpdate) {
+				// Encode and send the update
+				const encoder = encoding.createEncoder();
+				encoding.writeVarUint(encoder, MESSAGE_SYNC);
+				syncProtocol.writeUpdate(encoder, this.pendingUpdate);
+				const message = encoding.toUint8Array(encoder);
+
+				this.socket.emit("yjs-message", Array.from(message));
+				this.pendingUpdate = null;
+			}
+			this.updateThrottleTimer = null;
+		}, 16); // 16ms = ~60fps
 	};
 
 	/**

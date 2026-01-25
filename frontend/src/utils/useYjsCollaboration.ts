@@ -50,7 +50,6 @@ export function useYjsCollaboration(options: UseYjsCollaborationOptions): UseYjs
 
 	// Y.Map to store the page data
 	let ymap: Y.Map<any> | null = null;
-	let isLocalUpdate = false;
 
 	/**
 	 * Initialize Yjs document and provider
@@ -99,8 +98,8 @@ export function useYjsCollaboration(options: UseYjsCollaborationOptions): UseYjs
 		});
 
 		// Listen to remote updates on the Y.Map
-		ymap.observe((event) => {
-			if (!isLocalUpdate && options.onRemoteUpdate) {
+		ymap.observe((event, transaction) => {
+			if (transaction.origin !== "local" && options.onRemoteUpdate) {
 				const data = yMapToObject(ymap!);
 				options.onRemoteUpdate(data);
 			}
@@ -119,24 +118,14 @@ export function useYjsCollaboration(options: UseYjsCollaborationOptions): UseYjs
 		}
 	};
 
-	/**
-	 * Update local data and sync with Yjs
-	 */
 	const updateLocalData = (data: any) => {
-		if (!ymap) return;
+		if (!ymap || !ydoc.value) return;
 
-		// Set flag to prevent triggering remote update callback
-		isLocalUpdate = true;
-
-		// Sync the data to Y.Map in a transaction
-		ydoc.value?.transact(() => {
+		// Sync the data to Y.Map in a transaction with 'local' origin
+		// This prevents the observe handler from triggering the remote update callback
+		ydoc.value.transact(() => {
 			syncYMapWithObject(ymap!, data);
-		});
-
-		// Reset flag after a short delay
-		setTimeout(() => {
-			isLocalUpdate = false;
-		}, 10);
+		}, "local");
 	};
 
 	/**

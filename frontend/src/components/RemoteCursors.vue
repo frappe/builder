@@ -41,7 +41,7 @@ const props = defineProps({
 		required: true,
 	},
 	canvasProps: {
-		type: Object as PropType<any>,
+		type: Object as PropType<CanvasProps>,
 		required: true,
 	},
 	canvasElement: {

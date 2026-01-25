@@ -1,127 +1,168 @@
-/**
- * Yjs Collaboration handlers for Frappe Socket.IO
- *
- * This module handles Yjs collaboration messages through Frappe's existing socket.io infrastructure
- * instead of using a separate WebSocket server.
- */
-
 const Y = require("yjs");
 const syncProtocol = require("y-protocols/sync");
 const awarenessProtocol = require("y-protocols/awareness");
 const encoding = require("lib0/encoding");
 const decoding = require("lib0/decoding");
 
-// Store documents in memory
-const docs = new Map();
-const awareness_map = new Map();
-const roomSockets = new Map(); // Map of docname to socket for broadcasting
-
-// Message types
 const MESSAGE_SYNC = 0;
 const MESSAGE_AWARENESS = 1;
 
-/**
- * Get or create a Yjs document
- */
-function getYDoc(docname) {
-	let doc = docs.get(docname);
-	if (!doc) {
-		doc = new Y.Doc();
-		doc.gc = true;
-		docs.set(docname, doc);
+class YjsDocumentManager {
+	constructor() {
+		this.docs = new Map();
+		this.awarenessMap = new Map();
+		this.roomSockets = new Map();
+	}
 
-		// Set up document update listener to broadcast changes
-		doc.on("update", (update, origin) => {
-			// Don't broadcast if the update came from a socket (to avoid loops)
-			if (origin !== "socket") {
-				broadcastUpdate(docname, update);
-			}
+	getDoc(docname) {
+		let doc = this.docs.get(docname);
+		if (!doc) {
+			doc = new Y.Doc();
+			doc.gc = true;
+			this.docs.set(docname, doc);
+
+			doc.on("update", (update, origin) => {
+				if (origin !== "socket") {
+					this.broadcastUpdate(docname, update);
+				}
+			});
+		}
+		return doc;
+	}
+
+	getAwareness(docname, doc) {
+		let awareness = this.awarenessMap.get(docname);
+		if (!awareness) {
+			awareness = new awarenessProtocol.Awareness(doc);
+			this.awarenessMap.set(docname, awareness);
+
+			awareness.on("update", ({ added, updated, removed }) => {
+				const changedClients = added.concat(updated).concat(removed);
+				this.broadcastAwareness(docname, awareness, changedClients);
+			});
+		}
+		return awareness;
+	}
+
+	registerSocket(docname, socket) {
+		if (!this.roomSockets.has(docname)) {
+			this.roomSockets.set(docname, socket);
+		}
+	}
+
+	broadcastUpdate(docname, update) {
+		const message = this._encodeMessage(MESSAGE_SYNC, (encoder) => {
+			syncProtocol.writeUpdate(encoder, update);
 		});
+		this._emitToRoom(docname, message);
 	}
-	return doc;
-}
 
-/**
- * Get or create awareness for a document
- */
-function getAwareness(docname, doc) {
-	let awareness = awareness_map.get(docname);
-	if (!awareness) {
-		awareness = new awarenessProtocol.Awareness(doc);
-		awareness_map.set(docname, awareness);
-
-		// Broadcast awareness updates
-		awareness.on("update", ({ added, updated, removed }) => {
-			const changedClients = added.concat(updated).concat(removed);
-			broadcastAwareness(docname, awareness, changedClients);
+	broadcastAwareness(docname, awareness, changedClients) {
+		const message = this._encodeMessage(MESSAGE_AWARENESS, (encoder) => {
+			encoding.writeVarUint8Array(
+				encoder,
+				awarenessProtocol.encodeAwarenessUpdate(awareness, changedClients),
+			);
 		});
+		this._emitToRoom(docname, message);
 	}
-	return awareness;
-}
 
-/**
- * Broadcast document update to all connected clients
- */
-function broadcastUpdate(docname, update) {
-	const encoder = encoding.createEncoder();
-	encoding.writeVarUint(encoder, MESSAGE_SYNC);
-	syncProtocol.writeUpdate(encoder, update);
-	const message = encoding.toUint8Array(encoder);
-
-	// Broadcast to all clients in the document room except sender
-	const socket = roomSockets.get(docname);
-	if (socket) {
-		socket.to(docname).emit("yjs-message", Array.from(message));
+	cleanupAwareness(docname, socketId) {
+		const awareness = this.awarenessMap.get(docname);
+		if (awareness) {
+			const states = Array.from(awareness.getStates().keys());
+			const clientsToRemove = states.filter((clientId) => {
+				const state = awareness.getStates().get(clientId);
+				return state?.socketId === socketId;
+			});
+			awarenessProtocol.removeAwarenessStates(awareness, clientsToRemove, null);
+		}
 	}
-}
 
-/**
- * Broadcast awareness update to all connected clients
- */
-function broadcastAwareness(docname, awareness, changedClients) {
-	const encoder = encoding.createEncoder();
-	encoding.writeVarUint(encoder, MESSAGE_AWARENESS);
-	encoding.writeVarUint8Array(encoder, awarenessProtocol.encodeAwarenessUpdate(awareness, changedClients));
-	const message = encoding.toUint8Array(encoder);
+	_encodeMessage(messageType, writeCallback) {
+		const encoder = encoding.createEncoder();
+		encoding.writeVarUint(encoder, messageType);
+		writeCallback(encoder);
+		return Array.from(encoding.toUint8Array(encoder));
+	}
 
-	// Broadcast to all clients in the document room except sender
-	const socket = roomSockets.get(docname);
-	if (socket) {
-		socket.to(docname).emit("yjs-message", Array.from(message));
+	_emitToRoom(docname, message) {
+		const socket = this.roomSockets.get(docname);
+		if (socket) {
+			socket.to(docname).emit("yjs-message", message);
+		}
 	}
 }
 
-/**
- * Main handler function that gets called for each socket connection
- */
-module.exports = function (socket) {
-	console.log("Builder realtime handler initialized for socket:", socket.id);
+class YjsMessageHandler {
+	constructor(docManager) {
+		this.docManager = docManager;
+	}
 
-	// Listen for Yjs collaboration requests
-	socket.on("yjs-connect", (data) => {
-		const docname = data.docname;
+	handleConnect(socket, docname) {
 		console.log(`Yjs client connecting to document: ${docname}`);
-
-		// Join the document room
 		socket.join(docname);
+		this.docManager.registerSocket(docname, socket);
 
-		// Store socket for broadcasting (any socket in the room can be used)
-		if (!roomSockets.has(docname)) {
-			roomSockets.set(docname, socket);
+		const doc = this.docManager.getDoc(docname);
+		const awareness = this.docManager.getAwareness(docname, doc);
+
+		this._sendSyncStep1(socket, doc);
+		this._sendAwarenessStates(socket, awareness);
+
+		socket.yjs_docname = docname;
+	}
+
+	handleMessage(socket, message) {
+		const docname = socket.yjs_docname;
+		if (!docname) {
+			console.warn("Received yjs-message without active document");
+			return;
 		}
 
-		// Get or create the Yjs document
-		const doc = getYDoc(docname);
-		const awareness = getAwareness(docname, doc);
+		const doc = this.docManager.getDoc(docname);
+		const awareness = this.docManager.getAwareness(docname, doc);
+		const uint8Message = new Uint8Array(message);
+		const decoder = decoding.createDecoder(uint8Message);
+		const messageType = decoding.readVarUint(decoder);
 
-		// Send initial sync state
+		switch (messageType) {
+			case MESSAGE_SYNC:
+				this._handleSyncMessage(socket, decoder, doc);
+				break;
+			case MESSAGE_AWARENESS:
+				this._handleAwarenessMessage(socket, decoder, awareness, docname, message);
+				break;
+			default:
+				console.warn(`Unknown Yjs message type: ${messageType}`);
+		}
+	}
+
+	handleDisconnect(socket) {
+		const docname = socket.yjs_docname;
+		if (docname) {
+			console.log(`Yjs client disconnected from document: ${docname}`);
+			this.docManager.cleanupAwareness(docname, socket.id);
+		}
+	}
+
+	handleExplicitDisconnect(socket) {
+		const docname = socket.yjs_docname;
+		if (docname) {
+			console.log(`Yjs client explicitly disconnecting from document: ${docname}`);
+			socket.leave(docname);
+			delete socket.yjs_docname;
+		}
+	}
+
+	_sendSyncStep1(socket, doc) {
 		const encoder = encoding.createEncoder();
 		encoding.writeVarUint(encoder, MESSAGE_SYNC);
 		syncProtocol.writeSyncStep1(encoder, doc);
-		const syncMessage = encoding.toUint8Array(encoder);
-		socket.emit("yjs-message", Array.from(syncMessage));
+		socket.emit("yjs-message", Array.from(encoding.toUint8Array(encoder)));
+	}
 
-		// Send current awareness states
+	_sendAwarenessStates(socket, awareness) {
 		const awarenessStates = awareness.getStates();
 		if (awarenessStates.size > 0) {
 			const encoder = encoding.createEncoder();
@@ -132,85 +173,43 @@ module.exports = function (socket) {
 			);
 			socket.emit("yjs-message", Array.from(encoding.toUint8Array(encoder)));
 		}
+	}
 
-		// Store document name on socket for cleanup
-		socket.yjs_docname = docname;
-	});
-
-	// Listen for Yjs messages
-	socket.on("yjs-message", (message) => {
-		const docname = socket.yjs_docname;
-		if (!docname) {
-			console.warn("Received yjs-message without active document");
-			return;
-		}
-
-		const doc = getYDoc(docname);
-		const awareness = getAwareness(docname, doc);
-
-		// Convert message array back to Uint8Array
-		const uint8Message = new Uint8Array(message);
-		const decoder = decoding.createDecoder(uint8Message);
+	_handleSyncMessage(socket, decoder, doc) {
 		const encoder = encoding.createEncoder();
-		const messageType = decoding.readVarUint(decoder);
+		encoding.writeVarUint(encoder, MESSAGE_SYNC);
+		syncProtocol.readSyncMessage(decoder, encoder, doc, "socket");
 
-		switch (messageType) {
-			case MESSAGE_SYNC:
-				encoding.writeVarUint(encoder, MESSAGE_SYNC);
-				// Apply the sync message and mark origin as "socket" to prevent re-broadcast
-				syncProtocol.readSyncMessage(decoder, encoder, doc, "socket");
-
-				// Send response if there's data to send
-				if (encoding.length(encoder) > 1) {
-					socket.emit("yjs-message", Array.from(encoding.toUint8Array(encoder)));
-				}
-				break;
-
-			case MESSAGE_AWARENESS:
-				// Apply awareness update locally
-				awarenessProtocol.applyAwarenessUpdate(
-					awareness,
-					decoding.readVarUint8Array(decoder),
-					socket,
-				);
-
-				// Broadcast the awareness update to all other clients in the room
-				socket.to(docname).emit("yjs-message", message);
-				break;
-
-			default:
-				console.warn(`Unknown Yjs message type: ${messageType}`);
+		if (encoding.length(encoder) > 1) {
+			socket.emit("yjs-message", Array.from(encoding.toUint8Array(encoder)));
 		}
+	}
+
+	_handleAwarenessMessage(socket, decoder, awareness, docname, message) {
+		awarenessProtocol.applyAwarenessUpdate(awareness, decoding.readVarUint8Array(decoder), socket);
+		socket.to(docname).emit("yjs-message", message);
+	}
+}
+
+const docManager = new YjsDocumentManager();
+const messageHandler = new YjsMessageHandler(docManager);
+
+module.exports = function (socket) {
+	console.log("Builder realtime handler initialized for socket:", socket.id);
+
+	socket.on("yjs-connect", (data) => {
+		messageHandler.handleConnect(socket, data.docname);
 	});
 
-	// Clean up on disconnect
+	socket.on("yjs-message", (message) => {
+		messageHandler.handleMessage(socket, message);
+	});
+
 	socket.on("disconnect", () => {
-		const docname = socket.yjs_docname;
-		if (docname) {
-			console.log(`Yjs client disconnected from document: ${docname}`);
-			const awareness = awareness_map.get(docname);
-			if (awareness) {
-				// Remove the client's awareness state
-				const states = Array.from(awareness.getStates().keys());
-				awarenessProtocol.removeAwarenessStates(
-					awareness,
-					states.filter((clientId) => {
-						const state = awareness.getStates().get(clientId);
-						return state?.socketId === socket.id;
-					}),
-					null,
-				);
-			}
-		}
+		messageHandler.handleDisconnect(socket);
 	});
 
-	// Cleanup Yjs connection
 	socket.on("yjs-disconnect", () => {
-		const docname = socket.yjs_docname;
-		if (docname) {
-			console.log(`Yjs client explicitly disconnecting from document: ${docname}`);
-			socket.leave(docname);
-			delete socket.yjs_docname;
-		}
+		messageHandler.handleExplicitDisconnect(socket);
 	});
 };
