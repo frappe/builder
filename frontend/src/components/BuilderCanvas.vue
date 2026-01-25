@@ -41,12 +41,6 @@
 				v-for="breakpoint in renderedBreakpoints"
 				v-show="breakpoint.visible"
 				:key="breakpoint.device">
-				<!-- Remote cursors positioned relative to canvas content -->
-				<RemoteCursors
-					v-if="isCollaborationEnabled"
-					:remote-users="remoteUsers"
-					:canvas-scale="canvasProps.scale"></RemoteCursors>
-
 				<div
 					class="absolute left-0 cursor-pointer select-none text-3xl text-ink-gray-7"
 					:style="{
@@ -69,6 +63,17 @@
 			</div>
 		</div>
 		<div
+			class="overlay absolute"
+			:class="{ 'pointer-events-none': isOverDropZone }"
+			id="overlay"
+			ref="overlay" />
+		<RemoteCursors
+			v-if="isCollaborationEnabled"
+			v-show="!canvasProps.panning"
+			:remote-users="remoteUsers"
+			:canvas-props="canvasProps"
+			:canvas-element="canvas"></RemoteCursors>
+		<div
 			class="fixed bottom-12 left-[50%] flex translate-x-[-50%] cursor-default items-center justify-center gap-2 rounded-lg bg-surface-white px-3 py-2 text-center text-sm font-semibold text-ink-gray-7 shadow-md"
 			v-show="!canvasProps.panning">
 			{{ Math.round(canvasProps.scale * 100) + "%" }}
@@ -76,11 +81,6 @@
 				<FitScreenIcon />
 			</div>
 		</div>
-		<div
-			class="overlay absolute"
-			:class="{ 'pointer-events-none': isOverDropZone }"
-			id="overlay"
-			ref="overlay" />
 		<div class="absolute top-0 order-1 w-full">
 			<slot name="header"></slot>
 		</div>

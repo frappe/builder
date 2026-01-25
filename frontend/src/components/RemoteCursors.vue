@@ -1,36 +1,31 @@
 <template>
-	<div class="remote-cursors">
+	<div class="pointer-events-none fixed left-0 top-0 h-full w-full">
 		<div
 			v-for="[clientId, user] in remoteUsers"
 			:key="clientId"
-			class="remote-cursor"
+			v-show="user.cursor?.position?.x"
+			class="pointer-events-none absolute left-0 top-0 transition-transform duration-150 ease-out will-change-transform"
 			:style="{
-				transform:
-					user.cursor?.position?.x !== undefined
-						? `translate(${user.cursor.position.x}px, ${user.cursor.position.y}px)`
-						: 'translate(-9999px, -9999px)',
+				transform: `translate(${transformedPosition(user).x}px, ${transformedPosition(user).y}px)`,
 				opacity: user.cursor?.position ? 1 : 0,
+				transitionProperty: 'transform, opacity',
 			}">
-			<!-- Wrapper with counter-scale to keep visual size consistent -->
+			<svg
+				class="[filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.1))_drop-shadow(0_1px_2px_rgba(0,0,0,0.2))]"
+				width="24"
+				height="24"
+				viewBox="0 0 24 24"
+				xmlns="http://www.w3.org/2000/svg">
+				<path
+					d="M5.65376 12.3673H5.46026L5.31717 12.4976L0.500002 16.8829L0.500002 1.19841L11.7841 12.3673H5.65376Z"
+					:fill="user.userColor"
+					stroke="white"
+					stroke-width="1.5" />
+			</svg>
 			<div
-				class="cursor-visual"
-				:style="{ transform: `scale(${1 / canvasScale})`, transformOrigin: 'top left' }">
-				<svg
-					class="cursor-icon"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					xmlns="http://www.w3.org/2000/svg">
-					<!-- Cursor arrow shape -->
-					<path
-						d="M5.65376 12.3673H5.46026L5.31717 12.4976L0.500002 16.8829L0.500002 1.19841L11.7841 12.3673H5.65376Z"
-						:fill="user.userColor"
-						stroke="white"
-						stroke-width="1.5" />
-				</svg>
-				<div class="cursor-label" :style="{ backgroundColor: user.userColor }">
-					{{ user.userName }}
-				</div>
+				class="absolute left-3 top-5 flex items-center whitespace-nowrap rounded-md px-2 py-1 text-xs capitalize text-white shadow-xl"
+				:style="{ backgroundColor: user.userColor }">
+				{{ user.userName }}
 			</div>
 		</div>
 	</div>
@@ -40,57 +35,49 @@
 import { UserAwareness } from "@/utils/yjsHelpers";
 import { PropType } from "vue";
 
-defineProps({
+const props = defineProps({
 	remoteUsers: {
 		type: Map as PropType<Map<number, UserAwareness>>,
 		required: true,
 	},
-	canvasScale: {
-		type: Number,
+	canvasProps: {
+		type: Object as PropType<any>,
 		required: true,
 	},
+	canvasElement: {
+		type: Object as PropType<any>,
+		required: false,
+	},
 });
+
+const transformedPosition = (user: UserAwareness) => {
+	if (!user.cursor?.position || !props.canvasElement) {
+		return { x: -9999, y: -9999 };
+	}
+
+	const canvasEl = props.canvasElement as HTMLElement;
+	if (!canvasEl) {
+		return { x: -9999, y: -9999 };
+	}
+
+	const firstCanvas = canvasEl.querySelector('.canvas:not([style*="display: none"])') as HTMLElement;
+	if (!firstCanvas) {
+		return { x: -9999, y: -9999 };
+	}
+
+	const rect = firstCanvas.getBoundingClientRect();
+	const scale = props.canvasProps.scale;
+
+	// Cursor positions are stored as logical coordinates (scale-independent)
+	// Convert to visual coordinates by multiplying by scale
+	const visualX = user.cursor.position.x * scale;
+	const visualY = user.cursor.position.y * scale;
+
+	// Since RemoteCursors is position:absolute in canvasContainer,
+	// we need viewport coordinates directly
+	const x = rect.left + visualX;
+	const y = rect.top + visualY;
+
+	return { x, y };
+};
 </script>
-
-<style scoped>
-.remote-cursors {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	pointer-events: none;
-	z-index: 9999;
-	overflow: visible;
-}
-
-.remote-cursor {
-	position: absolute;
-	pointer-events: none;
-	transition:
-		transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
-		opacity 0.2s ease;
-	will-change: transform;
-	left: 0;
-	top: 0;
-}
-
-.cursor-icon {
-	filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
-}
-
-.cursor-label {
-	position: absolute;
-	top: 20px;
-	left: 12px;
-	padding: 3px 8px;
-	border-radius: 6px;
-	color: white;
-	font-size: 11px;
-	font-weight: 600;
-	white-space: nowrap;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-	letter-spacing: 0.3px;
-	line-height: 1.2;
-}
-</style>
