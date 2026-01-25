@@ -10,6 +10,7 @@ from urllib.parse import unquote, urlparse
 import frappe
 from frappe.modules.import_file import import_file_by_path
 from frappe.utils import get_url
+from frappe.utils.html_utils import unescape_html
 from frappe.utils.safe_exec import (
 	SERVER_SCRIPT_FILE_PREFIX,
 	FrappeTransformer,
@@ -658,6 +659,6 @@ def execute_script_and_combine(prev_block_data, block_data_script, props):
 	props = frappe._dict(frappe.parse_json(props or "{}"))
 	block_data = frappe._dict()
 	_locals = dict(block=frappe._dict(), props=props)
-	execute_script(block_data_script, _locals, "sample")
+	execute_script(unescape_html(block_data_script), _locals, "sample")
 	block_data.update(_locals["block"])
 	return combine(prev_block_data, block_data)
