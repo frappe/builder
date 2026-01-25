@@ -21,12 +21,14 @@
 					:title="element.blockId"
 					class="block-layer-item relative min-w-24 cursor-pointer select-none rounded border border-transparent bg-surface-white bg-opacity-50 text-base text-ink-gray-7"
 					:class="{
-						'border-blue-500 !bg-blue-100 bg-opacity-30 dark:!bg-blue-900':
-							canvasStore.layerDraggingOverBlockId === element.blockId,
+						'border-blue-500 !bg-blue-100 dark:!bg-blue-900':
+							canvasStore.layerDraggingOverBlock === element.blockId,
 					}"
 					@click.stop="selectBlock(element, $event)"
-					@mouseover.stop="canvasStore.activeCanvas?.setHoveredBlock(element.blockId)"
-					@mouseleave.stop="canvasStore.activeCanvas?.setHoveredBlock(null)">
+					@mouseover.stop="
+						!canvasStore.isDragging && canvasStore.activeCanvas?.setHoveredBlock(element.blockId)
+					"
+					@mouseleave.stop="!canvasStore.isDragging && canvasStore.activeCanvas?.setHoveredBlock(null)">
 					<span
 						class="group my-[7px] flex items-center gap-1.5 pr-[2px] font-medium"
 						:style="{ paddingLeft: `${indent}px` }"
@@ -254,7 +256,6 @@ const selectBlock = (block: Block, event: MouseEvent) => {
 	canvasStore.selectBlock(block, event, false, true);
 };
 
-// Drag and drop state
 interface DragState {
 	draggedElement: HTMLElement | null;
 	hoverTarget: HTMLElement | null;
@@ -268,12 +269,13 @@ const dragState: DragState = { draggedElement: null, hoverTarget: null, hoverPos
 
 const resetDropIndicators = () => {
 	showDropIndicator.value = false;
-	canvasStore.layerDraggingOverBlockId = null;
+	canvasStore.layerDraggingOverBlock = null;
 };
 
 const checkMove = () => false; // Prevent automatic reordering
 
 const onDragStart = (event: any) => {
+	canvasStore.isDragging = true;
 	resetDropIndicators();
 	dragState.draggedElement = event.item;
 	document.addEventListener("mousemove", onMouseMove);
@@ -321,12 +323,12 @@ const onMouseMove = (event: MouseEvent) => {
 
 	if (block.canHaveChildren() && isInCenterZone) {
 		// Highlight parent block for nested drop
-		canvasStore.layerDraggingOverBlockId = blockId!;
+		canvasStore.layerDraggingOverBlock = blockId!;
 		showDropIndicator.value = false;
 		dragState.hoverPosition = "inside";
 	} else {
 		// Show line indicator for sibling drop
-		canvasStore.layerDraggingOverBlockId = null;
+		canvasStore.layerDraggingOverBlock = null;
 		updateDropIndicator(blockLayerItem, relativeY, elementHeight);
 	}
 };
@@ -358,6 +360,7 @@ const moveBlockAdjacent = (draggedBlock: Block, targetBlock: Block, position: "b
 };
 
 const onDragEnd = () => {
+	canvasStore.isDragging = false;
 	resetDropIndicators();
 	document.removeEventListener("mousemove", onMouseMove);
 

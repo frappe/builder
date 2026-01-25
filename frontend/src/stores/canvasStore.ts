@@ -9,7 +9,7 @@ const useCanvasStore = defineStore("canvasStore", {
 		activeCanvas: <InstanceType<typeof BuilderCanvas> | null>null,
 		requiresConfirmationForCopyingEntirePage: <boolean>true,
 		copyEntirePage: <boolean>false,
-		layerDraggingOverBlockId: <string | null>null,
+		layerDraggingOverBlock: <string | null>null,
 		preventClick: false,
 		guides: {
 			showX: false,
