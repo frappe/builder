@@ -3,7 +3,7 @@
 		<div class="flex justify-between">
 			<label class="w-fit text-p-base shrink-0 font-medium text-ink-gray-8">Execute Block Client Scripts in Editor</label>
 			<Select
-				class="w-[200px]"
+				class="!w-[200px]"
 				:modelValue="builderSettings.doc?.execute_block_scripts_in_editor"
 				@update:modelValue="
 					(value) => builderStore.updateBuilderSettings('execute_block_scripts_in_editor', value)
@@ -18,10 +18,10 @@
 			size="sm"
 			label="Prevent Click Emulation"
 			description="Prevents click events from being emulated in the editor for blocks with Block Client Scripts."
-			:modelValue="Boolean(builderSettings.doc?.block_click_handlers)"
+			:modelValue="Boolean(builderSettings.doc?.restrict_click_handlers)"
 			@update:modelValue="
 				(val: Boolean) => {
-					builderStore.updateBuilderSettings('block_click_handlers', val);
+					builderStore.updateBuilderSettings('restrict_click_handlers', val);
 				}
 			" />
 		<div class="flex flex-col gap-2">
