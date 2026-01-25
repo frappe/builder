@@ -51,33 +51,20 @@ const props = defineProps({
 });
 
 const transformedPosition = (user: UserAwareness) => {
-	if (!user.cursor?.position || !props.canvasElement) {
-		return { x: -9999, y: -9999 };
-	}
-
 	const canvasEl = props.canvasElement as HTMLElement;
-	if (!canvasEl) {
-		return { x: -9999, y: -9999 };
-	}
+	const firstCanvas = canvasEl?.querySelector('.canvas:not([style*="display: none"])') as HTMLElement;
 
-	const firstCanvas = canvasEl.querySelector('.canvas:not([style*="display: none"])') as HTMLElement;
-	if (!firstCanvas) {
+	if (!user.cursor?.position || !firstCanvas) {
 		return { x: -9999, y: -9999 };
 	}
 
 	const rect = firstCanvas.getBoundingClientRect();
+	const { x, y } = user.cursor.position;
 	const scale = props.canvasProps.scale;
 
-	// Cursor positions are stored as logical coordinates (scale-independent)
-	// Convert to visual coordinates by multiplying by scale
-	const visualX = user.cursor.position.x * scale;
-	const visualY = user.cursor.position.y * scale;
-
-	// Since RemoteCursors is position:absolute in canvasContainer,
-	// we need viewport coordinates directly
-	const x = rect.left + visualX;
-	const y = rect.top + visualY;
-
-	return { x, y };
+	return {
+		x: rect.left + x * scale,
+		y: rect.top + y * scale,
+	};
 };
 </script>

@@ -40,7 +40,6 @@ declare module 'vue' {
     Code: typeof import('./src/components/Icons/Code.vue')['default']
     CodeEditor: typeof import('./src/components/Controls/CodeEditor.vue')['default']
     CodeMirrorEditor: typeof import('./src/components/Controls/CodeMirror/CodeMirrorEditor.vue')['default']
-    CollaborationStatus: typeof import('./src/components/CollaborationStatus.vue')['default']
     CollapsibleSection: typeof import('./src/components/CollapsibleSection.vue')['default']
     ColorInput: typeof import('./src/components/Controls/ColorInput.vue')['default']
     ColorPicker: typeof import('./src/components/Controls/ColorPicker.vue')['default']

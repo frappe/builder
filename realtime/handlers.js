@@ -195,8 +195,6 @@ const docManager = new YjsDocumentManager();
 const messageHandler = new YjsMessageHandler(docManager);
 
 module.exports = function (socket) {
-	console.log("Builder realtime handler initialized for socket:", socket.id);
-
 	socket.on("yjs-connect", (data) => {
 		messageHandler.handleConnect(socket, data.docname);
 	});

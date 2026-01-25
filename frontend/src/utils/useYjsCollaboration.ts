@@ -1,4 +1,4 @@
-import { getCurrentInstance, onBeforeUnmount, onMounted, ref, Ref } from "vue";
+import { getCurrentInstance, onBeforeUnmount, ref, Ref } from "vue";
 import * as Y from "yjs";
 import { FrappeSocketProvider } from "./FrappeSocketProvider";
 import {
@@ -36,9 +36,6 @@ export interface UseYjsCollaborationReturn {
 	getData: () => any;
 }
 
-/**
- * Vue composable for Yjs collaborative editing
- */
 export function useYjsCollaboration(options: UseYjsCollaborationOptions): UseYjsCollaborationReturn {
 	console.log("useYjsCollaboration called with options:", options);
 	const ydoc = ref<Y.Doc | null>(null);
@@ -48,14 +45,9 @@ export function useYjsCollaboration(options: UseYjsCollaborationOptions): UseYjs
 	const remoteUsers = ref<Map<number, UserAwareness>>(new Map());
 	const userColor = ref(generateUserColor());
 
-	// Y.Map to store the page data
 	let ymap: Y.Map<any> | null = null;
 
-	/**
-	 * Initialize Yjs document and provider
-	 */
 	const initialize = () => {
-		// Get Frappe's existing socket from Vue global properties
 		const instance = getCurrentInstance();
 		const $socket = instance?.appContext.config.globalProperties.$socket;
 
@@ -64,19 +56,15 @@ export function useYjsCollaboration(options: UseYjsCollaborationOptions): UseYjs
 			return;
 		}
 
-		// Create Yjs document
-		console.log("Initializing Yjs collaboration for document:", options.documentName);
 		ydoc.value = createYjsDocument();
 		ymap = ydoc.value.getMap("pageData");
 
-		// Create Frappe Socket.IO provider with existing socket
 		provider.value = createFrappeSocketProvider(
 			ydoc.value,
 			options.documentName,
-			$socket, // Pass Frappe's existing socket
+			$socket,
 		) as FrappeSocketProvider;
 
-		// Set up awareness for user presence
 		if (provider.value?.awareness) {
 			setupAwareness(
 				provider.value.awareness,
@@ -87,17 +75,14 @@ export function useYjsCollaboration(options: UseYjsCollaborationOptions): UseYjs
 			);
 		}
 
-		// Listen to connection status
 		provider.value?.on("status", (event: { status: string }) => {
 			isConnected.value = event.status === "connected";
 		});
 
-		// Listen to sync status
 		provider.value?.on("synced", (syncStatus: boolean) => {
 			isSynced.value = syncStatus;
 		});
 
-		// Listen to remote updates on the Y.Map
 		ymap.observe((event, transaction) => {
 			if (transaction.origin !== "local" && options.onRemoteUpdate) {
 				const data = yMapToObject(ymap!);
@@ -105,7 +90,6 @@ export function useYjsCollaboration(options: UseYjsCollaborationOptions): UseYjs
 			}
 		});
 
-		// Listen to awareness changes (user presence)
 		if (provider.value?.awareness) {
 			provider.value.awareness.on("change", () => {
 				if (provider.value?.awareness) {
@@ -121,48 +105,33 @@ export function useYjsCollaboration(options: UseYjsCollaborationOptions): UseYjs
 	const updateLocalData = (data: any) => {
 		if (!ymap || !ydoc.value) return;
 
-		// Sync the data to Y.Map in a transaction with 'local' origin
-		// This prevents the observe handler from triggering the remote update callback
 		ydoc.value.transact(() => {
 			syncYMapWithObject(ymap!, data);
 		}, "local");
 	};
 
-	/**
-	 * Update local cursor position
-	 */
 	const updateLocalCursor = (blockId: string | null, position: { x: number; y: number } | null) => {
 		if (provider.value?.awareness) {
 			updateCursor(provider.value.awareness, blockId, position);
 		}
 	};
 
-	/**
-	 * Update local selection
-	 */
 	const updateLocalSelection = (blockIds: string[], activeBreakpoint?: string) => {
 		if (provider.value?.awareness) {
 			updateSelection(provider.value.awareness, blockIds, activeBreakpoint);
 		}
 	};
 
-	/**
-	 * Get current data from Y.Map
-	 */
 	const getData = (): any => {
 		if (!ymap) return null;
 		return yMapToObject(ymap);
 	};
 
-	// Initialize on mount
 	initialize();
-	onMounted(() => {});
 
-	// Cleanup function
 	const cleanup = () => {
 		if (provider.value && ydoc.value) {
 			const prov = provider.value as FrappeSocketProvider;
-			// Set local awareness state to null before destroying to signal disconnect
 			if (prov.awareness) {
 				prov.awareness.setLocalState(null);
 			}
@@ -170,10 +139,8 @@ export function useYjsCollaboration(options: UseYjsCollaborationOptions): UseYjs
 		}
 	};
 
-	// Cleanup on unmount
 	onBeforeUnmount(cleanup);
 
-	// Also cleanup on page unload (tab close, navigation, etc.)
 	if (typeof window !== "undefined") {
 		window.addEventListener("beforeunload", cleanup);
 		onBeforeUnmount(() => {

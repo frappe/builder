@@ -189,13 +189,11 @@ watch(
 	() => remoteUsers?.value,
 	async () => {
 		await nextTick();
-		// Clear all remote selection highlights
 		document.querySelectorAll(`[data-block-layer-id].remote-selected`).forEach((el) => {
 			el.classList.remove("remote-selected");
 			(el as HTMLElement).style.removeProperty("--remote-user-color");
 		});
 
-		// Add highlights for each remote user's selection
 		if (remoteUsers?.value) {
 			remoteUsers.value.forEach((user) => {
 				if (user.selection?.blockIds) {
@@ -203,7 +201,6 @@ watch(
 						const blockElement = document.querySelector(`[data-block-layer-id="${blockId}"]`);
 						if (blockElement) {
 							blockElement.classList.add("remote-selected");
-							// Set CSS variable for the user's color
 							(blockElement as HTMLElement).style.setProperty("--remote-user-color", user.userColor);
 						}
 					});

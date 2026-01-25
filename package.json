@@ -15,12 +15,6 @@
     "engines": {
         "node": ">=18.0.0"
     },
-    "dependencies": {
-        "ws": "^8.18.0",
-        "yjs": "^13.6.29",
-        "y-protocols": "^1.0.7",
-        "lib0": "^0.2.103"
-    },
     "resolutions": {
         "lint-staged": "^15.2.10"
     }

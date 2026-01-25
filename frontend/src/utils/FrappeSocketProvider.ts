@@ -13,12 +13,9 @@ export interface FrappeSocketProviderOptions {
 	autoConnect?: boolean;
 	awareness?: Awareness;
 	resyncInterval?: number;
-	socket?: Socket; // Existing socket from Frappe UI
+	socket?: Socket;
 }
 
-/**
- * Custom Yjs provider that integrates with Frappe's socket.io infrastructure
- */
 export class FrappeSocketProvider {
 	public doc: Y.Doc;
 	public awareness: Awareness;
@@ -60,24 +57,17 @@ export class FrappeSocketProvider {
 	connect(): void {
 		console.log("Setting up Yjs collaboration on Frappe socket for:", this.roomName);
 
-		// Set up socket event listeners
 		this.socket.on("yjs-message", this.onYjsMessage);
 
-		// If already connected, trigger connect handler immediately
 		if (this.socket.connected) {
 			this.onConnect();
 		} else {
-			// Wait for connection
 			this.socket.once("connect", this.onConnect);
 		}
 
-		// Listen for disconnections
 		this.socket.on("disconnect", this.onDisconnect);
 	}
 
-	/**
-	 * Disconnect from socket
-	 */
 	disconnect(): void {
 		if (this.resyncTimer) {
 			clearInterval(this.resyncTimer);
@@ -89,7 +79,6 @@ export class FrappeSocketProvider {
 			this.updateThrottleTimer = null;
 		}
 
-		// Remove our event listeners but don't disconnect the socket
 		this.socket.emit("yjs-disconnect");
 		this.socket.off("connect", this.onConnect);
 		this.socket.off("disconnect", this.onDisconnect);
@@ -99,9 +88,6 @@ export class FrappeSocketProvider {
 		this.synced = false;
 	}
 
-	/**
-	 * Destroy the provider
-	 */
 	destroy(): void {
 		this.doc.off("update", this.onDocUpdate);
 		this.awareness.off("update", this.onAwarenessUpdate);
@@ -109,9 +95,6 @@ export class FrappeSocketProvider {
 		this.awareness.destroy();
 	}
 
-	/**
-	 * Event emitter - on
-	 */
 	on(event: string, handler: (...args: any[]) => void): void {
 		if (!this.eventHandlers.has(event)) {
 			this.eventHandlers.set(event, new Set());
@@ -119,9 +102,6 @@ export class FrappeSocketProvider {
 		this.eventHandlers.get(event)!.add(handler);
 	}
 
-	/**
-	 * Event emitter - off
-	 */
 	off(event: string, handler: (...args: any[]) => void): void {
 		const handlers = this.eventHandlers.get(event);
 		if (handlers) {
@@ -129,9 +109,6 @@ export class FrappeSocketProvider {
 		}
 	}
 
-	/**
-	 * Event emitter - emit
-	 */
 	private emit(event: string, ...args: any[]): void {
 		const handlers = this.eventHandlers.get(event);
 		if (handlers) {
@@ -139,17 +116,12 @@ export class FrappeSocketProvider {
 		}
 	}
 
-	/**
-	 * Handle socket connection
-	 */
 	private onConnect = (): void => {
 		console.log("Frappe socket.io connected for Yjs:", this.roomName);
 		this.connected = true;
 
-		// Join the Yjs document room
 		this.socket.emit("yjs-connect", { docname: this.roomName });
 
-		// Set up resync interval if specified
 		if (this.resyncInterval > 0 && !this.resyncTimer) {
 			this.resyncTimer = setInterval(() => {
 				if (this.socket && this.connected) {
@@ -161,9 +133,6 @@ export class FrappeSocketProvider {
 		this.emit("status", { status: "connected" });
 	};
 
-	/**
-	 * Handle socket disconnection
-	 */
 	private onDisconnect = (): void => {
 		console.log("Frappe socket.io disconnected for Yjs");
 		this.connected = false;
@@ -177,27 +146,20 @@ export class FrappeSocketProvider {
 		this.emit("status", { status: "disconnected" });
 	};
 
-	/**
-	 * Handle document updates (throttled for performance)
-	 */
 	private onDocUpdate = (update: Uint8Array, origin: any): void => {
 		// Don't send updates that came from the socket
 		if (origin === this) {
 			return;
 		}
 
-		// Store the latest update
 		this.pendingUpdate = update;
 
-		// Clear existing timer
 		if (this.updateThrottleTimer) {
 			clearTimeout(this.updateThrottleTimer);
 		}
 
-		// Throttle updates to batch rapid changes (~60fps for near-instant feel)
 		this.updateThrottleTimer = setTimeout(() => {
 			if (this.pendingUpdate) {
-				// Encode and send the update
 				const encoder = encoding.createEncoder();
 				encoding.writeVarUint(encoder, MESSAGE_SYNC);
 				syncProtocol.writeUpdate(encoder, this.pendingUpdate);
@@ -207,17 +169,13 @@ export class FrappeSocketProvider {
 				this.pendingUpdate = null;
 			}
 			this.updateThrottleTimer = null;
-		}, 16); // 16ms = ~60fps
+		}, 16);
 	};
 
-	/**
-	 * Handle awareness updates
-	 */
 	private onAwarenessUpdate = (
 		{ added, updated, removed }: { added: number[]; updated: number[]; removed: number[] },
 		origin: any,
 	): void => {
-		// Don't send updates that came from the socket
 		if (origin === this) {
 			return;
 		}
@@ -234,9 +192,6 @@ export class FrappeSocketProvider {
 		this.socket.emit("yjs-message", Array.from(message));
 	};
 
-	/**
-	 * Handle incoming Yjs messages from socket
-	 */
 	private onYjsMessage = (message: number[]): void => {
 		const uint8Message = new Uint8Array(message);
 		const decoder = decoding.createDecoder(uint8Message);
@@ -248,12 +203,10 @@ export class FrappeSocketProvider {
 				encoding.writeVarUint(encoder, MESSAGE_SYNC);
 				syncProtocol.readSyncMessage(decoder, encoder, this.doc, this);
 
-				// If we have a response, send it back
 				if (encoding.length(encoder) > 1) {
 					this.socket.emit("yjs-message", Array.from(encoding.toUint8Array(encoder)));
 				}
 
-				// Mark as synced after first sync
 				if (!this.synced) {
 					this.synced = true;
 					this.emit("synced", true);
@@ -271,9 +224,6 @@ export class FrappeSocketProvider {
 		}
 	};
 
-	/**
-	 * Send sync step 1 to request document state
-	 */
 	private sendSyncStep1(): void {
 		const encoder = encoding.createEncoder();
 		encoding.writeVarUint(encoder, MESSAGE_SYNC);

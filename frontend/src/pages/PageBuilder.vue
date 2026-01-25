@@ -160,7 +160,6 @@ const componentUsedInPages = ref<BuilderPage[]>([]);
 const pageListDialog = ref(false);
 const blockContextMenu = ref<InstanceType<typeof BlockContextMenu> | null>(null);
 
-// Yjs Collaborative Editing
 const yjsCollaboration = ref<ReturnType<typeof useYjsCollaboration> | null>(null);
 const remoteUsers = ref<Map<number, UserAwareness>>(new Map());
 const isCollaborationEnabled = ref(false);
@@ -213,22 +212,12 @@ watch(space, (value) => {
 	}
 });
 
-// Track mouse movement for collaborative cursors
 const debouncedCursorUpdate = useDebounceFn((e: MouseEvent) => {
 	if (isCollaborationEnabled.value && yjsCollaboration.value && pageCanvas.value) {
-		// Stop following when user moves their cursor
-		// if (followingUserId.value !== null) {
-		// 	followingUserId.value = null;
-		// }
-
-		// Get the actual canvas element (the one with fixed width, e.g., 1400px)
 		const canvasElement = document.querySelector(".canvas:not([style*='display: none'])") as HTMLElement;
 
 		if (canvasElement) {
-			// Get the canvas element's bounding rect (already accounts for parent transforms)
 			const canvasRect = canvasElement.getBoundingClientRect();
-
-			// Get the current scale from the page canvas
 			const currentScale = pageCanvas.value?.canvasProps?.scale || 1;
 
 			// Calculate position relative to the canvas element (visual coordinates)
@@ -255,17 +244,14 @@ async function saveAndExitFragmentMode(e: Event) {
 	canvasStore.exitFragmentMode(e);
 }
 
-// Handle following a user's cursor
 function handleFollowUser(clientId: number) {
 	if (followingUserId.value === clientId) {
-		// Toggle off if clicking the same user
 		followingUserId.value = null;
 	} else {
 		followingUserId.value = clientId;
 	}
 }
 
-// Watch the followed user's cursor and pan canvas to keep it in viewport
 watch(
 	[remoteUsers, followingUserId],
 	() => {
@@ -336,21 +322,17 @@ watch(
 	{ deep: true },
 );
 
-// Initialize Yjs collaborative editing
 function initializeCollaboration(pageId: string) {
 	if (!sessionUser.value || !pageId || pageId === "new") {
 		return;
 	}
 
 	try {
-		// Get user image from frappe boot if available
-		const userImage = (window as any).frappe?.boot?.user_info?.[sessionUser.value]?.image;
-
 		yjsCollaboration.value = useYjsCollaboration({
 			documentName: `builder-page-${pageId}`,
 			userId: sessionUser.value,
 			userName: sessionUser.value.split("@")[0] || sessionUser.value,
-			userImage: userImage || undefined,
+			userImage: undefined,
 			onRemoteUpdate: (data) => {
 				// Handle remote updates from other users
 				if (data.blocks && canvasStore.editingMode === "page") {
@@ -390,7 +372,6 @@ onActivated(async () => {
 	}
 	if (route.params.pageId && route.params.pageId !== "new") {
 		pageStore.setPage(route.params.pageId as string, true, route.query);
-		// Initialize Yjs collaboration for the page
 		initializeCollaboration(route.params.pageId as string);
 	}
 });
@@ -417,11 +398,9 @@ watch(
 
 onMounted(() => {
 	builderStore.blockContextMenu = blockContextMenu.value;
-	// Add mouse move listener for cursor tracking
 	document.addEventListener("mousemove", debouncedCursorUpdate);
 });
 
-// Watch for canvas panning to update cursor position
 watch(
 	() => pageCanvas.value?.canvasProps.panning,
 	() => {
@@ -435,12 +414,10 @@ watch(
 	{ deep: true },
 );
 
-// Watch for block selection changes to sync with Yjs
 watch(
 	() => pageCanvas.value?.selectedBlockIds,
 	(selectedIds) => {
 		if (isCollaborationEnabled.value && yjsCollaboration.value && selectedIds) {
-			// Convert Set to Array for Yjs
 			const activeBreakpoint = pageCanvas.value?.activeBreakpoint || "desktop";
 			yjsCollaboration.value.updateLocalSelection(Array.from(selectedIds), activeBreakpoint);
 		}
@@ -449,7 +426,6 @@ watch(
 );
 
 onDeactivated(() => {
-	// Remove mouse move listener
 	document.removeEventListener("mousemove", debouncedCursorUpdate);
 });
 
@@ -493,7 +469,6 @@ watch(
 			pageStore.savingPage = true;
 			debouncedPageSave();
 
-			// Sync local changes with Yjs if collaboration is enabled
 			if (isCollaborationEnabled.value && yjsCollaboration.value && pageCanvas.value?.block) {
 				try {
 					const blockData = getBlockString(pageCanvas.value.block);

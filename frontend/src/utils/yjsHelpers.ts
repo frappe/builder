@@ -18,9 +18,6 @@ export interface UserAwareness {
 	};
 }
 
-/**
- * Generate a random color for a user
- */
 export function generateUserColor(): string {
 	const colors = [
 		"#FF6B6B",
@@ -61,11 +58,6 @@ export function createFrappeSocketProvider(
 	return provider;
 }
 
-// Remove unused getDefaultSocketUrl function
-
-/**
- * Sync Yjs Map with a JavaScript object
- */
 export function syncYMapWithObject(ymap: Y.Map<any>, obj: any) {
 	// Remove keys that don't exist in the object
 	ymap.forEach((value, key) => {
@@ -74,10 +66,8 @@ export function syncYMapWithObject(ymap: Y.Map<any>, obj: any) {
 		}
 	});
 
-	// Add or update keys from the object
 	Object.entries(obj).forEach(([key, value]) => {
 		if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-			// For nested objects, create a nested Y.Map
 			let nestedMap = ymap.get(key);
 			if (!(nestedMap instanceof Y.Map)) {
 				nestedMap = new Y.Map();
@@ -90,9 +80,6 @@ export function syncYMapWithObject(ymap: Y.Map<any>, obj: any) {
 	});
 }
 
-/**
- * Convert a Y.Map to a plain JavaScript object
- */
 export function yMapToObject(ymap: Y.Map<any>): any {
 	const obj: any = {};
 	ymap.forEach((value, key) => {
@@ -105,9 +92,6 @@ export function yMapToObject(ymap: Y.Map<any>): any {
 	return obj;
 }
 
-/**
- * Set up awareness updates for user presence
- */
 export function setupAwareness(
 	awareness: Awareness,
 	userId: string,
@@ -127,9 +111,6 @@ export function setupAwareness(
 	});
 }
 
-/**
- * Update user's cursor position in awareness
- */
 export function updateCursor(
 	awareness: Awareness,
 	blockId: string | null,
@@ -145,9 +126,6 @@ export function updateCursor(
 	});
 }
 
-/**
- * Update user's selection in awareness
- */
 export function updateSelection(awareness: Awareness, blockIds: string[], activeBreakpoint?: string): void {
 	const currentState = awareness.getLocalState();
 	awareness.setLocalState({
@@ -159,9 +137,6 @@ export function updateSelection(awareness: Awareness, blockIds: string[], active
 	});
 }
 
-/**
- * Get all remote users from awareness
- */
 export function getRemoteUsers(awareness: Awareness): Map<number, UserAwareness> {
 	const remoteStates = new Map<number, UserAwareness>();
 	const states = awareness.getStates();
@@ -176,9 +151,6 @@ export function getRemoteUsers(awareness: Awareness): Map<number, UserAwareness>
 	return remoteStates;
 }
 
-/**
- * Clean up Yjs resources
- */
 export function cleanupYjs(provider: FrappeSocketProvider, doc: Y.Doc): void {
 	provider.awareness?.destroy();
 	provider.disconnect();
