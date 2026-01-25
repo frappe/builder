@@ -1,17 +1,29 @@
 <template>
-	<div>
+	<div ref="rootContainer" class="relative">
 		<draggable
-			class="block-tree"
+			class="block-tree relative"
 			:list="blocks"
-			:group="{ name: 'block-tree' }"
+			:group="{ name: 'block-tree', pull: 'clone', put: true }"
 			item-key="blockId"
 			@add="updateParent"
-			:disabled="disableDraggable || readonly">
+			:disabled="disableDraggable || readonly"
+			:force-fallback="true"
+			:fallback-class="'!hidden'"
+			:fallback-on-body="false"
+			:sort="false"
+			:move="checkMove"
+			@start="onDragStart"
+			@end="onDragEnd">
 			<template #item="{ element }">
 				<div
 					:data-block-layer-id="element.blockId"
+					:data-indent="indent"
 					:title="element.blockId"
-					class="min-w-24 cursor-pointer select-none rounded border border-transparent bg-surface-white bg-opacity-50 text-base text-ink-gray-7"
+					class="block-layer-item relative min-w-24 cursor-pointer select-none rounded border border-transparent bg-surface-white bg-opacity-50 text-base text-ink-gray-7"
+					:class="{
+						'border-blue-500 !bg-blue-100 bg-opacity-30 dark:!bg-blue-900':
+							canvasStore.layerDraggingOverBlockId === element.blockId,
+					}"
 					@click.stop="selectBlock(element, $event)"
 					@mouseover.stop="canvasStore.activeCanvas?.setHoveredBlock(element.blockId)"
 					@mouseleave.stop="canvasStore.activeCanvas?.setHoveredBlock(null)">
@@ -90,6 +102,15 @@
 				</div>
 			</template>
 		</draggable>
+		<!-- Drop indicator line -->
+		<div
+			v-if="showDropIndicator"
+			class="pointer-events-none absolute h-0.5 bg-blue-500 transition-none"
+			:style="{
+				top: dropIndicatorTop + 'px',
+				left: dropIndicatorLeft + 'px',
+				width: 'calc(100% - ' + dropIndicatorLeft + 'px)',
+			}"></div>
 	</div>
 </template>
 <script setup lang="ts">
@@ -105,6 +126,7 @@ type LayerInstance = InstanceType<typeof BlockLayers>;
 
 const canvasStore = useCanvasStore();
 
+const rootContainer = ref<HTMLElement | null>(null);
 const childLayers = ref<LayerInstance[]>([]);
 const childLayer = (el: LayerInstance) => {
 	if (el) {
@@ -230,6 +252,136 @@ const blockExitsInTree = (block: Block) => {
 
 const selectBlock = (block: Block, event: MouseEvent) => {
 	canvasStore.selectBlock(block, event, false, true);
+};
+
+// Drag and drop state
+interface DragState {
+	draggedElement: HTMLElement | null;
+	hoverTarget: HTMLElement | null;
+	hoverPosition: "before" | "after" | "inside" | null;
+}
+
+const showDropIndicator = ref(false);
+const dropIndicatorTop = ref(0);
+const dropIndicatorLeft = ref(0);
+const dragState: DragState = { draggedElement: null, hoverTarget: null, hoverPosition: null };
+
+const resetDropIndicators = () => {
+	showDropIndicator.value = false;
+	canvasStore.layerDraggingOverBlockId = null;
+};
+
+const checkMove = () => false; // Prevent automatic reordering
+
+const onDragStart = (event: any) => {
+	resetDropIndicators();
+	dragState.draggedElement = event.item;
+	document.addEventListener("mousemove", onMouseMove);
+};
+
+const updateDropIndicator = (blockLayerItem: HTMLElement, relativeY: number, elementHeight: number) => {
+	if (!rootContainer.value) return;
+
+	const rect = blockLayerItem.getBoundingClientRect();
+	const containerRect = rootContainer.value.getBoundingClientRect();
+	const indent = parseInt(blockLayerItem.dataset.indent || "0", 10);
+	const showAbove = relativeY < elementHeight / 2;
+
+	dropIndicatorTop.value = showAbove ? rect.top - containerRect.top : rect.bottom - containerRect.top;
+	dropIndicatorLeft.value = indent;
+	dragState.hoverPosition = showAbove ? "before" : "after";
+	showDropIndicator.value = true;
+};
+
+const onMouseMove = (event: MouseEvent) => {
+	if (!dragState.draggedElement) return;
+
+	const target = document.elementFromPoint(event.clientX, event.clientY);
+	const blockLayerItem = target?.closest(".block-layer-item") as HTMLElement | null;
+
+	if (!blockLayerItem || blockLayerItem === dragState.draggedElement) {
+		resetDropIndicators();
+		return;
+	}
+
+	const blockId = blockLayerItem.dataset.blockLayerId;
+	const block = canvasStore.activeCanvas?.findBlock(blockId!);
+
+	if (!block) {
+		resetDropIndicators();
+		return;
+	}
+
+	const rect = blockLayerItem.getBoundingClientRect();
+	const relativeY = event.clientY - rect.top;
+	const elementHeight = rect.height;
+	const isInCenterZone = relativeY > elementHeight * 0.25 && relativeY < elementHeight * 0.75;
+
+	dragState.hoverTarget = blockLayerItem;
+
+	if (block.canHaveChildren() && isInCenterZone) {
+		// Highlight parent block for nested drop
+		canvasStore.layerDraggingOverBlockId = blockId!;
+		showDropIndicator.value = false;
+		dragState.hoverPosition = "inside";
+	} else {
+		// Show line indicator for sibling drop
+		canvasStore.layerDraggingOverBlockId = null;
+		updateDropIndicator(blockLayerItem, relativeY, elementHeight);
+	}
+};
+
+const removeFromParent = (block: Block) => {
+	const parent = block.getParentBlock();
+	if (parent?.children) {
+		const index = parent.children.indexOf(block);
+		if (index > -1) parent.children.splice(index, 1);
+	}
+};
+
+const moveBlockInside = (draggedBlock: Block, targetBlock: Block) => {
+	removeFromParent(draggedBlock);
+	if (!targetBlock.children) targetBlock.children = [];
+	targetBlock.children.push(draggedBlock);
+	draggedBlock.parentBlock = targetBlock;
+};
+
+const moveBlockAdjacent = (draggedBlock: Block, targetBlock: Block, position: "before" | "after") => {
+	const targetParent = targetBlock.getParentBlock();
+	if (!targetParent?.children) return;
+
+	removeFromParent(draggedBlock);
+	const targetIndex = targetParent.children.indexOf(targetBlock);
+	const insertIndex = position === "before" ? targetIndex : targetIndex + 1;
+	targetParent.children.splice(insertIndex, 0, draggedBlock);
+	draggedBlock.parentBlock = targetParent;
+};
+
+const onDragEnd = () => {
+	resetDropIndicators();
+	document.removeEventListener("mousemove", onMouseMove);
+
+	const { draggedElement, hoverTarget, hoverPosition } = dragState;
+	if (!draggedElement || !hoverTarget || !hoverPosition) {
+		Object.assign(dragState, { draggedElement: null, hoverTarget: null, hoverPosition: null });
+		return;
+	}
+
+	const draggedBlock = canvasStore.activeCanvas?.findBlock(draggedElement.dataset.blockLayerId!);
+	const targetBlock = canvasStore.activeCanvas?.findBlock(hoverTarget.dataset.blockLayerId!);
+
+	if (draggedBlock && targetBlock && draggedBlock !== targetBlock) {
+		if (hoverPosition === "inside") {
+			moveBlockInside(draggedBlock, targetBlock);
+		} else {
+			moveBlockAdjacent(draggedBlock, targetBlock, hoverPosition);
+		}
+
+		// Select the moved block
+		canvasStore.activeCanvas?.selectBlock(draggedBlock);
+	}
+
+	Object.assign(dragState, { draggedElement: null, hoverTarget: null, hoverPosition: null });
 };
 
 defineExpose({
