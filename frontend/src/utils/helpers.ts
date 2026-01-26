@@ -1273,12 +1273,6 @@ function executeBlockClientScriptUnrestricted(
 	props: Record<string, any> = {},
 ) {
 	const thisElement = document.querySelector(`[data-block-uid='${blockUid}']`) as HTMLElement;
-	const safeCreateElement = (tagName: string): HTMLElement => {
-		// Restrict to only allow creating elements within the thisElement
-		const el = document.createElement(tagName);
-		el.dataset.createdBy = blockUid;
-		return el;
-	};
 
 	const context = {
 		thisRef: thisElement,
