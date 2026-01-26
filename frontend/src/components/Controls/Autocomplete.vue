@@ -46,7 +46,7 @@
 						fixedPositionStyles = {};
 					}
 				"
-				:class="anchorSelector ? 'fixed' : 'absolute'"
+				:class="referenceElementSelector ? 'fixed' : 'absolute'"
 				:style="fixedPositionStyles"
 				ref="contentRef"
 				class="z-50 mt-1 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-white shadow-xl">
@@ -128,7 +128,7 @@ interface Props {
 	placeholder?: string;
 	showInputAsOption?: boolean;
 	actionButton?: ActionButton;
-	anchorSelector?: string;
+	referenceElementSelector?: string;
 	allowArbitraryValue?: boolean;
 }
 
@@ -240,9 +240,9 @@ if (props.getOptions) refreshOptions();
 // in Popover, absolute positioning keeps all options within the Popover taking extra space
 // making it fixed makes it float above Popover container
 const getFixedPositionStyles = () => {
-	if (props.anchorSelector) {
+	if (props.referenceElementSelector) {
 		const fixedToElRect = (
-			comboboxInput.value?.$el.closest(props.anchorSelector) as HTMLElement
+			comboboxInput.value?.$el.closest(props.referenceElementSelector) as HTMLElement
 		)?.getBoundingClientRect();
 		const comboboxInputRect = comboboxInput.value?.$el.getBoundingClientRect();
 		const contentRect = contentRef.value?.$el?.getBoundingClientRect
