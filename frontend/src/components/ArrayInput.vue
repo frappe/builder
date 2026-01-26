@@ -1,5 +1,5 @@
 <template>
-	<Popover popoverClass="!mr-[20px] !min-w-fit" placement="left">
+	<Popover :offset="20" placement="left">
 		<template #target="{ open }">
 			<div class="relative flex w-full gap-2">
 				<div class="flex w-[88px] shrink-0 items-center">
