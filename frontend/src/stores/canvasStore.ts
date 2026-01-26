@@ -29,7 +29,7 @@ const useCanvasStore = defineStore("canvasStore", {
 		editingContentType: <"html" | "css" | "js" | "python">"html",
 		editingMode: <EditingMode>"page",
 		settingPage: false,
-		showExpandedEditorDialog: false,
+		showEditorDialog: false,
 		fragmentData: {
 			block: <Block | null>null,
 			saveAction: <Function | null>null,
@@ -101,7 +101,7 @@ const useCanvasStore = defineStore("canvasStore", {
 			this.editableBlock = block;
 			this.editingContentType = "html";
 			nextTick(() => {
-				this.showExpandedEditorDialog = true;
+				this.showEditorDialog = true;
 			});
 		},
 
@@ -109,7 +109,7 @@ const useCanvasStore = defineStore("canvasStore", {
 			this.editableBlock = block;
 			this.editingContentType = "js";
 			nextTick(() => {
-				this.showExpandedEditorDialog = true;
+				this.showEditorDialog = true;
 			});
 		},
 
@@ -117,7 +117,7 @@ const useCanvasStore = defineStore("canvasStore", {
 			this.editableBlock = block;
 			this.editingContentType = "python";
 			nextTick(() => {
-				this.showExpandedEditorDialog = true;
+				this.showEditorDialog = true;
 			});
 		},
 

@@ -80,7 +80,7 @@
 	</div>
 	<PageListModal v-model="pageListDialog" :pages="componentUsedInPages"></PageListModal>
 	<Dialog
-		v-model="canvasStore.showExpandedEditorDialog"
+		v-model="canvasStore.showEditorDialog"
 		class="overscroll-none"
 		:isDirty="expandedEditor?.isDirty"
 		:options="{
@@ -239,7 +239,7 @@ async function saveExpandedEditorContent(val: string) {
 	} else if (canvasStore.editingContentType === "python") {
 		canvasStore.editableBlock?.setBlockDataScript(val);
 	}
-	canvasStore.showExpandedEditorDialog = false;
+	canvasStore.showEditorDialog = false;
 }
 
 onActivated(async () => {
@@ -330,7 +330,7 @@ watch(
 );
 
 watch(
-	() => canvasStore.showExpandedEditorDialog,
+	() => canvasStore.showEditorDialog,
 	(value) => {
 		if (!value) {
 			canvasStore.editableBlock = null;
