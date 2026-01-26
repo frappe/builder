@@ -635,9 +635,10 @@ def process_block_props(block: dict, data_key: dict | None, props_stack: dict) -
 def interpret_prop_value(prop_config: dict, data_key: dict | None) -> Any:
 	"""Interpret prop value based on its configuration (static or dynamic)."""
 	is_dynamic = prop_config.get("isDynamic", False)
-	comes_from = prop_config.get("comesFrom", "props")
 	is_standard = prop_config.get("isStandard", False)
+	comes_from = prop_config.get("comesFrom", "props")
 	value = prop_config.get("value")
+	is_empty = value is None or value == ""
 
 	default_value = None
 	if is_standard:
@@ -646,7 +647,7 @@ def interpret_prop_value(prop_config: dict, data_key: dict | None) -> Any:
 			prop_config.get("standardOptions", {}).get("options", {}).get("defaultValue"), prop_type
 		)
 
-	if value is None:
+	if is_empty:
 		return default_value if is_standard else "undefined"
 
 	if is_dynamic:
@@ -656,7 +657,7 @@ def interpret_prop_value(prop_config: dict, data_key: dict | None) -> Any:
 		prop_type = prop_config.get("standardOptions", {}).get("type")
 		value = parse_static_value(value, prop_type)
 
-	return value if value is not None else "undefined"
+	return value if not is_empty else "undefined"
 
 
 def get_dynamic_props_template(

@@ -66,7 +66,7 @@
 											}}
 										</p>
 										<p v-else class="max-w-full truncate text-ellipsis text-xs text-ink-gray-4">
-											{{ value.value }}
+											{{ value.value || "No Value" }}
 										</p>
 									</div>
 								</div>
@@ -226,7 +226,7 @@ const updateObjectValue = (
 		comesFrom,
 		isPassedDown,
 	}: {
-		label: string;
+		label?: string;
 		value: string | null;
 		isDynamic: boolean;
 		comesFrom: BlockProps[string]["comesFrom"];
