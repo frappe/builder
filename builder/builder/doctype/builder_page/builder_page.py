@@ -915,13 +915,13 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 		state["used_block_scripts"].add(script_unique_id)
 
 	# Add data attribute for selecting this specific block
-	tag.attrs["data-block-id"] = "{{ unique_hash }}"
+	tag.attrs["data-block-uid"] = "{{ unique_hash }}"
 
 	# Add local script to call the function
 	local_script = state["soup"].new_tag("script")
 	local_script.string = (
 		f"(client_script_{script_unique_id}).call("
-		f"document.querySelector('[data-block-id=\"{{{{ unique_hash }}}}\"]'), "
+		f"document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]'), "
 		f"{{{{ props | to_safe_json }}}}"
 		f");"
 	)
