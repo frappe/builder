@@ -1279,16 +1279,8 @@ function executeBlockClientScriptUnrestricted(
 		el.dataset.createdBy = blockUid;
 		return el;
 	};
-	const documentProxy = new Proxy(document, {
-		get(target, prop: string) {
-			if (prop === "createElement") {
-				return safeCreateElement;
-			}
-			return Reflect.get(target, prop);
-		},
-	});
+
 	const context = {
-		document: documentProxy,
 		thisRef: thisElement,
 		props,
 	};
