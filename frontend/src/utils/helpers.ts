@@ -1111,7 +1111,7 @@ const getParentProps = (baseBlock: Block, baseProps: BlockProps = {}): BlockProp
 			.map(([propName, propDetails]) => {
 				parentProps[propName] = propDetails;
 			});
-		const combinedProps = { ...baseProps, ...parentProps };
+		const combinedProps = { ...parentProps, ...baseProps };
 		return getParentProps(parentBlock, combinedProps);
 	} else {
 		return baseProps;
