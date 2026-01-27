@@ -19,9 +19,7 @@
 						</p>
 					</div>
 					<UseTimeAgo v-slot="{ timeAgo }" :time="page.modified">
-						<p class="mt-1 block text-sm text-ink-gray-5 group-hover:text-ink-gray-6">
-							Edited {{ timeAgo }} by {{ user.fullname }}
-						</p>
+						<p class="mt-1 block text-sm text-ink-gray-5 group-hover:text-ink-gray-6">Edited {{ timeAgo }}</p>
 					</UseTimeAgo>
 				</span>
 				<PageActionsDropdown :page="page" size="xs" placement="right">
