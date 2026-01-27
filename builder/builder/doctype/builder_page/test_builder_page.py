@@ -727,6 +727,51 @@ class TestBuilderPage(FrappeTestCase):
 			page.delete()
 			component.delete()
 
+	def test_dark_mode_img(self):
+		body = Block(element="body")
+		image_block = Block(
+			element="img",
+			attributes={
+				"src": "/files/light-mode-image.png",
+				"darkSrc": "/files/dark-mode-image.png",
+				"alt": "Test Image",
+			},
+		)
+		image_block_only_dark_mode = Block(
+			element="img",
+			attributes={
+				"darkSrc": "/files/another-dark-mode-image.png",
+				"alt": "Test Image",
+			},
+		)
+		body.attach_children(image_block, image_block_only_dark_mode)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dark Mode Image Test",
+				"published": 1,
+				"route": "/dark-mode-image-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dark-mode-image-test")
+			self.assertTrue(
+				'src="/files/light-mode-image.png"' in get_html_for(content, "tag", "img", only_content=False)
+			)
+			self.assertTrue(
+				'srcset="/files/dark-mode-image.png"'
+				in get_html_for(content, "tag", "source", only_content=False)
+			)
+			self.assertTrue(
+				'srcset="/files/another-dark-mode-image.png"'
+				in get_html_for(content, "tag", "source", index=1, only_content=False)
+			)
+		finally:
+			page.delete()
+
 	@classmethod
 	def tearDownClass(cls):
 		cls.page.delete()
