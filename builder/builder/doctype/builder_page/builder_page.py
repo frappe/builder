@@ -695,7 +695,7 @@ def create_html_tag(block: dict, state: dict) -> bs.Tag:
 			frappe.utils.quote(attributes.get("darkSrc")) if attributes.get("darkSrc") else None
 		)
 		light_src = frappe.utils.quote(attributes.get("src")) if attributes.get("src") else None
-		if dark_src and light_src:
+		if dark_src:
 			picture_tag = soup.new_tag("picture")
 
 			# Add source for dark mode
@@ -707,6 +707,8 @@ def create_html_tag(block: dict, state: dict) -> bs.Tag:
 
 			tag = soup.new_tag("img")
 			tag.attrs = {k: v for k, v in attributes.items() if k != "darkSrc"}
+			if not light_src:
+				tag.attrs["src"] = ""
 		else:
 			tag = soup.new_tag(element)
 			tag.attrs = block.get("attributes", {}).copy()
@@ -723,6 +725,10 @@ def create_html_tag(block: dict, state: dict) -> bs.Tag:
 	tag.attrs["class"] = " ".join(classes)
 
 	add_inner_html_content(tag, block, state)
+
+	if picture_tag is not None:
+		picture_tag.append(tag)
+		return picture_tag
 
 	return tag
 
