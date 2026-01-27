@@ -19,7 +19,9 @@
 						</p>
 					</div>
 					<UseTimeAgo v-slot="{ timeAgo }" :time="page.modified">
-						<p class="mt-1 block text-sm text-ink-gray-5 group-hover:text-ink-gray-6">Edited {{ timeAgo }}</p>
+						<p class="mt-1 block text-sm text-ink-gray-5 group-hover:text-ink-gray-6">
+							Edited {{ timeAgo }} by {{ user.fullname }}
+						</p>
 					</UseTimeAgo>
 				</span>
 				<PageActionsDropdown :page="page" size="xs" placement="right">
@@ -39,10 +41,13 @@
 <script setup lang="ts">
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { getUserInfo } from "@/usersInfo";
 import { UseTimeAgo } from "@vueuse/components";
 
-defineProps<{
+const props = defineProps<{
 	page: BuilderPage;
 	selected: boolean;
 }>();
+
+const user = getUserInfo(props.page.modified_by);
 </script>
