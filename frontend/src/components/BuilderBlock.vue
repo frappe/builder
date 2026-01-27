@@ -39,6 +39,7 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
+import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { setFont } from "@/utils/fontManager";
 import {
@@ -71,6 +72,7 @@ import usePageStore from "@/stores/pageStore";
 import { toast } from "vue-sonner";
 import useBlockDataStore from "@/stores/blockDataStore";
 
+const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
 const attrs = useAttrs();
@@ -161,6 +163,14 @@ const getBlockDataScriptValue = (path: string): any => {
 
 const attributes = computed(() => {
 	const attribs = { ...props.block.getAttributes(), ...attrs } as { [key: string]: any };
+
+	if (props.block.isImage() && !props.preview) {
+		if (builderStore.isDark && attribs.darkSrc) {
+			attribs.src = attribs.darkSrc;
+		}
+		delete attribs.darkSrc;
+	}
+
 	if (
 		props.block.isText() ||
 		props.block.isHTML() ||

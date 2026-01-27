@@ -8,6 +8,7 @@ import {
 	getBoxSpacing,
 	getNumberFromPx,
 	getTextContent,
+	handleBase64Attribute,
 	kebabToCamelCase,
 	parseAndSetBackground,
 	setBoxSpacing,
@@ -127,19 +128,10 @@ class Block implements BlockOptions {
 		parseAndSetBackground(this.tabletStyles);
 
 		if (this.isImage()) {
-			// if src is base64, convert it to a file
-			const src = this.getAttribute("src") as string;
-			if (src && src.startsWith("data:image")) {
-				const file = dataURLtoFile(src, "image.png");
-				if (file) {
-					this.setAttribute("src", "");
-					options.src = "";
-					uploadBuilderAsset(file, true).then((obj) => {
-						this.setAttribute("src", obj.fileURL);
-					});
-				}
-			}
+			handleBase64Attribute(this, "src", "image.png");
+			handleBase64Attribute(this, "darkSrc", "image-dark.png");
 		}
+
 		const bgImage = this.getStyle("backgroundImage") as string;
 		if (bgImage && /^url\(['"]?data:image/.test(bgImage)) {
 			let bgImage = this.getStyle("backgroundImage") as string;

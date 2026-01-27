@@ -1,11 +1,11 @@
 import CodeEditor from "@/components/Controls/CodeEditor.vue";
 import blockController from "@/utils/blockController";
 import useCanvasStore from "../../stores/canvasStore";
-import PropertyControl from "../Controls/PropertyControl.vue";
+import BasePropertyControl from "../Controls/BasePropertyControl.vue";
 
 const HTMLOptionsSectionProperties = [
 	{
-		component: PropertyControl,
+		component: BasePropertyControl,
 		getProps: () => {
 			return {
 				component: CodeEditor,
@@ -14,7 +14,7 @@ const HTMLOptionsSectionProperties = [
 				autofocus: false,
 				height: "60px",
 				controlType: "key",
-				styleProperty: "innerHTML",
+				propertyKey: "innerHTML",
 				labelPlacement: "top",
 				getModelValue: () => blockController.getInnerHTML() || "",
 				setModelValue: (val: string) => blockController.setInnerHTML(val),
