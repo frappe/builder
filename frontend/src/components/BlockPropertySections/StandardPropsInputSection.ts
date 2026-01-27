@@ -1,10 +1,10 @@
 import blockController from "@/utils/blockController";
 import OptionToggle from "../Controls/OptionToggle.vue";
-import GenericControl from "../Controls/GenericControl.vue";
 import ArrayInput from "../ArrayInput.vue";
 import ObjectInput from "../ObjectInput.vue";
 import ImageUploadInput from "../ImageUploadInput.vue";
 import ColorInput from "../Controls/ColorInput.vue";
+import BasePropertyControl from "../Controls/BasePropertyControl.vue";
 
 const componentMap = {
 	array: ArrayInput,
@@ -131,7 +131,7 @@ const getStandardPropsInputSection = () => {
 	for (const [propKey, propDetails] of Object.entries(standardProps)) {
 		const propType = propDetails.propOptions?.type;
 		const component =
-			(propType === "array" || propType === "object" ? componentMap[propType] : undefined) || GenericControl;
+			(propType === "array" || propType === "object" ? componentMap[propType] : undefined) || BasePropertyControl;
 		const getProps = () => {
 			const props = getPropsMap(propKey, propDetails);
 			return props;
