@@ -168,7 +168,7 @@ const key = ref(props.propName ?? "");
 const value = ref(props.propDetails?.value ?? "");
 const comesFrom = ref<BlockProps[string]["comesFrom"]>(props.propDetails?.comesFrom ?? null);
 const selectedNonStandardPropType = ref(getInitialNonStandardPropType());
-const standardPropOptions = reactive<BlockPropsStandardOptions>(getInitialStandardPropOptions());
+const standardPropOptions = reactive<BlockPropOptions>(getInitialStandardPropOptions());
 const standardPropDependencyMap = reactive<{ [key: string]: any }>(getInitialDependencies());
 const autoCompleteRef = ref<typeof Autocomplete | null>(null);
 const optionsComponentRef = ref<any>(null);
@@ -239,12 +239,12 @@ function getInitialNonStandardPropType() {
 		: "static";
 }
 
-function getInitialStandardPropOptions(): BlockPropsStandardOptions {
+function getInitialStandardPropOptions(): BlockPropOptions {
 	if (props.propDetails?.isStandard) {
 		return {
-			...props.propDetails.standardOptions,
-			isRequired: Boolean(props.propDetails.standardOptions?.isRequired),
-			type: props.propDetails.standardOptions?.type || "string",
+			...props.propDetails.propOptions,
+			isRequired: Boolean(props.propDetails.propOptions?.isRequired),
+			type: props.propDetails.propOptions?.type || "string",
 		};
 	}
 
@@ -257,7 +257,7 @@ function getInitialStandardPropOptions(): BlockPropsStandardOptions {
 }
 
 function getInitialDependencies() {
-	return props.propDetails?.isStandard ? props.propDetails.standardOptions?.dependencies || {} : {};
+	return props.propDetails?.isStandard ? props.propDetails.propOptions?.dependencies || {} : {};
 }
 
 function getStandardPropTypes() {
@@ -371,15 +371,15 @@ function resetStandardState(keepProps: boolean, keepType: boolean) {
 	const details = keepProps ? props.propDetails : null;
 
 	if (details?.isStandard) {
-		const nextType = keepType ? standardPropOptions.type : details.standardOptions?.type ?? "string";
+		const nextType = keepType ? standardPropOptions.type : details.propOptions?.type ?? "string";
 
 		Object.assign(standardPropOptions, {
-			...details.standardOptions,
-			isRequired: Boolean(details.standardOptions?.isRequired),
+			...details.propOptions,
+			isRequired: Boolean(details.propOptions?.isRequired),
 			type: nextType,
 		});
 
-		updateDependencyMap(details.standardOptions?.dependencies || {});
+		updateDependencyMap(details.propOptions?.dependencies || {});
 	} else if (isStandardBool.value) {
 		if (!keepType) {
 			standardPropOptions.type = "string";
@@ -433,7 +433,7 @@ function buildPropValue(): BlockProps[string] {
 		isPassedDown: isStandardBool.value || isPassedDown.value === "true",
 		comesFrom: comesFrom.value,
 		value: isStandardBool.value ? null : value.value,
-		standardOptions: isStandardBool.value
+		propOptions: isStandardBool.value
 			? {
 					...standardPropOptions,
 					dependencies: standardPropDependencyMap.value,

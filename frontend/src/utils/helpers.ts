@@ -366,14 +366,14 @@ const detachBlockFromComponent = (block: Block, componentId: null | string) => {
 		Object.entries(block.getBlockProps()).map(([key, prop]) => {
 			const propCopy = { ...prop }; // creating copy to avoid mutating original prop
 			if (propCopy.isStandard) {
-				let value = propCopy.value || propCopy.standardOptions?.options?.defaultValue;
-				if (!["string", "select"].includes(propCopy.standardOptions?.type!)) {
+				let value = propCopy.value || propCopy.propOptions?.options?.defaultValue;
+				if (!["string", "select"].includes(propCopy.propOptions?.type!)) {
 					propCopy.value = JSON.stringify(value);
 				} else {
 					propCopy.value = value;
 				}
 				propCopy.isStandard = false;
-				propCopy.standardOptions = undefined;
+				propCopy.propOptions = undefined;
 			}
 			return [key, propCopy];
 		}),
@@ -1080,16 +1080,16 @@ const getValueForInheritedProp = (
 					return getValueForInheritedProp(propName, parent, getDataScriptValue, getBlockScriptValue);
 				}
 			} else {
-				if (matchingProp.isStandard && matchingProp.standardOptions) {
+				if (matchingProp.isStandard && matchingProp.propOptions) {
 					if (
-						matchingProp.standardOptions.type !== "string" &&
-						matchingProp.standardOptions.type !== "select"
+						matchingProp.propOptions.type !== "string" &&
+						matchingProp.propOptions.type !== "select"
 					) {
 						return matchingProp.value
 							? JSON.parse(matchingProp.value)
-							: matchingProp.standardOptions?.options?.defaultValue || null;
+							: matchingProp.propOptions?.options?.defaultValue || null;
 					} else {
-						return matchingProp.value || matchingProp.standardOptions?.options?.defaultValue || null;
+						return matchingProp.value || matchingProp.propOptions?.options?.defaultValue || null;
 					}
 				}
 				return matchingProp.value;
@@ -1203,8 +1203,8 @@ const getPropValue = (
 	}
 
 	// Handle standard props
-	if (matchingProp.isStandard && matchingProp.standardOptions) {
-		const { type, options } = matchingProp.standardOptions;
+	if (matchingProp.isStandard && matchingProp.propOptions) {
+		const { type, options } = matchingProp.propOptions;
 		const defaultValue = options?.defaultValue ?? null;
 
 		if (PARSEABLE_STANDARD_TYPES.includes(type)) {
@@ -1225,18 +1225,18 @@ const getStandardPropValue = (
 	if (propsOfComponentRoot) {
 		for (const [name, value] of Object.entries(propsOfComponentRoot)) {
 			if (propName === name && value.isStandard) {
-				if (PARSEABLE_STANDARD_TYPES.includes(value.standardOptions?.type || "string")) {
+				if (PARSEABLE_STANDARD_TYPES.includes(value.propOptions?.type || "string")) {
 					const parsedValue = value.value
 						? JSON.parse(value.value)
-						: value.standardOptions?.options?.defaultValue || null;
+						: value.propOptions?.options?.defaultValue || null;
 					return {
 						value: parsedValue,
-						options: value.standardOptions?.options || {},
+						options: value.propOptions?.options || {},
 					};
 				} else {
 					return {
-						value: value.value || value.standardOptions?.options?.defaultValue || null,
-						options: value.standardOptions?.options || {},
+						value: value.value || value.propOptions?.options?.defaultValue || null,
+						options: value.propOptions?.options || {},
 					};
 				}
 			}

@@ -487,7 +487,7 @@ class TestBuilderPage(FrappeTestCase):
 					"isPassedDown": True,
 					"comesFrom": None,
 					"value": None,
-					"standardOptions": {
+					"propOptions": {
 						"isRequired": False,
 						"type": "string",
 						"options": {"defaultValue": "Default Header Title"},
@@ -500,7 +500,7 @@ class TestBuilderPage(FrappeTestCase):
 					"isPassedDown": True,
 					"comesFrom": None,
 					"value": None,
-					"standardOptions": {
+					"propOptions": {
 						"isRequired": False,
 						"type": "number",
 						"options": {"defaultValue": 25},
@@ -513,7 +513,7 @@ class TestBuilderPage(FrappeTestCase):
 					"isPassedDown": True,
 					"comesFrom": None,
 					"value": None,
-					"standardOptions": {
+					"propOptions": {
 						"isRequired": False,
 						"type": "boolean",
 						"options": {"defaultValue": False},
@@ -572,7 +572,7 @@ class TestBuilderPage(FrappeTestCase):
 				"isPassedDown": True,
 				"comesFrom": None,
 				"value": "Overridden Header Title",
-				"standardOptions": {
+				"propOptions": {
 					"isRequired": False,
 					"type": "string",
 					"options": {"defaultValue": "Default Header Title"},
@@ -585,7 +585,7 @@ class TestBuilderPage(FrappeTestCase):
 				"isPassedDown": True,
 				"comesFrom": None,
 				"value": 29,
-				"standardOptions": {
+				"propOptions": {
 					"isRequired": False,
 					"type": "number",
 					"options": {"defaultValue": 25},
@@ -598,7 +598,7 @@ class TestBuilderPage(FrappeTestCase):
 				"isPassedDown": True,
 				"comesFrom": None,
 				"value": True,
-				"standardOptions": {
+				"propOptions": {
 					"isRequired": False,
 					"type": "boolean",
 					"options": {"defaultValue": False},
@@ -655,7 +655,7 @@ class TestBuilderPage(FrappeTestCase):
 					"isPassedDown": True,
 					"comesFrom": None,
 					"value": None,
-					"standardOptions": {
+					"propOptions": {
 						"isRequired": False,
 						"type": "object",
 						"options": {

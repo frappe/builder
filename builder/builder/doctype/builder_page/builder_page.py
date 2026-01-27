@@ -642,9 +642,9 @@ def interpret_prop_value(prop_config: dict, data_key: dict | None) -> Any:
 
 	default_value = None
 	if is_standard:
-		prop_type = prop_config.get("standardOptions", {}).get("type")
+		prop_type = prop_config.get("propOptions", {}).get("type")
 		default_value = parse_static_value(
-			prop_config.get("standardOptions", {}).get("options", {}).get("defaultValue"), prop_type
+			prop_config.get("propOptions", {}).get("options", {}).get("defaultValue"), prop_type
 		)
 
 	if is_empty:
@@ -654,7 +654,7 @@ def interpret_prop_value(prop_config: dict, data_key: dict | None) -> Any:
 		return get_dynamic_props_template(value, comes_from, data_key, default_value)
 
 	if is_standard:
-		prop_type = prop_config.get("standardOptions", {}).get("type")
+		prop_type = prop_config.get("propOptions", {}).get("type")
 		value = parse_static_value(value, prop_type)
 
 	return value if not is_empty else "undefined"
@@ -863,7 +863,7 @@ def extract_loop_variables(key: str, props_stack: dict) -> list[str]:
 		return []
 
 	prop_info = props_stack[key][-1]
-	standard_options = prop_info.get("standardOptions", {})
+	standard_options = prop_info.get("propOptions", {})
 	prop_type = standard_options.get("type")
 
 	if prop_type == "array":

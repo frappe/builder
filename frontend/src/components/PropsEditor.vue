@@ -35,7 +35,7 @@
 											"
 											class="h-4 w-4 text-ink-gray-4" />
 										<component
-											v-if="value.isStandard && value.standardOptions?.type"
+											v-if="value.isStandard && value.propOptions?.type"
 											:is="
 												{
 													number: LucideNumber,
@@ -46,7 +46,7 @@
 													array: LucideArray,
 													color: LucideColor,
 													image: LucideImage,
-												}[value.standardOptions?.type] || LucideZap
+												}[value.propOptions?.type] || LucideZap
 											"
 											class="h-4 w-4 text-ink-gray-4" />
 									</div>
@@ -58,10 +58,10 @@
 											v-if="value.isStandard"
 											class="max-w-24 truncate text-ellipsis text-xs text-ink-gray-4">
 											{{
-												value.standardOptions?.options?.defaultValue
-													? ["array", "object"].includes(value.standardOptions.options.type)
-														? JSON.stringify(value.standardOptions?.options?.defaultValue)
-														: value.standardOptions?.options?.defaultValue
+												value.propOptions?.options?.defaultValue
+													? ["array", "object"].includes(value.propOptions.options.type)
+														? JSON.stringify(value.propOptions?.options?.defaultValue)
+														: value.propOptions?.options?.defaultValue
 													: "No Default Value"
 											}}
 										</p>
@@ -283,11 +283,11 @@ const updateIsStandard = (map: Map<string, BlockProps[string]>, key: string, isS
 	return map;
 };
 
-const updateStandardOptions = (map: Map<string, BlockProps[string]>, key: string, standardOptions: any) => {
+const updatePropOptions = (map: Map<string, BlockProps[string]>, key: string, propOptions: any) => {
 	const value = map.get(key);
 	map.set(key, {
 		...value!,
-		standardOptions,
+		propOptions,
 	});
 	return map;
 };
@@ -315,7 +315,7 @@ const updateProp = async ({
 		isPassedDown: newValue.isPassedDown || false,
 	});
 	map = updateIsStandard(map, newName, newValue.isStandard || false);
-	map = updateStandardOptions(map, newName, newValue.standardOptions || {});
+	map = updatePropOptions(map, newName, newValue.propOptions || {});
 	emit("update:obj", mapToObject(map));
 
 	return map;

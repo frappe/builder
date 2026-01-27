@@ -12,7 +12,7 @@ const componentMap = {
 };
 
 const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
-	const type = propDetails.standardOptions?.type || "string";
+	const type = propDetails.propOptions?.type || "string";
 	let map = {};
 	switch (type) {
 		case "string":
@@ -28,8 +28,8 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 				enableStates: false,
 				allowDynamicValue: true,
 				options: [
-					{ label: propDetails.standardOptions?.options?.trueLabel || "True", value: true },
-					{ label: propDetails.standardOptions?.options?.falseLabel || "False", value: false },
+					{ label: propDetails.propOptions?.options?.trueLabel || "True", value: true },
+					{ label: propDetails.propOptions?.options?.falseLabel || "False", value: false },
 				],
 			};
 			break;
@@ -38,7 +38,7 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 				type: "select",
 				enableStates: false,
 				options:
-					propDetails.standardOptions?.options?.options?.map((item: any) => ({
+					propDetails.propOptions?.options?.options?.map((item: any) => ({
 						label: item,
 						value: item,
 					})) || [],
@@ -51,8 +51,8 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 				allowDynamicValue: true,
 				imageURL: blockController.getBlockProps()[propName].value as string,
 				imageFit:
-					propDetails.standardOptions?.options?.imageFit ||
-					(propDetails.standardOptions?.options?.defaultImageFit as StyleValue),
+					propDetails.propOptions?.options?.imageFit ||
+					(propDetails.propOptions?.options?.defaultImageFit as StyleValue),
 			};
 			break;
 		case "color":
@@ -87,12 +87,12 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 			return value;
 		},
 		getPlaceholder: () => {
-			return propDetails.standardOptions?.options?.defaultValue || null;
+			return propDetails.propOptions?.options?.defaultValue || null;
 		},
 		defaultValue:
 			type == "boolean"
-				? propDetails.standardOptions?.options?.defaultValue == "true"
-				: propDetails.standardOptions?.options?.defaultValue,
+				? propDetails.propOptions?.options?.defaultValue == "true"
+				: propDetails.propOptions?.options?.defaultValue,
 		...map,
 	};
 	return map;
@@ -100,14 +100,14 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 
 const getEventsMap = (propName: string, propDetails: BlockProps[string]) => {
 	let events: Record<string, Function> = {};
-	const type = propDetails.standardOptions?.type || "string";
+	const type = propDetails.propOptions?.type || "string";
 	switch (type) {
 		case "image":
 			events = {
 				"update:imageURL": (val: string) => blockController.setBlockProp(propName, { value: val }),
 				"update:imageFit": (val: StyleValue) =>
 					blockController.setBlockProp(propName, {
-						standardOptions: { options: { ...propDetails.standardOptions?.options, imageFit: val } },
+						propOptions: { options: { ...propDetails.propOptions?.options, imageFit: val } },
 					}),
 			};
 			break;
@@ -129,7 +129,7 @@ const getStandardPropsInputSection = () => {
 	const standardProps = getStandardProps(blockController.getBlockProps());
 	const sections = [];
 	for (const [propKey, propDetails] of Object.entries(standardProps)) {
-		const propType = propDetails.standardOptions?.type;
+		const propType = propDetails.propOptions?.type;
 		const component =
 			(propType === "array" || propType === "object" ? componentMap[propType] : undefined) || GenericControl;
 		const getProps = () => {

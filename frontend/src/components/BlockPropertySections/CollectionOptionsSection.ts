@@ -52,7 +52,7 @@ const keyOptions = computed(() => {
 		Object.entries(propsOfComponentRoot).forEach(([key, value]) => {
 			if (
 				value.isStandard &&
-				(value.standardOptions?.type == "array" || value.standardOptions?.type == "object")
+				(value.propOptions?.type == "array" || value.propOptions?.type == "object")
 			) {
 				repeatableProps.push(key);
 			}
