@@ -486,7 +486,6 @@ watch(
 
 			if (pageCanvas.value?.block) {
 				const blockData = getBlockObject(pageCanvas.value.block);
-				console.log("Local change detected, syncing with Yjs:", blockData);
 				debouncedYjsSync(blockData);
 			}
 		}

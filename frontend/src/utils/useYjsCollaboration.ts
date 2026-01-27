@@ -37,7 +37,6 @@ export interface UseYjsCollaborationReturn {
 }
 
 export function useYjsCollaboration(options: UseYjsCollaborationOptions): UseYjsCollaborationReturn {
-	console.log("useYjsCollaboration called with options:", options);
 	const ydoc = ref<Y.Doc | null>(null);
 	const provider = ref<FrappeSocketProvider | null>(null);
 	const isConnected = ref(false);
