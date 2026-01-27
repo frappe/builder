@@ -20,7 +20,7 @@ const typographySectionProperties = [
 		getProps: () => {
 			return {
 				label: "Content",
-				styleProperty: "innerHTML",
+				propertyKey: "innerHTML",
 				// @ts-ignore
 				allowDynamicValue: true,
 				getModelValue: () => blockController.getText(),
@@ -39,7 +39,7 @@ const typographySectionProperties = [
 			return {
 				label: "Family",
 				component: Autocomplete,
-				styleProperty: "fontFamily",
+				propertyKey: "fontFamily",
 				getOptions: (filterString: string) => {
 					const fontOptions = [] as { label: string; value: string }[];
 					userFonts.data.forEach((font: UserFont) => {
@@ -92,7 +92,7 @@ const typographySectionProperties = [
 		getProps: () => {
 			return {
 				label: "Weight",
-				styleProperty: "fontWeight",
+				propertyKey: "fontWeight",
 				component: Autocomplete,
 				options: getFontWeightOptions((blockController.getStyle("fontFamily") || "Inter") as string),
 			};
@@ -104,7 +104,7 @@ const typographySectionProperties = [
 		getProps: () => {
 			return {
 				label: "Size",
-				styleProperty: "fontSize",
+				propertyKey: "fontSize",
 				enableSlider: true,
 				minValue: 1,
 				unitOptions: ["px", "em", "rem"],
@@ -118,7 +118,7 @@ const typographySectionProperties = [
 		getProps: () => {
 			return {
 				label: "Height",
-				styleProperty: "lineHeight",
+				propertyKey: "lineHeight",
 			};
 		},
 		searchKeyWords: "Font, Height, LineHeight, Line Height",
@@ -129,7 +129,7 @@ const typographySectionProperties = [
 		getProps: () => {
 			return {
 				label: "Letter",
-				styleProperty: "letterSpacing",
+				propertyKey: "letterSpacing",
 			};
 		},
 		searchKeyWords: "Font, Letter, LetterSpacing, Letter Spacing",
@@ -140,7 +140,7 @@ const typographySectionProperties = [
 		getProps: () => {
 			return {
 				label: "Transform",
-				styleProperty: "textTransform",
+				propertyKey: "textTransform",
 				type: "select",
 				options: [
 					{
@@ -170,7 +170,7 @@ const typographySectionProperties = [
 		getProps: () => {
 			return {
 				label: "Align",
-				styleProperty: "textAlign",
+				propertyKey: "textAlign",
 				component: OptionToggle,
 				options: [
 					{

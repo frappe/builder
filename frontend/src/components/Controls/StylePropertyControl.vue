@@ -18,7 +18,7 @@ import { computed } from "vue";
 
 const props = withDefaults(
 	defineProps<{
-		styleProperty: string;
+		propertyKey: string;
 		label?: string;
 		placeholder?: string;
 		getModelValue?: () => string;
@@ -54,7 +54,7 @@ const stateLabels: Record<string, string> = {
 const stateVariants = computed(() =>
 	props.enabledStates.map((state) => ({
 		name: state,
-		property: `${state}:${props.styleProperty}`,
+		property: `${state}:${props.propertyKey}`,
 		label: stateLabels[state] || state,
 	})),
 );
@@ -66,7 +66,7 @@ const allVariants = computed(() => [
 
 const getVariantValue = (variantName: string): string => {
 	if (stateVariants.value.find((v) => v.name === variantName)) {
-		return String(blockController.getNativeStyle(`${variantName}:${props.styleProperty}`) || "");
+		return String(blockController.getNativeStyle(`${variantName}:${props.propertyKey}`) || "");
 	}
 	const property = props.variants?.find((v) => v.name === variantName)?.property;
 	return property ? String(blockController.getAttribute(property) || "") : "";
@@ -83,7 +83,7 @@ const setVariantValue = (variantName: string, value: string | null) => {
 				}
 			});
 		}
-		blockController.setStyle(`${variantName}:${props.styleProperty}`, value);
+		blockController.setStyle(`${variantName}:${props.propertyKey}`, value);
 		return;
 	}
 	const property = props.variants?.find((v) => v.name === variantName)?.property;
@@ -96,12 +96,11 @@ const baseProps = computed(() => {
 		...rest,
 		controlType: "style" as const,
 		getModelValue:
-			props.getModelValue || (() => String(blockController.getNativeStyle(props.styleProperty) ?? "")),
+			props.getModelValue || (() => String(blockController.getNativeStyle(props.propertyKey) ?? "")),
 		setModelValue:
-			props.setModelValue || ((value: string) => blockController.setStyle(props.styleProperty, value)),
+			props.setModelValue || ((value: string) => blockController.setStyle(props.propertyKey, value)),
 		getPlaceholder:
-			props.getPlaceholder ||
-			(() => String(blockController.getCascadingStyle(props.styleProperty) ?? "unset")),
+			props.getPlaceholder || (() => String(blockController.getCascadingStyle(props.propertyKey) ?? "unset")),
 	};
 });
 </script>

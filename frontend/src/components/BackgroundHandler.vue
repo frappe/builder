@@ -3,7 +3,7 @@
 		<template #target="{ togglePopover }">
 			<div class="flex w-full items-center justify-between">
 				<StylePropertyControl
-					styleProperty="backgroundImage"
+					propertyKey="backgroundImage"
 					:component="Input"
 					label="BG Image"
 					:enableStates="false"
@@ -78,7 +78,7 @@
 	</Popover>
 	<StylePropertyControl
 		label="BG Color"
-		styleProperty="backgroundColor"
+		propertyKey="backgroundColor"
 		:component="ColorInput"
 		:popoverOffset="120" />
 </template>

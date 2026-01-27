@@ -940,14 +940,14 @@ function addUnitToNumber(numberStr: string, unit: string): string {
  * Handles both single values and spacing properties with multiple values
  * @param value - CSS value string
  * @param unitOptions - Array of possible units, first is used as default
- * @param styleProperty - CSS property name (used to detect spacing properties)
+ * @param propertyKey - CSS property name (used to detect spacing properties)
  * @returns Normalized value string with units added
  */
-function normalizeValueWithUnits(value: string, unitOptions: string[], styleProperty: string): string {
+function normalizeValueWithUnits(value: string, unitOptions: string[], propertyKey: string): string {
 	if (!unitOptions.length) return value;
 
 	const defaultUnit = unitOptions[0];
-	const isSpacingProperty = styleProperty === "margin" || styleProperty === "padding";
+	const isSpacingProperty = propertyKey === "margin" || propertyKey === "padding";
 
 	if (isSpacingProperty) {
 		const parts = value.trim().split(/\s+/);

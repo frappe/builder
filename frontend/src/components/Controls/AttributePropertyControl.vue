@@ -18,7 +18,7 @@ import { computed } from "vue";
 
 const props = withDefaults(
 	defineProps<{
-		styleProperty: string;
+		propertyKey: string;
 		label?: string;
 		placeholder?: string;
 		getModelValue?: () => string;
@@ -45,9 +45,9 @@ const baseProps = computed(() => ({
 	...props,
 	controlType: "attribute" as const,
 	getModelValue:
-		props.getModelValue || (() => (blockController.getAttribute(props.styleProperty) as string) || ""),
+		props.getModelValue || (() => (blockController.getAttribute(props.propertyKey) as string) || ""),
 	setModelValue:
-		props.setModelValue || ((value: string) => blockController.setAttribute(props.styleProperty, value)),
+		props.setModelValue || ((value: string) => blockController.setAttribute(props.propertyKey, value)),
 }));
 
 const getVariantValue = (variantName: string) => {

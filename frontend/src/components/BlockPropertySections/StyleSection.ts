@@ -33,7 +33,7 @@ const styleSectionProperties = [
 		getProps: () => {
 			return {
 				label: "Opacity",
-				styleProperty: "opacity",
+				propertyKey: "opacity",
 				enableSlider: false,
 				component: RangeInput,
 				getModelValue: () => {
@@ -57,7 +57,7 @@ const styleSectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				styleProperty: "color",
+				propertyKey: "color",
 				component: ColorInput,
 				label: "Text Color",
 				popoverOffset: 120,
@@ -70,7 +70,7 @@ const styleSectionProperties = [
 		getProps: () => {
 			return {
 				component: ColorInput,
-				styleProperty: "borderColor",
+				propertyKey: "borderColor",
 				popoverOffset: 120,
 				label: "Border Color",
 			};
@@ -95,7 +95,7 @@ const styleSectionProperties = [
 		getProps: () => {
 			return {
 				label: "Border Width",
-				styleProperty: "borderWidth",
+				propertyKey: "borderWidth",
 				enableSlider: true,
 				unitOptions: ["px", "%", "em", "rem"],
 				minValue: 0,
@@ -109,7 +109,7 @@ const styleSectionProperties = [
 		getProps: () => {
 			return {
 				label: "Border Style",
-				styleProperty: "borderStyle",
+				propertyKey: "borderStyle",
 				type: "select",
 				options: [
 					{ value: "solid", label: "Solid" },
@@ -126,7 +126,7 @@ const styleSectionProperties = [
 		getProps: () => {
 			return {
 				label: "Shadow",
-				styleProperty: "boxShadow",
+				propertyKey: "boxShadow",
 				type: "select",
 				options: [
 					{ value: null, label: "None" },
@@ -152,7 +152,7 @@ const styleSectionProperties = [
 		getProps: () => {
 			return {
 				label: "Radius",
-				styleProperty: "borderRadius",
+				propertyKey: "borderRadius",
 				enableSlider: true,
 				unitOptions: ["px", "%"],
 				minValue: 0,
@@ -178,7 +178,7 @@ const styleSectionProperties = [
 		getProps: () => {
 			return {
 				label: "Z-Index",
-				styleProperty: "zIndex",
+				propertyKey: "zIndex",
 			};
 		},
 		searchKeyWords: "Z, Index, ZIndex, Z Index, Z-index, Z-Index",
@@ -193,7 +193,7 @@ const styleSectionProperties = [
 			return {
 				label: "Overflow X",
 				type: "select",
-				styleProperty: "overflowX",
+				propertyKey: "overflowX",
 				options: overflowOptions,
 				setModelValue: (val: StyleValue) => {
 					if (val === "unset") {
@@ -211,7 +211,7 @@ const styleSectionProperties = [
 		getProps: () => {
 			return {
 				label: "Overflow Y",
-				styleProperty: "overflowY",
+				propertyKey: "overflowY",
 				type: "select",
 				options: overflowOptions,
 				setModelValue: (val: StyleValue) => {
@@ -231,7 +231,7 @@ const styleSectionProperties = [
 		getProps: () => {
 			return {
 				label: "Cursor",
-				styleProperty: "cursor",
+				propertyKey: "cursor",
 				type: "select",
 				options: [
 					{ value: null, label: "Default" },

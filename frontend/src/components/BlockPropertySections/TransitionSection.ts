@@ -7,7 +7,7 @@ const transitionSectionProperties = [
 		getProps: () => {
 			return {
 				label: "Speed",
-				styleProperty: "transitionDuration",
+				propertyKey: "transitionDuration",
 				type: "select",
 				enableStates: false,
 				options: [
@@ -43,7 +43,7 @@ const transitionSectionProperties = [
 		getProps: () => {
 			return {
 				label: "Timing",
-				styleProperty: "transitionTimingFunction",
+				propertyKey: "transitionTimingFunction",
 				type: "select",
 				enableStates: false,
 				options: [
@@ -63,7 +63,7 @@ const transitionSectionProperties = [
 		getProps: () => {
 			return {
 				label: "Properties",
-				styleProperty: "transitionProperty",
+				propertyKey: "transitionProperty",
 				type: "select",
 				enableStates: false,
 				options: [

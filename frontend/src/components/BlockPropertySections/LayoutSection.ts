@@ -10,9 +10,10 @@ const layoutSectionProperties = [
 		condition: () => !blockController.isText(),
 		getProps: () => {
 			return {
-				styleProperty: "display",
+				propertyKey: "display",
 				component: OptionToggle,
 				label: "Type",
+				enableStates: false,
 				options: [
 					{
 						label: "Stack",

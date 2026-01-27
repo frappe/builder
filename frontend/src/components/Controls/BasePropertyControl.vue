@@ -97,7 +97,7 @@ const emit = defineEmits<{
 
 const props = withDefaults(
 	defineProps<{
-		styleProperty: string;
+		propertyKey: string;
 		label?: string;
 		placeholder?: string;
 		controlType?: "style" | "attribute" | "key";
@@ -145,7 +145,7 @@ const controlAttrs = computed(() => {
 });
 
 const defaultValue = computed(() => {
-	return blockController.getCascadingStyle(props.styleProperty) ?? props.defaultValue;
+	return blockController.getCascadingStyle(props.propertyKey) ?? props.defaultValue;
 });
 
 const modelValue = computed(() => props.getModelValue?.() ?? "");
@@ -158,7 +158,7 @@ const normalizeInputValue = (value: string | number | null | { label: string; va
 		value = value.value;
 	}
 	if (value && typeof value === "string") {
-		value = normalizeValueWithUnits(value, props.unitOptions, props.styleProperty);
+		value = normalizeValueWithUnits(value, props.unitOptions, props.propertyKey);
 	}
 	return value as string;
 };
@@ -262,7 +262,7 @@ const handleKeyDown = (e: KeyboardEvent, variantName?: string) => {
 
 function setDynamicValue(value: string) {
 	blockController.getSelectedBlocks().forEach((block) => {
-		block.setDynamicValue(props.styleProperty, props.controlType, value);
+		block.setDynamicValue(props.propertyKey, props.controlType, value);
 	});
 	showDynamicValueModal.value = false;
 	emit("setDynamicValue");
@@ -274,13 +274,13 @@ const dynamicValue = computed(() => {
 
 	const dataKeyObj = blocks[0]
 		.getDynamicValues()
-		.find((obj) => obj.type === props.controlType && obj.property === props.styleProperty);
+		.find((obj) => obj.type === props.controlType && obj.property === props.propertyKey);
 	return dataKeyObj?.key || "";
 });
 
 const clearDynamicValue = () => {
 	blockController.getSelectedBlocks().forEach((block) => {
-		block.removeDynamicValue(props.styleProperty, props.controlType);
+		block.removeDynamicValue(props.propertyKey, props.controlType);
 	});
 	emit("clearDynamicValue");
 };

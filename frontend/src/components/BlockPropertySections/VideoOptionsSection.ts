@@ -23,7 +23,7 @@ const videoOptionsSectionProperties = [
 		getProps: () => {
 			return {
 				component: ImageUploadInput,
-				styleProperty: "poster",
+				propertyKey: "poster",
 				label: "Poster",
 			};
 		},

@@ -14,7 +14,7 @@ const HTMLOptionsSectionProperties = [
 				autofocus: false,
 				height: "60px",
 				controlType: "key",
-				styleProperty: "innerHTML",
+				propertyKey: "innerHTML",
 				labelPlacement: "top",
 				getModelValue: () => blockController.getInnerHTML() || "",
 				setModelValue: (val: string) => blockController.setInnerHTML(val),

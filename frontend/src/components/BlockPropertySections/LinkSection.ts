@@ -8,7 +8,7 @@ const linkSectionProperties = [
 		getProps: () => {
 			return {
 				label: "Link To",
-				styleProperty: "href",
+				propertyKey: "href",
 				allowDynamicValue: true,
 				getModelValue: () => blockController.getAttribute("href"),
 				setModelValue: async (val: string) => {
@@ -43,7 +43,7 @@ const linkSectionProperties = [
 			return {
 				label: "Opens in",
 				type: "select",
-				styleProperty: "target",
+				propertyKey: "target",
 				allowDynamicValue: false,
 				getModelValue: () => blockController.getAttribute("target") || "_self",
 				setModelValue: (val: string) => {

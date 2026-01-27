@@ -46,7 +46,7 @@
 		:modelValue="height"
 		@update:modelValue="setHeight" />
 	<StylePropertyControl
-		styleProperty="gap"
+		propertyKey="gap"
 		label="Gap"
 		v-if="blockController.isGrid()"
 		:enableSlider="true"

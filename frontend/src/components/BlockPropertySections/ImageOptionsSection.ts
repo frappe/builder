@@ -11,7 +11,7 @@ const imageOptionsSectionProperties = [
 		getProps: () => {
 			return {
 				component: ImageUploadInput,
-				styleProperty: "src",
+				propertyKey: "src",
 				label: "Image URL",
 				allowDynamicValue: true,
 				popoverOffset: 120,
@@ -65,7 +65,7 @@ const imageOptionsSectionProperties = [
 		component: AttributePropertyControl,
 		getProps: () => {
 			return {
-				styleProperty: "alt",
+				propertyKey: "alt",
 				label: "Alt Text",
 				allowDynamicValue: true,
 				getModelValue: () => blockController.getAttribute("alt") || "",

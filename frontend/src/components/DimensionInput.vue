@@ -1,7 +1,7 @@
 <template>
 	<StylePropertyControl
 		:component="Autocomplete"
-		:styleProperty="property"
+		:propertyKey="property"
 		:label="label"
 		:enableSlider="true"
 		:options="[
