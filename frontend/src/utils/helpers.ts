@@ -453,6 +453,19 @@ function dataURLtoFile(dataurl: string, filename: string) {
 	}
 }
 
+function handleBase64Attribute(block: Block, attrName: string, fileName: string) {
+	const attrValue = block.getAttribute(attrName) as string;
+	if (attrValue?.startsWith("data:image")) {
+		const file = dataURLtoFile(attrValue, fileName);
+		if (file) {
+			block.setAttribute(attrName, "");
+			uploadBuilderAsset(file, true).then((obj) => {
+				block.setAttribute(attrName, obj.fileURL);
+			});
+		}
+	}
+}
+
 declare global {
 	interface Window {
 		Module: {
@@ -927,14 +940,14 @@ function addUnitToNumber(numberStr: string, unit: string): string {
  * Handles both single values and spacing properties with multiple values
  * @param value - CSS value string
  * @param unitOptions - Array of possible units, first is used as default
- * @param styleProperty - CSS property name (used to detect spacing properties)
+ * @param propertyKey - CSS property name (used to detect spacing properties)
  * @returns Normalized value string with units added
  */
-function normalizeValueWithUnits(value: string, unitOptions: string[], styleProperty: string): string {
+function normalizeValueWithUnits(value: string, unitOptions: string[], propertyKey: string): string {
 	if (!unitOptions.length) return value;
 
 	const defaultUnit = unitOptions[0];
-	const isSpacingProperty = styleProperty === "margin" || styleProperty === "padding";
+	const isSpacingProperty = propertyKey === "margin" || propertyKey === "padding";
 
 	if (isSpacingProperty) {
 		const parts = value.trim().split(/\s+/);
@@ -1070,6 +1083,7 @@ export {
 	getRouteVariables,
 	getTextContent,
 	getVideoBlock,
+	handleBase64Attribute,
 	HexToHSV,
 	HSVToHex,
 	isBlock,
