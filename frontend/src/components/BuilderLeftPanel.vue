@@ -3,6 +3,7 @@
 		<PanelResizer
 			:dimension="builderStore.builderLayout.leftPanelWidth"
 			side="right"
+			:minDimension="200	"
 			:maxDimension="500"
 			@resize="(width) => (builderStore.builderLayout.leftPanelWidth = width)" />
 		<div
