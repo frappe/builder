@@ -766,8 +766,8 @@ class TestBuilderPage(FrappeTestCase):
 				in get_html_for(content, "tag", "source", only_content=False)
 			)
 			self.assertTrue(
-				'srcset="/files/another-dark-mode-image.png"'
-				in get_html_for(content, "tag", "source", index=1, only_content=False)
+				'src="/files/another-dark-mode-image.png"'
+				in get_html_for(content, "tag", "img", index=1, only_content=False)
 			)
 		finally:
 			page.delete()

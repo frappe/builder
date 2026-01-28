@@ -168,6 +168,9 @@ const attributes = computed(() => {
 		if (builderStore.isDark && attribs.darkSrc) {
 			attribs.src = attribs.darkSrc;
 		}
+		if (attribs.darkSrc && !attribs.src) {
+			attribs.src = attribs.darkSrc;
+		}
 		delete attribs.darkSrc;
 	}
 
