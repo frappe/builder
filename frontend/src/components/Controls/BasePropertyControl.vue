@@ -31,7 +31,7 @@
 				v-if="showDynamicValueModal">
 				<template #header>Set Dynamic Value</template>
 				<template #content>
-					<DynamicValueHandler @setDynamicValue="setDynamicValue" :selectedValue="dynamicValue" />
+					<DynamicValueHandler @setDynamicValue="updateDynamicValue" :selectedValue="dynamicValue" />
 				</template>
 			</DraggablePopup>
 
@@ -42,7 +42,7 @@
 				:modelValue="modelValue"
 				:defaultValue="defaultValue"
 				:placeholder="placeholderValue"
-				:dynamicValue="dynamicValue"
+				:dynamicValueKey="dynamicValue?.key"
 				componentClass="w-full"
 				@update:modelValue="updateValue"
 				@keydown="handleKeyDown"
@@ -104,6 +104,8 @@ const props = withDefaults(
 		getModelValue?: () => string;
 		getPlaceholder?: () => string;
 		setModelValue?: (value: string) => void;
+		getDynamicValue?: () => { key: string; comesFrom: BlockDataKey["comesFrom"] } | undefined;
+		setDynamicValue?: (key: string, comesFrom: BlockDataKey["comesFrom"]) => void;
 		enableSlider?: boolean;
 		unitOptions?: string[];
 		changeFactor?: number;
@@ -260,22 +262,29 @@ const handleKeyDown = (e: KeyboardEvent, variantName?: string) => {
 	e.preventDefault();
 };
 
-function setDynamicValue(value: string) {
-	blockController.getSelectedBlocks().forEach((block) => {
-		block.setDynamicValue(props.propertyKey, props.controlType, value);
-	});
+function updateDynamicValue(value: { key: string; comesFrom: BlockDataKey["comesFrom"] }) {
+	if (props.setDynamicValue) {
+		props.setDynamicValue(value.key, value.comesFrom);
+	} else {
+		blockController.getSelectedBlocks().forEach((block) => {
+			block.setDynamicValue(props.propertyKey, props.controlType, value.key, value.comesFrom);
+		});
+	}
 	showDynamicValueModal.value = false;
 	emit("setDynamicValue");
 }
 
 const dynamicValue = computed(() => {
+	if (props.getDynamicValue) {
+		return props.getDynamicValue();
+	}
 	const blocks = blockController.getSelectedBlocks();
-	if (!blocks?.length) return "";
+	if (!blocks?.length) return { key: "", comesFrom: "dataScript" as BlockDataKey["comesFrom"] };
 
 	const dataKeyObj = blocks[0]
 		.getDynamicValues()
 		.find((obj) => obj.type === props.controlType && obj.property === props.propertyKey);
-	return dataKeyObj?.key || "";
+	return { key: dataKeyObj?.key || "", comesFrom: dataKeyObj?.comesFrom || "dataScript" };
 });
 
 const clearDynamicValue = () => {

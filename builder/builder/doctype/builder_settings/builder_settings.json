@@ -15,7 +15,10 @@
   "auto_convert_images_to_webp",
   "default_language",
   "landing_page_section",
-  "home_page"
+  "home_page",
+  "developer_options_section",
+  "execute_block_scripts_in_editor",
+  "restrict_click_handlers"
  ],
  "fields": [
   {
@@ -85,13 +88,31 @@
    "fieldtype": "Code",
    "label": "Body HTML",
    "options": "HTML"
+  },
+  {
+   "fieldname": "developer_options_section",
+   "fieldtype": "Section Break",
+   "label": "Developer Options"
+  },
+  {
+   "default": "Restricted",
+   "fieldname": "execute_block_scripts_in_editor",
+   "fieldtype": "Select",
+   "label": "Execute Block Scripts in Editor",
+   "options": "Don't Execute\nRestricted\nUnrestricted"
+  },
+  {
+   "default": "1",
+   "fieldname": "restrict_click_handlers",
+   "fieldtype": "Check",
+   "label": "Restrict Click Handlers"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-02-19 14:34:18.392867",
+ "modified": "2026-01-24 12:49:59.610151",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Settings",
@@ -113,6 +134,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

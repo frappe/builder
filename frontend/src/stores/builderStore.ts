@@ -35,7 +35,7 @@ const useBuilderStore = defineStore("builderStore", {
 		showRightPanel: <boolean>true,
 		showLeftPanel: <boolean>true,
 		showHTMLDialog: false,
-		showDataScriptDialog: false,
+		showDataScriptDialog: <"block" | "page" | null>null,
 		realtime: new RealTimeHandler(),
 		readOnlyMode: false,
 		viewers: <UserInfo[]>[],

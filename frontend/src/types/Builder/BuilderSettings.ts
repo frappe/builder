@@ -29,5 +29,9 @@ export interface BuilderSettings{
 	/**	Default Language : Data - Default language code for HTML lang attribute (e.g., en, es, fr, de)	*/
 	default_language?: string
 	/**	Home Page : Data	*/
-	home_page?: string
+	home_page?: string,
+	/**	Execute Block Scripts in Editor : Check - Tries to best emulate how blocks will look like on the live site by executing Block Scripts.	*/
+	execute_block_scripts_in_editor?: "Don't Execute" | "Restricted" | "Unrestricted"
+	/**	Prevent Click Emulation : Check - Prevents click events from being emulated in the editor for blocks with Block Client Scripts.	*/
+	restrict_click_handlers?: 0 | 1
 }
