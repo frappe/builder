@@ -37,7 +37,7 @@
 						</div>
 						<div class="flex items-baseline gap-2 text-ink-gray-6">
 							<UseTimeAgo v-slot="{ timeAgo }" :time="page.modified">
-								<p class="mt-1 block text-sm">Last updated {{ timeAgo }} by {{ page.modified_by }}</p>
+								<p class="mt-1 block text-sm">Last updated {{ timeAgo }} by {{ modifiedBy.fullname }}</p>
 							</UseTimeAgo>
 						</div>
 					</span>
@@ -49,25 +49,19 @@
 				</Badge>
 				<Avatar
 					:shape="'circle'"
-					:label="page.owner"
+					:image="owner.image"
+					:label="owner.fullname"
 					class="[&>div]:bg-surface-gray-2 [&>div]:text-ink-gray-4 [&>div]:group-hover:bg-surface-gray-4 [&>div]:group-hover:text-ink-gray-6"
 					size="sm"
-					:title="`Created by ${page.owner}`" />
-				<Dropdown
-					:options="[
-						{ label: 'Duplicate', onClick: () => pageStore.duplicatePage(page), icon: 'copy' },
-						{ label: 'View in Desk', onClick: () => openInDesk(page), icon: 'arrow-up-right' },
-						{ label: 'Delete', onClick: () => pageStore.deletePage(page), icon: 'trash' },
-					]"
-					size="sm"
-					placement="right">
+					:title="`Created by ${owner.fullname}`" />
+				<PageActionsDropdown :page="page" size="sm" placement="right">
 					<template v-slot="{ open }">
 						<FeatherIcon
 							name="more-horizontal"
 							class="h-4 w-4 font-bold text-ink-gray-6"
 							@click="open"></FeatherIcon>
 					</template>
-				</Dropdown>
+				</PageActionsDropdown>
 			</div>
 		</div>
 	</router-link>
@@ -75,16 +69,20 @@
 <script setup lang="ts">
 import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import GlobeIcon from "@/components/Icons/Globe.vue";
+import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { openInDesk } from "@/utils/helpers";
+import { getUserInfo } from "@/usersInfo";
 import { UseTimeAgo } from "@vueuse/components";
-import { Avatar, Badge, Dropdown } from "frappe-ui";
+import { Avatar, Badge } from "frappe-ui";
 
 const pageStore = usePageStore();
 
-defineProps<{
+const props = defineProps<{
 	page: BuilderPage;
 	selected: boolean;
 }>();
+
+const modifiedBy = getUserInfo(props.page.modified_by);
+const owner = getUserInfo(props.page.owner);
 </script>

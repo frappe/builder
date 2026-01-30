@@ -3,8 +3,9 @@
 		ref="colorPickerPopover"
 		v-if="renderMode === 'popover'"
 		:placement="placement"
+		:offset="offset"
 		class="!block w-full"
-		popoverClass="!min-w-fit !mr-[30px]">
+		popoverClass="!min-w-fit">
 		<template #target="{ togglePopover, isOpen }">
 			<slot
 				name="target"
@@ -131,9 +132,6 @@ const { resolveVariableValue } = useBuilderVariable();
 const canvasStore = useCanvasStore();
 const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;
 const colorMap = ref(null) as unknown as Ref<HTMLDivElement>;
-const hueSelector = ref(null) as unknown as Ref<HTMLDivElement>;
-const colorSelector = ref(null) as unknown as Ref<HTMLDivElement>;
-const colorPicker = ref(null) as unknown as Ref<HTMLDivElement>;
 
 const colorPickerPopover = ref<InstanceType<typeof Popover> | null>(null);
 
@@ -147,14 +145,28 @@ const props = withDefaults(
 	defineProps<{
 		modelValue?: CSSColorValue | null;
 		showInput?: boolean;
-		placement?: string;
+		placement?:
+			| "bottom-start"
+			| "top-start"
+			| "top-end"
+			| "bottom-end"
+			| "right-start"
+			| "right-end"
+			| "left-start"
+			| "left-end"
+			| "bottom"
+			| "top"
+			| "right"
+			| "left";
 		renderMode?: "popover" | "inline";
+		offset?: number;
 	}>(),
 	{
 		modelValue: null,
 		showInput: false,
-		placement: "left",
+		placement: "left-start",
 		renderMode: "popover",
+		offset: 10,
 	},
 );
 
@@ -240,7 +252,11 @@ const handleInputChange = (color: HashString) => {
 };
 
 const setColorSelectorPosition = (color: string) => {
-	const { width, height } = colorMap.value.getBoundingClientRect();
+	if (!colorMap.value) return;
+	const rect = colorMap.value.getBoundingClientRect();
+	if (!rect || !rect.width || !rect.height) return;
+
+	const { width, height } = rect;
 	const { s, v } = HexToHSV(color as HashString);
 	let x = clamp(s * width, 0, width);
 	let y = clamp((1 - v) * height, 0, height);
@@ -248,7 +264,11 @@ const setColorSelectorPosition = (color: string) => {
 };
 
 const setHueSelectorPosition = (color: string) => {
-	const { width } = hueMap.value.getBoundingClientRect();
+	if (!hueMap.value) return;
+	const rect = hueMap.value.getBoundingClientRect();
+	if (!rect || !rect.width) return;
+
+	const { width } = rect;
 	const { h } = HexToHSV(color as HashString);
 	const left = (h / 360) * width;
 	hueSelectorPosition.value = { x: left, y: 0 };

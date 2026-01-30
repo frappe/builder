@@ -1,17 +1,15 @@
-import glob
 import inspect
 import os
 import re
 import shutil
 import socket
-import subprocess
 from dataclasses import dataclass
 from os.path import join
 from urllib.parse import unquote, urlparse
 
 import frappe
 from frappe.modules.import_file import import_file_by_path
-from frappe.utils import get_site_base_path, get_site_path, get_url
+from frappe.utils import get_url
 from frappe.utils.safe_exec import (
 	SERVER_SCRIPT_FILE_PREFIX,
 	FrappeTransformer,
@@ -35,13 +33,15 @@ class BlockDataKey:
 
 class Block:
 	blockId: str = ""
-	children: list["Block"] = None
-	baseStyles: dict = None
-	rawStyles: dict = None
-	mobileStyles: dict = None
-	tabletStyles: dict = None
-	attributes: dict = None
-	classes: list[str] = None
+	from typing import ClassVar
+
+	children: ClassVar[list["Block"]] = []
+	baseStyles: ClassVar[dict] = {}
+	rawStyles: ClassVar[dict] = {}
+	mobileStyles: ClassVar[dict] = {}
+	tabletStyles: ClassVar[dict] = {}
+	attributes: ClassVar[dict] = {}
+	classes: ClassVar[list[str]] = []
 	dataKey: BlockDataKey | None = None
 	blockName: str | None = None
 	element: str | None = None
@@ -107,7 +107,7 @@ def get_cached_doc_as_dict(doctype, name):
 def make_safe_get_request(url, **kwargs):
 	parsed = urlparse(url)
 	parsed_ip = socket.gethostbyname(parsed.hostname)
-	if parsed_ip.startswith("127", "10", "192", "172"):
+	if parsed_ip.startswith(("127", "10", "192", "172")):
 		return
 
 	return frappe.integrations.utils.make_get_request(url, **kwargs)
@@ -269,27 +269,49 @@ def make_records(path):
 # 	)
 
 
-def copy_img_to_asset_folder(block: Block, page_doc):
-	if block.get("element") == "img":
-		src = block.get("attributes", {}).get("src")
+def copy_img_to_asset_folder(block, page_doc):
+	def safe_get(obj, attr, default=None):
+		if isinstance(obj, dict):
+			return obj.get(attr, default)
+		else:
+			return getattr(obj, attr, default)
+
+	if isinstance(block, dict):
+		block = frappe._dict(block)
+		children = block.get("children", [])
+		if children and isinstance(children, list):
+			block.children = [frappe._dict(child) if isinstance(child, dict) else child for child in children]
+
+	element = safe_get(block, "element")
+
+	if element == "img":
+		attributes = safe_get(block, "attributes")
+		src = None
+
+		if attributes:
+			src = safe_get(attributes, "src")
+
 		site_url = get_url()
 
 		if src and (src.startswith(f"{site_url}/files") or src.startswith("/files")):
-			# find file doc
 			if src.startswith(f"{site_url}/files"):
 				src = src.split(f"{site_url}")[1]
-			# url decode
 			src = unquote(src)
-			print(f"src: {src}")
 			files = frappe.get_all("File", filters={"file_url": src}, fields=["name"])
-			print(f"files: {files}")
 			if files:
 				_file = frappe.get_doc("File", files[0].name)
-				# copy physical file to new location
 				assets_folder_path = get_template_assets_folder_path(page_doc)
 				shutil.copy(_file.get_full_path(), assets_folder_path)
-			block["attributes"]["src"] = f"/builder_assets/{page_doc.name}/{src.split('/')[-1]}"
-	for child in block.get("children", []) or []:
+
+			new_src = f"/builder_assets/{page_doc.name}/{src.split('/')[-1]}"
+			if attributes:
+				if isinstance(attributes, dict):
+					attributes["src"] = new_src
+				else:
+					attributes.src = new_src
+
+	children = safe_get(block, "children", [])
+	for child in children or []:
 		copy_img_to_asset_folder(child, page_doc)
 
 
@@ -408,4 +430,160 @@ def split_styles(styles):
 	return {
 		"regular": {k: v for k, v in styles.items() if ":" not in k},
 		"state": {k: v for k, v in styles.items() if ":" in k},
+	}
+
+
+def copy_assets_from_blocks(blocks, assets_path, target_app="builder"):
+	if not isinstance(blocks, list):
+		blocks = [blocks]
+
+	for block in blocks:
+		if isinstance(block, dict):
+			process_block_assets(block, assets_path, target_app)
+			children = block.get("children")
+			if children and isinstance(children, list):
+				copy_assets_from_blocks(children, assets_path, target_app)
+
+
+def process_block_assets(block, assets_path, target_app="builder"):
+	"""Process assets for a single block"""
+	if block.get("element") in ("img", "video"):
+		src = block.get("attributes", {}).get("src")
+		if src:
+			new_location = copy_asset_file(src, assets_path, target_app)
+			if new_location:
+				block["attributes"]["src"] = new_location
+
+
+def copy_asset_file(file_url, assets_path, target_app="builder"):
+	"""Copy a file from the source to assets directory and return new public path"""
+	if not file_url or not isinstance(file_url, str):
+		return None
+
+	try:
+		if file_url.startswith("/files/"):
+			return copy_from_site_files(file_url, assets_path, target_app)
+		elif file_url.startswith("/builder_assets/") or (
+			file_url.startswith("/assets/") and "/builder_assets/" in file_url
+		):
+			return copy_from_builder_assets(file_url, assets_path, target_app)
+	except Exception as e:
+		frappe.log_error(f"Failed to copy asset {file_url}: {e!s}")
+	return None
+
+
+def copy_from_site_files(file_url, assets_path, target_app="builder"):
+	"""Copy file from site files directory"""
+	source_path = os.path.join(frappe.local.site_path, "public", file_url.lstrip("/"))
+	if os.path.exists(source_path):
+		return copy_file_to_assets(source_path, file_url, assets_path, target_app)
+	return None
+
+
+def copy_from_builder_assets(file_url, assets_path, target_app="builder"):
+	"""Copy file from builder assets directory"""
+	if file_url.startswith("/assets/") and "/builder_assets/" in file_url:
+		parts = file_url.split("/")
+		if len(parts) >= 3:
+			app_name = parts[2]
+			source_path = os.path.join(frappe.get_app_path(app_name), "public", "/".join(parts[3:]))
+	else:
+		source_path = os.path.join(frappe.get_app_path("builder"), "www", file_url.lstrip("/"))
+	if os.path.exists(source_path):
+		return copy_file_to_assets(source_path, file_url, assets_path, target_app)
+	return None
+
+
+def copy_file_to_assets(source_path, file_url, assets_path, target_app="builder"):
+	"""Copy file to assets directory and return public path"""
+	filename = os.path.basename(file_url)
+	dest_path = os.path.join(assets_path, filename)
+	shutil.copy2(source_path, dest_path)
+	return f"/assets/{target_app}/builder_assets/{filename}"
+
+
+def extract_components_from_blocks(blocks):
+	"""Extract component IDs from blocks recursively"""
+	components = set()
+	if not isinstance(blocks, list):
+		blocks = [blocks]
+
+	for block in blocks:
+		if isinstance(block, dict):
+			if block.get("extendedFromComponent"):
+				component_doc = frappe.get_cached_doc("Builder Component", block["extendedFromComponent"])
+				if component_doc:
+					components.update(
+						extract_components_from_blocks(frappe.parse_json(component_doc.block or "{}"))
+					)
+				components.add(block["extendedFromComponent"])
+			children = block.get("children")
+			if children and isinstance(children, list):
+				components.update(extract_components_from_blocks(children))
+
+	return components
+
+
+def export_client_scripts(page_doc, client_scripts_path):
+	"""Export client scripts for a page"""
+	from frappe.modules.export_file import strip_default_fields
+
+	for script_row in page_doc.client_scripts:
+		script_doc = frappe.get_doc("Builder Client Script", script_row.builder_script)
+		script_config = script_doc.as_dict(no_nulls=True)
+		script_config = strip_default_fields(script_doc, script_config)
+		fname = frappe.scrub(str(script_doc.name))
+		# ensure the target directory exists before writing the file
+		script_dir = os.path.join(client_scripts_path, fname)
+		os.makedirs(script_dir, exist_ok=True)
+		script_file_path = os.path.join(script_dir, f"{fname}.json")
+
+		with open(script_file_path, "w", encoding="utf-8") as f:
+			f.write(frappe.as_json(script_config, ensure_ascii=False))
+
+
+def export_components(components, components_path, assets_path, target_app="builder"):
+	"""Export components to files"""
+	for component_id in components:
+		try:
+			component_doc = frappe.get_doc("Builder Component", component_id)
+			# replace assets in component blocks
+			component_blocks = frappe.parse_json(component_doc.block or "[]")
+			copy_assets_from_blocks(component_blocks, assets_path, target_app)
+			component_doc.block = frappe.as_json(component_blocks)
+
+			# Replace forward slashes with underscores to create valid directory names
+			safe_component_name = frappe.scrub(component_doc.component_name).replace("/", "_")
+			component_dir = os.path.join(components_path, safe_component_name)
+			os.makedirs(component_dir, exist_ok=True)
+			component_file_path = os.path.join(component_dir, f"{safe_component_name}.json")
+
+			with open(component_file_path, "w") as f:
+				f.write(frappe.as_json(component_doc.as_dict()))
+		except Exception as e:
+			print(e)
+			frappe.log_error(f"Failed to export component {component_id}: {e!s}")
+
+
+def create_export_directories(app_path, export_name):
+	paths = get_export_paths(app_path, export_name)
+	for path in paths.values():
+		os.makedirs(path, exist_ok=True)
+
+	return paths
+
+
+def get_export_paths(app_path, export_name):
+	"""Get all export directory paths"""
+	builder_files_path = os.path.join(app_path, "builder_files")
+	pages_path = os.path.join(builder_files_path, "pages")
+	public_builder_files_path = os.path.join(app_path, "public", "builder_assets")
+
+	return {
+		"page_path": os.path.join(pages_path, export_name),
+		"assets_path": public_builder_files_path,
+		"client_scripts_path": os.path.join(builder_files_path, "client_scripts"),
+		"components_path": os.path.join(builder_files_path, "components"),
+		"builder_files_path": builder_files_path,
+		"pages_path": pages_path,
 	}

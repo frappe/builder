@@ -1,7 +1,8 @@
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
+import BasePropertyControl from "@/components/Controls/BasePropertyControl.vue";
 import FontUploader from "@/components/Controls/FontUploader.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
-import PropertyControl from "@/components/Controls/PropertyControl.vue";
+import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import userFonts from "@/data/userFonts";
 import { UserFont } from "@/types/Builder/UserFont";
 import blockController from "@/utils/blockController";
@@ -15,12 +16,11 @@ const setFont = (font: string) => {
 
 const typographySectionProperties = [
 	{
-		component: PropertyControl,
+		component: BasePropertyControl,
 		getProps: () => {
 			return {
 				label: "Content",
-				controlType: "key",
-				styleProperty: "innerHTML",
+				propertyKey: "innerHTML",
 				// @ts-ignore
 				allowDynamicValue: true,
 				getModelValue: () => blockController.getText(),
@@ -34,12 +34,12 @@ const typographySectionProperties = [
 			(blockController.isText() || blockController.isButton()) && !blockController.multipleBlocksSelected(),
 	},
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				label: "Family",
 				component: Autocomplete,
-				styleProperty: "fontFamily",
+				propertyKey: "fontFamily",
 				getOptions: (filterString: string) => {
 					const fontOptions = [] as { label: string; value: string }[];
 					userFonts.data.forEach((font: UserFont) => {
@@ -88,11 +88,11 @@ const typographySectionProperties = [
 		condition: () => blockController.isText() || blockController.isContainer(),
 	},
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				label: "Weight",
-				styleProperty: "fontWeight",
+				propertyKey: "fontWeight",
 				component: Autocomplete,
 				options: getFontWeightOptions((blockController.getStyle("fontFamily") || "Inter") as string),
 			};
@@ -100,46 +100,47 @@ const typographySectionProperties = [
 		searchKeyWords: "Font, Weight, FontWeight",
 	},
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				label: "Size",
-				styleProperty: "fontSize",
+				propertyKey: "fontSize",
 				enableSlider: true,
 				minValue: 1,
+				unitOptions: ["px", "em", "rem"],
 			};
 		},
 		searchKeyWords: "Font, Size, FontSize",
 		condition: () => blockController.isText() || blockController.isInput(),
 	},
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				label: "Height",
-				styleProperty: "lineHeight",
+				propertyKey: "lineHeight",
 			};
 		},
 		searchKeyWords: "Font, Height, LineHeight, Line Height",
 		condition: () => blockController.isText(),
 	},
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				label: "Letter",
-				styleProperty: "letterSpacing",
+				propertyKey: "letterSpacing",
 			};
 		},
 		searchKeyWords: "Font, Letter, LetterSpacing, Letter Spacing",
 		condition: () => blockController.isText(),
 	},
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				label: "Transform",
-				styleProperty: "textTransform",
+				propertyKey: "textTransform",
 				type: "select",
 				options: [
 					{
@@ -165,11 +166,11 @@ const typographySectionProperties = [
 		condition: () => blockController.isText(),
 	},
 	{
-		component: PropertyControl,
+		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				label: "Align",
-				styleProperty: "textAlign",
+				propertyKey: "textAlign",
 				component: OptionToggle,
 				options: [
 					{

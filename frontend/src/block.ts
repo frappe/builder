@@ -8,10 +8,11 @@ import {
 	getBoxSpacing,
 	getNumberFromPx,
 	getTextContent,
+	handleBase64Attribute,
 	kebabToCamelCase,
 	parseAndSetBackground,
 	setBoxSpacing,
-	uploadImage,
+	uploadBuilderAsset,
 } from "@/utils/helpers";
 import { Editor } from "@tiptap/vue-3";
 import { clamp } from "@vueuse/core";
@@ -113,19 +114,10 @@ class Block implements BlockOptions {
 		parseAndSetBackground(this.tabletStyles);
 
 		if (this.isImage()) {
-			// if src is base64, convert it to a file
-			const src = this.getAttribute("src") as string;
-			if (src && src.startsWith("data:image")) {
-				const file = dataURLtoFile(src, "image.png");
-				if (file) {
-					this.setAttribute("src", "");
-					options.src = "";
-					uploadImage(file, true).then((obj) => {
-						this.setAttribute("src", obj.fileURL);
-					});
-				}
-			}
+			handleBase64Attribute(this, "src", "image.png");
+			handleBase64Attribute(this, "darkSrc", "image-dark.png");
 		}
+
 		const bgImage = this.getStyle("backgroundImage") as string;
 		if (bgImage && /^url\(['"]?data:image/.test(bgImage)) {
 			let bgImage = this.getStyle("backgroundImage") as string;
@@ -135,7 +127,7 @@ class Block implements BlockOptions {
 
 			if (file) {
 				this.setStyle("backgroundImage", "");
-				uploadImage(file, true).then((obj) => {
+				uploadBuilderAsset(file, true).then((obj) => {
 					this.setStyle("backgroundImage", `url(${obj.fileURL})`);
 				});
 			}
@@ -346,43 +338,70 @@ class Block implements BlockOptions {
 		cascading: boolean = false,
 	): StyleValue | undefined {
 		const canvasStore = useCanvasStore();
-		breakpoint = breakpoint || canvasStore.activeCanvas?.activeBreakpoint;
-		let styleValue: StyleValue = undefined;
+		const currentBreakpoint = breakpoint || canvasStore.activeCanvas?.activeBreakpoint || "desktop";
+
 		if (nativeOnly) {
-			if (breakpoint === "mobile") {
-				styleValue = this.mobileStyles[style];
-			} else if (breakpoint === "tablet") {
-				styleValue = this.tabletStyles[style];
-			} else {
-				styleValue = this.baseStyles[style];
-			}
-			return styleValue;
+			const styleMap = this.getStyleMapForBreakpoint(currentBreakpoint);
+			return styleMap[style];
 		}
+
 		if (cascading) {
-			if (breakpoint === "mobile") {
-				return this.getStyle(style, "tablet") ?? this.getStyle(style, "desktop");
-			}
-			if (breakpoint === "tablet") {
-				return this.getStyle(style, "desktop");
-			}
-			return this.getStyle(style, "desktop");
+			return this.getStyleWithCascading(style, currentBreakpoint);
 		}
-		if (breakpoint === "mobile") {
-			styleValue = this.mobileStyles[style] || this.tabletStyles[style] || this.baseStyles[style];
-		} else if (breakpoint === "tablet") {
-			styleValue = this.tabletStyles[style] || this.baseStyles[style];
-		} else {
-			styleValue = this.baseStyles[style];
+
+		const styleValue = this.getInheritedStyleValue(style, currentBreakpoint);
+
+		return styleValue ?? this.getComponentStyleFallback(style, currentBreakpoint, nativeOnly, cascading);
+	}
+
+	private getStyleMapForBreakpoint(breakpoint: string) {
+		const styleMap = {
+			mobile: this.mobileStyles,
+			tablet: this.tabletStyles,
+			desktop: this.baseStyles,
+		};
+		return styleMap[breakpoint as keyof typeof styleMap] || this.baseStyles;
+	}
+
+	private getStyleWithCascading(style: styleProperty, breakpoint: string): StyleValue | undefined {
+		if (this.isExtendedFromComponent()) {
+			const componentValue = this.referenceComponent?.getStyle(style, breakpoint, true, false);
+			if (componentValue) return componentValue;
 		}
-		if (styleValue === undefined && this.isExtendedFromComponent()) {
-			styleValue = this.referenceComponent?.getStyle?.(
-				style,
-				breakpoint,
-				nativeOnly,
-				cascading,
-			) as StyleValue;
+
+		const fallbackBreakpoints = {
+			mobile: ["tablet", "desktop"],
+			tablet: ["desktop"],
+		};
+
+		const fallbacks = fallbackBreakpoints[breakpoint as keyof typeof fallbackBreakpoints] || [];
+		for (const fallbackBreakpoint of fallbacks) {
+			const value = this.getStyle(style, fallbackBreakpoint);
+			if (value) return value;
 		}
-		return styleValue;
+
+		return this.getStyle(style, "desktop");
+	}
+
+	private getInheritedStyleValue(style: styleProperty, breakpoint: string): StyleValue | undefined {
+		switch (breakpoint) {
+			case "mobile":
+				return this.mobileStyles[style] || this.tabletStyles[style] || this.baseStyles[style];
+			case "tablet":
+				return this.tabletStyles[style] || this.baseStyles[style];
+			default:
+				return this.baseStyles[style];
+		}
+	}
+
+	private getComponentStyleFallback(
+		style: styleProperty,
+		breakpoint: string,
+		nativeOnly: boolean,
+		cascading: boolean,
+	): StyleValue | undefined {
+		if (!this.isExtendedFromComponent()) return undefined;
+		return this.referenceComponent?.getStyle?.(style, breakpoint, nativeOnly, cascading);
 	}
 	getNativeStyle(style: styleProperty) {
 		return this.getStyle(style, undefined, true);
@@ -586,6 +605,7 @@ class Block implements BlockOptions {
 			this.isInput() ||
 			this.isVideo() ||
 			(this.isText() && !this.isLink()) ||
+			this.isHTML() ||
 			this.isExtendedFromComponent()
 		);
 	}
@@ -791,6 +811,35 @@ class Block implements BlockOptions {
 
 		return new Set(componentNames);
 	}
+	getUsedVariableNames() {
+		const variableNames = [] as string[];
+		const varPattern = /var\(--([a-zA-Z0-9_-]+)/g;
+
+		const extractVarsFromValue = (value: any) => {
+			if (!value || typeof value !== "string") return;
+			const matches = value.matchAll(varPattern);
+			for (const match of matches) {
+				variableNames.push(match[1]);
+			}
+		};
+
+		const styleObjects = [this.baseStyles, this.mobileStyles, this.tabletStyles, this.rawStyles];
+		styleObjects.forEach((styleObj) => {
+			if (styleObj) {
+				Object.values(styleObj).forEach(extractVarsFromValue);
+			}
+		});
+
+		if (this.innerHTML) {
+			extractVarsFromValue(this.innerHTML);
+		}
+
+		this.children.forEach((child) => {
+			variableNames.push(...child.getUsedVariableNames());
+		});
+
+		return new Set(variableNames);
+	}
 	isFlex() {
 		return this.getStyle("display") === "flex";
 	}
@@ -829,7 +878,7 @@ class Block implements BlockOptions {
 		nextTick(() => {
 			if (child) {
 				child.selectBlock();
-				pauseId && canvasStore.activeCanvas?.history?.resume(pauseId, true);
+				pauseId && canvasStore.activeCanvas?.history?.resume(pauseId, true, true);
 			}
 		});
 	}
@@ -844,6 +893,19 @@ class Block implements BlockOptions {
 	}
 	getMargin(opts?: { nativeOnly?: boolean; cascading?: boolean }) {
 		return getBoxSpacing(this, "margin", opts);
+	}
+	getDynamicValues() {
+		let dynamicValues = this.dynamicValues;
+		const dynamicValueProperties = dynamicValues.map((v) => v.property);
+		if (this.isExtendedFromComponent()) {
+			const componentDynamicValues = this.referenceComponent?.getDynamicValues() || [];
+			componentDynamicValues.forEach((v) => {
+				if (!dynamicValueProperties.includes(v.property)) {
+					dynamicValues.push(v);
+				}
+			});
+		}
+		return dynamicValues;
 	}
 	setDynamicValue(
 		property: BlockDataKey["property"],
@@ -993,6 +1055,7 @@ function resetBlock(
 		block.customAttributes = {};
 		block.classes = [];
 		block.dataKey = null;
+		block.dynamicValues = [];
 	}
 
 	if (resetChildren) {

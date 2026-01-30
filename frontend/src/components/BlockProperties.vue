@@ -1,18 +1,6 @@
 <template>
 	<div v-if="blockController.isBlockSelected()" class="flex select-none flex-col pb-16">
-		<div class="sticky top-0 z-50 mt-[-16px] flex w-full bg-surface-white py-3">
-			<BuilderInput
-				ref="searchInput"
-				type="text"
-				placeholder="Search properties"
-				v-model="builderStore.propertyFilter"
-				@input="
-					(value: string) => {
-						builderStore.propertyFilter = value;
-					}
-				" />
-		</div>
-		<div class="mt-1 flex flex-col gap-3">
+		<div class="order-1 mt-1 flex flex-col gap-3">
 			<CollapsibleSection
 				:sectionName="section.name"
 				v-for="section in sections"
@@ -25,6 +13,18 @@
 					</component>
 				</template>
 			</CollapsibleSection>
+		</div>
+		<div class="sticky top-[1px] z-[1] mt-[-16px] flex w-full bg-surface-white py-3">
+			<BuilderInput
+				ref="searchInput"
+				type="text"
+				placeholder="Search properties"
+				v-model="builderStore.propertyFilter"
+				@input="
+					(value: string) => {
+						builderStore.propertyFilter = value;
+					}
+				" />
 		</div>
 	</div>
 	<div v-else>
@@ -39,6 +39,7 @@ import dataKeySection from "@/components/BlockPropertySections/DataKeySection";
 import dimensionSection from "@/components/BlockPropertySections/DimenstionSection";
 import HTMLOptionsSection from "@/components/BlockPropertySections/HTMLOptionsSection";
 import imageOptionsSection from "@/components/BlockPropertySections/ImageOptionsSection";
+import inputOptionsSection from "@/components/BlockPropertySections/InputOptionsSection";
 import layoutSection from "@/components/BlockPropertySections/LayoutSection";
 import linkSection from "@/components/BlockPropertySections/LinkSection";
 import optionsSection from "@/components/BlockPropertySections/OptionsSection";
@@ -110,6 +111,7 @@ const sections = [
 	imageOptionsSection,
 	HTMLOptionsSection,
 	videoOptionsSection,
+	inputOptionsSection,
 	typographySection,
 	styleSection,
 	dimensionSection,

@@ -25,7 +25,7 @@
 					v-for="row in rows"
 					:key="row.id"
 					class="group flex items-center rounded-sm border-b border-outline-gray-1 px-2 py-2 text-sm text-ink-gray-7 hover:bg-surface-gray-2">
-					<div class="w-1/2">
+					<div class="w-[calc(50%-.5rem)]">
 						<BuilderInput
 							v-if="editingRedirect === row.id"
 							v-model="editForm.from"
@@ -40,7 +40,7 @@
 							{{ row.from }}
 						</code>
 					</div>
-					<div class="w-1/2 pl-3 pr-2">
+					<div class="w-[calc(50%-.5rem)] pl-3 pr-2">
 						<BuilderInput
 							v-if="editingRedirect === row.id"
 							v-model="editForm.to"

@@ -87,11 +87,10 @@ const dataArray = computed(() => {
 	function processObject(obj: Record<string, any>, prefix = "") {
 		Object.entries(obj).forEach(([key, value]) => {
 			const path = prefix ? `${prefix}.${key}` : key;
-
-			if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-				processObject(value, path);
-			} else if (["string", "number", "boolean"].includes(typeof value)) {
+			if (!value || ["string", "number", "boolean"].includes(typeof value)) {
 				result.push(path);
+			} else if (typeof value === "object" && !Array.isArray(value)) {
+				processObject(value, path);
 			}
 		});
 	}

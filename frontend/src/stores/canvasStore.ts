@@ -9,6 +9,7 @@ const useCanvasStore = defineStore("canvasStore", {
 		activeCanvas: <InstanceType<typeof BuilderCanvas> | null>null,
 		requiresConfirmationForCopyingEntirePage: <boolean>true,
 		copyEntirePage: <boolean>false,
+		layerDraggingOverBlock: <string | null>null,
 		preventClick: false,
 		guides: {
 			showX: false,
@@ -147,6 +148,7 @@ const useCanvasStore = defineStore("canvasStore", {
 				saveActionLabel: null,
 				fragmentName: null,
 				fragmentId: null,
+				showUsageCount: false,
 			};
 		},
 

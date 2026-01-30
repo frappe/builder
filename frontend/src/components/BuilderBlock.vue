@@ -7,6 +7,7 @@
 		:draggable="draggable"
 		:class="classes"
 		v-bind="attributes"
+		:readonly="readonly"
 		:style="styles"
 		ref="component">
 		<BuilderBlock
@@ -14,6 +15,7 @@
 			:block="child"
 			:breakpoint="breakpoint"
 			:preview="preview"
+			:readonly="readonly"
 			:isChildOfComponent="block.isExtendedFromComponent() || isChildOfComponent"
 			:key="child.blockId"
 			v-for="child in block.getChildren().filter((child) => child.isVisible(breakpoint))" />
@@ -28,11 +30,13 @@
 			:breakpoint="breakpoint"
 			:editable="isEditable"
 			:isSelected="isSelected"
+			:readonly="readonly"
 			:target="(target as HTMLElement)" />
 	</teleport>
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
+import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { setFont } from "@/utils/fontManager";
 import { getDataForKey } from "@/utils/helpers";
@@ -43,6 +47,7 @@ import BlockHTML from "./BlockHTML.vue";
 import DataLoaderBlock from "./DataLoaderBlock.vue";
 import TextBlock from "./TextBlock.vue";
 
+const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
 const attrs = useAttrs();
@@ -54,12 +59,14 @@ const props = withDefaults(
 		isChildOfComponent?: boolean;
 		breakpoint?: string;
 		preview?: boolean;
+		readonly?: boolean;
 		data?: Record<string, any> | null;
 	}>(),
 	{
 		isChildOfComponent: false,
 		breakpoint: "desktop",
 		preview: false,
+		readonly: false,
 		data: null,
 	},
 );
@@ -102,6 +109,14 @@ const classes = computed(() => {
 
 const attributes = computed(() => {
 	const attribs = { ...props.block.getAttributes(), ...attrs } as { [key: string]: any };
+
+	if (props.block.isImage() && !props.preview) {
+		if (builderStore.isDark && attribs.darkSrc) {
+			attribs.src = attribs.darkSrc;
+		}
+		delete attribs.darkSrc;
+	}
+
 	if (
 		props.block.isText() ||
 		props.block.isHTML() ||
@@ -121,7 +136,8 @@ const attributes = computed(() => {
 				getDataForKey(props.data, props.block.getDataKey("key")) ??
 				attribs[props.block.getDataKey("property") as string];
 		}
-		props.block.dynamicValues
+		props.block
+			.getDynamicValues()
 			?.filter((dataKeyObj: BlockDataKey) => {
 				return dataKeyObj.type === "attribute";
 			})
@@ -160,7 +176,8 @@ const styles = computed(() => {
 				),
 			};
 		}
-		props.block.dynamicValues
+		props.block
+			.getDynamicValues()
 			?.filter((dataKeyObj: BlockDataKey) => {
 				return dataKeyObj.type === "style";
 			})

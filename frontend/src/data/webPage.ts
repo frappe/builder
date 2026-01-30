@@ -18,6 +18,7 @@ const webPages = createListResource({
 		"is_template",
 		"authenticated_access",
 		"project_folder",
+		"is_standard",
 		"owner",
 	],
 	filters: {

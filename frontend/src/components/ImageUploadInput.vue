@@ -1,5 +1,5 @@
 <template>
-	<Popover placement="left" class="!block w-full" popoverClass="!min-w-fit !mr-[30px]">
+	<Popover placement="left" class="!block w-full" :offset="popoverOffset">
 		<template #target="{ togglePopover, isOpen }">
 			<div class="flex items-center justify-between">
 				<InputLabel v-if="label && labelPosition === 'left'">{{ label }}</InputLabel>
@@ -14,13 +14,13 @@
 						:description="description"
 						:hideClearButton="labelPosition === 'top'"
 						@update:modelValue="setImageURL"
-						:modelValue="imageURL" />
+						:modelValue="currentImageURL" />
 					<img
 						v-if="labelPosition === 'left'"
-						:src="imageURL || '/assets/builder/images/fallback.png'"
+						:src="currentImageURL || '/assets/builder/images/fallback.png'"
 						alt=""
 						@click="togglePopover"
-						class="absolute bottom-[6px] left-2 z-10 h-4 w-4 rounded border border-outline-gray-3 shadow-sm"
+						class="absolute bottom-[6px] left-2 h-4 w-4 rounded border border-outline-gray-3 shadow-sm"
 						:style="{
 							'object-fit': imageFit || 'contain',
 						}" />
@@ -28,7 +28,7 @@
 						v-if="labelPosition === 'top'"
 						@upload="setImageURL"
 						@remove="setImageURL('')"
-						:image_url="imageURL"
+						:image_url="currentImageURL"
 						class="absolute right-0 top-5 rounded-r-md bg-surface-gray-2 pl-2 dark:bg-transparent"
 						:file_types="['image/*']" />
 				</div>
@@ -41,25 +41,24 @@
 					:uploadArgs="{
 						private: false,
 						folder: 'Home/Builder Uploads',
-						optimize: true,
 						upload_endpoint: '/api/method/builder.api.upload_builder_asset',
 					}">
 					<template v-slot="{ openFileSelector }">
 						<div class="group relative overflow-hidden rounded">
 							<img
-								:src="imageURL || '/assets/builder/images/fallback.png'"
+								:src="currentImageURL || '/assets/builder/images/fallback.png'"
 								alt=""
 								class="image-preview relative h-24 w-48 cursor-pointer bg-surface-gray-2"
 								:style="{
 									'object-fit': imageFit || 'contain',
 								}" />
 							<div
-								class="absolute bottom-0 left-0 right-0 top-0 hidden place-items-center bg-gray-500 bg-opacity-20"
+								class="absolute bottom-0 left-0 right-0 top-0 hidden place-items-center bg-surface-gray-4 opacity-90"
 								:class="{
-									'!grid': !imageURL,
-									'group-hover:grid': imageURL,
+									'!grid': !currentImageURL,
+									'group-hover:grid': currentImageURL,
 								}">
-								<BuilderButton variant="solid" @click="openFileSelector">Upload</BuilderButton>
+								<BuilderButton variant="subtle" @click="openFileSelector">Upload</BuilderButton>
 							</div>
 						</div>
 					</template>
@@ -80,27 +79,32 @@ import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import { FileUploader, Popover } from "frappe-ui";
+import { computed } from "vue";
 
-withDefaults(
+const props = withDefaults(
 	defineProps<{
 		imageURL?: string;
+		modelValue?: string;
 		label?: string;
 		labelPosition?: "top" | "left";
 		placeholder?: string;
 		imageFit?: "contain" | "cover" | "fill" | "none";
 		description?: string;
+		popoverOffset?: number;
 	}>(),
 	{
 		labelPosition: "left",
 		placeholder: "Set Image",
 		imageFit: "contain",
+		popoverOffset: 10,
 	},
 );
 
-const emit = defineEmits(["update:imageURL", "update:imageFit"]);
+const currentImageURL = computed(() => props.modelValue || "");
+const emit = defineEmits(["update:imageFit", "update:modelValue"]);
 
 const setImageURL = (fileURL: string) => {
-	emit("update:imageURL", fileURL);
+	emit("update:modelValue", fileURL);
 };
 
 const setImageFit = (fit: string) => {

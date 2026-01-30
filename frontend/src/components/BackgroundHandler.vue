@@ -1,9 +1,9 @@
 <template>
-	<Popover placement="left" class="!block w-full" popoverClass="!min-w-fit !mr-[30px]">
+	<Popover placement="left" class="!block w-full" :offset="25">
 		<template #target="{ togglePopover }">
 			<div class="flex w-full items-center justify-between">
-				<PropertyControl
-					styleProperty="backgroundImage"
+				<StylePropertyControl
+					propertyKey="backgroundImage"
 					:component="Input"
 					label="BG Image"
 					:enableStates="false"
@@ -14,12 +14,12 @@
 					@update:modelValue="setBGImageURL">
 					<template #prefix>
 						<div
-							class="absolute left-2 top-[6px] z-10 h-4 w-4 cursor-pointer rounded shadow-sm"
+							class="absolute left-2 top-[6px] h-4 w-4 cursor-pointer rounded shadow-sm"
 							@click="togglePopover"
 							:class="{ 'bg-surface-gray-4': !Boolean(backgroundImage) }"
 							:style="previewStyle" />
 					</template>
-				</PropertyControl>
+				</StylePropertyControl>
 			</div>
 		</template>
 		<template #body>
@@ -76,14 +76,18 @@
 			</div>
 		</template>
 	</Popover>
-	<PropertyControl label="BG Color" styleProperty="backgroundColor" :component="ColorInput" />
+	<StylePropertyControl
+		label="BG Color"
+		propertyKey="backgroundColor"
+		:component="ColorInput"
+		:popoverOffset="120" />
 </template>
 
 <script lang="ts" setup>
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import Input from "@/components/Controls/Input.vue";
-import PropertyControl from "@/components/Controls/PropertyControl.vue";
+import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
 import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
 import { FileUploader, Popover } from "frappe-ui";

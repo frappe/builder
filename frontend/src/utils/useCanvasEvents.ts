@@ -35,6 +35,7 @@ export function useCanvasEvents(
 		if (builderStore.mode === "select") {
 			return;
 		} else {
+			if (builderStore.readOnlyMode) return;
 			const pauseId = canvasHistory.value?.pause();
 			ev.stopPropagation();
 			let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;

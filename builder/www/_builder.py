@@ -1,5 +1,6 @@
 import frappe
 from frappe.integrations.frappe_providers.frappecloud_billing import is_fc_site
+from frappe.pulse.utils import get_app_version
 from frappe.utils.telemetry import capture
 
 from builder.hooks import builder_path
@@ -13,6 +14,7 @@ def get_context(context):
 	context.csrf_token = csrf_token
 	context.site_name = frappe.local.site
 	context.builder_path = builder_path
+	context.builder_version = get_app_version("builder")
 	# developer mode
 	context.is_developer_mode = frappe.conf.developer_mode
 	context.is_fc_site = is_fc_site()

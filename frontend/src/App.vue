@@ -6,7 +6,7 @@
 			</keep-alive>
 		</router-view>
 		<UseDark attribute="data-theme"></UseDark>
-		<Toaster :theme="isDark ? 'dark' : 'light'" richColors class="mr-10" />
+		<Toaster :theme="builderStore.isDark ? 'dark' : 'light'" richColors class="mr-10" />
 		<Dialogs></Dialogs>
 		<component v-for="dialog in builderStore.appDialogs" :is="dialog"></component>
 	</div>
@@ -15,7 +15,7 @@
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { UseDark } from "@vueuse/components";
-import { useDark, useTitle } from "@vueuse/core";
+import { useTitle } from "@vueuse/core";
 import { Dialogs } from "frappe-ui";
 import { computed, provide } from "vue";
 import { useRoute } from "vue-router";
@@ -26,9 +26,6 @@ import { sessionUser } from "./router";
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 const route = useRoute();
-const isDark = useDark({
-	attribute: "data-theme",
-});
 
 provide("sessionUser", sessionUser);
 
@@ -41,10 +38,6 @@ const title = computed(() => {
 useTitle(title);
 </script>
 <style>
-[id^="headlessui-dialog"] {
-	@apply z-50;
-}
-
 [id^="headlessui-dialog-panel"] {
 	@apply bg-surface-gray-1;
 	@apply dark:border-outline-gray-1;

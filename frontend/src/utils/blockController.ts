@@ -1,5 +1,4 @@
-import type Block from "@/block";
-import type { BlockDataKey } from "@/block";
+import type { default as Block, default as BlockDataKey } from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import getBlockTemplate from "./blockTemplate";
 
@@ -211,6 +210,9 @@ const blockController = {
 	isHTML: () => {
 		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isHTML();
 	},
+	isSVG() {
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isSVG();
+	},
 	getInnerHTML: () => {
 		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().getInnerHTML();
 	},
@@ -278,6 +280,9 @@ const blockController = {
 				block.setAttribute(attribute, "");
 			}
 		});
+	},
+	canHaveChildren: () => {
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().canHaveChildren();
 	},
 	convertToLink: async () => {
 		const blocks = blockController.getSelectedBlocks();

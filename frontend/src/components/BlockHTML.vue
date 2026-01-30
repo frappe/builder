@@ -19,7 +19,7 @@ const getDynamicContent = () => {
 		innerHTML = typeof dataValue === "string" ? dataValue : innerHTML;
 	}
 	if (props.data) {
-		props.block.dynamicValues
+		props.block.getDynamicValues()
 			?.filter((dataKeyObj: BlockDataKey) => {
 				return dataKeyObj.property === "innerHTML" && dataKeyObj.type === "key";
 			})

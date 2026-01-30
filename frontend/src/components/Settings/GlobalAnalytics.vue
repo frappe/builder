@@ -16,7 +16,7 @@
 		</AnalyticsOverview>
 		<div class="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
 			<div>
-				<h3 class="mb-4 text-lg font-medium">Top Pages</h3>
+				<h3 class="mb-4 text-lg font-medium text-ink-gray-7">Top Pages</h3>
 				<div
 					v-if="analytics.loading"
 					class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">
@@ -39,7 +39,7 @@
 					row-key="route" />
 			</div>
 			<div>
-				<h3 class="mb-4 text-lg font-medium">Top Referrers</h3>
+				<h3 class="mb-4 text-lg font-medium text-ink-gray-7">Top Referrers</h3>
 				<div
 					v-if="analytics.loading"
 					class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">

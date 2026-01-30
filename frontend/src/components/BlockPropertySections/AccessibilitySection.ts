@@ -44,38 +44,6 @@ const accessibilitySectionProperties = [
 	},
 	{
 		component: InlineInput,
-		getProps: () => {
-			return {
-				label: "Input Type",
-				type: "select",
-				options: ["text", "number", "email", "password", "date", "time", "search", "tel", "url", "color"],
-				modelValue: blockController.getAttribute("type") || "text",
-			};
-		},
-		searchKeyWords:
-			"Input, Type, InputType, Input Type, Text, Number, Email, Password, Date, Time, Search, Tel, Url, Color, tag",
-		events: {
-			"update:modelValue": (val: string) => blockController.setAttribute("type", val),
-		},
-		condition: () => blockController.isInput(),
-	},
-	{
-		component: InlineInput,
-		getProps: () => {
-			return {
-				label: "Placeholder",
-				modelValue: blockController.getAttribute("placeholder"),
-			};
-		},
-		searchKeyWords:
-			"Placeholder, Input, PlaceholderText, Placeholder Text, form, input, text, number, email, password, date, time, search, tel, url, color, tag",
-		events: {
-			"update:modelValue": (val: string) => blockController.setAttribute("placeholder", val),
-		},
-		condition: () => blockController.isInput(),
-	},
-	{
-		component: InlineInput,
 		getProps: () => ({
 			label: "Aria Label",
 			modelValue: blockController.getAttribute("aria-label"),

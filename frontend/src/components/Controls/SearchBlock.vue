@@ -64,6 +64,17 @@
 			</Popover>
 		</div>
 
+		<div v-if="canvasStore.activeCanvas?.selectedBlocks?.length" class="mb-4">
+			<label class="flex cursor-pointer items-center text-sm text-ink-gray-7">
+				<Input
+					type="checkbox"
+					v-model="searchInSelectedBlock"
+					@change="performSearch"
+					class="focus:ring-ink-gray-5 mr-2 size-4 border-outline-gray-1 text-ink-gray-7" />
+				<span>Search inside selected block only</span>
+			</label>
+		</div>
+
 		<div v-if="searchMode === 'replace'" class="mb-4">
 			<BuilderInput
 				class="w-full"
@@ -137,8 +148,7 @@
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { watchDebounced } from "@vueuse/core";
-import { FeatherIcon, Popover } from "frappe-ui";
-import Input from "frappe-ui/src/components/Input.vue";
+import { FeatherIcon, Input, Popover } from "frappe-ui";
 import { computed, nextTick, onMounted, Ref, ref } from "vue";
 import { toast } from "vue-sonner";
 import BuilderButton from "./BuilderButton.vue";
@@ -153,6 +163,7 @@ const replaceQuery = ref("");
 const searchMode = ref<"search" | "replace">("search");
 const replacedCount = ref(0);
 const results = ref([]) as Ref<Block[]>;
+const searchInSelectedBlock = ref(false);
 
 const propertyHandlers = [
 	{
@@ -166,8 +177,8 @@ const propertyHandlers = [
 		key: "data",
 		name: "Data",
 		matches: (block: Block, term: string) => {
-			if (block.dynamicValues) {
-				block.dynamicValues.forEach((dv: BlockDataKey) => {
+			if (block.getDynamicValues()) {
+				block.getDynamicValues().forEach((dv: BlockDataKey) => {
 					if (dv.key?.toLowerCase().includes(term)) {
 						return true;
 					}
@@ -419,9 +430,14 @@ const searchWithFilters = (searchTerm: string): Block[] => {
 		block.children?.forEach((child) => searchInBlock(child));
 	}
 
-	const rootBlock = canvasStore.activeCanvas?.getRootBlock();
-	if (rootBlock) {
-		searchInBlock(rootBlock);
+	const selectedBlocks = canvasStore.activeCanvas?.selectedBlocks;
+	const startingBlock =
+		searchInSelectedBlock.value && selectedBlocks?.length
+			? selectedBlocks[0]
+			: canvasStore.activeCanvas?.getRootBlock();
+
+	if (startingBlock) {
+		searchInBlock(startingBlock);
 	}
 
 	return searchResults;
@@ -440,6 +456,10 @@ watchDebounced(query, performSearch, {
 });
 
 watchDebounced(() => filters.value.map((f) => f.selected).join(","), performSearch, {
+	debounce: 300,
+});
+
+watchDebounced(searchInSelectedBlock, performSearch, {
 	debounce: 300,
 });
 

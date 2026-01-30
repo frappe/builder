@@ -1,6 +1,6 @@
 <template>
-	<PropertyControl
-		styleProperty="flexDirection"
+	<StylePropertyControl
+		propertyKey="flexDirection"
 		defaultValue="row"
 		:component="OptionToggle"
 		label="Direction"
@@ -8,16 +8,16 @@
 		:options="[
 			{ label: 'Horizontal', value: 'row', icon: 'arrow-right', hideLabel: true },
 			{ label: 'Vertical', value: 'column', icon: 'arrow-down', hideLabel: true },
-		]"></PropertyControl>
-	<PropertyControl
-		styleProperty="alignItems"
+		]"></StylePropertyControl>
+	<StylePropertyControl
+		propertyKey="alignItems"
 		label="Placement"
 		:enableStates="false"
 		v-if="blockController.isFlex()"
-		:component="PlacementControl"></PropertyControl>
-	<PropertyControl
+		:component="PlacementControl"></StylePropertyControl>
+	<StylePropertyControl
 		v-if="blockController.isFlex()"
-		styleProperty="justifyContent"
+		propertyKey="justifyContent"
 		type="select"
 		label="Distribution"
 		:options="[
@@ -25,14 +25,14 @@
 			{ label: 'Space Around', value: 'space-around' },
 			{ label: 'Space Evenly', value: 'space-evenly' },
 		]" />
-	<PropertyControl
+	<StylePropertyControl
 		v-if="blockController.isFlex()"
 		label="Gap"
-		styleProperty="gap"
+		propertyKey="gap"
 		:enableSlider="true"
 		:unitOptions="['px', 'em', 'rem']" />
-	<PropertyControl
-		styleProperty="flexWrap"
+	<StylePropertyControl
+		propertyKey="flexWrap"
 		:component="OptionToggle"
 		label="Wrap"
 		v-if="blockController.isFlex()"
@@ -40,20 +40,28 @@
 			{ label: 'No Wrap', value: 'nowrap' },
 			{ label: 'Wrap', value: 'wrap' },
 		]"
-		defaultValue="nowrap"></PropertyControl>
+		defaultValue="nowrap"></StylePropertyControl>
 	<div class="flex flex-col gap-3" v-if="blockController.getParentBlock()?.isFlex()">
-		<PropertyControl
+		<StylePropertyControl
+			label="Order"
+			propertyKey="order"
+			:enableSlider="true"
+			:min="-99"
+			:max="99"
+			:step="1"
+			:defaultValue="0" />
+		<StylePropertyControl
 			label="Grow"
-			styleProperty="flexGrow"
+			propertyKey="flexGrow"
 			:component="OptionToggle"
 			:options="[
 				{ label: 'Yes', value: 1 },
 				{ label: 'No', value: 0 },
 			]"
 			:defaultValue="0" />
-		<PropertyControl
+		<StylePropertyControl
 			label="Shrink"
-			styleProperty="flexShrink"
+			propertyKey="flexShrink"
 			:component="OptionToggle"
 			:options="[
 				{ label: 'Yes', value: 1 },
@@ -64,7 +72,7 @@
 </template>
 <script lang="ts" setup>
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
-import PropertyControl from "@/components/Controls/PropertyControl.vue";
+import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
 import PlacementControl from "./PlacementControl.vue";
 </script>

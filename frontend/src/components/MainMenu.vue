@@ -1,70 +1,5 @@
 <template>
-	<Dropdown
-		:options="[
-			{
-				group: 'Builder',
-				hideLabel: true,
-				items: [
-					{ label: 'Back to Dashboard', onClick: () => $router.push({ name: 'home' }), icon: 'arrow-left' },
-				],
-			},
-			{
-				group: 'Page',
-				hideLabel: true,
-				items: [
-					{
-						label: 'New Page',
-						onClick: () => $router.push({ name: 'builder', params: { pageId: 'new' } }),
-						icon: 'plus',
-					},
-					{
-						label: 'Copy Page',
-						onClick: handleCopyPage,
-						icon: 'clipboard',
-						condition: () => Boolean(pageStore.activePage),
-					},
-					{
-						label: 'Duplicate Page',
-						onClick: () => pageStore.duplicatePage(pageStore.activePage as BuilderPage),
-						icon: 'copy',
-					},
-					{
-						label: `Toggle Theme`,
-						onClick: () => toggleDark(),
-						icon: isDark ? 'sun' : 'moon',
-					},
-					{ label: 'Settings', onClick: () => $emit('showSettings'), icon: 'settings' },
-
-					{
-						label: 'Help',
-						onClick: () => {
-							// @ts-ignore
-							window.open('https://t.me/frappebuilder');
-						},
-						icon: 'info',
-					},
-				],
-			},
-			{
-				group: 'Delete',
-				hideLabel: true,
-				items: [
-					{
-						label: 'Delete Page',
-						onClick: () => {
-							if (!pageStore.activePage) return;
-							pageStore.deletePage(pageStore.activePage).then(() => {
-								$router.push({ name: 'home' });
-							});
-						},
-						icon: 'trash-2',
-					},
-				],
-			},
-		]"
-		size="sm"
-		class="flex-1 [&>div>div>div]:w-full"
-		placement="right">
+	<Dropdown :options="mainMenuOptions" size="sm" placement="left" :offset="18">
 		<template v-slot="{ open }">
 			<div class="flex cursor-pointer items-center gap-2">
 				<img src="/builder_logo.png" alt="logo" class="h-7" />
@@ -80,16 +15,19 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { triggerCopyEvent } from "@/utils/helpers";
-
 import { useDark, useToggle } from "@vueuse/core";
 import { Dropdown } from "frappe-ui";
+import { useRouter } from "vue-router";
 
 const pageStore = usePageStore();
 const isDark = useDark({
 	attribute: "data-theme",
 });
+const router = useRouter();
 const toggleDark = useToggle(isDark);
 const canvasStore = useCanvasStore();
+
+const emit = defineEmits(["showSettings"]);
 
 const handleCopyPage = () => {
 	if (!pageStore.activePage) return;
@@ -97,4 +35,65 @@ const handleCopyPage = () => {
 	canvasStore.requiresConfirmationForCopyingEntirePage = false;
 	triggerCopyEvent();
 };
+
+const mainMenuOptions = [
+	{
+		group: "Builder",
+		hideLabel: true,
+		items: [{ label: "Back to Dashboard", onClick: () => router.push({ name: "home" }), icon: "arrow-left" }],
+	},
+	{
+		group: "Page",
+		hideLabel: true,
+		items: [
+			{
+				label: "New Page",
+				onClick: () => router.push({ name: "builder", params: { pageId: "new" } }),
+				icon: "plus",
+			},
+			{
+				label: "Copy Page",
+				onClick: handleCopyPage,
+				icon: "clipboard",
+				condition: () => Boolean(pageStore.activePage),
+			},
+			{
+				label: "Duplicate Page",
+				onClick: () => pageStore.duplicatePage(pageStore.activePage as BuilderPage),
+				icon: "copy",
+			},
+			{
+				label: "Delete Page",
+				onClick: () => {
+					if (!pageStore.activePage) return;
+					pageStore.deletePage(pageStore.activePage).then(() => {
+						router.push({ name: "home" });
+					});
+				},
+				icon: "trash-2",
+				condition: () => !Boolean(pageStore.activePage?.is_standard),
+			},
+		],
+	},
+	{
+		group: "Preferences",
+		hideLabel: true,
+		items: [
+			{
+				label: `Toggle Theme`,
+				onClick: () => toggleDark(),
+				icon: isDark ? "sun" : "moon",
+			},
+			{ label: "Settings", onClick: () => emit("showSettings"), icon: "settings" },
+			{
+				label: "Help",
+				onClick: () => {
+					// @ts-ignore
+					window.open("https://t.me/frappebuilder");
+				},
+				icon: "info",
+			},
+		],
+	},
+];
 </script>

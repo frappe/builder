@@ -1,4 +1,4 @@
-@import "frappe-ui/src/style.css";
+@import "frappe-ui/style.css";
 
 @layer base {
 	ul,
@@ -60,4 +60,8 @@ p:empty::before {
 
 [data-theme='dark'] img {
 	filter: revert;
+}
+
+[role='dialog'].bg-surface-modal, [role='dialog'] .bg-surface-modal {
+	background-color: var(--surface-white);
 }

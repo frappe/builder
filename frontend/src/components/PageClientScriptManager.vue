@@ -14,10 +14,10 @@
 								href="#"
 								:class="{
 									'text-ink-gray-5': activeScript !== script,
-									'font-medium text-ink-gray-8': activeScript === script,
+									'font-medium !text-ink-gray-8': activeScript === script,
 								}"
 								@click="selectScript(script)"
-								class="group flex h-6 items-center justify-between gap-1 text-sm first-of-type:mt-6 last-of-type:mb-2">
+								class="group flex h-6 items-center justify-between gap-1 text-sm first-of-type:mt-6 last-of-type:mb-2 hover:text-ink-gray-7">
 								<div class="flex w-[90%] items-center gap-1">
 									<GripVertical class="drag-handle cursor-grab text-ink-gray-5 hover:text-ink-gray-8" />
 									<CSSIcon class="shrink-0" v-if="script.script_type === 'CSS'" />
@@ -26,7 +26,7 @@
 
 									<EditableSpan
 										v-model="script.script_name"
-										:editable="script.editable"
+										:editable="script.editable && !builderStore.readOnlyMode"
 										:onChange="
 											async (newName) => {
 												await updateScriptName(newName, script);
@@ -40,7 +40,7 @@
 								<Dropdown
 									class="script-options"
 									placement="right"
-									v-if="activeScript === script"
+									v-if="activeScript === script && !builderStore.readOnlyMode"
 									:options="[
 										{
 											label: 'Rename',
@@ -67,14 +67,21 @@
 						</template>
 					</draggable>
 
-					<div class="flex w-full gap-2">
+					<div
+						class="grid w-full grid-cols-1 gap-2"
+						v-if="!builderStore.readOnlyMode"
+						:class="
+							clientScriptResource.data && clientScriptResource.data.length > 0
+								? 'grid-cols-2'
+								: 'grid-cols-1'
+						">
 						<Dropdown
 							:options="[
 								{ label: 'JavaScript', onClick: () => addScript('JavaScript') },
 								{ label: 'CSS', onClick: () => addScript('CSS') },
 							]"
 							size="sm"
-							class="flex-1 [&>div>div>div]:w-full">
+							class="[&>div>div>div]:w-full">
 							<template v-slot="{ open }">
 								<BuilderButton class="w-full text-xs" @click="open">New Script</BuilderButton>
 							</template>
@@ -83,7 +90,7 @@
 						<Autocomplete
 							v-if="clientScriptResource.data && clientScriptResource.data.length > 0"
 							:options="clientScriptOptions"
-							class="[&>div>div>div]:overflow-hidden"
+							bodyClasses="overflow-hidden [&>ul]:!bg-surface-white"
 							@update:modelValue="(option: Option) => attachScript(option.value)"
 							placeholder="Attach Script">
 							<template v-slot:target="{ open }">
@@ -114,6 +121,7 @@
 				:type="activeScript.script_type as 'JavaScript' | 'CSS'"
 				class="flex-1"
 				height="65vh"
+				:readonly="builderStore.readOnlyMode"
 				:autofocus="false"
 				:show-save-button="true"
 				@save="updateScript"
@@ -124,6 +132,7 @@
 
 <script setup lang="ts">
 import EditableSpan from "@/components/EditableSpan.vue";
+import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { posthog } from "@/telemetry";
 import { BuilderClientScript } from "@/types/Builder/BuilderClientScript";
@@ -138,6 +147,7 @@ import GripVertical from "./Icons/GripVertical.vue";
 import JavaScriptIcon from "./Icons/JavaScript.vue";
 
 const scriptEditor = ref<InstanceType<typeof CodeEditor> | null>(null);
+const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 
 type attachedScript = {
@@ -195,7 +205,7 @@ const selectScript = (script: attachedScript) => {
 };
 
 const updateScript = (value: string) => {
-	if (!activeScript.value) return;
+	if (!activeScript.value || builderStore.readOnlyMode) return;
 
 	if (!value || !value.trim()) {
 		toast.warning("Script cannot be empty");
@@ -232,6 +242,8 @@ const updateScript = (value: string) => {
 };
 
 const addScript = (scriptType: "JavaScript" | "CSS") => {
+	if (builderStore.readOnlyMode) return;
+
 	clientScriptResource.insert
 		.submit({
 			script_type: scriptType,
@@ -261,6 +273,8 @@ const addScript = (scriptType: "JavaScript" | "CSS") => {
 };
 
 const attachScript = (builder_script_name: string) => {
+	if (builderStore.readOnlyMode) return;
+
 	attachedScriptResource.insert
 		.submit({
 			parent: props.page.name,
@@ -280,6 +294,8 @@ const attachScript = (builder_script_name: string) => {
 };
 
 const deleteScript = (scriptName: string) => {
+	if (builderStore.readOnlyMode) return;
+
 	activeScript.value = null;
 	attachedScriptResource.delete.submit(scriptName).then(() => {
 		attachedScriptResource.reload();
@@ -290,7 +306,7 @@ const deleteScript = (scriptName: string) => {
 };
 
 const updateScriptName = async (newName: string, script: attachedScript) => {
-	if (!newName) return;
+	if (!newName || builderStore.readOnlyMode) return;
 	script.editable = false;
 	pageStore.activePageScripts = pageStore.activePageScripts.map((_script: BuilderClientScript) => {
 		if (_script.name === script.name) {

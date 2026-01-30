@@ -6,7 +6,6 @@
 		</div>
 		<CodeEditor v-model="pageStore.pageData" type="JSON" label="Data Preview" :readonly="true"></CodeEditor>
 		<Dialog
-			style="z-index: 40"
 			class="overscroll-none"
 			:options="{
 				title: currentScriptEditor == 'data' ? 'Data Script' : 'Client Script',
@@ -28,6 +27,7 @@
 							v-model="page.page_data_script"
 							type="Python"
 							height="60vh"
+							:readonly="builderStore.readOnlyMode"
 							:autofocus="true"
 							@save="savePageDataScript"
 							:showSaveButton="true"

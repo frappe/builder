@@ -1,4 +1,4 @@
-import PropertyControl from "@/components/Controls/PropertyControl.vue";
+import AttributePropertyControl from "@/components/Controls/AttributePropertyControl.vue";
 import ImageUploadInput from "@/components/ImageUploadInput.vue";
 import blockController from "@/utils/blockController";
 import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
@@ -7,23 +7,24 @@ import { computed } from "vue";
 
 const imageOptionsSectionProperties = [
 	{
-		component: PropertyControl,
+		component: AttributePropertyControl,
 		getProps: () => {
 			return {
 				component: ImageUploadInput,
-				controlType: "attribute",
-				styleProperty: "src",
+				propertyKey: "src",
 				label: "Image URL",
 				allowDynamicValue: true,
-				imageURL: blockController.getAttribute("src"),
+				popoverOffset: 120,
 				imageFit: blockController.getStyle("objectFit"),
+				variants: [{ name: "dark", property: "darkSrc", label: "Dark Mode" }],
 			};
 		},
 		events: {
 			"update:imageURL": (val: string) => blockController.setAttribute("src", val),
 			"update:imageFit": (val: StyleValue) => blockController.setStyle("objectFit", val),
 		},
-		searchKeyWords: "Image, URL, Src, Fit, ObjectFit, Object Fit, Fill, Contain, Cover",
+		searchKeyWords:
+			"Image, URL, Src, Fit, ObjectFit, Object Fit, Fill, Contain, Cover, Dark, Mode, Dark Mode, Theme",
 	},
 	{
 		component: Button,
@@ -61,11 +62,10 @@ const imageOptionsSectionProperties = [
 		},
 	},
 	{
-		component: PropertyControl,
+		component: AttributePropertyControl,
 		getProps: () => {
 			return {
-				controlType: "attribute",
-				styleProperty: "alt",
+				propertyKey: "alt",
 				label: "Alt Text",
 				allowDynamicValue: true,
 				getModelValue: () => blockController.getAttribute("alt") || "",
