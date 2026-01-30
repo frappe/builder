@@ -34,7 +34,7 @@ jobs:
 
       - name: Create Release
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GIT_AUTHOR_NAME: "Frappe PR Bot"
           GIT_AUTHOR_EMAIL: "developers@frappe.io"
           GIT_COMMITTER_NAME: "Frappe PR Bot"
