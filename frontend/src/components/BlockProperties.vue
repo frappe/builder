@@ -14,7 +14,7 @@
 				</template>
 			</CollapsibleSection>
 		</div>
-		<div class="sticky top-0 mt-[-16px] flex w-full bg-surface-white py-3">
+		<div class="sticky top-[1px] z-[1] mt-[-16px] flex w-full bg-surface-white py-3">
 			<BuilderInput
 				ref="searchInput"
 				type="text"

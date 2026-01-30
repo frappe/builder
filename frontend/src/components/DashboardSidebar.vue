@@ -116,7 +116,7 @@
 					),
 				}"
 				@click="setFolderActive(project.folder_name)">
-				<span class="flex flex-1 gap-2">
+				<span class="flex flex-1 gap-2 overflow-hidden">
 					<FolderIcon class="size-4"></FolderIcon>
 					<EditableSpan
 						v-model="project.folder_name"
