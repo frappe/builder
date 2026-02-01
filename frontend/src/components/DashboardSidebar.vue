@@ -108,7 +108,7 @@
 				<p class="text-sm text-ink-gray-5">No folders yet</p>
 			</div>
 			<span
-				class="flex h-8 w-full cursor-pointer items-center justify-between gap-2 rounded p-2 py-1 text-base text-ink-gray-6"
+				class="flex h-8 w-full cursor-pointer items-center justify-between gap-2 rounded p-2 py-1 pr-1 text-base text-ink-gray-6"
 				v-for="project in builderProjectFolder.data"
 				:class="{
 					'bg-surface-modal text-ink-gray-8 shadow-sm dark:bg-surface-gray-2': isFolderActive(
