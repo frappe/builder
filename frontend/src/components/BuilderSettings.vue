@@ -46,9 +46,12 @@ import ChartIcon from "./Icons/Chart.vue";
 import CodeIcon from "./Icons/Code.vue";
 import MetaIcon from "./Icons/Meta.vue";
 import SettingsIcon from "./Icons/Settings.vue";
+// @ts-ignore
+import TerminalIcon from "~icons/lucide/terminal";
 import GlobalAnalytics from "./Settings/GlobalAnalytics.vue";
 import GlobalCode from "./Settings/GlobalCode.vue";
 import GlobalGeneral from "./Settings/GlobalGeneral.vue";
+import GlobalDeveloper from "./Settings/GlobalDeveloper.vue";
 import PageAnalytics from "./Settings/PageAnalytics.vue";
 import PageGeneral from "./Settings/PageGeneral.vue";
 import PageMeta from "./Settings/PageMeta.vue";
@@ -143,6 +146,13 @@ const globalSettings = {
 			title: "Site Views",
 			icon: ChartIcon,
 		},
+		{
+			label: "Developer Settings",
+			value: "global_developer",
+			component: GlobalDeveloper,
+			title: "Developer Settings",
+			icon: TerminalIcon,
+		}
 	],
 };
 

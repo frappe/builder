@@ -115,17 +115,39 @@ const blockController = {
 		});
 	},
 	getKeyValue: (key: "element" | "innerHTML" | "visibilityCondition") => {
-		let keyValue = "__initial__" as StyleValue | undefined;
-		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
-			if (keyValue === "__initial__") {
-				keyValue = block[key];
-			} else if (keyValue !== block[key]) {
-				keyValue = "Mixed";
-			}
-		});
-		return keyValue;
+		if (key !== "visibilityCondition") {
+			let keyValue = "__initial__" as StyleValue | undefined;
+			canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
+				if (keyValue === "__initial__") {
+					keyValue = block[key];
+				} else if (keyValue !== block[key]) {
+					keyValue = "Mixed";
+				}
+			});
+			return keyValue;
+		} else {
+			// TODO: handle it better
+			let key: string | undefined = "__initial__";
+			let comesFrom: "props" | "dataScript" | "blockDataScript" | undefined = undefined;
+			canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
+				const condition: BlockVisibilityCondition | undefined = block.getVisibilityCondition();
+				if (key === "__initial__") {
+					if (condition) {
+						key = condition.key;
+						comesFrom = condition.comesFrom;
+					} else {
+						key = undefined;
+						comesFrom = undefined;
+					}
+				} else if (condition?.comesFrom !== comesFrom || condition?.key !== key) {
+					key = "Mixed";
+					comesFrom = undefined;
+				}
+			});
+			return { key, comesFrom };
+		}
 	},
-	setKeyValue: (key: "element" | "innerHTML" | "visibilityCondition", value: string) => {
+	setKeyValue: (key: "element" | "innerHTML" | "visibilityCondition", value: any) => {
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 			if (key === "element" && block.blockName === "container") {
 				// reset blockName since it will not be a container anymore
@@ -305,6 +327,62 @@ const blockController = {
 		blockController.getSelectedBlocks().forEach((block) => {
 			block.unsetLink();
 		});
+	},
+	getComponentRootBlock: (block?: Block): Block => {
+		if (!block) {
+			block = blockController.getFirstSelectedBlock();
+		}
+		const editingMode = canvasStore.editingMode;
+
+		while (block && block.isExtendedFromComponent()) {
+			if (block.extendedFromComponent) break;
+			block = block.getParentBlock()!;
+		}
+		if (editingMode == "fragment") {
+			while (block && !block.isExtendedFromComponent() && block.getParentBlock()) {
+				block = block.getParentBlock()!;
+			}
+		}
+		return block;
+	},
+	getBlockClientScript: () => {
+		return blockController.getFirstSelectedBlock()?.getBlockClientScript();
+	},
+	setBlockClientScript: (script: string) => {
+		blockController.getFirstSelectedBlock()?.setBlockClientScript(script);
+	},
+	getBlockDataScript: () => {
+		return blockController.getFirstSelectedBlock()?.getBlockDataScript();
+	},
+	setBlockDataScript: (script: string) => {
+		blockController.getFirstSelectedBlock()?.setBlockDataScript(script);
+	},
+	getBlockProps: () => {
+		return blockController.getFirstSelectedBlock()?.getBlockProps();
+	},
+	setBlockProp: (key: string, value: Record<string, any>) => {
+		const allProps = blockController.getBlockProps();
+		if (!allProps) return;
+		const updatedProps = {
+			...allProps,
+			[key]: {
+				...allProps[key],
+				...value,
+			},
+		};
+		blockController.setBlockProps(updatedProps);
+	},
+	setBlockProps: (props: BlockProps) => {
+		const block = blockController.getFirstSelectedBlock();
+		if (!block.props) {
+			block.props = {};
+		}
+		Object.keys(block.props).forEach((key) => {
+			if (!props[key]) {
+				delete block.props?.[key];
+			}
+		});
+		Object.assign(block.props, props);
 	},
 };
 

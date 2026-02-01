@@ -80,28 +80,23 @@
 	</div>
 	<PageListModal v-model="pageListDialog" :pages="componentUsedInPages"></PageListModal>
 	<Dialog
-		v-model="canvasStore.showHTMLDialog"
+		v-model="canvasStore.showEditorDialog"
 		class="overscroll-none"
-		:isDirty="htmlEditor?.isDirty"
+		:isDirty="expandedEditor?.isDirty"
 		:options="{
 			title: 'HTML',
 			size: '7xl',
 		}">
 		<template #body-content>
 			<CodeEditor
-				:modelValue="canvasStore.editableBlock?.getInnerHTML()"
-				ref="htmlEditor"
-				type="HTML"
+				:modelValue="getExpandedEditorContent()"
+				ref="expandedEditor"
+				:type="expandedEditorOptions.type"
 				height="68vh"
-				label="Edit HTML"
+				:label="expandedEditorOptions.label"
 				:showLineNumbers="true"
 				:showSaveButton="true"
-				@save="
-					(val) => {
-						canvasStore.editableBlock?.setInnerHTML(val);
-						canvasStore.showHTMLDialog = false;
-					}
-				"
+				@save="saveExpandedEditorContent"
 				required />
 		</template>
 	</Dialog>
@@ -138,7 +133,7 @@ import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, w
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
 
-const htmlEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
+const expandedEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
 
 const breakpoints = useBreakpoints(breakpointsTailwind);
 const isSmallScreen = breakpoints.smaller("lg");
@@ -202,6 +197,49 @@ async function saveAndExitFragmentMode(e: Event) {
 	await canvasStore.fragmentData.saveAction?.(fragmentCanvas.value?.getRootBlock());
 	fragmentCanvas.value?.toggleDirty(false);
 	canvasStore.exitFragmentMode(e);
+}
+
+let expandedEditorOptions = computed(() => {
+	let title, label;
+	let type: "HTML" | "JavaScript" | "CSS" | "Python" = "HTML";
+	if (canvasStore.editingContentType === "html") {
+		title = "HTML";
+		label = "Edit HTML";
+	} else if (canvasStore.editingContentType === "js") {
+		title = "Block Client Script";
+		label = "Edit Block Client Script";
+		type = "JavaScript";
+	} else if (canvasStore.editingContentType === "css") {
+		title = "CSS";
+		label = "Edit CSS";
+		type = "CSS";
+	} else if (canvasStore.editingContentType === "python") {
+		title = "Block Data Script";
+		label = "Edit Block Data Script";
+		type = "Python";
+	}
+	return { title, label, type };
+});
+
+function getExpandedEditorContent() {
+	if (canvasStore.editingContentType === "html") {
+		return canvasStore.editableBlock?.getInnerHTML();
+	} else if (canvasStore.editingContentType === "js") {
+		return canvasStore.editableBlock?.getBlockClientScript();
+	} else if (canvasStore.editingContentType === "python") {
+		return canvasStore.editableBlock?.getBlockDataScript();
+	}
+}
+
+async function saveExpandedEditorContent(val: string) {
+	if (canvasStore.editingContentType === "html") {
+		canvasStore.editableBlock?.setInnerHTML(val);
+	} else if (canvasStore.editingContentType === "js") {
+		canvasStore.editableBlock?.setBlockClientScript(val);
+	} else if (canvasStore.editingContentType === "python") {
+		canvasStore.editableBlock?.setBlockDataScript(val);
+	}
+	canvasStore.showEditorDialog = false;
 }
 
 onActivated(async () => {
@@ -292,7 +330,7 @@ watch(
 );
 
 watch(
-	() => canvasStore.showHTMLDialog,
+	() => canvasStore.showEditorDialog,
 	(value) => {
 		if (!value) {
 			canvasStore.editableBlock = null;

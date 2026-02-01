@@ -38,11 +38,14 @@ class Block implements BlockOptions {
 	isChildOfComponent?: string;
 	referenceBlockId?: string;
 	isRepeaterBlock?: boolean;
-	visibilityCondition?: string;
+	visibilityCondition?: BlockVisibilityCondition;
 	elementBeforeConversion?: string;
 	parentBlock: Block | null;
 	activeState?: string | null = null;
 	dynamicValues: Array<BlockDataKey>;
+	blockClientScript?: string;
+	blockDataScript?: string;
+	props?: BlockProps;
 	// @ts-expect-error
 	referenceComponent: Block | null;
 	customAttributes: BlockAttributeMap;
@@ -54,7 +57,6 @@ class Block implements BlockOptions {
 		this.isRepeaterBlock = options.isRepeaterBlock;
 		this.isChildOfComponent = options.isChildOfComponent;
 		this.referenceBlockId = options.referenceBlockId;
-		this.visibilityCondition = options.visibilityCondition;
 		this.parentBlock = options.parentBlock || null;
 		if (this.extendedFromComponent) {
 			componentStore.loadComponent(this.extendedFromComponent);
@@ -79,6 +81,15 @@ class Block implements BlockOptions {
 			this.innerHTML = options.innerText;
 		}
 
+		if (typeof options.visibilityCondition == "string") {
+			this.visibilityCondition = {
+				key: options.visibilityCondition,
+				comesFrom: "dataScript",
+			};
+		} else {
+			this.visibilityCondition = options.visibilityCondition;
+		}
+
 		this.originalElement = options.originalElement;
 
 		if (!options.blockId || options.blockId === "root") {
@@ -98,6 +109,9 @@ class Block implements BlockOptions {
 		this.tabletStyles = reactive(options.tabletStyles || {});
 		this.attributes = reactive(options.attributes || {});
 		this.dynamicValues = reactive(options.dynamicValues || []);
+		this.blockClientScript = options.blockClientScript || "";
+		this.blockDataScript = options.blockDataScript || "";
+		this.props = reactive(options.props || {});
 
 		this.blockName = options.blockName;
 		delete this.attributes.style;
@@ -708,6 +722,7 @@ class Block implements BlockOptions {
 				key: "",
 				type: this.isImage() || this.isLink() ? "attribute" : "key",
 				property: this.isLink() ? "href" : this.isImage() ? "src" : "innerHTML",
+				comesFrom: "dataScript",
 			};
 		}
 		if (!value && key === "key") {
@@ -911,12 +926,13 @@ class Block implements BlockOptions {
 		property: BlockDataKey["property"],
 		type: BlockDataKeyType,
 		key: BlockDataKey["key"] | null = null,
+		comesFrom: BlockDataKey["comesFrom"] = "dataScript",
 	) {
 		const existingKey = this.getDynamicKey(property, type);
 		if (existingKey) {
 			this.dynamicValues = this.dynamicValues.map((v) => {
 				if (v.property === property && v.type === type) {
-					return { ...v, key: key || "" };
+					return { ...v, key: key || "", comesFrom };
 				}
 				return v;
 			});
@@ -925,6 +941,7 @@ class Block implements BlockOptions {
 				property,
 				type,
 				key: key || "",
+				comesFrom,
 			});
 		}
 	}
@@ -950,6 +967,42 @@ class Block implements BlockOptions {
 	}
 	isInsideRepeater(): boolean {
 		return Boolean(this.getRepeaterParent());
+	}
+	getBlockClientScript(): string {
+		let blockClientScript = "";
+		if (this.isExtendedFromComponent() && !this.blockClientScript) {
+			blockClientScript = this.referenceComponent?.getBlockClientScript() || "";
+		} else {
+			blockClientScript = this.blockClientScript || "";
+		}
+		return blockClientScript;
+	}
+	setBlockClientScript(script: string) {
+		this.blockClientScript = script;
+	}
+	getBlockDataScript(): string {
+		let blockDataScript = "";
+		if (this.isExtendedFromComponent() && !this.blockDataScript) {
+			blockDataScript = this.referenceComponent?.getBlockDataScript() || "";
+		} else {
+			blockDataScript = this.blockDataScript || "";
+		}
+		return blockDataScript;
+	}
+	setBlockDataScript(script: string) {
+		this.blockDataScript = script;
+	}
+	getBlockProps(): BlockProps {
+		let blockProps = {};
+		if (this.isExtendedFromComponent() && !Object.keys(this.props || {}).length) {
+			blockProps = this.referenceComponent?.getBlockProps() || {};
+		} else {
+			blockProps = this.props || {};
+		}
+		return blockProps;
+	}
+	setBlockProps(props: BlockProps) {
+		this.props = props;
 	}
 }
 
@@ -1056,6 +1109,9 @@ function resetBlock(
 		block.classes = [];
 		block.dataKey = null;
 		block.dynamicValues = [];
+		block.props = {};
+		block.blockClientScript = "";
+		block.blockDataScript = "";
 	}
 
 	if (resetChildren) {

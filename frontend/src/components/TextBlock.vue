@@ -31,7 +31,7 @@ import TextBlockBubbleMenu from "@/components/TextBlockBubbleMenu.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
 import { setFontFromHTML } from "@/utils/fontManager";
-import { getDataForKey } from "@/utils/helpers";
+import { getDataForKey, getPropValue } from "@/utils/helpers";
 import type { PauseId } from "@/utils/useCanvasHistory";
 import { Color } from "@tiptap/extension-color";
 import { FontFamily } from "@tiptap/extension-font-family";
@@ -58,11 +58,15 @@ const props = withDefaults(
 		block: Block;
 		preview?: boolean;
 		data?: Record<string, any>;
+		blockData?: Record<string, any> | null;
+		defaultProps?: Record<string, any> | null;
 		breakpoint?: string;
 	}>(),
 	{
 		preview: false,
 		data: () => ({}),
+		blockData: null,
+		defaultProps: null,
 		breakpoint: "desktop",
 	},
 );
@@ -96,9 +100,13 @@ const FontFamilyPasteRule = Extension.create({
 	},
 });
 
+const hasBlockProps = computed(() => {
+	return props.defaultProps || Object.keys(props.block.getBlockProps()).length > 0;
+});
+
 const textContent = computed(() => {
 	let innerHTML = props.block.getInnerHTML();
-	if (props.data) {
+	if (props.data || props.blockData || hasBlockProps.value) {
 		const dynamicContent = getDynamicContent();
 		if (dynamicContent) {
 			innerHTML = dynamicContent;
@@ -107,19 +115,54 @@ const textContent = computed(() => {
 	return String(innerHTML ?? "");
 });
 
+const getDataScriptValue = (path: string): any => {
+	return getDataForKey(props.data, path);
+};
+const getBlockDataScriptValue = (path: string): any => {
+	return getDataForKey(props.blockData || {}, path);
+};
+
 const getDynamicContent = () => {
 	let innerHTML = null as string | null;
+
 	if (props.block.getDataKey("property") === "innerHTML") {
-		const result = getDataForKey(props.data, props.block.getDataKey("key"));
-		innerHTML = (typeof result === "string" ? result : null) ?? innerHTML;
+		let value;
+		if (props.block.getDataKey("comesFrom") === "props") {
+			// props are checked first as unavailablity of comesFrom means it comes from dataScript (legacy)
+			value = getPropValue(
+				props.block.getDataKey("key"),
+				props.block,
+				getDataScriptValue,
+				getBlockDataScriptValue,
+				props.defaultProps,
+			);
+		} else if (props.block.getDataKey("comesFrom") === "blockDataScript") {
+			value = getBlockDataScriptValue(props.block.getDataKey("key"));
+		} else {
+			value = getDataScriptValue(props.block.getDataKey("key"));
+		}
+		innerHTML = value ?? innerHTML;
 	}
 	props.block.getDynamicValues()
 		?.filter((dataKeyObj: BlockDataKey) => {
 			return dataKeyObj.property === "innerHTML" && dataKeyObj.type === "key";
 		})
 		?.forEach((dataKeyObj: BlockDataKey) => {
-			const result = getDataForKey(props.data as Object, dataKeyObj.key as string);
-			innerHTML = (typeof result === "string" ? result : null) ?? innerHTML;
+			let value;
+			if (dataKeyObj.comesFrom === "props") {
+				value = getPropValue(
+					dataKeyObj.key as string,
+					props.block,
+					getDataScriptValue,
+					getBlockDataScriptValue,
+					props.defaultProps,
+				);
+			} else if (dataKeyObj.comesFrom === "blockDataScript") {
+				value = getBlockDataScriptValue(dataKeyObj.key as string);
+			} else {
+				value = getDataScriptValue(dataKeyObj.key as string);
+			}
+			innerHTML = value ?? innerHTML;
 		});
 	return innerHTML;
 };

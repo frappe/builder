@@ -25,6 +25,7 @@
 								}"
 								v-bind="events"
 								ref="colorInput"
+								:referenceElementSelector="autocompleteReferenceElementSelector"
 								@keydown.enter="handleEnter"
 								@focus="togglePopover"
 								:placeholder="placeholder"
@@ -167,6 +168,7 @@ const props = withDefaults(
 		showColorVariableOptions?: boolean;
 		showPickerOnMount?: boolean;
 		popoverOffset?: number;
+		autocompleteReferenceElementSelector?: string;
 	}>(),
 	{
 		modelValue: null,

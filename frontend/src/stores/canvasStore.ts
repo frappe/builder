@@ -27,9 +27,10 @@ const useCanvasStore = defineStore("canvasStore", {
 			index: <number | null>null,
 		},
 		editableBlock: <Block | null>null,
+		editingContentType: <"html" | "css" | "js" | "python">"html",
 		editingMode: <EditingMode>"page",
 		settingPage: false,
-		showHTMLDialog: false,
+		showEditorDialog: false,
 		fragmentData: {
 			block: <Block | null>null,
 			saveAction: <Function | null>null,
@@ -99,8 +100,25 @@ const useCanvasStore = defineStore("canvasStore", {
 
 		editHTML(block: Block) {
 			this.editableBlock = block;
+			this.editingContentType = "html";
 			nextTick(() => {
-				this.showHTMLDialog = true;
+				this.showEditorDialog = true;
+			});
+		},
+
+		editBlockClientScript(block: Block) {
+			this.editableBlock = block;
+			this.editingContentType = "js";
+			nextTick(() => {
+				this.showEditorDialog = true;
+			});
+		},
+
+		editBlockDataScript(block: Block) {
+			this.editableBlock = block;
+			this.editingContentType = "python";
+			nextTick(() => {
+				this.showEditorDialog = true;
 			});
 		},
 

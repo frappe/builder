@@ -93,6 +93,6 @@ const selectBlock = (e: MouseEvent) => {
 	canvasStore.selectBlock(block, e);
 	canvasStore.activeCanvas?.setActiveBreakpoint(breakpoint);
 
-	builderStore.leftPanelActiveTab = "Layers";
+	if (builderStore.leftPanelActiveTab !== "Code") builderStore.leftPanelActiveTab = "Layers";
 	builderStore.rightPanelActiveTab = "Properties";
 };

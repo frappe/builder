@@ -8,6 +8,7 @@ import { confirmDialog, FileUploadHandler } from "frappe-ui";
 import { defineComponent, h, markRaw, reactive, ref, toRaw } from "vue";
 import { toast } from "vue-sonner";
 import Dialog from "../components/Controls/Dialog.vue";
+import { builderSettings } from "@/data/builderSettings";
 
 function getNumberFromPx(px: string | number | null | undefined): number {
 	if (!px) {
@@ -361,6 +362,23 @@ const detachBlockFromComponent = (block: Block, componentId: null | string) => {
 	blockCopy.isRepeaterBlock = component?.isRepeaterBlock || block.isRepeaterBlock;
 	blockCopy.visibilityCondition = component?.visibilityCondition || block.visibilityCondition;
 	blockCopy.innerHTML = block.innerHTML || component?.innerHTML;
+	blockCopy.props = Object.fromEntries(
+		Object.entries(block.getBlockProps()).map(([key, prop]) => {
+			const propCopy = { ...prop }; // creating copy to avoid mutating original prop
+			if (propCopy.isStandard) {
+				let value = propCopy.value || propCopy.propOptions?.options?.defaultValue;
+				if (!["string", "select"].includes(propCopy.propOptions?.type!)) {
+					propCopy.value = JSON.stringify(value);
+				} else {
+					propCopy.value = value;
+				}
+				propCopy.isStandard = false;
+				propCopy.propOptions = undefined;
+			}
+			return [key, propCopy];
+		}),
+	);
+
 	delete blockCopy.extendedFromComponent;
 	delete blockCopy.isChildOfComponent;
 	delete blockCopy.referenceBlockId;
@@ -1033,16 +1051,17 @@ function showDialog(options: DialogOptions): Promise<void> {
 	});
 }
 
-function getCollectionKeys(block: any): string[] {
+function getCollectionKeys(block: any, type: BlockDataKey["comesFrom"] = "dataScript"): string[] {
 	// traverse up the block to get list of dataKeys set
 	const repeaterBlock = block.getRepeaterParent();
 	const keys: string[] = [];
 	if (repeaterBlock) {
 		const collectionKey = repeaterBlock.getDataKey("key");
-		if (collectionKey) {
+		const comesFrom = repeaterBlock.getDataKey("comesFrom");
+		if (collectionKey && comesFrom == type) {
 			keys.push(collectionKey);
 		}
-		const parentKeys: string[] = getCollectionKeys(repeaterBlock);
+		const parentKeys: string[] = getCollectionKeys(repeaterBlock, type);
 		if (parentKeys.length > 0) {
 			keys.unshift(...parentKeys);
 		}
@@ -1053,6 +1072,381 @@ function getCollectionKeys(block: any): string[] {
 function triggerCopyEvent() {
 	document.execCommand("copy");
 }
+
+const getValueForInheritedProp = (
+	propName: string,
+	block: Block,
+	getDataScriptValue: (path: string) => any,
+	getBlockScriptValue: (path: string) => any,
+): any => {
+	let parent = block.getParentBlock();
+	while (parent) {
+		const parentProps = parent.getBlockProps();
+		const matchingProp = parentProps[propName];
+		if (matchingProp) {
+			if (matchingProp.isDynamic) {
+				if (matchingProp.comesFrom === "dataScript" && matchingProp.value) {
+					return getDataScriptValue(matchingProp.value);
+				} else if (matchingProp.comesFrom === "blockDataScript" && matchingProp.value) {
+					return getBlockScriptValue(matchingProp.value);
+				} else {
+					return getValueForInheritedProp(propName, parent, getDataScriptValue, getBlockScriptValue);
+				}
+			} else {
+				if (matchingProp.isStandard && matchingProp.propOptions) {
+					if (
+						matchingProp.propOptions.type !== "string" &&
+						matchingProp.propOptions.type !== "select"
+					) {
+						return matchingProp.value
+							? JSON.parse(matchingProp.value)
+							: matchingProp.propOptions?.options?.defaultValue || null;
+					} else {
+						return matchingProp.value || matchingProp.propOptions?.options?.defaultValue || null;
+					}
+				}
+				return matchingProp.value;
+			}
+		}
+		parent = parent.getParentBlock();
+	}
+	return undefined;
+};
+
+const getParentProps = (baseBlock: Block, baseProps: BlockProps = {}): BlockProps => {
+	const parentBlock = baseBlock.getParentBlock();
+	if (parentBlock) {
+		const parentProps: BlockProps = {};
+		Object.entries(parentBlock.getBlockProps())
+			.filter(([_, propDetails]) => {
+				return propDetails.isPassedDown;
+			})
+			.map(([propName, propDetails]) => {
+				parentProps[propName] = propDetails;
+			});
+		const combinedProps = { ...parentProps, ...baseProps };
+		return getParentProps(parentBlock, combinedProps);
+	} else {
+		return baseProps;
+	}
+};
+
+const getDefaultPropsList = (block: Block, blockController: any): BlockProps => {
+	// we need to pass blockController because during initialization phase, blockController can't use canvasStore
+	const isCurrentBlockInRepeater = block?.isInsideRepeater();
+	const repeaterRoot = isCurrentBlockInRepeater ? block?.getRepeaterParent() : null;
+	if (repeaterRoot) {
+		const key = repeaterRoot.getDataKey("key");
+		const comesFrom = repeaterRoot.getDataKey("comesFrom");
+		if (key && comesFrom === "props") {
+			const componentRoot = blockController.getComponentRootBlock(repeaterRoot);
+			const parsedValue = getStandardPropValue(key, componentRoot)?.value;
+			if (!parsedValue) return {};
+			if (Array.isArray(parsedValue)) {
+				return {
+					item: {
+						value: parsedValue[0],
+						isStandard: false,
+						isDynamic: true,
+						comesFrom: "props",
+						isPassedDown: true,
+					},
+				};
+			} else if (typeof parsedValue === "object") {
+				return {
+					key: {
+						value: Object.keys(parsedValue)[0],
+						isStandard: false,
+						isDynamic: true,
+						comesFrom: "props",
+						isPassedDown: true,
+					},
+					value: {
+						value: parsedValue[Object.keys(parsedValue)[0]],
+						isStandard: false,
+						isDynamic: true,
+						comesFrom: "props",
+						isPassedDown: true,
+					},
+				};
+			}
+		}
+	}
+	return {};
+};
+
+const PARSEABLE_STANDARD_TYPES = ["number", "boolean", "object", "array"];
+
+const getPropValue = (
+	propName: string,
+	block: Block,
+	getDataScriptValue: (path: string) => any,
+	getBlockScriptValue: (path: string) => any,
+	defaultProps?: Record<string, any> | null,
+): any => {
+	// Check default props first
+	if (defaultProps?.[propName] !== undefined) {
+		return defaultProps[propName].value;
+	}
+
+	// Find matching prop from block or parent
+	const blockProps = block.getBlockProps();
+	const matchingProp = blockProps[propName] ?? getParentProps(block, {})[propName];
+
+	if (!matchingProp) {
+		return undefined;
+	}
+
+	// Handle dynamic props
+	if (matchingProp.isDynamic) {
+		if (matchingProp.comesFrom === "dataScript" && matchingProp.value) {
+			return getDataScriptValue(matchingProp.value);
+		}
+
+		if (matchingProp.comesFrom === "blockDataScript" && matchingProp.value) {
+			return getBlockScriptValue(matchingProp.value);
+		}
+
+		// Fallback to default props
+		if (matchingProp.value && defaultProps?.[matchingProp.value] !== undefined) {
+			return defaultProps[matchingProp.value].value;
+		}
+
+		return undefined;
+	}
+
+	// Handle standard props
+	if (matchingProp.isStandard && matchingProp.propOptions) {
+		const { type, options } = matchingProp.propOptions;
+		const defaultValue = options?.defaultValue ?? null;
+
+		if (PARSEABLE_STANDARD_TYPES.includes(type)) {
+			return matchingProp.value ? JSON.parse(matchingProp.value) : defaultValue;
+		}
+
+		return matchingProp.value || defaultValue;
+	}
+
+	return matchingProp.value;
+};
+
+const getStandardPropValue = (
+	propName: string,
+	componentRoot: Block,
+): { value: any; options: Record<string, any> } | undefined => {
+	const propsOfComponentRoot = componentRoot.getBlockProps();
+	if (propsOfComponentRoot) {
+		for (const [name, value] of Object.entries(propsOfComponentRoot)) {
+			if (propName === name && value.isStandard) {
+				if (PARSEABLE_STANDARD_TYPES.includes(value.propOptions?.type || "string")) {
+					const parsedValue = value.value
+						? JSON.parse(value.value)
+						: value.propOptions?.options?.defaultValue || null;
+					return {
+						value: parsedValue,
+						options: value.propOptions?.options || {},
+					};
+				} else {
+					return {
+						value: value.value || value.propOptions?.options?.defaultValue || null,
+						options: value.propOptions?.options || {},
+					};
+				}
+			}
+		}
+		return undefined;
+	} else {
+		return undefined;
+	}
+};
+
+const getDataArray = (collectionObject: Record<string, any>) => {
+	const result: string[] = [];
+	let collectionObjectCopy = { ...collectionObject };
+
+	function processObject(obj: Record<string, any>, prefix = "") {
+		Object.entries(obj).forEach(([key, value]) => {
+			const path = prefix ? `${prefix}.${key}` : key;
+
+			if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+				processObject(value, path);
+			} else if (["string", "number", "boolean"].includes(typeof value)) {
+				result.push(path);
+			}
+		});
+	}
+
+	processObject(collectionObjectCopy);
+	return result;
+};
+
+function executeBlockClientScriptUnrestricted(
+	blockUid: string,
+	userScript: string,
+	props: Record<string, any> = {},
+) {
+	const thisElement = document.querySelector(`[data-block-uid='${blockUid}']`) as HTMLElement;
+
+	const context = {
+		thisRef: thisElement,
+		props,
+	};
+
+	const fn = new Function(
+		"context",
+		`with (context) {
+			return (function() { ${userScript} }).call(thisRef);
+		}`,
+	);
+
+	try {
+		document.querySelectorAll(`[data-created-by='${blockUid}']`).forEach(el => el.remove());
+		fn.call(thisElement, context);
+		console.log("Executed unrestricted user script");
+	} catch (e) {
+		console.error("Error in user script 2:", e);
+		// toast.warning("An error occurred while executing block script: " + (e instanceof Error ? e.message : ""));
+	}
+}
+
+/**
+ * Tries to execute user-provided script in a safer environment, (but not guarantee) restricting access to certain DOM properties and methods.
+ * It makes the editor canvas as the root (document), and thus limits the script's ability to manipulate the broader document.
+ * It tries to restrict escape hatches which could be used to access the global window or document objects.
+ * It tries to `wrap` all returned DOM nodes and collections to ensure they are also proxied.
+ * The `wrap` function creates proxies for DOM elements to intercept property access and method calls.
+ *
+ * @param blockId - The ID of the block element to which the script is associated.
+ * @param userScript - The user-provided JavaScript code to execute.
+ * @param props - An optional object containing properties to be made available in the script's context.
+ */
+
+function executeBlockClientScriptRestricted(
+	blockUid: string,
+	userScript: string,
+	props: Record<string, any> = {},
+) {
+	const cache = new WeakMap();
+
+	const BLOCKED_GET = new Set([
+		"ownerDocument",
+		"document",
+		"defaultView",
+		"window",
+		"globalThis",
+		"parentElement",
+		"parentNode",
+		"innerHTML",
+		"outerHTML",
+	]);
+
+	const BLOCKED_SET = new Set(["innerHTML", "outerHTML"]);
+
+	function wrap(value: Element | Node) {
+		if (value === null || typeof value !== "object") return value;
+		if (cache.has(value)) return cache.get(value);
+
+		const proxy = new Proxy(value, handler);
+		cache.set(value, proxy);
+		return proxy;
+	}
+
+	const handler = {
+		get(target: Element, prop: string, receiver: any) {
+			if (BLOCKED_GET.has(prop)) return undefined;
+
+			let val = Reflect.get(target, prop, receiver);
+
+			// Wrap DOM returns
+			if (val instanceof Node) return wrap(val);
+			if (val instanceof NamedNodeMap || val instanceof DOMTokenList || val instanceof CSSStyleDeclaration)
+				return wrap(val as any);
+
+			if (val instanceof NodeList || val instanceof HTMLCollection) {
+				return Array.from(val, wrap);
+			}
+
+			// Wrap functions (methods)
+			if (typeof val === "function") {
+				// disallow eventListeners
+				if (prop === "addEventListener" || prop === "removeEventListener") {
+					// disallow clicks
+					return (...args: any[]) => {
+						const eventType = args[0];
+						const disallowClicks = Boolean(builderSettings.doc?.block_click_handlers);
+						if (disallowClicks && (eventType === "click" || eventType === "dblclick")) {
+							throw new Error(`Blocked: cannot add/remove ${eventType} event listeners`);
+						}
+						const realArgs = args.map((a) => cache.get(a) || a);
+						return val.apply(target, realArgs);
+					};
+				}
+				return (...args) => {
+					const realArgs = args.map((a) => cache.get(a) || a);
+
+					// Do not allow inserting nodes outside the sandbox
+					for (const a of realArgs) {
+						if (a instanceof Node && !sandboxRoot.contains(a)) {
+							throw new Error("Blocked: external node insertion");
+						}
+					}
+
+					const result = val.apply(target, realArgs);
+					return wrap(result);
+				};
+			}
+
+			return val; // primitive allowed
+		},
+
+		set(target: Element, prop: string, value: any) {
+			if (BLOCKED_SET.has(prop)) {
+				throw new Error(`Blocked: cannot set ${prop}`);
+			}
+
+			// Allow normal DOM props like src, value, className, id, etc.
+			try {
+				return Reflect.set(target as any, prop as any, value);
+			} catch {
+				return false;
+			}
+		},
+	};
+
+	const sandboxRoot = document.querySelector("[data-block-id='root']") as HTMLElement;
+	const thisElement = document.querySelector(`[data-block-uid='${blockUid}']`) as HTMLElement;
+
+	const proxiedRoot = wrap(sandboxRoot);
+	const proxiedThis = wrap(thisElement);
+
+	const context = {
+		document: proxiedRoot,
+		thisRef: proxiedThis,
+		props,
+		// Escape hatches blocked
+		window: undefined,
+		globalThis: undefined,
+		eval: undefined,
+		Function: undefined,
+		setTimeout: undefined,
+		setInterval: undefined,
+	};
+
+	const fn = new Function(
+		"context",
+		`with (context) {
+			return (function() { ${userScript} }).call(thisRef);
+		}`,
+	);
+
+	try {
+		fn.call(proxiedThis, context);
+	} catch (e) {
+		console.error("Error in user script:", e);
+		// toast.warning("An error occurred while executing block script: " + (e instanceof Error ? e.message : ""));
+	}
+}
+
 export {
 	addPxToNumber,
 	addUnitToNumber,
@@ -1110,4 +1504,11 @@ export {
 	triggerCopyEvent,
 	uploadBuilderAsset,
 	uploadUserFont,
+	getParentProps,
+	getDefaultPropsList,
+	getPropValue,
+	getStandardPropValue,
+	getDataArray,
+	executeBlockClientScriptUnrestricted,
+	executeBlockClientScriptRestricted,
 };

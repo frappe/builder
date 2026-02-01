@@ -1,23 +1,30 @@
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
-import usePageStore from "@/stores/pageStore";
+import useBlockDataStore from "@/stores/blockDataStore";
+import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
-import { getCollectionKeys, getDataForKey } from "@/utils/helpers";
-import { computed } from "vue";
+import { FeatherIcon } from "frappe-ui";
+import { computed, h } from "vue";
 
 const keyOptions = computed(() => {
-	const pageStore = usePageStore();
-	const result: string[] = [];
-	let collectionObject = pageStore.pageData;
+	const blockDataStore = useBlockDataStore();
+	let result: { label: string; value: string; prefix: any }[] = [];
 
-	if (blockController.getFirstSelectedBlock()?.isInsideRepeater()) {
-		const keys = getCollectionKeys(blockController.getFirstSelectedBlock());
-		collectionObject = keys.reduce((acc: any, key: string) => {
-			const data = getDataForKey(acc, key);
-			return Array.isArray(data) && data.length > 0 ? data[0] : data;
-		}, collectionObject);
-	}
+	const repeatablePageDataKeys: string[] = [];
+	const repeatableBlockDataKeys: string[] = [];
 
-	function processObject(obj: Record<string, any>, prefix = "") {
+	let pageDataCollectionObject =
+		blockDataStore.getPageData(blockController.getFirstSelectedBlock()?.blockId || "") || {};
+	let blockDataCollectionObject =
+		blockDataStore.getBlockData(blockController.getFirstSelectedBlock()?.blockId || "") || {};
+
+	const isInsideRepeater = blockController.getFirstSelectedBlock()?.isInsideRepeater();
+	const repeaterDataKeyComesFrom: BlockDataKey["comesFrom"] | undefined = blockController
+		.getFirstSelectedBlock()
+		?.getRepeaterParent()
+		?.getDataKey("comesFrom") as BlockDataKey["comesFrom"] | undefined;
+
+
+	function processObject(obj: Record<string, any>, prefix = "", resultArray: string[] = []) {
 		if (!obj || typeof obj !== "object") {
 			return;
 		}
@@ -26,18 +33,64 @@ const keyOptions = computed(() => {
 			const path = prefix ? `${prefix}.${key}` : key;
 
 			if (Array.isArray(value)) {
-				result.push(path);
+				resultArray.push(path);
 			} else if (typeof value === "object" && value !== null) {
-				processObject(value, path);
+				processObject(value, path, resultArray);
 			}
 		});
 	}
 
-	processObject(collectionObject);
-	return result.map((key) => ({
-		label: key,
-		value: key,
-	}));
+	processObject(pageDataCollectionObject, "", repeatablePageDataKeys);
+	processObject(blockDataCollectionObject, "", repeatableBlockDataKeys);
+
+	const isPropsBasedRepeater = isInsideRepeater && repeaterDataKeyComesFrom == "props";
+	const repeatableProps: string[] = [];
+
+	const propsOfComponentRoot = blockController.getComponentRootBlock()?.getBlockProps();
+
+	if (propsOfComponentRoot && !isPropsBasedRepeater) {
+		Object.entries(propsOfComponentRoot).forEach(([key, value]) => {
+			if (
+				value.isStandard &&
+				(value.propOptions?.type == "array" || value.propOptions?.type == "object")
+			) {
+				repeatableProps.push(key);
+			}
+		});
+	}
+
+	repeatablePageDataKeys.forEach((item) => {
+		result.push({
+			label: item,
+			value: `${item}--dataScript`,
+			prefix: h(FeatherIcon, {
+				name: "zap",
+				class: "size-3",
+			}),
+		});
+	});
+	repeatableBlockDataKeys.forEach((item) => {
+		result.push({
+			label: item,
+			value: `${item}--blockDataScript`,
+			prefix: h(FeatherIcon, {
+				name: "zap",
+				class: "size-3",
+			}),
+		});
+	});
+	repeatableProps.forEach((prop) => {
+		result.push({
+			label: prop,
+			value: `${prop}--props`,
+			prefix: h(FeatherIcon, {
+				name: "git-commit",
+				class: "size-3",
+			}),
+		});
+	});
+
+	return result;
 });
 
 const collectionOptions = [
@@ -54,7 +107,10 @@ const collectionOptions = [
 		searchKeyWords: "Collection, Repeater, Dynamic Collection, Dynamic Repeater",
 		events: {
 			"update:modelValue": (selectedOption: string) => {
-				blockController.setDataKey("key", selectedOption);
+				let value = selectedOption.split("--").slice(0, -1).join("--");
+				let comesFrom = selectedOption.split("--").slice(-1)[0] as BlockDataKey["comesFrom"];
+				blockController.setDataKey("key", value);
+				blockController.setDataKey("comesFrom", comesFrom);
 			},
 		},
 	},

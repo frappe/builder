@@ -6,6 +6,32 @@ declare interface BlockStyleMap {
 	[key: styleProperty]: StyleValue;
 }
 
+type BlockPropOptions = {
+	type: "number" | "string" | "boolean" | "select" | "array" | "object" | "image" | "color";
+	isRequired?: boolean;
+	// defaultValue?: any;
+	options?: Record<string, any>;
+	dependencies?: { [key: string]: any };
+}
+
+declare type BlockProps = Record<
+	string,
+	{
+		label?: string;
+		isDynamic: boolean;
+		isPassedDown: boolean;
+		comesFrom: "props" | "dataScript" | "blockDataScript" | null;
+		value: string?;
+		isStandard?: boolean;
+		propOptions?: BlockPropOptions;
+	}
+>;
+
+declare type BlockVisibilityCondition = {
+	key: string | undefined;
+	comesFrom: "props" | "dataScript" | "blockDataScript" | undefined;
+};
+
 declare interface BlockAttributeMap {
 	[key: string]: string | number | null | undefined;
 }
@@ -106,6 +132,7 @@ declare type FileDoc = {
 declare interface BlockDataKey {
 	key?: string;
 	type?: BlockDataKeyType;
+	comesFrom?: "props" | "dataScript" | "blockDataScript";
 	property?: string;
 }
 

@@ -50,6 +50,7 @@ import styleSection from "@/components/BlockPropertySections/StyleSection";
 import transitionSection from "@/components/BlockPropertySections/TransitionSection";
 import typographySection from "@/components/BlockPropertySections/TypographySection";
 import videoOptionsSection from "@/components/BlockPropertySections/VideoOptionsSection";
+import standardPropsInputSection from "@/components/BlockPropertySections/StandardPropsInputSection";
 import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
 import { toValue } from "@vueuse/core";
@@ -70,7 +71,7 @@ type BlockProperty = {
 
 type PropertySection = {
 	name: string;
-	properties: BlockProperty[];
+	properties: BlockProperty[] | (() => BlockProperty[]);
 	condition?: () => boolean;
 	collapsed?: boolean;
 };
@@ -89,7 +90,8 @@ const showSection = (section: PropertySection) => {
 };
 
 const getFilteredProperties = (section: PropertySection) => {
-	return section.properties.filter((property) => {
+	const properties = typeof section.properties === "function" ? section.properties() : section.properties;
+	return properties.filter((property) => {
 		let showProperty = true;
 		if (property.condition) {
 			showProperty = property.condition();
@@ -104,7 +106,9 @@ const getFilteredProperties = (section: PropertySection) => {
 	});
 };
 
+
 const sections = [
+	standardPropsInputSection,
 	collectionOptionsSection,
 	linkSection,
 	layoutSection,

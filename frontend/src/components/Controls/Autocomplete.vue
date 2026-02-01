@@ -12,9 +12,15 @@
 					<slot name="prefix" />
 				</div>
 				<ComboboxInput
+					ref="comboboxInput"
 					v-model="searchQuery"
 					autocomplete="off"
-					@focus="emit('focus')"
+					@focus="
+						() => {
+							emit('focus');
+							return false;
+						}
+					"
 					@blur="handleBlur"
 					@keydown.enter="handleEnter"
 					:display-value="getDisplayValue"
@@ -30,7 +36,20 @@
 			</div>
 
 			<ComboboxContent
-				class="absolute z-10 mt-1 max-h-80 w-full overflow-hidden rounded-lg border bg-surface-white shadow-xl">
+				@after-enter="
+					() => {
+						fixedPositionStyles = getFixedPositionStyles();
+					}
+				"
+				@after-leave="
+					() => {
+						fixedPositionStyles = {};
+					}
+				"
+				:class="referenceElementSelector ? 'fixed' : 'absolute'"
+				:style="fixedPositionStyles"
+				ref="contentRef"
+				class="z-50 mt-1 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-white shadow-xl">
 				<div class="overflow-y-auto p-1">
 					<template v-for="(option, index) in displayOptions" :key="`${option.value}-${index}`">
 						<ComboboxSeparator
@@ -84,8 +103,8 @@ import {
 	ComboboxRoot,
 	ComboboxSeparator,
 } from "reka-ui";
-import type { Component } from "vue";
-import { computed, ref, watch } from "vue";
+import type { Component, ComponentPublicInstance } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 
 interface Option {
 	label: string;
@@ -109,6 +128,7 @@ interface Props {
 	placeholder?: string;
 	showInputAsOption?: boolean;
 	actionButton?: ActionButton;
+	referenceElementSelector?: string;
 	allowArbitraryValue?: boolean;
 }
 
@@ -130,6 +150,9 @@ const isOpen = ref(false);
 const searchQuery = ref("");
 const asyncOptions = ref<Option[]>([]);
 const hasValue = computed(() => props.modelValue != null && props.modelValue !== "");
+const comboboxInput = ref<ComponentPublicInstance | null>(null);
+const contentRef = ref<ComponentPublicInstance | null>(null);
+const fixedPositionStyles = ref({});
 const allOptions = computed(() => (props.getOptions ? asyncOptions.value : props.options));
 
 const displayOptions = computed(() => {
@@ -213,6 +236,39 @@ watch(
 	{ immediate: true },
 );
 if (props.getOptions) refreshOptions();
+
+// in Popover, absolute positioning keeps all options within the Popover taking extra space
+// making it fixed makes it float above Popover container
+const getFixedPositionStyles = () => {
+	if (props.referenceElementSelector) {
+		const fixedToElRect = (
+			comboboxInput.value?.$el.closest(props.referenceElementSelector) as HTMLElement
+		)?.getBoundingClientRect();
+		const comboboxInputRect = comboboxInput.value?.$el.getBoundingClientRect();
+		const contentRect = contentRef.value?.$el?.getBoundingClientRect
+			? contentRef.value.$el.getBoundingClientRect()
+			: null;
+		if (!fixedToElRect || !comboboxInputRect) {
+			return {};
+		}
+		// Calculate top position based on available space: if there's not enough space below, position it above
+		const top =
+			contentRect && contentRect.top + contentRect?.height > window.innerHeight
+				? "unset"
+				: comboboxInputRect.top - fixedToElRect.top + comboboxInputRect.height + "px";
+		const bottom =
+			contentRect && contentRect.top + contentRect?.height > window.innerHeight
+				? fixedToElRect.bottom - comboboxInputRect.top + 8 + "px"
+				: "unset";
+		return {
+			top,
+			bottom,
+			width: comboboxInputRect.width + "px",
+			zIndex: "10",
+		};
+	}
+	return {};
+};
 
 defineExpose({
 	refreshOptions,
