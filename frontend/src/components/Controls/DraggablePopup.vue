@@ -5,6 +5,7 @@
 				<div
 					ref="popoverContent"
 					class="fixed flex flex-col gap-1 overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-white shadow-2xl"
+					:class="{ 'transition-all duration-300 ease-in-out': isTransitioning }"
 					:style="{
 						width: width + 'px',
 						minHeight: height + 'px',
@@ -79,7 +80,8 @@ const popoverContent = ref(null) as Ref<HTMLElement | null>;
 const headerRef = ref<HTMLElement | null>(null);
 const popupLeft = ref(1500);
 const popupTop = ref(100);
-let isDragging = ref(false);
+const isDragging = ref(false);
+const isTransitioning = ref(false);
 
 let startX = 0;
 let startY = 0;
@@ -112,27 +114,39 @@ const drag = (event: MouseEvent) => {
 	const dx = event.clientX - startX;
 	const dy = event.clientY - startY;
 
-	let newLeft = startLeft + dx;
-	let newTop = startTop + dy;
-
-	const headerHeight = headerRef.value.offsetHeight;
-	const popupWidth = popoverContent.value.offsetWidth;
-
-	const minTop = 0;
-	const maxTop = window.innerHeight - headerHeight;
-
-	const minLeft = 0;
-	const maxLeft = window.innerWidth - popupWidth;
-
-	popupTop.value = Math.min(Math.max(newTop, minTop), maxTop);
-	popupLeft.value = Math.min(Math.max(newLeft, minLeft), maxLeft);
+	popupTop.value = startTop + dy;
+	popupLeft.value = startLeft + dx;
 };
-
-
 
 const stopDrag = () => {
 	isDragging.value = false;
 	document.removeEventListener("mousemove", drag);
+
+	if (popoverContent.value && headerRef.value) {
+		const headerHeight = headerRef.value.offsetHeight;
+		const popupWidth = popoverContent.value.offsetWidth;
+
+		const padding = 10;
+
+		const minTop = 0 + padding;
+		const maxTop = window.innerHeight - headerHeight - padding;
+		const minLeft = 0 + padding;
+		const maxLeft = window.innerWidth - popupWidth - padding;
+
+		const clampedTop = Math.min(Math.max(popupTop.value, minTop), maxTop);
+		const clampedLeft = Math.min(Math.max(popupLeft.value, minLeft), maxLeft);
+
+		// transition if position needs adjustment
+		if (clampedTop !== popupTop.value || clampedLeft !== popupLeft.value) {
+			isTransitioning.value = true;
+			popupTop.value = clampedTop;
+			popupLeft.value = clampedLeft;
+
+			setTimeout(() => {
+				isTransitioning.value = false;
+			}, 300);
+		}
+	}
 };
 
 const handleClickOutside = (event: Event) => {
