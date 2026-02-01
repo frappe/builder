@@ -12,6 +12,7 @@
 						top: popupTop + 'px',
 					}">
 					<div
+						ref="headerRef"
 						class="flex cursor-grab select-none items-center justify-between px-4 py-2 pr-3 text-sm text-ink-gray-9"
 						:class="{ 'cursor-grabbing': isDragging }"
 						@mousedown="startDrag">
@@ -75,6 +76,7 @@ const props = withDefaults(
 const emit = defineEmits(["update:modelValue"]);
 
 const popoverContent = ref(null) as Ref<HTMLElement | null>;
+const headerRef = ref<HTMLElement | null>(null);
 const popupLeft = ref(1500);
 const popupTop = ref(100);
 let isDragging = ref(false);
@@ -105,12 +107,28 @@ const startDrag = (event: MouseEvent) => {
 };
 
 const drag = (event: MouseEvent) => {
-	if (!isDragging.value) return;
+	if (!isDragging.value || !popoverContent.value || !headerRef.value) return;
+
 	const dx = event.clientX - startX;
 	const dy = event.clientY - startY;
-	popupLeft.value = startLeft + dx;
-	popupTop.value = startTop + dy;
+
+	let newLeft = startLeft + dx;
+	let newTop = startTop + dy;
+
+	const headerHeight = headerRef.value.offsetHeight;
+	const popupWidth = popoverContent.value.offsetWidth;
+
+	const minTop = 0;
+	const maxTop = window.innerHeight - headerHeight;
+
+	const minLeft = 0;
+	const maxLeft = window.innerWidth - popupWidth;
+
+	popupTop.value = Math.min(Math.max(newTop, minTop), maxTop);
+	popupLeft.value = Math.min(Math.max(newLeft, minLeft), maxLeft);
 };
+
+
 
 const stopDrag = () => {
 	isDragging.value = false;
