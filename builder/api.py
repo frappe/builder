@@ -1,4 +1,3 @@
-import json
 import os
 from io import BytesIO
 from types import FunctionType, MethodType, ModuleType
@@ -11,7 +10,6 @@ import requests
 from frappe.apps import get_apps as get_permitted_apps
 from frappe.core.doctype.file.file import get_local_image
 from frappe.core.doctype.file.utils import delete_file
-from frappe.integrations.utils import make_post_request
 from frappe.model.document import Document
 from frappe.utils.caching import redis_cache
 from frappe.utils.safe_exec import NamespaceDict, get_safe_globals
@@ -21,33 +19,6 @@ from werkzeug.wrappers import Response
 
 from builder import builder_analytics
 from builder.builder.doctype.builder_page.builder_page import BuilderPageRenderer
-
-
-@frappe.whitelist()
-def get_blocks(prompt):
-	API_KEY = frappe.conf.openai_api_key
-	if not API_KEY:
-		frappe.throw("OpenAI API Key not set in site config.")
-
-	messages = [
-		{
-			"role": "system",
-			"content": "You are a website developer. You respond only with HTML code WITHOUT any EXPLANATION. You use any publicly available images in the webpage. You can use any font from fonts.google.com. Do not use any external css file or font files. DO NOT ADD <style> TAG AT ALL! You should use tailwindcss for styling the page. Use images from pixabay.com or unsplash.com",
-		},
-		{"role": "user", "content": prompt},
-	]
-
-	response = make_post_request(
-		"https://api.openai.com/v1/chat/completions",
-		headers={"Content-Type": "application/json", "Authorization": f"Bearer {API_KEY}"},
-		data=json.dumps(
-			{
-				"model": "gpt-3.5-turbo",
-				"messages": messages,
-			}
-		),
-	)
-	return response["choices"][0]["message"]["content"]
 
 
 @frappe.whitelist()
@@ -72,6 +43,9 @@ def get_posthog_settings():
 
 @frappe.whitelist()
 def get_page_preview_html(page: str, **kwarg) -> Response:
+	if not frappe.has_permission("Builder Page", "read", page):
+		frappe.throw("No permission to preview this page")
+
 	# to load preview without publishing
 	frappe.form_dict.update(kwarg)
 	frappe.local.request.for_preview = True

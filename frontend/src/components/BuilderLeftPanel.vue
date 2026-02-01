@@ -139,7 +139,7 @@ const leftPanelOptions = [
 
 const setActiveTab = (tab: LeftSidebarTabOption) => {
 	if (tab === "variables") {
-		showVariableManager.value = true;
+		showVariableManager.value = !showVariableManager.value;
 	} else {
 		builderStore.leftPanelActiveTab = tab;
 	}
