@@ -1,6 +1,6 @@
 <template>
-	<div v-if="blockController.isBlockSelected()" class="flex select-none flex-col pb-16">
-		<div class="order-1 mt-1 flex flex-col gap-3">
+	<div v-if="blockController.isBlockSelected()" class="flex select-none flex-col-reverse pb-16">
+		<div class="mt-1 flex flex-col gap-3">
 			<CollapsibleSection
 				:sectionName="section.name"
 				v-for="section in sections"
@@ -14,7 +14,7 @@
 				</template>
 			</CollapsibleSection>
 		</div>
-		<div class="sticky top-[1px] z-[1] mt-[-16px] flex w-full bg-surface-white py-3">
+		<div class="sticky top-0 mt-[-16px] flex w-full bg-surface-white py-3">
 			<BuilderInput
 				ref="searchInput"
 				type="text"

@@ -42,7 +42,7 @@
 								@update:modelValue="handleColorUpdate">
 								<template #prefix>
 									<div
-										class="h-4 w-4 rounded shadow-sm"
+										class="size-4 rounded shadow-md"
 										@click="togglePopover"
 										:style="{
 											background: modelValue

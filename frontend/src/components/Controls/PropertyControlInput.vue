@@ -1,5 +1,5 @@
 <template>
-	<div class="relative w-full">
+	<div class="relative w-full min-w-0">
 		<component
 			:is="component"
 			v-bind="controlAttrs"
