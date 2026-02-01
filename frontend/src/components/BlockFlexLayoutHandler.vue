@@ -43,14 +43,6 @@
 		defaultValue="nowrap"></StylePropertyControl>
 	<div class="flex flex-col gap-3" v-if="blockController.getParentBlock()?.isFlex()">
 		<StylePropertyControl
-			label="Order"
-			propertyKey="order"
-			:enableSlider="true"
-			:min="-99"
-			:max="99"
-			:step="1"
-			:defaultValue="0" />
-		<StylePropertyControl
 			label="Grow"
 			propertyKey="flexGrow"
 			:component="OptionToggle"
@@ -68,6 +60,14 @@
 				{ label: 'No', value: 0 },
 			]"
 			:defaultValue="1" />
+		<StylePropertyControl
+			label="Order"
+			propertyKey="order"
+			:enableSlider="true"
+			:min="-99"
+			:max="99"
+			:step="1"
+			:defaultValue="0" />
 	</div>
 </template>
 <script lang="ts" setup>
