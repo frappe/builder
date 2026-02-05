@@ -141,8 +141,8 @@ const normalizeColorInput = (val: string) => {
 	if (/^#+/.test(val)) {
 		return "#" + val.replace(/^#+/, "");
 	}
-	if(isValidHexChar(val)) {
-		return "#" + val
+	if (isValidHexChar(val)) {
+		return "#" + val;
 	}
 	return val;
 };
