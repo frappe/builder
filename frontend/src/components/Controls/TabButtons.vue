@@ -21,10 +21,7 @@
 							:name="button.icon"
 							:label="button.label"
 							:aria-label="button.label" />
-						<RadioGroupLabel
-							as="span"
-							class="flex items-center"
-							v-show="button.label && !button.hideLabel">
+						<RadioGroupLabel as="span" class="flex items-center" v-show="button.label && !button.hideLabel">
 							{{ button.label }}
 						</RadioGroupLabel>
 					</button>
