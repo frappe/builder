@@ -54,7 +54,6 @@ const props = defineProps<{
 }>();
 
 const value = computed(() => {
-	return props.modelValue || props.defaultValue;
 	let v;
 	if (props.modelValue !== undefined && props.modelValue !== null) {
 		v = props.modelValue;
@@ -67,7 +66,7 @@ const value = computed(() => {
 	} else {
 		return v;
 	}
-	});
+});
 
 const emit = defineEmits<{
 	(e: "update:modelValue", value: string | number | boolean): void;
