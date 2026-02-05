@@ -5,7 +5,7 @@
 				class="contents"
 				v-for="button in buttons"
 				:key="button.label"
-				:value="button.value ?? button.label"
+				:value="String(button.value ?? button.label)"
 				v-slot="{ active, checked }">
 				<Tooltip :disabled="!button.showTooltip" :text="button.label" placement="top">
 					<button
@@ -55,7 +55,19 @@ const props = defineProps<{
 
 const value = computed(() => {
 	return props.modelValue || props.defaultValue;
-});
+	let v;
+	if (props.modelValue !== undefined && props.modelValue !== null) {
+		v = props.modelValue;
+	} else {
+		v = props.defaultValue;
+	}
+
+	if (v !== null && v !== undefined) {
+		return String(v);
+	} else {
+		return v;
+	}
+	});
 
 const emit = defineEmits<{
 	(e: "update:modelValue", value: string | number | boolean): void;
