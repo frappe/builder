@@ -54,18 +54,8 @@ const props = defineProps<{
 }>();
 
 const value = computed(() => {
-	let v;
-	if (props.modelValue !== undefined && props.modelValue !== null) {
-		v = props.modelValue;
-	} else {
-		v = props.defaultValue;
-	}
-
-	if (v !== null && v !== undefined) {
-		return String(v);
-	} else {
-		return v;
-	}
+	const v = props.modelValue ?? props.defaultValue;
+	return v == null ? v : String(v);
 });
 
 const emit = defineEmits<{
