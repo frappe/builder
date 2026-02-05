@@ -191,6 +191,12 @@ const typographySectionProperties = [
 						icon: "align-right",
 						hideLabel: true,
 					},
+					{
+						label: "Justify",
+						value: "justify",
+						icon: "align-justify",
+						hideLabel: true,
+					},
 				],
 				defaultValue: "left",
 			};
