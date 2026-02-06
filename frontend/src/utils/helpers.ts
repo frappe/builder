@@ -122,17 +122,26 @@ function toTitleCase(str: string): string {
 
 async function confirm(message: string, title: string = "Confirm"): Promise<boolean> {
 	return new Promise((resolve) => {
-		confirmDialog({
-			title: title,
-			message: message,
-			onConfirm: ({ hideDialog }: { hideDialog: Function }) => {
-				resolve(true);
-				hideDialog();
+		showDialog({
+			title,
+			message,
+			icon: {
+				name:'alert-circele',
+				appearance:"warning"
 			},
-			onCancel: () => {
-				resolve(false);
-			},
-		});
+			actions:[
+				{
+					label:"Cancel",
+					variant: "subtle",
+					onClick: () => resolve(false),
+				},
+				{
+					label:"Confirm",
+					theme: "red",
+					onClick: () => resolve(true)
+				}
+			]
+		})
 	});
 }
 
