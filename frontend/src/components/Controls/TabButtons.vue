@@ -5,7 +5,7 @@
 				class="contents"
 				v-for="button in buttons"
 				:key="button.label"
-				:value="button.value ?? button.label"
+				:value="String(button.value ?? button.label)"
 				v-slot="{ active, checked }">
 				<Tooltip :disabled="!button.showTooltip" :text="button.label" placement="top">
 					<button
@@ -21,10 +21,7 @@
 							:name="button.icon"
 							:label="button.label"
 							:aria-label="button.label" />
-						<RadioGroupLabel
-							as="span"
-							class="flex items-center"
-							v-show="button.label && !button.hideLabel">
+						<RadioGroupLabel as="span" class="flex items-center" v-show="button.label && !button.hideLabel">
 							{{ button.label }}
 						</RadioGroupLabel>
 					</button>
@@ -54,7 +51,8 @@ const props = defineProps<{
 }>();
 
 const value = computed(() => {
-	return props.modelValue || props.defaultValue;
+	const v = props.modelValue ?? props.defaultValue;
+	return v == null ? v : String(v);
 });
 
 const emit = defineEmits<{
