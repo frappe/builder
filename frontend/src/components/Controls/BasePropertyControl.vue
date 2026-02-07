@@ -101,11 +101,17 @@ const props = withDefaults(
 		label?: string;
 		placeholder?: string;
 		controlType?: "style" | "attribute" | "key";
+<<<<<<< HEAD
 		getModelValue?: () => string;
 		getPlaceholder?: () => string;
 		setModelValue?: (value: string) => void;
 		getDynamicValue?: () => { key: string; comesFrom: BlockDataKey["comesFrom"] } | undefined;
 		setDynamicValue?: (key: string, comesFrom: BlockDataKey["comesFrom"]) => void;
+=======
+		getModelValue?: () => string | number | boolean;
+		getPlaceholder?: () => string | number | boolean;
+		setModelValue?: (value: string | number | boolean) => void;
+>>>>>>> 37a92c2 (fix(PropertyControl): Allow modelValue as boolean and number as well)
 		enableSlider?: boolean;
 		unitOptions?: string[];
 		changeFactor?: number;
@@ -117,8 +123,8 @@ const props = withDefaults(
 		allowDynamicValue?: boolean;
 		labelPlacement?: "left" | "top";
 		variants?: Array<{ name: string; property: string; label: string }>;
-		getVariantValue?: (variant: string) => string;
-		setVariantValue?: (variant: string, value: string | null) => void;
+		getVariantValue?: (variant: string) => string | number | boolean;
+		setVariantValue?: (variant: string, value: string | number | boolean | null) => void;
 	}>(),
 	{
 		placeholder: "unset",

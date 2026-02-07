@@ -44,10 +44,17 @@ defineProps<{
 	component: Component;
 	controlAttrs?: Record<string, unknown>;
 	events?: Record<string, unknown>;
+<<<<<<< HEAD
 	modelValue: string | number;
 	defaultValue?: string | number;
 	placeholder?: string;
 	dynamicValueKey?: string;
+=======
+	modelValue: string | number | boolean;
+	defaultValue?: string | number | boolean;
+	placeholder?: string | number | boolean;
+	dynamicValue?: string;
+>>>>>>> 37a92c2 (fix(PropertyControl): Allow modelValue as boolean and number as well)
 	componentClass?: string;
 }>();
 
