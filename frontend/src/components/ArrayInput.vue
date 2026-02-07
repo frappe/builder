@@ -8,11 +8,7 @@
 					</InputLabel>
 				</div>
 				<div class="relative w-full">
-					<BuilderButton
-						class="w-full"
-						variant="subtle"
-						icon="edit-2"
-						@click.stop="open()" />
+					<BuilderButton class="w-full" variant="subtle" icon="edit-2" @click.stop="open()" />
 				</div>
 			</div>
 		</template>
@@ -21,12 +17,8 @@
 				@click.stop
 				@mousedown.stop
 				class="flex max-h-60 w-60 flex-col gap-3 overflow-auto rounded-lg bg-surface-white p-4 shadow-lg">
-				<div class="text-sm text-ink-gray-8">
-                    Array Items:
-                </div>
-				<ArrayEditor
-					:arr
-					@update:arr="updateModelValue" />
+				<div class="text-sm text-ink-gray-8">Array Items:</div>
+				<ArrayEditor :arr @update:arr="updateModelValue" />
 			</div>
 		</template>
 	</Popover>
@@ -69,6 +61,4 @@ const updateModelValue = (value: string[]) => {
 	props.setModelValue(JSON.stringify(value));
 	emit("update:modelValue", JSON.stringify(value));
 };
-
-
 </script>

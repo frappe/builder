@@ -130,9 +130,21 @@ function useArrayOption(key: string, isNumeric: boolean = false) {
 		: { value: arrayValue, handleChange: handleArrayChange, reset: resetArray };
 }
 
-const { value: minItems, handleChange: handleMinItemsChange, reset: resetMin } = useArrayOption("minItems", true) as NumberRef;
-const { value: maxItems, handleChange: handleMaxItemsChange, reset: resetMax } = useArrayOption("maxItems", true) as NumberRef;
-const { value: arr, handleChange: handleArrChange, reset: resetArr } = useArrayOption("defaultValue") as StringArrayRef;
+const {
+	value: minItems,
+	handleChange: handleMinItemsChange,
+	reset: resetMin,
+} = useArrayOption("minItems", true) as NumberRef;
+const {
+	value: maxItems,
+	handleChange: handleMaxItemsChange,
+	reset: resetMax,
+} = useArrayOption("maxItems", true) as NumberRef;
+const {
+	value: arr,
+	handleChange: handleArrChange,
+	reset: resetArr,
+} = useArrayOption("defaultValue") as StringArrayRef;
 
 const reset = (toProps: boolean = false) => {
 	resetMin(toProps);

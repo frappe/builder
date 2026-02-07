@@ -84,8 +84,16 @@ function useSelectOption(key: string, isString: boolean = false) {
 		: { value: arrayValue, handleChange: handleArrayChange, reset: resetArray };
 }
 
-const { value: options, handleChange: handleOptionsChange, reset: resetOptions } = useSelectOption("options") as StringArrayRef;
-const { value: defaultValue, handleChange: handleDefaultValueChange, reset: resetDefaultValue } = useSelectOption("defaultValue", true) as StringRef;
+const {
+	value: options,
+	handleChange: handleOptionsChange,
+	reset: resetOptions,
+} = useSelectOption("options") as StringArrayRef;
+const {
+	value: defaultValue,
+	handleChange: handleDefaultValueChange,
+	reset: resetDefaultValue,
+} = useSelectOption("defaultValue", true) as StringRef;
 
 const optionsAvailable = computed(() => {
 	return options.value.map((opt) => ({ label: opt, value: opt }));

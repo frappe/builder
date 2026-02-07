@@ -75,9 +75,21 @@ function useBooleanOption(key: string) {
 	return { value, reset, handleChange };
 }
 
-const { value: trueLabel, reset: resetTrueLabel, handleChange: handleTrueLabelChange } = useBooleanOption("trueLabel");
-const { value: falseLabel, reset: resetFalseLabel, handleChange: handleFalseLabelChange } = useBooleanOption("falseLabel");
-const { value: defaultValue, reset: resetDefaultValue, handleChange: handleDefaultValueChange } = useBooleanOption("defaultValue");
+const {
+	value: trueLabel,
+	reset: resetTrueLabel,
+	handleChange: handleTrueLabelChange,
+} = useBooleanOption("trueLabel");
+const {
+	value: falseLabel,
+	reset: resetFalseLabel,
+	handleChange: handleFalseLabelChange,
+} = useBooleanOption("falseLabel");
+const {
+	value: defaultValue,
+	reset: resetDefaultValue,
+	handleChange: handleDefaultValueChange,
+} = useBooleanOption("defaultValue");
 
 const reset = (toProps: boolean = false) => {
 	resetTrueLabel(toProps);

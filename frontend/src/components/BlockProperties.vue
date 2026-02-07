@@ -106,7 +106,6 @@ const getFilteredProperties = (section: PropertySection) => {
 	});
 };
 
-
 const sections = [
 	standardPropsInputSection,
 	collectionOptionsSection,

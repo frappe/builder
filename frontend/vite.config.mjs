@@ -35,6 +35,12 @@ export default defineConfig({
 		allowedHosts: true,
 	},
 	optimizeDeps: {
-		include: ["frappe-ui > feather-icons", "showdown", "engine.io-client", "interactjs", "highlight.js/lib/core"],
+		include: [
+			"frappe-ui > feather-icons",
+			"showdown",
+			"engine.io-client",
+			"interactjs",
+			"highlight.js/lib/core",
+		],
 	},
 });

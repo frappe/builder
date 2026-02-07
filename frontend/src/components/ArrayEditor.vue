@@ -55,7 +55,7 @@ const deleteItem = (index: number) => {
 const arrayEditor = ref<HTMLElement | null>(null);
 
 const pasteArray = (e: ClipboardEvent) => {
-	const passedArr = props.arr.filter(item => item.trim() !== "");
+	const passedArr = props.arr.filter((item) => item.trim() !== "");
 	const text = e.clipboardData?.getData("text/plain");
 	if (text) {
 		e.preventDefault();
@@ -63,28 +63,34 @@ const pasteArray = (e: ClipboardEvent) => {
 			// Try to parse as JSON array first
 			const parsed = JSON.parse(text);
 			if (Array.isArray(parsed)) {
-				const stringArray = parsed.map(item => String(item));
+				const stringArray = parsed.map((item) => String(item));
 				emit("update:arr", [...passedArr, ...stringArray]);
 				return;
 			}
 		} catch (e) {
 			// If JSON parsing fails, try other formats
 		}
-		
+
 		// Try to parse as comma-separated values
 		if (text.includes(",")) {
-			const items = text.split(",").map(item => item.trim()).filter(item => item);
+			const items = text
+				.split(",")
+				.map((item) => item.trim())
+				.filter((item) => item);
 			emit("update:arr", [...passedArr, ...items]);
 			return;
 		}
-		
+
 		// Try to parse as line-separated values
 		if (text.includes("\n")) {
-			const items = text.split("\n").map(item => item.trim()).filter(item => item);
+			const items = text
+				.split("\n")
+				.map((item) => item.trim())
+				.filter((item) => item);
 			emit("update:arr", [...passedArr, ...items]);
 			return;
 		}
-		
+
 		// Single item
 		emit("update:arr", [...passedArr, text.trim()]);
 	}

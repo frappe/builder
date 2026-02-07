@@ -142,10 +142,21 @@ function useObjectOption(key: string, isNumeric: boolean = false) {
 		: { value: objectValue, handleChange: handleObjectChange, reset: resetObject };
 }
 
-const { value: minItems, handleChange: handleMinItemsChange, reset: resetMin } = useObjectOption("minItems", true) as NumberRef;
-const { value: maxItems, handleChange: handleMaxItemsChange, reset: resetMax } = useObjectOption("maxItems", true) as NumberRef;
-const { value: obj, handleChange: handleObjChange, reset: resetObj } = useObjectOption("defaultValue") as StringObjectRef;
-
+const {
+	value: minItems,
+	handleChange: handleMinItemsChange,
+	reset: resetMin,
+} = useObjectOption("minItems", true) as NumberRef;
+const {
+	value: maxItems,
+	handleChange: handleMaxItemsChange,
+	reset: resetMax,
+} = useObjectOption("maxItems", true) as NumberRef;
+const {
+	value: obj,
+	handleChange: handleObjChange,
+	reset: resetObj,
+} = useObjectOption("defaultValue") as StringObjectRef;
 
 const reset = (toProps: boolean = false) => {
 	resetMin(toProps);

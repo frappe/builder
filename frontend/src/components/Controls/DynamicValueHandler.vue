@@ -10,7 +10,12 @@
 			<div class="max-h-[60vh] overflow-y-auto">
 				<ul class="m-0 list-none p-0">
 					<li
-						v-if="selectedItem?.key && !filteredItems.some(i => i.key === selectedItem!.key && i.comesFrom === selectedItem!.comesFrom)">
+						v-if="
+							selectedItem?.key &&
+							!filteredItems.some(
+								(i) => i.key === selectedItem!.key && i.comesFrom === selectedItem!.comesFrom,
+							)
+						">
 						<div
 							class="w-full cursor-pointer truncate rounded bg-surface-gray-3 p-2 text-left font-mono text-p-sm text-ink-gray-9"
 							@click.stop="selectAndSetItem(selectedItem)">
@@ -73,12 +78,7 @@ import useBlockDataStore from "@/stores/blockDataStore";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
-import {
-	getDataArray,
-	getDefaultPropsList,
-	getParentProps,
-	getPropValue,
-} from "@/utils/helpers";
+import { getDataArray, getDefaultPropsList, getParentProps, getPropValue } from "@/utils/helpers";
 import { computed, ref } from "vue";
 
 const pageStore = usePageStore();

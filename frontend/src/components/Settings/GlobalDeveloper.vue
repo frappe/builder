@@ -1,7 +1,9 @@
 <template>
 	<div class="flex flex-col gap-5">
 		<div class="flex justify-between">
-			<label class="w-fit text-p-base shrink-0 font-medium text-ink-gray-8">Execute Block Client Scripts in Editor</label>
+			<label class="w-fit shrink-0 text-p-base font-medium text-ink-gray-8">
+				Execute Block Client Scripts in Editor
+			</label>
 			<Select
 				class="!w-[200px]"
 				:modelValue="builderSettings.doc?.execute_block_scripts_in_editor"

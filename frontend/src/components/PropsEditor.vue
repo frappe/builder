@@ -11,17 +11,18 @@
 							<div
 								class="flex w-full cursor-pointer items-center justify-between"
 								@click.stop="
-											() => {
-												popupMode = 'edit';
-												popoverContentItemsRef[index]?.reset({
-													keepName: false,
-													keepIsStandard: false,
-													keepProps: true,
-													keepType: false,
-												});
-												keyBeingEdited = name as string;
-												open();
-											}">
+									() => {
+										popupMode = 'edit';
+										popoverContentItemsRef[index]?.reset({
+											keepName: false,
+											keepIsStandard: false,
+											keepProps: true,
+											keepType: false,
+										});
+										keyBeingEdited = name as string;
+										open();
+									}
+								">
 								<div class="flex w-fit max-w-[60%] items-center gap-2 pl-2">
 									<div class="icon">
 										<component
