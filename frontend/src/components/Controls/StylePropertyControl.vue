@@ -21,9 +21,9 @@ const props = withDefaults(
 		propertyKey: string;
 		label?: string;
 		placeholder?: string;
-		getModelValue?: () => string;
-		getPlaceholder?: () => string;
-		setModelValue?: (value: string) => void;
+		getModelValue?: () => string | number | boolean;
+		getPlaceholder?: () => string | number | boolean;
+		setModelValue?: (value: string | number | boolean) => void;
 		enableSlider?: boolean;
 		unitOptions?: string[];
 		changeFactor?: number;
@@ -64,15 +64,15 @@ const allVariants = computed(() => [
 	...(props.variants || []),
 ]);
 
-const getVariantValue = (variantName: string): string => {
+const getVariantValue = (variantName: string): string | number | boolean => {
 	if (stateVariants.value.find((v) => v.name === variantName)) {
-		return String(blockController.getNativeStyle(`${variantName}:${props.propertyKey}`) || "");
+		return blockController.getNativeStyle(`${variantName}:${props.propertyKey}`) ?? "";
 	}
 	const property = props.variants?.find((v) => v.name === variantName)?.property;
-	return property ? String(blockController.getAttribute(property) || "") : "";
+	return property ? (blockController.getNativeStyle(property) ?? "") : "";
 };
 
-const setVariantValue = (variantName: string, value: string | null) => {
+const setVariantValue = (variantName: string, value: string | number | boolean | null) => {
 	if (stateVariants.value.find((v) => v.name === variantName)) {
 		if (value !== null) {
 			blockController.getSelectedBlocks().forEach((block) => {
@@ -87,7 +87,7 @@ const setVariantValue = (variantName: string, value: string | null) => {
 		return;
 	}
 	const property = props.variants?.find((v) => v.name === variantName)?.property;
-	if (property) blockController.setAttribute(property, value || "");
+	if (property) blockController.setStyle(property, value);
 };
 
 const baseProps = computed(() => {
@@ -95,12 +95,12 @@ const baseProps = computed(() => {
 	return {
 		...rest,
 		controlType: "style" as const,
-		getModelValue:
-			props.getModelValue || (() => String(blockController.getNativeStyle(props.propertyKey) ?? "")),
+		getModelValue: props.getModelValue || (() => blockController.getNativeStyle(props.propertyKey) ?? ""),
 		setModelValue:
-			props.setModelValue || ((value: string) => blockController.setStyle(props.propertyKey, value)),
+			props.setModelValue ||
+			((value: string | number | boolean) => blockController.setStyle(props.propertyKey, value)),
 		getPlaceholder:
-			props.getPlaceholder || (() => String(blockController.getCascadingStyle(props.propertyKey) ?? "unset")),
+			props.getPlaceholder || (() => blockController.getCascadingStyle(props.propertyKey) ?? "unset"),
 	};
 });
 </script>

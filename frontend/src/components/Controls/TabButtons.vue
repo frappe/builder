@@ -11,9 +11,9 @@
 					<button
 						:class="[
 							active ? 'ring-outline-gray-2 focus-visible:ring' : '',
-							!modelValue && checked ? 'border border-dashed border-outline-gray-3' : '',
-							modelValue && checked ? 'bg-surface-white text-ink-gray-9 shadow' : 'text-ink-gray-7',
-							'flex flex-1 justify-center gap-2 whitespace-nowrap rounded-[7px] px-2 py-[5px] leading-none transition-colors focus:outline-none',
+							!isValueSet() && checked ? 'border border-dashed border-outline-gray-3' : '',
+							isValueSet() && checked ? 'bg-surface-white text-ink-gray-9 shadow' : 'text-ink-gray-7',
+							'flex flex-1 justify-center gap-2 whitespace-nowrap rounded-[7px] px-3 py-[5px] leading-none transition-colors focus:outline-none',
 						]">
 						<FeatherIcon
 							class="size-4"
@@ -21,10 +21,7 @@
 							:name="button.icon"
 							:label="button.label"
 							:aria-label="button.label" />
-						<RadioGroupLabel
-							as="span"
-							class="flex items-center"
-							v-show="button.label && !button.hideLabel">
+						<RadioGroupLabel as="span" class="flex items-center" v-show="button.label && !button.hideLabel">
 							{{ button.label }}
 						</RadioGroupLabel>
 					</button>
@@ -54,10 +51,14 @@ const props = defineProps<{
 }>();
 
 const value = computed(() => {
-	return props.modelValue || props.defaultValue;
+	return isValueSet() ? props.modelValue : props.defaultValue;
 });
 
 const emit = defineEmits<{
 	(e: "update:modelValue", value: string | number | boolean): void;
 }>();
+
+const isValueSet = (): boolean => {
+	return props.modelValue !== undefined && props.modelValue !== null && props.modelValue !== "";
+};
 </script>

@@ -44,15 +44,15 @@ defineProps<{
 	component: Component;
 	controlAttrs?: Record<string, unknown>;
 	events?: Record<string, unknown>;
-	modelValue: string | number;
-	defaultValue?: string | number;
-	placeholder?: string;
+	modelValue: string | number | boolean;
+	defaultValue?: string | number | boolean;
+	placeholder?: string | number | boolean;
 	dynamicValueKey?: string;
 	componentClass?: string;
 }>();
 
 defineEmits<{
-	(e: "update:modelValue", value: any): void;
+	(e: "update:modelValue", value: string | number | boolean): void;
 	(e: "keydown", event: KeyboardEvent): void;
 	(e: "openDynamicModal"): void;
 	(e: "clearDynamic"): void;
