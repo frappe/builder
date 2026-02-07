@@ -38,6 +38,7 @@
 			<div class="rounded-lg bg-surface-white p-3 shadow-lg">
 				<FileUploader
 					@success="(file: FileDoc) => setImageURL(file.file_url)"
+					fileTypes="image/*"
 					:uploadArgs="{
 						private: false,
 						folder: 'Home/Builder Uploads',

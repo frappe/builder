@@ -44,9 +44,9 @@ defineProps<{
 	component: Component;
 	controlAttrs?: Record<string, unknown>;
 	events?: Record<string, unknown>;
-	modelValue: string | number;
-	defaultValue?: string | number;
-	placeholder?: string;
+	modelValue: string | number | boolean;
+	defaultValue?: string | number | boolean;
+	placeholder?: string | number | boolean;
 	dynamicValue?: string;
 	componentClass?: string;
 }>();

@@ -1,4 +1,4 @@
-declare type StyleValue = string | number | null | undefined;
+declare type StyleValue = string | number | boolean | null | undefined;
 
 declare type styleProperty = keyof CSSProperties | `__${string}`;
 
