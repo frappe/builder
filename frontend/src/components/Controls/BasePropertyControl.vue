@@ -101,9 +101,9 @@ const props = withDefaults(
 		label?: string;
 		placeholder?: string;
 		controlType?: "style" | "attribute" | "key";
-		getModelValue?: () => string;
-		getPlaceholder?: () => string;
-		setModelValue?: (value: string) => void;
+		getModelValue?: () => string | number | boolean;
+		getPlaceholder?: () => string | number | boolean;
+		setModelValue?: (value: string | number | boolean) => void;
 		getDynamicValue?: () => { key: string; comesFrom: BlockDataKey["comesFrom"] } | undefined;
 		setDynamicValue?: (key: string, comesFrom: BlockDataKey["comesFrom"]) => void;
 		enableSlider?: boolean;
@@ -117,8 +117,8 @@ const props = withDefaults(
 		allowDynamicValue?: boolean;
 		labelPlacement?: "left" | "top";
 		variants?: Array<{ name: string; property: string; label: string }>;
-		getVariantValue?: (variant: string) => string;
-		setVariantValue?: (variant: string, value: string | null) => void;
+		getVariantValue?: (variant: string) => string | number | boolean;
+		setVariantValue?: (variant: string, value: string | number | boolean | null) => void;
 	}>(),
 	{
 		placeholder: "unset",

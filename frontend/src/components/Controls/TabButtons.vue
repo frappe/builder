@@ -5,15 +5,15 @@
 				class="contents"
 				v-for="button in buttons"
 				:key="button.label"
-				:value="String(button.value ?? button.label)"
+				:value="button.value ?? button.label"
 				v-slot="{ active, checked }">
 				<Tooltip :disabled="!button.showTooltip" :text="button.label" placement="top">
 					<button
 						:class="[
 							active ? 'ring-outline-gray-2 focus-visible:ring' : '',
-							!modelValue && checked ? 'border border-dashed border-outline-gray-3' : '',
-							modelValue && checked ? 'bg-surface-white text-ink-gray-9 shadow' : 'text-ink-gray-7',
-							'flex flex-1 justify-center gap-2 whitespace-nowrap rounded-[7px] px-2 py-[5px] leading-none transition-colors focus:outline-none',
+							!isValueSet() && checked ? 'border border-dashed border-outline-gray-3' : '',
+							isValueSet() && checked ? 'bg-surface-white text-ink-gray-9 shadow' : 'text-ink-gray-7',
+							'flex flex-1 justify-center gap-2 whitespace-nowrap rounded-[7px] px-3 py-[5px] leading-none transition-colors focus:outline-none',
 						]">
 						<FeatherIcon
 							class="size-4"
@@ -51,11 +51,14 @@ const props = defineProps<{
 }>();
 
 const value = computed(() => {
-	const v = props.modelValue ?? props.defaultValue;
-	return v == null ? v : String(v);
+	return isValueSet() ? props.modelValue : props.defaultValue;
 });
 
 const emit = defineEmits<{
 	(e: "update:modelValue", value: string | number | boolean): void;
 }>();
+
+const isValueSet = (): boolean => {
+	return props.modelValue !== undefined && props.modelValue !== null && props.modelValue !== "";
+};
 </script>
