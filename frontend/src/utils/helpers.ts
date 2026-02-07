@@ -1,14 +1,14 @@
 import Block from "@/block";
 import AlertDialog from "@/components/AlertDialog.vue";
+import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { confirmDialog, FileUploadHandler } from "frappe-ui";
+import { FileUploadHandler } from "frappe-ui";
 import { defineComponent, h, markRaw, reactive, ref, toRaw } from "vue";
 import { toast } from "vue-sonner";
 import Dialog from "../components/Controls/Dialog.vue";
-import { builderSettings } from "@/data/builderSettings";
 
 function getNumberFromPx(px: string | number | null | undefined): number {
 	if (!px) {
@@ -126,22 +126,22 @@ async function confirm(message: string, title: string = "Confirm"): Promise<bool
 			title,
 			message,
 			icon: {
-				name:'alert-circele',
-				appearance:"warning"
+				name: "alert-circle",
+				appearance: "warning",
 			},
-			actions:[
+			actions: [
 				{
-					label:"Cancel",
+					label: "Cancel",
 					variant: "subtle",
 					onClick: () => resolve(false),
 				},
 				{
-					label:"Confirm",
+					label: "Confirm",
 					theme: "red",
-					onClick: () => resolve(true)
-				}
-			]
-		})
+					onClick: () => resolve(true),
+				},
+			],
+		});
 	});
 }
 
@@ -1103,10 +1103,7 @@ const getValueForInheritedProp = (
 				}
 			} else {
 				if (matchingProp.isStandard && matchingProp.propOptions) {
-					if (
-						matchingProp.propOptions.type !== "string" &&
-						matchingProp.propOptions.type !== "select"
-					) {
+					if (matchingProp.propOptions.type !== "string" && matchingProp.propOptions.type !== "select") {
 						return matchingProp.value
 							? JSON.parse(matchingProp.value)
 							: matchingProp.propOptions?.options?.defaultValue || null;
@@ -1309,7 +1306,7 @@ function executeBlockClientScriptUnrestricted(
 	);
 
 	try {
-		document.querySelectorAll(`[data-created-by='${blockUid}']`).forEach(el => el.remove());
+		document.querySelectorAll(`[data-created-by='${blockUid}']`).forEach((el) => el.remove());
 		fn.call(thisElement, context);
 		console.log("Executed unrestricted user script");
 	} catch (e) {
@@ -1464,6 +1461,8 @@ export {
 	copyToClipboard,
 	dataURLtoFile,
 	detachBlockFromComponent,
+	executeBlockClientScriptRestricted,
+	executeBlockClientScriptUnrestricted,
 	extractNumberAndUnit,
 	findNearestSiblingIndex,
 	generateId,
@@ -1476,14 +1475,19 @@ export {
 	getBoxSpacing,
 	getCollectionKeys,
 	getCopyWithoutParent,
+	getDataArray,
 	getDataForKey,
+	getDefaultPropsList,
 	getFontName,
 	getImageBlock,
 	getNumberFromPx,
+	getParentProps,
+	getPropValue,
 	getRandomColor,
 	getRGB,
 	getRootBlockTemplate,
 	getRouteVariables,
+	getStandardPropValue,
 	getTextContent,
 	getVideoBlock,
 	handleBase64Attribute,
@@ -1513,11 +1517,4 @@ export {
 	triggerCopyEvent,
 	uploadBuilderAsset,
 	uploadUserFont,
-	getParentProps,
-	getDefaultPropsList,
-	getPropValue,
-	getStandardPropValue,
-	getDataArray,
-	executeBlockClientScriptUnrestricted,
-	executeBlockClientScriptRestricted,
 };
