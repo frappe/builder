@@ -101,17 +101,11 @@ const props = withDefaults(
 		label?: string;
 		placeholder?: string;
 		controlType?: "style" | "attribute" | "key";
-<<<<<<< HEAD
-		getModelValue?: () => string;
-		getPlaceholder?: () => string;
-		setModelValue?: (value: string) => void;
-		getDynamicValue?: () => { key: string; comesFrom: BlockDataKey["comesFrom"] } | undefined;
-		setDynamicValue?: (key: string, comesFrom: BlockDataKey["comesFrom"]) => void;
-=======
 		getModelValue?: () => string | number | boolean;
 		getPlaceholder?: () => string | number | boolean;
 		setModelValue?: (value: string | number | boolean) => void;
->>>>>>> 37a92c2 (fix(PropertyControl): Allow modelValue as boolean and number as well)
+		getDynamicValue?: () => { key: string; comesFrom: BlockDataKey["comesFrom"] } | undefined;
+		setDynamicValue?: (key: string, comesFrom: BlockDataKey["comesFrom"]) => void;
 		enableSlider?: boolean;
 		unitOptions?: string[];
 		changeFactor?: number;

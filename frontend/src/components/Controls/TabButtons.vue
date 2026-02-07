@@ -7,14 +7,13 @@
 				:key="button.label"
 				:value="button.value ?? button.label"
 				v-slot="{ active, checked }">
-<<<<<<< HEAD
 				<Tooltip :disabled="!button.showTooltip" :text="button.label" placement="top">
 					<button
 						:class="[
 							active ? 'ring-outline-gray-2 focus-visible:ring' : '',
-							!modelValue && checked ? 'border border-dashed border-outline-gray-3' : '',
-							modelValue && checked ? 'bg-surface-white text-ink-gray-9 shadow' : 'text-ink-gray-7',
-							'flex flex-1 justify-center gap-2 whitespace-nowrap rounded-[7px] px-2 py-[5px] leading-none transition-colors focus:outline-none',
+							!isValueSet() && checked ? 'border border-dashed border-outline-gray-3' : '',
+							isValueSet() && checked ? 'bg-surface-white text-ink-gray-9 shadow' : 'text-ink-gray-7',
+							'flex flex-1 justify-center gap-2 whitespace-nowrap rounded-[7px] px-3 py-[5px] leading-none transition-colors focus:outline-none',
 						]">
 						<FeatherIcon
 							class="size-4"
@@ -22,33 +21,11 @@
 							:name="button.icon"
 							:label="button.label"
 							:aria-label="button.label" />
-						<RadioGroupLabel
-							as="span"
-							class="flex items-center"
-							v-show="button.label && !button.hideLabel">
+						<RadioGroupLabel as="span" class="flex items-center" v-show="button.label && !button.hideLabel">
 							{{ button.label }}
 						</RadioGroupLabel>
 					</button>
 				</Tooltip>
-=======
-				<button
-					:class="[
-						active ? 'ring-outline-gray-2 focus-visible:ring' : '',
-						!isValueSet() && checked ? 'border border-dashed border-outline-gray-3' : '',
-						isValueSet() && checked ? 'bg-surface-white text-ink-gray-9 shadow' : 'text-ink-gray-7',
-						'flex flex-1 justify-center gap-2 whitespace-nowrap rounded-[7px] px-3 py-[5px] leading-none transition-colors focus:outline-none',
-					]">
-					<FeatherIcon
-						class="h-4 w-4"
-						v-if="button.icon"
-						:name="button.icon"
-						:label="button.label"
-						:aria-label="button.label" />
-					<RadioGroupLabel as="span" class="flex h-4 items-center" v-show="button.label && !button.hideLabel">
-						{{ button.label }}
-					</RadioGroupLabel>
-				</button>
->>>>>>> 37a92c2 (fix(PropertyControl): Allow modelValue as boolean and number as well)
 			</RadioGroupOption>
 		</div>
 	</RadioGroup>
