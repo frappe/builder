@@ -143,7 +143,8 @@ const getDynamicContent = () => {
 		}
 		innerHTML = value ?? innerHTML;
 	}
-	props.block.getDynamicValues()
+	props.block
+		.getDynamicValues()
 		?.filter((dataKeyObj: BlockDataKey) => {
 			return dataKeyObj.property === "innerHTML" && dataKeyObj.type === "key";
 		})
@@ -233,10 +234,18 @@ const getInnerHTML = (editor: Editor | null) => {
 
 if (!props.preview) {
 	watch(
-		() => canvasStore.activeCanvas?.isSelected(props.block),
+		() => [
+			canvasStore.activeCanvas?.isSelected(props.block),
+			props.breakpoint,
+			canvasStore.activeCanvas?.activeBreakpoint,
+		],
 		() => {
-			// only load editor if block is selected for performance reasons
-			if (canvasStore.activeCanvas?.isSelected(props.block) && !blockController.multipleBlocksSelected()) {
+			if (
+				canvasStore.activeCanvas?.isSelected(props.block) &&
+				canvasStore.activeCanvas?.activeBreakpoint === props.breakpoint &&
+				!blockController.multipleBlocksSelected() &&
+				!editor.value
+			) {
 				editor.value = new Editor({
 					content: textContent.value,
 					extensions: [
@@ -300,7 +309,7 @@ const handleEscKey = () => {
 };
 
 const handleClickOutside = (e: MouseEvent) => {
-	if ((e.target as HTMLElement).closest(".canvas-container")) {
+	if ((e.target as HTMLElement).closest(".__text_block__")) {
 		canvasStore.editableBlock = null;
 	}
 };
