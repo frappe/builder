@@ -80,7 +80,7 @@ def upload_builder_asset():
 
 @frappe.whitelist()
 def convert_to_webp(image_url: str | None = None, file_doc: Document | None = None) -> str:
-	"""BETA: Convert image to webp format"""
+	"""Convert image to webp format"""
 
 	CONVERTIBLE_IMAGE_EXTENSIONS = ["png", "jpeg", "jpg"]
 
@@ -253,7 +253,11 @@ def sync_component(component_id: str):
 
 @frappe.whitelist()
 def get_page_analytics(
-	route=None, interval: str = "daily", from_date=None, to_date=None, route_filter_type: str = "wildcard"
+	route: str,
+	interval: str = "daily",
+	from_date: str | None = None,
+	to_date: str | None = None,
+	route_filter_type: str = "wildcard",
 ):
 	return builder_analytics.get_page_analytics(
 		route=route,
@@ -266,7 +270,11 @@ def get_page_analytics(
 
 @frappe.whitelist()
 def get_overall_analytics(
-	interval: str = "daily", route=None, from_date=None, to_date=None, route_filter_type: str = "wildcard"
+	interval: str = "daily",
+	route: str | None = None,
+	from_date: str | None = None,
+	to_date: str | None = None,
+	route_filter_type: str = "wildcard",
 ):
 	return builder_analytics.get_overall_analytics(
 		interval=interval,
@@ -328,12 +336,9 @@ def get_codemirror_completions():
 
 
 @frappe.whitelist()
-def reorder_client_scripts(script_order):
+def reorder_client_scripts(script_order: list[str]):
 	if not frappe.has_permission("Builder Page", ptype="write"):
 		frappe.throw("You do not have permission to reorder client scripts")
-
-	if isinstance(script_order, str):
-		script_order = frappe.parse_json(script_order)
 
 	for idx, script_name in enumerate(script_order, start=1):
 		frappe.db.set_value("Builder Page Client Script", script_name, "idx", idx)
