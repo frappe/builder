@@ -219,10 +219,7 @@ class BuilderPage(WebsiteGenerator):
 		)
 
 	@frappe.whitelist()
-	def publish(self, route_variables=None):
-		if route_variables:
-			for k, v in frappe.parse_json(route_variables or "{}").items():
-				frappe.form_dict[k] = v
+	def publish(self):
 		self.published = 1
 		if self.draft_blocks:
 			self.blocks = self.draft_blocks
@@ -362,9 +359,9 @@ class BuilderPage(WebsiteGenerator):
 		context["_body_html"] = render_template(context._body_html, context)
 
 	@frappe.whitelist()
-	def get_page_data(self, route_variables=None):
+	def get_page_data(self, route_variables: dict | None = None) -> dict:
 		if route_variables:
-			frappe.form_dict.update(dict(frappe.parse_json(route_variables or "{}").items()))
+			frappe.form_dict.update({k: v for k, v in route_variables.items()})
 		page_data = frappe._dict()
 		if self.page_data_script:
 			_locals = dict(data=frappe._dict(), page=frappe._dict())
@@ -494,12 +491,14 @@ def save_as_template(page_doc: BuilderPage):
 
 
 @frappe.whitelist()
-def get_block_data(block_id, block_data_script, props):
-	props = frappe._dict(frappe.parse_json(props or "{}"))
+def get_block_data(block_id, block_data_script: str, props: str):
+	frappe.has_permission("Builder Page", "write", throw=True)
+	props = frappe.parse_json(props or "{}")
 	block_data = frappe._dict()
 	_locals = dict(block=frappe._dict(), props=props)
 	execute_script(block_data_script, _locals, block_id)
-	block_data.update(_locals["block"])
+	if isinstance(_locals["block"], dict):
+		block_data.update(_locals["block"])
 	return block_data
 
 
@@ -1241,7 +1240,7 @@ def find_page_with_path(route):
 
 
 @redis_cache(ttl=60 * 60)
-def get_web_pages_with_dynamic_routes() -> list[BuilderPage]:
+def get_web_pages_with_dynamic_routes() -> list[dict]:
 	return frappe.get_all(
 		"Builder Page",
 		fields=["name", "route", "modified"],

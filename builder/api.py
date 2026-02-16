@@ -80,7 +80,7 @@ def upload_builder_asset():
 
 @frappe.whitelist()
 def convert_to_webp(image_url: str | None = None, file_doc: Document | None = None) -> str:
-	"""BETA: Convert image to webp format"""
+	"""Convert image to webp format"""
 
 	CONVERTIBLE_IMAGE_EXTENSIONS = ["png", "jpeg", "jpg"]
 
