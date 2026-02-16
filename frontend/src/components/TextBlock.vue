@@ -243,8 +243,7 @@ if (!props.preview) {
 			if (
 				canvasStore.activeCanvas?.isSelected(props.block) &&
 				canvasStore.activeCanvas?.activeBreakpoint === props.breakpoint &&
-				!blockController.multipleBlocksSelected() &&
-				!editor.value
+				!blockController.multipleBlocksSelected()
 			) {
 				editor.value = new Editor({
 					content: textContent.value,
@@ -309,7 +308,7 @@ const handleEscKey = () => {
 };
 
 const handleClickOutside = (e: MouseEvent) => {
-	if ((e.target as HTMLElement).closest(".__text_block__")) {
+	if ((e.target as HTMLElement).closest(".canvas-container")) {
 		canvasStore.editableBlock = null;
 	}
 };
