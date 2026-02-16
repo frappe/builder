@@ -5,7 +5,7 @@ import copy
 import os
 import re
 import shutil
-from typing import Any, Optional
+from typing import Any
 
 import bs4 as bs
 import frappe
@@ -239,7 +239,7 @@ class BuilderPage(WebsiteGenerator):
 		return self.route
 
 	@frappe.whitelist()
-	def unpublish(self, **kwargs):
+	def unpublish(self):
 		self.published = 0
 		self.save()
 
