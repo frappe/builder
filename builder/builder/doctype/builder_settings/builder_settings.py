@@ -80,7 +80,7 @@ def get_components():
 
 
 @frappe.whitelist()
-def replace_component(target_component: str, replace_with: str, filters=None):
+def replace_component(target_component: str, replace_with: str, filters: dict | None = None):
 	if not target_component or not replace_with:
 		return
 	# check permissions
@@ -108,7 +108,7 @@ def replace_component(target_component: str, replace_with: str, filters=None):
 
 @frappe.whitelist()
 @redis_cache()
-def get_component_usage_count(component_id: str, filters=None):
+def get_component_usage_count(component_id: str, filters: dict | None = None):
 	pages = frappe.get_all(
 		"Builder Page",
 		filters=filters,
