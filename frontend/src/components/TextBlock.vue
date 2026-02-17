@@ -255,10 +255,17 @@ const getInnerHTML = (editor: Editor | null) => {
 
 if (!props.preview) {
 	watch(
-		() => canvasStore.activeCanvas?.isSelected(props.block),
+		() => [
+			canvasStore.activeCanvas?.isSelected(props.block),
+			props.breakpoint,
+			canvasStore.activeCanvas?.activeBreakpoint,
+		],
 		() => {
-			// only load editor if block is selected for performance reasons
-			if (canvasStore.activeCanvas?.isSelected(props.block) && !blockController.multipleBlocksSelected()) {
+			if (
+				canvasStore.activeCanvas?.isSelected(props.block) &&
+				canvasStore.activeCanvas?.activeBreakpoint === props.breakpoint &&
+				!blockController.multipleBlocksSelected()
+			) {
 				editor.value = new Editor({
 					content: textContent.value,
 					extensions: [
