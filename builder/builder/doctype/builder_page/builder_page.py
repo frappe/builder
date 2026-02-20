@@ -576,7 +576,8 @@ def build_tag(block: dict, state: dict, data_key: dict | None = None) -> bs.Tag:
 	attach_client_script(tag, block, state)
 
 	# Add body scripts for body element
-	if block.get("element") == "body":
+	effective_element = block.get("originalElement") or block.get("element")
+	if effective_element == "body":
 		tag.append("{% include 'templates/generators/webpage_scripts.html' %}")
 
 	cleanup_props_stack(props, state["standard_props_stack"])
