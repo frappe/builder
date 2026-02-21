@@ -52,7 +52,8 @@ class TestBuilderPage(FrappeTestCase):
 				"published": 1,
 				"route": "/test-page",
 				"blocks": Block(
-					element="body",
+					element="div",
+					originalElement="body",
 					baseStyles={"background": "red", "fontFamily": "Inter"},
 					customAttributes={"dir": "ltr"},
 					children=[
@@ -77,7 +78,9 @@ class TestBuilderPage(FrappeTestCase):
 				"route": "/test-page-dynamic-route/<name>",
 				"dynamic_route": 1,
 				"blocks": Block(
-					element="body", children=[Block(element="h1", innerHTML="Dynamic Content!")]
+					element="div",
+					originalElement="body",
+					children=[Block(element="h1", innerHTML="Dynamic Content!")],
 				).as_json(wrap_in_array=True),
 			}
 		).insert(ignore_if_duplicate=True)
@@ -108,7 +111,10 @@ class TestBuilderPage(FrappeTestCase):
 		self.assertTrue("Hello World!" in content)
 
 	def test_dynamic_values(self):
-		body = Block(element="body")
+		body = Block(
+			element="div",
+			originalElement="body",
+		)
 		header = Block(element="h1", innerHTML="Hello")
 		sub_header = Block(element="h2", innerHTML="Content")
 		link = Block(element="a", innerHTML="Link")
@@ -141,7 +147,10 @@ class TestBuilderPage(FrappeTestCase):
 			page.delete()
 
 	def test_repeater_block_dynamic_values(self):
-		body = Block(element="body")
+		body = Block(
+			element="div",
+			originalElement="body",
+		)
 		repeater_block = Block(element="div", isRepeaterBlock=True)
 		wrapper_div = Block(element="div")
 		item_name = Block(element="h2")
@@ -190,7 +199,10 @@ class TestBuilderPage(FrappeTestCase):
 			}
 		).insert()
 
-		body = Block(element="body")
+		body = Block(
+			element="div",
+			originalElement="body",
+		)
 		component_root_copy = Block(extendedFromComponent=component.name)
 		component_header_copy = Block(isChildOfComponent=component.name, referenceBlockId="comp-block-1-1")
 
@@ -258,7 +270,10 @@ class TestBuilderPage(FrappeTestCase):
 			component.delete()
 
 	def test_visibility_condition_from_page_data(self):
-		body = Block(element="body")
+		body = Block(
+			element="div",
+			originalElement="body",
+		)
 		header = Block(element="h1", innerHTML="Visible Header")
 		hidden_header = Block(element="h2", innerHTML="Hidden Header")
 
@@ -286,7 +301,8 @@ class TestBuilderPage(FrappeTestCase):
 
 	def test_visibility_condition_from_block_data(self):
 		body = Block(
-			element="body",
+			element="div",
+			originalElement="body",
 			blockDataScript='block.update({"is_header_visible": True,"is_hidden_header_visible": False})',
 		)
 		header = Block(element="h1", innerHTML="Visible Header")
@@ -317,7 +333,10 @@ class TestBuilderPage(FrappeTestCase):
 			page.delete()
 
 	def test_block_data(self):
-		body = Block(element="body")
+		body = Block(
+			element="div",
+			originalElement="body",
+		)
 		wrapper = Block(element="div", blockDataScript=block_data_script)
 		content_dynamic = Block(element="h4", innerHTML="Block Content")
 		content_fallback = Block(element="h4", innerHTML="Block Content")
@@ -346,7 +365,10 @@ class TestBuilderPage(FrappeTestCase):
 			page.delete()
 
 	def test_repeater_from_block_data(self):
-		body = Block(element="body")
+		body = Block(
+			element="div",
+			originalElement="body",
+		)
 		repeater_block = Block(element="div", isRepeaterBlock=True, blockDataScript=block_data_script)
 		wrapper_div = Block(element="div")
 		item_name = Block(element="h2")
@@ -381,7 +403,10 @@ class TestBuilderPage(FrappeTestCase):
 			page.delete()
 
 	def test_block_client_script(self):
-		body = Block(element="body")
+		body = Block(
+			element="div",
+			originalElement="body",
+		)
 		div_wrapper = Block(
 			element="div",
 			blockClientScript='console.log("Block Client Script Executed");\n',
@@ -410,7 +435,10 @@ class TestBuilderPage(FrappeTestCase):
 			page.delete()
 
 	def test_block_props(self):
-		body = Block(element="body")
+		body = Block(
+			element="div",
+			originalElement="body",
+		)
 		div_wrapper = Block(
 			element="div",
 			props={
@@ -542,7 +570,10 @@ class TestBuilderPage(FrappeTestCase):
 			}
 		).insert()
 
-		body = Block(element="body")
+		body = Block(
+			element="div",
+			originalElement="body",
+		)
 
 		component_root_copy = Block(extendedFromComponent=component.name)
 		component_title_block_copy = Block(isChildOfComponent=component.name, referenceBlockId="title-block")
@@ -694,7 +725,10 @@ class TestBuilderPage(FrappeTestCase):
 			}
 		).insert()
 
-		body = Block(element="body")
+		body = Block(
+			element="div",
+			originalElement="body",
+		)
 		component_root_copy = Block(extendedFromComponent=component.name)
 		component_repeater_block_copy = Block(
 			isChildOfComponent=component.name, referenceBlockId="repeater-block", isRepeaterBlock=True
@@ -728,7 +762,10 @@ class TestBuilderPage(FrappeTestCase):
 			component.delete()
 
 	def test_dark_mode_img(self):
-		body = Block(element="body")
+		body = Block(
+			element="div",
+			originalElement="body",
+		)
 		image_block = Block(
 			element="img",
 			attributes={
