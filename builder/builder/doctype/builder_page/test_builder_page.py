@@ -110,6 +110,71 @@ class TestBuilderPage(FrappeTestCase):
 		content = get_response_content("/test-page")
 		self.assertTrue("Hello World!" in content)
 
+	def test_client_script(self):
+		client_script_js = frappe.get_doc(
+			{
+				"doctype": "Builder Client Script",
+				"script_type": "JavaScript",
+				"script": 'console.log("Test");',
+			}
+		).insert()
+
+		client_script_css = frappe.get_doc(
+			{
+				"doctype": "Builder Client Script",
+				"script_type": "CSS",
+				"script": "body { background-color: red; }",
+			}
+		).insert()
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Client Script Test",
+				"published": 1,
+				"route": "/client-script-test",
+				"blocks": Block(
+					element="div",
+					originalElement="body",
+				).as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		client_script_js_row = frappe.get_doc(
+			{
+				"doctype": "Builder Page Client Script",
+				"parent": page.name,
+				"builder_script": client_script_js.name,
+				"parenttype": "Builder Page",
+				"parentfield": "client_scripts",
+			}
+		).insert()
+
+		client_script_css_row = frappe.get_doc(
+			{
+				"doctype": "Builder Page Client Script",
+				"parent": page.name,
+				"builder_script": client_script_css.name,
+				"parenttype": "Builder Page",
+				"parentfield": "client_scripts",
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/client-script-test")
+			self.assertTrue(
+				client_script_js.public_url in get_html_for(content, "attribute", "src", list_all=True)
+			)
+			self.assertTrue(
+				client_script_css.public_url in get_html_for(content, "attribute", "href", list_all=True)
+			)
+		finally:
+			client_script_js_row.delete()
+			client_script_css_row.delete()
+			page.delete()
+			client_script_js.delete()
+			client_script_css.delete()
+
 	def test_dynamic_values(self):
 		body = Block(
 			element="div",
@@ -815,12 +880,14 @@ class TestBuilderPage(FrappeTestCase):
 		cls.page_with_dynamic_route.delete()
 
 
-def get_html_for(html, type, value, index=None, only_content=False):
+def get_html_for(html, type, value, index=None, only_content=False, list_all=False):
 	from bs4 import BeautifulSoup
 
 	soup = BeautifulSoup(html, "html.parser")
 	if type == "tag":
 		results = soup.find_all(value)
+		if list_all:
+			return [result.decode_contents() if only_content else str(result) for result in results]
 		result = (
 			results[index] if index is not None and index < len(results) else results[0] if results else None
 		)
@@ -828,8 +895,10 @@ def get_html_for(html, type, value, index=None, only_content=False):
 			return result.decode_contents()
 		return str(result) if result else ""
 	if type == "attribute":
-		results = soup.find_all(attrs=value)
+		results = soup.find_all(attrs={value: True})
+		if list_all:
+			return [result.get(value) for result in results if result.get(value)]
 		result = (
 			results[index] if index is not None and index < len(results) else results[0] if results else None
 		)
-		return str(result) if result else ""
+		return result.get(value) if result and result.get(value) else ""
