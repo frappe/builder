@@ -104,6 +104,13 @@
 					v-if="pageStore.savingPage && pageStore.activePage?.is_template">
 					Saving template
 				</span>
+				<Tooltip text="Generate with AI" :hoverDelay="0.6" arrow-class="mb-3">
+					<Button
+						variant="ghost"
+						@click="openAIGenerator"
+						icon="zap"
+						:disabled="builderStore.readOnlyMode"></Button>
+				</Tooltip>
 				<Tooltip text="Settings" :hoverDelay="0.6" arrow-class="mb-3">
 					<Button variant="ghost" @click="showSettingsDialog = true" :icon="SettingsGearIcon"></Button>
 				</Tooltip>
@@ -157,7 +164,7 @@ import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { getTextContent } from "@/utils/helpers";
 import { useDark, useToggle } from "@vueuse/core";
 import { Badge, Popover, Tooltip } from "frappe-ui";
-import { computed, defineAsyncComponent, ref } from "vue";
+import { computed, defineAsyncComponent, inject, ref } from "vue";
 import { toast } from "vue-sonner";
 import MainMenu from "./MainMenu.vue";
 import PageOptions from "./PageOptions.vue";
@@ -174,6 +181,17 @@ const pageStore = usePageStore();
 
 const showInfoDialog = ref(false);
 const showSettingsDialog = ref(false);
+
+// Get the AI generator opener from PageBuilder
+const openAIGeneratorFn = inject<(() => void) | undefined>("showAIGenerator", undefined);
+
+const openAIGenerator = () => {
+	if (openAIGeneratorFn) {
+		openAIGeneratorFn();
+	} else {
+		toast.error("AI Generator is not available");
+	}
+};
 
 const currentlyViewedByText = computed(() => {
 	const names = builderStore.viewers.map((viewer) => viewer.fullname).map((name) => name.split(" ")[0]);

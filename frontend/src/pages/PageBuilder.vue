@@ -100,10 +100,14 @@
 				required />
 		</template>
 	</Dialog>
+	<AIPageGeneratorModal
+		v-model="showAIGeneratorDialog"
+		@generated="handleGeneratedBlocks"></AIPageGeneratorModal>
 	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
 </template>
 
 <script setup lang="ts">
+import AIPageGeneratorModal from "@/components/AIPageGeneratorModal.vue";
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import BuilderCanvas from "@/components/BuilderCanvas.vue";
 import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
@@ -147,6 +151,26 @@ const usageCount = ref(0);
 const componentUsedInPages = ref<BuilderPage[]>([]);
 const pageListDialog = ref(false);
 const blockContextMenu = ref<InstanceType<typeof BlockContextMenu> | null>(null);
+const showAIGeneratorDialog = ref(false);
+
+// Expose AI generator dialog to toolbar
+provide("showAIGenerator", () => {
+	showAIGeneratorDialog.value = true;
+});
+
+// Handle AI generated blocks
+const handleGeneratedBlocks = (blocks: any[]) => {
+	if (!blocks || blocks.length === 0) return;
+
+	// Replace the page blocks with the generated blocks
+	pageStore.pageBlocks.splice(0, pageStore.pageBlocks.length);
+	blocks.forEach((block) => {
+		pageStore.pageBlocks.push(block);
+	});
+
+	// Force a page save
+	pageStore.savePage();
+};
 
 watch([() => canvasStore.editableBlock, () => pageStore.activePage?.is_standard], () => {
 	builderStore.toggleReadOnlyMode(
