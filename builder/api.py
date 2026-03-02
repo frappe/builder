@@ -337,3 +337,20 @@ def reorder_client_scripts(script_order):
 
 	for idx, script_name in enumerate(script_order, start=1):
 		frappe.db.set_value("Builder Page Client Script", script_name, "idx", idx)
+
+
+@frappe.whitelist()
+def get_style_book():
+	styles = frappe.get_all(
+		"Builder Style Book",
+		fields=["style", "element", "font_family", "font_size", "font_weight", "line_height"],
+	)
+	return styles
+
+
+@frappe.whitelist()
+def update_style_book(style, font_family, font_size, font_weight, line_height):
+	doc = frappe.get_all("Builder Style Book", filters={"style": style}, limit=1)
+	doc = frappe.get_doc("Builder Style Book", doc[0].name)
+	doc.font_size = font_size
+	doc.save()
