@@ -1,0 +1,81 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-03-02 14:23:02.044444",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_es97",
+  "style",
+  "element",
+  "font_family",
+  "font_weight",
+  "font_size",
+  "line_height"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_es97",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "style",
+   "fieldtype": "Select",
+   "label": "Style",
+   "options": "None\nHeading 1\nHeading 2\nHeading 3\nHeading 4\nHeading 5\nHeading 6\nParagraph\nCaption"
+  },
+  {
+   "fieldname": "element",
+   "fieldtype": "Select",
+   "label": "Element",
+   "options": "NA\nH1\nH2\nH3\nH4\nH5\nH6\np\ncaption"
+  },
+  {
+   "fieldname": "font_family",
+   "fieldtype": "Data",
+   "label": "Font Family"
+  },
+  {
+   "fieldname": "font_weight",
+   "fieldtype": "Data",
+   "label": "Font Weight"
+  },
+  {
+   "fieldname": "font_size",
+   "fieldtype": "Data",
+   "label": "Font Size"
+  },
+  {
+   "fieldname": "line_height",
+   "fieldtype": "Data",
+   "label": "Line Height"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-03-02 15:22:28.667431",
+ "modified_by": "Administrator",
+ "module": "Builder",
+ "name": "Builder Style Book",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
