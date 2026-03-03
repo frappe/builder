@@ -107,6 +107,10 @@ const collectionOptions = [
 		searchKeyWords: "Collection, Repeater, Dynamic Collection, Dynamic Repeater",
 		events: {
 			"update:modelValue": (selectedOption: string) => {
+				if (!selectedOption) {
+					blockController.setDataKey("key", null);
+					return;
+				}
 				let value = selectedOption.split("--").slice(0, -1).join("--");
 				let comesFrom = selectedOption.split("--").slice(-1)[0] as BlockDataKey["comesFrom"];
 				blockController.setDataKey("key", value);
