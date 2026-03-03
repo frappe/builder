@@ -4,6 +4,7 @@ import FontUploader from "@/components/Controls/FontUploader.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import userFonts from "@/data/userFonts";
+import styleBook from "@/data/styleBook";
 import { UserFont } from "@/types/Builder/UserFont";
 import blockController from "@/utils/blockController";
 import { setFont as _setFont, fontList, getFontWeightOptions } from "@/utils/fontManager";
@@ -32,6 +33,39 @@ const typographySectionProperties = [
 		searchKeyWords: "Content, Text, ContentText, Content Text",
 		condition: () =>
 			(blockController.isText() || blockController.isButton()) && !blockController.multipleBlocksSelected(),
+	},
+	{
+		component: StylePropertyControl,
+		getProps: () => {
+			return {
+				label: "Style",
+				styleProperty: "textStylePreset",
+				type: "select",
+				options: styleBook.data
+					? styleBook.data.map((s: any) => ({
+						label: s.style,
+						value: s.style,
+					}))
+					: [],
+				setModelValue: (val: string) => {
+					if (!val) {
+						blockController.setStyle("fontFamily", null);
+						blockController.setStyle("fontSize", null);
+						blockController.setStyle("fontWeight", null);
+						blockController.setStyle("lineHeight", null);
+						return;
+					}
+					const preset = styleBook.data?.find((s: any) => s.style === val);
+					if (!preset) return;
+					setFont(preset.font_family);
+					blockController.setStyle("fontSize", preset.font_size);
+					blockController.setStyle("fontWeight", preset.font_weight);
+					blockController.setStyle("lineHeight", preset.line_height);
+				},
+			};
+		},
+		searchKeyWords: "Style, Preset, Typography",
+		condition: () => blockController.isText(),
 	},
 	{
 		component: StylePropertyControl,
