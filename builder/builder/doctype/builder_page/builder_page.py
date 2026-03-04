@@ -916,6 +916,9 @@ def get_visibility_condition_key(block: dict, data_key: dict | None) -> str | No
 		key = visibility_condition.get("key")
 		comes_from = visibility_condition.get("comesFrom", "dataScript")
 
+	if not key:
+		return None
+
 	# Get key based on source
 	if comes_from == "props":
 		return jinja_safe_key(f"props.{key}")
