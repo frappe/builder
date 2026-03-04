@@ -2,25 +2,25 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "field:style_name",
- "creation": "2026-03-02 14:23:02.044444",
+ "creation": "2026-03-04 11:58:54.158151",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_es97",
+  "style_name_section",
   "style_name",
   "style_map"
  ],
  "fields": [
   {
-   "fieldname": "section_break_es97",
-   "fieldtype": "Section Break"
+   "fieldname": "style_name_section",
+   "fieldtype": "Section Break",
+   "label": "Style Name"
   },
   {
    "fieldname": "style_name",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Style Name",
-   "options": "None\nHeading 1\nHeading 2\nHeading 3\nHeading 4\nHeading 5\nHeading 6\nParagraph\nCaption",
    "reqd": 1,
    "unique": 1
   },
@@ -33,10 +33,10 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-04 11:26:26.903827",
+ "modified": "2026-03-04 15:24:16.012355",
  "modified_by": "Administrator",
  "module": "Builder",
- "name": "Builder Style Book",
+ "name": "Builder Style Preset",
  "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
