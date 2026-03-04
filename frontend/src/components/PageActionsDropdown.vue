@@ -25,7 +25,7 @@
 						label: 'Delete',
 						onClick: () => pageStore.deletePage(props.page),
 						icon: 'trash',
-						condition: () => !props.page.is_standard,
+						condition: () => !props.page.is_standard || Boolean(window.is_developer_mode),
 					},
 				],
 			},
