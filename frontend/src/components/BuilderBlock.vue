@@ -162,7 +162,10 @@ const getBlockDataScriptValue = (path: string): any => {
 };
 
 const attributes = computed(() => {
-	const attribs = { ...props.block.getAttributes(), ...attrs } as { [key: string]: any };
+	const RESTRICTED_ATTRIBS = ["data-block-id", "data-block-uid", "data-breakpoint"];
+	const attribs = { ...props.block.getCustomAttributes(), ...props.block.getAttributes(), ...attrs } as {
+		[key: string]: any;
+	};
 
 	if (props.block.isImage() && !props.preview) {
 		if (builderStore.isDark && attribs.darkSrc) {
@@ -236,6 +239,13 @@ const attributes = computed(() => {
 	if (props.block.isInput()) {
 		attribs.readonly = true;
 	}
+
+	Object.keys(attribs).forEach((key) => {
+		if (RESTRICTED_ATTRIBS.includes(key)) {
+			delete attribs[key];
+		}
+	});
+	
 	return attribs;
 });
 
