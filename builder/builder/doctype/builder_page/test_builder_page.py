@@ -880,7 +880,221 @@ class TestBuilderPage(FrappeTestCase):
 		cls.page_with_dynamic_route.delete()
 
 
-def get_html_for(html, type, value, index=None, only_content=False, list_all=False):
+class TestStandardPageSync(FrappeTestCase):
+	"""Verify that builder_files on disk stay in sync with DB operations.
+
+	Filesystem calls are mocked so the tests remain fast and self-contained; we
+	are testing the *logic* that decides whether and what to delete/rename, not
+	the underlying ``shutil`` behaviour.
+	"""
+
+	# The app must be installed on the bench so that ``frappe.get_app_path``
+	# succeeds.  ``builder_test`` is created and installed automatically during
+	# the test run setup, so we use it as our fixture app.
+	FIXTURE_APP = "builder_test"
+
+	# ------------------------------------------------------------------ helpers
+
+	@staticmethod
+	def _without_developer_mode():
+		"""Context manager that temporarily disables developer_mode."""
+		import contextlib
+
+		@contextlib.contextmanager
+		def cm():
+			original = frappe.conf.developer_mode
+			frappe.conf.developer_mode = 0
+			try:
+				yield
+			finally:
+				frappe.conf.developer_mode = original
+
+		return cm()
+
+	def _make_page(self, page_name: str, with_script: bool = False):
+		"""Create a standard BuilderPage fixture without triggering export."""
+		with self._without_developer_mode():
+			doc = frappe.get_doc(
+				{
+					"doctype": "Builder Page",
+					"page_title": page_name,
+					"route": f"/test-standard-{frappe.generate_hash(4)}",
+					"blocks": "[]",
+					"is_standard": 1,
+					"app": self.FIXTURE_APP,
+				}
+			).insert(ignore_permissions=True)
+			if with_script:
+				script = frappe.get_doc(
+					{
+						"doctype": "Builder Client Script",
+						"script_type": "JavaScript",
+						"script": "// test",
+					}
+				).insert(ignore_permissions=True)
+				doc.append("client_scripts", {"builder_script": script.name})
+				doc.save(ignore_permissions=True)
+				doc.reload()
+				return doc, script
+		return doc
+
+	# ------------------------------------------------------------------ tests
+
+	def test_on_trash_standard_page_removes_directory(self):
+		"""Deleting a standard page must call delete_standard_page_files."""
+		import unittest.mock as mock
+
+		page = self._make_page("trash-sync-page")
+		try:
+			with mock.patch("builder.export_import_standard_page.delete_standard_page_files") as mock_delete:
+				frappe.conf.developer_mode = 1
+				page.delete(ignore_permissions=True)
+				mock_delete.assert_called_once()
+				_args = mock_delete.call_args[0]
+				self.assertEqual(_args[1], self.FIXTURE_APP)
+		finally:
+			frappe.conf.developer_mode = 0
+
+	def test_on_trash_standard_page_removes_orphaned_script(self):
+		"""Deleting a standard page removes its exclusive client-script directory."""
+		import unittest.mock as mock
+
+		page, script = self._make_page("trash-sync-page-script", with_script=True)
+		try:
+			with (
+				mock.patch("builder.export_import_standard_page.delete_standard_page_files"),
+				mock.patch(
+					"builder.export_import_standard_page.delete_standard_client_script_files"
+				) as mock_del_script,
+			):
+				frappe.conf.developer_mode = 1
+				page.delete(ignore_permissions=True)
+				mock_del_script.assert_called_once()
+				_args = mock_del_script.call_args[0]
+				self.assertEqual(_args[0], script.name)
+				self.assertEqual(_args[1], self.FIXTURE_APP)
+		finally:
+			frappe.conf.developer_mode = 0
+			if frappe.db.exists("Builder Client Script", script.name):
+				frappe.delete_doc("Builder Client Script", script.name, ignore_permissions=True)
+
+	def test_on_trash_shared_script_is_not_removed(self):
+		"""A client script shared by two standard pages must not be deleted when only one page is trashed."""
+		import unittest.mock as mock
+
+		page1, script = self._make_page("trash-shared-page-1", with_script=True)
+		with self._without_developer_mode():
+			page2 = frappe.get_doc(
+				{
+					"doctype": "Builder Page",
+					"page_title": "trash-shared-page-2",
+					"route": f"/test-standard-{frappe.generate_hash(4)}",
+					"blocks": "[]",
+					"is_standard": 1,
+					"app": self.FIXTURE_APP,
+				}
+			).insert(ignore_permissions=True)
+			page2.append("client_scripts", {"builder_script": script.name})
+			page2.save(ignore_permissions=True)
+
+		try:
+			with (
+				mock.patch("builder.export_import_standard_page.delete_standard_page_files"),
+				mock.patch(
+					"builder.export_import_standard_page.delete_standard_client_script_files"
+				) as mock_del_script,
+			):
+				frappe.conf.developer_mode = 1
+				page1.delete(ignore_permissions=True)
+				mock_del_script.assert_not_called()
+		finally:
+			frappe.conf.developer_mode = 0
+			if frappe.db.exists("Builder Page", page2.name):
+				page2.delete(ignore_permissions=True)
+			if frappe.db.exists("Builder Client Script", script.name):
+				frappe.delete_doc("Builder Client Script", script.name, ignore_permissions=True)
+
+	def test_after_rename_standard_page_removes_old_directory(self):
+		"""Renaming a standard page must delete the old builder_files directory and re-export under the new name."""
+		import unittest.mock as mock
+
+		page = self._make_page("rename-sync-page-old")
+		new_name = f"rename-sync-page-new-{frappe.generate_hash(4)}"
+		try:
+			with (
+				mock.patch("builder.export_import_standard_page.delete_standard_page_files") as mock_delete,
+				mock.patch("builder.export_import_standard_page.export_page_as_standard") as mock_export,
+			):
+				frappe.conf.developer_mode = 1
+				frappe.rename_doc("Builder Page", page.name, new_name, force=True)
+				mock_delete.assert_called_once()
+				_del_args = mock_delete.call_args[0]
+				self.assertEqual(_del_args[0], page.name)  # old name
+				self.assertEqual(_del_args[1], self.FIXTURE_APP)
+				mock_export.assert_called_once()
+				_exp_args, _exp_kwargs = mock_export.call_args
+				self.assertEqual(_exp_args[0], new_name)
+				self.assertEqual(_exp_kwargs.get("target_app"), self.FIXTURE_APP)
+		finally:
+			frappe.conf.developer_mode = 0
+			if frappe.db.exists("Builder Page", new_name):
+				frappe.delete_doc("Builder Page", new_name, ignore_permissions=True)
+			if frappe.db.exists("Builder Page", page.name):
+				page.delete(ignore_permissions=True)
+
+	def test_client_script_on_trash_removes_directory(self):
+		"""Deleting a client script must remove its builder_files directory."""
+		import unittest.mock as mock
+
+		page, script = self._make_page("cs-trash-page", with_script=True)
+		try:
+			with mock.patch(
+				"builder.export_import_standard_page.delete_standard_client_script_files"
+			) as mock_del:
+				frappe.conf.developer_mode = 1
+				script_name = script.name
+				frappe.delete_doc("Builder Client Script", script_name, force=1)
+				mock_del.assert_called_once()
+				_args = mock_del.call_args[0]
+				self.assertEqual(_args[0], script_name)
+				self.assertEqual(_args[1], self.FIXTURE_APP)
+		finally:
+			frappe.conf.developer_mode = 0
+			if frappe.db.exists("Builder Page", page.name):
+				page.delete(ignore_permissions=True)
+
+	def test_client_script_after_rename_renames_directory(self):
+		"""Renaming a client script must rename its builder_files directory in every referencing app."""
+		import unittest.mock as mock
+
+		page, script = self._make_page("cs-rename-page", with_script=True)
+		old_script_name = script.name
+		new_script_name = f"renamed-{frappe.generate_hash(4)}"
+		try:
+			with mock.patch(
+				"builder.export_import_standard_page.rename_standard_client_script_files"
+			) as mock_rename:
+				frappe.conf.developer_mode = 1
+				frappe.rename_doc("Builder Client Script", old_script_name, new_script_name, force=True)
+				mock_rename.assert_called_once()
+				_args = mock_rename.call_args[0]
+				self.assertEqual(_args[0], old_script_name)
+				self.assertEqual(_args[1], new_script_name)
+				self.assertEqual(_args[2], self.FIXTURE_APP)
+		finally:
+			frappe.conf.developer_mode = 0
+			actual_name = (
+				new_script_name
+				if frappe.db.exists("Builder Client Script", new_script_name)
+				else old_script_name
+			)
+			if frappe.db.exists("Builder Client Script", actual_name):
+				frappe.delete_doc("Builder Client Script", actual_name, force=1)
+			if frappe.db.exists("Builder Page", page.name):
+				page.delete(ignore_permissions=True)
+
+
+def get_html_for(html, type, value, index=None, only_content=False):
 	from bs4 import BeautifulSoup
 
 	soup = BeautifulSoup(html, "html.parser")

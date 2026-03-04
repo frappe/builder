@@ -315,6 +315,65 @@ def export_variables(variables, builder_files_path):
 			frappe.log_error(f"Failed to export variable {var_name}: {e!s}")
 
 
+def delete_standard_page_files(page_name: str, app_name: str) -> None:
+	"""Remove the exported directory for a standard page from the target app's source code.
+
+	Called from ``BuilderPage.on_trash`` so that deleting a page through the UI
+	also removes the corresponding files that were written by
+	``export_page_as_standard``.
+	"""
+	app_path = frappe.get_app_path(app_name)
+	if not app_path:
+		return
+	export_name = frappe.scrub(page_name)
+	page_path = os.path.join(app_path, "builder_files", "pages", export_name)
+	if os.path.isdir(page_path):
+		shutil.rmtree(page_path, ignore_errors=True)
+
+
+def delete_standard_client_script_files(script_name: str, app_name: str) -> None:
+	"""Remove the exported directory for a client script from the target app's source code.
+
+	Called when a ``Builder Client Script`` is deleted *and* no other standard
+	page in the same app still references it.
+	"""
+	app_path = frappe.get_app_path(app_name)
+	if not app_path:
+		return
+	export_name = frappe.scrub(script_name)
+	script_path = os.path.join(app_path, "builder_files", "client_scripts", export_name)
+	if os.path.isdir(script_path):
+		shutil.rmtree(script_path, ignore_errors=True)
+
+
+def rename_standard_page_files(old_page_name: str, app_name: str) -> None:
+	"""Remove the exported directory for a page that has been renamed.
+
+	Callers are responsible for re-exporting under the new name afterwards
+	(Frappe does not automatically call ``on_update`` after a rename).
+	"""
+	delete_standard_page_files(old_page_name, app_name)
+
+
+def rename_standard_client_script_files(old_name: str, new_name: str, app_name: str) -> None:
+	"""Rename the exported directory for a client script inside the target app's source code."""
+	app_path = frappe.get_app_path(app_name)
+	if not app_path:
+		return
+	old_export_name = frappe.scrub(old_name)
+	new_export_name = frappe.scrub(new_name)
+	old_path = os.path.join(app_path, "builder_files", "client_scripts", old_export_name)
+	new_path = os.path.join(app_path, "builder_files", "client_scripts", new_export_name)
+	if os.path.isdir(old_path):
+		if os.path.isdir(new_path):
+			shutil.rmtree(new_path, ignore_errors=True)
+		os.rename(old_path, new_path)
+		old_json = os.path.join(new_path, f"{old_export_name}.json")
+		new_json = os.path.join(new_path, f"{new_export_name}.json")
+		if os.path.exists(old_json):
+			os.rename(old_json, new_json)
+
+
 def import_fonts(fonts_path):
 	"""Import User Font records from exported files"""
 	if not os.path.isdir(fonts_path):

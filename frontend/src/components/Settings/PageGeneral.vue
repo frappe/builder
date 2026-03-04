@@ -152,6 +152,26 @@
 									@update:modelValue="handleAppChange"></BuilderInput>
 							</div>
 						</div>
+						<template v-if="pageStore.activePage?.is_standard && isDeveloperMode">
+							<hr class="w-full border-outline-gray-2" />
+							<div class="flex items-center justify-between">
+								<div class="flex flex-col gap-2">
+									<span class="text-base font-medium text-ink-gray-9">Page Name</span>
+									<p class="max-w-xs text-p-sm text-ink-gray-7">Rename the exported file name for this standard page</p>
+								</div>
+								<div class="flex items-center gap-2">
+									<BuilderInput
+										class="w-fit"
+										type="text"
+										:hideClearButton="true"
+										:modelValue="pageNameInput"
+										@update:modelValue="(val: string) => (pageNameInput = val)"
+										@input="(val: string) => (pageNameInput = val)"
+										@keydown.enter="handlePageRename"
+										@focusout="handlePageRename" />
+								</div>
+							</div>
+						</template>
 					</template>
 					<hr class="w-full border-outline-gray-2" v-if="!pageStore.activePage?.is_standard" />
 					<div class="flex items-center justify-between" v-if="!pageStore.activePage?.is_standard">
@@ -186,12 +206,33 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderProjectFolder } from "@/types/Builder/BuilderProjectFolder";
 import { toTitleCase } from "@/utils/helpers";
 import { createResource, FeatherIcon } from "frappe-ui";
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import { toast } from "vue-sonner";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
 const isDeveloperMode = computed(() => Boolean(window.is_developer_mode));
+
+const pageNameInput = ref(pageStore.activePage?.page_name || "");
+watch(
+	() => pageStore.activePage?.page_name,
+	(val) => {
+		pageNameInput.value = val || "";
+	},
+	{ immediate: true },
+);
+
+const handlePageRename = async () => {
+	const newName = pageNameInput.value?.trim();
+	if (!newName || newName === pageStore.activePage?.page_name) return;
+	try {
+		await pageStore.renamePage(newName);
+		toast.success(`Page renamed to "${newName}"`);
+	} catch {
+		pageNameInput.value = pageStore.activePage?.page_name || "";
+		toast.error("Failed to rename page");
+	}
+};
 const fullURL = computed(
 	() => window.location.origin + (pageStore.activePage?.route ? "/" + pageStore.activePage.route : ""),
 );
