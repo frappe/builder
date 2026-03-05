@@ -80,7 +80,7 @@ def get_components():
 
 
 @frappe.whitelist()
-def replace_component(target_component: str, replace_with: str, filters: dict | None = None):
+def replace_component(target_component: str, replace_with: str, filters: str | None = None):
 	if not target_component or not replace_with:
 		return
 	# check permissions
@@ -95,7 +95,7 @@ def replace_component(target_component: str, replace_with: str, filters: dict | 
 	pages = frappe.get_all(
 		"Builder Page",
 		fields=["name"],
-		filters=filters,
+		filters=frappe.parse_json(filters) if filters else {},
 		or_filters={
 			"blocks": ["like", f"%{target_component}%"],
 			"draft_blocks": ["like", f"%{target_component}%"],
@@ -108,10 +108,12 @@ def replace_component(target_component: str, replace_with: str, filters: dict | 
 
 @frappe.whitelist()
 @redis_cache()
-def get_component_usage_count(component_id: str, filters: dict | None = None):
+def get_component_usage_count(component_id: str, filters: str | None = None):
+	if not frappe.has_permission("Builder Page", ptype="read"):
+		return {"count": 0, "pages": []}
 	pages = frappe.get_all(
 		"Builder Page",
-		filters=filters,
+		filters=frappe.parse_json(filters) if filters else {},
 		fields=["name", "page_title", "route", "preview"],
 		or_filters={
 			"blocks": ["like", f"%{component_id}%"],
