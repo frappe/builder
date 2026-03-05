@@ -1,11 +1,12 @@
 exclude: 'node_modules|.git'
 default_stages: [pre-commit]
+default_install_hook_types: [pre-commit, commit-msg]
 fail_fast: false
 
 
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.13
+    rev: v0.14.10
     hooks:
       - id: ruff
         name: "Run ruff import sorter"
@@ -29,7 +30,7 @@ repos:
           - prettier-plugin-tailwindcss@0.6.11
         exclude: |
             (?x)^(
-                frappe/public/dist/.*|
+                builder/public/dist/.*|
                 .*node_modules.*|
                 .*boilerplate.*|
                 .*src.*.js|
@@ -37,7 +38,13 @@ repos:
                 builder/public/js/posthog.js|
             )$
 
+  - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
+    rev: v9.23.0
+    hooks:
+      - id: commitlint
+        stages: [commit-msg]
+        additional_dependencies: ['conventional-changelog-conventionalcommits']
+
 ci:
     autoupdate_schedule: weekly
-    skip: [prettier]
     submodules: false
