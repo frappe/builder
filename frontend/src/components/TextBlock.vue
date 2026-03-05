@@ -206,18 +206,18 @@ watch(
 	() => textContent.value,
 	(newValue: string) => {
 		if (!editor.value) return;
-		
+
 		const innerHTML = getInnerHTML(editor.value);
 		if (newValue === innerHTML) return;
-		
+
 		// If plain text is entered but current content has HTML styling, preserve it
 		const isPlainText = !/<[^>]+>/.test(newValue);
 		const hasStyles = /<[^>]+style=/.test(innerHTML) || /<(em|strong|i|b|u)/.test(innerHTML);
-		
+
 		if (isPlainText && hasStyles && newValue.trim()) {
-			const tempDiv = document.createElement('div');
+			const tempDiv = document.createElement("div");
 			tempDiv.innerHTML = innerHTML;
-			
+
 			if (tempDiv.textContent !== newValue) {
 				// Update only the text content, preserving all HTML tags
 				const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_TEXT);
@@ -230,7 +230,7 @@ watch(
 			}
 			return;
 		}
-		
+
 		editor.value.commands.setContent(newValue || "", false);
 	},
 );
@@ -274,11 +274,11 @@ if (!props.preview) {
 							addGlobalAttributes() {
 								return [
 									{
-										types: ['textStyle'],
+										types: ["textStyle"],
 										attributes: {
 											style: {
-												parseHTML: element => element.getAttribute('style'),
-												renderHTML: attributes => attributes.style ? { style: attributes.style } : {},
+												parseHTML: (element) => element.getAttribute("style"),
+												renderHTML: (attributes) => (attributes.style ? { style: attributes.style } : {}),
 											},
 										},
 									},
@@ -286,7 +286,7 @@ if (!props.preview) {
 							},
 						}),
 						Color.configure({
-							types: ['textStyle'],
+							types: ["textStyle"],
 						}),
 						FontFamily,
 						Link.configure({

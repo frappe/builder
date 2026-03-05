@@ -361,7 +361,7 @@ class TestBuilderPage(FrappeTestCase):
 
 		header.visibilityCondition = {"key": "is_header_visible", "comesFrom": "dataScript"}
 		hidden_header.visibilityCondition = {"key": "is_hidden_header_visible", "comesFrom": "dataScript"}
-		hidden_header_h3.visibilityCondition = "is_hidden_header_visible" # legacy
+		hidden_header_h3.visibilityCondition = "is_hidden_header_visible"  # legacy
 		header_h4.visibilityCondition = ""
 		header_h5.visibilityCondition = {"key": "", "comesFrom": "dataScript"}
 
