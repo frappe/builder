@@ -39,5 +39,5 @@ repos:
 
 ci:
     autoupdate_schedule: weekly
-    skip: []
+    skip: [prettier]
     submodules: false
