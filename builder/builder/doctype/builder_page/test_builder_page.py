@@ -1094,7 +1094,7 @@ class TestStandardPageSync(FrappeTestCase):
 				page.delete(ignore_permissions=True)
 
 
-def get_html_for(html, type, value, index=None, only_content=False):
+def get_html_for(html, type, value, index=None, only_content=False, list_all=False):
 	from bs4 import BeautifulSoup
 
 	soup = BeautifulSoup(html, "html.parser")
