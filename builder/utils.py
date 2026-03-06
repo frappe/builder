@@ -21,6 +21,7 @@ from frappe.utils.safe_exec import (
 	safe_exec_flags,
 )
 from RestrictedPython import compile_restricted
+from RestrictedPython import safe_globals as restricted_safe_globals
 from werkzeug.routing import Rule
 
 
@@ -177,6 +178,7 @@ def get_safer_globals():
 	out._iter_unpack_sequence_ = safe_globals["_iter_unpack_sequence_"]
 
 	# add common python builtins
+	out.update(restricted_safe_globals)
 	out.update(get_python_builtins())
 
 	return out
