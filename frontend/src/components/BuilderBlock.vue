@@ -163,7 +163,19 @@ const getBlockDataScriptValue = (path: string): any => {
 
 const attributes = computed(() => {
 	const RESTRICTED_ATTRIBS = ["data-block-id", "data-block-uid", "data-breakpoint"];
-	const attribs = { ...props.block.getCustomAttributes(), ...props.block.getAttributes(), ...attrs } as {
+	let additionalAttributes: Record<string, any> = {};
+
+	if (builderSettings.doc?.execute_block_scripts_in_editor !== "Don't Execute") {
+		additionalAttributes = props.block.getCustomAttributes();
+	}
+
+	Object.keys(additionalAttributes).forEach((key) => {
+		if (!RESTRICTED_ATTRIBS.includes(key)) {
+			delete additionalAttributes[key];
+		}
+	});
+
+	const attribs = { ...additionalAttributes, ...props.block.getAttributes(), ...attrs } as {
 		[key: string]: any;
 	};
 
@@ -240,12 +252,6 @@ const attributes = computed(() => {
 		attribs.readonly = true;
 	}
 
-	Object.keys(attribs).forEach((key) => {
-		if (RESTRICTED_ATTRIBS.includes(key)) {
-			delete attribs[key];
-		}
-	});
-	
 	return attribs;
 });
 
