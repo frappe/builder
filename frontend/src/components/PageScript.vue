@@ -171,7 +171,7 @@ const builderStore = useBuilderStore();
 const blockDataStore = useBlockDataStore();
 
 const showDialog = ref(false);
-const mode = useStorage("builder_last_used_script_editor_mode", "block");
+const mode = useStorage("builder_last_used_script_editor_mode", "page");
 const showCumulativeBlockData = ref(false);
 
 const props = defineProps<{
