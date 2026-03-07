@@ -8,6 +8,7 @@ const stylePreset = createListResource({
 	start: 0,
 	pageLength: 50,
 	auto: true,
+	orderby: "creation asc",
 });
 
 export default stylePreset;

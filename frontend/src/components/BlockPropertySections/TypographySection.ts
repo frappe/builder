@@ -4,7 +4,6 @@ import FontUploader from "@/components/Controls/FontUploader.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import userFonts from "@/data/userFonts";
-import styleBook from "@/data/stylePreset";
 import { UserFont } from "@/types/Builder/UserFont";
 import blockController from "@/utils/blockController";
 import { setFont as _setFont, fontList, getFontWeightOptions } from "@/utils/fontManager";
@@ -40,7 +39,7 @@ const typographySectionProperties = [
 		getProps: () => {
 			return {
 				label: "Style",
-				styleProperty: "textStylePreset",
+				propertyKey: "textStylePreset",
 				type: "select",
 				options: stylePreset.data //list of items in dropdown
 					? stylePreset.data.map((s: any) => ({ //s -> object and kept any not defined type of it 
@@ -48,7 +47,9 @@ const typographySectionProperties = [
 						value: s.style_name,
 					}))
 					: [],
+				getModelValue: () => String(blockController.getStyle("textStylePreset") ?? ""),
 				setModelValue: (val: string) => {
+					blockController.setStyle("textStylePreset", val);
 					if (!val) {
 						blockController.setStyle("fontFamily", null);
 						blockController.setStyle("fontSize", null);
@@ -58,12 +59,14 @@ const typographySectionProperties = [
 					}
 					const preset = stylePreset.data?.find((s: any) => s.style_name === val);
 					if (!preset) return;
-					setFont(preset.font_family);
-					blockController.setStyle("fontSize", preset.font_size);
-					blockController.setStyle("fontWeight", preset.font_weight);
-					blockController.setStyle("lineHeight", preset.line_height);
-				
-				},
+					const map = typeof preset.style_map === "string" 
+    					? JSON.parse(preset.style_map) 
+						: preset.style_map;
+					setFont(map.fontFamily);
+					blockController.setStyle("fontSize", map.fontSize);
+					blockController.setStyle("fontWeight", map.fontWeight);
+					blockController.setStyle("lineHeight", map.lineHeight);
+			},
 			};
 		},
 		searchKeyWords: "Style, Preset, Typography",
