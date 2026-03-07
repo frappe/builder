@@ -48,7 +48,6 @@
 					{ label: 'Page', icon: 'layout', hideLabel: true, value: 'page', showTooltip: true },
 					{ label: 'Block', icon: 'layers', hideLabel: true, value: 'block', showTooltip: true },
 				]"
-				@update:model-value="(val) => saveLastUsedMode(String(val))"
 				v-model="mode" />
 		</div>
 		<Dialog
@@ -165,21 +164,14 @@ import TabButtons from "./Controls/TabButtons.vue";
 import Switch from "./Controls/Switch.vue";
 import PropsEditor from "./PropsEditor.vue";
 import useBlockDataStore from "@/stores/blockDataStore";
+import { useStorage } from "@vueuse/core";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
 const blockDataStore = useBlockDataStore();
 
-const getLastUsedMode = () => {
-	const lastUsedMode = localStorage.getItem("builder_last_used_script_editor_mode");
-	if (lastUsedMode === "page" || lastUsedMode === "block") {
-		return lastUsedMode;
-	}
-	return "block";
-};
-
 const showDialog = ref(false);
-const mode = ref<"page" | "block">(getLastUsedMode());
+const mode = useStorage("builder_last_used_script_editor_mode", "block");
 const showCumulativeBlockData = ref(false);
 
 const props = defineProps<{
@@ -213,7 +205,7 @@ const blockData = computed(() => {
 		? blockDataStore.getBlockData(
 				blockController.getFirstSelectedBlock().blockId,
 				showCumulativeBlockData.value ? "all" : "own",
-			) || {}
+		  ) || {}
 		: {};
 });
 
@@ -252,10 +244,6 @@ const saveBlockDataScript = (value: string) => {
 	if (isBlockSelected.value) {
 		blockController.getFirstSelectedBlock()?.setBlockDataScript(value);
 	}
-};
-
-const saveLastUsedMode = (value: string) => {
-	localStorage.setItem("builder_last_used_script_editor_mode", value);
 };
 
 const showClientScriptEditor = () => {
