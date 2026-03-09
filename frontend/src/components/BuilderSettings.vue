@@ -152,7 +152,7 @@ const globalSettings = {
 			component: GlobalDeveloper,
 			title: "Developer Settings",
 			icon: TerminalIcon,
-		}
+		},
 	],
 };
 

@@ -102,9 +102,21 @@ function useNumericOption(key: string) {
 	return { value, reset, handleChange };
 }
 
-const { value: minValue, reset: resetMinValue, handleChange: handleMinValueChange } = useNumericOption("minValue");
-const { value: maxValue, reset: resetMaxValue, handleChange: handleMaxValueChange } = useNumericOption("maxValue");
-const { value: defaultValue, reset: resetDefaultValue, handleChange: handleDefaultValueChange } = useNumericOption("defaultValue");
+const {
+	value: minValue,
+	reset: resetMinValue,
+	handleChange: handleMinValueChange,
+} = useNumericOption("minValue");
+const {
+	value: maxValue,
+	reset: resetMaxValue,
+	handleChange: handleMaxValueChange,
+} = useNumericOption("maxValue");
+const {
+	value: defaultValue,
+	reset: resetDefaultValue,
+	handleChange: handleDefaultValueChange,
+} = useNumericOption("defaultValue");
 
 const reset = (toProps = false) => {
 	resetMinValue(toProps);
@@ -113,5 +125,4 @@ const reset = (toProps = false) => {
 };
 
 defineExpose({ reset });
-
 </script>

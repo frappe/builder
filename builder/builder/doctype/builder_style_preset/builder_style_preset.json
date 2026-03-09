@@ -8,7 +8,8 @@
  "field_order": [
   "style_name_section",
   "style_name",
-  "style_map"
+  "style_map",
+  "sort_order"
  ],
  "fields": [
   {
@@ -28,12 +29,17 @@
    "fieldname": "style_map",
    "fieldtype": "JSON",
    "label": "Style Map"
+  },
+  {
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "label": "Sort Order"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-04 15:24:16.012355",
+ "modified": "2026-03-09 11:59:01.879720",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Style Preset",

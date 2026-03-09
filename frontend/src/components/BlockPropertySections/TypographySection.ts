@@ -37,20 +37,28 @@ const typographySectionProperties = [
 	{
 		component: StylePropertyControl,
 		getProps: () => {
+			console.log("stylePreset.data", JSON.stringify(stylePreset.data?.map((s: any) => ({ name: s.style_name, order: s.sort_order }))));
+			console.log("stylePreset.data", stylePreset.data);
 			return {
 				label: "Style",
 				propertyKey: "textStylePreset",
 				type: "select",
 				options: stylePreset.data //list of items in dropdown
-					? stylePreset.data.map((s: any) => ({ //s -> object and kept any not defined type of it 
+					? [
+						{ label: "None", value: null },
+						...stylePreset.data.map((s: any) => ({ //s -> object and kept any not defined type of it 
 						label: s.style_name, //if stylebook.data exists and loaded, do the map or else return empty array
 						value: s.style_name,
 					}))
-					: [],
-				getModelValue: () => String(blockController.getStyle("textStylePreset") ?? ""),
-				setModelValue: (val: string) => {
-					blockController.setStyle("textStylePreset", val);
+					]	
+					: [{ label: "None", value: " " }],
+				getModelValue: () => String(blockController.getStyle("textStylePreset") ?? ""), //reads the currently selected preset from the block's styles.
+				setModelValue: (val: string) => { //called when user selects an option
+					console.log("setModelValue called with:", val, typeof val);
+					blockController.setStyle("textStylePreset", val); //saves selected style
 					if (!val) {
+						console.log("None selected, clearing styles");
+						blockController.setFontFamily(" ");
 						blockController.setStyle("fontFamily", null);
 						blockController.setStyle("fontSize", null);
 						blockController.setStyle("fontWeight", null);
@@ -60,10 +68,10 @@ const typographySectionProperties = [
 					const preset = stylePreset.data?.find((s: any) => s.style_name === val);
 					if (!preset) return;
 					const map = typeof preset.style_map === "string" 
-    					? JSON.parse(preset.style_map) 
+    					? JSON.parse(preset.style_map) 	
 						: preset.style_map;
 					setFont(map.fontFamily);
-					blockController.setStyle("fontSize", map.fontSize);
+					blockController.setStyle("fontSize", map.fontSize); //knows which block is currently selected on the canvas and applies changes to it
 					blockController.setStyle("fontWeight", map.fontWeight);
 					blockController.setStyle("lineHeight", map.lineHeight);
 			},
