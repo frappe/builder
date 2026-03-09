@@ -205,7 +205,7 @@ const blockData = computed(() => {
 		? blockDataStore.getBlockData(
 				blockController.getFirstSelectedBlock().blockId,
 				showCumulativeBlockData.value ? "all" : "own",
-		  ) || {}
+			) || {}
 		: {};
 });
 
