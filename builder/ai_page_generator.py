@@ -339,14 +339,14 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None) ->
 		return blocks
 
 	except json.JSONDecodeError as e:
-		frappe.log_error(f"JSON parsing error: {str(e)}\nContent: {content}", "AI Page Generation Error")
+		frappe.log_error(f"JSON parsing error: {e!s}\nContent: {content}", "AI Page Generation Error")
 		frappe.throw(
 			_("Failed to parse AI response as JSON. The model may have returned invalid output."),
 			title=_("Generation Error"),
 		)
 
 	except Exception as e:
-		frappe.log_error(f"AI generation error: {str(e)}", "AI Page Generation Error")
+		frappe.log_error(f"AI generation error: {e!s}", "AI Page Generation Error")
 		frappe.throw(
 			_("Failed to generate page: {0}").format(str(e)),
 			title=_("Generation Error"),
@@ -410,17 +410,10 @@ def get_ai_models():
 
 
 @frappe.whitelist()
-def generate_page_from_prompt(prompt: str, model: str, api_key: str | None = None):
+def generate_page_from_prompt(prompt: str, model: str | None = None, api_key: str | None = None):
 	"""
-	API endpoint to generate page blocks from a prompt
-
-	Args:
-		prompt: User's page description
-		model: AI model to use
-		api_key: Optional API key
-
-	Returns:
-		dict with blocks array
+	API endpoint to generate page blocks from a prompt.
+	Reads model and API key from Builder Settings if not provided.
 	"""
 	if not frappe.has_permission("Builder Page", ptype="write"):
 		frappe.throw(_("You do not have permission to generate pages"))
@@ -428,10 +421,16 @@ def generate_page_from_prompt(prompt: str, model: str, api_key: str | None = Non
 	if not prompt or not prompt.strip():
 		frappe.throw(_("Please provide a prompt describing the page you want to create"))
 
+	# Read from Builder Settings if not provided
 	if not model:
-		frappe.throw(_("Please select an AI model"))
+		settings = frappe.get_single("Builder Settings")
+		model = settings.get("ai_model")
+		if not api_key:
+			api_key = settings.get_password("ai_api_key", raise_exception=False)
 
-	# Generate blocks
+	if not model:
+		frappe.throw(_("Please configure an AI model in Settings → AI"))
+
 	blocks = generate_page_blocks(prompt, model, api_key)
 
 	return {
@@ -450,7 +449,7 @@ def test_api_key(model: str, api_key: str):
 		set_api_key_for_provider(model, api_key)
 
 		# Make a simple test call
-		response = litellm.completion(
+		litellm.completion(
 			model=model,
 			messages=[{"role": "user", "content": "Say 'OK' if you can read this"}],
 			max_tokens=10,
