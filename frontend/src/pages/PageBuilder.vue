@@ -102,7 +102,8 @@
 	</Dialog>
 	<AIPageGeneratorModal
 		v-model="showAIGeneratorDialog"
-		@generated="handleGeneratedBlocks"></AIPageGeneratorModal>
+		@generated="handleGeneratedBlocks"
+		@streaming="handleStreamingBlocks"></AIPageGeneratorModal>
 	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
 </template>
 
@@ -123,7 +124,7 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { getUsersInfo } from "@/usersInfo";
 import blockController from "@/utils/blockController";
-import { getRootBlockTemplate, isTargetEditable } from "@/utils/helpers";
+import { getBlockInstance, getRootBlockTemplate, isTargetEditable } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
 import {
 	breakpointsTailwind,
@@ -162,14 +163,24 @@ provide("showAIGenerator", () => {
 const handleGeneratedBlocks = (blocks: any[]) => {
 	if (!blocks || blocks.length === 0) return;
 
-	// Replace the page blocks with the generated blocks
-	pageStore.pageBlocks.splice(0, pageStore.pageBlocks.length);
-	blocks.forEach((block) => {
-		pageStore.pageBlocks.push(block);
-	});
+	// Replace the page blocks with the final generated blocks
+	pageStore.pageBlocks = [getBlockInstance(blocks[0])];
+	canvasStore.activeCanvas?.setRootBlock(pageStore.pageBlocks[0] as any, false);
 
 	// Force a page save
 	pageStore.savePage();
+};
+
+// Handle live streaming blocks (partial, not saved)
+const handleStreamingBlocks = (blocks: any[]) => {
+	if (!blocks || blocks.length === 0) return;
+
+	try {
+		pageStore.pageBlocks = [getBlockInstance(blocks[0])];
+		canvasStore.activeCanvas?.setRootBlock(pageStore.pageBlocks[0] as any, false);
+	} catch {
+		// Partial block may still be invalid, skip this frame
+	}
 };
 
 watch([() => canvasStore.editableBlock, () => pageStore.activePage?.is_standard], () => {

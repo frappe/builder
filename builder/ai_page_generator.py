@@ -79,6 +79,7 @@ Your task is to generate a complete page structure based on user prompts. You mu
    - Buttons: "button" or "a"
    - Images: "img" with src attribute
    - Sections: "section", "header", "footer", "nav"
+   - Font: Choose from Google Fonts and specify in styles
 
 3. **Styling (baseStyles)**: Use CSS-in-JS object format:
 ```json
@@ -210,18 +211,21 @@ Remember:
 
 def generate_page_blocks(prompt: str, model: str, api_key: str | None = None) -> list[dict[str, Any]]:
 	"""
-	Generate page blocks from a prompt using the specified AI model
+	Generate page blocks from a prompt using the specified AI model with streaming.
+
+	Streams response chunks to the frontend via realtime events so users
+	can see the generation happening in real time.
 
 	Args:
 		prompt: User's description of the page they want
-		model: Model identifier (e.g., 'gpt-4o', 'claude-3-5-sonnet-20241022')
+		model: Model identifier (e.g., 'gpt-4o', 'claude-sonnet-4-6')
 		api_key: Optional API key (if not configured in site config)
 
 	Returns:
 		List of block dictionaries
 	"""
+	content = ""
 	try:
-		# Try to import litellm
 		try:
 			import litellm
 		except ImportError:
@@ -230,7 +234,6 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None) ->
 				title=_("Missing Dependency"),
 			)
 
-		# Get API key from site config if not provided
 		if not api_key:
 			api_key = get_api_key_for_model(model)
 
@@ -242,78 +245,91 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None) ->
 				title=_("API Key Missing"),
 			)
 
-		# Set the API key
 		set_api_key_for_provider(model, api_key)
 
-		# Send progress update
 		frappe.publish_realtime(
 			"ai_generation_progress",
 			{"status": "preparing", "message": "Preparing AI request..."},
 			user=frappe.session.user,
 		)
 
-		# Prepare messages
 		messages = [
 			{"role": "system", "content": get_system_prompt()},
-			{"role": "user", "content": f"Create a web page for: {prompt}"},
+			{"role": "user", "content": f"Create a section for: {prompt}"},
 		]
 
-		# Send progress update
 		frappe.publish_realtime(
 			"ai_generation_progress",
 			{"status": "generating", "message": f"Generating page with {model}..."},
 			user=frappe.session.user,
 		)
 
-		# Call the LLM
+		# Stream the response so the frontend can show progressive output
 		response = litellm.completion(
 			model=model,
 			messages=messages,
 			temperature=0.7,
 			max_tokens=8000,
+			stream=True,
 		)
 
-		# Send progress update
+		content = ""
+		for chunk in response:
+			delta = chunk.choices[0].delta.content
+			if delta:
+				content += delta
+				frappe.publish_realtime(
+					"ai_generation_stream",
+					{"chunk": delta, "accumulated": content},
+					user=frappe.session.user,
+				)
+
+		content = content.strip()
+
 		frappe.publish_realtime(
 			"ai_generation_progress",
 			{"status": "parsing", "message": "Parsing generated content..."},
 			user=frappe.session.user,
 		)
 
-		# Extract content
-		content = response.choices[0].message.content.strip()
-
-		# Try to parse as JSON
 		# Remove markdown code blocks if present
 		if content.startswith("```"):
-			# Remove ```json or ``` from start
 			content = content.split("\n", 1)[1] if "\n" in content else content[3:]
-			# Remove ``` from end
 			if content.endswith("```"):
 				content = content[:-3].strip()
 
-		# Parse JSON
-		blocks = json.loads(content)
+		section = json.loads(content)
 
-		# Validate it's a list
-		if not isinstance(blocks, list):
+		# Normalize: if the model returned an array, take the first element
+		if isinstance(section, list):
+			section = section[0] if section else {}
+
+		if not isinstance(section, dict):
 			frappe.throw(
-				_("AI response is not a valid block array"),
+				_("AI response is not a valid block object"),
 				title=_("Invalid Response"),
 			)
 
-		# Ensure we have a root block
-		if not blocks or blocks[0].get("element") != "body":
-			blocks = [
-				{
-					"element": "body",
-					"blockId": "root",
-					"children": blocks,
-					"baseStyles": {},
-				}
-			]
+		# Wrap the generated section in a proper Builder root block
+		blocks = [
+			{
+				"element": "div",
+				"originalElement": "body",
+				"blockId": "root",
+				"children": [section],
+				"baseStyles": {
+					"display": "flex",
+					"flexWrap": "wrap",
+					"flexShrink": "0",
+					"flexDirection": "column",
+					"alignItems": "center",
+				},
+				"attributes": {},
+				"mobileStyles": {},
+				"tabletStyles": {},
+			}
+		]
 
-		# Send completion update
 		frappe.publish_realtime(
 			"ai_generation_progress",
 			{"status": "complete", "message": "Page generated successfully!"},
@@ -357,7 +373,7 @@ def get_api_key_for_model(model: str) -> str | None:
 
 def get_provider_from_model(model: str) -> str:
 	"""Determine provider from model name"""
-	if model.startswith("gpt-"):
+	if model.startswith(("gpt-", "chatgpt-", "o1", "o3")):
 		return "openai"
 	elif model.startswith("claude-"):
 		return "anthropic"

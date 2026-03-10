@@ -130,17 +130,17 @@
 					class="rounded-md px-4 py-2 text-sm font-medium text-ink-gray-8 hover:bg-surface-gray-2">
 					Cancel
 				</button>
-				<button
+				<Button
 					@click="generatePage"
 					:disabled="!canGenerate || generating"
-					class="bg-ink-blue-2 hover:bg-ink-blue-7 rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+					class="bg-ink-blue-2 hover:bg-ink-blue-7 rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50">
 					<span v-if="generating" class="flex items-center gap-2">
 						<span
 							class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
 						{{ progressMessage || "Generating..." }}
 					</span>
 					<span v-else>Generate Page</span>
-				</button>
+				</Button>
 			</div>
 		</template>
 	</Dialog>
@@ -148,6 +148,7 @@
 
 <script setup lang="ts">
 import Dialog from "@/components/Controls/Dialog.vue";
+import useBuilderStore from "@/stores/builderStore";
 import { createResource } from "frappe-ui";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
@@ -169,6 +170,7 @@ const props = defineProps<{
 const emit = defineEmits<{
 	(e: "update:modelValue", value: boolean): void;
 	(e: "generated", blocks: any[]): void;
+	(e: "streaming", blocks: any[]): void;
 }>();
 
 const showDialog = computed({
@@ -186,6 +188,61 @@ const successMessage = ref("");
 const progressMessage = ref("");
 const availableModels = ref<any[]>([]);
 const showApiKeyInput = ref(true);
+const streamingContent = ref("");
+const builderStore = useBuilderStore();
+
+/**
+ * Attempt to repair partial/incomplete JSON by closing open strings, arrays, and objects.
+ * Returns a parseable JSON string or null if the content is too incomplete.
+ */
+function repairPartialJSON(partial: string): string | null {
+	partial = partial.trim();
+	if (!partial) return null;
+
+	// Remove trailing commas before we close things
+	let result = partial;
+	let inString = false;
+	let escaped = false;
+	const stack: string[] = []; // tracks open brackets: '{' or '['
+
+	for (let i = 0; i < result.length; i++) {
+		const ch = result[i];
+		if (escaped) {
+			escaped = false;
+			continue;
+		}
+		if (ch === "\\" && inString) {
+			escaped = true;
+			continue;
+		}
+		if (ch === '"') {
+			inString = !inString;
+			continue;
+		}
+		if (inString) continue;
+		if (ch === "{" || ch === "[") stack.push(ch);
+		else if (ch === "}") {
+			if (stack.length && stack[stack.length - 1] === "{") stack.pop();
+		} else if (ch === "]") {
+			if (stack.length && stack[stack.length - 1] === "[") stack.pop();
+		}
+	}
+
+	// If we're inside an unclosed string, close it
+	if (inString) {
+		result += '"';
+	}
+
+	// Remove any trailing comma or colon (invalid before closing)
+	result = result.replace(/[,:\s]+$/, "");
+
+	// Close any unclosed brackets/braces in reverse order
+	for (let i = stack.length - 1; i >= 0; i--) {
+		result += stack[i] === "{" ? "}" : "]";
+	}
+
+	return result;
+}
 
 const examplePrompts = [
 	"Create a modern landing page for a fitness app with a hero section, features grid with icons, pricing table, and footer. Use energetic colors like orange and blue.",
@@ -223,7 +280,13 @@ const getProviderLabel = (provider: string): string => {
 };
 
 const getProviderForModel = (model: string): string => {
-	if (model.startsWith("gpt-")) return "openai";
+	if (
+		model.startsWith("gpt-") ||
+		model.startsWith("chatgpt-") ||
+		model.startsWith("o1") ||
+		model.startsWith("o3")
+	)
+		return "openai";
 	if (model.startsWith("claude-")) return "anthropic";
 	if (model.startsWith("gemini-")) return "google";
 	if (model.startsWith("grok-")) return "x-ai";
@@ -268,6 +331,10 @@ const generatePage = async () => {
 	errorMessage.value = "";
 	successMessage.value = "";
 	progressMessage.value = "Initializing...";
+	streamingContent.value = "";
+
+	// Close dialog immediately so user sees blocks render live on canvas
+	showDialog.value = false;
 
 	try {
 		const result = await createResource({
@@ -280,21 +347,16 @@ const generatePage = async () => {
 		}).submit();
 
 		if (result.success && result.blocks) {
-			successMessage.value = result.message || "Page generated successfully!";
-			// Emit the generated blocks
+			// Emit final blocks (properly parsed by the server)
 			emit("generated", result.blocks);
-			// Close dialog after a short delay
-			setTimeout(() => {
-				showDialog.value = false;
-				// Reset form
-				prompt.value = "";
-				tempApiKey.value = "";
-				successMessage.value = "";
-			}, 1500);
+			prompt.value = "";
+			tempApiKey.value = "";
 		} else {
+			showDialog.value = true;
 			errorMessage.value = "Failed to generate page. Please try again.";
 		}
 	} catch (error: any) {
+		showDialog.value = true;
 		errorMessage.value = error.message || "An error occurred while generating the page";
 	} finally {
 		generating.value = false;
@@ -314,23 +376,57 @@ watch(showDialog, (newValue) => {
 		errorMessage.value = "";
 		successMessage.value = "";
 		progressMessage.value = "";
+		streamingContent.value = "";
 	}
 });
 
 // Setup socket connection for progress updates
 onMounted(() => {
-	if (window.frappe?.realtime) {
-		window.frappe.realtime.on("ai_generation_progress", (data: any) => {
-			if (data.message) {
-				progressMessage.value = data.message;
+	builderStore.realtime.on("ai_generation_progress", (data: any) => {
+		if (data.message) {
+			progressMessage.value = data.message;
+		}
+	});
+	builderStore.realtime.on("ai_generation_stream", (data: any) => {
+		if (data.chunk) {
+			streamingContent.value += data.chunk;
+			// Try to repair partial JSON and render live
+			const repaired = repairPartialJSON(streamingContent.value);
+			if (repaired) {
+				try {
+					let section = JSON.parse(repaired);
+					if (Array.isArray(section)) section = section[0];
+					if (section && typeof section === "object" && section.element) {
+						const wrapped = [
+							{
+								element: "div",
+								originalElement: "body",
+								blockId: "root",
+								children: [section],
+								baseStyles: {
+									display: "flex",
+									flexWrap: "wrap",
+									flexShrink: "0",
+									flexDirection: "column",
+									alignItems: "center",
+								},
+								attributes: {},
+								mobileStyles: {},
+								tabletStyles: {},
+							},
+						];
+						emit("streaming", wrapped);
+					}
+				} catch {
+					// Still not valid enough, wait for more chunks
+				}
 			}
-		});
-	}
+		}
+	});
 });
 
 onUnmounted(() => {
-	if (window.frappe?.realtime) {
-		window.frappe.realtime.off("ai_generation_progress");
-	}
+	builderStore.realtime.off("ai_generation_progress", () => {});
+	builderStore.realtime.off("ai_generation_stream", () => {});
 });
 </script>
