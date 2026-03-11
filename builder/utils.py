@@ -406,9 +406,14 @@ def escape_single_quotes(text):
 
 
 def camel_case_to_kebab_case(text, remove_spaces=False):
+	# Used to convert camelCase css properties to kebab-case, e.g. backgroundColor → background-color
 	if not text:
 		return ""
 	text = re.sub(r"(?<!^)(?=[A-Z])", "-", text).lower()
+	# Add leading hyphen for vendor-prefixed CSS properties
+	# e.g. WebkitBackgroundClip → -webkit-background-clip
+	if re.match(r"^(webkit|moz|ms|o)-", text):
+		text = f"-{text}"
 	if remove_spaces:
 		text = text.replace(" ", "")
 	return text
