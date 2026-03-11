@@ -116,7 +116,7 @@
    "label": "AI Settings"
   },
   {
-   "description": "AI model to use for page generation (e.g., gpt-4o, claude-sonnet-4-6, gemini-1.5-flash)",
+   "description": "AI model to use for page generation (e.g., gpt-5.4, claude-sonnet-4-6, gemini-1.5-flash)",
    "fieldname": "ai_model",
    "fieldtype": "Data",
    "label": "AI Model"

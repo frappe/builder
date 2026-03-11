@@ -15,12 +15,14 @@ def get_available_models():
 		{
 			"provider": "openai",
 			"models": [
-				{"name": "chatgpt-4o-latest", "label": "GPT-4o Latest", "max_tokens": 128000},
-				{"name": "gpt-4o", "label": "GPT-4o", "max_tokens": 128000},
-				{"name": "gpt-4o-mini", "label": "GPT-4o Mini", "max_tokens": 128000},
-				{"name": "o1", "label": "O1 (Reasoning)", "max_tokens": 100000},
-				{"name": "o1-mini", "label": "O1 Mini (Reasoning)", "max_tokens": 65000},
-				{"name": "gpt-4-turbo", "label": "GPT-4 Turbo", "max_tokens": 128000},
+				{"name": "gpt-5.4", "label": "GPT-5.4 (Flagship)", "max_tokens": 1050000},
+				{"name": "gpt-5", "label": "GPT-5 (Reasoning)", "max_tokens": 400000},
+				{"name": "gpt-5-mini", "label": "GPT-5 Mini (Fast)", "max_tokens": 400000},
+				{"name": "gpt-5-nano", "label": "GPT-5 Nano (Cheapest)", "max_tokens": 400000},
+				{"name": "gpt-4.1", "label": "GPT-4.1", "max_tokens": 1047576},
+				{"name": "gpt-4.1-mini", "label": "GPT-4.1 Mini", "max_tokens": 1047576},
+				{"name": "o3", "label": "o3 (Reasoning)", "max_tokens": 200000},
+				{"name": "o4-mini", "label": "o4-mini (Fast Reasoning)", "max_tokens": 200000},
 			],
 		},
 		{
@@ -213,7 +215,7 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None, us
 
 	Args:
 		prompt: User's description of the page they want
-		model: Model identifier (e.g., 'gpt-4o', 'claude-sonnet-4-6')
+		model: Model identifier (e.g., 'gpt-5.4', 'claude-sonnet-4-6')
 		api_key: Optional API key (if not configured in site config)
 		user: The user to publish realtime events to
 	"""
