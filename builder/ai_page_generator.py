@@ -234,7 +234,10 @@ def generate_page_blocks(
 		except ImportError:
 			frappe.publish_realtime(
 				"ai_generation_error",
-				{"page_id": page_id, "message": "litellm library is not installed. Please install it using: pip install litellm"},
+				{
+					"page_id": page_id,
+					"message": "litellm library is not installed. Please install it using: pip install litellm",
+				},
 				user=user,
 			)
 			return
@@ -342,7 +345,10 @@ def generate_page_blocks(
 		frappe.log_error(f"JSON parsing error: {e!s}\nContent: {content}", "AI Page Generation Error")
 		frappe.publish_realtime(
 			"ai_generation_error",
-			{"page_id": page_id, "message": "Failed to parse AI response as JSON. The model may have returned invalid output."},
+			{
+				"page_id": page_id,
+				"message": "Failed to parse AI response as JSON. The model may have returned invalid output.",
+			},
 			user=user,
 		)
 
@@ -405,6 +411,254 @@ def set_api_key_for_provider(model: str, api_key: str):
 		os.environ[env_key] = api_key
 
 
+def get_modify_system_prompt():
+	"""Return the system prompt for modifying an existing section"""
+	return """You are an expert web designer and developer specializing in modifying web page sections using the Frappe Builder block system.
+
+Your task is to modify an existing block structure based on user instructions. You will receive the current JSON block structure and an instruction describing the desired changes.
+
+You must return ONLY a valid JSON array of blocks (the modified version), with no additional text, markdown formatting, or explanations.
+
+# Block Structure Rules:
+
+1. **Common Elements**: Use semantic HTML elements:
+   - Container: "div" with display: flex/grid
+   - Text: "h1", "h2", "h3", "p", "span"
+   - Buttons: "button" or "a"
+   - Images: "img" with src attribute
+   - Sections: "section", "header", "footer", "nav"
+   - Font: Choose creative/relevant fonts from Google Fonts and specify in baseStyles (e.g., "fontFamily": "Roboto")
+
+2. **Styling (baseStyles)**: Use CSS-in-JS object format:
+```json
+{
+  "baseStyles": {
+    "display": "flex",
+    "flexDirection": "column",
+    "padding": "2rem",
+    "backgroundColor": "#ffffff",
+    "fontSize": "16px",
+    "fontWeight": "600"
+  }
+}
+```
+
+3. **Responsive Styles**: Add mobile/tablet overrides:
+```json
+{
+  "mobileStyles": {
+    "fontSize": "14px",
+    "padding": "1rem"
+  },
+  "tabletStyles": {
+    "fontSize": "15px"
+  }
+}
+```
+
+4. **Attributes**: Add HTML attributes:
+```json
+{
+  "attributes": {
+    "src": "/path/to/image.jpg",
+    "alt": "Image description",
+    "href": "https://example.com",
+    "target": "_blank"
+  }
+}
+```
+
+5. **Text Content**: Use innerText or innerHTML:
+```json
+{
+  "element": "h1",
+  "blockName": "hero-title",
+  "innerText": "Welcome to Our Site"
+}
+```
+
+6. **Classes**: Add CSS classes if needed:
+```json
+{
+  "classes": ["hero-section", "text-center"]
+}
+```
+
+# Important Modification Guidelines:
+
+1. **Preserve Structure**: Keep existing block structure where the user hasn't asked for changes.
+2. **Maintain blockId**: Preserve existing blockId values to minimize DOM churn.
+3. **Surgical Changes**: Only modify what the user asks for — don't redesign the entire section unless requested.
+4. **Responsive**: Ensure mobile-first responsive design, set relative units (%, rem) for widths.
+
+# CRITICAL: Output Format
+
+Return ONLY a JSON array with no markdown code blocks, no explanations, no additional text. Start directly with `[` and end with `]`.
+
+The output must be the complete modified block structure (not a diff or patch).
+
+Remember:
+- Return the full modified block structure
+- Preserve existing structure where not explicitly asked to change
+- Return ONLY valid JSON
+- No markdown, no explanations, just JSON"""
+
+
+def modify_section_blocks(
+	prompt: str,
+	block_context: str,
+	model: str,
+	api_key: str | None = None,
+	user: str | None = None,
+	page_id: str | None = None,
+):
+	"""
+	Modify existing section blocks based on a prompt using the specified AI model with streaming.
+
+	Runs as a background job. Streams chunks and publishes final blocks via realtime.
+
+	Args:
+		prompt: User's description of the modification they want
+		block_context: JSON string of the existing block structure to modify
+		model: Model identifier (e.g., 'gpt-5.4', 'claude-sonnet-4-6')
+		api_key: Optional API key (if not configured in site config)
+		user: The user to publish realtime events to
+		page_id: Builder Page ID to scope realtime events to
+	"""
+	user = user or frappe.session.user
+	content = ""
+	try:
+		try:
+			import litellm
+		except ImportError:
+			frappe.publish_realtime(
+				"ai_modify_error",
+				{
+					"page_id": page_id,
+					"message": "litellm library is not installed. Please install it using: pip install litellm",
+				},
+				user=user,
+			)
+			return
+
+		if not api_key:
+			api_key = get_api_key_for_model(model)
+
+		if not api_key:
+			frappe.publish_realtime(
+				"ai_modify_error",
+				{
+					"page_id": page_id,
+					"message": f"API key not configured for model: {model}. Please configure it in Settings → AI.",
+				},
+				user=user,
+			)
+			return
+
+		set_api_key_for_provider(model, api_key)
+
+		frappe.publish_realtime(
+			"ai_modify_progress",
+			{"page_id": page_id, "status": "preparing", "message": "Preparing AI request..."},
+			user=user,
+		)
+
+		user_message = f"Here is the current section structure:\n```json\n{block_context}\n```\n\nModify it according to: {prompt}"
+
+		messages = [
+			{"role": "system", "content": get_modify_system_prompt()},
+			{"role": "user", "content": user_message},
+		]
+
+		frappe.publish_realtime(
+			"ai_modify_progress",
+			{"page_id": page_id, "status": "generating", "message": f"Modifying section with {model}..."},
+			user=user,
+		)
+
+		litellm.drop_params = True
+		response = litellm.completion(
+			model=model,
+			messages=messages,
+			temperature=0.7,
+			max_tokens=12000,
+			stream=True,
+		)
+
+		content = ""
+		for chunk in response:
+			delta = chunk.choices[0].delta.content
+			if delta:
+				content += delta
+				frappe.publish_realtime(
+					"ai_modify_stream",
+					{"page_id": page_id, "chunk": delta, "accumulated": content},
+					user=user,
+				)
+
+		content = content.strip()
+
+		frappe.publish_realtime(
+			"ai_modify_progress",
+			{"page_id": page_id, "status": "parsing", "message": "Parsing modified content..."},
+			user=user,
+		)
+
+		# Remove markdown code blocks if present
+		if content.startswith("```"):
+			content = content.split("\n", 1)[1] if "\n" in content else content[3:]
+			if content.endswith("```"):
+				content = content[:-3].strip()
+
+		parsed = json.loads(content)
+
+		# Normalize: ensure we have a list of section blocks
+		if isinstance(parsed, dict):
+			blocks = [parsed]
+		elif isinstance(parsed, list):
+			blocks = [b for b in parsed if isinstance(b, dict)]
+		else:
+			frappe.publish_realtime(
+				"ai_modify_error",
+				{"page_id": page_id, "message": "AI response is not a valid block object"},
+				user=user,
+			)
+			return
+
+		if not blocks:
+			frappe.publish_realtime(
+				"ai_modify_error",
+				{"page_id": page_id, "message": "AI response contained no valid blocks"},
+				user=user,
+			)
+			return
+
+		frappe.publish_realtime(
+			"ai_modify_complete",
+			{"page_id": page_id, "blocks": blocks},
+			user=user,
+		)
+
+	except json.JSONDecodeError as e:
+		frappe.log_error(f"JSON parsing error: {e!s}\nContent: {content}", "AI Section Modify Error")
+		frappe.publish_realtime(
+			"ai_modify_error",
+			{
+				"page_id": page_id,
+				"message": "Failed to parse AI response as JSON. The model may have returned invalid output.",
+			},
+			user=user,
+		)
+
+	except Exception as e:
+		frappe.log_error(f"AI modify error: {e!s}", "AI Section Modify Error")
+		frappe.publish_realtime(
+			"ai_modify_error",
+			{"page_id": page_id, "message": f"Failed to modify section: {e!s}"},
+			user=user,
+		)
+
+
 @frappe.whitelist()
 def get_ai_models():
 	"""API endpoint to get available AI models"""
@@ -412,7 +666,66 @@ def get_ai_models():
 
 
 @frappe.whitelist()
-def generate_page_from_prompt(prompt: str, page_id: str | None = None, model: str | None = None, api_key: str | None = None):
+def modify_section_from_prompt(
+	prompt: str,
+	block_context: str,
+	page_id: str | None = None,
+	model: str | None = None,
+	api_key: str | None = None,
+):
+	"""
+	API endpoint to modify existing section blocks from a prompt.
+	Reads model and API key from Builder Settings if not provided.
+	"""
+	if not frappe.has_permission("Builder Page", ptype="write"):
+		frappe.throw(_("You do not have permission to modify pages"))
+
+	if not prompt or not prompt.strip():
+		frappe.throw(_("Please provide a prompt describing the modification"))
+
+	if not block_context or not block_context.strip():
+		frappe.throw(_("Block context is required for modification"))
+
+	# Validate block_context is valid JSON
+	try:
+		json.loads(block_context)
+	except json.JSONDecodeError:
+		frappe.throw(_("Invalid block context JSON"))
+
+	# Read from Builder Settings if not provided
+	if not model:
+		settings = frappe.get_single("Builder Settings")
+		model = settings.get("ai_model")
+		if not api_key:
+			api_key = settings.get_password("ai_api_key", raise_exception=False)
+
+	if not model:
+		frappe.throw(_("Please configure an AI model in Settings → AI"))
+
+	user = frappe.session.user
+
+	frappe.enqueue(
+		modify_section_blocks,
+		prompt=prompt,
+		block_context=block_context,
+		model=model,
+		api_key=api_key,
+		user=user,
+		page_id=page_id,
+		queue="default",
+		is_async=True,
+	)
+
+	return {
+		"status": "started",
+		"message": _("Section modification started"),
+	}
+
+
+@frappe.whitelist()
+def generate_page_from_prompt(
+	prompt: str, page_id: str | None = None, model: str | None = None, api_key: str | None = None
+):
 	"""
 	API endpoint to generate page blocks from a prompt.
 	Reads model and API key from Builder Settings if not provided.

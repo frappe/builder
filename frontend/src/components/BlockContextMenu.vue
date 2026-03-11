@@ -16,7 +16,7 @@ import useComponentStore from "@/stores/componentStore";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { confirm, detachBlockFromComponent, getBlockCopy, triggerCopyEvent } from "@/utils/helpers";
 import { useStorage } from "@vueuse/core";
-import { Ref, nextTick, ref } from "vue";
+import { Ref, inject, nextTick, ref } from "vue";
 import { toast } from "vue-sonner";
 
 const builderStore = useBuilderStore();
@@ -44,6 +44,8 @@ const showContextMenu = (event: MouseEvent, refBlock: Block) => {
 
 const copiedStyle = useStorage("copiedStyle", { blockId: "", style: {} }, sessionStorage) as Ref<StyleCopy>;
 
+const editWithAIFn = inject<((block: Block) => void) | undefined>("editWithAI", undefined);
+
 const copyStyle = () => {
 	copiedStyle.value = {
 		blockId: block.value.blockId,
@@ -60,6 +62,16 @@ const duplicateBlock = () => {
 };
 
 const contextMenuOptions: ContextMenuOption[] = [
+	{
+		label: "Edit with AI",
+		action: () => {
+			if (editWithAIFn) {
+				editWithAIFn(block.value);
+			}
+		},
+		condition: () => Boolean(editWithAIFn) && !block.value.isRoot(),
+		disabled: () => builderStore.readOnlyMode,
+	},
 	{
 		label: "Edit HTML",
 		action: () => {

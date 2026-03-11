@@ -102,9 +102,13 @@
 	</Dialog>
 	<AIPageGeneratorModal
 		v-model="showAIGeneratorDialog"
-		:pageId="(route.params.pageId as string)"
+		:pageId="route.params.pageId as string"
+		:mode="aiMode"
+		:blockContext="modifyBlockContext"
 		@generated="handleGeneratedBlocks"
-		@streaming="handleStreamingBlocks"></AIPageGeneratorModal>
+		@streaming="handleStreamingBlocks"
+		@modified="handleModifiedBlocks"
+		@modifyStreaming="handleModifyStreamingBlocks"></AIPageGeneratorModal>
 	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
 </template>
 
@@ -125,7 +129,7 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { getUsersInfo } from "@/usersInfo";
 import blockController from "@/utils/blockController";
-import { getBlockInstance, getRootBlockTemplate, isTargetEditable } from "@/utils/helpers";
+import { getBlockInstance, getBlockObject, getRootBlockTemplate, isTargetEditable } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
 import {
 	breakpointsTailwind,
@@ -154,9 +158,24 @@ const componentUsedInPages = ref<BuilderPage[]>([]);
 const pageListDialog = ref(false);
 const blockContextMenu = ref<InstanceType<typeof BlockContextMenu> | null>(null);
 const showAIGeneratorDialog = ref(false);
+const aiMode = ref<"generate" | "modify">("generate");
+const modifyBlockContext = ref<Record<string, any> | null>(null);
+const modifyBlockId = ref<string | null>(null);
 
 // Expose AI generator dialog to toolbar
 provide("showAIGenerator", () => {
+	aiMode.value = "generate";
+	modifyBlockContext.value = null;
+	modifyBlockId.value = null;
+	showAIGeneratorDialog.value = true;
+});
+
+// Expose edit-with-AI to context menu
+provide("editWithAI", (block: any) => {
+	const blockObj = getBlockObject(block);
+	aiMode.value = "modify";
+	modifyBlockContext.value = blockObj;
+	modifyBlockId.value = block.blockId;
 	showAIGeneratorDialog.value = true;
 });
 
@@ -196,6 +215,71 @@ const handleStreamingBlocks = (blocks: any[]) => {
 	try {
 		pageStore.pageBlocks = [getBlockInstance(blocks[0])];
 		canvasStore.activeCanvas?.setRootBlock(pageStore.pageBlocks[0] as any, false);
+	} catch {
+		// Partial block may still be invalid, skip this frame
+	}
+};
+
+// Find a block in the tree by blockId and replace its children/styles with new data
+const replaceBlockInTree = (root: any, targetId: string, newBlocks: any[]): boolean => {
+	if (!root) return false;
+	if (root.blockId === targetId) {
+		// Replace this block's content with the first new block's content
+		const replacement = newBlocks[0];
+		if (replacement) {
+			root.element = replacement.element || root.element;
+			root.baseStyles = replacement.baseStyles || root.baseStyles;
+			root.mobileStyles = replacement.mobileStyles || root.mobileStyles;
+			root.tabletStyles = replacement.tabletStyles || root.tabletStyles;
+			root.attributes = replacement.attributes || root.attributes;
+			root.classes = replacement.classes || root.classes;
+
+			if (replacement.innerText !== undefined) root.innerText = replacement.innerText;
+			if (replacement.innerHTML !== undefined) root.innerHTML = replacement.innerHTML;
+
+			// Replace children
+			if (replacement.children) {
+				root.children.splice(0, root.children.length);
+				for (const child of replacement.children) {
+					root.addChild(getBlockInstance(child));
+				}
+			}
+		}
+		return true;
+	}
+	if (root.children) {
+		for (const child of root.children) {
+			if (replaceBlockInTree(child, targetId, newBlocks)) return true;
+		}
+	}
+	return false;
+};
+
+// Handle AI modified blocks (replace the specific block in the tree)
+const handleModifiedBlocks = (blocks: any[]) => {
+	if (!blocks || blocks.length === 0 || !modifyBlockId.value) return;
+
+	const rootBlock = pageStore.pageBlocks[0];
+	if (rootBlock) {
+		replaceBlockInTree(rootBlock, modifyBlockId.value, blocks);
+		pageStore.savePage();
+	}
+
+	// Reset modify state
+	modifyBlockContext.value = null;
+	modifyBlockId.value = null;
+	aiMode.value = "generate";
+};
+
+// Handle live streaming of modify (update block in-place)
+const handleModifyStreamingBlocks = (blocks: any[]) => {
+	if (!blocks || blocks.length === 0 || !modifyBlockId.value) return;
+
+	try {
+		const rootBlock = pageStore.pageBlocks[0];
+		if (rootBlock) {
+			replaceBlockInTree(rootBlock, modifyBlockId.value, blocks);
+		}
 	} catch {
 		// Partial block may still be invalid, skip this frame
 	}

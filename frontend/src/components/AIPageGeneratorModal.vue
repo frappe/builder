@@ -2,7 +2,7 @@
 	<Dialog
 		v-model="showDialog"
 		:options="{
-			title: 'Generate with AI',
+			title: mode === 'modify' ? 'Modify with AI' : 'Generate with AI',
 			size: 'lg',
 		}">
 		<template #body-content>
@@ -11,9 +11,13 @@
 					v-model="prompt"
 					:rows="4"
 					variant="outline"
-					placeholder="Describe the section you want to create..."
-					@keydown.meta.enter="generatePage"
-					@keydown.ctrl.enter="generatePage" />
+					:placeholder="
+						mode === 'modify'
+							? 'Describe how you want to modify this section...'
+							: 'Describe the section you want to create...'
+					"
+					@keydown.meta.enter="handleSubmit"
+					@keydown.ctrl.enter="handleSubmit" />
 
 				<div v-if="errorMessage" class="text-ink-red-9 rounded-lg bg-surface-red-1 p-3 text-sm">
 					{{ errorMessage }}
@@ -30,10 +34,16 @@
 				<Button variant="subtle" @click="showDialog = false">Cancel</Button>
 				<Button
 					variant="solid"
-					@click="generatePage"
+					@click="handleSubmit"
 					:disabled="!canGenerate || generating"
 					:loading="generating">
-					{{ generating ? progressMessage || "Generating..." : "Generate" }}
+					{{
+						generating
+							? progressMessage || (mode === "modify" ? "Modifying..." : "Generating...")
+							: mode === "modify"
+								? "Modify"
+								: "Generate"
+					}}
 				</Button>
 			</div>
 		</template>
@@ -47,7 +57,7 @@
 					class="flex items-center gap-3 rounded-lg border border-outline-gray-2 bg-surface-white px-4 py-2.5 shadow-lg">
 					<div class="border-ink-gray-3 border-t-ink-gray-9 h-4 w-4 animate-spin rounded-full border-2"></div>
 					<span class="text-sm font-medium text-ink-gray-9">
-						{{ progressMessage || "Generating page..." }}
+						{{ progressMessage || (mode === "modify" ? "Modifying section..." : "Generating page...") }}
 					</span>
 				</div>
 			</div>
@@ -62,15 +72,25 @@ import useBuilderStore from "@/stores/builderStore";
 import { createResource, Textarea } from "frappe-ui";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
-const props = defineProps<{
-	modelValue: boolean;
-	pageId: string;
-}>();
+const props = withDefaults(
+	defineProps<{
+		modelValue: boolean;
+		pageId: string;
+		mode?: "generate" | "modify";
+		blockContext?: Record<string, any> | null;
+	}>(),
+	{
+		mode: "generate",
+		blockContext: null,
+	},
+);
 
 const emit = defineEmits<{
 	(e: "update:modelValue", value: boolean): void;
 	(e: "generated", blocks: any[]): void;
 	(e: "streaming", blocks: any[]): void;
+	(e: "modified", blocks: any[]): void;
+	(e: "modifyStreaming", blocks: any[]): void;
 	(e: "openSettings"): void;
 }>();
 
@@ -143,6 +163,14 @@ const canGenerate = computed(() => {
 	return prompt.value.trim() !== "" && hasAISettings.value && !generating.value;
 });
 
+const handleSubmit = async () => {
+	if (props.mode === "modify") {
+		await modifySection();
+	} else {
+		await generatePage();
+	}
+};
+
 const generatePage = async () => {
 	if (!canGenerate.value) return;
 
@@ -167,6 +195,33 @@ const generatePage = async () => {
 		progressMessage.value = "";
 		showDialog.value = true;
 		errorMessage.value = error.message || "An error occurred while generating the page";
+	}
+};
+
+const modifySection = async () => {
+	if (!canGenerate.value || !props.blockContext) return;
+
+	generating.value = true;
+	errorMessage.value = "";
+	progressMessage.value = "Initializing...";
+	streamingContent.value = "";
+
+	showDialog.value = false;
+
+	try {
+		await createResource({
+			url: "builder.ai_page_generator.modify_section_from_prompt",
+			makeParams: () => ({
+				prompt: prompt.value,
+				block_context: JSON.stringify(props.blockContext),
+				page_id: props.pageId,
+			}),
+		}).submit();
+	} catch (error: any) {
+		generating.value = false;
+		progressMessage.value = "";
+		showDialog.value = true;
+		errorMessage.value = error.message || "An error occurred while modifying the section";
 	}
 };
 
@@ -243,11 +298,61 @@ const onError = (data: any) => {
 	errorMessage.value = data.message || "An error occurred while generating the page";
 };
 
+// Modify mode realtime event handlers
+const onModifyProgress = (data: any) => {
+	if (data.page_id && data.page_id !== props.pageId) return;
+	if (data.message) {
+		progressMessage.value = data.message;
+	}
+};
+
+const onModifyStream = (data: any) => {
+	if (data.page_id && data.page_id !== props.pageId) return;
+	if (data.chunk) {
+		streamingContent.value += data.chunk;
+		const repaired = repairPartialJSON(streamingContent.value);
+		if (repaired) {
+			try {
+				let parsed = JSON.parse(repaired);
+				let sections = Array.isArray(parsed) ? parsed : [parsed];
+				sections = sections.filter((s: any) => s && typeof s === "object" && s.element);
+				if (sections.length > 0) {
+					emit("modifyStreaming", sections);
+				}
+			} catch {
+				// Still not valid enough, wait for more chunks
+			}
+		}
+	}
+};
+
+const onModifyComplete = (data: any) => {
+	if (data.page_id && data.page_id !== props.pageId) return;
+	generating.value = false;
+	progressMessage.value = "";
+	if (data.blocks) {
+		emit("modified", data.blocks);
+		prompt.value = "";
+	}
+};
+
+const onModifyError = (data: any) => {
+	if (data.page_id && data.page_id !== props.pageId) return;
+	generating.value = false;
+	progressMessage.value = "";
+	showDialog.value = true;
+	errorMessage.value = data.message || "An error occurred while modifying the section";
+};
+
 onMounted(() => {
 	builderStore.realtime.on("ai_generation_progress", onProgress);
 	builderStore.realtime.on("ai_generation_stream", onStream);
 	builderStore.realtime.on("ai_generation_complete", onComplete);
 	builderStore.realtime.on("ai_generation_error", onError);
+	builderStore.realtime.on("ai_modify_progress", onModifyProgress);
+	builderStore.realtime.on("ai_modify_stream", onModifyStream);
+	builderStore.realtime.on("ai_modify_complete", onModifyComplete);
+	builderStore.realtime.on("ai_modify_error", onModifyError);
 });
 
 onUnmounted(() => {
@@ -255,6 +360,10 @@ onUnmounted(() => {
 	builderStore.realtime.off("ai_generation_stream", onStream);
 	builderStore.realtime.off("ai_generation_complete", onComplete);
 	builderStore.realtime.off("ai_generation_error", onError);
+	builderStore.realtime.off("ai_modify_progress", onModifyProgress);
+	builderStore.realtime.off("ai_modify_stream", onModifyStream);
+	builderStore.realtime.off("ai_modify_complete", onModifyComplete);
+	builderStore.realtime.off("ai_modify_error", onModifyError);
 });
 </script>
 
