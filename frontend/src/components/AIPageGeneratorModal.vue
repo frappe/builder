@@ -7,13 +7,13 @@
 		}">
 		<template #body-content>
 			<div class="flex flex-col gap-3">
-				<textarea
+				<Textarea
 					v-model="prompt"
-					rows="4"
-					class="focus:border-ink-blue-6 focus:ring-ink-blue-2 w-full rounded-md border border-outline-gray-3 p-3 text-sm focus:outline-none focus:ring-2"
+					:rows="4"
+					variant="outline"
 					placeholder="Describe the section you want to create..."
 					@keydown.meta.enter="generatePage"
-					@keydown.ctrl.enter="generatePage"></textarea>
+					@keydown.ctrl.enter="generatePage" />
 
 				<div v-if="errorMessage" class="text-ink-red-9 rounded-lg bg-surface-red-1 p-3 text-sm">
 					{{ errorMessage }}
@@ -21,9 +21,7 @@
 
 				<p v-if="!hasAISettings" class="text-xs text-ink-gray-6">
 					Configure your AI model and API key in
-					<button @click="$emit('openSettings')" class="text-ink-blue-6 hover:underline">
-						Settings &rarr; AI
-					</button>
+					<Button variant="link" @click="$emit('openSettings')">Settings &rarr; AI</Button>
 				</p>
 			</div>
 		</template>
@@ -61,7 +59,7 @@
 import Dialog from "@/components/Controls/Dialog.vue";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
-import { createResource } from "frappe-ui";
+import { createResource, Textarea } from "frappe-ui";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
 const props = defineProps<{
