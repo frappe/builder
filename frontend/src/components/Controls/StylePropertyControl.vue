@@ -11,6 +11,7 @@
 </template>
 
 <script lang="ts" setup>
+import { getPresetMap } from "@/utils/presetUtils";
 import BasePropertyControl from "@/components/Controls/BasePropertyControl.vue";
 import blockController from "@/utils/blockController";
 import type { Component } from "vue";
@@ -92,15 +93,31 @@ const setVariantValue = (variantName: string, value: string | null) => {
 
 const baseProps = computed(() => {
 	const { enableStates, enabledStates, variants, ...rest } = props;
+	const presetMap = getPresetMap();
+	const presetValue = presetMap?.[props.propertyKey];
+	const isInherited =
+		presetValue && blockController.getNativeStyle(props.propertyKey as styleProperty) === presetValue;
 	return {
 		...rest,
 		controlType: "style" as const,
 		getModelValue:
-			props.getModelValue || (() => String(blockController.getNativeStyle(props.propertyKey) ?? "")),
+			props.getModelValue ||
+			(() => (isInherited ? "" : String(blockController.getNativeStyle(props.propertyKey) ?? ""))),
 		setModelValue:
-			props.setModelValue || ((value: string) => blockController.setStyle(props.propertyKey, value)),
+			props.setModelValue ||
+			((value: string) => {
+				if (!value && presetValue) {
+					blockController.setStyle(props.propertyKey, presetValue);
+				} else {
+					blockController.setStyle(props.propertyKey, value);
+				}
+			}),
 		getPlaceholder:
-			props.getPlaceholder || (() => String(blockController.getCascadingStyle(props.propertyKey) ?? "unset")),
+			props.getPlaceholder ||
+			(() =>
+				presetValue
+					? String(presetValue)
+					: String(blockController.getCascadingStyle(props.propertyKey) ?? "unset")),
 	};
 });
 </script>

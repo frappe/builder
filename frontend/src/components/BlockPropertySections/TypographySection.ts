@@ -20,7 +20,7 @@ const styleKeyMap: Record<string, string> = {
     fontWeight: "fontWeight",
     fontSize: "fontSize",
     lineHeight: "lineHeight",
-    transform: "textTransform",
+    textTransform: "textTransform",
 };
 
 const typographySectionProperties = [
@@ -69,6 +69,9 @@ const typographySectionProperties = [
           	        });
         			return;
 					}
+					Object.values(styleKeyMap).forEach((cssProperty) => {
+					blockController.setStyle(cssProperty as styleProperty, null);
+					});
 					const preset = stylePreset.data?.find((s: any) => s.style_name === val);
 					if (!preset) return;
 					const map = typeof preset.style_map === "string" 
@@ -90,17 +93,6 @@ const typographySectionProperties = [
 	{
 		component: StylePropertyControl,
 		getProps: () => {
-
-			const presetName = blockController.getPresetStyle();
-
-			const preset = stylePreset.data?.find((s: any) => s.style_name === presetName);
-
-			const presetMap = preset
-				? (typeof preset.style_map === "string" ? JSON.parse(preset.style_map) : preset.style_map)
-				: null;
-
-			const isInherited = presetMap && blockController.getNativeStyle("fontFamily") === presetMap.fontFamily;
-
 			return {
 				label: "Family",
 				component: Autocomplete,
@@ -145,18 +137,7 @@ const typographySectionProperties = [
 				actionButton: {
 					component: FontUploader,
 				},
-				getModelValue: () => isInherited ? "" : String(blockController.getNativeStyle("fontFamily") ?? ""),
-				getPlaceholder: () => presetMap?.fontFamily
-				? String(presetMap.fontFamily) 
-				: String(blockController.getCascadingStyle("fontFamily") ?? "unset"),
-				setModelValue: (val: string) => {
-					if(!val && presetMap?.fontFamily) {
-						blockController.setStyle("fontFamily", presetMap.fontFamily)
-					} 
-					else{
-						blockController.setStyle("fontFamily", val);
-					}
-				},
+				setModelValue: (val: string) => setFont(val),
 			};
 		},
 		searchKeyWords: "Font, Family, FontFamily",
@@ -165,34 +146,11 @@ const typographySectionProperties = [
 	{
 		component: StylePropertyControl,
 		getProps: () => {
-
-			const presetName = blockController.getPresetStyle();
-
-			const preset = stylePreset.data?.find((s: any) => s.style_name === presetName);
-
-			const presetMap = preset 
-				? (typeof preset.style_map === "string" ? JSON.parse(preset.style_map) : preset.style_map) 
-				: null;
-
-			const isInherited = presetMap && blockController.getNativeStyle("fontWeight") === presetMap.fontWeight;
-
 			return {
 				label: "Weight",
 				propertyKey: "fontWeight",
 				component: Autocomplete,
 				options: getFontWeightOptions((blockController.getStyle("fontFamily") || "Inter") as string),
-				getModelValue: () => isInherited ? "" : String(blockController.getNativeStyle("fontWeight") ?? ""),
-				getPlaceholder: () => presetMap?.fontWeight
-				? String(presetMap.fontWeight) 
-				: String(blockController.getCascadingStyle("fontWeight") ?? "unset"),
-				setModelValue: (val: string) => {
-					if(!val && presetMap?.fontWeight) {
-						blockController.setStyle("fontWeight", presetMap.fontWeight)
-					} 
-					else{
-						blockController.setStyle("fontWeight", val);
-					}
-				},
 			};
 		},
 		searchKeyWords: "Font, Weight, FontWeight",
@@ -200,41 +158,12 @@ const typographySectionProperties = [
 	{
 		component: StylePropertyControl,
 		getProps: () => {
-
-			// check if a preset is active
-			const presetName = blockController.getPresetStyle();
-			
-			// find that preset's data
-			const preset = stylePreset.data?.find((s: any) => s.style_name === presetName);
-			
-			// get the preset's style map , without this can get undefined so added check for it too
-			const presetMap = preset 
-				? (typeof preset.style_map === "string" //preset exists get the map
-				? JSON.parse(preset.style_map) // if string, parse it into object
-				: preset.style_map) //if already object, use as is
-				: null;
-			
-			// check if fontSize is still matching the preset value (not manually changed)
-			const isInherited = presetMap && blockController.getNativeStyle("fontSize") === presetMap.fontSize;
-
 			return {
 				label: "Size",
 				propertyKey: "fontSize",
 				enableSlider: true,
 				minValue: 1,
 				unitOptions: ["px", "em", "rem"],
-				getModelValue: () => isInherited ? "" : String(blockController.getNativeStyle("fontSize") ?? ""),
-				getPlaceholder: () => presetMap?.fontSize 
-				? String(presetMap.fontSize) 
-				: String(blockController.getCascadingStyle("fontSize") ?? "unset"),
-        		setModelValue: (val: string) => {
-					if(!val && presetMap?.fontSize) {
-						blockController.setStyle("fontSize", presetMap.fontSize)
-					} 
-					else{
-						blockController.setStyle("fontSize", val);
-					}
-				},
 			};
 		},
 		searchKeyWords: "Font, Size, FontSize",
@@ -243,32 +172,9 @@ const typographySectionProperties = [
 	{
 		component: StylePropertyControl,
 		getProps: () => {
-
-			const presetName = blockController.getPresetStyle();
-
-			const preset = stylePreset.data?.find((s: any) => s.style_name === presetName);
-
-			const presetMap = preset
-				? (typeof preset.style_map === "string" ? JSON.parse(preset.style_map) : preset.style_map)
-				: null;
-
-			const isInherited = presetMap && blockController.getNativeStyle("lineHeight") === presetMap.lineHeight;
-
 			return {
 				label: "Height",
 				propertyKey: "lineHeight",
-				getModelValue: () => isInherited ? "" : String(blockController.getNativeStyle("lineHeight") ?? ""),
-				getPlaceholder: () => presetMap?.lineHeight
-                ? String(presetMap.lineHeight)
-                : String(blockController.getCascadingStyle("lineHeight") ?? "unset"),
-				setModelValue: (val: string) => {
-					if (!val && presetMap?.lineHeight) {
-						blockController.setStyle("lineHeight", presetMap.lineHeight);
-					} 
-					else {
-						blockController.setStyle("lineHeight", val);
-					}
-				},
 			};
 		},
 		searchKeyWords: "Font, Height, LineHeight, Line Height",

@@ -380,7 +380,7 @@ const blockController = {
 		}
 		Object.keys(block.props).forEach((key) => {
 			if (!props[key]) {
-				delete block.props?.[key];
+				delete block.props?.[key];	
 			}
 		});
 		Object.assign(block.props, props);
