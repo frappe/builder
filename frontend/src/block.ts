@@ -45,6 +45,7 @@ class Block implements BlockOptions {
 	dynamicValues: Array<BlockDataKey>;
 	blockClientScript?: string;
 	blockDataScript?: string;
+	presetStyle?: string;
 	props?: BlockProps;
 	// @ts-expect-error
 	referenceComponent: Block | null;
