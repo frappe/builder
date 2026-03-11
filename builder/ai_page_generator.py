@@ -1,12 +1,294 @@
-"""
-AI Page Generator
-Generates Builder pages from natural language prompts using various LLM providers
-"""
-
 import json
+import re
 
 import frappe
 from frappe import _
+
+# ─── Task Classification ───────────────────────────────────────────
+
+TRIVIAL_PATTERNS = [
+	r"\b(change|update|rename|rephrase|reword|fix|correct|replace)\b.*\b(text|title|heading|label|typo|word|name|copy|content|string)\b",
+	r"\b(change|update|set|make)\b.*\b(colou?r|font|size|bold|italic|underline|weight)\b",
+	r"\b(change|update|set)\b.*\b(background|bg)\s*(colou?r)?\b",
+	r"\bmake\s+(it\s+)?(bigger|smaller|larger|bolder|lighter|darker|brighter)\b",
+]
+
+SIMPLE_PATTERNS = [
+	r"\b(add|insert|include|put)\b.*\b(button|link|icon|image|img|divider|spacer|badge|tag)\b",
+	r"\b(change|update|set|adjust|modify|tweak)\b.*\b(padding|margin|spacing|gap|border|shadow|radius|opacity|alignment|align|width|height)\b",
+	r"\b(center|left.?align|right.?align|justify)\b",
+	r"\b(hide|show|remove|delete|toggle)\b.*\b(block|element|section|button|text|image|div)\b",
+	r"\b(move|swap|reorder|rearrange)\b",
+	r"\b(round|rounded|square|circle|pill)\b.*\b(corner|border|shape)\b",
+]
+
+COMPLEX_PATTERNS = [
+	r"\b(create|build|generate|make|design)\b.*\b(page|landing|website|full|complete)\b",
+	r"\b(from\s+scratch|entire|whole|complete|multi.?section)\b",
+]
+
+
+def classify_task(prompt: str, is_modify: bool = False) -> str:
+	"""Classify prompt complexity → trivial | simple | moderate | complex."""
+	lower = prompt.lower().strip()
+
+	if not is_modify:
+		for p in COMPLEX_PATTERNS:
+			if re.search(p, lower):
+				return "complex"
+		return "moderate"
+
+	for p in TRIVIAL_PATTERNS:
+		if re.search(p, lower):
+			return "trivial"
+	for p in SIMPLE_PATTERNS:
+		if re.search(p, lower):
+			return "simple"
+	for p in COMPLEX_PATTERNS:
+		if re.search(p, lower):
+			return "complex"
+	return "moderate"
+
+
+# ─── Model Selection & Cost Intelligence ──────────────────────────
+
+MODEL_TIERS = {
+	"openai": {"trivial": "gpt-5-nano", "simple": "gpt-4.1-mini", "moderate": "gpt-4.1", "complex": "gpt-5"},
+	"anthropic": {
+		"trivial": "claude-haiku-4-5",
+		"simple": "claude-haiku-4-5",
+		"moderate": "claude-sonnet-4-6",
+		"complex": "claude-sonnet-4-6",
+	},
+	"google": {
+		"trivial": "gemini-1.5-flash",
+		"simple": "gemini-1.5-flash",
+		"moderate": "gemini-2.0-flash-exp",
+		"complex": "gemini-1.5-pro",
+	},
+	"x-ai": {
+		"trivial": "grok-beta",
+		"simple": "grok-beta",
+		"moderate": "grok-2-1212",
+		"complex": "grok-2-1212",
+	},
+}
+
+MODEL_COST_INDEX = {
+	"gpt-5-nano": 1,
+	"gpt-5-mini": 2,
+	"gpt-4.1-mini": 2,
+	"o4-mini": 3,
+	"gpt-4.1": 4,
+	"gpt-5": 5,
+	"o3": 6,
+	"gpt-5.4": 7,
+	"claude-haiku-4-5": 1,
+	"claude-sonnet-4-6": 4,
+	"claude-opus-4-6": 7,
+	"gemini-1.5-flash": 1,
+	"gemini-2.0-flash-exp": 2,
+	"gemini-1.5-pro": 5,
+	"grok-beta": 2,
+	"grok-2-1212": 4,
+	"grok-2-vision-1212": 4,
+}
+
+TASK_PARAMS = {
+	"trivial": {"max_tokens": 2000, "temperature": 0.3},
+	"simple": {"max_tokens": 4000, "temperature": 0.5},
+	"moderate": {"max_tokens": 8000, "temperature": 0.7},
+	"complex": {"max_tokens": 12000, "temperature": 0.7},
+}
+
+TIER_ORDER = ["trivial", "simple", "moderate", "complex"]
+
+
+def get_optimal_model(configured_model: str, task_tier: str) -> str:
+	"""Pick the cheapest adequate model, capped at the user's configured model."""
+	provider = get_provider_from_model(configured_model)
+	tier_map = MODEL_TIERS.get(provider)
+	if not tier_map:
+		return configured_model
+	optimal = tier_map.get(task_tier, configured_model)
+	configured_cost = MODEL_COST_INDEX.get(configured_model, 5)
+	optimal_cost = MODEL_COST_INDEX.get(optimal, 5)
+	if optimal_cost > configured_cost:
+		return configured_model
+	return optimal
+
+
+def get_escalated_model(current_model: str, configured_model: str) -> str | None:
+	"""Next-tier fallback model, capped at configured model's cost."""
+	provider = get_provider_from_model(current_model)
+	tier_map = MODEL_TIERS.get(provider)
+	if not tier_map:
+		return None
+	reverse_map = {v: k for k, v in tier_map.items()}
+	current_tier = reverse_map.get(current_model)
+	if not current_tier or current_tier not in TIER_ORDER:
+		return None
+	idx = TIER_ORDER.index(current_tier)
+	if idx >= len(TIER_ORDER) - 1:
+		return None
+	next_model = tier_map.get(TIER_ORDER[idx + 1])
+	if not next_model or next_model == current_model:
+		return None
+	configured_cost = MODEL_COST_INDEX.get(configured_model, 5)
+	if MODEL_COST_INDEX.get(next_model, 5) > configured_cost:
+		return configured_model if configured_model != current_model else None
+	return next_model
+
+
+# ─── Tiered System Prompts ────────────────────────────────────────
+
+MINIMAL_MODIFY_PROMPT = (
+	"You modify web sections in Frappe Builder's block system.\n"
+	"Return ONLY valid JSON array. No markdown, no text. Start with [ end with ].\n\n"
+	'Block: {"element":"tag","blockName":"n","blockId":"id","baseStyles":{...},'
+	'"children":[...],"attributes":{...},"innerText":"t","mobileStyles":{...},"tabletStyles":{...}}\n\n'
+	"Preserve all blockId values. Only change what was asked. Use camelCase CSS.\n"
+	"Wrap text in semantic elements (p, h1-h3, span, a) — never place text directly in div/section."
+)
+
+FOCUSED_MODIFY_PROMPT = (
+	"You modify web sections in Frappe Builder's block system.\n"
+	"Return ONLY valid JSON array. No markdown, no explanations. Start with [ end with ].\n\n"
+	"Block props: element, blockName, blockId, baseStyles (CSS-in-JS camelCase), "
+	"mobileStyles, tabletStyles, attributes, innerText/innerHTML, children, classes.\n"
+	'Style example: {"display":"flex","flexDirection":"column","padding":"2rem","backgroundColor":"#fff"}\n\n'
+	"Rules: Preserve blockId values. Only change what requested. Return COMPLETE block structure. "
+	"Use %, rem for responsive widths.\n"
+	"Wrap text in semantic elements (p, h1-h3, span, a) — never place text directly in div/section."
+)
+
+COMPACT_GENERATION_PROMPT = (
+	"You generate web sections using Frappe Builder's block system.\n"
+	"Return ONLY valid JSON array. No markdown, no text. Start with [ end with ].\n\n"
+	'Block: {"element":"section","blockName":"hero","baseStyles":{"display":"flex",'
+	'"flexDirection":"column","padding":"2rem"},"children":[...],"attributes":{},'
+	'"mobileStyles":{},"tabletStyles":{}}\n\n'
+	"Elements: section, div, nav, header, footer, h1-h3, p, span, button, a, img\n"
+	"Styles: CSS-in-JS camelCase \u2014 display, flexDirection, padding, margin, gap, "
+	"backgroundColor, color, fontSize, fontWeight, width, minHeight, background, "
+	"boxShadow, borderRadius, gridTemplateColumns\n"
+	"Attributes: src, alt, href, target | Text: innerText or innerHTML\n\n"
+	"Design: flex/grid layouts, 100% widths, modern colors, Google Fonts via fontFamily "
+	'(use ONLY the font name e.g. "Bebas Neue" — never add fallback families like cursive or sans-serif), '
+	"responsive mobileStyles overrides.\n"
+	"Wrap text in semantic elements (p, h1-h3, span, a) — never place text directly in div/section."
+)
+
+
+def get_system_prompt_for_tier(task_tier: str, is_modify: bool) -> str:
+	"""Select the most token-efficient prompt for the task tier."""
+	if is_modify:
+		if task_tier == "trivial":
+			return MINIMAL_MODIFY_PROMPT
+		if task_tier == "simple":
+			return FOCUSED_MODIFY_PROMPT
+		return get_modify_system_prompt()
+	if task_tier in ("trivial", "simple"):
+		return COMPACT_GENERATION_PROMPT
+	return get_system_prompt()
+
+
+# ─── Context Optimization ─────────────────────────────────────────
+
+
+def strip_block_context(block_context: str, task_tier: str) -> str:
+	"""Remove empty/default properties from block JSON to reduce input tokens."""
+	try:
+		data = json.loads(block_context)
+	except (json.JSONDecodeError, TypeError):
+		return block_context
+
+	if isinstance(data, dict):
+		data = [data]
+
+	def _strip(block, depth=0):
+		if not isinstance(block, dict):
+			return block
+		out = {}
+		for k, v in block.items():
+			if v is None:
+				continue
+			if isinstance(v, dict) and not v:
+				continue
+			if isinstance(v, list) and not v and k != "children":
+				continue
+			if isinstance(v, str) and not v and k not in ("innerText", "innerHTML"):
+				continue
+			if k == "children" and isinstance(v, list):
+				children = [_strip(c, depth + 1) for c in v if isinstance(c, dict)]
+				if children:
+					out[k] = children
+			else:
+				out[k] = v
+		if task_tier == "trivial" and depth > 1:
+			out.pop("mobileStyles", None)
+			out.pop("tabletStyles", None)
+			out.pop("classes", None)
+		return out
+
+	stripped = [_strip(b) for b in data if isinstance(b, dict)]
+	return json.dumps(stripped, separators=(",", ":"))
+
+
+def build_user_message(prompt: str, task_tier: str, is_modify: bool, block_context: str | None = None) -> str:
+	"""Build a token-efficient user message."""
+	if is_modify and block_context:
+		if task_tier in ("trivial", "simple"):
+			return f"Block:\n{block_context}\n\nChange: {prompt}"
+		return f"Current section:\n{block_context}\n\nModify: {prompt}"
+	if task_tier in ("trivial", "simple"):
+		return f"Create: {prompt}"
+	return f"Create a section for: {prompt}"
+
+
+# ─── LLM Helpers ──────────────────────────────────────────────────
+
+
+def _call_llm(model: str, messages: list, params: dict, *, stream: bool = True):
+	"""Unified litellm call. Returns iterator (stream) or string (non-stream)."""
+	import litellm
+
+	litellm.drop_params = True
+	if stream:
+		return litellm.completion(
+			model=model,
+			messages=messages,
+			temperature=params["temperature"],
+			max_tokens=params["max_tokens"],
+			stream=True,
+		)
+	resp = litellm.completion(
+		model=model,
+		messages=messages,
+		temperature=params["temperature"],
+		max_tokens=params["max_tokens"],
+		stream=False,
+	)
+	return resp.choices[0].message.content or ""
+
+
+def _parse_blocks(content: str) -> list[dict]:
+	"""Parse LLM output into block list. Raises on invalid output."""
+	content = content.strip()
+	if content.startswith("```"):
+		content = content.split("\n", 1)[1] if "\n" in content else content[3:]
+		if content.endswith("```"):
+			content = content[:-3].strip()
+	parsed = json.loads(content)
+	if isinstance(parsed, dict):
+		blocks = [parsed]
+	elif isinstance(parsed, list):
+		blocks = [b for b in parsed if isinstance(b, dict)]
+	else:
+		raise ValueError("Not a valid block object")
+	if not blocks:
+		raise ValueError("No valid blocks in response")
+	return blocks
 
 
 def get_available_models():
@@ -57,154 +339,35 @@ def get_available_models():
 
 
 def get_system_prompt():
-	"""Return the system prompt for page generation"""
-	return """You are an expert web designer and developer specializing in creating beautiful, modern, and responsive web pages using the Frappe Builder block system.
+	"""Full system prompt for complex page generation (moderate/complex tiers)."""
+	return """You are an expert web designer specializing in creating modern, responsive web pages using the Frappe Builder block system.
 
-Your task is to generate a complete page structure based on user prompts. You must return ONLY a valid JSON array of blocks, with no additional text, markdown formatting, or explanations.
+Return ONLY a valid JSON array of blocks. No markdown, no explanations. Start with [ end with ].
 
-# Block Structure Rules:
+# Block Structure:
+- element: semantic HTML tag (section, div, nav, header, footer, h1-h3, p, span, button, a, img)
+- blockName: descriptive name
+- baseStyles: CSS-in-JS camelCase object (display, flexDirection, padding, margin, gap, backgroundColor, color, fontSize, fontWeight, width, minHeight, background, boxShadow, borderRadius, gridTemplateColumns, fontFamily)
+- mobileStyles: mobile overrides (fontSize, padding, flexDirection, etc.)
+- tabletStyles: tablet overrides
+- attributes: HTML attrs (src, alt, href, target)
+- innerText or innerHTML: text content
+- children: nested blocks array
+- classes: CSS class names
 
-2. **Common Elements**: Use semantic HTML elements:
-   - Container: "div" with display: flex/grid
-   - Text: "h1", "h2", "h3", "p", "span"
-   - Buttons: "button" or "a"
-   - Images: "img" with src attribute
-   - Sections: "section", "header", "footer", "nav"
-   - Font: Choose creative/relevant fonts from Google Fonts and specify in baseStyles (e.g., "fontFamily": "Roboto")
+# Style Format:
+{"display":"flex","flexDirection":"column","padding":"2rem","backgroundColor":"#ffffff"}
 
-3. **Styling (baseStyles)**: Use CSS-in-JS object format:
-```json
-{
-  "baseStyles": {
-    "display": "flex",
-    "flexDirection": "column",
-    "padding": "2rem",
-    "backgroundColor": "#ffffff",
-    "fontSize": "16px",
-    "fontWeight": "600"
-  }
-}
-```
+# Rules:
+- Use flex/grid layouts with 100% widths
+- Modern harmonious color palettes
+- Google Fonts via fontFamily in baseStyles (use ONLY the font name, e.g. "Bebas Neue" — do NOT add CSS fallback families like cursive, sans-serif, etc.)
+- Responsive: %, rem, auto-fit units; add mobileStyles overrides
+- Semantic HTML with alt texts for images
+- Consistent padding/margins
+- Wrap text (innerText/innerHTML) in semantic text elements (p, h1-h3, span, a) — never place text directly in div/section.
 
-4. **Responsive Styles**: Add mobile/tablet overrides:
-```json
-{
-  "mobileStyles": {
-    "fontSize": "14px",
-    "padding": "1rem"
-  },
-  "tabletStyles": {
-    "fontSize": "15px"
-  }
-}
-```
-
-5. **Attributes**: Add HTML attributes:
-```json
-{
-  "attributes": {
-    "src": "/path/to/image.jpg",
-    "alt": "Image description",
-    "href": "https://example.com",
-    "target": "_blank"
-  }
-}
-```
-
-6. **Text Content**: Use innerText or innerHTML:
-```json
-{
-  "element": "h1",
-  "blockName": "hero-title",
-  "innerText": "Welcome to Our Site"
-}
-```
-
-7. **Classes**: Add CSS classes if needed:
-```json
-{
-  "classes": ["hero-section", "text-center"]
-}
-```
-
-# Design Best Practices:
-
-1. **Modern Design**: Use contemporary design patterns (flexbox, grid layouts)
-2. **Color Schemes**: Use harmonious color palettes
-3. **Typography**: Use appropriate font sizes and weights
-4. **Spacing**: Apply consistent padding and margins
-5. **Responsive**: Ensure mobile-first responsive design, set relative units (%, rem) for widths.
-6. **Accessibility**: Include proper semantic HTML and alt texts
-
-# Common Layouts:
-
-**Hero Section**:
-```json
-{
-  "element": "section",
-  "blockName": "hero-section",
-  "baseStyles": {
-    "display": "flex",
-    "flexDirection": "column",
-    "alignItems": "center",
-    "justifyContent": "center",
-    "minHeight": "80vh",
-    "padding": "4rem 2rem",
-    "width": "100%",
-    "background": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    "color": "#ffffff"
-  },
-  "children": [...]
-}
-```
-
-**Card Grid**:
-```json
-{
-  "element": "div",
-  "blockName": "product-grid",
-  "baseStyles": {
-    "display": "grid",
-    "gridTemplateColumns": "repeat(auto-fit, minmax(300px, 1fr))",
-    "gap": "2rem",
-    "padding": "2rem"
-  },
-  "children": [...]
-}
-```
-
-**Navigation Bar**:
-```json
-{
-  "element": "nav",
-  "blockName": "main-nav",
-  "baseStyles": {
-    "display": "flex",
-    "justifyContent": "space-between",
-    "alignItems": "center",
-    "padding": "1rem 2rem",
-    "width": "100%",
-    "backgroundColor": "#ffffff",
-    "boxShadow": "0 2px 4px rgba(0,0,0,0.1)"
-  },
-  "children": [...]
-}
-```
-
-# CRITICAL: Output Format
-
-Return ONLY a JSON array with no markdown code blocks, no explanations, no additional text. Start directly with `[` and end with `]`.
-
-Example output:
-[{"element":"section","baseStyles":{"display":"flex"},"children":[...],attributes:{},blockName:"hero-section"}, {"element":"div","baseStyles":{"display":"grid"},"children":[...]}, ...]
-
-Remember:
-- Generate complete, production-ready pages
-- Use modern design principles
-- Ensure responsive design
-- Return ONLY valid JSON
-- No markdown, no explanations, just JSON
-- Make sure widths are set to 100% for responsiveness"""
+# CRITICAL: Return ONLY valid JSON array. No markdown code blocks, no text outside the array."""
 
 
 def generate_page_blocks(
@@ -214,30 +377,16 @@ def generate_page_blocks(
 	user: str | None = None,
 	page_id: str | None = None,
 ):
-	"""
-	Generate page blocks from a prompt using the specified AI model with streaming.
-
-	Runs as a background job. Streams chunks and publishes final blocks via realtime.
-
-	Args:
-		prompt: User's description of the page they want
-		model: Model identifier (e.g., 'gpt-5.4', 'claude-sonnet-4-6')
-		api_key: Optional API key (if not configured in site config)
-		user: The user to publish realtime events to
-		page_id: Builder Page ID to scope realtime events to
-	"""
+	"""Smart page generation with auto model selection and fallback escalation."""
 	user = user or frappe.session.user
 	content = ""
 	try:
 		try:
-			import litellm
+			import litellm  # noqa: F401
 		except ImportError:
 			frappe.publish_realtime(
 				"ai_generation_error",
-				{
-					"page_id": page_id,
-					"message": "litellm library is not installed. Please install it using: pip install litellm",
-				},
+				{"page_id": page_id, "message": "litellm is not installed. Run: pip install litellm"},
 				user=user,
 			)
 			return
@@ -250,110 +399,93 @@ def generate_page_blocks(
 				"ai_generation_error",
 				{
 					"page_id": page_id,
-					"message": f"API key not configured for model: {model}. Please configure it in Settings \u2192 AI.",
+					"message": f"API key not configured for {model}. Configure in Settings \u2192 AI.",
 				},
 				user=user,
 			)
 			return
 
-		set_api_key_for_provider(model, api_key)
+		# ── Smart routing ──
+		task_tier = classify_task(prompt, is_modify=False)
+		optimal_model = get_optimal_model(model, task_tier)
+		params = TASK_PARAMS[task_tier]
+		should_stream = task_tier in ("moderate", "complex")
 
-		frappe.publish_realtime(
-			"ai_generation_progress",
-			{"page_id": page_id, "status": "preparing", "message": "Preparing AI request..."},
-			user=user,
-		)
+		set_api_key_for_provider(optimal_model, api_key)
 
-		messages = [
-			{"role": "system", "content": get_system_prompt()},
-			{"role": "user", "content": f"Create a section for: {prompt}"},
+		tier_label = {"trivial": "quick", "simple": "fast", "moderate": "standard", "complex": "full"}[
+			task_tier
 		]
-
 		frappe.publish_realtime(
 			"ai_generation_progress",
-			{"page_id": page_id, "status": "generating", "message": f"Generating page with {model}..."},
-			user=user,
-		)
-
-		# Stream the response so the frontend can show progressive output
-		# GPT-5+ models only support temperature=1; use drop_params to
-		# let litellm silently strip unsupported kwargs for any model.
-		litellm.drop_params = True
-		response = litellm.completion(
-			model=model,
-			messages=messages,
-			temperature=0.7,
-			max_tokens=12000,
-			stream=True,
-		)
-
-		content = ""
-		for chunk in response:
-			delta = chunk.choices[0].delta.content
-			if delta:
-				content += delta
-				frappe.publish_realtime(
-					"ai_generation_stream",
-					{"page_id": page_id, "chunk": delta, "accumulated": content},
-					user=user,
-				)
-
-		content = content.strip()
-
-		frappe.publish_realtime(
-			"ai_generation_progress",
-			{"page_id": page_id, "status": "parsing", "message": "Parsing generated content..."},
-			user=user,
-		)
-
-		# Remove markdown code blocks if present
-		if content.startswith("```"):
-			content = content.split("\n", 1)[1] if "\n" in content else content[3:]
-			if content.endswith("```"):
-				content = content[:-3].strip()
-
-		parsed = json.loads(content)
-
-		# Normalize: ensure we have a list of section blocks
-		if isinstance(parsed, dict):
-			blocks = [parsed]
-		elif isinstance(parsed, list):
-			blocks = [b for b in parsed if isinstance(b, dict)]
-		else:
-			frappe.publish_realtime(
-				"ai_generation_error",
-				{"page_id": page_id, "message": "AI response is not a valid block object"},
-				user=user,
-			)
-			return
-
-		if not blocks:
-			frappe.publish_realtime(
-				"ai_generation_error",
-				{"page_id": page_id, "message": "AI response contained no valid blocks"},
-				user=user,
-			)
-			return
-
-		frappe.publish_realtime(
-			"ai_generation_complete",
-			{"page_id": page_id, "blocks": blocks},
-			user=user,
-		)
-
-	except json.JSONDecodeError as e:
-		frappe.log_error(f"JSON parsing error: {e!s}\nContent: {content}", "AI Page Generation Error")
-		frappe.publish_realtime(
-			"ai_generation_error",
 			{
 				"page_id": page_id,
-				"message": "Failed to parse AI response as JSON. The model may have returned invalid output.",
+				"status": "generating",
+				"message": f"Generating ({tier_label}) with {optimal_model}...",
+				"task_tier": task_tier,
+				"model_used": optimal_model,
 			},
 			user=user,
 		)
 
+		system_prompt = get_system_prompt_for_tier(task_tier, is_modify=False)
+		user_message = build_user_message(prompt, task_tier, is_modify=False)
+		messages = [
+			{"role": "system", "content": system_prompt},
+			{"role": "user", "content": user_message},
+		]
+
+		# ── LLM call (stream for complex, single-shot for simple) ──
+		if should_stream:
+			response = _call_llm(optimal_model, messages, params, stream=True)
+			for chunk in response:
+				delta = chunk.choices[0].delta.content
+				if delta:
+					content += delta
+					frappe.publish_realtime(
+						"ai_generation_stream",
+						{"page_id": page_id, "chunk": delta},
+						user=user,
+					)
+		else:
+			content = _call_llm(optimal_model, messages, params, stream=False)
+
+		# ── Parse with automatic escalation on failure ──
+		try:
+			blocks = _parse_blocks(content)
+		except (json.JSONDecodeError, ValueError):
+			escalated = get_escalated_model(optimal_model, model)
+			if escalated and escalated != optimal_model:
+				frappe.publish_realtime(
+					"ai_generation_progress",
+					{"page_id": page_id, "message": f"Refining with {escalated}..."},
+					user=user,
+				)
+				set_api_key_for_provider(escalated, api_key)
+				next_idx = min(TIER_ORDER.index(task_tier) + 1, len(TIER_ORDER) - 1)
+				next_tier = TIER_ORDER[next_idx]
+				messages[0]["content"] = get_system_prompt_for_tier(next_tier, is_modify=False)
+				content = _call_llm(escalated, messages, TASK_PARAMS[next_tier], stream=False)
+				blocks = _parse_blocks(content)
+			else:
+				raise
+
+		frappe.publish_realtime(
+			"ai_generation_complete",
+			{"page_id": page_id, "blocks": blocks, "model_used": optimal_model, "task_tier": task_tier},
+			user=user,
+		)
+
+	except json.JSONDecodeError as e:
+		frappe.log_error(f"JSON parse error: {e!s}\nContent: {content}", "AI Page Generation")
+		frappe.publish_realtime(
+			"ai_generation_error",
+			{"page_id": page_id, "message": "Failed to parse AI response. The model returned invalid JSON."},
+			user=user,
+		)
+
 	except Exception as e:
-		frappe.log_error(f"AI generation error: {e!s}", "AI Page Generation Error")
+		frappe.log_error(f"AI generation error: {e!s}", "AI Page Generation")
 		frappe.publish_realtime(
 			"ai_generation_error",
 			{"page_id": page_id, "message": f"Failed to generate page: {e!s}"},
@@ -380,8 +512,8 @@ def get_api_key_for_model(model: str) -> str | None:
 
 
 def get_provider_from_model(model: str) -> str:
-	"""Determine provider from model name"""
-	if model.startswith(("gpt-", "chatgpt-", "o1", "o3")):
+	"""Determine provider from model name."""
+	if model.startswith(("gpt-", "chatgpt-", "o1", "o3", "o4")):
 		return "openai"
 	elif model.startswith("claude-"):
 		return "anthropic"
@@ -412,96 +544,25 @@ def set_api_key_for_provider(model: str, api_key: str):
 
 
 def get_modify_system_prompt():
-	"""Return the system prompt for modifying an existing section"""
-	return """You are an expert web designer and developer specializing in modifying web page sections using the Frappe Builder block system.
+	"""Full system prompt for complex section modification (moderate/complex tiers)."""
+	return """You are an expert web designer specializing in modifying web page sections using the Frappe Builder block system.
 
-Your task is to modify an existing block structure based on user instructions. You will receive the current JSON block structure and an instruction describing the desired changes.
+Modify the existing block structure based on user instructions. Return ONLY a valid JSON array of the modified blocks. No markdown, no explanations.
 
-You must return ONLY a valid JSON array of blocks (the modified version), with no additional text, markdown formatting, or explanations.
+# Block Structure:
+- element, blockName, blockId, baseStyles (CSS-in-JS camelCase), mobileStyles, tabletStyles
+- attributes (src, alt, href, target), innerText/innerHTML, children, classes
 
-# Block Structure Rules:
+# Modification Rules:
+1. Preserve ALL existing blockId values to prevent DOM churn
+2. Only modify what the user explicitly asks for
+3. Keep existing structure intact where not asked to change
+4. Return the COMPLETE modified block structure (not a diff)
+5. Use responsive units (%, rem, auto-fit) for widths
+6. Style format: {"display":"flex","flexDirection":"column","padding":"2rem"}
+7. Wrap text (innerText/innerHTML) in semantic text elements (p, h1-h3, span, a) — never place text directly in div/section
 
-1. **Common Elements**: Use semantic HTML elements:
-   - Container: "div" with display: flex/grid
-   - Text: "h1", "h2", "h3", "p", "span"
-   - Buttons: "button" or "a"
-   - Images: "img" with src attribute
-   - Sections: "section", "header", "footer", "nav"
-   - Font: Choose creative/relevant fonts from Google Fonts and specify in baseStyles (e.g., "fontFamily": "Roboto")
-
-2. **Styling (baseStyles)**: Use CSS-in-JS object format:
-```json
-{
-  "baseStyles": {
-    "display": "flex",
-    "flexDirection": "column",
-    "padding": "2rem",
-    "backgroundColor": "#ffffff",
-    "fontSize": "16px",
-    "fontWeight": "600"
-  }
-}
-```
-
-3. **Responsive Styles**: Add mobile/tablet overrides:
-```json
-{
-  "mobileStyles": {
-    "fontSize": "14px",
-    "padding": "1rem"
-  },
-  "tabletStyles": {
-    "fontSize": "15px"
-  }
-}
-```
-
-4. **Attributes**: Add HTML attributes:
-```json
-{
-  "attributes": {
-    "src": "/path/to/image.jpg",
-    "alt": "Image description",
-    "href": "https://example.com",
-    "target": "_blank"
-  }
-}
-```
-
-5. **Text Content**: Use innerText or innerHTML:
-```json
-{
-  "element": "h1",
-  "blockName": "hero-title",
-  "innerText": "Welcome to Our Site"
-}
-```
-
-6. **Classes**: Add CSS classes if needed:
-```json
-{
-  "classes": ["hero-section", "text-center"]
-}
-```
-
-# Important Modification Guidelines:
-
-1. **Preserve Structure**: Keep existing block structure where the user hasn't asked for changes.
-2. **Maintain blockId**: Preserve existing blockId values to minimize DOM churn.
-3. **Surgical Changes**: Only modify what the user asks for — don't redesign the entire section unless requested.
-4. **Responsive**: Ensure mobile-first responsive design, set relative units (%, rem) for widths.
-
-# CRITICAL: Output Format
-
-Return ONLY a JSON array with no markdown code blocks, no explanations, no additional text. Start directly with `[` and end with `]`.
-
-The output must be the complete modified block structure (not a diff or patch).
-
-Remember:
-- Return the full modified block structure
-- Preserve existing structure where not explicitly asked to change
-- Return ONLY valid JSON
-- No markdown, no explanations, just JSON"""
+# CRITICAL: Return ONLY valid JSON array. Start with [ end with ]."""
 
 
 def modify_section_blocks(
@@ -512,31 +573,16 @@ def modify_section_blocks(
 	user: str | None = None,
 	page_id: str | None = None,
 ):
-	"""
-	Modify existing section blocks based on a prompt using the specified AI model with streaming.
-
-	Runs as a background job. Streams chunks and publishes final blocks via realtime.
-
-	Args:
-		prompt: User's description of the modification they want
-		block_context: JSON string of the existing block structure to modify
-		model: Model identifier (e.g., 'gpt-5.4', 'claude-sonnet-4-6')
-		api_key: Optional API key (if not configured in site config)
-		user: The user to publish realtime events to
-		page_id: Builder Page ID to scope realtime events to
-	"""
+	"""Smart section modification with context stripping and auto model selection."""
 	user = user or frappe.session.user
 	content = ""
 	try:
 		try:
-			import litellm
+			import litellm  # noqa: F401
 		except ImportError:
 			frappe.publish_realtime(
 				"ai_modify_error",
-				{
-					"page_id": page_id,
-					"message": "litellm library is not installed. Please install it using: pip install litellm",
-				},
+				{"page_id": page_id, "message": "litellm is not installed. Run: pip install litellm"},
 				user=user,
 			)
 			return
@@ -549,109 +595,96 @@ def modify_section_blocks(
 				"ai_modify_error",
 				{
 					"page_id": page_id,
-					"message": f"API key not configured for model: {model}. Please configure it in Settings → AI.",
+					"message": f"API key not configured for {model}. Configure in Settings \u2192 AI.",
 				},
 				user=user,
 			)
 			return
 
-		set_api_key_for_provider(model, api_key)
+		# ── Smart routing ──
+		task_tier = classify_task(prompt, is_modify=True)
+		optimal_model = get_optimal_model(model, task_tier)
+		params = TASK_PARAMS[task_tier]
+		should_stream = task_tier in ("moderate", "complex")
 
-		frappe.publish_realtime(
-			"ai_modify_progress",
-			{"page_id": page_id, "status": "preparing", "message": "Preparing AI request..."},
-			user=user,
-		)
+		# Strip context to save tokens
+		stripped_context = strip_block_context(block_context, task_tier)
 
-		user_message = f"Here is the current section structure:\n```json\n{block_context}\n```\n\nModify it according to: {prompt}"
+		set_api_key_for_provider(optimal_model, api_key)
 
-		messages = [
-			{"role": "system", "content": get_modify_system_prompt()},
-			{"role": "user", "content": user_message},
+		tier_label = {"trivial": "quick", "simple": "fast", "moderate": "standard", "complex": "full"}[
+			task_tier
 		]
-
 		frappe.publish_realtime(
 			"ai_modify_progress",
-			{"page_id": page_id, "status": "generating", "message": f"Modifying section with {model}..."},
-			user=user,
-		)
-
-		litellm.drop_params = True
-		response = litellm.completion(
-			model=model,
-			messages=messages,
-			temperature=0.7,
-			max_tokens=12000,
-			stream=True,
-		)
-
-		content = ""
-		for chunk in response:
-			delta = chunk.choices[0].delta.content
-			if delta:
-				content += delta
-				frappe.publish_realtime(
-					"ai_modify_stream",
-					{"page_id": page_id, "chunk": delta, "accumulated": content},
-					user=user,
-				)
-
-		content = content.strip()
-
-		frappe.publish_realtime(
-			"ai_modify_progress",
-			{"page_id": page_id, "status": "parsing", "message": "Parsing modified content..."},
-			user=user,
-		)
-
-		# Remove markdown code blocks if present
-		if content.startswith("```"):
-			content = content.split("\n", 1)[1] if "\n" in content else content[3:]
-			if content.endswith("```"):
-				content = content[:-3].strip()
-
-		parsed = json.loads(content)
-
-		# Normalize: ensure we have a list of section blocks
-		if isinstance(parsed, dict):
-			blocks = [parsed]
-		elif isinstance(parsed, list):
-			blocks = [b for b in parsed if isinstance(b, dict)]
-		else:
-			frappe.publish_realtime(
-				"ai_modify_error",
-				{"page_id": page_id, "message": "AI response is not a valid block object"},
-				user=user,
-			)
-			return
-
-		if not blocks:
-			frappe.publish_realtime(
-				"ai_modify_error",
-				{"page_id": page_id, "message": "AI response contained no valid blocks"},
-				user=user,
-			)
-			return
-
-		frappe.publish_realtime(
-			"ai_modify_complete",
-			{"page_id": page_id, "blocks": blocks},
-			user=user,
-		)
-
-	except json.JSONDecodeError as e:
-		frappe.log_error(f"JSON parsing error: {e!s}\nContent: {content}", "AI Section Modify Error")
-		frappe.publish_realtime(
-			"ai_modify_error",
 			{
 				"page_id": page_id,
-				"message": "Failed to parse AI response as JSON. The model may have returned invalid output.",
+				"status": "generating",
+				"message": f"Modifying ({tier_label}) with {optimal_model}...",
+				"task_tier": task_tier,
+				"model_used": optimal_model,
 			},
 			user=user,
 		)
 
+		system_prompt = get_system_prompt_for_tier(task_tier, is_modify=True)
+		user_message = build_user_message(prompt, task_tier, is_modify=True, block_context=stripped_context)
+		messages = [
+			{"role": "system", "content": system_prompt},
+			{"role": "user", "content": user_message},
+		]
+
+		# ── LLM call (stream for complex, single-shot for simple) ──
+		if should_stream:
+			response = _call_llm(optimal_model, messages, params, stream=True)
+			for chunk in response:
+				delta = chunk.choices[0].delta.content
+				if delta:
+					content += delta
+					frappe.publish_realtime(
+						"ai_modify_stream",
+						{"page_id": page_id, "chunk": delta},
+						user=user,
+					)
+		else:
+			content = _call_llm(optimal_model, messages, params, stream=False)
+
+		# ── Parse with automatic escalation on failure ──
+		try:
+			blocks = _parse_blocks(content)
+		except (json.JSONDecodeError, ValueError):
+			escalated = get_escalated_model(optimal_model, model)
+			if escalated and escalated != optimal_model:
+				frappe.publish_realtime(
+					"ai_modify_progress",
+					{"page_id": page_id, "message": f"Refining with {escalated}..."},
+					user=user,
+				)
+				set_api_key_for_provider(escalated, api_key)
+				next_idx = min(TIER_ORDER.index(task_tier) + 1, len(TIER_ORDER) - 1)
+				next_tier = TIER_ORDER[next_idx]
+				messages[0]["content"] = get_system_prompt_for_tier(next_tier, is_modify=True)
+				content = _call_llm(escalated, messages, TASK_PARAMS[next_tier], stream=False)
+				blocks = _parse_blocks(content)
+			else:
+				raise
+
+		frappe.publish_realtime(
+			"ai_modify_complete",
+			{"page_id": page_id, "blocks": blocks, "model_used": optimal_model, "task_tier": task_tier},
+			user=user,
+		)
+
+	except json.JSONDecodeError as e:
+		frappe.log_error(f"JSON parse error: {e!s}\nContent: {content}", "AI Section Modify")
+		frappe.publish_realtime(
+			"ai_modify_error",
+			{"page_id": page_id, "message": "Failed to parse AI response. The model returned invalid JSON."},
+			user=user,
+		)
+
 	except Exception as e:
-		frappe.log_error(f"AI modify error: {e!s}", "AI Section Modify Error")
+		frappe.log_error(f"AI modify error: {e!s}", "AI Section Modify")
 		frappe.publish_realtime(
 			"ai_modify_error",
 			{"page_id": page_id, "message": f"Failed to modify section: {e!s}"},

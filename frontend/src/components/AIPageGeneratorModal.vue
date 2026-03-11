@@ -52,10 +52,15 @@
 	<!-- Floating progress indicator when generating with dialog closed -->
 	<Teleport to="body">
 		<Transition name="slide-up">
-			<div v-if="generating && !showDialog" class="fixed left-1/2 top-15 z-[1000] -translate-x-1/2 transform">
+			<div
+				v-if="(generating || progressMessage) && !showDialog"
+				class="fixed left-1/2 top-15 z-[1000] -translate-x-1/2 transform">
 				<div
 					class="flex items-center gap-3 rounded-lg border border-outline-gray-2 bg-surface-white px-4 py-2.5 shadow-lg">
-					<div class="border-ink-gray-3 border-t-ink-gray-9 h-4 w-4 animate-spin rounded-full border-2"></div>
+					<div
+						v-if="generating"
+						class="border-ink-gray-3 border-t-ink-gray-9 h-4 w-4 animate-spin rounded-full border-2"></div>
+					<FeatherIcon v-else name="check-circle" class="h-4 w-4 text-ink-green-3" />
 					<span class="text-sm font-medium text-ink-gray-9">
 						{{ progressMessage || (mode === "modify" ? "Modifying section..." : "Generating page...") }}
 					</span>
@@ -69,7 +74,7 @@
 import Dialog from "@/components/Controls/Dialog.vue";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
-import { createResource, Textarea } from "frappe-ui";
+import { createResource, FeatherIcon, Textarea } from "frappe-ui";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
 const props = withDefaults(
@@ -283,7 +288,21 @@ const onStream = (data: any) => {
 const onComplete = (data: any) => {
 	if (data.page_id && data.page_id !== props.pageId) return;
 	generating.value = false;
-	progressMessage.value = "";
+	if (data.model_used) {
+		const tierLabels: Record<string, string> = {
+			trivial: "quick",
+			simple: "fast",
+			moderate: "standard",
+			complex: "full",
+		};
+		const tierLabel = tierLabels[data.task_tier as string] || "";
+		progressMessage.value = `Done — ${tierLabel} mode with ${data.model_used}`;
+		setTimeout(() => {
+			progressMessage.value = "";
+		}, 2000);
+	} else {
+		progressMessage.value = "";
+	}
 	if (data.blocks) {
 		emit("generated", data.blocks);
 		prompt.value = "";
@@ -329,7 +348,21 @@ const onModifyStream = (data: any) => {
 const onModifyComplete = (data: any) => {
 	if (data.page_id && data.page_id !== props.pageId) return;
 	generating.value = false;
-	progressMessage.value = "";
+	if (data.model_used) {
+		const tierLabels: Record<string, string> = {
+			trivial: "quick",
+			simple: "fast",
+			moderate: "standard",
+			complex: "full",
+		};
+		const tierLabel = tierLabels[data.task_tier as string] || "";
+		progressMessage.value = `Done — ${tierLabel} mode with ${data.model_used}`;
+		setTimeout(() => {
+			progressMessage.value = "";
+		}, 2000);
+	} else {
+		progressMessage.value = "";
+	}
 	if (data.blocks) {
 		emit("modified", data.blocks);
 		prompt.value = "";
