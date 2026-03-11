@@ -1,6 +1,7 @@
 import type { default as Block, default as BlockDataKey } from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import getBlockTemplate from "./blockTemplate";
+import { set } from "@vueuse/core";
 
 const canvasStore = useCanvasStore();
 
@@ -384,6 +385,15 @@ const blockController = {
 		});
 		Object.assign(block.props, props);
 	},
+	getPresetStyle: () => {
+		return blockController.getFirstSelectedBlock()?.presetStyle || " ";
+	},
+	setPresetStyle: (value: string) => {
+		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
+			block.presetStyle = value;
+		});
+	},
+
 };
 
 export default blockController;

@@ -15,6 +15,14 @@ const setFont = (font: string) => {
 	});
 };
 
+const styleKeyMap: Record<string, string> = {
+    fontFamily: "fontFamily",
+    fontWeight: "fontWeight",
+    fontSize: "fontSize",
+    lineHeight: "lineHeight",
+    transform: "textTransform",
+};
+
 const typographySectionProperties = [
 	{
 		component: BasePropertyControl,
@@ -37,8 +45,6 @@ const typographySectionProperties = [
 	{
 		component: StylePropertyControl,
 		getProps: () => {
-			console.log("stylePreset.data", JSON.stringify(stylePreset.data?.map((s: any) => ({ name: s.style_name, order: s.sort_order }))));
-			console.log("stylePreset.data", stylePreset.data);
 			return {
 				label: "Style",
 				propertyKey: "textStylePreset",
@@ -52,30 +58,29 @@ const typographySectionProperties = [
 					}))
 					]	
 					: [{ label: "None", value: " " }],
-				getModelValue: () => String(blockController.getStyle("textStylePreset") ?? ""), //reads the currently selected preset from the block's styles.
+				getModelValue: () => String(blockController.getStyle("textStylePreset") ?? ""),
 				setModelValue: (val: string) => { //called when user selects an option
-					console.log("setModelValue called with:", val, typeof val);
-					blockController.setStyle("textStylePreset", val); //saves selected style
+					blockController.setStyle("textStylePreset", val);
+					blockController.setPresetStyle(val);
 					if (!val) {
-						console.log("None selected, clearing styles");
-						blockController.setFontFamily(" ");
-						blockController.setStyle("fontFamily", null);
-						blockController.setStyle("fontSize", null);
-						blockController.setStyle("fontWeight", null);
-						blockController.setStyle("lineHeight", null);
-						blockController.setStyle("textTransform", null);
-						return;
+						blockController.setPresetStyle("");
+						Object.values(styleKeyMap).forEach((cssProperty) => {
+            				blockController.setStyle(cssProperty as styleProperty, null);
+          	        });
+        			return;
 					}
 					const preset = stylePreset.data?.find((s: any) => s.style_name === val);
 					if (!preset) return;
 					const map = typeof preset.style_map === "string" 
     					? JSON.parse(preset.style_map) 	
 						: preset.style_map;
-					setFont(map.fontFamily);
-					blockController.setStyle("fontSize", map.fontSize); //knows which block is currently selected on the canvas and applies changes to it
-					blockController.setStyle("fontWeight", map.fontWeight);
-					blockController.setStyle("lineHeight", map.lineHeight);
-					blockController.setStyle("textTransform", map.transform);
+					Object.entries(map).forEach(([key, value]) => {
+					if (key === "fontFamily") {
+						setFont(value as string);
+					} else if (styleKeyMap[key]) {
+						blockController.setStyle(styleKeyMap[key] as styleProperty, value as string);
+					}
+				});
 			},
 			};
 		},
@@ -86,7 +91,7 @@ const typographySectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 
-			const presetName = blockController.getStyle("textStylePreset") as string;
+			const presetName = blockController.getPresetStyle();
 
 			const preset = stylePreset.data?.find((s: any) => s.style_name === presetName);
 
@@ -161,7 +166,7 @@ const typographySectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 
-			const presetName = blockController.getStyle("textStylePreset") as string;
+			const presetName = blockController.getPresetStyle();
 
 			const preset = stylePreset.data?.find((s: any) => s.style_name === presetName);
 
@@ -197,7 +202,7 @@ const typographySectionProperties = [
 		getProps: () => {
 
 			// check if a preset is active
-			const presetName = blockController.getStyle("textStylePreset") as string;
+			const presetName = blockController.getPresetStyle();
 			
 			// find that preset's data
 			const preset = stylePreset.data?.find((s: any) => s.style_name === presetName);
@@ -239,7 +244,7 @@ const typographySectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 
-			const presetName = blockController.getStyle("textStylePreset") as string;
+			const presetName = blockController.getPresetStyle();
 
 			const preset = stylePreset.data?.find((s: any) => s.style_name === presetName);
 
