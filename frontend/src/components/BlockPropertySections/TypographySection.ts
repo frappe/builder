@@ -21,6 +21,7 @@ const typographySectionProperties = [
 			return {
 				label: "Content",
 				propertyKey: "innerHTML",
+				controlType: "key",
 				// @ts-ignore
 				allowDynamicValue: true,
 				getModelValue: () => blockController.getText(),

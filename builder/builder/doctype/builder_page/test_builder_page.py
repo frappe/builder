@@ -15,6 +15,20 @@ data.update({
 	"items": [
 		{"name": "Item 1", "price": "$10"},
 		{"name": "Item 2", "price": "$20"}
+	],
+	"item_group": [
+		{
+			"group": [
+				{"name": "Item A1", "price": "$10"},
+				{"name": "Item A2", "price": "$20"}
+			],
+		},
+		{
+			"group": [
+				{"name": "Item B1", "price": "$15"},
+				{"name": "Item B2", "price": "$25"}
+			],
+		}
 	]
 })
 """
@@ -339,13 +353,19 @@ class TestBuilderPage(FrappeTestCase):
 			element="div",
 			originalElement="body",
 		)
-		header = Block(element="h1", innerHTML="Visible Header")
-		hidden_header = Block(element="h2", innerHTML="Hidden Header")
+		header = Block(element="h1", innerHTML="Visible Header H1")
+		hidden_header = Block(element="h2", innerHTML="Hidden Header H2")
+		hidden_header_h3 = Block(element="h3", innerHTML="Hidden Header H3")
+		header_h4 = Block(element="h4", innerHTML="Header H4")
+		header_h5 = Block(element="h5", innerHTML="Header H5")
 
 		header.visibilityCondition = {"key": "is_header_visible", "comesFrom": "dataScript"}
 		hidden_header.visibilityCondition = {"key": "is_hidden_header_visible", "comesFrom": "dataScript"}
+		hidden_header_h3.visibilityCondition = "is_hidden_header_visible"  # legacy
+		header_h4.visibilityCondition = ""
+		header_h5.visibilityCondition = {"key": "", "comesFrom": "dataScript"}
 
-		body.attach_children(header, hidden_header)
+		body.attach_children(header, hidden_header, hidden_header_h3, header_h4, header_h5)
 
 		page = frappe.get_doc(
 			{
@@ -359,8 +379,11 @@ class TestBuilderPage(FrappeTestCase):
 		).insert()
 		try:
 			content = get_response_content("/visibility-key-test")
-			self.assertTrue("Visible Header" in get_html_for(content, "tag", "h1"))
-			self.assertFalse("Hidden Header" in get_html_for(content, "tag", "h2"))
+			self.assertTrue("Visible Header H1" in get_html_for(content, "tag", "h1"))
+			self.assertFalse("Hidden Header H2" in get_html_for(content, "tag", "h2"))
+			self.assertFalse("Hidden Header H3" in get_html_for(content, "tag", "h3"))
+			self.assertTrue("Header H4" in get_html_for(content, "tag", "h4"))
+			self.assertTrue("Header H5" in get_html_for(content, "tag", "h5"))
 		finally:
 			page.delete()
 
@@ -871,6 +894,53 @@ class TestBuilderPage(FrappeTestCase):
 				'src="/files/another-dark-mode-image.png"'
 				in get_html_for(content, "tag", "img", index=1, only_content=False)
 			)
+		finally:
+			page.delete()
+
+	def test_nested_repeater_from_page_data(self):
+		body = Block(
+			element="div",
+			originalElement="body",
+		)
+		parent_repeater = Block(element="div", isRepeaterBlock=True)
+		child_repeater = Block(element="div", isRepeaterBlock=True)
+		wrapper_div = Block(element="div")
+
+		parent_repeater.attach_data_key("item_group", "dataKey")
+		child_repeater.attach_data_key("group", "dataKey")
+
+		item_name = Block(element="h2")
+		item_price = Block(element="span")
+
+		item_name.set_dynamic_value("name", "key", "innerHTML")
+		item_price.set_dynamic_value("price", "key", "innerHTML")
+
+		wrapper_div.attach_children(item_name, item_price)
+		child_repeater.attach_children(wrapper_div)
+		parent_repeater.attach_children(child_repeater)
+		body.attach_children(parent_repeater)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Nested Repeater Blocks Test",
+				"published": 1,
+				"route": "/nested-repeater-blocks-test",
+				"page_data_script": repeater_page_data_script,
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/nested-repeater-blocks-test")
+			self.assertTrue("Item A1" in get_html_for(content, "tag", "h2"))
+			self.assertTrue("$10" in get_html_for(content, "tag", "span"))
+			self.assertTrue("Item A2" in get_html_for(content, "tag", "h2", index=1))
+			self.assertTrue("$20" in get_html_for(content, "tag", "span", index=1))
+			self.assertFalse("Item B1" in get_html_for(content, "tag", "h2"))
+			self.assertFalse("$15" in get_html_for(content, "tag", "span"))
+			self.assertFalse("Item B2" in get_html_for(content, "tag", "h2", index=1))
+			self.assertFalse("$25" in get_html_for(content, "tag", "span", index=1))
 		finally:
 			page.delete()
 

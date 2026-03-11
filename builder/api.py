@@ -143,14 +143,14 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 
 	if file_doc:
 		if file_doc.file_url.startswith("/files"):
-			image, filename, extn = get_local_image(file_doc.file_url)
+			image, _, extn = get_local_image(file_doc.file_url)
 			if can_convert_image(extn):
 				return update_file_doc_with_webp(file_doc, image, extn)
 		return file_doc.file_url
 
 	image_url = image_url or ""
 	if image_url.startswith("/files"):
-		image, filename, extn = get_local_image(image_url)
+		image, _, extn = get_local_image(image_url)
 		if can_convert_image(extn):
 			return create_new_webp_file_doc(image_url, image, extn)
 		return image_url

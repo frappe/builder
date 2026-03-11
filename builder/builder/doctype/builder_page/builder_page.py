@@ -491,7 +491,7 @@ def save_as_template(page_doc: BuilderPage):
 
 
 @frappe.whitelist()
-def get_block_data(block_id, block_data_script: str, props: str):
+def get_block_data(block_id: str, block_data_script: str, props: str):
 	frappe.has_permission("Builder Page", "write", throw=True)
 	props = frappe.parse_json(props or "{}")
 	block_data = frappe._dict()
@@ -915,6 +915,9 @@ def get_visibility_condition_key(block: dict, data_key: dict | None) -> str | No
 	else:
 		key = visibility_condition.get("key")
 		comes_from = visibility_condition.get("comesFrom", "dataScript")
+
+	if not key:
+		return None
 
 	# Get key based on source
 	if comes_from == "props":

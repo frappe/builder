@@ -22,6 +22,7 @@ from frappe.utils.safe_exec import (
 	safe_exec_flags,
 )
 from RestrictedPython import compile_restricted
+from RestrictedPython import safe_globals as restricted_safe_globals
 from werkzeug.routing import Rule
 
 
@@ -225,6 +226,7 @@ def get_safer_globals():
 	out._iter_unpack_sequence_ = safe_globals["_iter_unpack_sequence_"]
 
 	# add common python builtins
+	out.update(restricted_safe_globals)
 	out.update(get_python_builtins())
 
 	return out
@@ -404,9 +406,14 @@ def escape_single_quotes(text):
 
 
 def camel_case_to_kebab_case(text, remove_spaces=False):
+	# Used to convert camelCase css properties to kebab-case, e.g. backgroundColor → background-color
 	if not text:
 		return ""
 	text = re.sub(r"(?<!^)(?=[A-Z])", "-", text).lower()
+	# Add leading hyphen for vendor-prefixed CSS properties
+	# e.g. WebkitBackgroundClip → -webkit-background-clip
+	if re.match(r"^(webkit|moz|ms|o)-", text):
+		text = f"-{text}"
 	if remove_spaces:
 		text = text.replace(" ", "")
 	return text
