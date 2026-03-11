@@ -163,8 +163,25 @@ provide("showAIGenerator", () => {
 const handleGeneratedBlocks = (blocks: any[]) => {
 	if (!blocks || blocks.length === 0) return;
 
-	// Replace the page blocks with the final generated blocks
-	pageStore.pageBlocks = [getBlockInstance(blocks[0])];
+	// Wrap all generated sections in a root block
+	const root = {
+		element: "div",
+		originalElement: "body",
+		blockId: "root",
+		children: blocks,
+		baseStyles: {
+			display: "flex",
+			flexWrap: "wrap",
+			flexShrink: "0",
+			flexDirection: "column",
+			alignItems: "center",
+		},
+		attributes: {},
+		mobileStyles: {},
+		tabletStyles: {},
+	};
+
+	pageStore.pageBlocks = [getBlockInstance(root)];
 	canvasStore.activeCanvas?.setRootBlock(pageStore.pageBlocks[0] as any, false);
 
 	// Force a page save

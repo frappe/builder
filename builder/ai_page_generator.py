@@ -4,7 +4,6 @@ Generates Builder pages from natural language prompts using various LLM provider
 """
 
 import json
-from typing import Any
 
 import frappe
 from frappe import _
@@ -206,48 +205,50 @@ Remember:
 - Make sure widths are set to 100% for responsiveness"""
 
 
-def generate_page_blocks(prompt: str, model: str, api_key: str | None = None) -> list[dict[str, Any]]:
+def generate_page_blocks(prompt: str, model: str, api_key: str | None = None, user: str | None = None):
 	"""
 	Generate page blocks from a prompt using the specified AI model with streaming.
 
-	Streams response chunks to the frontend via realtime events so users
-	can see the generation happening in real time.
+	Runs as a background job. Streams chunks and publishes final blocks via realtime.
 
 	Args:
 		prompt: User's description of the page they want
 		model: Model identifier (e.g., 'gpt-4o', 'claude-sonnet-4-6')
 		api_key: Optional API key (if not configured in site config)
-
-	Returns:
-		List of block dictionaries
+		user: The user to publish realtime events to
 	"""
+	user = user or frappe.session.user
 	content = ""
 	try:
 		try:
 			import litellm
 		except ImportError:
-			frappe.throw(
-				_("litellm library is not installed. Please install it using: pip install litellm"),
-				title=_("Missing Dependency"),
+			frappe.publish_realtime(
+				"ai_generation_error",
+				{"message": "litellm library is not installed. Please install it using: pip install litellm"},
+				user=user,
 			)
+			return
 
 		if not api_key:
 			api_key = get_api_key_for_model(model)
 
 		if not api_key:
-			frappe.throw(
-				_(
-					"API key not configured for model: {0}. Please configure it in site config or provide it in the request."
-				).format(model),
-				title=_("API Key Missing"),
+			frappe.publish_realtime(
+				"ai_generation_error",
+				{
+					"message": f"API key not configured for model: {model}. Please configure it in Settings \u2192 AI."
+				},
+				user=user,
 			)
+			return
 
 		set_api_key_for_provider(model, api_key)
 
 		frappe.publish_realtime(
 			"ai_generation_progress",
 			{"status": "preparing", "message": "Preparing AI request..."},
-			user=frappe.session.user,
+			user=user,
 		)
 
 		messages = [
@@ -258,7 +259,7 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None) ->
 		frappe.publish_realtime(
 			"ai_generation_progress",
 			{"status": "generating", "message": f"Generating page with {model}..."},
-			user=frappe.session.user,
+			user=user,
 		)
 
 		# Stream the response so the frontend can show progressive output
@@ -266,7 +267,7 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None) ->
 			model=model,
 			messages=messages,
 			temperature=0.7,
-			max_tokens=8000,
+			max_tokens=12000,
 			stream=True,
 		)
 
@@ -278,7 +279,7 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None) ->
 				frappe.publish_realtime(
 					"ai_generation_stream",
 					{"chunk": delta, "accumulated": content},
-					user=frappe.session.user,
+					user=user,
 				)
 
 		content = content.strip()
@@ -286,7 +287,7 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None) ->
 		frappe.publish_realtime(
 			"ai_generation_progress",
 			{"status": "parsing", "message": "Parsing generated content..."},
-			user=frappe.session.user,
+			user=user,
 		)
 
 		# Remove markdown code blocks if present
@@ -295,42 +296,49 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None) ->
 			if content.endswith("```"):
 				content = content[:-3].strip()
 
-		section = json.loads(content)
+		parsed = json.loads(content)
 
-		# Normalize: if the model returned an array, take the first element
-		if isinstance(section, list):
-			section = section[0] if section else {}
-
-		if not isinstance(section, dict):
-			frappe.throw(
-				_("AI response is not a valid block object"),
-				title=_("Invalid Response"),
+		# Normalize: ensure we have a list of section blocks
+		if isinstance(parsed, dict):
+			blocks = [parsed]
+		elif isinstance(parsed, list):
+			blocks = [b for b in parsed if isinstance(b, dict)]
+		else:
+			frappe.publish_realtime(
+				"ai_generation_error",
+				{"message": "AI response is not a valid block object"},
+				user=user,
 			)
+			return
 
-		# Wrap the generated section in a proper Builder root block
-		blocks = [section]
+		if not blocks:
+			frappe.publish_realtime(
+				"ai_generation_error",
+				{"message": "AI response contained no valid blocks"},
+				user=user,
+			)
+			return
 
 		frappe.publish_realtime(
-			"ai_generation_progress",
-			{"status": "complete", "message": "Page generated successfully!"},
-			user=frappe.session.user,
+			"ai_generation_complete",
+			{"blocks": blocks},
+			user=user,
 		)
-
-		return blocks
 
 	except json.JSONDecodeError as e:
 		frappe.log_error(f"JSON parsing error: {e!s}\nContent: {content}", "AI Page Generation Error")
-		frappe.throw(
-			_("Failed to parse AI response as JSON. The model may have returned invalid output."),
-			title=_("Generation Error"),
+		frappe.publish_realtime(
+			"ai_generation_error",
+			{"message": "Failed to parse AI response as JSON. The model may have returned invalid output."},
+			user=user,
 		)
 
 	except Exception as e:
-		print(f"Error during AI generation: {e!s}")
 		frappe.log_error(f"AI generation error: {e!s}", "AI Page Generation Error")
-		frappe.throw(
-			_("Failed to generate page: {0}").format(str(e)),
-			title=_("Generation Error"),
+		frappe.publish_realtime(
+			"ai_generation_error",
+			{"message": f"Failed to generate page: {e!s}"},
+			user=user,
 		)
 
 
@@ -412,12 +420,21 @@ def generate_page_from_prompt(prompt: str, model: str | None = None, api_key: st
 	if not model:
 		frappe.throw(_("Please configure an AI model in Settings → AI"))
 
-	blocks = generate_page_blocks(prompt, model, api_key)
+	user = frappe.session.user
+
+	frappe.enqueue(
+		generate_page_blocks,
+		prompt=prompt,
+		model=model,
+		api_key=api_key,
+		user=user,
+		queue="default",
+		is_async=True,
+	)
 
 	return {
-		"success": True,
-		"blocks": blocks,
-		"message": _("Page generated successfully"),
+		"status": "started",
+		"message": _("Page generation started"),
 	}
 
 

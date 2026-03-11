@@ -155,26 +155,18 @@ const generatePage = async () => {
 	showDialog.value = false;
 
 	try {
-		const result = await createResource({
+		// Fire and forget — results come through realtime events
+		await createResource({
 			url: "builder.ai_page_generator.generate_page_from_prompt",
 			makeParams: () => ({
 				prompt: prompt.value,
 			}),
 		}).submit();
-
-		if (result.success && result.blocks) {
-			emit("generated", result.blocks);
-			prompt.value = "";
-		} else {
-			showDialog.value = true;
-			errorMessage.value = "Failed to generate page. Please try again.";
-		}
 	} catch (error: any) {
-		showDialog.value = true;
-		errorMessage.value = error.message || "An error occurred while generating the page";
-	} finally {
 		generating.value = false;
 		progressMessage.value = "";
+		showDialog.value = true;
+		errorMessage.value = error.message || "An error occurred while generating the page";
 	}
 };
 
@@ -187,53 +179,78 @@ watch(showDialog, (newValue) => {
 });
 
 // Setup socket connection for progress updates
-onMounted(() => {
-	builderStore.realtime.on("ai_generation_progress", (data: any) => {
-		if (data.message) {
-			progressMessage.value = data.message;
-		}
-	});
-	builderStore.realtime.on("ai_generation_stream", (data: any) => {
-		if (data.chunk) {
-			streamingContent.value += data.chunk;
-			// Try to repair partial JSON and render live
-			const repaired = repairPartialJSON(streamingContent.value);
-			if (repaired) {
-				try {
-					let section = JSON.parse(repaired);
-					if (Array.isArray(section)) section = section[0];
-					if (section && typeof section === "object" && section.element) {
-						const wrapped = [
-							{
-								element: "div",
-								originalElement: "body",
-								blockId: "root",
-								children: [section],
-								baseStyles: {
-									display: "flex",
-									flexWrap: "wrap",
-									flexShrink: "0",
-									flexDirection: "column",
-									alignItems: "center",
-								},
-								attributes: {},
-								mobileStyles: {},
-								tabletStyles: {},
+const onProgress = (data: any) => {
+	if (data.message) {
+		progressMessage.value = data.message;
+	}
+};
+
+const onStream = (data: any) => {
+	if (data.chunk) {
+		streamingContent.value += data.chunk;
+		// Try to repair partial JSON and render live
+		const repaired = repairPartialJSON(streamingContent.value);
+		if (repaired) {
+			try {
+				let parsed = JSON.parse(repaired);
+				let sections = Array.isArray(parsed) ? parsed : [parsed];
+				sections = sections.filter((s: any) => s && typeof s === "object" && s.element);
+				if (sections.length > 0) {
+					const wrapped = [
+						{
+							element: "div",
+							originalElement: "body",
+							blockId: "root",
+							children: sections,
+							baseStyles: {
+								display: "flex",
+								flexWrap: "wrap",
+								flexShrink: "0",
+								flexDirection: "column",
+								alignItems: "center",
 							},
-						];
-						emit("streaming", wrapped);
-					}
-				} catch {
-					// Still not valid enough, wait for more chunks
+							attributes: {},
+							mobileStyles: {},
+							tabletStyles: {},
+						},
+					];
+					emit("streaming", wrapped);
 				}
+			} catch {
+				// Still not valid enough, wait for more chunks
 			}
 		}
-	});
+	}
+};
+
+const onComplete = (data: any) => {
+	generating.value = false;
+	progressMessage.value = "";
+	if (data.blocks) {
+		emit("generated", data.blocks);
+		prompt.value = "";
+	}
+};
+
+const onError = (data: any) => {
+	generating.value = false;
+	progressMessage.value = "";
+	showDialog.value = true;
+	errorMessage.value = data.message || "An error occurred while generating the page";
+};
+
+onMounted(() => {
+	builderStore.realtime.on("ai_generation_progress", onProgress);
+	builderStore.realtime.on("ai_generation_stream", onStream);
+	builderStore.realtime.on("ai_generation_complete", onComplete);
+	builderStore.realtime.on("ai_generation_error", onError);
 });
 
 onUnmounted(() => {
-	builderStore.realtime.off("ai_generation_progress", () => {});
-	builderStore.realtime.off("ai_generation_stream", () => {});
+	builderStore.realtime.off("ai_generation_progress", onProgress);
+	builderStore.realtime.off("ai_generation_stream", onStream);
+	builderStore.realtime.off("ai_generation_complete", onComplete);
+	builderStore.realtime.off("ai_generation_error", onError);
 });
 </script>
 
