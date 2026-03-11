@@ -102,6 +102,7 @@
 	</Dialog>
 	<AIPageGeneratorModal
 		v-model="showAIGeneratorDialog"
+		:pageId="(route.params.pageId as string)"
 		@generated="handleGeneratedBlocks"
 		@streaming="handleStreamingBlocks"></AIPageGeneratorModal>
 	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>

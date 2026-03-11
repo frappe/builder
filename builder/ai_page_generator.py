@@ -207,7 +207,13 @@ Remember:
 - Make sure widths are set to 100% for responsiveness"""
 
 
-def generate_page_blocks(prompt: str, model: str, api_key: str | None = None, user: str | None = None):
+def generate_page_blocks(
+	prompt: str,
+	model: str,
+	api_key: str | None = None,
+	user: str | None = None,
+	page_id: str | None = None,
+):
 	"""
 	Generate page blocks from a prompt using the specified AI model with streaming.
 
@@ -218,6 +224,7 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None, us
 		model: Model identifier (e.g., 'gpt-5.4', 'claude-sonnet-4-6')
 		api_key: Optional API key (if not configured in site config)
 		user: The user to publish realtime events to
+		page_id: Builder Page ID to scope realtime events to
 	"""
 	user = user or frappe.session.user
 	content = ""
@@ -227,7 +234,7 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None, us
 		except ImportError:
 			frappe.publish_realtime(
 				"ai_generation_error",
-				{"message": "litellm library is not installed. Please install it using: pip install litellm"},
+				{"page_id": page_id, "message": "litellm library is not installed. Please install it using: pip install litellm"},
 				user=user,
 			)
 			return
@@ -239,7 +246,8 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None, us
 			frappe.publish_realtime(
 				"ai_generation_error",
 				{
-					"message": f"API key not configured for model: {model}. Please configure it in Settings \u2192 AI."
+					"page_id": page_id,
+					"message": f"API key not configured for model: {model}. Please configure it in Settings \u2192 AI.",
 				},
 				user=user,
 			)
@@ -249,7 +257,7 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None, us
 
 		frappe.publish_realtime(
 			"ai_generation_progress",
-			{"status": "preparing", "message": "Preparing AI request..."},
+			{"page_id": page_id, "status": "preparing", "message": "Preparing AI request..."},
 			user=user,
 		)
 
@@ -260,7 +268,7 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None, us
 
 		frappe.publish_realtime(
 			"ai_generation_progress",
-			{"status": "generating", "message": f"Generating page with {model}..."},
+			{"page_id": page_id, "status": "generating", "message": f"Generating page with {model}..."},
 			user=user,
 		)
 
@@ -283,7 +291,7 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None, us
 				content += delta
 				frappe.publish_realtime(
 					"ai_generation_stream",
-					{"chunk": delta, "accumulated": content},
+					{"page_id": page_id, "chunk": delta, "accumulated": content},
 					user=user,
 				)
 
@@ -291,7 +299,7 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None, us
 
 		frappe.publish_realtime(
 			"ai_generation_progress",
-			{"status": "parsing", "message": "Parsing generated content..."},
+			{"page_id": page_id, "status": "parsing", "message": "Parsing generated content..."},
 			user=user,
 		)
 
@@ -311,7 +319,7 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None, us
 		else:
 			frappe.publish_realtime(
 				"ai_generation_error",
-				{"message": "AI response is not a valid block object"},
+				{"page_id": page_id, "message": "AI response is not a valid block object"},
 				user=user,
 			)
 			return
@@ -319,14 +327,14 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None, us
 		if not blocks:
 			frappe.publish_realtime(
 				"ai_generation_error",
-				{"message": "AI response contained no valid blocks"},
+				{"page_id": page_id, "message": "AI response contained no valid blocks"},
 				user=user,
 			)
 			return
 
 		frappe.publish_realtime(
 			"ai_generation_complete",
-			{"blocks": blocks},
+			{"page_id": page_id, "blocks": blocks},
 			user=user,
 		)
 
@@ -334,7 +342,7 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None, us
 		frappe.log_error(f"JSON parsing error: {e!s}\nContent: {content}", "AI Page Generation Error")
 		frappe.publish_realtime(
 			"ai_generation_error",
-			{"message": "Failed to parse AI response as JSON. The model may have returned invalid output."},
+			{"page_id": page_id, "message": "Failed to parse AI response as JSON. The model may have returned invalid output."},
 			user=user,
 		)
 
@@ -342,7 +350,7 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None, us
 		frappe.log_error(f"AI generation error: {e!s}", "AI Page Generation Error")
 		frappe.publish_realtime(
 			"ai_generation_error",
-			{"message": f"Failed to generate page: {e!s}"},
+			{"page_id": page_id, "message": f"Failed to generate page: {e!s}"},
 			user=user,
 		)
 
@@ -404,7 +412,7 @@ def get_ai_models():
 
 
 @frappe.whitelist()
-def generate_page_from_prompt(prompt: str, model: str | None = None, api_key: str | None = None):
+def generate_page_from_prompt(prompt: str, page_id: str | None = None, model: str | None = None, api_key: str | None = None):
 	"""
 	API endpoint to generate page blocks from a prompt.
 	Reads model and API key from Builder Settings if not provided.
@@ -433,6 +441,7 @@ def generate_page_from_prompt(prompt: str, model: str | None = None, api_key: st
 		model=model,
 		api_key=api_key,
 		user=user,
+		page_id=page_id,
 		queue="default",
 		is_async=True,
 	)

@@ -64,6 +64,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
 const props = defineProps<{
 	modelValue: boolean;
+	pageId: string;
 }>();
 
 const emit = defineEmits<{
@@ -158,6 +159,7 @@ const generatePage = async () => {
 			url: "builder.ai_page_generator.generate_page_from_prompt",
 			makeParams: () => ({
 				prompt: prompt.value,
+				page_id: props.pageId,
 			}),
 		}).submit();
 	} catch (error: any) {
@@ -178,12 +180,14 @@ watch(showDialog, (newValue) => {
 
 // Setup socket connection for progress updates
 const onProgress = (data: any) => {
+	if (data.page_id && data.page_id !== props.pageId) return;
 	if (data.message) {
 		progressMessage.value = data.message;
 	}
 };
 
 const onStream = (data: any) => {
+	if (data.page_id && data.page_id !== props.pageId) return;
 	if (data.chunk) {
 		streamingContent.value += data.chunk;
 		// Try to repair partial JSON and render live
@@ -222,6 +226,7 @@ const onStream = (data: any) => {
 };
 
 const onComplete = (data: any) => {
+	if (data.page_id && data.page_id !== props.pageId) return;
 	generating.value = false;
 	progressMessage.value = "";
 	if (data.blocks) {
@@ -231,6 +236,7 @@ const onComplete = (data: any) => {
 };
 
 const onError = (data: any) => {
+	if (data.page_id && data.page_id !== props.pageId) return;
 	generating.value = false;
 	progressMessage.value = "";
 	showDialog.value = true;
