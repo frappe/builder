@@ -132,7 +132,7 @@ Your task is to generate a complete page structure based on user prompts. You mu
 2. **Color Schemes**: Use harmonious color palettes
 3. **Typography**: Use appropriate font sizes and weights
 4. **Spacing**: Apply consistent padding and margins
-5. **Responsive**: Ensure mobile-first responsive design
+5. **Responsive**: Ensure mobile-first responsive design, set relative units (%, rem) for widths.
 6. **Accessibility**: Include proper semantic HTML and alt texts
 
 # Common Layouts:
@@ -141,6 +141,7 @@ Your task is to generate a complete page structure based on user prompts. You mu
 ```json
 {
   "element": "section",
+  "blockName": "hero-section",
   "baseStyles": {
     "display": "flex",
     "flexDirection": "column",
@@ -160,6 +161,7 @@ Your task is to generate a complete page structure based on user prompts. You mu
 ```json
 {
   "element": "div",
+  "blockName": "product-grid",
   "baseStyles": {
     "display": "grid",
     "gridTemplateColumns": "repeat(auto-fit, minmax(300px, 1fr))",
@@ -174,6 +176,7 @@ Your task is to generate a complete page structure based on user prompts. You mu
 ```json
 {
   "element": "nav",
+  "blockName": "main-nav",
   "baseStyles": {
     "display": "flex",
     "justifyContent": "space-between",
@@ -192,14 +195,15 @@ Your task is to generate a complete page structure based on user prompts. You mu
 Return ONLY a JSON array with no markdown code blocks, no explanations, no additional text. Start directly with `[` and end with `]`.
 
 Example output:
-[{"element":"body","blockId":"root","children":[{"element":"section","baseStyles":{"display":"flex"},"children":[...]}],"baseStyles":{}}]
+[{"element":"section","baseStyles":{"display":"flex"},"children":[...],attributes:{},blockName:"hero-section"}, {"element":"div","baseStyles":{"display":"grid"},"children":[...]}, ...]
 
 Remember:
 - Generate complete, production-ready pages
 - Use modern design principles
 - Ensure responsive design
 - Return ONLY valid JSON
-- No markdown, no explanations, just JSON"""
+- No markdown, no explanations, just JSON
+- Make sure widths are set to 100% for responsiveness"""
 
 
 def generate_page_blocks(prompt: str, model: str, api_key: str | None = None) -> list[dict[str, Any]]:
