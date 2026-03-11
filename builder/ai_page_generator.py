@@ -63,23 +63,13 @@ Your task is to generate a complete page structure based on user prompts. You mu
 
 # Block Structure Rules:
 
-1. **Root Block**: Always wrap everything in a root body element:
-```json
-{
-  "element": "body",
-  "blockId": "root",
-  "children": [...],
-  "baseStyles": {}
-}
-```
-
 2. **Common Elements**: Use semantic HTML elements:
    - Container: "div" with display: flex/grid
    - Text: "h1", "h2", "h3", "p", "span"
    - Buttons: "button" or "a"
    - Images: "img" with src attribute
    - Sections: "section", "header", "footer", "nav"
-   - Font: Choose from Google Fonts and specify in styles
+   - Font: Choose creative/relevant fonts from Google Fonts and specify in baseStyles (e.g., "fontFamily": "Roboto")
 
 3. **Styling (baseStyles)**: Use CSS-in-JS object format:
 ```json
@@ -124,6 +114,7 @@ Your task is to generate a complete page structure based on user prompts. You mu
 ```json
 {
   "element": "h1",
+  "blockName": "hero-title",
   "innerText": "Welcome to Our Site"
 }
 ```
@@ -157,6 +148,7 @@ Your task is to generate a complete page structure based on user prompts. You mu
     "justifyContent": "center",
     "minHeight": "80vh",
     "padding": "4rem 2rem",
+    "width": "100%",
     "background": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
     "color": "#ffffff"
   },
@@ -187,6 +179,7 @@ Your task is to generate a complete page structure based on user prompts. You mu
     "justifyContent": "space-between",
     "alignItems": "center",
     "padding": "1rem 2rem",
+    "width": "100%",
     "backgroundColor": "#ffffff",
     "boxShadow": "0 2px 4px rgba(0,0,0,0.1)"
   },
@@ -311,24 +304,7 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None) ->
 			)
 
 		# Wrap the generated section in a proper Builder root block
-		blocks = [
-			{
-				"element": "div",
-				"originalElement": "body",
-				"blockId": "root",
-				"children": [section],
-				"baseStyles": {
-					"display": "flex",
-					"flexWrap": "wrap",
-					"flexShrink": "0",
-					"flexDirection": "column",
-					"alignItems": "center",
-				},
-				"attributes": {},
-				"mobileStyles": {},
-				"tabletStyles": {},
-			}
-		]
+		blocks = [section]
 
 		frappe.publish_realtime(
 			"ai_generation_progress",
@@ -346,6 +322,7 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None) ->
 		)
 
 	except Exception as e:
+		print(f"Error during AI generation: {e!s}")
 		frappe.log_error(f"AI generation error: {e!s}", "AI Page Generation Error")
 		frappe.throw(
 			_("Failed to generate page: {0}").format(str(e)),

@@ -40,6 +40,21 @@
 			</div>
 		</template>
 	</Dialog>
+
+	<!-- Floating progress indicator when generating with dialog closed -->
+	<Teleport to="body">
+		<Transition name="slide-up">
+			<div v-if="generating && !showDialog" class="fixed left-1/2 top-15 z-[1000] -translate-x-1/2 transform">
+				<div
+					class="flex items-center gap-3 rounded-lg border border-outline-gray-2 bg-surface-white px-4 py-2.5 shadow-lg">
+					<div class="border-ink-gray-3 border-t-ink-gray-9 h-4 w-4 animate-spin rounded-full border-2"></div>
+					<span class="text-sm font-medium text-ink-gray-9">
+						{{ progressMessage || "Generating page..." }}
+					</span>
+				</div>
+			</div>
+		</Transition>
+	</Teleport>
 </template>
 
 <script setup lang="ts">
@@ -221,3 +236,15 @@ onUnmounted(() => {
 	builderStore.realtime.off("ai_generation_stream", () => {});
 });
 </script>
+
+<style scoped>
+.slide-up-enter-active,
+.slide-up-leave-active {
+	transition: all 0.3s ease;
+}
+.slide-up-enter-from,
+.slide-up-leave-to {
+	opacity: 0;
+	transform: translate(-50%, -20px);
+}
+</style>
