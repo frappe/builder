@@ -265,6 +265,9 @@ def generate_page_blocks(prompt: str, model: str, api_key: str | None = None, us
 		)
 
 		# Stream the response so the frontend can show progressive output
+		# GPT-5+ models only support temperature=1; use drop_params to
+		# let litellm silently strip unsupported kwargs for any model.
+		litellm.drop_params = True
 		response = litellm.completion(
 			model=model,
 			messages=messages,
