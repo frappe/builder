@@ -81,7 +81,7 @@ function formatShortcutParts(config: {
 
 const groupedShortcuts = computed(() => {
 	const groups: Record<string, RegisteredShortcut[]> = {};
-	for (const shortcut of activeShortcuts) {
+	for (const shortcut of activeShortcuts.value) {
 		if (!groups[shortcut.group]) {
 			groups[shortcut.group] = [];
 		}

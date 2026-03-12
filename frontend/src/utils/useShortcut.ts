@@ -1,5 +1,5 @@
 import { isCtrlOrCmd, isTargetEditable } from "@/utils/helpers";
-import { onActivated, onBeforeUnmount, onDeactivated, reactive, readonly } from "vue";
+import { computed, onActivated, onBeforeUnmount, onDeactivated, reactive, readonly } from "vue";
 
 export interface ShortcutConfig {
 	/** Shortcut key(s) to listen for (e.g. "s", "Escape", "ArrowUp") */
@@ -32,6 +32,7 @@ export interface RegisteredShortcut {
 	description: string;
 	group: string;
 	id: symbol;
+	condition?: () => boolean;
 }
 
 const activeShortcuts = reactive<RegisteredShortcut[]>([]);
@@ -145,6 +146,7 @@ export function useShortcut(shortcuts: ShortcutConfig | ShortcutConfig[]) {
 			description: config.description,
 			group: config.group ?? "General",
 			id,
+			condition: config.condition,
 		};
 
 		shortcutHandlers.set(id, config);
@@ -172,6 +174,7 @@ export function useShortcut(shortcuts: ShortcutConfig | ShortcutConfig[]) {
 					description: configs[i].description,
 					group: configs[i].group ?? "General",
 					id,
+					condition: configs[i].condition,
 				});
 			}
 		}
@@ -191,10 +194,10 @@ export function useShortcut(shortcuts: ShortcutConfig | ShortcutConfig[]) {
 }
 
 /**
- * Get all currently registered shortcuts (read-only). Useful outside of component setup.
+ * Get all currently registered shortcuts whose conditions are met (read-only).
  */
 export function getActiveShortcuts() {
-	return readonly(activeShortcuts);
+	return computed(() => activeShortcuts.filter((s) => !s.condition || s.condition()));
 }
 
 export { formatShortcutLabel };
