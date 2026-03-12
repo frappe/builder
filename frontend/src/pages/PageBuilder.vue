@@ -170,6 +170,12 @@ useBuilderEvents(pageCanvas, fragmentCanvas, saveAndExitFragmentMode, route, rou
 
 const shortcutsModal = ref<InstanceType<typeof KeyboardShortcutsModal> | null>(null);
 
+provide("showShortcuts", () => {
+	if (shortcutsModal.value) {
+		shortcutsModal.value.showDialog = true;
+	}
+});
+
 useShortcut([
 	{
 		key: " ",
