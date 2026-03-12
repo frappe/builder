@@ -101,9 +101,11 @@
 		</template>
 	</Dialog>
 	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
+	<ShortcutsOverlay v-model:show="showShortcutsOverlay" />
 </template>
 
 <script setup lang="ts">
+import ShortcutsOverlay from "@/components/ShortcutsOverlay.vue";
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import BuilderCanvas from "@/components/BuilderCanvas.vue";
 import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
@@ -164,12 +166,15 @@ declare global {
 
 window.blockController = blockController;
 
+const showShortcutsOverlay = ref(false);
 const pageCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 const fragmentCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 
 provide("pageCanvas", pageCanvas);
 provide("fragmentCanvas", fragmentCanvas);
-useBuilderEvents(pageCanvas, fragmentCanvas, saveAndExitFragmentMode, route, router);
+useBuilderEvents(pageCanvas, fragmentCanvas, saveAndExitFragmentMode, route, router, () => {
+	showShortcutsOverlay.value = !showShortcutsOverlay.value;
+});
 
 const activeElement = useActiveElement();
 const notUsingInput = computed(
