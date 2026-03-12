@@ -119,9 +119,12 @@ const blockRepeaterData = computed(() => {
 
 const getRepeaterIndex = (index: number | string) => {
 	if (props.repeaterIndex !== undefined) {
-		return `${props.repeaterIndex}-${index}`;
+		const parsedPropIndex =
+			typeof props.repeaterIndex === "string" ? parseInt(props.repeaterIndex, 10) : props.repeaterIndex;
+		const parsedIndex = typeof index === "string" ? parseInt(index, 10) : index;
+		return (parsedPropIndex || 0) * 10 + parsedIndex;
 	}
-	return `${index}`;
+	return index;
 };
 
 defineExpose({
