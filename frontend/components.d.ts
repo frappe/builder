@@ -85,6 +85,7 @@ declare module 'vue' {
     Input: typeof import('./src/components/Controls/Input.vue')['default']
     InputLabel: typeof import('./src/components/Controls/InputLabel.vue')['default']
     JavaScript: typeof import('./src/components/Icons/JavaScript.vue')['default']
+    KeyboardShortcutsModal: typeof import('./src/components/KeyboardShortcutsModal.vue')['default']
     Layers: typeof import('./src/components/Icons/Layers.vue')['default']
     Loading: typeof import('./src/components/Icons/Loading.vue')['default']
     MainMenu: typeof import('./src/components/MainMenu.vue')['default']
