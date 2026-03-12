@@ -35,6 +35,7 @@ export function useBuilderEvents(
 	saveAndExitFragmentMode: (e: KeyboardEvent) => void,
 	route: ReturnType<typeof useRoute>,
 	router: ReturnType<typeof useRouter>,
+	onShowShortcuts?: () => void,
 ) {
 	// to disable page zoom
 	useEventListener(
@@ -379,6 +380,11 @@ export function useBuilderEvents(
 			if (pageCanvas.value) {
 				pageCanvas.value.zoomOut();
 			}
+			return;
+		}
+
+		if (e.key === "?") {
+			onShowShortcuts?.();
 			return;
 		}
 
