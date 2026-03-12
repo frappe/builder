@@ -1,18 +1,17 @@
 <template>
 	<div class="flex items-center justify-between [&>div>input]:!bg-red-600 [&>div>input]:pr-6">
-		<Tooltip :disabled="!label" :text="label" placement="bottom">
-			<InputLabel
-				v-if="label"
-				:class="{
-					'cursor-ns-resize': enableSlider,
-				}"
-				ref="labelRef"
-				class="w-[88px] shrink-0 truncate"
-				:description="description"
-				@mousedown="handleMouseDown">
-				{{ label }}
-			</InputLabel>
-		</Tooltip>
+		<InputLabel
+			v-if="label"
+			:class="{
+				'cursor-ns-resize': enableSlider,
+			}"
+			ref="labelRef"
+			class="w-[88px] shrink-0 truncate"
+			:title="label"
+			:description="description"
+			@mousedown="handleMouseDown">
+			{{ label }}
+		</InputLabel>
 		<BuilderInput
 			class="w-full"
 			:type="type"
@@ -42,9 +41,6 @@ import { isNumber } from "@tiptap/vue-3";
 import { computed } from "vue";
 import Autocomplete from "./Autocomplete.vue";
 import InputLabel from "./InputLabel.vue";
-import { ref, onMounted, nextTick } from "vue";
-import { useResizeObserver } from "@vueuse/core";
-import { Tooltip } from "frappe-ui";
 
 type Action = {
 	label: string;
@@ -86,9 +82,6 @@ const props = withDefaults(
 		hideClearButton: false,
 	},
 );
-
-const labelRef = ref<InstanceType<typeof InputLabel> | null>(null);
-const isTruncated = ref(false);
 
 const emit = defineEmits(["update:modelValue"]);
 
@@ -166,20 +159,4 @@ const incrementOrDecrement = (step: number, initialValue: null | number = null) 
 	handleChange(newValue + "" + unit);
 };
 
-onMounted(async () => {
-	await nextTick();
-	checkTruncation();
-});
-
-useResizeObserver(labelRef, () => {
-	checkTruncation();
-});
-
-function checkTruncation() {
-	if (!labelRef.value) return;
-	const el = labelRef.value.$el as HTMLElement;
-	if (!el) return;
-
-	isTruncated.value = el.scrollWidth > el.clientWidth;
-}
 </script>

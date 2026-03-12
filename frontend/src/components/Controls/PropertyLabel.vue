@@ -9,23 +9,21 @@
 					@click="open" />
 			</template>
 		</Dropdown>
-		<Tooltip :disabled="!isTruncated" :text="label" placement="bottom">
-			<InputLabel
-				ref="labelRef"
-				class="truncate"
-				:class="{ 'cursor-ns-resize': enableSlider }"
-				@mousedown="$emit('mousedown', $event)">
-				{{ label }}
-			</InputLabel>
-		</Tooltip>
+		<InputLabel
+			ref="labelRef"
+			class="truncate"
+			:title="label"
+			:class="{ 'cursor-ns-resize': enableSlider }"
+			@mousedown="$emit('mousedown', $event)">
+			{{ label }}
+		</InputLabel>
 	</div>
 </template>
 
 <script lang="ts" setup>
 import InputLabel from "@/components/Controls/InputLabel.vue";
-import { useResizeObserver } from "@vueuse/core";
-import { Dropdown, FeatherIcon, Tooltip } from "frappe-ui";
-import { ref, onMounted, nextTick } from "vue";
+import { Dropdown, FeatherIcon } from "frappe-ui";
+import { ref } from "vue";
 
 const props = defineProps<{
 	label: string;
@@ -40,25 +38,6 @@ defineEmits<{
 }>();
 
 const dropdownTrigger = ref<typeof FeatherIcon | null>(null);
-const labelRef = ref<InstanceType<typeof InputLabel> | null>(null);
-const isTruncated = ref(false);
-
-function checkTruncation() {
-	if (!labelRef.value) return;
-	const el = labelRef.value.$el as HTMLElement;
-	if (!el) return;
-
-	isTruncated.value = el.scrollWidth > el.clientWidth;
-}
-
-onMounted(async () => {
-	await nextTick();
-	checkTruncation();
-});
-
-useResizeObserver(labelRef, () => {
-	checkTruncation();
-});
 
 defineExpose({ dropdownTrigger });
 </script>
