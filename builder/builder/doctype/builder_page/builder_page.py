@@ -491,7 +491,9 @@ def save_as_template(page_doc: BuilderPage):
 
 
 @frappe.whitelist()
-def get_block_data(block_id: str, block_data_script: str, props: str):
+def get_block_data(block_id: str, block_data_script: str, props: str, route_variables: dict | None = None):
+	if route_variables:
+			frappe.form_dict.update({k: v for k, v in route_variables.items()})
 	frappe.has_permission("Builder Page", "write", throw=True)
 	props = frappe.parse_json(props or "{}")
 	block_data = frappe._dict()
