@@ -10,22 +10,24 @@
 				<div
 					v-for="(shortcuts, group) in groupedShortcuts"
 					:key="group"
-					class="mb-4 break-inside-avoid last:mb-0">
-					<h3 class="mb-1 text-xs font-semibold uppercase tracking-wider text-ink-gray-9">
+					class="mb-7 break-inside-avoid last:mb-0">
+					<h3 class="mb-2 text-base font-medium tracking-wider text-ink-gray-8">
 						{{ group }}
 					</h3>
 					<div class="flex flex-col">
 						<div
 							v-for="shortcut in shortcuts"
 							:key="shortcut.description"
-							class="flex items-center justify-between rounded py-1.5">
-							<span class="text-sm text-ink-gray-6">{{ shortcut.description }}</span>
-							<div class="flex items-center gap-0.5">
+							class="flex items-center justify-between rounded py-1">
+							<span class="text-base text-ink-gray-6">{{ shortcut.description }}</span>
+							<div class="flex items-center gap-1">
 								<kbd
 									v-for="(part, i) in formatShortcutParts(shortcut)"
 									:key="i"
-									class="inline-flex min-w-[22px] items-center justify-center rounded border border-outline-gray-2 bg-surface-gray-1 px-1.5 py-0.5 font-medium text-ink-gray-7"
-									:class="part.isSymbol ? 'text-base' : 'text-[11px]'">
+									class="inline-flex h-6 min-w-6 items-center justify-center rounded border bg-surface-gray-2 px-1.5 py-0.5 font-medium text-ink-gray-7"
+									:class="{
+										'text-xs': !part.isSymbol,
+									}">
 									{{ part.label }}
 								</kbd>
 							</div>
