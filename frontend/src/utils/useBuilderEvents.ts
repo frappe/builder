@@ -248,7 +248,7 @@ export function useBuilderEvents(
 		{
 			key: "p",
 			ctrl: true,
-			description: "Save & preview",
+			description: "Preview",
 			group: "General",
 			handler: () => {
 				pageStore.savePage();
