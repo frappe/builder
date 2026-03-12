@@ -16,6 +16,7 @@ import BasePropertyControl from "@/components/Controls/BasePropertyControl.vue";
 import blockController from "@/utils/blockController";
 import type { Component } from "vue";
 import { computed } from "vue";
+import { getFontWeightOptions } from "@/utils/fontManager";
 
 const props = withDefaults(
 	defineProps<{
@@ -114,10 +115,18 @@ const baseProps = computed(() => {
 			}),
 		getPlaceholder:
 			props.getPlaceholder ||
-			(() =>
-				presetValue
-					? String(presetValue)
-					: String(blockController.getCascadingStyle(props.propertyKey) ?? "unset")),
+			(() => {
+				if (presetValue) {
+					if (props.propertyKey === "fontWeight") {
+						const options = getFontWeightOptions(
+							(blockController.getStyle("fontFamily") as string) || "Inter",
+						);
+						return options.find((o) => o.value === String(presetValue))?.label || String(presetValue);
+					}
+					return String(presetValue);
+				}
+				return String(blockController.getCascadingStyle(props.propertyKey) ?? "unset");
+			}),
 	};
 });
 </script>
