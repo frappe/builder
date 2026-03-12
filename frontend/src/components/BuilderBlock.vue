@@ -448,6 +448,7 @@ watch(
 		() => props.blockData,
 		() => props.block.getBlockDataScript(),
 		() => pageStore.settingPage,
+		() => pageStore.routeVariables,
 	],
 	() => {
 		if (pageStore.settingPage || props.repeaterIndex) return;
