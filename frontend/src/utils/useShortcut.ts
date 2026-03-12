@@ -40,6 +40,10 @@ const shortcutHandlers = new Map<symbol, ShortcutConfig>();
 
 let listenerAttached = false;
 
+function isDialogOpen() {
+	return !!document.querySelector("[role='dialog']");
+}
+
 function attachGlobalListener() {
 	if (listenerAttached) return;
 	listenerAttached = true;
@@ -48,6 +52,8 @@ function attachGlobalListener() {
 }
 
 function globalKeydownHandler(e: KeyboardEvent) {
+	if (isDialogOpen()) return;
+
 	// Iterate through all registered shortcuts and find matching ones
 	for (const [id, config] of shortcutHandlers) {
 		if (!matchesShortcut(e, config)) continue;
