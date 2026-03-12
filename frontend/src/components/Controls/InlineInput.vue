@@ -5,7 +5,6 @@
 			:class="{
 				'cursor-ns-resize': enableSlider,
 			}"
-			ref="labelRef"
 			class="w-[88px] shrink-0 truncate"
 			:title="label"
 			:description="description"
