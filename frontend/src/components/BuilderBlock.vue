@@ -3,7 +3,7 @@
 		:is="getComponentName(block)"
 		:selected="isSelected"
 		:data-block-id="block.blockId"
-		:data-block-uid="uid"
+		:data-block-uid="uidToUse"
 		:data-breakpoint="breakpoint"
 		:draggable="draggable"
 		:class="classes"
@@ -21,6 +21,7 @@
 			:readonly="readonly"
 			:isChildOfComponent="block.isExtendedFromComponent() || isChildOfComponent"
 			:key="child.blockId"
+			:repeater-index="repeaterIndex"
 			v-for="child in block.getChildren().filter((child) => child.isVisible(breakpoint))" />
 	</component>
 	<teleport to="#overlay" v-if="canvasProps?.overlayElement && !preview && Boolean(canvasProps)">
@@ -117,7 +118,12 @@ const isHovered = ref(false);
 const isSelected = ref(false);
 const ownBlockData = ref<Record<string, any>>({});
 
-const uid = `builder-block-${props.block.blockId}-${Math.random().toString(36).substr(2, 9)}`;
+// For repeater items the same Block object is used but Block Data can vary with each item
+// So we need unique identifier for block data store
+// Thus we use blockId for the first index and then generate new IDs for the next items
+const uidToUse = !!props.repeaterIndex
+	? `builder-block-${props.block.blockId}-${Math.random().toString(36).substr(2, 9)}}`
+	: props.block.blockId;
 
 const getComponentName = (block: Block) => {
 	if (block.isRepeater()) {
@@ -197,6 +203,8 @@ const attributes = computed(() => {
 		props.block.isRepeater()
 	) {
 		attribs.block = props.block;
+		attribs.uid = uidToUse;
+		attribs.repeaterIndex = props.repeaterIndex;
 		attribs.preview = props.preview;
 		attribs.breakpoint = props.breakpoint;
 		attribs.data = props.data;
@@ -423,9 +431,17 @@ watch(
 		if (pageStore.settingPage || !props.block.getBlockClientScript().trim()) return;
 		if (builderSettings.doc?.execute_block_scripts_in_editor !== "Don't Execute") {
 			if (builderSettings.doc?.execute_block_scripts_in_editor === "Restricted")
-				executeBlockClientScriptRestricted(uid, props.block.getBlockClientScript(), allResolvedProps.value);
+				executeBlockClientScriptRestricted(
+					uidToUse,
+					props.block.getBlockClientScript(),
+					allResolvedProps.value,
+				);
 			else
-				executeBlockClientScriptUnrestricted(uid, props.block.getBlockClientScript(), allResolvedProps.value);
+				executeBlockClientScriptUnrestricted(
+					uidToUse,
+					props.block.getBlockClientScript(),
+					allResolvedProps.value,
+				);
 		}
 	},
 	{ deep: true },
@@ -434,9 +450,8 @@ watch(
 watch(
 	[component, () => props.blockData, () => props.data],
 	() => {
-		if (props.repeaterIndex) return;
-		blockDataStore.setPageData(props.block.blockId, props.data || {});
-		blockDataStore.setBlockData(props.block.blockId, props.blockData || {}, "passedDown");
+		blockDataStore.setPageData(uidToUse, props.data || {});
+		blockDataStore.setBlockData(uidToUse, props.blockData || {}, "passedDown");
 	},
 	{ immediate: true, deep: true },
 );
@@ -450,21 +465,21 @@ watch(
 		() => pageStore.settingPage,
 	],
 	() => {
-		if (pageStore.settingPage || props.repeaterIndex) return;
+		if (pageStore.settingPage) return;
 		if (props.block.getBlockDataScript().trim() === "") {
 			ownBlockData.value = {};
-			blockDataStore.setBlockData(props.block.blockId, {}, "own");
+			blockDataStore.setBlockData(uidToUse, {}, "own");
 			return;
 		}
 		fetchBlockData
 			.fetch({
-				block_id: uid,
+				block_id: uidToUse,
 				block_data_script: props.block.getBlockDataScript(),
 				props: JSON.stringify(allResolvedProps.value),
 			})
 			.then((res: any) => {
 				ownBlockData.value = res || {};
-				blockDataStore.setBlockData(props.block.blockId, res || {}, "own");
+				blockDataStore.setBlockData(uidToUse, res || {}, "own");
 			})
 			.catch((e: { exc: string | null }) => {
 				const error_message = e.exc?.split("\n").slice(-2)[0];
@@ -535,10 +550,8 @@ if (!props.preview) {
 }
 
 onUnmounted(() => {
-	if (props.repeaterIndex) {
-		blockDataStore.clearBlockData(props.block.blockId);
-		blockDataStore.clearPageData(props.block.blockId);
-	}
+	blockDataStore.clearBlockData(uidToUse);
+	blockDataStore.clearPageData(uidToUse);
 });
 
 // Note: All the block event listeners are delegated to parent for better scalability

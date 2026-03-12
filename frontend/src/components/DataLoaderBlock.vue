@@ -15,7 +15,7 @@
 			:readonly="readonly"
 			:breakpoint="breakpoint"
 			:isChildOfComponent="block.isExtendedFromComponent()"
-			:repeater-index="index"
+			:repeater-index="getRepeaterIndex(index)"
 			v-for="(_data, index) in blockRepeaterData" />
 	</div>
 </template>
@@ -35,6 +35,8 @@ const blockDataStore = useBlockDataStore();
 const props = withDefaults(
 	defineProps<{
 		block: Block;
+		uid?: string;
+		repeaterIndex?: string | number | null;
 		preview?: boolean;
 		breakpoint?: string;
 		data?: Record<string, any> | null;
@@ -56,7 +58,7 @@ const repeatingFrom = computed(() => {
 
 const blockRepeaterData = computed(() => {
 	const pageData = props.data || pageStore.pageData;
-	const blockData = blockDataStore.getBlockData(props.block.blockId) || {};
+	const blockData = blockDataStore.getBlockData(props.uid || props.block.blockId) || {};
 	const key = props.block.getDataKey("key");
 	if (pageData && repeatingFrom.value === "dataScript" && key) {
 		const data = getDataForKey(pageData, key);
@@ -114,6 +116,13 @@ const blockRepeaterData = computed(() => {
 		return [{}];
 	}
 });
+
+const getRepeaterIndex = (index: number | string) => {
+	if (props.repeaterIndex !== undefined) {
+		return `${props.repeaterIndex}-${index}`;
+	}
+	return `${index}`;
+};
 
 defineExpose({
 	component,

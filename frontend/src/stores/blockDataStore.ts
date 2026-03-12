@@ -8,27 +8,27 @@ const useBlockDataStore = defineStore("blockDataStore", {
 		pageDataMapping: <Record<string, any>>{},
 	}),
 	actions: {
-		setPageData(pageId: string, pageData: any) {
-			this.pageDataMapping[pageId] = pageData;
+		setPageData(blockUid: string, pageData: any) {
+			this.pageDataMapping[blockUid] = pageData;
 		},
-		getPageData(pageId: string): any {
-			return this.pageDataMapping[pageId];
+		getPageData(blockUid: string): any {
+			return this.pageDataMapping[blockUid];
 		},
-		clearPageData(pageId: string) {
-			delete this.pageDataMapping[pageId];
+		clearPageData(blockUid: string) {
+			delete this.pageDataMapping[blockUid];
 		},
-		setBlockData(blockId: string, blockData: BlockData, type: "own" | "passedDown" = "own") {
-			if(!this.blockDataMapping[blockId]) {
-                this.blockDataMapping[blockId] = { ownData: {}, passedDownData: {} };
+		setBlockData(blockUid: string, blockData: BlockData, type: "own" | "passedDown" = "own") {
+			if(!this.blockDataMapping[blockUid]) {
+                this.blockDataMapping[blockUid] = { ownData: {}, passedDownData: {} };
             }
 			if (type === "own") {
-				this.blockDataMapping[blockId].ownData = blockData;
+				this.blockDataMapping[blockUid].ownData = blockData;
 			} else {
-				this.blockDataMapping[blockId].passedDownData = blockData;
+				this.blockDataMapping[blockUid].passedDownData = blockData;
 			}
 		},
-		getBlockData(blockId: string, filter: "all" | "own" | "passedDown" = "all"): BlockData | null {
-			const blockData = this.blockDataMapping[blockId];
+		getBlockData(blockUid: string, filter: "all" | "own" | "passedDown" = "all"): BlockData | null {
+			const blockData = this.blockDataMapping[blockUid];
 			if (!blockData) {
 				return null;
 			}
@@ -39,8 +39,8 @@ const useBlockDataStore = defineStore("blockDataStore", {
 			}
 			return { ...blockData.ownData, ...blockData.passedDownData };
 		},
-		clearBlockData(blockId: string) {
-			delete this.blockDataMapping[blockId];
+		clearBlockData(blockUid: string) {
+			delete this.blockDataMapping[blockUid];
 		},
 	},
 });
