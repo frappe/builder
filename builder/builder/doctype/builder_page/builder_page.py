@@ -1169,7 +1169,7 @@ def extend_block(block, overridden_block):
 	block["tabletStyles"].update(overridden_block["tabletStyles"])
 	block["attributes"].update(overridden_block["attributes"])
 
-	dynamicValues = overridden_block.get("dynamicValues", [])
+	dynamicValues = overridden_block.get("dynamicValues") or []
 	dynamicValuesProperties = [dv.get("property") for dv in dynamicValues]
 	for dv in block.get("dynamicValues", []) or []:
 		if dv.get("property") in dynamicValuesProperties:
