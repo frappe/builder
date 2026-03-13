@@ -21,9 +21,9 @@ const props = withDefaults(
 		propertyKey: string;
 		label?: string;
 		placeholder?: string;
-		getModelValue?: () => string;
-		getPlaceholder?: () => string;
-		setModelValue?: (value: string) => void;
+		getModelValue?: () => string | number | boolean;
+		getPlaceholder?: () => string | number | boolean;
+		setModelValue?: (value: string | number | boolean) => void;
 		enableSlider?: boolean;
 		unitOptions?: string[];
 		changeFactor?: number;
@@ -44,19 +44,19 @@ const props = withDefaults(
 const baseProps = computed(() => ({
 	...props,
 	controlType: "attribute" as const,
-	getModelValue:
-		props.getModelValue || (() => (blockController.getAttribute(props.propertyKey) as string) || ""),
+	getModelValue: props.getModelValue || (() => blockController.getAttribute(props.propertyKey) ?? ""),
 	setModelValue:
-		props.setModelValue || ((value: string) => blockController.setAttribute(props.propertyKey, value)),
+		props.setModelValue ||
+		((value: string | number | boolean) => blockController.setAttribute(props.propertyKey, String(value))),
 }));
 
-const getVariantValue = (variantName: string) => {
+const getVariantValue = (variantName: string): string | number | boolean => {
 	const property = props.variants?.find((v) => v.name === variantName)?.property;
-	return property ? (blockController.getAttribute(property) as string) || "" : "";
+	return property ? (blockController.getAttribute(property) ?? "") : "";
 };
 
-const setVariantValue = (variantName: string, value: string | null) => {
+const setVariantValue = (variantName: string, value: string | number | boolean | null) => {
 	const property = props.variants?.find((v) => v.name === variantName)?.property;
-	if (property) blockController.setAttribute(property, value || "");
+	if (property) blockController.setAttribute(property, value !== null ? String(value) : "");
 };
 </script>

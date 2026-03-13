@@ -5,7 +5,7 @@
 			:class="{
 				'bg-surface-gray-2': selected,
 			}">
-			<div class="flex w-[90%] gap-3">
+			<div class="flex w-[85%] gap-3">
 				<img
 					width="140"
 					height="82"
@@ -16,9 +16,7 @@
 					<span class="flex h-full w-full flex-col justify-between text-base">
 						<div>
 							<div class="flex items-center gap-1">
-								<p
-									class="max-w-[90%] truncate font-medium text-ink-gray-9"
-									:title="page.page_title || page.page_name">
+								<p class="truncate font-medium text-ink-gray-9" :title="page.page_title || page.page_name">
 									{{ page.page_title || page.page_name }}
 								</p>
 							</div>

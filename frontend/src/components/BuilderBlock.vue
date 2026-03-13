@@ -162,7 +162,22 @@ const getBlockDataScriptValue = (path: string): any => {
 };
 
 const attributes = computed(() => {
-	const attribs = { ...props.block.getAttributes(), ...attrs } as { [key: string]: any };
+	const RESTRICTED_ATTRIBS = ["data-block-id", "data-block-uid", "data-breakpoint"];
+	let additionalAttributes: Record<string, any> = {};
+
+	if (builderSettings.doc?.execute_block_scripts_in_editor !== "Don't Execute") {
+		additionalAttributes = props.block.getCustomAttributes();
+	}
+
+	Object.keys(additionalAttributes).forEach((key) => {
+		if (!RESTRICTED_ATTRIBS.includes(key)) {
+			delete additionalAttributes[key];
+		}
+	});
+
+	const attribs = { ...additionalAttributes, ...props.block.getAttributes(), ...attrs } as {
+		[key: string]: any;
+	};
 
 	if (props.block.isImage() && !props.preview) {
 		if (builderStore.isDark && attribs.darkSrc) {
@@ -236,6 +251,7 @@ const attributes = computed(() => {
 	if (props.block.isInput()) {
 		attribs.readonly = true;
 	}
+
 	return attribs;
 });
 
@@ -432,6 +448,7 @@ watch(
 		() => props.blockData,
 		() => props.block.getBlockDataScript(),
 		() => pageStore.settingPage,
+		() => pageStore.routeVariables,
 	],
 	() => {
 		if (pageStore.settingPage || props.repeaterIndex) return;
@@ -445,6 +462,7 @@ watch(
 				block_id: uid,
 				block_data_script: props.block.getBlockDataScript(),
 				props: JSON.stringify(allResolvedProps.value),
+				route_variables: pageStore.routeVariables,
 			})
 			.then((res: any) => {
 				ownBlockData.value = res || {};

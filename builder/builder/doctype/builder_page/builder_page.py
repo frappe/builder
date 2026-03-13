@@ -5,7 +5,7 @@ import copy
 import os
 import re
 import shutil
-from typing import Any, Optional
+from typing import Any
 
 import bs4 as bs
 import frappe
@@ -219,10 +219,7 @@ class BuilderPage(WebsiteGenerator):
 		)
 
 	@frappe.whitelist()
-	def publish(self, route_variables=None):
-		if route_variables:
-			for k, v in frappe.parse_json(route_variables or "{}").items():
-				frappe.form_dict[k] = v
+	def publish(self):
 		self.published = 1
 		if self.draft_blocks:
 			self.blocks = self.draft_blocks
@@ -239,7 +236,7 @@ class BuilderPage(WebsiteGenerator):
 		return self.route
 
 	@frappe.whitelist()
-	def unpublish(self, **kwargs):
+	def unpublish(self):
 		self.published = 0
 		self.save()
 
@@ -362,9 +359,9 @@ class BuilderPage(WebsiteGenerator):
 		context["_body_html"] = render_template(context._body_html, context)
 
 	@frappe.whitelist()
-	def get_page_data(self, route_variables=None):
+	def get_page_data(self, route_variables: dict | None = None) -> dict:
 		if route_variables:
-			frappe.form_dict.update(dict(frappe.parse_json(route_variables or "{}").items()))
+			frappe.form_dict.update({k: v for k, v in route_variables.items()})
 		page_data = frappe._dict()
 		if self.page_data_script:
 			_locals = dict(data=frappe._dict(), page=frappe._dict())
@@ -494,12 +491,16 @@ def save_as_template(page_doc: BuilderPage):
 
 
 @frappe.whitelist()
-def get_block_data(block_id, block_data_script, props):
-	props = frappe._dict(frappe.parse_json(props or "{}"))
+def get_block_data(block_id: str, block_data_script: str, props: str, route_variables: dict | None = None):
+	if route_variables:
+		frappe.form_dict.update({k: v for k, v in route_variables.items()})
+	frappe.has_permission("Builder Page", "write", throw=True)
+	props = frappe.parse_json(props or "{}")
 	block_data = frappe._dict()
 	_locals = dict(block=frappe._dict(), props=props)
 	execute_script(block_data_script, _locals, block_id)
-	block_data.update(_locals["block"])
+	if isinstance(_locals["block"], dict):
+		block_data.update(_locals["block"])
 	return block_data
 
 
@@ -576,7 +577,8 @@ def build_tag(block: dict, state: dict, data_key: dict | None = None) -> bs.Tag:
 	attach_client_script(tag, block, state)
 
 	# Add body scripts for body element
-	if block.get("element") == "body":
+	effective_element = block.get("originalElement") or block.get("element")
+	if effective_element == "body":
 		tag.append("{% include 'templates/generators/webpage_scripts.html' %}")
 
 	cleanup_props_stack(props, state["standard_props_stack"])
@@ -916,6 +918,9 @@ def get_visibility_condition_key(block: dict, data_key: dict | None) -> str | No
 		key = visibility_condition.get("key")
 		comes_from = visibility_condition.get("comesFrom", "dataScript")
 
+	if not key:
+		return None
+
 	# Get key based on source
 	if comes_from == "props":
 		return jinja_safe_key(f"props.{key}")
@@ -1166,7 +1171,7 @@ def extend_block(block, overridden_block):
 	block["tabletStyles"].update(overridden_block["tabletStyles"])
 	block["attributes"].update(overridden_block["attributes"])
 
-	dynamicValues = overridden_block.get("dynamicValues", [])
+	dynamicValues = overridden_block.get("dynamicValues") or []
 	dynamicValuesProperties = [dv.get("property") for dv in dynamicValues]
 	for dv in block.get("dynamicValues", []) or []:
 		if dv.get("property") in dynamicValuesProperties:
@@ -1241,7 +1246,7 @@ def find_page_with_path(route):
 
 
 @redis_cache(ttl=60 * 60)
-def get_web_pages_with_dynamic_routes() -> list[BuilderPage]:
+def get_web_pages_with_dynamic_routes() -> list[dict]:
 	return frappe.get_all(
 		"Builder Page",
 		fields=["name", "route", "modified"],

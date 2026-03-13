@@ -11,7 +11,7 @@ dependencies = [
     "jsmin>=3.0.1",
     "csscompressor>=0.9.5",
     "pandas (>=2.3.2,<3.0.0)",
-    "duckdb~=1.3.0",
+    "duckdb==1.4.3",
 ]
 
 [project.urls]
@@ -22,6 +22,9 @@ Repository = "https://github.com/frappe/builder.git"
 [build-system]
 requires = ["flit_core >=3.4,<4"]
 build-backend = "flit_core.buildapi"
+
+[tool.bench.frappe-dependencies]
+frappe = ">=15.0.0"
 
 [tool.black]
 line-length = 99

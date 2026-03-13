@@ -5,7 +5,7 @@
 		:selected="isBlockSelected"
 		@click.stop="handleClick"
 		@dblclick="handleDoubleClick"
-		@mousedown.prevent="handleMove"
+		@mousedown.prevent.stop="handleMove"
 		@drop.prevent.stop="handleDrop"
 		:data-block-id="block.blockId"
 		:class="getStyleClasses">
