@@ -15,7 +15,7 @@ class BuilderStylePreset(Document):
 		from frappe.types import DF
 
 		sort_order: DF.Int
-		style_map: DF.JSON | None
+		style_map: DF.JSON
 		style_name: DF.Data
 	# end: auto-generated types
 

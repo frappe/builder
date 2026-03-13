@@ -28,7 +28,8 @@
   {
    "fieldname": "style_map",
    "fieldtype": "JSON",
-   "label": "Style Map"
+   "label": "Style Map",
+   "reqd": 1
   },
   {
    "fieldname": "sort_order",
@@ -39,7 +40,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-09 11:59:01.879720",
+ "modified": "2026-03-13 12:47:52.513378",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Style Preset",
