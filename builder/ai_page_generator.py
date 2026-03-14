@@ -85,7 +85,7 @@ MODEL_COST_INDEX = {
 	"gpt-5.4": 7,
 	"claude-haiku-4-5": 1,
 	"claude-sonnet-4-6": 4,
-	"claude-opus-4-6": 7,
+	# "claude-opus-4-6": 7,
 	"gemini-2.5-flash-lite": 1,
 	"gemini-2.5-flash": 2,
 	"gemini-2.5-pro": 5,
@@ -311,7 +311,7 @@ def get_available_models():
 			"provider": "anthropic",
 			"models": [
 				{"name": "claude-sonnet-4-6", "label": "Claude Sonnet 4.6 (Latest)", "max_tokens": 200000},
-				{"name": "claude-opus-4-6", "label": "Claude Opus 4.6 (Most Capable)", "max_tokens": 200000},
+				# {"name": "claude-opus-4-6", "label": "Claude Opus 4.6 (Most Capable)", "max_tokens": 200000},
 				{"name": "claude-haiku-4-5", "label": "Claude Haiku 4.5 (Fastest)", "max_tokens": 200000},
 			],
 		},
@@ -378,7 +378,7 @@ def generate_page_blocks(
 	content = ""
 	try:
 		try:
-			import litellm  # noqa: F401
+			import litellm
 		except ImportError:
 			frappe.publish_realtime(
 				"ai_generation_error",
@@ -573,7 +573,7 @@ def modify_section_blocks(
 	content = ""
 	try:
 		try:
-			import litellm  # noqa: F401
+			import litellm
 		except ImportError:
 			frappe.publish_realtime(
 				"ai_modify_error",

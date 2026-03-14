@@ -93,6 +93,13 @@
 			</div>
 			<Badge variant="subtle" theme="orange" v-if="builderStore.readOnlyMode">Read Only</Badge>
 			<div class="flex gap-2">
+				<Tooltip text="Generate with AI" :hoverDelay="0.6" arrow-class="mb-3">
+					<Button
+						variant="ghost"
+						@click="openAIGenerator"
+						:icon="SparklesIcon"
+						:disabled="builderStore.readOnlyMode"></Button>
+				</Tooltip>
 				<Tooltip text="Toggle Dark Mode" :hoverDelay="0.6" arrow-class="mb-3">
 					<Button
 						variant="ghost"
@@ -104,13 +111,6 @@
 					v-if="pageStore.savingPage && pageStore.activePage?.is_template">
 					Saving template
 				</span>
-				<Tooltip text="Generate with AI" :hoverDelay="0.6" arrow-class="mb-3">
-					<Button
-						variant="ghost"
-						@click="openAIGenerator"
-						icon="zap"
-						:disabled="builderStore.readOnlyMode"></Button>
-				</Tooltip>
 				<Tooltip text="Settings" :hoverDelay="0.6" arrow-class="mb-3">
 					<Button variant="ghost" @click="showSettingsDialog = true" :icon="SettingsGearIcon"></Button>
 				</Tooltip>
@@ -166,6 +166,8 @@ import { useDark, useToggle } from "@vueuse/core";
 import { Badge, Popover, Tooltip } from "frappe-ui";
 import { computed, defineAsyncComponent, inject, ref } from "vue";
 import { toast } from "vue-sonner";
+// @ts-ignore
+import SparklesIcon from "~icons/lucide/sparkles";
 import MainMenu from "./MainMenu.vue";
 import PageOptions from "./PageOptions.vue";
 

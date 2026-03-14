@@ -35,15 +35,19 @@
 				<Button
 					variant="solid"
 					@click="handleSubmit"
-					:disabled="!canGenerate || generating"
-					:loading="generating">
-					{{
-						generating
-							? progressMessage || (mode === "modify" ? "Modifying..." : "Generating...")
-							: mode === "modify"
-								? "Modify"
-								: "Generate"
-					}}
+					:disabled="!canGenerate || generating">
+					<div class="flex items-center gap-2">
+						<FeatherIcon v-if="generating" name="loader" class="h-4 w-4 animate-spin" />
+						<span>
+							{{
+								generating
+									? progressMessage || (mode === "modify" ? "Modifying..." : "Generating...")
+									: mode === "modify"
+										? "Modify"
+										: "Generate"
+							}}
+						</span>
+					</div>
 				</Button>
 			</div>
 		</template>
@@ -54,12 +58,13 @@
 		<Transition name="slide-up">
 			<div
 				v-if="(generating || progressMessage) && !showDialog"
-				class="fixed left-1/2 top-15 z-[1000] -translate-x-1/2 transform">
+				class="fixed left-1/2 top-16 z-[1000] -translate-x-1/2 transform">
 				<div
 					class="flex items-center gap-3 rounded-lg border border-outline-gray-2 bg-surface-white px-4 py-2.5 shadow-lg">
-					<div
+					<FeatherIcon
 						v-if="generating"
-						class="border-ink-gray-3 border-t-ink-gray-9 h-4 w-4 animate-spin rounded-full border-2"></div>
+						name="loader"
+						class="h-4 w-4 animate-spin text-ink-gray-7" />
 					<FeatherIcon v-else name="check-circle" class="h-4 w-4 text-ink-green-3" />
 					<span class="text-sm font-medium text-ink-gray-9">
 						{{ progressMessage || (mode === "modify" ? "Modifying section..." : "Generating page...") }}
