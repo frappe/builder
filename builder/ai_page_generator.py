@@ -61,10 +61,10 @@ MODEL_TIERS = {
 		"complex": "claude-sonnet-4-6",
 	},
 	"google": {
-		"trivial": "gemini-1.5-flash",
-		"simple": "gemini-1.5-flash",
-		"moderate": "gemini-2.0-flash-exp",
-		"complex": "gemini-1.5-pro",
+		"trivial": "gemini-2.5-flash-lite",
+		"simple": "gemini-2.5-flash",
+		"moderate": "gemini-2.5-flash",
+		"complex": "gemini-2.5-pro",
 	},
 	"x-ai": {
 		"trivial": "grok-beta",
@@ -86,9 +86,9 @@ MODEL_COST_INDEX = {
 	"claude-haiku-4-5": 1,
 	"claude-sonnet-4-6": 4,
 	"claude-opus-4-6": 7,
-	"gemini-1.5-flash": 1,
-	"gemini-2.0-flash-exp": 2,
-	"gemini-1.5-pro": 5,
+	"gemini-2.5-flash-lite": 1,
+	"gemini-2.5-flash": 2,
+	"gemini-2.5-pro": 5,
 	"grok-beta": 2,
 	"grok-2-1212": 4,
 	"grok-2-vision-1212": 4,
@@ -97,8 +97,8 @@ MODEL_COST_INDEX = {
 TASK_PARAMS = {
 	"trivial": {"max_tokens": 2000, "temperature": 0.3},
 	"simple": {"max_tokens": 4000, "temperature": 0.5},
-	"moderate": {"max_tokens": 8000, "temperature": 0.7},
-	"complex": {"max_tokens": 12000, "temperature": 0.7},
+	"moderate": {"max_tokens": 18000, "temperature": 0.7},
+	"complex": {"max_tokens": 20000, "temperature": 0.7},
 }
 
 TIER_ORDER = ["trivial", "simple", "moderate", "complex"]
@@ -249,26 +249,27 @@ def build_user_message(prompt: str, task_tier: str, is_modify: bool, block_conte
 # ─── LLM Helpers ──────────────────────────────────────────────────
 
 
-def _call_llm(model: str, messages: list, params: dict, *, stream: bool = True):
+def _call_llm(model: str, messages: list, params: dict, *, stream: bool = True, api_key: str | None = None):
 	"""Unified litellm call. Returns iterator (stream) or string (non-stream)."""
 	import litellm
 
+	# Google AI Studio keys require the 'gemini/' provider prefix;
+	# without it litellm routes to Vertex AI and demands ADC credentials.
+	if model.startswith("gemini-"):
+		model = f"gemini/{model}"
+
 	litellm.drop_params = True
-	if stream:
-		return litellm.completion(
-			model=model,
-			messages=messages,
-			temperature=params["temperature"],
-			max_tokens=params["max_tokens"],
-			stream=True,
-		)
-	resp = litellm.completion(
+	kwargs = dict(
 		model=model,
 		messages=messages,
 		temperature=params["temperature"],
 		max_tokens=params["max_tokens"],
-		stream=False,
 	)
+	if api_key:
+		kwargs["api_key"] = api_key
+	if stream:
+		return litellm.completion(**kwargs, stream=True)
+	resp = litellm.completion(**kwargs, stream=False)
 	return resp.choices[0].message.content or ""
 
 
@@ -292,7 +293,6 @@ def _parse_blocks(content: str) -> list[dict]:
 
 
 def get_available_models():
-	"""Return list of available AI models"""
 	return [
 		{
 			"provider": "openai",
@@ -318,13 +318,9 @@ def get_available_models():
 		{
 			"provider": "google",
 			"models": [
-				{"name": "gemini-1.5-flash", "label": "Gemini 1.5 Flash", "max_tokens": 1048576},
-				{"name": "gemini-1.5-pro", "label": "Gemini 1.5 Pro", "max_tokens": 2097152},
-				{
-					"name": "gemini-2.0-flash-exp",
-					"label": "Gemini 2.0 Flash (Experimental)",
-					"max_tokens": 1048576,
-				},
+				{"name": "gemini-2.5-pro", "label": "Gemini 2.5 Pro", "max_tokens": 1048576},
+				{"name": "gemini-2.5-flash", "label": "Gemini 2.5 Flash", "max_tokens": 1048576},
+				{"name": "gemini-2.5-flash-lite", "label": "Gemini 2.5 Flash-Lite", "max_tokens": 1048576},
 			],
 		},
 		{
@@ -411,8 +407,6 @@ def generate_page_blocks(
 		params = TASK_PARAMS[task_tier]
 		should_stream = task_tier in ("moderate", "complex")
 
-		set_api_key_for_provider(optimal_model, api_key)
-
 		tier_label = {"trivial": "quick", "simple": "fast", "moderate": "standard", "complex": "full"}[
 			task_tier
 		]
@@ -437,7 +431,7 @@ def generate_page_blocks(
 
 		# ── LLM call (stream for complex, single-shot for simple) ──
 		if should_stream:
-			response = _call_llm(optimal_model, messages, params, stream=True)
+			response = _call_llm(optimal_model, messages, params, stream=True, api_key=api_key)
 			for chunk in response:
 				delta = chunk.choices[0].delta.content
 				if delta:
@@ -448,7 +442,7 @@ def generate_page_blocks(
 						user=user,
 					)
 		else:
-			content = _call_llm(optimal_model, messages, params, stream=False)
+			content = _call_llm(optimal_model, messages, params, stream=False, api_key=api_key)
 
 		# ── Parse with automatic escalation on failure ──
 		try:
@@ -461,11 +455,12 @@ def generate_page_blocks(
 					{"page_id": page_id, "message": f"Refining with {escalated}..."},
 					user=user,
 				)
-				set_api_key_for_provider(escalated, api_key)
 				next_idx = min(TIER_ORDER.index(task_tier) + 1, len(TIER_ORDER) - 1)
 				next_tier = TIER_ORDER[next_idx]
 				messages[0]["content"] = get_system_prompt_for_tier(next_tier, is_modify=False)
-				content = _call_llm(escalated, messages, TASK_PARAMS[next_tier], stream=False)
+				content = _call_llm(
+					escalated, messages, TASK_PARAMS[next_tier], stream=False, api_key=api_key
+				)
 				blocks = _parse_blocks(content)
 			else:
 				raise
@@ -534,7 +529,7 @@ def set_api_key_for_provider(model: str, api_key: str):
 	key_mapping = {
 		"openai": "OPENAI_API_KEY",
 		"anthropic": "ANTHROPIC_API_KEY",
-		"google": "GOOGLE_API_KEY",
+		"google": "GEMINI_API_KEY",
 		"x-ai": "XAI_API_KEY",
 	}
 
@@ -610,8 +605,6 @@ def modify_section_blocks(
 		# Strip context to save tokens
 		stripped_context = strip_block_context(block_context, task_tier)
 
-		set_api_key_for_provider(optimal_model, api_key)
-
 		tier_label = {"trivial": "quick", "simple": "fast", "moderate": "standard", "complex": "full"}[
 			task_tier
 		]
@@ -636,7 +629,7 @@ def modify_section_blocks(
 
 		# ── LLM call (stream for complex, single-shot for simple) ──
 		if should_stream:
-			response = _call_llm(optimal_model, messages, params, stream=True)
+			response = _call_llm(optimal_model, messages, params, stream=True, api_key=api_key)
 			for chunk in response:
 				delta = chunk.choices[0].delta.content
 				if delta:
@@ -647,7 +640,7 @@ def modify_section_blocks(
 						user=user,
 					)
 		else:
-			content = _call_llm(optimal_model, messages, params, stream=False)
+			content = _call_llm(optimal_model, messages, params, stream=False, api_key=api_key)
 
 		# ── Parse with automatic escalation on failure ──
 		try:
@@ -660,11 +653,12 @@ def modify_section_blocks(
 					{"page_id": page_id, "message": f"Refining with {escalated}..."},
 					user=user,
 				)
-				set_api_key_for_provider(escalated, api_key)
 				next_idx = min(TIER_ORDER.index(task_tier) + 1, len(TIER_ORDER) - 1)
 				next_tier = TIER_ORDER[next_idx]
 				messages[0]["content"] = get_system_prompt_for_tier(next_tier, is_modify=True)
-				content = _call_llm(escalated, messages, TASK_PARAMS[next_tier], stream=False)
+				content = _call_llm(
+					escalated, messages, TASK_PARAMS[next_tier], stream=False, api_key=api_key
+				)
 				blocks = _parse_blocks(content)
 			else:
 				raise
@@ -694,43 +688,22 @@ def modify_section_blocks(
 
 @frappe.whitelist()
 def get_ai_models():
-	"""API endpoint to get available AI models"""
 	return get_available_models()
 
 
 @frappe.whitelist()
-def modify_section_from_prompt(
-	prompt: str,
-	block_context: str,
-	page_id: str | None = None,
-	model: str | None = None,
-	api_key: str | None = None,
-):
-	"""
-	API endpoint to modify existing section blocks from a prompt.
-	Reads model and API key from Builder Settings if not provided.
-	"""
+def modify_section_from_prompt(prompt: str, block_context: str, page_id: str | None = None):
 	if not frappe.has_permission("Builder Page", ptype="write"):
 		frappe.throw(_("You do not have permission to modify pages"))
 
-	if not prompt or not prompt.strip():
-		frappe.throw(_("Please provide a prompt describing the modification"))
-
-	if not block_context or not block_context.strip():
-		frappe.throw(_("Block context is required for modification"))
-
-	# Validate block_context is valid JSON
 	try:
 		json.loads(block_context)
 	except json.JSONDecodeError:
 		frappe.throw(_("Invalid block context JSON"))
 
-	# Read from Builder Settings if not provided
-	if not model:
-		settings = frappe.get_single("Builder Settings")
-		model = settings.get("ai_model")
-		if not api_key:
-			api_key = settings.get_password("ai_api_key", raise_exception=False)
+	settings = frappe.get_single("Builder Settings")
+	model = settings.get("ai_model")
+	api_key = settings.get_password("ai_api_key", raise_exception=False)
 
 	if not model:
 		frappe.throw(_("Please configure an AI model in Settings → AI"))
@@ -756,25 +729,13 @@ def modify_section_from_prompt(
 
 
 @frappe.whitelist()
-def generate_page_from_prompt(
-	prompt: str, page_id: str | None = None, model: str | None = None, api_key: str | None = None
-):
-	"""
-	API endpoint to generate page blocks from a prompt.
-	Reads model and API key from Builder Settings if not provided.
-	"""
+def generate_page_from_prompt(prompt: str, page_id: str | None = None):
 	if not frappe.has_permission("Builder Page", ptype="write"):
 		frappe.throw(_("You do not have permission to generate pages"))
 
-	if not prompt or not prompt.strip():
-		frappe.throw(_("Please provide a prompt describing the page you want to create"))
-
-	# Read from Builder Settings if not provided
-	if not model:
-		settings = frappe.get_single("Builder Settings")
-		model = settings.get("ai_model")
-		if not api_key:
-			api_key = settings.get_password("ai_api_key", raise_exception=False)
+	settings = frappe.get_single("Builder Settings")
+	model = settings.get("ai_model")
+	api_key = settings.get_password("ai_api_key", raise_exception=False)
 
 	if not model:
 		frappe.throw(_("Please configure an AI model in Settings → AI"))
@@ -788,8 +749,6 @@ def generate_page_from_prompt(
 		api_key=api_key,
 		user=user,
 		page_id=page_id,
-		queue="default",
-		is_async=True,
 	)
 
 	return {
@@ -804,13 +763,14 @@ def test_api_key(model: str, api_key: str):
 	try:
 		import litellm
 
-		set_api_key_for_provider(model, api_key)
-
 		# Make a simple test call
+		test_model = f"gemini/{model}" if model.startswith("gemini-") else model
+		litellm.drop_params = True
 		litellm.completion(
-			model=model,
+			model=test_model,
 			messages=[{"role": "user", "content": "Say 'OK' if you can read this"}],
 			max_tokens=10,
+			api_key=api_key,
 		)
 
 		return {
