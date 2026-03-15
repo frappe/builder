@@ -178,7 +178,7 @@ FOCUSED_MODIFY_PROMPT = (
 	"text?: str\n"
 	"m_style?: dict\n\n"
 	"Rules: Preserve 'id' values. Only change what requested. Return COMPLETE structure. "
-	"Use %, rem for responsive widths.\n"
+	"Use %, rem for responsive widths. Top-level sections MUST be 100% width.\n"
 	"Wrap text in semantic elements — never place text directly in div/section."
 )
 
@@ -193,7 +193,7 @@ COMPACT_GENERATION_PROMPT = (
 	"attrs?: dict    # attributes (src, alt, href)\n"
 	"text?: str      # inner content\n"
 	"m_style?: dict  # mobile overrides\n\n"
-	"Design: flex/grid layouts, 100% widths, modern colors, Google Fonts via fontFamily "
+	"Design: flex/grid layouts, top-level sections MUST be 100% width, modern colors, Google Fonts via fontFamily "
 	'(use ONLY the font name e.g. "Bebas Neue" — never add fallback families).\n'
 	"Wrap text in semantic elements (p, h1-h3, span, a) — never place text directly in div/section."
 )
@@ -504,7 +504,7 @@ Return ONLY a valid YAML array of blocks. No markdown, no explanations.
 - classes: CSS class names
 
 # Rules:
-- Use flex/grid layouts with 100% widths
+- Top-level sections MUST always have 'width: 100%'. Use flex/grid layouts.
 - Modern harmonious color palettes
 - Google Fonts via fontFamily in style (use ONLY the font name, e.g. "Bebas Neue" — do NOT add CSS fallback families)
 - Responsive: %, rem, auto-fit units; add m_style overrides
@@ -700,7 +700,7 @@ Modify the existing structure based on user instructions. Return ONLY a valid YA
 2. Only modify what the user explicitly asks for
 3. Keep existing structure intact where not asked to change
 4. Return the COMPLETE modified block structure (not a diff)
-5. Use responsive units (%, rem, auto-fit) for widths
+5. Use responsive units (%, rem, auto-fit) for widths. Top-level sections MUST be 100% width.
 6. Wrap text in semantic text elements (p, h1-h3, span, a) — never place text directly in div/section
 
 # CRITICAL: Return ONLY valid YAML array."""
