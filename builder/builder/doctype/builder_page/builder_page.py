@@ -734,7 +734,11 @@ def create_html_tag(block: dict, state: dict) -> bs.Tag:
 
 def build_tag_classes(block: dict, state: dict) -> list[str]:
 	"""Build list of CSS classes for the tag."""
-	classes = block.get("classes", []).copy()
+	classes = block.get("classes", [])
+	if isinstance(classes, str):
+		classes = [c.strip() for c in classes.split(",") if c.strip()]
+	else:
+		classes = classes.copy()
 	element = block.get("originalElement") or block.get("element")
 
 	text_elements = {"span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6", "label", "a"}
