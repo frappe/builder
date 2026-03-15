@@ -9,3 +9,5 @@ builder/public/page_scripts
 builder/public/page_styles
 builder/www/_builder.html
 builder/public/dist
+frontend/test-results
+frontend/playwright-report
