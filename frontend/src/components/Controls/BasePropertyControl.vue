@@ -19,7 +19,7 @@
 				:showDropdown="showDropdown"
 				:dropdownOptions="dropdownOptions"
 				:enableSlider="enableSlider"
-				containerClass="w-[88px] shrink-0"
+				containerClass="min-w-[88px] w-1/3 shrink-0"
 				@mousedown="handleMouseDown" />
 
 			<DraggablePopup
