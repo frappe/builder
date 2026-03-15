@@ -7,11 +7,20 @@ import userFonts from "@/data/userFonts";
 import { UserFont } from "@/types/Builder/UserFont";
 import blockController from "@/utils/blockController";
 import { setFont as _setFont, fontList, getFontWeightOptions } from "@/utils/fontManager";
+import stylePreset from "@/data/stylePreset";
 
 const setFont = (font: string) => {
 	_setFont(font, null).then(() => {
 		blockController.setFontFamily(font);
 	});
+};
+
+const styleKeyMap: Record<string, string> = {
+    fontFamily: "fontFamily",
+    fontWeight: "fontWeight",
+    fontSize: "fontSize",
+    lineHeight: "lineHeight",
+    textTransform: "textTransform",
 };
 
 const typographySectionProperties = [
@@ -33,6 +42,54 @@ const typographySectionProperties = [
 		searchKeyWords: "Content, Text, ContentText, Content Text",
 		condition: () =>
 			(blockController.isText() || blockController.isButton()) && !blockController.multipleBlocksSelected(),
+	},
+	{
+		component: StylePropertyControl,
+		getProps: () => {
+			return {
+				label: "Style",
+				propertyKey: "textStylePreset",
+				type: "select",
+				options: stylePreset.data //list of items in dropdown
+					? [
+						{ label: "None", value: null },
+						...stylePreset.data.map((s: any) => ({ //s -> object and kept any not defined type of it 
+						label: s.style_name, //if stylebook.data exists and loaded, do the map or else return empty array
+						value: s.style_name,
+					}))
+					]	
+					: [{ label: "None", value: " " }],
+				getModelValue: () => String(blockController.getStyle("textStylePreset") ?? ""),
+				setModelValue: (val: string) => { //called when user selects an option
+					blockController.setStyle("textStylePreset", val);
+					blockController.setPresetStyle(val);
+					if (!val) {
+						blockController.setPresetStyle("");
+						Object.values(styleKeyMap).forEach((cssProperty) => {
+            				blockController.setStyle(cssProperty as styleProperty, null);
+          	        });
+        			return;
+					}
+					Object.values(styleKeyMap).forEach((cssProperty) => {
+					blockController.setStyle(cssProperty as styleProperty, null);
+					});
+					const preset = stylePreset.data?.find((s: any) => s.style_name === val);
+					if (!preset) return;
+					const map = typeof preset.style_map === "string" 
+    					? JSON.parse(preset.style_map) 	
+						: preset.style_map;
+					Object.entries(map).forEach(([key, value]) => {
+					if (key === "fontFamily") {
+						setFont(value as string);
+					} else if (styleKeyMap[key]) {
+						blockController.setStyle(styleKeyMap[key] as styleProperty, value as string);
+					}
+				});
+			},
+			};
+		},
+		searchKeyWords: "Style, Preset, Typography",
+		condition: () => blockController.isText(),
 	},
 	{
 		component: StylePropertyControl,
@@ -81,7 +138,6 @@ const typographySectionProperties = [
 				actionButton: {
 					component: FontUploader,
 				},
-				getModelValue: () => blockController.getFontFamily(),
 				setModelValue: (val: string) => setFont(val),
 			};
 		},

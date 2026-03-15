@@ -11,10 +11,12 @@
 </template>
 
 <script lang="ts" setup>
+import { getPresetMap } from "@/utils/presetUtils";
 import BasePropertyControl from "@/components/Controls/BasePropertyControl.vue";
 import blockController from "@/utils/blockController";
 import type { Component } from "vue";
 import { computed } from "vue";
+import { getFontWeightOptions } from "@/utils/fontManager";
 
 const props = withDefaults(
 	defineProps<{
@@ -92,15 +94,39 @@ const setVariantValue = (variantName: string, value: string | number | boolean |
 
 const baseProps = computed(() => {
 	const { enableStates, enabledStates, variants, ...rest } = props;
+	const presetMap = getPresetMap();
+	const presetValue = presetMap?.[props.propertyKey];
+	const isInherited =
+		presetValue && blockController.getNativeStyle(props.propertyKey as styleProperty) === presetValue;
 	return {
 		...rest,
 		controlType: "style" as const,
-		getModelValue: props.getModelValue || (() => blockController.getNativeStyle(props.propertyKey) ?? ""),
+		getModelValue:
+			props.getModelValue ||
+			(() => (isInherited ? "" : String(blockController.getNativeStyle(props.propertyKey) ?? ""))),
 		setModelValue:
 			props.setModelValue ||
-			((value: string | number | boolean) => blockController.setStyle(props.propertyKey, value)),
+			((value: string | number | boolean) => {
+				if (!value && presetValue) {
+					blockController.setStyle(props.propertyKey, presetValue);
+				} else {
+					blockController.setStyle(props.propertyKey, value);
+				}
+			}),
 		getPlaceholder:
-			props.getPlaceholder || (() => blockController.getCascadingStyle(props.propertyKey) ?? "unset"),
+			props.getPlaceholder ||
+			(() => {
+				if (presetValue) {
+					if (props.propertyKey === "fontWeight") {
+						const options = getFontWeightOptions(
+							(blockController.getStyle("fontFamily") as string) || "Inter",
+						);
+						return options.find((o) => o.value === String(presetValue))?.label || String(presetValue);
+					}
+					return String(presetValue);
+				}
+				return String(blockController.getCascadingStyle(props.propertyKey) ?? "unset");
+			}),
 	};
 });
 </script>
