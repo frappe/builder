@@ -27,7 +27,7 @@ const emit = defineEmits(["update:modelValue"]);
 
 const dialRef = ref<HTMLElement | null>(null);
 const { elementX, elementY, elementWidth, elementHeight } = useMouseInElement(dialRef);
-const { pressed } = useMousePressed();
+const { pressed } = useMousePressed({ target: dialRef });
 
 watch([elementX, elementY, pressed], () => {
 	if (!pressed.value) return;

@@ -86,6 +86,7 @@
 
 <script setup lang="ts">
 import { parseGradient, stringifyGradient, type Gradient, type GradientStop } from "@/utils/gradientUtils";
+import { useMouseInElement, useMousePressed } from "@vueuse/core";
 import { Popover } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 import AnglePicker from "./AnglePicker.vue";
@@ -93,7 +94,6 @@ import BuilderButton from "./BuilderButton.vue";
 import ColorPicker from "./ColorPicker.vue";
 import Input from "./Input.vue";
 import TabButtons from "./TabButtons.vue";
-import { useMouseInElement, useMousePressed } from "@vueuse/core";
 
 const props = defineProps<{
 	modelValue: string | null;
@@ -152,20 +152,31 @@ const applyPreset = (presetGradient: string) => {
 	const parsed = parseGradient(presetGradient);
 	if (parsed) {
 		gradient.value = parsed;
-		emitUpdate();
+		emit("update:modelValue", stringifyGradient(parsed));
 	}
 };
 
-const defaultGradient: Gradient = {
+const getDefaultGradient = (): Gradient => ({
 	type: "linear-gradient",
 	angle: "180deg",
 	stops: [
 		{ color: "#ffffff", position: 0 },
 		{ color: "#000000", position: 100 },
 	],
+});
+
+const gradient = ref<Gradient>(getDefaultGradient());
+
+const initializeGradient = (value: string | null) => {
+	const parsed = parseGradient(value || "");
+	if (parsed) {
+		gradient.value = parsed;
+	} else if (!gradient.value.stops.length || !value) {
+		gradient.value = getDefaultGradient();
+	}
 };
 
-const gradient = ref<Gradient>(parseGradient(props.modelValue || "") || { ...defaultGradient });
+initializeGradient(props.modelValue);
 
 const angleValue = computed(() => {
 	return gradient.value.angle.replace("deg", "");
@@ -191,8 +202,12 @@ watch(
 	() => props.modelValue,
 	(newVal) => {
 		const parsed = parseGradient(newVal || "");
-		if (parsed && stringifyGradient(parsed) !== stringifyGradient(gradient.value)) {
-			gradient.value = parsed;
+		if (parsed) {
+			const currentString = stringifyGradient(gradient.value);
+			const newString = stringifyGradient(parsed);
+			if (currentString !== newString) {
+				gradient.value = parsed;
+			}
 		}
 	},
 );

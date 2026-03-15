@@ -24,9 +24,9 @@ export function parseGradient(gradientStr: string): Gradient | null {
 
 	if (parts[0]) {
 		const firstPart = parts[0].trim();
-		const isAngle = firstPart.includes("deg") || firstPart.includes("to ");
-		const isRadialConfig = firstPart.includes("circle") || firstPart.includes("ellipse") || firstPart.includes("at ");
-		
+		const isAngle = /^(-?\d+(\.\d+)?deg|to\s+(top|bottom|left|right)(\s+(top|bottom|left|right))?)/i.test(firstPart);
+		const isRadialConfig = /^(circle|ellipse|at\s+|closest-side|farthest-side|closest-corner|farthest-corner)/i.test(firstPart);
+
 		if (isAngle || isRadialConfig) {
 			angle = firstPart;
 			stopsStartIdx = 1;

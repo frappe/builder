@@ -44,7 +44,11 @@
 				<!-- Color Tab -->
 				<div v-if="activeTab === 'color'" class="w-full space-y-4">
 					<ColorPicker renderMode="inline" :modelValue="backgroundColor" @update:modelValue="setBGColor" />
-					<BuilderButton v-if="backgroundColor" class="w-full" variant="subtle" @click="setBGColor(null)">
+					<BuilderButton
+						:disabled="!backgroundColor"
+						class="w-full"
+						variant="subtle"
+						@click="setBGColor(null)">
 						Clear Color
 					</BuilderButton>
 				</div>
@@ -104,9 +108,7 @@
 
 				<!-- Gradient Tab -->
 				<div v-else class="space-y-4">
-					<GradientEditor
-						:modelValue="isGradient ? rawBackgroundImage : null"
-						@update:modelValue="setGradient" />
+					<GradientEditor :modelValue="rawBackgroundImage" @update:modelValue="setGradient" />
 					<BuilderButton v-if="isGradient" class="w-full" variant="subtle" @click="clearBGImage">
 						Clear Gradient
 					</BuilderButton>
@@ -150,7 +152,9 @@ const getStyleKey = (prop: string, state: string | null = activeState.value) => 
 	return state ? `${state}:${prop}` : prop;
 };
 
-const rawBackgroundImage = computed(() => blockController.getStyle(getStyleKey("backgroundImage")) as any);
+const rawBackgroundImage = computed(
+	() => (blockController.getStyle(getStyleKey("backgroundImage")) || "") as string,
+);
 const backgroundColor = computed(() => blockController.getStyle(getStyleKey("backgroundColor")) as any);
 
 const isGradient = computed(() => rawBackgroundImage.value?.includes("gradient"));
