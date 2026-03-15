@@ -1,31 +1,35 @@
 import json
 import re
-import yaml
 
 import frappe
+import yaml
 from frappe import _
 
 # ─── Task Classification ───────────────────────────────────────────
 
 TRIVIAL_PATTERNS = [
-	r"\b(change|update|rename|rephrase|reword|fix|correct|replace)\b.*\b(text|title|heading|label|typo|word|name|copy|content|string)\b",
-	r"\b(change|update|set|make)\b.*\b(colou?r|font|size|bold|italic|underline|weight)\b",
-	r"\b(change|update|set)\b.*\b(background|bg)\s*(colou?r)?\b",
-	r"\bmake\s+(it\s+)?(bigger|smaller|larger|bolder|lighter|darker|brighter)\b",
+	re.compile(
+		r"\b(change|update|rename|rephrase|reword|fix|correct|replace)\b.*\b(text|title|heading|label|typo|word|name|copy|content|string)\b"
+	),
+	re.compile(r"\b(change|update|set|make)\b.*\b(colou?r|font|size|bold|italic|underline|weight)\b"),
+	re.compile(r"\b(change|update|set)\b.*\b(background|bg)\s*(colou?r)?\b"),
+	re.compile(r"\bmake\s+(it\s+)?(bigger|smaller|larger|bolder|lighter|darker|brighter)\b"),
 ]
 
 SIMPLE_PATTERNS = [
-	r"\b(add|insert|include|put)\b.*\b(button|link|icon|image|img|divider|spacer|badge|tag)\b",
-	r"\b(change|update|set|adjust|modify|tweak)\b.*\b(padding|margin|spacing|gap|border|shadow|radius|opacity|alignment|align|width|height)\b",
-	r"\b(center|left.?align|right.?align|justify)\b",
-	r"\b(hide|show|remove|delete|toggle)\b.*\b(block|element|section|button|text|image|div)\b",
-	r"\b(move|swap|reorder|rearrange)\b",
-	r"\b(round|rounded|square|circle|pill)\b.*\b(corner|border|shape)\b",
+	re.compile(r"\b(add|insert|include|put)\b.*\b(button|link|icon|image|img|divider|spacer|badge|tag)\b"),
+	re.compile(
+		r"\b(change|update|set|adjust|modify|tweak)\b.*\b(padding|margin|spacing|gap|border|shadow|radius|opacity|alignment|align|width|height)\b"
+	),
+	re.compile(r"\b(center|left.?align|right.?align|justify)\b"),
+	re.compile(r"\b(hide|show|remove|delete|toggle)\b.*\b(block|element|section|button|text|image|div)\b"),
+	re.compile(r"\b(move|swap|reorder|rearrange)\b"),
+	re.compile(r"\b(round|rounded|square|circle|pill)\b.*\b(corner|border|shape)\b"),
 ]
 
 COMPLEX_PATTERNS = [
-	r"\b(create|build|generate|make|design)\b.*\b(page|landing|website|full|complete)\b",
-	r"\b(from\s+scratch|entire|whole|complete|multi.?section)\b",
+	re.compile(r"\b(create|build|generate|make|design)\b.*\b(page|landing|website|full|complete)\b"),
+	re.compile(r"\b(from\s+scratch|entire|whole|complete|multi.?section)\b"),
 ]
 
 
@@ -35,18 +39,18 @@ def classify_task(prompt: str, is_modify: bool = False) -> str:
 
 	if not is_modify:
 		for p in COMPLEX_PATTERNS:
-			if re.search(p, lower):
+			if p.search(lower):
 				return "complex"
 		return "moderate"
 
 	for p in TRIVIAL_PATTERNS:
-		if re.search(p, lower):
+		if p.search(lower):
 			return "trivial"
 	for p in SIMPLE_PATTERNS:
-		if re.search(p, lower):
+		if p.search(lower):
 			return "simple"
 	for p in COMPLEX_PATTERNS:
-		if re.search(p, lower):
+		if p.search(lower):
 			return "complex"
 	return "moderate"
 
@@ -121,24 +125,29 @@ def get_optimal_model(configured_model: str, task_tier: str) -> str:
 
 def get_escalated_model(current_model: str, configured_model: str) -> str | None:
 	"""Next-tier fallback model, capped at configured model's cost."""
-	provider = get_provider_from_model(current_model)
+	provider = get_provider_from_model(configured_model)
 	tier_map = MODEL_TIERS.get(provider)
 	if not tier_map:
 		return None
-	reverse_map = {v: k for k, v in tier_map.items()}
-	current_tier = reverse_map.get(current_model)
-	if not current_tier or current_tier not in TIER_ORDER:
-		return None
-	idx = TIER_ORDER.index(current_tier)
-	if idx >= len(TIER_ORDER) - 1:
-		return None
-	next_model = tier_map.get(TIER_ORDER[idx + 1])
-	if not next_model or next_model == current_model:
-		return None
+
 	configured_cost = MODEL_COST_INDEX.get(configured_model, 5)
-	if MODEL_COST_INDEX.get(next_model, 5) > configured_cost:
-		return configured_model if configured_model != current_model else None
-	return next_model
+
+	current_tier = None
+	for tier in TIER_ORDER:
+		if tier_map.get(tier) == current_model:
+			current_tier = tier
+
+	if current_tier is None or current_tier not in TIER_ORDER:
+		return None
+
+	for next_tier in TIER_ORDER[TIER_ORDER.index(current_tier) + 1 :]:
+		next_model = tier_map.get(next_tier)
+		if not next_model or next_model == current_model:
+			continue
+		if MODEL_COST_INDEX.get(next_model, 5) <= configured_cost:
+			return next_model
+
+	return None
 
 
 # ─── Tiered System Prompts ────────────────────────────────────────
@@ -205,37 +214,99 @@ def get_system_prompt_for_tier(task_tier: str, is_modify: bool) -> str:
 
 # ─── Context Optimization ─────────────────────────────────────────
 
-def compress_block_to_dsl(block: dict, depth: int=0, task_tier: str="moderate") -> dict:
+STYLE_KEYS_TRIVIAL = frozenset(
+	{
+		"color",
+		"backgroundColor",
+		"fontSize",
+		"fontWeight",
+		"fontStyle",
+		"textDecoration",
+		"opacity",
+		"visibility",
+	}
+)
+
+STYLE_KEYS_SIMPLE = frozenset(
+	{
+		"color",
+		"backgroundColor",
+		"background",
+		"fontSize",
+		"fontWeight",
+		"fontStyle",
+		"textDecoration",
+		"opacity",
+		"visibility",
+		"padding",
+		"paddingTop",
+		"paddingRight",
+		"paddingBottom",
+		"paddingLeft",
+		"margin",
+		"marginTop",
+		"marginRight",
+		"marginBottom",
+		"marginLeft",
+		"border",
+		"borderRadius",
+		"borderColor",
+		"borderWidth",
+		"display",
+		"width",
+		"height",
+		"maxWidth",
+	}
+)
+
+
+def compress_block_to_dsl(block: dict, depth: int = 0, task_tier: str = "moderate") -> dict:
 	if not isinstance(block, dict):
 		return block
 	dsl = {}
-	if block.get("element"): dsl["el"] = block["element"]
-	if block.get("blockId"): dsl["id"] = block["blockId"]
-	if block.get("blockName"): dsl["name"] = block["blockName"]
-	
-	if block.get("baseStyles") and isinstance(block.get("baseStyles"), dict): 
-		dsl["style"] = block["baseStyles"]
-	if block.get("attributes") and isinstance(block.get("attributes"), dict): 
+	if block.get("element"):
+		dsl["el"] = block["element"]
+	if block.get("blockId"):
+		dsl["id"] = block["blockId"]
+	if block.get("blockName"):
+		dsl["name"] = block["blockName"]
+
+	if block.get("baseStyles") and isinstance(block.get("baseStyles"), dict):
+		if task_tier == "trivial":
+			filtered = {k: v for k, v in block["baseStyles"].items() if k in STYLE_KEYS_TRIVIAL}
+		elif task_tier == "simple":
+			filtered = {k: v for k, v in block["baseStyles"].items() if k in STYLE_KEYS_SIMPLE}
+		else:
+			filtered = block["baseStyles"]
+		if filtered:
+			dsl["style"] = filtered
+
+	if block.get("attributes") and isinstance(block.get("attributes"), dict):
 		dsl["attrs"] = block["attributes"]
-	if block.get("classes"): 
+	if block.get("classes"):
 		dsl["classes"] = block["classes"]
-	
-	if block.get("innerText"): dsl["text"] = block["innerText"]
-	elif block.get("innerHTML"): dsl["text"] = block["innerHTML"]
-		
+
+	if block.get("innerText"):
+		dsl["text"] = block["innerText"]
+	elif block.get("innerHTML"):
+		dsl["text"] = block["innerHTML"]
+
 	if task_tier != "trivial" or depth <= 1:
-		if block.get("mobileStyles") and isinstance(block.get("mobileStyles"), dict): 
+		if block.get("mobileStyles") and isinstance(block.get("mobileStyles"), dict):
 			dsl["m_style"] = block["mobileStyles"]
-		if block.get("tabletStyles") and isinstance(block.get("tabletStyles"), dict): 
+		if block.get("tabletStyles") and isinstance(block.get("tabletStyles"), dict):
 			dsl["t_style"] = block["tabletStyles"]
-		
+
 	children = block.get("children", [])
 	if children and isinstance(children, list):
-		compressed_children = [compress_block_to_dsl(c, depth + 1, task_tier) for c in children if isinstance(c, dict)]
+		compressed_children = [
+			compress_block_to_dsl(c, depth + 1, task_tier) for c in children if isinstance(c, dict)
+		]
 		if compressed_children:
 			dsl["c"] = compressed_children
-			
+
 	return dsl
+
 
 def strip_block_context(block_context: str, task_tier: str) -> str:
 	"""Convert block JSON to compact YAML using a terse DSL to reduce input tokens."""
@@ -249,6 +320,7 @@ def strip_block_context(block_context: str, task_tier: str) -> str:
 
 	stripped = [compress_block_to_dsl(b, 0, task_tier) for b in data if isinstance(b, dict)]
 	return yaml.dump(stripped, sort_keys=False, default_flow_style=False)
+
 
 def expand_dsl_to_block(dsl_block: dict) -> dict:
 	"""Expand compact DSL dictionary back to Frappe Builder block schema."""
@@ -270,13 +342,13 @@ def expand_dsl_to_block(dsl_block: dict) -> dict:
 		block["tabletStyles"] = dsl_block["t_style"]
 	if "classes" in dsl_block:
 		block["classes"] = dsl_block["classes"]
-		
+
 	children = dsl_block.get("c", [])
 	if children and isinstance(children, list):
 		block["children"] = [expand_dsl_to_block(c) for c in children if isinstance(c, dict)]
 	else:
 		block["children"] = []
-		
+
 	return block
 
 
@@ -298,23 +370,52 @@ def _call_llm(model: str, messages: list, params: dict, *, stream: bool = True, 
 	"""Unified litellm call. Returns iterator (stream) or string (non-stream)."""
 	import litellm
 
-	# Google AI Studio keys require the 'gemini/' provider prefix;
-	# without it litellm routes to Vertex AI and demands ADC credentials.
 	if model.startswith("gemini-"):
 		model = f"gemini/{model}"
 
 	litellm.drop_params = True
+
+	# For Anthropic: inject cache_control into the system message content block
+	# so litellm forwards it correctly to Anthropic's caching layer.
+	# For all other providers: pass messages unchanged.
+	if "claude-" in model:
+		patched = []
+		for m in messages:
+			if m["role"] == "system":
+				patched.append(
+					{
+						"role": "system",
+						"content": [
+							{
+								"type": "text",
+								"text": m["content"]
+								if isinstance(m["content"], str)
+								else m["content"][0].get("text", ""),
+							}
+						],
+						"cache_control": {"type": "ephemeral"},
+					}
+				)
+			else:
+				patched.append(m)
+		messages = patched
+
 	kwargs = dict(
 		model=model,
 		messages=messages,
 		temperature=params["temperature"],
 		max_tokens=params["max_tokens"],
 	)
+
 	if api_key:
 		kwargs["api_key"] = api_key
 	if stream:
-		return litellm.completion(**kwargs, stream=True)
-	resp = litellm.completion(**kwargs, stream=False)
+		kwargs["stream"] = True
+
+	if stream:
+		return litellm.completion(**kwargs)
+
+	resp = litellm.completion(**kwargs)
 	return resp.choices[0].message.content or ""
 
 
@@ -322,18 +423,15 @@ def _parse_blocks(content: str) -> list[dict]:
 	"""Parse LLM YAML output into block list and expand DSL. Raises on invalid output."""
 	content = content.strip()
 	if content.startswith("```"):
-		content = content.split("\n", 1)[1] if "\n" in content else content[3:]
-		if content.endswith("```"):
-			content = content[:-3].strip()
-			
-	if content.startswith("yaml\n"):
-		content = content[5:]
-			
+		content = re.sub(r"^```(?:yaml)?\s*\n?", "", content)
+		content = re.sub(r"\n?```\s*$", "", content)
+	content = content.strip()
+
 	try:
 		parsed = yaml.safe_load(content)
 	except Exception as e:
 		raise ValueError(f"YAML parsing failed: {e}")
-		
+
 	if isinstance(parsed, dict):
 		blocks = [parsed]
 	elif isinstance(parsed, list):
@@ -342,7 +440,7 @@ def _parse_blocks(content: str) -> list[dict]:
 		raise ValueError("Not a valid block object")
 	if not blocks:
 		raise ValueError("No valid blocks in response")
-		
+
 	return [expand_dsl_to_block(b) for b in blocks]
 
 
@@ -452,7 +550,6 @@ def generate_page_blocks(
 			)
 			return
 
-		# ── Smart routing ──
 		task_tier = classify_task(prompt, is_modify=False)
 		optimal_model = get_optimal_model(model, task_tier)
 		params = TASK_PARAMS[task_tier]
@@ -475,17 +572,12 @@ def generate_page_blocks(
 
 		system_prompt = get_system_prompt_for_tier(task_tier, is_modify=False)
 		user_message = build_user_message(prompt, task_tier, is_modify=False)
-		
-		sys_msg = {"role": "system", "content": system_prompt}
-		if get_provider_from_model(optimal_model) == "anthropic":
-			sys_msg["cache_control"] = {"type": "ephemeral"}
-			
+
 		messages = [
-			sys_msg,
+			{"role": "system", "content": system_prompt, "cache_control": {"type": "ephemeral"}},
 			{"role": "user", "content": user_message},
 		]
 
-		# ── LLM call (stream for complex, single-shot for simple) ──
 		if should_stream:
 			response = _call_llm(optimal_model, messages, params, stream=True, api_key=api_key)
 			for chunk in response:
@@ -500,7 +592,6 @@ def generate_page_blocks(
 		else:
 			content = _call_llm(optimal_model, messages, params, stream=False, api_key=api_key)
 
-		# ── Parse with automatic escalation on failure ──
 		try:
 			blocks = _parse_blocks(content)
 		except ValueError:
@@ -651,13 +742,11 @@ def modify_section_blocks(
 			)
 			return
 
-		# ── Smart routing ──
 		task_tier = classify_task(prompt, is_modify=True)
 		optimal_model = get_optimal_model(model, task_tier)
 		params = TASK_PARAMS[task_tier]
 		should_stream = task_tier in ("moderate", "complex")
 
-		# Strip context to save tokens
 		stripped_context = strip_block_context(block_context, task_tier)
 
 		tier_label = {"trivial": "quick", "simple": "fast", "moderate": "standard", "complex": "full"}[
@@ -677,17 +766,12 @@ def modify_section_blocks(
 
 		system_prompt = get_system_prompt_for_tier(task_tier, is_modify=True)
 		user_message = build_user_message(prompt, task_tier, is_modify=True, block_context=stripped_context)
-		
-		sys_msg = {"role": "system", "content": system_prompt}
-		if get_provider_from_model(optimal_model) == "anthropic":
-			sys_msg["cache_control"] = {"type": "ephemeral"}
-			
+
 		messages = [
-			sys_msg,
+			{"role": "system", "content": system_prompt, "cache_control": {"type": "ephemeral"}},
 			{"role": "user", "content": user_message},
 		]
 
-		# ── LLM call (stream for complex, single-shot for simple) ──
 		if should_stream:
 			response = _call_llm(optimal_model, messages, params, stream=True, api_key=api_key)
 			for chunk in response:
@@ -702,7 +786,6 @@ def modify_section_blocks(
 		else:
 			content = _call_llm(optimal_model, messages, params, stream=False, api_key=api_key)
 
-		# ── Parse with automatic escalation on failure ──
 		try:
 			blocks = _parse_blocks(content)
 		except ValueError:
@@ -823,7 +906,6 @@ def test_api_key(model: str, api_key: str):
 	try:
 		import litellm
 
-		# Make a simple test call
 		test_model = f"gemini/{model}" if model.startswith("gemini-") else model
 		litellm.drop_params = True
 		litellm.completion(
