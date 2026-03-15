@@ -290,9 +290,13 @@ const dynamicValue = computed(() => {
 });
 
 const clearDynamicValue = () => {
-	blockController.getSelectedBlocks().forEach((block) => {
-		block.removeDynamicValue(props.propertyKey, props.controlType);
-	});
+	if (props.setDynamicValue) {
+		props.setDynamicValue("", "dataScript");
+	} else {
+		blockController.getSelectedBlocks().forEach((block) => {
+			block.removeDynamicValue(props.propertyKey, props.controlType);
+		});
+	}
 	emit("clearDynamicValue");
 };
 </script>
