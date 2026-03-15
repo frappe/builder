@@ -109,7 +109,7 @@
 				<!-- Gradient Tab -->
 				<div v-else class="space-y-4">
 					<GradientEditor :modelValue="rawBackgroundImage" @update:modelValue="setGradient" />
-					<BuilderButton v-if="isGradient" class="w-full" variant="subtle" @click="clearBGImage">
+					<BuilderButton :disabled="!isGradient" class="w-full" variant="subtle" @click="clearBGImage">
 						Clear Gradient
 					</BuilderButton>
 				</div>
