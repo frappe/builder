@@ -448,6 +448,7 @@ watch(
 		() => props.blockData,
 		() => props.block.getBlockDataScript(),
 		() => pageStore.settingPage,
+		() => pageStore.routeVariables,
 	],
 	() => {
 		if (pageStore.settingPage || props.repeaterIndex) return;
@@ -461,6 +462,7 @@ watch(
 				block_id: uid,
 				block_data_script: props.block.getBlockDataScript(),
 				props: JSON.stringify(allResolvedProps.value),
+				route_variables: pageStore.routeVariables,
 			})
 			.then((res: any) => {
 				ownBlockData.value = res || {};

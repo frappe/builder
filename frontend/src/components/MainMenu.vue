@@ -27,7 +27,7 @@ const router = useRouter();
 const toggleDark = useToggle(isDark);
 const canvasStore = useCanvasStore();
 
-const emit = defineEmits(["showSettings"]);
+const emit = defineEmits(["showSettings", "showShortcuts"]);
 
 const handleCopyPage = () => {
 	if (!pageStore.activePage) return;
@@ -85,6 +85,7 @@ const mainMenuOptions = [
 				icon: isDark ? "sun" : "moon",
 			},
 			{ label: "Settings", onClick: () => emit("showSettings"), icon: "settings" },
+			{ label: "Shortcuts", onClick: () => emit("showShortcuts"), icon: "command" },
 			{
 				label: "Help",
 				onClick: () => {
