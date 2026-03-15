@@ -22,6 +22,7 @@
 			:isChildOfComponent="block.isExtendedFromComponent() || isChildOfComponent"
 			:key="child.blockId"
 			:repeater-index="repeaterIndex"
+			:parent-block-uid="uidToUse"
 			v-for="child in block.getChildren().filter((child) => child.isVisible(breakpoint))" />
 	</component>
 	<teleport to="#overlay" v-if="canvasProps?.overlayElement && !preview && Boolean(canvasProps)">
@@ -71,7 +72,7 @@ import { builderSettings } from "@/data/builderSettings";
 import fetchBlockData from "@/data/blockData";
 import usePageStore from "@/stores/pageStore";
 import { toast } from "vue-sonner";
-import useBlockDataStore from "@/stores/blockDataStore";
+import { useBlockDataStore, useBlockUidStore } from "@/stores/blockStore";
 
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
@@ -80,6 +81,7 @@ const attrs = useAttrs();
 const editor = ref<InstanceType<typeof BlockEditor> | null>(null);
 const pageStore = usePageStore();
 const blockDataStore = useBlockDataStore();
+const blockUidStore = useBlockUidStore();
 
 const props = withDefaults(
 	defineProps<{
@@ -91,6 +93,7 @@ const props = withDefaults(
 		data?: Record<string, any> | null;
 		blockData?: Record<string, any> | null;
 		defaultProps?: Record<string, any> | null;
+		parentBlockUid?: string | null;
 		repeaterIndex?: string | number | null;
 	}>(),
 	{
@@ -122,7 +125,7 @@ const ownBlockData = ref<Record<string, any>>({});
 // So we need unique identifier for block data store
 // Thus we use blockId for the first index and then generate new IDs for the next items
 const uidToUse = !!props.repeaterIndex
-	? `builder-block-${props.block.blockId}-${Math.random().toString(36).substr(2, 9)}}`
+	? `builder-block-${props.block.blockId}-${props.repeaterIndex}}`
 	: props.block.blockId;
 
 const getComponentName = (block: Block) => {
@@ -391,6 +394,8 @@ onMounted(async () => {
 			reactive({ ghostScale: canvasProps?.scale || 1 }),
 		);
 	}
+	blockUidStore.registerBlockUid(uidToUse, props.block);
+	blockUidStore.setParentUid(uidToUse, props.parentBlockUid || "root");
 });
 
 const allResolvedProps = computed(() => {
@@ -419,6 +424,7 @@ const allResolvedProps = computed(() => {
 	};
 });
 
+// Execute client script
 watch(
 	[
 		component,
@@ -428,32 +434,18 @@ watch(
 		() => pageStore.settingPage,
 	],
 	() => {
-		if (pageStore.settingPage || !props.block.getBlockClientScript().trim()) return;
-		if (builderSettings.doc?.execute_block_scripts_in_editor !== "Don't Execute") {
-			if (builderSettings.doc?.execute_block_scripts_in_editor === "Restricted")
-				executeBlockClientScriptRestricted(
-					uidToUse,
-					props.block.getBlockClientScript(),
-					allResolvedProps.value,
-				);
-			else
-				executeBlockClientScriptUnrestricted(
-					uidToUse,
-					props.block.getBlockClientScript(),
-					allResolvedProps.value,
-				);
-		}
-	},
-	{ deep: true },
-);
+		if (pageStore.settingPage) return;
 
-watch(
-	[component, () => props.blockData, () => props.data],
-	() => {
-		blockDataStore.setPageData(uidToUse, props.data || {});
-		blockDataStore.setBlockData(uidToUse, props.blockData || {}, "passedDown");
+		const script = props.block.getBlockClientScript().trim();
+		if (!script) return;
+
+		const mode = builderSettings.doc?.execute_block_scripts_in_editor;
+		if (mode === "Don't Execute") return;
+
+		if (mode === "Restricted") executeBlockClientScriptRestricted(uidToUse, script, allResolvedProps.value);
+		else executeBlockClientScriptUnrestricted(uidToUse, script, allResolvedProps.value);
 	},
-	{ immediate: true, deep: true },
+	{ immediate: true },
 );
 
 watch(
@@ -464,32 +456,52 @@ watch(
 		() => props.block.getBlockDataScript(),
 		() => pageStore.settingPage,
 	],
-	() => {
+	(_, __, onCleanup) => {
 		if (pageStore.settingPage) return;
-		if (props.block.getBlockDataScript().trim() === "") {
+
+		const script = props.block.getBlockDataScript().trim();
+
+		if (!script) {
 			ownBlockData.value = {};
 			blockDataStore.setBlockData(uidToUse, {}, "own");
 			return;
 		}
+
+		let cancelled = false;
+		onCleanup(() => {
+			cancelled = true;
+		});
+
 		fetchBlockData
 			.fetch({
 				block_id: uidToUse,
-				block_data_script: props.block.getBlockDataScript(),
+				block_data_script: script,
 				props: JSON.stringify(allResolvedProps.value),
 			})
 			.then((res: any) => {
-				ownBlockData.value = res || {};
-				blockDataStore.setBlockData(uidToUse, res || {}, "own");
+				if (cancelled) return;
+
+				const data = res || {};
+				ownBlockData.value = data;
+				blockDataStore.setBlockData(uidToUse, data, "own");
 			})
 			.catch((e: { exc: string | null }) => {
+				if (cancelled) return;
+
 				const error_message = e.exc?.split("\n").slice(-2)[0];
 				toast.error("There was an error while fetching page data", {
 					description: error_message,
 				});
 			});
 	},
-	{ deep: true, immediate: true },
+	{ immediate: true },
 );
+
+watchEffect(() => {
+	blockDataStore.setPageData(uidToUse, props.data || {});
+	blockDataStore.setBlockData(uidToUse, props.blockData || {}, "passedDown");
+	blockDataStore.setBlockDefaultProps(uidToUse, props.defaultProps || {});
+});
 
 const isEditable = computed(() => {
 	// to ensure it is right block and not on different breakpoint
@@ -552,6 +564,9 @@ if (!props.preview) {
 onUnmounted(() => {
 	blockDataStore.clearBlockData(uidToUse);
 	blockDataStore.clearPageData(uidToUse);
+	blockDataStore.clearDefaultProps(uidToUse);
+	blockUidStore.unregisterBlockUid(uidToUse);
+	blockUidStore.clearParentUid(uidToUse);
 });
 
 // Note: All the block event listeners are delegated to parent for better scalability
