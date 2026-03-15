@@ -233,6 +233,30 @@ const usePageStore = defineStore("pageStore", {
 				});
 		},
 
+		async renamePage(newName: string) {
+			if (!this.activePage) return;
+			const oldName = this.activePage.name as string;
+			if (oldName === newName) return;
+
+			const renameResource = createResource({
+				url: "frappe.client.rename_doc",
+				method: "POST",
+			});
+
+			await renameResource.submit({
+				doctype: "Builder Page",
+				old_name: oldName,
+				new_name: newName,
+			});
+
+			if (this.activePage) {
+				this.activePage.name = newName;
+				this.activePage.page_name = newName;
+			}
+			this.selectedPage = newName;
+			router.replace({ name: "builder", params: { pageId: newName } });
+		},
+
 		savePage() {
 			const builderStore = useBuilderStore();
 			if (builderStore.readOnlyMode) return;

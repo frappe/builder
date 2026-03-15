@@ -207,6 +207,40 @@ class BuilderPage(WebsiteGenerator):
 			if os.path.exists(assets_path):
 				shutil.rmtree(assets_path)
 
+		if self.is_standard and self.app and frappe.conf.developer_mode:
+			from builder.export_import_standard_page import (
+				delete_standard_client_script_files,
+				delete_standard_page_files,
+			)
+
+			delete_standard_page_files(self.page_name, self.app)
+
+			for row in self.client_scripts:
+				other_refs = frappe.get_all(
+					"Builder Page Client Script",
+					filters={"builder_script": row.builder_script, "parent": ("!=", self.name)},
+					fields=["parent"],
+					ignore_permissions=True,
+				)
+				still_used = any(
+					frappe.db.get_value("Builder Page", ref.parent, ["is_standard", "app"], as_dict=True)
+					== {"is_standard": 1, "app": self.app}
+					for ref in other_refs
+				)
+				if not still_used:
+					delete_standard_client_script_files(row.builder_script, self.app)
+
+	def after_rename(self, old: str, new: str, merge: bool = False) -> None:
+		if not (self.is_standard and self.app and frappe.conf.developer_mode):
+			return
+		from builder.export_import_standard_page import (
+			delete_standard_page_files,
+			export_page_as_standard,
+		)
+
+		delete_standard_page_files(old, self.app)
+		export_page_as_standard(new, target_app=self.app)
+
 	def add_comment(self, comment_type="Comment", text=None, comment_email=None, comment_by=None):
 		if comment_type in ["Attachment Removed", "Attachment"]:
 			return
@@ -1367,7 +1401,7 @@ def parse_static_value(value: str, prop_type: str) -> Any:
 		case "number":
 			try:
 				return float(value)
-			except (ValueError, TypeError):
+			except ValueError, TypeError:
 				return None
 		case "boolean":
 			if isinstance(value, bool):
