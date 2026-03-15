@@ -136,6 +136,7 @@ import {
 	useActiveElement,
 	useBreakpoints,
 	useDebounceFn,
+	useThrottleFn,
 	useMagicKeys,
 } from "@vueuse/core";
 import { createResource } from "frappe-ui";
@@ -209,7 +210,7 @@ const handleGeneratedBlocks = (blocks: any[]) => {
 };
 
 // Handle live streaming blocks (partial, not saved)
-const handleStreamingBlocks = (blocks: any[]) => {
+const handleStreamingBlocks = useThrottleFn((blocks: any[]) => {
 	if (!blocks || blocks.length === 0) return;
 
 	try {
@@ -218,7 +219,7 @@ const handleStreamingBlocks = (blocks: any[]) => {
 	} catch {
 		// Partial block may still be invalid, skip this frame
 	}
-};
+}, 60);
 
 // Find a block in the tree by blockId and replace its children/styles with new data
 const replaceBlockInTree = (root: any, targetId: string, newBlocks: any[]): boolean => {
@@ -272,7 +273,7 @@ const handleModifiedBlocks = (blocks: any[]) => {
 };
 
 // Handle live streaming of modify (update block in-place)
-const handleModifyStreamingBlocks = (blocks: any[]) => {
+const handleModifyStreamingBlocks = useThrottleFn((blocks: any[]) => {
 	if (!blocks || blocks.length === 0 || !modifyBlockId.value) return;
 
 	try {
@@ -283,7 +284,7 @@ const handleModifyStreamingBlocks = (blocks: any[]) => {
 	} catch {
 		// Partial block may still be invalid, skip this frame
 	}
-};
+}, 60);
 
 watch([() => canvasStore.editableBlock, () => pageStore.activePage?.is_standard], () => {
 	builderStore.toggleReadOnlyMode(
