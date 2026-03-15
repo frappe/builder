@@ -1,5 +1,6 @@
 import json
 import re
+import yaml
 
 import frappe
 from frappe import _
@@ -144,38 +145,47 @@ def get_escalated_model(current_model: str, configured_model: str) -> str | None
 
 MINIMAL_MODIFY_PROMPT = (
 	"You modify web sections in Frappe Builder's block system.\n"
-	"Return ONLY valid JSON array. No markdown, no text. Start with [ end with ].\n\n"
-	'Block: {"element":"tag","blockName":"n","blockId":"id","baseStyles":{...},'
-	'"children":[...],"attributes":{...},"innerText":"t","mobileStyles":{...},"tabletStyles":{...}}\n\n'
-	"Preserve all blockId values. Only change what was asked. Use camelCase CSS.\n"
+	"Return ONLY valid YAML array. No markdown, no text.\n\n"
+	"# Schema\n"
+	"el: str\n"
+	"id: str # MUST preserve\n"
+	"style?: dict\n"
+	"c?: [el]\n"
+	"text?: str\n\n"
+	"Preserve all id values. Only change what was asked. Use camelCase CSS.\n"
 	"Wrap text in semantic elements (p, h1-h3, span, a) — never place text directly in div/section."
 )
 
 FOCUSED_MODIFY_PROMPT = (
 	"You modify web sections in Frappe Builder's block system.\n"
-	"Return ONLY valid JSON array. No markdown, no explanations. Start with [ end with ].\n\n"
-	"Block props: element, blockName, blockId, baseStyles (CSS-in-JS camelCase), "
-	"mobileStyles, tabletStyles, attributes, innerText/innerHTML, children, classes.\n"
-	'Style example: {"display":"flex","flexDirection":"column","padding":"2rem","backgroundColor":"#fff"}\n\n'
-	"Rules: Preserve blockId values. Only change what requested. Return COMPLETE block structure. "
+	"Return ONLY valid YAML array. No markdown, no explanations.\n\n"
+	"# Schema\n"
+	"el: str\n"
+	"id: str # MUST preserve existing\n"
+	"name?: str\n"
+	"style?: dict # CSS-in-JS camelCase\n"
+	"c?: [el]\n"
+	"attrs?: dict\n"
+	"text?: str\n"
+	"m_style?: dict\n\n"
+	"Rules: Preserve 'id' values. Only change what requested. Return COMPLETE structure. "
 	"Use %, rem for responsive widths.\n"
-	"Wrap text in semantic elements (p, h1-h3, span, a) — never place text directly in div/section."
+	"Wrap text in semantic elements — never place text directly in div/section."
 )
 
 COMPACT_GENERATION_PROMPT = (
 	"You generate web sections using Frappe Builder's block system.\n"
-	"Return ONLY valid JSON array. No markdown, no text. Start with [ end with ].\n\n"
-	'Block: {"element":"section","blockName":"hero","baseStyles":{"display":"flex",'
-	'"flexDirection":"column","padding":"2rem"},"children":[...],"attributes":{},'
-	'"mobileStyles":{},"tabletStyles":{}}\n\n'
-	"Elements: section, div, nav, header, footer, h1-h3, p, span, button, a, img\n"
-	"Styles: CSS-in-JS camelCase \u2014 display, flexDirection, padding, margin, gap, "
-	"backgroundColor, color, fontSize, fontWeight, width, minHeight, background, "
-	"boxShadow, borderRadius, gridTemplateColumns\n"
-	"Attributes: src, alt, href, target | Text: innerText or innerHTML\n\n"
+	"Return ONLY valid YAML array. No markdown, no text.\n\n"
+	"# Schema\n"
+	"el: str         # tag name (section, div, h1-h3, p, span, button, a, img, etc.)\n"
+	"name?: str      # blockName\n"
+	"style?: dict    # CSS-in-JS (camelCase: display, padding, gap, fontFamily, etc.)\n"
+	"c?: [el]        # children\n"
+	"attrs?: dict    # attributes (src, alt, href)\n"
+	"text?: str      # inner content\n"
+	"m_style?: dict  # mobile overrides\n\n"
 	"Design: flex/grid layouts, 100% widths, modern colors, Google Fonts via fontFamily "
-	'(use ONLY the font name e.g. "Bebas Neue" — never add fallback families like cursive or sans-serif), '
-	"responsive mobileStyles overrides.\n"
+	'(use ONLY the font name e.g. "Bebas Neue" — never add fallback families).\n'
 	"Wrap text in semantic elements (p, h1-h3, span, a) — never place text directly in div/section."
 )
 
@@ -195,9 +205,40 @@ def get_system_prompt_for_tier(task_tier: str, is_modify: bool) -> str:
 
 # ─── Context Optimization ─────────────────────────────────────────
 
+def compress_block_to_dsl(block: dict, depth: int=0, task_tier: str="moderate") -> dict:
+	if not isinstance(block, dict):
+		return block
+	dsl = {}
+	if block.get("element"): dsl["el"] = block["element"]
+	if block.get("blockId"): dsl["id"] = block["blockId"]
+	if block.get("blockName"): dsl["name"] = block["blockName"]
+	
+	if block.get("baseStyles") and isinstance(block.get("baseStyles"), dict): 
+		dsl["style"] = block["baseStyles"]
+	if block.get("attributes") and isinstance(block.get("attributes"), dict): 
+		dsl["attrs"] = block["attributes"]
+	if block.get("classes"): 
+		dsl["classes"] = block["classes"]
+	
+	if block.get("innerText"): dsl["text"] = block["innerText"]
+	elif block.get("innerHTML"): dsl["text"] = block["innerHTML"]
+		
+	if task_tier != "trivial" or depth <= 1:
+		if block.get("mobileStyles") and isinstance(block.get("mobileStyles"), dict): 
+			dsl["m_style"] = block["mobileStyles"]
+		if block.get("tabletStyles") and isinstance(block.get("tabletStyles"), dict): 
+			dsl["t_style"] = block["tabletStyles"]
+		
+	children = block.get("children", [])
+	if children and isinstance(children, list):
+		compressed_children = [compress_block_to_dsl(c, depth + 1, task_tier) for c in children if isinstance(c, dict)]
+		if compressed_children:
+			dsl["c"] = compressed_children
+			
+	return dsl
 
 def strip_block_context(block_context: str, task_tier: str) -> str:
-	"""Remove empty/default properties from block JSON to reduce input tokens."""
+	"""Convert block JSON to compact YAML using a terse DSL to reduce input tokens."""
 	try:
 		data = json.loads(block_context)
 	except (json.JSONDecodeError, TypeError):
@@ -206,33 +247,37 @@ def strip_block_context(block_context: str, task_tier: str) -> str:
 	if isinstance(data, dict):
 		data = [data]
 
-	def _strip(block, depth=0):
-		if not isinstance(block, dict):
-			return block
-		out = {}
-		for k, v in block.items():
-			if v is None:
-				continue
-			if isinstance(v, dict) and not v:
-				continue
-			if isinstance(v, list) and not v and k != "children":
-				continue
-			if isinstance(v, str) and not v and k not in ("innerText", "innerHTML"):
-				continue
-			if k == "children" and isinstance(v, list):
-				children = [_strip(c, depth + 1) for c in v if isinstance(c, dict)]
-				if children:
-					out[k] = children
-			else:
-				out[k] = v
-		if task_tier == "trivial" and depth > 1:
-			out.pop("mobileStyles", None)
-			out.pop("tabletStyles", None)
-			out.pop("classes", None)
-		return out
+	stripped = [compress_block_to_dsl(b, 0, task_tier) for b in data if isinstance(b, dict)]
+	return yaml.dump(stripped, sort_keys=False, default_flow_style=False)
 
-	stripped = [_strip(b) for b in data if isinstance(b, dict)]
-	return json.dumps(stripped, separators=(",", ":"))
+def expand_dsl_to_block(dsl_block: dict) -> dict:
+	"""Expand compact DSL dictionary back to Frappe Builder block schema."""
+	if not isinstance(dsl_block, dict):
+		return dsl_block
+	block = {
+		"element": dsl_block.get("el", "div"),
+		"blockName": dsl_block.get("name", ""),
+		"baseStyles": dsl_block.get("style", {}),
+		"attributes": dsl_block.get("attrs", {}),
+	}
+	if "id" in dsl_block:
+		block["blockId"] = dsl_block["id"]
+	if "text" in dsl_block:
+		block["innerText"] = dsl_block["text"]
+	if "m_style" in dsl_block:
+		block["mobileStyles"] = dsl_block["m_style"]
+	if "t_style" in dsl_block:
+		block["tabletStyles"] = dsl_block["t_style"]
+	if "classes" in dsl_block:
+		block["classes"] = dsl_block["classes"]
+		
+	children = dsl_block.get("c", [])
+	if children and isinstance(children, list):
+		block["children"] = [expand_dsl_to_block(c) for c in children if isinstance(c, dict)]
+	else:
+		block["children"] = []
+		
+	return block
 
 
 def build_user_message(prompt: str, task_tier: str, is_modify: bool, block_context: str | None = None) -> str:
@@ -274,13 +319,21 @@ def _call_llm(model: str, messages: list, params: dict, *, stream: bool = True, 
 
 
 def _parse_blocks(content: str) -> list[dict]:
-	"""Parse LLM output into block list. Raises on invalid output."""
+	"""Parse LLM YAML output into block list and expand DSL. Raises on invalid output."""
 	content = content.strip()
 	if content.startswith("```"):
 		content = content.split("\n", 1)[1] if "\n" in content else content[3:]
 		if content.endswith("```"):
 			content = content[:-3].strip()
-	parsed = json.loads(content)
+			
+	if content.startswith("yaml\n"):
+		content = content[5:]
+			
+	try:
+		parsed = yaml.safe_load(content)
+	except Exception as e:
+		raise ValueError(f"YAML parsing failed: {e}")
+		
 	if isinstance(parsed, dict):
 		blocks = [parsed]
 	elif isinstance(parsed, list):
@@ -289,7 +342,8 @@ def _parse_blocks(content: str) -> list[dict]:
 		raise ValueError("Not a valid block object")
 	if not blocks:
 		raise ValueError("No valid blocks in response")
-	return blocks
+		
+	return [expand_dsl_to_block(b) for b in blocks]
 
 
 def get_available_models():
@@ -338,32 +392,29 @@ def get_system_prompt():
 	"""Full system prompt for complex page generation (moderate/complex tiers)."""
 	return """You are an expert web designer specializing in creating modern, responsive web pages using the Frappe Builder block system.
 
-Return ONLY a valid JSON array of blocks. No markdown, no explanations. Start with [ end with ].
+Return ONLY a valid YAML array of blocks. No markdown, no explanations.
 
-# Block Structure:
-- element: semantic HTML tag (section, div, nav, header, footer, h1-h3, p, span, button, a, img)
-- blockName: descriptive name
-- baseStyles: CSS-in-JS camelCase object (display, flexDirection, padding, margin, gap, backgroundColor, color, fontSize, fontWeight, width, minHeight, background, boxShadow, borderRadius, gridTemplateColumns, fontFamily)
-- mobileStyles: mobile overrides (fontSize, padding, flexDirection, etc.)
-- tabletStyles: tablet overrides
-- attributes: HTML attrs (src, alt, href, target)
-- innerText or innerHTML: text content
-- children: nested blocks array
+# Block Schema (Compact DSL):
+- el: semantic HTML tag (section, div, nav, header, footer, h1-h3, p, span, button, a, img)
+- name: descriptive name
+- style: CSS-in-JS camelCase object (display, flexDirection, padding, margin, gap, backgroundColor, color, fontSize, fontWeight, width, minHeight, background, boxShadow, borderRadius, gridTemplateColumns, fontFamily)
+- m_style: mobile overrides (fontSize, padding, flexDirection, etc.)
+- t_style: tablet overrides
+- attrs: HTML attrs (src, alt, href, target)
+- text: text content
+- c: nested blocks array
 - classes: CSS class names
-
-# Style Format:
-{"display":"flex","flexDirection":"column","padding":"2rem","backgroundColor":"#ffffff"}
 
 # Rules:
 - Use flex/grid layouts with 100% widths
 - Modern harmonious color palettes
-- Google Fonts via fontFamily in baseStyles (use ONLY the font name, e.g. "Bebas Neue" — do NOT add CSS fallback families like cursive, sans-serif, etc.)
-- Responsive: %, rem, auto-fit units; add mobileStyles overrides
+- Google Fonts via fontFamily in style (use ONLY the font name, e.g. "Bebas Neue" — do NOT add CSS fallback families)
+- Responsive: %, rem, auto-fit units; add m_style overrides
 - Semantic HTML with alt texts for images
 - Consistent padding/margins
-- Wrap text (innerText/innerHTML) in semantic text elements (p, h1-h3, span, a) — never place text directly in div/section.
+- Wrap text in semantic text elements (p, h1-h3, span, a) — never place text directly in div/section.
 
-# CRITICAL: Return ONLY valid JSON array. No markdown code blocks, no text outside the array."""
+# CRITICAL: Return ONLY valid YAML array."""
 
 
 def generate_page_blocks(
@@ -424,8 +475,13 @@ def generate_page_blocks(
 
 		system_prompt = get_system_prompt_for_tier(task_tier, is_modify=False)
 		user_message = build_user_message(prompt, task_tier, is_modify=False)
+		
+		sys_msg = {"role": "system", "content": system_prompt}
+		if get_provider_from_model(optimal_model) == "anthropic":
+			sys_msg["cache_control"] = {"type": "ephemeral"}
+			
 		messages = [
-			{"role": "system", "content": system_prompt},
+			sys_msg,
 			{"role": "user", "content": user_message},
 		]
 
@@ -447,7 +503,7 @@ def generate_page_blocks(
 		# ── Parse with automatic escalation on failure ──
 		try:
 			blocks = _parse_blocks(content)
-		except (json.JSONDecodeError, ValueError):
+		except ValueError:
 			escalated = get_escalated_model(optimal_model, model)
 			if escalated and escalated != optimal_model:
 				frappe.publish_realtime(
@@ -471,11 +527,11 @@ def generate_page_blocks(
 			user=user,
 		)
 
-	except json.JSONDecodeError as e:
-		frappe.log_error(f"JSON parse error: {e!s}\nContent: {content}", "AI Page Generation")
+	except ValueError as e:
+		frappe.log_error(f"Parse error: {e!s}\nContent: {content}", "AI Page Generation")
 		frappe.publish_realtime(
 			"ai_generation_error",
-			{"page_id": page_id, "message": "Failed to parse AI response. The model returned invalid JSON."},
+			{"page_id": page_id, "message": "Failed to parse AI response. The model returned invalid YAML."},
 			user=user,
 		)
 
@@ -542,22 +598,21 @@ def get_modify_system_prompt():
 	"""Full system prompt for complex section modification (moderate/complex tiers)."""
 	return """You are an expert web designer specializing in modifying web page sections using the Frappe Builder block system.
 
-Modify the existing block structure based on user instructions. Return ONLY a valid JSON array of the modified blocks. No markdown, no explanations.
+Modify the existing structure based on user instructions. Return ONLY a valid YAML array of the modified blocks. No markdown, no explanations.
 
-# Block Structure:
-- element, blockName, blockId, baseStyles (CSS-in-JS camelCase), mobileStyles, tabletStyles
-- attributes (src, alt, href, target), innerText/innerHTML, children, classes
+# Block Schema (Compact DSL):
+- el, name, id (MUST PRESERVE), style (CSS-in-JS camelCase), m_style, t_style
+- attrs (src, alt, href, target), text, c (children array), classes
 
 # Modification Rules:
-1. Preserve ALL existing blockId values to prevent DOM churn
+1. Preserve ALL existing 'id' values to prevent DOM churn
 2. Only modify what the user explicitly asks for
 3. Keep existing structure intact where not asked to change
 4. Return the COMPLETE modified block structure (not a diff)
 5. Use responsive units (%, rem, auto-fit) for widths
-6. Style format: {"display":"flex","flexDirection":"column","padding":"2rem"}
-7. Wrap text (innerText/innerHTML) in semantic text elements (p, h1-h3, span, a) — never place text directly in div/section
+6. Wrap text in semantic text elements (p, h1-h3, span, a) — never place text directly in div/section
 
-# CRITICAL: Return ONLY valid JSON array. Start with [ end with ]."""
+# CRITICAL: Return ONLY valid YAML array."""
 
 
 def modify_section_blocks(
@@ -622,8 +677,13 @@ def modify_section_blocks(
 
 		system_prompt = get_system_prompt_for_tier(task_tier, is_modify=True)
 		user_message = build_user_message(prompt, task_tier, is_modify=True, block_context=stripped_context)
+		
+		sys_msg = {"role": "system", "content": system_prompt}
+		if get_provider_from_model(optimal_model) == "anthropic":
+			sys_msg["cache_control"] = {"type": "ephemeral"}
+			
 		messages = [
-			{"role": "system", "content": system_prompt},
+			sys_msg,
 			{"role": "user", "content": user_message},
 		]
 
@@ -645,7 +705,7 @@ def modify_section_blocks(
 		# ── Parse with automatic escalation on failure ──
 		try:
 			blocks = _parse_blocks(content)
-		except (json.JSONDecodeError, ValueError):
+		except ValueError:
 			escalated = get_escalated_model(optimal_model, model)
 			if escalated and escalated != optimal_model:
 				frappe.publish_realtime(
@@ -669,11 +729,11 @@ def modify_section_blocks(
 			user=user,
 		)
 
-	except json.JSONDecodeError as e:
-		frappe.log_error(f"JSON parse error: {e!s}\nContent: {content}", "AI Section Modify")
+	except ValueError as e:
+		frappe.log_error(f"Parse error: {e!s}\nContent: {content}", "AI Section Modify")
 		frappe.publish_realtime(
 			"ai_modify_error",
-			{"page_id": page_id, "message": "Failed to parse AI response. The model returned invalid JSON."},
+			{"page_id": page_id, "message": "Failed to parse AI response. The model returned invalid YAML."},
 			user=user,
 		)
 

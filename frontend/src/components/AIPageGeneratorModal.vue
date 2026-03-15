@@ -81,6 +81,7 @@ import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import { createResource, FeatherIcon, Textarea } from "frappe-ui";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import yaml from "js-yaml";
 
 const props = withDefaults(
 	defineProps<{
@@ -121,52 +122,59 @@ const hasAISettings = computed(() => {
 });
 
 /**
- * Attempt to repair partial/incomplete JSON by closing open strings, arrays, and objects.
- * Returns a parseable JSON string or null if the content is too incomplete.
+ * Attempt to parse incomplete YAML stream content.
+ * Returns a JS object or null if too incomplete.
  */
-function repairPartialJSON(partial: string): string | null {
-	partial = partial.trim();
-	if (!partial) return null;
+function expandDSL(dslBlock: any): any {
+	if (!dslBlock || typeof dslBlock !== "object" || Array.isArray(dslBlock)) return dslBlock;
 
-	let result = partial;
-	let inString = false;
-	let escaped = false;
-	const stack: string[] = [];
+	const ensureObj = (val: any) => (val && typeof val === "object" && !Array.isArray(val) ? val : {});
+	const ensureArray = (val: any) => (Array.isArray(val) ? val : []);
 
-	for (let i = 0; i < result.length; i++) {
-		const ch = result[i];
-		if (escaped) {
-			escaped = false;
-			continue;
+	const block: any = {
+		element: dslBlock.el || "div",
+		blockName: dslBlock.name || "",
+		baseStyles: ensureObj(dslBlock.style),
+		attributes: ensureObj(dslBlock.attrs),
+		mobileStyles: ensureObj(dslBlock.m_style),
+		tabletStyles: ensureObj(dslBlock.t_style),
+		classes: ensureArray(dslBlock.classes),
+	};
+	if (dslBlock.id) block.blockId = dslBlock.id;
+	if (dslBlock.text) block.innerText = dslBlock.text;
+
+	if (Array.isArray(dslBlock.c)) {
+		block.children = dslBlock.c.map(expandDSL);
+	} else {
+		block.children = [];
+	}
+	return block;
+}
+
+function getValidPartialYAML(yamlStr: string): any {
+	let cleaned = yamlStr.trim();
+	if (cleaned.startsWith("```")) {
+		const lines = cleaned.split("\n");
+		if (lines.length > 0) lines.shift(); // remove ```yaml or ```
+		if (lines.length > 0 && lines[lines.length - 1].startsWith("```")) {
+			lines.pop();
 		}
-		if (ch === "\\" && inString) {
-			escaped = true;
-			continue;
-		}
-		if (ch === '"') {
-			inString = !inString;
-			continue;
-		}
-		if (inString) continue;
-		if (ch === "{" || ch === "[") stack.push(ch);
-		else if (ch === "}") {
-			if (stack.length && stack[stack.length - 1] === "{") stack.pop();
-		} else if (ch === "]") {
-			if (stack.length && stack[stack.length - 1] === "[") stack.pop();
-		}
+		cleaned = lines.join("\n");
 	}
 
-	if (inString) {
-		result += '"';
+	try {
+		return yaml.load(cleaned);
+	} catch (e) {
+		const lines = cleaned.split("\n");
+		for (let i = lines.length - 1; i > 0; i--) {
+			try {
+				const slice = lines.slice(0, i).join("\n");
+				const parsed = yaml.load(slice);
+				if (parsed) return parsed;
+			} catch (err) {}
+		}
 	}
-
-	result = result.replace(/[,:\s]+$/, "");
-
-	for (let i = stack.length - 1; i >= 0; i--) {
-		result += stack[i] === "{" ? "}" : "]";
-	}
-
-	return result;
+	return null;
 }
 
 const canGenerate = computed(() => {
@@ -255,13 +263,12 @@ const onStream = (data: any) => {
 	if (data.page_id && data.page_id !== props.pageId) return;
 	if (data.chunk) {
 		streamingContent.value += data.chunk;
-		// Try to repair partial JSON and render live
-		const repaired = repairPartialJSON(streamingContent.value);
-		if (repaired) {
+		const parsed = getValidPartialYAML(streamingContent.value);
+		if (parsed) {
 			try {
-				let parsed = JSON.parse(repaired);
-				let sections = Array.isArray(parsed) ? parsed : [parsed];
-				sections = sections.filter((s: any) => s && typeof s === "object" && s.element);
+				let parsedArray = Array.isArray(parsed) ? parsed : [parsed];
+				let sections = parsedArray.filter((s: any) => s && typeof s === "object" && s.el);
+				sections = sections.map(expandDSL);
 				if (sections.length > 0) {
 					const wrapped = [
 						{
@@ -284,7 +291,7 @@ const onStream = (data: any) => {
 					emit("streaming", wrapped);
 				}
 			} catch {
-				// Still not valid enough, wait for more chunks
+				// Ignore errors in partial parse
 			}
 		}
 	}
@@ -334,17 +341,17 @@ const onModifyStream = (data: any) => {
 	if (data.page_id && data.page_id !== props.pageId) return;
 	if (data.chunk) {
 		streamingContent.value += data.chunk;
-		const repaired = repairPartialJSON(streamingContent.value);
-		if (repaired) {
+		const parsed = getValidPartialYAML(streamingContent.value);
+		if (parsed) {
 			try {
-				let parsed = JSON.parse(repaired);
-				let sections = Array.isArray(parsed) ? parsed : [parsed];
-				sections = sections.filter((s: any) => s && typeof s === "object" && s.element);
+				let parsedArray = Array.isArray(parsed) ? parsed : [parsed];
+				let sections = parsedArray.filter((s: any) => s && typeof s === "object" && s.el);
+				sections = sections.map(expandDSL);
 				if (sections.length > 0) {
 					emit("modifyStreaming", sections);
 				}
 			} catch {
-				// Still not valid enough, wait for more chunks
+				// Ignore
 			}
 		}
 	}

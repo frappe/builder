@@ -465,17 +465,33 @@ async function uploadBuilderAsset(file: File, silent = false) {
 
 function dataURLtoFile(dataurl: string, filename: string) {
 	try {
-		let arr = dataurl.split(","),
-			mime = arr[0].match(/:(.*?);/)?.[1],
-			bstr = atob(arr[1]),
-			n = bstr.length,
+		let arr = dataurl.split(",");
+		let mimeMatch = arr[0].match(/:(.*?)(;|,)/);
+		let mime = mimeMatch ? mimeMatch[1] : "";
+		let isBase64 = arr[0].includes(";base64");
+		
+		let dataString = arr.slice(1).join(",");
+		let u8arr;
+		
+		if (isBase64) {
+			let bstr = atob(dataString);
+			let n = bstr.length;
 			u8arr = new Uint8Array(n);
-		while (n--) {
-			u8arr[n] = bstr.charCodeAt(n);
+			while (n--) {
+				u8arr[n] = bstr.charCodeAt(n);
+			}
+		} else {
+			let decoded = decodeURIComponent(dataString);
+			let n = decoded.length;
+			u8arr = new Uint8Array(n);
+			while (n--) {
+				u8arr[n] = decoded.charCodeAt(n);
+			}
 		}
+		
 		return new File([u8arr], filename, { type: mime });
 	} catch (error) {
-		console.error(`Failed to convert dataURL ${dataurl} to file.`);
+		console.error(`Failed to convert dataURL ${dataurl.substring(0, 50)}... to file.`, error);
 		return null;
 	}
 }
