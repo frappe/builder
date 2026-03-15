@@ -3,7 +3,7 @@
 		class="toolbar border-outline border-outline flex items-center justify-center border-b-[1px] border-outline-gray-1 bg-surface-white px-2 py-1"
 		ref="toolbar">
 		<div class="absolute left-3 flex items-center gap-5">
-			<MainMenu @showSettings="() => (showSettingsDialog = true)"></MainMenu>
+			<MainMenu @showSettings="() => (showSettingsDialog = true)" @showShortcuts="showShortcuts"></MainMenu>
 			<div class="flex gap-2">
 				<Tooltip
 					:text="mode.description"
@@ -183,6 +183,7 @@ const pageStore = usePageStore();
 
 const showInfoDialog = ref(false);
 const showSettingsDialog = ref(false);
+const showShortcuts = inject<() => void>("showShortcuts", () => {});
 
 // Get the AI generator opener from PageBuilder
 const openAIGeneratorFn = inject<(() => void) | undefined>("showAIGenerator", undefined);

@@ -78,7 +78,8 @@ import PublishButton from "@/components/PublishButton.vue";
 import router from "@/router";
 import usePageStore from "@/stores/pageStore";
 import { posthog } from "@/telemetry";
-import { useDark, useEventListener, useToggle } from "@vueuse/core";
+import { useShortcut } from "@/utils/useShortcut";
+import { useDark, useToggle } from "@vueuse/core";
 import { Tooltip } from "frappe-ui";
 import { Ref, computed, onActivated, ref, watch, watchEffect } from "vue";
 import { useRoute } from "vue-router";
@@ -144,10 +145,16 @@ const transitionTheme = (toggle: () => void) => {
 	}
 };
 
-useEventListener(document, "keydown", (ev) => {
-	if (ev.key === "Escape" && router.currentRoute.value.name === "preview") {
-		history.back();
-	}
+useShortcut({
+	key: "Escape",
+	description: "Back to builder",
+	group: "Navigation",
+	handler: () => {
+		if (router.currentRoute.value.name === "preview") {
+			history.back();
+		}
+	},
+	condition: () => router.currentRoute.value.name === "preview",
 });
 
 const applyColorSchemeToIframe = (scheme: "dark" | "light") => {

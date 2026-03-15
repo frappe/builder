@@ -1,6 +1,6 @@
 <template>
 	<BasePropertyControl
-		v-bind="baseProps"
+		v-bind="{ ...baseProps, ...$attrs }"
 		:variants="allVariants"
 		:getVariantValue="getVariantValue"
 		:setVariantValue="setVariantValue">
@@ -37,6 +37,8 @@ const props = withDefaults(
 		enableStates?: boolean;
 		enabledStates?: string[];
 		variants?: Array<{ name: string; property: string; label: string }>;
+		getVariantValue?: (variantName: string) => string | number | boolean;
+		setVariantValue?: (variantName: string, value: string | number | boolean | null) => void;
 	}>(),
 	{
 		enableStates: true,
@@ -65,6 +67,9 @@ const allVariants = computed(() => [
 ]);
 
 const getVariantValue = (variantName: string): string | number | boolean => {
+	if (props.getVariantValue) {
+		return props.getVariantValue(variantName);
+	}
 	if (stateVariants.value.find((v) => v.name === variantName)) {
 		return blockController.getNativeStyle(`${variantName}:${props.propertyKey}`) ?? "";
 	}
@@ -73,6 +78,10 @@ const getVariantValue = (variantName: string): string | number | boolean => {
 };
 
 const setVariantValue = (variantName: string, value: string | number | boolean | null) => {
+	if (props.setVariantValue) {
+		props.setVariantValue(variantName, value);
+		return;
+	}
 	if (stateVariants.value.find((v) => v.name === variantName)) {
 		if (value !== null) {
 			blockController.getSelectedBlocks().forEach((block) => {

@@ -110,6 +110,7 @@
 		@modified="handleModifiedBlocks"
 		@modifyStreaming="handleModifyStreamingBlocks"></AIPageGeneratorModal>
 	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
+	<KeyboardShortcutsModal ref="shortcutsModal" />
 </template>
 
 <script setup lang="ts">
@@ -120,6 +121,7 @@ import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
+import KeyboardShortcutsModal from "@/components/KeyboardShortcutsModal.vue";
 import PageListModal from "@/components/Modals/PageListModal.vue";
 import { webPages } from "@/data/webPage";
 import { sessionUser } from "@/router";
@@ -129,15 +131,15 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { getUsersInfo } from "@/usersInfo";
 import blockController from "@/utils/blockController";
-import { getBlockInstance, getBlockObject, getRootBlockTemplate, isTargetEditable } from "@/utils/helpers";
+import { getBlockInstance, getBlockObject, getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
+import { useShortcut } from "@/utils/useShortcut";
 import {
 	breakpointsTailwind,
-	useActiveElement,
 	useBreakpoints,
 	useDebounceFn,
+	useEventListener,
 	useThrottleFn,
-	useMagicKeys,
 } from "@vueuse/core";
 import { createResource } from "frappe-ui";
 import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, watchEffect } from "vue";
@@ -309,24 +311,41 @@ provide("pageCanvas", pageCanvas);
 provide("fragmentCanvas", fragmentCanvas);
 useBuilderEvents(pageCanvas, fragmentCanvas, saveAndExitFragmentMode, route, router);
 
-const activeElement = useActiveElement();
-const notUsingInput = computed(
-	() => activeElement.value?.tagName !== "INPUT" && activeElement.value?.tagName !== "TEXTAREA",
-);
+const shortcutsModal = ref<InstanceType<typeof KeyboardShortcutsModal> | null>(null);
 
-const { space } = useMagicKeys({
-	passive: false,
-	onEventFired(e) {
-		if (e.key === " " && notUsingInput.value && !isTargetEditable(e)) {
-			e.preventDefault();
-		}
-	},
+provide("showShortcuts", () => {
+	if (shortcutsModal.value) {
+		shortcutsModal.value.showDialog = true;
+	}
 });
 
-watch(space, (value) => {
-	if (value && !canvasStore.editableBlock) {
-		builderStore.mode = "move";
-	} else if (builderStore.mode === "move") {
+useShortcut([
+	{
+		key: " ",
+		description: "Hold for move mode",
+		group: "Tools",
+		handler: () => {
+			if (!canvasStore.editableBlock) {
+				builderStore.mode = "move";
+			}
+		},
+		preventDefault: true,
+	},
+	{
+		key: "?",
+		description: "Show keyboard shortcuts",
+		group: "General",
+		handler: () => {
+			if (shortcutsModal.value) {
+				shortcutsModal.value.showDialog = true;
+			}
+		},
+	},
+]);
+
+// When space is released, revert back to last mode
+useEventListener(document, "keyup", (e) => {
+	if (e.key === " " && builderStore.mode === "move") {
 		builderStore.mode = builderStore.lastMode !== "move" ? builderStore.lastMode : "select";
 	}
 });

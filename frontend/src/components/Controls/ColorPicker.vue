@@ -23,7 +23,7 @@
 					ref="colorMap"
 					:style="colorMapStyle"
 					@mousedown.prevent="handleSelectorMove"
-					class="relative m-auto h-24 w-44 rounded-md"
+					class="relative m-auto h-24 w-full rounded-md"
 					@click.prevent="setColor">
 					<div
 						ref="colorSelector"
@@ -33,7 +33,7 @@
 				</div>
 				<div
 					ref="hueMap"
-					class="relative m-auto h-3 w-44 rounded-md"
+					class="relative m-auto h-3 w-full rounded-md"
 					@click="setHue"
 					@mousedown.prevent="handleHueSelectorMove"
 					:style="hueMapStyle">
@@ -58,7 +58,7 @@
 					v-if="showInput"
 					type="text"
 					:modelValue="modelValue"
-					class="mt-2 w-44 text-sm"
+					class="mt-2 w-full text-sm"
 					placeholder="Set Color"
 					@update:modelValue="handleInputChange" />
 			</div>
@@ -69,14 +69,14 @@
 		ref="colorPicker"
 		:class="
 			renderMode === 'inline'
-				? 'flex flex-col gap-2'
+				? 'flex w-full flex-col gap-2'
 				: 'flex flex-col gap-2 rounded-lg bg-surface-white p-3 shadow-lg'
 		">
 		<div
 			ref="colorMap"
 			:style="colorMapStyle"
 			@mousedown.prevent="handleSelectorMove"
-			class="relative m-auto h-24 w-44 rounded-md"
+			class="relative m-auto h-24 w-full rounded-md"
 			@click.prevent="setColor">
 			<div
 				ref="colorSelector"
@@ -86,7 +86,7 @@
 		</div>
 		<div
 			ref="hueMap"
-			class="relative m-auto h-3 w-44 rounded-md"
+			class="relative m-auto h-3 w-full rounded-md"
 			@click="setHue"
 			@mousedown.prevent="handleHueSelectorMove"
 			:style="hueMapStyle">
@@ -111,7 +111,7 @@
 			v-if="showInput"
 			type="text"
 			:modelValue="modelValue"
-			class="mt-2 w-44 text-sm"
+			class="mt-2 w-full text-sm"
 			placeholder="Set Color"
 			@update:modelValue="handleInputChange" />
 	</div>
