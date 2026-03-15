@@ -11,6 +11,7 @@
 		</Dropdown>
 		<InputLabel
 			class="truncate"
+			:title="label"
 			:class="{ 'cursor-ns-resize': enableSlider }"
 			@mousedown="$emit('mousedown', $event)">
 			{{ label }}
