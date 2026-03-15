@@ -29,18 +29,18 @@
 		<!-- Gradient Preview / Stop Bar -->
 		<div
 			class="shadow-inner relative h-5 w-full rounded border border-outline-gray-2"
-			:style="barPreviewStyle">
-			<div class="absolute inset-0 cursor-copy" @click="addStopAtX" ref="barRef"></div>
-			<!-- Stops -->
+			:style="barPreviewStyle"
+			ref="barRef">
+			<div class="absolute inset-0 cursor-copy" @click.self="addStopAtX"></div>
 			<div
 				v-for="(stop, index) in gradient.stops"
 				:key="index"
-				class="absolute top-1/2 -translate-x-1/2 -translate-y-1/2"
+				class="absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
 				:style="{ left: stop.position + '%' }">
 				<Popover placement="top" :offset="10">
 					<template #target="{ togglePopover }">
 						<div
-							class="size-3 cursor-pointer rounded-full border-2 border-white shadow-md transition-transform hover:scale-125 focus:outline-none"
+							class="size-4 cursor-pointer rounded-full border-2 border-white shadow-md ring-1 ring-black/20 transition-transform hover:scale-110 focus:outline-none"
 							:style="{ backgroundColor: stop.color }"
 							@mousedown="handleStopMouseDown(index, $event)"
 							@click="(e) => !hasMoved && togglePopover()" />
@@ -93,6 +93,7 @@ import BuilderButton from "./BuilderButton.vue";
 import ColorPicker from "./ColorPicker.vue";
 import Input from "./Input.vue";
 import TabButtons from "./TabButtons.vue";
+import { useMouseInElement, useMousePressed } from "@vueuse/core";
 
 const props = defineProps<{
 	modelValue: string | null;
@@ -104,36 +105,31 @@ const barRef = ref<HTMLElement | null>(null);
 const draggingIdx = ref<number | null>(null);
 const hasMoved = ref(false);
 
+const { elementX } = useMouseInElement(barRef);
+const { pressed } = useMousePressed();
+
+const startDraggingX = ref(0);
 const handleStopMouseDown = (index: number, e: MouseEvent) => {
-	e.stopPropagation();
 	draggingIdx.value = index;
 	hasMoved.value = false;
-	const startX = e.clientX;
-
-	const onMouseMove = (moveEvent: MouseEvent) => {
-		if (Math.abs(moveEvent.clientX - startX) > 3) {
-			hasMoved.value = true;
-		}
-		if (draggingIdx.value === null || !barRef.value) return;
-
-		const rect = barRef.value.getBoundingClientRect();
-		const x = moveEvent.clientX - rect.left;
-		const position = Math.round(Math.max(0, Math.min(100, (x / rect.width) * 100)));
-
-		updateStopPosition(draggingIdx.value, position);
-	};
-
-	const onMouseUp = () => {
-		draggingIdx.value = null;
-		window.removeEventListener("mousemove", onMouseMove);
-		window.removeEventListener("mouseup", onMouseUp);
-		document.body.style.userSelect = "";
-	};
-
-	window.addEventListener("mousemove", onMouseMove);
-	window.addEventListener("mouseup", onMouseUp);
-	document.body.style.userSelect = "none";
+	startDraggingX.value = elementX.value;
 };
+
+watch([elementX, pressed], () => {
+	if (!pressed.value) {
+		draggingIdx.value = null;
+		return;
+	}
+
+	if (draggingIdx.value === null || !barRef.value) return;
+
+	if (Math.abs(elementX.value - startDraggingX.value) > 3) {
+		hasMoved.value = true;
+	}
+
+	const position = Math.round(Math.max(0, Math.min(100, (elementX.value / barRef.value.clientWidth) * 100)));
+	updateStopPosition(draggingIdx.value, position);
+});
 
 const presets = [
 	{ name: "Hyper", gradient: "linear-gradient(135deg, #0cebeb 0%, #20e3b2 50%, #29ffc6 100%)" },
