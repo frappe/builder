@@ -1,7 +1,7 @@
 <template>
 	<Popover placement="left" class="!block w-full" :offset="25">
 		<template #target="{ togglePopover }">
-			<div class="flex w-full items-center justify-between">
+			<div class="flex w-full items-center justify-between" @focusin="updateActiveState">
 				<StylePropertyControl
 					propertyKey="boxShadow"
 					:component="Input"
@@ -10,12 +10,19 @@
 					:allowDynamicValue="true"
 					placeholder="None"
 					@focus="togglePopover"
-					:modelValue="boxShadow"
+					:getModelValue="() => getBoxShadowValue(null)"
+					:getVariantValue="(v: string) => getBoxShadowValue(v)"
+					:setVariantValue="handleSetVariant"
 					@update:modelValue="setBoxShadow">
-					<template #prefix>
+					<template #prefix="{ variant }">
 						<div
 							class="absolute left-2 top-[6px] size-4 cursor-pointer rounded border border-outline-gray-1 shadow-sm"
-							@click="togglePopover"
+							@click="
+								() => {
+									activeState = variant;
+									togglePopover();
+								}
+							"
 							:style="{
 								backgroundColor: shadowConfigs[0]?.color ?? 'transparent',
 							}" />
@@ -25,7 +32,7 @@
 		</template>
 		<template #body>
 			<div
-				class="max-h-[80vh] w-72 select-none space-y-2 overflow-y-auto rounded-lg border border-outline-gray-1 bg-surface-white p-3 shadow-xl">
+				class="shadow-popover-body max-h-[80vh] w-72 select-none space-y-2 overflow-y-auto rounded-lg border border-outline-gray-1 bg-surface-white p-3 shadow-xl">
 				<InlineInput
 					label="Preset"
 					type="select"
@@ -104,13 +111,39 @@
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import Input from "@/components/Controls/Input.vue";
+import InputLabel from "@/components/Controls/InputLabel.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
-import { Popover } from "frappe-ui";
-import { computed, reactive, watch } from "vue";
+import { Button, Popover } from "frappe-ui";
+import { computed, reactive, ref, watch } from "vue";
 
-const boxShadow = computed(() => blockController.getStyle("boxShadow") as string);
+const activeState = ref<string | null>(null);
+
+const updateActiveState = (e: FocusEvent) => {
+	const target = e.target as HTMLElement;
+
+	if (target.closest(".shadow-popover-body")) return;
+
+	const variantRow = target.closest("[data-variant]");
+	const mainPropRow = target.closest("[data-property]");
+
+	if (variantRow) {
+		activeState.value = variantRow.getAttribute("data-variant") as string;
+	} else if (mainPropRow) {
+		activeState.value = null;
+	}
+};
+
+const getStyleKey = (prop: string, state: string | null = activeState.value) => {
+	return state ? `${state}:${prop}` : prop;
+};
+
+const boxShadow = computed(() => blockController.getStyle(getStyleKey("boxShadow")) as string);
+
+const getBoxShadowValue = (state: string | null) => {
+	return (blockController.getStyle(getStyleKey("boxShadow", state)) || "") as string;
+};
 
 const presetOptions = [
 	{ label: "None", value: "none" },
@@ -265,14 +298,31 @@ const applyShadow = () => {
 			return `${inset ? "inset " : ""}${x} ${y} ${blur} ${spread} ${color}`.trim();
 		})
 		.join(", ");
-	blockController.setStyle("boxShadow", shadowStr);
+	blockController.setStyle(getStyleKey("boxShadow"), shadowStr);
 };
 
 const setBoxShadow = (val: string) => {
-	blockController.setStyle("boxShadow", val);
+	blockController.setStyle(getStyleKey("boxShadow"), val);
 };
 
 const clearShadow = () => {
-	blockController.setStyle("boxShadow", null);
+	blockController.setStyle(getStyleKey("boxShadow"), null);
+};
+
+const handleSetVariant = (variantName: string, value: string | number | boolean | null) => {
+	const shadowKey = `${variantName}:boxShadow`;
+
+	if (value === null) {
+		blockController.setStyle(shadowKey, null);
+	} else {
+		blockController.getSelectedBlocks().forEach((block) => {
+			if (!block.getStyle("transitionDuration")) {
+				block.setStyle("transitionDuration", "300ms");
+				block.setStyle("transitionTimingFunction", "ease");
+				block.setStyle("transitionProperty", "all");
+			}
+		});
+		blockController.setStyle(shadowKey, value as string);
+	}
 };
 </script>
