@@ -1144,12 +1144,13 @@ def set_fonts(styles, font_map):
 		if font:
 			# escape spaces in font name
 			style["fontFamily"] = font.replace(" ", "\\ ")
+			weight = str(style.get("fontWeight") or "400")
 			if font in font_map:
-				if style.get("fontWeight") and style.get("fontWeight") not in font_map[font]["weights"]:
-					font_map[font]["weights"].append(style.get("fontWeight"))
+				if weight not in font_map[font]["weights"]:
+					font_map[font]["weights"].append(weight)
 					font_map[font]["weights"].sort()
 			else:
-				font_map[font] = {"weights": [style.get("fontWeight") or "400"]}
+				font_map[font] = {"weights": [weight]}
 
 
 def set_fonts_from_html(soup, font_map):
