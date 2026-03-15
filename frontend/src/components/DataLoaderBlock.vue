@@ -27,7 +27,7 @@ import { getDataForKey, getStandardPropValue } from "@/utils/helpers";
 import { Ref, computed, ref } from "vue";
 import BuilderBlock from "./BuilderBlock.vue";
 import blockController from "@/utils/blockController";
-import useBlockDataStore from "@/stores/blockDataStore";
+import { useBlockDataStore } from "@/stores/blockStore";
 
 const pageStore = usePageStore();
 const blockDataStore = useBlockDataStore();
