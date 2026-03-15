@@ -15,14 +15,6 @@ const setFont = (font: string) => {
 	});
 };
 
-const styleKeyMap: Record<string, string> = {
-    fontFamily: "fontFamily",
-    fontWeight: "fontWeight",
-    fontSize: "fontSize",
-    lineHeight: "lineHeight",
-    textTransform: "textTransform",
-};
-
 const typographySectionProperties = [
 	{
 		component: BasePropertyControl,
@@ -44,11 +36,13 @@ const typographySectionProperties = [
 			(blockController.isText() || blockController.isButton()) && !blockController.multipleBlocksSelected(),
 	},
 	{
-		component: StylePropertyControl,
+		component: BasePropertyControl,
 		getProps: () => {
 			return {
 				label: "Style",
 				propertyKey: "textStylePreset",
+				controlType: "key",
+				allowDynamicValue: true,
 				type: "select",
 				options: stylePreset.data //list of items in dropdown
 					? [
@@ -60,31 +54,8 @@ const typographySectionProperties = [
 					]	
 					: [{ label: "None", value: " " }],
 				getModelValue: () => String(blockController.getStyle("textStylePreset") ?? ""),
-				setModelValue: (val: string) => { //called when user selects an option
-					blockController.setStyle("textStylePreset", val);
-					blockController.setPresetStyle(val);
-					if (!val) {
-						blockController.setPresetStyle("");
-						Object.values(styleKeyMap).forEach((cssProperty) => {
-            				blockController.setStyle(cssProperty as styleProperty, null);
-          	        });
-        			return;
-					}
-					Object.values(styleKeyMap).forEach((cssProperty) => {
-					blockController.setStyle(cssProperty as styleProperty, null);
-					});
-					const preset = stylePreset.data?.find((s: any) => s.style_name === val);
-					if (!preset) return;
-					const map = typeof preset.style_map === "string" 
-    					? JSON.parse(preset.style_map) 	
-						: preset.style_map;
-					Object.entries(map).forEach(([key, value]) => {
-					if (key === "fontFamily") {
-						setFont(value as string);
-					} else if (styleKeyMap[key]) {
-						blockController.setStyle(styleKeyMap[key] as styleProperty, value as string);
-					}
-				});
+				setModelValue: (val: string) => {
+				blockController.setStyle("textStylePreset", val);
 			},
 			};
 		},

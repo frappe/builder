@@ -71,6 +71,7 @@ import fetchBlockData from "@/data/blockData";
 import usePageStore from "@/stores/pageStore";
 import { toast } from "vue-sonner";
 import useBlockDataStore from "@/stores/blockDataStore";
+import stylePreset from "@/data/stylePreset";
 
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
@@ -266,6 +267,14 @@ const target = computed(() => {
 	}
 });
 
+const presetStyles = computed(() => {
+	const presetName = props.block.getStyle("textStylePreset");
+	if (!presetName) return {};
+	const preset = stylePreset.data?.find((s: any) => s.style_name === presetName);
+	if (!preset) return {};
+	return typeof preset.style_map === "string" ? JSON.parse(preset.style_map) : preset.style_map;
+});
+
 const styles = computed(() => {
 	let dynamicStyles = {} as { [key: string]: string };
 	if (props.data || hasBlockProps.value) {
@@ -314,6 +323,7 @@ const styles = computed(() => {
 	}
 
 	const styleMap = {
+		...presetStyles.value,
 		...props.block.getStyles(props.breakpoint),
 		...props.block.getEditorStyles(),
 		...dynamicStyles,
@@ -476,6 +486,16 @@ watch(
 			});
 	},
 	{ deep: true, immediate: true },
+);
+
+watch(
+	() => props.block.getStyle("textStylePreset"),
+	(val) => {
+		const styleKeyMap = ["fontFamily", "fontWeight", "fontSize", "lineHeight", "textTransform"];
+		styleKeyMap.forEach((cssProperty) => {
+			props.block.setStyle(cssProperty as styleProperty, null);
+		});
+	},
 );
 
 const isEditable = computed(() => {

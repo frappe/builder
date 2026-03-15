@@ -385,15 +385,6 @@ const blockController = {
 		});
 		Object.assign(block.props, props);
 	},
-	getPresetStyle: () => {
-		return blockController.getFirstSelectedBlock()?.presetStyle || " ";
-	},
-	setPresetStyle: (value: string) => {
-		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
-			block.presetStyle = value;
-		});
-	},
-
 };
 
 export default blockController;
