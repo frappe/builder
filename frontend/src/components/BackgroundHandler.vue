@@ -3,7 +3,7 @@
 		<template #target="{ togglePopover }">
 			<div class="flex w-full items-center justify-between" @focusin="updateActiveState">
 				<StylePropertyControl
-					propertyKey="backgroundImage"
+					propertyKey="background"
 					:component="Input"
 					label="Background"
 					:enableStates="true"
