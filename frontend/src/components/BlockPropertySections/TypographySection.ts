@@ -53,9 +53,9 @@ const typographySectionProperties = [
 					}))
 					]	
 					: [{ label: "None", value: " " }],
-				getModelValue: () => String(blockController.getStyle("textStylePreset") ?? ""),
+				getModelValue: () => String(blockController.getKeyValue("stylePreset") ?? ""),
 				setModelValue: (val: string) => {
-				blockController.setStyle("textStylePreset", val);
+				blockController.setKeyValue("stylePreset", val);
 			},
 			};
 		},

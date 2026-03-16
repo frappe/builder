@@ -268,7 +268,7 @@ const target = computed(() => {
 });
 
 const presetStyles = computed(() => {
-	const presetName = props.block.getStyle("textStylePreset");
+	const presetName = props.block.stylePreset;
 	if (!presetName) return {};
 	const preset = stylePreset.data?.find((s: any) => s.style_name === presetName);
 	if (!preset) return {};
@@ -488,11 +488,14 @@ watch(
 	{ deep: true, immediate: true },
 );
 
+// when preset changes, clear any manually set styles
+// so the new preset values show as grey placeholders instead of black
 watch(
-	() => props.block.getStyle("textStylePreset"),
+	() => props.block.stylePreset,
 	(val) => {
 		const styleKeyMap = ["fontFamily", "fontWeight", "fontSize", "lineHeight", "textTransform"];
 		styleKeyMap.forEach((cssProperty) => {
+			// setting to null deletes the property from baseStyles
 			props.block.setStyle(cssProperty as styleProperty, null);
 		});
 	},

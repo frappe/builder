@@ -69,6 +69,7 @@ class Block implements BlockOptions {
 	blockClientScript?: string;
 	blockDataScript?: string;
 	props?: BlockProps;
+	stylePreset?: string;
 	// @ts-expect-error
 	referenceComponent: Block | null;
 	customAttributes: BlockAttributeMap;

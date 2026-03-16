@@ -29,11 +29,10 @@ function getBlockTemplate(
 				name: "Text",
 				element: "p",
 				innerHTML: "Text",
+				stylePreset: "paragraph",
 				baseStyles: {
-					fontSize: "16px",
 					width: "fit-content",
 					height: "fit-content",
-					lineHeight: "1.4",
 					minWidth: "10px",
 				} as BlockStyleMap,
 			};
