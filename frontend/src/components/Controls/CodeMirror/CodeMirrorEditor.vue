@@ -108,6 +108,7 @@ watch(isDark, (newVal) => {
 
 const allBlockProps = computed(() => {
 	const currentBlock = blockController.getFirstSelectedBlock();
+<<<<<<< HEAD
 
 	if (!currentBlock || typeof currentBlock.getBlockProps !== "function") return {};
 
@@ -120,6 +121,18 @@ const allBlockProps = computed(() => {
 		...inheritedBlockProps,
 		...ownBlockProps,
 	};
+=======
+	if (currentBlock) {
+		const ownBlockProps = currentBlock.getBlockProps();
+		const inheritedBlockProps = getParentProps(currentBlock);
+		const defaultProps = getDefaultPropsList(currentBlock, blockController);
+		return {
+			...defaultProps,
+			...inheritedBlockProps,
+			...ownBlockProps,
+		};
+	}
+>>>>>>> fcc5ba5 (fix: simplify getPropValue with dynamic props handling)
 });
 
 onMounted(async () => {
