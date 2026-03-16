@@ -114,6 +114,7 @@
 </template>
 
 <script setup lang="ts">
+import type Block from "@/block";
 import AIPageGeneratorModal from "@/components/AIPageGeneratorModal.vue";
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import BuilderCanvas from "@/components/BuilderCanvas.vue";
@@ -174,13 +175,13 @@ provide("showAIGenerator", () => {
 });
 
 // Expose edit-with-AI to context menu
-provide("editWithAI", (block: any) => {
-	const blockObj = getBlockObject(block);
+const editWithAIFn = (block: Block) => {
 	aiMode.value = "modify";
-	modifyBlockContext.value = blockObj;
+	modifyBlockContext.value = getBlockObject(block);
 	modifyBlockId.value = block.blockId;
 	showAIGeneratorDialog.value = true;
-});
+};
+provide("editWithAI", editWithAIFn);
 
 // Handle AI generated blocks
 const handleGeneratedBlocks = (blocks: any[]) => {
@@ -338,6 +339,20 @@ useShortcut([
 		handler: () => {
 			if (shortcutsModal.value) {
 				shortcutsModal.value.showDialog = true;
+			}
+		},
+	},
+	{
+		key: "i",
+		ctrl: true,
+		description: "Edit block with AI",
+		group: "Block",
+		condition: () =>
+			!blockController.isRoot() && !blockController.multipleBlocksSelected() && !builderStore.readOnlyMode,
+		handler: () => {
+			const block = blockController.getSelectedBlocks()[0];
+			if (block) {
+				editWithAIFn?.(block);
 			}
 		},
 	},
