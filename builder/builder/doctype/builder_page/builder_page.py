@@ -491,7 +491,9 @@ def save_as_template(page_doc: BuilderPage):
 
 
 @frappe.whitelist()
-def get_block_data(block_id: str, block_data_script: str, props: str):
+def get_block_data(block_id: str, block_data_script: str, props: str, route_variables: dict | None = None):
+	if route_variables:
+		frappe.form_dict.update({k: v for k, v in route_variables.items()})
 	frappe.has_permission("Builder Page", "write", throw=True)
 	props = frappe.parse_json(props or "{}")
 	block_data = frappe._dict()
@@ -734,7 +736,11 @@ def create_html_tag(block: dict, state: dict) -> bs.Tag:
 
 def build_tag_classes(block: dict, state: dict) -> list[str]:
 	"""Build list of CSS classes for the tag."""
-	classes = block.get("classes", []).copy()
+	classes = block.get("classes", [])
+	if isinstance(classes, str):
+		classes = [c.strip() for c in classes.split(",") if c.strip()]
+	else:
+		classes = classes.copy()
 	element = block.get("originalElement") or block.get("element")
 
 	text_elements = {"span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6", "label", "a"}
@@ -1169,7 +1175,7 @@ def extend_block(block, overridden_block):
 	block["tabletStyles"].update(overridden_block["tabletStyles"])
 	block["attributes"].update(overridden_block["attributes"])
 
-	dynamicValues = overridden_block.get("dynamicValues", [])
+	dynamicValues = overridden_block.get("dynamicValues") or []
 	dynamicValuesProperties = [dv.get("property") for dv in dynamicValues]
 	for dv in block.get("dynamicValues", []) or []:
 		if dv.get("property") in dynamicValuesProperties:

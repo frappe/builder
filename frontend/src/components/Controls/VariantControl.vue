@@ -1,5 +1,5 @@
 <template>
-	<div v-if="labelPlacement === 'top'" class="flex flex-col gap-1">
+	<div v-if="labelPlacement === 'top'" class="flex flex-col gap-1" v-bind="$attrs">
 		<InputLabel
 			class="text-sm"
 			:class="{ 'cursor-ns-resize': enableSlider }"
@@ -32,7 +32,8 @@
 
 	<div
 		v-else
-		class="group ml-[5px] flex items-center justify-between before:-mt-7 before:h-7 before:w-[1px] before:bg-surface-gray-4 before:content-['_'] after:absolute after:left-3.5 after:h-1.5 after:w-1.5 after:rounded-full after:bg-surface-gray-4 hover:after:hidden">
+		class="group ml-[5px] flex items-center justify-between before:-mt-7 before:h-7 before:w-[1px] before:bg-surface-gray-4 before:content-['_'] after:absolute after:left-3.5 after:h-1.5 after:w-1.5 after:rounded-full after:bg-surface-gray-4 hover:after:hidden"
+		v-bind="$attrs">
 		<button
 			type="button"
 			class="absolute left-[11px] hidden text-ink-gray-7 hover:text-ink-gray-9 group-hover:block"
@@ -73,9 +74,9 @@ defineProps<{
 	component: Component;
 	controlAttrs?: Record<string, unknown>;
 	events?: Record<string, unknown>;
-	modelValue: string;
-	defaultValue?: string | number;
-	placeholder?: string;
+	modelValue: string | number | boolean;
+	defaultValue?: string | number | boolean;
+	placeholder?: string | number | boolean;
 	enableSlider?: boolean;
 }>();
 

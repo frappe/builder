@@ -26,7 +26,6 @@ import { getDataArray, getDefaultPropsList, getParentProps, getStandardPropValue
 import { computed, ref, watch } from "vue";
 
 const props = defineProps<{
-	property: styleProperty;
 	label: string;
 	getModelValue: () => string;
 	setModelValue: (value: BlockVisibilityCondition) => void;

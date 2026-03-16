@@ -436,6 +436,7 @@ watch(
 		() => props.blockData,
 		() => props.block.getBlockDataScript(),
 		() => pageStore.settingPage,
+		() => pageStore.routeVariables,
 	],
 	(_, __, onCleanup) => {
 		if (pageStore.settingPage) return;
@@ -458,6 +459,7 @@ watch(
 				block_id: uidToUse,
 				block_data_script: script,
 				props: JSON.stringify(allResolvedProps.value),
+				route_variables: pageStore.routeVariables,
 			})
 			.then((res: any) => {
 				if (cancelled) return;
