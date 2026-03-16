@@ -95,6 +95,7 @@ import BuilderAssets from "./BuilderAssets.vue";
 import BuilderBlockTemplates from "./BuilderBlockTemplates.vue";
 import BuilderCanvas from "./BuilderCanvas.vue";
 import PanelResizer from "./PanelResizer.vue";
+import { useRoute } from 'vue-router';
 
 const showVariableManager = ref(false);
 const miniSidebar = ref(null) as Ref<HTMLElement | null>;
@@ -107,6 +108,8 @@ const pageStore = usePageStore();
 
 const pageCanvas = inject("pageCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
 const fragmentCanvas = inject("fragmentCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
+
+const route = useRoute();
 
 const leftPanelOptions = [
 	{
@@ -151,6 +154,13 @@ watchEffect(() => {
 		builderStore.activeLayers = componentLayers.value;
 	}
 });
+
+watch(
+  () => route.fullPath,  
+  () => {
+    showVariableManager.value = false;
+  }
+);
 
 // moved out of BlockLayers for performance
 // TODO: Find a better way to do this
