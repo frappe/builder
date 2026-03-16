@@ -95,7 +95,7 @@ import BuilderAssets from "./BuilderAssets.vue";
 import BuilderBlockTemplates from "./BuilderBlockTemplates.vue";
 import BuilderCanvas from "./BuilderCanvas.vue";
 import PanelResizer from "./PanelResizer.vue";
-import { useRoute } from 'vue-router';
+import { useRoute } from "vue-router";
 
 const showVariableManager = ref(false);
 const miniSidebar = ref(null) as Ref<HTMLElement | null>;
@@ -156,10 +156,10 @@ watchEffect(() => {
 });
 
 watch(
-  () => route.fullPath,  
-  () => {
-    showVariableManager.value = false;
-  }
+	() => route.fullPath,
+	() => {
+		showVariableManager.value = false;
+	},
 );
 
 // moved out of BlockLayers for performance
