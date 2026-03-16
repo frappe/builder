@@ -419,6 +419,14 @@ def camel_case_to_kebab_case(text, remove_spaces=False):
 	return text
 
 
+def sanitize_style_value(value):
+	if not isinstance(value, str):
+		return value
+	# Remove stray trailing/leading quotes
+	value = value.strip().strip('"').strip("'")
+	return value
+
+
 def execute_script(script, _locals, script_filename):
 	if is_safe_exec_enabled():
 		safe_exec(script, None, _locals, script_filename=script_filename)

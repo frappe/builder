@@ -157,5 +157,4 @@ const incrementOrDecrement = (step: number, initialValue: null | number = null) 
 	}
 	handleChange(newValue + "" + unit);
 };
-
 </script>
