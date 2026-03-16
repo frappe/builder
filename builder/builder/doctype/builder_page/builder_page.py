@@ -1145,17 +1145,69 @@ def append_state_style(style_obj, style_tag, style_class, device="desktop"):
 
 
 def set_fonts(styles, font_map):
+	weight_map = {
+		"thin": "100",
+		"extralight": "200",
+		"light": "300",
+		"normal": "400",
+		"medium": "500",
+		"semibold": "600",
+		"bold": "700",
+		"extrabold": "800",
+		"black": "900",
+	}
+	system_fonts = {
+		"arial",
+		"helvetica",
+		"times new roman",
+		"times",
+		"courier new",
+		"courier",
+		"verdana",
+		"georgia",
+		"palatino",
+		"garamond",
+		"bookman",
+		"comic sans ms",
+		"comic sans",
+		"trebuchet ms",
+		"arial black",
+		"impact",
+		"sans-serif",
+		"serif",
+		"monospace",
+		"cursive",
+		"fantasy",
+		"system-ui",
+	}
 	for style in styles:
 		font = style.get("fontFamily")
 		if font:
-			# escape spaces in font name
+			# Remove quotes if present
+			font = font.strip("'\"")
+
+			# Skip if it is a system font
+			if font.lower() in system_fonts:
+				continue
+
+			# escape spaces in font name for CSS
 			style["fontFamily"] = font.replace(" ", "\\ ")
+
+			weight = str(style.get("fontWeight") or "400").lower()
+			weight = weight_map.get(weight, weight)
+
+			# Ensure weight is a valid integer
+			try:
+				weight = int(weight)
+			except (ValueError, TypeError):
+				weight = 400
+
 			if font in font_map:
-				if style.get("fontWeight") and style.get("fontWeight") not in font_map[font]["weights"]:
-					font_map[font]["weights"].append(style.get("fontWeight"))
+				if weight not in font_map[font]["weights"]:
+					font_map[font]["weights"].append(weight)
 					font_map[font]["weights"].sort()
 			else:
-				font_map[font] = {"weights": [style.get("fontWeight") or "400"]}
+				font_map[font] = {"weights": [weight]}
 
 
 def set_fonts_from_html(soup, font_map):
@@ -1164,9 +1216,9 @@ def set_fonts_from_html(soup, font_map):
 		styles = tag.attrs.get("style").split(";")
 		for style in styles:
 			if "font-family" in style:
-				font = style.split(":")[1].strip()
+				font = style.split(":")[1].strip().strip("'\"")
 				if font:
-					font_map[font] = {"weights": ["400"]}
+					font_map[font] = {"weights": [400]}
 
 
 def extend_block(block, overridden_block):
