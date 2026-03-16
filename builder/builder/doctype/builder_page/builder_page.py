@@ -37,6 +37,7 @@ from builder.utils import (
 	get_builder_page_preview_file_paths,
 	get_template_assets_folder_path,
 	is_component_used,
+	sanitize_style_value,
 	split_styles,
 )
 
@@ -1118,7 +1119,7 @@ def wrap_with_media_query(style_string, device):
 def get_style(style_obj):
 	return (
 		"".join(
-			f"{camel_case_to_kebab_case(key)}: {value};"
+			f"{camel_case_to_kebab_case(key)}: {sanitize_style_value(value)};"
 			for key, value in style_obj.items()
 			if value is not None and value != "" and not key.startswith("__")
 		)
