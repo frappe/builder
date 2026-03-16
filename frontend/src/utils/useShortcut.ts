@@ -1,4 +1,4 @@
-import { isCtrlOrCmd, isTargetEditable } from "@/utils/helpers";
+import { isCtrlOrCmd, isDialogOpen, isTargetEditable } from "@/utils/helpers";
 import { computed, onActivated, onBeforeUnmount, onDeactivated, reactive, readonly } from "vue";
 
 export interface ShortcutConfig {
@@ -39,10 +39,6 @@ const activeShortcuts = reactive<RegisteredShortcut[]>([]);
 const shortcutHandlers = new Map<symbol, ShortcutConfig>();
 
 let listenerAttached = false;
-
-function isDialogOpen() {
-	return !!document.querySelector("[role='dialog']");
-}
 
 function attachGlobalListener() {
 	if (listenerAttached) return;
