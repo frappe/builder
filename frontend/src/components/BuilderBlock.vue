@@ -79,6 +79,8 @@ const canvasStore = useCanvasStore();
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
 const attrs = useAttrs();
 const editor = ref<InstanceType<typeof BlockEditor> | null>(null);
+const isMounted = ref(false);
+
 const pageStore = usePageStore();
 const blockDataStore = useBlockDataStore();
 const blockUidStore = useBlockUidStore();
@@ -219,13 +221,7 @@ const attributes = computed(() => {
 		if (props.block.getDataKey("type") === "attribute") {
 			let value;
 			if (props.block.getDataKey("comesFrom") === "props") {
-				value = getPropValue(
-					props.block.getDataKey("key") as string,
-					props.block,
-					getDataScriptValue,
-					getBlockDataScriptValue,
-					props.defaultProps,
-				);
+				value = getPropValue(props.block.getDataKey("key") as string, props.block, uidToUse);
 			} else if (props.block.getDataKey("comesFrom") === "blockDataScript") {
 				value = getBlockDataScriptValue(props.block.getDataKey("key") as string);
 			} else {
@@ -243,13 +239,7 @@ const attributes = computed(() => {
 				const property = dataKeyObj.property as string;
 				let value;
 				if (dataKeyObj.comesFrom === "props") {
-					value = getPropValue(
-						dataKeyObj.key as string,
-						props.block,
-						getDataScriptValue,
-						getBlockDataScriptValue,
-						props.defaultProps,
-					);
+					value = getPropValue(dataKeyObj.key as string, props.block, uidToUse);
 				} else if (dataKeyObj.comesFrom === "blockDataScript") {
 					value = getBlockDataScriptValue(dataKeyObj.key as string);
 				} else {
@@ -283,13 +273,7 @@ const styles = computed(() => {
 		if (props.block.getDataKey("type") === "style") {
 			let value;
 			if (props.block.getDataKey("comesFrom") === "props") {
-				value = getPropValue(
-					props.block.getDataKey("key") as string,
-					props.block,
-					getDataScriptValue,
-					getBlockDataScriptValue,
-					props.defaultProps,
-				);
+				value = getPropValue(props.block.getDataKey("key") as string, props.block, uidToUse);
 			} else if (props.block.getDataKey("comesFrom") === "blockDataScript") {
 				value = getBlockDataScriptValue(props.block.getDataKey("key") as string);
 			} else {
@@ -308,13 +292,7 @@ const styles = computed(() => {
 				const property = dataKeyObj.property as string;
 				let value;
 				if (dataKeyObj.comesFrom === "props") {
-					value = getPropValue(
-						dataKeyObj.key as string,
-						props.block,
-						getDataScriptValue,
-						getBlockDataScriptValue,
-						props.defaultProps,
-					);
+					value = getPropValue(dataKeyObj.key as string, props.block, uidToUse);
 				} else if (dataKeyObj.comesFrom === "blockDataScript") {
 					value = getBlockDataScriptValue(dataKeyObj.key as string);
 				} else {
@@ -396,31 +374,34 @@ onMounted(async () => {
 	}
 	blockUidStore.registerBlockUid(uidToUse, props.block);
 	blockUidStore.setParentUid(uidToUse, props.parentBlockUid || "root");
+	isMounted.value = true;
 });
 
 const allResolvedProps = computed(() => {
+	if (!isMounted.value) {
+		return {};
+	}
+	const defaultProps = Object.entries(props.defaultProps || {}).reduce((acc, [key, value]) => {
+		acc[key] = value.value;
+		return acc;
+	}, {} as Record<string, any>);
+
+	const blockProps = Object.entries({
+		...props.block.getBlockProps(),
+	}).reduce((acc, [key]) => {
+		acc[key] = getPropValue(key, props.block, uidToUse);
+		return acc;
+	}, {} as Record<string, any>);
+
+	const parentProps = Object.entries(getParentProps(props.block, uidToUse)).reduce((acc, [key, value]) => {
+		acc[key] = getPropValue(key, value.block!, value.blockUid);
+		return acc;
+	}, {} as Record<string, any>);
+
 	return {
-		...Object.fromEntries(
-			Object.entries(props.defaultProps || {}).map(([key, value]) => {
-				return [key, value.value];
-			}),
-		),
-		...Object.fromEntries(
-			Object.entries({ ...props.block.getBlockProps(), ...getParentProps(props.block) }).map(
-				([key, prop]) => {
-					return [
-						key,
-						getPropValue(
-							key,
-							props.block,
-							getDataScriptValue,
-							(path: string) => getDataForKey({ ...props.blockData }, path), // block props can not refer to own block data items
-							props.defaultProps,
-						),
-					];
-				},
-			),
-		),
+		...defaultProps,
+		...blockProps,
+		...parentProps,
 	};
 });
 
@@ -523,13 +504,7 @@ const hiddenDueToVisibilityCondition = computed(() => {
 		const value = getDataScriptValue(key as string);
 		return !Boolean(value);
 	} else {
-		const value = getPropValue(
-			key as string,
-			props.block,
-			getDataScriptValue,
-			getBlockDataScriptValue,
-			props.defaultProps,
-		);
+		const value = getPropValue(key as string, props.block, uidToUse);
 		return !Boolean(value);
 	}
 });

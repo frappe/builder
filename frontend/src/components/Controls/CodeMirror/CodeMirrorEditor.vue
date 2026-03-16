@@ -110,7 +110,7 @@ const allBlockProps = computed(() => {
 	const currentBlock = blockController.getFirstSelectedBlock();
 	if (currentBlock) {
 		const ownBlockProps = currentBlock.getBlockProps();
-		const inheritedBlockProps = getParentProps(currentBlock, {});
+		const inheritedBlockProps = getParentProps(currentBlock);
 		const defaultProps = getDefaultPropsList(currentBlock, blockController);
 		return {
 			...defaultProps,

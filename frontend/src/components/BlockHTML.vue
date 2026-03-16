@@ -33,13 +33,7 @@ const getDynamicContent = () => {
 			let value;
 			if (props.block.getDataKey("comesFrom") === "props") {
 				// props are checked first as unavailablity of comesFrom means it comes from dataScript (legacy)
-				value = getPropValue(
-					props.block.getDataKey("key"),
-					props.block,
-					getDataScriptValue,
-					getBlockDataScriptValue,
-					props.defaultProps,
-				);
+				value = getPropValue(props.block.getDataKey("key"), props.block);
 			} else if (props.block.getDataKey("comesFrom") === "blockDataScript") {
 				value = getBlockDataScriptValue(props.block.getDataKey("key"));
 			} else {
@@ -55,13 +49,7 @@ const getDynamicContent = () => {
 			?.forEach((dataKeyObj: BlockDataKey) => {
 				let value;
 				if (dataKeyObj.comesFrom === "props") {
-					value = getPropValue(
-						dataKeyObj.key as string,
-						props.block,
-						getDataScriptValue,
-						getBlockDataScriptValue,
-						props.defaultProps,
-					);
+					value = getPropValue(dataKeyObj.key as string, props.block, props.uid);
 				} else if (dataKeyObj.comesFrom === "blockDataScript") {
 					value = getBlockDataScriptValue(dataKeyObj.key as string);
 				} else {
