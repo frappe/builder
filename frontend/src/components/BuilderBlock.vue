@@ -323,7 +323,7 @@ const styles = computed(() => {
 	}
 
 	const styleMap = {
-		...presetStyles.value,
+		...(presetStyles.value?.baseStyles || {}),
 		...props.block.getStyles(props.breakpoint),
 		...props.block.getEditorStyles(),
 		...dynamicStyles,

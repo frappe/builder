@@ -758,20 +758,17 @@ def generate_and_apply_styles(block: dict, state: dict) -> str:
 
 	preset_styles = {}
 	if block.get("stylePreset"):
-		preset = frappe.db.get_value(
-			"Builder Style Preset",  # DocType name
-			{"style_name": block.get("stylePreset")},  # filter by style_name
-			"style_map",  # field to fetch
+		preset = frappe.get_cached_doc(
+			"Builder Style Preset",
+			block.get("stylePreset"),
 		)
-		if preset:  # parse to dic from JSON
-			preset_styles = frappe.parse_json(preset)
+		if preset:
+			preset_styles = frappe.parse_json(preset.style_map)
 
 	styles = {
-		"base": split_styles(
-			{**preset_styles, **block.get("baseStyles", {})}
-		),  # if user manually set fontWeight, it overrides preset's fontWeight
-		"mobile": split_styles(block.get("mobileStyles", {})),
-		"tablet": split_styles(block.get("tabletStyles", {})),
+		"base": split_styles({**preset_styles.get("baseStyles", {}), **block.get("baseStyles", {})}),
+		"mobile": split_styles({**preset_styles.get("mobileStyles", {}), **block.get("mobileStyles", {})}),
+		"tablet": split_styles({**preset_styles.get("tabletStyles", {}), **block.get("tabletStyles", {})}),
 		"raw": split_styles(block.get("rawStyles", {})),
 	}
 

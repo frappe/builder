@@ -95,7 +95,7 @@ const setVariantValue = (variantName: string, value: string | number | boolean |
 const baseProps = computed(() => {
 	const { enableStates, enabledStates, variants, ...rest } = props;
 	const presetMap = getPresetMap();
-	const presetValue = presetMap?.[props.propertyKey];
+	const presetValue = presetMap?.baseStyles?.[props.propertyKey];
 	const isInherited =
 		presetValue && blockController.getNativeStyle(props.propertyKey as styleProperty) === presetValue;
 	return {

@@ -109,6 +109,7 @@ const typographySectionProperties = [
 				actionButton: {
 					component: FontUploader,
 				},
+				getModelValue: () => blockController.getFontFamily(),
 				setModelValue: (val: string) => setFont(val),
 			};
 		},
