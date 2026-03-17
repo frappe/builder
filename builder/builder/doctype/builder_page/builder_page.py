@@ -798,6 +798,9 @@ def add_inner_html_content(tag: bs.Tag, block: dict, state: dict):
 	"""Add inner HTML content to the tag."""
 	inner_content = block.get("innerHTML")
 	if inner_content:
+		# Ensure inner_content is a string before passing to BeautifulSoup
+		if not isinstance(inner_content, (str, bytes)):
+			inner_content = str(inner_content)
 		inner_soup = bs.BeautifulSoup(inner_content, "html.parser")
 		set_fonts_from_html(inner_soup, state["font_map"])
 		tag.append(inner_soup)
