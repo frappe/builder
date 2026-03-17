@@ -492,20 +492,19 @@ class TestBuilderUtils(FrappeTestCase):
 
 	def test_sanitize_style_value(self):
 		test_cases = {
-			'center"': "center",
-			'"center"': "center",
-			"'center'": "center",
+			# No escaping needed
 			"center": "center",
-			"  center  ": "center",
-			'align-items: center"': "align-items: center",
-			'10px"': "10px",
-			"'red'": "red",
-			'"blue"': "blue",
-			'  "quoted value"  ': "quoted value",
+			"'center'": "'center'",
+			'"center"': '"center"',
+			"rgba(0,0,0,0.5)": "rgba(0,0,0,0.5)",
 			None: None,
 			123: 123,
-			'#fff"': "#fff",
-			'rgba(0,0,0,0.5)"': "rgba(0,0,0,0.5)",
+			# Unbalanced parentheses
+			"rgba(0,0,0,0.5": r"rgba\(0,0,0,0.5",
+			"rgba(0,0,0,0.5))": r"rgba\(0,0,0,0.5\)\)",
+			# Unbalanced quotes
+			"'center": r"\'center",
+			'"center': r"\"center",
 		}
 
 		for input_val, expected in test_cases.items():

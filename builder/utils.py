@@ -422,8 +422,12 @@ def camel_case_to_kebab_case(text, remove_spaces=False):
 def sanitize_style_value(value):
 	if not isinstance(value, str):
 		return value
-	# Remove stray trailing/leading quotes
-	value = value.strip().strip('"').strip("'")
+	if value.count("(") != value.count(")"):
+		value = value.replace("(", "\\(").replace(")", "\\)")
+	if value.count("'") % 2 != 0:
+		value = value.replace("'", "\\'")
+	if value.count('"') % 2 != 0:
+		value = value.replace('"', '\\"')
 	return value
 
 
