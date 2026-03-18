@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- Made with Frappe Builder -->
-<html lang="{{ language or default_language or 'en' }}">
+<html lang="{{ language or default_language or 'en' }}"{% if disable_auto_dark_mode %} data-prefers-color-scheme="light"{% endif %}>
 <head>
 	{% if base_url %}
 	<base href="{{ base_url }}">
@@ -29,6 +29,15 @@
 	{% endfor %}
 	{{ style }}
 	<link rel="stylesheet" href="/builder_assets/variables.css" media="screen">
+	{%- if disable_auto_dark_mode and css_variables -%}
+	<style>
+		@media (prefers-color-scheme: dark) {
+			:root {
+				{%- for key, value in css_variables.items() %}{{ key }}: {{ value }} !important;{%- endfor %}
+			}
+		}
+	</style>
+	{%- endif -%}
 	{% if preview %}
 	<link rel="stylesheet" href="/builder_assets/color_scheme_variables.css" media="screen">
 	{% endif %}

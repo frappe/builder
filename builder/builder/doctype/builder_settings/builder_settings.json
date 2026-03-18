@@ -13,6 +13,7 @@
   "style_public_url",
   "favicon",
   "auto_convert_images_to_webp",
+  "disable_auto_dark_mode",
   "default_language",
   "landing_page_section",
   "home_page",
@@ -67,6 +68,13 @@
    "fieldname": "auto_convert_images_to_webp",
    "fieldtype": "Check",
    "label": "Auto convert images to WebP"
+  },
+  {
+   "default": "0",
+   "description": "Disable automatic dark mode color scheme adjustments for all pages globally.",
+   "fieldname": "disable_auto_dark_mode",
+   "fieldtype": "Check",
+   "label": "Disable Auto Dark Mode"
   },
   {
    "default": "en",

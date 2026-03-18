@@ -71,6 +71,14 @@
 			@update:modelValue="
 				(val: Boolean) => builderStore.updateBuilderSettings('auto_convert_images_to_webp', val)
 			" />
+		<Switch
+			size="sm"
+			label="Disable Auto Dark Mode"
+			description="Prevent the site from automatically switching to dark mode"
+			:modelValue="Boolean(builderSettings.doc?.disable_auto_dark_mode)"
+			@update:modelValue="
+				(val: Boolean) => builderStore.updateBuilderSettings('disable_auto_dark_mode', val)
+			" />
 	</div>
 </template>
 <script setup lang="ts">
