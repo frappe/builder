@@ -98,10 +98,10 @@ const props = withDefaults(
 const emit = defineEmits<{
 	(e: "update:modelValue", value: boolean): void;
 	(e: "update:blockContext", value: Record<string, any> | null): void;
-	(e: "generated", blocks: any[]): void;
-	(e: "streaming", blocks: any[]): void;
-	(e: "modified", blocks: any[]): void;
-	(e: "modifyStreaming", blocks: any[]): void;
+	(e: "generated", block: any): void;
+	(e: "streaming", block: any): void;
+	(e: "modified", block: any): void;
+	(e: "modifyStreaming", block: any): void;
 	(e: "openSettings"): void;
 	(e: "generating", isGenerating: boolean): void;
 }>();
@@ -201,11 +201,14 @@ function getValidPartialYAML(yamlStr: string): any {
 	return null;
 }
 
-function parseSections(raw: string): any[] {
+function parseBlock(raw: string): any | null {
 	const parsed = getValidPartialYAML(raw);
-	if (!parsed) return [];
-	const arr = Array.isArray(parsed) ? parsed : [parsed];
-	return arr.filter((s: any) => s && typeof s === "object" && s.el).map(expandDSL);
+	if (!parsed) return null;
+	const block = Array.isArray(parsed) ? parsed[0] : parsed;
+	if (block && typeof block === "object" && block.el) {
+		return expandDSL(block);
+	}
+	return null;
 }
 
 const canGenerate = computed(() => {
@@ -336,26 +339,11 @@ const onStream = (data: any) => {
 	if (data.page_id && data.page_id !== props.pageId) return;
 	if (!data.chunk) return;
 	streamingContent.value += data.chunk;
-	const sections = parseSections(streamingContent.value);
-	if (sections.length > 0) {
-		emit("streaming", [
-			{
-				element: "div",
-				originalElement: "body",
-				blockId: "root",
-				children: sections,
-				baseStyles: {
-					display: "flex",
-					flexWrap: "wrap",
-					flexShrink: "0",
-					flexDirection: "column",
-					alignItems: "center",
-				},
-				attributes: {},
-				mobileStyles: {},
-				tabletStyles: {},
-			},
-		]);
+	const block = parseBlock(streamingContent.value);
+	if (block) {
+		block.originalElement = "body";
+		block.blockId = block.blockId || "root";
+		emit("streaming", block);
 	}
 };
 
@@ -363,8 +351,8 @@ const onComplete = (data: any) => {
 	if (data.page_id && data.page_id !== props.pageId) return;
 	generating.value = false;
 	applyTierLabel(data);
-	if (data.blocks) {
-		emit("generated", data.blocks);
+	if (data.block) {
+		emit("generated", data.block);
 		prompt.value = "";
 	}
 };
@@ -389,38 +377,34 @@ const onModifyStream = (data: any) => {
 	streamingContent.value += data.chunk;
 
 	if (taskType.value === "rewrite_text") {
-		emit("modifyStreaming", [
-			{
-				innerHTML: streamingContent.value.trim().replace(/^"|"$/g, ""),
-				blockId: props.blockContext?.blockId,
-			},
-		]);
+		emit("modifyStreaming", {
+			innerHTML: streamingContent.value.trim().replace(/^"|"$/g, ""),
+			blockId: props.blockContext?.blockId,
+		});
 		return;
 	}
 
 	if (taskType.value === "replace_image") {
 		const parsed = getValidPartialYAML(streamingContent.value);
 		if (parsed && typeof parsed === "object") {
-			emit("modifyStreaming", [
-				{
-					attributes: parsed,
-					blockId: props.blockContext?.blockId,
-				},
-			]);
+			emit("modifyStreaming", {
+				attributes: parsed,
+				blockId: props.blockContext?.blockId,
+			});
 		}
 		return;
 	}
 
-	const sections = parseSections(streamingContent.value);
-	if (sections.length > 0) emit("modifyStreaming", sections);
+	const block = parseBlock(streamingContent.value);
+	if (block) emit("modifyStreaming", block);
 };
 
 const onModifyComplete = (data: any) => {
 	if (data.page_id && data.page_id !== props.pageId) return;
 	generating.value = false;
 	applyTierLabel(data);
-	if (data.blocks) {
-		emit("modified", data.blocks);
+	if (data.block) {
+		emit("modified", data.block);
 		prompt.value = "";
 	}
 };

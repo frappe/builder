@@ -197,28 +197,13 @@ const runDirectAI = (block: Block, type: "rewrite_text" | "replace_image", custo
 provide("runDirectAI", runDirectAI);
 
 // Handle AI generated blocks
-const handleGeneratedBlocks = (blocks: any[]) => {
-	if (!blocks || blocks.length === 0) return;
+const handleGeneratedBlocks = (block: any) => {
+	if (!block) return;
 
-	// Wrap all generated sections in a root block
-	const root = {
-		element: "div",
-		originalElement: "body",
-		blockId: "root",
-		children: blocks,
-		baseStyles: {
-			display: "flex",
-			flexWrap: "wrap",
-			flexShrink: "0",
-			flexDirection: "column",
-			alignItems: "center",
-		},
-		attributes: {},
-		mobileStyles: {},
-		tabletStyles: {},
-	};
+	block.originalElement = "body";
+	block.blockId = block.blockId || "root";
 
-	pageStore.pageBlocks = [getBlockInstance(root)];
+	pageStore.pageBlocks = [getBlockInstance(block)];
 	canvasStore.activeCanvas?.setRootBlock(pageStore.pageBlocks[0] as any, false);
 
 	// Force a page save
@@ -226,22 +211,21 @@ const handleGeneratedBlocks = (blocks: any[]) => {
 };
 
 // Handle live streaming blocks (partial, not saved)
-const handleStreamingBlocks = useThrottleFn((blocks: any[]) => {
-	if (!blocks || blocks.length === 0) return;
+const handleStreamingBlocks = useThrottleFn((block: any) => {
+	if (!block) return;
 
 	try {
-		pageStore.pageBlocks = [getBlockInstance(blocks[0])];
+		pageStore.pageBlocks = [getBlockInstance(block)];
 		canvasStore.activeCanvas?.setRootBlock(pageStore.pageBlocks[0] as any, false);
 	} catch {
 		// Partial block may still be invalid, skip this frame
 	}
 }, 60);
 
-// Find a block in the tree by blockId and replace its children/styles with new data
-const replaceBlockInTree = (root: any, targetId: string, newBlocks: any[]): boolean => {
-	if (!root) return false;
-	if (root.blockId === targetId && newBlocks[0]) {
-		const replacement = newBlocks[0];
+// Find a block in the tree by blockId and replace its properties with new data
+const replaceBlockInTree = (root: any, targetId: string, replacement: any): boolean => {
+	if (!root || !replacement) return false;
+	if (root.blockId === targetId) {
 		root.element = replacement.element || root.element;
 		root.baseStyles = replacement.baseStyles || root.baseStyles;
 		root.mobileStyles = replacement.mobileStyles || root.mobileStyles;
@@ -260,16 +244,16 @@ const replaceBlockInTree = (root: any, targetId: string, newBlocks: any[]): bool
 		}
 		return true;
 	}
-	return root.children?.some((child: any) => replaceBlockInTree(child, targetId, newBlocks)) || false;
+	return root.children?.some((child: any) => replaceBlockInTree(child, targetId, replacement)) || false;
 };
 
 // Handle AI modified blocks (replace the specific block in the tree)
-const handleModifiedBlocks = (blocks: any[]) => {
-	if (!blocks || blocks.length === 0 || !modifyBlockId.value) return;
+const handleModifiedBlocks = (block: any) => {
+	if (!block || !modifyBlockId.value) return;
 
 	const rootBlock = pageStore.pageBlocks[0];
 	if (rootBlock) {
-		replaceBlockInTree(rootBlock, modifyBlockId.value, blocks);
+		replaceBlockInTree(rootBlock, modifyBlockId.value, block);
 		pageStore.savePage();
 	}
 
@@ -280,13 +264,13 @@ const handleModifiedBlocks = (blocks: any[]) => {
 };
 
 // Handle live streaming of modify (update block in-place)
-const handleModifyStreamingBlocks = useThrottleFn((blocks: any[]) => {
-	if (!blocks || blocks.length === 0 || !modifyBlockId.value) return;
+const handleModifyStreamingBlocks = useThrottleFn((block: any) => {
+	if (!block || !modifyBlockId.value) return;
 
 	try {
 		const rootBlock = pageStore.pageBlocks[0];
 		if (rootBlock) {
-			replaceBlockInTree(rootBlock, modifyBlockId.value, blocks);
+			replaceBlockInTree(rootBlock, modifyBlockId.value, block);
 		}
 	} catch {
 		// Partial block may still be invalid, skip this frame

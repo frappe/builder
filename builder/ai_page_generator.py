@@ -59,7 +59,7 @@ MODIFY_PROMPT = (
 	"el: str\n"
 	"id: str # MUST preserve existing\n"
 	"name?: str\n"
-	"style?: dict # CSS-in-JS camelCase\n"
+	"style?: dict # CSS-in-JS camelCase. Support interactive states like hover:backgroundColor, active:color.\n"
 	"c?: [el]\n"
 	"attrs?: dict\n"
 	"text?: str\n"
@@ -67,7 +67,7 @@ MODIFY_PROMPT = (
 	"Rules: Preserve ALL existing 'id' values. Only change what requested. Return COMPLETE structure. "
 	"Use %, rem for responsive widths. Top-level sections MUST be 100% width.\n"
 	"Wrap text in semantic elements — never place text directly in div/section.\n"
-	"Formatting: use flow style for all style dicts e.g. style: {color: '#fff', fontSize: 1rem}. "
+	"Formatting: use flow style for all style dicts e.g. style: {color: '#fff', 'hover:backgroundColor': '#eee'}. "
 	"Omit any key whose value is empty, null, or {}."
 )
 
@@ -84,13 +84,23 @@ REPLACE_IMAGE_PROMPT = (
 
 GENERATE_PROMPT = """You are an expert web designer specializing in creating modern, responsive web pages using the Frappe Builder block system.
 
-Return ONLY a valid YAML array of blocks. No markdown, no explanations.
+Return ONLY a valid YAML object. No markdown, no explanations.
 
-# Block Schema:
-- el: semantic HTML tag (section, div, nav, header, footer, h1-h3, p, span, button, a, img)
+# Structure:
+Return a single root block that represents the page (el: div, id: root). This block contains all sections in its 'c' (children) property.
+
+# Schema for the Page Container Object:
+- el: div
+- id: root
+- name: body
+- style: CSS-in-JS camelCase object for page-wide styles (e.g. { backgroundColor: '#f8f9fa', fontFamily: 'Inter', display: 'flex', flexDirection: 'column', alignItems: 'center' })
+- c: array of content blocks (sections, header, footer, etc.)
+
+# Content Block Schema:
+- el: semantic HTML tag (section, nav, header, footer, h1-h3, p, span, button, a, img)
 - name: descriptive name
-- style: CSS-in-JS camelCase object (display, flexDirection, padding, margin, gap, backgroundColor, color, fontSize, fontWeight, width, minHeight, background, boxShadow, borderRadius, gridTemplateColumns, fontFamily)
-- m_style: mobile overrides (fontSize, padding, flexDirection, etc.)
+- style: CSS-in-JS camelCase object. Include interactive states (e.g., 'hover:backgroundColor', 'active:transform', 'hover:color') for buttons and links.
+- m_style: mobile overrides
 - t_style: tablet overrides
 - attrs: HTML attrs (src, alt, href, target)
 - text: text content
@@ -98,13 +108,12 @@ Return ONLY a valid YAML array of blocks. No markdown, no explanations.
 - classes: CSS class names
 
 # Rules:
-- Top-level sections MUST always have 'width: 100%'. Use flex/grid layouts.
-- Modern harmonious color palettes
-- Google Fonts via fontFamily in style (use ONLY the font name, e.g. "Bebas Neue" — do NOT add CSS fallback families)
-- Responsive: %, rem, auto-fit units; add m_style overrides
-- Semantic HTML with alt texts for images
-- Wrap text in semantic text elements (p, h1-h3, span, a) — never place text directly in div/section.
-- Formatting: use flow style for all style dicts e.g. style: {color: '#fff', fontSize: 1rem}. Omit any key whose value is empty, null, or {}."""
+- The top-level Page block must have 'display: flex', 'flexDirection: column', and 'alignItems: center' to layout sections properly.
+- All top-level sections inside 'c' MUST have 'width: 100%'.
+- Modern harmonious color palettes. If you set a dark background for the page, ensure text colors are light.
+- Interactive: Use hover states for buttons/links to make the page feel alive.
+- Google Fonts via fontFamily (use ONLY the font name).
+- Semantic HTML with alt texts."""
 
 MODIFY_PROMPT_MAP = {
 	"rewrite_text": REWRITE_TEXT_PROMPT,
@@ -262,33 +271,38 @@ def strip_fences(text: str) -> str:
 	return re.sub(r"\n?```\s*$", "", text).strip()
 
 
-def parse_blocks(content: str) -> list[dict]:
-	"""Parse LLM YAML output into blocks. Raises ValueError on invalid output."""
+def parse_blocks(content: str) -> dict:
+	"""Parse LLM YAML output into a single block object."""
 	parsed = yaml.safe_load(strip_fences(content))
 	if isinstance(parsed, dict):
-		blocks = [parsed]
+		block = parsed
 	elif isinstance(parsed, list):
-		blocks = [b for b in parsed if isinstance(b, dict)]
+		block = parsed[0] if parsed else {}
 	else:
 		raise ValueError("Not a valid block object")
-	if not blocks:
+
+	if not block:
 		raise ValueError("No valid blocks in response")
-	return [expand_yaml_to_block(b) for b in blocks]
+
+	if isinstance(block, dict) and not block.get("id"):
+		block["id"] = "root"
+
+	return expand_yaml_to_block(block)
 
 
-def parse_modify_response(content: str, original_id: str | None, task_type: str | None) -> list:
-	"""Parse LLM output for modify operations, handling task-specific response formats."""
+def parse_modify_response(content: str, original_id: str | None, task_type: str | None) -> dict:
+	"""Parse LLM output for modify operations, returning a single block/result."""
 	clean = strip_fences(content)
 
 	if task_type == "rewrite_text":
-		return [{"innerHTML": clean.strip('"'), "blockId": original_id}]
+		return {"innerHTML": clean.strip('"'), "blockId": original_id}
 
 	if task_type == "replace_image":
 		try:
 			res = yaml.safe_load(clean)
 			res = res[0] if isinstance(res, list) and res else res
 			if isinstance(res, dict):
-				return [{"attributes": res, "blockId": original_id}]
+				return {"attributes": res, "blockId": original_id}
 		except Exception:
 			pass
 
@@ -356,9 +370,7 @@ def run_llm_job(
 		else:
 			content = call_llm(model, messages, params, stream=False, api_key=api_key)
 
-		blocks = (
-			parse_modify_response(content, original_id, task_type) if is_modify else parse_blocks(content)
-		)
+		block = parse_modify_response(content, original_id, task_type) if is_modify else parse_blocks(content)
 
 	except ValueError as e:
 		frappe.log_error(f"Parse error: {e}\nContent: {content}", f"{event_prefix} parse")
@@ -370,7 +382,7 @@ def run_llm_job(
 		emit("error", message=str(e))
 		return
 
-	emit("complete", blocks=blocks, model_used=model, task_tier=task_tier)
+	emit("complete", block=block, model_used=model, task_tier=task_tier)
 
 
 def generate_page_blocks(
