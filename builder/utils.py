@@ -8,6 +8,7 @@ from os.path import join
 from urllib.parse import unquote, urlparse
 
 import frappe
+import yaml
 from frappe.modules.import_file import import_file_by_path
 from frappe.utils import get_url
 from frappe.utils.html_utils import unescape_html
@@ -681,3 +682,46 @@ def execute_script_and_combine(prev_block_data, block_data_script, props):
 	execute_script(unescape_html(block_data_script), _locals, "sample")
 	block_data.update(_locals["block"])
 	return combine(prev_block_data, block_data)
+
+
+class CompactDumper(yaml.Dumper):
+	"""Minimal-whitespace YAML dumper.
+
+	Two optimizations over the default Dumper:
+	1. indentless=True — removes the extra 2-space indent on list items inside
+	   mappings, which compounds in deeply nested block trees.
+	2. Flow style for flat dicts — turns multi-line style blocks into single-line
+	   {k: v, k: v} inline mappings, saving ~60% of style-dict tokens.
+	"""
+
+	def increase_indent(self, flow=False, indentless=False):
+		return super().increase_indent(flow=flow, indentless=True)
+
+	def represent_mapping(self, tag, mapping, flow_style=None):
+		# Use flow style {k: v} only for flat dicts (no nested dicts or lists)
+		if flow_style is None:
+			flow_style = all(not isinstance(v, (dict, list)) for v in mapping.values())
+		return super().represent_mapping(tag, mapping, flow_style=flow_style)
+
+
+def _str_representer(dumper, data):
+	"""Use plain scalars where safe; single-quote only when the value contains
+	characters that would confuse the YAML parser."""
+	if any(c in data for c in (":", "{", "}", "[", "]", "#", "&", "*", "!", "|", ">", "'", '"', "\n")):
+		return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="'")
+	return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+
+
+CompactDumper.add_representer(str, _str_representer)
+
+
+def to_compact_yaml(data) -> str:
+	"""Serialize data to minimal YAML for LLM context."""
+	return yaml.dump(
+		data,
+		Dumper=CompactDumper,
+		sort_keys=False,
+		default_flow_style=False,
+		allow_unicode=True,
+		width=1000,  # prevent wrapping long values mid-token
+	)

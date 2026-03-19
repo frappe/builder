@@ -6,9 +6,11 @@ import litellm
 import yaml
 from frappe import _
 
+from builder.utils import to_compact_yaml
+
 TASK_PARAMS = {
-	"simple": {"max_tokens": 24000, "temperature": 0.5},
-	"complex": {"max_tokens": 20000, "temperature": 0.7},
+	"simple": {"max_tokens": 1000, "temperature": 0.5},
+	"complex": {"max_tokens": 16000, "temperature": 0.7},
 }
 
 STYLE_KEYS_SIMPLE = frozenset(
@@ -64,7 +66,9 @@ MODIFY_PROMPT = (
 	"m_style?: dict\n\n"
 	"Rules: Preserve ALL existing 'id' values. Only change what requested. Return COMPLETE structure. "
 	"Use %, rem for responsive widths. Top-level sections MUST be 100% width.\n"
-	"Wrap text in semantic elements — never place text directly in div/section."
+	"Wrap text in semantic elements — never place text directly in div/section.\n"
+	"Formatting: use flow style for all style dicts e.g. style: {color: '#fff', fontSize: 1rem}. "
+	"Omit any key whose value is empty, null, or {}."
 )
 
 REWRITE_TEXT_PROMPT = (
@@ -100,8 +104,7 @@ Return ONLY a valid YAML array of blocks. No markdown, no explanations.
 - Responsive: %, rem, auto-fit units; add m_style overrides
 - Semantic HTML with alt texts for images
 - Wrap text in semantic text elements (p, h1-h3, span, a) — never place text directly in div/section.
-
-# CRITICAL: Return ONLY valid YAML array."""
+- Formatting: use flow style for all style dicts e.g. style: {color: '#fff', fontSize: 1rem}. Omit any key whose value is empty, null, or {}."""
 
 MODIFY_PROMPT_MAP = {
 	"rewrite_text": REWRITE_TEXT_PROMPT,
@@ -143,18 +146,22 @@ def compress_block_to_yaml(block: dict, depth: int = 0, task_tier: str = "comple
 		if filtered:
 			out["style"] = filtered
 
-	if isinstance(block.get("attributes"), dict):
-		out["attrs"] = block["attributes"]
+	attrs = block.get("attributes") or {}
+	if isinstance(attrs, dict) and attrs:
+		out["attrs"] = attrs
+
 	if block.get("classes"):
 		out["classes"] = block["classes"]
 	if block.get("innerHTML"):
 		out["text"] = block["innerHTML"]
 
-	if task_tier == "complex" or depth <= 1:
-		if isinstance(block.get("mobileStyles"), dict):
-			out["m_style"] = block["mobileStyles"]
-		if isinstance(block.get("tabletStyles"), dict):
-			out["t_style"] = block["tabletStyles"]
+	mob = block.get("mobileStyles") or {}
+	if isinstance(mob, dict) and mob:
+		out["m_style"] = mob
+
+	tab = block.get("tabletStyles") or {}
+	if isinstance(tab, dict) and tab and (task_tier == "complex" or depth <= 1):
+		out["t_style"] = tab
 
 	children = [
 		compress_block_to_yaml(c, depth + 1, task_tier)
@@ -165,6 +172,17 @@ def compress_block_to_yaml(block: dict, depth: int = 0, task_tier: str = "comple
 		out["c"] = children
 
 	return out
+
+
+def extract_block_id(block_context: str) -> str | None:
+	"""Extract blockId from raw JSON context without full re-parse later."""
+	try:
+		data = json.loads(block_context)
+		if isinstance(data, list):
+			data = data[0] if data else {}
+		return data.get("blockId") if isinstance(data, dict) else None
+	except Exception:
+		return None
 
 
 def strip_block_context(block_context: str, task_tier: str, task_type: str | None = None) -> str:
@@ -183,12 +201,8 @@ def strip_block_context(block_context: str, task_tier: str, task_type: str | Non
 		return data.get("innerHTML") or data.get("innerText") or ""
 	if task_type == "replace_image":
 		attrs = data.get("attributes", {})
-		return yaml.dump({"src": attrs.get("src", ""), "alt": attrs.get("alt", "")}, sort_keys=False)
-	print(
-		"Compressing block context for modify task:",
-		yaml.dump([compress_block_to_yaml(data, 0, task_tier)], sort_keys=False, default_flow_style=False),
-	)
-	return yaml.dump([compress_block_to_yaml(data, 0, task_tier)], sort_keys=False, default_flow_style=False)
+		return to_compact_yaml({"src": attrs.get("src", ""), "alt": attrs.get("alt", "")})
+	return to_compact_yaml([compress_block_to_yaml(data, 0, task_tier)])
 
 
 def expand_yaml_to_block(node: dict) -> dict:
@@ -239,8 +253,6 @@ def call_llm(model: str, messages: list, params: dict, *, stream: bool, api_key:
 		for m in messages:
 			if m["role"] == "system" and isinstance(m.get("content"), str):
 				m["content"] = [{"type": "text", "text": m["content"]}]
-				m["cache_control"] = {"type": "ephemeral"}
-
 	resp = litellm.completion(model=model, messages=messages, stream=stream, api_key=api_key, **params)
 	return resp if stream else (resp.choices[0].message.content or "")
 
@@ -264,16 +276,9 @@ def parse_blocks(content: str) -> list[dict]:
 	return [expand_yaml_to_block(b) for b in blocks]
 
 
-def parse_modify_response(content: str, block_context: str, task_type: str | None) -> list:
+def parse_modify_response(content: str, original_id: str | None, task_type: str | None) -> list:
 	"""Parse LLM output for modify operations, handling task-specific response formats."""
 	clean = strip_fences(content)
-
-	try:
-		ctx = json.loads(block_context)
-		ctx = ctx[0] if isinstance(ctx, list) and ctx else ctx
-		original_id = ctx.get("blockId") if isinstance(ctx, dict) else None
-	except Exception:
-		original_id = None
 
 	if task_type == "rewrite_text":
 		return [{"innerHTML": clean.strip('"'), "blockId": original_id}]
@@ -320,9 +325,13 @@ def run_llm_job(
 		model_used=model,
 	)
 
+	# Fix: extract original_id once here; pass it down instead of re-parsing later
+	original_id = extract_block_id(block_context) if is_modify and block_context else None
+
 	stripped_context = (
 		strip_block_context(block_context, task_tier, task_type=task_type) if is_modify else None
 	)
+
 	messages = [
 		{
 			"role": "system",
@@ -348,7 +357,7 @@ def run_llm_job(
 			content = call_llm(model, messages, params, stream=False, api_key=api_key)
 
 		blocks = (
-			parse_modify_response(content, block_context, task_type) if is_modify else parse_blocks(content)
+			parse_modify_response(content, original_id, task_type) if is_modify else parse_blocks(content)
 		)
 
 	except ValueError as e:
