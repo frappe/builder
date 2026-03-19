@@ -181,7 +181,7 @@ const attributes = computed(() => {
 	}
 
 	Object.keys(additionalAttributes).forEach((key) => {
-		if (!RESTRICTED_ATTRIBS.includes(key)) {
+		if (RESTRICTED_ATTRIBS.includes(key)) {
 			delete additionalAttributes[key];
 		}
 	});
@@ -477,12 +477,18 @@ watch(
 				});
 			});
 	},
-	{ immediate: true },
+	{ immediate: true, deep: true },
 );
 
 watchEffect(() => {
-	blockDataStore.setPageData(uidToUse, props.data || {});
 	blockDataStore.setBlockData(uidToUse, props.blockData || {}, "passedDown");
+});
+
+watchEffect(() => {
+	blockDataStore.setPageData(uidToUse, props.data || {});
+});
+
+watchEffect(() => {
 	blockDataStore.setBlockDefaultProps(uidToUse, props.defaultProps || {});
 });
 
