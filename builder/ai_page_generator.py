@@ -5,6 +5,7 @@ import frappe
 import yaml
 from frappe import _
 
+
 def classify_task(prompt: str, is_modify: bool = False) -> str:
 	"""Classify task → simple (modify) | complex (full page creation)."""
 	return "simple" if is_modify else "complex"
@@ -13,30 +14,26 @@ def classify_task(prompt: str, is_modify: bool = False) -> str:
 # ─── Model Selection & Cost Intelligence ──────────────────────────
 
 MODEL_TIERS = {
-	"openai": {"simple": "gpt-4.1-mini", "complex": "gpt-5"},
+	"openai": {"simple": "gpt-5.4-mini", "complex": "gpt-5.4"},
 	"anthropic": {"simple": "claude-haiku-4-5", "complex": "claude-sonnet-4-6"},
-	"google": {"simple": "gemini-2.5-flash", "complex": "gemini-2.5-pro"},
-	"x-ai": {"simple": "grok-beta", "complex": "grok-2-1212"},
+	"google": {"simple": "gemini-3-flash", "complex": "gemini-3.1-pro"},
+	"x-ai": {"simple": "grok-4.1-fast", "complex": "grok-4.1"},
 }
 
 MODEL_COST_INDEX = {
-	"gpt-5-nano": 1,
-	"gpt-5-mini": 2,
-	"gpt-4.1-mini": 2,
-	"o4-mini": 3,
-	"gpt-4.1": 4,
-	"gpt-5": 5,
-	"o3": 6,
-	"gpt-5.4": 7,
+	"gpt-5.4-nano": 1,
+	"gpt-5.4-mini": 2,
+	"gpt-5.3-codex": 4,
+	"gpt-5.4": 6,
 	"claude-haiku-4-5": 1,
 	"claude-sonnet-4-6": 4,
 	# "claude-opus-4-6": 7,
-	"gemini-2.5-flash-lite": 1,
-	"gemini-2.5-flash": 2,
-	"gemini-2.5-pro": 5,
-	"grok-beta": 2,
-	"grok-2-1212": 4,
-	"grok-2-vision-1212": 4,
+	"gemini-3-flash": 2,
+	"gemini-2.5-pro": 4,
+	"gemini-3.1-pro": 6,
+	"grok-4.1-fast": 1,
+	"grok-4.1": 4,
+	"grok-4.20": 6,
 }
 
 TASK_PARAMS = {
@@ -332,38 +329,34 @@ def get_available_models():
 		{
 			"provider": "openai",
 			"models": [
-				{"name": "gpt-5.4", "label": "GPT-5.4 (Flagship)", "max_tokens": 1050000},
-				{"name": "gpt-5", "label": "GPT-5 (Reasoning)", "max_tokens": 400000},
-				{"name": "gpt-5-mini", "label": "GPT-5 Mini (Fast)", "max_tokens": 400000},
-				{"name": "gpt-5-nano", "label": "GPT-5 Nano (Cheapest)", "max_tokens": 400000},
-				{"name": "gpt-4.1", "label": "GPT-4.1", "max_tokens": 1047576},
-				{"name": "gpt-4.1-mini", "label": "GPT-4.1 Mini", "max_tokens": 1047576},
-				{"name": "o3", "label": "o3 (Reasoning)", "max_tokens": 200000},
-				{"name": "o4-mini", "label": "o4-mini (Fast Reasoning)", "max_tokens": 200000},
+				{"name": "gpt-5.4", "label": "GPT-5.4 (Flagship)", "max_tokens": 1000000},
+				{"name": "gpt-5.3-codex", "label": "GPT-5.3 Codex (Best Coding)", "max_tokens": 1000000},
+				{"name": "gpt-5.4-mini", "label": "GPT-5.4 Mini (Fast)", "max_tokens": 1000000},
+				{"name": "gpt-5.4-nano", "label": "GPT-5.4 Nano (Cheapest)", "max_tokens": 1000000},
 			],
 		},
 		{
 			"provider": "anthropic",
 			"models": [
-				{"name": "claude-sonnet-4-6", "label": "Claude Sonnet 4.6 (Latest)", "max_tokens": 200000},
 				# {"name": "claude-opus-4-6", "label": "Claude Opus 4.6 (Most Capable)", "max_tokens": 200000},
+				{"name": "claude-sonnet-4-6", "label": "Claude Sonnet 4.6 (Balanced)", "max_tokens": 200000},
 				{"name": "claude-haiku-4-5", "label": "Claude Haiku 4.5 (Fastest)", "max_tokens": 200000},
 			],
 		},
 		{
 			"provider": "google",
 			"models": [
+				{"name": "gemini-3.1-pro", "label": "Gemini 3.1 Pro (Flagship)", "max_tokens": 1048576},
 				{"name": "gemini-2.5-pro", "label": "Gemini 2.5 Pro", "max_tokens": 1048576},
-				{"name": "gemini-2.5-flash", "label": "Gemini 2.5 Flash", "max_tokens": 1048576},
-				{"name": "gemini-2.5-flash-lite", "label": "Gemini 2.5 Flash-Lite", "max_tokens": 1048576},
+				{"name": "gemini-3-flash", "label": "Gemini 3 Flash (Fast)", "max_tokens": 1048576},
 			],
 		},
 		{
 			"provider": "x-ai",
 			"models": [
-				{"name": "grok-beta", "label": "Grok Beta", "max_tokens": 131072},
-				{"name": "grok-2-1212", "label": "Grok 2", "max_tokens": 131072},
-				{"name": "grok-2-vision-1212", "label": "Grok 2 Vision", "max_tokens": 32768},
+				{"name": "grok-4.20", "label": "Grok 4.20 (Most Capable)", "max_tokens": 131072},
+				{"name": "grok-4.1", "label": "Grok 4.1", "max_tokens": 131072},
+				{"name": "grok-4.1-fast", "label": "Grok 4.1 Fast (Cheapest)", "max_tokens": 2000000},
 			],
 		},
 	]
