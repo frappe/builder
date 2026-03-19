@@ -21,6 +21,7 @@ from builder.utils import (
 	make_safe_get_request,
 	process_block_assets,
 	remove_unsafe_fields,
+	sanitize_style_value,
 	split_styles,
 )
 
@@ -488,3 +489,23 @@ class TestBuilderUtils(FrappeTestCase):
 		block.attributes = frappe._dict()
 		block.children = None
 		copy_img_to_asset_folder(block, test_page)  # Should handle None children gracefully
+
+	def test_sanitize_style_value(self):
+		test_cases = {
+			# No escaping needed
+			"center": "center",
+			"'center'": "'center'",
+			'"center"': '"center"',
+			"rgba(0,0,0,0.5)": "rgba(0,0,0,0.5)",
+			None: None,
+			123: 123,
+			# Unbalanced parentheses
+			"rgba(0,0,0,0.5": r"rgba\(0,0,0,0.5",
+			"rgba(0,0,0,0.5))": r"rgba\(0,0,0,0.5\)\)",
+			# Unbalanced quotes
+			"'center": r"\'center",
+			'"center': r"\"center",
+		}
+
+		for input_val, expected in test_cases.items():
+			self.assertEqual(sanitize_style_value(input_val), expected)

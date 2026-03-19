@@ -758,7 +758,7 @@ class Block implements BlockOptions {
 		if (!innerHTML && this.isExtendedFromComponent()) {
 			innerHTML = this.referenceComponent?.getInnerHTML() || "";
 		}
-		return innerHTML;
+		return String(innerHTML);
 	}
 	getText(): string {
 		const editor = this.getEditor();

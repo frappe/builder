@@ -5,7 +5,8 @@
 			:class="{
 				'cursor-ns-resize': enableSlider,
 			}"
-			class="w-[88px] shrink-0"
+			class="w-[88px] shrink-0 truncate"
+			:title="label"
 			:description="description"
 			@mousedown="handleMouseDown">
 			{{ label }}
