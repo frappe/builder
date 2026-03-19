@@ -1486,6 +1486,10 @@ function executeBlockClientScriptRestricted(
 	}
 }
 
+function isDialogOpen() {
+	return !!document.querySelector("[role='dialog']");
+}
+
 export {
 	addPxToNumber,
 	addUnitToNumber,
@@ -1528,6 +1532,7 @@ export {
 	HSVToHex,
 	isBlock,
 	isCtrlOrCmd,
+	isDialogOpen,
 	isHTMLString,
 	isJSONString,
 	isTargetEditable,

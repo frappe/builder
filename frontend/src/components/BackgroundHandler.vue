@@ -43,14 +43,11 @@
 
 				<!-- Color Tab -->
 				<div v-if="activeTab === 'color'" class="w-full space-y-4">
-					<ColorPicker renderMode="inline" :modelValue="backgroundColor" @update:modelValue="setBGColor" />
-					<BuilderButton
-						:disabled="!backgroundColor"
-						class="w-full"
-						variant="subtle"
-						@click="setBGColor(null)">
-						Clear Color
-					</BuilderButton>
+					<ColorPicker
+						renderMode="inline"
+						:modelValue="backgroundColor"
+						:showInput="true"
+						@update:modelValue="setBGColor" />
 				</div>
 
 				<!-- Image Tab -->

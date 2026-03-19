@@ -18,7 +18,9 @@
 				:isOpen="isOpen"></slot>
 		</template>
 		<template #body="{ close }">
-			<div ref="colorPicker" class="flex flex-col gap-2 rounded-lg bg-surface-white p-3 shadow-lg">
+			<div
+				ref="colorPicker"
+				class="color-picker-container flex flex-col gap-2 rounded-lg bg-surface-white p-3 shadow-lg">
 				<div
 					ref="colorMap"
 					:style="colorMapStyle"
@@ -54,12 +56,13 @@
 						<EyeDropperIcon v-if="isSupported" class="text-ink-gray-7" @click="() => open()" />
 					</div>
 				</div>
-				<Input
+				<Autocomplete
 					v-if="showInput"
-					type="text"
 					:modelValue="modelValue"
-					class="mt-2 w-full text-sm"
+					class="mt-2 w-full text-sm [&>div>div>input]:text-sm"
 					placeholder="Set Color"
+					:getOptions="getOptions"
+					referenceElementSelector=".color-picker-container"
 					@update:modelValue="handleInputChange" />
 			</div>
 		</template>
@@ -67,11 +70,12 @@
 	<div
 		v-else
 		ref="colorPicker"
-		:class="
+		:class="[
+			'color-picker-container',
 			renderMode === 'inline'
 				? 'flex w-full flex-col gap-2'
-				: 'flex flex-col gap-2 rounded-lg bg-surface-white p-3 shadow-lg'
-		">
+				: 'flex flex-col gap-2 rounded-lg bg-surface-white p-3 shadow-lg',
+		]">
 		<div
 			ref="colorMap"
 			:style="colorMapStyle"
@@ -107,27 +111,34 @@
 				<EyeDropperIcon v-if="isSupported" class="text-ink-gray-7" @click="() => open()" />
 			</div>
 		</div>
-		<Input
+		<Autocomplete
 			v-if="showInput"
-			type="text"
 			:modelValue="modelValue"
-			class="mt-2 w-full text-sm"
+			class="mt-2 w-full text-sm [&>div>div>input]:text-sm"
 			placeholder="Set Color"
+			:getOptions="getOptions"
+			referenceElementSelector=".color-picker-container"
 			@update:modelValue="handleInputChange" />
 	</div>
 </template>
 <script setup lang="ts">
+import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import EyeDropperIcon from "@/components/Icons/EyeDropper.vue";
 import useCanvasStore from "@/stores/canvasStore";
+import { getColorVariableOptions } from "@/utils/colorOptions";
 import { HSVToHex, HexToHSV, getRGB } from "@/utils/helpers";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
-import { clamp, useEyeDropper } from "@vueuse/core";
+import { clamp, useDark, useEyeDropper } from "@vueuse/core";
 import { Popover } from "frappe-ui";
 import { Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
 
 type CSSColorValue = HashString | RGBString | `var(--${string})`;
 
-const { resolveVariableValue } = useBuilderVariable();
+const { variables, resolveVariableValue } = useBuilderVariable();
+
+const isDark = useDark({
+	attribute: "data-theme",
+});
 
 const canvasStore = useCanvasStore();
 const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;
@@ -176,6 +187,10 @@ const modelColor = computed(() => {
 	const resolvedColor = resolveVariableValue(color);
 	return getRGB(resolvedColor);
 });
+
+const getOptions = async (query: string) => {
+	return getColorVariableOptions(query, variables.value, resolveVariableValue, isDark.value);
+};
 
 const emit = defineEmits(["update:modelValue"]);
 
@@ -242,12 +257,18 @@ const handleColorPaletteClick = (color: HashString) => {
 	updateColor();
 };
 
-const handleInputChange = (color: HashString) => {
+const handleInputChange = (color: string | null) => {
 	if (!color) {
 		emit("update:modelValue", null);
 		return;
 	}
-	setSelectorPosition(color);
+
+	if (color.startsWith("var(--") || color.startsWith("--")) {
+		emit("update:modelValue", color.startsWith("var(--") ? color : `var(${color})`);
+		return;
+	}
+
+	setSelectorPosition(color as HashString);
 	updateColor();
 };
 
