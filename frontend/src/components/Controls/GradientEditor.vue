@@ -10,7 +10,54 @@
 				:modelValue="gradient.type"
 				@update:modelValue="updateType"
 				class="flex-1" />
-			<div v-if="gradient.type === 'linear-gradient'" class="flex items-center gap-2">
+		</div>
+
+		<div class="flex items-center gap-4">
+			<!-- Gradient Preview / Stop Bar -->
+			<div
+				class="shadow-inner relative h-5 w-full rounded border border-outline-gray-2"
+				:style="barPreviewStyle"
+				ref="barRef">
+				<div class="absolute inset-0 cursor-copy" @click.self="addStopAtX"></div>
+				<div
+					v-for="(stop, index) in gradient.stops"
+					:key="index"
+					class="absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
+					:style="{ left: stop.position + '%' }">
+					<Popover placement="top" :offset="10">
+						<template #target="{ togglePopover }">
+							<div
+								class="size-4 cursor-pointer rounded-full border-2 border-white shadow-md ring-1 ring-black/20 transition-transform hover:scale-110 focus:outline-none"
+								:style="{ backgroundColor: stop.color }"
+								@mousedown="handleStopMouseDown(index, $event)"
+								@click="(e) => !hasMoved && togglePopover()" />
+						</template>
+						<template #body="{ close }">
+							<div class="rounded-lg border border-outline-gray-2 bg-surface-white p-3 shadow-xl">
+								<ColorPicker
+									renderMode="inline"
+									:showInput="true"
+									:modelValue="stop.color"
+									@update:modelValue="(val) => updateStopColor(index, val)" />
+								<div class="mt-2 flex items-center gap-2">
+									<BuilderButton
+										variant="subtle"
+										label="Remove Stop"
+										class="w-full"
+										:disabled="gradient.stops.length <= 2"
+										@click="
+											() => {
+												close();
+												removeStop(index);
+											}
+										" />
+								</div>
+							</div>
+						</template>
+					</Popover>
+				</div>
+			</div>
+			<div v-if="gradient.type === 'linear-gradient'" class="flex items-center gap-1">
 				<AnglePicker :modelValue="parseInt(angleValue)" @update:modelValue="updateAngle" />
 				<Input
 					type="text"
@@ -23,51 +70,6 @@
 						<span class="absolute right-2 top-1/2 -translate-y-1/2 text-[12px] text-ink-gray-4">°</span>
 					</template>
 				</Input>
-			</div>
-		</div>
-
-		<!-- Gradient Preview / Stop Bar -->
-		<div
-			class="shadow-inner relative h-5 w-full rounded border border-outline-gray-2"
-			:style="barPreviewStyle"
-			ref="barRef">
-			<div class="absolute inset-0 cursor-copy" @click.self="addStopAtX"></div>
-			<div
-				v-for="(stop, index) in gradient.stops"
-				:key="index"
-				class="absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
-				:style="{ left: stop.position + '%' }">
-				<Popover placement="top" :offset="10">
-					<template #target="{ togglePopover }">
-						<div
-							class="size-4 cursor-pointer rounded-full border-2 border-white shadow-md ring-1 ring-black/20 transition-transform hover:scale-110 focus:outline-none"
-							:style="{ backgroundColor: stop.color }"
-							@mousedown="handleStopMouseDown(index, $event)"
-							@click="(e) => !hasMoved && togglePopover()" />
-					</template>
-					<template #body="{ close }">
-						<div class="rounded-lg border border-outline-gray-2 bg-surface-white p-3 shadow-xl">
-							<ColorPicker
-								renderMode="inline"
-								:showInput="true"
-								:modelValue="stop.color"
-								@update:modelValue="(val) => updateStopColor(index, val)" />
-							<div class="mt-2 flex items-center gap-2">
-								<BuilderButton
-									variant="subtle"
-									label="Remove Stop"
-									class="w-full"
-									:disabled="gradient.stops.length <= 2"
-									@click="
-										() => {
-											close();
-											removeStop(index);
-										}
-									" />
-							</div>
-						</div>
-					</template>
-				</Popover>
 			</div>
 		</div>
 
