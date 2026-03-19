@@ -178,7 +178,7 @@ const PRESETS: Preset[] = [
 		id: "aurora-glass",
 		name: "Aurora Glass",
 		description:
-			"Deep dark backgrounds with vibrant aurora-inspired gradients, glassmorphism cards with blur/translucency, glowing color blobs, and rich purple/cyan/violet palettes. Ultra-modern and immersive.",
+			"Deep dark backgrounds with vibrant aurora-inspired gradients, glassmorphism cards with blur/translucency, and glowing blobs. Ultra-modern and immersive.",
 		icon: "aperture",
 		preview: {
 			bg: "bg-ink-gray-9",
@@ -190,7 +190,7 @@ const PRESETS: Preset[] = [
 		id: "bento",
 		name: "Bento Grid",
 		description:
-			"Modular bento-box grid layouts with varied tile sizes, soft pastel fills, and generous rounded corners. Each section is a self-contained card. Inspired by Japanese bento compartments — clean, playful, highly structured.",
+			"Modular bento-box grid layouts with varied tile sizes, and generous rounded corners. Each section is a self-contained card. Inspired by Japanese bento compartments — clean, playful, highly structured.",
 		icon: "grid",
 		preview: {
 			bg: "bg-surface-gray-1",
@@ -200,7 +200,7 @@ const PRESETS: Preset[] = [
 		id: "neo-brutalist",
 		name: "Neo-Brutalist",
 		description:
-			"Raw, unapologetic design with heavy black borders, stark white/yellow backgrounds, bold offset shadows, and chunky typography. Intentionally rough and high-contrast. No gradients, no subtlety.",
+			"Raw, unapologetic design with heavy borders, bold offset shadows, and chunky typography. Intentionally rough and high-contrast. No gradients, no subtlety.",
 		icon: "bold",
 		preview: {
 			bg: "bg-surface-white",
@@ -210,7 +210,7 @@ const PRESETS: Preset[] = [
 		id: "soft-glow",
 		name: "Soft Glow",
 		description:
-			"Dreamy pastel gradients (lavender, rose, sky), soft glow halos, pill-shaped buttons, and rounded fluid shapes. Light and airy — think Figma landing pages and modern SaaS products with a fresh, inviting feel.",
+			"Dreamy gradients, soft glow halos, pill-shaped buttons, and rounded fluid shapes. Light and airy — think Figma landing pages and modern SaaS products with a fresh, inviting feel.",
 		icon: "sun",
 		preview: {
 			bg: "bg-surface-purple-1",
@@ -220,7 +220,7 @@ const PRESETS: Preset[] = [
 		id: "minimal-ink",
 		name: "Minimal Ink",
 		description:
-			"Absolute restraint — off-white backgrounds, hairline borders, sparse layout. Typography does all the work. Inspired by Swiss editorial design and Japanese stationery brands. Zero decoration.",
+			"Absolute restraint — hairline borders, sparse layout. Typography does all the work. Inspired by Swiss editorial design and Japanese stationery brands. Zero decoration.",
 		icon: "feather",
 		preview: {
 			bg: "bg-surface-gray-1",
@@ -230,7 +230,7 @@ const PRESETS: Preset[] = [
 		id: "earthy",
 		name: "Earthy Organic",
 		description:
-			"Warm terracotta, sand, sage, and clay tones with organic shapes, natural textures, and rounded asymmetric forms. Grounded and tactile — ideal for wellness, food, craft, and sustainability brands.",
+			"Organic shapes, natural textures, and rounded asymmetric forms. Grounded and tactile — ideal for wellness, food, craft, and sustainability brands.",
 		icon: "coffee",
 		preview: {
 			bg: "bg-surface-red-1",
@@ -240,7 +240,7 @@ const PRESETS: Preset[] = [
 		id: "tech-terminal",
 		name: "Tech Terminal",
 		description:
-			"Dark background with monospace typography, neon green accent colors, terminal-style chrome, and code-aesthetic UI. Think developer tools, CLI apps, and hacker-culture interfaces.",
+			"Dark background with monospace typography, terminal-style chrome, and code-aesthetic UI. Think developer tools, CLI apps, and hacker-culture interfaces.",
 		icon: "terminal",
 		preview: {
 			bg: "bg-ink-gray-9",
@@ -250,7 +250,7 @@ const PRESETS: Preset[] = [
 		id: "luxe-editorial",
 		name: "Luxe Editorial",
 		description:
-			"Deep charcoal or navy backgrounds with gold/champagne accents, thin serif typefaces, and refined negative space. Understated luxury — think high-fashion magazines and premium brand campaigns.",
+			"Thin serif typefaces, and refined negative space. Understated luxury — think high-fashion magazines and premium brand campaigns.",
 		icon: "star",
 		preview: {
 			bg: "bg-ink-gray-8",
@@ -260,7 +260,7 @@ const PRESETS: Preset[] = [
 		id: "bold-retro",
 		name: "Bold Retro",
 		description:
-			"Vibrant primary colors (red, yellow, black), thick borders, chunky chart bars, flat graphic shapes, and retro poster energy. Bold and high-contrast, inspired by 90s print graphics and risograph aesthetics.",
+			"Thick borders, chunky chart bars, flat graphic shapes, and retro poster energy. Bold and high-contrast, inspired by 90s print graphics and risograph aesthetics.",
 		icon: "zap",
 		preview: {
 			bg: "bg-surface-yellow-1",
