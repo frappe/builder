@@ -2,7 +2,7 @@
 	<Dialog
 		v-model="showDialog"
 		:options="{
-			title: mode === 'modify' ? 'Modify with AI' : 'Generate with AI',
+			title: title,
 			size: 'lg',
 		}">
 		<template #body-content>
@@ -11,11 +11,7 @@
 					v-model="prompt"
 					:rows="4"
 					variant="outline"
-					:placeholder="
-						mode === 'modify'
-							? 'Describe how you want to modify this section...'
-							: 'Describe the section you want to create...'
-					"
+					:placeholder="placeholder"
 					@keydown.meta.enter="handleSubmit"
 					@keydown.ctrl.enter="handleSubmit" />
 
@@ -101,6 +97,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
 	(e: "update:modelValue", value: boolean): void;
+	(e: "update:blockContext", value: Record<string, any> | null): void;
 	(e: "generated", blocks: any[]): void;
 	(e: "streaming", blocks: any[]): void;
 	(e: "modified", blocks: any[]): void;
@@ -128,6 +125,32 @@ watch(generating, (val) => {
 
 const hasAISettings = computed(() => {
 	return builderSettings.doc?.ai_model && builderSettings.doc?.ai_api_key;
+});
+
+const title = computed(() => {
+	if (props.mode === "generate") return "Generate with AI";
+	if (!props.blockContext) return "Modify with AI";
+	const el = props.blockContext.element;
+	if (["h1", "h2", "h3", "p", "span"].includes(el)) return "Rewrite with AI";
+	if (el === "img") return "Replace Image with AI";
+	return "Modify with AI";
+});
+
+const placeholder = computed(() => {
+	if (props.mode === "generate") return "Describe the section you want to create...";
+	if (!props.blockContext) return "Describe how you want to modify this section...";
+	const el = props.blockContext.element;
+	if (["h1", "h2", "h3", "p", "span"].includes(el)) return "Describe how you want to rewrite this text...";
+	if (el === "img") return "Describe the new image you want...";
+	return "Describe how you want to modify this section...";
+});
+
+const taskType = computed(() => {
+	if (props.mode !== "modify" || !props.blockContext) return null;
+	const el = props.blockContext.element;
+	if (["h1", "h2", "h3", "p", "span"].includes(el)) return "rewrite_text";
+	if (el === "img") return "replace_image";
+	return null;
 });
 
 function buildPrompt(base: string): string {
@@ -221,7 +244,6 @@ const generatePage = async () => {
 		errorMessage.value = error.message || "An error occurred while generating the page";
 	}
 };
-
 const modifySection = async () => {
 	if (!canGenerate.value || !props.blockContext) return;
 
@@ -238,6 +260,7 @@ const modifySection = async () => {
 				prompt: buildPrompt(prompt.value),
 				block_context: JSON.stringify(props.blockContext),
 				page_id: props.pageId,
+				task_type: taskType.value,
 			}),
 		}).submit();
 	} catch (error: any) {
@@ -245,6 +268,42 @@ const modifySection = async () => {
 		progressMessage.value = "";
 		showDialog.value = true;
 		errorMessage.value = error.message || "An error occurred while modifying the section";
+	}
+};
+
+const executeDirect = async (block: any, type: "rewrite_text" | "replace_image", customPrompt?: string) => {
+	generating.value = true;
+	errorMessage.value = "";
+	progressMessage.value = "Initializing...";
+	streamingContent.value = "";
+	showDialog.value = false;
+
+	// Set modify state so handlers know what to do
+	emit("update:blockContext", block);
+	// We need to wait for parent to update modifiedBlockId if we want to follow the same flow
+	// or we can just handle it here. PageBuilder handles modified blocks by watching the events.
+	// But it needs modifyBlockId correctly set.
+	// Actually, it might be better if PageBuilder sets the state and then calls this,
+	// or this method takes enough info.
+
+	const finalPrompt =
+		customPrompt || (type === "rewrite_text" ? "Improve this text" : "Suggest a better image");
+
+	try {
+		await createResource({
+			url: "builder.ai_page_generator.modify_section_from_prompt",
+			makeParams: () => ({
+				prompt: finalPrompt,
+				block_context: JSON.stringify(block),
+				page_id: props.pageId,
+				task_type: type,
+			}),
+		}).submit();
+	} catch (error: any) {
+		generating.value = false;
+		progressMessage.value = "";
+		errorMessage.value = error.message || "An error occurred";
+		showDialog.value = true;
 	}
 };
 
@@ -259,9 +318,7 @@ watch(showDialog, (newValue) => {
 function applyTierLabel(data: any) {
 	if (data.model_used) {
 		const tierLabels: Record<string, string> = {
-			trivial: "quick",
 			simple: "fast",
-			moderate: "standard",
 			complex: "full",
 		};
 		progressMessage.value = `Done — ${tierLabels[data.task_tier] || ""} mode with ${data.model_used}`;
@@ -376,6 +433,10 @@ onUnmounted(() => {
 	builderStore.realtime.off("ai_modify_stream", onModifyStream);
 	builderStore.realtime.off("ai_modify_complete", onModifyComplete);
 	builderStore.realtime.off("ai_modify_error", onModifyError);
+});
+
+defineExpose({
+	executeDirect,
 });
 </script>
 

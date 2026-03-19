@@ -45,6 +45,9 @@ const showContextMenu = (event: MouseEvent, refBlock: Block) => {
 const copiedStyle = useStorage("copiedStyle", { blockId: "", style: {} }, sessionStorage) as Ref<StyleCopy>;
 
 const editWithAIFn = inject<((block: Block) => void) | undefined>("editWithAI", undefined);
+const runDirectAI = inject<
+	((block: Block, type: "rewrite_text" | "replace_image", customPrompt?: string) => void) | undefined
+>("runDirectAI", undefined);
 
 const copyStyle = () => {
 	copiedStyle.value = {
@@ -70,6 +73,36 @@ const contextMenuOptions: ContextMenuOption[] = [
 			}
 		},
 		condition: () => Boolean(editWithAIFn) && !block.value.isRoot(),
+		disabled: () => builderStore.readOnlyMode,
+	},
+	{
+		label: "Improve Writing (AI)",
+		action: () => {
+			runDirectAI?.(block.value, "rewrite_text", "Improve this text to be more engaging");
+		},
+		condition: () =>
+			Boolean(runDirectAI) &&
+			["h1", "h2", "h3", "p", "span"].includes(block.value.element || "") &&
+			!block.value.isRoot(),
+		disabled: () => builderStore.readOnlyMode,
+	},
+	{
+		label: "Make it Professional (AI)",
+		action: () => {
+			runDirectAI?.(block.value, "rewrite_text", "Make this text more professional");
+		},
+		condition: () =>
+			Boolean(runDirectAI) &&
+			["h1", "h2", "h3", "p", "span"].includes(block.value.element || "") &&
+			!block.value.isRoot(),
+		disabled: () => builderStore.readOnlyMode,
+	},
+	{
+		label: "Better AI Image",
+		action: () => {
+			runDirectAI?.(block.value, "replace_image", "Suggest a better relevant image");
+		},
+		condition: () => Boolean(runDirectAI) && block.value.element === "img" && !block.value.isRoot(),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{

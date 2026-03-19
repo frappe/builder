@@ -109,7 +109,8 @@
 		@streaming="handleStreamingBlocks"
 		@modified="handleModifiedBlocks"
 		@modifyStreaming="handleModifyStreamingBlocks"
-		@generating="isAIGenerating = $event"></AIPageGeneratorModal>
+		@generating="isAIGenerating = $event"
+		ref="aiGeneratorModal"></AIPageGeneratorModal>
 	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
 	<KeyboardShortcutsModal ref="shortcutsModal" />
 </template>
@@ -149,6 +150,7 @@ import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
 
 const expandedEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
+const aiGeneratorModal = ref<null | InstanceType<typeof AIPageGeneratorModal>>(null);
 
 const breakpoints = useBreakpoints(breakpointsTailwind);
 const isSmallScreen = breakpoints.smaller("lg");
@@ -184,6 +186,13 @@ const editWithAIFn = (block: Block) => {
 	showAIGeneratorDialog.value = true;
 };
 provide("editWithAI", editWithAIFn);
+
+const runDirectAI = (block: Block, type: "rewrite_text" | "replace_image", customPrompt?: string) => {
+	aiMode.value = "modify";
+	modifyBlockId.value = block.blockId;
+	aiGeneratorModal.value?.executeDirect(getBlockObject(block), type, customPrompt);
+};
+provide("runDirectAI", runDirectAI);
 
 // Handle AI generated blocks
 const handleGeneratedBlocks = (blocks: any[]) => {
