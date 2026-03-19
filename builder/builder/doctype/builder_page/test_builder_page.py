@@ -944,6 +944,28 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
+	def test_set_fonts(self):
+		from builder.builder.doctype.builder_page.builder_page import set_fonts
+
+		font_map = {}
+		styles = [
+			{"fontFamily": "Inter", "fontWeight": "bold"},
+			{"fontFamily": "Inter", "fontWeight": 400},
+			{"fontFamily": "'Open Sans'", "fontWeight": "600"},
+			{"fontFamily": "Impact", "fontWeight": "800"},  # System font, should be skipped
+			{"fontFamily": "Inter", "fontWeight": "bold"},  # Duplicate
+		]
+
+		set_fonts(styles, font_map)
+
+		self.assertIn("Inter", font_map)
+		self.assertIn("Open Sans", font_map)
+		self.assertNotIn("Impact", font_map)
+
+		# Weights should be normalized to integers and deduplicated
+		self.assertEqual(font_map["Inter"]["weights"], [400, 700])
+		self.assertEqual(font_map["Open Sans"]["weights"], [600])
+
 	@classmethod
 	def tearDownClass(cls):
 		cls.page.delete()

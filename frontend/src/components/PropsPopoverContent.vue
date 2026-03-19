@@ -115,7 +115,7 @@ import BooleanOptions from "@/components/PropsOptions/BooleanOptions.vue";
 import SelectOptions from "@/components/PropsOptions/SelectOptions.vue";
 
 import { getDataArray, toKebabCase } from "@/utils/helpers";
-import useBlockDataStore from "@/stores/blockDataStore";
+import { useBlockDataStore } from "@/stores/blockStore";
 import ColorOptions from "./PropsOptions/ColorOptions.vue";
 import ImageOptions from "./PropsOptions/ImageOptions.vue";
 import InlineInput from "./Controls/InlineInput.vue";

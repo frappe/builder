@@ -20,13 +20,12 @@
 </template>
 <script setup lang="ts">
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
-import useBlockDataStore from "@/stores/blockDataStore";
+import { useBlockDataStore } from "@/stores/blockStore";
 import blockController from "@/utils/blockController";
 import { getDataArray, getDefaultPropsList, getParentProps, getStandardPropValue } from "@/utils/helpers";
 import { computed, ref, watch } from "vue";
 
 const props = defineProps<{
-	property: styleProperty;
 	label: string;
 	getModelValue: () => string;
 	setModelValue: (value: BlockVisibilityCondition) => void;
@@ -62,7 +61,7 @@ const parentProps = computed(() => {
 	if (!currentBlock) {
 		return [];
 	}
-	return Object.keys(getParentProps(currentBlock, {}));
+	return Object.keys(getParentProps(currentBlock));
 });
 const defaultProps = computed(() => {
 	const currentBlock = blockController.getFirstSelectedBlock();

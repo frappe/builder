@@ -13,13 +13,14 @@ import { copyBuilderBlocks, pasteBuilderBlocks } from "@/utils/builderBlockCopyP
 import {
 	addPxToNumber,
 	getBlockCopy,
-	isCtrlOrCmd,
+	isDialogOpen,
 	isHTMLString,
 	isTargetEditable,
 	showDialog,
 	triggerCopyEvent,
 	uploadBuilderAsset,
 } from "@/utils/helpers";
+import { useShortcut } from "@/utils/useShortcut";
 import { useEventListener, useStorage } from "@vueuse/core";
 import { Ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -51,7 +52,7 @@ export function useBuilderEvents(
 	);
 
 	useEventListener(document, "copy", (e) => {
-		if (isTargetEditable(e) || canvasStore.editableBlock) return;
+		if (isTargetEditable(e) || canvasStore.editableBlock || isDialogOpen()) return;
 		copySelectedBlocksToClipboard(e);
 	});
 
@@ -103,9 +104,10 @@ export function useBuilderEvents(
 			return;
 		}
 
+		let text = e.clipboardData?.getData("text/plain") as string || "";
+
 		await pasteBuilderBlocks(e, window.location.origin);
 
-		let text = e.clipboardData?.getData("text/plain") as string;
 		if (!text) {
 			return;
 		}
@@ -211,209 +213,302 @@ export function useBuilderEvents(
 		}
 	});
 
-	useEventListener(document, "keydown", (e) => {
-		if (e.key === "\\" && isCtrlOrCmd(e)) {
-			e.preventDefault();
-			if (e.shiftKey) {
-				builderStore.showLeftPanel = !builderStore.showLeftPanel;
-			} else {
+	useShortcut([
+		{
+			key: "\\",
+			ctrl: true,
+			description: "Toggle panels",
+			group: "View",
+			handler: (e) => {
 				builderStore.showRightPanel = !builderStore.showRightPanel;
 				builderStore.showLeftPanel = builderStore.showRightPanel;
-			}
-		}
-		// save page or component
-		if (e.key === "s" && isCtrlOrCmd(e)) {
-			e.preventDefault();
-			if (canvasStore.editingMode === "fragment") {
-				saveAndExitFragmentMode(e);
+			},
+		},
+		{
+			key: "\\",
+			ctrl: true,
+			shift: true,
+			description: "Toggle left panel",
+			group: "View",
+			handler: () => {
+				builderStore.showLeftPanel = !builderStore.showLeftPanel;
+			},
+		},
+		{
+			key: "s",
+			ctrl: true,
+			description: "Save page / component",
+			group: "General",
+			allowInInput: true,
+			handler: (e) => {
+				if (canvasStore.editingMode === "fragment") {
+					saveAndExitFragmentMode(e);
+					e.stopPropagation();
+				}
+			},
+		},
+		{
+			key: "p",
+			ctrl: true,
+			description: "Preview",
+			group: "General",
+			handler: () => {
+				pageStore.savePage();
+				router.push({
+					name: "preview",
+					params: {
+						pageId: pageStore.selectedPage as string,
+					},
+				});
+			},
+		},
+		{
+			key: "f",
+			ctrl: true,
+			shift: true,
+			description: "Search blocks",
+			group: "General",
+			handler: () => {
+				builderStore.showSearchBlock = true;
+			},
+		},
+		{
+			key: "f",
+			ctrl: true,
+			description: "Focus property search",
+			group: "General",
+			handler: () => {
+				document.querySelector(".properties-search-input")?.querySelector("input")?.focus();
+			},
+		},
+		{
+			key: "c",
+			ctrl: true,
+			shift: true,
+			description: "Copy block styles",
+			group: "Edit",
+			handler: () => {
+				if (blockController.isBlockSelected() && !blockController.multipleBlocksSelected()) {
+					const block = blockController.getSelectedBlocks()[0];
+					const copiedStyle = useStorage(
+						"copiedStyle",
+						{ blockId: "", style: {} },
+						sessionStorage,
+					) as Ref<StyleCopy>;
+					copiedStyle.value = {
+						blockId: block.blockId,
+						style: block.getStylesCopy(),
+					};
+				}
+			},
+		},
+		{
+			key: "d",
+			ctrl: true,
+			description: "Duplicate block",
+			group: "Edit",
+			handler: () => {
+				if (builderStore.readOnlyMode) return;
+				if (blockController.isBlockSelected() && !blockController.multipleBlocksSelected()) {
+					const block = blockController.getSelectedBlocks()[0];
+					block.duplicateBlock();
+				}
+			},
+		},
+		{
+			key: "Backspace",
+			description: "Delete selected blocks",
+			group: "Edit",
+			handler: (e) => {
+				if (builderStore.readOnlyMode) return;
+				if (!blockController.isBlockSelected()) return;
+				for (const block of blockController.getSelectedBlocks()) {
+					canvasStore.activeCanvas?.removeBlock(block, e.shiftKey);
+				}
+				clearSelection();
 				e.stopPropagation();
-			}
-			return;
-		}
-
-		if (e.key === "p" && isCtrlOrCmd(e)) {
-			e.preventDefault();
-			pageStore.savePage();
-			router.push({
-				name: "preview",
-				params: {
-					pageId: pageStore.selectedPage as string,
-				},
-			});
-		}
-
-		// command + f should focus on search input
-		if (e.key === "f" && isCtrlOrCmd(e)) {
-			e.preventDefault();
-			document.querySelector(".properties-search-input")?.querySelector("input")?.focus();
-		}
-
-		if (e.key === "f" && isCtrlOrCmd(e) && e.shiftKey) {
-			e.preventDefault();
-			builderStore.showSearchBlock = true;
-		}
-
-		if (e.key === "c" && isCtrlOrCmd(e) && e.shiftKey) {
-			if (blockController.isBlockSelected() && !blockController.multipleBlocksSelected()) {
-				e.preventDefault();
-				const block = blockController.getSelectedBlocks()[0];
-				const copiedStyle = useStorage(
-					"copiedStyle",
-					{ blockId: "", style: {} },
-					sessionStorage,
-				) as Ref<StyleCopy>;
-				copiedStyle.value = {
-					blockId: block.blockId,
-					style: block.getStylesCopy(),
-				};
-			}
-		}
-
-		if (e.key === "d" && isCtrlOrCmd(e)) {
-			if (builderStore.readOnlyMode) return;
-			if (blockController.isBlockSelected() && !blockController.multipleBlocksSelected()) {
-				e.preventDefault();
-				const block = blockController.getSelectedBlocks()[0];
-				block.duplicateBlock();
-			}
-		}
-
-		if (isTargetEditable(e)) return;
-
-		if ((e.key === "Backspace" || e.key === "Delete") && blockController.isBlockSelected()) {
-			if (builderStore.readOnlyMode) return;
-			for (const block of blockController.getSelectedBlocks()) {
-				canvasStore.activeCanvas?.removeBlock(block, e.shiftKey);
-			}
-			clearSelection();
-			e.stopPropagation();
-			return;
-		}
-
-		if (e.key === "Escape") {
-			canvasStore.exitFragmentMode(e);
-		}
-
-		// handle arrow keys
-		// if (
-		// 	e.key.startsWith("Arrow") &&
-		// 	blockController.isBlockSelected() &&
-		// 	blockController.getFirstSelectedBlock().isMovable()
-		// ) {
-		// 	e.stopImmediatePropagation();
-		// 	const key = e.key.replace("Arrow", "").toLowerCase() as "up" | "down" | "left" | "right";
-		// 	for (const block of blockController.getSelectedBlocks()) {
-		// 		block.move(key);
-		// 	}
-		// }
-	});
-
-	// TODO: Refactor with useMagicKeys
-	useEventListener(document, "keydown", (e) => {
-		if (isTargetEditable(e)) return;
-		if (e.key === "z" && isCtrlOrCmd(e) && !e.shiftKey && canvasStore.activeCanvas?.history?.canUndo) {
-			canvasStore.activeCanvas?.history.undo();
-			e.preventDefault();
-			return;
-		}
-		if (e.key === "z" && e.shiftKey && isCtrlOrCmd(e) && canvasStore.activeCanvas?.history?.canRedo) {
-			canvasStore.activeCanvas?.history.redo();
-			e.preventDefault();
-			return;
-		}
-
-		if (e.key === "0" && isCtrlOrCmd(e)) {
-			e.preventDefault();
-			if (pageCanvas.value) {
-				if (e.shiftKey) {
-					pageCanvas.value.setScaleAndTranslate();
-				} else {
+			},
+		},
+		{
+			key: "Delete",
+			description: "Delete selected blocks",
+			group: "Edit",
+			handler: (e) => {
+				if (builderStore.readOnlyMode) return;
+				if (!blockController.isBlockSelected()) return;
+				for (const block of blockController.getSelectedBlocks()) {
+					canvasStore.activeCanvas?.removeBlock(block, e.shiftKey);
+				}
+				clearSelection();
+				e.stopPropagation();
+			},
+		},
+		{
+			key: "Escape",
+			description: "Exit current mode",
+			group: "General",
+			condition: () => canvasStore.editingMode !== "page",
+			handler: (e) => {
+				canvasStore.exitFragmentMode(e);
+			},
+			preventDefault: false,
+		},
+		{
+			key: "z",
+			ctrl: true,
+			description: "Undo",
+			group: "Edit",
+			handler: () => {
+				if (canvasStore.activeCanvas?.history?.canUndo) {
+					canvasStore.activeCanvas?.history.undo();
+				}
+			},
+		},
+		{
+			key: "z",
+			ctrl: true,
+			shift: true,
+			description: "Redo",
+			group: "Edit",
+			handler: () => {
+				if (canvasStore.activeCanvas?.history?.canRedo) {
+					canvasStore.activeCanvas?.history.redo();
+				}
+			},
+		},
+		{
+			key: "0",
+			ctrl: true,
+			description: "Reset canvas zoom",
+			group: "Canvas",
+			handler: () => {
+				if (pageCanvas.value) {
 					pageCanvas.value.setCanvasZoom?.(1, "center");
 				}
-			}
-			return;
-		}
-
-		if (e.key === "ArrowRight" && !blockController.isBlockSelected()) {
-			e.preventDefault();
-			if (pageCanvas.value) {
-				pageCanvas.value.moveCanvas("right");
-			}
-			return;
-		}
-
-		if (e.key === "ArrowLeft" && !blockController.isBlockSelected()) {
-			e.preventDefault();
-			if (pageCanvas.value) {
-				pageCanvas.value.moveCanvas("left");
-			}
-			return;
-		}
-
-		if (e.key === "ArrowUp" && !blockController.isBlockSelected()) {
-			e.preventDefault();
-			if (pageCanvas.value) {
-				pageCanvas.value.moveCanvas("up");
-			}
-			return;
-		}
-
-		if (e.key === "ArrowDown" && !blockController.isBlockSelected()) {
-			e.preventDefault();
-			if (pageCanvas.value) {
-				pageCanvas.value.moveCanvas("down");
-			}
-			return;
-		}
-
-		if (e.key === "=" && isCtrlOrCmd(e)) {
-			e.preventDefault();
-			if (pageCanvas.value) {
-				pageCanvas.value.zoomIn();
-			}
-			return;
-		}
-
-		if (e.key === "-" && isCtrlOrCmd(e)) {
-			e.preventDefault();
-			if (pageCanvas.value) {
-				pageCanvas.value.zoomOut();
-			}
-			return;
-		}
-
-		if (isCtrlOrCmd(e) || e.shiftKey) {
-			return;
-		}
-
-		if (e.key === "c") {
-			if (builderStore.readOnlyMode) return;
-			builderStore.mode = "container";
-			return;
-		}
-
-		if (e.key === "i") {
-			if (builderStore.readOnlyMode) return;
-			builderStore.mode = "image";
-			return;
-		}
-
-		if (e.key === "t") {
-			if (builderStore.readOnlyMode) return;
-			builderStore.mode = "text";
-			return;
-		}
-
-		if (e.key === "v") {
-			builderStore.mode = "select";
-			return;
-		}
-
-		if (e.key === "h") {
-			builderStore.mode = "move";
-			return;
-		}
-	});
+			},
+		},
+		{
+			key: "0",
+			ctrl: true,
+			shift: true,
+			description: "Fit canvas to screen",
+			group: "Canvas",
+			handler: () => {
+				if (pageCanvas.value) {
+					pageCanvas.value.setScaleAndTranslate();
+				}
+			},
+		},
+		{
+			key: "ArrowRight",
+			description: "Pan canvas right",
+			group: "Canvas",
+			handler: () => {
+				if (pageCanvas.value) {
+					pageCanvas.value.moveCanvas("right");
+				}
+			},
+			condition: () => !blockController.isBlockSelected(),
+		},
+		{
+			key: "ArrowLeft",
+			description: "Pan canvas left",
+			group: "Canvas",
+			handler: () => {
+				if (pageCanvas.value) {
+					pageCanvas.value.moveCanvas("left");
+				}
+			},
+			condition: () => !blockController.isBlockSelected(),
+		},
+		{
+			key: "ArrowUp",
+			description: "Pan canvas up",
+			group: "Canvas",
+			handler: () => {
+				if (pageCanvas.value) {
+					pageCanvas.value.moveCanvas("up");
+				}
+			},
+			condition: () => !blockController.isBlockSelected(),
+		},
+		{
+			key: "ArrowDown",
+			description: "Pan canvas down",
+			group: "Canvas",
+			handler: () => {
+				if (pageCanvas.value) {
+					pageCanvas.value.moveCanvas("down");
+				}
+			},
+			condition: () => !blockController.isBlockSelected(),
+		},
+		{
+			key: "=",
+			ctrl: true,
+			description: "Zoom in",
+			group: "Canvas",
+			handler: () => {
+				if (pageCanvas.value) {
+					pageCanvas.value.zoomIn();
+				}
+			},
+		},
+		{
+			key: "-",
+			ctrl: true,
+			description: "Zoom out",
+			group: "Canvas",
+			handler: () => {
+				if (pageCanvas.value) {
+					pageCanvas.value.zoomOut();
+				}
+			},
+		},
+		{
+			key: "c",
+			description: "Container mode",
+			group: "Tools",
+			handler: () => {
+				if (builderStore.readOnlyMode) return;
+				builderStore.mode = "container";
+			},
+		},
+		{
+			key: "i",
+			description: "Image mode",
+			group: "Tools",
+			handler: () => {
+				if (builderStore.readOnlyMode) return;
+				builderStore.mode = "image";
+			},
+		},
+		{
+			key: "t",
+			description: "Text mode",
+			group: "Tools",
+			handler: () => {
+				if (builderStore.readOnlyMode) return;
+				builderStore.mode = "text";
+			},
+		},
+		{
+			key: "v",
+			description: "Select mode",
+			group: "Tools",
+			handler: () => {
+				builderStore.mode = "select";
+			},
+		},
+		{
+			key: "h",
+			description: "Move / hand mode",
+			group: "Tools",
+			handler: () => {
+				builderStore.mode = "move";
+			},
+		},
+	]);
 
 	// on tab activation, reload for latest data
 	useEventListener(document, "visibilitychange", () => {

@@ -163,14 +163,15 @@ import blockController from "@/utils/blockController";
 import TabButtons from "./Controls/TabButtons.vue";
 import Switch from "./Controls/Switch.vue";
 import PropsEditor from "./PropsEditor.vue";
-import useBlockDataStore from "@/stores/blockDataStore";
+import { useBlockDataStore } from "@/stores/blockStore";
+import { useStorage } from "@vueuse/core";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
 const blockDataStore = useBlockDataStore();
 
 const showDialog = ref(false);
-const mode = ref<"page" | "block">("block");
+const mode = useStorage("builder_last_used_script_editor_mode", "page");
 const showCumulativeBlockData = ref(false);
 
 const props = defineProps<{
