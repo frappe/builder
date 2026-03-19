@@ -399,9 +399,9 @@ const allResolvedProps = computed(() => {
 	}, {} as Record<string, any>);
 
 	return {
-		...defaultProps,
-		...blockProps,
 		...parentProps,
+		...blockProps,
+		...defaultProps,
 	};
 });
 

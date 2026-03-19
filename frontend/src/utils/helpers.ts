@@ -1228,7 +1228,6 @@ const getPropValue = (propName: string, block: Block, blockUid?: string | null):
 			}
 			const newMatchingProp = parentProps[matchingProp.value];
 			if (!newMatchingProp.block) return undefined;
-			console.log("here", newMatchingProp, matchingProp);
 			return getPropValue(matchingProp.value, newMatchingProp.block, newMatchingProp.blockUid);
 		}
 		const getDataScriptValue = (path: string) => {
@@ -1341,9 +1340,8 @@ function executeBlockClientScriptUnrestricted(
 	try {
 		document.querySelectorAll(`[data-created-by='${blockUid}']`).forEach((el) => el.remove());
 		fn.call(thisElement, context);
-		console.log("Executed unrestricted user script");
 	} catch (e) {
-		console.error("Error in user script 2:", e);
+		console.error("Error in user script (unrestricted):", e);
 		// toast.warning("An error occurred while executing block script: " + (e instanceof Error ? e.message : ""));
 	}
 }
