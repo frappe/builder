@@ -5,7 +5,7 @@
 			:class="{
 				'cursor-ns-resize': enableSlider,
 			}"
-			class="w-[88px] shrink-0 truncate"
+			class="w-1/3 shrink-0 truncate"
 			:title="label"
 			:description="description"
 			@mousedown="handleMouseDown">
@@ -23,6 +23,7 @@
 			@keydown.stop="handleKeyDown" />
 		<Autocomplete
 			v-if="type == 'autocomplete'"
+			ref="autocompleteRef"
 			:placeholder="placeholder ? String(placeholder) : undefined"
 			:modelValue="String(modelValue || '')"
 			:options="inputOptions"
@@ -37,7 +38,7 @@
 <script setup lang="ts">
 import { extractNumberAndUnit } from "@/utils/helpers";
 import { isNumber } from "@tiptap/vue-3";
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import Autocomplete from "./Autocomplete.vue";
 import InputLabel from "./InputLabel.vue";
 
@@ -157,4 +158,10 @@ const incrementOrDecrement = (step: number, initialValue: null | number = null) 
 	}
 	handleChange(newValue + "" + unit);
 };
+
+const autocompleteRef = ref<InstanceType<typeof Autocomplete> | null>(null);
+
+defineExpose({
+	refreshOptions: () => autocompleteRef.value?.refreshOptions(),
+});
 </script>
