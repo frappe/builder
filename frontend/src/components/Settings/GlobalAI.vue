@@ -94,14 +94,14 @@ const testApiKey = async () => {
 
 		if (result.success) {
 			statusMessage.value = "API key is valid!";
-			statusClass.value = "text-ink-green-9 bg-surface-green-1";
+			statusClass.value = "text-ink-green-3 bg-surface-green-1";
 		} else {
 			statusMessage.value = result.message || "API key test failed";
-			statusClass.value = "text-ink-red-9 bg-surface-red-1";
+			statusClass.value = "text-ink-red-3 bg-surface-red-1";
 		}
 	} catch (error: any) {
 		statusMessage.value = error.message || "Failed to test API key";
-		statusClass.value = "text-ink-red-9 bg-surface-red-1";
+		statusClass.value = "text-ink-red-3 bg-surface-red-1";
 	} finally {
 		testing.value = false;
 		setTimeout(() => {
