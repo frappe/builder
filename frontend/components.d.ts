@@ -147,5 +147,6 @@ declare module 'vue' {
     VariableManager: typeof import('./src/components/Modals/VariableManager.vue')['default']
     VariantControl: typeof import('./src/components/Controls/VariantControl.vue')['default']
     VisibilityInput: typeof import('./src/components/VisibilityInput.vue')['default']
+    WebPagePresetPicker: typeof import('./src/components/WebPagePresetPicker.vue')['default']
   }
 }

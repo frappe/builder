@@ -22,6 +22,7 @@
 				<div v-if="errorMessage" class="text-ink-red-9 rounded-lg bg-surface-red-1 p-3 text-sm">
 					{{ errorMessage }}
 				</div>
+				<WebPagePresetPicker v-model="selectedPreset" v-if="mode === 'generate'" />
 
 				<p v-if="!hasAISettings" class="text-xs text-ink-gray-6">
 					Configure your AI model and API key in
@@ -74,8 +75,16 @@ import Dialog from "@/components/Controls/Dialog.vue";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import { createResource, FeatherIcon, Textarea } from "frappe-ui";
-import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import yaml from "js-yaml";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import WebPagePresetPicker from "./WebPagePresetPicker.vue";
+
+interface Preset {
+	id: string;
+	name: string;
+	description: string;
+	icon: string;
+}
 
 const props = withDefaults(
 	defineProps<{
@@ -110,6 +119,7 @@ const generating = ref(false);
 const errorMessage = ref("");
 const progressMessage = ref("");
 const streamingContent = ref("");
+const selectedPreset = ref<Preset | null>(null);
 const builderStore = useBuilderStore();
 
 watch(generating, (val) => {
@@ -120,10 +130,11 @@ const hasAISettings = computed(() => {
 	return builderSettings.doc?.ai_model && builderSettings.doc?.ai_api_key;
 });
 
-/**
- * Attempt to parse incomplete YAML stream content.
- * Returns a JS object or null if too incomplete.
- */
+function buildPrompt(base: string): string {
+	const preset = selectedPreset.value;
+	return preset ? `${base}\n\nDESIGN STYLE: ${preset.name}. ${preset.description}` : base;
+}
+
 function expandDSL(dslBlock: any): any {
 	if (!dslBlock || typeof dslBlock !== "object" || Array.isArray(dslBlock)) return dslBlock;
 
@@ -141,12 +152,7 @@ function expandDSL(dslBlock: any): any {
 	};
 	if (dslBlock.id) block.blockId = dslBlock.id;
 	if (dslBlock.text) block.innerText = dslBlock.text;
-
-	if (Array.isArray(dslBlock.c)) {
-		block.children = dslBlock.c.map(expandDSL);
-	} else {
-		block.children = [];
-	}
+	block.children = Array.isArray(dslBlock.c) ? dslBlock.c.map(expandDSL) : [];
 	return block;
 }
 
@@ -154,26 +160,29 @@ function getValidPartialYAML(yamlStr: string): any {
 	let cleaned = yamlStr.trim();
 	if (cleaned.startsWith("```")) {
 		const lines = cleaned.split("\n");
-		if (lines.length > 0) lines.shift(); // remove ```yaml or ```
-		if (lines.length > 0 && lines[lines.length - 1].startsWith("```")) {
-			lines.pop();
-		}
+		if (lines.length > 0) lines.shift();
+		if (lines.length > 0 && lines[lines.length - 1].startsWith("```")) lines.pop();
 		cleaned = lines.join("\n");
 	}
-
 	try {
 		return yaml.load(cleaned);
-	} catch (e) {
+	} catch {
 		const lines = cleaned.split("\n");
 		for (let i = lines.length - 1; i > 0; i--) {
 			try {
-				const slice = lines.slice(0, i).join("\n");
-				const parsed = yaml.load(slice);
+				const parsed = yaml.load(lines.slice(0, i).join("\n"));
 				if (parsed) return parsed;
-			} catch (err) {}
+			} catch {}
 		}
 	}
 	return null;
+}
+
+function parseSections(raw: string): any[] {
+	const parsed = getValidPartialYAML(raw);
+	if (!parsed) return [];
+	const arr = Array.isArray(parsed) ? parsed : [parsed];
+	return arr.filter((s: any) => s && typeof s === "object" && s.el).map(expandDSL);
 }
 
 const canGenerate = computed(() => {
@@ -195,15 +204,13 @@ const generatePage = async () => {
 	errorMessage.value = "";
 	progressMessage.value = "Initializing...";
 	streamingContent.value = "";
-
 	showDialog.value = false;
 
 	try {
-		// Fire and forget — results come through realtime events
 		await createResource({
 			url: "builder.ai_page_generator.generate_page_from_prompt",
 			makeParams: () => ({
-				prompt: prompt.value,
+				prompt: buildPrompt(prompt.value),
 				page_id: props.pageId,
 			}),
 		}).submit();
@@ -222,14 +229,13 @@ const modifySection = async () => {
 	errorMessage.value = "";
 	progressMessage.value = "Initializing...";
 	streamingContent.value = "";
-
 	showDialog.value = false;
 
 	try {
 		await createResource({
 			url: "builder.ai_page_generator.modify_section_from_prompt",
 			makeParams: () => ({
-				prompt: prompt.value,
+				prompt: buildPrompt(prompt.value),
 				block_context: JSON.stringify(props.blockContext),
 				page_id: props.pageId,
 			}),
@@ -250,55 +256,7 @@ watch(showDialog, (newValue) => {
 	}
 });
 
-// Setup socket connection for progress updates
-const onProgress = (data: any) => {
-	if (data.page_id && data.page_id !== props.pageId) return;
-	if (data.message) {
-		progressMessage.value = data.message;
-	}
-};
-
-const onStream = (data: any) => {
-	if (data.page_id && data.page_id !== props.pageId) return;
-	if (data.chunk) {
-		streamingContent.value += data.chunk;
-		const parsed = getValidPartialYAML(streamingContent.value);
-		if (parsed) {
-			try {
-				let parsedArray = Array.isArray(parsed) ? parsed : [parsed];
-				let sections = parsedArray.filter((s: any) => s && typeof s === "object" && s.el);
-				sections = sections.map(expandDSL);
-				if (sections.length > 0) {
-					const wrapped = [
-						{
-							element: "div",
-							originalElement: "body",
-							blockId: "root",
-							children: sections,
-							baseStyles: {
-								display: "flex",
-								flexWrap: "wrap",
-								flexShrink: "0",
-								flexDirection: "column",
-								alignItems: "center",
-							},
-							attributes: {},
-							mobileStyles: {},
-							tabletStyles: {},
-						},
-					];
-					emit("streaming", wrapped);
-				}
-			} catch {
-				// Ignore errors in partial parse
-			}
-		}
-	}
-};
-
-const onComplete = (data: any) => {
-	if (data.page_id && data.page_id !== props.pageId) return;
-	generating.value = false;
+function applyTierLabel(data: any) {
 	if (data.model_used) {
 		const tierLabels: Record<string, string> = {
 			trivial: "quick",
@@ -306,14 +264,52 @@ const onComplete = (data: any) => {
 			moderate: "standard",
 			complex: "full",
 		};
-		const tierLabel = tierLabels[data.task_tier as string] || "";
-		progressMessage.value = `Done — ${tierLabel} mode with ${data.model_used}`;
+		progressMessage.value = `Done — ${tierLabels[data.task_tier] || ""} mode with ${data.model_used}`;
 		setTimeout(() => {
 			progressMessage.value = "";
 		}, 2000);
 	} else {
 		progressMessage.value = "";
 	}
+}
+
+// Generate event handlers
+const onProgress = (data: any) => {
+	if (data.page_id && data.page_id !== props.pageId) return;
+	if (data.message) progressMessage.value = data.message;
+};
+
+const onStream = (data: any) => {
+	if (data.page_id && data.page_id !== props.pageId) return;
+	if (!data.chunk) return;
+	streamingContent.value += data.chunk;
+	const sections = parseSections(streamingContent.value);
+	if (sections.length > 0) {
+		emit("streaming", [
+			{
+				element: "div",
+				originalElement: "body",
+				blockId: "root",
+				children: sections,
+				baseStyles: {
+					display: "flex",
+					flexWrap: "wrap",
+					flexShrink: "0",
+					flexDirection: "column",
+					alignItems: "center",
+				},
+				attributes: {},
+				mobileStyles: {},
+				tabletStyles: {},
+			},
+		]);
+	}
+};
+
+const onComplete = (data: any) => {
+	if (data.page_id && data.page_id !== props.pageId) return;
+	generating.value = false;
+	applyTierLabel(data);
 	if (data.blocks) {
 		emit("generated", data.blocks);
 		prompt.value = "";
@@ -328,52 +324,24 @@ const onError = (data: any) => {
 	errorMessage.value = data.message || "An error occurred while generating the page";
 };
 
-// Modify mode realtime event handlers
+// Modify event handlers
 const onModifyProgress = (data: any) => {
 	if (data.page_id && data.page_id !== props.pageId) return;
-	if (data.message) {
-		progressMessage.value = data.message;
-	}
+	if (data.message) progressMessage.value = data.message;
 };
 
 const onModifyStream = (data: any) => {
 	if (data.page_id && data.page_id !== props.pageId) return;
-	if (data.chunk) {
-		streamingContent.value += data.chunk;
-		const parsed = getValidPartialYAML(streamingContent.value);
-		if (parsed) {
-			try {
-				let parsedArray = Array.isArray(parsed) ? parsed : [parsed];
-				let sections = parsedArray.filter((s: any) => s && typeof s === "object" && s.el);
-				sections = sections.map(expandDSL);
-				if (sections.length > 0) {
-					emit("modifyStreaming", sections);
-				}
-			} catch {
-				// Ignore
-			}
-		}
-	}
+	if (!data.chunk) return;
+	streamingContent.value += data.chunk;
+	const sections = parseSections(streamingContent.value);
+	if (sections.length > 0) emit("modifyStreaming", sections);
 };
 
 const onModifyComplete = (data: any) => {
 	if (data.page_id && data.page_id !== props.pageId) return;
 	generating.value = false;
-	if (data.model_used) {
-		const tierLabels: Record<string, string> = {
-			trivial: "quick",
-			simple: "fast",
-			moderate: "standard",
-			complex: "full",
-		};
-		const tierLabel = tierLabels[data.task_tier as string] || "";
-		progressMessage.value = `Done — ${tierLabel} mode with ${data.model_used}`;
-		setTimeout(() => {
-			progressMessage.value = "";
-		}, 2000);
-	} else {
-		progressMessage.value = "";
-	}
+	applyTierLabel(data);
 	if (data.blocks) {
 		emit("modified", data.blocks);
 		prompt.value = "";
