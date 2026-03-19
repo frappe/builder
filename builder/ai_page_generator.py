@@ -5,78 +5,18 @@ import frappe
 import yaml
 from frappe import _
 
-# ─── Task Classification ───────────────────────────────────────────
-
-TRIVIAL_PATTERNS = [
-	re.compile(
-		r"\b(change|update|rename|rephrase|reword|fix|correct|replace)\b.*\b(text|title|heading|label|typo|word|name|copy|content|string)\b"
-	),
-	re.compile(r"\b(change|update|set|make)\b.*\b(colou?r|font|size|bold|italic|underline|weight)\b"),
-	re.compile(r"\b(change|update|set)\b.*\b(background|bg)\s*(colou?r)?\b"),
-	re.compile(r"\bmake\s+(it\s+)?(bigger|smaller|larger|bolder|lighter|darker|brighter)\b"),
-]
-
-SIMPLE_PATTERNS = [
-	re.compile(r"\b(add|insert|include|put)\b.*\b(button|link|icon|image|img|divider|spacer|badge|tag)\b"),
-	re.compile(
-		r"\b(change|update|set|adjust|modify|tweak)\b.*\b(padding|margin|spacing|gap|border|shadow|radius|opacity|alignment|align|width|height)\b"
-	),
-	re.compile(r"\b(center|left.?align|right.?align|justify)\b"),
-	re.compile(r"\b(hide|show|remove|delete|toggle)\b.*\b(block|element|section|button|text|image|div)\b"),
-	re.compile(r"\b(move|swap|reorder|rearrange)\b"),
-	re.compile(r"\b(round|rounded|square|circle|pill)\b.*\b(corner|border|shape)\b"),
-]
-
-COMPLEX_PATTERNS = [
-	re.compile(r"\b(create|build|generate|make|design)\b.*\b(page|landing|website|full|complete)\b"),
-	re.compile(r"\b(from\s+scratch|entire|whole|complete|multi.?section)\b"),
-]
-
-
 def classify_task(prompt: str, is_modify: bool = False) -> str:
-	"""Classify prompt complexity → trivial | simple | moderate | complex."""
-	lower = prompt.lower().strip()
-
-	if not is_modify:
-		for p in COMPLEX_PATTERNS:
-			if p.search(lower):
-				return "complex"
-		return "moderate"
-
-	for p in TRIVIAL_PATTERNS:
-		if p.search(lower):
-			return "trivial"
-	for p in SIMPLE_PATTERNS:
-		if p.search(lower):
-			return "simple"
-	for p in COMPLEX_PATTERNS:
-		if p.search(lower):
-			return "complex"
-	return "moderate"
+	"""Classify task → simple (modify) | complex (full page creation)."""
+	return "simple" if is_modify else "complex"
 
 
 # ─── Model Selection & Cost Intelligence ──────────────────────────
 
 MODEL_TIERS = {
-	"openai": {"trivial": "gpt-5-nano", "simple": "gpt-4.1-mini", "moderate": "gpt-4.1", "complex": "gpt-5"},
-	"anthropic": {
-		"trivial": "claude-haiku-4-5",
-		"simple": "claude-haiku-4-5",
-		"moderate": "claude-sonnet-4-6",
-		"complex": "claude-sonnet-4-6",
-	},
-	"google": {
-		"trivial": "gemini-2.5-flash-lite",
-		"simple": "gemini-2.5-flash",
-		"moderate": "gemini-2.5-flash",
-		"complex": "gemini-2.5-pro",
-	},
-	"x-ai": {
-		"trivial": "grok-beta",
-		"simple": "grok-beta",
-		"moderate": "grok-2-1212",
-		"complex": "grok-2-1212",
-	},
+	"openai": {"simple": "gpt-4.1-mini", "complex": "gpt-5"},
+	"anthropic": {"simple": "claude-haiku-4-5", "complex": "claude-sonnet-4-6"},
+	"google": {"simple": "gemini-2.5-flash", "complex": "gemini-2.5-pro"},
+	"x-ai": {"simple": "grok-beta", "complex": "grok-2-1212"},
 }
 
 MODEL_COST_INDEX = {
@@ -100,13 +40,11 @@ MODEL_COST_INDEX = {
 }
 
 TASK_PARAMS = {
-	"trivial": {"max_tokens": 2000, "temperature": 0.3},
-	"simple": {"max_tokens": 4000, "temperature": 0.5},
-	"moderate": {"max_tokens": 18000, "temperature": 0.7},
+	"simple": {"max_tokens": 24000, "temperature": 0.5},
 	"complex": {"max_tokens": 20000, "temperature": 0.7},
 }
 
-TIER_ORDER = ["trivial", "simple", "moderate", "complex"]
+TIER_ORDER = ["simple", "complex"]
 
 
 def get_optimal_model(configured_model: str, task_tier: str) -> str:
@@ -152,20 +90,7 @@ def get_escalated_model(current_model: str, configured_model: str) -> str | None
 
 # ─── Tiered System Prompts ────────────────────────────────────────
 
-MINIMAL_MODIFY_PROMPT = (
-	"You modify web sections in Frappe Builder's block system.\n"
-	"Return ONLY valid YAML array. No markdown, no text.\n\n"
-	"# Schema\n"
-	"el: str\n"
-	"id: str # MUST preserve\n"
-	"style?: dict\n"
-	"c?: [el]\n"
-	"text?: str\n\n"
-	"Preserve all id values. Only change what was asked. Use camelCase CSS.\n"
-	"Wrap text in semantic elements (p, h1-h3, span, a) — never place text directly in div/section."
-)
-
-FOCUSED_MODIFY_PROMPT = (
+MODIFY_PROMPT = (
 	"You modify web sections in Frappe Builder's block system.\n"
 	"Return ONLY valid YAML array. No markdown, no explanations.\n\n"
 	"# Schema\n"
@@ -177,55 +102,19 @@ FOCUSED_MODIFY_PROMPT = (
 	"attrs?: dict\n"
 	"text?: str\n"
 	"m_style?: dict\n\n"
-	"Rules: Preserve 'id' values. Only change what requested. Return COMPLETE structure. "
+	"Rules: Preserve ALL existing 'id' values. Only change what requested. Return COMPLETE structure. "
 	"Use %, rem for responsive widths. Top-level sections MUST be 100% width.\n"
 	"Wrap text in semantic elements — never place text directly in div/section."
 )
 
-COMPACT_GENERATION_PROMPT = (
-	"You generate web sections using Frappe Builder's block system.\n"
-	"Return ONLY valid YAML array. No markdown, no text.\n\n"
-	"# Schema\n"
-	"el: str         # tag name (section, div, h1-h3, p, span, button, a, img, etc.)\n"
-	"name?: str      # blockName\n"
-	"style?: dict    # CSS-in-JS (camelCase: display, padding, gap, fontFamily, etc.)\n"
-	"c?: [el]        # children\n"
-	"attrs?: dict    # attributes (src, alt, href)\n"
-	"text?: str      # inner content\n"
-	"m_style?: dict  # mobile overrides\n\n"
-	"Design: flex/grid layouts, top-level sections MUST be 100% width, modern colors, Google Fonts via fontFamily "
-	'(use ONLY the font name e.g. "Bebas Neue" — never add fallback families).\n'
-	"Wrap text in semantic elements (p, h1-h3, span, a) — never place text directly in div/section."
-)
-
 
 def get_system_prompt_for_tier(task_tier: str, is_modify: bool) -> str:
-	"""Select the most token-efficient prompt for the task tier."""
 	if is_modify:
-		if task_tier == "trivial":
-			return MINIMAL_MODIFY_PROMPT
-		if task_tier == "simple":
-			return FOCUSED_MODIFY_PROMPT
-		return get_modify_system_prompt()
-	if task_tier in ("trivial", "simple"):
-		return COMPACT_GENERATION_PROMPT
+		return MODIFY_PROMPT
 	return get_system_prompt()
 
 
 # ─── Context Optimization ─────────────────────────────────────────
-
-STYLE_KEYS_TRIVIAL = frozenset(
-	{
-		"color",
-		"backgroundColor",
-		"fontSize",
-		"fontWeight",
-		"fontStyle",
-		"textDecoration",
-		"opacity",
-		"visibility",
-	}
-)
 
 STYLE_KEYS_SIMPLE = frozenset(
 	{
@@ -260,7 +149,7 @@ STYLE_KEYS_SIMPLE = frozenset(
 )
 
 
-def compress_block_to_dsl(block: dict, depth: int = 0, task_tier: str = "moderate") -> dict:
+def compress_block_to_dsl(block: dict, depth: int = 0, task_tier: str = "complex") -> dict:
 	if not isinstance(block, dict):
 		return block
 	dsl = {}
@@ -272,9 +161,7 @@ def compress_block_to_dsl(block: dict, depth: int = 0, task_tier: str = "moderat
 		dsl["name"] = block["blockName"]
 
 	if block.get("baseStyles") and isinstance(block.get("baseStyles"), dict):
-		if task_tier == "trivial":
-			filtered = {k: v for k, v in block["baseStyles"].items() if k in STYLE_KEYS_TRIVIAL}
-		elif task_tier == "simple":
+		if task_tier == "simple":
 			filtered = {k: v for k, v in block["baseStyles"].items() if k in STYLE_KEYS_SIMPLE}
 		else:
 			filtered = block["baseStyles"]
@@ -291,7 +178,7 @@ def compress_block_to_dsl(block: dict, depth: int = 0, task_tier: str = "moderat
 	elif block.get("innerHTML"):
 		dsl["text"] = block["innerHTML"]
 
-	if task_tier != "trivial" or depth <= 1:
+	if task_tier == "complex" or depth <= 1:
 		if block.get("mobileStyles") and isinstance(block.get("mobileStyles"), dict):
 			dsl["m_style"] = block["mobileStyles"]
 		if block.get("tabletStyles") and isinstance(block.get("tabletStyles"), dict):
@@ -355,11 +242,7 @@ def expand_dsl_to_block(dsl_block: dict) -> dict:
 def build_user_message(prompt: str, task_tier: str, is_modify: bool, block_context: str | None = None) -> str:
 	"""Build a token-efficient user message."""
 	if is_modify and block_context:
-		if task_tier in ("trivial", "simple"):
-			return f"Block:\n{block_context}\n\nChange: {prompt}"
-		return f"Current section:\n{block_context}\n\nModify: {prompt}"
-	if task_tier in ("trivial", "simple"):
-		return f"Create: {prompt}"
+		return f"Block:\n{block_context}\n\nChange: {prompt}"
 	return f"Create a section for: {prompt}"
 
 
@@ -553,11 +436,9 @@ def generate_page_blocks(
 		task_tier = classify_task(prompt, is_modify=False)
 		optimal_model = get_optimal_model(model, task_tier)
 		params = TASK_PARAMS[task_tier]
-		should_stream = task_tier in ("moderate", "complex")
+		should_stream = True
+		tier_label = {"simple": "fast", "complex": "full"}[task_tier]
 
-		tier_label = {"trivial": "quick", "simple": "fast", "moderate": "standard", "complex": "full"}[
-			task_tier
-		]
 		frappe.publish_realtime(
 			"ai_generation_progress",
 			{
@@ -685,27 +566,6 @@ def set_api_key_for_provider(model: str, api_key: str):
 		os.environ[env_key] = api_key
 
 
-def get_modify_system_prompt():
-	"""Full system prompt for complex section modification (moderate/complex tiers)."""
-	return """You are an expert web designer specializing in modifying web page sections using the Frappe Builder block system.
-
-Modify the existing structure based on user instructions. Return ONLY a valid YAML array of the modified blocks. No markdown, no explanations.
-
-# Block Schema (Compact DSL):
-- el, name, id (MUST PRESERVE), style (CSS-in-JS camelCase), m_style, t_style
-- attrs (src, alt, href, target), text, c (children array), classes
-
-# Modification Rules:
-1. Preserve ALL existing 'id' values to prevent DOM churn
-2. Only modify what the user explicitly asks for
-3. Keep existing structure intact where not asked to change
-4. Return the COMPLETE modified block structure (not a diff)
-5. Use responsive units (%, rem, auto-fit) for widths. Top-level sections MUST be 100% width.
-6. Wrap text in semantic text elements (p, h1-h3, span, a) — never place text directly in div/section
-
-# CRITICAL: Return ONLY valid YAML array."""
-
-
 def modify_section_blocks(
 	prompt: str,
 	block_context: str,
@@ -745,13 +605,10 @@ def modify_section_blocks(
 		task_tier = classify_task(prompt, is_modify=True)
 		optimal_model = get_optimal_model(model, task_tier)
 		params = TASK_PARAMS[task_tier]
-		should_stream = task_tier in ("moderate", "complex")
-
+		should_stream = True
 		stripped_context = strip_block_context(block_context, task_tier)
+		tier_label = {"simple": "fast", "complex": "full"}[task_tier]
 
-		tier_label = {"trivial": "quick", "simple": "fast", "moderate": "standard", "complex": "full"}[
-			task_tier
-		]
 		frappe.publish_realtime(
 			"ai_modify_progress",
 			{
