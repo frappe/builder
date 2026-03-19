@@ -6,9 +6,13 @@ import yaml
 from frappe import _
 
 
-def classify_task(prompt: str, is_modify: bool = False) -> str:
-	"""Classify task → simple (modify) | complex (full page creation)."""
-	return "simple" if is_modify else "complex"
+def classify_task(prompt: str, is_modify: bool = False, task_type: str | None = None) -> str:
+	"""Classify task → simple (specific modify) | complex (general modify/full page)."""
+	if not is_modify:
+		return "complex"
+	if task_type in ["rewrite_text", "replace_image"]:
+		return "simple"
+	return "complex"
 
 
 # ─── Model Selection & Cost Intelligence ──────────────────────────
@@ -104,9 +108,25 @@ MODIFY_PROMPT = (
 	"Wrap text in semantic elements — never place text directly in div/section."
 )
 
+REWRITE_TEXT_PROMPT = (
+	"You are a professional copywriter. Rewrite the text content in the provided block structure to be more engaging and professional.\n"
+	"Return ONLY a valid YAML array. Preserve everything. Only update the 'text' property.\n"
+	"No markdown, no explanations."
+)
 
-def get_system_prompt_for_tier(task_tier: str, is_modify: bool) -> str:
+REPLACE_IMAGE_PROMPT = (
+	"You are a visual design assistant. Suggest a highly relevant, high-quality image description or URL for the provided block.\n"
+	"Return ONLY a valid YAML array. Preserve everything. Only update 'attrs' property like 'src' and 'alt'.\n"
+	"No markdown, no explanations."
+)
+
+
+def get_system_prompt_for_tier(task_tier: str, is_modify: bool, task_type: str | None = None) -> str:
 	if is_modify:
+		if task_type == "rewrite_text":
+			return REWRITE_TEXT_PROMPT
+		if task_type == "replace_image":
+			return REPLACE_IMAGE_PROMPT
 		return MODIFY_PROMPT
 	return get_system_prompt()
 
@@ -363,7 +383,7 @@ def get_available_models():
 
 
 def get_system_prompt():
-	"""Full system prompt for complex page generation (moderate/complex tiers)."""
+	"""Full system prompt for complex page generation."""
 	return """You are an expert web designer specializing in creating modern, responsive web pages using the Frappe Builder block system.
 
 Return ONLY a valid YAML array of blocks. No markdown, no explanations.
@@ -566,6 +586,7 @@ def modify_section_blocks(
 	api_key: str | None = None,
 	user: str | None = None,
 	page_id: str | None = None,
+	task_type: str | None = None,
 ):
 	"""Smart section modification with context stripping and auto model selection."""
 	user = user or frappe.session.user
@@ -595,7 +616,7 @@ def modify_section_blocks(
 			)
 			return
 
-		task_tier = classify_task(prompt, is_modify=True)
+		task_tier = classify_task(prompt, is_modify=True, task_type=task_type)
 		optimal_model = get_optimal_model(model, task_tier)
 		params = TASK_PARAMS[task_tier]
 		should_stream = True
@@ -614,7 +635,7 @@ def modify_section_blocks(
 			user=user,
 		)
 
-		system_prompt = get_system_prompt_for_tier(task_tier, is_modify=True)
+		system_prompt = get_system_prompt_for_tier(task_tier, is_modify=True, task_type=task_type)
 		user_message = build_user_message(prompt, task_tier, is_modify=True, block_context=stripped_context)
 
 		messages = [
@@ -685,7 +706,9 @@ def get_ai_models():
 
 
 @frappe.whitelist()
-def modify_section_from_prompt(prompt: str, block_context: str, page_id: str | None = None):
+def modify_section_from_prompt(
+	prompt: str, block_context: str, page_id: str | None = None, task_type: str | None = None
+):
 	if not frappe.has_permission("Builder Page", ptype="write"):
 		frappe.throw(_("You do not have permission to modify pages"))
 
@@ -713,6 +736,7 @@ def modify_section_from_prompt(prompt: str, block_context: str, page_id: str | N
 		page_id=page_id,
 		queue="default",
 		is_async=True,
+		task_type=task_type,
 	)
 
 	return {
