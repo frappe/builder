@@ -127,20 +127,20 @@ const hasAISettings = computed(() => {
 	return builderSettings.doc?.ai_model && builderSettings.doc?.ai_api_key;
 });
 
+const TEXT_ELEMENTS = ["h1", "h2", "h3", "p", "span"];
+
 const title = computed(() => {
 	if (props.mode === "generate") return "Generate with AI";
-	if (!props.blockContext) return "Modify with AI";
-	const el = props.blockContext.element;
-	if (["h1", "h2", "h3", "p", "span"].includes(el)) return "Rewrite with AI";
+	const el = props.blockContext?.element;
+	if (TEXT_ELEMENTS.includes(el)) return "Rewrite with AI";
 	if (el === "img") return "Replace Image with AI";
 	return "Modify with AI";
 });
 
 const placeholder = computed(() => {
 	if (props.mode === "generate") return "Describe the section you want to create...";
-	if (!props.blockContext) return "Describe how you want to modify this section...";
-	const el = props.blockContext.element;
-	if (["h1", "h2", "h3", "p", "span"].includes(el)) return "Describe how you want to rewrite this text...";
+	const el = props.blockContext?.element;
+	if (TEXT_ELEMENTS.includes(el)) return "Describe how you want to rewrite this text...";
 	if (el === "img") return "Describe the new image you want...";
 	return "Describe how you want to modify this section...";
 });
@@ -148,7 +148,7 @@ const placeholder = computed(() => {
 const taskType = computed(() => {
 	if (props.mode !== "modify" || !props.blockContext) return null;
 	const el = props.blockContext.element;
-	if (["h1", "h2", "h3", "p", "span"].includes(el)) return "rewrite_text";
+	if (TEXT_ELEMENTS.includes(el)) return "rewrite_text";
 	if (el === "img") return "replace_image";
 	return null;
 });
@@ -212,12 +212,8 @@ const canGenerate = computed(() => {
 	return prompt.value.trim() !== "" && hasAISettings.value && !generating.value;
 });
 
-const handleSubmit = async () => {
-	if (props.mode === "modify") {
-		await modifySection();
-	} else {
-		await generatePage();
-	}
+const handleSubmit = () => {
+	return props.mode === "modify" ? modifySection() : generatePage();
 };
 
 const generatePage = async () => {

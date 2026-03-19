@@ -8,9 +8,7 @@ from frappe import _
 
 def classify_task(prompt: str, is_modify: bool = False, task_type: str | None = None) -> str:
 	"""Classify task → simple (specific modify) | complex (general modify/full page)."""
-	if not is_modify:
-		return "complex"
-	if task_type in ["rewrite_text", "replace_image"]:
+	if is_modify and task_type in ["rewrite_text", "replace_image"]:
 		return "simple"
 	return "complex"
 
@@ -116,7 +114,7 @@ REWRITE_TEXT_PROMPT = (
 
 REPLACE_IMAGE_PROMPT = (
 	"You are a visual design assistant. Suggest a highly relevant, high-quality image description or URL for the provided block.\n"
-	"Return ONLY a valid YAML array. Preserve everything. Only update 'attrs' property like 'src' and 'alt'.\n"
+	"Return ONLY a valid YAML array. Preserve everything. Update 'attrs' property like 'src' and 'alt'.\n"
 	"No markdown, no explanations."
 )
 
@@ -162,6 +160,10 @@ STYLE_KEYS_SIMPLE = frozenset(
 		"width",
 		"height",
 		"maxWidth",
+		"objectFit",
+		"position",
+		"zIndex",
+		"boxShadow",
 	}
 )
 
@@ -190,9 +192,7 @@ def compress_block_to_dsl(block: dict, depth: int = 0, task_tier: str = "complex
 	if block.get("classes"):
 		dsl["classes"] = block["classes"]
 
-	if block.get("innerText"):
-		dsl["text"] = block["innerText"]
-	elif block.get("innerHTML"):
+	if block.get("innerHTML"):
 		dsl["text"] = block["innerHTML"]
 
 	if task_tier == "complex" or depth <= 1:
@@ -239,7 +239,7 @@ def expand_dsl_to_block(dsl_block: dict) -> dict:
 	if "id" in dsl_block:
 		block["blockId"] = dsl_block["id"]
 	if "text" in dsl_block:
-		block["innerText"] = dsl_block["text"]
+		block["innerHTML"] = dsl_block["text"]
 	if "m_style" in dsl_block:
 		block["mobileStyles"] = dsl_block["m_style"]
 	if "t_style" in dsl_block:
@@ -279,44 +279,22 @@ def _call_llm(model: str, messages: list, params: dict, *, stream: bool = True, 
 	# so litellm forwards it correctly to Anthropic's caching layer.
 	# For all other providers: pass messages unchanged.
 	if "claude-" in model:
-		patched = []
 		for m in messages:
-			if m["role"] == "system":
-				patched.append(
-					{
-						"role": "system",
-						"content": [
-							{
-								"type": "text",
-								"text": m["content"]
-								if isinstance(m["content"], str)
-								else m["content"][0].get("text", ""),
-							}
-						],
-						"cache_control": {"type": "ephemeral"},
-					}
-				)
-			else:
-				patched.append(m)
-		messages = patched
+			if m["role"] == "system" and isinstance(m.get("content"), str):
+				m["content"] = [{"type": "text", "text": m["content"]}]
+				m["cache_control"] = {"type": "ephemeral"}
 
-	kwargs = dict(
-		model=model,
-		messages=messages,
-		temperature=params["temperature"],
-		max_tokens=params["max_tokens"],
-	)
-
-	if api_key:
-		kwargs["api_key"] = api_key
-	if stream:
-		kwargs["stream"] = True
-
-	if stream:
-		return litellm.completion(**kwargs)
+	kwargs = {
+		"model": model,
+		"messages": messages,
+		"temperature": params["temperature"],
+		"max_tokens": params["max_tokens"],
+		"stream": stream,
+		"api_key": api_key,
+	}
 
 	resp = litellm.completion(**kwargs)
-	return resp.choices[0].message.content or ""
+	return resp if stream else (resp.choices[0].message.content or "")
 
 
 def _parse_blocks(content: str) -> list[dict]:
@@ -449,7 +427,7 @@ def generate_page_blocks(
 		task_tier = classify_task(prompt, is_modify=False)
 		optimal_model = get_optimal_model(model, task_tier)
 		params = TASK_PARAMS[task_tier]
-		should_stream = True
+		should_stream = task_tier != "simple"
 		tier_label = {"simple": "fast", "complex": "full"}[task_tier]
 
 		frappe.publish_realtime(
@@ -561,22 +539,6 @@ def get_provider_from_model(model: str) -> str:
 		return "openai"  # default
 
 
-def set_api_key_for_provider(model: str, api_key: str):
-	"""Set API key in environment for litellm"""
-	import os
-
-	provider = get_provider_from_model(model)
-
-	key_mapping = {
-		"openai": "OPENAI_API_KEY",
-		"anthropic": "ANTHROPIC_API_KEY",
-		"google": "GEMINI_API_KEY",
-		"x-ai": "XAI_API_KEY",
-	}
-
-	env_key = key_mapping.get(provider)
-	if env_key:
-		os.environ[env_key] = api_key
 
 
 def modify_section_blocks(
@@ -619,7 +581,7 @@ def modify_section_blocks(
 		task_tier = classify_task(prompt, is_modify=True, task_type=task_type)
 		optimal_model = get_optimal_model(model, task_tier)
 		params = TASK_PARAMS[task_tier]
-		should_stream = True
+		should_stream = task_tier != "simple"
 		stripped_context = strip_block_context(block_context, task_tier)
 		tier_label = {"simple": "fast", "complex": "full"}[task_tier]
 

@@ -238,36 +238,25 @@ const handleStreamingBlocks = useThrottleFn((blocks: any[]) => {
 // Find a block in the tree by blockId and replace its children/styles with new data
 const replaceBlockInTree = (root: any, targetId: string, newBlocks: any[]): boolean => {
 	if (!root) return false;
-	if (root.blockId === targetId) {
-		// Replace this block's content with the first new block's content
+	if (root.blockId === targetId && newBlocks[0]) {
 		const replacement = newBlocks[0];
-		if (replacement) {
-			root.element = replacement.element || root.element;
-			root.baseStyles = replacement.baseStyles || root.baseStyles;
-			root.mobileStyles = replacement.mobileStyles || root.mobileStyles;
-			root.tabletStyles = replacement.tabletStyles || root.tabletStyles;
-			root.attributes = replacement.attributes || root.attributes;
-			root.classes = replacement.classes || root.classes;
+		Object.assign(root, {
+			element: replacement.element || root.element,
+			baseStyles: replacement.baseStyles || root.baseStyles,
+			mobileStyles: replacement.mobileStyles || root.mobileStyles,
+			tabletStyles: replacement.tabletStyles || root.tabletStyles,
+			attributes: replacement.attributes || root.attributes,
+			classes: replacement.classes || root.classes,
+		});
+		if (replacement.innerText !== undefined) root.innerText = replacement.innerText;
+		if (replacement.innerHTML !== undefined) root.innerHTML = replacement.innerHTML;
 
-			if (replacement.innerText !== undefined) root.innerText = replacement.innerText;
-			if (replacement.innerHTML !== undefined) root.innerHTML = replacement.innerHTML;
-
-			// Replace children
-			if (replacement.children) {
-				root.children.splice(0, root.children.length);
-				for (const child of replacement.children) {
-					root.addChild(getBlockInstance(child));
-				}
-			}
+		if (replacement.children) {
+			root.children.splice(0, root.children.length, ...replacement.children.map(getBlockInstance));
 		}
 		return true;
 	}
-	if (root.children) {
-		for (const child of root.children) {
-			if (replaceBlockInTree(child, targetId, newBlocks)) return true;
-		}
-	}
-	return false;
+	return root.children?.some((child: any) => replaceBlockInTree(child, targetId, newBlocks)) || false;
 };
 
 // Handle AI modified blocks (replace the specific block in the tree)
@@ -545,8 +534,6 @@ watch(
 
 <style>
 .page-builder {
-	--left-panel-width: 17rem;
-	--right-panel-width: 20rem;
 	--toolbar-height: 3rem;
 }
 </style>
