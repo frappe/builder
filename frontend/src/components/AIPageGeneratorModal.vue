@@ -138,7 +138,7 @@ const title = computed(() => {
 });
 
 const placeholder = computed(() => {
-	if (props.mode === "generate") return "Describe the section you want to create...";
+	if (props.mode === "generate") return "Describe the page you want to create...";
 	const el = props.blockContext?.element;
 	if (TEXT_ELEMENTS.includes(el)) return "Describe how you want to rewrite this text...";
 	if (el === "img") return "Describe the new image you want...";
@@ -387,6 +387,30 @@ const onModifyStream = (data: any) => {
 	if (data.page_id && data.page_id !== props.pageId) return;
 	if (!data.chunk) return;
 	streamingContent.value += data.chunk;
+
+	if (taskType.value === "rewrite_text") {
+		emit("modifyStreaming", [
+			{
+				innerHTML: streamingContent.value.trim().replace(/^"|"$/g, ""),
+				blockId: props.blockContext?.blockId,
+			},
+		]);
+		return;
+	}
+
+	if (taskType.value === "replace_image") {
+		const parsed = getValidPartialYAML(streamingContent.value);
+		if (parsed && typeof parsed === "object") {
+			emit("modifyStreaming", [
+				{
+					attributes: parsed,
+					blockId: props.blockContext?.blockId,
+				},
+			]);
+		}
+		return;
+	}
+
 	const sections = parseSections(streamingContent.value);
 	if (sections.length > 0) emit("modifyStreaming", sections);
 };

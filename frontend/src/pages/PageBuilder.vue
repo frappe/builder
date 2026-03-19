@@ -188,9 +188,11 @@ const editWithAIFn = (block: Block) => {
 provide("editWithAI", editWithAIFn);
 
 const runDirectAI = (block: Block, type: "rewrite_text" | "replace_image", customPrompt?: string) => {
+	const blockObj = getBlockObject(block);
 	aiMode.value = "modify";
 	modifyBlockId.value = block.blockId;
-	aiGeneratorModal.value?.executeDirect(getBlockObject(block), type, customPrompt);
+	modifyBlockContext.value = blockObj;
+	aiGeneratorModal.value?.executeDirect(blockObj, type, customPrompt);
 };
 provide("runDirectAI", runDirectAI);
 
@@ -240,14 +242,16 @@ const replaceBlockInTree = (root: any, targetId: string, newBlocks: any[]): bool
 	if (!root) return false;
 	if (root.blockId === targetId && newBlocks[0]) {
 		const replacement = newBlocks[0];
-		Object.assign(root, {
-			element: replacement.element || root.element,
-			baseStyles: replacement.baseStyles || root.baseStyles,
-			mobileStyles: replacement.mobileStyles || root.mobileStyles,
-			tabletStyles: replacement.tabletStyles || root.tabletStyles,
-			attributes: replacement.attributes || root.attributes,
-			classes: replacement.classes || root.classes,
-		});
+		root.element = replacement.element || root.element;
+		root.baseStyles = replacement.baseStyles || root.baseStyles;
+		root.mobileStyles = replacement.mobileStyles || root.mobileStyles;
+		root.tabletStyles = replacement.tabletStyles || root.tabletStyles;
+		root.classes = replacement.classes || root.classes;
+
+		if (replacement.attributes) {
+			root.attributes = { ...root.attributes, ...replacement.attributes };
+		}
+
 		if (replacement.innerText !== undefined) root.innerText = replacement.innerText;
 		if (replacement.innerHTML !== undefined) root.innerHTML = replacement.innerHTML;
 

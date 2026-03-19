@@ -107,15 +107,13 @@ MODIFY_PROMPT = (
 )
 
 REWRITE_TEXT_PROMPT = (
-	"You are a professional copywriter. Rewrite the text content in the provided block structure to be more engaging and professional.\n"
-	"Return ONLY a valid YAML array. Preserve everything. Only update the 'text' property.\n"
-	"No markdown, no explanations."
+	"You are a professional copywriter. Rewrite the provided text content to be more engaging and professional.\n"
+	"Return ONLY the rewritten text. No markdown, no explanations, no quotes."
 )
 
 REPLACE_IMAGE_PROMPT = (
-	"You are a visual design assistant. Suggest a highly relevant, high-quality image description or URL for the provided block.\n"
-	"Return ONLY a valid YAML array. Preserve everything. Update 'attrs' property like 'src' and 'alt'.\n"
-	"No markdown, no explanations."
+	"You are an image finder. Suggest a highly relevant, high-quality publicly available image URL (different from what is provided) and alt text.\n"
+	"Return ONLY a valid YAML object with 'src' and 'alt' keys. No markdown, no explanations."
 )
 
 
@@ -212,17 +210,28 @@ def compress_block_to_dsl(block: dict, depth: int = 0, task_tier: str = "complex
 	return dsl
 
 
-def strip_block_context(block_context: str, task_tier: str) -> str:
-	"""Convert block JSON to compact YAML using a terse DSL to reduce input tokens."""
+def strip_block_context(block_context: str, task_tier: str, task_type: str | None = None) -> str:
+	"""Convert block JSON to compact representation to reduce input tokens."""
 	try:
 		data = json.loads(block_context)
 	except (json.JSONDecodeError, TypeError):
 		return block_context
 
-	if isinstance(data, dict):
-		data = [data]
+	if isinstance(data, list) and len(data) > 0:
+		data = data[0]
 
-	stripped = [compress_block_to_dsl(b, 0, task_tier) for b in data if isinstance(b, dict)]
+	if not isinstance(data, dict):
+		return block_context
+
+	if task_type == "rewrite_text":
+		return data.get("innerHTML") or data.get("innerText") or ""
+
+	if task_type == "replace_image":
+		attrs = data.get("attributes", {})
+		return yaml.dump({"src": attrs.get("src", ""), "alt": attrs.get("alt", "")}, sort_keys=False)
+
+	# Default: full DSL
+	stripped = [compress_block_to_dsl(data, 0, task_tier)]
 	return yaml.dump(stripped, sort_keys=False, default_flow_style=False)
 
 
@@ -256,9 +265,19 @@ def expand_dsl_to_block(dsl_block: dict) -> dict:
 	return block
 
 
-def build_user_message(prompt: str, task_tier: str, is_modify: bool, block_context: str | None = None) -> str:
+def build_user_message(
+	prompt: str,
+	task_tier: str,
+	is_modify: bool,
+	block_context: str | None = None,
+	task_type: str | None = None,
+) -> str:
 	"""Build a token-efficient user message."""
 	if is_modify and block_context:
+		if task_type == "rewrite_text":
+			return f'Text content to rewrite: "{block_context}"\n\nInstruction: {prompt}'
+		if task_type == "replace_image":
+			return f"Current image attributes:\n{block_context}\n\nInstruction: {prompt}"
 		return f"Block:\n{block_context}\n\nChange: {prompt}"
 	return f"Create a section for: {prompt}"
 
@@ -539,8 +558,6 @@ def get_provider_from_model(model: str) -> str:
 		return "openai"  # default
 
 
-
-
 def modify_section_blocks(
 	prompt: str,
 	block_context: str,
@@ -550,116 +567,104 @@ def modify_section_blocks(
 	page_id: str | None = None,
 	task_type: str | None = None,
 ):
-	"""Smart section modification with context stripping and auto model selection."""
 	user = user or frappe.session.user
+
+	def emit(event, **kwargs):
+		frappe.publish_realtime(event, {"page_id": page_id, **kwargs}, user=user)
+
+	try:
+		import litellm
+	except ImportError:
+		return emit("ai_modify_error", message="litellm is not installed. Run: pip install litellm")
+
+	api_key = api_key or get_api_key_for_model(model)
+	if not api_key:
+		return emit(
+			"ai_modify_error", message=f"API key not configured for {model}. Configure in Settings → AI."
+		)
+
+	task_tier = classify_task(prompt, is_modify=True, task_type=task_type)
+	optimal_model = get_optimal_model(model, task_tier)
+	stripped_context = strip_block_context(block_context, task_tier, task_type=task_type)
+	should_stream = task_tier != "simple"
+
+	emit(
+		"ai_modify_progress",
+		status="generating",
+		message=f"Modifying ({'fast' if task_tier == 'simple' else 'full'}) with {optimal_model}...",
+		task_tier=task_tier,
+		model_used=optimal_model,
+	)
+
+	messages = [
+		{
+			"role": "system",
+			"content": get_system_prompt_for_tier(task_tier, is_modify=True, task_type=task_type),
+			"cache_control": {"type": "ephemeral"},
+		},
+		{
+			"role": "user",
+			"content": build_user_message(
+				prompt, task_tier, is_modify=True, block_context=stripped_context, task_type=task_type
+			),
+		},
+	]
+
 	content = ""
 	try:
-		try:
-			import litellm
-		except ImportError:
-			frappe.publish_realtime(
-				"ai_modify_error",
-				{"page_id": page_id, "message": "litellm is not installed. Run: pip install litellm"},
-				user=user,
-			)
-			return
-
-		if not api_key:
-			api_key = get_api_key_for_model(model)
-
-		if not api_key:
-			frappe.publish_realtime(
-				"ai_modify_error",
-				{
-					"page_id": page_id,
-					"message": f"API key not configured for {model}. Configure in Settings \u2192 AI.",
-				},
-				user=user,
-			)
-			return
-
-		task_tier = classify_task(prompt, is_modify=True, task_type=task_type)
-		optimal_model = get_optimal_model(model, task_tier)
-		params = TASK_PARAMS[task_tier]
-		should_stream = task_tier != "simple"
-		stripped_context = strip_block_context(block_context, task_tier)
-		tier_label = {"simple": "fast", "complex": "full"}[task_tier]
-
-		frappe.publish_realtime(
-			"ai_modify_progress",
-			{
-				"page_id": page_id,
-				"status": "generating",
-				"message": f"Modifying ({tier_label}) with {optimal_model}...",
-				"task_tier": task_tier,
-				"model_used": optimal_model,
-			},
-			user=user,
-		)
-
-		system_prompt = get_system_prompt_for_tier(task_tier, is_modify=True, task_type=task_type)
-		user_message = build_user_message(prompt, task_tier, is_modify=True, block_context=stripped_context)
-
-		messages = [
-			{"role": "system", "content": system_prompt, "cache_control": {"type": "ephemeral"}},
-			{"role": "user", "content": user_message},
-		]
-
 		if should_stream:
-			response = _call_llm(optimal_model, messages, params, stream=True, api_key=api_key)
-			for chunk in response:
-				delta = chunk.choices[0].delta.content
-				if delta:
+			for chunk in _call_llm(
+				optimal_model, messages, TASK_PARAMS[task_tier], stream=True, api_key=api_key
+			):
+				if delta := chunk.choices[0].delta.content:
 					content += delta
-					frappe.publish_realtime(
-						"ai_modify_stream",
-						{"page_id": page_id, "chunk": delta},
-						user=user,
-					)
+					emit("ai_modify_stream", chunk=delta)
 		else:
-			content = _call_llm(optimal_model, messages, params, stream=False, api_key=api_key)
+			content = _call_llm(
+				optimal_model, messages, TASK_PARAMS[task_tier], stream=False, api_key=api_key
+			)
 
+		blocks = _parse_response(content, block_context, task_type)
+
+	except ValueError:
+		escalated = get_escalated_model(optimal_model, model)
+		if not escalated or escalated == optimal_model:
+			raise
+		emit("ai_modify_progress", message=f"Refining with {escalated}...")
+		next_tier = TIER_ORDER[min(TIER_ORDER.index(task_tier) + 1, len(TIER_ORDER) - 1)]
+		messages[0]["content"] = get_system_prompt_for_tier(next_tier, is_modify=True)
+		blocks = _parse_blocks(
+			_call_llm(escalated, messages, TASK_PARAMS[next_tier], stream=False, api_key=api_key)
+		)
+
+	emit("ai_modify_complete", blocks=blocks, model_used=optimal_model, task_tier=task_tier)
+
+
+def _parse_response(content: str, block_context: str, task_type: str | None) -> list:
+	"""Clean raw LLM output and parse into blocks."""
+	clean = re.sub(r"^```(?:yaml|json)?\s*\n?", "", content.strip())
+	clean = re.sub(r"\n?```\s*$", "", clean).strip()
+
+	try:
+		ctx = json.loads(block_context)
+		ctx = ctx[0] if isinstance(ctx, list) and ctx else ctx
+		original_id = ctx.get("blockId") if isinstance(ctx, dict) else None
+	except Exception:
+		original_id = None
+
+	if task_type == "rewrite_text":
+		return [{"innerHTML": clean.strip('"'), "blockId": original_id}]
+
+	if task_type == "replace_image":
 		try:
-			blocks = _parse_blocks(content)
-		except ValueError:
-			escalated = get_escalated_model(optimal_model, model)
-			if escalated and escalated != optimal_model:
-				frappe.publish_realtime(
-					"ai_modify_progress",
-					{"page_id": page_id, "message": f"Refining with {escalated}..."},
-					user=user,
-				)
-				next_idx = min(TIER_ORDER.index(task_tier) + 1, len(TIER_ORDER) - 1)
-				next_tier = TIER_ORDER[next_idx]
-				messages[0]["content"] = get_system_prompt_for_tier(next_tier, is_modify=True)
-				content = _call_llm(
-					escalated, messages, TASK_PARAMS[next_tier], stream=False, api_key=api_key
-				)
-				blocks = _parse_blocks(content)
-			else:
-				raise
+			res = yaml.safe_load(clean)
+			res = res[0] if isinstance(res, list) and res else res
+			if isinstance(res, dict):
+				return [{"attributes": res, "blockId": original_id}]
+		except Exception:
+			pass
 
-		frappe.publish_realtime(
-			"ai_modify_complete",
-			{"page_id": page_id, "blocks": blocks, "model_used": optimal_model, "task_tier": task_tier},
-			user=user,
-		)
-
-	except ValueError as e:
-		frappe.log_error(f"Parse error: {e!s}\nContent: {content}", "AI Section Modify")
-		frappe.publish_realtime(
-			"ai_modify_error",
-			{"page_id": page_id, "message": "Failed to parse AI response. The model returned invalid YAML."},
-			user=user,
-		)
-
-	except Exception as e:
-		frappe.log_error(f"AI modify error: {e!s}", "AI Section Modify")
-		frappe.publish_realtime(
-			"ai_modify_error",
-			{"page_id": page_id, "message": f"Failed to modify section: {e!s}"},
-			user=user,
-		)
+	return _parse_blocks(content)
 
 
 @frappe.whitelist()
