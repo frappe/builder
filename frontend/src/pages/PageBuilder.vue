@@ -108,7 +108,8 @@
 		@generated="handleGeneratedBlocks"
 		@streaming="handleStreamingBlocks"
 		@modified="handleModifiedBlocks"
-		@modifyStreaming="handleModifyStreamingBlocks"></AIPageGeneratorModal>
+		@modifyStreaming="handleModifyStreamingBlocks"
+		@generating="isAIGenerating = $event"></AIPageGeneratorModal>
 	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
 	<KeyboardShortcutsModal ref="shortcutsModal" />
 </template>
@@ -165,6 +166,7 @@ const showAIGeneratorDialog = ref(false);
 const aiMode = ref<"generate" | "modify">("generate");
 const modifyBlockContext = ref<Record<string, any> | null>(null);
 const modifyBlockId = ref<string | null>(null);
+const isAIGenerating = ref(false);
 
 // Expose AI generator dialog to toolbar
 provide("showAIGenerator", () => {
@@ -490,7 +492,8 @@ watch(
 			pageStore.selectedPage &&
 			!pageStore.settingPage &&
 			canvasStore.editingMode === "page" &&
-			!pageCanvas.value?.canvasProps?.settingCanvas
+			!pageCanvas.value?.canvasProps?.settingCanvas &&
+			!isAIGenerating.value
 		) {
 			pageStore.savingPage = true;
 			debouncedPageSave();

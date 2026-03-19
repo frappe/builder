@@ -32,10 +32,7 @@
 		<template #actions>
 			<div class="flex items-center justify-end gap-2">
 				<Button variant="subtle" @click="showDialog = false">Cancel</Button>
-				<Button
-					variant="solid"
-					@click="handleSubmit"
-					:disabled="!canGenerate || generating">
+				<Button variant="solid" @click="handleSubmit" :disabled="!canGenerate || generating">
 					<div class="flex items-center gap-2">
 						<FeatherIcon v-if="generating" name="loader" class="h-4 w-4 animate-spin" />
 						<span>
@@ -61,10 +58,7 @@
 				class="fixed left-1/2 top-16 z-[1000] -translate-x-1/2 transform">
 				<div
 					class="flex items-center gap-3 rounded-lg border border-outline-gray-2 bg-surface-white px-4 py-2.5 shadow-lg">
-					<FeatherIcon
-						v-if="generating"
-						name="loader"
-						class="h-4 w-4 animate-spin text-ink-gray-7" />
+					<FeatherIcon v-if="generating" name="loader" class="h-4 w-4 animate-spin text-ink-gray-7" />
 					<FeatherIcon v-else name="check-circle" class="h-4 w-4 text-ink-green-3" />
 					<span class="text-sm font-medium text-ink-gray-9">
 						{{ progressMessage || (mode === "modify" ? "Modifying section..." : "Generating page...") }}
@@ -103,6 +97,7 @@ const emit = defineEmits<{
 	(e: "modified", blocks: any[]): void;
 	(e: "modifyStreaming", blocks: any[]): void;
 	(e: "openSettings"): void;
+	(e: "generating", isGenerating: boolean): void;
 }>();
 
 const showDialog = computed({
@@ -116,6 +111,10 @@ const errorMessage = ref("");
 const progressMessage = ref("");
 const streamingContent = ref("");
 const builderStore = useBuilderStore();
+
+watch(generating, (val) => {
+	emit("generating", val);
+});
 
 const hasAISettings = computed(() => {
 	return builderSettings.doc?.ai_model && builderSettings.doc?.ai_api_key;
