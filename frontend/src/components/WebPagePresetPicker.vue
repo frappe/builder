@@ -13,10 +13,10 @@
 			<button
 				v-for="preset in PRESETS"
 				:key="preset.id"
-				class="group relative flex flex-col items-center gap-2 rounded-xl border p-2 outline-none transition-all duration-200 hover:scale-[1.02]"
+				class="group relative flex flex-col items-center gap-2 rounded-xl border p-2 outline-none transition-all duration-200"
 				:class="
 					modelValue?.id === preset.id
-						? 'border-outline-gray-9 ring-outline-gray-9 bg-surface-gray-2 shadow-md ring-2 ring-offset-2'
+						? 'border-outline-gray-9 shadow-md ring-2 ring-outline-gray-5'
 						: 'border-outline-gray-2 bg-surface-white hover:border-outline-gray-4 hover:shadow-sm'
 				"
 				@click="$emit('update:modelValue', preset)">
@@ -150,9 +150,6 @@
 				<div class="flex flex-col items-center gap-0.5 px-0.5">
 					<span class="text-[11px] font-semibold leading-tight text-ink-gray-9">
 						{{ preset.name }}
-					</span>
-					<span class="hidden text-center text-[9px] leading-none text-ink-gray-5 group-hover:block sm:block">
-						{{ preset.id }}
 					</span>
 				</div>
 			</button>
