@@ -335,7 +335,7 @@ def run_llm_job(
 
 	task_tier = classify_task(is_modify=is_modify, task_type=task_type)
 	params = TASK_PARAMS[task_tier]
-	should_stream = task_tier != "simple"
+	should_stream = True
 	action = "Modifying" if is_modify else "Generating"
 	tier_label = "fast" if task_tier == "simple" else "full"
 

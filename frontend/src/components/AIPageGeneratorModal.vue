@@ -335,17 +335,17 @@ function applyTierLabel(data: any) {
 	}
 }
 
-// Throttled emitters to minimize overhead
-const throttledProcessStreaming = useThrottleFn(() => {
+// Throttled logic for streaming
+const processStreaming = () => {
 	const block = parseBlock(streamingContent.value);
 	if (block) {
 		block.originalElement = "body";
 		block.blockId = block.blockId || "root";
 		emit("streaming", block);
 	}
-}, 300);
+};
 
-const throttledProcessModifyStreaming = useThrottleFn(() => {
+const processModifyStreaming = () => {
 	const effectiveTaskType = remoteTaskType.value || taskType.value;
 	const effectiveBlockId = remoteBlockId.value || props.blockContext?.blockId;
 
@@ -373,7 +373,10 @@ const throttledProcessModifyStreaming = useThrottleFn(() => {
 		block.blockId = effectiveBlockId;
 		emit("modifyStreaming", block);
 	}
-}, 300);
+};
+
+const throttledProcessStreaming = useThrottleFn(processStreaming, 300);
+const throttledProcessModifyStreaming = useThrottleFn(processModifyStreaming, 300);
 
 const onProgress = (data: any) => {
 	generating.value = true;
@@ -391,10 +394,8 @@ const onStream = (data: any) => {
 const onComplete = (data: any) => {
 	generating.value = false;
 	applyTierLabel(data);
-	// Wait for any remaining throttled updates to resolve
-	setTimeout(() => {
-		emit("generated");
-	}, 300);
+	processStreaming();
+	emit("generated");
 	prompt.value = "";
 	remoteTaskType.value = null;
 	remoteBlockId.value = null;
@@ -430,10 +431,8 @@ const onModifyStream = (data: any) => {
 const onModifyComplete = (data: any) => {
 	generating.value = false;
 	applyTierLabel(data);
-	// Wait for any remaining throttled updates to resolve
-	setTimeout(() => {
-		emit("modified");
-	}, 300);
+	processModifyStreaming();
+	emit("modified");
 	prompt.value = "";
 	remoteTaskType.value = null;
 	remoteBlockId.value = null;
