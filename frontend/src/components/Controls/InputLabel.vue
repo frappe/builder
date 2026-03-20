@@ -1,7 +1,7 @@
 <template>
 	<span
 		:class="{ 'inline-flex': description }"
-		class="min-w-16 max-w-40 items-center text-xs leading-5 text-ink-gray-6">
+		class="min-w-16 max-w-40 shrink-0 items-center truncate text-xs leading-5 text-ink-gray-6">
 		<slot />
 		<Popover trigger="hover" v-if="description" placement="top">
 			<template #target>

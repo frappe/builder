@@ -30,22 +30,19 @@
 		</div>
 	</div>
 
-	<div
-		v-else
-		class="group relative flex items-center gap-2 before:absolute before:left-[5px] before:-mt-9 before:h-7.5 before:w-[1px] before:bg-surface-gray-4 before:content-['_'] after:absolute after:left-[2.5px] after:size-1.5 after:rounded-full after:bg-surface-gray-4 hover:after:hidden"
-		v-bind="$attrs">
-		<button
-			type="button"
-			class="absolute hidden text-ink-gray-7 hover:text-ink-gray-9 group-hover:block"
-			@click="$emit('clear')">
-			<FeatherIcon name="x" class="size-3" />
-		</button>
-		<InputLabel
-			class="flex w-1/3 min-w-[88px] max-w-none shrink-0 pl-5"
-			:class="{ 'cursor-ns-resize': enableSlider }"
-			@mousedown="$emit('labelMousedown', $event)">
-			{{ label }}
-		</InputLabel>
+	<div v-else class="group flex items-center justify-between gap-2" v-bind="$attrs">
+		<div
+			class="relative flex w-1/3 min-w-[88px] shrink-0 items-center gap-2 before:absolute before:left-[5px] before:-mt-[33px] before:h-[22px] before:w-[1px] before:bg-surface-gray-4 before:content-['_'] after:absolute after:ml-[3px] after:h-1.5 after:w-1.5 after:rounded-full after:bg-surface-gray-4 hover:after:hidden">
+			<button
+				type="button"
+				class="invisible text-ink-gray-7 hover:text-ink-gray-9 group-hover:visible"
+				@click="$emit('clear')">
+				<FeatherIcon name="x" class="size-3" />
+			</button>
+			<InputLabel :class="{ 'cursor-ns-resize': enableSlider }" @mousedown="$emit('labelMousedown', $event)">
+				{{ label }}
+			</InputLabel>
+		</div>
 		<div class="relative w-full min-w-0">
 			<component
 				:is="component"
@@ -56,7 +53,7 @@
 				:placeholder="placeholder"
 				@update:modelValue="$emit('update:modelValue', $event)"
 				@keydown.stop="$emit('keydown', $event)"
-				class="w-full">
+				class="shrink-1 w-full">
 				<template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
 					<slot :name="name" v-bind="slotData || {}" />
 				</template>
