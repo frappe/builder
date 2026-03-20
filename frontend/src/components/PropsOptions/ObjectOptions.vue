@@ -1,30 +1,30 @@
 <template>
 	<div v-if="false" class="flex items-center justify-between">
-		<InputLabel>Min. Items</InputLabel>
-		<Input
-			:model-value="minItems"
-			@update:model-value="handleMinItemsChange"
+		<InlineInput
+			label="Min. Items"
+			:modelValue="minItems"
+			@update:modelValue="handleMinItemsChange"
 			@input="handleMinItemsChange"
-			placeholder="Enter min number of items"></Input>
+			placeholder="Enter min number of items"></InlineInput>
 	</div>
 	<div v-if="false" class="flex items-center justify-between">
-		<InputLabel>Max. Items</InputLabel>
-		<Input
-			:model-value="maxItems"
-			@update:model-value="handleMaxItemsChange"
+		<InlineInput
+			label="Max. Items"
+			:modelValue="maxItems"
+			@update:modelValue="handleMaxItemsChange"
 			@input="handleMaxItemsChange"
-			placeholder="Enter max number of items"></Input>
+			placeholder="Enter max number of items"></InlineInput>
 	</div>
 	<div class="flex flex-col gap-3">
-		<InputLabel>Default Items</InputLabel>
+		<InputLabel class="w-[88px] shrink-0">Default Items</InputLabel>
 		<ObjectEditor :obj="obj" @update:obj="handleObjChange" />
 	</div>
 </template>
 
 <script setup lang="ts">
 import InputLabel from "@/components/Controls/InputLabel.vue";
-import Input from "@/components/Controls/Input.vue";
 import ObjectEditor from "../ObjectEditor.vue";
+import InlineInput from "@/components/Controls/InlineInput.vue";
 
 import { nextTick, ref, watch } from "vue";
 import { Ref } from "vue";

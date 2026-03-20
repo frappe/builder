@@ -419,6 +419,18 @@ def camel_case_to_kebab_case(text, remove_spaces=False):
 	return text
 
 
+def sanitize_style_value(value):
+	if not isinstance(value, str):
+		return value
+	if value.count("(") != value.count(")"):
+		value = value.replace("(", "\\(").replace(")", "\\)")
+	if value.count("'") % 2 != 0:
+		value = value.replace("'", "\\'")
+	if value.count('"') % 2 != 0:
+		value = value.replace('"', '\\"')
+	return value
+
+
 def execute_script(script, _locals, script_filename):
 	if is_safe_exec_enabled():
 		safe_exec(script, None, _locals, script_filename=script_filename)

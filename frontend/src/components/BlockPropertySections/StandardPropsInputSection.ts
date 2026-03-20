@@ -15,18 +15,9 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 	const type = propDetails.propOptions?.type || "string";
 	let map = {};
 	switch (type) {
-		case "string":
-		case "number":
-			map = {
-				enableStates: false,
-				allowDynamicValue: true,
-			};
-			break;
 		case "boolean":
 			map = {
 				component: OptionToggle,
-				enableStates: false,
-				allowDynamicValue: true,
 				options: [
 					{ label: propDetails.propOptions?.options?.trueLabel || "True", value: true },
 					{ label: propDetails.propOptions?.options?.falseLabel || "False", value: false },
@@ -36,7 +27,6 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 		case "select":
 			map = {
 				type: "select",
-				enableStates: false,
 				options:
 					propDetails.propOptions?.options?.options?.map((item: any) => ({
 						label: item,
@@ -47,8 +37,6 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 		case "image":
 			map = {
 				component: ImageUploadInput,
-				enableStates: false,
-				allowDynamicValue: true,
 				imageURL: blockController.getBlockProps()[propName].value as string,
 				imageFit:
 					propDetails.propOptions?.options?.imageFit ||
@@ -63,6 +51,8 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 	}
 	map = {
 		label: propDetails.label || propName,
+		enableStates: false,
+		allowDynamicValue: true,
 		dynamicValueFilterOptions: {
 			excludeOwnProps: true,
 			excludeOwnBlockData: true,
@@ -76,7 +66,11 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 			}
 		},
 		setDynamicValue: (key: string | null, comesFrom: BlockProps[string]["comesFrom"]) => {
-			blockController.setBlockProp(propName, { value: key || "", isDynamic: key !== null, comesFrom });
+			blockController.setBlockProp(propName, {
+				value: key || "",
+				isDynamic: !!key,
+				comesFrom: key ? comesFrom : null,
+			});
 		},
 		setModelValue: (value: any) => {
 			if (value == "") value = null;
@@ -131,7 +125,8 @@ const getStandardPropsInputSection = () => {
 	for (const [propKey, propDetails] of Object.entries(standardProps)) {
 		const propType = propDetails.propOptions?.type;
 		const component =
-			(propType === "array" || propType === "object" ? componentMap[propType] : undefined) || BasePropertyControl;
+			(propType === "array" || propType === "object" ? componentMap[propType] : undefined) ||
+			BasePropertyControl;
 		const getProps = () => {
 			const props = getPropsMap(propKey, propDetails);
 			return props;

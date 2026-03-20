@@ -13,6 +13,7 @@ import { copyBuilderBlocks, pasteBuilderBlocks } from "@/utils/builderBlockCopyP
 import {
 	addPxToNumber,
 	getBlockCopy,
+	isDialogOpen,
 	isHTMLString,
 	isTargetEditable,
 	showDialog,
@@ -51,7 +52,7 @@ export function useBuilderEvents(
 	);
 
 	useEventListener(document, "copy", (e) => {
-		if (isTargetEditable(e) || canvasStore.editableBlock) return;
+		if (isTargetEditable(e) || canvasStore.editableBlock || isDialogOpen()) return;
 		copySelectedBlocksToClipboard(e);
 	});
 
@@ -103,9 +104,10 @@ export function useBuilderEvents(
 			return;
 		}
 
+		let text = e.clipboardData?.getData("text/plain") as string || "";
+
 		await pasteBuilderBlocks(e, window.location.origin);
 
-		let text = e.clipboardData?.getData("text/plain") as string;
 		if (!text) {
 			return;
 		}

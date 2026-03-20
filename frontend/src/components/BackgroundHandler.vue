@@ -43,14 +43,11 @@
 
 				<!-- Color Tab -->
 				<div v-if="activeTab === 'color'" class="w-full space-y-4">
-					<ColorPicker renderMode="inline" :modelValue="backgroundColor" @update:modelValue="setBGColor" />
-					<BuilderButton
-						:disabled="!backgroundColor"
-						class="w-full"
-						variant="subtle"
-						@click="setBGColor(null)">
-						Clear Color
-					</BuilderButton>
+					<ColorPicker
+						renderMode="inline"
+						:modelValue="backgroundColor"
+						:showInput="true"
+						@update:modelValue="setBGColor" />
 				</div>
 
 				<!-- Image Tab -->
@@ -109,9 +106,17 @@
 				<!-- Gradient Tab -->
 				<div v-else class="space-y-4">
 					<GradientEditor :modelValue="rawBackgroundImage" @update:modelValue="setGradient" />
-					<BuilderButton v-if="isGradient" class="w-full" variant="subtle" @click="clearBGImage">
+					<BuilderButton :disabled="!isGradient" class="w-full" variant="subtle" @click="clearBGImage">
 						Clear Gradient
 					</BuilderButton>
+				</div>
+
+				<div v-if="isTextBlock" class="mt-4 border-t border-outline-gray-2 pt-3">
+					<InlineInput
+						label="Clip Background to Text"
+						type="checkbox"
+						:modelValue="backgroundClip === 'text'"
+						@update:modelValue="setBGClip" />
 				</div>
 			</div>
 		</template>
@@ -170,8 +175,6 @@ watch(
 	{ immediate: true },
 );
 
-const hasBackground = computed(() => Boolean(rawBackgroundImage.value || backgroundColor.value));
-
 const getDisplayValue = (state: string | null) => {
 	const bg = blockController.getStyle(getStyleKey("backgroundImage", state)) as string;
 	const color = blockController.getStyle(getStyleKey("backgroundColor", state)) as string;
@@ -198,6 +201,12 @@ const backgroundPosition = computed(
 	() => blockController.getStyle(getStyleKey("backgroundPosition")) as string,
 );
 const backgroundRepeat = computed(() => blockController.getStyle(getStyleKey("backgroundRepeat")) as string);
+const backgroundClip = computed(
+	() =>
+		blockController.getStyle(getStyleKey("backgroundClip")) ||
+		blockController.getStyle(getStyleKey("WebkitBackgroundClip")),
+);
+const isTextBlock = computed(() => blockController.isText());
 
 const getHasBackground = (state: string | null) => {
 	return Boolean(
@@ -315,6 +324,16 @@ const clearBGImage = () => {
 	blockController.setStyle(getStyleKey("backgroundSize"), null);
 	blockController.setStyle(getStyleKey("backgroundPosition"), null);
 	blockController.setStyle(getStyleKey("backgroundRepeat"), null);
+	blockController.setStyle(getStyleKey("backgroundColor"), null);
+};
+
+const setBGClip = (value: boolean) => {
+	const clipValue = value ? "text" : null;
+	const fillValue = value ? "transparent" : null;
+
+	blockController.setStyle(getStyleKey("backgroundClip"), clipValue);
+	blockController.setStyle(getStyleKey("WebkitBackgroundClip"), clipValue);
+	blockController.setStyle(getStyleKey("WebkitTextFillColor"), fillValue);
 };
 
 const handleSetVariant = (variantName: string, value: string | number | boolean | null) => {
