@@ -137,13 +137,7 @@ import blockController from "@/utils/blockController";
 import { getBlockInstance, getBlockObject, getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
 import { useShortcut } from "@/utils/useShortcut";
-import {
-	breakpointsTailwind,
-	useBreakpoints,
-	useDebounceFn,
-	useEventListener,
-	useThrottleFn,
-} from "@vueuse/core";
+import { breakpointsTailwind, useBreakpoints, useDebounceFn, useEventListener } from "@vueuse/core";
 import { createResource } from "frappe-ui";
 import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -196,34 +190,24 @@ const runDirectAI = (block: Block, type: "rewrite_text" | "replace_image", custo
 };
 provide("runDirectAI", runDirectAI);
 
-// Handle AI generated blocks
-const handleGeneratedBlocks = (block: any) => {
-	if (!block) return;
-
-	block.originalElement = "body";
-	block.blockId = block.blockId || "root";
-
-	pageStore.pageBlocks = [getBlockInstance(block)];
-	canvasStore.activeCanvas?.setRootBlock(pageStore.pageBlocks[0] as any, false);
-
-	// Force a page save
+const handleGeneratedBlocks = () => {
 	pageStore.savePage();
 };
 
 // Handle live streaming blocks (partial, not saved)
-const handleStreamingBlocks = useThrottleFn((block: any) => {
+const handleStreamingBlocks = (block: Block) => {
 	if (!block) return;
 
 	try {
 		pageStore.pageBlocks = [getBlockInstance(block)];
-		canvasStore.activeCanvas?.setRootBlock(pageStore.pageBlocks[0] as any, false);
+		canvasStore.activeCanvas?.setRootBlock(pageStore.pageBlocks[0] as Block, false);
 	} catch {
 		// Partial block may still be invalid, skip this frame
 	}
-}, 60);
+};
 
 // Find a block in the tree by blockId and replace its properties with new data
-const replaceBlockInTree = (root: any, targetId: string, replacement: any): boolean => {
+const replaceBlockInTree = (root: Block, targetId: string, replacement: BlockOptions): boolean => {
 	if (!root || !replacement) return false;
 	if (root.blockId === targetId) {
 		root.element = replacement.element || root.element;
@@ -240,42 +224,38 @@ const replaceBlockInTree = (root: any, targetId: string, replacement: any): bool
 		if (replacement.innerHTML !== undefined) root.innerHTML = replacement.innerHTML;
 
 		if (replacement.children) {
-			root.children.splice(0, root.children.length, ...replacement.children.map(getBlockInstance));
+			root.children.splice(
+				0,
+				root.children.length,
+				...replacement.children.map((child) => getBlockInstance(child)),
+			);
 		}
 		return true;
 	}
-	return root.children?.some((child: any) => replaceBlockInTree(child, targetId, replacement)) || false;
+	return root.children?.some((child: Block) => replaceBlockInTree(child, targetId, replacement)) || false;
 };
 
-// Handle AI modified blocks (replace the specific block in the tree)
-const handleModifiedBlocks = (block: any) => {
-	if (!block || !modifyBlockId.value) return;
-
-	const rootBlock = pageStore.pageBlocks[0];
-	if (rootBlock) {
-		replaceBlockInTree(rootBlock, modifyBlockId.value, block);
-		pageStore.savePage();
-	}
-
-	// Reset modify state
+const handleModifiedBlocks = () => {
+	pageStore.savePage();
 	modifyBlockContext.value = null;
 	modifyBlockId.value = null;
 	aiMode.value = "generate";
 };
 
 // Handle live streaming of modify (update block in-place)
-const handleModifyStreamingBlocks = useThrottleFn((block: any) => {
-	if (!block || !modifyBlockId.value) return;
+const handleModifyStreamingBlocks = (block: BlockOptions) => {
+	const targetId = block?.blockId || modifyBlockId.value;
+	if (!block || !targetId) return;
 
 	try {
-		const rootBlock = pageStore.pageBlocks[0];
+		const rootBlock = pageStore.pageBlocks[0] as Block;
 		if (rootBlock) {
-			replaceBlockInTree(rootBlock, modifyBlockId.value, block);
+			replaceBlockInTree(rootBlock, targetId, block);
 		}
 	} catch {
 		// Partial block may still be invalid, skip this frame
 	}
-}, 60);
+};
 
 watch([() => canvasStore.editableBlock, () => pageStore.activePage?.is_standard], () => {
 	builderStore.toggleReadOnlyMode(

@@ -323,7 +323,15 @@ def run_llm_job(
 	user = user or frappe.session.user
 
 	def emit(suffix, **kwargs):
-		frappe.publish_realtime(f"{event_prefix}_{suffix}", {"page_id": page_id, **kwargs}, user=user)
+		event = f"{event_prefix}_{suffix}"
+		if page_id:
+			event = f"{event}_{page_id}"
+		payload = {
+			"page_id": page_id,
+			"task_type": task_type,
+			**kwargs,
+		}
+		frappe.publish_realtime(event, payload, user=user)
 
 	task_tier = classify_task(is_modify=is_modify, task_type=task_type)
 	params = TASK_PARAMS[task_tier]
@@ -366,11 +374,9 @@ def run_llm_job(
 			for chunk in call_llm(model, messages, params, stream=True, api_key=api_key):
 				if delta := chunk.choices[0].delta.content:
 					content += delta
-					emit("stream", chunk=delta)
+					emit("stream", chunk=delta, block_id=original_id)
 		else:
 			content = call_llm(model, messages, params, stream=False, api_key=api_key)
-
-		block = parse_modify_response(content, original_id, task_type) if is_modify else parse_blocks(content)
 
 	except ValueError as e:
 		frappe.log_error(f"Parse error: {e}\nContent: {content}", f"{event_prefix} parse")
@@ -382,7 +388,7 @@ def run_llm_job(
 		emit("error", message=str(e))
 		return
 
-	emit("complete", block=block, model_used=model, task_tier=task_tier)
+	emit("complete", block_id=original_id, model_used=model, task_tier=task_tier)
 
 
 def generate_page_blocks(

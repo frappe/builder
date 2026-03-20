@@ -67,9 +67,11 @@
 </template>
 
 <script setup lang="ts">
+import type Block from "@/block";
 import Dialog from "@/components/Controls/Dialog.vue";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
+import { useThrottleFn } from "@vueuse/core";
 import { createResource, FeatherIcon, Textarea } from "frappe-ui";
 import yaml from "js-yaml";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
@@ -80,6 +82,7 @@ interface Preset {
 	name: string;
 	description: string;
 	icon: string;
+	category: string;
 }
 
 const props = withDefaults(
@@ -98,10 +101,10 @@ const props = withDefaults(
 const emit = defineEmits<{
 	(e: "update:modelValue", value: boolean): void;
 	(e: "update:blockContext", value: Record<string, any> | null): void;
-	(e: "generated", block: any): void;
-	(e: "streaming", block: any): void;
-	(e: "modified", block: any): void;
-	(e: "modifyStreaming", block: any): void;
+	(e: "generated"): void;
+	(e: "streaming", block: Block): void;
+	(e: "modified"): void;
+	(e: "modifyStreaming", block: BlockOptions): void;
 	(e: "openSettings"): void;
 	(e: "generating", isGenerating: boolean): void;
 }>();
@@ -118,6 +121,8 @@ const progressMessage = ref("");
 const streamingContent = ref("");
 const selectedPreset = ref<Preset | null>(null);
 const builderStore = useBuilderStore();
+const remoteTaskType = ref<string | null>(null);
+const remoteBlockId = ref<string | null>(null);
 
 watch(generating, (val) => {
 	emit("generating", val);
@@ -158,24 +163,24 @@ function buildPrompt(base: string): string {
 	return preset ? `${base}\n\nDESIGN STYLE: ${preset.name}. ${preset.description}` : base;
 }
 
-function expandDSL(dslBlock: any): any {
-	if (!dslBlock || typeof dslBlock !== "object" || Array.isArray(dslBlock)) return dslBlock;
+function convertYAMLtoBlock(yamlBlock: any): BlockOptions {
+	if (!yamlBlock || typeof yamlBlock !== "object" || Array.isArray(yamlBlock)) return yamlBlock;
 
 	const ensureObj = (val: any) => (val && typeof val === "object" && !Array.isArray(val) ? val : {});
 	const ensureArray = (val: any) => (Array.isArray(val) ? val : []);
 
-	const block: any = {
-		element: dslBlock.el || "div",
-		blockName: dslBlock.name || "",
-		baseStyles: ensureObj(dslBlock.style),
-		attributes: ensureObj(dslBlock.attrs),
-		mobileStyles: ensureObj(dslBlock.m_style),
-		tabletStyles: ensureObj(dslBlock.t_style),
-		classes: ensureArray(dslBlock.classes),
+	const block: BlockOptions = {
+		element: yamlBlock.el || "div",
+		blockName: yamlBlock.name || "",
+		baseStyles: ensureObj(yamlBlock.style),
+		attributes: ensureObj(yamlBlock.attrs),
+		mobileStyles: ensureObj(yamlBlock.m_style),
+		tabletStyles: ensureObj(yamlBlock.t_style),
+		classes: ensureArray(yamlBlock.classes),
 	};
-	if (dslBlock.id) block.blockId = dslBlock.id;
-	if (dslBlock.text) block.innerText = dslBlock.text;
-	block.children = Array.isArray(dslBlock.c) ? dslBlock.c.map(expandDSL) : [];
+	if (yamlBlock.id) block.blockId = yamlBlock.id;
+	if (yamlBlock.text) block.innerText = yamlBlock.text;
+	block.children = Array.isArray(yamlBlock.c) ? yamlBlock.c.map(convertYAMLtoBlock) : [];
 	return block;
 }
 
@@ -206,7 +211,7 @@ function parseBlock(raw: string): any | null {
 	if (!parsed) return null;
 	const block = Array.isArray(parsed) ? parsed[0] : parsed;
 	if (block && typeof block === "object" && block.el) {
-		return expandDSL(block);
+		return convertYAMLtoBlock(block);
 	}
 	return null;
 }
@@ -243,6 +248,7 @@ const generatePage = async () => {
 		errorMessage.value = error.message || "An error occurred while generating the page";
 	}
 };
+
 const modifySection = async () => {
 	if (!canGenerate.value || !props.blockContext) return;
 
@@ -329,114 +335,141 @@ function applyTierLabel(data: any) {
 	}
 }
 
-// Generate event handlers
-const onProgress = (data: any) => {
-	if (data.page_id && data.page_id !== props.pageId) return;
-	if (data.message) progressMessage.value = data.message;
-};
-
-const onStream = (data: any) => {
-	if (data.page_id && data.page_id !== props.pageId) return;
-	if (!data.chunk) return;
-	streamingContent.value += data.chunk;
+// Throttled emitters to minimize overhead
+const throttledProcessStreaming = useThrottleFn(() => {
 	const block = parseBlock(streamingContent.value);
 	if (block) {
 		block.originalElement = "body";
 		block.blockId = block.blockId || "root";
 		emit("streaming", block);
 	}
-};
+}, 300);
 
-const onComplete = (data: any) => {
-	if (data.page_id && data.page_id !== props.pageId) return;
-	generating.value = false;
-	applyTierLabel(data);
-	if (data.block) {
-		emit("generated", data.block);
-		prompt.value = "";
-	}
-};
+const throttledProcessModifyStreaming = useThrottleFn(() => {
+	const effectiveTaskType = remoteTaskType.value || taskType.value;
+	const effectiveBlockId = remoteBlockId.value || props.blockContext?.blockId;
 
-const onError = (data: any) => {
-	if (data.page_id && data.page_id !== props.pageId) return;
-	generating.value = false;
-	progressMessage.value = "";
-	showDialog.value = true;
-	errorMessage.value = data.message || "An error occurred while generating the page";
-};
-
-// Modify event handlers
-const onModifyProgress = (data: any) => {
-	if (data.page_id && data.page_id !== props.pageId) return;
-	if (data.message) progressMessage.value = data.message;
-};
-
-const onModifyStream = (data: any) => {
-	if (data.page_id && data.page_id !== props.pageId) return;
-	if (!data.chunk) return;
-	streamingContent.value += data.chunk;
-
-	if (taskType.value === "rewrite_text") {
+	if (effectiveTaskType === "rewrite_text") {
 		emit("modifyStreaming", {
 			innerHTML: streamingContent.value.trim().replace(/^"|"$/g, ""),
-			blockId: props.blockContext?.blockId,
+			blockId: effectiveBlockId,
 		});
 		return;
 	}
 
-	if (taskType.value === "replace_image") {
+	if (effectiveTaskType === "replace_image") {
 		const parsed = getValidPartialYAML(streamingContent.value);
 		if (parsed && typeof parsed === "object") {
 			emit("modifyStreaming", {
 				attributes: parsed,
-				blockId: props.blockContext?.blockId,
+				blockId: effectiveBlockId,
 			});
 		}
 		return;
 	}
 
 	const block = parseBlock(streamingContent.value);
-	if (block) emit("modifyStreaming", block);
+	if (block) {
+		block.blockId = effectiveBlockId;
+		emit("modifyStreaming", block);
+	}
+}, 300);
+
+const onProgress = (data: any) => {
+	generating.value = true;
+	if (data.message) progressMessage.value = data.message;
+	if (data.task_type) remoteTaskType.value = data.task_type;
+};
+
+const onStream = (data: any) => {
+	generating.value = true;
+	if (!data.chunk) return;
+	streamingContent.value += data.chunk;
+	throttledProcessStreaming();
+};
+
+const onComplete = (data: any) => {
+	generating.value = false;
+	applyTierLabel(data);
+	// Wait for any remaining throttled updates to resolve
+	setTimeout(() => {
+		emit("generated");
+	}, 300);
+	prompt.value = "";
+	remoteTaskType.value = null;
+	remoteBlockId.value = null;
+};
+
+const onError = (data: any) => {
+	generating.value = false;
+	progressMessage.value = "";
+	showDialog.value = true;
+	errorMessage.value = data.message || "An error occurred while generating the page";
+	remoteTaskType.value = null;
+	remoteBlockId.value = null;
+};
+
+const onModifyProgress = (data: any) => {
+	generating.value = true;
+	if (data.message) progressMessage.value = data.message;
+	if (data.task_type) remoteTaskType.value = data.task_type;
+	if (data.block_id) remoteBlockId.value = data.block_id;
+};
+
+const onModifyStream = (data: any) => {
+	generating.value = true;
+	if (!data.chunk) return;
+	streamingContent.value += data.chunk;
+
+	if (data.task_type) remoteTaskType.value = data.task_type;
+	if (data.block_id) remoteBlockId.value = data.block_id;
+
+	throttledProcessModifyStreaming();
 };
 
 const onModifyComplete = (data: any) => {
-	if (data.page_id && data.page_id !== props.pageId) return;
 	generating.value = false;
 	applyTierLabel(data);
-	if (data.block) {
-		emit("modified", data.block);
-		prompt.value = "";
-	}
+	// Wait for any remaining throttled updates to resolve
+	setTimeout(() => {
+		emit("modified");
+	}, 300);
+	prompt.value = "";
+	remoteTaskType.value = null;
+	remoteBlockId.value = null;
 };
 
 const onModifyError = (data: any) => {
-	if (data.page_id && data.page_id !== props.pageId) return;
 	generating.value = false;
 	progressMessage.value = "";
 	showDialog.value = true;
 	errorMessage.value = data.message || "An error occurred while modifying the section";
+	remoteTaskType.value = null;
+	remoteBlockId.value = null;
 };
 
+const eventName = (base: string) => (props.pageId ? `${base}_${props.pageId}` : base);
+
 onMounted(() => {
-	builderStore.realtime.on("ai_generation_progress", onProgress);
-	builderStore.realtime.on("ai_generation_stream", onStream);
-	builderStore.realtime.on("ai_generation_complete", onComplete);
-	builderStore.realtime.on("ai_generation_error", onError);
-	builderStore.realtime.on("ai_modify_progress", onModifyProgress);
-	builderStore.realtime.on("ai_modify_stream", onModifyStream);
-	builderStore.realtime.on("ai_modify_complete", onModifyComplete);
-	builderStore.realtime.on("ai_modify_error", onModifyError);
+	builderStore.realtime.on(eventName("ai_generation_progress"), onProgress);
+	builderStore.realtime.on(eventName("ai_generation_stream"), onStream);
+	builderStore.realtime.on(eventName("ai_generation_complete"), onComplete);
+	builderStore.realtime.on(eventName("ai_generation_error"), onError);
+	builderStore.realtime.on(eventName("ai_modify_progress"), onModifyProgress);
+	builderStore.realtime.on(eventName("ai_modify_stream"), onModifyStream);
+	builderStore.realtime.on(eventName("ai_modify_complete"), onModifyComplete);
+	builderStore.realtime.on(eventName("ai_modify_error"), onModifyError);
 });
 
 onUnmounted(() => {
-	builderStore.realtime.off("ai_generation_progress", onProgress);
-	builderStore.realtime.off("ai_generation_stream", onStream);
-	builderStore.realtime.off("ai_generation_complete", onComplete);
-	builderStore.realtime.off("ai_generation_error", onError);
-	builderStore.realtime.off("ai_modify_progress", onModifyProgress);
-	builderStore.realtime.off("ai_modify_stream", onModifyStream);
-	builderStore.realtime.off("ai_modify_complete", onModifyComplete);
-	builderStore.realtime.off("ai_modify_error", onModifyError);
+	builderStore.realtime.off(eventName("ai_generation_progress"), onProgress);
+	builderStore.realtime.off(eventName("ai_generation_stream"), onStream);
+	builderStore.realtime.off(eventName("ai_generation_complete"), onComplete);
+	builderStore.realtime.off(eventName("ai_generation_error"), onError);
+	builderStore.realtime.off(eventName("ai_modify_progress"), onModifyProgress);
+	builderStore.realtime.off(eventName("ai_modify_stream"), onModifyStream);
+	builderStore.realtime.off(eventName("ai_modify_complete"), onModifyComplete);
+	builderStore.realtime.off(eventName("ai_modify_error"), onModifyError);
 });
 
 defineExpose({
@@ -449,6 +482,7 @@ defineExpose({
 .slide-up-leave-active {
 	transition: all 0.3s ease;
 }
+
 .slide-up-enter-from,
 .slide-up-leave-to {
 	opacity: 0;
