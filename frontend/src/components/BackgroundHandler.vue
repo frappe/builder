@@ -331,9 +331,9 @@ const setBGClip = (value: boolean) => {
 	const clipValue = value ? "text" : null;
 	const fillValue = value ? "transparent" : null;
 
-	blockController.setStyle(getStyleKey("background-clip"), clipValue);
-	blockController.setStyle(getStyleKey("-webkit-background-clip"), clipValue);
-	blockController.setStyle(getStyleKey("-webkit-text-fill-color"), fillValue);
+	blockController.setStyle(getStyleKey("backgroundClip"), clipValue);
+	blockController.setStyle(getStyleKey("WebkitBackgroundClip"), clipValue);
+	blockController.setStyle(getStyleKey("WebkitTextFillColor"), fillValue);
 };
 
 const handleSetVariant = (variantName: string, value: string | number | boolean | null) => {
