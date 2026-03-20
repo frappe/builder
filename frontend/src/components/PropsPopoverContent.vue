@@ -4,39 +4,39 @@
 		@mousedown.stop
 		class="props-popover-content flex max-h-80 w-80 flex-col gap-3 overflow-auto rounded-lg bg-surface-white p-4 shadow-lg">
 		<div v-if="showIsStandardInput" class="flex items-center justify-between">
-			<InputLabel>Is Standard</InputLabel>
+			<InputLabel class="w-[88px] shrink-0">Is Standard</InputLabel>
 			<OptionToggle
 				:options="toggleOptions"
 				:model-value="isStandard"
 				@update:model-value="handleIsStandardChange" />
 		</div>
 		<div v-if="isStandardBool" class="flex items-center justify-between">
-			<InputLabel>Label</InputLabel>
-			<Input
-				v-model="label"
-				placeholder="Enter prop label"
-				@update:model-value="(val) => (label = val)"
-				@input="(val) => (label = val)"></Input>
+			<InlineInput
+				label="Label"
+				class="w-full"
+				:modelValue="label"
+				@update:modelValue="(val) => (label = val)"
+				placeholder="Enter prop label" />
 		</div>
 		<div class="flex items-center justify-between">
-			<InputLabel>Key</InputLabel>
-			<Input
-				v-model="key"
-				:placeholder="computedKey || 'Enter prop key'"
-				@update:model-value="(val) => (key = val)"
-				@input="(val) => (key = val)"></Input>
+			<InlineInput
+				label="Key Lorem Ipsum Dolor"
+				class="w-full"
+				:modelValue="computedKey"
+				@update:modelValue="(val) => (computedKey = val)"
+				placeholder="Enter prop key" />
 		</div>
 		<div class="flex items-center justify-between">
-			<InputLabel>Type</InputLabel>
-			<Input
-				placeholder="Select prop type"
-				type="select"
-				:options="propTypes"
-				:model-value="selectedPropType"
-				@update:model-value="handleTypeChange"></Input>
+			<InlineInput
+				label="Type"
+				class="w-full"
+				:type="isStandardBool ? 'select' : 'autocomplete'"
+				:modelValue="selectedPropType"
+				@update:modelValue="handleTypeChange"
+				:options="propTypes" />
 		</div>
 		<div v-if="!isStandardBool" class="flex items-center justify-between">
-			<InputLabel v-model="value">Value</InputLabel>
+			<InputLabel class="w-[88px] shrink-0" v-model="value">Value</InputLabel>
 			<Input
 				v-if="isStaticProp"
 				v-model="value"
@@ -55,7 +55,7 @@
 				@update:modelValue="handleValueSelection" />
 		</div>
 		<div v-if="!isStandardBool" class="flex items-center justify-between">
-			<InputLabel>Pass Down</InputLabel>
+			<InputLabel class="w-[88px] shrink-0">Pass Down</InputLabel>
 			<OptionToggle
 				:options="toggleOptions"
 				:model-value="isPassedDown"
@@ -63,7 +63,7 @@
 		</div>
 		<!-- Disabled for now-->
 		<div v-if="false && !isStandardBool && isInFragmentMode" class="flex items-center justify-between">
-			<InputLabel>Is Editable</InputLabel>
+			<InputLabel class="w-[88px] shrink-0">Is Editable</InputLabel>
 			<OptionToggle
 				:options="toggleOptions"
 				:model-value="isEditable"
@@ -72,7 +72,7 @@
 		<template v-if="isStandardBool">
 			<!-- Disabled for now -->
 			<div v-if="false" class="flex items-center justify-between">
-				<InputLabel>Is Required</InputLabel>
+				<InputLabel class="w-[88px] shrink-0">Is Required</InputLabel>
 				<OptionToggle
 					:options="toggleOptions"
 					:model-value="String(standardPropOptions.isRequired)"
@@ -118,6 +118,7 @@ import { getDataArray, toKebabCase } from "@/utils/helpers";
 import { useBlockDataStore } from "@/stores/blockStore";
 import ColorOptions from "./PropsOptions/ColorOptions.vue";
 import ImageOptions from "./PropsOptions/ImageOptions.vue";
+import InlineInput from "./Controls/InlineInput.vue";
 
 const props = withDefaults(
 	defineProps<{
@@ -356,8 +357,8 @@ function getDefaultIsStandard(keepProps: boolean): string {
 	return propDetailsStandard !== undefined
 		? String(propDetailsStandard)
 		: isStandardByDefault
-			? "true"
-			: "false";
+		? "true"
+		: "false";
 }
 
 function resetNonStandardState(keepProps: boolean, keepType: boolean) {
@@ -371,7 +372,7 @@ function resetStandardState(keepProps: boolean, keepType: boolean) {
 	const details = keepProps ? props.propDetails : null;
 
 	if (details?.isStandard) {
-		const nextType = keepType ? standardPropOptions.type : (details.propOptions?.type ?? "string");
+		const nextType = keepType ? standardPropOptions.type : details.propOptions?.type ?? "string";
 
 		Object.assign(standardPropOptions, {
 			...details.propOptions,
@@ -437,7 +438,7 @@ function buildPropValue(): BlockProps[string] {
 			? {
 					...standardPropOptions,
 					dependencies: standardPropDependencyMap.value,
-				}
+			  }
 			: undefined,
 	};
 }

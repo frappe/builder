@@ -812,7 +812,8 @@ def add_inner_html_content(tag: bs.Tag, block: dict, state: dict):
 			inner_content = str(inner_content)
 		inner_soup = bs.BeautifulSoup(inner_content, "html.parser")
 		set_fonts_from_html(inner_soup, state["font_map"])
-		tag.append(inner_soup)
+		if inner_soup.contents:
+			tag.append(inner_soup)
 
 
 def is_repeater_block(block: dict) -> bool:
