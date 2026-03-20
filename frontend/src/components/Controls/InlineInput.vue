@@ -1,18 +1,21 @@
 <template>
-	<div class="flex items-center justify-between [&>div>input]:!bg-red-600 [&>div>input]:pr-6">
+	<div class="flex items-center justify-between gap-2 [&>div>input]:!bg-red-600 [&>div>input]:pr-6">
 		<InputLabel
 			v-if="label"
 			:class="{
 				'cursor-ns-resize': enableSlider,
+				'w-1/3': type != 'checkbox',
 			}"
-			class="w-1/3 shrink-0 truncate"
+			class="shrink-0 truncate"
 			:title="label"
 			:description="description"
 			@mousedown="handleMouseDown">
 			{{ label }}
 		</InputLabel>
 		<BuilderInput
-			class="w-full"
+			:class="{
+				'w-full': type != 'checkbox',
+			}"
 			:type="type"
 			:placeholder="placeholder"
 			:modelValue="modelValue"
