@@ -144,6 +144,7 @@ import Input from "@/components/Controls/Input.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
+import { useEventListener } from "@vueuse/core";
 import { Button, Popover, Tooltip } from "frappe-ui";
 import { computed, reactive, ref, watch } from "vue";
 
@@ -276,13 +277,11 @@ const handleVisualPickerMouseDown = (e: MouseEvent, index: number) => {
 		updateShadow(index, "y", `${valY}px`);
 	};
 	update(e);
-	const move = (me: MouseEvent) => update(me);
-	const stop = () => {
-		window.removeEventListener("mousemove", move);
-		window.removeEventListener("mouseup", stop);
-	};
-	window.addEventListener("mousemove", move);
-	window.addEventListener("mouseup", stop);
+	const stopMove = useEventListener(window, "mousemove", update);
+	const stopUp = useEventListener(window, "mouseup", () => {
+		stopMove();
+		stopUp();
+	});
 };
 
 const applyShadow = () =>
