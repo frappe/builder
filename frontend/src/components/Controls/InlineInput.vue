@@ -1,12 +1,11 @@
 <template>
-	<div class="flex items-center justify-between gap-2 [&>div>input]:!bg-red-600 [&>div>input]:pr-6">
+	<div class="flex items-center justify-between gap-2 [&>div>input]:pr-6">
 		<InputLabel
 			v-if="label"
 			:class="{
 				'cursor-ns-resize': enableSlider,
 				'w-1/3': type != 'checkbox',
 			}"
-			class="shrink-0 truncate"
 			:title="label"
 			:description="description"
 			@mousedown="handleMouseDown">

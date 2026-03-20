@@ -16,7 +16,7 @@ import TabButtons from "@/components/Controls/TabButtons.vue";
 withDefaults(
 	defineProps<{
 		modelValue?: string | number | boolean;
-		options?: { label: string; value: string | number; icon?: string; hideLabel?: boolean }[];
+		options?: { label: string; value: string | number | boolean; icon?: string; hideLabel?: boolean }[];
 		label?: string;
 		defaultValue?: string | number;
 	}>(),
