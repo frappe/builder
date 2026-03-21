@@ -80,97 +80,95 @@ def upload_builder_asset():
 
 @frappe.whitelist()
 def convert_to_webp(image_url: str | None = None, file_doc: Document | None = None) -> str:
-	"""Convert image to webp format"""
+	"""
+	Convert image to webp format.
+	Handles local files, builder assets, and external URLs.
+	Returns the new webp file URL or the original if conversion is not possible.
+	"""
+	import hashlib
 
 	CONVERTIBLE_IMAGE_EXTENSIONS = ["png", "jpeg", "jpg"]
 
-	def is_external_image(image_url):
-		return image_url.startswith("http") or image_url.startswith("https")
-
-	def can_convert_image(extn):
+	def can_convert_image(extn: str) -> bool:
 		return extn.lower() in CONVERTIBLE_IMAGE_EXTENSIONS
 
-	def get_extension(filename):
-		return filename.split(".")[-1].lower()
+	def get_extension(filename: str) -> str:
+		return filename.split(".")[-1].lower() if "." in filename else ""
 
-	def convert_and_save_image(image, path):
+	def save_as_webp(image, path: str) -> None:
 		image.save(path, "WEBP")
-		return path
 
-	def update_file_doc_with_webp(file_doc, image, extn):
-		webp_path = file_doc.get_full_path().replace(extn, "webp")
-		convert_and_save_image(image, webp_path)
+	def to_webp_url(url: str, extn: str) -> str:
+		return url.replace(extn, "webp")
+
+	def to_webp_path(path: str, extn: str) -> str:
+		return path.replace(extn, "webp")
+
+	def handle_file_doc(file_doc: Document) -> str:
+		if not file_doc.file_url.startswith("/files"):
+			return file_doc.file_url
+		image, _, extn = get_local_image(file_doc.file_url)
+		if not can_convert_image(extn):
+			return file_doc.file_url
+		save_as_webp(image, to_webp_path(file_doc.get_full_path(), extn))
 		delete_file(file_doc.get_full_path())
-		file_doc.file_url = f"{file_doc.file_url.replace(extn, 'webp')}"
+		file_doc.file_url = to_webp_url(file_doc.file_url, extn)
 		file_doc.save()
 		return file_doc.file_url
 
-	def create_new_webp_file_doc(file_url, image, extn):
-		files = frappe.get_all("File", filters={"file_url": file_url}, fields=["name"], limit=1)
-		if files:
-			_file = frappe.get_doc("File", files[0].name)
-			webp_path = _file.get_full_path().replace(extn, "webp")
-			convert_and_save_image(image, webp_path)
-			new_file = frappe.copy_doc(_file)
-			new_file.file_name = f"{_file.file_name.replace(extn, 'webp')}"
-			new_file.file_url = f"{_file.file_url.replace(extn, 'webp')}"
-			new_file.save()
-			return new_file.file_url
-		return file_url
+	def handle_local_url(image_url: str) -> str:
+		image, _, extn = get_local_image(image_url)
+		if not can_convert_image(extn):
+			return image_url
+		files = frappe.get_all("File", filters={"file_url": image_url}, fields=["name"], limit=1)
+		if not files:
+			return image_url
+		file = frappe.get_doc("File", files[0].name)
+		save_as_webp(image, to_webp_path(file.get_full_path(), extn))
+		new_file = frappe.copy_doc(file)
+		new_file.file_name = to_webp_url(file.file_name, extn)
+		new_file.file_url = to_webp_url(file.file_url, extn)
+		new_file.save()
+		return new_file.file_url
 
-	def handle_image_from_url(image_url):
-		image_url = unquote(image_url)
-		response = requests.get(image_url)
-		image = Image.open(BytesIO(response.content))
-		filename = image_url.split("/")[-1]
-		extn = get_extension(filename)
-		if can_convert_image(extn) or is_external_image(image_url):
-			_file = frappe.get_doc(
-				{
-					"doctype": "File",
-					"file_name": f"{filename.replace(extn, 'webp')}",
-					"file_url": f"/files/{filename.replace(extn, 'webp')}",
-				}
-			)
-			webp_path = _file.get_full_path()
-			convert_and_save_image(image, webp_path)
-			_file.save()
-			return _file.file_url
-		return image_url
+	def handle_builder_asset(image_url: str) -> str:
+		image_path = os.path.abspath(frappe.get_app_path("builder", "www", image_url.lstrip("/")))
+		image_path = image_path.replace("_", "-").replace("/builder-assets", "/builder_assets")
+		extn = get_extension(image_path)
+		if not can_convert_image(extn):
+			return image_url
+		image = Image.open(image_path)
+		save_as_webp(image, to_webp_path(image_path, extn))
+		return to_webp_url(image_url, extn)
+
+	def get_external_webp_filename(image_url: str) -> str:
+		filename = image_url.split("/")[-1].split("?")[0]
+		base = filename.rsplit(".", 1)[0] if "." in filename else ""
+		if not base or base.lower() == "webp" or filename.lower() == "webp":
+			return f"external-{hashlib.md5(image_url.encode()).hexdigest()[:8]}.webp"
+		return base + ".webp"
+
+	def handle_external_url(image_url: str) -> str:
+		url = unquote(image_url)
+		image = Image.open(BytesIO(requests.get(url).content))
+		filename = get_external_webp_filename(url)
+		file = frappe.get_doc({"doctype": "File", "file_name": filename, "file_url": f"/files/{filename}"})
+		save_as_webp(image, file.get_full_path())
+		file.save()
+		return file.file_url
 
 	if not image_url and not file_doc:
 		return ""
-
 	if file_doc:
-		if file_doc.file_url.startswith("/files"):
-			image, _, extn = get_local_image(file_doc.file_url)
-			if can_convert_image(extn):
-				return update_file_doc_with_webp(file_doc, image, extn)
-		return file_doc.file_url
+		return handle_file_doc(file_doc)
 
 	image_url = image_url or ""
 	if image_url.startswith("/files"):
-		image, _, extn = get_local_image(image_url)
-		if can_convert_image(extn):
-			return create_new_webp_file_doc(image_url, image, extn)
-		return image_url
-
+		return handle_local_url(image_url)
 	if image_url.startswith("/builder_assets"):
-		image_path = os.path.abspath(frappe.get_app_path("builder", "www", image_url.lstrip("/")))
-		image_path = image_path.replace("_", "-")
-		image_path = image_path.replace("/builder-assets", "/builder_assets")
-
-		image = Image.open(image_path)
-		extn = get_extension(image_path)
-		if can_convert_image(extn):
-			webp_path = image_path.replace(extn, "webp")
-			convert_and_save_image(image, webp_path)
-			return image_url.replace(extn, "webp")
-		return image_url
-
+		return handle_builder_asset(image_url)
 	if image_url.startswith("http"):
-		return handle_image_from_url(image_url)
-
+		return handle_external_url(image_url)
 	return image_url
 
 
