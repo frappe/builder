@@ -359,12 +359,13 @@ const processModifyStreaming = () => {
 
 	if (effectiveTaskType === "replace_image") {
 		const parsed = getValidPartialYAML(streamingContent.value);
-		if (parsed && typeof parsed === "object") {
-			emit("modifyStreaming", {
-				attributes: parsed,
-				blockId: effectiveBlockId,
-			});
-		}
+		console.log("Parsed attributes:", parsed);
+		emit("modifyStreaming", {
+			attributes: {
+				src: parsed,
+			},
+			blockId: effectiveBlockId,
+		});
 		return;
 	}
 

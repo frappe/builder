@@ -78,8 +78,8 @@ REWRITE_TEXT_PROMPT = (
 
 REPLACE_IMAGE_PROMPT = (
 	"You are an image finder. Suggest a highly relevant, high-quality publicly available image URL "
-	"(different from what is provided) and alt text.\n"
-	"Return ONLY a valid YAML object with 'src' and 'alt' keys. No markdown, no explanations."
+	"(different from what is provided).\n"
+	"Return ONLY the image URL. No markdown, no explanations, no quotes."
 )
 
 GENERATE_PROMPT = """You are an expert web designer specializing in creating modern, responsive web pages using the Frappe Builder block system.
@@ -290,25 +290,6 @@ def parse_blocks(content: str) -> dict:
 	return expand_yaml_to_block(block)
 
 
-def parse_modify_response(content: str, original_id: str | None, task_type: str | None) -> dict:
-	"""Parse LLM output for modify operations, returning a single block/result."""
-	clean = strip_fences(content)
-
-	if task_type == "rewrite_text":
-		return {"innerHTML": clean.strip('"'), "blockId": original_id}
-
-	if task_type == "replace_image":
-		try:
-			res = yaml.safe_load(clean)
-			res = res[0] if isinstance(res, list) and res else res
-			if isinstance(res, dict):
-				return {"attributes": res, "blockId": original_id}
-		except Exception:
-			pass
-
-	return parse_blocks(content)
-
-
 def run_llm_job(
 	prompt: str,
 	model: str,
@@ -335,6 +316,10 @@ def run_llm_job(
 
 	task_tier = classify_task(is_modify=is_modify, task_type=task_type)
 	params = TASK_PARAMS[task_tier]
+
+	if task_tier == "simple":
+		model = get_simple_model(model)
+
 	should_stream = True
 	action = "Modifying" if is_modify else "Generating"
 	tier_label = "fast" if task_tier == "simple" else "full"
@@ -475,6 +460,34 @@ def get_available_models():
 			],
 		},
 	]
+
+
+PROVIDER_SIMPLE_MODEL: dict[str, str] = {
+	"anthropic": "claude-haiku-4-5",
+	"google": "gemini-3-flash",
+	"openai": "gpt-5.4-nano",
+	"xai": "grok-4.1-fast",
+}
+
+
+def detect_provider(model: str) -> str | None:
+	lower = model.lower()
+	if "claude-" in lower:
+		return "anthropic"
+	if "gemini-" in lower:
+		return "google"
+	if "gpt-" in lower or re.match(r"o\d", lower):
+		return "openai"
+	if "grok-" in lower:
+		return "xai"
+	return None
+
+
+def get_simple_model(model: str) -> str:
+	provider = detect_provider(model)
+	if provider is None:
+		return model
+	return PROVIDER_SIMPLE_MODEL[provider]
 
 
 @frappe.whitelist()

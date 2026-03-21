@@ -76,25 +76,11 @@ const contextMenuOptions: ContextMenuOption[] = [
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
-		label: "Improve Writing (AI)",
+		label: "Rewrite with AI",
 		action: () => {
-			runDirectAI?.(block.value, "rewrite_text", "Improve this text to be more engaging");
+			runDirectAI?.(block.value, "rewrite_text", "Rewrite the content");
 		},
-		condition: () =>
-			Boolean(runDirectAI) &&
-			["h1", "h2", "h3", "p", "span"].includes(block.value.element || "") &&
-			!block.value.isRoot(),
-		disabled: () => builderStore.readOnlyMode,
-	},
-	{
-		label: "Make it Professional (AI)",
-		action: () => {
-			runDirectAI?.(block.value, "rewrite_text", "Make this text more professional");
-		},
-		condition: () =>
-			Boolean(runDirectAI) &&
-			["h1", "h2", "h3", "p", "span"].includes(block.value.element || "") &&
-			!block.value.isRoot(),
+		condition: () => Boolean(runDirectAI) && block.value.isText() && !block.value.isRoot(),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
@@ -102,7 +88,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		action: () => {
 			runDirectAI?.(block.value, "replace_image", "Suggest a better relevant image");
 		},
-		condition: () => Boolean(runDirectAI) && block.value.element === "img" && !block.value.isRoot(),
+		condition: () => Boolean(runDirectAI) && block.value.isImage() && !block.value.isRoot(),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
