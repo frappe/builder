@@ -426,10 +426,8 @@ const onModifyStream = (data: any) => {
 	if (data.task_type) remoteTaskType.value = data.task_type;
 	if (data.block_id) remoteBlockId.value = data.block_id;
 
-	// only if its not text rewrite or image replace, since those are handled differently
-	if (remoteTaskType.value === "rewrite_text" || remoteTaskType.value === "replace_image") {
+	if (!["rewrite_text", "replace_image"].includes(remoteTaskType.value ?? "")) {
 		throttledProcessModifyStreaming();
-		return;
 	}
 };
 
