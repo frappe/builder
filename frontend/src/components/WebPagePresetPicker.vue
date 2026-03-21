@@ -66,10 +66,10 @@
 					<!-- Bento Grid -->
 					<template v-else-if="preset.id === 'bento'">
 						<div class="grid h-full w-full grid-cols-2 grid-rows-2 gap-1">
-							<div class="bg-indigo-100 rounded-lg"></div>
-							<div class="rounded-md bg-amber-100"></div>
-							<div class="bg-emerald-100 rounded-md"></div>
-							<div class="rounded-xl bg-pink-100"></div>
+							<div class="rounded-lg bg-blue-200"></div>
+							<div class="rounded-md bg-orange-200"></div>
+							<div class="rounded-md bg-violet-200"></div>
+							<div class="rounded-xl bg-pink-200"></div>
 						</div>
 					</template>
 
@@ -93,7 +93,7 @@
 							class="h-2 w-2/3 rounded-full"
 							style="background: linear-gradient(90deg, #a855f7, #818cf8)"></div>
 						<div class="h-1 w-1/2 rounded-full bg-purple-300 opacity-50"></div>
-						<div class="bg-indigo-200 h-1 w-3/5 rounded-full opacity-40"></div>
+						<div class="h-1 w-3/5 rounded-full bg-blue-200 opacity-40"></div>
 						<div
 							class="mt-1 h-3 w-2/5 rounded-full"
 							style="background: linear-gradient(90deg, #a855f7, #818cf8); opacity: 0.85"></div>
@@ -173,7 +173,7 @@
 							"></div>
 						<div class="relative z-10 flex flex-col gap-1.5 pt-1">
 							<div class="h-1.5 w-4/5 border-l-2 border-cyan-400 bg-cyan-400/10 px-1"></div>
-							<div class="border-fuchsia-500 bg-fuchsia-500/10 h-1.5 w-1/2 border-l-2 px-1"></div>
+							<div class="h-1.5 w-1/2 border-l-2 border-blue-500 bg-blue-500/10 px-1"></div>
 							<div class="mt-1 h-3.5 w-full border border-cyan-400/50 bg-cyan-400/5">
 								<div class="h-full w-1/3 bg-cyan-400/40"></div>
 							</div>
@@ -246,7 +246,7 @@
 							<div class="h-2 w-2/3 rounded-full bg-white/20 backdrop-blur-sm"></div>
 							<div class="h-1.5 w-1/2 rounded-full bg-white/10"></div>
 							<div
-								class="bg-indigo-500/60 mt-1 h-3 w-1/3 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.5)]"></div>
+								class="mt-1 h-3 w-1/3 rounded-full bg-blue-500/60 shadow-[0_0_8px_rgba(99,102,241,0.5)]"></div>
 						</div>
 					</template>
 
@@ -266,7 +266,7 @@
 							class="absolute -bottom-2 -left-2 h-16 w-16 rounded-full bg-gradient-to-t from-orange-500/40 to-pink-500/40 blur-md"></div>
 						<div class="relative z-10 flex flex-col gap-1.5">
 							<div class="h-1.5 w-3/4 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></div>
-							<div class="bg-fuchsia-400 h-1 w-1/2 shadow-[0_0_5px_#e879f9]"></div>
+							<div class="h-1 w-1/2 bg-blue-400 shadow-[0_0_5px_#e879f9]"></div>
 						</div>
 					</template>
 
@@ -303,10 +303,10 @@
 									#ecfdf5 75%,
 									#fff7ed 100%
 								);
-								filter: saturate(1.5);
+								filter: saturate(3);
 							"></div>
 						<div class="relative flex flex-col gap-1.5">
-							<div class="h-3 w-3/4 rounded-lg bg-white/40 ring-1 ring-white/60 backdrop-blur-md"></div>
+							<div class="h-3 w-3/4 rounded-lg bg-white/80 ring-1 ring-blue-300/60 backdrop-blur-md"></div>
 							<div class="h-1.5 w-1/2 rounded-full bg-white/30 backdrop-blur-sm"></div>
 							<div
 								class="mt-1 h-4 w-1/3 rounded-lg border border-white/80 bg-gradient-to-br from-white/60 to-transparent shadow-sm"></div>
@@ -316,26 +316,34 @@
 					<!-- Claymorphism -->
 					<template v-else-if="preset.id === 'claymorphism'">
 						<div
-							class="bg-sky-200/50 absolute bottom-2 right-2 h-10 w-10 rounded-full"
-							style="filter: blur(8px)"></div>
+							class="absolute bottom-2 right-2 h-10 w-10 rounded-full"
+							style="
+								background: radial-gradient(circle at 30% 30%, #d8d4f0, #bdb8e8);
+								filter: blur(10px);
+								opacity: 0.5;
+							"></div>
+
 						<div class="relative flex flex-col gap-3 pt-1">
 							<div
-								class="bg-sky-100 h-4 w-4/5 rounded-2xl"
+								class="h-4 w-4/5 rounded-2xl"
 								style="
+									background: linear-gradient(135deg, #ede9fa 0%, #d4ceef 100%);
 									box-shadow:
-										8px 8px 16px #d1e2f3,
-										-8px -8px 16px #ffffff,
-										inset 2px 2px 4px rgba(255, 255, 255, 0.8),
-										inset -2px -2px 4px rgba(0, 0, 0, 0.05);
+										6px 6px 14px #c8c2e844,
+										-6px -6px 14px #ffffff,
+										inset 2px 2px 5px rgba(255, 255, 255, 0.95),
+										inset -2px -2px 5px rgba(139, 120, 200, 0.08);
 								"></div>
+
 							<div
-								class="h-6 w-1/2 rounded-full bg-white"
+								class="h-6 w-1/2 rounded-full"
 								style="
+									background: linear-gradient(135deg, #d4eee3 0%, #b8dece 100%);
 									box-shadow:
-										4px 4px 8px #d1e2f3,
-										-4px -4px 8px #ffffff,
-										inset 4px 4px 8px rgba(0, 0, 0, 0.05),
-										inset -4px -4px 8px rgba(255, 255, 255, 0.8);
+										5px 5px 12px #aed4c044,
+										-5px -5px 12px #ffffff,
+										inset 3px 3px 7px rgba(255, 255, 255, 0.9),
+										inset -3px -3px 7px rgba(80, 160, 120, 0.08);
 								"></div>
 						</div>
 					</template>
@@ -399,9 +407,9 @@ const PRESETS: Preset[] = [
 			"Deep dark backgrounds with vibrant aurora-inspired gradients, glassmorphism cards with blur/translucency, and glowing blobs. Ultra-modern and immersive.",
 		icon: "aperture",
 		preview: {
-			bg: "bg-ink-gray-9",
-			blobA: "bg-ink-purple-6",
-			blobB: "bg-ink-blue-7",
+			bg: "bg-gray-900",
+			blobA: "bg-purple-600",
+			blobB: "bg-blue-700",
 		},
 	},
 	{
@@ -412,7 +420,7 @@ const PRESETS: Preset[] = [
 			"Modular bento-box grid layouts with varied tile sizes, and generous rounded corners. Each section is a self-contained card. Inspired by Japanese bento compartments — clean, playful, highly structured.",
 		icon: "grid",
 		preview: {
-			bg: "bg-surface-gray-1",
+			bg: "bg-gray-50",
 		},
 	},
 	{
@@ -423,7 +431,7 @@ const PRESETS: Preset[] = [
 			"Raw, unapologetic design with heavy borders, bold offset shadows, and chunky typography. Intentionally rough and high-contrast. No gradients, no subtlety.",
 		icon: "bold",
 		preview: {
-			bg: "bg-surface-white",
+			bg: "bg-white",
 		},
 	},
 	{
@@ -434,7 +442,7 @@ const PRESETS: Preset[] = [
 			"Dreamy gradients, soft glow halos, pill-shaped buttons, and rounded fluid shapes. Light and airy — think Figma landing pages and modern SaaS products with a fresh, inviting feel.",
 		icon: "sun",
 		preview: {
-			bg: "bg-surface-purple-1",
+			bg: "bg-purple-100",
 		},
 	},
 	{
@@ -445,7 +453,7 @@ const PRESETS: Preset[] = [
 			"Absolute restraint — hairline borders, sparse layout. Typography does all the work. Inspired by Swiss editorial design and Japanese stationery brands. Zero decoration.",
 		icon: "feather",
 		preview: {
-			bg: "bg-surface-gray-1",
+			bg: "bg-gray-100",
 		},
 	},
 	{
@@ -456,7 +464,7 @@ const PRESETS: Preset[] = [
 			"Organic shapes, natural textures, and rounded asymmetric forms. Grounded and tactile — ideal for wellness, food, craft, and sustainability brands.",
 		icon: "coffee",
 		preview: {
-			bg: "bg-surface-red-1",
+			bg: "bg-red-100",
 		},
 	},
 	{
@@ -467,7 +475,7 @@ const PRESETS: Preset[] = [
 			"Dark background with monospace typography, terminal-style chrome, and code-aesthetic UI. Think developer tools, CLI apps, and hacker-culture interfaces.",
 		icon: "terminal",
 		preview: {
-			bg: "bg-ink-gray-9",
+			bg: "bg-gray-900",
 		},
 	},
 	{
@@ -478,7 +486,7 @@ const PRESETS: Preset[] = [
 			"Thin serif typefaces, and refined negative space. Understated luxury — think high-fashion magazines and premium brand campaigns.",
 		icon: "star",
 		preview: {
-			bg: "bg-ink-gray-8",
+			bg: "bg-gray-800",
 		},
 	},
 	{
@@ -489,7 +497,7 @@ const PRESETS: Preset[] = [
 			"Thick borders, chunky chart bars, flat graphic shapes, and retro poster energy. Bold and high-contrast, inspired by 90s print graphics and risograph aesthetics.",
 		icon: "zap",
 		preview: {
-			bg: "bg-surface-yellow-1",
+			bg: "bg-yellow-100",
 		},
 	},
 	{
@@ -544,7 +552,7 @@ const PRESETS: Preset[] = [
 			"Deep space aesthetics with swirling stellar clouds, star-fields, and floating translucent elements. Magical, expansive, and ethereal.",
 		icon: "cloud",
 		preview: {
-			bg: "bg-slate-950",
+			bg: "bg-zinc-900",
 		},
 	},
 	{
@@ -555,7 +563,7 @@ const PRESETS: Preset[] = [
 			"80s retro-futurism with glowing grid floors, vibrant sun-gradient headers, and high-contrast pink and purple neon accents. Retro-digital aesthetic.",
 		icon: "sun",
 		preview: {
-			bg: "bg-purple-950",
+			bg: "bg-purple-900",
 		},
 	},
 	{
@@ -577,7 +585,7 @@ const PRESETS: Preset[] = [
 			"Iridescent color-shifting surfaces, holographic overlays, and translucent frosted glass. Ethereal, modern, and shimmering with light.",
 		icon: "layers",
 		preview: {
-			bg: "bg-blue-50",
+			bg: "bg-blue-100",
 		},
 	},
 	{
@@ -588,7 +596,7 @@ const PRESETS: Preset[] = [
 			"Soft, pillowy surfaces with deep inner shadows and outer glows. Friendly, tactile, and highly rounded shapes. Modern 3D 'clay' look.",
 		icon: "box",
 		preview: {
-			bg: "bg-sky-50",
+			bg: "bg-blue-100",
 		},
 	},
 	{
@@ -604,15 +612,15 @@ const PRESETS: Preset[] = [
 	},
 ];
 
-import { ref, computed } from "vue";
 import TabButtons from "@/components/Controls/TabButtons.vue";
 import { FeatherIcon } from "frappe-ui";
+import { computed, ref } from "vue";
 
 const CATEGORIES = [
 	{ label: "Modern", value: "modern" },
 	{ label: "Minimal", value: "minimal" },
-	{ label: "Retro", value: "retro" },
 	{ label: "Technical", value: "tech" },
+	{ label: "Retro", value: "retro" },
 ];
 
 const selectedCategory = ref("modern");
