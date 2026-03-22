@@ -278,6 +278,12 @@ def sync_block_templates():
 	make_records(builder_block_template_path)
 
 
+def sync_style_presets():
+	print("Syncing Builder Style Presets")
+	builder_style_preset_path = frappe.get_module_path("builder", "builder_style_preset")
+	make_records(builder_style_preset_path)
+
+
 def sync_builder_variables():
 	print("Syncing Builder Builder Variables")
 	builder_variable_path = frappe.get_module_path("builder", "builder_variable")

@@ -6,12 +6,19 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "is_standard",
   "style_name_section",
   "style_name",
   "style_map",
   "sort_order"
  ],
  "fields": [
+  {
+   "default": "0",
+   "fieldname": "is_standard",
+   "fieldtype": "Check",
+   "label": "Is Standard"
+  },
   {
    "fieldname": "style_name_section",
    "fieldtype": "Section Break",

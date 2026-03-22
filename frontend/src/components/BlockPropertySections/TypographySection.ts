@@ -44,11 +44,11 @@ const typographySectionProperties = [
 				controlType: "key",
 				allowDynamicValue: true,
 				type: "select",
-				options: stylePreset.data //list of items in dropdown
+				options: stylePreset.data 
 					? [
 						{ label: "None", value: null },
-						...stylePreset.data.map((s: any) => ({ //s -> object and kept any not defined type of it 
-						label: s.style_name, //if stylebook.data exists and loaded, do the map or else return empty array
+						...stylePreset.data.map((s: any) => ({ 
+						label: s.style_name, 
 						value: s.style_name,
 					}))
 					]	
