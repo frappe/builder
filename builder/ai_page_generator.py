@@ -110,7 +110,7 @@ Return a single root block that represents the page (el: div, id: root). This bl
 # Rules:
 - The top-level Page block must have 'display: flex', 'flexDirection: column', and 'alignItems: center' to layout sections properly.
 - All top-level sections inside 'c' MUST have 'width: 100%'.
-- Modern harmonious color palettes. If you set a dark background for the page, ensure text colors are light.
+- Modern harmonious color palettes. Good spacing. Professional concise copy.
 - Interactive: Use hover states for buttons/links to make the page feel alive.
 - Google Fonts via fontFamily (use ONLY the font name).
 - Semantic HTML with alt texts."""
@@ -422,7 +422,8 @@ def enqueue_ai_job(fn, **kwargs):
 		is_async=True,
 		**kwargs,
 	)
-	return {"status": "started"}
+	frappe.local.response.http_status_code = 202
+	return {"status": "accepted"}
 
 
 def get_available_models():
@@ -446,7 +447,11 @@ def get_available_models():
 		{
 			"provider": "google",
 			"models": [
-				{"name": "gemini-3.1-pro", "label": "Gemini 3.1 Pro (Flagship)", "max_tokens": 1048576},
+				{
+					"name": "gemini-3.1-pro-preview",
+					"label": "Gemini 3.1 Pro (Flagship)",
+					"max_tokens": 1048576,
+				},
 				{"name": "gemini-2.5-pro", "label": "Gemini 2.5 Pro", "max_tokens": 1048576},
 				{"name": "gemini-3-flash", "label": "Gemini 3 Flash (Fast)", "max_tokens": 1048576},
 			],
@@ -464,7 +469,7 @@ def get_available_models():
 
 PROVIDER_SIMPLE_MODEL: dict[str, str] = {
 	"anthropic": "claude-haiku-4-5",
-	"google": "gemini-3-flash",
+	"google": "gemini-3-flash-preview",
 	"openai": "gpt-5.4-nano",
 	"xai": "grok-4.1-fast",
 }

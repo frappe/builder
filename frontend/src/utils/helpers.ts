@@ -9,7 +9,6 @@ import { FileUploadHandler } from "frappe-ui";
 import { defineComponent, h, markRaw, reactive, ref, toRaw } from "vue";
 import { toast } from "vue-sonner";
 import Dialog from "../components/Controls/Dialog.vue";
-import { useBlockDataStore, useBlockUidStore } from "@/stores/blockStore";
 
 function getNumberFromPx(px: string | number | null | undefined): number {
 	if (!px) {
@@ -470,10 +469,10 @@ function dataURLtoFile(dataurl: string, filename: string) {
 		let mimeMatch = arr[0].match(/:(.*?)(;|,)/);
 		let mime = mimeMatch ? mimeMatch[1] : "";
 		let isBase64 = arr[0].includes(";base64");
-		
+
 		let dataString = arr.slice(1).join(",");
 		let u8arr;
-		
+
 		if (isBase64) {
 			let bstr = atob(dataString);
 			let n = bstr.length;
@@ -489,7 +488,7 @@ function dataURLtoFile(dataurl: string, filename: string) {
 				u8arr[n] = decoded.charCodeAt(n);
 			}
 		}
-		
+
 		return new File([u8arr], filename, { type: mime });
 	} catch (error) {
 		console.error(`Failed to convert dataURL ${dataurl.substring(0, 50)}... to file.`, error);
