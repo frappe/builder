@@ -22,24 +22,26 @@ const WEIGHT_LABELS: Record<FontWeight, string> = {
 const GF_CSS = "https://fonts.googleapis.com/css2";
 const fontCache = new Map<string, Promise<string>>();
 
-function loadGoogleFont(font: string): Promise<string> {
-	if (fontCache.has(font)) return fontCache.get(font)!;
-
-	const linkId = `gf-${font.replace(/\s+/g, "-")}`;
-
-	if (!document.getElementById(linkId)) {
-		Object.assign(document.head.appendChild(document.createElement("link")), {
-			id: linkId,
-			rel: "stylesheet",
-			crossOrigin: "anonymous",
-			href: `${GF_CSS}?family=${encodeURIComponent(
-				font,
-			)}:wght@100;200;300;400;500;600;700;800;900&display=swap`,
+function loadCustomFont(font: string, url: string): Promise<string> {
+	return new FontFace(font, `url("${url}")`)
+		.load()
+		.then((face) => {
+			document.fonts.add(face);
+			return font;
+		})
+		.catch(() => {
+			console.warn(`Failed to load custom font: ${font}`);
+			return font;
 		});
-	}
+}
 
-	const promise = new Promise<string>((resolve) => {
-		const link = document.getElementById(linkId) as HTMLLinkElement;
+function loadGoogleFont(font: string): Promise<string> {
+	return new Promise<string>((resolve) => {
+		const link = document.createElement("link");
+		link.id = `gf-${font.replace(/\s+/g, "-")}`;
+		link.rel = "stylesheet";
+		link.crossOrigin = "anonymous";
+		link.href = `${GF_CSS}?family=${encodeURIComponent(font)}&display=swap`;
 		link.addEventListener("load", () => resolve(font), { once: true });
 		link.addEventListener(
 			"error",
@@ -49,45 +51,35 @@ function loadGoogleFont(font: string): Promise<string> {
 			},
 			{ once: true },
 		);
+		document.head.appendChild(link);
 	});
+}
+
+export function setFont(font: string | null): Promise<string> {
+	if (!font) return Promise.resolve("");
+	if (fontCache.has(font)) return fontCache.get(font)!;
+
+	const customFont = userFont.data.find(
+		(f: { font_name: string; font_file: string }) => f.font_name === font,
+	);
+
+	const promise = customFont ? loadCustomFont(font, customFont.font_file) : loadGoogleFont(font);
 
 	fontCache.set(font, promise);
 	return promise;
 }
 
-export function setFont(font: string | null): Promise<string> {
-	if (!font) return Promise.resolve("");
-
-	const customFont = userFont.data.find(
-		(f: { font_name: string; font_file: string }) => f.font_name === font,
-	);
-	if (customFont) {
-		if (!fontCache.has(font)) {
-			fontCache.set(
-				font,
-				new FontFace(font, `url("${customFont.font_file}")`).load().then((face) => {
-					document.fonts.add(face);
-					return font;
-				}),
-			);
-		}
-		return fontCache.get(font)!;
-	}
-
-	return loadGoogleFont(font);
-}
-
 export function setFontFromHTML(html: string): void {
-	(html.match(/font-family:\s*([^;"]+)[";]/g) ?? [])
+	const matches = html.match(/font-family:\s*([^;"]+)[";]/g) ?? [];
+	matches
 		.map((m) => m.replace(/font-family:\s*([^;"]+)[";]/, "$1").trim())
 		.filter(Boolean)
 		.forEach((font) => setFont(font));
 }
 
 export function getFontWeightOptions(font: string): WeightOption[] {
-	const fallback = [{ value: "400" as FontWeight, label: "Regular" }];
 	const fontObj = font && fontList.items.find((f) => f.family === font);
-	if (!fontObj) return fallback;
+	if (!fontObj) return [{ value: "400", label: "Regular" }];
 
 	return fontObj.variants
 		.filter((v) => !v.includes("italic"))
