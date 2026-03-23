@@ -18,7 +18,7 @@
 				<div v-if="errorMessage" class="text-ink-red-9 rounded-lg bg-surface-red-1 p-3 text-sm">
 					{{ errorMessage }}
 				</div>
-				<WebPagePresetPicker v-model="selectedPreset" v-if="mode === 'generate'" />
+				<!-- <WebPagePresetPicker v-model="selectedPreset" v-if="mode === 'generate'" /> -->
 
 				<p v-if="!hasAISettings" class="text-xs text-ink-gray-6">
 					Configure your AI model and API key in
@@ -75,7 +75,6 @@ import { useThrottleFn } from "@vueuse/core";
 import { createResource, FeatherIcon, Textarea } from "frappe-ui";
 import yaml from "js-yaml";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
-import WebPagePresetPicker from "./WebPagePresetPicker.vue";
 
 interface Preset {
 	id: string;
