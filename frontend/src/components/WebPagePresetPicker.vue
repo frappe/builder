@@ -34,7 +34,7 @@
 				class="group relative flex flex-col items-center gap-2 rounded-xl border p-2 outline-none transition-all duration-200"
 				:class="
 					modelValue?.id === preset.id
-						? 'border-outline-gray-9 shadow-md ring-2 ring-outline-gray-5'
+						? 'border-outline-gray-9 ring-2 ring-outline-gray-4'
 						: 'border-outline-gray-2 bg-surface-white hover:border-outline-gray-4 hover:shadow-sm'
 				"
 				@click="$emit('update:modelValue', preset)">

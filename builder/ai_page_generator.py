@@ -112,7 +112,7 @@ Return a single root block that represents the page (el: div, id: root). This bl
 - All top-level sections inside 'c' MUST have 'width: 100%'.
 - Modern harmonious color palettes. Good spacing. Professional concise copy.
 - Interactive: Use hover states for buttons/links to make the page feel alive.
-- Google Fonts via fontFamily (use ONLY the font name).
+- Google Fonts via fontFamily (use ONLY the font name and not the fallback).
 - Semantic HTML with alt texts."""
 
 MODIFY_PROMPT_MAP = {
