@@ -3,14 +3,14 @@
 		@click.stop
 		@mousedown.stop
 		class="props-popover-content flex max-h-80 w-80 flex-col gap-3 overflow-auto rounded-lg bg-surface-white p-4 shadow-lg">
-		<div v-if="showIsStandardInput" class="flex items-center justify-between">
-			<InputLabel class="w-[88px] shrink-0">Is Standard</InputLabel>
+		<div v-if="showIsStandardInput" class="flex items-center justify-between gap-2">
+			<InputLabel>Is Standard</InputLabel>
 			<OptionToggle
 				:options="toggleOptions"
 				:model-value="isStandard"
 				@update:model-value="handleIsStandardChange" />
 		</div>
-		<div v-if="isStandardBool" class="flex items-center justify-between">
+		<div v-if="isStandardBool" class="flex items-center justify-between gap-2">
 			<InlineInput
 				label="Label"
 				class="w-full"
@@ -18,7 +18,7 @@
 				@update:modelValue="(val) => (label = val)"
 				placeholder="Enter prop label" />
 		</div>
-		<div class="flex items-center justify-between">
+		<div class="flex items-center justify-between gap-2">
 			<InlineInput
 				label="Key"
 				class="w-full"
@@ -26,7 +26,7 @@
 				@update:modelValue="(val) => (computedKey = val)"
 				placeholder="Enter prop key" />
 		</div>
-		<div class="flex items-center justify-between">
+		<div class="flex items-center justify-between gap-2">
 			<InlineInput
 				label="Type"
 				class="w-full"
