@@ -32,7 +32,7 @@
 				</div>
 			</div>
 			<div
-				class="canvas relative flex h-full bg-surface-white shadow-2xl contain-layout dark:selection:!bg-gray-200"
+				class="canvas relative flex h-full bg-surface-white shadow-2xl contain-layout"
 				:style="{
 					...canvasStyles,
 					background: canvasProps.background,

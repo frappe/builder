@@ -37,6 +37,7 @@ from builder.utils import (
 	get_builder_page_preview_file_paths,
 	get_template_assets_folder_path,
 	is_component_used,
+	sanitize_style_value,
 	split_styles,
 )
 
@@ -491,7 +492,9 @@ def save_as_template(page_doc: BuilderPage):
 
 
 @frappe.whitelist()
-def get_block_data(block_id: str, block_data_script: str, props: str):
+def get_block_data(block_id: str, block_data_script: str, props: str, route_variables: dict | None = None):
+	if route_variables:
+		frappe.form_dict.update({k: v for k, v in route_variables.items()})
 	frappe.has_permission("Builder Page", "write", throw=True)
 	props = frappe.parse_json(props or "{}")
 	block_data = frappe._dict()
@@ -734,7 +737,11 @@ def create_html_tag(block: dict, state: dict) -> bs.Tag:
 
 def build_tag_classes(block: dict, state: dict) -> list[str]:
 	"""Build list of CSS classes for the tag."""
-	classes = block.get("classes", []).copy()
+	classes = block.get("classes", [])
+	if isinstance(classes, str):
+		classes = [c.strip() for c in classes.split(",") if c.strip()]
+	else:
+		classes = classes.copy()
 	element = block.get("originalElement") or block.get("element")
 
 	text_elements = {"span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6", "label", "a"}
@@ -791,9 +798,13 @@ def add_inner_html_content(tag: bs.Tag, block: dict, state: dict):
 	"""Add inner HTML content to the tag."""
 	inner_content = block.get("innerHTML")
 	if inner_content:
+		# Ensure inner_content is a string before passing to BeautifulSoup
+		if not isinstance(inner_content, (str, bytes)):
+			inner_content = str(inner_content)
 		inner_soup = bs.BeautifulSoup(inner_content, "html.parser")
 		set_fonts_from_html(inner_soup, state["font_map"])
-		tag.append(inner_soup)
+		if inner_soup.contents:
+			tag.append(inner_soup)
 
 
 def is_repeater_block(block: dict) -> bool:
@@ -1112,7 +1123,7 @@ def wrap_with_media_query(style_string, device):
 def get_style(style_obj):
 	return (
 		"".join(
-			f"{camel_case_to_kebab_case(key)}: {value};"
+			f"{camel_case_to_kebab_case(key)}: {sanitize_style_value(value)};"
 			for key, value in style_obj.items()
 			if value is not None and value != "" and not key.startswith("__")
 		)
@@ -1139,17 +1150,69 @@ def append_state_style(style_obj, style_tag, style_class, device="desktop"):
 
 
 def set_fonts(styles, font_map):
+	weight_map = {
+		"thin": "100",
+		"extralight": "200",
+		"light": "300",
+		"normal": "400",
+		"medium": "500",
+		"semibold": "600",
+		"bold": "700",
+		"extrabold": "800",
+		"black": "900",
+	}
+	system_fonts = {
+		"arial",
+		"helvetica",
+		"times new roman",
+		"times",
+		"courier new",
+		"courier",
+		"verdana",
+		"georgia",
+		"palatino",
+		"garamond",
+		"bookman",
+		"comic sans ms",
+		"comic sans",
+		"trebuchet ms",
+		"arial black",
+		"impact",
+		"sans-serif",
+		"serif",
+		"monospace",
+		"cursive",
+		"fantasy",
+		"system-ui",
+	}
 	for style in styles:
 		font = style.get("fontFamily")
 		if font:
-			# escape spaces in font name
+			# Remove quotes if present
+			font = font.strip("'\"")
+
+			# Skip if it is a system font
+			if font.lower() in system_fonts:
+				continue
+
+			# escape spaces in font name for CSS
 			style["fontFamily"] = font.replace(" ", "\\ ")
+
+			weight = str(style.get("fontWeight") or "400").lower()
+			weight = weight_map.get(weight, weight)
+
+			# Ensure weight is a valid integer
+			try:
+				weight = int(weight)
+			except (ValueError, TypeError):
+				weight = 400
+
 			if font in font_map:
-				if style.get("fontWeight") and style.get("fontWeight") not in font_map[font]["weights"]:
-					font_map[font]["weights"].append(style.get("fontWeight"))
+				if weight not in font_map[font]["weights"]:
+					font_map[font]["weights"].append(weight)
 					font_map[font]["weights"].sort()
 			else:
-				font_map[font] = {"weights": [style.get("fontWeight") or "400"]}
+				font_map[font] = {"weights": [weight]}
 
 
 def set_fonts_from_html(soup, font_map):
@@ -1158,9 +1221,9 @@ def set_fonts_from_html(soup, font_map):
 		styles = tag.attrs.get("style").split(";")
 		for style in styles:
 			if "font-family" in style:
-				font = style.split(":")[1].strip()
+				font = style.split(":")[1].strip().strip("'\"")
 				if font:
-					font_map[font] = {"weights": ["400"]}
+					font_map[font] = {"weights": [400]}
 
 
 def extend_block(block, overridden_block):
@@ -1169,7 +1232,7 @@ def extend_block(block, overridden_block):
 	block["tabletStyles"].update(overridden_block["tabletStyles"])
 	block["attributes"].update(overridden_block["attributes"])
 
-	dynamicValues = overridden_block.get("dynamicValues", [])
+	dynamicValues = overridden_block.get("dynamicValues") or []
 	dynamicValuesProperties = [dv.get("property") for dv in dynamicValues]
 	for dv in block.get("dynamicValues", []) or []:
 		if dv.get("property") in dynamicValuesProperties:

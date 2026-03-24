@@ -1,35 +1,42 @@
 <template>
 	<div v-if="false" class="flex items-center justify-between">
-		<InputLabel>Min. Value</InputLabel>
-		<Input
-			:model-value="minValue"
-			@update:model-value="handleMinValueChange"
+		<InlineInput
+			label="Min. Value"
+			:modelValue="minValue"
+			@update:modelValue="handleMinValueChange"
 			@input="handleMinValueChange"
-			placeholder="Enter min value"></Input>
+			placeholder="Enter min value"></InlineInput>
 	</div>
 	<div v-if="false" class="flex items-center justify-between">
-		<InputLabel>Max. Value</InputLabel>
-		<Input
-			:model-value="maxValue"
-			@update:model-value="handleMaxValueChange"
-			@input="handleMaxValueChange"
-			placeholder="Enter max value"></Input>
+		<InlineInput
+			label="Max. Value"
+			:modelValue="maxValue"
+			@update:modelValue="handleMaxValueChange"
+			placeholder="Enter max value"></InlineInput>
 	</div>
 	<div class="flex items-center justify-between">
-		<InputLabel>Default Value</InputLabel>
-		<Input
-			:model-value="defaultValue"
-			@update:model-value="handleDefaultValueChange"
+		<InlineInput
+			label="Default Value"
+			:modelValue="defaultValue"
+			@update:modelValue="handleDefaultValueChange"
 			@input="handleDefaultValueChange"
-			placeholder="Enter default value"></Input>
+			@update:model-value="handleMaxValueChange"
+			placeholder="Enter max value"></InlineInput>
+	</div>
+	<div class="flex items-center justify-between">
+		<InlineInput
+			label="Default Value"
+			:modelValue="defaultValue"
+			@update:modelValue="handleDefaultValueChange"
+			@input="handleDefaultValueChange"
+			placeholder="Enter default value"></InlineInput>
 	</div>
 </template>
 
 <script setup lang="ts">
-import InputLabel from "@/components/Controls/InputLabel.vue";
-import Input from "@/components/Controls/Input.vue";
 import { nextTick, ref, watch } from "vue";
 import { toast } from "vue-sonner";
+import InlineInput from "@/components/Controls/InlineInput.vue";
 
 const props = defineProps<{
 	options: Record<string, any>;

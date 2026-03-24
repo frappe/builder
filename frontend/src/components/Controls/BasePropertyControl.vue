@@ -11,7 +11,8 @@
 
 		<div
 			class="relative flex w-full gap-2"
-			:class="labelPlacement === 'top' ? 'items-start' : 'items-center'">
+			:class="labelPlacement === 'top' ? 'items-start' : 'items-center'"
+			:data-property="propertyKey">
 			<PropertyLabel
 				v-if="labelPlacement === 'left' && label"
 				ref="propertyLabelRef"
@@ -49,7 +50,7 @@
 				@openDynamicModal="showDynamicValueModal = true"
 				@clearDynamic="clearDynamicValue">
 				<template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
-					<slot :name="name" v-bind="slotData || {}" />
+					<slot :name="name" v-bind="{ ...slotData, variant: null }" />
 				</template>
 			</PropertyControlInput>
 		</div>
@@ -58,6 +59,7 @@
 		<VariantControl
 			v-for="variant in visibleVariants"
 			:key="variant.name"
+			:data-variant="variant.name"
 			:label="variant.label"
 			:labelPlacement="labelPlacement"
 			:component="props.component"
@@ -72,7 +74,7 @@
 			@labelMousedown="(e: MouseEvent) => handleSliderMouseDown(e, variant.name)"
 			@clear="clearVariant(variant.name)">
 			<template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
-				<slot :name="name" v-bind="slotData || {}" />
+				<slot :name="name" v-bind="{ ...slotData, variant: variant.name }" />
 			</template>
 		</VariantControl>
 	</div>
@@ -155,17 +157,17 @@ const modelValue = computed(() => props.getModelValue?.() ?? "");
 const placeholderValue = computed(() => props.getPlaceholder?.() ?? props.placeholder);
 
 // Normalize and extract value from various input formats
-const normalizeInputValue = (value: string | number | null | { label: string; value: string }) => {
+const normalizeInputValue = (value: string | number | boolean | null | { label: string; value: string }) => {
 	if (typeof value === "object" && value !== null && "value" in value) {
 		value = value.value;
 	}
 	if (value && typeof value === "string") {
 		value = normalizeValueWithUnits(value, props.unitOptions, props.propertyKey);
 	}
-	return value as string;
+	return value as string | number | boolean;
 };
 
-const updateValue = (value: string | number | null | { label: string; value: string }) => {
+const updateValue = (value: string | number | boolean | null | { label: string; value: string }) => {
 	props.setModelValue?.(normalizeInputValue(value));
 };
 
@@ -199,7 +201,7 @@ const getVariantValue = (variantName: string) => {
 
 const updateVariantValue = (
 	variantName: string,
-	value: string | number | null | { label: string; value: string },
+	value: string | number | boolean | null | { label: string; value: string },
 ) => {
 	props.setVariantValue?.(variantName, normalizeInputValue(value));
 };
@@ -288,9 +290,13 @@ const dynamicValue = computed(() => {
 });
 
 const clearDynamicValue = () => {
-	blockController.getSelectedBlocks().forEach((block) => {
-		block.removeDynamicValue(props.propertyKey, props.controlType);
-	});
+	if (props.setDynamicValue) {
+		props.setDynamicValue("", "dataScript");
+	} else {
+		blockController.getSelectedBlocks().forEach((block) => {
+			block.removeDynamicValue(props.propertyKey, props.controlType);
+		});
+	}
 	emit("clearDynamicValue");
 };
 </script>
