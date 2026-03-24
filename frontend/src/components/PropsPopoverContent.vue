@@ -20,7 +20,7 @@
 		</div>
 		<div class="flex items-center justify-between">
 			<InlineInput
-				label="Key Lorem Ipsum Dolor"
+				label="Key"
 				class="w-full"
 				:modelValue="computedKey"
 				@update:modelValue="(val) => (computedKey = val)"
@@ -35,8 +35,8 @@
 				@update:modelValue="handleTypeChange"
 				:options="propTypes" />
 		</div>
-		<div v-if="!isStandardBool" class="flex items-center justify-between">
-			<InputLabel class="w-[88px] shrink-0" v-model="value">Value</InputLabel>
+		<div v-if="!isStandardBool" class="flex items-center justify-between gap-2">
+			<InputLabel v-model="value">Value</InputLabel>
 			<Input
 				v-if="isStaticProp"
 				v-model="value"
@@ -54,8 +54,8 @@
 				:getOptions="getOptions"
 				@update:modelValue="handleValueSelection" />
 		</div>
-		<div v-if="!isStandardBool" class="flex items-center justify-between">
-			<InputLabel class="w-[88px] shrink-0">Pass Down</InputLabel>
+		<div v-if="!isStandardBool" class="flex items-center justify-between gap-2">
+			<InputLabel>Pass Down</InputLabel>
 			<OptionToggle
 				:options="toggleOptions"
 				:model-value="isPassedDown"

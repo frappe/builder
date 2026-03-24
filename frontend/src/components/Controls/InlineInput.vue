@@ -7,7 +7,6 @@
 				'w-1/3': type != 'checkbox',
 			}"
 			:title="label"
-			class="w-[88px] shrink-0 truncate"
 			:description="description"
 			@mousedown="handleMouseDown">
 			{{ label }}
@@ -167,5 +166,4 @@ const autocompleteRef = ref<InstanceType<typeof Autocomplete> | null>(null);
 defineExpose({
 	refreshOptions: () => autocompleteRef.value?.refreshOptions(),
 });
-
 </script>
