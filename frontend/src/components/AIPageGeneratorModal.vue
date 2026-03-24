@@ -18,7 +18,7 @@
 				<div v-if="errorMessage" class="text-ink-red-9 rounded-lg bg-surface-red-1 p-3 text-sm">
 					{{ errorMessage }}
 				</div>
-				<!-- <WebPagePresetPicker v-model="selectedPreset" v-if="mode === 'generate'" /> -->
+				<WebPagePresetPicker v-model="selectedPreset" v-if="mode === 'generate'" />
 
 				<p v-if="!hasAISettings" class="text-xs text-ink-gray-6">
 					Configure your AI model and API key in
@@ -282,13 +282,7 @@ const executeDirect = async (block: any, type: "rewrite_text" | "replace_image",
 	streamingContent.value = "";
 	showDialog.value = false;
 
-	// Set modify state so handlers know what to do
 	emit("update:blockContext", block);
-	// We need to wait for parent to update modifiedBlockId if we want to follow the same flow
-	// or we can just handle it here. PageBuilder handles modified blocks by watching the events.
-	// But it needs modifyBlockId correctly set.
-	// Actually, it might be better if PageBuilder sets the state and then calls this,
-	// or this method takes enough info.
 
 	const finalPrompt =
 		customPrompt || (type === "rewrite_text" ? "Improve this text" : "Suggest a better image");
@@ -334,7 +328,6 @@ function applyTierLabel(data: any) {
 	}
 }
 
-// Throttled logic for streaming
 const processStreaming = () => {
 	const block = parseBlock(streamingContent.value);
 	if (block) {

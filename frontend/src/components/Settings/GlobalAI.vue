@@ -1,40 +1,33 @@
 <template>
 	<div class="flex flex-col gap-5">
 		<div class="flex flex-col gap-2">
-			<label class="text-sm font-medium text-ink-gray-9">AI Model</label>
-			<select
-				:value="builderSettings.doc?.ai_model"
-				@change="updateModel(($event.target as HTMLSelectElement).value)"
-				class="focus:border-ink-blue-6 focus:ring-ink-blue-2 w-full rounded-md border border-outline-gray-3 p-2 text-sm focus:outline-none focus:ring-2">
-				<option value="">Select a model...</option>
-				<optgroup
-					v-for="provider in availableModels"
-					:key="provider.provider"
-					:label="getProviderLabel(provider.provider)">
-					<option v-for="model in provider.models" :key="model.name" :value="model.name">
-						{{ model.label }}
-					</option>
-				</optgroup>
-			</select>
+			<FormControl
+				label="AI Model"
+				type="select"
+				:options="flattenedModels"
+				:modelValue="builderSettings.doc?.ai_model"
+				@update:modelValue="updateModel" />
 			<p class="text-xs text-ink-gray-6">Model used for AI page generation</p>
 		</div>
 		<div class="flex flex-col gap-2">
-			<label class="flex items-center gap-2 text-sm font-medium text-ink-gray-9">
-				API Key
-				<button
-					v-if="apiKey"
-					@click="testApiKey"
-					:disabled="testing"
-					class="text-ink-blue-6 hover:text-ink-blue-7 text-xs disabled:opacity-50">
-					{{ testing ? "Testing..." : "Test Key" }}
-				</button>
-			</label>
-			<input
-				:value="apiKey"
-				@change="updateApiKey(($event.target as HTMLInputElement).value)"
+			<FormControl
 				type="password"
-				class="focus:border-ink-blue-6 focus:ring-ink-blue-2 w-full rounded-md border border-outline-gray-3 p-2 text-sm focus:outline-none focus:ring-2"
-				placeholder="Enter API key for the selected provider" />
+				:modelValue="apiKey"
+				@update:modelValue="updateApiKey"
+				placeholder="Enter API key for the selected provider">
+				<template #label>
+					<label class="flex items-center gap-2 text-sm font-medium text-ink-gray-9">
+						API Key
+						<button
+							v-if="apiKey"
+							@click="testApiKey"
+							:disabled="testing"
+							class="text-ink-blue-6 hover:text-ink-blue-7 text-xs disabled:opacity-50">
+							{{ testing ? "Testing..." : "Test Key" }}
+						</button>
+					</label>
+				</template>
+			</FormControl>
 			<p class="text-xs text-ink-gray-6">
 				API key for the selected model's provider. Stored in Builder Settings.
 			</p>
@@ -47,8 +40,8 @@
 <script setup lang="ts">
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
-import { createResource } from "frappe-ui";
-import { onMounted, ref } from "vue";
+import { createResource, FormControl } from "frappe-ui";
+import { computed, onMounted, ref } from "vue";
 
 const builderStore = useBuilderStore();
 const availableModels = ref<any[]>([]);
@@ -56,6 +49,19 @@ const testing = ref(false);
 const statusMessage = ref("");
 const statusClass = ref("");
 const apiKey = ref("");
+
+const flattenedModels = computed(() => {
+	const options: any[] = [{ label: "Select a model...", value: "" }];
+	availableModels.value.forEach((provider) => {
+		provider.models.forEach((model: any) => {
+			options.push({
+				label: `${getProviderLabel(provider.provider)}: ${model.label}`,
+				value: model.name,
+			});
+		});
+	});
+	return options;
+});
 
 const getProviderLabel = (provider: string): string => {
 	const labels: Record<string, string> = {

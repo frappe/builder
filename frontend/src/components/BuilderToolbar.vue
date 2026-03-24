@@ -185,7 +185,6 @@ const showInfoDialog = ref(false);
 const showSettingsDialog = ref(false);
 const showShortcuts = inject<() => void>("showShortcuts", () => {});
 
-// Get the AI generator opener from PageBuilder
 const openAIGeneratorFn = inject<(() => void) | undefined>("showAIGenerator", undefined);
 
 const openAIGenerator = () => {

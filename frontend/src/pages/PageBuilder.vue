@@ -164,7 +164,6 @@ const modifyBlockContext = ref<Record<string, any> | null>(null);
 const modifyBlockId = ref<string | null>(null);
 const isAIGenerating = ref(false);
 
-// Expose AI generator dialog to toolbar
 provide("showAIGenerator", () => {
 	aiMode.value = "generate";
 	modifyBlockContext.value = null;
@@ -172,7 +171,6 @@ provide("showAIGenerator", () => {
 	showAIGeneratorDialog.value = true;
 });
 
-// Expose edit-with-AI to context menu
 const editWithAIFn = (block: Block) => {
 	aiMode.value = "modify";
 	modifyBlockContext.value = getBlockObject(block);
@@ -194,7 +192,6 @@ const handleGeneratedBlocks = () => {
 	pageStore.savePage();
 };
 
-// Handle live streaming blocks (partial, not saved)
 const handleStreamingBlocks = (block: Block) => {
 	if (!block) return;
 
@@ -206,7 +203,6 @@ const handleStreamingBlocks = (block: Block) => {
 	}
 };
 
-// Find a block in the tree by blockId and replace its properties with new data
 const replaceBlockInTree = (root: Block, targetId: string, replacement: BlockOptions): boolean => {
 	if (!root || !replacement) return false;
 	if (root.blockId === targetId) {
@@ -242,7 +238,6 @@ const handleModifiedBlocks = () => {
 	aiMode.value = "generate";
 };
 
-// Handle live streaming of modify (update block in-place)
 const handleModifyStreamingBlocks = (block: BlockOptions) => {
 	const targetId = block?.blockId || modifyBlockId.value;
 	if (!block || !targetId) return;

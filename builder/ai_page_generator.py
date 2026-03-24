@@ -68,6 +68,7 @@ MODIFY_PROMPT = (
 	"Use %, rem for responsive widths. Top-level sections MUST be 100% width.\n"
 	"Wrap text in semantic elements — never place text directly in div/section.\n"
 	"Formatting: use flow style for all style dicts e.g. style: {color: '#fff', 'hover:backgroundColor': '#eee'}. "
+	"All images must be external URLs with proper alt text if replacing."
 	"Omit any key whose value is empty, null, or {}."
 )
 
@@ -402,9 +403,6 @@ def modify_section_blocks(
 		block_context=block_context,
 		task_type=task_type,
 	)
-
-
-# ─── Whitelisted API Endpoints ────────────────────────────────────
 
 
 def enqueue_ai_job(fn, **kwargs):
