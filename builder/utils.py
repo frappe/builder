@@ -8,6 +8,7 @@ from os.path import join
 from urllib.parse import unquote, urlparse
 
 import frappe
+from frappe.model.document import Document
 from frappe.modules.import_file import import_file_by_path
 from frappe.utils import get_url
 from frappe.utils.html_utils import unescape_html
@@ -661,8 +662,20 @@ def combine(a, b):
 		return b
 	if b is None:
 		return a
-	res = dict(a)
-	res.update(b)
+	try:
+		res = dict(a)
+	except TypeError as e:
+		if isinstance(a, Document):
+			res = a.as_dict()
+		else:
+			raise e
+	try:
+		res.update(b)
+	except TypeError as e:
+		if isinstance(b, Document):
+			res.update(b.as_dict())
+		else:
+			raise e
 	return res
 
 
@@ -677,7 +690,7 @@ def to_safe_json(data):
 def execute_script_and_combine(prev_block_data, block_data_script, props):
 	props = frappe._dict(frappe.parse_json(props or "{}"))
 	block_data = frappe._dict()
-	_locals = dict(block=frappe._dict(), props=props)
+	_locals = dict(block=frappe._dict(), prev_blocks=frappe._dict(prev_block_data), props=props)
 	execute_script(unescape_html(block_data_script), _locals, "sample")
 	block_data.update(_locals["block"])
 	return combine(prev_block_data, block_data)

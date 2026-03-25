@@ -492,13 +492,19 @@ def save_as_template(page_doc: BuilderPage):
 
 
 @frappe.whitelist()
-def get_block_data(block_id: str, block_data_script: str, props: str, route_variables: dict | None = None):
+def get_block_data(
+	block_id: str,
+	block_data_script: str,
+	props: str,
+	prev_block_data: dict | None = None,
+	route_variables: dict | None = None,
+):
 	if route_variables:
 		frappe.form_dict.update({k: v for k, v in route_variables.items()})
 	frappe.has_permission("Builder Page", "write", throw=True)
 	props = frappe.parse_json(props or "{}")
 	block_data = frappe._dict()
-	_locals = dict(block=frappe._dict(), props=props)
+	_locals = dict(block=frappe._dict(), prev_blocks=frappe._dict(prev_block_data or {}), props=props)
 	execute_script(block_data_script, _locals, block_id)
 	if isinstance(_locals["block"], dict):
 		block_data.update(_locals["block"])
