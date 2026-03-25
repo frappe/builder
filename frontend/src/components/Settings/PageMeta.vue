@@ -23,7 +23,6 @@
 						label="Meta Image"
 						placeholder="Upload Meta Image"
 						labelPosition="top"
-						description="Recommended size: 1200 x 630 px; Page preview image is used as a fallback if Meta Image is not set"
 						@update:modelValue="
 							(url: string) => pageStore.updateActivePage('meta_image', url)
 						"></ImageUploadInput>
