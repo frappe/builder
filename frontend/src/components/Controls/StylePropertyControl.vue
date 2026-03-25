@@ -116,8 +116,8 @@ const baseProps = computed(() => {
 		setModelValue:
 			props.setModelValue ||
 			((value: string | number | boolean) => {
-				if (!value && presetValue) {
-					blockController.setStyle(props.propertyKey, presetValue);
+				if (!value) {
+					blockController.setStyle(props.propertyKey, null);
 				} else {
 					blockController.setStyle(props.propertyKey, value);
 				}
