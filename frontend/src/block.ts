@@ -83,6 +83,7 @@ class Block implements BlockOptions {
 		this.isChildOfComponent = options.isChildOfComponent;
 		this.referenceBlockId = options.referenceBlockId;
 		this.parentBlock = options.parentBlock || null;
+		this.stylePreset = options.stylePreset;
 		if (this.extendedFromComponent) {
 			componentStore.loadComponent(this.extendedFromComponent);
 		}
