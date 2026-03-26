@@ -671,7 +671,7 @@ def hash(s):
 
 
 def to_safe_json(data):
-	return frappe.as_json(data)
+	return frappe.as_json(data or {})
 
 
 def execute_script_and_combine(prev_block_data, block_data_script, props):
