@@ -444,7 +444,7 @@ const onModifyError = (data: any) => {
 
 const eventName = (base: string) => (props.pageId ? `${base}_${props.pageId}` : base);
 
-onMounted(() => {
+const attachEventListeners = () => {
 	builderStore.realtime.on(eventName("ai_generation_progress"), onProgress);
 	builderStore.realtime.on(eventName("ai_generation_stream"), onStream);
 	builderStore.realtime.on(eventName("ai_generation_complete"), onComplete);
@@ -453,9 +453,11 @@ onMounted(() => {
 	builderStore.realtime.on(eventName("ai_modify_stream"), onModifyStream);
 	builderStore.realtime.on(eventName("ai_modify_complete"), onModifyComplete);
 	builderStore.realtime.on(eventName("ai_modify_error"), onModifyError);
-});
+};
 
-onUnmounted(() => {
+onMounted(attachEventListeners);
+
+const detachEventListeners = () => {
 	builderStore.realtime.off(eventName("ai_generation_progress"), onProgress);
 	builderStore.realtime.off(eventName("ai_generation_stream"), onStream);
 	builderStore.realtime.off(eventName("ai_generation_complete"), onComplete);
@@ -464,7 +466,17 @@ onUnmounted(() => {
 	builderStore.realtime.off(eventName("ai_modify_stream"), onModifyStream);
 	builderStore.realtime.off(eventName("ai_modify_complete"), onModifyComplete);
 	builderStore.realtime.off(eventName("ai_modify_error"), onModifyError);
-});
+};
+
+onUnmounted(detachEventListeners);
+
+watch(
+	() => props.pageId,
+	() => {
+		detachEventListeners();
+		attachEventListeners();
+	},
+);
 
 defineExpose({
 	executeDirect,
