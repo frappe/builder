@@ -76,7 +76,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
-		label: "Rewrite with AI",
+		label: "Rewrite (AI)",
 		action: () => {
 			runDirectAI?.(block.value, "rewrite_text", "Rewrite the content");
 		},
@@ -84,9 +84,9 @@ const contextMenuOptions: ContextMenuOption[] = [
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
-		label: "Better AI Image",
+		label: "Replace Image (AI)",
 		action: () => {
-			runDirectAI?.(block.value, "replace_image", "Suggest a better relevant image");
+			runDirectAI?.(block.value, "replace_image", "Replace image");
 		},
 		condition: () => Boolean(runDirectAI) && block.value.isImage() && !block.value.isRoot(),
 		disabled: () => builderStore.readOnlyMode,

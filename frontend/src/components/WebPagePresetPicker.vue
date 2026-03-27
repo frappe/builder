@@ -617,13 +617,13 @@ import { FeatherIcon } from "frappe-ui";
 import { computed, ref } from "vue";
 
 const CATEGORIES = [
-	{ label: "Modern", value: "modern" },
 	{ label: "Minimal", value: "minimal" },
 	{ label: "Technical", value: "tech" },
+	{ label: "Modern", value: "modern" },
 	{ label: "Retro", value: "retro" },
 ];
 
-const selectedCategory = ref("modern");
+const selectedCategory = ref("minimal");
 
 const filteredPresets = computed(() => {
 	return PRESETS.filter((p) => p.category === selectedCategory.value);

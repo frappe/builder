@@ -284,8 +284,7 @@ const executeDirect = async (block: any, type: "rewrite_text" | "replace_image",
 
 	emit("update:blockContext", block);
 
-	const finalPrompt =
-		customPrompt || (type === "rewrite_text" ? "Improve this text" : "Suggest a better image");
+	const finalPrompt = customPrompt || (type === "rewrite_text" ? "Improve this text" : "Replace image");
 
 	try {
 		await createResource({
