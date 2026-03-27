@@ -85,7 +85,7 @@ REPLACE_IMAGE_PROMPT = (
 
 GENERATE_PROMPT = """You are an expert web designer specializing in creating modern, responsive web pages using the Frappe Builder block system.
 
-Return ONLY a valid YAML object. No markdown, no explanations.
+Critical: Return ONLY a valid YAML object. No markdown, no explanations.
 
 # Structure:
 Return a single root block that represents the page (el: div, id: root). This block contains all sections in its 'c' (children) property.
@@ -417,7 +417,7 @@ def enqueue_ai_job(fn, **kwargs):
 		model=model,
 		api_key=settings.get_password("ai_api_key", raise_exception=False),
 		user=frappe.session.user,
-		is_async=True,
+		now=True,
 		**kwargs,
 	)
 	frappe.local.response.http_status_code = 202
@@ -462,19 +462,68 @@ def get_available_models():
 				{"name": "grok-4.1-fast", "label": "Grok 4.1 Fast (Cheapest)", "max_tokens": 2000000},
 			],
 		},
+		{
+			"provider": "openrouter",
+			"models": [
+				{
+					"name": "openrouter/anthropic/claude-sonnet-4.6",
+					"label": "Claude 4.6 Sonnet (Balanced)",
+					"max_tokens": 200000,
+				},
+				{
+					"name": "openrouter/anthropic/claude-haiku-4.5",
+					"label": "Claude 4.5 Haiku (Fastest)",
+					"max_tokens": 200000,
+				},
+				{
+					"name": "openrouter/google/gemini-3.1-pro",
+					"label": "Gemini 3.1 Pro (Flagship)",
+					"max_tokens": 1048576,
+				},
+				{
+					"name": "openrouter/google/gemini-3-flash-preview",
+					"label": "Gemini 3 Flash (Fast)",
+					"max_tokens": 1048576,
+				},
+				{
+					"name": "openrouter/openai/gpt-5.4",
+					"label": "GPT-5.4 (Flagship)",
+					"max_tokens": 1000000,
+				},
+				{
+					"name": "openrouter/openai/gpt-5.4-mini",
+					"label": "GPT-5.4 Mini",
+					"max_tokens": 1000000,
+				},
+				{
+					"name": "openrouter/moonshotai/kimi-k2.5",
+					"label": "Kimi K2.5 (Cheapest)",
+					"max_tokens": 2000000,
+				},
+				# z-ai/glm-5
+				{
+					"name": "openrouter/z-ai/glm-5",
+					"label": "GLM-5 (Balanced)",
+					"max_tokens": 200000,
+				},
+			],
+		},
 	]
 
 
 PROVIDER_SIMPLE_MODEL: dict[str, str] = {
-	"anthropic": "claude-haiku-4-5",
+	"anthropic": "claude-sonnet-4-6",
 	"google": "gemini-3-flash-preview",
 	"openai": "gpt-5.4-nano",
 	"xai": "grok-4.1-fast",
+	"openrouter": "openrouter/google/gemini-3-flash-preview",
 }
 
 
 def detect_provider(model: str) -> str | None:
 	lower = model.lower()
+	if lower.startswith("openrouter/"):
+		return "openrouter"
 	if "claude-" in lower:
 		return "anthropic"
 	if "gemini-" in lower:

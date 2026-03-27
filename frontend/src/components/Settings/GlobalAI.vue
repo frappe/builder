@@ -69,6 +69,7 @@ const getProviderLabel = (provider: string): string => {
 		anthropic: "Anthropic",
 		google: "Google",
 		"x-ai": "xAI",
+		openrouter: "OpenRouter",
 	};
 	return labels[provider] || provider;
 };
