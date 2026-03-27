@@ -656,26 +656,22 @@ def get_export_paths(app_path, export_name):
 		"pages_path": pages_path,
 	}
 
+def to_dict_with_fallback(obj):
+	try:
+		return frappe._dict(obj)
+	except TypeError:
+		if isinstance(obj, Document):
+			return obj.as_dict()
+		else:
+			raise
 
 def combine(a, b):
 	if a is None:
 		return b
 	if b is None:
 		return a
-	try:
-		res = dict(a)
-	except TypeError as e:
-		if isinstance(a, Document):
-			res = a.as_dict()
-		else:
-			raise e
-	try:
-		res.update(b)
-	except TypeError as e:
-		if isinstance(b, Document):
-			res.update(b.as_dict())
-		else:
-			raise e
+	res = to_dict_with_fallback(a)
+	res.update(to_dict_with_fallback(b))
 	return res
 
 
@@ -690,7 +686,7 @@ def to_safe_json(data):
 def execute_script_and_combine(prev_block_data, block_data_script, props):
 	props = frappe._dict(frappe.parse_json(props or "{}"))
 	block_data = frappe._dict()
-	_locals = dict(block=frappe._dict(), prev_blocks=frappe._dict(prev_block_data), props=props)
+	_locals = dict(block=frappe._dict(), prev_blocks=to_dict_with_fallback(prev_block_data), props=props)
 	execute_script(unescape_html(block_data_script), _locals, "sample")
 	block_data.update(_locals["block"])
 	return combine(prev_block_data, block_data)
