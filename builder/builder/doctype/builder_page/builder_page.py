@@ -954,7 +954,9 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 
 	# Add global function definition (only once)
 	if script_unique_id not in state["used_block_scripts"]:
-		state["global_script_tag"].append(f"function client_script_{script_unique_id}(props) {{{script}}}\n")
+		state["global_script_tag"].append(
+			f"function client_script_{script_unique_id}(props, block_data) {{{script}}}\n"
+		)
 		state["used_block_scripts"].add(script_unique_id)
 
 	# Add data attribute for selecting this specific block
@@ -965,7 +967,8 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 	local_script.string = (
 		f"(client_script_{script_unique_id}).call("
 		f"document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]'), "
-		f"{{{{ props | to_safe_json }}}}"
+		f"{{{{ props | to_safe_json }}}}, "
+		f"{{{{ block.block_data | to_safe_json }}}}"
 		f");"
 	)
 	tag.append(local_script)
