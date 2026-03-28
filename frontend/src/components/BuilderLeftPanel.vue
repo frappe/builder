@@ -90,12 +90,12 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { Tooltip } from "frappe-ui";
 import { inject, nextTick, Ref, ref, watch, watchEffect } from "vue";
+import { useRoute } from "vue-router";
 import BlockLayers from "./BlockLayers.vue";
 import BuilderAssets from "./BuilderAssets.vue";
 import BuilderBlockTemplates from "./BuilderBlockTemplates.vue";
 import BuilderCanvas from "./BuilderCanvas.vue";
 import PanelResizer from "./PanelResizer.vue";
-import { useRoute } from "vue-router";
 
 const showVariableManager = ref(false);
 const miniSidebar = ref(null) as Ref<HTMLElement | null>;
@@ -144,6 +144,7 @@ const setActiveTab = (tab: LeftSidebarTabOption) => {
 		showVariableManager.value = !showVariableManager.value;
 	} else {
 		builderStore.leftPanelActiveTab = tab;
+		showVariableManager.value = false;
 	}
 };
 
