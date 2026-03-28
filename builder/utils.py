@@ -656,6 +656,7 @@ def get_export_paths(app_path, export_name):
 		"pages_path": pages_path,
 	}
 
+
 def to_dict_with_fallback(obj):
 	try:
 		return frappe._dict(obj)
@@ -664,6 +665,7 @@ def to_dict_with_fallback(obj):
 			return obj.as_dict()
 		else:
 			raise
+
 
 def combine(a, b):
 	if a is None:

@@ -357,8 +357,8 @@ function getDefaultIsStandard(keepProps: boolean): string {
 	return propDetailsStandard !== undefined
 		? String(propDetailsStandard)
 		: isStandardByDefault
-		? "true"
-		: "false";
+			? "true"
+			: "false";
 }
 
 function resetNonStandardState(keepProps: boolean, keepType: boolean) {
@@ -372,7 +372,7 @@ function resetStandardState(keepProps: boolean, keepType: boolean) {
 	const details = keepProps ? props.propDetails : null;
 
 	if (details?.isStandard) {
-		const nextType = keepType ? standardPropOptions.type : details.propOptions?.type ?? "string";
+		const nextType = keepType ? standardPropOptions.type : (details.propOptions?.type ?? "string");
 
 		Object.assign(standardPropOptions, {
 			...details.propOptions,
@@ -438,7 +438,7 @@ function buildPropValue(): BlockProps[string] {
 			? {
 					...standardPropOptions,
 					dependencies: standardPropDependencyMap.value,
-			  }
+				}
 			: undefined,
 	};
 }
