@@ -65,3 +65,9 @@ p:empty::before {
 [role='dialog'].bg-surface-modal, [role='dialog'] .bg-surface-modal {
 	background-color: var(--surface-white);
 }
+
+[contenteditable=true]:focus-visible {
+	outline: 1px solid var(--outline-gray-4);
+	outline-offset: 3px;
+	border-radius: 2px;
+}

@@ -1,23 +1,24 @@
 <template>
 	<div class="flex items-center justify-between">
-		<InputLabel>True Label</InputLabel>
-		<Input
-			:model-value="trueLabel"
-			@update:model-value="handleTrueLabelChange"
-			@input="handleTrueLabelChange"
-			placeholder="Enter true Label display"></Input>
+		<InlineInput
+			label="True Label"
+			class="w-full"
+			:modelValue="trueLabel"
+			@update:modelValue="handleTrueLabelChange"
+			placeholder="Enter true label display"></InlineInput>
 	</div>
 	<div class="flex items-center justify-between">
-		<InputLabel>False Label</InputLabel>
-		<Input
-			:model-value="falseLabel"
-			@update:model-value="handleFalseLabelChange"
-			@input="handleFalseLabelChange"
-			placeholder="Enter false Label display"></Input>
+		<InlineInput
+			label="False Label"
+			class="w-full"
+			:modelValue="falseLabel"
+			@update:modelValue="handleFalseLabelChange"
+			placeholder="Enter false label display"></InlineInput>
 	</div>
 	<div class="flex items-center justify-between">
-		<InputLabel>Default Value</InputLabel>
-		<Input
+		<InlineInput
+			label="Default Value"
+			class="w-full"
 			type="select"
 			:options="[
 				{
@@ -29,16 +30,15 @@
 					value: 'false',
 				},
 			]"
-			:model-value="defaultValue"
-			@update:model-value="handleDefaultValueChange"
-			placeholder="Enter default value"></Input>
+			:modelValue="defaultValue"
+			@update:modelValue="handleDefaultValueChange"
+			placeholder="Enter default value"></InlineInput>
 	</div>
 </template>
 
 <script setup lang="ts">
-import InputLabel from "@/components/Controls/InputLabel.vue";
-import Input from "@/components/Controls/Input.vue";
 import { nextTick, ref, watch } from "vue";
+import InlineInput from "@/components/Controls/InlineInput.vue";
 
 const props = defineProps<{
 	options: Record<string, any>;

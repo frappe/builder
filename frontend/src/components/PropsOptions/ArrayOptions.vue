@@ -1,22 +1,22 @@
 <template>
 	<div v-if="false" class="flex items-center justify-between">
-		<InputLabel>Min. Items</InputLabel>
-		<Input
-			:model-value="minItems"
-			@update:model-value="handleMinItemsChange"
+		<InlineInput
+			label="Min. Items"
+			:modelValue="minItems"
+			@update:modelValue="handleMinItemsChange"
 			@input="handleMinItemsChange"
-			placeholder="Enter min number of items"></Input>
+			placeholder="Enter min number of items"></InlineInput>
 	</div>
 	<div v-if="false" class="flex items-center justify-between">
-		<InputLabel>Max. Items</InputLabel>
-		<Input
-			:model-value="maxItems"
-			@update:model-value="handleMaxItemsChange"
+		<InlineInput
+			label="Max. Items"
+			:modelValue="maxItems"
+			@update:modelValue="handleMaxItemsChange"
 			@input="handleMaxItemsChange"
-			placeholder="Enter max number of items"></Input>
+			placeholder="Enter max number of items"></InlineInput>
 	</div>
 	<div class="flex flex-col gap-3">
-		<InputLabel>Default Items</InputLabel>
+		<InputLabel class="w-[88px] shrink-0">Default Items</InputLabel>
 		<ArrayEditor :arr @update:arr="handleArrChange" />
 	</div>
 </template>
@@ -28,6 +28,7 @@ import ArrayEditor from "@/components/ArrayEditor.vue";
 import { nextTick, ref, watch } from "vue";
 import { Ref } from "vue";
 import { toast } from "vue-sonner";
+import InlineInput from "../Controls/InlineInput.vue";
 
 const props = defineProps<{
 	options: Record<string, any>;

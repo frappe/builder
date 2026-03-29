@@ -35,6 +35,7 @@ const TEXT_ELEMENTS = new Set([
 	"strong",
 	"em",
 	"i",
+	"blockquote",
 ]);
 
 const CONTAINER_ELEMENTS = new Set(["section", "div"]);

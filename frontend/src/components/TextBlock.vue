@@ -18,7 +18,7 @@
 			v-on-click-outside="handleClickOutside"
 			@mouseup="selectionTriggered = false"
 			v-if="editor && showEditor"
-			class="relative"
+			class="bg-clip-[inherit] relative bg-inherit [-webkit-background-clip:inherit] [background-image:inherit]"
 			:style="block.getRawStyles()"
 			@keydown="(e: KeyboardEvent) => bubbleMenu?.handleKeydown(e)" />
 		<slot />
@@ -56,6 +56,7 @@ let selectionTriggered = false as boolean;
 const props = withDefaults(
 	defineProps<{
 		block: Block;
+		uid: string;
 		preview?: boolean;
 		data?: Record<string, any>;
 		blockData?: Record<string, any> | null;

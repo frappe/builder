@@ -110,6 +110,14 @@
 						Clear Gradient
 					</BuilderButton>
 				</div>
+
+				<div v-if="isTextBlock" class="mt-4 border-t border-outline-gray-2 pt-3">
+					<InlineInput
+						label="Clip Background to Text"
+						type="checkbox"
+						:modelValue="backgroundClip === 'text'"
+						@update:modelValue="setBGClip" />
+				</div>
 			</div>
 		</template>
 	</Popover>
@@ -167,8 +175,6 @@ watch(
 	{ immediate: true },
 );
 
-const hasBackground = computed(() => Boolean(rawBackgroundImage.value || backgroundColor.value));
-
 const getDisplayValue = (state: string | null) => {
 	const bg = blockController.getStyle(getStyleKey("backgroundImage", state)) as string;
 	const color = blockController.getStyle(getStyleKey("backgroundColor", state)) as string;
@@ -195,6 +201,12 @@ const backgroundPosition = computed(
 	() => blockController.getStyle(getStyleKey("backgroundPosition")) as string,
 );
 const backgroundRepeat = computed(() => blockController.getStyle(getStyleKey("backgroundRepeat")) as string);
+const backgroundClip = computed(
+	() =>
+		blockController.getStyle(getStyleKey("backgroundClip")) ||
+		blockController.getStyle(getStyleKey("WebkitBackgroundClip")),
+);
+const isTextBlock = computed(() => blockController.isText());
 
 const getHasBackground = (state: string | null) => {
 	return Boolean(
@@ -312,6 +324,16 @@ const clearBGImage = () => {
 	blockController.setStyle(getStyleKey("backgroundSize"), null);
 	blockController.setStyle(getStyleKey("backgroundPosition"), null);
 	blockController.setStyle(getStyleKey("backgroundRepeat"), null);
+	blockController.setStyle(getStyleKey("backgroundColor"), null);
+};
+
+const setBGClip = (value: boolean) => {
+	const clipValue = value ? "text" : null;
+	const fillValue = value ? "transparent" : null;
+
+	blockController.setStyle(getStyleKey("backgroundClip"), clipValue);
+	blockController.setStyle(getStyleKey("WebkitBackgroundClip"), clipValue);
+	blockController.setStyle(getStyleKey("WebkitTextFillColor"), fillValue);
 };
 
 const handleSetVariant = (variantName: string, value: string | number | boolean | null) => {

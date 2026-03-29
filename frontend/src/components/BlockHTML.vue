@@ -9,6 +9,7 @@ import { computed, ref } from "vue";
 const component = ref<HTMLElement | null>(null);
 const props = defineProps<{
 	block: Block;
+	uid: string;
 	data?: Record<string, unknown> | null;
 	blockData?: Record<string, unknown> | null;
 	defaultProps?: Record<string, unknown> | null;

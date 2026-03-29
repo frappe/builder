@@ -163,7 +163,7 @@ import blockController from "@/utils/blockController";
 import TabButtons from "./Controls/TabButtons.vue";
 import Switch from "./Controls/Switch.vue";
 import PropsEditor from "./PropsEditor.vue";
-import useBlockDataStore from "@/stores/blockDataStore";
+import { useBlockDataStore } from "@/stores/blockStore";
 import { useStorage } from "@vueuse/core";
 
 const pageStore = usePageStore();

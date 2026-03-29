@@ -1,18 +1,17 @@
 <template>
 	<div class="flex items-center justify-between">
-		<InputLabel>Default Value</InputLabel>
-		<Input
-			:model-value="options.defaultValue"
-			@input="handleDefaultValueChange"
-			@update:model-value="handleDefaultValueChange"
-			placeholder="Enter default value"></Input>
+		<InlineInput
+			label="Default Value"
+			class="w-full"
+			:modelValue="defaultValue"
+			@update:modelValue="handleDefaultValueChange"
+			placeholder="Enter default value"></InlineInput>
 	</div>
 </template>
 
 <script setup lang="ts">
-import InputLabel from "@/components/Controls/InputLabel.vue";
-import Input from "@/components/Controls/Input.vue";
 import { ref } from "vue";
+import InlineInput from "@/components/Controls/InlineInput.vue";
 
 const props = defineProps<{
 	options: Record<string, any>;

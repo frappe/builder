@@ -12,7 +12,7 @@
   "preview_width",
   "preview_height",
   "category",
-  "order"
+  "sort_order"
  ],
  "fields": [
   {
@@ -58,9 +58,9 @@
    "label": "Preview Height"
   },
   {
-   "fieldname": "order",
+   "fieldname": "sort_order",
    "fieldtype": "Int",
-   "label": "Order"
+   "label": "Sort Order"
   }
  ],
  "in_create": 1,
@@ -98,7 +98,7 @@
    "write": 1
   }
  ],
- "sort_field": "creation",
- "sort_order": "DESC",
+ "sort_field": "sort_order",
+ "sort_order": "ASC",
  "states": []
 }

@@ -8,7 +8,7 @@
  "modified": "2024-09-19 13:08:25.812814",
  "modified_by": "Administrator",
  "name": "Hero 1",
- "order": 4,
+ "sort_order": 4,
  "owner": "Administrator",
  "preview": "/builder_assets/Hero 1/hero_1.png",
  "preview_height": 2,

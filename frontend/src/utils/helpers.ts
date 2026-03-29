@@ -9,6 +9,7 @@ import { FileUploadHandler } from "frappe-ui";
 import { defineComponent, h, markRaw, reactive, ref, toRaw } from "vue";
 import { toast } from "vue-sonner";
 import Dialog from "../components/Controls/Dialog.vue";
+import { useBlockDataStore, useBlockUidStore } from "@/stores/blockStore";
 
 function getNumberFromPx(px: string | number | null | undefined): number {
 	if (!px) {

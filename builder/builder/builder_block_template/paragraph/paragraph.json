@@ -8,7 +8,7 @@
  "modified": "2024-09-19 13:09:32.402504",
  "modified_by": "Administrator",
  "name": "Paragraph",
- "order": 11,
+ "sort_order": 11,
  "owner": "Administrator",
  "preview": "/builder_assets/Paragraph/paragraph.png",
  "preview_height": 1,
