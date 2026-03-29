@@ -323,10 +323,11 @@ def run_llm_job(
 
 	should_stream = True
 	action = "Modifying" if is_modify else "Generating"
+	model_label = get_model_label(model)
 	emit(
 		"progress",
 		status="generating",
-		message=f"{action} with {model}...",
+		message=f"{action} with {model_label}...",
 		task_tier=task_tier,
 		model_used=model,
 	)
@@ -355,10 +356,19 @@ def run_llm_job(
 	content = ""
 	try:
 		if should_stream:
+			last_stage = None
 			for chunk in call_llm(model, messages, params, stream=True, api_key=api_key):
 				if delta := chunk.choices[0].delta.content:
+					if not content:
+						emit("progress", message="Designing...")
+						last_stage = "Designing..."
 					content += delta
 					emit("stream", chunk=delta, block_id=original_id)
+
+					stage = get_progress_stage(content)
+					if stage and stage != last_stage:
+						emit("progress", message=stage)
+						last_stage = stage
 		else:
 			content = call_llm(model, messages, params, stream=False, api_key=api_key)
 
@@ -372,7 +382,14 @@ def run_llm_job(
 		emit("error", message=str(e))
 		return
 
-	emit("complete", block_id=original_id, model_used=model, task_tier=task_tier)
+	success_message = "Modified block successfully" if is_modify else "Page generated successfully"
+	emit(
+		"complete",
+		block_id=original_id,
+		model_used=model,
+		task_tier=task_tier,
+		message=success_message,
+	)
 
 
 def generate_page_blocks(
@@ -508,6 +525,39 @@ def get_available_models():
 			],
 		},
 	]
+
+
+def get_model_label(model_name: str) -> str:
+	available = get_available_models()
+	for provider in available:
+		for m in provider["models"]:
+			if m["name"] == model_name:
+				return m["label"]
+	# Fallback: clean up the name
+	return model_name.removeprefix("openrouter/").replace("/", " ").replace("-", " ").title()
+
+
+def get_progress_stage(content: str) -> str | None:
+	lookback = content[-400:]
+	major_elements = ["section", "nav", "header", "footer"]
+
+	# Find the most recent major element type
+	last_pos = -1
+	found_el = None
+	for el in major_elements:
+		pos = lookback.rfind(f"el: {el}")
+		if pos > last_pos:
+			last_pos = pos
+			found_el = el
+
+	if found_el and last_pos != -1:
+		part = lookback[last_pos:]
+		name_match = re.search(r"name:\s*['\"]?([^'\"\n]+)['\"]?", part)
+		if name_match:
+			block_name = name_match.group(1).strip()
+			if block_name.lower() not in {"body", "root", "container"}:
+				return f"Building {block_name}..."
+	return None
 
 
 PROVIDER_DEFAULT_MODEL: dict[str, str] = {

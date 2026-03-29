@@ -62,7 +62,7 @@ import Dialog from "@/components/Controls/Dialog.vue";
 import WebPagePresetPicker from "@/components/WebPagePresetPicker.vue";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
-import { useThrottleFn } from "@vueuse/core";
+import { useLocalStorage, useThrottleFn } from "@vueuse/core";
 import { createResource, FeatherIcon, FormControl, Textarea } from "frappe-ui";
 import yaml from "js-yaml";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
@@ -106,6 +106,7 @@ interface ProgressData {
 interface CompleteData {
 	model_used?: string;
 	task_tier?: "simple" | "complex";
+	message?: string;
 }
 
 const props = withDefaults(
@@ -143,7 +144,7 @@ const remoteTaskType = ref<string | null>(null);
 const remoteBlockId = ref<string | null>(null);
 const availableModels = ref<AIProvider[]>([]);
 const selectedPreset = ref<Preset | null>(null);
-const selectedModel = ref("");
+const selectedModel = useLocalStorage("ai-selected-model", "");
 const currentProviderModels = computed(() => {
 	const provider = builderSettings.doc?.ai_model;
 	if (!provider) return [];
@@ -154,7 +155,8 @@ const currentProviderModels = computed(() => {
 watch(
 	currentProviderModels,
 	(models) => {
-		if (models.length > 0 && !selectedModel.value) {
+		const isValid = models.some((m) => m.name === selectedModel.value);
+		if (models.length > 0 && (!selectedModel.value || !isValid)) {
 			selectedModel.value = models[0].name;
 		}
 	},
@@ -362,9 +364,9 @@ function makeHandlers(isModify: boolean) {
 		if (canThrottle) (isModify ? throttledModifyStreaming : throttledStreaming)();
 	};
 
-	const onComplete = (_data: CompleteData) => {
+	const onComplete = (data: CompleteData) => {
 		generating.value = false;
-		progressMessage.value = "Page generation completed";
+		progressMessage.value = data.message || "Operation completed";
 		setTimeout(() => (progressMessage.value = ""), 2000);
 		if (isModify) {
 			processModifyStreaming();
