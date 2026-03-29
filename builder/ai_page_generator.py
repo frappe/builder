@@ -323,12 +323,10 @@ def run_llm_job(
 
 	should_stream = True
 	action = "Modifying" if is_modify else "Generating"
-	tier_label = "fast" if task_tier == "simple" else "full"
-
 	emit(
 		"progress",
 		status="generating",
-		message=f"{action} ({tier_label}) with {model}...",
+		message=f"{action} with {model}...",
 		task_tier=task_tier,
 		model_used=model,
 	)
@@ -405,13 +403,19 @@ def modify_section_blocks(
 	)
 
 
-def enqueue_ai_job(fn, **kwargs):
+def enqueue_ai_job(fn, model=None, **kwargs):
 	if not frappe.has_permission("Builder Page", ptype="write"):
 		frappe.throw(_("You do not have permission to modify pages"))
 	settings = frappe.get_single("Builder Settings")
-	model = settings.get("ai_model")
+
 	if not model:
-		frappe.throw(_("Please configure an AI model in Settings → AI"))
+		model = settings.get("ai_model")
+
+	if not model:
+		frappe.throw(_("Please configure an AI provider in Settings → AI"))
+
+	model = get_default_model(model)
+
 	frappe.enqueue(
 		fn,
 		model=model,
@@ -486,11 +490,6 @@ def get_available_models():
 					"max_tokens": 1048576,
 				},
 				{
-					"name": "openrouter/openai/gpt-5.4",
-					"label": "GPT-5.4 (Flagship)",
-					"max_tokens": 1000000,
-				},
-				{
 					"name": "openrouter/openai/gpt-5.4-mini",
 					"label": "GPT-5.4 Mini",
 					"max_tokens": 1000000,
@@ -511,11 +510,20 @@ def get_available_models():
 	]
 
 
+PROVIDER_DEFAULT_MODEL: dict[str, str] = {
+	"openai": "gpt-5.4",
+	"anthropic": "claude-sonnet-4-6",
+	"google": "gemini-3.1-pro-preview",
+	"x-ai": "grok-4.20",
+	"openrouter": "openrouter/anthropic/claude-sonnet-4.6",
+}
+
+
 PROVIDER_SIMPLE_MODEL: dict[str, str] = {
 	"anthropic": "claude-sonnet-4-6",
 	"google": "gemini-3-flash-preview",
 	"openai": "gpt-5.4-nano",
-	"xai": "grok-4.1-fast",
+	"x-ai": "grok-4.1-fast",
 	"openrouter": "openrouter/google/gemini-3-flash-preview",
 }
 
@@ -531,15 +539,23 @@ def detect_provider(model: str) -> str | None:
 	if "gpt-" in lower or re.match(r"o\d", lower):
 		return "openai"
 	if "grok-" in lower:
-		return "xai"
+		return "x-ai"
 	return None
 
 
 def get_simple_model(model: str) -> str:
 	provider = detect_provider(model)
 	if provider is None:
+		if model in PROVIDER_SIMPLE_MODEL:
+			return PROVIDER_SIMPLE_MODEL[model]
 		return model
-	return PROVIDER_SIMPLE_MODEL[provider]
+	return PROVIDER_SIMPLE_MODEL.get(provider, model)
+
+
+def get_default_model(model_or_provider: str) -> str:
+	if model_or_provider in PROVIDER_DEFAULT_MODEL:
+		return PROVIDER_DEFAULT_MODEL[model_or_provider]
+	return model_or_provider
 
 
 @frappe.whitelist()
@@ -548,13 +564,17 @@ def get_ai_models():
 
 
 @frappe.whitelist()
-def generate_page_from_prompt(prompt: str, page_id: str | None = None):
-	return enqueue_ai_job(generate_page_blocks, prompt=prompt, page_id=page_id)
+def generate_page_from_prompt(prompt: str, page_id: str | None = None, model: str | None = None):
+	return enqueue_ai_job(generate_page_blocks, prompt=prompt, page_id=page_id, model=model)
 
 
 @frappe.whitelist()
 def modify_section_from_prompt(
-	prompt: str, block_context: str, page_id: str | None = None, task_type: str | None = None
+	prompt: str,
+	block_context: str,
+	page_id: str | None = None,
+	task_type: str | None = None,
+	model: str | None = None,
 ):
 	try:
 		json.loads(block_context)
@@ -566,15 +586,19 @@ def modify_section_from_prompt(
 		block_context=block_context,
 		page_id=page_id,
 		task_type=task_type,
+		model=model,
 	)
 
 
 @frappe.whitelist()
 def test_api_key(model: str, api_key: str):
+	actual_model = get_default_model(model)
+	if actual_model.startswith("gemini-"):
+		actual_model = f"gemini/{actual_model}"
 	try:
 		litellm.drop_params = True
 		litellm.completion(
-			model=f"gemini/{model}" if model.startswith("gemini-") else model,
+			model=actual_model,
 			messages=[{"role": "user", "content": "Say 'OK' if you can read this"}],
 			max_tokens=10,
 			api_key=api_key,
