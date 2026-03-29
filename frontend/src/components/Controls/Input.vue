@@ -31,6 +31,7 @@
 				<button
 					class="cursor-pointer text-ink-gray-4 hover:text-ink-gray-5"
 					tabindex="-1"
+					:disabled="Boolean(attrs.disabled)"
 					@click="clearValue">
 					<CrossIcon />
 				</button>

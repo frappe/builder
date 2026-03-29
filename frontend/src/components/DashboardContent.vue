@@ -139,7 +139,8 @@ import vOnClickAndHold from "@/directives/vOnClickAndHold";
 import useBuilderStore from "@/stores/builderStore";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { useEventListener, useStorage, watchDebounced } from "@vueuse/core";
+import { useShortcut } from "@/utils/useShortcut";
+import { useStorage, watchDebounced } from "@vueuse/core";
 import { Button, createResource, Select } from "frappe-ui";
 import { onActivated, Ref, ref, watch } from "vue";
 
@@ -173,11 +174,14 @@ watch(
 );
 
 // remove selection mode when the escape key is pressed
-useEventListener(document, "keydown", (ev) => {
-	if (ev.key === "Escape") {
+useShortcut({
+	key: "Escape",
+	description: "Deselect pages",
+	group: "Dashboard",
+	handler: () => {
 		selectedPages.value.clear();
 		selectionMode.value = false;
-	}
+	},
 });
 
 const fetchPages = () => {

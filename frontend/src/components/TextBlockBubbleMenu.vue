@@ -160,8 +160,9 @@ const isEditableRef = computed(() => props.isEditable);
 
 const selectedColor = computed(() => {
 	if (props.editor?.isActive("textStyle")) {
-		return props.editor.getAttributes("textStyle").color || "#000000";
+		return props.editor.getAttributes("textStyle").color || null;
 	}
+	return null;
 });
 
 const enableLinkInput = () => {

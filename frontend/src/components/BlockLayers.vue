@@ -10,6 +10,8 @@
 			:force-fallback="true"
 			:fallback-class="'!hidden'"
 			:fallback-on-body="false"
+			:delay="100"
+			:delay-on-touch-only="false"
 			:sort="false"
 			:move="checkMove"
 			@start="onDragStart"
@@ -45,7 +47,7 @@
 								'ml-[-18px]': adjustForRoot,
 							}"
 							v-if="element.children && element.children.length && !element.isRoot()"
-							@click.stop="toggleExpanded(element)" />
+							@click="toggleExpanded(element)" />
 						<FeatherIcon
 							:name="element.getIcon()"
 							class="h-3 w-3"

@@ -21,6 +21,7 @@ const typographySectionProperties = [
 			return {
 				label: "Content",
 				propertyKey: "innerHTML",
+				controlType: "key",
 				// @ts-ignore
 				allowDynamicValue: true,
 				getModelValue: () => blockController.getText(),
@@ -189,6 +190,12 @@ const typographySectionProperties = [
 						label: "Right",
 						value: "right",
 						icon: "align-right",
+						hideLabel: true,
+					},
+					{
+						label: "Justify",
+						value: "justify",
+						icon: "align-justify",
 						hideLabel: true,
 					},
 				],

@@ -12,9 +12,15 @@
 					<slot name="prefix" />
 				</div>
 				<ComboboxInput
+					ref="comboboxInput"
 					v-model="searchQuery"
 					autocomplete="off"
-					@focus="emit('focus')"
+					@focus="
+						() => {
+							emit('focus');
+							return false;
+						}
+					"
 					@blur="handleBlur"
 					@keydown.enter="handleEnter"
 					:display-value="getDisplayValue"
@@ -29,46 +35,61 @@
 				</Button>
 			</div>
 
-			<ComboboxContent
-				class="absolute z-10 mt-1 max-h-80 w-full overflow-hidden rounded-lg border bg-surface-white shadow-xl">
-				<div class="overflow-y-auto p-1">
-					<template v-for="(option, index) in displayOptions" :key="`${option.value}-${index}`">
-						<ComboboxSeparator
-							v-if="option.value.startsWith('_separator_line')"
-							class="bg-outline-gray-2 mx-2 my-1 h-px" />
-						<ComboboxLabel
-							v-else-if="option.value.startsWith('_separator')"
-							class="px-2 py-1 text-xs font-semibold text-ink-gray-5">
-							{{ option.label }}
-						</ComboboxLabel>
-						<ComboboxItem
+			<Teleport to="body" :disabled="!referenceElementSelector">
+				<ComboboxContent
+					@after-enter="
+						() => {
+							fixedPositionStyles = getFixedPositionStyles();
+						}
+					"
+					@after-leave="
+						() => {
+							fixedPositionStyles = {};
+						}
+					"
+					:class="referenceElementSelector ? 'fixed' : 'absolute'"
+					:style="fixedPositionStyles"
+					ref="contentRef"
+					class="z-50 mt-1 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-white shadow-xl">
+					<div class="overflow-y-auto p-1">
+						<template v-for="(option, index) in displayOptions" :key="`${option.value}-${index}`">
+							<ComboboxSeparator
+								v-if="option.value.startsWith('_separator_line')"
+								class="bg-outline-gray-2 mx-2 my-1 h-px" />
+							<ComboboxLabel
+								v-else-if="option.value.startsWith('_separator')"
+								class="px-2 py-1 text-xs font-semibold text-ink-gray-5">
+								{{ option.label }}
+							</ComboboxLabel>
+							<ComboboxItem
+								v-else
+								:value="option.value"
+								:disabled="option.disabled"
+								class="group flex cursor-default select-none items-center gap-2 rounded px-2 py-1.5 text-sm text-ink-gray-9 transition-colors data-[disabled]:pointer-events-none data-[highlighted]:bg-surface-gray-1 data-[disabled]:opacity-50">
+								<component v-if="option.prefix" :is="option.prefix" class="h-4 w-4 flex-shrink-0" />
+								<span class="w-full flex-1 truncate">{{ option.label }}</span>
+								<component
+									v-if="option.suffix"
+									:is="option.suffix"
+									class="h-4 min-w-4 flex-shrink-0 opacity-60 group-hover:opacity-100"
+									@mousedown.stop.prevent
+									@click.stop.prevent />
+							</ComboboxItem>
+						</template>
+					</div>
+					<div v-if="actionButton" class="border-t border-outline-gray-2 bg-surface-gray-1">
+						<component v-if="actionButton.component" :is="actionButton.component" @change="refreshOptions" />
+						<BuilderButton
 							v-else
-							:value="option.value"
-							:disabled="option.disabled"
-							class="group flex cursor-default select-none items-center gap-2 rounded px-2 py-1.5 text-sm text-ink-gray-9 transition-colors data-[disabled]:pointer-events-none data-[highlighted]:bg-surface-gray-1 data-[disabled]:opacity-50">
-							<component v-if="option.prefix" :is="option.prefix" class="h-4 w-4 flex-shrink-0" />
-							<span class="w-full flex-1 truncate">{{ option.label }}</span>
-							<component
-								v-if="option.suffix"
-								:is="option.suffix"
-								class="h-4 min-w-4 flex-shrink-0 opacity-60 group-hover:opacity-100"
-								@mousedown.stop.prevent
-								@click.stop.prevent />
-						</ComboboxItem>
-					</template>
-				</div>
-				<div v-if="actionButton" class="border-t border-outline-gray-2 bg-surface-gray-1">
-					<component v-if="actionButton.component" :is="actionButton.component" @change="refreshOptions" />
-					<BuilderButton
-						v-else
-						:icon-left="actionButton.icon"
-						variant="ghost"
-						class="w-full justify-start rounded-none text-sm"
-						@click="actionButton.handler">
-						{{ actionButton.label }}
-					</BuilderButton>
-				</div>
-			</ComboboxContent>
+							:icon-left="actionButton.icon"
+							variant="ghost"
+							class="w-full justify-start rounded-none text-sm"
+							@click="actionButton.handler">
+							{{ actionButton.label }}
+						</BuilderButton>
+					</div>
+				</ComboboxContent>
+			</Teleport>
 		</div>
 	</ComboboxRoot>
 </template>
@@ -84,8 +105,8 @@ import {
 	ComboboxRoot,
 	ComboboxSeparator,
 } from "reka-ui";
-import type { Component } from "vue";
-import { computed, ref, watch } from "vue";
+import type { Component, ComponentPublicInstance } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 
 interface Option {
 	label: string;
@@ -109,6 +130,7 @@ interface Props {
 	placeholder?: string;
 	showInputAsOption?: boolean;
 	actionButton?: ActionButton;
+	referenceElementSelector?: string;
 	allowArbitraryValue?: boolean;
 }
 
@@ -130,6 +152,9 @@ const isOpen = ref(false);
 const searchQuery = ref("");
 const asyncOptions = ref<Option[]>([]);
 const hasValue = computed(() => props.modelValue != null && props.modelValue !== "");
+const comboboxInput = ref<ComponentPublicInstance | null>(null);
+const contentRef = ref<ComponentPublicInstance | null>(null);
+const fixedPositionStyles = ref({});
 const allOptions = computed(() => (props.getOptions ? asyncOptions.value : props.options));
 
 const displayOptions = computed(() => {
@@ -212,7 +237,44 @@ watch(
 	(val) => (searchQuery.value = val ?? ""),
 	{ immediate: true },
 );
+
+watch(isOpen, (val) => {
+	if (val && props.referenceElementSelector) {
+		nextTick(() => {
+			fixedPositionStyles.value = getFixedPositionStyles();
+		});
+	}
+});
+
 if (props.getOptions) refreshOptions();
+
+// in Popover, absolute positioning keeps all options within the Popover taking extra space
+// making it fixed makes it float above Popover container
+const getFixedPositionStyles = () => {
+	if (props.referenceElementSelector) {
+		const comboboxInputRect = containerRef.value?.getBoundingClientRect();
+		const contentRect = contentRef.value?.$el?.getBoundingClientRect
+			? contentRef.value.$el.getBoundingClientRect()
+			: null;
+		if (!comboboxInputRect) {
+			return {};
+		}
+		// Calculate positions relative to viewport and use with Teleport to body
+		const isAbove = contentRect && comboboxInputRect.bottom + (contentRect?.height || 0) > window.innerHeight;
+		const top = isAbove ? "unset" : comboboxInputRect.bottom + 4 + "px";
+		const bottom = isAbove ? window.innerHeight - comboboxInputRect.top + 4 + "px" : "unset";
+		const left = comboboxInputRect.left + "px";
+
+		return {
+			top,
+			bottom,
+			left,
+			width: comboboxInputRect.width + "px",
+			zIndex: "999",
+		};
+	}
+	return {};
+};
 
 defineExpose({
 	refreshOptions,

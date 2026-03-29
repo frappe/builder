@@ -5,10 +5,12 @@
 		@keydown="handleKeyDown"></div>
 </template>
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 
 import codeCompletions from "@/data/codeCompletions";
+import blockController from "@/utils/blockController";
 import { createStartingState } from "@/utils/createCodeMirrorState";
+import { getDefaultPropsList, getParentProps } from "@/utils/helpers";
 import { openSearchPanel } from "@codemirror/search";
 import { Compartment } from "@codemirror/state";
 import { oneDark } from "@codemirror/theme-one-dark";
@@ -18,6 +20,7 @@ import { tomorrow } from "thememirror";
 
 const props = defineProps<{
 	type: "Python" | "JavaScript" | "HTML" | "CSS" | "JSON";
+	mode?: "block" | "page";
 	initialValue?: string;
 	readonly: boolean;
 	allowSave: boolean;
@@ -62,6 +65,8 @@ const resetEditor = async (params: { content: string; resetHistory: boolean; aut
 						onBlurCallback: (value: string) => emit("blur", value),
 						initialValue: params.content,
 						extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
+						mode: props.mode,
+						blockProps: allBlockProps.value,
 					})
 				).startState,
 			);
@@ -101,23 +106,44 @@ watch(isDark, (newVal) => {
 	}
 });
 
+const allBlockProps = computed(() => {
+	const currentBlock = blockController.getFirstSelectedBlock();
+
+	if (!currentBlock || typeof currentBlock.getBlockProps !== "function") return {};
+
+	const ownBlockProps = currentBlock.getBlockProps();
+	const inheritedBlockProps = getParentProps(currentBlock, {});
+	const defaultProps = getDefaultPropsList(currentBlock, blockController);
+
+	return {
+		...defaultProps,
+		...inheritedBlockProps,
+		...ownBlockProps,
+	};
+});
+
 onMounted(async () => {
-	if (editorContainer.value) {
-		const { startState } = await createStartingState({
-			props,
-			pythonCompletions: await getPythonCompletions(),
-			onSaveCallback: () => emit("save", getEditorValue()),
-			onChangeCallback: () => emit("change", getEditorValue()),
-			onBlurCallback: (value: string) => emit("blur", value),
-			extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
-		});
-		editor = new EditorView({
-			state: startState,
-			parent: editorContainer.value,
-		});
-	} else {
-		console.error("Editor container not found");
+	if (!editorContainer.value) {
+		console.warn("CodeMirror: editor container not found, skipping mount");
+		return;
 	}
+
+	const pythonCompletions = await getPythonCompletions();
+	const { startState } = await createStartingState({
+		props,
+		pythonCompletions,
+		onSaveCallback: () => emit("save", getEditorValue()),
+		onChangeCallback: () => emit("change", getEditorValue()),
+		onBlurCallback: (value: string) => emit("blur", value),
+		extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
+		mode: props.mode,
+		blockProps: allBlockProps.value,
+	});
+
+	editor = new EditorView({
+		state: startState,
+		parent: editorContainer.value,
+	});
 });
 
 defineExpose({
@@ -130,7 +156,6 @@ defineExpose({
 .code-mirror-editor {
 	width: 100%;
 	border-radius: 5px;
-	overscroll-behavior: none;
 	display: flex;
 	flex: 1;
 }

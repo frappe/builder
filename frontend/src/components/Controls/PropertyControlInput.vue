@@ -17,16 +17,16 @@
 
 		<!-- Dynamic value overlay -->
 		<div
-			v-if="dynamicValue"
+			v-if="dynamicValueKey"
 			class="absolute bottom-0 left-0 right-0 top-0 flex cursor-pointer items-center gap-2 rounded bg-surface-violet-1 py-0.5 pl-2.5 pr-6 text-sm text-ink-violet-1"
 			@click.stop="$emit('openDynamicModal')">
 			<FeatherIcon name="zap" class="size-3"></FeatherIcon>
-			<span class="truncate">{{ dynamicValue }}</span>
+			<span class="truncate">{{ dynamicValueKey }}</span>
 		</div>
 
 		<!-- Clear button -->
 		<button
-			v-show="dynamicValue"
+			v-show="dynamicValueKey"
 			class="absolute right-1 top-1 cursor-pointer p-1 text-ink-gray-4 hover:text-ink-gray-5"
 			tabindex="-1"
 			@click="$emit('clearDynamic')">
@@ -47,12 +47,12 @@ defineProps<{
 	modelValue: string | number | boolean;
 	defaultValue?: string | number | boolean;
 	placeholder?: string | number | boolean;
-	dynamicValue?: string;
+	dynamicValueKey?: string;
 	componentClass?: string;
 }>();
 
 defineEmits<{
-	(e: "update:modelValue", value: any): void;
+	(e: "update:modelValue", value: string | number | boolean): void;
 	(e: "keydown", event: KeyboardEvent): void;
 	(e: "openDynamicModal"): void;
 	(e: "clearDynamic"): void;

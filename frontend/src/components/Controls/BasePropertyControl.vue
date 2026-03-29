@@ -11,7 +11,8 @@
 
 		<div
 			class="relative flex w-full gap-2"
-			:class="labelPlacement === 'top' ? 'items-start' : 'items-center'">
+			:class="labelPlacement === 'top' ? 'items-start' : 'items-center'"
+			:data-property="propertyKey">
 			<PropertyLabel
 				v-if="labelPlacement === 'left' && label"
 				ref="propertyLabelRef"
@@ -19,7 +20,7 @@
 				:showDropdown="showDropdown"
 				:dropdownOptions="dropdownOptions"
 				:enableSlider="enableSlider"
-				containerClass="w-[88px] shrink-0"
+				containerClass="min-w-[88px] w-1/3 shrink-0"
 				@mousedown="handleMouseDown" />
 
 			<DraggablePopup
@@ -31,7 +32,7 @@
 				v-if="showDynamicValueModal">
 				<template #header>Set Dynamic Value</template>
 				<template #content>
-					<DynamicValueHandler @setDynamicValue="setDynamicValue" :selectedValue="dynamicValue" />
+					<DynamicValueHandler @setDynamicValue="updateDynamicValue" :selectedValue="dynamicValue" />
 				</template>
 			</DraggablePopup>
 
@@ -42,14 +43,14 @@
 				:modelValue="modelValue"
 				:defaultValue="defaultValue"
 				:placeholder="placeholderValue"
-				:dynamicValue="dynamicValue"
+				:dynamicValueKey="dynamicValue?.key"
 				componentClass="w-full"
 				@update:modelValue="updateValue"
 				@keydown="handleKeyDown"
 				@openDynamicModal="showDynamicValueModal = true"
 				@clearDynamic="clearDynamicValue">
 				<template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
-					<slot :name="name" v-bind="slotData || {}" />
+					<slot :name="name" v-bind="{ ...slotData, variant: null }" />
 				</template>
 			</PropertyControlInput>
 		</div>
@@ -58,6 +59,7 @@
 		<VariantControl
 			v-for="variant in visibleVariants"
 			:key="variant.name"
+			:data-variant="variant.name"
 			:label="variant.label"
 			:labelPlacement="labelPlacement"
 			:component="props.component"
@@ -72,7 +74,7 @@
 			@labelMousedown="(e: MouseEvent) => handleSliderMouseDown(e, variant.name)"
 			@clear="clearVariant(variant.name)">
 			<template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
-				<slot :name="name" v-bind="slotData || {}" />
+				<slot :name="name" v-bind="{ ...slotData, variant: variant.name }" />
 			</template>
 		</VariantControl>
 	</div>
@@ -104,6 +106,8 @@ const props = withDefaults(
 		getModelValue?: () => string | number | boolean;
 		getPlaceholder?: () => string | number | boolean;
 		setModelValue?: (value: string | number | boolean) => void;
+		getDynamicValue?: () => { key: string; comesFrom: BlockDataKey["comesFrom"] } | undefined;
+		setDynamicValue?: (key: string, comesFrom: BlockDataKey["comesFrom"]) => void;
 		enableSlider?: boolean;
 		unitOptions?: string[];
 		changeFactor?: number;
@@ -153,17 +157,17 @@ const modelValue = computed(() => props.getModelValue?.() ?? "");
 const placeholderValue = computed(() => props.getPlaceholder?.() ?? props.placeholder);
 
 // Normalize and extract value from various input formats
-const normalizeInputValue = (value: string | number | null | { label: string; value: string }) => {
+const normalizeInputValue = (value: string | number | boolean | null | { label: string; value: string }) => {
 	if (typeof value === "object" && value !== null && "value" in value) {
 		value = value.value;
 	}
 	if (value && typeof value === "string") {
 		value = normalizeValueWithUnits(value, props.unitOptions, props.propertyKey);
 	}
-	return value as string;
+	return value as string | number | boolean;
 };
 
-const updateValue = (value: string | number | null | { label: string; value: string }) => {
+const updateValue = (value: string | number | boolean | null | { label: string; value: string }) => {
 	props.setModelValue?.(normalizeInputValue(value));
 };
 
@@ -197,7 +201,7 @@ const getVariantValue = (variantName: string) => {
 
 const updateVariantValue = (
 	variantName: string,
-	value: string | number | null | { label: string; value: string },
+	value: string | number | boolean | null | { label: string; value: string },
 ) => {
 	props.setVariantValue?.(variantName, normalizeInputValue(value));
 };
@@ -260,28 +264,39 @@ const handleKeyDown = (e: KeyboardEvent, variantName?: string) => {
 	e.preventDefault();
 };
 
-function setDynamicValue(value: string) {
-	blockController.getSelectedBlocks().forEach((block) => {
-		block.setDynamicValue(props.propertyKey, props.controlType, value);
-	});
+function updateDynamicValue(value: { key: string; comesFrom: BlockDataKey["comesFrom"] }) {
+	if (props.setDynamicValue) {
+		props.setDynamicValue(value.key, value.comesFrom);
+	} else {
+		blockController.getSelectedBlocks().forEach((block) => {
+			block.setDynamicValue(props.propertyKey, props.controlType, value.key, value.comesFrom);
+		});
+	}
 	showDynamicValueModal.value = false;
 	emit("setDynamicValue");
 }
 
 const dynamicValue = computed(() => {
+	if (props.getDynamicValue) {
+		return props.getDynamicValue();
+	}
 	const blocks = blockController.getSelectedBlocks();
-	if (!blocks?.length) return "";
+	if (!blocks?.length) return { key: "", comesFrom: "dataScript" as BlockDataKey["comesFrom"] };
 
 	const dataKeyObj = blocks[0]
 		.getDynamicValues()
 		.find((obj) => obj.type === props.controlType && obj.property === props.propertyKey);
-	return dataKeyObj?.key || "";
+	return { key: dataKeyObj?.key || "", comesFrom: dataKeyObj?.comesFrom || "dataScript" };
 });
 
 const clearDynamicValue = () => {
-	blockController.getSelectedBlocks().forEach((block) => {
-		block.removeDynamicValue(props.propertyKey, props.controlType);
-	});
+	if (props.setDynamicValue) {
+		props.setDynamicValue("", "dataScript");
+	} else {
+		blockController.getSelectedBlocks().forEach((block) => {
+			block.removeDynamicValue(props.propertyKey, props.controlType);
+		});
+	}
 	emit("clearDynamicValue");
 };
 </script>

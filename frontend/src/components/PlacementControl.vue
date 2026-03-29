@@ -19,7 +19,7 @@
 					<div
 						@click="setAlignment(option)"
 						@dblclick="setAlignment(option, true)"
-						class="hidden gap-[2px] hover:opacity-100 group-hover/option:flex"
+						class="hidden w-5 gap-[2px] hover:opacity-100 group-hover/option:flex"
 						:class="{
 							'flex-row': direction === 'row',
 							'flex-col': direction === 'column',

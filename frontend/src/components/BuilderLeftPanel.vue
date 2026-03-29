@@ -67,9 +67,8 @@
 					:adjustForRoot="false"
 					v-if="canvasStore.editingMode === 'fragment' && fragmentCanvas" />
 			</div>
-			<div v-show="builderStore.leftPanelActiveTab === 'Code'">
+			<div class="h-full" v-show="builderStore.leftPanelActiveTab === 'Code'">
 				<PageScript
-					class="p-4"
 					:key="pageStore.selectedPage"
 					v-if="pageStore.selectedPage && pageStore.activePage"
 					:page="pageStore.activePage" />
@@ -91,6 +90,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { Tooltip } from "frappe-ui";
 import { inject, nextTick, Ref, ref, watch, watchEffect } from "vue";
+import { useRoute } from "vue-router";
 import BlockLayers from "./BlockLayers.vue";
 import BuilderAssets from "./BuilderAssets.vue";
 import BuilderBlockTemplates from "./BuilderBlockTemplates.vue";
@@ -108,6 +108,8 @@ const pageStore = usePageStore();
 
 const pageCanvas = inject("pageCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
 const fragmentCanvas = inject("fragmentCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
+
+const route = useRoute();
 
 const leftPanelOptions = [
 	{
@@ -142,6 +144,7 @@ const setActiveTab = (tab: LeftSidebarTabOption) => {
 		showVariableManager.value = !showVariableManager.value;
 	} else {
 		builderStore.leftPanelActiveTab = tab;
+		showVariableManager.value = false;
 	}
 };
 
@@ -152,6 +155,13 @@ watchEffect(() => {
 		builderStore.activeLayers = componentLayers.value;
 	}
 });
+
+watch(
+	() => route.fullPath,
+	() => {
+		showVariableManager.value = false;
+	},
+);
 
 // moved out of BlockLayers for performance
 // TODO: Find a better way to do this
