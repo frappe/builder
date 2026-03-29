@@ -311,7 +311,10 @@ useShortcut([
 		description: "Edit block with AI",
 		group: "Block",
 		condition: () =>
-			!blockController.isRoot() && !blockController.multipleBlocksSelected() && !builderStore.readOnlyMode,
+			builderStore.isAIEnabled &&
+			!blockController.isRoot() &&
+			!blockController.multipleBlocksSelected() &&
+			!builderStore.readOnlyMode,
 		handler: () => {
 			const block = blockController.getSelectedBlocks()[0];
 			if (block) {

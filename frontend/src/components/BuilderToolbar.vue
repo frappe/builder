@@ -93,11 +93,7 @@
 			</div>
 			<Badge variant="subtle" theme="orange" v-if="builderStore.readOnlyMode">Read Only</Badge>
 			<div class="flex gap-2">
-				<Tooltip
-					v-if="builderSettings.doc?.ai_api_key"
-					text="Generate with AI"
-					:hoverDelay="0.6"
-					arrow-class="mb-3">
+				<Tooltip v-if="builderStore.isAIEnabled" text="Generate with AI" :hoverDelay="0.6" arrow-class="mb-3">
 					<Button
 						variant="ghost"
 						@click="openAIGenerator"

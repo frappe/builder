@@ -166,8 +166,9 @@ const modelOptions = computed<SelectOption[]>(() => {
 });
 
 const builderStore = useBuilderStore();
-const hasAISettings = computed(() => builderSettings.doc?.ai_model && builderSettings.doc?.ai_api_key);
-const canGenerate = computed(() => prompt.value.trim() !== "" && hasAISettings.value && !generating.value);
+const canGenerate = computed(
+	() => prompt.value.trim() !== "" && builderStore.isAIEnabled && !generating.value,
+);
 
 const TEXT_ELEMENTS = ["h1", "h2", "h3", "p", "span"];
 

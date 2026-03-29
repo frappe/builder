@@ -72,7 +72,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 				editWithAIFn(block.value);
 			}
 		},
-		condition: () => Boolean(editWithAIFn) && !block.value.isRoot(),
+		condition: () => builderStore.isAIEnabled && Boolean(editWithAIFn) && !block.value.isRoot(),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
@@ -80,7 +80,8 @@ const contextMenuOptions: ContextMenuOption[] = [
 		action: () => {
 			runDirectAI?.(block.value, "rewrite_text", "Rewrite the content");
 		},
-		condition: () => Boolean(runDirectAI) && block.value.isText() && !block.value.isRoot(),
+		condition: () =>
+			builderStore.isAIEnabled && Boolean(runDirectAI) && block.value.isText() && !block.value.isRoot(),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
@@ -88,7 +89,8 @@ const contextMenuOptions: ContextMenuOption[] = [
 		action: () => {
 			runDirectAI?.(block.value, "replace_image", "Replace image");
 		},
-		condition: () => Boolean(runDirectAI) && block.value.isImage() && !block.value.isRoot(),
+		condition: () =>
+			builderStore.isAIEnabled && Boolean(runDirectAI) && block.value.isImage() && !block.value.isRoot(),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
