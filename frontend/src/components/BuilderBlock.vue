@@ -478,6 +478,7 @@ watch(
 				block_id: uidToUse,
 				block_data_script: script,
 				props: JSON.stringify(allResolvedProps.value),
+				prev_block_data: props.blockData || {},
 				route_variables: pageStore.routeVariables,
 			})
 			.then((res: any) => {
