@@ -1,0 +1,14 @@
+{
+ "creation": "2026-03-09 10:57:17.377387",
+ "docstatus": 0,
+ "doctype": "Builder Style Preset",
+ "idx": 0,
+ "is_standard": 1,
+ "modified": "2026-03-22 22:24:00.659864",
+ "modified_by": "Administrator",
+ "name": "Paragraph",
+ "owner": "Administrator",
+ "sort_order": 7,
+ "style_map": "{   \n    \"baseStyles\":{\n    \"fontFamily\": \"Inter\",\n    \"fontWeight\": \"500\",\n    \"fontSize\": \"24px\",\n    \"lineHeight\": \"1.5\"\n    },\n    \"tabletStyles\": {},\n    \"mobileStyles\": {}\n}",
+ "style_name": "Paragraph"
+}

@@ -1,0 +1,14 @@
+{
+ "creation": "2026-03-09 10:55:38.869009",
+ "docstatus": 0,
+ "doctype": "Builder Style Preset",
+ "idx": 0,
+ "is_standard": 1,
+ "modified": "2026-03-22 22:23:31.723841",
+ "modified_by": "Administrator",
+ "name": "Heading 1",
+ "owner": "Administrator",
+ "sort_order": 1,
+ "style_map": "{\n    \"baseStyles\": {\n    \"fontFamily\": \"Inter\",\n    \"fontWeight\": \"800\",\n    \"fontSize\": \"88px\",\n    \"lineHeight\": \"1.2\"\n    },\n    \"tabletStyles\": {},\n    \"mobileStyles\": {}\n}",
+ "style_name": "Heading 1"
+}

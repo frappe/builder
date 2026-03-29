@@ -7,6 +7,7 @@ import userFonts from "@/data/userFonts";
 import { UserFont } from "@/types/Builder/UserFont";
 import blockController from "@/utils/blockController";
 import { setFont as _setFont, fontList, getFontWeightOptions } from "@/utils/fontManager";
+import stylePreset from "@/data/stylePreset";
 
 const setFont = (font: string) => {
 	_setFont(font, null).then(() => {
@@ -33,6 +34,33 @@ const typographySectionProperties = [
 		searchKeyWords: "Content, Text, ContentText, Content Text",
 		condition: () =>
 			(blockController.isText() || blockController.isButton()) && !blockController.multipleBlocksSelected(),
+	},
+	{
+		component: BasePropertyControl,
+		getProps: () => {
+			return {
+				label: "Style",
+				propertyKey: "textStylePreset",
+				controlType: "key",
+				allowDynamicValue: true,
+				type: "select",
+				options: stylePreset.data 
+					? [
+						{ label: "None", value: null },
+						...stylePreset.data.map((s: any) => ({ 
+						label: s.style_name, 
+						value: s.style_name,
+					}))
+					]	
+					: [{ label: "None", value: " " }],
+				getModelValue: () => String(blockController.getKeyValue("stylePreset") ?? ""),
+				setModelValue: (val: string) => {
+				blockController.setKeyValue("stylePreset", val);
+			},
+			};
+		},
+		searchKeyWords: "Style, Preset, Typography",
+		condition: () => blockController.isText(),
 	},
 	{
 		component: StylePropertyControl,

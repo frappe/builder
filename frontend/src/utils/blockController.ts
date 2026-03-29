@@ -1,6 +1,7 @@
 import type { default as Block, default as BlockDataKey } from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import getBlockTemplate from "./blockTemplate";
+import { set } from "@vueuse/core";
 
 const canvasStore = useCanvasStore();
 
@@ -114,7 +115,7 @@ const blockController = {
 			block.removeAttribute(attribute);
 		});
 	},
-	getKeyValue: (key: "element" | "innerHTML" | "visibilityCondition") => {
+	getKeyValue: (key: "element" | "innerHTML" | "visibilityCondition" | "stylePreset") => {
 		if (key !== "visibilityCondition") {
 			let keyValue = "__initial__" as StyleValue | undefined;
 			canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
@@ -147,7 +148,7 @@ const blockController = {
 			return { key, comesFrom };
 		}
 	},
-	setKeyValue: (key: "element" | "innerHTML" | "visibilityCondition", value: any) => {
+	setKeyValue: (key: "element" | "innerHTML" | "visibilityCondition" | "stylePreset", value: any) => {
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 			if (key === "element" && block.blockName === "container") {
 				// reset blockName since it will not be a container anymore

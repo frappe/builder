@@ -73,6 +73,7 @@ import fetchBlockData from "@/data/blockData";
 import usePageStore from "@/stores/pageStore";
 import { toast } from "vue-sonner";
 import { useBlockDataStore, useBlockUidStore } from "@/stores/blockStore";
+import stylePreset from "@/data/stylePreset";
 
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
@@ -277,6 +278,14 @@ const target = computed(() => {
 	}
 });
 
+const presetStyles = computed(() => {
+	const presetName = props.block.stylePreset;
+	if (!presetName) return {};
+	const preset = stylePreset.data?.find((s: any) => s.style_name === presetName);
+	if (!preset) return {};
+	return typeof preset.style_map === "string" ? JSON.parse(preset.style_map) : preset.style_map;
+});
+
 const styles = computed(() => {
 	let dynamicStyles = {} as { [key: string]: string };
 	if (props.data || hasBlockProps.value) {
@@ -325,6 +334,7 @@ const styles = computed(() => {
 	}
 
 	const styleMap = {
+		...(presetStyles.value?.baseStyles || {}),
 		...props.block.getStyles(props.breakpoint),
 		...props.block.getEditorStyles(),
 		...dynamicStyles,
