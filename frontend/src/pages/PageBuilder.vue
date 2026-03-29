@@ -192,7 +192,7 @@ const handleGeneratedBlocks = () => {
 	pageStore.savePage();
 };
 
-const handleStreamingBlocks = (block: Block) => {
+const handleStreamingBlocks = (block: BlockOptions) => {
 	if (!block) return;
 
 	try {
@@ -223,7 +223,7 @@ const replaceBlockInTree = (root: Block, targetId: string, replacement: BlockOpt
 			root.children.splice(
 				0,
 				root.children.length,
-				...replacement.children.map((child) => getBlockInstance(child)),
+				...replacement.children.map((child) => getBlockInstance(child as BlockOptions)),
 			);
 		}
 		return true;

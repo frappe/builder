@@ -1,10 +1,5 @@
 <template>
-	<Dialog
-		v-model="showDialog"
-		:options="{
-			title: title,
-			size: 'lg',
-		}">
+	<Dialog v-model="showDialog" :options="{ title, size: 'lg' }">
 		<template #body-content>
 			<div class="flex flex-col gap-3">
 				<Textarea
@@ -18,47 +13,43 @@
 				<div v-if="errorMessage" class="text-ink-red-9 rounded-lg bg-surface-red-1 p-3 text-sm">
 					{{ errorMessage }}
 				</div>
-				<WebPagePresetPicker v-model="selectedPreset" v-if="mode === 'generate'" />
 
-				<p v-if="!hasAISettings" class="text-xs text-ink-gray-6">
-					Configure your AI model and API key in
-					<Button variant="link" @click="$emit('openSettings')">Settings &rarr; AI</Button>
-				</p>
+				<WebPagePresetPicker v-if="mode === 'generate'" v-model="selectedPreset" :showLabel="false" />
 			</div>
 		</template>
+
 		<template #actions>
-			<div class="flex items-center justify-end gap-2">
-				<Button variant="subtle" @click="showDialog = false">Cancel</Button>
-				<Button variant="solid" @click="handleSubmit" :disabled="!canGenerate || generating">
-					<div class="flex items-center gap-2">
-						<FeatherIcon v-if="generating" name="loader" class="h-4 w-4 animate-spin" />
-						<span>
-							{{
-								generating
-									? progressMessage || (mode === "modify" ? "Modifying..." : "Generating...")
-									: mode === "modify"
-										? "Modify"
-										: "Generate"
-							}}
-						</span>
-					</div>
-				</Button>
+			<div class="flex w-full items-center justify-between gap-2">
+				<FormControl
+					type="select"
+					:options="[{ label: 'AI Model', value: '_', disabled: true }, ...modelOptions]"
+					v-model="selectedModel"
+					class="text-xs" />
+				<div class="flex items-center gap-2">
+					<Button variant="solid" @click="handleSubmit" :disabled="!canGenerate || generating">
+						<template v-if="generating">
+							<FeatherIcon name="loader" class="h-4 w-4 animate-spin" />
+							{{ progressMessage || (mode === "modify" ? "Modifying…" : "Generating…") }}
+						</template>
+						<template v-else>{{ mode === "modify" ? "Modify" : "Generate" }}</template>
+					</Button>
+				</div>
 			</div>
 		</template>
 	</Dialog>
 
-	<!-- Floating progress indicator when generating with dialog closed -->
 	<Teleport to="body">
 		<Transition name="slide-up">
 			<div
 				v-if="(generating || progressMessage) && !showDialog"
-				class="fixed left-1/2 top-16 z-[1000] -translate-x-1/2 transform">
+				class="fixed left-1/2 top-16 z-[1000] -translate-x-1/2">
 				<div
 					class="flex items-center gap-3 rounded-lg border border-outline-gray-2 bg-surface-white px-4 py-2.5 shadow-lg">
-					<FeatherIcon v-if="generating" name="loader" class="h-4 w-4 animate-spin text-ink-gray-7" />
-					<FeatherIcon v-else name="check-circle" class="h-4 w-4 text-ink-green-3" />
+					<FeatherIcon
+						:name="generating ? 'loader' : 'check-circle'"
+						:class="[generating ? 'animate-spin text-ink-gray-7' : 'text-ink-green-3', 'h-4 w-4']" />
 					<span class="text-sm font-medium text-ink-gray-9">
-						{{ progressMessage || (mode === "modify" ? "Modifying section..." : "Generating page...") }}
+						{{ progressMessage || (mode === "modify" ? "Modifying section…" : "Generating page…") }}
 					</span>
 				</div>
 			</div>
@@ -67,12 +58,12 @@
 </template>
 
 <script setup lang="ts">
-import type Block from "@/block";
 import Dialog from "@/components/Controls/Dialog.vue";
+import WebPagePresetPicker from "@/components/WebPagePresetPicker.vue";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import { useThrottleFn } from "@vueuse/core";
-import { createResource, FeatherIcon, Textarea } from "frappe-ui";
+import { createResource, FeatherIcon, FormControl, Textarea } from "frappe-ui";
 import yaml from "js-yaml";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
@@ -84,6 +75,39 @@ interface Preset {
 	category: string;
 }
 
+interface AIModel {
+	name: string;
+	label: string;
+	max_tokens: number;
+}
+
+interface AIProvider {
+	provider: string;
+	models: AIModel[];
+}
+
+interface SelectOption {
+	label: string;
+	value: string;
+}
+
+interface StreamData {
+	chunk?: string;
+	task_type?: string;
+	block_id?: string;
+}
+
+interface ProgressData {
+	message?: string;
+	task_type?: string;
+	block_id?: string;
+}
+
+interface CompleteData {
+	model_used?: string;
+	task_tier?: "simple" | "complex";
+}
+
 const props = withDefaults(
 	defineProps<{
 		modelValue: boolean;
@@ -91,17 +115,14 @@ const props = withDefaults(
 		mode?: "generate" | "modify";
 		blockContext?: Record<string, any> | null;
 	}>(),
-	{
-		mode: "generate",
-		blockContext: null,
-	},
+	{ mode: "generate", blockContext: null },
 );
 
 const emit = defineEmits<{
 	(e: "update:modelValue", value: boolean): void;
 	(e: "update:blockContext", value: Record<string, any> | null): void;
 	(e: "generated"): void;
-	(e: "streaming", block: Block): void;
+	(e: "streaming", block: BlockOptions): void;
 	(e: "modified"): void;
 	(e: "modifyStreaming", block: BlockOptions): void;
 	(e: "openSettings"): void;
@@ -110,7 +131,7 @@ const emit = defineEmits<{
 
 const showDialog = computed({
 	get: () => props.modelValue,
-	set: (value) => emit("update:modelValue", value),
+	set: (v) => emit("update:modelValue", v),
 });
 
 const prompt = ref("");
@@ -118,56 +139,72 @@ const generating = ref(false);
 const errorMessage = ref("");
 const progressMessage = ref("");
 const streamingContent = ref("");
-const selectedPreset = ref<Preset | null>(null);
-const builderStore = useBuilderStore();
 const remoteTaskType = ref<string | null>(null);
 const remoteBlockId = ref<string | null>(null);
-
-watch(generating, (val) => {
-	emit("generating", val);
+const availableModels = ref<AIProvider[]>([]);
+const selectedPreset = ref<Preset | null>(null);
+const selectedModel = ref("");
+const currentProviderModels = computed(() => {
+	const provider = builderSettings.doc?.ai_model;
+	if (!provider) return [];
+	const found = availableModels.value.find((p) => p.provider === provider);
+	return found ? found.models : [];
 });
 
-const hasAISettings = computed(() => {
-	return builderSettings.doc?.ai_model && builderSettings.doc?.ai_api_key;
+watch(
+	currentProviderModels,
+	(models) => {
+		if (models.length > 0 && !selectedModel.value) {
+			selectedModel.value = models[0].name;
+		}
+	},
+	{ immediate: true },
+);
+
+const modelOptions = computed<SelectOption[]>(() => {
+	return currentProviderModels.value.map((m) => ({ label: m.label, value: m.name }));
 });
+
+const builderStore = useBuilderStore();
+const hasAISettings = computed(() => builderSettings.doc?.ai_model && builderSettings.doc?.ai_api_key);
+const canGenerate = computed(() => prompt.value.trim() !== "" && hasAISettings.value && !generating.value);
 
 const TEXT_ELEMENTS = ["h1", "h2", "h3", "p", "span"];
 
 const title = computed(() => {
 	if (props.mode === "generate") return "Generate with AI";
 	const el = props.blockContext?.element;
-	if (TEXT_ELEMENTS.includes(el)) return "Rewrite with AI";
+	if (typeof el === "string" && TEXT_ELEMENTS.includes(el)) return "Rewrite with AI";
 	if (el === "img") return "Replace Image with AI";
 	return "Modify with AI";
 });
 
 const placeholder = computed(() => {
-	if (props.mode === "generate") return "Describe the page you want to create...";
+	if (props.mode === "generate") return "Describe the page you want to create…";
 	const el = props.blockContext?.element;
-	if (TEXT_ELEMENTS.includes(el)) return "Describe how you want to rewrite this text...";
-	if (el === "img") return "Describe the new image you want...";
-	return "Describe how you want to modify this section...";
+	if (typeof el === "string" && TEXT_ELEMENTS.includes(el))
+		return "Describe how you want to rewrite this text…";
+	if (el === "img") return "Describe the new image you want…";
+	return "Describe how you want to modify this section…";
 });
 
 const taskType = computed(() => {
 	if (props.mode !== "modify" || !props.blockContext) return null;
 	const el = props.blockContext.element;
-	if (TEXT_ELEMENTS.includes(el)) return "rewrite_text";
+	if (typeof el === "string" && TEXT_ELEMENTS.includes(el)) return "rewrite_text";
 	if (el === "img") return "replace_image";
 	return null;
 });
 
-function buildPrompt(base: string): string {
+function buildPrompt(base: string) {
 	const preset = selectedPreset.value;
 	return preset ? `${base}\n\nDESIGN STYLE: ${preset.name}. ${preset.description}` : base;
 }
 
-function convertYAMLtoBlock(yamlBlock: any): BlockOptions {
+function convertYAMLtoBlock(yamlBlock: Record<string, any>): BlockOptions {
 	if (!yamlBlock || typeof yamlBlock !== "object" || Array.isArray(yamlBlock)) return yamlBlock;
-
 	const ensureObj = (val: any) => (val && typeof val === "object" && !Array.isArray(val) ? val : {});
 	const ensureArray = (val: any) => (Array.isArray(val) ? val : []);
-
 	const block: BlockOptions = {
 		element: yamlBlock.el || "div",
 		blockName: yamlBlock.name || "",
@@ -187,8 +224,8 @@ function getValidPartialYAML(yamlStr: string): any {
 	let cleaned = yamlStr.trim();
 	if (cleaned.startsWith("```")) {
 		const lines = cleaned.split("\n");
-		if (lines.length > 0) lines.shift();
-		if (lines.length > 0 && lines[lines.length - 1].startsWith("```")) lines.pop();
+		lines.shift();
+		if (lines.at(-1)?.startsWith("```")) lines.pop();
 		cleaned = lines.join("\n");
 	}
 	try {
@@ -205,138 +242,82 @@ function getValidPartialYAML(yamlStr: string): any {
 	return null;
 }
 
-function parseBlock(raw: string): any | null {
+function parseBlock(raw: string): BlockOptions | null {
 	const parsed = getValidPartialYAML(raw);
 	if (!parsed) return null;
 	const block = Array.isArray(parsed) ? parsed[0] : parsed;
-	if (block && typeof block === "object" && block.el) {
-		return convertYAMLtoBlock(block);
-	}
-	return null;
+	return block && typeof block === "object" && block.el ? convertYAMLtoBlock(block) : null;
 }
 
-const canGenerate = computed(() => {
-	return prompt.value.trim() !== "" && hasAISettings.value && !generating.value;
-});
+function resetState() {
+	generating.value = true;
+	errorMessage.value = "";
+	progressMessage.value = "Initializing…";
+	streamingContent.value = "";
+	showDialog.value = false;
+}
+
+function handleError(error: unknown, fallback: string) {
+	generating.value = false;
+	progressMessage.value = "";
+	showDialog.value = true;
+	errorMessage.value = error instanceof Error ? error.message : fallback;
+}
+
+async function runTask(type: "generate" | "modify", customParams: Record<string, any> = {}) {
+	resetState();
+	const isModify = type === "modify" || props.mode === "modify";
+	const url = `builder.ai_page_generator.${isModify ? "modify_section" : "generate_page"}_from_prompt`;
+
+	try {
+		await createResource({
+			url,
+			makeParams: () => ({
+				prompt: buildPrompt(prompt.value),
+				page_id: props.pageId,
+				model: selectedModel.value,
+				...customParams,
+			}),
+		}).submit();
+	} catch (e) {
+		handleError(e, `An error occurred while ${isModify ? "modifying" : "generating"}`);
+	}
+}
 
 const handleSubmit = () => {
-	return props.mode === "modify" ? modifySection() : generatePage();
-};
-
-const generatePage = async () => {
-	if (!canGenerate.value) return;
-
-	generating.value = true;
-	errorMessage.value = "";
-	progressMessage.value = "Initializing...";
-	streamingContent.value = "";
-	showDialog.value = false;
-
-	try {
-		await createResource({
-			url: "builder.ai_page_generator.generate_page_from_prompt",
-			makeParams: () => ({
-				prompt: buildPrompt(prompt.value),
-				page_id: props.pageId,
-			}),
-		}).submit();
-	} catch (error: any) {
-		generating.value = false;
-		progressMessage.value = "";
-		showDialog.value = true;
-		errorMessage.value = error.message || "An error occurred while generating the page";
-	}
-};
-
-const modifySection = async () => {
-	if (!canGenerate.value || !props.blockContext) return;
-
-	generating.value = true;
-	errorMessage.value = "";
-	progressMessage.value = "Initializing...";
-	streamingContent.value = "";
-	showDialog.value = false;
-
-	try {
-		await createResource({
-			url: "builder.ai_page_generator.modify_section_from_prompt",
-			makeParams: () => ({
-				prompt: buildPrompt(prompt.value),
-				block_context: JSON.stringify(props.blockContext),
-				page_id: props.pageId,
-				task_type: taskType.value,
-			}),
-		}).submit();
-	} catch (error: any) {
-		generating.value = false;
-		progressMessage.value = "";
-		showDialog.value = true;
-		errorMessage.value = error.message || "An error occurred while modifying the section";
-	}
-};
-
-const executeDirect = async (block: any, type: "rewrite_text" | "replace_image", customPrompt?: string) => {
-	generating.value = true;
-	errorMessage.value = "";
-	progressMessage.value = "Initializing...";
-	streamingContent.value = "";
-	showDialog.value = false;
-
-	emit("update:blockContext", block);
-
-	const finalPrompt = customPrompt || (type === "rewrite_text" ? "Improve this text" : "Replace image");
-
-	try {
-		await createResource({
-			url: "builder.ai_page_generator.modify_section_from_prompt",
-			makeParams: () => ({
-				prompt: finalPrompt,
-				block_context: JSON.stringify(block),
-				page_id: props.pageId,
-				task_type: type,
-			}),
-		}).submit();
-	} catch (error: any) {
-		generating.value = false;
-		progressMessage.value = "";
-		errorMessage.value = error.message || "An error occurred";
-		showDialog.value = true;
-	}
-};
-
-watch(showDialog, (newValue) => {
-	if (newValue) {
-		errorMessage.value = "";
-		progressMessage.value = "";
-		streamingContent.value = "";
-	}
-});
-
-function applyTierLabel(data: any) {
-	if (data.model_used) {
-		const tierLabels: Record<string, string> = {
-			simple: "fast",
-			complex: "full",
-		};
-		progressMessage.value = `Done — ${tierLabels[data.task_tier] || ""} mode with ${data.model_used}`;
-		setTimeout(() => {
-			progressMessage.value = "";
-		}, 2000);
+	if (props.mode === "modify") {
+		runTask("modify", {
+			block_context: JSON.stringify(props.blockContext),
+			task_type: taskType.value,
+		});
 	} else {
-		progressMessage.value = "";
+		runTask("generate");
 	}
+};
+
+async function executeDirect(
+	block: Record<string, any>,
+	type: "rewrite_text" | "replace_image",
+	customPrompt?: string,
+) {
+	emit("update:blockContext", block);
+	runTask("modify", {
+		prompt: customPrompt || (type === "rewrite_text" ? "Improve this text" : "Replace image"),
+		block_context: JSON.stringify(block),
+		task_type: type,
+	});
 }
 
-const processStreaming = () => {
+function processStreaming() {
 	const block = parseBlock(streamingContent.value);
 	if (block) {
 		block.originalElement = "body";
 		block.blockId = block.blockId || "root";
 		emit("streaming", block);
 	}
-};
+}
 
-const processModifyStreaming = () => {
+function processModifyStreaming() {
 	const effectiveTaskType = remoteTaskType.value || taskType.value;
 	const effectiveBlockId = remoteBlockId.value || props.blockContext?.blockId;
 
@@ -347,139 +328,124 @@ const processModifyStreaming = () => {
 		});
 		return;
 	}
-
 	if (effectiveTaskType === "replace_image") {
 		const parsed = getValidPartialYAML(streamingContent.value);
-		console.log("Parsed attributes:", parsed);
-		emit("modifyStreaming", {
-			attributes: {
-				src: parsed,
-			},
-			blockId: effectiveBlockId,
-		});
+		emit("modifyStreaming", { attributes: { src: parsed }, blockId: effectiveBlockId });
 		return;
 	}
-
 	const block = parseBlock(streamingContent.value);
 	if (block) {
 		block.blockId = effectiveBlockId;
 		emit("modifyStreaming", block);
 	}
-};
+}
 
-const throttledProcessStreaming = useThrottleFn(processStreaming, 300);
-const throttledProcessModifyStreaming = useThrottleFn(processModifyStreaming, 300);
+const throttledStreaming = useThrottleFn(processStreaming, 300);
+const throttledModifyStreaming = useThrottleFn(processModifyStreaming, 300);
 
-const onProgress = (data: any) => {
-	generating.value = true;
-	if (data.message) progressMessage.value = data.message;
-	if (data.task_type) remoteTaskType.value = data.task_type;
-};
+function makeHandlers(isModify: boolean) {
+	const onProgress = (data: ProgressData) => {
+		generating.value = true;
+		if (data.message) progressMessage.value = data.message;
+		if (data.task_type) remoteTaskType.value = data.task_type;
+		if (isModify && data.block_id) remoteBlockId.value = data.block_id;
+	};
 
-const onStream = (data: any) => {
-	generating.value = true;
-	if (!data.chunk) return;
-	streamingContent.value += data.chunk;
-	throttledProcessStreaming();
-};
+	const onStream = (data: StreamData) => {
+		generating.value = true;
+		if (!data.chunk) return;
+		streamingContent.value += data.chunk;
+		if (data.task_type) remoteTaskType.value = data.task_type;
+		if (data.block_id) remoteBlockId.value = data.block_id;
+		const canThrottle = !isModify || !["rewrite_text", "replace_image"].includes(remoteTaskType.value ?? "");
+		if (canThrottle) (isModify ? throttledModifyStreaming : throttledStreaming)();
+	};
 
-const onComplete = (data: any) => {
-	generating.value = false;
-	applyTierLabel(data);
-	processStreaming();
-	emit("generated");
-	prompt.value = "";
-	remoteTaskType.value = null;
-	remoteBlockId.value = null;
-};
+	const onComplete = (_data: CompleteData) => {
+		generating.value = false;
+		progressMessage.value = "Page generation completed";
+		setTimeout(() => (progressMessage.value = ""), 2000);
+		if (isModify) {
+			processModifyStreaming();
+			emit("modified");
+		} else {
+			processStreaming();
+			emit("generated");
+		}
+		prompt.value = "";
+		remoteTaskType.value = null;
+		remoteBlockId.value = null;
+	};
 
-const onError = (data: any) => {
-	generating.value = false;
-	progressMessage.value = "";
-	showDialog.value = true;
-	errorMessage.value = data.message || "An error occurred while generating the page";
-	remoteTaskType.value = null;
-	remoteBlockId.value = null;
-};
+	const onError = (data: { message?: string }) => {
+		generating.value = false;
+		progressMessage.value = "";
+		showDialog.value = true;
+		errorMessage.value =
+			data.message || `An error occurred while ${isModify ? "modifying the section" : "generating the page"}`;
+		remoteTaskType.value = null;
+		remoteBlockId.value = null;
+	};
 
-const onModifyProgress = (data: any) => {
-	generating.value = true;
-	if (data.message) progressMessage.value = data.message;
-	if (data.task_type) remoteTaskType.value = data.task_type;
-	if (data.block_id) remoteBlockId.value = data.block_id;
-};
+	return { onProgress, onStream, onComplete, onError };
+}
 
-const onModifyStream = (data: any) => {
-	generating.value = true;
-	if (!data.chunk) return;
-	streamingContent.value += data.chunk;
-
-	if (data.task_type) remoteTaskType.value = data.task_type;
-	if (data.block_id) remoteBlockId.value = data.block_id;
-
-	if (!["rewrite_text", "replace_image"].includes(remoteTaskType.value ?? "")) {
-		throttledProcessModifyStreaming();
-	}
-};
-
-const onModifyComplete = (data: any) => {
-	generating.value = false;
-	applyTierLabel(data);
-	processModifyStreaming();
-	emit("modified");
-	prompt.value = "";
-	remoteTaskType.value = null;
-	remoteBlockId.value = null;
-};
-
-const onModifyError = (data: any) => {
-	generating.value = false;
-	progressMessage.value = "";
-	showDialog.value = true;
-	errorMessage.value = data.message || "An error occurred while modifying the section";
-	remoteTaskType.value = null;
-	remoteBlockId.value = null;
-};
+const generateHandlers = makeHandlers(false);
+const modifyHandlers = makeHandlers(true);
 
 const eventName = (base: string) => (props.pageId ? `${base}_${props.pageId}` : base);
 
-const attachEventListeners = () => {
-	builderStore.realtime.on(eventName("ai_generation_progress"), onProgress);
-	builderStore.realtime.on(eventName("ai_generation_stream"), onStream);
-	builderStore.realtime.on(eventName("ai_generation_complete"), onComplete);
-	builderStore.realtime.on(eventName("ai_generation_error"), onError);
-	builderStore.realtime.on(eventName("ai_modify_progress"), onModifyProgress);
-	builderStore.realtime.on(eventName("ai_modify_stream"), onModifyStream);
-	builderStore.realtime.on(eventName("ai_modify_complete"), onModifyComplete);
-	builderStore.realtime.on(eventName("ai_modify_error"), onModifyError);
+const listeners = {
+	ai_generation_progress: generateHandlers.onProgress,
+	ai_generation_stream: generateHandlers.onStream,
+	ai_generation_complete: generateHandlers.onComplete,
+	ai_generation_error: generateHandlers.onError,
+	ai_modify_progress: modifyHandlers.onProgress,
+	ai_modify_stream: modifyHandlers.onStream,
+	ai_modify_complete: modifyHandlers.onComplete,
+	ai_modify_error: modifyHandlers.onError,
 };
 
-onMounted(attachEventListeners);
+function attachListeners() {
+	Object.entries(listeners).forEach(([evt, handler]) => {
+		builderStore.realtime.on(eventName(evt), handler);
+	});
+}
 
-const detachEventListeners = () => {
-	builderStore.realtime.off(eventName("ai_generation_progress"), onProgress);
-	builderStore.realtime.off(eventName("ai_generation_stream"), onStream);
-	builderStore.realtime.off(eventName("ai_generation_complete"), onComplete);
-	builderStore.realtime.off(eventName("ai_generation_error"), onError);
-	builderStore.realtime.off(eventName("ai_modify_progress"), onModifyProgress);
-	builderStore.realtime.off(eventName("ai_modify_stream"), onModifyStream);
-	builderStore.realtime.off(eventName("ai_modify_complete"), onModifyComplete);
-	builderStore.realtime.off(eventName("ai_modify_error"), onModifyError);
-};
+function detachListeners() {
+	Object.entries(listeners).forEach(([evt, handler]) => {
+		builderStore.realtime.off(eventName(evt), handler);
+	});
+}
 
-onUnmounted(detachEventListeners);
+onMounted(() => {
+	attachListeners();
+	createResource({
+		url: "builder.ai_page_generator.get_ai_models",
+		auto: true,
+		onSuccess: (data: AIProvider[]) => (availableModels.value = data),
+	});
+});
+
+onUnmounted(detachListeners);
 
 watch(
 	() => props.pageId,
 	() => {
-		detachEventListeners();
-		attachEventListeners();
+		detachListeners();
+		attachListeners();
 	},
 );
-
-defineExpose({
-	executeDirect,
+watch(generating, (v) => emit("generating", v));
+watch(showDialog, (v) => {
+	if (v) {
+		errorMessage.value = "";
+		progressMessage.value = "";
+		streamingContent.value = "";
+	}
 });
+
+defineExpose({ executeDirect });
 </script>
 
 <style scoped>
