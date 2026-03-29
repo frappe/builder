@@ -99,10 +99,6 @@ const testApiKey = async () => {
 	try {
 		const result = (await createResource({
 			url: "builder.ai_page_generator.test_api_key",
-			makeParams: () => ({
-				model: provider,
-				api_key: apiKey.value,
-			}),
 		}).submit()) as { success: boolean; message?: string };
 
 		if (result.success) {

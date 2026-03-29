@@ -591,7 +591,13 @@ def modify_section_from_prompt(
 
 
 @frappe.whitelist()
-def test_api_key(model: str, api_key: str):
+def test_api_key():
+	settings = frappe.get_single("Builder Settings")
+	model = settings.get("ai_model")
+	api_key = settings.get_password("ai_api_key", raise_exception=False)
+	if not model or not api_key:
+		return {"success": False, "message": _("Please set an AI provider and API key")}
+
 	actual_model = get_default_model(model)
 	if actual_model.startswith("gemini-"):
 		actual_model = f"gemini/{actual_model}"
