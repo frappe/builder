@@ -1,27 +1,5 @@
 <template>
 	<div class="flex flex-col gap-2">
-		<div class="flex h-6 items-center justify-between">
-			<div class="flex items-center gap-2">
-				<label class="text-[10px] font-bold uppercase tracking-[0.1em] text-ink-gray-4">
-					{{ modelValue ? "Style" : "Design Style" }}
-				</label>
-				<div v-if="modelValue" class="flex items-center gap-1.5">
-					<div
-						class="flex items-center gap-1.5 rounded-md bg-surface-gray-2 px-2 py-0.5 ring-1 ring-inset ring-outline-gray-2">
-						<span class="text-[10px] font-bold uppercase text-ink-gray-9">
-							{{ modelValue.name }}
-						</span>
-						<button
-							class="text-ink-gray-4 transition-colors hover:text-ink-gray-9"
-							@click="$emit('update:modelValue', null)"
-							title="Clear style selection">
-							<FeatherIcon name="x" class="size-3" />
-						</button>
-					</div>
-				</div>
-			</div>
-		</div>
-
 		<!-- Category Filter -->
 		<div class="pb-2 pt-0.5">
 			<TabButtons v-model="selectedCategory" :buttons="CATEGORIES" />
