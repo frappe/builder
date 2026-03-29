@@ -3,14 +3,12 @@ name: UI Test
 on:
   pull_request:
   push:
-    branches: master
+    branches: [master]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-    name: UI Tests (Cypress)
+    name: UI Tests (Playwright)
 
     services:
       redis-cache:
@@ -70,11 +68,9 @@ jobs:
           key: ${{ runner.os }}-yarn-ui-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
             ${{ runner.os }}-yarn-ui-
-      - name: Cache cypress binary
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/Cypress
-          key: ${{ runner.os }}-cypress
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
 
       - name: Setup
         run: |
@@ -109,6 +105,16 @@ jobs:
 
       - name: UI Tests
         run: cd ~/frappe-bench/apps/builder/frontend && yarn test
+        env:
+          CI: 'true'
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          retention-days: 7
 
       - name: Stop server
         run: |

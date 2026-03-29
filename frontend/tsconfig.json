@@ -35,7 +35,9 @@
     "src/**/*.tsx",
     "src/**/*.vue",
     "tests/**/*.ts",
-    "tests/**/*.tsx"
+    "tests/**/*.tsx",
+    "e2e/**/*.ts",
+    "playwright.config.ts"
   ],
   "exclude": [
     "node_modules",
