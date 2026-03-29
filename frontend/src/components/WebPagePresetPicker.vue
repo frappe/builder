@@ -62,17 +62,6 @@
 								"></div>
 						</div>
 					</template>
-
-					<!-- Bento Grid -->
-					<template v-else-if="preset.id === 'bento'">
-						<div class="grid h-full w-full grid-cols-2 grid-rows-2 gap-1">
-							<div class="rounded-lg bg-blue-200"></div>
-							<div class="rounded-md bg-orange-200"></div>
-							<div class="rounded-md bg-violet-200"></div>
-							<div class="rounded-xl bg-pink-200"></div>
-						</div>
-					</template>
-
 					<!-- Neo-Brutalist -->
 					<template v-else-if="preset.id === 'neo-brutalist'">
 						<div class="absolute inset-x-0 top-0 flex h-6 items-center bg-black px-2">
@@ -228,28 +217,6 @@
 						</div>
 					</template>
 
-					<!-- Cosmic Nebula -->
-					<template v-else-if="preset.id === 'cosmic-nebula'">
-						<div
-							class="absolute inset-0"
-							style="
-								background: radial-gradient(circle at 70% 30%, #4c1d95 0%, transparent 70%),
-									radial-gradient(circle at 20% 80%, #1e40af 0%, transparent 70%);
-							"></div>
-						<div
-							class="absolute inset-0 opacity-20"
-							style="
-								background-image: radial-gradient(circle at 1px 1px, white 0.5px, transparent 0);
-								background-size: 8px 8px;
-							"></div>
-						<div class="relative z-10 flex flex-col gap-1.5">
-							<div class="h-2 w-2/3 rounded-full bg-white/20 backdrop-blur-sm"></div>
-							<div class="h-1.5 w-1/2 rounded-full bg-white/10"></div>
-							<div
-								class="mt-1 h-3 w-1/3 rounded-full bg-blue-500/60 shadow-[0_0_8px_rgba(99,102,241,0.5)]"></div>
-						</div>
-					</template>
-
 					<!-- Synthwave Neon -->
 					<template v-else-if="preset.id === 'synthwave'">
 						<div
@@ -287,29 +254,6 @@
 							<div
 								class="absolute -right-1 bottom-0 h-4 w-4 border-2 border-dashed border-gray-400"
 								style="transform: rotate(5deg)"></div>
-						</div>
-					</template>
-
-					<!-- Holographic -->
-					<template v-else-if="preset.id === 'holographic'">
-						<div
-							class="absolute inset-0"
-							style="
-								background: linear-gradient(
-									135deg,
-									#e0f2fe 0%,
-									#fdf2f8 25%,
-									#f5f3ff 50%,
-									#ecfdf5 75%,
-									#fff7ed 100%
-								);
-								filter: saturate(3);
-							"></div>
-						<div class="relative flex flex-col gap-1.5">
-							<div class="h-3 w-3/4 rounded-lg bg-white/80 ring-1 ring-blue-300/60 backdrop-blur-md"></div>
-							<div class="h-1.5 w-1/2 rounded-full bg-white/30 backdrop-blur-sm"></div>
-							<div
-								class="mt-1 h-4 w-1/3 rounded-lg border border-white/80 bg-gradient-to-br from-white/60 to-transparent shadow-sm"></div>
 						</div>
 					</template>
 
@@ -410,17 +354,6 @@ const PRESETS: Preset[] = [
 			bg: "bg-gray-900",
 			blobA: "bg-purple-600",
 			blobB: "bg-blue-700",
-		},
-	},
-	{
-		id: "bento",
-		name: "Bento Grid",
-		category: "modern",
-		description:
-			"Modular bento-box grid layouts with varied tile sizes, and generous rounded corners. Each section is a self-contained card. Inspired by Japanese bento compartments — clean, playful, highly structured.",
-		icon: "grid",
-		preview: {
-			bg: "bg-gray-50",
 		},
 	},
 	{
@@ -545,17 +478,6 @@ const PRESETS: Preset[] = [
 		},
 	},
 	{
-		id: "cosmic-nebula",
-		name: "Cosmic Nebula",
-		category: "tech",
-		description:
-			"Deep space aesthetics with swirling stellar clouds, star-fields, and floating translucent elements. Magical, expansive, and ethereal.",
-		icon: "cloud",
-		preview: {
-			bg: "bg-zinc-900",
-		},
-	},
-	{
 		id: "synthwave",
 		name: "Synthwave Neon",
 		category: "retro",
@@ -575,17 +497,6 @@ const PRESETS: Preset[] = [
 		icon: "edit-3",
 		preview: {
 			bg: "bg-gray-100",
-		},
-	},
-	{
-		id: "holographic",
-		name: "Holographic",
-		category: "modern",
-		description:
-			"Iridescent color-shifting surfaces, holographic overlays, and translucent frosted glass. Ethereal, modern, and shimmering with light.",
-		icon: "layers",
-		preview: {
-			bg: "bg-blue-100",
 		},
 	},
 	{
