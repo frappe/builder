@@ -93,7 +93,11 @@
 			</div>
 			<Badge variant="subtle" theme="orange" v-if="builderStore.readOnlyMode">Read Only</Badge>
 			<div class="flex gap-2">
-				<Tooltip text="Generate with AI" :hoverDelay="0.6" arrow-class="mb-3">
+				<Tooltip
+					v-if="builderSettings.doc?.ai_api_key"
+					text="Generate with AI"
+					:hoverDelay="0.6"
+					arrow-class="mb-3">
 					<Button
 						variant="ghost"
 						@click="openAIGenerator"
@@ -157,6 +161,7 @@ import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import PlayIcon from "@/components/Icons/Play.vue";
 import SettingsGearIcon from "@/components/Icons/SettingsGear.vue";
 import PublishButton from "@/components/PublishButton.vue";
+import { builderSettings } from "@/data/builderSettings";
 import { webPages } from "@/data/webPage";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
