@@ -10,5 +10,6 @@
  "name": "Video",
  "owner": "Administrator",
  "preview": "/builder_assets/Video/video.png",
- "template_name": "Video"
+ "template_name": "Video",
+ "sort_order": 19
 }
