@@ -318,34 +318,6 @@ function handleError(error: unknown, fallback: string) {
 	errorMessage.value = error instanceof Error ? error.message : fallback;
 }
 
-const syncing = ref(false);
-async function syncStreamingContent() {
-	if (syncing.value) return;
-	syncing.value = true;
-	try {
-		const data = await createResource({
-			url: "builder.ai_page_generator.get_ai_streaming_content",
-			params: { page_id: props.pageId },
-		}).submit();
-
-		if (data?.content && data.content.length > streamingContent.value.length) {
-			generating.value = true;
-			streamingContent.value = data.content;
-			if (data.task_type) remoteTaskType.value = data.task_type;
-
-			if (props.mode === "modify" || data.task_type) {
-				throttledModifyStreaming();
-			} else {
-				throttledStreaming();
-			}
-		}
-	} catch (e) {
-		console.error("Failed to sync AI content:", e);
-	} finally {
-		syncing.value = false;
-	}
-}
-
 async function runTask(type: "generate" | "modify", customParams: Record<string, any> = {}) {
 	resetState();
 	const isModify = type === "modify" || props.mode === "modify";
@@ -431,27 +403,15 @@ function makeHandlers(isModify: boolean) {
 		if (data.message) progressMessage.value = data.message;
 		if (data.task_type) remoteTaskType.value = data.task_type;
 		if (isModify && data.block_id) remoteBlockId.value = data.block_id;
-
-		if (data.total_length && data.total_length > streamingContent.value.length) {
-			syncStreamingContent();
-		}
 	};
 
 	const onStream = (data: StreamData) => {
 		generating.value = true;
 		if (!data.chunk) return;
 
-		const currentLen = streamingContent.value.length;
-		if (data.total_length! <= currentLen) return;
-
-		if (data.total_length! > currentLen + data.chunk.length) {
-			syncStreamingContent();
-		} else {
-			streamingContent.value += data.chunk;
-			const canThrottle =
-				!isModify || !["rewrite_text", "replace_image"].includes(remoteTaskType.value ?? "");
-			if (canThrottle) (isModify ? throttledModifyStreaming : throttledStreaming)();
-		}
+		streamingContent.value += data.chunk;
+		const canThrottle = !isModify || !["rewrite_text", "replace_image"].includes(remoteTaskType.value ?? "");
+		if (canThrottle) (isModify ? throttledModifyStreaming : throttledStreaming)();
 
 		if (data.task_type) remoteTaskType.value = data.task_type;
 		if (data.block_id) remoteBlockId.value = data.block_id;
@@ -521,7 +481,6 @@ onMounted(() => {
 		auto: true,
 		onSuccess: (data: AIProvider[]) => (availableModels.value = data),
 	});
-	syncStreamingContent();
 });
 
 onUnmounted(detachListeners);
