@@ -889,9 +889,8 @@ class TestStandardPageSync(FrappeTestCase):
 	"""
 
 	# The app must be installed on the bench so that ``frappe.get_app_path``
-	# succeeds.  ``builder_test`` is created and installed automatically during
-	# the test run setup, so we use it as our fixture app.
-	FIXTURE_APP = "builder_test"
+	# succeeds.  We use the builder app itself since it is always available.
+	FIXTURE_APP = "builder"
 
 	# ------------------------------------------------------------------ helpers
 
@@ -1041,6 +1040,52 @@ class TestStandardPageSync(FrappeTestCase):
 				frappe.delete_doc("Builder Page", new_name, ignore_permissions=True)
 			if frappe.db.exists("Builder Page", page.name):
 				page.delete(ignore_permissions=True)
+
+	def test_uncheck_standard_page_removes_files(self):
+		"""Unchecking is_standard must delete the exported page files."""
+		import unittest.mock as mock
+
+		page = self._make_page("uncheck-std-page")
+		try:
+			with mock.patch("builder.export_import_standard_page.delete_standard_page_files") as mock_delete:
+				frappe.conf.developer_mode = 1
+				page.is_standard = 0
+				page.app = ""
+				page.save(ignore_permissions=True)
+				mock_delete.assert_called_once()
+				_args = mock_delete.call_args[0]
+				self.assertEqual(_args[1], self.FIXTURE_APP)
+		finally:
+			frappe.conf.developer_mode = 0
+			if frappe.db.exists("Builder Page", page.name):
+				frappe.delete_doc("Builder Page", page.name, ignore_permissions=True, force=True)
+
+	def test_uncheck_standard_page_removes_orphaned_scripts(self):
+		"""Unchecking is_standard must also delete orphaned client-script directories."""
+		import unittest.mock as mock
+
+		page, script = self._make_page("uncheck-std-scripts", with_script=True)
+		try:
+			with (
+				mock.patch("builder.export_import_standard_page.delete_standard_page_files"),
+				mock.patch(
+					"builder.export_import_standard_page.delete_standard_client_script_files"
+				) as mock_del_script,
+			):
+				frappe.conf.developer_mode = 1
+				page.is_standard = 0
+				page.app = ""
+				page.save(ignore_permissions=True)
+				mock_del_script.assert_called_once()
+				_args = mock_del_script.call_args[0]
+				self.assertEqual(_args[0], script.name)
+				self.assertEqual(_args[1], self.FIXTURE_APP)
+		finally:
+			frappe.conf.developer_mode = 0
+			if frappe.db.exists("Builder Page", page.name):
+				frappe.delete_doc("Builder Page", page.name, ignore_permissions=True, force=True)
+			if frappe.db.exists("Builder Client Script", script.name):
+				frappe.delete_doc("Builder Client Script", script.name, ignore_permissions=True)
 
 	def test_client_script_on_trash_removes_directory(self):
 		"""Deleting a client script must remove its builder_files directory."""
