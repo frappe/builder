@@ -318,6 +318,10 @@ def run_llm_job(
 	task_tier = classify_task(is_modify=is_modify, task_type=task_type)
 	params = TASK_PARAMS[task_tier]
 
+	cache_key = f"ai_streaming_content:{page_id}:{user}" if page_id else None
+	if cache_key:
+		frappe.cache().set_value(cache_key, {"content": "", "task_type": task_type}, expires_in_sec=600)
+
 	if task_tier == "simple":
 		model = get_simple_model(model)
 
@@ -330,6 +334,7 @@ def run_llm_job(
 		message=f"{action} with {model_label}...",
 		task_tier=task_tier,
 		model_used=model,
+		total_length=0,
 	)
 
 	# Fix: extract original_id once here; pass it down instead of re-parsing later
@@ -360,27 +365,43 @@ def run_llm_job(
 			for chunk in call_llm(model, messages, params, stream=True, api_key=api_key):
 				if delta := chunk.choices[0].delta.content:
 					if not content:
-						emit("progress", message="Designing...")
-						last_stage = "Designing..."
+						emit("progress", message="Building...")
+						last_stage = "Building..."
 					content += delta
-					emit("stream", chunk=delta, block_id=original_id)
+					if cache_key:
+						frappe.cache().set_value(
+							cache_key, {"content": content, "task_type": task_type}, expires_in_sec=600
+						)
+
+					emit("stream", chunk=delta, block_id=original_id, total_length=len(content))
 
 					stage = get_progress_stage(content)
 					if stage and stage != last_stage:
-						emit("progress", message=stage)
 						last_stage = stage
+						emit("progress", message=stage, total_length=len(content))
 		else:
 			content = call_llm(model, messages, params, stream=False, api_key=api_key)
+			if cache_key:
+				frappe.cache().set_value(
+					cache_key, {"content": content, "task_type": task_type}, expires_in_sec=600
+				)
 
 	except ValueError as e:
+		if cache_key:
+			frappe.cache().delete_value(cache_key)
 		frappe.log_error(f"Parse error: {e}\nContent: {content}", f"{event_prefix} parse")
 		emit("error", message="Failed to parse AI response. The model returned invalid YAML.")
 		return
 
 	except Exception as e:
+		if cache_key:
+			frappe.cache().delete_value(cache_key)
 		frappe.log_error(f"LLM job error: {e}", event_prefix)
 		emit("error", message=str(e))
 		return
+
+	if cache_key:
+		frappe.cache().delete_value(cache_key)
 
 	success_message = "Modified block successfully" if is_modify else "Page generated successfully"
 	emit(
@@ -638,6 +659,13 @@ def modify_section_from_prompt(
 		task_type=task_type,
 		model=model,
 	)
+
+
+@frappe.whitelist()
+def get_ai_streaming_content(page_id: str):
+	user = frappe.session.user
+	cache_key = f"ai_streaming_content:{page_id}:{user}"
+	return frappe.cache().get_value(cache_key) or {"content": None}
 
 
 @frappe.whitelist()
