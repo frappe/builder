@@ -435,7 +435,7 @@ const PRESETS: Preset[] = [
 	},
 	{
 		id: "blueprint",
-		name: "Technical Blueprint",
+		name: "Tech Blueprint",
 		category: "tech",
 		description:
 			"Deep architectural blue backgrounds with fine white grid lines and technical drafting annotations. Precise, structural, and professional.",
