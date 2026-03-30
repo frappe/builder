@@ -1,5 +1,5 @@
 <template>
-	<Dialog v-model="showDialog" :options="{ title, size: 'xl' }">
+	<Dialog v-model="showDialog" :options="{ title, size: 'xl', paddingTop: '20vh' }">
 		<template #body-content>
 			<div class="flex flex-col gap-3">
 				<Textarea
@@ -9,8 +9,15 @@
 					class="w-full text-base"
 					@keydown.meta.enter="handleSubmit"
 					@keydown.ctrl.enter="handleSubmit" />
-
-				<div class="flex items-center justify-between gap-2 px-1">
+				<Transition name="fade">
+					<div
+						v-if="errorMessage"
+						class="text-ink-red-9 flex items-center gap-2 rounded-md bg-surface-red-1 p-2 text-xs">
+						<FeatherIcon name="alert-circle" class="h-3.5 w-3.5 shrink-0" />
+						{{ errorMessage }}
+					</div>
+				</Transition>
+				<div class="flex items-center justify-between gap-2 pt-2">
 					<div class="flex items-center">
 						<Dropdown
 							:options="[
@@ -76,15 +83,6 @@
 						:label="mode === 'modify' ? 'Modify' : 'Generate'"
 						icon-right="arrow-up" />
 				</div>
-
-				<Transition name="fade">
-					<div
-						v-if="errorMessage"
-						class="text-ink-red-9 mt-2 flex items-center gap-2 rounded-md bg-surface-red-1 p-2 text-xs">
-						<FeatherIcon name="alert-circle" class="h-3.5 w-3.5 shrink-0" />
-						{{ errorMessage }}
-					</div>
-				</Transition>
 			</div>
 		</template>
 	</Dialog>
