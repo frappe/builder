@@ -50,22 +50,6 @@
 							<div class="h-1.5 w-2/5 rounded-sm border-2 border-black bg-transparent"></div>
 						</div>
 					</template>
-
-					<!-- Soft Glow -->
-					<template v-else-if="preset.id === 'soft-glow'">
-						<div
-							class="absolute bottom-0 right-0 h-12 w-12 rounded-full bg-purple-500 opacity-20"
-							style="filter: blur(10px)"></div>
-						<div
-							class="h-2 w-2/3 rounded-full"
-							style="background: linear-gradient(90deg, #a855f7, #818cf8)"></div>
-						<div class="h-1 w-1/2 rounded-full bg-purple-300 opacity-50"></div>
-						<div class="h-1 w-3/5 rounded-full bg-blue-200 opacity-40"></div>
-						<div
-							class="mt-1 h-3 w-2/5 rounded-full"
-							style="background: linear-gradient(90deg, #a855f7, #818cf8); opacity: 0.85"></div>
-					</template>
-
 					<!-- Minimal Ink -->
 					<template v-else-if="preset.id === 'minimal-ink'">
 						<div class="h-px w-full bg-gray-200"></div>
@@ -127,23 +111,6 @@
 							<div class="flex-1 rounded-t-sm bg-red-500" style="height: 75%"></div>
 							<div class="flex-1 rounded-t-sm bg-black" style="height: 35%"></div>
 							<div class="flex-1 rounded-t-sm bg-red-500" style="height: 88%"></div>
-						</div>
-					</template>
-
-					<!-- Cyber Punk -->
-					<template v-else-if="preset.id === 'cyber-punk'">
-						<div
-							class="absolute inset-0 opacity-10"
-							style="
-								background-image: radial-gradient(circle at 2px 2px, #00f2ff 1px, transparent 0);
-								background-size: 10px 10px;
-							"></div>
-						<div class="relative z-10 flex flex-col gap-1.5 pt-1">
-							<div class="h-1.5 w-4/5 border-l-2 border-cyan-400 bg-cyan-400/10 px-1"></div>
-							<div class="h-1.5 w-1/2 border-l-2 border-blue-500 bg-blue-500/10 px-1"></div>
-							<div class="mt-1 h-3.5 w-full border border-cyan-400/50 bg-cyan-400/5">
-								<div class="h-full w-1/3 bg-cyan-400/40"></div>
-							</div>
 						</div>
 					</template>
 
@@ -346,17 +313,6 @@ const PRESETS: Preset[] = [
 		},
 	},
 	{
-		id: "soft-glow",
-		name: "Soft Glow",
-		category: "modern",
-		description:
-			"Dreamy gradients, soft glow halos, pill-shaped buttons, and rounded fluid shapes. Light and airy — think Figma landing pages and modern SaaS products with a fresh, inviting feel.",
-		icon: "sun",
-		preview: {
-			bg: "bg-purple-100",
-		},
-	},
-	{
 		id: "minimal-ink",
 		name: "Minimal Ink",
 		category: "minimal",
@@ -370,7 +326,7 @@ const PRESETS: Preset[] = [
 	{
 		id: "earthy",
 		name: "Earthy Organic",
-		category: "minimal",
+		category: "other",
 		description:
 			"Organic shapes, natural textures, and rounded asymmetric forms. Grounded and tactile — ideal for wellness, food, craft, and sustainability brands.",
 		icon: "coffee",
@@ -392,7 +348,7 @@ const PRESETS: Preset[] = [
 	{
 		id: "luxe-editorial",
 		name: "Luxe Editorial",
-		category: "minimal",
+		category: "other",
 		description:
 			"Thin serif typefaces, and refined negative space. Understated luxury — think high-fashion magazines and premium brand campaigns.",
 		icon: "star",
@@ -409,17 +365,6 @@ const PRESETS: Preset[] = [
 		icon: "zap",
 		preview: {
 			bg: "bg-yellow-100",
-		},
-	},
-	{
-		id: "cyber-punk",
-		name: "Futuristic Cyber",
-		category: "tech",
-		description:
-			"High-visibility neon accents against deep obsidian backgrounds. Glowing borders, scanning lines, and tech-heavy interfaces with futuristic energy.",
-		icon: "cpu",
-		preview: {
-			bg: "bg-black",
 		},
 	},
 	{
@@ -502,7 +447,6 @@ const PRESETS: Preset[] = [
 ];
 
 import TabButtons from "@/components/Controls/TabButtons.vue";
-import { FeatherIcon } from "frappe-ui";
 import { computed, ref } from "vue";
 
 const CATEGORIES = [
@@ -510,6 +454,7 @@ const CATEGORIES = [
 	{ label: "Technical", value: "tech" },
 	{ label: "Modern", value: "modern" },
 	{ label: "Retro", value: "retro" },
+	{ label: "Other", value: "other" },
 ];
 
 const selectedCategory = ref("minimal");

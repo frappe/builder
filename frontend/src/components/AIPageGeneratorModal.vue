@@ -1,39 +1,90 @@
 <template>
-	<Dialog v-model="showDialog" :options="{ title, size: 'lg' }">
+	<Dialog v-model="showDialog" :options="{ title, size: 'xl' }">
 		<template #body-content>
 			<div class="flex flex-col gap-3">
 				<Textarea
 					v-model="prompt"
-					:rows="4"
-					variant="outline"
 					:placeholder="placeholder"
+					:rows="6"
+					class="w-full text-base"
 					@keydown.meta.enter="handleSubmit"
 					@keydown.ctrl.enter="handleSubmit" />
 
-				<div v-if="errorMessage" class="text-ink-red-9 rounded-lg bg-surface-red-1 p-3 text-sm">
-					{{ errorMessage }}
+				<div class="flex items-center justify-between gap-2 px-1">
+					<div class="flex items-center">
+						<Dropdown
+							:options="[
+								{
+									label: 'Select Model',
+									disabled: true,
+								},
+								...modelOptions.map((m) => ({
+									label: m.label,
+									onClick: () => (selectedModel = m.value),
+								})),
+							]">
+							<Button
+								variant="ghost"
+								icon-left="chevron-up"
+								:label="modelOptions.find((m) => m.value === selectedModel)?.label || 'Model'" />
+						</Dropdown>
+						<Popover v-if="mode === 'generate'" placement="top" :offset="10">
+							<template #target="{ togglePopover }">
+								<Button
+									variant="ghost"
+									icon-left="chevron-up"
+									:label="selectedPreset?.name || 'No Style'"
+									:class="{
+										'!text-ink-gray-4': !selectedPreset,
+									}"
+									@click="togglePopover" />
+							</template>
+							<template #body-main="{ close }">
+								<div class="z-[1100] w-[420px] rounded-lg border bg-surface-white p-2 shadow-2xl">
+									<div class="flex items-center justify-between p-1 px-2">
+										<div class="text-sm text-ink-gray-4">Styles</div>
+										<Button
+											v-if="selectedPreset"
+											class="text-sm text-ink-gray-5 hover:text-ink-gray-7"
+											@click="
+												selectedPreset = null;
+												close();
+											">
+											Clear Selection
+										</Button>
+									</div>
+									<div class="max-h-[350px] overflow-y-auto p-2">
+										<WebPagePresetPicker
+											:modelValue="selectedPreset"
+											@update:modelValue="
+												(val) => {
+													selectedPreset = val;
+													close();
+												}
+											" />
+									</div>
+								</div>
+							</template>
+						</Popover>
+					</div>
+
+					<Button
+						variant="solid"
+						@click="handleSubmit"
+						:disabled="!canGenerate"
+						:loading="generating"
+						:label="mode === 'modify' ? 'Modify' : 'Generate'"
+						icon-right="arrow-up" />
 				</div>
 
-				<WebPagePresetPicker v-if="mode === 'generate'" v-model="selectedPreset" :showLabel="false" />
-			</div>
-		</template>
-
-		<template #actions>
-			<div class="flex w-full items-center justify-between gap-2">
-				<FormControl
-					type="select"
-					:options="[{ label: 'AI Model', value: '_', disabled: true }, ...modelOptions]"
-					v-model="selectedModel"
-					class="text-xs" />
-				<div class="flex items-center gap-2">
-					<Button variant="solid" @click="handleSubmit" :disabled="!canGenerate || generating">
-						<template v-if="generating">
-							<FeatherIcon name="loader" class="h-4 w-4 animate-spin" />
-							{{ progressMessage || (mode === "modify" ? "Modifying…" : "Generating…") }}
-						</template>
-						<template v-else>{{ mode === "modify" ? "Modify" : "Generate" }}</template>
-					</Button>
-				</div>
+				<Transition name="fade">
+					<div
+						v-if="errorMessage"
+						class="text-ink-red-9 mt-2 flex items-center gap-2 rounded-md bg-surface-red-1 p-2 text-xs">
+						<FeatherIcon name="alert-circle" class="h-3.5 w-3.5 shrink-0" />
+						{{ errorMessage }}
+					</div>
+				</Transition>
 			</div>
 		</template>
 	</Dialog>
@@ -63,7 +114,7 @@ import WebPagePresetPicker from "@/components/WebPagePresetPicker.vue";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import { useLocalStorage, useThrottleFn } from "@vueuse/core";
-import { createResource, FeatherIcon, FormControl, Textarea } from "frappe-ui";
+import { Button, createResource, Dropdown, FeatherIcon, Popover, Textarea } from "frappe-ui";
 import yaml from "js-yaml";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
@@ -506,5 +557,15 @@ defineExpose({ executeDirect });
 .slide-up-leave-to {
 	opacity: 0;
 	transform: translate(-50%, -20px);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+	transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+	opacity: 0;
 }
 </style>
