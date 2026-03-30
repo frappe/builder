@@ -113,6 +113,7 @@ import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import { useLocalStorage, useThrottleFn } from "@vueuse/core";
 import { Button, createResource, Dropdown, FeatherIcon, Popover, Textarea } from "frappe-ui";
+// @ts-ignore
 import yaml from "js-yaml";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
@@ -223,31 +224,14 @@ const canGenerate = computed(
 	() => prompt.value.trim() !== "" && builderStore.isAIEnabled && !generating.value,
 );
 
-const TEXT_ELEMENTS = ["h1", "h2", "h3", "p", "span"];
-
 const title = computed(() => {
 	if (props.mode === "generate") return "Generate with AI";
-	const el = props.blockContext?.element;
-	if (typeof el === "string" && TEXT_ELEMENTS.includes(el)) return "Rewrite with AI";
-	if (el === "img") return "Replace Image with AI";
 	return "Modify with AI";
 });
 
 const placeholder = computed(() => {
 	if (props.mode === "generate") return "Describe the page you want to create…";
-	const el = props.blockContext?.element;
-	if (typeof el === "string" && TEXT_ELEMENTS.includes(el))
-		return "Describe how you want to rewrite this text…";
-	if (el === "img") return "Describe the new image you want…";
 	return "Describe how you want to modify this section…";
-});
-
-const taskType = computed(() => {
-	if (props.mode !== "modify" || !props.blockContext) return null;
-	const el = props.blockContext.element;
-	if (typeof el === "string" && TEXT_ELEMENTS.includes(el)) return "rewrite_text";
-	if (el === "img") return "replace_image";
-	return null;
 });
 
 function buildPrompt(base: string) {
@@ -342,7 +326,6 @@ const handleSubmit = () => {
 	if (props.mode === "modify") {
 		runTask("modify", {
 			block_context: JSON.stringify(props.blockContext),
-			task_type: taskType.value,
 		});
 	} else {
 		runTask("generate");
@@ -372,7 +355,7 @@ function processStreaming() {
 }
 
 function processModifyStreaming() {
-	const effectiveTaskType = remoteTaskType.value || taskType.value;
+	const effectiveTaskType = remoteTaskType.value;
 	const effectiveBlockId = remoteBlockId.value || props.blockContext?.blockId;
 
 	if (effectiveTaskType === "rewrite_text") {
