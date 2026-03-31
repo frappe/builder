@@ -688,7 +688,7 @@ def to_safe_json(data):
 def execute_script_and_combine(prev_block_data, block_data_script, props):
 	props = frappe._dict(frappe.parse_json(props or "{}"))
 	block_data = frappe._dict()
-	_locals = dict(block=frappe._dict(), prev_blocks=to_dict_with_fallback(prev_block_data), props=props)
+	_locals = dict(block=to_dict_with_fallback(prev_block_data or {}), props=props)
 	execute_script(unescape_html(block_data_script), _locals, "sample")
 	block_data.update(_locals["block"])
 	return combine(prev_block_data, block_data)
