@@ -691,4 +691,4 @@ def execute_script_and_combine(prev_block_data, block_data_script, props):
 	_locals = dict(block=to_dict_with_fallback(prev_block_data or {}), props=props)
 	execute_script(unescape_html(block_data_script), _locals, "sample")
 	block_data.update(_locals["block"])
-	return combine(prev_block_data, block_data)
+	return block_data
