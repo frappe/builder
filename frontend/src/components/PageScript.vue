@@ -24,10 +24,10 @@
 						:autofocus="false"
 						:readonly="true"></CodeEditor>
 					<div class="flex w-full items-center justify-between py-4">
-						<div class="text-sm text-ink-gray-6">Show cumulative data</div>
+						<div class="text-sm text-ink-gray-6">Show inherited data</div>
 						<Switch
-							:model-value="showCumulativeBlockData"
-							@update:model-value="(val) => (showCumulativeBlockData = val)" />
+							:model-value="showInheritedBlockData"
+							@update:model-value="(val) => (showInheritedBlockData = val)" />
 					</div>
 					<div class="my-3 mt-4 text-sm text-ink-gray-8">Block Props</div>
 					<PropsEditor
@@ -129,18 +129,26 @@
 								@save="saveBlockDataScript"
 								:showSaveButton="true"
 								:show-line-numbers="true"></CodeEditor>
-							<CodeEditor
-								v-model="blockData"
-								type="JSON"
-								label="Data Preview"
-								:showLineNumbers="true"
-								class="-mt-5 w-1/3 [&>div>div]:bg-surface-white"
-								height="calc(100% - 110px)"
-								description='Use Block Data Script to provide dynamic data to your block.<br>
+							<div class="-mt-5 w-1/3 p-4" height="calc(100% - 110px)">
+								<CodeEditor
+									v-model="blockData"
+									type="JSON"
+									label="Data Preview"
+									:showLineNumbers="true"
+									height="calc(100% - 140px)"
+									class="h-full [&>div>div]:bg-surface-white"
+									description='Use Block Data Script to provide dynamic data to your block.<br>
 								<b>Example:</b> block.events = frappe.get_list("Event")<br><br>
 								For more details on how to write block data script, refer to <b><a class="underline" href="https://docs.frappe.io/builder/data-script" target="_blank">this documentation</a></b>.
 								'
-								:readonly="true"></CodeEditor>
+									:readonly="true"></CodeEditor>
+								<div class="flex items-center justify-between gap-4">
+									<div class="text-sm text-ink-gray-6">Show inherited data</div>
+									<Switch
+										:model-value="showInheritedBlockData"
+										@update:model-value="(val) => (showInheritedBlockData = val)" />
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -172,7 +180,7 @@ const blockDataStore = useBlockDataStore();
 
 const showDialog = ref(false);
 const mode = useStorage("builder_last_used_script_editor_mode", "page");
-const showCumulativeBlockData = ref(false);
+const showInheritedBlockData = ref(false);
 
 const props = defineProps<{
 	page: BuilderPage;
@@ -204,8 +212,8 @@ const blockData = computed(() => {
 	return isBlockSelected.value
 		? blockDataStore.getBlockData(
 				blockController.getFirstSelectedBlock().blockId,
-				showCumulativeBlockData.value ? "all" : "own",
-			) || {}
+				showInheritedBlockData.value ? "all" : "own",
+		  ) || {}
 		: {};
 });
 
