@@ -32,14 +32,14 @@
 							]">
 							<Button
 								variant="ghost"
-								icon-left="chevron-up"
+								icon-right="chevron-up"
 								:label="modelOptions.find((m) => m.value === selectedModel)?.label || 'Model'" />
 						</Dropdown>
 						<Popover v-if="mode === 'generate'" placement="top" :offset="10">
 							<template #target="{ togglePopover }">
 								<Button
 									variant="ghost"
-									icon-left="chevron-up"
+									icon-right="chevron-up"
 									:label="selectedPreset?.name || 'No Style'"
 									:class="{
 										'!text-ink-gray-4': !selectedPreset,
