@@ -12,7 +12,7 @@ litellm.drop_params = True
 
 TASK_PARAMS = {
 	"simple": {"max_tokens": 1000, "temperature": 0.5},
-	"complex": {"max_tokens": 16000, "temperature": 0.7},
+	"complex": {"max_tokens": 22000, "temperature": 0.7},
 }
 
 
@@ -20,7 +20,7 @@ TASK_PARAMS = {
 
 MODIFY_PROMPT = (
 	"You modify web sections in Frappe Builder's block system.\n"
-	"Return ONLY valid YAML array. No markdown, no explanations.\n\n"
+	"Return ONLY valid and compact YAML array. No markdown, no explanations.\n\n"
 	"# Schema\n"
 	"el: str\n"
 	"id: str # MUST preserve existing\n"
@@ -35,7 +35,11 @@ MODIFY_PROMPT = (
 	"Wrap text in semantic elements — never place text directly in div/section.\n"
 	"Formatting: use flow style for all style dicts e.g. style: {color: '#fff', 'hover:backgroundColor': '#eee'}. "
 	"All images must be external URLs with proper alt text if replacing."
-	"Omit any key whose value is empty, null, or {}."
+	"Omit any key whose value is empty, null, or {}.\n"
+	"Gradients: ALWAYS use 'backgroundImage' (NOT 'background') for gradients. "
+	"The gradient value MUST be quoted to avoid YAML parse errors. "
+	"Example: backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'. "
+	"Never leave gradient strings unquoted."
 )
 
 REWRITE_TEXT_PROMPT = (
@@ -51,7 +55,7 @@ REPLACE_IMAGE_PROMPT = (
 
 GENERATE_PROMPT = """You are an expert web designer specializing in creating modern, responsive web pages using the Frappe Builder block system.
 
-Critical: Return ONLY a valid YAML object. No markdown, no explanations.
+Critical: Return ONLY a valid and compact YAML object. No markdown, no explanations.
 
 # Structure:
 Return a single root block that represents the page (el: div, id: root). This block contains all sections in its 'c' (children) property.
@@ -80,7 +84,8 @@ Return a single root block that represents the page (el: div, id: root). This bl
 - Modern harmonious color palettes. Good spacing. Professional concise copy.
 - Interactive: Use hover states for buttons/links to make the page feel alive.
 - Google Fonts via fontFamily (use ONLY the font name and not the fallback).
-- Semantic HTML with alt texts."""
+- Semantic HTML with alt texts.
+- Gradients: ALWAYS use 'backgroundImage' (NOT 'background') for gradients. The value MUST be a quoted YAML string to avoid parse errors. Example: backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'. Never use unquoted gradient values."""
 
 MODIFY_PROMPT_MAP = {
 	"rewrite_text": REWRITE_TEXT_PROMPT,
