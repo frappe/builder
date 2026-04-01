@@ -8,46 +8,12 @@ from frappe import _
 
 from builder.utils import to_compact_yaml
 
+litellm.drop_params = True
+
 TASK_PARAMS = {
 	"simple": {"max_tokens": 1000, "temperature": 0.5},
 	"complex": {"max_tokens": 16000, "temperature": 0.7},
 }
-
-STYLE_KEYS_SIMPLE = frozenset(
-	{
-		"color",
-		"backgroundColor",
-		"background",
-		"fontSize",
-		"fontWeight",
-		"fontStyle",
-		"textDecoration",
-		"opacity",
-		"visibility",
-		"padding",
-		"paddingTop",
-		"paddingRight",
-		"paddingBottom",
-		"paddingLeft",
-		"margin",
-		"marginTop",
-		"marginRight",
-		"marginBottom",
-		"marginLeft",
-		"border",
-		"borderRadius",
-		"borderColor",
-		"borderWidth",
-		"display",
-		"width",
-		"height",
-		"maxWidth",
-		"objectFit",
-		"position",
-		"zIndex",
-		"boxShadow",
-	}
-)
 
 
 # System Prompts
@@ -147,17 +113,11 @@ def compress_block_to_yaml(block: dict, depth: int = 0, task_tier: str = "comple
 		out["name"] = block["blockName"]
 
 	base_styles = block.get("baseStyles") or {}
-	if isinstance(base_styles, dict):
-		filtered = (
-			{k: v for k, v in base_styles.items() if k in STYLE_KEYS_SIMPLE}
-			if task_tier == "simple"
-			else base_styles
-		)
-		if filtered:
-			out["style"] = filtered
+	if base_styles:
+		out["style"] = base_styles
 
 	attrs = block.get("attributes") or {}
-	if isinstance(attrs, dict) and attrs:
+	if attrs:
 		out["attrs"] = attrs
 
 	if block.get("classes"):
@@ -166,11 +126,11 @@ def compress_block_to_yaml(block: dict, depth: int = 0, task_tier: str = "comple
 		out["text"] = block["innerHTML"]
 
 	mob = block.get("mobileStyles") or {}
-	if isinstance(mob, dict) and mob:
+	if mob:
 		out["m_style"] = mob
 
 	tab = block.get("tabletStyles") or {}
-	if isinstance(tab, dict) and tab and (task_tier == "complex" or depth <= 1):
+	if tab and (task_tier == "complex" or depth <= 1):
 		out["t_style"] = tab
 
 	children = [
@@ -257,8 +217,6 @@ def call_llm(model: str, messages: list, params: dict, *, stream: bool, api_key:
 	if model.startswith("gemini-"):
 		model = f"gemini/{model}"
 
-	litellm.drop_params = True
-
 	if "claude-" in model:
 		for m in messages:
 			if m["role"] == "system" and isinstance(m.get("content"), str):
@@ -325,7 +283,6 @@ def run_llm_job(
 	if task_tier == "simple":
 		model = get_simple_model(model)
 
-	should_stream = True
 	action = "Modifying" if is_modify else "Generating"
 	model_label = get_model_label(model)
 	emit(
@@ -337,12 +294,11 @@ def run_llm_job(
 		total_length=0,
 	)
 
-	# Fix: extract original_id once here; pass it down instead of re-parsing later
-	original_id = extract_block_id(block_context) if is_modify and block_context else None
-
-	stripped_context = (
-		strip_block_context(block_context, task_tier, task_type=task_type) if is_modify else None
-	)
+	original_id = None
+	stripped_context = None
+	if is_modify and block_context:
+		original_id = extract_block_id(block_context)
+		stripped_context = strip_block_context(block_context, task_tier, task_type=task_type)
 
 	messages = [
 		{
@@ -360,31 +316,24 @@ def run_llm_job(
 
 	content = ""
 	try:
-		if should_stream:
-			last_stage = None
-			for chunk in call_llm(model, messages, params, stream=True, api_key=api_key):
-				if delta := chunk.choices[0].delta.content:
-					if not content:
-						emit("progress", message="Building...")
-						last_stage = "Building..."
-					content += delta
-					if cache_key:
-						frappe.cache().set_value(
-							cache_key, {"content": content, "task_type": task_type}, expires_in_sec=600
-						)
+		last_stage = None
+		for chunk in call_llm(model, messages, params, stream=True, api_key=api_key):
+			if delta := chunk.choices[0].delta.content:
+				if not content:
+					emit("progress", message="Building...")
+					last_stage = "Building..."
+				content += delta
+				if cache_key:
+					frappe.cache().set_value(
+						cache_key, {"content": content, "task_type": task_type}, expires_in_sec=600
+					)
 
-					emit("stream", chunk=delta, block_id=original_id, total_length=len(content))
+				emit("stream", chunk=delta, block_id=original_id, total_length=len(content))
 
-					stage = get_progress_stage(content)
-					if stage and stage != last_stage:
-						last_stage = stage
-						emit("progress", message=stage, total_length=len(content))
-		else:
-			content = call_llm(model, messages, params, stream=False, api_key=api_key)
-			if cache_key:
-				frappe.cache().set_value(
-					cache_key, {"content": content, "task_type": task_type}, expires_in_sec=600
-				)
+				stage = get_progress_stage(content)
+				if stage and stage != last_stage:
+					last_stage = stage
+					emit("progress", message=stage, total_length=len(content))
 
 	except ValueError as e:
 		if cache_key:
@@ -466,91 +415,89 @@ def enqueue_ai_job(fn, model=None, **kwargs):
 	return {"status": "accepted"}
 
 
-def get_available_models():
-	return [
-		{
-			"provider": "openai",
-			"models": [
-				{"name": "gpt-5.4", "label": "GPT-5.4 (Flagship)", "max_tokens": 1000000},
-				{"name": "gpt-5.3-codex", "label": "GPT-5.3 Codex (Best Coding)", "max_tokens": 1000000},
-				{"name": "gpt-5.4-mini", "label": "GPT-5.4 Mini (Fast)", "max_tokens": 1000000},
-				{"name": "gpt-5.4-nano", "label": "GPT-5.4 Nano (Cheapest)", "max_tokens": 1000000},
-			],
-		},
-		{
-			"provider": "anthropic",
-			"models": [
-				{"name": "claude-sonnet-4-6", "label": "Claude Sonnet 4.6 (Balanced)", "max_tokens": 200000},
-				{"name": "claude-haiku-4-5", "label": "Claude Haiku 4.5 (Fastest)", "max_tokens": 200000},
-			],
-		},
-		{
-			"provider": "google",
-			"models": [
-				{
-					"name": "gemini-3.1-pro-preview",
-					"label": "Gemini 3.1 Pro (Flagship)",
-					"max_tokens": 1048576,
-				},
-				{"name": "gemini-2.5-pro", "label": "Gemini 2.5 Pro", "max_tokens": 1048576},
-				{"name": "gemini-3-flash", "label": "Gemini 3 Flash (Fast)", "max_tokens": 1048576},
-			],
-		},
-		{
-			"provider": "x-ai",
-			"models": [
-				{"name": "grok-4.20", "label": "Grok 4.20 (Most Capable)", "max_tokens": 131072},
-				{"name": "grok-4.1", "label": "Grok 4.1", "max_tokens": 131072},
-				{"name": "grok-4.1-fast", "label": "Grok 4.1 Fast (Cheapest)", "max_tokens": 2000000},
-			],
-		},
-		{
-			"provider": "openrouter",
-			"models": [
-				{
-					"name": "openrouter/anthropic/claude-sonnet-4.6",
-					"label": "Claude 4.6 Sonnet (Balanced)",
-					"max_tokens": 200000,
-				},
-				{
-					"name": "openrouter/anthropic/claude-haiku-4.5",
-					"label": "Claude 4.5 Haiku (Fastest)",
-					"max_tokens": 200000,
-				},
-				{
-					"name": "openrouter/google/gemini-3.1-pro",
-					"label": "Gemini 3.1 Pro (Flagship)",
-					"max_tokens": 1048576,
-				},
-				{
-					"name": "openrouter/google/gemini-3-flash-preview",
-					"label": "Gemini 3 Flash (Fast)",
-					"max_tokens": 1048576,
-				},
-				{
-					"name": "openrouter/openai/gpt-5.4-mini",
-					"label": "GPT-5.4 Mini",
-					"max_tokens": 1000000,
-				},
-				{
-					"name": "openrouter/moonshotai/kimi-k2.5",
-					"label": "Kimi K2.5 (Cheapest)",
-					"max_tokens": 2000000,
-				},
-				# z-ai/glm-5
-				{
-					"name": "openrouter/z-ai/glm-5",
-					"label": "GLM-5 (Balanced)",
-					"max_tokens": 200000,
-				},
-			],
-		},
-	]
+AVAILABLE_MODELS = [
+	{
+		"provider": "openai",
+		"models": [
+			{"name": "gpt-5.4", "label": "GPT-5.4 (Flagship)", "max_tokens": 1000000},
+			{"name": "gpt-5.3-codex", "label": "GPT-5.3 Codex (Best Coding)", "max_tokens": 1000000},
+			{"name": "gpt-5.4-mini", "label": "GPT-5.4 Mini (Fast)", "max_tokens": 1000000},
+			{"name": "gpt-5.4-nano", "label": "GPT-5.4 Nano (Cheapest)", "max_tokens": 1000000},
+		],
+	},
+	{
+		"provider": "anthropic",
+		"models": [
+			{"name": "claude-sonnet-4-6", "label": "Claude Sonnet 4.6 (Balanced)", "max_tokens": 200000},
+			{"name": "claude-haiku-4-5", "label": "Claude Haiku 4.5 (Fastest)", "max_tokens": 200000},
+		],
+	},
+	{
+		"provider": "google",
+		"models": [
+			{
+				"name": "gemini-3.1-pro-preview",
+				"label": "Gemini 3.1 Pro (Flagship)",
+				"max_tokens": 1048576,
+			},
+			{"name": "gemini-2.5-pro", "label": "Gemini 2.5 Pro", "max_tokens": 1048576},
+			{"name": "gemini-3-flash", "label": "Gemini 3 Flash (Fast)", "max_tokens": 1048576},
+		],
+	},
+	{
+		"provider": "x-ai",
+		"models": [
+			{"name": "grok-4.20", "label": "Grok 4.20 (Most Capable)", "max_tokens": 131072},
+			{"name": "grok-4.1", "label": "Grok 4.1", "max_tokens": 131072},
+			{"name": "grok-4.1-fast", "label": "Grok 4.1 Fast (Cheapest)", "max_tokens": 2000000},
+		],
+	},
+	{
+		"provider": "openrouter",
+		"models": [
+			{
+				"name": "openrouter/anthropic/claude-sonnet-4.6",
+				"label": "Claude 4.6 Sonnet (Balanced)",
+				"max_tokens": 200000,
+			},
+			{
+				"name": "openrouter/anthropic/claude-haiku-4.5",
+				"label": "Claude 4.5 Haiku (Fastest)",
+				"max_tokens": 200000,
+			},
+			{
+				"name": "openrouter/google/gemini-3.1-pro",
+				"label": "Gemini 3.1 Pro (Flagship)",
+				"max_tokens": 1048576,
+			},
+			{
+				"name": "openrouter/google/gemini-3-flash-preview",
+				"label": "Gemini 3 Flash (Fast)",
+				"max_tokens": 1048576,
+			},
+			{
+				"name": "openrouter/openai/gpt-5.4-mini",
+				"label": "GPT-5.4 Mini",
+				"max_tokens": 1000000,
+			},
+			{
+				"name": "openrouter/moonshotai/kimi-k2.5",
+				"label": "Kimi K2.5 (Cheapest)",
+				"max_tokens": 2000000,
+			},
+			# z-ai/glm-5
+			{
+				"name": "openrouter/z-ai/glm-5",
+				"label": "GLM-5 (Balanced)",
+				"max_tokens": 200000,
+			},
+		],
+	},
+]
 
 
 def get_model_label(model_name: str) -> str:
-	available = get_available_models()
-	for provider in available:
+	for provider in AVAILABLE_MODELS:
 		for m in provider["models"]:
 			if m["name"] == model_name:
 				return m["label"]
@@ -631,7 +578,7 @@ def get_default_model(model_or_provider: str) -> str:
 
 @frappe.whitelist()
 def get_ai_models():
-	return get_available_models()
+	return AVAILABLE_MODELS
 
 
 @frappe.whitelist()
@@ -680,7 +627,6 @@ def test_api_key():
 	if actual_model.startswith("gemini-"):
 		actual_model = f"gemini/{actual_model}"
 	try:
-		litellm.drop_params = True
 		litellm.completion(
 			model=actual_model,
 			messages=[{"role": "user", "content": "Say 'OK' if you can read this"}],
