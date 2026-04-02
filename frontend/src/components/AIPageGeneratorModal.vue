@@ -2,13 +2,50 @@
 	<Dialog v-model="showDialog" :options="{ title, size: 'xl', paddingTop: '20vh' }">
 		<template #body-content>
 			<div class="flex flex-col gap-3">
-				<Textarea
-					v-model="prompt"
-					:placeholder="placeholder"
-					:rows="6"
-					class="w-full text-base"
-					@keydown.meta.enter="handleSubmit"
-					@keydown.ctrl.enter="handleSubmit" />
+				<div
+					class="relative"
+					@paste.stop="handlePaste"
+					@dragover.prevent="isDragging = isVisionModel ? true : isDragging"
+					@dragleave="isDragging = false"
+					@drop.prevent="handleDrop">
+					<Textarea
+						v-model="prompt"
+						:placeholder="placeholder"
+						:rows="6"
+						class="w-full text-base"
+						@keydown.meta.enter="handleSubmit"
+						@keydown.ctrl.enter="handleSubmit" />
+					<Transition name="fade">
+						<div
+							v-if="isDragging"
+							class="border-outline-blue-3 bg-surface-blue-1/60 pointer-events-none absolute inset-0 flex items-center justify-center rounded-md border-2 border-dashed">
+							<div class="text-ink-blue-4 flex items-center gap-1.5 text-xs font-medium">
+								<FeatherIcon name="image" class="h-3.5 w-3.5" />
+								Drop image to attach
+							</div>
+						</div>
+					</Transition>
+					<span
+						v-if="isVisionModel && !imagePreviewUrl && !isDragging"
+						class="pointer-events-none absolute bottom-2 right-2 select-none text-[10px] text-ink-gray-4">
+						Paste or drop image
+					</span>
+				</div>
+				<Transition name="fade">
+					<div
+						v-if="imagePreviewUrl"
+						class="flex items-center gap-2 rounded-md border border-outline-gray-2 bg-surface-gray-1 p-1.5 pr-2.5">
+						<img :src="imagePreviewUrl" class="h-8 w-8 rounded object-cover" alt="Reference image" />
+						<span class="flex-1 truncate text-xs text-ink-gray-7">{{ imageFileName }}</span>
+						<button
+							type="button"
+							class="hover:text-ink-red-7 flex items-center rounded text-ink-gray-5"
+							title="Remove image"
+							@click="clearImage">
+							<FeatherIcon name="x" class="h-3.5 w-3.5" />
+						</button>
+					</div>
+				</Transition>
 				<Transition name="fade">
 					<div
 						v-if="errorMessage"
@@ -109,7 +146,6 @@
 <script setup lang="ts">
 import Dialog from "@/components/Controls/Dialog.vue";
 import WebPagePresetPicker from "@/components/WebPagePresetPicker.vue";
-import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import { useLocalStorage, useThrottleFn } from "@vueuse/core";
 import { Button, createResource, Dropdown, FeatherIcon, Popover, Textarea } from "frappe-ui";
@@ -129,6 +165,7 @@ interface AIModel {
 	name: string;
 	label: string;
 	max_tokens: number;
+	vision?: boolean;
 }
 
 interface AIProvider {
@@ -197,10 +234,12 @@ const remoteBlockId = ref<string | null>(null);
 const availableModels = ref<AIProvider[]>([]);
 const selectedPreset = ref<Preset | null>(null);
 const selectedModel = useLocalStorage("ai-selected-model", "");
+const imageData = ref<string | null>(null);
+const imagePreviewUrl = ref<string | null>(null);
+const imageFileName = ref("");
+const isDragging = ref(false);
 const currentProviderModels = computed(() => {
-	const provider = builderSettings.doc?.ai_model;
-	if (!provider) return [];
-	const found = availableModels.value.find((p) => p.provider === provider);
+	const found = availableModels.value.find((p) => p.provider === "openrouter");
 	return found ? found.models : [];
 });
 
@@ -217,6 +256,15 @@ watch(
 
 const modelOptions = computed<SelectOption[]>(() => {
 	return currentProviderModels.value.map((m) => ({ label: m.label, value: m.name }));
+});
+
+const isVisionModel = computed(() => {
+	const model = currentProviderModels.value.find((m) => m.name === selectedModel.value);
+	return model?.vision ?? false;
+});
+
+watch(isVisionModel, (supported) => {
+	if (!supported) clearImage();
 });
 
 const builderStore = useBuilderStore();
@@ -237,6 +285,48 @@ const placeholder = computed(() => {
 function buildPrompt(base: string) {
 	const preset = selectedPreset.value;
 	return preset ? `${base}\n\nDESIGN STYLE: ${preset.name}. ${preset.description}` : base;
+}
+
+function clearImage() {
+	imageData.value = null;
+	imagePreviewUrl.value = null;
+	imageFileName.value = "";
+	isDragging.value = false;
+}
+
+function attachImageFile(file: File) {
+	if (!file.type.startsWith("image/")) {
+		errorMessage.value = "Please paste a valid image.";
+		return;
+	}
+	if (file.size > 5 * 1024 * 1024) {
+		errorMessage.value = "Image must be smaller than 5 MB.";
+		return;
+	}
+	imageFileName.value = file.name || "pasted-image.png";
+	const reader = new FileReader();
+	reader.onload = (e) => {
+		imageData.value = e.target?.result as string;
+		imagePreviewUrl.value = imageData.value;
+	};
+	reader.readAsDataURL(file);
+}
+
+function handlePaste(event: ClipboardEvent) {
+	if (!isVisionModel.value) return;
+	const items = Array.from(event.clipboardData?.items || []);
+	const imageItem = items.find((item) => item.type.startsWith("image/"));
+	if (!imageItem) return;
+	event.preventDefault();
+	const file = imageItem.getAsFile();
+	if (file) attachImageFile(file);
+}
+
+function handleDrop(event: DragEvent) {
+	isDragging.value = false;
+	if (!isVisionModel.value) return;
+	const file = Array.from(event.dataTransfer?.files || []).find((f) => f.type.startsWith("image/"));
+	if (file) attachImageFile(file);
 }
 
 function convertYAMLtoBlock(yamlBlock: Record<string, any>): BlockOptions {
@@ -314,6 +404,7 @@ async function runTask(type: "generate" | "modify", customParams: Record<string,
 				prompt: buildPrompt(prompt.value),
 				page_id: props.pageId,
 				model: selectedModel.value,
+				...(imageData.value ? { image_data: imageData.value } : {}),
 				...customParams,
 			}),
 		}).submit();
@@ -481,6 +572,7 @@ watch(showDialog, (v) => {
 		errorMessage.value = "";
 		progressMessage.value = "";
 		streamingContent.value = "";
+		clearImage();
 	}
 });
 

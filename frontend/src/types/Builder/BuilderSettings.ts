@@ -33,8 +33,6 @@ export interface BuilderSettings {
 	execute_block_scripts_in_editor?: "Don't Execute" | "Restricted" | "Unrestricted";
 	/**	Prevent Click Emulation : Check - Prevents click events from being emulated in the editor for blocks with Block Client Scripts.	*/
 	restrict_click_handlers?: 0 | 1;
-	/**	AI Model : Data - AI model to use for page generation	*/
-	ai_model?: string;
-	/**	AI API Key : Password - API key for the selected AI model provider	*/
+	/**	AI API Key : Password - API key for the OpenRouter AI provider	*/
 	ai_api_key?: string;
 }

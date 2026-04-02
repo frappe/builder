@@ -20,7 +20,6 @@
   "execute_block_scripts_in_editor",
   "restrict_click_handlers",
   "ai_section",
-  "ai_model",
   "ai_api_key"
  ],
  "fields": [
@@ -114,12 +113,6 @@
    "fieldname": "ai_section",
    "fieldtype": "Section Break",
    "label": "AI Settings"
-  },
-  {
-   "description": "AI model to use for page generation (e.g., gpt-5.4, claude-sonnet-4-6, gemini-1.5-flash)",
-   "fieldname": "ai_model",
-   "fieldtype": "Data",
-   "label": "AI Model"
   },
   {
    "description": "API key for the selected AI model provider",

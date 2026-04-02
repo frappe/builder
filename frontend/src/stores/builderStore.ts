@@ -47,7 +47,7 @@ const useBuilderStore = defineStore("builderStore", {
 	}),
 	getters: {
 		isAIEnabled(): boolean {
-			return !!(builderSettings.doc?.ai_model && builderSettings.doc?.ai_api_key);
+			return !!builderSettings.doc?.ai_api_key;
 		},
 	},
 	actions: {

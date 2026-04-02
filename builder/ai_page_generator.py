@@ -205,16 +205,41 @@ def expand_yaml_to_block(node: dict) -> dict:
 	return block
 
 
+def validate_image_data(image_data: str) -> str:
+	"""Validate that image_data is a safe base64-encoded image data URL."""
+	if not image_data.startswith("data:image/"):
+		frappe.throw(_("Invalid image data: must be a base64-encoded image data URL"))
+	if ";base64," not in image_data:
+		frappe.throw(_("Invalid image data: must be a base64-encoded data URL"))
+	# ~5 MB image ≈ ~6.7 MB base64 string
+	if len(image_data) > 7 * 1024 * 1024:
+		frappe.throw(_("Image is too large. Please use an image smaller than 5 MB."))
+	return image_data
+
+
 def build_user_message(
-	prompt: str, is_modify: bool, block_context: str | None = None, task_type: str | None = None
-) -> str:
+	prompt: str,
+	is_modify: bool,
+	block_context: str | None = None,
+	task_type: str | None = None,
+	image_url: str | None = None,
+) -> str | list:
 	if is_modify and block_context:
 		if task_type == "rewrite_text":
-			return f'Text content to rewrite: "{block_context}"\n\nInstruction: {prompt}'
-		if task_type == "replace_image":
-			return f"Current image attributes:\n{block_context}\n\nInstruction: {prompt}"
-		return f"Block:\n{block_context}\n\nChange: {prompt}"
-	return f"Create a page for: {prompt}"
+			text = f'Text content to rewrite: "{block_context}"\n\nInstruction: {prompt}'
+		elif task_type == "replace_image":
+			text = f"Current image attributes:\n{block_context}\n\nInstruction: {prompt}"
+		else:
+			text = f"Block:\n{block_context}\n\nChange: {prompt}"
+	else:
+		text = f"Create a page for: {prompt}"
+
+	if image_url:
+		return [
+			{"type": "text", "text": text},
+			{"type": "image_url", "image_url": {"url": image_url}},
+		]
+	return text
 
 
 def call_llm(model: str, messages: list, params: dict, *, stream: bool, api_key: str | None = None):
@@ -264,6 +289,7 @@ def run_llm_job(
 	page_id: str | None = None,
 	block_context: str | None = None,
 	task_type: str | None = None,
+	image_url: str | None = None,
 ):
 	user = user or frappe.session.user
 
@@ -293,7 +319,7 @@ def run_llm_job(
 	emit(
 		"progress",
 		status="generating",
-		message=f"{action} with {model_label}...",
+		message=f"{action} with {model_label}",
 		task_tier=task_tier,
 		model_used=model,
 		total_length=0,
@@ -305,6 +331,9 @@ def run_llm_job(
 		original_id = extract_block_id(block_context)
 		stripped_context = strip_block_context(block_context, task_tier, task_type=task_type)
 
+	# Image is only applicable for generate/modify-block tasks, not simple text/image tasks
+	effective_image_url = image_url if task_type not in {"rewrite_text", "replace_image"} else None
+
 	messages = [
 		{
 			"role": "system",
@@ -314,7 +343,11 @@ def run_llm_job(
 		{
 			"role": "user",
 			"content": build_user_message(
-				prompt, is_modify, block_context=stripped_context, task_type=task_type
+				prompt,
+				is_modify,
+				block_context=stripped_context,
+				task_type=task_type,
+				image_url=effective_image_url,
 			),
 		},
 	]
@@ -368,9 +401,23 @@ def run_llm_job(
 
 
 def generate_page_blocks(
-	prompt: str, model: str, api_key: str, user: str | None = None, page_id: str | None = None
+	prompt: str,
+	model: str,
+	api_key: str,
+	user: str | None = None,
+	page_id: str | None = None,
+	image_url: str | None = None,
 ):
-	run_llm_job(prompt, model, api_key, "ai_generation", is_modify=False, user=user, page_id=page_id)
+	run_llm_job(
+		prompt,
+		model,
+		api_key,
+		"ai_generation",
+		is_modify=False,
+		user=user,
+		page_id=page_id,
+		image_url=image_url,
+	)
 
 
 def modify_section_blocks(
@@ -381,6 +428,7 @@ def modify_section_blocks(
 	user: str | None = None,
 	page_id: str | None = None,
 	task_type: str | None = None,
+	image_url: str | None = None,
 ):
 	run_llm_job(
 		prompt,
@@ -392,6 +440,7 @@ def modify_section_blocks(
 		page_id=page_id,
 		block_context=block_context,
 		task_type=task_type,
+		image_url=image_url,
 	)
 
 
@@ -401,17 +450,18 @@ def enqueue_ai_job(fn, model=None, **kwargs):
 	settings = frappe.get_single("Builder Settings")
 
 	if not model:
-		model = settings.get("ai_model")
-
-	if not model:
-		frappe.throw(_("Please configure an AI provider in Settings → AI"))
+		model = "openrouter"
 
 	model = get_default_model(model)
+
+	api_key = settings.get_password("ai_api_key", raise_exception=False)
+	if not api_key:
+		frappe.throw(_("Please configure an OpenRouter API key in Settings → AI"))
 
 	frappe.enqueue(
 		fn,
 		model=model,
-		api_key=settings.get_password("ai_api_key", raise_exception=False),
+		api_key=api_key,
 		user=frappe.session.user,
 		now=True,
 		**kwargs,
@@ -422,79 +472,55 @@ def enqueue_ai_job(fn, model=None, **kwargs):
 
 AVAILABLE_MODELS = [
 	{
-		"provider": "openai",
-		"models": [
-			{"name": "gpt-5.4", "label": "GPT-5.4 (Flagship)", "max_tokens": 1000000},
-			{"name": "gpt-5.3-codex", "label": "GPT-5.3 Codex (Best Coding)", "max_tokens": 1000000},
-			{"name": "gpt-5.4-mini", "label": "GPT-5.4 Mini (Fast)", "max_tokens": 1000000},
-			{"name": "gpt-5.4-nano", "label": "GPT-5.4 Nano (Cheapest)", "max_tokens": 1000000},
-		],
-	},
-	{
-		"provider": "anthropic",
-		"models": [
-			{"name": "claude-sonnet-4-6", "label": "Claude Sonnet 4.6 (Balanced)", "max_tokens": 200000},
-			{"name": "claude-haiku-4-5", "label": "Claude Haiku 4.5 (Fastest)", "max_tokens": 200000},
-		],
-	},
-	{
-		"provider": "google",
-		"models": [
-			{
-				"name": "gemini-3.1-pro-preview",
-				"label": "Gemini 3.1 Pro (Flagship)",
-				"max_tokens": 1048576,
-			},
-			{"name": "gemini-2.5-pro", "label": "Gemini 2.5 Pro", "max_tokens": 1048576},
-			{"name": "gemini-3-flash", "label": "Gemini 3 Flash (Fast)", "max_tokens": 1048576},
-		],
-	},
-	{
-		"provider": "x-ai",
-		"models": [
-			{"name": "grok-4.20", "label": "Grok 4.20 (Most Capable)", "max_tokens": 131072},
-			{"name": "grok-4.1", "label": "Grok 4.1", "max_tokens": 131072},
-			{"name": "grok-4.1-fast", "label": "Grok 4.1 Fast (Cheapest)", "max_tokens": 2000000},
-		],
-	},
-	{
 		"provider": "openrouter",
 		"models": [
 			{
 				"name": "openrouter/anthropic/claude-sonnet-4.6",
-				"label": "Claude 4.6 Sonnet (Balanced)",
+				"label": "Claude Sonnet 4.6 (Balanced)",
 				"max_tokens": 200000,
+				"vision": True,
 			},
 			{
-				"name": "openrouter/anthropic/claude-haiku-4.5",
-				"label": "Claude 4.5 Haiku (Fastest)",
+				"name": "openrouter/anthropic/claude-haiku-4-6",
+				"label": "Claude Haiku 4.6 (Fast)",
 				"max_tokens": 200000,
+				"vision": True,
 			},
 			{
 				"name": "openrouter/google/gemini-3.1-pro",
 				"label": "Gemini 3.1 Pro (Flagship)",
 				"max_tokens": 1048576,
+				"vision": True,
 			},
 			{
 				"name": "openrouter/google/gemini-3-flash-preview",
 				"label": "Gemini 3 Flash (Fast)",
 				"max_tokens": 1048576,
+				"vision": True,
 			},
 			{
 				"name": "openrouter/openai/gpt-5.4-mini",
 				"label": "GPT-5.4 Mini",
 				"max_tokens": 1000000,
+				"vision": True,
 			},
 			{
 				"name": "openrouter/moonshotai/kimi-k2.5",
 				"label": "Kimi K2.5 (Cheapest)",
 				"max_tokens": 2000000,
+				"vision": True,
 			},
-			# z-ai/glm-5
 			{
 				"name": "openrouter/z-ai/glm-5",
 				"label": "GLM-5 (Balanced)",
 				"max_tokens": 200000,
+				"vision": True,
+			},
+			{
+				"name": "openrouter/moonshotai/kimi-k2",
+				"label": "Kimi K2 (Generous Free Tier)",
+				"max_tokens": 131072,
+				"vision": False,
 			},
 		],
 	},
@@ -529,40 +555,23 @@ def get_progress_stage(content: str) -> str | None:
 		if name_match:
 			block_name = name_match.group(1).strip()
 			if block_name.lower() not in {"body", "root", "container"}:
-				return f"Building {block_name}..."
+				return f"Building {block_name}"
 	return None
 
 
 PROVIDER_DEFAULT_MODEL: dict[str, str] = {
-	"openai": "gpt-5.4",
-	"anthropic": "claude-sonnet-4-6",
-	"google": "gemini-3.1-pro-preview",
-	"x-ai": "grok-4.20",
 	"openrouter": "openrouter/anthropic/claude-sonnet-4.6",
 }
 
 
 PROVIDER_SIMPLE_MODEL: dict[str, str] = {
-	"anthropic": "claude-sonnet-4-6",
-	"google": "gemini-3-flash-preview",
-	"openai": "gpt-5.4-nano",
-	"x-ai": "grok-4.1-fast",
 	"openrouter": "openrouter/google/gemini-3-flash-preview",
 }
 
 
 def detect_provider(model: str) -> str | None:
-	lower = model.lower()
-	if lower.startswith("openrouter/"):
+	if model.lower().startswith("openrouter/"):
 		return "openrouter"
-	if "claude-" in lower:
-		return "anthropic"
-	if "gemini-" in lower:
-		return "google"
-	if "gpt-" in lower or re.match(r"o\d", lower):
-		return "openai"
-	if "grok-" in lower:
-		return "x-ai"
 	return None
 
 
@@ -587,8 +596,16 @@ def get_ai_models():
 
 
 @frappe.whitelist()
-def generate_page_from_prompt(prompt: str, page_id: str | None = None, model: str | None = None):
-	return enqueue_ai_job(generate_page_blocks, prompt=prompt, page_id=page_id, model=model)
+def generate_page_from_prompt(
+	prompt: str,
+	page_id: str | None = None,
+	model: str | None = None,
+	image_data: str | None = None,
+):
+	image_url = validate_image_data(image_data) if image_data else None
+	return enqueue_ai_job(
+		generate_page_blocks, prompt=prompt, page_id=page_id, model=model, image_url=image_url
+	)
 
 
 @frappe.whitelist()
@@ -598,11 +615,13 @@ def modify_section_from_prompt(
 	page_id: str | None = None,
 	task_type: str | None = None,
 	model: str | None = None,
+	image_data: str | None = None,
 ):
 	try:
 		json.loads(block_context)
 	except json.JSONDecodeError:
 		frappe.throw(_("Invalid block context JSON"))
+	image_url = validate_image_data(image_data) if image_data else None
 	return enqueue_ai_job(
 		modify_section_blocks,
 		prompt=prompt,
@@ -610,6 +629,7 @@ def modify_section_from_prompt(
 		page_id=page_id,
 		task_type=task_type,
 		model=model,
+		image_url=image_url,
 	)
 
 
@@ -623,10 +643,10 @@ def get_ai_streaming_content(page_id: str):
 @frappe.whitelist()
 def test_api_key():
 	settings = frappe.get_single("Builder Settings")
-	model = settings.get("ai_model")
+	model = settings.get("ai_model") or "openrouter"
 	api_key = settings.get_password("ai_api_key", raise_exception=False)
-	if not model or not api_key:
-		return {"success": False, "message": _("Please set an AI provider and API key")}
+	if not api_key:
+		return {"success": False, "message": _("Please set an OpenRouter API key")}
 
 	actual_model = get_default_model(model)
 	if actual_model.startswith("gemini-"):

@@ -1,28 +1,29 @@
 <template>
 	<div class="flex flex-col gap-5">
 		<div class="flex flex-col gap-2">
-			<FormControl
-				label="AI Provider"
-				type="select"
-				:options="providerOptions"
-				:modelValue="builderSettings.doc?.ai_model"
-				@update:modelValue="updateProvider" />
-			<p class="text-xs text-ink-gray-6">AI provider for page generation</p>
-		</div>
-		<div class="flex flex-col gap-2">
-			<label class="text-sm font-medium text-ink-gray-9">API Key</label>
+			<label class="text-sm text-ink-gray-9">OpenRouter API Key</label>
 			<div class="flex items-center gap-2">
 				<FormControl
 					type="password"
 					:modelValue="apiKey"
 					@update:modelValue="updateApiKey"
-					placeholder="Enter API key for the selected provider"
+					placeholder="sk-or-v1-…"
 					class="flex-1" />
 				<Button v-if="apiKey" variant="subtle" @click="testApiKey" :disabled="testing">
 					{{ testing ? "Testing..." : "Test Key" }}
 				</Button>
 			</div>
-			<p class="text-xs text-ink-gray-6">API key for the selected provider. Stored in Builder Settings.</p>
+			<p class="text-xs text-ink-gray-6">
+				Get API key from
+				<a
+					href="https://openrouter.ai/keys"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="text-ink-blue-4 underline">
+					openrouter.ai/keys
+				</a>
+				— supports Claude, Gemini, GPT and more under one key.
+			</p>
 		</div>
 		<div v-if="statusMessage" class="rounded-lg p-3 text-sm" :class="statusClass">
 			{{ statusMessage }}
@@ -33,56 +34,14 @@
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import { createResource, FormControl } from "frappe-ui";
-import { computed, onMounted, ref } from "vue";
-
-interface AIModel {
-	name: string;
-	label: string;
-	max_tokens: number;
-}
-
-interface AIProvider {
-	provider: string;
-	models: AIModel[];
-}
-
-interface SelectOption {
-	label: string;
-	value: string;
-}
+import { onMounted, ref } from "vue";
 
 const builderStore = useBuilderStore();
-const availableModels = ref<AIProvider[]>([]);
+
 const testing = ref(false);
 const statusMessage = ref("");
 const statusClass = ref("");
 const apiKey = ref("");
-
-const providerOptions = computed(() => {
-	const options: SelectOption[] = [{ label: "Select a provider...", value: "" }];
-	availableModels.value.forEach((available) => {
-		options.push({
-			label: getProviderLabel(available.provider),
-			value: available.provider,
-		});
-	});
-	return options;
-});
-
-const getProviderLabel = (provider: string): string => {
-	const labels: Record<string, string> = {
-		openai: "OpenAI",
-		anthropic: "Anthropic",
-		google: "Google",
-		"x-ai": "xAI",
-		openrouter: "OpenRouter",
-	};
-	return labels[provider] || provider;
-};
-
-const updateProvider = (value: string) => {
-	builderStore.updateBuilderSettings("ai_model", value);
-};
 
 const updateApiKey = (value: string) => {
 	apiKey.value = value;
@@ -90,8 +49,7 @@ const updateApiKey = (value: string) => {
 };
 
 const testApiKey = async () => {
-	const provider = builderSettings.doc?.ai_model;
-	if (!apiKey.value || !provider) return;
+	if (!apiKey.value) return;
 
 	testing.value = true;
 	statusMessage.value = "";
@@ -120,14 +78,6 @@ const testApiKey = async () => {
 };
 
 onMounted(() => {
-	createResource({
-		url: "builder.ai_page_generator.get_ai_models",
-		auto: true,
-		onSuccess: (data: AIProvider[]) => {
-			availableModels.value = data;
-		},
-	});
-	// Load the saved API key
 	if (builderSettings.doc?.ai_api_key) {
 		apiKey.value = builderSettings.doc.ai_api_key;
 	}
