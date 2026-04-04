@@ -468,8 +468,8 @@ function processModifyStreaming() {
 	}
 }
 
-const throttledStreaming = useThrottleFn(processStreaming, 300);
-const throttledModifyStreaming = useThrottleFn(processModifyStreaming, 300);
+const throttledStreaming = useThrottleFn(processStreaming, 500);
+const throttledModifyStreaming = useThrottleFn(processModifyStreaming, 500);
 
 function makeHandlers(isModify: boolean) {
 	const onProgress = (data: ProgressData) => {
