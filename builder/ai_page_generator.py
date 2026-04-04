@@ -85,6 +85,9 @@ Return a single root block that represents the page (el: div, id: root). This bl
 - Interactive: Use hover states for buttons/links to make the page feel alive.
 - Google Fonts via fontFamily (use ONLY the font name and not the fallback).
 - Semantic HTML with alt texts.
+- Create maximum 5 high quality sections
+- Use semantic tags and wrap text in them. Never place text directly in a div/section without a semantic tag.
+- Avoid using emojis in text content. Focus on professional tone.
 - Gradients: ALWAYS use 'backgroundImage' (NOT 'background') for gradients. The value MUST be a quoted YAML string to avoid parse errors. Example: backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'. Never use unquoted gradient values."""
 
 MODIFY_PROMPT_MAP = {
