@@ -9,7 +9,6 @@ import { FileUploadHandler } from "frappe-ui";
 import { defineComponent, h, markRaw, reactive, ref, toRaw } from "vue";
 import { toast } from "vue-sonner";
 import Dialog from "../components/Controls/Dialog.vue";
-import { useBlockDataStore, useBlockUidStore } from "@/stores/blockStore";
 
 function getNumberFromPx(px: string | number | null | undefined): number {
 	if (!px) {
@@ -30,7 +29,7 @@ function addPxToNumber(number: number, round: boolean = true): string {
 	return `${number}px`;
 }
 
-function HexToHSV(color: HashString): { h: number; s: number; v: number } {
+function HexToHSV(color: HashString): { h: number; s: number; v: number; a: number } {
 	// Remove hash and normalize length
 	let hex = color.replace("#", "").trim();
 
@@ -42,9 +41,16 @@ function HexToHSV(color: HashString): { h: number; s: number; v: number } {
 			.join("");
 	}
 
+	// Extract alpha from 8-digit hex (#RRGGBBAA)
+	let a = 100;
+	if (/^[0-9a-fA-F]{8}$/.test(hex)) {
+		a = Math.round((parseInt(hex.slice(6, 8), 16) / 255) * 100);
+		hex = hex.slice(0, 6);
+	}
+
 	// If not valid hex, return black
 	if (!/^[0-9a-fA-F]{6}$/.test(hex)) {
-		return { h: 0, s: 0, v: 0 };
+		return { h: 0, s: 0, v: 0, a: 100 };
 	}
 
 	const r = parseInt(hex.slice(0, 2), 16);
@@ -69,10 +75,10 @@ function HexToHSV(color: HashString): { h: number; s: number; v: number } {
 		h *= 60;
 	}
 
-	return { h, s, v };
+	return { h, s, v, a };
 }
 
-function HSVToHex(h: number, s: number, v: number): HashString {
+function HSVToHex(h: number, s: number, v: number, a: number = 100): HashString {
 	s /= 100;
 	v /= 100;
 	h /= 360;
@@ -110,7 +116,12 @@ function HSVToHex(h: number, s: number, v: number): HashString {
 	r = Math.round(r * 255);
 	g = Math.round(g * 255);
 	b = Math.round(b * 255);
-	return `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
+	const hex = `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}` as HashString;
+	const alphaByte = Math.round((a / 100) * 255);
+	if (alphaByte < 255) {
+		return `${hex}${alphaByte.toString(16).padStart(2, "0")}` as HashString;
+	}
+	return hex;
 }
 
 function getRandomColor() {
@@ -179,6 +190,18 @@ function RGBToHex(rgb: RGBString): HashString {
 function getRGB(color: HashString | RGBString | string | null): HashString | null {
 	if (!color) {
 		return null;
+	}
+	if (color.startsWith("rgba")) {
+		const parts = color
+			.replace("rgba(", "")
+			.replace(")", "")
+			.split(",")
+			.map((x) => x.trim());
+		const [r, g, b] = parts.map((x) => parseInt(x));
+		const alphaHex = Math.round(parseFloat(parts[3]) * 255)
+			.toString(16)
+			.padStart(2, "0");
+		return `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}${alphaHex}` as HashString;
 	}
 	if (color.startsWith("rgb")) {
 		return RGBToHex(color as RGBString);

@@ -45,6 +45,17 @@
 						:class="hueSelectorClass"
 						:style="hueSelectorStyle"></div>
 				</div>
+				<div
+					ref="alphaMap"
+					class="relative m-auto h-3 w-full rounded-md"
+					@click="setAlpha"
+					@mousedown.prevent="handleAlphaSelectorMove"
+					:style="alphaMapStyle">
+					<div
+						@mousedown="handleAlphaSelectorMove"
+						:class="hueSelectorClass"
+						:style="alphaSelectorStyle"></div>
+				</div>
 				<div ref="colorPalette">
 					<div class="flex flex-wrap gap-1.5">
 						<div
@@ -100,6 +111,14 @@
 				:class="hueSelectorClass"
 				:style="hueSelectorStyle"></div>
 		</div>
+		<div
+			ref="alphaMap"
+			class="relative m-auto h-3 w-full rounded-md"
+			@click="setAlpha"
+			@mousedown.prevent="handleAlphaSelectorMove"
+			:style="alphaMapStyle">
+			<div @mousedown="handleAlphaSelectorMove" :class="hueSelectorClass" :style="alphaSelectorStyle"></div>
+		</div>
 		<div ref="colorPalette">
 			<div class="flex flex-wrap gap-1.5">
 				<div
@@ -128,7 +147,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import { getColorVariableOptions } from "@/utils/colorOptions";
 import { HSVToHex, HexToHSV, getRGB } from "@/utils/helpers";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
-import { clamp, useDark, useEyeDropper } from "@vueuse/core";
+import { clamp, useDark, useElementBounding, useEyeDropper } from "@vueuse/core";
 import { Popover } from "frappe-ui";
 import { Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
 
@@ -143,11 +162,22 @@ const isDark = useDark({
 const canvasStore = useCanvasStore();
 const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;
 const colorMap = ref(null) as unknown as Ref<HTMLDivElement>;
+const alphaMap = ref(null) as unknown as Ref<HTMLDivElement>;
+
+const {
+	width: colorMapWidth,
+	height: colorMapHeight,
+	left: colorMapLeft,
+	top: colorMapTop,
+} = useElementBounding(colorMap);
+const { width: hueMapWidth, left: hueMapLeft } = useElementBounding(hueMap);
+const { width: alphaMapWidth, left: alphaMapLeft } = useElementBounding(alphaMap);
 
 const colorPickerPopover = ref<InstanceType<typeof Popover> | null>(null);
 
 const colorSelectorPosition = ref({ x: 0, y: 0 });
 const hueSelectorPosition = ref({ x: 0, y: 0 });
+const alphaSelectorPosition = ref({ x: Infinity, y: 0 });
 let currentColor = "#FFF" as HashString;
 
 const { isSupported, sRGBHex, open } = useEyeDropper();
@@ -226,6 +256,23 @@ const hueMapStyle = computed(() => ({
 	`,
 }));
 
+const liveSolidColor = computed(() => {
+	if (!colorMapWidth.value || !colorMapHeight.value) return `hsl(${hue.value}, 100%, 50%)`;
+	const s = Math.round((colorSelectorPosition.value.x / colorMapWidth.value) * 100);
+	const v = 100 - Math.round((colorSelectorPosition.value.y / colorMapHeight.value) * 100);
+	return HSVToHex(hue.value, s, v) as string;
+});
+
+const alphaMapStyle = computed(() => {
+	const solidColor = liveSolidColor.value;
+	return {
+		background: `
+			linear-gradient(90deg, transparent, ${solidColor}),
+			repeating-conic-gradient(#ccc 0% 25%, var(--surface-white) 0% 50%) 0 0 / 8px 8px
+		`,
+	};
+});
+
 const selectorClass =
 	"absolute rounded-full border border-black border-opacity-20 before:absolute before:h-full before:w-full before:rounded-full before:border-2 before:border-white before:!bg-[currentColor] after:absolute after:left-[2px] after:top-[2px] after:h-[calc(100%-4px)] after:w-[calc(100%-4px)] after:rounded-full after:border after:border-black after:border-opacity-20 after:bg-transparent";
 
@@ -239,7 +286,7 @@ const colorSelectorStyle = computed(
 			width: "12px",
 			left: `calc(${colorSelectorPosition.value.x}px - 6px)`,
 			top: `calc(${colorSelectorPosition.value.y}px - 6px)`,
-			color: modelColor.value || "#FFF",
+			color: liveSolidColor.value,
 			background: "transparent",
 		}) as StyleValue,
 );
@@ -251,6 +298,21 @@ const hueSelectorStyle = computed(() => ({
 	color: `hsl(${hue.value}, 100%, 50%)`,
 	background: "transparent",
 }));
+
+const alphaSelectorStyle = computed(() => {
+	const alphaByte = Math.round((alpha.value / 100) * 255);
+	const colorWithAlpha =
+		alphaByte < 255
+			? (`${liveSolidColor.value}${alphaByte.toString(16).padStart(2, "0")}` as HashString)
+			: liveSolidColor.value;
+	return {
+		height: "12px",
+		width: "12px",
+		left: `calc(${clamp(alphaSelectorPosition.value.x, 0, alphaMapWidth.value)}px - 6px)`,
+		color: colorWithAlpha,
+		background: "transparent",
+	};
+});
 
 const handleColorPaletteClick = (color: HashString) => {
 	setSelectorPosition(color);
@@ -273,86 +335,66 @@ const handleInputChange = (color: string | null) => {
 };
 
 const setColorSelectorPosition = (color: string) => {
-	if (!colorMap.value) return;
-	const rect = colorMap.value.getBoundingClientRect();
-	if (!rect || !rect.width || !rect.height) return;
-
-	const { width, height } = rect;
+	if (!colorMapWidth.value || !colorMapHeight.value) return;
 	const { s, v } = HexToHSV(color as HashString);
-	let x = clamp(s * width, 0, width);
-	let y = clamp((1 - v) * height, 0, height);
-	colorSelectorPosition.value = { x, y };
+	colorSelectorPosition.value = {
+		x: clamp(s * colorMapWidth.value, 0, colorMapWidth.value),
+		y: clamp((1 - v) * colorMapHeight.value, 0, colorMapHeight.value),
+	};
 };
 
 const setHueSelectorPosition = (color: string) => {
-	if (!hueMap.value) return;
-	const rect = hueMap.value.getBoundingClientRect();
-	if (!rect || !rect.width) return;
-
-	const { width } = rect;
+	if (!hueMapWidth.value) return;
 	const { h } = HexToHSV(color as HashString);
-	const left = (h / 360) * width;
-	hueSelectorPosition.value = { x: left, y: 0 };
+	hueSelectorPosition.value = { x: (h / 360) * hueMapWidth.value, y: 0 };
 };
 
-const handleSelectorMove = (ev: MouseEvent) => {
-	setColor(ev);
-	const pauseId = canvasStore.activeCanvas?.history?.pause();
-	const mouseMove = (mouseMoveEvent: MouseEvent) => {
-		mouseMoveEvent.preventDefault();
-		setColor(mouseMoveEvent);
-	};
-	document.addEventListener("mousemove", mouseMove);
-	document.addEventListener(
-		"mouseup",
-		(mouseUpEvent) => {
-			document.removeEventListener("mousemove", mouseMove);
-			mouseUpEvent.preventDefault();
-			pauseId && canvasStore.activeCanvas?.history?.resume(pauseId, true);
-		},
-		{ once: true },
-	);
+const setAlphaSelectorPosition = (color: string) => {
+	if (!alphaMapWidth.value) return;
+	const { a } = HexToHSV(color as HashString);
+	alphaSelectorPosition.value = { x: (a / 100) * alphaMapWidth.value, y: 0 };
 };
 
-const handleHueSelectorMove = (ev: MouseEvent) => {
-	setHue(ev);
-	const pauseId = canvasStore.activeCanvas?.history?.pause();
-	const mouseMove = (mouseMoveEvent: MouseEvent) => {
-		mouseMoveEvent.preventDefault();
-		setHue(mouseMoveEvent);
+function makeDragHandler(setter: (ev: MouseEvent) => void) {
+	return (ev: MouseEvent) => {
+		setter(ev);
+		const pauseId = canvasStore.activeCanvas?.history?.pause();
+		const onMove = (e: MouseEvent) => {
+			e.preventDefault();
+			setter(e);
+		};
+		document.addEventListener("mousemove", onMove);
+		document.addEventListener(
+			"mouseup",
+			(e) => {
+				document.removeEventListener("mousemove", onMove);
+				e.preventDefault();
+				pauseId && canvasStore.activeCanvas?.history?.resume(pauseId, true);
+			},
+			{ once: true },
+		);
 	};
-	document.addEventListener("mousemove", mouseMove);
-	document.addEventListener(
-		"mouseup",
-		(mouseUpEvent) => {
-			document.removeEventListener("mousemove", mouseMove);
-			mouseUpEvent.preventDefault();
-			pauseId && canvasStore.activeCanvas?.history?.resume(pauseId, true);
-		},
-		{ once: true },
-	);
-};
+}
+
+const handleSelectorMove = makeDragHandler(setColor);
+const handleHueSelectorMove = makeDragHandler(setHue);
+const handleAlphaSelectorMove = makeDragHandler(setAlpha);
 
 function setColor(ev: MouseEvent) {
-	const clickPointX = ev.clientX;
-	const clickPointY = ev.clientY;
-	const colorMapBounds = colorMap.value.getBoundingClientRect();
-
-	let pointX = clickPointX - colorMapBounds.left;
-	let pointY = clickPointY - colorMapBounds.top;
-
-	pointX = clamp(pointX, 0, colorMapBounds.width);
-	pointY = clamp(pointY, 0, colorMapBounds.height);
-	colorSelectorPosition.value = { x: pointX, y: pointY };
+	colorSelectorPosition.value = {
+		x: clamp(ev.clientX - colorMapLeft.value, 0, colorMapWidth.value),
+		y: clamp(ev.clientY - colorMapTop.value, 0, colorMapHeight.value),
+	};
 	updateColor();
 }
 
 function setHue(ev: MouseEvent) {
-	const hueMapBounds = hueMap.value.getBoundingClientRect();
-	const { clientX } = ev;
-	let point = clientX - hueMapBounds.left;
-	point = clamp(point, 0, hueMapBounds.width);
-	hueSelectorPosition.value = { x: point, y: 0 };
+	hueSelectorPosition.value = { x: clamp(ev.clientX - hueMapLeft.value, 0, hueMapWidth.value), y: 0 };
+	updateColor();
+}
+
+function setAlpha(ev: MouseEvent) {
+	alphaSelectorPosition.value = { x: clamp(ev.clientX - alphaMapLeft.value, 0, alphaMapWidth.value), y: 0 };
 	updateColor();
 }
 
@@ -360,30 +402,34 @@ function setSelectorPosition(color: HashString | null) {
 	if (!color) {
 		colorSelectorPosition.value = { x: 0, y: 0 };
 		hueSelectorPosition.value = { x: 0, y: 0 };
+		alphaSelectorPosition.value = { x: Infinity, y: 0 };
 		return;
 	}
 	const resolvedColor = resolveVariableValue(color);
 	nextTick(() => {
 		setColorSelectorPosition(resolvedColor);
 		setHueSelectorPosition(resolvedColor);
+		setAlphaSelectorPosition(resolvedColor);
 		currentColor = resolvedColor as HashString;
 	});
 }
 
 const hue = computed(() => {
-	if (!hueMap.value) return 0;
 	const positionX = hueSelectorPosition.value.x || 0;
-	const width = hueMap.value.getBoundingClientRect().width || 1;
-	return Math.round((positionX / width) * 360);
+	return Math.round((positionX / (hueMapWidth.value || 1)) * 360);
+});
+
+const alpha = computed(() => {
+	const positionX = clamp(alphaSelectorPosition.value.x, 0, alphaMapWidth.value || 1);
+	return Math.round((positionX / (alphaMapWidth.value || 1)) * 100);
 });
 
 const updateColor = () => {
 	nextTick(() => {
-		const colorMapBounds = colorMap.value.getBoundingClientRect();
-		const s = Math.round((colorSelectorPosition.value.x / colorMapBounds.width) * 100);
-		const v = 100 - Math.round((colorSelectorPosition.value.y / colorMapBounds.height) * 100);
-		const h = hue.value;
-		currentColor = HSVToHex(h, s, v);
+		if (!colorMapWidth.value || !colorMapHeight.value) return;
+		const s = Math.round((colorSelectorPosition.value.x / colorMapWidth.value) * 100);
+		const v = 100 - Math.round((colorSelectorPosition.value.y / colorMapHeight.value) * 100);
+		currentColor = HSVToHex(hue.value, s, v, alpha.value);
 		emit("update:modelValue", currentColor);
 	});
 };
