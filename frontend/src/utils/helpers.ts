@@ -1,6 +1,7 @@
 import Block from "@/block";
 import AlertDialog from "@/components/AlertDialog.vue";
 import { builderSettings } from "@/data/builderSettings";
+import { useBlockDataStore, useBlockUidStore } from "@/stores/blockStore";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
