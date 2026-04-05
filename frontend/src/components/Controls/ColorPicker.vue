@@ -180,6 +180,19 @@ const hueSelectorPosition = ref({ x: 0, y: 0 });
 const alphaSelectorPosition = ref({ x: Infinity, y: 0 });
 let currentColor = "#FFF" as HashString;
 
+let pendingPositionColor: string | null = null;
+
+watch(colorMapWidth, (w) => {
+	if (w && pendingPositionColor) {
+		const color = pendingPositionColor;
+		nextTick(() => {
+			setColorSelectorPosition(color);
+			setHueSelectorPosition(color);
+			setAlphaSelectorPosition(color);
+		});
+	}
+});
+
 const { isSupported, sRGBHex, open } = useEyeDropper();
 
 const props = withDefaults(
@@ -403,9 +416,11 @@ function setSelectorPosition(color: HashString | null) {
 		colorSelectorPosition.value = { x: 0, y: 0 };
 		hueSelectorPosition.value = { x: 0, y: 0 };
 		alphaSelectorPosition.value = { x: Infinity, y: 0 };
+		pendingPositionColor = null;
 		return;
 	}
 	const resolvedColor = resolveVariableValue(color);
+	pendingPositionColor = resolvedColor;
 	nextTick(() => {
 		setColorSelectorPosition(resolvedColor);
 		setHueSelectorPosition(resolvedColor);
