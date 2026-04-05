@@ -289,9 +289,7 @@ const setBGImageURL = (url: string) => {
 		blockController.setStyle(bgKey, null);
 	} else {
 		blockController.setStyle(bgKey, cleanURL ? `url(${cleanURL})` : null);
-		if (cleanURL) {
-			blockController.setStyle(colorKey, null);
-		}
+		blockController.setStyle(colorKey, null);
 	}
 };
 
