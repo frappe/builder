@@ -192,10 +192,43 @@ class BuilderPage(WebsiteGenerator):
 		if frappe.conf.developer_mode and self.is_standard and self.app:
 			export_page_as_standard(self.name, target_app=self.app)
 
+		if self.has_value_changed("is_standard") and not self.is_standard:
+			self._delete_standard_page_files_if_needed()
+
 	def clear_route_cache(self):
 		get_web_pages_with_dynamic_routes.clear_cache()
 		find_page_with_path.clear_cache()
 		clear_cache(self.route)
+
+	def _delete_standard_page_files_if_needed(self) -> None:
+		"""Delete exported standard page files. Used when is_standard is unchecked or on trash."""
+		doc_before = self.get_doc_before_save()
+		app = (doc_before.app if doc_before else self.app) or self.app
+		if not app or not frappe.conf.developer_mode:
+			return
+
+		from builder.export_import_standard_page import (
+			delete_standard_client_script_files,
+			delete_standard_page_files,
+		)
+
+		delete_standard_page_files(self.page_name, app)
+
+		client_scripts = doc_before.client_scripts if doc_before else self.client_scripts
+		for row in client_scripts:
+			other_refs = frappe.get_all(
+				"Builder Page Client Script",
+				filters={"builder_script": row.builder_script, "parent": ("!=", self.name)},
+				fields=["parent"],
+				ignore_permissions=True,
+			)
+			still_used = any(
+				frappe.db.get_value("Builder Page", ref.parent, ["is_standard", "app"], as_dict=True)
+				== {"is_standard": 1, "app": app}
+				for ref in other_refs
+			)
+			if not still_used:
+				delete_standard_client_script_files(row.builder_script, app)
 
 	def on_trash(self):
 		if self.is_template and frappe.conf.developer_mode:
@@ -207,6 +240,20 @@ class BuilderPage(WebsiteGenerator):
 			assets_path = get_template_assets_folder_path(self)
 			if os.path.exists(assets_path):
 				shutil.rmtree(assets_path)
+
+		if self.is_standard and self.app and frappe.conf.developer_mode:
+			self._delete_standard_page_files_if_needed()
+
+	def after_rename(self, old: str, new: str, merge: bool = False) -> None:
+		if not (self.is_standard and self.app and frappe.conf.developer_mode):
+			return
+		from builder.export_import_standard_page import (
+			delete_standard_page_files,
+			export_page_as_standard,
+		)
+
+		delete_standard_page_files(old, self.app)
+		export_page_as_standard(new, target_app=self.app)
 
 	def add_comment(self, comment_type="Comment", text=None, comment_email=None, comment_by=None):
 		if comment_type in ["Attachment Removed", "Attachment"]:
@@ -1434,7 +1481,7 @@ def parse_static_value(value: str, prop_type: str) -> Any:
 		case "number":
 			try:
 				return float(value)
-			except (ValueError, TypeError):
+			except ValueError, TypeError:
 				return None
 		case "boolean":
 			if isinstance(value, bool):
