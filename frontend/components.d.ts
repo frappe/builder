@@ -52,6 +52,7 @@ declare module 'vue' {
     ColorInput: typeof import('./src/components/Controls/ColorInput.vue')['default']
     ColorOptions: typeof import('./src/components/PropsOptions/ColorOptions.vue')['default']
     ColorPicker: typeof import('./src/components/Controls/ColorPicker.vue')['default']
+    ColorPickerContent: typeof import('./src/components/Controls/ColorPickerContent.vue')['default']
     Component: typeof import('./src/components/Icons/Component.vue')['default']
     ContextMenu: typeof import('./src/components/ContextMenu.vue')['default']
     Cross: typeof import('./src/components/Icons/Cross.vue')['default']

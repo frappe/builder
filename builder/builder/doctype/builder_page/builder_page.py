@@ -492,16 +492,23 @@ def save_as_template(page_doc: BuilderPage):
 
 
 @frappe.whitelist()
-def get_block_data(block_id: str, block_data_script: str, props: str, route_variables: dict | None = None):
+def get_block_data(
+	block_id: str,
+	block_data_script: str,
+	props: str,
+	prev_block_data: dict | None = None,
+	route_variables: dict | None = None,
+):
 	if route_variables:
 		frappe.form_dict.update({k: v for k, v in route_variables.items()})
 	frappe.has_permission("Builder Page", "write", throw=True)
 	props = frappe.parse_json(props or "{}")
 	block_data = frappe._dict()
-	_locals = dict(block=frappe._dict(), props=props)
+	_locals = dict(block=frappe._dict(prev_block_data or {}), props=props)
 	execute_script(block_data_script, _locals, block_id)
+
 	if isinstance(_locals["block"], dict):
-		block_data.update(_locals["block"])
+		block_data = frappe._dict({k: v for k, v in _locals["block"].items() if prev_block_data.get(k) != v})
 	return block_data
 
 
@@ -954,7 +961,9 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 
 	# Add global function definition (only once)
 	if script_unique_id not in state["used_block_scripts"]:
-		state["global_script_tag"].append(f"function client_script_{script_unique_id}(props) {{{script}}}\n")
+		state["global_script_tag"].append(
+			f"function client_script_{script_unique_id}(props, block_data) {{{script}}}\n"
+		)
 		state["used_block_scripts"].add(script_unique_id)
 
 	# Add data attribute for selecting this specific block
@@ -965,7 +974,8 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 	local_script.string = (
 		f"(client_script_{script_unique_id}).call("
 		f"document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]'), "
-		f"{{{{ props | to_safe_json }}}}"
+		f"{{{{ props | to_safe_json }}}}, "
+		f"{{{{ block.block_data | to_safe_json }}}}"
 		f");"
 	)
 	tag.append(local_script)

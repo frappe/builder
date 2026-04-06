@@ -28,13 +28,14 @@
 			<template
 				#suffix
 				v-else-if="!['select', 'checkbox'].includes(type) && !hideClearButton && data && !disabled">
-				<button
-					class="cursor-pointer text-ink-gray-4 hover:text-ink-gray-5"
+				<Button
 					tabindex="-1"
 					:disabled="Boolean(attrs.disabled)"
-					@click="clearValue">
-					<CrossIcon />
-				</button>
+					variant="ghost"
+					@click.stop="clearValue"
+					class="-mr-1.5">
+					<CrossIcon class="h-3 w-3" />
+				</Button>
 			</template>
 		</FormControl>
 	</div>

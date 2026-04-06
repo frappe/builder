@@ -9,6 +9,7 @@ from urllib.parse import unquote, urlparse
 
 import frappe
 import yaml
+from frappe.model.document import Document
 from frappe.modules.import_file import import_file_by_path
 from frappe.utils import get_url
 from frappe.utils.html_utils import unescape_html
@@ -657,13 +658,23 @@ def get_export_paths(app_path, export_name):
 	}
 
 
+def to_dict_with_fallback(obj):
+	try:
+		return frappe._dict(obj)
+	except TypeError:
+		if isinstance(obj, Document):
+			return obj.as_dict()
+		else:
+			raise
+
+
 def combine(a, b):
 	if a is None:
 		return b
 	if b is None:
 		return a
-	res = dict(a)
-	res.update(b)
+	res = to_dict_with_fallback(a)
+	res.update(to_dict_with_fallback(b))
 	return res
 
 
@@ -672,13 +683,13 @@ def hash(s):
 
 
 def to_safe_json(data):
-	return frappe.as_json(data)
+	return frappe.as_json(data or {})
 
 
 def execute_script_and_combine(prev_block_data, block_data_script, props):
 	props = frappe._dict(frappe.parse_json(props or "{}"))
 	block_data = frappe._dict()
-	_locals = dict(block=frappe._dict(), props=props)
+	_locals = dict(block=to_dict_with_fallback(prev_block_data or {}), props=props)
 	execute_script(unescape_html(block_data_script), _locals, "sample")
 	block_data.update(_locals["block"])
 	return combine(prev_block_data, block_data)

@@ -8,7 +8,7 @@
  "modified": "2024-09-19 13:10:00.947270",
  "modified_by": "Administrator",
  "name": "Blockquote",
- "order": 13,
+ "sort_order": 13,
  "owner": "Administrator",
  "preview": "/builder_assets/Blockquote/blockquote.png",
  "preview_height": 1,

@@ -3,14 +3,14 @@
 		@click.stop
 		@mousedown.stop
 		class="props-popover-content flex max-h-80 w-80 flex-col gap-3 overflow-auto rounded-lg bg-surface-white p-4 shadow-lg">
-		<div v-if="showIsStandardInput" class="flex items-center justify-between">
-			<InputLabel class="w-[88px] shrink-0">Is Standard</InputLabel>
+		<div v-if="showIsStandardInput" class="flex items-center justify-between gap-2">
+			<InputLabel>Is Standard</InputLabel>
 			<OptionToggle
 				:options="toggleOptions"
 				:model-value="isStandard"
 				@update:model-value="handleIsStandardChange" />
 		</div>
-		<div v-if="isStandardBool" class="flex items-center justify-between">
+		<div v-if="isStandardBool" class="flex items-center justify-between gap-2">
 			<InlineInput
 				label="Label"
 				class="w-full"
@@ -18,15 +18,15 @@
 				@update:modelValue="(val) => (label = val)"
 				placeholder="Enter prop label" />
 		</div>
-		<div class="flex items-center justify-between">
+		<div class="flex items-center justify-between gap-2">
 			<InlineInput
-				label="Key Lorem Ipsum Dolor"
+				label="Key"
 				class="w-full"
 				:modelValue="computedKey"
 				@update:modelValue="(val) => (computedKey = val)"
 				placeholder="Enter prop key" />
 		</div>
-		<div class="flex items-center justify-between">
+		<div class="flex items-center justify-between gap-2">
 			<InlineInput
 				label="Type"
 				class="w-full"
@@ -35,8 +35,8 @@
 				@update:modelValue="handleTypeChange"
 				:options="propTypes" />
 		</div>
-		<div v-if="!isStandardBool" class="flex items-center justify-between">
-			<InputLabel class="w-[88px] shrink-0" v-model="value">Value</InputLabel>
+		<div v-if="!isStandardBool" class="flex items-center justify-between gap-2">
+			<InputLabel v-model="value">Value</InputLabel>
 			<Input
 				v-if="isStaticProp"
 				v-model="value"
@@ -54,8 +54,8 @@
 				:getOptions="getOptions"
 				@update:modelValue="handleValueSelection" />
 		</div>
-		<div v-if="!isStandardBool" class="flex items-center justify-between">
-			<InputLabel class="w-[88px] shrink-0">Pass Down</InputLabel>
+		<div v-if="!isStandardBool" class="flex items-center justify-between gap-2">
+			<InputLabel>Pass Down</InputLabel>
 			<OptionToggle
 				:options="toggleOptions"
 				:model-value="isPassedDown"
@@ -357,8 +357,8 @@ function getDefaultIsStandard(keepProps: boolean): string {
 	return propDetailsStandard !== undefined
 		? String(propDetailsStandard)
 		: isStandardByDefault
-		? "true"
-		: "false";
+			? "true"
+			: "false";
 }
 
 function resetNonStandardState(keepProps: boolean, keepType: boolean) {
@@ -372,7 +372,7 @@ function resetStandardState(keepProps: boolean, keepType: boolean) {
 	const details = keepProps ? props.propDetails : null;
 
 	if (details?.isStandard) {
-		const nextType = keepType ? standardPropOptions.type : details.propOptions?.type ?? "string";
+		const nextType = keepType ? standardPropOptions.type : (details.propOptions?.type ?? "string");
 
 		Object.assign(standardPropOptions, {
 			...details.propOptions,
@@ -438,7 +438,7 @@ function buildPropValue(): BlockProps[string] {
 			? {
 					...standardPropOptions,
 					dependencies: standardPropDependencyMap.value,
-			  }
+				}
 			: undefined,
 	};
 }
