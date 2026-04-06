@@ -26,7 +26,7 @@ const useBuilderStore = defineStore("builderStore", {
 		showSearchBlock: false,
 		builderLayout: {
 			rightPanelWidth: 275,
-			leftPanelWidth: 250,
+			leftPanelWidth: 300,
 			scriptEditorHeight: 300,
 			optionsPanelWidth: 57,
 		},

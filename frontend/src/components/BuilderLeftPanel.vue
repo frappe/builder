@@ -83,10 +83,10 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
+import BuilderAIChatPanel from "@/components/BuilderAIChatPanel.vue";
 import ComponentIcon from "@/components/Icons/Component.vue";
 import LayersIcon from "@/components/Icons/Layers.vue";
 import PlusIcon from "@/components/Icons/Plus.vue";
-import BuilderAIChatPanel from "@/components/BuilderAIChatPanel.vue";
 import VariableManager from "@/components/Modals/VariableManager.vue";
 import PageScript from "@/components/PageScript.vue";
 import useBuilderStore from "@/stores/builderStore";
@@ -137,14 +137,14 @@ const leftPanelOptions = [
 		icon: "code",
 	},
 	{
-		label: "Chat",
-		value: "Chat",
-		icon: "message-circle",
-	},
-	{
 		label: "Variables",
 		value: "variables",
 		icon: "aperture",
+	},
+	{
+		label: "Chat",
+		value: "Chat",
+		icon: "message-circle",
 	},
 ];
 

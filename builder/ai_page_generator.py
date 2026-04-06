@@ -1107,19 +1107,28 @@ def run_agent_job(
 		messages.append({"role": "system", "content": session_context})
 	if page_context_message:
 		messages.append({"role": "user", "content": page_context_message})
-		messages.append({"role": "assistant", "content": "Understood. I have the current page structure. What would you like me to change?"})
+		messages.append(
+			{
+				"role": "assistant",
+				"content": "Understood. I have the current page structure. What would you like me to change?",
+			}
+		)
 	messages.append({"role": "user", "content": prompt})
 
-	params = TASK_PARAMS["complex"]
+	# Classify as simple for tool-calling (targeted edits are inherently focused)
+	# Use cheaper/faster model for better cost-efficiency on small changes
+	task_tier = "simple"
+	params = TASK_PARAMS[task_tier]
+	llm_model = get_simple_model(model)
 
 	# --- Tool-calling LLM call (non-streaming) ---
 	tool_operations = []
 	summary_text = ""
 
 	try:
-		_model = f"gemini/{model}" if model.startswith("gemini-") else model
+		_model = f"gemini/{llm_model}" if llm_model.startswith("gemini-") else llm_model
 
-		if "claude-" in model:
+		if "claude-" in llm_model:
 			for m in messages:
 				if m["role"] == "system" and isinstance(m.get("content"), str):
 					m["content"] = [{"type": "text", "text": m["content"]}]
@@ -1171,7 +1180,8 @@ def run_agent_job(
 	# --- Second call: get a short summary as streaming text ---
 	if not summary_text:
 		try:
-			summary_messages = messages + [
+			summary_messages = [
+				*messages,
 				{
 					"role": "assistant",
 					"content": None,
@@ -1197,7 +1207,9 @@ def run_agent_job(
 					"content": "Briefly describe what was changed (1–2 sentences, plain text).",
 				},
 			]
-			for chunk in call_llm(model, summary_messages, TASK_PARAMS["simple"], stream=True, api_key=api_key):
+			for chunk in call_llm(
+				model, summary_messages, TASK_PARAMS["simple"], stream=True, api_key=api_key
+			):
 				if delta := chunk.choices[0].delta.content:
 					summary_text += delta
 					emit("stream", chunk=delta)

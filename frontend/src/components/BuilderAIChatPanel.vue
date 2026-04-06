@@ -2,10 +2,10 @@
 	<div class="flex h-full min-h-full flex-col bg-surface-white">
 		<div class="flex items-center justify-between border-b border-outline-gray-1 px-4 py-3">
 			<div>
-				<div class="text-sm font-medium text-ink-gray-9">AI Chat</div>
-				<div class="text-xs text-ink-gray-5">Session persists for this page</div>
+				<div class="text-sm font-medium text-ink-gray-9">Bob AI</div>
+				<div class="text-p-xs text-ink-gray-5">Session persists for this page</div>
 			</div>
-			<Button v-if="builderStore.isAIEnabled" variant="ghost" label="Clear" @click="clearSession" />
+			<Button v-if="builderStore.isAIEnabled" variant="subtle" label="Clear" @click="clearSession" />
 		</div>
 
 		<div v-if="!builderStore.isAIEnabled" class="flex flex-1 flex-col items-start gap-3 p-4">
@@ -15,23 +15,11 @@
 
 		<template v-else>
 			<div class="border-b border-outline-gray-1 px-4 py-3">
-				<div class="mb-3 flex items-center gap-2">
-					<Button
-						:variant="scope === 'page' ? 'solid' : 'ghost'"
-						label="Page"
-						class="text-xs"
-						@click="scope = 'page'" />
-					<Button
-						:variant="scope === 'selection' ? 'solid' : 'ghost'"
-						label="Selection"
-						:disabled="!selectedBlock"
-						class="text-xs"
-						@click="scope = 'selection'" />
-				</div>
-				<div
+				<OptionToggle v-model="scope" :options="scopeOptions" />
+				<!-- <div
 					class="rounded-md border border-outline-gray-1 bg-surface-gray-1 px-3 py-2 text-xs text-ink-gray-6">
 					{{ contextLabel }}
-				</div>
+				</div> -->
 			</div>
 
 			<div ref="messageContainer" class="no-scrollbar flex-1 space-y-3 overflow-y-auto px-4 py-4">
@@ -46,12 +34,8 @@
 					class="flex"
 					:class="message.role === 'user' ? 'justify-end' : 'justify-start'">
 					<div
-						class="max-w-[88%] rounded px-3 py-2 text-p-sm shadow-sm"
-						:class="
-							message.role === 'user'
-								? 'bg-surface-blue-2 text-ink-gray-9'
-								: ' bg-surface-gray-1 text-ink-gray-8'
-						">
+						class="max-w-[88%] text-p-sm"
+						:class="message.role === 'user' ? 'rounded-md border px-3 py-2 text-ink-gray-9 shadow-sm' : ''">
 						<div class="whitespace-pre-wrap break-words">{{ message.content }}</div>
 						<div class="mt-1 text-[11px] text-ink-gray-5">
 							{{ messageLabel(message) }}
@@ -87,6 +71,7 @@
 
 <script setup lang="ts">
 import type Block from "@/block";
+import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
@@ -155,6 +140,11 @@ const modelLabel = computed(() => {
 		currentProviderModels.value.find((model) => model.name === selectedModel.value)?.label || "Select model"
 	);
 });
+const scopeOptions = computed(() => [
+	{ label: "Page", value: "page" },
+	{ label: "Selection", value: "selection", disabled: !selectedBlock.value },
+]);
+
 const canSubmit = computed(() => {
 	return !!prompt.value.trim() && !isSubmitting.value && !!selectedModel.value;
 });
@@ -457,8 +447,8 @@ function applyToolOperation(toolName: string, args: Record<string, any>) {
 				block.setAttribute(key, value as string | undefined);
 			});
 		}
-		if (args.inner_text !== undefined) block.innerText = args.inner_text;
-		if (args.inner_html !== undefined) block.innerHTML = args.inner_html;
+		if (args.inner_text !== undefined) block.setInnerHTML(args.inner_text);
+		if (args.inner_html !== undefined) block.setInnerHTML(args.inner_html);
 		if (args.element !== undefined) block.element = args.element;
 		if (args.classes !== undefined) block.classes = args.classes;
 		return;
