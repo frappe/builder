@@ -35,6 +35,7 @@ declare module 'vue' {
     BooleanOptions: typeof import('./src/components/PropsOptions/BooleanOptions.vue')['default']
     BorderRadiusHandler: typeof import('./src/components/BorderRadiusHandler.vue')['default']
     BoxResizer: typeof import('./src/components/BoxResizer.vue')['default']
+    BuilderAIChatPanel: typeof import('./src/components/BuilderAIChatPanel.vue')['default']
     BuilderAssets: typeof import('./src/components/BuilderAssets.vue')['default']
     BuilderBlock: typeof import('./src/components/BuilderBlock.vue')['default']
     BuilderBlockTemplates: typeof import('./src/components/BuilderBlockTemplates.vue')['default']

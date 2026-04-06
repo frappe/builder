@@ -15,6 +15,9 @@ TASK_PARAMS = {
 	"complex": {"max_tokens": 22000, "temperature": 0.7},
 }
 
+SESSION_DOCTYPE = "Builder AI Session"
+MAX_SESSION_MESSAGES = 24
+
 
 # System Prompts
 
@@ -220,6 +223,128 @@ def validate_image_data(image_data: str) -> str:
 	return image_data
 
 
+def get_or_create_ai_session_doc(
+	page_id: str,
+	model: str | None = None,
+	user: str | None = None,
+):
+	user = user or frappe.session.user
+	session_name = frappe.db.get_value(
+		SESSION_DOCTYPE,
+		{"page": page_id, "session_user": user, "status": "Active"},
+		"name",
+	)
+	if session_name:
+		session = frappe.get_doc(SESSION_DOCTYPE, session_name)
+		if model and not session.selected_model:
+			session.selected_model = model
+			session.save(ignore_permissions=True)
+		return session
+
+	session = frappe.get_doc(
+		{
+			"doctype": SESSION_DOCTYPE,
+			"page": page_id,
+			"session_user": user,
+			"status": "Active",
+			"selected_model": model or "",
+			"messages_json": "[]",
+			"last_interaction_on": frappe.utils.now_datetime(),
+		}
+	)
+	session.insert(ignore_permissions=True)
+	return session
+
+
+def validate_ai_session(session_id: str, page_id: str | None = None, user: str | None = None):
+	user = user or frappe.session.user
+	if not frappe.db.exists(SESSION_DOCTYPE, session_id):
+		frappe.throw(_("AI session not found"))
+
+	session = frappe.get_doc(SESSION_DOCTYPE, session_id)
+	if session.session_user != user:
+		frappe.throw(_("You do not have access to this AI session"))
+	if page_id and session.page != page_id:
+		frappe.throw(_("AI session does not belong to this page"))
+	return session
+
+
+def get_session_messages(session_doc) -> list[dict]:
+	try:
+		messages = json.loads(session_doc.messages_json or "[]")
+	except json.JSONDecodeError:
+		return []
+	return messages if isinstance(messages, list) else []
+
+
+def save_session_messages(session_doc, messages: list[dict], task_type: str | None = None):
+	trimmed_messages = messages[-MAX_SESSION_MESSAGES:]
+	session_doc.messages_json = json.dumps(trimmed_messages, separators=(",", ":"))
+	session_doc.last_interaction_on = frappe.utils.now_datetime()
+	session_doc.last_task_type = task_type or session_doc.last_task_type
+	session_doc.save(ignore_permissions=True)
+
+
+def append_session_message(
+	session_doc,
+	role: str,
+	content: str,
+	*,
+	message_type: str = "chat",
+	task_type: str | None = None,
+	block_id: str | None = None,
+	metadata: dict | None = None,
+):
+	messages = get_session_messages(session_doc)
+	messages.append(
+		{
+			"id": frappe.generate_hash(length=10),
+			"role": role,
+			"content": content,
+			"message_type": message_type,
+			"task_type": task_type,
+			"block_id": block_id,
+			"created_at": str(frappe.utils.now_datetime()),
+			"metadata": metadata or {},
+		}
+	)
+	save_session_messages(session_doc, messages, task_type=task_type)
+
+
+def build_session_context(session_id: str | None) -> str:
+	if not session_id or not frappe.db.exists(SESSION_DOCTYPE, session_id):
+		return ""
+
+	session_doc = frappe.get_doc(SESSION_DOCTYPE, session_id)
+	history_lines = []
+	for message in get_session_messages(session_doc)[-10:]:
+		role = message.get("role") or "user"
+		content = (message.get("content") or "").strip()
+		if not content:
+			continue
+		prefix = "User" if role == "user" else "Assistant"
+		history_lines.append(f"{prefix}: {content}")
+
+	if not history_lines:
+		return ""
+
+	return "Conversation history for this page:\n" + "\n".join(history_lines)
+
+
+def build_completion_summary(
+	is_modify: bool,
+	task_type: str | None = None,
+	block_id: str | None = None,
+):
+	if task_type == "rewrite_text":
+		return "Rewrote the selected text content."
+	if task_type == "replace_image":
+		return "Replaced the selected image."
+	if is_modify:
+		return f"Applied an inline update{' to block ' + block_id if block_id else ''}."
+	return "Applied a page-level draft update."
+
+
 def build_user_message(
 	prompt: str,
 	is_modify: bool,
@@ -293,6 +418,7 @@ def run_llm_job(
 	block_context: str | None = None,
 	task_type: str | None = None,
 	image_url: str | None = None,
+	session_id: str | None = None,
 ):
 	user = user or frappe.session.user
 
@@ -333,6 +459,7 @@ def run_llm_job(
 	if is_modify and block_context:
 		original_id = extract_block_id(block_context)
 		stripped_context = strip_block_context(block_context, task_tier, task_type=task_type)
+	session_context = build_session_context(session_id)
 
 	# Image is only applicable for generate/modify-block tasks, not simple text/image tasks
 	effective_image_url = image_url if task_type not in {"rewrite_text", "replace_image"} else None
@@ -343,6 +470,10 @@ def run_llm_job(
 			"content": get_system_prompt(is_modify, task_type),
 			"cache_control": {"type": "ephemeral"},
 		},
+	]
+	if session_context:
+		messages.append({"role": "system", "content": session_context})
+	messages.append(
 		{
 			"role": "user",
 			"content": build_user_message(
@@ -353,7 +484,7 @@ def run_llm_job(
 				image_url=effective_image_url,
 			),
 		},
-	]
+	)
 
 	content = ""
 	try:
@@ -380,6 +511,16 @@ def run_llm_job(
 		if cache_key:
 			frappe.cache().delete_value(cache_key)
 		frappe.log_error(f"Parse error: {e}\nContent: {content}", f"{event_prefix} parse")
+		if session_id and frappe.db.exists(SESSION_DOCTYPE, session_id):
+			append_session_message(
+				frappe.get_doc(SESSION_DOCTYPE, session_id),
+				"assistant",
+				"The AI response could not be parsed into valid Builder blocks.",
+				message_type="status",
+				task_type=task_type,
+				block_id=original_id,
+				metadata={"status": "error"},
+			)
 		emit("error", message="Failed to parse AI response. The model returned invalid YAML.")
 		return
 
@@ -387,11 +528,32 @@ def run_llm_job(
 		if cache_key:
 			frappe.cache().delete_value(cache_key)
 		frappe.log_error(f"LLM job error: {e}", event_prefix)
+		if session_id and frappe.db.exists(SESSION_DOCTYPE, session_id):
+			append_session_message(
+				frappe.get_doc(SESSION_DOCTYPE, session_id),
+				"assistant",
+				str(e),
+				message_type="status",
+				task_type=task_type,
+				block_id=original_id,
+				metadata={"status": "error"},
+			)
 		emit("error", message=str(e))
 		return
 
 	if cache_key:
 		frappe.cache().delete_value(cache_key)
+
+	if session_id and frappe.db.exists(SESSION_DOCTYPE, session_id):
+		append_session_message(
+			frappe.get_doc(SESSION_DOCTYPE, session_id),
+			"assistant",
+			build_completion_summary(is_modify, task_type=task_type, block_id=original_id),
+			message_type="status",
+			task_type=task_type or ("modify" if is_modify else "generate"),
+			block_id=original_id,
+			metadata={"status": "complete", "model": model},
+		)
 
 	success_message = "Modified block successfully" if is_modify else "Page generated successfully"
 	emit(
@@ -410,6 +572,7 @@ def generate_page_blocks(
 	user: str | None = None,
 	page_id: str | None = None,
 	image_url: str | None = None,
+	session_id: str | None = None,
 ):
 	run_llm_job(
 		prompt,
@@ -420,6 +583,7 @@ def generate_page_blocks(
 		user=user,
 		page_id=page_id,
 		image_url=image_url,
+		session_id=session_id,
 	)
 
 
@@ -432,6 +596,7 @@ def modify_section_blocks(
 	page_id: str | None = None,
 	task_type: str | None = None,
 	image_url: str | None = None,
+	session_id: str | None = None,
 ):
 	run_llm_job(
 		prompt,
@@ -444,6 +609,7 @@ def modify_section_blocks(
 		block_context=block_context,
 		task_type=task_type,
 		image_url=image_url,
+		session_id=session_id,
 	)
 
 
@@ -470,7 +636,7 @@ def enqueue_ai_job(fn, model=None, **kwargs):
 		**kwargs,
 	)
 	frappe.local.response.http_status_code = 202
-	return {"status": "accepted"}
+	return {"status": "accepted", "session_id": kwargs.get("session_id")}
 
 
 AVAILABLE_MODELS = [
@@ -599,15 +765,59 @@ def get_ai_models():
 
 
 @frappe.whitelist()
+def get_ai_session(page_id: str, model: str | None = None):
+	if not frappe.has_permission("Builder Page", ptype="write"):
+		frappe.throw(_("You do not have permission to modify pages"))
+
+	session = get_or_create_ai_session_doc(page_id, model=model)
+	return {
+		"session_id": session.name,
+		"page_id": session.page,
+		"selected_model": session.selected_model,
+		"last_task_type": session.last_task_type,
+		"messages": get_session_messages(session),
+	}
+
+
+@frappe.whitelist()
+def clear_ai_session(page_id: str):
+	if not frappe.has_permission("Builder Page", ptype="write"):
+		frappe.throw(_("You do not have permission to modify pages"))
+
+	session = get_or_create_ai_session_doc(page_id)
+	session.messages_json = "[]"
+	session.last_task_type = None
+	session.last_interaction_on = frappe.utils.now_datetime()
+	session.save(ignore_permissions=True)
+	return {"session_id": session.name, "messages": []}
+
+
+@frappe.whitelist()
 def generate_page_from_prompt(
 	prompt: str,
 	page_id: str | None = None,
 	model: str | None = None,
 	image_data: str | None = None,
+	session_id: str | None = None,
 ):
 	image_url = validate_image_data(image_data) if image_data else None
+	if page_id and session_id:
+		session = validate_ai_session(session_id, page_id=page_id)
+		append_session_message(
+			session,
+			"user",
+			prompt,
+			message_type="chat",
+			task_type="generate",
+			metadata={"scope": "page"},
+		)
 	return enqueue_ai_job(
-		generate_page_blocks, prompt=prompt, page_id=page_id, model=model, image_url=image_url
+		generate_page_blocks,
+		prompt=prompt,
+		page_id=page_id,
+		model=model,
+		image_url=image_url,
+		session_id=session_id,
 	)
 
 
@@ -619,12 +829,25 @@ def modify_section_from_prompt(
 	task_type: str | None = None,
 	model: str | None = None,
 	image_data: str | None = None,
+	session_id: str | None = None,
 ):
 	try:
 		json.loads(block_context)
 	except json.JSONDecodeError:
 		frappe.throw(_("Invalid block context JSON"))
 	image_url = validate_image_data(image_data) if image_data else None
+	block_id = extract_block_id(block_context)
+	if page_id and session_id:
+		session = validate_ai_session(session_id, page_id=page_id)
+		append_session_message(
+			session,
+			"user",
+			prompt,
+			message_type="chat",
+			task_type=task_type or "modify",
+			block_id=block_id,
+			metadata={"scope": "block" if block_id and block_id != "root" else "page"},
+		)
 	return enqueue_ai_job(
 		modify_section_blocks,
 		prompt=prompt,
@@ -633,6 +856,7 @@ def modify_section_from_prompt(
 		task_type=task_type,
 		model=model,
 		image_url=image_url,
+		session_id=session_id,
 	)
 
 
@@ -664,3 +888,374 @@ def test_api_key():
 		return {"success": True, "message": _("API key is valid")}
 	except Exception as e:
 		return {"success": False, "message": str(e)}
+
+
+# ---------------------------------------------------------------------------
+# AI Agent — Tool-Calling Mode
+# ---------------------------------------------------------------------------
+
+AGENT_TOOLS = [
+	{
+		"type": "function",
+		"function": {
+			"name": "update_block",
+			"description": (
+				"Merge style, attribute, or content changes into an existing block. "
+				"Use this to change colours, fonts, spacing, text, HTML attributes, "
+				"element type, or class names on ANY block at any nesting depth."
+			),
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"block_id": {
+						"type": "string",
+						"description": "The blockId of the target block (from the page YAML).",
+					},
+					"base_styles": {
+						"type": "object",
+						"description": "CSS-in-JS camelCase style properties to merge into baseStyles (desktop). E.g. {backgroundColor: '#ff0000'}.",
+					},
+					"mobile_styles": {
+						"type": "object",
+						"description": "CSS-in-JS style properties to merge into mobileStyles.",
+					},
+					"tablet_styles": {
+						"type": "object",
+						"description": "CSS-in-JS style properties to merge into tabletStyles.",
+					},
+					"attributes": {
+						"type": "object",
+						"description": "HTML attributes to merge (e.g. {href: '/about', target: '_blank'} for links, {src: '...', alt: '...'} for images).",
+					},
+					"inner_text": {
+						"type": "string",
+						"description": "Replace the text content of the block (plain text).",
+					},
+					"inner_html": {
+						"type": "string",
+						"description": "Replace the inner HTML of the block (use for rich content).",
+					},
+					"element": {
+						"type": "string",
+						"description": "Change the HTML element tag (e.g. 'h1', 'button', 'a').",
+					},
+					"classes": {
+						"type": "array",
+						"items": {"type": "string"},
+						"description": "Replace the classes array on the block.",
+					},
+				},
+				"required": ["block_id"],
+			},
+		},
+	},
+	{
+		"type": "function",
+		"function": {
+			"name": "add_block",
+			"description": (
+				"Insert a new block as a child of an existing block. "
+				"Use this to add sections, components, or elements anywhere in the page tree."
+			),
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"parent_block_id": {
+						"type": "string",
+						"description": "The blockId of the parent block that will contain the new block.",
+					},
+					"block": {
+						"type": "object",
+						"description": (
+							"The new block definition using compact YAML schema: "
+							"el (element tag), name (optional label), style (CSS-in-JS dict), "
+							"m_style (mobile styles), t_style (tablet styles), "
+							"attrs (HTML attributes), text (text content), "
+							"classes (list of CSS classes), c (children array). "
+							"Do NOT include an 'id' field — one will be auto-assigned."
+						),
+					},
+					"after_block_id": {
+						"type": "string",
+						"description": "Insert the new block immediately after this sibling blockId. Takes precedence over 'index'.",
+					},
+					"index": {
+						"type": "integer",
+						"description": "Zero-based position in the parent's children list. Defaults to appending at the end.",
+					},
+				},
+				"required": ["parent_block_id", "block"],
+			},
+		},
+	},
+	{
+		"type": "function",
+		"function": {
+			"name": "remove_block",
+			"description": "Delete an existing block (and all its descendants) from the page.",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"block_id": {
+						"type": "string",
+						"description": "The blockId of the block to delete.",
+					},
+				},
+				"required": ["block_id"],
+			},
+		},
+	},
+	{
+		"type": "function",
+		"function": {
+			"name": "move_block",
+			"description": (
+				"Move an existing block to a different parent, or reorder it within the same parent."
+			),
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"block_id": {
+						"type": "string",
+						"description": "The blockId of the block to move.",
+					},
+					"new_parent_block_id": {
+						"type": "string",
+						"description": "The blockId of the new parent block.",
+					},
+					"after_block_id": {
+						"type": "string",
+						"description": "Place the block immediately after this sibling blockId in the new parent. Takes precedence over 'index'.",
+					},
+					"index": {
+						"type": "integer",
+						"description": "Zero-based position in the new parent's children list. Defaults to appending at the end.",
+					},
+				},
+				"required": ["block_id", "new_parent_block_id"],
+			},
+		},
+	},
+]
+
+AGENT_SYSTEM_PROMPT = (
+	"You are an AI assistant that edits web pages in Frappe Builder by calling tools.\n\n"
+	"# Page Context\n"
+	"The user will provide the current page as compact YAML. Each block has an 'id' field — "
+	"that is its blockId. You MUST use the exact blockId values from the context when calling tools.\n\n"
+	"# Rules\n"
+	"- ALWAYS use tools to apply changes. Never return raw YAML or code.\n"
+	"- Make the minimal necessary changes. Do not regenerate sections that don't need to change.\n"
+	"- For style changes, only include the properties that need to change.\n"
+	"- For gradients, use 'backgroundImage' (NOT 'background') e.g. backgroundImage: 'linear-gradient(...)'.\n"
+	"- Use camelCase for all CSS property names (backgroundColor, fontSize, etc.).\n"
+	"- For 'add_block', define the full block structure with semantic HTML. Do NOT include an 'id' field.\n"
+	"- 'update_block' merges (does not replace) styles and attributes — only specify what changes.\n"
+	"- After calling tools, give a short 1–2 sentence summary of what was changed.\n"
+)
+
+
+def _build_page_context_message(page_context_json: str) -> str:
+	"""Compress full page JSON to compact YAML for LLM context."""
+	try:
+		data = json.loads(page_context_json)
+	except (json.JSONDecodeError, TypeError):
+		return ""
+
+	if isinstance(data, list):
+		root = data[0] if data else {}
+	else:
+		root = data
+
+	if not isinstance(root, dict):
+		return ""
+
+	compressed = compress_block_to_yaml(root, depth=0, task_tier="complex")
+	return f"Current page structure (YAML — use the 'id' values as blockIds):\n{to_compact_yaml(compressed)}"
+
+
+def run_agent_job(
+	prompt: str,
+	page_context_json: str,
+	model: str,
+	api_key: str,
+	user: str | None = None,
+	page_id: str | None = None,
+	session_id: str | None = None,
+):
+	user = user or frappe.session.user
+
+	def emit(suffix, **kwargs):
+		event = f"ai_agent_{suffix}"
+		if page_id:
+			event = f"{event}_{page_id}"
+		frappe.publish_realtime(event, {"page_id": page_id, **kwargs}, user=user)
+
+	emit("progress", message=f"Thinking with {get_model_label(model)}…")
+
+	page_context_message = _build_page_context_message(page_context_json)
+	session_context = build_session_context(session_id)
+
+	messages: list[dict] = [
+		{
+			"role": "system",
+			"content": AGENT_SYSTEM_PROMPT,
+			"cache_control": {"type": "ephemeral"},
+		},
+	]
+	if session_context:
+		messages.append({"role": "system", "content": session_context})
+	if page_context_message:
+		messages.append({"role": "user", "content": page_context_message})
+		messages.append({"role": "assistant", "content": "Understood. I have the current page structure. What would you like me to change?"})
+	messages.append({"role": "user", "content": prompt})
+
+	params = TASK_PARAMS["complex"]
+
+	# --- Tool-calling LLM call (non-streaming) ---
+	tool_operations = []
+	summary_text = ""
+
+	try:
+		_model = f"gemini/{model}" if model.startswith("gemini-") else model
+
+		if "claude-" in model:
+			for m in messages:
+				if m["role"] == "system" and isinstance(m.get("content"), str):
+					m["content"] = [{"type": "text", "text": m["content"]}]
+
+		resp = litellm.completion(
+			model=_model,
+			messages=messages,
+			stream=False,
+			api_key=api_key,
+			tools=AGENT_TOOLS,
+			**params,
+		)
+		choice = resp.choices[0]
+		assistant_message = choice.message
+
+		# Collect tool calls
+		if assistant_message.tool_calls:
+			for tc in assistant_message.tool_calls:
+				try:
+					args = json.loads(tc.function.arguments)
+				except json.JSONDecodeError:
+					args = {}
+				tool_operations.append({"tool_name": tc.function.name, "args": args})
+
+		# Collect inline text (if model returned text alongside tools or instead of tools)
+		summary_text = assistant_message.content or ""
+
+	except Exception as e:
+		frappe.log_error(f"Agent LLM call failed: {e}", "run_agent_job")
+		if session_id and frappe.db.exists(SESSION_DOCTYPE, session_id):
+			append_session_message(
+				frappe.get_doc(SESSION_DOCTYPE, session_id),
+				"assistant",
+				str(e),
+				message_type="status",
+				metadata={"status": "error"},
+			)
+		emit("error", message=str(e))
+		return
+
+	if not tool_operations and not summary_text:
+		emit("error", message="The AI returned an empty response. Please try rephrasing.")
+		return
+
+	# Emit all tool operations to the frontend in one batch
+	if tool_operations:
+		emit("tool_batch", operations=tool_operations)
+
+	# --- Second call: get a short summary as streaming text ---
+	if not summary_text:
+		try:
+			summary_messages = messages + [
+				{
+					"role": "assistant",
+					"content": None,
+					"tool_calls": [
+						{
+							"id": f"call_{i}",
+							"type": "function",
+							"function": {"name": op["tool_name"], "arguments": json.dumps(op["args"])},
+						}
+						for i, op in enumerate(tool_operations)
+					],
+				},
+				*[
+					{
+						"role": "tool",
+						"tool_call_id": f"call_{i}",
+						"content": "Applied successfully.",
+					}
+					for i, op in enumerate(tool_operations)
+				],
+				{
+					"role": "user",
+					"content": "Briefly describe what was changed (1–2 sentences, plain text).",
+				},
+			]
+			for chunk in call_llm(model, summary_messages, TASK_PARAMS["simple"], stream=True, api_key=api_key):
+				if delta := chunk.choices[0].delta.content:
+					summary_text += delta
+					emit("stream", chunk=delta)
+		except Exception:
+			# Non-fatal — emit a generic summary
+			n = len(tool_operations)
+			summary_text = f"Applied {n} change{'s' if n != 1 else ''} to the page."
+			emit("stream", chunk=summary_text)
+	else:
+		emit("stream", chunk=summary_text)
+
+	# Persist to session
+	if session_id and frappe.db.exists(SESSION_DOCTYPE, session_id):
+		session_doc = frappe.get_doc(SESSION_DOCTYPE, session_id)
+		append_session_message(
+			session_doc,
+			"assistant",
+			summary_text or f"Applied {len(tool_operations)} change(s).",
+			message_type="chat",
+			task_type="agent",
+			metadata={"status": "complete", "model": model, "operations": len(tool_operations)},
+		)
+
+	emit("complete", message=summary_text or "Done")
+
+
+@frappe.whitelist()
+def run_agent_from_prompt(
+	prompt: str,
+	page_context: str,
+	page_id: str | None = None,
+	model: str | None = None,
+	session_id: str | None = None,
+):
+	if not frappe.has_permission("Builder Page", ptype="write"):
+		frappe.throw(_("You do not have permission to modify pages"))
+
+	try:
+		json.loads(page_context)
+	except (json.JSONDecodeError, TypeError):
+		frappe.throw(_("Invalid page context JSON"))
+
+	if page_id and session_id:
+		session = validate_ai_session(session_id, page_id=page_id)
+		append_session_message(
+			session,
+			"user",
+			prompt,
+			message_type="chat",
+			task_type="agent",
+			metadata={"scope": "page"},
+		)
+
+	return enqueue_ai_job(
+		run_agent_job,
+		prompt=prompt,
+		page_context_json=page_context,
+		page_id=page_id,
+		session_id=session_id,
+		model=model,
+	)

@@ -73,6 +73,9 @@
 					v-if="pageStore.selectedPage && pageStore.activePage"
 					:page="pageStore.activePage" />
 			</div>
+			<div class="h-full" v-show="builderStore.leftPanelActiveTab === 'Chat'">
+				<BuilderAIChatPanel />
+			</div>
 		</div>
 
 		<VariableManager v-model="showVariableManager" :container="miniSidebar" />
@@ -83,6 +86,7 @@ import type Block from "@/block";
 import ComponentIcon from "@/components/Icons/Component.vue";
 import LayersIcon from "@/components/Icons/Layers.vue";
 import PlusIcon from "@/components/Icons/Plus.vue";
+import BuilderAIChatPanel from "@/components/BuilderAIChatPanel.vue";
 import VariableManager from "@/components/Modals/VariableManager.vue";
 import PageScript from "@/components/PageScript.vue";
 import useBuilderStore from "@/stores/builderStore";
@@ -131,6 +135,11 @@ const leftPanelOptions = [
 		label: "Code",
 		value: "Code",
 		icon: "code",
+	},
+	{
+		label: "Chat",
+		value: "Chat",
+		icon: "message-circle",
 	},
 	{
 		label: "Variables",
