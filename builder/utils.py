@@ -657,7 +657,7 @@ def get_export_paths(app_path, export_name):
 	}
 
 
-def to_dict_with_fallback(obj):
+def safe_dict_conversion(obj):
 	try:
 		return frappe._dict(obj)
 	except TypeError:
@@ -672,23 +672,72 @@ def combine(a, b):
 		return b
 	if b is None:
 		return a
-	res = to_dict_with_fallback(a)
-	res.update(to_dict_with_fallback(b))
+	res = safe_dict_conversion(a)
+	res.update(safe_dict_conversion(b))
 	return res
 
 
 def hash(s):
-	return f"{frappe.generate_hash(length=6)}-{s}"
+	return f"{frappe.generate_hash(length=6)}_{s}"
 
 
 def to_safe_json(data):
 	return frappe.as_json(data or {})
 
 
-def execute_script_and_combine(prev_block_data, block_data_script, props):
+class DictWithFallback(frappe._dict):
+	"""A dictionary that falls back to another dictionary for keys that are not present in the main dictionary.
+	Keys are also accessible as attributes for convenience. This is used to create the block data context where the block data script can set values in the main dictionary, and access fallback values from the previous block data.
+	"""
+
+	def __init__(self, primary, fallback):
+		"""Initialize with primary dict and fallback dict
+		Args:
+			primary: The primary dictionary (where new values are set)
+			fallback: The fallback dictionary (used when key not found in primary)
+		"""
+		super().__init__(primary)
+		self._fallback = fallback
+
+	def __getitem__(self, key):
+		"""Get item from primary dict, fall back to fallback dict if not found"""
+		try:
+			return super().__getitem__(key)
+		except KeyError:
+			if self._fallback is not None:
+				return self._fallback[key]
+			raise
+	def __getattr__(self, key):
+		"""Get attribute from primary dict, fall back to fallback dict if not found"""
+		try:
+			return super().__getitem__(key)
+		except KeyError:
+			if self._fallback is not None:
+				return getattr(self._fallback, key)
+			raise AttributeError(f"{self.__class__.__name__} object has no attribute '{key}'")
+
+	def get(self, key, default=None):
+		"""Get with fallback support"""
+		try:
+			return self[key]
+		except KeyError:
+			return default
+
+	def get_self(self):
+		"""Return the primary dictionary (self) as a regular dict without _fallback"""
+		res = dict(self)
+		del res["_fallback"]
+		return res
+
+
+def execute_block_data_script(prev_block_data, block_data_script, props):
 	props = frappe._dict(frappe.parse_json(props or "{}"))
 	block_data = frappe._dict()
-	_locals = dict(block=to_dict_with_fallback(prev_block_data or {}), props=props)
+	block_locals = DictWithFallback(block_data, safe_dict_conversion(prev_block_data or {}))
+	print("Initial block data before executing script:", block_data)
+	_locals = dict(
+		block=block_locals, props=props
+	)
 	execute_script(unescape_html(block_data_script), _locals, "sample")
-	block_data.update(_locals["block"])
+	block_data.update(_locals["block"].get_self())
 	return block_data

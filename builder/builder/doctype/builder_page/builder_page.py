@@ -675,7 +675,7 @@ def get_dynamic_props_template(
 ) -> str:
 	"""Get a Jinja template reference for dynamic properties."""
 	if comes_from == "blockDataScript":
-		key = jinja_safe_key(f"block.{prop_value}")
+		key = jinja_safe_key(f"block_data.{prop_value}")
 	elif comes_from == "props":
 		key = jinja_safe_key(f"props.{prop_value}")
 	else:  # dataScript
@@ -883,8 +883,8 @@ def get_loop_info(block: dict, data_key: dict | None, props_stack: dict) -> dict
 
 	elif comes_from == "blockDataScript":
 		return {
-			"loop_var": "block",
-			"iterator_key": jinja_safe_key(f"block.{iterator_key}"),
+			"loop_var": "block_data",
+			"iterator_key": jinja_safe_key(f"block_data.{iterator_key}"),
 			"data_key": data_key,
 		}
 
@@ -941,7 +941,7 @@ def get_visibility_condition_key(block: dict, data_key: dict | None) -> str | No
 	if comes_from == "props":
 		return jinja_safe_key(f"props.{key}")
 	elif comes_from == "blockDataScript":
-		return jinja_safe_key(f"block.{key}")
+		return jinja_safe_key(f"block_data.{key}")
 	else:  # dataScript
 		if data_key:
 			return f"{extract_data_key(data_key)}.{key}"
@@ -968,15 +968,23 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 
 	# Add data attribute for selecting this specific block
 	tag.attrs["data-block-uid"] = "{{ unique_hash }}"
+	tag.attrs["x-data"] = "data_{{ unique_hash }}"
+
+	alpine_loader_code = "loadAlpineData('data_{{ unique_hash }}', {{ own_block_data | to_safe_json }});"
 
 	# Add local script to call the function
 	local_script = state["soup"].new_tag("script")
 	local_script.string = (
-		f"(client_script_{script_unique_id}).call("
-		f"document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]'), "
-		f"{{{{ props | to_safe_json }}}}, "
-		f"{{{{ block.block_data | to_safe_json }}}}"
-		f");"
+		f"document.addEventListener('alpine:initialized', async () => {{"
+		f"	const element = document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]');"
+		f"	const block_data = Alpine.$data(element);"
+		f"	(client_script_{script_unique_id}).call("
+		f"		element, "
+		f"		{{{{ props | to_safe_json }}}}, "
+		f"		block_data"
+		f"	);"
+		f"}});"
+		f"{alpine_loader_code}"
 	)
 	tag.append(local_script)
 
@@ -1000,7 +1008,10 @@ def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
 
 	if context.get("block_data_script"):
 		escaped_script = escape_single_quotes(context["block_data_script"])
-		parent.append(f"{{% with block = block | execute_script_and_combine('{escaped_script}', props) %}}")
+		parent.append(
+			f"{{% with own_block_data = block_data | execute_block_data_script('{escaped_script}', props) %}}"
+		)
+		parent.append("{% with block_data = own_block_data | combine(block_data) %}")
 
 	if context.get("visibility_key"):
 		parent.append(f"{{% if {context['visibility_key']} %}}")
@@ -1011,6 +1022,7 @@ def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
 		parent.append("{% endif %}")
 
 	if context.get("block_data_script"):
+		parent.append("{% endwith %}")
 		parent.append("{% endwith %}")
 
 	parent.append("{% endwith %}")
@@ -1045,6 +1057,8 @@ def set_dynamic_content_placeholders(block: dict, data_key: dict | None = None):
 		if value_type == "attribute":
 			current_value = block["attributes"].get(property_name, "")
 			block["attributes"][property_name] = f"{{{{ {key} or '{escape_single_quotes(current_value)}' }}}}"
+			if dynamic_value_doc.get("comesFrom", "dataScript") == "blockDataScript":
+				block["attributes"][f"x-bind:{property_name}"] = original_key
 
 		elif value_type == "style":
 			if not block["attributes"].get("style"):
@@ -1055,12 +1069,18 @@ def set_dynamic_content_placeholders(block: dict, data_key: dict | None = None):
 			block["attributes"]["style"] += (
 				f"{css_property}: {{{{ {key} or '{escape_single_quotes(current_value)}' }}}};"
 			)
+			if dynamic_value_doc.get("comesFrom", "dataScript") == "blockDataScript":
+				block["attributes"]["x-bind:style"] = f"{css_property}: {original_key}"
 
 		elif value_type == "key" and not block.get("isRepeaterBlock"):
 			current_value = block.get(property_name, "")
 			block[property_name] = (
 				f"{{{{ {key} if {key} or {key} in ['', 0] else '{escape_single_quotes(current_value)}' }}}}"
 			)
+			if dynamic_value_doc.get("comesFrom", "dataScript") == "blockDataScript":
+				block["attributes"][
+					"x-text" if property_name == "innerHTML" else f"x-bind:{property_name}"
+				] = original_key
 
 
 def get_dynamic_value_key(dynamic_value_doc: dict, original_key: str, data_key: dict | None) -> str:
@@ -1070,7 +1090,7 @@ def get_dynamic_value_key(dynamic_value_doc: dict, original_key: str, data_key: 
 	if comes_from == "props":
 		return jinja_safe_key(f"props.{original_key}")
 	elif comes_from == "blockDataScript":
-		return jinja_safe_key(f"block.{original_key}")
+		return jinja_safe_key(f"block_data.{original_key}")
 	else:  # dataScript
 		key = dynamic_value_doc.get("key")
 		if data_key:
@@ -1091,7 +1111,7 @@ def wrap_html_with_context(html: str, context: dict) -> str:
 
 	script_escaped = escape_single_quotes(context.get("block_data_script") or "")
 	html = (
-		f"{{% with block = {{}} | execute_script_and_combine('{script_escaped}', {all_props_literal}) %}}"
+		f"{{% with block_data = {{}} | execute_block_data_script('{script_escaped}', {all_props_literal}) %}}"
 		f"{html}"
 		f"{{% endwith %}}"
 	)
