@@ -1,0 +1,14 @@
+{
+ "creation": "2026-03-09 10:57:00.191000",
+ "docstatus": 0,
+ "doctype": "Builder Style Preset",
+ "idx": 0,
+ "is_standard": 1,
+ "modified": "2026-03-22 22:23:56.075284",
+ "modified_by": "Administrator",
+ "name": "Heading 6",
+ "owner": "Administrator",
+ "sort_order": 6,
+ "style_map": "{   \n    \"baseStyles\":{\n    \"fontFamily\": \"Inter\",\n    \"fontWeight\": \"600\",\n    \"fontSize\": \"32px\",\n    \"lineHeight\": \"1.4\"\n    },\n    \"tabletStyles\": {},\n    \"mobileStyles\": {}\n}",
+ "style_name": "Heading 6"
+}
