@@ -233,16 +233,17 @@ const isEntireTextSelected = () => {
 };
 
 const setTextColor = debounce((color: string | undefined) => {
+	if (!props.editor || props.editor.isDestroyed) return;
 	const colorValue = color as string;
 	if (!colorValue) {
-		props.editor?.chain().focus().setColor(colorValue).run();
+		props.editor.chain().setColor("").run();
 		if (isEntireTextSelected()) {
 			props.block.setStyle("color", "");
 		}
 		return;
 	}
 
-	props.editor?.chain().focus().setColor(colorValue).run();
+	props.editor.chain().setColor(colorValue).run();
 	if (isEntireTextSelected()) {
 		props.block.setStyle("color", colorValue);
 	}
