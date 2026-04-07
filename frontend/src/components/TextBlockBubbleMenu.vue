@@ -206,6 +206,13 @@ watch(colorPickerOpen, (open) => {
     }
 });
 
+watch(
+    () => props.isEditable,
+    (editable) => {
+        if (!editable) colorPickerOpen.value = false;
+    },
+);
+
 const enableLinkInput = () => {
 	settingLink.value = true;
 	// check if link is already set on selection
