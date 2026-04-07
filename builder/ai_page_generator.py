@@ -6,9 +6,10 @@ import litellm
 import yaml
 from frappe import _
 
-from builder.utils import to_compact_yaml
+from builder.utils import has_page_write, to_compact_yaml
 
 litellm.drop_params = True
+
 
 TASK_PARAMS = {
 	"simple": {"max_tokens": 1000, "temperature": 0.5},
@@ -760,15 +761,14 @@ def get_default_model(model_or_provider: str) -> str:
 
 
 @frappe.whitelist()
+@has_page_write()
 def get_ai_models():
 	return AVAILABLE_MODELS
 
 
 @frappe.whitelist()
+@has_page_write()
 def get_ai_session(page_id: str, model: str | None = None):
-	if not frappe.has_permission("Builder Page", ptype="write"):
-		frappe.throw(_("You do not have permission to modify pages"))
-
 	session = get_or_create_ai_session_doc(page_id, model=model)
 	return {
 		"session_id": session.name,
@@ -780,10 +780,8 @@ def get_ai_session(page_id: str, model: str | None = None):
 
 
 @frappe.whitelist()
+@has_page_write()
 def clear_ai_session(page_id: str):
-	if not frappe.has_permission("Builder Page", ptype="write"):
-		frappe.throw(_("You do not have permission to modify pages"))
-
 	session = get_or_create_ai_session_doc(page_id)
 	session.messages_json = "[]"
 	session.last_task_type = None
@@ -793,6 +791,7 @@ def clear_ai_session(page_id: str):
 
 
 @frappe.whitelist()
+@has_page_write()
 def generate_page_from_prompt(
 	prompt: str,
 	page_id: str | None = None,
@@ -822,6 +821,7 @@ def generate_page_from_prompt(
 
 
 @frappe.whitelist()
+@has_page_write()
 def modify_section_from_prompt(
 	prompt: str,
 	block_context: str,
@@ -861,6 +861,7 @@ def modify_section_from_prompt(
 
 
 @frappe.whitelist()
+@has_page_write()
 def get_ai_streaming_content(page_id: str):
 	user = frappe.session.user
 	cache_key = f"ai_streaming_content:{page_id}:{user}"
@@ -868,6 +869,7 @@ def get_ai_streaming_content(page_id: str):
 
 
 @frappe.whitelist()
+@has_page_write()
 def test_api_key():
 	settings = frappe.get_single("Builder Settings")
 	model = settings.get("ai_model") or "openrouter"
@@ -1264,6 +1266,7 @@ def run_agent_job(
 
 
 @frappe.whitelist()
+@has_page_write()
 def run_agent_from_prompt(
 	prompt: str,
 	page_context: str,

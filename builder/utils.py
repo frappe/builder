@@ -4,6 +4,7 @@ import re
 import shutil
 import socket
 from dataclasses import dataclass
+from functools import wraps
 from os.path import join
 from urllib.parse import unquote, urlparse
 
@@ -26,6 +27,27 @@ from frappe.utils.safe_exec import (
 from RestrictedPython import compile_restricted
 from RestrictedPython import safe_globals as restricted_safe_globals
 from werkzeug.routing import Rule
+
+
+def has_page_write(message: str | None = None):
+	"""Decorator to check if user has permission to edit Builder Page.
+
+	Args:
+		message: Custom error message to display if permission is denied.
+			 If not provided, defaults to "You do not have permission to modify pages"
+	"""
+
+	def decorator(fn):
+		@wraps(fn)
+		def wrapper(*args, **kwargs):
+			if not frappe.has_permission("Builder Page", ptype="write"):
+				error_message = message or frappe._("You do not have permission to modify pages")
+				frappe.throw(error_message)
+			return fn(*args, **kwargs)
+
+		return wrapper
+
+	return decorator
 
 
 @dataclass
