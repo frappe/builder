@@ -155,6 +155,15 @@ const textLink = ref("");
 const openInNewTab = ref(false);
 const linkInput = ref(null) as Ref<typeof Input | null>;
 
+const colorSwatchBtn = ref<HTMLElement | null>(null);
+const colorPickerOpen = ref(false);
+const colorPickerWrapper = ref<HTMLElement | null>(null);
+const colorPickerStyle = ref<Record<string, string>>({
+	position: "fixed",
+	top: "0px",
+	left: "0px",
+});
+
 const editorRef = computed(() => props.editor);
 const isEditableRef = computed(() => props.isEditable);
 
