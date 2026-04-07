@@ -174,6 +174,38 @@ const selectedColor = computed(() => {
 	return null;
 });
 
+const toggleColorPicker = () => {
+	if (!colorPickerOpen.value) {
+		const rect = colorSwatchBtn.value?.getBoundingClientRect();
+		if (rect) {
+			colorPickerStyle.value = {
+				position: "fixed",
+				top: `${rect.bottom + 8}px`,
+				left: `${rect.left}px`,
+			};
+		}
+	}
+	colorPickerOpen.value = !colorPickerOpen.value;
+};
+
+const handleOutsideClick = (e: MouseEvent) => {
+    if (
+        colorPickerWrapper.value &&
+        !colorPickerWrapper.value.contains(e.target as Node) &&
+        !colorSwatchBtn.value?.contains(e.target as Node)
+    ) {
+        colorPickerOpen.value = false;
+    }
+};
+
+watch(colorPickerOpen, (open) => {
+    if (open) {
+        document.addEventListener("mousedown", handleOutsideClick);
+    } else {
+        document.removeEventListener("mousedown", handleOutsideClick);
+    }
+});
+
 const enableLinkInput = () => {
 	settingLink.value = true;
 	// check if link is already set on selection
