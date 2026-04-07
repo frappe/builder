@@ -91,41 +91,36 @@
 				:class="{ 'bg-surface-gray-3': editor.isActive('link') }">
 				<FeatherIcon class="h-3 w-3" name="link" :stroke-width="2" />
 			</button>
-			<div v-show="!block.isHeader()">
-				<ColorPicker
-					:modelValue="selectedColor"
-					@update:modelValue="setTextColor"
-					:show-input="true"
-					placement="top"
-					:appendTo="overlayElement"
-					popoverClass="!min-w-fit">
-					<template #target="{ togglePopover, isOpen }">
-						<button v-show="!block.isHeader()" class="rounded px-2 py-1 hover:bg-surface-gray-2">
-							<div class="p-1">
-								<div
-									class="h-4 w-4 rounded shadow-sm"
-									@click="
-										() => {
-											togglePopover();
-										}
-									"
-									:style="{
-										background:
-											editor?.isActive('textStyle') && editor?.getAttributes('textStyle').color
-												? editor?.getAttributes('textStyle').color
-												: `url(/assets/builder/images/color-circle.png) center / contain`,
-									}"></div>
-							</div>
-						</button>
-					</template>
-					<template>
-						<Input
-							type="text"
+			<div v-show="!block.isHeader()" class="relative">
+				<button
+					ref="colorSwatchBtn"
+					class="rounded px-2 py-1 hover:bg-surface-gray-2"
+					@click="toggleColorPicker">
+					<div class="p-1">
+						<div
+							class="h-4 w-4 rounded shadow-sm"
+							:style="{
+								background:
+									editor?.isActive('textStyle') && editor?.getAttributes('textStyle').color
+										? editor?.getAttributes('textStyle').color
+										: `url(/assets/builder/images/color-circle.png) center / contain`,
+							}"></div>
+					</div>
+				</button>
+
+				<teleport to="body">
+					<div
+						v-if="colorPickerOpen"
+						ref="colorPickerWrapper"
+						:style="colorPickerStyle"
+						class="fixed z-[9999] rounded-lg bg-surface-white p-3 shadow-lg">
+						<ColorPicker
 							:modelValue="selectedColor"
-							class="!w-32 text-sm"
-							@update:modelValue="setTextColor" />
-					</template>
-				</ColorPicker>
+							@update:modelValue="setTextColor"
+							:show-input="true"
+							render-mode="inline" />
+					</div>
+				</teleport>
 			</div>
 		</div>
 	</bubble-menu>
