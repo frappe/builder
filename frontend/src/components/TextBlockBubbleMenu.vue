@@ -78,7 +78,6 @@
 				:class="{ 'bg-surface-gray-3': editor.isActive('strike') }">
 				<StrikeThroughIcon />
 			</button>
-
 			<button
 				v-show="!block.isHeader() && !block.isLink() && !block.isButton()"
 				@click="
@@ -149,7 +148,6 @@ const settingLink = ref(false);
 const textLink = ref("");
 const openInNewTab = ref(false);
 const linkInput = ref(null) as Ref<typeof Input | null>;
-
 const colorSwatchBtn = ref<HTMLElement | null>(null);
 const colorPickerOpen = ref(false);
 const colorPickerWrapper = ref<HTMLElement | null>(null);
@@ -184,33 +182,32 @@ const toggleColorPicker = () => {
 };
 
 const handleOutsideClick = (e: MouseEvent) => {
-    if (
-        colorPickerWrapper.value &&
-        !colorPickerWrapper.value.contains(e.target as Node) &&
-        !colorSwatchBtn.value?.contains(e.target as Node)
-    ) {
-        colorPickerOpen.value = false;
-    }
+	if (
+		colorPickerWrapper.value &&
+		!colorPickerWrapper.value.contains(e.target as Node) &&
+		!colorSwatchBtn.value?.contains(e.target as Node)
+	) {
+		colorPickerOpen.value = false;
+	}
 };
 
 watch(colorPickerOpen, (open) => {
-    if (open) {
-        document.addEventListener("mousedown", handleOutsideClick);
-    } else {
-        document.removeEventListener("mousedown", handleOutsideClick);
-    }
+	if (open) {
+		document.addEventListener("mousedown", handleOutsideClick);
+	} else {
+		document.removeEventListener("mousedown", handleOutsideClick);
+	}
 });
 
 watch(
-    () => props.isEditable,
-    (editable) => {
-        if (!editable) colorPickerOpen.value = false;
-    },
+	() => props.isEditable,
+	(editable) => {
+		if (!editable) colorPickerOpen.value = false;
+	},
 );
 
 const enableLinkInput = () => {
 	settingLink.value = true;
-	// check if link is already set on selection
 	const link = props.editor?.isActive("link") ? props.editor?.getAttributes("link").href : null;
 	textLink.value = link || "";
 	openInNewTab.value = props.editor?.isActive("link")
@@ -251,18 +248,15 @@ const setHeading = (level: 1 | 2 | 3) => {
 	} else {
 		props.block.element = tag;
 	}
-
 	nextTick(() => {
 		props.block.selectBlock();
 	});
 };
 
-// Text color functionality
 const isEntireTextSelected = () => {
 	if (!props.editor) return false;
 	const { from, to } = props.editor.state.selection;
-	const textContent = props.editor.state.doc.textContent;
-	const textLength = textContent.length;
+	const textLength = props.editor.state.doc.textContent.length;
 	return from === 0 && to >= textLength;
 };
 
@@ -276,14 +270,12 @@ const setTextColor = debounce((color: string | undefined) => {
 		}
 		return;
 	}
-
 	props.editor.chain().setColor(colorValue).run();
 	if (isEntireTextSelected()) {
 		props.block.setStyle("color", colorValue);
 	}
 }, 50);
 
-// Keyboard handling
 const handleKeydown = (e: KeyboardEvent) => {
 	if (e.key === "k" && e.metaKey) {
 		const blockWarnings = {
@@ -291,7 +283,6 @@ const handleKeydown = (e: KeyboardEvent) => {
 			isLink: "You cannot add link inside a link block",
 			isButton: "You cannot add link inside a button block",
 		};
-
 		const blockType = Object.entries(blockWarnings).find(([type]) => (props.block as any)[type]());
 		if (blockType) {
 			toast.warning(blockType[1]);
