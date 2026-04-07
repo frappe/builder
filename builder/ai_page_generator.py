@@ -1036,6 +1036,32 @@ AGENT_TOOLS = [
 			},
 		},
 	},
+	{
+		"type": "function",
+		"function": {
+			"name": "set_page_script",
+			"description": (
+				"Create a new JavaScript or CSS client script and attach it to the page. "
+				"Use this to add event listeners, animations, dynamic behaviour, fetch calls, "
+				"or any page-level code that cannot be expressed via block styles alone."
+			),
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"script": {
+						"type": "string",
+						"description": "The full JavaScript or CSS source code to add to the page.",
+					},
+					"script_type": {
+						"type": "string",
+						"enum": ["JavaScript", "CSS"],
+						"description": "Whether this is a JavaScript or CSS script. Defaults to 'JavaScript'.",
+					},
+				},
+				"required": ["script"],
+			},
+		},
+	},
 ]
 
 AGENT_SYSTEM_PROMPT = (
@@ -1051,6 +1077,7 @@ AGENT_SYSTEM_PROMPT = (
 	"- Use camelCase for all CSS property names (backgroundColor, fontSize, etc.).\n"
 	"- For 'add_block', define the full block structure with semantic HTML. Do NOT include an 'id' field.\n"
 	"- 'update_block' merges (does not replace) styles and attributes — only specify what changes.\n"
+	"- Use 'set_page_script' to add JavaScript or CSS that needs to run on the page (event listeners, animations, etc.).\n"
 	"- After calling tools, give a short 1–2 sentence summary of what was changed.\n"
 )
 

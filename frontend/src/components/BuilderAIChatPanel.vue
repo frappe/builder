@@ -40,6 +40,13 @@
 						<div class="mt-1 text-[11px] text-ink-gray-5">
 							{{ messageLabel(message) }}
 						</div>
+						<Button
+							v-if="message.metadata?.undoScripts?.length"
+							class="mt-1"
+							variant="ghost"
+							size="sm"
+							label="Undo script"
+							@click="undoAgentScript(message)" />
 					</div>
 				</div>
 			</div>
@@ -75,6 +82,7 @@ import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
+import type { BuilderClientScript } from "@/types/Builder/BuilderClientScript";
 import { getBlockInstance, getBlockObject } from "@/utils/helpers";
 import { useLocalStorage } from "@vueuse/core";
 import { Button, createResource, Textarea } from "frappe-ui";
@@ -122,6 +130,7 @@ const streamingContent = ref("");
 const remoteTaskType = ref<string | null>(null);
 const remoteBlockId = ref<string | null>(null);
 const pendingAssistantId = ref<string | null>(null);
+const pendingScriptOps = ref<Promise<string | null>[]>([]);
 const messageContainer = ref<HTMLElement | null>(null);
 
 const pageId = computed(() => route.params.pageId as string);
@@ -383,7 +392,17 @@ function onStream(data: { chunk?: string; task_type?: string; block_id?: string 
 async function onComplete(data: { message?: string }) {
 	isSubmitting.value = false;
 	progressMessage.value = data.message || "Applied update";
-	replacePendingAssistant(progressMessage.value, { status: "complete" });
+
+	let undoScripts: string[] = [];
+	if (pendingScriptOps.value.length) {
+		const names = await Promise.all(pendingScriptOps.value);
+		undoScripts = names.filter((n): n is string => !!n);
+		pendingScriptOps.value = [];
+	}
+
+	const meta: Record<string, any> = { status: "complete" };
+	if (undoScripts.length) meta.undoScripts = undoScripts;
+	replacePendingAssistant(progressMessage.value, meta);
 	pageStore.savePage();
 	prompt.value = "";
 	streamingContent.value = "";
@@ -493,6 +512,59 @@ function applyToolOperation(toolName: string, args: Record<string, any>) {
 		const index = typeof args.index === "number" ? args.index : null;
 		newParent.addChild(block, index, false);
 		return;
+	}
+
+	if (toolName === "set_page_script") {
+		const scriptType = (args.script_type as string) || "JavaScript";
+		const op = createResource({ url: "frappe.client.insert" })
+			.submit({
+				doc: {
+					doctype: "Builder Client Script",
+					script_type: scriptType,
+					script: args.script as string,
+				},
+			})
+			.then((res: BuilderClientScript) =>
+				createResource({ url: "frappe.client.insert" })
+					.submit({
+						doc: {
+							doctype: "Builder Page Client Script",
+							parent: pageId.value,
+							parenttype: "Builder Page",
+							parentfield: "client_scripts",
+							builder_script: res.name,
+						},
+					})
+					.then(() => {
+						pageStore.activePageScripts.push(res);
+						return res.name;
+					}),
+			)
+			.catch(() => null);
+		pendingScriptOps.value.push(op);
+		return;
+	}
+}
+
+async function undoAgentScript(message: ChatMessage) {
+	const scriptNames: string[] = message.metadata?.undoScripts || [];
+	await Promise.all(
+		scriptNames.map((name) =>
+			createResource({ url: "frappe.client.delete" }).submit({
+				doctype: "Builder Client Script",
+				name,
+			}),
+		),
+	);
+	pageStore.activePageScripts = pageStore.activePageScripts.filter(
+		(s: BuilderClientScript) => !scriptNames.includes(s.name),
+	);
+	const idx = messages.value.findIndex((m) => m.id === message.id);
+	if (idx !== -1) {
+		messages.value[idx] = {
+			...messages.value[idx],
+			metadata: { ...messages.value[idx].metadata, undoScripts: [] },
+		};
 	}
 }
 
