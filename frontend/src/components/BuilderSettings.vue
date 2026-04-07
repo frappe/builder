@@ -48,10 +48,13 @@ import MetaIcon from "./Icons/Meta.vue";
 import SettingsIcon from "./Icons/Settings.vue";
 // @ts-ignore
 import TerminalIcon from "~icons/lucide/terminal";
+// @ts-ignore
+import SparklesIcon from "~icons/lucide/sparkles";
+import GlobalAI from "./Settings/GlobalAI.vue";
 import GlobalAnalytics from "./Settings/GlobalAnalytics.vue";
 import GlobalCode from "./Settings/GlobalCode.vue";
-import GlobalGeneral from "./Settings/GlobalGeneral.vue";
 import GlobalDeveloper from "./Settings/GlobalDeveloper.vue";
+import GlobalGeneral from "./Settings/GlobalGeneral.vue";
 import PageAnalytics from "./Settings/PageAnalytics.vue";
 import PageGeneral from "./Settings/PageGeneral.vue";
 import PageMeta from "./Settings/PageMeta.vue";
@@ -152,6 +155,13 @@ const globalSettings = {
 			component: GlobalDeveloper,
 			title: "Developer Settings",
 			icon: TerminalIcon,
+		},
+		{
+			label: "AI",
+			value: "global_ai",
+			component: GlobalAI,
+			title: "AI Settings",
+			icon: SparklesIcon,
 		},
 	],
 };

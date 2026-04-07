@@ -4,10 +4,12 @@ import re
 import shutil
 import socket
 from dataclasses import dataclass
+from functools import wraps
 from os.path import join
 from urllib.parse import unquote, urlparse
 
 import frappe
+import yaml
 from frappe.model.document import Document
 from frappe.modules.import_file import import_file_by_path
 from frappe.utils import get_url
@@ -25,6 +27,27 @@ from frappe.utils.safe_exec import (
 from RestrictedPython import compile_restricted
 from RestrictedPython import safe_globals as restricted_safe_globals
 from werkzeug.routing import Rule
+
+
+def has_page_write(message: str | None = None):
+	"""Decorator to check if user has permission to edit Builder Page.
+
+	Args:
+		message: Custom error message to display if permission is denied.
+			 If not provided, defaults to "You do not have permission to modify pages"
+	"""
+
+	def decorator(fn):
+		@wraps(fn)
+		def wrapper(*args, **kwargs):
+			if not frappe.has_permission("Builder Page", ptype="write"):
+				error_message = message or frappe._("You do not have permission to modify pages")
+				frappe.throw(error_message)
+			return fn(*args, **kwargs)
+
+		return wrapper
+
+	return decorator
 
 
 @dataclass
@@ -691,4 +714,47 @@ def execute_script_and_combine(prev_block_data, block_data_script, props):
 	_locals = dict(block=to_dict_with_fallback(prev_block_data or {}), props=props)
 	execute_script(unescape_html(block_data_script), _locals, "sample")
 	block_data.update(_locals["block"])
-	return block_data
+	return combine(prev_block_data, block_data)
+
+
+class CompactDumper(yaml.Dumper):
+	"""Minimal-whitespace YAML dumper.
+
+	Two optimizations over the default Dumper:
+	1. indentless=True — removes the extra 2-space indent on list items inside
+	   mappings, which compounds in deeply nested block trees.
+	2. Flow style for flat dicts — turns multi-line style blocks into single-line
+	   {k: v, k: v} inline mappings, saving ~60% of style-dict tokens.
+	"""
+
+	def increase_indent(self, flow=False, indentless=False):
+		return super().increase_indent(flow=flow, indentless=True)
+
+	def represent_mapping(self, tag, mapping, flow_style=None):
+		# Use flow style {k: v} only for flat dicts (no nested dicts or lists)
+		if flow_style is None:
+			flow_style = all(not isinstance(v, (dict, list)) for v in mapping.values())
+		return super().represent_mapping(tag, mapping, flow_style=flow_style)
+
+
+def _str_representer(dumper, data):
+	"""Use plain scalars where safe; single-quote only when the value contains
+	characters that would confuse the YAML parser."""
+	if any(c in data for c in (":", "{", "}", "[", "]", "#", "&", "*", "!", "|", ">", "'", '"', "\n")):
+		return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="'")
+	return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+
+
+CompactDumper.add_representer(str, _str_representer)
+
+
+def to_compact_yaml(data) -> str:
+	"""Serialize data to minimal YAML for LLM context."""
+	return yaml.dump(
+		data,
+		Dumper=CompactDumper,
+		sort_keys=False,
+		default_flow_style=False,
+		allow_unicode=True,
+		width=1000,  # prevent wrapping long values mid-token
+	)

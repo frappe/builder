@@ -8,6 +8,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AIPageGeneratorModal: typeof import('./src/components/AIPageGeneratorModal.vue')['default']
     AlertDialog: typeof import('./src/components/AlertDialog.vue')['default']
     AnalyticsFilters: typeof import('./src/components/Settings/AnalyticsFilters.vue')['default']
     AnalyticsOverview: typeof import('./src/components/Settings/AnalyticsOverview.vue')['default']
@@ -71,6 +72,7 @@ declare module 'vue' {
     FitScreen: typeof import('./src/components/Icons/FitScreen.vue')['default']
     Folder: typeof import('./src/components/Icons/Folder.vue')['default']
     FontUploader: typeof import('./src/components/Controls/FontUploader.vue')['default']
+    GlobalAI: typeof import('./src/components/Settings/GlobalAI.vue')['default']
     GlobalAnalytics: typeof import('./src/components/Settings/GlobalAnalytics.vue')['default']
     GlobalCode: typeof import('./src/components/Settings/GlobalCode.vue')['default']
     GlobalDeveloper: typeof import('./src/components/Settings/GlobalDeveloper.vue')['default']
@@ -147,5 +149,6 @@ declare module 'vue' {
     VariableManager: typeof import('./src/components/Modals/VariableManager.vue')['default']
     VariantControl: typeof import('./src/components/Controls/VariantControl.vue')['default']
     VisibilityInput: typeof import('./src/components/VisibilityInput.vue')['default']
+    WebPagePresetPicker: typeof import('./src/components/WebPagePresetPicker.vue')['default']
   }
 }
