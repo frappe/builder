@@ -56,7 +56,7 @@ const testApiKey = async () => {
 
 	try {
 		const result = (await createResource({
-			url: "builder.ai_page_generator.test_api_key",
+			url: "builder.ai.ai_page_generator.test_api_key",
 		}).submit()) as { success: boolean; message?: string };
 
 		if (result.success) {

@@ -395,7 +395,7 @@ function handleError(error: unknown, fallback: string) {
 async function runTask(type: "generate" | "modify", customParams: Record<string, any> = {}) {
 	resetState();
 	const isModify = type === "modify" || props.mode === "modify";
-	const url = `builder.ai_page_generator.${isModify ? "modify_section" : "generate_page"}_from_prompt`;
+	const url = `builder.ai.ai_page_generator.${isModify ? "modify_section" : "generate_page"}_from_prompt`;
 
 	try {
 		await createResource({
@@ -551,7 +551,7 @@ function detachListeners() {
 onMounted(() => {
 	attachListeners();
 	createResource({
-		url: "builder.ai_page_generator.get_ai_models",
+		url: "builder.ai.ai_page_generator.get_ai_models",
 		auto: true,
 		onSuccess: (data: AIProvider[]) => (availableModels.value = data),
 	});

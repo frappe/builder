@@ -34,6 +34,7 @@ const usePageStore = defineStore("pageStore", {
 		activePageScripts: <BuilderClientScript[]>[],
 		savingPage: false,
 		settingPage: false,
+		pageLoadToken: 0,
 	}),
 	actions: {
 		async setPage(pageName: string, resetCanvas = true, routeParams = null as Object | null) {
@@ -42,7 +43,13 @@ const usePageStore = defineStore("pageStore", {
 				return;
 			}
 
+			this.selectedPage = pageName;
+			const pageLoadToken = ++this.pageLoadToken;
+
 			const page = await this.fetchActivePage(pageName);
+			if (pageLoadToken !== this.pageLoadToken || this.selectedPage !== pageName) {
+				return;
+			}
 			if (!page) {
 				toast.error("Page not found", {
 					duration: Infinity,
@@ -60,7 +67,6 @@ const usePageStore = defineStore("pageStore", {
 			this.pageBlocks = [getBlockInstance(blocks[0] || getBlockTemplate("body"))];
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
-			this.selectedPage = page.name;
 			const variables = localStorage.getItem(`${page.name}:routeVariables`) || "{}";
 			this.routeVariables = JSON.parse(variables);
 			if (routeParams) {
@@ -249,7 +255,7 @@ const usePageStore = defineStore("pageStore", {
 			// more save requests can be triggered till the first one is completed
 			this.saveId = saveId;
 			const args = {
-				name: this.selectedPage,
+				name: this.activePage?.name || this.selectedPage,
 				draft_blocks: pageData,
 			};
 			return webPages.setValue
