@@ -34,8 +34,8 @@
 					class="flex"
 					:class="message.role === 'user' ? 'justify-end' : 'justify-start'">
 					<div
-						class="max-w-[88%] text-p-sm"
-						:class="message.role === 'user' ? 'rounded-md border px-3 py-2 text-ink-gray-9 shadow-sm' : ''">
+						class="max-w-[88%] text-p-sm text-ink-gray-8"
+						:class="message.role === 'user' ? 'rounded-md border px-3 py-2  shadow-sm' : ''">
 						<div class="whitespace-pre-wrap break-words">{{ message.content }}</div>
 						<div class="mt-1 text-[11px] text-ink-gray-5">
 							{{ messageLabel(message) }}
