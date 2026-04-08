@@ -16,18 +16,9 @@
 		<template v-else>
 			<div class="border-b border-outline-gray-1 px-4 py-3">
 				<OptionToggle v-model="scope" :options="scopeOptions" />
-				<!-- <div
-					class="rounded-md border border-outline-gray-1 bg-surface-gray-1 px-3 py-2 text-xs text-ink-gray-6">
-					{{ contextLabel }}
-				</div> -->
 			</div>
 
 			<div ref="messageContainer" class="no-scrollbar flex-1 space-y-3 overflow-y-auto px-4 py-4">
-				<div
-					v-if="!messages.length"
-					class="rounded-lg border border-dashed border-outline-gray-2 p-4 text-sm text-ink-gray-5">
-					Start with a page brief, or select a block and ask for an inline edit.
-				</div>
 				<div
 					v-for="message in messages"
 					:key="message.id"

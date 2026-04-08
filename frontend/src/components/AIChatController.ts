@@ -422,6 +422,30 @@ export class AIChatController {
 				newParent.addChild(block, typeof args.index === "number" ? args.index : null, false);
 				return;
 			}
+			case "update_script": {
+				const op = createResource({ url: "frappe.client.set_value" })
+					.submit({
+						doctype: "Builder Client Script",
+						name: args.script_name as string,
+						fieldname: {
+							script: args.script as string,
+							...(args.script_type ? { script_type: args.script_type as string } : {}),
+						},
+					})
+					.then(() => {
+						const existing = this.pageStore.activePageScripts.find(
+							(s) => s.name === (args.script_name as string),
+						);
+						if (existing) {
+							existing.script = args.script as string;
+							if (args.script_type) existing.script_type = args.script_type as any;
+						}
+						return args.script_name as string;
+					})
+					.catch(() => null);
+				this.pendingScriptOps.value.push(op);
+				return;
+			}
 			case "set_page_script": {
 				const scriptType = (args.script_type as string) || "JavaScript";
 				const op = createResource({ url: "frappe.client.insert" })

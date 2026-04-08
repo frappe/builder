@@ -182,6 +182,58 @@ AGENT_TOOLS = [
 			},
 		},
 	},
+	{
+		"type": "function",
+		"function": {
+			"name": "get_page_scripts",
+			"description": (
+				"Fetch the JavaScript and/or CSS scripts attached to this page. "
+				"Call this before using update_script so you can read the existing code. "
+				"Pass script_type to fetch only one kind."
+			),
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"script_type": {
+						"type": "string",
+						"enum": ["JavaScript", "CSS"],
+						"description": "Return only scripts of this type. Omit to return all scripts.",
+					},
+				},
+				"required": [],
+			},
+		},
+	},
+	{
+		"type": "function",
+		"function": {
+			"name": "update_script",
+			"description": (
+				"Replace the source code of an existing page script. "
+				"You MUST call get_page_scripts first and copy the exact 'script_name' value "
+				"from that response — do not guess or invent a name."
+			),
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"script_name": {
+						"type": "string",
+						"description": "The exact 'script_name' value returned by get_page_scripts (e.g. 'BSC-00001'). Never invent this value.",
+					},
+					"script": {
+						"type": "string",
+						"description": "The new full source code that replaces the existing script content.",
+					},
+					"script_type": {
+						"type": "string",
+						"enum": ["JavaScript", "CSS"],
+						"description": "Change the script type. Omit to keep the existing type.",
+					},
+				},
+				"required": ["script_name", "script"],
+			},
+		},
+	},
 ]
 
 
@@ -217,15 +269,13 @@ class AgentJob:
 	def build_page_context(self) -> str:
 		try:
 			data = json.loads(self.page_context_json)
+			root = data[0] if isinstance(data, list) else data
+			if not isinstance(root, dict):
+				return ""
+			compressed = BlockCodec.compress(root, depth=0, task_tier="complex")
+			return f"Current page structure (YAML — use the 'id' values as blockIds):\n{to_compact_yaml(compressed)}"
 		except (json.JSONDecodeError, TypeError):
 			return ""
-		root = data[0] if isinstance(data, list) else data
-		if not isinstance(root, dict):
-			return ""
-		compressed = BlockCodec.compress(root, depth=0, task_tier="complex")
-		return (
-			f"Current page structure (YAML — use the 'id' values as blockIds):\n{to_compact_yaml(compressed)}"
-		)
 
 	def build_messages(self) -> list[dict]:
 		messages: list[dict] = [
@@ -251,7 +301,36 @@ class AgentJob:
 		messages.append({"role": "user", "content": self.prompt})
 		return messages
 
-	def call_tool_llm(self, messages: list[dict]) -> tuple[list[dict], str]:
+	def fetch_page_scripts(self, script_type: str | None = None) -> str:
+		"""Query DB for scripts attached to this page and return as JSON string."""
+		if not self.page_id:
+			return json.dumps([])
+		try:
+			script_names = frappe.db.get_all(
+				"Builder Page Client Script",
+				filters={"parent": self.page_id, "parenttype": "Builder Page"},
+				pluck="builder_script",
+			)
+			if not script_names:
+				return json.dumps([])
+			filters: dict = {"name": ["in", script_names]}
+			if script_type:
+				filters["script_type"] = script_type
+			scripts = frappe.db.get_all(
+				"Builder Client Script",
+				filters=filters,
+				fields=["name", "script_type", "script"],
+			)
+			return json.dumps(
+				[{"script_name": s.name, "script_type": s.script_type, "script": s.script} for s in scripts]
+			)
+		except Exception as e:
+			logger.warning(f"fetch_page_scripts failed: {e}")
+			return json.dumps([])
+
+	def call_tool_llm(self, messages: list[dict]) -> tuple[list[dict], str, list[dict]]:
+		"""Returns (tool_operations, text_content, raw_tool_calls) where raw_tool_calls
+		are serialisable dicts needed to reconstruct the assistant turn for a follow-up round."""
 		llm_model = ModelRegistry.get_simple(self.model)
 		resolved_model = f"gemini/{llm_model}" if llm_model.startswith("gemini-") else llm_model
 
@@ -278,6 +357,7 @@ class AgentJob:
 		)
 
 		tool_operations = []
+		raw_tool_calls: list[dict] = []
 		if assistant_message.tool_calls:
 			for tc in assistant_message.tool_calls:
 				raw_arguments = tc.function.arguments or ""
@@ -291,8 +371,15 @@ class AgentJob:
 					BlockCodec.truncate_for_log(raw_arguments, 2000),
 				)
 				tool_operations.append({"tool_name": tc.function.name, "args": args})
+				raw_tool_calls.append(
+					{
+						"id": tc.id,
+						"type": "function",
+						"function": {"name": tc.function.name, "arguments": raw_arguments},
+					}
+				)
 
-		return tool_operations, assistant_message.content or ""
+		return tool_operations, assistant_message.content or "", raw_tool_calls
 
 	def stream_summary(self, messages: list[dict], tool_operations: list[dict]) -> str:
 		summary_messages = [
@@ -319,13 +406,17 @@ class AgentJob:
 		summary_text = ""
 		try:
 			for chunk in call_llm(
-				self.model, summary_messages, TASK_PARAMS["simple"], stream=True, api_key=self.api_key
+				ModelRegistry.get_simple(self.model),
+				summary_messages,
+				TASK_PARAMS["simple"],
+				stream=True,
+				api_key=self.api_key,
 			):
 				if delta := chunk.choices[0].delta.content:
 					summary_text += delta
 					self.emit("stream", chunk=delta)
 		except Exception as e:
-			logger.warning(f"Failed to generate summary text: {str(e)}")
+			logger.warning(f"Failed to generate summary text: {e!s}")
 			n = len(tool_operations)
 			summary_text = f"Applied {n} change{'s' if n != 1 else ''} to the page."
 			self.emit("stream", chunk=summary_text)
@@ -339,11 +430,35 @@ class AgentJob:
 		self.emit("progress", message=f"Thinking with {ModelRegistry.get_label(self.model)}…")
 
 		messages = self.build_messages()
+		client_tool_operations: list[dict] = []
+		summary_text = ""
 
 		try:
-			tool_operations, summary_text = self.call_tool_llm(messages)
+			# Agentic loop: resolve server-side tools first, then hand client tools to the frontend.
+			for _round in range(4):
+				tool_operations, summary_text, raw_tool_calls = self.call_tool_llm(messages)
+
+				server_ops = [op for op in tool_operations if op["tool_name"] == "get_page_scripts"]
+				client_ops = [op for op in tool_operations if op["tool_name"] != "get_page_scripts"]
+				client_tool_operations.extend(client_ops)
+
+				if not server_ops:
+					break
+
+				# Append assistant turn and tool results, then loop.
+				messages.append(
+					{"role": "assistant", "content": summary_text or None, "tool_calls": raw_tool_calls}
+				)
+				for tc_dict, op in zip(raw_tool_calls, tool_operations, strict=True):
+					if op["tool_name"] == "get_page_scripts":
+						content = self.fetch_page_scripts(op["args"].get("script_type"))
+						logger.info("Served get_page_scripts: %s bytes", len(content))
+					else:
+						content = "Will be applied by the frontend."
+					messages.append({"role": "tool", "tool_call_id": tc_dict["id"], "content": content})
+
 		except Exception as e:
-			logger.error(f"Agent LLM call failed: {str(e)}", exc_info=True)
+			logger.error(f"Agent LLM call failed: {e!s}", exc_info=True)
 			frappe.log_error(f"Agent LLM call failed: {e}", "AgentJob.run")
 			AISession.try_append_message(
 				self.session_id,
@@ -355,27 +470,27 @@ class AgentJob:
 			self.emit("error", message=str(e))
 			return
 
-		if not tool_operations and not summary_text:
+		if not client_tool_operations and not summary_text:
 			logger.warning("Agent returned empty response (no tools, no text)")
 			self.emit("error", message="The AI returned an empty response. Please try rephrasing.")
 			return
 
-		if tool_operations:
-			logger.info(f"Emitting {len(tool_operations)} tool operations to frontend")
-			self.emit("tool_batch", operations=tool_operations)
+		if client_tool_operations:
+			logger.info(f"Emitting {len(client_tool_operations)} tool operations to frontend")
+			self.emit("tool_batch", operations=client_tool_operations)
 
 		if not summary_text:
-			summary_text = self.stream_summary(messages, tool_operations)
+			summary_text = self.stream_summary(messages, client_tool_operations)
 		else:
 			self.emit("stream", chunk=summary_text)
 
 		AISession.try_append_message(
 			self.session_id,
 			"assistant",
-			summary_text or f"Applied {len(tool_operations)} change(s).",
+			summary_text or f"Applied {len(client_tool_operations)} change(s).",
 			message_type="chat",
 			task_type="agent",
-			metadata={"status": "complete", "model": self.model, "operations": len(tool_operations)},
+			metadata={"status": "complete", "model": self.model, "operations": len(client_tool_operations)},
 		)
 
 		self.emit("complete", message=summary_text or "Done")
