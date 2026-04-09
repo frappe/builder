@@ -166,6 +166,10 @@ export class AIChatController {
 			this.canvasStore.activeCanvas?.selectedBlocks?.[0] ||
 			null) as Block | null;
 	});
+	readonly selectedBlocks = computed<Block[]>(() => {
+		return (this.canvasStore.activeCanvas?.selectedBlocks || []) as Block[];
+	});
+	readonly includeSelection = ref(true);
 	readonly rootBlock = computed<Block | null>(() => {
 		return (this.pageStore.pageBlocks[0] || null) as Block | null;
 	});
@@ -196,7 +200,10 @@ export class AIChatController {
 		);
 
 		watch(this.selectedBlock, (block) => {
-			if (!block && this.scope.value === "selection") this.scope.value = "page";
+			if (!block) {
+				if (this.scope.value === "selection") this.scope.value = "page";
+				this.includeSelection.value = true;
+			}
 		});
 
 		// No watcher needed — scroll is triggered explicitly from message-mutating methods
@@ -500,6 +507,7 @@ export class AIChatController {
 		switch (toolName) {
 			case "update_block": {
 				const block = this.findBlockInTree(args.block_id);
+				console.log("Updating block", block?.blockId, "with args", args);
 				if (!block) return;
 				if (args.base_styles) {
 					Object.entries(args.base_styles).forEach(([key, value]) =>
@@ -706,7 +714,14 @@ export class AIChatController {
 			url = "builder.ai.ai_page_generator.generate_page_from_prompt";
 		} else if (runAgent) {
 			url = "builder.ai.ai_page_generator.run_agent_from_prompt";
-			extraParams = { page_context: JSON.stringify(getBlockObject(this.rootBlock.value as Block)) };
+			const selectedIds =
+				this.includeSelection.value && this.selectedBlocks.value.length
+					? this.selectedBlocks.value.map((b) => b.blockId).filter(Boolean)
+					: [];
+			extraParams = {
+				page_context: JSON.stringify(getBlockObject(this.rootBlock.value as Block)),
+				...(selectedIds.length ? { selected_block_ids: selectedIds } : {}),
+			};
 		} else {
 			url = "builder.ai.ai_page_generator.modify_section_from_prompt";
 			extraParams = { block_context: JSON.stringify(getBlockObject(targetBlock as Block)) };

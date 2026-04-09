@@ -438,6 +438,7 @@ def run_agent_from_prompt(
 	page_id: str | None = None,
 	model: str | None = None,
 	session_id: str | None = None,
+	selected_block_ids: list | None = None,
 ):
 	logger.info(f"run_agent_from_prompt: page_id={page_id}, model={model}, session_id={session_id}")
 
@@ -466,4 +467,5 @@ def run_agent_from_prompt(
 		page_id=page_id,
 		session_id=session_id,
 		model=model,
+		selected_block_ids=selected_block_ids,
 	)

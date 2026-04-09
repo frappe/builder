@@ -252,6 +252,7 @@ class AgentJob:
 		user: str | None = None,
 		page_id: str | None = None,
 		session_id: str | None = None,
+		selected_block_ids: list[str] | None = None,
 	):
 		self.prompt = prompt
 		self.page_context_json = page_context_json
@@ -260,6 +261,7 @@ class AgentJob:
 		self.user = user or frappe.session.user
 		self.page_id = page_id
 		self.session_id = session_id
+		self.selected_block_ids = selected_block_ids or []
 
 	def emit(self, suffix: str, **kwargs):
 		event = f"ai_agent_{suffix}"
@@ -300,6 +302,9 @@ class AgentJob:
 				}
 			)
 		messages.append({"role": "user", "content": self.prompt})
+		if self.selected_block_ids:
+			ids = ", ".join(self.selected_block_ids)
+			messages[-1]["content"] += f"\n\n(User has selected: {ids})"
 		return messages
 
 	def fetch_page_scripts(self, script_type: str | None = None) -> str:
@@ -436,7 +441,7 @@ class AgentJob:
 
 		try:
 			# Agentic loop: resolve server-side tools first, then hand client tools to the frontend.
-			for _round in range(4):
+			for _round in range(8):
 				tool_operations, summary_text, raw_tool_calls = self.call_tool_llm(messages)
 
 				server_ops = [op for op in tool_operations if op["tool_name"] == "get_page_scripts"]
@@ -505,6 +510,7 @@ def run_agent_job(
 	user: str | None = None,
 	page_id: str | None = None,
 	session_id: str | None = None,
+	selected_block_ids: list[str] | None = None,
 ):
 	AgentJob(
 		prompt,
@@ -514,4 +520,5 @@ def run_agent_job(
 		user=user,
 		page_id=page_id,
 		session_id=session_id,
+		selected_block_ids=selected_block_ids,
 	).run()

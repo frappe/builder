@@ -68,6 +68,23 @@
 			</div>
 
 			<div class="border-t border-outline-gray-1 p-4">
+				<div
+					v-if="selectedBlocks.length && includeSelection"
+					class="mb-2 flex flex-wrap items-center gap-1.5">
+					<span class="text-xs text-ink-gray-5">Focusing on:</span>
+					<span
+						v-for="block in selectedBlocks"
+						:key="block.blockId"
+						class="inline-flex items-center gap-1 rounded bg-surface-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-7">
+						{{ block.blockName || block.element }}
+					</span>
+					<button
+						class="ml-auto text-xs text-ink-gray-4 hover:text-ink-gray-7"
+						title="Don't send selection as context"
+						@click="includeSelection = false">
+						✕ Clear
+					</button>
+				</div>
 				<textarea
 					v-model="prompt"
 					rows="4"
@@ -113,6 +130,7 @@ const chat = new AIChatController();
 const { prompt, progressMessage, isSubmitting, messages, modelLabel, canSubmit, pageId } = chat;
 const { clearSession, submitPrompt, undoAgentScript } = chat;
 const { selectBlockById, openScriptByName } = chat;
+const { selectedBlocks, includeSelection } = chat;
 const builderStore = useBuilderStore();
 
 const messageContainer = ref<HTMLElement | null>(null);
