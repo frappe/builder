@@ -14,9 +14,9 @@
 		</div>
 
 		<template v-else>
-			<div class="border-b border-outline-gray-1 px-4 py-3">
+			<!-- <div class="border-b border-outline-gray-1 px-4 py-3">
 				<OptionToggle v-model="scope" :options="scopeOptions" />
-			</div>
+			</div> -->
 
 			<div ref="messageContainer" class="no-scrollbar flex-1 space-y-3 overflow-y-auto px-4 py-4">
 				<div
@@ -69,7 +69,6 @@
 
 <script setup lang="ts">
 import { AIChatController } from "@/components/AIChatController";
-import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import useBuilderStore from "@/stores/builderStore";
 import { Button, Textarea } from "frappe-ui";
 import { onMounted, onUnmounted } from "vue";

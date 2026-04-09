@@ -115,6 +115,8 @@ function replaceBlockInTree(root: Block, targetId: string, replacement: BlockOpt
 	return root.children?.some((child: Block) => replaceBlockInTree(child, targetId, replacement)) || false;
 }
 
+const STANDARD_ATTRS = new Set(["src", "alt", "href", "title", "value", "type", "placeholder"]);
+
 export class AIChatController {
 	private readonly builderStore = useBuilderStore();
 	private readonly canvasStore = useCanvasStore();
@@ -309,7 +311,6 @@ export class AIChatController {
 		const meta: Record<string, any> = { status: "complete" };
 		if (undoScripts.length) meta.undoScripts = undoScripts;
 		this.replacePendingAssistant(this.progressMessage.value, meta);
-		this.pageStore.savePage();
 		this.prompt.value = "";
 		this.streamingContent.value = "";
 		this.remoteTaskType.value = null;
@@ -377,9 +378,13 @@ export class AIChatController {
 					});
 				}
 				if (args.attributes) {
-					Object.entries(args.attributes).forEach(([key, value]) =>
-						block.setAttribute(key, value as string | undefined),
-					);
+					Object.entries(args.attributes).forEach(([key, value]) => {
+						if (STANDARD_ATTRS.has(key)) {
+							block.setAttribute(key, value as string | undefined);
+						} else {
+							block.customAttributes[key] = value as string | undefined;
+						}
+					});
 				}
 				if (args.inner_text !== undefined) block.setInnerHTML(args.inner_text);
 				if (args.inner_html !== undefined) block.setInnerHTML(args.inner_html);

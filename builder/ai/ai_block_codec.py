@@ -7,6 +7,8 @@ from frappe import _
 
 from builder.utils import to_compact_yaml
 
+STANDARD_ATTRS = {"src", "alt", "href", "title", "value", "type", "placeholder"}
+
 
 class BlockCodec:
 	@staticmethod
@@ -29,6 +31,10 @@ class BlockCodec:
 		attrs = block.get("attributes") or {}
 		if attrs:
 			out["attrs"] = attrs
+
+		custom_attrs = block.get("customAttributes") or {}
+		if custom_attrs:
+			out["attrs"] = {**out.get("attrs", {}), **custom_attrs}
 
 		if block.get("classes"):
 			out["classes"] = block["classes"]
@@ -58,11 +64,16 @@ class BlockCodec:
 		if not isinstance(node, dict):
 			return node
 
+		attrs = node.get("attrs", {})
+		standard_attrs = {k: v for k, v in attrs.items() if k in STANDARD_ATTRS}
+		custom_attrs = {k: v for k, v in attrs.items() if k not in STANDARD_ATTRS}
+
 		block = {
 			"element": node.get("el", "div"),
 			"blockName": node.get("name", ""),
 			"baseStyles": node.get("style", {}),
-			"attributes": node.get("attrs", {}),
+			"attributes": standard_attrs,
+			"customAttributes": custom_attrs,
 			"children": [BlockCodec.expand(c) for c in node.get("c", []) if isinstance(c, dict)],
 		}
 		for yaml_key, block_key in [

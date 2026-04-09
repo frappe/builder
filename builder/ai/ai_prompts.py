@@ -62,7 +62,7 @@ Return a single root block that represents the page (el: div, id: root). This bl
 
 # Rules:
 - The top-level Page block must have 'display: flex', 'flexDirection: column', and 'alignItems: center' to layout sections properly.
-- All top-level sections inside 'c' MUST have 'width: 100%'.
+- Critical: All top-level sections MUST have 'width: 100%'.
 - Modern harmonious color palettes. Good spacing. Professional concise copy.
 - Interactive: Use hover states for buttons/links to make the page feel alive.
 - Google Fonts via fontFamily (use ONLY the font name and not the fallback).
