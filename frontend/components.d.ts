@@ -139,6 +139,7 @@ declare module 'vue' {
     Settings: typeof import('./src/components/Icons/Settings.vue')['default']
     SettingsGear: typeof import('./src/components/Icons/SettingsGear.vue')['default']
     ShadowHandler: typeof import('./src/components/ShadowHandler.vue')['default']
+    Sparkles: typeof import('./src/components/Icons/Sparkles.vue')['default']
     StrikeThrough: typeof import('./src/components/Icons/StrikeThrough.vue')['default']
     StringOptions: typeof import('./src/components/PropsOptions/StringOptions.vue')['default']
     StylePropertyControl: typeof import('./src/components/Controls/StylePropertyControl.vue')['default']

@@ -87,6 +87,7 @@ import BuilderAIChatPanel from "@/components/BuilderAIChatPanel.vue";
 import ComponentIcon from "@/components/Icons/Component.vue";
 import LayersIcon from "@/components/Icons/Layers.vue";
 import PlusIcon from "@/components/Icons/Plus.vue";
+import SparklesIcon from "@/components/Icons/Sparkles.vue";
 import VariableManager from "@/components/Modals/VariableManager.vue";
 import PageScript from "@/components/PageScript.vue";
 import useBuilderStore from "@/stores/builderStore";
@@ -144,7 +145,7 @@ const leftPanelOptions = [
 	{
 		label: "Chat",
 		value: "Chat",
-		icon: "message-circle",
+		icon: SparklesIcon,
 	},
 ];
 

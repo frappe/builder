@@ -1,3 +1,6 @@
+from typing import ClassVar
+
+
 class Prompts:
 	MODIFY = (
 		"You modify web sections in Frappe Builder's block system.\n"
@@ -87,10 +90,10 @@ Return a single root block that represents the page (el: div, id: root). This bl
 		"- For 'add_block', define the full block structure with semantic HTML. Do NOT include an 'id' field.\n"
 		"- 'update_block' merges (does not replace) styles and attributes — only specify what changes.\n"
 		"- Use 'set_page_script' to add JavaScript or CSS that needs to run on the page (event listeners, animations, etc.).\n"
-		"- After calling tools, give a short 1–2 sentence summary of what was changed.\n"
+		"- After calling tools, give a short 1–2 sentence summary of what was changed. Use markdown formatting (bold, inline code, lists) where it aids clarity.\n"
 	)
 
-	MODIFY_MAP = {
+	MODIFY_MAP: ClassVar[dict] = {
 		"rewrite_text": REWRITE_TEXT,
 		"replace_image": REPLACE_IMAGE,
 	}

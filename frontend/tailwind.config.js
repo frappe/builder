@@ -27,6 +27,7 @@ export default {
 			);
 		}),
 		require("@tailwindcss/container-queries"),
+		require("@tailwindcss/typography"),
 	],
 	theme: {
 		extend: {

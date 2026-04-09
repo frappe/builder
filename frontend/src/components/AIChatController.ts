@@ -153,6 +153,7 @@ export class AIChatController {
 	private readonly pendingScriptOps = ref<Promise<string | null>[]>([]);
 	private readonly pendingAffectedBlocks = ref<AffectedBlock[]>([]);
 	private readonly pendingAffectedScripts = ref<AffectedScript[]>([]);
+	private submittedForPageId: string | null = null;
 
 	readonly pageId = computed(() => this.route.params.pageId as string);
 	readonly isUnsavedPage = computed(() => !this.pageId.value || this.pageId.value === "new");
@@ -271,6 +272,7 @@ export class AIChatController {
 	};
 
 	private applyPageStream() {
+		if (this.submittedForPageId && this.submittedForPageId !== this.pageId.value) return;
 		const block = parseBlock(this.streamingContent.value);
 		if (!block) return;
 		try {
@@ -319,8 +321,13 @@ export class AIChatController {
 	};
 
 	onComplete = async (data: { message?: string }) => {
+		if (this.submittedForPageId && this.submittedForPageId !== this.pageId.value) {
+			this.submittedForPageId = null;
+			return;
+		}
+		this.submittedForPageId = null;
 		this.isSubmitting.value = false;
-		this.progressMessage.value = data.message || "Applied update";
+		this.progressMessage.value = data.message || "Done";
 
 		let undoScripts: string[] = [];
 		if (this.pendingScriptOps.value.length) {
@@ -675,6 +682,7 @@ export class AIChatController {
 
 		const userText = this.prompt.value.trim();
 		this.prompt.value = "";
+		this.submittedForPageId = this.pageId.value;
 
 		if (!this.sessionId.value) await this.loadSession();
 

@@ -75,14 +75,14 @@ class LLMJob:
 			]
 		return text
 
-	def completion_summary(self, block_id: str | None = None) -> str:
+	def completion_summary(self, block_id: str | None = None) -> str | None:
 		if self.task_type == "rewrite_text":
 			return "Rewrote the selected text content."
 		if self.task_type == "replace_image":
 			return "Replaced the selected image."
 		if self.is_modify:
 			return f"Applied an inline update{(' to block ' + block_id) if block_id else ''}."
-		return "Applied a page-level draft update."
+		return "Page generated successfully."
 
 	def run(self):
 		logger.info(
@@ -170,7 +170,7 @@ class LLMJob:
 		except Exception as e:
 			if cache_key:
 				frappe.cache().delete_value(cache_key)
-			logger.error(f"LLMJob failed in {self.event_prefix}: {str(e)}", exc_info=True)
+			logger.error(f"LLMJob failed in {self.event_prefix}: {e!s}", exc_info=True)
 			frappe.log_error(f"LLM job error: {e}", self.event_prefix)
 			AISession.try_append_message(
 				self.session_id,
@@ -187,15 +187,17 @@ class LLMJob:
 		if cache_key:
 			frappe.cache().delete_value(cache_key)
 
-		AISession.try_append_message(
-			self.session_id,
-			"assistant",
-			self.completion_summary(original_id),
-			message_type="status",
-			task_type=self.task_type or ("modify" if self.is_modify else "generate"),
-			block_id=original_id,
-			metadata={"status": "complete", "model": model},
-		)
+		summary = self.completion_summary(original_id)
+		if summary:
+			AISession.try_append_message(
+				self.session_id,
+				"assistant",
+				summary,
+				message_type="status",
+				task_type=self.task_type or ("modify" if self.is_modify else "generate"),
+				block_id=original_id,
+				metadata={"status": "complete", "model": model},
+			)
 
 		success_message = "Modified block successfully" if self.is_modify else "Page generated successfully"
 		self.emit(
@@ -424,7 +426,7 @@ def test_api_key():
 		)
 		return {"success": True, "message": _("API key is valid")}
 	except Exception as e:
-		logger.error(f"test_api_key: API key validation failed: {str(e)}", exc_info=True)
+		logger.error(f"test_api_key: API key validation failed: {e!s}", exc_info=True)
 		return {"success": False, "message": str(e)}
 
 
