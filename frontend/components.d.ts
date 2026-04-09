@@ -8,6 +8,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AIAffectedItems: typeof import('./src/components/AIAffectedItems.vue')['default']
     AIPageGeneratorModal: typeof import('./src/components/AIPageGeneratorModal.vue')['default']
     AlertDialog: typeof import('./src/components/AlertDialog.vue')['default']
     AnalyticsFilters: typeof import('./src/components/Settings/AnalyticsFilters.vue')['default']

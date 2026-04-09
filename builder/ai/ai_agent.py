@@ -22,7 +22,8 @@ AGENT_TOOLS = [
 			"description": (
 				"Merge style, attribute, or content changes into an existing block. "
 				"Use this to change colours, fonts, spacing, text, HTML attributes, "
-				"element type, or class names on ANY block at any nesting depth."
+				"element type, or class names on ANY block at any nesting depth. "
+				"Make sure to set units on style values (e.g. padding: '10px' not just 10)."
 			),
 			"parameters": {
 				"type": "object",
@@ -418,7 +419,7 @@ class AgentJob:
 		except Exception as e:
 			logger.warning(f"Failed to generate summary text: {e!s}")
 			n = len(tool_operations)
-			summary_text = f"Applied {n} change{'s' if n != 1 else ''} to the page."
+			summary_text = f"Applying {n} change{'s' if n != 1 else ''} to the page."
 			self.emit("stream", chunk=summary_text)
 
 		return summary_text
@@ -487,7 +488,7 @@ class AgentJob:
 		AISession.try_append_message(
 			self.session_id,
 			"assistant",
-			summary_text or f"Applied {len(client_tool_operations)} change(s).",
+			summary_text or f"Applying {len(client_tool_operations)} change(s).",
 			message_type="chat",
 			task_type="agent",
 			metadata={"status": "complete", "model": self.model, "operations": len(client_tool_operations)},

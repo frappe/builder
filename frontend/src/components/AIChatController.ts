@@ -33,6 +33,18 @@ export interface ChatMessage {
 	metadata?: Record<string, any>;
 }
 
+export interface AffectedBlock {
+	block_id: string;
+	blockName: string;
+	element: string;
+	changedProps: string[];
+}
+
+export interface AffectedScript {
+	script_name: string;
+	changedProps: string[];
+}
+
 function buildLocalMessage(role: "user" | "assistant", content: string, metadata: Record<string, any> = {}) {
 	return {
 		id: `${role}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -139,6 +151,8 @@ export class AIChatController {
 	private readonly remoteBlockId = ref<string | null>(null);
 	private readonly pendingAssistantId = ref<string | null>(null);
 	private readonly pendingScriptOps = ref<Promise<string | null>[]>([]);
+	private readonly pendingAffectedBlocks = ref<AffectedBlock[]>([]);
+	private readonly pendingAffectedScripts = ref<AffectedScript[]>([]);
 
 	readonly pageId = computed(() => this.route.params.pageId as string);
 	readonly isUnsavedPage = computed(() => !this.pageId.value || this.pageId.value === "new");
@@ -184,13 +198,7 @@ export class AIChatController {
 			if (!block && this.scope.value === "selection") this.scope.value = "page";
 		});
 
-		watch(
-			() => [this.messages.value.length, this.progressMessage.value],
-			async () => {
-				await nextTick();
-				this.messageContainer.value?.scrollTo({ top: this.messageContainer.value.scrollHeight });
-			},
-		);
+		// No watcher needed — scroll is triggered explicitly from message-mutating methods
 
 		watch(this.pageId, async (newPageId, oldPageId) => {
 			if (oldPageId) this.detachListeners(oldPageId);
@@ -212,6 +220,8 @@ export class AIChatController {
 		this.remoteTaskType.value = null;
 		this.remoteBlockId.value = null;
 		this.pendingAssistantId.value = null;
+		this.pendingAffectedBlocks.value = [];
+		this.pendingAffectedScripts.value = [];
 		this.isSubmitting.value = false;
 	}
 
@@ -229,7 +239,9 @@ export class AIChatController {
 	messageLabel(message: ChatMessage) {
 		const scopeLabel = message.metadata?.scope === "selection" ? "selection" : "page";
 		if (message.role === "user") return scopeLabel;
-		return message.metadata?.status || message.task_type || "assistant";
+		const status = message.metadata?.status;
+		if (!status || status === "complete" || status === "running") return "";
+		return status;
 	}
 
 	async loadSession() {
@@ -276,12 +288,21 @@ export class AIChatController {
 		} catch {}
 	}
 
+	private scrollToBottom() {
+		nextTick(() => {
+			if (this.messageContainer.value) {
+				this.messageContainer.value.scrollTop = this.messageContainer.value.scrollHeight;
+			}
+		});
+	}
+
 	onProgress = (data: { message?: string; task_type?: string; block_id?: string }) => {
 		this.isSubmitting.value = true;
 		this.progressMessage.value = data.message || this.progressMessage.value;
 		if (data.task_type) this.remoteTaskType.value = data.task_type;
 		if (data.block_id) this.remoteBlockId.value = data.block_id;
 		this.replacePendingAssistant(this.progressMessage.value || "Working...", { status: "running" });
+		this.scrollToBottom();
 	};
 
 	onStream = (data: { chunk?: string; task_type?: string; block_id?: string }) => {
@@ -308,14 +329,47 @@ export class AIChatController {
 			this.pendingScriptOps.value = [];
 		}
 
+		// Add newly created scripts (set_page_script) to affected scripts
+		for (const name of undoScripts) {
+			if (!this.pendingAffectedScripts.value.find((s) => s.script_name === name)) {
+				this.pendingAffectedScripts.value.push({ script_name: name, changedProps: ["created"] });
+			}
+		}
+
 		const meta: Record<string, any> = { status: "complete" };
 		if (undoScripts.length) meta.undoScripts = undoScripts;
+		if (this.pendingAffectedBlocks.value.length) meta.affectedBlocks = [...this.pendingAffectedBlocks.value];
+		if (this.pendingAffectedScripts.value.length)
+			meta.affectedScripts = [...this.pendingAffectedScripts.value];
 		this.replacePendingAssistant(this.progressMessage.value, meta);
-		this.prompt.value = "";
 		this.streamingContent.value = "";
 		this.remoteTaskType.value = null;
 		this.remoteBlockId.value = null;
+		this.pendingAffectedBlocks.value = [];
+		this.pendingAffectedScripts.value = [];
+
+		// Save local metadata before loadSession() overwrites this.messages with server data
+		const localMeta = { ...meta };
 		await this.loadSession();
+
+		// Re-apply local metadata (affectedBlocks, affectedScripts, undoScripts) to the last
+		// assistant message since the server doesn't persist these UI-only fields
+		if (
+			localMeta.affectedBlocks?.length ||
+			localMeta.affectedScripts?.length ||
+			localMeta.undoScripts?.length
+		) {
+			let idx = this.messages.value.length - 1;
+			while (idx >= 0 && this.messages.value[idx]?.role !== "assistant") idx--;
+			if (idx >= 0) {
+				this.messages.value[idx] = {
+					...this.messages.value[idx],
+					metadata: { ...this.messages.value[idx].metadata, ...localMeta },
+				};
+			}
+		}
+		this.scrollToBottom();
+
 		window.setTimeout(() => {
 			this.progressMessage.value = "";
 			this.pendingAssistantId.value = null;
@@ -336,6 +390,8 @@ export class AIChatController {
 	onAgentToolBatch = (data: { operations?: Array<{ tool_name: string; args: Record<string, any> }> }) => {
 		if (!data.operations?.length) return;
 		for (const op of data.operations) {
+			// Track before apply so remove_block can capture block info while it still exists
+			this.trackAffectedItem(op.tool_name, op.args);
 			try {
 				this.applyToolOperation(op.tool_name, op.args);
 			} catch (e) {
@@ -343,7 +399,8 @@ export class AIChatController {
 			}
 		}
 		const n = data.operations.length;
-		this.replacePendingAssistant(`Applied ${n} change${n !== 1 ? "s" : ""}…`, { status: "running" });
+		this.replacePendingAssistant(`Applying ${n} change${n !== 1 ? "s" : ""}…`, { status: "running" });
+		this.scrollToBottom();
 	};
 
 	findBlockInTree(blockId: string, root?: Block | null): Block | null {
@@ -355,6 +412,81 @@ export class AIChatController {
 			if (found) return found;
 		}
 		return null;
+	}
+
+	private extractChangedProps(toolName: string, args: Record<string, any>): string[] {
+		switch (toolName) {
+			case "update_block": {
+				const props: string[] = [];
+				if (args.base_styles) props.push(...Object.keys(args.base_styles));
+				if (args.mobile_styles) props.push(...Object.keys(args.mobile_styles).map((k) => `m:${k}`));
+				if (args.tablet_styles) props.push(...Object.keys(args.tablet_styles).map((k) => `t:${k}`));
+				if (args.attributes) props.push(...Object.keys(args.attributes));
+				if (args.inner_text !== undefined) props.push("text");
+				if (args.inner_html !== undefined) props.push("html");
+				if (args.element !== undefined) props.push("element");
+				if (args.classes !== undefined) props.push("classes");
+				return props;
+			}
+			case "add_block":
+				return ["added child"];
+			case "remove_block":
+				return ["removed"];
+			case "move_block":
+				return ["moved"];
+			case "update_script": {
+				const props = ["script"];
+				if (args.script_type) props.push("script_type");
+				return props;
+			}
+			default:
+				return [];
+		}
+	}
+
+	private trackAffectedItem(toolName: string, args: Record<string, any>) {
+		const changedProps = this.extractChangedProps(toolName, args);
+		if (!changedProps.length) return;
+		if (["update_block", "remove_block", "move_block"].includes(toolName)) {
+			const blockId = args.block_id as string;
+			if (!blockId) return;
+			const block = this.findBlockInTree(blockId);
+			const existing = this.pendingAffectedBlocks.value.find((b) => b.block_id === blockId);
+			if (existing) {
+				existing.changedProps = [...new Set([...existing.changedProps, ...changedProps])];
+			} else {
+				this.pendingAffectedBlocks.value.push({
+					block_id: blockId,
+					blockName: block?.blockName || "",
+					element: block?.element || "div",
+					changedProps,
+				});
+			}
+		} else if (toolName === "add_block") {
+			const parentId = args.parent_block_id as string;
+			if (!parentId) return;
+			const block = this.findBlockInTree(parentId);
+			const existing = this.pendingAffectedBlocks.value.find((b) => b.block_id === parentId);
+			if (existing) {
+				existing.changedProps = [...new Set([...existing.changedProps, ...changedProps])];
+			} else {
+				this.pendingAffectedBlocks.value.push({
+					block_id: parentId,
+					blockName: block?.blockName || "",
+					element: block?.element || "div",
+					changedProps,
+				});
+			}
+		} else if (toolName === "update_script") {
+			const scriptName = args.script_name as string | undefined;
+			if (!scriptName) return;
+			const existing = this.pendingAffectedScripts.value.find((s) => s.script_name === scriptName);
+			if (existing) {
+				existing.changedProps = [...new Set([...existing.changedProps, ...changedProps])];
+			} else {
+				this.pendingAffectedScripts.value.push({ script_name: scriptName, changedProps });
+			}
+		}
 	}
 
 	applyToolOperation(toolName: string, args: Record<string, any>) {
@@ -540,13 +672,17 @@ export class AIChatController {
 
 	submitPrompt = async () => {
 		if (!this.canSubmit.value || !this.pageId.value || this.isUnsavedPage.value) return;
-		if (!this.sessionId.value) await this.loadSession();
 
 		const userText = this.prompt.value.trim();
+		this.prompt.value = "";
+
+		if (!this.sessionId.value) await this.loadSession();
+
 		const userMessage = buildLocalMessage("user", userText, { scope: this.scope.value });
 		const assistantMessage = buildLocalMessage("assistant", "Working...", { status: "running" });
 		this.messages.value.push(userMessage, assistantMessage);
 		this.pendingAssistantId.value = assistantMessage.id;
+		this.scrollToBottom();
 		this.streamingContent.value = "";
 		this.remoteTaskType.value = null;
 		this.remoteBlockId.value = null;
@@ -584,6 +720,16 @@ export class AIChatController {
 		} catch (error) {
 			await this.onError({ message: error instanceof Error ? error.message : "Request failed" });
 		}
+	};
+
+	selectBlockById = (blockId: string) => {
+		const block = this.findBlockInTree(blockId);
+		if (!block) return;
+		this.canvasStore.selectBlock(block, null, true, true);
+	};
+
+	openScriptByName = (scriptName: string) => {
+		this.builderStore.openClientScript = scriptName;
 	};
 
 	async mount() {

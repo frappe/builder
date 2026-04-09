@@ -159,20 +159,20 @@
 <script lang="ts" setup>
 import Dialog from "@/components/Controls/Dialog.vue";
 import { webPages } from "@/data/webPage";
+import { useBlockDataStore } from "@/stores/blockStore";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
+import blockController from "@/utils/blockController";
+import { useStorage } from "@vueuse/core";
 import { computed, defineComponent, ref, watch } from "vue";
 import { toast } from "vue-sonner";
 import CodeEditor from "./Controls/CodeEditor.vue";
-import PageClientScriptManager from "./PageClientScriptManager.vue";
-import blockController from "@/utils/blockController";
-import TabButtons from "./Controls/TabButtons.vue";
 import Switch from "./Controls/Switch.vue";
+import TabButtons from "./Controls/TabButtons.vue";
+import PageClientScriptManager from "./PageClientScriptManager.vue";
 import PropsEditor from "./PropsEditor.vue";
-import { useBlockDataStore } from "@/stores/blockStore";
-import { useStorage } from "@vueuse/core";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
@@ -282,6 +282,16 @@ watch(
 			showServerScriptEditor();
 			builderStore.showDataScriptDialog = null; // reset the flag
 		}
+	},
+);
+
+watch(
+	() => builderStore.openClientScript,
+	(scriptName) => {
+		if (!scriptName) return;
+		currentScriptEditor.value = "client";
+		showDialog.value = true;
+		// PageClientScriptManager will handle actual selection once it mounts and loads data
 	},
 );
 </script>

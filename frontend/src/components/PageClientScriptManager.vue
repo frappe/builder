@@ -185,6 +185,15 @@ const attachedScriptResource = createListResource({
 	orderBy: "`tabBuilder Page Client Script`.idx asc",
 	auto: true,
 	onSuccess: (data: attachedScript[]) => {
+		const pendingName = builderStore.openClientScript;
+		if (pendingName) {
+			builderStore.openClientScript = null;
+			const target = data.find((s: attachedScript) => s.script_name === pendingName);
+			if (target) {
+				selectScript(target);
+				return;
+			}
+		}
 		if (data && data.length > 0 && !activeScript.value) {
 			selectScript(data[0]);
 		}
@@ -364,6 +373,21 @@ const onScriptReorder = () => {
 		});
 };
 
+const selectScriptByName = (name: string) => {
+	const target = attachedScriptResource.data?.find((s: attachedScript) => s.script_name === name);
+	if (target) selectScript(target);
+};
+
+// Handle openClientScript when data is already loaded (component already mounted)
+watch(
+	() => builderStore.openClientScript,
+	(name) => {
+		if (!name || !attachedScriptResource.data?.length) return;
+		builderStore.openClientScript = null;
+		selectScriptByName(name);
+	},
+);
+
 watch(
 	() => props.page,
 	async () => {
@@ -376,7 +400,7 @@ watch(
 	},
 );
 
-defineExpose({ scriptEditor });
+defineExpose({ scriptEditor, selectScriptByName });
 </script>
 
 <style scoped>
