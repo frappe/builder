@@ -174,7 +174,7 @@ export class AIChatController {
 	readonly selectedBlocks = computed<Block[]>(() => {
 		return (this.canvasStore.activeCanvas?.selectedBlocks || []) as Block[];
 	});
-	readonly includeSelection = ref(true);
+
 	readonly rootBlock = computed<Block | null>(() => {
 		return (this.pageStore.pageBlocks[0] || null) as Block | null;
 	});
@@ -184,6 +184,12 @@ export class AIChatController {
 			"Select model"
 		);
 	});
+	readonly modelOptions = computed(() =>
+		this.currentProviderModels.value.map((m) => ({
+			label: m.label,
+			onClick: () => (this.selectedModel.value = m.name),
+		})),
+	);
 	readonly scopeOptions = computed(() => [
 		{ label: "Page", value: "page" },
 		{ label: "Selection", value: "selection", disabled: !this.selectedBlock.value },
@@ -208,10 +214,7 @@ export class AIChatController {
 		);
 
 		watch(this.selectedBlock, (block) => {
-			if (!block) {
-				if (this.scope.value === "selection") this.scope.value = "page";
-				this.includeSelection.value = true;
-			}
+			if (!block && this.scope.value === "selection") this.scope.value = "page";
 		});
 
 		// No watcher needed — scroll is triggered explicitly from message-mutating methods
@@ -741,10 +744,7 @@ export class AIChatController {
 			url = "builder.ai.ai_page_generator.generate_page_from_prompt";
 		} else if (runAgent) {
 			url = "builder.ai.ai_page_generator.run_agent_from_prompt";
-			const selectedIds =
-				this.includeSelection.value && this.selectedBlocks.value.length
-					? this.selectedBlocks.value.map((b) => b.blockId).filter(Boolean)
-					: [];
+			const selectedIds = this.selectedBlocks.value.map((b) => b.blockId).filter(Boolean);
 			extraParams = {
 				page_context: JSON.stringify(getBlockObject(this.rootBlock.value as Block)),
 				...(selectedIds.length ? { selected_block_ids: selectedIds } : {}),

@@ -402,8 +402,14 @@ class AgentJob:
 		return tool_operations, assistant_message.content or "", raw_tool_calls
 
 	def stream_summary(self, messages: list[dict], tool_operations: list[dict]) -> str:
+		# Keep only the final user message — no page YAML, system prompt, or loop history.
+		# This keeps input tokens minimal so the flash model stays fast.
+		last_user = next(
+			(m for m in reversed(messages) if m.get("role") == "user" and isinstance(m.get("content"), str)),
+			None,
+		)
 		summary_messages = [
-			*messages,
+			*(([last_user]) if last_user else []),
 			{
 				"role": "assistant",
 				"content": None,
@@ -447,7 +453,7 @@ class AgentJob:
 		logger.info(
 			f"AgentJob.run: page_id={self.page_id}, model={self.model}, session_id={self.session_id}, user={self.user}"
 		)
-		self.emit("progress", message=f"Thinking with {ModelRegistry.get_label(self.model)}…")
+		self.emit("progress", message=f"Thinking with {ModelRegistry.get_label(self.model)}")
 
 		messages = self.build_messages()
 		client_tool_operations: list[dict] = []

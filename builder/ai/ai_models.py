@@ -1,32 +1,33 @@
 import re
+from typing import ClassVar
 
 
 class ModelRegistry:
-	AVAILABLE = [
+	AVAILABLE: ClassVar[list] = [
 		{
 			"provider": "openrouter",
 			"models": [
 				{
 					"name": "openrouter/anthropic/claude-sonnet-4.6",
-					"label": "Claude Sonnet 4.6 (Balanced)",
+					"label": "Claude Sonnet 4.6",
 					"max_tokens": 200000,
 					"vision": True,
 				},
 				{
 					"name": "openrouter/anthropic/claude-haiku-4-6",
-					"label": "Claude Haiku 4.6 (Fast)",
+					"label": "Claude Haiku 4.6",
 					"max_tokens": 200000,
 					"vision": True,
 				},
 				{
 					"name": "openrouter/google/gemini-3.1-pro",
-					"label": "Gemini 3.1 Pro (Flagship)",
+					"label": "Gemini 3.1 Pro",
 					"max_tokens": 1048576,
 					"vision": True,
 				},
 				{
 					"name": "openrouter/google/gemini-3-flash-preview",
-					"label": "Gemini 3 Flash (Fast)",
+					"label": "Gemini 3 Flash",
 					"max_tokens": 1048576,
 					"vision": True,
 				},
@@ -38,19 +39,19 @@ class ModelRegistry:
 				},
 				{
 					"name": "openrouter/moonshotai/kimi-k2.5",
-					"label": "Kimi K2.5 (Cheapest)",
+					"label": "Kimi K2.5",
 					"max_tokens": 2000000,
 					"vision": True,
 				},
 				{
 					"name": "openrouter/z-ai/glm-5",
-					"label": "GLM-5 (Balanced)",
+					"label": "GLM-5",
 					"max_tokens": 200000,
 					"vision": True,
 				},
 				{
 					"name": "openrouter/moonshotai/kimi-k2",
-					"label": "Kimi K2 (Generous Free Tier)",
+					"label": "Kimi K2",
 					"max_tokens": 131072,
 					"vision": False,
 				},
@@ -58,11 +59,11 @@ class ModelRegistry:
 		},
 	]
 
-	PROVIDER_DEFAULT: dict[str, str] = {
+	PROVIDER_DEFAULT: ClassVar[dict[str, str]] = {
 		"openrouter": "openrouter/anthropic/claude-sonnet-4.6",
 	}
 
-	PROVIDER_SIMPLE: dict[str, str] = {
+	PROVIDER_SIMPLE: ClassVar[dict[str, str]] = {
 		"openrouter": "openrouter/google/gemini-3-flash-preview",
 	}
 

@@ -68,22 +68,14 @@
 			</div>
 
 			<div class="border-t border-outline-gray-1 p-4">
-				<div
-					v-if="selectedBlocks.length && includeSelection"
-					class="mb-2 flex flex-wrap items-center gap-1.5">
-					<span class="text-xs text-ink-gray-5">Focusing on:</span>
+				<div v-if="selectedBlocks.length" class="mb-2 flex flex-wrap items-center gap-1.5">
+					<span class="text-xs text-ink-gray-5">Selections:</span>
 					<span
 						v-for="block in selectedBlocks"
 						:key="block.blockId"
 						class="inline-flex items-center gap-1 rounded bg-surface-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-7">
 						{{ block.blockName || block.element }}
 					</span>
-					<button
-						class="ml-auto text-xs text-ink-gray-4 hover:text-ink-gray-7"
-						title="Don't send selection as context"
-						@click="includeSelection = false">
-						✕ Clear
-					</button>
 				</div>
 				<Transition name="fade">
 					<div
@@ -130,9 +122,11 @@
 						Paste or drop image
 					</span>
 				</div>
-				<div class="mt-3 flex items-center justify-between gap-2">
-					<div class="truncate text-xs text-ink-gray-5">
-						{{ progressMessage || modelLabel }}
+				<div class="mt-2 flex items-center justify-between gap-2">
+					<div class="flex min-w-0 items-center gap-1">
+						<Dropdown :options="[{ label: 'Select Model', disabled: true }, ...modelOptions]">
+							<Button variant="ghost" icon-right="chevron-up" :label="modelLabel" />
+						</Dropdown>
 					</div>
 					<Button
 						variant="solid"
@@ -152,7 +146,7 @@ import AIAffectedItems from "@/components/AIAffectedItems.vue";
 import { AIChatController } from "@/components/AIChatController";
 import SparklesIcon from "@/components/Icons/Sparkles.vue";
 import useBuilderStore from "@/stores/builderStore";
-import { Button, FeatherIcon } from "frappe-ui";
+import { Button, Dropdown, FeatherIcon } from "frappe-ui";
 import { marked } from "marked";
 import { onMounted, onUnmounted, ref, watch } from "vue";
 
@@ -164,10 +158,10 @@ function renderMarkdown(content: string): string {
 
 const chat = new AIChatController();
 
-const { prompt, progressMessage, isSubmitting, messages, modelLabel, canSubmit, pageId } = chat;
+const { prompt, progressMessage, isSubmitting, messages, modelLabel, modelOptions, canSubmit } = chat;
 const { clearSession, submitPrompt, undoAgentScript } = chat;
 const { selectBlockById, openScriptByName } = chat;
-const { selectedBlocks, includeSelection } = chat;
+const { selectedBlocks } = chat;
 const { imagePreviewUrl, imageFileName, isDragging, isVisionModel } = chat;
 const { clearImage, attachImageFile } = chat;
 const builderStore = useBuilderStore();
