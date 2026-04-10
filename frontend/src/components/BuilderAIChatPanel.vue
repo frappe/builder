@@ -85,14 +85,51 @@
 						✕ Clear
 					</button>
 				</div>
-				<textarea
-					v-model="prompt"
-					rows="4"
-					class="w-full resize-none rounded border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:border-outline-gray-modals hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:bg-surface-white focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
-					:disabled="isSubmitting"
-					placeholder="Ask to create or edit this page..."
-					@keydown.meta.enter="submitPrompt"
-					@keydown.ctrl.enter="submitPrompt" />
+				<Transition name="fade">
+					<div
+						v-if="imagePreviewUrl"
+						class="mb-2 flex items-center gap-2 rounded-md border border-outline-gray-2 bg-surface-gray-1 p-1.5 pr-2.5">
+						<img :src="imagePreviewUrl" class="h-8 w-8 rounded object-cover" alt="Attached image" />
+						<span class="flex-1 truncate text-xs text-ink-gray-7">{{ imageFileName }}</span>
+						<button
+							type="button"
+							class="hover:text-ink-red-7 flex items-center rounded text-ink-gray-5"
+							title="Remove image"
+							@click="clearImage">
+							<FeatherIcon name="x" class="h-3.5 w-3.5" />
+						</button>
+					</div>
+				</Transition>
+				<div
+					class="relative"
+					@paste.stop="handlePaste"
+					@dragover.prevent="isDragging = isVisionModel ? true : isDragging"
+					@dragleave="isDragging = false"
+					@drop.prevent="handleDrop">
+					<textarea
+						v-model="prompt"
+						rows="4"
+						class="w-full resize-none rounded border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:border-outline-gray-modals hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:bg-surface-white focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
+						:disabled="isSubmitting"
+						placeholder="Ask to create or edit this page..."
+						@keydown.meta.enter="submitPrompt"
+						@keydown.ctrl.enter="submitPrompt" />
+					<Transition name="fade">
+						<div
+							v-if="isDragging"
+							class="border-outline-blue-3 bg-surface-blue-1/60 pointer-events-none absolute inset-0 flex items-center justify-center rounded-md border-2 border-dashed">
+							<div class="text-ink-blue-4 flex items-center gap-1.5 text-xs font-medium">
+								<FeatherIcon name="image" class="h-3.5 w-3.5" />
+								Drop image to attach
+							</div>
+						</div>
+					</Transition>
+					<span
+						v-if="isVisionModel && !imagePreviewUrl && !isDragging"
+						class="pointer-events-none absolute bottom-3 right-2 select-none text-[10px] text-ink-gray-4">
+						Paste or drop image
+					</span>
+				</div>
 				<div class="mt-3 flex items-center justify-between gap-2">
 					<div class="truncate text-xs text-ink-gray-5">
 						{{ progressMessage || modelLabel }}
@@ -115,7 +152,7 @@ import AIAffectedItems from "@/components/AIAffectedItems.vue";
 import { AIChatController } from "@/components/AIChatController";
 import SparklesIcon from "@/components/Icons/Sparkles.vue";
 import useBuilderStore from "@/stores/builderStore";
-import { Button } from "frappe-ui";
+import { Button, FeatherIcon } from "frappe-ui";
 import { marked } from "marked";
 import { onMounted, onUnmounted, ref, watch } from "vue";
 
@@ -131,6 +168,8 @@ const { prompt, progressMessage, isSubmitting, messages, modelLabel, canSubmit, 
 const { clearSession, submitPrompt, undoAgentScript } = chat;
 const { selectBlockById, openScriptByName } = chat;
 const { selectedBlocks, includeSelection } = chat;
+const { imagePreviewUrl, imageFileName, isDragging, isVisionModel } = chat;
+const { clearImage, attachImageFile } = chat;
 const builderStore = useBuilderStore();
 
 const messageContainer = ref<HTMLElement | null>(null);
@@ -144,6 +183,23 @@ watch(
 
 onMounted(() => chat.mount());
 onUnmounted(() => chat.unmount());
+
+function handlePaste(event: ClipboardEvent) {
+	if (!isVisionModel.value) return;
+	const items = Array.from(event.clipboardData?.items || []);
+	const imageItem = items.find((item) => item.type.startsWith("image/"));
+	if (!imageItem) return;
+	event.preventDefault();
+	const file = imageItem.getAsFile();
+	if (file) attachImageFile(file);
+}
+
+function handleDrop(event: DragEvent) {
+	isDragging.value = false;
+	if (!isVisionModel.value) return;
+	const file = Array.from(event.dataTransfer?.files || []).find((f) => f.type.startsWith("image/"));
+	if (file) attachImageFile(file);
+}
 </script>
 
 <style>

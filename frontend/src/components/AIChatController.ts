@@ -141,6 +141,11 @@ export class AIChatController {
 	readonly scope = ref<"page" | "selection">("page");
 	readonly messageContainer = ref<HTMLElement | null>(null);
 
+	readonly imageData = ref<string | null>(null);
+	readonly imagePreviewUrl = ref<string | null>(null);
+	readonly imageFileName = ref("");
+	readonly isDragging = ref(false);
+
 	readonly sessionId = ref("");
 	readonly messages = ref<ChatMessage[]>([]);
 	readonly availableModels = ref<AIProvider[]>([]);
@@ -183,6 +188,9 @@ export class AIChatController {
 		{ label: "Page", value: "page" },
 		{ label: "Selection", value: "selection", disabled: !this.selectedBlock.value },
 	]);
+	readonly isVisionModel = computed(() => {
+		return this.currentProviderModels.value.find((m) => m.name === this.selectedModel.value)?.vision ?? false;
+	});
 	readonly canSubmit = computed(
 		() => !!this.prompt.value.trim() && !this.isSubmitting.value && !!this.selectedModel.value,
 	);
@@ -265,6 +273,25 @@ export class AIChatController {
 			role: m.role === "user" ? "user" : ("assistant" as const),
 		}));
 	}
+
+	clearImage = () => {
+		this.imageData.value = null;
+		this.imagePreviewUrl.value = null;
+		this.imageFileName.value = "";
+		this.isDragging.value = false;
+	};
+
+	attachImageFile = (file: File) => {
+		if (!file.type.startsWith("image/")) return;
+		if (file.size > 5 * 1024 * 1024) return;
+		this.imageFileName.value = file.name || "pasted-image.png";
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			this.imageData.value = e.target?.result as string;
+			this.imagePreviewUrl.value = this.imageData.value;
+		};
+		reader.readAsDataURL(file);
+	};
 
 	clearSession = async () => {
 		if (!this.pageId.value || this.isUnsavedPage.value) return;
@@ -721,11 +748,14 @@ export class AIChatController {
 			extraParams = {
 				page_context: JSON.stringify(getBlockObject(this.rootBlock.value as Block)),
 				...(selectedIds.length ? { selected_block_ids: selectedIds } : {}),
+				...(this.imageData.value ? { image_data: this.imageData.value } : {}),
 			};
 		} else {
 			url = "builder.ai.ai_page_generator.modify_section_from_prompt";
 			extraParams = { block_context: JSON.stringify(getBlockObject(targetBlock as Block)) };
 		}
+
+		this.clearImage();
 
 		try {
 			const result = await createResource({

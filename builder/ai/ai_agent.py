@@ -253,6 +253,7 @@ class AgentJob:
 		page_id: str | None = None,
 		session_id: str | None = None,
 		selected_block_ids: list[str] | None = None,
+		image_url: str | None = None,
 	):
 		self.prompt = prompt
 		self.page_context_json = page_context_json
@@ -262,6 +263,7 @@ class AgentJob:
 		self.page_id = page_id
 		self.session_id = session_id
 		self.selected_block_ids = selected_block_ids or []
+		self.image_url = image_url
 
 	def emit(self, suffix: str, **kwargs):
 		event = f"ai_agent_{suffix}"
@@ -301,10 +303,22 @@ class AgentJob:
 					"content": "Understood. I have the current page structure. What would you like me to change?",
 				}
 			)
-		messages.append({"role": "user", "content": self.prompt})
+		user_text = self.prompt
 		if self.selected_block_ids:
 			ids = ", ".join(self.selected_block_ids)
-			messages[-1]["content"] += f"\n\n(User has selected: {ids})"
+			user_text += f"\n\n(User has selected: {ids})"
+		if self.image_url:
+			messages.append(
+				{
+					"role": "user",
+					"content": [
+						{"type": "text", "text": user_text},
+						{"type": "image_url", "image_url": {"url": self.image_url}},
+					],
+				}
+			)
+		else:
+			messages.append({"role": "user", "content": user_text})
 		return messages
 
 	def fetch_page_scripts(self, script_type: str | None = None) -> str:
@@ -511,6 +525,7 @@ def run_agent_job(
 	page_id: str | None = None,
 	session_id: str | None = None,
 	selected_block_ids: list[str] | None = None,
+	image_url: str | None = None,
 ):
 	AgentJob(
 		prompt,
@@ -521,4 +536,5 @@ def run_agent_job(
 		page_id=page_id,
 		session_id=session_id,
 		selected_block_ids=selected_block_ids,
+		image_url=image_url,
 	).run()
