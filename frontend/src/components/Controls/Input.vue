@@ -40,7 +40,7 @@
 
 		<div
 			v-if="hasNumber && !disabled"
-			class="gap-0.1 pointer-events-none absolute right-6 top-1/2 z-10 flex -translate-y-1/2 flex-col opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100">
+			class="gap-0.1 pointer-events-none absolute right-5 top-1/2 z-10 flex -translate-y-1/2 flex-col opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100">
 			<button
 				type="button"
 				class="duration-250 flex h-3 w-5 items-center justify-center rounded transition-all ease-in-out active:-translate-y-[2px]"
@@ -111,8 +111,8 @@ const data = useVModel(props, "modelValue", emit);
 
 const hasNumber = computed(() => {
 	if (!data.value) return false;
-	const value = String(data.value);
-	return /\d/.test(value);
+	const value = String(data.value).trim();
+	return /^-?\d/.test(value); //
 });
 
 defineOptions({
@@ -145,8 +145,10 @@ const handleFocus = ($event: Event) => {
 const incrementValue = () => {
 	const { number, unit } = extractNumberAndUnit(String(data.value || ""));
 	const step = props.type === "number" && attrs.step ? parseFloat(String(attrs.step)) : 1;
+	const max = attrs.max !== undefined ? parseFloat(String(attrs.max)) : Infinity;
+	const min = attrs.min !== undefined ? parseFloat(String(attrs.min)) : -Infinity;
 	const currentNum = parseFloat(number) || 0;
-	const newNum = parseFloat((currentNum + step).toFixed(10));
+	const newNum = Math.min(max, parseFloat((currentNum + step).toFixed(10)));
 	const newValue = newNum + unit;
 	data.value = newValue;
 	emit("update:modelValue", newValue);
@@ -155,8 +157,10 @@ const incrementValue = () => {
 const decrementValue = () => {
 	const { number, unit } = extractNumberAndUnit(String(data.value || ""));
 	const step = props.type === "number" && attrs.step ? parseFloat(String(attrs.step)) : 1;
+	const max = attrs.max !== undefined ? parseFloat(String(attrs.max)) : Infinity;
+	const min = attrs.min !== undefined ? parseFloat(String(attrs.min)) : -Infinity;
 	const currentNum = parseFloat(number) || 0;
-	const newNum = parseFloat((currentNum - step).toFixed(10));
+	const newNum = Math.max(min, parseFloat((currentNum - step).toFixed(10)));
 	const newValue = newNum + unit;
 	data.value = newValue;
 	emit("update:modelValue", newValue);
@@ -173,5 +177,6 @@ input[type="number"]::-webkit-inner-spin-button {
 input[type="number"] {
 	-moz-appearance: textfield !important;
 	appearance: textfield !important;
+	padding-right: 0.75rem !important;
 }
 </style>

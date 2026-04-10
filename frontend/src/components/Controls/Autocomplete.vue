@@ -37,7 +37,7 @@
 
 			<div
 				v-if="hasNumber"
-				class="gap-0.1 pointer-events-none absolute right-6 top-1/2 z-10 flex -translate-y-1/2 flex-col opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100">
+				class="gap-0.1 pointer-events-none absolute right-5 top-1/2 z-10 flex -translate-y-1/2 flex-col opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100">
 				<button
 					type="button"
 					class="duration-250 flex h-3 w-5 items-center justify-center rounded transition-all ease-in-out active:-translate-y-[2px]"
@@ -205,8 +205,8 @@ const allOptions = computed(() => (props.getOptions ? asyncOptions.value : props
 
 const hasNumber = computed(() => {
 	if (!props.modelValue) return false;
-	const value = String(props.modelValue);
-	return /\d/.test(value);
+	const value = String(props.modelValue).trim();
+	return /^-?\d/.test(value); // must START with a digit (or minus+digit)
 });
 
 const incrementValue = () => {
