@@ -1,13 +1,13 @@
 <template>
 	<div class="flex h-full min-h-full flex-col bg-surface-white">
 		<div class="flex items-center justify-between border-b border-outline-gray-1 px-3 py-2.5">
-			<div>
-				<div class="text-sm font-semibold text-ink-gray-9">Bob AI</div>
-				<div class="text-p-xs text-ink-gray-5">Session persists for this page</div>
+			<div class="flex flex-col gap-1">
+				<div class="mt-1 text-sm font-semibold text-ink-gray-9">Bob AI</div>
+				<div class="text-p-xs leading-4 text-ink-gray-5">Session persists for this page</div>
 			</div>
 			<button
-				v-if="builderStore.isAIEnabled"
-				class="text-xs text-ink-gray-4 hover:text-ink-gray-7"
+				v-if="builderStore.isAIEnabled && messages.length"
+				class="text-xs text-ink-gray-4 hover:text-ink-gray-9"
 				@click="clearSession">
 				Clear
 			</button>
