@@ -335,8 +335,11 @@ def generate_page_from_prompt(
 	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
 	if page_id and session_id:
 		session = AISession.get(session_id, page_id=page_id)
+		generate_meta: dict = {"scope": "page"}
+		if image_data:
+			generate_meta["attachedImageUrl"] = image_data
 		session.append_message(
-			"user", prompt, message_type="chat", task_type="generate", metadata={"scope": "page"}
+			"user", prompt, message_type="chat", task_type="generate", metadata=generate_meta
 		)
 
 	return enqueue_ai_job(
@@ -440,6 +443,7 @@ def run_agent_from_prompt(
 	session_id: str | None = None,
 	selected_block_ids: list | None = None,
 	image_data: str | None = None,
+	selected_block_context: list | None = None,
 ):
 	logger.info(f"run_agent_from_prompt: page_id={page_id}, model={model}, session_id={session_id}")
 
@@ -453,12 +457,15 @@ def run_agent_from_prompt(
 
 	if page_id and session_id:
 		session = AISession.get(session_id, page_id=page_id)
+		msg_meta: dict = {"scope": "page", "selectedBlockContext": selected_block_context or []}
+		if image_data:
+			msg_meta["attachedImageUrl"] = image_data
 		session.append_message(
 			"user",
 			prompt,
 			message_type="chat",
 			task_type="agent",
-			metadata={"scope": "page"},
+			metadata=msg_meta,
 		)
 
 	return enqueue_ai_job(

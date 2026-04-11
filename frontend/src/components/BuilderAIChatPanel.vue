@@ -33,8 +33,8 @@
 				<div
 					v-for="message in messages"
 					:key="message.id"
-					class="flex"
-					:class="message.role === 'user' ? 'justify-end' : 'justify-start'">
+					class="flex flex-col"
+					:class="message.role === 'user' ? 'items-end' : 'items-start'">
 					<div
 						class="w-fit text-p-sm"
 						:class="[
@@ -49,7 +49,9 @@
 							v-if="message.role === 'assistant'"
 							class="ai-prose prose prose-sm max-w-none text-p-sm"
 							v-html="renderMarkdown(message.content)" />
-						<div v-else class="whitespace-pre-wrap break-words">{{ message.content }}</div>
+						<div v-else>
+							<div class="whitespace-pre-wrap break-words">{{ message.content }}</div>
+						</div>
 						<Button
 							v-if="message.metadata?.undoScripts?.length"
 							class="mt-1"
@@ -63,6 +65,39 @@
 							:affected-scripts="message.metadata.affectedScripts || []"
 							@select-block="selectBlockById"
 							@open-script="openScriptByName" />
+					</div>
+					<!-- Block + image chips below the bubble -->
+					<div
+						v-if="
+							message.role === 'user' &&
+							(message.metadata?.selectedBlockContext?.length || message.metadata?.attachedImageUrl)
+						"
+						class="mt-1 flex max-w-[88%] flex-wrap items-center gap-1">
+						<!-- image chip -->
+						<span
+							v-if="message.metadata?.attachedImageUrl"
+							class="inline-flex items-center gap-1 rounded bg-surface-gray-2 px-1.5 py-0.5 text-[10px] text-ink-gray-6">
+							<img :src="message.metadata.attachedImageUrl" class="h-3 w-3 rounded object-cover" alt="" />
+							Image
+						</span>
+						<!-- block chips -->
+						<button
+							v-for="block in getVisibleChips(message)"
+							:key="block.id"
+							class="inline-flex items-center rounded bg-surface-gray-2 px-1.5 py-0.5 text-[10px] text-ink-gray-6 transition-colors hover:bg-surface-gray-3 hover:text-ink-gray-8"
+							@click="selectBlockById(block.id)">
+							{{ block.label }}
+						</button>
+						<button
+							v-if="(message.metadata?.selectedBlockContext?.length ?? 0) > MAX_VISIBLE_CHIPS"
+							class="inline-flex items-center rounded bg-surface-gray-2 px-1.5 py-0.5 text-[10px] text-ink-gray-5 transition-colors hover:bg-surface-gray-3"
+							@click="toggleChips(message.id)">
+							{{
+								expandedMessages.has(message.id)
+									? "Show less"
+									: `+${(message.metadata?.selectedBlockContext?.length ?? 0) - MAX_VISIBLE_CHIPS} more`
+							}}
+						</button>
 					</div>
 				</div>
 			</div>
@@ -78,18 +113,19 @@
 					</span>
 				</div>
 				<Transition name="fade">
-					<div
-						v-if="imagePreviewUrl"
-						class="mb-2 flex items-center gap-2 rounded-md border border-outline-gray-2 bg-surface-gray-1 p-1.5 pr-2.5">
-						<img :src="imagePreviewUrl" class="h-8 w-8 rounded object-cover" alt="Attached image" />
-						<span class="flex-1 truncate text-xs text-ink-gray-7">{{ imageFileName }}</span>
-						<button
-							type="button"
-							class="hover:text-ink-red-7 flex items-center rounded text-ink-gray-5"
-							title="Remove image"
-							@click="clearImage">
-							<FeatherIcon name="x" class="h-3.5 w-3.5" />
-						</button>
+					<div v-if="imagePreviewUrl" class="mb-1.5 flex flex-wrap gap-1">
+						<span
+							class="inline-flex items-center gap-1 rounded bg-surface-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-7">
+							<img :src="imagePreviewUrl" class="h-3 w-3 rounded object-cover" alt="" />
+							<span class="max-w-[120px] truncate">{{ imageFileName }}</span>
+							<button
+								type="button"
+								class="hover:text-ink-red-7 ml-0.5 flex items-center text-ink-gray-4"
+								title="Remove image"
+								@click="clearImage">
+								<FeatherIcon name="x" class="h-3 w-3" />
+							</button>
+						</span>
 					</div>
 				</Transition>
 				<div
@@ -143,7 +179,7 @@
 
 <script setup lang="ts">
 import AIAffectedItems from "@/components/AIAffectedItems.vue";
-import { AIChatController } from "@/components/AIChatController";
+import { AIChatController, type ChatMessage } from "@/components/AIChatController";
 import SparklesIcon from "@/components/Icons/Sparkles.vue";
 import useBuilderStore from "@/stores/builderStore";
 import { Button, Dropdown, FeatherIcon } from "frappe-ui";
@@ -193,6 +229,22 @@ function handleDrop(event: DragEvent) {
 	if (!isVisionModel.value) return;
 	const file = Array.from(event.dataTransfer?.files || []).find((f) => f.type.startsWith("image/"));
 	if (file) attachImageFile(file);
+}
+
+const MAX_VISIBLE_CHIPS = 3;
+const expandedMessages = ref(new Set<string>());
+
+function getVisibleChips(message: ChatMessage) {
+	const blocks: { id: string; label: string }[] = message.metadata?.selectedBlockContext || [];
+	if (expandedMessages.value.has(message.id)) return blocks;
+	return blocks.slice(0, MAX_VISIBLE_CHIPS);
+}
+
+function toggleChips(messageId: string) {
+	const next = new Set(expandedMessages.value);
+	if (next.has(messageId)) next.delete(messageId);
+	else next.add(messageId);
+	expandedMessages.value = next;
 }
 </script>
 

@@ -271,10 +271,13 @@ export class AIChatController {
 		}).submit();
 		const session = result as { session_id: string; messages: ChatMessage[] };
 		this.sessionId.value = session.session_id;
-		this.messages.value = (session.messages || []).map((m) => ({
-			...m,
-			role: m.role === "user" ? "user" : ("assistant" as const),
-		}));
+		this.messages.value = (session.messages || []).map(
+			(m) =>
+				({
+					...m,
+					role: m.role === "user" ? "user" : "assistant",
+				} as ChatMessage),
+		);
 	}
 
 	clearImage = () => {
@@ -724,7 +727,29 @@ export class AIChatController {
 
 		if (!this.sessionId.value) await this.loadSession();
 
-		const userMessage = buildLocalMessage("user", userText, { scope: this.scope.value });
+		const runGenerate = this.scope.value === "page" && this.isGenerateMode();
+		const runAgent = this.scope.value === "page" && !runGenerate;
+		const targetBlock = this.scope.value === "selection" ? this.selectedBlock.value : this.rootBlock.value;
+
+		// Snapshot context attachments before submit
+		const selectedBlockContext =
+			runAgent && this.selectedBlocks.value.length
+				? this.selectedBlocks.value
+						.filter((b) => b.blockId)
+						.map((b) => ({ id: b.blockId, label: b.blockName || b.element }))
+				: [];
+		const attachedImageUrl = this.imagePreviewUrl.value;
+		const attachedImageData = this.imageData.value;
+		this.clearImage();
+
+		const contextMeta: Record<string, any> = {};
+		if (selectedBlockContext.length) contextMeta.selectedBlockContext = selectedBlockContext;
+		if (attachedImageUrl) contextMeta.attachedImageUrl = attachedImageUrl;
+
+		const userMessage = buildLocalMessage("user", userText, {
+			scope: this.scope.value,
+			...contextMeta,
+		});
 		const assistantMessage = buildLocalMessage("assistant", "Working...", { status: "running" });
 		this.messages.value.push(userMessage, assistantMessage);
 		this.pendingAssistantId.value = assistantMessage.id;
@@ -734,28 +759,26 @@ export class AIChatController {
 		this.remoteBlockId.value = null;
 		this.isSubmitting.value = true;
 
-		const runGenerate = this.scope.value === "page" && this.isGenerateMode();
-		const runAgent = this.scope.value === "page" && !runGenerate;
-		const targetBlock = this.scope.value === "selection" ? this.selectedBlock.value : this.rootBlock.value;
-
 		let url: string;
 		let extraParams: Record<string, any> = {};
 		if (runGenerate) {
 			url = "builder.ai.ai_page_generator.generate_page_from_prompt";
+			extraParams = {
+				...(attachedImageData ? { image_data: attachedImageData } : {}),
+			};
 		} else if (runAgent) {
 			url = "builder.ai.ai_page_generator.run_agent_from_prompt";
 			const selectedIds = this.selectedBlocks.value.map((b) => b.blockId).filter(Boolean);
 			extraParams = {
 				page_context: JSON.stringify(getBlockObject(this.rootBlock.value as Block)),
 				...(selectedIds.length ? { selected_block_ids: selectedIds } : {}),
-				...(this.imageData.value ? { image_data: this.imageData.value } : {}),
+				...(selectedBlockContext.length ? { selected_block_context: selectedBlockContext } : {}),
+				...(attachedImageData ? { image_data: attachedImageData } : {}),
 			};
 		} else {
 			url = "builder.ai.ai_page_generator.modify_section_from_prompt";
 			extraParams = { block_context: JSON.stringify(getBlockObject(targetBlock as Block)) };
 		}
-
-		this.clearImage();
 
 		try {
 			const result = await createResource({
