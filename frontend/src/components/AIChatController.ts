@@ -91,7 +91,10 @@ function convertYAMLtoBlock(yamlBlock: Record<string, any>): BlockOptions {
 		tabletStyles: ensureObject(yamlBlock.t_style),
 		classes: ensureArray(yamlBlock.classes),
 	};
-	if (yamlBlock.id) block.blockId = yamlBlock.id;
+	if (yamlBlock.id) {
+		block.blockId = yamlBlock.id;
+		block.originalElement = yamlBlock.id === "root" ? "body" : undefined;
+	}
 	if (yamlBlock.text) block.innerText = yamlBlock.text;
 	block.children = Array.isArray(yamlBlock.c) ? yamlBlock.c.map(convertYAMLtoBlock) : [];
 	return block;

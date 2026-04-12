@@ -184,16 +184,6 @@ const showInfoDialog = ref(false);
 const showSettingsDialog = ref(false);
 const showShortcuts = inject<() => void>("showShortcuts", () => {});
 
-const openAIGeneratorFn = inject<(() => void) | undefined>("showAIGenerator", undefined);
-
-const openAIGenerator = () => {
-	if (openAIGeneratorFn) {
-		openAIGeneratorFn();
-	} else {
-		toast.error("AI Generator is not available");
-	}
-};
-
 const currentlyViewedByText = computed(() => {
 	const names = builderStore.viewers.map((viewer) => viewer.fullname).map((name) => name.split(" ")[0]);
 	const count = names.length;

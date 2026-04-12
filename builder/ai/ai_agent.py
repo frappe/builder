@@ -360,6 +360,13 @@ class AgentJob:
 					m["content"] = [{"type": "text", "text": m["content"]}]
 
 		logger.debug(f"Calling agent LLM with tools: {[t['function']['name'] for t in self.TOOLS]}")
+		logger.info(
+			f"Agent LLM request | model={resolved_model}\n"
+			+ "\n".join(
+				f"[{m['role']}] {m['content'] if isinstance(m['content'], str) else m['content']}"
+				for m in messages
+			)
+		)
 		resp = litellm.completion(
 			model=resolved_model,
 			messages=messages,
@@ -426,7 +433,7 @@ class AgentJob:
 				{"role": "tool", "tool_call_id": f"call_{i}", "content": "Applied successfully."}
 				for i, op in enumerate(tool_operations)
 			],
-			{"role": "user", "content": "Briefly describe what was changed (1–2 sentences, plain text)."},
+			{"role": "user", "content": "Briefly describe what was changed (1–2 sentences, as markdown)."},
 		]
 
 		summary_text = ""
@@ -447,6 +454,7 @@ class AgentJob:
 			summary_text = f"Applying {n} change{'s' if n != 1 else ''} to the page."
 			self.emit("stream", chunk=summary_text)
 
+		logger.info(f"Agent summary stream | length={len(summary_text)}\n{summary_text}")
 		return summary_text
 
 	def run(self):

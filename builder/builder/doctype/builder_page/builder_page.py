@@ -198,6 +198,9 @@ class BuilderPage(WebsiteGenerator):
 		clear_cache(self.route)
 
 	def on_trash(self):
+		for session in frappe.get_all("Builder AI Session", filters={"page": self.name}, pluck="name"):
+			frappe.delete_doc("Builder AI Session", session, ignore_missing=True)
+
 		if self.is_template and frappe.conf.developer_mode:
 			page_template_folder = os.path.join(
 				frappe.get_app_path("builder"), "builder", "builder_page_template", scrub(str(self.name))

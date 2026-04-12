@@ -94,12 +94,6 @@ class LLMJob:
 		params = TASK_PARAMS[task_tier]
 		model = ModelRegistry.get_simple(self.model) if task_tier == "simple" else self.model
 
-		cache_key = f"ai_streaming_content:{self.page_id}:{self.user}" if self.page_id else None
-		if cache_key:
-			frappe.cache().set_value(
-				cache_key, {"content": "", "task_type": self.task_type}, expires_in_sec=600
-			)
-
 		action = "Modifying" if self.is_modify else "Generating"
 		self.emit(
 			"progress",
@@ -140,10 +134,6 @@ class LLMJob:
 						self.emit("progress", message="Building...")
 						last_stage = "Building..."
 					content += delta
-					if cache_key:
-						frappe.cache().set_value(
-							cache_key, {"content": content, "task_type": self.task_type}, expires_in_sec=600
-						)
 					self.emit("stream", chunk=delta, block_id=original_id, total_length=len(content))
 
 					stage = ModelRegistry.get_progress_stage(content)
@@ -151,9 +141,9 @@ class LLMJob:
 						last_stage = stage
 						self.emit("progress", message=stage, total_length=len(content))
 
+			logger.info(f"LLM stream response | model={model} length={len(content)}\n{content}")
+
 		except ValueError as e:
-			if cache_key:
-				frappe.cache().delete_value(cache_key)
 			frappe.log_error(f"Parse error: {e}\nContent: {content}", f"{self.event_prefix} parse")
 			AISession.try_append_message(
 				self.session_id,
@@ -168,8 +158,6 @@ class LLMJob:
 			return
 
 		except Exception as e:
-			if cache_key:
-				frappe.cache().delete_value(cache_key)
 			logger.error(f"LLMJob failed in {self.event_prefix}: {e!s}", exc_info=True)
 			frappe.log_error(f"LLM job error: {e}", self.event_prefix)
 			AISession.try_append_message(
@@ -183,9 +171,6 @@ class LLMJob:
 			)
 			self.emit("error", message=str(e))
 			return
-
-		if cache_key:
-			frappe.cache().delete_value(cache_key)
 
 		summary = self.completion_summary(original_id)
 		if summary:
@@ -396,14 +381,6 @@ def modify_section_from_prompt(
 		image_url=image_url,
 		session_id=session_id,
 	)
-
-
-@frappe.whitelist()
-@has_page_write()
-def get_ai_streaming_content(page_id: str):
-	user = frappe.session.user
-	cache_key = f"ai_streaming_content:{page_id}:{user}"
-	return frappe.cache().get_value(cache_key) or {"content": None}
 
 
 @frappe.whitelist()
