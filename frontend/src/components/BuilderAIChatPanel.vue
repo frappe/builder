@@ -65,6 +65,19 @@
 							:affected-scripts="message.metadata.affectedScripts || []"
 							@select-block="selectBlockById"
 							@open-script="openScriptByName" />
+						<!-- Clarification options -->
+						<div
+							v-if="message.metadata?.status === 'clarification' && message.metadata?.options?.length"
+							class="mt-2 flex flex-wrap gap-1.5">
+							<button
+								v-for="option in message.metadata.options"
+								:key="option"
+								:disabled="isSubmitting"
+								class="rounded-full border border-outline-gray-2 bg-surface-white px-2.5 py-1 text-[11px] text-ink-gray-7 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-2 disabled:cursor-not-allowed disabled:opacity-50"
+								@click="selectOption(option)">
+								{{ option }}
+							</button>
+						</div>
 					</div>
 					<!-- Block + image chips below the bubble -->
 					<div
@@ -195,7 +208,7 @@ function renderMarkdown(content: string): string {
 const chat = new AIChatController();
 
 const { prompt, progressMessage, isSubmitting, messages, modelLabel, modelOptions, canSubmit } = chat;
-const { clearSession, submitPrompt, undoAgentScript } = chat;
+const { clearSession, submitPrompt, undoAgentScript, selectOption } = chat;
 const { selectBlockById, openScriptByName } = chat;
 const { selectedBlocks } = chat;
 const { imagePreviewUrl, imageFileName, isDragging, isVisionModel } = chat;

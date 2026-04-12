@@ -437,6 +437,28 @@ export class AIChatController {
 		this.pendingAssistantId.value = null;
 	};
 
+	onClarify = async (data: { question?: string; options?: string[]; block_id?: string }) => {
+		this.isSubmitting.value = false;
+		this.progressMessage.value = "";
+		this.streamingContent.value = "";
+		this.remoteTaskType.value = null;
+		this.remoteBlockId.value = null;
+		const question = data.question || "Can you clarify?";
+		const options = data.options || [];
+		this.replacePendingAssistant(question, {
+			status: "clarification",
+			options,
+		});
+		this.pendingAssistantId.value = null;
+		await this.loadSession();
+		// Re-apply options to last assistant message (not persisted server-side)
+		const lastAssistant = [...this.messages.value].reverse().find((m) => m.role === "assistant");
+		if (lastAssistant && !lastAssistant.metadata?.options?.length) {
+			lastAssistant.metadata = { ...lastAssistant.metadata, options, status: "clarification" };
+		}
+		this.scrollToBottom();
+	};
+
 	onAgentToolBatch = (data: { operations?: Array<{ tool_name: string; args: Record<string, any> }> }) => {
 		if (!data.operations?.length) return;
 		for (const op of data.operations) {
@@ -688,15 +710,18 @@ export class AIChatController {
 			ai_generation_stream: this.onStream,
 			ai_generation_complete: this.onComplete,
 			ai_generation_error: this.onError,
+			ai_generation_clarify: this.onClarify,
 			ai_modify_progress: this.onProgress,
 			ai_modify_stream: this.onStream,
 			ai_modify_complete: this.onComplete,
 			ai_modify_error: this.onError,
+			ai_modify_clarify: this.onClarify,
 			ai_agent_progress: this.onProgress,
 			ai_agent_tool_batch: this.onAgentToolBatch,
 			ai_agent_stream: this.onStream,
 			ai_agent_complete: this.onComplete,
 			ai_agent_error: this.onError,
+			ai_agent_clarify: this.onClarify,
 		};
 	}
 
@@ -720,6 +745,11 @@ export class AIChatController {
 		if (this.scope.value === "selection") return false;
 		return !this.rootBlock.value || !this.rootBlock.value.children?.length;
 	}
+
+	selectOption = (option: string) => {
+		this.prompt.value = option;
+		this.submitPrompt();
+	};
 
 	submitPrompt = async () => {
 		if (!this.canSubmit.value || !this.pageId.value || this.isUnsavedPage.value) return;

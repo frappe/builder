@@ -9,7 +9,7 @@ from builder.ai.ai_agent import run_agent_job
 from builder.ai.ai_block_codec import BlockCodec
 from builder.ai.ai_llm import TASK_PARAMS, call_llm
 from builder.ai.ai_models import ModelRegistry
-from builder.ai.ai_prompts import Prompts
+from builder.ai.ai_prompts import Prompts, parse_clarification
 from builder.ai.ai_session import AISession
 from builder.utils import has_page_write
 
@@ -170,6 +170,25 @@ class LLMJob:
 				metadata={"status": "error"},
 			)
 			self.emit("error", message=str(e))
+			return
+
+		if clarification := parse_clarification(content):
+			logger.info(f"LLMJob: clarification requested: {clarification}")
+			AISession.try_append_message(
+				self.session_id,
+				"assistant",
+				clarification["question"],
+				message_type="clarification",
+				task_type=self.task_type or ("modify" if self.is_modify else "generate"),
+				block_id=original_id,
+				metadata={"options": clarification["options"], "status": "clarification"},
+			)
+			self.emit(
+				"clarify",
+				question=clarification["question"],
+				options=clarification["options"],
+				block_id=original_id,
+			)
 			return
 
 		summary = self.completion_summary(original_id)

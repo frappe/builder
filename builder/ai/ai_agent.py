@@ -7,7 +7,7 @@ import litellm
 from builder.ai.ai_block_codec import BlockCodec
 from builder.ai.ai_llm import TASK_PARAMS, call_llm
 from builder.ai.ai_models import ModelRegistry
-from builder.ai.ai_prompts import Prompts
+from builder.ai.ai_prompts import Prompts, parse_clarification
 from builder.ai.ai_session import AISession
 from builder.utils import to_compact_yaml
 
@@ -362,10 +362,7 @@ class AgentJob:
 		logger.debug(f"Calling agent LLM with tools: {[t['function']['name'] for t in self.TOOLS]}")
 		logger.info(
 			f"Agent LLM request | model={resolved_model}\n"
-			+ "\n".join(
-				f"[{m['role']}] {m['content'] if isinstance(m['content'], str) else m['content']}"
-				for m in messages
-			)
+			+ "\n".join(f"[{m['role']}] {m['content']}" for m in messages)
 		)
 		resp = litellm.completion(
 			model=resolved_model,
@@ -507,6 +504,23 @@ class AgentJob:
 		if not client_tool_operations and not summary_text:
 			logger.warning("Agent returned empty response (no tools, no text)")
 			self.emit("error", message="The AI returned an empty response. Please try rephrasing.")
+			return
+
+		if not client_tool_operations and (clarification := parse_clarification(summary_text)):
+			logger.info(f"Agent: clarification requested: {clarification}")
+			AISession.try_append_message(
+				self.session_id,
+				"assistant",
+				clarification["question"],
+				message_type="clarification",
+				task_type="agent",
+				metadata={"options": clarification["options"], "status": "clarification"},
+			)
+			self.emit(
+				"clarify",
+				question=clarification["question"],
+				options=clarification["options"],
+			)
 			return
 
 		if client_tool_operations:

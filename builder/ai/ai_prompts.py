@@ -1,5 +1,25 @@
 from typing import ClassVar
 
+import yaml
+
+
+def parse_clarification(content: str) -> dict | None:
+	"""Return {'question': str, 'options': list[str]} if content is a clarification block, else None."""
+	try:
+		stripped = content.strip()
+		if stripped.startswith("```"):
+			lines = stripped.splitlines()
+			stripped = "\n".join(lines[1:-1] if lines[-1].startswith("```") else lines[1:])
+		parsed = yaml.safe_load(stripped)
+		if isinstance(parsed, dict) and parsed.get("type") == "clarification":
+			question = str(parsed.get("question", "Can you clarify?"))
+			options = [str(o) for o in parsed.get("options", []) if o]
+			if options:
+				return {"question": question, "options": options}
+	except Exception:
+		pass
+	return None
+
 
 class Prompts:
 	MODIFY = (
@@ -36,6 +56,21 @@ class Prompts:
 		"You are an image finder. Suggest a highly relevant, high-quality publicly available image URL "
 		"(different from what is provided).\n"
 		"Return ONLY the image URL. No markdown, no explanations, no quotes."
+	)
+
+	CLARIFICATION = (
+		"If the user's request is too vague to act on confidently "
+		"(e.g. a single word, no page type, no content described), "
+		"respond with ONLY this YAML and nothing else:\n\n"
+		"type: clarification\n"
+		"question: <one short question>\n"
+		"options:\n"
+		"  - <option 1>\n"
+		"  - <option 2>\n"
+		"  - <option 3>\n"
+		"  - <option 4>\n\n"
+		"Provide 3-5 concise options that cover the most likely intents. "
+		"Do NOT ask for clarification if there is enough context to make a reasonable page."
 	)
 
 	GENERATE = """You are an expert web designer specializing in creating modern, responsive web pages using the Frappe Builder block system.
@@ -75,22 +110,30 @@ Return a single root block that represents the page (el: div, id: root). This bl
 - Avoid using emojis in text content. Focus on professional tone.
 - Gradients: ALWAYS use 'backgroundImage' (NOT 'background') for gradients. The value MUST be a quoted YAML string to avoid parse errors. Example: backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'. Never use unquoted gradient values."""
 
+	@classmethod
+	def get_generate_prompt(cls) -> str:
+		return cls.GENERATE + "\n\n" + cls.CLARIFICATION
+
 	AGENT = (
-		"You are an AI assistant that edits web pages in Frappe Builder by calling tools.\n\n"
-		"# Page Context\n"
-		"The user will provide the current page as compact YAML. Each block has an 'id' field — "
-		"that is its blockId. You MUST use the exact blockId values from the context when calling tools.\n\n"
-		"# Rules\n"
-		"- ALWAYS use tools to apply changes. Never return raw YAML or code.\n"
-		"- Make the minimal necessary changes. Do not regenerate sections that don't need to change.\n"
-		"- For style changes, only include the properties that need to change.\n"
-		"- The top-level 'id' on blocks is the editor blockId. If you need an HTML id attribute, set it under attrs.id\n"
-		"- For gradients, use 'backgroundImage' (NOT 'background') e.g. backgroundImage: 'linear-gradient(...)'.\n"
-		"- Use camelCase for all CSS property names (backgroundColor, fontSize, etc.).\n"
-		"- For 'add_block', define the full block structure with semantic HTML. Do NOT include an 'id' field.\n"
-		"- 'update_block' merges (does not replace) styles and attributes — only specify what changes.\n"
-		"- Use 'set_page_script' to add JavaScript or CSS that needs to run on the page (event listeners, animations, etc.).\n"
-		"- After calling tools, give a short 1–2 sentence summary of what was changed. Use markdown formatting (bold, inline code, lists) where it aids clarity.\n"
+		(
+			"You are an AI assistant that edits web pages in Frappe Builder by calling tools.\n\n"
+			"# Page Context\n"
+			"The user will provide the current page as compact YAML. Each block has an 'id' field — "
+			"that is its blockId. You MUST use the exact blockId values from the context when calling tools.\n\n"
+			"# Rules\n"
+			"- ALWAYS use tools to apply changes. Never return raw YAML or code.\n"
+			"- Make the minimal necessary changes. Do not regenerate sections that don't need to change.\n"
+			"- For style changes, only include the properties that need to change.\n"
+			"- The top-level 'id' on blocks is the editor blockId. If you need an HTML id attribute, set it under attrs.id\n"
+			"- For gradients, use 'backgroundImage' (NOT 'background') e.g. backgroundImage: 'linear-gradient(...)'.\n"
+			"- Use camelCase for all CSS property names (backgroundColor, fontSize, etc.).\n"
+			"- For 'add_block', define the full block structure with semantic HTML. Do NOT include an 'id' field.\n"
+			"- 'update_block' merges (does not replace) styles and attributes — only specify what changes.\n"
+			"- Use 'set_page_script' to add JavaScript or CSS that needs to run on the page (event listeners, animations, etc.).\n"
+			"- After calling tools, give a short 1–2 sentence summary of what was changed. Use markdown formatting (bold, inline code, lists) where it aids clarity.\n"
+		)
+		+ "\n\n"
+		+ CLARIFICATION
 	)
 
 	MODIFY_MAP: ClassVar[dict] = {
@@ -102,7 +145,7 @@ Return a single root block that represents the page (el: div, id: root). This bl
 	def get_system(cls, is_modify: bool, task_type: str | None = None) -> str:
 		if is_modify:
 			return cls.MODIFY_MAP.get(task_type or "", cls.MODIFY)
-		return cls.GENERATE
+		return cls.get_generate_prompt()
 
 	@classmethod
 	def classify_task(cls, is_modify: bool, task_type: str | None = None) -> str:
