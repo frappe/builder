@@ -87,14 +87,48 @@ AGENT_TOOLS = [
 					},
 					"block": {
 						"type": "object",
-						"description": (
-							"The new block definition using compact YAML schema: "
-							"el (element tag), name (optional label), style (CSS-in-JS dict), "
-							"m_style (mobile styles), t_style (tablet styles), "
-							"attrs (HTML attributes, including attrs.id for HTML id), text (text content), "
-							"classes (list of CSS classes), c (children array). "
-							"Do NOT include an 'id' field — one will be auto-assigned."
-						),
+						"description": "The new block definition. Do NOT include an 'id' field — one will be auto-assigned.",
+						"properties": {
+							"el": {
+								"type": "string",
+								"description": "HTML element tag (e.g. section, div, h1, p, button, img, a).",
+							},
+							"name": {
+								"type": "string",
+								"description": "Human-readable label for this block.",
+							},
+							"style": {
+								"type": "object",
+								"description": "CSS-in-JS camelCase desktop styles (e.g. {backgroundColor: '#fff', padding: '40px'}).",
+							},
+							"m_style": {
+								"type": "object",
+								"description": "Mobile style overrides (same format as style).",
+							},
+							"t_style": {
+								"type": "object",
+								"description": "Tablet style overrides (same format as style).",
+							},
+							"attrs": {
+								"type": "object",
+								"description": "HTML attributes (e.g. {src: '...', alt: '...', href: '/', id: 'features'}).",
+							},
+							"text": {
+								"type": "string",
+								"description": "Text content of the element.",
+							},
+							"classes": {
+								"type": "array",
+								"items": {"type": "string"},
+								"description": "CSS class names to apply.",
+							},
+							"c": {
+								"type": "array",
+								"description": "Child blocks (same schema, recursively).",
+								"items": {"type": "object"},
+							},
+						},
+						"required": ["el"],
 					},
 					"after_block_id": {
 						"type": "string",
