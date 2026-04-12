@@ -1,16 +1,15 @@
+import json
 from typing import ClassVar
-
-import yaml
 
 
 def parse_clarification(content: str) -> dict | None:
-	"""Return {'question': str, 'options': list[str]} if content is a clarification block, else None."""
+	"""Return {'question': str, 'options': list[str]} if content is a clarification JSON block, else None."""
 	try:
 		stripped = content.strip()
 		if stripped.startswith("```"):
 			lines = stripped.splitlines()
 			stripped = "\n".join(lines[1:-1] if lines[-1].startswith("```") else lines[1:])
-		parsed = yaml.safe_load(stripped)
+		parsed = json.loads(stripped)
 		if isinstance(parsed, dict) and parsed.get("type") == "clarification":
 			question = str(parsed.get("question", "Can you clarify?"))
 			options = [str(o) for o in parsed.get("options", []) if o]
@@ -44,7 +43,10 @@ class Prompts:
 		"Gradients: ALWAYS use 'backgroundImage' (NOT 'background') for gradients. "
 		"The gradient value MUST be quoted to avoid YAML parse errors. "
 		"Example: backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'. "
-		"Never leave gradient strings unquoted."
+		"Never leave gradient strings unquoted.\n"
+		"Fonts: fontFamily MUST be the bare font name only — no quotes, no fallback stack. "
+		"Correct: fontFamily: Space Grotesk. Wrong: fontFamily: 'Space Grotesk', sans-serif. "
+		"Never add @import or <link> tags for Google Fonts — the builder loads Google Fonts automatically from the fontFamily name."
 	)
 
 	REWRITE_TEXT = (
@@ -61,15 +63,9 @@ class Prompts:
 	CLARIFICATION = (
 		"If the user's request is too vague to act on confidently "
 		"(e.g. a single word, no page type, no content described), "
-		"respond with ONLY this YAML and nothing else:\n\n"
-		"type: clarification\n"
-		"question: <one short question>\n"
-		"options:\n"
-		"  - <option 1>\n"
-		"  - <option 2>\n"
-		"  - <option 3>\n"
-		"  - <option 4>\n\n"
-		"Provide 3-5 concise options that cover the most likely intents. "
+		"respond with ONLY this JSON object and nothing else:\n\n"
+		'{"type": "clarification", "question": "<one short question>", "options": ["<option 1>", "<option 2>", "<option 3>"]}\n\n'
+		"Provide 3-5 short plain-text options (no markdown, no descriptions). "
 		"Do NOT ask for clarification if there is enough context to make a reasonable page."
 	)
 
@@ -84,7 +80,7 @@ Return a single root block that represents the page (el: div, id: root). This bl
 - el: div
 - id: root
 - name: body
-- style: CSS-in-JS camelCase object for page-wide styles (e.g. { backgroundColor: '#f8f9fa', fontFamily: 'Inter', display: 'flex', flexDirection: 'column', alignItems: 'center' })
+- style: CSS-in-JS camelCase object for page-wide styles (e.g. { backgroundColor: '#f8f9fa', fontFamily: Inter, display: 'flex', flexDirection: 'column', alignItems: 'center' })
 - c: array of content blocks (sections, header, footer, etc.)
 
 # Content Block Schema:
@@ -103,7 +99,8 @@ Return a single root block that represents the page (el: div, id: root). This bl
 - Critical: All top-level sections MUST have 'width: 100%'.
 - Modern harmonious color palettes. Good spacing. Professional concise copy.
 - Interactive: Use hover states for buttons/links to make the page feel alive.
-- Google Fonts via fontFamily (use ONLY the font name and not the fallback).
+- Google Fonts via fontFamily. Use ONLY the bare font name — no quotes, no fallback stack. Correct: `fontFamily: Playfair Display`. Wrong: `fontFamily: 'Playfair Display', serif`.
+- Never add @import or <link> tags for Google Fonts — the builder loads Google Fonts automatically from the fontFamily name.
 - Semantic HTML with alt texts.
 - Create maximum 5 high quality sections
 - Use semantic tags and wrap text in them. Never place text directly in a div/section without a semantic tag.
@@ -127,6 +124,7 @@ Return a single root block that represents the page (el: div, id: root). This bl
 			"- The top-level 'id' on blocks is the editor blockId. If you need an HTML id attribute, set it under attrs.id\n"
 			"- For gradients, use 'backgroundImage' (NOT 'background') e.g. backgroundImage: 'linear-gradient(...)'.\n"
 			"- Use camelCase for all CSS property names (backgroundColor, fontSize, etc.).\n"
+			"- fontFamily must be the bare font name only (e.g. Space Grotesk). Never add @import or <link> for Google Fonts — the builder loads them automatically from the fontFamily name.\n"
 			"- For 'add_block', define the full block structure with semantic HTML. Do NOT include an 'id' field.\n"
 			"- 'update_block' merges (does not replace) styles and attributes — only specify what changes.\n"
 			"- Use 'set_page_script' to add JavaScript or CSS that needs to run on the page (event listeners, animations, etc.).\n"
