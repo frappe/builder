@@ -20,7 +20,7 @@ class ModelRegistry:
 					"vision": True,
 				},
 				{
-					"name": "openrouter/google/gemini-3.1-pro",
+					"name": "openrouter/google/gemini-3.1-pro-preview",
 					"label": "Gemini 3.1 Pro",
 					"max_tokens": 1048576,
 					"vision": True,
