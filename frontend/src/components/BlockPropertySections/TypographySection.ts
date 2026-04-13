@@ -7,6 +7,7 @@ import userFonts from "@/data/userFonts";
 import { UserFont } from "@/types/Builder/UserFont";
 import blockController from "@/utils/blockController";
 import { setFont as _setFont, fontList, getFontWeightOptions } from "@/utils/fontManager";
+import { set } from "@vueuse/core";
 
 const setFont = (font: string) => {
 	_setFont(font, null).then(() => {
@@ -96,6 +97,9 @@ const typographySectionProperties = [
 				propertyKey: "fontWeight",
 				component: Autocomplete,
 				options: getFontWeightOptions((blockController.getStyle("fontFamily") || "Inter") as string),
+				step: 100,
+				min: 100,
+				max: 900,
 			};
 		},
 		searchKeyWords: "Font, Weight, FontWeight",
@@ -120,6 +124,7 @@ const typographySectionProperties = [
 			return {
 				label: "Height",
 				propertyKey: "lineHeight",
+				step: 0.1,
 			};
 		},
 		searchKeyWords: "Font, Height, LineHeight, Line Height",
@@ -131,6 +136,7 @@ const typographySectionProperties = [
 			return {
 				label: "Letter",
 				propertyKey: "letterSpacing",
+				step: 0.1,
 			};
 		},
 		searchKeyWords: "Font, Letter, LetterSpacing, Letter Spacing",

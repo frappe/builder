@@ -112,7 +112,7 @@ import {
 	ComboboxSeparator,
 } from "reka-ui";
 import type { Component, ComponentPublicInstance } from "vue";
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, nextTick, useAttrs, ref, watch } from "vue";
 import { useNumberInput } from "@/utils/useNumberInput";
 import NumberArrows from "@/components/Controls/NumberArrows.vue";
 
@@ -166,9 +166,12 @@ const contentRef = ref<ComponentPublicInstance | null>(null);
 const fixedPositionStyles = ref({});
 const allOptions = computed(() => (props.getOptions ? asyncOptions.value : props.options));
 
+const attrs = useAttrs();
+
 const { hasNumber, incrementValue, decrementValue } = useNumberInput({
 	getValue: () => props.modelValue,
 	setValue: (v) => emit("update:modelValue", v),
+	getAttrs: () => attrs,
 });
 
 const displayOptions = computed(() => {

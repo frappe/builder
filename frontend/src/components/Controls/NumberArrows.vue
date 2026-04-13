@@ -1,7 +1,7 @@
 <template>
 	<div
 		v-if="modelValue && !disabled"
-		class="gap-0.1 pointer-events-none absolute right-5 top-1/2 z-10 flex -translate-y-1/2 flex-col opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100">
+		class="pointer-events-none absolute right-5 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-0 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100">
 		<button
 			type="button"
 			class="duration-250 flex h-3 w-5 items-center justify-center rounded transition-all ease-in-out active:-translate-y-[2px]"
