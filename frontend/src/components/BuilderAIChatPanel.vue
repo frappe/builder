@@ -42,7 +42,7 @@
 								? 'max-w-[88%] rounded-md border px-3 py-2 text-ink-gray-8 shadow-sm'
 								: 'max-w-full',
 							message.role === 'assistant' && message.metadata?.status === 'running'
-								? 'animate-pulse text-ink-gray-5'
+								? 'animate-shine'
 								: 'text-ink-gray-8',
 						]">
 						<div
@@ -292,5 +292,21 @@ function toggleChips(messageId: string) {
 .ai-prose pre {
 	background: var(--surface-gray-2) !important;
 	border-radius: 0.375rem;
+}
+@keyframes shine {
+	from {
+		background-position: 200% center;
+	}
+	to {
+		background-position: -200% center;
+	}
+}
+.animate-shine {
+	background: linear-gradient(120deg, var(--ink-gray-6) 20%, var(--ink-gray-9) 50%, var(--ink-gray-6) 80%);
+	background-size: 200% auto;
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+	animation: shine 2.5s linear infinite;
 }
 </style>

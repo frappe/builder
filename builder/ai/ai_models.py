@@ -94,7 +94,7 @@ class ModelRegistry:
 			if name_match:
 				block_name = name_match.group(1).strip()
 				if block_name.lower() not in {"body", "root", "container"}:
-					return f"Building {block_name}"
+					return f"Building {block_name} section"
 		return None
 
 	@classmethod
