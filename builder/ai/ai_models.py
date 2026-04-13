@@ -55,6 +55,12 @@ class ModelRegistry:
 					"max_tokens": 131072,
 					"vision": False,
 				},
+				{
+					"name": "openrouter/qwen/qwen3.6-plus",
+					"label": "Qwen 3.6 Plus",
+					"max_tokens": 131072,
+					"vision": True,
+				},
 			],
 		},
 	]

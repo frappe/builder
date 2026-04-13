@@ -172,15 +172,55 @@
 					</span>
 				</div>
 				<div class="mt-2 flex items-center justify-between gap-2">
-					<div class="flex min-w-0 items-center gap-1">
-						<Dropdown :options="[{ label: 'Select Model', disabled: true }, ...modelOptions]">
-							<Button variant="ghost" icon-right="chevron-up" :label="modelLabel" />
-						</Dropdown>
+					<div class="flex items-center gap-0.5">
+						<Popover placement="top-start" :offset="6">
+							<template #target="{ togglePopover }">
+								<button
+									class="flex h-7 max-w-[9rem] items-center gap-1.5 rounded px-1.5 text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8"
+									@click="togglePopover">
+									<FeatherIcon name="cpu" class="size-3.5 shrink-0" />
+									<span class="truncate text-xs">{{ modelLabel }}</span>
+								</button>
+							</template>
+							<template #body="{ close }">
+								<div class="min-w-40 rounded-lg border border-outline-gray-2 bg-surface-white py-1 shadow-lg">
+									<button
+										v-for="option in modelOptions"
+										:key="option.label"
+										class="flex w-full items-center px-3 py-1.5 text-left text-sm text-ink-gray-7 hover:bg-surface-gray-2"
+										:class="{ 'font-medium text-ink-gray-9': option.label === modelLabel }"
+										@click="
+											() => {
+												option.onClick();
+												close();
+											}
+										">
+										{{ option.label }}
+									</button>
+								</div>
+							</template>
+						</Popover>
+						<Popover v-if="!messages.length" placement="top-start" :offset="6">
+							<template #target="{ togglePopover }">
+								<Tooltip :text="selectedPreset ? selectedPreset.name : 'Style Preset'" placement="top">
+									<button
+										class="flex size-7 items-center justify-center rounded text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8"
+										:class="{ 'bg-surface-gray-2 text-ink-gray-8': selectedPreset }"
+										@click="togglePopover">
+										<FeatherIcon name="layout" class="size-3.5" />
+									</button>
+								</Tooltip>
+							</template>
+							<template #body>
+								<div class="w-96 rounded-lg border border-outline-gray-2 bg-surface-white p-3 shadow-lg">
+									<WebPagePresetPicker v-model="selectedPreset" />
+								</div>
+							</template>
+						</Popover>
 					</div>
 					<Button
 						variant="solid"
-						label="Send"
-						icon-right="arrow-up"
+						icon="arrow-up"
 						:disabled="!canSubmit"
 						:loading="isSubmitting"
 						@click="submitPrompt" />
@@ -194,8 +234,9 @@
 import AIAffectedItems from "@/components/AIAffectedItems.vue";
 import { AIChatController, type ChatMessage } from "@/components/AIChatController";
 import SparklesIcon from "@/components/Icons/Sparkles.vue";
+import WebPagePresetPicker from "@/components/WebPagePresetPicker.vue";
 import useBuilderStore from "@/stores/builderStore";
-import { Button, Dropdown, FeatherIcon } from "frappe-ui";
+import { Button, FeatherIcon, Popover, Tooltip } from "frappe-ui";
 import { marked } from "marked";
 import { onMounted, onUnmounted, ref, watch } from "vue";
 
@@ -207,13 +248,30 @@ function renderMarkdown(content: string): string {
 
 const chat = new AIChatController();
 
-const { prompt, progressMessage, isSubmitting, messages, modelLabel, modelOptions, canSubmit } = chat;
-const { clearSession, submitPrompt, undoAgentScript, selectOption } = chat;
+const { prompt, isSubmitting, messages, modelLabel, modelOptions, canSubmit } = chat;
+const { clearSession, undoAgentScript, selectOption } = chat;
 const { selectBlockById, openScriptByName } = chat;
 const { selectedBlocks } = chat;
 const { imagePreviewUrl, imageFileName, isDragging, isVisionModel } = chat;
 const { clearImage, attachImageFile } = chat;
 const builderStore = useBuilderStore();
+
+const selectedPreset = ref<{
+	id: string;
+	name: string;
+	category: string;
+	description: string;
+	icon: string;
+} | null>(null);
+
+const submitPrompt = () => {
+	if (selectedPreset.value) {
+		const presetContext = `Style: ${selectedPreset.value.name} - ${selectedPreset.value.description}`;
+		chat.prompt.value = `${chat.prompt.value}\n\n${presetContext}`;
+		selectedPreset.value = null;
+	}
+	chat.submitPrompt();
+};
 
 const messageContainer = ref<HTMLElement | null>(null);
 watch(
