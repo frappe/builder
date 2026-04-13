@@ -9,7 +9,11 @@
 		<div
 			class="flex min-h-full flex-col items-center gap-3 border-r border-outline-gray-1 p-3"
 			ref="miniSidebar">
-			<Tooltip v-for="option of leftPanelOptions" :key="option.value" :text="option.label" placement="right">
+			<Tooltip
+				v-for="option of leftPanelOptions"
+				:key="option.value"
+				:text="`${option.label} (${formatShortcutLabel(option.shortcut)})`"
+				placement="right">
 				<button
 					class="flex size-8 items-center justify-center rounded text-ink-gray-7 hover:bg-surface-gray-2 focus:!bg-surface-gray-3"
 					:class="{
@@ -93,6 +97,7 @@ import PageScript from "@/components/PageScript.vue";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
+import { formatShortcutLabel, useShortcut } from "@/utils/useShortcut";
 import { Tooltip } from "frappe-ui";
 import { inject, nextTick, Ref, ref, watch, watchEffect } from "vue";
 import { useRoute } from "vue-router";
@@ -121,31 +126,37 @@ const leftPanelOptions = [
 		label: "Insert",
 		value: "Blocks",
 		icon: PlusIcon,
+		shortcut: { key: "i", ctrl: true, shift: true },
 	},
 	{
 		label: "Layers",
 		value: "Layers",
 		icon: LayersIcon,
+		shortcut: { key: "l", ctrl: true, shift: true },
 	},
 	{
 		label: "Components",
 		value: "Assets",
 		icon: ComponentIcon,
+		shortcut: { key: "a", ctrl: true, shift: true },
 	},
 	{
 		label: "Code",
 		value: "Code",
 		icon: "code",
+		shortcut: { key: "k", ctrl: true, shift: true },
 	},
 	{
 		label: "Variables",
 		value: "variables",
 		icon: "aperture",
+		shortcut: { key: "v", ctrl: true, shift: true },
 	},
 	{
 		label: "Chat",
 		value: "Chat",
 		icon: SparklesIcon,
+		shortcut: { key: "h", ctrl: true, shift: true },
 	},
 ];
 
@@ -157,6 +168,17 @@ const setActiveTab = (tab: LeftSidebarTabOption) => {
 		showVariableManager.value = false;
 	}
 };
+
+useShortcut(
+	leftPanelOptions.map((option) => ({
+		key: option.shortcut.key,
+		ctrl: option.shortcut.ctrl,
+		shift: option.shortcut.shift,
+		description: `Show ${option.label} panel`,
+		group: "View",
+		handler: () => setActiveTab(option.value as LeftSidebarTabOption),
+	})),
+);
 
 watchEffect(() => {
 	if (pageLayers.value) {

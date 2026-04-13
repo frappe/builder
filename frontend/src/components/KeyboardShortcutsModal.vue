@@ -6,7 +6,7 @@
 			size: '4xl',
 		}">
 		<template #body-content>
-			<div class="max-h-[70vh] columns-2 gap-8 overflow-y-auto">
+			<div class="max-h-[70vh] columns-3 gap-8 overflow-y-auto">
 				<div
 					v-for="(shortcuts, group) in groupedShortcuts"
 					:key="group"
