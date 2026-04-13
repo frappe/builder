@@ -41,8 +41,12 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
+import fetchBlockData from "@/data/blockData";
+import { builderSettings } from "@/data/builderSettings";
+import { useBlockDataStore, useBlockUidStore } from "@/stores/blockStore";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
+import usePageStore from "@/stores/pageStore";
 import { setFont } from "@/utils/fontManager";
 import {
 	executeBlockClientScriptRestricted,
@@ -64,15 +68,11 @@ import {
 	watch,
 	watchEffect,
 } from "vue";
+import { toast } from "vue-sonner";
 import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
 import DataLoaderBlock from "./DataLoaderBlock.vue";
 import TextBlock from "./TextBlock.vue";
-import { builderSettings } from "@/data/builderSettings";
-import fetchBlockData from "@/data/blockData";
-import usePageStore from "@/stores/pageStore";
-import { toast } from "vue-sonner";
-import { useBlockDataStore, useBlockUidStore } from "@/stores/blockStore";
 
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
@@ -381,22 +381,31 @@ const allResolvedProps = computed(() => {
 	if (!isMounted.value) {
 		return {};
 	}
-	const defaultProps = Object.entries(props.defaultProps || {}).reduce((acc, [key, value]) => {
-		acc[key] = value.value;
-		return acc;
-	}, {} as Record<string, any>);
+	const defaultProps = Object.entries(props.defaultProps || {}).reduce(
+		(acc, [key, value]) => {
+			acc[key] = value.value;
+			return acc;
+		},
+		{} as Record<string, any>,
+	);
 
 	const blockProps = Object.entries({
 		...props.block.getBlockProps(),
-	}).reduce((acc, [key]) => {
-		acc[key] = getPropValue(key, props.block, uidToUse);
-		return acc;
-	}, {} as Record<string, any>);
+	}).reduce(
+		(acc, [key]) => {
+			acc[key] = getPropValue(key, props.block, uidToUse);
+			return acc;
+		},
+		{} as Record<string, any>,
+	);
 
-	const parentProps = Object.entries(getParentProps(props.block, uidToUse)).reduce((acc, [key, value]) => {
-		acc[key] = getPropValue(key, value.block!, value.blockUid);
-		return acc;
-	}, {} as Record<string, any>);
+	const parentProps = Object.entries(getParentProps(props.block, uidToUse)).reduce(
+		(acc, [key, value]) => {
+			acc[key] = getPropValue(key, value.block!, value.blockUid);
+			return acc;
+		},
+		{} as Record<string, any>,
+	);
 
 	return {
 		...parentProps,

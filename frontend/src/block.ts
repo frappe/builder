@@ -9,6 +9,7 @@ import {
 	getNumberFromPx,
 	getTextContent,
 	handleBase64Attribute,
+	isHTMLString,
 	kebabToCamelCase,
 	parseAndSetBackground,
 	setBoxSpacing,
@@ -695,7 +696,7 @@ class Block implements BlockOptions {
 		}
 	}
 	isHTML() {
-		return this.originalElement === "__raw_html__";
+		return this.originalElement === "__raw_html__" || (isHTMLString(this.getInnerHTML()) && !this.isText());
 	}
 	isIframe() {
 		return this.innerHTML?.startsWith("<iframe");
