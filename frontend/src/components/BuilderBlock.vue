@@ -381,22 +381,31 @@ const allResolvedProps = computed(() => {
 	if (!isMounted.value) {
 		return {};
 	}
-	const defaultProps = Object.entries(props.defaultProps || {}).reduce((acc, [key, value]) => {
-		acc[key] = value.value;
-		return acc;
-	}, {} as Record<string, any>);
+	const defaultProps = Object.entries(props.defaultProps || {}).reduce(
+		(acc, [key, value]) => {
+			acc[key] = value.value;
+			return acc;
+		},
+		{} as Record<string, any>,
+	);
 
 	const blockProps = Object.entries({
 		...props.block.getBlockProps(),
-	}).reduce((acc, [key]) => {
-		acc[key] = getPropValue(key, props.block, uidToUse);
-		return acc;
-	}, {} as Record<string, any>);
+	}).reduce(
+		(acc, [key]) => {
+			acc[key] = getPropValue(key, props.block, uidToUse);
+			return acc;
+		},
+		{} as Record<string, any>,
+	);
 
-	const parentProps = Object.entries(getParentProps(props.block, uidToUse)).reduce((acc, [key, value]) => {
-		acc[key] = getPropValue(key, value.block!, value.blockUid);
-		return acc;
-	}, {} as Record<string, any>);
+	const parentProps = Object.entries(getParentProps(props.block, uidToUse)).reduce(
+		(acc, [key, value]) => {
+			acc[key] = getPropValue(key, value.block!, value.blockUid);
+			return acc;
+		},
+		{} as Record<string, any>,
+	);
 
 	return {
 		...parentProps,

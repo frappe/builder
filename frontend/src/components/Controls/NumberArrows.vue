@@ -56,8 +56,8 @@ defineEmits(["increment", "decrement"]);
 <style scoped>
 .circle-cursor {
 	cursor:
-		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Ccircle cx='6' cy='6' r='5' fill='none' stroke='gray' stroke-width='1.5'/%3E%3C/svg%3E")
-			6 6,
+		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14'%3E%3Ccircle cx='7' cy='7' r='6' fill='gray' fill-opacity='0.7' stroke='none'/%3E%3C/svg%3E")
+			7 7,
 		auto;
 }
 </style>
