@@ -1,10 +1,10 @@
 <template>
 	<div
-		v-if="modelValue && !disabled"
-		class="pointer-events-none absolute right-5 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-0 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100">
+		v-if="modelValue"
+		class="pointer-events-none flex flex-col gap-0 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100">
 		<button
 			type="button"
-			class="duration-250 flex h-3 w-5 items-center justify-center rounded transition-all ease-in-out active:-translate-y-[2px]"
+			class="circle-cursor duration-250 -mb-[1.5px] flex h-3 w-5 items-center justify-center rounded transition-all ease-in-out active:-translate-y-[2px]"
 			@click.stop="$emit('increment')"
 			@mousedown.prevent
 			tabindex="-1">
@@ -24,7 +24,7 @@
 		</button>
 		<button
 			type="button"
-			class="duration-250 -mt-[2px] flex h-3 w-5 items-center justify-center rounded transition-all ease-in-out active:translate-y-[2px]"
+			class="circle-cursor duration-250 -mt-[1.5px] flex h-3 w-5 items-center justify-center rounded transition-all ease-in-out active:translate-y-[2px]"
 			@click.stop="$emit('decrement')"
 			@mousedown.prevent
 			tabindex="-1">
@@ -47,9 +47,17 @@
 
 <script lang="ts" setup>
 defineProps<{
-	modelValue: boolean; // this is hasNumber
-	disabled?: boolean;
+	modelValue: boolean;
 }>();
 
 defineEmits(["increment", "decrement"]);
 </script>
+
+<style scoped>
+.circle-cursor {
+	cursor:
+		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Ccircle cx='6' cy='6' r='5' fill='none' stroke='gray' stroke-width='1.5'/%3E%3C/svg%3E")
+			6 6,
+		auto;
+}
+</style>

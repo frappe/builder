@@ -22,27 +22,24 @@
 			<template #prefix v-if="$slots.prefix">
 				<slot name="prefix" />
 			</template>
-			<template #suffix v-if="$slots.suffix">
-				<slot name="suffix" />
-			</template>
-			<template
-				#suffix
-				v-else-if="!['select', 'checkbox'].includes(type) && !hideClearButton && data && !disabled">
+			<template #suffix>
+				<NumberArrows
+					:modelValue="hasNumber"
+					v-if="!disabled && hasNumber && isStrictNumber"
+					@increment="incrementValue"
+					@decrement="decrementValue" />
+
+				<slot v-if="$slots.suffix" name="suffix" />
+
 				<button
+					v-if="!['select', 'checkbox'].includes(type) && !hideClearButton && data && !disabled"
 					class="cursor-pointer text-ink-gray-4 hover:text-ink-gray-5"
 					tabindex="-1"
-					:disabled="Boolean(attrs.disabled)"
 					@click="clearValue">
 					<CrossIcon />
 				</button>
 			</template>
 		</FormControl>
-
-		<NumberArrows
-			:modelValue="hasNumber"
-			:disabled="disabled"
-			@increment="incrementValue"
-			@decrement="decrementValue" />
 	</div>
 </template>
 <script lang="ts" setup>
@@ -76,6 +73,12 @@ interface UseNumberInputOptions {
 	setValue: (value: string) => void;
 	getAttrs?: () => Record<string, unknown>;
 }
+
+const isStrictNumber = computed(() => {
+	if (typeof data.value !== "string") return false;
+
+	return /^\d*\.?\d+(px|%|em|rem)?$/.test(data.value.trim());
+});
 
 defineOptions({
 	inheritAttrs: false,

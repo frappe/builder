@@ -30,16 +30,24 @@
 						'pl-2': !$slots.prefix,
 						'pr-2': !hasValue,
 					}" />
-				<Button v-if="hasValue" variant="ghost" @click.stop="clearSelection" class="-ml-2">
-					<CrossIcon class="h-3 w-3" />
-				</Button>
-			</div>
+				<div class="flex items-center gap-0">
+					<NumberArrows
+						v-if="hasNumber && isStrictNumber"
+						class="ml-1"
+						:modelValue="hasNumber"
+						@increment="incrementValue"
+						@decrement="decrementValue" />
 
-			<NumberArrows
-				:modelValue="hasNumber"
-				:disabled="disabled"
-				@increment="incrementValue"
-				@decrement="decrementValue" />
+					<button
+						v-if="hasValue"
+						class="mr-2 flex-shrink-0 cursor-pointer text-ink-gray-4 hover:text-ink-gray-5"
+						tabindex="-1"
+						@click.stop="clearSelection"
+						@mousedown.prevent>
+						<CrossIcon />
+					</button>
+				</div>
+			</div>
 
 			<Teleport to="body" :disabled="!referenceElementSelector">
 				<ComboboxContent
@@ -172,6 +180,13 @@ const { hasNumber, incrementValue, decrementValue } = useNumberInput({
 	getValue: () => props.modelValue,
 	setValue: (v) => emit("update:modelValue", v),
 	getAttrs: () => attrs,
+});
+
+const isStrictNumber = computed(() => {
+	if (typeof props.modelValue !== "string") return false;
+	const nonNumericValues = allOptions.value.map((opt) => opt.value);
+	if (nonNumericValues.includes(props.modelValue)) return false;
+	return /^\d*\.?\d+(px|%|em|rem)?$/.test(props.modelValue.trim());
 });
 
 const displayOptions = computed(() => {
