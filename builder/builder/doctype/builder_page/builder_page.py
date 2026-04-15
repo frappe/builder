@@ -1051,6 +1051,7 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 
 	# Add local script to call the function
 	local_script = state["soup"].new_tag("script")
+	local_script['defer'] = True
 	script_content = (
 		f"const element = document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]');"
 		f"(client_script_{script_unique_id}).call("
@@ -1060,14 +1061,14 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 		f");"
 	)
 	local_script.string = (
-		f"{{% if has_tile %}}"
+		f"{{% if has_tile or include_alpinejs %}}"
 		f"function exec() {{ {script_content} }}"
 		f"if (window.Alpine) {{ exec() }} else  {{ document.addEventListener('alpine:initialized', exec) }}"
 		f"{{% else %}}"
 		f"{{ {script_content} }}"
 		f"{{% endif %}}"
 	)
-	tag.append(local_script)
+	tag.insert(0, local_script)
 
 
 def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
