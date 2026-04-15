@@ -46,22 +46,6 @@
 	{%- if _head_html %}
 	{{ _head_html|safe }}
 	{%-endif -%}
-	<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-	<script type="text/javascript">
-		document.addEventListener("alpine:init", () => {
-			window.effect = Alpine.effect;
-			window.watch = Alpine.watch;
-		});
-		function loadAlpineData(uniqueHash, blockData) {
-			if (window.Alpine) {
-				Alpine.data(uniqueHash, () => blockData);
-			} else {
-				document.addEventListener("alpine:init", () => {
-					Alpine.data(uniqueHash, () => blockData);
-				});
-			}
-		}
-	</script>
 </head>
 {% block page_content %}
 {{ __content }}

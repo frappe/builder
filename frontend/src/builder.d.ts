@@ -48,6 +48,7 @@ declare interface BlockOptions {
 	children?: Array<Block | BlockOptions>;
 	dynamicValues?: Array<BlockDataKey>;
 	draggable?: boolean;
+	isTile?: boolean;
 	[key: string]: any;
 }
 

@@ -73,6 +73,7 @@ class Block implements BlockOptions {
 	// @ts-expect-error
 	referenceComponent: Block | null;
 	customAttributes: BlockAttributeMap;
+	isTile: boolean;
 	constructor(options: BlockOptions) {
 		const componentStore = useComponentStore();
 		this.element = options.element;
@@ -82,6 +83,7 @@ class Block implements BlockOptions {
 		this.isChildOfComponent = options.isChildOfComponent;
 		this.referenceBlockId = options.referenceBlockId;
 		this.parentBlock = options.parentBlock || null;
+		this.isTile = Boolean(options.isTile);
 		if (this.extendedFromComponent) {
 			componentStore.loadComponent(this.extendedFromComponent);
 		}
@@ -1025,6 +1027,15 @@ class Block implements BlockOptions {
 	}
 	setBlockProps(props: BlockProps) {
 		this.props = props;
+	}
+	getIsTile(): boolean {
+		if (this.isExtendedFromComponent()) {
+			return !!this.referenceComponent?.isTile;
+		}
+		return this.isTile;
+	}
+	setIsTile(val: boolean){
+		this.isTile = val;
 	}
 }
 
