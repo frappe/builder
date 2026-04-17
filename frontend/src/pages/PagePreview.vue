@@ -214,7 +214,7 @@ const setWidth = (device: string) => {
 };
 
 const saveDraftTiles = async () => {
-	await pageStore.saveTiles(true, pageStore.selectedPage || route.params.pageId as string);
+	await pageStore.saveTiles(true, pageStore.selectedPage || (route.params.pageId as string));
 };
 
 const setPreviewURL = () => {
