@@ -1,10 +1,14 @@
 <template>
-	<div class="flex items-center justify-between gap-2 [&>div>input]:pr-6">
+	<div
+		class="flex items-center justify-between gap-2"
+		:class="{
+			'[&>div>input]:pr-6': !hideClearButton,
+		}">
 		<InputLabel
 			v-if="label"
 			:class="{
 				'cursor-ns-resize': enableSlider,
-				'w-1/3': type != 'checkbox',
+				'w-1/3 min-w-[88px] shrink-0': type != 'checkbox',
 			}"
 			:title="label"
 			:description="description"

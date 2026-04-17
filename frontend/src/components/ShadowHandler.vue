@@ -35,7 +35,7 @@
 				class="shadow-popover-body max-h-[80vh] w-64 select-none overflow-y-auto rounded-lg border border-outline-gray-1 bg-surface-white p-3 shadow-xl">
 				<div class="mb-3 space-y-3">
 					<div
-						class="flex h-24 w-full items-center justify-center rounded-md border border-outline-gray-1 bg-surface-white"
+						class="flex h-24 w-full items-center justify-center overflow-hidden rounded-md border border-outline-gray-1 bg-surface-white"
 						style="
 							background-image: conic-gradient(
 								var(--surface-gray-1) 90deg,

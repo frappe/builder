@@ -12,6 +12,7 @@ dependencies = [
     "csscompressor>=0.9.5",
     "pandas (>=2.3.2,<3.0.0)",
     "duckdb==1.4.3",
+    "litellm>=1.51.8",
 ]
 
 [project.urls]

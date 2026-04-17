@@ -504,10 +504,11 @@ def get_block_data(
 	frappe.has_permission("Builder Page", "write", throw=True)
 	props = frappe.parse_json(props or "{}")
 	block_data = frappe._dict()
-	_locals = dict(block=frappe._dict(), prev_blocks=frappe._dict(prev_block_data or {}), props=props)
+	_locals = dict(block=frappe._dict(prev_block_data or {}), props=props)
 	execute_script(block_data_script, _locals, block_id)
+
 	if isinstance(_locals["block"], dict):
-		block_data.update(_locals["block"])
+		block_data = frappe._dict({k: v for k, v in _locals["block"].items() if prev_block_data.get(k) != v})
 	return block_data
 
 
