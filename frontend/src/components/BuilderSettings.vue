@@ -39,6 +39,7 @@ import GlobalRedirects from "@/components/Settings/GlobalRedirects.vue";
 import PageCode from "@/components/Settings/PageCode.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
+import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { computed, onActivated, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
@@ -49,11 +50,14 @@ import SettingsIcon from "./Icons/Settings.vue";
 // @ts-ignore
 import TerminalIcon from "~icons/lucide/terminal";
 // @ts-ignore
+import ExternalLinkIcon from "~icons/lucide/external-link";
+// @ts-ignore
 import SparklesIcon from "~icons/lucide/sparkles";
 import GlobalAI from "./Settings/GlobalAI.vue";
 import GlobalAnalytics from "./Settings/GlobalAnalytics.vue";
 import GlobalCode from "./Settings/GlobalCode.vue";
 import GlobalDeveloper from "./Settings/GlobalDeveloper.vue";
+import GlobalDomains from "./Settings/GlobalDomains.vue";
 import GlobalGeneral from "./Settings/GlobalGeneral.vue";
 import PageAnalytics from "./Settings/PageAnalytics.vue";
 import PageGeneral from "./Settings/PageGeneral.vue";
@@ -65,6 +69,7 @@ const props = defineProps<{
 
 const route = useRoute();
 const pageStore = usePageStore();
+const builderStore = useBuilderStore();
 const emit = defineEmits(["close"]);
 const selectedItem = ref<string>(props.onlyGlobal ? "global_general" : "page_general");
 const settingsLoaded = ref(false);
@@ -142,6 +147,17 @@ const globalSettings = {
 			title: "Redirects",
 			icon: RedirectIcon,
 		},
+		...(builderStore.isFCSite || window.is_developer_mode
+			? [
+					{
+						label: "Domains",
+						value: "global_domains",
+						component: GlobalDomains,
+						title: "Custom Domains",
+						icon: ExternalLinkIcon,
+					},
+				]
+			: []),
 		{
 			label: "Analytics",
 			value: "global_analytics",
