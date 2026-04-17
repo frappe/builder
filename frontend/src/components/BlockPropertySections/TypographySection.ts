@@ -7,7 +7,6 @@ import userFonts from "@/data/userFonts";
 import { UserFont } from "@/types/Builder/UserFont";
 import blockController from "@/utils/blockController";
 import { setFont as _setFont, fontList, getFontWeightOptions } from "@/utils/fontManager";
-import { set } from "@vueuse/core";
 
 const setFont = (font: string) => {
 	_setFont(font, null).then(() => {

@@ -110,7 +110,9 @@
 
 <script setup lang="ts">
 import BuilderButton from "@/components/Controls/BuilderButton.vue";
+import NumberArrows from "@/components/Controls/NumberArrows.vue";
 import CrossIcon from "@/components/Icons/Cross.vue";
+import { useNumberInput } from "@/utils/useNumberInput";
 import {
 	ComboboxContent,
 	ComboboxInput,
@@ -120,9 +122,7 @@ import {
 	ComboboxSeparator,
 } from "reka-ui";
 import type { Component, ComponentPublicInstance } from "vue";
-import { computed, nextTick, useAttrs, ref, watch } from "vue";
-import { useNumberInput } from "@/utils/useNumberInput";
-import NumberArrows from "@/components/Controls/NumberArrows.vue";
+import { computed, nextTick, ref, useAttrs, watch } from "vue";
 
 interface Option {
 	label: string;

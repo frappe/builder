@@ -43,12 +43,12 @@
 	</div>
 </template>
 <script lang="ts" setup>
+import NumberArrows from "@/components/Controls/NumberArrows.vue";
 import CrossIcon from "@/components/Icons/Cross.vue";
+import { useNumberInput } from "@/utils/useNumberInput";
 import { useDebounceFn, useVModel } from "@vueuse/core";
 import { Select } from "frappe-ui";
 import { computed, useAttrs } from "vue";
-import { useNumberInput } from "@/utils/useNumberInput";
-import NumberArrows from "@/components/Controls/NumberArrows.vue";
 
 const props = withDefaults(
 	defineProps<{
