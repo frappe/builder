@@ -1,3 +1,4 @@
+import hashlib
 import inspect
 import os
 import re
@@ -679,6 +680,10 @@ def combine(a, b):
 
 def hash(s):
 	return f"{frappe.generate_hash(length=6)}_{s}"
+
+
+def script_hash(js_code, length=8):
+	return hashlib.sha256(js_code.encode()).hexdigest()[:length]
 
 
 def to_safe_json(data):

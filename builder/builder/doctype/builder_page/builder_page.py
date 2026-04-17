@@ -38,6 +38,7 @@ from builder.utils import (
 	get_template_assets_folder_path,
 	is_component_used,
 	sanitize_style_value,
+	script_hash,
 	split_styles,
 )
 
@@ -589,6 +590,7 @@ def get_block_html(blocks: str | list, for_tile: bool = False) -> tuple[str, str
 		"global_script_tag": soup.new_tag("script"),
 		"used_block_scripts": set(),
 		"tile_blocks": {},  # block_id -> block json
+		"for_tile": for_tile,
 	}
 
 	html_parts = []
@@ -602,7 +604,8 @@ def get_block_html(blocks: str | list, for_tile: bool = False) -> tuple[str, str
 
 		tag = build_tag(block, shared_state)
 		# Add global script to the top
-		tag.insert(0, shared_state["global_script_tag"])
+		if not for_tile:
+			tag.insert(0, shared_state["global_script_tag"])
 
 		html = wrap_html_with_context(str(tag), block_context, for_tile, block.get("blockId", ""))
 		# Write html to a file for debugging
@@ -1037,21 +1040,22 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 	# Generate unique identifier for the script
 	script_unique_id = block.get("blockId")
 	if block.get("isBlockClientScriptOverridden"):
-		script_unique_id = frappe.generate_hash(length=8)
+		script_unique_id = script_hash(script, length=8)
 
-	# Add global function definition (only once)
-	if script_unique_id not in state["used_block_scripts"]:
-		state["global_script_tag"].append(
-			f"function client_script_{script_unique_id}(props, block_data) {{{script}}}\n"
-		)
-		state["used_block_scripts"].add(script_unique_id)
+	if not state["for_tile"]:
+		# Add global function definition (only once)
+		if script_unique_id not in state["used_block_scripts"]:
+			state["global_script_tag"].append(
+				f"function client_script_{script_unique_id}(props, block_data) {{{script}}}\n"
+			)
+			state["used_block_scripts"].add(script_unique_id)
 
 	# Add data attribute for selecting this specific block
 	tag.attrs["data-block-uid"] = "{{ unique_hash }}"
 
 	# Add local script to call the function
 	local_script = state["soup"].new_tag("script")
-	local_script['defer'] = True
+	local_script["defer"] = "defer"
 	script_content = (
 		f"const element = document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]');"
 		f"(client_script_{script_unique_id}).call("

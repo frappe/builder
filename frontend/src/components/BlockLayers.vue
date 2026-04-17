@@ -66,7 +66,7 @@
 						<TilesIcon
 							class="h-3 w-3"
 							:class="{
-								'text-yellow-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
+								'text-yellow-600 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
 									element.getIsTile(),
 							}"
 							v-if="Boolean(element.getIsTile())" />
@@ -76,7 +76,7 @@
 							:title="element.blockId"
 							:class="{
 								'text-purple-500': element.isExtendedFromComponent(),
-								'text-yellow-500': element.getIsTile(),
+								'text-yellow-600': element.getIsTile(),
 								'opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
 									element.isExtendedFromComponent() || element.getIsTile(),
 							}"
