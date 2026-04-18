@@ -100,6 +100,7 @@ declare module 'vue' {
     NewBuilderVariable: typeof import('./src/components/Modals/NewBuilderVariable.vue')['default']
     NewComponent: typeof import('./src/components/Modals/NewComponent.vue')['default']
     NewFolder: typeof import('./src/components/Modals/NewFolder.vue')['default']
+    NumberArrows: typeof import('./src/components/Controls/NumberArrows.vue')['default']
     NumberOptions: typeof import('./src/components/PropsOptions/NumberOptions.vue')['default']
     ObjectEditor: typeof import('./src/components/ObjectEditor.vue')['default']
     ObjectInput: typeof import('./src/components/ObjectInput.vue')['default']
