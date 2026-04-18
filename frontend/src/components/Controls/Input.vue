@@ -1,5 +1,5 @@
 <template>
-	<div :class="type === 'checkbox' ? 'relative' : 'relative w-full'">
+	<div :class="type === 'checkbox' ? 'relative' : 'group relative w-full'">
 		<Select
 			v-if="type === 'select'"
 			:modelValue="data as string"
@@ -22,29 +22,33 @@
 			<template #prefix v-if="$slots.prefix">
 				<slot name="prefix" />
 			</template>
-			<template #suffix v-if="$slots.suffix">
-				<slot name="suffix" />
-			</template>
-			<template
-				#suffix
-				v-else-if="!['select', 'checkbox'].includes(type) && !hideClearButton && data && !disabled">
-				<Button
+			<template #suffix>
+				<NumberArrows
+					:modelValue="hasNumber"
+					v-if="!disabled && hasNumber && isStrictNumber"
+					@increment="incrementValue"
+					@decrement="decrementValue" />
+
+				<slot v-if="$slots.suffix" name="suffix" />
+
+				<button
+					v-if="!['select', 'checkbox'].includes(type) && !hideClearButton && data && !disabled"
+					class="cursor-pointer text-ink-gray-4 hover:text-ink-gray-5"
 					tabindex="-1"
-					:disabled="Boolean(attrs.disabled)"
-					variant="ghost"
-					@click.stop="clearValue"
-					class="-mr-1.5">
-					<CrossIcon class="h-3 w-3" />
-				</Button>
+					@click="clearValue">
+					<CrossIcon />
+				</button>
 			</template>
 		</FormControl>
 	</div>
 </template>
 <script lang="ts" setup>
+import NumberArrows from "@/components/Controls/NumberArrows.vue";
 import CrossIcon from "@/components/Icons/Cross.vue";
+import { useNumberInput } from "@/utils/useNumberInput";
 import { useDebounceFn, useVModel } from "@vueuse/core";
 import { Select } from "frappe-ui";
-import { useAttrs } from "vue";
+import { computed, useAttrs } from "vue";
 
 const props = withDefaults(
 	defineProps<{
@@ -64,11 +68,32 @@ const props = withDefaults(
 const emit = defineEmits(["update:modelValue", "input"]);
 const data = useVModel(props, "modelValue", emit);
 
+interface UseNumberInputOptions {
+	getValue: () => string | number | boolean | null | undefined;
+	setValue: (value: string) => void;
+	getAttrs?: () => Record<string, unknown>;
+}
+
+const isStrictNumber = computed(() => {
+	if (typeof data.value !== "string") return false;
+
+	return /^\d*\.?\d+(px|%|em|rem)?$/.test(data.value.trim());
+});
+
 defineOptions({
 	inheritAttrs: false,
 });
 
 const attrs = useAttrs();
+
+const { hasNumber, incrementValue, decrementValue } = useNumberInput({
+	getValue: () => data.value,
+	setValue: (v) => {
+		data.value = v;
+		emit("update:modelValue", v);
+	},
+	getAttrs: () => attrs,
+});
 
 const clearValue = () => {
 	data.value = "";
@@ -91,3 +116,17 @@ const handleFocus = ($event: Event) => {
 	}
 };
 </script>
+
+<style>
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+	-webkit-appearance: none !important;
+	margin: 0 !important;
+}
+
+input[type="number"] {
+	-moz-appearance: textfield !important;
+	appearance: textfield !important;
+	padding-right: 0.75rem !important;
+}
+</style>
