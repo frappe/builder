@@ -423,8 +423,8 @@ watch(
 		const mode = builderSettings.doc?.execute_block_scripts_in_editor;
 		if (mode === "Don't Execute") return;
 
-		if (mode === "Restricted") executeBlockClientScriptRestricted(uidToUse, script, allResolvedProps.value);
-		else executeBlockClientScriptUnrestricted(uidToUse, script, allResolvedProps.value);
+		if (mode === "Restricted") executeBlockClientScriptRestricted(uidToUse, props.breakpoint, script, allResolvedProps.value);
+		else executeBlockClientScriptUnrestricted(uidToUse, props.breakpoint, script, allResolvedProps.value);
 	},
 	{ immediate: true },
 );
