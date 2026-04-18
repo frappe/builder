@@ -66,12 +66,28 @@ def fc_call(method: str, **params):
 			)
 		)
 
-	url = f"{get_base_url()}/api/method/press.api.developer.domain.{method}"
+	url = f"https://staging.frappe.cloud/api/method/press.api.developer.domain.{method}"
 	response = requests.post(url, data={"secret_key": secret_key, **params})
 
 	if response.status_code != 200:
-		error = response.json().get("exception") or f"FC API returned {response.status_code}"
-		frappe.throw(error)
+		body = response.json()
+		# Try to surface the real error from the FC response
+		server_msgs = body.get("_server_messages")
+		if server_msgs:
+			import json as _json
+
+			try:
+				msgs = _json.loads(server_msgs)
+				error = (
+					_json.loads(msgs[0]).get("message")
+					if isinstance(msgs[0], str)
+					else msgs[0].get("message")
+				)
+			except Exception:
+				error = None
+		else:
+			error = body.get("exception") or body.get("message")
+		frappe.throw(error or f"FC API returned {response.status_code}")
 
 	return response.json().get("message")
 
@@ -84,7 +100,7 @@ def get_server_ip() -> str | None:
 			ip = "192.0.2.1"
 			frappe.cache().set_value("builder_site_server_ip", ip)
 		return ip
-	return fc_call("get_server_ip")
+	return fc_call("get_inbound_ip")
 
 
 @frappe.whitelist()

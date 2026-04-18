@@ -147,7 +147,7 @@ const globalSettings = {
 			title: "Redirects",
 			icon: RedirectIcon,
 		},
-		...(builderStore.isFCSite || window.is_developer_mode
+		...(true || window.is_developer_mode
 			? [
 					{
 						label: "Domains",
