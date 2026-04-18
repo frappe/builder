@@ -1,5 +1,5 @@
 <template>
-	<div class="relative w-full">
+	<div :class="type === 'checkbox' ? 'relative' : 'relative w-full'">
 		<Select
 			v-if="type === 'select'"
 			:modelValue="data as string"
