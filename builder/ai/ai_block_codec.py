@@ -36,6 +36,10 @@ class BlockCodec:
 		if custom_attrs:
 			out["attrs"] = {**out.get("attrs", {}), **custom_attrs}
 
+		if block.get("extendedFromComponent"):
+			out["component"] = block["extendedFromComponent"]
+		if block.get("isChildOfComponent"):
+			out["child_of"] = block["isChildOfComponent"]
 		if block.get("classes"):
 			out["classes"] = block["classes"]
 		if block.get("innerHTML"):
@@ -82,6 +86,8 @@ class BlockCodec:
 			("m_style", "mobileStyles"),
 			("t_style", "tabletStyles"),
 			("classes", "classes"),
+			("component", "extendedFromComponent"),
+			("child_of", "isChildOfComponent"),
 		]:
 			if yaml_key in node:
 				block[block_key] = node[yaml_key]

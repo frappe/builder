@@ -96,6 +96,8 @@ function convertYAMLtoBlock(yamlBlock: Record<string, any>): BlockOptions {
 		block.originalElement = yamlBlock.id === "root" ? "body" : undefined;
 	}
 	if (yamlBlock.text) block.innerText = yamlBlock.text;
+	if (yamlBlock.component) block.extendedFromComponent = yamlBlock.component;
+	if (yamlBlock.child_of) block.isChildOfComponent = yamlBlock.child_of;
 	block.children = Array.isArray(yamlBlock.c) ? yamlBlock.c.map(convertYAMLtoBlock) : [];
 	return block;
 }
