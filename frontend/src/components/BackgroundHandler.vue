@@ -111,12 +111,14 @@
 					</BuilderButton>
 				</div>
 
-				<div v-if="isTextBlock" class="mt-4 border-t border-outline-gray-2 pt-3">
-					<InlineInput
-						label="Clip Background to Text"
-						type="checkbox"
-						:modelValue="backgroundClip === 'text'"
-						@update:modelValue="setBGClip" />
+				<div
+					v-if="isTextBlock"
+					class="flex items-center justify-between pt-3"
+					:class="{
+						'px-0.5': activeTab !== 'image',
+					}">
+					<InputLabel class="flex-1">Clip Background to Text</InputLabel>
+					<Switch size="sm" :modelValue="backgroundClip === 'text'" @update:modelValue="setBGClip" />
 				</div>
 			</div>
 		</template>
@@ -129,6 +131,7 @@ import GradientEditor from "@/components/Controls/GradientEditor.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import Input from "@/components/Controls/Input.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
+import Switch from "@/components/Controls/Switch.vue";
 import TabButtons from "@/components/Controls/TabButtons.vue";
 import blockController from "@/utils/blockController";
 import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
@@ -188,8 +191,6 @@ const getDisplayValue = (state: string | null) => {
 	if (color) return color;
 	return "";
 };
-
-const displayValue = computed(() => getDisplayValue(activeState.value));
 
 const backgroundImageURL = computed(() => {
 	const bgImage = rawBackgroundImage.value;

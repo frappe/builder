@@ -1360,10 +1360,11 @@ const getDataArray = (collectionObject: Record<string, any>) => {
 
 function executeBlockClientScriptUnrestricted(
 	blockUid: string,
+	breakpoint: string,
 	userScript: string,
 	props: Record<string, any> = {},
 ) {
-	const thisElement = document.querySelector(`[data-block-uid='${blockUid}']`) as HTMLElement;
+	const thisElement = document.querySelector(`[data-block-uid='${blockUid}'][data-breakpoint=${breakpoint}]`) as HTMLElement;
 
 	const context = {
 		thisRef: thisElement,
@@ -1400,6 +1401,7 @@ function executeBlockClientScriptUnrestricted(
 
 function executeBlockClientScriptRestricted(
 	blockUid: string,
+	breakpoint: string,
 	userScript: string,
 	props: Record<string, any> = {},
 ) {
@@ -1491,7 +1493,7 @@ function executeBlockClientScriptRestricted(
 	};
 
 	const sandboxRoot = document.querySelector("[data-block-id='root']") as HTMLElement;
-	const thisElement = document.querySelector(`[data-block-uid='${blockUid}']`) as HTMLElement;
+	const thisElement = document.querySelector(`[data-block-uid='${blockUid}'][data-breakpoint='${breakpoint}']`) as HTMLElement;
 
 	const proxiedRoot = wrap(sandboxRoot);
 	const proxiedThis = wrap(thisElement);
