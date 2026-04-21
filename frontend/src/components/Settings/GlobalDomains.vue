@@ -3,15 +3,18 @@
 		<!-- Domain list -->
 		<div v-if="loading && !domains.length" class="text-p-sm text-ink-gray-5">Loading domains…</div>
 		<div v-else-if="!domains.length" class="text-p-sm text-ink-gray-5">No custom domains added yet.</div>
-		<div v-else class="mb-2 divide-y divide-outline-gray-1 rounded-md border border-outline-gray-1">
-			<div v-for="d in domains" :key="d.domain" class="flex items-center gap-2 px-3 py-2.5">
-				<div class="min-w-0 flex-1">
-					<p class="truncate text-p-sm font-medium text-ink-gray-9">{{ d.domain }}</p>
+		<div v-else class="mb-2 flex flex-col gap-2">
+			<div
+				v-for="d in domains"
+				:key="d.domain"
+				class="flex items-center gap-2 rounded-md border border-outline-gray-1 px-3 py-2.5">
+				<div class="flex min-w-0 flex-1 items-center gap-2">
+					<p class="truncate text-p-sm font-medium leading-6 text-ink-gray-9">{{ d.domain }}</p>
 					<p v-if="d.redirect_to_primary" class="text-p-xs text-ink-gray-5">Redirects to primary</p>
+					<Badge v-if="d.primary" size="sm" theme="green" label="Primary" />
+					<Badge v-else :label="d.status" size="sm" :theme="statusTheme(d.status)" />
 				</div>
-				<Badge v-if="d.primary" size="sm" theme="green" label="Primary" />
-				<Badge v-else :label="d.status" size="sm" :theme="statusTheme(d.status)" />
-				<Dropdown :options="getDomainActions(d)" placement="right">
+				<Dropdown v-if="getDomainActions(d).length" :options="getDomainActions(d)" placement="right">
 					<Button variant="ghost" icon="more-horizontal" />
 				</Dropdown>
 			</div>
@@ -20,7 +23,7 @@
 		<!-- Add domain form -->
 		<form @submit.prevent="handleVerifyOrAdd" class="flex flex-col gap-3">
 			<FormControl
-				label="Set Domain"
+				label="Add Domain"
 				placeholder="e.g. yourdomain.com"
 				v-model="newDomain"
 				:readonly="dnsVerified === true"
@@ -28,41 +31,49 @@
 
 			<!-- DNS records -->
 			<div class="overflow-hidden rounded bg-surface-gray-1">
-				<div class="space-y-1">
-					<div
-						v-for="rec in dnsRecords"
-						:key="rec.type"
-						class="flex items-center gap-2 px-2.5 py-1.5 font-mono text-p-xs">
-						<span class="w-10 shrink-0 font-semibold text-ink-gray-7">{{ rec.type }}</span>
-						<span :class="newDomain ? 'text-ink-gray-5' : 'text-ink-gray-3'">
-							{{ newDomain ? dnsHostLabel : "your-domain.com" }}
-						</span>
-						<span class="text-ink-gray-4">→</span>
-						<span class="flex-1 truncate text-ink-gray-9">{{ rec.value }}</span>
+				<template v-for="(rec, i) in dnsRecords" :key="rec.type">
+					<div v-if="i > 0" class="flex items-center gap-3 px-3">
+						<div class="bg-outline-gray-2 h-px flex-1"></div>
+						<span class="text-p-xs text-ink-gray-4">or</span>
+						<div class="bg-outline-gray-2 h-px flex-1"></div>
+					</div>
+					<div class="flex items-center gap-2 px-3 py-2.5">
+						<div class="min-w-0 flex-1">
+							<div class="flex items-baseline gap-1.5">
+								<span class="text-p-sm font-semibold leading-6 text-ink-gray-8">{{ rec.type }} record</span>
+								<span class="font-mono text-p-xs">
+									<span :class="newDomain ? 'text-ink-gray-5' : 'text-ink-gray-3'">{{ rec.host }}</span>
+									<span class="px-1 text-ink-gray-4">→</span>
+									<span class="text-ink-gray-9">{{ rec.value }}</span>
+								</span>
+							</div>
+							<p class="text-p-xs text-ink-gray-5">{{ rec.hint }}</p>
+						</div>
 						<button
 							type="button"
 							:disabled="!rec.copyValue"
 							@click="copyToClipboard(rec.copyValue)"
-							class="text-ink-gray-4 transition-colors hover:text-ink-gray-7 disabled:cursor-not-allowed disabled:opacity-40">
+							class="shrink-0 text-ink-gray-4 transition-colors hover:text-ink-gray-7 disabled:cursor-not-allowed disabled:opacity-40">
 							<FeatherIcon name="copy" class="h-3.5 w-3.5" />
 						</button>
 					</div>
-				</div>
-				<div class="flex items-center gap-2 rounded px-3 py-2 text-p-xs" :class="statusClass">
-					<FeatherIcon :name="statusIcon" class="h-3.5 w-3.5 shrink-0" />
-					<span v-if="dnsVerified === true">
-						DNS verified. Click
-						<strong>Add Domain</strong>
-						to proceed.
-					</span>
-					<span v-else>{{ statusMessage }}</span>
-				</div>
+				</template>
+			</div>
+			<div class="flex items-center gap-1.5 text-p-xs" :class="statusClass">
+				<FeatherIcon :name="statusIcon" class="h-3.5 w-3.5 shrink-0" />
+				<span v-if="dnsVerified === true">
+					DNS verified. Click
+					<strong>Add Domain</strong>
+					to proceed.
+				</span>
+				<span v-else v-html="statusMessage"></span>
 			</div>
 
 			<ErrorMessage v-if="addDomainError" :message="addDomainError" />
 			<div class="flex gap-2">
 				<Button
 					type="submit"
+					:disabled="checkingDNS || addingDomain || !newDomain"
 					:variant="dnsVerified ? 'solid' : 'subtle'"
 					:loading="checkingDNS || addingDomain">
 					{{ dnsVerified ? "Add Domain" : "Verify DNS" }}
@@ -132,17 +143,36 @@ const dnsHostLabel = computed(() => {
 });
 
 const dnsRecords = computed(() => {
+	const host = newDomain.value ? dnsHostLabel.value : "your-domain.com";
 	const records = [];
-	if (isSubdomain.value) records.push({ type: "CNAME", value: currentSite, copyValue: currentSite });
-	records.push({ type: "A", value: serverIP.value ?? "loading…", copyValue: serverIP.value ?? "" });
+	if (isSubdomain.value) {
+		records.push({
+			type: "CNAME",
+			host,
+			value: currentSite,
+			copyValue: currentSite,
+			recommended: true,
+			hint: "Automatically follows server IP changes. Best choice for subdomains.",
+		});
+	}
+	records.push({
+		type: "A",
+		host: isSubdomain.value ? host : "@",
+		value: serverIP.value ?? "loading…",
+		copyValue: serverIP.value ?? "",
+		recommended: !isSubdomain.value,
+		hint: isSubdomain.value
+			? "Use this if your DNS provider doesn't support CNAME for subdomains."
+			: "Points your root domain directly to the server. Use @ as the host name.",
+	});
 	return records;
 });
 
 const statusClass = computed(() => {
-	if (dnsVerified.value === true) return "text-ink-green-1 bg-surface-green-1";
-	if (dnsVerified.value === false && dnsCheckError.value) return "bg-red-50 text-ink-red-4";
-	if (dnsVerified.value === false) return "bg-yellow-50 text-yellow-700";
-	return "text-ink-gray-6";
+	if (dnsVerified.value === true) return "text-ink-green-3";
+	if (dnsVerified.value === false && dnsCheckError.value) return "text-ink-red-4";
+	if (dnsVerified.value === false) return "text-yellow-700";
+	return "text-ink-gray-5";
 });
 
 const statusIcon = computed(() => {
@@ -157,8 +187,8 @@ const statusMessage = computed(() => {
 	if (dnsVerified.value === false)
 		return "DNS record not matched. Double-check the values below and allow up to 48h for propagation.";
 	return isSubdomain.value
-		? "Set one of these DNS records at your registrar, then click Verify DNS."
-		: "Set this DNS record at your registrar, then click Verify DNS.";
+		? "Choose one of the records below and set it at your DNS registrar, then click Verify DNS."
+		: "Set the A record at your registrar, then click Verify DNS.";
 });
 
 function statusTheme(status: string) {
@@ -213,7 +243,7 @@ function getDomainActions(d: any) {
 	const actions: any[] = [];
 	if (d.status === "Active" && !d.primary)
 		actions.push({ label: "Set as Primary", icon: "star", onClick: () => setHostName(d.domain) });
-	if (!d.redirect_to_primary && d.status === "Active")
+	if (!d.primary && !d.redirect_to_primary && d.status === "Active")
 		actions.push({
 			label: "Redirect to Primary",
 			icon: "corner-right-up",
@@ -223,7 +253,8 @@ function getDomainActions(d: any) {
 		actions.push({ label: "Disable Redirect", icon: "slash", onClick: () => unsetRedirect(d.domain) });
 	if (d.status === "Broken")
 		actions.push({ label: "Retry", icon: "refresh-cw", onClick: () => retryDomain(d.domain) });
-	actions.push({ label: "Remove Domain", icon: "trash", onClick: () => removeDomain(d.domain) });
+	if (!d.primary)
+		actions.push({ label: "Remove Domain", icon: "trash", onClick: () => removeDomain(d.domain) });
 	return actions;
 }
 </script>

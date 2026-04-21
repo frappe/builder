@@ -39,7 +39,9 @@ export function useDomains() {
 			const result = (await createResource({ url: `${API}.check_dns` }).submit({ domain })) as any;
 			return { matched: result?.matched ?? false, error: "" };
 		} catch (e: any) {
-			return { matched: false, error: getErrorMessage(e) };
+			const msg = Array.isArray(e?.messages) && e.messages[0];
+			const error = (msg && typeof msg === "string" ? msg : e?.message) || "Something went wrong";
+			return { matched: false, error };
 		}
 	}
 
