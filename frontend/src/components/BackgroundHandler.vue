@@ -13,7 +13,7 @@
 					:getModelValue="() => getDisplayValue(null)"
 					:getVariantValue="(v: string) => getDisplayValue(v)"
 					:setVariantValue="handleSetVariant"
-					@update:modelValue="setBGImageURL">
+					:setModelValue="(val: string) => setBGValue(val)">
 					<template #prefix="{ variant }">
 						<div
 							class="absolute left-2 top-[6px] size-4 cursor-pointer rounded shadow-md"
@@ -275,18 +275,20 @@ const setBGImage = (file: { file_url: string }) => {
 	}
 };
 
-const setBGImageURL = (url: string) => {
+const setBGValue = (value: string) => {
 	const bgKey = getStyleKey("backgroundImage");
 	const colorKey = getStyleKey("backgroundColor");
+	const isValidHexValue = (value: string) => /^([0-9A-F]{3}){1,2}$/i.test(value);
 
-	// Clean up input if it's a URL wrapper
-	let cleanURL = url;
-	if (url?.startsWith("url(")) {
-		cleanURL = url.replace(/^url\(['"]?|['"]?\)$/g, "");
+	let cleanURL = value;
+	if (value?.startsWith("url(")) {
+		cleanURL = value.replace(/^url\(['"]?|['"]?\)$/g, "");
 	}
-
-	if (cleanURL?.startsWith("#") || cleanURL?.startsWith("rgb") || cleanURL?.startsWith("hsl")) {
-		blockController.setStyle(colorKey, cleanURL);
+	if (isValidHexValue(value)) {
+		blockController.setStyle(colorKey, `#${value}`);
+		blockController.setStyle(bgKey, null);
+	} else if (value?.startsWith("#") || value?.startsWith("rgb") || value?.startsWith("hsl")) {
+		blockController.setStyle(colorKey, value);
 		blockController.setStyle(bgKey, null);
 	} else {
 		blockController.setStyle(bgKey, cleanURL ? `url(${cleanURL})` : null);
