@@ -5,7 +5,7 @@
 		open-on-click
 		open-on-focus
 		:reset-search-term-on-blur="false">
-		<div class="group relative" ref="containerRef">
+		<div class="group/autocomplete relative" ref="containerRef">
 			<div
 				class="group form-input flex h-7 flex-1 items-center gap-2 rounded bg-surface-gray-2 p-0 text-sm text-ink-gray-8 transition-colors focus-within:bg-surface-white focus-within:ring-2 focus-within:ring-outline-gray-3">
 				<div v-if="$slots.prefix" class="flex items-center pl-2">
