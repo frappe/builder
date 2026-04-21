@@ -104,7 +104,7 @@ export function useBuilderEvents(
 			return;
 		}
 
-		let text = e.clipboardData?.getData("text/plain") as string || "";
+		let text = (e.clipboardData?.getData("text/plain") as string) || "";
 
 		await pasteBuilderBlocks(e, window.location.origin);
 
@@ -277,6 +277,7 @@ export function useBuilderEvents(
 			ctrl: true,
 			description: "Focus property search",
 			group: "General",
+			allowInInput: true,
 			handler: () => {
 				document.querySelector(".properties-search-input")?.querySelector("input")?.focus();
 			},
