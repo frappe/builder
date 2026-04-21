@@ -3,6 +3,8 @@ from frappe.integrations.frappe_providers.frappecloud_billing import get_base_ur
 
 
 def fc_call(method: str, **params):
+	frappe.only_for("System Manager")
+
 	import requests
 
 	response = requests.post(

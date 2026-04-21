@@ -39,7 +39,6 @@ import GlobalRedirects from "@/components/Settings/GlobalRedirects.vue";
 import PageCode from "@/components/Settings/PageCode.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
-import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { computed, onActivated, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
@@ -69,7 +68,6 @@ const props = defineProps<{
 
 const route = useRoute();
 const pageStore = usePageStore();
-const builderStore = useBuilderStore();
 const emit = defineEmits(["close"]);
 const selectedItem = ref<string>(props.onlyGlobal ? "global_general" : "page_general");
 const settingsLoaded = ref(false);
@@ -147,7 +145,7 @@ const globalSettings = {
 			title: "Redirects",
 			icon: RedirectIcon,
 		},
-		...(true || window.is_developer_mode
+		...(window.is_fc_site || window.is_developer_mode
 			? [
 					{
 						label: "Domains",
