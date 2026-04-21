@@ -192,4 +192,30 @@ watch(
 	},
 	{ deep: true },
 );
+
+watch(
+	[() => builderStore.highlightBlocksWithDataScripts, () => builderStore.highlightBlocksWithClientScripts],
+	([highlightDataScripts, highlightClientScripts]) => {
+		const toggleScriptClasses = (selector: string, highlight: boolean, lowlight: boolean) => {
+			document.querySelectorAll(selector).forEach((el) => {
+				el.classList.toggle("highlight-block-script", highlight);
+				el.classList.toggle("lowlight-nonscript-block", lowlight);
+			});
+		};
+
+		toggleScriptClasses(
+			".has-data-script",
+			highlightDataScripts,
+			!highlightDataScripts && highlightClientScripts,
+		);
+		toggleScriptClasses(
+			".has-client-script",
+			highlightClientScripts,
+			!highlightClientScripts && highlightDataScripts,
+		);
+		toggleScriptClasses(".has-both-scripts", highlightDataScripts || highlightClientScripts, false);
+		toggleScriptClasses(".no-scripts", false, highlightDataScripts || highlightClientScripts);
+	},
+	{ immediate: true },
+);
 </script>

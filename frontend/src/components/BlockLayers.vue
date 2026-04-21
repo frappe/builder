@@ -21,11 +21,14 @@
 					:data-block-layer-id="element.blockId"
 					:data-indent="indent"
 					:title="element.blockId"
-					class="block-layer-item relative min-w-24 cursor-pointer select-none rounded border border-transparent bg-surface-white bg-opacity-50 text-base text-ink-gray-7"
-					:class="{
-						'border-blue-500 !bg-blue-100 dark:!bg-blue-900':
-							canvasStore.layerDraggingOverBlock === element.blockId,
-					}"
+					class="block-layer-item relative min-w-24 cursor-pointer select-none rounded border border-transparent bg-surface-white bg-opacity-50 text-base text-ink-gray-7 transition-[color] duration-50 ease-out"
+					:class="[
+						{
+							'border-blue-500 !bg-blue-100 dark:!bg-blue-900':
+								canvasStore.layerDraggingOverBlock === element.blockId,
+						},
+						getBlockScriptClasses(element),
+					]"
 					@click.stop="selectBlock(element, $event)"
 					@mouseover.stop="
 						!canvasStore.isDragging && canvasStore.activeCanvas?.setHoveredBlock(element.blockId)
@@ -258,6 +261,18 @@ const selectBlock = (block: Block, event: MouseEvent) => {
 	canvasStore.selectBlock(block, event, false, true);
 };
 
+const getBlockScriptClasses = (block: Block) => {
+	const hasClientScript = Boolean(block.getBlockClientScript());
+	const hasDataScript = Boolean(block.getBlockDataScript());
+
+	return {
+		"has-client-script": hasClientScript && !hasDataScript,
+		"has-data-script": hasDataScript && !hasClientScript,
+		"has-both-scripts": hasDataScript && hasClientScript,
+		"no-scripts": !hasDataScript && !hasClientScript,
+	};
+};
+
 interface DragState {
 	draggedElement: HTMLElement | null;
 	hoverTarget: HTMLElement | null;
@@ -401,5 +416,13 @@ defineExpose({
 }
 .block-selected {
 	@apply border-blue-400 text-gray-900 dark:border-blue-700 dark:text-gray-200;
+}
+
+.highlight-block-script {
+	@apply border-dashed border-outline-gray-3 text-gray-800 dark:border-outline-gray-4 dark:text-gray-300;
+}
+
+.lowlight-nonscript-block {
+	@apply text-gray-400 dark:text-gray-700;
 }
 </style>
