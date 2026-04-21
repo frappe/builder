@@ -1,19 +1,17 @@
 <template>
 	<div class="flex flex-col gap-3">
 		<!-- Domain list -->
-		<div v-if="loading" class="text-p-sm text-ink-gray-5">Loading domains…</div>
+		<div v-if="loading && !domains.length" class="text-p-sm text-ink-gray-5">Loading domains…</div>
 		<div v-else-if="!domains.length" class="text-p-sm text-ink-gray-5">No custom domains added yet.</div>
-		<div v-else class="mb-2 flex flex-col gap-2">
-			<div
-				v-for="d in domains"
-				:key="d.domain"
-				class="flex items-center justify-between rounded-md border border-outline-gray-1 px-3 py-2">
-				<div class="flex items-center gap-2">
-					<span class="text-p-sm font-medium leading-7 text-ink-gray-9">{{ d.domain }}</span>
-					<Badge v-if="d.primary" size="sm" theme="green" label="Primary" />
-					<Badge v-else-if="d.redirect_to_primary" size="sm" theme="blue" label="Redirecting" />
+		<div v-else class="mb-2 divide-y divide-outline-gray-1 rounded-md border border-outline-gray-1">
+			<div v-for="d in domains" :key="d.domain" class="flex items-center gap-2 px-3 py-2.5">
+				<div class="min-w-0 flex-1">
+					<p class="truncate text-p-sm font-medium text-ink-gray-9">{{ d.domain }}</p>
+					<p v-if="d.redirect_to_primary" class="text-p-xs text-ink-gray-5">Redirects to primary</p>
 				</div>
-				<Dropdown v-if="!d.primary" :options="getDomainActions(d)" placement="right">
+				<Badge v-if="d.primary" size="sm" theme="green" label="Primary" />
+				<Badge v-else :label="d.status" size="sm" :theme="statusTheme(d.status)" />
+				<Dropdown :options="getDomainActions(d)" placement="right">
 					<Button variant="ghost" icon="more-horizontal" />
 				</Dropdown>
 			</div>
@@ -21,34 +19,20 @@
 
 		<!-- Add domain form -->
 		<form @submit.prevent="handleVerifyOrAdd" class="flex flex-col gap-3">
-			<span class="text-sm text-ink-gray-5">
-				To add a custom domain, you must already own it. If you don't have one, buy it and come back here.
-			</span>
 			<FormControl
-				placeholder="www.example.com"
+				label="Set Domain"
+				placeholder="e.g. yourdomain.com"
 				v-model="newDomain"
 				:readonly="dnsVerified === true"
 				autocomplete="off" />
 
-			<!-- DNS info card -->
-			<div class="overflow-hidden rounded-md border border-outline-gray-1">
-				<div
-					class="flex items-center gap-2 border-b border-outline-gray-1 px-3 py-2 text-p-xs"
-					:class="statusClass">
-					<FeatherIcon :name="statusIcon" class="h-3.5 w-3.5 shrink-0" />
-					<span v-if="dnsVerified === true">
-						DNS verified. Click
-						<strong>Add Domain</strong>
-						to proceed.
-					</span>
-					<span v-else>{{ statusMessage }}</span>
-				</div>
-
-				<div class="space-y-1 p-3">
+			<!-- DNS records -->
+			<div class="overflow-hidden rounded bg-surface-gray-1">
+				<div class="space-y-1">
 					<div
 						v-for="rec in dnsRecords"
 						:key="rec.type"
-						class="flex items-center gap-2 rounded bg-surface-gray-1 px-2.5 py-1.5 font-mono text-p-xs">
+						class="flex items-center gap-2 px-2.5 py-1.5 font-mono text-p-xs">
 						<span class="w-10 shrink-0 font-semibold text-ink-gray-7">{{ rec.type }}</span>
 						<span :class="newDomain ? 'text-ink-gray-5' : 'text-ink-gray-3'">
 							{{ newDomain ? dnsHostLabel : "your-domain.com" }}
@@ -63,6 +47,15 @@
 							<FeatherIcon name="copy" class="h-3.5 w-3.5" />
 						</button>
 					</div>
+				</div>
+				<div class="flex items-center gap-2 rounded px-3 py-2 text-p-xs" :class="statusClass">
+					<FeatherIcon :name="statusIcon" class="h-3.5 w-3.5 shrink-0" />
+					<span v-if="dnsVerified === true">
+						DNS verified. Click
+						<strong>Add Domain</strong>
+						to proceed.
+					</span>
+					<span v-else>{{ statusMessage }}</span>
 				</div>
 			</div>
 
@@ -83,8 +76,10 @@
 <script setup lang="ts">
 import { useDomains } from "@/data/domains";
 import { Badge, Dropdown, ErrorMessage, FeatherIcon, FormControl } from "frappe-ui";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { toast } from "vue-sonner";
+
+const PENDING_STATUSES = ["Pending", "In Progress"];
 
 const currentSite = window.location.hostname;
 const {
@@ -109,16 +104,45 @@ const addDomainError = ref("");
 const checkingDNS = ref(false);
 const addingDomain = ref(false);
 
+let pollInterval: ReturnType<typeof setInterval> | null = null;
+
+const hasPendingDomains = computed(() => domains.value.some((d) => PENDING_STATUSES.includes(d.status)));
+
+watch(hasPendingDomains, (val) => {
+	if (val && !pollInterval) {
+		pollInterval = setInterval(() => {
+			if (!loading.value) fetchDomains();
+		}, 5000);
+	} else if (!val && pollInterval) {
+		clearInterval(pollInterval);
+		pollInterval = null;
+	}
+});
+
+onMounted(() => Promise.all([fetchDomains(), fetchServerIP()]));
+onUnmounted(() => {
+	if (pollInterval) clearInterval(pollInterval);
+});
+
+const isSubdomain = computed(() => newDomain.value.split(".").length > 2);
+
 const dnsHostLabel = computed(() => {
 	const parts = newDomain.value.split(".");
 	return parts.length <= 2 ? newDomain.value : parts[0];
 });
 
+const dnsRecords = computed(() => {
+	const records = [];
+	if (isSubdomain.value) records.push({ type: "CNAME", value: currentSite, copyValue: currentSite });
+	records.push({ type: "A", value: serverIP.value ?? "loading…", copyValue: serverIP.value ?? "" });
+	return records;
+});
+
 const statusClass = computed(() => {
-	if (dnsVerified.value === true) return "text-ink-green-4 bg-green-50";
+	if (dnsVerified.value === true) return "text-ink-green-1 bg-surface-green-1";
 	if (dnsVerified.value === false && dnsCheckError.value) return "bg-red-50 text-ink-red-4";
 	if (dnsVerified.value === false) return "bg-yellow-50 text-yellow-700";
-	return "bg-surface-gray-1 text-ink-gray-5";
+	return "text-ink-gray-6";
 });
 
 const statusIcon = computed(() => {
@@ -132,15 +156,18 @@ const statusMessage = computed(() => {
 	if (dnsVerified.value === false && dnsCheckError.value) return dnsCheckError.value;
 	if (dnsVerified.value === false)
 		return "DNS record not matched. Double-check the values below and allow up to 48h for propagation.";
-	return "Set one of these DNS records at your domain registrar, then click Verify DNS.";
+	return isSubdomain.value
+		? "Set one of these DNS records at your registrar, then click Verify DNS."
+		: "Set this DNS record at your registrar, then click Verify DNS.";
 });
 
-const dnsRecords = computed(() => [
-	{ type: "CNAME", value: currentSite, copyValue: currentSite },
-	{ type: "A", value: serverIP.value ?? "loading…", copyValue: serverIP.value ?? "" },
-]);
-
-onMounted(() => Promise.all([fetchDomains(), fetchServerIP()]));
+function statusTheme(status: string) {
+	return (
+		({ Active: "green", Broken: "red", Pending: "orange", "In Progress": "blue" } as Record<string, string>)[
+			status
+		] ?? "gray"
+	);
+}
 
 async function copyToClipboard(text: string) {
 	if (!text) return;
