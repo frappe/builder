@@ -21,14 +21,11 @@
 					:data-block-layer-id="element.blockId"
 					:data-indent="indent"
 					:title="element.blockId"
-					class="block-layer-item relative min-w-24 cursor-pointer select-none rounded border border-transparent bg-surface-white bg-opacity-50 text-base text-ink-gray-7 transition-[color] duration-50 ease-out"
-					:class="[
-						{
-							'border-blue-500 !bg-blue-100 dark:!bg-blue-900':
-								canvasStore.layerDraggingOverBlock === element.blockId,
-						},
-						getBlockScriptClasses(element),
-					]"
+					class="block-layer-item relative min-w-24 cursor-pointer select-none rounded border border-transparent bg-surface-white bg-opacity-50 text-base text-ink-gray-7"
+					:class="{
+						'border-blue-500 !bg-blue-100 dark:!bg-blue-900':
+							canvasStore.layerDraggingOverBlock === element.blockId,
+					}"
 					@click.stop="selectBlock(element, $event)"
 					@mouseover.stop="
 						!canvasStore.isDragging && canvasStore.activeCanvas?.setHoveredBlock(element.blockId)
@@ -58,14 +55,19 @@
 								'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
 									element.isExtendedFromComponent(),
 							}"
-							v-if="!Boolean(element.extendedFromComponent)" />
+							v-if="!Boolean(element.extendedFromComponent) && !showCodeIcon(element)" />
 						<BlocksIcon
 							class="mr-1 h-3 w-3"
 							:class="{
 								'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
 									element.isExtendedFromComponent(),
 							}"
-							v-if="Boolean(element.extendedFromComponent)" />
+							v-if="Boolean(element.extendedFromComponent) && !showCodeIcon(element)" />
+						<FeatherIcon
+							name="terminal"
+							:stroke-width="3"
+							class="h-3 w-3 text-orange-500"
+							v-if="showCodeIcon(element)" />
 						<span
 							class="layer-label min-h-[1em] min-w-[2em] max-w-64 truncate"
 							:contenteditable="element.editable && !readonly"
@@ -88,6 +90,7 @@
 							@blur="setBlockName($event, element)">
 							{{ element.getBlockDescription() }}
 						</span>
+
 						<!-- toggle visibility -->
 						<FeatherIcon
 							v-if="!element.isRoot() && !isParentHidden && !readonly"
@@ -128,10 +131,12 @@ import { ref, watch } from "vue";
 import draggable from "vuedraggable";
 import BlockLayers from "./BlockLayers.vue";
 import BlocksIcon from "./Icons/Blocks.vue";
+import useBuilderStore from "@/stores/builderStore";
 
 type LayerInstance = InstanceType<typeof BlockLayers>;
 
 const canvasStore = useCanvasStore();
+const builderStore = useBuilderStore();
 
 const rootContainer = ref<HTMLElement | null>(null);
 const childLayers = ref<LayerInstance[]>([]);
@@ -180,6 +185,13 @@ const expandedLayers = ref(new Set(["root"]));
 
 const isExpanded = (block: Block) => {
 	return expandedLayers.value.has(block.blockId);
+};
+
+const showCodeIcon = (block: Block) => {
+	return (
+		(builderStore.highlightBlocksWithClientScripts && block.getBlockClientScript()) ||
+		(builderStore.highlightBlocksWithDataScripts && block.getBlockDataScript())
+	);
 };
 
 // TODO: Refactor this!
@@ -259,18 +271,6 @@ const blockExitsInTree = (block: Block) => {
 
 const selectBlock = (block: Block, event: MouseEvent) => {
 	canvasStore.selectBlock(block, event, false, true);
-};
-
-const getBlockScriptClasses = (block: Block) => {
-	const hasClientScript = Boolean(block.getBlockClientScript());
-	const hasDataScript = Boolean(block.getBlockDataScript());
-
-	return {
-		"has-client-script": hasClientScript && !hasDataScript,
-		"has-data-script": hasDataScript && !hasClientScript,
-		"has-both-scripts": hasDataScript && hasClientScript,
-		"no-scripts": !hasDataScript && !hasClientScript,
-	};
 };
 
 interface DragState {
@@ -416,13 +416,5 @@ defineExpose({
 }
 .block-selected {
 	@apply border-blue-400 text-gray-900 dark:border-blue-700 dark:text-gray-200;
-}
-
-.highlight-block-script {
-	@apply border-dashed border-outline-gray-3 text-gray-800 dark:border-outline-gray-4 dark:text-gray-300;
-}
-
-.lowlight-nonscript-block {
-	@apply text-gray-400 dark:text-gray-700;
 }
 </style>
