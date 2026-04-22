@@ -55,14 +55,19 @@
 								'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
 									element.isExtendedFromComponent(),
 							}"
-							v-if="!Boolean(element.extendedFromComponent)" />
+							v-if="!Boolean(element.extendedFromComponent) && !showCodeIcon(element)" />
 						<BlocksIcon
 							class="mr-1 h-3 w-3"
 							:class="{
 								'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
 									element.isExtendedFromComponent(),
 							}"
-							v-if="Boolean(element.extendedFromComponent)" />
+							v-if="Boolean(element.extendedFromComponent) && !showCodeIcon(element)" />
+						<FeatherIcon
+							name="terminal"
+							:stroke-width="3"
+							class="h-3 w-3 text-orange-500"
+							v-if="showCodeIcon(element)" />
 						<span
 							class="layer-label min-h-[1em] min-w-[2em] max-w-64 truncate"
 							:contenteditable="element.editable && !readonly"
@@ -85,6 +90,7 @@
 							@blur="setBlockName($event, element)">
 							{{ element.getBlockDescription() }}
 						</span>
+
 						<!-- toggle visibility -->
 						<FeatherIcon
 							v-if="!element.isRoot() && !isParentHidden && !readonly"
@@ -125,10 +131,12 @@ import { ref, watch } from "vue";
 import draggable from "vuedraggable";
 import BlockLayers from "./BlockLayers.vue";
 import BlocksIcon from "./Icons/Blocks.vue";
+import useBuilderStore from "@/stores/builderStore";
 
 type LayerInstance = InstanceType<typeof BlockLayers>;
 
 const canvasStore = useCanvasStore();
+const builderStore = useBuilderStore();
 
 const rootContainer = ref<HTMLElement | null>(null);
 const childLayers = ref<LayerInstance[]>([]);
@@ -177,6 +185,13 @@ const expandedLayers = ref(new Set(["root"]));
 
 const isExpanded = (block: Block) => {
 	return expandedLayers.value.has(block.blockId);
+};
+
+const showCodeIcon = (block: Block) => {
+	return (
+		(builderStore.highlightBlocksWithClientScripts && block.getBlockClientScript()) ||
+		(builderStore.highlightBlocksWithDataScripts && block.getBlockDataScript())
+	);
 };
 
 // TODO: Refactor this!
