@@ -5,28 +5,37 @@
 		<div v-else-if="!domains.length" class="text-p-sm text-ink-gray-5">No custom domains added yet.</div>
 		<div v-else class="mb-2 flex flex-col gap-2">
 			<div
-				v-for="d in domains"
+				v-for="d in sortedDomains"
 				:key="d.domain"
-				class="flex items-center gap-2 rounded-md border border-outline-gray-1 px-3 py-2.5">
-				<div class="flex min-w-0 flex-1 items-center gap-2">
-					<p class="truncate text-p-sm font-medium leading-6 text-ink-gray-9">{{ d.domain }}</p>
-					<p v-if="d.redirect_to_primary" class="text-p-xs text-ink-gray-5">Redirects to primary</p>
-					<Badge v-if="d.primary" size="sm" theme="green" label="Primary" />
-					<Badge v-else :label="d.status" size="sm" :theme="statusTheme(d.status)" />
+				class="flex flex-col gap-1 rounded-md border border-outline-gray-1 px-3 py-2.5">
+				<div class="flex items-center gap-2">
+					<div class="flex min-w-0 flex-1 items-center gap-2">
+						<p class="truncate text-p-sm font-medium leading-6 text-ink-gray-9">{{ d.domain }}</p>
+						<Badge v-if="d.dns_type" size="sm" theme="gray" :label="d.dns_type" />
+						<p v-if="d.redirect_to_primary" class="text-p-xs text-ink-gray-5">Redirects to primary</p>
+						<Badge v-if="d.primary" size="sm" theme="green" label="Primary" />
+						<Badge
+							v-else-if="d.status !== 'Active'"
+							:label="d.status"
+							size="sm"
+							:theme="statusTheme(d.status)" />
+					</div>
+					<Dropdown v-if="getDomainActions(d).length" :options="getDomainActions(d)" placement="right">
+						<Button variant="ghost" icon="more-horizontal" />
+					</Dropdown>
 				</div>
-				<Dropdown v-if="getDomainActions(d).length" :options="getDomainActions(d)" placement="right">
-					<Button variant="ghost" icon="more-horizontal" />
-				</Dropdown>
+				<p v-if="d.status === 'Broken'" class="text-p-xs text-ink-red-4">
+					{{ brokenReason(d) }}
+				</p>
 			</div>
 		</div>
 
 		<!-- Add domain form -->
-		<form @submit.prevent="handleVerifyOrAdd" class="flex flex-col gap-3">
+		<form @submit.prevent="handleAdd" class="flex flex-col gap-3">
 			<FormControl
-				label="Add Domain"
+				label="Enter your domain"
 				placeholder="e.g. yourdomain.com"
 				v-model="newDomain"
-				:readonly="dnsVerified === true"
 				autocomplete="off" />
 
 			<!-- DNS records -->
@@ -59,26 +68,11 @@
 					</div>
 				</template>
 			</div>
-			<div class="flex items-center gap-1.5 text-p-xs" :class="statusClass">
-				<FeatherIcon :name="statusIcon" class="h-3.5 w-3.5 shrink-0" />
-				<span v-if="dnsVerified === true">
-					DNS verified. Click
-					<strong>Add Domain</strong>
-					to proceed.
-				</span>
-				<span v-else v-html="statusMessage"></span>
-			</div>
-
-			<ErrorMessage v-if="addDomainError" :message="addDomainError" />
+			<ErrorMessage v-if="addError" :message="addError" />
 			<div class="flex gap-2">
-				<Button
-					type="submit"
-					:disabled="checkingDNS || addingDomain || !newDomain"
-					:variant="dnsVerified ? 'solid' : 'subtle'"
-					:loading="checkingDNS || addingDomain">
-					{{ dnsVerified ? "Add Domain" : "Verify DNS" }}
+				<Button type="submit" :disabled="submitting || !newDomain" variant="subtle" :loading="submitting">
+					Add Domain
 				</Button>
-				<Button v-if="dnsVerified !== null" variant="ghost" @click="resetForm">Reset</Button>
 			</div>
 		</form>
 	</div>
@@ -99,7 +93,6 @@ const {
 	loading,
 	fetchDomains,
 	fetchServerIP,
-	checkDNS,
 	addDomain,
 	removeDomain,
 	retryDomain,
@@ -109,13 +102,18 @@ const {
 } = useDomains();
 
 const newDomain = ref("");
-const dnsVerified = ref<boolean | null>(null);
-const dnsCheckError = ref("");
-const addDomainError = ref("");
-const checkingDNS = ref(false);
-const addingDomain = ref(false);
+const submitting = ref(false);
+const addError = ref("");
+
+watch(newDomain, () => {
+	addError.value = "";
+});
 
 let pollInterval: ReturnType<typeof setInterval> | null = null;
+
+const sortedDomains = computed(() =>
+	[...domains.value].sort((a, b) => (b.primary ? 1 : 0) - (a.primary ? 1 : 0)),
+);
 
 const hasPendingDomains = computed(() => domains.value.some((d) => PENDING_STATUSES.includes(d.status)));
 
@@ -168,28 +166,24 @@ const dnsRecords = computed(() => {
 	return records;
 });
 
-const statusClass = computed(() => {
-	if (dnsVerified.value === true) return "text-ink-green-3";
-	if (dnsVerified.value === false && dnsCheckError.value) return "text-ink-red-4";
-	if (dnsVerified.value === false) return "text-yellow-700";
-	return "text-ink-gray-5";
-});
-
-const statusIcon = computed(() => {
-	if (dnsVerified.value === true) return "check-circle";
-	if (dnsVerified.value === false && dnsCheckError.value) return "alert-circle";
-	if (dnsVerified.value === false) return "alert-triangle";
-	return "info";
-});
-
-const statusMessage = computed(() => {
-	if (dnsVerified.value === false && dnsCheckError.value) return dnsCheckError.value;
-	if (dnsVerified.value === false)
-		return "DNS record not matched. Double-check the values below and allow up to 48h for propagation.";
-	return isSubdomain.value
-		? "Choose one of the records below and set it at your DNS registrar, then click Verify DNS."
-		: "Set the A record at your registrar, then click Verify DNS.";
-});
+function brokenReason(d: any): string {
+	if (!d.dns_response) return "Domain setup failed. Please retry or contact support.";
+	try {
+		const parsed = JSON.parse(d.dns_response);
+		if (parsed.exc_message) return parsed.exc_message.replace(/<[^>]*>/g, "").trim();
+		const cname = parsed.CNAME;
+		const a = parsed.A;
+		if (cname?.exists && !cname?.matched)
+			return `CNAME record points to wrong destination: ${cname.answer?.trim() || "unknown"}`;
+		if (a?.exists && !a?.matched) return `A record points to wrong IP: ${a.answer?.trim() || "unknown"}`;
+		if (!cname?.exists && !a?.exists) return "No DNS record found for this domain.";
+		if (parsed.matched || parsed.valid)
+			return "DNS is verified but SSL certificate provisioning failed. Please retry.";
+	} catch {
+		// ignore parse errors
+	}
+	return "Domain setup failed. Please retry or contact support.";
+}
 
 function statusTheme(status: string) {
 	return (
@@ -209,15 +203,7 @@ async function copyToClipboard(text: string) {
 	}
 }
 
-function resetForm() {
-	newDomain.value = "";
-	dnsVerified.value = null;
-	dnsCheckError.value = "";
-	addDomainError.value = "";
-}
-
-async function handleVerifyOrAdd() {
-	addDomainError.value = "";
+async function handleAdd() {
 	if (!newDomain.value) return;
 
 	newDomain.value = newDomain.value
@@ -225,17 +211,14 @@ async function handleVerifyOrAdd() {
 		.split("/")[0]
 		.toLowerCase();
 
-	if (dnsVerified.value) {
-		addingDomain.value = true;
-		const ok = await addDomain(newDomain.value);
-		addingDomain.value = false;
-		if (ok) resetForm();
-	} else {
-		checkingDNS.value = true;
-		const { matched, error } = await checkDNS(newDomain.value);
-		checkingDNS.value = false;
-		dnsVerified.value = matched;
-		dnsCheckError.value = error;
+	addError.value = "";
+	submitting.value = true;
+	const { ok, error } = await addDomain(newDomain.value);
+	submitting.value = false;
+	if (ok) {
+		newDomain.value = "";
+	} else if (error) {
+		addError.value = error;
 	}
 }
 

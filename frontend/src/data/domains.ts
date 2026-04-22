@@ -45,45 +45,56 @@ export function useDomains() {
 		}
 	}
 
-	async function addDomain(domain: string): Promise<boolean> {
+	async function addDomain(domain: string): Promise<{ ok: boolean; error?: string }> {
+		const id = toast.loading(`Verifying DNS for ${domain}…`);
 		try {
+			const { matched, error } = await checkDNS(domain);
+			if (!matched) {
+				toast.error("Domain verification failed", { id });
+				return {
+					ok: false,
+					error: error || "DNS not yet propagated. Make sure the record is set correctly and try again.",
+				};
+			}
+			toast.loading(`Adding ${domain}…`, { id });
 			await createResource({ url: `${API}.add_domain` }).submit({ domain });
-			toast.success(`Domain ${domain} added successfully`);
+			toast.success(`${domain} added successfully`, { id });
 			await fetchDomains();
-			return true;
+			return { ok: true };
 		} catch (e: any) {
-			toast.error(getErrorMessage(e));
-			return false;
+			toast.error(getErrorMessage(e), { id });
+			return { ok: false };
 		}
 	}
 
 	async function removeDomain(domain: string) {
-		await callAPI("remove_domain", domain, `${domain} removed`);
+		await callAPI("remove_domain", domain, `${domain} removed`, `Removing ${domain}…`);
 	}
 
 	async function retryDomain(domain: string) {
-		await callAPI("retry_add_domain", domain, `Retrying ${domain}`);
+		await callAPI("retry_add_domain", domain, `Retrying ${domain}`, `Retrying ${domain}…`);
 	}
 
 	async function setHostName(domain: string) {
-		await callAPI("set_host_name", domain, `${domain} set as primary`);
+		await callAPI("set_host_name", domain, `${domain} set as primary`, `Updating primary domain…`);
 	}
 
 	async function setRedirect(domain: string) {
-		await callAPI("set_redirect", domain, `Redirect enabled for ${domain}`);
+		await callAPI("set_redirect", domain, `Redirect enabled for ${domain}`, `Enabling redirect…`);
 	}
 
 	async function unsetRedirect(domain: string) {
-		await callAPI("unset_redirect", domain, `Redirect disabled for ${domain}`);
+		await callAPI("unset_redirect", domain, `Redirect disabled for ${domain}`, `Disabling redirect…`);
 	}
 
-	async function callAPI(method: string, domain: string, successMsg: string) {
+	async function callAPI(method: string, domain: string, successMsg: string, loadingMsg?: string) {
+		const id = loadingMsg ? toast.loading(loadingMsg) : undefined;
 		try {
 			await createResource({ url: `${API}.${method}` }).submit({ domain });
-			toast.success(successMsg);
+			toast.success(successMsg, { id });
 			await fetchDomains();
 		} catch (e: any) {
-			toast.error(getErrorMessage(e));
+			toast.error(getErrorMessage(e), { id });
 		}
 	}
 
@@ -93,7 +104,6 @@ export function useDomains() {
 		loading,
 		fetchDomains,
 		fetchServerIP,
-		checkDNS,
 		addDomain,
 		removeDomain,
 		retryDomain,
