@@ -1346,7 +1346,9 @@ const getDataArray = (collectionObject: Record<string, any>) => {
 		Object.entries(obj).forEach(([key, value]) => {
 			const path = prefix ? `${prefix}.${key}` : key;
 
-			if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+			if (value === null) {
+				result.push(path);
+			} else if (typeof value === "object" && !Array.isArray(value)) {
 				processObject(value, path);
 			} else if (["string", "number", "boolean"].includes(typeof value)) {
 				result.push(path);
@@ -1360,10 +1362,13 @@ const getDataArray = (collectionObject: Record<string, any>) => {
 
 function executeBlockClientScriptUnrestricted(
 	blockUid: string,
+	breakpoint: string,
 	userScript: string,
 	props: Record<string, any> = {},
 ) {
-	const thisElement = document.querySelector(`[data-block-uid='${blockUid}']`) as HTMLElement;
+	const thisElement = document.querySelector(
+		`[data-block-uid='${blockUid}'][data-breakpoint=${breakpoint}]`,
+	) as HTMLElement;
 
 	const context = {
 		thisRef: thisElement,
@@ -1400,6 +1405,7 @@ function executeBlockClientScriptUnrestricted(
 
 function executeBlockClientScriptRestricted(
 	blockUid: string,
+	breakpoint: string,
 	userScript: string,
 	props: Record<string, any> = {},
 ) {
@@ -1491,7 +1497,9 @@ function executeBlockClientScriptRestricted(
 	};
 
 	const sandboxRoot = document.querySelector("[data-block-id='root']") as HTMLElement;
-	const thisElement = document.querySelector(`[data-block-uid='${blockUid}']`) as HTMLElement;
+	const thisElement = document.querySelector(
+		`[data-block-uid='${blockUid}'][data-breakpoint='${breakpoint}']`,
+	) as HTMLElement;
 
 	const proxiedRoot = wrap(sandboxRoot);
 	const proxiedThis = wrap(thisElement);

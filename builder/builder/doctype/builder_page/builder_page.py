@@ -271,7 +271,7 @@ class BuilderPage(WebsiteGenerator):
 		if frappe.form_dict and self.dynamic_route:
 			query_string = "&".join(
 				[
-					f"{k}={frappe.utils.escape_html(frappe.utils.quote(v))}"
+					f"{frappe.utils.escape_html(frappe.utils.quote(k))}={frappe.utils.escape_html(frappe.utils.quote(v))}"
 					for k, v in frappe.form_dict.items()
 				]
 			)

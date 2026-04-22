@@ -8,7 +8,6 @@
 			:defaultValue="defaultValue"
 			:placeholder="placeholder"
 			@update:modelValue="$emit('update:modelValue', $event)"
-			@keydown.stop="$emit('keydown', $event)"
 			:class="componentClass">
 			<template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
 				<slot :name="name" v-bind="slotData || {}" />

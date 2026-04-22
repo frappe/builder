@@ -49,11 +49,14 @@ import SettingsIcon from "./Icons/Settings.vue";
 // @ts-ignore
 import TerminalIcon from "~icons/lucide/terminal";
 // @ts-ignore
+import ExternalLinkIcon from "~icons/lucide/external-link";
+// @ts-ignore
 import SparklesIcon from "~icons/lucide/sparkles";
 import GlobalAI from "./Settings/GlobalAI.vue";
 import GlobalAnalytics from "./Settings/GlobalAnalytics.vue";
 import GlobalCode from "./Settings/GlobalCode.vue";
 import GlobalDeveloper from "./Settings/GlobalDeveloper.vue";
+import GlobalDomains from "./Settings/GlobalDomains.vue";
 import GlobalGeneral from "./Settings/GlobalGeneral.vue";
 import PageAnalytics from "./Settings/PageAnalytics.vue";
 import PageGeneral from "./Settings/PageGeneral.vue";
@@ -142,6 +145,17 @@ const globalSettings = {
 			title: "Redirects",
 			icon: RedirectIcon,
 		},
+		...(window.is_fc_site || window.is_developer_mode
+			? [
+					{
+						label: "Domains",
+						value: "global_domains",
+						component: GlobalDomains,
+						title: "Custom Domains",
+						icon: ExternalLinkIcon,
+					},
+				]
+			: []),
 		{
 			label: "Analytics",
 			value: "global_analytics",
