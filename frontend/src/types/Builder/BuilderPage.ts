@@ -60,4 +60,6 @@ You can generate using favicon-generator.org	*/
 	disable_indexing?: 0 | 1;
 	/**	Project Folder : Link - Builder Project Folder	*/
 	project_folder?: string;
+	/**	Include Alpine.JS : Check - AlpineJS is included by default in pages with Tiles.	*/
+	include_alpinejs?: 0 | 1,
 }

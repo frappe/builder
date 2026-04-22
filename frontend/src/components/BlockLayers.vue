@@ -55,7 +55,7 @@
 								'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
 									element.isExtendedFromComponent(),
 							}"
-							v-if="!Boolean(element.extendedFromComponent)" />
+							v-if="!Boolean(element.extendedFromComponent) && !element.getIsTile()" />
 						<BlocksIcon
 							class="mr-1 h-3 w-3"
 							:class="{
@@ -63,13 +63,22 @@
 									element.isExtendedFromComponent(),
 							}"
 							v-if="Boolean(element.extendedFromComponent)" />
+						<TilesIcon
+							class="h-3 w-3"
+							:class="{
+								'text-yellow-600 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
+									element.getIsTile(),
+							}"
+							v-if="Boolean(element.getIsTile())" />
 						<span
 							class="layer-label min-h-[1em] min-w-[2em] max-w-64 truncate"
 							:contenteditable="element.editable && !readonly"
 							:title="element.blockId"
 							:class="{
-								'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
-									element.isExtendedFromComponent(),
+								'text-purple-500': element.isExtendedFromComponent(),
+								'text-yellow-600': element.getIsTile(),
+								'opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
+									element.isExtendedFromComponent() || element.getIsTile(),
 							}"
 							@dblclick="
 								(ev) => {
@@ -125,6 +134,8 @@ import { ref, watch } from "vue";
 import draggable from "vuedraggable";
 import BlockLayers from "./BlockLayers.vue";
 import BlocksIcon from "./Icons/Blocks.vue";
+// @ts-ignore
+import TilesIcon from "~icons/lucide/blocks";
 
 type LayerInstance = InstanceType<typeof BlockLayers>;
 

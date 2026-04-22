@@ -1,4 +1,14 @@
 {% block script %}
+<script type="text/javascript">
+window.dispatch=(e,t,n)=>{n&&"string"===n?n=document.querySelector(n):n instanceof HTMLElement||(n=document);let i=new CustomEvent(e,{detail:t});n.dispatchEvent(i)},window.listen=(e,t,n)=>{n&&"string"===n?n=document.querySelector(n):n instanceof HTMLElement||(n=document),n.addEventListener(e,t)};
+</script>
+{% if has_tile or include_alpinejs %}
+<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/morph@3.x.x/dist/cdn.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script type="text/javascript">
+function hydrateData(e){e.querySelectorAll("script[data-block-data]").forEach(e=>{let t=e.dataset.blockData,a=JSON.parse(e.innerHTML);window.__DATA__[t]?Object.assign(window.__DATA__[t],a):window.__DATA__[t]=a})}async function refreshTile(e){e instanceof HTMLElement||(e=document.querySelector(e));let t=e?.dataset.tileId,a,r=new FormData;r.append("render_tile","true"),r.append("block_id",t),a=Alpine.$data(e),r.append("block_data",JSON.stringify(a.block_data)),r.append("props",JSON.stringify(a.props));let c=window.location.href,i={method:"POST"};i.body=r;try{let l=await fetch(c,i);a=await l.text()}catch(d){console.error(d)}Alpine.morph(e,a),hydrateData(e)}document.addEventListener("alpine:init",()=>{Alpine.store("__reactive__",{state:Alpine.reactive({})});let e=()=>Alpine.store("__reactive__").state,t=(e,t)=>Object.is(e,t);window.$reactive={set(t,a){e()[t]=a},get:t=>e()[t],update(a,r,c={}){let i=e(),l=i[a],d;d="function"==typeof r?r(l):"object"==typeof r&&null!==r?{...l||{},...r}:r,c.skipEqual&&t(l,d)||(i[a]=d)},watch:(t,a)=>Alpine.watch(()=>e()[t],(e,t)=>a(e,t)),effect:e=>Alpine.effect(()=>{e()}),delete(t){delete e()[t]},batch(t){let a=e();t(a)},dump:()=>e()},window.__DATA__=Alpine.reactive({}),Alpine.data("block",e=>(window.__DATA__[e]||(window.__DATA__[e]={}),window.__DATA__[e])),hydrateData(document)});
+</script>
+{% endif %}
 {%- if scripts -%}
 {% for script_path in scripts %}
 <script src="{{ script_path }}"></script>
@@ -10,7 +20,7 @@
 <!-- csrf_token -->
 {% if enable_view_tracking and not preview %}
 <script>
-	document.addEventListener("DOMContentLoaded", function() {let b=getBrowser(),q=getQueryParams();import('/assets/builder/js/identify.js').then(f=>f.load()).then(fp=>fp.get()).then(r=>{const d={referrer:document.referrer,browser:b.name,version:b.version,user_tz:Intl.DateTimeFormat().resolvedOptions().timeZone,source:q.source,medium:q.medium,campaign:q.campaign,visitor_id:r.visitorId};makeViewLog(d)})});function getBrowser(){const ua=navigator.userAgent,b={};if(ua.indexOf("Chrome")!==-1){b.name="Chrome";b.version=parseInt(ua.split("Chrome/")[1])}else if(ua.indexOf("Firefox")!==-1){b.name="Firefox";b.version=parseInt(ua.split("Firefox/")[1])}else{b.name="Unknown";b.version="Unknown"}return b}function getQueryParams(){const q={},p=window.location.search.substring(1).split("&");p.forEach(p=>{const [k,v]=p.split("=");q[k]=v});return q}function makeViewLog(d){fetch('/api/method/frappe.website.doctype.web_page_view.web_page_view.make_view_log',{method:'POST',headers:{'Content-Type':'application/json',"X-Frappe-CSRF-Token": frappe.csrf_token},body:JSON.stringify(d)})}
+document.addEventListener("DOMContentLoaded", function() {let b=getBrowser(),q=getQueryParams();import('/assets/builder/js/identify.js').then(f=>f.load()).then(fp=>fp.get()).then(r=>{const d={referrer:document.referrer,browser:b.name,version:b.version,user_tz:Intl.DateTimeFormat().resolvedOptions().timeZone,source:q.source,medium:q.medium,campaign:q.campaign,visitor_id:r.visitorId};makeViewLog(d)})});function getBrowser(){const ua=navigator.userAgent,b={};if(ua.indexOf("Chrome")!==-1){b.name="Chrome";b.version=parseInt(ua.split("Chrome/")[1])}else if(ua.indexOf("Firefox")!==-1){b.name="Firefox";b.version=parseInt(ua.split("Firefox/")[1])}else{b.name="Unknown";b.version="Unknown"}return b}function getQueryParams(){const q={},p=window.location.search.substring(1).split("&");p.forEach(p=>{const [k,v]=p.split("=");q[k]=v});return q}function makeViewLog(d){fetch('/api/method/frappe.website.doctype.web_page_view.web_page_view.make_view_log',{method:'POST',headers:{'Content-Type':'application/json',"X-Frappe-CSRF-Token": frappe.csrf_token},body:JSON.stringify(d)})}
 </script>
 {% endif %}
 {% if not preview %}

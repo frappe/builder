@@ -1,3 +1,4 @@
+import hashlib
 import inspect
 import os
 import re
@@ -680,7 +681,7 @@ def get_export_paths(app_path, export_name):
 	}
 
 
-def to_dict_with_fallback(obj):
+def safe_dict_conversion(obj):
 	try:
 		return frappe._dict(obj)
 	except TypeError:
@@ -695,23 +696,27 @@ def combine(a, b):
 		return b
 	if b is None:
 		return a
-	res = to_dict_with_fallback(a)
-	res.update(to_dict_with_fallback(b))
+	res = safe_dict_conversion(a)
+	res.update(safe_dict_conversion(b))
 	return res
 
 
 def hash(s):
-	return f"{frappe.generate_hash(length=6)}-{s}"
+	return f"{frappe.generate_hash(length=6)}_{s}"
+
+
+def script_hash(js_code, length=8):
+	return hashlib.sha256(js_code.encode()).hexdigest()[:length]
 
 
 def to_safe_json(data):
 	return frappe.as_json(data or {})
 
 
-def execute_script_and_combine(prev_block_data, block_data_script, props):
+def execute_block_data_script(prev_block_data, block_data_script, props):
 	props = frappe._dict(frappe.parse_json(props or "{}"))
 	block_data = frappe._dict()
-	_locals = dict(block=to_dict_with_fallback(prev_block_data or {}), props=props)
+	_locals = dict(block=safe_dict_conversion(prev_block_data or {}), props=props)
 	execute_script(unescape_html(block_data_script), _locals, "sample")
 	block_data.update(_locals["block"])
 	return combine(prev_block_data, block_data)
