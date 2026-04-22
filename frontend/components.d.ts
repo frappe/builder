@@ -76,6 +76,7 @@ declare module 'vue' {
     GlobalAnalytics: typeof import('./src/components/Settings/GlobalAnalytics.vue')['default']
     GlobalCode: typeof import('./src/components/Settings/GlobalCode.vue')['default']
     GlobalDeveloper: typeof import('./src/components/Settings/GlobalDeveloper.vue')['default']
+    GlobalDomains: typeof import('./src/components/Settings/GlobalDomains.vue')['default']
     GlobalGeneral: typeof import('./src/components/Settings/GlobalGeneral.vue')['default']
     GlobalMeta: typeof import('./src/components/Settings/GlobalMeta.vue')['default']
     GlobalRedirects: typeof import('./src/components/Settings/GlobalRedirects.vue')['default']
