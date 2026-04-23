@@ -49,7 +49,6 @@ const props = defineProps<{
 	block: Block;
 }>();
 
-// Add defineModel and fix the watch
 const model = defineModel<boolean>();
 
 const componentName = ref(props.block.blockName || "");
