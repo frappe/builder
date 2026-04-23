@@ -97,6 +97,8 @@ const { hasNumber, incrementValue, decrementValue } = useNumberInput({
 
 const clearValue = () => {
 	data.value = "";
+	emit("update:modelValue", "");
+	emit("input", "");
 };
 
 const triggerUpdate = useDebounceFn(($event: Event) => {
