@@ -110,6 +110,45 @@ watch(newDomain, () => {
 });
 
 let pollInterval: ReturnType<typeof setInterval> | null = null;
+let domainProbeInterval: ReturnType<typeof setInterval> | null = null;
+
+async function probeDomain(domain: string): Promise<boolean> {
+	try {
+		await fetch(`https://${domain}`, {
+			mode: "no-cors",
+			signal: AbortSignal.timeout(8000),
+		});
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+function startDomainLiveCheck(domain: string) {
+	if (domainProbeInterval) clearInterval(domainProbeInterval);
+	const TOAST_ID = "domain-live-check";
+	toast.info(`Waiting for "${domain}" to go live…`, {
+		id: TOAST_ID,
+		description: "SSL setup and DNS propagation can take a few minutes.",
+		duration: Infinity,
+	});
+	domainProbeInterval = setInterval(async () => {
+		const alive = await probeDomain(domain);
+		if (alive) {
+			clearInterval(domainProbeInterval!);
+			domainProbeInterval = null;
+			toast.success(`${domain} is now live!`, {
+				id: TOAST_ID,
+				description: "Your custom domain is accessible.",
+				duration: 10000,
+				action: {
+					label: "Open",
+					onClick: () => window.open(`https://${domain}`, "_blank"),
+				},
+			});
+		}
+	}, 30000);
+}
 
 const sortedDomains = computed(() =>
 	[...domains.value].sort((a, b) => (b.primary ? 1 : 0) - (a.primary ? 1 : 0)),
@@ -131,6 +170,7 @@ watch(hasPendingDomains, (val) => {
 onMounted(() => Promise.all([fetchDomains(), fetchServerIP()]));
 onUnmounted(() => {
 	if (pollInterval) clearInterval(pollInterval);
+	if (domainProbeInterval) clearInterval(domainProbeInterval);
 });
 
 const isSubdomain = computed(() => newDomain.value.split(".").length > 2);
@@ -225,7 +265,14 @@ async function handleAdd() {
 function getDomainActions(d: any) {
 	const actions: any[] = [];
 	if (d.status === "Active" && !d.primary)
-		actions.push({ label: "Set as Primary", icon: "star", onClick: () => setHostName(d.domain) });
+		actions.push({
+			label: "Set as Primary",
+			icon: "star",
+			onClick: async () => {
+				const { ok } = await setHostName(d.domain);
+				if (ok) startDomainLiveCheck(d.domain);
+			},
+		});
 	if (!d.primary && !d.redirect_to_primary && d.status === "Active")
 		actions.push({
 			label: "Redirect to Primary",

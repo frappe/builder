@@ -75,8 +75,8 @@ export function useDomains() {
 		await callAPI("retry_add_domain", domain, `Retrying ${domain}`, `Retrying ${domain}…`);
 	}
 
-	async function setHostName(domain: string) {
-		await callAPI("set_host_name", domain, `${domain} set as primary`, `Updating primary domain…`);
+	async function setHostName(domain: string): Promise<{ ok: boolean }> {
+		return callAPI("set_host_name", domain, `${domain} set as primary`, `Updating primary domain…`);
 	}
 
 	async function setRedirect(domain: string) {
@@ -87,14 +87,21 @@ export function useDomains() {
 		await callAPI("unset_redirect", domain, `Redirect disabled for ${domain}`, `Disabling redirect…`);
 	}
 
-	async function callAPI(method: string, domain: string, successMsg: string, loadingMsg?: string) {
+	async function callAPI(
+		method: string,
+		domain: string,
+		successMsg: string,
+		loadingMsg?: string,
+	): Promise<{ ok: boolean }> {
 		const id = loadingMsg ? toast.loading(loadingMsg) : undefined;
 		try {
 			await createResource({ url: `${API}.${method}` }).submit({ domain });
 			toast.success(successMsg, { id });
 			await fetchDomains();
+			return { ok: true };
 		} catch (e: any) {
 			toast.error(getErrorMessage(e), { id });
+			return { ok: false };
 		}
 	}
 
