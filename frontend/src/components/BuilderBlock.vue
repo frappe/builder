@@ -78,7 +78,6 @@ const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
 const attrs = useAttrs();
-const editor = ref<InstanceType<typeof BlockEditor> | null>(null);
 const isMounted = ref(false);
 
 const pageStore = usePageStore();
