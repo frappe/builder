@@ -123,7 +123,7 @@ const typographySectionProperties = [
 			return {
 				label: "Height",
 				propertyKey: "lineHeight",
-				step: 0.1,
+				enableSlider: true,
 			};
 		},
 		searchKeyWords: "Font, Height, LineHeight, Line Height",
@@ -135,7 +135,7 @@ const typographySectionProperties = [
 			return {
 				label: "Letter",
 				propertyKey: "letterSpacing",
-				step: 0.1,
+				enableSlider: true,
 			};
 		},
 		searchKeyWords: "Font, Letter, LetterSpacing, Letter Spacing",
