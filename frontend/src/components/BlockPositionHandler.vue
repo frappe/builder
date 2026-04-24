@@ -76,9 +76,6 @@ import { computed, watch } from "vue";
 const position = computed({
 	get() {
 		const pos = (blockController.getStyle("position") as string) || "static";
-		if (["relative", "static"].includes(pos)) {
-			return "static";
-		}
 		return pos;
 	},
 	set(value: string) {
