@@ -1,5 +1,10 @@
 <template>
-	<div ref="component" v-html="html"></div>
+	<div
+		ref="component"
+		:class="{
+			'!relative': !block.getStyle('position'),
+		}"
+		v-html="html"></div>
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
