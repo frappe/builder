@@ -367,7 +367,7 @@ const isFixed = computed(() => {
 	return value.repeat !== "auto-fill" && value.repeat !== "auto-fit";
 });
 
-const setGridType = (val) => {
+const setGridType = (val: string | number | boolean) => {
 	if (val === "fixed") {
 		blockController.setStyle("gridTemplateColumns", `repeat(2, minmax(0, 1fr))`);
 	} else {
