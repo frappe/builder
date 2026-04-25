@@ -1,14 +1,17 @@
 <template>
-	<OptionToggle
+	<StylePropertyControl
+		propertyKey="gridTemplateColumns"
+		:component="OptionToggle"
 		class="w-full"
 		label="Grid Type"
 		v-if="blockController.isGrid()"
-		:modelValue="isFixed ? 'fixed' : 'auto'"
-		@update:modelValue="setGridType"
+		:getModelValue="getGridType"
+		:setModelValue="setGridType"
+		:enableStates="false"
 		:options="[
 			{ label: 'Fixed', value: 'fixed' },
 			{ label: 'Auto', value: 'auto' },
-		]"></OptionToggle>
+		]" />
 	<InlineInput
 		v-if="blockController.isGrid() && isFixed"
 		label="Columns"
@@ -216,6 +219,10 @@ import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
 
+const getGridType = () => {
+	return isFixed.value ? "fixed" : "auto";
+};
+
 const columns = computed(() => {
 	const template = blockController.getStyle("gridTemplateColumns") as string;
 	if (!template) {
@@ -360,7 +367,7 @@ const isFixed = computed(() => {
 	return value.repeat !== "auto-fill" && value.repeat !== "auto-fit";
 });
 
-const setGridType = (val: string) => {
+const setGridType = (val) => {
 	if (val === "fixed") {
 		blockController.setStyle("gridTemplateColumns", `repeat(2, minmax(0, 1fr))`);
 	} else {
