@@ -78,7 +78,6 @@ const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
 const attrs = useAttrs();
-const editor = ref<InstanceType<typeof BlockEditor> | null>(null);
 const isMounted = ref(false);
 
 const pageStore = usePageStore();
@@ -436,7 +435,8 @@ watch(
 		const mode = builderSettings.doc?.execute_block_scripts_in_editor;
 		if (mode === "Don't Execute") return;
 
-		if (mode === "Restricted") executeBlockClientScriptRestricted(uidToUse, props.breakpoint, script, allResolvedProps.value);
+		if (mode === "Restricted")
+			executeBlockClientScriptRestricted(uidToUse, props.breakpoint, script, allResolvedProps.value);
 		else executeBlockClientScriptUnrestricted(uidToUse, props.breakpoint, script, allResolvedProps.value);
 	},
 	{ immediate: true },

@@ -1,5 +1,6 @@
 <template>
 	<Dialog
+		v-model="model"
 		:options="{
 			title: 'New Component',
 			size: 'sm',
@@ -38,7 +39,7 @@ import usePageStore from "@/stores/pageStore";
 import { posthog } from "@/telemetry";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import { getBlockCopy, getBlockString } from "@/utils/helpers";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 
 const componentStore = useComponentStore();
 const canvasStore = useCanvasStore();
@@ -48,7 +49,15 @@ const props = defineProps<{
 	block: Block;
 }>();
 
-const componentName = ref("");
+const model = defineModel<boolean>();
+
+const componentName = ref(props.block.blockName || "");
+
+watch(model, (isOpen) => {
+	if (isOpen) {
+		componentName.value = props.block.blockName || "";
+	}
+});
 const isGlobalComponent = ref(0);
 
 const createComponentHandler = async (context: { close: () => void }) => {

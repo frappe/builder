@@ -12,8 +12,14 @@ export interface ShortcutConfig {
 	description: string;
 	/** Group name for categorizing in the shortcuts modal */
 	group?: string;
-	/** Handler to execute when the shortcut is triggered */
-	handler: (e: KeyboardEvent) => void;
+	/** Whether the action should be triggered on press or hold */
+	triggeredOn?: "press" | "hold";
+	/** Handler to execute when the shortcut is triggered (on keydown) */
+	handler?: (e: KeyboardEvent) => void;
+	/** Handler to execute while the shortcut keys are held down (on keydown) */
+	onHold?: (e: KeyboardEvent) => void;
+	/** Handler to execute when the shortcut keys are released (on keyup) */
+	onRelease?: (e: KeyboardEvent) => void;
 	/** Whether to prevent default browser behavior (default: true) */
 	preventDefault?: boolean;
 	/** Whether the shortcut should work when an input/textarea is focused (default: false) */
@@ -38,6 +44,9 @@ export interface RegisteredShortcut {
 const activeShortcuts = reactive<RegisteredShortcut[]>([]);
 const shortcutHandlers = new Map<symbol, ShortcutConfig>();
 
+// Track which shortcut keys are currently held down
+const heldShortcuts = new Set<symbol>();
+
 let listenerAttached = false;
 
 function attachGlobalListener() {
@@ -45,6 +54,7 @@ function attachGlobalListener() {
 	listenerAttached = true;
 
 	document.addEventListener("keydown", globalKeydownHandler);
+	document.addEventListener("keyup", globalKeyupHandler);
 }
 
 function globalKeydownHandler(e: KeyboardEvent) {
@@ -64,9 +74,73 @@ function globalKeydownHandler(e: KeyboardEvent) {
 			e.preventDefault();
 		}
 
-		config.handler(e);
+		config.handler?.(e);
+		// Mark as held if not already held
+		if (config.triggeredOn === "hold" && !heldShortcuts.has(id)) {
+			heldShortcuts.add(id);
+
+			// Call onHold if provided and this is the initial press
+			if (config.onHold) {
+				config.onHold(e);
+			}
+		}
+
 		return; // Only fire the first match
 	}
+}
+
+function globalKeyupHandler(e: KeyboardEvent) {
+	if (isDialogOpen()) return;
+
+	// Check all held shortcuts to see if any are still active
+	// If a modifier key is released, we need to detect that the combo is no longer valid
+	const idsToRelease: symbol[] = [];
+
+	for (const id of heldShortcuts) {
+		const config = shortcutHandlers.get(id);
+		if (!config || config.triggeredOn !== "hold") continue;
+
+		// Check if the combo is still valid. If not, it's time to release.
+		if (!isShortcutStillPressed(e, config)) {
+			idsToRelease.push(id);
+		}
+	}
+
+	// Process releases
+	for (const id of idsToRelease) {
+		const config = shortcutHandlers.get(id);
+		if (!config) continue;
+
+		// Call onRelease if provided
+		if (config.onRelease) {
+			config.onRelease(e);
+		}
+
+		// Remove from held shortcuts
+		heldShortcuts.delete(id);
+	}
+
+	if (idsToRelease.length > 0 && !shortcutHandlers.values().next().value?.preventDefault === false) {
+		// e.preventDefault();
+	}
+}
+
+function isShortcutStillPressed(e: KeyboardEvent, config: ShortcutConfig): boolean {
+	// Check if the main key is still being pressed (heuristic: if this key was released, the combo isn't pressed)
+	// However, we can't directly tell which keys are still pressed from a keyup event
+	// So we check if the modifiers that are required are no longer all satisfied
+
+	const wantsCtrl = config.ctrl ?? false;
+	const wantsShift = config.shift ?? false;
+	const hasCtrl = isCtrlOrCmd(e);
+	const hasShift = e.shiftKey;
+
+	// If we want Ctrl but it's not pressed (user released Ctrl), combo is no longer valid
+	if (wantsCtrl && !hasCtrl) return false;
+	// If we want Shift but it's not pressed (user released Shift), combo is no longer valid
+	if (wantsShift && !hasShift) return false;
+
+	return true;
 }
 
 function matchesShortcut(e: KeyboardEvent, config: ShortcutConfig): boolean {
@@ -159,6 +233,7 @@ export function useShortcut(shortcuts: ShortcutConfig | ShortcutConfig[]) {
 	const removeShortcuts = () => {
 		for (const id of registeredIds) {
 			shortcutHandlers.delete(id);
+			heldShortcuts.delete(id);
 			const idx = activeShortcuts.findIndex((s) => s.id === id);
 			if (idx !== -1) activeShortcuts.splice(idx, 1);
 		}

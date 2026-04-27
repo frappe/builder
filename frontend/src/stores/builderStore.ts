@@ -45,6 +45,8 @@ const useBuilderStore = defineStore("builderStore", {
 		isDark: useDark({
 			attribute: "data-theme",
 		}),
+		highlightBlocksWithDataScripts: false,
+		highlightBlocksWithClientScripts: false,
 	}),
 	getters: {
 		isAIEnabled(): boolean {
