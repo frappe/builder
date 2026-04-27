@@ -122,7 +122,7 @@
 						v-for="block in selectedBlocks"
 						:key="block.blockId"
 						class="inline-flex items-center gap-1 rounded bg-surface-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-7">
-						{{ block.blockName || block.element }}
+						<span class="block max-w-[8rem] truncate">{{ block.getBlockDescription() }}</span>
 					</span>
 				</div>
 				<Transition name="fade">
