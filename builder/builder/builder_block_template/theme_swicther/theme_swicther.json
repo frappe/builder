@@ -1,0 +1,17 @@
+{
+ "block": "{\"activeState\": null,\"attributes\": {},\"baseStyles\": {\"alignItems\": \"flex-start\",\"backgroundColor\": \"#E2E2E2\",\"borderColor\": \"#ffffff00\",\"borderRadius\": \"9999px\",\"borderStyle\": \"solid\",\"borderWidth\": \"2px\",\"cursor\": \"pointer\",\"display\": \"flex\",\"flexDirection\": \"column\",\"flexShrink\": 0,\"height\": \"16px\",\"hover:backgroundColor\": \"#bababa\",\"justifyContent\": \"center\",\"overflow\": \"hidden\",\"position\": \"static\",\"transitionDuration\": \"300ms\",\"transitionProperty\": \"all\",\"transitionTimingFunction\": \"ease\",\"width\": \"26px\"},\"blockClientScript\": \"const root = document.documentElement;\\n\\n// load saved theme\\nconst savedTheme = localStorage.getItem(\\\"theme\\\");\\nif (savedTheme) {\\n  root.setAttribute(\\\"data-theme\\\", savedTheme);\\n}\\n\\nlet state = savedTheme === \\\"light\\\";\\n\\nfunction setColorScheme(mode) {\\n  root.dataset.theme = mode\\n  localStorage.setItem(\\\"theme\\\", mode)\\n}\\n\\nthis.addEventListener(\\\"click\\\", () => {\\n  if (!state) {\\n    this.style.backgroundColor = \\\"rgb(56, 56, 56)\\\";\\n    this.querySelector(\\\".switch-handle\\\").style.transform =\\n      \\\"matrix(1, 0, 0, 1, 10, 0)\\\";\\n    setColorScheme(\\\"dark\\\");\\n  } else {\\n    this.style.backgroundColor = \\\"\\\";\\n    this.querySelector(\\\".switch-handle\\\").style.transform = \\\"\\\";\\n    setColorScheme(\\\"light\\\");\\n  }\\n  state = !state;\\n});\\n\",\"blockDataScript\": \"\",\"blockId\": \"sz0tgawrs\",\"blockName\": \"container\",\"children\": [{\"activeState\": null,\"attributes\": {},\"baseStyles\": {\"backgroundColor\": \"#ffffff\",\"borderRadius\": \"9999px\",\"boxShadow\": \"rgb(255, 255, 255) 0px 0px 0px 0px, rgba(2, 137, 247, 0.5) 0px 0px 0px 0px, rgba(0, 0, 0, 0.45) 0px 0px 1px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px 0px\",\"display\": \"flex\",\"flexDirection\": \"column\",\"flexShrink\": 0,\"height\": \"12px\",\"overflow\": \"hidden\",\"overflowX\": \"hidden\",\"overflowY\": \"hidden\",\"position\": \"static\",\"width\": \"12px\"},\"blockClientScript\": \"\",\"blockDataScript\": \"\",\"blockId\": \"2iwtr58ft\",\"children\": [],\"classes\": [\"switch-handle\"],\"customAttributes\": {},\"dataKey\": null,\"dynamicValues\": [],\"element\": \"span\",\"mobileStyles\": {},\"props\": {},\"rawStyles\": {\"transition\": \"all 150ms ease-out\"},\"tabletStyles\": {}}],\"classes\": [],\"customAttributes\": {},\"dataKey\": null,\"dynamicValues\": [],\"element\": \"div\",\"mobileStyles\": {},\"props\": {},\"rawStyles\": {\"overflow\": \"unset\",\"transition\": \"all 150ms ease-out\"},\"tabletStyles\": {}}",
+ "category": "Basic",
+ "creation": "2026-04-28 15:56:03.773551",
+ "docstatus": 0,
+ "doctype": "Block Template",
+ "idx": 0,
+ "modified": "2026-04-28 15:58:33.507926",
+ "modified_by": "Administrator",
+ "name": "Theme Swicther",
+ "owner": "Administrator",
+ "preview": "/builder_assets/Theme Swicther/theme-switcher.png",
+ "preview_height": 1,
+ "preview_width": 1,
+ "sort_order": 0,
+ "template_name": "Theme Swicther"
+}
