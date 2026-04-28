@@ -78,7 +78,6 @@
 				:class="{ 'bg-surface-gray-3': editor.isActive('strike') }">
 				<StrikeThroughIcon />
 			</button>
-
 			<button
 				v-show="!block.isHeader() && !block.isLink() && !block.isButton()"
 				@click="
@@ -91,41 +90,36 @@
 				:class="{ 'bg-surface-gray-3': editor.isActive('link') }">
 				<FeatherIcon class="h-3 w-3" name="link" :stroke-width="2" />
 			</button>
-			<div v-show="!block.isHeader()">
-				<ColorPicker
-					:modelValue="selectedColor"
-					@update:modelValue="setTextColor"
-					:show-input="true"
-					placement="top"
-					:appendTo="overlayElement"
-					popoverClass="!min-w-fit">
-					<template #target="{ togglePopover, isOpen }">
-						<button v-show="!block.isHeader()" class="rounded px-2 py-1 hover:bg-surface-gray-2">
-							<div class="p-1">
-								<div
-									class="h-4 w-4 rounded shadow-sm"
-									@click="
-										() => {
-											togglePopover();
-										}
-									"
-									:style="{
-										background:
-											editor?.isActive('textStyle') && editor?.getAttributes('textStyle').color
-												? editor?.getAttributes('textStyle').color
-												: `url(/assets/builder/images/color-circle.png) center / contain`,
-									}"></div>
-							</div>
-						</button>
-					</template>
-					<template>
-						<Input
-							type="text"
+			<div v-show="!block.isHeader()" class="relative">
+				<button
+					ref="colorSwatchBtn"
+					class="rounded px-2 py-1 hover:bg-surface-gray-2"
+					@click="toggleColorPicker">
+					<div class="p-1">
+						<div
+							class="h-4 w-4 rounded shadow-sm"
+							:style="{
+								background:
+									editor?.isActive('textStyle') && editor?.getAttributes('textStyle').color
+										? editor?.getAttributes('textStyle').color
+										: `url(/assets/builder/images/color-circle.png) center / contain`,
+							}"></div>
+					</div>
+				</button>
+
+				<teleport to="body">
+					<div
+						v-if="colorPickerOpen"
+						ref="colorPickerWrapper"
+						:style="colorPickerStyle"
+						class="fixed z-[9999] rounded-lg bg-surface-white p-3 shadow-lg">
+						<ColorPicker
 							:modelValue="selectedColor"
-							class="!w-32 text-sm"
-							@update:modelValue="setTextColor" />
-					</template>
-				</ColorPicker>
+							@update:modelValue="setTextColor"
+							:show-input="true"
+							render-mode="inline" />
+					</div>
+				</teleport>
 			</div>
 		</div>
 	</bubble-menu>
@@ -154,6 +148,14 @@ const settingLink = ref(false);
 const textLink = ref("");
 const openInNewTab = ref(false);
 const linkInput = ref(null) as Ref<typeof Input | null>;
+const colorSwatchBtn = ref<HTMLElement | null>(null);
+const colorPickerOpen = ref(false);
+const colorPickerWrapper = ref<HTMLElement | null>(null);
+const colorPickerStyle = ref<Record<string, string>>({
+	position: "fixed",
+	top: "0px",
+	left: "0px",
+});
 
 const editorRef = computed(() => props.editor);
 const isEditableRef = computed(() => props.isEditable);
@@ -165,9 +167,47 @@ const selectedColor = computed(() => {
 	return null;
 });
 
+const toggleColorPicker = () => {
+	if (!colorPickerOpen.value) {
+		const rect = colorSwatchBtn.value?.getBoundingClientRect();
+		if (rect) {
+			colorPickerStyle.value = {
+				position: "fixed",
+				top: `${rect.bottom + 8}px`,
+				left: `${rect.left}px`,
+			};
+		}
+	}
+	colorPickerOpen.value = !colorPickerOpen.value;
+};
+
+const handleOutsideClick = (e: MouseEvent) => {
+	if (
+		colorPickerWrapper.value &&
+		!colorPickerWrapper.value.contains(e.target as Node) &&
+		!colorSwatchBtn.value?.contains(e.target as Node)
+	) {
+		colorPickerOpen.value = false;
+	}
+};
+
+watch(colorPickerOpen, (open) => {
+	if (open) {
+		document.addEventListener("mousedown", handleOutsideClick);
+	} else {
+		document.removeEventListener("mousedown", handleOutsideClick);
+	}
+});
+
+watch(
+	() => props.isEditable,
+	(editable) => {
+		if (!editable) colorPickerOpen.value = false;
+	},
+);
+
 const enableLinkInput = () => {
 	settingLink.value = true;
-	// check if link is already set on selection
 	const link = props.editor?.isActive("link") ? props.editor?.getAttributes("link").href : null;
 	textLink.value = link || "";
 	openInNewTab.value = props.editor?.isActive("link")
@@ -208,38 +248,34 @@ const setHeading = (level: 1 | 2 | 3) => {
 	} else {
 		props.block.element = tag;
 	}
-
 	nextTick(() => {
 		props.block.selectBlock();
 	});
 };
 
-// Text color functionality
 const isEntireTextSelected = () => {
 	if (!props.editor) return false;
 	const { from, to } = props.editor.state.selection;
-	const textContent = props.editor.state.doc.textContent;
-	const textLength = textContent.length;
+	const textLength = props.editor.state.doc.textContent.length;
 	return from === 0 && to >= textLength;
 };
 
 const setTextColor = debounce((color: string | undefined) => {
+	if (!props.editor || props.editor.isDestroyed) return;
 	const colorValue = color as string;
 	if (!colorValue) {
-		props.editor?.chain().focus().setColor(colorValue).run();
+		props.editor.chain().setColor("").run();
 		if (isEntireTextSelected()) {
 			props.block.setStyle("color", "");
 		}
 		return;
 	}
-
-	props.editor?.chain().focus().setColor(colorValue).run();
+	props.editor.chain().setColor(colorValue).run();
 	if (isEntireTextSelected()) {
 		props.block.setStyle("color", colorValue);
 	}
 }, 50);
 
-// Keyboard handling
 const handleKeydown = (e: KeyboardEvent) => {
 	if (e.key === "k" && e.metaKey) {
 		const blockWarnings = {
@@ -247,7 +283,6 @@ const handleKeydown = (e: KeyboardEvent) => {
 			isLink: "You cannot add link inside a link block",
 			isButton: "You cannot add link inside a button block",
 		};
-
 		const blockType = Object.entries(blockWarnings).find(([type]) => (props.block as any)[type]());
 		if (blockType) {
 			toast.warning(blockType[1]);
