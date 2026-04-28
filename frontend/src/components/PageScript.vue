@@ -1,6 +1,6 @@
 <template>
 	<div class="flex h-full flex-col justify-between">
-		<div class="flex h-full flex-col gap-4 p-4">
+		<div class="flex h-full flex-col gap-4 p-3">
 			<div class="flex gap-2" v-if="mode == 'page' || isBlockSelected">
 				<BuilderButton @click="showClientScriptEditor()" class="flex-1">Client Script</BuilderButton>
 				<BuilderButton @click="showServerScriptEditor()" class="flex-1">Data Script</BuilderButton>
@@ -34,9 +34,7 @@
 						:obj="blockController.getBlockProps()"
 						@update:obj="(obj: BlockProps) => blockController.setBlockProps(obj)" />
 				</div>
-				<div v-else class="w-full py-4 text-center text-xs text-ink-gray-5">
-					Select a block to preview data.
-				</div>
+				<div v-else class="mt-2 text-center text-sm text-ink-gray-6">Select a block to preview data</div>
 			</div>
 		</div>
 		<div
@@ -159,20 +157,20 @@
 <script lang="ts" setup>
 import Dialog from "@/components/Controls/Dialog.vue";
 import { webPages } from "@/data/webPage";
+import { useBlockDataStore } from "@/stores/blockStore";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
+import blockController from "@/utils/blockController";
+import { useStorage } from "@vueuse/core";
 import { computed, defineComponent, ref, watch } from "vue";
 import { toast } from "vue-sonner";
 import CodeEditor from "./Controls/CodeEditor.vue";
-import PageClientScriptManager from "./PageClientScriptManager.vue";
-import blockController from "@/utils/blockController";
-import TabButtons from "./Controls/TabButtons.vue";
 import Switch from "./Controls/Switch.vue";
+import TabButtons from "./Controls/TabButtons.vue";
+import PageClientScriptManager from "./PageClientScriptManager.vue";
 import PropsEditor from "./PropsEditor.vue";
-import { useBlockDataStore } from "@/stores/blockStore";
-import { useStorage } from "@vueuse/core";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();

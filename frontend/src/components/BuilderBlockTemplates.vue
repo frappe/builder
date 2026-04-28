@@ -1,17 +1,6 @@
 <template>
-	<div class="flex flex-col gap-3">
-		<div v-show="blockTemplates.length > 10 || blockTemplateFilter">
-			<BuilderInput
-				type="text"
-				placeholder="Search Template"
-				v-model="blockTemplateFilter"
-				@input="
-					(value: string) => {
-						blockTemplateFilter = value;
-					}
-				" />
-		</div>
-		<CollapsibleSection :sectionName="section.sectionName" v-for="section in sections">
+	<div class="flex flex-col">
+		<CollapsibleSection class="order-1" :sectionName="section.sectionName" v-for="section in sections">
 			<div class="grid auto-rows-[80px] grid-cols-2 gap-4">
 				<div
 					v-for="blockTemplate in section.blocks"
@@ -42,6 +31,19 @@
 				</div>
 			</div>
 		</CollapsibleSection>
+		<div
+			v-show="blockTemplates.length > 10 || blockTemplateFilter"
+			class="sticky top-0 -mb-1 bg-surface-white py-3">
+			<BuilderInput
+				type="text"
+				placeholder="Search Template"
+				v-model="blockTemplateFilter"
+				@input="
+					(value: string) => {
+						blockTemplateFilter = value;
+					}
+				" />
+		</div>
 	</div>
 </template>
 <script setup lang="ts">
