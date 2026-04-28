@@ -1,7 +1,7 @@
 <template>
 	<div
 		v-if="modelValue"
-		class="pointer-events-none flex flex-col gap-0 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100">
+		class="pointer-events-none flex flex-col gap-0 opacity-100 transition-opacity group-hover:pointer-events-auto">
 		<button
 			type="button"
 			class="circle-cursor duration-250 -mb-[1.5px] flex h-3 w-5 items-center justify-center rounded text-ink-gray-5 transition-all ease-in-out active:-translate-y-[2px] active:text-ink-gray-9"

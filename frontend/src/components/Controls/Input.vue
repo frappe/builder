@@ -22,7 +22,7 @@
 			<template #prefix v-if="$slots.prefix">
 				<slot name="prefix" />
 			</template>
-			<template #suffix>
+			<template v-if="hasSuffix" #suffix>
 				<NumberArrows
 					:modelValue="hasNumber"
 					v-if="!disabled && hasNumber && isStrictNumber"
@@ -32,7 +32,7 @@
 				<slot v-if="$slots.suffix" name="suffix" />
 
 				<button
-					v-if="!['select', 'checkbox'].includes(type) && !hideClearButton && data && !disabled"
+					v-if="showClearButton"
 					class="cursor-pointer text-ink-gray-4 hover:text-ink-gray-5"
 					tabindex="-1"
 					@click="clearValue">
@@ -100,6 +100,17 @@ const clearValue = () => {
 	emit("update:modelValue", "");
 	emit("input", "");
 };
+const showClearButton = computed(() => {
+	return (
+		!["select", "checkbox"].includes(props.type) && !props.hideClearButton && data.value && !props.disabled
+	);
+});
+
+const hasSuffix = computed(() => {
+	const hasClearButton = showClearButton.value;
+	const hasNumberArrows = !props.disabled && hasNumber.value && isStrictNumber.value;
+	return hasClearButton || hasNumberArrows || !!attrs.suffix;
+});
 
 const triggerUpdate = useDebounceFn(($event: Event) => {
 	if (props.type === "checkbox") {
