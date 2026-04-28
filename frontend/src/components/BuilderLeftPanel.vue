@@ -29,7 +29,7 @@
 			</Tooltip>
 		</div>
 		<div
-			class="no-scrollbar hover:show-scrollbar relative min-h-full overflow-auto"
+			class="no-scrollbar relative min-h-full overflow-auto"
 			:style="{
 				width: `${builderStore.builderLayout.leftPanelWidth}px`,
 			}"
@@ -37,13 +37,13 @@
 				builderStore.leftPanelActiveTab === 'Layers' && canvasStore.activeCanvas?.clearSelection()
 			">
 			<div v-show="builderStore.leftPanelActiveTab === 'Blocks'">
-				<BuilderBlockTemplates class="mt-1 p-4 pt-3" />
+				<BuilderBlockTemplates class="px-3 pb-3" />
 			</div>
 			<div v-show="builderStore.leftPanelActiveTab === 'Assets'">
-				<BuilderAssets class="mt-1 p-4 pt-3" />
+				<BuilderAssets class="px-3 pb-3" />
 			</div>
 			<div v-show="builderStore.leftPanelActiveTab === 'Layers'" class="p-3 pr-0">
-				<span class="flex items-center gap-2 py-1 pb-2 text-sm capitalize text-ink-gray-4">
+				<span class="flex items-center gap-2 pb-2 text-sm capitalize text-ink-gray-4">
 					<FeatherIcon
 						:name="
 							canvasStore.activeCanvas?.canvasProps.breakpoints.find(

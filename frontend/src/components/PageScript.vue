@@ -1,6 +1,6 @@
 <template>
 	<div class="flex h-full flex-col justify-between">
-		<div class="flex h-full flex-col gap-4 p-4">
+		<div class="flex h-full flex-col gap-4 p-3">
 			<div class="flex gap-2" v-if="mode == 'page' || isBlockSelected">
 				<BuilderButton @click="showClientScriptEditor()" class="flex-1">Client Script</BuilderButton>
 				<BuilderButton @click="showServerScriptEditor()" class="flex-1">Data Script</BuilderButton>
@@ -34,9 +34,7 @@
 						:obj="blockController.getBlockProps()"
 						@update:obj="(obj: BlockProps) => blockController.setBlockProps(obj)" />
 				</div>
-				<div v-else class="w-full py-4 text-center text-xs text-ink-gray-5">
-					Select a block to preview data.
-				</div>
+				<div v-else class="mt-2 text-center text-sm text-ink-gray-6">Select a block to preview data</div>
 			</div>
 		</div>
 		<div

@@ -125,13 +125,13 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
+import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { FeatherIcon } from "frappe-ui";
 import { ref, watch } from "vue";
 import draggable from "vuedraggable";
 import BlockLayers from "./BlockLayers.vue";
 import BlocksIcon from "./Icons/Blocks.vue";
-import useBuilderStore from "@/stores/builderStore";
 
 type LayerInstance = InstanceType<typeof BlockLayers>;
 
@@ -309,7 +309,8 @@ const updateDropIndicator = (blockLayerItem: HTMLElement, relativeY: number, ele
 	dropIndicatorTop.value = showAbove ? rect.top - containerRect.top : rect.bottom - containerRect.top;
 	dropIndicatorLeft.value = indent;
 	dragState.hoverPosition = showAbove ? "before" : "after";
-	showDropIndicator.value = true;
+
+	showDropIndicator.value = indent === 0 && showAbove ? false : true;
 };
 
 const onMouseMove = (event: MouseEvent) => {
