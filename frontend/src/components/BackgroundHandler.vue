@@ -13,7 +13,7 @@
 					:getModelValue="() => getDisplayValue(null)"
 					:getVariantValue="(v: string) => getDisplayValue(v)"
 					:setVariantValue="handleSetVariant"
-					@update:modelValue="setBGImageURL">
+					:setModelValue="(val: string) => setBGValue(val)">
 					<template #prefix="{ variant }">
 						<div
 							class="absolute left-2 top-[6px] size-4 cursor-pointer rounded shadow-md"
@@ -43,14 +43,11 @@
 
 				<!-- Color Tab -->
 				<div v-if="activeTab === 'color'" class="w-full space-y-4">
-					<ColorPicker renderMode="inline" :modelValue="backgroundColor" @update:modelValue="setBGColor" />
-					<BuilderButton
-						:disabled="!backgroundColor"
-						class="w-full"
-						variant="subtle"
-						@click="setBGColor(null)">
-						Clear Color
-					</BuilderButton>
+					<ColorPicker
+						renderMode="inline"
+						:modelValue="backgroundColor"
+						:showInput="true"
+						@update:modelValue="setBGColor" />
 				</div>
 
 				<!-- Image Tab -->
@@ -113,6 +110,16 @@
 						Clear Gradient
 					</BuilderButton>
 				</div>
+
+				<div
+					v-if="isTextBlock"
+					class="flex items-center justify-between pt-3"
+					:class="{
+						'px-0.5': activeTab !== 'image',
+					}">
+					<InputLabel class="flex-1">Clip Background to Text</InputLabel>
+					<Switch size="sm" :modelValue="backgroundClip === 'text'" @update:modelValue="setBGClip" />
+				</div>
 			</div>
 		</template>
 	</Popover>
@@ -124,6 +131,7 @@ import GradientEditor from "@/components/Controls/GradientEditor.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import Input from "@/components/Controls/Input.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
+import Switch from "@/components/Controls/Switch.vue";
 import TabButtons from "@/components/Controls/TabButtons.vue";
 import blockController from "@/utils/blockController";
 import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
@@ -170,8 +178,6 @@ watch(
 	{ immediate: true },
 );
 
-const hasBackground = computed(() => Boolean(rawBackgroundImage.value || backgroundColor.value));
-
 const getDisplayValue = (state: string | null) => {
 	const bg = blockController.getStyle(getStyleKey("backgroundImage", state)) as string;
 	const color = blockController.getStyle(getStyleKey("backgroundColor", state)) as string;
@@ -186,8 +192,6 @@ const getDisplayValue = (state: string | null) => {
 	return "";
 };
 
-const displayValue = computed(() => getDisplayValue(activeState.value));
-
 const backgroundImageURL = computed(() => {
 	const bgImage = rawBackgroundImage.value;
 	return bgImage && !isGradient.value ? bgImage.replace(/^url\(['"]?|['"]?\)$/g, "") : null;
@@ -198,6 +202,12 @@ const backgroundPosition = computed(
 	() => blockController.getStyle(getStyleKey("backgroundPosition")) as string,
 );
 const backgroundRepeat = computed(() => blockController.getStyle(getStyleKey("backgroundRepeat")) as string);
+const backgroundClip = computed(
+	() =>
+		blockController.getStyle(getStyleKey("backgroundClip")) ||
+		blockController.getStyle(getStyleKey("WebkitBackgroundClip")),
+);
+const isTextBlock = computed(() => blockController.isText());
 
 const getHasBackground = (state: string | null) => {
 	return Boolean(
@@ -265,24 +275,24 @@ const setBGImage = (file: { file_url: string }) => {
 	}
 };
 
-const setBGImageURL = (url: string) => {
+const setBGValue = (value: string) => {
 	const bgKey = getStyleKey("backgroundImage");
 	const colorKey = getStyleKey("backgroundColor");
+	const isValidHexValue = (value: string) => /^([0-9A-F]{3}){1,2}$/i.test(value);
 
-	// Clean up input if it's a URL wrapper
-	let cleanURL = url;
-	if (url?.startsWith("url(")) {
-		cleanURL = url.replace(/^url\(['"]?|['"]?\)$/g, "");
+	let cleanURL = value;
+	if (value?.startsWith("url(")) {
+		cleanURL = value.replace(/^url\(['"]?|['"]?\)$/g, "");
 	}
-
-	if (cleanURL?.startsWith("#") || cleanURL?.startsWith("rgb") || cleanURL?.startsWith("hsl")) {
-		blockController.setStyle(colorKey, cleanURL);
+	if (isValidHexValue(value)) {
+		blockController.setStyle(colorKey, `#${value}`);
+		blockController.setStyle(bgKey, null);
+	} else if (value?.startsWith("#") || value?.startsWith("rgb") || value?.startsWith("hsl")) {
+		blockController.setStyle(colorKey, value);
 		blockController.setStyle(bgKey, null);
 	} else {
 		blockController.setStyle(bgKey, cleanURL ? `url(${cleanURL})` : null);
-		if (cleanURL) {
-			blockController.setStyle(colorKey, null);
-		}
+		blockController.setStyle(colorKey, null);
 	}
 };
 
@@ -315,6 +325,16 @@ const clearBGImage = () => {
 	blockController.setStyle(getStyleKey("backgroundSize"), null);
 	blockController.setStyle(getStyleKey("backgroundPosition"), null);
 	blockController.setStyle(getStyleKey("backgroundRepeat"), null);
+	blockController.setStyle(getStyleKey("backgroundColor"), null);
+};
+
+const setBGClip = (value: boolean) => {
+	const clipValue = value ? "text" : null;
+	const fillValue = value ? "transparent" : null;
+
+	blockController.setStyle(getStyleKey("backgroundClip"), clipValue);
+	blockController.setStyle(getStyleKey("WebkitBackgroundClip"), clipValue);
+	blockController.setStyle(getStyleKey("WebkitTextFillColor"), fillValue);
 };
 
 const handleSetVariant = (variantName: string, value: string | number | boolean | null) => {

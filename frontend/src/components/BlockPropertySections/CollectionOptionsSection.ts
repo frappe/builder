@@ -1,5 +1,5 @@
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
-import useBlockDataStore from "@/stores/blockDataStore";
+import { useBlockDataStore } from "@/stores/blockStore";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
 import { FeatherIcon } from "frappe-ui";

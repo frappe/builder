@@ -3,6 +3,7 @@ import ColorInput from "@/components/Controls/ColorInput.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
 import RangeInput from "../Controls/RangeInput.vue";
+import ShadowHandler from "@/components/ShadowHandler.vue";
 
 const overflowOptions = [
 	{
@@ -122,29 +123,8 @@ const styleSectionProperties = [
 		condition: () => blockController.getStyle("borderColor"),
 	},
 	{
-		component: StylePropertyControl,
-		getProps: () => {
-			return {
-				label: "Shadow",
-				propertyKey: "boxShadow",
-				type: "select",
-				options: [
-					{ value: null, label: "None" },
-					{
-						label: "Small",
-						value: "rgba(0, 0, 0, 0.05) 0px 1px 2px 0px, rgba(0, 0, 0, 0.05) 0px 1px 3px 0px",
-					},
-					{
-						label: "Medium",
-						value: "rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.1) 0px 4px 6px -4px",
-					},
-					{
-						label: "Large",
-						value: "rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.1) 0px 10px 10px -5px",
-					},
-				],
-			};
-		},
+		component: ShadowHandler,
+		getProps: () => {},
 		searchKeyWords: "Shadow, BoxShadow, Box Shadow",
 	},
 	{

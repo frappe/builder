@@ -1,5 +1,10 @@
 <template>
-	<div ref="component" class="!relative" v-html="html"></div>
+	<div
+		ref="component"
+		:class="{
+			'!relative': !block.getStyle('position'),
+		}"
+		v-html="html"></div>
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
@@ -9,6 +14,7 @@ import { computed, ref } from "vue";
 const component = ref<HTMLElement | null>(null);
 const props = defineProps<{
 	block: Block;
+	uid: string;
 	data?: Record<string, unknown> | null;
 	blockData?: Record<string, unknown> | null;
 	defaultProps?: Record<string, unknown> | null;
@@ -32,13 +38,7 @@ const getDynamicContent = () => {
 			let value;
 			if (props.block.getDataKey("comesFrom") === "props") {
 				// props are checked first as unavailablity of comesFrom means it comes from dataScript (legacy)
-				value = getPropValue(
-					props.block.getDataKey("key"),
-					props.block,
-					getDataScriptValue,
-					getBlockDataScriptValue,
-					props.defaultProps,
-				);
+				value = getPropValue(props.block.getDataKey("key"), props.block);
 			} else if (props.block.getDataKey("comesFrom") === "blockDataScript") {
 				value = getBlockDataScriptValue(props.block.getDataKey("key"));
 			} else {
@@ -54,13 +54,7 @@ const getDynamicContent = () => {
 			?.forEach((dataKeyObj: BlockDataKey) => {
 				let value;
 				if (dataKeyObj.comesFrom === "props") {
-					value = getPropValue(
-						dataKeyObj.key as string,
-						props.block,
-						getDataScriptValue,
-						getBlockDataScriptValue,
-						props.defaultProps,
-					);
+					value = getPropValue(dataKeyObj.key as string, props.block, props.uid);
 				} else if (dataKeyObj.comesFrom === "blockDataScript") {
 					value = getBlockDataScriptValue(dataKeyObj.key as string);
 				} else {

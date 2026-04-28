@@ -8,7 +8,7 @@
 			:style="{
 				'min-height': height,
 			}"
-			class="flex h-[30vh] max-h-[80vh] resize-y overflow-hidden overscroll-none !rounded border border-outline-gray-2 bg-surface-gray-2">
+			class="flex h-[30vh] max-h-[80vh] resize-y overflow-hidden !rounded border border-outline-gray-2 bg-surface-gray-2">
 			<CodeMirrorEditor
 				ref="editor"
 				:mode

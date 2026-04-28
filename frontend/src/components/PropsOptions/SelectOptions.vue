@@ -1,24 +1,25 @@
 <template>
 	<div class="flex flex-col gap-3">
-		<InputLabel>Options</InputLabel>
+		<InputLabel class="w-[88px] shrink-0">Options</InputLabel>
 		<ArrayEditor :arr="options" @update:arr="handleOptionsChange" />
 	</div>
 	<div class="flex items-center justify-between">
-		<InputLabel>Default Value</InputLabel>
-		<Input
+		<InlineInput
+			label="Default Value"
+			class="w-full"
 			type="select"
 			:options="optionsAvailable"
-			:model-value="defaultValue"
-			@update:model-value="handleDefaultValueChange"
-			placeholder="Select default value"></Input>
+			:modelValue="defaultValue"
+			@update:modelValue="handleDefaultValueChange"
+			placeholder="Enter default value"></InlineInput>
 	</div>
 </template>
 
 <script setup lang="ts">
 import InputLabel from "@/components/Controls/InputLabel.vue";
-import Input from "@/components/Controls/Input.vue";
 import ArrayEditor from "@/components/ArrayEditor.vue";
 import { computed, nextTick, Ref, ref, watch } from "vue";
+import InlineInput from "@/components/Controls/InlineInput.vue";
 
 const props = defineProps<{
 	options: Record<string, any>;

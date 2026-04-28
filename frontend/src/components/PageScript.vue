@@ -1,6 +1,6 @@
 <template>
 	<div class="flex h-full flex-col justify-between">
-		<div class="flex h-full flex-col gap-4 p-4">
+		<div class="flex h-full flex-col gap-4 p-3">
 			<div class="flex gap-2" v-if="mode == 'page' || isBlockSelected">
 				<BuilderButton @click="showClientScriptEditor()" class="flex-1">Client Script</BuilderButton>
 				<BuilderButton @click="showServerScriptEditor()" class="flex-1">Data Script</BuilderButton>
@@ -24,19 +24,17 @@
 						:autofocus="false"
 						:readonly="true"></CodeEditor>
 					<div class="flex w-full items-center justify-between py-4">
-						<div class="text-sm text-ink-gray-6">Show cumulative data</div>
+						<div class="text-sm text-ink-gray-6">Show inherited data</div>
 						<Switch
-							:model-value="showCumulativeBlockData"
-							@update:model-value="(val) => (showCumulativeBlockData = val)" />
+							:model-value="showInheritedBlockData"
+							@update:model-value="(val) => (showInheritedBlockData = val)" />
 					</div>
 					<div class="my-3 mt-4 text-sm text-ink-gray-8">Block Props</div>
 					<PropsEditor
 						:obj="blockController.getBlockProps()"
 						@update:obj="(obj: BlockProps) => blockController.setBlockProps(obj)" />
 				</div>
-				<div v-else class="w-full py-4 text-center text-xs text-ink-gray-5">
-					Select a block to preview data.
-				</div>
+				<div v-else class="mt-2 text-center text-sm text-ink-gray-6">Select a block to preview data</div>
 			</div>
 		</div>
 		<div
@@ -129,18 +127,26 @@
 								@save="saveBlockDataScript"
 								:showSaveButton="true"
 								:show-line-numbers="true"></CodeEditor>
-							<CodeEditor
-								v-model="blockData"
-								type="JSON"
-								label="Data Preview"
-								:showLineNumbers="true"
-								class="-mt-5 w-1/3 [&>div>div]:bg-surface-white"
-								height="calc(100% - 110px)"
-								description='Use Block Data Script to provide dynamic data to your block.<br>
+							<div class="-mt-5 w-1/3 p-4" height="calc(100% - 110px)">
+								<CodeEditor
+									v-model="blockData"
+									type="JSON"
+									label="Data Preview"
+									:showLineNumbers="true"
+									height="calc(100% - 140px)"
+									class="h-full [&>div>div]:bg-surface-white"
+									description='Use Block Data Script to provide dynamic data to your block.<br>
 								<b>Example:</b> block.events = frappe.get_list("Event")<br><br>
 								For more details on how to write block data script, refer to <b><a class="underline" href="https://docs.frappe.io/builder/data-script" target="_blank">this documentation</a></b>.
 								'
-								:readonly="true"></CodeEditor>
+									:readonly="true"></CodeEditor>
+								<div class="flex items-center justify-between gap-4">
+									<div class="text-sm text-ink-gray-6">Show inherited data</div>
+									<Switch
+										:model-value="showInheritedBlockData"
+										@update:model-value="(val) => (showInheritedBlockData = val)" />
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -151,20 +157,20 @@
 <script lang="ts" setup>
 import Dialog from "@/components/Controls/Dialog.vue";
 import { webPages } from "@/data/webPage";
+import { useBlockDataStore } from "@/stores/blockStore";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
+import blockController from "@/utils/blockController";
+import { useStorage } from "@vueuse/core";
 import { computed, defineComponent, ref, watch } from "vue";
 import { toast } from "vue-sonner";
 import CodeEditor from "./Controls/CodeEditor.vue";
-import PageClientScriptManager from "./PageClientScriptManager.vue";
-import blockController from "@/utils/blockController";
-import TabButtons from "./Controls/TabButtons.vue";
 import Switch from "./Controls/Switch.vue";
+import TabButtons from "./Controls/TabButtons.vue";
+import PageClientScriptManager from "./PageClientScriptManager.vue";
 import PropsEditor from "./PropsEditor.vue";
-import useBlockDataStore from "@/stores/blockDataStore";
-import { useStorage } from "@vueuse/core";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
@@ -172,7 +178,7 @@ const blockDataStore = useBlockDataStore();
 
 const showDialog = ref(false);
 const mode = useStorage("builder_last_used_script_editor_mode", "page");
-const showCumulativeBlockData = ref(false);
+const showInheritedBlockData = ref(false);
 
 const props = defineProps<{
 	page: BuilderPage;
@@ -204,7 +210,7 @@ const blockData = computed(() => {
 	return isBlockSelected.value
 		? blockDataStore.getBlockData(
 				blockController.getFirstSelectedBlock().blockId,
-				showCumulativeBlockData.value ? "all" : "own",
+				showInheritedBlockData.value ? "all" : "own",
 			) || {}
 		: {};
 });

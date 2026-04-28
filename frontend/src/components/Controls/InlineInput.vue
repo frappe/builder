@@ -1,18 +1,24 @@
 <template>
-	<div class="flex items-center justify-between [&>div>input]:!bg-red-600 [&>div>input]:pr-6">
+	<div
+		class="flex items-center justify-between gap-2"
+		:class="{
+			'[&>div>input]:pr-6': !hideClearButton,
+		}">
 		<InputLabel
 			v-if="label"
 			:class="{
 				'cursor-ns-resize': enableSlider,
+				'w-1/3 min-w-[88px] shrink-0': type != 'checkbox',
 			}"
-			class="w-[88px] shrink-0 truncate"
 			:title="label"
 			:description="description"
 			@mousedown="handleMouseDown">
 			{{ label }}
 		</InputLabel>
 		<BuilderInput
-			class="w-full"
+			:class="{
+				'w-full': type != 'checkbox',
+			}"
 			:type="type"
 			:placeholder="placeholder"
 			:modelValue="modelValue"
@@ -23,6 +29,7 @@
 			@keydown.stop="handleKeyDown" />
 		<Autocomplete
 			v-if="type == 'autocomplete'"
+			ref="autocompleteRef"
 			:placeholder="placeholder ? String(placeholder) : undefined"
 			:modelValue="String(modelValue || '')"
 			:options="inputOptions"
@@ -37,7 +44,7 @@
 <script setup lang="ts">
 import { extractNumberAndUnit } from "@/utils/helpers";
 import { isNumber } from "@tiptap/vue-3";
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import Autocomplete from "./Autocomplete.vue";
 import InputLabel from "./InputLabel.vue";
 
@@ -157,4 +164,10 @@ const incrementOrDecrement = (step: number, initialValue: null | number = null) 
 	}
 	handleChange(newValue + "" + unit);
 };
+
+const autocompleteRef = ref<InstanceType<typeof Autocomplete> | null>(null);
+
+defineExpose({
+	refreshOptions: () => autocompleteRef.value?.refreshOptions(),
+});
 </script>

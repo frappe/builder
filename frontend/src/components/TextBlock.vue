@@ -18,7 +18,7 @@
 			v-on-click-outside="handleClickOutside"
 			@mouseup="selectionTriggered = false"
 			v-if="editor && showEditor"
-			class="relative"
+			class="bg-clip-[inherit] relative bg-inherit [-webkit-background-clip:inherit] [background-image:inherit]"
 			:style="block.getRawStyles()"
 			@keydown="(e: KeyboardEvent) => bubbleMenu?.handleKeydown(e)" />
 		<slot />
@@ -56,6 +56,7 @@ let selectionTriggered = false as boolean;
 const props = withDefaults(
 	defineProps<{
 		block: Block;
+		uid: string;
 		preview?: boolean;
 		data?: Record<string, any>;
 		blockData?: Record<string, any> | null;
@@ -129,13 +130,7 @@ const getDynamicContent = () => {
 		let value;
 		if (props.block.getDataKey("comesFrom") === "props") {
 			// props are checked first as unavailablity of comesFrom means it comes from dataScript (legacy)
-			value = getPropValue(
-				props.block.getDataKey("key"),
-				props.block,
-				getDataScriptValue,
-				getBlockDataScriptValue,
-				props.defaultProps,
-			);
+			value = getPropValue(props.block.getDataKey("key"), props.block, props.uid);
 		} else if (props.block.getDataKey("comesFrom") === "blockDataScript") {
 			value = getBlockDataScriptValue(props.block.getDataKey("key"));
 		} else {
@@ -151,13 +146,7 @@ const getDynamicContent = () => {
 		?.forEach((dataKeyObj: BlockDataKey) => {
 			let value;
 			if (dataKeyObj.comesFrom === "props") {
-				value = getPropValue(
-					dataKeyObj.key as string,
-					props.block,
-					getDataScriptValue,
-					getBlockDataScriptValue,
-					props.defaultProps,
-				);
+				value = getPropValue(dataKeyObj.key as string, props.block, props.uid);
 			} else if (dataKeyObj.comesFrom === "blockDataScript") {
 				value = getBlockDataScriptValue(dataKeyObj.key as string);
 			} else {

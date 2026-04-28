@@ -74,7 +74,7 @@
 
 <script setup lang="ts">
 import Block from "@/block";
-import useBlockDataStore from "@/stores/blockDataStore";
+import { useBlockDataStore } from "@/stores/blockStore";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
@@ -148,7 +148,7 @@ const filteredBlockProps = computed(() => {
 	} else {
 		const currentBlock = props.block || blockController.getFirstSelectedBlock();
 		if (currentBlock) {
-			parentProps = Object.keys(getParentProps(currentBlock, {}));
+			parentProps = Object.keys(getParentProps(currentBlock));
 		} else {
 			parentProps = [];
 		}
@@ -185,15 +185,7 @@ const filteredItems = computed(() => {
 		(item) =>
 			item.key.toLowerCase().includes(query) ||
 			String(getDataScriptValue(item.key)).toLowerCase().includes(query) ||
-			String(
-				getPropValue(
-					item.key,
-					props.block || blockController.getFirstSelectedBlock(),
-					getDataScriptValue,
-					getBlockDataScriptValue,
-					defaultProps.value,
-				),
-			)
+			String(getPropValue(item.key, props.block || blockController.getFirstSelectedBlock()))
 				.toLowerCase()
 				.includes(query),
 	);
@@ -203,13 +195,7 @@ const selectedItem = ref<DynamicValueItem | null>(props.selectedValue || null);
 
 const getValue = (item: DynamicValueItem): any => {
 	if (item.comesFrom == "props") {
-		return getPropValue(
-			item.key,
-			props.block || blockController.getFirstSelectedBlock(),
-			getDataScriptValue,
-			getBlockDataScriptValue,
-			defaultProps.value,
-		);
+		return getPropValue(item.key, props.block || blockController.getFirstSelectedBlock());
 	} else if (item.comesFrom == "blockDataScript") {
 		return getBlockDataScriptValue(item.key);
 	} else {

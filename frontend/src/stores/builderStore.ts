@@ -44,7 +44,14 @@ const useBuilderStore = defineStore("builderStore", {
 		isDark: useDark({
 			attribute: "data-theme",
 		}),
+		highlightBlocksWithDataScripts: false,
+		highlightBlocksWithClientScripts: false,
 	}),
+	getters: {
+		isAIEnabled(): boolean {
+			return !!builderSettings.doc?.ai_api_key;
+		},
+	},
 	actions: {
 		toggleReadOnlyMode(readonly: boolean | null = null) {
 			this.readOnlyMode = readonly ?? !this.readOnlyMode;

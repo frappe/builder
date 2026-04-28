@@ -25,7 +25,7 @@
 			</Tooltip>
 		</div>
 		<div
-			class="no-scrollbar hover:show-scrollbar relative min-h-full overflow-auto"
+			class="no-scrollbar relative min-h-full overflow-auto"
 			:style="{
 				width: `${builderStore.builderLayout.leftPanelWidth}px`,
 			}"
@@ -33,13 +33,13 @@
 				builderStore.leftPanelActiveTab === 'Layers' && canvasStore.activeCanvas?.clearSelection()
 			">
 			<div v-show="builderStore.leftPanelActiveTab === 'Blocks'">
-				<BuilderBlockTemplates class="mt-1 p-4 pt-3" />
+				<BuilderBlockTemplates class="px-3 pb-3" />
 			</div>
 			<div v-show="builderStore.leftPanelActiveTab === 'Assets'">
-				<BuilderAssets class="mt-1 p-4 pt-3" />
+				<BuilderAssets class="px-3 pb-3" />
 			</div>
 			<div v-show="builderStore.leftPanelActiveTab === 'Layers'" class="p-3 pr-0">
-				<span class="flex items-center gap-2 py-1 pb-2 text-sm capitalize text-ink-gray-4">
+				<span class="flex items-center gap-2 pb-2 text-sm capitalize text-ink-gray-4">
 					<FeatherIcon
 						:name="
 							canvasStore.activeCanvas?.canvasProps.breakpoints.find(
@@ -90,12 +90,12 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { Tooltip } from "frappe-ui";
 import { inject, nextTick, Ref, ref, watch, watchEffect } from "vue";
+import { useRoute } from "vue-router";
 import BlockLayers from "./BlockLayers.vue";
 import BuilderAssets from "./BuilderAssets.vue";
 import BuilderBlockTemplates from "./BuilderBlockTemplates.vue";
 import BuilderCanvas from "./BuilderCanvas.vue";
 import PanelResizer from "./PanelResizer.vue";
-import { useRoute } from "vue-router";
 
 const showVariableManager = ref(false);
 const miniSidebar = ref(null) as Ref<HTMLElement | null>;
@@ -144,6 +144,7 @@ const setActiveTab = (tab: LeftSidebarTabOption) => {
 		showVariableManager.value = !showVariableManager.value;
 	} else {
 		builderStore.leftPanelActiveTab = tab;
+		showVariableManager.value = false;
 	}
 };
 
