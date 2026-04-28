@@ -19,25 +19,9 @@ if(window.matchMedia("(min-width:768px)").matches&&document.cookie.includes("use
 </script>
 {% endif %}
 <style>
-/* Native browser theming */
-:root {
-  color-scheme: light dark; /* auto-follow system by default */
-}
-/* disable_auto_dark_mode or editor in light preview */
-:root[data-prefers-color-scheme="light"] {
-  color-scheme: light;
-}
-/* editor in dark preview */
-:root[data-prefers-color-scheme="dark"] {
-  color-scheme: dark;
-}
-/* manual user toggle always wins */
-:root[data-theme="light"] {
-  color-scheme: light;
-}
-:root[data-theme="dark"] {
-  color-scheme: dark;
-}
+:root { color-scheme: light dark }
+:root[data-prefers-color-scheme="light"], :root[data-theme="light"] { color-scheme: light }
+:root[data-prefers-color-scheme="dark"], :root[data-theme="dark"] { color-scheme: dark }
 </style>
 {% if _body_html %}
 {{ _body_html | safe }}
