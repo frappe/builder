@@ -1,15 +1,3 @@
 {%- if css_variables -%}:root {
-{%- for key, value in css_variables.items() %}{{ key }}: {{ value }};
+{%- for key, value in css_variables.items() %}{%- set dark_value = (dark_mode_css_variables or {}).get(key) %}{{ key }}: {% if dark_value is not none and dark_value != value %}light-dark({{ value }}, {{ dark_value }}){% else %}{{ value }}{% endif %};
 {%- endfor %}}{%- endif -%}
-
-{%- if dark_mode_css_variables -%}:root[data-theme="dark"] {
-{%- for key, value in dark_mode_css_variables.items() %}{{ key }}: {{ value }};
-{%- endfor %}}
-:root[data-prefers-color-scheme="dark"]:not([data-theme="light"]) {
-{%- for key, value in dark_mode_css_variables.items() %}{{ key }}: {{ value }};
-{%- endfor %}}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]):not([data-prefers-color-scheme="light"]):not([data-prefers-color-scheme="dark"]) {
-{%- for key, value in dark_mode_css_variables.items() %}    {{ key }}: {{ value }};
-{%- endfor %}  }
-}{%- endif -%}
