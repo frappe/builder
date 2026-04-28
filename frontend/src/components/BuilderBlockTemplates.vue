@@ -33,7 +33,7 @@
 		</CollapsibleSection>
 		<div
 			v-show="blockTemplates.length > 10 || blockTemplateFilter"
-			class="sticky top-0 -mb-1 bg-surface-white py-3">
+			class="sticky top-0 bg-surface-white py-3">
 			<BuilderInput
 				type="text"
 				placeholder="Search Template"

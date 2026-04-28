@@ -1,6 +1,11 @@
 <template>
 	<div class="flex flex-col">
-		<div ref="componentContainer" class="order-1">
+		<div
+			ref="componentContainer"
+			class="order-1"
+			:class="{
+				'pt-2': !showSearchInput,
+			}">
 			<div v-show="!components.length" class="text-base italic text-gray-600">No components saved</div>
 			<div v-for="component in components" :key="component.name" class="flex w-full">
 				<div class="component-container group relative flex w-full flex-col">
@@ -28,7 +33,7 @@
 				</div>
 			</div>
 		</div>
-		<div v-show="components.length > 10 || componentFilter" class="sticky top-0 -mb-1 bg-surface-white py-3">
+		<div v-show="showSearchInput" class="sticky top-0 -mb-1 bg-surface-white py-3">
 			<BuilderInput
 				type="text"
 				placeholder="Search component"
@@ -56,6 +61,10 @@ const pageStore = usePageStore();
 
 const componentFilter = ref("");
 const componentContainer = ref(null);
+
+const showSearchInput = computed(() => {
+	return components.value.length > 10 || componentFilter.value;
+});
 
 onMounted(() => {
 	webComponent.fetch();
