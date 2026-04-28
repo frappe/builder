@@ -8,6 +8,7 @@
 			v-bind="attrs" />
 		<FormControl
 			v-else
+			ref="inputWrapper"
 			:type="type"
 			@change="triggerUpdate"
 			@paste="triggerUpdate"
@@ -48,7 +49,7 @@ import CrossIcon from "@/components/Icons/Cross.vue";
 import { useNumberInput } from "@/utils/useNumberInput";
 import { useDebounceFn, useVModel } from "@vueuse/core";
 import { Select } from "frappe-ui";
-import { computed, useAttrs } from "vue";
+import { computed, useAttrs, ref, watch, onMounted } from "vue";
 
 const props = withDefaults(
 	defineProps<{
@@ -117,6 +118,24 @@ const handleFocus = ($event: Event) => {
 		}, 0);
 	}
 };
+
+const inputWrapper = ref<any>(null);
+
+const updateInputPadding = () => {
+	if (!inputWrapper.value) return;
+	const inputElement = inputWrapper.value?.$el?.querySelector("input");
+	if (!inputElement) return;
+
+	inputElement.style.paddingRight = hasNumber.value && isStrictNumber.value ? "0.75rem" : "0.5rem";
+};
+
+onMounted(() => {
+	updateInputPadding();
+});
+
+watch([data, hasNumber, isStrictNumber], () => {
+	updateInputPadding();
+});
 </script>
 
 <style>
