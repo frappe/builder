@@ -255,11 +255,6 @@ class BuilderPage(WebsiteGenerator):
 				"Builder Settings", "Builder Settings", "disable_auto_dark_mode"
 			)
 
-		if context.disable_auto_dark_mode:
-			from builder.builder.doctype.builder_variable.builder_variable import get_css_variables
-
-			context.css_variables, _ = get_css_variables()
-
 		page_data = self.get_page_data()
 		if page_data.get("title"):
 			context.title = page_data.get("page_title")

@@ -18,6 +18,29 @@
 if(window.matchMedia("(min-width:768px)").matches&&document.cookie.includes("user_id=")&&!document.cookie.includes("user_id=Guest")&&!document.cookie.includes("system_user=no;")){const a=Object.assign(document.createElement("a"),{rel:"nofollow",href:"{{editor_link}}",target:"editor-{{page_name}}",style:"position:fixed;bottom:40px;right:50px;height:35px;width:35px;opacity:.1",innerHTML:'<img src="/assets/builder/frontend/builder_logo.png" alt="Edit in Builder" style="box-shadow:#bdbdbd 0 0 5px;border-radius:10px"/>'});document.body.appendChild(a),a.addEventListener("mouseover",()=>a.style.opacity="1"),a.addEventListener("mouseout",()=>a.style.opacity=".1")}
 </script>
 {% endif %}
+<script>
+const root = document.documentElement;
+const media = window.matchMedia("(prefers-color-scheme: dark)");
+const disableAutoDarkMode = {{ "true" if disable_auto_dark_mode else "false" }};
+function applyTheme() {
+  const saved = localStorage.getItem("theme");
+
+  if (saved === "light" || saved === "dark") {
+    root.setAttribute("data-theme", saved);
+  } else if (!disableAutoDarkMode) {
+    // system mode
+    root.removeAttribute("data-theme");
+    const systemDark = media.matches;
+    root.setAttribute("data-theme", systemDark ? "dark" : "light");
+  }
+}
+
+if (!disableAutoDarkMode) {
+  media.addEventListener("change", applyTheme);
+}
+
+applyTheme();
+</script>
 {% if _body_html %}
 {{ _body_html | safe }}
 {% endif %}
