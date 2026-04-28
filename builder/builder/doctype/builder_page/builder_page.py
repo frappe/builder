@@ -245,12 +245,21 @@ class BuilderPage(WebsiteGenerator):
 		# delete default favicon
 		del context.favicon
 		context.disable_indexing = self.disable_indexing
+
+		context.preview = getattr(getattr(frappe.local, "request", None), "for_preview", None)
+
+		if context.preview:
+			context.disable_auto_dark_mode = 0
+		else:
+			context.disable_auto_dark_mode = frappe.get_cached_value(
+				"Builder Settings", "Builder Settings", "disable_auto_dark_mode"
+			)
+
 		page_data = self.get_page_data()
 		if page_data.get("title"):
 			context.title = page_data.get("page_title")
 
 		blocks = self.blocks
-		context.preview = getattr(getattr(frappe.local, "request", None), "for_preview", None)
 
 		if context.preview and self.draft_blocks:
 			blocks = self.draft_blocks
