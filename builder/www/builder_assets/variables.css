@@ -4,4 +4,12 @@
 
 {%- if dark_mode_css_variables -%}:root[data-theme="dark"] {
 {%- for key, value in dark_mode_css_variables.items() %}{{ key }}: {{ value }};
-{%- endfor %}}{%- endif -%}
+{%- endfor %}}
+:root[data-prefers-color-scheme="dark"]:not([data-theme="light"]) {
+{%- for key, value in dark_mode_css_variables.items() %}{{ key }}: {{ value }};
+{%- endfor %}}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-prefers-color-scheme="light"]):not([data-prefers-color-scheme="dark"]) {
+{%- for key, value in dark_mode_css_variables.items() %}    {{ key }}: {{ value }};
+{%- endfor %}  }
+}{%- endif -%}
