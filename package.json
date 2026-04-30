@@ -11,11 +11,13 @@
         "build": "cd frontend && yarn build"
     },
     "version": "0.0.0",
+    "license": "AGPL-3.0-only",
     "engines": {
         "node": ">=18.0.0"
     },
     "dependencies": {},
     "resolutions": {
-        "lint-staged": "^15.2.10"
+        "lint-staged": "^15.2.10",
+        "baseline-browser-mapping": "^2.10.24"
     }
 }
