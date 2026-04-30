@@ -1,11 +1,11 @@
 import { createApp } from "vue";
 
 import { Button, FeatherIcon, FormControl, FrappeUI } from "frappe-ui";
+import { telemetryPlugin } from "frappe-ui/frappe";
 import { createPinia } from "pinia";
 import "./index.css";
 import router from "./router";
 import "./setupFrappeUIResource";
-import "./telemetry";
 import "./utils/arrayFunctions";
 
 import App from "@/App.vue";
@@ -18,6 +18,7 @@ const pinia = createPinia();
 app.use(router);
 app.use(FrappeUI);
 app.use(pinia);
+app.use(telemetryPlugin, { app_name: "builder" });
 
 window.name = "frappe-builder";
 app.config.globalProperties.window = window;

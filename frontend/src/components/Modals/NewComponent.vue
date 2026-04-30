@@ -36,7 +36,6 @@ import webComponent from "@/data/webComponent";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
-import { posthog } from "@/telemetry";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import { getBlockCopy, getBlockString } from "@/utils/helpers";
 import { ref, watch } from "vue";
@@ -70,7 +69,6 @@ const createComponentHandler = async (context: { close: () => void }) => {
 		component_name: componentName.value,
 		for_web_page: isGlobalComponent.value ? null : pageStore.selectedPage,
 	})) as BuilderComponent;
-	posthog.capture("builder_component_created", { component_name: componentData.name });
 	componentStore.setComponentMap(componentData);
 	const block = canvasStore.activeCanvas?.findBlock(props.block.blockId);
 	if (!block) return;

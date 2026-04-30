@@ -3,7 +3,6 @@ import useBlockTemplateStore from "@/stores/blockTemplateStore";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
-import { posthog } from "@/telemetry";
 import {
 	getBlockCopy,
 	getBlockInstance,
@@ -13,9 +12,11 @@ import {
 	uploadUserFont,
 } from "@/utils/helpers";
 import { useDropZone } from "@vueuse/core";
+import { useTelemetry } from "frappe-ui/frappe";
 import { Ref } from "vue";
 import blockController from "./blockController";
 
+const { capture } = useTelemetry();
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 const componentStore = useComponentStore();
@@ -229,7 +230,7 @@ export function useCanvasDropZone(
 				parentBlock.addChild(newBlock, index);
 			}
 			ev.stopPropagation();
-			posthog.capture("builder_component_used");
+			capture("builder_component_used");
 		} else if (blockTemplate) {
 			await blockTemplateStore.fetchBlockTemplate(blockTemplate);
 			const newBlock = getBlockInstance(blockTemplateStore.getBlockTemplate(blockTemplate).block, false);
@@ -245,7 +246,7 @@ export function useCanvasDropZone(
 				if (!parentBlock) return;
 				parentBlock.addChild(newBlock, index);
 			}
-			posthog.capture("builder_block_template_used", { template: blockTemplate });
+			capture("builder_block_template_used", { template: blockTemplate });
 		}
 	};
 
@@ -268,30 +269,30 @@ export function useCanvasDropZone(
 				} else {
 					parentBlock.addChild(getVideoBlock(fileDoc.fileURL), index);
 				}
-				posthog.capture("builder_video_uploaded");
+				capture("builder_video_uploaded");
 				return;
 			}
 
 			if (parentBlock.isImage() && files[0].type.startsWith("image/")) {
 				parentBlock.setAttribute("src", fileDoc.fileURL);
-				posthog.capture("builder_image_uploaded", {
+				capture("builder_image_uploaded", {
 					type: "image-replace",
 				});
 			} else if (parentBlock.isSVG()) {
 				const imageBlock = getImageBlock(fileDoc.fileURL, fileDoc.fileName);
 				const parentParentBlock = parentBlock.getParentBlock();
 				parentParentBlock?.replaceChild(parentBlock, getBlockInstance(imageBlock));
-				posthog.capture("builder_image_uploaded", {
+				capture("builder_image_uploaded", {
 					type: "svg-replace",
 				});
 			} else if (parentBlock.isContainer() && ev.shiftKey) {
 				parentBlock.setStyle("background", `url(${fileDoc.fileURL})`);
-				posthog.capture("builder_image_uploaded", {
+				capture("builder_image_uploaded", {
 					type: "background",
 				});
 			} else {
 				parentBlock.addChild(getImageBlock(fileDoc.fileURL, fileDoc.fileName), index);
-				posthog.capture("builder_image_uploaded", {
+				capture("builder_image_uploaded", {
 					type: "new-image",
 				});
 			}
@@ -304,7 +305,7 @@ export function useCanvasDropZone(
 			blockController.setFontFamily(result.fontName);
 		}
 		if (result?.uploaded) {
-			posthog.capture("builder_font_uploaded");
+			capture("builder_font_uploaded");
 		}
 	};
 
