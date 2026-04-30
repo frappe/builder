@@ -35,10 +35,8 @@ import { getDataForKey, getPropValue } from "@/utils/helpers";
 import type { PauseId } from "@/utils/useCanvasHistory";
 import { Color } from "@tiptap/extension-color";
 import { FontFamily } from "@tiptap/extension-font-family";
-import { Link } from "@tiptap/extension-link";
-import TextStyle from "@tiptap/extension-text-style";
-import Underline from "@tiptap/extension-underline";
-import StarterKit from "@tiptap/starter-kit";
+import { TextStyle } from "@tiptap/extension-text-style";
+import { StarterKit } from "@tiptap/starter-kit";
 import { Editor, EditorContent, Extension } from "@tiptap/vue-3";
 import { vOnClickOutside } from "@vueuse/components";
 import { Plugin, PluginKey } from "prosemirror-state";
@@ -258,7 +256,9 @@ if (!props.preview) {
 				editor.value = new Editor({
 					content: textContent.value,
 					extensions: [
-						StarterKit,
+						StarterKit.configure({
+							link: { openOnClick: false },
+						}),
 						TextStyle.extend({
 							addGlobalAttributes() {
 								return [
@@ -278,10 +278,6 @@ if (!props.preview) {
 							types: ["textStyle"],
 						}),
 						FontFamily,
-						Link.configure({
-							openOnClick: false,
-						}),
-						Underline,
 						FontFamilyPasteRule,
 					],
 					enablePasteRules: false,
