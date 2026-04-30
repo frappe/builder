@@ -93,6 +93,7 @@ declare module 'vue' {
     KeyboardShortcutsModal: typeof import('./src/components/KeyboardShortcutsModal.vue')['default']
     Layers: typeof import('./src/components/Icons/Layers.vue')['default']
     Loading: typeof import('./src/components/Icons/Loading.vue')['default']
+    LucideX: typeof import('~icons/lucide/x')['default']
     MainMenu: typeof import('./src/components/MainMenu.vue')['default']
     MarginHandler: typeof import('./src/components/MarginHandler.vue')['default']
     Meta: typeof import('./src/components/Icons/Meta.vue')['default']
