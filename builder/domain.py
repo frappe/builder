@@ -1,5 +1,6 @@
 import frappe
 from frappe.integrations.frappe_providers.frappecloud_billing import get_base_url, get_headers
+from frappe.utils.telemetry import capture
 
 
 def fc_call(method: str, **params):
@@ -52,7 +53,9 @@ def check_dns(domain: str) -> dict:
 
 @frappe.whitelist()
 def add_domain(domain: str) -> str:
-	return fc_call("add_domain", domain=domain)
+	result = fc_call("add_domain", domain=domain)
+	capture("builder_custom_domain_added", "builder")
+	return result
 
 
 @frappe.whitelist()
