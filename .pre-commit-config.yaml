@@ -35,7 +35,6 @@ repos:
                 .*boilerplate.*|
                 .*src.*.js|
                 builder/public/js/identify.js|
-                builder/public/js/posthog.js|
             )$
 
   - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook

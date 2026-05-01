@@ -137,13 +137,14 @@ import PageListItem from "@/components/PageListItem.vue";
 import { webPages } from "@/data/webPage";
 import vOnClickAndHold from "@/directives/vOnClickAndHold";
 import useBuilderStore from "@/stores/builderStore";
-import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { useShortcut } from "@/utils/useShortcut";
 import { useStorage, watchDebounced } from "@vueuse/core";
 import { Button, createResource, Select } from "frappe-ui";
+import { useTelemetry } from "frappe-ui/frappe";
 import { onActivated, Ref, ref, watch } from "vue";
 
+const { capture } = useTelemetry();
 const builderStore = useBuilderStore();
 const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list">;
 const showFolderSelectorDialog = ref(false);
@@ -165,7 +166,7 @@ const selectedPages = ref(new Set<string>());
 const selectionMode = ref(false);
 
 onActivated(() => {
-	posthog.capture("builder_dashboard_page_visited");
+	capture("builder_dashboard_page_visited");
 });
 
 watch(
@@ -251,7 +252,7 @@ const handleClick = (e: MouseEvent, page: BuilderPage) => {
 			togglePageSelection(page);
 		}
 	} else {
-		posthog.capture("builder_page_opened", { page_name: page.page_name });
+		capture("builder_page_opened", { page_name: page.page_name });
 	}
 };
 
