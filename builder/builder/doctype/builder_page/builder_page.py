@@ -15,6 +15,7 @@ from frappe.modules.export_file import export_to_files
 from frappe.utils import set_request
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
+from frappe.utils.telemetry import capture
 from frappe.website.page_renderers.document_page import DocumentPage
 from frappe.website.path_resolver import evaluate_dynamic_routes
 from frappe.website.path_resolver import resolve_path as original_resolve_path
@@ -143,6 +144,7 @@ class BuilderPage(WebsiteGenerator):
 		self.process_blocks()
 		self.set_preview()
 		self.set_default_values()
+		capture("builder_page_created", "builder")
 
 	def process_blocks(self):
 		for block_type in ["blocks", "draft_blocks"]:
@@ -229,6 +231,7 @@ class BuilderPage(WebsiteGenerator):
 			self.blocks = self.draft_blocks
 			self.draft_blocks = None
 		self.save()
+		capture("builder_page_published", "builder")
 		frappe.enqueue_doc(
 			self.doctype,
 			self.name,
@@ -243,6 +246,7 @@ class BuilderPage(WebsiteGenerator):
 	def unpublish(self):
 		self.published = 0
 		self.save()
+		capture("builder_page_unpublished", "builder")
 
 	def get_context(self, context):
 		# delete default favicon

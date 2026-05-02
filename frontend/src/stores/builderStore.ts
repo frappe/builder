@@ -3,10 +3,13 @@ import { builderSettings } from "@/data/builderSettings";
 import { BuilderSettings } from "@/types/Builder/BuilderSettings";
 import RealTimeHandler from "@/utils/realtimeHandler";
 import { useDark, useStorage } from "@vueuse/core";
+import { useTelemetry } from "frappe-ui/frappe";
 import { defineStore } from "pinia";
 import { toast } from "vue-sonner";
 import type Dialog from "../components/Controls/Dialog.vue";
 import BlockLayers from "./components/BlockLayers.vue";
+
+const { capture } = useTelemetry();
 
 declare global {
 	interface Window {
@@ -63,6 +66,7 @@ const useBuilderStore = defineStore("builderStore", {
 					home_page: route,
 				})
 				.then(() => {
+					capture("builder_homepage_set");
 					toast.success("Homepage set successfully");
 				});
 		},
@@ -72,6 +76,7 @@ const useBuilderStore = defineStore("builderStore", {
 					home_page: "",
 				})
 				.then(() => {
+					capture("builder_homepage_unset");
 					toast.success("This page will no longer be the homepage");
 				});
 		},

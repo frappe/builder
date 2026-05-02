@@ -5,7 +5,6 @@ from typing import Any
 from urllib.parse import unquote
 
 import frappe
-import frappe.utils
 import requests
 from frappe.apps import get_apps as get_permitted_apps
 from frappe.core.doctype.file.file import get_local_image
@@ -13,33 +12,12 @@ from frappe.core.doctype.file.utils import delete_file
 from frappe.model.document import Document
 from frappe.utils.caching import redis_cache
 from frappe.utils.safe_exec import NamespaceDict, get_safe_globals
-from frappe.utils.telemetry import POSTHOG_HOST_FIELD, POSTHOG_PROJECT_FIELD
 from PIL import Image
 from werkzeug.wrappers import Response
 
 from builder import builder_analytics
 from builder.builder.doctype.builder_page.builder_page import BuilderPageRenderer
 from builder.utils import has_page_write
-
-
-@frappe.whitelist()
-def get_posthog_settings():
-	can_record_session = False
-	if start_time := frappe.db.get_default("session_recording_start"):
-		time_difference = (
-			frappe.utils.now_datetime() - frappe.utils.get_datetime(start_time)
-		).total_seconds()
-		if time_difference < 86400:  # 1 day
-			can_record_session = True
-
-	return {
-		"posthog_project_id": frappe.conf.get(POSTHOG_PROJECT_FIELD),
-		"posthog_host": frappe.conf.get(POSTHOG_HOST_FIELD),
-		"enable_telemetry": frappe.get_system_settings("enable_telemetry"),
-		"telemetry_site_age": frappe.utils.telemetry.site_age(),
-		"record_session": can_record_session,
-		"posthog_identifier": frappe.local.site,
-	}
 
 
 @frappe.whitelist()

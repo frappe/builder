@@ -160,10 +160,10 @@ import { webPages } from "@/data/webPage";
 import { useBlockDataStore } from "@/stores/blockStore";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
-import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import blockController from "@/utils/blockController";
 import { useStorage } from "@vueuse/core";
+import { useTelemetry } from "frappe-ui/frappe";
 import { computed, defineComponent, ref, watch } from "vue";
 import { toast } from "vue-sonner";
 import CodeEditor from "./Controls/CodeEditor.vue";
@@ -171,6 +171,8 @@ import Switch from "./Controls/Switch.vue";
 import TabButtons from "./Controls/TabButtons.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
 import PropsEditor from "./PropsEditor.vue";
+
+const { capture } = useTelemetry();
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
@@ -222,7 +224,7 @@ const savePageDataScript = (value: string) => {
 			page_data_script: value,
 		})
 		.then(() => {
-			posthog.capture("builder_page_data_script_saved");
+			capture("builder_page_data_script_saved");
 			props.page.page_data_script = value;
 			pageStore.setPageData(props.page);
 			toast.success("Data script saved");
