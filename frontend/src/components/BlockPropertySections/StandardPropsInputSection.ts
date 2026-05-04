@@ -1,10 +1,10 @@
 import blockController from "@/utils/blockController";
-import OptionToggle from "../Controls/OptionToggle.vue";
 import ArrayInput from "../ArrayInput.vue";
-import ObjectInput from "../ObjectInput.vue";
-import ImageUploadInput from "../ImageUploadInput.vue";
-import ColorInput from "../Controls/ColorInput.vue";
 import BasePropertyControl from "../Controls/BasePropertyControl.vue";
+import ColorInput from "../Controls/ColorInput.vue";
+import OptionToggle from "../Controls/OptionToggle.vue";
+import ImageUploadInput from "../ImageUploadInput.vue";
+import ObjectInput from "../ObjectInput.vue";
 
 const componentMap = {
 	array: ArrayInput,
@@ -143,10 +143,8 @@ const getStandardPropsInputSection = () => {
 };
 
 export default {
-	name: "Component Options",
+	name: "Block Options",
 	properties: getStandardPropsInputSection,
 	collapsed: false,
-	condition: () =>
-		Boolean(blockController.getFirstSelectedBlock().extendedFromComponent) &&
-		Object.keys(getStandardProps(blockController.getBlockProps())).length > 0,
+	condition: () => Object.keys(getStandardProps(blockController.getBlockProps())).length > 0,
 };
