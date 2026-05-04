@@ -79,6 +79,7 @@ const useBlockTemplateStore = defineStore("blockTemplateStore", {
 				args["preview"] = previewImage;
 				await builderBlockTemplate.insert.submit(args);
 			}
+			await builderBlockTemplate.reload();
 
 			toast.success("Block template saved!");
 		},
