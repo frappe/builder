@@ -14,13 +14,17 @@
 						draggable="true"
 						:data-component-id="component.component_id"
 						:data-component-name="component.name"
+						@contextmenu.prevent="(e: MouseEvent) => showContextMenu(e, component)"
 						:class="{
 							'!border-outline-gray-4':
 								canvasStore.fragmentData.fragmentId === component.name ||
 								componentStore.selectedComponent === component.component_id,
 						}">
 						<div class="flex items-center gap-2 text-ink-gray-7">
-							<FeatherIcon :name="'box'" class="h-4 w-4"></FeatherIcon>
+							<Tooltip v-if="!component.for_web_page" text="Global Component" :hoverDelay="0.3">
+								<FeatherIcon name="globe" class="size-4" />
+							</Tooltip>
+							<FeatherIcon v-else name="box" class="size-4" />
 							<p class="text-base">
 								{{ component.component_name }}
 							</p>
@@ -44,23 +48,31 @@
 					}
 				" />
 		</div>
+		<ContextMenu ref="contextMenu" :options="contextMenuOptions" />
 	</div>
 </template>
 <script setup lang="ts">
+import ContextMenu from "@/components/ContextMenu.vue";
 import webComponent from "@/data/webComponent";
+import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import { useEventListener } from "@vueuse/core";
-import { computed, onMounted, ref } from "vue";
+import { Tooltip } from "frappe-ui";
+import { computed, onMounted, ref, Ref } from "vue";
+import { toast } from "vue-sonner";
 
 const canvasStore = useCanvasStore();
 const componentStore = useComponentStore();
 const pageStore = usePageStore();
+const builderStore = useBuilderStore();
 
 const componentFilter = ref("");
 const componentContainer = ref(null);
+const contextMenu = ref(null) as Ref<InstanceType<typeof ContextMenu> | null>;
+const selectedComponent = ref(null) as Ref<BuilderComponent | null>;
 
 const showSearchInput = computed(() => {
 	return components.value.length > 10 || componentFilter.value;
@@ -121,4 +133,37 @@ useEventListener(componentContainer, "dblclick", (e) => {
 const setComponentData = (ev: DragEvent, componentName: string) => {
 	ev?.dataTransfer?.setData("componentName", componentName);
 };
+
+const showContextMenu = (event: MouseEvent, component: BuilderComponent) => {
+	if (!component.for_web_page) {
+		contextMenu.value?.hide();
+		return;
+	}
+	selectedComponent.value = component;
+	contextMenu.value?.show(event);
+};
+
+const setAsGlobalComponent = () => {
+	if (!selectedComponent.value) return;
+	webComponent.setValue
+		.submit({
+			name: selectedComponent.value.name,
+			for_web_page: null,
+		})
+		.then(() => {
+			toast.success("Component is now set as global.");
+			if (selectedComponent.value) {
+				selectedComponent.value.for_web_page = undefined;
+				componentStore.setComponentMap(selectedComponent.value);
+			}
+		});
+};
+
+const contextMenuOptions: ContextMenuOption[] = [
+	{
+		label: "Set as Global Component",
+		action: setAsGlobalComponent,
+		disabled: () => builderStore.readOnlyMode,
+	},
+];
 </script>

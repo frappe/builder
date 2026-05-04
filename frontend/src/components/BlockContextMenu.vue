@@ -10,6 +10,7 @@ import type Block from "@/block";
 import ContextMenu from "@/components/ContextMenu.vue";
 import NewBlockTemplate from "@/components/Modals/NewBlockTemplate.vue";
 import NewComponent from "@/components/Modals/NewComponent.vue";
+import webComponent from "@/data/webComponent";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
@@ -263,6 +264,33 @@ const contextMenuOptions: ContextMenuOption[] = [
 		label: "Save As Component",
 		action: () => (showNewComponentDialog.value = true),
 		condition: () => !block.value.isExtendedFromComponent(),
+		disabled: () => builderStore.readOnlyMode,
+	},
+	{
+		label: "Set as Global Component",
+		action: () => {
+			const componentName = block.value.extendedFromComponent || block.value.isChildOfComponent;
+			if (!componentName) return;
+			const component = componentStore.getComponent(componentName);
+			if (!component) return;
+			webComponent.setValue
+				.submit({
+					name: componentName,
+					for_web_page: null,
+				})
+				.then(() => {
+					toast.success("Component is now set as global.");
+					component.for_web_page = undefined;
+					componentStore.setComponentMap(component);
+				});
+		},
+		condition: () => {
+			if (!block.value.isExtendedFromComponent()) return false;
+			const componentName = block.value.extendedFromComponent || block.value.isChildOfComponent;
+			if (!componentName) return false;
+			const component = componentStore.getComponent(componentName);
+			return Boolean(component?.for_web_page);
+		},
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{

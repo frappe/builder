@@ -164,7 +164,7 @@ import { BuilderPage } from "@/types/Builder/BuilderPage";
 import blockController from "@/utils/blockController";
 import { useStorage } from "@vueuse/core";
 import { useTelemetry } from "frappe-ui/frappe";
-import { computed, defineComponent, ref, watch } from "vue";
+import { computed, defineComponent, onMounted, ref, watch } from "vue";
 import { toast } from "vue-sonner";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import Switch from "./Controls/Switch.vue";
@@ -213,7 +213,7 @@ const blockData = computed(() => {
 		? blockDataStore.getBlockData(
 				blockController.getFirstSelectedBlock().blockId,
 				showInheritedBlockData.value ? "all" : "own",
-			) || {}
+		  ) || {}
 		: {};
 });
 
@@ -284,4 +284,20 @@ watch(
 		}
 	},
 );
+
+watch(isBlockSelected, (newValue) => {
+	if (newValue) {
+		mode.value = "block";
+	} else {
+		mode.value = "page";
+	}
+});
+
+onMounted(() => {
+	if (isBlockSelected.value) {
+		mode.value = "block";
+	} else {
+		mode.value = "page";
+	}
+});
 </script>
