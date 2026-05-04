@@ -97,6 +97,8 @@ const emit = defineEmits<{
 	(clearDynamicValue: void): void;
 }>();
 
+defineOptions({ inheritance: false });
+
 const props = withDefaults(
 	defineProps<{
 		propertyKey: string;

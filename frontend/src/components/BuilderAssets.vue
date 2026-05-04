@@ -1,22 +1,16 @@
 <template>
-	<div class="flex flex-col gap-3">
-		<div v-show="components.length > 10 || componentFilter">
-			<BuilderInput
-				type="text"
-				placeholder="Search component"
-				v-model="componentFilter"
-				@input="
-					(value: string) => {
-						componentFilter = value;
-					}
-				" />
-		</div>
-		<div ref="componentContainer">
-			<div v-show="!components.length" class="mt-2 text-base italic text-gray-600">No components saved</div>
+	<div class="flex flex-col">
+		<div
+			ref="componentContainer"
+			class="order-1"
+			:class="{
+				'pt-2': !showSearchInput,
+			}">
+			<div v-show="!components.length" class="text-base italic text-gray-600">No components saved</div>
 			<div v-for="component in components" :key="component.name" class="flex w-full">
 				<div class="component-container group relative flex w-full flex-col">
 					<div
-						class="user-component relative flex translate-x-0 translate-y-0 cursor-pointer items-center justify-between overflow-hidden truncate rounded border border-transparent bg-surface-white px-2 py-1.5"
+						class="user-component relative flex translate-x-0 translate-y-0 cursor-pointer items-center justify-between overflow-hidden truncate rounded border border-transparent bg-surface-white py-1.5"
 						draggable="true"
 						:data-component-id="component.component_id"
 						:data-component-name="component.name"
@@ -39,6 +33,17 @@
 				</div>
 			</div>
 		</div>
+		<div v-show="showSearchInput" class="sticky top-0 -mb-1 bg-surface-white py-3">
+			<BuilderInput
+				type="text"
+				placeholder="Search component"
+				v-model="componentFilter"
+				@input="
+					(value: string) => {
+						componentFilter = value;
+					}
+				" />
+		</div>
 	</div>
 </template>
 <script setup lang="ts">
@@ -56,6 +61,10 @@ const pageStore = usePageStore();
 
 const componentFilter = ref("");
 const componentContainer = ref(null);
+
+const showSearchInput = computed(() => {
+	return components.value.length > 10 || componentFilter.value;
+});
 
 onMounted(() => {
 	webComponent.fetch();

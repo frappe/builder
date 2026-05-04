@@ -2,14 +2,15 @@
 	<div class="flex w-full flex-col items-center gap-5">
 		<StylePropertyControl
 			propertyKey="position"
-			:component="OptionToggle"
+			type="select"
 			:getModelValue="() => position"
-			:setModelValue="(val) => (position = val)"
+			:setModelValue="setPosition"
 			defaultValue="static"
 			:enableStates="false"
 			:options="[
 				{ label: 'Auto', value: 'static' },
 				{ label: 'Free', value: 'absolute' },
+				{ label: 'Relative', value: 'relative' },
 				{
 					label: 'Fixed',
 					value: 'fixed',
@@ -68,7 +69,6 @@
 </template>
 <script setup lang="ts">
 import InlineInput from "@/components/Controls/InlineInput.vue";
-import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
 import { computed, watch } from "vue";
@@ -76,9 +76,6 @@ import { computed, watch } from "vue";
 const position = computed({
 	get() {
 		const pos = (blockController.getStyle("position") as string) || "static";
-		if (["relative", "static"].includes(pos)) {
-			return "static";
-		}
 		return pos;
 	},
 	set(value: string) {
@@ -92,6 +89,12 @@ const position = computed({
 		}
 	},
 });
+
+const setPosition = (val: string | number | boolean) => {
+	if (typeof val === "string") {
+		position.value = val;
+	}
+};
 
 watch(position, (value) => {
 	if (value === "static") {

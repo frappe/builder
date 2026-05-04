@@ -77,12 +77,14 @@ import PanelResizer from "@/components/PanelResizer.vue";
 import PublishButton from "@/components/PublishButton.vue";
 import router from "@/router";
 import usePageStore from "@/stores/pageStore";
-import { posthog } from "@/telemetry";
 import { useShortcut } from "@/utils/useShortcut";
 import { useDark, useToggle } from "@vueuse/core";
 import { Tooltip } from "frappe-ui";
+import { useTelemetry } from "frappe-ui/frappe";
 import { Ref, computed, onActivated, ref, watch, watchEffect } from "vue";
 import { useRoute } from "vue-router";
+
+const { capture } = useTelemetry();
 
 const route = useRoute();
 const maxWidth = window.innerWidth * 0.92;
@@ -226,6 +228,6 @@ const setPreviewURL = () => {
 
 onActivated(() => {
 	setPreviewURL();
-	posthog.capture("builder_page_preview_viewed");
+	capture("builder_page_preview_viewed");
 });
 </script>

@@ -8,6 +8,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AIPageGeneratorModal: typeof import('./src/components/AIPageGeneratorModal.vue')['default']
     AlertDialog: typeof import('./src/components/AlertDialog.vue')['default']
     AnalyticsFilters: typeof import('./src/components/Settings/AnalyticsFilters.vue')['default']
     AnalyticsOverview: typeof import('./src/components/Settings/AnalyticsOverview.vue')['default']
@@ -51,6 +52,7 @@ declare module 'vue' {
     ColorInput: typeof import('./src/components/Controls/ColorInput.vue')['default']
     ColorOptions: typeof import('./src/components/PropsOptions/ColorOptions.vue')['default']
     ColorPicker: typeof import('./src/components/Controls/ColorPicker.vue')['default']
+    ColorPickerContent: typeof import('./src/components/Controls/ColorPickerContent.vue')['default']
     Component: typeof import('./src/components/Icons/Component.vue')['default']
     ContextMenu: typeof import('./src/components/ContextMenu.vue')['default']
     Cross: typeof import('./src/components/Icons/Cross.vue')['default']
@@ -70,9 +72,11 @@ declare module 'vue' {
     FitScreen: typeof import('./src/components/Icons/FitScreen.vue')['default']
     Folder: typeof import('./src/components/Icons/Folder.vue')['default']
     FontUploader: typeof import('./src/components/Controls/FontUploader.vue')['default']
+    GlobalAI: typeof import('./src/components/Settings/GlobalAI.vue')['default']
     GlobalAnalytics: typeof import('./src/components/Settings/GlobalAnalytics.vue')['default']
     GlobalCode: typeof import('./src/components/Settings/GlobalCode.vue')['default']
     GlobalDeveloper: typeof import('./src/components/Settings/GlobalDeveloper.vue')['default']
+    GlobalDomains: typeof import('./src/components/Settings/GlobalDomains.vue')['default']
     GlobalGeneral: typeof import('./src/components/Settings/GlobalGeneral.vue')['default']
     GlobalMeta: typeof import('./src/components/Settings/GlobalMeta.vue')['default']
     GlobalRedirects: typeof import('./src/components/Settings/GlobalRedirects.vue')['default']
@@ -89,6 +93,7 @@ declare module 'vue' {
     KeyboardShortcutsModal: typeof import('./src/components/KeyboardShortcutsModal.vue')['default']
     Layers: typeof import('./src/components/Icons/Layers.vue')['default']
     Loading: typeof import('./src/components/Icons/Loading.vue')['default']
+    LucideX: typeof import('~icons/lucide/x')['default']
     MainMenu: typeof import('./src/components/MainMenu.vue')['default']
     MarginHandler: typeof import('./src/components/MarginHandler.vue')['default']
     Meta: typeof import('./src/components/Icons/Meta.vue')['default']
@@ -96,6 +101,7 @@ declare module 'vue' {
     NewBuilderVariable: typeof import('./src/components/Modals/NewBuilderVariable.vue')['default']
     NewComponent: typeof import('./src/components/Modals/NewComponent.vue')['default']
     NewFolder: typeof import('./src/components/Modals/NewFolder.vue')['default']
+    NumberArrows: typeof import('./src/components/Controls/NumberArrows.vue')['default']
     NumberOptions: typeof import('./src/components/PropsOptions/NumberOptions.vue')['default']
     ObjectEditor: typeof import('./src/components/ObjectEditor.vue')['default']
     ObjectInput: typeof import('./src/components/ObjectInput.vue')['default']
@@ -146,5 +152,6 @@ declare module 'vue' {
     VariableManager: typeof import('./src/components/Modals/VariableManager.vue')['default']
     VariantControl: typeof import('./src/components/Controls/VariantControl.vue')['default']
     VisibilityInput: typeof import('./src/components/VisibilityInput.vue')['default']
+    WebPagePresetPicker: typeof import('./src/components/WebPagePresetPicker.vue')['default']
   }
 }

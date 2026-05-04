@@ -13,7 +13,7 @@
 					:getModelValue="() => getDisplayValue(null)"
 					:getVariantValue="(v: string) => getDisplayValue(v)"
 					:setVariantValue="handleSetVariant"
-					@update:modelValue="setBGImageURL">
+					:setModelValue="(val: string) => setBGValue(val)">
 					<template #prefix="{ variant }">
 						<div
 							class="absolute left-2 top-[6px] size-4 cursor-pointer rounded shadow-md"
@@ -111,12 +111,14 @@
 					</BuilderButton>
 				</div>
 
-				<div v-if="isTextBlock" class="mt-4 border-t border-outline-gray-2 pt-3">
-					<InlineInput
-						label="Clip Background to Text"
-						type="checkbox"
-						:modelValue="backgroundClip === 'text'"
-						@update:modelValue="setBGClip" />
+				<div
+					v-if="isTextBlock"
+					class="flex items-center justify-between pt-3"
+					:class="{
+						'px-0.5': activeTab !== 'image',
+					}">
+					<InputLabel class="flex-1">Clip Background to Text</InputLabel>
+					<Switch size="sm" :modelValue="backgroundClip === 'text'" @update:modelValue="setBGClip" />
 				</div>
 			</div>
 		</template>
@@ -129,6 +131,7 @@ import GradientEditor from "@/components/Controls/GradientEditor.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import Input from "@/components/Controls/Input.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
+import Switch from "@/components/Controls/Switch.vue";
 import TabButtons from "@/components/Controls/TabButtons.vue";
 import blockController from "@/utils/blockController";
 import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
@@ -188,8 +191,6 @@ const getDisplayValue = (state: string | null) => {
 	if (color) return color;
 	return "";
 };
-
-const displayValue = computed(() => getDisplayValue(activeState.value));
 
 const backgroundImageURL = computed(() => {
 	const bgImage = rawBackgroundImage.value;
@@ -274,24 +275,24 @@ const setBGImage = (file: { file_url: string }) => {
 	}
 };
 
-const setBGImageURL = (url: string) => {
+const setBGValue = (value: string) => {
 	const bgKey = getStyleKey("backgroundImage");
 	const colorKey = getStyleKey("backgroundColor");
+	const isValidHexValue = (value: string) => /^([0-9A-F]{3}){1,2}$/i.test(value);
 
-	// Clean up input if it's a URL wrapper
-	let cleanURL = url;
-	if (url?.startsWith("url(")) {
-		cleanURL = url.replace(/^url\(['"]?|['"]?\)$/g, "");
+	let cleanURL = value;
+	if (value?.startsWith("url(")) {
+		cleanURL = value.replace(/^url\(['"]?|['"]?\)$/g, "");
 	}
-
-	if (cleanURL?.startsWith("#") || cleanURL?.startsWith("rgb") || cleanURL?.startsWith("hsl")) {
-		blockController.setStyle(colorKey, cleanURL);
+	if (isValidHexValue(value)) {
+		blockController.setStyle(colorKey, `#${value}`);
+		blockController.setStyle(bgKey, null);
+	} else if (value?.startsWith("#") || value?.startsWith("rgb") || value?.startsWith("hsl")) {
+		blockController.setStyle(colorKey, value);
 		blockController.setStyle(bgKey, null);
 	} else {
 		blockController.setStyle(bgKey, cleanURL ? `url(${cleanURL})` : null);
-		if (cleanURL) {
-			blockController.setStyle(colorKey, null);
-		}
+		blockController.setStyle(colorKey, null);
 	}
 };
 

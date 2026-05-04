@@ -10,6 +10,9 @@
 		<BlockSnapGuides></BlockSnapGuides>
 		<div
 			class="fixed flex gap-40"
+			:class="{
+				'scheme-dark': builderStore.isDark,
+			}"
 			ref="canvas"
 			:style="{
 				transformOrigin: 'top center',

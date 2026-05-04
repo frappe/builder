@@ -104,7 +104,7 @@ export function useBuilderEvents(
 			return;
 		}
 
-		let text = e.clipboardData?.getData("text/plain") as string || "";
+		let text = (e.clipboardData?.getData("text/plain") as string) || "";
 
 		await pasteBuilderBlocks(e, window.location.origin);
 
@@ -277,6 +277,7 @@ export function useBuilderEvents(
 			ctrl: true,
 			description: "Focus property search",
 			group: "General",
+			allowInInput: true,
 			handler: () => {
 				document.querySelector(".properties-search-input")?.querySelector("input")?.focus();
 			},
@@ -506,6 +507,33 @@ export function useBuilderEvents(
 			group: "Tools",
 			handler: () => {
 				builderStore.mode = "move";
+			},
+		},
+		{
+			key: "l",
+			ctrl: true,
+			triggeredOn: "hold",
+			description: "Highlight Blocks with Data Scripts",
+			group: "View",
+			onHold: () => {
+				builderStore.highlightBlocksWithDataScripts = true;
+			},
+			onRelease: () => {
+				builderStore.highlightBlocksWithDataScripts = false;
+			},
+		},
+		{
+			key: "l",
+			ctrl: true,
+			shift: true,
+			triggeredOn: "hold",
+			description: "Highlight Blocks with Client Scripts",
+			group: "View",
+			onHold: () => {
+				builderStore.highlightBlocksWithClientScripts = true;
+			},
+			onRelease: () => {
+				builderStore.highlightBlocksWithClientScripts = false;
 			},
 		},
 	]);

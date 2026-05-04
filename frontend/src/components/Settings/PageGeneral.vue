@@ -251,13 +251,13 @@ const handleAppChange = async (val: string) => {
 const notifyStandardPageExport = () => {
 	const activePage = pageStore.activePage;
 
-	if (!activePage?.app) {
+	if (!activePage?.app && activePage?.is_standard) {
 		toast.warning("Please select an app for this standard page");
 		return;
 	}
 
-	if (activePage.is_standard) {
-		const appName = toTitleCase(activePage.app);
+	if (activePage?.is_standard) {
+		const appName = toTitleCase(activePage?.app || "");
 		toast.success(`This page will be exported to ${appName} app as standard page`);
 	}
 };

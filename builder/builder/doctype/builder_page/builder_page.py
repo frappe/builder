@@ -15,6 +15,7 @@ from frappe.modules.export_file import export_to_files
 from frappe.utils import set_request
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
+from frappe.utils.telemetry import capture
 from frappe.website.page_renderers.document_page import DocumentPage
 from frappe.website.path_resolver import evaluate_dynamic_routes
 from frappe.website.path_resolver import resolve_path as original_resolve_path
@@ -143,6 +144,7 @@ class BuilderPage(WebsiteGenerator):
 		self.process_blocks()
 		self.set_preview()
 		self.set_default_values()
+		capture("builder_page_created", "builder")
 
 	def process_blocks(self):
 		for block_type in ["blocks", "draft_blocks"]:
@@ -226,6 +228,7 @@ class BuilderPage(WebsiteGenerator):
 			self.blocks = self.draft_blocks
 			self.draft_blocks = None
 		self.save()
+		capture("builder_page_published", "builder")
 		frappe.enqueue_doc(
 			self.doctype,
 			self.name,
@@ -240,17 +243,27 @@ class BuilderPage(WebsiteGenerator):
 	def unpublish(self):
 		self.published = 0
 		self.save()
+		capture("builder_page_unpublished", "builder")
 
 	def get_context(self, context):
 		# delete default favicon
 		del context.favicon
 		context.disable_indexing = self.disable_indexing
+
+		context.preview = getattr(getattr(frappe.local, "request", None), "for_preview", None)
+
+		if context.preview:
+			context.disable_auto_dark_mode = 0
+		else:
+			context.disable_auto_dark_mode = frappe.get_cached_value(
+				"Builder Settings", "Builder Settings", "disable_auto_dark_mode"
+			)
+
 		page_data = self.get_page_data()
 		if page_data.get("title"):
 			context.title = page_data.get("page_title")
 
 		blocks = self.blocks
-		context.preview = getattr(getattr(frappe.local, "request", None), "for_preview", None)
 
 		if context.preview and self.draft_blocks:
 			blocks = self.draft_blocks

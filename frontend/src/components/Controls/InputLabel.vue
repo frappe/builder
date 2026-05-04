@@ -1,8 +1,6 @@
 <template>
-	<span
-		:class="{ 'inline-flex': description }"
-		class="w-[88px] min-w-16 max-w-40 items-center truncate text-xs leading-5 text-ink-gray-6">
-		<slot />
+	<span class="flex w-[88px] min-w-16 items-center truncate text-xs leading-5 text-ink-gray-6">
+		<span class="truncate"><slot /></span>
 		<Popover trigger="hover" v-if="description" placement="top">
 			<template #target>
 				<FeatherIcon name="info" class="ml-1 h-[12px] w-[12px] text-gray-500" />

@@ -13,12 +13,15 @@
   "style_public_url",
   "favicon",
   "auto_convert_images_to_webp",
+  "disable_auto_dark_mode",
   "default_language",
   "landing_page_section",
   "home_page",
   "developer_options_section",
   "execute_block_scripts_in_editor",
-  "restrict_click_handlers"
+  "restrict_click_handlers",
+  "ai_section",
+  "ai_api_key"
  ],
  "fields": [
   {
@@ -69,6 +72,13 @@
    "label": "Auto convert images to WebP"
   },
   {
+   "default": "0",
+   "description": "Disable automatic dark mode color scheme adjustments for all pages globally.",
+   "fieldname": "disable_auto_dark_mode",
+   "fieldtype": "Check",
+   "label": "Disable Auto Dark Mode"
+  },
+  {
    "default": "en",
    "description": "Default HTML lang code (e.g., en, es, fr)",
    "fieldname": "default_language",
@@ -106,6 +116,17 @@
    "fieldname": "restrict_click_handlers",
    "fieldtype": "Check",
    "label": "Restrict Click Handlers"
+  },
+  {
+   "fieldname": "ai_section",
+   "fieldtype": "Section Break",
+   "label": "AI Settings"
+  },
+  {
+   "description": "API key for the selected AI model provider",
+   "fieldname": "ai_api_key",
+   "fieldtype": "Password",
+   "label": "AI API Key"
   }
  ],
  "hide_toolbar": 1,
