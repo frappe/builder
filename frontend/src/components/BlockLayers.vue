@@ -46,7 +46,12 @@
 							:class="{
 								'ml-[-18px]': adjustForRoot,
 							}"
-							v-if="element.children && element.children.length && !element.isRoot()"
+							v-if="
+								element.children &&
+								element.children.length &&
+								!element.isRoot() &&
+								element.editorConfig?.showChildrenInEditor !== false
+							"
 							@click="toggleExpanded(element)" />
 						<FeatherIcon
 							:name="element.getIcon()"
@@ -228,7 +233,13 @@ const blockExits = (block: Block) => {
 };
 
 const canShowChildLayer = (block: Block) => {
-	return (isExpanded(block) && block.hasChildren()) || (block.canHaveChildren() && !block.hasChildren());
+	if (block.editorConfig?.showChildrenInEditor === false) {
+		return false;
+	}
+	return (
+		((isExpanded(block) && block.hasChildren()) || (block.canHaveChildren() && !block.hasChildren())) &&
+		!block.isVideo()
+	);
 };
 
 watch(
