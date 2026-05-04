@@ -1,0 +1,17 @@
+{
+ "block": "{\"blockId\":\"yt8xk2p9q1\",\"children\":[{\"blockId\":\"yt_iframe01\",\"children\":[],\"baseStyles\":{\"border\":\"none\",\"height\":\"100%\",\"width\":\"100%\"},\"rawStyles\":{},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{\"allow\":\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\",\"allowfullscreen\":\"\",\"frameborder\":\"0\"},\"classes\":[],\"dataKey\":null,\"element\":\"iframe\",\"activeState\":null,\"dynamicValues\":[],\"blockClientScript\":\"\",\"blockDataScript\":\"\",\"props\":{},\"customAttributes\":{}}],\"baseStyles\":{\"borderRadius\":\"8px\",\"height\":\"315px\",\"overflow\":\"hidden\",\"position\":\"static\",\"width\":\"560px\"},\"rawStyles\":{},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[],\"dataKey\":null,\"blockName\":\"YouTube\",\"element\":\"div\",\"activeState\":null,\"dynamicValues\":[],\"blockClientScript\":\"function getYouTubeId(url) {\\n  if (!url || typeof url !== 'string') return null;\\n\\n  const patterns = [\\n    /(?:youtu\\\\.be\\\\/|youtube\\\\.com\\\\/(?:embed\\\\/|v\\\\/|shorts\\\\/|watch\\\\?v=|watch\\\\?.+&v=))([\\\\w-]{11})/,\\n    /^([\\\\w-]{11})$/\\n  ];\\n\\n  for (const pattern of patterns) {\\n    const match = url.trim().match(pattern);\\n    if (match?.[1]) return match[1];\\n  }\\n\\n  return null;\\n}\\n\\nconst iframe = this.querySelector('iframe');\\nif (!iframe) return;\\n\\nconst videoId = getYouTubeId(props.video_url ?? '');\\nif (!videoId) {\\n  iframe.removeAttribute('src');\\n  return;\\n}\\n\\nconst autoplay = props.autoplay === 'On' ? 1 : 0;\\nconst params = new URLSearchParams({ autoplay, rel: 0 });\\niframe.src = `https://www.youtube.com/embed/${videoId}?${params}`;\",\"blockDataScript\":\"\",\"props\":{\"video_url\":{\"comesFrom\":null,\"isDynamic\":false,\"isPassedDown\":true,\"isStandard\":true,\"label\":\"Video URL\",\"propOptions\":{\"isRequired\":false,\"options\":{\"defaultValue\":\"https://www.youtube.com/watch?v=dQw4w9WgXcQ\"},\"type\":\"string\"},\"value\":\"https://www.youtube.com/watch?v=dQw4w9WgXcQ\"},\"autoplay\":{\"label\":\"Autoplay\",\"isStandard\":true,\"isDynamic\":false,\"isPassedDown\":true,\"comesFrom\":null,\"value\":null,\"propOptions\":{\"isRequired\":false,\"type\":\"boolean\",\"options\":{\"trueLabel\":\"Yes\",\"falseLabel\":\"No\",\"defaultValue\":\"false\"}}}},\"editorConfig\":{\"icon\":\"film\",\"showChildrenInEditor\":false},\"customAttributes\":{}}",
+ "category": "Media",
+ "creation": "2026-05-04 12:00:00",
+ "docstatus": 0,
+ "doctype": "Block Template",
+ "idx": 0,
+ "modified": "2026-05-04 20:02:22.825445",
+ "modified_by": "Administrator",
+ "name": "YouTube",
+ "owner": "Administrator",
+ "preview": "/builder_assets/YouTube/youtube.png",
+ "preview_height": 1,
+ "preview_width": 1,
+ "sort_order": 20,
+ "template_name": "YouTube"
+}
