@@ -5,7 +5,6 @@ import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore.js";
-import { posthog } from "@/telemetry";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import getBlockTemplate from "@/utils/blockTemplate";
 import {
@@ -178,9 +177,6 @@ const usePageStore = defineStore("pageStore", {
 					route_variables: this.routeVariables,
 				})
 				.then(async () => {
-					posthog.capture("builder_page_published", {
-						page: this.selectedPage,
-					});
 					this.activePage = await this.fetchActivePage(this.selectedPage as string);
 					if (openInBrowser) {
 						this.openPageInBrowser(this.activePage as BuilderPage);

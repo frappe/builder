@@ -18,7 +18,7 @@
 			v-on-click-outside="handleClickOutside"
 			@mouseup="selectionTriggered = false"
 			v-if="editor && showEditor"
-			class="relative"
+			class="bg-clip-[inherit] relative bg-inherit [-webkit-background-clip:inherit] [background-image:inherit]"
 			:style="block.getRawStyles()"
 			@keydown="(e: KeyboardEvent) => bubbleMenu?.handleKeydown(e)" />
 		<slot />
@@ -31,14 +31,12 @@ import TextBlockBubbleMenu from "@/components/TextBlockBubbleMenu.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
 import { setFontFromHTML } from "@/utils/fontManager";
-import { getDataForKey } from "@/utils/helpers";
+import { getDataForKey, getPropValue } from "@/utils/helpers";
 import type { PauseId } from "@/utils/useCanvasHistory";
 import { Color } from "@tiptap/extension-color";
 import { FontFamily } from "@tiptap/extension-font-family";
-import { Link } from "@tiptap/extension-link";
-import TextStyle from "@tiptap/extension-text-style";
-import Underline from "@tiptap/extension-underline";
-import StarterKit from "@tiptap/starter-kit";
+import { TextStyle } from "@tiptap/extension-text-style";
+import { StarterKit } from "@tiptap/starter-kit";
 import { Editor, EditorContent, Extension } from "@tiptap/vue-3";
 import { vOnClickOutside } from "@vueuse/components";
 import { Plugin, PluginKey } from "prosemirror-state";
@@ -56,13 +54,18 @@ let selectionTriggered = false as boolean;
 const props = withDefaults(
 	defineProps<{
 		block: Block;
+		uid: string;
 		preview?: boolean;
 		data?: Record<string, any>;
+		blockData?: Record<string, any> | null;
+		defaultProps?: Record<string, any> | null;
 		breakpoint?: string;
 	}>(),
 	{
 		preview: false,
 		data: () => ({}),
+		blockData: null,
+		defaultProps: null,
 		breakpoint: "desktop",
 	},
 );
@@ -96,9 +99,13 @@ const FontFamilyPasteRule = Extension.create({
 	},
 });
 
+const hasBlockProps = computed(() => {
+	return props.defaultProps || Object.keys(props.block.getBlockProps()).length > 0;
+});
+
 const textContent = computed(() => {
 	let innerHTML = props.block.getInnerHTML();
-	if (props.data) {
+	if (props.data || props.blockData || hasBlockProps.value) {
 		const dynamicContent = getDynamicContent();
 		if (dynamicContent) {
 			innerHTML = dynamicContent;
@@ -107,19 +114,43 @@ const textContent = computed(() => {
 	return String(innerHTML ?? "");
 });
 
+const getDataScriptValue = (path: string): any => {
+	return getDataForKey(props.data, path);
+};
+const getBlockDataScriptValue = (path: string): any => {
+	return getDataForKey(props.blockData || {}, path);
+};
+
 const getDynamicContent = () => {
 	let innerHTML = null as string | null;
+
 	if (props.block.getDataKey("property") === "innerHTML") {
-		const result = getDataForKey(props.data, props.block.getDataKey("key"));
-		innerHTML = (typeof result === "string" ? result : null) ?? innerHTML;
+		let value;
+		if (props.block.getDataKey("comesFrom") === "props") {
+			// props are checked first as unavailablity of comesFrom means it comes from dataScript (legacy)
+			value = getPropValue(props.block.getDataKey("key"), props.block, props.uid);
+		} else if (props.block.getDataKey("comesFrom") === "blockDataScript") {
+			value = getBlockDataScriptValue(props.block.getDataKey("key"));
+		} else {
+			value = getDataScriptValue(props.block.getDataKey("key"));
+		}
+		innerHTML = value ?? innerHTML;
 	}
-	props.block.getDynamicValues()
+	props.block
+		.getDynamicValues()
 		?.filter((dataKeyObj: BlockDataKey) => {
 			return dataKeyObj.property === "innerHTML" && dataKeyObj.type === "key";
 		})
 		?.forEach((dataKeyObj: BlockDataKey) => {
-			const result = getDataForKey(props.data as Object, dataKeyObj.key as string);
-			innerHTML = (typeof result === "string" ? result : null) ?? innerHTML;
+			let value;
+			if (dataKeyObj.comesFrom === "props") {
+				value = getPropValue(dataKeyObj.key as string, props.block, props.uid);
+			} else if (dataKeyObj.comesFrom === "blockDataScript") {
+				value = getBlockDataScriptValue(dataKeyObj.key as string);
+			} else {
+				value = getDataScriptValue(dataKeyObj.key as string);
+			}
+			innerHTML = value ?? innerHTML;
 		});
 	return innerHTML;
 };
@@ -161,12 +192,33 @@ watch(
 watch(
 	() => textContent.value,
 	(newValue: string) => {
+		if (!editor.value) return;
+
 		const innerHTML = getInnerHTML(editor.value);
-		const isSame = newValue === innerHTML;
-		if (isSame) {
+		if (newValue === innerHTML) return;
+
+		// If plain text is entered but current content has HTML styling, preserve it
+		const isPlainText = !/<[^>]+>/.test(newValue);
+		const hasStyles = /<[^>]+style=/.test(innerHTML) || /<(em|strong|i|b|u)/.test(innerHTML);
+
+		if (isPlainText && hasStyles && newValue.trim()) {
+			const tempDiv = document.createElement("div");
+			tempDiv.innerHTML = innerHTML;
+
+			if (tempDiv.textContent !== newValue) {
+				// Update only the text content, preserving all HTML tags
+				const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_TEXT);
+				const textNode = walker.nextNode();
+				if (textNode) {
+					textNode.textContent = newValue;
+					editor.value.commands.setContent(tempDiv.innerHTML, false);
+					return;
+				}
+			}
 			return;
 		}
-		editor.value?.commands.setContent(newValue || "", false);
+
+		editor.value.commands.setContent(newValue || "", false);
 	},
 );
 
@@ -190,21 +242,42 @@ const getInnerHTML = (editor: Editor | null) => {
 
 if (!props.preview) {
 	watch(
-		() => canvasStore.activeCanvas?.isSelected(props.block),
+		() => [
+			canvasStore.activeCanvas?.isSelected(props.block),
+			props.breakpoint,
+			canvasStore.activeCanvas?.activeBreakpoint,
+		],
 		() => {
-			// only load editor if block is selected for performance reasons
-			if (canvasStore.activeCanvas?.isSelected(props.block) && !blockController.multipleBlocksSelected()) {
+			if (
+				canvasStore.activeCanvas?.isSelected(props.block) &&
+				canvasStore.activeCanvas?.activeBreakpoint === props.breakpoint &&
+				!blockController.multipleBlocksSelected()
+			) {
 				editor.value = new Editor({
 					content: textContent.value,
 					extensions: [
-						StarterKit,
-						TextStyle,
-						Color,
-						FontFamily,
-						Link.configure({
-							openOnClick: false,
+						StarterKit.configure({
+							link: { openOnClick: false },
 						}),
-						Underline,
+						TextStyle.extend({
+							addGlobalAttributes() {
+								return [
+									{
+										types: ["textStyle"],
+										attributes: {
+											style: {
+												parseHTML: (element) => element.getAttribute("style"),
+												renderHTML: (attributes) => (attributes.style ? { style: attributes.style } : {}),
+											},
+										},
+									},
+								];
+							},
+						}),
+						Color.configure({
+							types: ["textStyle"],
+						}),
+						FontFamily,
 						FontFamilyPasteRule,
 					],
 					enablePasteRules: false,

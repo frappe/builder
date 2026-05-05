@@ -10,6 +10,8 @@
 			:force-fallback="true"
 			:fallback-class="'!hidden'"
 			:fallback-on-body="false"
+			:delay="100"
+			:delay-on-touch-only="false"
 			:sort="false"
 			:move="checkMove"
 			@start="onDragStart"
@@ -44,8 +46,13 @@
 							:class="{
 								'ml-[-18px]': adjustForRoot,
 							}"
-							v-if="element.children && element.children.length && !element.isRoot()"
-							@click.stop="toggleExpanded(element)" />
+							v-if="
+								element.children &&
+								element.children.length &&
+								!element.isRoot() &&
+								element.editorConfig?.showChildrenInEditor !== false
+							"
+							@click="toggleExpanded(element)" />
 						<FeatherIcon
 							:name="element.getIcon()"
 							class="h-3 w-3"
@@ -53,14 +60,19 @@
 								'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
 									element.isExtendedFromComponent(),
 							}"
-							v-if="!Boolean(element.extendedFromComponent)" />
+							v-if="!Boolean(element.extendedFromComponent) && !showCodeIcon(element)" />
 						<BlocksIcon
 							class="mr-1 h-3 w-3"
 							:class="{
 								'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
 									element.isExtendedFromComponent(),
 							}"
-							v-if="Boolean(element.extendedFromComponent)" />
+							v-if="Boolean(element.extendedFromComponent) && !showCodeIcon(element)" />
+						<FeatherIcon
+							name="terminal"
+							:stroke-width="3"
+							class="h-3 w-3 text-orange-500"
+							v-if="showCodeIcon(element)" />
 						<span
 							class="layer-label min-h-[1em] min-w-[2em] max-w-64 truncate"
 							:contenteditable="element.editable && !readonly"
@@ -83,6 +95,7 @@
 							@blur="setBlockName($event, element)">
 							{{ element.getBlockDescription() }}
 						</span>
+
 						<!-- toggle visibility -->
 						<FeatherIcon
 							v-if="!element.isRoot() && !isParentHidden && !readonly"
@@ -117,6 +130,7 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
+import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { FeatherIcon } from "frappe-ui";
 import { ref, watch } from "vue";
@@ -127,6 +141,7 @@ import BlocksIcon from "./Icons/Blocks.vue";
 type LayerInstance = InstanceType<typeof BlockLayers>;
 
 const canvasStore = useCanvasStore();
+const builderStore = useBuilderStore();
 
 const rootContainer = ref<HTMLElement | null>(null);
 const childLayers = ref<LayerInstance[]>([]);
@@ -177,6 +192,13 @@ const isExpanded = (block: Block) => {
 	return expandedLayers.value.has(block.blockId);
 };
 
+const showCodeIcon = (block: Block) => {
+	return (
+		(builderStore.highlightBlocksWithClientScripts && block.getBlockClientScript()) ||
+		(builderStore.highlightBlocksWithDataScripts && block.getBlockDataScript())
+	);
+};
+
 // TODO: Refactor this!
 const toggleExpanded = (block: Block) => {
 	if (block.isRoot()) {
@@ -211,7 +233,13 @@ const blockExits = (block: Block) => {
 };
 
 const canShowChildLayer = (block: Block) => {
-	return (isExpanded(block) && block.hasChildren()) || (block.canHaveChildren() && !block.hasChildren());
+	if (block.editorConfig?.showChildrenInEditor === false) {
+		return false;
+	}
+	return (
+		((isExpanded(block) && block.hasChildren()) || (block.canHaveChildren() && !block.hasChildren())) &&
+		!block.isVideo()
+	);
 };
 
 watch(
@@ -292,7 +320,8 @@ const updateDropIndicator = (blockLayerItem: HTMLElement, relativeY: number, ele
 	dropIndicatorTop.value = showAbove ? rect.top - containerRect.top : rect.bottom - containerRect.top;
 	dropIndicatorLeft.value = indent;
 	dragState.hoverPosition = showAbove ? "before" : "after";
-	showDropIndicator.value = true;
+
+	showDropIndicator.value = indent === 0 && showAbove ? false : true;
 };
 
 const onMouseMove = (event: MouseEvent) => {

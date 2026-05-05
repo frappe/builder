@@ -1,6 +1,6 @@
 <template>
-	<div v-if="blockController.isBlockSelected()" class="flex select-none flex-col pb-16">
-		<div class="order-1 mt-1 flex flex-col gap-3">
+	<div v-if="blockController.isBlockSelected()" class="flex select-none flex-col-reverse pb-16">
+		<div class="mt-1 flex flex-col gap-3">
 			<CollapsibleSection
 				:sectionName="section.name"
 				v-for="section in sections"
@@ -37,6 +37,7 @@ import collectionOptionsSection from "@/components/BlockPropertySections/Collect
 import customAttributesSection from "@/components/BlockPropertySections/CustomAttributesSection";
 import dataKeySection from "@/components/BlockPropertySections/DataKeySection";
 import dimensionSection from "@/components/BlockPropertySections/DimenstionSection";
+import editorConfigSection from "@/components/BlockPropertySections/EditorConfigSection";
 import HTMLOptionsSection from "@/components/BlockPropertySections/HTMLOptionsSection";
 import imageOptionsSection from "@/components/BlockPropertySections/ImageOptionsSection";
 import inputOptionsSection from "@/components/BlockPropertySections/InputOptionsSection";
@@ -46,6 +47,7 @@ import optionsSection from "@/components/BlockPropertySections/OptionsSection";
 import positionSection from "@/components/BlockPropertySections/PositionSection";
 import rawStyleSection from "@/components/BlockPropertySections/RawStyleSection";
 import spacingSection from "@/components/BlockPropertySections/SpacingSection";
+import standardPropsInputSection from "@/components/BlockPropertySections/StandardPropsInputSection";
 import styleSection from "@/components/BlockPropertySections/StyleSection";
 import transitionSection from "@/components/BlockPropertySections/TransitionSection";
 import typographySection from "@/components/BlockPropertySections/TypographySection";
@@ -70,7 +72,7 @@ type BlockProperty = {
 
 type PropertySection = {
 	name: string;
-	properties: BlockProperty[];
+	properties: BlockProperty[] | (() => BlockProperty[]);
 	condition?: () => boolean;
 	collapsed?: boolean;
 };
@@ -89,7 +91,8 @@ const showSection = (section: PropertySection) => {
 };
 
 const getFilteredProperties = (section: PropertySection) => {
-	return section.properties.filter((property) => {
+	const properties = typeof section.properties === "function" ? section.properties() : section.properties;
+	return properties.filter((property) => {
 		let showProperty = true;
 		if (property.condition) {
 			showProperty = property.condition();
@@ -105,6 +108,7 @@ const getFilteredProperties = (section: PropertySection) => {
 };
 
 const sections = [
+	standardPropsInputSection,
 	collectionOptionsSection,
 	linkSection,
 	layoutSection,
@@ -122,6 +126,7 @@ const sections = [
 	dataKeySection,
 	accessibilitySection,
 	customAttributesSection,
+	editorConfigSection,
 	rawStyleSection,
 ] as PropertySection[];
 </script>

@@ -21,6 +21,7 @@ from builder.utils import (
 	make_safe_get_request,
 	process_block_assets,
 	remove_unsafe_fields,
+	sanitize_style_value,
 	split_styles,
 )
 
@@ -32,10 +33,17 @@ class TestBuilderUtils(FrappeTestCase):
 			"marginTop": "margin-top",
 			"WebsiteHeader": "website-header",
 			"simple": "simple",
+			"Color": "color",
+			"color": "color",
+			"WebkitBackgroundClip": "-webkit-background-clip",
+			"WebkitTextFillColor": "-webkit-text-fill-color",
+			"MozTransform": "-moz-transform",
 		}
 
 		for input_str, expected in test_cases.items():
 			self.assertEqual(camel_case_to_kebab_case(input_str), expected)
+
+		self.assertEqual(camel_case_to_kebab_case("new page", remove_spaces=True), "newpage")
 
 	def test_escape_single_quotes(self):
 		test_cases = {
@@ -129,6 +137,26 @@ class TestBuilderUtils(FrappeTestCase):
 		data = frappe._dict({})
 		execute_script("data.sum = a + b", {"data": data, "a": 2, "b": 2}, "test.py")
 		self.assertEqual(data.sum, 4)
+
+	@patch("builder.utils.is_safe_exec_enabled", return_value=False)
+	@patch("frappe.utils.safe_exec.is_safe_exec_enabled", return_value=False)
+	def test_execute_script_with_enabled_server_script(self, *args):
+		script = "data.test = frappe.get_doc('User', 'Administrator').email"
+		_locals = dict(data=frappe._dict())
+		execute_script(script, _locals, "test.py")
+		self.assertEqual(_locals["data"]["test"], "admin@example.com")
+
+	@patch("builder.utils.is_safe_exec_enabled", return_value=True)
+	@patch("frappe.utils.safe_exec.is_safe_exec_enabled", return_value=True)
+	def test_execute_script_with_disabled_server_script(self, *args):
+		script = "data.test = frappe.get_doc('User', 'Administrator').email"
+		_locals = dict(data=frappe._dict())
+		execute_script(script, _locals, "test.py")
+		self.assertEqual(_locals["data"]["test"], "admin@example.com")
+
+		script = "data.users = frappe.db.get_all('User')"
+		execute_script(script, _locals, "test.py")
+		self.assertTrue(_locals["data"]["users"])
 
 	def test_colon_rule(self):
 		rule = ColonRule("/test/<name>", endpoint="test_endpoint")
@@ -461,3 +489,23 @@ class TestBuilderUtils(FrappeTestCase):
 		block.attributes = frappe._dict()
 		block.children = None
 		copy_img_to_asset_folder(block, test_page)  # Should handle None children gracefully
+
+	def test_sanitize_style_value(self):
+		test_cases = {
+			# No escaping needed
+			"center": "center",
+			"'center'": "'center'",
+			'"center"': '"center"',
+			"rgba(0,0,0,0.5)": "rgba(0,0,0,0.5)",
+			None: None,
+			123: 123,
+			# Unbalanced parentheses
+			"rgba(0,0,0,0.5": r"rgba\(0,0,0,0.5",
+			"rgba(0,0,0,0.5))": r"rgba\(0,0,0,0.5\)\)",
+			# Unbalanced quotes
+			"'center": r"\'center",
+			'"center': r"\"center",
+		}
+
+		for input_val, expected in test_cases.items():
+			self.assertEqual(sanitize_style_value(input_val), expected)

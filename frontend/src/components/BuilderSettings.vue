@@ -1,5 +1,5 @@
 <template>
-	<div class="flex h-[90vh] max-h-[800px] overflow-hidden">
+	<div class="flex h-[88vh] max-h-[800px] overflow-hidden">
 		<div class="flex w-48 shrink-0 flex-col gap-5 bg-surface-gray-1 p-4 px-2">
 			<span class="px-2 text-lg font-semibold text-ink-gray-9">Settings</span>
 			<div class="flex flex-col" v-for="(item, index) in settingsSidebarItems" :key="index">
@@ -46,8 +46,17 @@ import ChartIcon from "./Icons/Chart.vue";
 import CodeIcon from "./Icons/Code.vue";
 import MetaIcon from "./Icons/Meta.vue";
 import SettingsIcon from "./Icons/Settings.vue";
+// @ts-ignore
+import TerminalIcon from "~icons/lucide/terminal";
+// @ts-ignore
+import ExternalLinkIcon from "~icons/lucide/external-link";
+// @ts-ignore
+import SparklesIcon from "~icons/lucide/sparkles";
+import GlobalAI from "./Settings/GlobalAI.vue";
 import GlobalAnalytics from "./Settings/GlobalAnalytics.vue";
 import GlobalCode from "./Settings/GlobalCode.vue";
+import GlobalDeveloper from "./Settings/GlobalDeveloper.vue";
+import GlobalDomains from "./Settings/GlobalDomains.vue";
 import GlobalGeneral from "./Settings/GlobalGeneral.vue";
 import PageAnalytics from "./Settings/PageAnalytics.vue";
 import PageGeneral from "./Settings/PageGeneral.vue";
@@ -136,12 +145,37 @@ const globalSettings = {
 			title: "Redirects",
 			icon: RedirectIcon,
 		},
+		...(window.is_fc_site || window.is_developer_mode
+			? [
+					{
+						label: "Domains",
+						value: "global_domains",
+						component: GlobalDomains,
+						title: "Custom Domains",
+						icon: ExternalLinkIcon,
+					},
+				]
+			: []),
 		{
 			label: "Analytics",
 			value: "global_analytics",
 			component: GlobalAnalytics,
 			title: "Site Views",
 			icon: ChartIcon,
+		},
+		{
+			label: "Developer Settings",
+			value: "global_developer",
+			component: GlobalDeveloper,
+			title: "Developer Settings",
+			icon: TerminalIcon,
+		},
+		{
+			label: "AI",
+			value: "global_ai",
+			component: GlobalAI,
+			title: "AI Settings",
+			icon: SparklesIcon,
 		},
 	],
 };

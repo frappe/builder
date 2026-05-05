@@ -1,6 +1,7 @@
 <template>
 	<div
 		ref="editableRef"
+		class="overflow-hidden truncate rounded-sm px-1 focus-within:border focus-within:border-outline-gray-2 focus-visible:outline-none"
 		:contenteditable="editMode"
 		@dblclick="handleDoubleClick"
 		@blur="handleBlur"

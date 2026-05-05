@@ -120,6 +120,7 @@
 				:label="activeScript.script_name"
 				:type="activeScript.script_type as 'JavaScript' | 'CSS'"
 				class="flex-1"
+				mode="page"
 				height="65vh"
 				:readonly="builderStore.readOnlyMode"
 				:autofocus="false"
@@ -134,10 +135,10 @@
 import EditableSpan from "@/components/EditableSpan.vue";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
-import { posthog } from "@/telemetry";
 import { BuilderClientScript } from "@/types/Builder/BuilderClientScript";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { Autocomplete, createListResource, createResource, Dropdown } from "frappe-ui";
+import { useTelemetry } from "frappe-ui/frappe";
 import { computed, nextTick, ref, watch } from "vue";
 import { toast } from "vue-sonner";
 import draggable from "vuedraggable";
@@ -145,6 +146,8 @@ import CodeEditor from "./Controls/CodeEditor.vue";
 import CSSIcon from "./Icons/CSS.vue";
 import GripVertical from "./Icons/GripVertical.vue";
 import JavaScriptIcon from "./Icons/JavaScript.vue";
+
+const { capture } = useTelemetry();
 
 const scriptEditor = ref<InstanceType<typeof CodeEditor> | null>(null);
 const builderStore = useBuilderStore();
@@ -258,9 +261,7 @@ const addScript = (scriptType: "JavaScript" | "CSS") => {
 					builder_script: res.name,
 				})
 				.then(async () => {
-					posthog.capture("builder_client_script_added", {
-						script_type: res.script_type,
-					});
+					// builder_client_script_created is captured in the backend (before_insert)
 					await attachedScriptResource.reload();
 					attachedScriptResource.data?.forEach((script: attachedScript) => {
 						if (script.script_name === res.name) {
@@ -283,7 +284,7 @@ const attachScript = (builder_script_name: string) => {
 			builder_script: builder_script_name,
 		})
 		.then(async () => {
-			posthog.capture("builder_client_script_attached");
+			capture("builder_client_script_attached");
 			await attachedScriptResource.reload();
 			attachedScriptResource.data?.forEach((script: attachedScript) => {
 				if (script.script_name === builder_script_name) {

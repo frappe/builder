@@ -4,13 +4,7 @@ import {
 	closeBracketsKeymap,
 	completionKeymap,
 } from "@codemirror/autocomplete";
-import {
-	defaultKeymap,
-	history,
-	historyKeymap,
-	indentMore,
-	indentLess,
-} from "@codemirror/commands";
+import { defaultKeymap, history, historyKeymap, indentMore, indentLess } from "@codemirror/commands";
 import {
 	bracketMatching,
 	defaultHighlightStyle,
@@ -39,7 +33,7 @@ import customPythonCompletions from "./pythonCustomCompletion";
 
 import { createApp } from "vue";
 import CustomSearchPanel from "@/components/Controls/CodeMirror/CustomSearchPanel.vue";
-import { indentationMarkers } from '@replit/codemirror-indentation-markers';
+import { indentationMarkers } from "@replit/codemirror-indentation-markers";
 
 interface CreateStateParams {
 	props: any;
@@ -49,6 +43,8 @@ interface CreateStateParams {
 	onChangeCallback: any;
 	onBlurCallback?: any;
 	initialValue?: string;
+	mode?: "block" | "page";
+	blockProps?: Record<string, any>;
 }
 
 export const createStartingState = async ({
@@ -59,6 +55,8 @@ export const createStartingState = async ({
 	onChangeCallback,
 	onBlurCallback,
 	initialValue = "", // to override initial value without recreating state (eg: when resetting)
+	mode,
+	blockProps,
 }: CreateStateParams) => {
 	const updateEmitter = EditorView.updateListener.of((update: ViewUpdate) => {
 		if (update.docChanged) onChangeCallback();
@@ -71,7 +69,7 @@ export const createStartingState = async ({
 					onBlurCallback(view.state.doc.toString());
 					return false; // Don't prevent default
 				},
-			})
+		  })
 		: [];
 	// collection of basic extensions: https://github.com/codemirror/basic-setup/blob/main/src/codemirror.ts
 	const basicSetup: Extension = (() => [
@@ -167,26 +165,22 @@ export const createStartingState = async ({
 	// TODO: reconfigure with Compartments instead of switch...case
 	switch (props.type) {
 		case "JavaScript": {
-			const { javascript, javascriptLanguage } = await import(
-				"@codemirror/lang-javascript"
-			);
+			const { javascript, javascriptLanguage } = await import("@codemirror/lang-javascript");
 			extensions.push(
 				javascript(),
 				javascriptLanguage.data.of({
-					autocomplete: jsCompletionsFromGlobalScope,
+					autocomplete: (context: any) =>
+						jsCompletionsFromGlobalScope(context, { ...(mode == "block" ? { ...blockProps } : {}) }),
 				}),
 			);
 			break;
 		}
 		case "Python": {
-			const { python, pythonLanguage } = await import(
-				"@codemirror/lang-python"
-			);
+			const { python, pythonLanguage } = await import("@codemirror/lang-python");
 			extensions.push(
 				python(),
 				pythonLanguage.data.of({
-					autocomplete: (context: any) =>
-						customPythonCompletions(context, pythonCompletions),
+					autocomplete: (context: any) => customPythonCompletions(context, pythonCompletions, mode, { ...(mode == "block" ? { ...blockProps } : {}) }),
 				}),
 			);
 			break;

@@ -5,7 +5,7 @@
 			:class="{
 				'bg-surface-gray-2': selected,
 			}">
-			<div class="flex w-[90%] gap-3">
+			<div class="flex w-[85%] gap-3">
 				<img
 					width="140"
 					height="82"
@@ -16,9 +16,7 @@
 					<span class="flex h-full w-full flex-col justify-between text-base">
 						<div>
 							<div class="flex items-center gap-1">
-								<p
-									class="max-w-[90%] truncate font-medium text-ink-gray-9"
-									:title="page.page_title || page.page_name">
+								<p class="truncate font-medium text-ink-gray-9" :title="page.page_title || page.page_name">
 									{{ page.page_title || page.page_name }}
 								</p>
 							</div>
@@ -37,7 +35,7 @@
 						</div>
 						<div class="flex items-baseline gap-2 text-ink-gray-6">
 							<UseTimeAgo v-slot="{ timeAgo }" :time="page.modified">
-								<p class="mt-1 block text-sm">Last updated {{ timeAgo }} by {{ page.modified_by }}</p>
+								<p class="mt-1 block text-sm">Last updated {{ timeAgo }} by {{ modifiedBy.fullname }}</p>
 							</UseTimeAgo>
 						</div>
 					</span>
@@ -49,10 +47,11 @@
 				</Badge>
 				<Avatar
 					:shape="'circle'"
-					:label="page.owner"
+					:image="owner.image"
+					:label="owner.fullname"
 					class="[&>div]:bg-surface-gray-2 [&>div]:text-ink-gray-4 [&>div]:group-hover:bg-surface-gray-4 [&>div]:group-hover:text-ink-gray-6"
 					size="sm"
-					:title="`Created by ${page.owner}`" />
+					:title="`Created by ${owner.fullname}`" />
 				<PageActionsDropdown :page="page" size="sm" placement="right">
 					<template v-slot="{ open }">
 						<FeatherIcon
@@ -71,13 +70,17 @@ import GlobeIcon from "@/components/Icons/Globe.vue";
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { getUserInfo } from "@/usersInfo";
 import { UseTimeAgo } from "@vueuse/components";
 import { Avatar, Badge } from "frappe-ui";
 
 const pageStore = usePageStore();
 
-defineProps<{
+const props = defineProps<{
 	page: BuilderPage;
 	selected: boolean;
 }>();
+
+const modifiedBy = getUserInfo(props.page.modified_by);
+const owner = getUserInfo(props.page.owner);
 </script>

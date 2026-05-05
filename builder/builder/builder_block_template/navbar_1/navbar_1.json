@@ -8,7 +8,7 @@
  "modified": "2024-09-19 13:08:11.964111",
  "modified_by": "Administrator",
  "name": "Navbar 1",
- "order": 2,
+ "sort_order": 2,
  "owner": "Administrator",
  "preview": "/builder_assets/Navbar 1/navbar_1.png",
  "preview_height": 1,

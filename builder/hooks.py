@@ -1,7 +1,5 @@
 import frappe
 
-from . import __version__ as app_version
-
 app_name = "builder"
 app_title = "Frappe Builder"
 app_publisher = "Frappe Technologies Pvt Ltd"
@@ -16,6 +14,7 @@ app_license = "GNU Affero General Public License v3.0"
 app_include_js = "/assets/builder/js/builder.js"
 
 export_python_type_annotations = True
+require_type_annotated_api_methods = True
 
 # include js, css files in header of web template
 # web_include_css = "/assets/builder/css/builder.css"
@@ -55,10 +54,14 @@ website_generators = ["Builder Page"]
 # ----------
 
 # add methods and filters to jinja environment
-# jinja = {
-# "methods": "builder.utils.jinja_methods",
-# "filters": "builder.utils.jinja_filters"
-# }
+jinja = {
+	"filters": [
+		"builder.utils.combine",
+		"builder.utils.execute_script_and_combine",
+		"builder.utils.hash",
+		"builder.utils.to_safe_json",
+	],
+}
 
 # Installation
 # ------------

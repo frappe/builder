@@ -4,6 +4,9 @@
 		:editor="editor"
 		:tippy-options="bubbleMenuOptions.tippyOptions"
 		v-if="editor"
+		:style="{
+			transform: `scale(${1 / canvasProps.scale})`,
+		}"
 		class="rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-ink-gray-9 shadow-2xl"
 		:should-show="bubbleMenuOptions.shouldShow">
 		<div
@@ -136,11 +139,13 @@ import type Block from "@/block";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import Input from "@/components/Controls/Input.vue";
 import StrikeThroughIcon from "@/components/Icons/StrikeThrough.vue";
-import { BubbleMenu, type Editor } from "@tiptap/vue-3";
+import type { Editor } from "@tiptap/vue-3";
+import { BubbleMenu } from "@tiptap/vue-3/menus";
 import { vOnClickOutside } from "@vueuse/components";
 import { debounce } from "frappe-ui";
-import { computed, nextTick, ref, watch, type Ref } from "vue";
+import { computed, inject, nextTick, ref, watch, type Ref } from "vue";
 import { toast } from "vue-sonner";
+const canvasProps = inject("canvasProps") as CanvasProps;
 
 const props = defineProps<{
 	block: Block;
@@ -160,8 +165,9 @@ const isEditableRef = computed(() => props.isEditable);
 
 const selectedColor = computed(() => {
 	if (props.editor?.isActive("textStyle")) {
-		return props.editor.getAttributes("textStyle").color || "#000000";
+		return props.editor.getAttributes("textStyle").color || null;
 	}
+	return null;
 });
 
 const enableLinkInput = () => {

@@ -39,10 +39,13 @@
 <script setup lang="ts">
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { getUserInfo } from "@/usersInfo";
 import { UseTimeAgo } from "@vueuse/components";
 
-defineProps<{
+const props = defineProps<{
 	page: BuilderPage;
 	selected: boolean;
 }>();
+
+const user = getUserInfo(props.page.modified_by);
 </script>

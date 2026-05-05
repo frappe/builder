@@ -3,6 +3,7 @@
 		<PanelResizer
 			:dimension="builderStore.builderLayout.leftPanelWidth"
 			side="right"
+			:minDimension="200"
 			:maxDimension="500"
 			@resize="(width) => (builderStore.builderLayout.leftPanelWidth = width)" />
 		<div
@@ -24,7 +25,7 @@
 			</Tooltip>
 		</div>
 		<div
-			class="no-scrollbar hover:show-scrollbar relative min-h-full overflow-auto"
+			class="no-scrollbar relative min-h-full overflow-auto"
 			:style="{
 				width: `${builderStore.builderLayout.leftPanelWidth}px`,
 			}"
@@ -32,13 +33,13 @@
 				builderStore.leftPanelActiveTab === 'Layers' && canvasStore.activeCanvas?.clearSelection()
 			">
 			<div v-show="builderStore.leftPanelActiveTab === 'Blocks'">
-				<BuilderBlockTemplates class="mt-1 p-4 pt-3" />
+				<BuilderBlockTemplates class="px-3 pb-3" />
 			</div>
 			<div v-show="builderStore.leftPanelActiveTab === 'Assets'">
-				<BuilderAssets class="mt-1 p-4 pt-3" />
+				<BuilderAssets class="px-3 pb-3" />
 			</div>
 			<div v-show="builderStore.leftPanelActiveTab === 'Layers'" class="p-3 pr-0">
-				<span class="flex items-center gap-2 py-1 pb-2 text-sm capitalize text-ink-gray-4">
+				<span class="flex items-center gap-2 pb-2 text-sm capitalize text-ink-gray-4">
 					<FeatherIcon
 						:name="
 							canvasStore.activeCanvas?.canvasProps.breakpoints.find(
@@ -66,9 +67,8 @@
 					:adjustForRoot="false"
 					v-if="canvasStore.editingMode === 'fragment' && fragmentCanvas" />
 			</div>
-			<div v-show="builderStore.leftPanelActiveTab === 'Code'">
+			<div class="h-full" v-show="builderStore.leftPanelActiveTab === 'Code'">
 				<PageScript
-					class="p-4"
 					:key="pageStore.selectedPage"
 					v-if="pageStore.selectedPage && pageStore.activePage"
 					:page="pageStore.activePage" />
@@ -91,6 +91,7 @@ import usePageStore from "@/stores/pageStore";
 import type { UserAwareness } from "@/utils/yjsHelpers";
 import { Tooltip } from "frappe-ui";
 import { inject, nextTick, Ref, ref, watch, watchEffect } from "vue";
+import { useRoute } from "vue-router";
 import BlockLayers from "./BlockLayers.vue";
 import BuilderAssets from "./BuilderAssets.vue";
 import BuilderBlockTemplates from "./BuilderBlockTemplates.vue";
@@ -109,6 +110,8 @@ const pageStore = usePageStore();
 const pageCanvas = inject("pageCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
 const fragmentCanvas = inject("fragmentCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
 const remoteUsers = inject("remoteUsers") as Ref<Map<number, UserAwareness>> | undefined;
+
+const route = useRoute();
 
 const leftPanelOptions = [
 	{
@@ -140,9 +143,10 @@ const leftPanelOptions = [
 
 const setActiveTab = (tab: LeftSidebarTabOption) => {
 	if (tab === "variables") {
-		showVariableManager.value = true;
+		showVariableManager.value = !showVariableManager.value;
 	} else {
 		builderStore.leftPanelActiveTab = tab;
+		showVariableManager.value = false;
 	}
 };
 
@@ -153,6 +157,13 @@ watchEffect(() => {
 		builderStore.activeLayers = componentLayers.value;
 	}
 });
+
+watch(
+	() => route.fullPath,
+	() => {
+		showVariableManager.value = false;
+	},
+);
 
 // moved out of BlockLayers for performance
 // TODO: Find a better way to do this

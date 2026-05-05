@@ -1,5 +1,5 @@
 <template>
-	<Button :variant="variant" :class="classes"><slot /></Button>
+	<Button :disabled="disabled" :variant="variant" :class="classes"><slot /></Button>
 </template>
 <script lang="ts" setup>
 import { Button } from "frappe-ui";
@@ -7,7 +7,8 @@ import { computed } from "vue";
 
 const props = withDefaults(
 	defineProps<{
-		variant?: string;
+		disabled?: boolean;
+		variant?: "solid" | "subtle" | "ghost";
 	}>(),
 	{
 		variant: "subtle",
@@ -16,6 +17,9 @@ const props = withDefaults(
 
 const classes = computed(() => {
 	const _classes = [];
+	if (props.disabled) {
+		_classes.push("cursor-not-allowed");
+	}
 	if (props.variant === "solid") {
 		_classes.push([
 			"bg-surface-gray-7",

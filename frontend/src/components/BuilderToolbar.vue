@@ -3,7 +3,7 @@
 		class="toolbar border-outline border-outline flex items-center justify-center border-b-[1px] border-outline-gray-1 bg-surface-white px-2 py-1"
 		ref="toolbar">
 		<div class="absolute left-3 flex items-center gap-5">
-			<MainMenu @showSettings="() => (showSettingsDialog = true)"></MainMenu>
+			<MainMenu @showSettings="() => (showSettingsDialog = true)" @showShortcuts="showShortcuts"></MainMenu>
 			<div class="flex gap-2">
 				<Tooltip
 					:text="mode.description"
@@ -105,6 +105,13 @@
 			</div>
 			<Badge variant="subtle" theme="orange" v-if="builderStore.readOnlyMode">Read Only</Badge>
 			<div class="flex gap-2">
+				<Tooltip v-if="builderStore.isAIEnabled" text="Generate with AI" :hoverDelay="0.6" arrow-class="mb-3">
+					<Button
+						variant="ghost"
+						@click="openAIGenerator"
+						:icon="SparklesIcon"
+						:disabled="builderStore.readOnlyMode"></Button>
+				</Tooltip>
 				<Tooltip text="Toggle Dark Mode" :hoverDelay="0.6" arrow-class="mb-3">
 					<Button
 						variant="ghost"
@@ -145,7 +152,6 @@
 		<Dialog
 			v-model="showSettingsDialog"
 			:disableOutsideClickToClose="true"
-			class="[&>div>div[id^=headlessui-dialog-panel]]:my-3"
 			:options="{
 				title: 'Settings',
 				size: '5xl',
@@ -170,8 +176,10 @@ import { getTextContent } from "@/utils/helpers";
 import { UserAwareness } from "@/utils/yjsHelpers";
 import { useDark, useToggle } from "@vueuse/core";
 import { Badge, Popover, Tooltip } from "frappe-ui";
-import { computed, defineAsyncComponent, PropType, ref } from "vue";
+import { computed, defineAsyncComponent, inject, PropType, ref } from "vue";
 import { toast } from "vue-sonner";
+// @ts-ignore
+import SparklesIcon from "~icons/lucide/sparkles";
 import MainMenu from "./MainMenu.vue";
 import PageOptions from "./PageOptions.vue";
 
@@ -202,6 +210,17 @@ const pageStore = usePageStore();
 
 const showInfoDialog = ref(false);
 const showSettingsDialog = ref(false);
+const showShortcuts = inject<() => void>("showShortcuts", () => {});
+
+const openAIGeneratorFn = inject<(() => void) | undefined>("showAIGenerator", undefined);
+
+const openAIGenerator = () => {
+	if (openAIGeneratorFn) {
+		openAIGeneratorFn();
+	} else {
+		toast.error("AI Generator is not available");
+	}
+};
 
 function getUserInitials(name: string | undefined): string {
 	if (!name) return "?";

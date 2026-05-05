@@ -1,130 +1,104 @@
+import AttributePropertyControl from "@/components/Controls/AttributePropertyControl.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
-import PropertyControl from "@/components/Controls/PropertyControl.vue";
 import ImageUploadInput from "@/components/ImageUploadInput.vue";
 import blockController from "@/utils/blockController";
 
 const videoOptionsSectionProperties = [
 	{
-		component: InlineInput,
+		component: AttributePropertyControl,
 		getProps: () => {
 			return {
+				component: InlineInput,
+				propertyKey: "src",
 				label: "Video URL",
-				modelValue: blockController.getAttribute("src"),
+				allowDynamicValue: true,
+				dynamicValueFilterOptions: {
+					excludeOwnProps: true,
+					excludeOwnBlockData: true,
+				},
 			};
 		},
-		searchKeyWords: "Video, URL, Src",
-		events: {
-			"update:modelValue": (val: string) => blockController.setAttribute("src", val),
-		},
+		searchKeyWords: "Source, URL, Link, Video URL, Video Link",
 	},
 	{
-		component: PropertyControl,
+		component: AttributePropertyControl,
 		getProps: () => {
 			return {
 				component: ImageUploadInput,
-				controlType: "attribute",
-				styleProperty: "poster",
+				propertyKey: "poster",
 				label: "Poster",
-				imageURL: blockController.getAttribute("poster"),
 			};
-		},
-		events: {
-			"update:imageURL": (val: string) => blockController.setAttribute("poster", val),
 		},
 		searchKeyWords: "Poster, Image, Thumbnail, Preview",
 	},
 	{
-		component: OptionToggle,
+		component: AttributePropertyControl,
 		getProps: () => {
 			return {
+				component: OptionToggle,
+				propertyKey: "controls",
 				label: "Controls",
 				options: [
-					{
-						label: "Show",
-						value: "true",
-					},
-					{
-						label: "Hide",
-						value: "false",
-					},
+					{ label: "Show", value: "true" },
+					{ label: "Hide", value: "false" },
 				],
-				modelValue: blockController.getAttribute("controls") === "" ? "true" : "false",
+				getModelValue: () => (blockController.getAttribute("controls") === "" ? "true" : "false"),
+				setModelValue: () => blockController.toggleAttribute("controls"),
 			};
 		},
 		searchKeyWords: "Controls, volume, play, pause, stop, mute, unmute, fullscreen, full screen",
-		events: {
-			"update:modelValue": (val: boolean) => blockController.toggleAttribute("controls"),
-		},
 	},
 	{
-		component: OptionToggle,
+		component: AttributePropertyControl,
 		getProps: () => {
 			return {
+				component: OptionToggle,
+				propertyKey: "autoplay",
 				label: "Autoplay",
 				options: [
-					{
-						label: "Yes",
-						value: "true",
-					},
-					{
-						label: "No",
-						value: "false",
-					},
+					{ label: "Yes", value: "true" },
+					{ label: "No", value: "false" },
 				],
-				modelValue: blockController.getAttribute("autoplay") === "" ? "true" : "false",
+				getModelValue: () => (blockController.getAttribute("autoplay") === "" ? "true" : "false"),
+				setModelValue: () => blockController.toggleAttribute("autoplay"),
 			};
 		},
 		searchKeyWords: "Autoplay, Auto Play",
-		events: {
-			"update:modelValue": (val: boolean) => blockController.toggleAttribute("autoplay"),
-		},
 	},
 	{
-		component: OptionToggle,
+		component: AttributePropertyControl,
 		getProps: () => {
 			return {
+				component: OptionToggle,
+				propertyKey: "muted",
 				label: "Muted",
 				options: [
-					{
-						label: "Yes",
-						value: "true",
-					},
-					{
-						label: "No",
-						value: "false",
-					},
+					{ label: "Yes", value: "true" },
+					{ label: "No", value: "false" },
 				],
-				modelValue: blockController.getAttribute("muted") === "" ? "true" : "false",
+				getModelValue: () => (blockController.getAttribute("muted") === "" ? "true" : "false"),
+				setModelValue: () => blockController.toggleAttribute("muted"),
 			};
 		},
 		searchKeyWords: "Muted",
-		events: {
-			"update:modelValue": (val: boolean) => blockController.toggleAttribute("muted"),
-		},
 	},
 	{
-		component: OptionToggle,
+		component: AttributePropertyControl,
 		getProps: () => {
 			return {
+				component: OptionToggle,
+				propertyKey: "loop",
 				label: "Loop",
 				options: [
-					{
-						label: "Yes",
-						value: "true",
-					},
-					{
-						label: "No",
-						value: "false",
-					},
+					{ label: "Yes", value: "true" },
+					{ label: "No", value: "false" },
 				],
-				modelValue: blockController.getAttribute("loop") === "" ? "true" : "false",
+				getModelValue: () => (blockController.getAttribute("loop") === "" ? "true" : "false"),
+				setModelValue: () => blockController.toggleAttribute("loop"),
 			};
 		},
 		searchKeyWords: "Loop",
-		events: {
-			"update:modelValue": (val: boolean) => blockController.toggleAttribute("loop"),
-		},
 	},
 ];
 

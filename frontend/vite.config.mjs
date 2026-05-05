@@ -15,10 +15,10 @@ export default defineConfig({
 				source: "^/(app|desk|login|api|assets|files|pages|builder_assets)",
 			},
 			lucideIcons: true,
+			buildConfig: false,
 		}),
 		vue(),
 	],
-	buildConfig: false,
 	build: {
 		chunkSizeWarningLimit: 1500,
 		outDir: `../builder/public/frontend`,
@@ -35,6 +35,6 @@ export default defineConfig({
 		allowedHosts: true,
 	},
 	optimizeDeps: {
-		include: ["frappe-ui > feather-icons", "showdown", "engine.io-client", "interactjs"],
+		include: ["frappe-ui > feather-icons", "engine.io-client", "interactjs", "highlight.js/lib/core"],
 	},
 });

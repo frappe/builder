@@ -8,6 +8,7 @@ import {
 	getBoxSpacing,
 	getNumberFromPx,
 	getTextContent,
+	handleBase64Attribute,
 	kebabToCamelCase,
 	parseAndSetBackground,
 	setBoxSpacing,
@@ -16,6 +17,30 @@ import {
 import { Editor } from "@tiptap/vue-3";
 import { clamp } from "@vueuse/core";
 import { computed, nextTick, reactive, toRaw } from "vue";
+
+const TEXT_ELEMENTS = new Set([
+	"span",
+	"h1",
+	"p",
+	"b",
+	"h2",
+	"h3",
+	"h4",
+	"h5",
+	"h6",
+	"label",
+	"a",
+	"cite",
+	"li",
+	"strong",
+	"em",
+	"i",
+	"blockquote",
+]);
+
+const CONTAINER_ELEMENTS = new Set(["section", "div"]);
+
+const HEADER_ELEMENTS = new Set(["h1", "h2", "h3", "h4", "h5", "h6"]);
 
 class Block implements BlockOptions {
 	blockId: string;
@@ -37,11 +62,15 @@ class Block implements BlockOptions {
 	isChildOfComponent?: string;
 	referenceBlockId?: string;
 	isRepeaterBlock?: boolean;
-	visibilityCondition?: string;
+	visibilityCondition?: BlockVisibilityCondition;
 	elementBeforeConversion?: string;
 	parentBlock: Block | null;
 	activeState?: string | null = null;
 	dynamicValues: Array<BlockDataKey>;
+	blockClientScript?: string;
+	blockDataScript?: string;
+	props?: BlockProps;
+	editorConfig?: BlockEditorConfig;
 	// @ts-expect-error
 	referenceComponent: Block | null;
 	customAttributes: BlockAttributeMap;
@@ -53,7 +82,6 @@ class Block implements BlockOptions {
 		this.isRepeaterBlock = options.isRepeaterBlock;
 		this.isChildOfComponent = options.isChildOfComponent;
 		this.referenceBlockId = options.referenceBlockId;
-		this.visibilityCondition = options.visibilityCondition;
 		this.parentBlock = options.parentBlock || null;
 		if (this.extendedFromComponent) {
 			componentStore.loadComponent(this.extendedFromComponent);
@@ -78,6 +106,15 @@ class Block implements BlockOptions {
 			this.innerHTML = options.innerText;
 		}
 
+		if (typeof options.visibilityCondition == "string") {
+			this.visibilityCondition = {
+				key: options.visibilityCondition,
+				comesFrom: "dataScript",
+			};
+		} else {
+			this.visibilityCondition = options.visibilityCondition;
+		}
+
 		this.originalElement = options.originalElement;
 
 		if (!options.blockId || options.blockId === "root") {
@@ -97,6 +134,10 @@ class Block implements BlockOptions {
 		this.tabletStyles = reactive(options.tabletStyles || {});
 		this.attributes = reactive(options.attributes || {});
 		this.dynamicValues = reactive(options.dynamicValues || []);
+		this.blockClientScript = options.blockClientScript || "";
+		this.blockDataScript = options.blockDataScript || "";
+		this.props = reactive(options.props || {});
+		this.editorConfig = options.editorConfig;
 
 		this.blockName = options.blockName;
 		delete this.attributes.style;
@@ -113,19 +154,10 @@ class Block implements BlockOptions {
 		parseAndSetBackground(this.tabletStyles);
 
 		if (this.isImage()) {
-			// if src is base64, convert it to a file
-			const src = this.getAttribute("src") as string;
-			if (src && src.startsWith("data:image")) {
-				const file = dataURLtoFile(src, "image.png");
-				if (file) {
-					this.setAttribute("src", "");
-					options.src = "";
-					uploadBuilderAsset(file, true).then((obj) => {
-						this.setAttribute("src", obj.fileURL);
-					});
-				}
-			}
+			handleBase64Attribute(this, "src", "image.png");
+			handleBase64Attribute(this, "darkSrc", "image-dark.png");
 		}
+
 		const bgImage = this.getStyle("backgroundImage") as string;
 		if (bgImage && /^url\(['"]?data:image/.test(bgImage)) {
 			let bgImage = this.getStyle("backgroundImage") as string;
@@ -291,15 +323,13 @@ class Block implements BlockOptions {
 		return this.getElement() === "svg" || this.getInnerHTML()?.startsWith("<svg");
 	}
 	isText() {
-		return ["span", "h1", "p", "b", "h2", "h3", "h4", "h5", "h6", "label", "a", "cite"].includes(
-			this.getElement() as string,
-		);
+		return TEXT_ELEMENTS.has(this.getElement() as string);
 	}
 	isContainer() {
-		return ["section", "div"].includes(this.getElement() as string);
+		return CONTAINER_ELEMENTS.has(this.getElement() as string);
 	}
 	isHeader() {
-		return ["h1", "h2", "h3", "h4", "h5", "h6"].includes(this.getElement() as string);
+		return HEADER_ELEMENTS.has(this.getElement() as string);
 	}
 	isInput() {
 		return (
@@ -418,6 +448,9 @@ class Block implements BlockOptions {
 		return Math.random().toString(36).substr(2, 9);
 	}
 	getIcon() {
+		if (this.editorConfig?.icon) {
+			return this.editorConfig.icon;
+		}
 		switch (true) {
 			case this.isRoot():
 				return "hash";
@@ -431,6 +464,8 @@ class Block implements BlockOptions {
 				return "link";
 			case this.isText():
 				return "type";
+			case this.isVideo():
+				return "film";
 			case this.isContainer() && this.isRow():
 				return "columns";
 			case this.isContainer() && this.isColumn():
@@ -441,8 +476,6 @@ class Block implements BlockOptions {
 				return "square";
 			case this.isImage():
 				return "image";
-			case this.isVideo():
-				return "film";
 			case this.isForm():
 				return "file-text";
 			default:
@@ -716,6 +749,7 @@ class Block implements BlockOptions {
 				key: "",
 				type: this.isImage() || this.isLink() ? "attribute" : "key",
 				property: this.isLink() ? "href" : this.isImage() ? "src" : "innerHTML",
+				comesFrom: "dataScript",
 			};
 		}
 		if (!value && key === "key") {
@@ -729,7 +763,7 @@ class Block implements BlockOptions {
 		if (!innerHTML && this.isExtendedFromComponent()) {
 			innerHTML = this.referenceComponent?.getInnerHTML() || "";
 		}
-		return innerHTML;
+		return String(innerHTML);
 	}
 	getText(): string {
 		const editor = this.getEditor();
@@ -919,12 +953,13 @@ class Block implements BlockOptions {
 		property: BlockDataKey["property"],
 		type: BlockDataKeyType,
 		key: BlockDataKey["key"] | null = null,
+		comesFrom: BlockDataKey["comesFrom"] = "dataScript",
 	) {
 		const existingKey = this.getDynamicKey(property, type);
 		if (existingKey) {
 			this.dynamicValues = this.dynamicValues.map((v) => {
 				if (v.property === property && v.type === type) {
-					return { ...v, key: key || "" };
+					return { ...v, key: key || "", comesFrom };
 				}
 				return v;
 			});
@@ -933,6 +968,7 @@ class Block implements BlockOptions {
 				property,
 				type,
 				key: key || "",
+				comesFrom,
 			});
 		}
 	}
@@ -958,6 +994,42 @@ class Block implements BlockOptions {
 	}
 	isInsideRepeater(): boolean {
 		return Boolean(this.getRepeaterParent());
+	}
+	getBlockClientScript(): string {
+		let blockClientScript = "";
+		if (this.isExtendedFromComponent() && !this.blockClientScript) {
+			blockClientScript = this.referenceComponent?.getBlockClientScript() || "";
+		} else {
+			blockClientScript = this.blockClientScript || "";
+		}
+		return blockClientScript;
+	}
+	setBlockClientScript(script: string) {
+		this.blockClientScript = script;
+	}
+	getBlockDataScript(): string {
+		let blockDataScript = "";
+		if (this.isExtendedFromComponent() && !this.blockDataScript) {
+			blockDataScript = this.referenceComponent?.getBlockDataScript() || "";
+		} else {
+			blockDataScript = this.blockDataScript || "";
+		}
+		return blockDataScript;
+	}
+	setBlockDataScript(script: string) {
+		this.blockDataScript = script;
+	}
+	getBlockProps(): BlockProps {
+		let blockProps = {};
+		if (this.isExtendedFromComponent() && !Object.keys(this.props || {}).length) {
+			blockProps = this.referenceComponent?.getBlockProps() || {};
+		} else {
+			blockProps = this.props || {};
+		}
+		return blockProps;
+	}
+	setBlockProps(props: BlockProps) {
+		this.props = props;
 	}
 }
 
@@ -1064,6 +1136,9 @@ function resetBlock(
 		block.classes = [];
 		block.dataKey = null;
 		block.dynamicValues = [];
+		block.props = {};
+		block.blockClientScript = "";
+		block.blockDataScript = "";
 	}
 
 	if (resetChildren) {

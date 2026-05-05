@@ -1,6 +1,7 @@
 # Copyright (c) 2024, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
+import json
 import os
 import shutil
 
@@ -30,7 +31,7 @@ class BlockTemplate(Document):
 		block = frappe.parse_json(self.block)
 		if block:
 			copy_img_to_asset_folder(block, self)
-		self.db_set("block", frappe.as_json(block, indent=None))
+		self.db_set("block", json.dumps(block, separators=(",", ":")))
 
 		export_to_files(
 			record_list=[

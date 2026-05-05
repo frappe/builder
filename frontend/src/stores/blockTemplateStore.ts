@@ -4,7 +4,9 @@ import { BlockTemplate } from "@/types/Builder/BlockTemplate";
 import { getBlockInstance, getBlockString } from "@/utils/helpers";
 import { createDocumentResource } from "frappe-ui";
 import { defineStore } from "pinia";
+import { nextTick } from "vue";
 import { toast } from "vue-sonner";
+import useBuilderStore from "./builderStore";
 import useCanvasStore from "./canvasStore";
 
 const useBlockTemplateStore = defineStore("blockTemplateStore", {
@@ -30,6 +32,7 @@ const useBlockTemplateStore = defineStore("blockTemplateStore", {
 			const blockTemplate = this.getBlockTemplate(blockTemplateName);
 			const blockTemplateBlock = this.getBlockTemplateBlock(blockTemplateName);
 			const canvasStore = useCanvasStore();
+			const builderStore = useBuilderStore();
 
 			canvasStore.editOnCanvas(
 				blockTemplateBlock,
@@ -39,6 +42,10 @@ const useBlockTemplateStore = defineStore("blockTemplateStore", {
 				"Save Template",
 				blockTemplate.template_name,
 			);
+			builderStore.leftPanelActiveTab = "Layers";
+			nextTick(() => {
+				canvasStore.fragmentData.block?.selectBlock();
+			});
 		},
 
 		getBlockTemplateBlock(blockTemplateName: string) {
@@ -79,6 +86,8 @@ const useBlockTemplateStore = defineStore("blockTemplateStore", {
 				args["preview"] = previewImage;
 				await builderBlockTemplate.insert.submit(args);
 			}
+			this.blockTemplateMap.delete(templateName);
+			await builderBlockTemplate.reload();
 
 			toast.success("Block template saved!");
 		},

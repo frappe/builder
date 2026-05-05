@@ -1,0 +1,150 @@
+import blockController from "@/utils/blockController";
+import ArrayInput from "../ArrayInput.vue";
+import BasePropertyControl from "../Controls/BasePropertyControl.vue";
+import ColorInput from "../Controls/ColorInput.vue";
+import OptionToggle from "../Controls/OptionToggle.vue";
+import ImageUploadInput from "../ImageUploadInput.vue";
+import ObjectInput from "../ObjectInput.vue";
+
+const componentMap = {
+	array: ArrayInput,
+	object: ObjectInput,
+};
+
+const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
+	const type = propDetails.propOptions?.type || "string";
+	let map = {};
+	switch (type) {
+		case "boolean":
+			map = {
+				component: OptionToggle,
+				options: [
+					{ label: propDetails.propOptions?.options?.trueLabel || "True", value: true },
+					{ label: propDetails.propOptions?.options?.falseLabel || "False", value: false },
+				],
+			};
+			break;
+		case "select":
+			map = {
+				type: "select",
+				options:
+					propDetails.propOptions?.options?.options?.map((item: any) => ({
+						label: item,
+						value: item,
+					})) || [],
+			};
+			break;
+		case "image":
+			map = {
+				component: ImageUploadInput,
+				imageURL: blockController.getBlockProps()[propName].value as string,
+				imageFit:
+					propDetails.propOptions?.options?.imageFit ||
+					(propDetails.propOptions?.options?.defaultImageFit as StyleValue),
+			};
+			break;
+		case "color":
+			map = {
+				component: ColorInput,
+			};
+			break;
+	}
+	map = {
+		label: propDetails.label || propName,
+		enableStates: false,
+		allowDynamicValue: true,
+		dynamicValueFilterOptions: {
+			excludeOwnProps: true,
+			excludeOwnBlockData: true,
+		},
+		getDynamicValue: () => {
+			if (propDetails.isDynamic) {
+				return {
+					key: propDetails.value,
+					comesFrom: propDetails.comesFrom,
+				};
+			}
+		},
+		setDynamicValue: (key: string | null, comesFrom: BlockProps[string]["comesFrom"]) => {
+			blockController.setBlockProp(propName, {
+				value: key || "",
+				isDynamic: !!key,
+				comesFrom: key ? comesFrom : null,
+			});
+		},
+		setModelValue: (value: any) => {
+			if (value == "") value = null;
+			blockController.setBlockProp(propName, { value });
+		},
+		getModelValue: () => {
+			const value = blockController.getFirstSelectedBlock().props?.[propName]?.value;
+			return value;
+		},
+		getPlaceholder: () => {
+			return propDetails.propOptions?.options?.defaultValue || null;
+		},
+		defaultValue:
+			type == "boolean"
+				? propDetails.propOptions?.options?.defaultValue == "true"
+				: propDetails.propOptions?.options?.defaultValue,
+		...map,
+	};
+	return map;
+};
+
+const getEventsMap = (propName: string, propDetails: BlockProps[string]) => {
+	let events: Record<string, Function> = {};
+	const type = propDetails.propOptions?.type || "string";
+	switch (type) {
+		case "image":
+			events = {
+				"update:imageURL": (val: string) => blockController.setBlockProp(propName, { value: val }),
+				"update:imageFit": (val: StyleValue) =>
+					blockController.setBlockProp(propName, {
+						propOptions: { options: { ...propDetails.propOptions?.options, imageFit: val } },
+					}),
+			};
+			break;
+	}
+	return events;
+};
+
+const getStandardProps = (allProps: BlockProps) => {
+	const standardProps: BlockProps = {};
+	for (const [propKey, propDetails] of Object.entries(allProps || {})) {
+		if (propDetails.isStandard) {
+			standardProps[propKey] = propDetails;
+		}
+	}
+	return standardProps;
+};
+
+const getStandardPropsInputSection = () => {
+	const standardProps = getStandardProps(blockController.getBlockProps());
+	const sections = [];
+	for (const [propKey, propDetails] of Object.entries(standardProps)) {
+		const propType = propDetails.propOptions?.type;
+		const component =
+			(propType === "array" || propType === "object" ? componentMap[propType] : undefined) ||
+			BasePropertyControl;
+		const getProps = () => {
+			const props = getPropsMap(propKey, propDetails);
+			return props;
+		};
+		const events = getEventsMap(propKey, propDetails);
+		sections.push({
+			component,
+			getProps,
+			events,
+			searchKeyWords: [propKey, propDetails.label].join(", "),
+		});
+	}
+	return sections;
+};
+
+export default {
+	name: "Block Options",
+	properties: getStandardPropsInputSection,
+	collapsed: false,
+	condition: () => Object.keys(getStandardProps(blockController.getBlockProps())).length > 0,
+};

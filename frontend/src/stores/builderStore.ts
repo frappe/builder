@@ -1,11 +1,14 @@
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import { builderSettings } from "@/data/builderSettings";
 import { BuilderSettings } from "@/types/Builder/BuilderSettings";
-import { useStorage } from "@vueuse/core";
+import { useDark, useStorage } from "@vueuse/core";
+import { useTelemetry } from "frappe-ui/frappe";
 import { defineStore } from "pinia";
 import { toast } from "vue-sonner";
 import type Dialog from "../components/Controls/Dialog.vue";
 import BlockLayers from "./components/BlockLayers.vue";
+
+const { capture } = useTelemetry();
 
 declare global {
 	interface Window {
@@ -34,11 +37,21 @@ const useBuilderStore = defineStore("builderStore", {
 		showRightPanel: <boolean>true,
 		showLeftPanel: <boolean>true,
 		showHTMLDialog: false,
-		showDataScriptDialog: false,
+		showDataScriptDialog: <"block" | "page" | null>null,
 		readOnlyMode: false,
 		isFCSite: window.is_fc_site === "True" ? true : false,
 		activeFolder: useStorage("activeFolder", ""),
+		isDark: useDark({
+			attribute: "data-theme",
+		}),
+		highlightBlocksWithDataScripts: false,
+		highlightBlocksWithClientScripts: false,
 	}),
+	getters: {
+		isAIEnabled(): boolean {
+			return !!builderSettings.doc?.ai_api_key;
+		},
+	},
 	actions: {
 		toggleReadOnlyMode(readonly: boolean | null = null) {
 			this.readOnlyMode = readonly ?? !this.readOnlyMode;
@@ -49,6 +62,7 @@ const useBuilderStore = defineStore("builderStore", {
 					home_page: route,
 				})
 				.then(() => {
+					capture("builder_homepage_set");
 					toast.success("Homepage set successfully");
 				});
 		},
@@ -58,6 +72,7 @@ const useBuilderStore = defineStore("builderStore", {
 					home_page: "",
 				})
 				.then(() => {
+					capture("builder_homepage_unset");
 					toast.success("This page will no longer be the homepage");
 				});
 		},

@@ -10,6 +10,9 @@
 		<BlockSnapGuides></BlockSnapGuides>
 		<div
 			class="fixed flex gap-40"
+			:class="{
+				'scheme-dark': builderStore.isDark,
+			}"
 			ref="canvas"
 			:style="{
 				transformOrigin: 'top center',
@@ -32,7 +35,7 @@
 				</div>
 			</div>
 			<div
-				class="canvas relative flex h-full bg-surface-white shadow-2xl contain-layout dark:selection:!bg-gray-200"
+				class="canvas relative flex h-full bg-surface-white shadow-2xl contain-layout"
 				:style="{
 					...canvasStyles,
 					background: canvasProps.background,
@@ -112,7 +115,6 @@ import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useCanvasDropZone } from "@/utils/useCanvasDropZone";
 import { useCanvasEvents } from "@/utils/useCanvasEvents";
 import { useCanvasUtils } from "@/utils/useCanvasUtils";
-import { useDark } from "@vueuse/core";
 import { FeatherIcon } from "frappe-ui";
 import { Ref, computed, onMounted, provide, reactive, ref, watch } from "vue";
 import setPanAndZoom from "../utils/panAndZoom";
@@ -125,14 +127,11 @@ const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 
 const { cssVariables, darkCssVariables } = useBuilderVariable();
-const isDark = useDark({
-	attribute: "data-theme",
-});
 
 const variables = computed(() => {
 	return {
 		...cssVariables.value,
-		...(isDark.value ? darkCssVariables.value : {}),
+		...(builderStore.isDark ? darkCssVariables.value : {}),
 	};
 });
 
