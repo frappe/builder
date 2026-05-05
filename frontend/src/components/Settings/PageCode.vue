@@ -9,7 +9,8 @@
 			class="shrink-0"
 			:modelValue="pageStore.activePage?.head_html"
 			@update:modelValue="(val) => pageStore.updateActivePage('head_html', val)"
-			:showLineNumbers="true"></CodeEditor>
+			:showLineNumbers="true"
+			:externalEditorContext="getEditorContext('head_html')"></CodeEditor>
 		<CodeEditor
 			label="<body> HTML"
 			type="HTML"
@@ -19,16 +20,22 @@
 			height="200px"
 			class="shrink-0"
 			@update:modelValue="pageStore.updateActivePage('body_html', $event)"
-			:showLineNumbers="true"></CodeEditor>
+			:showLineNumbers="true"
+			:externalEditorContext="getEditorContext('body_html')"></CodeEditor>
 	</div>
 </template>
 <script setup lang="ts">
 import CodeEditor from "@/components/Controls/CodeEditor.vue";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
+import { createEditorContext } from "@/composables/useExternalEditor";
 
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
+
+const getEditorContext = (field: string) => {
+	return createEditorContext("Builder Page", pageStore.activePage?.name, field);
+};
 
 // const libraryURL = ref("");
 // const builderStore = useBuilderStore();

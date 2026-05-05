@@ -126,7 +126,8 @@
 				:autofocus="false"
 				:show-save-button="true"
 				@save="updateScript"
-				:show-line-numbers="true"></CodeEditor>
+				:show-line-numbers="true"
+				:external-editor-context="getEditorContext()"></CodeEditor>
 		</div>
 	</div>
 </template>
@@ -146,6 +147,7 @@ import CodeEditor from "./Controls/CodeEditor.vue";
 import CSSIcon from "./Icons/CSS.vue";
 import GripVertical from "./Icons/GripVertical.vue";
 import JavaScriptIcon from "./Icons/JavaScript.vue";
+import { createEditorContext } from "@/composables/useExternalEditor";
 
 const { capture } = useTelemetry();
 
@@ -205,6 +207,10 @@ const selectScript = (script: attachedScript) => {
 	nextTick(() => {
 		scriptEditor.value?.resetEditor(true);
 	});
+};
+
+const getEditorContext = () => {
+	return createEditorContext("Builder Client Script", activeScript.value?.script_name, "script");
 };
 
 const updateScript = (value: string) => {

@@ -79,7 +79,8 @@
 								:autofocus="true"
 								@save="savePageDataScript"
 								:showSaveButton="true"
-								:show-line-numbers="true"></CodeEditor>
+								:show-line-numbers="true"
+								:external-editor-context="getPageEditorContext('page_data_script')"></CodeEditor>
 							<CodeEditor
 								v-model="pageStore.pageData"
 								type="JSON"
@@ -109,9 +110,10 @@
 							@save="saveBlockClientScript"
 							:showSaveButton="true"
 							:show-line-numbers="true"
+							:external-editor-context="getBlockEditorContext('blockClientScript')"
 							description='Use Block Client Script to add interactivity to your block. You can access the current DOM node using the keyword `this`. All Block props are accessible using the read-only `props` object.<br>
-							<b>Example:</b> <pre style="display:inline; font-size: 11px;">this.addEventListener("click", () => { console.log(props) })</pre><br><br>
-							For more details on how to write data script, refer to <b><a class="underline" href="https://docs.frappe.io/builder/data-script" target="_blank">this documentation</a></b>.'></CodeEditor>
+						<b>Example:</b> <pre style="display:inline; font-size: 11px;">this.addEventListener("click", () => { console.log(props) })</pre><br><br>
+						For more details on how to write data script, refer to <b><a class="underline" href="https://docs.frappe.io/builder/data-script" target="_blank">this documentation</a></b>.'></CodeEditor>
 					</div>
 					<div v-else>
 						<div class="flex gap-4">
@@ -126,7 +128,8 @@
 								:autofocus="true"
 								@save="saveBlockDataScript"
 								:showSaveButton="true"
-								:show-line-numbers="true"></CodeEditor>
+								:show-line-numbers="true"
+								:external-editor-context="getBlockEditorContext('blockDataScript')"></CodeEditor>
 							<div class="-mt-5 w-1/3 p-4" height="calc(100% - 110px)">
 								<CodeEditor
 									v-model="blockData"
@@ -171,6 +174,7 @@ import Switch from "./Controls/Switch.vue";
 import TabButtons from "./Controls/TabButtons.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
 import PropsEditor from "./PropsEditor.vue";
+import { createEditorContext } from "@/composables/useExternalEditor";
 
 const { capture } = useTelemetry();
 
@@ -213,9 +217,18 @@ const blockData = computed(() => {
 		? blockDataStore.getBlockData(
 				blockController.getFirstSelectedBlock().blockId,
 				showInheritedBlockData.value ? "all" : "own",
-			) || {}
+		  ) || {}
 		: {};
 });
+
+const getPageEditorContext = (field: string) => {
+	return createEditorContext("Builder Page", props.page?.name, field);
+};
+
+const getBlockEditorContext = (blockField: "blockClientScript" | "blockDataScript") => {
+	const block = blockController.getFirstSelectedBlock();
+	return createEditorContext("Builder Page", props.page?.name, undefined, block?.blockId, blockField);
+};
 
 const savePageDataScript = (value: string) => {
 	webPages.setValue

@@ -8,7 +8,8 @@
 			height="100px"
 			class="shrink-0"
 			@update:modelValue="builderStore.updateBuilderSettings('head_html', $event)"
-			:showLineNumbers="true"></CodeEditor>
+			:showLineNumbers="true"
+			:externalEditorContext="getEditorContext('head_html')"></CodeEditor>
 		<CodeEditor
 			label="<body> HTML"
 			type="HTML"
@@ -17,7 +18,8 @@
 			height="100px"
 			class="shrink-0"
 			@update:modelValue="builderStore.updateBuilderSettings('body_html', $event)"
-			:showLineNumbers="true"></CodeEditor>
+			:showLineNumbers="true"
+			:externalEditorContext="getEditorContext('body_html')"></CodeEditor>
 		<CodeEditor
 			label="Client Script"
 			type="JavaScript"
@@ -26,7 +28,8 @@
 			height="100px"
 			class="shrink-0"
 			@update:modelValue="(code) => builderStore.updateBuilderSettings('script', code)"
-			:showLineNumbers="true"></CodeEditor>
+			:showLineNumbers="true"
+			:externalEditorContext="getEditorContext('script')"></CodeEditor>
 		<CodeEditor
 			label="Style"
 			type="CSS"
@@ -35,13 +38,19 @@
 			height="100px"
 			class="shrink-0"
 			@update:modelValue="(code) => builderStore.updateBuilderSettings('style', code)"
-			:showLineNumbers="true"></CodeEditor>
+			:showLineNumbers="true"
+			:externalEditorContext="getEditorContext('style')"></CodeEditor>
 	</div>
 </template>
 <script setup lang="ts">
 import CodeEditor from "@/components/Controls/CodeEditor.vue";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
+import { createEditorContext } from "@/composables/useExternalEditor";
 
 const builderStore = useBuilderStore();
+
+const getEditorContext = (field: string) => {
+	return createEditorContext("Builder Settings", "Builder Settings", field);
+};
 </script>
