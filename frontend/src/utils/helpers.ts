@@ -963,7 +963,8 @@ function getBoxSpacing(
 ): string {
 	const nativeOnly = opts?.nativeOnly ?? false;
 	const cascading = opts?.cascading ?? false;
-	const base = String(block.getStyle(type, undefined, nativeOnly, cascading) ?? "0px");
+	const baseValue = block.getStyle(type, undefined, nativeOnly, cascading);
+	const base = String(baseValue ?? (nativeOnly && !cascading ? "" : "unset"));
 	const top = block.getStyle(`${type}Top`, undefined, nativeOnly, cascading) ?? base;
 	const bottom = block.getStyle(`${type}Bottom`, undefined, nativeOnly, cascading) ?? base;
 	const left = block.getStyle(`${type}Left`, undefined, nativeOnly, cascading) ?? base;
