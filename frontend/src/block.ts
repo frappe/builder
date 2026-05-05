@@ -71,6 +71,7 @@ class Block implements BlockOptions {
 	blockClientScript?: string;
 	blockDataScript?: string;
 	props?: BlockProps;
+	editorConfig?: BlockEditorConfig;
 	// @ts-expect-error
 	referenceComponent: Block | null;
 	customAttributes: BlockAttributeMap;
@@ -137,6 +138,7 @@ class Block implements BlockOptions {
 		this.blockClientScript = options.blockClientScript || "";
 		this.blockDataScript = options.blockDataScript || "";
 		this.props = reactive(options.props || {});
+		this.editorConfig = options.editorConfig;
 
 		this.blockName = options.blockName;
 		delete this.attributes.style;
@@ -447,6 +449,9 @@ class Block implements BlockOptions {
 		return Math.random().toString(36).substr(2, 9);
 	}
 	getIcon() {
+		if (this.editorConfig?.icon) {
+			return this.editorConfig.icon;
+		}
 		switch (true) {
 			case this.isRoot():
 				return "hash";
@@ -460,6 +465,8 @@ class Block implements BlockOptions {
 				return "link";
 			case this.isText():
 				return "type";
+			case this.isVideo():
+				return "film";
 			case this.isContainer() && this.isRow():
 				return "columns";
 			case this.isContainer() && this.isColumn():
@@ -470,8 +477,6 @@ class Block implements BlockOptions {
 				return "square";
 			case this.isImage():
 				return "image";
-			case this.isVideo():
-				return "film";
 			case this.isForm():
 				return "file-text";
 			default:
@@ -501,7 +506,7 @@ class Block implements BlockOptions {
 		};
 	}
 	isMovable(): boolean {
-		return ["absolute", "fixed", "relative"].includes(this.getStyle("position") as string);
+		return ["absolute", "fixed"].includes(this.getStyle("position") as string);
 	}
 	move(direction: "up" | "left" | "down" | "right") {
 		if (!this.isMovable()) {

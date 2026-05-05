@@ -1438,7 +1438,10 @@ function executeBlockClientScriptRestricted(
 		get(target: Element, prop: string, receiver: any) {
 			if (BLOCKED_GET.has(prop)) return undefined;
 
-			let val = Reflect.get(target, prop, receiver);
+			// Always pass `target` (not the proxy) as the receiver so that native DOM
+			// getters (e.g. tagName, nodeType, children) run with the correct `this`.
+			// Passing the Proxy as receiver causes "Illegal invocation" in those cases.
+			let val = Reflect.get(target, prop, target);
 
 			// Wrap DOM returns
 			if (val instanceof Node) return wrap(val);

@@ -326,6 +326,10 @@ const styles = computed(() => {
 		}
 	}
 
+	if (!props.preview && props.block.getTag() === "iframe") {
+		styleMap.pointerEvents = "none";
+	}
+
 	// escape space in font family
 	if (styleMap.fontFamily && typeof styleMap.fontFamily === "string") {
 		styleMap.fontFamily = (styleMap.fontFamily as string).replace(/ /g, "\\ ");
