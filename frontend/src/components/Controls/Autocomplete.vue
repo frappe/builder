@@ -7,7 +7,10 @@
 		:reset-search-term-on-blur="false">
 		<div class="group/autocomplete relative" ref="containerRef">
 			<div
-				class="group form-input flex h-7 flex-1 items-center gap-2 rounded bg-surface-gray-2 p-0 text-sm text-ink-gray-8 transition-colors focus-within:bg-surface-white focus-within:ring-2 focus-within:ring-outline-gray-3">
+				class="group form-input flex h-7 flex-1 items-center gap-2 rounded bg-surface-gray-2 p-0 text-sm text-ink-gray-8 transition-colors focus-within:bg-surface-white focus-within:ring-2 focus-within:ring-outline-gray-3"
+				:class="{
+					'can-show-arrows': canShowArrows,
+				}">
 				<div v-if="$slots.prefix" class="flex items-center pl-2">
 					<slot name="prefix" />
 				</div>
@@ -28,12 +31,11 @@
 					class="h-full w-full flex-1 border-none bg-transparent px-0 text-base placeholder:text-ink-gray-4 focus:outline-none focus:ring-0"
 					:class="{
 						'pl-2': !$slots.prefix,
-						'pr-2': !hasValue,
+						'pr-2': !hasValue && !canShowArrows,
 					}" />
-				<div class="flex items-center gap-0">
+				<div class="flex items-center gap-0.5">
 					<NumberArrows
-						v-if="hasNumber && isStrictNumber"
-						class="ml-1"
+						v-if="canShowArrows"
 						:modelValue="hasNumber"
 						@increment="incrementValue"
 						@decrement="decrementValue" />
@@ -189,6 +191,8 @@ const isStrictNumber = computed(() => {
 	return /^\d*\.?\d+(px|%|em|rem)?$/.test(props.modelValue.trim());
 });
 
+const canShowArrows = computed(() => hasNumber.value && isStrictNumber.value);
+
 const displayOptions = computed(() => {
 	let options = allOptions.value;
 	if (
@@ -313,3 +317,8 @@ defineExpose({
 	clearSelection,
 });
 </script>
+<style scoped>
+.can-show-arrows:hover {
+	gap: 3px !important;
+}
+</style>
