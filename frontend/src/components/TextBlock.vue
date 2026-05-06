@@ -36,10 +36,10 @@ import type { PauseId } from "@/utils/useCanvasHistory";
 import { Color } from "@tiptap/extension-color";
 import { FontFamily } from "@tiptap/extension-font-family";
 import { TextStyle } from "@tiptap/extension-text-style";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { StarterKit } from "@tiptap/starter-kit";
 import { Editor, EditorContent, Extension } from "@tiptap/vue-3";
 import { vOnClickOutside } from "@vueuse/components";
-import { Plugin, PluginKey } from "prosemirror-state";
 import { Ref, computed, inject, onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
 
 const canvasStore = useCanvasStore();
@@ -345,6 +345,7 @@ defineExpose({
 }
 
 .__text_block__ :deep(.ProseMirror) {
+	white-space: pre-wrap;
 	word-break: unset;
 }
 
