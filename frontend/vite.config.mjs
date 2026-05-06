@@ -27,6 +27,7 @@ export default defineConfig({
 		sourcemap: true,
 	},
 	resolve: {
+		dedupe: ["prosemirror-model", "prosemirror-view", "prosemirror-state", "prosemirror-transform"],
 		alias: {
 			"@": path.resolve(__dirname, "src"),
 		},
