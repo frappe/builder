@@ -2,13 +2,11 @@
 	<bubble-menu
 		ref="menu"
 		:editor="editor"
-		:tippy-options="bubbleMenuOptions.tippyOptions"
+		:append-to="overlayElement"
+		:options="{ strategy: 'absolute', placement: 'bottom' }"
 		v-if="editor"
-		:style="{
-			transform: `scale(${1 / canvasProps.scale})`,
-		}"
 		class="rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-ink-gray-9 shadow-2xl"
-		:should-show="bubbleMenuOptions.shouldShow">
+		:should-show="shouldShow">
 		<div
 			v-if="settingLink"
 			class="flex flex-col gap-2 p-1"
@@ -275,26 +273,7 @@ watch(
 	{ immediate: true },
 );
 
-const bubbleMenuOptions = {
-	tippyOptions: {
-		appendTo: props.overlayElement,
-		interactive: true,
-		onCreate: (instance: any) => {
-			watch(
-				() => props.canvasProps,
-				() => {
-					if (props.canvasProps?.panning || props.canvasProps?.scaling) {
-						instance.hide();
-					} else {
-						instance.show();
-					}
-				},
-				{ deep: true },
-			);
-		},
-	},
-	shouldShow: () => isEditableRef.value,
-};
+const shouldShow = () => isEditableRef.value && !props.canvasProps?.panning && !props.canvasProps?.scaling;
 
 defineExpose({
 	handleKeydown,
