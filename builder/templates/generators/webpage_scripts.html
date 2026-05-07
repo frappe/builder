@@ -23,6 +23,7 @@ if(window.matchMedia("(min-width:768px)").matches&&document.cookie.includes("use
 :root { background: white; color: black }
 :root[data-prefers-color-scheme="light"], :root[data-theme="light"] { color-scheme: light }
 :root[data-prefers-color-scheme="dark"], :root[data-theme="dark"] { color-scheme: dark }
+::selection { background: Highlight; color: HighlightText }
 </style>
 {% if _body_html %}
 {{ _body_html | safe }}
