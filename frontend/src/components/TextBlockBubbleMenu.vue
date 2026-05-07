@@ -5,8 +5,7 @@
 		:append-to="overlayElement"
 		:options="{ strategy: 'absolute', placement: 'bottom' }"
 		v-if="editor"
-		class="rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-ink-gray-9 shadow-2xl"
-		:should-show="shouldShow">
+		class="rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-ink-gray-9 shadow-2xl">
 		<div
 			v-if="settingLink"
 			class="flex flex-col gap-2 p-1"
@@ -272,8 +271,6 @@ watch(
 	},
 	{ immediate: true },
 );
-
-const shouldShow = () => isEditableRef.value && !props.canvasProps?.panning && !props.canvasProps?.scaling;
 
 defineExpose({
 	handleKeydown,
