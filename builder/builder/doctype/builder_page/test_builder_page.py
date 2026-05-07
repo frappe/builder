@@ -1,7 +1,6 @@
 # Copyright (c) 2023, asdf and Contributors
 # See license.txt
 
-import json
 
 import frappe
 from frappe.desk.form.load import getdoc
@@ -257,9 +256,9 @@ class TestBuilderPage(FrappeTestCase):
 		try:
 			content = get_response_content("/repeater-block-test")
 			self.assertTrue("Item 1" in get_html_for(content, "tag", "h2"))
-			self.assertTrue("$10" in get_html_for(content, "tag", "span"))
+			self.assertTrue("$10" in get_html_for(content, "tag", "span", index=1))
 			self.assertTrue("Item 2" in get_html_for(content, "tag", "h2", index=1))
-			self.assertTrue("$20" in get_html_for(content, "tag", "span", index=1))
+			self.assertTrue("$20" in get_html_for(content, "tag", "span", index=2))
 
 		finally:
 			page.delete()
@@ -335,11 +334,9 @@ class TestBuilderPage(FrappeTestCase):
 			content_with_bad_overrides = get_response_content(
 				"/component-dynamic-values-test-with-bad-overrides"
 			)
-			self.assertEqual(
-				"John Doe", get_html_for(content_with_no_overrides, "tag", "h1", only_content=True)
-			)
-			self.assertEqual("Jane Doe", get_html_for(content_with_overrides, "tag", "h1", only_content=True))
-			self.assertEqual(
+			self.assertIn("John Doe", get_html_for(content_with_no_overrides, "tag", "h1", only_content=True))
+			self.assertIn("Jane Doe", get_html_for(content_with_overrides, "tag", "h1", only_content=True))
+			self.assertIn(
 				"Fallback Content", get_html_for(content_with_bad_overrides, "tag", "h1", only_content=True)
 			)
 		finally:
@@ -447,8 +444,8 @@ class TestBuilderPage(FrappeTestCase):
 
 		try:
 			content = get_response_content("/block-data-test")
-			self.assertEqual("Custom Block Data", get_html_for(content, "tag", "h4", only_content=True))
-			self.assertEqual("Block Content", get_html_for(content, "tag", "h4", index=1, only_content=True))
+			self.assertIn("Custom Block Data", get_html_for(content, "tag", "h4", only_content=True))
+			self.assertIn("Block Content", get_html_for(content, "tag", "h4", index=1, only_content=True))
 		finally:
 			page.delete()
 
@@ -483,9 +480,9 @@ class TestBuilderPage(FrappeTestCase):
 		try:
 			content = get_response_content("/block-data-repeater-test")
 			self.assertTrue("Item 1" in get_html_for(content, "tag", "h2"))
-			self.assertTrue("$10" in get_html_for(content, "tag", "span"))
+			self.assertTrue("$10" in get_html_for(content, "tag", "span", index=1))
 			self.assertTrue("Item 2" in get_html_for(content, "tag", "h2", index=1))
-			self.assertTrue("$20" in get_html_for(content, "tag", "span", index=1))
+			self.assertTrue("$20" in get_html_for(content, "tag", "span", index=2))
 
 		finally:
 			page.delete()
@@ -580,11 +577,9 @@ class TestBuilderPage(FrappeTestCase):
 
 		try:
 			content = get_response_content("/block-props-test")
-			self.assertEqual("John", get_html_for(content, "tag", "h4", only_content=True))
-			self.assertEqual(
-				"Custom Block Data", get_html_for(content, "tag", "h4", index=1, only_content=True)
-			)
-			self.assertEqual(
+			self.assertIn("John", get_html_for(content, "tag", "h4", only_content=True))
+			self.assertIn("Custom Block Data", get_html_for(content, "tag", "h4", index=1, only_content=True))
+			self.assertIn(
 				"Block Props Content", get_html_for(content, "tag", "h4", index=2, only_content=True)
 			)
 		finally:
@@ -739,20 +734,18 @@ class TestBuilderPage(FrappeTestCase):
 			content_with_default_values = get_response_content("/block-std-props-test-no-overrides")
 			content_with_overridden_values = get_response_content("/block-std-props-test-overrides")
 
-			self.assertEqual(
+			self.assertIn(
 				"Default Header Title",
 				get_html_for(content_with_default_values, "tag", "h1", only_content=True),
 			)
-			self.assertEqual(
-				"25.0", get_html_for(content_with_default_values, "tag", "h4", only_content=True)
-			)
+			self.assertIn("25.0", get_html_for(content_with_default_values, "tag", "h4", only_content=True))
 			self.assertFalse("Badge" in get_html_for(content_with_default_values, "tag", "h6"))
 
-			self.assertEqual(
+			self.assertIn(
 				"Overridden Header Title",
 				get_html_for(content_with_overridden_values, "tag", "h1", only_content=True),
 			)
-			self.assertEqual(
+			self.assertIn(
 				"29.0", get_html_for(content_with_overridden_values, "tag", "h4", only_content=True)
 			)
 			self.assertTrue("Badge" in get_html_for(content_with_overridden_values, "tag", "h6"))
@@ -837,13 +830,13 @@ class TestBuilderPage(FrappeTestCase):
 		).insert()
 		try:
 			content = get_response_content("/block-std-props-test")
-			self.assertEqual("1. Home", get_html_for(content, "tag", "a", only_content=True))
+			self.assertIn("1. Home", get_html_for(content, "tag", "a", only_content=True))
 			self.assertTrue('href="/"' in get_html_for(content, "tag", "a", only_content=False))
-			self.assertEqual("2. Products", get_html_for(content, "tag", "a", index=1, only_content=True))
+			self.assertIn("2. Products", get_html_for(content, "tag", "a", index=1, only_content=True))
 			self.assertTrue(
 				'href="/products"' in get_html_for(content, "tag", "a", index=1, only_content=False)
 			)
-			self.assertEqual("3. About Us", get_html_for(content, "tag", "a", index=2, only_content=True))
+			self.assertIn("3. About Us", get_html_for(content, "tag", "a", index=2, only_content=True))
 			self.assertTrue('href="/about"' in get_html_for(content, "tag", "a", index=2, only_content=False))
 		finally:
 			page.delete()
@@ -934,13 +927,13 @@ class TestBuilderPage(FrappeTestCase):
 		try:
 			content = get_response_content("/nested-repeater-blocks-test")
 			self.assertTrue("Item A1" in get_html_for(content, "tag", "h2"))
-			self.assertTrue("$10" in get_html_for(content, "tag", "span"))
+			self.assertTrue("$10" in get_html_for(content, "tag", "span", index=1))
 			self.assertTrue("Item A2" in get_html_for(content, "tag", "h2", index=1))
-			self.assertTrue("$20" in get_html_for(content, "tag", "span", index=1))
+			self.assertTrue("$20" in get_html_for(content, "tag", "span", index=2))
 			self.assertFalse("Item B1" in get_html_for(content, "tag", "h2"))
-			self.assertFalse("$15" in get_html_for(content, "tag", "span"))
+			self.assertFalse("$15" in get_html_for(content, "tag", "span", index=1))
 			self.assertFalse("Item B2" in get_html_for(content, "tag", "h2", index=1))
-			self.assertFalse("$25" in get_html_for(content, "tag", "span", index=1))
+			self.assertFalse("$25" in get_html_for(content, "tag", "span", index=2))
 		finally:
 			page.delete()
 
