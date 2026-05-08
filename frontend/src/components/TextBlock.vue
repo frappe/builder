@@ -2,7 +2,9 @@
 	<component :is="block.getTag()" ref="component" :key="editor" class="__text_block__">
 		<div v-html="textContent" v-show="!editor && textContent" @click="handleClick"></div>
 		<TextBlockBubbleMenu
-			v-if="editor && !canvasProps?.panning && !canvasProps?.scaling"
+			v-if="editor"
+			v-show="!canvasProps?.panning && !canvasProps?.scaling"
+			:key="`${canvasProps?.panning}-${canvasProps?.scaling}`"
 			:block="block"
 			:editor="editor"
 			:canvas-props="canvasProps"
