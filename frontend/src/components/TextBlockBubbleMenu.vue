@@ -140,9 +140,8 @@ import type { Editor } from "@tiptap/vue-3";
 import { BubbleMenu } from "@tiptap/vue-3/menus";
 import { vOnClickOutside } from "@vueuse/components";
 import { debounce } from "frappe-ui";
-import { computed, inject, nextTick, ref, watch, type Ref } from "vue";
+import { computed, nextTick, ref, watch, type Ref } from "vue";
 import { toast } from "vue-sonner";
-const canvasProps = inject("canvasProps") as CanvasProps;
 
 const props = defineProps<{
 	block: Block;
