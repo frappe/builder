@@ -1,5 +1,5 @@
 <template>
-	<div class="group relative w-full">
+	<div ref="containerRef" class="group relative w-full" :class="paddingClass">
 		<Select
 			v-if="type === 'select'"
 			:modelValue="data as string"
@@ -22,22 +22,24 @@
 			<template #prefix v-if="$slots.prefix">
 				<slot name="prefix" />
 			</template>
-			<template #suffix>
-				<NumberArrows
-					:modelValue="hasNumber"
-					v-if="!disabled && hasNumber && isStrictNumber"
-					@increment="incrementValue"
-					@decrement="decrementValue" />
+			<template #suffix v-if="hasSuffix">
+				<div class="flex items-center gap-0.5">
+					<NumberArrows
+						:modelValue="hasNumber"
+						v-if="canShowArrows"
+						@increment="incrementValue"
+						@decrement="decrementValue" />
 
-				<slot v-if="$slots.suffix" name="suffix" />
+					<slot v-if="$slots.suffix" name="suffix" />
 
-				<button
-					v-if="!['select', 'checkbox'].includes(type) && !hideClearButton && data && !disabled"
-					class="cursor-pointer text-ink-gray-4 hover:text-ink-gray-5"
-					tabindex="-1"
-					@click="clearValue">
-					<CrossIcon />
-				</button>
+					<button
+						v-if="hasClearButton"
+						class="cursor-pointer text-ink-gray-4 hover:text-ink-gray-5"
+						tabindex="-1"
+						@click="clearValue">
+						<CrossIcon />
+					</button>
+				</div>
 			</template>
 		</FormControl>
 	</div>
@@ -46,9 +48,9 @@
 import NumberArrows from "@/components/Controls/NumberArrows.vue";
 import CrossIcon from "@/components/Icons/Cross.vue";
 import { useNumberInput } from "@/utils/useNumberInput";
-import { useDebounceFn, useVModel } from "@vueuse/core";
+import { useDebounceFn, useResizeObserver, useVModel } from "@vueuse/core";
 import { Select } from "frappe-ui";
-import { computed, useAttrs } from "vue";
+import { computed, ref, useAttrs, useSlots } from "vue";
 
 const props = withDefaults(
 	defineProps<{
@@ -85,6 +87,31 @@ defineOptions({
 });
 
 const attrs = useAttrs();
+const slots = useSlots();
+
+const containerRef = ref<HTMLElement | null>(null);
+const containerWidth = ref(Infinity);
+useResizeObserver(containerRef, (entries) => {
+	containerWidth.value = entries[0].contentRect.width;
+});
+
+const canShowArrows = computed(
+	() => !props.disabled && hasNumber.value && isStrictNumber.value && containerWidth.value >= 60,
+);
+
+const hasClearButton = computed(
+	() =>
+		!["select", "checkbox"].includes(props.type) && !props.hideClearButton && !!data.value && !props.disabled,
+);
+
+const hasSuffix = computed(() => canShowArrows.value || hasClearButton.value || !!slots.suffix);
+
+const paddingClass = computed(() => {
+	if (canShowArrows.value && hasClearButton.value) return "has-both-suffix";
+	if (canShowArrows.value && !hasClearButton.value) return "arrows-only-suffix";
+	if (!canShowArrows.value && hasClearButton.value) return "cross-only-suffix";
+	return "";
+});
 
 const { hasNumber, incrementValue, decrementValue } = useNumberInput({
 	getValue: () => data.value,
@@ -129,6 +156,31 @@ input[type="number"]::-webkit-inner-spin-button {
 input[type="number"] {
 	-moz-appearance: textfield !important;
 	appearance: textfield !important;
-	padding-right: 0.75rem !important;
+}
+</style>
+
+<style scoped>
+.arrows-only-suffix :deep(input + div) {
+	padding-inline-end: 3px;
+}
+
+.arrows-only-suffix :deep(input) {
+	padding-inline-end: 3px;
+}
+
+.arrows-only-suffix:hover :deep(input) {
+	padding-right: 1.4rem !important;
+}
+
+.cross-only-suffix :deep(input) {
+	padding-right: 1.8rem !important;
+}
+
+.has-both-suffix :deep(input) {
+	padding-right: 1.5rem !important;
+}
+
+.has-both-suffix:hover :deep(input) {
+	padding-right: 2.8rem !important;
 }
 </style>

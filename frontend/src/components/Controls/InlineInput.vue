@@ -1,9 +1,5 @@
 <template>
-	<div
-		class="flex items-center justify-between gap-2"
-		:class="{
-			'[&>div>input]:pr-6': !hideClearButton,
-		}">
+	<div class="flex items-center justify-between gap-2">
 		<InputLabel
 			v-if="label"
 			:class="{
