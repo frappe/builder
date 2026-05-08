@@ -9,6 +9,7 @@
 					@dragleave="isDragging = false"
 					@drop.prevent="handleDrop">
 					<Textarea
+						ref="promptRef"
 						v-model="prompt"
 						:placeholder="placeholder"
 						:rows="6"
@@ -222,6 +223,13 @@ const emit = defineEmits<{
 const showDialog = computed({
 	get: () => props.modelValue,
 	set: (v) => emit("update:modelValue", v),
+});
+
+const promptRef = ref<{ el: HTMLTextAreaElement } | null>(null);
+watch(showDialog, (val) => {
+	if (val) {
+		setTimeout(() => promptRef.value?.el?.focus(), 50);
+	}
 });
 
 const prompt = ref("");

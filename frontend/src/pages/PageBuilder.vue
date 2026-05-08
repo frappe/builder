@@ -102,6 +102,7 @@
 	</Dialog>
 	<AIPageGeneratorModal
 		v-model="showAIGeneratorDialog"
+		v-if="builderStore.isAIEnabled"
 		:pageId="route.params.pageId as string"
 		:mode="aiMode"
 		:blockContext="modifyBlockContext"
