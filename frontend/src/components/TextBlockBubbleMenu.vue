@@ -4,6 +4,8 @@
 		:editor="editor"
 		:append-to="overlayElement"
 		:options="{ strategy: 'absolute', placement: 'bottom' }"
+		:plugin-key="bubbleMenuPluginKey"
+		v-show="!canvasProps?.panning && !canvasProps?.scaling"
 		v-if="editor"
 		class="rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-ink-gray-9 shadow-2xl">
 		<div
@@ -139,6 +141,7 @@ import StrikeThroughIcon from "@/components/Icons/StrikeThrough.vue";
 import type { Editor } from "@tiptap/vue-3";
 import { BubbleMenu } from "@tiptap/vue-3/menus";
 import { vOnClickOutside } from "@vueuse/components";
+import { debouncedWatch } from "@vueuse/core";
 import { debounce } from "frappe-ui";
 import { computed, nextTick, ref, watch, type Ref } from "vue";
 import { toast } from "vue-sonner";
@@ -157,7 +160,7 @@ const openInNewTab = ref(false);
 const linkInput = ref(null) as Ref<typeof Input | null>;
 
 const editorRef = computed(() => props.editor);
-const isEditableRef = computed(() => props.isEditable);
+const bubbleMenuPluginKey = "bubbleMenu";
 
 const selectedColor = computed(() => {
 	if (props.editor?.isActive("textStyle")) {
@@ -269,6 +272,15 @@ watch(
 		}
 	},
 	{ immediate: true },
+);
+
+debouncedWatch(
+	() => [props.canvasProps?.panning, props.canvasProps?.scaling],
+	() => {
+		nextTick(() => {
+			props.editor?.commands.setMeta(bubbleMenuPluginKey, "updatePosition");
+		});
+	},
 );
 
 defineExpose({
