@@ -2,7 +2,7 @@
 	<div class="flex w-full items-center justify-between">
 		<InputLabel v-if="label">{{ label }}</InputLabel>
 		<TabButtons
-			class="w-full min-w-[150px] [&>div>button[aria-checked='true']]:dark:!bg-surface-gray-4 [&>div>button]:items-center [&>div]:h-7"
+			class="w-full min-w-[150px] [&>div>button[aria-checked='true']]:dark:!bg-surface-gray-4 [&>div>button]:items-center"
 			:buttons="options"
 			:modelValue="modelValue"
 			:defaultValue="defaultValue"
