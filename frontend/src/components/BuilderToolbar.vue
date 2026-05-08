@@ -112,7 +112,7 @@
 					Saving template
 				</span>
 				<Tooltip text="Settings" :hoverDelay="0.6" arrow-class="mb-3">
-					<Button variant="ghost" @click="showSettingsDialog = true" :icon="SettingsGearIcon"></Button>
+					<Button variant="ghost" @click="openSettings" :icon="SettingsGearIcon"></Button>
 				</Tooltip>
 				<router-link :to="{ name: 'preview', params: { pageId: pageStore.selectedPage } }" title="Preview">
 					<Tooltip text="Preview" :hoverDelay="0.6" arrow-class="mb-3">
@@ -182,6 +182,11 @@ const pageStore = usePageStore();
 const showInfoDialog = ref(false);
 const showSettingsDialog = ref(false);
 const showShortcuts = inject<() => void>("showShortcuts", () => {});
+
+const openSettings = (e: MouseEvent) => {
+	(e.currentTarget as HTMLElement)?.blur();
+	showSettingsDialog.value = true;
+};
 
 const currentlyViewedByText = computed(() => {
 	const names = builderStore.viewers.map((viewer) => viewer.fullname).map((name) => name.split(" ")[0]);

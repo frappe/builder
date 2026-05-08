@@ -74,8 +74,8 @@
 					<div class="max-md:hidden" v-show="!selectionMode">
 						<Select
 							v-model="typeFilter"
-							class="!w-24"
 							:options="[
+								{ label: 'Type', value: '', disabled: true },
 								{ label: 'All', value: 'all' },
 								{ label: 'Draft', value: 'draft' },
 								{ label: 'Published', value: 'published' },
@@ -85,7 +85,6 @@
 					<div class="max-sm:hidden" v-show="!selectionMode">
 						<Select
 							v-model="orderBy"
-							class="!w-32"
 							:options="[
 								{ label: 'Sort', value: '', disabled: true },
 								{ label: 'Last Created', value: 'creation' },
