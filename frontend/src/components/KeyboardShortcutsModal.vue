@@ -16,7 +16,7 @@
 				</div>
 				<div class="grid grid-cols-1 gap-x-5 gap-y-4 overflow-y-auto pr-1 md:grid-cols-2 xl:grid-cols-3">
 					<div v-for="(shortcuts, group) in filteredGroupedShortcuts" :key="group" class="space-y-1.5">
-						<h3 class="text-sm font-semibold tracking-wide text-ink-gray-8">
+						<h3 class="text-base font-medium tracking-wide text-ink-gray-8">
 							{{ group }}
 						</h3>
 						<div
@@ -32,7 +32,7 @@
 									<kbd
 										v-for="(part, i) in variant"
 										:key="`${variantIndex}-${i}`"
-										class="inline-flex h-5 min-w-5 items-center justify-center rounded border bg-surface-gray-2 px-1.5 text-[11px] font-medium text-ink-gray-7"
+										class="inline-flex h-6 min-w-6 items-center justify-center rounded border bg-surface-gray-2 px-1.5 py-0.5 font-medium text-ink-gray-7"
 										:class="{
 											'text-xs': !part.isSymbol,
 										}">
