@@ -33,13 +33,17 @@
 				</div>
 				<!-- tree -->
 				<div v-if="displayType === 'tree'">
-					<RouteTreeView ref="routeTreeRef" class="pr-3" :pages="webPages.data || []" />
+					<RouteTreeView
+						ref="routeTreeRef"
+						class="pl-2 pr-3"
+						:search-filter="searchFilter"
+						:active-folder="builderStore.activeFolder" />
 				</div>
 			</div>
 			<BuilderButton
 				class="m-auto mt-12 w-fit text-sm"
 				@click="loadMore"
-				v-if="webPages.data?.length && webPages.hasNextPage"
+				v-if="webPages.data?.length && webPages.hasNextPage && displayType !== 'tree'"
 				variant="subtle"
 				size="sm">
 				Load More
@@ -64,7 +68,6 @@
 							type="text"
 							placeholder="Filter by title or route"
 							v-model="searchFilter"
-							autofocus
 							@input="
 								(value: string) => {
 									searchFilter = value;
