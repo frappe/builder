@@ -134,6 +134,7 @@ declare module 'vue' {
     Reset: typeof import('./src/components/Reset.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    RouteTreeView: typeof import('./src/components/RouteTreeView.vue')['default']
     SearchBlock: typeof import('./src/components/Controls/SearchBlock.vue')['default']
     SelectFolder: typeof import('./src/components/Modals/SelectFolder.vue')['default']
     SelectOptions: typeof import('./src/components/PropsOptions/SelectOptions.vue')['default']

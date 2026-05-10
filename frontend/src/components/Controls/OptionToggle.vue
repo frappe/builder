@@ -12,11 +12,18 @@
 <script setup lang="ts">
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import TabButtons from "@/components/Controls/TabButtons.vue";
+import type { Component } from "vue";
 
 withDefaults(
 	defineProps<{
 		modelValue?: string | number | boolean;
-		options?: { label: string; value: string | number | boolean; icon?: string; hideLabel?: boolean }[];
+		options?: {
+			label: string;
+			value: string | number | boolean;
+			icon?: string | Component;
+			hideLabel?: boolean;
+			showTooltip?: boolean;
+		}[];
 		label?: string;
 		defaultValue?: string | number;
 	}>(),
