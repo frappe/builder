@@ -21,7 +21,7 @@
 				<div
 					v-if="node.isLoadMore"
 					class="flex items-center pt-2"
-					:style="{ marginLeft: `${node.depth * 24 + 4 + 32}px` }">
+					:style="{ marginLeft: `${node.depth * 24 + 8 + 32}px` }">
 					<button
 						class="flex items-center gap-1 text-xs text-ink-gray-4 hover:text-ink-gray-7"
 						@click="loadMore(node)">
@@ -51,8 +51,8 @@
 						@click.stop="toggleNode(node)"
 						:icon="node.expanded ? 'chevron-down' : 'chevron-right'"></Button>
 					<span v-else class="size-6 w-7 shrink-0"></span>
-					<FeatherIcon v-if="node.hasChildren" name="hash" class="size-3.5 shrink-0 text-ink-gray-5" />
-					<FeatherIcon v-else name="file-minus" class="-mr-1 size-3.5 shrink-0 text-ink-gray-5" />
+					<!-- <FeatherIcon v-if="node.hasChildren" name="hash" class="size-3.5 shrink-0 text-ink-gray-5" /> -->
+					<!-- <FeatherIcon v-else name="file-minus" class="-mr-1 size-3.5 shrink-0 text-ink-gray-5" /> -->
 
 					<!-- Page node label row -->
 					<div v-if="node.page" class="flex min-w-0 flex-1 items-center gap-1.5 py-0.5">
@@ -86,7 +86,7 @@
 						<span
 							class="font-mono text-sm font-semibold"
 							:class="node.depth === 0 ? 'text-ink-gray-8' : 'text-ink-gray-6'">
-							{{ node.depth === 0 ? "" : "/" }}{{ node.label }}
+							/{{ node.label }}
 						</span>
 					</div>
 
