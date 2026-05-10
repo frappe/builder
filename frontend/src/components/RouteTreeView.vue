@@ -20,7 +20,7 @@
 				<!-- Load more row -->
 				<div
 					v-if="node.isLoadMore"
-					class="flex items-center py-0.5"
+					class="flex items-center pt-2"
 					:style="{ marginLeft: `${node.depth * 24 + 4 + 32}px` }">
 					<button
 						class="flex items-center gap-1 text-xs text-ink-gray-4 hover:text-ink-gray-7"
@@ -35,30 +35,27 @@
 				<div
 					v-else
 					class="group flex cursor-pointer items-center gap-1.5 border-b border-outline-gray-1 px-1 py-1 hover:rounded-md hover:bg-surface-gray-1"
-					:class="{ 'rounded-md bg-surface-gray-2 ring-1 ring-outline-gray-3': focusedNodeId === node.id }"
+					:class="{ 'rounded-md !bg-surface-gray-2 ': focusedNodeId === node.id }"
 					:ref="
 						(el) => {
 							if (el) nodeEls.set(node.id, el as HTMLElement);
 						}
 					"
-					:style="{ marginLeft: `${node.depth * 24 + 4}px` }"
+					:style="{ marginLeft: `${node.depth * 24}px` }"
 					@click="selectNode(node)"
 					@dblclick="activateNode(node)">
 					<Button
 						v-if="node.hasChildren"
 						variant="ghost"
+						class="!text-ink-gray-4"
 						@click.stop="toggleNode(node)"
 						:icon="node.expanded ? 'chevron-down' : 'chevron-right'"></Button>
-					<span v-else class="size-6 shrink-0"></span>
-					<FeatherIcon
-						v-if="node.hasChildren"
-						name="hash"
-						class="size-3.5 shrink-0"
-						:class="node.depth === 0 ? 'text-ink-gray-7' : 'text-ink-gray-4'" />
-					<FeatherIcon v-else name="file-minus" class="size-3.5 shrink-0 text-ink-gray-4" />
+					<span v-else class="size-6 w-7 shrink-0"></span>
+					<FeatherIcon v-if="node.hasChildren" name="hash" class="size-3.5 shrink-0 text-ink-gray-5" />
+					<FeatherIcon v-else name="file-minus" class="-mr-1 size-3.5 shrink-0 text-ink-gray-5" />
 
 					<!-- Page node label row -->
-					<div v-if="node.page" class="flex min-w-0 flex-1 items-center gap-2 py-0.5">
+					<div v-if="node.page" class="flex min-w-0 flex-1 items-center gap-1.5 py-0.5">
 						<code class="shrink-0 px-1.5 py-0.5 font-mono text-xs font-medium text-ink-gray-8">
 							/{{ node.label }}
 						</code>
@@ -68,19 +65,18 @@
 							:title="node.page.page_title">
 							{{ node.page.page_title }}
 						</span>
-						<!-- Status icons -->
-						<span class="ml-auto flex shrink-0 items-center gap-1 pr-1">
+						<span class="ml-auto flex shrink-0 items-center gap-1">
 							<Tooltip v-if="isHomePage(node.page)" text="Home page" :hoverDelay="0.5">
-								<FeatherIcon name="home" class="size-3 text-ink-gray-4" />
+								<HomeIcon class="size-3.5 text-ink-green-3" />
 							</Tooltip>
 							<Tooltip
 								v-if="node.page.authenticated_access"
-								text="Restricted – login required"
+								text="This page has limited access"
 								:hoverDelay="0.5">
-								<FeatherIcon name="lock" class="size-3 text-ink-amber-3" />
+								<AuthenticatedUserIcon class="size-3.5 text-ink-amber-3" />
 							</Tooltip>
 							<Tooltip v-if="!node.page.published" text="Draft – not published" :hoverDelay="0.5">
-								<FeatherIcon name="eye-off" class="size-3 text-ink-gray-4" />
+								<CloudOffIcon class="size-3.5 text-ink-gray-4" />
 							</Tooltip>
 						</span>
 					</div>
@@ -90,7 +86,7 @@
 						<span
 							class="font-mono text-sm font-semibold"
 							:class="node.depth === 0 ? 'text-ink-gray-8' : 'text-ink-gray-6'">
-							/{{ node.label }}
+							{{ node.depth === 0 ? "" : "/" }}{{ node.label }}
 						</span>
 					</div>
 
@@ -100,7 +96,7 @@
 								icon="more-horizontal"
 								size="sm"
 								variant="subtle"
-								class="invisible bg-surface-white !text-ink-gray-5 hover:!text-ink-gray-9 group-hover:visible"
+								class="bg-surface-white !text-ink-gray-5 hover:!text-ink-gray-9"
 								@click.stop></BuilderButton>
 						</template>
 					</PageActionsDropdown>
@@ -111,6 +107,7 @@
 </template>
 
 <script setup lang="ts">
+import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
 import { builderSettings } from "@/data/builderSettings";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
@@ -118,6 +115,8 @@ import { useShortcut } from "@/utils/useShortcut";
 import { createListResource, Tooltip } from "frappe-ui";
 import { computed, onBeforeUpdate, ref, watch, watchEffect } from "vue";
 import { useRouter } from "vue-router";
+import CloudOffIcon from "~icons/lucide/cloud-off";
+import HomeIcon from "~icons/lucide/house";
 
 const props = withDefaults(
 	defineProps<{

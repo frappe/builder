@@ -35,7 +35,7 @@
 				<div v-if="displayType === 'tree'">
 					<RouteTreeView
 						ref="routeTreeRef"
-						class="pr-3"
+						class="pl-2 pr-3"
 						:search-filter="searchFilter"
 						:active-folder="builderStore.activeFolder" />
 				</div>
