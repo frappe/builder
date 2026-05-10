@@ -6,17 +6,23 @@
 	</div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, useTemplateRef } from "vue";
 
-const props = defineProps({
-	text: String,
-});
+const props = withDefaults(
+	defineProps<{
+		text: string;
+		lettersAfterSlplit?: number;
+	}>(),
+	{
+		lettersAfterSlplit: 16,
+	},
+);
 
 const startSplitRef = useTemplateRef("start");
 
 const splitIndex = computed(() => {
-	return Math.floor(props.text.length - 16);
+	return Math.floor(props.text.length - props.lettersAfterSlplit);
 });
 
 const start = computed(() => {
