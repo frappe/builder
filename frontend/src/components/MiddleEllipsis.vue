@@ -1,6 +1,6 @@
 <template>
-	<div class="flex overflow-hidden whitespace-nowrap w-full" :title="text">
-		<span ref="start" class="overflow-hidden min-w-0">{{ start }}</span>
+	<div class="flex w-full overflow-hidden whitespace-nowrap" :title="text">
+		<span ref="start" class="min-w-0 overflow-hidden">{{ start }}</span>
 		<span v-if="hasEllipsis">...</span>
 		<span class="shrink-0">{{ end }}</span>
 	</div>
@@ -12,17 +12,17 @@ import { computed, useTemplateRef } from "vue";
 const props = withDefaults(
 	defineProps<{
 		text: string;
-		lettersAfterSlplit?: number;
+		lettersAfterSplit?: number;
 	}>(),
 	{
-		lettersAfterSlplit: 16,
+		lettersAfterSplit: 16,
 	},
 );
 
 const startSplitRef = useTemplateRef("start");
 
 const splitIndex = computed(() => {
-	return Math.floor(props.text.length - props.lettersAfterSlplit);
+	return Math.floor(props.text.length - props.lettersAfterSplit);
 });
 
 const start = computed(() => {
