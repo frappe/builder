@@ -1,5 +1,5 @@
 <template>
-	<div class="flex-1 overflow-auto">
+	<div class="no-scrollbar flex-1 overflow-auto">
 		<section class="m-auto mb-32 flex h-fit w-3/4 max-w-6xl flex-col pt-5">
 			<!-- pages -->
 			<div>
@@ -9,7 +9,7 @@
 					</p>
 				</div>
 				<div v-else-if="!webPages.data?.length" class="col-span-full">
-					<p class="text-base text-gray-500">No matching pages found.</p>
+					<p class="px-3 text-base text-gray-500">No matching pages found.</p>
 				</div>
 				<!-- grid -->
 				<div class="grid-col grid gap-3 auto-fill-[220px]" v-if="displayType === 'grid'">
@@ -31,6 +31,10 @@
 						:page="page"
 						v-on-click-and-hold="() => enableSelectionMode(page)"></PageListItem>
 				</div>
+				<!-- tree -->
+				<div v-if="displayType === 'tree'">
+					<RouteTreeView :pages="webPages.data || []" />
+				</div>
 			</div>
 			<BuilderButton
 				class="m-auto mt-12 w-fit text-sm"
@@ -41,7 +45,7 @@
 				Load More
 			</BuilderButton>
 			<!-- list head -->
-			<div class="sticky top-0 order-[-1] mb-8 flex items-center justify-between bg-surface-white px-3 py-5">
+			<div class="sticky top-0 order-[-1] mb-4 flex items-center justify-between bg-surface-white px-3 py-5">
 				<h1 class="text-xl font-semibold text-ink-gray-9">
 					{{ builderStore.activeFolder || "All Pages" }}
 				</h1>
@@ -115,6 +119,13 @@
 									icon: 'list',
 									hideLabel: true,
 								},
+								{
+									label: 'Route Tree',
+									value: 'tree',
+									icon: ListTreeIcon,
+									hideLabel: true,
+									showTooltip: true,
+								},
 							]"
 							v-model="displayType"></OptionToggle>
 					</div>
@@ -133,6 +144,7 @@ import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import SelectFolder from "@/components/Modals/SelectFolder.vue";
 import PageCard from "@/components/PageCard.vue";
 import PageListItem from "@/components/PageListItem.vue";
+import RouteTreeView from "@/components/RouteTreeView.vue";
 import { webPages } from "@/data/webPage";
 import vOnClickAndHold from "@/directives/vOnClickAndHold";
 import useBuilderStore from "@/stores/builderStore";
@@ -142,10 +154,11 @@ import { useStorage, watchDebounced } from "@vueuse/core";
 import { Button, createResource, Select } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
 import { onActivated, Ref, ref, watch } from "vue";
+import ListTreeIcon from "~icons/lucide/list-tree";
 
 const { capture } = useTelemetry();
 const builderStore = useBuilderStore();
-const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list">;
+const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list" | "tree">;
 const showFolderSelectorDialog = ref(false);
 
 const searchFilter = ref("");
