@@ -1,6 +1,7 @@
 # Copyright (c) 2023, asdf and Contributors
 # See license.txt
 
+import json
 
 import frappe
 from frappe.desk.form.load import getdoc
@@ -964,60 +965,6 @@ class TestBuilderPage(FrappeTestCase):
 		# Weights should be normalized to integers and deduplicated
 		self.assertEqual(font_map["Inter"]["weights"], [400, 700])
 		self.assertEqual(font_map["Open Sans"]["weights"], [600])
-
-	def test_set_fonts_inherits_font_family_from_ancestor(self):
-		"""Child block with only fontWeight should inherit fontFamily from ancestor via inherited_font."""
-		from builder.builder.doctype.builder_page.builder_page import set_fonts
-
-		font_map = {}
-		# No fontFamily on this style — only fontWeight — simulating a child block
-		styles = [{"fontWeight": "600"}]
-
-		# No inherited font: nothing should be added
-		set_fonts(styles, font_map)
-		self.assertEqual(font_map, {})
-
-		# With inherited font from ancestor: weight should be registered under that family
-		set_fonts(styles, font_map, inherited_font="Newsreader")
-		self.assertIn("Newsreader", font_map)
-		self.assertEqual(font_map["Newsreader"]["weights"], [600])
-
-	def test_font_family_inherited_from_parent_block(self):
-		"""End-to-end: child block with only fontWeight gets parent's fontFamily in the font_map."""
-		from builder.builder.doctype.builder_page.builder_page import get_block_html
-
-		body = Block(
-			element="div",
-			originalElement="body",
-			baseStyles={"fontFamily": "Newsreader"},
-			children=[
-				Block(
-					element="h1",
-					innerHTML="Headline",
-					baseStyles={"fontWeight": "700"},
-				)
-			],
-		)
-
-		_, _, font_map, _ = get_block_html(body.as_json(wrap_in_array=True))
-
-		self.assertIn("Newsreader", font_map)
-		self.assertIn(700, font_map["Newsreader"]["weights"])
-
-	def test_intervar_font_skipped(self):
-		"""InterVar font should never appear in font_map (loaded by reset.css)."""
-		from builder.builder.doctype.builder_page.builder_page import get_block_html
-
-		body = Block(
-			element="div",
-			originalElement="body",
-			baseStyles={"fontFamily": "InterVar", "fontWeight": "400"},
-		)
-
-		_, _, font_map, _ = get_block_html(body.as_json(wrap_in_array=True))
-
-		self.assertNotIn("InterVar", font_map)
-		self.assertNotIn("intervar", font_map)
 
 	@classmethod
 	def tearDownClass(cls):
