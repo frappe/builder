@@ -794,15 +794,7 @@ def generate_and_apply_styles(block: dict, state: dict) -> str:
 		styles["tablet"]["regular"],
 		styles["raw"]["regular"],
 	]
-	# Update inherited font family in state (parent processed before children)
-	declared_font = next(
-		(s.get("fontFamily", "").strip("'\"") for s in style_list if s.get("fontFamily")),
-		None,
-	)
-	if declared_font:
-		state["inherited_font_family"] = declared_font
-
-	set_fonts(style_list, font_map, state.get("inherited_font_family"))
+	set_fonts(style_list, font_map)
 
 	# Append styles for different states and devices
 	# Base and raw
@@ -1180,7 +1172,7 @@ def append_state_style(style_obj, style_tag, style_class, device="desktop"):
 			style_tag.append(wrap_with_media_query(style_string, device))
 
 
-def set_fonts(styles, font_map, inherited_font=None):
+def set_fonts(styles, font_map):
 	weight_map = {
 		"thin": "100",
 		"extralight": "200",
@@ -1219,9 +1211,6 @@ def set_fonts(styles, font_map, inherited_font=None):
 	}
 	for style in styles:
 		font = style.get("fontFamily")
-		if not font and style.get("fontWeight"):
-			# fontWeight is set but fontFamily is not — use font inherited from ancestor block
-			font = inherited_font
 		if font:
 			# Remove quotes if present
 			font = font.strip("'\"")
