@@ -24,6 +24,7 @@ from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
 from jinja2.exceptions import TemplateSyntaxError
 
+from builder.builder.doctype.user_font.user_font import get_all_user_fonts
 from builder.export_import_standard_page import export_page_as_standard
 from builder.hooks import builder_path
 from builder.html_preview_image import generate_preview
@@ -402,11 +403,8 @@ class BuilderPage(WebsiteGenerator):
 		self.db_set("preview", public_path, commit=True, update_modified=False)
 
 	def set_custom_font(self, context, font_map):
-		user_fonts = frappe.get_all(
-			"User Font",
-			fields=["font_name", "font_file"],
-			filters={"font_name": ("in", list(font_map.keys()))},
-		)
+		all_user_fonts = get_all_user_fonts()
+		user_fonts = [f for f in all_user_fonts if f.font_name in font_map]
 		if user_fonts:
 			context.custom_fonts = user_fonts
 		for font in user_fonts:
@@ -568,9 +566,6 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 		tag.insert(0, shared_state["global_script_tag"])
 
 		html = wrap_html_with_context(str(tag), block_context)
-		# Write html to a file for debugging
-		with open("output.html", "w") as f:
-			f.write(html)
 		html_parts.append(html)
 
 	return "".join(html_parts), str(style_tag), font_map, shared_state["has_block_script"]
