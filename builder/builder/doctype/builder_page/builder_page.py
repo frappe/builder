@@ -1207,6 +1207,7 @@ def set_fonts(styles, font_map):
 		"cursive",
 		"fantasy",
 		"system-ui",
+		"intervar",  # loaded by default via reset.css
 	}
 	for style in styles:
 		font = style.get("fontFamily")
