@@ -33,7 +33,7 @@
 				</div>
 				<!-- tree -->
 				<div v-if="displayType === 'tree'">
-					<RouteTreeView :pages="webPages.data || []" />
+					<RouteTreeView ref="routeTreeRef" :pages="webPages.data || []" />
 				</div>
 			</div>
 			<BuilderButton
@@ -75,7 +75,7 @@
 							</template>
 						</BuilderInput>
 					</div>
-					<div class="max-md:hidden" v-show="!selectionMode">
+					<div class="max-md:hidden" v-show="!selectionMode && displayType !== 'tree'">
 						<Select
 							v-model="typeFilter"
 							:options="[
@@ -86,7 +86,20 @@
 								{ label: 'Unpublished', value: 'unpublished' },
 							]" />
 					</div>
-					<div class="max-sm:hidden" v-show="!selectionMode">
+					<div v-if="displayType === 'tree' && !selectionMode">
+						<Button
+							variant="subtle"
+							size="sm"
+							class="w-20"
+							@click="
+								treeExpanded
+									? (routeTreeRef?.collapseAll(), (treeExpanded = false))
+									: (routeTreeRef?.expandAll(), (treeExpanded = true))
+							">
+							{{ treeExpanded ? "Collapse" : "Expand" }}
+						</Button>
+					</div>
+					<div class="max-sm:hidden" v-show="displayType !== 'tree' && !selectionMode">
 						<Select
 							v-model="orderBy"
 							:options="[
@@ -156,6 +169,9 @@ import { useTelemetry } from "frappe-ui/frappe";
 import { onActivated, Ref, ref, watch } from "vue";
 import ListTreeIcon from "~icons/lucide/list-tree";
 
+const routeTreeRef = ref<InstanceType<typeof RouteTreeView>>();
+const treeExpanded = ref(true);
+
 const { capture } = useTelemetry();
 const builderStore = useBuilderStore();
 const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list" | "tree">;
@@ -186,6 +202,8 @@ watch(
 	() => fetchPages(),
 );
 
+watch(displayType, () => fetchPages());
+
 // remove selection mode when the escape key is pressed
 useShortcut({
 	key: "Escape",
@@ -201,7 +219,7 @@ const fetchPages = () => {
 	const filters = {
 		is_template: 0,
 	} as any;
-	if (typeFilter.value) {
+	if (typeFilter.value && displayType.value !== "tree") {
 		if (typeFilter.value === "published") {
 			filters["published"] = true;
 		} else if (typeFilter.value === "unpublished") {

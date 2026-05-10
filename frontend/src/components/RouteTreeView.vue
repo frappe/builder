@@ -13,11 +13,9 @@
 				:icon="node.expanded ? 'chevron-down' : 'chevron-right'"></Button>
 			<span v-else class="size-4 shrink-0"></span>
 
-			<!-- icon: slash for path segments, file for leaf pages only -->
 			<FeatherIcon v-if="node.hasChildren" name="hash" class="size-3.5 shrink-0 text-ink-gray-4" />
 			<FeatherIcon v-else name="file-text" class="size-3.5 shrink-0 text-ink-gray-4" />
 
-			<!-- URL segment label + page title -->
 			<router-link
 				v-if="node.page"
 				:to="{ name: 'builder', params: { pageId: node.page.page_name } }"
@@ -80,7 +78,6 @@ const props = defineProps<{
 	pages: BuilderPage[];
 }>();
 
-// "collapsedNodes" set — nodes not in this set are expanded (default: all expanded)
 const collapsedNodes = ref(new Set<string>());
 
 function buildTrie(pages: BuilderPage[]): Map<string, TrieNode> {
@@ -114,7 +111,16 @@ const visibleNodes = computed<TreeNode[]>(() => {
 			const hasChildren = trieNode.children.size > 0;
 			const expanded = !collapsedNodes.value.has(id);
 
-			result.push({ id, label, fullPath, depth, page: trieNode.page, hasChildren, expanded, parentId });
+			result.push({
+				id,
+				label,
+				fullPath,
+				depth,
+				page: trieNode.page,
+				hasChildren,
+				expanded,
+				parentId,
+			});
 
 			if (hasChildren && expanded) {
 				traverse(trieNode.children, depth + 1, fullPath, id);
@@ -135,4 +141,30 @@ function toggleNode(node: TreeNode) {
 	}
 	collapsedNodes.value = next;
 }
+
+function getAllParentIds(): string[] {
+	const trie = buildTrie(props.pages);
+	const ids: string[] = [];
+	function collect(map: Map<string, TrieNode>, parentPath: string) {
+		for (const [label, trieNode] of map) {
+			const fullPath = parentPath ? `${parentPath}/${label}` : label;
+			if (trieNode.children.size > 0) {
+				ids.push(fullPath);
+				collect(trieNode.children, fullPath);
+			}
+		}
+	}
+	collect(trie, "");
+	return ids;
+}
+
+function expandAll() {
+	collapsedNodes.value = new Set();
+}
+
+function collapseAll() {
+	collapsedNodes.value = new Set(getAllParentIds());
+}
+
+defineExpose({ expandAll, collapseAll });
 </script>
