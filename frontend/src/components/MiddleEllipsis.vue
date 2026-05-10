@@ -1,8 +1,8 @@
 <template>
-	<div class="path" :title="text">
-		<span ref="start" class="start">{{ start }}</span>
+	<div class="flex overflow-hidden whitespace-nowrap w-full" :title="text">
+		<span ref="start" class="overflow-hidden min-w-0">{{ start }}</span>
 		<span v-if="hasEllipsis">...</span>
-		<span class="end">{{ end }}</span>
+		<span class="shrink-0">{{ end }}</span>
 	</div>
 </template>
 
@@ -38,21 +38,3 @@ const hasEllipsis = computed(() => {
 	return false;
 });
 </script>
-
-<style scoped>
-.path {
-	display: flex;
-	overflow: hidden;
-	white-space: nowrap;
-	width: 100%;
-}
-
-.start {
-	overflow: hidden;
-	min-width: 0;
-}
-
-.end {
-	flex-shrink: 0;
-}
-</style>
