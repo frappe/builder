@@ -79,7 +79,11 @@ const position = computed({
 		return pos;
 	},
 	set(value: string) {
-		if (value === "static") {
+		if (
+			value === "static" &&
+			(blockController.getCascadingStyle("position") === "static" ||
+				!blockController.getCascadingStyle("position"))
+		) {
 			value = "";
 		}
 		blockController.setStyle("position", value);

@@ -112,7 +112,7 @@
 					Saving template
 				</span>
 				<Tooltip text="Settings" :hoverDelay="0.6" arrow-class="mb-3">
-					<Button variant="ghost" @click="showSettingsDialog = true" :icon="SettingsGearIcon"></Button>
+					<Button variant="ghost" @click="openSettings" :icon="SettingsGearIcon"></Button>
 				</Tooltip>
 				<router-link :to="{ name: 'preview', params: { pageId: pageStore.selectedPage } }" title="Preview">
 					<Tooltip text="Preview" :hoverDelay="0.6" arrow-class="mb-3">
@@ -156,7 +156,6 @@ import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import PlayIcon from "@/components/Icons/Play.vue";
 import SettingsGearIcon from "@/components/Icons/SettingsGear.vue";
 import PublishButton from "@/components/PublishButton.vue";
-import { builderSettings } from "@/data/builderSettings";
 import { webPages } from "@/data/webPage";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
@@ -187,12 +186,18 @@ const showShortcuts = inject<() => void>("showShortcuts", () => {});
 
 const openAIGeneratorFn = inject<(() => void) | undefined>("showAIGenerator", undefined);
 
-const openAIGenerator = () => {
+const openAIGenerator = (e: MouseEvent) => {
+	(e.currentTarget as HTMLElement)?.blur();
 	if (openAIGeneratorFn) {
 		openAIGeneratorFn();
 	} else {
 		toast.error("AI Generator is not available");
 	}
+};
+
+const openSettings = (e: MouseEvent) => {
+	(e.currentTarget as HTMLElement)?.blur();
+	showSettingsDialog.value = true;
 };
 
 const currentlyViewedByText = computed(() => {

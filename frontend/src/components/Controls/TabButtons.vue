@@ -15,11 +15,11 @@
 							isValueSet() && checked ? 'bg-surface-white text-ink-gray-9 shadow' : 'text-ink-gray-7',
 							'flex flex-1 justify-center gap-2 whitespace-nowrap rounded-[7px] px-3 py-[5px] leading-none transition-colors focus:outline-none',
 						]">
-						<FeatherIcon
-							class="size-4"
+						<component
 							v-if="button.icon"
-							:name="button.icon"
-							:label="button.label"
+							:is="typeof button.icon === 'string' ? FeatherIcon : button.icon"
+							class="size-4"
+							v-bind="typeof button.icon === 'string' ? { name: button.icon, label: button.label } : {}"
 							:aria-label="button.label" />
 						<RadioGroupLabel as="span" class="flex items-center" v-show="button.label && !button.hideLabel">
 							{{ button.label }}
@@ -34,12 +34,13 @@
 <script lang="ts" setup>
 import { RadioGroup, RadioGroupLabel, RadioGroupOption } from "@headlessui/vue";
 import { FeatherIcon, Tooltip } from "frappe-ui";
+import type { Component } from "vue";
 import { computed } from "vue";
 
 interface Button {
 	label: string;
 	value?: string | number | boolean;
-	icon?: string;
+	icon?: string | Component;
 	hideLabel?: boolean;
 	showTooltip?: boolean;
 }

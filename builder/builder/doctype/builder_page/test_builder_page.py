@@ -1,7 +1,6 @@
 # Copyright (c) 2023, asdf and Contributors
 # See license.txt
 
-import json
 
 import frappe
 from frappe.desk.form.load import getdoc
@@ -965,6 +964,61 @@ class TestBuilderPage(FrappeTestCase):
 		# Weights should be normalized to integers and deduplicated
 		self.assertEqual(font_map["Inter"]["weights"], [400, 700])
 		self.assertEqual(font_map["Open Sans"]["weights"], [600])
+
+	def test_set_fonts_inherits_font_family_from_ancestor(self):
+		"""set_fonts should use inherited_font when a style has fontWeight but no fontFamily."""
+		from builder.builder.doctype.builder_page.builder_page import set_fonts
+
+		font_map = {}
+		styles = [{"fontWeight": "600"}]
+
+		# Without inherited_font, nothing should be added
+		set_fonts(styles, font_map)
+		self.assertEqual(font_map, {})
+
+		# With inherited_font, the ancestor font should be registered
+		set_fonts(styles, font_map, inherited_font="Newsreader")
+		self.assertIn("Newsreader", font_map)
+		self.assertIn(600, font_map["Newsreader"]["weights"])
+
+	def test_font_weight_inherited_from_parent_block(self):
+		"""Child block with only fontWeight should inherit fontFamily from parent in font_map."""
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		blocks = [
+			{
+				"element": "div",
+				"originalElement": "body",
+				"baseStyles": {"fontFamily": "Newsreader"},
+				"children": [
+					{
+						"element": "h1",
+						"innerHTML": "Headline",
+						"baseStyles": {"fontWeight": "700"},
+						"children": [],
+					}
+				],
+			}
+		]
+		_, _, font_map, _ = get_block_html(blocks)
+		self.assertIn("Newsreader", font_map)
+		self.assertIn(700, font_map["Newsreader"]["weights"])
+
+	def test_intervar_font_skipped(self):
+		"""InterVar should not appear in the font_map — it is loaded via reset.css."""
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		blocks = [
+			{
+				"element": "div",
+				"originalElement": "body",
+				"baseStyles": {"fontFamily": "InterVar", "fontWeight": "400"},
+				"children": [],
+			}
+		]
+		_, _, font_map, _ = get_block_html(blocks)
+		self.assertNotIn("InterVar", font_map)
+		self.assertNotIn("intervar", font_map)
 
 	@classmethod
 	def tearDownClass(cls):

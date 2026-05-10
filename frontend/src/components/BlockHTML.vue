@@ -2,7 +2,7 @@
 	<div
 		ref="component"
 		:class="{
-			'!relative': !block.getStyle('position'),
+			'!relative': !block.getStyle('position') || block.getStyle('position') === 'static',
 		}"
 		v-html="html"></div>
 </template>
