@@ -1,61 +1,63 @@
 <template>
 	<div>
-		<div
-			v-for="node in visibleNodes"
-			:key="node.id"
-			class="group flex items-center gap-1.5 rounded-md p-1 hover:bg-surface-gray-1"
-			:style="{ paddingLeft: `${node.depth * 20 + 4}px` }">
-			<!-- expand/collapse button or spacer -->
-			<Button
-				v-if="node.hasChildren"
-				variant="ghost"
-				@click="toggleNode(node)"
-				:icon="node.expanded ? 'chevron-down' : 'chevron-right'"></Button>
-			<span v-else class="size-4 shrink-0"></span>
+		<template v-for="(node, idx) in visibleNodes" :key="node.id">
+			<div
+				class="group flex items-center gap-1.5 border-b border-outline-gray-1 px-1 py-1 hover:rounded-md hover:bg-surface-gray-1"
+				:style="{ marginLeft: `${node.depth * 24 + 4}px` }">
+				<Button
+					v-if="node.hasChildren"
+					variant="ghost"
+					@click="toggleNode(node)"
+					:icon="node.expanded ? 'chevron-down' : 'chevron-right'"></Button>
+				<span v-else class="size-6 shrink-0"></span>
+				<FeatherIcon
+					v-if="node.hasChildren"
+					name="hash"
+					class="size-3.5 shrink-0"
+					:class="node.depth === 0 ? 'text-ink-gray-7' : 'text-ink-gray-4'" />
+				<FeatherIcon v-else name="file-minus" class="size-3.5 shrink-0 text-ink-gray-4" />
 
-			<FeatherIcon v-if="node.hasChildren" name="hash" class="size-3.5 shrink-0 text-ink-gray-4" />
-			<FeatherIcon v-else name="file-text" class="size-3.5 shrink-0 text-ink-gray-4" />
+				<router-link
+					v-if="node.page"
+					:to="{ name: 'builder', params: { pageId: node.page.page_name } }"
+					class="flex min-w-0 flex-1 items-center gap-2 py-0.5">
+					<code class="shrink-0 px-1.5 py-0.5 font-mono text-xs font-medium text-ink-gray-8">
+						/{{ node.label }}
+					</code>
+					<span
+						v-if="node.page.page_title"
+						class="truncate text-sm text-ink-gray-5"
+						:title="node.page.page_title">
+						{{ node.page.page_title }}
+					</span>
+				</router-link>
 
-			<router-link
-				v-if="node.page"
-				:to="{ name: 'builder', params: { pageId: node.page.page_name } }"
-				class="flex min-w-0 flex-1 items-center gap-2">
-				<span class="shrink-0 font-mono text-sm font-medium text-ink-gray-9">/{{ node.label }}</span>
-				<span
-					v-if="node.page.page_title"
-					class="truncate text-sm text-ink-gray-5"
-					:title="node.page.page_title">
-					{{ node.page.page_title }}
-				</span>
-				<Badge
-					v-if="node.page.published"
-					theme="green"
-					class="ml-auto shrink-0 text-xs dark:bg-green-900 dark:text-green-400">
-					Published
-				</Badge>
-			</router-link>
-			<button v-else class="flex min-w-0 flex-1 items-center gap-1" @click="toggleNode(node)">
-				<span class="font-mono text-sm font-medium text-ink-gray-7">/{{ node.label }}</span>
-			</button>
+				<button v-else class="flex min-w-0 flex-1 items-center gap-1 py-0.5" @click="toggleNode(node)">
+					<span
+						class="font-mono text-sm font-semibold"
+						:class="node.depth === 0 ? 'text-ink-gray-8' : 'text-ink-gray-6'">
+						/{{ node.label }}
+					</span>
+				</button>
 
-			<PageActionsDropdown v-if="node.page" :page="node.page" size="xs" placement="right">
-				<template v-slot="{ open }">
-					<BuilderButton
-						icon="more-horizontal"
-						size="sm"
-						variant="subtle"
-						class="bg-surface-white !text-ink-gray-5 hover:!text-ink-gray-9"
-						@click="open"></BuilderButton>
-				</template>
-			</PageActionsDropdown>
-		</div>
+				<PageActionsDropdown v-if="node.page" :page="node.page" size="xs" placement="right">
+					<template v-slot="{ open }">
+						<BuilderButton
+							icon="more-horizontal"
+							size="sm"
+							variant="subtle"
+							class="invisible bg-surface-white !text-ink-gray-5 hover:!text-ink-gray-9 group-hover:visible"
+							@click="open"></BuilderButton>
+					</template>
+				</PageActionsDropdown>
+			</div>
+		</template>
 	</div>
 </template>
 
 <script setup lang="ts">
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { Badge } from "frappe-ui";
 import { computed, ref } from "vue";
 
 interface TreeNode {

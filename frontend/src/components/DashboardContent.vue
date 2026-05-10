@@ -33,7 +33,7 @@
 				</div>
 				<!-- tree -->
 				<div v-if="displayType === 'tree'">
-					<RouteTreeView ref="routeTreeRef" :pages="webPages.data || []" />
+					<RouteTreeView ref="routeTreeRef" class="pr-3" :pages="webPages.data || []" />
 				</div>
 			</div>
 			<BuilderButton
