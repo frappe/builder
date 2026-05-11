@@ -47,21 +47,23 @@
 					<Button
 						v-if="node.hasChildren"
 						variant="ghost"
-						class="!text-ink-gray-4"
+						class="!text-ink-gray-5"
 						@click.stop="toggleNode(node)"
 						:icon="node.expanded ? 'chevron-down' : 'chevron-right'"></Button>
 					<span v-else class="size-6 w-7 shrink-0"></span>
-					<!-- <FeatherIcon v-if="node.hasChildren" name="hash" class="size-3.5 shrink-0 text-ink-gray-5" /> -->
-					<!-- <FeatherIcon v-else name="file-minus" class="-mr-1 size-3.5 shrink-0 text-ink-gray-5" /> -->
 
 					<!-- Page node label row -->
 					<div v-if="node.page" class="flex min-w-0 flex-1 items-center gap-1.5 py-0.5">
-						<code class="shrink-0 px-1.5 py-0.5 font-mono text-xs font-medium text-ink-gray-8">
+						<code
+							class="shrink-0 py-0.5 font-mono text-sm text-ink-gray-6 group-hover:text-ink-gray-9"
+							:class="{
+								'font-semibold': node.hasChildren,
+							}">
 							/{{ node.label }}
 						</code>
 						<span
 							v-if="node.page.page_title"
-							class="truncate text-sm text-ink-gray-5"
+							class="truncate text-sm text-ink-gray-4"
 							:title="node.page.page_title">
 							{{ node.page.page_title }}
 						</span>
@@ -84,8 +86,10 @@
 					<!-- Folder node label -->
 					<div v-else class="flex min-w-0 flex-1 items-center gap-1 py-0.5">
 						<span
-							class="font-mono text-sm font-semibold"
-							:class="node.depth === 0 ? 'text-ink-gray-8' : 'text-ink-gray-6'">
+							class="font-mono text-sm text-ink-gray-6 group-hover:text-ink-gray-9"
+							:class="{
+								'font-semibold': node.hasChildren,
+							}">
 							/{{ node.label }}
 						</span>
 					</div>
