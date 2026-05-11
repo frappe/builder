@@ -17,6 +17,12 @@
 						condition: () => Boolean(props.page.published),
 					},
 					{
+						label: 'Unpublish',
+						onClick: () => pageStore.unpublishPage(props.page),
+						icon: 'lucide-cloud-off',
+						condition: () => Boolean(props.page.published),
+					},
+					{
 						label: 'View in Desk',
 						onClick: () => openInDesk(props.page),
 						icon: 'arrow-up-right',

@@ -1,14 +1,16 @@
 <template>
 	<div class="flex h-screen">
 		<DashboardSidebar></DashboardSidebar>
-		<div class="flex w-full flex-1 flex-col overflow-hidden">
+		<div class="flex w-full flex-1 flex-col overflow-hidden pb-10">
 			<DashboardToolbar class="sticky top-0" />
+			<DashboardHead />
 			<DashboardContent />
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
 import DashboardContent from "@/components/DashboardContent.vue";
+import DashboardHead from "@/components/DashboardHead.vue";
 import DashboardSidebar from "@/components/DashboardSidebar.vue";
 import DashboardToolbar from "@/components/DashboardToolbar.vue";
 </script>

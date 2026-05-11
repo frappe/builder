@@ -52,7 +52,8 @@ export function useBuilderEvents(
 	);
 
 	useEventListener(document, "copy", (e) => {
-		if (isTargetEditable(e) || canvasStore.editableBlock || isDialogOpen()) return;
+		if (isTargetEditable(e) || canvasStore.editableBlock) return;
+		if (isDialogOpen() && canvasStore.requiresConfirmationForCopyingEntirePage) return;
 		copySelectedBlocksToClipboard(e);
 	});
 
@@ -614,5 +615,6 @@ const copySelectedBlocksToClipboard = (e: ClipboardEvent) => {
 	} else {
 		copyBuilderBlocks(e, window.location.origin, canvasStore.copyEntirePage);
 		canvasStore.requiresConfirmationForCopyingEntirePage = true;
+		canvasStore.copyEntirePage = false;
 	}
 };

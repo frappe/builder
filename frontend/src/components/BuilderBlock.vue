@@ -365,7 +365,20 @@ const loadEditor = computed(() => {
 const emit = defineEmits(["mounted"]);
 
 watchEffect(() => {
-	setFont(props.block.getStyle("fontFamily") as string, props.block.getStyle("fontWeight") as string);
+	let fontFamily = props.block.getStyle("fontFamily") as string;
+	const fontWeight = props.block.getStyle("fontWeight") as string;
+	if (!fontFamily && fontWeight) {
+		let parent = props.block.getParentBlock();
+		while (parent) {
+			const parentFont = parent.getStyle("fontFamily") as string;
+			if (parentFont) {
+				fontFamily = parentFont;
+				break;
+			}
+			parent = parent.getParentBlock();
+		}
+	}
+	setFont(fontFamily, fontWeight);
 });
 
 onMounted(async () => {
