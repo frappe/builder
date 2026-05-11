@@ -1,7 +1,6 @@
 import { useStorage } from "@vueuse/core";
 import { ref, Ref } from "vue";
 
-// Module-level singletons shared across DashboardHead and DashboardContent
 const searchFilter = ref("");
 const selectionMode = ref(false);
 const selectedPages = ref(new Set<string>());
@@ -14,7 +13,6 @@ const orderBy = useStorage("orderBy", "creation") as Ref<
 	"creation" | "modified" | "alphabetically_a_z" | "alphabetically_z_a"
 >;
 
-// Callbacks registered by DashboardContent so DashboardHead can control the tree
 const expandTreeFn = ref<(() => void) | null>(null);
 const collapseTreeFn = ref<(() => void) | null>(null);
 
