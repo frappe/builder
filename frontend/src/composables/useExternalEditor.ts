@@ -74,7 +74,7 @@ async function openInExternalEditor(
 
 		const uri = `${
 			externalEditorUriScheme.value
-		}://frappe.frappe-script-editor/open-script?${searchParams.toString()}`;
+		}://PratikBadhe.frappe-script-editor/open-script?${searchParams.toString()}`;
 		window.location.href = uri;
 
 		return { success: true };
