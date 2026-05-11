@@ -1,6 +1,6 @@
 <template>
 	<div class="no-scrollbar flex-1 overflow-auto">
-		<section class="m-auto mb-32 flex h-fit w-3/4 max-w-6xl flex-col pt-5">
+		<section class="m-auto mb-24 flex h-fit w-3/4 max-w-6xl flex-col pt-5">
 			<!-- pages -->
 			<div>
 				<div v-if="!webPages.data?.length && !searchFilter && !typeFilter" class="col-span-full">
@@ -48,105 +48,6 @@
 				size="sm">
 				Load More
 			</BuilderButton>
-			<!-- list head -->
-			<div class="sticky top-0 order-[-1] mb-4 flex items-center justify-between bg-surface-white px-3 py-5">
-				<h1 class="text-xl font-semibold text-ink-gray-9">
-					{{ builderStore.activeFolder || "All Pages" }}
-				</h1>
-				<div class="flex gap-2">
-					<div>
-						<Button
-							variant="solid"
-							v-if="selectionMode && selectedPages.size"
-							@click="showFolderSelectorDialog = true">
-							Move To Folder
-						</Button>
-					</div>
-					<div class="relative flex" v-show="!selectionMode">
-						<BuilderInput
-							class="w-48"
-							type="text"
-							placeholder="Filter by title or route"
-							v-model="searchFilter"
-							@input="
-								(value: string) => {
-									searchFilter = value;
-								}
-							">
-							<template #prefix>
-								<FeatherIcon name="search" class="size-4 text-ink-gray-5"></FeatherIcon>
-							</template>
-						</BuilderInput>
-					</div>
-					<div class="max-md:hidden" v-show="!selectionMode && displayType !== 'tree'">
-						<Select
-							v-model="typeFilter"
-							:options="[
-								{ label: 'Type', value: '', disabled: true },
-								{ label: 'All', value: 'all' },
-								{ label: 'Draft', value: 'draft' },
-								{ label: 'Published', value: 'published' },
-								{ label: 'Unpublished', value: 'unpublished' },
-							]" />
-					</div>
-					<div v-if="displayType === 'tree' && !selectionMode">
-						<Button
-							variant="subtle"
-							size="sm"
-							class="w-20"
-							@click="
-								treeExpanded
-									? (routeTreeRef?.collapseAll(), (treeExpanded = false))
-									: (routeTreeRef?.expandAll(), (treeExpanded = true))
-							">
-							{{ treeExpanded ? "Collapse" : "Expand" }}
-						</Button>
-					</div>
-					<div class="max-sm:hidden" v-show="displayType !== 'tree' && !selectionMode">
-						<Select
-							v-model="orderBy"
-							:options="[
-								{ label: 'Sort', value: '', disabled: true },
-								{ label: 'Last Created', value: 'creation' },
-								{ label: 'Last Modified', value: 'modified' },
-								{
-									label: 'Alphabetically (A-Z)',
-									value: 'alphabetically_a_z',
-								},
-								{
-									label: 'Alphabetically (Z-A)',
-									value: 'alphabetically_z_a',
-								},
-							]" />
-					</div>
-					<div class="max-md:hidden">
-						<OptionToggle
-							class="[&>div]:min-w-0"
-							:options="[
-								{
-									label: 'Grid',
-									value: 'grid',
-									icon: 'grid',
-									hideLabel: true,
-								},
-								{
-									label: 'List',
-									value: 'list',
-									icon: 'list',
-									hideLabel: true,
-								},
-								{
-									label: 'Route Tree',
-									value: 'tree',
-									icon: ListTreeIcon,
-									hideLabel: true,
-									showTooltip: true,
-								},
-							]"
-							v-model="displayType"></OptionToggle>
-					</div>
-				</div>
-			</div>
 		</section>
 	</div>
 	<SelectFolder
@@ -156,35 +57,46 @@
 </template>
 
 <script setup lang="ts">
-import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import SelectFolder from "@/components/Modals/SelectFolder.vue";
 import PageCard from "@/components/PageCard.vue";
 import PageListItem from "@/components/PageListItem.vue";
 import RouteTreeView from "@/components/RouteTreeView.vue";
+import { useDashboardState } from "@/composables/useDashboardState";
 import { webPages } from "@/data/webPage";
 import vOnClickAndHold from "@/directives/vOnClickAndHold";
 import useBuilderStore from "@/stores/builderStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { useShortcut } from "@/utils/useShortcut";
-import { useStorage, watchDebounced } from "@vueuse/core";
-import { Button, createResource, Select } from "frappe-ui";
+import { watchDebounced } from "@vueuse/core";
+import { createResource } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
-import { onActivated, Ref, ref, watch } from "vue";
-import ListTreeIcon from "~icons/lucide/list-tree";
+import { onActivated, onMounted, onUnmounted, ref, watch } from "vue";
 
 const routeTreeRef = ref<InstanceType<typeof RouteTreeView>>();
-const treeExpanded = ref(true);
 
 const { capture } = useTelemetry();
 const builderStore = useBuilderStore();
-const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list" | "tree">;
-const showFolderSelectorDialog = ref(false);
+const {
+	searchFilter,
+	typeFilter,
+	orderBy,
+	displayType,
+	selectionMode,
+	selectedPages,
+	showFolderSelectorDialog,
+	expandTreeFn,
+	collapseTreeFn,
+} = useDashboardState();
 
-const searchFilter = ref("");
-const typeFilter = useStorage("typeFilter", "") as Ref<"" | "draft" | "published" | "unpublished" | "all">;
-const orderBy = useStorage("orderBy", "creation") as Ref<
-	"creation" | "modified" | "alphabetically_a_z" | "alphabetically_z_a"
->;
+onMounted(() => {
+	expandTreeFn.value = () => routeTreeRef.value?.expandAll();
+	collapseTreeFn.value = () => routeTreeRef.value?.collapseAll();
+});
+
+onUnmounted(() => {
+	expandTreeFn.value = null;
+	collapseTreeFn.value = null;
+});
 
 const orderMap = {
 	creation: "creation desc",
@@ -192,9 +104,6 @@ const orderMap = {
 	alphabetically_a_z: "page_title asc",
 	alphabetically_z_a: "page_title desc",
 };
-
-const selectedPages = ref(new Set<string>());
-const selectionMode = ref(false);
 
 onActivated(() => {
 	capture("builder_dashboard_page_visited");
