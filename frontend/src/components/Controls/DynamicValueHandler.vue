@@ -25,7 +25,7 @@
 							</p>
 						</div>
 					</li>
-					<li v-for="(item, index) in filteredItems" :key="index">
+					<li v-for="item in filteredItems" :key="item.key">
 						<div
 							class="w-full cursor-pointer truncate rounded p-2 text-left font-mono text-p-sm text-ink-gray-7 hover:bg-surface-gray-2"
 							:class="{
