@@ -59,6 +59,7 @@ declare module 'vue' {
     CSS: typeof import('./src/components/Icons/CSS.vue')['default']
     CustomSearchPanel: typeof import('./src/components/Controls/CodeMirror/CustomSearchPanel.vue')['default']
     DashboardContent: typeof import('./src/components/DashboardContent.vue')['default']
+    DashboardHead: typeof import('./src/components/DashboardHead.vue')['default']
     DashboardSidebar: typeof import('./src/components/DashboardSidebar.vue')['default']
     DashboardToolbar: typeof import('./src/components/DashboardToolbar.vue')['default']
     DataLoaderBlock: typeof import('./src/components/DataLoaderBlock.vue')['default']
