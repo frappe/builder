@@ -17,7 +17,7 @@ import usePageStore from "@/stores/pageStore";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { confirm, detachBlockFromComponent, getBlockCopy, triggerCopyEvent } from "@/utils/helpers";
 import { useStorage } from "@vueuse/core";
-import { Ref, inject, nextTick, ref } from "vue";
+import { Ref, inject, nextTick, ref, computed } from "vue";
 import { toast } from "vue-sonner";
 import { useExternalEditor, createEditorContext } from "@/composables/useExternalEditor";
 
@@ -90,7 +90,7 @@ const duplicateBlock = () => {
 	block.value.duplicateBlock();
 };
 
-const contextMenuOptions: ContextMenuOption[] = [
+const contextMenuOptions = computed((): ContextMenuOption[] => [
 	{
 		label: "Edit with AI",
 		action: () => {
@@ -353,7 +353,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		},
 		disabled: () => builderStore.readOnlyMode,
 	},
-];
+]);
 
 defineExpose({
 	showContextMenu,
