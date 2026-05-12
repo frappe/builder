@@ -19,7 +19,7 @@
 					{
 						label: 'Unpublish',
 						onClick: () => pageStore.unpublishPage(props.page),
-						icon: 'lucide-cloud-off',
+						icon: GlobeOffIcon,
 						condition: () => Boolean(props.page.published),
 					},
 					{
@@ -49,6 +49,7 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { openInDesk } from "@/utils/helpers";
 import { Dropdown } from "frappe-ui";
+import GlobeOffIcon from "@/components/Icons/GlobeOff.vue";
 
 const pageStore = usePageStore();
 

@@ -77,8 +77,8 @@
 								:hoverDelay="0.5">
 								<AuthenticatedUserIcon class="size-3.5 text-ink-amber-3" />
 							</Tooltip>
-							<Tooltip v-if="!node.page.published" text="Draft – not published" :hoverDelay="0.5">
-								<CloudOffIcon class="size-3.5 text-ink-gray-4" />
+							<Tooltip v-if="!node.page.published" text="Not published" :hoverDelay="0.5">
+								<GlobeOffIcon class="size-3.5 text-ink-gray-4" />
 							</Tooltip>
 						</span>
 					</div>
@@ -112,6 +112,7 @@
 
 <script setup lang="ts">
 import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
+import GlobeOffIcon from "@/components/Icons/GlobeOff.vue";
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
 import { builderSettings } from "@/data/builderSettings";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
@@ -119,7 +120,6 @@ import { useShortcut } from "@/utils/useShortcut";
 import { createListResource, Tooltip } from "frappe-ui";
 import { computed, onBeforeUpdate, ref, watch, watchEffect } from "vue";
 import { useRouter } from "vue-router";
-import CloudOffIcon from "~icons/lucide/cloud-off";
 import HomeIcon from "~icons/lucide/house";
 
 const props = withDefaults(
