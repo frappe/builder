@@ -2,6 +2,8 @@ import { ref, onMounted } from "vue";
 
 const EXTERNAL_EDITOR_PORT_RANGE = { start: 59000, end: 59021 };
 
+type PermissionState = "granted" | "denied" | "prompt" | "unsupported";
+
 interface ExternalEditorStatus {
 	active: boolean;
 	extension: string;
@@ -22,15 +24,35 @@ const isExternalEditorActive = ref(false);
 const externalEditorPort = ref<number | null>(null);
 const externalEditorUriScheme = ref<string>("vscode");
 const editorName = ref<string>("VS Code");
+const lnaPermissionStatus = ref<PermissionState>("prompt");
+const isRequestingAccess = ref(false);
 
-async function checkExternalEditorStatus(): Promise<void> {
-	isExternalEditorActive.value = false;
-	externalEditorPort.value = null;
+async function checkLocalNetworkAccess(): Promise<void> {
+	try {
+		const result = await navigator.permissions.query({
+			name: "local-network-access" as PermissionName,
+		});
+		lnaPermissionStatus.value = result.state as PermissionState;
+		result.addEventListener("change", () => {
+			lnaPermissionStatus.value = result.state as PermissionState;
+		});
+	} catch {
+		lnaPermissionStatus.value = "unsupported";
+	}
+}
+
+async function scanPorts(
+	options: {
+		timeout?: number;
+		validateResponse?: (data: ExternalEditorStatus) => boolean;
+	} = {},
+): Promise<{ port: number; data?: ExternalEditorStatus } | null> {
+	const { timeout = 500, validateResponse } = options;
 
 	for (let port = EXTERNAL_EDITOR_PORT_RANGE.start; port <= EXTERNAL_EDITOR_PORT_RANGE.end; port++) {
 		try {
 			const controller = new AbortController();
-			const timeoutId = setTimeout(() => controller.abort(), 500);
+			const timeoutId = setTimeout(() => controller.abort(), timeout);
 
 			const response = await fetch(`http://127.0.0.1:${port}/status`, {
 				method: "GET",
@@ -41,17 +63,39 @@ async function checkExternalEditorStatus(): Promise<void> {
 
 			if (response.ok) {
 				const data = (await response.json()) as ExternalEditorStatus;
-				if (data.active && data.extension === "frappe-script-editor") {
-					isExternalEditorActive.value = true;
-					externalEditorPort.value = port;
-					externalEditorUriScheme.value = data.uriScheme || "vscode";
-					editorName.value = data.name;
-					return;
+				if (!validateResponse || validateResponse(data)) {
+					return { port, data };
 				}
 			}
-		} catch {
-			// Port not available or timeout, continue to next
-		}
+		} catch {}
+	}
+	return null;
+}
+
+async function requestLocalNetworkAccess(): Promise<void> {
+	isRequestingAccess.value = true;
+	try {
+		await scanPorts({ timeout: 300 });
+	} catch {}
+	await checkLocalNetworkAccess();
+	isRequestingAccess.value = false;
+}
+
+async function checkExternalEditorStatus(): Promise<void> {
+	isExternalEditorActive.value = false;
+	externalEditorPort.value = null;
+
+	if (lnaPermissionStatus.value === "denied") return;
+
+	const result = await scanPorts({
+		validateResponse: (data) => data.active && data.extension === "frappe-script-editor",
+	});
+
+	if (result) {
+		isExternalEditorActive.value = true;
+		externalEditorPort.value = result.port;
+		externalEditorUriScheme.value = result.data?.uriScheme || "vscode";
+		editorName.value = result.data?.name || "VS Code";
 	}
 }
 
@@ -85,14 +129,21 @@ async function openInExternalEditor(
 }
 
 export function useExternalEditor() {
-	onMounted(() => {
-		checkExternalEditorStatus();
+	onMounted(async () => {
+		await checkLocalNetworkAccess();
+		if (lnaPermissionStatus.value === "granted" || import.meta.env.DEV) {
+			await checkExternalEditorStatus();
+		}
 	});
 
 	return {
 		isExternalEditorActive,
 		openInExternalEditor,
 		editorName,
+		lnaPermissionStatus,
+		isRequestingAccess,
+		requestLocalNetworkAccess,
+		checkLocalNetworkAccess,
 	};
 }
 
