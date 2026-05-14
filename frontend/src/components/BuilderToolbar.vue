@@ -2,7 +2,7 @@
 	<div
 		class="toolbar border-outline border-outline flex items-center justify-center border-b-[1px] border-outline-gray-1 bg-surface-white px-2 py-1"
 		ref="toolbar">
-		<div class="absolute left-3 flex items-center gap-5">
+		<div class="absolute left-3 flex items-center gap-4">
 			<MainMenu @showSettings="() => (showSettingsDialog = true)" @showShortcuts="showShortcuts"></MainMenu>
 			<div class="flex gap-2">
 				<Tooltip
@@ -72,7 +72,7 @@
 			</Popover>
 		</div>
 		<div class="absolute right-3 flex items-center gap-4">
-			<div class="group flex hover:gap-1">
+			<div class="group flex hover:gap-1" v-if="builderStore.viewers.length">
 				<div v-for="user in builderStore.viewers">
 					<Tooltip :text="currentlyViewedByText" :hoverDelay="0.6" arrow-class="mb-3">
 						<div class="ml-[-10px] h-6 w-6 cursor-pointer transition-all group-hover:ml-0">
