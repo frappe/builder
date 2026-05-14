@@ -19,7 +19,7 @@
 						<div
 							class="w-full cursor-pointer truncate rounded bg-surface-gray-3 p-2 text-left font-mono text-p-sm text-ink-gray-9"
 							@click.stop="selectAndSetItem(selectedItem)">
-							<MiddleEllipsis :text="selectedItem.key" />
+							<MiddleTruncate :text="selectedItem.key" />
 							<p class="truncate text-xs text-ink-gray-5" :class="{ italic: getValue(selectedItem) == null }">
 								{{ getValue(selectedItem) == null ? "No Value Set" : getValue(selectedItem) }}
 							</p>
@@ -33,7 +33,7 @@
 									selectedItem?.key === item.key && selectedItem?.comesFrom === item.comesFrom,
 							}"
 							@click.stop="selectAndSetItem(item)">
-							<MiddleEllipsis :text="item.key" />
+							<MiddleTruncate :text="item.key" />
 							<p class="truncate text-xs text-ink-gray-5" :class="{ italic: getValue(item) == null }">
 								{{ getValue(item) == null ? "No Value Set" : getValue(item) }}
 							</p>
@@ -80,7 +80,7 @@ import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
 import { getDataArray, getDefaultPropsList, getParentProps, getPropValue } from "@/utils/helpers";
 import { computed, ref } from "vue";
-import MiddleEllipsis from "../MiddleEllipsis.vue";
+import MiddleTruncate from "../MiddleTruncate.vue";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
