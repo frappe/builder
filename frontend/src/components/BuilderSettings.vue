@@ -13,7 +13,7 @@
 					:icon-left="link.icon"
 					@click="!link.disabled && selectItem(link.value)"
 					:class="{
-						'bg-surface-gray-4': selectedItem === link.value,
+						'!bg-surface-gray-3': selectedItem === link.value,
 					}"
 					class="!justify-start">
 					{{ link.label }}
@@ -42,10 +42,6 @@ import { builderSettings } from "@/data/builderSettings";
 import usePageStore from "@/stores/pageStore";
 import { computed, onActivated, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
-import ChartIcon from "./Icons/Chart.vue";
-import CodeIcon from "./Icons/Code.vue";
-import MetaIcon from "./Icons/Meta.vue";
-import SettingsIcon from "./Icons/Settings.vue";
 import GlobalAI from "./Settings/GlobalAI.vue";
 import GlobalAnalytics from "./Settings/GlobalAnalytics.vue";
 import GlobalCode from "./Settings/GlobalCode.vue";
@@ -78,16 +74,6 @@ onMounted(async () => {
 	settingsLoaded.value = true;
 });
 
-type SidebarItem = {
-	label: string;
-	value: string;
-	component: any;
-	title: string;
-	// prettier-ignore
-	icon?: typeof import("*.vue");
-	disabled?: boolean;
-};
-
 const selectedItemDoc = computed(() => {
 	for (const item of settingsSidebarItems) {
 		for (const link of item.items) {
@@ -106,16 +92,22 @@ const pageSettings = {
 			value: "page_general",
 			component: PageGeneral,
 			title: "General",
-			icon: SettingsIcon,
+			icon: "lucide-settings",
 		},
-		{ label: "Code", value: "page_code", component: PageCode, title: "Page Code", icon: CodeIcon },
-		{ label: "Meta", value: "page_meta", component: PageMeta, title: "Meta", icon: MetaIcon },
+		{ label: "Code", value: "page_code", component: PageCode, title: "Page Code", icon: "lucide-code" },
+		{
+			label: "Meta",
+			value: "page_meta",
+			component: PageMeta,
+			title: "Meta",
+			icon: "lucide-square-dashed-bottom-code",
+		},
 		{
 			label: "Analytics",
 			value: "page_analytics",
 			component: PageAnalytics,
 			title: "Page Views",
-			icon: ChartIcon,
+			icon: "lucide-chart-bar",
 		},
 	],
 };
