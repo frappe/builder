@@ -12,7 +12,7 @@ import frappe
 import frappe.utils
 from frappe.modules import scrub
 from frappe.modules.export_file import export_to_files
-from frappe.utils import set_request
+from frappe.utils import now, set_request
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
 from frappe.utils.telemetry import capture
@@ -117,6 +117,7 @@ class BuilderPage(WebsiteGenerator):
 		is_standard: DF.Check
 		is_template: DF.Check
 		language: DF.Data | None
+		last_published_time: DF.Datetime | None
 		meta_description: DF.SmallText | None
 		meta_image: DF.AttachImage | None
 		page_data_script: DF.Code | None
@@ -225,6 +226,7 @@ class BuilderPage(WebsiteGenerator):
 	@frappe.whitelist()
 	def publish(self):
 		self.published = 1
+		self.last_published_time = now()
 		if self.draft_blocks:
 			self.blocks = self.draft_blocks
 			self.draft_blocks = None
@@ -1346,7 +1348,7 @@ def extend_block(block, overridden_block):
 def find_page_with_path(route):
 	try:
 		return frappe.db.get_value(
-			"Builder Page", dict(route=route, published=1), "name", order_by="modified", cache=True
+			"Builder Page", dict(route=route, published=1), "name", order_by="last_published_time", cache=True
 		)
 	except frappe.DoesNotExistError:
 		pass

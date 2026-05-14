@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_bulk_edit": 1,
  "allow_guest_to_view": 1,
  "allow_rename": 1,
  "autoname": "field:page_name",
@@ -14,6 +15,7 @@
   "page_name",
   "route",
   "dynamic_route",
+  "last_published_time",
   "column_break_ymjg",
   "is_standard",
   "is_template",
@@ -242,11 +244,16 @@
    "label": "App",
    "mandatory_depends_on": "is_standard",
    "no_copy": 1
+  },
+  {
+   "fieldname": "last_published_time",
+   "fieldtype": "Datetime",
+   "label": "Last Published Time"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-05 16:23:52.605250",
+ "modified": "2026-05-14 21:29:01.992686",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",
