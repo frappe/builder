@@ -1345,7 +1345,7 @@ def extend_block(block, overridden_block):
 @redis_cache(ttl=60 * 60)
 def find_page_with_path(route):
 	try:
-		return frappe.db.get_value("Builder Page", dict(route=route, published=1), "name", cache=True)
+		return frappe.db.get_value("Builder Page", dict(route=route, published=1), "name", order_by="modified", cache=True)
 	except frappe.DoesNotExistError:
 		pass
 
