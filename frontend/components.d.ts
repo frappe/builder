@@ -97,7 +97,7 @@ declare module 'vue' {
     MainMenu: typeof import('./src/components/MainMenu.vue')['default']
     MarginHandler: typeof import('./src/components/MarginHandler.vue')['default']
     Meta: typeof import('./src/components/Icons/Meta.vue')['default']
-    MiddleEllipsis: typeof import('./src/components/MiddleEllipsis.vue')['default']
+    MiddleTruncate: typeof import('./src/components/MiddleTruncate.vue')['default']
     NewBlockTemplate: typeof import('./src/components/Modals/NewBlockTemplate.vue')['default']
     NewBuilderVariable: typeof import('./src/components/Modals/NewBuilderVariable.vue')['default']
     NewComponent: typeof import('./src/components/Modals/NewComponent.vue')['default']
