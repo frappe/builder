@@ -16,7 +16,12 @@
 						'!text-ink-gray-6': builderStore.leftPanelActiveTab !== option.value,
 					}"
 					size="md"
-					:variant="builderStore.leftPanelActiveTab === option.value ? 'subtle' : 'ghost'"
+					:variant="
+						builderStore.leftPanelActiveTab === option.value ||
+						(showVariableManager && option.value === 'variables')
+							? 'subtle'
+							: 'ghost'
+					"
 					@click.stop="setActiveTab(option.value as LeftSidebarTabOption)"></Button>
 			</Tooltip>
 		</div>
