@@ -1,21 +1,23 @@
 <template>
-	<div class="flex w-full overflow-hidden whitespace-nowrap" :title="text">
+	<component :is="as" class="flex w-full overflow-hidden whitespace-nowrap" :title="text">
 		<span ref="start" class="min-w-0 overflow-hidden">{{ start }}</span>
 		<span v-if="hasEllipsis">...</span>
 		<span class="shrink-0">{{ end }}</span>
-	</div>
+	</component>
 </template>
 
 <script setup lang="ts">
-import { computed, useTemplateRef } from "vue";
+import { computed, ref, useTemplateRef, watchEffect } from "vue";
 
 const props = withDefaults(
 	defineProps<{
 		text: string;
 		lettersAfterSplit?: number;
+		as?: string;
 	}>(),
 	{
 		lettersAfterSplit: 16,
+		as: "div",
 	},
 );
 
@@ -33,8 +35,26 @@ const end = computed(() => {
 	return props.text.slice(splitIndex.value);
 });
 
-const hasEllipsis = computed(() => {
-	if (startSplitRef.value) return startSplitRef.value.scrollWidth > startSplitRef.value.clientWidth;
-	return false;
+const hasEllipsis = ref(false);
+
+watchEffect((onCleanup) => {
+	const el = startSplitRef.value;
+	if (!el) {
+		hasEllipsis.value = false;
+		return;
+	}
+
+	const updateEllipsis = () => {
+		hasEllipsis.value = el.scrollWidth > el.clientWidth;
+	};
+
+	updateEllipsis();
+
+	const resizeObserver = new ResizeObserver(updateEllipsis);
+	resizeObserver.observe(el);
+
+	onCleanup(() => {
+		resizeObserver.disconnect();
+	});
 });
 </script>
