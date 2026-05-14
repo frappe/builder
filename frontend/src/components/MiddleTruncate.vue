@@ -1,7 +1,7 @@
 <template>
 	<component :is="as" class="flex w-full overflow-hidden whitespace-nowrap" :title="text">
-		<span class="truncate min-w-0 break-words">{{ start }}</span>
-		<span class="shrink-0">{{ end }}</span>
+		<span class="min-w-4 truncate">{{ textParts.join(".") }}</span>
+		<span class="" v-if="textParts.length > 1">{{ textParts[textParts.length - 1] }}</span>
 	</component>
 </template>
 
@@ -20,15 +20,7 @@ const props = withDefaults(
 	},
 );
 
-const splitIndex = computed(() => {
-	return Math.floor(props.text.length - props.lettersAfterSplit);
-});
-
-const start = computed(() => {
-	return props.text.slice(0, splitIndex.value);
-});
-
-const end = computed(() => {
-	return props.text.slice(splitIndex.value);
+const textParts = computed(() => {
+	return props.text.split(".");
 });
 </script>
