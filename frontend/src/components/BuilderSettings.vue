@@ -20,14 +20,14 @@
 				</Button>
 			</div>
 		</div>
-		<div class="flex flex-1 flex-col gap-5 overflow-hidden bg-surface-white p-14 px-16">
+		<div class="flex flex-1 flex-col gap-5 overflow-hidden bg-surface-white p-14 px-16 pb-0">
 			<h2 class="text-xl font-semibold leading-none text-ink-gray-9">{{ selectedItemDoc?.title }}</h2>
 			<BuilderButton
 				icon="x"
 				variant="subtle"
 				@click="$emit('close')"
 				class="absolute right-5 top-5"></BuilderButton>
-			<component :is="selectedItemDoc?.component" v-if="settingsLoaded" />
+			<component :is="selectedItemDoc?.component" v-if="settingsLoaded" class="pb-16" />
 			<div v-else class="flex items-center justify-center">
 				<span class="text-ink-gray-5">Loading...</span>
 			</div>
