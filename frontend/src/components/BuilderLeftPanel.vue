@@ -7,21 +7,17 @@
 			:maxDimension="500"
 			@resize="(width) => (builderStore.builderLayout.leftPanelWidth = width)" />
 		<div
-			class="flex min-h-full flex-col items-center gap-3 border-r border-outline-gray-1 p-3"
+			class="flex min-h-full flex-col items-center gap-2 border-r border-outline-gray-1 p-3"
 			ref="miniSidebar">
 			<Tooltip v-for="option of leftPanelOptions" :key="option.value" :text="option.label" placement="right">
-				<button
-					class="flex size-8 items-center justify-center rounded text-ink-gray-7 hover:bg-surface-gray-2 focus:!bg-surface-gray-3"
+				<Button
+					:icon="option.icon"
 					:class="{
-						'bg-surface-gray-3 text-ink-gray-9': builderStore.leftPanelActiveTab === option.value,
+						'!text-ink-gray-6': builderStore.leftPanelActiveTab !== option.value,
 					}"
-					@click.stop="setActiveTab(option.value as LeftSidebarTabOption)">
-					<FeatherIcon
-						:name="option.icon"
-						v-if="typeof option.icon === 'string'"
-						class="size-4"></FeatherIcon>
-					<component :is="option.icon" v-else />
-				</button>
+					size="md"
+					:variant="builderStore.leftPanelActiveTab === option.value ? 'subtle' : 'ghost'"
+					@click.stop="setActiveTab(option.value as LeftSidebarTabOption)"></Button>
 			</Tooltip>
 		</div>
 		<div
@@ -80,9 +76,7 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
-import ComponentIcon from "@/components/Icons/Component.vue";
 import LayersIcon from "@/components/Icons/Layers.vue";
-import PlusIcon from "@/components/Icons/Plus.vue";
 import VariableManager from "@/components/Modals/VariableManager.vue";
 import PageScript from "@/components/PageScript.vue";
 import useBuilderStore from "@/stores/builderStore";
@@ -91,6 +85,7 @@ import usePageStore from "@/stores/pageStore";
 import { Tooltip } from "frappe-ui";
 import { inject, nextTick, Ref, ref, watch, watchEffect } from "vue";
 import { useRoute } from "vue-router";
+import Button from "../../../frappe-ui/src/components/Button/Button.vue";
 import BlockLayers from "./BlockLayers.vue";
 import BuilderAssets from "./BuilderAssets.vue";
 import BuilderBlockTemplates from "./BuilderBlockTemplates.vue";
@@ -115,7 +110,7 @@ const leftPanelOptions = [
 	{
 		label: "Insert",
 		value: "Blocks",
-		icon: PlusIcon,
+		icon: "lucide-plus",
 	},
 	{
 		label: "Layers",
@@ -125,17 +120,17 @@ const leftPanelOptions = [
 	{
 		label: "Components",
 		value: "Assets",
-		icon: ComponentIcon,
+		icon: "lucide-box",
 	},
 	{
 		label: "Code",
 		value: "Code",
-		icon: "code",
+		icon: "lucide-code",
 	},
 	{
 		label: "Variables",
 		value: "variables",
-		icon: "aperture",
+		icon: "lucide-aperture",
 	},
 ];
 
