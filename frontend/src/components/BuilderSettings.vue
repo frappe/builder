@@ -6,17 +6,18 @@
 				<span class="mb-2 px-2 text-base font-medium text-ink-gray-5">
 					{{ item.title }}
 				</span>
-				<a
+				<Button
+					v-for="link in item.items"
+					:variant="selectedItem === link.value ? 'subtle' : 'ghost'"
+					:disabled="link.disabled"
+					:icon-left="link.icon"
 					@click="!link.disabled && selectItem(link.value)"
-					class="flex cursor-pointer items-center gap-2 rounded p-2 py-[5px] text-base text-ink-gray-8"
 					:class="{
-						'bg-surface-selected shadow-sm': selectedItem === link.value,
-						'!text-ink-gray-3': link.disabled,
+						'bg-surface-gray-4': selectedItem === link.value,
 					}"
-					v-for="link in item.items">
-					<component v-if="link?.icon" :is="link?.icon" class="h-4 w-4" />
+					class="!justify-start">
 					{{ link.label }}
-				</a>
+				</Button>
 			</div>
 		</div>
 		<div class="flex flex-1 flex-col gap-5 overflow-hidden bg-surface-white p-14 px-16">
@@ -34,7 +35,6 @@
 	</div>
 </template>
 <script setup lang="ts">
-import RedirectIcon from "@/components/Icons/Redirect.vue";
 import GlobalRedirects from "@/components/Settings/GlobalRedirects.vue";
 import PageCode from "@/components/Settings/PageCode.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
@@ -46,12 +46,6 @@ import ChartIcon from "./Icons/Chart.vue";
 import CodeIcon from "./Icons/Code.vue";
 import MetaIcon from "./Icons/Meta.vue";
 import SettingsIcon from "./Icons/Settings.vue";
-// @ts-ignore
-import TerminalIcon from "~icons/lucide/terminal";
-// @ts-ignore
-import ExternalLinkIcon from "~icons/lucide/external-link";
-// @ts-ignore
-import SparklesIcon from "~icons/lucide/sparkles";
 import GlobalAI from "./Settings/GlobalAI.vue";
 import GlobalAnalytics from "./Settings/GlobalAnalytics.vue";
 import GlobalCode from "./Settings/GlobalCode.vue";
@@ -134,16 +128,16 @@ const globalSettings = {
 			value: "global_general",
 			component: GlobalGeneral,
 			title: "General",
-			icon: SettingsIcon,
+			icon: "lucide-settings",
 			disabled: false,
 		},
-		{ label: "Code", value: "global_code", component: GlobalCode, title: "Global Code", icon: CodeIcon },
+		{ label: "Code", value: "global_code", component: GlobalCode, title: "Global Code", icon: "lucide-code" },
 		{
 			label: "Redirects",
 			value: "global_redirects",
 			component: GlobalRedirects,
 			title: "Redirects",
-			icon: RedirectIcon,
+			icon: "lucide-shuffle",
 		},
 		...(window.is_fc_site || window.is_developer_mode
 			? [
@@ -152,30 +146,30 @@ const globalSettings = {
 						value: "global_domains",
 						component: GlobalDomains,
 						title: "Custom Domains",
-						icon: ExternalLinkIcon,
+						icon: "lucide-globe",
 					},
-				]
+			  ]
 			: []),
 		{
 			label: "Analytics",
 			value: "global_analytics",
 			component: GlobalAnalytics,
 			title: "Site Views",
-			icon: ChartIcon,
+			icon: "lucide-chart-bar",
 		},
 		{
-			label: "Developer Settings",
+			label: "Developer",
 			value: "global_developer",
 			component: GlobalDeveloper,
 			title: "Developer Settings",
-			icon: TerminalIcon,
+			icon: "lucide-terminal",
 		},
 		{
 			label: "AI",
 			value: "global_ai",
 			component: GlobalAI,
 			title: "AI Settings",
-			icon: SparklesIcon,
+			icon: "lucide-sparkles",
 		},
 	],
 };
