@@ -11,11 +11,9 @@ import { computed } from "vue";
 const props = withDefaults(
 	defineProps<{
 		text: string;
-		lettersAfterSplit?: number;
 		as?: string;
 	}>(),
 	{
-		lettersAfterSplit: 16,
 		as: "div",
 	},
 );

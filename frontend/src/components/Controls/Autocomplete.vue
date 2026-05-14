@@ -83,7 +83,7 @@
 								:disabled="option.disabled"
 								class="group flex cursor-default select-none items-center gap-2 rounded px-2 py-1.5 text-sm text-ink-gray-9 transition-colors data-[disabled]:pointer-events-none data-[highlighted]:bg-surface-gray-1 data-[disabled]:opacity-50">
 								<component v-if="option.prefix" :is="option.prefix" class="h-4 w-4 flex-shrink-0" />
-								<MiddleTruncate :text="option.label" :letters-after-split="8" />
+								<MiddleTruncate :text="option.label" />
 								<component
 									v-if="option.suffix"
 									:is="option.suffix"
