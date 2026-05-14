@@ -15,7 +15,7 @@
   "page_name",
   "route",
   "dynamic_route",
-  "last_published_time",
+  "published_at",
   "column_break_ymjg",
   "is_standard",
   "is_template",
@@ -246,14 +246,14 @@
    "no_copy": 1
   },
   {
-   "fieldname": "last_published_time",
+   "fieldname": "published_at",
    "fieldtype": "Datetime",
-   "label": "Last Published Time"
+   "label": "Published At"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-14 21:29:01.992686",
+ "modified": "2026-05-14 22:54:25.353324",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

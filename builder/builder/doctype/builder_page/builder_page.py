@@ -117,7 +117,6 @@ class BuilderPage(WebsiteGenerator):
 		is_standard: DF.Check
 		is_template: DF.Check
 		language: DF.Data | None
-		last_published_time: DF.Datetime | None
 		meta_description: DF.SmallText | None
 		meta_image: DF.AttachImage | None
 		page_data_script: DF.Code | None
@@ -126,6 +125,7 @@ class BuilderPage(WebsiteGenerator):
 		preview: DF.Data | None
 		project_folder: DF.Link | None
 		published: DF.Check
+		published_at: DF.Datetime | None
 		route: DF.Data | None
 	# end: auto-generated types
 
@@ -226,7 +226,7 @@ class BuilderPage(WebsiteGenerator):
 	@frappe.whitelist()
 	def publish(self):
 		self.published = 1
-		self.last_published_time = now()
+		self.published_at = now()
 		if self.draft_blocks:
 			self.blocks = self.draft_blocks
 			self.draft_blocks = None
@@ -1348,7 +1348,7 @@ def extend_block(block, overridden_block):
 def find_page_with_path(route):
 	try:
 		return frappe.db.get_value(
-			"Builder Page", dict(route=route, published=1), "name", order_by="last_published_time", cache=True
+			"Builder Page", dict(route=route, published=1), "name", order_by="published_at", cache=True
 		)
 	except frappe.DoesNotExistError:
 		pass
