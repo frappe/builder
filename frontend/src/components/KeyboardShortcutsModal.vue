@@ -1,11 +1,6 @@
 <template>
-	<Dialog
-		v-model="showDialog"
-		:options="{
-			title: 'Keyboard Shortcuts',
-			size: '4xl',
-		}">
-		<template #body-content>
+	<Dialog v-model="showDialog" title="Keyboard Shortcuts" size="4xl">
+		<template #default>
 			<div class="max-h-[70vh] columns-2 gap-8 overflow-y-auto">
 				<div
 					v-for="(shortcuts, group) in groupedShortcuts"

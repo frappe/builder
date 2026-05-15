@@ -1,12 +1,6 @@
 <template>
-	<Dialog
-		class="overscroll-none"
-		v-model="showModel"
-		:options="{
-			title: 'Select Folder',
-			size: 'sm',
-		}">
-		<template #body-content>
+	<Dialog class="overscroll-none" v-model="showModel" title="Select Folder" size="sm">
+		<template #default>
 			<span
 				class="flex gap-2 rounded p-2 text-base text-ink-gray-3"
 				:class="{

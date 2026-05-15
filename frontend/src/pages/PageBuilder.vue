@@ -83,11 +83,9 @@
 		v-model="canvasStore.showEditorDialog"
 		class="overscroll-none"
 		:isDirty="expandedEditor?.isDirty"
-		:options="{
-			title: 'HTML',
-			size: '7xl',
-		}">
-		<template #body-content>
+		title="HTML"
+		size="7xl">
+		<template #default>
 			<CodeEditor
 				:modelValue="getExpandedEditorContent()"
 				ref="expandedEditor"

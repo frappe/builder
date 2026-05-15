@@ -1,12 +1,6 @@
 <template>
-	<Dialog
-		class="overscroll-none"
-		v-model="showModel"
-		:options="{
-			title: 'Used in following pages',
-			size: 'xl',
-		}">
-		<template #body-content>
+	<Dialog class="overscroll-none" v-model="showModel" title="Used in following pages" size="xl">
+		<template #default>
 			<div class="max-h-[80vh] overflow-y-auto">
 				<div v-for="page in pages">
 					<router-link

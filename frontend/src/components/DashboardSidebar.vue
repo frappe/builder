@@ -135,7 +135,7 @@
 					v-if="isFolderActive(project.folder_name) && project.is_standard"
 					variant="ghost"
 					size="sm"
-					icon="info"
+					icon="lucide-info"
 					disabled
 					tooltip="System generated folder cannot be edited or deleted"
 					class="cursor-pointer" />
@@ -157,7 +157,11 @@
 						},
 					]">
 					<template v-slot="{ open }">
-						<BuilderButton icon="more-horizontal" size="sm" variant="ghost" @click="open"></BuilderButton>
+						<BuilderButton
+							icon="lucide-more-horizontal"
+							size="sm"
+							variant="ghost"
+							@click="open"></BuilderButton>
 					</template>
 				</Dropdown>
 			</span>
@@ -166,16 +170,9 @@
 		<NewFolder v-model="showNewFolderDialog"></NewFolder>
 		<TrialBanner v-if="builderStore.isFCSite"></TrialBanner>
 	</section>
-	<Dialog
-		v-model="showSettingsDialog"
-		:disableOutsideClickToClose="true"
-		class="[&>div>div[id^=headlessui-dialog-panel]]:my-3"
-		:options="{
-			title: 'Settings',
-			size: '5xl',
-		}">
-		<template #body>
-			<BuilderSettings @close="showSettingsDialog = false" :onlyGlobal="true"></BuilderSettings>
+	<Dialog v-model="showSettingsDialog" :dismissable="false" size="5xl" bare>
+		<template #default>
+			<BuilderSettings @close="showSettingsDialog = false" :onlyGlobal="true" />
 		</template>
 	</Dialog>
 </template>

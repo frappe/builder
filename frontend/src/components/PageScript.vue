@@ -50,16 +50,15 @@
 		</div>
 		<Dialog
 			class="overscroll-none"
-			:options="{
-				title:
-					currentScriptEditor == 'data'
-						? `${mode.charAt(0).toUpperCase() + mode.slice(1)} Data Script`
-						: `${mode.charAt(0).toUpperCase() + mode.slice(1)} Client Script`,
-				size: '7xl',
-			}"
+			:title="
+				currentScriptEditor == 'data'
+					? `${mode.charAt(0).toUpperCase() + mode.slice(1)} Data Script`
+					: `${mode.charAt(0).toUpperCase() + mode.slice(1)} Client Script`
+			"
+			size="7xl"
 			:isDirty="isDirty"
 			v-model="showDialog">
-			<template #body-content>
+			<template #default>
 				<div v-if="mode == 'page'">
 					<div v-if="currentScriptEditor == 'client'">
 						<PageClientScriptManager
@@ -213,7 +212,7 @@ const blockData = computed(() => {
 		? blockDataStore.getBlockData(
 				blockController.getFirstSelectedBlock().blockId,
 				showInheritedBlockData.value ? "all" : "own",
-			) || {}
+		  ) || {}
 		: {};
 });
 

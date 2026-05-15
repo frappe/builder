@@ -1,6 +1,6 @@
 <template>
-	<Dialog v-model="showDialog" :options="{ title, size: 'xl', paddingTop: '20vh' }">
-		<template #body-content>
+	<Dialog v-model="showDialog" :title="title" size="xl" paddingTop="20vh">
+		<template #default>
 			<div class="flex flex-col gap-3">
 				<div
 					class="relative"

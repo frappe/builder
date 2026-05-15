@@ -104,7 +104,7 @@
 					<Button
 						variant="ghost"
 						@click="() => transitionTheme(toggleDark)"
-						:icon="isDark ? 'sun' : 'moon'"></Button>
+						:icon="isDark ? 'lucide-sun' : 'lucide-moon'"></Button>
 				</Tooltip>
 				<span
 					class="text-sm text-ink-gray-3"
@@ -122,13 +122,8 @@
 			</div>
 			<PublishButton :disabled="builderStore.readOnlyMode"></PublishButton>
 		</div>
-		<Dialog
-			:options="{
-				title: 'Get Started',
-				size: '4xl',
-			}"
-			v-model="showInfoDialog">
-			<template #body-content>
+		<Dialog title="Get Started" size="4xl" v-model="showInfoDialog">
+			<template #default>
 				<iframe
 					class="h-[60vh] w-full rounded-sm"
 					src="https://www.youtube-nocookie.com/embed/videoseries?si=8NvOFXFq6ntafauO&amp;controls=0&amp;list=PL3lFfCEoMxvwZsBfCgk6vLKstZx204xe3"
@@ -137,14 +132,8 @@
 					allowfullscreen></iframe>
 			</template>
 		</Dialog>
-		<Dialog
-			v-model="showSettingsDialog"
-			:disableOutsideClickToClose="true"
-			:options="{
-				title: 'Settings',
-				size: '5xl',
-			}">
-			<template #body>
+		<Dialog v-model="showSettingsDialog" :dismissable="false" size="5xl" bare>
+			<template #default>
 				<BuilderSettings @close="showSettingsDialog = false"></BuilderSettings>
 			</template>
 		</Dialog>
