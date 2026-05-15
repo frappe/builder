@@ -31,7 +31,7 @@
 				<div class="flex items-center justify-between bg-surface-white p-2 text-sm text-ink-gray-8 shadow-sm">
 					<div class="flex items-center gap-1 pl-2 text-xs">
 						<a @click="canvasStore.exitFragmentMode" class="cursor-pointer">Page</a>
-						<FeatherIcon name="chevron-right" class="h-3 w-3" />
+						<span class="lucide-chevron-right h-3 w-3" aria-hidden="true" />
 						<span class="flex items-center gap-2">
 							{{ canvasStore.fragmentData.fragmentName }}
 							<a

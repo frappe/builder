@@ -7,7 +7,7 @@
 					'cursor-pointer text-ink-gray-6 hover:text-ink-gray-9': currentFolder,
 				}"
 				@click="folderSelected('')">
-				<FeatherIcon name="home" class="size-4"></FeatherIcon>
+				<span class="lucide-home size-4" aria-hidden="true" />
 				Home
 			</span>
 			<span

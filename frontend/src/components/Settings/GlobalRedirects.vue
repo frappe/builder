@@ -57,19 +57,19 @@
 					</div>
 					<div class="flex gap-1">
 						<template v-if="editingRedirect === row.id">
-							<FeatherIcon
-								name="check"
-								class="size-3 cursor-pointer text-ink-gray-5 hover:text-ink-gray-9"
+							<span
+								class="lucide-check size-3 cursor-pointer text-ink-gray-5 hover:text-ink-gray-9"
+								aria-hidden="true"
 								@click="saveRedirect(row.id)" />
-							<FeatherIcon
-								name="x"
-								class="size-3 cursor-pointer text-ink-gray-5 hover:text-ink-gray-9"
+							<span
+								class="lucide-x size-3 cursor-pointer text-ink-gray-5 hover:text-ink-gray-9"
+								aria-hidden="true"
 								@click="cancelEdit" />
 						</template>
-						<FeatherIcon
+						<span
 							v-else
-							name="trash"
-							class="size-3 cursor-pointer text-ink-gray-5 hover:text-ink-gray-9"
+							class="lucide-trash size-3 cursor-pointer text-ink-gray-5 hover:text-ink-gray-9"
+							aria-hidden="true"
 							@click="deleteRedirect(row.id)" />
 					</div>
 				</div>

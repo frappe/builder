@@ -25,7 +25,7 @@
 				type="button"
 				class="absolute right-1 top-1 text-ink-gray-7 hover:text-ink-gray-9"
 				@click="$emit('clear')">
-				<FeatherIcon name="x" class="h-3 w-3" />
+				<span class="lucide-x h-3 w-3" aria-hidden="true" />
 			</button>
 		</div>
 	</div>
@@ -37,7 +37,7 @@
 				type="button"
 				class="invisible text-ink-gray-7 hover:text-ink-gray-9 group-hover/variant:visible"
 				@click="$emit('clear')">
-				<FeatherIcon name="x" class="size-3" />
+				<span class="lucide-x size-3" aria-hidden="true" />
 			</button>
 			<InputLabel :class="{ 'cursor-ns-resize': enableSlider }" @mousedown="$emit('labelMousedown', $event)">
 				{{ label }}
@@ -64,7 +64,6 @@
 
 <script lang="ts" setup>
 import InputLabel from "@/components/Controls/InputLabel.vue";
-import { FeatherIcon } from "frappe-ui";
 import type { Component } from "vue";
 
 defineProps<{

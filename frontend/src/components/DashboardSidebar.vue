@@ -71,9 +71,12 @@
 										Builder
 									</h1>
 								</div>
-								<FeatherIcon
-									:name="open ? 'chevron-up' : 'chevron-down'"
-									class="h-4 w-4 !text-gray-700 dark:!text-gray-200"></FeatherIcon>
+								<span
+									:class="[
+										open ? 'lucide-chevron-up' : 'lucide-chevron-down',
+										'h-4 w-4 !text-gray-700 dark:!text-gray-200',
+									]"
+									aria-hidden="true" />
 							</button>
 						</template>
 					</Dropdown>

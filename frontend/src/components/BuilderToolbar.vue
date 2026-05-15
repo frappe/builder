@@ -32,10 +32,10 @@
 						</div>
 						<div @click="togglePopover" v-else class="flex items-center gap-1">
 							<Tooltip text="This is the homepage for your site" :hoverDelay="0.6">
-								<FeatherIcon
-									name="home"
-									class="h-[14px] w-4"
-									v-if="pageStore.isHomePage(pageStore.activePage)"></FeatherIcon>
+								<span
+									class="lucide-home h-[14px] w-4"
+									aria-hidden="true"
+									v-if="pageStore.isHomePage(pageStore.activePage)" />
 							</Tooltip>
 							<Tooltip text="This page has limited access" :hoverDelay="0.6">
 								<AuthenticatedUserIcon
@@ -55,11 +55,11 @@
 								v-html="routeString"
 								:title="getTextContent(routeString)"></span>
 						</div>
-						<FeatherIcon
-							name="external-link"
+						<span
+							class="lucide-external-link h-[14px] w-[14px] !text-gray-700 dark:!text-gray-200"
+							aria-hidden="true"
 							v-if="pageStore.activePage && pageStore.activePage.published"
-							class="h-[14px] w-[14px] !text-gray-700 dark:!text-gray-200"
-							@click="pageStore.openPageInBrowser(pageStore.activePage as BuilderPage)"></FeatherIcon>
+							@click="pageStore.openPageInBrowser(pageStore.activePage as BuilderPage)" />
 					</div>
 				</template>
 				<template #body="{ close }">

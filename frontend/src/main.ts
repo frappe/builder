@@ -1,6 +1,6 @@
 import { createApp } from "vue";
 
-import { Button, FeatherIcon, FormControl, FrappeUI } from "frappe-ui";
+import { Button, FormControl, FrappeUI } from "frappe-ui";
 import { telemetryPlugin } from "frappe-ui/frappe";
 import { createPinia } from "pinia";
 import "./index.css";
@@ -28,7 +28,6 @@ app.component("BuilderButton", BuilderButton);
 app.component("FormControl", FormControl);
 app.component("BuilderInput", Input);
 
-app.component("FeatherIcon", FeatherIcon);
 app.mount("#app");
 
 declare global {

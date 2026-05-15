@@ -4,7 +4,9 @@
 		@keydown.esc.stop="(e) => closePanel(e)">
 		<div v-if="enableReplace" class="flex items-center justify-center">
 			<Button variant="ghost" size="sm" class="h-full" @click="toggleReplace">
-				<FeatherIcon :name="showReplace ? 'chevron-down' : 'chevron-right'" class="h-4 w-4" />
+				<span
+					:class="[showReplace ? 'lucide-chevron-down' : 'lucide-chevron-right', 'h-4 w-4']"
+					aria-hidden="true" />
 			</Button>
 		</div>
 		<div class="flex w-full max-w-lg flex-col">
@@ -108,7 +110,7 @@ import {
 	setSearchQuery,
 } from "@codemirror/search";
 import type { EditorView } from "@codemirror/view";
-import { Button, FeatherIcon, Input } from "frappe-ui";
+import { Button, Input } from "frappe-ui";
 import { inject, nextTick, onMounted, ref } from "vue";
 
 const view = inject<EditorView>("view")!;

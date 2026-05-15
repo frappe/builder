@@ -31,14 +31,14 @@
 						componentStore.selectedComponent === component.component_id
 					">
 					<template #prefix>
-						<FeatherIcon name="box" class="size-3.5" />
+						<span class="lucide-box size-3.5" aria-hidden="true" />
 					</template>
 					<span class="block truncate">{{ component.component_name }}</span>
 					<template #suffix>
-						<FeatherIcon
-							name="trash"
-							class="size-3 cursor-pointer text-ink-gray-5"
+						<span
+							class="lucide-trash size-3 cursor-pointer text-ink-gray-5"
 							:class="draggingComponentName === component.name ? 'hidden' : 'hidden group-hover:block'"
+							aria-hidden="true"
 							@click.stop.prevent="componentStore.deleteComponent(component)" />
 					</template>
 				</ItemListRow>

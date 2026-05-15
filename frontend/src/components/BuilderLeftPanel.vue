@@ -41,13 +41,14 @@
 			</div>
 			<div v-show="builderStore.leftPanelActiveTab === 'Layers'" class="p-3 pr-0">
 				<span class="flex items-center gap-2 pb-2 text-sm capitalize text-ink-gray-4">
-					<FeatherIcon
-						:name="
+					<span
+						:class="[
 							canvasStore.activeCanvas?.canvasProps.breakpoints.find(
 								(b) => b.device === canvasStore.activeCanvas?.activeBreakpoint,
-							)?.icon || 'monitor'
-						"
-						class="size-3" />
+							)?.icon || 'lucide-monitor',
+							'size-3',
+						]"
+						aria-hidden="true" />
 					{{ canvasStore.activeCanvas?.activeBreakpoint }}
 				</span>
 				<BlockLayers

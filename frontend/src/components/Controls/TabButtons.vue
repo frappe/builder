@@ -13,12 +13,13 @@
 				]">
 				<Tooltip :disabled="!button.showTooltip" :text="button.label" placement="top">
 					<div class="flex min-h-4 items-center gap-2">
-						<component
-							v-if="button.icon"
-							:is="typeof button.icon === 'string' ? FeatherIcon : button.icon"
-							class="size-4"
-							v-bind="typeof button.icon === 'string' ? { name: button.icon, label: button.label } : {}"
-							:aria-label="button.label" />
+						<template v-if="button.icon">
+							<span
+								v-if="typeof button.icon === 'string'"
+								:class="[button.icon, 'size-3.5']"
+								:aria-label="button.label" />
+							<component v-else :is="button.icon" class="size-3.5" :aria-label="button.label" />
+						</template>
 						<span class="flex items-center" v-show="button.label && !button.hideLabel">
 							{{ button.label }}
 						</span>
@@ -30,7 +31,7 @@
 </template>
 
 <script lang="ts" setup>
-import { FeatherIcon, Tooltip } from "frappe-ui";
+import { Tooltip } from "frappe-ui";
 import { TabsList, TabsRoot, TabsTrigger } from "reka-ui";
 import type { Component } from "vue";
 import { computed } from "vue";
