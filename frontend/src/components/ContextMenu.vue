@@ -1,36 +1,37 @@
 <template>
-	<Menu
-		v-if="visible"
-		class="fixed h-fit w-fit min-w-[120px] rounded-md bg-surface-white p-1 shadow-xl"
-		:style="{ top: y + 'px', left: x + 'px' }"
-		ref="menu"
-		v-on-click-outside="hide">
-		<MenuItems static class="text-sm">
-			<MenuItem
-				v-slot="{ active, disabled }"
-				class="block cursor-pointer rounded-sm px-3 py-1 text-ink-gray-9"
-				:disabled="option.disabled && option.disabled()"
-				v-for="(option, index) in options"
-				v-show="!option.condition || option.condition()">
-				<div
-					@click.prevent.stop="(!option.condition || option.condition()) && handleClick(option.action)"
-					:class="{
-						'text-gray-900': !disabled,
-						'bg-surface-gray-4': active,
-						'!cursor-default !text-ink-gray-4': disabled,
-					}">
+	<DropdownMenuRoot v-model:open="visible">
+		<DropdownMenuTrigger as-child>
+			<span class="fixed size-0" :style="{ top: currentPosY + 'px', left: currentPosX + 'px' }" />
+		</DropdownMenuTrigger>
+		<DropdownMenuPortal>
+			<DropdownMenuContent
+				class="z-50 min-w-[120px] rounded-lg bg-surface-white p-1 text-sm shadow-xl"
+				:side-offset="0"
+				align="start"
+				avoid-collisions>
+				<DropdownMenuItem
+					v-for="(option, index) in options"
+					:key="index"
+					v-show="!option.condition || option.condition()"
+					class="block cursor-pointer rounded px-3 py-1.5 text-ink-gray-9 outline-none data-[highlighted]:bg-surface-gray-4"
+					:class="{ '!cursor-default !text-ink-gray-4': option.disabled?.() }"
+					:disabled="option.disabled?.()"
+					@select="handleClick(option.action)">
 					{{ option.label }}
-				</div>
-			</MenuItem>
-		</MenuItems>
-	</Menu>
+				</DropdownMenuItem>
+			</DropdownMenuContent>
+		</DropdownMenuPortal>
+	</DropdownMenuRoot>
 </template>
 <script setup lang="ts">
-import { Menu, MenuItem, MenuItems } from "@headlessui/vue";
-import { vOnClickOutside } from "@vueuse/components";
-import { computed, ref } from "vue";
-
-const menu = ref(null) as unknown as typeof Menu;
+import {
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuPortal,
+	DropdownMenuRoot,
+	DropdownMenuTrigger,
+} from "reka-ui";
+import { computed, ref, watch } from "vue";
 
 interface ContextMenuOption {
 	label: string;
@@ -52,6 +53,11 @@ const props = withDefaults(
 	},
 );
 
+const emit = defineEmits({
+	select: (action: CallableFunction) => action,
+	hide: () => true,
+});
+
 const visible = ref(false);
 const internalPosX = ref(0);
 const internalPosY = ref(0);
@@ -59,34 +65,12 @@ const internalPosY = ref(0);
 const currentPosX = computed(() => internalPosX.value || props.posX);
 const currentPosY = computed(() => internalPosY.value || props.posY);
 
-const x = computed(() => {
-	const menuWidth = menu.value?.$el.clientWidth;
-	const windowWidth = window.innerWidth;
-	const diff = windowWidth - (currentPosX.value + menuWidth);
-	if (diff < 0) {
-		return currentPosX.value + diff - 10;
-	}
-	return currentPosX.value;
-});
-
-const y = computed(() => {
-	const menuHeight = menu.value?.$el.clientHeight;
-	const windowHeight = window.innerHeight;
-	const diff = windowHeight - (currentPosY.value + menuHeight);
-	if (diff < 0) {
-		return currentPosY.value + diff - 10;
-	}
-	return currentPosY.value;
-});
-
-const emit = defineEmits({
-	select: (action: CallableFunction) => action,
-	hide: () => true,
+watch(visible, (open) => {
+	if (!open) emit("hide");
 });
 
 const handleClick = (action: CallableFunction) => {
 	action();
-	hide();
 	emit("select", action);
 };
 
@@ -100,7 +84,6 @@ const show = (event: MouseEvent) => {
 
 const hide = () => {
 	visible.value = false;
-	emit("hide");
 };
 
 defineExpose({
