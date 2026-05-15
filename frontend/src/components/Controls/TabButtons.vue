@@ -16,9 +16,9 @@
 						<template v-if="button.icon">
 							<span
 								v-if="typeof button.icon === 'string'"
-								:class="[button.icon, 'size-3.5']"
+								:class="[button.icon, 'size-4']"
 								:aria-label="button.label" />
-							<component v-else :is="button.icon" class="size-3.5" :aria-label="button.label" />
+							<component v-else :is="button.icon" class="size-4" :aria-label="button.label" />
 						</template>
 						<span class="flex items-center" v-show="button.label && !button.hideLabel">
 							{{ button.label }}
