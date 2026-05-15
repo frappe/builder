@@ -21,7 +21,7 @@
 							:theme="statusTheme(d.status)" />
 					</div>
 					<Dropdown v-if="getDomainActions(d).length" :options="getDomainActions(d)" placement="right">
-						<Button variant="ghost" icon="more-horizontal" />
+						<Button variant="ghost" icon="lucide-more-horizontal" />
 					</Dropdown>
 				</div>
 				<p v-if="d.status === 'Broken'" class="text-p-xs text-ink-red-4">

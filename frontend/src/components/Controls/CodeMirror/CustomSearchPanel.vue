@@ -44,26 +44,26 @@
 				<div class="flex w-full justify-between gap-1 @md:w-auto @md:justify-normal">
 					<Button
 						size="sm"
-						icon="chevron-up"
+						icon="lucide-chevron-up"
 						variant="ghost"
 						@click.prevent="findNext(view)"
 						title="Find Next (Enter)"></Button>
 					<Button
 						size="sm"
 						variant="ghost"
-						icon="chevron-down"
+						icon="lucide-chevron-down"
 						@click.prevent="findPrevious(view)"
 						title="Find Previous (Shift + Enter)"></Button>
 					<Button
 						size="sm"
 						variant="ghost"
-						icon="layers"
+						icon="lucide-layers"
 						@click.prevent="selectMatches(view)"
 						title="Select All Matches (Alt + Enter)"></Button>
 					<Button
 						size="sm"
 						variant="ghost"
-						icon="x"
+						icon="lucide-x"
 						@click.prevent="(e: Event) => closePanel(e)"
 						title="Close Search (Esc)"></Button>
 				</div>
@@ -83,13 +83,13 @@
 						size="sm"
 						variant="ghost"
 						@click.prevent="replaceNext(view)"
-						icon="corner-down-right"
+						icon="lucide-corner-down-right"
 						title="Replace Next"></Button>
 					<Button
 						size="sm"
 						variant="ghost"
 						@click.prevent="replaceAll(view)"
-						icon="copy"
+						icon="lucide-copy"
 						title="Replace All"></Button>
 				</div>
 			</div>

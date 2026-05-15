@@ -28,7 +28,7 @@
 				<Tooltip text="Toggle Dark Mode" :hoverDelay="0.6">
 					<Button
 						variant="ghost"
-						:icon="isDark ? 'sun' : 'moon'"
+						:icon="isDark ? 'lucide-sun' : 'lucide-moon'"
 						class="h-8 w-8 cursor-pointer text-ink-gray-8 outline-none"
 						@click="() => transitionTheme(toggleDark)" />
 				</Tooltip>

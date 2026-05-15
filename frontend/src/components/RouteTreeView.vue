@@ -49,7 +49,7 @@
 						variant="ghost"
 						class="!text-ink-gray-5"
 						@click.stop="toggleNode(node)"
-						:icon="node.expanded ? 'chevron-down' : 'chevron-right'"></Button>
+						:icon="node.expanded ? 'lucide-chevron-down' : 'lucide-chevron-right'"></Button>
 					<span v-else class="size-6 w-7 shrink-0"></span>
 
 					<!-- Page node label row -->
@@ -97,7 +97,7 @@
 					<PageActionsDropdown v-if="node.page" :page="node.page" size="xs" placement="right">
 						<template v-slot="{ open }">
 							<BuilderButton
-								icon="more-horizontal"
+								icon="lucide-more-horizontal"
 								size="sm"
 								variant="subtle"
 								class="bg-surface-white !text-ink-gray-5 hover:!text-ink-gray-9"

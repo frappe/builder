@@ -57,7 +57,7 @@
 									]">
 									<template v-slot="{ open }">
 										<BuilderButton
-											icon="more-horizontal"
+											icon="lucide-more-horizontal"
 											size="sm"
 											variant="ghost"
 											@click="open"></BuilderButton>

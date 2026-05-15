@@ -212,7 +212,7 @@ const blockData = computed(() => {
 		? blockDataStore.getBlockData(
 				blockController.getFirstSelectedBlock().blockId,
 				showInheritedBlockData.value ? "all" : "own",
-		  ) || {}
+			) || {}
 		: {};
 });
 

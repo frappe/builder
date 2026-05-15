@@ -6,7 +6,7 @@
 				<BuilderInput v-model="redirectMap.to" placeholder="To" :hideClearButton="true" required />
 			</div>
 			<div class="mr-1 justify-self-end py-1">
-				<Button type="submit" label="Add Redirect" variant="ghost" iconLeft="plus" />
+				<Button type="submit" label="Add Redirect" variant="ghost" iconLeft="lucide-plus" />
 			</div>
 		</form>
 		<div
