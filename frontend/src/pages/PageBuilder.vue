@@ -310,7 +310,7 @@ useShortcut([
 		key: "i",
 		ctrl: true,
 		description: "Edit block with AI",
-		group: "Block",
+		group: "Edit",
 		condition: () =>
 			builderStore.isAIEnabled &&
 			!blockController.isRoot() &&
@@ -322,6 +322,21 @@ useShortcut([
 				editWithAIFn?.(block);
 			}
 		},
+	},
+	{
+		key: "d",
+		ctrl: true,
+		shift: true,
+		description: "Delete Page",
+		group: "General",
+		handler: () => {
+			if (pageStore.activePage && !pageStore.activePage.is_standard) {
+				pageStore.deletePage(pageStore.activePage).then(() => {
+					router.push({ name: "home" });
+				});
+			}
+		},
+		condition: () => Boolean(pageStore.activePage && !pageStore.activePage.is_standard),
 	},
 ]);
 
