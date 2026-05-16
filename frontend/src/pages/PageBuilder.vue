@@ -328,7 +328,7 @@ useShortcut([
 		ctrl: true,
 		shift: true,
 		description: "Delete Page",
-		group: "Page",
+		group: "General",
 		handler: () => {
 			if (pageStore.activePage && !pageStore.activePage.is_standard) {
 				pageStore.deletePage(pageStore.activePage).then(() => {

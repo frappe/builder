@@ -1,59 +1,64 @@
 <template>
-	<Dialog
-		v-model="showDialog"
-		:options="{
-			title: 'Keyboard Shortcuts',
-			size: '6xl',
-		}">
-		<template #body-content>
-			<div class="flex max-h-[70vh] flex-col">
-				<div v-if="shouldShowSearch" class="mb-5 w-fit">
+	<Dialog v-model="showDialog" title="Keyboard Shortcuts" size="6xl" position="top" paddingTop="5vh">
+		<template #body-header>
+			<div class="mb-6 flex items-center justify-between">
+				<h3 class="text-2xl font-semibold leading-6 text-ink-gray-9">Keyboard Shortcuts</h3>
+				<div class="flex items-center gap-2">
 					<Input
+						v-if="shouldShowSearch"
 						v-model.trim="searchQuery"
 						@input="searchQuery = $event"
 						type="text"
 						placeholder="Search shortcuts" />
+					<Button variant="ghost" @click="showDialog = false" label="Close">
+						<template #icon>
+							<span class="lucide-x size-4 text-ink-gray-9" />
+						</template>
+					</Button>
 				</div>
-				<div class="grid grid-cols-1 gap-x-5 gap-y-4 overflow-y-auto pr-1 md:grid-cols-2 xl:grid-cols-3">
-					<div v-for="(shortcuts, group) in filteredGroupedShortcuts" :key="group" class="space-y-1.5">
-						<h3 class="text-base font-medium tracking-wide text-ink-gray-8">
-							{{ group }}
-						</h3>
-						<div
-							v-for="shortcut in shortcuts"
-							:key="shortcut.id"
-							class="flex items-start justify-between gap-3 rounded py-0.5">
-							<span class="text-p-base text-ink-gray-6">{{ shortcut.description }}</span>
-							<div class="flex shrink-0 items-center gap-1.5">
-								<div
-									v-for="(variant, variantIndex) in formatShortcutVariants(shortcut)"
-									:key="`${shortcut.id.toString()}-${variantIndex}`"
-									class="flex items-center gap-1">
-									<kbd
-										v-for="(part, i) in variant"
-										:key="`${variantIndex}-${i}`"
-										class="inline-flex h-6 min-w-6 items-center justify-center rounded border bg-surface-gray-2 px-1.5 py-0.5 font-medium text-ink-gray-7"
-										:class="{
-											'text-xs': !part.isSymbol,
-										}">
-										{{ part.label }}
-									</kbd>
-									<span v-if="variantIndex < shortcut.keys.length - 1" class="px-0.5 text-xs text-ink-gray-5">
-										/
-									</span>
-								</div>
+			</div>
+		</template>
+		<template #body-content>
+			<div v-if="!activeShortcuts.length" class="h-[20vh] py-8 text-center text-sm text-ink-gray-5">
+				No keyboard shortcuts available on this page.
+			</div>
+			<div
+				v-else-if="shouldShowSearch && !hasVisibleShortcuts"
+				class="h-[20vh] py-8 text-center text-sm text-ink-gray-5">
+				No shortcuts match your search.
+			</div>
+			<div
+				v-else
+				class="grid max-h-[70vh] grid-cols-1 gap-8 gap-x-6 overflow-y-auto pr-1 md:grid-cols-2 xl:grid-cols-3">
+				<div v-for="(shortcuts, group) in filteredGroupedShortcuts" :key="group" class="space-y-1">
+					<h3 class="mb-3 text-base font-medium tracking-wide text-ink-gray-8">
+						{{ group }}
+					</h3>
+					<div
+						v-for="shortcut in shortcuts"
+						:key="shortcut.id"
+						class="grid grid-cols-[1fr_auto] items-start gap-3 rounded py-0.5">
+						<span class="text-p-base text-ink-gray-6">{{ shortcut.description }}</span>
+						<div class="flex shrink-0 items-center gap-1.5">
+							<div
+								v-for="(variant, variantIndex) in formatShortcutVariants(shortcut)"
+								:key="`${shortcut.id.toString()}-${variantIndex}`"
+								class="flex items-center gap-1">
+								<kbd
+									v-for="(part, i) in variant"
+									:key="`${variantIndex}-${i}`"
+									class="inline-flex h-6 min-w-6 items-center justify-center rounded border bg-surface-gray-2 px-1.5 py-0.5 font-medium text-ink-gray-7"
+									:class="{
+										'text-xs': !part.isSymbol,
+									}">
+									{{ part.label }}
+								</kbd>
+								<span v-if="variantIndex < shortcut.keys.length - 1" class="px-0.5 text-xs text-ink-gray-5">
+									/
+								</span>
 							</div>
 						</div>
 					</div>
-				</div>
-
-				<div v-if="!activeShortcuts.length" class="py-8 text-center text-sm text-ink-gray-5">
-					No keyboard shortcuts available on this page.
-				</div>
-				<div
-					v-else-if="shouldShowSearch && !hasVisibleShortcuts"
-					class="py-8 text-center text-sm text-ink-gray-5">
-					No shortcuts match your search.
 				</div>
 			</div>
 		</template>
