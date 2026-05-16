@@ -12,7 +12,7 @@ import frappe
 import frappe.utils
 from frappe.modules import scrub
 from frappe.modules.export_file import export_to_files
-from frappe.utils import set_request
+from frappe.utils import now, set_request
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
 from frappe.utils.telemetry import capture
@@ -24,6 +24,7 @@ from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
 from jinja2.exceptions import TemplateSyntaxError
 
+from builder.builder.doctype.user_font.user_font import get_all_user_fonts
 from builder.export_import_standard_page import export_page_as_standard
 from builder.hooks import builder_path
 from builder.html_preview_image import generate_preview
@@ -124,6 +125,7 @@ class BuilderPage(WebsiteGenerator):
 		preview: DF.Data | None
 		project_folder: DF.Link | None
 		published: DF.Check
+		published_at: DF.Datetime | None
 		route: DF.Data | None
 	# end: auto-generated types
 
@@ -224,6 +226,7 @@ class BuilderPage(WebsiteGenerator):
 	@frappe.whitelist()
 	def publish(self):
 		self.published = 1
+		self.published_at = now()
 		if self.draft_blocks:
 			self.blocks = self.draft_blocks
 			self.draft_blocks = None
@@ -402,11 +405,8 @@ class BuilderPage(WebsiteGenerator):
 		self.db_set("preview", public_path, commit=True, update_modified=False)
 
 	def set_custom_font(self, context, font_map):
-		user_fonts = frappe.get_all(
-			"User Font",
-			fields=["font_name", "font_file"],
-			filters={"font_name": ("in", list(font_map.keys()))},
-		)
+		all_user_fonts = get_all_user_fonts()
+		user_fonts = [f for f in all_user_fonts if f.font_name in font_map]
 		if user_fonts:
 			context.custom_fonts = user_fonts
 		for font in user_fonts:
@@ -568,15 +568,14 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 		tag.insert(0, shared_state["global_script_tag"])
 
 		html = wrap_html_with_context(str(tag), block_context)
-		# Write html to a file for debugging
-		with open("output.html", "w") as f:
-			f.write(html)
 		html_parts.append(html)
 
 	return "".join(html_parts), str(style_tag), font_map, shared_state["has_block_script"]
 
 
-def build_tag(block: dict, state: dict, data_key: dict | None = None) -> bs.Tag:
+def build_tag(
+	block: dict, state: dict, data_key: dict | None = None, ancestor_font: str | None = None
+) -> bs.Tag:
 	"""
 	Transforms a single block to an HTML tag.
 
@@ -588,12 +587,26 @@ def build_tag(block: dict, state: dict, data_key: dict | None = None) -> bs.Tag:
 
 	set_dynamic_content_placeholders(block, data_key)
 
-	tag = create_html_tag(block, state)
+	all_styles = [
+		block.get("baseStyles") or {},
+		block.get("mobileStyles") or {},
+		block.get("tabletStyles") or {},
+		block.get("rawStyles") or {},
+	]
+	resolved_font = (
+		next(
+			(s.get("fontFamily", "").strip("'\"") for s in all_styles if s.get("fontFamily")),
+			None,
+		)
+		or ancestor_font
+	)
+
+	tag = create_html_tag(block, state, ancestor_font=resolved_font)
 
 	if is_repeater_block(block):
-		render_repeater_children(tag, block, data_key, state)
+		render_repeater_children(tag, block, data_key, state, ancestor_font=resolved_font)
 	else:
-		render_children(tag, block, data_key, state)
+		render_children(tag, block, data_key, state, ancestor_font=resolved_font)
 
 	attach_client_script(tag, block, state)
 
@@ -702,7 +715,7 @@ def get_dynamic_props_template(
 	return f"{{{{ {key} if {key} is defined else '{fallback}' }}}}"
 
 
-def create_html_tag(block: dict, state: dict) -> bs.Tag:
+def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) -> bs.Tag:
 	"""Create HTML tag element with attributes, classes, and styling."""
 	soup = state["soup"]
 
@@ -743,7 +756,7 @@ def create_html_tag(block: dict, state: dict) -> bs.Tag:
 	for key, value in block.get("customAttributes", {}).items():
 		tag[key] = value
 
-	classes = build_tag_classes(block, state)
+	classes = build_tag_classes(block, state, ancestor_font=ancestor_font)
 	tag.attrs["class"] = " ".join(classes)
 
 	add_inner_html_content(tag, block, state)
@@ -755,7 +768,7 @@ def create_html_tag(block: dict, state: dict) -> bs.Tag:
 	return tag
 
 
-def build_tag_classes(block: dict, state: dict) -> list[str]:
+def build_tag_classes(block: dict, state: dict, ancestor_font: str | None = None) -> list[str]:
 	"""Build list of CSS classes for the tag."""
 	classes = block.get("classes", [])
 	if isinstance(classes, str):
@@ -769,13 +782,13 @@ def build_tag_classes(block: dict, state: dict) -> list[str]:
 		classes.insert(0, "__text_block__")
 
 	if block.get("baseStyles"):
-		style_class = generate_and_apply_styles(block, state)
+		style_class = generate_and_apply_styles(block, state, ancestor_font=ancestor_font)
 		classes.insert(0, style_class)
 
 	return classes
 
 
-def generate_and_apply_styles(block: dict, state: dict) -> str:
+def generate_and_apply_styles(block: dict, state: dict, ancestor_font: str | None = None) -> str:
 	"""Generate a unique style class and append all styles to the style tag."""
 	style_class = f"fb-{frappe.generate_hash(length=8)}"
 	style_tag = state["style_tag"]
@@ -794,7 +807,7 @@ def generate_and_apply_styles(block: dict, state: dict) -> str:
 		styles["tablet"]["regular"],
 		styles["raw"]["regular"],
 	]
-	set_fonts(style_list, font_map)
+	set_fonts(style_list, font_map, inherited_font=ancestor_font)
 
 	# Append styles for different states and devices
 	# Base and raw
@@ -832,7 +845,9 @@ def is_repeater_block(block: dict) -> bool:
 	return bool(block.get("isRepeaterBlock") and block.get("children") and block.get("dataKey"))
 
 
-def render_children(tag: bs.Tag, block: dict, data_key: dict | None, state: dict):
+def render_children(
+	tag: bs.Tag, block: dict, data_key: dict | None, state: dict, ancestor_font: str | None = None
+):
 	"""Render (non-repeater) children."""
 	for child in block.get("children", []) or []:
 		child = extend_block_with_component(child)
@@ -842,12 +857,14 @@ def render_children(tag: bs.Tag, block: dict, data_key: dict | None, state: dict
 
 		state["has_block_script"] = child_context["block_data_script"] is not None
 
-		child_tag = build_tag(child, state, data_key)
+		child_tag = build_tag(child, state, data_key, ancestor_font=ancestor_font)
 
 		append_child_with_context(tag, child_tag, child_context)
 
 
-def render_repeater_children(tag: bs.Tag, block: dict, data_key: dict | None, state: dict):
+def render_repeater_children(
+	tag: bs.Tag, block: dict, data_key: dict | None, state: dict, ancestor_font: str | None = None
+):
 	"""Render children for repeater blocks (with for loops)."""
 	loop_info = get_loop_info(block, data_key, state["standard_props_stack"])
 
@@ -865,7 +882,7 @@ def render_repeater_children(tag: bs.Tag, block: dict, data_key: dict | None, st
 		data_key_key = block.get("dataKey").get("key")
 		child_context["default_props"] = extract_loop_variables(data_key_key, state["standard_props_stack"])
 
-	child_tag = build_tag(child, state, loop_info["data_key"])
+	child_tag = build_tag(child, state, loop_info["data_key"], ancestor_font=ancestor_font)
 
 	append_child_with_context(tag, child_tag, child_context)
 
@@ -1144,9 +1161,14 @@ def wrap_with_media_query(style_string, device):
 
 
 def get_style(style_obj):
+	def _css_value(key, value):
+		if key == "fontFamily" and isinstance(value, str):
+			value = value.strip("'\"").replace(" ", "\\ ")
+		return sanitize_style_value(value)
+
 	return (
 		"".join(
-			f"{camel_case_to_kebab_case(key)}: {sanitize_style_value(value)};"
+			f"{camel_case_to_kebab_case(key)}: {_css_value(key, value)};"
 			for key, value in style_obj.items()
 			if value is not None and value != "" and not key.startswith("__")
 		)
@@ -1172,7 +1194,7 @@ def append_state_style(style_obj, style_tag, style_class, device="desktop"):
 			style_tag.append(wrap_with_media_query(style_string, device))
 
 
-def set_fonts(styles, font_map):
+def set_fonts(styles, font_map, inherited_font=None):
 	weight_map = {
 		"thin": "100",
 		"extralight": "200",
@@ -1207,9 +1229,13 @@ def set_fonts(styles, font_map):
 		"cursive",
 		"fantasy",
 		"system-ui",
+		"intervar",  # loaded by default via reset.css
 	}
 	for style in styles:
 		font = style.get("fontFamily")
+		if not font and style.get("fontWeight") and inherited_font:
+			# fontWeight is set but fontFamily is not — use explicitly passed ancestor font
+			font = inherited_font
 		if font:
 			# Remove quotes if present
 			font = font.strip("'\"")
@@ -1217,9 +1243,6 @@ def set_fonts(styles, font_map):
 			# Skip if it is a system font
 			if font.lower() in system_fonts:
 				continue
-
-			# escape spaces in font name for CSS
-			style["fontFamily"] = font.replace(" ", "\\ ")
 
 			weight = str(style.get("fontWeight") or "400").lower()
 			weight = weight_map.get(weight, weight)
@@ -1324,7 +1347,9 @@ def extend_block(block, overridden_block):
 @redis_cache(ttl=60 * 60)
 def find_page_with_path(route):
 	try:
-		return frappe.db.get_value("Builder Page", dict(route=route, published=1), "name", cache=True)
+		return frappe.db.get_value(
+			"Builder Page", dict(route=route, published=1), "name", order_by="published_at", cache=True
+		)
 	except frappe.DoesNotExistError:
 		pass
 

@@ -17,6 +17,12 @@
 						condition: () => Boolean(props.page.published),
 					},
 					{
+						label: 'Unpublish',
+						onClick: () => pageStore.unpublishPage(props.page),
+						icon: GlobeOffIcon,
+						condition: () => Boolean(props.page.published),
+					},
+					{
 						label: 'View in Desk',
 						onClick: () => openInDesk(props.page),
 						icon: 'arrow-up-right',
@@ -43,6 +49,7 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { openInDesk } from "@/utils/helpers";
 import { Dropdown } from "frappe-ui";
+import GlobeOffIcon from "@/components/Icons/GlobeOff.vue";
 
 const pageStore = usePageStore();
 

@@ -36,6 +36,7 @@ import type { PauseId } from "@/utils/useCanvasHistory";
 import { Color } from "@tiptap/extension-color";
 import { FontFamily } from "@tiptap/extension-font-family";
 import { TextStyle } from "@tiptap/extension-text-style";
+import { Underline } from "@tiptap/extension-underline";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { StarterKit } from "@tiptap/starter-kit";
 import { Editor, EditorContent, Extension } from "@tiptap/vue-3";
@@ -279,6 +280,7 @@ if (!props.preview) {
 						}),
 						FontFamily,
 						FontFamilyPasteRule,
+						Underline,
 					],
 					enablePasteRules: false,
 					onUpdate({ editor }) {
