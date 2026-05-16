@@ -330,12 +330,13 @@ const updateDropIndicator = (blockLayerItem: HTMLElement, relativeY: number, ele
 };
 
 const onMouseMove = (event: MouseEvent) => {
-	if (!dragState.draggedElement) return;
+	const draggedElement = dragState.draggedElement;
+	if (!draggedElement) return;
 
 	const target = document.elementFromPoint(event.clientX, event.clientY);
 	const blockLayerItem = target?.closest(".block-layer-item") as HTMLElement | null;
 
-	if (!blockLayerItem || blockLayerItem === dragState.draggedElement) {
+	if (!blockLayerItem || blockLayerItem === draggedElement || draggedElement.contains(blockLayerItem)) {
 		resetDropIndicators();
 		return;
 	}
@@ -399,7 +400,7 @@ const onDragEnd = () => {
 	document.removeEventListener("mousemove", onMouseMove);
 
 	const { draggedElement, hoverTarget, hoverPosition } = dragState;
-	if (!draggedElement || !hoverTarget || !hoverPosition) {
+	if (!draggedElement || !hoverTarget || !hoverPosition || draggedElement.contains(hoverTarget)) {
 		Object.assign(dragState, { draggedElement: null, hoverTarget: null, hoverPosition: null });
 		return;
 	}

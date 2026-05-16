@@ -21,7 +21,7 @@
 			class="absolute bottom-0 left-0 right-0 top-0 flex cursor-pointer items-center gap-2 rounded bg-surface-violet-1 py-0.5 pl-2.5 pr-6 text-sm text-ink-violet-1"
 			@click.stop="$emit('openDynamicModal')">
 			<span class="lucide-zap size-3" aria-hidden="true" />
-			<span class="truncate">{{ dynamicValueKey }}</span>
+			<MiddleTruncate :text="dynamicValueKey" />
 		</div>
 
 		<!-- Clear button -->
@@ -38,6 +38,7 @@
 <script lang="ts" setup>
 import CrossIcon from "@/components/Icons/Cross.vue";
 import type { Component } from "vue";
+import MiddleTruncate from "../MiddleTruncate.vue";
 
 defineProps<{
 	component: Component;
