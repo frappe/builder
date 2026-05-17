@@ -175,7 +175,11 @@
 	</section>
 	<Dialog v-model="showSettingsDialog" :dismissable="false" size="5xl" bare>
 		<template #default>
-			<BuilderSettings @close="showSettingsDialog = false" :onlyGlobal="true" />
+			<DialogTitle class="sr-only">Global Builder Settings</DialogTitle>
+			<DialogDescription class="sr-only">
+				Configure global settings for this builder project.
+			</DialogDescription>
+			<BuilderSettings @close="showSettingsDialog = false" :onlyGlobal="true" bare />
 		</template>
 	</Dialog>
 </template>
@@ -193,6 +197,7 @@ import { confirm } from "@/utils/helpers";
 import { useDark, useToggle } from "@vueuse/core";
 import { createResource, Dialog, Dropdown } from "frappe-ui";
 import { TrialBanner } from "frappe-ui/frappe";
+import { DialogDescription, DialogTitle } from "reka-ui";
 import { computed, defineAsyncComponent, h, ref } from "vue";
 
 const BuilderSettings = defineAsyncComponent(() => import("@/components/BuilderSettings.vue"));

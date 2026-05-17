@@ -45,11 +45,11 @@
 </template>
 
 <script setup lang="ts">
+import GlobeOffIcon from "@/components/Icons/GlobeOff.vue";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { openInDesk } from "@/utils/helpers";
 import { Dropdown } from "frappe-ui";
-import GlobeOffIcon from "@/components/Icons/GlobeOff.vue";
 
 const pageStore = usePageStore();
 

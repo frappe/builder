@@ -134,6 +134,10 @@
 		</Dialog>
 		<Dialog v-model="showSettingsDialog" :dismissable="false" size="5xl" bare>
 			<template #default>
+				<DialogTitle class="sr-only">Builder Settings</DialogTitle>
+				<DialogDescription class="sr-only">
+					Configure page and global settings for this project.
+				</DialogDescription>
 				<BuilderSettings @close="showSettingsDialog = false"></BuilderSettings>
 			</template>
 		</Dialog>
@@ -152,6 +156,7 @@ import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { getTextContent } from "@/utils/helpers";
 import { useDark, useToggle } from "@vueuse/core";
 import { Badge, Popover, Tooltip } from "frappe-ui";
+import { DialogDescription, DialogTitle } from "reka-ui";
 import { computed, defineAsyncComponent, inject, ref } from "vue";
 import { toast } from "vue-sonner";
 // @ts-ignore
