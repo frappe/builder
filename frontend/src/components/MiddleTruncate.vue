@@ -30,7 +30,9 @@ watchEffect(() => {
 	if (!wrapperRef.value) return;
 
 	const checkOverflow = () => {
-		hasOverflow.value = wrapperRef.value!.scrollWidth > wrapperRef.value!.clientWidth;
+		const wrapper = wrapperRef.value;
+		if (!wrapper) return;
+		hasOverflow.value = wrapper.scrollWidth > wrapper.clientWidth;
 	};
 
 	checkOverflow();

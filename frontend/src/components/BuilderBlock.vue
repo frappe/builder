@@ -444,6 +444,7 @@ watch(
 		() => pageStore.settingPage,
 	],
 	() => {
+		if (!isMounted.value) return;
 		if (pageStore.settingPage) return;
 
 		const script = props.block.getBlockClientScript().trim();
@@ -469,6 +470,7 @@ watch(
 		() => pageStore.routeVariables,
 	],
 	(_, __, onCleanup) => {
+		if (!isMounted.value) return;
 		if (pageStore.settingPage) return;
 
 		const script = props.block.getBlockDataScript().trim();
