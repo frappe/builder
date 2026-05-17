@@ -2,19 +2,17 @@
 	<Dialog
 		class="overscroll-none"
 		v-model="showModel"
-		:options="{
-			title: 'Create New Folder',
-			size: 'sm',
-			actions: [
-				{
-					label: 'Create Folder',
-					variant: 'solid',
-					loading: builderProjectFolder.loading,
-					onClick: createFolder,
-				},
-			],
-		}">
-		<template #body-content>
+		title="Create New Folder"
+		size="sm"
+		:actions="[
+			{
+				label: 'Create Folder',
+				variant: 'solid',
+				loading: builderProjectFolder.loading,
+				onClick: createFolder,
+			},
+		]">
+		<template #default>
 			<BuilderInput
 				@input="folderName = $event"
 				:modelValue="folderName"

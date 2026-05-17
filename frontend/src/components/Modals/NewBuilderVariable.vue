@@ -2,18 +2,16 @@
 	<Dialog
 		:modelValue="modelValue"
 		@update:modelValue="$emit('update:modelValue', $event)"
-		:options="{
-			title: dialogMode === 'edit' ? 'Edit Variable' : 'New Variable',
-			size: 'sm',
-			actions: [
-				{
-					label: dialogMode === 'edit' ? 'Update' : 'Create',
-					variant: 'solid',
-					onClick: handleSave,
-				},
-			],
-		}">
-		<template #body-content>
+		:title="dialogMode === 'edit' ? 'Edit Variable' : 'New Variable'"
+		size="sm"
+		:actions="[
+			{
+				label: dialogMode === 'edit' ? 'Update' : 'Create',
+				variant: 'solid',
+				onClick: handleSave,
+			},
+		]">
+		<template #default>
 			<div class="flex flex-col gap-4">
 				<BuilderInput
 					type="text"

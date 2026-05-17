@@ -5,7 +5,7 @@
 			<router-link :to="{ name: 'builder', params: { pageId: 'new' } }">
 				<BuilderButton
 					variant="solid"
-					iconLeft="plus"
+					iconLeft="lucide-plus"
 					class="bg-surface-gray-7 !text-ink-white hover:bg-surface-gray-6">
 					New
 				</BuilderButton>

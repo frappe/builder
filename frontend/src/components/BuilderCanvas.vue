@@ -25,13 +25,13 @@
 					v-for="breakpoint in canvasProps.breakpoints"
 					:key="breakpoint.device"
 					@click.stop="(ev) => selectBreakpoint(ev, breakpoint)">
-					<FeatherIcon
-						:name="breakpoint.icon"
-						class="h-8 w-6"
-						:class="{
-							'text-ink-gray-8': breakpoint.visible,
-							'text-ink-gray-3': !breakpoint.visible,
-						}" />
+					<span
+						:class="[
+							breakpoint.icon,
+							'h-8 w-6',
+							{ 'text-ink-gray-8': breakpoint.visible, 'text-ink-gray-3': !breakpoint.visible },
+						]"
+						aria-hidden="true" />
 				</div>
 			</div>
 			<div
@@ -109,7 +109,6 @@ import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useCanvasDropZone } from "@/utils/useCanvasDropZone";
 import { useCanvasEvents } from "@/utils/useCanvasEvents";
 import { useCanvasUtils } from "@/utils/useCanvasUtils";
-import { FeatherIcon } from "frappe-ui";
 import { Ref, computed, onMounted, provide, reactive, ref, watch } from "vue";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
@@ -172,7 +171,7 @@ const canvasProps = reactive({
 	panning: false,
 	breakpoints: [
 		{
-			icon: "monitor",
+			icon: "lucide-monitor",
 			device: "desktop",
 			displayName: "Desktop",
 			width: 1400,
@@ -180,14 +179,14 @@ const canvasProps = reactive({
 			renderedOnce: true,
 		},
 		{
-			icon: "tablet",
+			icon: "lucide-tablet",
 			device: "tablet",
 			displayName: "Tablet",
 			width: 800,
 			visible: false,
 		},
 		{
-			icon: "smartphone",
+			icon: "lucide-smartphone",
 			device: "mobile",
 			displayName: "Mobile",
 			width: 420,

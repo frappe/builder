@@ -71,9 +71,12 @@
 										Builder
 									</h1>
 								</div>
-								<FeatherIcon
-									:name="open ? 'chevron-up' : 'chevron-down'"
-									class="h-4 w-4 !text-gray-700 dark:!text-gray-200"></FeatherIcon>
+								<span
+									:class="[
+										open ? 'lucide-chevron-up' : 'lucide-chevron-down',
+										'h-4 w-4 !text-gray-700 dark:!text-gray-200',
+									]"
+									aria-hidden="true" />
 							</button>
 						</template>
 					</Dropdown>
@@ -96,7 +99,7 @@
 				<SettingsIcon class="size-4"></SettingsIcon>
 				<span>Settings</span>
 			</span>
-			<div class="flex items-center justify-between p-2 text-base text-ink-gray-6">
+			<div class="flex items-center justify-between p-2 pr-0 text-base text-ink-gray-6">
 				<span>Folders</span>
 				<BuilderButton
 					variant="subtle"
@@ -108,7 +111,7 @@
 				<p class="text-sm text-ink-gray-5">No folders yet</p>
 			</div>
 			<span
-				class="flex h-8 w-full cursor-pointer items-center justify-between gap-2 rounded p-2 py-1 pr-1 text-base text-ink-gray-6"
+				class="flex h-8 w-full cursor-pointer items-center justify-between gap-2 rounded p-2 py-1 pr-0 text-base text-ink-gray-6"
 				v-for="project in builderProjectFolder.data"
 				:class="{
 					'bg-surface-modal text-ink-gray-8 shadow-sm dark:bg-surface-gray-2': isFolderActive(
@@ -131,12 +134,14 @@
 						{{ project.folder_name }}
 					</EditableSpan>
 				</span>
-				<Tooltip
+				<Button
 					v-if="isFolderActive(project.folder_name) && project.is_standard"
-					placement="top"
-					text="System generated folder cannot be edited or deleted">
-					<FeatherIcon name="info" class="size-4 text-gray-500" />
-				</Tooltip>
+					variant="ghost"
+					size="sm"
+					icon="lucide-info"
+					disabled
+					tooltip="System generated folder cannot be edited or deleted"
+					class="cursor-pointer" />
 				<Dropdown
 					placement="right"
 					v-else-if="isFolderActive(project.folder_name)"
@@ -155,25 +160,22 @@
 						},
 					]">
 					<template v-slot="{ open }">
-						<BuilderButton icon="more-horizontal" size="sm" variant="ghost" @click="open"></BuilderButton>
+						<BuilderButton
+							icon="lucide-more-horizontal"
+							size="sm"
+							variant="ghost"
+							@click="open"></BuilderButton>
 					</template>
 				</Dropdown>
 			</span>
 		</div>
-		<p class="mt-2 p-2 text-center text-sm text-ink-gray-4">Version: {{ window.builder_version }}</p>
+		<p class="mt-2 p-2 text-center text-sm text-ink-gray-4">Version: {{ builderVersion }}</p>
 		<NewFolder v-model="showNewFolderDialog"></NewFolder>
 		<TrialBanner v-if="builderStore.isFCSite"></TrialBanner>
 	</section>
-	<Dialog
-		v-model="showSettingsDialog"
-		:disableOutsideClickToClose="true"
-		class="[&>div>div[id^=headlessui-dialog-panel]]:my-3"
-		:options="{
-			title: 'Settings',
-			size: '5xl',
-		}">
-		<template #body>
-			<BuilderSettings @close="showSettingsDialog = false" :onlyGlobal="true"></BuilderSettings>
+	<Dialog v-model="showSettingsDialog" :dismissable="false" size="5xl" bare>
+		<template #default>
+			<BuilderSettings @close="showSettingsDialog = false" :onlyGlobal="true" />
 		</template>
 	</Dialog>
 </template>
@@ -189,7 +191,7 @@ import useBuilderStore from "@/stores/builderStore";
 import { BuilderProjectFolder } from "@/types/Builder/BuilderProjectFolder";
 import { confirm } from "@/utils/helpers";
 import { useDark, useToggle } from "@vueuse/core";
-import { createResource, Dialog, Dropdown, Tooltip } from "frappe-ui";
+import { createResource, Dialog, Dropdown } from "frappe-ui";
 import { TrialBanner } from "frappe-ui/frappe";
 import { computed, defineAsyncComponent, h, ref } from "vue";
 
@@ -263,4 +265,5 @@ const deleteFolder = async (folderName: string) => {
 	setFolderActive("");
 };
 const showSettingsDialog = ref(false);
+const builderVersion = (window as any).builder_version;
 </script>

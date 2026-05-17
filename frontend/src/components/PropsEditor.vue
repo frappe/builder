@@ -75,7 +75,7 @@
 									<BuilderButton
 										class="flex-shrink-0 bg-transparent text-xs text-ink-gray-6"
 										variant="subtle"
-										icon="x"
+										icon="lucide-x"
 										@click="deleteObjectKey(name as string)" />
 								</div>
 							</div>
@@ -141,8 +141,6 @@
 import { mapToObject, replaceMapKey } from "@/utils/helpers";
 import { computed, ref, useAttrs, watch } from "vue";
 
-import { toast } from "vue-sonner";
-
 // @ts-ignore
 import LucideZap from "~icons/lucide/zap";
 // @ts-ignore
@@ -166,10 +164,10 @@ import LucideColor from "~icons/lucide/palette";
 // @ts-ignore
 import LucideImage from "~icons/lucide/image";
 
-import { Popover } from "frappe-ui";
-import PropsPopoverContent from "./PropsPopoverContent.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
+import { Popover } from "frappe-ui";
+import PropsPopoverContent from "./PropsPopoverContent.vue";
 
 const attrs = useAttrs();
 const events = Object.fromEntries(

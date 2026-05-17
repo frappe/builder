@@ -1,18 +1,16 @@
 <template>
 	<Dialog
 		v-model="model"
-		:options="{
-			title: 'New Component',
-			size: 'sm',
-			actions: [
-				{
-					label: 'Save',
-					variant: 'solid',
-					onClick: createComponentHandler,
-				},
-			],
-		}">
-		<template #body-content>
+		title="New Component"
+		size="sm"
+		:actions="[
+			{
+				label: 'Save',
+				variant: 'solid',
+				onClick: createComponentHandler,
+			},
+		]">
+		<template #default>
 			<BuilderInput
 				type="text"
 				:modelValue="componentName"

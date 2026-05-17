@@ -57,7 +57,7 @@
 									]">
 									<template v-slot="{ open }">
 										<BuilderButton
-											icon="more-horizontal"
+											icon="lucide-more-horizontal"
 											size="sm"
 											variant="ghost"
 											@click="open"></BuilderButton>
@@ -90,7 +90,7 @@
 						<Autocomplete
 							v-if="clientScriptResource.data && clientScriptResource.data.length > 0"
 							:options="clientScriptOptions"
-							bodyClasses="overflow-hidden [&>ul]:!bg-surface-white"
+							bodyClasses="overflow-hidden [&>ul]:!bg-surface-white max-w-[300px]"
 							@update:modelValue="(option: Option) => attachScript(option.value)"
 							placeholder="Attach Script">
 							<template v-slot:target="{ open }">

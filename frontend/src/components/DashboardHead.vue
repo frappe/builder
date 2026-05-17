@@ -24,7 +24,7 @@
 						}
 					">
 					<template #prefix>
-						<FeatherIcon name="search" class="size-4 text-ink-gray-5"></FeatherIcon>
+						<span class="lucide-search size-4 text-ink-gray-5" aria-hidden="true" />
 					</template>
 				</BuilderInput>
 			</div>
@@ -76,13 +76,13 @@
 						{
 							label: 'Grid',
 							value: 'grid',
-							icon: 'grid',
+							icon: 'lucide-grid-2x2',
 							hideLabel: true,
 						},
 						{
 							label: 'List',
 							value: 'list',
-							icon: 'list',
+							icon: 'lucide-list',
 							hideLabel: true,
 						},
 						{

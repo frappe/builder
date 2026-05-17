@@ -4,8 +4,8 @@
 			<OptionToggle
 				v-model="searchMode"
 				:options="[
-					{ label: 'Search', value: 'search', icon: 'search' },
-					{ label: 'Find & Replace', value: 'replace', icon: 'edit-3' },
+					{ label: 'Search', value: 'search', icon: 'lucide-search' },
+					{ label: 'Find & Replace', value: 'replace', icon: 'lucide-edit-3' },
 				]" />
 		</div>
 
@@ -23,8 +23,7 @@
 				<template #target="{ isOpen, togglePopover }">
 					<BuilderButton
 						@click="togglePopover"
-						variant="outline"
-						icon="filter"
+						icon="lucide-filter"
 						label="Filters"
 						:class="[
 							'flex items-center gap-2 text-sm',
@@ -35,7 +34,9 @@
 							class="bg-ink-gray-7 ml-1 rounded-full px-2 py-0.5 text-xs text-white">
 							{{ selectedFiltersCount }}
 						</span>
-						<FeatherIcon :name="isOpen ? 'chevron-up' : 'chevron-down'" class="size-4" />
+						<span
+							:class="[isOpen ? 'lucide-chevron-up' : 'lucide-chevron-down', 'size-4']"
+							aria-hidden="true" />
 					</BuilderButton>
 				</template>
 				<template #body>
@@ -103,7 +104,7 @@
 		<div v-if="!query" class="mt-6 text-center">
 			<div class="flex flex-col items-center justify-center py-8">
 				<div class="mb-4 flex size-16 items-center justify-center rounded-full bg-surface-gray-2">
-					<FeatherIcon name="search" class="size-8 text-ink-gray-4" />
+					<span class="lucide-search size-8 text-ink-gray-4" aria-hidden="true" />
 				</div>
 				<h3 class="mb-2 text-sm font-medium text-ink-gray-6">Search your blocks</h3>
 			</div>
@@ -137,7 +138,7 @@
 		<div v-else-if="query && results.length === 0" class="mt-6 text-center">
 			<!-- No Results State -->
 			<div class="flex flex-col items-center justify-center py-6">
-				<FeatherIcon name="search" class="mb-3 size-6 text-ink-gray-4" />
+				<span class="lucide-search mb-3 size-6 text-ink-gray-4" aria-hidden="true" />
 				<h3 class="mb-1 text-sm font-medium text-ink-gray-6">No results found</h3>
 				<p class="text-xs text-ink-gray-5">Try different keywords or adjust your filters</p>
 			</div>
@@ -148,7 +149,7 @@
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { watchDebounced } from "@vueuse/core";
-import { FeatherIcon, Input, Popover } from "frappe-ui";
+import { Input, Popover } from "frappe-ui";
 import { computed, nextTick, onMounted, Ref, ref } from "vue";
 import { toast } from "vue-sonner";
 import BuilderButton from "./BuilderButton.vue";

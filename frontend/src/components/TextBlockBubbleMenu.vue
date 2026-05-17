@@ -64,14 +64,14 @@
 				@click="editor?.chain().focus().toggleBold().run()"
 				class="rounded px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('bold') }">
-				<FeatherIcon class="h-3 w-3" name="bold" :stroke-width="2" />
+				<span class="lucide-bold h-3 w-3" aria-hidden="true" />
 			</button>
 			<button
 				v-show="!block.isHeader()"
 				@click="editor?.chain().focus().toggleItalic().run()"
 				class="rounded px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('italic') }">
-				<FeatherIcon class="h-3 w-3" name="italic" :stroke-width="2" />
+				<span class="lucide-italic h-3 w-3" aria-hidden="true" />
 			</button>
 			<button
 				v-show="!block.isHeader()"
@@ -99,7 +99,7 @@
 				"
 				class="rounded px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('link') }">
-				<FeatherIcon class="h-3 w-3" name="link" :stroke-width="2" />
+				<span class="lucide-link h-3 w-3" aria-hidden="true" />
 			</button>
 			<div v-show="!block.isHeader()">
 				<ColorPicker

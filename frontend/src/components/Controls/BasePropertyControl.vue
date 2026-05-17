@@ -25,7 +25,7 @@
 
 			<DraggablePopup
 				v-model="showDynamicValueModal"
-				:container="propertyLabelRef?.dropdownTrigger?.$el"
+				:container="propertyLabelRef?.dropdownTrigger"
 				placement="middle-right"
 				:clickOutsideToClose="false"
 				:placementOffset="20"

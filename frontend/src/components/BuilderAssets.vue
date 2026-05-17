@@ -1,39 +1,6 @@
 <template>
-	<div class="flex flex-col">
-		<div
-			ref="componentContainer"
-			class="order-1"
-			:class="{
-				'pt-2': !showSearchInput,
-			}">
-			<div v-show="!components.length" class="text-base italic text-gray-600">No components saved</div>
-			<div v-for="component in components" :key="component.name" class="flex w-full">
-				<div class="component-container group relative flex w-full flex-col">
-					<div
-						class="user-component relative flex translate-x-0 translate-y-0 cursor-pointer items-center justify-between overflow-hidden truncate rounded border border-transparent bg-surface-white py-1.5"
-						draggable="true"
-						:data-component-id="component.component_id"
-						:data-component-name="component.name"
-						:class="{
-							'!border-outline-gray-4':
-								canvasStore.fragmentData.fragmentId === component.name ||
-								componentStore.selectedComponent === component.component_id,
-						}">
-						<div class="flex items-center gap-2 text-ink-gray-7">
-							<FeatherIcon :name="'box'" class="h-4 w-4"></FeatherIcon>
-							<p class="text-base">
-								{{ component.component_name }}
-							</p>
-						</div>
-						<FeatherIcon
-							name="trash"
-							class="hidden h-3 w-3 cursor-pointer text-ink-gray-5 group-hover:block"
-							@click.stop.prevent="componentStore.deleteComponent(component)"></FeatherIcon>
-					</div>
-				</div>
-			</div>
-		</div>
-		<div v-show="showSearchInput" class="sticky top-0 -mb-1 bg-surface-white py-3">
+	<div class="isolate flex flex-col">
+		<div v-show="showSearchInput" class="sticky top-0 z-[1] bg-surface-white py-3">
 			<BuilderInput
 				type="text"
 				placeholder="Search component"
@@ -44,6 +11,39 @@
 					}
 				" />
 		</div>
+		<div
+			ref="componentContainer"
+			:class="{
+				'pt-2': !showSearchInput,
+			}">
+			<div v-show="!components.length" class="text-base italic text-gray-600">No components saved</div>
+			<div v-for="component in components" :key="component.name" class="group flex w-full">
+				<ItemListRow
+					class="user-component w-full cursor-pointer bg-surface-white"
+					:class="{
+						'!bg-surface-gray-3': canvasStore.fragmentData.fragmentId === component.name,
+					}"
+					draggable="true"
+					:data-component-id="component.component_id"
+					:data-component-name="component.name"
+					:active="
+						canvasStore.fragmentData.fragmentId === component.name ||
+						componentStore.selectedComponent === component.component_id
+					">
+					<template #prefix>
+						<span class="lucide-box size-3.5" aria-hidden="true" />
+					</template>
+					<span class="block truncate">{{ component.component_name }}</span>
+					<template #suffix>
+						<span
+							class="lucide-trash size-3 cursor-pointer text-ink-gray-5"
+							:class="draggingComponentName === component.name ? 'hidden' : 'hidden group-hover:block'"
+							aria-hidden="true"
+							@click.stop.prevent="componentStore.deleteComponent(component)" />
+					</template>
+				</ItemListRow>
+			</div>
+		</div>
 	</div>
 </template>
 <script setup lang="ts">
@@ -53,6 +53,7 @@ import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderComponent } from "@/types/Builder/BuilderComponent";
 import { useEventListener } from "@vueuse/core";
+import { ItemListRow } from "frappe-ui";
 import { computed, onMounted, ref } from "vue";
 
 const canvasStore = useCanvasStore();
@@ -61,6 +62,7 @@ const pageStore = usePageStore();
 
 const componentFilter = ref("");
 const componentContainer = ref(null);
+const draggingComponentName = ref<string | null>(null);
 
 const showSearchInput = computed(() => {
 	return components.value.length > 10 || componentFilter.value;
@@ -101,11 +103,13 @@ useEventListener(componentContainer, "dragstart", (e) => {
 	const component = (e.target as HTMLElement)?.closest(".user-component") as HTMLElement;
 	if (component) {
 		setComponentData(e, component.dataset.componentName as string);
+		draggingComponentName.value = component.dataset.componentName as string;
 		canvasStore.handleDragStart(e);
 	}
 });
 
 useEventListener(componentContainer, "dragend", () => {
+	draggingComponentName.value = null;
 	canvasStore.handleDragEnd();
 });
 
