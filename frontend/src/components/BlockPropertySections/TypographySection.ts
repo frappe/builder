@@ -150,8 +150,8 @@ const typographySectionProperties = [
 				type: "select",
 				options: [
 					{
-						value: null,
-						label: "None",
+						value: "unset",
+						label: "Unset",
 					},
 					{
 						value: "uppercase",
@@ -166,9 +166,13 @@ const typographySectionProperties = [
 						label: "Capitalize",
 					},
 				],
+				setModelValue: (val: string) => {
+					blockController.setStyle("textTransform", val === "unset" ? null : val);
+				},
 			};
 		},
-		searchKeyWords: "Font, Transform, TextTransform, Text Transform, Capitalize, Uppercase, Lowercase",
+		searchKeyWords:
+			"Font, Transform, TextTransform, Text Transform, Capitalize, Uppercase, Lowercase, Unset, None",
 		condition: () => blockController.isText(),
 	},
 	{
