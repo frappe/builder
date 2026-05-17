@@ -225,19 +225,19 @@ async function handleAdd() {
 function getDomainActions(d: any) {
 	const actions: any[] = [];
 	if (d.status === "Active" && !d.primary)
-		actions.push({ label: "Set as Primary", icon: "star", onClick: () => setHostName(d.domain) });
+		actions.push({ label: "Set as Primary", icon: "lucide-star", onClick: () => setHostName(d.domain) });
 	if (!d.primary && !d.redirect_to_primary && d.status === "Active")
 		actions.push({
 			label: "Redirect to Primary",
-			icon: "corner-right-up",
+			icon: "lucide-corner-right-up",
 			onClick: () => setRedirect(d.domain),
 		});
 	if (d.redirect_to_primary)
-		actions.push({ label: "Disable Redirect", icon: "slash", onClick: () => unsetRedirect(d.domain) });
+		actions.push({ label: "Disable Redirect", icon: "lucide-slash", onClick: () => unsetRedirect(d.domain) });
 	if (d.status === "Broken")
-		actions.push({ label: "Retry", icon: "refresh-cw", onClick: () => retryDomain(d.domain) });
+		actions.push({ label: "Retry", icon: "lucide-refresh-cw", onClick: () => retryDomain(d.domain) });
 	if (!d.primary)
-		actions.push({ label: "Remove Domain", icon: "trash", onClick: () => removeDomain(d.domain) });
+		actions.push({ label: "Remove Domain", icon: "lucide-trash", onClick: () => removeDomain(d.domain) });
 	return actions;
 }
 </script>

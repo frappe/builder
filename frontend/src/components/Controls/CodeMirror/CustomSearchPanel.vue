@@ -24,7 +24,7 @@
 						<Button
 							:variant="caseSensitive ? 'outline' : 'ghost'"
 							size="sm"
-							icon="type"
+							icon="lucide-type"
 							@click="toggleCaseSensitive"
 							title="Match Case"></Button>
 						<Button

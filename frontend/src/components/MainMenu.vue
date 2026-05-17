@@ -43,7 +43,9 @@ const mainMenuOptions = [
 	{
 		group: "Builder",
 		hideLabel: true,
-		items: [{ label: "Back to Dashboard", onClick: () => router.push({ name: "home" }), icon: "arrow-left" }],
+		items: [
+			{ label: "Back to Dashboard", onClick: () => router.push({ name: "home" }), icon: "lucide-arrow-left" },
+		],
 	},
 	{
 		group: "Page",
@@ -52,18 +54,18 @@ const mainMenuOptions = [
 			{
 				label: "New Page",
 				onClick: () => router.push({ name: "builder", params: { pageId: "new" } }),
-				icon: "plus",
+				icon: "lucide-plus",
 			},
 			{
 				label: "Copy Page",
 				onClick: handleCopyPage,
-				icon: "clipboard",
+				icon: "lucide-clipboard",
 				condition: () => Boolean(pageStore.activePage),
 			},
 			{
 				label: "Duplicate Page",
 				onClick: () => pageStore.duplicatePage(pageStore.activePage as BuilderPage),
-				icon: "copy",
+				icon: "lucide-copy",
 			},
 			{
 				label: "Delete Page",
@@ -73,7 +75,7 @@ const mainMenuOptions = [
 						router.push({ name: "home" });
 					});
 				},
-				icon: "trash-2",
+				icon: "lucide-trash-2",
 				condition: () => !Boolean(pageStore.activePage?.is_standard),
 			},
 		],
@@ -85,17 +87,17 @@ const mainMenuOptions = [
 			{
 				label: `Toggle Theme`,
 				onClick: () => toggleDark(),
-				icon: isDark ? "sun" : "moon",
+				icon: isDark ? "lucide-sun" : "lucide-moon",
 			},
-			{ label: "Settings", onClick: () => emit("showSettings"), icon: "settings" },
-			{ label: "Shortcuts", onClick: () => emit("showShortcuts"), icon: "command" },
+			{ label: "Settings", onClick: () => emit("showSettings"), icon: "lucide-settings" },
+			{ label: "Shortcuts", onClick: () => emit("showShortcuts"), icon: "lucide-command" },
 			{
 				label: "Help",
 				onClick: () => {
 					// @ts-ignore
 					window.open("https://t.me/frappebuilder");
 				},
-				icon: "info",
+				icon: "lucide-info",
 			},
 		],
 	},

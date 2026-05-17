@@ -103,7 +103,7 @@
 				<span>Folders</span>
 				<BuilderButton
 					variant="subtle"
-					icon="plus"
+					icon="lucide-plus"
 					class="size-4 cursor-pointer hover:text-ink-gray-8"
 					@click="showNewFolderDialog = true"></BuilderButton>
 			</div>
@@ -151,12 +151,12 @@
 							onClick: () => {
 								renamingFolder = project.folder_name;
 							},
-							icon: 'edit',
+							icon: 'lucide-edit',
 						},
 						{
 							label: 'Delete Folder',
 							onClick: () => deleteFolder(project.folder_name),
-							icon: 'trash',
+							icon: 'lucide-trash',
 						},
 					]">
 					<template v-slot="{ open }">
