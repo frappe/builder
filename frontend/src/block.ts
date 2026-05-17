@@ -452,6 +452,7 @@ class Block implements BlockOptions {
 			const icon = this.editorConfig.icon;
 			return icon.startsWith("lucide-") ? icon : `lucide-${icon}`;
 		}
+		// "lucide-toggle-left";
 		switch (true) {
 			case this.isRoot():
 				return "lucide-hash";
