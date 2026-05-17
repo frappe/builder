@@ -35,7 +35,7 @@
 									modelValue && !isCssVariable && props.showColorVariableOptions
 										? {
 												label: 'Save as Variable',
-												icon: 'plus',
+												icon: 'lucide-plus',
 												handler: openVariableDialog,
 											}
 										: undefined

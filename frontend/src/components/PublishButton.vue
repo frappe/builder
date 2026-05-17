@@ -23,13 +23,13 @@
 					label: 'Revert Changes',
 					onClick: () => pageStore.revertChanges(),
 					condition: () => pageStore.activePage?.draft_blocks,
-					icon: 'refresh-cw',
+					icon: 'lucide-refresh-cw',
 				},
 				{
 					label: 'Unpublish',
 					onClick: () => pageStore.unpublishPage(),
 					condition: () => Boolean(pageStore.activePage?.published),
-					icon: 'cloud-off',
+					icon: 'lucide-cloud-off',
 				},
 			]"
 			size="sm"

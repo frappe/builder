@@ -9,10 +9,10 @@
 					:text="mode.description"
 					:hoverDelay="0.6"
 					v-for="mode in [
-						{ mode: 'select', icon: 'mouse-pointer', description: 'Select (v)' },
-						{ mode: 'container', icon: 'square', description: 'Container (c)' },
-						{ mode: 'text', icon: 'type', description: 'Text (t)' },
-						{ mode: 'image', icon: 'image', description: 'Image (i)' },
+						{ mode: 'select', icon: 'lucide-mouse-pointer', description: 'Select (v)' },
+						{ mode: 'container', icon: 'lucide-square', description: 'Container (c)' },
+						{ mode: 'text', icon: 'lucide-type', description: 'Text (t)' },
+						{ mode: 'image', icon: 'lucide-image', description: 'Image (i)' },
 					]">
 					<BuilderButton
 						variant="ghost"

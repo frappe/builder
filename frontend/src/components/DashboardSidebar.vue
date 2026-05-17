@@ -17,7 +17,7 @@
 												name: 'builder',
 												params: { pageId: 'new' },
 											}),
-										icon: 'plus',
+										icon: 'lucide-plus',
 									},
 								],
 							},
@@ -27,18 +27,18 @@
 								items: [
 									{
 										label: 'Apps',
-										icon: 'grid',
+										icon: 'lucide-grid',
 										submenu: appsSubmenu,
 									},
 									{
 										label: 'Toggle Theme',
 										onClick: () => toggleDark(),
-										icon: isDark ? 'sun' : 'moon',
+										icon: isDark ? 'lucide-sun' : 'lucide-moon',
 									},
 									{
 										label: 'Settings',
 										onClick: () => (showSettingsDialog = true),
-										icon: 'settings',
+										icon: 'lucide-settings',
 									},
 								],
 							},
@@ -52,7 +52,7 @@
 											// @ts-ignore
 											window.open('https://t.me/frappebuilder');
 										},
-										icon: 'info',
+										icon: 'lucide-info',
 									},
 								],
 							},

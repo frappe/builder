@@ -8,12 +8,12 @@
 					{
 						label: 'Duplicate',
 						onClick: () => pageStore.duplicatePage(props.page),
-						icon: 'copy',
+						icon: 'lucide-copy',
 					},
 					{
 						label: 'View Page',
 						onClick: () => pageStore.openPageInBrowser(props.page),
-						icon: 'globe',
+						icon: 'lucide-globe',
 						condition: () => Boolean(props.page.published),
 					},
 					{
@@ -25,12 +25,12 @@
 					{
 						label: 'View in Desk',
 						onClick: () => openInDesk(props.page),
-						icon: 'arrow-up-right',
+						icon: 'lucide-arrow-up-right',
 					},
 					{
 						label: 'Delete',
 						onClick: () => pageStore.deletePage(props.page),
-						icon: 'trash',
+						icon: 'lucide-trash',
 						condition: () => !props.page.is_standard,
 					},
 				],

@@ -47,12 +47,12 @@
 											onClick: () => {
 												script.editable = true;
 											},
-											icon: 'edit',
+											icon: 'lucide-edit',
 										},
 										{
 											label: 'Remove Script',
 											onClick: () => deleteScript(script.name),
-											icon: 'trash',
+											icon: 'lucide-trash',
 										},
 									]">
 									<template v-slot="{ open }">
