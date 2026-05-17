@@ -4,58 +4,39 @@
 		ref="wrapper"
 		class="flex w-full overflow-hidden whitespace-nowrap"
 		:title="text"
-		:style="applyGradient">
-		<span class="min-w-8 truncate">{{ truncatedSplit }}</span>
-		<span v-if="textParts.length > 1">{{ endSplit }}</span>
+		:style="hasOverflow ? 'mask-image: linear-gradient(to right, black 90%, transparent)' : ''">
+		<span class="min-w-8 truncate">{{ leading }}</span>
+		<span v-if="trailing">{{ trailing }}</span>
 	</component>
 </template>
 
 <script setup lang="ts">
-import { computed, useTemplateRef, ref, watchEffect } from "vue";
+import { computed, onMounted, onUnmounted, ref, useTemplateRef } from "vue";
 
-const wrapperRef: any = useTemplateRef("wrapper");
+const props = defineProps<{ text: string; as?: string }>();
+const as = computed(() => props.as ?? "div");
+
+const wrapper = useTemplateRef<HTMLElement>("wrapper");
 const hasOverflow = ref(false);
 
-const props = withDefaults(
-	defineProps<{
-		text: string;
-		as?: string;
-	}>(),
-	{
-		as: "div",
-	},
-);
+let observer: ResizeObserver;
 
-watchEffect(() => {
-	if (!wrapperRef.value) return;
-
-	const checkOverflow = () => {
-		const wrapper = wrapperRef.value;
-		if (!wrapper) return;
-		hasOverflow.value = wrapper.scrollWidth > wrapper.clientWidth;
+onMounted(() => {
+	const check = () => {
+		hasOverflow.value = (wrapper.value?.scrollWidth ?? 0) > (wrapper.value?.clientWidth ?? 0);
 	};
-
-	checkOverflow();
-
-	const resizeObserver = new ResizeObserver(checkOverflow);
-	resizeObserver.observe(wrapperRef.value);
-
-	return () => resizeObserver.disconnect();
+	observer = new ResizeObserver(check);
+	observer.observe(wrapper.value!);
+	check();
 });
 
-const textParts = computed(() => {
-	return props.text.split(".");
+onUnmounted(() => observer?.disconnect());
+
+const suffixLen = computed(() => {
+	const len = props.text.length;
+	return len < 10 ? 0 : Math.floor(len * 0.35);
 });
 
-const truncatedSplit = computed(() => {
-	return textParts.value.slice(0, textParts.value.length - 1).join(".");
-});
-
-const endSplit = computed(() => {
-	return `.${textParts.value[textParts.value.length - 1]}`;
-});
-
-const applyGradient = computed(() => {
-	return hasOverflow.value ? "mask-image: linear-gradient(to right, black 90%, transparent)" : "";
-});
+const leading = computed(() => (suffixLen.value ? props.text.slice(0, -suffixLen.value) : props.text));
+const trailing = computed(() => (suffixLen.value ? props.text.slice(-suffixLen.value) : ""));
 </script>
