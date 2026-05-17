@@ -1,24 +1,18 @@
 <template>
-	<Dialog v-model="showDialog" title="Keyboard Shortcuts" size="6xl" position="top" paddingTop="5vh">
-		<template #body-header>
-			<div class="mb-6 flex items-center justify-between">
-				<h3 class="text-2xl font-semibold leading-6 text-ink-gray-9">Keyboard Shortcuts</h3>
-				<div class="flex items-center gap-2">
-					<Input
-						v-if="shouldShowSearch"
-						v-model.trim="searchQuery"
-						@input="searchQuery = $event"
-						type="text"
-						placeholder="Search shortcuts" />
-					<Button variant="ghost" @click="showDialog = false" label="Close">
-						<template #icon>
-							<span class="lucide-x size-4 text-ink-gray-9" />
-						</template>
-					</Button>
-				</div>
+	<Dialog v-model="showDialog" size="6xl" position="top" paddingTop="5vh">
+		<template #title>
+			<div class="flex items-center pr-3">
+				<h3 class="shrink-0 text-2xl font-semibold leading-6 text-ink-gray-9">Keyboard Shortcuts</h3>
+				<Input
+					v-if="shouldShowSearch"
+					v-model.trim="searchQuery"
+					@input="searchQuery = $event"
+					type="text"
+					class="ml-auto w-fit"
+					placeholder="Search shortcuts" />
 			</div>
 		</template>
-		<template #body-content>
+		<template #default>
 			<div v-if="!activeShortcuts.length" class="h-[20vh] py-8 text-center text-sm text-ink-gray-5">
 				No keyboard shortcuts available on this page.
 			</div>
