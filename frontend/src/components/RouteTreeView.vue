@@ -1,5 +1,5 @@
 <template>
-	<div>
+	<div class="isolate">
 		<div v-if="pagesResource.loading && !pages.length" class="px-3 py-6 text-center text-sm text-ink-gray-4">
 			Loading pages…
 		</div>
