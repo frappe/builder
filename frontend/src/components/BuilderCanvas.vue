@@ -1,5 +1,5 @@
 <template>
-	<div ref="canvasContainer" @click="handleClick">
+	<div ref="canvasContainer" @click="handleClick" @mousedown="handleMarqueeStart">
 		<Transition name="fade">
 			<div
 				class="absolute bottom-0 left-0 right-0 top-0 grid w-full place-items-center bg-surface-gray-1 p-10 text-ink-gray-5"
@@ -36,6 +36,7 @@
 			</div>
 			<div
 				class="canvas relative flex h-full bg-surface-white shadow-2xl contain-layout"
+				:data-breakpoint="breakpoint.device"
 				:style="{
 					...canvasStyles,
 					background: canvasProps.background,
@@ -78,6 +79,7 @@
 			:class="{ 'pointer-events-none': isOverDropZone }"
 			id="overlay"
 			ref="overlay" />
+		<div v-show="marquee.visible" class="pointer-events-none fixed z-[200]" :style="marqueeStyle" />
 		<div class="absolute top-0 order-1 w-full">
 			<slot name="header"></slot>
 		</div>
@@ -108,8 +110,9 @@ import { useBlockSelection } from "@/utils/useBlockSelection";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useCanvasDropZone } from "@/utils/useCanvasDropZone";
 import { useCanvasEvents } from "@/utils/useCanvasEvents";
+import { useCanvasMarqueeSelection } from "@/utils/useCanvasMarqueeSelection";
 import { useCanvasUtils } from "@/utils/useCanvasUtils";
-import { Ref, computed, onMounted, provide, reactive, ref, watch } from "vue";
+import { Ref, computed, onMounted, onUnmounted, provide, reactive, ref, watch } from "vue";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
@@ -214,6 +217,17 @@ const {
 	isDirty,
 } = useCanvasUtils(canvasProps, canvasContainer, canvas, block, selectedBlockIds, history);
 
+const { marquee, marqueeStyle, suppressNextClick, handleMarqueeStart, cleanupMarqueeListeners } =
+	useCanvasMarqueeSelection({
+		canvasContainer,
+		canvasProps,
+		activeBreakpoint,
+		selectedBlockIds,
+		findBlock,
+		setActiveBreakpoint,
+		setHoveredBreakpoint,
+	});
+
 const { isOverDropZone } = useCanvasDropZone(
 	canvasContainer as unknown as Ref<HTMLElement>,
 	block,
@@ -240,7 +254,16 @@ onMounted(() => {
 	useBlockEventHandlers(canvasContainerEl);
 });
 
+onUnmounted(() => {
+	cleanupMarqueeListeners();
+});
+
 const handleClick = (ev: MouseEvent) => {
+	if (suppressNextClick.value) {
+		suppressNextClick.value = false;
+		return;
+	}
+
 	const target = document.elementFromPoint(ev.clientX, ev.clientY);
 	// hack to ensure if click is on canvas-container
 	// TODO: Still clears selection if space handlers are dragged over canvas-container
