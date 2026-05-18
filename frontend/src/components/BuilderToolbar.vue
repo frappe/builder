@@ -5,22 +5,18 @@
 		<div class="absolute left-3 flex items-center gap-4">
 			<MainMenu @showSettings="() => (showSettingsDialog = true)" @showShortcuts="showShortcuts"></MainMenu>
 			<div class="flex gap-2">
-				<Tooltip
-					:text="mode.description"
-					:hoverDelay="0.6"
+				<BuilderButton
 					v-for="mode in [
 						{ mode: 'select', icon: 'lucide-mouse-pointer', description: 'Select (v)' },
 						{ mode: 'container', icon: 'lucide-square', description: 'Container (c)' },
 						{ mode: 'text', icon: 'lucide-type', description: 'Text (t)' },
 						{ mode: 'image', icon: 'lucide-image', description: 'Image (i)' },
-					]">
-					<BuilderButton
-						variant="ghost"
-						:icon="mode.icon"
-						class="text-ink-gray-7 hover:bg-surface-gray-2 focus:!bg-surface-gray-3 [&[active='true']]:bg-surface-gray-3 [&[active='true']]:text-ink-gray-9"
-						@click="() => (builderStore.mode = mode.mode as BuilderMode)"
-						:active="builderStore.mode === mode.mode"></BuilderButton>
-				</Tooltip>
+					]"
+					:variant="builderStore.mode === mode.mode ? 'subtle' : 'ghost'"
+					:tooltip="mode.description"
+					:icon="mode.icon"
+					@click="() => (builderStore.mode = mode.mode as BuilderMode)"
+					:active="builderStore.mode === mode.mode"></BuilderButton>
 			</div>
 		</div>
 		<div>
