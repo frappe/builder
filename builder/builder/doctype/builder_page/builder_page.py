@@ -1032,7 +1032,9 @@ def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
 
 	if context.get("block_data_script"):
 		escaped_script = escape_single_quotes(context["block_data_script"])
-		parent.append(f"{{% with block = block | execute_script_and_combine('{escaped_script}', props, block_id) %}}")
+		parent.append(
+			f"{{% with block = block | execute_script_and_combine('{escaped_script}', props, block_id) %}}"
+		)
 
 	if context.get("visibility_key"):
 		parent.append(f"{{% if {context['visibility_key']} %}}")
