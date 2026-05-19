@@ -6,8 +6,7 @@
 			</keep-alive>
 		</router-view>
 		<UseDark attribute="data-theme"></UseDark>
-		<ToastProvider />
-		<Dialogs></Dialogs>
+		<FrappeUIProvider />
 		<component v-for="dialog in builderStore.appDialogs" :is="dialog"></component>
 	</div>
 </template>
@@ -16,7 +15,7 @@ import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { UseDark } from "@vueuse/components";
 import { useTitle } from "@vueuse/core";
-import { Dialogs, ToastProvider } from "frappe-ui";
+import { FrappeUIProvider } from "frappe-ui";
 import { computed, provide } from "vue";
 import { useRoute } from "vue-router";
 import { sessionUser } from "./router";
