@@ -187,7 +187,7 @@ import { BuilderProjectFolder } from "@/types/Builder/BuilderProjectFolder";
 import { toTitleCase } from "@/utils/helpers";
 import { createResource } from "frappe-ui";
 import { computed } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();

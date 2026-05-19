@@ -51,7 +51,7 @@ import { BuilderVariable } from "@/types/Builder/BuilderVariable";
 import { defaultBuilderVariable, useBuilderVariable } from "@/utils/useBuilderVariable";
 import { Dialog } from "frappe-ui";
 import { computed, ref, watch } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 
 const props = defineProps<{
 	modelValue: boolean;
