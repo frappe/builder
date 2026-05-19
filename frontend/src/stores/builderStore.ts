@@ -5,7 +5,7 @@ import RealTimeHandler from "@/utils/realtimeHandler";
 import { useDark, useStorage } from "@vueuse/core";
 import { useTelemetry } from "frappe-ui/frappe";
 import { defineStore } from "pinia";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 import type Dialog from "../components/Controls/Dialog.vue";
 import BlockLayers from "./components/BlockLayers.vue";
 

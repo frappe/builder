@@ -8,7 +8,7 @@ import { BuilderPage } from "@/types/Builder/BuilderPage";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { FileUploadHandler } from "frappe-ui";
 import { defineComponent, h, markRaw, reactive, ref, toRaw } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 import Dialog from "../components/Controls/Dialog.vue";
 
 function getNumberFromPx(px: string | number | null | undefined): number {

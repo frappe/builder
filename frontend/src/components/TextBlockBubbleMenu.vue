@@ -153,7 +153,7 @@ import { vOnClickOutside } from "@vueuse/components";
 import { debouncedWatch } from "@vueuse/core";
 import { debounce } from "frappe-ui";
 import { computed, nextTick, ref, watch, type Ref } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 
 const props = defineProps<{
 	block: Block;

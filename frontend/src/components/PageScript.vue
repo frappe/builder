@@ -164,7 +164,7 @@ import blockController from "@/utils/blockController";
 import { useStorage } from "@vueuse/core";
 import { useTelemetry } from "frappe-ui/frappe";
 import { computed, defineComponent, ref, watch } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import Switch from "./Controls/Switch.vue";
 import TabButtons from "./Controls/TabButtons.vue";

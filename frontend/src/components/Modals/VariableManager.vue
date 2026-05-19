@@ -169,7 +169,7 @@ import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useDebounceFn } from "@vueuse/core";
 import { Button, ListView, Tooltip } from "frappe-ui";
 import { computed, nextTick, ref } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 
 defineProps<{
 	modelValue: boolean;

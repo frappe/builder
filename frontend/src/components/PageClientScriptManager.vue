@@ -140,7 +140,7 @@ import { BuilderPage } from "@/types/Builder/BuilderPage";
 import { Autocomplete, createListResource, createResource, Dropdown } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
 import { computed, nextTick, ref, watch } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 import draggable from "vuedraggable";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import CSSIcon from "./Icons/CSS.vue";

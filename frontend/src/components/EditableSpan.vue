@@ -12,7 +12,7 @@
 
 <script lang="ts" setup>
 import { nextTick, ref, watch } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 
 const props = withDefaults(
 	defineProps<{

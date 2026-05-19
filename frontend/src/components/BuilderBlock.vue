@@ -68,7 +68,7 @@ import {
 	watch,
 	watchEffect,
 } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
 import DataLoaderBlock from "./DataLoaderBlock.vue";

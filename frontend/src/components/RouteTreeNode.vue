@@ -5,7 +5,7 @@
 				class="group flex cursor-pointer select-none items-center gap-1.5 border-b border-outline-gray-1 px-1 hover:rounded-md hover:bg-surface-gray-1"
 				:class="[
 					node.hasChildren ? 'sticky bg-surface-white shadow-[0_1px_0_var(--border-color)]' : '',
-					{ 'rounded-md !bg-surface-gray-2 ': focusedNodeId === node.id },
+					{ 'rounded-md !bg-surface-gray-2': focusedNodeId === node.id },
 				]"
 				:ref="
 					(el) => {
