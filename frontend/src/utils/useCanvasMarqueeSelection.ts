@@ -5,7 +5,17 @@ import type { CanvasProps } from "@/types/Builder/BuilderCanvas";
 import { computed, reactive, ref, type Ref } from "vue";
 
 const MIN_MARQUEE_DRAG = 5;
+// Blocks must overlap the selection by at least this fraction of their area,
+// unless fully contained — in which case they are always selected.
 const OVERLAP_SELECTION_THRESHOLD = 0.5;
+
+type BlockRectSnapshot = { blockId: string; rect: DOMRect; area: number; block: Block };
+
+const setsEqual = (a: Set<string>, b: Set<string>): boolean => {
+	if (a.size !== b.size) return false;
+	for (const id of a) if (!b.has(id)) return false;
+	return true;
+};
 
 type UseCanvasMarqueeSelectionOptions = {
 	canvasContainer: Ref<HTMLElement | null>;
@@ -34,6 +44,9 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 	const marqueeAdditiveSelection = ref(false);
 	const marqueeBreakpoint = ref<string | null>(null);
 	const marqueeInitialSelection = ref<Set<string>>(new Set());
+	// Cached block rects — snapshotted once when drag starts; blocks don't move during a marquee
+	let blockRectCache: BlockRectSnapshot[] = [];
+	let rafId: number | null = null;
 	const marquee = reactive({
 		active: false,
 		visible: false,
@@ -59,9 +72,22 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 		};
 	});
 
+	const cancelMarqueeOnDrag = () => {
+		if (rafId !== null) {
+			cancelAnimationFrame(rafId);
+			rafId = null;
+		}
+		marquee.active = false;
+		marquee.visible = false;
+		blockRectCache = [];
+		canvasStore.isMarqueeActive = false;
+		removeWindowListeners();
+	};
+
 	const removeWindowListeners = () => {
 		window.removeEventListener("mousemove", handleMarqueeMove);
 		window.removeEventListener("mouseup", handleMarqueeEnd);
+		window.removeEventListener("dragstart", cancelMarqueeOnDrag);
 	};
 
 	const handleMarqueeStart = (ev: MouseEvent) => {
@@ -81,31 +107,64 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 
 		window.addEventListener("mousemove", handleMarqueeMove);
 		window.addEventListener("mouseup", handleMarqueeEnd);
+		// Cancel marquee if the browser starts an HTML5 block drag (mouseup won't fire during drag)
+		window.addEventListener("dragstart", cancelMarqueeOnDrag);
+	};
+
+	const snapshotBlockRects = (): BlockRectSnapshot[] => {
+		const container = canvasContainer.value;
+		if (!container) return [];
+		const target = marqueeBreakpoint.value || activeBreakpoint.value;
+		const elements = container.querySelectorAll<HTMLElement>(
+			".__builder_component__[data-block-id][data-breakpoint]",
+		);
+		const result: BlockRectSnapshot[] = [];
+		for (const el of elements) {
+			if ((el.dataset.breakpoint || null) !== target) continue;
+			const blockId = el.dataset.blockId;
+			if (!blockId || blockId === "root") continue;
+			const rect = el.getBoundingClientRect();
+			if (!rect.width || !rect.height) continue;
+			const block = findBlock(blockId);
+			if (!block) continue;
+			result.push({ blockId, rect, area: rect.width * rect.height, block });
+		}
+		return result;
 	};
 
 	const handleMarqueeMove = (ev: MouseEvent) => {
-		if (!marquee.active) {
-			return;
-		}
+		if (!marquee.active) return;
 
+		// Always capture the latest position — even if a rAF is already pending
 		marquee.currentX = ev.clientX;
 		marquee.currentY = ev.clientY;
 
-		if (!marquee.visible) {
-			const deltaX = Math.abs(marquee.currentX - marquee.startX);
-			const deltaY = Math.abs(marquee.currentY - marquee.startY);
-			marquee.visible = deltaX >= MIN_MARQUEE_DRAG || deltaY >= MIN_MARQUEE_DRAG;
-		}
+		if (rafId !== null) return; // coalesce: only one rAF per frame
 
-		if (marquee.visible) {
-			ev.preventDefault();
-			applyMarqueeSelection();
-		}
+		rafId = requestAnimationFrame(() => {
+			rafId = null;
+
+			if (!marquee.visible) {
+				const dx = Math.abs(marquee.currentX - marquee.startX);
+				const dy = Math.abs(marquee.currentY - marquee.startY);
+				if (dx >= MIN_MARQUEE_DRAG || dy >= MIN_MARQUEE_DRAG) {
+					marquee.visible = true;
+					// Snapshot rects once — blocks don't move during a marquee drag
+					blockRectCache = snapshotBlockRects();
+					canvasStore.isMarqueeActive = true;
+				}
+			}
+
+			if (marquee.visible) applyMarqueeSelection();
+		});
 	};
 
 	const handleMarqueeEnd = () => {
-		if (!marquee.active) {
-			return;
+		if (!marquee.active) return;
+
+		if (rafId !== null) {
+			cancelAnimationFrame(rafId);
+			rafId = null;
 		}
 
 		removeWindowListeners();
@@ -113,10 +172,14 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 		if (marquee.visible) {
 			applyMarqueeSelection();
 			suppressNextClick.value = true;
+			// Also prevent useBlockEventHandlers from selecting the block under the cursor
+			canvasStore.preventClick = true;
 		}
 
 		marquee.active = false;
 		marquee.visible = false;
+		blockRectCache = [];
+		canvasStore.isMarqueeActive = false;
 	};
 
 	const shouldStartMarquee = (ev: MouseEvent) => {
@@ -129,10 +192,6 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 		if (!target) return false;
 
 		if (target.closest("input, textarea, select, button, a, [contenteditable='true'], .editor")) {
-			return false;
-		}
-
-		if (target.closest("[data-block-id]:not([data-block-id='root'])")) {
 			return false;
 		}
 
@@ -159,8 +218,7 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 	};
 
 	const getMarqueeIntersectingBlockIds = () => {
-		const container = canvasContainer.value;
-		if (!container) return new Set<string>();
+		if (!blockRectCache.length) return new Set<string>();
 
 		const selectionRect = {
 			left: Math.min(marquee.startX, marquee.currentX),
@@ -169,21 +227,14 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 			bottom: Math.max(marquee.startY, marquee.currentY),
 		};
 
-		const targetBreakpoint = marqueeBreakpoint.value || activeBreakpoint.value;
-		const blockElements = Array.from(
-			container.querySelectorAll(".__builder_component__[data-block-id][data-breakpoint]"),
-		) as HTMLElement[];
-		const intersectingBlockIds = new Set<string>();
-		const fullyContainedBlockIds = new Set<string>();
+		const intersectingIds = new Set<string>();
+		const fullyContainedIds = new Set<string>();
+		// Build a map once so the parent-walk loop is O(1) per lookup
+		const blockByIdInCache = new Map<string, BlockRectSnapshot>();
 
-		for (const element of blockElements) {
-			if ((element.dataset.breakpoint || null) !== targetBreakpoint) continue;
-
-			const blockId = element.dataset.blockId;
-			if (!blockId || blockId === "root") continue;
-
-			const rect = element.getBoundingClientRect();
-			if (!rect.width || !rect.height) continue;
+		for (const entry of blockRectCache) {
+			blockByIdInCache.set(entry.blockId, entry);
+			const { blockId, rect, area } = entry;
 
 			const intersects = !(
 				rect.right < selectionRect.left ||
@@ -191,20 +242,7 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 				rect.bottom < selectionRect.top ||
 				rect.top > selectionRect.bottom
 			);
-
 			if (!intersects) continue;
-
-			const intersectionWidth = Math.max(
-				0,
-				Math.min(rect.right, selectionRect.right) - Math.max(rect.left, selectionRect.left),
-			);
-			const intersectionHeight = Math.max(
-				0,
-				Math.min(rect.bottom, selectionRect.bottom) - Math.max(rect.top, selectionRect.top),
-			);
-			const intersectionArea = intersectionWidth * intersectionHeight;
-			const elementArea = rect.width * rect.height;
-			const overlapRatio = elementArea > 0 ? intersectionArea / elementArea : 0;
 
 			const fullyContained =
 				rect.left >= selectionRect.left &&
@@ -212,53 +250,53 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 				rect.top >= selectionRect.top &&
 				rect.bottom <= selectionRect.bottom;
 
-			if (!fullyContained && overlapRatio <= OVERLAP_SELECTION_THRESHOLD) continue;
+			if (fullyContained) {
+				intersectingIds.add(blockId);
+				fullyContainedIds.add(blockId);
+				continue;
+			}
 
-			const selected = findBlock(blockId);
-			if (selected) {
-				intersectingBlockIds.add(selected.blockId);
-				if (fullyContained) {
-					fullyContainedBlockIds.add(selected.blockId);
-				}
+			const iW = Math.min(rect.right, selectionRect.right) - Math.max(rect.left, selectionRect.left);
+			const iH = Math.min(rect.bottom, selectionRect.bottom) - Math.max(rect.top, selectionRect.top);
+			const overlapRatio = area > 0 ? (Math.max(0, iW) * Math.max(0, iH)) / area : 0;
+			if (overlapRatio > OVERLAP_SELECTION_THRESHOLD) {
+				intersectingIds.add(blockId);
 			}
 		}
 
-		const parentOnlyBlockIds = new Set<string>();
-
-		for (const blockId of intersectingBlockIds) {
-			const block = findBlock(blockId);
-			if (!block) continue;
-
+		const parentOnlyIds = new Set<string>();
+		for (const blockId of intersectingIds) {
+			const entry = blockByIdInCache.get(blockId);
+			if (!entry) continue;
+			let parent = entry.block.getParentBlock();
 			let hasFullyContainedAncestor = false;
-			let parent = block.getParentBlock();
-
 			while (parent) {
-				if (fullyContainedBlockIds.has(parent.blockId)) {
+				if (fullyContainedIds.has(parent.blockId)) {
 					hasFullyContainedAncestor = true;
 					break;
 				}
 				parent = parent.getParentBlock();
 			}
-
-			if (!hasFullyContainedAncestor) {
-				parentOnlyBlockIds.add(blockId);
-			}
+			if (!hasFullyContainedAncestor) parentOnlyIds.add(blockId);
 		}
 
-		return parentOnlyBlockIds;
+		return parentOnlyIds;
 	};
 
 	const applyMarqueeSelection = () => {
 		const targetBreakpoint = marqueeBreakpoint.value || activeBreakpoint.value;
-		const intersectingBlockIds = getMarqueeIntersectingBlockIds();
-		const nextSelectedBlockIds = new Set<string>();
+		const intersectingIds = getMarqueeIntersectingBlockIds();
+		const nextIds = new Set<string>();
 
 		if (marqueeAdditiveSelection.value) {
-			marqueeInitialSelection.value.forEach((id) => nextSelectedBlockIds.add(id));
+			for (const id of marqueeInitialSelection.value) nextIds.add(id);
 		}
+		for (const id of intersectingIds) nextIds.add(id);
 
-		intersectingBlockIds.forEach((id) => nextSelectedBlockIds.add(id));
-		selectedBlockIds.value = nextSelectedBlockIds;
+		// Skip reactivity churn when the selection set hasn't actually changed
+		if (!setsEqual(selectedBlockIds.value, nextIds)) {
+			selectedBlockIds.value = nextIds;
+		}
 
 		if (targetBreakpoint) {
 			setActiveBreakpoint(targetBreakpoint);
