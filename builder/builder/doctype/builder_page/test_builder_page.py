@@ -1020,6 +1020,34 @@ class TestBuilderPage(FrappeTestCase):
 		self.assertNotIn("InterVar", font_map)
 		self.assertNotIn("intervar", font_map)
 
+	def test_block_script_error_traceback(self):
+		body = Block(
+			element="div",
+			originalElement="body",
+		)
+		div = Block(
+			element="div",
+			blockId="test-block",
+			innerHTML="Test Block",
+			blockDataScript="block.data = sample_error",
+		)
+		body.attach_children(div)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Block Script Error Test",
+				"published": 1,
+				"route": "/block-script-error-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+		try:
+			content = get_response_content("/block-script-error-test")
+			self.assertTrue("block_script_for_test_block" in content)
+			self.assertTrue("NameError: name &#x27;sample_error&#x27; is not defined" in content)
+		finally:
+			page.delete()
+
 	@classmethod
 	def tearDownClass(cls):
 		cls.page.delete()
