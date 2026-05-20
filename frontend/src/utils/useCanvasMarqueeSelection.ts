@@ -180,6 +180,7 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 					// Snapshot rects once — blocks don't move during a marquee drag
 					blockRectCache = snapshotBlockRects();
 					canvasStore.isMarqueeActive = true;
+					canvasStore.activeCanvas?.setHoveredBlock(null);
 				}
 			}
 

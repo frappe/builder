@@ -17,6 +17,7 @@
 			:style="{
 				transformOrigin: 'top center',
 				transform: `scale(${canvasProps.scale}) translate(${canvasProps.translateX}px, ${canvasProps.translateY}px)`,
+				'--canvas-scale': canvasProps.scale,
 			}">
 			<div class="absolute right-0 top-[-60px] flex rounded-md bg-surface-white px-3">
 				<div
@@ -431,7 +432,6 @@ const renderedBreakpoints = computed(() => canvasProps.breakpoints.filter((bp) =
 
 /* Lightweight marquee-drag highlight — applied via DOM attribute, not Vue reactive state */
 .__builder_component__[data-marquee-selected] {
-	@apply ring-2 ring-inset;
-	@apply ring-blue-400;
+	box-shadow: inset 0 0 0 calc(2px / var(--canvas-scale, 1)) theme("colors.blue.400 / 85%");
 }
 </style>
