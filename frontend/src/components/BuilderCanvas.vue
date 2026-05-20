@@ -392,6 +392,18 @@ function selectBreakpoint(ev: MouseEvent, breakpoint: BreakpointConfig) {
 		activeBreakpoint.value = breakpoint.device;
 		breakpoint.renderedOnce = true;
 	}
+	const isActiveVisible = canvasProps.breakpoints.find(
+		(bp) => bp.device === activeBreakpoint.value && bp.visible,
+	);
+	if (!isActiveVisible) {
+		const lastVisible = Array.from(canvasProps.breakpoints)
+			.reverse()
+			.find((bp) => bp.visible);
+		if (lastVisible) {
+			activeBreakpoint.value = lastVisible.device;
+			hoveredBreakpoint.value = lastVisible.device;
+		}
+	}
 }
 
 const renderedBreakpoints = computed(() => canvasProps.breakpoints.filter((bp) => bp.renderedOnce));

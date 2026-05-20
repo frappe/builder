@@ -81,7 +81,7 @@
 import routeRedirects from "@/data/routeRedirects";
 import { confirm } from "@/utils/helpers";
 import { computed, onMounted, ref } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 
 const redirectMap = ref({ from: "", to: "" });
 const searchQuery = ref({ from: "", to: "" });

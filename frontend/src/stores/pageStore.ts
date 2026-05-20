@@ -17,7 +17,7 @@ import {
 import { createDocumentResource, createListResource, createResource } from "frappe-ui";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 import { BuilderClientScript } from "../types/Builder/BuilderClientScript";
 
 const usePageStore = defineStore("pageStore", {

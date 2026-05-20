@@ -102,7 +102,7 @@
 			<div class="flex items-center justify-between p-2 pr-0 text-base text-ink-gray-6">
 				<span>Folders</span>
 				<BuilderButton
-					variant="subtle"
+					variant="ghost"
 					icon="lucide-plus"
 					class="size-4 cursor-pointer hover:text-ink-gray-8"
 					@click="showNewFolderDialog = true"></BuilderButton>
@@ -130,6 +130,7 @@
 								renamingFolder = '';
 							}
 						"
+						@blur="renamingFolder = ''"
 						class="w-full capitalize">
 						{{ project.folder_name }}
 					</EditableSpan>

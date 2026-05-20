@@ -82,7 +82,7 @@
 import { useDomains } from "@/data/domains";
 import { Badge, Dropdown, ErrorMessage, FormControl } from "frappe-ui";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 
 const PENDING_STATUSES = ["Pending", "In Progress"];
 

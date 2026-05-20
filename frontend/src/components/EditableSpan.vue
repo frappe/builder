@@ -12,7 +12,7 @@
 
 <script lang="ts" setup>
 import { nextTick, ref, watch } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 
 const props = withDefaults(
 	defineProps<{
@@ -25,6 +25,18 @@ const props = withDefaults(
 		editable: false,
 	},
 );
+
+const emit = defineEmits(["focus", "blur"]);
+
+const focus = () => {
+	editableRef.value?.focus();
+	emit("focus");
+};
+
+const blur = () => {
+	editableRef.value?.blur();
+	emit("blur");
+};
 
 const editMode = ref(false);
 const editableRef = ref<HTMLElement>();
@@ -58,11 +70,11 @@ function handleBlur() {
 function handleKeydown(e: KeyboardEvent) {
 	if (e.key === "Enter" && !e.shiftKey) {
 		e.preventDefault();
-		editableRef.value?.blur();
+		blur();
 	}
 	if (e.key === "Escape") {
 		e.preventDefault();
-		editableRef.value?.blur();
+		blur();
 	}
 }
 
@@ -71,10 +83,9 @@ watch(
 	(value) => {
 		nextTick(() => {
 			if (value && editableRef.value) {
-				editableRef.value?.focus();
+				focus();
 				const range = document.createRange();
 				range.selectNodeContents(editableRef.value);
-				range.collapse(false);
 				const selection = window.getSelection();
 				selection?.removeAllRanges();
 				selection?.addRange(range);

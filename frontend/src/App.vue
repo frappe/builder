@@ -6,8 +6,7 @@
 			</keep-alive>
 		</router-view>
 		<UseDark attribute="data-theme"></UseDark>
-		<Toaster :theme="builderStore.isDark ? 'dark' : 'light'" richColors class="mr-10" />
-		<Dialogs></Dialogs>
+		<FrappeUIProvider />
 		<component v-for="dialog in builderStore.appDialogs" :is="dialog"></component>
 	</div>
 </template>
@@ -16,10 +15,9 @@ import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { UseDark } from "@vueuse/components";
 import { useTitle } from "@vueuse/core";
-import { Dialogs } from "frappe-ui";
+import { FrappeUIProvider } from "frappe-ui";
 import { computed, provide } from "vue";
 import { useRoute } from "vue-router";
-import { Toaster } from "vue-sonner";
 import { sessionUser } from "./router";
 
 // do not remove this

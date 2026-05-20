@@ -27,7 +27,7 @@ import Input from "@/components/Controls/Input.vue";
 import ArrayEditor from "@/components/ArrayEditor.vue";
 import { nextTick, ref, watch } from "vue";
 import { Ref } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 import InlineInput from "../Controls/InlineInput.vue";
 
 const props = defineProps<{
