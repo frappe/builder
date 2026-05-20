@@ -9,7 +9,7 @@ const MIN_MARQUEE_DRAG = 5;
 // unless fully contained — in which case they are always selected.
 const OVERLAP_SELECTION_THRESHOLD = 0.5;
 
-type BlockRectSnapshot = { blockId: string; rect: DOMRect; area: number; block: Block };
+type BlockRectSnapshot = { blockId: string; rect: DOMRect; area: number; block: Block; el: HTMLElement };
 
 const setsEqual = (a: Set<string>, b: Set<string>): boolean => {
 	if (a.size !== b.size) return false;
@@ -47,6 +47,8 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 	// Cached block rects — snapshotted once when drag starts; blocks don't move during a marquee
 	let blockRectCache: BlockRectSnapshot[] = [];
 	let rafId: number | null = null;
+	// Tracks which blocks currently have the DOM highlight attribute (no Vue overhead)
+	let marqueePreviewIds = new Set<string>();
 	const marquee = reactive({
 		active: false,
 		visible: false,
@@ -72,11 +74,19 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 		};
 	});
 
+	const clearMarqueeDOMHighlights = () => {
+		for (const entry of blockRectCache) {
+			entry.el.removeAttribute("data-marquee-selected");
+		}
+		marqueePreviewIds = new Set();
+	};
+
 	const cancelMarqueeOnDrag = () => {
 		if (rafId !== null) {
 			cancelAnimationFrame(rafId);
 			rafId = null;
 		}
+		clearMarqueeDOMHighlights();
 		marquee.active = false;
 		marquee.visible = false;
 		blockRectCache = [];
@@ -127,9 +137,27 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 			if (!rect.width || !rect.height) continue;
 			const block = findBlock(blockId);
 			if (!block) continue;
-			result.push({ blockId, rect, area: rect.width * rect.height, block });
+			result.push({ blockId, rect, area: rect.width * rect.height, block, el });
 		}
 		return result;
+	};
+
+	// Updates block highlight during drag via DOM attribute — zero Vue reactivity overhead.
+	// Vue reactive state is only committed once at drag end.
+	const updateMarqueeDOMHighlights = () => {
+		const newIds = getMarqueeIntersectingBlockIds();
+		for (const entry of blockRectCache) {
+			const hadHighlight = marqueePreviewIds.has(entry.blockId);
+			const hasHighlight = newIds.has(entry.blockId);
+			if (hadHighlight !== hasHighlight) {
+				if (hasHighlight) {
+					entry.el.setAttribute("data-marquee-selected", "");
+				} else {
+					entry.el.removeAttribute("data-marquee-selected");
+				}
+			}
+		}
+		marqueePreviewIds = newIds;
 	};
 
 	const handleMarqueeMove = (ev: MouseEvent) => {
@@ -155,7 +183,8 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 				}
 			}
 
-			if (marquee.visible) applyMarqueeSelection();
+			// Drive highlight via DOM only — no Vue reactive updates per frame
+			if (marquee.visible) updateMarqueeDOMHighlights();
 		});
 	};
 
@@ -170,6 +199,8 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 		removeWindowListeners();
 
 		if (marquee.visible) {
+			// Remove DOM highlights, then commit selection to Vue reactive state exactly once
+			clearMarqueeDOMHighlights();
 			applyMarqueeSelection();
 			suppressNextClick.value = true;
 			// Also prevent useBlockEventHandlers from selecting the block under the cursor

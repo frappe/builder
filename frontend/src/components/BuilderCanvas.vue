@@ -428,4 +428,10 @@ const renderedBreakpoints = computed(() => canvasProps.breakpoints.filter((bp) =
 .horizontal-placeholder {
 	@apply my-4 h-auto w-full border-t-2 border-dashed border-blue-500;
 }
+
+/* Lightweight marquee-drag highlight — applied via DOM attribute, not Vue reactive state */
+.__builder_component__[data-marquee-selected] {
+	@apply ring-2 ring-inset;
+	@apply ring-blue-400;
+}
 </style>
