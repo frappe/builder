@@ -34,9 +34,9 @@
 				class="background-popover-body w-64 rounded-lg border border-outline-gray-2 bg-surface-white p-3 shadow-xl">
 				<TabButtons
 					:buttons="[
-						{ label: '', value: 'color', icon: 'droplet' },
-						{ label: '', value: 'image', icon: 'image' },
-						{ label: '', value: 'gradient', icon: 'aperture' },
+						{ label: '', value: 'color', icon: 'lucide-droplet' },
+						{ label: '', value: 'image', icon: 'lucide-image' },
+						{ label: '', value: 'gradient', icon: 'lucide-aperture' },
 					]"
 					v-model="activeTab"
 					class="mb-3" />

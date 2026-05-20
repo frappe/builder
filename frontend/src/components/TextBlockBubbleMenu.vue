@@ -64,14 +64,14 @@
 				@click="editor?.chain().focus().toggleBold().run()"
 				class="rounded px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('bold') }">
-				<FeatherIcon class="h-3 w-3" name="bold" :stroke-width="2" />
+				<span class="lucide-bold h-3 w-3" aria-hidden="true" />
 			</button>
 			<button
 				v-show="!block.isHeader()"
 				@click="editor?.chain().focus().toggleItalic().run()"
 				class="rounded px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('italic') }">
-				<FeatherIcon class="h-3 w-3" name="italic" :stroke-width="2" />
+				<span class="lucide-italic h-3 w-3" aria-hidden="true" />
 			</button>
 			<button
 				v-show="!block.isHeader()"
@@ -79,6 +79,14 @@
 				class="rounded px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('strike') }">
 				<StrikeThroughIcon />
+			</button>
+
+			<button
+				v-show="!block.isHeader()"
+				@click="editor?.chain().focus().toggleUnderline().run()"
+				class="rounded px-2 py-1 hover:bg-surface-gray-2"
+				:class="{ 'bg-surface-gray-3': editor.isActive('underline') }">
+				<UnderlineIcon />
 			</button>
 
 			<button
@@ -91,7 +99,7 @@
 				"
 				class="rounded px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('link') }">
-				<FeatherIcon class="h-3 w-3" name="link" :stroke-width="2" />
+				<span class="lucide-link h-3 w-3" aria-hidden="true" />
 			</button>
 			<div v-show="!block.isHeader()">
 				<ColorPicker
@@ -138,13 +146,14 @@ import type Block from "@/block";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import Input from "@/components/Controls/Input.vue";
 import StrikeThroughIcon from "@/components/Icons/StrikeThrough.vue";
+import UnderlineIcon from "@/components/Icons/Underline.vue";
 import type { Editor } from "@tiptap/vue-3";
 import { BubbleMenu } from "@tiptap/vue-3/menus";
 import { vOnClickOutside } from "@vueuse/components";
 import { debouncedWatch } from "@vueuse/core";
 import { debounce } from "frappe-ui";
 import { computed, nextTick, ref, watch, type Ref } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 
 const props = defineProps<{
 	block: Block;

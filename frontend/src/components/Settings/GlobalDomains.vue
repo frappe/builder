@@ -21,7 +21,7 @@
 							:theme="statusTheme(d.status)" />
 					</div>
 					<Dropdown v-if="getDomainActions(d).length" :options="getDomainActions(d)" placement="right">
-						<Button variant="ghost" icon="more-horizontal" />
+						<Button variant="ghost" icon="lucide-more-horizontal" />
 					</Dropdown>
 				</div>
 				<p v-if="d.status === 'Broken'" class="text-p-xs text-ink-red-4">
@@ -63,7 +63,7 @@
 							:disabled="!rec.copyValue"
 							@click="copyToClipboard(rec.copyValue)"
 							class="shrink-0 text-ink-gray-4 transition-colors hover:text-ink-gray-7 disabled:cursor-not-allowed disabled:opacity-40">
-							<FeatherIcon name="copy" class="h-3.5 w-3.5" />
+							<span class="lucide-copy h-3.5 w-3.5" aria-hidden="true" />
 						</button>
 					</div>
 				</template>
@@ -80,9 +80,9 @@
 
 <script setup lang="ts">
 import { useDomains } from "@/data/domains";
-import { Badge, Dropdown, ErrorMessage, FeatherIcon, FormControl } from "frappe-ui";
+import { Badge, Dropdown, ErrorMessage, FormControl } from "frappe-ui";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 
 const PENDING_STATUSES = ["Pending", "In Progress"];
 
@@ -225,19 +225,19 @@ async function handleAdd() {
 function getDomainActions(d: any) {
 	const actions: any[] = [];
 	if (d.status === "Active" && !d.primary)
-		actions.push({ label: "Set as Primary", icon: "star", onClick: () => setHostName(d.domain) });
+		actions.push({ label: "Set as Primary", icon: "lucide-star", onClick: () => setHostName(d.domain) });
 	if (!d.primary && !d.redirect_to_primary && d.status === "Active")
 		actions.push({
 			label: "Redirect to Primary",
-			icon: "corner-right-up",
+			icon: "lucide-corner-right-up",
 			onClick: () => setRedirect(d.domain),
 		});
 	if (d.redirect_to_primary)
-		actions.push({ label: "Disable Redirect", icon: "slash", onClick: () => unsetRedirect(d.domain) });
+		actions.push({ label: "Disable Redirect", icon: "lucide-slash", onClick: () => unsetRedirect(d.domain) });
 	if (d.status === "Broken")
-		actions.push({ label: "Retry", icon: "refresh-cw", onClick: () => retryDomain(d.domain) });
+		actions.push({ label: "Retry", icon: "lucide-refresh-cw", onClick: () => retryDomain(d.domain) });
 	if (!d.primary)
-		actions.push({ label: "Remove Domain", icon: "trash", onClick: () => removeDomain(d.domain) });
+		actions.push({ label: "Remove Domain", icon: "lucide-trash", onClick: () => removeDomain(d.domain) });
 	return actions;
 }
 </script>

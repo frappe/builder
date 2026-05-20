@@ -450,37 +450,39 @@ class Block implements BlockOptions {
 	}
 	getIcon() {
 		if (this.editorConfig?.icon) {
-			return this.editorConfig.icon;
+			const icon = this.editorConfig.icon;
+			return icon.startsWith("lucide-") ? icon : `lucide-${icon}`;
 		}
+		// "lucide-toggle-left";
 		switch (true) {
 			case this.isRoot():
-				return "hash";
+				return "lucide-hash";
 			case this.isRepeater():
-				return "database";
+				return "lucide-database";
 			case this.isSVG():
-				return "aperture";
+				return "lucide-aperture";
 			case this.isHTML():
-				return "code";
+				return "lucide-code";
 			case this.isLink():
-				return "link";
+				return "lucide-link";
 			case this.isText():
-				return "type";
+				return "lucide-type";
 			case this.isVideo():
-				return "film";
+				return "lucide-film";
 			case this.isContainer() && this.isRow():
-				return "columns";
+				return "lucide-columns";
 			case this.isContainer() && this.isColumn():
-				return "credit-card";
+				return "lucide-rows-2";
 			case this.isGrid():
-				return "grid";
+				return "lucide-grid";
 			case this.isContainer():
-				return "square";
+				return "lucide-square";
 			case this.isImage():
-				return "image";
+				return "lucide-image";
 			case this.isForm():
-				return "file-text";
+				return "lucide-file-text";
 			default:
-				return "square";
+				return "lucide-square";
 		}
 	}
 	isRoot() {

@@ -23,13 +23,13 @@
 					label: 'Revert Changes',
 					onClick: () => pageStore.revertChanges(),
 					condition: () => pageStore.activePage?.draft_blocks,
-					icon: 'refresh-cw',
+					icon: 'lucide-refresh-cw',
 				},
 				{
 					label: 'Unpublish',
 					onClick: () => pageStore.unpublishPage(),
 					condition: () => Boolean(pageStore.activePage?.published),
-					icon: 'cloud-off',
+					icon: 'lucide-cloud-off',
 				},
 			]"
 			size="sm"
@@ -40,7 +40,7 @@
 					variant="solid"
 					@click="open"
 					:disabled="Boolean(pageStore.activePage?.is_template)"
-					icon="chevron-down"
+					icon="lucide-chevron-down"
 					class="!w-6 justify-start rounded-bl-none rounded-tl-none border-0 pr-0 text-xs"></BuilderButton>
 			</template>
 		</Dropdown>

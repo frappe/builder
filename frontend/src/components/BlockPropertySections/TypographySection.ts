@@ -150,8 +150,8 @@ const typographySectionProperties = [
 				type: "select",
 				options: [
 					{
-						value: null,
-						label: "None",
+						value: "unset",
+						label: "Unset",
 					},
 					{
 						value: "uppercase",
@@ -166,9 +166,13 @@ const typographySectionProperties = [
 						label: "Capitalize",
 					},
 				],
+				setModelValue: (val: string) => {
+					blockController.setStyle("textTransform", val === "unset" ? null : val);
+				},
 			};
 		},
-		searchKeyWords: "Font, Transform, TextTransform, Text Transform, Capitalize, Uppercase, Lowercase",
+		searchKeyWords:
+			"Font, Transform, TextTransform, Text Transform, Capitalize, Uppercase, Lowercase, Unset, None",
 		condition: () => blockController.isText(),
 	},
 	{
@@ -182,25 +186,25 @@ const typographySectionProperties = [
 					{
 						label: "Left",
 						value: "left",
-						icon: "align-left",
+						icon: "lucide-align-left",
 						hideLabel: true,
 					},
 					{
 						label: "Center",
 						value: "center",
-						icon: "align-center",
+						icon: "lucide-align-center",
 						hideLabel: true,
 					},
 					{
 						label: "Right",
 						value: "right",
-						icon: "align-right",
+						icon: "lucide-align-right",
 						hideLabel: true,
 					},
 					{
 						label: "Justify",
 						value: "justify",
-						icon: "align-justify",
+						icon: "lucide-align-justify",
 						hideLabel: true,
 					},
 				],

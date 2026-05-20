@@ -18,7 +18,7 @@ import {
 } from "@/utils/helpers";
 import { createListResource } from "frappe-ui";
 import { nextTick } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 import { webPages } from "../data/webPage";
 import { BuilderClientScript } from "../types/Builder/BuilderClientScript";
 

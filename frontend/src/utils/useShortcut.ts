@@ -41,6 +41,16 @@ export interface RegisteredShortcut {
 	condition?: () => boolean;
 }
 
+export interface ActiveShortcut extends RegisteredShortcut {
+	keys: string[];
+}
+
+function getShortcutMergeIdentity(
+	shortcut: Pick<RegisteredShortcut, "group" | "description" | "ctrl" | "shift">,
+) {
+	return [shortcut.group, shortcut.description, Boolean(shortcut.ctrl), Boolean(shortcut.shift)].join("|");
+}
+
 const activeShortcuts = reactive<RegisteredShortcut[]>([]);
 const shortcutHandlers = new Map<symbol, ShortcutConfig>();
 
@@ -274,7 +284,31 @@ export function useShortcut(shortcuts: ShortcutConfig | ShortcutConfig[]) {
  * Get all currently registered shortcuts whose conditions are met (read-only).
  */
 export function getActiveShortcuts() {
-	return computed(() => activeShortcuts.filter((s) => !s.condition || s.condition()));
+	return computed(() => {
+		const visibleShortcuts = activeShortcuts.filter(
+			(shortcut) => !shortcut.condition || shortcut.condition(),
+		);
+		const mergedShortcuts = new Map<string, ActiveShortcut>();
+
+		for (const shortcut of visibleShortcuts) {
+			const identity = getShortcutMergeIdentity(shortcut);
+			const existing = mergedShortcuts.get(identity);
+
+			if (!existing) {
+				mergedShortcuts.set(identity, {
+					...shortcut,
+					keys: [shortcut.key],
+				});
+				continue;
+			}
+
+			if (!existing.keys.some((key) => key.toLowerCase() === shortcut.key.toLowerCase())) {
+				existing.keys.push(shortcut.key);
+			}
+		}
+
+		return [...mergedShortcuts.values()];
+	});
 }
 
 export { formatShortcutLabel };

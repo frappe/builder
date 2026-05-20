@@ -8,7 +8,7 @@ import { BuilderPage } from "@/types/Builder/BuilderPage";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { FileUploadHandler } from "frappe-ui";
 import { defineComponent, h, markRaw, reactive, ref, toRaw } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 import Dialog from "../components/Controls/Dialog.vue";
 
 function getNumberFromPx(px: string | number | null | undefined): number {
@@ -30,7 +30,12 @@ function addPxToNumber(number: number, round: boolean = true): string {
 	return `${number}px`;
 }
 
-function HexToHSV(color: HashString): { h: number; s: number; v: number; a: number } {
+function HexToHSV(color: HashString): {
+	h: number;
+	s: number;
+	v: number;
+	a: number;
+} {
 	// Remove hash and normalize length
 	let hex = color.replace("#", "").trim();
 
@@ -1301,7 +1306,14 @@ const getPropValue = (propName: string, block: Block, blockUid?: string | null):
 		const defaultValue = options?.defaultValue ?? null;
 
 		if (PARSEABLE_STANDARD_TYPES.includes(type)) {
-			return matchingProp.value ? JSON.parse(matchingProp.value) : defaultValue;
+			if (matchingProp.value) {
+				return JSON.parse(matchingProp.value);
+			} else {
+				if (typeof defaultValue === "string") {
+					return JSON.parse(defaultValue);
+				}
+				return defaultValue;
+			}
 		}
 		return matchingProp.value || defaultValue;
 	}

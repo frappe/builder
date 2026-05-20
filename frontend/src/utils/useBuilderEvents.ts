@@ -24,7 +24,7 @@ import { useShortcut } from "@/utils/useShortcut";
 import { useEventListener, useStorage } from "@vueuse/core";
 import { Ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();

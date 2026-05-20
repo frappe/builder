@@ -7,25 +7,26 @@
 			:maxDimension="500"
 			@resize="(width) => (builderStore.builderLayout.leftPanelWidth = width)" />
 		<div
-			class="flex min-h-full flex-col items-center gap-3 border-r border-outline-gray-1 p-3"
+			class="flex min-h-full flex-col items-center gap-2 border-r border-outline-gray-1 p-3"
 			ref="miniSidebar">
 			<Tooltip
 				v-for="option of leftPanelOptions"
 				:key="option.value"
 				:text="`${option.label} (${formatShortcutLabel(option.shortcut)})`"
 				placement="right">
-				<button
-					class="flex size-8 items-center justify-center rounded text-ink-gray-7 hover:bg-surface-gray-2 focus:!bg-surface-gray-3"
+				<Button
+					:icon="option.icon"
 					:class="{
-						'bg-surface-gray-3 text-ink-gray-9': builderStore.leftPanelActiveTab === option.value,
+						'!text-ink-gray-6': builderStore.leftPanelActiveTab !== option.value,
 					}"
-					@click.stop="setActiveTab(option.value as LeftSidebarTabOption)">
-					<FeatherIcon
-						:name="option.icon"
-						v-if="typeof option.icon === 'string'"
-						class="size-4"></FeatherIcon>
-					<component :is="option.icon" v-else />
-				</button>
+					size="md"
+					:variant="
+						builderStore.leftPanelActiveTab === option.value ||
+						(showVariableManager && option.value === 'variables')
+							? 'subtle'
+							: 'ghost'
+					"
+					@click.stop="setActiveTab(option.value as LeftSidebarTabOption)"></Button>
 			</Tooltip>
 		</div>
 		<div
@@ -44,13 +45,14 @@
 			</div>
 			<div v-show="builderStore.leftPanelActiveTab === 'Layers'" class="p-3 pr-0">
 				<span class="flex items-center gap-2 pb-2 text-sm capitalize text-ink-gray-4">
-					<FeatherIcon
-						:name="
+					<span
+						:class="[
 							canvasStore.activeCanvas?.canvasProps.breakpoints.find(
 								(b) => b.device === canvasStore.activeCanvas?.activeBreakpoint,
-							)?.icon || 'monitor'
-						"
-						class="size-3" />
+							)?.icon || 'lucide-monitor',
+							'size-3',
+						]"
+						aria-hidden="true" />
 					{{ canvasStore.activeCanvas?.activeBreakpoint }}
 				</span>
 				<BlockLayers
@@ -88,10 +90,7 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import BuilderAIChatPanel from "@/components/BuilderAIChatPanel.vue";
-import ComponentIcon from "@/components/Icons/Component.vue";
 import LayersIcon from "@/components/Icons/Layers.vue";
-import PlusIcon from "@/components/Icons/Plus.vue";
-import SparklesIcon from "@/components/Icons/Sparkles.vue";
 import VariableManager from "@/components/Modals/VariableManager.vue";
 import PageScript from "@/components/PageScript.vue";
 import useBuilderStore from "@/stores/builderStore";
@@ -125,7 +124,7 @@ const leftPanelOptions = [
 	{
 		label: "Insert",
 		value: "Blocks",
-		icon: PlusIcon,
+		icon: "lucide-plus",
 		shortcut: { key: "i", ctrl: true, shift: true },
 	},
 	{
@@ -137,25 +136,25 @@ const leftPanelOptions = [
 	{
 		label: "Components",
 		value: "Assets",
-		icon: ComponentIcon,
+		icon: "lucide-box",
 		shortcut: { key: "a", ctrl: true, shift: true },
 	},
 	{
 		label: "Code",
 		value: "Code",
-		icon: "code",
+		icon: "lucide-code",
 		shortcut: { key: "k", ctrl: true, shift: true },
 	},
 	{
 		label: "Variables",
 		value: "variables",
-		icon: "aperture",
+		icon: "lucide-aperture",
 		shortcut: { key: "v", ctrl: true, shift: true },
 	},
 	{
 		label: "Chat",
 		value: "Chat",
-		icon: SparklesIcon,
+		icon: "lucide-sparkles",
 		shortcut: { key: "h", ctrl: true, shift: true },
 	},
 ];

@@ -17,7 +17,7 @@ import {
 import { createDocumentResource, createListResource, createResource } from "frappe-ui";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 import { BuilderClientScript } from "../types/Builder/BuilderClientScript";
 
 const usePageStore = defineStore("pageStore", {
@@ -200,21 +200,27 @@ const usePageStore = defineStore("pageStore", {
 			}
 		},
 
-		async unpublishPage() {
+		async unpublishPage(page?: BuilderPage) {
+			const targetName = page?.name || this.selectedPage;
+			const targetTitle = page?.page_title || page?.page_name || "this page";
 			const confirmed = await confirm(
-				"Are you sure you want to unpublish this page? It will no longer be accessible on the website.",
+				`Are you sure you want to unpublish "${targetTitle}"? It will no longer be accessible on the website.`,
 			);
 			if (!confirmed) {
 				return;
 			}
 			return webPages.setValue
 				.submit({
-					name: this.selectedPage,
+					name: targetName,
 					published: false,
 				})
 				.then(() => {
 					toast.success("Page unpublished");
-					this.setPage(this.selectedPage as string);
+					if (page) {
+						page.published = 0;
+					} else {
+						this.setPage(this.selectedPage as string);
+					}
 					builderSettings.reload();
 				});
 		},

@@ -8,7 +8,7 @@ import { alert, confirm, getBlockInstance, getBlockObject } from "@/utils/helper
 import { createDocumentResource, createResource } from "frappe-ui";
 import { defineStore } from "pinia";
 import { markRaw } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 
 const useComponentStore = defineStore("componentStore", {
 	state: () => ({

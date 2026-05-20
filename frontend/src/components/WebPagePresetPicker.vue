@@ -294,7 +294,7 @@ const PRESETS: Preset[] = [
 		category: "modern",
 		description:
 			"Deep dark backgrounds with vibrant aurora-inspired gradients, glassmorphism cards with blur/translucency, and glowing blobs. Ultra-modern and immersive.",
-		icon: "aperture",
+		icon: "lucide-aperture",
 		preview: {
 			bg: "bg-gray-900",
 			blobA: "bg-purple-600",
@@ -307,7 +307,7 @@ const PRESETS: Preset[] = [
 		category: "retro",
 		description:
 			"Raw, unapologetic design with heavy borders, bold offset shadows, and chunky typography. Intentionally rough and high-contrast. No gradients, no subtlety.",
-		icon: "bold",
+		icon: "lucide-bold",
 		preview: {
 			bg: "bg-white",
 		},
@@ -318,7 +318,7 @@ const PRESETS: Preset[] = [
 		category: "minimal",
 		description:
 			"Absolute restraint — hairline borders, sparse layout. Typography does all the work. Inspired by Swiss editorial design and Japanese stationery brands. Zero decoration.",
-		icon: "feather",
+		icon: "lucide-feather",
 		preview: {
 			bg: "bg-gray-100",
 		},
@@ -329,7 +329,7 @@ const PRESETS: Preset[] = [
 		category: "other",
 		description:
 			"Organic shapes, natural textures, and rounded asymmetric forms. Grounded and tactile — ideal for wellness, food, craft, and sustainability brands.",
-		icon: "coffee",
+		icon: "lucide-coffee",
 		preview: {
 			bg: "bg-red-100",
 		},
@@ -340,7 +340,7 @@ const PRESETS: Preset[] = [
 		category: "tech",
 		description:
 			"Dark background with monospace typography, terminal-style chrome, and code-aesthetic UI. Think developer tools, CLI apps, and hacker-culture interfaces.",
-		icon: "terminal",
+		icon: "lucide-terminal",
 		preview: {
 			bg: "bg-gray-900",
 		},
@@ -351,7 +351,7 @@ const PRESETS: Preset[] = [
 		category: "other",
 		description:
 			"Thin serif typefaces, and refined negative space. Understated luxury — think high-fashion magazines and premium brand campaigns.",
-		icon: "star",
+		icon: "lucide-star",
 		preview: {
 			bg: "bg-gray-800",
 		},
@@ -362,7 +362,7 @@ const PRESETS: Preset[] = [
 		category: "retro",
 		description:
 			"Thick borders, chunky chart bars, flat graphic shapes, and retro poster energy. Bold and high-contrast, inspired by 90s print graphics and risograph aesthetics.",
-		icon: "zap",
+		icon: "lucide-zap",
 		preview: {
 			bg: "bg-yellow-100",
 		},
@@ -373,7 +373,7 @@ const PRESETS: Preset[] = [
 		category: "minimal",
 		description:
 			"Warm, textured paper backgrounds with high-contrast ink-like typography. Tactile and organic, inspired by letterpress printing and boutique stationery.",
-		icon: "book-open",
+		icon: "lucide-book-open",
 		preview: {
 			bg: "bg-orange-50",
 		},
@@ -384,7 +384,7 @@ const PRESETS: Preset[] = [
 		category: "modern",
 		description:
 			"Soft candy-colored palettes, organic wiggly shapes, and pill-shaped rounded buttons. Bouncy, cheerful, and approachable for consumer-friendly apps.",
-		icon: "smile",
+		icon: "lucide-smile",
 		preview: {
 			bg: "bg-pink-50",
 		},
@@ -395,7 +395,7 @@ const PRESETS: Preset[] = [
 		category: "tech",
 		description:
 			"Raw, high-contrast monochrome with technical grid backgrounds and utility-first layouts. Rugged, functional, and inspired by architectural blueprints.",
-		icon: "box",
+		icon: "lucide-box",
 		preview: {
 			bg: "bg-zinc-900",
 		},
@@ -406,7 +406,7 @@ const PRESETS: Preset[] = [
 		category: "retro",
 		description:
 			"80s retro-futurism with glowing grid floors, vibrant sun-gradient headers, and high-contrast pink and purple neon accents. Retro-digital aesthetic.",
-		icon: "sun",
+		icon: "lucide-sun",
 		preview: {
 			bg: "bg-purple-900",
 		},
@@ -417,7 +417,7 @@ const PRESETS: Preset[] = [
 		category: "minimal",
 		description:
 			"Hand-drawn pencil lines, rough scribbled borders, and graphite textures. Creative and raw artistic feel, as if sketched in a physical notebook.",
-		icon: "edit-3",
+		icon: "lucide-edit-3",
 		preview: {
 			bg: "bg-gray-100",
 		},
@@ -428,7 +428,7 @@ const PRESETS: Preset[] = [
 		category: "modern",
 		description:
 			"Soft, pillowy surfaces with deep inner shadows and outer glows. Friendly, tactile, and highly rounded shapes. Modern 3D 'clay' look.",
-		icon: "box",
+		icon: "lucide-box",
 		preview: {
 			bg: "bg-blue-100",
 		},
@@ -439,7 +439,7 @@ const PRESETS: Preset[] = [
 		category: "tech",
 		description:
 			"Deep architectural blue backgrounds with fine white grid lines and technical drafting annotations. Precise, structural, and professional.",
-		icon: "map",
+		icon: "lucide-map",
 		preview: {
 			bg: "bg-blue-900",
 		},
