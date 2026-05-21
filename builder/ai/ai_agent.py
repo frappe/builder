@@ -404,7 +404,7 @@ class AgentJob:
 			stream=False,
 			api_key=self.api_key,
 			tools=self.TOOLS,
-			**TASK_PARAMS["simple"],
+			**TASK_PARAMS["agent"],
 		)
 		choice = resp.choices[0]
 		assistant_message = choice.message
@@ -494,13 +494,27 @@ class AgentJob:
 		)
 		self.emit("progress", message=f"Thinking with {ModelRegistry.get_label(self.model)}")
 
+		# Concurrent-request guard: reject if a job is already running for this session
+		if self.session_id and AISession.is_session_running(self.session_id):
+			logger.warning(f"AgentJob.run: session {self.session_id} already has a running job, rejecting")
+			self.emit(
+				"error", message="Another AI request is still processing. Please wait for it to finish."
+			)
+			return
+
+		if self.session_id:
+			try:
+				AISession(frappe.get_doc(AISession.DOCTYPE, self.session_id)).set_running()
+			except Exception:
+				pass
+
 		messages = self.build_messages()
 		client_tool_operations: list[dict] = []
 		summary_text = ""
 
 		try:
 			# Agentic loop: resolve server-side tools first, then hand client tools to the frontend.
-			for _round in range(8):
+			for _round in range(15):
 				tool_operations, summary_text, raw_tool_calls = self.call_tool_llm(messages)
 
 				server_ops = [op for op in tool_operations if op["tool_name"] == "get_page_scripts"]
@@ -534,6 +548,12 @@ class AgentJob:
 			)
 			self.emit("error", message=str(e))
 			return
+		finally:
+			if self.session_id:
+				try:
+					AISession(frappe.get_doc(AISession.DOCTYPE, self.session_id)).clear_running()
+				except Exception:
+					pass
 
 		if not client_tool_operations and not summary_text:
 			logger.warning("Agent returned empty response (no tools, no text)")
