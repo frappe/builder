@@ -236,6 +236,7 @@ import { AIChatController, type ChatMessage } from "@/components/AIChatControlle
 import SparklesIcon from "@/components/Icons/Sparkles.vue";
 import WebPagePresetPicker from "@/components/WebPagePresetPicker.vue";
 import useBuilderStore from "@/stores/builderStore";
+import DOMPurify from "dompurify";
 import { Button, FeatherIcon, Popover, Tooltip } from "frappe-ui";
 import { marked } from "marked";
 import { onMounted, onUnmounted, ref, watch } from "vue";
@@ -243,7 +244,29 @@ import { onMounted, onUnmounted, ref, watch } from "vue";
 marked.use({ breaks: true, gfm: true });
 
 function renderMarkdown(content: string): string {
-	return marked.parse(content) as string;
+	return DOMPurify.sanitize(marked.parse(content) as string, {
+		ALLOWED_TAGS: [
+			"p",
+			"br",
+			"strong",
+			"em",
+			"code",
+			"pre",
+			"ul",
+			"ol",
+			"li",
+			"a",
+			"h1",
+			"h2",
+			"h3",
+			"h4",
+			"blockquote",
+			"hr",
+			"span",
+		],
+		ALLOWED_ATTR: ["href", "target", "rel", "class"],
+		ADD_ATTR: ["target"],
+	});
 }
 
 const chat = new AIChatController();
@@ -266,8 +289,8 @@ const selectedPreset = ref<{
 
 const submitPrompt = () => {
 	if (selectedPreset.value) {
-		const presetContext = `Style: ${selectedPreset.value.name} - ${selectedPreset.value.description}`;
-		chat.prompt.value = `${chat.prompt.value}\n\n${presetContext}`;
+		// Pass preset as a structured system-level parameter, not appended user text
+		chat.pendingStylePreset = `${selectedPreset.value.name}: ${selectedPreset.value.description}`;
 		selectedPreset.value = null;
 	}
 	chat.submitPrompt();
