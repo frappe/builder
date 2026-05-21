@@ -435,4 +435,8 @@ defineExpose({
 .block-selected {
 	@apply border-blue-400 text-gray-900 dark:border-blue-700 dark:text-gray-200;
 }
+
+.block-selected .block-selected {
+	@apply rounded-none border-transparent bg-blue-50 dark:bg-blue-900/25;
+}
 </style>
