@@ -152,10 +152,10 @@ const leftPanelOptions = [
 		shortcut: { key: "v", ctrl: true, shift: true },
 	},
 	{
-		label: "Chat",
+		label: "Bob AI",
 		value: "Chat",
-		icon: "lucide-sparkles",
-		shortcut: { key: "h", ctrl: true, shift: true },
+		icon: "lucide-sparkle",
+		shortcut: { key: "o", ctrl: true, shift: true },
 	},
 ];
 
