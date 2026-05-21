@@ -1,23 +1,43 @@
 import json
+import re
 from typing import ClassVar
 
 
 def parse_clarification(content: str) -> dict | None:
-	"""Return {'question': str, 'options': list[str]} if content is a clarification JSON block, else None."""
+	"""Return {'question': str, 'options': list[str]} if content is a clarification JSON block, else None.
+
+	Robust against LLM wrapping the JSON in markdown fences, prose text, or whitespace.
+	Uses regex to extract the first JSON object before attempting json.loads.
+	"""
+	if not content or not content.strip():
+		return None
+
+	# Only attempt extraction if the response looks like it could be clarification JSON.
+	# This prevents false positives on normal prose responses.
+	if "clarification" not in content and '"type"' not in content:
+		return None
+
+	# Extract the first {...} block using a non-greedy regex (handles nested braces is impractical,
+	# but clarification JSON is shallow so this is reliable).
+	match = re.search(r"\{[^{}]*\}", content, re.DOTALL)
+	if not match:
+		return None
+
 	try:
-		stripped = content.strip()
-		if stripped.startswith("```"):
-			lines = stripped.splitlines()
-			stripped = "\n".join(lines[1:-1] if lines[-1].startswith("```") else lines[1:])
-		parsed = json.loads(stripped)
-		if isinstance(parsed, dict) and parsed.get("type") == "clarification":
-			question = str(parsed.get("question", "Can you clarify?"))
-			options = [str(o) for o in parsed.get("options", []) if o]
-			if options:
-				return {"question": question, "options": options}
-	except Exception:
-		pass
-	return None
+		parsed = json.loads(match.group(0))
+	except (json.JSONDecodeError, ValueError):
+		return None
+
+	if not isinstance(parsed, dict) or parsed.get("type") != "clarification":
+		return None
+
+	question = str(parsed.get("question", "Can you clarify?")).strip()
+	options = [str(o).strip() for o in parsed.get("options", []) if o and str(o).strip()]
+	if len(options) < 2:
+		# Require at least 2 options — a single option isn't a real clarification
+		return None
+
+	return {"question": question, "options": options}
 
 
 class Prompts:
@@ -61,12 +81,15 @@ class Prompts:
 	)
 
 	CLARIFICATION = (
-		"If the user's request is too vague to act on confidently "
-		"(e.g. a single word, no page type, no content described), "
-		"respond with ONLY this JSON object and nothing else:\n\n"
-		'{"type": "clarification", "question": "<one short question>", "options": ["<option 1>", "<option 2>", "<option 3>"]}\n\n'
-		"Provide 3-5 short plain-text options (no markdown, no descriptions). "
-		"Do NOT ask for clarification if there is enough context to make a reasonable page."
+		"CLARIFICATION RULE (read carefully):\n"
+		"Only ask for clarification when ALL of the following are true:\n"
+		"  1. The request is 5 words or fewer AND has no page type or industry mentioned, OR\n"
+		"  2. The request contains only a generic single-word category with zero context (e.g. just 'website').\n"
+		"If there is ANY useful signal (industry, audience, purpose, features, examples, style references) — "
+		"proceed and create the best page you can. Do NOT ask for clarification.\n\n"
+		"When clarification IS needed, respond with ONLY this JSON object and nothing else (no prose, no markdown fences):\n"
+		'{"type": "clarification", "question": "<one short focused question>", "options": ["<option 1>", "<option 2>", "<option 3>", "<option 4>"]}\n\n'
+		"Options must be 3-5 short plain-text phrases. No markdown, no descriptions."
 	)
 
 	GENERATE = """You are an expert web designer specializing in creating modern, responsive web pages using the Frappe Builder block system.
@@ -129,6 +152,9 @@ Return a single root block that represents the page (el: div, id: root). This bl
 			"- 'update_block' merges (does not replace) styles and attributes — only specify what changes.\n"
 			"- Use 'set_page_script' to add JavaScript or CSS that needs to run on the page (event listeners, animations, etc.).\n"
 			"- After calling tools, give a short 1–2 sentence summary of what was changed. Use markdown formatting (bold, inline code, lists) where it aids clarity.\n"
+			"- IMPORTANT: You have the full page context. Never ask for clarification on page structure \u2014 "
+			"make reasonable decisions and proceed. Only ask for clarification if the intent is completely ambiguous "
+			"AND you have tried all reasonable interpretations.\n"
 		)
 		+ "\n\n"
 		+ CLARIFICATION
