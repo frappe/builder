@@ -101,6 +101,7 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 	};
 
 	const handleMarqueeStart = (ev: MouseEvent) => {
+		ev.preventDefault();
 		if (!shouldStartMarquee(ev)) {
 			return;
 		}
@@ -137,6 +138,8 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 			if (!rect.width || !rect.height) continue;
 			const block = findBlock(blockId);
 			if (!block) continue;
+			// Only select the component root — never select internal children of a component
+			if (block.isChildOfComponentBlock()) continue;
 			result.push({ blockId, rect, area: rect.width * rect.height, block, el });
 		}
 		return result;
@@ -181,6 +184,9 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 					blockRectCache = snapshotBlockRects();
 					canvasStore.isMarqueeActive = true;
 					canvasStore.activeCanvas?.setHoveredBlock(null);
+					if (canvasStore.activeCanvas) {
+						canvasStore.activeCanvas.clearSelection();
+					}
 				}
 			}
 
@@ -223,7 +229,7 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 		const target = ev.target as HTMLElement | null;
 		if (!target) return false;
 
-		if (target.closest("input, textarea, select, button, a, [contenteditable='true'], .editor")) {
+		if (target.closest("input, textarea, select, button, a, [contenteditable='true']")) {
 			return false;
 		}
 
