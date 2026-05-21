@@ -119,6 +119,32 @@ class AISession:
 		)
 		self.save_messages(messages, task_type=task_type)
 
+	def update_last_assistant_metadata(self, extra_metadata: dict):
+		"""Merge extra_metadata into the most recent assistant message and persist."""
+		messages = self.get_messages()
+		for msg in reversed(messages):
+			if msg.get("role") == "assistant":
+				msg.setdefault("metadata", {}).update(extra_metadata)
+				break
+		self.save_messages(messages)
+
+	def set_running(self):
+		"""Mark session as having an active AI job running."""
+		frappe.db.set_value(self.DOCTYPE, self._doc.name, "is_running", 1, update_modified=False)
+		frappe.db.commit()
+
+	def clear_running(self):
+		"""Clear the running flag when the job finishes."""
+		frappe.db.set_value(self.DOCTYPE, self._doc.name, "is_running", 0, update_modified=False)
+		frappe.db.commit()
+
+	@classmethod
+	def is_session_running(cls, session_id: str) -> bool:
+		"""Return True if there is already a job running for this session."""
+		if not session_id or not frappe.db.exists(cls.DOCTYPE, session_id):
+			return False
+		return bool(frappe.db.get_value(cls.DOCTYPE, session_id, "is_running"))
+
 	def build_context_string(self) -> str:
 		history_lines = []
 		for message in self.get_messages()[-10:]:

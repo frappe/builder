@@ -33,6 +33,7 @@ class LLMJob:
 		task_type: str | None = None,
 		image_url: str | None = None,
 		session_id: str | None = None,
+		style_preset: str | None = None,
 	):
 		self.prompt = prompt
 		self.model = model
@@ -45,6 +46,7 @@ class LLMJob:
 		self.task_type = task_type
 		self.image_url = image_url
 		self.session_id = session_id
+		self.style_preset = style_preset
 
 	def emit(self, suffix: str, **kwargs):
 		event = f"{self.event_prefix}_{suffix}"
@@ -114,10 +116,18 @@ class LLMJob:
 
 		session_context = AISession.build_context_from_id(self.session_id)
 
+		system_prompt = Prompts.get_system(self.is_modify, self.task_type)
+		# Inject style preset as a system-level addendum for page generation
+		if self.style_preset and not self.is_modify:
+			system_prompt = (
+				system_prompt
+				+ f"\n\n# Style Preset\nApply this visual style to the page: {self.style_preset}"
+			)
+
 		messages = [
 			{
 				"role": "system",
-				"content": Prompts.get_system(self.is_modify, self.task_type),
+				"content": system_prompt,
 				"cache_control": {"type": "ephemeral"},
 			},
 		]
@@ -221,6 +231,7 @@ def generate_page_blocks(
 	page_id: str | None = None,
 	image_url: str | None = None,
 	session_id: str | None = None,
+	style_preset: str | None = None,
 ):
 	LLMJob(
 		prompt,
@@ -232,6 +243,7 @@ def generate_page_blocks(
 		page_id=page_id,
 		image_url=image_url,
 		session_id=session_id,
+		style_preset=style_preset,
 	).run()
 
 
@@ -325,15 +337,32 @@ def clear_ai_session(page_id: str):
 
 @frappe.whitelist()
 @has_page_write()
+def update_session_message_metadata(session_id: str, metadata: dict):
+	"""Persist client-side metadata (affectedBlocks, affectedScripts, undoScripts) onto
+	the last assistant message in the session. Called after the frontend processes a
+	tool_batch so that metadata survives page reloads."""
+	if not session_id or not frappe.db.exists(AISession.DOCTYPE, session_id):
+		return
+	session = AISession(frappe.get_doc(AISession.DOCTYPE, session_id))
+	# Only keep known UI-only fields to prevent arbitrary data injection
+	safe_meta = {
+		k: metadata[k] for k in ("affectedBlocks", "affectedScripts", "undoScripts") if k in metadata
+	}
+	session.update_last_assistant_metadata(safe_meta)
+
+
+@frappe.whitelist()
+@has_page_write()
 def generate_page_from_prompt(
 	prompt: str,
 	page_id: str | None = None,
 	model: str | None = None,
 	image_data: str | None = None,
 	session_id: str | None = None,
+	style_preset: str | None = None,
 ):
 	logger.info(
-		f"generate_page_from_prompt: page_id={page_id}, model={model}, session_id={session_id}, has_image={bool(image_data)}"
+		f"generate_page_from_prompt: page_id={page_id}, model={model}, session_id={session_id}, has_image={bool(image_data)}, style_preset={style_preset}"
 	)
 
 	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
@@ -353,6 +382,7 @@ def generate_page_from_prompt(
 		model=model,
 		image_url=image_url,
 		session_id=session_id,
+		style_preset=style_preset,
 	)
 
 
@@ -452,6 +482,10 @@ def run_agent_from_prompt(
 		frappe.throw(_("Invalid page context JSON"))
 
 	if page_id and session_id:
+		if AISession.is_session_running(session_id):
+			frappe.local.response.http_status_code = 429
+			return {"status": "busy", "message": _("Another AI request is still processing. Please wait.")}
+
 		session = AISession.get(session_id, page_id=page_id)
 		msg_meta: dict = {"scope": "page", "selectedBlockContext": selected_block_context or []}
 		if image_data:

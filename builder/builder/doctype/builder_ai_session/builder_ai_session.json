@@ -62,6 +62,12 @@
    "fieldname": "messages_json",
    "fieldtype": "Long Text",
    "label": "Messages JSON"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_running",
+   "fieldtype": "Check",
+   "label": "Is Running"
   }
  ],
  "grid_page_length": 50,
