@@ -212,6 +212,9 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 			suppressNextClick.value = true;
 			// Also prevent useBlockEventHandlers from selecting the block under the cursor
 			canvasStore.preventClick = true;
+			setTimeout(() => {
+				canvasStore.preventClick = false;
+			}, 50);
 		}
 
 		marquee.active = false;
