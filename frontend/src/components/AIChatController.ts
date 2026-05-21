@@ -164,6 +164,8 @@ export class AIChatController {
 	private readonly pendingAffectedBlocks = ref<AffectedBlock[]>([]);
 	private readonly pendingAffectedScripts = ref<AffectedScript[]>([]);
 	private submittedForPageId: string | null = null;
+	private lastSubmitWasGenerate = false;
+	private pendingStylePreset: string | null = null;
 
 	readonly pageId = computed(() => this.route.params.pageId as string);
 	readonly isUnsavedPage = computed(() => !this.pageId.value || this.pageId.value === "new");
@@ -370,6 +372,8 @@ export class AIChatController {
 			this.submittedForPageId = null;
 			return;
 		}
+		const wasGenerate = this.lastSubmitWasGenerate;
+		this.lastSubmitWasGenerate = false;
 		this.submittedForPageId = null;
 		this.isSubmitting.value = false;
 		this.progressMessage.value = data.message || "Done";
@@ -402,10 +406,21 @@ export class AIChatController {
 
 		// Save local metadata before loadSession() overwrites this.messages with server data
 		const localMeta = { ...meta };
+
+		// Persist UI-only metadata to the server so it survives page reloads
+		if (
+			this.sessionId.value &&
+			(localMeta.affectedBlocks?.length || localMeta.affectedScripts?.length || localMeta.undoScripts?.length)
+		) {
+			createResource({ url: "builder.ai.ai_page_generator.update_session_message_metadata" })
+				.submit({ session_id: this.sessionId.value, metadata: localMeta })
+				.catch(() => null); // Non-critical — ignore failures
+		}
+
 		await this.loadSession();
 
 		// Re-apply local metadata (affectedBlocks, affectedScripts, undoScripts) to the last
-		// assistant message since the server doesn't persist these UI-only fields
+		// assistant message in case the server hasn't flushed yet
 		if (
 			localMeta.affectedBlocks?.length ||
 			localMeta.affectedScripts?.length ||
@@ -420,6 +435,20 @@ export class AIChatController {
 				};
 			}
 		}
+
+		// After a full page generation, nudge the user to continue refining
+		if (wasGenerate && this.rootBlock.value?.children?.length) {
+			nextTick(() => {
+				const nudge = buildLocalMessage(
+					"assistant",
+					"Page created! You can now ask me to refine it — adjust styles, add sections, update copy, or change the layout.",
+					{ status: "nudge" },
+				);
+				this.messages.value.push(nudge);
+				this.scrollToBottom();
+			});
+		}
+
 		this.scrollToBottom();
 
 		window.setTimeout(() => {
@@ -765,6 +794,7 @@ export class AIChatController {
 		const runGenerate = this.scope.value === "page" && this.isGenerateMode();
 		const runAgent = this.scope.value === "page" && !runGenerate;
 		const targetBlock = this.scope.value === "selection" ? this.selectedBlock.value : this.rootBlock.value;
+		this.lastSubmitWasGenerate = runGenerate;
 
 		// Snapshot context attachments before submit
 		const selectedBlockContext =
@@ -798,8 +828,11 @@ export class AIChatController {
 		let extraParams: Record<string, any> = {};
 		if (runGenerate) {
 			url = "builder.ai.ai_page_generator.generate_page_from_prompt";
+			const stylePreset = this.pendingStylePreset;
+			this.pendingStylePreset = null;
 			extraParams = {
 				...(attachedImageData ? { image_data: attachedImageData } : {}),
+				...(stylePreset ? { style_preset: stylePreset } : {}),
 			};
 		} else if (runAgent) {
 			url = "builder.ai.ai_page_generator.run_agent_from_prompt";
