@@ -473,7 +473,7 @@ class Block implements BlockOptions {
 			case this.isContainer() && this.isColumn():
 				return "lucide-rows-2";
 			case this.isGrid():
-				return "lucide-grid";
+				return "lucide-grid-2x2";
 			case this.isContainer():
 				return "lucide-square";
 			case this.isImage():
