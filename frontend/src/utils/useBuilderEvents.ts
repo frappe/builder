@@ -20,11 +20,10 @@ import {
 	triggerCopyEvent,
 	uploadBuilderAsset,
 } from "@/utils/helpers";
-import { useShortcut } from "@/utils/useShortcut";
 import { useEventListener, useStorage } from "@vueuse/core";
+import { toast, useShortcut } from "frappe-ui";
 import { Ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { toast } from "frappe-ui";
 
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();

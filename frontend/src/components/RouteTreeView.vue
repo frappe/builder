@@ -51,8 +51,7 @@
 import RouteTreeNode from "@/components/RouteTreeNode.vue";
 import { builderSettings } from "@/data/builderSettings";
 import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { useShortcut } from "@/utils/useShortcut";
-import { createListResource } from "frappe-ui";
+import { createListResource, useShortcut } from "frappe-ui";
 import { computed, onBeforeUpdate, ref, watch, watchEffect } from "vue";
 import { useRouter } from "vue-router";
 
