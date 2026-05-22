@@ -708,11 +708,11 @@ def to_safe_json(data):
 	return frappe.as_json(data or {})
 
 
-def execute_script_and_combine(prev_block_data, block_data_script, props):
+def execute_script_and_combine(prev_block_data, block_data_script, props, block_id):
 	props = frappe._dict(frappe.parse_json(props or "{}"))
 	block_data = frappe._dict()
 	_locals = dict(block=to_dict_with_fallback(prev_block_data or {}), props=props)
-	execute_script(unescape_html(block_data_script), _locals, "sample")
+	execute_script(unescape_html(block_data_script), _locals, f"block_script_for_{block_id}")
 	block_data.update(_locals["block"])
 	return combine(prev_block_data, block_data)
 

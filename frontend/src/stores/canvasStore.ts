@@ -11,6 +11,7 @@ const useCanvasStore = defineStore("canvasStore", {
 		copyEntirePage: <boolean>false,
 		layerDraggingOverBlock: <string | null>null,
 		preventClick: false,
+		isMarqueeActive: false,
 		guides: {
 			showX: false,
 			showY: false,
