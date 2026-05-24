@@ -311,3 +311,41 @@ def get_codemirror_completions():
 def reorder_client_scripts(script_order: list[str]):
 	for idx, script_name in enumerate(script_order, start=1):
 		frappe.db.set_value("Builder Page Client Script", script_name, "idx", idx)
+
+
+@frappe.whitelist()
+def get_builder_variable_usage(name: str) -> dict:
+	"""Count Builder Page / Builder Component records that reference var(--<name>)."""
+	if not name or not isinstance(name, str):
+		return {"pages": 0, "components": 0}
+	needle = f"%var(--{name}%"
+	pages = (
+		frappe.db.count(
+			"Builder Page",
+			filters=[
+				["Builder Page", "blocks", "like", needle],
+			],
+		)
+		or 0
+	)
+	# Also check draft_blocks; a page may have refs only in unpublished drafts.
+	draft_pages = (
+		frappe.db.count(
+			"Builder Page",
+			filters=[
+				["Builder Page", "draft_blocks", "like", needle],
+				["Builder Page", "blocks", "not like", needle],
+			],
+		)
+		or 0
+	)
+	components = (
+		frappe.db.count(
+			"Builder Component",
+			filters=[
+				["Builder Component", "block", "like", needle],
+			],
+		)
+		or 0
+	)
+	return {"pages": pages + draft_pages, "components": components}

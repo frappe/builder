@@ -157,7 +157,7 @@ declare module 'vue' {
     TextBlock: typeof import('./src/components/TextBlock.vue')['default']
     TextBlockBubbleMenu: typeof import('./src/components/TextBlockBubbleMenu.vue')['default']
     Underline: typeof import('./src/components/Icons/Underline.vue')['default']
-    VariableManager: typeof import('./src/components/Modals/VariableManager.vue')['default']
+    VariableGroupNode: typeof import('./src/components/VariableGroupNode.vue')['default']
     VariantControl: typeof import('./src/components/Controls/VariantControl.vue')['default']
     VisibilityInput: typeof import('./src/components/VisibilityInput.vue')['default']
     WebPagePresetPicker: typeof import('./src/components/WebPagePresetPicker.vue')['default']

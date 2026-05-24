@@ -82,6 +82,12 @@ const routes = [
 		beforeEnter: validateVisit,
 		component: () => import("@/pages/PagePreview.vue"),
 	},
+	{
+		path: "/page/:pageId/variables",
+		name: "variables",
+		beforeEnter: validateVisit,
+		component: () => import("@/pages/PageVariables.vue"),
+	},
 ];
 
 declare global {

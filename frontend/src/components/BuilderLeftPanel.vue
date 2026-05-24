@@ -16,12 +16,7 @@
 						'!text-ink-gray-6': builderStore.leftPanelActiveTab !== option.value,
 					}"
 					size="md"
-					:variant="
-						builderStore.leftPanelActiveTab === option.value ||
-						(showVariableManager && option.value === 'variables')
-							? 'subtle'
-							: 'ghost'
-					"
+					:variant="builderStore.leftPanelActiveTab === option.value ? 'subtle' : 'ghost'"
 					@click.stop="setActiveTab(option.value as LeftSidebarTabOption)"></Button>
 			</Tooltip>
 		</div>
@@ -76,28 +71,24 @@
 					:page="pageStore.activePage" />
 			</div>
 		</div>
-
-		<VariableManager v-model="showVariableManager" :container="miniSidebar" />
 	</div>
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
 import LayersIcon from "@/components/Icons/Layers.vue";
-import VariableManager from "@/components/Modals/VariableManager.vue";
 import PageScript from "@/components/PageScript.vue";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { Tooltip } from "frappe-ui";
 import { inject, nextTick, Ref, ref, watch, watchEffect } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import BlockLayers from "./BlockLayers.vue";
 import BuilderAssets from "./BuilderAssets.vue";
 import BuilderBlockTemplates from "./BuilderBlockTemplates.vue";
 import BuilderCanvas from "./BuilderCanvas.vue";
 import PanelResizer from "./PanelResizer.vue";
 
-const showVariableManager = ref(false);
 const miniSidebar = ref(null) as Ref<HTMLElement | null>;
 const pageLayers = ref<InstanceType<typeof BlockLayers> | null>(null);
 const componentLayers = ref<InstanceType<typeof BlockLayers> | null>(null);
@@ -110,6 +101,7 @@ const pageCanvas = inject("pageCanvas") as Ref<InstanceType<typeof BuilderCanvas
 const fragmentCanvas = inject("fragmentCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
 
 const route = useRoute();
+const router = useRouter();
 
 const leftPanelOptions = [
 	{
@@ -141,10 +133,12 @@ const leftPanelOptions = [
 
 const setActiveTab = (tab: LeftSidebarTabOption) => {
 	if (tab === "variables") {
-		showVariableManager.value = !showVariableManager.value;
+		router.push({
+			name: "variables",
+			params: { pageId: (route.params.pageId as string) || "new" },
+		});
 	} else {
 		builderStore.leftPanelActiveTab = tab;
-		showVariableManager.value = false;
 	}
 };
 
@@ -155,13 +149,6 @@ watchEffect(() => {
 		builderStore.activeLayers = componentLayers.value;
 	}
 });
-
-watch(
-	() => route.fullPath,
-	() => {
-		showVariableManager.value = false;
-	},
-);
 
 // moved out of BlockLayers for performance
 // TODO: Find a better way to do this
