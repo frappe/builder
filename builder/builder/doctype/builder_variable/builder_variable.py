@@ -26,7 +26,11 @@ class BuilderVariable(Document):
 	# end: auto-generated types
 
 	def autoname(self):
-		self.name = frappe.generate_hash(length=10)
+		# Preserve explicit names (e.g. set by the DTCG importer so block
+		# references in the imported template stay resolvable). Otherwise mint
+		# a fresh random hash.
+		if not self.name:
+			self.name = frappe.generate_hash(length=10)
 
 	def after_insert(self):
 		get_css_variables.clear_cache()

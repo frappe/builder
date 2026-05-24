@@ -16,6 +16,17 @@
 					placeholder="Search variables"
 					class="w-56"
 					icon-left="search" />
+				<input ref="importFileInput" type="file" accept=".json" @change="handleImportFile" class="hidden" />
+				<Button @click="triggerImport" variant="outline" icon-left="upload" title="Import DTCG tokens.json">
+					Import
+				</Button>
+				<Button
+					@click="exportTokens"
+					variant="outline"
+					icon-left="download"
+					title="Export as DTCG tokens.json">
+					Export
+				</Button>
 				<Button @click="addNewVariable" variant="solid" icon-left="plus">New variable</Button>
 			</div>
 		</header>
@@ -231,6 +242,7 @@ const editingCell = ref<string | null>(null);
 const nextNewId = ref(1);
 const newRow = ref<Partial<BuilderVariable> | null>(null);
 const usageCache = ref<Record<string, number>>({});
+const importFileInput = ref<HTMLInputElement | null>(null);
 
 type Row = Partial<BuilderVariable> & { id: string; isNew: boolean; usage?: number };
 
@@ -454,4 +466,52 @@ const primeUsageCounts = useDebounceFn(async () => {
 }, 200);
 
 primeUsageCounts();
+
+const exportTokens = async () => {
+	try {
+		const tree = await createResource({
+			url: "builder.export_import_standard_page.export_builder_variables_as_dtcg",
+			cache: false,
+		}).fetch();
+		const blob = new Blob([JSON.stringify(tree, null, 2)], { type: "application/json" });
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement("a");
+		link.href = url;
+		link.download = "tokens.json";
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+		URL.revokeObjectURL(url);
+		toast.success("Exported tokens.json");
+	} catch (e) {
+		toast.error((e as Error).message || "Export failed");
+	}
+};
+
+const triggerImport = () => importFileInput.value?.click();
+
+const handleImportFile = async (event: Event) => {
+	const file = (event.target as HTMLInputElement).files?.[0];
+	if (!file) return;
+	try {
+		const text = await file.text();
+		const result = await createResource({
+			url: "builder.export_import_standard_page.import_builder_variables_from_dtcg",
+			cache: false,
+		}).submit({ tokens_json: text, default_group: selectedGroup.value || undefined });
+		const created = result?.created ?? 0;
+		const skipped = result?.skipped ?? 0;
+		toast.success(`Imported ${created} token(s)${skipped ? `, skipped ${skipped}` : ""}`);
+		await variableStoreReload();
+	} catch (e) {
+		toast.error((e as Error).message || "Import failed");
+	} finally {
+		if (importFileInput.value) importFileInput.value.value = "";
+	}
+};
+
+const variableStoreReload = async () => {
+	const store = (await import("@/data/builderVariable")).default;
+	await store.reload();
+};
 </script>
