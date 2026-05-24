@@ -51,7 +51,7 @@ import webComponent from "@/data/webComponent";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderComponent } from "@/types/Builder/BuilderComponent";
+import { BuilderComponent } from "@/types/doctypes";
 import { useEventListener } from "@vueuse/core";
 import { ItemListRow } from "frappe-ui";
 import { computed, onMounted, ref } from "vue";

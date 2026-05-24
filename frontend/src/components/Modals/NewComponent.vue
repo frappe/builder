@@ -34,7 +34,7 @@ import webComponent from "@/data/webComponent";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderComponent } from "@/types/Builder/BuilderComponent";
+import { BuilderComponent } from "@/types/doctypes";
 import { getBlockCopy, getBlockString } from "@/utils/helpers";
 import { ref, watch } from "vue";
 

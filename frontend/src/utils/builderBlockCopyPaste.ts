@@ -2,9 +2,7 @@ import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderComponent } from "@/types/Builder/BuilderComponent";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { BuilderVariable } from "@/types/Builder/BuilderVariable";
+import { BuilderClientScript, BuilderComponent, BuilderPage, BuilderVariable } from "@/types/doctypes";
 
 import builderVariables from "@/data/builderVariable";
 import {
@@ -20,7 +18,6 @@ import { createListResource } from "frappe-ui";
 import { nextTick } from "vue";
 import { toast } from "frappe-ui";
 import { webPages } from "../data/webPage";
-import { BuilderClientScript } from "../types/Builder/BuilderClientScript";
 
 type BuilderPageClientScriptRef = { builder_script: string; idx?: number };
 

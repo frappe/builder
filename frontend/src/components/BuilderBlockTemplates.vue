@@ -50,7 +50,7 @@
 import builderBlockTemplate from "@/data/builderBlockTemplate";
 import useBlockTemplateStore from "@/stores/blockTemplateStore";
 import useCanvasStore from "@/stores/canvasStore";
-import { BlockTemplate } from "@/types/Builder/BlockTemplate";
+import { BlockTemplate } from "@/types/doctypes";
 import { computed, onMounted, ref } from "vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
 

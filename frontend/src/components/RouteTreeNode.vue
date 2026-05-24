@@ -101,7 +101,7 @@
 import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import GlobeOffIcon from "@/components/Icons/GlobeOff.vue";
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 import { Tooltip } from "frappe-ui";
 import HomeIcon from "~icons/lucide/house";
 
