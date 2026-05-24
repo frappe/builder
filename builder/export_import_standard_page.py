@@ -264,33 +264,22 @@ def copy_font_file(file_url, assets_path, target_app="builder"):
 	return None
 
 
-_DTCG_EXTENSION_KEY = "io.frappe.builder"
+DTCG_EXTENSION_KEY = "io.frappe.builder"
 
 
 def export_variables(variables, builder_files_path, source_app="builder"):
-	"""Export Builder Variable records as a DTCG-formatted tokens.json bundle.
-
-	`variables` is the set of names extracted from `var(--<name>)` refs in
-	exported blocks. With stable IDs each `<name>` IS the doctype `name`.
-	Unknown names (e.g. references to vars that no longer exist on this site)
-	are silently skipped.
-
-	The on-disk shape follows https://www.designtokens.org/tr/drafts/format/ —
-	groups become nested objects, tokens carry `$type` + `$value`. Builder
-	metadata that has no first-class spec slot (the stable id, dark mode value,
-	source app) rides under `$extensions["io.frappe.builder"]`.
-	"""
+	"""Write the referenced Builder Variables to builder_files/tokens.json in
+	W3C Design Tokens format (designtokens.org)."""
 	if not variables:
 		return
 
 	tokens_root: dict = {}
-
 	for var_name in variables:
 		if not frappe.db.exists("Builder Variable", var_name):
 			continue
 		try:
 			var_doc = frappe.get_cached_doc("Builder Variable", var_name)
-			_insert_dtcg_token(tokens_root, var_doc, source_app)
+			insert_dtcg_token(tokens_root, var_doc, source_app)
 		except Exception as e:
 			frappe.log_error(f"Failed to export variable {var_name}: {e!s}")
 
@@ -302,7 +291,7 @@ def export_variables(variables, builder_files_path, source_app="builder"):
 		f.write(frappe.as_json(tokens_root, ensure_ascii=False))
 
 
-def _insert_dtcg_token(root: dict, var_doc, source_app: str) -> None:
+def insert_dtcg_token(root: dict, var_doc, source_app: str) -> None:
 	segments = [s for s in (var_doc.group or "").split("/") if s.strip()]
 	leaf_name = var_doc.variable_name or var_doc.name
 
@@ -311,7 +300,7 @@ def _insert_dtcg_token(root: dict, var_doc, source_app: str) -> None:
 		cursor = cursor.setdefault(seg, {})
 
 	token: dict = {
-		"$type": (var_doc.type or "Color").lower(),  # color | dimension
+		"$type": (var_doc.type or "Color").lower(),
 		"$value": var_doc.value,
 	}
 	if var_doc.description:
@@ -320,21 +309,16 @@ def _insert_dtcg_token(root: dict, var_doc, source_app: str) -> None:
 	extensions: dict = {"id": var_doc.name, "sourceApp": source_app}
 	if var_doc.dark_value:
 		extensions["darkValue"] = var_doc.dark_value
-	token["$extensions"] = {_DTCG_EXTENSION_KEY: extensions}
+	token["$extensions"] = {DTCG_EXTENSION_KEY: extensions}
 
-	# Avoid colliding with an existing sub-group of the same name.
 	if leaf_name in cursor and isinstance(cursor[leaf_name], dict) and "$value" not in cursor[leaf_name]:
 		leaf_name = f"{leaf_name}-{var_doc.name}"
 	cursor[leaf_name] = token
 
 
 def import_dtcg_tokens(tokens_path: str, default_group: str | None = None) -> dict:
-	"""Import a DTCG tokens.json file. Returns {'created': n, 'skipped': n}.
-
-	Mirrors what the dedicated Variables page calls when a user uploads JSON.
-	`default_group` is applied when a token sits at the root of the file with
-	no group nesting (template imports use the source app name).
-	"""
+	"""Import tokens from a tokens.json file shipped with a standard page bundle.
+	Silently skips tokens whose id collides with an existing record."""
 	try:
 		with open(tokens_path, encoding="utf-8") as f:
 			tree = frappe.parse_json(f.read())
@@ -342,27 +326,22 @@ def import_dtcg_tokens(tokens_path: str, default_group: str | None = None) -> di
 		frappe.log_error(f"Failed to read DTCG tokens from {tokens_path}: {e!s}")
 		return {"created": 0, "skipped": 0}
 
-	flat = list(_walk_dtcg_tree(tree, group_segments=[], inherited_type=None))
 	created, skipped = 0, 0
-	for token in flat:
-		ext = (token.get("$extensions") or {}).get(_DTCG_EXTENSION_KEY) or {}
+	for token in walk_dtcg_tree(tree, group_segments=[], inherited_type=None):
+		ext = (token.get("$extensions") or {}).get(DTCG_EXTENSION_KEY) or {}
 		token_id = ext.get("id")
-		# Collision or missing id → mint a new one; the existing record wins.
 		if not token_id or frappe.db.exists("Builder Variable", token_id):
 			skipped += 1
 			continue
 
-		group_path = "/".join(token["_group"])
-		if not group_path and default_group:
-			group_path = default_group
-
+		group_path = "/".join(token["group_segments"]) or (default_group or "")
 		try:
-			_insert_builder_variable_preserving_name(
+			create_builder_variable(
 				name=token_id,
-				variable_name=token["_name"],
+				variable_name=token["leaf_name"],
 				value=token.get("$value") or "",
 				dark_value=ext.get("darkValue") or "",
-				type_=_dtcg_type_to_builder(token.get("$type")),
+				token_type=dtcg_type_to_builder(token.get("$type")),
 				group=group_path,
 				description=token.get("$description") or "",
 				ignore_permissions=True,
@@ -374,120 +353,103 @@ def import_dtcg_tokens(tokens_path: str, default_group: str | None = None) -> di
 	return {"created": created, "skipped": skipped}
 
 
-def _insert_builder_variable_preserving_name(
+def create_builder_variable(
 	*,
-	name: str,
+	name: str | None,
 	variable_name: str,
 	value: str,
 	dark_value: str,
-	type_: str,
+	token_type: str,
 	group: str,
 	description: str,
 	ignore_permissions: bool = False,
-) -> None:
-	"""Insert a Builder Variable with `name` preserved.
-
-	Frappe's `set_new_name` resets `doc.name = None` before calling `autoname()`
-	unless `frappe.flags.in_import` is set. The importer needs the original id
-	preserved so block references in companion templates stay resolvable.
-	"""
+):
+	doc = frappe.get_doc(
+		{
+			"doctype": "Builder Variable",
+			"name": name,
+			"variable_name": variable_name,
+			"value": value,
+			"dark_value": dark_value,
+			"type": token_type,
+			"group": group,
+			"description": description,
+		}
+	)
+	# Tell frappe.model.naming.set_new_name not to clear our explicit `name`
+	# before autoname runs; needed so DTCG imports keep their original ids.
 	prev_flag = frappe.flags.in_import
-	frappe.flags.in_import = True
+	if name:
+		frappe.flags.in_import = True
 	try:
-		doc = frappe.get_doc(
-			{
-				"doctype": "Builder Variable",
-				"name": name,
-				"variable_name": variable_name,
-				"value": value,
-				"dark_value": dark_value,
-				"type": type_,
-				"group": group,
-				"description": description,
-			}
-		)
 		doc.insert(ignore_permissions=ignore_permissions)
 	finally:
 		frappe.flags.in_import = prev_flag
+	return doc
 
 
-def _walk_dtcg_tree(node, group_segments, inherited_type):
-	"""Yield flat token dicts from a nested DTCG group structure."""
+def walk_dtcg_tree(node, group_segments, inherited_type):
 	if not isinstance(node, dict):
 		return
-	# Group-level $type cascades to children.
 	current_type = node.get("$type", inherited_type)
 	for key, value in node.items():
-		if key.startswith("$"):
-			continue
-		if not isinstance(value, dict):
+		if key.startswith("$") or not isinstance(value, dict):
 			continue
 		if "$value" in value:
 			yield {
-				"_name": key,
-				"_group": list(group_segments),
+				"leaf_name": key,
+				"group_segments": list(group_segments),
 				"$type": value.get("$type", current_type),
 				"$value": value["$value"],
 				"$description": value.get("$description"),
 				"$extensions": value.get("$extensions") or {},
 			}
 		else:
-			yield from _walk_dtcg_tree(value, [*group_segments, key], current_type)
+			yield from walk_dtcg_tree(value, [*group_segments, key], current_type)
 
 
-def _dtcg_type_to_builder(dtcg_type) -> str:
-	if not dtcg_type:
-		return "Color"
-	t = str(dtcg_type).lower()
-	if t == "dimension":
-		return "Dimension"
-	return "Color"
+def dtcg_type_to_builder(dtcg_type) -> str:
+	return "Dimension" if str(dtcg_type or "").lower() == "dimension" else "Color"
 
 
 @frappe.whitelist()
 def export_builder_variables_as_dtcg() -> dict:
-	"""Return the entire Builder Variable store as a DTCG tokens.json structure."""
 	tokens_root: dict = {}
 	for var in frappe.get_all(
 		"Builder Variable",
 		fields=["name", "variable_name", "group", "description", "type", "value", "dark_value"],
 	):
-		_insert_dtcg_token(tokens_root, var, source_app=frappe.local.site or "builder")
+		insert_dtcg_token(tokens_root, var, source_app=frappe.local.site or "builder")
 	return tokens_root
 
 
 @frappe.whitelist()
 def import_builder_variables_from_dtcg(tokens_json: str, default_group: str | None = None) -> dict:
-	"""Import tokens from a DTCG JSON payload uploaded by the user.
-
-	The payload is the parsed contents of a tokens.json file (passed as a JSON
-	string from the frontend).
-	"""
 	try:
 		tree = frappe.parse_json(tokens_json)
 	except Exception:
 		frappe.throw("Invalid JSON")
-	flat = list(_walk_dtcg_tree(tree, group_segments=[], inherited_type=None))
+
 	created, skipped = 0, 0
-	for token in flat:
-		ext = (token.get("$extensions") or {}).get(_DTCG_EXTENSION_KEY) or {}
-		token_id = ext.get("id") or frappe.generate_hash(length=10)
-		if frappe.db.exists("Builder Variable", token_id):
-			token_id = frappe.generate_hash(length=10)
-		group_path = "/".join(token["_group"]) or (default_group or "")
+	for token in walk_dtcg_tree(tree, group_segments=[], inherited_type=None):
+		ext = (token.get("$extensions") or {}).get(DTCG_EXTENSION_KEY) or {}
+		token_id = ext.get("id")
+		if token_id and frappe.db.exists("Builder Variable", token_id):
+			token_id = None
+		group_path = "/".join(token["group_segments"]) or (default_group or "")
 		try:
-			_insert_builder_variable_preserving_name(
+			create_builder_variable(
 				name=token_id,
-				variable_name=token["_name"],
+				variable_name=token["leaf_name"],
 				value=token.get("$value") or "",
 				dark_value=ext.get("darkValue") or "",
-				type_=_dtcg_type_to_builder(token.get("$type")),
+				token_type=dtcg_type_to_builder(token.get("$type")),
 				group=group_path,
 				description=token.get("$description") or "",
 			)
 			created += 1
 		except Exception as e:
-			frappe.log_error(f"Failed to import DTCG token {token_id}: {e!s}")
+			frappe.log_error(f"Failed to import DTCG token: {e!s}")
 			skipped += 1
 	return {"created": created, "skipped": skipped}
 

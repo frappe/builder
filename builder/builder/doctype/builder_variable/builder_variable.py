@@ -1,6 +1,8 @@
 # Copyright (c) 2025, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
+import uuid
+
 import frappe
 from frappe.model.document import Document
 from frappe.modules.export_file import delete_folder, export_to_files
@@ -26,11 +28,8 @@ class BuilderVariable(Document):
 	# end: auto-generated types
 
 	def autoname(self):
-		# Preserve explicit names (e.g. set by the DTCG importer so block
-		# references in the imported template stay resolvable). Otherwise mint
-		# a fresh random hash.
 		if not self.name:
-			self.name = frappe.generate_hash(length=10)
+			self.name = str(uuid.uuid4())
 
 	def after_insert(self):
 		get_css_variables.clear_cache()
