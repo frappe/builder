@@ -183,7 +183,7 @@ import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderProjectFolder } from "@/types/Builder/BuilderProjectFolder";
+import { BuilderProjectFolder } from "@/types/doctypes";
 import { toTitleCase } from "@/utils/helpers";
 import { createResource } from "frappe-ui";
 import { computed } from "vue";

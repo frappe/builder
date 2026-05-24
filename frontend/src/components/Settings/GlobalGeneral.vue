@@ -88,7 +88,7 @@ import { allWebPages } from "@/data/allWebPages";
 import { builderSettings } from "@/data/builderSettings";
 import { websiteSettings } from "@/data/websiteSettings";
 import useBuilderStore from "@/stores/builderStore";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 import { computed } from "vue";
 import ImageUploader from "../Controls/ImageUploader.vue";
 

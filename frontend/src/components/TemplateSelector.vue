@@ -26,7 +26,7 @@
 <script setup lang="ts">
 import { templates, webPages } from "@/data/webPage";
 import router from "@/router";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 import { createDocumentResource } from "frappe-ui";
 import TemplatePagePreview from "./TemplatePagePreview.vue";
 

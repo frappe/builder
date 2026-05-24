@@ -39,7 +39,7 @@
 <script setup lang="ts">
 import useBuilderStore from "@/stores/builderStore";
 import usepageStore from "@/stores/pageStore";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 import { getRouteVariables } from "@/utils/helpers";
 import { useDebounceFn } from "@vueuse/core";
 import { computed } from "vue";
