@@ -260,7 +260,13 @@ def copy_font_file(file_url, assets_path, target_app="builder"):
 
 
 def export_variables(variables, builder_files_path):
-	"""Export Builder Variable records"""
+	"""Export Builder Variable records.
+
+	`variables` is a set of names extracted from `var(--<name>)` references in
+	blocks. With stable IDs the `<name>` IS the doctype name — single lookup,
+	no fuzzy fallbacks. Unknown names (e.g. legacy gray-* that no longer exist)
+	are silently skipped.
+	"""
 	if not variables:
 		return
 
@@ -268,45 +274,24 @@ def export_variables(variables, builder_files_path):
 	os.makedirs(variables_path, exist_ok=True)
 
 	for var_name in variables:
+		if not frappe.db.exists("Builder Variable", var_name):
+			continue
 		try:
-			# Convert CSS variable name (kebab-case) to possible DB name (snake_case)
-			db_name = var_name.replace("-", "_")
-
-			# Try to find the variable by name
-			var_docs = frappe.get_all(
-				"Builder Variable",
-				filters=[
-					["variable_name", "in", [var_name, db_name, var_name.replace("-", " ").title()]],
-				],
-				fields=["name", "variable_name", "type", "value", "dark_value"],
-			)
-
-			if not var_docs:
-				# Also try searching by the scrubbed name
-				var_docs = frappe.get_all(
-					"Builder Variable",
-					filters={"name": db_name},
-					fields=["name", "variable_name", "type", "value", "dark_value"],
-				)
-
-			if not var_docs:
-				continue
-
-			var_doc = var_docs[0]
-
+			var_doc = frappe.get_cached_doc("Builder Variable", var_name)
 			var_config = {
 				"doctype": "Builder Variable",
 				"name": var_doc.name,
 				"variable_name": var_doc.variable_name,
+				"group": var_doc.group,
+				"description": var_doc.description,
 				"type": var_doc.type,
 				"value": var_doc.value,
 				"dark_value": var_doc.dark_value,
 			}
 
-			safe_var_name = frappe.scrub(var_doc.variable_name)
-			var_dir = os.path.join(variables_path, safe_var_name)
+			var_dir = os.path.join(variables_path, var_doc.name)
 			os.makedirs(var_dir, exist_ok=True)
-			var_file_path = os.path.join(var_dir, f"{safe_var_name}.json")
+			var_file_path = os.path.join(var_dir, f"{var_doc.name}.json")
 
 			with open(var_file_path, "w", encoding="utf-8") as f:
 				f.write(frappe.as_json(var_config, ensure_ascii=False))

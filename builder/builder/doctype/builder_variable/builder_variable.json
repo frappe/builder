@@ -6,9 +6,11 @@
  "field_order": [
   "is_standard",
   "variable_name",
+  "group",
   "type",
   "value",
-  "dark_value"
+  "dark_value",
+  "description"
  ],
  "fields": [
   {
@@ -16,7 +18,7 @@
    "fieldname": "type",
    "fieldtype": "Select",
    "label": "Type",
-   "options": "Color\nSpacing"
+   "options": "Color\nDimension"
   },
   {
    "fieldname": "value",
@@ -29,6 +31,7 @@
   {
    "fieldname": "variable_name",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Variable Name",
    "reqd": 1
   },
@@ -43,13 +46,25 @@
    "fieldname": "dark_value",
    "fieldtype": "Data",
    "label": "Dark Value"
+  },
+  {
+   "fieldname": "group",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Group"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
   }
  ],
  "grid_page_length": 50,
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-18 19:54:11.776268",
+ "modified": "2026-05-24 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Variable",
