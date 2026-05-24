@@ -65,7 +65,7 @@ import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import NewBuilderVariable from "@/components/Modals/NewBuilderVariable.vue";
 import { BuilderVariable } from "@/types/doctypes";
 import { getColorVariableOptions } from "@/utils/colorOptions";
-import { getRGB, toKebabCase } from "@/utils/helpers";
+import { getRGB } from "@/utils/helpers";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useDark } from "@vueuse/core";
 import { Tooltip } from "frappe-ui";
@@ -221,7 +221,8 @@ const openVariableDialog = () => {
 };
 
 const handleVariableSaved = (savedVariable: BuilderVariable) => {
-	emit("update:modelValue", `var(--${toKebabCase(savedVariable.variable_name || "")})`);
+	const fallback = savedVariable.value ? `, ${savedVariable.value}` : "";
+	emit("update:modelValue", `var(--${savedVariable.name}${fallback})`);
 };
 
 const getOptions = async (query: string) => {

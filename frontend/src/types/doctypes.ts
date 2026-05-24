@@ -13,10 +13,10 @@ interface DocType {
     idx?: number;
   }
   
-// Last updated: 2025-08-18 19:54:11.776268
+// Last updated: 2026-05-24 12:00:00.000000
 export interface BuilderVariable extends DocType {
   /** Type: Select */
-  type?: 'Color' | 'Spacing';
+  type?: 'Color' | 'Dimension';
   /** Value: Data */
   value: string;
   /** Variable Name: Data */
@@ -25,6 +25,10 @@ export interface BuilderVariable extends DocType {
   is_standard: 0 | 1;
   /** Dark Value: Data */
   dark_value?: string;
+  /** Group: Data */
+  group?: string;
+  /** Description: Small Text */
+  description?: string;
 }
 
 // Last updated: 2024-09-19 13:07:00.935349
