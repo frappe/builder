@@ -4,7 +4,7 @@ import FontUploader from "@/components/Controls/FontUploader.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import userFonts from "@/data/userFonts";
-import { UserFont } from "@/types/Builder/UserFont";
+import { UserFont } from "@/types/doctypes";
 import blockController from "@/utils/blockController";
 import { setFont as _setFont, fontList, getFontWeightOptions } from "@/utils/fontManager";
 

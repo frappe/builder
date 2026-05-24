@@ -47,7 +47,7 @@
 <script setup lang="ts">
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
-import { BuilderVariable } from "@/types/Builder/BuilderVariable";
+import { BuilderVariable } from "@/types/doctypes";
 import { defaultBuilderVariable, useBuilderVariable } from "@/utils/useBuilderVariable";
 import { Dialog } from "frappe-ui";
 import { computed, ref, watch } from "vue";

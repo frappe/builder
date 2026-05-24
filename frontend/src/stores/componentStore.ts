@@ -2,7 +2,7 @@ import type Block from "@/block";
 import webComponent from "@/data/webComponent";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderComponent } from "@/types/Builder/BuilderComponent";
+import { BuilderComponent } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { alert, confirm, getBlockInstance, getBlockObject } from "@/utils/helpers";
 import { createDocumentResource, createResource } from "frappe-ui";
@@ -119,7 +119,6 @@ const useComponentStore = defineStore("componentStore", {
 							modified: "",
 							owner: "Administrator",
 							modified_by: "Administrator",
-							docstatus: 1 as 0 | 1 | 2,
 						};
 						this.setComponentMap(missingComponentDoc);
 					})

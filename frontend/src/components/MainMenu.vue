@@ -16,7 +16,7 @@
 <script setup lang="ts">
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 import { triggerCopyEvent } from "@/utils/helpers";
 import { useDark, useToggle } from "@vueuse/core";
 import { Dropdown } from "frappe-ui";

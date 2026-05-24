@@ -135,8 +135,7 @@
 import EditableSpan from "@/components/EditableSpan.vue";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderClientScript } from "@/types/Builder/BuilderClientScript";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import { Autocomplete, createListResource, createResource, Dropdown } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
 import { computed, nextTick, ref, watch } from "vue";

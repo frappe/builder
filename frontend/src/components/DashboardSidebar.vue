@@ -193,7 +193,7 @@ import SettingsIcon from "@/components/Icons/SettingsGear.vue";
 import NewFolder from "@/components/Modals/NewFolder.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import useBuilderStore from "@/stores/builderStore";
-import { BuilderProjectFolder } from "@/types/Builder/BuilderProjectFolder";
+import { BuilderProjectFolder } from "@/types/doctypes";
 import { confirm } from "@/utils/helpers";
 import { useDark, useToggle } from "@vueuse/core";
 import { createResource, Dialog, Dropdown } from "frappe-ui";

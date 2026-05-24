@@ -159,7 +159,7 @@ import { webPages } from "@/data/webPage";
 import { useBlockDataStore } from "@/stores/blockStore";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 import blockController from "@/utils/blockController";
 import { useStorage } from "@vueuse/core";
 import { useTelemetry } from "frappe-ui/frappe";

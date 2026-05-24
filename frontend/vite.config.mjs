@@ -16,6 +16,21 @@ export default defineConfig({
 			},
 			lucideIcons: true,
 			buildConfig: false,
+			frappeTypes: {
+				input: {
+					builder: [
+						"block_template",
+						"builder_client_script",
+						"builder_component",
+						"builder_page",
+						"builder_page_client_script",
+						"builder_project_folder",
+						"builder_settings",
+						"builder_variable",
+						"user_font",
+					],
+				},
+			},
 		}),
 		vue(),
 	],
