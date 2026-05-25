@@ -29,7 +29,7 @@
 </template>
 <script setup lang="ts">
 import Dialog from "@/components/Controls/Dialog.vue";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 import { ref } from "vue";
 const showModel = ref(true);
 defineProps<{

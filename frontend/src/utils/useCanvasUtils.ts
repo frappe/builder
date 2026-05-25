@@ -156,9 +156,9 @@ export function useCanvasUtils(
 		}
 	}
 
-	function setRootBlock(newBlock: Block, resetCanvas = false) {
+	function setRootBlock(newBlock: Block, resetCanvas = false, resetHistory = true) {
 		rootBlock.value = newBlock;
-		if (canvasHistory.value) {
+		if (canvasHistory.value && resetHistory) {
 			canvasHistory.value.dispose();
 			setupHistory();
 		}

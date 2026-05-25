@@ -65,7 +65,7 @@ import { useDashboardState } from "@/composables/useDashboardState";
 import { webPages } from "@/data/webPage";
 import vOnClickAndHold from "@/directives/vOnClickAndHold";
 import useBuilderStore from "@/stores/builderStore";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 import { watchDebounced } from "@vueuse/core";
 import { createResource, useShortcut } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";

@@ -27,7 +27,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 
 const is_developer_mode = window.is_developer_mode;
 

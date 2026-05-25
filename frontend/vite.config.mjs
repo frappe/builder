@@ -10,21 +10,33 @@ export default defineConfig({
 	},
 	plugins: [
 		frappeui({
+			frontendRoute: "/_builder",
 			frappeProxy: {
 				port: 8080,
 				source: "^/(app|desk|login|api|assets|files|pages|builder_assets)",
 			},
 			lucideIcons: true,
-			buildConfig: false,
+			frappeTypes: {
+				input: {
+					builder: [
+						"block_template",
+						"builder_client_script",
+						"builder_component",
+						"builder_page",
+						"builder_page_client_script",
+						"builder_project_folder",
+						"builder_settings",
+						"builder_variable",
+						"user_font",
+					],
+				},
+			},
 		}),
 		vue(),
 	],
 	build: {
 		chunkSizeWarningLimit: 1500,
-		outDir: `../builder/public/frontend`,
-		emptyOutDir: true,
 		target: "es2015",
-		sourcemap: true,
 	},
 	resolve: {
 		dedupe: ["prosemirror-model", "prosemirror-view", "prosemirror-state", "prosemirror-transform"],

@@ -50,7 +50,7 @@
 // TODO: Refactor to meke it generic, this has lots of unnecessary coupling, props usage and hacky implementation
 import RouteTreeNode from "@/components/RouteTreeNode.vue";
 import { builderSettings } from "@/data/builderSettings";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 import { createListResource, useShortcut } from "frappe-ui";
 import { computed, onBeforeUpdate, ref, watch, watchEffect } from "vue";
 import { useRouter } from "vue-router";

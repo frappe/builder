@@ -163,7 +163,7 @@
 import BuilderButton from "@/components/Controls/BuilderButton.vue";
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
-import { BuilderVariable } from "@/types/Builder/BuilderVariable";
+import { BuilderVariable } from "@/types/doctypes";
 import { confirm } from "@/utils/helpers";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useDebounceFn } from "@vueuse/core";

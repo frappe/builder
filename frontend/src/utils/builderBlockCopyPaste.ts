@@ -2,9 +2,7 @@ import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderComponent } from "@/types/Builder/BuilderComponent";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { BuilderVariable } from "@/types/Builder/BuilderVariable";
+import { BuilderClientScript, BuilderComponent, BuilderPage, BuilderVariable } from "@/types/doctypes";
 
 import builderVariables from "@/data/builderVariable";
 import {
@@ -16,11 +14,9 @@ import {
 	isJSONString,
 	showDialog,
 } from "@/utils/helpers";
-import { createListResource } from "frappe-ui";
+import { createListResource, toast } from "frappe-ui";
 import { nextTick } from "vue";
-import { toast } from "frappe-ui";
 import { webPages } from "../data/webPage";
-import { BuilderClientScript } from "../types/Builder/BuilderClientScript";
 
 type BuilderPageClientScriptRef = { builder_script: string; idx?: number };
 
@@ -217,7 +213,7 @@ async function handlePagePaste(
 					});
 					await pageStore.setPage(currentPage.name);
 					nextTick(() => {
-						canvasStore.pushBlocks(clipboardData.blocks);
+						canvasStore.pushBlocks(clipboardData.blocks, false);
 						pageStore.savePage();
 					});
 					toast.success("Done", { id: "paste-page" });
@@ -297,7 +293,7 @@ async function insertBlocks(blocks: (Block | BlockOptions)[]) {
 		}
 		blocks.forEach((block) => parentBlock.addChild(getBlockCopy(block), null, true));
 	} else {
-		canvasStore.pushBlocks(blocks);
+		canvasStore.pushBlocks(blocks, false);
 	}
 }
 
