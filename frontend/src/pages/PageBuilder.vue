@@ -112,6 +112,7 @@
 		ref="aiGeneratorModal"></AIPageGeneratorModal>
 	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
 	<KeyboardShortcutsModal ref="shortcutsModal" />
+	<BuilderCommandPalette ref="commandPalette" />
 </template>
 
 <script setup lang="ts">
@@ -119,6 +120,7 @@ import type Block from "@/block";
 import AIPageGeneratorModal from "@/components/AIPageGeneratorModal.vue";
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import BuilderCanvas from "@/components/BuilderCanvas.vue";
+import BuilderCommandPalette from "@/components/BuilderCommandPalette.vue";
 import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
@@ -275,6 +277,7 @@ provide("fragmentCanvas", fragmentCanvas);
 useBuilderEvents(pageCanvas, fragmentCanvas, saveAndExitFragmentMode, route, router);
 
 const shortcutsModal = ref<InstanceType<typeof KeyboardShortcutsModal> | null>(null);
+const commandPalette = ref<InstanceType<typeof BuilderCommandPalette> | null>(null);
 
 provide("showShortcuts", () => {
 	if (shortcutsModal.value) {

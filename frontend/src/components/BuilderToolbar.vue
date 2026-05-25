@@ -3,7 +3,14 @@
 		class="toolbar border-outline border-outline flex items-center justify-center border-b-[1px] border-outline-gray-1 bg-surface-white px-2 py-1"
 		ref="toolbar">
 		<div class="absolute left-3 flex items-center gap-4">
-			<MainMenu @showSettings="() => (showSettingsDialog = true)" @showShortcuts="showShortcuts"></MainMenu>
+			<MainMenu
+				@showSettings="
+					() => {
+						builderStore.settingsActiveTab = 'page_general';
+						builderStore.showSettingsDialog = true;
+					}
+				"
+				@showShortcuts="showShortcuts"></MainMenu>
 			<div class="flex gap-2">
 				<BuilderButton
 					v-for="mode in [
@@ -128,13 +135,15 @@
 					allowfullscreen></iframe>
 			</template>
 		</Dialog>
-		<Dialog v-model="showSettingsDialog" :dismissable="false" size="5xl" bare>
+		<Dialog v-model="builderStore.showSettingsDialog" :dismissable="false" size="5xl" bare>
 			<template #default>
 				<DialogTitle class="sr-only">Builder Settings</DialogTitle>
 				<DialogDescription class="sr-only">
 					Configure page and global settings for this project.
 				</DialogDescription>
-				<BuilderSettings @close="showSettingsDialog = false"></BuilderSettings>
+				<BuilderSettings
+					:initial-tab="builderStore.settingsActiveTab"
+					@close="builderStore.showSettingsDialog = false"></BuilderSettings>
 			</template>
 		</Dialog>
 	</div>
@@ -151,10 +160,9 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { getTextContent } from "@/utils/helpers";
 import { useDark, useToggle } from "@vueuse/core";
-import { Badge, Popover, Tooltip } from "frappe-ui";
+import { Badge, Popover, toast, Tooltip } from "frappe-ui";
 import { DialogDescription, DialogTitle } from "reka-ui";
 import { computed, defineAsyncComponent, inject, ref } from "vue";
-import { toast } from "frappe-ui";
 // @ts-ignore
 import SparklesIcon from "~icons/lucide/sparkles";
 import MainMenu from "./MainMenu.vue";
@@ -171,7 +179,6 @@ const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 
 const showInfoDialog = ref(false);
-const showSettingsDialog = ref(false);
 const showShortcuts = inject<() => void>("showShortcuts", () => {});
 
 const openAIGeneratorFn = inject<(() => void) | undefined>("showAIGenerator", undefined);
@@ -187,7 +194,8 @@ const openAIGenerator = (e: MouseEvent) => {
 
 const openSettings = (e: MouseEvent) => {
 	(e.currentTarget as HTMLElement)?.blur();
-	showSettingsDialog.value = true;
+	builderStore.settingsActiveTab = "page_general";
+	builderStore.showSettingsDialog = true;
 };
 
 const currentlyViewedByText = computed(() => {
