@@ -10,12 +10,12 @@ export default defineConfig({
 	},
 	plugins: [
 		frappeui({
+			frontendRoute: "/_builder",
 			frappeProxy: {
 				port: 8080,
 				source: "^/(app|desk|login|api|assets|files|pages|builder_assets)",
 			},
 			lucideIcons: true,
-			buildConfig: false,
 			frappeTypes: {
 				input: {
 					builder: [
@@ -36,10 +36,7 @@ export default defineConfig({
 	],
 	build: {
 		chunkSizeWarningLimit: 1500,
-		outDir: `../builder/public/frontend`,
-		emptyOutDir: true,
 		target: "es2015",
-		sourcemap: true,
 	},
 	resolve: {
 		dedupe: ["prosemirror-model", "prosemirror-view", "prosemirror-state", "prosemirror-transform"],
