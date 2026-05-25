@@ -96,7 +96,7 @@
 
 <script setup lang="ts">
 import { DialogContent, DialogOverlay, DialogPortal, DialogRoot, DialogTitle } from "reka-ui";
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 
 export interface CommandPaletteItem {
 	name: string;
@@ -235,18 +235,4 @@ function select(item: CommandPaletteItem) {
 		emit("update:show", false);
 	}
 }
-
-function keydownWatcher(e: KeyboardEvent) {
-	if (
-		e.key === "k" &&
-		(e.ctrlKey || e.metaKey) &&
-		!(e.target as HTMLElement).classList.contains("ProseMirror")
-	) {
-		emit("update:show", true);
-		e.preventDefault();
-	}
-}
-
-onMounted(() => window.addEventListener("keydown", keydownWatcher));
-onBeforeUnmount(() => window.removeEventListener("keydown", keydownWatcher));
 </script>

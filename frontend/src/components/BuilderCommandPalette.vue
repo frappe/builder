@@ -15,9 +15,10 @@ import { webPages } from "@/data/webPage";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
+import { useShortcut } from "@/utils/useShortcut";
 import { useDark, useToggle } from "@vueuse/core";
 import { computed, inject, nextTick, ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import type { CommandPaletteItem as CPItem } from "./CommandPalette.vue";
 import CommandPalette from "./CommandPalette.vue";
 import CommandPaletteItem from "./CommandPaletteItem.vue";
@@ -28,8 +29,23 @@ const activeStep = ref<{ id: string; label: string; placeholder: string; hint: s
 
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
+const route = useRoute();
 const router = useRouter();
 const showShortcuts = inject<() => void>("showShortcuts", () => {});
+
+const isBuilderRoute = computed(() => route.name === "builder");
+
+useShortcut({
+	key: "k",
+	ctrl: true,
+	description: "Open Command Palette",
+	group: "General",
+	allowInInput: true,
+	condition: () => !document.activeElement?.classList.contains("ProseMirror"),
+	handler: () => {
+		show.value = true;
+	},
+});
 
 const isDark = useDark({ attribute: "data-theme" });
 const toggleDark = useToggle(isDark);
@@ -57,148 +73,165 @@ interface SettingsCommand extends CPItem {
 	section: "page" | "global";
 }
 
-const staticCommands = computed<Command[]>(() => [
-	// ── Navigate ────────────────────────────────────────────────
-	{
-		name: "search-page",
-		title: "Search Page",
-		icon: "lucide-file-search",
-		description: "Navigate",
-		group: "Navigate",
-		keepOpen: true,
-		action: () => {
-			activeStep.value = {
-				id: "search-page",
-				label: "Search Page",
-				placeholder: "Search by name or route...",
-				hint: "Start typing to search pages",
-			};
-			searchQuery.value = "";
+const staticCommands = computed<Command[]>(() => {
+	const isBuilder = isBuilderRoute.value;
+	return [
+		{
+			name: "search-page",
+			title: "Search Page",
+			icon: "lucide-file-search",
+			description: "Navigate",
+			group: "Navigate",
+			keepOpen: true,
+			action: () => {
+				activeStep.value = {
+					id: "search-page",
+					label: "Search Page",
+					placeholder: "Search by name or route...",
+					hint: "Start typing to search pages",
+				};
+				searchQuery.value = "";
+			},
 		},
-	},
-	{
-		name: "go-to-dashboard",
-		title: "Go to Dashboard",
-		icon: "lucide-layout-dashboard",
-		description: "Navigate",
-		group: "Navigate",
-		action: () => router.push({ name: "home" }),
-	},
-	{
-		name: "preview",
-		title: "Preview Page",
-		icon: "lucide-play",
-		description: "Page",
-		group: "Page",
-		action: () => {
-			if (pageStore.selectedPage) {
-				router.push({ name: "preview", params: { pageId: pageStore.selectedPage } });
-			}
+		...(isBuilder
+			? [
+					{
+						name: "go-to-dashboard",
+						title: "Go to Dashboard",
+						icon: "lucide-layout-dashboard",
+						description: "Navigate",
+						group: "Navigate",
+						action: () => router.push({ name: "home" }),
+					},
+				]
+			: []),
+		...(isBuilder
+			? [
+					{
+						name: "preview",
+						title: "Preview Page",
+						icon: "lucide-play",
+						description: "Page",
+						group: "Page",
+						action: () => {
+							if (pageStore.selectedPage) {
+								router.push({ name: "preview", params: { pageId: pageStore.selectedPage } });
+							}
+						},
+					},
+					{
+						name: "publish",
+						title: "Publish Page",
+						icon: "lucide-globe",
+						description: "Page",
+						group: "Page",
+						action: () => pageStore.publishPage(),
+					},
+					{
+						name: "duplicate-page",
+						title: "Duplicate Page",
+						icon: "lucide-copy-plus",
+						description: "Page",
+						group: "Page",
+						action: () => {
+							if (pageStore.activePage) {
+								pageStore.duplicatePage(pageStore.activePage);
+							}
+						},
+					},
+				]
+			: []),
+		...(isBuilder
+			? [
+					{
+						name: "expand-layers",
+						title: "Expand All Layers",
+						icon: "lucide-chevrons-up-down",
+						description: "Layers",
+						group: "Layers",
+						action: async () => {
+							builderStore.showLeftPanel = true;
+							builderStore.leftPanelActiveTab = "Layers";
+							await nextTick();
+							builderStore.activeLayers?.expandAll();
+						},
+					},
+					{
+						name: "collapse-layers",
+						title: "Collapse All Layers",
+						icon: "lucide-chevrons-down-up",
+						description: "Layers",
+						group: "Layers",
+						action: async () => {
+							builderStore.showLeftPanel = true;
+							builderStore.leftPanelActiveTab = "Layers";
+							await nextTick();
+							builderStore.activeLayers?.collapseAll();
+						},
+					},
+				]
+			: []),
+		...(isBuilder
+			? [
+					{
+						name: "toggle-left-panel",
+						title: `${builderStore.showLeftPanel ? "Hide" : "Show"} Left Panel`,
+						icon: builderStore.showLeftPanel ? "lucide-panel-left-close" : "lucide-panel-left-open",
+						description: "View",
+						group: "View",
+						action: () => {
+							builderStore.showLeftPanel = !builderStore.showLeftPanel;
+						},
+					},
+					{
+						name: "toggle-right-panel",
+						title: `${builderStore.showRightPanel ? "Hide" : "Show"} Right Panel`,
+						icon: builderStore.showRightPanel ? "lucide-panel-right-close" : "lucide-panel-right-open",
+						description: "View",
+						group: "View",
+						action: () => {
+							builderStore.showRightPanel = !builderStore.showRightPanel;
+						},
+					},
+				]
+			: []),
+		{
+			name: "toggle-theme",
+			title: `Switch to ${isDark.value ? "Light" : "Dark"} Mode`,
+			icon: isDark.value ? "lucide-sun" : "lucide-moon",
+			description: "View",
+			group: "View",
+			action: () => transitionTheme(),
 		},
-	},
-	{
-		name: "publish",
-		title: "Publish Page",
-		icon: "lucide-globe",
-		description: "Page",
-		group: "Page",
-		action: () => pageStore.publishPage(),
-	},
-	{
-		name: "duplicate-page",
-		title: "Duplicate Page",
-		icon: "lucide-copy-plus",
-		description: "Page",
-		group: "Page",
-		action: () => {
-			if (pageStore.activePage) {
-				pageStore.duplicatePage(pageStore.activePage);
-			}
+		{
+			name: "shortcuts",
+			title: "Keyboard Shortcuts",
+			icon: "lucide-command",
+			description: "General",
+			group: "General",
+			action: () => showShortcuts(),
 		},
-	},
-	{
-		name: "expand-layers",
-		title: "Expand All Layers",
-		icon: "lucide-chevrons-down-up",
-		description: "Layers",
-		group: "Layers",
-		action: async () => {
-			builderStore.showLeftPanel = true;
-			builderStore.leftPanelActiveTab = "Layers";
-			await nextTick();
-			builderStore.activeLayers?.expandAll();
+		{
+			name: "settings",
+			title: "Settings",
+			icon: "lucide-settings-2",
+			description: "General",
+			group: "General",
+			keepOpen: true,
+			action: () => {
+				activeStep.value = {
+					id: "settings",
+					label: "Settings",
+					placeholder: "Search settings...",
+					hint: "Browse all settings",
+				};
+				searchQuery.value = "";
+			},
 		},
-	},
-	{
-		name: "collapse-layers",
-		title: "Collapse All Layers",
-		icon: "lucide-chevrons-up-down",
-		description: "Layers",
-		group: "Layers",
-		action: async () => {
-			builderStore.showLeftPanel = true;
-			builderStore.leftPanelActiveTab = "Layers";
-			await nextTick();
-			builderStore.activeLayers?.collapseAll();
-		},
-	},
-	{
-		name: "toggle-left-panel",
-		title: `${builderStore.showLeftPanel ? "Hide" : "Show"} Left Panel`,
-		icon: builderStore.showLeftPanel ? "lucide-panel-left-close" : "lucide-panel-left-open",
-		description: "View",
-		group: "View",
-		action: () => {
-			builderStore.showLeftPanel = !builderStore.showLeftPanel;
-		},
-	},
-	{
-		name: "toggle-right-panel",
-		title: `${builderStore.showRightPanel ? "Hide" : "Show"} Right Panel`,
-		icon: builderStore.showRightPanel ? "lucide-panel-right-close" : "lucide-panel-right-open",
-		description: "View",
-		group: "View",
-		action: () => {
-			builderStore.showRightPanel = !builderStore.showRightPanel;
-		},
-	},
-	{
-		name: "toggle-theme",
-		title: `Switch to ${isDark.value ? "Light" : "Dark"} Mode`,
-		icon: isDark.value ? "lucide-sun" : "lucide-moon",
-		description: "View",
-		group: "View",
-		action: () => transitionTheme(),
-	},
-	// ── General ─────────────────────────────────────────────────
-	{
-		name: "shortcuts",
-		title: "Keyboard Shortcuts",
-		icon: "lucide-command",
-		description: "General",
-		group: "General",
-		action: () => showShortcuts(),
-	},
-	{
-		name: "settings",
-		title: "Settings",
-		icon: "lucide-settings-2",
-		description: "General",
-		group: "General",
-		keepOpen: true,
-		action: () => {
-			activeStep.value = {
-				id: "settings",
-				label: "Settings",
-				placeholder: "Search settings...",
-				hint: "Browse all settings",
-			};
-			searchQuery.value = "";
-		},
-	},
-]);
+	] as Command[];
+});
 
-const settingsCommands: SettingsCommand[] = [
+const allSettingsCommands: SettingsCommand[] = [
 	{
 		name: "page_general",
 		title: "General",
@@ -282,6 +315,10 @@ const settingsCommands: SettingsCommand[] = [
 	},
 ];
 
+const settingsCommands = computed<SettingsCommand[]>(() =>
+	isBuilderRoute.value ? allSettingsCommands : allSettingsCommands.filter((c) => c.section === "global"),
+);
+
 const RECENT_COMMANDS_KEY = "builder:recent_commands";
 const RECENT_PAGES_KEY = "builder:recent_pages";
 
@@ -303,7 +340,7 @@ function trackRecentCommand(name: string) {
 }
 
 const recentCommands = computed<(Command | SettingsCommand)[]>(() => {
-	const all = [...staticCommands.value, ...settingsCommands] as (Command | SettingsCommand)[];
+	const all = [...staticCommands.value, ...settingsCommands.value] as (Command | SettingsCommand)[];
 	return recentCommandNames.value.map((name) => all.find((c) => c.name === name)).filter(Boolean) as (
 		| Command
 		| SettingsCommand
@@ -378,13 +415,12 @@ const pageSearchResults = computed<Command[]>(() => {
 const commandGroups = computed(() => {
 	const q = searchQuery.value.toLowerCase().trim();
 
-	// ── Settings step ──────────────────────────────────────────
 	if (activeStep.value?.id === "settings") {
 		const items = q
-			? settingsCommands.filter(
+			? settingsCommands.value.filter(
 					(s) => s.title.toLowerCase().includes(q) || s.description?.toLowerCase().includes(q),
 				)
-			: settingsCommands;
+			: settingsCommands.value;
 		const pageItems = items.filter((s) => (s as SettingsCommand).section === "page");
 		const globalItems = items.filter((s) => (s as SettingsCommand).section === "global");
 		const groups = [];
@@ -418,7 +454,7 @@ const commandGroups = computed(() => {
 				const bi = recentCommandNames.value.indexOf(b.name);
 				return (ai === -1 ? Infinity : ai) - (bi === -1 ? Infinity : bi);
 			});
-		const matchedSettings = settingsCommands
+		const matchedSettings = settingsCommands.value
 			.filter((s) => s.title.toLowerCase().includes(q) || "settings".includes(q))
 			.sort((a, b) => {
 				const ai = recentCommandNames.value.indexOf(a.name);
