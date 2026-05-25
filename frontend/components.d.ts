@@ -139,7 +139,6 @@ declare module 'vue' {
     PublishButton: typeof import('./src/components/PublishButton.vue')['default']
     RangeInput: typeof import('./src/components/Controls/RangeInput.vue')['default']
     Redirect: typeof import('./src/components/Icons/Redirect.vue')['default']
-    Reset: typeof import('./src/components/Reset.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     RouteTreeNode: typeof import('./src/components/RouteTreeNode.vue')['default']

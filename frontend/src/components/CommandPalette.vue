@@ -29,7 +29,7 @@
 						spellcheck="false"
 						@keydown="handleKeydown" />
 					<kbd
-						class="mr-3 flex shrink-0 items-center gap-0.5 rounded border border-outline-gray-2 px-1.5 py-0.5 text-xs font-medium text-ink-gray-4"
+						class="mr-3 flex shrink-0 items-center gap-0.5 rounded border border-outline-gray-2 px-1.5 py-1 text-xs font-medium text-ink-gray-4"
 						title="Close">
 						esc
 					</kbd>
@@ -40,9 +40,7 @@
 					<template v-if="hasItems">
 						<template v-for="group in groups" :key="group.title">
 							<div v-if="group.items.length" class="mb-1 last:mb-0">
-								<div
-									v-if="!group.hideTitle"
-									class="px-4 pb-1 pt-2 text-xs font-semibold uppercase tracking-wider text-ink-gray-4">
+								<div v-if="!group.hideTitle" class="px-4 pb-1 pt-2 text-sm tracking-wider text-ink-gray-4">
 									{{ group.title }}
 								</div>
 								<div
@@ -75,18 +73,20 @@
 				<div class="flex items-center gap-4 border-t border-outline-gray-1 px-4 py-2.5">
 					<span class="flex items-center gap-1.5 text-xs text-ink-gray-4">
 						<span class="flex gap-1">
-							<kbd class="rounded border border-outline-gray-2 px-1 py-0.5 text-[11px] font-medium">↑</kbd>
-							<kbd class="rounded border border-outline-gray-2 px-1 py-0.5 text-[11px] font-medium">↓</kbd>
+							<kbd class="rounded border border-outline-gray-2 p-0.5 text-[11px] font-medium">
+								<span class="lucide-arrow-up size-3" />
+							</kbd>
+							<kbd class="rounded border border-outline-gray-2 p-0.5 text-[11px] font-medium">
+								<span class="lucide-arrow-down size-3" />
+							</kbd>
 						</span>
 						Navigate
 					</span>
 					<span class="flex items-center gap-1.5 text-xs text-ink-gray-4">
-						<kbd class="rounded border border-outline-gray-2 px-1 py-0.5 text-[11px] font-medium">↵</kbd>
+						<kbd class="rounded border border-outline-gray-2 p-0.5 text-[11px] font-medium">
+							<span class="lucide-corner-down-left size-3" />
+						</kbd>
 						Select
-					</span>
-					<span class="ml-auto flex items-center gap-1.5 text-xs text-ink-gray-4">
-						<kbd class="rounded border border-outline-gray-2 px-1 py-0.5 text-[11px] font-medium">⌘K</kbd>
-						Toggle
 					</span>
 				</div>
 			</DialogContent>
