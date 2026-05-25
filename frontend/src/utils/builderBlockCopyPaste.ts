@@ -14,9 +14,8 @@ import {
 	isJSONString,
 	showDialog,
 } from "@/utils/helpers";
-import { createListResource } from "frappe-ui";
+import { createListResource, toast } from "frappe-ui";
 import { nextTick } from "vue";
-import { toast } from "frappe-ui";
 import { webPages } from "../data/webPage";
 
 type BuilderPageClientScriptRef = { builder_script: string; idx?: number };
@@ -214,7 +213,7 @@ async function handlePagePaste(
 					});
 					await pageStore.setPage(currentPage.name);
 					nextTick(() => {
-						canvasStore.pushBlocks(clipboardData.blocks);
+						canvasStore.pushBlocks(clipboardData.blocks, false);
 						pageStore.savePage();
 					});
 					toast.success("Done", { id: "paste-page" });
@@ -294,7 +293,7 @@ async function insertBlocks(blocks: (Block | BlockOptions)[]) {
 		}
 		blocks.forEach((block) => parentBlock.addChild(getBlockCopy(block), null, true));
 	} else {
-		canvasStore.pushBlocks(blocks);
+		canvasStore.pushBlocks(blocks, false);
 	}
 }
 
