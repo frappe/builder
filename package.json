@@ -1,7 +1,8 @@
 {
     "private": true,
-    "workspaces": [
-        "frontend"
+    "workspace": [
+        "frontend",
+        "frappe-ui"
     ],
     "type": "module",
     "scripts": {
