@@ -20,9 +20,8 @@ import {
 	triggerCopyEvent,
 	uploadBuilderAsset,
 } from "@/utils/helpers";
-import { useShortcut } from "@/utils/useShortcut";
 import { useEventListener, useStorage } from "@vueuse/core";
-import { toast } from "frappe-ui";
+import { toast, useShortcut } from "frappe-ui";
 import { Ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
