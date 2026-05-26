@@ -31,7 +31,7 @@
 				<div class="flex items-center justify-between bg-surface-white p-2 text-sm text-ink-gray-8 shadow-sm">
 					<div class="flex items-center gap-1 pl-2 text-xs">
 						<a @click="canvasStore.exitFragmentMode" class="cursor-pointer">Page</a>
-						<FeatherIcon name="chevron-right" class="h-3 w-3" />
+						<span class="lucide-chevron-right h-3 w-3" aria-hidden="true" />
 						<span class="flex items-center gap-2">
 							{{ canvasStore.fragmentData.fragmentName }}
 							<a
@@ -83,11 +83,9 @@
 		v-model="canvasStore.showEditorDialog"
 		class="overscroll-none"
 		:isDirty="expandedEditor?.isDirty"
-		:options="{
-			title: 'HTML',
-			size: '7xl',
-		}">
-		<template #body-content>
+		title="HTML"
+		size="7xl">
+		<template #default>
 			<CodeEditor
 				:modelValue="getExpandedEditorContent()"
 				ref="expandedEditor"
@@ -113,7 +111,8 @@
 		@generating="isAIGenerating = $event"
 		ref="aiGeneratorModal"></AIPageGeneratorModal>
 	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
-	<KeyboardShortcutsModal ref="shortcutsModal" />
+	<BuilderCommandPalette ref="commandPalette" />
+	<KeyboardShortcutsModal v-model:open="shortcutsModalOpen" />
 </template>
 
 <script setup lang="ts">
@@ -121,25 +120,24 @@ import type Block from "@/block";
 import AIPageGeneratorModal from "@/components/AIPageGeneratorModal.vue";
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import BuilderCanvas from "@/components/BuilderCanvas.vue";
+import BuilderCommandPalette from "@/components/BuilderCommandPalette.vue";
 import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
-import KeyboardShortcutsModal from "@/components/KeyboardShortcutsModal.vue";
 import PageListModal from "@/components/Modals/PageListModal.vue";
 import { webPages } from "@/data/webPage";
 import { sessionUser } from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 import { getUsersInfo } from "@/usersInfo";
 import blockController from "@/utils/blockController";
 import { getBlockInstance, getBlockObject, getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
-import { useShortcut } from "@/utils/useShortcut";
 import { breakpointsTailwind, useBreakpoints, useDebounceFn, useEventListener } from "@vueuse/core";
-import { createResource } from "frappe-ui";
+import { createResource, KeyboardShortcutsModal, useShortcut } from "frappe-ui";
 import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
@@ -276,12 +274,10 @@ provide("pageCanvas", pageCanvas);
 provide("fragmentCanvas", fragmentCanvas);
 useBuilderEvents(pageCanvas, fragmentCanvas, saveAndExitFragmentMode, route, router);
 
-const shortcutsModal = ref<InstanceType<typeof KeyboardShortcutsModal> | null>(null);
+const shortcutsModalOpen = ref(false);
 
 provide("showShortcuts", () => {
-	if (shortcutsModal.value) {
-		shortcutsModal.value.showDialog = true;
-	}
+	shortcutsModalOpen.value = true;
 });
 
 useShortcut([
@@ -301,16 +297,14 @@ useShortcut([
 		description: "Show keyboard shortcuts",
 		group: "General",
 		handler: () => {
-			if (shortcutsModal.value) {
-				shortcutsModal.value.showDialog = true;
-			}
+			shortcutsModalOpen.value = true;
 		},
 	},
 	{
 		key: "i",
 		ctrl: true,
 		description: "Edit block with AI",
-		group: "Block",
+		group: "Edit",
 		condition: () =>
 			builderStore.isAIEnabled &&
 			!blockController.isRoot() &&
@@ -322,6 +316,21 @@ useShortcut([
 				editWithAIFn?.(block);
 			}
 		},
+	},
+	{
+		key: "d",
+		ctrl: true,
+		shift: true,
+		description: "Delete Page",
+		group: "General",
+		handler: () => {
+			if (pageStore.activePage && !pageStore.activePage.is_standard) {
+				pageStore.deletePage(pageStore.activePage).then(() => {
+					router.push({ name: "home" });
+				});
+			}
+		},
+		condition: () => Boolean(pageStore.activePage && !pageStore.activePage.is_standard),
 	},
 ]);
 

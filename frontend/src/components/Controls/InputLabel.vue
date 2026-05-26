@@ -3,7 +3,7 @@
 		<span class="truncate"><slot /></span>
 		<Popover trigger="hover" v-if="description" placement="top">
 			<template #target>
-				<FeatherIcon name="info" class="ml-1 h-[12px] w-[12px] text-gray-500" />
+				<span class="lucide-info ml-1 h-[12px] w-[12px] text-gray-500" aria-hidden="true" />
 			</template>
 			<template #body>
 				<slot name="body">
@@ -16,7 +16,7 @@
 	</span>
 </template>
 <script lang="ts" setup>
-import { FeatherIcon, Popover } from "frappe-ui";
+import { Popover } from "frappe-ui";
 const props = withDefaults(
 	defineProps<{
 		description?: string;

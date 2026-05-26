@@ -1,5 +1,5 @@
 <template>
-	<div>
+	<div class="isolate">
 		<div v-if="pagesResource.loading && !pages.length" class="px-3 py-6 text-center text-sm text-ink-gray-4">
 			Loading pages…
 		</div>
@@ -16,111 +16,44 @@
 			@focus="isFocused = true"
 			@blur="isFocused = false"
 			class="focus:outline-none">
-			<template v-for="node in visibleNodes" :key="node.id">
-				<!-- Load more row -->
-				<div
-					v-if="node.isLoadMore"
-					class="flex items-center pt-2"
-					:style="{ marginLeft: `${node.depth * 24 + 8 + 32}px` }">
-					<button
-						class="flex items-center gap-1 text-xs text-ink-gray-4 hover:text-ink-gray-7"
-						@click="loadMore(node)">
-						<FeatherIcon name="more-horizontal" class="size-3" />
-						Load {{ Math.min(PAGE_LIMIT_PER_NODE, node.totalCount - node.loadedCount) }} more
-						<span class="ml-0.5 text-ink-gray-3">({{ node.totalCount - node.loadedCount }} remaining)</span>
-					</button>
-				</div>
+			<RouteTreeNode
+				v-if="treeNodes.length"
+				:nodes="treeNodes"
+				:focused-node-id="focusedNodeId"
+				:sticky-row-height="STICKY_ROW_HEIGHT"
+				:on-select="selectNode"
+				:on-toggle="toggleNode"
+				:on-activate="activateNode"
+				:on-load-more="loadMore"
+				:set-node-ref="setNodeRef"
+				:is-home-page="isHomePage" />
 
-				<!-- Regular tree node -->
-				<div
-					v-else
-					class="group flex cursor-pointer items-center gap-1.5 border-b border-outline-gray-1 px-1 py-1 hover:rounded-md hover:bg-surface-gray-1"
-					:class="{ 'rounded-md !bg-surface-gray-2 ': focusedNodeId === node.id }"
-					:ref="
-						(el) => {
-							if (el) nodeEls.set(node.id, el as HTMLElement);
-						}
-					"
-					:style="{ marginLeft: `${node.depth * 24}px` }"
-					@click="selectNode(node)"
-					@dblclick="activateNode(node)">
-					<Button
-						v-if="node.hasChildren"
-						variant="ghost"
-						class="!text-ink-gray-5"
-						@click.stop="toggleNode(node)"
-						:icon="node.expanded ? 'chevron-down' : 'chevron-right'"></Button>
-					<span v-else class="size-6 w-7 shrink-0"></span>
-
-					<!-- Page node label row -->
-					<div v-if="node.page" class="flex min-w-0 flex-1 items-center gap-1.5 py-0.5">
-						<code
-							class="shrink-0 py-0.5 font-mono text-sm text-ink-gray-6 group-hover:text-ink-gray-9"
-							:class="{
-								'font-semibold': node.hasChildren,
-							}">
-							/{{ node.label }}
-						</code>
-						<span
-							v-if="node.page.page_title"
-							class="truncate text-sm text-ink-gray-4"
-							:title="node.page.page_title">
-							{{ node.page.page_title }}
-						</span>
-						<span class="ml-auto flex shrink-0 items-center gap-1">
-							<Tooltip v-if="isHomePage(node.page)" text="Home page" :hoverDelay="0.5">
-								<HomeIcon class="size-3.5 text-ink-green-3" />
-							</Tooltip>
-							<Tooltip
-								v-if="node.page.authenticated_access"
-								text="This page has limited access"
-								:hoverDelay="0.5">
-								<AuthenticatedUserIcon class="size-3.5 text-ink-amber-3" />
-							</Tooltip>
-							<Tooltip v-if="!node.page.published" text="Not published" :hoverDelay="0.5">
-								<GlobeOffIcon class="size-3.5 text-ink-gray-4" />
-							</Tooltip>
-						</span>
-					</div>
-
-					<!-- Folder node label -->
-					<div v-else class="flex min-w-0 flex-1 items-center gap-1 py-0.5">
-						<span
-							class="font-mono text-sm text-ink-gray-6 group-hover:text-ink-gray-9"
-							:class="{
-								'font-semibold': node.hasChildren,
-							}">
-							/{{ node.label }}
-						</span>
-					</div>
-
-					<PageActionsDropdown v-if="node.page" :page="node.page" size="xs" placement="right">
-						<template v-slot="{ open }">
-							<BuilderButton
-								icon="more-horizontal"
-								size="sm"
-								variant="subtle"
-								class="bg-surface-white !text-ink-gray-5 hover:!text-ink-gray-9"
-								@click.stop></BuilderButton>
-						</template>
-					</PageActionsDropdown>
-				</div>
-			</template>
+			<div
+				v-if="rootLoadMore.hasMore"
+				class="flex items-center pt-2"
+				:style="{ marginLeft: `${STICKY_ROW_HEIGHT}px` }">
+				<button
+					class="flex items-center gap-1 text-xs text-ink-gray-4 hover:text-ink-gray-7"
+					@click="loadMore('__root__', rootLoadMore.loadedCount)">
+					<span class="lucide-more-horizontal size-3" aria-hidden="true" />
+					Load {{ Math.min(PAGE_LIMIT_PER_NODE, rootLoadMore.totalCount - rootLoadMore.loadedCount) }} more
+					<span class="ml-0.5 text-ink-gray-3">
+						({{ rootLoadMore.totalCount - rootLoadMore.loadedCount }} remaining)
+					</span>
+				</button>
+			</div>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
-import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
-import GlobeOffIcon from "@/components/Icons/GlobeOff.vue";
-import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
+// TODO: Refactor to meke it generic, this has lots of unnecessary coupling, props usage and hacky implementation
+import RouteTreeNode from "@/components/RouteTreeNode.vue";
 import { builderSettings } from "@/data/builderSettings";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { useShortcut } from "@/utils/useShortcut";
-import { createListResource, Tooltip } from "frappe-ui";
+import { BuilderPage } from "@/types/doctypes";
+import { createListResource, useShortcut } from "frappe-ui";
 import { computed, onBeforeUpdate, ref, watch, watchEffect } from "vue";
 import { useRouter } from "vue-router";
-import HomeIcon from "~icons/lucide/house";
 
 const props = withDefaults(
 	defineProps<{
@@ -132,6 +65,7 @@ const props = withDefaults(
 
 const PAGE_LIMIT_PER_NODE = 50;
 const AUTO_COLLAPSE_THRESHOLD = 100;
+const STICKY_ROW_HEIGHT = 36;
 
 const router = useRouter();
 
@@ -140,24 +74,22 @@ interface Node {
 	label: string;
 	fullPath: string;
 	depth: number;
+	stickyStackDepth: number;
 	page: BuilderPage | null;
 	hasChildren: boolean;
 	expanded: boolean;
 	parentId: string | null;
-	isLoadMore?: false;
-}
-
-interface LoadMoreNode {
-	id: string;
-	depth: number;
-	parentId: string | null;
-	isLoadMore: true;
-	targetNodeId: string;
+	children: Node[];
+	hasMore: boolean;
 	loadedCount: number;
 	totalCount: number;
 }
 
-type TreeNode = Node | LoadMoreNode;
+interface RootLoadMore {
+	hasMore: boolean;
+	loadedCount: number;
+	totalCount: number;
+}
 
 type TrieNode = {
 	page: BuilderPage | null;
@@ -224,54 +156,72 @@ function getLimit(nodeId: string): number {
 	return loadedCounts.value.get(nodeId) ?? PAGE_LIMIT_PER_NODE;
 }
 
-const visibleNodes = computed<TreeNode[]>(() => {
+const treeState = computed(() => {
 	const trie = buildTrie(pages.value);
-	const result: TreeNode[] = [];
 
-	function traverse(map: Map<string, TrieNode>, depth: number, parentPath: string, parentId: string | null) {
+	function buildNodes(
+		map: Map<string, TrieNode>,
+		depth: number,
+		parentPath: string,
+		parentId: string | null,
+		stickyStackDepth: number,
+	): Node[] {
 		const entries = Array.from(map.entries());
 		const limitKey = parentId ?? "__root__";
 		const limit = getLimit(limitKey);
 		const visible = entries.slice(0, limit);
 
-		for (const [label, trieNode] of visible) {
+		return visible.map(([label, trieNode]) => {
 			const fullPath = parentPath ? `${parentPath}/${label}` : label;
-			const id = fullPath;
 			const hasChildren = trieNode.children.size > 0;
-			const expanded = !!props.searchFilter || !collapsedNodes.value.has(id);
+			const expanded = !!props.searchFilter || !collapsedNodes.value.has(fullPath);
+			const children =
+				hasChildren && expanded
+					? buildNodes(trieNode.children, depth + 1, fullPath, fullPath, stickyStackDepth + 1)
+					: [];
 
-			result.push({
-				id,
+			return {
+				id: fullPath,
 				label,
 				fullPath,
 				depth,
+				stickyStackDepth,
 				page: trieNode.page,
 				hasChildren,
 				expanded,
 				parentId,
-			});
-
-			if (hasChildren && expanded) {
-				traverse(trieNode.children, depth + 1, fullPath, id);
-			}
-		}
-
-		if (entries.length > limit) {
-			result.push({
-				id: `__load_more__${limitKey}`,
-				depth,
-				parentId,
-				isLoadMore: true,
-				targetNodeId: limitKey,
-				loadedCount: limit,
-				totalCount: entries.length,
-			});
-		}
+				children,
+				hasMore: hasChildren && trieNode.children.size > getLimit(fullPath),
+				loadedCount: hasChildren ? Math.min(getLimit(fullPath), trieNode.children.size) : 0,
+				totalCount: hasChildren ? trieNode.children.size : 0,
+			};
+		});
 	}
 
-	traverse(trie, 0, "", null);
-	return result;
+	const rootEntries = Array.from(trie.entries());
+	const rootLimit = getLimit("__root__");
+	return {
+		nodes: buildNodes(trie, 0, "", null, 0),
+		rootLoadMore: {
+			hasMore: rootEntries.length > rootLimit,
+			loadedCount: Math.min(rootLimit, rootEntries.length),
+			totalCount: rootEntries.length,
+		} satisfies RootLoadMore,
+	};
 });
+
+const treeNodes = computed(() => treeState.value.nodes);
+const rootLoadMore = computed(() => treeState.value.rootLoadMore);
+
+function flattenNodes(nodes: Node[], result: Node[] = []): Node[] {
+	for (const node of nodes) {
+		result.push(node);
+		if (node.hasChildren && node.expanded) {
+			flattenNodes(node.children, result);
+		}
+	}
+	return result;
+}
 
 function selectNode(node: Node) {
 	focusedNodeId.value = node.id;
@@ -296,9 +246,9 @@ function toggleNode(node: Node) {
 	collapsedNodes.value = next;
 }
 
-function loadMore(node: LoadMoreNode) {
+function loadMore(targetNodeId: string, loadedCount: number) {
 	const next = new Map(loadedCounts.value);
-	next.set(node.targetNodeId, node.loadedCount + PAGE_LIMIT_PER_NODE);
+	next.set(targetNodeId, loadedCount + PAGE_LIMIT_PER_NODE);
 	loadedCounts.value = next;
 }
 
@@ -334,6 +284,14 @@ function refresh() {
 	pagesResource.reload();
 }
 
+function setNodeRef(nodeId: string, element: HTMLElement | null) {
+	if (element) {
+		nodeEls.value.set(nodeId, element);
+	} else {
+		nodeEls.value.delete(nodeId);
+	}
+}
+
 watchEffect(() => {
 	if (!initialized.value && pages.value.length > 0) {
 		initialized.value = true;
@@ -353,7 +311,7 @@ watch([() => props.searchFilter, () => props.activeFolder], () => {
 });
 
 function regularNodes(): Node[] {
-	return visibleNodes.value.filter((n): n is Node => !n.isLoadMore);
+	return flattenNodes(treeNodes.value);
 }
 
 function currentNodes() {

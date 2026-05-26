@@ -5,7 +5,7 @@ import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore.js";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import {
 	confirm,
@@ -17,8 +17,7 @@ import {
 import { createDocumentResource, createListResource, createResource } from "frappe-ui";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
-import { toast } from "vue-sonner";
-import { BuilderClientScript } from "../types/Builder/BuilderClientScript";
+import { toast } from "frappe-ui";
 
 const usePageStore = defineStore("pageStore", {
 	state: () => ({

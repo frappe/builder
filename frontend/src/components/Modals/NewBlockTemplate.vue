@@ -1,26 +1,24 @@
 <template>
 	<Dialog
-		:options="{
-			title: 'Save as Block Template',
-			size: 'sm',
-			actions: [
-				{
-					label: 'Save',
-					variant: 'solid',
-					onClick: (close: () => void) => {
-						blockTemplateStore.saveBlockTemplate(
-							block,
-							blockTemplateProperties.templateName,
-							blockTemplateProperties.category,
-							blockTemplateProperties.previewImage,
-						);
-						close();
-					},
+		title="Save as Block Template"
+		size="sm"
+		:actions="[
+			{
+				label: 'Save',
+				variant: 'solid',
+				onClick: (close: () => void) => {
+					blockTemplateStore.saveBlockTemplate(
+						block,
+						blockTemplateProperties.templateName,
+						blockTemplateProperties.category,
+						blockTemplateProperties.previewImage,
+					);
+					close();
 				},
-			],
-		}"
+			},
+		]"
 		v-model="showBlockTemplateDialog">
-		<template #body-content>
+		<template #default>
 			<div class="flex flex-col gap-3">
 				<BuilderInput
 					type="text"

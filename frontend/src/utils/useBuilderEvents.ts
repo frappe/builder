@@ -5,7 +5,7 @@ import { webPages } from "@/data/webPage";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 
@@ -20,11 +20,10 @@ import {
 	triggerCopyEvent,
 	uploadBuilderAsset,
 } from "@/utils/helpers";
-import { useShortcut } from "@/utils/useShortcut";
 import { useEventListener, useStorage } from "@vueuse/core";
+import { toast, useShortcut } from "frappe-ui";
 import { Ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { toast } from "vue-sonner";
 
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
@@ -156,7 +155,7 @@ export function useBuilderEvents(
 				if (parentBlock) {
 					parentBlock.addChild(block);
 				} else {
-					canvasStore.pushBlocks([block]);
+					canvasStore.pushBlocks([block], false);
 				}
 			}
 			return;

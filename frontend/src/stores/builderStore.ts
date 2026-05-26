@@ -1,11 +1,11 @@
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import { builderSettings } from "@/data/builderSettings";
-import { BuilderSettings } from "@/types/Builder/BuilderSettings";
+import { BuilderSettings } from "@/types/doctypes";
 import RealTimeHandler from "@/utils/realtimeHandler";
 import { useDark, useStorage } from "@vueuse/core";
+import { toast } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
 import { defineStore } from "pinia";
-import { toast } from "vue-sonner";
 import type Dialog from "../components/Controls/Dialog.vue";
 import BlockLayers from "./components/BlockLayers.vue";
 
@@ -49,6 +49,8 @@ const useBuilderStore = defineStore("builderStore", {
 		}),
 		highlightBlocksWithDataScripts: false,
 		highlightBlocksWithClientScripts: false,
+		showSettingsDialog: false,
+		settingsActiveTab: <string>"page_general",
 	}),
 	getters: {
 		isAIEnabled(): boolean {

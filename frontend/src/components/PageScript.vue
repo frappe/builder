@@ -43,23 +43,22 @@
 			<TabButtons
 				class="w-fit"
 				:buttons="[
-					{ label: 'Page', icon: 'layout', hideLabel: true, value: 'page', showTooltip: true },
-					{ label: 'Block', icon: 'layers', hideLabel: true, value: 'block', showTooltip: true },
+					{ label: 'Page', icon: 'lucide-layout', hideLabel: true, value: 'page', showTooltip: true },
+					{ label: 'Block', icon: 'lucide-layers', hideLabel: true, value: 'block', showTooltip: true },
 				]"
 				v-model="mode" />
 		</div>
 		<Dialog
 			class="overscroll-none"
-			:options="{
-				title:
-					currentScriptEditor == 'data'
-						? `${mode.charAt(0).toUpperCase() + mode.slice(1)} Data Script`
-						: `${mode.charAt(0).toUpperCase() + mode.slice(1)} Client Script`,
-				size: '7xl',
-			}"
+			:title="
+				currentScriptEditor == 'data'
+					? `${mode.charAt(0).toUpperCase() + mode.slice(1)} Data Script`
+					: `${mode.charAt(0).toUpperCase() + mode.slice(1)} Client Script`
+			"
+			size="7xl"
 			:isDirty="isDirty"
 			v-model="showDialog">
-			<template #body-content>
+			<template #default>
 				<div v-if="mode == 'page'">
 					<div v-if="currentScriptEditor == 'client'">
 						<PageClientScriptManager
@@ -163,12 +162,12 @@ import { webPages } from "@/data/webPage";
 import { useBlockDataStore } from "@/stores/blockStore";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 import blockController from "@/utils/blockController";
 import { useStorage } from "@vueuse/core";
 import { useTelemetry } from "frappe-ui/frappe";
 import { computed, defineComponent, ref, watch } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import Switch from "./Controls/Switch.vue";
 import TabButtons from "./Controls/TabButtons.vue";

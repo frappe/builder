@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build --base=/assets/builder/frontend/ && yarn copy-html-entry",
-    "copy-html-entry": "cp ../builder/public/frontend/index.html ../builder/www/_builder.html",
+    "build": "vite build",
+    "build:reset": "tailwindcss -i ./src/reset.css -o ../builder/public/reset.css --minify && node ./scripts/strip-css-comments.js",
     "preview": "vite preview",
     "test-local": "cypress open --e2e --browser chrome",
     "test": "npx cypress run --record --key fa50a4df-569e-41bc-8600-850331fd1630"
@@ -38,7 +38,7 @@
     "@vueuse/core": "^10.2.1",
     "autoprefixer": "^10.4.2",
     "codemirror": "^6.0.2",
-    "frappe-ui": "0.1.278",
+    "frappe-ui": "frappe/frappe-ui#main",
     "js-yaml": "^4.1.1",
     "opentype.js": "^1.3.4",
     "pinia": "^2.0.28",

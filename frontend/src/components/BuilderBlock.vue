@@ -68,7 +68,7 @@ import {
 	watch,
 	watchEffect,
 } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
 import DataLoaderBlock from "./DataLoaderBlock.vue";
@@ -444,6 +444,7 @@ watch(
 		() => pageStore.settingPage,
 	],
 	() => {
+		if (!isMounted.value) return;
 		if (pageStore.settingPage) return;
 
 		const script = props.block.getBlockClientScript().trim();
@@ -469,6 +470,7 @@ watch(
 		() => pageStore.routeVariables,
 	],
 	(_, __, onCleanup) => {
+		if (!isMounted.value) return;
 		if (pageStore.settingPage) return;
 
 		const script = props.block.getBlockDataScript().trim();

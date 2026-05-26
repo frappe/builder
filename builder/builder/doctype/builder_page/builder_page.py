@@ -12,7 +12,7 @@ import frappe
 import frappe.utils
 from frappe.modules import scrub
 from frappe.modules.export_file import export_to_files
-from frappe.utils import set_request
+from frappe.utils import now, set_request
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
 from frappe.utils.telemetry import capture
@@ -125,6 +125,7 @@ class BuilderPage(WebsiteGenerator):
 		preview: DF.Data | None
 		project_folder: DF.Link | None
 		published: DF.Check
+		published_at: DF.Datetime | None
 		route: DF.Data | None
 	# end: auto-generated types
 
@@ -225,6 +226,7 @@ class BuilderPage(WebsiteGenerator):
 	@frappe.whitelist()
 	def publish(self):
 		self.published = 1
+		self.published_at = now()
 		if self.draft_blocks:
 			self.blocks = self.draft_blocks
 			self.draft_blocks = None
@@ -629,6 +631,7 @@ def get_block_context(block: dict, props: dict) -> dict:
 	passed_down_props = {name: info["value"] for name, info in props.items() if info["is_passed_down"]}
 
 	return {
+		"block_id": block.get("blockId"),
 		"all_props": all_props,
 		"passed_down_props": passed_down_props,
 		"block_data_script": block.get("blockDataScript"),
@@ -1014,6 +1017,7 @@ def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
 	# Generate unique hash for this block instance
 	# This is unique for each block irrespective of loops or components
 	parent.append("{% with unique_hash = (loop.index if loop is defined else 0) | hash %}")
+	parent.append(f"{{% with block_id = '{context['block_id']}' %}}")
 
 	if context.get("default_props"):
 		props_str = ", ".join([f"'{var}': {var}" for var in context["default_props"]])
@@ -1028,7 +1032,9 @@ def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
 
 	if context.get("block_data_script"):
 		escaped_script = escape_single_quotes(context["block_data_script"])
-		parent.append(f"{{% with block = block | execute_script_and_combine('{escaped_script}', props) %}}")
+		parent.append(
+			f"{{% with block = block | execute_script_and_combine('{escaped_script}', props, block_id) %}}"
+		)
 
 	if context.get("visibility_key"):
 		parent.append(f"{{% if {context['visibility_key']} %}}")
@@ -1047,6 +1053,7 @@ def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
 	if context.get("default_props"):
 		parent.append("{% endwith %}{% endwith %}")
 
+	parent.append("{% endwith %}")
 	parent.append("{% endwith %}")
 
 
@@ -1119,7 +1126,7 @@ def wrap_html_with_context(html: str, context: dict) -> str:
 
 	script_escaped = escape_single_quotes(context.get("block_data_script") or "")
 	html = (
-		f"{{% with block = {{}} | execute_script_and_combine('{script_escaped}', {all_props_literal}) %}}"
+		f"{{% with block = {{}} | execute_script_and_combine('{script_escaped}', {all_props_literal}, 'root') %}}"
 		f"{html}"
 		f"{{% endwith %}}"
 	)
@@ -1345,7 +1352,9 @@ def extend_block(block, overridden_block):
 @redis_cache(ttl=60 * 60)
 def find_page_with_path(route):
 	try:
-		return frappe.db.get_value("Builder Page", dict(route=route, published=1), "name", cache=True)
+		return frappe.db.get_value(
+			"Builder Page", dict(route=route, published=1), "name", order_by="published_at", cache=True
+		)
 	except frappe.DoesNotExistError:
 		pass
 

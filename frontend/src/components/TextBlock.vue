@@ -212,14 +212,14 @@ watch(
 				const textNode = walker.nextNode();
 				if (textNode) {
 					textNode.textContent = newValue;
-					editor.value.commands.setContent(tempDiv.innerHTML, false);
+					editor.value.commands.setContent(tempDiv.innerHTML, { emitUpdate: false });
 					return;
 				}
 			}
 			return;
 		}
 
-		editor.value.commands.setContent(newValue || "", false);
+		editor.value.commands.setContent(newValue || "", { emitUpdate: false });
 	},
 );
 
@@ -259,6 +259,7 @@ if (!props.preview) {
 					extensions: [
 						StarterKit.configure({
 							link: { openOnClick: false },
+							underline: false,
 						}),
 						TextStyle.extend({
 							addGlobalAttributes() {

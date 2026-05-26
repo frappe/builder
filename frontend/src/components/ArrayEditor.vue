@@ -8,7 +8,7 @@
 			<BuilderButton
 				class="flex-shrink-0 text-xs"
 				variant="subtle"
-				icon="x"
+				icon="lucide-x"
 				@click="deleteItem(index)"></BuilderButton>
 		</div>
 		<BuilderButton variant="subtle" class="w-full" label="Add" @click="addItem"></BuilderButton>

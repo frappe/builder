@@ -21,13 +21,13 @@
 				@click.stop="() => $emit('click', null)"
 				:to="{ name: 'builder', params: { pageId: page.page_name } }"
 				v-if="is_developer_mode">
-				<FeatherIcon name="edit" class="h-4 w-4 text-gray-500 hover:text-gray-700"></FeatherIcon>
+				<span class="lucide-pencil h-4 w-4 text-gray-500 hover:text-gray-700" aria-hidden="true" />
 			</router-link>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 
 const is_developer_mode = window.is_developer_mode;
 

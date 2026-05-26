@@ -18,8 +18,8 @@ import getBlockTemplate from "@/utils/blockTemplate";
 import { confirm, detachBlockFromComponent, getBlockCopy, triggerCopyEvent } from "@/utils/helpers";
 import { useStorage } from "@vueuse/core";
 import { Ref, inject, nextTick, ref, computed } from "vue";
-import { toast } from "vue-sonner";
 import { useExternalEditor, createEditorContext } from "@/composables/useExternalEditor";
+import { toast } from "frappe-ui";
 
 const builderStore = useBuilderStore();
 const componentStore = useComponentStore();
