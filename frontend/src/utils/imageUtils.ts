@@ -1,5 +1,5 @@
 import { createResource } from "frappe-ui";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 
 export interface ImageOptimizationOptions {
 	imageUrl: string;

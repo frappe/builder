@@ -114,7 +114,7 @@ import { clamp } from "@vueuse/core";
 import { computed, inject, ref, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
 
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 const canvasProps = inject("canvasProps") as CanvasProps;
 
 const props = withDefaults(

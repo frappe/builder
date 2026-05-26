@@ -8,7 +8,7 @@
  "modified": "2025-03-29 13:47:45.015311",
  "modified_by": "Administrator",
  "name": "Hero 2",
- "order": 5,
+ "sort_order": 5,
  "owner": "Administrator",
  "preview": "/builder_assets/Hero 2/hero_2.png",
  "preview_height": 2,

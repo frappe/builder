@@ -8,6 +8,7 @@ from csscompressor import compress
 from frappe.model.document import Document
 from frappe.modules.export_file import export_to_files
 from frappe.utils import get_files_path
+from frappe.utils.telemetry import capture
 from jsmin import jsmin
 
 
@@ -29,6 +30,7 @@ class BuilderClientScript(Document):
 		if not self.name:
 			self.name = f"{self.script_type}-{frappe.generate_hash(length=5)}"
 		self.update_script_file()
+		capture("builder_client_script_created", "builder")
 
 	def on_update(self):
 		self.update_script_file()

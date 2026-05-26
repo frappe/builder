@@ -1,13 +1,14 @@
 import Block from "@/block";
 import AlertDialog from "@/components/AlertDialog.vue";
 import { builderSettings } from "@/data/builderSettings";
+import { useBlockDataStore, useBlockUidStore } from "@/stores/blockStore";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { FileUploadHandler } from "frappe-ui";
 import { defineComponent, h, markRaw, reactive, ref, toRaw } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 import Dialog from "../components/Controls/Dialog.vue";
 
 function getNumberFromPx(px: string | number | null | undefined): number {
@@ -29,7 +30,12 @@ function addPxToNumber(number: number, round: boolean = true): string {
 	return `${number}px`;
 }
 
-function HexToHSV(color: HashString): { h: number; s: number; v: number } {
+function HexToHSV(color: HashString): {
+	h: number;
+	s: number;
+	v: number;
+	a: number;
+} {
 	// Remove hash and normalize length
 	let hex = color.replace("#", "").trim();
 
@@ -41,9 +47,16 @@ function HexToHSV(color: HashString): { h: number; s: number; v: number } {
 			.join("");
 	}
 
+	// Extract alpha from 8-digit hex (#RRGGBBAA)
+	let a = 100;
+	if (/^[0-9a-fA-F]{8}$/.test(hex)) {
+		a = Math.round((parseInt(hex.slice(6, 8), 16) / 255) * 100);
+		hex = hex.slice(0, 6);
+	}
+
 	// If not valid hex, return black
 	if (!/^[0-9a-fA-F]{6}$/.test(hex)) {
-		return { h: 0, s: 0, v: 0 };
+		return { h: 0, s: 0, v: 0, a: 100 };
 	}
 
 	const r = parseInt(hex.slice(0, 2), 16);
@@ -68,10 +81,10 @@ function HexToHSV(color: HashString): { h: number; s: number; v: number } {
 		h *= 60;
 	}
 
-	return { h, s, v };
+	return { h, s, v, a };
 }
 
-function HSVToHex(h: number, s: number, v: number): HashString {
+function HSVToHex(h: number, s: number, v: number, a: number = 100): HashString {
 	s /= 100;
 	v /= 100;
 	h /= 360;
@@ -109,7 +122,12 @@ function HSVToHex(h: number, s: number, v: number): HashString {
 	r = Math.round(r * 255);
 	g = Math.round(g * 255);
 	b = Math.round(b * 255);
-	return `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
+	const hex = `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}` as HashString;
+	const alphaByte = Math.round((a / 100) * 255);
+	if (alphaByte < 255) {
+		return `${hex}${alphaByte.toString(16).padStart(2, "0")}` as HashString;
+	}
+	return hex;
 }
 
 function getRandomColor() {
@@ -178,6 +196,18 @@ function RGBToHex(rgb: RGBString): HashString {
 function getRGB(color: HashString | RGBString | string | null): HashString | null {
 	if (!color) {
 		return null;
+	}
+	if (color.startsWith("rgba")) {
+		const parts = color
+			.replace("rgba(", "")
+			.replace(")", "")
+			.split(",")
+			.map((x) => x.trim());
+		const [r, g, b] = parts.map((x) => parseInt(x));
+		const alphaHex = Math.round(parseFloat(parts[3]) * 255)
+			.toString(16)
+			.padStart(2, "0");
+		return `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}${alphaHex}` as HashString;
 	}
 	if (color.startsWith("rgb")) {
 		return RGBToHex(color as RGBString);
@@ -465,17 +495,33 @@ async function uploadBuilderAsset(file: File, silent = false) {
 
 function dataURLtoFile(dataurl: string, filename: string) {
 	try {
-		let arr = dataurl.split(","),
-			mime = arr[0].match(/:(.*?);/)?.[1],
-			bstr = atob(arr[1]),
-			n = bstr.length,
+		let arr = dataurl.split(",");
+		let mimeMatch = arr[0].match(/:(.*?)(;|,)/);
+		let mime = mimeMatch ? mimeMatch[1] : "";
+		let isBase64 = arr[0].includes(";base64");
+
+		let dataString = arr.slice(1).join(",");
+		let u8arr;
+
+		if (isBase64) {
+			let bstr = atob(dataString);
+			let n = bstr.length;
 			u8arr = new Uint8Array(n);
-		while (n--) {
-			u8arr[n] = bstr.charCodeAt(n);
+			while (n--) {
+				u8arr[n] = bstr.charCodeAt(n);
+			}
+		} else {
+			let decoded = decodeURIComponent(dataString);
+			let n = decoded.length;
+			u8arr = new Uint8Array(n);
+			while (n--) {
+				u8arr[n] = decoded.charCodeAt(n);
+			}
 		}
+
 		return new File([u8arr], filename, { type: mime });
 	} catch (error) {
-		console.error(`Failed to convert dataURL ${dataurl} to file.`);
+		console.error(`Failed to convert dataURL ${dataurl.substring(0, 50)}... to file.`, error);
 		return null;
 	}
 }
@@ -922,7 +968,8 @@ function getBoxSpacing(
 ): string {
 	const nativeOnly = opts?.nativeOnly ?? false;
 	const cascading = opts?.cascading ?? false;
-	const base = String(block.getStyle(type, undefined, nativeOnly, cascading) ?? "0px");
+	const baseValue = block.getStyle(type, undefined, nativeOnly, cascading);
+	const base = String(baseValue ?? (nativeOnly && !cascading ? "" : "unset"));
 	const top = block.getStyle(`${type}Top`, undefined, nativeOnly, cascading) ?? base;
 	const bottom = block.getStyle(`${type}Bottom`, undefined, nativeOnly, cascading) ?? base;
 	const left = block.getStyle(`${type}Left`, undefined, nativeOnly, cascading) ?? base;
@@ -1119,19 +1166,33 @@ const getValueForInheritedProp = (
 	return undefined;
 };
 
-const getParentProps = (baseBlock: Block, baseProps: BlockProps = {}): BlockProps => {
+type BlockPropsWithTraceback = Record<
+	string,
+	BlockProps[string] & { block?: Block; blockUid?: string | null }
+>;
+
+const getParentProps = (
+	baseBlock: Block,
+	blockUid?: string | null,
+	baseProps: BlockPropsWithTraceback = {},
+): BlockPropsWithTraceback => {
 	const parentBlock = baseBlock.getParentBlock();
+	const parentBlockUid = useBlockUidStore().getParentUid(blockUid || "");
 	if (parentBlock) {
-		const parentProps: BlockProps = {};
+		const parentProps: BlockPropsWithTraceback = {};
 		Object.entries(parentBlock.getBlockProps())
 			.filter(([_, propDetails]) => {
 				return propDetails.isPassedDown;
 			})
-			.map(([propName, propDetails]) => {
-				parentProps[propName] = propDetails;
+			.forEach(([propName, propDetails]) => {
+				parentProps[propName] = {
+					...propDetails,
+					block: parentBlock,
+					blockUid: parentBlockUid,
+				};
 			});
 		const combinedProps = { ...parentProps, ...baseProps };
-		return getParentProps(parentBlock, combinedProps);
+		return getParentProps(parentBlock, parentBlockUid, combinedProps);
 	} else {
 		return baseProps;
 	}
@@ -1183,21 +1244,23 @@ const getDefaultPropsList = (block: Block, blockController: any): BlockProps => 
 
 const PARSEABLE_STANDARD_TYPES = ["number", "boolean", "object", "array"];
 
-const getPropValue = (
-	propName: string,
-	block: Block,
-	getDataScriptValue: (path: string) => any,
-	getBlockScriptValue: (path: string) => any,
-	defaultProps?: Record<string, any> | null,
-): any => {
+const getPropValue = (propName: string, block: Block, blockUid?: string | null): any => {
+	const blockDataStore = useBlockDataStore();
+
+	const uidToUse = blockUid || block.blockId;
+
+	const defaultProps = blockDataStore.getDefaultProps(uidToUse);
 	// Check default props first
 	if (defaultProps?.[propName] !== undefined) {
 		return defaultProps[propName].value;
 	}
 
+	let parentProps: BlockPropsWithTraceback | null = null;
+
 	// Find matching prop from block or parent
 	const blockProps = block.getBlockProps();
-	const matchingProp = blockProps[propName] ?? getParentProps(block, {})[propName];
+	let matchingProp: BlockPropsWithTraceback[string] =
+		blockProps[propName] ?? (parentProps = getParentProps(block, blockUid))[propName];
 
 	if (!matchingProp) {
 		return undefined;
@@ -1205,6 +1268,22 @@ const getPropValue = (
 
 	// Handle dynamic props
 	if (matchingProp.isDynamic) {
+		if (matchingProp.comesFrom === "props" && matchingProp.value) {
+			if (parentProps === null) {
+				parentProps = getParentProps(block, blockUid);
+			}
+			const newMatchingProp = parentProps[matchingProp.value];
+			if (!newMatchingProp.block) return undefined;
+			return getPropValue(matchingProp.value, newMatchingProp.block, newMatchingProp.blockUid);
+		}
+		const getDataScriptValue = (path: string) => {
+			const pageData = blockDataStore.getPageData(uidToUse) || {};
+			return getDataForKey(pageData, path);
+		};
+		const getBlockScriptValue = (path: string) => {
+			const blockData = blockDataStore.getBlockData(uidToUse, "passedDown") || {};
+			return getDataForKey(blockData, path);
+		};
 		if (matchingProp.comesFrom === "dataScript" && matchingProp.value) {
 			return getDataScriptValue(matchingProp.value);
 		}
@@ -1227,9 +1306,15 @@ const getPropValue = (
 		const defaultValue = options?.defaultValue ?? null;
 
 		if (PARSEABLE_STANDARD_TYPES.includes(type)) {
-			return matchingProp.value ? JSON.parse(matchingProp.value) : defaultValue;
+			if (matchingProp.value) {
+				return JSON.parse(matchingProp.value);
+			} else {
+				if (typeof defaultValue === "string") {
+					return JSON.parse(defaultValue);
+				}
+				return defaultValue;
+			}
 		}
-
 		return matchingProp.value || defaultValue;
 	}
 
@@ -1274,7 +1359,9 @@ const getDataArray = (collectionObject: Record<string, any>) => {
 		Object.entries(obj).forEach(([key, value]) => {
 			const path = prefix ? `${prefix}.${key}` : key;
 
-			if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+			if (value === null) {
+				result.push(path);
+			} else if (typeof value === "object" && !Array.isArray(value)) {
 				processObject(value, path);
 			} else if (["string", "number", "boolean"].includes(typeof value)) {
 				result.push(path);
@@ -1288,10 +1375,13 @@ const getDataArray = (collectionObject: Record<string, any>) => {
 
 function executeBlockClientScriptUnrestricted(
 	blockUid: string,
+	breakpoint: string,
 	userScript: string,
 	props: Record<string, any> = {},
 ) {
-	const thisElement = document.querySelector(`[data-block-uid='${blockUid}']`) as HTMLElement;
+	const thisElement = document.querySelector(
+		`[data-block-uid='${blockUid}'][data-breakpoint=${breakpoint}]`,
+	) as HTMLElement;
 
 	const context = {
 		thisRef: thisElement,
@@ -1308,9 +1398,8 @@ function executeBlockClientScriptUnrestricted(
 	try {
 		document.querySelectorAll(`[data-created-by='${blockUid}']`).forEach((el) => el.remove());
 		fn.call(thisElement, context);
-		console.log("Executed unrestricted user script");
 	} catch (e) {
-		console.error("Error in user script 2:", e);
+		console.error("Error in user script (unrestricted):", e);
 		// toast.warning("An error occurred while executing block script: " + (e instanceof Error ? e.message : ""));
 	}
 }
@@ -1329,6 +1418,7 @@ function executeBlockClientScriptUnrestricted(
 
 function executeBlockClientScriptRestricted(
 	blockUid: string,
+	breakpoint: string,
 	userScript: string,
 	props: Record<string, any> = {},
 ) {
@@ -1361,7 +1451,10 @@ function executeBlockClientScriptRestricted(
 		get(target: Element, prop: string, receiver: any) {
 			if (BLOCKED_GET.has(prop)) return undefined;
 
-			let val = Reflect.get(target, prop, receiver);
+			// Always pass `target` (not the proxy) as the receiver so that native DOM
+			// getters (e.g. tagName, nodeType, children) run with the correct `this`.
+			// Passing the Proxy as receiver causes "Illegal invocation" in those cases.
+			let val = Reflect.get(target, prop, target);
 
 			// Wrap DOM returns
 			if (val instanceof Node) return wrap(val);
@@ -1420,7 +1513,9 @@ function executeBlockClientScriptRestricted(
 	};
 
 	const sandboxRoot = document.querySelector("[data-block-id='root']") as HTMLElement;
-	const thisElement = document.querySelector(`[data-block-uid='${blockUid}']`) as HTMLElement;
+	const thisElement = document.querySelector(
+		`[data-block-uid='${blockUid}'][data-breakpoint='${breakpoint}']`,
+	) as HTMLElement;
 
 	const proxiedRoot = wrap(sandboxRoot);
 	const proxiedThis = wrap(thisElement);
@@ -1451,6 +1546,10 @@ function executeBlockClientScriptRestricted(
 		console.error("Error in user script:", e);
 		// toast.warning("An error occurred while executing block script: " + (e instanceof Error ? e.message : ""));
 	}
+}
+
+function isDialogOpen() {
+	return !!document.querySelector("[role='dialog']");
 }
 
 export {
@@ -1495,6 +1594,7 @@ export {
 	HSVToHex,
 	isBlock,
 	isCtrlOrCmd,
+	isDialogOpen,
 	isHTMLString,
 	isJSONString,
 	isTargetEditable,

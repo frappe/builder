@@ -2,18 +2,16 @@
 	<Dialog
 		:modelValue="modelValue"
 		@update:modelValue="$emit('update:modelValue', $event)"
-		:options="{
-			title: dialogMode === 'edit' ? 'Edit Variable' : 'New Variable',
-			size: 'sm',
-			actions: [
-				{
-					label: dialogMode === 'edit' ? 'Update' : 'Create',
-					variant: 'solid',
-					onClick: handleSave,
-				},
-			],
-		}">
-		<template #body-content>
+		:title="dialogMode === 'edit' ? 'Edit Variable' : 'New Variable'"
+		size="sm"
+		:actions="[
+			{
+				label: dialogMode === 'edit' ? 'Update' : 'Create',
+				variant: 'solid',
+				onClick: handleSave,
+			},
+		]">
+		<template #default>
 			<div class="flex flex-col gap-4">
 				<BuilderInput
 					type="text"
@@ -49,11 +47,11 @@
 <script setup lang="ts">
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
-import { BuilderVariable } from "@/types/Builder/BuilderVariable";
+import { BuilderVariable } from "@/types/doctypes";
 import { defaultBuilderVariable, useBuilderVariable } from "@/utils/useBuilderVariable";
 import { Dialog } from "frappe-ui";
 import { computed, ref, watch } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 
 const props = defineProps<{
 	modelValue: boolean;

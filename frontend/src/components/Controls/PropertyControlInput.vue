@@ -8,7 +8,7 @@
 			:defaultValue="defaultValue"
 			:placeholder="placeholder"
 			@update:modelValue="$emit('update:modelValue', $event)"
-			@keydown.stop="$emit('keydown', $event)"
+			@keydown="$emit('keydown', $event)"
 			:class="componentClass">
 			<template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
 				<slot :name="name" v-bind="slotData || {}" />
@@ -20,8 +20,8 @@
 			v-if="dynamicValueKey"
 			class="absolute bottom-0 left-0 right-0 top-0 flex cursor-pointer items-center gap-2 rounded bg-surface-violet-1 py-0.5 pl-2.5 pr-6 text-sm text-ink-violet-1"
 			@click.stop="$emit('openDynamicModal')">
-			<FeatherIcon name="zap" class="size-3"></FeatherIcon>
-			<span class="truncate">{{ dynamicValueKey }}</span>
+			<span class="lucide-zap size-3" aria-hidden="true" />
+			<MiddleTruncate :text="dynamicValueKey" />
 		</div>
 
 		<!-- Clear button -->
@@ -37,8 +37,8 @@
 
 <script lang="ts" setup>
 import CrossIcon from "@/components/Icons/Cross.vue";
-import { FeatherIcon } from "frappe-ui";
 import type { Component } from "vue";
+import MiddleTruncate from "../MiddleTruncate.vue";
 
 defineProps<{
 	component: Component;

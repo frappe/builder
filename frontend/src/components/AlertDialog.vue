@@ -1,6 +1,6 @@
 <template>
-	<Dialog v-model="showDialog" :options="{ title }">
-		<template #body-content>
+	<Dialog v-model="showDialog" :title="title">
+		<template #default>
 			<div class="space-y-4">
 				<p class="text-p-base text-gray-800" v-if="message" v-html="message" />
 			</div>

@@ -1,5 +1,5 @@
 <template>
-	<div ref="canvasContainer" @click="handleClick">
+	<div ref="canvasContainer" @click="handleClick" @mousedown="handleMarqueeStart">
 		<Transition name="fade">
 			<div
 				class="absolute bottom-0 left-0 right-0 top-0 grid w-full place-items-center bg-surface-gray-1 p-10 text-ink-gray-5"
@@ -10,10 +10,14 @@
 		<BlockSnapGuides></BlockSnapGuides>
 		<div
 			class="fixed flex gap-40"
+			:class="{
+				'scheme-dark': builderStore.isDark,
+			}"
 			ref="canvas"
 			:style="{
 				transformOrigin: 'top center',
 				transform: `scale(${canvasProps.scale}) translate(${canvasProps.translateX}px, ${canvasProps.translateY}px)`,
+				'--canvas-scale': canvasProps.scale,
 			}">
 			<div class="absolute right-0 top-[-60px] flex rounded-md bg-surface-white px-3">
 				<div
@@ -22,17 +26,18 @@
 					v-for="breakpoint in canvasProps.breakpoints"
 					:key="breakpoint.device"
 					@click.stop="(ev) => selectBreakpoint(ev, breakpoint)">
-					<FeatherIcon
-						:name="breakpoint.icon"
-						class="h-8 w-6"
-						:class="{
-							'text-ink-gray-8': breakpoint.visible,
-							'text-ink-gray-3': !breakpoint.visible,
-						}" />
+					<span
+						:class="[
+							breakpoint.icon,
+							'h-8 w-6',
+							{ 'text-ink-gray-8': breakpoint.visible, 'text-ink-gray-3': !breakpoint.visible },
+						]"
+						aria-hidden="true" />
 				</div>
 			</div>
 			<div
-				class="canvas relative flex h-full bg-surface-white shadow-2xl contain-layout dark:selection:!bg-gray-200"
+				class="canvas relative flex h-full bg-surface-white shadow-2xl contain-layout"
+				:data-breakpoint="breakpoint.device"
 				:style="{
 					...canvasStyles,
 					background: canvasProps.background,
@@ -75,6 +80,7 @@
 			:class="{ 'pointer-events-none': isOverDropZone }"
 			id="overlay"
 			ref="overlay" />
+		<div v-show="marquee.visible" class="pointer-events-none fixed z-[200]" :style="marqueeStyle" />
 		<div class="absolute top-0 order-1 w-full">
 			<slot name="header"></slot>
 		</div>
@@ -105,9 +111,9 @@ import { useBlockSelection } from "@/utils/useBlockSelection";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useCanvasDropZone } from "@/utils/useCanvasDropZone";
 import { useCanvasEvents } from "@/utils/useCanvasEvents";
+import { useCanvasMarqueeSelection } from "@/utils/useCanvasMarqueeSelection";
 import { useCanvasUtils } from "@/utils/useCanvasUtils";
-import { FeatherIcon } from "frappe-ui";
-import { Ref, computed, onMounted, provide, reactive, ref, watch } from "vue";
+import { Ref, computed, onMounted, onUnmounted, provide, reactive, ref, watch } from "vue";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
@@ -169,7 +175,7 @@ const canvasProps = reactive({
 	panning: false,
 	breakpoints: [
 		{
-			icon: "monitor",
+			icon: "lucide-monitor",
 			device: "desktop",
 			displayName: "Desktop",
 			width: 1400,
@@ -177,14 +183,14 @@ const canvasProps = reactive({
 			renderedOnce: true,
 		},
 		{
-			icon: "tablet",
+			icon: "lucide-tablet",
 			device: "tablet",
 			displayName: "Tablet",
 			width: 800,
 			visible: false,
 		},
 		{
-			icon: "smartphone",
+			icon: "lucide-smartphone",
 			device: "mobile",
 			displayName: "Mobile",
 			width: 420,
@@ -212,6 +218,17 @@ const {
 	isDirty,
 } = useCanvasUtils(canvasProps, canvasContainer, canvas, block, selectedBlockIds, history);
 
+const { marquee, marqueeStyle, suppressNextClick, handleMarqueeStart, cleanupMarqueeListeners } =
+	useCanvasMarqueeSelection({
+		canvasContainer,
+		canvasProps,
+		activeBreakpoint,
+		selectedBlockIds,
+		findBlock,
+		setActiveBreakpoint,
+		setHoveredBreakpoint,
+	});
+
 const { isOverDropZone } = useCanvasDropZone(
 	canvasContainer as unknown as Ref<HTMLElement>,
 	block,
@@ -238,7 +255,16 @@ onMounted(() => {
 	useBlockEventHandlers(canvasContainerEl);
 });
 
+onUnmounted(() => {
+	cleanupMarqueeListeners();
+});
+
 const handleClick = (ev: MouseEvent) => {
+	if (suppressNextClick.value) {
+		suppressNextClick.value = false;
+		return;
+	}
+
 	const target = document.elementFromPoint(ev.clientX, ev.clientY);
 	// hack to ensure if click is on canvas-container
 	// TODO: Still clears selection if space handlers are dragged over canvas-container
@@ -367,6 +393,18 @@ function selectBreakpoint(ev: MouseEvent, breakpoint: BreakpointConfig) {
 		activeBreakpoint.value = breakpoint.device;
 		breakpoint.renderedOnce = true;
 	}
+	const isActiveVisible = canvasProps.breakpoints.find(
+		(bp) => bp.device === activeBreakpoint.value && bp.visible,
+	);
+	if (!isActiveVisible) {
+		const lastVisible = Array.from(canvasProps.breakpoints)
+			.reverse()
+			.find((bp) => bp.visible);
+		if (lastVisible) {
+			activeBreakpoint.value = lastVisible.device;
+			hoveredBreakpoint.value = lastVisible.device;
+		}
+	}
 }
 
 const renderedBreakpoints = computed(() => canvasProps.breakpoints.filter((bp) => bp.renderedOnce));
@@ -390,5 +428,10 @@ const renderedBreakpoints = computed(() => canvasProps.breakpoints.filter((bp) =
 }
 .horizontal-placeholder {
 	@apply my-4 h-auto w-full border-t-2 border-dashed border-blue-500;
+}
+
+/* Lightweight marquee-drag highlight — applied via DOM attribute, not Vue reactive state */
+.__builder_component__[data-marquee-selected] {
+	box-shadow: inset 0 0 0 calc(2px / var(--canvas-scale, 1)) theme("colors.blue.400 / 85%");
 }
 </style>

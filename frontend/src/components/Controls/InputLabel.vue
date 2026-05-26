@@ -1,9 +1,9 @@
 <template>
-	<span class="inline-flex w-1/2 min-w-20 max-w-40 items-center text-xs leading-5 text-ink-gray-6">
-		<slot />
+	<span class="flex w-[88px] min-w-16 items-center truncate text-xs leading-5 text-ink-gray-6">
+		<span class="truncate"><slot /></span>
 		<Popover trigger="hover" v-if="description" placement="top">
 			<template #target>
-				<FeatherIcon name="info" class="ml-1 h-[12px] w-[12px] text-gray-500" />
+				<span class="lucide-info ml-1 h-[12px] w-[12px] text-gray-500" aria-hidden="true" />
 			</template>
 			<template #body>
 				<slot name="body">
@@ -16,7 +16,7 @@
 	</span>
 </template>
 <script lang="ts" setup>
-import { FeatherIcon, Popover } from "frappe-ui";
+import { Popover } from "frappe-ui";
 const props = withDefaults(
 	defineProps<{
 		description?: string;

@@ -232,6 +232,7 @@ export function useCanvasEvents(
 }
 
 function handleMouseOver(e: MouseEvent) {
+	if (canvasStore.isMarqueeActive) return;
 	if (!isBlock(e)) {
 		canvasStore.activeCanvas?.setHoveredBlock(null);
 		return;

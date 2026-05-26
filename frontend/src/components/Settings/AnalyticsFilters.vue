@@ -24,7 +24,7 @@
 <script setup lang="ts">
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import { webPages } from "@/data/webPage";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 import { DateRangePicker, Select } from "frappe-ui";
 import { computed } from "vue";
 

@@ -1,32 +1,20 @@
 <template>
-	<div class="flex w-full flex-col gap-2">
-		<div class="relative flex w-full items-center gap-2">
-			<div class="flex w-fit max-w-[88px] shrink-0 items-center">
-				<InputLabel class="truncate" v-if="label">
-					{{ label }}
-				</InputLabel>
-			</div>
-
-			<div class="relative w-full">
-				<Autocomplete
-					placeholder="unset"
-					ref="autocompleteRef"
-					:modelValue="getModelValue()"
-					:getOptions="getOptions"
-					@update:modelValue="handleModelValueUpdate" />
-			</div>
-		</div>
-	</div>
+	<InlineInput
+		:label="label"
+		type="autocomplete"
+		ref="autocompleteRef"
+		:modelValue="getModelValue()"
+		:getOptions="getOptions"
+		@update:modelValue="handleModelValueUpdate" />
 </template>
 <script setup lang="ts">
-import Autocomplete from "@/components/Controls/Autocomplete.vue";
-import useBlockDataStore from "@/stores/blockDataStore";
+import InlineInput from "@/components/Controls/InlineInput.vue";
+import { useBlockDataStore } from "@/stores/blockStore";
 import blockController from "@/utils/blockController";
-import { getDataArray, getDefaultPropsList, getParentProps, getStandardPropValue } from "@/utils/helpers";
+import { getDataArray, getDefaultPropsList, getParentProps } from "@/utils/helpers";
 import { computed, ref, watch } from "vue";
 
 const props = defineProps<{
-	property: styleProperty;
 	label: string;
 	getModelValue: () => string;
 	setModelValue: (value: BlockVisibilityCondition) => void;
@@ -34,7 +22,7 @@ const props = defineProps<{
 
 const blockDataStore = useBlockDataStore();
 
-const autocompleteRef = ref<InstanceType<typeof Autocomplete> | null>(null);
+const autocompleteRef = ref<InstanceType<typeof InlineInput> | null>(null);
 
 const pageDataArray = computed(() => {
 	const currentBlock = blockController.getFirstSelectedBlock();
@@ -62,7 +50,7 @@ const parentProps = computed(() => {
 	if (!currentBlock) {
 		return [];
 	}
-	return Object.keys(getParentProps(currentBlock, {}));
+	return Object.keys(getParentProps(currentBlock));
 });
 const defaultProps = computed(() => {
 	const currentBlock = blockController.getFirstSelectedBlock();

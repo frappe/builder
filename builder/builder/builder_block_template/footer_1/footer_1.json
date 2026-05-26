@@ -8,7 +8,7 @@
  "modified": "2024-10-14 00:07:01.491709",
  "modified_by": "Administrator",
  "name": "Footer 1",
- "order": 7,
+ "sort_order": 7,
  "owner": "Administrator",
  "preview": "/builder_assets/Footer 1/footer_1.png",
  "preview_height": 2,

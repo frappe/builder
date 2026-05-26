@@ -5,8 +5,7 @@ import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore.js";
-import { posthog } from "@/telemetry";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import {
 	confirm,
@@ -18,8 +17,7 @@ import {
 import { createDocumentResource, createListResource, createResource } from "frappe-ui";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
-import { toast } from "vue-sonner";
-import { BuilderClientScript } from "../types/Builder/BuilderClientScript";
+import { toast } from "frappe-ui";
 
 const usePageStore = defineStore("pageStore", {
 	state: () => ({
@@ -178,9 +176,6 @@ const usePageStore = defineStore("pageStore", {
 					route_variables: this.routeVariables,
 				})
 				.then(async () => {
-					posthog.capture("builder_page_published", {
-						page: this.selectedPage,
-					});
 					this.activePage = await this.fetchActivePage(this.selectedPage as string);
 					if (openInBrowser) {
 						this.openPageInBrowser(this.activePage as BuilderPage);
@@ -198,21 +193,27 @@ const usePageStore = defineStore("pageStore", {
 			}
 		},
 
-		async unpublishPage() {
+		async unpublishPage(page?: BuilderPage) {
+			const targetName = page?.name || this.selectedPage;
+			const targetTitle = page?.page_title || page?.page_name || "this page";
 			const confirmed = await confirm(
-				"Are you sure you want to unpublish this page? It will no longer be accessible on the website.",
+				`Are you sure you want to unpublish "${targetTitle}"? It will no longer be accessible on the website.`,
 			);
 			if (!confirmed) {
 				return;
 			}
 			return webPages.setValue
 				.submit({
-					name: this.selectedPage,
+					name: targetName,
 					published: false,
 				})
 				.then(() => {
 					toast.success("Page unpublished");
-					this.setPage(this.selectedPage as string);
+					if (page) {
+						page.published = 0;
+					} else {
+						this.setPage(this.selectedPage as string);
+					}
 					builderSettings.reload();
 				});
 		},

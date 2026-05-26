@@ -5,6 +5,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import get_files_path
 from frappe.utils.caching import redis_cache
+from frappe.website.utils import clear_cache
 
 
 class BuilderSettings(Document):
@@ -19,6 +20,7 @@ class BuilderSettings(Document):
 		auto_convert_images_to_webp: DF.Check
 		body_html: DF.Code | None
 		default_language: DF.Data | None
+		disable_auto_dark_mode: DF.Check
 		execute_block_scripts_in_editor: DF.Literal["Don't Execute", "Restricted", "Unrestricted"]
 		favicon: DF.AttachImage | None
 		head_html: DF.Code | None
@@ -35,6 +37,9 @@ class BuilderSettings(Document):
 		self.handle_script_update("style", "css", "css", "page_styles")
 		if self.has_value_changed("home_page"):
 			frappe.cache.delete_key("home_page")
+		if self.has_value_changed("disable_auto_dark_mode"):
+			# Clear cache for all pages since this is a global setting
+			clear_cache()
 
 	def handle_script_update(self, attribute, script_type, extension, folder_name):
 		if self.has_value_changed(attribute):
@@ -80,7 +85,7 @@ def get_components():
 
 
 @frappe.whitelist()
-def replace_component(target_component: str, replace_with: str, filters: dict | None = None):
+def replace_component(target_component: str, replace_with: str, filters: str | None = None):
 	if not target_component or not replace_with:
 		return
 	# check permissions
@@ -95,7 +100,7 @@ def replace_component(target_component: str, replace_with: str, filters: dict | 
 	pages = frappe.get_all(
 		"Builder Page",
 		fields=["name"],
-		filters=filters,
+		filters=frappe.parse_json(filters) if filters else {},
 		or_filters={
 			"blocks": ["like", f"%{target_component}%"],
 			"draft_blocks": ["like", f"%{target_component}%"],
@@ -108,10 +113,12 @@ def replace_component(target_component: str, replace_with: str, filters: dict | 
 
 @frappe.whitelist()
 @redis_cache()
-def get_component_usage_count(component_id: str, filters: dict | None = None):
+def get_component_usage_count(component_id: str, filters: str | None = None):
+	if not frappe.has_permission("Builder Page", ptype="read"):
+		return {"count": 0, "pages": []}
 	pages = frappe.get_all(
 		"Builder Page",
-		filters=filters,
+		filters=frappe.parse_json(filters) if filters else {},
 		fields=["name", "page_title", "route", "preview"],
 		or_filters={
 			"blocks": ["like", f"%{component_id}%"],

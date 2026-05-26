@@ -7,25 +7,26 @@
 			:maxDimension="500"
 			@resize="(width) => (builderStore.builderLayout.leftPanelWidth = width)" />
 		<div
-			class="flex min-h-full flex-col items-center gap-3 border-r border-outline-gray-1 p-3"
+			class="flex min-h-full flex-col items-center gap-2 border-r border-outline-gray-1 p-3"
 			ref="miniSidebar">
 			<Tooltip v-for="option of leftPanelOptions" :key="option.value" :text="option.label" placement="right">
-				<button
-					class="flex size-8 items-center justify-center rounded text-ink-gray-7 hover:bg-surface-gray-2 focus:!bg-surface-gray-3"
+				<Button
+					:icon="option.icon"
 					:class="{
-						'bg-surface-gray-3 text-ink-gray-9': builderStore.leftPanelActiveTab === option.value,
+						'!text-ink-gray-6': builderStore.leftPanelActiveTab !== option.value,
 					}"
-					@click.stop="setActiveTab(option.value as LeftSidebarTabOption)">
-					<FeatherIcon
-						:name="option.icon"
-						v-if="typeof option.icon === 'string'"
-						class="size-4"></FeatherIcon>
-					<component :is="option.icon" v-else />
-				</button>
+					size="md"
+					:variant="
+						builderStore.leftPanelActiveTab === option.value ||
+						(showVariableManager && option.value === 'variables')
+							? 'subtle'
+							: 'ghost'
+					"
+					@click.stop="setActiveTab(option.value as LeftSidebarTabOption)"></Button>
 			</Tooltip>
 		</div>
 		<div
-			class="no-scrollbar hover:show-scrollbar relative min-h-full overflow-auto"
+			class="no-scrollbar relative min-h-full overflow-auto"
 			:style="{
 				width: `${builderStore.builderLayout.leftPanelWidth}px`,
 			}"
@@ -33,20 +34,21 @@
 				builderStore.leftPanelActiveTab === 'Layers' && canvasStore.activeCanvas?.clearSelection()
 			">
 			<div v-show="builderStore.leftPanelActiveTab === 'Blocks'">
-				<BuilderBlockTemplates class="mt-1 p-4 pt-3" />
+				<BuilderBlockTemplates class="px-3 pb-3" />
 			</div>
 			<div v-show="builderStore.leftPanelActiveTab === 'Assets'">
-				<BuilderAssets class="mt-1 p-4 pt-3" />
+				<BuilderAssets class="px-3 pb-3" />
 			</div>
 			<div v-show="builderStore.leftPanelActiveTab === 'Layers'" class="p-3 pr-0">
-				<span class="flex items-center gap-2 py-1 pb-2 text-sm capitalize text-ink-gray-4">
-					<FeatherIcon
-						:name="
+				<span class="flex items-center gap-2 pb-2 text-sm capitalize text-ink-gray-4">
+					<span
+						:class="[
 							canvasStore.activeCanvas?.canvasProps.breakpoints.find(
 								(b) => b.device === canvasStore.activeCanvas?.activeBreakpoint,
-							)?.icon || 'monitor'
-						"
-						class="size-3" />
+							)?.icon || 'lucide-monitor',
+							'size-3',
+						]"
+						aria-hidden="true" />
 					{{ canvasStore.activeCanvas?.activeBreakpoint }}
 				</span>
 				<BlockLayers
@@ -80,9 +82,7 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
-import ComponentIcon from "@/components/Icons/Component.vue";
 import LayersIcon from "@/components/Icons/Layers.vue";
-import PlusIcon from "@/components/Icons/Plus.vue";
 import VariableManager from "@/components/Modals/VariableManager.vue";
 import PageScript from "@/components/PageScript.vue";
 import useBuilderStore from "@/stores/builderStore";
@@ -90,6 +90,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { Tooltip } from "frappe-ui";
 import { inject, nextTick, Ref, ref, watch, watchEffect } from "vue";
+import { useRoute } from "vue-router";
 import BlockLayers from "./BlockLayers.vue";
 import BuilderAssets from "./BuilderAssets.vue";
 import BuilderBlockTemplates from "./BuilderBlockTemplates.vue";
@@ -108,11 +109,13 @@ const pageStore = usePageStore();
 const pageCanvas = inject("pageCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
 const fragmentCanvas = inject("fragmentCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
 
+const route = useRoute();
+
 const leftPanelOptions = [
 	{
 		label: "Insert",
 		value: "Blocks",
-		icon: PlusIcon,
+		icon: "lucide-plus",
 	},
 	{
 		label: "Layers",
@@ -122,17 +125,17 @@ const leftPanelOptions = [
 	{
 		label: "Components",
 		value: "Assets",
-		icon: ComponentIcon,
+		icon: "lucide-box",
 	},
 	{
 		label: "Code",
 		value: "Code",
-		icon: "code",
+		icon: "lucide-code",
 	},
 	{
 		label: "Variables",
 		value: "variables",
-		icon: "aperture",
+		icon: "lucide-aperture",
 	},
 ];
 
@@ -141,6 +144,7 @@ const setActiveTab = (tab: LeftSidebarTabOption) => {
 		showVariableManager.value = !showVariableManager.value;
 	} else {
 		builderStore.leftPanelActiveTab = tab;
+		showVariableManager.value = false;
 	}
 };
 
@@ -151,6 +155,13 @@ watchEffect(() => {
 		builderStore.activeLayers = componentLayers.value;
 	}
 });
+
+watch(
+	() => route.fullPath,
+	() => {
+		showVariableManager.value = false;
+	},
+);
 
 // moved out of BlockLayers for performance
 // TODO: Find a better way to do this

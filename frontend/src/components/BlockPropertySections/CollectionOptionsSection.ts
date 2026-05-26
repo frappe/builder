@@ -1,8 +1,6 @@
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
-import useBlockDataStore from "@/stores/blockDataStore";
-import useCanvasStore from "@/stores/canvasStore";
+import { useBlockDataStore } from "@/stores/blockStore";
 import blockController from "@/utils/blockController";
-import { FeatherIcon } from "frappe-ui";
 import { computed, h } from "vue";
 
 const keyOptions = computed(() => {
@@ -22,7 +20,6 @@ const keyOptions = computed(() => {
 		.getFirstSelectedBlock()
 		?.getRepeaterParent()
 		?.getDataKey("comesFrom") as BlockDataKey["comesFrom"] | undefined;
-
 
 	function processObject(obj: Record<string, any>, prefix = "", resultArray: string[] = []) {
 		if (!obj || typeof obj !== "object") {
@@ -50,10 +47,7 @@ const keyOptions = computed(() => {
 
 	if (propsOfComponentRoot && !isPropsBasedRepeater) {
 		Object.entries(propsOfComponentRoot).forEach(([key, value]) => {
-			if (
-				value.isStandard &&
-				(value.propOptions?.type == "array" || value.propOptions?.type == "object")
-			) {
+			if (value.isStandard && (value.propOptions?.type == "array" || value.propOptions?.type == "object")) {
 				repeatableProps.push(key);
 			}
 		});
@@ -63,30 +57,21 @@ const keyOptions = computed(() => {
 		result.push({
 			label: item,
 			value: `${item}--dataScript`,
-			prefix: h(FeatherIcon, {
-				name: "zap",
-				class: "size-3",
-			}),
+			prefix: h("span", { class: "lucide-zap size-3", "aria-hidden": "true" }),
 		});
 	});
 	repeatableBlockDataKeys.forEach((item) => {
 		result.push({
 			label: item,
 			value: `${item}--blockDataScript`,
-			prefix: h(FeatherIcon, {
-				name: "zap",
-				class: "size-3",
-			}),
+			prefix: h("span", { class: "lucide-zap size-3", "aria-hidden": "true" }),
 		});
 	});
 	repeatableProps.forEach((prop) => {
 		result.push({
 			label: prop,
 			value: `${prop}--props`,
-			prefix: h(FeatherIcon, {
-				name: "git-commit",
-				class: "size-3",
-			}),
+			prefix: h("span", { class: "lucide-git-commit size-3", "aria-hidden": "true" }),
 		});
 	});
 

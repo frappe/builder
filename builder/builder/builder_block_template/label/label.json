@@ -10,5 +10,6 @@
  "name": "Label",
  "owner": "Administrator",
  "preview": "/builder_assets/Label/label.png",
- "template_name": "Label"
+ "template_name": "Label",
+ "sort_order": 18
 }

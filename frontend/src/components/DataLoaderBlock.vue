@@ -15,7 +15,7 @@
 			:readonly="readonly"
 			:breakpoint="breakpoint"
 			:isChildOfComponent="block.isExtendedFromComponent()"
-			:repeater-index="index"
+			:repeater-index="getRepeaterIndex(index)"
 			v-for="(_data, index) in blockRepeaterData" />
 	</div>
 </template>
@@ -27,7 +27,7 @@ import { getDataForKey, getStandardPropValue } from "@/utils/helpers";
 import { Ref, computed, ref } from "vue";
 import BuilderBlock from "./BuilderBlock.vue";
 import blockController from "@/utils/blockController";
-import useBlockDataStore from "@/stores/blockDataStore";
+import { useBlockDataStore } from "@/stores/blockStore";
 
 const pageStore = usePageStore();
 const blockDataStore = useBlockDataStore();
@@ -35,6 +35,8 @@ const blockDataStore = useBlockDataStore();
 const props = withDefaults(
 	defineProps<{
 		block: Block;
+		uid?: string;
+		repeaterIndex?: string | number | null;
 		preview?: boolean;
 		breakpoint?: string;
 		data?: Record<string, any> | null;
@@ -56,7 +58,7 @@ const repeatingFrom = computed(() => {
 
 const blockRepeaterData = computed(() => {
 	const pageData = props.data || pageStore.pageData;
-	const blockData = blockDataStore.getBlockData(props.block.blockId) || {};
+	const blockData = blockDataStore.getBlockData(props.uid || props.block.blockId) || {};
 	const key = props.block.getDataKey("key");
 	if (pageData && repeatingFrom.value === "dataScript" && key) {
 		const data = getDataForKey(pageData, key);
@@ -114,6 +116,16 @@ const blockRepeaterData = computed(() => {
 		return [{}];
 	}
 });
+
+const getRepeaterIndex = (index: number | string) => {
+	if (props.repeaterIndex !== undefined) {
+		const parsedPropIndex =
+			typeof props.repeaterIndex === "string" ? parseInt(props.repeaterIndex, 10) : props.repeaterIndex;
+		const parsedIndex = typeof index === "string" ? parseInt(index, 10) : index;
+		return (parsedPropIndex || 0) * 10 + parsedIndex;
+	}
+	return index;
+};
 
 defineExpose({
 	component,

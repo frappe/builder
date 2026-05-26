@@ -3,9 +3,12 @@
 		<template v-slot="{ open }">
 			<div class="flex cursor-pointer items-center gap-2">
 				<img src="/builder_logo.png" alt="logo" class="h-7" />
-				<FeatherIcon
-					:name="open ? 'chevron-up' : 'chevron-down'"
-					class="h-4 w-4 !text-gray-700 dark:!text-gray-200"></FeatherIcon>
+				<span
+					:class="[
+						open ? 'lucide-chevron-up' : 'lucide-chevron-down',
+						'h-4 w-4 !text-gray-700 dark:!text-gray-200',
+					]"
+					aria-hidden="true" />
 			</div>
 		</template>
 	</Dropdown>
@@ -13,7 +16,7 @@
 <script setup lang="ts">
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 import { triggerCopyEvent } from "@/utils/helpers";
 import { useDark, useToggle } from "@vueuse/core";
 import { Dropdown } from "frappe-ui";
@@ -27,7 +30,7 @@ const router = useRouter();
 const toggleDark = useToggle(isDark);
 const canvasStore = useCanvasStore();
 
-const emit = defineEmits(["showSettings"]);
+const emit = defineEmits(["showSettings", "showShortcuts"]);
 
 const handleCopyPage = () => {
 	if (!pageStore.activePage) return;
@@ -40,7 +43,9 @@ const mainMenuOptions = [
 	{
 		group: "Builder",
 		hideLabel: true,
-		items: [{ label: "Back to Dashboard", onClick: () => router.push({ name: "home" }), icon: "arrow-left" }],
+		items: [
+			{ label: "Back to Dashboard", onClick: () => router.push({ name: "home" }), icon: "lucide-arrow-left" },
+		],
 	},
 	{
 		group: "Page",
@@ -49,18 +54,18 @@ const mainMenuOptions = [
 			{
 				label: "New Page",
 				onClick: () => router.push({ name: "builder", params: { pageId: "new" } }),
-				icon: "plus",
+				icon: "lucide-plus",
 			},
 			{
 				label: "Copy Page",
 				onClick: handleCopyPage,
-				icon: "clipboard",
+				icon: "lucide-clipboard",
 				condition: () => Boolean(pageStore.activePage),
 			},
 			{
 				label: "Duplicate Page",
 				onClick: () => pageStore.duplicatePage(pageStore.activePage as BuilderPage),
-				icon: "copy",
+				icon: "lucide-copy",
 			},
 			{
 				label: "Delete Page",
@@ -70,7 +75,7 @@ const mainMenuOptions = [
 						router.push({ name: "home" });
 					});
 				},
-				icon: "trash-2",
+				icon: "lucide-trash-2",
 				condition: () => !Boolean(pageStore.activePage?.is_standard),
 			},
 		],
@@ -82,16 +87,17 @@ const mainMenuOptions = [
 			{
 				label: `Toggle Theme`,
 				onClick: () => toggleDark(),
-				icon: isDark ? "sun" : "moon",
+				icon: isDark ? "lucide-sun" : "lucide-moon",
 			},
-			{ label: "Settings", onClick: () => emit("showSettings"), icon: "settings" },
+			{ label: "Settings", onClick: () => emit("showSettings"), icon: "lucide-settings" },
+			{ label: "Shortcuts", onClick: () => emit("showShortcuts"), icon: "lucide-command" },
 			{
 				label: "Help",
 				onClick: () => {
 					// @ts-ignore
 					window.open("https://t.me/frappebuilder");
 				},
-				icon: "info",
+				icon: "lucide-info",
 			},
 		],
 	},

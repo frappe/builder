@@ -8,7 +8,7 @@
  "modified": "2024-09-19 13:09:29.235170",
  "modified_by": "Administrator",
  "name": "Heading",
- "order": 10,
+ "sort_order": 10,
  "owner": "Administrator",
  "preview": "/builder_assets/Heading/heading.png",
  "preview_height": 1,

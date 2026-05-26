@@ -4,10 +4,13 @@ import re
 import shutil
 import socket
 from dataclasses import dataclass
+from functools import wraps
 from os.path import join
 from urllib.parse import unquote, urlparse
 
 import frappe
+import yaml
+from frappe.model.document import Document
 from frappe.modules.import_file import import_file_by_path
 from frappe.utils import get_url
 from frappe.utils.html_utils import unescape_html
@@ -22,7 +25,29 @@ from frappe.utils.safe_exec import (
 	safe_exec_flags,
 )
 from RestrictedPython import compile_restricted
+from RestrictedPython import safe_globals as restricted_safe_globals
 from werkzeug.routing import Rule
+
+
+def has_page_write(message: str | None = None):
+	"""Decorator to check if user has permission to edit Builder Page.
+
+	Args:
+		message: Custom error message to display if permission is denied.
+			 If not provided, defaults to "You do not have permission to modify pages"
+	"""
+
+	def decorator(fn):
+		@wraps(fn)
+		def wrapper(*args, **kwargs):
+			if not frappe.has_permission("Builder Page", ptype="write"):
+				error_message = message or frappe._("You do not have permission to modify pages")
+				frappe.throw(error_message)
+			return fn(*args, **kwargs)
+
+		return wrapper
+
+	return decorator
 
 
 @dataclass
@@ -225,6 +250,7 @@ def get_safer_globals():
 	out._iter_unpack_sequence_ = safe_globals["_iter_unpack_sequence_"]
 
 	# add common python builtins
+	out.update(restricted_safe_globals)
 	out.update(get_python_builtins())
 
 	return out
@@ -404,12 +430,29 @@ def escape_single_quotes(text):
 
 
 def camel_case_to_kebab_case(text, remove_spaces=False):
+	# Used to convert camelCase css properties to kebab-case, e.g. backgroundColor → background-color
 	if not text:
 		return ""
 	text = re.sub(r"(?<!^)(?=[A-Z])", "-", text).lower()
+	# Add leading hyphen for vendor-prefixed CSS properties
+	# e.g. WebkitBackgroundClip → -webkit-background-clip
+	if re.match(r"^(webkit|moz|ms|o)-", text):
+		text = f"-{text}"
 	if remove_spaces:
 		text = text.replace(" ", "")
 	return text
+
+
+def sanitize_style_value(value):
+	if not isinstance(value, str):
+		return value
+	if value.count("(") != value.count(")"):
+		value = value.replace("(", "\\(").replace(")", "\\)")
+	if value.count("'") % 2 != 0:
+		value = value.replace("'", "\\'")
+	if value.count('"') % 2 != 0:
+		value = value.replace('"', '\\"')
+	return value
 
 
 def execute_script(script, _locals, script_filename):
@@ -637,13 +680,23 @@ def get_export_paths(app_path, export_name):
 	}
 
 
+def to_dict_with_fallback(obj):
+	try:
+		return frappe._dict(obj)
+	except TypeError:
+		if isinstance(obj, Document):
+			return obj.as_dict()
+		else:
+			raise
+
+
 def combine(a, b):
 	if a is None:
 		return b
 	if b is None:
 		return a
-	res = dict(a)
-	res.update(b)
+	res = to_dict_with_fallback(a)
+	res.update(to_dict_with_fallback(b))
 	return res
 
 
@@ -652,13 +705,56 @@ def hash(s):
 
 
 def to_safe_json(data):
-	return frappe.as_json(data)
+	return frappe.as_json(data or {})
 
 
-def execute_script_and_combine(prev_block_data, block_data_script, props):
+def execute_script_and_combine(prev_block_data, block_data_script, props, block_id):
 	props = frappe._dict(frappe.parse_json(props or "{}"))
 	block_data = frappe._dict()
-	_locals = dict(block=frappe._dict(), props=props)
-	execute_script(unescape_html(block_data_script), _locals, "sample")
+	_locals = dict(block=to_dict_with_fallback(prev_block_data or {}), props=props)
+	execute_script(unescape_html(block_data_script), _locals, f"block_script_for_{block_id}")
 	block_data.update(_locals["block"])
 	return combine(prev_block_data, block_data)
+
+
+class CompactDumper(yaml.Dumper):
+	"""Minimal-whitespace YAML dumper.
+
+	Two optimizations over the default Dumper:
+	1. indentless=True — removes the extra 2-space indent on list items inside
+	   mappings, which compounds in deeply nested block trees.
+	2. Flow style for flat dicts — turns multi-line style blocks into single-line
+	   {k: v, k: v} inline mappings, saving ~60% of style-dict tokens.
+	"""
+
+	def increase_indent(self, flow=False, indentless=False):
+		return super().increase_indent(flow=flow, indentless=True)
+
+	def represent_mapping(self, tag, mapping, flow_style=None):
+		# Use flow style {k: v} only for flat dicts (no nested dicts or lists)
+		if flow_style is None:
+			flow_style = all(not isinstance(v, (dict, list)) for v in mapping.values())
+		return super().represent_mapping(tag, mapping, flow_style=flow_style)
+
+
+def _str_representer(dumper, data):
+	"""Use plain scalars where safe; single-quote only when the value contains
+	characters that would confuse the YAML parser."""
+	if any(c in data for c in (":", "{", "}", "[", "]", "#", "&", "*", "!", "|", ">", "'", '"', "\n")):
+		return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="'")
+	return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+
+
+CompactDumper.add_representer(str, _str_representer)
+
+
+def to_compact_yaml(data) -> str:
+	"""Serialize data to minimal YAML for LLM context."""
+	return yaml.dump(
+		data,
+		Dumper=CompactDumper,
+		sort_keys=False,
+		default_flow_style=False,
+		allow_unicode=True,
+		width=1000,  # prevent wrapping long values mid-token
+	)

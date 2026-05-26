@@ -7,8 +7,8 @@ import { computed } from "vue";
 
 const props = withDefaults(
 	defineProps<{
-		variant?: string;
 		disabled?: boolean;
+		variant?: "solid" | "subtle" | "ghost";
 	}>(),
 	{
 		variant: "subtle",

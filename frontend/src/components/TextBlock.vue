@@ -18,7 +18,7 @@
 			v-on-click-outside="handleClickOutside"
 			@mouseup="selectionTriggered = false"
 			v-if="editor && showEditor"
-			class="relative"
+			class="bg-clip-[inherit] relative bg-inherit [-webkit-background-clip:inherit] [background-image:inherit]"
 			:style="block.getRawStyles()"
 			@keydown="(e: KeyboardEvent) => bubbleMenu?.handleKeydown(e)" />
 		<slot />
@@ -35,13 +35,12 @@ import { getDataForKey, getPropValue } from "@/utils/helpers";
 import type { PauseId } from "@/utils/useCanvasHistory";
 import { Color } from "@tiptap/extension-color";
 import { FontFamily } from "@tiptap/extension-font-family";
-import { Link } from "@tiptap/extension-link";
-import TextStyle from "@tiptap/extension-text-style";
-import Underline from "@tiptap/extension-underline";
-import StarterKit from "@tiptap/starter-kit";
+import { TextStyle } from "@tiptap/extension-text-style";
+import { Underline } from "@tiptap/extension-underline";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { StarterKit } from "@tiptap/starter-kit";
 import { Editor, EditorContent, Extension } from "@tiptap/vue-3";
 import { vOnClickOutside } from "@vueuse/components";
-import { Plugin, PluginKey } from "prosemirror-state";
 import { Ref, computed, inject, onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
 
 const canvasStore = useCanvasStore();
@@ -56,6 +55,7 @@ let selectionTriggered = false as boolean;
 const props = withDefaults(
 	defineProps<{
 		block: Block;
+		uid: string;
 		preview?: boolean;
 		data?: Record<string, any>;
 		blockData?: Record<string, any> | null;
@@ -129,13 +129,7 @@ const getDynamicContent = () => {
 		let value;
 		if (props.block.getDataKey("comesFrom") === "props") {
 			// props are checked first as unavailablity of comesFrom means it comes from dataScript (legacy)
-			value = getPropValue(
-				props.block.getDataKey("key"),
-				props.block,
-				getDataScriptValue,
-				getBlockDataScriptValue,
-				props.defaultProps,
-			);
+			value = getPropValue(props.block.getDataKey("key"), props.block, props.uid);
 		} else if (props.block.getDataKey("comesFrom") === "blockDataScript") {
 			value = getBlockDataScriptValue(props.block.getDataKey("key"));
 		} else {
@@ -151,13 +145,7 @@ const getDynamicContent = () => {
 		?.forEach((dataKeyObj: BlockDataKey) => {
 			let value;
 			if (dataKeyObj.comesFrom === "props") {
-				value = getPropValue(
-					dataKeyObj.key as string,
-					props.block,
-					getDataScriptValue,
-					getBlockDataScriptValue,
-					props.defaultProps,
-				);
+				value = getPropValue(dataKeyObj.key as string, props.block, props.uid);
 			} else if (dataKeyObj.comesFrom === "blockDataScript") {
 				value = getBlockDataScriptValue(dataKeyObj.key as string);
 			} else {
@@ -206,32 +194,32 @@ watch(
 	() => textContent.value,
 	(newValue: string) => {
 		if (!editor.value) return;
-		
+
 		const innerHTML = getInnerHTML(editor.value);
 		if (newValue === innerHTML) return;
-		
+
 		// If plain text is entered but current content has HTML styling, preserve it
 		const isPlainText = !/<[^>]+>/.test(newValue);
 		const hasStyles = /<[^>]+style=/.test(innerHTML) || /<(em|strong|i|b|u)/.test(innerHTML);
-		
+
 		if (isPlainText && hasStyles && newValue.trim()) {
-			const tempDiv = document.createElement('div');
+			const tempDiv = document.createElement("div");
 			tempDiv.innerHTML = innerHTML;
-			
+
 			if (tempDiv.textContent !== newValue) {
 				// Update only the text content, preserving all HTML tags
 				const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_TEXT);
 				const textNode = walker.nextNode();
 				if (textNode) {
 					textNode.textContent = newValue;
-					editor.value.commands.setContent(tempDiv.innerHTML, false);
+					editor.value.commands.setContent(tempDiv.innerHTML, { emitUpdate: false });
 					return;
 				}
 			}
 			return;
 		}
-		
-		editor.value.commands.setContent(newValue || "", false);
+
+		editor.value.commands.setContent(newValue || "", { emitUpdate: false });
 	},
 );
 
@@ -269,16 +257,19 @@ if (!props.preview) {
 				editor.value = new Editor({
 					content: textContent.value,
 					extensions: [
-						StarterKit,
+						StarterKit.configure({
+							link: { openOnClick: false },
+							underline: false,
+						}),
 						TextStyle.extend({
 							addGlobalAttributes() {
 								return [
 									{
-										types: ['textStyle'],
+										types: ["textStyle"],
 										attributes: {
 											style: {
-												parseHTML: element => element.getAttribute('style'),
-												renderHTML: attributes => attributes.style ? { style: attributes.style } : {},
+												parseHTML: (element) => element.getAttribute("style"),
+												renderHTML: (attributes) => (attributes.style ? { style: attributes.style } : {}),
 											},
 										},
 									},
@@ -286,14 +277,11 @@ if (!props.preview) {
 							},
 						}),
 						Color.configure({
-							types: ['textStyle'],
+							types: ["textStyle"],
 						}),
 						FontFamily,
-						Link.configure({
-							openOnClick: false,
-						}),
-						Underline,
 						FontFamilyPasteRule,
+						Underline,
 					],
 					enablePasteRules: false,
 					onUpdate({ editor }) {
@@ -360,6 +348,7 @@ defineExpose({
 }
 
 .__text_block__ :deep(.ProseMirror) {
+	white-space: pre-wrap;
 	word-break: unset;
 }
 

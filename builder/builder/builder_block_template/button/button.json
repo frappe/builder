@@ -8,7 +8,7 @@
  "modified": "2024-09-19 13:08:10.275886",
  "modified_by": "Administrator",
  "name": "Button",
- "order": 1,
+ "sort_order": 1,
  "owner": "Administrator",
  "preview": "/builder_assets/Button/button.png",
  "preview_height": 1,

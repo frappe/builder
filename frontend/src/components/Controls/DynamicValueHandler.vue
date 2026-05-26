@@ -19,13 +19,13 @@
 						<div
 							class="w-full cursor-pointer truncate rounded bg-surface-gray-3 p-2 text-left font-mono text-p-sm text-ink-gray-9"
 							@click.stop="selectAndSetItem(selectedItem)">
-							{{ selectedItem.key }}
+							<MiddleTruncate :text="selectedItem.key" />
 							<p class="truncate text-xs text-ink-gray-5" :class="{ italic: getValue(selectedItem) == null }">
 								{{ getValue(selectedItem) == null ? "No Value Set" : getValue(selectedItem) }}
 							</p>
 						</div>
 					</li>
-					<li v-for="(item, index) in filteredItems" :key="index">
+					<li v-for="item in filteredItems" :key="item.key">
 						<div
 							class="w-full cursor-pointer truncate rounded p-2 text-left font-mono text-p-sm text-ink-gray-7 hover:bg-surface-gray-2"
 							:class="{
@@ -33,7 +33,7 @@
 									selectedItem?.key === item.key && selectedItem?.comesFrom === item.comesFrom,
 							}"
 							@click.stop="selectAndSetItem(item)">
-							{{ item.key }}
+							<MiddleTruncate :text="item.key" />
 							<p class="truncate text-xs text-ink-gray-5" :class="{ italic: getValue(item) == null }">
 								{{ getValue(item) == null ? "No Value Set" : getValue(item) }}
 							</p>
@@ -74,12 +74,13 @@
 
 <script setup lang="ts">
 import Block from "@/block";
-import useBlockDataStore from "@/stores/blockDataStore";
+import { useBlockDataStore } from "@/stores/blockStore";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
 import { getDataArray, getDefaultPropsList, getParentProps, getPropValue } from "@/utils/helpers";
 import { computed, ref } from "vue";
+import MiddleTruncate from "../MiddleTruncate.vue";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
@@ -148,7 +149,7 @@ const filteredBlockProps = computed(() => {
 	} else {
 		const currentBlock = props.block || blockController.getFirstSelectedBlock();
 		if (currentBlock) {
-			parentProps = Object.keys(getParentProps(currentBlock, {}));
+			parentProps = Object.keys(getParentProps(currentBlock));
 		} else {
 			parentProps = [];
 		}
@@ -185,15 +186,7 @@ const filteredItems = computed(() => {
 		(item) =>
 			item.key.toLowerCase().includes(query) ||
 			String(getDataScriptValue(item.key)).toLowerCase().includes(query) ||
-			String(
-				getPropValue(
-					item.key,
-					props.block || blockController.getFirstSelectedBlock(),
-					getDataScriptValue,
-					getBlockDataScriptValue,
-					defaultProps.value,
-				),
-			)
+			String(getPropValue(item.key, props.block || blockController.getFirstSelectedBlock()))
 				.toLowerCase()
 				.includes(query),
 	);
@@ -203,13 +196,7 @@ const selectedItem = ref<DynamicValueItem | null>(props.selectedValue || null);
 
 const getValue = (item: DynamicValueItem): any => {
 	if (item.comesFrom == "props") {
-		return getPropValue(
-			item.key,
-			props.block || blockController.getFirstSelectedBlock(),
-			getDataScriptValue,
-			getBlockDataScriptValue,
-			defaultProps.value,
-		);
+		return getPropValue(item.key, props.block || blockController.getFirstSelectedBlock());
 	} else if (item.comesFrom == "blockDataScript") {
 		return getBlockDataScriptValue(item.key);
 	} else {

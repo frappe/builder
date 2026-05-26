@@ -2,14 +2,12 @@
 # For license information, please see license.txt
 
 import copy
-import json
 import os
-from dataclasses import dataclass
-from typing import Union
 
 import frappe
 from frappe.model.document import Document
 from frappe.modules.export_file import export_to_files
+from frappe.utils.telemetry import capture
 from frappe.website.utils import clear_website_cache
 
 from builder.utils import Block
@@ -33,6 +31,7 @@ class BuilderComponent(Document):
 	def before_insert(self):
 		if not self.component_id:
 			self.component_id = frappe.generate_hash(length=16)
+		capture("builder_component_created", "builder")
 
 	def on_update(self):
 		self.queue_action("clear_page_cache")

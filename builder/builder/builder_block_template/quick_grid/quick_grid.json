@@ -8,7 +8,7 @@
  "modified": "2024-09-19 13:09:25.446243",
  "modified_by": "Administrator",
  "name": "Quick Grid",
- "order": 9,
+ "sort_order": 9,
  "owner": "Administrator",
  "preview": "/builder_assets/Quick Grid/quick-grid.png",
  "preview_height": 1,

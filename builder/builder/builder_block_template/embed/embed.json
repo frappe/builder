@@ -10,5 +10,6 @@
  "name": "Embed",
  "owner": "Administrator",
  "preview": "/builder_assets/Embed/embed.png",
- "template_name": "Embed"
+ "template_name": "Embed",
+ "sort_order": 17
 }

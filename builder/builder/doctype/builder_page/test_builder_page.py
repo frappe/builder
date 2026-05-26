@@ -1,7 +1,6 @@
 # Copyright (c) 2023, asdf and Contributors
 # See license.txt
 
-import json
 
 import frappe
 from frappe.desk.form.load import getdoc
@@ -15,6 +14,20 @@ data.update({
 	"items": [
 		{"name": "Item 1", "price": "$10"},
 		{"name": "Item 2", "price": "$20"}
+	],
+	"item_group": [
+		{
+			"group": [
+				{"name": "Item A1", "price": "$10"},
+				{"name": "Item A2", "price": "$20"}
+			],
+		},
+		{
+			"group": [
+				{"name": "Item B1", "price": "$15"},
+				{"name": "Item B2", "price": "$25"}
+			],
+		}
 	]
 })
 """
@@ -339,13 +352,19 @@ class TestBuilderPage(FrappeTestCase):
 			element="div",
 			originalElement="body",
 		)
-		header = Block(element="h1", innerHTML="Visible Header")
-		hidden_header = Block(element="h2", innerHTML="Hidden Header")
+		header = Block(element="h1", innerHTML="Visible Header H1")
+		hidden_header = Block(element="h2", innerHTML="Hidden Header H2")
+		hidden_header_h3 = Block(element="h3", innerHTML="Hidden Header H3")
+		header_h4 = Block(element="h4", innerHTML="Header H4")
+		header_h5 = Block(element="h5", innerHTML="Header H5")
 
 		header.visibilityCondition = {"key": "is_header_visible", "comesFrom": "dataScript"}
 		hidden_header.visibilityCondition = {"key": "is_hidden_header_visible", "comesFrom": "dataScript"}
+		hidden_header_h3.visibilityCondition = "is_hidden_header_visible"  # legacy
+		header_h4.visibilityCondition = ""
+		header_h5.visibilityCondition = {"key": "", "comesFrom": "dataScript"}
 
-		body.attach_children(header, hidden_header)
+		body.attach_children(header, hidden_header, hidden_header_h3, header_h4, header_h5)
 
 		page = frappe.get_doc(
 			{
@@ -359,8 +378,11 @@ class TestBuilderPage(FrappeTestCase):
 		).insert()
 		try:
 			content = get_response_content("/visibility-key-test")
-			self.assertTrue("Visible Header" in get_html_for(content, "tag", "h1"))
-			self.assertFalse("Hidden Header" in get_html_for(content, "tag", "h2"))
+			self.assertTrue("Visible Header H1" in get_html_for(content, "tag", "h1"))
+			self.assertFalse("Hidden Header H2" in get_html_for(content, "tag", "h2"))
+			self.assertFalse("Hidden Header H3" in get_html_for(content, "tag", "h3"))
+			self.assertTrue("Header H4" in get_html_for(content, "tag", "h4"))
+			self.assertTrue("Header H5" in get_html_for(content, "tag", "h5"))
 		finally:
 			page.delete()
 
@@ -871,6 +893,158 @@ class TestBuilderPage(FrappeTestCase):
 				'src="/files/another-dark-mode-image.png"'
 				in get_html_for(content, "tag", "img", index=1, only_content=False)
 			)
+		finally:
+			page.delete()
+
+	def test_nested_repeater_from_page_data(self):
+		body = Block(
+			element="div",
+			originalElement="body",
+		)
+		parent_repeater = Block(element="div", isRepeaterBlock=True)
+		child_repeater = Block(element="div", isRepeaterBlock=True)
+		wrapper_div = Block(element="div")
+
+		parent_repeater.attach_data_key("item_group", "dataKey")
+		child_repeater.attach_data_key("group", "dataKey")
+
+		item_name = Block(element="h2")
+		item_price = Block(element="span")
+
+		item_name.set_dynamic_value("name", "key", "innerHTML")
+		item_price.set_dynamic_value("price", "key", "innerHTML")
+
+		wrapper_div.attach_children(item_name, item_price)
+		child_repeater.attach_children(wrapper_div)
+		parent_repeater.attach_children(child_repeater)
+		body.attach_children(parent_repeater)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Nested Repeater Blocks Test",
+				"published": 1,
+				"route": "/nested-repeater-blocks-test",
+				"page_data_script": repeater_page_data_script,
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/nested-repeater-blocks-test")
+			self.assertTrue("Item A1" in get_html_for(content, "tag", "h2"))
+			self.assertTrue("$10" in get_html_for(content, "tag", "span"))
+			self.assertTrue("Item A2" in get_html_for(content, "tag", "h2", index=1))
+			self.assertTrue("$20" in get_html_for(content, "tag", "span", index=1))
+			self.assertFalse("Item B1" in get_html_for(content, "tag", "h2"))
+			self.assertFalse("$15" in get_html_for(content, "tag", "span"))
+			self.assertFalse("Item B2" in get_html_for(content, "tag", "h2", index=1))
+			self.assertFalse("$25" in get_html_for(content, "tag", "span", index=1))
+		finally:
+			page.delete()
+
+	def test_set_fonts(self):
+		from builder.builder.doctype.builder_page.builder_page import set_fonts
+
+		font_map = {}
+		styles = [
+			{"fontFamily": "Inter", "fontWeight": "bold"},
+			{"fontFamily": "Inter", "fontWeight": 400},
+			{"fontFamily": "'Open Sans'", "fontWeight": "600"},
+			{"fontFamily": "Impact", "fontWeight": "800"},  # System font, should be skipped
+			{"fontFamily": "Inter", "fontWeight": "bold"},  # Duplicate
+		]
+
+		set_fonts(styles, font_map)
+
+		self.assertIn("Inter", font_map)
+		self.assertIn("Open Sans", font_map)
+		self.assertNotIn("Impact", font_map)
+
+		# Weights should be normalized to integers and deduplicated
+		self.assertEqual(font_map["Inter"]["weights"], [400, 700])
+		self.assertEqual(font_map["Open Sans"]["weights"], [600])
+
+	def test_set_fonts_inherits_font_family_from_ancestor(self):
+		"""set_fonts should use inherited_font when a style has fontWeight but no fontFamily."""
+		from builder.builder.doctype.builder_page.builder_page import set_fonts
+
+		font_map = {}
+		styles = [{"fontWeight": "600"}]
+
+		# Without inherited_font, nothing should be added
+		set_fonts(styles, font_map)
+		self.assertEqual(font_map, {})
+
+		# With inherited_font, the ancestor font should be registered
+		set_fonts(styles, font_map, inherited_font="Newsreader")
+		self.assertIn("Newsreader", font_map)
+		self.assertIn(600, font_map["Newsreader"]["weights"])
+
+	def test_font_weight_inherited_from_parent_block(self):
+		"""Child block with only fontWeight should inherit fontFamily from parent in font_map."""
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		blocks = [
+			{
+				"element": "div",
+				"originalElement": "body",
+				"baseStyles": {"fontFamily": "Newsreader"},
+				"children": [
+					{
+						"element": "h1",
+						"innerHTML": "Headline",
+						"baseStyles": {"fontWeight": "700"},
+						"children": [],
+					}
+				],
+			}
+		]
+		_, _, font_map, _ = get_block_html(blocks)
+		self.assertIn("Newsreader", font_map)
+		self.assertIn(700, font_map["Newsreader"]["weights"])
+
+	def test_intervar_font_skipped(self):
+		"""InterVar should not appear in the font_map — it is loaded via reset.css."""
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		blocks = [
+			{
+				"element": "div",
+				"originalElement": "body",
+				"baseStyles": {"fontFamily": "InterVar", "fontWeight": "400"},
+				"children": [],
+			}
+		]
+		_, _, font_map, _ = get_block_html(blocks)
+		self.assertNotIn("InterVar", font_map)
+		self.assertNotIn("intervar", font_map)
+
+	def test_block_script_error_traceback(self):
+		body = Block(
+			element="div",
+			originalElement="body",
+		)
+		div = Block(
+			element="div",
+			blockId="test-block",
+			innerHTML="Test Block",
+			blockDataScript="block.data = sample_error",
+		)
+		body.attach_children(div)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Block Script Error Test",
+				"published": 1,
+				"route": "/block-script-error-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+		try:
+			content = get_response_content("/block-script-error-test")
+			self.assertTrue("block_script_for_test_block" in content)
+			self.assertTrue("NameError: name &#x27;sample_error&#x27; is not defined" in content)
 		finally:
 			page.delete()
 

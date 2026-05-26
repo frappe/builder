@@ -12,134 +12,34 @@
 				:togglePopover="
 					() => {
 						togglePopover();
-						setSelectorPosition(modelColor);
+						contentRef?.syncPositions();
 					}
 				"
 				:isOpen="isOpen"></slot>
 		</template>
-		<template #body="{ close }">
-			<div ref="colorPicker" class="flex flex-col gap-2 rounded-lg bg-surface-white p-3 shadow-lg">
-				<div
-					ref="colorMap"
-					:style="colorMapStyle"
-					@mousedown.prevent="handleSelectorMove"
-					class="relative m-auto h-24 w-44 rounded-md"
-					@click.prevent="setColor">
-					<div
-						ref="colorSelector"
-						@mousedown.stop.prevent="handleSelectorMove"
-						:class="selectorClass"
-						:style="colorSelectorStyle"></div>
-				</div>
-				<div
-					ref="hueMap"
-					class="relative m-auto h-3 w-44 rounded-md"
-					@click="setHue"
-					@mousedown.prevent="handleHueSelectorMove"
-					:style="hueMapStyle">
-					<div
-						ref="hueSelector"
-						@mousedown="handleHueSelectorMove"
-						:class="hueSelectorClass"
-						:style="hueSelectorStyle"></div>
-				</div>
-				<div ref="colorPalette">
-					<div class="flex flex-wrap gap-1.5">
-						<div
-							v-for="color in colors"
-							:key="color"
-							class="h-3.5 w-3.5 cursor-pointer rounded-full shadow-sm"
-							@click="handleColorPaletteClick(color)"
-							:style="{ background: color }"></div>
-						<EyeDropperIcon v-if="isSupported" class="text-ink-gray-7" @click="() => open()" />
-					</div>
-				</div>
-				<Input
-					v-if="showInput"
-					type="text"
-					:modelValue="modelValue"
-					class="mt-2 w-44 text-sm"
-					placeholder="Set Color"
-					@update:modelValue="handleInputChange" />
-			</div>
+		<template #body>
+			<ColorPickerContent
+				ref="contentRef"
+				:modelValue="modelValue"
+				:showInput="showInput"
+				renderMode="popover"
+				@update:modelValue="emit('update:modelValue', $event)" />
 		</template>
 	</Popover>
-	<div
+	<ColorPickerContent
 		v-else
-		ref="colorPicker"
-		:class="
-			renderMode === 'inline'
-				? 'flex flex-col gap-2'
-				: 'flex flex-col gap-2 rounded-lg bg-surface-white p-3 shadow-lg'
-		">
-		<div
-			ref="colorMap"
-			:style="colorMapStyle"
-			@mousedown.prevent="handleSelectorMove"
-			class="relative m-auto h-24 w-44 rounded-md"
-			@click.prevent="setColor">
-			<div
-				ref="colorSelector"
-				@mousedown.stop.prevent="handleSelectorMove"
-				:class="selectorClass"
-				:style="colorSelectorStyle"></div>
-		</div>
-		<div
-			ref="hueMap"
-			class="relative m-auto h-3 w-44 rounded-md"
-			@click="setHue"
-			@mousedown.prevent="handleHueSelectorMove"
-			:style="hueMapStyle">
-			<div
-				ref="hueSelector"
-				@mousedown="handleHueSelectorMove"
-				:class="hueSelectorClass"
-				:style="hueSelectorStyle"></div>
-		</div>
-		<div ref="colorPalette">
-			<div class="flex flex-wrap gap-1.5">
-				<div
-					v-for="color in colors"
-					:key="color"
-					class="h-3.5 w-3.5 cursor-pointer rounded-full shadow-sm"
-					@click="handleColorPaletteClick(color)"
-					:style="{ background: color }"></div>
-				<EyeDropperIcon v-if="isSupported" class="text-ink-gray-7" @click="() => open()" />
-			</div>
-		</div>
-		<Input
-			v-if="showInput"
-			type="text"
-			:modelValue="modelValue"
-			class="mt-2 w-44 text-sm"
-			placeholder="Set Color"
-			@update:modelValue="handleInputChange" />
-	</div>
+		ref="contentRef"
+		:modelValue="modelValue"
+		:showInput="showInput"
+		renderMode="inline"
+		@update:modelValue="emit('update:modelValue', $event)" />
 </template>
 <script setup lang="ts">
-import EyeDropperIcon from "@/components/Icons/EyeDropper.vue";
-import useCanvasStore from "@/stores/canvasStore";
-import { HSVToHex, HexToHSV, getRGB } from "@/utils/helpers";
-import { useBuilderVariable } from "@/utils/useBuilderVariable";
-import { clamp, useEyeDropper } from "@vueuse/core";
 import { Popover } from "frappe-ui";
-import { Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
+import { ref } from "vue";
+import ColorPickerContent from "./ColorPickerContent.vue";
 
 type CSSColorValue = HashString | RGBString | `var(--${string})`;
-
-const { resolveVariableValue } = useBuilderVariable();
-
-const canvasStore = useCanvasStore();
-const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;
-const colorMap = ref(null) as unknown as Ref<HTMLDivElement>;
-
-const colorPickerPopover = ref<InstanceType<typeof Popover> | null>(null);
-
-const colorSelectorPosition = ref({ x: 0, y: 0 });
-const hueSelectorPosition = ref({ x: 0, y: 0 });
-let currentColor = "#FFF" as HashString;
-
-const { isSupported, sRGBHex, open } = useEyeDropper();
 
 const props = withDefaults(
 	defineProps<{
@@ -161,225 +61,12 @@ const props = withDefaults(
 		renderMode?: "popover" | "inline";
 		offset?: number;
 	}>(),
-	{
-		modelValue: null,
-		showInput: false,
-		placement: "left-start",
-		renderMode: "popover",
-		offset: 10,
-	},
+	{ modelValue: null, showInput: false, placement: "left-start", renderMode: "popover", offset: 10 },
 );
-
-const modelColor = computed(() => {
-	const color = props.modelValue;
-	if (!color) return null;
-	const resolvedColor = resolveVariableValue(color);
-	return getRGB(resolvedColor);
-});
 
 const emit = defineEmits(["update:modelValue"]);
-
-const colors = [
-	"#FFB3E6",
-	"#00B3E6",
-	"#E6B333",
-	"#3366E6",
-	"#999966",
-	"#99FF99",
-	"#B34D4D",
-	"#80B300",
-] as HashString[];
-
-if (!isSupported.value) {
-	colors.push("#B34D4D");
-}
-
-const colorMapStyle = computed(() => ({
-	background: `
-		linear-gradient(0deg, black, transparent),
-		linear-gradient(90deg, white, transparent),
-		hsl(${hue.value}, 100%, 50%)
-	`,
-}));
-
-const hueMapStyle = computed(() => ({
-	background: `
-		linear-gradient(90deg, hsl(0, 100%, 50%),
-		hsl(60, 100%, 50%), hsl(120, 100%, 50%),
-		hsl(180, 100%, 50%), hsl(240, 100%, 50%),
-		hsl(300, 100%, 50%), hsl(360, 100%, 50%))
-	`,
-}));
-
-const selectorClass =
-	"absolute rounded-full border border-black border-opacity-20 before:absolute before:h-full before:w-full before:rounded-full before:border-2 before:border-white before:!bg-[currentColor] after:absolute after:left-[2px] after:top-[2px] after:h-[calc(100%-4px)] after:w-[calc(100%-4px)] after:rounded-full after:border after:border-black after:border-opacity-20 after:bg-transparent";
-
-const hueSelectorClass =
-	"absolute rounded-full border border-[rgba(0,0,0,.2)] before:absolute before:h-full before:w-full before:rounded-full before:border-2 before:border-white before:bg-[currentColor] after:absolute after:left-[2px] after:top-[2px] after:h-[calc(100%-4px)] after:w-[calc(100%-4px)] after:rounded-full after:border after:border-[rgba(0,0,0,.2)] after:bg-transparent";
-
-const colorSelectorStyle = computed(
-	() =>
-		({
-			height: "12px",
-			width: "12px",
-			left: `calc(${colorSelectorPosition.value.x}px - 6px)`,
-			top: `calc(${colorSelectorPosition.value.y}px - 6px)`,
-			color: modelColor.value || "#FFF",
-			background: "transparent",
-		}) as StyleValue,
-);
-
-const hueSelectorStyle = computed(() => ({
-	height: "12px",
-	width: "12px",
-	left: `calc(${hueSelectorPosition.value.x}px - 6px)`,
-	color: `hsl(${hue.value}, 100%, 50%)`,
-	background: "transparent",
-}));
-
-const handleColorPaletteClick = (color: HashString) => {
-	setSelectorPosition(color);
-	updateColor();
-};
-
-const handleInputChange = (color: HashString) => {
-	if (!color) {
-		emit("update:modelValue", null);
-		return;
-	}
-	setSelectorPosition(color);
-	updateColor();
-};
-
-const setColorSelectorPosition = (color: string) => {
-	if (!colorMap.value) return;
-	const rect = colorMap.value.getBoundingClientRect();
-	if (!rect || !rect.width || !rect.height) return;
-
-	const { width, height } = rect;
-	const { s, v } = HexToHSV(color as HashString);
-	let x = clamp(s * width, 0, width);
-	let y = clamp((1 - v) * height, 0, height);
-	colorSelectorPosition.value = { x, y };
-};
-
-const setHueSelectorPosition = (color: string) => {
-	if (!hueMap.value) return;
-	const rect = hueMap.value.getBoundingClientRect();
-	if (!rect || !rect.width) return;
-
-	const { width } = rect;
-	const { h } = HexToHSV(color as HashString);
-	const left = (h / 360) * width;
-	hueSelectorPosition.value = { x: left, y: 0 };
-};
-
-const handleSelectorMove = (ev: MouseEvent) => {
-	setColor(ev);
-	const pauseId = canvasStore.activeCanvas?.history?.pause();
-	const mouseMove = (mouseMoveEvent: MouseEvent) => {
-		mouseMoveEvent.preventDefault();
-		setColor(mouseMoveEvent);
-	};
-	document.addEventListener("mousemove", mouseMove);
-	document.addEventListener(
-		"mouseup",
-		(mouseUpEvent) => {
-			document.removeEventListener("mousemove", mouseMove);
-			mouseUpEvent.preventDefault();
-			pauseId && canvasStore.activeCanvas?.history?.resume(pauseId, true);
-		},
-		{ once: true },
-	);
-};
-
-const handleHueSelectorMove = (ev: MouseEvent) => {
-	setHue(ev);
-	const pauseId = canvasStore.activeCanvas?.history?.pause();
-	const mouseMove = (mouseMoveEvent: MouseEvent) => {
-		mouseMoveEvent.preventDefault();
-		setHue(mouseMoveEvent);
-	};
-	document.addEventListener("mousemove", mouseMove);
-	document.addEventListener(
-		"mouseup",
-		(mouseUpEvent) => {
-			document.removeEventListener("mousemove", mouseMove);
-			mouseUpEvent.preventDefault();
-			pauseId && canvasStore.activeCanvas?.history?.resume(pauseId, true);
-		},
-		{ once: true },
-	);
-};
-
-function setColor(ev: MouseEvent) {
-	const clickPointX = ev.clientX;
-	const clickPointY = ev.clientY;
-	const colorMapBounds = colorMap.value.getBoundingClientRect();
-
-	let pointX = clickPointX - colorMapBounds.left;
-	let pointY = clickPointY - colorMapBounds.top;
-
-	pointX = clamp(pointX, 0, colorMapBounds.width);
-	pointY = clamp(pointY, 0, colorMapBounds.height);
-	colorSelectorPosition.value = { x: pointX, y: pointY };
-	updateColor();
-}
-
-function setHue(ev: MouseEvent) {
-	const hueMapBounds = hueMap.value.getBoundingClientRect();
-	const { clientX } = ev;
-	let point = clientX - hueMapBounds.left;
-	point = clamp(point, 0, hueMapBounds.width);
-	hueSelectorPosition.value = { x: point, y: 0 };
-	updateColor();
-}
-
-function setSelectorPosition(color: HashString | null) {
-	if (!color) {
-		colorSelectorPosition.value = { x: 0, y: 0 };
-		hueSelectorPosition.value = { x: 0, y: 0 };
-		return;
-	}
-	const resolvedColor = resolveVariableValue(color);
-	nextTick(() => {
-		setColorSelectorPosition(resolvedColor);
-		setHueSelectorPosition(resolvedColor);
-		currentColor = resolvedColor as HashString;
-	});
-}
-
-const hue = computed(() => {
-	if (!hueMap.value) return 0;
-	const positionX = hueSelectorPosition.value.x || 0;
-	const width = hueMap.value.getBoundingClientRect().width || 1;
-	return Math.round((positionX / width) * 360);
-});
-
-const updateColor = () => {
-	nextTick(() => {
-		const colorMapBounds = colorMap.value.getBoundingClientRect();
-		const s = Math.round((colorSelectorPosition.value.x / colorMapBounds.width) * 100);
-		const v = 100 - Math.round((colorSelectorPosition.value.y / colorMapBounds.height) * 100);
-		const h = hue.value;
-		currentColor = HSVToHex(h, s, v);
-		emit("update:modelValue", currentColor);
-	});
-};
-
-watch(sRGBHex, () => {
-	if (!isSupported.value || !sRGBHex.value) return;
-	emit("update:modelValue", sRGBHex.value);
-});
-
-watch(
-	() => props.modelValue,
-	(color) => {
-		if (color === currentColor) return;
-		setSelectorPosition(getRGB(color));
-	},
-	{ immediate: true },
-);
+const colorPickerPopover = ref<InstanceType<typeof Popover> | null>(null);
+const contentRef = ref<InstanceType<typeof ColorPickerContent> | null>(null);
 
 function togglePopover(open?: boolean) {
 	if (open === undefined || open) {
@@ -389,7 +76,5 @@ function togglePopover(open?: boolean) {
 	}
 }
 
-defineExpose({
-	togglePopover,
-});
+defineExpose({ togglePopover });
 </script>

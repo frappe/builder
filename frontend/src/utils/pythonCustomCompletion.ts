@@ -93,6 +93,7 @@ export default function customPythonCompletions(
 				...(mode == "block"
 					? [
 							{ label: "block", type: "class", boost: BOOST_INDEX },
+							{ label: "prev_blocks", type: "class", boost: BOOST_INDEX },
 							{ label: "props", type: "class", boost: BOOST_INDEX },
 					  ]
 					: [
