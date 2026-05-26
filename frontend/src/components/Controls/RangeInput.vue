@@ -10,7 +10,8 @@
 			:step="step"
 			@focus="$emit('focus')"
 			@blur="$emit('blur')"
-			@input="$emit('update:modelValue', $event)"></BuilderInput>
+			@input="$emit('update:modelValue', $event)"
+			@update:modelValue="$emit('update:modelValue', $event)"></BuilderInput>
 		<input
 			type="range"
 			:max="max"

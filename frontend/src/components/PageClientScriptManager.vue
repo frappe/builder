@@ -47,17 +47,17 @@
 											onClick: () => {
 												script.editable = true;
 											},
-											icon: 'edit',
+											icon: 'lucide-edit',
 										},
 										{
 											label: 'Remove Script',
 											onClick: () => deleteScript(script.name),
-											icon: 'trash',
+											icon: 'lucide-trash',
 										},
 									]">
 									<template v-slot="{ open }">
 										<BuilderButton
-											icon="more-horizontal"
+											icon="lucide-more-horizontal"
 											size="sm"
 											variant="ghost"
 											@click="open"></BuilderButton>
@@ -90,7 +90,7 @@
 						<Autocomplete
 							v-if="clientScriptResource.data && clientScriptResource.data.length > 0"
 							:options="clientScriptOptions"
-							bodyClasses="overflow-hidden [&>ul]:!bg-surface-white"
+							bodyClasses="overflow-hidden [&>ul]:!bg-surface-white max-w-[300px]"
 							@update:modelValue="(option: Option) => attachScript(option.value)"
 							placeholder="Attach Script">
 							<template v-slot:target="{ open }">
@@ -135,17 +135,18 @@
 import EditableSpan from "@/components/EditableSpan.vue";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
-import { posthog } from "@/telemetry";
-import { BuilderClientScript } from "@/types/Builder/BuilderClientScript";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import { Autocomplete, createListResource, createResource, Dropdown } from "frappe-ui";
+import { useTelemetry } from "frappe-ui/frappe";
 import { computed, nextTick, ref, watch } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 import draggable from "vuedraggable";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import CSSIcon from "./Icons/CSS.vue";
 import GripVertical from "./Icons/GripVertical.vue";
 import JavaScriptIcon from "./Icons/JavaScript.vue";
+
+const { capture } = useTelemetry();
 
 const scriptEditor = ref<InstanceType<typeof CodeEditor> | null>(null);
 const builderStore = useBuilderStore();
@@ -259,9 +260,7 @@ const addScript = (scriptType: "JavaScript" | "CSS") => {
 					builder_script: res.name,
 				})
 				.then(async () => {
-					posthog.capture("builder_client_script_added", {
-						script_type: res.script_type,
-					});
+					// builder_client_script_created is captured in the backend (before_insert)
 					await attachedScriptResource.reload();
 					attachedScriptResource.data?.forEach((script: attachedScript) => {
 						if (script.script_name === res.name) {
@@ -284,7 +283,7 @@ const attachScript = (builder_script_name: string) => {
 			builder_script: builder_script_name,
 		})
 		.then(async () => {
-			posthog.capture("builder_client_script_attached");
+			capture("builder_client_script_attached");
 			await attachedScriptResource.reload();
 			attachedScriptResource.data?.forEach((script: attachedScript) => {
 				if (script.script_name === builder_script_name) {

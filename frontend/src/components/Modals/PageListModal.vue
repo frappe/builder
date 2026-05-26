@@ -1,12 +1,6 @@
 <template>
-	<Dialog
-		class="overscroll-none"
-		v-model="showModel"
-		:options="{
-			title: 'Used in following pages',
-			size: 'xl',
-		}">
-		<template #body-content>
+	<Dialog class="overscroll-none" v-model="showModel" title="Used in following pages" size="xl">
+		<template #default>
 			<div class="max-h-[80vh] overflow-y-auto">
 				<div v-for="page in pages">
 					<router-link
@@ -35,7 +29,7 @@
 </template>
 <script setup lang="ts">
 import Dialog from "@/components/Controls/Dialog.vue";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 import { ref } from "vue";
 const showModel = ref(true);
 defineProps<{

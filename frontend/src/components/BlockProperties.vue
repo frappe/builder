@@ -1,6 +1,18 @@
 <template>
-	<div v-if="blockController.isBlockSelected()" class="flex select-none flex-col-reverse pb-16">
-		<div class="mt-1 flex flex-col gap-3">
+	<div v-if="blockController.isBlockSelected()" class="isolate flex select-none flex-col pb-16">
+		<div class="sticky top-0 z-[1] mt-[-16px] flex w-full bg-surface-white py-3">
+			<BuilderInput
+				ref="searchInput"
+				type="text"
+				placeholder="Search properties"
+				v-model="builderStore.propertyFilter"
+				@input="
+					(value: string) => {
+						builderStore.propertyFilter = value;
+					}
+				" />
+		</div>
+		<div class="mt-2 flex flex-col gap-3">
 			<CollapsibleSection
 				:sectionName="section.name"
 				v-for="section in sections"
@@ -14,18 +26,6 @@
 				</template>
 			</CollapsibleSection>
 		</div>
-		<div class="sticky top-0 mt-[-16px] flex w-full bg-surface-white py-3">
-			<BuilderInput
-				ref="searchInput"
-				type="text"
-				placeholder="Search properties"
-				v-model="builderStore.propertyFilter"
-				@input="
-					(value: string) => {
-						builderStore.propertyFilter = value;
-					}
-				" />
-		</div>
 	</div>
 	<div v-else>
 		<p class="mt-2 text-center text-sm text-ink-gray-6">Select a block to edit properties</p>
@@ -37,6 +37,7 @@ import collectionOptionsSection from "@/components/BlockPropertySections/Collect
 import customAttributesSection from "@/components/BlockPropertySections/CustomAttributesSection";
 import dataKeySection from "@/components/BlockPropertySections/DataKeySection";
 import dimensionSection from "@/components/BlockPropertySections/DimenstionSection";
+import editorConfigSection from "@/components/BlockPropertySections/EditorConfigSection";
 import HTMLOptionsSection from "@/components/BlockPropertySections/HTMLOptionsSection";
 import imageOptionsSection from "@/components/BlockPropertySections/ImageOptionsSection";
 import inputOptionsSection from "@/components/BlockPropertySections/InputOptionsSection";
@@ -46,11 +47,11 @@ import optionsSection from "@/components/BlockPropertySections/OptionsSection";
 import positionSection from "@/components/BlockPropertySections/PositionSection";
 import rawStyleSection from "@/components/BlockPropertySections/RawStyleSection";
 import spacingSection from "@/components/BlockPropertySections/SpacingSection";
+import standardPropsInputSection from "@/components/BlockPropertySections/StandardPropsInputSection";
 import styleSection from "@/components/BlockPropertySections/StyleSection";
 import transitionSection from "@/components/BlockPropertySections/TransitionSection";
 import typographySection from "@/components/BlockPropertySections/TypographySection";
 import videoOptionsSection from "@/components/BlockPropertySections/VideoOptionsSection";
-import standardPropsInputSection from "@/components/BlockPropertySections/StandardPropsInputSection";
 import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
 import { toValue } from "@vueuse/core";
@@ -125,6 +126,7 @@ const sections = [
 	dataKeySection,
 	accessibilitySection,
 	customAttributesSection,
+	editorConfigSection,
 	rawStyleSection,
 ] as PropertySection[];
 </script>

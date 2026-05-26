@@ -5,7 +5,7 @@ import { getRootBlockTemplate } from "@/utils/helpers";
 import { useCanvasHistory } from "@/utils/useCanvasHistory";
 import { useElementBounding } from "@vueuse/core";
 import { nextTick, reactive, ref, Ref } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 
 const canvasStore = useCanvasStore();
 
@@ -156,9 +156,9 @@ export function useCanvasUtils(
 		}
 	}
 
-	function setRootBlock(newBlock: Block, resetCanvas = false) {
+	function setRootBlock(newBlock: Block, resetCanvas = false, resetHistory = true) {
 		rootBlock.value = newBlock;
-		if (canvasHistory.value) {
+		if (canvasHistory.value && resetHistory) {
 			canvasHistory.value.dispose();
 			setupHistory();
 		}

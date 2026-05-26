@@ -4,7 +4,7 @@
 			<router-link
 				:to="{ name: 'builder', params: { pageId: route.params.pageId || 'new' } }"
 				class="flex w-fit text-sm text-ink-gray-7 hover:text-ink-gray-9">
-				<FeatherIcon name="arrow-left" class="mr-4 h-4 w-4 cursor-pointer" />
+				<span class="lucide-arrow-left mr-4 h-4 w-4 cursor-pointer" aria-hidden="true" />
 				Back to builder
 			</router-link>
 			<div class="flex gap-1">
@@ -16,19 +16,20 @@
 						'bg-surface-white': activeBreakpoint === breakpoint.device,
 					}"
 					@click.stop="() => setWidth(breakpoint.device)">
-					<FeatherIcon
-						:name="breakpoint.icon"
-						class="h-6 w-5 text-ink-gray-4"
-						:class="{
-							'text-ink-gray-9': activeBreakpoint === breakpoint.device,
-						}" />
+					<span
+						:class="[
+							breakpoint.icon,
+							'h-6 w-5 text-ink-gray-4',
+							{ 'text-ink-gray-9': activeBreakpoint === breakpoint.device },
+						]"
+						aria-hidden="true" />
 				</div>
 			</div>
 			<div class="flex items-center gap-4">
 				<Tooltip text="Toggle Dark Mode" :hoverDelay="0.6">
 					<Button
 						variant="ghost"
-						:icon="isDark ? 'sun' : 'moon'"
+						:icon="isDark ? 'lucide-sun' : 'lucide-moon'"
 						class="h-8 w-8 cursor-pointer text-ink-gray-8 outline-none"
 						@click="() => transitionTheme(toggleDark)" />
 				</Tooltip>
@@ -77,12 +78,13 @@ import PanelResizer from "@/components/PanelResizer.vue";
 import PublishButton from "@/components/PublishButton.vue";
 import router from "@/router";
 import usePageStore from "@/stores/pageStore";
-import { posthog } from "@/telemetry";
-import { useShortcut } from "@/utils/useShortcut";
 import { useDark, useToggle } from "@vueuse/core";
-import { Tooltip } from "frappe-ui";
+import { Tooltip, useShortcut } from "frappe-ui";
+import { useTelemetry } from "frappe-ui/frappe";
 import { Ref, computed, onActivated, ref, watch, watchEffect } from "vue";
 import { useRoute } from "vue-router";
+
+const { capture } = useTelemetry();
 
 const route = useRoute();
 const maxWidth = window.innerWidth * 0.92;
@@ -94,17 +96,17 @@ const pageStore = usePageStore();
 
 const deviceBreakpoints = [
 	{
-		icon: "monitor",
+		icon: "lucide-monitor",
 		device: "desktop",
 		width: 1400,
 	},
 	{
-		icon: "tablet",
+		icon: "lucide-tablet",
 		device: "tablet",
 		width: 800,
 	},
 	{
-		icon: "smartphone",
+		icon: "lucide-smartphone",
 		device: "mobile",
 		width: 420,
 	},
@@ -231,6 +233,6 @@ const setPreviewURL = () => {
 onActivated(() => {
 	saveDraftTiles();
 	setPreviewURL();
-	posthog.capture("builder_page_preview_viewed");
+	capture("builder_page_preview_viewed");
 });
 </script>

@@ -17,8 +17,8 @@ import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { confirm, detachBlockFromComponent, getBlockCopy, triggerCopyEvent } from "@/utils/helpers";
 import { useStorage } from "@vueuse/core";
-import { Ref, nextTick, ref } from "vue";
-import { toast } from "vue-sonner";
+import { Ref, inject, nextTick, ref } from "vue";
+import { toast } from "frappe-ui";
 
 const builderStore = useBuilderStore();
 const componentStore = useComponentStore();
@@ -45,6 +45,11 @@ const showContextMenu = (event: MouseEvent, refBlock: Block) => {
 
 const copiedStyle = useStorage("copiedStyle", { blockId: "", style: {} }, sessionStorage) as Ref<StyleCopy>;
 
+const editWithAIFn = inject<((block: Block) => void) | undefined>("editWithAI", undefined);
+const runDirectAI = inject<
+	((block: Block, type: "rewrite_text" | "replace_image", customPrompt?: string) => void) | undefined
+>("runDirectAI", undefined);
+
 const copyStyle = () => {
 	copiedStyle.value = {
 		blockId: block.value.blockId,
@@ -61,6 +66,34 @@ const duplicateBlock = () => {
 };
 
 const contextMenuOptions: ContextMenuOption[] = [
+	{
+		label: "Edit with AI",
+		action: () => {
+			if (editWithAIFn) {
+				editWithAIFn(block.value);
+			}
+		},
+		condition: () => builderStore.isAIEnabled && Boolean(editWithAIFn) && !block.value.isRoot(),
+		disabled: () => builderStore.readOnlyMode,
+	},
+	{
+		label: "Rewrite (AI)",
+		action: () => {
+			runDirectAI?.(block.value, "rewrite_text", "Rewrite the content");
+		},
+		condition: () =>
+			builderStore.isAIEnabled && Boolean(runDirectAI) && block.value.isText() && !block.value.isRoot(),
+		disabled: () => builderStore.readOnlyMode,
+	},
+	{
+		label: "Replace Image (AI)",
+		action: () => {
+			runDirectAI?.(block.value, "replace_image", "Replace image");
+		},
+		condition: () =>
+			builderStore.isAIEnabled && Boolean(runDirectAI) && block.value.isImage() && !block.value.isRoot(),
+		disabled: () => builderStore.readOnlyMode,
+	},
 	{
 		label: "Edit HTML",
 		action: () => {

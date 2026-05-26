@@ -25,7 +25,7 @@
 
 			<DraggablePopup
 				v-model="showDynamicValueModal"
-				:container="propertyLabelRef?.dropdownTrigger?.$el"
+				:container="propertyLabelRef?.dropdownTrigger"
 				placement="middle-right"
 				:clickOutsideToClose="false"
 				:placementOffset="20"
@@ -96,6 +96,8 @@ const emit = defineEmits<{
 	(setDynamicValue: string): void;
 	(clearDynamicValue: void): void;
 }>();
+
+defineOptions({ inheritance: false });
 
 const props = withDefaults(
 	defineProps<{

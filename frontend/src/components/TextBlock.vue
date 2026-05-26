@@ -35,13 +35,12 @@ import { getDataForKey, getPropValue } from "@/utils/helpers";
 import type { PauseId } from "@/utils/useCanvasHistory";
 import { Color } from "@tiptap/extension-color";
 import { FontFamily } from "@tiptap/extension-font-family";
-import { Link } from "@tiptap/extension-link";
-import TextStyle from "@tiptap/extension-text-style";
-import Underline from "@tiptap/extension-underline";
-import StarterKit from "@tiptap/starter-kit";
+import { TextStyle } from "@tiptap/extension-text-style";
+import { Underline } from "@tiptap/extension-underline";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { StarterKit } from "@tiptap/starter-kit";
 import { Editor, EditorContent, Extension } from "@tiptap/vue-3";
 import { vOnClickOutside } from "@vueuse/components";
-import { Plugin, PluginKey } from "prosemirror-state";
 import { Ref, computed, inject, onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
 
 const canvasStore = useCanvasStore();
@@ -213,14 +212,14 @@ watch(
 				const textNode = walker.nextNode();
 				if (textNode) {
 					textNode.textContent = newValue;
-					editor.value.commands.setContent(tempDiv.innerHTML, false);
+					editor.value.commands.setContent(tempDiv.innerHTML, { emitUpdate: false });
 					return;
 				}
 			}
 			return;
 		}
 
-		editor.value.commands.setContent(newValue || "", false);
+		editor.value.commands.setContent(newValue || "", { emitUpdate: false });
 	},
 );
 
@@ -258,7 +257,10 @@ if (!props.preview) {
 				editor.value = new Editor({
 					content: textContent.value,
 					extensions: [
-						StarterKit,
+						StarterKit.configure({
+							link: { openOnClick: false },
+							underline: false,
+						}),
 						TextStyle.extend({
 							addGlobalAttributes() {
 								return [
@@ -278,11 +280,8 @@ if (!props.preview) {
 							types: ["textStyle"],
 						}),
 						FontFamily,
-						Link.configure({
-							openOnClick: false,
-						}),
-						Underline,
 						FontFamilyPasteRule,
+						Underline,
 					],
 					enablePasteRules: false,
 					onUpdate({ editor }) {
@@ -349,6 +348,7 @@ defineExpose({
 }
 
 .__text_block__ :deep(.ProseMirror) {
+	white-space: pre-wrap;
 	word-break: unset;
 }
 

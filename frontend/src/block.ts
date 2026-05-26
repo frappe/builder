@@ -70,6 +70,7 @@ class Block implements BlockOptions {
 	blockClientScript?: string;
 	blockDataScript?: string;
 	props?: BlockProps;
+	editorConfig?: BlockEditorConfig;
 	// @ts-expect-error
 	referenceComponent: Block | null;
 	customAttributes: BlockAttributeMap;
@@ -138,6 +139,7 @@ class Block implements BlockOptions {
 		this.blockClientScript = options.blockClientScript || "";
 		this.blockDataScript = options.blockDataScript || "";
 		this.props = reactive(options.props || {});
+		this.editorConfig = options.editorConfig;
 
 		this.blockName = options.blockName;
 		delete this.attributes.style;
@@ -448,35 +450,40 @@ class Block implements BlockOptions {
 		return Math.random().toString(36).substr(2, 9);
 	}
 	getIcon() {
+		if (this.editorConfig?.icon) {
+			const icon = this.editorConfig.icon;
+			return icon.startsWith("lucide-") ? icon : `lucide-${icon}`;
+		}
+		// "lucide-toggle-left";
 		switch (true) {
 			case this.isRoot():
-				return "hash";
+				return "lucide-hash";
 			case this.isRepeater():
-				return "database";
+				return "lucide-database";
 			case this.isSVG():
-				return "aperture";
+				return "lucide-aperture";
 			case this.isHTML():
-				return "code";
+				return "lucide-code";
 			case this.isLink():
-				return "link";
+				return "lucide-link";
 			case this.isText():
-				return "type";
-			case this.isContainer() && this.isRow():
-				return "columns";
-			case this.isContainer() && this.isColumn():
-				return "credit-card";
-			case this.isGrid():
-				return "grid";
-			case this.isContainer():
-				return "square";
-			case this.isImage():
-				return "image";
+				return "lucide-type";
 			case this.isVideo():
-				return "film";
+				return "lucide-film";
+			case this.isContainer() && this.isRow():
+				return "lucide-columns";
+			case this.isContainer() && this.isColumn():
+				return "lucide-rows-2";
+			case this.isGrid():
+				return "lucide-grid-2x2";
+			case this.isContainer():
+				return "lucide-square";
+			case this.isImage():
+				return "lucide-image";
 			case this.isForm():
-				return "file-text";
+				return "lucide-file-text";
 			default:
-				return "square";
+				return "lucide-square";
 		}
 	}
 	isRoot() {

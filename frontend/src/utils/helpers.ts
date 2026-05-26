@@ -4,11 +4,11 @@ import { builderSettings } from "@/data/builderSettings";
 import { useBlockDataStore, useBlockUidStore } from "@/stores/blockStore";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { FileUploadHandler } from "frappe-ui";
 import { defineComponent, h, markRaw, reactive, ref, toRaw } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 import Dialog from "../components/Controls/Dialog.vue";
 
 function getNumberFromPx(px: string | number | null | undefined): number {
@@ -30,7 +30,12 @@ function addPxToNumber(number: number, round: boolean = true): string {
 	return `${number}px`;
 }
 
-function HexToHSV(color: HashString): { h: number; s: number; v: number; a: number } {
+function HexToHSV(color: HashString): {
+	h: number;
+	s: number;
+	v: number;
+	a: number;
+} {
 	// Remove hash and normalize length
 	let hex = color.replace("#", "").trim();
 
@@ -490,17 +495,33 @@ async function uploadBuilderAsset(file: File, silent = false) {
 
 function dataURLtoFile(dataurl: string, filename: string) {
 	try {
-		let arr = dataurl.split(","),
-			mime = arr[0].match(/:(.*?);/)?.[1],
-			bstr = atob(arr[1]),
-			n = bstr.length,
+		let arr = dataurl.split(",");
+		let mimeMatch = arr[0].match(/:(.*?)(;|,)/);
+		let mime = mimeMatch ? mimeMatch[1] : "";
+		let isBase64 = arr[0].includes(";base64");
+
+		let dataString = arr.slice(1).join(",");
+		let u8arr;
+
+		if (isBase64) {
+			let bstr = atob(dataString);
+			let n = bstr.length;
 			u8arr = new Uint8Array(n);
-		while (n--) {
-			u8arr[n] = bstr.charCodeAt(n);
+			while (n--) {
+				u8arr[n] = bstr.charCodeAt(n);
+			}
+		} else {
+			let decoded = decodeURIComponent(dataString);
+			let n = decoded.length;
+			u8arr = new Uint8Array(n);
+			while (n--) {
+				u8arr[n] = decoded.charCodeAt(n);
+			}
 		}
+
 		return new File([u8arr], filename, { type: mime });
 	} catch (error) {
-		console.error(`Failed to convert dataURL ${dataurl} to file.`);
+		console.error(`Failed to convert dataURL ${dataurl.substring(0, 50)}... to file.`, error);
 		return null;
 	}
 }
@@ -947,7 +968,8 @@ function getBoxSpacing(
 ): string {
 	const nativeOnly = opts?.nativeOnly ?? false;
 	const cascading = opts?.cascading ?? false;
-	const base = String(block.getStyle(type, undefined, nativeOnly, cascading) ?? "0px");
+	const baseValue = block.getStyle(type, undefined, nativeOnly, cascading);
+	const base = String(baseValue ?? (nativeOnly && !cascading ? "" : "unset"));
 	const top = block.getStyle(`${type}Top`, undefined, nativeOnly, cascading) ?? base;
 	const bottom = block.getStyle(`${type}Bottom`, undefined, nativeOnly, cascading) ?? base;
 	const left = block.getStyle(`${type}Left`, undefined, nativeOnly, cascading) ?? base;
@@ -1284,7 +1306,14 @@ const getPropValue = (propName: string, block: Block, blockUid?: string | null):
 		const defaultValue = options?.defaultValue ?? null;
 
 		if (PARSEABLE_STANDARD_TYPES.includes(type)) {
-			return matchingProp.value ? JSON.parse(matchingProp.value) : defaultValue;
+			if (matchingProp.value) {
+				return JSON.parse(matchingProp.value);
+			} else {
+				if (typeof defaultValue === "string") {
+					return JSON.parse(defaultValue);
+				}
+				return defaultValue;
+			}
 		}
 		return matchingProp.value || defaultValue;
 	}
@@ -1330,7 +1359,9 @@ const getDataArray = (collectionObject: Record<string, any>) => {
 		Object.entries(obj).forEach(([key, value]) => {
 			const path = prefix ? `${prefix}.${key}` : key;
 
-			if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+			if (value === null) {
+				result.push(path);
+			} else if (typeof value === "object" && !Array.isArray(value)) {
 				processObject(value, path);
 			} else if (["string", "number", "boolean"].includes(typeof value)) {
 				result.push(path);
@@ -1344,10 +1375,13 @@ const getDataArray = (collectionObject: Record<string, any>) => {
 
 function executeBlockClientScriptUnrestricted(
 	blockUid: string,
+	breakpoint: string,
 	userScript: string,
 	props: Record<string, any> = {},
 ) {
-	const thisElement = document.querySelector(`[data-block-uid='${blockUid}']`) as HTMLElement;
+	const thisElement = document.querySelector(
+		`[data-block-uid='${blockUid}'][data-breakpoint=${breakpoint}]`,
+	) as HTMLElement;
 
 	const context = {
 		thisRef: thisElement,
@@ -1384,6 +1418,7 @@ function executeBlockClientScriptUnrestricted(
 
 function executeBlockClientScriptRestricted(
 	blockUid: string,
+	breakpoint: string,
 	userScript: string,
 	props: Record<string, any> = {},
 ) {
@@ -1416,7 +1451,10 @@ function executeBlockClientScriptRestricted(
 		get(target: Element, prop: string, receiver: any) {
 			if (BLOCKED_GET.has(prop)) return undefined;
 
-			let val = Reflect.get(target, prop, receiver);
+			// Always pass `target` (not the proxy) as the receiver so that native DOM
+			// getters (e.g. tagName, nodeType, children) run with the correct `this`.
+			// Passing the Proxy as receiver causes "Illegal invocation" in those cases.
+			let val = Reflect.get(target, prop, target);
 
 			// Wrap DOM returns
 			if (val instanceof Node) return wrap(val);
@@ -1475,7 +1513,9 @@ function executeBlockClientScriptRestricted(
 	};
 
 	const sandboxRoot = document.querySelector("[data-block-id='root']") as HTMLElement;
-	const thisElement = document.querySelector(`[data-block-uid='${blockUid}']`) as HTMLElement;
+	const thisElement = document.querySelector(
+		`[data-block-uid='${blockUid}'][data-breakpoint='${breakpoint}']`,
+	) as HTMLElement;
 
 	const proxiedRoot = wrap(sandboxRoot);
 	const proxiedThis = wrap(thisElement);

@@ -5,9 +5,12 @@
 		open-on-click
 		open-on-focus
 		:reset-search-term-on-blur="false">
-		<div class="relative" ref="containerRef">
+		<div class="group/autocomplete relative" ref="containerRef">
 			<div
-				class="group form-input flex h-7 flex-1 items-center gap-2 rounded bg-surface-gray-2 p-0 text-sm text-ink-gray-8 transition-colors focus-within:bg-surface-white focus-within:ring-2 focus-within:ring-outline-gray-3">
+				class="group form-input flex h-7 flex-1 items-center gap-2 rounded bg-surface-gray-2 p-0 text-sm text-ink-gray-8 transition-colors focus-within:bg-surface-white focus-within:ring-2 focus-within:ring-outline-gray-3"
+				:class="{
+					'can-show-arrows': canShowArrows,
+				}">
 				<div v-if="$slots.prefix" class="flex items-center pl-2">
 					<slot name="prefix" />
 				</div>
@@ -28,11 +31,24 @@
 					class="h-full w-full flex-1 border-none bg-transparent px-0 text-base placeholder:text-ink-gray-4 focus:outline-none focus:ring-0"
 					:class="{
 						'pl-2': !$slots.prefix,
-						'pr-2': !hasValue,
+						'pr-2': !hasValue && !canShowArrows,
 					}" />
-				<Button v-if="hasValue" variant="ghost" @click.stop="clearSelection" class="-ml-2">
-					<CrossIcon class="h-3 w-3" />
-				</Button>
+				<div class="flex items-center gap-0.5">
+					<NumberArrows
+						v-if="canShowArrows"
+						:modelValue="hasNumber"
+						@increment="incrementValue"
+						@decrement="decrementValue" />
+
+					<button
+						v-if="hasValue"
+						class="mr-2 flex-shrink-0 cursor-pointer text-ink-gray-4 hover:text-ink-gray-5"
+						tabindex="-1"
+						@click.stop="clearSelection"
+						@mousedown.prevent>
+						<CrossIcon />
+					</button>
+				</div>
 			</div>
 
 			<Teleport to="body" :disabled="!referenceElementSelector">
@@ -67,7 +83,7 @@
 								:disabled="option.disabled"
 								class="group flex cursor-default select-none items-center gap-2 rounded px-2 py-1.5 text-sm text-ink-gray-9 transition-colors data-[disabled]:pointer-events-none data-[highlighted]:bg-surface-gray-1 data-[disabled]:opacity-50">
 								<component v-if="option.prefix" :is="option.prefix" class="h-4 w-4 flex-shrink-0" />
-								<span class="w-full flex-1 truncate">{{ option.label }}</span>
+								<MiddleTruncate :text="option.label" />
 								<component
 									v-if="option.suffix"
 									:is="option.suffix"
@@ -96,7 +112,9 @@
 
 <script setup lang="ts">
 import BuilderButton from "@/components/Controls/BuilderButton.vue";
+import NumberArrows from "@/components/Controls/NumberArrows.vue";
 import CrossIcon from "@/components/Icons/Cross.vue";
+import { useNumberInput } from "@/utils/useNumberInput";
 import {
 	ComboboxContent,
 	ComboboxInput,
@@ -106,7 +124,8 @@ import {
 	ComboboxSeparator,
 } from "reka-ui";
 import type { Component, ComponentPublicInstance } from "vue";
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, nextTick, ref, useAttrs, watch } from "vue";
+import MiddleTruncate from "../MiddleTruncate.vue";
 
 interface Option {
 	label: string;
@@ -132,6 +151,7 @@ interface Props {
 	actionButton?: ActionButton;
 	referenceElementSelector?: string;
 	allowArbitraryValue?: boolean;
+	disabled?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -156,6 +176,23 @@ const comboboxInput = ref<ComponentPublicInstance | null>(null);
 const contentRef = ref<ComponentPublicInstance | null>(null);
 const fixedPositionStyles = ref({});
 const allOptions = computed(() => (props.getOptions ? asyncOptions.value : props.options));
+
+const attrs = useAttrs();
+
+const { hasNumber, incrementValue, decrementValue } = useNumberInput({
+	getValue: () => props.modelValue,
+	setValue: (v) => emit("update:modelValue", v),
+	getAttrs: () => attrs,
+});
+
+const isStrictNumber = computed(() => {
+	if (typeof props.modelValue !== "string") return false;
+	const nonNumericValues = allOptions.value.map((opt) => opt.value);
+	if (nonNumericValues.includes(props.modelValue)) return false;
+	return /^\d*\.?\d+(px|%|em|rem)?$/.test(props.modelValue.trim());
+});
+
+const canShowArrows = computed(() => hasNumber.value && isStrictNumber.value);
 
 const displayOptions = computed(() => {
 	let options = allOptions.value;
@@ -281,3 +318,8 @@ defineExpose({
 	clearSelection,
 });
 </script>
+<style scoped>
+.can-show-arrows:hover {
+	gap: 3px !important;
+}
+</style>

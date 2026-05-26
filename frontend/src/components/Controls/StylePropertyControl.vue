@@ -31,6 +31,8 @@ const props = withDefaults(
 		maxValue?: number | null;
 		component?: Component;
 		events?: Record<string, unknown>;
+		type?: string;
+		options?: Array<{ label: string; value: string | null }>;
 		defaultValue?: string | number;
 		allowDynamicValue?: boolean;
 		labelPlacement?: "left" | "top";

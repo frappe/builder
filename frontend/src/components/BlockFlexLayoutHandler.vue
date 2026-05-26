@@ -6,8 +6,8 @@
 		label="Direction"
 		v-if="blockController.isFlex()"
 		:options="[
-			{ label: 'Horizontal', value: 'row', icon: 'arrow-right', hideLabel: true },
-			{ label: 'Vertical', value: 'column', icon: 'arrow-down', hideLabel: true },
+			{ label: 'Horizontal', value: 'row', icon: 'lucide-arrow-right', hideLabel: true },
+			{ label: 'Vertical', value: 'column', icon: 'lucide-arrow-down', hideLabel: true },
 		]"></StylePropertyControl>
 	<StylePropertyControl
 		propertyKey="alignItems"

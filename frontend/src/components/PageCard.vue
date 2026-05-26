@@ -25,7 +25,7 @@
 				<PageActionsDropdown :page="page" size="xs" placement="right">
 					<template v-slot="{ open }">
 						<BuilderButton
-							icon="more-horizontal"
+							icon="lucide-more-horizontal"
 							size="sm"
 							variant="subtle"
 							class="bg-surface-white !text-ink-gray-5 hover:!text-ink-gray-9"
@@ -38,7 +38,7 @@
 </template>
 <script setup lang="ts">
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 import { getUserInfo } from "@/usersInfo";
 import { UseTimeAgo } from "@vueuse/components";
 

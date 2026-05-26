@@ -54,10 +54,10 @@
 					:title="`Created by ${owner.fullname}`" />
 				<PageActionsDropdown :page="page" size="sm" placement="right">
 					<template v-slot="{ open }">
-						<FeatherIcon
-							name="more-horizontal"
-							class="h-4 w-4 font-bold text-ink-gray-6"
-							@click="open"></FeatherIcon>
+						<span
+							class="lucide-more-horizontal h-4 w-4 font-bold text-ink-gray-6"
+							aria-hidden="true"
+							@click="open" />
 					</template>
 				</PageActionsDropdown>
 			</div>
@@ -69,7 +69,7 @@ import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import GlobeIcon from "@/components/Icons/Globe.vue";
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
 import usePageStore from "@/stores/pageStore";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 import { getUserInfo } from "@/usersInfo";
 import { UseTimeAgo } from "@vueuse/components";
 import { Avatar, Badge } from "frappe-ui";

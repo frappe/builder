@@ -31,7 +31,7 @@
 				<div class="flex items-center justify-between bg-surface-white p-2 text-sm text-ink-gray-8 shadow-sm">
 					<div class="flex items-center gap-1 pl-2 text-xs">
 						<a @click="canvasStore.exitFragmentMode" class="cursor-pointer">Page</a>
-						<FeatherIcon name="chevron-right" class="h-3 w-3" />
+						<span class="lucide-chevron-right h-3 w-3" aria-hidden="true" />
 						<span class="flex items-center gap-2">
 							{{ canvasStore.fragmentData.fragmentName }}
 							<a
@@ -83,11 +83,9 @@
 		v-model="canvasStore.showEditorDialog"
 		class="overscroll-none"
 		:isDirty="expandedEditor?.isDirty"
-		:options="{
-			title: 'HTML',
-			size: '7xl',
-		}">
-		<template #body-content>
+		title="HTML"
+		size="7xl">
+		<template #default>
 			<CodeEditor
 				:modelValue="getExpandedEditorContent()"
 				ref="expandedEditor"
@@ -100,37 +98,52 @@
 				required />
 		</template>
 	</Dialog>
+	<AIPageGeneratorModal
+		v-model="showAIGeneratorDialog"
+		v-if="builderStore.isAIEnabled"
+		:pageId="route.params.pageId as string"
+		:mode="aiMode"
+		:blockContext="modifyBlockContext"
+		@generated="handleGeneratedBlocks"
+		@streaming="handleStreamingBlocks"
+		@modified="handleModifiedBlocks"
+		@modifyStreaming="handleModifyStreamingBlocks"
+		@generating="isAIGenerating = $event"
+		ref="aiGeneratorModal"></AIPageGeneratorModal>
 	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
-	<KeyboardShortcutsModal ref="shortcutsModal" />
+	<BuilderCommandPalette ref="commandPalette" />
+	<KeyboardShortcutsModal v-model:open="shortcutsModalOpen" />
 </template>
 
 <script setup lang="ts">
+import type Block from "@/block";
+import AIPageGeneratorModal from "@/components/AIPageGeneratorModal.vue";
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import BuilderCanvas from "@/components/BuilderCanvas.vue";
+import BuilderCommandPalette from "@/components/BuilderCommandPalette.vue";
 import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
-import KeyboardShortcutsModal from "@/components/KeyboardShortcutsModal.vue";
 import PageListModal from "@/components/Modals/PageListModal.vue";
 import { webPages } from "@/data/webPage";
 import { sessionUser } from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderPage } from "@/types/doctypes";
 import { getUsersInfo } from "@/usersInfo";
 import blockController from "@/utils/blockController";
-import { getRootBlockTemplate } from "@/utils/helpers";
+import { getBlockInstance, getBlockObject, getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
-import { useShortcut } from "@/utils/useShortcut";
 import { breakpointsTailwind, useBreakpoints, useDebounceFn, useEventListener } from "@vueuse/core";
-import { createResource } from "frappe-ui";
+import { createResource, KeyboardShortcutsModal, useShortcut } from "frappe-ui";
 import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
 
 const expandedEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
+const aiGeneratorModal = ref<null | InstanceType<typeof AIPageGeneratorModal>>(null);
 
 const breakpoints = useBreakpoints(breakpointsTailwind);
 const isSmallScreen = breakpoints.smaller("lg");
@@ -144,6 +157,99 @@ const usageCount = ref(0);
 const componentUsedInPages = ref<BuilderPage[]>([]);
 const pageListDialog = ref(false);
 const blockContextMenu = ref<InstanceType<typeof BlockContextMenu> | null>(null);
+const showAIGeneratorDialog = ref(false);
+const aiMode = ref<"generate" | "modify">("generate");
+const modifyBlockContext = ref<Record<string, any> | null>(null);
+const modifyBlockId = ref<string | null>(null);
+const isAIGenerating = ref(false);
+
+provide("showAIGenerator", () => {
+	aiMode.value = "generate";
+	modifyBlockContext.value = null;
+	modifyBlockId.value = null;
+	showAIGeneratorDialog.value = true;
+});
+
+const editWithAIFn = (block: Block) => {
+	aiMode.value = "modify";
+	modifyBlockContext.value = getBlockObject(block);
+	modifyBlockId.value = block.blockId;
+	showAIGeneratorDialog.value = true;
+};
+provide("editWithAI", editWithAIFn);
+
+const runDirectAI = (block: Block, type: "rewrite_text" | "replace_image", customPrompt?: string) => {
+	const blockObj = getBlockObject(block);
+	aiMode.value = "modify";
+	modifyBlockId.value = block.blockId;
+	modifyBlockContext.value = blockObj;
+	aiGeneratorModal.value?.executeDirect(blockObj, type, customPrompt);
+};
+provide("runDirectAI", runDirectAI);
+
+const handleGeneratedBlocks = () => {
+	pageStore.savePage();
+};
+
+const handleStreamingBlocks = (block: BlockOptions) => {
+	if (!block) return;
+
+	try {
+		pageStore.pageBlocks = [getBlockInstance(block)];
+		canvasStore.activeCanvas?.setRootBlock(pageStore.pageBlocks[0] as Block, false);
+	} catch {
+		// Partial block may still be invalid, skip this frame
+	}
+};
+
+const replaceBlockInTree = (root: Block, targetId: string, replacement: BlockOptions): boolean => {
+	if (!root || !replacement) return false;
+	if (root.blockId === targetId) {
+		root.element = replacement.element || root.element;
+		root.baseStyles = replacement.baseStyles || root.baseStyles;
+		root.mobileStyles = replacement.mobileStyles || root.mobileStyles;
+		root.tabletStyles = replacement.tabletStyles || root.tabletStyles;
+		root.classes = replacement.classes || root.classes;
+
+		if (replacement.attributes) {
+			root.attributes = { ...root.attributes, ...replacement.attributes };
+		}
+
+		if (replacement.innerText !== undefined) root.innerText = replacement.innerText;
+		if (replacement.innerHTML !== undefined) root.innerHTML = replacement.innerHTML;
+
+		if (replacement.children) {
+			root.children.splice(
+				0,
+				root.children.length,
+				...replacement.children.map((child) => getBlockInstance(child as BlockOptions)),
+			);
+		}
+		return true;
+	}
+	return root.children?.some((child: Block) => replaceBlockInTree(child, targetId, replacement)) || false;
+};
+
+const handleModifiedBlocks = () => {
+	pageStore.savePage();
+	modifyBlockContext.value = null;
+	modifyBlockId.value = null;
+	aiMode.value = "generate";
+};
+
+const handleModifyStreamingBlocks = (block: BlockOptions) => {
+	const targetId = block?.blockId || modifyBlockId.value;
+	if (!block || !targetId) return;
+
+	try {
+		const rootBlock = pageStore.pageBlocks[0] as Block;
+		if (rootBlock) {
+			replaceBlockInTree(rootBlock, targetId, block);
+		}
+	} catch {
+		// Partial block may still be invalid, skip this frame
+	}
+};
 
 watch([() => canvasStore.editableBlock, () => pageStore.activePage?.is_standard], () => {
 	builderStore.toggleReadOnlyMode(
@@ -168,12 +274,10 @@ provide("pageCanvas", pageCanvas);
 provide("fragmentCanvas", fragmentCanvas);
 useBuilderEvents(pageCanvas, fragmentCanvas, saveAndExitFragmentMode, route, router);
 
-const shortcutsModal = ref<InstanceType<typeof KeyboardShortcutsModal> | null>(null);
+const shortcutsModalOpen = ref(false);
 
 provide("showShortcuts", () => {
-	if (shortcutsModal.value) {
-		shortcutsModal.value.showDialog = true;
-	}
+	shortcutsModalOpen.value = true;
 });
 
 useShortcut([
@@ -193,10 +297,40 @@ useShortcut([
 		description: "Show keyboard shortcuts",
 		group: "General",
 		handler: () => {
-			if (shortcutsModal.value) {
-				shortcutsModal.value.showDialog = true;
+			shortcutsModalOpen.value = true;
+		},
+	},
+	{
+		key: "i",
+		ctrl: true,
+		description: "Edit block with AI",
+		group: "Edit",
+		condition: () =>
+			builderStore.isAIEnabled &&
+			!blockController.isRoot() &&
+			!blockController.multipleBlocksSelected() &&
+			!builderStore.readOnlyMode,
+		handler: () => {
+			const block = blockController.getSelectedBlocks()[0];
+			if (block) {
+				editWithAIFn?.(block);
 			}
 		},
+	},
+	{
+		key: "d",
+		ctrl: true,
+		shift: true,
+		description: "Delete Page",
+		group: "General",
+		handler: () => {
+			if (pageStore.activePage && !pageStore.activePage.is_standard) {
+				pageStore.deletePage(pageStore.activePage).then(() => {
+					router.push({ name: "home" });
+				});
+			}
+		},
+		condition: () => Boolean(pageStore.activePage && !pageStore.activePage.is_standard),
 	},
 ]);
 
@@ -332,7 +466,8 @@ watch(
 			pageStore.selectedPage &&
 			!pageStore.settingPage &&
 			canvasStore.editingMode === "page" &&
-			!pageCanvas.value?.canvasProps?.settingCanvas
+			!pageCanvas.value?.canvasProps?.settingCanvas &&
+			!isAIGenerating.value
 		) {
 			pageStore.savingPage = true;
 			debouncedPageSave();
@@ -375,8 +510,6 @@ watch(
 
 <style>
 .page-builder {
-	--left-panel-width: 17rem;
-	--right-panel-width: 20rem;
 	--toolbar-height: 3rem;
 }
 </style>

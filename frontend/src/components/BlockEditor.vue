@@ -5,7 +5,7 @@
 		:selected="isBlockSelected"
 		@click.stop="handleClick"
 		@dblclick="handleDoubleClick"
-		@mousedown.prevent.stop="handleMove"
+		@mousedown.prevent="handleMove"
 		@drop.prevent.stop="handleDrop"
 		:data-block-id="block.blockId"
 		:class="getStyleClasses">
@@ -253,6 +253,7 @@ const handleMove = (ev: MouseEvent) => {
 		canvasStore.editableBlock = props.block;
 	}
 	if (!movable.value || props.block.isRoot()) return;
+	ev.stopPropagation();
 	const pauseId = canvasStore.activeCanvas?.history?.pause();
 	const target = ev.target as HTMLElement;
 	const startX = ev.clientX;
@@ -269,6 +270,7 @@ const handleMove = (ev: MouseEvent) => {
 	target.style.cursor = "grabbing";
 
 	const mousemove = async (mouseMoveEvent: MouseEvent) => {
+		if (canvasStore.isMarqueeActive) return;
 		const scale = canvasProps.scale;
 		const movementX = (mouseMoveEvent.clientX - startX) / scale;
 		const movementY = (mouseMoveEvent.clientY - startY) / scale;

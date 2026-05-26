@@ -4,7 +4,7 @@ import FontUploader from "@/components/Controls/FontUploader.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import userFonts from "@/data/userFonts";
-import { UserFont } from "@/types/Builder/UserFont";
+import { UserFont } from "@/types/doctypes";
 import blockController from "@/utils/blockController";
 import { setFont as _setFont, fontList, getFontWeightOptions } from "@/utils/fontManager";
 
@@ -96,6 +96,9 @@ const typographySectionProperties = [
 				propertyKey: "fontWeight",
 				component: Autocomplete,
 				options: getFontWeightOptions((blockController.getStyle("fontFamily") || "Inter") as string),
+				step: 100,
+				min: 100,
+				max: 900,
 			};
 		},
 		searchKeyWords: "Font, Weight, FontWeight",
@@ -120,6 +123,7 @@ const typographySectionProperties = [
 			return {
 				label: "Height",
 				propertyKey: "lineHeight",
+				enableSlider: true,
 			};
 		},
 		searchKeyWords: "Font, Height, LineHeight, Line Height",
@@ -131,6 +135,7 @@ const typographySectionProperties = [
 			return {
 				label: "Letter",
 				propertyKey: "letterSpacing",
+				enableSlider: true,
 			};
 		},
 		searchKeyWords: "Font, Letter, LetterSpacing, Letter Spacing",
@@ -145,8 +150,8 @@ const typographySectionProperties = [
 				type: "select",
 				options: [
 					{
-						value: null,
-						label: "None",
+						value: "unset",
+						label: "Unset",
 					},
 					{
 						value: "uppercase",
@@ -161,9 +166,13 @@ const typographySectionProperties = [
 						label: "Capitalize",
 					},
 				],
+				setModelValue: (val: string) => {
+					blockController.setStyle("textTransform", val === "unset" ? null : val);
+				},
 			};
 		},
-		searchKeyWords: "Font, Transform, TextTransform, Text Transform, Capitalize, Uppercase, Lowercase",
+		searchKeyWords:
+			"Font, Transform, TextTransform, Text Transform, Capitalize, Uppercase, Lowercase, Unset, None",
 		condition: () => blockController.isText(),
 	},
 	{
@@ -177,25 +186,25 @@ const typographySectionProperties = [
 					{
 						label: "Left",
 						value: "left",
-						icon: "align-left",
+						icon: "lucide-align-left",
 						hideLabel: true,
 					},
 					{
 						label: "Center",
 						value: "center",
-						icon: "align-center",
+						icon: "lucide-align-center",
 						hideLabel: true,
 					},
 					{
 						label: "Right",
 						value: "right",
-						icon: "align-right",
+						icon: "lucide-align-right",
 						hideLabel: true,
 					},
 					{
 						label: "Justify",
 						value: "justify",
-						icon: "align-justify",
+						icon: "lucide-align-justify",
 						hideLabel: true,
 					},
 				],

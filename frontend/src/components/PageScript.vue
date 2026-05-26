@@ -1,6 +1,6 @@
 <template>
 	<div class="flex h-full flex-col justify-between">
-		<div class="flex h-full flex-col gap-4 p-4">
+		<div class="flex h-full flex-col gap-4 p-3">
 			<div class="flex gap-2" v-if="mode == 'page' || isBlockSelected">
 				<BuilderButton @click="showClientScriptEditor()" class="flex-1">Client Script</BuilderButton>
 				<BuilderButton @click="showServerScriptEditor()" class="flex-1">Data Script</BuilderButton>
@@ -34,9 +34,7 @@
 						:obj="blockController.getBlockProps()"
 						@update:obj="(obj: BlockProps) => blockController.setBlockProps(obj)" />
 				</div>
-				<div v-else class="w-full py-4 text-center text-xs text-ink-gray-5">
-					Select a block to preview data.
-				</div>
+				<div v-else class="mt-2 text-center text-sm text-ink-gray-6">Select a block to preview data</div>
 			</div>
 		</div>
 		<div
@@ -45,23 +43,22 @@
 			<TabButtons
 				class="w-fit"
 				:buttons="[
-					{ label: 'Page', icon: 'layout', hideLabel: true, value: 'page', showTooltip: true },
-					{ label: 'Block', icon: 'layers', hideLabel: true, value: 'block', showTooltip: true },
+					{ label: 'Page', icon: 'lucide-layout', hideLabel: true, value: 'page', showTooltip: true },
+					{ label: 'Block', icon: 'lucide-layers', hideLabel: true, value: 'block', showTooltip: true },
 				]"
 				v-model="mode" />
 		</div>
 		<Dialog
 			class="overscroll-none"
-			:options="{
-				title:
-					currentScriptEditor == 'data'
-						? `${mode.charAt(0).toUpperCase() + mode.slice(1)} Data Script`
-						: `${mode.charAt(0).toUpperCase() + mode.slice(1)} Client Script`,
-				size: '7xl',
-			}"
+			:title="
+				currentScriptEditor == 'data'
+					? `${mode.charAt(0).toUpperCase() + mode.slice(1)} Data Script`
+					: `${mode.charAt(0).toUpperCase() + mode.slice(1)} Client Script`
+			"
+			size="7xl"
 			:isDirty="isDirty"
 			v-model="showDialog">
-			<template #body-content>
+			<template #default>
 				<div v-if="mode == 'page'">
 					<div v-if="currentScriptEditor == 'client'">
 						<PageClientScriptManager
@@ -159,20 +156,22 @@
 <script lang="ts" setup>
 import Dialog from "@/components/Controls/Dialog.vue";
 import { webPages } from "@/data/webPage";
+import { useBlockDataStore } from "@/stores/blockStore";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
-import { posthog } from "@/telemetry";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
-import { computed, defineComponent, ref, watch } from "vue";
-import { toast } from "vue-sonner";
-import CodeEditor from "./Controls/CodeEditor.vue";
-import PageClientScriptManager from "./PageClientScriptManager.vue";
+import { BuilderPage } from "@/types/doctypes";
 import blockController from "@/utils/blockController";
-import TabButtons from "./Controls/TabButtons.vue";
-import Switch from "./Controls/Switch.vue";
-import PropsEditor from "./PropsEditor.vue";
-import { useBlockDataStore } from "@/stores/blockStore";
 import { useStorage } from "@vueuse/core";
+import { useTelemetry } from "frappe-ui/frappe";
+import { computed, defineComponent, ref, watch } from "vue";
+import { toast } from "frappe-ui";
+import CodeEditor from "./Controls/CodeEditor.vue";
+import Switch from "./Controls/Switch.vue";
+import TabButtons from "./Controls/TabButtons.vue";
+import PageClientScriptManager from "./PageClientScriptManager.vue";
+import PropsEditor from "./PropsEditor.vue";
+
+const { capture } = useTelemetry();
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
@@ -224,7 +223,7 @@ const savePageDataScript = (value: string) => {
 			page_data_script: value,
 		})
 		.then(() => {
-			posthog.capture("builder_page_data_script_saved");
+			capture("builder_page_data_script_saved");
 			props.page.page_data_script = value;
 			pageStore.setPageData(props.page);
 			toast.success("Data script saved");

@@ -1,8 +1,3 @@
-<template>
-	<div></div>
-</template>
-<script setup></script>
-<style>
 @font-face {
 	font-family: "InterVar";
 	font-weight: 100 900;
@@ -47,4 +42,3 @@ p:empty:before {
 	text-decoration: underline;
 	background-color: transparent;
 }
-</style>

@@ -11,6 +11,7 @@ const useCanvasStore = defineStore("canvasStore", {
 		copyEntirePage: <boolean>false,
 		layerDraggingOverBlock: <string | null>null,
 		preventClick: false,
+		isMarqueeActive: false,
 		guides: {
 			showX: false,
 			showY: false,
@@ -44,12 +45,12 @@ const useCanvasStore = defineStore("canvasStore", {
 		clearBlocks() {
 			this.activeCanvas?.clearCanvas();
 		},
-		pushBlocks(blocks: BlockOptions[]) {
+		pushBlocks(blocks: BlockOptions[], resetHistory: boolean = true) {
 			let parent = this.activeCanvas?.getRootBlock();
 			let firstBlock = getBlockInstance(blocks[0]);
 
 			if (this.editingMode === "page" && firstBlock.isRoot() && this.activeCanvas?.block) {
-				this.activeCanvas.setRootBlock(firstBlock);
+				this.activeCanvas.setRootBlock(firstBlock, false, resetHistory);
 			} else {
 				for (let block of blocks) {
 					parent?.addChild(block);

@@ -48,7 +48,7 @@ const useBlockDataStore = defineStore("blockDataStore", {
 			} else if (filter === "passedDown") {
 				return blockData.passedDownData;
 			}
-			return { ...blockData.ownData, ...blockData.passedDownData };
+			return { ...blockData.passedDownData, ...blockData.ownData };
 		},
 		clearBlockData(blockUid: string) {
 			delete this.blockDataMap[blockUid];

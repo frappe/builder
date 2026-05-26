@@ -6,7 +6,7 @@
 				<BuilderInput v-model="redirectMap.to" placeholder="To" :hideClearButton="true" required />
 			</div>
 			<div class="mr-1 justify-self-end py-1">
-				<Button type="submit" label="Add Redirect" variant="ghost" iconLeft="plus" />
+				<Button type="submit" label="Add Redirect" variant="ghost" iconLeft="lucide-plus" />
 			</div>
 		</form>
 		<div
@@ -57,19 +57,19 @@
 					</div>
 					<div class="flex gap-1">
 						<template v-if="editingRedirect === row.id">
-							<FeatherIcon
-								name="check"
-								class="size-3 cursor-pointer text-ink-gray-5 hover:text-ink-gray-9"
+							<span
+								class="lucide-check size-3 cursor-pointer text-ink-gray-5 hover:text-ink-gray-9"
+								aria-hidden="true"
 								@click="saveRedirect(row.id)" />
-							<FeatherIcon
-								name="x"
-								class="size-3 cursor-pointer text-ink-gray-5 hover:text-ink-gray-9"
+							<span
+								class="lucide-x size-3 cursor-pointer text-ink-gray-5 hover:text-ink-gray-9"
+								aria-hidden="true"
 								@click="cancelEdit" />
 						</template>
-						<FeatherIcon
+						<span
 							v-else
-							name="trash"
-							class="size-3 cursor-pointer text-ink-gray-5 hover:text-ink-gray-9"
+							class="lucide-trash size-3 cursor-pointer text-ink-gray-5 hover:text-ink-gray-9"
+							aria-hidden="true"
 							@click="deleteRedirect(row.id)" />
 					</div>
 				</div>
@@ -81,7 +81,7 @@
 import routeRedirects from "@/data/routeRedirects";
 import { confirm } from "@/utils/helpers";
 import { computed, onMounted, ref } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 
 const redirectMap = ref({ from: "", to: "" });
 const searchQuery = ref({ from: "", to: "" });

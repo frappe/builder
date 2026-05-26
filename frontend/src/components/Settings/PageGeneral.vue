@@ -28,18 +28,18 @@
 						<span class="w-20 text-ink-gray-6">Status</span>
 						<div class="flex items-center gap-2">
 							<span class="flex items-center gap-2 text-base text-ink-gray-9">
-								<FeatherIcon
-									name="check-circle"
-									class="size-4 text-ink-green-3"
+								<span
+									class="lucide-check-circle size-4 text-ink-green-3"
+									aria-hidden="true"
 									v-if="pageStore.activePage?.published && !pageStore.activePage.authenticated_access" />
 								<AuthenticatedUserIcon
 									class="size-4 text-ink-amber-3"
 									v-else-if="
 										pageStore.activePage?.published && pageStore.activePage?.authenticated_access
 									"></AuthenticatedUserIcon>
-								<FeatherIcon
-									name="alert-circle"
-									class="size-4 text-ink-gray-4"
+								<span
+									class="lucide-alert-circle size-4 text-ink-gray-4"
+									aria-hidden="true"
 									v-else-if="!pageStore.activePage?.published" />
 								{{
 									pageStore.activePage?.published
@@ -183,11 +183,11 @@ import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderProjectFolder } from "@/types/Builder/BuilderProjectFolder";
+import { BuilderProjectFolder } from "@/types/doctypes";
 import { toTitleCase } from "@/utils/helpers";
-import { createResource, FeatherIcon } from "frappe-ui";
+import { createResource } from "frappe-ui";
 import { computed } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
@@ -251,13 +251,13 @@ const handleAppChange = async (val: string) => {
 const notifyStandardPageExport = () => {
 	const activePage = pageStore.activePage;
 
-	if (!activePage?.app) {
+	if (!activePage?.app && activePage?.is_standard) {
 		toast.warning("Please select an app for this standard page");
 		return;
 	}
 
-	if (activePage.is_standard) {
-		const appName = toTitleCase(activePage.app);
+	if (activePage?.is_standard) {
+		const appName = toTitleCase(activePage?.app || "");
 		toast.success(`This page will be exported to ${appName} app as standard page`);
 	}
 };

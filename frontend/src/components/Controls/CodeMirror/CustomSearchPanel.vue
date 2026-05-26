@@ -4,7 +4,9 @@
 		@keydown.esc.stop="(e) => closePanel(e)">
 		<div v-if="enableReplace" class="flex items-center justify-center">
 			<Button variant="ghost" size="sm" class="h-full" @click="toggleReplace">
-				<FeatherIcon :name="showReplace ? 'chevron-down' : 'chevron-right'" class="h-4 w-4" />
+				<span
+					:class="[showReplace ? 'lucide-chevron-down' : 'lucide-chevron-right', 'h-4 w-4']"
+					aria-hidden="true" />
 			</Button>
 		</div>
 		<div class="flex w-full max-w-lg flex-col">
@@ -22,7 +24,7 @@
 						<Button
 							:variant="caseSensitive ? 'outline' : 'ghost'"
 							size="sm"
-							icon="type"
+							icon="lucide-type"
 							@click="toggleCaseSensitive"
 							title="Match Case"></Button>
 						<Button
@@ -44,26 +46,26 @@
 				<div class="flex w-full justify-between gap-1 @md:w-auto @md:justify-normal">
 					<Button
 						size="sm"
-						icon="chevron-up"
+						icon="lucide-chevron-up"
 						variant="ghost"
 						@click.prevent="findNext(view)"
 						title="Find Next (Enter)"></Button>
 					<Button
 						size="sm"
 						variant="ghost"
-						icon="chevron-down"
+						icon="lucide-chevron-down"
 						@click.prevent="findPrevious(view)"
 						title="Find Previous (Shift + Enter)"></Button>
 					<Button
 						size="sm"
 						variant="ghost"
-						icon="layers"
+						icon="lucide-layers"
 						@click.prevent="selectMatches(view)"
 						title="Select All Matches (Alt + Enter)"></Button>
 					<Button
 						size="sm"
 						variant="ghost"
-						icon="x"
+						icon="lucide-x"
 						@click.prevent="(e: Event) => closePanel(e)"
 						title="Close Search (Esc)"></Button>
 				</div>
@@ -83,13 +85,13 @@
 						size="sm"
 						variant="ghost"
 						@click.prevent="replaceNext(view)"
-						icon="corner-down-right"
+						icon="lucide-corner-down-right"
 						title="Replace Next"></Button>
 					<Button
 						size="sm"
 						variant="ghost"
 						@click.prevent="replaceAll(view)"
-						icon="copy"
+						icon="lucide-copy"
 						title="Replace All"></Button>
 				</div>
 			</div>
@@ -108,7 +110,7 @@ import {
 	setSearchQuery,
 } from "@codemirror/search";
 import type { EditorView } from "@codemirror/view";
-import { Button, FeatherIcon, Input } from "frappe-ui";
+import { Button, Input } from "frappe-ui";
 import { inject, nextTick, onMounted, ref } from "vue";
 
 const view = inject<EditorView>("view")!;

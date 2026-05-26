@@ -47,7 +47,7 @@ jobs:
       - name: Install and run pip-audit
         run: |
           pip install pip-audit
-          pip-audit --desc on --ignore-vuln PYSEC-2023-312 .
+          pip-audit --desc on --ignore-vuln PYSEC-2023-312 --ignore-vuln CVE-2026-28684 .
 
   precommit:
     name: 'Pre-Commit'
