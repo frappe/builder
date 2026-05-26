@@ -99,17 +99,18 @@
 		</template>
 	</Dialog>
 	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
-	<KeyboardShortcutsModal ref="shortcutsModal" />
+	<BuilderCommandPalette ref="commandPalette" />
+	<KeyboardShortcutsModal v-model:open="shortcutsModalOpen" />
 </template>
 
 <script setup lang="ts">
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import BuilderCanvas from "@/components/BuilderCanvas.vue";
+import BuilderCommandPalette from "@/components/BuilderCommandPalette.vue";
 import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
-import KeyboardShortcutsModal from "@/components/KeyboardShortcutsModal.vue";
 import PageListModal from "@/components/Modals/PageListModal.vue";
 import { webPages } from "@/data/webPage";
 import { sessionUser } from "@/router";
@@ -121,9 +122,8 @@ import { getUsersInfo } from "@/usersInfo";
 import blockController from "@/utils/blockController";
 import { getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
-import { useShortcut } from "@/utils/useShortcut";
 import { breakpointsTailwind, useBreakpoints, useDebounceFn, useEventListener } from "@vueuse/core";
-import { createResource } from "frappe-ui";
+import { createResource, KeyboardShortcutsModal, useShortcut } from "frappe-ui";
 import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
@@ -166,12 +166,10 @@ provide("pageCanvas", pageCanvas);
 provide("fragmentCanvas", fragmentCanvas);
 useBuilderEvents(pageCanvas, fragmentCanvas, saveAndExitFragmentMode, route, router);
 
-const shortcutsModal = ref<InstanceType<typeof KeyboardShortcutsModal> | null>(null);
+const shortcutsModalOpen = ref(false);
 
 provide("showShortcuts", () => {
-	if (shortcutsModal.value) {
-		shortcutsModal.value.showDialog = true;
-	}
+	shortcutsModalOpen.value = true;
 });
 
 useShortcut([
@@ -191,9 +189,7 @@ useShortcut([
 		description: "Show keyboard shortcuts",
 		group: "General",
 		handler: () => {
-			if (shortcutsModal.value) {
-				shortcutsModal.value.showDialog = true;
-			}
+			shortcutsModalOpen.value = true;
 		},
 	},
 	{
