@@ -409,16 +409,21 @@ class BuilderPage(WebsiteGenerator):
 			font_map.pop(font.font_name, None)
 
 	def replace_component(self, target_component, replace_with):
+		updates = {}
 		if self.blocks:
 			blocks = frappe.parse_json(self.blocks)
 			self.blocks = frappe.as_json(replace_component_in_blocks(blocks, target_component, replace_with))
-			self.db_set("blocks", self.blocks, commit=True, update_modified=False)
+			updates["blocks"] = self.blocks
 		if self.draft_blocks:
 			draft_blocks = frappe.parse_json(self.draft_blocks)
 			self.draft_blocks = frappe.as_json(
 				replace_component_in_blocks(draft_blocks, target_component, replace_with)
 			)
-			self.db_set("draft_blocks", self.draft_blocks, commit=True, update_modified=False)
+			updates["draft_blocks"] = self.draft_blocks
+
+		# one db_set (single commit per page) instead of one commit per field
+		if updates:
+			self.db_set(updates, commit=True, update_modified=False)
 
 		self.clear_route_cache()
 
