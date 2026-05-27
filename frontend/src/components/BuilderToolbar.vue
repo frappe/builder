@@ -163,7 +163,6 @@ import { useDark, useToggle } from "@vueuse/core";
 import { Badge, Popover, toast, Tooltip } from "frappe-ui";
 import { DialogDescription, DialogTitle } from "reka-ui";
 import { computed, defineAsyncComponent, inject, ref } from "vue";
-// @ts-ignore
 import SparklesIcon from "~icons/lucide/sparkles";
 import MainMenu from "./MainMenu.vue";
 import PageOptions from "./PageOptions.vue";
