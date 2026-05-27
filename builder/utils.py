@@ -316,33 +316,6 @@ def make_records(path):
 			import_file_by_path(f"{path}/{fname}/{fname}.json")
 
 
-# def generate_tailwind_css_file_from_html(html):
-# 	# execute tailwindcss cli command to generate css file
-# 	# create temp folder
-# 	temp_folder = os.path.join(get_site_base_path(), "temp")
-# 	if os.path.exists(temp_folder):
-# 		shutil.rmtree(temp_folder)
-# 	os.mkdir(temp_folder)
-
-# 	# create temp html file
-# 	temp_html_file_path = os.path.join(temp_folder, "temp.html")
-# 	with open(temp_html_file_path, "w") as f:
-# 		f.write(html)
-
-# 	# place tailwind.css file in public folder
-# 	tailwind_css_file_path = os.path.join(get_site_path(), "public", "files", "tailwind.css")
-
-# 	# create temp config file
-# 	temp_config_file_path = os.path.join(temp_folder, "tailwind.config.js")
-# 	with open(temp_config_file_path, "w") as f:
-# 		f.write("module.exports = {content: ['./temp.html']}")
-
-# 	# run tailwindcss cli command in production mode
-# 	subprocess.run(
-# 		["npx", "tailwindcss", "-o", tailwind_css_file_path, "--config", temp_config_file_path, "--minify"]
-# 	)
-
-
 def copy_img_to_asset_folder(block, page_doc):
 	def safe_get(obj, attr, default=None):
 		if isinstance(obj, dict):

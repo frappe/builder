@@ -5,10 +5,9 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderComponent } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { alert, confirm, getBlockInstance, getBlockObject } from "@/utils/helpers";
-import { createDocumentResource, createResource } from "frappe-ui";
+import { createDocumentResource, createResource, toast } from "frappe-ui";
 import { defineStore } from "pinia";
 import { markRaw } from "vue";
-import { toast } from "frappe-ui";
 
 const useComponentStore = defineStore("componentStore", {
 	state: () => ({
@@ -154,7 +153,7 @@ const useComponentStore = defineStore("componentStore", {
 						block: obj.block,
 					});
 				} else {
-					console.log("Skipping component update", obj.name);
+					console.warn("Skipping component update", obj.name);
 					return;
 				}
 			}
