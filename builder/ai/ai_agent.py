@@ -514,7 +514,7 @@ class AgentJob:
 
 		try:
 			# Agentic loop: resolve server-side tools first, then hand client tools to the frontend.
-			for _round in range(15):
+			for _round in range(100):
 				tool_operations, summary_text, raw_tool_calls = self.call_tool_llm(messages)
 
 				server_ops = [op for op in tool_operations if op["tool_name"] == "get_page_scripts"]
