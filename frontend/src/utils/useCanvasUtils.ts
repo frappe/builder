@@ -1,4 +1,5 @@
 import type Block from "@/block";
+import { findBlockInTree } from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { CanvasProps } from "@/types/Builder/BuilderCanvas";
 import { getRootBlockTemplate } from "@/utils/helpers";
@@ -219,21 +220,7 @@ export function useCanvasUtils(
 	}
 
 	function findBlock(blockId: string, blocks?: Block[]): Block | null {
-		if (!blocks) {
-			blocks = [getRootBlock()];
-		}
-		for (const block of blocks) {
-			if (block.blockId === blockId) {
-				return block;
-			}
-			if (block.children) {
-				const found = findBlock(blockId, block.children);
-				if (found) {
-					return found;
-				}
-			}
-		}
-		return null;
+		return findBlockInTree(blockId, blocks ?? [getRootBlock()]);
 	}
 
 	function removeBlock(block: Block, force: boolean = false) {
