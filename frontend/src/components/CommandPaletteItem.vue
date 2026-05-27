@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="flex w-full min-w-0 items-center rounded px-2 py-2 text-sm text-ink-gray-8 transition-colors"
+		class="flex w-full min-w-0 items-center rounded px-2 py-2 text-sm text-ink-gray-8"
 		:class="{ 'bg-surface-gray-2': active }">
 		<!-- lucide string icon (e.g. "lucide-search") -->
 		<span
