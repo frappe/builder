@@ -9,7 +9,7 @@ import { FileUploadHandler } from "frappe-ui";
 import { defineComponent, h, markRaw, reactive, ref, toRaw } from "vue";
 import { toast } from "frappe-ui";
 import Dialog from "../components/Controls/Dialog.vue";
-import { getRGB, getRandomColor, HexToHSV, HSVToHex, RGBToHex } from "./colors";
+import { getRGB, getRandomColor, HexToHSV, HSVToHex } from "./colors";
 import {
 	addPxToNumber,
 	addUnitToNumber,
@@ -83,14 +83,6 @@ function copyToClipboard(text: string | object, e: ClipboardEvent, copyFormat = 
 		text = JSON.stringify(text);
 	}
 	e.clipboardData?.setData(copyFormat, text);
-}
-
-function stripExtension(string: string) {
-	const lastDotPosition = string.lastIndexOf(".");
-	if (lastDotPosition === -1) {
-		return string;
-	}
-	return string.substr(0, lastDotPosition);
 }
 
 function findNearestSiblingIndex(e: MouseEvent) {
@@ -175,31 +167,6 @@ function replaceMapKey(map: Map<any, any>, oldKey: string, newKey: string) {
 }
 
 const mapToObject = (map: Map<any, any>) => Object.fromEntries(map.entries());
-
-function logObjectDiff(obj1: Record<string, any>, obj2: Record<string, any>, path: string[] = []) {
-	if (!obj1 || !obj2) return;
-	for (const key in obj1) {
-		const newPath = path.concat(key);
-
-		if (obj2.hasOwnProperty(key)) {
-			if (typeof obj1[key] === "object" && typeof obj2[key] === "object") {
-				logObjectDiff(obj1[key], obj2[key], newPath);
-			} else {
-				if (obj1[key] !== obj2[key]) {
-					console.log(`Difference at ${newPath.join(".")} - ${obj1[key]} !== ${obj2[key]}`);
-				}
-			}
-		} else {
-			// console.log(`Property ${newPath.join(".")} is missing in the second object`);
-		}
-	}
-
-	for (const key in obj2) {
-		if (!obj1.hasOwnProperty(key)) {
-			// console.log(`Property ${key} is missing in the first object`);
-		}
-	}
-}
 
 function getBlockInstance(options: BlockOptions | string, retainId = true): Block {
 	if (typeof options === "string") {
@@ -405,22 +372,26 @@ declare global {
 	}
 }
 
-async function getFontArrayBuffer(file_url: string) {
-	const arrayBuffer = await fetch(file_url).then((res) => res.arrayBuffer());
-	if (file_url.endsWith(".woff2")) {
+// Lazily loads the wawoff2 wasm runtime (sets window.Module) and decompresses
+// a woff2 buffer to raw font bytes; non-woff2 buffers are returned unchanged.
+async function decompressFontIfWoff2(arrayBuffer: ArrayBuffer, isWoff2: boolean): Promise<ArrayBuffer> {
+	if (!isWoff2) return arrayBuffer;
+	if (!window.Module) {
 		const loadScript = (src: string) =>
 			new Promise((onload) =>
 				document.documentElement.append(Object.assign(document.createElement("script"), { src, onload })),
 			);
-		if (!window.Module) {
-			const path = "https://unpkg.com/wawoff2@2.0.1/build/decompress_binding.js";
-			// @ts-ignore
-			const init = new Promise((done) => (window.Module = { onRuntimeInitialized: done }));
-			await loadScript(path).then(() => init);
-		}
-		return Uint8Array.from(window.Module.decompress(arrayBuffer)).buffer;
+		const path = "https://unpkg.com/wawoff2@2.0.1/build/decompress_binding.js";
+		// @ts-ignore - Module is populated by the wawoff2 runtime once initialized
+		const init = new Promise((done) => (window.Module = { onRuntimeInitialized: done }));
+		await loadScript(path).then(() => init);
 	}
-	return arrayBuffer;
+	return Uint8Array.from(window.Module.decompress(arrayBuffer)).buffer;
+}
+
+async function getFontArrayBuffer(file_url: string) {
+	const arrayBuffer = await fetch(file_url).then((res) => res.arrayBuffer());
+	return decompressFontIfWoff2(arrayBuffer, file_url.endsWith(".woff2"));
 }
 
 async function getFontName(file_url: string) {
@@ -430,20 +401,7 @@ async function getFontName(file_url: string) {
 
 async function getFontNameFromFile(file: File): Promise<string> {
 	const arrayBuffer = await file.arrayBuffer();
-	let buffer = arrayBuffer;
-	if (file.name.endsWith(".woff2")) {
-		const loadScript = (src: string) =>
-			new Promise((onload) =>
-				document.documentElement.append(Object.assign(document.createElement("script"), { src, onload })),
-			);
-		if (!window.Module) {
-			const path = "https://unpkg.com/wawoff2@2.0.1/build/decompress_binding.js";
-			// @ts-ignore
-			const init = new Promise((done) => (window.Module = { onRuntimeInitialized: done }));
-			await loadScript(path).then(() => init);
-		}
-		buffer = Uint8Array.from(window.Module.decompress(arrayBuffer)).buffer;
-	}
+	const buffer = await decompressFontIfWoff2(arrayBuffer, file.name.endsWith(".woff2"));
 	const opentype = await import("opentype.js");
 	return opentype.parse(buffer).names.fullName.en;
 }
@@ -521,31 +479,6 @@ async function uploadUserFont(
 
 function generateId() {
 	return Math.random().toString(36).substr(2, 9);
-}
-
-function throttle<T extends (...args: any[]) => void>(func: T, wait: number = 1000) {
-	let timeout: ReturnType<typeof setTimeout> | null = null;
-	let lastArgs: Parameters<T> | null = null;
-	let pending = false;
-
-	const invoke = (...args: Parameters<T>) => {
-		lastArgs = args;
-		if (timeout) {
-			pending = true;
-			return;
-		}
-
-		func(...lastArgs);
-		timeout = setTimeout(() => {
-			timeout = null;
-			if (pending && lastArgs) {
-				pending = false;
-				invoke(...lastArgs);
-			}
-		}, wait);
-	};
-
-	return invoke;
 }
 
 function isBlock(e: MouseEvent) {
@@ -988,19 +921,15 @@ export {
 	isJSONString,
 	isTargetEditable,
 	kebabToCamelCase,
-	logObjectDiff,
 	mapToObject,
 	normalizeValueWithUnits,
 	openInDesk,
 	parseAndSetBackground,
 	parseBackground,
 	replaceMapKey,
-	RGBToHex,
 	setBoxSpacing,
 	shortenNumber,
 	showDialog,
-	stripExtension,
-	throttle,
 	toKebabCase,
 	toTitleCase,
 	triggerCopyEvent,

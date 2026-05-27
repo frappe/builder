@@ -138,4 +138,4 @@ function getRGB(color: HashString | RGBString | string | null): HashString | nul
 	return color as HashString;
 }
 
-export { HexToHSV, HSVToHex, getRandomColor, RGBToHex, getRGB };
+export { HexToHSV, HSVToHex, getRandomColor, getRGB };
