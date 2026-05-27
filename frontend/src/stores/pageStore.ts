@@ -238,6 +238,10 @@ const usePageStore = defineStore("pageStore", {
 			const builderStore = useBuilderStore();
 			if (builderStore.readOnlyMode) return;
 
+			// Own the flag here (not only in the editor watch) so every caller —
+			// including direct savePage() calls — keeps waitTillPageIsSaved reliable.
+			this.savingPage = true;
+
 			const canvasStore = useCanvasStore();
 			const pageData = JSON.stringify(
 				canvasStore
