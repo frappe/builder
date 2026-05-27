@@ -392,8 +392,8 @@ def is_component_used(blocks, component_id):
 			continue
 		if block.get("extendedFromComponent") == component_id:
 			return True
-		elif block.get("children"):
-			return is_component_used(block.get("children"), component_id)
+		if block.get("children") and is_component_used(block.get("children"), component_id):
+			return True
 
 	return False
 
