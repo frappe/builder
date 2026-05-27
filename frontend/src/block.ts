@@ -939,7 +939,7 @@ class Block implements BlockOptions {
 		return getBoxSpacing(this, "margin", opts);
 	}
 	getDynamicValues() {
-		let dynamicValues = this.dynamicValues;
+		const dynamicValues = [...this.dynamicValues];
 		const dynamicValueProperties = dynamicValues.map((v) => v.property);
 		if (this.isExtendedFromComponent()) {
 			const componentDynamicValues = this.referenceComponent?.getDynamicValues() || [];
