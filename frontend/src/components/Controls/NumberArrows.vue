@@ -46,33 +46,38 @@
 </template>
 
 <script lang="ts" setup>
+import { useIntervalFn, useTimeoutFn } from "@vueuse/core";
+
 defineProps<{
 	modelValue: boolean;
 }>();
 
 const emit = defineEmits(["increment", "decrement"]);
 
-let holdTimeout: ReturnType<typeof setTimeout> | null = null;
-let holdInterval: ReturnType<typeof setInterval> | null = null;
+let heldDirection: "increment" | "decrement" | null = null;
+
+// Repeats the emit while the button stays held; both timers auto-stop on unmount.
+const { pause: stopRepeat, resume: startRepeat } = useIntervalFn(
+	() => {
+		if (heldDirection) emit(heldDirection);
+	},
+	50,
+	{ immediate: false },
+);
+
+// Delay before the hold-to-repeat kicks in.
+const { start: startDelay, stop: stopDelay } = useTimeoutFn(() => startRepeat(), 400, { immediate: false });
 
 function startHold(direction: "increment" | "decrement") {
+	heldDirection = direction;
 	emit(direction);
-	holdTimeout = setTimeout(() => {
-		holdInterval = setInterval(() => {
-			emit(direction);
-		}, 50);
-	}, 400);
+	startDelay();
 }
 
 function stopHold() {
-	if (holdTimeout) {
-		clearTimeout(holdTimeout);
-		holdTimeout = null;
-	}
-	if (holdInterval) {
-		clearInterval(holdInterval);
-		holdInterval = null;
-	}
+	stopDelay();
+	stopRepeat();
+	heldDirection = null;
 }
 </script>
 
