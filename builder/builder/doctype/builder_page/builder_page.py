@@ -22,7 +22,6 @@ from frappe.website.path_resolver import resolve_path as original_resolve_path
 from frappe.website.serve import get_response_content
 from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
-from jinja2.exceptions import TemplateSyntaxError
 
 from builder.builder.doctype.user_font.user_font import get_all_user_fonts
 from builder.export_import_standard_page import export_page_as_standard
@@ -304,10 +303,7 @@ class BuilderPage(WebsiteGenerator):
 		self.set_favicon(context)
 		self.set_language(context)
 		context.page_data = clean_data(context.page_data)
-		try:
-			context["__content"] = render_template(context.__content, context)
-		except TemplateSyntaxError:
-			raise
+		context["__content"] = render_template(context.__content, context)
 
 	def set_meta_tags(self, context, page_data=None):
 		if not page_data:
