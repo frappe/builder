@@ -145,6 +145,14 @@ class AISession:
 			return False
 		return bool(frappe.db.get_value(cls.DOCTYPE, session_id, "is_running"))
 
+	@classmethod
+	def has_clarification_messages(cls, session_id: str | None) -> bool:
+		"""Return True if the session already has clarification messages (we're mid Q&A)."""
+		if not session_id or not frappe.db.exists(cls.DOCTYPE, session_id):
+			return False
+		messages = cls(frappe.get_doc(cls.DOCTYPE, session_id)).get_messages()
+		return any(m.get("message_type") == "clarification" for m in messages)
+
 	def build_context_string(self) -> str:
 		history_lines = []
 		for message in self.get_messages()[-10:]:

@@ -93,7 +93,11 @@ class LLMJob:
 		)
 
 		task_tier = Prompts.classify_task(is_modify=self.is_modify, task_type=self.task_type)
-		params = TASK_PARAMS[task_tier]
+		# Use strict low-temperature params during Q&A phase to ensure reliable JSON output
+		if not self.is_modify and AISession.has_clarification_messages(self.session_id):
+			params = TASK_PARAMS["clarify"]
+		else:
+			params = TASK_PARAMS[task_tier]
 		model = ModelRegistry.get_simple(self.model) if task_tier == "simple" else self.model
 
 		action = "Modifying" if self.is_modify else "Generating"
@@ -182,23 +186,46 @@ class LLMJob:
 			self.emit("error", message=str(e))
 			return
 
-		if clarification := parse_clarification(content):
-			logger.info(f"LLMJob: clarification requested: {clarification}")
-			AISession.try_append_message(
-				self.session_id,
-				"assistant",
-				clarification["question"],
-				message_type="clarification",
-				task_type=self.task_type or ("modify" if self.is_modify else "generate"),
-				block_id=original_id,
-				metadata={"options": clarification["options"], "status": "clarification"},
-			)
-			self.emit(
-				"clarify",
-				question=clarification["question"],
-				options=clarification["options"],
-				block_id=original_id,
-			)
+		if result := parse_clarification(content):
+			logger.info(f"LLMJob: clarification/plan result: {result}")
+			if result["type"] == "plan_summary":
+				AISession.try_append_message(
+					self.session_id,
+					"assistant",
+					result["headline"],
+					message_type="clarification",
+					task_type=self.task_type or ("modify" if self.is_modify else "generate"),
+					block_id=original_id,
+					metadata={"status": "plan_summary", "headline": result["headline"], "sections": result["sections"], "palette": result["palette"]},
+				)
+				self.emit(
+					"clarify",
+					question=result["headline"],
+					options=[],
+					plan_summary=True,
+					headline=result["headline"],
+					sections=result["sections"],
+					palette=result["palette"],
+					block_id=original_id,
+				)
+			else:
+				AISession.try_append_message(
+					self.session_id,
+					"assistant",
+					result["question"],
+					message_type="clarification",
+					task_type=self.task_type or ("modify" if self.is_modify else "generate"),
+					block_id=original_id,
+					metadata={"options": result["options"], "previews": result.get("previews"), "ready": result.get("ready", False), "status": "clarification"},
+				)
+				self.emit(
+					"clarify",
+					question=result["question"],
+					options=result["options"],
+					previews=result.get("previews"),
+					ready=result.get("ready", False),
+					block_id=original_id,
+				)
 			return
 
 		summary = self.completion_summary(original_id)

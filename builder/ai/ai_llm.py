@@ -12,6 +12,7 @@ logger.setLevel(logging.INFO)
 TASK_PARAMS = {
 	"simple": {"max_tokens": 1000, "temperature": 0.5},
 	"complex": {"max_tokens": 40000, "temperature": 0.7},
+	"clarify": {"max_tokens": 700, "temperature": 0.1},  # Strict JSON output for Q&A phase
 	"agent": {
 		"max_tokens": 16000,
 		"temperature": 0.3,

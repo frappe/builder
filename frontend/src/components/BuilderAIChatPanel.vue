@@ -65,18 +65,63 @@
 							:affected-scripts="message.metadata.affectedScripts || []"
 							@select-block="selectBlockById"
 							@open-script="openScriptByName" />
+						<!-- Plan summary card -->
+						<div
+							v-if="message.metadata?.status === 'plan_summary'"
+							class="mt-2.5 rounded-lg border border-outline-gray-2 bg-surface-gray-1 p-3">
+							<ul class="mb-2.5 space-y-1">
+								<li
+									v-for="section in message.metadata.sections"
+									:key="section"
+									class="flex items-start gap-1.5 text-[11px] text-ink-gray-7">
+									<span class="mt-0.5 shrink-0 text-ink-gray-3">–</span>
+									{{ section }}
+								</li>
+							</ul>
+							<p v-if="message.metadata.palette" class="mb-2.5 text-[10px] text-ink-gray-4">
+								{{ message.metadata.palette }}
+							</p>
+							<!-- Action buttons — only on last message -->
+							<template v-if="message.id === lastMessageId">
+								<p class="mb-2 text-[10px] text-ink-gray-4">
+									Refine the plan below, or go ahead and create the page.
+								</p>
+								<button
+									:disabled="isSubmitting"
+									class="rounded-full border border-violet-300 bg-violet-50 px-3 py-1 text-[11px] font-medium text-violet-700 transition-colors hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
+									@click="triggerGeneration">
+									✦ Create Page
+								</button>
+							</template>
+						</div>
 						<!-- Clarification options -->
 						<div
 							v-if="message.metadata?.status === 'clarification' && message.metadata?.options?.length"
-							class="mt-2 flex flex-wrap gap-1.5">
-							<button
-								v-for="option in message.metadata.options"
-								:key="option"
-								:disabled="isSubmitting"
-								class="rounded-full border border-outline-gray-2 bg-surface-white px-2.5 py-1 text-[11px] text-ink-gray-7 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-2 disabled:cursor-not-allowed disabled:opacity-50"
-								@click="selectOption(option)">
-								{{ option }}
-							</button>
+							class="mt-2.5 flex flex-col gap-2">
+							<div class="flex flex-wrap gap-1.5">
+								<button
+									v-for="(option, idx) in message.metadata.options"
+									:key="option"
+									:disabled="isSubmitting"
+									class="flex items-center gap-1.5 rounded-full border border-outline-gray-2 bg-surface-white px-2.5 py-1 text-[11px] text-ink-gray-7 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-2 disabled:cursor-not-allowed disabled:opacity-50"
+									@click="selectOption(option)">
+									<!-- Color swatches when previews available -->
+									<span
+										v-if="message.metadata.previews?.[idx]?.colors?.length"
+										class="flex shrink-0 gap-px overflow-hidden rounded-full">
+										<span
+											v-for="color in message.metadata.previews[idx].colors.slice(0, 4)"
+											:key="color"
+											class="h-3 w-3"
+											:style="{ backgroundColor: color }" />
+									</span>
+									{{ option }}
+								</button>
+							</div>
+							<!-- Type-your-own nudge: only on last message -->
+							<p v-if="message.id === lastMessageId" class="text-[10px] text-ink-gray-4">
+								Or describe something different below
+							</p>
 						</div>
 					</div>
 					<!-- Block + image chips below the bubble -->
@@ -158,7 +203,7 @@
 					<Transition name="fade">
 						<div
 							v-if="isDragging"
-							class="border-outline-blue-3 bg-surface-blue-1/60 pointer-events-none absolute inset-0 flex items-center justify-center rounded-md border-2 border-dashed">
+							class="border-outline-blue-3 pointer-events-none absolute inset-0 flex items-center justify-center rounded-md border-2 border-dashed bg-surface-blue-1/60">
 							<div class="text-ink-blue-4 flex items-center gap-1.5 text-xs font-medium">
 								<FeatherIcon name="image" class="h-3.5 w-3.5" />
 								Drop image to attach
@@ -239,7 +284,7 @@ import useBuilderStore from "@/stores/builderStore";
 import DOMPurify from "dompurify";
 import { Button, FeatherIcon, Popover, Tooltip } from "frappe-ui";
 import { marked } from "marked";
-import { onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
 marked.use({ breaks: true, gfm: true });
 
@@ -272,12 +317,14 @@ function renderMarkdown(content: string): string {
 const chat = new AIChatController();
 
 const { prompt, isSubmitting, messages, modelLabel, modelOptions, canSubmit } = chat;
-const { clearSession, undoAgentScript, selectOption } = chat;
+const { clearSession, undoAgentScript, selectOption, triggerGeneration } = chat;
 const { selectBlockById, openScriptByName } = chat;
 const { selectedBlocks } = chat;
 const { imagePreviewUrl, imageFileName, isDragging, isVisionModel } = chat;
 const { clearImage, attachImageFile } = chat;
 const builderStore = useBuilderStore();
+
+const lastMessageId = computed(() => messages.value.at(-1)?.id ?? null);
 
 const selectedPreset = ref<{
 	id: string;

@@ -560,21 +560,42 @@ class AgentJob:
 			self.emit("error", message="The AI returned an empty response. Please try rephrasing.")
 			return
 
-		if not client_tool_operations and (clarification := parse_clarification(summary_text)):
-			logger.info(f"Agent: clarification requested: {clarification}")
-			AISession.try_append_message(
-				self.session_id,
-				"assistant",
-				clarification["question"],
-				message_type="clarification",
-				task_type="agent",
-				metadata={"options": clarification["options"], "status": "clarification"},
-			)
-			self.emit(
-				"clarify",
-				question=clarification["question"],
-				options=clarification["options"],
-			)
+		if not client_tool_operations and (result := parse_clarification(summary_text)):
+			logger.info(f"Agent: clarification/plan result: {result}")
+			if result["type"] == "plan_summary":
+				AISession.try_append_message(
+					self.session_id,
+					"assistant",
+					result["headline"],
+					message_type="clarification",
+					task_type="agent",
+					metadata={"status": "plan_summary", "headline": result["headline"], "sections": result["sections"], "palette": result["palette"]},
+				)
+				self.emit(
+					"clarify",
+					question=result["headline"],
+					options=[],
+					plan_summary=True,
+					headline=result["headline"],
+					sections=result["sections"],
+					palette=result["palette"],
+				)
+			else:
+				AISession.try_append_message(
+					self.session_id,
+					"assistant",
+					result["question"],
+					message_type="clarification",
+					task_type="agent",
+					metadata={"options": result["options"], "previews": result.get("previews"), "ready": result.get("ready", False), "status": "clarification"},
+				)
+				self.emit(
+					"clarify",
+					question=result["question"],
+					options=result["options"],
+					previews=result.get("previews"),
+					ready=result.get("ready", False),
+				)
 			return
 
 		if client_tool_operations:

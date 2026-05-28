@@ -347,7 +347,11 @@ export class AIChatController {
 
 	onProgress = (data: { message?: string; task_type?: string; block_id?: string }) => {
 		this.isSubmitting.value = true;
-		this.progressMessage.value = data.message || this.progressMessage.value;
+		const msg = data.message || "";
+		// "Generating..." and "Building..." are misleading during clarification rounds
+		// because we don't know yet if the LLM will clarify or generate.
+		const isGeneratePhase = msg.startsWith("Generating") || msg === "Building...";
+		this.progressMessage.value = isGeneratePhase ? "Thinking..." : msg || this.progressMessage.value;
 		if (data.task_type) this.remoteTaskType.value = data.task_type;
 		if (data.block_id) this.remoteBlockId.value = data.block_id;
 		this.replacePendingAssistant(this.progressMessage.value || "Working...", { status: "running" });
@@ -468,24 +472,54 @@ export class AIChatController {
 		this.pendingAssistantId.value = null;
 	};
 
-	onClarify = async (data: { question?: string; options?: string[]; block_id?: string }) => {
+	onClarify = async (data: {
+		question?: string;
+		options?: string[];
+		previews?: Array<{ colors: string[] }> | null;
+		ready?: boolean;
+		plan_summary?: boolean;
+		headline?: string;
+		sections?: string[];
+		palette?: string;
+		block_id?: string;
+	}) => {
 		this.isSubmitting.value = false;
 		this.progressMessage.value = "";
 		this.streamingContent.value = "";
 		this.remoteTaskType.value = null;
 		this.remoteBlockId.value = null;
-		const question = data.question || "Can you clarify?";
-		const options = data.options || [];
-		this.replacePendingAssistant(question, {
-			status: "clarification",
-			options,
-		});
-		this.pendingAssistantId.value = null;
-		await this.loadSession();
-		// Re-apply options to last assistant message (not persisted server-side)
-		const lastAssistant = [...this.messages.value].reverse().find((m) => m.role === "assistant");
-		if (lastAssistant && !lastAssistant.metadata?.options?.length) {
-			lastAssistant.metadata = { ...lastAssistant.metadata, options, status: "clarification" };
+
+		if (data.plan_summary) {
+			const headline = data.headline || "Here's my plan";
+			this.replacePendingAssistant(headline, {
+				status: "plan_summary",
+				headline,
+				sections: data.sections || [],
+				palette: data.palette || "",
+			});
+			this.pendingAssistantId.value = null;
+			await this.loadSession();
+			const lastAssistant = [...this.messages.value].reverse().find((m) => m.role === "assistant");
+			if (lastAssistant && lastAssistant.metadata?.status !== "plan_summary") {
+				lastAssistant.metadata = { ...lastAssistant.metadata, status: "plan_summary", headline, sections: data.sections || [], palette: data.palette || "" };
+			}
+		} else {
+			const question = data.question || "Can you clarify?";
+			const options = data.options || [];
+			const previews = data.previews ?? null;
+			const ready = data.ready ?? false;
+			this.replacePendingAssistant(question, {
+				status: "clarification",
+				options,
+				previews,
+				ready,
+			});
+			this.pendingAssistantId.value = null;
+			await this.loadSession();
+			const lastAssistant = [...this.messages.value].reverse().find((m) => m.role === "assistant");
+			if (lastAssistant && !lastAssistant.metadata?.options?.length) {
+				lastAssistant.metadata = { ...lastAssistant.metadata, options, previews, ready, status: "clarification" };
+			}
 		}
 		this.scrollToBottom();
 	};
@@ -782,6 +816,11 @@ export class AIChatController {
 		this.submitPrompt();
 	};
 
+	triggerGeneration = () => {
+		this.prompt.value = "✓ APPROVED — Generate the page now following the plan we discussed.";
+		this.submitPrompt();
+	};
+
 	submitPrompt = async () => {
 		if (!this.canSubmit.value || !this.pageId.value || this.isUnsavedPage.value) return;
 
@@ -815,7 +854,8 @@ export class AIChatController {
 			scope: this.scope.value,
 			...contextMeta,
 		});
-		const assistantMessage = buildLocalMessage("assistant", "Working...", { status: "running" });
+		const inQnA = this.messages.value.some((m) => m.metadata?.status === "clarification");
+		const assistantMessage = buildLocalMessage("assistant", runGenerate || inQnA ? "Thinking..." : "Working...", { status: "running" });
 		this.messages.value.push(userMessage, assistantMessage);
 		this.pendingAssistantId.value = assistantMessage.id;
 		this.scrollToBottom();

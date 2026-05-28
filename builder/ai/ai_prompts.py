@@ -4,40 +4,72 @@ from typing import ClassVar
 
 
 def parse_clarification(content: str) -> dict | None:
-	"""Return {'question': str, 'options': list[str]} if content is a clarification JSON block, else None.
+	"""Return clarification or plan_summary dict, or None.
 
-	Robust against LLM wrapping the JSON in markdown fences, prose text, or whitespace.
-	Uses regex to extract the first JSON object before attempting json.loads.
+	clarification: {'type': 'clarification', 'question', 'options', 'previews', 'ready'}
+	plan_summary:  {'type': 'plan_summary', 'headline', 'sections', 'palette'}
+	Robust against LLM wrapping in markdown fences, prose, or whitespace.
 	"""
 	if not content or not content.strip():
 		return None
 
-	# Only attempt extraction if the response looks like it could be clarification JSON.
-	# This prevents false positives on normal prose responses.
-	if "clarification" not in content and '"type"' not in content:
+	if "clarification" not in content and "plan_summary" not in content and '"type"' not in content:
 		return None
 
-	# Extract the first {...} block using a non-greedy regex (handles nested braces is impractical,
-	# but clarification JSON is shallow so this is reliable).
-	match = re.search(r"\{[^{}]*\}", content, re.DOTALL)
-	if not match:
+	# Strip markdown fences and try direct parse first (handles nested JSON like previews).
+	stripped = re.sub(r"```(?:json)?\s*|\s*```", "", content).strip()
+	parsed = None
+	for candidate in [stripped, content.strip()]:
+		try:
+			parsed = json.loads(candidate)
+			break
+		except (json.JSONDecodeError, ValueError):
+			pass
+
+	# Fallback: extract outermost {...} block tolerating one level of nesting.
+	if parsed is None:
+		match = re.search(r"\{(?:[^{}]|\{[^{}]*\})*\}", content, re.DOTALL)
+		if not match:
+			return None
+		try:
+			parsed = json.loads(match.group(0))
+		except (json.JSONDecodeError, ValueError):
+			return None
+
+	if not isinstance(parsed, dict):
 		return None
 
-	try:
-		parsed = json.loads(match.group(0))
-	except (json.JSONDecodeError, ValueError):
-		return None
+	kind = parsed.get("type")
 
-	if not isinstance(parsed, dict) or parsed.get("type") != "clarification":
-		return None
+	if kind == "plan_summary":
+		headline = str(parsed.get("headline", "Here's my plan")).strip()
+		sections = [str(s).strip() for s in parsed.get("sections", []) if s and str(s).strip()]
+		palette = str(parsed.get("palette", "")).strip()
+		if not sections:
+			return None
+		return {"type": "plan_summary", "headline": headline, "sections": sections, "palette": palette}
 
-	question = str(parsed.get("question", "Can you clarify?")).strip()
-	options = [str(o).strip() for o in parsed.get("options", []) if o and str(o).strip()]
-	if len(options) < 2:
-		# Require at least 2 options — a single option isn't a real clarification
-		return None
+	if kind == "clarification":
+		question = str(parsed.get("question", "Can you clarify?")).strip()
+		options = [str(o).strip() for o in parsed.get("options", []) if o and str(o).strip()]
+		if len(options) < 2:
+			return None
 
-	return {"question": question, "options": options}
+		previews: list[dict] | None = None
+		raw_previews = parsed.get("previews")
+		if isinstance(raw_previews, list) and len(raw_previews) == len(options):
+			previews = []
+			for p in raw_previews:
+				if isinstance(p, dict) and isinstance(p.get("colors"), list):
+					colors = [str(c).strip() for c in p["colors"] if c and str(c).strip()]
+					previews.append({"colors": colors})
+				else:
+					previews = None
+					break
+
+		return {"type": "clarification", "question": question, "options": options, "previews": previews}
+
+	return None
 
 
 class Prompts:
@@ -81,15 +113,34 @@ class Prompts:
 	)
 
 	CLARIFICATION = (
-		"CLARIFICATION RULE (read carefully):\n"
-		"Only ask for clarification when ALL of the following are true:\n"
-		"  1. The request is 5 words or fewer AND has no page type or industry mentioned, OR\n"
-		"  2. The request contains only a generic single-word category with zero context (e.g. just 'website').\n"
-		"If there is ANY useful signal (industry, audience, purpose, features, examples, style references) — "
-		"proceed and create the best page you can. Do NOT ask for clarification.\n\n"
-		"When clarification IS needed, respond with ONLY this JSON object and nothing else (no prose, no markdown fences):\n"
-		'{"type": "clarification", "question": "<one short focused question>", "options": ["<option 1>", "<option 2>", "<option 3>", "<option 4>"]}\n\n'
-		"Options must be 3-5 short plain-text phrases. No markdown, no descriptions."
+		"DESIGN BRIEF PHASE — read every rule before responding:\n\n"
+		"CRITICAL: You MUST NEVER output YAML, HTML, or page code in this phase. "
+		"Your ONLY valid responses are the JSON formats defined below. "
+		"The page is built ONLY when the user sends the explicit approval message starting with '✓ APPROVED'.\n\n"
+		"# Phase 1 — Gather information\n"
+		"Ask ONE focused question at a time to understand:\n"
+		"  1. Page purpose / product / industry (if not clear)\n"
+		"  2. Visual style / mood (minimal, bold, luxury, playful, corporate, earthy)\n"
+		"  3. Color palette preference\n"
+		"  4. Key content or sections needed (only if non-obvious)\n\n"
+		"Clarification JSON format (no prose, no markdown fences):\n"
+		'{"type": "clarification", "question": "...", "options": ["opt1", "opt2", "opt3", "opt4"]}\n\n'
+		"  - 'previews' (optional): for visual style / color questions, add [{\"colors\": [\"#hex1\", \"#hex2\", \"#hex3\", \"#hex4\"]}] per option.\n\n"
+		"# Phase 2 — Show plan summary (after 2–3 rounds)\n"
+		"Once you know purpose, style, and rough structure — stop asking and show a plan summary. "
+		"Never ask more than 3-4 rounds before showing the plan.\n\n"
+		"Plan summary JSON format (no prose, no markdown fences):\n"
+		'{"type": "plan_summary", "headline": "<short description of the page>", '
+		'"sections": ["<section 1 description>", "<section 2 description>", ...], '
+		'"palette": "<palette description with hex codes>"}\n\n'
+		"Keep section descriptions short (under 12 words each). List 3–5 sections.\n\n"
+		"# Phase 3 — Generate (only on explicit approval)\n"
+		"When the user's message starts with '✓ APPROVED' — output the page YAML immediately, following the plan.\n"
+		"Do NOT ask any more questions. Do NOT output another plan. Output YAML only.\n\n"
+		"General rules:\n"
+		"  - Never ask about something the user already answered.\n"
+		"  - Never ask more than one question per turn.\n"
+		"  - Options: 3–5 short plain-text phrases, no markdown, no descriptions."
 	)
 
 	GENERATE = """You are an expert web designer specializing in creating modern, responsive web pages using the Frappe Builder block system.
@@ -152,9 +203,11 @@ Return a single root block that represents the page (el: div, id: root). This bl
 			"- 'update_block' merges (does not replace) styles and attributes — only specify what changes.\n"
 			"- Use 'set_page_script' to add JavaScript or CSS that needs to run on the page (event listeners, animations, etc.).\n"
 			"- After calling tools, give a short 1–2 sentence summary of what was changed. Use markdown formatting (bold, inline code, lists) where it aids clarity.\n"
-			"- IMPORTANT: You have the full page context. Never ask for clarification on page structure \u2014 "
-			"make reasonable decisions and proceed. Only ask for clarification if the intent is completely ambiguous "
-			"AND you have tried all reasonable interpretations.\n"
+			"- IMPORTANT: You have the full page context. For small, targeted edits (color, text, spacing, single block changes) — "
+			"make reasonable decisions and proceed without asking.\n"
+			"- For MAJOR requests (redesign, restructure, restyle the whole page, 'make it look like X') — "
+			"treat these like a new generation: ask clarifying questions about visual style, color palette, and layout "
+			"before making sweeping changes. Changing the whole page after the fact is costly.\n"
 		)
 		+ "\n\n"
 		+ CLARIFICATION
