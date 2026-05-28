@@ -40,6 +40,11 @@ logger.setLevel(logging.INFO)
 MAX_ROUNDS = 100
 EVENT_PREFIX = "ai_chat"
 
+
+class CancelledError(Exception):
+	"""Raised inside the stream loops when the user cancels the turn."""
+
+
 _JSON_UNESCAPE = {"n": "\n", "t": "\t", "r": "\r", '"': '"', "\\": "\\", "/": "/", "b": "\b", "f": "\f"}
 
 
@@ -117,6 +122,22 @@ class AgentRunner:
 		self.system_prompt = system_prompt or Prompts.AGENT_SYSTEM
 		# Tiered model selection: resolved in run() once we know the scenario.
 		self.loop_model = self.model
+
+	# --- cancellation -----------------------------------------------------
+
+	def _cancel_key(self) -> str | None:
+		return f"builder_ai_cancel:{self.session_id}" if self.session_id else None
+
+	def is_cancelled(self) -> bool:
+		key = self._cancel_key()
+		# use_local_cache=False is critical: the cancel is set by a DIFFERENT
+		# web worker, and Frappe's per-request local cache would otherwise
+		# pin the first (miss) result and never re-read Redis.
+		return bool(frappe.cache.get_value(key, use_local_cache=False)) if key else False
+
+	def clear_cancel_flag(self) -> None:
+		if key := self._cancel_key():
+			frappe.cache.delete_value(key)
 
 	# --- realtime ---------------------------------------------------------
 
@@ -201,6 +222,12 @@ class AgentRunner:
 		emitted: dict[int, int] = {}  # index -> chars of stream_arg already emitted
 
 		for chunk in stream:
+			if self.is_cancelled():
+				try:
+					stream.close()
+				except Exception:
+					pass
+				raise CancelledError
 			delta = chunk.choices[0].delta
 			if getattr(delta, "content", None):
 				content_parts.append(delta.content)
@@ -371,6 +398,13 @@ class AgentRunner:
 				api_key=self.api_key,
 			)
 			for chunk in stream:
+				if self.is_cancelled():
+					try:
+						stream.close()
+					except Exception:
+						pass
+					self._emit_cancelled()
+					return
 				delta = chunk.choices[0].delta.content
 				if delta:
 					yaml_content += delta
@@ -412,7 +446,17 @@ class AgentRunner:
 
 	# --- orchestration ----------------------------------------------------
 
+	def _emit_cancelled(self) -> None:
+		msg = "Cancelled."
+		AISession.try_append_message(
+			self.session_id, "assistant", msg, message_type="status", metadata={"status": "cancelled"}
+		)
+		frappe.db.commit()
+		self.emit("complete", message=msg)
+
 	def run(self):
+		# Clear any stale cancel flag from a previous turn before starting.
+		self.clear_cancel_flag()
 		# Tiered model: full model only when generation is imminent, else fast model.
 		self.loop_model = self.model if self.should_use_full_model() else ModelRegistry.get_simple(self.model)
 		logger.info(
@@ -443,6 +487,7 @@ class AgentRunner:
 			try:
 				self._run_generation_fastpath()
 			finally:
+				self.clear_cancel_flag()
 				if self.session_id:
 					try:
 						AISession(frappe.get_doc(AISession.DOCTYPE, self.session_id)).clear_running()
@@ -486,6 +531,9 @@ class AgentRunner:
 						content = "Will be applied by the frontend."
 					messages.append({"role": "tool", "tool_call_id": tc_dict["id"], "content": content})
 
+		except CancelledError:
+			self._emit_cancelled()
+			return
 		except Exception as e:
 			logger.error(f"Agent LLM call failed: {e!s}", exc_info=True)
 			frappe.log_error(f"Agent LLM call failed: {e}", "AgentRunner.run")
@@ -496,6 +544,7 @@ class AgentRunner:
 			self.emit("error", message=str(e))
 			return
 		finally:
+			self.clear_cancel_flag()
 			if self.session_id:
 				try:
 					AISession(frappe.get_doc(AISession.DOCTYPE, self.session_id)).clear_running()

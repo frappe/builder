@@ -350,6 +350,18 @@ export class AIChatController {
 		this.submitPrompt();
 	};
 
+	/** Ask the backend to abort the in-flight turn at its next stream chunk.
+	 * Anthropic/OpenRouter stop billing once the stream is closed. Local state
+	 * is reset by the cancelled `complete` event the backend emits. */
+	cancel = async () => {
+		if (!this.sessionId.value || !this.isSubmitting.value) return;
+		try {
+			await createResource({ url: "builder.ai.api.cancel" }).submit({ session_id: this.sessionId.value });
+		} catch {
+			// Ignore — the user will see the event when it arrives.
+		}
+	};
+
 	submitPrompt = async () => {
 		if (!this.canSubmit.value || !this.pageId.value || this.isUnsavedPage.value) return;
 

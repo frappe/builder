@@ -27,9 +27,8 @@ TASK_PARAMS = {
 # If the primary model fails, try the next in order. Matched by substring.
 FALLBACK_CHAIN: list[tuple[str, str]] = [
 	("claude-sonnet-4", "openrouter/google/gemini-3.1-pro-preview"),
-	("gemini-3.1-pro", "openrouter/google/gemini-3-flash-preview"),
-	("gemini-3-flash", "openrouter/google/gemini-3-flash-preview"),
-	("claude-haiku-4", "openrouter/google/gemini-3-flash-preview"),
+	("gemini-3.1-pro", "openrouter/google/gemini-3.5-flash"),
+	("claude-haiku-4", "openrouter/google/gemini-3.5-flash"),
 ]
 
 

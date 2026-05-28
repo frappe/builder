@@ -26,8 +26,8 @@ class ModelRegistry:
 					"vision": True,
 				},
 				{
-					"name": "openrouter/google/gemini-3-flash-preview",
-					"label": "Gemini 3 Flash",
+					"name": "openrouter/google/gemini-3.5-flash",
+					"label": "Gemini 3.5 Flash",
 					"max_tokens": 1048576,
 					"vision": True,
 				},
@@ -70,7 +70,7 @@ class ModelRegistry:
 	}
 
 	PROVIDER_SIMPLE: ClassVar[dict[str, str]] = {
-		"openrouter": "openrouter/google/gemini-3-flash-preview",
+		"openrouter": "openrouter/google/gemini-3.5-flash",
 	}
 
 	@classmethod

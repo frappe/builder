@@ -85,6 +85,17 @@ def run(
 
 @frappe.whitelist()
 @has_page_write()
+def cancel(session_id: str):
+	"""Request that the currently-running turn for this session abort at its
+	next stream chunk. The loop closes the LLM stream — Anthropic / OpenRouter
+	stop billing for further tokens once the connection drops."""
+	if session_id:
+		frappe.cache.set_value(f"builder_ai_cancel:{session_id}", "1", expires_in_sec=300)
+	return {"status": "ok"}
+
+
+@frappe.whitelist()
+@has_page_write()
 def get_ai_models():
 	return ModelRegistry.AVAILABLE
 

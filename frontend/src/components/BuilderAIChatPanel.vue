@@ -272,11 +272,12 @@
 						</Popover>
 					</div>
 					<Button
+						v-if="isSubmitting"
 						variant="solid"
-						icon="arrow-up"
-						:disabled="!canSubmit"
-						:loading="isSubmitting"
-						@click="submitPrompt" />
+						icon="square"
+						title="Stop generation"
+						@click="chat.cancel" />
+					<Button v-else variant="solid" icon="arrow-up" :disabled="!canSubmit" @click="submitPrompt" />
 				</div>
 			</div>
 		</template>
