@@ -12,7 +12,6 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AIPageGeneratorModal: typeof import('./src/components/AIPageGeneratorModal.vue')['default']
-    AlertDialog: typeof import('./src/components/AlertDialog.vue')['default']
     AnalyticsFilters: typeof import('./src/components/Settings/AnalyticsFilters.vue')['default']
     AnalyticsOverview: typeof import('./src/components/Settings/AnalyticsOverview.vue')['default']
     AnglePicker: typeof import('./src/components/Controls/AnglePicker.vue')['default']
