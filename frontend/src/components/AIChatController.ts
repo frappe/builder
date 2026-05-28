@@ -1,149 +1,36 @@
 import type Block from "@/block";
+import { type AIChatHandlers, attachAIChatListeners, detachAIChatListeners } from "@/components/ai/realtime";
+import { ToolDispatcher } from "@/components/ai/toolDispatch";
+import type { AIProvider, ChatMessage } from "@/components/ai/types";
+import { buildLocalMessage } from "@/components/ai/yaml";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import type { BuilderClientScript } from "@/types/Builder/BuilderClientScript";
-import { getBlockInstance, getBlockObject } from "@/utils/helpers";
+import { getBlockObject } from "@/utils/helpers";
 import { useLocalStorage } from "@vueuse/core";
 import { createResource } from "frappe-ui";
-// @ts-ignore
-import yaml from "js-yaml";
 import { computed, nextTick, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
-export interface AIModel {
-	name: string;
-	label: string;
-	vision?: boolean;
-}
+// Re-exported for components that still import these from here.
+export type { AffectedBlock, AffectedScript, AIModel, AIProvider, ChatMessage } from "@/components/ai/types";
 
-export interface AIProvider {
-	provider: string;
-	models: AIModel[];
-}
-
-export interface ChatMessage {
-	id: string;
-	role: "user" | "assistant";
-	content: string;
-	message_type?: string;
-	task_type?: string | null;
-	block_id?: string | null;
-	created_at?: string;
-	metadata?: Record<string, any>;
-}
-
-export interface AffectedBlock {
-	block_id: string;
-	blockName: string;
-	element: string;
-	changedProps: string[];
-}
-
-export interface AffectedScript {
-	script_name: string;
-	changedProps: string[];
-}
-
-function buildLocalMessage(role: "user" | "assistant", content: string, metadata: Record<string, any> = {}) {
-	return {
-		id: `${role}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-		role,
-		content,
-		created_at: new Date().toISOString(),
-		metadata,
-	} as ChatMessage;
-}
-
-function getValidPartialYAML(yamlStr: string): any {
-	let cleaned = yamlStr.trim();
-	if (cleaned.startsWith("```")) {
-		const lines = cleaned.split("\n");
-		lines.shift();
-		if (lines.at(-1)?.startsWith("```")) lines.pop();
-		cleaned = lines.join("\n");
-	}
-	try {
-		return yaml.load(cleaned);
-	} catch {
-		const lines = cleaned.split("\n");
-		for (let i = lines.length - 1; i > 0; i--) {
-			try {
-				const parsed = yaml.load(lines.slice(0, i).join("\n"));
-				if (parsed) return parsed;
-			} catch {}
-		}
-	}
-	return null;
-}
-
-function convertYAMLtoBlock(yamlBlock: Record<string, any>): BlockOptions {
-	if (!yamlBlock || typeof yamlBlock !== "object" || Array.isArray(yamlBlock)) return yamlBlock;
-	const ensureObject = (value: any) =>
-		value && typeof value === "object" && !Array.isArray(value) ? value : {};
-	const ensureArray = (value: any) => (Array.isArray(value) ? value : []);
-	const block: BlockOptions = {
-		element: yamlBlock.el || "div",
-		blockName: yamlBlock.name || "",
-		baseStyles: ensureObject(yamlBlock.style),
-		attributes: ensureObject(yamlBlock.attrs),
-		mobileStyles: ensureObject(yamlBlock.m_style),
-		tabletStyles: ensureObject(yamlBlock.t_style),
-		classes: ensureArray(yamlBlock.classes),
-	};
-	if (yamlBlock.id) {
-		block.blockId = yamlBlock.id;
-		block.originalElement = yamlBlock.id === "root" ? "body" : undefined;
-	}
-	if (yamlBlock.text) block.innerText = yamlBlock.text;
-	if (yamlBlock.component) block.extendedFromComponent = yamlBlock.component;
-	if (yamlBlock.child_of) block.isChildOfComponent = yamlBlock.child_of;
-	block.children = Array.isArray(yamlBlock.c) ? yamlBlock.c.map(convertYAMLtoBlock) : [];
-	return block;
-}
-
-function parseBlock(raw: string): BlockOptions | null {
-	const parsed = getValidPartialYAML(raw);
-	if (!parsed) return null;
-	const block = Array.isArray(parsed) ? parsed[0] : parsed;
-	return block && typeof block === "object" && block.el ? convertYAMLtoBlock(block) : null;
-}
-
-function replaceBlockInTree(root: Block, targetId: string, replacement: BlockOptions): boolean {
-	if (!root || !replacement) return false;
-	if (root.blockId === targetId) {
-		root.element = replacement.element || root.element;
-		root.baseStyles = replacement.baseStyles || root.baseStyles;
-		root.mobileStyles = replacement.mobileStyles || root.mobileStyles;
-		root.tabletStyles = replacement.tabletStyles || root.tabletStyles;
-		root.classes = replacement.classes || root.classes;
-		if (replacement.attributes) root.attributes = { ...root.attributes, ...replacement.attributes };
-		if (replacement.innerText !== undefined) root.innerText = replacement.innerText;
-		if (replacement.innerHTML !== undefined) root.innerHTML = replacement.innerHTML;
-		if (replacement.children) {
-			root.children.splice(
-				0,
-				root.children.length,
-				...replacement.children.map((child) => getBlockInstance(child as BlockOptions)),
-			);
-		}
-		return true;
-	}
-	return root.children?.some((child: Block) => replaceBlockInTree(child, targetId, replacement)) || false;
-}
-
-const STANDARD_ATTRS = new Set(["src", "alt", "href", "title", "value", "type", "placeholder"]);
-
+/**
+ * Orchestrates the Builder AI chat: holds UI state, sends each user turn to the
+ * single `builder.ai.api.run` endpoint, and reacts to the `ai_chat_*` realtime
+ * events. Block-tree mutation lives in ToolDispatcher; YAML parsing in ./ai/yaml.
+ */
 export class AIChatController {
 	private readonly builderStore = useBuilderStore();
 	private readonly canvasStore = useCanvasStore();
 	private readonly pageStore = usePageStore();
 	private readonly route = useRoute();
+	private readonly dispatcher: ToolDispatcher;
 
 	readonly prompt = ref("");
 	readonly progressMessage = ref("");
 	readonly isSubmitting = ref(false);
-	readonly scope = ref<"page" | "selection">("page");
 	readonly messageContainer = ref<HTMLElement | null>(null);
 
 	readonly imageData = ref<string | null>(null);
@@ -156,59 +43,44 @@ export class AIChatController {
 	readonly availableModels = ref<AIProvider[]>([]);
 	readonly selectedModel = useLocalStorage("ai-selected-model", "");
 
-	private readonly streamingContent = ref("");
-	private readonly remoteTaskType = ref<string | null>(null);
-	private readonly remoteBlockId = ref<string | null>(null);
+	// Set by the panel's style-preset picker; folded into the prompt on submit.
+	pendingStylePreset: string | null = null;
+
+	private readonly pageStreamContent = ref(""); // accumulates kind="page_yaml" chunks
+	private readonly summaryContent = ref(""); // accumulates summary chunks
 	private readonly pendingAssistantId = ref<string | null>(null);
-	private readonly pendingScriptOps = ref<Promise<string | null>[]>([]);
-	private readonly pendingAffectedBlocks = ref<AffectedBlock[]>([]);
-	private readonly pendingAffectedScripts = ref<AffectedScript[]>([]);
 	private submittedForPageId: string | null = null;
-	private lastSubmitWasGenerate = false;
-	private pendingStylePreset: string | null = null;
 
 	readonly pageId = computed(() => this.route.params.pageId as string);
 	readonly isUnsavedPage = computed(() => !this.pageId.value || this.pageId.value === "new");
-	readonly currentProviderModels = computed(() => {
-		const found = this.availableModels.value.find((p) => p.provider === "openrouter");
-		return found?.models || [];
-	});
-	readonly selectedBlock = computed<Block | null>(() => {
-		return (this.canvasStore.editableBlock ||
-			this.canvasStore.activeCanvas?.selectedBlocks?.[0] ||
-			null) as Block | null;
-	});
-	readonly selectedBlocks = computed<Block[]>(() => {
-		return (this.canvasStore.activeCanvas?.selectedBlocks || []) as Block[];
-	});
-
-	readonly rootBlock = computed<Block | null>(() => {
-		return (this.pageStore.pageBlocks[0] || null) as Block | null;
-	});
-	readonly modelLabel = computed(() => {
-		return (
+	readonly currentProviderModels = computed(
+		() => this.availableModels.value.find((p) => p.provider === "openrouter")?.models || [],
+	);
+	readonly selectedBlocks = computed<Block[]>(
+		() => (this.canvasStore.activeCanvas?.selectedBlocks || []) as Block[],
+	);
+	readonly rootBlock = computed<Block | null>(() => (this.pageStore.pageBlocks[0] || null) as Block | null);
+	readonly modelLabel = computed(
+		() =>
 			this.currentProviderModels.value.find((m) => m.name === this.selectedModel.value)?.label ||
-			"Select model"
-		);
-	});
+			"Select model",
+	);
 	readonly modelOptions = computed(() =>
 		this.currentProviderModels.value.map((m) => ({
 			label: m.label,
 			onClick: () => (this.selectedModel.value = m.name),
 		})),
 	);
-	readonly scopeOptions = computed(() => [
-		{ label: "Page", value: "page" },
-		{ label: "Selection", value: "selection", disabled: !this.selectedBlock.value },
-	]);
-	readonly isVisionModel = computed(() => {
-		return this.currentProviderModels.value.find((m) => m.name === this.selectedModel.value)?.vision ?? false;
-	});
+	readonly isVisionModel = computed(
+		() => this.currentProviderModels.value.find((m) => m.name === this.selectedModel.value)?.vision ?? false,
+	);
 	readonly canSubmit = computed(
 		() => !!this.prompt.value.trim() && !this.isSubmitting.value && !!this.selectedModel.value,
 	);
 
 	constructor() {
+		this.dispatcher = new ToolDispatcher(this.pageStore, this.canvasStore, () => this.pageId.value);
+
 		watch(
 			this.currentProviderModels,
 			(models) => {
@@ -220,16 +92,10 @@ export class AIChatController {
 			{ immediate: true },
 		);
 
-		watch(this.selectedBlock, (block) => {
-			if (!block && this.scope.value === "selection") this.scope.value = "page";
-		});
-
-		// No watcher needed — scroll is triggered explicitly from message-mutating methods
-
 		watch(this.pageId, async (newPageId, oldPageId) => {
-			if (oldPageId) this.detachListeners(oldPageId);
+			if (oldPageId) detachAIChatListeners(this.builderStore.realtime, oldPageId, this.handlers);
 			if (!newPageId) return;
-			this.attachListeners(newPageId);
+			attachAIChatListeners(this.builderStore.realtime, newPageId, this.handlers);
 			this.resetTransientState();
 			if (newPageId === "new") {
 				this.messages.value = [];
@@ -240,14 +106,23 @@ export class AIChatController {
 		});
 	}
 
+	private get handlers(): AIChatHandlers {
+		return {
+			onProgress: this.onProgress,
+			onStream: this.onStream,
+			onToolBatch: this.onToolBatch,
+			onClarify: this.onClarify,
+			onComplete: this.onComplete,
+			onError: this.onError,
+		};
+	}
+
 	resetTransientState() {
 		this.progressMessage.value = "";
-		this.streamingContent.value = "";
-		this.remoteTaskType.value = null;
-		this.remoteBlockId.value = null;
+		this.pageStreamContent.value = "";
+		this.summaryContent.value = "";
 		this.pendingAssistantId.value = null;
-		this.pendingAffectedBlocks.value = [];
-		this.pendingAffectedScripts.value = [];
+		this.dispatcher.reset();
 		this.isSubmitting.value = false;
 	}
 
@@ -262,30 +137,38 @@ export class AIChatController {
 		};
 	}
 
-	messageLabel(message: ChatMessage) {
-		const scopeLabel = message.metadata?.scope === "selection" ? "selection" : "page";
-		if (message.role === "user") return scopeLabel;
-		const status = message.metadata?.status;
-		if (!status || status === "complete" || status === "running") return "";
-		return status;
+	private scrollToBottom() {
+		nextTick(() => {
+			if (this.messageContainer.value) {
+				this.messageContainer.value.scrollTop = this.messageContainer.value.scrollHeight;
+			}
+		});
 	}
 
 	async loadSession() {
 		if (!this.pageId.value || !this.builderStore.isAIEnabled || this.isUnsavedPage.value) return;
 		const result = await createResource({
-			url: "builder.ai.ai_page_generator.get_ai_session",
+			url: "builder.ai.api.get_ai_session",
 			makeParams: () => ({ page_id: this.pageId.value, model: this.selectedModel.value }),
 		}).submit();
 		const session = result as { session_id: string; messages: ChatMessage[] };
 		this.sessionId.value = session.session_id;
 		this.messages.value = (session.messages || []).map(
-			(m) =>
-				({
-					...m,
-					role: m.role === "user" ? "user" : "assistant",
-				} as ChatMessage),
+			(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" } as ChatMessage),
 		);
 	}
+
+	clearSession = async () => {
+		if (!this.pageId.value || this.isUnsavedPage.value) return;
+		const result = await createResource({
+			url: "builder.ai.api.clear_ai_session",
+			makeParams: () => ({ page_id: this.pageId.value }),
+		}).submit();
+		const session = result as { session_id: string; messages: ChatMessage[] };
+		this.sessionId.value = session.session_id;
+		this.messages.value = session.messages || [];
+		this.resetTransientState();
+	};
 
 	clearImage = () => {
 		this.imageData.value = null;
@@ -306,69 +189,44 @@ export class AIChatController {
 		reader.readAsDataURL(file);
 	};
 
-	clearSession = async () => {
-		if (!this.pageId.value || this.isUnsavedPage.value) return;
-		const result = await createResource({
-			url: "builder.ai.ai_page_generator.clear_ai_session",
-			makeParams: () => ({ page_id: this.pageId.value }),
-		}).submit();
-		const session = result as { session_id: string; messages: ChatMessage[] };
-		this.sessionId.value = session.session_id;
-		this.messages.value = session.messages || [];
-		this.resetTransientState();
-	};
+	// --- realtime handlers ------------------------------------------------
 
-	private applyPageStream() {
-		if (this.submittedForPageId && this.submittedForPageId !== this.pageId.value) return;
-		const block = parseBlock(this.streamingContent.value);
-		if (!block) return;
-		try {
-			this.pageStore.pageBlocks = [getBlockInstance(block)];
-			this.canvasStore.activeCanvas?.setRootBlock(this.pageStore.pageBlocks[0] as Block, false);
-		} catch {}
-	}
-
-	private applyModifyStream() {
-		const block = parseBlock(this.streamingContent.value);
-		const targetId = this.remoteBlockId.value || this.selectedBlock.value?.blockId;
-		if (!block || !targetId || !this.rootBlock.value) return;
-		try {
-			replaceBlockInTree(this.rootBlock.value, targetId, block);
-		} catch {}
-	}
-
-	private scrollToBottom() {
-		nextTick(() => {
-			if (this.messageContainer.value) {
-				this.messageContainer.value.scrollTop = this.messageContainer.value.scrollHeight;
-			}
-		});
-	}
-
-	onProgress = (data: { message?: string; task_type?: string; block_id?: string }) => {
+	onProgress = (data: { message?: string }) => {
 		this.isSubmitting.value = true;
-		const msg = data.message || "";
-		// "Generating..." and "Building..." are misleading during clarification rounds
-		// because we don't know yet if the LLM will clarify or generate.
-		const isGeneratePhase = msg.startsWith("Generating") || msg === "Building...";
-		this.progressMessage.value = isGeneratePhase ? "Thinking..." : msg || this.progressMessage.value;
-		if (data.task_type) this.remoteTaskType.value = data.task_type;
-		if (data.block_id) this.remoteBlockId.value = data.block_id;
+		this.progressMessage.value = data.message || this.progressMessage.value;
 		this.replacePendingAssistant(this.progressMessage.value || "Working...", { status: "running" });
 		this.scrollToBottom();
 	};
 
-	onStream = (data: { chunk?: string; task_type?: string; block_id?: string }) => {
+	onStream = (data: { chunk?: string; kind?: string }) => {
 		if (!data.chunk) return;
 		this.isSubmitting.value = true;
-		this.streamingContent.value += data.chunk;
-		if (data.task_type) this.remoteTaskType.value = data.task_type;
-		if (data.block_id) this.remoteBlockId.value = data.block_id;
-		if (this.remoteTaskType.value || this.scope.value === "selection") {
-			this.applyModifyStream();
+		if (data.kind === "page_yaml") {
+			if (this.submittedForPageId && this.submittedForPageId !== this.pageId.value) return;
+			this.pageStreamContent.value += data.chunk;
+			try {
+				this.dispatcher.applyPageYaml(this.pageStreamContent.value);
+			} catch {}
 		} else {
-			this.applyPageStream();
+			this.summaryContent.value += data.chunk;
+			this.replacePendingAssistant(this.summaryContent.value, { status: "running" });
+			this.scrollToBottom();
 		}
+	};
+
+	onToolBatch = (data: { operations?: Array<{ tool_name: string; args: Record<string, any> }> }) => {
+		if (!data.operations?.length) return;
+		for (const op of data.operations) {
+			this.dispatcher.trackAffectedItem(op.tool_name, op.args); // track before apply (remove_block)
+			try {
+				this.dispatcher.applyToolOperation(op.tool_name, op.args);
+			} catch (e) {
+				console.warn(`[AI agent] tool "${op.tool_name}" failed:`, e);
+			}
+		}
+		const n = data.operations.length;
+		this.replacePendingAssistant(`Applying ${n} change${n !== 1 ? "s" : ""}…`, { status: "running" });
+		this.scrollToBottom();
 	};
 
 	onComplete = async (data: { message?: string }) => {
@@ -376,60 +234,47 @@ export class AIChatController {
 			this.submittedForPageId = null;
 			return;
 		}
-		const wasGenerate = this.lastSubmitWasGenerate;
-		this.lastSubmitWasGenerate = false;
 		this.submittedForPageId = null;
 		this.isSubmitting.value = false;
 		this.progressMessage.value = data.message || "Done";
 
 		let undoScripts: string[] = [];
-		if (this.pendingScriptOps.value.length) {
-			const names = await Promise.all(this.pendingScriptOps.value);
+		if (this.dispatcher.pendingScriptOps.value.length) {
+			const names = await Promise.all(this.dispatcher.pendingScriptOps.value);
 			undoScripts = names.filter((n): n is string => !!n);
-			this.pendingScriptOps.value = [];
+			this.dispatcher.pendingScriptOps.value = [];
 		}
-
-		// Add newly created scripts (set_page_script) to affected scripts
 		for (const name of undoScripts) {
-			if (!this.pendingAffectedScripts.value.find((s) => s.script_name === name)) {
-				this.pendingAffectedScripts.value.push({ script_name: name, changedProps: ["created"] });
+			if (!this.dispatcher.pendingAffectedScripts.value.find((s) => s.script_name === name)) {
+				this.dispatcher.pendingAffectedScripts.value.push({ script_name: name, changedProps: ["created"] });
 			}
 		}
 
 		const meta: Record<string, any> = { status: "complete" };
 		if (undoScripts.length) meta.undoScripts = undoScripts;
-		if (this.pendingAffectedBlocks.value.length) meta.affectedBlocks = [...this.pendingAffectedBlocks.value];
-		if (this.pendingAffectedScripts.value.length)
-			meta.affectedScripts = [...this.pendingAffectedScripts.value];
+		if (this.dispatcher.pendingAffectedBlocks.value.length)
+			meta.affectedBlocks = [...this.dispatcher.pendingAffectedBlocks.value];
+		if (this.dispatcher.pendingAffectedScripts.value.length)
+			meta.affectedScripts = [...this.dispatcher.pendingAffectedScripts.value];
 		this.replacePendingAssistant(this.progressMessage.value, meta);
-		this.streamingContent.value = "";
-		this.remoteTaskType.value = null;
-		this.remoteBlockId.value = null;
-		this.pendingAffectedBlocks.value = [];
-		this.pendingAffectedScripts.value = [];
+		this.pageStreamContent.value = "";
+		this.summaryContent.value = "";
+		this.dispatcher.reset();
 
-		// Save local metadata before loadSession() overwrites this.messages with server data
 		const localMeta = { ...meta };
-
-		// Persist UI-only metadata to the server so it survives page reloads
 		if (
 			this.sessionId.value &&
 			(localMeta.affectedBlocks?.length || localMeta.affectedScripts?.length || localMeta.undoScripts?.length)
 		) {
-			createResource({ url: "builder.ai.ai_page_generator.update_session_message_metadata" })
+			createResource({ url: "builder.ai.api.update_session_message_metadata" })
 				.submit({ session_id: this.sessionId.value, metadata: localMeta })
-				.catch(() => null); // Non-critical — ignore failures
+				.catch(() => null);
 		}
 
 		await this.loadSession();
 
-		// Re-apply local metadata (affectedBlocks, affectedScripts, undoScripts) to the last
-		// assistant message in case the server hasn't flushed yet
-		if (
-			localMeta.affectedBlocks?.length ||
-			localMeta.affectedScripts?.length ||
-			localMeta.undoScripts?.length
-		) {
+		// Re-apply client-only metadata in case the server hasn't flushed it yet.
+		if (localMeta.affectedBlocks?.length || localMeta.affectedScripts?.length || localMeta.undoScripts?.length) {
 			let idx = this.messages.value.length - 1;
 			while (idx >= 0 && this.messages.value[idx]?.role !== "assistant") idx--;
 			if (idx >= 0) {
@@ -440,21 +285,7 @@ export class AIChatController {
 			}
 		}
 
-		// After a full page generation, nudge the user to continue refining
-		if (wasGenerate && this.rootBlock.value?.children?.length) {
-			nextTick(() => {
-				const nudge = buildLocalMessage(
-					"assistant",
-					"Page created! You can now ask me to refine it — adjust styles, add sections, update copy, or change the layout.",
-					{ status: "nudge" },
-				);
-				this.messages.value.push(nudge);
-				this.scrollToBottom();
-			});
-		}
-
 		this.scrollToBottom();
-
 		window.setTimeout(() => {
 			this.progressMessage.value = "";
 			this.pendingAssistantId.value = null;
@@ -465,9 +296,8 @@ export class AIChatController {
 		this.isSubmitting.value = false;
 		this.progressMessage.value = "";
 		this.replacePendingAssistant(data.message || "Request failed", { status: "error" });
-		this.streamingContent.value = "";
-		this.remoteTaskType.value = null;
-		this.remoteBlockId.value = null;
+		this.pageStreamContent.value = "";
+		this.summaryContent.value = "";
 		await this.loadSession();
 		this.pendingAssistantId.value = null;
 	};
@@ -481,274 +311,103 @@ export class AIChatController {
 		headline?: string;
 		sections?: string[];
 		palette?: string;
-		block_id?: string;
 	}) => {
 		this.isSubmitting.value = false;
 		this.progressMessage.value = "";
-		this.streamingContent.value = "";
-		this.remoteTaskType.value = null;
-		this.remoteBlockId.value = null;
+		this.pageStreamContent.value = "";
+		this.summaryContent.value = "";
 
 		if (data.plan_summary) {
-			const headline = data.headline || "Here's my plan";
-			this.replacePendingAssistant(headline, {
+			this.replacePendingAssistant(data.headline || "Here's my plan", {
 				status: "plan_summary",
-				headline,
+				headline: data.headline || "",
 				sections: data.sections || [],
 				palette: data.palette || "",
 			});
-			this.pendingAssistantId.value = null;
-			await this.loadSession();
-			const lastAssistant = [...this.messages.value].reverse().find((m) => m.role === "assistant");
-			if (lastAssistant && lastAssistant.metadata?.status !== "plan_summary") {
-				lastAssistant.metadata = { ...lastAssistant.metadata, status: "plan_summary", headline, sections: data.sections || [], palette: data.palette || "" };
-			}
 		} else {
-			const question = data.question || "Can you clarify?";
-			const options = data.options || [];
-			const previews = data.previews ?? null;
-			const ready = data.ready ?? false;
-			this.replacePendingAssistant(question, {
+			this.replacePendingAssistant(data.question || "Could you clarify?", {
 				status: "clarification",
-				options,
-				previews,
-				ready,
+				options: data.options || [],
+				previews: data.previews ?? null,
+				ready: data.ready ?? false,
 			});
-			this.pendingAssistantId.value = null;
-			await this.loadSession();
-			const lastAssistant = [...this.messages.value].reverse().find((m) => m.role === "assistant");
-			if (lastAssistant && !lastAssistant.metadata?.options?.length) {
-				lastAssistant.metadata = { ...lastAssistant.metadata, options, previews, ready, status: "clarification" };
-			}
 		}
+		this.pendingAssistantId.value = null;
+		// Backend persists+commits clarify messages before emitting, so this is race-free.
+		await this.loadSession();
 		this.scrollToBottom();
 	};
 
-	onAgentToolBatch = (data: { operations?: Array<{ tool_name: string; args: Record<string, any> }> }) => {
-		if (!data.operations?.length) return;
-		for (const op of data.operations) {
-			// Track before apply so remove_block can capture block info while it still exists
-			this.trackAffectedItem(op.tool_name, op.args);
-			try {
-				this.applyToolOperation(op.tool_name, op.args);
-			} catch (e) {
-				console.warn(`[AI agent] tool "${op.tool_name}" failed:`, e);
-			}
-		}
-		const n = data.operations.length;
-		this.replacePendingAssistant(`Applying ${n} change${n !== 1 ? "s" : ""}…`, { status: "running" });
-		this.scrollToBottom();
+	// --- user actions -----------------------------------------------------
+
+	selectOption = (option: string) => {
+		this.prompt.value = option;
+		this.submitPrompt();
 	};
 
-	findBlockInTree(blockId: string, root?: Block | null): Block | null {
-		const searchRoot = root !== undefined ? root : this.rootBlock.value;
-		if (!searchRoot) return null;
-		if (searchRoot.blockId === blockId) return searchRoot;
-		for (const child of searchRoot.children || []) {
-			const found = this.findBlockInTree(blockId, child as Block);
-			if (found) return found;
-		}
-		return null;
-	}
+	approvePlan = () => {
+		this.prompt.value = "Yes, that plan looks good — go ahead and build the page.";
+		this.submitPrompt();
+	};
 
-	private extractChangedProps(toolName: string, args: Record<string, any>): string[] {
-		switch (toolName) {
-			case "update_block": {
-				const props: string[] = [];
-				if (args.base_styles) props.push(...Object.keys(args.base_styles));
-				if (args.mobile_styles) props.push(...Object.keys(args.mobile_styles).map((k) => `m:${k}`));
-				if (args.tablet_styles) props.push(...Object.keys(args.tablet_styles).map((k) => `t:${k}`));
-				if (args.attributes) props.push(...Object.keys(args.attributes));
-				if (args.inner_text !== undefined) props.push("text");
-				if (args.inner_html !== undefined) props.push("html");
-				if (args.element !== undefined) props.push("element");
-				if (args.classes !== undefined) props.push("classes");
-				return props;
-			}
-			case "add_block":
-				return ["added child"];
-			case "remove_block":
-				return ["removed"];
-			case "move_block":
-				return ["moved"];
-			case "update_script": {
-				const props = ["script"];
-				if (args.script_type) props.push("script_type");
-				return props;
-			}
-			default:
-				return [];
-		}
-	}
+	submitPrompt = async () => {
+		if (!this.canSubmit.value || !this.pageId.value || this.isUnsavedPage.value) return;
 
-	private trackAffectedItem(toolName: string, args: Record<string, any>) {
-		const changedProps = this.extractChangedProps(toolName, args);
-		if (!changedProps.length) return;
-		if (["update_block", "remove_block", "move_block"].includes(toolName)) {
-			const blockId = args.block_id as string;
-			if (!blockId) return;
-			const block = this.findBlockInTree(blockId);
-			const existing = this.pendingAffectedBlocks.value.find((b) => b.block_id === blockId);
-			if (existing) {
-				existing.changedProps = [...new Set([...existing.changedProps, ...changedProps])];
-			} else {
-				this.pendingAffectedBlocks.value.push({
-					block_id: blockId,
-					blockName: block?.blockName || "",
-					element: block?.element || "div",
-					changedProps,
-				});
-			}
-		} else if (toolName === "add_block") {
-			const parentId = args.parent_block_id as string;
-			if (!parentId) return;
-			const block = this.findBlockInTree(parentId);
-			const existing = this.pendingAffectedBlocks.value.find((b) => b.block_id === parentId);
-			if (existing) {
-				existing.changedProps = [...new Set([...existing.changedProps, ...changedProps])];
-			} else {
-				this.pendingAffectedBlocks.value.push({
-					block_id: parentId,
-					blockName: block?.blockName || "",
-					element: block?.element || "div",
-					changedProps,
-				});
-			}
-		} else if (toolName === "update_script") {
-			const scriptName = args.script_name as string | undefined;
-			if (!scriptName) return;
-			const existing = this.pendingAffectedScripts.value.find((s) => s.script_name === scriptName);
-			if (existing) {
-				existing.changedProps = [...new Set([...existing.changedProps, ...changedProps])];
-			} else {
-				this.pendingAffectedScripts.value.push({ script_name: scriptName, changedProps });
-			}
+		let userText = this.prompt.value.trim();
+		this.prompt.value = "";
+		if (this.pendingStylePreset) {
+			userText += `\n\n(Preferred visual style: ${this.pendingStylePreset})`;
+			this.pendingStylePreset = null;
 		}
-	}
+		this.submittedForPageId = this.pageId.value;
+		if (!this.sessionId.value) await this.loadSession();
 
-	applyToolOperation(toolName: string, args: Record<string, any>) {
-		switch (toolName) {
-			case "update_block": {
-				const block = this.findBlockInTree(args.block_id);
-				console.log("Updating block", block?.blockId, "with args", args);
-				if (!block) return;
-				if (args.base_styles) {
-					Object.entries(args.base_styles).forEach(([key, value]) =>
-						block.setBaseStyle(key as any, value as StyleValue),
-					);
-				}
-				if (args.mobile_styles) {
-					Object.entries(args.mobile_styles).forEach(([key, value]) => {
-						block.mobileStyles[key] = value as StyleValue;
-					});
-				}
-				if (args.tablet_styles) {
-					Object.entries(args.tablet_styles).forEach(([key, value]) => {
-						block.tabletStyles[key] = value as StyleValue;
-					});
-				}
-				if (args.attributes) {
-					Object.entries(args.attributes).forEach(([key, value]) => {
-						if (STANDARD_ATTRS.has(key)) {
-							block.setAttribute(key, value as string | undefined);
-						} else {
-							block.customAttributes[key] = value as string | undefined;
-						}
-					});
-				}
-				if (args.inner_text !== undefined) block.setInnerHTML(args.inner_text);
-				if (args.inner_html !== undefined) block.setInnerHTML(args.inner_html);
-				if (args.element !== undefined) block.element = args.element;
-				if (args.classes !== undefined) block.classes = args.classes;
-				return;
-			}
-			case "add_block": {
-				const parent = this.findBlockInTree(args.parent_block_id);
-				if (!parent) return;
-				const newBlock = getBlockInstance(convertYAMLtoBlock(args.block as Record<string, any>));
-				if (args.after_block_id) {
-					const sibling = this.findBlockInTree(args.after_block_id, parent);
-					if (sibling) {
-						parent.addChildAfter(newBlock, sibling);
-						return;
-					}
-				}
-				parent.addChild(newBlock, typeof args.index === "number" ? args.index : null);
-				return;
-			}
-			case "remove_block": {
-				const block = this.findBlockInTree(args.block_id);
-				if (!block) return;
-				block.getParentBlock()?.removeChild(block);
-				return;
-			}
-			case "move_block": {
-				const block = this.findBlockInTree(args.block_id);
-				const newParent = this.findBlockInTree(args.new_parent_block_id);
-				if (!block || !newParent) return;
-				block.getParentBlock()?.removeChild(block);
-				if (args.after_block_id) {
-					const sibling = this.findBlockInTree(args.after_block_id, newParent);
-					if (sibling) {
-						newParent.addChildAfter(block, sibling);
-						return;
-					}
-				}
-				newParent.addChild(block, typeof args.index === "number" ? args.index : null, false);
-				return;
-			}
-			case "update_script": {
-				const op = createResource({ url: "frappe.client.set_value" })
-					.submit({
-						doctype: "Builder Client Script",
-						name: args.script_name as string,
-						fieldname: {
-							script: args.script as string,
-							...(args.script_type ? { script_type: args.script_type as string } : {}),
-						},
-					})
-					.then(() => {
-						const existing = this.pageStore.activePageScripts.find(
-							(s) => s.name === (args.script_name as string),
-						);
-						if (existing) {
-							existing.script = args.script as string;
-							if (args.script_type) existing.script_type = args.script_type as any;
-						}
-						return args.script_name as string;
-					})
-					.catch(() => null);
-				this.pendingScriptOps.value.push(op);
-				return;
-			}
-			case "set_page_script": {
-				const scriptType = (args.script_type as string) || "JavaScript";
-				const op = createResource({ url: "frappe.client.insert" })
-					.submit({
-						doc: { doctype: "Builder Client Script", script_type: scriptType, script: args.script as string },
-					})
-					.then((res: BuilderClientScript) =>
-						createResource({ url: "frappe.client.insert" })
-							.submit({
-								doc: {
-									doctype: "Builder Page Client Script",
-									parent: this.pageId.value,
-									parenttype: "Builder Page",
-									parentfield: "client_scripts",
-									builder_script: res.name,
-								},
-							})
-							.then(() => {
-								this.pageStore.activePageScripts.push(res);
-								return res.name;
-							}),
-					)
-					.catch(() => null);
-				this.pendingScriptOps.value.push(op);
-				return;
-			}
+		const selectedBlockContext = this.selectedBlocks.value
+			.filter((b) => b.blockId)
+			.map((b) => ({ id: b.blockId, label: b.blockName || b.element }));
+		const selectedIds = this.selectedBlocks.value.map((b) => b.blockId).filter(Boolean);
+		const attachedImageData = this.imageData.value;
+		const attachedImageUrl = this.imagePreviewUrl.value;
+		this.clearImage();
+
+		const contextMeta: Record<string, any> = {};
+		if (selectedBlockContext.length) contextMeta.selectedBlockContext = selectedBlockContext;
+		if (attachedImageUrl) contextMeta.attachedImageUrl = attachedImageUrl;
+
+		const userMessage = buildLocalMessage("user", userText, contextMeta);
+		const assistantMessage = buildLocalMessage("assistant", "Thinking...", { status: "running" });
+		this.messages.value.push(userMessage, assistantMessage);
+		this.pendingAssistantId.value = assistantMessage.id;
+		this.scrollToBottom();
+		this.pageStreamContent.value = "";
+		this.summaryContent.value = "";
+		this.dispatcher.reset();
+		this.isSubmitting.value = true;
+
+		const pageContext = this.rootBlock.value
+			? JSON.stringify(getBlockObject(this.rootBlock.value as Block))
+			: "[]";
+
+		try {
+			const result = await createResource({
+				url: "builder.ai.api.run",
+				makeParams: () => ({
+					prompt: userText,
+					page_id: this.pageId.value,
+					model: this.selectedModel.value,
+					session_id: this.sessionId.value,
+					page_context: pageContext,
+					...(selectedIds.length ? { selected_block_ids: selectedIds } : {}),
+					...(selectedBlockContext.length ? { selected_block_context: selectedBlockContext } : {}),
+					...(attachedImageData ? { image_data: attachedImageData } : {}),
+				}),
+			}).submit();
+			const response = result as { session_id?: string };
+			if (response.session_id) this.sessionId.value = response.session_id;
+		} catch (error) {
+			await this.onError({ message: error instanceof Error ? error.message : "Request failed" });
 		}
-	}
+	};
 
 	undoAgentScript = async (message: ChatMessage) => {
 		const scriptNames: string[] = message.metadata?.undoScripts || [];
@@ -769,145 +428,8 @@ export class AIChatController {
 		}
 	};
 
-	private get listenerMap() {
-		return {
-			ai_generation_progress: this.onProgress,
-			ai_generation_stream: this.onStream,
-			ai_generation_complete: this.onComplete,
-			ai_generation_error: this.onError,
-			ai_generation_clarify: this.onClarify,
-			ai_modify_progress: this.onProgress,
-			ai_modify_stream: this.onStream,
-			ai_modify_complete: this.onComplete,
-			ai_modify_error: this.onError,
-			ai_modify_clarify: this.onClarify,
-			ai_agent_progress: this.onProgress,
-			ai_agent_tool_batch: this.onAgentToolBatch,
-			ai_agent_stream: this.onStream,
-			ai_agent_complete: this.onComplete,
-			ai_agent_error: this.onError,
-			ai_agent_clarify: this.onClarify,
-		};
-	}
-
-	private eventName(base: string, targetPageId: string) {
-		return targetPageId ? `${base}_${targetPageId}` : base;
-	}
-
-	attachListeners(targetPageId: string) {
-		Object.entries(this.listenerMap).forEach(([event, handler]) => {
-			this.builderStore.realtime.on(this.eventName(event, targetPageId), handler);
-		});
-	}
-
-	detachListeners(targetPageId: string) {
-		Object.entries(this.listenerMap).forEach(([event, handler]) => {
-			this.builderStore.realtime.off(this.eventName(event, targetPageId), handler);
-		});
-	}
-
-	private isGenerateMode() {
-		if (this.scope.value === "selection") return false;
-		return !this.rootBlock.value || !this.rootBlock.value.children?.length;
-	}
-
-	selectOption = (option: string) => {
-		this.prompt.value = option;
-		this.submitPrompt();
-	};
-
-	triggerGeneration = () => {
-		this.prompt.value = "✓ APPROVED — Generate the page now following the plan we discussed.";
-		this.submitPrompt();
-	};
-
-	submitPrompt = async () => {
-		if (!this.canSubmit.value || !this.pageId.value || this.isUnsavedPage.value) return;
-
-		const userText = this.prompt.value.trim();
-		this.prompt.value = "";
-		this.submittedForPageId = this.pageId.value;
-
-		if (!this.sessionId.value) await this.loadSession();
-
-		const runGenerate = this.scope.value === "page" && this.isGenerateMode();
-		const runAgent = this.scope.value === "page" && !runGenerate;
-		const targetBlock = this.scope.value === "selection" ? this.selectedBlock.value : this.rootBlock.value;
-		this.lastSubmitWasGenerate = runGenerate;
-
-		// Snapshot context attachments before submit
-		const selectedBlockContext =
-			runAgent && this.selectedBlocks.value.length
-				? this.selectedBlocks.value
-						.filter((b) => b.blockId)
-						.map((b) => ({ id: b.blockId, label: b.blockName || b.element }))
-				: [];
-		const attachedImageUrl = this.imagePreviewUrl.value;
-		const attachedImageData = this.imageData.value;
-		this.clearImage();
-
-		const contextMeta: Record<string, any> = {};
-		if (selectedBlockContext.length) contextMeta.selectedBlockContext = selectedBlockContext;
-		if (attachedImageUrl) contextMeta.attachedImageUrl = attachedImageUrl;
-
-		const userMessage = buildLocalMessage("user", userText, {
-			scope: this.scope.value,
-			...contextMeta,
-		});
-		const inQnA = this.messages.value.some((m) => m.metadata?.status === "clarification");
-		const assistantMessage = buildLocalMessage("assistant", runGenerate || inQnA ? "Thinking..." : "Working...", { status: "running" });
-		this.messages.value.push(userMessage, assistantMessage);
-		this.pendingAssistantId.value = assistantMessage.id;
-		this.scrollToBottom();
-		this.streamingContent.value = "";
-		this.remoteTaskType.value = null;
-		this.remoteBlockId.value = null;
-		this.isSubmitting.value = true;
-
-		let url: string;
-		let extraParams: Record<string, any> = {};
-		if (runGenerate) {
-			url = "builder.ai.ai_page_generator.generate_page_from_prompt";
-			const stylePreset = this.pendingStylePreset;
-			this.pendingStylePreset = null;
-			extraParams = {
-				...(attachedImageData ? { image_data: attachedImageData } : {}),
-				...(stylePreset ? { style_preset: stylePreset } : {}),
-			};
-		} else if (runAgent) {
-			url = "builder.ai.ai_page_generator.run_agent_from_prompt";
-			const selectedIds = this.selectedBlocks.value.map((b) => b.blockId).filter(Boolean);
-			extraParams = {
-				page_context: JSON.stringify(getBlockObject(this.rootBlock.value as Block)),
-				...(selectedIds.length ? { selected_block_ids: selectedIds } : {}),
-				...(selectedBlockContext.length ? { selected_block_context: selectedBlockContext } : {}),
-				...(attachedImageData ? { image_data: attachedImageData } : {}),
-			};
-		} else {
-			url = "builder.ai.ai_page_generator.modify_section_from_prompt";
-			extraParams = { block_context: JSON.stringify(getBlockObject(targetBlock as Block)) };
-		}
-
-		try {
-			const result = await createResource({
-				url,
-				makeParams: () => ({
-					prompt: userText,
-					page_id: this.pageId.value,
-					model: this.selectedModel.value,
-					session_id: this.sessionId.value,
-					...extraParams,
-				}),
-			}).submit();
-			const response = result as { session_id?: string };
-			if (response.session_id) this.sessionId.value = response.session_id;
-		} catch (error) {
-			await this.onError({ message: error instanceof Error ? error.message : "Request failed" });
-		}
-	};
-
 	selectBlockById = (blockId: string) => {
-		const block = this.findBlockInTree(blockId);
+		const block = this.dispatcher.findBlockInTree(blockId);
 		if (!block) return;
 		this.canvasStore.selectBlock(block, null, true, true);
 	};
@@ -917,9 +439,9 @@ export class AIChatController {
 	};
 
 	async mount() {
-		if (this.pageId.value) this.attachListeners(this.pageId.value);
+		if (this.pageId.value) attachAIChatListeners(this.builderStore.realtime, this.pageId.value, this.handlers);
 		createResource({
-			url: "builder.ai.ai_page_generator.get_ai_models",
+			url: "builder.ai.api.get_ai_models",
 			auto: true,
 			onSuccess: (data: AIProvider[]) => {
 				this.availableModels.value = data;
@@ -929,6 +451,6 @@ export class AIChatController {
 	}
 
 	unmount() {
-		if (this.pageId.value) this.detachListeners(this.pageId.value);
+		if (this.pageId.value) detachAIChatListeners(this.builderStore.realtime, this.pageId.value, this.handlers);
 	}
 }

@@ -12,7 +12,6 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AIAffectedItems: typeof import('./src/components/AIAffectedItems.vue')['default']
-    AIPageGeneratorModal: typeof import('./src/components/AIPageGeneratorModal.vue')['default']
     AlertDialog: typeof import('./src/components/AlertDialog.vue')['default']
     AnalyticsFilters: typeof import('./src/components/Settings/AnalyticsFilters.vue')['default']
     AnalyticsOverview: typeof import('./src/components/Settings/AnalyticsOverview.vue')['default']
@@ -100,9 +99,12 @@ declare module 'vue' {
     Input: typeof import('./src/components/Controls/Input.vue')['default']
     InputLabel: typeof import('./src/components/Controls/InputLabel.vue')['default']
     JavaScript: typeof import('./src/components/Icons/JavaScript.vue')['default']
-    KeyboardShortcutsModal: typeof import('./src/components/KeyboardShortcutsModal.vue')['default']
     Layers: typeof import('./src/components/Icons/Layers.vue')['default']
     Loading: typeof import('./src/components/Icons/Loading.vue')['default']
+    LucideCpu: typeof import('~icons/lucide/cpu')['default']
+    LucideImage: typeof import('~icons/lucide/image')['default']
+    LucideLayout: typeof import('~icons/lucide/layout')['default']
+    LucideX: typeof import('~icons/lucide/x')['default']
     MainMenu: typeof import('./src/components/MainMenu.vue')['default']
     MarginHandler: typeof import('./src/components/MarginHandler.vue')['default']
     Meta: typeof import('./src/components/Icons/Meta.vue')['default']

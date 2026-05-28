@@ -6,7 +6,7 @@ from frappe import _
 
 class AISession:
 	DOCTYPE = "Builder AI Session"
-	MAX_MESSAGES = 24
+	MAX_MESSAGES = 100
 
 	def __init__(self, doc):
 		self._doc = doc
@@ -152,6 +152,18 @@ class AISession:
 			return False
 		messages = cls(frappe.get_doc(cls.DOCTYPE, session_id)).get_messages()
 		return any(m.get("message_type") == "clarification" for m in messages)
+
+	@classmethod
+	def last_assistant_was_plan(cls, session_id: str | None) -> bool:
+		"""True if the most recent assistant message proposed a plan — i.e. the
+		current user turn is likely approving it, so generation is imminent."""
+		if not session_id or not frappe.db.exists(cls.DOCTYPE, session_id):
+			return False
+		messages = cls(frappe.get_doc(cls.DOCTYPE, session_id)).get_messages()
+		for m in reversed(messages):
+			if m.get("role") == "assistant":
+				return (m.get("metadata") or {}).get("status") == "plan_summary"
+		return False
 
 	def build_context_string(self) -> str:
 		history_lines = []

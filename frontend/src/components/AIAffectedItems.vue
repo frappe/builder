@@ -36,6 +36,7 @@
 
 <script setup lang="ts">
 import type { AffectedBlock, AffectedScript } from "@/components/AIChatController";
+import { FeatherIcon } from "frappe-ui";
 import { computed, ref } from "vue";
 
 const props = defineProps<{

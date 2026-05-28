@@ -119,3 +119,7 @@ class ModelRegistry:
 	@classmethod
 	def get_default(cls, model_or_provider: str) -> str:
 		return cls.PROVIDER_DEFAULT.get(model_or_provider, model_or_provider)
+
+	@classmethod
+	def is_known_model(cls, model: str) -> bool:
+		return any(m["name"] == model for provider in cls.AVAILABLE for m in provider["models"])

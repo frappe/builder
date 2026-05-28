@@ -68,28 +68,36 @@
 						<!-- Plan summary card -->
 						<div
 							v-if="message.metadata?.status === 'plan_summary'"
-							class="mt-2.5 rounded-lg border border-outline-gray-2 bg-surface-gray-1 p-3">
-							<ul class="mb-2.5 space-y-1">
+							class="mt-2 w-full rounded-lg border border-outline-gray-2 bg-surface-gray-1 p-3">
+							<ul class="m-0 list-none space-y-1 p-0">
 								<li
 									v-for="section in message.metadata.sections"
 									:key="section"
-									class="flex items-start gap-1.5 text-[11px] text-ink-gray-7">
-									<span class="mt-0.5 shrink-0 text-ink-gray-3">–</span>
-									{{ section }}
+									class="flex items-start gap-2 text-p-sm leading-snug text-ink-gray-7">
+									<span class="mt-[6px] size-1 shrink-0 rounded-full bg-surface-gray-4" />
+									<span>{{ section }}</span>
 								</li>
 							</ul>
-							<p v-if="message.metadata.palette" class="mb-2.5 text-[10px] text-ink-gray-4">
-								{{ message.metadata.palette }}
-							</p>
+							<div v-if="message.metadata.palette" class="mt-2.5 border-t border-outline-gray-1 pt-2.5">
+								<div v-if="paletteColors(message.metadata.palette).length" class="mb-1 flex flex-wrap gap-1">
+									<span
+										v-for="hex in paletteColors(message.metadata.palette)"
+										:key="hex"
+										class="size-3.5 rounded-full border border-outline-gray-2"
+										:style="{ backgroundColor: hex }"
+										:title="hex" />
+								</div>
+								<p class="text-xs leading-snug text-ink-gray-5">{{ message.metadata.palette }}</p>
+							</div>
 							<!-- Action buttons — only on last message -->
 							<template v-if="message.id === lastMessageId">
-								<p class="mb-2 text-[10px] text-ink-gray-4">
+								<p class="mb-2 mt-2.5 text-xs text-ink-gray-5">
 									Refine the plan below, or go ahead and create the page.
 								</p>
 								<button
 									:disabled="isSubmitting"
-									class="rounded-full border border-violet-300 bg-violet-50 px-3 py-1 text-[11px] font-medium text-violet-700 transition-colors hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
-									@click="triggerGeneration">
+									class="rounded-full border border-violet-300 bg-violet-50 px-3 py-1 text-xs font-medium text-violet-700 transition-colors hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
+									@click="approvePlan">
 									✦ Create Page
 								</button>
 							</template>
@@ -97,13 +105,13 @@
 						<!-- Clarification options -->
 						<div
 							v-if="message.metadata?.status === 'clarification' && message.metadata?.options?.length"
-							class="mt-2.5 flex flex-col gap-2">
-							<div class="flex flex-wrap gap-1.5">
+							class="mt-3 flex flex-col gap-2.5">
+							<div class="flex flex-wrap gap-2">
 								<button
 									v-for="(option, idx) in message.metadata.options"
 									:key="option"
 									:disabled="isSubmitting"
-									class="flex items-center gap-1.5 rounded-full border border-outline-gray-2 bg-surface-white px-2.5 py-1 text-[11px] text-ink-gray-7 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-2 disabled:cursor-not-allowed disabled:opacity-50"
+									class="flex items-center gap-2 rounded-full border border-outline-gray-2 bg-surface-white px-3 py-1.5 text-xs text-ink-gray-7 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-2 disabled:cursor-not-allowed disabled:opacity-50"
 									@click="selectOption(option)">
 									<!-- Color swatches when previews available -->
 									<span
@@ -112,14 +120,14 @@
 										<span
 											v-for="color in message.metadata.previews[idx].colors.slice(0, 4)"
 											:key="color"
-											class="h-3 w-3"
+											class="size-3.5"
 											:style="{ backgroundColor: color }" />
 									</span>
 									{{ option }}
 								</button>
 							</div>
 							<!-- Type-your-own nudge: only on last message -->
-							<p v-if="message.id === lastMessageId" class="text-[10px] text-ink-gray-4">
+							<p v-if="message.id === lastMessageId" class="text-xs text-ink-gray-4">
 								Or describe something different below
 							</p>
 						</div>
@@ -317,7 +325,7 @@ function renderMarkdown(content: string): string {
 const chat = new AIChatController();
 
 const { prompt, isSubmitting, messages, modelLabel, modelOptions, canSubmit } = chat;
-const { clearSession, undoAgentScript, selectOption, triggerGeneration } = chat;
+const { clearSession, undoAgentScript, selectOption, approvePlan } = chat;
 const { selectBlockById, openScriptByName } = chat;
 const { selectedBlocks } = chat;
 const { imagePreviewUrl, imageFileName, isDragging, isVisionModel } = chat;
@@ -325,6 +333,11 @@ const { clearImage, attachImageFile } = chat;
 const builderStore = useBuilderStore();
 
 const lastMessageId = computed(() => messages.value.at(-1)?.id ?? null);
+
+/** Extract hex colour codes from a palette description for swatch previews. */
+function paletteColors(palette: string): string[] {
+	return palette.match(/#[0-9a-fA-F]{3,8}\b/g) || [];
+}
 
 const selectedPreset = ref<{
 	id: string;

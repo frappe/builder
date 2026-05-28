@@ -1,0 +1,4 @@
+- I don't like "_" prefix in method names
+- Small functions/methods and files. Try to cap it to 10 lines and 500 lines
+- Focus on code readability and performance
+- Use frappe-ui and existing library components as much as you can before hand rolling new components
