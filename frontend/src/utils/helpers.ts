@@ -1,138 +1,24 @@
 import Block from "@/block";
-import AlertDialog from "@/components/AlertDialog.vue";
-import { builderSettings } from "@/data/builderSettings";
 import { useBlockDataStore, useBlockUidStore } from "@/stores/blockStore";
-import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { FileUploadHandler } from "frappe-ui";
-import { defineComponent, h, markRaw, reactive, ref, toRaw } from "vue";
-import { toast } from "frappe-ui";
-import Dialog from "../components/Controls/Dialog.vue";
-
-function getNumberFromPx(px: string | number | null | undefined): number {
-	if (!px) {
-		return 0;
-	}
-	if (typeof px === "number") {
-		return px;
-	}
-	const number = Number(px.replace("px", ""));
-	if (isNaN(number)) {
-		return 0;
-	}
-	return number;
-}
-
-function addPxToNumber(number: number, round: boolean = true): string {
-	number = round ? Math.round(number) : number;
-	return `${number}px`;
-}
-
-function HexToHSV(color: HashString): {
-	h: number;
-	s: number;
-	v: number;
-	a: number;
-} {
-	// Remove hash and normalize length
-	let hex = color.replace("#", "").trim();
-
-	// Expand short hex (#abc -> #aabbcc)
-	if (hex.length === 3) {
-		hex = hex
-			.split("")
-			.map((c) => c + c)
-			.join("");
-	}
-
-	// Extract alpha from 8-digit hex (#RRGGBBAA)
-	let a = 100;
-	if (/^[0-9a-fA-F]{8}$/.test(hex)) {
-		a = Math.round((parseInt(hex.slice(6, 8), 16) / 255) * 100);
-		hex = hex.slice(0, 6);
-	}
-
-	// If not valid hex, return black
-	if (!/^[0-9a-fA-F]{6}$/.test(hex)) {
-		return { h: 0, s: 0, v: 0, a: 100 };
-	}
-
-	const r = parseInt(hex.slice(0, 2), 16);
-	const g = parseInt(hex.slice(2, 4), 16);
-	const b = parseInt(hex.slice(4, 6), 16);
-
-	const max = Math.max(r, g, b);
-	const min = Math.min(r, g, b);
-	const v = max / 255;
-	const d = max - min;
-	const s = max === 0 ? 0 : d / max;
-
-	let h = 0;
-	if (d !== 0) {
-		if (max === r) {
-			h = (g - b) / d + (g < b ? 6 : 0);
-		} else if (max === g) {
-			h = (b - r) / d + 2;
-		} else {
-			h = (r - g) / d + 4;
-		}
-		h *= 60;
-	}
-
-	return { h, s, v, a };
-}
-
-function HSVToHex(h: number, s: number, v: number, a: number = 100): HashString {
-	s /= 100;
-	v /= 100;
-	h /= 360;
-
-	let r = 0,
-		g = 0,
-		b = 0;
-
-	let i = Math.floor(h * 6);
-	let f = h * 6 - i;
-	let p = v * (1 - s);
-	let q = v * (1 - f * s);
-	let t = v * (1 - (1 - f) * s);
-
-	switch (i % 6) {
-		case 0:
-			(r = v), (g = t), (b = p);
-			break;
-		case 1:
-			(r = q), (g = v), (b = p);
-			break;
-		case 2:
-			(r = p), (g = v), (b = t);
-			break;
-		case 3:
-			(r = p), (g = q), (b = v);
-			break;
-		case 4:
-			(r = t), (g = p), (b = v);
-			break;
-		case 5:
-			(r = v), (g = p), (b = q);
-			break;
-	}
-	r = Math.round(r * 255);
-	g = Math.round(g * 255);
-	b = Math.round(b * 255);
-	const hex = `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}` as HashString;
-	const alphaByte = Math.round((a / 100) * 255);
-	if (alphaByte < 255) {
-		return `${hex}${alphaByte.toString(16).padStart(2, "0")}` as HashString;
-	}
-	return hex;
-}
-
-function getRandomColor() {
-	return HSVToHex(Math.random() * 360, 25, 100);
-}
+import { dialog, FileUploadHandler, toast } from "frappe-ui";
+import { reactive, toRaw } from "vue";
+import { getRGB, getRandomColor, HexToHSV, HSVToHex } from "./colors";
+import {
+	addPxToNumber,
+	addUnitToNumber,
+	extractNumberAndUnit,
+	getBoxSpacing,
+	getNumberFromPx,
+	normalizeValueWithUnits,
+	parseAndSetBackground,
+	parseBackground,
+	setBoxSpacing,
+	shortenNumber,
+} from "./cssUtils";
+import { executeBlockClientScriptRestricted, executeBlockClientScriptUnrestricted } from "./scriptSandbox";
 
 function toTitleCase(str: string): string {
 	return str.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
@@ -164,13 +50,12 @@ async function confirm(message: string, title: string = "Confirm"): Promise<bool
 }
 
 async function alert(message: string, title: string = "Alert"): Promise<boolean> {
-	return new Promise((resolve) => {
-		h(AlertDialog, {
-			title,
-			message,
-			onClick: () => resolve(true),
-		});
+	await showDialog({
+		title,
+		message,
+		actions: [{ label: "Ok", variant: "solid", onClick: () => {} }],
 	});
+	return true;
 }
 
 function getTextContent(html: string | null) {
@@ -184,39 +69,6 @@ function getTextContent(html: string | null) {
 	return textContent;
 }
 
-function RGBToHex(rgb: RGBString): HashString {
-	const [r, g, b] = rgb
-		.replace("rgb(", "")
-		.replace(")", "")
-		.split(",")
-		.map((x) => parseInt(x));
-	return `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
-}
-
-function getRGB(color: HashString | RGBString | string | null): HashString | null {
-	if (!color) {
-		return null;
-	}
-	if (color.startsWith("rgba")) {
-		const parts = color
-			.replace("rgba(", "")
-			.replace(")", "")
-			.split(",")
-			.map((x) => x.trim());
-		const [r, g, b] = parts.map((x) => parseInt(x));
-		const alphaHex = Math.round(parseFloat(parts[3]) * 255)
-			.toString(16)
-			.padStart(2, "0");
-		return `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}${alphaHex}` as HashString;
-	}
-	if (color.startsWith("rgb")) {
-		return RGBToHex(color as RGBString);
-	} else if (!color.startsWith("#") && color.match(/\b[a-fA-F0-9]{3,6}\b/g)) {
-		return `#${color}` as HashString;
-	}
-	return color as HashString;
-}
-
 function isHTMLString(str: string) {
 	return /<[a-z][\s\S]*>/i.test(str);
 }
@@ -226,14 +78,6 @@ function copyToClipboard(text: string | object, e: ClipboardEvent, copyFormat = 
 		text = JSON.stringify(text);
 	}
 	e.clipboardData?.setData(copyFormat, text);
-}
-
-function stripExtension(string: string) {
-	const lastDotPosition = string.lastIndexOf(".");
-	if (lastDotPosition === -1) {
-		return string;
-	}
-	return string.substr(0, lastDotPosition);
 }
 
 function findNearestSiblingIndex(e: MouseEvent) {
@@ -318,31 +162,6 @@ function replaceMapKey(map: Map<any, any>, oldKey: string, newKey: string) {
 }
 
 const mapToObject = (map: Map<any, any>) => Object.fromEntries(map.entries());
-
-function logObjectDiff(obj1: Record<string, any>, obj2: Record<string, any>, path: string[] = []) {
-	if (!obj1 || !obj2) return;
-	for (const key in obj1) {
-		const newPath = path.concat(key);
-
-		if (obj2.hasOwnProperty(key)) {
-			if (typeof obj1[key] === "object" && typeof obj2[key] === "object") {
-				logObjectDiff(obj1[key], obj2[key], newPath);
-			} else {
-				if (obj1[key] !== obj2[key]) {
-					console.log(`Difference at ${newPath.join(".")} - ${obj1[key]} !== ${obj2[key]}`);
-				}
-			}
-		} else {
-			// console.log(`Property ${newPath.join(".")} is missing in the second object`);
-		}
-	}
-
-	for (const key in obj2) {
-		if (!obj1.hasOwnProperty(key)) {
-			// console.log(`Property ${key} is missing in the first object`);
-		}
-	}
-}
 
 function getBlockInstance(options: BlockOptions | string, retainId = true): Block {
 	if (typeof options === "string") {
@@ -548,22 +367,26 @@ declare global {
 	}
 }
 
-async function getFontArrayBuffer(file_url: string) {
-	const arrayBuffer = await fetch(file_url).then((res) => res.arrayBuffer());
-	if (file_url.endsWith(".woff2")) {
+// Lazily loads the wawoff2 wasm runtime (sets window.Module) and decompresses
+// a woff2 buffer to raw font bytes; non-woff2 buffers are returned unchanged.
+async function decompressFontIfWoff2(arrayBuffer: ArrayBuffer, isWoff2: boolean): Promise<ArrayBuffer> {
+	if (!isWoff2) return arrayBuffer;
+	if (!window.Module) {
 		const loadScript = (src: string) =>
 			new Promise((onload) =>
 				document.documentElement.append(Object.assign(document.createElement("script"), { src, onload })),
 			);
-		if (!window.Module) {
-			const path = "https://unpkg.com/wawoff2@2.0.1/build/decompress_binding.js";
-			// @ts-ignore
-			const init = new Promise((done) => (window.Module = { onRuntimeInitialized: done }));
-			await loadScript(path).then(() => init);
-		}
-		return Uint8Array.from(window.Module.decompress(arrayBuffer)).buffer;
+		const path = "https://unpkg.com/wawoff2@2.0.1/build/decompress_binding.js";
+		// @ts-ignore - Module is populated by the wawoff2 runtime once initialized
+		const init = new Promise((done) => (window.Module = { onRuntimeInitialized: done }));
+		await loadScript(path).then(() => init);
 	}
-	return arrayBuffer;
+	return Uint8Array.from(window.Module.decompress(arrayBuffer)).buffer;
+}
+
+async function getFontArrayBuffer(file_url: string) {
+	const arrayBuffer = await fetch(file_url).then((res) => res.arrayBuffer());
+	return decompressFontIfWoff2(arrayBuffer, file_url.endsWith(".woff2"));
 }
 
 async function getFontName(file_url: string) {
@@ -573,20 +396,7 @@ async function getFontName(file_url: string) {
 
 async function getFontNameFromFile(file: File): Promise<string> {
 	const arrayBuffer = await file.arrayBuffer();
-	let buffer = arrayBuffer;
-	if (file.name.endsWith(".woff2")) {
-		const loadScript = (src: string) =>
-			new Promise((onload) =>
-				document.documentElement.append(Object.assign(document.createElement("script"), { src, onload })),
-			);
-		if (!window.Module) {
-			const path = "https://unpkg.com/wawoff2@2.0.1/build/decompress_binding.js";
-			// @ts-ignore
-			const init = new Promise((done) => (window.Module = { onRuntimeInitialized: done }));
-			await loadScript(path).then(() => init);
-		}
-		buffer = Uint8Array.from(window.Module.decompress(arrayBuffer)).buffer;
-	}
+	const buffer = await decompressFontIfWoff2(arrayBuffer, file.name.endsWith(".woff2"));
 	const opentype = await import("opentype.js");
 	return opentype.parse(buffer).names.fullName.en;
 }
@@ -663,32 +473,7 @@ async function uploadUserFont(
 }
 
 function generateId() {
-	return Math.random().toString(36).substr(2, 9);
-}
-
-function throttle<T extends (...args: any[]) => void>(func: T, wait: number = 1000) {
-	let timeout: ReturnType<typeof setTimeout> | null = null;
-	let lastArgs: Parameters<T> | null = null;
-	let pending = false;
-
-	const invoke = (...args: Parameters<T>) => {
-		lastArgs = args;
-		if (timeout) {
-			pending = true;
-			return;
-		}
-
-		func(...lastArgs);
-		timeout = setTimeout(() => {
-			timeout = null;
-			if (pending && lastArgs) {
-				pending = false;
-				invoke(...lastArgs);
-			}
-		}, wait);
-	};
-
-	return invoke;
+	return Math.random().toString(36).slice(2, 11);
 }
 
 function isBlock(e: MouseEvent) {
@@ -740,299 +525,6 @@ function openInDesk(page: BuilderPage) {
 	window.open(`/app/builder-page/${page.page_name}`, "_blank");
 }
 
-interface BackgroundValue {
-	image?: string;
-	position?: string;
-	size?: string;
-	repeat?: string;
-	attachment?: string;
-	origin?: string;
-	clip?: string;
-	color?: string;
-}
-
-// Based on WebKit and Gecko parsing implementations
-function parseBackground(cssText: string): BackgroundValue {
-	if (!cssText || typeof cssText !== "string") {
-		return {};
-	}
-
-	// Tokenize the input preserving quoted strings and functions
-	function tokenize(input: string): string[] {
-		const tokens: string[] = [];
-		let current = "";
-		let parenDepth = 0;
-		let inQuote: string | null = null;
-
-		for (let i = 0; i < input.length; i++) {
-			const char = input[i];
-
-			if (inQuote) {
-				current += char;
-				if (char === inQuote && input[i - 1] !== "\\") {
-					inQuote = null;
-				}
-				continue;
-			}
-
-			if (char === '"' || char === "'") {
-				current += char;
-				inQuote = char;
-				continue;
-			}
-
-			if (char === "(") {
-				parenDepth++;
-				current += char;
-				continue;
-			}
-
-			if (char === ")") {
-				parenDepth--;
-				current += char;
-				continue;
-			}
-
-			if (parenDepth > 0) {
-				current += char;
-				continue;
-			}
-
-			if (char === " " || char === "\t" || char === "\n") {
-				if (current) {
-					tokens.push(current);
-					current = "";
-				}
-				continue;
-			}
-
-			current += char;
-		}
-
-		if (current) {
-			tokens.push(current);
-		}
-
-		return tokens;
-	}
-
-	// Parse color value
-	function isColor(value: string): boolean {
-		return (
-			/^(#|rgb|hsl|[a-z]+$)/.test(value) &&
-			!["center", "top", "bottom", "left", "right", "fixed", "local", "scroll", "contain", "repeat"].includes(
-				value,
-			)
-		);
-	}
-
-	// Parse position values
-	function isPosition(value: string): boolean {
-		return /^(center|top|bottom|left|right|[-\d.]+(%|px|em|rem|vh|vw)?)$/.test(value);
-	}
-
-	// Parse size values
-	function isSize(value: string): boolean {
-		return /^(cover|contain|auto|[-\d.]+(%|px|em|rem|vh|vw)?)$/.test(value);
-	}
-
-	const result: BackgroundValue = {};
-	const tokens = tokenize(cssText.trim());
-	let i = 0;
-
-	while (i < tokens.length) {
-		const token = tokens[i];
-
-		// Handle url() and gradients
-		if (token.startsWith("url(") || token.includes("gradient")) {
-			result.image = token;
-			i++;
-			continue;
-		}
-
-		// Handle color
-		if (isColor(token)) {
-			result.color = token;
-			i++;
-			continue;
-		}
-
-		// Handle position and size
-		if (isPosition(token)) {
-			let position = [token];
-
-			// Check for second position value
-			if (i + 1 < tokens.length && isPosition(tokens[i + 1])) {
-				position.push(tokens[i + 1]);
-				i++;
-			}
-
-			result.position = position.join(" ");
-
-			// Check for size after '/'
-			if (i + 2 < tokens.length && tokens[i + 1] === "/" && isSize(tokens[i + 2])) {
-				let size = [tokens[i + 2]];
-				if (i + 3 < tokens.length && isSize(tokens[i + 3])) {
-					size.push(tokens[i + 3]);
-					i++;
-				}
-				result.size = size.join(" ");
-				i += 2;
-			}
-
-			i++;
-			continue;
-		}
-
-		// Handle repeat
-		if (/^(no-repeat|repeat(-[xy])?|round|space)$/.test(token)) {
-			result.repeat = token;
-			i++;
-			continue;
-		}
-
-		// Handle attachment
-		if (/^(fixed|local|scroll)$/.test(token)) {
-			result.attachment = token;
-			i++;
-			continue;
-		}
-
-		// Handle origin/clip
-		if (/^(border|padding|content)-box$/.test(token)) {
-			if (!result.origin) {
-				result.origin = token;
-			} else {
-				result.clip = token;
-			}
-			i++;
-			continue;
-		}
-
-		i++;
-	}
-
-	return result;
-}
-
-const parseAndSetBackground = (styles: BlockStyleMap) => {
-	if (styles.background) {
-		const { color, image, position, size, repeat } = parseBackground(styles.background as string);
-		delete styles.background;
-		if (color) styles.backgroundColor = color;
-		if (image) styles.backgroundImage = image;
-		if (position) styles.backgroundPosition = position;
-		if (size) styles.backgroundSize = size;
-		if (repeat) styles.backgroundRepeat = repeat;
-	}
-};
-
-function shortenNumber(num: number): string {
-	if (num < 1000) return num.toString();
-	const units = ["", "k", "M", "B", "T"];
-	const order = Math.floor(Math.log10(num) / 3);
-	const unitname = units[order];
-	const shortNum = num / Math.pow(1000, order);
-	return shortNum % 1 === 0 ? shortNum.toFixed(0) + unitname : shortNum.toFixed(1) + unitname;
-}
-
-function setBoxSpacing(block: Block, type: "padding" | "margin", value: string) {
-	const props = [type, `${type}Top`, `${type}Right`, `${type}Bottom`, `${type}Left`];
-	props.forEach((prop) => block.setStyle(prop, null));
-	if (!value) return;
-	const arr = value.split(" ");
-	if (arr.length === 1) {
-		block.setStyle(type, arr[0]);
-	} else if (arr.length === 2) {
-		block.setStyle(`${type}Top`, arr[0]);
-		block.setStyle(`${type}Bottom`, arr[0]);
-		block.setStyle(`${type}Left`, arr[1]);
-		block.setStyle(`${type}Right`, arr[1]);
-	} else if (arr.length === 3) {
-		block.setStyle(`${type}Top`, arr[0]);
-		block.setStyle(`${type}Left`, arr[1]);
-		block.setStyle(`${type}Right`, arr[1]);
-		block.setStyle(`${type}Bottom`, arr[2]);
-	} else if (arr.length === 4) {
-		block.setStyle(`${type}Top`, arr[0]);
-		block.setStyle(`${type}Right`, arr[1]);
-		block.setStyle(`${type}Bottom`, arr[2]);
-		block.setStyle(`${type}Left`, arr[3]);
-	}
-}
-
-function getBoxSpacing(
-	block: Block,
-	type: "padding" | "margin",
-	opts?: { nativeOnly?: boolean; cascading?: boolean },
-): string {
-	const nativeOnly = opts?.nativeOnly ?? false;
-	const cascading = opts?.cascading ?? false;
-	const baseValue = block.getStyle(type, undefined, nativeOnly, cascading);
-	const base = String(baseValue ?? (nativeOnly && !cascading ? "" : "unset"));
-	const top = block.getStyle(`${type}Top`, undefined, nativeOnly, cascading) ?? base;
-	const bottom = block.getStyle(`${type}Bottom`, undefined, nativeOnly, cascading) ?? base;
-	const left = block.getStyle(`${type}Left`, undefined, nativeOnly, cascading) ?? base;
-	const right = block.getStyle(`${type}Right`, undefined, nativeOnly, cascading) ?? base;
-	const sTop = String(top);
-	const sBottom = String(bottom);
-	const sLeft = String(left);
-	const sRight = String(right);
-	if (sTop === base && sBottom === base && sLeft === base && sRight === base) return base;
-	if (sTop === sBottom && sTop === sRight && sTop === sLeft) return sTop;
-	if (sTop === sBottom && sLeft === sRight) return `${sTop} ${sLeft}`;
-	return `${sTop} ${sRight} ${sBottom} ${sLeft}`;
-}
-
-/**
- * Extracts the numeric value and unit from a CSS value string
- * @param value - CSS value string (e.g., "10px", "1.5em", "20")
- * @returns Object containing the number and unit parts
- */
-function extractNumberAndUnit(value: string): { number: string; unit: string } {
-	const match = value.match(/([0-9.]+)([a-z%]*)/) || ["", "0", ""];
-	return { number: match[1], unit: match[2] };
-}
-
-/**
- * Adds a unit to a number if it doesn't already have one
- * @param numberStr - String containing a number with or without a unit
- * @param unit - Default unit to add if none exists
- * @returns String with unit attached
- */
-function addUnitToNumber(numberStr: string, unit: string): string {
-	const match = numberStr.match(/^([0-9.]+)([a-z%]*)$/);
-	if (match) {
-		const [, number, existingUnit] = match;
-		return existingUnit ? numberStr : number + unit;
-	}
-	return numberStr;
-}
-
-/**
- * Normalizes CSS values by adding default units where missing
- * Handles both single values and spacing properties with multiple values
- * @param value - CSS value string
- * @param unitOptions - Array of possible units, first is used as default
- * @param propertyKey - CSS property name (used to detect spacing properties)
- * @returns Normalized value string with units added
- */
-function normalizeValueWithUnits(value: string, unitOptions: string[], propertyKey: string): string {
-	if (!unitOptions.length) return value;
-
-	const defaultUnit = unitOptions[0];
-	const isSpacingProperty = propertyKey === "margin" || propertyKey === "padding";
-
-	if (isSpacingProperty) {
-		const parts = value.trim().split(/\s+/);
-		if (parts.length > 1) {
-			return parts.map((part) => addUnitToNumber(part, defaultUnit)).join(" ");
-		}
-	}
-
-	return addUnitToNumber(value, defaultUnit);
-}
-
 interface DialogAction {
 	label: string;
 	variant?: "solid" | "subtle" | "outline" | "ghost";
@@ -1052,58 +544,27 @@ interface DialogOptions {
 }
 
 function showDialog(options: DialogOptions): Promise<void> {
+	const appearanceToTheme = { warning: "yellow", info: "blue", danger: "red", success: "green" } as const;
 	return new Promise((resolve) => {
-		const isOpen = ref(true);
-		const dialogOptions = {
+		dialog.confirm({
 			title: options.title || "",
 			message: options.message,
-			icon: options.icon,
 			size: options.size || "md",
 			actions: (options.actions || []).map((action) => ({
 				label: action.label,
-				variant: action.variant || "subtle",
-				theme: action.theme || "gray",
-				onClick: async ({ close }: { close: () => void }) => {
-					if (action.onClick) {
-						await action.onClick();
-					}
+				variant: action.variant ?? "subtle",
+				theme: action.theme ?? "gray",
+				onClick: async ({ close }) => {
+					if (action.onClick) await action.onClick();
 					close();
+					resolve();
 				},
 			})),
-		};
-
-		const DialogComponent = markRaw(
-			defineComponent({
-				name: "DynamicDialog",
-				setup() {
-					const handleClose = () => {
-						isOpen.value = false;
-						// Remove dialog from appDialogs after animation
-						setTimeout(() => {
-							const builderStore = useBuilderStore();
-							const index = builderStore.appDialogs.indexOf(DialogComponent);
-							if (index > -1) {
-								builderStore.appDialogs.splice(index, 1);
-							}
-							resolve();
-						}, 200);
-					};
-
-					return () =>
-						h(Dialog, {
-							modelValue: isOpen.value,
-							"onUpdate:modelValue": (val: boolean) => {
-								isOpen.value = val;
-								if (!val) handleClose();
-							},
-							options: dialogOptions,
-						});
-				},
-			}),
-		) as typeof Dialog;
-
-		const builderStore = useBuilderStore();
-		builderStore.appDialogs.push(DialogComponent);
+			onCancel: () => resolve(),
+			...(options.icon
+				? { icon: options.icon.name, theme: appearanceToTheme[options.icon.appearance ?? "info"] }
+				: {}),
+		});
 	});
 }
 
@@ -1373,181 +834,6 @@ const getDataArray = (collectionObject: Record<string, any>) => {
 	return result;
 };
 
-function executeBlockClientScriptUnrestricted(
-	blockUid: string,
-	breakpoint: string,
-	userScript: string,
-	props: Record<string, any> = {},
-) {
-	const thisElement = document.querySelector(
-		`[data-block-uid='${blockUid}'][data-breakpoint=${breakpoint}]`,
-	) as HTMLElement;
-
-	const context = {
-		thisRef: thisElement,
-		props,
-	};
-
-	const fn = new Function(
-		"context",
-		`with (context) {
-			return (function() { ${userScript} }).call(thisRef);
-		}`,
-	);
-
-	try {
-		document.querySelectorAll(`[data-created-by='${blockUid}']`).forEach((el) => el.remove());
-		fn.call(thisElement, context);
-	} catch (e) {
-		console.error("Error in user script (unrestricted):", e);
-		// toast.warning("An error occurred while executing block script: " + (e instanceof Error ? e.message : ""));
-	}
-}
-
-/**
- * Tries to execute user-provided script in a safer environment, (but not guarantee) restricting access to certain DOM properties and methods.
- * It makes the editor canvas as the root (document), and thus limits the script's ability to manipulate the broader document.
- * It tries to restrict escape hatches which could be used to access the global window or document objects.
- * It tries to `wrap` all returned DOM nodes and collections to ensure they are also proxied.
- * The `wrap` function creates proxies for DOM elements to intercept property access and method calls.
- *
- * @param blockId - The ID of the block element to which the script is associated.
- * @param userScript - The user-provided JavaScript code to execute.
- * @param props - An optional object containing properties to be made available in the script's context.
- */
-
-function executeBlockClientScriptRestricted(
-	blockUid: string,
-	breakpoint: string,
-	userScript: string,
-	props: Record<string, any> = {},
-) {
-	const cache = new WeakMap();
-
-	const BLOCKED_GET = new Set([
-		"ownerDocument",
-		"document",
-		"defaultView",
-		"window",
-		"globalThis",
-		"parentElement",
-		"parentNode",
-		"innerHTML",
-		"outerHTML",
-	]);
-
-	const BLOCKED_SET = new Set(["innerHTML", "outerHTML"]);
-
-	function wrap(value: Element | Node) {
-		if (value === null || typeof value !== "object") return value;
-		if (cache.has(value)) return cache.get(value);
-
-		const proxy = new Proxy(value, handler);
-		cache.set(value, proxy);
-		return proxy;
-	}
-
-	const handler = {
-		get(target: Element, prop: string, receiver: any) {
-			if (BLOCKED_GET.has(prop)) return undefined;
-
-			// Always pass `target` (not the proxy) as the receiver so that native DOM
-			// getters (e.g. tagName, nodeType, children) run with the correct `this`.
-			// Passing the Proxy as receiver causes "Illegal invocation" in those cases.
-			let val = Reflect.get(target, prop, target);
-
-			// Wrap DOM returns
-			if (val instanceof Node) return wrap(val);
-			if (val instanceof NamedNodeMap || val instanceof DOMTokenList || val instanceof CSSStyleDeclaration)
-				return wrap(val as any);
-
-			if (val instanceof NodeList || val instanceof HTMLCollection) {
-				return Array.from(val, wrap);
-			}
-
-			// Wrap functions (methods)
-			if (typeof val === "function") {
-				// disallow eventListeners
-				if (prop === "addEventListener" || prop === "removeEventListener") {
-					// disallow clicks
-					return (...args: any[]) => {
-						const eventType = args[0];
-						const disallowClicks = Boolean(builderSettings.doc?.block_click_handlers);
-						if (disallowClicks && (eventType === "click" || eventType === "dblclick")) {
-							throw new Error(`Blocked: cannot add/remove ${eventType} event listeners`);
-						}
-						const realArgs = args.map((a) => cache.get(a) || a);
-						return val.apply(target, realArgs);
-					};
-				}
-				return (...args) => {
-					const realArgs = args.map((a) => cache.get(a) || a);
-
-					// Do not allow inserting nodes outside the sandbox
-					for (const a of realArgs) {
-						if (a instanceof Node && !sandboxRoot.contains(a)) {
-							throw new Error("Blocked: external node insertion");
-						}
-					}
-
-					const result = val.apply(target, realArgs);
-					return wrap(result);
-				};
-			}
-
-			return val; // primitive allowed
-		},
-
-		set(target: Element, prop: string, value: any) {
-			if (BLOCKED_SET.has(prop)) {
-				throw new Error(`Blocked: cannot set ${prop}`);
-			}
-
-			// Allow normal DOM props like src, value, className, id, etc.
-			try {
-				return Reflect.set(target as any, prop as any, value);
-			} catch {
-				return false;
-			}
-		},
-	};
-
-	const sandboxRoot = document.querySelector("[data-block-id='root']") as HTMLElement;
-	const thisElement = document.querySelector(
-		`[data-block-uid='${blockUid}'][data-breakpoint='${breakpoint}']`,
-	) as HTMLElement;
-
-	const proxiedRoot = wrap(sandboxRoot);
-	const proxiedThis = wrap(thisElement);
-
-	const context = {
-		document: proxiedRoot,
-		thisRef: proxiedThis,
-		props,
-		// Escape hatches blocked
-		window: undefined,
-		globalThis: undefined,
-		eval: undefined,
-		Function: undefined,
-		setTimeout: undefined,
-		setInterval: undefined,
-	};
-
-	const fn = new Function(
-		"context",
-		`with (context) {
-			return (function() { ${userScript} }).call(thisRef);
-		}`,
-	);
-
-	try {
-		fn.call(proxiedThis, context);
-	} catch (e) {
-		console.error("Error in user script:", e);
-		// toast.warning("An error occurred while executing block script: " + (e instanceof Error ? e.message : ""));
-	}
-}
-
 function isDialogOpen() {
 	return !!document.querySelector("[role='dialog']");
 }
@@ -1599,19 +885,15 @@ export {
 	isJSONString,
 	isTargetEditable,
 	kebabToCamelCase,
-	logObjectDiff,
 	mapToObject,
 	normalizeValueWithUnits,
 	openInDesk,
 	parseAndSetBackground,
 	parseBackground,
 	replaceMapKey,
-	RGBToHex,
 	setBoxSpacing,
 	shortenNumber,
 	showDialog,
-	stripExtension,
-	throttle,
 	toKebabCase,
 	toTitleCase,
 	triggerCopyEvent,

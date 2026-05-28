@@ -105,7 +105,7 @@
 					variant="ghost"
 					icon="lucide-plus"
 					class="size-4 cursor-pointer hover:text-ink-gray-8"
-					@click="showNewFolderDialog = true"></BuilderButton>
+					@click="promptCreateFolder()"></BuilderButton>
 			</div>
 			<div class="flex p-2" v-show="!builderProjectFolder.data?.length">
 				<p class="text-sm text-ink-gray-5">No folders yet</p>
@@ -171,7 +171,6 @@
 			</span>
 		</div>
 		<p class="mt-2 p-2 text-center text-sm text-ink-gray-4">Version: {{ builderVersion }}</p>
-		<NewFolder v-model="showNewFolderDialog"></NewFolder>
 		<TrialBanner v-if="builderStore.isFCSite"></TrialBanner>
 	</section>
 	<Dialog v-model="showSettingsDialog" :dismissable="false" size="5xl" bare>
@@ -190,7 +189,7 @@ import EditableSpan from "@/components/EditableSpan.vue";
 import FilesIcon from "@/components/Icons/Files.vue";
 import FolderIcon from "@/components/Icons/Folder.vue";
 import SettingsIcon from "@/components/Icons/SettingsGear.vue";
-import NewFolder from "@/components/Modals/NewFolder.vue";
+import { promptCreateFolder } from "@/utils/dialogs";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import useBuilderStore from "@/stores/builderStore";
 import { BuilderProjectFolder } from "@/types/doctypes";
@@ -208,7 +207,6 @@ const isDark = useDark({
 const toggleDark = useToggle(isDark);
 const builderStore = useBuilderStore();
 const renamingFolder = ref("");
-const showNewFolderDialog = ref(false);
 
 const apps = createResource({
 	url: "builder.api.get_apps",

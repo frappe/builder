@@ -370,7 +370,7 @@ def get_template_assets_folder_path(page_doc):
 
 
 def get_builder_page_preview_file_paths(page_doc):
-	public_path, public_path = None, None
+	public_path, local_path = None, None
 	if page_doc.is_template:
 		local_path = os.path.join(get_template_assets_folder_path(page_doc), "preview.webp")
 		public_path = f"/builder_assets/{page_doc.name}/preview.webp"
@@ -392,8 +392,8 @@ def is_component_used(blocks, component_id):
 			continue
 		if block.get("extendedFromComponent") == component_id:
 			return True
-		elif block.get("children"):
-			return is_component_used(block.get("children"), component_id)
+		if block.get("children") and is_component_used(block.get("children"), component_id):
+			return True
 
 	return False
 
@@ -433,27 +433,6 @@ def execute_script(script, _locals, script_filename):
 		safe_exec(script, None, _locals, script_filename=script_filename)
 	else:
 		safer_exec(script, None, _locals, script_filename=script_filename)
-
-
-def get_dummy_blocks():
-	return [
-		{
-			"element": "div",
-			"extendedFromComponent": "component-1",
-			"children": [
-				{
-					"element": "div",
-					"children": [
-						{
-							"element": "div",
-							"extendedFromComponent": "component-2",
-							"children": [],
-						},
-					],
-				},
-			],
-		},
-	]
 
 
 def clean_data(data):

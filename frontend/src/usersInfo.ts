@@ -17,12 +17,12 @@
  * 4. Request Deduplication: If multiple components request the same user simultaneously
  *    (during the debounce window), they subscribe to the same pending request.
  */
+import { useDebounceFn } from "@vueuse/core";
 import { createResource } from "frappe-ui";
 import { reactive } from "vue";
 
 let usersByName = reactive({}) as { [key: string]: UserInfo };
 const activeRequests = new Set<string>();
-let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 const queue = new Set<string>();
 
 export function getUserInfo(email: string) {
@@ -51,10 +51,7 @@ export function getUsersInfo(emails: string[]) {
 	return resultIs;
 }
 
-function triggerDebouncedFetch() {
-	if (debounceTimer) clearTimeout(debounceTimer);
-	debounceTimer = setTimeout(processBatch, 50);
-}
+const triggerDebouncedFetch = useDebounceFn(processBatch, 50);
 
 async function processBatch() {
 	const emailsToFetch = Array.from(queue);
@@ -62,7 +59,6 @@ async function processBatch() {
 
 	queue.clear();
 	emailsToFetch.forEach((email) => activeRequests.add(email));
-	debounceTimer = null;
 
 	try {
 		const res = (await createResource({

@@ -3,6 +3,7 @@ import useComponentStore from "@/stores/componentStore";
 import {
 	addPxToNumber,
 	dataURLtoFile,
+	generateId,
 	getBlockCopy,
 	getBlockInstance,
 	getBoxSpacing,
@@ -93,7 +94,7 @@ class Block implements BlockOptions {
 					return componentStore.getComponentBlock(this.extendedFromComponent as string) || null;
 				} else if (this.isChildOfComponent) {
 					const componentBlock = componentStore.getComponentBlock(this.isChildOfComponent as string);
-					return findBlock(this.referenceBlockId as string, [componentBlock]);
+					return findBlockInTree(this.referenceBlockId as string, [componentBlock]);
 				}
 				return null;
 			}),
@@ -118,7 +119,7 @@ class Block implements BlockOptions {
 		this.originalElement = options.originalElement;
 
 		if (!options.blockId || options.blockId === "root") {
-			this.blockId = this.generateId();
+			this.blockId = generateId();
 		} else {
 			this.blockId = options.blockId;
 		}
@@ -443,9 +444,6 @@ class Block implements BlockOptions {
 	}
 	getNativeStyle(style: styleProperty) {
 		return this.getStyle(style, undefined, true);
-	}
-	generateId() {
-		return Math.random().toString(36).substr(2, 9);
 	}
 	getIcon() {
 		if (this.editorConfig?.icon) {
@@ -939,7 +937,7 @@ class Block implements BlockOptions {
 		return getBoxSpacing(this, "margin", opts);
 	}
 	getDynamicValues() {
-		let dynamicValues = this.dynamicValues;
+		const dynamicValues = [...this.dynamicValues];
 		const dynamicValueProperties = dynamicValues.map((v) => v.property);
 		if (this.isExtendedFromComponent()) {
 			const componentDynamicValues = this.referenceComponent?.getDynamicValues() || [];
@@ -1125,7 +1123,7 @@ function resetBlock(
 	resetChildren: boolean = true,
 	resetOverrides: boolean = true,
 ) {
-	block.blockId = block.generateId();
+	block.blockId = generateId();
 	if (resetOverrides) {
 		delete block.innerHTML;
 		delete block.element;
@@ -1150,13 +1148,13 @@ function resetBlock(
 	}
 }
 
-function findBlock(blockId: string, blocks: Block[]): Block | null {
+export function findBlockInTree(blockId: string, blocks: Block[]): Block | null {
 	for (const block of blocks) {
 		if (block.blockId === blockId) {
 			return block;
 		}
 		if (block.children) {
-			const found = findBlock(blockId, block.children);
+			const found = findBlockInTree(blockId, block.children);
 			if (found) {
 				return found;
 			}
