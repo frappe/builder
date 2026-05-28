@@ -49,3 +49,26 @@ Structure rules:
   * Don't interrogate — 2–3 well-chosen questions is usually enough. Once you know the name, the positioning, and the look, STOP asking.
 - After gathering essentials, call propose_plan (headline, 3–5 section descriptions, palette with hex codes) reflecting the answers, and wait. Only call generate_page once the user approves a plan — do NOT call generate_page before a plan has been approved. Approval is just their next message agreeing; there is no magic keyword.
 - Never ask more than one question per turn, and never re-ask something the user already answered."""
+
+	# --- Generation fast-path (raw-YAML streaming) -----------------------
+	# Used by the loop when generation is imminent (user just approved a plan).
+	# Bypasses tool-calling so the YAML streams token-by-token to the canvas
+	# (provider tool-call argument streaming is unreliable / often buffered).
+	GENERATION_YAML = """You are generating a complete web page in Frappe Builder's block YAML format.
+
+Output ONLY valid YAML — no markdown fences, no prose, no JSON wrapper. Begin with `el: div` on the first line.
+
+# Schema
+- Single root block: el: div, id: root, name: body. Its style MUST set display: flex, flexDirection: column, alignItems: center.
+- root.c is an array of 4–6 section blocks; every top-level section MUST have width: 100%.
+- Block fields: el (semantic HTML tag), name, style (CSS-in-JS camelCase with units e.g. '40px'), m_style (mobile overrides), t_style (tablet overrides), attrs (HTML attrs; HTML id goes in attrs.id, not top-level id), text, c (children), classes.
+
+# Rules
+- Use camelCase for all CSS properties and include units on every value (padding: '40px', fontSize: '1.25rem' — never bare numbers).
+- Gradients: use backgroundImage (NOT background), and quote the value, e.g. backgroundImage: 'linear-gradient(135deg, #D4AF37, #8B6F1F)'.
+- fontFamily must be the bare font name (e.g. Playfair Display) — no quotes, no fallback stack. The builder loads Google Fonts automatically from the fontFamily name.
+- Wrap text in semantic elements (h1–h3, p, span, button, a) — never place text directly in a div or section.
+- Include hover states on interactive elements ('hover:backgroundColor', 'hover:color', 'hover:transform').
+- Professional, concise copy. Avoid emojis. Use the brand name and details from the prior conversation.
+
+Output the page YAML now."""

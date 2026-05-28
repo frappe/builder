@@ -319,6 +319,97 @@ class AgentRunner:
 
 		return summary_text
 
+	# --- generation fast-path --------------------------------------------
+
+	def _run_generation_fastpath(self):
+		"""Stream the page YAML as plain content (no tool envelope) so the
+		canvas renders live during the LLM completion. Used only when the user
+		just approved a plan; at the end we synthesize a generate_page tool op
+		so the final state is the canonical, fully-parsed YAML."""
+		plan = AISession.latest_plan(self.session_id) or {}
+		plan_recap = ""
+		if plan:
+			sections = "\n".join(f"- {s}" for s in (plan.get("sections") or []))
+			plan_recap = (
+				"User-approved plan to build now:\n"
+				f"Headline: {plan.get('headline', '')}\n"
+				f"Sections:\n{sections}\n"
+				f"Palette: {plan.get('palette', '')}"
+			)
+
+		messages: list[dict] = [
+			{"role": "system", "content": Prompts.GENERATION_YAML, "cache_control": {"type": "ephemeral"}},
+		]
+		if plan_recap:
+			messages.append({"role": "system", "content": plan_recap})
+		if session_context := AISession.build_context_from_id(self.session_id):
+			messages.append({"role": "system", "content": session_context})
+
+		user_text = self.prompt
+		if self.image_url:
+			messages.append(
+				{
+					"role": "user",
+					"content": [
+						{"type": "text", "text": user_text},
+						{"type": "image_url", "image_url": {"url": self.image_url}},
+					],
+				}
+			)
+		else:
+			messages.append({"role": "user", "content": user_text})
+
+		self.emit("progress", message="Building the page…")
+
+		yaml_content = ""
+		try:
+			stream = llm.complete(
+				self.loop_model,
+				messages,
+				llm.TASK_PARAMS["complex"],
+				stream=True,
+				api_key=self.api_key,
+			)
+			for chunk in stream:
+				delta = chunk.choices[0].delta.content
+				if delta:
+					yaml_content += delta
+					self.emit("stream", chunk=delta, kind="page_yaml")
+		except Exception as e:
+			logger.error(f"Generation fast-path failed: {e!s}", exc_info=True)
+			frappe.log_error(f"Generation fast-path failed: {e}", "AgentRunner.fastpath")
+			AISession.try_append_message(
+				self.session_id, "assistant", str(e), message_type="status", metadata={"status": "error"}
+			)
+			frappe.db.commit()
+			self.emit("error", message=str(e))
+			return
+
+		yaml_text = BlockCodec.strip_fences(yaml_content).strip()
+		if not yaml_text:
+			self.emit("error", message="The AI returned an empty response. Please try rephrasing.")
+			return
+
+		# Canonical final apply — re-applies the full YAML so the canvas matches
+		# what the frontend can parse cleanly, not the last partial stream state.
+		self.emit("tool_batch", operations=[{"tool_name": "generate_page", "args": {"yaml": yaml_text}}])
+
+		summary_text = (
+			"Created the page. Ask me to refine it — adjust styles, add sections, or change the layout."
+		)
+		self.emit("stream", chunk=summary_text)
+
+		AISession.try_append_message(
+			self.session_id,
+			"assistant",
+			summary_text,
+			message_type="chat",
+			task_type="agent",
+			metadata={"status": "complete", "model": self.model, "operations": 1},
+		)
+		frappe.db.commit()
+		self.emit("complete", message=summary_text)
+
 	# --- orchestration ----------------------------------------------------
 
 	def run(self):
@@ -343,6 +434,21 @@ class AgentRunner:
 				AISession(frappe.get_doc(AISession.DOCTYPE, self.session_id)).set_running()
 			except Exception:
 				pass
+
+		# Fast-path: when generation is imminent (user just approved a plan),
+		# stream raw YAML directly to the canvas instead of going through
+		# tool-calling — provider tool-call argument streaming is unreliable,
+		# leaving the user staring at a blank canvas for the whole completion.
+		if self.should_use_full_model():
+			try:
+				self._run_generation_fastpath()
+			finally:
+				if self.session_id:
+					try:
+						AISession(frappe.get_doc(AISession.DOCTYPE, self.session_id)).clear_running()
+					except Exception:
+						pass
+			return
 
 		messages = self.build_messages()
 		client_operations: list[dict] = []

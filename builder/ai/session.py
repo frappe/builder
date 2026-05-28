@@ -165,6 +165,19 @@ class AISession:
 				return (m.get("metadata") or {}).get("status") == "plan_summary"
 		return False
 
+	@classmethod
+	def latest_plan(cls, session_id: str | None) -> dict | None:
+		"""Return the most recent plan_summary metadata (headline / sections /
+		palette) so the generation fast-path can recap it for the model."""
+		if not session_id or not frappe.db.exists(cls.DOCTYPE, session_id):
+			return None
+		messages = cls(frappe.get_doc(cls.DOCTYPE, session_id)).get_messages()
+		for m in reversed(messages):
+			meta = m.get("metadata") or {}
+			if meta.get("status") == "plan_summary":
+				return meta
+		return None
+
 	def build_context_string(self) -> str:
 		history_lines = []
 		for message in self.get_messages()[-10:]:
