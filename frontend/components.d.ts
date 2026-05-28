@@ -139,7 +139,6 @@ declare module 'vue' {
     RouteTreeNode: typeof import('./src/components/RouteTreeNode.vue')['default']
     RouteTreeView: typeof import('./src/components/RouteTreeView.vue')['default']
     SearchBlock: typeof import('./src/components/Controls/SearchBlock.vue')['default']
-    SelectFolder: typeof import('./src/components/Modals/SelectFolder.vue')['default']
     SelectOptions: typeof import('./src/components/PropsOptions/SelectOptions.vue')['default']
     Settings: typeof import('./src/components/Icons/Settings.vue')['default']
     SettingsGear: typeof import('./src/components/Icons/SettingsGear.vue')['default']

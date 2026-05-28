@@ -1,12 +1,15 @@
 import type Block from "@/block";
+import { useDashboardState } from "@/composables/useDashboardState";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import webComponent from "@/data/webComponent";
+import { webPages } from "@/data/webPage";
+import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderComponent } from "@/types/doctypes";
+import { BuilderComponent, BuilderPage, BuilderProjectFolder } from "@/types/doctypes";
 import { getBlockCopy, getBlockString } from "@/utils/helpers";
-import { dialog } from "frappe-ui";
+import { createResource, dialog } from "frappe-ui";
 
 // Imperative dialogs that replace single-purpose modal components. Each opens
 // a frappe-ui prompt that auto-closes once `onConfirm` resolves; throwing from
@@ -54,6 +57,49 @@ export function promptCreateComponent(block: Block) {
 			componentStore.setComponentMap(componentData);
 			const updatedBlock = canvasStore.activeCanvas?.findBlock(block.blockId);
 			updatedBlock?.extendFromComponent(componentData.name);
+		},
+	});
+}
+
+export function promptSelectFolder() {
+	const { selectedPages, selectionMode } = useDashboardState();
+	const builderStore = useBuilderStore();
+	const options = [
+		{ label: "Home", value: "" },
+		...(builderProjectFolder.data || []).map((p: BuilderProjectFolder) => ({
+			label: p.folder_name,
+			value: p.folder_name,
+		})),
+	];
+	dialog.prompt({
+		title: "Select Folder",
+		size: "sm",
+		fields: [
+			{
+				name: "folder",
+				type: "select",
+				label: "Folder",
+				defaultValue: builderStore.activeFolder || "",
+				options,
+			},
+		],
+		onConfirm: async ({ values }) => {
+			const folder = values.folder;
+			if (folder === builderStore.activeFolder) return;
+			await createResource({
+				method: "POST",
+				url: "builder.api.update_page_folder",
+			}).submit({
+				pages: Array.from(selectedPages.value),
+				folder_name: folder,
+			});
+			for (const pageName of selectedPages.value) {
+				const page = webPages.data?.find((p: BuilderPage) => p.name === pageName);
+				if (page) page.project_folder = folder;
+			}
+			selectedPages.value.clear();
+			selectionMode.value = false;
+			builderStore.activeFolder = folder;
 		},
 	});
 }

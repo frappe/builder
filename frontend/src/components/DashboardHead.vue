@@ -5,10 +5,7 @@
 		</h1>
 		<div class="flex gap-2">
 			<div>
-				<Button
-					variant="solid"
-					v-if="selectionMode && selectedPages.size"
-					@click="showFolderSelectorDialog = true">
+				<Button variant="solid" v-if="selectionMode && selectedPages.size" @click="promptSelectFolder()">
 					Move To Folder
 				</Button>
 			</div>
@@ -103,6 +100,7 @@
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import { useDashboardState } from "@/composables/useDashboardState";
 import useBuilderStore from "@/stores/builderStore";
+import { promptSelectFolder } from "@/utils/dialogs";
 import { Button, Select } from "frappe-ui";
 import ListTreeIcon from "~icons/lucide/list-tree";
 
@@ -111,7 +109,6 @@ const {
 	searchFilter,
 	selectionMode,
 	selectedPages,
-	showFolderSelectorDialog,
 	treeExpanded,
 	displayType,
 	typeFilter,
