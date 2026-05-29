@@ -105,29 +105,29 @@
 						<!-- Clarification options -->
 						<div
 							v-if="message.metadata?.status === 'clarification' && message.metadata?.options?.length"
-							class="mt-3 flex flex-col gap-2.5">
-							<div class="flex flex-wrap gap-2">
-								<button
-									v-for="(option, idx) in message.metadata.options"
-									:key="option"
-									:disabled="isSubmitting"
-									class="flex items-center gap-2 rounded-full border border-outline-gray-2 bg-surface-white px-3 py-1.5 text-xs text-ink-gray-7 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-2 disabled:cursor-not-allowed disabled:opacity-50"
-									@click="selectOption(option)">
-									<!-- Color swatches when previews available -->
+							class="mt-3 flex w-full flex-wrap gap-3">
+							<button
+								v-for="(option, idx) in message.metadata.options"
+								:key="option"
+								:disabled="isSubmitting"
+								class="group flex flex-1 flex-col items-center gap-3 rounded-lg border border-outline-gray-2 bg-surface-gray-1 px-3 py-2.5 text-left transition-all hover:border-outline-gray-3 hover:bg-surface-gray-2 disabled:cursor-not-allowed disabled:opacity-50"
+								@click="selectOption(option)">
+								<!-- Color palette swatches -->
+								<span
+									v-if="message.metadata.previews?.[idx]?.colors?.length"
+									class="flex shrink-0 overflow-hidden rounded border border-black/10">
 									<span
-										v-if="message.metadata.previews?.[idx]?.colors?.length"
-										class="flex shrink-0 gap-px overflow-hidden rounded-full">
-										<span
-											v-for="color in message.metadata.previews[idx].colors.slice(0, 4)"
-											:key="color"
-											class="size-3.5"
-											:style="{ backgroundColor: color }" />
-									</span>
+										v-for="color in message.metadata.previews[idx].colors.slice(0, 4)"
+										:key="color"
+										class="size-3"
+										:style="{ backgroundColor: color }" />
+								</span>
+								<span :title="option" class="line-clamp-3 text-p-sm font-medium leading-snug text-ink-gray-8">
 									{{ option }}
-								</button>
-							</div>
+								</span>
+							</button>
 							<!-- Type-your-own nudge: only on last message -->
-							<p v-if="message.id === lastMessageId" class="text-xs text-ink-gray-4">
+							<p v-if="message.id === lastMessageId" class="mt-1 text-xs text-ink-gray-4">
 								Or describe something different below
 							</p>
 						</div>
