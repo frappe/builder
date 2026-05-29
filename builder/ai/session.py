@@ -6,10 +6,13 @@ from frappe import _
 
 class AISession:
 	DOCTYPE = "Builder AI Session"
-	MAX_MESSAGES = 100
+	MESSAGE_DOCTYPE = "Builder AI Message"
+	CONTEXT_WINDOW = 10  # how many prior turns to feed back to the model
 
 	def __init__(self, doc):
 		self._doc = doc
+
+	# --- factories --------------------------------------------------------
 
 	@classmethod
 	def get_or_create(cls, page_id: str, model: str | None = None, user: str | None = None):
@@ -34,7 +37,6 @@ class AISession:
 				"session_user": user,
 				"status": "Active",
 				"selected_model": model or "",
-				"messages_json": "[]",
 				"last_interaction_on": frappe.utils.now_datetime(),
 			}
 		)
@@ -59,10 +61,12 @@ class AISession:
 			cls(frappe.get_doc(cls.DOCTYPE, session_id)).append_message(role, content, **kwargs)
 
 	@classmethod
-	def build_context_from_id(cls, session_id: str | None) -> str:
+	def build_context_messages_from_id(cls, session_id: str | None) -> list[dict]:
 		if not session_id or not frappe.db.exists(cls.DOCTYPE, session_id):
-			return ""
-		return cls(frappe.get_doc(cls.DOCTYPE, session_id)).build_context_string()
+			return []
+		return cls(frappe.get_doc(cls.DOCTYPE, session_id)).build_context_messages()
+
+	# --- properties -------------------------------------------------------
 
 	@property
 	def name(self):
@@ -80,19 +84,84 @@ class AISession:
 	def last_task_type(self):
 		return self._doc.last_task_type
 
-	def get_messages(self) -> list[dict]:
-		try:
-			messages = json.loads(self._doc.messages_json or "[]")
-		except json.JSONDecodeError:
-			return []
-		return messages if isinstance(messages, list) else []
+	# --- message read -----------------------------------------------------
 
-	def save_messages(self, messages: list[dict], task_type: str | None = None):
-		trimmed = messages[-self.MAX_MESSAGES :]
-		self._doc.messages_json = json.dumps(trimmed, separators=(",", ":"))
-		self._doc.last_interaction_on = frappe.utils.now_datetime()
-		self._doc.last_task_type = task_type or self._doc.last_task_type
-		self._doc.save(ignore_permissions=True)
+	@staticmethod
+	def _row_to_message(row: dict) -> dict:
+		"""Reshape a Builder AI Message DB row into the ChatMessage dict shape
+		the frontend renders."""
+		try:
+			metadata = json.loads(row.get("metadata_json") or "{}") or {}
+		except (json.JSONDecodeError, TypeError):
+			metadata = {}
+		# `status` lives in its own column for queryability; surface it in the
+		# returned metadata dict so callers see the same shape as before.
+		if row.get("status"):
+			metadata["status"] = row["status"]
+		return {
+			"id": row.get("name"),
+			"role": row.get("role"),
+			"content": row.get("content") or "",
+			"message_type": row.get("message_type"),
+			"task_type": row.get("task_type") or None,
+			"block_id": row.get("block_id") or None,
+			"created_at": str(row.get("creation")) if row.get("creation") else None,
+			"metadata": metadata,
+		}
+
+	_FIELDS = (
+		"name",
+		"role",
+		"content",
+		"message_type",
+		"task_type",
+		"block_id",
+		"status",
+		"metadata_json",
+		"creation",
+	)
+
+	def get_messages(self) -> list[dict]:
+		"""Return ALL messages for this session in chronological order, shaped
+		for the frontend's ChatMessage interface."""
+		rows = frappe.db.get_all(
+			self.MESSAGE_DOCTYPE,
+			filters={"session": self._doc.name},
+			fields=list(self._FIELDS),
+			order_by="creation asc",
+			limit_page_length=0,
+		)
+		return [self._row_to_message(r) for r in rows]
+
+	def build_context_messages(self) -> list[dict]:
+		"""Return the last N prior turns as proper role-tagged messages.
+
+		Excludes the current-turn user message (the agent loop appends a fresh
+		one), and filters out transient status/error/cancelled chatter."""
+		# Fetch one extra (the current user message) and drop it.
+		rows = frappe.db.get_all(
+			self.MESSAGE_DOCTYPE,
+			filters={"session": self._doc.name},
+			fields=["role", "content", "message_type", "status"],
+			order_by="creation desc",
+			limit_page_length=self.CONTEXT_WINDOW + 1,
+		)
+		# Skip the most recent row (current user msg) and reverse to chrono order.
+		history = list(reversed(rows[1:])) if rows else []
+		out: list[dict] = []
+		for r in history:
+			content = (r.get("content") or "").strip()
+			role = r.get("role")
+			if not content or role not in ("user", "assistant"):
+				continue
+			if r.get("message_type") == "status":
+				continue
+			if r.get("status") in ("running", "error", "cancelled"):
+				continue
+			out.append({"role": role, "content": content})
+		return out
+
+	# --- message write ----------------------------------------------------
 
 	def append_message(
 		self,
@@ -104,54 +173,88 @@ class AISession:
 		block_id: str | None = None,
 		metadata: dict | None = None,
 	):
-		messages = self.get_messages()
-		messages.append(
+		metadata = metadata or {}
+		# Hoist status to its own column for cheap filtered queries; keep
+		# everything else in metadata_json.
+		status = ""
+		meta_clean: dict = {}
+		if isinstance(metadata, dict):
+			status = (metadata.get("status") or "").strip()
+			meta_clean = {k: v for k, v in metadata.items() if k != "status"}
+
+		frappe.get_doc(
 			{
-				"id": frappe.generate_hash(length=10),
+				"doctype": self.MESSAGE_DOCTYPE,
+				"session": self._doc.name,
 				"role": role,
 				"content": content,
 				"message_type": message_type,
-				"task_type": task_type,
-				"block_id": block_id,
-				"created_at": str(frappe.utils.now_datetime()),
-				"metadata": metadata or {},
+				"status": status,
+				"task_type": task_type or "",
+				"block_id": block_id or "",
+				"metadata_json": json.dumps(meta_clean, separators=(",", ":")) if meta_clean else "",
 			}
-		)
-		self.save_messages(messages, task_type=task_type)
+		).insert(ignore_permissions=True)
+
+		# Touch the parent's bookkeeping fields atomically (no full re-save).
+		updates: dict = {"last_interaction_on": frappe.utils.now_datetime()}
+		if task_type:
+			updates["last_task_type"] = task_type
+		frappe.db.set_value(self.DOCTYPE, self._doc.name, updates, update_modified=False)
 
 	def update_last_assistant_metadata(self, extra_metadata: dict):
-		"""Merge extra_metadata into the most recent assistant message and persist."""
-		messages = self.get_messages()
-		for msg in reversed(messages):
-			if msg.get("role") == "assistant":
-				msg.setdefault("metadata", {}).update(extra_metadata)
-				break
-		self.save_messages(messages)
+		"""Merge extra_metadata into the most recent assistant message's
+		metadata_json. One-row UPDATE — no read-modify-write of a giant blob."""
+		row = frappe.db.get_value(
+			self.MESSAGE_DOCTYPE,
+			{"session": self._doc.name, "role": "assistant"},
+			["name", "metadata_json"],
+			order_by="creation desc",
+			as_dict=True,
+		)
+		if not row:
+			return
+		try:
+			meta = json.loads(row.metadata_json) if row.metadata_json else {}
+		except (json.JSONDecodeError, TypeError):
+			meta = {}
+		if not isinstance(meta, dict):
+			meta = {}
+		meta.update(extra_metadata or {})
+		frappe.db.set_value(
+			self.MESSAGE_DOCTYPE,
+			row.name,
+			"metadata_json",
+			json.dumps(meta, separators=(",", ":")),
+			update_modified=False,
+		)
+
+	# --- running flag (concurrency guard) --------------------------------
 
 	def set_running(self):
-		"""Mark session as having an active AI job running."""
 		frappe.db.set_value(self.DOCTYPE, self._doc.name, "is_running", 1, update_modified=False)
 		frappe.db.commit()
 
 	def clear_running(self):
-		"""Clear the running flag when the job finishes."""
 		frappe.db.set_value(self.DOCTYPE, self._doc.name, "is_running", 0, update_modified=False)
 		frappe.db.commit()
 
 	@classmethod
 	def is_session_running(cls, session_id: str) -> bool:
-		"""Return True if there is already a job running for this session."""
 		if not session_id or not frappe.db.exists(cls.DOCTYPE, session_id):
 			return False
 		return bool(frappe.db.get_value(cls.DOCTYPE, session_id, "is_running"))
 
+	# --- cheap queries used by the agent loop ----------------------------
+
 	@classmethod
 	def has_clarification_messages(cls, session_id: str | None) -> bool:
-		"""Return True if the session already has clarification messages (we're mid Q&A)."""
+		"""True if the session has any clarification message at all."""
 		if not session_id or not frappe.db.exists(cls.DOCTYPE, session_id):
 			return False
-		messages = cls(frappe.get_doc(cls.DOCTYPE, session_id)).get_messages()
-		return any(m.get("message_type") == "clarification" for m in messages)
+		return bool(
+			frappe.db.exists(cls.MESSAGE_DOCTYPE, {"session": session_id, "message_type": "clarification"})
+		)
 
 	@classmethod
 	def last_assistant_was_plan(cls, session_id: str | None) -> bool:
@@ -159,11 +262,13 @@ class AISession:
 		current user turn is likely approving it, so generation is imminent."""
 		if not session_id or not frappe.db.exists(cls.DOCTYPE, session_id):
 			return False
-		messages = cls(frappe.get_doc(cls.DOCTYPE, session_id)).get_messages()
-		for m in reversed(messages):
-			if m.get("role") == "assistant":
-				return (m.get("metadata") or {}).get("status") == "plan_summary"
-		return False
+		status = frappe.db.get_value(
+			cls.MESSAGE_DOCTYPE,
+			{"session": session_id, "role": "assistant"},
+			"status",
+			order_by="creation desc",
+		)
+		return status == "plan_summary"
 
 	@classmethod
 	def latest_plan(cls, session_id: str | None) -> dict | None:
@@ -171,29 +276,37 @@ class AISession:
 		palette) so the generation fast-path can recap it for the model."""
 		if not session_id or not frappe.db.exists(cls.DOCTYPE, session_id):
 			return None
-		messages = cls(frappe.get_doc(cls.DOCTYPE, session_id)).get_messages()
-		for m in reversed(messages):
-			meta = m.get("metadata") or {}
-			if meta.get("status") == "plan_summary":
-				return meta
-		return None
+		meta_json = frappe.db.get_value(
+			cls.MESSAGE_DOCTYPE,
+			{"session": session_id, "status": "plan_summary"},
+			"metadata_json",
+			order_by="creation desc",
+		)
+		if not meta_json:
+			return None
+		try:
+			meta = json.loads(meta_json)
+		except (json.JSONDecodeError, TypeError):
+			return None
+		if not isinstance(meta, dict):
+			return None
+		# Restore the status key callers expect.
+		meta["status"] = "plan_summary"
+		return meta
 
-	def build_context_string(self) -> str:
-		history_lines = []
-		for message in self.get_messages()[-10:]:
-			role = message.get("role") or "user"
-			content = (message.get("content") or "").strip()
-			if not content:
-				continue
-			prefix = "User" if role == "user" else "Assistant"
-			history_lines.append(f"{prefix}: {content}")
-
-		if not history_lines:
-			return ""
-		return "Conversation history for this page:\n" + "\n".join(history_lines)
+	# --- lifecycle --------------------------------------------------------
 
 	def clear(self):
-		self._doc.messages_json = "[]"
-		self._doc.last_task_type = None
-		self._doc.last_interaction_on = frappe.utils.now_datetime()
-		self._doc.save(ignore_permissions=True)
+		"""Wipe all messages for this session and reset transient state."""
+		frappe.db.delete(self.MESSAGE_DOCTYPE, {"session": self._doc.name})
+		frappe.db.set_value(
+			self.DOCTYPE,
+			self._doc.name,
+			{
+				"is_running": 0,
+				"last_task_type": None,
+				"last_interaction_on": frappe.utils.now_datetime(),
+			},
+			update_modified=False,
+		)
+		frappe.db.commit()

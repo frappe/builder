@@ -12,8 +12,7 @@
   "status",
   "selected_model",
   "last_task_type",
-  "last_interaction_on",
-  "messages_json"
+  "last_interaction_on"
  ],
  "fields": [
   {
@@ -57,11 +56,6 @@
    "in_list_view": 1,
    "label": "Last Interaction On",
    "read_only": 1
-  },
-  {
-   "fieldname": "messages_json",
-   "fieldtype": "Long Text",
-   "label": "Messages JSON"
   },
   {
    "default": "0",

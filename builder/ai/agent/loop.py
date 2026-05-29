@@ -166,8 +166,6 @@ class AgentRunner:
 				"cache_control": {"type": "ephemeral"},
 			},
 		]
-		if session_context := AISession.build_context_from_id(self.session_id):
-			messages.append({"role": "system", "content": session_context})
 
 		if page_context_message := self.build_page_context():
 			messages.append({"role": "user", "content": page_context_message})
@@ -177,6 +175,11 @@ class AgentRunner:
 					"content": "Understood. I have the current page structure. What would you like me to change?",
 				}
 			)
+
+		# Prior conversation as proper role-tagged turns (not a flattened system
+		# blob) — the model handles dialogue better and we save the "User:"/
+		# "Assistant:" prefix tokens on every call.
+		messages.extend(AISession.build_context_messages_from_id(self.session_id))
 
 		user_text = self.prompt
 		if self.selected_block_ids:
@@ -369,8 +372,9 @@ class AgentRunner:
 		]
 		if plan_recap:
 			messages.append({"role": "system", "content": plan_recap})
-		if session_context := AISession.build_context_from_id(self.session_id):
-			messages.append({"role": "system", "content": session_context})
+
+		# Prior conversation as proper role-tagged turns.
+		messages.extend(AISession.build_context_messages_from_id(self.session_id))
 
 		user_text = self.prompt
 		if self.image_url:
