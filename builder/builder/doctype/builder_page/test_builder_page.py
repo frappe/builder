@@ -1048,6 +1048,122 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
+	def test_conflicting_routes_picks_last_published(self):
+		"""Pages sharing a route should resolve to the most recently published one."""
+		from frappe.utils import add_to_date, now_datetime
+		from frappe.website.utils import clear_cache as clear_page_cache
+
+		from builder.builder.doctype.builder_page.builder_page import find_page_with_path
+
+		# Frappe strips leading slashes from routes during validation; use without slash
+		route = "conflicting-route-test"
+
+		page_older = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Older Published Page",
+				"published": 1,
+				"route": route,
+				"blocks": Block(
+					element="div",
+					originalElement="body",
+					children=[Block(element="h1", innerHTML="Older Published Content")],
+				).as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		page_newer = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Newer Published Page",
+				"published": 1,
+				"route": route,
+				"blocks": Block(
+					element="div",
+					originalElement="body",
+					children=[Block(element="h1", innerHTML="Newer Published Content")],
+				).as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		def clear_caches():
+			find_page_with_path.clear_cache()
+			clear_page_cache(route)
+
+		try:
+			page_older.db_set("published_at", add_to_date(now_datetime(), days=-2))
+			page_newer.db_set("published_at", add_to_date(now_datetime(), days=-1))
+			clear_caches()
+
+			content = get_response_content(f"/{route}")
+			self.assertIn("Newer Published Content", content)
+
+			# Republish the older page — it should now be picked
+			page_older.db_set("published_at", now_datetime())
+			clear_caches()
+
+			content = get_response_content(f"/{route}")
+			self.assertIn("Older Published Content", content)
+		finally:
+			clear_caches()
+			page_older.delete()
+			page_newer.delete()
+
+	def test_conflicting_routes_no_published_at_picks_last_created(self):
+		"""When published_at is absent, the most recently created page should win."""
+		from frappe.utils import add_to_date, now_datetime
+		from frappe.website.utils import clear_cache as clear_page_cache
+
+		from builder.builder.doctype.builder_page.builder_page import find_page_with_path
+
+		# Frappe strips leading slashes from routes during validation; use without slash
+		route = "conflicting-route-no-published-at-test"
+
+		page_first = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "First Created Page",
+				"published": 1,
+				"route": route,
+				"blocks": Block(
+					element="div",
+					originalElement="body",
+					children=[Block(element="h1", innerHTML="First Created Content")],
+				).as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		page_second = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Second Created Page",
+				"published": 1,
+				"route": route,
+				"blocks": Block(
+					element="div",
+					originalElement="body",
+					children=[Block(element="h1", innerHTML="Second Created Content")],
+				).as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		# Ensure page_first has an older creation timestamp as a tiebreaker
+		page_first.db_set("creation", add_to_date(now_datetime(), seconds=-10))
+
+		def clear_caches():
+			find_page_with_path.clear_cache()
+			clear_page_cache(route)
+
+		try:
+			# Both pages have no published_at; creation order should determine the winner
+			clear_caches()
+			content = get_response_content(f"/{route}")
+			self.assertIn("Second Created Content", content)
+		finally:
+			clear_caches()
+			page_first.delete()
+			page_second.delete()
+
 	@classmethod
 	def tearDownClass(cls):
 		cls.page.delete()
