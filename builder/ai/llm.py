@@ -1,12 +1,10 @@
 """Consolidated LLM adapter for Builder AI.
 
-This is the ONLY place that knows about provider-specific quirks (model name
-resolution, Claude system-prompt shaping, fallback chains). The agent loop and
-tools talk to LLMs exclusively through the functions defined here.
+This is the ONLY place that knows about provider-specific quirks. The agent
+loop and tools talk to LLMs exclusively through the functions defined here.
 """
 
 import logging
-import time
 
 import frappe
 import litellm
@@ -32,71 +30,47 @@ FALLBACK_CHAIN: list[tuple[str, str]] = [
 ]
 
 
-def resolve_model(model: str) -> str:
-	"""Normalise a model name into the form litellm expects."""
-	if model.startswith("gemini-"):
-		return f"gemini/{model}"
-	return model
+def fallbacks_for(model: str) -> list[str]:
+	for pattern, fallback in FALLBACK_CHAIN:
+		if pattern in model and fallback not in model:
+			return [fallback]
+	return []
 
 
 def patch_messages_for_provider(model: str, messages: list[dict]) -> None:
-	"""Mutate `messages` in place to satisfy provider-specific requirements.
-
-	Anthropic models require the system prompt as a content-block list (so the
-	ephemeral cache_control marker is honoured), not a bare string.
-	"""
+	"""Anthropic via OpenRouter needs the system prompt as a content-block list
+	so the ephemeral cache_control marker is honoured. Mutates in place."""
 	if "claude-" in model:
 		for m in messages:
 			if m["role"] == "system" and isinstance(m.get("content"), str):
 				m["content"] = [{"type": "text", "text": m["content"]}]
 
 
-def _get_fallback(model: str) -> str | None:
-	for pattern, fallback in FALLBACK_CHAIN:
-		if pattern in model and fallback not in model:
-			return fallback
-	return None
-
-
 def complete(model: str, messages: list, params: dict, *, stream: bool, api_key: str | None = None):
-	"""Plain completion with provider patching and a one-step fallback chain.
-
-	Returns the response object when streaming, or the text content when not.
-	"""
-	model = resolve_model(model)
+	"""Plain completion. Returns the response iterator when streaming, else the
+	text content. litellm handles fallback + retry."""
 	patch_messages_for_provider(model, messages)
-
 	logger.info(
-		f"LLM request | model={model} stream={stream} params={params}\n"
+		f"LLM | model={model} stream={stream} fallbacks={fallbacks_for(model)} params={params}\n"
 		+ "\n".join(f"[{m['role']}] {m['content']!s}" for m in messages)
 	)
-
-	last_err: Exception | None = None
-	attempt_models = [model]
-	if fallback := _get_fallback(model):
-		attempt_models.append(fallback)
-
-	for attempt, attempt_model in enumerate(attempt_models):
-		try:
-			if attempt > 0:
-				time.sleep(2 ** (attempt - 1))  # 2s, 4s… before each fallback
-				logger.warning(f"Falling back to {attempt_model} after error: {last_err}")
-			resp = litellm.completion(
-				model=attempt_model, messages=messages, stream=stream, api_key=api_key, **params
-			)
-			if not stream:
-				content = resp.choices[0].message.content or ""
-				logger.info(f"LLM response | model={attempt_model} length={len(content)}\n{content}")
-				return content
-			return resp
-		except litellm.APIError as e:
-			last_err = e
-			logger.error(f"LiteLLM APIError on {attempt_model}: {e}")
-			if attempt + 1 >= len(attempt_models):
-				raise
-		except Exception as e:
-			logger.error(f"LiteLLM call failed: {e!s}", exc_info=True)
-			raise
+	resp = litellm.completion(
+		model=model,
+		messages=messages,
+		stream=stream,
+		api_key=api_key,
+		# Fallbacks are disabled during streaming: litellm's mid-stream fallback
+		# attempts __next__ on async generators returned by OpenRouter, causing
+		# MidStreamFallbackError. Fallbacks only work safely for non-streaming calls.
+		fallbacks=[] if stream else fallbacks_for(model),
+		num_retries=1,
+		**params,
+	)
+	if not stream:
+		content = resp.choices[0].message.content or ""
+		logger.info(f"LLM response | length={len(content)}\n{content}")
+		return content
+	return resp
 
 
 def complete_with_tools(
@@ -108,15 +82,21 @@ def complete_with_tools(
 	api_key: str | None = None,
 	stream: bool = False,
 ):
-	"""Tool-calling completion. Returns the raw response object (an iterable of
-	chunks when stream=True, otherwise a single response)."""
-	model = resolve_model(model)
+	"""Tool-calling completion. Returns the raw response (iterator when
+	streaming). litellm handles fallback + retry."""
 	patch_messages_for_provider(model, messages)
-
 	logger.info(
-		f"LLM tool request | model={model} stream={stream} tools={[t['function']['name'] for t in tools]}\n"
+		f"LLM tools | model={model} stream={stream} tools={[t['function']['name'] for t in tools]}\n"
 		+ "\n".join(f"[{m['role']}] {m['content']}" for m in messages)
 	)
 	return litellm.completion(
-		model=model, messages=messages, tools=tools, stream=stream, api_key=api_key, **params
+		model=model,
+		messages=messages,
+		tools=tools,
+		stream=stream,
+		api_key=api_key,
+		# Fallbacks disabled during streaming — see comment in complete().
+		fallbacks=[] if stream else fallbacks_for(model),
+		num_retries=1,
+		**params,
 	)
