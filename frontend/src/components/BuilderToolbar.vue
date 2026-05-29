@@ -12,7 +12,7 @@
 				"
 				@showShortcuts="showShortcuts"></MainMenu>
 			<div class="flex gap-2">
-				<BuilderButton
+				<Button
 					v-for="mode in [
 						{ mode: 'select', icon: 'lucide-mouse-pointer', description: 'Select (v)' },
 						{ mode: 'container', icon: 'lucide-square', description: 'Container (c)' },
@@ -23,7 +23,7 @@
 					:tooltip="mode.description"
 					:icon="mode.icon"
 					@click="() => (builderStore.mode = mode.mode as BuilderMode)"
-					:active="builderStore.mode === mode.mode"></BuilderButton>
+					:active="builderStore.mode === mode.mode"></Button>
 			</div>
 		</div>
 		<div>

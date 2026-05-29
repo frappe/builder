@@ -70,7 +70,7 @@
 										'!grid': !backgroundImageURL,
 										'group-hover:grid': backgroundImageURL,
 									}">
-									<BuilderButton @click="openFileSelector">Upload</BuilderButton>
+									<Button @click="openFileSelector">Upload</Button>
 								</div>
 							</template>
 						</FileUploader>
@@ -95,20 +95,20 @@
 							:options="repeatOptions"
 							@update:modelValue="setBGRepeat" />
 					</div>
-					<BuilderButton v-if="showServeLocallyButton" class="w-full" @click="serveBackgroundImageLocally">
+					<Button v-if="showServeLocallyButton" class="w-full" @click="serveBackgroundImageLocally">
 						{{ serveLocallyButtonText }}
-					</BuilderButton>
-					<BuilderButton v-if="backgroundImageURL" class="w-full" variant="subtle" @click="clearBGImage">
+					</Button>
+					<Button v-if="backgroundImageURL" class="w-full" variant="subtle" @click="clearBGImage">
 						Clear Image
-					</BuilderButton>
+					</Button>
 				</div>
 
 				<!-- Gradient Tab -->
 				<div v-else class="space-y-4">
 					<GradientEditor :modelValue="rawBackgroundImage" @update:modelValue="setGradient" />
-					<BuilderButton :disabled="!isGradient" class="w-full" variant="subtle" @click="clearBGImage">
+					<Button :disabled="!isGradient" class="w-full" variant="subtle" @click="clearBGImage">
 						Clear Gradient
-					</BuilderButton>
+					</Button>
 				</div>
 
 				<div
@@ -131,11 +131,10 @@ import GradientEditor from "@/components/Controls/GradientEditor.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import Input from "@/components/Controls/Input.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
-import Switch from "@/components/Controls/Switch.vue";
 import TabButtons from "@/components/Controls/TabButtons.vue";
 import blockController from "@/utils/blockController";
 import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
-import { FileUploader, Popover } from "frappe-ui";
+import { FileUploader, Popover, Switch } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
 const activeState = ref<string | null>(null);

@@ -35,11 +35,9 @@
 	</div>
 </template>
 <script setup lang="ts">
-import Switch from "@/components/Controls/Switch.vue";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
-import { Select } from "frappe-ui";
-import InlineInput from "../Controls/InlineInput.vue";
+import { Select, Switch } from "frappe-ui";
 
 const builderStore = useBuilderStore();
 </script>

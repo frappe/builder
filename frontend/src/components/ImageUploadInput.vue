@@ -60,7 +60,7 @@
 									'!grid': !currentImageURL,
 									'group-hover:grid': currentImageURL,
 								}">
-								<BuilderButton variant="subtle" @click="openFileSelector">Upload</BuilderButton>
+								<Button variant="subtle" @click="openFileSelector">Upload</Button>
 							</div>
 						</div>
 					</template>

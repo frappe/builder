@@ -72,7 +72,7 @@
 									</div>
 								</div>
 								<div class="flex-shrink-0 gap-1 rounded">
-									<BuilderButton
+									<Button
 										class="flex-shrink-0 bg-transparent text-xs text-ink-gray-6"
 										variant="subtle"
 										icon="lucide-x"
@@ -99,7 +99,7 @@
 		</div>
 		<Popover ref="popOverRef" :offset="24" placement="right">
 			<template #target="{ open }">
-				<BuilderButton
+				<Button
 					class="w-full"
 					variant="subtle"
 					label="Add"
@@ -115,7 +115,7 @@
 							popupMode = 'add';
 							open();
 						}
-					"></BuilderButton>
+					"></Button>
 			</template>
 			<template #body="{ open, close }">
 				<PropsPopoverContent

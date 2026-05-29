@@ -9,13 +9,13 @@
 				placeholder="Value"
 				:modelValue="value"
 				@update:modelValue="(val: string) => updateObjectValue(key, val)" />
-			<BuilderButton
+			<Button
 				class="flex-shrink-0 text-xs"
 				variant="subtle"
 				icon="lucide-x"
-				@click="deleteObjectKey(key as string)"></BuilderButton>
+				@click="deleteObjectKey(key as string)"></Button>
 		</div>
-		<BuilderButton variant="subtle" label="Add" @click="addObjectKey"></BuilderButton>
+		<Button variant="subtle" label="Add" @click="addObjectKey"></Button>
 		<p class="rounded-sm bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
 			<span v-html="description"></span>
 		</p>
