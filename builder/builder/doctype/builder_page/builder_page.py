@@ -179,6 +179,7 @@ class BuilderPage(WebsiteGenerator):
 			self.has_value_changed("dynamic_route")
 			or self.has_value_changed("route")
 			or self.has_value_changed("published")
+			or self.has_value_changed("published_at")
 			or self.has_value_changed("disable_indexing")
 			or self.has_value_changed("blocks")
 		):
@@ -1354,7 +1355,11 @@ def extend_block(block, overridden_block):
 def find_page_with_path(route):
 	try:
 		return frappe.db.get_value(
-			"Builder Page", dict(route=route, published=1), "name", order_by="published_at", cache=True
+			"Builder Page",
+			dict(route=route, published=1),
+			"name",
+			order_by="published_at desc, creation desc",
+			cache=True,
 		)
 	except frappe.DoesNotExistError:
 		pass
