@@ -8,7 +8,7 @@
 			}
 		">
 		<template v-slot="{ file, progress, uploading, openFileSelector }">
-			<div class="flex items-end space-x-1">
+			<div class="flex items-end">
 				<BuilderButton @click="openFileSelector">
 					{{ uploading ? `Uploading ${progress}%` : image_url ? "Change" : "Upload" }}
 				</BuilderButton>
