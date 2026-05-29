@@ -69,7 +69,7 @@
 					<div
 						class="flex w-72 flex-col gap-3 rounded bg-surface-white p-4 shadow-lg"
 						v-if="pageStore.activePage">
-						<PageOptions v-if="pageStore.activePage" :page="pageStore.activePage"></PageOptions>
+						<PageOptions v-if="pageStore.activePage"></PageOptions>
 					</div>
 				</template>
 			</Popover>
