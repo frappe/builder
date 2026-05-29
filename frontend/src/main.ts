@@ -6,7 +6,6 @@ import { createPinia } from "pinia";
 import "./index.css";
 import router from "./router";
 import "./setupFrappeUIResource";
-import "./utils/arrayFunctions";
 
 import App from "@/App.vue";
 import BuilderButton from "@/components/Controls/BuilderButton.vue";

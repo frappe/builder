@@ -181,8 +181,11 @@ def get_apps():
 @frappe.whitelist()
 @has_page_write("You do not have permission to update page folder.")
 def update_page_folder(pages: list[str], folder_name: str) -> None:
-	for page in pages:
-		frappe.db.set_value("Builder Page", page, "project_folder", folder_name, update_modified=False)
+	if not pages:
+		return
+	frappe.db.set_value(
+		"Builder Page", {"name": ["in", pages]}, "project_folder", folder_name, update_modified=False
+	)
 
 
 @frappe.whitelist()
@@ -207,10 +210,10 @@ def duplicate_page(page_name: str):
 @frappe.whitelist()
 @has_page_write("You do not have permission to delete a folder.")
 def delete_folder(folder_name: str) -> None:
-	# remove folder from all pages
-	pages = frappe.get_all("Builder Page", filters={"project_folder": folder_name}, fields=["name"])
-	for page in pages:
-		frappe.db.set_value("Builder Page", page.name, "project_folder", "", update_modified=False)
+	# remove folder from all pages in a single update
+	frappe.db.set_value(
+		"Builder Page", {"project_folder": folder_name}, "project_folder", "", update_modified=False
+	)
 
 	frappe.db.delete("Builder Project Folder", {"folder_name": folder_name})
 

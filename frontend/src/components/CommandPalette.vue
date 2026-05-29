@@ -224,7 +224,10 @@ watch(
 	(val) => {
 		if (val) {
 			activeIndex.value = 0;
-			nextTick(() => inputRef.value?.focus());
+			nextTick(() => {
+				inputRef.value?.focus();
+				inputRef.value?.select();
+			});
 		}
 	},
 );

@@ -283,12 +283,7 @@ export function useAnalytics({
 
 	const getFormattedRoute = () => {
 		if (!route.value) return "";
-
-		if (routeFilterType.value === "exact") {
-			return route.value;
-		} else {
-			return route.value;
-		}
+		return route.value;
 	};
 
 	const getParams = () => {

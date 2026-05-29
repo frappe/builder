@@ -12,6 +12,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AIAffectedItems: typeof import('./src/components/AIAffectedItems.vue')['default']
+    AIPageGeneratorModal: typeof import('./src/components/AIPageGeneratorModal.vue')['default']
     AlertDialog: typeof import('./src/components/AlertDialog.vue')['default']
     AnalyticsFilters: typeof import('./src/components/Settings/AnalyticsFilters.vue')['default']
     AnalyticsOverview: typeof import('./src/components/Settings/AnalyticsOverview.vue')['default']
@@ -34,7 +35,6 @@ declare module 'vue' {
     BlockProperties: typeof import('./src/components/BlockProperties.vue')['default']
     Blocks: typeof import('./src/components/Icons/Blocks.vue')['default']
     BlockSnapGuides: typeof import('./src/components/BlockSnapGuides.vue')['default']
-    BlockStyleManager: typeof import('./src/components/Controls/BlockStyleManager.vue')['default']
     BooleanOptions: typeof import('./src/components/PropsOptions/BooleanOptions.vue')['default']
     BorderRadiusHandler: typeof import('./src/components/BorderRadiusHandler.vue')['default']
     BoxResizer: typeof import('./src/components/BoxResizer.vue')['default']
@@ -107,8 +107,6 @@ declare module 'vue' {
     MiddleTruncate: typeof import('./src/components/MiddleTruncate.vue')['default']
     NewBlockTemplate: typeof import('./src/components/Modals/NewBlockTemplate.vue')['default']
     NewBuilderVariable: typeof import('./src/components/Modals/NewBuilderVariable.vue')['default']
-    NewComponent: typeof import('./src/components/Modals/NewComponent.vue')['default']
-    NewFolder: typeof import('./src/components/Modals/NewFolder.vue')['default']
     NumberArrows: typeof import('./src/components/Controls/NumberArrows.vue')['default']
     NumberOptions: typeof import('./src/components/PropsOptions/NumberOptions.vue')['default']
     ObjectEditor: typeof import('./src/components/ObjectEditor.vue')['default']
@@ -144,7 +142,6 @@ declare module 'vue' {
     RouteTreeNode: typeof import('./src/components/RouteTreeNode.vue')['default']
     RouteTreeView: typeof import('./src/components/RouteTreeView.vue')['default']
     SearchBlock: typeof import('./src/components/Controls/SearchBlock.vue')['default']
-    SelectFolder: typeof import('./src/components/Modals/SelectFolder.vue')['default']
     SelectOptions: typeof import('./src/components/PropsOptions/SelectOptions.vue')['default']
     Settings: typeof import('./src/components/Icons/Settings.vue')['default']
     SettingsGear: typeof import('./src/components/Icons/SettingsGear.vue')['default']

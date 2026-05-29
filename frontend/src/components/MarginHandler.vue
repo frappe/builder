@@ -114,8 +114,8 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
-import { clamp } from "@vueuse/core";
-import { computed, inject, ref, watchEffect } from "vue";
+import { Position, useSpacingHandler } from "@/composables/useSpacingHandler";
+import { computed, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
 const props = withDefaults(
 	defineProps<{
@@ -131,25 +131,15 @@ const props = withDefaults(
 	},
 );
 
-const updating = ref(false);
 const emit = defineEmits(["update"]);
-
-const canvasProps = inject("canvasProps") as CanvasProps;
+const { canvasProps, updating, blockStyles, handleBorderWidth, longHandleSize, sideHandleSize } =
+	useSpacingHandler(
+		() => props.targetBlock,
+		() => props.breakpoint,
+	);
 
 watchEffect(() => {
 	emit("update", updating.value);
-});
-
-const blockStyles = computed(() => {
-	const baseStyles = { ...props.targetBlock.baseStyles };
-	let styles = baseStyles;
-	if (props.breakpoint === "mobile" || props.breakpoint === "tablet") {
-		styles = { ...styles, ...props.targetBlock.mobileStyles };
-	}
-	if (props.breakpoint === "tablet") {
-		styles = { ...styles, ...props.targetBlock.tabletStyles };
-	}
-	return styles;
 });
 
 const topMarginHandlerHeight = computed(() => {
@@ -185,60 +175,45 @@ const rightMarginHandlerWidth = computed(() => {
 	return value;
 });
 
-const handleBorderWidth = computed(() => {
-	return `${clamp(1 * canvasProps.scale, 1, 2)}px`;
-});
-
 const topHandle = computed(() => {
-	const width = clamp(16 * canvasProps.scale, 8, 32);
-	const height = clamp(4 * canvasProps.scale, 2, 8);
+	const { width, height } = longHandleSize.value;
 	return {
-		width: width,
-		height: height,
+		width,
+		height,
 		bottom: `clamp(0px, calc(4px * ${canvasProps.scale}), 12px)`,
 		left: `calc(50% - ${width / 2}px)`,
 	};
 });
 
 const bottomHandle = computed(() => {
-	const width = clamp(16 * canvasProps.scale, 8, 32);
-	const height = clamp(4 * canvasProps.scale, 2, 8);
+	const { width, height } = longHandleSize.value;
 	return {
-		width: width,
-		height: height,
+		width,
+		height,
 		bottom: `clamp(-16px, calc(-8px * ${canvasProps.scale}), 2px)`,
 		left: `calc(50% - ${width / 2}px)`,
 	};
 });
 
 const leftHandle = computed(() => {
-	const width = clamp(4 * canvasProps.scale, 2, 8);
-	const height = clamp(16 * canvasProps.scale, 8, 32);
+	const { width, height } = sideHandleSize.value;
 	return {
-		width: width,
-		height: height,
+		width,
+		height,
 		right: `clamp(0px, calc(4px * ${canvasProps.scale}), 12px)`,
 		top: `calc(50% - ${height / 2}px)`,
 	};
 });
 
 const rightHandle = computed(() => {
-	const width = clamp(4 * canvasProps.scale, 2, 8);
-	const height = clamp(16 * canvasProps.scale, 8, 32);
+	const { width, height } = sideHandleSize.value;
 	return {
-		width: width,
-		height: height,
+		width,
+		height,
 		right: `clamp(-16px, calc(-8px * ${canvasProps.scale}), 2px)`,
 		top: `calc(50% - ${height / 2}px)`,
 	};
 });
-
-enum Position {
-	Top = "top",
-	Right = "right",
-	Bottom = "bottom",
-	Left = "left",
-}
 
 const handleMargin = (ev: MouseEvent, position: Position) => {
 	if (props.disableHandlers) return;
