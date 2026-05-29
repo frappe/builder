@@ -1,4 +1,3 @@
-import re
 from typing import ClassVar
 
 
@@ -80,28 +79,6 @@ class ModelRegistry:
 				if m["name"] == model_name:
 					return m["label"]
 		return model_name.removeprefix("openrouter/").replace("/", " ").replace("-", " ").title()
-
-	@classmethod
-	def get_progress_stage(cls, content: str) -> str | None:
-		lookback = content[-400:]
-		major_elements = ["section", "nav", "header", "footer"]
-
-		last_pos = -1
-		found_el = None
-		for el in major_elements:
-			pos = lookback.rfind(f"el: {el}")
-			if pos > last_pos:
-				last_pos = pos
-				found_el = el
-
-		if found_el and last_pos != -1:
-			part = lookback[last_pos:]
-			name_match = re.search(r"name:\s*['\"]?([^'\"\n]+)['\"]?", part)
-			if name_match:
-				block_name = name_match.group(1).strip()
-				if block_name.lower() not in {"body", "root", "container"}:
-					return f"Building {block_name} section"
-		return None
 
 	@classmethod
 	def detect_provider(cls, model: str) -> str | None:

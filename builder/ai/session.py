@@ -245,55 +245,6 @@ class AISession:
 			return False
 		return bool(frappe.db.get_value(cls.DOCTYPE, session_id, "is_running"))
 
-	# --- cheap queries used by the agent loop ----------------------------
-
-	@classmethod
-	def has_clarification_messages(cls, session_id: str | None) -> bool:
-		"""True if the session has any clarification message at all."""
-		if not session_id or not frappe.db.exists(cls.DOCTYPE, session_id):
-			return False
-		return bool(
-			frappe.db.exists(cls.MESSAGE_DOCTYPE, {"session": session_id, "message_type": "clarification"})
-		)
-
-	@classmethod
-	def last_assistant_was_plan(cls, session_id: str | None) -> bool:
-		"""True if the most recent assistant message proposed a plan — i.e. the
-		current user turn is likely approving it, so generation is imminent."""
-		if not session_id or not frappe.db.exists(cls.DOCTYPE, session_id):
-			return False
-		status = frappe.db.get_value(
-			cls.MESSAGE_DOCTYPE,
-			{"session": session_id, "role": "assistant"},
-			"status",
-			order_by="creation desc",
-		)
-		return status == "plan_summary"
-
-	@classmethod
-	def latest_plan(cls, session_id: str | None) -> dict | None:
-		"""Return the most recent plan_summary metadata (headline / sections /
-		palette) so the generation fast-path can recap it for the model."""
-		if not session_id or not frappe.db.exists(cls.DOCTYPE, session_id):
-			return None
-		meta_json = frappe.db.get_value(
-			cls.MESSAGE_DOCTYPE,
-			{"session": session_id, "status": "plan_summary"},
-			"metadata_json",
-			order_by="creation desc",
-		)
-		if not meta_json:
-			return None
-		try:
-			meta = json.loads(meta_json)
-		except (json.JSONDecodeError, TypeError):
-			return None
-		if not isinstance(meta, dict):
-			return None
-		# Restore the status key callers expect.
-		meta["status"] = "plan_summary"
-		return meta
-
 	# --- lifecycle --------------------------------------------------------
 
 	def clear(self):

@@ -11,6 +11,13 @@ function schema and a *side* that tells the loop how to handle a call to it:
                 (e.g. ask a clarifying question, propose a plan). The loop calls
                 `handler(ctx, args)` to emit the appropriate event and stops.
 
+A tool may additionally produce a large *streamed artifact* (e.g. a full page
+of YAML). Such a tool sets `artifact` + `generator`: when the conversational
+model calls it, the loop hands execution to the generator, which produces the
+artifact on the heavy model and streams it to the client as content (reliable),
+then returns the canonical client op(s) to apply. The agent calling the tool is
+the signal to generate — no out-of-band state decides it.
+
 Adding a capability = registering one `Tool`. The loop never changes.
 """
 
@@ -30,10 +37,12 @@ class Tool:
 	# Required for "server" and "terminal" tools; ignored for "client" tools.
 	# Signature: handler(ctx, args: dict) -> str | None
 	handler: Callable | None = None
-	# Name of a string argument whose value should be streamed to the client as
-	# the model writes it (e.g. generate_page's "yaml"). The loop decodes the
-	# partial JSON arguments and emits the value incrementally. None = no stream.
-	stream_arg: str | None = None
+	# When set, this tool produces a streamed artifact of the given kind (e.g.
+	# "page_yaml"). The loop runs `generator(ctx, args) -> list[dict]` instead of
+	# emitting a plain client op; the generator streams the artifact as content
+	# and returns the canonical client op(s) to apply. None = ordinary tool.
+	artifact: str | None = None
+	generator: Callable | None = None
 
 	def schema(self) -> dict:
 		return {

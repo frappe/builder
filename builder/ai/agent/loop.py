@@ -45,46 +45,6 @@ class CancelledError(Exception):
 	"""Raised inside the stream loops when the user cancels the turn."""
 
 
-_JSON_UNESCAPE = {"n": "\n", "t": "\t", "r": "\r", '"': '"', "\\": "\\", "/": "/", "b": "\b", "f": "\f"}
-
-
-def extract_streaming_string(partial_args: str, key: str) -> str | None:
-	"""Best-effort decode of a string value from a partial JSON object.
-
-	Given an incomplete tool-call arguments string (e.g. `{"yaml": "el: di`),
-	return the decoded value of `key` so far (e.g. `el: di`), JSON-unescaping as
-	we go. Returns None until the key's opening quote has been seen. The frontend
-	never sees JSON escaping — only clean text.
-	"""
-	match = re.search(r'"' + re.escape(key) + r'"\s*:\s*"', partial_args)
-	if not match:
-		return None  # key's opening quote not seen yet
-	out: list[str] = []
-	i = match.end()
-	n = len(partial_args)
-	while i < n:
-		ch = partial_args[i]
-		if ch == "\\":
-			if i + 1 >= n:
-				break  # dangling escape — wait for more
-			nxt = partial_args[i + 1]
-			if nxt == "u" and i + 6 <= n:
-				try:
-					out.append(chr(int(partial_args[i + 2 : i + 6], 16)))
-				except ValueError:
-					pass
-				i += 6
-				continue
-			out.append(_JSON_UNESCAPE.get(nxt, nxt))
-			i += 2
-			continue
-		if ch == '"':
-			break  # closing quote — value complete
-		out.append(ch)
-		i += 1
-	return "".join(out)
-
-
 def _looks_like_page_yaml(text: str) -> bool:
 	"""Heuristic: did the model emit page YAML as plain content?"""
 	if not text:
@@ -204,11 +164,11 @@ class AgentRunner:
 		"""Stream one tool-calling completion. Returns (tool_operations,
 		text_content, raw_tool_calls).
 
-		Tool-call arguments are accumulated by index across chunks. For a tool
-		that declares `stream_arg` (e.g. generate_page → "yaml"), the value is
-		decoded incrementally and emitted to the client as it arrives, so the
-		page renders live. `raw_tool_calls` reconstruct the assistant turn for a
-		follow-up round.
+		Tool-call arguments are accumulated by index across chunks.
+		`raw_tool_calls` reconstruct the assistant turn for a follow-up round.
+		Large artifacts (e.g. a full page) are NOT streamed here — the model
+		calls an artifact tool with a short brief, and the loop hands generation
+		to that tool's generator, which streams the artifact as content.
 		"""
 		stream = llm.complete_with_tools(
 			self.loop_model,
@@ -222,7 +182,6 @@ class AgentRunner:
 		content_parts: list[str] = []
 		# index -> {"id", "name", "args"}; preserves call order across chunks.
 		acc: dict[int, dict] = {}
-		emitted: dict[int, int] = {}  # index -> chars of stream_arg already emitted
 
 		for chunk in stream:
 			if self.is_cancelled():
@@ -244,12 +203,6 @@ class AgentRunner:
 					entry["name"] = fn.name
 				if fn and fn.arguments:
 					entry["args"] += fn.arguments
-					tool = self.registry.get(entry["name"]) if entry["name"] else None
-					if tool and tool.stream_arg:
-						decoded = extract_streaming_string(entry["args"], tool.stream_arg)
-						if decoded is not None and len(decoded) > emitted.get(idx, 0):
-							self.emit("stream", chunk=decoded[emitted.get(idx, 0) :], kind="page_yaml")
-							emitted[idx] = len(decoded)
 
 		tool_operations: list[dict] = []
 		raw_tool_calls: list[dict] = []
@@ -289,17 +242,6 @@ class AgentRunner:
 		if isinstance(data, list):
 			data = data[0] if data else None
 		return data if isinstance(data, dict) else None
-
-	def should_use_full_model(self) -> bool:
-		"""Use the user's selected (full) model only when full-page generation is
-		imminent: the page is empty AND the user just approved a proposed plan.
-		Clarification, planning, and targeted edits all run on the fast model so
-		the refine loop stays snappy."""
-		root = self._page_root()
-		page_empty = root is None or not (root.get("children") or root.get("c"))
-		if not page_empty:
-			return False
-		return AISession.last_assistant_was_plan(self.session_id)
 
 	def stream_summary(self, messages: list[dict], tool_operations: list[dict]) -> str:
 		"""Generate a short markdown summary of the applied changes, streamed to
@@ -349,105 +291,6 @@ class AgentRunner:
 
 		return summary_text
 
-	# --- generation fast-path --------------------------------------------
-
-	def _run_generation_fastpath(self):
-		"""Stream the page YAML as plain content (no tool envelope) so the
-		canvas renders live during the LLM completion. Used only when the user
-		just approved a plan; at the end we synthesize a generate_page tool op
-		so the final state is the canonical, fully-parsed YAML."""
-		plan = AISession.latest_plan(self.session_id) or {}
-		plan_recap = ""
-		if plan:
-			sections = "\n".join(f"- {s}" for s in (plan.get("sections") or []))
-			plan_recap = (
-				"User-approved plan to build now:\n"
-				f"Headline: {plan.get('headline', '')}\n"
-				f"Sections:\n{sections}\n"
-				f"Palette: {plan.get('palette', '')}"
-			)
-
-		messages: list[dict] = [
-			{"role": "system", "content": Prompts.GENERATION_YAML, "cache_control": {"type": "ephemeral"}},
-		]
-		if plan_recap:
-			messages.append({"role": "system", "content": plan_recap})
-
-		# Prior conversation as proper role-tagged turns.
-		messages.extend(AISession.build_context_messages_from_id(self.session_id))
-
-		user_text = self.prompt
-		if self.image_url:
-			messages.append(
-				{
-					"role": "user",
-					"content": [
-						{"type": "text", "text": user_text},
-						{"type": "image_url", "image_url": {"url": self.image_url}},
-					],
-				}
-			)
-		else:
-			messages.append({"role": "user", "content": user_text})
-
-		self.emit("progress", message="Building the page…")
-
-		yaml_content = ""
-		try:
-			stream = llm.complete(
-				self.loop_model,
-				messages,
-				llm.TASK_PARAMS["complex"],
-				stream=True,
-				api_key=self.api_key,
-			)
-			for chunk in stream:
-				if self.is_cancelled():
-					try:
-						stream.close()
-					except Exception:
-						pass
-					self._emit_cancelled()
-					return
-				delta = chunk.choices[0].delta.content
-				if delta:
-					yaml_content += delta
-					self.emit("stream", chunk=delta, kind="page_yaml")
-		except Exception as e:
-			logger.error(f"Generation fast-path failed: {e!s}", exc_info=True)
-			frappe.log_error(f"Generation fast-path failed: {e}", "AgentRunner.fastpath")
-			AISession.try_append_message(
-				self.session_id, "assistant", str(e), message_type="status", metadata={"status": "error"}
-			)
-			frappe.db.commit()
-			self.emit("error", message=str(e))
-			return
-
-		yaml_text = BlockCodec.strip_fences(yaml_content).strip()
-		if not yaml_text:
-			self.emit("error", message="The AI returned an empty response. Please try rephrasing.")
-			return
-
-		# Canonical final apply — re-applies the full YAML so the canvas matches
-		# what the frontend can parse cleanly, not the last partial stream state.
-		self.emit("tool_batch", operations=[{"tool_name": "generate_page", "args": {"yaml": yaml_text}}])
-
-		summary_text = (
-			"Created the page. Ask me to refine it — adjust styles, add sections, or change the layout."
-		)
-		self.emit("stream", chunk=summary_text)
-
-		AISession.try_append_message(
-			self.session_id,
-			"assistant",
-			summary_text,
-			message_type="chat",
-			task_type="agent",
-			metadata={"status": "complete", "model": self.model, "operations": 1},
-		)
-		frappe.db.commit()
-		self.emit("complete", message=summary_text)
-
 	# --- orchestration ----------------------------------------------------
 
 	def _emit_cancelled(self) -> None:
@@ -461,8 +304,10 @@ class AgentRunner:
 	def run(self):
 		# Clear any stale cancel flag from a previous turn before starting.
 		self.clear_cancel_flag()
-		# Tiered model: full model only when generation is imminent, else fast model.
-		self.loop_model = self.model if self.should_use_full_model() else ModelRegistry.get_simple(self.model)
+		# The conversational loop always runs on the fast model (clarify, plan,
+		# targeted edits). Full-page generation runs on the user's selected heavy
+		# model, but inside the artifact generator — not here.
+		self.loop_model = ModelRegistry.get_simple(self.model)
 		logger.info(
 			f"AgentRunner.run: page_id={self.page_id}, model={self.model}, loop_model={self.loop_model}, "
 			f"session_id={self.session_id}, user={self.user}"
@@ -483,22 +328,6 @@ class AgentRunner:
 			except Exception:
 				pass
 
-		# Fast-path: when generation is imminent (user just approved a plan),
-		# stream raw YAML directly to the canvas instead of going through
-		# tool-calling — provider tool-call argument streaming is unreliable,
-		# leaving the user staring at a blank canvas for the whole completion.
-		if self.should_use_full_model():
-			try:
-				self._run_generation_fastpath()
-			finally:
-				self.clear_cancel_flag()
-				if self.session_id:
-					try:
-						AISession(frappe.get_doc(AISession.DOCTYPE, self.session_id)).clear_running()
-					except Exception:
-						pass
-			return
-
 		messages = self.build_messages()
 		client_operations: list[dict] = []
 		summary_text = ""
@@ -507,11 +336,20 @@ class AgentRunner:
 			for _round in range(MAX_ROUNDS):
 				tool_operations, summary_text, raw_tool_calls = self.call_tool_llm(messages)
 
-				terminal_ops = [
-					op for op in tool_operations if self.registry.side(op["tool_name"]) == "terminal"
-				]
-				server_ops = [op for op in tool_operations if self.registry.side(op["tool_name"]) == "server"]
-				client_ops = [op for op in tool_operations if self.registry.side(op["tool_name"]) == "client"]
+				# Classify each call. Artifact tools (e.g. generate_page) take
+				# precedence over their nominal side — they're handled by their
+				# generator, not emitted as a plain client op.
+				terminal_ops, artifact_ops, server_ops, client_ops = [], [], [], []
+				for op in tool_operations:
+					tool = self.registry.get(op["tool_name"])
+					if tool and tool.artifact:
+						artifact_ops.append(op)
+					elif self.registry.side(op["tool_name"]) == "terminal":
+						terminal_ops.append(op)
+					elif self.registry.side(op["tool_name"]) == "server":
+						server_ops.append(op)
+					else:
+						client_ops.append(op)
 				client_operations.extend(client_ops)
 
 				# A terminal tool ends the turn and hands control back to the user.
@@ -519,6 +357,16 @@ class AgentRunner:
 				if terminal_ops:
 					self.handle_terminal(terminal_ops[0])
 					return
+
+				# An artifact tool (full-page generation) is the turn's work:
+				# its generator streams the artifact live on the heavy model and
+				# returns the canonical client op(s). Generation ends the loop.
+				if artifact_ops:
+					for op in artifact_ops:
+						tool = self.registry.get(op["tool_name"])
+						if tool and tool.generator:
+							client_operations.extend(tool.generator(self, op["args"]))
+					break
 
 				if not server_ops:
 					break
