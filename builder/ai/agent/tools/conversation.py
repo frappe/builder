@@ -109,17 +109,29 @@ propose_plan = Tool(
 	side="terminal",
 	description=(
 		"Before building a NEW page or doing a major redesign, present a short plan and "
-		"wait for the user to approve or refine it. Ends your turn. Only call generate_page "
-		"after the user approves."
+		"wait for the user to approve or refine it. Ends your turn. Never call this twice "
+		"in a row: if a plan is already pending and the user approved it, call generate_page "
+		"instead. Only re-propose when the user asked for changes."
 	),
 	parameters={
 		"type": "object",
 		"properties": {
-			"headline": {"type": "string", "description": "One-line description of the page."},
+			"headline": {
+				"type": "string",
+				"description": "One concrete line stating what the page is and who it's for — not a slogan.",
+			},
 			"sections": {
 				"type": "array",
 				"items": {"type": "string"},
-				"description": "3–5 short section descriptions (under 12 words each).",
+				"description": (
+					"3–5 sections. Make each one DECISION-USEFUL: state the actual content — the real "
+					"headline/key copy it will use (in quotes), what's concretely in it (named items, "
+					"not 'categories'), and the layout (e.g. 'full-bleed split, photo right'). "
+					"Write real nouns and copy, never mood-adjective filler — do NOT use 'striking', "
+					"'clean', 'elegant', 'minimalist', 'sleek', 'modern', or 'premium'. "
+					'Example: \'Hero — deep-green full-bleed panel, headline "Bring the forest home", '
+					'sapling photo on the right, "Shop the collection" button\'.'
+				),
 			},
 			"palette": {"type": "string", "description": "Palette description with hex codes."},
 		},
