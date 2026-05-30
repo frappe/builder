@@ -243,53 +243,36 @@ class AgentRunner:
 			data = data[0] if data else None
 		return data if isinstance(data, dict) else None
 
-	def stream_summary(self, messages: list[dict], tool_operations: list[dict]) -> str:
-		"""Generate a short markdown summary of the applied changes, streamed to
-		the client. Kept context-light so the flash model stays fast."""
-		last_user = next(
-			(m for m in reversed(messages) if m.get("role") == "user" and isinstance(m.get("content"), str)),
-			None,
-		)
-		summary_messages = [
-			*(([last_user]) if last_user else []),
-			{
-				"role": "assistant",
-				"content": None,
-				"tool_calls": [
-					{
-						"id": f"call_{i}",
-						"type": "function",
-						"function": {"name": op["tool_name"], "arguments": json.dumps(op["args"])},
-					}
-					for i, op in enumerate(tool_operations)
-				],
-			},
-			*[
-				{"role": "tool", "tool_call_id": f"call_{i}", "content": "Applied successfully."}
-				for i, op in enumerate(tool_operations)
-			],
-			{"role": "user", "content": "Briefly describe what was changed (1–2 sentences, as markdown)."},
-		]
+	@staticmethod
+	def describe_operations(operations: list[dict]) -> str:
+		"""A deterministic one-line summary of applied ops — used when the model
+		didn't return its own summary text, so we avoid a second LLM round trip."""
+		from collections import Counter
 
-		summary_text = ""
-		try:
-			for chunk in llm.complete(
-				ModelRegistry.get_simple(self.model),
-				summary_messages,
-				llm.TASK_PARAMS["simple"],
-				stream=True,
-				api_key=self.api_key,
-			):
-				if delta := chunk.choices[0].delta.content:
-					summary_text += delta
-					self.emit("stream", chunk=delta)
-		except Exception as e:
-			logger.warning(f"Failed to generate summary text: {e!s}")
-			n = len(tool_operations)
-			summary_text = f"Applying {n} change{'s' if n != 1 else ''} to the page."
-			self.emit("stream", chunk=summary_text)
+		counts = Counter(op.get("tool_name") for op in operations)
 
-		return summary_text
+		def blk(n: int) -> str:
+			return "block" if n == 1 else "blocks"
+
+		parts: list[str] = []
+		if n := counts.get("add_block"):
+			parts.append(f"added {n} {blk(n)}")
+		if n := counts.get("update_block"):
+			parts.append(f"updated {n} {blk(n)}")
+		if n := counts.get("remove_block"):
+			parts.append(f"removed {n} {blk(n)}")
+		if n := counts.get("move_block"):
+			parts.append(f"moved {n} {blk(n)}")
+		if counts.get("set_page_script"):
+			parts.append("added a script")
+		if counts.get("update_script"):
+			parts.append("updated a script")
+
+		if not parts:
+			n = len(operations)
+			return f"Applied {n} change{'s' if n != 1 else ''} to the page."
+		sentence = parts[0] if len(parts) == 1 else f"{', '.join(parts[:-1])} and {parts[-1]}"
+		return sentence[0].upper() + sentence[1:] + "."
 
 	# --- orchestration ----------------------------------------------------
 
@@ -423,16 +406,22 @@ class AgentRunner:
 
 		generated = any(op["tool_name"] == "generate_page" for op in client_operations)
 		if summary_text:
+			# The model wrote a summary alongside its tool calls — richest, and
+			# free (no extra round trip). Prefer it whenever present.
 			self.emit("stream", chunk=summary_text)
 		elif generated:
-			# Skip the extra summary call after generation (the YAML arg would
-			# bloat its context); send a fixed nudge instead.
+			# Skip a summary call after generation (the YAML arg would bloat its
+			# context); send a fixed nudge instead.
 			summary_text = (
 				"Created the page. Ask me to refine it — adjust styles, add sections, or change the layout."
 			)
 			self.emit("stream", chunk=summary_text)
 		else:
-			summary_text = self.stream_summary(messages, client_operations)
+			# Block/script edits with no model text: synthesise the summary from
+			# the ops rather than making a second LLM call. The canvas already
+			# updated from the tool_batch above; this just ends the turn sooner.
+			summary_text = self.describe_operations(client_operations)
+			self.emit("stream", chunk=summary_text)
 
 		AISession.try_append_message(
 			self.session_id,

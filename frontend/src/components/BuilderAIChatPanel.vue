@@ -275,7 +275,8 @@
 						v-if="isSubmitting"
 						variant="solid"
 						icon="square"
-						title="Stop generation"
+						:loading="isCancelling"
+						:title="isCancelling ? 'Cancelling…' : 'Cancel generation'"
 						@click="chat.cancel" />
 					<Button v-else variant="solid" icon="arrow-up" :disabled="!canSubmit" @click="submitPrompt" />
 				</div>
@@ -325,7 +326,7 @@ function renderMarkdown(content: string): string {
 
 const chat = new AIChatController();
 
-const { prompt, isSubmitting, messages, modelLabel, modelOptions, canSubmit } = chat;
+const { prompt, isSubmitting, isCancelling, messages, modelLabel, modelOptions, canSubmit } = chat;
 const { clearSession, undoAgentScript, selectOption, approvePlan } = chat;
 const { selectBlockById, openScriptByName } = chat;
 const { selectedBlocks } = chat;

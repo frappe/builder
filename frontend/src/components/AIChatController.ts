@@ -31,6 +31,7 @@ export class AIChatController {
 	readonly prompt = ref("");
 	readonly progressMessage = ref("");
 	readonly isSubmitting = ref(false);
+	readonly isCancelling = ref(false); // true between clicking stop and the backend's cancelled event
 	readonly messageContainer = ref<HTMLElement | null>(null);
 
 	readonly imageData = ref<string | null>(null);
@@ -124,6 +125,7 @@ export class AIChatController {
 		this.pendingAssistantId.value = null;
 		this.dispatcher.reset();
 		this.isSubmitting.value = false;
+		this.isCancelling.value = false;
 	}
 
 	private replacePendingAssistant(content: string, metadata: Record<string, any> = {}) {
@@ -236,6 +238,7 @@ export class AIChatController {
 		}
 		this.submittedForPageId = null;
 		this.isSubmitting.value = false;
+		this.isCancelling.value = false;
 		this.progressMessage.value = data.message || "Done";
 
 		let undoScripts: string[] = [];
@@ -274,7 +277,11 @@ export class AIChatController {
 		await this.loadSession();
 
 		// Re-apply client-only metadata in case the server hasn't flushed it yet.
-		if (localMeta.affectedBlocks?.length || localMeta.affectedScripts?.length || localMeta.undoScripts?.length) {
+		if (
+			localMeta.affectedBlocks?.length ||
+			localMeta.affectedScripts?.length ||
+			localMeta.undoScripts?.length
+		) {
 			let idx = this.messages.value.length - 1;
 			while (idx >= 0 && this.messages.value[idx]?.role !== "assistant") idx--;
 			if (idx >= 0) {
@@ -294,6 +301,7 @@ export class AIChatController {
 
 	onError = async (data: { message?: string }) => {
 		this.isSubmitting.value = false;
+		this.isCancelling.value = false;
 		this.progressMessage.value = "";
 		this.replacePendingAssistant(data.message || "Request failed", { status: "error" });
 		this.pageStreamContent.value = "";
@@ -313,6 +321,7 @@ export class AIChatController {
 		palette?: string;
 	}) => {
 		this.isSubmitting.value = false;
+		this.isCancelling.value = false;
 		this.progressMessage.value = "";
 		this.pageStreamContent.value = "";
 		this.summaryContent.value = "";
@@ -351,10 +360,15 @@ export class AIChatController {
 	};
 
 	/** Ask the backend to abort the in-flight turn at its next stream chunk.
-	 * Anthropic/OpenRouter stop billing once the stream is closed. Local state
-	 * is reset by the cancelled `complete` event the backend emits. */
+	 * Anthropic/OpenRouter stop billing once the stream is closed. The backend's
+	 * cancelled `complete` event lands only after the next chunk + a round trip,
+	 * so we show "Cancelling" locally right away for instant feedback; that event
+	 * (or onError/onClarify) clears isCancelling when the turn actually ends. */
 	cancel = async () => {
-		if (!this.sessionId.value || !this.isSubmitting.value) return;
+		if (!this.sessionId.value || !this.isSubmitting.value || this.isCancelling.value) return;
+		this.isCancelling.value = true;
+		this.progressMessage.value = "Cancelling...";
+		this.replacePendingAssistant("Cancelling...", { status: "running" });
 		try {
 			await createResource({ url: "builder.ai.api.cancel" }).submit({ session_id: this.sessionId.value });
 		} catch {
@@ -451,7 +465,8 @@ export class AIChatController {
 	};
 
 	async mount() {
-		if (this.pageId.value) attachAIChatListeners(this.builderStore.realtime, this.pageId.value, this.handlers);
+		if (this.pageId.value)
+			attachAIChatListeners(this.builderStore.realtime, this.pageId.value, this.handlers);
 		createResource({
 			url: "builder.ai.api.get_ai_models",
 			auto: true,
@@ -463,6 +478,7 @@ export class AIChatController {
 	}
 
 	unmount() {
-		if (this.pageId.value) detachAIChatListeners(this.builderStore.realtime, this.pageId.value, this.handlers);
+		if (this.pageId.value)
+			detachAIChatListeners(this.builderStore.realtime, this.pageId.value, this.handlers);
 	}
 }
