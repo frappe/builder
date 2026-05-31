@@ -11,16 +11,44 @@ STANDARD_ATTRS = {"src", "alt", "href", "title", "value", "type", "placeholder"}
 
 
 class BlockCodec:
+	# Defaults the client injects on an icon svg — noise for the model, stripped on re-collapse.
+	ICON_STYLE_DEFAULTS = {
+		"display": "inline-flex",
+		"alignItems": "center",
+		"justifyContent": "center",
+		"lineHeight": "0",
+		"flexShrink": 0,
+	}
+
 	@staticmethod
 	def compress(block: dict, depth: int = 0, task_tier: str = "complex") -> dict:
 		if not isinstance(block, dict):
 			return block
 
+		# Re-collapse a baked Lucide icon back to `icon: <name>` so editing an
+		# existing page never ships the full SVG to the model. The rendered SVG
+		# lives in innerHTML; data-lucide is the round-trip hint.
+		custom = block.get("customAttributes") or {}
+		if custom.get("data-lucide"):
+			icon = {"icon": custom["data-lucide"]}
+			if block.get("blockName"):
+				icon["name"] = block["blockName"]
+			style = {
+				k: v
+				for k, v in (block.get("baseStyles") or {}).items()
+				if BlockCodec.ICON_STYLE_DEFAULTS.get(k) != v
+			}
+			if style:
+				icon["style"] = style
+			return icon
+
 		out = {}
 		if block.get("element"):
 			out["el"] = block["element"]
 		if block.get("blockId"):
-			out["id"] = block["blockId"]
+			# Editor handle, surfaced as `ref` (NOT `id`) so the model never mistakes
+			# it for an HTML id / DOM selector. It is what the edit tools take as block_id.
+			out["ref"] = block["blockId"]
 		if block.get("blockName"):
 			out["name"] = block["blockName"]
 
@@ -67,6 +95,19 @@ class BlockCodec:
 	def expand(node: dict) -> dict:
 		if not isinstance(node, dict):
 			return node
+
+		# Icon ref. The authoritative SVG is baked client-side (frontend has the
+		# Lucide set); the server only records the name so the block round-trips.
+		if node.get("icon"):
+			return {
+				"element": "svg",
+				"blockName": node.get("name") or f"Icon: {node['icon']}",
+				"baseStyles": node.get("style", {}),
+				"attributes": {},
+				"customAttributes": {"data-lucide": node["icon"]},
+				"children": [],
+				"innerHTML": "",
+			}
 
 		attrs = node.get("attrs", {})
 		standard_attrs = {k: v for k, v in attrs.items() if k in STANDARD_ATTRS}

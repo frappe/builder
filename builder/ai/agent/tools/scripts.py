@@ -53,7 +53,11 @@ set_page_script = Tool(
 	description=(
 		"Create a new JavaScript or CSS client script and attach it to the page. "
 		"Use this to add event listeners, animations, dynamic behaviour, fetch calls, "
-		"or any page-level code that cannot be expressed via block styles alone."
+		"or any page-level code that cannot be expressed via block styles alone. "
+		"To target an element, in the SAME turn give it a hook via update_block — a class "
+		"(preferred) in 'classes', or attrs.id for a single unique element — and select "
+		"that. Do NOT select by a block's 'ref' (editor handle): it is not in the published "
+		"DOM and matches nothing on the live page."
 	),
 	parameters={
 		"type": "object",
@@ -78,7 +82,9 @@ update_script = Tool(
 	description=(
 		"Replace the source code of an existing page script. "
 		"You MUST call get_page_scripts first and copy the exact 'script_name' value "
-		"from that response — do not guess or invent a name."
+		"from that response — do not guess or invent a name. "
+		"Same targeting rule as set_page_script: select by a class/attrs.id hook you add "
+		"via update_block, never by a block's 'ref' (not in the published DOM)."
 	),
 	parameters={
 		"type": "object",

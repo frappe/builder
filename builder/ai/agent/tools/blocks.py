@@ -17,7 +17,7 @@ update_block = Tool(
 		"properties": {
 			"block_id": {
 				"type": "string",
-				"description": "The blockId of the target block (from the page YAML).",
+				"description": "The target block's 'ref' value (from the page YAML).",
 			},
 			"base_styles": {
 				"type": "object",
@@ -33,7 +33,7 @@ update_block = Tool(
 			},
 			"attributes": {
 				"type": "object",
-				"description": "HTML attributes to merge (e.g. {href: '/about', target: '_blank'} for links, {src: '...', alt: '...'} for images, {id: 'hero-section'} for HTML id). Do not use this for block identity; block_id is separate.",
+				"description": "HTML attributes to merge (e.g. {href: '/about', target: '_blank'} for links, {src: '...', alt: '...'} for images, {id: 'hero-section'} for HTML id). attrs.id sets the HTML id; the block's ref (passed as block_id) is its editor handle — separate things.",
 			},
 			"inner_text": {
 				"type": "string",
@@ -62,18 +62,21 @@ add_block = Tool(
 	side="client",
 	description=(
 		"Insert a new block as a child of an existing block. "
-		"Use this to add sections, components, or elements anywhere in the page tree."
+		"Use this to add sections, components, or elements anywhere in the page tree. "
+		"NOT for JavaScript or CSS: never add a <script> or <style> block, and never put "
+		"code in the block's text/innerHTML — use set_page_script for that. A script added "
+		"as a block does not execute in the editor and bypasses the page's script system."
 	),
 	parameters={
 		"type": "object",
 		"properties": {
 			"parent_block_id": {
 				"type": "string",
-				"description": "The blockId of the parent block that will contain the new block.",
+				"description": "The 'ref' value of the parent block that will contain the new block.",
 			},
 			"block": {
 				"type": "object",
-				"description": "The new block definition. Do NOT include an 'id' field — one will be auto-assigned.",
+				"description": "The new block definition. Do NOT include a 'ref' or 'id' field — the editor assigns block ids automatically.",
 				"properties": {
 					"el": {
 						"type": "string",
@@ -118,7 +121,7 @@ add_block = Tool(
 			},
 			"after_block_id": {
 				"type": "string",
-				"description": "Insert the new block immediately after this sibling blockId. Takes precedence over 'index'.",
+				"description": "Insert the new block immediately after this sibling's 'ref'. Takes precedence over 'index'.",
 			},
 			"index": {
 				"type": "integer",
@@ -138,7 +141,7 @@ remove_block = Tool(
 		"properties": {
 			"block_id": {
 				"type": "string",
-				"description": "The blockId of the block to delete.",
+				"description": "The 'ref' of the block to delete.",
 			},
 		},
 		"required": ["block_id"],
@@ -154,15 +157,15 @@ move_block = Tool(
 		"properties": {
 			"block_id": {
 				"type": "string",
-				"description": "The blockId of the block to move.",
+				"description": "The 'ref' of the block to move.",
 			},
 			"new_parent_block_id": {
 				"type": "string",
-				"description": "The blockId of the new parent block.",
+				"description": "The 'ref' of the new parent block.",
 			},
 			"after_block_id": {
 				"type": "string",
-				"description": "Place the block immediately after this sibling blockId in the new parent. Takes precedence over 'index'.",
+				"description": "Place the block immediately after this sibling's 'ref' in the new parent. Takes precedence over 'index'.",
 			},
 			"index": {
 				"type": "integer",

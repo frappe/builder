@@ -114,9 +114,7 @@ class AgentRunner:
 		if root is None:
 			return ""
 		compressed = BlockCodec.compress(root, depth=0, task_tier="complex")
-		return (
-			f"Current page structure (YAML — use the 'id' values as blockIds):\n{to_compact_yaml(compressed)}"
-		)
+		return f"Current page structure (YAML — pass a block's 'ref' value as block_id to edit it):\n{to_compact_yaml(compressed)}"
 
 	def build_messages(self) -> list[dict]:
 		messages: list[dict] = [
