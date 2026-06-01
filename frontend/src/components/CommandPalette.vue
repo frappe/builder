@@ -53,6 +53,7 @@
 									<component
 										:is="group.component"
 										:item="item"
+										:show-description="group.showDescription === true"
 										:active="flatIndex(group, idx) === activeIndex" />
 								</div>
 							</div>
@@ -111,6 +112,7 @@ export interface CommandPaletteItem {
 export interface CommandPaletteGroup {
 	title: string;
 	hideTitle?: boolean;
+	showDescription?: boolean;
 	component: object;
 	items: CommandPaletteItem[];
 }
