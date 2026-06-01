@@ -6,18 +6,19 @@
 		:step-label="activeStep?.label"
 		:placeholder="activeStep?.placeholder"
 		:hint="activeStep?.hint"
+		:loading="isSearching"
 		@select="executeCommand"
 		@back="handleBack" />
 </template>
 
 <script setup lang="ts">
-import { webPages } from "@/data/webPage";
+import { searchablePages } from "@/data/webPage";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
-import { useDark, useToggle } from "@vueuse/core";
+import { useDark, useToggle, watchDebounced } from "@vueuse/core";
 import { useShortcut } from "frappe-ui";
-import { computed, inject, nextTick, ref } from "vue";
+import { computed, inject, nextTick, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type { CommandPaletteItem as CPItem } from "./CommandPalette.vue";
 import CommandPalette from "./CommandPalette.vue";
@@ -388,7 +389,7 @@ function makePageCommand(page: BuilderPage): Command {
 }
 
 const recentPages = computed<Command[]>(() => {
-	const allPages: BuilderPage[] = webPages.data || [];
+	const allPages: BuilderPage[] = searchablePages.data || [];
 	return recentPageNames.value
 		.map((name) => allPages.find((p) => p.name === name))
 		.filter(Boolean)
@@ -396,23 +397,54 @@ const recentPages = computed<Command[]>(() => {
 });
 
 const pageSearchResults = computed<Command[]>(() => {
-	const q = searchQuery.value.toLowerCase().trim();
-	if (!q) return [];
-	const pages: BuilderPage[] = webPages.data || [];
-	const recentSet = new Set(recentPageNames.value);
+	const pages: BuilderPage[] = searchablePages.data || [];
 	return pages
-		.filter((page) => {
-			const title = (page.page_title || page.page_name || "").toLowerCase();
-			const route = (page.route || "").toLowerCase();
-			return title.includes(q) || route.includes(q);
-		})
 		.sort((a, b) => {
 			const ai = recentPageNames.value.indexOf(a.name);
 			const bi = recentPageNames.value.indexOf(b.name);
 			return (ai === -1 ? Infinity : ai) - (bi === -1 ? Infinity : bi);
 		})
-		.slice(0, 8)
 		.map(makePageCommand);
+});
+
+function runPageQuery() {
+	if (activeStep.value?.id !== "search-page") return;
+	const q = searchQuery.value.trim();
+	if (q) {
+		searchablePages.update({
+			filters: { is_template: 0 },
+			orFilters: {
+				page_title: ["like", `%${q}%`],
+				page_name: ["like", `%${q}%`],
+				route: ["like", `%${q}%`],
+			},
+			orderBy: "modified desc",
+		});
+		searchablePages.fetch();
+	} else if (recentPageNames.value.length) {
+		searchablePages.update({
+			filters: { is_template: 0, name: ["in", recentPageNames.value] },
+			orFilters: {},
+			orderBy: "modified desc",
+		});
+		searchablePages.fetch();
+	}
+}
+
+watch(() => activeStep.value?.id, runPageQuery);
+watchDebounced(searchQuery, runPageQuery, { debounce: 250 });
+
+const isSearching = computed(
+	() => activeStep.value?.id === "search-page" && !!searchQuery.value.trim() && searchablePages.list.loading,
+);
+
+// Reset sub-step when the palette closes so it always reopens at root.
+watch(show, (val) => {
+	if (!val) {
+		setTimeout(() => {
+			activeStep.value = null;
+		}, 150);
+	}
 });
 
 const commandGroups = computed(() => {
