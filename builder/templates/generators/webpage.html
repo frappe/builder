@@ -18,7 +18,7 @@
 	<link rel="icon" href="{{ favicon_light or favicon or '/assets/builder/images/frappe_black.png' }}"  media="(prefers-color-scheme: light)"/>
 	<link rel="icon" href="{{ favicon_dark or favicon or '/assets/builder/images/frappe_white.png' }}"  media="(prefers-color-scheme: dark)"/>
 	{% block meta_block %}{% include "templates/includes/meta_block.html" %}{% endblock %}
-	<link rel="stylesheet" href="/assets/builder/reset.css?v=1" media="screen">
+	<link rel="stylesheet" href="/assets/builder/reset.css?v=3" media="screen">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	{% for (font, options) in fonts.items() %}
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ font | replace(' ', '+') }}&display=swap" media="screen">

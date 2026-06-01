@@ -1,4 +1,4 @@
-import { BuilderVariable } from "@/types/Builder/BuilderVariable";
+import { BuilderVariable } from "@/types/doctypes";
 import { toKebabCase } from "@/utils/helpers";
 import { defineComponent, h, shallowRef } from "vue";
 

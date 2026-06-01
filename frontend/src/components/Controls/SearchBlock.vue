@@ -4,8 +4,8 @@
 			<OptionToggle
 				v-model="searchMode"
 				:options="[
-					{ label: 'Search', value: 'search', icon: 'search' },
-					{ label: 'Find & Replace', value: 'replace', icon: 'edit-3' },
+					{ label: 'Search', value: 'search', icon: 'lucide-search' },
+					{ label: 'Find & Replace', value: 'replace', icon: 'lucide-edit-3' },
 				]" />
 		</div>
 
@@ -21,10 +21,9 @@
 
 			<Popover class="relative inline-block text-left">
 				<template #target="{ isOpen, togglePopover }">
-					<BuilderButton
+					<Button
 						@click="togglePopover"
-						variant="outline"
-						icon="filter"
+						icon="lucide-filter"
 						label="Filters"
 						:class="[
 							'flex items-center gap-2 text-sm',
@@ -35,8 +34,10 @@
 							class="bg-ink-gray-7 ml-1 rounded-full px-2 py-0.5 text-xs text-white">
 							{{ selectedFiltersCount }}
 						</span>
-						<FeatherIcon :name="isOpen ? 'chevron-up' : 'chevron-down'" class="size-4" />
-					</BuilderButton>
+						<span
+							:class="[isOpen ? 'lucide-chevron-up' : 'lucide-chevron-down', 'size-4']"
+							aria-hidden="true" />
+					</Button>
 				</template>
 				<template #body>
 					<div class="w-48 rounded-lg bg-surface-white py-2 shadow-lg ring-1 ring-black ring-opacity-5">
@@ -55,9 +56,7 @@
 							</label>
 						</div>
 						<div class="border-surface-gray-3 mt-1 border-t px-2 pt-2">
-							<BuilderButton @click="clearAllFilters" variant="subtle" class="w-full">
-								Clear all filters
-							</BuilderButton>
+							<Button @click="clearAllFilters" variant="subtle" class="w-full">Clear all filters</Button>
 						</div>
 					</div>
 				</template>
@@ -87,14 +86,14 @@
 		<div
 			v-if="query && (searchMode === 'search' || (searchMode === 'replace' && results.length > 0))"
 			class="mb-4">
-			<BuilderButton
+			<Button
 				v-if="searchMode === 'replace'"
 				@click="handlePrimaryAction"
 				variant="solid"
 				class="w-full"
 				:disabled="!replaceQuery">
 				Replace All ({{ results.length }} matches)
-			</BuilderButton>
+			</Button>
 			<div v-if="searchMode === 'replace' && replacedCount > 0" class="mt-2 text-xs text-ink-gray-5">
 				{{ replacedCount }} replacements made
 			</div>
@@ -103,7 +102,7 @@
 		<div v-if="!query" class="mt-6 text-center">
 			<div class="flex flex-col items-center justify-center py-8">
 				<div class="mb-4 flex size-16 items-center justify-center rounded-full bg-surface-gray-2">
-					<FeatherIcon name="search" class="size-8 text-ink-gray-4" />
+					<span class="lucide-search size-8 text-ink-gray-4" aria-hidden="true" />
 				</div>
 				<h3 class="mb-2 text-sm font-medium text-ink-gray-6">Search your blocks</h3>
 			</div>
@@ -122,14 +121,14 @@
 							{{ getMatchDetails(result) }}
 						</div>
 					</div>
-					<BuilderButton
+					<Button
 						v-if="searchMode === 'replace'"
 						@click.stop="replaceInBlock(result, index)"
 						variant="subtle"
 						class="ml-3 px-2 py-1 text-xs"
 						:disabled="!replaceQuery">
 						Replace
-					</BuilderButton>
+					</Button>
 				</div>
 			</div>
 		</div>
@@ -137,7 +136,7 @@
 		<div v-else-if="query && results.length === 0" class="mt-6 text-center">
 			<!-- No Results State -->
 			<div class="flex flex-col items-center justify-center py-6">
-				<FeatherIcon name="search" class="mb-3 size-6 text-ink-gray-4" />
+				<span class="lucide-search mb-3 size-6 text-ink-gray-4" aria-hidden="true" />
 				<h3 class="mb-1 text-sm font-medium text-ink-gray-6">No results found</h3>
 				<p class="text-xs text-ink-gray-5">Try different keywords or adjust your filters</p>
 			</div>
@@ -148,10 +147,9 @@
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { watchDebounced } from "@vueuse/core";
-import { FeatherIcon, Input, Popover } from "frappe-ui";
+import { Input, Popover } from "frappe-ui";
 import { computed, nextTick, onMounted, Ref, ref } from "vue";
-import { toast } from "vue-sonner";
-import BuilderButton from "./BuilderButton.vue";
+import { toast } from "frappe-ui";
 import OptionToggle from "./OptionToggle.vue";
 
 const canvasStore = useCanvasStore();

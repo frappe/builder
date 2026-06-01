@@ -1,6 +1,6 @@
 <template>
-	<Dialog v-model="showDialog" :options="{ title, size: 'xl', paddingTop: '20vh' }">
-		<template #body-content>
+	<Dialog v-model="showDialog" :title="title" size="xl" paddingTop="20vh">
+		<template #default>
 			<div class="flex flex-col gap-3">
 				<div
 					class="relative"
@@ -21,7 +21,7 @@
 							v-if="isDragging"
 							class="border-outline-blue-3 bg-surface-blue-1/60 pointer-events-none absolute inset-0 flex items-center justify-center rounded-md border-2 border-dashed">
 							<div class="text-ink-blue-4 flex items-center gap-1.5 text-xs font-medium">
-								<FeatherIcon name="image" class="h-3.5 w-3.5" />
+								<span class="lucide-image h-3.5 w-3.5" aria-hidden="true" />
 								Drop image to attach
 							</div>
 						</div>
@@ -43,7 +43,7 @@
 							class="hover:text-ink-red-7 flex items-center rounded text-ink-gray-5"
 							title="Remove image"
 							@click="clearImage">
-							<FeatherIcon name="x" class="h-3.5 w-3.5" />
+							<span class="lucide-x h-3.5 w-3.5" aria-hidden="true" />
 						</button>
 					</div>
 				</Transition>
@@ -51,7 +51,7 @@
 					<div
 						v-if="errorMessage"
 						class="text-ink-red-9 flex items-center gap-2 rounded-md bg-surface-red-1 p-2 text-xs">
-						<FeatherIcon name="alert-circle" class="h-3.5 w-3.5 shrink-0" />
+						<span class="lucide-alert-circle h-3.5 w-3.5 shrink-0" aria-hidden="true" />
 						{{ errorMessage }}
 					</div>
 				</Transition>
@@ -132,9 +132,14 @@
 				class="fixed left-1/2 top-16 z-[1000] -translate-x-1/2">
 				<div
 					class="flex items-center gap-3 rounded-lg border border-outline-gray-2 bg-surface-white px-4 py-2.5 shadow-lg">
-					<FeatherIcon
-						:name="generating ? 'loader' : 'check-circle'"
-						:class="[generating ? 'animate-spin text-ink-gray-7' : 'text-ink-green-3', 'h-4 w-4']" />
+					<span
+						:class="[
+							generating
+								? 'lucide-loader animate-spin text-ink-gray-7'
+								: 'lucide-check-circle text-ink-green-3',
+							'h-4 w-4',
+						]"
+						aria-hidden="true" />
 					<span class="text-sm font-medium text-ink-gray-9">
 						{{ progressMessage || (mode === "modify" ? "Modifying section…" : "Generating page…") }}
 					</span>
@@ -149,7 +154,7 @@ import Dialog from "@/components/Controls/Dialog.vue";
 import WebPagePresetPicker from "@/components/WebPagePresetPicker.vue";
 import useBuilderStore from "@/stores/builderStore";
 import { useLocalStorage, useThrottleFn } from "@vueuse/core";
-import { Button, createResource, Dropdown, FeatherIcon, Popover, Textarea } from "frappe-ui";
+import { Button, createResource, Dropdown, Popover, Textarea } from "frappe-ui";
 // @ts-ignore
 import yaml from "js-yaml";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";

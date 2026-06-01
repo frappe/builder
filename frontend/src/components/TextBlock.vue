@@ -36,6 +36,7 @@ import type { PauseId } from "@/utils/useCanvasHistory";
 import { Color } from "@tiptap/extension-color";
 import { FontFamily } from "@tiptap/extension-font-family";
 import { TextStyle } from "@tiptap/extension-text-style";
+import { Underline } from "@tiptap/extension-underline";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { StarterKit } from "@tiptap/starter-kit";
 import { Editor, EditorContent, Extension } from "@tiptap/vue-3";
@@ -211,14 +212,14 @@ watch(
 				const textNode = walker.nextNode();
 				if (textNode) {
 					textNode.textContent = newValue;
-					editor.value.commands.setContent(tempDiv.innerHTML, false);
+					editor.value.commands.setContent(tempDiv.innerHTML, { emitUpdate: false });
 					return;
 				}
 			}
 			return;
 		}
 
-		editor.value.commands.setContent(newValue || "", false);
+		editor.value.commands.setContent(newValue || "", { emitUpdate: false });
 	},
 );
 
@@ -258,6 +259,7 @@ if (!props.preview) {
 					extensions: [
 						StarterKit.configure({
 							link: { openOnClick: false },
+							underline: false,
 						}),
 						TextStyle.extend({
 							addGlobalAttributes() {
@@ -279,6 +281,7 @@ if (!props.preview) {
 						}),
 						FontFamily,
 						FontFamilyPasteRule,
+						Underline,
 					],
 					enablePasteRules: false,
 					onUpdate({ editor }) {

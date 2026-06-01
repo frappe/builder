@@ -40,7 +40,7 @@
 								v-if="row.is_standard"
 								text="This is a standard variable. It cannot be modified or deleted."
 								placement="top">
-								<FeatherIcon name="info" class="h-4 w-4 text-ink-gray-5" />
+								<span class="lucide-info h-4 w-4 text-ink-gray-5" aria-hidden="true" />
 							</Tooltip>
 							<BuilderInput
 								v-if="isEditing('name', row.id) || row.isNew"
@@ -131,13 +131,13 @@
 						<!-- Actions Column -->
 						<div v-else-if="column.key === 'actions'" class="flex items-center justify-center gap-1">
 							<template v-if="!row.is_standard">
-								<BuilderButton
+								<Button
 									variant="ghost"
 									class="text-ink-gray-6 hover:text-red-600"
 									@click="deleteVariableRow(row)"
 									title="Delete Variable">
-									<FeatherIcon name="trash-2" class="h-3 w-3" />
-								</BuilderButton>
+									<span class="lucide-trash-2 h-3 w-3" aria-hidden="true" />
+								</Button>
 							</template>
 						</div>
 					</template>
@@ -160,16 +160,15 @@
 </template>
 
 <script setup lang="ts">
-import BuilderButton from "@/components/Controls/BuilderButton.vue";
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
-import { BuilderVariable } from "@/types/Builder/BuilderVariable";
+import { BuilderVariable } from "@/types/doctypes";
 import { confirm } from "@/utils/helpers";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useDebounceFn } from "@vueuse/core";
-import { Button, FeatherIcon, ListView, Tooltip } from "frappe-ui";
+import { Button, ListView, Tooltip } from "frappe-ui";
 import { computed, nextTick, ref } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 
 defineProps<{
 	modelValue: boolean;

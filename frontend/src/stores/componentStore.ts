@@ -2,13 +2,12 @@ import type Block from "@/block";
 import webComponent from "@/data/webComponent";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderComponent } from "@/types/Builder/BuilderComponent";
+import { BuilderComponent } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { alert, confirm, getBlockInstance, getBlockObject } from "@/utils/helpers";
-import { createDocumentResource, createResource } from "frappe-ui";
+import { createDocumentResource, createResource, toast } from "frappe-ui";
 import { defineStore } from "pinia";
 import { markRaw } from "vue";
-import { toast } from "vue-sonner";
 
 const useComponentStore = defineStore("componentStore", {
 	state: () => ({
@@ -119,7 +118,6 @@ const useComponentStore = defineStore("componentStore", {
 							modified: "",
 							owner: "Administrator",
 							modified_by: "Administrator",
-							docstatus: 1 as 0 | 1 | 2,
 						};
 						this.setComponentMap(missingComponentDoc);
 					})
@@ -155,7 +153,7 @@ const useComponentStore = defineStore("componentStore", {
 						block: obj.block,
 					});
 				} else {
-					console.log("Skipping component update", obj.name);
+					console.warn("Skipping component update", obj.name);
 					return;
 				}
 			}

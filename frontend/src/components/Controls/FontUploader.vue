@@ -1,10 +1,10 @@
 <template>
-	<BuilderButton
-		iconLeft="plus"
+	<Button
+		iconLeft="lucide-plus"
 		class="w-full rounded-none text-xs text-ink-gray-8"
 		@click="openFileSelector">
 		Upload Font
-	</BuilderButton>
+	</Button>
 </template>
 <script lang="ts" setup>
 import blockController from "@/utils/blockController";

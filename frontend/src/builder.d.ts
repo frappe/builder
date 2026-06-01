@@ -12,7 +12,7 @@ type BlockPropOptions = {
 	// defaultValue?: any;
 	options?: Record<string, any>;
 	dependencies?: { [key: string]: any };
-}
+};
 
 declare type BlockProps = Record<
 	string,
@@ -36,6 +36,11 @@ declare interface BlockAttributeMap {
 	[key: string]: string | number | null | undefined;
 }
 
+declare interface BlockEditorConfig {
+	icon?: string;
+	showChildrenInEditor?: boolean;
+}
+
 declare interface BlockOptions {
 	blockId?: string | undefined;
 	element?: string;
@@ -48,6 +53,7 @@ declare interface BlockOptions {
 	children?: Array<Block | BlockOptions>;
 	dynamicValues?: Array<BlockDataKey>;
 	draggable?: boolean;
+	editorConfig?: BlockEditorConfig;
 	[key: string]: any;
 }
 

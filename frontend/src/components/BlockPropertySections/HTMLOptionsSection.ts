@@ -21,7 +21,7 @@ const HTMLOptionsSectionProperties = [
 				allowDynamicValue: true,
 				actionButton: {
 					label: "Expand",
-					icon: "maximize-2",
+					icon: "lucide-maximize-2",
 					handler: () => {
 						useCanvasStore().editHTML(blockController.getSelectedBlocks()[0]);
 					},

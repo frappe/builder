@@ -83,7 +83,7 @@
 								:disabled="option.disabled"
 								class="group flex cursor-default select-none items-center gap-2 rounded px-2 py-1.5 text-sm text-ink-gray-9 transition-colors data-[disabled]:pointer-events-none data-[highlighted]:bg-surface-gray-1 data-[disabled]:opacity-50">
 								<component v-if="option.prefix" :is="option.prefix" class="h-4 w-4 flex-shrink-0" />
-								<span class="w-full flex-1 truncate">{{ option.label }}</span>
+								<MiddleTruncate :text="option.label" />
 								<component
 									v-if="option.suffix"
 									:is="option.suffix"
@@ -95,14 +95,14 @@
 					</div>
 					<div v-if="actionButton" class="border-t border-outline-gray-2 bg-surface-gray-1">
 						<component v-if="actionButton.component" :is="actionButton.component" @change="refreshOptions" />
-						<BuilderButton
+						<Button
 							v-else
 							:icon-left="actionButton.icon"
 							variant="ghost"
 							class="w-full justify-start rounded-none text-sm"
 							@click="actionButton.handler">
 							{{ actionButton.label }}
-						</BuilderButton>
+						</Button>
 					</div>
 				</ComboboxContent>
 			</Teleport>
@@ -111,7 +111,6 @@
 </template>
 
 <script setup lang="ts">
-import BuilderButton from "@/components/Controls/BuilderButton.vue";
 import NumberArrows from "@/components/Controls/NumberArrows.vue";
 import CrossIcon from "@/components/Icons/Cross.vue";
 import { useNumberInput } from "@/utils/useNumberInput";
@@ -125,6 +124,7 @@ import {
 } from "reka-ui";
 import type { Component, ComponentPublicInstance } from "vue";
 import { computed, nextTick, ref, useAttrs, watch } from "vue";
+import MiddleTruncate from "../MiddleTruncate.vue";
 
 interface Option {
 	label: string;

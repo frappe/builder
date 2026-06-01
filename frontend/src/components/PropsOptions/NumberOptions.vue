@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import { nextTick, ref, watch } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 
 const props = defineProps<{

@@ -64,7 +64,7 @@
 								Layer {{ index + 1 }}
 							</span>
 							<Button
-								icon="x"
+								icon="lucide-x"
 								variant="ghost"
 								size="sm"
 								class="!size-5 !text-ink-gray-4"

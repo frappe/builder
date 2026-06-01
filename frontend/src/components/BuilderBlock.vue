@@ -68,7 +68,7 @@ import {
 	watch,
 	watchEffect,
 } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
 import DataLoaderBlock from "./DataLoaderBlock.vue";
@@ -326,6 +326,10 @@ const styles = computed(() => {
 		}
 	}
 
+	if (!props.preview && props.block.getTag() === "iframe") {
+		styleMap.pointerEvents = "none";
+	}
+
 	// escape space in font family
 	if (styleMap.fontFamily && typeof styleMap.fontFamily === "string") {
 		styleMap.fontFamily = (styleMap.fontFamily as string).replace(/ /g, "\\ ");
@@ -361,7 +365,20 @@ const loadEditor = computed(() => {
 const emit = defineEmits(["mounted"]);
 
 watchEffect(() => {
-	setFont(props.block.getStyle("fontFamily") as string, props.block.getStyle("fontWeight") as string);
+	let fontFamily = props.block.getStyle("fontFamily") as string;
+	const fontWeight = props.block.getStyle("fontWeight") as string;
+	if (!fontFamily && fontWeight) {
+		let parent = props.block.getParentBlock();
+		while (parent) {
+			const parentFont = parent.getStyle("fontFamily") as string;
+			if (parentFont) {
+				fontFamily = parentFont;
+				break;
+			}
+			parent = parent.getParentBlock();
+		}
+	}
+	setFont(fontFamily, fontWeight);
 });
 
 onMounted(async () => {
@@ -427,6 +444,7 @@ watch(
 		() => pageStore.settingPage,
 	],
 	() => {
+		if (!isMounted.value) return;
 		if (pageStore.settingPage) return;
 
 		const script = props.block.getBlockClientScript().trim();
@@ -452,6 +470,7 @@ watch(
 		() => pageStore.routeVariables,
 	],
 	(_, __, onCleanup) => {
+		if (!isMounted.value) return;
 		if (pageStore.settingPage) return;
 
 		const script = props.block.getBlockDataScript().trim();

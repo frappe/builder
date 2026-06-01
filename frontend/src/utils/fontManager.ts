@@ -35,13 +35,16 @@ function loadCustomFont(font: string, url: string): Promise<string> {
 		});
 }
 
-function loadGoogleFont(font: string): Promise<string> {
+function loadGoogleFont(font: string, weight?: string): Promise<string> {
+	const familyParam = weight ? `${encodeURIComponent(font)}:wght@${weight}` : encodeURIComponent(font);
+
 	return new Promise<string>((resolve) => {
+		const id = `gf-${font.replace(/\s+/g, "-")}${weight ? `-${weight}` : ""}`;
 		const link = document.createElement("link");
-		link.id = `gf-${font.replace(/\s+/g, "-")}`;
+		link.id = id;
 		link.rel = "stylesheet";
 		link.crossOrigin = "anonymous";
-		link.href = `${GF_CSS}?family=${encodeURIComponent(font)}&display=swap`;
+		link.href = `${GF_CSS}?family=${familyParam}&display=swap`;
 		link.addEventListener("load", () => resolve(font), { once: true });
 		link.addEventListener(
 			"error",
@@ -55,17 +58,18 @@ function loadGoogleFont(font: string): Promise<string> {
 	});
 }
 
-export function setFont(font: string | null): Promise<string> {
+export function setFont(font: string | null, weight?: string): Promise<string> {
 	if (!font) return Promise.resolve("");
-	if (fontCache.has(font)) return fontCache.get(font)!;
+	const cacheKey = weight ? `${font}:${weight}` : font;
+	if (fontCache.has(cacheKey)) return fontCache.get(cacheKey)!;
 
 	const customFont = userFont.data.find(
 		(f: { font_name: string; font_file: string }) => f.font_name === font,
 	);
 
-	const promise = customFont ? loadCustomFont(font, customFont.font_file) : loadGoogleFont(font);
+	const promise = customFont ? loadCustomFont(font, customFont.font_file) : loadGoogleFont(font, weight);
 
-	fontCache.set(font, promise);
+	fontCache.set(cacheKey, promise);
 	return promise;
 }
 

@@ -5,13 +5,13 @@
 				placeholder="Enter value"
 				:modelValue="item"
 				@input="(val: string) => updateItem(index, val)" />
-			<BuilderButton
+			<Button
 				class="flex-shrink-0 text-xs"
 				variant="subtle"
-				icon="x"
-				@click="deleteItem(index)"></BuilderButton>
+				icon="lucide-x"
+				@click="deleteItem(index)"></Button>
 		</div>
-		<BuilderButton variant="subtle" class="w-full" label="Add" @click="addItem"></BuilderButton>
+		<Button variant="subtle" class="w-full" label="Add" @click="addItem"></Button>
 		<p class="rounded-sm bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
 			<span v-html="description"></span>
 		</p>

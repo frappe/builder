@@ -1,7 +1,6 @@
 <template>
 	<div>
 		<ContextMenu ref="contextMenu" :options="contextMenuOptions" />
-		<NewComponent v-if="block" :block="block" v-model="showNewComponentDialog"></NewComponent>
 		<NewBlockTemplate v-if="block" :block="block" v-model="showBlockTemplateDialog"></NewBlockTemplate>
 	</div>
 </template>
@@ -9,7 +8,7 @@
 import type Block from "@/block";
 import ContextMenu from "@/components/ContextMenu.vue";
 import NewBlockTemplate from "@/components/Modals/NewBlockTemplate.vue";
-import NewComponent from "@/components/Modals/NewComponent.vue";
+import { promptCreateComponent } from "@/utils/dialogs";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
@@ -17,7 +16,7 @@ import getBlockTemplate from "@/utils/blockTemplate";
 import { confirm, detachBlockFromComponent, getBlockCopy, triggerCopyEvent } from "@/utils/helpers";
 import { useStorage } from "@vueuse/core";
 import { Ref, inject, nextTick, ref } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 
 const builderStore = useBuilderStore();
 const componentStore = useComponentStore();
@@ -28,7 +27,6 @@ const triggeredFromLayersPanel = ref(false);
 
 const block = ref(null) as unknown as Ref<Block>;
 
-const showNewComponentDialog = ref(false);
 const showBlockTemplateDialog = ref(false);
 const target = ref(null) as unknown as Ref<HTMLElement>;
 
@@ -261,7 +259,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 	},
 	{
 		label: "Save As Component",
-		action: () => (showNewComponentDialog.value = true),
+		action: () => promptCreateComponent(block.value),
 		condition: () => !block.value.isExtendedFromComponent(),
 		disabled: () => builderStore.readOnlyMode,
 	},

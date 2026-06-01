@@ -35,7 +35,7 @@
 									modelValue && !isCssVariable && props.showColorVariableOptions
 										? {
 												label: 'Save as Variable',
-												icon: 'plus',
+												icon: 'lucide-plus',
 												handler: openVariableDialog,
 											}
 										: undefined
@@ -43,7 +43,7 @@
 								@update:modelValue="handleColorUpdate">
 								<template #prefix>
 									<div
-										class="size-4 rounded shadow-md"
+										class="size-4 cursor-pointer rounded shadow-md"
 										@click="togglePopover"
 										:style="{
 											background: modelValue
@@ -63,7 +63,7 @@
 <script setup lang="ts">
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import NewBuilderVariable from "@/components/Modals/NewBuilderVariable.vue";
-import { BuilderVariable } from "@/types/Builder/BuilderVariable";
+import { BuilderVariable } from "@/types/doctypes";
 import { getColorVariableOptions } from "@/utils/colorOptions";
 import { getRGB, toKebabCase } from "@/utils/helpers";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";

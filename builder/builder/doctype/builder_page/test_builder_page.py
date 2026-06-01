@@ -1,7 +1,6 @@
 # Copyright (c) 2023, asdf and Contributors
 # See license.txt
 
-import json
 
 import frappe
 from frappe.desk.form.load import getdoc
@@ -965,6 +964,205 @@ class TestBuilderPage(FrappeTestCase):
 		# Weights should be normalized to integers and deduplicated
 		self.assertEqual(font_map["Inter"]["weights"], [400, 700])
 		self.assertEqual(font_map["Open Sans"]["weights"], [600])
+
+	def test_set_fonts_inherits_font_family_from_ancestor(self):
+		"""set_fonts should use inherited_font when a style has fontWeight but no fontFamily."""
+		from builder.builder.doctype.builder_page.builder_page import set_fonts
+
+		font_map = {}
+		styles = [{"fontWeight": "600"}]
+
+		# Without inherited_font, nothing should be added
+		set_fonts(styles, font_map)
+		self.assertEqual(font_map, {})
+
+		# With inherited_font, the ancestor font should be registered
+		set_fonts(styles, font_map, inherited_font="Newsreader")
+		self.assertIn("Newsreader", font_map)
+		self.assertIn(600, font_map["Newsreader"]["weights"])
+
+	def test_font_weight_inherited_from_parent_block(self):
+		"""Child block with only fontWeight should inherit fontFamily from parent in font_map."""
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		blocks = [
+			{
+				"element": "div",
+				"originalElement": "body",
+				"baseStyles": {"fontFamily": "Newsreader"},
+				"children": [
+					{
+						"element": "h1",
+						"innerHTML": "Headline",
+						"baseStyles": {"fontWeight": "700"},
+						"children": [],
+					}
+				],
+			}
+		]
+		_, _, font_map, _ = get_block_html(blocks)
+		self.assertIn("Newsreader", font_map)
+		self.assertIn(700, font_map["Newsreader"]["weights"])
+
+	def test_intervar_font_skipped(self):
+		"""InterVar should not appear in the font_map — it is loaded via reset.css."""
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		blocks = [
+			{
+				"element": "div",
+				"originalElement": "body",
+				"baseStyles": {"fontFamily": "InterVar", "fontWeight": "400"},
+				"children": [],
+			}
+		]
+		_, _, font_map, _ = get_block_html(blocks)
+		self.assertNotIn("InterVar", font_map)
+		self.assertNotIn("intervar", font_map)
+
+	def test_block_script_error_traceback(self):
+		body = Block(
+			element="div",
+			originalElement="body",
+		)
+		div = Block(
+			element="div",
+			blockId="test-block",
+			innerHTML="Test Block",
+			blockDataScript="block.data = sample_error",
+		)
+		body.attach_children(div)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Block Script Error Test",
+				"published": 1,
+				"route": "/block-script-error-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+		try:
+			content = get_response_content("/block-script-error-test")
+			self.assertTrue("block_script_for_test_block" in content)
+			self.assertTrue("NameError: name &#x27;sample_error&#x27; is not defined" in content)
+		finally:
+			page.delete()
+
+	def test_conflicting_routes_picks_last_published(self):
+		"""Pages sharing a route should resolve to the most recently published one."""
+		from frappe.utils import add_to_date, now_datetime
+		from frappe.website.utils import clear_cache as clear_page_cache
+
+		from builder.builder.doctype.builder_page.builder_page import find_page_with_path
+
+		# Frappe strips leading slashes from routes during validation; use without slash
+		route = "conflicting-route-test"
+
+		page_older = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Older Published Page",
+				"published": 1,
+				"route": route,
+				"blocks": Block(
+					element="div",
+					originalElement="body",
+					children=[Block(element="h1", innerHTML="Older Published Content")],
+				).as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		page_newer = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Newer Published Page",
+				"published": 1,
+				"route": route,
+				"blocks": Block(
+					element="div",
+					originalElement="body",
+					children=[Block(element="h1", innerHTML="Newer Published Content")],
+				).as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		def clear_caches():
+			find_page_with_path.clear_cache()
+			clear_page_cache(route)
+
+		try:
+			page_older.db_set("published_at", add_to_date(now_datetime(), days=-2))
+			page_newer.db_set("published_at", add_to_date(now_datetime(), days=-1))
+			clear_caches()
+
+			content = get_response_content(f"/{route}")
+			self.assertIn("Newer Published Content", content)
+
+			# Republish the older page — it should now be picked
+			page_older.db_set("published_at", now_datetime())
+			clear_caches()
+
+			content = get_response_content(f"/{route}")
+			self.assertIn("Older Published Content", content)
+		finally:
+			clear_caches()
+			page_older.delete()
+			page_newer.delete()
+
+	def test_conflicting_routes_no_published_at_picks_last_created(self):
+		"""When published_at is absent, the most recently created page should win."""
+		from frappe.utils import add_to_date, now_datetime
+		from frappe.website.utils import clear_cache as clear_page_cache
+
+		from builder.builder.doctype.builder_page.builder_page import find_page_with_path
+
+		# Frappe strips leading slashes from routes during validation; use without slash
+		route = "conflicting-route-no-published-at-test"
+
+		page_first = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "First Created Page",
+				"published": 1,
+				"route": route,
+				"blocks": Block(
+					element="div",
+					originalElement="body",
+					children=[Block(element="h1", innerHTML="First Created Content")],
+				).as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		page_second = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Second Created Page",
+				"published": 1,
+				"route": route,
+				"blocks": Block(
+					element="div",
+					originalElement="body",
+					children=[Block(element="h1", innerHTML="Second Created Content")],
+				).as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		# Ensure page_first has an older creation timestamp as a tiebreaker
+		page_first.db_set("creation", add_to_date(now_datetime(), seconds=-10))
+
+		def clear_caches():
+			find_page_with_path.clear_cache()
+			clear_page_cache(route)
+
+		try:
+			# Both pages have no published_at; creation order should determine the winner
+			clear_caches()
+			content = get_response_content(f"/{route}")
+			self.assertIn("Second Created Content", content)
+		finally:
+			clear_caches()
+			page_first.delete()
+			page_second.delete()
 
 	@classmethod
 	def tearDownClass(cls):

@@ -1,96 +1,99 @@
 <template>
 	<div
 		class="absolute right-0 top-0 flex rounded-md border border-outline-gray-3 bg-surface-gray-1 shadow-lg"
-		@keydown.esc.stop="(e) => closePanel(e)">
-		<div v-if="enableReplace" class="flex items-center justify-center">
-			<Button variant="ghost" size="sm" class="h-full" @click="toggleReplace">
-				<FeatherIcon :name="showReplace ? 'chevron-down' : 'chevron-right'" class="h-4 w-4" />
+		@keydown.esc.stop="closePanel">
+		<div v-if="enableReplace" class="flex items-center border-r border-outline-gray-2">
+			<Button
+				variant="ghost"
+				size="sm"
+				class="h-full rounded-r-none"
+				:tooltip="showReplace ? 'Hide Replace' : 'Show Replace'"
+				@click="toggleReplace">
+				<span
+					:class="[showReplace ? 'lucide-chevron-down' : 'lucide-chevron-right', 'h-4 w-4']"
+					aria-hidden="true" />
 			</Button>
 		</div>
-		<div class="flex w-full max-w-lg flex-col">
-			<div class="relative flex flex-col items-center gap-2 px-2.5 py-2 @md:flex-row">
-				<div class="flex gap-1">
-					<Input
-						v-model="search"
-						ref="inputRef"
-						type="text"
-						placeholder="Find"
-						@input="(e: string) => commit({ searchTerm: e })"
-						@keyup="commit"
-						@keydown.enter.prevent="enter" />
-					<div class="flex shrink-0 items-center gap-1">
-						<Button
-							:variant="caseSensitive ? 'outline' : 'ghost'"
-							size="sm"
-							icon="type"
-							@click="toggleCaseSensitive"
-							title="Match Case"></Button>
-						<Button
-							:variant="regexp ? 'outline' : 'ghost'"
-							size="sm"
-							@click="toggleIsRegexp"
-							title="Use Regular Expression">
-							<span class="font-mono text-xs">.*</span>
-						</Button>
-						<Button
-							:variant="wholeWord ? 'outline' : 'ghost'"
-							size="sm"
-							@click="toggleWholeWord"
-							title="Match Whole Word">
-							<span class="font-mono text-xs">Ab</span>
-						</Button>
-					</div>
+		<div class="flex w-full max-w-lg flex-col divide-y divide-outline-gray-2">
+			<!-- Find row -->
+			<div class="flex items-center gap-1.5 px-1.5 py-1">
+				<Input
+					v-model="search"
+					ref="inputRef"
+					type="text"
+					placeholder="Find"
+					@input="(val: string) => commit({ searchTerm: val })"
+					@keydown.enter.prevent="enter" />
+				<div class="flex shrink-0 items-center">
+					<Button
+						:variant="caseSensitive ? 'subtle' : 'ghost'"
+						size="sm"
+						icon="lucide-type"
+						tooltip="Match Case"
+						@click="toggleCaseSensitive" />
+					<Button
+						:variant="regexp ? 'subtle' : 'ghost'"
+						size="sm"
+						tooltip="Use Regular Expression"
+						@click="toggleIsRegexp">
+						<span class="font-mono text-xs">.*</span>
+					</Button>
+					<Button
+						:variant="wholeWord ? 'subtle' : 'ghost'"
+						size="sm"
+						tooltip="Match Whole Word"
+						@click="toggleWholeWord">
+						<span class="font-mono text-xs">Ab</span>
+					</Button>
 				</div>
-				<div class="flex w-full justify-between gap-1 @md:w-auto @md:justify-normal">
+				<div class="flex shrink-0 items-center border-l border-outline-gray-2 pl-1">
 					<Button
 						size="sm"
-						icon="chevron-up"
+						icon="lucide-chevron-up"
 						variant="ghost"
-						@click.prevent="findNext(view)"
-						title="Find Next (Enter)"></Button>
-					<Button
-						size="sm"
-						variant="ghost"
-						icon="chevron-down"
-						@click.prevent="findPrevious(view)"
-						title="Find Previous (Shift + Enter)"></Button>
+						tooltip="Find Previous (Shift+Enter)"
+						@click.prevent="findPrevious(view)" />
 					<Button
 						size="sm"
 						variant="ghost"
-						icon="layers"
-						@click.prevent="selectMatches(view)"
-						title="Select All Matches (Alt + Enter)"></Button>
+						icon="lucide-chevron-down"
+						tooltip="Find Next (Enter)"
+						@click.prevent="findNext(view)" />
 					<Button
 						size="sm"
 						variant="ghost"
-						icon="x"
-						@click.prevent="(e: Event) => closePanel(e)"
-						title="Close Search (Esc)"></Button>
+						icon="lucide-align-justify"
+						tooltip="Select All Matches (Alt+Enter)"
+						@click.prevent="selectMatches(view)" />
+					<Button
+						size="sm"
+						variant="ghost"
+						icon="lucide-x"
+						tooltip="Close (Esc)"
+						@click.prevent="closePanel" />
 				</div>
 			</div>
-			<div v-if="enableReplace && showReplace" class="relative flex items-center gap-2 px-2.5 py-2">
-				<div class="flex">
-					<Input
-						v-model="replaceWith"
-						type="text"
-						placeholder="Replace"
-						@input="(e: string) => commit({ replaceTerm: e })"
-						@keyup="commit"
-						@keydown.enter.prevent="enter" />
-				</div>
-				<div class="flex items-center gap-1">
+			<!-- Replace row -->
+			<div v-if="enableReplace && showReplace" class="flex items-center gap-1.5 px-1.5 py-1">
+				<Input
+					v-model="replaceWith"
+					type="text"
+					placeholder="Replace"
+					@input="(val: string) => commit({ replaceTerm: val })"
+					@keydown.enter.prevent="enter" />
+				<div class="flex shrink-0 items-center">
 					<Button
 						size="sm"
 						variant="ghost"
-						@click.prevent="replaceNext(view)"
-						icon="corner-down-right"
-						title="Replace Next"></Button>
+						icon="lucide-corner-down-right"
+						tooltip="Replace Next"
+						@click.prevent="replaceNext(view)" />
 					<Button
 						size="sm"
 						variant="ghost"
-						@click.prevent="replaceAll(view)"
-						icon="copy"
-						title="Replace All"></Button>
+						icon="lucide-copy"
+						tooltip="Replace All"
+						@click.prevent="replaceAll(view)" />
 				</div>
 			</div>
 		</div>
@@ -108,7 +111,7 @@ import {
 	setSearchQuery,
 } from "@codemirror/search";
 import type { EditorView } from "@codemirror/view";
-import { Button, FeatherIcon, Input } from "frappe-ui";
+import { Button, Input } from "frappe-ui";
 import { inject, nextTick, onMounted, ref } from "vue";
 
 const view = inject<EditorView>("view")!;

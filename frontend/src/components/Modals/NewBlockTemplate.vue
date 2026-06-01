@@ -1,26 +1,24 @@
 <template>
 	<Dialog
-		:options="{
-			title: 'Save as Block Template',
-			size: 'sm',
-			actions: [
-				{
-					label: 'Save',
-					variant: 'solid',
-					onClick: (close: () => void) => {
-						blockTemplateStore.saveBlockTemplate(
-							block,
-							blockTemplateProperties.templateName,
-							blockTemplateProperties.category,
-							blockTemplateProperties.previewImage,
-						);
-						close();
-					},
+		title="Save as Block Template"
+		size="sm"
+		:actions="[
+			{
+				label: 'Save',
+				variant: 'solid',
+				onClick: (close: () => void) => {
+					blockTemplateStore.saveBlockTemplate(
+						block,
+						blockTemplateProperties.templateName,
+						blockTemplateProperties.category,
+						blockTemplateProperties.previewImage,
+					);
+					close();
 				},
-			],
-		}"
+			},
+		]"
 		v-model="showBlockTemplateDialog">
-		<template #body-content>
+		<template #default>
 			<div class="flex flex-col gap-3">
 				<BuilderInput
 					type="text"
@@ -49,7 +47,7 @@
 						">
 						<template v-slot="{ openFileSelector }">
 							<div class="absolute bottom-0 right-0 place-items-center">
-								<BuilderButton size="sm" @click="openFileSelector" class="text-sm">Upload</BuilderButton>
+								<Button size="sm" @click="openFileSelector" class="text-sm">Upload</Button>
 							</div>
 						</template>
 					</FileUploader>

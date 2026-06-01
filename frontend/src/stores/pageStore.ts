@@ -5,7 +5,7 @@ import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore.js";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import {
 	confirm,
@@ -14,11 +14,9 @@ import {
 	getCopyWithoutParent,
 	getRouteVariables,
 } from "@/utils/helpers";
-import { createDocumentResource, createListResource, createResource } from "frappe-ui";
+import { createDocumentResource, createListResource, createResource, toast } from "frappe-ui";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
-import { toast } from "vue-sonner";
-import { BuilderClientScript } from "../types/Builder/BuilderClientScript";
 
 const usePageStore = defineStore("pageStore", {
 	state: () => ({
@@ -194,21 +192,27 @@ const usePageStore = defineStore("pageStore", {
 			}
 		},
 
-		async unpublishPage() {
+		async unpublishPage(page?: BuilderPage) {
+			const targetName = page?.name || this.selectedPage;
+			const targetTitle = page?.page_title || page?.page_name || "this page";
 			const confirmed = await confirm(
-				"Are you sure you want to unpublish this page? It will no longer be accessible on the website.",
+				`Are you sure you want to unpublish "${targetTitle}"? It will no longer be accessible on the website.`,
 			);
 			if (!confirmed) {
 				return;
 			}
 			return webPages.setValue
 				.submit({
-					name: this.selectedPage,
+					name: targetName,
 					published: false,
 				})
 				.then(() => {
 					toast.success("Page unpublished");
-					this.setPage(this.selectedPage as string);
+					if (page) {
+						page.published = 0;
+					} else {
+						this.setPage(this.selectedPage as string);
+					}
 					builderSettings.reload();
 				});
 		},
@@ -217,21 +221,21 @@ const usePageStore = defineStore("pageStore", {
 			if (!this.activePage) {
 				return;
 			}
-			return webPages.setValue
-				.submit({
-					name: this.activePage.name as string,
-					[key]: value,
-				})
-				.then(() => {
-					if (this.activePage) {
-						this.activePage[key] = value;
-					}
-				});
+			// Optimistically update in-place so reactive bindings stay consistent
+			this.activePage[key] = value;
+			return webPages.setValue.submit({
+				name: this.activePage.name as string,
+				[key]: value,
+			});
 		},
 
 		savePage() {
 			const builderStore = useBuilderStore();
 			if (builderStore.readOnlyMode) return;
+
+			// Own the flag here (not only in the editor watch) so every caller —
+			// including direct savePage() calls — keeps waitTillPageIsSaved reliable.
+			this.savingPage = true;
 
 			const canvasStore = useCanvasStore();
 			const pageData = JSON.stringify(
@@ -251,7 +255,11 @@ const usePageStore = defineStore("pageStore", {
 			return webPages.setValue
 				.submit(args)
 				.then((page: BuilderPage) => {
-					this.activePage = page;
+					if (this.activePage) {
+						Object.assign(this.activePage, page);
+					} else {
+						this.activePage = page;
+					}
 				})
 				.finally(() => {
 					if (this.saveId === saveId) {

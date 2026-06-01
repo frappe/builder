@@ -40,21 +40,30 @@
 						<div>
 							<div class="scroll-into-view-anchor absolute ml-20"></div>
 						</div>
-						<FeatherIcon
-							:name="isExpanded(element) ? 'chevron-down' : 'chevron-right'"
-							class="h-3 w-3 text-ink-gray-4"
-							:class="{
-								'ml-[-18px]': adjustForRoot,
-							}"
-							v-if="element.children && element.children.length && !element.isRoot()"
+						<span
+							:class="[
+								isExpanded(element) ? 'lucide-chevron-down' : 'lucide-chevron-right',
+								'h-3 w-3 text-ink-gray-4',
+								{ 'ml-[-18px]': adjustForRoot },
+							]"
+							aria-hidden="true"
+							v-if="
+								element.children &&
+								element.children.length &&
+								!element.isRoot() &&
+								element.editorConfig?.showChildrenInEditor !== false
+							"
 							@click="toggleExpanded(element)" />
-						<FeatherIcon
-							:name="element.getIcon()"
-							class="h-3 w-3"
-							:class="{
-								'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
-									element.isExtendedFromComponent(),
-							}"
+						<span
+							:class="[
+								element.getIcon(),
+								'h-3 w-3',
+								{
+									'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
+										element.isExtendedFromComponent(),
+								},
+							]"
+							aria-hidden="true"
 							v-if="!Boolean(element.extendedFromComponent) && !showCodeIcon(element)" />
 						<BlocksIcon
 							class="mr-1 h-3 w-3"
@@ -63,10 +72,9 @@
 									element.isExtendedFromComponent(),
 							}"
 							v-if="Boolean(element.extendedFromComponent) && !showCodeIcon(element)" />
-						<FeatherIcon
-							name="terminal"
-							:stroke-width="3"
-							class="h-3 w-3 text-orange-500"
+						<span
+							class="lucide-terminal h-3 w-3 text-orange-500"
+							aria-hidden="true"
 							v-if="showCodeIcon(element)" />
 						<span
 							class="layer-label min-h-[1em] min-w-[2em] max-w-64 truncate"
@@ -92,10 +100,13 @@
 						</span>
 
 						<!-- toggle visibility -->
-						<FeatherIcon
+						<span
 							v-if="!element.isRoot() && !isParentHidden && !readonly"
-							:name="element.isVisible() ? 'eye' : 'eye-off'"
-							class="invisible ml-auto mr-2 h-3 w-3 group-hover:visible"
+							:class="[
+								element.isVisible() ? 'lucide-eye' : 'lucide-eye-off',
+								'invisible ml-auto mr-2 h-3 w-3 group-hover:visible',
+							]"
+							aria-hidden="true"
 							@click.stop="element.toggleVisibility()" />
 					</span>
 					<div v-if="canShowChildLayer(element)">
@@ -127,8 +138,7 @@
 import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
-import { FeatherIcon } from "frappe-ui";
-import { ref, watch } from "vue";
+import { nextTick, ref, watch } from "vue";
 import draggable from "vuedraggable";
 import BlockLayers from "./BlockLayers.vue";
 import BlocksIcon from "./Icons/Blocks.vue";
@@ -228,7 +238,13 @@ const blockExits = (block: Block) => {
 };
 
 const canShowChildLayer = (block: Block) => {
-	return (isExpanded(block) && block.hasChildren()) || (block.canHaveChildren() && !block.hasChildren());
+	if (block.editorConfig?.showChildrenInEditor === false) {
+		return false;
+	}
+	return (
+		((isExpanded(block) && block.hasChildren()) || (block.canHaveChildren() && !block.hasChildren())) &&
+		!block.isVideo()
+	);
 };
 
 watch(
@@ -314,12 +330,13 @@ const updateDropIndicator = (blockLayerItem: HTMLElement, relativeY: number, ele
 };
 
 const onMouseMove = (event: MouseEvent) => {
-	if (!dragState.draggedElement) return;
+	const draggedElement = dragState.draggedElement;
+	if (!draggedElement) return;
 
 	const target = document.elementFromPoint(event.clientX, event.clientY);
 	const blockLayerItem = target?.closest(".block-layer-item") as HTMLElement | null;
 
-	if (!blockLayerItem || blockLayerItem === dragState.draggedElement) {
+	if (!blockLayerItem || blockLayerItem === draggedElement || draggedElement.contains(blockLayerItem)) {
 		resetDropIndicators();
 		return;
 	}
@@ -383,7 +400,7 @@ const onDragEnd = () => {
 	document.removeEventListener("mousemove", onMouseMove);
 
 	const { draggedElement, hoverTarget, hoverPosition } = dragState;
-	if (!draggedElement || !hoverTarget || !hoverPosition) {
+	if (!draggedElement || !hoverTarget || !hoverPosition || draggedElement.contains(hoverTarget)) {
 		Object.assign(dragState, { draggedElement: null, hoverTarget: null, hoverPosition: null });
 		return;
 	}
@@ -405,10 +422,37 @@ const onDragEnd = () => {
 	Object.assign(dragState, { draggedElement: null, hoverTarget: null, hoverPosition: null });
 };
 
+const getAllExpandableBlockIds = (blocks: Block[]): string[] => {
+	const ids: string[] = [];
+	for (const block of blocks) {
+		if (!block.children?.length) continue;
+		if (!block.isRoot() && block.editorConfig?.showChildrenInEditor !== false) {
+			ids.push(block.blockId);
+		}
+		ids.push(...getAllExpandableBlockIds(block.children));
+	}
+	return ids;
+};
+
+const expandAll = async () => {
+	const ids = getAllExpandableBlockIds(props.blocks);
+	ids.forEach((id) => expandedLayers.value.add(id));
+	await nextTick();
+	childLayers.value.forEach((child) => child?.expandAll());
+};
+
+const collapseAll = () => {
+	childLayers.value.forEach((child) => child?.collapseAll());
+	expandedLayers.value.clear();
+	expandedLayers.value.add("root");
+};
+
 defineExpose({
 	toggleExpanded,
 	isExpandedInTree,
 	blockExitsInTree,
+	expandAll,
+	collapseAll,
 });
 </script>
 <style>
@@ -416,6 +460,10 @@ defineExpose({
 	@apply border-blue-300 text-gray-700 dark:border-blue-900 dark:text-gray-500;
 }
 .block-selected {
-	@apply border-blue-400 text-gray-900 dark:border-blue-700 dark:text-gray-200;
+	@apply overflow-hidden border-blue-400 text-gray-900 dark:border-blue-700 dark:text-gray-200;
+}
+
+.block-selected .block-selected {
+	@apply rounded-none border-transparent bg-blue-300/25 dark:bg-blue-900/25;
 }
 </style>

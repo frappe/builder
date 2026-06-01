@@ -67,7 +67,7 @@ const blockController = {
 		return styleValue;
 	},
 	isBlockSelected: () => {
-		return canvasStore.activeCanvas?.selectedBlocks.length || 0 > 0;
+		return (canvasStore.activeCanvas?.selectedBlocks.length ?? 0) > 0;
 	},
 	multipleBlocksSelected: () => {
 		return canvasStore.activeCanvas?.selectedBlocks && canvasStore.activeCanvas?.selectedBlocks.length > 1;

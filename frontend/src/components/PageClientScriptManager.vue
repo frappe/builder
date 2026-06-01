@@ -47,20 +47,16 @@
 											onClick: () => {
 												script.editable = true;
 											},
-											icon: 'edit',
+											icon: 'lucide-edit',
 										},
 										{
 											label: 'Remove Script',
 											onClick: () => deleteScript(script.name),
-											icon: 'trash',
+											icon: 'lucide-trash',
 										},
 									]">
 									<template v-slot="{ open }">
-										<BuilderButton
-											icon="more-horizontal"
-											size="sm"
-											variant="ghost"
-											@click="open"></BuilderButton>
+										<Button icon="lucide-more-horizontal" size="sm" variant="ghost" @click="open"></Button>
 									</template>
 								</Dropdown>
 							</a>
@@ -83,18 +79,18 @@
 							size="sm"
 							class="[&>div>div>div]:w-full">
 							<template v-slot="{ open }">
-								<BuilderButton class="w-full text-xs" @click="open">New Script</BuilderButton>
+								<Button class="w-full text-xs" @click="open">New Script</Button>
 							</template>
 						</Dropdown>
 
 						<Autocomplete
 							v-if="clientScriptResource.data && clientScriptResource.data.length > 0"
 							:options="clientScriptOptions"
-							bodyClasses="overflow-hidden [&>ul]:!bg-surface-white"
+							bodyClasses="overflow-hidden [&>ul]:!bg-surface-white max-w-[300px]"
 							@update:modelValue="(option: Option) => attachScript(option.value)"
 							placeholder="Attach Script">
 							<template v-slot:target="{ open }">
-								<BuilderButton class="w-full text-xs" @click="open">Attach Script</BuilderButton>
+								<Button class="w-full text-xs" @click="open">Attach Script</Button>
 							</template>
 						</Autocomplete>
 					</div>
@@ -135,12 +131,11 @@
 import EditableSpan from "@/components/EditableSpan.vue";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderClientScript } from "@/types/Builder/BuilderClientScript";
-import { BuilderPage } from "@/types/Builder/BuilderPage";
+import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import { Autocomplete, createListResource, createResource, Dropdown } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
 import { computed, nextTick, ref, watch } from "vue";
-import { toast } from "vue-sonner";
+import { toast } from "frappe-ui";
 import draggable from "vuedraggable";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import CSSIcon from "./Icons/CSS.vue";
