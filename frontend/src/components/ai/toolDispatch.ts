@@ -6,7 +6,7 @@ import { getBlockInstance } from "@/utils/helpers";
 import { createResource } from "frappe-ui";
 import { ref } from "vue";
 import type { AffectedBlock, AffectedScript } from "./types";
-import { convertYAMLtoBlock, parseBlock, STANDARD_ATTRS } from "./yaml";
+import { buildRepeaterDataScript, convertYAMLtoBlock, parseBlock, STANDARD_ATTRS } from "./yaml";
 
 type PageStore = ReturnType<typeof usePageStore>;
 type CanvasStore = ReturnType<typeof useCanvasStore>;
@@ -55,6 +55,10 @@ export class ToolDispatcher {
 		try {
 			this.pageStore.pageBlocks = [getBlockInstance(block)];
 			this.canvasStore.activeCanvas?.setRootBlock(this.pageStore.pageBlocks[0] as Block, false);
+			// Any repeaters in the generated page carry static JSON data; persist it as
+			// the page_data_script shim so the loops render in the editor and on publish.
+			const dataScript = buildRepeaterDataScript(yamlString);
+			if (dataScript) this.pageStore.applyRepeaterDataScript(dataScript);
 		} catch {}
 	}
 

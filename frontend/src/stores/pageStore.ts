@@ -299,6 +299,22 @@ const usePageStore = defineStore("pageStore", {
 				});
 		},
 
+		/** Persist a generated page_data_script (the static-repeater data shim) and
+		 * refresh pageData so repeaters render immediately in the editor. The script
+		 * is code we generate from the AI's JSON data — never AI-authored. */
+		applyRepeaterDataScript(script: string) {
+			const name = this.activePage?.name || this.selectedPage;
+			if (!name) return;
+			if (this.activePage) this.activePage.page_data_script = script;
+			return webPages.setValue
+				.submit({ name, page_data_script: script })
+				.then((page: BuilderPage) => {
+					this.activePage = page;
+					this.setPageData(page);
+				})
+				.catch(() => null);
+		},
+
 		setRouteVariable(variable: string, value: string) {
 			this.routeVariables[variable] = value;
 			localStorage.setItem(`${this.selectedPage}:routeVariables`, JSON.stringify(this.routeVariables));

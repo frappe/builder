@@ -70,9 +70,55 @@ export function convertYAMLtoBlock(yamlBlock: Record<string, any>, isRoot = fals
 	if (yamlBlock.text) block.innerText = yamlBlock.text;
 	if (yamlBlock.component) block.extendedFromComponent = yamlBlock.component;
 	if (yamlBlock.child_of) block.isChildOfComponent = yamlBlock.child_of;
+	// `bind` maps a template field to a loop-item key → dynamicValues. innerHTML/text
+	// bind by content ("key"); anything else binds an HTML attribute (e.g. href, src).
+	if (yamlBlock.bind && typeof yamlBlock.bind === "object" && !Array.isArray(yamlBlock.bind)) {
+		block.dynamicValues = Object.entries(yamlBlock.bind).map(([prop, field]) =>
+			prop === "innerHTML" || prop === "text"
+				? { key: String(field), property: "innerHTML", type: "key" }
+				: { key: String(field), property: prop, type: "attribute" },
+		);
+	}
 	// NB: pass each child explicitly — Array.map would feed the index as `isRoot`.
 	block.children = Array.isArray(yamlBlock.c) ? yamlBlock.c.map((c: any) => convertYAMLtoBlock(c)) : [];
+	// `repeat` = a static repeater: ONE template + JSON data. The data array is NOT
+	// stored on the block — it's collected into the page_data_script shim (see
+	// buildRepeaterDataScript); the block keeps only the loop wiring + template child.
+	if (yamlBlock.repeat && typeof yamlBlock.repeat === "object" && yamlBlock.repeat.item) {
+		block.isRepeaterBlock = true;
+		block.dataKey = { key: String(yamlBlock.repeat.data || ""), property: "innerHTML", type: "key" };
+		block.children = [convertYAMLtoBlock(yamlBlock.repeat.item)];
+	}
 	return block;
+}
+
+/** Walk the raw generation YAML and collect each repeater's static data array,
+ * keyed by its `repeat.data` key. */
+function collectRepeaterData(node: any, out: Record<string, unknown[]>): void {
+	if (!node || typeof node !== "object") return;
+	if (Array.isArray(node)) {
+		node.forEach((n) => collectRepeaterData(n, out));
+		return;
+	}
+	const rep = node.repeat;
+	if (rep && typeof rep === "object" && rep.data && Array.isArray(rep.items)) {
+		out[String(rep.data)] = rep.items;
+		collectRepeaterData(rep.item, out); // a template may itself nest a repeater
+	}
+	if (Array.isArray(node.c)) node.c.forEach((n: any) => collectRepeaterData(n, out));
+}
+
+/** Build the page_data_script shim for a generated page: `data.<key> = <json>` per
+ * repeater. The AI supplies only JSON data — this fixed assignment is the ONLY code,
+ * so there is no AI-authored Python. Returns "" when the page has no repeaters. */
+export function buildRepeaterDataScript(yamlString: string): string {
+	const parsed = getValidPartialYAML(yamlString);
+	if (!parsed) return "";
+	const out: Record<string, unknown[]> = {};
+	collectRepeaterData(parsed, out);
+	return Object.entries(out)
+		.map(([key, items]) => `data.${key} = ${JSON.stringify(items)}`)
+		.join("\n");
 }
 
 /** Expand a `{ icon: <lucide-name> }` node into an inline-SVG span block. */

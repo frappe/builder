@@ -76,6 +76,25 @@ The current page is given to you as compact YAML. Every block has a 'ref' field 
     style: { color: '#5E7C58', width: '22px', height: '22px' }
 - Put an icon inside buttons, feature cards, list bullets, eyebrows, stats — wherever you'd reach for an emoji. Wrap an icon + label in a flex row (el: div, style display flex, alignItems center, gap) rather than nesting the icon in the text element.
 
+# Repeaters — one template for repeated items (compact + consistent)
+- When a list or grid has items of the SAME structure that differ only in CONTENT (nav links, feature cards, steps, stats, testimonials, ingredients), do NOT write every item out. Emit ONE block with a `repeat`:
+    - el: section
+      style: {...}
+      repeat:
+        data: features          # short snake_case key, unique on the page
+        items:                  # the content as JSON — a list of objects (or plain strings)
+          - {title: 'Fast', body: 'Ships in minutes.'}
+          - {title: 'Simple', body: 'No config needed.'}
+          - {title: 'Open', body: 'MIT licensed.'}
+        item:                   # the SINGLE template block (it may have its own children)
+          el: div
+          style: {...}
+          c:
+            - {el: h3, bind: {innerHTML: title}}
+            - {el: p, bind: {innerHTML: body}}
+- `bind` maps a template field to a key in each item: use innerHTML (or text) for the element's text, or an attribute name (href, src, alt) for an attribute — e.g. bind: {innerHTML: label, href: link}. The template carries placeholder styles/structure; `items` fills the bound fields per row.
+- Use `repeat` ONLY for genuinely repeated structure (3+ similar items). Keep one-off sections written out inline.
+
 # Motion & copy
 - Interactive elements get transition: 'all 0.2s ease' plus a hover state ('hover:transform': 'translateY(-2px)', 'hover:boxShadow', 'hover:backgroundColor', 'hover:color'). Buttons are real: padding ≈ '16px 32px', clear fontWeight, your radius, a confident accent fill or outline.
 - Write specific, brand-true copy from the prior conversation — real headlines and value props, never "Welcome to our website" or lorem ipsum. Confident, concise, no emojis.
