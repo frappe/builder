@@ -89,9 +89,10 @@ ask_clarification = Tool(
 			"previews": {
 				"type": "array",
 				"description": (
-					"ONLY for questions that ask the user to choose a COLOUR PALETTE: one entry "
-					"per option, each {colors: ['#hex', ...]} showing that palette's swatches. "
-					"Do NOT use for font, layout, tone, or any non-colour question."
+					"For questions offering a DESIGN DIRECTION or a COLOUR PALETTE: one entry per "
+					"option, each {colors: ['#hex', ...]} = that option's palette swatches (for a "
+					"direction, use that direction's palette). One entry per option, in the same "
+					"order. Omit for purely textual answers like the brand name."
 				),
 				"items": {
 					"type": "object",
@@ -109,9 +110,11 @@ propose_plan = Tool(
 	side="terminal",
 	description=(
 		"Before building a NEW page or doing a major redesign, present a short plan and "
-		"wait for the user to approve or refine it. Ends your turn. Never call this twice "
-		"in a row: if a plan is already pending and the user approved it, call generate_page "
-		"instead. Only re-propose when the user asked for changes."
+		"wait for the user to approve or refine it. The plan must EXPRESS the chosen design "
+		"direction — its sections, copy, and layout should read unmistakably as that "
+		"aesthetic, not a generic structure. Ends your turn. Never call this twice in a row: "
+		"if a plan is already pending and the user approved it, call generate_page instead. "
+		"Only re-propose when the user asked for changes."
 	),
 	parameters={
 		"type": "object",

@@ -31,9 +31,11 @@ generate_page = Tool(
 				"type": "string",
 				"description": (
 					"A concise spec of the page to build, drawn from the approved plan and "
-					"conversation: the brand/product name, positioning, audience, the section "
-					"list, and the palette (with hex codes). Do NOT write the YAML yourself — "
-					"the brief guides a dedicated generation step that produces the full page."
+					"conversation: the DESIGN DIRECTION (the agreed visual character — layout "
+					"feel, typography, colour mood), the brand/product name, positioning, "
+					"audience, the section list, and the palette (with hex codes). Lead with the "
+					"design direction so the page is built to that aesthetic. Do NOT write the "
+					"YAML yourself — the brief guides a dedicated generation step."
 				),
 			},
 		},

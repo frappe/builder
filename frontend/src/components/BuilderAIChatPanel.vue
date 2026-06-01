@@ -110,20 +110,25 @@
 								v-for="(option, idx) in message.metadata.options"
 								:key="option"
 								:disabled="isSubmitting"
-								class="group flex flex-1 flex-col items-center gap-3 rounded-lg border border-outline-gray-2 bg-surface-gray-1 px-3 py-2.5 text-left transition-all hover:border-outline-gray-3 hover:bg-surface-gray-2 disabled:cursor-not-allowed disabled:opacity-50"
+								class="group flex flex-1 basis-48 flex-col items-start gap-2 rounded-lg border border-outline-gray-2 bg-surface-gray-1 px-3 py-2.5 text-left transition-all hover:border-outline-gray-3 hover:bg-surface-gray-2 disabled:cursor-not-allowed disabled:opacity-50"
 								@click="selectOption(option)">
 								<!-- Color palette swatches -->
 								<span
 									v-if="message.metadata.previews?.[idx]?.colors?.length"
 									class="flex shrink-0 overflow-hidden rounded border border-black/10">
 									<span
-										v-for="color in message.metadata.previews[idx].colors.slice(0, 4)"
+										v-for="color in message.metadata.previews[idx].colors.slice(0, 5)"
 										:key="color"
-										class="size-3"
+										class="size-3.5"
 										:style="{ backgroundColor: color }" />
 								</span>
-								<span :title="option" class="line-clamp-3 text-p-sm font-medium leading-snug text-ink-gray-8">
-									{{ option }}
+								<span class="text-p-sm font-medium leading-snug text-ink-gray-8">
+									{{ optionParts(option).label }}
+								</span>
+								<span
+									v-if="optionParts(option).desc"
+									class="line-clamp-4 text-xs leading-snug text-ink-gray-5">
+									{{ optionParts(option).desc }}
 								</span>
 							</button>
 							<!-- Type-your-own nudge: only on last message -->
@@ -339,6 +344,33 @@ const lastMessageId = computed(() => messages.value.at(-1)?.id ?? null);
 /** Extract hex colour codes from a palette description for swatch previews. */
 function paletteColors(palette: string): string[] {
 	return palette.match(/#[0-9a-fA-F]{3,8}\b/g) || [];
+}
+
+/** Split a clarification option like "Editorial — asymmetric, serif headlines" or
+ * "Warm Heritage (cream, terracotta)" into a bold label + muted description so
+ * richer design-direction options stay readable instead of being truncated. */
+function optionParts(option: string): { label: string; desc: string } {
+	const dash = option.search(/\s[—–-]\s/);
+	if (dash !== -1) {
+		return {
+			label: option.slice(0, dash).trim(),
+			desc: option
+				.slice(dash)
+				.replace(/^\s[—–-]\s/, "")
+				.trim(),
+		};
+	}
+	const paren = option.indexOf(" (");
+	if (paren !== -1 && option.trimEnd().endsWith(")")) {
+		return {
+			label: option.slice(0, paren).trim(),
+			desc: option
+				.slice(paren + 2)
+				.replace(/\)\s*$/, "")
+				.trim(),
+		};
+	}
+	return { label: option.trim(), desc: "" };
 }
 
 const selectedPreset = ref<{
