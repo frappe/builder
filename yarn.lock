@@ -3947,13 +3947,6 @@ doctrine@^3.0.0:
   dependencies:
     esutils "^2.0.2"
 
-dompurify@^3.2.6:
-  version "3.3.1"
-  resolved "https://registry.yarnpkg.com/dompurify/-/dompurify-3.3.1.tgz#c7e1ddebfe3301eacd6c0c12a4af284936dbbb86"
-  integrity sha512-qkdCKzLNtrgPFP1Vo+98FRzJnBRGe4ffyCea9IwHB1fyxPOeNTHpLKYGd4Uk9xvNoH0ZoOjwZxNptyMwqrId1Q==
-  optionalDependencies:
-    "@types/trusted-types" "^2.0.7"
-
 dompurify@^3.4.0:
   version "3.4.5"
   resolved "https://registry.yarnpkg.com/dompurify/-/dompurify-3.4.5.tgz#bedc7d30a6007ae9a8937b952be6adb76a28e871"
@@ -4803,64 +4796,6 @@ fraction.js@^5.3.4:
   version "5.3.4"
   resolved "https://registry.yarnpkg.com/fraction.js/-/fraction.js-5.3.4.tgz#8c0fcc6a9908262df4ed197427bdeef563e0699a"
   integrity sha512-1X1NTtiJphryn/uLQz3whtY6jK3fTqoE3ohKs0tT+Ujr1W59oopxmoEh7Lu5p6vBaPbgoM0bzveAW4Qi5RyWDQ==
-
-frappe-ui@frappe/frappe-ui#main:
-  version "0.1.278"
-  resolved "https://codeload.github.com/frappe/frappe-ui/tar.gz/7203bbb9abbd672bb0b21348a4f0b0f3ca5e520b"
-  dependencies:
-    "@headlessui/vue" "^1.7.14"
-    "@popperjs/core" "^2.11.2"
-    "@tailwindcss/forms" "^0.5.3"
-    "@tailwindcss/line-clamp" "^0.4.4"
-    "@tailwindcss/typography" "^0.5.16"
-    "@tiptap/core" "^3.11.0"
-    "@tiptap/extension-bubble-menu" "^3.11.0"
-    "@tiptap/extension-code" "^3.11.0"
-    "@tiptap/extension-code-block" "^3.11.0"
-    "@tiptap/extension-code-block-lowlight" "^3.11.0"
-    "@tiptap/extension-color" "^3.11.0"
-    "@tiptap/extension-heading" "^3.11.0"
-    "@tiptap/extension-highlight" "^3.11.0"
-    "@tiptap/extension-image" "^3.11.0"
-    "@tiptap/extension-link" "^3.11.0"
-    "@tiptap/extension-list" "^3.11.0"
-    "@tiptap/extension-mention" "^3.11.0"
-    "@tiptap/extension-node-range" "^3.11.0"
-    "@tiptap/extension-placeholder" "^3.11.0"
-    "@tiptap/extension-table" "^3.11.0"
-    "@tiptap/extension-task-item" "^3.11.0"
-    "@tiptap/extension-task-list" "^3.11.0"
-    "@tiptap/extension-text-align" "^3.11.0"
-    "@tiptap/extension-text-style" "^3.11.0"
-    "@tiptap/extension-typography" "^3.11.0"
-    "@tiptap/extensions" "^3.11.0"
-    "@tiptap/pm" "^3.11.0"
-    "@tiptap/starter-kit" "^3.11.0"
-    "@tiptap/suggestion" "^3.11.0"
-    "@tiptap/vue-3" "^3.11.0"
-    "@vueuse/core" "^10.4.1"
-    dayjs "^1.11.13"
-    dompurify "^3.2.6"
-    echarts "^5.6.0"
-    feather-icons "^4.28.0"
-    grid-layout-plus "^1.1.0"
-    highlight.js "^11.11.1"
-    idb-keyval "^6.2.0"
-    lowlight "^3.3.0"
-    lucide-static "^1.16.0"
-    marked "^15.0.12"
-    ora "5.4.1"
-    prettier "^3.3.2"
-    prosemirror-tables "^1.8.1"
-    reka-ui "^2.5.0"
-    slugify "^1.6.6"
-    socket.io-client "^4.5.1"
-    tippy.js "^6.3.7"
-    typescript "^5.0.2"
-    unplugin-auto-import "^19.3.0"
-    unplugin-icons "^22.1.0"
-    unplugin-vue-components "^28.4.1"
-    vue-sonner "^2.0.9"
 
 fromentries@^1.2.0:
   version "1.3.2"
@@ -8748,20 +8683,6 @@ unplugin-utils@^0.3.1:
     pathe "^2.0.3"
     picomatch "^4.0.3"
 
-unplugin-vue-components@^28.4.1:
-  version "28.8.0"
-  resolved "https://registry.yarnpkg.com/unplugin-vue-components/-/unplugin-vue-components-28.8.0.tgz#3ccabfee1f4d2bdec38ef76634b6924001a5b671"
-  integrity sha512-2Q6ZongpoQzuXDK0ZsVzMoshH0MWZQ1pzVL538G7oIDKRTVzHjppBDS8aB99SADGHN3lpGU7frraCG6yWNoL5Q==
-  dependencies:
-    chokidar "^3.6.0"
-    debug "^4.4.1"
-    local-pkg "^1.1.1"
-    magic-string "^0.30.17"
-    mlly "^1.7.4"
-    tinyglobby "^0.2.14"
-    unplugin "^2.3.5"
-    unplugin-utils "^0.2.4"
-
 unplugin-vue-components@^32.0.0:
   version "32.1.0"
   resolved "https://registry.yarnpkg.com/unplugin-vue-components/-/unplugin-vue-components-32.1.0.tgz#6381802ff55b72b4664f575e926765f454255b8d"
@@ -8787,7 +8708,7 @@ unplugin@^2.2.2, unplugin@^2.3.4:
     picomatch "^4.0.3"
     webpack-virtual-modules "^0.6.2"
 
-unplugin@^2.3.10, unplugin@^2.3.5:
+unplugin@^2.3.10:
   version "2.3.10"
   resolved "https://registry.yarnpkg.com/unplugin/-/unplugin-2.3.10.tgz#15e75fec9384743335be7e54e5c88b5c187a3e94"
   integrity sha512-6NCPkv1ClwH+/BGE9QeoTIl09nuiAt0gS28nn1PvYXsGKRwM2TCbFA2QiilmehPDTXIe684k4rZI1yl3A1PCUw==
