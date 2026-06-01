@@ -436,15 +436,6 @@ const isSearching = computed(
 	() => activeStep.value?.id === "search-page" && !!searchQuery.value.trim() && searchablePages.list.loading,
 );
 
-// Reset sub-step when the palette closes so it always reopens at root.
-watch(show, (val) => {
-	if (!val) {
-		setTimeout(() => {
-			activeStep.value = null;
-		}, 150);
-	}
-});
-
 const commandGroups = computed(() => {
 	const q = searchQuery.value.toLowerCase().trim();
 
