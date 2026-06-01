@@ -15,7 +15,7 @@
 					<button
 						v-if="stepLabel"
 						type="button"
-						class="ml-3 flex shrink-0 items-center gap-1 py-1 text-base font-semibold text-ink-gray-7 transition-colors hover:bg-surface-gray-3"
+						class="ml-3 flex shrink-0 items-center gap-2 py-1 text-base font-semibold text-ink-gray-7 transition-colors hover:bg-surface-gray-3"
 						@click="goBack">
 						{{ stepLabel }}
 						<span class="lucide-chevron-right size-3 text-ink-gray-4" aria-hidden="true" />
@@ -29,7 +29,7 @@
 						spellcheck="false"
 						@keydown="handleKeydown" />
 					<kbd
-						class="mr-3 flex shrink-0 items-center gap-0.5 rounded border border-outline-gray-2 px-1.5 py-1 text-xs font-medium text-ink-gray-4"
+						class="mr-1.5 flex shrink-0 items-center gap-0.5 rounded border border-outline-gray-2 px-1.5 py-1 text-xs font-medium text-ink-gray-4"
 						title="Close">
 						esc
 					</kbd>
@@ -220,7 +220,9 @@ function onOpenChange(val: boolean) {
 }
 
 function onEscapeKey() {
-	if (props.stepLabel) {
+	if (localQuery.value) {
+		localQuery.value = "";
+	} else if (props.stepLabel) {
 		emit("back");
 	} else {
 		onOpenChange(false);

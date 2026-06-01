@@ -418,14 +418,12 @@ function runPageQuery() {
 				page_name: ["like", `%${q}%`],
 				route: ["like", `%${q}%`],
 			},
-			orderBy: "modified desc",
 		});
 		searchablePages.fetch();
 	} else if (recentPageNames.value.length) {
 		searchablePages.update({
 			filters: { is_template: 0, name: ["in", recentPageNames.value] },
 			orFilters: {},
-			orderBy: "modified desc",
 		});
 		searchablePages.fetch();
 	}
