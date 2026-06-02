@@ -17,7 +17,7 @@ from werkzeug.wrappers import Response
 
 from builder import builder_analytics
 from builder.builder.doctype.builder_page.builder_page import BuilderPageRenderer
-from builder.utils import has_page_write
+from builder.utils import has_page_read, has_page_write
 
 
 @frappe.whitelist()
@@ -46,6 +46,7 @@ def get_page_preview_html(page: str, **kwarg) -> Response:
 
 
 @frappe.whitelist()
+@has_page_write("You do not have permission to upload assets.")
 def upload_builder_asset():
 	from frappe.handler import upload_file
 
@@ -226,6 +227,7 @@ def sync_component(component_id: str):
 
 
 @frappe.whitelist()
+@has_page_read("You do not have permission to view analytics.")
 def get_page_analytics(
 	route: str,
 	interval: str = "daily",
@@ -243,6 +245,7 @@ def get_page_analytics(
 
 
 @frappe.whitelist()
+@has_page_read("You do not have permission to view analytics.")
 def get_overall_analytics(
 	interval: str = "daily",
 	route: str | None = None,
