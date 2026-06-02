@@ -1,4 +1,4 @@
-import { type Ref, watchEffect } from "vue";
+import { type Ref, watch, toRaw, onUnmounted } from "vue";
 import useBuilderStore from "@/stores/builderStore";
 import { call } from "frappe-ui";
 import { useExternalEditor } from "./useExternalEditor";
@@ -25,63 +25,60 @@ export function useRealtimeDocSync(
 	getCurrentValue: () => string,
 	onUpdate: (value: string) => void,
 ) {
-	const builderStore = useBuilderStore();
+	const { realtime } = useBuilderStore();
 	const { isExternalEditorActive } = useExternalEditor();
 
-	watchEffect((onCleanup) => {
-		const ctx = context.value;
-		if (!isExternalEditorActive.value) return;
-		if (!hasValidContext(ctx)) return;
+	watch(
+		[() => context.value, () => isExternalEditorActive.value],
+		([ctx]) => {
+			if (!isExternalEditorActive.value || !hasValidContext(ctx)) return;
 
-		let isActive = true;
+			const key = `${ctx.doctype}:${ctx.docname}`;
+			if (!realtime.open_docs.has(key)) {
+				realtime.doc_subscribe(ctx.doctype, ctx.docname);
+			}
 
-		const key = `${ctx.doctype}:${ctx.docname}`;
-		const didSubscribe = !builderStore.realtime.open_docs.has(key);
-		if (didSubscribe) {
-			builderStore.realtime.doc_subscribe(ctx.doctype, ctx.docname);
-		}
+			const handleDocUpdate = async (data: { doctype: string; name: string }) => {
+				if (data.doctype !== ctx.doctype || data.name !== ctx.docname) return;
 
-		const handleDocUpdate = async (data: { doctype: string; name: string }) => {
-			if (!isActive || data.doctype !== ctx.doctype || data.name !== ctx.docname) return;
-
-			let newValue: string;
-
-			try {
-				if (ctx.field) {
-					const result = await call("frappe.client.get_value", {
-						doctype: ctx.doctype,
-						filters: ctx.docname,
-						fieldname: ctx.field,
-					});
-					newValue = result?.[ctx.field] ?? "";
-				} else {
-					const result = await call("frappe.client.get_value", {
-						doctype: ctx.doctype,
-						filters: ctx.docname,
-						fieldname: ["draft_blocks", "blocks"],
-					});
-					const blocksJson = result?.draft_blocks ?? result?.blocks ?? "[]";
-					const blocks: Record<string, any>[] = JSON.parse(blocksJson);
-					const block = findBlockById(Array.isArray(blocks) ? blocks : [blocks], ctx.blockId!);
-					newValue = block?.[ctx.blockField!] ?? "";
+				let newValue: string;
+				try {
+					if (ctx.field) {
+						const result = await call("frappe.client.get_value", {
+							doctype: ctx.doctype,
+							filters: ctx.docname,
+							fieldname: ctx.field,
+						});
+						newValue = result?.[ctx.field] ?? "";
+					} else {
+						const result = await call("frappe.client.get_value", {
+							doctype: ctx.doctype,
+							filters: ctx.docname,
+							fieldname: ["draft_blocks", "blocks"],
+						});
+						const blocksJson = result?.draft_blocks ?? result?.blocks ?? "[]";
+						const blocks: Record<string, any>[] = JSON.parse(blocksJson);
+						const block = findBlockById(Array.isArray(blocks) ? blocks : [blocks], ctx.blockId!);
+						newValue = block?.[ctx.blockField!] ?? "";
+					}
+				} catch {
+					return;
 				}
-			} catch {
-				return;
-			}
 
-			if (newValue === getCurrentValue()) return;
+				if (newValue !== getCurrentValue()) onUpdate(newValue);
+			};
 
-			onUpdate(newValue);
-		};
+			realtime.on("doc_update", handleDocUpdate);
+		},
+		{ immediate: true },
+	);
 
-		builderStore.realtime.on("doc_update", handleDocUpdate);
-
-		onCleanup(() => {
-			isActive = false;
-			builderStore.realtime.off("doc_update", handleDocUpdate);
-			if (didSubscribe) {
-				builderStore.realtime.doc_unsubscribe(ctx.doctype, ctx.docname);
-			}
-		});
+	onUnmounted(() => {
+		const ctx = context.value;
+		if (!isExternalEditorActive.value || !hasValidContext(ctx)) return;
+		const key = `${ctx.doctype}:${ctx.docname}`;
+		if (realtime.open_docs.has(key)) {
+			realtime.doc_unsubscribe(ctx.doctype, ctx.docname);
+		}
 	});
 }
