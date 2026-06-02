@@ -1,6 +1,7 @@
 import { type Ref, watchEffect } from "vue";
 import useBuilderStore from "@/stores/builderStore";
 import { call } from "frappe-ui";
+import { useExternalEditor } from "./useExternalEditor";
 import type { OpenScriptRequest } from "./useExternalEditor";
 
 function findBlockById(blocks: Record<string, any>[], blockId: string): Record<string, any> | null {
@@ -25,9 +26,11 @@ export function useRealtimeDocSync(
 	onUpdate: (value: string) => void,
 ) {
 	const builderStore = useBuilderStore();
+	const { isExternalEditorActive } = useExternalEditor();
 
 	watchEffect((onCleanup) => {
 		const ctx = context.value;
+		if (!isExternalEditorActive.value) return;
 		if (!hasValidContext(ctx)) return;
 
 		let isActive = true;
