@@ -12,7 +12,7 @@
 				"
 				@showShortcuts="showShortcuts"></MainMenu>
 			<div class="flex gap-2">
-				<BuilderButton
+				<Button
 					v-for="mode in [
 						{ mode: 'select', icon: 'lucide-mouse-pointer', description: 'Select (v)' },
 						{ mode: 'container', icon: 'lucide-square', description: 'Container (c)' },
@@ -23,7 +23,7 @@
 					:tooltip="mode.description"
 					:icon="mode.icon"
 					@click="() => (builderStore.mode = mode.mode as BuilderMode)"
-					:active="builderStore.mode === mode.mode"></BuilderButton>
+					:active="builderStore.mode === mode.mode"></Button>
 			</div>
 		</div>
 		<div>
@@ -69,7 +69,7 @@
 					<div
 						class="flex w-72 flex-col gap-3 rounded bg-surface-white p-4 shadow-lg"
 						v-if="pageStore.activePage">
-						<PageOptions v-if="pageStore.activePage" :page="pageStore.activePage"></PageOptions>
+						<PageOptions v-if="pageStore.activePage"></PageOptions>
 					</div>
 				</template>
 			</Popover>
@@ -163,7 +163,6 @@ import { useDark, useToggle } from "@vueuse/core";
 import { Badge, Popover, toast, Tooltip } from "frappe-ui";
 import { DialogDescription, DialogTitle } from "reka-ui";
 import { computed, defineAsyncComponent, inject, ref } from "vue";
-// @ts-ignore
 import SparklesIcon from "~icons/lucide/sparkles";
 import MainMenu from "./MainMenu.vue";
 import PageOptions from "./PageOptions.vue";

@@ -80,11 +80,10 @@
 	</div>
 </template>
 <script setup lang="ts">
-import Switch from "@/components/Controls/Switch.vue";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
-import { useExternalEditor } from "@/composables/useExternalEditor";
 import { Button, Select } from "frappe-ui";
+import { useExternalEditor } from "@/composables/useExternalEditor";
 
 const builderStore = useBuilderStore();
 const { lnaPermissionStatus, isRequestingAccess, requestLocalNetworkAccess } = useExternalEditor();

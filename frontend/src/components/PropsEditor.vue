@@ -72,7 +72,7 @@
 									</div>
 								</div>
 								<div class="flex-shrink-0 gap-1 rounded">
-									<BuilderButton
+									<Button
 										class="flex-shrink-0 bg-transparent text-xs text-ink-gray-6"
 										variant="subtle"
 										icon="lucide-x"
@@ -99,7 +99,7 @@
 		</div>
 		<Popover ref="popOverRef" :offset="24" placement="right">
 			<template #target="{ open }">
-				<BuilderButton
+				<Button
 					class="w-full"
 					variant="subtle"
 					label="Add"
@@ -115,7 +115,7 @@
 							popupMode = 'add';
 							open();
 						}
-					"></BuilderButton>
+					"></Button>
 			</template>
 			<template #body="{ open, close }">
 				<PropsPopoverContent
@@ -141,28 +141,17 @@
 import { mapToObject, replaceMapKey } from "@/utils/helpers";
 import { computed, ref, useAttrs, watch } from "vue";
 
-// @ts-ignore
-import LucideZap from "~icons/lucide/zap";
-// @ts-ignore
-import LucideCaseSensitive from "~icons/lucide/case-sensitive";
-// @ts-ignore
-import LucideGitCommit from "~icons/lucide/git-commit-horizontal";
-// @ts-ignore
-import LucideNumber from "~icons/lucide/pi";
-// @ts-ignore
-import LucideString from "~icons/lucide/type";
-// @ts-ignore
-import LucideBoolean from "~icons/lucide/toggle-right";
-// @ts-ignore
-import LucideSelect from "~icons/lucide/chevrons-up-down";
-// @ts-ignore
-import LucideArray from "~icons/lucide/brackets";
-// @ts-ignore
 import LucideObject from "~icons/lucide/braces";
-// @ts-ignore
-import LucideColor from "~icons/lucide/palette";
-// @ts-ignore
+import LucideArray from "~icons/lucide/brackets";
+import LucideCaseSensitive from "~icons/lucide/case-sensitive";
+import LucideSelect from "~icons/lucide/chevrons-up-down";
+import LucideGitCommit from "~icons/lucide/git-commit-horizontal";
 import LucideImage from "~icons/lucide/image";
+import LucideColor from "~icons/lucide/palette";
+import LucideNumber from "~icons/lucide/pi";
+import LucideBoolean from "~icons/lucide/toggle-right";
+import LucideString from "~icons/lucide/type";
+import LucideZap from "~icons/lucide/zap";
 
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";

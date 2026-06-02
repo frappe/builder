@@ -131,13 +131,13 @@
 						<!-- Actions Column -->
 						<div v-else-if="column.key === 'actions'" class="flex items-center justify-center gap-1">
 							<template v-if="!row.is_standard">
-								<BuilderButton
+								<Button
 									variant="ghost"
 									class="text-ink-gray-6 hover:text-red-600"
 									@click="deleteVariableRow(row)"
 									title="Delete Variable">
 									<span class="lucide-trash-2 h-3 w-3" aria-hidden="true" />
-								</BuilderButton>
+								</Button>
 							</template>
 						</div>
 					</template>
@@ -160,7 +160,6 @@
 </template>
 
 <script setup lang="ts">
-import BuilderButton from "@/components/Controls/BuilderButton.vue";
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
 import { BuilderVariable } from "@/types/doctypes";

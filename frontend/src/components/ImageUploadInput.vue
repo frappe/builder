@@ -3,7 +3,7 @@
 		<template #target="{ togglePopover, isOpen }">
 			<div class="flex items-center justify-between">
 				<InputLabel v-if="label && labelPosition === 'left'">{{ label }}</InputLabel>
-				<div class="relative w-full">
+				<div class="relative w-full [&>div>div>div>div]:pe-0">
 					<BuilderInput
 						:class="{
 							'[&>div>input]:pl-8': labelPosition === 'left',
@@ -14,7 +14,15 @@
 						:description="description"
 						:hideClearButton="labelPosition === 'top'"
 						@update:modelValue="setImageURL"
-						:modelValue="currentImageURL" />
+						:modelValue="currentImageURL">
+						<template v-if="labelPosition === 'top'" #suffix>
+							<ImageUploader
+								@upload="setImageURL"
+								@remove="setImageURL('')"
+								:image_url="currentImageURL"
+								:file_types="['image/*']" />
+						</template>
+					</BuilderInput>
 					<img
 						v-if="labelPosition === 'left'"
 						:src="currentImageURL || '/assets/builder/images/fallback.png'"
@@ -24,13 +32,6 @@
 						:style="{
 							'object-fit': imageFit || 'contain',
 						}" />
-					<ImageUploader
-						v-if="labelPosition === 'top'"
-						@upload="setImageURL"
-						@remove="setImageURL('')"
-						:image_url="currentImageURL"
-						class="absolute right-0 top-5 rounded-r-md bg-surface-gray-2 pl-2 dark:bg-transparent"
-						:file_types="['image/*']" />
 				</div>
 			</div>
 		</template>
@@ -59,7 +60,7 @@
 									'!grid': !currentImageURL,
 									'group-hover:grid': currentImageURL,
 								}">
-								<BuilderButton variant="subtle" @click="openFileSelector">Upload</BuilderButton>
+								<Button variant="subtle" @click="openFileSelector">Upload</Button>
 							</div>
 						</div>
 					</template>

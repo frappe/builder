@@ -53,4 +53,17 @@ const templates = createListResource({
 	orderBy: "modified desc",
 	pageLength: 50,
 });
-export { templates, webPages };
+
+const searchablePages = createListResource({
+	method: "GET",
+	doctype: "Builder Page",
+	fields: ["name", "route", "page_name", "page_title"],
+	filters: {
+		is_template: 0,
+	},
+	cache: "searchable-pages",
+	orderBy: "modified desc",
+	pageLength: 10,
+});
+
+export { searchablePages, templates, webPages };

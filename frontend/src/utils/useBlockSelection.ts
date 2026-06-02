@@ -1,25 +1,12 @@
 import type Block from "@/block";
+import { findBlockInTree } from "@/block";
 import { computed, Ref, ref } from "vue";
 
 export function useBlockSelection(rootBlock: Ref<Block>) {
 	const selectedBlockIds = ref<Set<string>>(new Set());
 
 	function findBlock(blockId: string, blocks?: Block[]): Block | null {
-		if (!blocks) {
-			blocks = [rootBlock.value];
-		}
-		for (const block of blocks) {
-			if (block.blockId === blockId) {
-				return block;
-			}
-			if (block.children) {
-				const found = findBlock(blockId, block.children);
-				if (found) {
-					return found;
-				}
-			}
-		}
-		return null;
+		return findBlockInTree(blockId, blocks ?? [rootBlock.value]);
 	}
 
 	const selectedBlocks = computed(() => {

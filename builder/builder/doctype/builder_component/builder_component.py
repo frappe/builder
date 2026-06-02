@@ -45,7 +45,17 @@ class BuilderComponent(Document):
 				clear_website_cache(page_doc.route)
 
 	def sync_component(self):
-		pages = frappe.get_all("Builder Page", fields=["name"])
+		# Only load pages whose blocks/draft_blocks mention this component; the
+		# precise is_component_used() check still runs below. Mirrors the filter
+		# used by Builder Settings.replace_component to avoid scanning every page.
+		pages = frappe.get_all(
+			"Builder Page",
+			fields=["name"],
+			or_filters={
+				"blocks": ["like", f"%{self.component_id}%"],
+				"draft_blocks": ["like", f"%{self.component_id}%"],
+			},
+		)
 		for page in pages:
 			page_doc = frappe.get_cached_doc("Builder Page", page.name)
 			if page_doc.is_component_used(self.component_id):

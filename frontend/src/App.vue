@@ -7,7 +7,6 @@
 		</router-view>
 		<UseDark attribute="data-theme"></UseDark>
 		<FrappeUIProvider />
-		<component v-for="dialog in builderStore.appDialogs" :is="dialog"></component>
 	</div>
 </template>
 <script setup lang="ts">
