@@ -145,7 +145,7 @@ const updateActiveState = (e: FocusEvent) => {
 	// If focusing popover controls, we preserve the current activeState
 	if (target.closest(".background-popover-body")) return;
 
-	const variantRow = target.closest("[data-variant]");
+	const variantRow = target.closest("[data-variant]:not(input)");
 	const mainPropRow = target.closest("[data-property]");
 
 	if (variantRow) {
