@@ -160,7 +160,7 @@ const activeState = ref<string | null>(null);
 const updateActiveState = (e: FocusEvent) => {
 	const target = e.target as HTMLElement;
 	if (target.closest(".shadow-popover-body")) return;
-	const variantRow = target.closest("[data-variant]");
+	const variantRow = target.closest("[data-variant]:not(input)");
 	activeState.value = variantRow ? (variantRow.getAttribute("data-variant") as string) : null;
 };
 

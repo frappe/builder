@@ -255,6 +255,8 @@ const setTextColor = debounce((color: string | undefined) => {
 // Keyboard handling
 const handleKeydown = (e: KeyboardEvent) => {
 	if (e.key === "k" && e.metaKey) {
+		e.preventDefault();
+		e.stopPropagation();
 		const blockWarnings = {
 			isHeader: "You cannot make heading a link",
 			isLink: "You cannot add link inside a link block",

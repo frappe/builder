@@ -15,21 +15,25 @@
 		<span class="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
 			{{ item.title }}
 		</span>
-		<span v-if="item.description" class="ml-3 shrink-0 text-xs text-ink-gray-4">
+		<span v-if="item.description && showDescription" class="ml-3 shrink-0 text-xs text-ink-gray-4">
 			{{ item.description }}
 		</span>
 	</div>
 </template>
 
 <script setup lang="ts">
-defineProps<{
-	item: {
-		name: string;
-		title: string;
-		description?: string;
-		icon?: string | object;
-		[key: string]: unknown;
-	};
-	active?: boolean;
-}>();
+withDefaults(
+	defineProps<{
+		item: {
+			name: string;
+			title: string;
+			description?: string;
+			icon?: string | object;
+			[key: string]: unknown;
+		};
+		active?: boolean;
+		showDescription?: boolean;
+	}>(),
+	{ showDescription: false },
+);
 </script>
