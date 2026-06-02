@@ -5,7 +5,7 @@
 import frappe
 from frappe.desk.form.load import getdoc
 from frappe.tests.utils import FrappeTestCase
-from frappe.website.serve import get_response_content, get_response
+from frappe.website.serve import get_response, get_response_content
 
 from builder.utils import Block
 
@@ -401,7 +401,6 @@ class TestBuilderPage(FrappeTestCase):
 			}
 		).insert()
 		try:
-
 			response = get_response("/redirect-test")
 			self.assertEqual(response.status_code, 302)
 			self.assertEqual(response.headers.get("Location"), "/login")
