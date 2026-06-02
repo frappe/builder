@@ -136,6 +136,7 @@ import { getUsersInfo } from "@/usersInfo";
 import blockController from "@/utils/blockController";
 import { getBlockInstance, getBlockObject, getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
+import { useActivePageSync } from "@/composables/useLiveDocSync";
 import { breakpointsTailwind, useBreakpoints, useDebounceFn, useEventListener } from "@vueuse/core";
 import { createResource, KeyboardShortcutsModal, useShortcut } from "frappe-ui";
 import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, watchEffect } from "vue";
@@ -162,6 +163,8 @@ const aiMode = ref<"generate" | "modify">("generate");
 const modifyBlockContext = ref<Record<string, any> | null>(null);
 const modifyBlockId = ref<string | null>(null);
 const isAIGenerating = ref(false);
+
+useActivePageSync();
 
 provide("showAIGenerator", () => {
 	aiMode.value = "generate";

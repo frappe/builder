@@ -131,7 +131,7 @@ async function openInExternalEditor(
 export function useExternalEditor() {
 	onMounted(async () => {
 		await checkLocalNetworkAccess();
-		if (lnaPermissionStatus.value === "granted" || import.meta.env.DEV) {
+		if (!isExternalEditorActive.value && (lnaPermissionStatus.value === "granted" || import.meta.env.DEV)) {
 			await checkExternalEditorStatus();
 		}
 	});

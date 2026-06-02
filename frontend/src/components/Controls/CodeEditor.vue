@@ -11,7 +11,7 @@
 					<span v-if="isDirty" class="text-[10px] text-gray-600">●</span>
 				</span>
 			</div>
-			<BuilderButton
+			<Button
 				v-if="isExternalEditorActive && externalEditorContext"
 				@click="handleOpenInExternalEditor"
 				variant="ghost"
@@ -19,7 +19,7 @@
 				class="!gap-1 text-p-xs"
 				icon-right="arrow-up-right">
 				{{ `Open in ${editorName}` }}
-			</BuilderButton>
+			</Button>
 		</div>
 		<div
 			:style="{
@@ -59,11 +59,10 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { ref, VNodeRef, watch, computed } from "vue";
+import { ref, VNodeRef, watch } from "vue";
 import CodeMirrorEditor from "./CodeMirror/CodeMirrorEditor.vue";
 import { useExternalEditor, type OpenScriptRequest } from "@/composables/useExternalEditor";
 import { toast } from "frappe-ui";
-import { useRealtimeDocSync } from "@/composables/useRealtimeDocSync";
 
 const props = withDefaults(
 	defineProps<{
@@ -182,13 +181,6 @@ function resetEditor(resetHistory = false) {
 	// aceEditor?.clearSelection(); // TODO: implement in codemirror
 	isDirty.value = false;
 }
-
-const externalEditorContextRef = computed(() => props.externalEditorContext);
-
-useRealtimeDocSync(externalEditorContextRef, getModelValue, (newValue: string) => {
-	editor.value?.resetEditor?.({ content: newValue, resetHistory: false, autofocus: false });
-	isDirty.value = false;
-});
 
 watch(
 	() => props.modelValue,

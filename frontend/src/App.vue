@@ -12,6 +12,7 @@
 <script setup lang="ts">
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
+import { useBuilderSettingsSync } from "@/composables/useLiveDocSync";
 import { UseDark } from "@vueuse/components";
 import { useTitle } from "@vueuse/core";
 import { FrappeUIProvider } from "frappe-ui";
@@ -23,6 +24,8 @@ import { sessionUser } from "./router";
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 const route = useRoute();
+
+useBuilderSettingsSync();
 
 provide("sessionUser", sessionUser);
 
