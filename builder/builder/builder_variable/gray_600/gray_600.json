@@ -1,0 +1,14 @@
+{
+ "creation": "2025-07-03 20:29:18.003824",
+ "docstatus": 0,
+ "doctype": "Builder Variable",
+ "idx": 0,
+ "is_standard": 1,
+ "modified": "2025-07-04 15:19:30.436442",
+ "modified_by": "Administrator",
+ "name": "gray-600",
+ "owner": "Administrator",
+ "variable_name": "gray-600",
+ "type": "Color",
+ "value": "#7C7C7C"
+}
