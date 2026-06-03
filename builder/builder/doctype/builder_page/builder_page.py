@@ -197,42 +197,35 @@ class BuilderPage(WebsiteGenerator):
 			export_page_as_standard(self.name, target_app=self.app)
 
 		if self.has_value_changed("is_standard") and not self.is_standard:
-			self._delete_standard_page_files_if_needed()
+			self._cleanup_standard_page_exports()
 
 	def clear_route_cache(self):
 		get_web_pages_with_dynamic_routes.clear_cache()
 		find_page_with_path.clear_cache()
 		clear_cache(self.route)
 
-	def _delete_standard_page_files_if_needed(self) -> None:
-		"""Delete exported standard page files. Used when is_standard is unchecked or on trash."""
-		doc_before = self.get_doc_before_save()
-		app = (doc_before.app if doc_before else self.app) or self.app
-		if not app or not frappe.conf.developer_mode:
-			return
-
-		from builder.export_import_standard_page import (
-			delete_standard_client_script_files,
-			delete_standard_page_files,
-		)
-
-		delete_standard_page_files(self.page_name, app)
-
-		client_scripts = doc_before.client_scripts if doc_before else self.client_scripts
-		for row in client_scripts:
-			other_refs = frappe.get_all(
-				"Builder Page Client Script",
-				filters={"builder_script": row.builder_script, "parent": ("!=", self.name)},
-				fields=["parent"],
-				ignore_permissions=True,
-			)
-			still_used = any(
-				frappe.db.get_value("Builder Page", ref.parent, ["is_standard", "app"], as_dict=True)
-				== {"is_standard": 1, "app": app}
-				for ref in other_refs
-			)
-			if not still_used:
-				delete_standard_client_script_files(row.builder_script, app)
+	def _cleanup_standard_page_exports(self) -> None:
+	    """Delete exported standard page files. Used when is_standard is unchecked or on trash."""
+	    doc_before = self.get_doc_before_save()
+	    app = (doc_before.app if doc_before else self.app) or self.app
+	    if not app or not frappe.conf.developer_mode:
+	        return
+	
+	    from builder.export_import_standard_page import (
+	        delete_standard_client_script_files,
+	        delete_standard_page_files,
+	    )
+	
+	    delete_standard_page_files(self.page_name, app)
+	
+	    client_scripts = doc_before.client_scripts if doc_before else self.client_scripts
+	    for row in client_scripts:
+	        referencing_apps = frappe.get_doc(
+	            "Builder Client Script", row.builder_script
+	        )._get_referencing_apps(exclude_page=self.name)
+	
+	        if app not in referencing_apps:
+	            delete_standard_client_script_files(row.builder_script, app)
 
 	def on_trash(self):
 		if self.is_template and frappe.conf.developer_mode:
@@ -246,7 +239,7 @@ class BuilderPage(WebsiteGenerator):
 				shutil.rmtree(assets_path)
 
 		if self.is_standard and self.app and frappe.conf.developer_mode:
-			self._delete_standard_page_files_if_needed()
+			self._cleanup_standard_page_exports()
 
 	def after_rename(self, old: str, new: str, merge: bool = False) -> None:
 		if not (self.is_standard and self.app and frappe.conf.developer_mode):
