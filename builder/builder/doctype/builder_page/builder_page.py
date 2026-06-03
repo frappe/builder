@@ -242,15 +242,10 @@ class BuilderPage(WebsiteGenerator):
 			self._cleanup_standard_page_exports()
 
 	def after_rename(self, old: str, new: str, merge: bool = False) -> None:
-		if not (self.is_standard and self.app and frappe.conf.developer_mode):
-			return
-		from builder.export_import_standard_page import (
-			delete_standard_page_files,
-			export_page_as_standard,
-		)
-
-		delete_standard_page_files(old, self.app)
-		export_page_as_standard(new, target_app=self.app)
+	    if not (self.is_standard and self.app and frappe.conf.developer_mode):
+	        return
+	    from builder.export_import_standard_page import rename_standard_page_files
+	    rename_standard_page_files(old, new, self.app)
 
 	def add_comment(self, comment_type="Comment", text=None, comment_email=None, comment_by=None):
 		if comment_type in ["Attachment Removed", "Attachment"]:
