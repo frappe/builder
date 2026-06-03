@@ -5,7 +5,7 @@
 import frappe
 from frappe.desk.form.load import getdoc
 from frappe.tests.utils import FrappeTestCase
-from frappe.website.serve import get_response_content
+from frappe.website.serve import get_response, get_response_content
 
 from builder.utils import Block
 
@@ -384,6 +384,30 @@ class TestBuilderPage(FrappeTestCase):
 			self.assertTrue("Header H4" in get_html_for(content, "tag", "h4"))
 			self.assertTrue("Header H5" in get_html_for(content, "tag", "h5"))
 		finally:
+			page.delete()
+
+	def test_redirect_from_page_data_script(self):
+		body = Block(element="div", originalElement="body")
+		body.attach_children(Block(element="h1", innerHTML="Should not render"))
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Redirect Test",
+				"published": 1,
+				"route": "/redirect-test",
+				"page_data_script": 'redirect("/login", 302)',
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+		try:
+			response = get_response("/redirect-test")
+			self.assertEqual(response.status_code, 302)
+			self.assertEqual(response.headers.get("Location"), "/login")
+
+			self.assertEqual(page.get_page_data(), {})
+		finally:
+			frappe.local.flags.redirect_location = None
 			page.delete()
 
 	def test_visibility_condition_from_block_data(self):

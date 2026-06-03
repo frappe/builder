@@ -262,7 +262,7 @@ class BuilderPage(WebsiteGenerator):
 				"Builder Settings", "Builder Settings", "disable_auto_dark_mode"
 			)
 
-		page_data = self.get_page_data()
+		page_data = self._get_page_data(for_render=True)
 		if page_data.get("title"):
 			context.title = page_data.get("page_title")
 
@@ -273,7 +273,7 @@ class BuilderPage(WebsiteGenerator):
 
 		content, style, fonts, has_block_script = get_block_html(blocks)
 
-		if self.dynamic_route or page_data or has_block_script:
+		if self.dynamic_route or page_data or has_block_script or self.page_data_script:
 			context.no_cache = 1
 
 		self.set_custom_font(context, fonts)
@@ -374,11 +374,20 @@ class BuilderPage(WebsiteGenerator):
 
 	@frappe.whitelist()
 	def get_page_data(self, route_variables: dict | None = None) -> dict:
+		return self._get_page_data(route_variables=route_variables, for_render=False)
+
+	def _get_page_data(self, route_variables: dict | None = None, for_render: bool = False) -> dict:
 		if route_variables:
 			frappe.form_dict.update({k: v for k, v in route_variables.items()})
 		page_data = frappe._dict()
 		if self.page_data_script:
-			_locals = dict(data=frappe._dict(), page=frappe._dict())
+
+			def redirect(location: str, http_status_code: int = 302):
+				if for_render:
+					frappe.local.flags.redirect_location = location
+					raise frappe.Redirect(http_status_code)
+
+			_locals = dict(data=frappe._dict(), page=frappe._dict(), redirect=redirect)
 			execute_script(self.page_data_script, _locals, self.name)
 			page_data.update(_locals["data"])
 			page_data.update(_locals["page"])
