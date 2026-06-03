@@ -12,6 +12,7 @@ import { promptCreateComponent } from "@/utils/dialogs";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
+import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { confirm, detachBlockFromComponent, getBlockCopy, triggerCopyEvent } from "@/utils/helpers";
 import { useStorage } from "@vueuse/core";
@@ -256,6 +257,26 @@ const contextMenuOptions: ContextMenuOption[] = [
 		},
 		condition: () => !block.value.isExtendedFromComponent() && Boolean(window.is_developer_mode),
 		disabled: () => builderStore.readOnlyMode,
+	},
+	{
+		label: "Convert to Tile",
+		condition: () =>
+			!blockController.multipleBlocksSelected() &&
+			!blockController.isRoot() &&
+			!blockController.getSelectedBlocks()[0].getIsTile(),
+		action: () => {
+			blockController.getSelectedBlocks()[0].setIsTile(true);
+		},
+	},
+	{
+		label: "Revert to Block",
+		condition: () =>
+			!blockController.multipleBlocksSelected() &&
+			!blockController.isRoot() &&
+			blockController.getSelectedBlocks()[0].getIsTile(),
+		action: () => {
+			blockController.getSelectedBlocks()[0].setIsTile(false);
+		},
 	},
 	{
 		label: "Save As Component",

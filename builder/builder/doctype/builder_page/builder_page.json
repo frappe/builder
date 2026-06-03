@@ -23,11 +23,14 @@
   "section_break_ujsp",
   "blocks",
   "draft_blocks",
+  "tiles",
+  "draft_tiles",
   "scripting_tab",
   "page_data_script",
   "head_html",
   "body_html",
   "client_scripts",
+  "include_alpinejs",
   "settings_tab",
   "section_break_shab",
   "preview",
@@ -244,6 +247,27 @@
    "label": "App",
    "mandatory_depends_on": "is_standard",
    "no_copy": 1
+  },
+  {
+   "fieldname": "tiles",
+   "fieldtype": "Table",
+   "label": "Tiles",
+   "options": "Builder Tile",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "AlpineJS is included by default in pages with Tiles.",
+   "fieldname": "include_alpinejs",
+   "fieldtype": "Check",
+   "label": "Include AlpineJS"
+  },
+  {
+   "fieldname": "draft_tiles",
+   "fieldtype": "Table",
+   "label": "Draft Tiles",
+   "options": "Builder Tile",
+   "read_only": 1
   },
   {
    "fieldname": "published_at",

@@ -39,6 +39,7 @@ from builder.utils import (
 	get_template_assets_folder_path,
 	is_component_used,
 	sanitize_style_value,
+	script_hash,
 	split_styles,
 )
 
@@ -101,6 +102,7 @@ class BuilderPage(WebsiteGenerator):
 		from builder.builder.doctype.builder_page_client_script.builder_page_client_script import (
 			BuilderPageClientScript,
 		)
+		from builder.builder.doctype.builder_tile.builder_tile import BuilderTile
 
 		app: DF.Literal[None]
 		authenticated_access: DF.Check
@@ -110,9 +112,11 @@ class BuilderPage(WebsiteGenerator):
 		client_scripts: DF.TableMultiSelect[BuilderPageClientScript]
 		disable_indexing: DF.Check
 		draft_blocks: DF.LongText | None
+		draft_tiles: DF.Table[BuilderTile]
 		dynamic_route: DF.Check
 		favicon: DF.AttachImage | None
 		head_html: DF.Code | None
+		include_alpinejs: DF.Check
 		is_standard: DF.Check
 		is_template: DF.Check
 		language: DF.Data | None
@@ -126,6 +130,7 @@ class BuilderPage(WebsiteGenerator):
 		published: DF.Check
 		published_at: DF.Datetime | None
 		route: DF.Data | None
+		tiles: DF.Table[BuilderTile]
 	# end: auto-generated types
 
 	def onload(self):
@@ -230,6 +235,7 @@ class BuilderPage(WebsiteGenerator):
 		if self.draft_blocks:
 			self.blocks = self.draft_blocks
 			self.draft_blocks = None
+			self.draft_tiles = []
 		self.save()
 		capture("builder_page_published", "builder")
 		frappe.enqueue_doc(
@@ -248,9 +254,67 @@ class BuilderPage(WebsiteGenerator):
 		self.save()
 		capture("builder_page_unpublished", "builder")
 
+
+	@frappe.whitelist()
+	def save_tiles(self, for_draft: bool = False):
+		_, _, _, _, tiles = get_block_html((self.draft_blocks if for_draft else self.blocks) or "[]")
+		if not for_draft:
+			self.tiles = []
+			for tile_id, tile_block in tiles.items():
+				tile_doc = self.append("tiles", {})
+				tile_doc.block_id = tile_id
+				tile_doc.blocks = frappe.as_json(tile_block)
+		else:
+			self.draft_tiles = []
+			for tile_id, tile_block in tiles.items():
+				tile_doc = self.append("draft_tiles", {})
+				tile_doc.block_id = tile_id
+				tile_doc.blocks = frappe.as_json(tile_block)
+		self.save()
+
+	@frappe.whitelist()
+	def save_tiles(self, for_draft: bool = False):
+		_, _, _, _, tiles = get_block_html((self.draft_blocks if for_draft else self.blocks) or "[]")
+		if not for_draft:
+			self.tiles = []
+			for tile_id, tile_block in tiles.items():
+				tile_doc = self.append("tiles", {})
+				tile_doc.block_id = tile_id
+				tile_doc.blocks = frappe.as_json(tile_block)
+		else:
+			self.draft_tiles = []
+			for tile_id, tile_block in tiles.items():
+				tile_doc = self.append("draft_tiles", {})
+				tile_doc.block_id = tile_id
+				tile_doc.blocks = frappe.as_json(tile_block)
+		self.save()
+
 	def get_context(self, context):
-		# delete default favicon
-		del context.favicon
+		# Handle tile partial-rendering requests
+
+		if frappe.form_dict and frappe.form_dict.get("render_tile"):
+			context["template"] = "templates/generators/tile.html"
+
+			tiles = self.draft_tiles if getattr(frappe.local.request, "for_preview", None) else self.tiles
+
+			block_id = frappe.form_dict.get("block_id")
+			block_data = frappe.parse_json(frappe.form_dict.get("block_data")) or {}
+			props = frappe.form_dict.get("props") or {}
+
+			for tile in tiles:
+				if tile.block_id == block_id:
+					content, _, _, _, _ = get_block_html(tile.blocks, for_tile=True)
+					context.__content = content
+					context.update({"block_data": block_data, "props": props, "has_tile": True})
+					context["__content"] = render_template(context.__content, context)
+					break
+			else:
+				frappe.throw(f"Tile with block_id {block_id} not found", frappe.DoesNotExistError)
+			return
+
+		# Handle normal page rendering
+
+		del context.favicon  # delete default favicon
 		context.disable_indexing = self.disable_indexing
 
 		context.preview = getattr(getattr(frappe.local, "request", None), "for_preview", None)
@@ -271,7 +335,7 @@ class BuilderPage(WebsiteGenerator):
 		if context.preview and self.draft_blocks:
 			blocks = self.draft_blocks
 
-		content, style, fonts, has_block_script = get_block_html(blocks)
+		content, style, fonts, has_block_script, tiles = get_block_html(blocks)
 
 		if self.dynamic_route or page_data or has_block_script or self.page_data_script:
 			context.no_cache = 1
@@ -280,6 +344,7 @@ class BuilderPage(WebsiteGenerator):
 		context.fonts = fonts
 		context.__content = content
 		context.style = render_template(style, page_data)
+		context.has_tile = len(tiles) > 0
 		context.editor_link = f"/{builder_path}/page/{self.name}"
 		if frappe.form_dict and self.dynamic_route:
 			query_string = "&".join(
@@ -296,6 +361,8 @@ class BuilderPage(WebsiteGenerator):
 				context.base_url = frappe.utils.get_url(frappe.local.request.path or self.route)
 			else:
 				context.base_url = frappe.utils.get_url(self.route)
+
+		context.include_alpinejs = self.include_alpinejs
 
 		context.update(page_data)
 
@@ -536,12 +603,13 @@ def get_block_data(
 	return block_data
 
 
-def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
+def get_block_html(blocks: str | list, for_tile: bool = False) -> tuple[str, str, dict, bool]:
 	"""
 	Main entry point for converting blocks to HTML.
 
 	#### Args:
 		blocks: JSON string or list of block dictionaries
+		for_tile: Whether to render blocks for a tile
 
 	#### Returns:
 		Tuple of (`html_content`, `css_styles`, `font_map`, `has_block_script`)
@@ -563,6 +631,8 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 		"standard_props_stack": {},  # prop_name -> list of prop_info
 		"global_script_tag": soup.new_tag("script"),
 		"used_block_scripts": set(),
+		"tile_blocks": {},  # block_id -> block json
+		"for_tile": for_tile,
 	}
 
 	html_parts = []
@@ -576,16 +646,28 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 
 		tag = build_tag(block, shared_state)
 		# Add global script to the top
-		tag.insert(0, shared_state["global_script_tag"])
+		if not for_tile:
+			tag.insert(0, shared_state["global_script_tag"])
 
-		html = wrap_html_with_context(str(tag), block_context)
+		html = wrap_html_with_context(str(tag), block_context, for_tile, block.get("blockId", ""))
+		# Write html to a file for debugging
+		with open("output.html", "w") as f:
+			f.write(html)
 		html_parts.append(html)
 
-	return "".join(html_parts), str(style_tag), font_map, shared_state["has_block_script"]
+	return (
+		"".join(html_parts),
+		str(style_tag),
+		font_map,
+		shared_state["has_block_script"],
+		shared_state["tile_blocks"],
+	)
 
 
 def build_tag(
-	block: dict, state: dict, data_key: dict | None = None, ancestor_font: str | None = None
+	block: dict,
+	state: dict,
+	data_key: dict | None = None,
 ) -> bs.Tag:
 	"""
 	Transforms a single block to an HTML tag.
@@ -593,6 +675,10 @@ def build_tag(
 	#### Returns:
 		BeautifulSoup tag element
 	"""
+	is_tile = block.get("isTile", False)
+
+	if is_tile:
+		state["tile_blocks"][block.get("blockId")] = copy.deepcopy(block)
 
 	props = process_block_props(block, data_key, state["standard_props_stack"])
 
@@ -614,12 +700,17 @@ def build_tag(
 
 	tag = create_html_tag(block, state, ancestor_font=resolved_font)
 
+	if is_tile:
+		tag["data-tile-id"] = block.get("blockId")
+
 	if is_repeater_block(block):
 		render_repeater_children(tag, block, data_key, state, ancestor_font=resolved_font)
 	else:
 		render_children(tag, block, data_key, state, ancestor_font=resolved_font)
 
 	attach_client_script(tag, block, state)
+	if is_tile:
+		attach_client_data(tag, block, state)
 
 	# Add body scripts for body element
 	effective_element = block.get("originalElement") or block.get("element")
@@ -713,7 +804,7 @@ def get_dynamic_props_template(
 ) -> str:
 	"""Get a Jinja template reference for dynamic properties."""
 	if comes_from == "blockDataScript":
-		key = jinja_safe_key(f"block.{prop_value}")
+		key = jinja_safe_key(f"block_data.{prop_value}")
 	elif comes_from == "props":
 		key = jinja_safe_key(f"props.{prop_value}")
 	else:  # dataScript
@@ -802,7 +893,7 @@ def build_tag_classes(block: dict, state: dict, ancestor_font: str | None = None
 
 def generate_and_apply_styles(block: dict, state: dict, ancestor_font: str | None = None) -> str:
 	"""Generate a unique style class and append all styles to the style tag."""
-	style_class = f"fb-{frappe.generate_hash(length=8)}"
+	style_class = f"fb-{block.get('blockId')}"
 	style_tag = state["style_tag"]
 	font_map = state["font_map"]
 
@@ -925,8 +1016,8 @@ def get_loop_info(block: dict, data_key: dict | None, props_stack: dict) -> dict
 
 	elif comes_from == "blockDataScript":
 		return {
-			"loop_var": "block",
-			"iterator_key": jinja_safe_key(f"block.{iterator_key}"),
+			"loop_var": "block_data",
+			"iterator_key": jinja_safe_key(f"block_data.{iterator_key}"),
 			"data_key": data_key,
 		}
 
@@ -983,11 +1074,21 @@ def get_visibility_condition_key(block: dict, data_key: dict | None) -> str | No
 	if comes_from == "props":
 		return jinja_safe_key(f"props.{key}")
 	elif comes_from == "blockDataScript":
-		return jinja_safe_key(f"block.{key}")
+		return jinja_safe_key(f"block_data.{key}")
 	else:  # dataScript
 		if data_key:
 			return f"{extract_data_key(data_key)}.{key}"
 		return key
+
+
+def attach_client_data(tag: bs.Tag, block: dict, state: dict):
+	tag.attrs["x-data"] = f"block('{block.get('blockId')}')"
+	script_tag = state["soup"].new_tag("script", type="application/json")
+	script_tag.string = (
+		'{ "block_data": {{ block_data | to_safe_json }}, "props": {{ props | to_safe_json }} }'
+	)
+	script_tag.attrs["data-block-data"] = block.get("blockId")
+	tag.append(script_tag)
 
 
 def attach_client_script(tag: bs.Tag, block: dict, state: dict):
@@ -999,36 +1100,48 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 	# Generate unique identifier for the script
 	script_unique_id = block.get("blockId")
 	if block.get("isBlockClientScriptOverridden"):
-		script_unique_id = frappe.generate_hash(length=8)
+		script_unique_id = script_hash(script, length=8)
 
-	# Add global function definition (only once)
-	if script_unique_id not in state["used_block_scripts"]:
-		state["global_script_tag"].append(
-			f"function client_script_{script_unique_id}(props, block_data) {{{script}}}\n"
-		)
-		state["used_block_scripts"].add(script_unique_id)
+	if not state["for_tile"]:
+		# Add global function definition (only once)
+		if script_unique_id not in state["used_block_scripts"]:
+			state["global_script_tag"].append(
+				f"function client_script_{script_unique_id}(props, block_data) {{{script}}}\n"
+			)
+			state["used_block_scripts"].add(script_unique_id)
 
 	# Add data attribute for selecting this specific block
 	tag.attrs["data-block-uid"] = "{{ unique_hash }}"
 
 	# Add local script to call the function
 	local_script = state["soup"].new_tag("script")
-	local_script.string = (
+	local_script["defer"] = "defer"
+	script_content = (
+		f"const element = document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]');"
 		f"(client_script_{script_unique_id}).call("
-		f"document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]'), "
-		f"{{{{ props | to_safe_json }}}}, "
-		f"{{{{ block.block_data | to_safe_json }}}}"
+		f"	element, "
+		f"	{{{{ props | to_safe_json }}}}, "
+		f"	{{{{ {jinja_safe_key('block_data.block_data')} | to_safe_json }}}}"
 		f");"
 	)
-	tag.append(local_script)
+	local_script.string = (
+		f"{{% if has_tile or include_alpinejs %}}"
+		f"function exec() {{ {script_content} }}"
+		f"if (window.Alpine) {{ exec() }} else  {{ document.addEventListener('alpine:initialized', exec) }}"
+		f"{{% else %}}"
+		f"{{ {script_content} }}"
+		f"{{% endif %}}"
+	)
+	tag.insert(0, local_script)
 
 
 def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
 	"""Append child tag with proper Jinja context wrapping."""
 	# Generate unique hash for this block instance
 	# This is unique for each block irrespective of loops or components
-	parent.append("{% with unique_hash = (loop.index if loop is defined else 0) | hash %}")
-	parent.append(f"{{% with block_id = '{context['block_id']}' %}}")
+	parent.append(
+		f"{{% with unique_hash =  '{context.get('block_id', '')}' ~ '_' ~ (loop.index if loop is defined else 0) %}}"
+	)
 
 	if context.get("default_props"):
 		props_str = ", ".join([f"'{var}': {var}" for var in context["default_props"]])
@@ -1044,7 +1157,7 @@ def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
 	if context.get("block_data_script"):
 		escaped_script = escape_single_quotes(context["block_data_script"])
 		parent.append(
-			f"{{% with block = block | execute_script_and_combine('{escaped_script}', props, block_id) %}}"
+			f"{{% with block_data = block_data | execute_block_data_script('{escaped_script}', props) %}}"
 		)
 
 	if context.get("visibility_key"):
@@ -1116,7 +1229,7 @@ def get_dynamic_value_key(dynamic_value_doc: dict, original_key: str, data_key: 
 	if comes_from == "props":
 		return jinja_safe_key(f"props.{original_key}")
 	elif comes_from == "blockDataScript":
-		return jinja_safe_key(f"block.{original_key}")
+		return jinja_safe_key(f"block_data.{original_key}")
 	else:  # dataScript
 		key = dynamic_value_doc.get("key")
 		if data_key:
@@ -1125,7 +1238,7 @@ def get_dynamic_value_key(dynamic_value_doc: dict, original_key: str, data_key: 
 		return key
 
 
-def wrap_html_with_context(html: str, context: dict) -> str:
+def wrap_html_with_context(html: str, context: dict, for_tile: bool = False, tile_block_id: str = "") -> str:
 	"""
 	Wrap HTML with Jinja context variables.
 
@@ -1137,14 +1250,17 @@ def wrap_html_with_context(html: str, context: dict) -> str:
 
 	script_escaped = escape_single_quotes(context.get("block_data_script") or "")
 	html = (
-		f"{{% with block = {{}} | execute_script_and_combine('{script_escaped}', {all_props_literal}, 'root') %}}"
+		f"{{% with block_data = {'block_data' if for_tile else '{}'} %}}"
+		f"{{% with block_data = block_data | execute_block_data_script('{script_escaped}', {all_props_literal}) %}}"
 		f"{html}"
+		f"{{% endwith %}}"
 		f"{{% endwith %}}"
 	)
 
 	# Set props contexts
 	html = f"{{% with props = {all_props_literal} %}}{html}{{% endwith %}}"
 	html = f"{{% with passed_down_props = {passed_down_literal} %}}{html}{{% endwith %}}"
+	html = f"{{% with unique_hash = '{tile_block_id if for_tile else 'root'}' %}}{html}{{% endwith %}}"
 
 	return html
 

@@ -20,6 +20,16 @@
 			class="shrink-0"
 			@update:modelValue="pageStore.updateActivePage('body_html', $event)"
 			:showLineNumbers="true"></CodeEditor>
+		<Switch
+			size="sm"
+			label="Include Alpine.JS"
+			description="AlpineJS is included by default in pages with Tiles."
+			:modelValue="Boolean(pageStore.activePage?.include_alpinejs)"
+			@update:modelValue="
+				(val: Boolean) => {
+					pageStore.updateActivePage('include_alpinejs', val);
+				}
+			" />
 	</div>
 </template>
 <script setup lang="ts">

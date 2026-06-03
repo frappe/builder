@@ -176,6 +176,7 @@ const usePageStore = defineStore("pageStore", {
 				})
 				.then(async () => {
 					this.activePage = await this.fetchActivePage(this.selectedPage as string);
+					await this.saveTiles();
 					if (openInBrowser) {
 						this.openPageInBrowser(this.activePage as BuilderPage);
 					}
@@ -309,6 +310,22 @@ const usePageStore = defineStore("pageStore", {
 					targetWindow?.location.reload();
 				}, 50);
 			}
+		},
+
+		async saveTiles(for_draft = false, page_id: string | null = null) {
+			return webPages.runDocMethod
+				.submit({
+					name: page_id || this.selectedPage,
+					method: "save_tiles",
+					for_draft,
+				})
+				.then()
+				.catch((e: { exc: string | null }) => {
+					const error_message = e.exc?.split("\n").slice(-2)[0];
+					toast.error("There was an error while saving tiles", {
+						description: error_message,
+					});
+				});
 		},
 
 		getResolvedPageURL(prependSlash = true, page: BuilderPage | null = null) {

@@ -215,6 +215,10 @@ const setWidth = (device: string) => {
 	}
 };
 
+const saveDraftTiles = async () => {
+	await pageStore.saveTiles(true, pageStore.selectedPage || (route.params.pageId as string));
+};
+
 const setPreviewURL = () => {
 	let queryParams: Record<string, any> = {
 		page: route.params.pageId,
@@ -227,6 +231,7 @@ const setPreviewURL = () => {
 };
 
 onActivated(() => {
+	saveDraftTiles();
 	setPreviewURL();
 	capture("builder_page_preview_viewed");
 });
