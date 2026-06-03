@@ -53,24 +53,20 @@ class BuilderClientScript(Document):
 		for app_name in self._get_referencing_apps():
 			rename_standard_client_script_files(old, new, app_name)
 
-	def _get_referencing_apps(self) -> list[str]:
-		"""Return the distinct app names of standard pages that use this script."""
-		refs = frappe.get_all(
-			"Builder Page Client Script",
-			filters={"builder_script": self.name},
-			fields=["parent"],
-			ignore_permissions=True,
-		)
-		apps: list[str] = []
-		seen: set[str] = set()
-		for ref in refs:
-			row = frappe.db.get_value("Builder Page", ref.parent, ["is_standard", "app"], as_dict=True)
-			if row and row.get("is_standard") and row.get("app"):
-				app = row["app"]
-				if app not in seen:
-					seen.add(app)
-					apps.append(app)
-		return apps
+	def _get_referencing_apps(self) -> set[str]:
+	    """Return the distinct app names of standard pages that use this script."""
+	    refs = frappe.get_all(
+	        "Builder Page Client Script",
+	        filters={"builder_script": self.name},
+	        fields=["parent"],
+	        ignore_permissions=True,
+	    )
+	    apps: set[str] = set()
+	    for ref in refs:
+	        row = frappe.db.get_value("Builder Page", ref.parent, ["is_standard", "app"], as_dict=True)
+	        if row and row.get("is_standard") and row.get("app"):
+	            apps.add(row["app"])
+	    return apps
 
 	def update_script_file(self):
 		script_type = self.script_type or ""
