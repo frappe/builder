@@ -346,13 +346,16 @@ def delete_standard_client_script_files(script_name: str, app_name: str) -> None
 		shutil.rmtree(script_path, ignore_errors=True)
 
 
-def rename_standard_page_files(old_page_name: str, app_name: str) -> None:
-	"""Remove the exported directory for a page that has been renamed.
-
-	Callers are responsible for re-exporting under the new name afterwards
-	(Frappe does not automatically call ``on_update`` after a rename).
-	"""
-	delete_standard_page_files(old_page_name, app_name)
+def rename_standard_page_files(old: str, new: str, app_name: str) -> None:
+    """Rename the builder_files directory for a standard page."""
+    old_dir = frappe.get_app_path(app_name, "builder_files", "pages", old)
+    new_dir = frappe.get_app_path(app_name, "builder_files", "pages", new)
+    if os.path.exists(old_dir):
+        os.rename(old_dir, new_dir)
+    old_json = os.path.join(new_dir, f"{old}.json")
+    new_json = os.path.join(new_dir, f"{new}.json")
+    if os.path.exists(old_json):
+        os.rename(old_json, new_json)
 
 
 def rename_standard_client_script_files(old_name: str, new_name: str, app_name: str) -> None:
