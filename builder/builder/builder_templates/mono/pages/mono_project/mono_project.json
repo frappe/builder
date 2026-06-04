@@ -1,0 +1,1723 @@
+{
+ "authenticated_access": 0,
+ "blocks": [
+  {
+   "attributes": {},
+   "baseStyles": {
+    "alignItems": "center",
+    "backgroundColor": "var(--5084c003-435e-4afe-9606-738d2fe9eaf0, #0F0F0E)",
+    "color": "var(--d6644bcb-e9fe-43a3-b3d2-5c6f8d3a4e16, #F4F4F0)",
+    "display": "flex",
+    "flexDirection": "column",
+    "flexShrink": 0,
+    "flexWrap": "wrap",
+    "fontFamily": "Inter",
+    "width": "100%"
+   },
+   "blockId": "root",
+   "blockName": "Page",
+   "children": [
+    {
+     "attributes": {},
+     "baseStyles": {},
+     "blockId": "27ca1b5aff",
+     "blockName": "Navbar",
+     "children": [
+      {
+       "attributes": {},
+       "baseStyles": {},
+       "blockId": "f0760c6872",
+       "children": [
+        {
+         "attributes": {},
+         "baseStyles": {},
+         "blockId": "8884cfb4ce",
+         "children": [
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "dfbc8dad9d",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "215b0a9440",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "mono_navbar",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "607e440fd6",
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "7cf03dc7c6",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "mono_navbar",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "b2cb9d9dea",
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "mono_navbar",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "b46d626597",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "30044bfb53",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "7c60fd50da",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "mono_navbar",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "ec8a46a64d",
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "b7121b1d1b",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "mono_navbar",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "37d223606c",
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "3f0cf8eedb",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "mono_navbar",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "355d47ec7f",
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "mono_navbar",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "386882a7dc",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "7e11593f56",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "mono_navbar",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "be1ec495a7",
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "customAttributes": {},
+         "isChildOfComponent": "mono_navbar",
+         "mobileStyles": {},
+         "rawStyles": {},
+         "referenceBlockId": "6213ebca16",
+         "tabletStyles": {}
+        }
+       ],
+       "classes": [],
+       "customAttributes": {},
+       "isChildOfComponent": "mono_navbar",
+       "mobileStyles": {},
+       "rawStyles": {},
+       "referenceBlockId": "036860d5f9",
+       "tabletStyles": {}
+      }
+     ],
+     "classes": [],
+     "customAttributes": {},
+     "extendedFromComponent": "mono_navbar",
+     "mobileStyles": {},
+     "rawStyles": {},
+     "tabletStyles": {}
+    },
+    {
+     "attributes": {},
+     "baseStyles": {
+      "alignItems": "center",
+      "backgroundColor": "var(--5084c003-435e-4afe-9606-738d2fe9eaf0, #0F0F0E)",
+      "display": "flex",
+      "flexDirection": "column",
+      "flexShrink": 0,
+      "overflow": "hidden",
+      "paddingBottom": "56px",
+      "paddingTop": "96px",
+      "width": "100%"
+     },
+     "blockId": "c5d4d5c5ed",
+     "blockName": "Section · Project Hero",
+     "children": [
+      {
+       "attributes": {},
+       "baseStyles": {
+        "display": "flex",
+        "flexDirection": "column",
+        "flexShrink": 0,
+        "marginLeft": "auto",
+        "marginRight": "auto",
+        "maxWidth": "1200px",
+        "overflow": "hidden",
+        "paddingLeft": "32px",
+        "paddingRight": "32px",
+        "width": "100%"
+       },
+       "blockId": "921f39801d",
+       "blockName": "Project Hero Container",
+       "children": [
+        {
+         "attributes": {},
+         "baseStyles": {
+          "display": "flex",
+          "flexDirection": "column",
+          "flexShrink": 0,
+          "gap": "36px",
+          "overflow": "hidden",
+          "width": "100%"
+         },
+         "blockId": "a15c55221e",
+         "blockName": "Project Hero Stack",
+         "children": [
+          {
+           "attributes": {},
+           "baseStyles": {
+            "alignItems": "center",
+            "display": "flex",
+            "flexDirection": "row",
+            "flexShrink": 0,
+            "gap": "10px",
+            "overflow": "hidden",
+            "width": "fit-content"
+           },
+           "blockId": "0207d38645",
+           "blockName": "Eyebrow",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {
+              "backgroundColor": "var(--a7daf035-5b1d-40aa-bd3e-1b522c705cd5, #D9F551)",
+              "borderRadius": "100px",
+              "display": "flex",
+              "flexDirection": "column",
+              "flexShrink": 0,
+              "height": "8px",
+              "overflow": "hidden",
+              "width": "8px"
+             },
+             "blockId": "58badf2af9",
+             "blockName": "Eyebrow Dot",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "div",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "color": "var(--d6644bcb-e9fe-43a3-b3d2-5c6f8d3a4e16, #F4F4F0)",
+              "fontFamily": "Inter",
+              "fontSize": "12px",
+              "fontWeight": "500",
+              "height": "fit-content",
+              "letterSpacing": "0.1em",
+              "lineHeight": "1.4",
+              "minWidth": "10px",
+              "textTransform": "uppercase",
+              "width": "fit-content"
+             },
+             "blockId": "529eb861ab",
+             "blockName": "Eyebrow Text",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "span",
+             "innerHTML": "Case study",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "element": "div",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {
+            "color": "var(--d6644bcb-e9fe-43a3-b3d2-5c6f8d3a4e16, #F4F4F0)",
+            "fontFamily": "Space Grotesk",
+            "fontSize": "64px",
+            "fontWeight": "500",
+            "height": "fit-content",
+            "letterSpacing": "-0.03em",
+            "lineHeight": "1.02",
+            "maxWidth": "900px",
+            "minWidth": "10px",
+            "width": "fit-content"
+           },
+           "blockId": "02b66c1855",
+           "blockName": "Project Title",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "element": "h1",
+           "innerHTML": "Nova — personal banking, unboxed",
+           "mobileStyles": {
+            "fontSize": "38px"
+           },
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {
+            "display": "grid",
+            "flexDirection": "column",
+            "flexShrink": 0,
+            "gap": "24px",
+            "gridTemplateColumns": "repeat(4, 1fr)",
+            "overflow": "hidden",
+            "width": "100%"
+           },
+           "blockId": "c5ecb31811",
+           "blockName": "Project Meta",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {
+              "display": "flex",
+              "flexDirection": "column",
+              "flexShrink": 0,
+              "gap": "6px",
+              "overflow": "hidden"
+             },
+             "blockId": "5ca304addf",
+             "blockName": "Meta · Client",
+             "children": [
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--71911d82-22b2-4753-bddf-b2d6726a820d, #98988F)",
+                "fontFamily": "Inter",
+                "fontSize": "12px",
+                "fontWeight": "500",
+                "height": "fit-content",
+                "letterSpacing": "0.1em",
+                "lineHeight": "1.4",
+                "minWidth": "10px",
+                "textTransform": "uppercase",
+                "width": "fit-content"
+               },
+               "blockId": "0416d47bc9",
+               "blockName": "Meta Key",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "span",
+               "innerHTML": "Client",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--d6644bcb-e9fe-43a3-b3d2-5c6f8d3a4e16, #F4F4F0)",
+                "fontFamily": "Inter",
+                "fontSize": "15px",
+                "height": "fit-content",
+                "lineHeight": "1.7",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "3716c90928",
+               "blockName": "Meta Value",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "p",
+               "innerHTML": "Nova Financial",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              }
+             ],
+             "classes": [],
+             "customAttributes": {},
+             "element": "div",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "display": "flex",
+              "flexDirection": "column",
+              "flexShrink": 0,
+              "gap": "6px",
+              "overflow": "hidden"
+             },
+             "blockId": "01fcc4d26c",
+             "blockName": "Meta · Year",
+             "children": [
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--71911d82-22b2-4753-bddf-b2d6726a820d, #98988F)",
+                "fontFamily": "Inter",
+                "fontSize": "12px",
+                "fontWeight": "500",
+                "height": "fit-content",
+                "letterSpacing": "0.1em",
+                "lineHeight": "1.4",
+                "minWidth": "10px",
+                "textTransform": "uppercase",
+                "width": "fit-content"
+               },
+               "blockId": "14e5bbab5d",
+               "blockName": "Meta Key",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "span",
+               "innerHTML": "Year",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--d6644bcb-e9fe-43a3-b3d2-5c6f8d3a4e16, #F4F4F0)",
+                "fontFamily": "Inter",
+                "fontSize": "15px",
+                "height": "fit-content",
+                "lineHeight": "1.7",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "be3adb62d9",
+               "blockName": "Meta Value",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "p",
+               "innerHTML": "2026",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              }
+             ],
+             "classes": [],
+             "customAttributes": {},
+             "element": "div",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "display": "flex",
+              "flexDirection": "column",
+              "flexShrink": 0,
+              "gap": "6px",
+              "overflow": "hidden"
+             },
+             "blockId": "fa36201e9c",
+             "blockName": "Meta · Scope",
+             "children": [
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--71911d82-22b2-4753-bddf-b2d6726a820d, #98988F)",
+                "fontFamily": "Inter",
+                "fontSize": "12px",
+                "fontWeight": "500",
+                "height": "fit-content",
+                "letterSpacing": "0.1em",
+                "lineHeight": "1.4",
+                "minWidth": "10px",
+                "textTransform": "uppercase",
+                "width": "fit-content"
+               },
+               "blockId": "a3f3905880",
+               "blockName": "Meta Key",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "span",
+               "innerHTML": "Scope",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--d6644bcb-e9fe-43a3-b3d2-5c6f8d3a4e16, #F4F4F0)",
+                "fontFamily": "Inter",
+                "fontSize": "15px",
+                "height": "fit-content",
+                "lineHeight": "1.7",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "f30833e63f",
+               "blockName": "Meta Value",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "p",
+               "innerHTML": "Brand · Product · Motion",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              }
+             ],
+             "classes": [],
+             "customAttributes": {},
+             "element": "div",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "display": "flex",
+              "flexDirection": "column",
+              "flexShrink": 0,
+              "gap": "6px",
+              "overflow": "hidden"
+             },
+             "blockId": "be6eb72163",
+             "blockName": "Meta · Industry",
+             "children": [
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--71911d82-22b2-4753-bddf-b2d6726a820d, #98988F)",
+                "fontFamily": "Inter",
+                "fontSize": "12px",
+                "fontWeight": "500",
+                "height": "fit-content",
+                "letterSpacing": "0.1em",
+                "lineHeight": "1.4",
+                "minWidth": "10px",
+                "textTransform": "uppercase",
+                "width": "fit-content"
+               },
+               "blockId": "664755e608",
+               "blockName": "Meta Key",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "span",
+               "innerHTML": "Industry",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--d6644bcb-e9fe-43a3-b3d2-5c6f8d3a4e16, #F4F4F0)",
+                "fontFamily": "Inter",
+                "fontSize": "15px",
+                "height": "fit-content",
+                "lineHeight": "1.7",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "f723f8b549",
+               "blockName": "Meta Value",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "p",
+               "innerHTML": "Fintech",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              }
+             ],
+             "classes": [],
+             "customAttributes": {},
+             "element": "div",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "element": "div",
+           "mobileStyles": {
+            "gridTemplateColumns": "1fr 1fr"
+           },
+           "rawStyles": {},
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "customAttributes": {},
+         "element": "div",
+         "mobileStyles": {},
+         "rawStyles": {},
+         "tabletStyles": {}
+        }
+       ],
+       "classes": [],
+       "customAttributes": {},
+       "element": "div",
+       "mobileStyles": {},
+       "rawStyles": {},
+       "tabletStyles": {}
+      }
+     ],
+     "classes": [],
+     "customAttributes": {},
+     "element": "div",
+     "mobileStyles": {},
+     "rawStyles": {},
+     "tabletStyles": {}
+    },
+    {
+     "attributes": {},
+     "baseStyles": {
+      "alignItems": "center",
+      "backgroundColor": "var(--5084c003-435e-4afe-9606-738d2fe9eaf0, #0F0F0E)",
+      "display": "flex",
+      "flexDirection": "column",
+      "flexShrink": 0,
+      "overflow": "hidden",
+      "paddingBottom": "88px",
+      "width": "100%"
+     },
+     "blockId": "84aebf7484",
+     "blockName": "Section · Cover",
+     "children": [
+      {
+       "attributes": {},
+       "baseStyles": {
+        "display": "flex",
+        "flexDirection": "column",
+        "flexShrink": 0,
+        "marginLeft": "auto",
+        "marginRight": "auto",
+        "maxWidth": "1200px",
+        "overflow": "hidden",
+        "paddingLeft": "32px",
+        "paddingRight": "32px",
+        "width": "100%"
+       },
+       "blockId": "6c36e3334a",
+       "blockName": "Cover Container",
+       "children": [
+        {
+         "attributes": {
+          "alt": "Nova brand cover",
+          "src": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1800"
+         },
+         "baseStyles": {
+          "borderRadius": "22px",
+          "flexShrink": 0,
+          "height": "640px",
+          "objectFit": "cover",
+          "width": "100%"
+         },
+         "blockId": "1bcf239531",
+         "blockName": "Project Cover",
+         "children": [],
+         "classes": [],
+         "customAttributes": {},
+         "element": "img",
+         "mobileStyles": {
+          "height": "300px"
+         },
+         "rawStyles": {},
+         "tabletStyles": {}
+        }
+       ],
+       "classes": [],
+       "customAttributes": {},
+       "element": "div",
+       "mobileStyles": {},
+       "rawStyles": {},
+       "tabletStyles": {}
+      }
+     ],
+     "classes": [],
+     "customAttributes": {},
+     "element": "div",
+     "mobileStyles": {},
+     "rawStyles": {},
+     "tabletStyles": {}
+    },
+    {
+     "attributes": {},
+     "baseStyles": {
+      "alignItems": "center",
+      "backgroundColor": "var(--5084c003-435e-4afe-9606-738d2fe9eaf0, #0F0F0E)",
+      "display": "flex",
+      "flexDirection": "column",
+      "flexShrink": 0,
+      "overflow": "hidden",
+      "paddingBottom": "88px",
+      "width": "100%"
+     },
+     "blockId": "832add69f2",
+     "blockName": "Section · Overview",
+     "children": [
+      {
+       "attributes": {},
+       "baseStyles": {
+        "display": "flex",
+        "flexDirection": "column",
+        "flexShrink": 0,
+        "marginLeft": "auto",
+        "marginRight": "auto",
+        "maxWidth": "1200px",
+        "overflow": "hidden",
+        "paddingLeft": "32px",
+        "paddingRight": "32px",
+        "width": "100%"
+       },
+       "blockId": "6a005c5b78",
+       "blockName": "Overview Container",
+       "children": [
+        {
+         "attributes": {},
+         "baseStyles": {
+          "alignItems": "flex-start",
+          "display": "flex",
+          "flexDirection": "row",
+          "flexShrink": 0,
+          "gap": "48px",
+          "overflow": "hidden",
+          "width": "100%"
+         },
+         "blockId": "8e208978ef",
+         "blockName": "Overview Split",
+         "children": [
+          {
+           "attributes": {},
+           "baseStyles": {
+            "display": "flex",
+            "flexBasis": "0px",
+            "flexDirection": "column",
+            "flexGrow": 1,
+            "flexShrink": 0,
+            "gap": "14px",
+            "minWidth": "0px",
+            "overflow": "hidden"
+           },
+           "blockId": "e94a9ea3cb",
+           "blockName": "Overview · Challenge",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {
+              "color": "var(--a7daf035-5b1d-40aa-bd3e-1b522c705cd5, #D9F551)",
+              "fontFamily": "Inter",
+              "fontSize": "12px",
+              "fontWeight": "500",
+              "height": "fit-content",
+              "letterSpacing": "0.1em",
+              "lineHeight": "1.4",
+              "minWidth": "10px",
+              "textTransform": "uppercase",
+              "width": "fit-content"
+             },
+             "blockId": "eabfc95aa6",
+             "blockName": "Challenge Label",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "span",
+             "innerHTML": "The challenge",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "color": "var(--d6644bcb-e9fe-43a3-b3d2-5c6f8d3a4e16, #F4F4F0)",
+              "fontFamily": "Inter",
+              "fontSize": "17px",
+              "height": "fit-content",
+              "lineHeight": "1.7",
+              "minWidth": "10px",
+              "width": "fit-content"
+             },
+             "blockId": "cfcfc8a7e9",
+             "blockName": "Challenge Text",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "p",
+             "innerHTML": "Nova had a banking license, a waitlist of 40,000 people, and a brand that looked like a spreadsheet. They needed an identity and an app that made personal finance feel personal — in time for a public launch twelve weeks out.",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "element": "div",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {
+            "display": "flex",
+            "flexBasis": "0px",
+            "flexDirection": "column",
+            "flexGrow": 1,
+            "flexShrink": 0,
+            "gap": "14px",
+            "minWidth": "0px",
+            "overflow": "hidden"
+           },
+           "blockId": "76a2a1bd8a",
+           "blockName": "Overview · Outcome",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {
+              "color": "var(--a7daf035-5b1d-40aa-bd3e-1b522c705cd5, #D9F551)",
+              "fontFamily": "Inter",
+              "fontSize": "12px",
+              "fontWeight": "500",
+              "height": "fit-content",
+              "letterSpacing": "0.1em",
+              "lineHeight": "1.4",
+              "minWidth": "10px",
+              "textTransform": "uppercase",
+              "width": "fit-content"
+             },
+             "blockId": "cb28f4e0cf",
+             "blockName": "Outcome Label",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "span",
+             "innerHTML": "The outcome",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "color": "var(--d6644bcb-e9fe-43a3-b3d2-5c6f8d3a4e16, #F4F4F0)",
+              "fontFamily": "Inter",
+              "fontSize": "17px",
+              "height": "fit-content",
+              "lineHeight": "1.7",
+              "minWidth": "10px",
+              "width": "fit-content"
+             },
+             "blockId": "5f6b98dd4e",
+             "blockName": "Outcome Text",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "p",
+             "innerHTML": "A warm, editorial identity, a design system covering 220+ app screens, and a launch film that did the rounds. Nova onboarded 18,000 customers in week one and now ships product without us — which was the point.",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "element": "div",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "customAttributes": {},
+         "element": "div",
+         "mobileStyles": {
+          "flexDirection": "column",
+          "gap": "32px"
+         },
+         "rawStyles": {},
+         "tabletStyles": {}
+        }
+       ],
+       "classes": [],
+       "customAttributes": {},
+       "element": "div",
+       "mobileStyles": {},
+       "rawStyles": {},
+       "tabletStyles": {}
+      }
+     ],
+     "classes": [],
+     "customAttributes": {},
+     "element": "div",
+     "mobileStyles": {},
+     "rawStyles": {},
+     "tabletStyles": {}
+    },
+    {
+     "attributes": {},
+     "baseStyles": {
+      "alignItems": "center",
+      "backgroundColor": "var(--5084c003-435e-4afe-9606-738d2fe9eaf0, #0F0F0E)",
+      "display": "flex",
+      "flexDirection": "column",
+      "flexShrink": 0,
+      "overflow": "hidden",
+      "paddingBottom": "88px",
+      "width": "100%"
+     },
+     "blockId": "975e3069bd",
+     "blockName": "Section · Gallery",
+     "children": [
+      {
+       "attributes": {},
+       "baseStyles": {
+        "display": "flex",
+        "flexDirection": "column",
+        "flexShrink": 0,
+        "marginLeft": "auto",
+        "marginRight": "auto",
+        "maxWidth": "1200px",
+        "overflow": "hidden",
+        "paddingLeft": "32px",
+        "paddingRight": "32px",
+        "width": "100%"
+       },
+       "blockId": "a310f2efaa",
+       "blockName": "Gallery Container",
+       "children": [
+        {
+         "attributes": {},
+         "baseStyles": {
+          "display": "grid",
+          "flexDirection": "column",
+          "flexShrink": 0,
+          "gap": "28px",
+          "gridTemplateColumns": "repeat(2, 1fr)",
+          "overflow": "hidden",
+          "width": "100%"
+         },
+         "blockId": "5b5bf3dc1c",
+         "blockName": "Gallery Pair",
+         "children": [
+          {
+           "attributes": {
+            "alt": "Nova identity detail",
+            "src": "https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80&w=1100"
+           },
+           "baseStyles": {
+            "borderRadius": "18px",
+            "flexShrink": 0,
+            "height": "460px",
+            "objectFit": "cover",
+            "width": "100%"
+           },
+           "blockId": "8c47995f7e",
+           "blockName": "Gallery Image 1",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "element": "img",
+           "mobileStyles": {
+            "height": "260px"
+           },
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {
+            "alt": "Nova app screens",
+            "src": "https://images.unsplash.com/photo-1545235617-9465d2a55698?auto=format&fit=crop&q=80&w=1100"
+           },
+           "baseStyles": {
+            "borderRadius": "18px",
+            "flexShrink": 0,
+            "height": "460px",
+            "objectFit": "cover",
+            "width": "100%"
+           },
+           "blockId": "d3f7370b86",
+           "blockName": "Gallery Image 2",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "element": "img",
+           "mobileStyles": {
+            "height": "260px"
+           },
+           "rawStyles": {},
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "customAttributes": {},
+         "element": "div",
+         "mobileStyles": {
+          "gridTemplateColumns": "1fr"
+         },
+         "rawStyles": {},
+         "tabletStyles": {}
+        },
+        {
+         "attributes": {
+          "alt": "Nova design system",
+          "src": "https://images.unsplash.com/photo-1559028012-481c04fa702d?auto=format&fit=crop&q=80&w=1800"
+         },
+         "baseStyles": {
+          "borderRadius": "22px",
+          "flexShrink": 0,
+          "height": "560px",
+          "marginTop": "28px",
+          "objectFit": "cover",
+          "width": "100%"
+         },
+         "blockId": "eba9d3e4cc",
+         "blockName": "Gallery Wide",
+         "children": [],
+         "classes": [],
+         "customAttributes": {},
+         "element": "img",
+         "mobileStyles": {
+          "height": "280px"
+         },
+         "rawStyles": {},
+         "tabletStyles": {}
+        }
+       ],
+       "classes": [],
+       "customAttributes": {},
+       "element": "div",
+       "mobileStyles": {},
+       "rawStyles": {},
+       "tabletStyles": {}
+      }
+     ],
+     "classes": [],
+     "customAttributes": {},
+     "element": "div",
+     "mobileStyles": {},
+     "rawStyles": {},
+     "tabletStyles": {}
+    },
+    {
+     "attributes": {},
+     "baseStyles": {
+      "alignItems": "center",
+      "backgroundColor": "var(--5084c003-435e-4afe-9606-738d2fe9eaf0, #0F0F0E)",
+      "display": "flex",
+      "flexDirection": "column",
+      "flexShrink": 0,
+      "overflow": "hidden",
+      "paddingBottom": "72px",
+      "width": "100%"
+     },
+     "blockId": "2bd3f43938",
+     "blockName": "Section · Results",
+     "children": [
+      {
+       "attributes": {},
+       "baseStyles": {
+        "display": "flex",
+        "flexDirection": "column",
+        "flexShrink": 0,
+        "marginLeft": "auto",
+        "marginRight": "auto",
+        "maxWidth": "1200px",
+        "overflow": "hidden",
+        "paddingLeft": "32px",
+        "paddingRight": "32px",
+        "width": "100%"
+       },
+       "blockId": "52f20b2d5a",
+       "blockName": "Results Container",
+       "children": [
+        {
+         "attributes": {},
+         "baseStyles": {
+          "display": "grid",
+          "flexDirection": "column",
+          "flexShrink": 0,
+          "gap": "28px",
+          "gridTemplateColumns": "repeat(3, 1fr)",
+          "overflow": "hidden",
+          "width": "100%"
+         },
+         "blockId": "a35d060e26",
+         "blockName": "Results Grid",
+         "children": [
+          {
+           "attributes": {},
+           "baseStyles": {
+            "borderTopColor": "var(--bdea6039-60bc-445e-9f9e-5c82000b5839, #2A2A27)",
+            "borderTopStyle": "solid",
+            "borderTopWidth": "1px",
+            "display": "flex",
+            "flexDirection": "column",
+            "flexGrow": 1,
+            "flexShrink": 0,
+            "gap": "10px",
+            "overflow": "hidden",
+            "paddingTop": "28px"
+           },
+           "blockId": "ebe5ceef0e",
+           "blockName": "Stat · Customers in wee",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {
+              "color": "var(--a7daf035-5b1d-40aa-bd3e-1b522c705cd5, #D9F551)",
+              "fontFamily": "Space Grotesk",
+              "fontSize": "52px",
+              "fontWeight": "500",
+              "height": "fit-content",
+              "letterSpacing": "-0.03em",
+              "lineHeight": "1.02",
+              "minWidth": "10px",
+              "width": "fit-content"
+             },
+             "blockId": "1b31e629d8",
+             "blockName": "Stat Number",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "h3",
+             "innerHTML": "18k",
+             "mobileStyles": {
+              "fontSize": "38px"
+             },
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "color": "var(--71911d82-22b2-4753-bddf-b2d6726a820d, #98988F)",
+              "fontFamily": "Inter",
+              "fontSize": "15px",
+              "height": "fit-content",
+              "lineHeight": "1.7",
+              "minWidth": "10px",
+              "width": "fit-content"
+             },
+             "blockId": "895b0233b9",
+             "blockName": "Stat Label",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "p",
+             "innerHTML": "Customers in week one",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "element": "div",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {
+            "borderTopColor": "var(--bdea6039-60bc-445e-9f9e-5c82000b5839, #2A2A27)",
+            "borderTopStyle": "solid",
+            "borderTopWidth": "1px",
+            "display": "flex",
+            "flexDirection": "column",
+            "flexGrow": 1,
+            "flexShrink": 0,
+            "gap": "10px",
+            "overflow": "hidden",
+            "paddingTop": "28px"
+           },
+           "blockId": "7e5dab9298",
+           "blockName": "Stat · Screens in the d",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {
+              "color": "var(--a7daf035-5b1d-40aa-bd3e-1b522c705cd5, #D9F551)",
+              "fontFamily": "Space Grotesk",
+              "fontSize": "52px",
+              "fontWeight": "500",
+              "height": "fit-content",
+              "letterSpacing": "-0.03em",
+              "lineHeight": "1.02",
+              "minWidth": "10px",
+              "width": "fit-content"
+             },
+             "blockId": "9b19ce634e",
+             "blockName": "Stat Number",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "h3",
+             "innerHTML": "220+",
+             "mobileStyles": {
+              "fontSize": "38px"
+             },
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "color": "var(--71911d82-22b2-4753-bddf-b2d6726a820d, #98988F)",
+              "fontFamily": "Inter",
+              "fontSize": "15px",
+              "height": "fit-content",
+              "lineHeight": "1.7",
+              "minWidth": "10px",
+              "width": "fit-content"
+             },
+             "blockId": "654c49a76e",
+             "blockName": "Stat Label",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "p",
+             "innerHTML": "Screens in the design system",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "element": "div",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {
+            "borderTopColor": "var(--bdea6039-60bc-445e-9f9e-5c82000b5839, #2A2A27)",
+            "borderTopStyle": "solid",
+            "borderTopWidth": "1px",
+            "display": "flex",
+            "flexDirection": "column",
+            "flexGrow": 1,
+            "flexShrink": 0,
+            "gap": "10px",
+            "overflow": "hidden",
+            "paddingTop": "28px"
+           },
+           "blockId": "5599c59b91",
+           "blockName": "Stat · App Store rating",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {
+              "color": "var(--a7daf035-5b1d-40aa-bd3e-1b522c705cd5, #D9F551)",
+              "fontFamily": "Space Grotesk",
+              "fontSize": "52px",
+              "fontWeight": "500",
+              "height": "fit-content",
+              "letterSpacing": "-0.03em",
+              "lineHeight": "1.02",
+              "minWidth": "10px",
+              "width": "fit-content"
+             },
+             "blockId": "29a1e9a4a1",
+             "blockName": "Stat Number",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "h3",
+             "innerHTML": "4.8★",
+             "mobileStyles": {
+              "fontSize": "38px"
+             },
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "color": "var(--71911d82-22b2-4753-bddf-b2d6726a820d, #98988F)",
+              "fontFamily": "Inter",
+              "fontSize": "15px",
+              "height": "fit-content",
+              "lineHeight": "1.7",
+              "minWidth": "10px",
+              "width": "fit-content"
+             },
+             "blockId": "c82c57b849",
+             "blockName": "Stat Label",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "p",
+             "innerHTML": "App Store rating at launch",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "element": "div",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "customAttributes": {},
+         "element": "div",
+         "mobileStyles": {
+          "gridTemplateColumns": "1fr"
+         },
+         "rawStyles": {},
+         "tabletStyles": {}
+        },
+        {
+         "attributes": {},
+         "baseStyles": {
+          "alignItems": "center",
+          "borderTopColor": "var(--bdea6039-60bc-445e-9f9e-5c82000b5839, #2A2A27)",
+          "borderTopStyle": "solid",
+          "borderTopWidth": "1px",
+          "display": "flex",
+          "flexDirection": "row",
+          "flexShrink": 0,
+          "flexWrap": "wrap",
+          "gap": "16px",
+          "justifyContent": "space-between",
+          "marginTop": "72px",
+          "overflow": "hidden",
+          "paddingTop": "28px",
+          "width": "100%"
+         },
+         "blockId": "e8f104d6aa",
+         "blockName": "Next Project Row",
+         "children": [
+          {
+           "attributes": {},
+           "baseStyles": {
+            "color": "var(--71911d82-22b2-4753-bddf-b2d6726a820d, #98988F)",
+            "fontFamily": "Inter",
+            "fontSize": "12px",
+            "fontWeight": "500",
+            "height": "fit-content",
+            "letterSpacing": "0.1em",
+            "lineHeight": "1.4",
+            "minWidth": "10px",
+            "textTransform": "uppercase",
+            "width": "fit-content"
+           },
+           "blockId": "25b705abed",
+           "blockName": "Next Label",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "element": "span",
+           "innerHTML": "Next up",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {
+            "href": "/"
+           },
+           "baseStyles": {
+            "alignItems": "center",
+            "display": "inline-flex",
+            "flexDirection": "row",
+            "fontSize": "16px",
+            "gap": "8px",
+            "height": "fit-content",
+            "lineHeight": "1.4",
+            "minWidth": "10px",
+            "textDecoration": "none",
+            "width": "fit-content"
+           },
+           "blockId": "a3045938c0",
+           "blockName": "Next Link",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {
+              "color": "var(--d6644bcb-e9fe-43a3-b3d2-5c6f8d3a4e16, #F4F4F0)",
+              "fontFamily": "Space Grotesk",
+              "fontSize": "15px",
+              "fontWeight": "500",
+              "height": "fit-content",
+              "lineHeight": "1.4",
+              "minWidth": "10px",
+              "width": "fit-content"
+             },
+             "blockId": "db09df0f14",
+             "blockName": "Link Label",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "span",
+             "innerHTML": "Back to selected work",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "alignItems": "center",
+              "color": "var(--a7daf035-5b1d-40aa-bd3e-1b522c705cd5, #D9F551)",
+              "display": "inline-flex",
+              "flexShrink": 0,
+              "fontSize": "16px",
+              "height": "fit-content",
+              "justifyContent": "center",
+              "lineHeight": "0",
+              "minWidth": "0px",
+              "width": "fit-content"
+             },
+             "blockId": "675866122e",
+             "blockName": "Arrow",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "span",
+             "innerHTML": "<!-- @license lucide-static v1.17.0 - ISC -->\n<svg\n  class=\"lucide lucide-arrow-up-right\"\n  xmlns=\"http://www.w3.org/2000/svg\"\n  width=\"18\"\n  height=\"18\"\n  viewBox=\"0 0 24 24\"\n  fill=\"none\"\n  stroke=\"currentColor\"\n  stroke-width=\"2\"\n  stroke-linecap=\"round\"\n  stroke-linejoin=\"round\"\n>\n  <path d=\"M7 7h10v10\" />\n  <path d=\"M7 17 17 7\" />\n</svg>\n",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "element": "a",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "customAttributes": {},
+         "element": "div",
+         "mobileStyles": {},
+         "rawStyles": {},
+         "tabletStyles": {}
+        }
+       ],
+       "classes": [],
+       "customAttributes": {},
+       "element": "div",
+       "mobileStyles": {},
+       "rawStyles": {},
+       "tabletStyles": {}
+      }
+     ],
+     "classes": [],
+     "customAttributes": {},
+     "element": "div",
+     "mobileStyles": {},
+     "rawStyles": {},
+     "tabletStyles": {}
+    },
+    {
+     "attributes": {},
+     "baseStyles": {},
+     "blockId": "34ebe32b49",
+     "blockName": "Footer",
+     "children": [
+      {
+       "attributes": {},
+       "baseStyles": {},
+       "blockId": "8dfd3e4b0a",
+       "children": [
+        {
+         "attributes": {},
+         "baseStyles": {},
+         "blockId": "d35b43f610",
+         "children": [
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "b1e51cbaf3",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "mono_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "226cc18098",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "25cc466475",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "mono_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "a096b3038c",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "e875cdd504",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "4c4e843e4c",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "mono_footer",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "4a6cf883d8",
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "a8947570cb",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "mono_footer",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "7f81f099b6",
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "mono_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "1df1cd1c6b",
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "customAttributes": {},
+         "isChildOfComponent": "mono_footer",
+         "mobileStyles": {},
+         "rawStyles": {},
+         "referenceBlockId": "2d2eea4153",
+         "tabletStyles": {}
+        },
+        {
+         "attributes": {},
+         "baseStyles": {},
+         "blockId": "0c6245d335",
+         "children": [
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "e977d804cf",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "mono_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "ed827e1d65",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "f874c88b0b",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "2dd7545d71",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "mono_footer",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "ce42b2e721",
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "83aa3b8d3a",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "mono_footer",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "b3620f2338",
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "f072c36581",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "mono_footer",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "41223c3608",
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "6650808285",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "mono_footer",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "9c582829ec",
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "mono_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "85b0c86168",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "098ea53a37",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "mono_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "41d904936e",
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "customAttributes": {},
+         "isChildOfComponent": "mono_footer",
+         "mobileStyles": {},
+         "rawStyles": {},
+         "referenceBlockId": "a59ebe408f",
+         "tabletStyles": {}
+        }
+       ],
+       "classes": [],
+       "customAttributes": {},
+       "isChildOfComponent": "mono_footer",
+       "mobileStyles": {},
+       "rawStyles": {},
+       "referenceBlockId": "f06f37b0da",
+       "tabletStyles": {}
+      }
+     ],
+     "classes": [],
+     "customAttributes": {},
+     "extendedFromComponent": "mono_footer",
+     "mobileStyles": {},
+     "rawStyles": {},
+     "tabletStyles": {}
+    }
+   ],
+   "classes": [],
+   "customAttributes": {},
+   "element": "div",
+   "mobileStyles": {},
+   "originalElement": "body",
+   "rawStyles": {},
+   "tabletStyles": {}
+  }
+ ],
+ "client_scripts": [],
+ "creation": "2026-06-05 00:04:07.595219",
+ "disable_indexing": 0,
+ "docstatus": 0,
+ "doctype": "Builder Page",
+ "draft_blocks": null,
+ "dynamic_route": 0,
+ "idx": 0,
+ "is_standard": 0,
+ "is_template": 1,
+ "meta_description": "Case study — Nova, personal banking unboxed.",
+ "modified": "2026-06-05 00:04:07.597783",
+ "modified_by": "Administrator",
+ "name": "mono_project",
+ "owner": "Administrator",
+ "page_name": "mono_project",
+ "page_title": "Project",
+ "preview": "/builder_assets/mono/mono_project/preview.webp",
+ "project_folder": null,
+ "published": 0,
+ "published_at": null,
+ "route": "templates/mono/project",
+ "template_group": "mono"
+}
