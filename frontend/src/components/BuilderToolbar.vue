@@ -94,8 +94,19 @@
 					</Tooltip>
 				</div>
 			</div>
-			<Badge variant="subtle" theme="orange" v-if="builderStore.readOnlyMode">Read Only</Badge>
-			<div class="flex gap-2">
+			<div class="flex items-center gap-2" v-if="builderStore.readOnlyMode">
+				<Badge variant="subtle" theme="orange">
+					{{ pageStore.activePage?.is_template ? "Template" : "Read Only" }}
+				</Badge>
+				<Button
+					v-if="pageStore.activePage?.is_template && pageStore.activePage?.template_group"
+					size="sm"
+					variant="subtle"
+					@click="duplicateToEdit">
+					Duplicate to edit
+				</Button>
+			</div>
+			<div class="flex items-center gap-2">
 				<Tooltip v-if="builderStore.isAIEnabled" text="Generate with AI" :hoverDelay="0.6" arrow-class="mb-3">
 					<Button
 						variant="ghost"
@@ -123,7 +134,9 @@
 					</Tooltip>
 				</router-link>
 			</div>
-			<PublishButton :disabled="builderStore.readOnlyMode"></PublishButton>
+			<PublishButton
+				v-if="!(builderStore.readOnlyMode && pageStore.activePage?.is_template)"
+				:disabled="builderStore.readOnlyMode"></PublishButton>
 		</div>
 		<Dialog title="Get Started" size="4xl" v-model="showInfoDialog">
 			<template #default>
@@ -154,13 +167,13 @@ import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import PlayIcon from "@/components/Icons/Play.vue";
 import SettingsGearIcon from "@/components/Icons/SettingsGear.vue";
 import PublishButton from "@/components/PublishButton.vue";
-import { webPages } from "@/data/webPage";
+import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { getTextContent } from "@/utils/helpers";
 import { useDark, useToggle } from "@vueuse/core";
-import { Badge, Popover, toast, Tooltip } from "frappe-ui";
+import { Badge, createResource, Popover, toast, Tooltip } from "frappe-ui";
 import { DialogDescription, DialogTitle } from "reka-ui";
 import { computed, defineAsyncComponent, inject, ref } from "vue";
 import SparklesIcon from "~icons/lucide/sparkles";
@@ -250,20 +263,20 @@ const transitionTheme = (toggleDark: () => void) => {
 	}
 };
 
-const saveAsTemplate = async () => {
+const duplicateToEdit = async () => {
 	toast.promise(
-		webPages.setValue.submit({
-			name: pageStore.activePage?.name,
-			is_template: true,
-		}),
+		createResource({
+			url: "builder.api.create_page_from_template",
+		})
+			.submit({ template_page: pageStore.activePage?.name })
+			.then((newPageName: string) => {
+				router.push({ name: "builder", params: { pageId: newPageName }, force: true });
+				pageStore.setPage(newPageName);
+			}),
 		{
-			loading: "Saving as template",
-			success: () => {
-				pageStore.fetchActivePage(pageStore.selectedPage as string).then((page) => {
-					pageStore.activePage = page;
-				});
-				return "Page saved as template";
-			},
+			loading: "Creating an editable copy...",
+			success: () => "Page created",
+			error: () => "Could not create page from template",
 		},
 	);
 };

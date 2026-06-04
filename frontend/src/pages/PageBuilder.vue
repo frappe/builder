@@ -251,13 +251,21 @@ const handleModifyStreamingBlocks = (block: BlockOptions) => {
 	}
 };
 
-watch([() => canvasStore.editableBlock, () => pageStore.activePage?.is_standard], () => {
-	builderStore.toggleReadOnlyMode(
-		canvasStore.editingMode === "page" &&
-			Boolean(pageStore.activePage?.is_standard) &&
-			!window.is_developer_mode,
-	);
-});
+watch(
+	[
+		() => canvasStore.editableBlock,
+		() => pageStore.activePage?.is_standard,
+		() => pageStore.activePage?.is_template,
+	],
+	() => {
+		builderStore.toggleReadOnlyMode(
+			canvasStore.editingMode === "page" &&
+				(Boolean(pageStore.activePage?.is_standard) ||
+					Boolean(pageStore.activePage?.is_template && pageStore.activePage?.template_group)) &&
+				!window.is_developer_mode,
+		);
+	},
+);
 
 declare global {
 	interface Window {

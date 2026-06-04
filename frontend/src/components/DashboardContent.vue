@@ -98,8 +98,15 @@ const orderMap = {
 	alphabetically_z_a: "page_title desc",
 };
 
+let freshlyMounted = true;
 onActivated(() => {
 	capture("builder_dashboard_page_visited");
+	// the dashboard is kept alive — refresh the list when returning to it so
+	// pages created elsewhere (e.g. from a template) show up without a reload
+	if (!freshlyMounted) {
+		fetchPages();
+	}
+	freshlyMounted = false;
 });
 
 watch(

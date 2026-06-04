@@ -210,14 +210,10 @@ def update_page_folder(pages: list[str], folder_name: str) -> None:
 	)
 
 
-@frappe.whitelist()
-@has_page_write("You do not have permission to duplicate a page.")
-def duplicate_page(page_name: str):
-	page = frappe.get_doc("Builder Page", page_name)
-	new_page = frappe.copy_doc(page)
-	del new_page.page_name
-	new_page.route = None
-	client_scripts = page.client_scripts
+def clone_client_scripts(source_page, new_page) -> None:
+	"""Clone the source page's client scripts onto new_page with hashed names,
+	so the copy never shares scripts with the source."""
+	client_scripts = source_page.client_scripts
 	new_page.client_scripts = []
 	for script in client_scripts:
 		builder_script = frappe.get_doc("Builder Client Script", script.builder_script)
@@ -225,8 +221,112 @@ def duplicate_page(page_name: str):
 		new_script.name = f"{builder_script.name}-{frappe.generate_hash(length=5)}"
 		new_script.insert(ignore_permissions=True)
 		new_page.append("client_scripts", {"builder_script": new_script.name})
+
+
+@frappe.whitelist()
+@has_page_write("You do not have permission to duplicate a page.")
+def duplicate_page(page_name: str):
+	page = frappe.get_doc("Builder Page", page_name)
+	new_page = frappe.copy_doc(page)
+	del new_page.page_name
+	new_page.route = None
+	clone_client_scripts(page, new_page)
 	new_page.insert()
 	return new_page
+
+
+@frappe.whitelist()
+@has_page_read("You do not have permission to view templates.")
+def get_template_groups() -> list[dict]:
+	"""Template groups with their pages, for the template selector.
+
+	Group metadata comes from each group's template.json manifest on disk;
+	pages come from the database (so only installed templates are listed).
+	Pages a user saved as template (no template_group) appear under
+	"My Templates"."""
+	from builder.template_sync import get_all_group_manifests
+
+	pages = frappe.get_all(
+		"Builder Page",
+		filters={"is_template": 1},
+		fields=["name", "page_title", "preview", "route", "template_group"],
+		order_by="creation asc",
+	)
+	pages_by_group: dict[str, list] = {}
+	for page in pages:
+		pages_by_group.setdefault(page.template_group or "", []).append(page)
+
+	groups = []
+	for group, manifest in get_all_group_manifests().items():
+		group_pages = pages_by_group.pop(group, [])
+		if not group_pages:
+			continue
+		manifest_order = {
+			page.get("name"): idx
+			for idx, page in enumerate(manifest.get("pages") or [])
+			if isinstance(page, dict)
+		}
+		group_pages.sort(key=lambda p: (manifest_order.get(p.name, len(manifest_order)), p.page_title or ""))
+		groups.append(
+			{
+				"name": group,
+				"title": manifest.get("title") or group.replace("_", " ").title(),
+				"description": manifest.get("description") or "",
+				"preview": manifest.get("preview") or group_pages[0].preview,
+				"order": manifest.get("order"),
+				"pages": group_pages,
+			}
+		)
+	groups.sort(key=lambda g: (g["order"] is None, g["order"] or 0, g["title"]))
+
+	user_templates = pages_by_group.pop("", [])
+	# grouped pages whose manifest is missing on disk should still show up
+	for group, group_pages in pages_by_group.items():
+		groups.append(
+			{
+				"name": group,
+				"title": group.replace("_", " ").title(),
+				"description": "",
+				"preview": group_pages[0].preview,
+				"pages": group_pages,
+			}
+		)
+	if user_templates:
+		groups.append(
+			{
+				"name": "my_templates",
+				"title": "My Templates",
+				"description": "Pages you saved as templates",
+				"preview": user_templates[0].preview,
+				"pages": user_templates,
+			}
+		)
+	return groups
+
+
+@frappe.whitelist()
+@has_page_write("You do not have permission to create a page.")
+def create_page_from_template(template_page: str, project_folder: str | None = None) -> str:
+	"""Create an editable copy of a template page and return its name."""
+	template = frappe.get_doc("Builder Page", template_page)
+	if not template.is_template:
+		frappe.throw(f"{template_page} is not a template page")
+
+	new_page = frappe.copy_doc(template)
+	new_page.is_template = 0
+	new_page.template_group = None
+	del new_page.page_name
+	new_page.route = None
+	new_page.published = 0
+	new_page.published_at = None
+	# the copy opens as a draft in the editor
+	new_page.draft_blocks = template.draft_blocks or template.blocks
+	new_page.blocks = None
+	if project_folder:
+		new_page.project_folder = project_folder
+	clone_client_scripts(template, new_page)
+	new_page.insert()
+	return new_page.name
 
 
 @frappe.whitelist()

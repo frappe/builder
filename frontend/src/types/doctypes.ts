@@ -79,6 +79,8 @@ export interface BuilderPage extends DocType {
 	client_scripts: BuilderPageClientScript[];
 	/** Is Template: Check */
 	is_template: 0 | 1;
+	/** Template Group: Data */
+	template_group?: string;
 	/** Favicon: Attach Image */
 	favicon?: string;
 	/** Authenticated Access: Check */
@@ -97,6 +99,23 @@ export interface BuilderPage extends DocType {
 	app?: any;
 	/** Published At: Datetime */
 	published_at?: string;
+}
+
+// returned by builder.api.get_template_groups
+export interface TemplatePageSummary {
+	name: string;
+	page_title?: string;
+	preview?: string;
+	route?: string;
+	template_group?: string;
+}
+
+export interface TemplateGroup {
+	name: string;
+	title: string;
+	description?: string;
+	preview?: string;
+	pages: TemplatePageSummary[];
 }
 
 // Last updated: 2024-11-13 20:08:54.615438

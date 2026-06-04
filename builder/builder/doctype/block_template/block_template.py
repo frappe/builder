@@ -11,8 +11,7 @@ from frappe.model.document import Document
 from frappe.modules import scrub
 from frappe.modules.export_file import export_to_files
 
-from builder.builder.doctype.builder_page.builder_page import get_template_assets_folder_path
-from builder.utils import copy_img_to_asset_folder
+from builder.utils import copy_img_to_asset_folder, get_template_assets_folder_path
 
 
 class BlockTemplate(Document):

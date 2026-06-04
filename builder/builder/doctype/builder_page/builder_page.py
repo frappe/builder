@@ -2,16 +2,12 @@
 # For license information, please see license.txt
 
 import copy
-import os
 import re
-import shutil
 from typing import Any
 
 import bs4 as bs
 import frappe
 import frappe.utils
-from frappe.modules import scrub
-from frappe.modules.export_file import export_to_files
 from frappe.utils import now, set_request
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
@@ -23,20 +19,19 @@ from frappe.website.serve import get_response_content
 from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
 
+from builder.builder.doctype.builder_project_folder.builder_project_folder import is_system_activity
 from builder.builder.doctype.user_font.user_font import get_all_user_fonts
 from builder.export_import_standard_page import export_page_as_standard
 from builder.hooks import builder_path
 from builder.html_preview_image import generate_preview
+from builder.template_sync import delete_template_page_fixture, export_template_group
 from builder.utils import (
-	Block,
 	ColonRule,
 	camel_case_to_kebab_case,
 	clean_data,
-	copy_img_to_asset_folder,
 	escape_single_quotes,
 	execute_script,
 	get_builder_page_preview_file_paths,
-	get_template_assets_folder_path,
 	is_component_used,
 	sanitize_style_value,
 	split_styles,
@@ -126,6 +121,7 @@ class BuilderPage(WebsiteGenerator):
 		published: DF.Check
 		published_at: DF.Datetime | None
 		route: DF.Data | None
+		template_group: DF.Data | None
 	# end: auto-generated types
 
 	def onload(self):
@@ -168,6 +164,21 @@ class BuilderPage(WebsiteGenerator):
 				self.autoname()
 			self.route = f"pages/{self.name}"
 
+	def validate(self):
+		super().validate()  # WebsiteGenerator route normalization
+
+		# pages of shipped template groups can only be edited in developer mode
+		if (
+			self.is_template
+			and self.template_group
+			and not frappe.conf.get("developer_mode")
+			and not is_system_activity()
+		):
+			frappe.throw(
+				frappe._("Template pages can only be modified in developer mode."),
+				frappe.PermissionError,
+			)
+
 	def on_update(self):
 		if self.has_value_changed("route"):
 			if self.route and (":" in self.route or "<" in self.route):
@@ -190,8 +201,13 @@ class BuilderPage(WebsiteGenerator):
 			if frappe.get_cached_value("Builder Settings", "Builder Settings", "home_page") == self.route:
 				frappe.db.set_value("Builder Settings", "Builder Settings", "home_page", None)
 
-		if frappe.conf.developer_mode and self.is_template:
-			save_as_template(self)
+		if (
+			frappe.conf.developer_mode
+			and self.is_template
+			and self.template_group
+			and not is_system_activity()
+		):
+			export_template_group(self.template_group)
 
 		if frappe.conf.developer_mode and self.is_standard and self.app:
 			export_page_as_standard(self.name, target_app=self.app)
@@ -202,15 +218,14 @@ class BuilderPage(WebsiteGenerator):
 		clear_cache(self.route)
 
 	def on_trash(self):
-		if self.is_template and frappe.conf.developer_mode:
-			page_template_folder = os.path.join(
-				frappe.get_app_path("builder"), "builder", "builder_page_template", scrub(str(self.name))
-			)
-			if os.path.exists(page_template_folder):
-				shutil.rmtree(page_template_folder)
-			assets_path = get_template_assets_folder_path(self)
-			if os.path.exists(assets_path):
-				shutil.rmtree(assets_path)
+		if self.is_template and self.template_group:
+			if frappe.conf.developer_mode:
+				delete_template_page_fixture(self)
+			elif not is_system_activity():
+				frappe.throw(
+					frappe._("Template pages can only be deleted in developer mode."),
+					frappe.PermissionError,
+				)
 
 	def add_comment(self, comment_type="Comment", text=None, comment_email=None, comment_by=None):
 		if comment_type in ["Attachment Removed", "Attachment"]:
@@ -459,61 +474,6 @@ def replace_component_in_blocks(blocks, target_component, replace_with) -> list[
 			)
 
 	return blocks
-
-
-def save_as_template(page_doc: BuilderPage):
-	# move all assets to www/builder_assets/{page_name}
-	if page_doc.draft_blocks:
-		page_doc.publish()
-	if not page_doc.template_name:
-		page_doc.template_name = page_doc.page_title
-
-	blocks: list[Block] = frappe.parse_json(page_doc.blocks or "[]")  # type: ignore
-	for block in blocks:
-		copy_img_to_asset_folder(block, page_doc)
-
-	page_doc.db_set("draft_blocks", None)
-	page_doc.db_set("blocks", frappe.as_json(blocks, indent=0))
-	page_doc.reload()
-	export_to_files(
-		record_list=[["Builder Page", page_doc.name, "builder_page_template"]], record_module="builder"
-	)
-
-	components = set()
-
-	def get_component(block):
-		if block.get("extendedFromComponent"):
-			component = block.get("extendedFromComponent")
-			components.add(component)
-			# export nested components as well
-			component_doc = frappe.get_cached_doc("Builder Component", component)
-			if component_doc.block:
-				component_block = frappe.parse_json(component_doc.block)
-				get_component(component_block)
-		for child in block.get("children", []) or []:
-			get_component(child)
-
-	for block in blocks:
-		get_component(block)
-
-	if components:
-		export_to_files(
-			record_list=[["Builder Component", c, "builder_component"] for c in components],
-			record_module="builder",
-		)
-
-	scripts = frappe.get_all(
-		"Builder Page Client Script",
-		filters={"parent": page_doc.name},
-		fields=["name", "builder_script"],
-	)
-	if scripts:
-		export_to_files(
-			record_list=[
-				["Builder Client Script", s.builder_script, "builder_client_script"] for s in scripts
-			],
-			record_module="builder",
-		)
 
 
 @frappe.whitelist()

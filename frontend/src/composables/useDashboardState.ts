@@ -5,6 +5,7 @@ const searchFilter = ref("");
 const selectionMode = ref(false);
 const selectedPages = ref(new Set<string>());
 const treeExpanded = ref(true);
+const showTemplatesDialog = ref(false);
 
 const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list" | "tree">;
 const typeFilter = useStorage("typeFilter", "") as Ref<"" | "draft" | "published" | "unpublished" | "all">;
@@ -21,6 +22,7 @@ export function useDashboardState() {
 		selectionMode,
 		selectedPages,
 		treeExpanded,
+		showTemplatesDialog,
 		displayType,
 		typeFilter,
 		orderBy,

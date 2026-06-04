@@ -306,10 +306,6 @@ def sync_page_templates():
 	builder_script_path = frappe.get_module_path("builder", "builder_script")
 	make_records(builder_script_path)
 
-	print("Syncing Builder Page Templates")
-	builder_page_template_path = frappe.get_module_path("builder", "builder_page_template")
-	make_records(builder_page_template_path)
-
 
 def sync_block_templates():
 	print("Syncing Builder Block Templates")
@@ -365,7 +361,7 @@ def copy_img_to_asset_folder(block, page_doc):
 				assets_folder_path = get_template_assets_folder_path(page_doc)
 				shutil.copy(_file.get_full_path(), assets_folder_path)
 
-			new_src = f"/builder_assets/{page_doc.name}/{src.split('/')[-1]}"
+			new_src = f"{get_template_assets_public_path(page_doc)}/{src.split('/')[-1]}"
 			if attributes:
 				if isinstance(attributes, dict):
 					attributes["src"] = new_src
@@ -377,8 +373,25 @@ def copy_img_to_asset_folder(block, page_doc):
 		copy_img_to_asset_folder(child, page_doc)
 
 
+def get_template_assets_subfolder(page_doc):
+	"""Relative folder under www/builder_assets for a page's exported assets.
+
+	Template-group pages are namespaced under their group folder so multiple
+	templates can ship assets without colliding."""
+	if getattr(page_doc, "is_template", None) and getattr(page_doc, "template_group", None):
+		return os.path.join(frappe.scrub(page_doc.template_group), str(page_doc.name))
+	return str(page_doc.name)
+
+
+def get_template_assets_public_path(page_doc):
+	"""Public URL prefix (no trailing slash) for a page's exported assets."""
+	return f"/builder_assets/{get_template_assets_subfolder(page_doc).replace(os.sep, '/')}"
+
+
 def get_template_assets_folder_path(page_doc):
-	path = os.path.join(frappe.get_app_path("builder"), "www", "builder_assets", page_doc.name)
+	path = os.path.join(
+		frappe.get_app_path("builder"), "www", "builder_assets", get_template_assets_subfolder(page_doc)
+	)
 	if not os.path.exists(path):
 		os.makedirs(path)
 	return path
@@ -388,7 +401,7 @@ def get_builder_page_preview_file_paths(page_doc):
 	public_path, local_path = None, None
 	if page_doc.is_template:
 		local_path = os.path.join(get_template_assets_folder_path(page_doc), "preview.webp")
-		public_path = f"/builder_assets/{page_doc.name}/preview.webp"
+		public_path = f"{get_template_assets_public_path(page_doc)}/preview.webp"
 	else:
 		file_name = f"{page_doc.name}-preview.webp"
 		local_path = os.path.join(frappe.local.site_path, "public", "files", file_name)
