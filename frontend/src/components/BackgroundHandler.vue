@@ -9,6 +9,9 @@
 					:enableStates="true"
 					:allowDynamicValue="true"
 					placeholder="Set Background"
+					readonly
+					:selectOnFocus="false"
+					class="[&_input]:cursor-pointer"
 					@focus="togglePopover"
 					:getModelValue="() => getDisplayValue(null)"
 					:getVariantValue="(v: string) => getDisplayValue(v)"
@@ -133,10 +136,16 @@ import Input from "@/components/Controls/Input.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import Switch from "@/components/Controls/Switch.vue";
 import TabButtons from "@/components/Controls/TabButtons.vue";
+import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
+import { cssUrl } from "@/utils/helpers";
 import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
+import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { FileUploader, Popover } from "frappe-ui";
 import { computed, ref, watch } from "vue";
+
+const builderStore = useBuilderStore();
+const { getVariableName, resolveVariableValue } = useBuilderVariable();
 
 const activeState = ref<string | null>(null);
 
@@ -188,7 +197,8 @@ const getDisplayValue = (state: string | null) => {
 		const parts = url.split("/");
 		return parts[parts.length - 1] || "Image";
 	}
-	if (color) return color;
+	// show the variable's name instead of its raw value e.g. var(--uuid)
+	if (color) return getVariableName(color) ?? color;
 	return "";
 };
 
@@ -228,11 +238,11 @@ const getPreviewStyle = (state: string | null) => {
 		bg = bgValue;
 	} else if (bgValue) {
 		const url = bgValue.replace(/^url\(['"]?|['"]?\)$/g, "");
-		bg = `url(${url})`;
+		bg = cssUrl(url);
 	}
 
 	return {
-		backgroundColor: colorValue,
+		backgroundColor: colorValue ? resolveVariableValue(colorValue, builderStore.canvasDarkMode) : colorValue,
 		backgroundImage: bg,
 		backgroundPosition: pos,
 		backgroundSize: size,
@@ -262,7 +272,7 @@ const repeatOptions = [
 ];
 
 const setBGImage = (file: { file_url: string }) => {
-	blockController.setStyle(getStyleKey("backgroundImage"), `url(${file.file_url})`);
+	blockController.setStyle(getStyleKey("backgroundImage"), cssUrl(file.file_url));
 	blockController.setStyle(getStyleKey("backgroundColor"), null);
 	if (!blockController.getStyle(getStyleKey("backgroundSize"))) {
 		blockController.setStyle(getStyleKey("backgroundSize"), "cover");
@@ -291,7 +301,7 @@ const setBGValue = (value: string) => {
 		blockController.setStyle(colorKey, value);
 		blockController.setStyle(bgKey, null);
 	} else {
-		blockController.setStyle(bgKey, cleanURL ? `url(${cleanURL})` : null);
+		blockController.setStyle(bgKey, cleanURL ? cssUrl(cleanURL) : null);
 		blockController.setStyle(colorKey, null);
 	}
 };
@@ -341,32 +351,26 @@ const handleSetVariant = (variantName: string, value: string | number | boolean 
 	const bgKey = `${variantName}:backgroundImage`;
 	const colorKey = `${variantName}:backgroundColor`;
 
-	if (value === null) {
+	if (!value) {
 		blockController.setStyle(bgKey, null);
 		blockController.setStyle(colorKey, null);
-	} else {
-		// Basic transition logic for states
-		blockController.getSelectedBlocks().forEach((block) => {
-			if (!block.getStyle("transitionDuration")) {
-				block.setStyle("transitionDuration", "300ms");
-				block.setStyle("transitionTimingFunction", "ease");
-				block.setStyle("transitionProperty", "all");
-			}
-		});
-
-		// Differentiate color vs image/gradient
-		const cleanValue = typeof value === "string" ? value.replace(/^url\(['"]?|['"]?\)$/g, "") : value;
-		if (
-			typeof cleanValue === "string" &&
-			(cleanValue.startsWith("#") || cleanValue.startsWith("rgb") || cleanValue.startsWith("hsl"))
-		) {
-			blockController.setStyle(colorKey, cleanValue);
-			blockController.setStyle(bgKey, null);
-		} else {
-			blockController.setStyle(bgKey, value);
-			blockController.setStyle(colorKey, null);
-		}
+		return;
 	}
+
+	// Basic transition logic for states
+	blockController.getSelectedBlocks().forEach((block) => {
+		if (!block.getStyle("transitionDuration")) {
+			block.setStyle("transitionDuration", "300ms");
+			block.setStyle("transitionTimingFunction", "ease");
+			block.setStyle("transitionProperty", "all");
+		}
+	});
+
+	// the trigger input is read-only, so a non-null value here can only come from
+	// the "copy current value to state" dropdown — copy the actual base styles
+	// instead of the display text (e.g. "Gradient", variable name, image file name)
+	blockController.setStyle(bgKey, (blockController.getStyle("backgroundImage") as string) ?? null);
+	blockController.setStyle(colorKey, (blockController.getStyle("backgroundColor") as string) ?? null);
 };
 
 const showServeLocallyButton = computed(() => shouldShowOptimizeButton(backgroundImageURL.value));
@@ -380,7 +384,7 @@ const serveBackgroundImageLocally = () => {
 	return optimizeImage({
 		imageUrl: backgroundImageURL.value,
 		onSuccess: (newUrl: string) => {
-			blockController.setStyle(getStyleKey("backgroundImage"), `url(${newUrl})`);
+			blockController.setStyle(getStyleKey("backgroundImage"), cssUrl(newUrl));
 		},
 	});
 };

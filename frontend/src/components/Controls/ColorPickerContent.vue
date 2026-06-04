@@ -42,7 +42,7 @@
 		</div>
 		<Autocomplete
 			v-if="showInput"
-			:modelValue="modelValue"
+			:modelValue="displayValue"
 			class="mt-2 w-full text-sm [&>div>div>input]:text-sm"
 			placeholder="Set Color"
 			:getOptions="getOptions"
@@ -63,7 +63,7 @@ import { Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
 
 type CSSColorValue = HashString | RGBString | `var(--${string})`;
 
-const { variables, resolveVariableValue } = useBuilderVariable();
+const { variables, resolveVariableValue, getVariableName } = useBuilderVariable();
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
@@ -112,6 +112,14 @@ const modelColor = computed(() => {
 	const color = props.modelValue;
 	if (!color) return null;
 	return getRGB(resolveVariableValue(color));
+});
+
+// show the variable's name instead of its raw value e.g. var(--uuid)
+const displayValue = computed(() => {
+	if (props.modelValue && (props.modelValue.startsWith("var(--") || props.modelValue.startsWith("--"))) {
+		return getVariableName(props.modelValue) ?? props.modelValue;
+	}
+	return props.modelValue;
 });
 
 const getOptions = async (query: string) =>

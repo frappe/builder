@@ -915,6 +915,9 @@ function parseBackground(cssText: string): BackgroundValue {
 	return result;
 }
 
+// quote the URL so that file names with spaces or special characters stay valid CSS
+const cssUrl = (url: string) => `url("${url.replace(/"/g, '\\"')}")`;
+
 const parseAndSetBackground = (styles: BlockStyleMap) => {
 	if (styles.background) {
 		const { color, image, position, size, repeat } = parseBackground(styles.background as string);
@@ -1558,6 +1561,7 @@ export {
 	alert,
 	confirm,
 	copyToClipboard,
+	cssUrl,
 	dataURLtoFile,
 	detachBlockFromComponent,
 	executeBlockClientScriptRestricted,
