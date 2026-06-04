@@ -63,19 +63,17 @@
 <script setup lang="ts">
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import NewBuilderVariable from "@/components/Modals/NewBuilderVariable.vue";
+import useBuilderStore from "@/stores/builderStore";
 import { BuilderVariable } from "@/types/doctypes";
 import { getColorVariableOptions } from "@/utils/colorOptions";
 import { getRGB } from "@/utils/helpers";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
-import { useDark } from "@vueuse/core";
 import { Tooltip } from "frappe-ui";
 import { computed, ComputedRef, nextTick, onMounted, ref, useAttrs, watch } from "vue";
 import ColorPicker from "./ColorPicker.vue";
 import InputLabel from "./InputLabel.vue";
 
-const isDark = useDark({
-	attribute: "data-theme",
-});
+const builderStore = useBuilderStore();
 
 const attrs = useAttrs();
 const events = Object.fromEntries(
@@ -197,7 +195,7 @@ const isCssVariable = computed(() => {
 const resolvedColor = computed(() => {
 	if (!props.modelValue) return "";
 	if (isCssVariable.value) {
-		return resolveVariableValue(props.modelValue, isDark.value);
+		return resolveVariableValue(props.modelValue, builderStore.canvasDarkMode);
 	}
 	return props.modelValue;
 }) as ComputedRef<HashString | RGBString>;
@@ -233,7 +231,7 @@ const getOptions = async (query: string) => {
 		query,
 		variables.value,
 		resolveVariableValue,
-		isDark.value,
+		builderStore.canvasDarkMode,
 		(builderVariable) => {
 			colorPickerRef.value?.togglePopover(false);
 			newVariable.value = { ...builderVariable };

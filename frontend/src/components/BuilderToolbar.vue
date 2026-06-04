@@ -96,12 +96,12 @@
 						:icon="SparklesIcon"
 						:disabled="builderStore.readOnlyMode"></Button>
 				</Tooltip>
-				<Tooltip text="Toggle Dark Mode" :hoverDelay="0.6" arrow-class="mb-3">
+				<!-- <Tooltip text="Toggle Dark Mode" :hoverDelay="0.6" arrow-class="mb-3">
 					<Button
 						variant="ghost"
 						@click="() => transitionTheme(toggleDark)"
 						:icon="isDark ? 'lucide-sun' : 'lucide-moon'"></Button>
-				</Tooltip>
+				</Tooltip> -->
 				<span
 					class="text-sm text-ink-gray-3"
 					v-if="pageStore.savingPage && pageStore.activePage?.is_template">
@@ -151,10 +151,9 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { getTextContent } from "@/utils/helpers";
 import { useDark, useToggle } from "@vueuse/core";
-import { Badge, Popover, Tooltip } from "frappe-ui";
+import { Badge, Popover, toast, Tooltip } from "frappe-ui";
 import { DialogDescription, DialogTitle } from "reka-ui";
 import { computed, defineAsyncComponent, inject, ref } from "vue";
-import { toast } from "frappe-ui";
 // @ts-ignore
 import SparklesIcon from "~icons/lucide/sparkles";
 import MainMenu from "./MainMenu.vue";

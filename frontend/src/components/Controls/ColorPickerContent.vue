@@ -53,17 +53,18 @@
 <script setup lang="ts">
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import EyeDropperIcon from "@/components/Icons/EyeDropper.vue";
+import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { getColorVariableOptions } from "@/utils/colorOptions";
 import { HSVToHex, HexToHSV, getRGB } from "@/utils/helpers";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
-import { clamp, useDark, useElementBounding, useEyeDropper } from "@vueuse/core";
+import { clamp, useElementBounding, useEyeDropper } from "@vueuse/core";
 import { Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
 
 type CSSColorValue = HashString | RGBString | `var(--${string})`;
 
 const { variables, resolveVariableValue } = useBuilderVariable();
-const isDark = useDark({ attribute: "data-theme" });
+const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
 const colorMap = ref(null) as unknown as Ref<HTMLDivElement>;
@@ -114,7 +115,7 @@ const modelColor = computed(() => {
 });
 
 const getOptions = async (query: string) =>
-	getColorVariableOptions(query, variables.value, resolveVariableValue, isDark.value);
+	getColorVariableOptions(query, variables.value, resolveVariableValue, builderStore.canvasDarkMode);
 
 const emit = defineEmits(["update:modelValue"]);
 

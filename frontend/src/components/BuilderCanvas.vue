@@ -11,15 +11,27 @@
 		<div
 			class="fixed flex gap-40"
 			:class="{
-				'scheme-dark': builderStore.isDark,
+				'scheme-dark': builderStore.canvasDarkMode,
 			}"
 			ref="canvas"
 			:style="{
 				transformOrigin: 'top center',
 				transform: `scale(${canvasProps.scale}) translate(${canvasProps.translateX}px, ${canvasProps.translateY}px)`,
 				'--canvas-scale': canvasProps.scale,
+				colorScheme: builderStore.canvasDarkMode ? 'dark' : 'light',
 			}">
 			<div class="absolute right-0 top-[-60px] flex rounded-md bg-surface-white px-3">
+				<Tooltip text="Toggle Canvas Dark Mode" :hoverDelay="0.6">
+					<div
+						v-show="!canvasProps.scaling && !canvasProps.panning"
+						class="w-auto cursor-pointer p-2"
+						@click.stop="builderStore.canvasDarkMode = !builderStore.canvasDarkMode">
+						<span
+							:class="[builderStore.canvasDarkMode ? 'lucide-sun' : 'lucide-moon', 'h-8 w-6 text-ink-gray-8']"
+							aria-hidden="true" />
+					</div>
+				</Tooltip>
+				<div v-show="!canvasProps.scaling && !canvasProps.panning" class="bg-outline-gray-2 my-2 w-px"></div>
 				<div
 					v-show="!canvasProps.scaling && !canvasProps.panning"
 					class="w-auto cursor-pointer p-2"
@@ -113,6 +125,7 @@ import { useCanvasDropZone } from "@/utils/useCanvasDropZone";
 import { useCanvasEvents } from "@/utils/useCanvasEvents";
 import { useCanvasMarqueeSelection } from "@/utils/useCanvasMarqueeSelection";
 import { useCanvasUtils } from "@/utils/useCanvasUtils";
+import { Tooltip } from "frappe-ui";
 import { Ref, computed, onMounted, onUnmounted, provide, reactive, ref, watch } from "vue";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
@@ -127,7 +140,7 @@ const { cssVariables, darkCssVariables } = useBuilderVariable();
 const variables = computed(() => {
 	return {
 		...cssVariables.value,
-		...(builderStore.isDark ? darkCssVariables.value : {}),
+		...(builderStore.canvasDarkMode ? darkCssVariables.value : {}),
 	};
 });
 
