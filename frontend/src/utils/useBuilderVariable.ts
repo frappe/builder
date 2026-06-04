@@ -1,6 +1,5 @@
 import builderVariableStore from "@/data/builderVariable";
 import { BuilderVariable } from "@/types/doctypes";
-import { toKebabCase } from "@/utils/helpers";
 import { computed } from "vue";
 
 export const defaultBuilderVariable = {
@@ -8,6 +7,7 @@ export const defaultBuilderVariable = {
 	value: "#000000",
 	type: "Color" as const,
 	dark_value: undefined as string | undefined,
+	group: undefined as string | undefined,
 };
 
 let instance: ReturnType<typeof builderVariableComposable> | null = null;
@@ -16,11 +16,8 @@ function builderVariableComposable() {
 	const cssVariables = computed(() => {
 		return builderVariableStore.data.reduce(
 			(obj: Record<string, string>, builderVariable: BuilderVariable) => {
-				if (!builderVariable.variable_name) return obj;
-				const cssVariableName = toKebabCase(builderVariable.variable_name);
-				if (builderVariable.value) {
-					obj[`--${cssVariableName}`] = builderVariable.value;
-				}
+				if (!builderVariable.name || !builderVariable.value) return obj;
+				obj[`--${builderVariable.name}`] = builderVariable.value;
 				return obj;
 			},
 			{},
@@ -30,11 +27,8 @@ function builderVariableComposable() {
 	const darkCssVariables = computed(() => {
 		return builderVariableStore.data.reduce(
 			(obj: Record<string, string>, builderVariable: BuilderVariable) => {
-				if (!builderVariable.variable_name) return obj;
-				const cssVariableName = toKebabCase(builderVariable.variable_name);
-				if (builderVariable.dark_value) {
-					obj[`--${cssVariableName}`] = builderVariable.dark_value;
-				}
+				if (!builderVariable.name || !builderVariable.dark_value) return obj;
+				obj[`--${builderVariable.name}`] = builderVariable.dark_value;
 				return obj;
 			},
 			{},
@@ -42,16 +36,16 @@ function builderVariableComposable() {
 	});
 
 	const resolveVariableValue = (value: string, isDarkMode = false): string => {
-		if (value.startsWith("#")) {
+		if (!value || value.startsWith("#")) {
 			return value;
 		}
 
 		let variableName = value;
 		if (variableName.startsWith("var(--")) {
-			const match = variableName.match(/^var\(\s*([^) ,]+)/);
+			const match = variableName.match(/^var\(\s*(--[^) ,]+)/);
 			variableName = match ? match[1] : variableName;
 		} else if (!variableName.startsWith("--")) {
-			variableName = `--${toKebabCase(variableName)}`;
+			return value;
 		}
 
 		const variables = isDarkMode ? darkCssVariables.value : cssVariables.value;
