@@ -42,31 +42,38 @@ class BuilderClientScript(Document):
 		if frappe.conf.developer_mode:
 			from builder.export_import_standard_page import delete_standard_client_script_files
 
-			for app_name in self._get_referencing_apps():
-				delete_standard_client_script_files(self.name, app_name)
+			referencing_standard_pages = self.get_referencing_pages(filters={"is_standard": 1}, fields=["app"])
+			for page in referencing_standard_pages:
+				delete_standard_client_script_files(self.name, page.app)
 
 	def after_rename(self, old: str, new: str, merge: bool = False) -> None:
-		if not frappe.conf.developer_mode:
-			return
-		from builder.export_import_standard_page import rename_standard_client_script_files
+		if frappe.conf.developer_mode:
+			from builder.export_import_standard_page import rename_standard_client_script_files
 
-		for app_name in self._get_referencing_apps():
-			rename_standard_client_script_files(old, new, app_name)
+			referencing_standard_pages = self.get_referencing_pages(filters={"is_standard": 1}, fields=["app"])
+			for page in referencing_standard_pages:
+				rename_standard_client_script_files(old, new, page.app)
 
-	def _get_referencing_apps(self) -> set[str]:
-	    """Return the distinct app names of standard pages that use this script."""
-	    refs = frappe.get_all(
-	        "Builder Page Client Script",
-	        filters={"builder_script": self.name},
-	        fields=["parent"],
-	        ignore_permissions=True,
-	    )
-	    apps: set[str] = set()
-	    for ref in refs:
-	        row = frappe.db.get_value("Builder Page", ref.parent, ["is_standard", "app"], as_dict=True)
-	        if row and row.get("is_standard") and row.get("app"):
-	            apps.add(row["app"])
-	    return apps
+	def get_referencing_pages(self, filters: dict | None = None, fields: list[str] | None = None) -> list[dict]:
+		"""Return the pages that use this script.
+
+		Args:
+		filters: Filters to apply to the pages.
+		fields: Fields to return from the pages.
+		"""
+		refs = frappe.get_all(
+			"Builder Page Client Script",
+			filters={"builder_script": self.name},
+			fields=["parent"],
+			ignore_permissions=True,
+		)
+
+		# use passed filters and fields if provided
+		filters = filters or {}
+		filters["name"] = ["in", [ref.parent for ref in refs]]
+		fields = fields or ["name"]
+		pages = frappe.get_all("Builder Page", filters=filters, fields=fields, ignore_permissions=True)
+		return pages
 
 	def update_script_file(self):
 		script_type = self.script_type or ""
