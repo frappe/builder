@@ -1024,7 +1024,7 @@ class TestBuilderPage(FrappeTestCase):
 				],
 			}
 		]
-		_, _, font_map, _ = get_block_html(blocks)
+		_, _, font_map, _, _ = get_block_html(blocks)
 		self.assertIn("Newsreader", font_map)
 		self.assertIn(700, font_map["Newsreader"]["weights"])
 
@@ -1040,7 +1040,7 @@ class TestBuilderPage(FrappeTestCase):
 				"children": [],
 			}
 		]
-		_, _, font_map, _ = get_block_html(blocks)
+		_, _, font_map, _, _ = get_block_html(blocks)
 		self.assertNotIn("InterVar", font_map)
 		self.assertNotIn("intervar", font_map)
 
