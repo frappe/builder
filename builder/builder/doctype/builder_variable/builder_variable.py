@@ -7,6 +7,7 @@ import frappe
 from frappe.model.document import Document
 from frappe.modules.export_file import delete_folder, export_to_files
 from frappe.utils.caching import redis_cache
+from frappe.website.utils import delete_page_cache
 
 
 class BuilderVariable(Document):
@@ -31,10 +32,10 @@ class BuilderVariable(Document):
 			self.name = str(uuid.uuid4())
 
 	def after_insert(self):
-		get_css_variables.clear_cache()
+		clear_builder_variable_cache()
 
 	def on_update(self):
-		get_css_variables.clear_cache()
+		clear_builder_variable_cache()
 		if self.is_standard:
 			export_to_files(
 				record_list=[["Builder Variable", self.name, "builder_variable"]], record_module="builder"
@@ -44,7 +45,7 @@ class BuilderVariable(Document):
 			delete_folder("builder", "builder_variable", self.name)
 
 	def on_trash(self):
-		get_css_variables.clear_cache()
+		clear_builder_variable_cache()
 		if self.is_standard:
 			delete_folder("builder", "builder_variable", self.name)
 
@@ -66,5 +67,7 @@ def get_css_variables():
 	return css_variables, dark_mode_css_variables
 
 
-def clear_builder_variable_cache(doc, method):
+def clear_builder_variable_cache(doc=None, method=None):
 	get_css_variables.clear_cache()
+	# bust the rendered page cache for /builder_assets/variables.css
+	delete_page_cache("builder_assets/variables.css")
