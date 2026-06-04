@@ -4,7 +4,7 @@
 			<div class="flex w-full items-center justify-between" @focusin="updateActiveState">
 				<StylePropertyControl
 					propertyKey="background"
-					:component="Input"
+					:component="BackgroundInput"
 					label="Background"
 					:enableStates="true"
 					:allowDynamicValue="true"
@@ -141,10 +141,40 @@ import { cssUrl } from "@/utils/helpers";
 import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { FileUploader, Popover, Switch } from "frappe-ui";
-import { computed, ref, watch } from "vue";
+import { computed, defineComponent, h, ref, watch } from "vue";
 
 const builderStore = useBuilderStore();
-const { getVariableName, resolveVariableValue } = useBuilderVariable();
+const { getVariableName, resolveVariableValue, variables } = useBuilderVariable();
+
+// wraps Input to style the value like ColorInput does when it displays a variable name
+const BackgroundInput = defineComponent({
+	props: {
+		modelValue: { type: [String, Number, Boolean], default: "" },
+	},
+	setup(props, { attrs, slots }) {
+		const showsVariableName = computed(() => {
+			return (
+				!!props.modelValue &&
+				variables.value.some((builderVariable) => builderVariable.variable_name === props.modelValue)
+			);
+		});
+		return () =>
+			h(
+				Input,
+				{
+					...attrs,
+					modelValue: props.modelValue,
+					class: [
+						attrs.class,
+						showsVariableName.value
+							? "[&_input]:font-mono [&_input]:text-sm [&_input]:text-ink-violet-1"
+							: "",
+					],
+				},
+				slots,
+			);
+	},
+});
 
 const activeState = ref<string | null>(null);
 
