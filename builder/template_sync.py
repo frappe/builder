@@ -88,17 +88,17 @@ def import_template_pages(pages_path, group):
 		if not os.path.isfile(page_file):
 			continue
 		with open(page_file, encoding="utf-8") as f:
-			page_name = frappe.parse_json(f.read()).get("name") or fname
+			fixture = frappe.parse_json(f.read())
+		page_name = fixture.get("name") or fname
 		import_file_by_path(page_file)
 		if frappe.db.exists("Builder Page", page_name):
-			# import_file_by_path skips unchanged files, so enforce the
-			# invariants directly — templates are never live routes
-			frappe.db.set_value(
-				"Builder Page",
-				page_name,
-				{"is_template": 1, "template_group": group, "published": 0, "published_at": None},
-				update_modified=False,
-			)
+			# import_file_by_path skips files whose db timestamp is newer, so
+			# enforce the invariants (and the committed preview) directly —
+			# templates are never live routes
+			values = {"is_template": 1, "template_group": group, "published": 0, "published_at": None}
+			if fixture.get("preview"):
+				values["preview"] = fixture["preview"]
+			frappe.db.set_value("Builder Page", page_name, values, update_modified=False)
 			page_names.append(page_name)
 	return page_names
 
@@ -165,7 +165,7 @@ def export_template_group(group):
 
 def export_template_page(page_doc, pages_path, group_folder):
 	"""Write one page fixture; returns the exported blocks."""
-	ensure_template_preview(page_doc)
+	preview_url = ensure_template_preview(page_doc)
 
 	page_config = page_doc.as_dict(no_nulls=True)
 	page_config = strip_default_fields(page_doc, page_config)
@@ -179,6 +179,10 @@ def export_template_page(page_doc, pages_path, group_folder):
 	page_config["published"] = 0
 	page_config["published_at"] = None
 	page_config["project_folder"] = None
+	# point at the committed preview (the db field may still hold the fallback
+	# if the .webp already existed from a prior export and generation was skipped)
+	if preview_url:
+		page_config["preview"] = preview_url
 
 	for field in ("favicon", "meta_image"):
 		if page_config.get(field):
@@ -267,19 +271,21 @@ def export_template_fonts(fonts, fonts_path, group_folder):
 
 
 def ensure_template_preview(page_doc):
-	"""Generate the page preview image if it isn't on disk yet. Preview
-	generation needs an external service, so failures are non-fatal."""
+	"""Generate the page preview image if it isn't on disk yet, and return the
+	public preview url whenever the .webp exists (so the fixture's preview field
+	is correct even when generation is skipped). Preview generation needs an
+	external service, so failures are non-fatal."""
 	from builder.utils import get_builder_page_preview_file_paths
 
-	_, local_path = get_builder_page_preview_file_paths(page_doc)
-	if os.path.exists(local_path):
-		return
-	try:
-		# render explicitly — template pages are unpublished, so they don't
-		# resolve through the regular website path resolution
-		page_doc.generate_page_preview_image(html=render_template_page(page_doc))
-	except Exception:
-		frappe.log_error(f"Failed to generate preview for template page {page_doc.name}")
+	public_path, local_path = get_builder_page_preview_file_paths(page_doc)
+	if not os.path.exists(local_path):
+		try:
+			# render explicitly — template pages are unpublished, so they don't
+			# resolve through the regular website path resolution
+			page_doc.generate_page_preview_image(html=render_template_page(page_doc))
+		except Exception:
+			frappe.log_error(f"Failed to generate preview for template page {page_doc.name}")
+	return public_path if os.path.exists(local_path) else None
 
 
 def render_template_page(page_doc):

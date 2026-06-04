@@ -1,0 +1,13 @@
+{
+ "creation": "2026-06-05 01:55:06.784615",
+ "docstatus": 0,
+ "doctype": "Builder Client Script",
+ "idx": 0,
+ "modified": "2026-06-05 01:55:06.784615",
+ "modified_by": "Administrator",
+ "name": "commit-styles",
+ "owner": "Administrator",
+ "public_url": "/files/page_styles/commit-styles-a59836b7b6.css?v=2cf2c287a9",
+ "script": "\n@keyframes commit-marquee {\n\tfrom { transform: translateX(0); }\n\tto { transform: translateX(-50%); }\n}\n.commit-marquee-track { animation: commit-marquee 30s linear infinite; }\n\n@keyframes commit-float {\n\t0%, 100% { transform: translateY(0px); }\n\t50% { transform: translateY(-20px); }\n}\n.commit-blob { animation: commit-float 9s ease-in-out infinite; }\n.commit-blob-slow { animation: commit-float 14s ease-in-out infinite; }\n\n.js-reveal [data-reveal] {\n\topacity: 0;\n\ttransform: translateY(22px);\n\ttransition: opacity 0.6s ease-out, transform 0.6s ease-out;\n}\n.js-reveal [data-reveal].in-view { opacity: 1; transform: translateY(0); }\n\n@media (prefers-reduced-motion: reduce) {\n\t.commit-marquee-track, .commit-blob, .commit-blob-slow { animation: none; }\n\t.js-reveal [data-reveal] { opacity: 1; transform: none; transition: none; }\n}\n",
+ "script_type": "CSS"
+}

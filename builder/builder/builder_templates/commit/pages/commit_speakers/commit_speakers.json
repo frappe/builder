@@ -1,0 +1,2087 @@
+{
+ "authenticated_access": 0,
+ "blocks": [
+  {
+   "attributes": {},
+   "baseStyles": {
+    "alignItems": "center",
+    "backgroundColor": "var(--e28e41dc-b70d-444d-809f-2c7c8c233304, #FFFFFF)",
+    "color": "var(--8dabd629-6a67-4861-ad2b-7ed7da3169bd, #17141F)",
+    "display": "flex",
+    "flexDirection": "column",
+    "flexShrink": 0,
+    "flexWrap": "wrap",
+    "fontFamily": "Inter",
+    "width": "100%"
+   },
+   "blockId": "root",
+   "blockName": "Page",
+   "children": [
+    {
+     "attributes": {},
+     "baseStyles": {},
+     "blockId": "7eaa883817",
+     "blockName": "Navbar",
+     "children": [
+      {
+       "attributes": {},
+       "baseStyles": {},
+       "blockId": "0624ff9cf1",
+       "children": [
+        {
+         "attributes": {},
+         "baseStyles": {},
+         "blockId": "ad7b940993",
+         "children": [
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "ade2d0f4d9",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "5d27cb6543",
+             "children": [
+              {
+               "attributes": {},
+               "baseStyles": {},
+               "blockId": "e16fc9f4c6",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "isChildOfComponent": "commit_navbar",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "referenceBlockId": "e5e473367f",
+               "tabletStyles": {}
+              }
+             ],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "commit_navbar",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "f169dca8c9",
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "32236b791f",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "commit_navbar",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "3e3d06df5e",
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "commit_navbar",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "916f28c31b",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "df6e0c8acf",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "6c3249e577",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "commit_navbar",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "279649472c",
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "397bc2f212",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "commit_navbar",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "cb5dfa5da0",
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "43d7de1dc4",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "commit_navbar",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "ee7c5c5a76",
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "db1835b2fb",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "commit_navbar",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "cbdab10222",
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "commit_navbar",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "0055c13860",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "e964749477",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "commit_navbar",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "7bbcaacad9",
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "customAttributes": {},
+         "isChildOfComponent": "commit_navbar",
+         "mobileStyles": {},
+         "rawStyles": {},
+         "referenceBlockId": "e7d0d091fb",
+         "tabletStyles": {}
+        }
+       ],
+       "classes": [],
+       "customAttributes": {},
+       "isChildOfComponent": "commit_navbar",
+       "mobileStyles": {},
+       "rawStyles": {},
+       "referenceBlockId": "a7cabf9f08",
+       "tabletStyles": {}
+      }
+     ],
+     "classes": [],
+     "customAttributes": {},
+     "extendedFromComponent": "commit_navbar",
+     "mobileStyles": {},
+     "rawStyles": {},
+     "tabletStyles": {}
+    },
+    {
+     "attributes": {},
+     "baseStyles": {
+      "alignItems": "center",
+      "backgroundColor": "var(--e28e41dc-b70d-444d-809f-2c7c8c233304, #FFFFFF)",
+      "display": "flex",
+      "flexDirection": "column",
+      "flexShrink": 0,
+      "overflow": "hidden",
+      "paddingBottom": "56px",
+      "paddingTop": "88px",
+      "position": "relative",
+      "width": "100%"
+     },
+     "blockId": "f8ffb107a4",
+     "blockName": "Section · Speakers Hero",
+     "children": [
+      {
+       "attributes": {},
+       "baseStyles": {
+        "display": "flex",
+        "flexDirection": "column",
+        "flexShrink": 0,
+        "height": "100%",
+        "left": "0px",
+        "lineHeight": "0",
+        "overflow": "hidden",
+        "pointerEvents": "none",
+        "position": "absolute",
+        "top": "0px",
+        "width": "100%"
+       },
+       "blockId": "38c0d00609",
+       "blockName": "Speakers Blobs",
+       "children": [],
+       "classes": [],
+       "customAttributes": {},
+       "element": "div",
+       "innerHTML": "<svg width=\"100%\" height=\"100%\" viewBox=\"0 0 1200 640\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMid slice\"><defs><radialGradient id=\"cb1\"><stop offset=\"0%\" stop-color=\"#7C3AED\" stop-opacity=\"0.30\"/><stop offset=\"100%\" stop-color=\"#7C3AED\" stop-opacity=\"0\"/></radialGradient><radialGradient id=\"cb2\"><stop offset=\"0%\" stop-color=\"#EC4899\" stop-opacity=\"0.26\"/><stop offset=\"100%\" stop-color=\"#EC4899\" stop-opacity=\"0\"/></radialGradient><radialGradient id=\"cb3\"><stop offset=\"0%\" stop-color=\"#F59E0B\" stop-opacity=\"0.24\"/><stop offset=\"100%\" stop-color=\"#F59E0B\" stop-opacity=\"0\"/></radialGradient></defs><circle class=\"commit-blob\" cx=\"250\" cy=\"210\" r=\"300\" fill=\"url(#cb1)\"/><circle class=\"commit-blob-slow\" cx=\"950\" cy=\"170\" r=\"280\" fill=\"url(#cb2)\"/><circle class=\"commit-blob\" cx=\"640\" cy=\"470\" r=\"320\" fill=\"url(#cb3)\"/></svg>",
+       "mobileStyles": {},
+       "rawStyles": {},
+       "tabletStyles": {}
+      },
+      {
+       "attributes": {},
+       "baseStyles": {
+        "display": "flex",
+        "flexDirection": "column",
+        "flexShrink": 0,
+        "marginLeft": "auto",
+        "marginRight": "auto",
+        "maxWidth": "1140px",
+        "overflow": "hidden",
+        "paddingLeft": "28px",
+        "paddingRight": "28px",
+        "width": "100%"
+       },
+       "blockId": "e6300f37c8",
+       "blockName": "Speakers Hero Container",
+       "children": [
+        {
+         "attributes": {},
+         "baseStyles": {
+          "alignItems": "center",
+          "display": "flex",
+          "flexDirection": "column",
+          "flexShrink": 0,
+          "gap": "18px",
+          "overflow": "hidden",
+          "position": "relative",
+          "zIndex": "1"
+         },
+         "blockId": "c9b06fd8dc",
+         "blockName": "Speakers Hero Stack",
+         "children": [
+          {
+           "attributes": {},
+           "baseStyles": {
+            "alignItems": "center",
+            "backgroundColor": "var(--c27ad2fa-eafc-4b58-aa00-73bc26490da3, #F3EEFF)",
+            "borderRadius": "100px",
+            "display": "flex",
+            "flexDirection": "row",
+            "flexShrink": 0,
+            "gap": "9px",
+            "overflow": "hidden",
+            "paddingBottom": "7px",
+            "paddingLeft": "16px",
+            "paddingRight": "16px",
+            "paddingTop": "7px",
+            "width": "fit-content"
+           },
+           "blockId": "4468c0de23",
+           "blockName": "Badge",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {
+              "display": "flex",
+              "flexDirection": "column",
+              "flexShrink": 0,
+              "lineHeight": "0",
+              "overflow": "hidden"
+             },
+             "blockId": "746914a1a3",
+             "blockName": "Badge Sparkle",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "div",
+             "innerHTML": "<svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4L12 0Z\" fill=\"#F59E0B\"/></svg>",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "color": "var(--8b349bf3-08db-47b5-82e9-368c7473467b, #7C3AED)",
+              "fontFamily": "Inter",
+              "fontSize": "13px",
+              "fontWeight": "600",
+              "height": "fit-content",
+              "lineHeight": "1.4",
+              "minWidth": "10px",
+              "width": "fit-content"
+             },
+             "blockId": "08e290a2bf",
+             "blockName": "Badge Text",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "span",
+             "innerHTML": "Lineup",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "element": "div",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {
+            "color": "var(--8dabd629-6a67-4861-ad2b-7ed7da3169bd, #17141F)",
+            "fontFamily": "Bricolage Grotesque",
+            "fontSize": "64px",
+            "fontWeight": "700",
+            "height": "fit-content",
+            "letterSpacing": "-0.02em",
+            "lineHeight": "1.04",
+            "minWidth": "10px",
+            "textAlign": "center",
+            "width": "fit-content"
+           },
+           "blockId": "2f5cc87c06",
+           "blockName": "Speakers Title",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "element": "h1",
+           "innerHTML": "The humans<br>of Commit.",
+           "mobileStyles": {
+            "fontSize": "38px"
+           },
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {
+            "color": "var(--00cebeb2-b6de-40df-994c-b740465ccd0e, #6E6880)",
+            "fontFamily": "Inter",
+            "fontSize": "17px",
+            "height": "fit-content",
+            "lineHeight": "1.65",
+            "maxWidth": "540px",
+            "minWidth": "10px",
+            "textAlign": "center",
+            "width": "fit-content"
+           },
+           "blockId": "3cc8a791ee",
+           "blockName": "Speakers Subtitle",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "element": "p",
+           "innerHTML": "Twenty-four speakers. Zero keynote fluff. These are the first eight — the rest land with the schedule.",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "customAttributes": {},
+         "element": "div",
+         "mobileStyles": {},
+         "rawStyles": {},
+         "tabletStyles": {}
+        }
+       ],
+       "classes": [],
+       "customAttributes": {},
+       "element": "div",
+       "mobileStyles": {},
+       "rawStyles": {},
+       "tabletStyles": {}
+      }
+     ],
+     "classes": [],
+     "customAttributes": {},
+     "element": "div",
+     "mobileStyles": {},
+     "rawStyles": {},
+     "tabletStyles": {}
+    },
+    {
+     "attributes": {},
+     "baseStyles": {
+      "alignItems": "center",
+      "backgroundColor": "var(--e28e41dc-b70d-444d-809f-2c7c8c233304, #FFFFFF)",
+      "display": "flex",
+      "flexDirection": "column",
+      "flexShrink": 0,
+      "overflow": "hidden",
+      "paddingBottom": "80px",
+      "width": "100%"
+     },
+     "blockId": "f67604379e",
+     "blockName": "Section · All Speakers",
+     "children": [
+      {
+       "attributes": {},
+       "baseStyles": {
+        "display": "flex",
+        "flexDirection": "column",
+        "flexShrink": 0,
+        "marginLeft": "auto",
+        "marginRight": "auto",
+        "maxWidth": "1140px",
+        "overflow": "hidden",
+        "paddingLeft": "28px",
+        "paddingRight": "28px",
+        "width": "100%"
+       },
+       "blockId": "257b32e2a7",
+       "blockName": "All Speakers Container",
+       "children": [
+        {
+         "attributes": {},
+         "baseStyles": {
+          "display": "grid",
+          "flexDirection": "column",
+          "flexShrink": 0,
+          "gap": "18px",
+          "gridTemplateColumns": "repeat(4, 1fr)",
+          "overflow": "hidden",
+          "width": "100%"
+         },
+         "blockId": "f3ccf492c1",
+         "blockName": "All Speakers Grid",
+         "children": [
+          {
+           "attributes": {},
+           "baseStyles": {
+            "backgroundColor": "var(--e28e41dc-b70d-444d-809f-2c7c8c233304, #FFFFFF)",
+            "borderColor": "var(--7c206579-fa31-4528-a5bf-a70a5c14d673, #E9E6F2)",
+            "borderRadius": "18px",
+            "borderStyle": "solid",
+            "borderWidth": "1px",
+            "display": "flex",
+            "flexDirection": "column",
+            "flexShrink": 0,
+            "gap": "14px",
+            "overflow": "hidden",
+            "padding": "14px",
+            "width": "100%"
+           },
+           "blockId": "83e428ef6a",
+           "blockName": "Speaker · Amara Chen",
+           "children": [
+            {
+             "attributes": {
+              "alt": "Amara Chen",
+              "src": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=700"
+             },
+             "baseStyles": {
+              "borderRadius": "12px",
+              "flexShrink": 0,
+              "height": "240px",
+              "objectFit": "cover",
+              "width": "100%"
+             },
+             "blockId": "aa4aae6fbb",
+             "blockName": "Speaker Photo",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "img",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "display": "flex",
+              "flexDirection": "column",
+              "flexShrink": 0,
+              "gap": "4px",
+              "overflow": "hidden",
+              "paddingBottom": "8px",
+              "paddingLeft": "6px",
+              "paddingRight": "6px"
+             },
+             "blockId": "77412b257f",
+             "blockName": "Speaker Copy",
+             "children": [
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--8dabd629-6a67-4861-ad2b-7ed7da3169bd, #17141F)",
+                "fontFamily": "Bricolage Grotesque",
+                "fontSize": "18px",
+                "fontWeight": "700",
+                "height": "fit-content",
+                "letterSpacing": "-0.02em",
+                "lineHeight": "1.04",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "e06fb9c4fd",
+               "blockName": "Speaker Name",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "h3",
+               "innerHTML": "Amara Chen",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--00cebeb2-b6de-40df-994c-b740465ccd0e, #6E6880)",
+                "fontFamily": "Inter",
+                "fontSize": "13px",
+                "height": "fit-content",
+                "lineHeight": "1.65",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "8fca582239",
+               "blockName": "Speaker Role",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "p",
+               "innerHTML": "Staff Engineer, Vercel",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--8b349bf3-08db-47b5-82e9-368c7473467b, #7C3AED)",
+                "fontFamily": "Inter",
+                "fontSize": "13px",
+                "height": "fit-content",
+                "lineHeight": "1.65",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "a1ac988865",
+               "blockName": "Speaker Talk",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "p",
+               "innerHTML": "&ldquo;The edge is a lie (a useful one)&rdquo;",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              }
+             ],
+             "classes": [],
+             "customAttributes": {},
+             "element": "div",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {
+            "data-reveal": ""
+           },
+           "element": "div",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {
+            "backgroundColor": "var(--e28e41dc-b70d-444d-809f-2c7c8c233304, #FFFFFF)",
+            "borderColor": "var(--7c206579-fa31-4528-a5bf-a70a5c14d673, #E9E6F2)",
+            "borderRadius": "18px",
+            "borderStyle": "solid",
+            "borderWidth": "1px",
+            "display": "flex",
+            "flexDirection": "column",
+            "flexShrink": 0,
+            "gap": "14px",
+            "overflow": "hidden",
+            "padding": "14px",
+            "width": "100%"
+           },
+           "blockId": "f6ee292f21",
+           "blockName": "Speaker · Diego Ferreira",
+           "children": [
+            {
+             "attributes": {
+              "alt": "Diego Ferreira",
+              "src": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=700"
+             },
+             "baseStyles": {
+              "borderRadius": "12px",
+              "flexShrink": 0,
+              "height": "240px",
+              "objectFit": "cover",
+              "width": "100%"
+             },
+             "blockId": "b8bd11d25a",
+             "blockName": "Speaker Photo",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "img",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "display": "flex",
+              "flexDirection": "column",
+              "flexShrink": 0,
+              "gap": "4px",
+              "overflow": "hidden",
+              "paddingBottom": "8px",
+              "paddingLeft": "6px",
+              "paddingRight": "6px"
+             },
+             "blockId": "70aff7cafb",
+             "blockName": "Speaker Copy",
+             "children": [
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--8dabd629-6a67-4861-ad2b-7ed7da3169bd, #17141F)",
+                "fontFamily": "Bricolage Grotesque",
+                "fontSize": "18px",
+                "fontWeight": "700",
+                "height": "fit-content",
+                "letterSpacing": "-0.02em",
+                "lineHeight": "1.04",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "6adf941bcf",
+               "blockName": "Speaker Name",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "h3",
+               "innerHTML": "Diego Ferreira",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--00cebeb2-b6de-40df-994c-b740465ccd0e, #6E6880)",
+                "fontFamily": "Inter",
+                "fontSize": "13px",
+                "height": "fit-content",
+                "lineHeight": "1.65",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "35103a7430",
+               "blockName": "Speaker Role",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "p",
+               "innerHTML": "Design Engineer, Linear",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--8b349bf3-08db-47b5-82e9-368c7473467b, #7C3AED)",
+                "fontFamily": "Inter",
+                "fontSize": "13px",
+                "height": "fit-content",
+                "lineHeight": "1.65",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "df9ace41d2",
+               "blockName": "Speaker Talk",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "p",
+               "innerHTML": "&ldquo;Animating like you mean it&rdquo;",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              }
+             ],
+             "classes": [],
+             "customAttributes": {},
+             "element": "div",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {
+            "data-reveal": ""
+           },
+           "element": "div",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {
+            "backgroundColor": "var(--e28e41dc-b70d-444d-809f-2c7c8c233304, #FFFFFF)",
+            "borderColor": "var(--7c206579-fa31-4528-a5bf-a70a5c14d673, #E9E6F2)",
+            "borderRadius": "18px",
+            "borderStyle": "solid",
+            "borderWidth": "1px",
+            "display": "flex",
+            "flexDirection": "column",
+            "flexShrink": 0,
+            "gap": "14px",
+            "overflow": "hidden",
+            "padding": "14px",
+            "width": "100%"
+           },
+           "blockId": "c0af4fbd92",
+           "blockName": "Speaker · Priya Raman",
+           "children": [
+            {
+             "attributes": {
+              "alt": "Priya Raman",
+              "src": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=700"
+             },
+             "baseStyles": {
+              "borderRadius": "12px",
+              "flexShrink": 0,
+              "height": "240px",
+              "objectFit": "cover",
+              "width": "100%"
+             },
+             "blockId": "f67ec794ff",
+             "blockName": "Speaker Photo",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "img",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "display": "flex",
+              "flexDirection": "column",
+              "flexShrink": 0,
+              "gap": "4px",
+              "overflow": "hidden",
+              "paddingBottom": "8px",
+              "paddingLeft": "6px",
+              "paddingRight": "6px"
+             },
+             "blockId": "42e8cc1492",
+             "blockName": "Speaker Copy",
+             "children": [
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--8dabd629-6a67-4861-ad2b-7ed7da3169bd, #17141F)",
+                "fontFamily": "Bricolage Grotesque",
+                "fontSize": "18px",
+                "fontWeight": "700",
+                "height": "fit-content",
+                "letterSpacing": "-0.02em",
+                "lineHeight": "1.04",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "26c405e1d3",
+               "blockName": "Speaker Name",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "h3",
+               "innerHTML": "Priya Raman",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--00cebeb2-b6de-40df-994c-b740465ccd0e, #6E6880)",
+                "fontFamily": "Inter",
+                "fontSize": "13px",
+                "height": "fit-content",
+                "lineHeight": "1.65",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "7bb590af83",
+               "blockName": "Speaker Role",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "p",
+               "innerHTML": "VP Engineering, Northwind",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--8b349bf3-08db-47b5-82e9-368c7473467b, #7C3AED)",
+                "fontFamily": "Inter",
+                "fontSize": "13px",
+                "height": "fit-content",
+                "lineHeight": "1.65",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "45a37f55e7",
+               "blockName": "Speaker Talk",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "p",
+               "innerHTML": "&ldquo;Shipping without standups&rdquo;",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              }
+             ],
+             "classes": [],
+             "customAttributes": {},
+             "element": "div",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {
+            "data-reveal": ""
+           },
+           "element": "div",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {
+            "backgroundColor": "var(--e28e41dc-b70d-444d-809f-2c7c8c233304, #FFFFFF)",
+            "borderColor": "var(--7c206579-fa31-4528-a5bf-a70a5c14d673, #E9E6F2)",
+            "borderRadius": "18px",
+            "borderStyle": "solid",
+            "borderWidth": "1px",
+            "display": "flex",
+            "flexDirection": "column",
+            "flexShrink": 0,
+            "gap": "14px",
+            "overflow": "hidden",
+            "padding": "14px",
+            "width": "100%"
+           },
+           "blockId": "ee3d74fd27",
+           "blockName": "Speaker · Tom Okafor",
+           "children": [
+            {
+             "attributes": {
+              "alt": "Tom Okafor",
+              "src": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=700"
+             },
+             "baseStyles": {
+              "borderRadius": "12px",
+              "flexShrink": 0,
+              "height": "240px",
+              "objectFit": "cover",
+              "width": "100%"
+             },
+             "blockId": "0542b68368",
+             "blockName": "Speaker Photo",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "img",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "display": "flex",
+              "flexDirection": "column",
+              "flexShrink": 0,
+              "gap": "4px",
+              "overflow": "hidden",
+              "paddingBottom": "8px",
+              "paddingLeft": "6px",
+              "paddingRight": "6px"
+             },
+             "blockId": "6f99443e4d",
+             "blockName": "Speaker Copy",
+             "children": [
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--8dabd629-6a67-4861-ad2b-7ed7da3169bd, #17141F)",
+                "fontFamily": "Bricolage Grotesque",
+                "fontSize": "18px",
+                "fontWeight": "700",
+                "height": "fit-content",
+                "letterSpacing": "-0.02em",
+                "lineHeight": "1.04",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "6281fc1855",
+               "blockName": "Speaker Name",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "h3",
+               "innerHTML": "Tom Okafor",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--00cebeb2-b6de-40df-994c-b740465ccd0e, #6E6880)",
+                "fontFamily": "Inter",
+                "fontSize": "13px",
+                "height": "fit-content",
+                "lineHeight": "1.65",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "0ba438448b",
+               "blockName": "Speaker Role",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "p",
+               "innerHTML": "Creator, htmx-ish",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--8b349bf3-08db-47b5-82e9-368c7473467b, #7C3AED)",
+                "fontFamily": "Inter",
+                "fontSize": "13px",
+                "height": "fit-content",
+                "lineHeight": "1.65",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "3445b53198",
+               "blockName": "Speaker Talk",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "p",
+               "innerHTML": "&ldquo;Hypermedia strikes back&rdquo;",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              }
+             ],
+             "classes": [],
+             "customAttributes": {},
+             "element": "div",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {
+            "data-reveal": ""
+           },
+           "element": "div",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {
+            "backgroundColor": "var(--e28e41dc-b70d-444d-809f-2c7c8c233304, #FFFFFF)",
+            "borderColor": "var(--7c206579-fa31-4528-a5bf-a70a5c14d673, #E9E6F2)",
+            "borderRadius": "18px",
+            "borderStyle": "solid",
+            "borderWidth": "1px",
+            "display": "flex",
+            "flexDirection": "column",
+            "flexShrink": 0,
+            "gap": "14px",
+            "overflow": "hidden",
+            "padding": "14px",
+            "width": "100%"
+           },
+           "blockId": "f4286c4504",
+           "blockName": "Speaker · Lena Vogel",
+           "children": [
+            {
+             "attributes": {
+              "alt": "Lena Vogel",
+              "src": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=700"
+             },
+             "baseStyles": {
+              "borderRadius": "12px",
+              "flexShrink": 0,
+              "height": "240px",
+              "objectFit": "cover",
+              "width": "100%"
+             },
+             "blockId": "c74cff5d63",
+             "blockName": "Speaker Photo",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "img",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "display": "flex",
+              "flexDirection": "column",
+              "flexShrink": 0,
+              "gap": "4px",
+              "overflow": "hidden",
+              "paddingBottom": "8px",
+              "paddingLeft": "6px",
+              "paddingRight": "6px"
+             },
+             "blockId": "a6284e05fb",
+             "blockName": "Speaker Copy",
+             "children": [
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--8dabd629-6a67-4861-ad2b-7ed7da3169bd, #17141F)",
+                "fontFamily": "Bricolage Grotesque",
+                "fontSize": "18px",
+                "fontWeight": "700",
+                "height": "fit-content",
+                "letterSpacing": "-0.02em",
+                "lineHeight": "1.04",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "132bccf0fc",
+               "blockName": "Speaker Name",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "h3",
+               "innerHTML": "Lena Vogel",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--00cebeb2-b6de-40df-994c-b740465ccd0e, #6E6880)",
+                "fontFamily": "Inter",
+                "fontSize": "13px",
+                "height": "fit-content",
+                "lineHeight": "1.65",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "2aed72b39f",
+               "blockName": "Speaker Role",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "p",
+               "innerHTML": "Security Lead, Sentry",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--8b349bf3-08db-47b5-82e9-368c7473467b, #7C3AED)",
+                "fontFamily": "Inter",
+                "fontSize": "13px",
+                "height": "fit-content",
+                "lineHeight": "1.65",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "1659ec173d",
+               "blockName": "Speaker Talk",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "p",
+               "innerHTML": "&ldquo;Your tokens are showing&rdquo;",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              }
+             ],
+             "classes": [],
+             "customAttributes": {},
+             "element": "div",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {
+            "data-reveal": ""
+           },
+           "element": "div",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {
+            "backgroundColor": "var(--e28e41dc-b70d-444d-809f-2c7c8c233304, #FFFFFF)",
+            "borderColor": "var(--7c206579-fa31-4528-a5bf-a70a5c14d673, #E9E6F2)",
+            "borderRadius": "18px",
+            "borderStyle": "solid",
+            "borderWidth": "1px",
+            "display": "flex",
+            "flexDirection": "column",
+            "flexShrink": 0,
+            "gap": "14px",
+            "overflow": "hidden",
+            "padding": "14px",
+            "width": "100%"
+           },
+           "blockId": "b2c6ac11f8",
+           "blockName": "Speaker · Marcus Hale",
+           "children": [
+            {
+             "attributes": {
+              "alt": "Marcus Hale",
+              "src": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=700"
+             },
+             "baseStyles": {
+              "borderRadius": "12px",
+              "flexShrink": 0,
+              "height": "240px",
+              "objectFit": "cover",
+              "width": "100%"
+             },
+             "blockId": "bf706d36ee",
+             "blockName": "Speaker Photo",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "img",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "display": "flex",
+              "flexDirection": "column",
+              "flexShrink": 0,
+              "gap": "4px",
+              "overflow": "hidden",
+              "paddingBottom": "8px",
+              "paddingLeft": "6px",
+              "paddingRight": "6px"
+             },
+             "blockId": "612948e051",
+             "blockName": "Speaker Copy",
+             "children": [
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--8dabd629-6a67-4861-ad2b-7ed7da3169bd, #17141F)",
+                "fontFamily": "Bricolage Grotesque",
+                "fontSize": "18px",
+                "fontWeight": "700",
+                "height": "fit-content",
+                "letterSpacing": "-0.02em",
+                "lineHeight": "1.04",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "f2fee22a5d",
+               "blockName": "Speaker Name",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "h3",
+               "innerHTML": "Marcus Hale",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--00cebeb2-b6de-40df-994c-b740465ccd0e, #6E6880)",
+                "fontFamily": "Inter",
+                "fontSize": "13px",
+                "height": "fit-content",
+                "lineHeight": "1.65",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "11516423ac",
+               "blockName": "Speaker Role",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "p",
+               "innerHTML": "Indie hacker",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--8b349bf3-08db-47b5-82e9-368c7473467b, #7C3AED)",
+                "fontFamily": "Inter",
+                "fontSize": "13px",
+                "height": "fit-content",
+                "lineHeight": "1.65",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "c28e993275",
+               "blockName": "Speaker Talk",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "p",
+               "innerHTML": "&ldquo;37 side projects later&rdquo;",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              }
+             ],
+             "classes": [],
+             "customAttributes": {},
+             "element": "div",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {
+            "data-reveal": ""
+           },
+           "element": "div",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {
+            "backgroundColor": "var(--e28e41dc-b70d-444d-809f-2c7c8c233304, #FFFFFF)",
+            "borderColor": "var(--7c206579-fa31-4528-a5bf-a70a5c14d673, #E9E6F2)",
+            "borderRadius": "18px",
+            "borderStyle": "solid",
+            "borderWidth": "1px",
+            "display": "flex",
+            "flexDirection": "column",
+            "flexShrink": 0,
+            "gap": "14px",
+            "overflow": "hidden",
+            "padding": "14px",
+            "width": "100%"
+           },
+           "blockId": "a90513e413",
+           "blockName": "Speaker · Yuki Tanaka",
+           "children": [
+            {
+             "attributes": {
+              "alt": "Yuki Tanaka",
+              "src": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=700"
+             },
+             "baseStyles": {
+              "borderRadius": "12px",
+              "flexShrink": 0,
+              "height": "240px",
+              "objectFit": "cover",
+              "width": "100%"
+             },
+             "blockId": "e9cd5c87d0",
+             "blockName": "Speaker Photo",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "img",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "display": "flex",
+              "flexDirection": "column",
+              "flexShrink": 0,
+              "gap": "4px",
+              "overflow": "hidden",
+              "paddingBottom": "8px",
+              "paddingLeft": "6px",
+              "paddingRight": "6px"
+             },
+             "blockId": "0ba528182f",
+             "blockName": "Speaker Copy",
+             "children": [
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--8dabd629-6a67-4861-ad2b-7ed7da3169bd, #17141F)",
+                "fontFamily": "Bricolage Grotesque",
+                "fontSize": "18px",
+                "fontWeight": "700",
+                "height": "fit-content",
+                "letterSpacing": "-0.02em",
+                "lineHeight": "1.04",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "c614455d3e",
+               "blockName": "Speaker Name",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "h3",
+               "innerHTML": "Yuki Tanaka",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--00cebeb2-b6de-40df-994c-b740465ccd0e, #6E6880)",
+                "fontFamily": "Inter",
+                "fontSize": "13px",
+                "height": "fit-content",
+                "lineHeight": "1.65",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "193df02bf5",
+               "blockName": "Speaker Role",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "p",
+               "innerHTML": "AI Platform, Supabase",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--8b349bf3-08db-47b5-82e9-368c7473467b, #7C3AED)",
+                "fontFamily": "Inter",
+                "fontSize": "13px",
+                "height": "fit-content",
+                "lineHeight": "1.65",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "8d63ba3a44",
+               "blockName": "Speaker Talk",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "p",
+               "innerHTML": "&ldquo;Agents in production, honestly&rdquo;",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              }
+             ],
+             "classes": [],
+             "customAttributes": {},
+             "element": "div",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {
+            "data-reveal": ""
+           },
+           "element": "div",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {
+            "backgroundColor": "var(--e28e41dc-b70d-444d-809f-2c7c8c233304, #FFFFFF)",
+            "borderColor": "var(--7c206579-fa31-4528-a5bf-a70a5c14d673, #E9E6F2)",
+            "borderRadius": "18px",
+            "borderStyle": "solid",
+            "borderWidth": "1px",
+            "display": "flex",
+            "flexDirection": "column",
+            "flexShrink": 0,
+            "gap": "14px",
+            "overflow": "hidden",
+            "padding": "14px",
+            "width": "100%"
+           },
+           "blockId": "2ac1497de6",
+           "blockName": "Speaker · Rafael Costa",
+           "children": [
+            {
+             "attributes": {
+              "alt": "Rafael Costa",
+              "src": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=700"
+             },
+             "baseStyles": {
+              "borderRadius": "12px",
+              "flexShrink": 0,
+              "height": "240px",
+              "objectFit": "cover",
+              "width": "100%"
+             },
+             "blockId": "0aa32c0df4",
+             "blockName": "Speaker Photo",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "img",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "display": "flex",
+              "flexDirection": "column",
+              "flexShrink": 0,
+              "gap": "4px",
+              "overflow": "hidden",
+              "paddingBottom": "8px",
+              "paddingLeft": "6px",
+              "paddingRight": "6px"
+             },
+             "blockId": "e4d8d869f7",
+             "blockName": "Speaker Copy",
+             "children": [
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--8dabd629-6a67-4861-ad2b-7ed7da3169bd, #17141F)",
+                "fontFamily": "Bricolage Grotesque",
+                "fontSize": "18px",
+                "fontWeight": "700",
+                "height": "fit-content",
+                "letterSpacing": "-0.02em",
+                "lineHeight": "1.04",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "5a25eaca67",
+               "blockName": "Speaker Name",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "h3",
+               "innerHTML": "Rafael Costa",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--00cebeb2-b6de-40df-994c-b740465ccd0e, #6E6880)",
+                "fontFamily": "Inter",
+                "fontSize": "13px",
+                "height": "fit-content",
+                "lineHeight": "1.65",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "8b75299a13",
+               "blockName": "Speaker Role",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "p",
+               "innerHTML": "CSS WG",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--8b349bf3-08db-47b5-82e9-368c7473467b, #7C3AED)",
+                "fontFamily": "Inter",
+                "fontSize": "13px",
+                "height": "fit-content",
+                "lineHeight": "1.65",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "296bf66d4a",
+               "blockName": "Speaker Talk",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "p",
+               "innerHTML": "&ldquo;What CSS knows that you don't&rdquo;",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              }
+             ],
+             "classes": [],
+             "customAttributes": {},
+             "element": "div",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {
+            "data-reveal": ""
+           },
+           "element": "div",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "customAttributes": {},
+         "element": "div",
+         "mobileStyles": {
+          "gridTemplateColumns": "1fr 1fr"
+         },
+         "rawStyles": {},
+         "tabletStyles": {}
+        }
+       ],
+       "classes": [],
+       "customAttributes": {},
+       "element": "div",
+       "mobileStyles": {},
+       "rawStyles": {},
+       "tabletStyles": {}
+      }
+     ],
+     "classes": [],
+     "customAttributes": {},
+     "element": "div",
+     "mobileStyles": {},
+     "rawStyles": {},
+     "tabletStyles": {}
+    },
+    {
+     "attributes": {},
+     "baseStyles": {
+      "alignItems": "center",
+      "backgroundColor": "var(--e28e41dc-b70d-444d-809f-2c7c8c233304, #FFFFFF)",
+      "display": "flex",
+      "flexDirection": "column",
+      "flexShrink": 0,
+      "overflow": "hidden",
+      "paddingBottom": "96px",
+      "width": "100%"
+     },
+     "blockId": "ae9161f0e9",
+     "blockName": "Section · CFP",
+     "children": [
+      {
+       "attributes": {},
+       "baseStyles": {
+        "display": "flex",
+        "flexDirection": "column",
+        "flexShrink": 0,
+        "marginLeft": "auto",
+        "marginRight": "auto",
+        "maxWidth": "1140px",
+        "overflow": "hidden",
+        "paddingLeft": "28px",
+        "paddingRight": "28px",
+        "width": "100%"
+       },
+       "blockId": "a23227feae",
+       "blockName": "CFP Container",
+       "children": [
+        {
+         "attributes": {},
+         "baseStyles": {
+          "alignItems": "center",
+          "backgroundColor": "var(--c27ad2fa-eafc-4b58-aa00-73bc26490da3, #F3EEFF)",
+          "borderRadius": "20px",
+          "display": "flex",
+          "flexDirection": "column",
+          "flexShrink": 0,
+          "gap": "14px",
+          "overflow": "hidden",
+          "paddingBottom": "56px",
+          "paddingLeft": "32px",
+          "paddingRight": "32px",
+          "paddingTop": "56px",
+          "width": "100%"
+         },
+         "blockId": "12607efc97",
+         "blockName": "CFP Box",
+         "children": [
+          {
+           "attributes": {},
+           "baseStyles": {
+            "color": "var(--8dabd629-6a67-4861-ad2b-7ed7da3169bd, #17141F)",
+            "fontFamily": "Bricolage Grotesque",
+            "fontSize": "34px",
+            "fontWeight": "700",
+            "height": "fit-content",
+            "letterSpacing": "-0.02em",
+            "lineHeight": "1.04",
+            "minWidth": "10px",
+            "textAlign": "center",
+            "width": "fit-content"
+           },
+           "blockId": "1099c60f7a",
+           "blockName": "CFP Title",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "element": "h2",
+           "innerHTML": "Got a talk in you?",
+           "mobileStyles": {
+            "fontSize": "26px"
+           },
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {
+            "color": "var(--00cebeb2-b6de-40df-994c-b740465ccd0e, #6E6880)",
+            "fontFamily": "Inter",
+            "fontSize": "16px",
+            "height": "fit-content",
+            "lineHeight": "1.65",
+            "maxWidth": "540px",
+            "minWidth": "10px",
+            "textAlign": "center",
+            "width": "fit-content"
+           },
+           "blockId": "eefb678355",
+           "blockName": "CFP Text",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "element": "p",
+           "innerHTML": "Our call for proposals is open until July 1. First-time speakers get a free coaching session with a past speaker.",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {
+            "href": "#"
+           },
+           "baseStyles": {
+            "alignItems": "center",
+            "backgroundImage": "linear-gradient(120deg, var(--8b349bf3-08db-47b5-82e9-368c7473467b, #7C3AED), var(--69306d8f-f2c5-4bf7-a718-365e0c080d43, #EC4899) 55%, var(--a34bd78b-a6a0-4557-9719-bb690c69cf89, #F59E0B))",
+            "borderRadius": "100px",
+            "color": "var(--2eb068f1-8ea4-4a60-8bbd-ac9cfd1fa2da, #FFFFFF)",
+            "cursor": "pointer",
+            "display": "inline-flex",
+            "fontFamily": "Bricolage Grotesque",
+            "fontSize": "15px",
+            "fontWeight": "700",
+            "height": "fit-content",
+            "justifyContent": "center",
+            "lineHeight": "1.4",
+            "marginTop": "10px",
+            "minWidth": "10px",
+            "paddingBottom": "13px",
+            "paddingLeft": "28px",
+            "paddingRight": "28px",
+            "paddingTop": "13px",
+            "textDecoration": "none",
+            "width": "fit-content"
+           },
+           "blockId": "a8b0839ef3",
+           "blockName": "CFP Button",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "element": "a",
+           "innerHTML": "Submit a proposal",
+           "mobileStyles": {},
+           "rawStyles": {
+            "hover:opacity": "0.88",
+            "transition": "opacity 0.15s ease-out"
+           },
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "customAttributes": {
+          "data-reveal": ""
+         },
+         "element": "div",
+         "mobileStyles": {},
+         "rawStyles": {},
+         "tabletStyles": {}
+        }
+       ],
+       "classes": [],
+       "customAttributes": {},
+       "element": "div",
+       "mobileStyles": {},
+       "rawStyles": {},
+       "tabletStyles": {}
+      }
+     ],
+     "classes": [],
+     "customAttributes": {},
+     "element": "div",
+     "mobileStyles": {},
+     "rawStyles": {},
+     "tabletStyles": {}
+    },
+    {
+     "attributes": {},
+     "baseStyles": {},
+     "blockId": "0e47492c3c",
+     "blockName": "Footer",
+     "children": [
+      {
+       "attributes": {},
+       "baseStyles": {},
+       "blockId": "571274e5be",
+       "children": [],
+       "classes": [],
+       "customAttributes": {},
+       "isChildOfComponent": "commit_footer",
+       "mobileStyles": {},
+       "rawStyles": {},
+       "referenceBlockId": "75e8bb7c09",
+       "tabletStyles": {}
+      },
+      {
+       "attributes": {},
+       "baseStyles": {},
+       "blockId": "3b4a838ce3",
+       "children": [
+        {
+         "attributes": {},
+         "baseStyles": {},
+         "blockId": "682db2abdb",
+         "children": [
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "180de6d8af",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "commit_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "966c942ae3",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "31161e767d",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "commit_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "fa5b292535",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "49b1ab1d52",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "commit_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "267d75fb02",
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "customAttributes": {},
+         "isChildOfComponent": "commit_footer",
+         "mobileStyles": {},
+         "rawStyles": {},
+         "referenceBlockId": "e9d26e37dc",
+         "tabletStyles": {}
+        },
+        {
+         "attributes": {},
+         "baseStyles": {},
+         "blockId": "2ce24806e4",
+         "children": [
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "099d9f87f0",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "commit_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "789c249d64",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "70135f33f9",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "commit_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "be9a014c3d",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "0630262dd7",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "commit_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "1a595af279",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "806ce318e9",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "commit_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "ffffcfcf06",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "71291dbf00",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "commit_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "9998062e4b",
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "customAttributes": {},
+         "isChildOfComponent": "commit_footer",
+         "mobileStyles": {},
+         "rawStyles": {},
+         "referenceBlockId": "2ee25ab6e7",
+         "tabletStyles": {}
+        },
+        {
+         "attributes": {},
+         "baseStyles": {},
+         "blockId": "ee2c6ff684",
+         "children": [
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "301705f6b0",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "47c020d58c",
+             "children": [
+              {
+               "attributes": {},
+               "baseStyles": {},
+               "blockId": "6195fe91c2",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "isChildOfComponent": "commit_footer",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "referenceBlockId": "30dcafc831",
+               "tabletStyles": {}
+              }
+             ],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "commit_footer",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "4cdb5633c3",
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "3446a8f0e7",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "commit_footer",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "9e47fd5d5e",
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "commit_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "ea8569b2a4",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "675140b5e5",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "commit_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "e7495c1ee0",
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "customAttributes": {},
+         "isChildOfComponent": "commit_footer",
+         "mobileStyles": {},
+         "rawStyles": {},
+         "referenceBlockId": "df5597a298",
+         "tabletStyles": {}
+        }
+       ],
+       "classes": [],
+       "customAttributes": {},
+       "isChildOfComponent": "commit_footer",
+       "mobileStyles": {},
+       "rawStyles": {},
+       "referenceBlockId": "8b2ebf5124",
+       "tabletStyles": {}
+      }
+     ],
+     "classes": [],
+     "customAttributes": {},
+     "extendedFromComponent": "commit_footer",
+     "mobileStyles": {},
+     "rawStyles": {},
+     "tabletStyles": {}
+    }
+   ],
+   "classes": [],
+   "customAttributes": {},
+   "element": "div",
+   "mobileStyles": {},
+   "originalElement": "body",
+   "rawStyles": {},
+   "tabletStyles": {}
+  }
+ ],
+ "client_scripts": [
+  {
+   "builder_script": "commit-styles"
+  },
+  {
+   "builder_script": "commit-reveal"
+  }
+ ],
+ "creation": "2026-06-05 01:55:11.006276",
+ "disable_indexing": 0,
+ "docstatus": 0,
+ "doctype": "Builder Page",
+ "draft_blocks": null,
+ "dynamic_route": 0,
+ "idx": 0,
+ "is_standard": 0,
+ "is_template": 1,
+ "meta_description": "The first eight speakers of Commit '26.",
+ "modified": "2026-06-05 01:55:12.508359",
+ "modified_by": "Administrator",
+ "name": "commit_speakers",
+ "owner": "Administrator",
+ "page_name": "commit_speakers",
+ "page_title": "Speakers",
+ "preview": "/builder_assets/commit/commit_speakers/preview.webp",
+ "project_folder": null,
+ "published": 0,
+ "published_at": null,
+ "route": "templates/commit/speakers",
+ "template_group": "commit"
+}
