@@ -258,6 +258,7 @@ class BuilderPage(WebsiteGenerator):
 		if not (self.is_standard and self.app and frappe.conf.developer_mode):
 			return
 		from builder.export_import_standard_page import rename_standard_page_files
+
 		rename_standard_page_files(old, new, self.app)
 
 	def add_comment(self, comment_type="Comment", text=None, comment_email=None, comment_by=None):
@@ -1540,7 +1541,7 @@ def parse_static_value(value: str, prop_type: str) -> Any:
 		case "number":
 			try:
 				return float(value)
-			except ValueError, TypeError:
+			except (ValueError, TypeError):
 				return None
 		case "boolean":
 			if isinstance(value, bool):

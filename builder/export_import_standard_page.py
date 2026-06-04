@@ -32,7 +32,9 @@ def export_page_as_standard(page_name, target_app):
 
 	config_file_path = os.path.join(paths["page_path"], f"{export_name}.json")
 
-	blocks = frappe.parse_json(page_config.get("draft_blocks") or page_config["blocks"]) # what if draft and published blocks have different components?
+	blocks = frappe.parse_json(
+		page_config.get("draft_blocks") or page_config["blocks"]
+	)  # what if draft and published blocks have different components?
 	if blocks:
 		copy_assets_from_blocks(blocks, paths["assets_path"], target_app)
 		page_config["blocks"] = blocks

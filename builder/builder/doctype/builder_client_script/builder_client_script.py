@@ -42,7 +42,9 @@ class BuilderClientScript(Document):
 		if frappe.conf.developer_mode:
 			from builder.export_import_standard_page import delete_standard_client_script_files
 
-			referencing_standard_pages = self.get_referencing_pages(filters={"is_standard": 1}, fields=["app"])
+			referencing_standard_pages = self.get_referencing_pages(
+				filters={"is_standard": 1}, fields=["app"]
+			)
 			for page in referencing_standard_pages:
 				delete_standard_client_script_files(self.name, page.app)
 
@@ -50,11 +52,15 @@ class BuilderClientScript(Document):
 		if frappe.conf.developer_mode:
 			from builder.export_import_standard_page import rename_standard_client_script_files
 
-			referencing_standard_pages = self.get_referencing_pages(filters={"is_standard": 1}, fields=["app"])
+			referencing_standard_pages = self.get_referencing_pages(
+				filters={"is_standard": 1}, fields=["app"]
+			)
 			for page in referencing_standard_pages:
 				rename_standard_client_script_files(old, new, page.app)
 
-	def get_referencing_pages(self, filters: dict | None = None, fields: list[str] | None = None) -> list[dict]:
+	def get_referencing_pages(
+		self, filters: dict | None = None, fields: list[str] | None = None
+	) -> list[dict]:
 		"""Return the pages that use this script.
 
 		Args:

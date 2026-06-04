@@ -43,7 +43,7 @@ class BuilderComponent(Document):
 				filters={"is_standard": 1}, fields=["app"]
 			)
 			for page in referencing_standard_pages:
-				app_path = (frappe.get_app_path(page.app))
+				app_path = frappe.get_app_path(page.app)
 				builder_files_path = os.path.join(app_path, "builder_files")
 				public_builder_files_path = os.path.join(app_path, "public", "builder_assets")
 				components_path = os.path.join(builder_files_path, "components")

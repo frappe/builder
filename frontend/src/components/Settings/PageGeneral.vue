@@ -157,7 +157,9 @@
 							<div class="flex items-center justify-between">
 								<div class="flex flex-col gap-2">
 									<span class="text-base font-medium text-ink-gray-9">Page Name</span>
-									<p class="max-w-xs text-p-sm text-ink-gray-7">Rename the exported file name for this standard page</p>
+									<p class="max-w-xs text-p-sm text-ink-gray-7">
+										Rename the exported file name for this standard page
+									</p>
 								</div>
 								<div class="flex items-center gap-2">
 									<BuilderInput

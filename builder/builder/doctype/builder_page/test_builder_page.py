@@ -1328,28 +1328,26 @@ class TestStandardPageSync(FrappeTestCase):
 				frappe.delete_doc("Builder Client Script", script.name, ignore_permissions=True)
 
 	def test_after_rename_standard_page_renames_directory(self):
-	    """Renaming a standard page must rename its builder_files directory."""
-	    import unittest.mock as mock
-	
-	    page = self._make_page("rename-sync-page-old")
-	    new_name = f"rename-sync-page-new-{frappe.generate_hash(4)}"
-	    try:
-	        with mock.patch(
-	            "builder.export_import_standard_page.rename_standard_page_files"
-	        ) as mock_rename:
-	            frappe.conf.developer_mode = 1
-	            frappe.rename_doc("Builder Page", page.name, new_name, force=True)
-	            mock_rename.assert_called_once()
-	            _args = mock_rename.call_args[0]
-	            self.assertEqual(_args[0], page.name)   # old name
-	            self.assertEqual(_args[1], new_name)    # new name
-	            self.assertEqual(_args[2], self.FIXTURE_APP)
-	    finally:
-	        frappe.conf.developer_mode = 0
-	        if frappe.db.exists("Builder Page", new_name):
-	            frappe.delete_doc("Builder Page", new_name, ignore_permissions=True)
-	        if frappe.db.exists("Builder Page", page.name):
-	            page.delete(ignore_permissions=True)
+		"""Renaming a standard page must rename its builder_files directory."""
+		import unittest.mock as mock
+
+		page = self._make_page("rename-sync-page-old")
+		new_name = f"rename-sync-page-new-{frappe.generate_hash(4)}"
+		try:
+			with mock.patch("builder.export_import_standard_page.rename_standard_page_files") as mock_rename:
+				frappe.conf.developer_mode = 1
+				frappe.rename_doc("Builder Page", page.name, new_name, force=True)
+				mock_rename.assert_called_once()
+				_args = mock_rename.call_args[0]
+				self.assertEqual(_args[0], page.name)  # old name
+				self.assertEqual(_args[1], new_name)  # new name
+				self.assertEqual(_args[2], self.FIXTURE_APP)
+		finally:
+			frappe.conf.developer_mode = 0
+			if frappe.db.exists("Builder Page", new_name):
+				frappe.delete_doc("Builder Page", new_name, ignore_permissions=True)
+			if frappe.db.exists("Builder Page", page.name):
+				page.delete(ignore_permissions=True)
 
 	def test_uncheck_standard_page_removes_files(self):
 		"""Unchecking is_standard must delete the exported page files."""
