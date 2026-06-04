@@ -14,7 +14,7 @@ let instance: ReturnType<typeof builderVariableComposable> | null = null;
 
 function builderVariableComposable() {
 	const cssVariables = computed(() => {
-		return builderVariableStore.data.reduce(
+		return (builderVariableStore.data || []).reduce(
 			(obj: Record<string, string>, builderVariable: BuilderVariable) => {
 				if (!builderVariable.name || !builderVariable.value) return obj;
 				obj[`--${builderVariable.name}`] = builderVariable.value;
@@ -25,7 +25,7 @@ function builderVariableComposable() {
 	});
 
 	const darkCssVariables = computed(() => {
-		return builderVariableStore.data.reduce(
+		return (builderVariableStore.data || []).reduce(
 			(obj: Record<string, string>, builderVariable: BuilderVariable) => {
 				if (!builderVariable.name || !builderVariable.dark_value) return obj;
 				obj[`--${builderVariable.name}`] = builderVariable.dark_value;
@@ -35,9 +35,10 @@ function builderVariableComposable() {
 		);
 	});
 
-	const resolveVariableValue = (value: string, isDarkMode = false): string => {
+	// extracts the variable key (e.g. "--uuid") from values like "var(--uuid)" or "--uuid"
+	const extractVariableKey = (value: string): string | null => {
 		if (!value || value.startsWith("#")) {
-			return value;
+			return null;
 		}
 
 		let variableName = value;
@@ -45,11 +46,33 @@ function builderVariableComposable() {
 			const match = variableName.match(/^var\(\s*(--[^) ,]+)/);
 			variableName = match ? match[1] : variableName;
 		} else if (!variableName.startsWith("--")) {
+			return null;
+		}
+
+		return variableName;
+	};
+
+	const resolveVariableValue = (value: string, isDarkMode = false): string => {
+		const key = extractVariableKey(value);
+		if (!key) {
 			return value;
 		}
 
 		const variables = isDarkMode ? darkCssVariables.value : cssVariables.value;
-		return variables[variableName] ?? cssVariables.value[variableName] ?? value;
+		return variables[key] ?? cssVariables.value[key] ?? value;
+	};
+
+	const getVariableName = (value: string): string | null => {
+		const key = extractVariableKey(value);
+		if (!key) {
+			return null;
+		}
+
+		const name = key.slice(2);
+		const variable = (builderVariableStore.data || []).find(
+			(builderVariable: BuilderVariable) => builderVariable.name === name,
+		);
+		return variable?.variable_name || null;
 	};
 
 	const createVariable = async (builderVariable: Partial<BuilderVariable>) => {
@@ -80,6 +103,7 @@ function builderVariableComposable() {
 		cssVariables,
 		darkCssVariables,
 		resolveVariableValue,
+		getVariableName,
 		createVariable,
 		updateVariable,
 		deleteVariable,

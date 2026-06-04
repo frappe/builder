@@ -29,7 +29,7 @@
 								@keydown.enter="handleEnter"
 								@focus="togglePopover"
 								:placeholder="placeholder"
-								:modelValue="modelValue"
+								:modelValue="displayValue"
 								:getOptions="getOptions"
 								:actionButton="
 									modelValue && !isCssVariable && props.showColorVariableOptions
@@ -84,7 +84,7 @@ const colorInput = ref<typeof Autocomplete | null>(null);
 const colorPickerRef = ref<typeof ColorPicker | null>(null);
 const showVariableDialog = ref(false);
 const newVariable = ref<Partial<BuilderVariable> | null>(null);
-const { variables, resolveVariableValue } = useBuilderVariable();
+const { variables, resolveVariableValue, getVariableName } = useBuilderVariable();
 
 const handleEnter = () => {
 	const val = props.modelValue;
@@ -199,6 +199,14 @@ const resolvedColor = computed(() => {
 	}
 	return props.modelValue;
 }) as ComputedRef<HashString | RGBString>;
+
+// show the variable's name instead of its raw value e.g. var(--uuid)
+const displayValue = computed(() => {
+	if (props.modelValue && isCssVariable.value) {
+		return getVariableName(props.modelValue) ?? props.modelValue;
+	}
+	return props.modelValue;
+});
 
 const emit = defineEmits(["update:modelValue"]);
 
