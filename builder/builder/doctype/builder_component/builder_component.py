@@ -43,7 +43,11 @@ class BuilderComponent(Document):
 				filters={"is_standard": 1}, fields=["app"]
 			)
 			for page in referencing_standard_pages:
-				export_components([self.name], page.app)
+				app_path = (frappe.get_app_path(page.app))
+				builder_files_path = os.path.join(app_path, "builder_files")
+				public_builder_files_path = os.path.join(app_path, "public", "builder_assets")
+				components_path = os.path.join(builder_files_path, "components")
+				export_components([self.component_id], components_path, public_builder_files_path, page.app)
 
 	def on_trash(self):
 		if frappe.conf.developer_mode:
