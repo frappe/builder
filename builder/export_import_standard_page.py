@@ -32,7 +32,7 @@ def export_page_as_standard(page_name, target_app):
 
 	config_file_path = os.path.join(paths["page_path"], f"{export_name}.json")
 
-	blocks = frappe.parse_json(page_config.get("draft_blocks") or page_config["blocks"])
+	blocks = frappe.parse_json(page_config.get("draft_blocks") or page_config["blocks"]) # what if draft and published blocks have different components?
 	if blocks:
 		copy_assets_from_blocks(blocks, paths["assets_path"], target_app)
 		page_config["blocks"] = blocks
@@ -315,58 +315,40 @@ def export_variables(variables, builder_files_path):
 			frappe.log_error(f"Failed to export variable {var_name}: {e!s}")
 
 
-def delete_standard_page_files(page_name: str, app_name: str) -> None:
-	"""Remove the exported directory for a standard page from the target app's source code.
-
-	Called from ``BuilderPage.on_trash`` so that deleting a page through the UI
-	also removes the corresponding files that were written by
-	``export_page_as_standard``.
-	"""
+def _delete_standard_builder_files(name: str, app_name: str, subdir: str) -> None:
+	"""Remove an exported builder_files directory from the target app's source code."""
 	app_path = frappe.get_app_path(app_name)
 	if not app_path:
 		return
-	export_name = frappe.scrub(page_name)
-	page_path = os.path.join(app_path, "builder_files", "pages", export_name)
-	if os.path.isdir(page_path):
-		shutil.rmtree(page_path, ignore_errors=True)
+	export_path = os.path.join(app_path, "builder_files", subdir, frappe.scrub(name))
+	if os.path.isdir(export_path):
+		shutil.rmtree(export_path, ignore_errors=True)
+
+
+def delete_standard_page_files(page_name: str, app_name: str) -> None:
+	"""Remove the exported directory for a standard page from the target app's source code."""
+	_delete_standard_builder_files(page_name, app_name, "pages")
 
 
 def delete_standard_client_script_files(script_name: str, app_name: str) -> None:
-	"""Remove the exported directory for a client script from the target app's source code.
+	"""Remove the exported directory for a client script from the target app's source code."""
+	_delete_standard_builder_files(script_name, app_name, "client_scripts")
 
-	Called when a ``Builder Client Script`` is deleted *and* no other standard
-	page in the same app still references it.
-	"""
+
+def delete_standard_component_files(component_name: str, app_name: str) -> None:
+	"""Remove the exported directory for a component from the target app's source code."""
+	_delete_standard_builder_files(component_name, app_name, "components")
+
+
+def _rename_standard_builder_files(old: str, new: str, app_name: str, subdir: str) -> None:
+	"""Rename an exported builder_files directory and its JSON config."""
 	app_path = frappe.get_app_path(app_name)
 	if not app_path:
 		return
-	export_name = frappe.scrub(script_name)
-	script_path = os.path.join(app_path, "builder_files", "client_scripts", export_name)
-	if os.path.isdir(script_path):
-		shutil.rmtree(script_path, ignore_errors=True)
-
-
-def rename_standard_page_files(old: str, new: str, app_name: str) -> None:
-    """Rename the builder_files directory for a standard page."""
-    old_dir = frappe.get_app_path(app_name, "builder_files", "pages", old)
-    new_dir = frappe.get_app_path(app_name, "builder_files", "pages", new)
-    if os.path.exists(old_dir):
-        os.rename(old_dir, new_dir)
-    old_json = os.path.join(new_dir, f"{old}.json")
-    new_json = os.path.join(new_dir, f"{new}.json")
-    if os.path.exists(old_json):
-        os.rename(old_json, new_json)
-
-
-def rename_standard_client_script_files(old_name: str, new_name: str, app_name: str) -> None:
-	"""Rename the exported directory for a client script inside the target app's source code."""
-	app_path = frappe.get_app_path(app_name)
-	if not app_path:
-		return
-	old_export_name = frappe.scrub(old_name)
-	new_export_name = frappe.scrub(new_name)
-	old_path = os.path.join(app_path, "builder_files", "client_scripts", old_export_name)
-	new_path = os.path.join(app_path, "builder_files", "client_scripts", new_export_name)
+	old_export_name = frappe.scrub(old)
+	new_export_name = frappe.scrub(new)
+	old_path = os.path.join(app_path, "builder_files", subdir, old_export_name)
+	new_path = os.path.join(app_path, "builder_files", subdir, new_export_name)
 	if os.path.isdir(old_path):
 		if os.path.isdir(new_path):
 			shutil.rmtree(new_path, ignore_errors=True)
@@ -375,6 +357,21 @@ def rename_standard_client_script_files(old_name: str, new_name: str, app_name: 
 		new_json = os.path.join(new_path, f"{new_export_name}.json")
 		if os.path.exists(old_json):
 			os.rename(old_json, new_json)
+
+
+def rename_standard_page_files(old: str, new: str, app_name: str) -> None:
+	"""Rename the builder_files directory for a standard page."""
+	_rename_standard_builder_files(old, new, app_name, "pages")
+
+
+def rename_standard_client_script_files(old: str, new: str, app_name: str) -> None:
+	"""Rename the exported directory for a client script inside the target app's source code."""
+	_rename_standard_builder_files(old, new, app_name, "client_scripts")
+
+
+def rename_standard_component_files(old: str, new: str, app_name: str) -> None:
+	"""Rename the exported directory for a component inside the target app's source code."""
+	_rename_standard_builder_files(old, new, app_name, "components")
 
 
 def import_fonts(fonts_path):
