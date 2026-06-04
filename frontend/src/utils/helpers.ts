@@ -5,7 +5,7 @@ import { BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { dialog, FileUploadHandler, toast } from "frappe-ui";
 import { reactive, toRaw } from "vue";
-import { getRGB, getRandomColor, HexToHSV, HSVToHex } from "./colors";
+import { getRandomColor, getRGB, HexToHSV, HSVToHex } from "./colors";
 import {
 	addPxToNumber,
 	addUnitToNumber,
@@ -525,6 +525,9 @@ function openInDesk(page: BuilderPage) {
 	window.open(`/app/builder-page/${page.page_name}`, "_blank");
 }
 
+// quote the URL so that file names with spaces or special characters stay valid CSS
+const cssUrl = (url: string) => `url("${url.replace(/"/g, '\\"')}")`;
+
 interface DialogAction {
 	label: string;
 	variant?: "solid" | "subtle" | "outline" | "ghost";
@@ -844,6 +847,7 @@ export {
 	alert,
 	confirm,
 	copyToClipboard,
+	cssUrl,
 	dataURLtoFile,
 	detachBlockFromComponent,
 	executeBlockClientScriptRestricted,
