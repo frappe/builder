@@ -271,10 +271,11 @@ class BuilderPage(WebsiteGenerator):
 		if context.preview and self.draft_blocks:
 			blocks = self.draft_blocks
 
-		content, style, fonts, has_block_script = get_block_html(blocks)
+		content, style, fonts, has_block_script, has_dual_mode_image = get_block_html(blocks)
 
 		if self.dynamic_route or page_data or has_block_script or self.page_data_script:
 			context.no_cache = 1
+		context.has_dual_mode_image = has_dual_mode_image
 
 		self.set_custom_font(context, fonts)
 		context.fonts = fonts
@@ -536,7 +537,7 @@ def get_block_data(
 	return block_data
 
 
-def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
+def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool, bool]:
 	"""
 	Main entry point for converting blocks to HTML.
 
@@ -544,7 +545,7 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 		blocks: JSON string or list of block dictionaries
 
 	#### Returns:
-		Tuple of (`html_content`, `css_styles`, `font_map`, `has_block_script`)
+		Tuple of (`html_content`, `css_styles`, `font_map`, `has_block_script`, `has_dual_mode_image`)
 	"""
 	blocks = frappe.parse_json(blocks)
 	if not isinstance(blocks, list):
@@ -560,6 +561,7 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 		"style_tag": style_tag,
 		"font_map": font_map,
 		"has_block_script": False,
+		"has_dual_mode_image": False,
 		"standard_props_stack": {},  # prop_name -> list of prop_info
 		"global_script_tag": soup.new_tag("script"),
 		"used_block_scripts": set(),
@@ -581,7 +583,13 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 		html = wrap_html_with_context(str(tag), block_context)
 		html_parts.append(html)
 
-	return "".join(html_parts), str(style_tag), font_map, shared_state["has_block_script"]
+	return (
+		"".join(html_parts),
+		str(style_tag),
+		font_map,
+		shared_state["has_block_script"],
+		shared_state["has_dual_mode_image"],
+	)
 
 
 def build_tag(
@@ -748,8 +756,10 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 			dark_source = soup.new_tag("source")
 			dark_source["srcset"] = dark_src
 			dark_source["media"] = "(prefers-color-scheme: dark)"
+			dark_source["data-scheme"] = "dark"  # used by manual theme toggle script
 			picture_tag.append(dark_source)
 			picture_tag.attrs["style"] = "display: contents;"
+			state["has_dual_mode_image"] = True
 
 			tag = soup.new_tag("img")
 			tag.attrs = {k: v for k, v in attributes.items() if k != "darkSrc"}
