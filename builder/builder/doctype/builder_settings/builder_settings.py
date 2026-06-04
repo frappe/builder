@@ -7,6 +7,8 @@ from frappe.utils import get_files_path
 from frappe.utils.caching import redis_cache
 from frappe.website.utils import clear_cache
 
+from builder.utils import has_page_read, has_page_write
+
 
 class BuilderSettings(Document):
 	# begin: auto-generated types
@@ -79,18 +81,17 @@ def get_website_user_home_page(session_user=None):
 
 
 @frappe.whitelist()
+@has_page_read()
 def get_components():
 	# in label value format
 	return frappe.get_all("Builder Component", fields=["name as value", "component_name as label"])
 
 
 @frappe.whitelist()
+@has_page_write("You don't have permission to access this component")
 def replace_component(target_component: str, replace_with: str, filters: str | None = None):
 	if not target_component or not replace_with:
 		return
-	# check permissions
-	if not frappe.has_permission("Builder Page", ptype="write"):
-		frappe.throw(_("You don't have permission to access this component"), frappe.PermissionError)
 
 	# check if the replace_with component exists
 	if not frappe.db.exists("Builder Component", replace_with):

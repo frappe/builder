@@ -50,13 +50,13 @@
 								}}
 							</span>
 
-							<BuilderButton
+							<Button
 								variant="subtle"
 								@click="
 									pageStore.activePage?.published ? pageStore.unpublishPage() : pageStore.publishPage(false)
 								">
 								{{ pageStore.activePage?.published ? "Unpublish" : "Publish" }}
-							</BuilderButton>
+							</Button>
 						</div>
 					</div>
 				</div>
@@ -98,7 +98,7 @@
 							<span class="text-base font-medium text-ink-gray-9">Homepage</span>
 							<p class="text-base text-ink-gray-5">Set current page as Homepage</p>
 						</div>
-						<BuilderButton
+						<Button
 							variant="subtle"
 							@click="
 								() => {
@@ -110,7 +110,7 @@
 								}
 							">
 							{{ pageStore.isHomePage(pageStore.activePage) ? "Unset Homepage" : "Set As Homepage" }}
-						</BuilderButton>
+						</Button>
 					</div>
 					<hr class="w-full border-outline-gray-2" />
 					<Switch
@@ -197,7 +197,6 @@
 </template>
 <script setup lang="ts">
 import ImageUploader from "@/components/Controls/ImageUploader.vue";
-import Switch from "@/components/Controls/Switch.vue";
 import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
@@ -205,9 +204,8 @@ import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderProjectFolder } from "@/types/doctypes";
 import { toTitleCase } from "@/utils/helpers";
-import { createResource, FeatherIcon } from "frappe-ui";
+import { createResource, Switch, toast } from "frappe-ui";
 import { computed, ref, watch } from "vue";
-import { toast } from "frappe-ui";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();

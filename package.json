@@ -1,6 +1,6 @@
 {
     "private": true,
-    "workspace": [
+    "workspaces": [
         "frontend",
         "frappe-ui"
     ],

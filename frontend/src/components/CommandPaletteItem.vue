@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="flex w-full min-w-0 items-center rounded px-2 py-2 text-sm text-ink-gray-8 transition-colors"
+		class="flex w-full min-w-0 items-center rounded px-2 py-2 text-sm text-ink-gray-8"
 		:class="{ 'bg-surface-gray-2': active }">
 		<!-- lucide string icon (e.g. "lucide-search") -->
 		<span
@@ -15,21 +15,25 @@
 		<span class="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
 			{{ item.title }}
 		</span>
-		<span v-if="item.description" class="ml-3 shrink-0 text-xs text-ink-gray-4">
+		<span v-if="item.description && showDescription" class="ml-3 shrink-0 text-xs text-ink-gray-4">
 			{{ item.description }}
 		</span>
 	</div>
 </template>
 
 <script setup lang="ts">
-defineProps<{
-	item: {
-		name: string;
-		title: string;
-		description?: string;
-		icon?: string | object;
-		[key: string]: unknown;
-	};
-	active?: boolean;
-}>();
+withDefaults(
+	defineProps<{
+		item: {
+			name: string;
+			title: string;
+			description?: string;
+			icon?: string | object;
+			[key: string]: unknown;
+		};
+		active?: boolean;
+		showDescription?: boolean;
+	}>(),
+	{ showDescription: false },
+);
 </script>

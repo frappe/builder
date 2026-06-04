@@ -40,7 +40,7 @@
 									:modelValue="stop.color"
 									@update:modelValue="(val) => updateStopColor(index, val)" />
 								<div class="mt-2 flex items-center gap-2">
-									<BuilderButton
+									<Button
 										variant="subtle"
 										label="Remove Stop"
 										class="w-full"
@@ -92,7 +92,6 @@ import { useMouseInElement, useMousePressed } from "@vueuse/core";
 import { Popover } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 import AnglePicker from "./AnglePicker.vue";
-import BuilderButton from "./BuilderButton.vue";
 import ColorPicker from "./ColorPicker.vue";
 import Input from "./Input.vue";
 import TabButtons from "./TabButtons.vue";

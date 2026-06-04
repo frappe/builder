@@ -1,6 +1,6 @@
 <template>
 	<div class="flex items-center">
-		<BuilderButton
+		<Button
 			variant="solid"
 			:disabled="disabled"
 			@click="
@@ -15,7 +15,7 @@
 			}"
 			:loading="publishing">
 			{{ publishButtonLabel }}
-		</BuilderButton>
+		</Button>
 		<Dropdown
 			v-if="showDropdown"
 			:options="[
@@ -36,12 +36,12 @@
 			class="flex-1 [&>div>div>div]:w-full"
 			placement="right">
 			<template v-slot="{ open }">
-				<BuilderButton
+				<Button
 					variant="solid"
 					@click="open"
 					:disabled="Boolean(pageStore.activePage?.is_template)"
 					icon="lucide-chevron-down"
-					class="!w-6 justify-start rounded-bl-none rounded-tl-none border-0 pr-0 text-xs"></BuilderButton>
+					class="!w-6 justify-start rounded-bl-none rounded-tl-none border-0 pr-0 text-xs"></Button>
 			</template>
 		</Dropdown>
 	</div>

@@ -4,7 +4,6 @@ import { ref, Ref } from "vue";
 const searchFilter = ref("");
 const selectionMode = ref(false);
 const selectedPages = ref(new Set<string>());
-const showFolderSelectorDialog = ref(false);
 const treeExpanded = ref(true);
 
 const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list" | "tree">;
@@ -21,7 +20,6 @@ export function useDashboardState() {
 		searchFilter,
 		selectionMode,
 		selectedPages,
-		showFolderSelectorDialog,
 		treeExpanded,
 		displayType,
 		typeFilter,

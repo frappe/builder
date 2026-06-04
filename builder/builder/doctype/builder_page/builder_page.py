@@ -22,7 +22,6 @@ from frappe.website.path_resolver import resolve_path as original_resolve_path
 from frappe.website.serve import get_response_content
 from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
-from jinja2.exceptions import TemplateSyntaxError
 
 from builder.builder.doctype.user_font.user_font import get_all_user_fonts
 from builder.export_import_standard_page import export_page_as_standard
@@ -180,6 +179,7 @@ class BuilderPage(WebsiteGenerator):
 			self.has_value_changed("dynamic_route")
 			or self.has_value_changed("route")
 			or self.has_value_changed("published")
+			or self.has_value_changed("published_at")
 			or self.has_value_changed("disable_indexing")
 			or self.has_value_changed("blocks")
 		):
@@ -297,7 +297,7 @@ class BuilderPage(WebsiteGenerator):
 				"Builder Settings", "Builder Settings", "disable_auto_dark_mode"
 			)
 
-		page_data = self.get_page_data()
+		page_data = self._get_page_data(for_render=True)
 		if page_data.get("title"):
 			context.title = page_data.get("page_title")
 
@@ -308,7 +308,7 @@ class BuilderPage(WebsiteGenerator):
 
 		content, style, fonts, has_block_script = get_block_html(blocks)
 
-		if self.dynamic_route or page_data or has_block_script:
+		if self.dynamic_route or page_data or has_block_script or self.page_data_script:
 			context.no_cache = 1
 
 		self.set_custom_font(context, fonts)
@@ -339,10 +339,7 @@ class BuilderPage(WebsiteGenerator):
 		self.set_favicon(context)
 		self.set_language(context)
 		context.page_data = clean_data(context.page_data)
-		try:
-			context["__content"] = render_template(context.__content, context)
-		except TemplateSyntaxError:
-			raise
+		context["__content"] = render_template(context.__content, context)
 
 	def set_meta_tags(self, context, page_data=None):
 		if not page_data:
@@ -412,11 +409,20 @@ class BuilderPage(WebsiteGenerator):
 
 	@frappe.whitelist()
 	def get_page_data(self, route_variables: dict | None = None) -> dict:
+		return self._get_page_data(route_variables=route_variables, for_render=False)
+
+	def _get_page_data(self, route_variables: dict | None = None, for_render: bool = False) -> dict:
 		if route_variables:
 			frappe.form_dict.update({k: v for k, v in route_variables.items()})
 		page_data = frappe._dict()
 		if self.page_data_script:
-			_locals = dict(data=frappe._dict(), page=frappe._dict())
+
+			def redirect(location: str, http_status_code: int = 302):
+				if for_render:
+					frappe.local.flags.redirect_location = location
+					raise frappe.Redirect(http_status_code)
+
+			_locals = dict(data=frappe._dict(), page=frappe._dict(), redirect=redirect)
 			execute_script(self.page_data_script, _locals, self.name)
 			page_data.update(_locals["data"])
 			page_data.update(_locals["page"])
@@ -448,16 +454,21 @@ class BuilderPage(WebsiteGenerator):
 			font_map.pop(font.font_name, None)
 
 	def replace_component(self, target_component, replace_with):
+		updates = {}
 		if self.blocks:
 			blocks = frappe.parse_json(self.blocks)
 			self.blocks = frappe.as_json(replace_component_in_blocks(blocks, target_component, replace_with))
-			self.db_set("blocks", self.blocks, commit=True, update_modified=False)
+			updates["blocks"] = self.blocks
 		if self.draft_blocks:
 			draft_blocks = frappe.parse_json(self.draft_blocks)
 			self.draft_blocks = frappe.as_json(
 				replace_component_in_blocks(draft_blocks, target_component, replace_with)
 			)
-			self.db_set("draft_blocks", self.draft_blocks, commit=True, update_modified=False)
+			updates["draft_blocks"] = self.draft_blocks
+
+		# one db_set (single commit per page) instead of one commit per field
+		if updates:
+			self.db_set(updates, commit=True, update_modified=False)
 
 		self.clear_route_cache()
 
@@ -1388,7 +1399,11 @@ def extend_block(block, overridden_block):
 def find_page_with_path(route):
 	try:
 		return frappe.db.get_value(
-			"Builder Page", dict(route=route, published=1), "name", order_by="published_at", cache=True
+			"Builder Page",
+			dict(route=route, published=1),
+			"name",
+			order_by="published_at desc, creation desc",
+			cache=True,
 		)
 	except frappe.DoesNotExistError:
 		pass

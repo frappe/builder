@@ -205,7 +205,7 @@ const handleInputChange = (color: string | null) => {
 	if (!color) return emit("update:modelValue", null);
 	if (color.startsWith("var(--") || color.startsWith("--"))
 		return emit("update:modelValue", color.startsWith("var(--") ? color : `var(${color})`);
-	selectColor(color as HashString);
+	selectColor((getRGB(color) ?? color) as HashString);
 };
 
 const setColorSelectorPosition = (color: string) => {
