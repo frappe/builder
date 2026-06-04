@@ -65,14 +65,13 @@ class BuilderClientScript(Document):
 			"Builder Page Client Script",
 			filters={"builder_script": self.name},
 			fields=["parent"],
-			ignore_permissions=True,
 		)
 
 		# use passed filters and fields if provided
 		filters = filters or {}
 		filters["name"] = ["in", [ref.parent for ref in refs]]
 		fields = fields or ["name"]
-		pages = frappe.get_all("Builder Page", filters=filters, fields=fields, ignore_permissions=True)
+		pages = frappe.get_all("Builder Page", filters=filters, fields=fields)
 		return pages
 
 	def update_script_file(self):

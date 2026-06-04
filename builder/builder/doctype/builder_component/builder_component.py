@@ -38,19 +38,26 @@ class BuilderComponent(Document):
 		self.update_exported_component()
 		if frappe.conf.developer_mode:
 			from builder.export_import_standard_page import export_components
-			referencing_standard_pages = self.get_referencing_pages(filters={"is_standard": 1}, fields=["app"])
+
+			referencing_standard_pages = self.get_referencing_pages(
+				filters={"is_standard": 1}, fields=["app"]
+			)
 			for page in referencing_standard_pages:
 				export_components([self.name], page.app)
 
 	def on_trash(self):
 		if frappe.conf.developer_mode:
 			from builder.export_import_standard_page import delete_standard_component_files
+
 			delete_standard_component_files(self.name, self.app)
 
 	def after_rename(self, old: str, new: str, merge: bool = False) -> None:
 		if frappe.conf.developer_mode:
 			from builder.export_import_standard_page import rename_standard_component_files
-			referencing_standard_pages = self.get_referencing_pages(filters={"is_standard": 1}, fields=["app"])
+
+			referencing_standard_pages = self.get_referencing_pages(
+				filters={"is_standard": 1}, fields=["app"]
+			)
 			for page in referencing_standard_pages:
 				rename_standard_component_files(old, new, page.app)
 
@@ -78,13 +85,22 @@ class BuilderComponent(Document):
 			if page_doc.is_component_used(self.component_id):
 				ComponentSyncer(page_doc).sync_component(self)
 
-	def get_referencing_pages(self, filters: dict | None = None, fields: list[str] | None = None) -> list[dict]:
+	def get_referencing_pages(
+		self, filters: dict | None = None, fields: list[str] | None = None
+	) -> list[dict]:
 		"""Return the pages that use this component."""
 		filters = filters or {}
-		filters["blocks"] = ["like", f"%{self.component_id}%"]
-		filters["draft_blocks"] = ["like", f"%{self.component_id}%"]
 		fields = fields or ["name"]
-		pages = frappe.get_all("Builder Page", filters=filters, fields=fields, ignore_permissions=True) # do we need ignore_permissions?
+
+		pages = frappe.get_all(
+			"Builder Page",
+			filters=filters,
+			fields=fields,
+			or_filters={
+				"blocks": ["like", f"%{self.component_id}%"],
+				"draft_blocks": ["like", f"%{self.component_id}%"],
+			},
+		)
 		return pages
 
 	def update_exported_component(self):
