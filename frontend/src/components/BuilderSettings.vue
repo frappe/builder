@@ -22,11 +22,11 @@
 		</div>
 		<div class="flex flex-1 flex-col gap-5 overflow-hidden bg-surface-white p-14 px-16 pb-0">
 			<h2 class="text-xl font-semibold leading-none text-ink-gray-9">{{ selectedItemDoc?.title }}</h2>
-			<BuilderButton
+			<Button
 				icon="lucide-x"
 				variant="subtle"
 				@click="$emit('close')"
-				class="absolute right-5 top-5"></BuilderButton>
+				class="absolute right-5 top-5"></Button>
 			<component :is="selectedItemDoc?.component" v-if="settingsLoaded" class="pb-16" />
 			<div v-else class="flex items-center justify-center">
 				<span class="text-ink-gray-5">Loading...</span>
@@ -40,7 +40,7 @@ import PageCode from "@/components/Settings/PageCode.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
 import usePageStore from "@/stores/pageStore";
-import { computed, onActivated, onMounted, ref } from "vue";
+import { computed, onActivated, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import GlobalAI from "./Settings/GlobalAI.vue";
 import GlobalAnalytics from "./Settings/GlobalAnalytics.vue";
@@ -54,12 +54,13 @@ import PageMeta from "./Settings/PageMeta.vue";
 
 const props = defineProps<{
 	onlyGlobal?: boolean;
+	initialTab?: string;
 }>();
 
 const route = useRoute();
 const pageStore = usePageStore();
 const emit = defineEmits(["close"]);
-const selectedItem = ref<string>(props.onlyGlobal ? "global_general" : "page_general");
+const selectedItem = ref<string>(props.initialTab || (props.onlyGlobal ? "global_general" : "page_general"));
 const settingsLoaded = ref(false);
 
 onMounted(async () => {
@@ -172,6 +173,15 @@ if (!props.onlyGlobal) settingsSidebarItems.unshift(pageSettings);
 const selectItem = (value: string) => {
 	selectedItem.value = value;
 };
+
+watch(
+	() => props.initialTab,
+	(tab) => {
+		if (tab) selectItem(tab);
+	},
+);
+
+defineExpose({ selectItem });
 
 onActivated(() => {
 	if (route.params.pageId === pageStore.activePage?.name) return;

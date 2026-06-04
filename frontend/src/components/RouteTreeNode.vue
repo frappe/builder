@@ -60,12 +60,12 @@
 
 				<PageActionsDropdown v-if="node.page" :page="node.page" size="xs" placement="right">
 					<template v-slot="{ open }">
-						<BuilderButton
+						<Button
 							icon="lucide-more-horizontal"
 							size="sm"
 							variant="subtle"
 							class="bg-surface-white !text-ink-gray-5 hover:!text-ink-gray-9"
-							@click.stop></BuilderButton>
+							@click.stop></Button>
 					</template>
 				</PageActionsDropdown>
 			</div>

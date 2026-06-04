@@ -3,10 +3,9 @@ import { builderSettings } from "@/data/builderSettings";
 import { BuilderSettings } from "@/types/doctypes";
 import RealTimeHandler from "@/utils/realtimeHandler";
 import { useDark, useStorage } from "@vueuse/core";
+import { toast } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
 import { defineStore } from "pinia";
-import { toast } from "frappe-ui";
-import type Dialog from "../components/Controls/Dialog.vue";
 import BlockLayers from "./components/BlockLayers.vue";
 
 const { capture } = useTelemetry();
@@ -20,7 +19,6 @@ declare global {
 const useBuilderStore = defineStore("builderStore", {
 	state: () => ({
 		activeLayers: <InstanceType<typeof BlockLayers> | null>null,
-		appDialogs: <(typeof Dialog)[]>[],
 		blockContextMenu: <InstanceType<typeof BlockContextMenu> | null>null,
 		propertyFilter: <string | null>null,
 		mode: <BuilderMode>"select", // check setEvents in BuilderCanvas for usage
@@ -50,6 +48,8 @@ const useBuilderStore = defineStore("builderStore", {
 		canvasDarkMode: useStorage("canvasDarkMode", false),
 		highlightBlocksWithDataScripts: false,
 		highlightBlocksWithClientScripts: false,
+		showSettingsDialog: false,
+		settingsActiveTab: <string>"page_general",
 	}),
 	getters: {
 		isAIEnabled(): boolean {

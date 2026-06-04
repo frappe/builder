@@ -4,11 +4,11 @@
 			<h3 class="cursor-pointer text-base text-ink-gray-9" @click="toggleCollapsed">
 				{{ sectionName }}
 			</h3>
-			<BuilderButton
+			<Button
 				:icon="collapsed ? 'lucide-chevron-right' : 'lucide-chevron-down'"
 				:variant="'ghost'"
 				size="sm"
-				@click="toggleCollapsed"></BuilderButton>
+				@click="toggleCollapsed"></Button>
 		</div>
 		<div v-if="!collapsed">
 			<div class="mb-4 mt-3 flex flex-col gap-3"><slot /></div>

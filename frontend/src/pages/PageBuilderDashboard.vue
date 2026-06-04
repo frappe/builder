@@ -7,8 +7,10 @@
 			<DashboardContent />
 		</div>
 	</div>
+	<BuilderCommandPalette />
 </template>
 <script setup lang="ts">
+import BuilderCommandPalette from "@/components/BuilderCommandPalette.vue";
 import DashboardContent from "@/components/DashboardContent.vue";
 import DashboardHead from "@/components/DashboardHead.vue";
 import DashboardSidebar from "@/components/DashboardSidebar.vue";

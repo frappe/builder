@@ -83,12 +83,12 @@
 </template>
 <script setup lang="ts">
 import InlineInput from "@/components/Controls/InlineInput.vue";
-import Switch from "@/components/Controls/Switch.vue";
 import { allWebPages } from "@/data/allWebPages";
 import { builderSettings } from "@/data/builderSettings";
 import { websiteSettings } from "@/data/websiteSettings";
 import useBuilderStore from "@/stores/builderStore";
 import { BuilderPage } from "@/types/doctypes";
+import { Switch } from "frappe-ui";
 import { computed } from "vue";
 import ImageUploader from "../Controls/ImageUploader.vue";
 

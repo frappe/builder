@@ -21,7 +21,7 @@
 
 			<Popover class="relative inline-block text-left">
 				<template #target="{ isOpen, togglePopover }">
-					<BuilderButton
+					<Button
 						@click="togglePopover"
 						icon="lucide-filter"
 						label="Filters"
@@ -37,7 +37,7 @@
 						<span
 							:class="[isOpen ? 'lucide-chevron-up' : 'lucide-chevron-down', 'size-4']"
 							aria-hidden="true" />
-					</BuilderButton>
+					</Button>
 				</template>
 				<template #body>
 					<div class="w-48 rounded-lg bg-surface-white py-2 shadow-lg ring-1 ring-black ring-opacity-5">
@@ -56,9 +56,7 @@
 							</label>
 						</div>
 						<div class="border-surface-gray-3 mt-1 border-t px-2 pt-2">
-							<BuilderButton @click="clearAllFilters" variant="subtle" class="w-full">
-								Clear all filters
-							</BuilderButton>
+							<Button @click="clearAllFilters" variant="subtle" class="w-full">Clear all filters</Button>
 						</div>
 					</div>
 				</template>
@@ -88,14 +86,14 @@
 		<div
 			v-if="query && (searchMode === 'search' || (searchMode === 'replace' && results.length > 0))"
 			class="mb-4">
-			<BuilderButton
+			<Button
 				v-if="searchMode === 'replace'"
 				@click="handlePrimaryAction"
 				variant="solid"
 				class="w-full"
 				:disabled="!replaceQuery">
 				Replace All ({{ results.length }} matches)
-			</BuilderButton>
+			</Button>
 			<div v-if="searchMode === 'replace' && replacedCount > 0" class="mt-2 text-xs text-ink-gray-5">
 				{{ replacedCount }} replacements made
 			</div>
@@ -123,14 +121,14 @@
 							{{ getMatchDetails(result) }}
 						</div>
 					</div>
-					<BuilderButton
+					<Button
 						v-if="searchMode === 'replace'"
 						@click.stop="replaceInBlock(result, index)"
 						variant="subtle"
 						class="ml-3 px-2 py-1 text-xs"
 						:disabled="!replaceQuery">
 						Replace
-					</BuilderButton>
+					</Button>
 				</div>
 			</div>
 		</div>
@@ -152,7 +150,6 @@ import { watchDebounced } from "@vueuse/core";
 import { Input, Popover } from "frappe-ui";
 import { computed, nextTick, onMounted, Ref, ref } from "vue";
 import { toast } from "frappe-ui";
-import BuilderButton from "./BuilderButton.vue";
 import OptionToggle from "./OptionToggle.vue";
 
 const canvasStore = useCanvasStore();

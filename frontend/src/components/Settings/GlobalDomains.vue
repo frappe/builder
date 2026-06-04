@@ -80,8 +80,9 @@
 
 <script setup lang="ts">
 import { useDomains } from "@/data/domains";
+import { useIntervalFn } from "@vueuse/core";
 import { Badge, Dropdown, ErrorMessage, FormControl } from "frappe-ui";
-import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { toast } from "frappe-ui";
 
 const PENDING_STATUSES = ["Pending", "In Progress"];
@@ -109,29 +110,24 @@ watch(newDomain, () => {
 	addError.value = "";
 });
 
-let pollInterval: ReturnType<typeof setInterval> | null = null;
-
 const sortedDomains = computed(() =>
 	[...domains.value].sort((a, b) => (b.primary ? 1 : 0) - (a.primary ? 1 : 0)),
 );
 
 const hasPendingDomains = computed(() => domains.value.some((d) => PENDING_STATUSES.includes(d.status)));
 
-watch(hasPendingDomains, (val) => {
-	if (val && !pollInterval) {
-		pollInterval = setInterval(() => {
-			if (!loading.value) fetchDomains();
-		}, 5000);
-	} else if (!val && pollInterval) {
-		clearInterval(pollInterval);
-		pollInterval = null;
-	}
-});
+// Poll while domains are still provisioning; auto-stops on unmount.
+const { pause: stopPolling, resume: startPolling } = useIntervalFn(
+	() => {
+		if (!loading.value) fetchDomains();
+	},
+	5000,
+	{ immediate: false },
+);
+
+watch(hasPendingDomains, (val) => (val ? startPolling() : stopPolling()));
 
 onMounted(() => Promise.all([fetchDomains(), fetchServerIP()]));
-onUnmounted(() => {
-	if (pollInterval) clearInterval(pollInterval);
-});
 
 const isSubdomain = computed(() => newDomain.value.split(".").length > 2);
 

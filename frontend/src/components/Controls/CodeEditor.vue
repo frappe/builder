@@ -22,23 +22,23 @@
 				@blur="handleBlur" />
 		</div>
 		<div v-if="actionButton" class="absolute bottom-1.5 right-1.5 flex gap-1">
-			<BuilderButton
+			<Button
 				@click="actionButton?.handler"
 				variant="subtle"
 				class="!h-6 !w-6 border !border-outline-gray-2 bg-surface-white [&>svg]:!h-3.5 [&>svg]:!w-3.5"
 				:icon="actionButton.icon"
 				:title="actionButton.label"
-				:disabled="readonly"></BuilderButton>
+				:disabled="readonly"></Button>
 		</div>
 		<span class="mt-1 text-p-xs text-ink-gray-6" v-show="description" v-html="description"></span>
-		<BuilderButton
+		<Button
 			v-if="showSaveButton"
 			variant="solid"
 			@click="emit('save', editor.getEditorValue())"
 			class="mt-3"
 			:disabled="!isDirty || readonly">
 			Save
-		</BuilderButton>
+		</Button>
 	</div>
 </template>
 <script setup lang="ts">

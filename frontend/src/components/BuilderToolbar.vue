@@ -3,9 +3,16 @@
 		class="toolbar border-outline border-outline flex items-center justify-center border-b-[1px] border-outline-gray-1 bg-surface-white px-2 py-1"
 		ref="toolbar">
 		<div class="absolute left-3 flex items-center gap-4">
-			<MainMenu @showSettings="() => (showSettingsDialog = true)" @showShortcuts="showShortcuts"></MainMenu>
+			<MainMenu
+				@showSettings="
+					() => {
+						builderStore.settingsActiveTab = 'page_general';
+						builderStore.showSettingsDialog = true;
+					}
+				"
+				@showShortcuts="showShortcuts"></MainMenu>
 			<div class="flex gap-2">
-				<BuilderButton
+				<Button
 					v-for="mode in [
 						{ mode: 'select', icon: 'lucide-mouse-pointer', description: 'Select (v)' },
 						{ mode: 'container', icon: 'lucide-square', description: 'Container (c)' },
@@ -16,7 +23,7 @@
 					:tooltip="mode.description"
 					:icon="mode.icon"
 					@click="() => (builderStore.mode = mode.mode as BuilderMode)"
-					:active="builderStore.mode === mode.mode"></BuilderButton>
+					:active="builderStore.mode === mode.mode"></Button>
 			</div>
 		</div>
 		<div>
@@ -62,7 +69,7 @@
 					<div
 						class="flex w-72 flex-col gap-3 rounded bg-surface-white p-4 shadow-lg"
 						v-if="pageStore.activePage">
-						<PageOptions v-if="pageStore.activePage" :page="pageStore.activePage"></PageOptions>
+						<PageOptions v-if="pageStore.activePage"></PageOptions>
 					</div>
 				</template>
 			</Popover>
@@ -128,13 +135,15 @@
 					allowfullscreen></iframe>
 			</template>
 		</Dialog>
-		<Dialog v-model="showSettingsDialog" :dismissable="false" size="5xl" bare>
+		<Dialog v-model="builderStore.showSettingsDialog" :dismissable="false" size="5xl" bare>
 			<template #default>
 				<DialogTitle class="sr-only">Builder Settings</DialogTitle>
 				<DialogDescription class="sr-only">
 					Configure page and global settings for this project.
 				</DialogDescription>
-				<BuilderSettings @close="showSettingsDialog = false"></BuilderSettings>
+				<BuilderSettings
+					:initial-tab="builderStore.settingsActiveTab"
+					@close="builderStore.showSettingsDialog = false"></BuilderSettings>
 			</template>
 		</Dialog>
 	</div>
@@ -154,7 +163,6 @@ import { useDark, useToggle } from "@vueuse/core";
 import { Badge, Popover, toast, Tooltip } from "frappe-ui";
 import { DialogDescription, DialogTitle } from "reka-ui";
 import { computed, defineAsyncComponent, inject, ref } from "vue";
-// @ts-ignore
 import SparklesIcon from "~icons/lucide/sparkles";
 import MainMenu from "./MainMenu.vue";
 import PageOptions from "./PageOptions.vue";
@@ -170,7 +178,6 @@ const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 
 const showInfoDialog = ref(false);
-const showSettingsDialog = ref(false);
 const showShortcuts = inject<() => void>("showShortcuts", () => {});
 
 const openAIGeneratorFn = inject<(() => void) | undefined>("showAIGenerator", undefined);
@@ -186,7 +193,8 @@ const openAIGenerator = (e: MouseEvent) => {
 
 const openSettings = (e: MouseEvent) => {
 	(e.currentTarget as HTMLElement)?.blur();
-	showSettingsDialog.value = true;
+	builderStore.settingsActiveTab = "page_general";
+	builderStore.showSettingsDialog = true;
 };
 
 const currentlyViewedByText = computed(() => {

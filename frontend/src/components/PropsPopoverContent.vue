@@ -84,7 +84,7 @@
 				ref="optionsComponentRef"
 				@update:options="updateStandardPropOptions" />
 		</template>
-		<BuilderButton
+		<Button
 			:disabled="!key.trim().length && !label.trim().length"
 			label="Save"
 			variant="subtle"
@@ -99,7 +99,6 @@ import Block from "@/block";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import Input from "@/components/Controls/Input.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
-import BuilderButton from "@/components/Controls/BuilderButton.vue";
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 
 import { computed, nextTick, reactive, ref, watch } from "vue";

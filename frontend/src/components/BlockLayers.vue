@@ -138,7 +138,7 @@
 import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
-import { ref, watch } from "vue";
+import { nextTick, ref, watch } from "vue";
 import draggable from "vuedraggable";
 import BlockLayers from "./BlockLayers.vue";
 import BlocksIcon from "./Icons/Blocks.vue";
@@ -422,10 +422,37 @@ const onDragEnd = () => {
 	Object.assign(dragState, { draggedElement: null, hoverTarget: null, hoverPosition: null });
 };
 
+const getAllExpandableBlockIds = (blocks: Block[]): string[] => {
+	const ids: string[] = [];
+	for (const block of blocks) {
+		if (!block.children?.length) continue;
+		if (!block.isRoot() && block.editorConfig?.showChildrenInEditor !== false) {
+			ids.push(block.blockId);
+		}
+		ids.push(...getAllExpandableBlockIds(block.children));
+	}
+	return ids;
+};
+
+const expandAll = async () => {
+	const ids = getAllExpandableBlockIds(props.blocks);
+	ids.forEach((id) => expandedLayers.value.add(id));
+	await nextTick();
+	childLayers.value.forEach((child) => child?.expandAll());
+};
+
+const collapseAll = () => {
+	childLayers.value.forEach((child) => child?.collapseAll());
+	expandedLayers.value.clear();
+	expandedLayers.value.add("root");
+};
+
 defineExpose({
 	toggleExpanded,
 	isExpandedInTree,
 	blockExitsInTree,
+	expandAll,
+	collapseAll,
 });
 </script>
 <style>

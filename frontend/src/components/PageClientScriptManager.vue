@@ -56,11 +56,7 @@
 										},
 									]">
 									<template v-slot="{ open }">
-										<BuilderButton
-											icon="lucide-more-horizontal"
-											size="sm"
-											variant="ghost"
-											@click="open"></BuilderButton>
+										<Button icon="lucide-more-horizontal" size="sm" variant="ghost" @click="open"></Button>
 									</template>
 								</Dropdown>
 							</a>
@@ -83,7 +79,7 @@
 							size="sm"
 							class="[&>div>div>div]:w-full">
 							<template v-slot="{ open }">
-								<BuilderButton class="w-full text-xs" @click="open">New Script</BuilderButton>
+								<Button class="w-full text-xs" @click="open">New Script</Button>
 							</template>
 						</Dropdown>
 
@@ -94,7 +90,7 @@
 							@update:modelValue="(option: Option) => attachScript(option.value)"
 							placeholder="Attach Script">
 							<template v-slot:target="{ open }">
-								<BuilderButton class="w-full text-xs" @click="open">Attach Script</BuilderButton>
+								<Button class="w-full text-xs" @click="open">Attach Script</Button>
 							</template>
 						</Autocomplete>
 					</div>
