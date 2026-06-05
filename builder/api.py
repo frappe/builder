@@ -324,6 +324,14 @@ def create_page_from_template(template_page: str, project_folder: str | None = N
 		new_script.insert(ignore_permissions=True)
 		new_page.append("client_scripts", {"builder_script": new_script.name})
 	new_page.insert()
+	# generate a dashboard thumbnail in the background (renders the draft)
+	frappe.enqueue_doc(
+		"Builder Page",
+		new_page.name,
+		"generate_page_preview_image",
+		queue="short",
+		enqueue_after_commit=True,
+	)
 	return new_page.name
 
 

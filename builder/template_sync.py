@@ -309,29 +309,12 @@ def ensure_template_preview(page_doc, app="builder"):
 	public_path, local_path = get_builder_page_preview_file_paths(page_doc, app=app)
 	if not os.path.exists(local_path):
 		try:
-			# render explicitly — template pages are unpublished, so they don't
-			# resolve through the regular website path resolution
-			page_doc.generate_page_preview_image(html=render_template_page(page_doc))
+			# generate_page_preview_image renders the draft in preview mode, so it
+			# works for these unpublished template pages
+			page_doc.generate_page_preview_image()
 		except Exception:
 			frappe.log_error(f"Failed to generate preview for template page {page_doc.name}")
 	return public_path if os.path.exists(local_path) else None
-
-
-def render_template_page(page_doc):
-	"""Render an unpublished template page to HTML, like the preview endpoint does."""
-	from frappe.utils import set_request
-
-	from builder.builder.doctype.builder_page.builder_page import BuilderPageRenderer
-
-	set_request(method="GET", path=f"/{page_doc.route or ''}")
-	frappe.local.request.for_preview = True
-	renderer = BuilderPageRenderer(path="")
-	renderer.docname = page_doc.name
-	renderer.doctype = "Builder Page"
-	frappe.local.no_cache = 1
-	renderer.init_context()
-	response = renderer.render()
-	return str(response.data, "utf-8")
 
 
 def update_template_manifest(group_path, page_names, title=None):

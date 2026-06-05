@@ -15,7 +15,6 @@ from frappe.utils.telemetry import capture
 from frappe.website.page_renderers.document_page import DocumentPage
 from frappe.website.path_resolver import evaluate_dynamic_routes
 from frappe.website.path_resolver import resolve_path as original_resolve_path
-from frappe.website.serve import get_response_content
 from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
 
@@ -420,15 +419,26 @@ class BuilderPage(WebsiteGenerator):
 	def generate_page_preview_image(self, html=None):
 		public_path, local_path = get_builder_page_preview_file_paths(self)
 		if not html:
-			set_request(method="GET", path=self.route)
-			frappe.local.request.for_preview = True
-			html = get_response_content()
+			html = self.get_preview_html()
 
 		generate_preview(
 			html,
 			local_path,
 		)
 		self.db_set("preview", public_path, commit=True, update_modified=False)
+
+	def get_preview_html(self) -> str:
+		"""Render this page in preview mode (uses draft_blocks when present), so a
+		preview can be generated for unpublished/draft pages too — not just for
+		pages reachable via their published route."""
+		set_request(method="GET", path=f"/{self.route or ''}")
+		frappe.local.request.for_preview = True
+		frappe.local.no_cache = 1
+		renderer = BuilderPageRenderer(path="")
+		renderer.docname = self.name
+		renderer.doctype = "Builder Page"
+		renderer.init_context()
+		return str(renderer.render().data, "utf-8")
 
 	def set_custom_font(self, context, font_map):
 		all_user_fonts = get_all_user_fonts()
