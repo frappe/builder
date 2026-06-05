@@ -1,0 +1,9 @@
+{
+ "dark_value": "#9CA3AF",
+ "doctype": "Builder Variable",
+ "group": "relay",
+ "name": "6c00f672-14e9-476a-bcdf-404f613831fb",
+ "type": "Color",
+ "value": "#6A7080",
+ "variable_name": "text-muted"
+}
