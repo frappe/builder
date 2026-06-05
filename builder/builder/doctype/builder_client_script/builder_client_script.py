@@ -36,6 +36,19 @@ class BuilderClientScript(Document):
 		self.update_script_file()
 		self.update_exported_script()
 
+		if frappe.conf.developer_mode:
+			from builder.export_import_standard_page import export_client_scripts
+
+			referencing_standard_pages = self.get_referencing_pages(
+				filters={"is_standard": 1}, fields=["app"]
+			)
+			referencing_apps = [page.app for page in referencing_standard_pages]
+			for app in referencing_apps:
+				app_path = frappe.get_app_path(app)
+				builder_files_path = os.path.join(app_path, "builder_files")
+				client_scripts_path = os.path.join(builder_files_path, "client_scripts")
+				export_client_scripts([self.name], client_scripts_path)
+
 	def on_trash(self):
 		self.delete_script_file()
 
