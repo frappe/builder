@@ -1,6 +1,7 @@
 # Copyright (c) 2025, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
+import os
 import uuid
 
 import frappe
@@ -44,10 +45,49 @@ class BuilderVariable(Document):
 		if self.has_value_changed("is_standard") and not self.is_standard:
 			delete_folder("builder", "builder_variable", self.name)
 
+		if frappe.conf.developer_mode:
+			from builder.export_import_standard_page import export_variables
+
+			referencing_standard_pages = self.get_referencing_pages(
+				filters={"is_standard": 1}, fields=["app"]
+			)
+			referencing_apps = [page.app for page in referencing_standard_pages]
+			for app in referencing_apps:
+				app_path = frappe.get_app_path(app)
+				builder_files_path = os.path.join(app_path, "builder_files")
+				export_variables([self.variable_name], builder_files_path)
+
 	def on_trash(self):
 		clear_builder_variable_cache()
 		if self.is_standard:
 			delete_folder("builder", "builder_variable", self.name)
+		self.delete_standard_exported_files()
+
+	def after_rename(self, old: str, new: str, merge: bool = False) -> None:
+		self.delete_standard_exported_files(old)
+
+	def get_referencing_pages(self, filters: dict | None = None, fields: list[str] | None = None):
+		filters = filters or {}
+		fields = fields or ["name"]
+
+		pages = frappe.get_all(
+			"Builder Page",
+			filters=filters,
+			fields=fields,
+			or_filters={
+				"blocks": ["like", f"%var(--{self.variable_name})%"],
+				"draft_blocks": ["like", f"%var(--{self.variable_name})%"],
+			},
+		)
+		return pages
+
+	def delete_standard_exported_files(self, old_name: str | None = None):
+		if frappe.conf.developer_mode:
+			from builder.export_import_standard_page import delete_standard_variable_files
+
+			all_installed_apps = frappe.get_installed_apps()
+			for app in all_installed_apps:
+				delete_standard_variable_files(old_name or self.name, app)
 
 
 @redis_cache(ttl=10 * 24 * 3600)
