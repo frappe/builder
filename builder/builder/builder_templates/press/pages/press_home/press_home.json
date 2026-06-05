@@ -1,0 +1,1338 @@
+{
+ "authenticated_access": 0,
+ "blocks": [
+  {
+   "attributes": {},
+   "baseStyles": {
+    "alignItems": "center",
+    "backgroundColor": "var(--a97667fa-6af8-44f9-b732-0dd02751220a, #FFFFFF)",
+    "color": "var(--84e90ee1-4a77-4d27-a1d7-1b461d01a359, #16161A)",
+    "display": "flex",
+    "flexDirection": "column",
+    "flexShrink": 0,
+    "flexWrap": "wrap",
+    "fontFamily": "Inter",
+    "width": "100%"
+   },
+   "blockId": "root",
+   "blockName": "Page",
+   "children": [
+    {
+     "attributes": {},
+     "baseStyles": {},
+     "blockId": "b1f66342b2",
+     "blockName": "Navbar",
+     "children": [
+      {
+       "attributes": {},
+       "baseStyles": {},
+       "blockId": "bc5fd384f3",
+       "children": [
+        {
+         "attributes": {},
+         "baseStyles": {},
+         "blockId": "4b92007683",
+         "children": [
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "c7ebc88b22",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "d82056fd70",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "press_navbar",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "716e7c5982",
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "a73d3a9546",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "press_navbar",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "6ffa1080b8",
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "press_navbar",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "333ec34182",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "0df7e74562",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "2479d87853",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "press_navbar",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "3b440af73d",
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "2ad0d48da6",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "press_navbar",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "b9e2c061a6",
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "bcb1e9dbdd",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "press_navbar",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "d878bb5354",
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "press_navbar",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "cd79d3fdcd",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "d24124323f",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "press_navbar",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "9666d3a612",
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "customAttributes": {},
+         "isChildOfComponent": "press_navbar",
+         "mobileStyles": {},
+         "rawStyles": {},
+         "referenceBlockId": "5bfe691be3",
+         "tabletStyles": {}
+        }
+       ],
+       "classes": [],
+       "customAttributes": {},
+       "isChildOfComponent": "press_navbar",
+       "mobileStyles": {},
+       "rawStyles": {},
+       "referenceBlockId": "937b2b6b5f",
+       "tabletStyles": {}
+      }
+     ],
+     "classes": [],
+     "customAttributes": {},
+     "extendedFromComponent": "press_navbar",
+     "mobileStyles": {},
+     "rawStyles": {},
+     "tabletStyles": {}
+    },
+    {
+     "attributes": {},
+     "baseStyles": {
+      "alignItems": "center",
+      "backgroundColor": "var(--a97667fa-6af8-44f9-b732-0dd02751220a, #FFFFFF)",
+      "borderBottomColor": "var(--e7baccd4-1a60-48bf-8f6b-899094d2761a, #E6E5E1)",
+      "borderBottomStyle": "solid",
+      "borderBottomWidth": "1px",
+      "display": "flex",
+      "flexDirection": "column",
+      "flexShrink": 0,
+      "overflow": "hidden",
+      "paddingBottom": "72px",
+      "paddingTop": "56px",
+      "width": "100%"
+     },
+     "blockId": "0542355507",
+     "blockName": "Section · Featured",
+     "children": [
+      {
+       "attributes": {},
+       "baseStyles": {
+        "display": "flex",
+        "flexDirection": "column",
+        "flexShrink": 0,
+        "marginLeft": "auto",
+        "marginRight": "auto",
+        "maxWidth": "1120px",
+        "overflow": "hidden",
+        "paddingLeft": "28px",
+        "paddingRight": "28px",
+        "width": "100%"
+       },
+       "blockId": "b01278e811",
+       "blockName": "Featured Container",
+       "children": [
+        {
+         "attributes": {},
+         "baseStyles": {
+          "alignItems": "stretch",
+          "display": "flex",
+          "flexDirection": "row",
+          "flexShrink": 0,
+          "gap": "48px",
+          "overflow": "hidden",
+          "width": "100%"
+         },
+         "blockId": "5a15a01cae",
+         "blockName": "Featured Split",
+         "children": [
+          {
+           "attributes": {},
+           "baseStyles": {
+            "alignItems": "flex-start",
+            "display": "flex",
+            "flexBasis": "0px",
+            "flexDirection": "column",
+            "flexGrow": 1,
+            "flexShrink": 0,
+            "gap": "16px",
+            "minWidth": "0px",
+            "overflow": "hidden"
+           },
+           "blockId": "c83c173de6",
+           "blockName": "Featured Copy",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {
+              "backgroundColor": "var(--65f4c9fb-8f6c-4aa7-856d-39c2d067c87b, #FBEDEB)",
+              "borderRadius": "100px",
+              "color": "var(--4b3b4a52-d650-4def-a4d8-5e5caa6bd05f, #B23A2E)",
+              "fontFamily": "Inter",
+              "fontSize": "11px",
+              "fontWeight": "600",
+              "height": "fit-content",
+              "letterSpacing": "0.06em",
+              "lineHeight": "1.4",
+              "minWidth": "10px",
+              "paddingBottom": "5px",
+              "paddingLeft": "12px",
+              "paddingRight": "12px",
+              "paddingTop": "5px",
+              "textTransform": "uppercase",
+              "width": "fit-content"
+             },
+             "blockId": "8411a3b5ad",
+             "blockName": "Featured Category",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "span",
+             "innerHTML": "Engineering",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "color": "var(--84e90ee1-4a77-4d27-a1d7-1b461d01a359, #16161A)",
+              "fontFamily": "Newsreader",
+              "fontSize": "48px",
+              "fontWeight": "500",
+              "height": "fit-content",
+              "letterSpacing": "-0.01em",
+              "lineHeight": "1.12",
+              "minWidth": "10px",
+              "width": "fit-content"
+             },
+             "blockId": "2e6b6b69db",
+             "blockName": "Featured Title",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "h1",
+             "innerHTML": "The quiet comeback of<br>server-rendered HTML.",
+             "mobileStyles": {
+              "fontSize": "32px"
+             },
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "color": "var(--8d4049dc-1ae6-4232-8759-f39670771fa4, #6B6B73)",
+              "fontFamily": "Inter",
+              "fontSize": "18px",
+              "height": "fit-content",
+              "lineHeight": "1.7",
+              "minWidth": "10px",
+              "width": "fit-content"
+             },
+             "blockId": "e456209cb9",
+             "blockName": "Featured Excerpt",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "p",
+             "innerHTML": "After a decade of client-side everything, the pendulum is swinging back — and the web feels faster for it. A field report from the new old web.",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "alignItems": "center",
+              "display": "flex",
+              "flexDirection": "row",
+              "flexShrink": 0,
+              "flexWrap": "wrap",
+              "gap": "8px",
+              "overflow": "hidden"
+             },
+             "blockId": "85e4bd0809",
+             "blockName": "Featured Meta",
+             "children": [
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--84e90ee1-4a77-4d27-a1d7-1b461d01a359, #16161A)",
+                "fontFamily": "Inter",
+                "fontSize": "14px",
+                "fontWeight": "500",
+                "height": "fit-content",
+                "lineHeight": "1.4",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "f880b2ec53",
+               "blockName": "FM Author",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "span",
+               "innerHTML": "Dana Whitman",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--8d4049dc-1ae6-4232-8759-f39670771fa4, #6B6B73)",
+                "fontSize": "16px",
+                "height": "fit-content",
+                "lineHeight": "1.4",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "eee4ac4a4a",
+               "blockName": "FM Sep1",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "span",
+               "innerHTML": "·",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--8d4049dc-1ae6-4232-8759-f39670771fa4, #6B6B73)",
+                "fontFamily": "Inter",
+                "fontSize": "14px",
+                "height": "fit-content",
+                "lineHeight": "1.4",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "4e019c2665",
+               "blockName": "FM Date",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "span",
+               "innerHTML": "Jun 2, 2026",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--8d4049dc-1ae6-4232-8759-f39670771fa4, #6B6B73)",
+                "fontSize": "16px",
+                "height": "fit-content",
+                "lineHeight": "1.4",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "3d29251807",
+               "blockName": "FM Sep2",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "span",
+               "innerHTML": "·",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--8d4049dc-1ae6-4232-8759-f39670771fa4, #6B6B73)",
+                "fontFamily": "Inter",
+                "fontSize": "14px",
+                "height": "fit-content",
+                "lineHeight": "1.4",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "66ce248e5b",
+               "blockName": "FM Read",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "element": "span",
+               "innerHTML": "8 min read",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              }
+             ],
+             "classes": [],
+             "customAttributes": {},
+             "element": "div",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {
+              "href": "/article"
+             },
+             "baseStyles": {
+              "alignItems": "center",
+              "backgroundColor": "var(--4b3b4a52-d650-4def-a4d8-5e5caa6bd05f, #B23A2E)",
+              "borderRadius": "8px",
+              "color": "var(--a3f54d47-34e7-4bb0-ad9e-693a1311182f, #FFFFFF)",
+              "cursor": "pointer",
+              "display": "inline-flex",
+              "fontFamily": "Inter",
+              "fontSize": "15px",
+              "fontWeight": "600",
+              "height": "fit-content",
+              "hover:backgroundColor": "var(--84e90ee1-4a77-4d27-a1d7-1b461d01a359, #16161A)",
+              "justifyContent": "center",
+              "lineHeight": "1.4",
+              "marginTop": "8px",
+              "minWidth": "10px",
+              "paddingBottom": "12px",
+              "paddingLeft": "24px",
+              "paddingRight": "24px",
+              "paddingTop": "12px",
+              "textDecoration": "none",
+              "transition": "background-color 0.15s ease-out",
+              "width": "fit-content"
+             },
+             "blockId": "d700da0ba6",
+             "blockName": "Featured CTA",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "a",
+             "innerHTML": "Read the story",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "element": "div",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {
+            "borderRadius": "16px",
+            "display": "flex",
+            "flexBasis": "0px",
+            "flexDirection": "column",
+            "flexGrow": 1,
+            "flexShrink": 0,
+            "height": "100%",
+            "minHeight": "420px",
+            "minWidth": "0px",
+            "overflow": "hidden",
+            "width": "100%"
+           },
+           "blockId": "d64605aa09",
+           "blockName": "Featured Media",
+           "children": [
+            {
+             "attributes": {
+              "alt": "Featured story",
+              "src": "https://images.unsplash.com/photo-1517180102446-f3ece451e9d8?auto=format&fit=crop&q=80&w=1200"
+             },
+             "baseStyles": {
+              "flexShrink": 0,
+              "height": "100%",
+              "objectFit": "cover",
+              "width": "100%"
+             },
+             "blockId": "aa18dec87b",
+             "blockName": "Featured Image",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "element": "img",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "element": "div",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "customAttributes": {},
+         "element": "div",
+         "mobileStyles": {
+          "flexDirection": "column",
+          "gap": "28px"
+         },
+         "rawStyles": {},
+         "tabletStyles": {}
+        }
+       ],
+       "classes": [],
+       "customAttributes": {},
+       "element": "div",
+       "mobileStyles": {},
+       "rawStyles": {},
+       "tabletStyles": {}
+      }
+     ],
+     "classes": [],
+     "customAttributes": {},
+     "element": "div",
+     "mobileStyles": {},
+     "rawStyles": {},
+     "tabletStyles": {}
+    },
+    {
+     "attributes": {},
+     "baseStyles": {
+      "alignItems": "center",
+      "backgroundColor": "var(--a97667fa-6af8-44f9-b732-0dd02751220a, #FFFFFF)",
+      "display": "flex",
+      "flexDirection": "column",
+      "flexShrink": 0,
+      "overflow": "hidden",
+      "paddingBottom": "96px",
+      "paddingTop": "64px",
+      "width": "100%"
+     },
+     "blockId": "be9b008139",
+     "blockName": "Section · Latest",
+     "children": [
+      {
+       "attributes": {},
+       "baseStyles": {
+        "display": "flex",
+        "flexDirection": "column",
+        "flexShrink": 0,
+        "marginLeft": "auto",
+        "marginRight": "auto",
+        "maxWidth": "1120px",
+        "overflow": "hidden",
+        "paddingLeft": "28px",
+        "paddingRight": "28px",
+        "width": "100%"
+       },
+       "blockId": "7930fd3fa4",
+       "blockName": "Latest Container",
+       "children": [
+        {
+         "attributes": {},
+         "baseStyles": {
+          "alignItems": "baseline",
+          "display": "flex",
+          "flexDirection": "row",
+          "flexShrink": 0,
+          "flexWrap": "wrap",
+          "gap": "16px",
+          "justifyContent": "space-between",
+          "marginBottom": "36px",
+          "overflow": "hidden",
+          "width": "100%"
+         },
+         "blockId": "7f6c1ac93d",
+         "blockName": "Latest Head",
+         "children": [
+          {
+           "attributes": {},
+           "baseStyles": {
+            "color": "var(--84e90ee1-4a77-4d27-a1d7-1b461d01a359, #16161A)",
+            "fontFamily": "Newsreader",
+            "fontSize": "32px",
+            "fontWeight": "500",
+            "height": "fit-content",
+            "letterSpacing": "-0.01em",
+            "lineHeight": "1.12",
+            "minWidth": "10px",
+            "width": "fit-content"
+           },
+           "blockId": "3752ca02f7",
+           "blockName": "Latest Title",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "element": "h2",
+           "innerHTML": "Latest",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {
+            "href": "/topics"
+           },
+           "baseStyles": {
+            "color": "var(--4b3b4a52-d650-4def-a4d8-5e5caa6bd05f, #B23A2E)",
+            "fontFamily": "Inter",
+            "fontSize": "15px",
+            "fontWeight": "600",
+            "height": "fit-content",
+            "hover:opacity": "0.7",
+            "lineHeight": "1.4",
+            "minWidth": "10px",
+            "textDecoration": "none",
+            "transition": "opacity 0.15s ease-out",
+            "width": "fit-content"
+           },
+           "blockId": "31aaed1956",
+           "blockName": "Latest Link",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "element": "a",
+           "innerHTML": "Browse topics →",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "customAttributes": {},
+         "element": "div",
+         "mobileStyles": {},
+         "rawStyles": {},
+         "tabletStyles": {}
+        },
+        {
+         "attributes": {},
+         "baseStyles": {
+          "display": "grid",
+          "flexDirection": "column",
+          "flexShrink": 0,
+          "gap": "32px",
+          "gridTemplateColumns": "repeat(3, 1fr)",
+          "overflow": "hidden",
+          "width": "100%"
+         },
+         "blockId": "1e036f05bd",
+         "blockName": "Latest Repeater",
+         "children": [
+          {
+           "attributes": {
+            "href": "#"
+           },
+           "baseStyles": {
+            "display": "flex",
+            "flexDirection": "column",
+            "fontSize": "16px",
+            "height": "fit-content",
+            "lineHeight": "1.4",
+            "minWidth": "0px",
+            "textDecoration": "none",
+            "width": "100%"
+           },
+           "blockId": "70cf7f5274",
+           "blockName": "Post Card",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {
+              "backgroundColor": "var(--8fb852c5-2637-4c54-b48d-ee9d4c8e78d4, #F6F5F3)",
+              "borderRadius": "12px",
+              "display": "flex",
+              "flexDirection": "column",
+              "flexShrink": 0,
+              "height": "220px",
+              "marginBottom": "16px",
+              "overflow": "hidden",
+              "width": "100%"
+             },
+             "blockId": "d52c999662",
+             "blockName": "Card Media",
+             "children": [
+              {
+               "attributes": {
+                "alt": "",
+                "src": ""
+               },
+               "baseStyles": {
+                "flexShrink": 0,
+                "height": "100%",
+                "hover:transform": "scale(1.04)",
+                "objectFit": "cover",
+                "transition": "transform 0.5s ease",
+                "width": "100%"
+               },
+               "blockId": "7ba823aba4",
+               "blockName": "Card Image",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "dynamicValues": [
+                {
+                 "comesFrom": "dataScript",
+                 "key": "image",
+                 "property": "src",
+                 "type": "attribute"
+                }
+               ],
+               "element": "img",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              }
+             ],
+             "classes": [],
+             "customAttributes": {},
+             "element": "div",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "alignItems": "flex-start",
+              "display": "flex",
+              "flexDirection": "column",
+              "flexShrink": 0,
+              "gap": "10px",
+              "overflow": "hidden"
+             },
+             "blockId": "72133cd152",
+             "blockName": "Card Body",
+             "children": [
+              {
+               "attributes": {},
+               "baseStyles": {
+                "backgroundColor": "var(--65f4c9fb-8f6c-4aa7-856d-39c2d067c87b, #FBEDEB)",
+                "borderRadius": "100px",
+                "color": "var(--4b3b4a52-d650-4def-a4d8-5e5caa6bd05f, #B23A2E)",
+                "fontFamily": "Inter",
+                "fontSize": "11px",
+                "fontWeight": "600",
+                "height": "fit-content",
+                "letterSpacing": "0.06em",
+                "lineHeight": "1.4",
+                "minWidth": "10px",
+                "paddingBottom": "5px",
+                "paddingLeft": "12px",
+                "paddingRight": "12px",
+                "paddingTop": "5px",
+                "textTransform": "uppercase",
+                "width": "fit-content"
+               },
+               "blockId": "7c4e08230d",
+               "blockName": "Card Category",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "dynamicValues": [
+                {
+                 "comesFrom": "dataScript",
+                 "key": "category",
+                 "property": "innerHTML",
+                 "type": "key"
+                }
+               ],
+               "element": "span",
+               "innerHTML": "Category",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--84e90ee1-4a77-4d27-a1d7-1b461d01a359, #16161A)",
+                "fontFamily": "Newsreader",
+                "fontSize": "23px",
+                "fontWeight": "500",
+                "height": "fit-content",
+                "hover:color": "var(--4b3b4a52-d650-4def-a4d8-5e5caa6bd05f, #B23A2E)",
+                "lineHeight": "1.2",
+                "minWidth": "10px",
+                "transition": "color 0.15s ease-out",
+                "width": "fit-content"
+               },
+               "blockId": "cdd708ca19",
+               "blockName": "Card Title",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "dynamicValues": [
+                {
+                 "comesFrom": "dataScript",
+                 "key": "title",
+                 "property": "innerHTML",
+                 "type": "key"
+                }
+               ],
+               "element": "h3",
+               "innerHTML": "Title",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--8d4049dc-1ae6-4232-8759-f39670771fa4, #6B6B73)",
+                "fontFamily": "Inter",
+                "fontSize": "15px",
+                "height": "fit-content",
+                "lineHeight": "1.6",
+                "minWidth": "10px",
+                "width": "fit-content"
+               },
+               "blockId": "8f03f58c10",
+               "blockName": "Card Excerpt",
+               "children": [],
+               "classes": [],
+               "customAttributes": {},
+               "dynamicValues": [
+                {
+                 "comesFrom": "dataScript",
+                 "key": "excerpt",
+                 "property": "innerHTML",
+                 "type": "key"
+                }
+               ],
+               "element": "p",
+               "innerHTML": "Excerpt",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "alignItems": "center",
+                "display": "flex",
+                "flexDirection": "row",
+                "flexShrink": 0,
+                "gap": "8px",
+                "marginTop": "4px",
+                "overflow": "hidden"
+               },
+               "blockId": "6d5964cfb8",
+               "blockName": "Card Foot",
+               "children": [
+                {
+                 "attributes": {},
+                 "baseStyles": {
+                  "color": "var(--84e90ee1-4a77-4d27-a1d7-1b461d01a359, #16161A)",
+                  "fontFamily": "Inter",
+                  "fontSize": "13px",
+                  "fontWeight": "500",
+                  "height": "fit-content",
+                  "lineHeight": "1.4",
+                  "minWidth": "10px",
+                  "width": "fit-content"
+                 },
+                 "blockId": "f915e8320c",
+                 "blockName": "Card Author",
+                 "children": [],
+                 "classes": [],
+                 "customAttributes": {},
+                 "dynamicValues": [
+                  {
+                   "comesFrom": "dataScript",
+                   "key": "author",
+                   "property": "innerHTML",
+                   "type": "key"
+                  }
+                 ],
+                 "element": "span",
+                 "innerHTML": "Author",
+                 "mobileStyles": {},
+                 "rawStyles": {},
+                 "tabletStyles": {}
+                },
+                {
+                 "attributes": {},
+                 "baseStyles": {
+                  "color": "var(--8d4049dc-1ae6-4232-8759-f39670771fa4, #6B6B73)",
+                  "fontSize": "16px",
+                  "height": "fit-content",
+                  "lineHeight": "1.4",
+                  "minWidth": "10px",
+                  "width": "fit-content"
+                 },
+                 "blockId": "7defdaf7c3",
+                 "blockName": "Card Sep",
+                 "children": [],
+                 "classes": [],
+                 "customAttributes": {},
+                 "element": "span",
+                 "innerHTML": "·",
+                 "mobileStyles": {},
+                 "rawStyles": {},
+                 "tabletStyles": {}
+                },
+                {
+                 "attributes": {},
+                 "baseStyles": {
+                  "color": "var(--8d4049dc-1ae6-4232-8759-f39670771fa4, #6B6B73)",
+                  "fontFamily": "Inter",
+                  "fontSize": "13px",
+                  "height": "fit-content",
+                  "lineHeight": "1.4",
+                  "minWidth": "10px",
+                  "width": "fit-content"
+                 },
+                 "blockId": "76f0565713",
+                 "blockName": "Card Date",
+                 "children": [],
+                 "classes": [],
+                 "customAttributes": {},
+                 "dynamicValues": [
+                  {
+                   "comesFrom": "dataScript",
+                   "key": "date",
+                   "property": "innerHTML",
+                   "type": "key"
+                  }
+                 ],
+                 "element": "span",
+                 "innerHTML": "Date",
+                 "mobileStyles": {},
+                 "rawStyles": {},
+                 "tabletStyles": {}
+                }
+               ],
+               "classes": [],
+               "customAttributes": {},
+               "element": "div",
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              }
+             ],
+             "classes": [],
+             "customAttributes": {},
+             "element": "div",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "dynamicValues": [
+            {
+             "comesFrom": "dataScript",
+             "key": "url",
+             "property": "href",
+             "type": "attribute"
+            }
+           ],
+           "element": "a",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "customAttributes": {},
+         "dataKey": {
+          "comesFrom": "dataScript",
+          "key": "posts"
+         },
+         "element": "div",
+         "isRepeaterBlock": true,
+         "mobileStyles": {
+          "gridTemplateColumns": "1fr"
+         },
+         "rawStyles": {},
+         "tabletStyles": {
+          "gridTemplateColumns": "repeat(2, 1fr)"
+         }
+        }
+       ],
+       "classes": [],
+       "customAttributes": {},
+       "element": "div",
+       "mobileStyles": {},
+       "rawStyles": {},
+       "tabletStyles": {}
+      }
+     ],
+     "classes": [],
+     "customAttributes": {},
+     "element": "div",
+     "mobileStyles": {},
+     "rawStyles": {},
+     "tabletStyles": {}
+    },
+    {
+     "attributes": {},
+     "baseStyles": {},
+     "blockId": "be02e3531b",
+     "blockName": "Footer",
+     "children": [
+      {
+       "attributes": {},
+       "baseStyles": {},
+       "blockId": "62728e1962",
+       "children": [
+        {
+         "attributes": {},
+         "baseStyles": {},
+         "blockId": "199f7b5c6e",
+         "children": [
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "5bfe7981a0",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "press_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "8917076627",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "68bfd89a21",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "press_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "3e33f4f0dd",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "b9678d6073",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "press_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "e3030844d4",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "bedf89fdd5",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "30f3f5a13f",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "press_footer",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "76d6840660",
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "31be2d39c7",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "press_footer",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "ec36a9aa6a",
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "press_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "06751b01b0",
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "customAttributes": {},
+         "isChildOfComponent": "press_footer",
+         "mobileStyles": {},
+         "rawStyles": {},
+         "referenceBlockId": "94ef1e1504",
+         "tabletStyles": {}
+        },
+        {
+         "attributes": {},
+         "baseStyles": {},
+         "blockId": "8b55c08c86",
+         "children": [
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "cb6b31daf9",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "88617a18c1",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "press_footer",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "8630cab79f",
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "3f7ca360e6",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "press_footer",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "b32996ed8c",
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "press_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "a58031ac51",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "31f822b66f",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "52f71d7e02",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "press_footer",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "eb41145762",
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "66985a3a21",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "press_footer",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "b240301818",
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "c4b35c8ffb",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "press_footer",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "248fdbacf6",
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "96fca1cfe8",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "press_footer",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "9c4bf18989",
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockId": "ed790a2240",
+             "children": [],
+             "classes": [],
+             "customAttributes": {},
+             "isChildOfComponent": "press_footer",
+             "mobileStyles": {},
+             "rawStyles": {},
+             "referenceBlockId": "682db4fa49",
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "press_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "c1cdaeadee",
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {},
+           "blockId": "84df3e924a",
+           "children": [],
+           "classes": [],
+           "customAttributes": {},
+           "isChildOfComponent": "press_footer",
+           "mobileStyles": {},
+           "rawStyles": {},
+           "referenceBlockId": "e6ae75bff2",
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "customAttributes": {},
+         "isChildOfComponent": "press_footer",
+         "mobileStyles": {},
+         "rawStyles": {},
+         "referenceBlockId": "629e65c99f",
+         "tabletStyles": {}
+        }
+       ],
+       "classes": [],
+       "customAttributes": {},
+       "isChildOfComponent": "press_footer",
+       "mobileStyles": {},
+       "rawStyles": {},
+       "referenceBlockId": "7875425124",
+       "tabletStyles": {}
+      }
+     ],
+     "classes": [],
+     "customAttributes": {},
+     "extendedFromComponent": "press_footer",
+     "mobileStyles": {},
+     "rawStyles": {},
+     "tabletStyles": {}
+    }
+   ],
+   "classes": [],
+   "customAttributes": {},
+   "element": "div",
+   "mobileStyles": {},
+   "originalElement": "body",
+   "rawStyles": {},
+   "tabletStyles": {}
+  }
+ ],
+ "client_scripts": [],
+ "creation": "2026-06-05 03:15:08.422183",
+ "disable_indexing": 0,
+ "docstatus": 0,
+ "doctype": "Builder Page",
+ "draft_blocks": null,
+ "dynamic_route": 0,
+ "idx": 0,
+ "is_standard": 0,
+ "is_template": 1,
+ "meta_description": "The Press — essays on engineering, design, and media.",
+ "modified": "2026-06-05 03:15:08.426403",
+ "modified_by": "Administrator",
+ "name": "press_home",
+ "owner": "Administrator",
+ "page_data_script": "data.posts = [{'title': 'The quiet comeback of server-rendered HTML', 'excerpt': 'After a decade of client-side everything, the pendulum is swinging back — and the web feels faster for it.', 'category': 'Engineering', 'author': 'Dana Whitman', 'date': 'Jun 2, 2026', 'read': '8 min', 'image': 'https://images.unsplash.com/photo-1517180102446-f3ece451e9d8?auto=format&fit=crop&q=80&w=1100', 'url': '/article'}, {'title': 'Designing for the first five seconds', 'excerpt': \"What a reader decides before they've read a word, and how to earn the next click.\", 'category': 'Design', 'author': 'Marcus Lee', 'date': 'May 28, 2026', 'read': '6 min', 'image': 'https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80&w=1100', 'url': '/article'}, {'title': 'The economics of a one-person newsroom', 'excerpt': 'A year of running an independent publication, with the real numbers attached.', 'category': 'Media', 'author': 'Priya Anand', 'date': 'May 21, 2026', 'read': '11 min', 'image': 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80&w=1100', 'url': '/article'}, {'title': 'Why your type scale is fighting you', 'excerpt': 'Most sites pick font sizes by feel. A little math makes everything click.', 'category': 'Design', 'author': 'Marcus Lee', 'date': 'May 14, 2026', 'read': '5 min', 'image': 'https://images.unsplash.com/photo-1488972685288-c3fd157d7c7a?auto=format&fit=crop&q=80&w=1100', 'url': '/article'}, {'title': 'Notes on writing in public', 'excerpt': 'Publishing rough ideas is terrifying and, it turns out, the whole point.', 'category': 'Culture', 'author': 'Dana Whitman', 'date': 'May 7, 2026', 'read': '7 min', 'image': 'https://images.unsplash.com/photo-1455390582262-044cdead5f82?auto=format&fit=crop&q=80&w=1100', 'url': '/article'}, {'title': 'The interface is the product now', 'excerpt': 'When every company ships the same models, the wrapper is the moat.', 'category': 'Engineering', 'author': 'Priya Anand', 'date': 'Apr 30, 2026', 'read': '9 min', 'image': 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&q=80&w=1100', 'url': '/article'}]",
+ "page_name": "press_home",
+ "page_title": "Home",
+ "preview": "/builder_assets/press/press_home/preview.webp",
+ "project_folder": null,
+ "published": 0,
+ "published_at": null,
+ "route": "templates/press/home",
+ "template_group": "press"
+}
