@@ -1,5 +1,4 @@
 import { BuilderVariable } from "@/types/doctypes";
-import { toKebabCase } from "@/utils/helpers";
 import { defineComponent, h, shallowRef } from "vue";
 
 export function getColorVariableOptions(
@@ -11,18 +10,19 @@ export function getColorVariableOptions(
 ) {
 	let processedQuery = query.replace(/^(--|var|\s+)/, "");
 	processedQuery = processedQuery.replace(/^--|\(|\s+/g, "");
-	
+
 	return variables
 		.filter((builderVariable: BuilderVariable) => {
-			const name = (builderVariable.variable_name || "").toLowerCase();
+			const label = (builderVariable.variable_name || "").toLowerCase();
+			const group = (builderVariable.group || "").toLowerCase();
 			const queryLower = processedQuery.toLowerCase();
-			return queryLower === "" || name.includes(queryLower);
+			return queryLower === "" || label.includes(queryLower) || group.includes(queryLower);
 		})
 		.map((builderVariable: BuilderVariable) => {
-			const varName = `var(--${toKebabCase(builderVariable?.variable_name || "")})`;
+			const varName = `var(--${builderVariable.name})`;
 			const resolvedLightColor = resolveVariableValue(varName);
 			const resolvedDarkColor = resolveVariableValue(varName, true);
-			
+
 			return {
 				label: `${builderVariable?.variable_name || ""}`,
 				value: varName,

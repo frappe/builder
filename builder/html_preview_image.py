@@ -20,5 +20,14 @@ def generate_preview(html, output_path):
 		with open(output_path, "wb") as f:
 			f.write(response.content)
 	else:
-		exception = response.json().get("exc")
-		raise Exception(frappe.parse_json(exception)[0])
+		try:
+			exception = response.json().get("exc")
+			parsed = frappe.parse_json(exception) if exception else None
+			message = (
+				parsed[0]
+				if parsed
+				else response.text or f"Preview generation failed (HTTP {response.status_code})"
+			)
+		except Exception:
+			message = response.text or f"Preview generation failed (HTTP {response.status_code})"
+		raise Exception(message)
