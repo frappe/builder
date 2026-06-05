@@ -40,7 +40,7 @@
 									:modelValue="stop.color"
 									@update:modelValue="(val) => updateStopColor(index, val)" />
 								<div class="mt-2 flex items-center gap-2">
-									<BuilderButton
+									<Button
 										variant="subtle"
 										label="Remove Stop"
 										class="w-full"
@@ -57,19 +57,22 @@
 					</Popover>
 				</div>
 			</div>
-			<div v-if="gradient.type === 'linear-gradient'" class="flex items-center gap-1">
+			<div v-if="gradient.type === 'linear-gradient'" class="flex shrink-0 items-center gap-2">
 				<AnglePicker :modelValue="parseInt(angleValue)" @update:modelValue="updateAngle" />
-				<Input
-					type="text"
-					:modelValue="angleValue"
-					@update:modelValue="updateAngle"
-					:hideClearButton="true"
-					class="w-13 [&>div>input]:pl-1.5 [&>div>input]:pr-4"
-					placeholder="0">
-					<template #suffix>
-						<span class="absolute right-2 top-1/2 -translate-y-1/2 text-[12px] text-ink-gray-4">°</span>
-					</template>
-				</Input>
+				<!-- fixed-width wrapper: the Input root is w-full and would get crushed by the stop bar otherwise -->
+				<div class="w-14 shrink-0">
+					<Input
+						type="text"
+						:modelValue="angleValue"
+						@update:modelValue="updateAngle"
+						:hideClearButton="true"
+						class="[&>input]:pe-4 [&>input]:ps-1.5"
+						placeholder="0">
+						<template #suffix>
+							<span class="text-[12px] text-ink-gray-4">°</span>
+						</template>
+					</Input>
+				</div>
 			</div>
 		</div>
 
@@ -92,7 +95,6 @@ import { useMouseInElement, useMousePressed } from "@vueuse/core";
 import { Popover } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 import AnglePicker from "./AnglePicker.vue";
-import BuilderButton from "./BuilderButton.vue";
 import ColorPicker from "./ColorPicker.vue";
 import Input from "./Input.vue";
 import TabButtons from "./TabButtons.vue";

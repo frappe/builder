@@ -101,11 +101,11 @@
 			</span>
 			<div class="flex items-center justify-between p-2 pr-0 text-base text-ink-gray-6">
 				<span>Folders</span>
-				<BuilderButton
+				<Button
 					variant="ghost"
 					icon="lucide-plus"
 					class="size-4 cursor-pointer hover:text-ink-gray-8"
-					@click="promptCreateFolder()"></BuilderButton>
+					@click="promptCreateFolder()"></Button>
 			</div>
 			<div class="flex p-2" v-show="!builderProjectFolder.data?.length">
 				<p class="text-sm text-ink-gray-5">No folders yet</p>
@@ -161,11 +161,7 @@
 						},
 					]">
 					<template v-slot="{ open }">
-						<BuilderButton
-							icon="lucide-more-horizontal"
-							size="sm"
-							variant="ghost"
-							@click="open"></BuilderButton>
+						<Button icon="lucide-more-horizontal" size="sm" variant="ghost" @click="open"></Button>
 					</template>
 				</Dropdown>
 			</span>
@@ -184,7 +180,6 @@
 	</Dialog>
 </template>
 <script lang="ts" setup>
-import BuilderButton from "@/components/Controls/BuilderButton.vue";
 import EditableSpan from "@/components/EditableSpan.vue";
 import FilesIcon from "@/components/Icons/Files.vue";
 import FolderIcon from "@/components/Icons/Folder.vue";

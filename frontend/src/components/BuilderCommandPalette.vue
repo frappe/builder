@@ -6,18 +6,19 @@
 		:step-label="activeStep?.label"
 		:placeholder="activeStep?.placeholder"
 		:hint="activeStep?.hint"
+		:loading="isSearching"
 		@select="executeCommand"
 		@back="handleBack" />
 </template>
 
 <script setup lang="ts">
-import { webPages } from "@/data/webPage";
+import { searchablePages } from "@/data/webPage";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
-import { useDark, useToggle } from "@vueuse/core";
+import { useDark, useToggle, watchDebounced } from "@vueuse/core";
 import { useShortcut } from "frappe-ui";
-import { computed, inject, nextTick, ref } from "vue";
+import { computed, inject, nextTick, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type { CommandPaletteItem as CPItem } from "./CommandPalette.vue";
 import CommandPalette from "./CommandPalette.vue";
@@ -41,7 +42,6 @@ useShortcut({
 	description: "Open Command Palette",
 	group: "General",
 	allowInInput: true,
-	condition: () => !document.activeElement?.classList.contains("ProseMirror"),
 	handler: () => {
 		show.value = true;
 	},
@@ -203,14 +203,18 @@ const staticCommands = computed<Command[]>(() => {
 			group: "View",
 			action: () => transitionTheme(),
 		},
-		{
-			name: "shortcuts",
-			title: "Keyboard Shortcuts",
-			icon: "lucide-command",
-			description: "General",
-			group: "General",
-			action: () => showShortcuts(),
-		},
+		...(isBuilder
+			? [
+					{
+						name: "shortcuts",
+						title: "Keyboard Shortcuts",
+						icon: "lucide-command",
+						description: "General",
+						group: "General",
+						action: () => showShortcuts(),
+					},
+				]
+			: []),
 		{
 			name: "settings",
 			title: "Settings",
@@ -235,7 +239,7 @@ const allSettingsCommands: SettingsCommand[] = [
 	{
 		name: "page_general",
 		title: "General",
-		description: "Page",
+		description: "Settings",
 		icon: "lucide-settings",
 		section: "page",
 		action: () => openSettings("page_general"),
@@ -243,7 +247,7 @@ const allSettingsCommands: SettingsCommand[] = [
 	{
 		name: "page_code",
 		title: "Page Code",
-		description: "Page",
+		description: "Settings",
 		icon: "lucide-code",
 		section: "page",
 		action: () => openSettings("page_code"),
@@ -251,7 +255,7 @@ const allSettingsCommands: SettingsCommand[] = [
 	{
 		name: "page_meta",
 		title: "Meta",
-		description: "Page",
+		description: "Settings",
 		icon: "lucide-square-dashed-bottom-code",
 		section: "page",
 		action: () => openSettings("page_meta"),
@@ -259,7 +263,7 @@ const allSettingsCommands: SettingsCommand[] = [
 	{
 		name: "page_analytics",
 		title: "Analytics",
-		description: "Page",
+		description: "Settings",
 		icon: "lucide-chart-bar",
 		section: "page",
 		action: () => openSettings("page_analytics"),
@@ -268,7 +272,7 @@ const allSettingsCommands: SettingsCommand[] = [
 	{
 		name: "global_general",
 		title: "General",
-		description: "Global",
+		description: "Settings",
 		icon: "lucide-settings",
 		section: "global",
 		action: () => openSettings("global_general"),
@@ -276,7 +280,7 @@ const allSettingsCommands: SettingsCommand[] = [
 	{
 		name: "global_code",
 		title: "Global Code",
-		description: "Global",
+		description: "Settings",
 		icon: "lucide-code",
 		section: "global",
 		action: () => openSettings("global_code"),
@@ -284,7 +288,7 @@ const allSettingsCommands: SettingsCommand[] = [
 	{
 		name: "global_redirects",
 		title: "Redirects",
-		description: "Global",
+		description: "Settings",
 		icon: "lucide-shuffle",
 		section: "global",
 		action: () => openSettings("global_redirects"),
@@ -292,7 +296,7 @@ const allSettingsCommands: SettingsCommand[] = [
 	{
 		name: "global_analytics",
 		title: "Site Analytics",
-		description: "Global",
+		description: "Settings",
 		icon: "lucide-chart-bar",
 		section: "global",
 		action: () => openSettings("global_analytics"),
@@ -300,7 +304,7 @@ const allSettingsCommands: SettingsCommand[] = [
 	{
 		name: "global_developer",
 		title: "Developer",
-		description: "Global",
+		description: "Settings",
 		icon: "lucide-terminal",
 		section: "global",
 		action: () => openSettings("global_developer"),
@@ -308,7 +312,7 @@ const allSettingsCommands: SettingsCommand[] = [
 	{
 		name: "global_ai",
 		title: "AI",
-		description: "Global",
+		description: "Settings",
 		icon: "lucide-sparkles",
 		section: "global",
 		action: () => openSettings("global_ai"),
@@ -385,7 +389,7 @@ function makePageCommand(page: BuilderPage): Command {
 }
 
 const recentPages = computed<Command[]>(() => {
-	const allPages: BuilderPage[] = webPages.data || [];
+	const allPages: BuilderPage[] = searchablePages.data || [];
 	return recentPageNames.value
 		.map((name) => allPages.find((p) => p.name === name))
 		.filter(Boolean)
@@ -393,24 +397,44 @@ const recentPages = computed<Command[]>(() => {
 });
 
 const pageSearchResults = computed<Command[]>(() => {
-	const q = searchQuery.value.toLowerCase().trim();
-	if (!q) return [];
-	const pages: BuilderPage[] = webPages.data || [];
-	const recentSet = new Set(recentPageNames.value);
+	const pages: BuilderPage[] = searchablePages.data || [];
 	return pages
-		.filter((page) => {
-			const title = (page.page_title || page.page_name || "").toLowerCase();
-			const route = (page.route || "").toLowerCase();
-			return title.includes(q) || route.includes(q);
-		})
 		.sort((a, b) => {
 			const ai = recentPageNames.value.indexOf(a.name);
 			const bi = recentPageNames.value.indexOf(b.name);
 			return (ai === -1 ? Infinity : ai) - (bi === -1 ? Infinity : bi);
 		})
-		.slice(0, 8)
 		.map(makePageCommand);
 });
+
+function runPageQuery() {
+	if (activeStep.value?.id !== "search-page") return;
+	const q = searchQuery.value.trim();
+	if (q) {
+		searchablePages.update({
+			filters: { is_template: 0 },
+			orFilters: {
+				page_title: ["like", `%${q}%`],
+				page_name: ["like", `%${q}%`],
+				route: ["like", `%${q}%`],
+			},
+		});
+		searchablePages.fetch();
+	} else if (recentPageNames.value.length) {
+		searchablePages.update({
+			filters: { is_template: 0, name: ["in", recentPageNames.value] },
+			orFilters: {},
+		});
+		searchablePages.fetch();
+	}
+}
+
+watch(() => activeStep.value?.id, runPageQuery);
+watchDebounced(searchQuery, runPageQuery, { debounce: 250 });
+
+const isSearching = computed(
+	() => activeStep.value?.id === "search-page" && !!searchQuery.value.trim() && searchablePages.list.loading,
+);
 
 const commandGroups = computed(() => {
 	const q = searchQuery.value.toLowerCase().trim();
@@ -437,11 +461,27 @@ const commandGroups = computed(() => {
 	if (activeStep.value?.id === "search-page") {
 		if (q) {
 			return pageSearchResults.value.length
-				? [{ title: "Pages", hideTitle: true, component: CommandPaletteItem, items: pageSearchResults.value }]
+				? [
+						{
+							title: "Pages",
+							hideTitle: true,
+							showDescription: true,
+							component: CommandPaletteItem,
+							items: pageSearchResults.value,
+						},
+					]
 				: [];
 		}
 		return recentPages.value.length
-			? [{ title: "Recent", hideTitle: false, component: CommandPaletteItem, items: recentPages.value }]
+			? [
+					{
+						title: "Recent",
+						hideTitle: false,
+						showDescription: true,
+						component: CommandPaletteItem,
+						items: recentPages.value,
+					},
+				]
 			: [];
 	}
 
@@ -466,6 +506,7 @@ const commandGroups = computed(() => {
 			groups.push({
 				title: "Commands",
 				hideTitle: matchedSettings.length === 0,
+				showDescription: true,
 				component: CommandPaletteItem,
 				items: matchedCommands,
 			});
@@ -498,7 +539,13 @@ const commandGroups = computed(() => {
 		.filter((g) => g.items.length > 0);
 	if (recentCommands.value.length) {
 		return [
-			{ title: "Recent", hideTitle: false, component: CommandPaletteItem, items: recentCommands.value },
+			{
+				title: "Recent",
+				hideTitle: false,
+				showDescription: true,
+				component: CommandPaletteItem,
+				items: recentCommands.value,
+			},
 			...grouped,
 		];
 	}

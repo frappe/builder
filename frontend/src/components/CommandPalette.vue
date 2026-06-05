@@ -15,7 +15,7 @@
 					<button
 						v-if="stepLabel"
 						type="button"
-						class="ml-3 flex shrink-0 items-center gap-1 py-1 text-base font-semibold text-ink-gray-7 transition-colors hover:bg-surface-gray-3"
+						class="ml-3 flex shrink-0 items-center gap-2 py-1 text-base font-semibold text-ink-gray-7 transition-colors hover:bg-surface-gray-3"
 						@click="goBack">
 						{{ stepLabel }}
 						<span class="lucide-chevron-right size-3 text-ink-gray-4" aria-hidden="true" />
@@ -29,14 +29,14 @@
 						spellcheck="false"
 						@keydown="handleKeydown" />
 					<kbd
-						class="mr-3 flex shrink-0 items-center gap-0.5 rounded border border-outline-gray-2 px-1.5 py-1 text-xs font-medium text-ink-gray-4"
+						class="mr-1.5 flex shrink-0 items-center gap-0.5 rounded border border-outline-gray-2 px-1.5 py-1 text-xs font-medium text-ink-gray-4"
 						title="Close">
 						esc
 					</kbd>
 				</div>
 
 				<!-- Results list -->
-				<div ref="listRef" class="max-h-[380px] overflow-y-auto py-2">
+				<div ref="listRef" class="max-h-[380px] min-h-[120px] overflow-y-auto py-2">
 					<template v-if="hasItems">
 						<template v-for="group in groups" :key="group.title">
 							<div v-if="group.items.length" class="mb-1 last:mb-0">
@@ -53,6 +53,7 @@
 									<component
 										:is="group.component"
 										:item="item"
+										:show-description="group.showDescription === true"
 										:active="flatIndex(group, idx) === activeIndex" />
 								</div>
 							</div>
@@ -60,10 +61,18 @@
 					</template>
 					<div v-else class="flex flex-col items-center py-12 text-ink-gray-4">
 						<span
-							:class="[localQuery ? 'lucide-search-x' : 'lucide-search', 'mb-2.5 size-8 opacity-40']"
+							:class="[
+								loading
+									? 'lucide-loader-circle animate-spin'
+									: localQuery
+										? 'lucide-search-x'
+										: 'lucide-search',
+								'mb-2.5 size-8 opacity-40',
+							]"
 							aria-hidden="true" />
 						<span class="text-base">
-							<template v-if="localQuery">No results for "{{ localQuery }}"</template>
+							<template v-if="loading">Searching...</template>
+							<template v-else-if="localQuery">No results for "{{ localQuery }}"</template>
 							<template v-else>{{ hint || "No commands found" }}</template>
 						</span>
 					</div>
@@ -111,6 +120,7 @@ export interface CommandPaletteItem {
 export interface CommandPaletteGroup {
 	title: string;
 	hideTitle?: boolean;
+	showDescription?: boolean;
 	component: object;
 	items: CommandPaletteItem[];
 }
@@ -130,10 +140,12 @@ const props = withDefaults(
 		stepLabel?: string;
 		placeholder?: string;
 		hint?: string;
+		loading?: boolean;
 	}>(),
 	{
 		show: false,
 		searchQuery: "",
+		loading: false,
 	},
 );
 
@@ -208,7 +220,9 @@ function onOpenChange(val: boolean) {
 }
 
 function onEscapeKey() {
-	if (props.stepLabel) {
+	if (localQuery.value) {
+		localQuery.value = "";
+	} else if (props.stepLabel) {
 		emit("back");
 	} else {
 		onOpenChange(false);

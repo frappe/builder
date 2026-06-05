@@ -8,7 +8,7 @@
 					</InputLabel>
 				</div>
 				<div class="relative w-full">
-					<BuilderButton class="w-full" variant="subtle" icon="lucide-pencil" @click.stop="open()" />
+					<Button class="w-full" variant="subtle" icon="lucide-pencil" @click.stop="open()" />
 				</div>
 			</div>
 		</template>
@@ -27,7 +27,6 @@
 <script setup lang="ts">
 import { Popover } from "frappe-ui";
 import { ref } from "vue";
-import BuilderButton from "./Controls/BuilderButton.vue";
 import InputLabel from "./Controls/InputLabel.vue";
 import ObjectEditor from "./ObjectEditor.vue";
 

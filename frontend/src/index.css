@@ -71,3 +71,9 @@ p:empty::before {
 	outline-offset: 3px;
 	border-radius: 2px;
 }
+
+/* frappe-ui popovers portal to <body> without a z-index; lift them above
+   DraggablePopup (z-20) so e.g. color pickers opened from within popups stay visible */
+.PopoverContent {
+	z-index: 30;
+}

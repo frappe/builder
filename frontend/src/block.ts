@@ -2,6 +2,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import {
 	addPxToNumber,
+	cssUrl,
 	dataURLtoFile,
 	generateId,
 	getBlockCopy,
@@ -170,7 +171,7 @@ class Block implements BlockOptions {
 			if (file) {
 				this.setStyle("backgroundImage", "");
 				uploadBuilderAsset(file, true).then((obj) => {
-					this.setStyle("backgroundImage", `url(${obj.fileURL})`);
+					this.setStyle("backgroundImage", cssUrl(obj.fileURL));
 				});
 			}
 		}

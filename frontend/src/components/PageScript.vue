@@ -2,8 +2,8 @@
 	<div class="flex h-full flex-col justify-between">
 		<div class="flex h-full flex-col gap-4 p-3">
 			<div class="flex gap-2" v-if="mode == 'page' || isBlockSelected">
-				<BuilderButton @click="showClientScriptEditor()" class="flex-1">Client Script</BuilderButton>
-				<BuilderButton @click="showServerScriptEditor()" class="flex-1">Data Script</BuilderButton>
+				<Button @click="showClientScriptEditor()" class="flex-1">Client Script</Button>
+				<Button @click="showServerScriptEditor()" class="flex-1">Data Script</Button>
 			</div>
 
 			<div class="h-full" v-if="mode == 'page'">
@@ -162,11 +162,10 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import blockController from "@/utils/blockController";
 import { useStorage } from "@vueuse/core";
+import { Switch, toast } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
 import { computed, defineComponent, ref, watch } from "vue";
-import { toast } from "frappe-ui";
 import CodeEditor from "./Controls/CodeEditor.vue";
-import Switch from "./Controls/Switch.vue";
 import TabButtons from "./Controls/TabButtons.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
 import PropsEditor from "./PropsEditor.vue";

@@ -14,10 +14,9 @@ import {
 	getCopyWithoutParent,
 	getRouteVariables,
 } from "@/utils/helpers";
-import { createDocumentResource, createListResource, createResource } from "frappe-ui";
+import { createDocumentResource, createListResource, createResource, toast } from "frappe-ui";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
-import { toast } from "frappe-ui";
 
 const usePageStore = defineStore("pageStore", {
 	state: () => ({
@@ -228,16 +227,12 @@ const usePageStore = defineStore("pageStore", {
 			if (!this.activePage) {
 				return;
 			}
-			return webPages.setValue
-				.submit({
-					name: this.activePage.name as string,
-					[key]: value,
-				})
-				.then(() => {
-					if (this.activePage) {
-						this.activePage[key] = value;
-					}
-				});
+			// Optimistically update in-place so reactive bindings stay consistent
+			this.activePage[key] = value;
+			return webPages.setValue.submit({
+				name: this.activePage.name as string,
+				[key]: value,
+			});
 		},
 
 		savePage() {
@@ -266,7 +261,11 @@ const usePageStore = defineStore("pageStore", {
 			return webPages.setValue
 				.submit(args)
 				.then((page: BuilderPage) => {
-					this.activePage = page;
+					if (this.activePage) {
+						Object.assign(this.activePage, page);
+					} else {
+						this.activePage = page;
+					}
 				})
 				.finally(() => {
 					if (this.saveId === saveId) {

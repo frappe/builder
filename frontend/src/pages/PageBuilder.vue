@@ -42,9 +42,9 @@
 							</a>
 						</span>
 					</div>
-					<BuilderButton variant="solid" class="text-xs" @click="saveAndExitFragmentMode">
+					<Button variant="solid" class="text-xs" @click="saveAndExitFragmentMode">
 						{{ canvasStore.fragmentData.saveActionLabel || "Save" }}
-					</BuilderButton>
+					</Button>
 				</div>
 			</template>
 		</BuilderCanvas>

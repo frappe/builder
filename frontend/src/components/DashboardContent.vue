@@ -40,14 +40,14 @@
 						:active-folder="builderStore.activeFolder" />
 				</div>
 			</div>
-			<BuilderButton
+			<Button
 				class="m-auto mt-12 w-fit text-sm"
 				@click="loadMore"
 				v-if="webPages.data?.length && webPages.hasNextPage && displayType !== 'tree'"
 				variant="subtle"
 				size="sm">
 				Load More
-			</BuilderButton>
+			</Button>
 		</section>
 	</div>
 </template>

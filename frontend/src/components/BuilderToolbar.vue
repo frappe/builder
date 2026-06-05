@@ -12,7 +12,7 @@
 				"
 				@showShortcuts="showShortcuts"></MainMenu>
 			<div class="flex gap-2">
-				<BuilderButton
+				<Button
 					v-for="mode in [
 						{ mode: 'select', icon: 'lucide-mouse-pointer', description: 'Select (v)' },
 						{ mode: 'container', icon: 'lucide-square', description: 'Container (c)' },
@@ -23,7 +23,7 @@
 					:tooltip="mode.description"
 					:icon="mode.icon"
 					@click="() => (builderStore.mode = mode.mode as BuilderMode)"
-					:active="builderStore.mode === mode.mode"></BuilderButton>
+					:active="builderStore.mode === mode.mode"></Button>
 			</div>
 		</div>
 		<div>
@@ -69,7 +69,7 @@
 					<div
 						class="flex w-72 flex-col gap-3 rounded bg-surface-white p-4 shadow-lg"
 						v-if="pageStore.activePage">
-						<PageOptions v-if="pageStore.activePage" :page="pageStore.activePage"></PageOptions>
+						<PageOptions v-if="pageStore.activePage"></PageOptions>
 					</div>
 				</template>
 			</Popover>
@@ -102,13 +102,13 @@
 						@click="openAIGenerator"
 						:icon="SparklesIcon"
 						:disabled="builderStore.readOnlyMode"></Button>
-				</Tooltip> -->
-				<Tooltip text="Toggle Dark Mode" :hoverDelay="0.6" arrow-class="mb-3">
+				</Tooltip>
+				<!-- <Tooltip text="Toggle Dark Mode" :hoverDelay="0.6" arrow-class="mb-3">
 					<Button
 						variant="ghost"
 						@click="() => transitionTheme(toggleDark)"
 						:icon="isDark ? 'lucide-sun' : 'lucide-moon'"></Button>
-				</Tooltip>
+				</Tooltip> -->
 				<span
 					class="text-sm text-ink-gray-3"
 					v-if="pageStore.savingPage && pageStore.activePage?.is_template">

@@ -8,7 +8,6 @@ import router from "./router";
 import "./setupFrappeUIResource";
 
 import App from "@/App.vue";
-import BuilderButton from "@/components/Controls/BuilderButton.vue";
 import Input from "@/components/Controls/Input.vue";
 
 const app = createApp(App);
@@ -23,7 +22,6 @@ window.name = "frappe-builder";
 app.config.globalProperties.window = window;
 
 app.component("Button", Button);
-app.component("BuilderButton", BuilderButton);
 app.component("FormControl", FormControl);
 app.component("BuilderInput", Input);
 
