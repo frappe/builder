@@ -100,6 +100,7 @@ class BuilderComponent(Document):
 	def delete_standard_exported_files(self, old_name: str | None = None):
 		if frappe.conf.developer_mode:
 			from builder.export_import_standard_page import delete_standard_component_files
+
 			all_installed_apps = frappe.get_installed_apps()
 			for app in all_installed_apps:
 				delete_standard_component_files(old_name or self.name, app)

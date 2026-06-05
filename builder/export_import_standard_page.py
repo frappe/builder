@@ -310,10 +310,12 @@ def delete_standard_client_script_files(script_name: str, app_name: str) -> None
 def delete_standard_component_files(component_name: str, app_name: str) -> None:
 	"""Remove the exported directory for a component from the target app's source code."""
 	_delete_standard_builder_files(component_name, app_name, "components")
- 
+
+
 def delete_standard_variable_files(variable_name: str, app_name: str) -> None:
 	"""Remove the exported directory for a variable from the target app's source code."""
 	_delete_standard_builder_files(variable_name, app_name, "variables")
+
 
 def delete_standard_font_files(font_name: str, app_name: str) -> None:
 	"""Remove the exported directory for a font from the target app's source code."""
@@ -347,6 +349,7 @@ def rename_standard_page_files(old: str, new: str, app_name: str) -> None:
 def rename_standard_client_script_files(old: str, new: str, app_name: str) -> None:
 	"""Rename the exported directory for a client script inside the target app's source code."""
 	_rename_standard_builder_files(old, new, app_name, "client_scripts")
+
 
 def import_fonts(fonts_path):
 	"""Import User Font records from exported files"""
