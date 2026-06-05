@@ -391,7 +391,7 @@ def get_template_assets_public_path(page_doc):
 	return f"/builder_assets/{get_template_assets_subfolder(page_doc).replace(os.sep, '/')}"
 
 
-def _template_target_app():
+def template_target_app():
 	"""App whose www/builder_assets directory holds exported template assets.
 	Defaults to builder; the hub site sets template_target_app=builder_hub so
 	template authoring on the hub writes assets into the hub app."""
@@ -400,7 +400,7 @@ def _template_target_app():
 
 def get_template_assets_folder_path(page_doc, app=None):
 	path = os.path.join(
-		frappe.get_app_path(app or _template_target_app()),
+		frappe.get_app_path(app or template_target_app()),
 		"www",
 		"builder_assets",
 		get_template_assets_subfolder(page_doc),

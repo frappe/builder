@@ -8,9 +8,6 @@ from builder.utils import (
 	sync_page_templates,
 )
 
-# NOTE: builder no longer ships/syncs page templates. They live in the
-# builder_hub app and are fetched over HTTP at browse time (see builder/api.py).
-
 
 def after_install():
 	create_new_folder("Builder Uploads", "Home")

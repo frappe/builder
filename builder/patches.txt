@@ -14,4 +14,3 @@ builder.builder.patches.add_composite_index_to_web_page_view
 builder.builder.patches.refactor_builder_variables
 execute:frappe.call("builder.builder_analytics.enqueue_web_page_view_ingesion")
 execute:frappe.call("builder.builder_analytics.setup_duckdb_table")
-builder.builder.patches.remove_local_template_groups
