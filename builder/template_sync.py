@@ -68,11 +68,17 @@ def sync_builder_templates():
 		if not os.path.isdir(group_path) or group.startswith((".", "_")):
 			continue
 		print(f"Syncing builder template group: {group}")
-		make_records(os.path.join(group_path, "variables"))
-		make_records(os.path.join(group_path, "components"))
-		make_records(os.path.join(group_path, "client_scripts"))
-		import_fonts(os.path.join(group_path, "fonts"))
-		groups_pages[group] = import_template_pages(os.path.join(group_path, "pages"), group)
+		# isolate each group so one group's failure (e.g. a stale document lock
+		# from clear_page_cache) can't abort the rest of the catalog
+		try:
+			make_records(os.path.join(group_path, "variables"))
+			make_records(os.path.join(group_path, "components"))
+			make_records(os.path.join(group_path, "client_scripts"))
+			import_fonts(os.path.join(group_path, "fonts"))
+			groups_pages[group] = import_template_pages(os.path.join(group_path, "pages"), group)
+		except Exception:
+			frappe.log_error(title=f"Failed to sync template group {group}")
+			print(f"  ! skipped template group {group} (see error log)")
 
 	reconcile_deleted_templates(groups_pages)
 
@@ -106,6 +112,9 @@ def import_template_pages(pages_path, group):
 def reconcile_deleted_templates(groups_pages):
 	"""Delete template pages whose fixtures were removed from disk.
 
+	Only prunes groups that synced successfully this run (present in
+	groups_pages) — a group that errored or whose fixtures are absent is left
+	untouched, so a transient sync failure never wipes a previously-good group.
 	Skipped in developer mode, where the DB is being authored and fixtures may
 	not exist yet. Pages without a template_group (user templates) are left alone.
 	Shared components/variables are not reconciled — orphans are harmless, while
@@ -120,7 +129,9 @@ def reconcile_deleted_templates(groups_pages):
 		fields=["name", "template_group"],
 	)
 	for page in template_pages:
-		if page.name not in (groups_pages.get(page.template_group) or []):
+		if page.template_group not in groups_pages:
+			continue  # group didn't sync this run — don't touch its pages
+		if page.name not in groups_pages[page.template_group]:
 			frappe.delete_doc("Builder Page", page.name, force=True, ignore_permissions=True)
 
 
