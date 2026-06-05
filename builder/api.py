@@ -237,26 +237,21 @@ def duplicate_page(page_name: str):
 
 # Templates live on a central Builder Hub site. Builder just fetches the catalog
 # and, on use, a per-page bundle over HTTP (server-side — no CORS), then builds a
-# page from it. Point at the hub via Builder Settings > Template Hub URL (or
-# site_config / common_site_config `template_hub_url`).
+# page from it. Point at the hub via `template_hub_url` in the site config (or
+# common_site_config for the whole bench).
 DEFAULT_HUB_URL = "https://builder-hub.frappe.cloud"
 
 
-def _hub_url() -> str:
-	url = (
-		frappe.get_cached_value("Builder Settings", "Builder Settings", "template_hub_url")
-		or frappe.conf.get("template_hub_url")
-		or DEFAULT_HUB_URL
-	)
-	return url.rstrip("/")
+def hub_url() -> str:
+	return (frappe.conf.get("template_hub_url") or DEFAULT_HUB_URL).rstrip("/")
 
 
-def _hub_get(method: str, **params):
+def hub_get(method: str, **params):
 	# make_get_request (not builder's make_safe_get_request, which blocks private
 	# IPs and would reject a localhost hub). Trust = admin-set hub URL.
 	from frappe.integrations.utils import make_get_request
 
-	resp = make_get_request(f"{_hub_url()}/api/method/builder_hub.api.{method}", params=params or None)
+	resp = make_get_request(f"{hub_url()}/api/method/builder_hub.api.{method}", params=params or None)
 	return resp.get("message")
 
 
@@ -266,7 +261,7 @@ def get_template_groups() -> list[dict]:
 	"""Template groups for the picker, fetched live from the hub. Empty (just
 	Blank page) if the hub is unreachable."""
 	try:
-		return _hub_get("get_catalog") or []
+		return hub_get("get_catalog") or []
 	except Exception:
 		frappe.log_error("Failed to fetch templates from hub")
 		return []
@@ -283,7 +278,7 @@ def create_page_from_template(template_page: str, project_folder: str | None = N
 	from frappe.modules.import_file import import_doc
 
 	try:
-		bundle = _hub_get("get_template_bundle", page=template_page)
+		bundle = hub_get("get_template_bundle", page=template_page)
 	except Exception:
 		frappe.log_error("Failed to fetch template bundle")
 		bundle = None

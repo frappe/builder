@@ -32,7 +32,6 @@ class BuilderSettings(Document):
 		script_public_url: DF.ReadOnly | None
 		style: DF.Code | None
 		style_public_url: DF.ReadOnly | None
-		template_hub_url: DF.Data | None
 	# end: auto-generated types
 
 	def on_update(self):
