@@ -235,17 +235,11 @@ def duplicate_page(page_name: str):
 	return new_page
 
 
-# Templates are served by a central Builder Hub site; a builder site fetches the
-# catalog + a per-page bundle over HTTP (server-side proxy — no CORS needed) and
-# materializes a page locally on demand. Override the hub via Builder Settings >
-# Template Hub URL, or site_config template_hub_url.
-#
-# NOTE: this default is a PLACEHOLDER for the eventual production hub and does not
-# resolve yet. Until that hub is deployed (or this constant is updated), a site
-# must set `template_hub_url` to get templates; otherwise the catalog fetch fails
-# gracefully and the picker shows only "Blank page" + the user's own My Templates.
+# Templates live on a central Builder Hub site. Builder just fetches the catalog
+# and, on use, a per-page bundle over HTTP (server-side — no CORS), then builds a
+# page from it. Point at the hub via Builder Settings > Template Hub URL (or
+# site_config / common_site_config `template_hub_url`).
 DEFAULT_HUB_URL = "https://builder-hub.frappe.cloud"
-MY_TEMPLATES = "__my_templates__"
 
 
 def _hub_url() -> str:
@@ -257,189 +251,46 @@ def _hub_url() -> str:
 	return url.rstrip("/")
 
 
-def _abs_url(path: str | None) -> str | None:
-	"""Absoluteize a site-relative (/...) url; leave absolute/None urls as-is."""
-	if path and isinstance(path, str) and path.startswith("/"):
-		return frappe.utils.get_url() + path
-	return path
-
-
-def build_template_catalog(
-	app: str = "builder", template_group: str | None = None, absolute_preview: bool = False
-) -> list[dict]:
-	"""Build the template-group catalog from local DB template pages + on-disk
-	manifests. Shared by builder (local "My Templates") and the hub (public catalog).
-
-	template_group:
-	  None         -> manifest-backed groups only (the hub's public catalog)
-	  MY_TEMPLATES -> only ungrouped user-saved templates, as one "My Templates" group
-	absolute_preview: prefix preview + add per-page live_url with this site's URL
-	  (so a remote consumer can load images / open Preview against the hub).
-	"""
-	from builder.template_sync import get_all_group_manifests
-
-	fields = ["name", "page_title", "preview", "route", "template_group"]
-
-	def decorate(pages):
-		if absolute_preview:
-			for p in pages:
-				p.preview = _abs_url(p.preview)
-				p.live_url = _abs_url(f"/{p.route}") if p.route else None
-		return pages
-
-	if template_group == MY_TEMPLATES:
-		pages = decorate(
-			frappe.get_all(
-				"Builder Page",
-				filters={"is_template": 1, "template_group": ("is", "not set")},
-				fields=fields,
-				order_by="creation asc",
-				ignore_permissions=True,
-			)
-		)
-		if not pages:
-			return []
-		return [
-			{
-				"name": "my_templates",
-				"title": "My Templates",
-				"description": "Pages you saved as templates",
-				"preview": pages[0].preview,
-				"pages": pages,
-			}
-		]
-
-	pages = decorate(
-		frappe.get_all(
-			"Builder Page",
-			filters={"is_template": 1, "template_group": ("is", "set")},
-			fields=fields,
-			order_by="creation asc",
-			ignore_permissions=True,
-		)
-	)
-	pages_by_group: dict[str, list] = {}
-	for page in pages:
-		pages_by_group.setdefault(page.template_group, []).append(page)
-
-	groups = []
-	for group, manifest in get_all_group_manifests(app).items():
-		group_pages = pages_by_group.pop(group, [])
-		if not group_pages:
-			continue
-		manifest_order = {
-			page.get("name"): idx
-			for idx, page in enumerate(manifest.get("pages") or [])
-			if isinstance(page, dict)
-		}
-		group_pages.sort(key=lambda p: (manifest_order.get(p.name, len(manifest_order)), p.page_title or ""))
-		preview = _abs_url(manifest.get("preview")) if absolute_preview else manifest.get("preview")
-		groups.append(
-			{
-				"name": group,
-				"title": manifest.get("title") or group.replace("_", " ").title(),
-				"description": manifest.get("description") or "",
-				"preview": preview or group_pages[0].preview,
-				"order": manifest.get("order"),
-				"pages": group_pages,
-			}
-		)
-	# grouped pages whose manifest is missing on disk should still show up
-	for group, group_pages in pages_by_group.items():
-		groups.append(
-			{
-				"name": group,
-				"title": group.replace("_", " ").title(),
-				"description": "",
-				"preview": group_pages[0].preview,
-				"pages": group_pages,
-			}
-		)
-	groups.sort(key=lambda g: (g.get("order") is None, g.get("order") or 0, g["title"]))
-	return groups
-
-
-@redis_cache(ttl=600)
-def _fetch_hub_catalog() -> list[dict]:
-	"""Fetch the remote hub catalog (grouped templates). Cached; empty on failure
-	so the picker degrades to Blank + local My Templates when the hub is down."""
+def _hub_get(method: str, **params):
+	# make_get_request (not builder's make_safe_get_request, which blocks private
+	# IPs and would reject a localhost hub). Trust = admin-set hub URL.
 	from frappe.integrations.utils import make_get_request
 
-	try:
-		# NOTE: make_get_request (not builder's make_safe_get_request, which blocks
-		# private IPs and would reject a localhost hub). Trust = admin-set hub URL.
-		resp = make_get_request(f"{_hub_url()}/api/method/builder_hub.api.get_catalog")
-		return resp.get("message") or []
-	except Exception:
-		frappe.log_error("Failed to fetch template hub catalog")
-		return []
+	resp = make_get_request(f"{_hub_url()}/api/method/builder_hub.api.{method}", params=params or None)
+	return resp.get("message")
 
 
 @frappe.whitelist()
 @has_page_read("You do not have permission to view templates.")
 def get_template_groups() -> list[dict]:
-	"""Catalog for the template picker: remote hub groups (cached) + the user's
-	own locally-saved "My Templates" (live)."""
-	groups = list(_fetch_hub_catalog())
-	groups += build_template_catalog(app="builder", template_group=MY_TEMPLATES)
-	return groups
+	"""Template groups for the picker, fetched live from the hub. Empty (just
+	Blank page) if the hub is unreachable."""
+	try:
+		return _hub_get("get_catalog") or []
+	except Exception:
+		frappe.log_error("Failed to fetch templates from hub")
+		return []
 
 
 @frappe.whitelist()
 @has_page_write("You do not have permission to create a page.")
 def create_page_from_template(template_page: str, project_folder: str | None = None) -> str:
-	"""Create an editable page from a template and return its name.
+	"""Create an editable page from a hub template and return its name.
 
-	`template_page` is either a local "My Template" page name or a hub page id.
-	Created pages hot-link the hub's /builder_assets/ images (known v1 gap — a
-	live page depends on hub availability; future: copy assets local on create)."""
-	if frappe.db.exists("Builder Page", template_page):
-		tpl = frappe.db.get_value(
-			"Builder Page", template_page, ["is_template", "template_group"], as_dict=True
-		)
-		if tpl and tpl.is_template and not tpl.template_group:
-			return _create_from_local_template(template_page, project_folder)
-	return _create_from_hub_template(template_page, project_folder)
-
-
-def _create_from_local_template(template_page: str, project_folder: str | None) -> str:
-	template = frappe.get_doc("Builder Page", template_page)
-	if not template.is_template:
-		frappe.throw(f"{template_page} is not a template page")
-	new_page = frappe.copy_doc(template)
-	new_page.is_template = 0
-	new_page.template_group = None
-	del new_page.page_name
-	new_page.route = None
-	new_page.published = 0
-	new_page.published_at = None
-	new_page.draft_blocks = template.draft_blocks or template.blocks  # opens as draft
-	new_page.blocks = None
-	if project_folder:
-		new_page.project_folder = project_folder
-	clone_client_scripts(template, new_page)
-	new_page.insert()
-	return new_page.name
-
-
-def _create_from_hub_template(template_page: str, project_folder: str | None) -> str:
-	from frappe.integrations.utils import make_get_request
+	Fetches the template bundle, installs its shared components/variables/scripts/
+	fonts, and builds the page from its blocks. Created pages hot-link the hub's
+	/builder_assets/ images (a live page depends on the hub staying up)."""
 	from frappe.modules.import_file import import_doc
 
 	try:
-		resp = make_get_request(
-			f"{_hub_url()}/api/method/builder_hub.api.get_template_bundle",
-			params={"page": template_page},
-		)
-		bundle = resp.get("message")
+		bundle = _hub_get("get_template_bundle", page=template_page)
 	except Exception:
 		frappe.log_error("Failed to fetch template bundle")
 		bundle = None
 	if not bundle or not bundle.get("page"):
 		frappe.throw(frappe._("Could not load the selected template. Please try again."))
 
-	# install shared deps (stable names → var(--uuid)/extendedFromComponent resolve);
-	# the read-only guard is inert here (import sets frappe.flags.in_import)
+	# install shared deps (stable names → var(--uuid)/extendedFromComponent resolve)
 	for font in bundle.get("fonts") or []:
 		import_doc(docdict=font)
 	for var in bundle.get("variables") or []:
@@ -451,19 +302,15 @@ def _create_from_hub_template(template_page: str, project_folder: str | None) ->
 	new_page = frappe.get_doc(
 		{
 			"doctype": "Builder Page",
-			"is_template": 0,
-			"template_group": None,
 			"page_title": page.get("page_title") or "My Page",
 			"draft_blocks": frappe.as_json(page.get("blocks") or []),  # opens as draft
 			"page_data_script": page.get("page_data_script"),
 			"head_html": page.get("head_html"),
 			"body_html": page.get("body_html"),
 			"meta_description": page.get("meta_description"),
-			"published": 0,
+			"project_folder": project_folder or None,
 		}
 	)
-	if project_folder:
-		new_page.project_folder = project_folder
 	# fresh client scripts from the bundle (hashed names) — never reuse hub names
 	for cs in bundle.get("client_scripts") or []:
 		new_script = frappe.get_doc(
