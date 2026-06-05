@@ -214,31 +214,42 @@ class BuilderPage(WebsiteGenerator):
 		from builder.export_import_standard_page import (
 			delete_standard_client_script_files,
 			delete_standard_component_files,
+			delete_standard_font_files,
 			delete_standard_page_files,
+			delete_standard_variable_files,
 			extract_components_from_blocks,
+			extract_fonts_from_blocks,
+			extract_variables_from_blocks,
 		)
 
 		delete_standard_page_files(self.page_name, app)
 
 		client_scripts = doc_before.client_scripts if doc_before else self.client_scripts
-		for row in client_scripts:
-			referencing_standard_pages = frappe.get_doc(
-				"Builder Client Script", row.builder_script
-			).get_referencing_pages(filters={"is_standard": 1}, fields=["name", "app"])
-			referencing_apps = [page.app for page in referencing_standard_pages if page.name != self.name]
-
-			if app not in referencing_apps:
-				delete_standard_client_script_files(row.builder_script, app)
-
 		blocks = frappe.parse_json(self.draft_blocks or self.blocks)
-		components = extract_components_from_blocks(blocks)
-		for component_id in components:
-			referencing_standard_pages = frappe.get_doc(
-				"Builder Component", component_id
-			).get_referencing_pages(filters={"is_standard": 1}, fields=["name", "app"])
-			referencing_apps = [page.app for page in referencing_standard_pages if page.name != self.name]
-			if app not in referencing_apps:
-				delete_standard_component_files(component_id, app)
+
+		dependencies = [
+			(
+				"Builder Client Script",
+				[row.builder_script for row in client_scripts],
+				delete_standard_client_script_files,
+			),
+			("Builder Component", extract_components_from_blocks(blocks), delete_standard_component_files),
+			("Builder Variable", extract_variables_from_blocks(blocks), delete_standard_variable_files),
+			("User Font", extract_fonts_from_blocks(blocks), delete_standard_font_files),
+		]
+
+		for doctype, identifiers, delete_files in dependencies:
+			for identifier in identifiers:
+				self._delete_standard_dependency_if_unreferenced(doctype, identifier, app, delete_files)
+
+	def _delete_standard_dependency_if_unreferenced(self, doctype, identifier, app, delete_files) -> None:
+		"""Delete a dependency's exported files unless another standard page in the app still references it."""
+		referencing_pages = frappe.get_doc(doctype, identifier).get_referencing_pages(
+			filters={"is_standard": 1}, fields=["name", "app"]
+		)
+		referencing_apps = [page.app for page in referencing_pages if page.name != self.name]
+		if app not in referencing_apps:
+			delete_files(identifier, app)
 
 	def on_trash(self):
 		if self.is_template and frappe.conf.developer_mode:
