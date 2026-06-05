@@ -582,12 +582,12 @@ def extract_components_from_blocks(blocks):
 	return components
 
 
-def export_client_scripts(page_doc, client_scripts_path):
+def export_client_scripts(client_scripts, client_scripts_path):
 	"""Export client scripts for a page"""
 	from frappe.modules.export_file import strip_default_fields
 
-	for script_row in page_doc.client_scripts:
-		script_doc = frappe.get_doc("Builder Client Script", script_row.builder_script)
+	for script in client_scripts:
+		script_doc = frappe.get_doc("Builder Client Script", script)
 		script_config = script_doc.as_dict(no_nulls=True)
 		script_config = strip_default_fields(script_doc, script_config)
 		fname = frappe.scrub(str(script_doc.name))
