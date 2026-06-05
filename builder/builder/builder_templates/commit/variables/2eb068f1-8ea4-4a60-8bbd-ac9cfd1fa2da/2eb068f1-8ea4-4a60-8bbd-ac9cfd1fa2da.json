@@ -1,9 +1,0 @@
-{
- "dark_value": "#FFFFFF",
- "doctype": "Builder Variable",
- "group": "commit",
- "name": "2eb068f1-8ea4-4a60-8bbd-ac9cfd1fa2da",
- "type": "Color",
- "value": "#FFFFFF",
- "variable_name": "accent-text"
-}

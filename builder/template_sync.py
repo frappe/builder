@@ -35,7 +35,7 @@ from urllib.parse import unquote
 import frappe
 from frappe.modules.export_file import strip_default_fields
 from frappe.modules.import_file import import_file_by_path
-from frappe.utils import get_url
+from frappe.utils import get_url, now
 
 from builder.export_import_standard_page import extract_fonts_from_blocks, import_fonts
 from builder.utils import (
@@ -45,20 +45,24 @@ from builder.utils import (
 )
 
 
-def get_templates_root():
-	return frappe.get_module_path("builder", "builder_templates")
+def get_templates_root(app="builder"):
+	return os.path.join(frappe.get_app_path(app), "builder_templates")
 
 
-def get_group_assets_root(group_folder):
-	return os.path.join(frappe.get_app_path("builder"), "www", "builder_assets", group_folder)
+def get_group_assets_root(group_folder, app="builder"):
+	return os.path.join(frappe.get_app_path(app), "www", "builder_assets", group_folder)
 
 
 # ---------------------------------------------------------------------------
 # import
 # ---------------------------------------------------------------------------
-def sync_builder_templates():
-	"""Import all template group fixtures from disk. Called on install/migrate."""
-	templates_root = get_templates_root()
+def sync_builder_templates(app="builder", publish=False):
+	"""Import all template group fixtures from disk. Called on install/migrate.
+
+	`app` selects which app's builder_templates/ dir to import from (the hub app
+	passes "builder_hub"). `publish=True` marks the imported pages published so
+	their routes resolve (the hub serves them publicly for Preview)."""
+	templates_root = get_templates_root(app)
 	if not os.path.isdir(templates_root):
 		return
 
@@ -75,7 +79,9 @@ def sync_builder_templates():
 			make_records(os.path.join(group_path, "components"))
 			make_records(os.path.join(group_path, "client_scripts"))
 			import_fonts(os.path.join(group_path, "fonts"))
-			groups_pages[group] = import_template_pages(os.path.join(group_path, "pages"), group)
+			groups_pages[group] = import_template_pages(
+				os.path.join(group_path, "pages"), group, publish=publish
+			)
 		except Exception:
 			frappe.log_error(title=f"Failed to sync template group {group}")
 			print(f"  ! skipped template group {group} (see error log)")
@@ -83,7 +89,7 @@ def sync_builder_templates():
 	reconcile_deleted_templates(groups_pages)
 
 
-def import_template_pages(pages_path, group):
+def import_template_pages(pages_path, group, publish=False):
 	"""Import page fixtures of a group and re-stamp template invariants."""
 	page_names = []
 	if not os.path.isdir(pages_path):
@@ -99,9 +105,14 @@ def import_template_pages(pages_path, group):
 		import_file_by_path(page_file)
 		if frappe.db.exists("Builder Page", page_name):
 			# import_file_by_path skips files whose db timestamp is newer, so
-			# enforce the invariants (and the committed preview) directly —
-			# templates are never live routes
-			values = {"is_template": 1, "template_group": group, "published": 0, "published_at": None}
+			# enforce the invariants (and the committed preview) directly.
+			# Consuming sites keep templates unpublished; the hub publishes them
+			# so their routes resolve for public Preview.
+			values = {"is_template": 1, "template_group": group}
+			if publish:
+				values.update({"published": 1, "published_at": now()})
+			else:
+				values.update({"published": 0, "published_at": None})
 			if fixture.get("preview"):
 				values["preview"] = fixture["preview"]
 			frappe.db.set_value("Builder Page", page_name, values, update_modified=False)
@@ -138,11 +149,14 @@ def reconcile_deleted_templates(groups_pages):
 # ---------------------------------------------------------------------------
 # export (developer mode)
 # ---------------------------------------------------------------------------
-def export_template_group(group):
+def export_template_group(group, target_app="builder"):
 	"""Export every page of a template group — with the shared components,
-	variables, client scripts, fonts and assets — to its fixture folder."""
+	variables, client scripts, fonts and assets — to its fixture folder.
+
+	`target_app` selects which app's builder_templates/ dir + www/builder_assets/
+	to write to (the hub site sets template_target_app=builder_hub)."""
 	group_folder = frappe.scrub(group)
-	group_path = os.path.join(get_templates_root(), group_folder)
+	group_path = os.path.join(get_templates_root(target_app), group_folder)
 	paths = {
 		key: os.path.join(group_path, key)
 		for key in ("pages", "components", "variables", "client_scripts", "fonts")
@@ -160,29 +174,31 @@ def export_template_group(group):
 	fonts = set()
 	for page_name in pages:
 		page_doc = frappe.get_doc("Builder Page", page_name)
-		blocks = export_template_page(page_doc, paths["pages"], group_folder)
+		blocks = export_template_page(page_doc, paths["pages"], group_folder, target_app=target_app)
 		components.update(extract_components_from_blocks(blocks))
 		fonts.update(extract_fonts_from_blocks(blocks))
 		export_client_scripts(page_doc, paths["client_scripts"])
 
 	for component_id in components:
-		component_blocks = export_template_component(component_id, paths["components"], group_folder)
+		component_blocks = export_template_component(
+			component_id, paths["components"], group_folder, target_app=target_app
+		)
 		fonts.update(extract_fonts_from_blocks(component_blocks))
 
 	export_template_variables(group, paths["variables"])
-	export_template_fonts(fonts, paths["fonts"], group_folder)
+	export_template_fonts(fonts, paths["fonts"], group_folder, target_app=target_app)
 	update_template_manifest(group_path, pages, title=group)
 
 
-def export_template_page(page_doc, pages_path, group_folder):
+def export_template_page(page_doc, pages_path, group_folder, target_app="builder"):
 	"""Write one page fixture; returns the exported blocks."""
-	preview_url = ensure_template_preview(page_doc)
+	preview_url = ensure_template_preview(page_doc, app=target_app)
 
 	page_config = page_doc.as_dict(no_nulls=True)
 	page_config = strip_default_fields(page_doc, page_config)
 
 	blocks = frappe.parse_json(page_config.get("draft_blocks") or page_config.get("blocks") or "[]")
-	copy_block_assets(blocks, group_folder, str(page_doc.name))
+	copy_block_assets(blocks, group_folder, str(page_doc.name), app=target_app)
 	page_config["blocks"] = blocks
 	page_config["draft_blocks"] = None
 	page_config["is_template"] = 1
@@ -197,7 +213,9 @@ def export_template_page(page_doc, pages_path, group_folder):
 
 	for field in ("favicon", "meta_image"):
 		if page_config.get(field):
-			new_url = copy_file_url_to_group_assets(page_config[field], group_folder, str(page_doc.name))
+			new_url = copy_file_url_to_group_assets(
+				page_config[field], group_folder, str(page_doc.name), app=target_app
+			)
 			if new_url:
 				page_config[field] = new_url
 
@@ -209,11 +227,11 @@ def export_template_page(page_doc, pages_path, group_folder):
 	return blocks
 
 
-def export_template_component(component_id, components_path, group_folder):
+def export_template_component(component_id, components_path, group_folder, target_app="builder"):
 	"""Write one component fixture; returns the component's blocks."""
 	component_doc = frappe.get_doc("Builder Component", component_id)
 	component_blocks = frappe.parse_json(component_doc.block or "{}")
-	copy_block_assets(component_blocks, group_folder, "components")
+	copy_block_assets(component_blocks, group_folder, "components", app=target_app)
 
 	component_config = component_doc.as_dict(no_nulls=True)
 	component_config = strip_default_fields(component_doc, component_config)
@@ -252,7 +270,7 @@ def export_template_variables(group, variables_path):
 			f.write(frappe.as_json(var_config, ensure_ascii=False))
 
 
-def export_template_fonts(fonts, fonts_path, group_folder):
+def export_template_fonts(fonts, fonts_path, group_folder, target_app="builder"):
 	"""Write User Font fixtures (and their font files) for custom fonts used by
 	the group. Fonts without a User Font record (e.g. bundled fonts) are skipped."""
 	for font_name in fonts:
@@ -264,9 +282,9 @@ def export_template_fonts(fonts, fonts_path, group_folder):
 
 		font_file = font.font_file
 		if font_file:
-			source_path = resolve_asset_source_path(font_file)
+			source_path = resolve_asset_source_path(font_file, app=target_app)
 			if source_path:
-				font_file = copy_file_to_group_assets(source_path, group_folder, "fonts")
+				font_file = copy_file_to_group_assets(source_path, group_folder, "fonts", app=target_app)
 
 		font_config = {
 			"doctype": "User Font",
@@ -281,14 +299,14 @@ def export_template_fonts(fonts, fonts_path, group_folder):
 			f.write(frappe.as_json(font_config, ensure_ascii=False))
 
 
-def ensure_template_preview(page_doc):
+def ensure_template_preview(page_doc, app="builder"):
 	"""Generate the page preview image if it isn't on disk yet, and return the
 	public preview url whenever the .webp exists (so the fixture's preview field
 	is correct even when generation is skipped). Preview generation needs an
 	external service, so failures are non-fatal."""
 	from builder.utils import get_builder_page_preview_file_paths
 
-	public_path, local_path = get_builder_page_preview_file_paths(page_doc)
+	public_path, local_path = get_builder_page_preview_file_paths(page_doc, app=app)
 	if not os.path.exists(local_path):
 		try:
 			# render explicitly — template pages are unpublished, so they don't
@@ -344,17 +362,17 @@ def update_template_manifest(group_path, page_names, title=None):
 		f.write(frappe.as_json(manifest, ensure_ascii=False))
 
 
-def delete_template_page_fixture(page_doc):
+def delete_template_page_fixture(page_doc, app="builder"):
 	"""Remove a template page's fixture and assets (dev-mode on_trash). Shared
 	components/variables of the group are intentionally left in place."""
 	group_folder = frappe.scrub(str(page_doc.template_group))
-	group_path = os.path.join(get_templates_root(), group_folder)
+	group_path = os.path.join(get_templates_root(app), group_folder)
 
 	page_dir = os.path.join(group_path, "pages", frappe.scrub(str(page_doc.name)))
 	if os.path.exists(page_dir):
 		shutil.rmtree(page_dir)
 
-	assets_dir = os.path.join(get_group_assets_root(group_folder), str(page_doc.name))
+	assets_dir = os.path.join(get_group_assets_root(group_folder, app), str(page_doc.name))
 	if os.path.exists(assets_dir):
 		shutil.rmtree(assets_dir)
 
@@ -372,8 +390,8 @@ def delete_template_page_fixture(page_doc):
 # ---------------------------------------------------------------------------
 # manifest / assets helpers
 # ---------------------------------------------------------------------------
-def get_group_manifest(group_folder):
-	manifest_path = os.path.join(get_templates_root(), group_folder, "template.json")
+def get_group_manifest(group_folder, app="builder"):
+	manifest_path = os.path.join(get_templates_root(app), group_folder, "template.json")
 	if not os.path.exists(manifest_path):
 		return {}
 	with open(manifest_path, encoding="utf-8") as f:
@@ -383,19 +401,19 @@ def get_group_manifest(group_folder):
 			return {}
 
 
-def get_all_group_manifests():
+def get_all_group_manifests(app="builder"):
 	"""{group_folder: manifest} for all template groups on disk."""
-	templates_root = get_templates_root()
+	templates_root = get_templates_root(app)
 	if not os.path.isdir(templates_root):
 		return {}
 	return {
-		group: get_group_manifest(group)
+		group: get_group_manifest(group, app=app)
 		for group in sorted(os.listdir(templates_root))
 		if os.path.isdir(os.path.join(templates_root, group)) and not group.startswith((".", "_"))
 	}
 
 
-def copy_block_assets(blocks, group_folder, subpath):
+def copy_block_assets(blocks, group_folder, subpath, app="builder"):
 	"""Copy /files/* assets referenced by a block tree into the group's
 	committed assets and rewrite srcs to /builder_assets/<group>/<subpath>/."""
 	if not isinstance(blocks, list):
@@ -405,13 +423,13 @@ def copy_block_assets(blocks, group_folder, subpath):
 			continue
 		if block.get("element") in ("img", "video"):
 			attributes = block.get("attributes") or {}
-			new_src = copy_file_url_to_group_assets(attributes.get("src"), group_folder, subpath)
+			new_src = copy_file_url_to_group_assets(attributes.get("src"), group_folder, subpath, app=app)
 			if new_src:
 				attributes["src"] = new_src
-		copy_block_assets(block.get("children") or [], group_folder, subpath)
+		copy_block_assets(block.get("children") or [], group_folder, subpath, app=app)
 
 
-def copy_file_url_to_group_assets(file_url, group_folder, subpath):
+def copy_file_url_to_group_assets(file_url, group_folder, subpath, app="builder"):
 	"""Copy a site /files/* url into the group assets folder; returns the new
 	public url, or None if the url doesn't point to a copyable site file."""
 	if not file_url or not isinstance(file_url, str):
@@ -429,25 +447,25 @@ def copy_file_url_to_group_assets(file_url, group_folder, subpath):
 		return None
 
 	source_path = frappe.get_doc("File", file_name).get_full_path()
-	return copy_file_to_group_assets(source_path, group_folder, subpath, os.path.basename(file_url))
+	return copy_file_to_group_assets(source_path, group_folder, subpath, os.path.basename(file_url), app=app)
 
 
-def copy_file_to_group_assets(source_path, group_folder, subpath, filename=None):
+def copy_file_to_group_assets(source_path, group_folder, subpath, filename=None, app="builder"):
 	filename = filename or os.path.basename(source_path)
-	dest_dir = os.path.join(get_group_assets_root(group_folder), subpath)
+	dest_dir = os.path.join(get_group_assets_root(group_folder, app), subpath)
 	os.makedirs(dest_dir, exist_ok=True)
 	shutil.copy2(source_path, os.path.join(dest_dir, filename))
 	return f"/builder_assets/{group_folder}/{subpath}/{filename}"
 
 
-def resolve_asset_source_path(file_url):
+def resolve_asset_source_path(file_url, app="builder"):
 	"""Resolve a /files/* or /builder_assets/* url to a local filesystem path."""
 	if not file_url or not isinstance(file_url, str):
 		return None
 	if file_url.startswith("/files/"):
 		path = os.path.join(frappe.local.site_path, "public", file_url.lstrip("/"))
 	elif file_url.startswith("/builder_assets/"):
-		path = os.path.join(frappe.get_app_path("builder"), "www", file_url.lstrip("/"))
+		path = os.path.join(frappe.get_app_path(app), "www", file_url.lstrip("/"))
 	else:
 		return None
 	return path if os.path.exists(path) else None

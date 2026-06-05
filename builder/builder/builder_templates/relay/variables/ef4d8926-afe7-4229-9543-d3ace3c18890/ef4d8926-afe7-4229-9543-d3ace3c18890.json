@@ -1,9 +1,0 @@
-{
- "dark_value": "#0B0C0F",
- "doctype": "Builder Variable",
- "group": "relay",
- "name": "ef4d8926-afe7-4229-9543-d3ace3c18890",
- "type": "Color",
- "value": "#FFFFFF",
- "variable_name": "accent-text"
-}

@@ -108,6 +108,8 @@ export interface TemplatePageSummary {
 	preview?: string;
 	route?: string;
 	template_group?: string;
+	/** absolute hub URL for remote templates; absent for local "My Templates" */
+	live_url?: string;
 }
 
 export interface TemplateGroup {

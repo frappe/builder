@@ -207,7 +207,11 @@ class BuilderPage(WebsiteGenerator):
 			and self.template_group
 			and not is_system_activity()
 		):
-			export_template_group(self.template_group)
+			# target app is the hub on the hub site (template_target_app=builder_hub),
+			# builder by default — keeps builder from importing the hub (circular)
+			export_template_group(
+				self.template_group, target_app=frappe.conf.get("template_target_app") or "builder"
+			)
 
 		if frappe.conf.developer_mode and self.is_standard and self.app:
 			export_page_as_standard(self.name, target_app=self.app)
@@ -220,7 +224,7 @@ class BuilderPage(WebsiteGenerator):
 	def on_trash(self):
 		if self.is_template and self.template_group:
 			if frappe.conf.developer_mode:
-				delete_template_page_fixture(self)
+				delete_template_page_fixture(self, app=frappe.conf.get("template_target_app") or "builder")
 			elif not is_system_activity():
 				frappe.throw(
 					frappe._("Template pages can only be deleted in developer mode."),

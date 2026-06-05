@@ -5,20 +5,22 @@
 			<DialogDescription class="sr-only">
 				Start from a blank page or pick a page from a template.
 			</DialogDescription>
-			<div
-				class="flex h-[85vh] max-h-[750px] overflow-hidden rounded-xl dark:border dark:border-outline-gray-2">
+			<div class="flex max-h-[85vh] min-h-[660px] overflow-hidden">
 				<TemplateGroupList :groups="groups" v-model="selectedGroup"></TemplateGroupList>
 				<div class="relative flex flex-1 flex-col overflow-hidden bg-surface-white">
-					<div class="flex flex-col gap-1 p-5 pb-2">
-						<h2 class="text-lg font-semibold text-ink-gray-9">{{ heading }}</h2>
-						<p class="text-p-sm text-ink-gray-5" v-if="activeGroup?.description">
+					<div class="flex flex-col gap-1 px-8 pb-4 pt-7">
+						<h2 class="text-xl font-semibold leading-none text-ink-gray-9">{{ heading }}</h2>
+						<p class="max-w-2xl text-sm leading-relaxed text-ink-gray-5" v-if="activeGroup?.description">
 							{{ activeGroup.description }}
+						</p>
+						<p class="text-sm text-ink-gray-5" v-else-if="selectedGroup === BLANK_GROUP">
+							Start from an empty canvas.
 						</p>
 					</div>
 					<Button
 						icon="lucide-x"
-						variant="ghost"
-						class="absolute right-4 top-4"
+						variant="subtle"
+						class="absolute right-5 top-5"
 						@click="showTemplatesDialog = false"></Button>
 					<TemplatePageGrid
 						:group="activeGroup"
