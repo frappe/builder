@@ -31,6 +31,7 @@ def export_page_as_standard(page_name, target_app):
 	page_config = strip_default_fields(page_doc, page_config)
 
 	config_file_path = os.path.join(paths["page_path"], f"{export_name}.json")
+	data_script_path = os.path.join(paths["page_path"], "data_script.py")
 
 	blocks = frappe.parse_json(
 		page_config.get("draft_blocks") or page_config["blocks"]
@@ -46,10 +47,17 @@ def export_page_as_standard(page_name, target_app):
 		page_config["meta_image"] = copy_asset_file(page_doc.meta_image, paths["assets_path"], target_app)
 
 	page_config["project_folder"] = target_app
+
+	if page_config["page_data_script"]:
+		data_script = page_config["page_data_script"]
 	page_config = frappe.as_json(page_config, ensure_ascii=False)
+
 
 	with open(config_file_path, "w", encoding="utf-8") as f:
 		f.write(page_config)
+
+	with open(data_script_path, "w", encoding="utf-8") as f:
+		f.write(data_script)
 
 	client_scripts = [row.builder_script for row in page_doc.client_scripts]
 	export_client_scripts(client_scripts, paths["client_scripts_path"])
