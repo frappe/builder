@@ -201,7 +201,7 @@ def get_interval_views_query(where_clause, interval, table_name=DUCKDB_TABLE):
 	return f"""
 		WITH normalized_views AS (
 			SELECT
-				{creation_ts} AS creation_ts,
+				CAST({creation_ts} AS TIMESTAMP) AS creation_ts,
 				is_unique
 			FROM {table_name}
 			WHERE {where_clause}
@@ -223,9 +223,9 @@ def get_referrer_domain_query(where_clause, limit=10, table_name=DUCKDB_TABLE):
 		WITH parsed_referrers AS (
 			SELECT
 				CASE
-					WHEN referrer IS NULL OR referrer = '' THEN 'direct'
-					WHEN REGEXP_MATCHES(referrer, '^https?://([^/]+)') THEN
-						REGEXP_REPLACE(REGEXP_EXTRACT(referrer, '^https?://([^/]+)', 1), '^www\\.', '')
+					WHEN referrer IS NULL OR CAST(referrer AS VARCHAR) = '' THEN 'direct'
+					WHEN REGEXP_MATCHES(CAST(referrer AS VARCHAR), '^https?://([^/]+)') THEN
+						REGEXP_REPLACE(REGEXP_EXTRACT(CAST(referrer AS VARCHAR), '^https?://([^/]+)', 1), '^www\.', '')
 					ELSE 'direct'
 				END as domain,
 				is_unique
