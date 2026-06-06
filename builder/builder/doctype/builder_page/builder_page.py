@@ -262,7 +262,7 @@ class BuilderPage(WebsiteGenerator):
 				"Builder Settings", "Builder Settings", "disable_auto_dark_mode"
 			)
 
-		page_data = self.get_page_data()
+		page_data = self._get_page_data(for_render=True)
 		if page_data.get("title"):
 			context.title = page_data.get("page_title")
 
@@ -271,10 +271,11 @@ class BuilderPage(WebsiteGenerator):
 		if context.preview and self.draft_blocks:
 			blocks = self.draft_blocks
 
-		content, style, fonts, has_block_script = get_block_html(blocks)
+		content, style, fonts, has_block_script, has_dual_mode_image = get_block_html(blocks)
 
-		if self.dynamic_route or page_data or has_block_script:
+		if self.dynamic_route or page_data or has_block_script or self.page_data_script:
 			context.no_cache = 1
+		context.has_dual_mode_image = has_dual_mode_image
 
 		self.set_custom_font(context, fonts)
 		context.fonts = fonts
@@ -374,11 +375,20 @@ class BuilderPage(WebsiteGenerator):
 
 	@frappe.whitelist()
 	def get_page_data(self, route_variables: dict | None = None) -> dict:
+		return self._get_page_data(route_variables=route_variables, for_render=False)
+
+	def _get_page_data(self, route_variables: dict | None = None, for_render: bool = False) -> dict:
 		if route_variables:
 			frappe.form_dict.update({k: v for k, v in route_variables.items()})
 		page_data = frappe._dict()
 		if self.page_data_script:
-			_locals = dict(data=frappe._dict(), page=frappe._dict())
+
+			def redirect(location: str, http_status_code: int = 302):
+				if for_render:
+					frappe.local.flags.redirect_location = location
+					raise frappe.Redirect(http_status_code)
+
+			_locals = dict(data=frappe._dict(), page=frappe._dict(), redirect=redirect)
 			execute_script(self.page_data_script, _locals, self.name)
 			page_data.update(_locals["data"])
 			page_data.update(_locals["page"])
@@ -527,7 +537,7 @@ def get_block_data(
 	return block_data
 
 
-def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
+def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool, bool]:
 	"""
 	Main entry point for converting blocks to HTML.
 
@@ -535,7 +545,7 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 		blocks: JSON string or list of block dictionaries
 
 	#### Returns:
-		Tuple of (`html_content`, `css_styles`, `font_map`, `has_block_script`)
+		Tuple of (`html_content`, `css_styles`, `font_map`, `has_block_script`, `has_dual_mode_image`)
 	"""
 	blocks = frappe.parse_json(blocks)
 	if not isinstance(blocks, list):
@@ -551,6 +561,7 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 		"style_tag": style_tag,
 		"font_map": font_map,
 		"has_block_script": False,
+		"has_dual_mode_image": False,
 		"standard_props_stack": {},  # prop_name -> list of prop_info
 		"global_script_tag": soup.new_tag("script"),
 		"used_block_scripts": set(),
@@ -572,7 +583,13 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 		html = wrap_html_with_context(str(tag), block_context)
 		html_parts.append(html)
 
-	return "".join(html_parts), str(style_tag), font_map, shared_state["has_block_script"]
+	return (
+		"".join(html_parts),
+		str(style_tag),
+		font_map,
+		shared_state["has_block_script"],
+		shared_state["has_dual_mode_image"],
+	)
 
 
 def build_tag(
@@ -739,8 +756,10 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 			dark_source = soup.new_tag("source")
 			dark_source["srcset"] = dark_src
 			dark_source["media"] = "(prefers-color-scheme: dark)"
+			dark_source["data-scheme"] = "dark"  # used by manual theme toggle script
 			picture_tag.append(dark_source)
 			picture_tag.attrs["style"] = "display: contents;"
+			state["has_dual_mode_image"] = True
 
 			tag = soup.new_tag("img")
 			tag.attrs = {k: v for k, v in attributes.items() if k != "darkSrc"}

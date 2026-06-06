@@ -1,8 +1,10 @@
+import ipaddress
 import os
+import socket
 from io import BytesIO
 from types import FunctionType, MethodType, ModuleType
 from typing import Any
-from urllib.parse import unquote
+from urllib.parse import unquote, urlparse
 
 import frappe
 import requests
@@ -17,7 +19,7 @@ from werkzeug.wrappers import Response
 
 from builder import builder_analytics
 from builder.builder.doctype.builder_page.builder_page import BuilderPageRenderer
-from builder.utils import has_page_write
+from builder.utils import has_page_read, has_page_write
 
 
 @frappe.whitelist()
@@ -46,6 +48,7 @@ def get_page_preview_html(page: str, **kwarg) -> Response:
 
 
 @frappe.whitelist()
+@has_page_write("You do not have permission to upload assets.")
 def upload_builder_asset():
 	from frappe.handler import upload_file
 
@@ -129,6 +132,7 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 
 	def handle_external_url(image_url: str) -> str:
 		url = unquote(image_url)
+		assert_not_private_url(url)
 		image = Image.open(BytesIO(requests.get(url).content))
 		filename = get_external_webp_filename(url)
 		file = frappe.get_doc({"doctype": "File", "file_name": filename, "file_url": f"/files/{filename}"})
@@ -149,6 +153,24 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 	if image_url.startswith("http"):
 		return handle_external_url(image_url)
 	return image_url
+
+
+def assert_not_private_url(url: str) -> None:
+	"""Raise PermissionError if the URL resolves to a private/internal IP (SSRF guard)."""
+	parsed = urlparse(url)
+	if parsed.scheme not in ("http", "https"):
+		frappe.throw("Only HTTP/HTTPS URLs are allowed for external images.", frappe.PermissionError)
+	hostname = parsed.hostname
+	if not hostname:
+		frappe.throw("Invalid URL: missing hostname.", frappe.ValidationError)
+	try:
+		addr_infos = socket.getaddrinfo(hostname, None)
+	except socket.gaierror:
+		frappe.throw(f"Could not resolve hostname: {hostname}", frappe.ValidationError)
+	for addr_info in addr_infos:
+		ip = ipaddress.ip_address(addr_info[4][0])
+		if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast:
+			frappe.throw("Requests to private or internal addresses are not allowed.", frappe.PermissionError)
 
 
 def check_app_permission():
@@ -226,6 +248,7 @@ def sync_component(component_id: str):
 
 
 @frappe.whitelist()
+@has_page_read("You do not have permission to view analytics.")
 def get_page_analytics(
 	route: str,
 	interval: str = "daily",
@@ -243,6 +266,7 @@ def get_page_analytics(
 
 
 @frappe.whitelist()
+@has_page_read("You do not have permission to view analytics.")
 def get_overall_analytics(
 	interval: str = "daily",
 	route: str | None = None,

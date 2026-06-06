@@ -194,7 +194,7 @@ const attributes = computed(() => {
 	};
 
 	if (props.block.isImage() && !props.preview) {
-		if (builderStore.isDark && attribs.darkSrc) {
+		if (builderStore.canvasDarkMode && attribs.darkSrc) {
 			attribs.src = attribs.darkSrc;
 		}
 		if (attribs.darkSrc && !attribs.src) {

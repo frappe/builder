@@ -103,12 +103,12 @@
 						:icon="SparklesIcon"
 						:disabled="builderStore.readOnlyMode"></Button>
 				</Tooltip>
-				<Tooltip text="Toggle Dark Mode" :hoverDelay="0.6" arrow-class="mb-3">
+				<!-- <Tooltip text="Toggle Dark Mode" :hoverDelay="0.6" arrow-class="mb-3">
 					<Button
 						variant="ghost"
 						@click="() => transitionTheme(toggleDark)"
 						:icon="isDark ? 'lucide-sun' : 'lucide-moon'"></Button>
-				</Tooltip>
+				</Tooltip> -->
 				<span
 					class="text-sm text-ink-gray-3"
 					v-if="pageStore.savingPage && pageStore.activePage?.is_template">

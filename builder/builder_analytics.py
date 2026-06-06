@@ -1,12 +1,29 @@
 import os
-import time
-from typing import cast
 
 import duckdb
 import frappe
 import pandas as pd
 
 DUCKDB_TABLE = "web_page_views"
+
+
+def get_creation_timestamp_expr(column: str = "creation") -> str:
+	"""Return a DuckDB SQL expression that normalizes mixed creation types to TIMESTAMP."""
+	value = f"TRY_CAST({column} AS BIGINT)"
+	return f"""
+		COALESCE(
+			TRY_CAST({column} AS TIMESTAMP),
+			TRY_STRPTIME(CAST({column} AS VARCHAR), '%Y-%m-%d %H:%M:%S.%f'),
+			TRY_STRPTIME(CAST({column} AS VARCHAR), '%Y-%m-%d %H:%M:%S'),
+			TRY_STRPTIME(CAST({column} AS VARCHAR), '%Y-%m-%d'),
+			CASE
+				WHEN {value} IS NULL THEN NULL
+				WHEN {value} > 999999999999 THEN EPOCH_MS({value})
+				WHEN {value} > 9999999999 THEN TO_TIMESTAMP(CAST({value} AS DOUBLE) / 1000.0)
+				ELSE TO_TIMESTAMP(CAST({value} AS DOUBLE))
+			END
+		)
+	""".strip()
 
 
 class DuckDBConnection:
@@ -34,7 +51,8 @@ def get_date_filter(from_date: str | None = None, to_date: str | None = None) ->
 	if len(to_date) == 10:  # YYYY-MM-DD format
 		to_date += " 23:59:59"
 
-	return "creation >= ? AND creation <= ?", [from_date, to_date]
+	creation_ts = get_creation_timestamp_expr("creation")
+	return f"{creation_ts} >= CAST(? AS TIMESTAMP) AND {creation_ts} <= CAST(? AS TIMESTAMP)", [from_date, to_date]
 
 
 def get_empty_analytics():
@@ -179,15 +197,23 @@ def get_aggregated_views_query(where_clause, table_name=DUCKDB_TABLE):
 def get_interval_views_query(where_clause, interval, table_name=DUCKDB_TABLE):
 	"""Get query for views grouped by time interval"""
 	display_fmt, sort_fmt = get_interval_formats(interval)
+	creation_ts = get_creation_timestamp_expr("creation")
 	return f"""
+		WITH normalized_views AS (
+			SELECT
+				CAST({creation_ts} AS TIMESTAMP) AS creation_ts,
+				is_unique
+			FROM {table_name}
+			WHERE {where_clause}
+		)
 		SELECT
-			strftime('{display_fmt}', creation) as interval,
+			strftime('{display_fmt}', creation_ts) as interval,
 			COUNT(*) as total_page_views,
 			SUM(is_unique) as unique_page_views
-		FROM {table_name}
-		WHERE {where_clause}
-		GROUP BY interval, strftime('{sort_fmt}', creation)
-		ORDER BY strftime('{sort_fmt}', creation)
+		FROM normalized_views
+		WHERE creation_ts IS NOT NULL
+		GROUP BY interval, strftime('{sort_fmt}', creation_ts)
+		ORDER BY strftime('{sort_fmt}', creation_ts)
 	"""
 
 
@@ -197,9 +223,9 @@ def get_referrer_domain_query(where_clause, limit=10, table_name=DUCKDB_TABLE):
 		WITH parsed_referrers AS (
 			SELECT
 				CASE
-					WHEN referrer IS NULL OR referrer = '' THEN 'direct'
-					WHEN REGEXP_MATCHES(referrer, '^https?://([^/]+)') THEN
-						REGEXP_REPLACE(REGEXP_EXTRACT(referrer, '^https?://([^/]+)', 1), '^www\\.', '')
+					WHEN referrer IS NULL OR CAST(referrer AS VARCHAR) = '' THEN 'direct'
+					WHEN REGEXP_MATCHES(CAST(referrer AS VARCHAR), '^https?://([^/]+)') THEN
+						REGEXP_REPLACE(REGEXP_EXTRACT(CAST(referrer AS VARCHAR), '^https?://([^/]+)', 1), '^www\.', '')
 					ELSE 'direct'
 				END as domain,
 				is_unique

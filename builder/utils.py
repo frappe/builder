@@ -29,25 +29,40 @@ from RestrictedPython import safe_globals as restricted_safe_globals
 from werkzeug.routing import Rule
 
 
-def has_page_write(message: str | None = None):
-	"""Decorator to check if user has permission to edit Builder Page.
+def has_page_permission(ptype: str = "write", message: str | None = None):
+	"""Decorator to check if user has the given permission on Builder Page.
 
 	Args:
+		ptype: Permission type — "read" or "write". Defaults to "write".
 		message: Custom error message to display if permission is denied.
-			 If not provided, defaults to "You do not have permission to modify pages"
+			 If not provided, a sensible default is used.
 	"""
 
 	def decorator(fn):
 		@wraps(fn)
 		def wrapper(*args, **kwargs):
-			if not frappe.has_permission("Builder Page", ptype="write"):
-				error_message = message or frappe._("You do not have permission to modify pages")
-				frappe.throw(error_message)
+			if not frappe.has_permission("Builder Page", ptype=ptype):
+				default_message = (
+					frappe._("You do not have permission to modify pages")
+					if ptype == "write"
+					else frappe._("You do not have permission to read pages")
+				)
+				frappe.throw(message or default_message)
 			return fn(*args, **kwargs)
 
 		return wrapper
 
 	return decorator
+
+
+def has_page_write(message: str | None = None):
+	"""Decorator to check if user has write permission on Builder Page."""
+	return has_page_permission(ptype="write", message=message)
+
+
+def has_page_read(message: str | None = None):
+	"""Decorator to check if user has read permission on Builder Page."""
+	return has_page_permission(ptype="read", message=message)
 
 
 @dataclass
