@@ -239,7 +239,7 @@ def duplicate_page(page_name: str):
 # and, on use, a per-page bundle over HTTP (server-side — no CORS), then builds a
 # page from it. Point at the hub via `template_hub_url` in the site config (or
 # common_site_config for the whole bench).
-DEFAULT_HUB_URL = "https://builder-hub.frappe.cloud"
+DEFAULT_HUB_URL = "https://preview.frappe.cloud"
 
 
 def hub_url() -> str:
