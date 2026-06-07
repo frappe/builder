@@ -53,8 +53,10 @@ def upload_builder_asset():
 	from frappe.handler import upload_file
 
 	image_file = upload_file()
-	if image_file.file_url.endswith((".png", ".jpeg", ".jpg")) and frappe.get_cached_value(
-		"Builder Settings", "Builder Settings", "auto_convert_images_to_webp"
+	if (
+		image_file
+		and image_file.file_url.endswith((".png", ".jpeg", ".jpg"))
+		and frappe.get_cached_value("Builder Settings", "Builder Settings", "auto_convert_images_to_webp")
 	):
 		convert_to_webp(file_doc=image_file)
 	return image_file
@@ -252,7 +254,7 @@ def hub_get(method: str, **params):
 	from frappe.integrations.utils import make_get_request
 
 	resp = make_get_request(f"{hub_url()}/api/method/builder_hub.api.{method}", params=params or None)
-	return resp.get("message")
+	return resp.get("message") if resp else None
 
 
 @frappe.whitelist()
@@ -261,7 +263,7 @@ def get_template_groups() -> list[dict]:
 	"""Template groups for the picker, fetched live from the hub. Empty (just
 	Blank page) if the hub is unreachable."""
 	try:
-		return hub_get("get_catalog") or []
+		return hub_get("get_catalog") or []  # type: ignore[return-value]
 	except Exception:
 		frappe.log_error("Failed to fetch templates from hub")
 		return []
@@ -285,6 +287,7 @@ def create_page_from_template(template_page: str, project_folder: str | None = N
 	if not bundle or not bundle.get("page"):
 		frappe.throw(frappe._("Could not load the selected template. Please try again."))
 
+	assert isinstance(bundle, dict)
 	# install shared deps (stable names → var(--uuid)/extendedFromComponent resolve)
 	for font in bundle.get("fonts") or []:
 		import_doc(docdict=font)
@@ -293,7 +296,8 @@ def create_page_from_template(template_page: str, project_folder: str | None = N
 	for comp in bundle.get("components") or []:
 		import_doc(docdict=comp)
 
-	page = bundle["page"]
+	page = bundle.get("page")
+	assert isinstance(page, dict)
 	new_page = frappe.get_doc(
 		{
 			"doctype": "Builder Page",
@@ -327,7 +331,7 @@ def create_page_from_template(template_page: str, project_folder: str | None = N
 		queue="short",
 		enqueue_after_commit=True,
 	)
-	return new_page.name
+	return new_page.name or ""
 
 
 @frappe.whitelist()
