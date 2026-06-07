@@ -222,7 +222,7 @@ class BuilderPage(WebsiteGenerator):
 			extract_variables_from_blocks,
 		)
 
-		def delete_standard_dependency_if_unreferenced(self, doctype, identifier, app, delete_files) -> None:
+		def delete_standard_dependency_if_unreferenced(doctype, identifier, app, delete_files) -> None:
 			"""Delete a dependency's exported files unless another standard page in the app still references it."""
 			referencing_pages = frappe.get_doc(doctype, identifier).get_referencing_pages(
 				filters={"is_standard": 1}, fields=["name", "app"]
