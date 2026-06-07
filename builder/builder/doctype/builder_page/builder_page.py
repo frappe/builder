@@ -542,21 +542,17 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 		"has_dual_mode_image": False,
 		"standard_props_stack": {},  # prop_name -> list of prop_info
 		"global_script_tag": soup.new_tag("script"),
-		# "used_block_scripts": set(),
+		"used_block_scripts": set(),
 	}
 
 	html_parts = []
 
 	for block in blocks:
 		block = extend_block_with_component(block)
-
 		props = process_block_props(block, None, shared_state["standard_props_stack"])
 		block_context = get_block_context(block, props)
 
 		tag = build_tag(block, shared_state)
-
-		cleanup_props_stack(props, shared_state["standard_props_stack"])
-
 		# Add global script to the top
 		tag.insert(0, shared_state["global_script_tag"])
 
@@ -581,6 +577,8 @@ def build_tag(
 		BeautifulSoup tag element
 	"""
 
+	props = process_block_props(block, data_key, state["standard_props_stack"])
+
 	set_dynamic_content_placeholders(block, data_key)
 
 	all_styles = [
@@ -604,11 +602,14 @@ def build_tag(
 	else:
 		render_children(tag, block, data_key, state, ancestor_font=resolved_font)
 
+	attach_client_script(tag, block, state)
+
 	# Add body scripts for body element
 	effective_element = block.get("originalElement") or block.get("element")
 	if effective_element == "body":
 		tag.append("{% include 'templates/generators/webpage_scripts.html' %}")
 
+	cleanup_props_stack(props, state["standard_props_stack"])
 
 	return tag
 
@@ -647,7 +648,7 @@ def process_block_props(block: dict, data_key: dict | None, props_stack: dict) -
 	props = {}
 
 	for prop_name, prop_config in block.get("props", {}).items():
-		is_standard = prop_config.get("isStandard", False) # TODO: will be True always (Component props only)
+		is_standard = prop_config.get("isStandard", False)
 		is_passed_down = prop_config.get("isPassedDown", False)
 
 		value = interpret_prop_value(prop_config, data_key)
@@ -851,7 +852,6 @@ def render_children(
 		child_tag = build_tag(child, state, data_key, ancestor_font=ancestor_font)
 
 		append_child_with_context(tag, child_tag, child_context)
-		cleanup_props_stack(child_props, state["standard_props_stack"])
 
 
 def render_repeater_children(
@@ -875,7 +875,6 @@ def render_repeater_children(
 	child_tag = build_tag(child, state, loop_info["data_key"], ancestor_font=ancestor_font)
 
 	append_child_with_context(tag, child_tag, child_context)
-	cleanup_props_stack(child_props, state["standard_props_stack"])
 
 	tag.append("{% endfor %}")
 
@@ -958,6 +957,40 @@ def get_visibility_condition_key(block: dict, data_key: dict | None) -> str | No
 		if data_key:
 			return f"{extract_data_key(data_key)}.{key}"
 		return key
+
+
+def attach_client_script(tag: bs.Tag, block: dict, state: dict):
+	"""Attach client-side JavaScript to the block."""
+	script = block.get("blockClientScript")
+	if not script:
+		return
+
+	# Generate unique identifier for the script
+	script_unique_id = block.get("blockId")
+	if block.get("isBlockClientScriptOverridden"):
+		script_unique_id = frappe.generate_hash(length=8)
+
+	# Add global function definition (only once)
+	if script_unique_id not in state["used_block_scripts"]:
+		state["global_script_tag"].append(
+			f"function client_script_{script_unique_id}(props, block_data) {{{script}}}\n"
+		)
+		state["used_block_scripts"].add(script_unique_id)
+
+	# Add data attribute for selecting this specific block
+	tag.attrs["data-block-uid"] = "{{ unique_hash }}"
+
+	# Add local script to call the function
+	local_script = state["soup"].new_tag("script")
+	local_script.string = (
+		f"(client_script_{script_unique_id}).call("
+		f"document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]'), "
+		f"{{{{ props | to_safe_json }}}}, "
+		f"{{}}"
+		f");"
+	)
+	tag.append(local_script)
+
 
 def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
 	"""Append child tag with proper Jinja context wrapping."""
@@ -1085,69 +1118,6 @@ def extend_block_with_component(block: dict) -> dict:
 
 	return block
 
-def extend_block(block, overridden_block):
-	block["baseStyles"].update(overridden_block["baseStyles"])
-	block["mobileStyles"].update(overridden_block["mobileStyles"])
-	block["tabletStyles"].update(overridden_block["tabletStyles"])
-	block["attributes"].update(overridden_block["attributes"])
-
-	dynamicValues = overridden_block.get("dynamicValues") or []
-	dynamicValuesProperties = [dv.get("property") for dv in dynamicValues]
-	for dv in block.get("dynamicValues", []) or []:
-		if dv.get("property") in dynamicValuesProperties:
-			continue
-		dynamicValues.append(dv)
-	block["dynamicValues"] = dynamicValues
-
-	if overridden_block.get("element"):
-		block["element"] = overridden_block["element"]
-
-	if overridden_block.get("visibilityCondition"):
-		block["visibilityCondition"] = overridden_block.get("visibilityCondition")
-
-	if not block.get("customAttributes"):
-		block["customAttributes"] = {}
-	block["customAttributes"].update(overridden_block.get("customAttributes", {}))
-
-	if not block.get("rawStyles"):
-		block["rawStyles"] = {}
-	block["rawStyles"].update(overridden_block.get("rawStyles", {}))
-
-	block["classes"].extend(overridden_block["classes"])
-
-	if not block.get("props"):
-		block["props"] = {}
-	block["props"].update(overridden_block.get("props", {}))
-
-	dataKey = overridden_block.get("dataKey", {})
-	if not block.get("dataKey"):
-		block["dataKey"] = {}
-	if dataKey:
-		block["dataKey"].update({k: v for k, v in dataKey.items() if v is not None and v != ""})
-	if overridden_block.get("innerHTML"):
-		block["innerHTML"] = overridden_block["innerHTML"]
-	component_children = block.get("children", []) or []
-	overridden_children = overridden_block.get("children", []) or []
-	extended_children = []
-	for overridden_child in overridden_children:
-		component_child = next(
-			(
-				child
-				for child in component_children
-				if child.get("blockId")
-				in [
-					overridden_child.get("blockId"),
-					overridden_child.get("referenceBlockId"),
-				]
-			),
-			None,
-		)
-		if component_child:
-			extended_children.append(extend_block(copy.deepcopy(component_child), overridden_child))
-		else:
-			extended_children.append(overridden_child)
-	block["children"] = extended_children
-	return block
 
 def wrap_with_media_query(style_string, device):
 	if device == "mobile":
@@ -1267,6 +1237,75 @@ def set_fonts_from_html(soup, font_map):
 				font = style.split(":")[1].strip().strip("'\"")
 				if font:
 					font_map[font] = {"weights": [400]}
+
+
+def extend_block(block, overridden_block):
+	block["baseStyles"].update(overridden_block["baseStyles"])
+	block["mobileStyles"].update(overridden_block["mobileStyles"])
+	block["tabletStyles"].update(overridden_block["tabletStyles"])
+	block["attributes"].update(overridden_block["attributes"])
+
+	dynamicValues = overridden_block.get("dynamicValues") or []
+	dynamicValuesProperties = [dv.get("property") for dv in dynamicValues]
+	for dv in block.get("dynamicValues", []) or []:
+		if dv.get("property") in dynamicValuesProperties:
+			continue
+		dynamicValues.append(dv)
+	block["dynamicValues"] = dynamicValues
+
+	if overridden_block.get("element"):
+		block["element"] = overridden_block["element"]
+
+	if overridden_block.get("visibilityCondition"):
+		block["visibilityCondition"] = overridden_block.get("visibilityCondition")
+
+	if not block.get("customAttributes"):
+		block["customAttributes"] = {}
+	block["customAttributes"].update(overridden_block.get("customAttributes", {}))
+
+	if not block.get("rawStyles"):
+		block["rawStyles"] = {}
+	block["rawStyles"].update(overridden_block.get("rawStyles", {}))
+
+	block["classes"].extend(overridden_block["classes"])
+
+	if not block.get("props"):
+		block["props"] = {}
+	block["props"].update(overridden_block.get("props", {}))
+
+	if overridden_block.get("blockClientScript"):
+		block["blockClientScript"] = overridden_block.get("blockClientScript")
+		block["isBlockClientScriptOverridden"] = True
+
+	dataKey = overridden_block.get("dataKey", {})
+	if not block.get("dataKey"):
+		block["dataKey"] = {}
+	if dataKey:
+		block["dataKey"].update({k: v for k, v in dataKey.items() if v is not None and v != ""})
+	if overridden_block.get("innerHTML"):
+		block["innerHTML"] = overridden_block["innerHTML"]
+	component_children = block.get("children", []) or []
+	overridden_children = overridden_block.get("children", []) or []
+	extended_children = []
+	for overridden_child in overridden_children:
+		component_child = next(
+			(
+				child
+				for child in component_children
+				if child.get("blockId")
+				in [
+					overridden_child.get("blockId"),
+					overridden_child.get("referenceBlockId"),
+				]
+			),
+			None,
+		)
+		if component_child:
+			extended_children.append(extend_block(copy.deepcopy(component_child), overridden_child))
+		else:
+			extended_children.append(overridden_child)
+	block["children"] = extended_children
+	return block
 
 
 @redis_cache(ttl=60 * 60)
