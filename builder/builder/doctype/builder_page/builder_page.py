@@ -197,14 +197,14 @@ class BuilderPage(WebsiteGenerator):
 			export_page_as_standard(self.name, target_app=self.app)
 
 		if self.has_value_changed("is_standard") and not self.is_standard:
-			self._cleanup_standard_page_exports()
+			self.cleanup_standard_page_exports()
 
 	def clear_route_cache(self):
 		get_web_pages_with_dynamic_routes.clear_cache()
 		find_page_with_path.clear_cache()
 		clear_cache(self.route)
 
-	def _cleanup_standard_page_exports(self) -> None:
+	def cleanup_standard_page_exports(self) -> None:
 		"""Delete exported standard page files. Used when is_standard is unchecked or on trash."""
 		doc_before = self.get_doc_before_save()
 		app = (doc_before.app if doc_before else self.app) or self.app
@@ -221,6 +221,15 @@ class BuilderPage(WebsiteGenerator):
 			extract_fonts_from_blocks,
 			extract_variables_from_blocks,
 		)
+
+		def delete_standard_dependency_if_unreferenced(self, doctype, identifier, app, delete_files) -> None:
+			"""Delete a dependency's exported files unless another standard page in the app still references it."""
+			referencing_pages = frappe.get_doc(doctype, identifier).get_referencing_pages(
+				filters={"is_standard": 1}, fields=["name", "app"]
+			)
+			referencing_apps = [page.app for page in referencing_pages if page.name != self.name]
+			if app not in referencing_apps:
+				delete_files(identifier, app)
 
 		delete_standard_page_files(self.page_name, app)
 
@@ -240,16 +249,7 @@ class BuilderPage(WebsiteGenerator):
 
 		for doctype, identifiers, delete_files in dependencies:
 			for identifier in identifiers:
-				self._delete_standard_dependency_if_unreferenced(doctype, identifier, app, delete_files)
-
-	def _delete_standard_dependency_if_unreferenced(self, doctype, identifier, app, delete_files) -> None:
-		"""Delete a dependency's exported files unless another standard page in the app still references it."""
-		referencing_pages = frappe.get_doc(doctype, identifier).get_referencing_pages(
-			filters={"is_standard": 1}, fields=["name", "app"]
-		)
-		referencing_apps = [page.app for page in referencing_pages if page.name != self.name]
-		if app not in referencing_apps:
-			delete_files(identifier, app)
+				delete_standard_dependency_if_unreferenced(doctype, identifier, app, delete_files)
 
 	def on_trash(self):
 		if self.is_template and frappe.conf.developer_mode:
@@ -263,7 +263,7 @@ class BuilderPage(WebsiteGenerator):
 				shutil.rmtree(assets_path)
 
 		if self.is_standard and self.app and frappe.conf.developer_mode:
-			self._cleanup_standard_page_exports()
+			self.cleanup_standard_page_exports()
 
 	def after_rename(self, old: str, new: str, merge: bool = False) -> None:
 		if not (self.is_standard and self.app and frappe.conf.developer_mode):
