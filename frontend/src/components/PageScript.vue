@@ -14,15 +14,15 @@
 					:autofocus="false"
 					:readonly="true" />
 			</div>
-			<div class="box-border h-full overflow-y-auto pb-12" v-if="mode == 'block'">
+			<div class="box-border h-full overflow-y-auto pb-12" v-if="mode == 'block' && showPropsInput">
 				<div class="flex min-h-full w-full flex-col" v-if="isBlockSelected">
 					<div class="my-3 mt-4 text-sm text-ink-gray-8">Block Props</div>
 					<PropsEditor
 						:obj="blockController.getBlockProps()"
 						@update:obj="(obj: BlockProps) => blockController.setBlockProps(obj)" />
 				</div>
-				<div v-else class="mt-2 text-center text-sm text-ink-gray-6">Select a block to edit props</div>
 			</div>
+			<div v-else class="mt-2 text-center text-sm text-ink-gray-6">Select a block to edit script</div>
 		</div>
 		<div
 			class="absolute bottom-0 left-0 box-border flex w-full items-center justify-between border-t bg-surface-white p-4 py-2">
@@ -117,11 +117,17 @@ import CodeEditor from "./Controls/CodeEditor.vue";
 import TabButtons from "./Controls/TabButtons.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
 import PropsEditor from "./PropsEditor.vue";
+import useCanvasStore from "@/stores/canvasStore.js";
 
 const { capture } = useTelemetry();
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
+const canvasStore = useCanvasStore();
+
+const showPropsInput = computed(() => {
+	return canvasStore.editingMode == "fragment" && !blockController.getFirstSelectedBlock()?.getParentBlock();
+});
 
 const showDialog = ref(false);
 const mode = useStorage("builder_last_used_script_editor_mode", "page");
