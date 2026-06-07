@@ -634,6 +634,7 @@ def build_tag(
 	if effective_element == "body":
 		tag.append("{% include 'templates/generators/webpage_scripts.html' %}")
 
+
 	return tag
 
 
@@ -1398,6 +1399,9 @@ def extend_block(block, overridden_block):
 	if overridden_block.get("blockClientScript"):
 		block["blockClientScript"] = overridden_block.get("blockClientScript")
 		block["isBlockClientScriptOverridden"] = True
+
+	if overridden_block.get("blockDataScript"):
+		block["blockDataScript"] = overridden_block.get("blockDataScript")
 
 	dataKey = overridden_block.get("dataKey", {})
 	if not block.get("dataKey"):
