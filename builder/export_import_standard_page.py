@@ -89,6 +89,7 @@ def sync_standard_builder_pages(app_name=None):
 	apps_to_sync = [app_name] if app_name else frappe.get_installed_apps()
 
 	for app in apps_to_sync:
+		# TODO: already extracted in a function?
 		app_path = frappe.get_app_path(app)
 		pages_path = os.path.join(app_path, "builder_files", "pages")
 		components_path = os.path.join(app_path, "builder_files", "components")
