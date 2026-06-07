@@ -564,7 +564,7 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool, bool]:
 		"has_dual_mode_image": False,
 		"standard_props_stack": {},  # prop_name -> list of prop_info
 		"global_script_tag": soup.new_tag("script"),
-		# "used_block_scripts": set(),
+		"used_block_scripts": set(),
 	}
 
 	html_parts = []
