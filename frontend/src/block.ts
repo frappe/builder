@@ -70,7 +70,6 @@ class Block implements BlockOptions {
 	activeState?: string | null = null;
 	dynamicValues: Array<BlockDataKey>;
 	blockClientScript?: string;
-	blockDataScript?: string;
 	props?: BlockProps;
 	editorConfig?: BlockEditorConfig;
 	// @ts-expect-error
@@ -137,7 +136,6 @@ class Block implements BlockOptions {
 		this.attributes = reactive(options.attributes || {});
 		this.dynamicValues = reactive(options.dynamicValues || []);
 		this.blockClientScript = options.blockClientScript || "";
-		this.blockDataScript = options.blockDataScript || "";
 		this.props = reactive(options.props || {});
 		this.editorConfig = options.editorConfig;
 
@@ -1008,18 +1006,6 @@ class Block implements BlockOptions {
 	setBlockClientScript(script: string) {
 		this.blockClientScript = script;
 	}
-	getBlockDataScript(): string {
-		let blockDataScript = "";
-		if (this.isExtendedFromComponent() && !this.blockDataScript) {
-			blockDataScript = this.referenceComponent?.getBlockDataScript() || "";
-		} else {
-			blockDataScript = this.blockDataScript || "";
-		}
-		return blockDataScript;
-	}
-	setBlockDataScript(script: string) {
-		this.blockDataScript = script;
-	}
 	getBlockProps(): BlockProps {
 		let blockProps = {};
 		if (this.isExtendedFromComponent() && !Object.keys(this.props || {}).length) {
@@ -1139,7 +1125,6 @@ function resetBlock(
 		block.dynamicValues = [];
 		block.props = {};
 		block.blockClientScript = "";
-		block.blockDataScript = "";
 	}
 
 	if (resetChildren) {

@@ -128,7 +128,7 @@ const blockController = {
 		} else {
 			// TODO: handle it better
 			let key: string | undefined = "__initial__";
-			let comesFrom: "props" | "dataScript" | "blockDataScript" | undefined = undefined;
+			let comesFrom: "props" | "dataScript" | undefined = undefined;
 			canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 				const condition: BlockVisibilityCondition | undefined = block.getVisibilityCondition();
 				if (key === "__initial__") {
@@ -350,12 +350,6 @@ const blockController = {
 	},
 	setBlockClientScript: (script: string) => {
 		blockController.getFirstSelectedBlock()?.setBlockClientScript(script);
-	},
-	getBlockDataScript: () => {
-		return blockController.getFirstSelectedBlock()?.getBlockDataScript();
-	},
-	setBlockDataScript: (script: string) => {
-		blockController.getFirstSelectedBlock()?.setBlockDataScript(script);
 	},
 	getBlockProps: () => {
 		return blockController.getFirstSelectedBlock()?.getBlockProps();

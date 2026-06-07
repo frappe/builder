@@ -57,7 +57,6 @@ website_generators = ["Builder Page"]
 jinja = {
 	"filters": [
 		"builder.utils.combine",
-		"builder.utils.execute_script_and_combine",
 		"builder.utils.hash",
 		"builder.utils.to_safe_json",
 	],
