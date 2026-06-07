@@ -52,7 +52,6 @@ def export_page_as_standard(page_name, target_app):
 		data_script = page_config["page_data_script"]
 	page_config = frappe.as_json(page_config, ensure_ascii=False)
 
-
 	with open(config_file_path, "w", encoding="utf-8") as f:
 		f.write(page_config)
 

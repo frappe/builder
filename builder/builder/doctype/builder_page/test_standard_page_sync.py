@@ -265,9 +265,7 @@ class TestStandardPageSync(FrappeTestCase):
 	def test_client_script_on_trash_removes_directory(self):
 		page, script = self.make_page("cs-trash-page", with_script=True)
 		try:
-			with mock.patch(
-				f"{self.EXPORT_MODULE}.delete_standard_client_script_files"
-			) as mock_del:
+			with mock.patch(f"{self.EXPORT_MODULE}.delete_standard_client_script_files") as mock_del:
 				with self._with_developer_mode():
 					script_name = script.name
 					frappe.delete_doc("Builder Client Script", script_name, force=1)
@@ -280,9 +278,7 @@ class TestStandardPageSync(FrappeTestCase):
 		old_script_name = script.name
 		new_script_name = f"renamed-{frappe.generate_hash(4)}"
 		try:
-			with mock.patch(
-				f"{self.EXPORT_MODULE}.rename_standard_client_script_files"
-			) as mock_rename:
+			with mock.patch(f"{self.EXPORT_MODULE}.rename_standard_client_script_files") as mock_rename:
 				with self._with_developer_mode():
 					frappe.rename_doc("Builder Client Script", old_script_name, new_script_name, force=True)
 				self._assert_rename_called_once(mock_rename, old_script_name, new_script_name)
