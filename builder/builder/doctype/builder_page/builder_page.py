@@ -557,6 +557,7 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 		tag.insert(0, shared_state["global_script_tag"])
 
 		html = wrap_html_with_context(str(tag), block_context)
+		cleanup_props_stack(props, shared_state["standard_props_stack"])
 		html_parts.append(html)
 
 	return (
@@ -576,8 +577,6 @@ def build_tag(
 	#### Returns:
 		BeautifulSoup tag element
 	"""
-
-	props = process_block_props(block, data_key, state["standard_props_stack"])
 
 	set_dynamic_content_placeholders(block, data_key)
 
@@ -608,8 +607,6 @@ def build_tag(
 	effective_element = block.get("originalElement") or block.get("element")
 	if effective_element == "body":
 		tag.append("{% include 'templates/generators/webpage_scripts.html' %}")
-
-	cleanup_props_stack(props, state["standard_props_stack"])
 
 	return tag
 
@@ -852,6 +849,7 @@ def render_children(
 		child_tag = build_tag(child, state, data_key, ancestor_font=ancestor_font)
 
 		append_child_with_context(tag, child_tag, child_context)
+		cleanup_props_stack(child_props, state["standard_props_stack"])
 
 
 def render_repeater_children(
@@ -875,6 +873,7 @@ def render_repeater_children(
 	child_tag = build_tag(child, state, loop_info["data_key"], ancestor_font=ancestor_font)
 
 	append_child_with_context(tag, child_tag, child_context)
+	cleanup_props_stack(child_props, state["standard_props_stack"])
 
 	tag.append("{% endfor %}")
 
