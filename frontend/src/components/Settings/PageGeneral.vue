@@ -185,7 +185,7 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderProjectFolder } from "@/types/doctypes";
 import { toTitleCase } from "@/utils/helpers";
 import { createResource, Switch, toast } from "frappe-ui";
-import { computed, ref, watch } from "vue";
+import { computed } from "vue";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
