@@ -9,9 +9,9 @@
 </template>
 <script setup lang="ts">
 import InlineInput from "@/components/Controls/InlineInput.vue";
-import usePageStore from "@/stores/pageStore";
+import { useBlockDataStore } from "@/stores/blockStore";
 import blockController from "@/utils/blockController";
-import { getDataArray, getDefaultPropsList, getParentProps, getRepeaterScopedData } from "@/utils/helpers";
+import { getDataArray, getDefaultPropsList, getParentProps } from "@/utils/helpers";
 import { computed, ref, watch } from "vue";
 
 const props = defineProps<{
@@ -20,7 +20,7 @@ const props = defineProps<{
 	setModelValue: (value: BlockVisibilityCondition) => void;
 }>();
 
-const pageStore = usePageStore();
+const blockDataStore = useBlockDataStore();
 
 const autocompleteRef = ref<InstanceType<typeof InlineInput> | null>(null);
 
@@ -29,7 +29,14 @@ const pageDataArray = computed(() => {
 	if (!currentBlock) {
 		return [];
 	}
-	return getDataArray(getRepeaterScopedData(currentBlock, pageStore.pageData));
+	return getDataArray(blockDataStore.getPageData(currentBlock.blockId) || {});
+});
+const blockDataArray = computed(() => {
+	const currentBlock = blockController.getFirstSelectedBlock();
+	if (!currentBlock) {
+		return [];
+	}
+	return getDataArray(blockDataStore.getBlockData(currentBlock.blockId) || {});
 });
 const ownProps = computed(() => {
 	const currentBlock = blockController.getFirstSelectedBlock();
@@ -60,6 +67,14 @@ const getOptions = async (query: string) => {
 			options.push({
 				label: prop,
 				value: `${prop}--dataScript`,
+			});
+		}
+	});
+	blockDataArray.value.map((prop) => {
+		if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
+			options.push({
+				label: prop,
+				value: `${prop}--blockDataScript`,
 			});
 		}
 	});
@@ -96,7 +111,7 @@ const handleModelValueUpdate = (value: string | null) => {
 };
 
 watch(
-	[pageDataArray, ownProps, parentProps, defaultProps],
+	[pageDataArray, blockDataArray, ownProps, parentProps, defaultProps],
 	() => {
 		autocompleteRef.value?.refreshOptions();
 	},

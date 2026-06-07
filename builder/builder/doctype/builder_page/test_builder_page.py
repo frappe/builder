@@ -43,6 +43,16 @@ data.update({
 
 custom_data_script = 'data.update({"name_new": "Jane Doe",})'
 
+block_data_script = """
+block.update({
+	"content": "Custom Block Data",
+	"items": [
+		{"name": "Item 1", "price": "$10"},
+		{"name": "Item 2", "price": "$20"}
+	]
+})
+"""
+
 
 class TestBuilderPage(FrappeTestCase):
 	@classmethod
@@ -400,6 +410,109 @@ class TestBuilderPage(FrappeTestCase):
 			frappe.local.flags.redirect_location = None
 			page.delete()
 
+	def test_visibility_condition_from_block_data(self):
+		body = Block(
+			element="div",
+			originalElement="body",
+			blockDataScript='block.update({"is_header_visible": True,"is_hidden_header_visible": False})',
+		)
+		header = Block(element="h1", innerHTML="Visible Header")
+		hidden_header = Block(element="h2", innerHTML="Hidden Header")
+
+		header.visibilityCondition = {"key": "is_header_visible", "comesFrom": "blockDataScript"}
+		hidden_header.visibilityCondition = {
+			"key": "is_hidden_header_visible",
+			"comesFrom": "blockDataScript",
+		}
+
+		body.attach_children(header, hidden_header)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Visibility Key Test",
+				"published": 1,
+				"route": "/visibility-key-test-block-data",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+		try:
+			content = get_response_content("/visibility-key-test-block-data")
+			self.assertTrue("Visible Header" in get_html_for(content, "tag", "h1"))
+			self.assertFalse("Hidden Header" in get_html_for(content, "tag", "h2"))
+		finally:
+			page.delete()
+
+	def test_block_data(self):
+		body = Block(
+			element="div",
+			originalElement="body",
+		)
+		wrapper = Block(element="div", blockDataScript=block_data_script)
+		content_dynamic = Block(element="h4", innerHTML="Block Content")
+		content_fallback = Block(element="h4", innerHTML="Block Content")
+
+		content_dynamic.set_dynamic_value("content", "key", "innerHTML", "blockDataScript")
+		content_fallback.set_dynamic_value("no_key", "key", "innerHTML", "blockDataScript")
+
+		wrapper.attach_children(content_dynamic, content_fallback)
+		body.attach_children(wrapper)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Block Data Test",
+				"published": 1,
+				"route": "/block-data-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/block-data-test")
+			self.assertEqual("Custom Block Data", get_html_for(content, "tag", "h4", only_content=True))
+			self.assertEqual("Block Content", get_html_for(content, "tag", "h4", index=1, only_content=True))
+		finally:
+			page.delete()
+
+	def test_repeater_from_block_data(self):
+		body = Block(
+			element="div",
+			originalElement="body",
+		)
+		repeater_block = Block(element="div", isRepeaterBlock=True, blockDataScript=block_data_script)
+		wrapper_div = Block(element="div")
+		item_name = Block(element="h2")
+		item_price = Block(element="span")
+
+		repeater_block.attach_data_key("items", "dataKey", comesFrom="blockDataScript")
+		item_name.set_dynamic_value("name", "key", "innerHTML", "blockDataScript")
+		item_price.set_dynamic_value("price", "key", "innerHTML", "blockDataScript")
+
+		wrapper_div.attach_children(item_name, item_price)
+		repeater_block.attach_children(wrapper_div)
+		body.attach_children(repeater_block)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Block Data Repeater Test",
+				"published": 1,
+				"route": "/block-data-repeater-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/block-data-repeater-test")
+			self.assertTrue("Item 1" in get_html_for(content, "tag", "h2"))
+			self.assertTrue("$10" in get_html_for(content, "tag", "span"))
+			self.assertTrue("Item 2" in get_html_for(content, "tag", "h2", index=1))
+			self.assertTrue("$20" in get_html_for(content, "tag", "span", index=1))
+
+		finally:
+			page.delete()
+
 	def test_block_client_script(self):
 		body = Block(
 			element="div",
@@ -453,6 +566,7 @@ class TestBuilderPage(FrappeTestCase):
 					"isStandard": False,
 				},
 			},
+			blockDataScript=block_data_script,
 		)
 		content_static_prop = Block(element="h4", innerHTML="Block Props Content")
 		content_dynamic_prop = Block(
@@ -461,9 +575,9 @@ class TestBuilderPage(FrappeTestCase):
 			props={
 				"content": {
 					"isDynamic": True,
-					"comesFrom": "dataScript",
+					"comesFrom": "blockDataScript",
 					"isPassedDown": True,
-					"value": "name",
+					"value": "content",
 					"isStandard": False,
 				},
 			},
@@ -483,7 +597,6 @@ class TestBuilderPage(FrappeTestCase):
 				"page_title": "Block Props Test",
 				"published": 1,
 				"route": "/block-props-test",
-				"page_data_script": page_data_script,
 				"blocks": body.as_json(wrap_in_array=True),
 			}
 		).insert()
@@ -491,7 +604,9 @@ class TestBuilderPage(FrappeTestCase):
 		try:
 			content = get_response_content("/block-props-test")
 			self.assertEqual("John", get_html_for(content, "tag", "h4", only_content=True))
-			self.assertEqual("John Doe", get_html_for(content, "tag", "h4", index=1, only_content=True))
+			self.assertEqual(
+				"Custom Block Data", get_html_for(content, "tag", "h4", index=1, only_content=True)
+			)
 			self.assertEqual(
 				"Block Props Content", get_html_for(content, "tag", "h4", index=2, only_content=True)
 			)
@@ -909,7 +1024,7 @@ class TestBuilderPage(FrappeTestCase):
 				],
 			}
 		]
-		_, _, font_map, _ = get_block_html(blocks)
+		_, _, font_map, _, _ = get_block_html(blocks)
 		self.assertIn("Newsreader", font_map)
 		self.assertIn(700, font_map["Newsreader"]["weights"])
 
@@ -925,9 +1040,37 @@ class TestBuilderPage(FrappeTestCase):
 				"children": [],
 			}
 		]
-		_, _, font_map, _ = get_block_html(blocks)
+		_, _, font_map, _, _ = get_block_html(blocks)
 		self.assertNotIn("InterVar", font_map)
 		self.assertNotIn("intervar", font_map)
+
+	def test_block_script_error_traceback(self):
+		body = Block(
+			element="div",
+			originalElement="body",
+		)
+		div = Block(
+			element="div",
+			blockId="test-block",
+			innerHTML="Test Block",
+			blockDataScript="block.data = sample_error",
+		)
+		body.attach_children(div)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Block Script Error Test",
+				"published": 1,
+				"route": "/block-script-error-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+		try:
+			content = get_response_content("/block-script-error-test")
+			self.assertTrue("block_script_for_test_block" in content)
+			self.assertTrue("NameError: name &#x27;sample_error&#x27; is not defined" in content)
+		finally:
+			page.delete()
 
 	def test_conflicting_routes_picks_last_published(self):
 		"""Pages sharing a route should resolve to the most recently published one."""

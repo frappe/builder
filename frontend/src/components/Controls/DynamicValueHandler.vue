@@ -2,7 +2,7 @@
 	<div class="flex min-h-36 flex-col justify-between gap-2">
 		<div class="flex flex-col gap-2">
 			<BuilderInput
-				v-if="pageDataArray.length > 5"
+				v-if="pageDataArray.length + blockDataArray.length > 5"
 				v-model="searchQuery"
 				@input="(val: string) => (searchQuery = val)"
 				type="text"
@@ -48,9 +48,15 @@
 								href="#"
 								@click="builderStore.showDataScriptDialog = 'page'"
 								class="text-ink-gray-5 underline hover:text-ink-gray-7">
-								Page Data Script
+								Page
 							</a>
-							.
+							<a
+								href="#"
+								@click="builderStore.showDataScriptDialog = 'block'"
+								class="text-ink-gray-5 underline hover:text-ink-gray-7">
+								/ Block
+							</a>
+							Data Scripts.
 						</div>
 					</li>
 				</ul>
@@ -68,21 +74,17 @@
 
 <script setup lang="ts">
 import Block from "@/block";
+import { useBlockDataStore } from "@/stores/blockStore";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
-import {
-	getDataArray,
-	getDefaultPropsList,
-	getParentProps,
-	getPropValue,
-	getRepeaterScopedData,
-} from "@/utils/helpers";
+import { getDataArray, getDefaultPropsList, getParentProps, getPropValue } from "@/utils/helpers";
 import { computed, ref } from "vue";
 import MiddleTruncate from "../MiddleTruncate.vue";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
+const blockDataStore = useBlockDataStore();
 
 type DynamicValueItem = {
 	key: string;
@@ -91,7 +93,9 @@ type DynamicValueItem = {
 
 type DynamicValueFilterOptions = {
 	excludePassedDownProps?: boolean;
+	excludePassedDownBlockData?: boolean;
 	excludeOwnProps?: boolean;
+	excludeOwnBlockData?: boolean;
 };
 
 const props = defineProps<{
@@ -103,16 +107,29 @@ const props = defineProps<{
 const emit = defineEmits(["setDynamicValue"]);
 const searchQuery = ref("");
 
-const currentBlock = computed(() => {
-	return props.block || blockController.getFirstSelectedBlock();
+const pageDataArray = computed(() => {
+	const currentBlock = props.block || blockController.getFirstSelectedBlock();
+	return getDataArray(blockDataStore.getPageData(currentBlock?.blockId) || pageStore.pageData);
 });
 
-const pageDataArray = computed(() => {
-	return getDataArray(getRepeaterScopedData(currentBlock.value, pageStore.pageData));
+const blockDataArray = computed(() => {
+	if (props.options?.excludeOwnBlockData && props.options.excludePassedDownBlockData) return [];
+	const currentBlock = props.block || blockController.getFirstSelectedBlock();
+	let filter: "all" | "own" | "passedDown" = "all";
+	if (props.options?.excludeOwnBlockData) {
+		filter = "passedDown";
+	} else if (props.options?.excludePassedDownBlockData) {
+		filter = "own";
+	}
+	if (currentBlock) {
+		return getDataArray(blockDataStore.getBlockData(currentBlock.blockId, filter) || {});
+	}
+	return [];
 });
 
 const defaultProps = computed(() => {
-	return getDefaultPropsList(currentBlock.value!, blockController);
+	const currentBlock = props.block || blockController.getFirstSelectedBlock();
+	return getDefaultPropsList(currentBlock!, blockController);
 });
 
 const filteredBlockProps = computed(() => {
@@ -120,13 +137,22 @@ const filteredBlockProps = computed(() => {
 	if (props.options?.excludeOwnProps) {
 		ownBlockProps = [];
 	} else {
-		ownBlockProps = Object.keys(currentBlock.value?.getBlockProps() || {});
+		ownBlockProps = Object.keys(
+			props.block
+				? props.block.getBlockProps()
+				: blockController.getFirstSelectedBlock()?.getBlockProps() || {},
+		);
 	}
 	let parentProps: string[];
-	if (props.options?.excludePassedDownProps || !currentBlock.value) {
+	if (props.options?.excludePassedDownProps) {
 		parentProps = [];
 	} else {
-		parentProps = Object.keys(getParentProps(currentBlock.value));
+		const currentBlock = props.block || blockController.getFirstSelectedBlock();
+		if (currentBlock) {
+			parentProps = Object.keys(getParentProps(currentBlock));
+		} else {
+			parentProps = [];
+		}
 	}
 	const combinedProps = [...ownBlockProps, ...parentProps].reduce((acc, prop) => {
 		if (!acc.find((p: string) => p === prop)) {
@@ -139,19 +165,28 @@ const filteredBlockProps = computed(() => {
 
 const filteredItems = computed(() => {
 	const pageDataArrayItems = pageDataArray.value.map((item) => ({ key: item, comesFrom: "dataScript" }));
+	const blockDataArrayItems = blockDataArray.value.map((item) => ({
+		key: item,
+		comesFrom: "blockDataScript",
+	}));
 	const propItems = filteredBlockProps.value.map((item) => ({ key: item, comesFrom: "props" }));
 	const defaultPropsKeys = Object.keys(defaultProps.value || {}).map((item) => ({
 		key: item,
 		comesFrom: "props",
 	}));
-	const allItems = [...pageDataArrayItems, ...propItems, ...defaultPropsKeys] as DynamicValueItem[];
+	const allItems = [
+		...pageDataArrayItems,
+		...blockDataArrayItems,
+		...propItems,
+		...defaultPropsKeys,
+	] as DynamicValueItem[];
 	if (!searchQuery.value) return allItems;
 	const query = searchQuery.value.toLowerCase();
 	return allItems.filter(
 		(item) =>
 			item.key.toLowerCase().includes(query) ||
 			String(getDataScriptValue(item.key)).toLowerCase().includes(query) ||
-			String(getPropValue(item.key, currentBlock.value, getDataScriptValue, defaultProps.value))
+			String(getPropValue(item.key, props.block || blockController.getFirstSelectedBlock()))
 				.toLowerCase()
 				.includes(query),
 	);
@@ -161,14 +196,28 @@ const selectedItem = ref<DynamicValueItem | null>(props.selectedValue || null);
 
 const getValue = (item: DynamicValueItem): any => {
 	if (item.comesFrom == "props") {
-		return getPropValue(item.key, currentBlock.value, getDataScriptValue, defaultProps.value);
+		return getPropValue(item.key, props.block || blockController.getFirstSelectedBlock());
+	} else if (item.comesFrom == "blockDataScript") {
+		return getBlockDataScriptValue(item.key);
 	} else {
 		return getDataScriptValue(item.key);
 	}
 };
 
 const getDataScriptValue = (path: string): any => {
-	const collectionObject = getRepeaterScopedData(currentBlock.value, pageStore.pageData);
+	let collectionObject = props.block
+		? blockDataStore.getPageData(props.block.blockId) || {}
+		: blockDataStore.getPageData(blockController.getFirstSelectedBlock()?.blockId || "") || {};
+	collectionObject = collectionObject || pageStore.pageData || {};
+
+	return path.split(".").reduce((obj: Record<string, any>, key: string) => obj?.[key], collectionObject);
+};
+
+const getBlockDataScriptValue = (path: string): any => {
+	let collectionObject = props.block
+		? blockDataStore.getBlockData(props.block.blockId) || {}
+		: blockDataStore.getBlockData(blockController.getFirstSelectedBlock()?.blockId || "") || {};
+
 	return path.split(".").reduce((obj: Record<string, any>, key: string) => obj?.[key], collectionObject);
 };
 function selectAndSetItem(item: DynamicValueItem) {

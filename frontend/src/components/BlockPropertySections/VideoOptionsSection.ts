@@ -15,6 +15,7 @@ const videoOptionsSectionProperties = [
 				allowDynamicValue: true,
 				dynamicValueFilterOptions: {
 					excludeOwnProps: true,
+					excludeOwnBlockData: true,
 				},
 			};
 		},

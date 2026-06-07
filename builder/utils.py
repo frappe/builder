@@ -13,6 +13,7 @@ import yaml
 from frappe.model.document import Document
 from frappe.modules.import_file import import_file_by_path
 from frappe.utils import get_url
+from frappe.utils.html_utils import unescape_html
 from frappe.utils.safe_exec import (
 	SERVER_SCRIPT_FILE_PREFIX,
 	FrappeTransformer,
@@ -104,6 +105,7 @@ class Block:
 	customAttributes: ClassVar[dict] = {}
 	dynamicValues: ClassVar[list[BlockDataKey]] = []
 	blockClientScript: str = ""
+	blockDataScript: str = ""
 	props: ClassVar[dict] = {}
 
 	def __init__(self, **kwargs) -> None:
@@ -170,6 +172,7 @@ class Block:
 			"customAttributes": self.customAttributes,
 			"dynamicValues": self.dynamicValues,
 			"blockClientScript": self.blockClientScript,
+			"blockDataScript": self.blockDataScript,
 			"props": self.props,
 		}
 
@@ -670,6 +673,15 @@ def hash(s):
 
 def to_safe_json(data):
 	return frappe.as_json(data or {})
+
+
+def execute_script_and_combine(prev_block_data, block_data_script, props, block_id):
+	props = frappe._dict(frappe.parse_json(props or "{}"))
+	block_data = frappe._dict()
+	_locals = dict(block=to_dict_with_fallback(prev_block_data or {}), props=props)
+	execute_script(unescape_html(block_data_script), _locals, f"block_script_for_{block_id}")
+	block_data.update(_locals["block"])
+	return combine(prev_block_data, block_data)
 
 
 class CompactDumper(yaml.Dumper):

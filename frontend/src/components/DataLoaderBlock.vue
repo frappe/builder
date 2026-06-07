@@ -8,6 +8,7 @@
 		<BuilderBlock
 			v-else
 			:data="repeatingFrom == 'dataScript' ? _data : data"
+			:block-data="repeatingFrom == 'blockDataScript' ? _data : blockData"
 			:defaultProps="repeatingFrom == 'props' ? _data : null"
 			:block="block.children[0]"
 			:preview="Number(index) !== 0 || preview"
@@ -26,16 +27,20 @@ import { getDataForKey, getStandardPropValue } from "@/utils/helpers";
 import { Ref, computed, ref } from "vue";
 import BuilderBlock from "./BuilderBlock.vue";
 import blockController from "@/utils/blockController";
+import { useBlockDataStore } from "@/stores/blockStore";
 
 const pageStore = usePageStore();
+const blockDataStore = useBlockDataStore();
 
 const props = withDefaults(
 	defineProps<{
 		block: Block;
+		uid?: string;
 		repeaterIndex?: string | number | null;
 		preview?: boolean;
 		breakpoint?: string;
 		data?: Record<string, any> | null;
+		blockData?: Record<string, any> | null;
 		readonly?: boolean;
 	}>(),
 	{
@@ -53,9 +58,16 @@ const repeatingFrom = computed(() => {
 
 const blockRepeaterData = computed(() => {
 	const pageData = props.data || pageStore.pageData;
+	const blockData = blockDataStore.getBlockData(props.uid || props.block.blockId) || {};
 	const key = props.block.getDataKey("key");
 	if (pageData && repeatingFrom.value === "dataScript" && key) {
 		const data = getDataForKey(pageData, key);
+		if (Array.isArray(data)) {
+			return data.slice(0, 100);
+		}
+		return data;
+	} else if (pageData && repeatingFrom.value === "blockDataScript" && key) {
+		const data = getDataForKey(blockData, key);
 		if (Array.isArray(data)) {
 			return data.slice(0, 100);
 		}

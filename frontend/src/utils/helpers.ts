@@ -1,4 +1,5 @@
 import Block from "@/block";
+import { useBlockDataStore, useBlockUidStore } from "@/stores/blockStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
@@ -588,30 +589,59 @@ function getCollectionKeys(block: any, type: BlockDataKey["comesFrom"] = "dataSc
 	return keys;
 }
 
-// Drill into page data for blocks inside repeaters (uses the first item of each collection)
-function getRepeaterScopedData(block: Block | null, pageData: Record<string, any>): Record<string, any> {
-	let collectionObject = pageData || {};
-	if (block?.isInsideRepeater()) {
-		const keys = getCollectionKeys(block);
-		collectionObject = keys.reduce((acc: any, key: string) => {
-			const data = getDataForKey(acc, key);
-			return Array.isArray(data) && data.length > 0 ? data[0] : data;
-		}, collectionObject);
-	}
-	return collectionObject || {};
-}
-
 function triggerCopyEvent() {
 	document.execCommand("copy");
 }
 
-type BlockPropsWithTraceback = Record<string, BlockProps[string] & { block?: Block }>;
+const getValueForInheritedProp = (
+	propName: string,
+	block: Block,
+	getDataScriptValue: (path: string) => any,
+	getBlockScriptValue: (path: string) => any,
+): any => {
+	let parent = block.getParentBlock();
+	while (parent) {
+		const parentProps = parent.getBlockProps();
+		const matchingProp = parentProps[propName];
+		if (matchingProp) {
+			if (matchingProp.isDynamic) {
+				if (matchingProp.comesFrom === "dataScript" && matchingProp.value) {
+					return getDataScriptValue(matchingProp.value);
+				} else if (matchingProp.comesFrom === "blockDataScript" && matchingProp.value) {
+					return getBlockScriptValue(matchingProp.value);
+				} else {
+					return getValueForInheritedProp(propName, parent, getDataScriptValue, getBlockScriptValue);
+				}
+			} else {
+				if (matchingProp.isStandard && matchingProp.propOptions) {
+					if (matchingProp.propOptions.type !== "string" && matchingProp.propOptions.type !== "select") {
+						return matchingProp.value
+							? JSON.parse(matchingProp.value)
+							: matchingProp.propOptions?.options?.defaultValue || null;
+					} else {
+						return matchingProp.value || matchingProp.propOptions?.options?.defaultValue || null;
+					}
+				}
+				return matchingProp.value;
+			}
+		}
+		parent = parent.getParentBlock();
+	}
+	return undefined;
+};
+
+type BlockPropsWithTraceback = Record<
+	string,
+	BlockProps[string] & { block?: Block; blockUid?: string | null }
+>;
 
 const getParentProps = (
 	baseBlock: Block,
+	blockUid?: string | null,
 	baseProps: BlockPropsWithTraceback = {},
 ): BlockPropsWithTraceback => {
 	const parentBlock = baseBlock.getParentBlock();
+	const parentBlockUid = useBlockUidStore().getParentUid(blockUid || "");
 	if (parentBlock) {
 		const parentProps: BlockPropsWithTraceback = {};
 		Object.entries(parentBlock.getBlockProps())
@@ -622,10 +652,11 @@ const getParentProps = (
 				parentProps[propName] = {
 					...propDetails,
 					block: parentBlock,
+					blockUid: parentBlockUid,
 				};
 			});
 		const combinedProps = { ...parentProps, ...baseProps };
-		return getParentProps(parentBlock, combinedProps);
+		return getParentProps(parentBlock, parentBlockUid, combinedProps);
 	} else {
 		return baseProps;
 	}
@@ -677,12 +708,12 @@ const getDefaultPropsList = (block: Block, blockController: any): BlockProps => 
 
 const PARSEABLE_STANDARD_TYPES = ["number", "boolean", "object", "array"];
 
-const getPropValue = (
-	propName: string,
-	block: Block,
-	getDataScriptValue: (path: string) => any = () => undefined,
-	defaultProps?: BlockProps | null,
-): any => {
+const getPropValue = (propName: string, block: Block, blockUid?: string | null): any => {
+	const blockDataStore = useBlockDataStore();
+
+	const uidToUse = blockUid || block.blockId;
+
+	const defaultProps = blockDataStore.getDefaultProps(uidToUse);
 	// Check default props first
 	if (defaultProps?.[propName] !== undefined) {
 		return defaultProps[propName].value;
@@ -693,7 +724,7 @@ const getPropValue = (
 	// Find matching prop from block or parent
 	const blockProps = block.getBlockProps();
 	let matchingProp: BlockPropsWithTraceback[string] =
-		blockProps[propName] ?? (parentProps = getParentProps(block))[propName];
+		blockProps[propName] ?? (parentProps = getParentProps(block, blockUid))[propName];
 
 	if (!matchingProp) {
 		return undefined;
@@ -703,14 +734,26 @@ const getPropValue = (
 	if (matchingProp.isDynamic) {
 		if (matchingProp.comesFrom === "props" && matchingProp.value) {
 			if (parentProps === null) {
-				parentProps = getParentProps(block);
+				parentProps = getParentProps(block, blockUid);
 			}
 			const newMatchingProp = parentProps[matchingProp.value];
-			if (!newMatchingProp?.block) return undefined;
-			return getPropValue(matchingProp.value, newMatchingProp.block, getDataScriptValue, defaultProps);
+			if (!newMatchingProp.block) return undefined;
+			return getPropValue(matchingProp.value, newMatchingProp.block, newMatchingProp.blockUid);
 		}
+		const getDataScriptValue = (path: string) => {
+			const pageData = blockDataStore.getPageData(uidToUse) || {};
+			return getDataForKey(pageData, path);
+		};
+		const getBlockScriptValue = (path: string) => {
+			const blockData = blockDataStore.getBlockData(uidToUse, "passedDown") || {};
+			return getDataForKey(blockData, path);
+		};
 		if (matchingProp.comesFrom === "dataScript" && matchingProp.value) {
 			return getDataScriptValue(matchingProp.value);
+		}
+
+		if (matchingProp.comesFrom === "blockDataScript" && matchingProp.value) {
+			return getBlockScriptValue(matchingProp.value);
 		}
 
 		// Fallback to default props
@@ -830,7 +873,6 @@ export {
 	getParentProps,
 	getPropValue,
 	getRandomColor,
-	getRepeaterScopedData,
 	getRGB,
 	getRootBlockTemplate,
 	getRouteVariables,

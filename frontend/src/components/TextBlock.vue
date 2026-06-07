@@ -55,14 +55,17 @@ let selectionTriggered = false as boolean;
 const props = withDefaults(
 	defineProps<{
 		block: Block;
+		uid: string;
 		preview?: boolean;
 		data?: Record<string, any>;
+		blockData?: Record<string, any> | null;
 		defaultProps?: Record<string, any> | null;
 		breakpoint?: string;
 	}>(),
 	{
 		preview: false,
 		data: () => ({}),
+		blockData: null,
 		defaultProps: null,
 		breakpoint: "desktop",
 	},
@@ -103,7 +106,7 @@ const hasBlockProps = computed(() => {
 
 const textContent = computed(() => {
 	let innerHTML = props.block.getInnerHTML();
-	if (props.data || hasBlockProps.value) {
+	if (props.data || props.blockData || hasBlockProps.value) {
 		const dynamicContent = getDynamicContent();
 		if (dynamicContent) {
 			innerHTML = dynamicContent;
@@ -115,6 +118,9 @@ const textContent = computed(() => {
 const getDataScriptValue = (path: string): any => {
 	return getDataForKey(props.data, path);
 };
+const getBlockDataScriptValue = (path: string): any => {
+	return getDataForKey(props.blockData || {}, path);
+};
 
 const getDynamicContent = () => {
 	let innerHTML = null as string | null;
@@ -123,12 +129,9 @@ const getDynamicContent = () => {
 		let value;
 		if (props.block.getDataKey("comesFrom") === "props") {
 			// props are checked first as unavailablity of comesFrom means it comes from dataScript (legacy)
-			value = getPropValue(
-				props.block.getDataKey("key"),
-				props.block,
-				getDataScriptValue,
-				props.defaultProps,
-			);
+			value = getPropValue(props.block.getDataKey("key"), props.block, props.uid);
+		} else if (props.block.getDataKey("comesFrom") === "blockDataScript") {
+			value = getBlockDataScriptValue(props.block.getDataKey("key"));
 		} else {
 			value = getDataScriptValue(props.block.getDataKey("key"));
 		}
@@ -142,7 +145,9 @@ const getDynamicContent = () => {
 		?.forEach((dataKeyObj: BlockDataKey) => {
 			let value;
 			if (dataKeyObj.comesFrom === "props") {
-				value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue, props.defaultProps);
+				value = getPropValue(dataKeyObj.key as string, props.block, props.uid);
+			} else if (dataKeyObj.comesFrom === "blockDataScript") {
+				value = getBlockDataScriptValue(dataKeyObj.key as string);
 			} else {
 				value = getDataScriptValue(dataKeyObj.key as string);
 			}
