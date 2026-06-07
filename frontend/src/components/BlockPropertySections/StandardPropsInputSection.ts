@@ -55,7 +55,6 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 		allowDynamicValue: true,
 		dynamicValueFilterOptions: {
 			excludeOwnProps: true,
-			excludeOwnBlockData: true,
 		},
 		getDynamicValue: () => {
 			if (propDetails.isDynamic) {

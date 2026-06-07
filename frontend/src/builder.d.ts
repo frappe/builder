@@ -20,7 +20,7 @@ declare type BlockProps = Record<
 		label?: string;
 		isDynamic: boolean;
 		isPassedDown: boolean;
-		comesFrom: "props" | "dataScript" | "blockDataScript" | null;
+		comesFrom: "props" | "dataScript" | null;
 		value: string?;
 		isStandard?: boolean;
 		propOptions?: BlockPropOptions;
@@ -29,7 +29,7 @@ declare type BlockProps = Record<
 
 declare type BlockVisibilityCondition = {
 	key: string | undefined;
-	comesFrom: "props" | "dataScript" | "blockDataScript" | undefined;
+	comesFrom: "props" | "dataScript" | undefined;
 };
 
 declare interface BlockAttributeMap {
@@ -138,7 +138,7 @@ declare type FileDoc = {
 declare interface BlockDataKey {
 	key?: string;
 	type?: BlockDataKeyType;
-	comesFrom?: "props" | "dataScript" | "blockDataScript";
+	comesFrom?: "props" | "dataScript";
 	property?: string;
 }
 
