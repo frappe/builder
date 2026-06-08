@@ -8,8 +8,9 @@
 				onerror="this.src='/assets/builder/images/fallback.png'"
 				class="aspect-video w-full rounded-md bg-surface-gray-1 object-cover object-top" />
 			<div
-				class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-				<Button size="sm" variant="solid">View templates</Button>
+				class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/40 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+				<Button size="sm" variant="solid" @click.stop="$emit('select', group)">View templates</Button>
+				<Button v-if="previewPage" size="sm" variant="subtle" @click.stop="openPreview">Preview</Button>
 			</div>
 		</div>
 		<div class="flex items-center justify-between gap-2 px-[2px]">
@@ -23,13 +24,27 @@
 	</div>
 </template>
 <script setup lang="ts">
+import router from "@/router";
 import { TemplateGroup } from "@/types/doctypes";
+import { computed } from "vue";
 
-defineProps<{
+const props = defineProps<{
 	group: TemplateGroup;
 }>();
 
 defineEmits(["select"]);
 
 const fallbackImage = "/assets/builder/images/fallback.png";
+
+// preview the group's first page (its card image represents this page)
+const previewPage = computed(() => props.group.pages[0] || null);
+
+const openPreview = () => {
+	const page = previewPage.value;
+	if (!page) return;
+	// remote hub templates carry an absolute live_url; local templates use the
+	// in-app preview route (the hub page id has no local page to preview)
+	const href = page.live_url || router.resolve({ name: "preview", params: { pageId: page.name } }).href;
+	window.open(href, "_blank");
+};
 </script>

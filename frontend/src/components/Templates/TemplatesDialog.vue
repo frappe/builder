@@ -5,21 +5,23 @@
 			<DialogDescription class="sr-only">
 				Start from a blank page or pick a page from a template.
 			</DialogDescription>
-			<div class="relative flex max-h-[85vh] min-h-[660px] flex-col overflow-hidden bg-surface-white">
+			<div class="relative flex max-h-[85vh] min-h-[560px] flex-col overflow-hidden bg-surface-white">
 				<!-- header -->
-				<div class="flex items-start gap-2 px-8 pb-4 pt-7">
+				<div class="px-8 pb-4 pt-7">
 					<Button
 						v-if="activeGroup"
-						icon="lucide-arrow-left"
+						icon-left="lucide-arrow-left"
 						variant="ghost"
-						class="-ml-2 mt-px"
-						@click="selectedGroup = null"></Button>
-					<div class="flex flex-col gap-1">
+						class="-ml-2 mb-3 !text-ink-gray-6 hover:!text-ink-gray-9"
+						@click="selectedGroup = ''">
+						Back to all templates
+					</Button>
+					<div class="mb-2 flex flex-col gap-2">
 						<h2 class="text-xl font-semibold leading-none text-ink-gray-9">{{ heading }}</h2>
 						<p class="max-w-2xl text-sm leading-relaxed text-ink-gray-5" v-if="activeGroup?.description">
 							{{ activeGroup.description }}
 						</p>
-						<p class="text-sm text-ink-gray-5" v-else-if="!activeGroup">
+						<p class="text-p-sm text-ink-gray-5" v-else-if="!activeGroup">
 							Start from a blank page or pick a template.
 						</p>
 					</div>
@@ -46,7 +48,7 @@
 							<div class="h-3.5 w-2/3 animate-pulse rounded bg-surface-gray-2"></div>
 						</div>
 					</div>
-					<div v-else class="grid gap-3 auto-fill-[190px]">
+					<div v-else class="grid gap-x-4 gap-y-5 auto-fill-[190px]">
 						<button
 							class="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-outline-gray-3 text-ink-gray-5 transition-colors duration-150 hover:border-outline-gray-4 hover:bg-surface-gray-1 hover:text-ink-gray-7"
 							@click="createBlankPage">
@@ -79,12 +81,13 @@ import PlusIcon from "~icons/lucide/plus";
 import TemplateGroupCard from "./TemplateGroupCard.vue";
 import TemplatePageGrid from "./TemplatePageGrid.vue";
 
-const { showTemplatesDialog } = useDashboardState();
+const { showTemplatesDialog, lastTemplateGroup } = useDashboardState();
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 
-// null = top-level gallery; a group name = drilled into that group's pages
-const selectedGroup = ref<string | null>(null);
+// "" = top-level gallery; a group name = drilled into that group's pages.
+// persisted so reopening the picker lands on the last template you viewed.
+const selectedGroup = lastTemplateGroup;
 
 const groups = computed<TemplateGroup[]>(() => templateGroups.data || []);
 const activeGroup = computed<TemplateGroup | null>(
@@ -93,14 +96,10 @@ const activeGroup = computed<TemplateGroup | null>(
 const heading = computed(() => activeGroup.value?.title || "New page");
 
 watch(showTemplatesDialog, (open) => {
-	if (open) {
-		// always reopen on the gallery, never a stale drill-down
-		selectedGroup.value = null;
-		// revalidate on open — the cache (IndexedDB-backed) renders instantly
-		// but goes stale when new template groups are synced on migrate
-		if (!templateGroups.loading) {
-			templateGroups.fetch();
-		}
+	// revalidate on open — the cache (IndexedDB-backed) renders instantly
+	// but goes stale when new template groups are synced on migrate
+	if (open && !templateGroups.loading) {
+		templateGroups.fetch();
 	}
 });
 
