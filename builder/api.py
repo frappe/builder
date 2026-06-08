@@ -269,26 +269,13 @@ def get_template_groups() -> list[dict]:
 		return []
 
 
-@frappe.whitelist()
-@has_page_write("You do not have permission to create a page.")
-def create_page_from_template(template_page: str, project_folder: str | None = None) -> str:
-	"""Create an editable page from a hub template and return its name.
+def create_page_from_bundle(bundle: dict, project_folder: str | None = None) -> str:
+	"""Create an editable page from a fetched hub bundle and return its name.
 
-	Fetches the template bundle, installs its shared components/variables/scripts/
-	fonts, and builds the page from its blocks. Created pages hot-link the hub's
-	/builder_assets/ images (a live page depends on the hub staying up)."""
+	Installs shared components/variables/scripts/fonts, then builds the page
+	from its blocks. Created pages hot-link the hub's /builder_assets/ images."""
 	from frappe.modules.import_file import import_doc
 
-	try:
-		bundle = hub_get("get_template_bundle", page=template_page)
-	except Exception:
-		frappe.log_error("Failed to fetch template bundle")
-		bundle = None
-	if not bundle or not bundle.get("page"):
-		frappe.throw(frappe._("Could not load the selected template. Please try again."))
-
-	assert isinstance(bundle, dict)
-	# install shared deps (stable names → var(--uuid)/extendedFromComponent resolve)
 	for font in bundle.get("fonts") or []:
 		import_doc(docdict=font)
 	for var in bundle.get("variables") or []:
@@ -302,7 +289,7 @@ def create_page_from_template(template_page: str, project_folder: str | None = N
 		{
 			"doctype": "Builder Page",
 			"page_title": page.get("page_title") or "My Page",
-			"draft_blocks": frappe.as_json(page.get("blocks") or []),  # opens as draft
+			"draft_blocks": frappe.as_json(page.get("blocks") or []),
 			"page_data_script": page.get("page_data_script"),
 			"head_html": page.get("head_html"),
 			"body_html": page.get("body_html"),
@@ -310,7 +297,6 @@ def create_page_from_template(template_page: str, project_folder: str | None = N
 			"project_folder": project_folder or None,
 		}
 	)
-	# fresh client scripts from the bundle (hashed names) — never reuse hub names
 	for cs in bundle.get("client_scripts") or []:
 		new_script = frappe.get_doc(
 			{
@@ -323,7 +309,6 @@ def create_page_from_template(template_page: str, project_folder: str | None = N
 		new_script.insert(ignore_permissions=True)
 		new_page.append("client_scripts", {"builder_script": new_script.name})
 	new_page.insert()
-	# generate a dashboard thumbnail in the background (renders the draft)
 	frappe.enqueue_doc(
 		"Builder Page",
 		new_page.name,
@@ -332,6 +317,53 @@ def create_page_from_template(template_page: str, project_folder: str | None = N
 		enqueue_after_commit=True,
 	)
 	return new_page.name or ""
+
+
+@frappe.whitelist()
+@has_page_write("You do not have permission to create a page.")
+def create_page_from_template(template_page: str, project_folder: str | None = None) -> str:
+	"""Create an editable page from a hub template and return its name."""
+	try:
+		bundle = hub_get("get_template_bundle", page=template_page)
+	except Exception:
+		frappe.log_error("Failed to fetch template bundle")
+		bundle = None
+	if not bundle or not bundle.get("page"):
+		frappe.throw(frappe._("Could not load the selected template. Please try again."))
+
+	assert isinstance(bundle, dict)
+	return create_page_from_bundle(bundle, project_folder)
+
+
+@frappe.whitelist()
+@has_page_write("You do not have permission to create pages.")
+def import_template_group(template_group: str, project_folder: str | None = None) -> list[str]:
+	"""Import all pages from a template group and return their names."""
+	groups = get_template_groups()
+	group = next((g for g in groups if g.get("name") == template_group), None)
+	if not group:
+		frappe.throw(frappe._("Template group not found."))
+
+	pages = group.get("pages") or []
+	if not pages:
+		frappe.throw(frappe._("No pages found in this template group."))
+
+	created = []
+	for page in pages:
+		try:
+			bundle = hub_get("get_template_bundle", page=page.get("name"))
+		except Exception:
+			frappe.log_error(f"Failed to fetch template bundle for {page.get('name')}")
+			continue
+		if not bundle or not bundle.get("page"):
+			continue
+		name = create_page_from_bundle(bundle, project_folder)
+		created.append(name)
+
+	if not created:
+		frappe.throw(frappe._("Could not import any pages from this template group."))
+
+	return created
 
 
 @frappe.whitelist()

@@ -64,7 +64,7 @@ import { BuilderPage } from "@/types/doctypes";
 import { watchDebounced } from "@vueuse/core";
 import { useShortcut } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
-import { onActivated, onMounted, onUnmounted, ref, watch } from "vue";
+import { onActivated, onDeactivated, onMounted, onUnmounted, ref, watch } from "vue";
 
 const routeTreeRef = ref<InstanceType<typeof RouteTreeView>>();
 
@@ -80,6 +80,17 @@ const {
 	expandTreeFn,
 	collapseTreeFn,
 } = useDashboardState();
+
+onActivated(() => {
+	builderStore.realtime.doctype_subscribe("Builder Page");
+	builderStore.realtime.on("list_update", (e) => {
+		if (e.doctype == "Builder Page") fetchPages();
+	});
+});
+
+onDeactivated(() => {
+	builderStore.realtime.doctype_unsubscribe("Builder Page");
+});
 
 onMounted(() => {
 	expandTreeFn.value = () => routeTreeRef.value?.expandAll();

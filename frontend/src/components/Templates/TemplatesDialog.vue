@@ -18,9 +18,17 @@
 					</Button>
 					<div class="mb-2 flex flex-col gap-2">
 						<h2 class="text-xl font-semibold leading-none text-ink-gray-9">{{ heading }}</h2>
-						<p class="max-w-2xl text-sm leading-relaxed text-ink-gray-5" v-if="activeGroup?.description">
+						<div
+							class="flex max-w-2xl flex-col gap-2 text-sm leading-relaxed text-ink-gray-5"
+							v-if="activeGroup?.description">
 							{{ activeGroup.description }}
-						</p>
+							<Button class="w-fit" variant="outline" :loading="importingAll" @click="importAll">
+								<template #prefix>
+									<LucideImport class="size-4" />
+								</template>
+								Import all
+							</Button>
+						</div>
 						<p class="text-p-sm text-ink-gray-5" v-else-if="!activeGroup">
 							Start from a blank page or pick a template.
 						</p>
@@ -74,7 +82,7 @@ import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { TemplateGroup, TemplatePageSummary } from "@/types/doctypes";
-import { createResource, toast } from "frappe-ui";
+import { Button, createResource, toast } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
 import { DialogDescription, DialogTitle } from "reka-ui";
 import { computed, ref, watch } from "vue";
@@ -140,6 +148,34 @@ const useTemplate = (page: TemplatePageSummary) => {
 	});
 	promise.finally(() => {
 		creatingPage.value = false;
+	});
+};
+
+const importingAll = ref(false);
+const importAll = () => {
+	if (importingAll.value || !activeGroup.value) return;
+	importingAll.value = true;
+	const promise = createResource({
+		url: "builder.api.import_template_group",
+	})
+		.submit({
+			template_group: activeGroup.value.name,
+			project_folder: builderStore.activeFolder || undefined,
+		})
+		.then((pageNames: string[]) => {
+			capture("builder_template_group_imported", {
+				template_group: activeGroup.value!.name,
+				page_count: pageNames.length,
+			});
+			showTemplatesDialog.value = false;
+		});
+	toast.promise(promise, {
+		loading: "Importing all pages...",
+		success: () => "All pages imported",
+		error: () => "Could not import pages",
+	});
+	promise.finally(() => {
+		importingAll.value = false;
 	});
 };
 
