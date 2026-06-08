@@ -7,15 +7,6 @@
 				<div class="h-3.5 w-2/3 animate-pulse rounded bg-surface-gray-2"></div>
 			</div>
 		</div>
-		<!-- blank page -->
-		<div v-else-if="blank" class="grid gap-3 auto-fill-[190px]">
-			<button
-				class="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-outline-gray-3 text-ink-gray-5 transition-colors duration-150 hover:border-outline-gray-4 hover:bg-surface-gray-1 hover:text-ink-gray-7"
-				@click="$emit('blank')">
-				<PlusIcon class="size-5" />
-				<span class="text-sm">Blank page</span>
-			</button>
-		</div>
 		<!-- template pages -->
 		<div v-else-if="group?.pages.length" class="grid gap-3 auto-fill-[190px]">
 			<TemplatePageCard
@@ -33,14 +24,12 @@
 </template>
 <script setup lang="ts">
 import { TemplateGroup, TemplatePageSummary } from "@/types/doctypes";
-import PlusIcon from "~icons/lucide/plus";
 import TemplatePageCard from "./TemplatePageCard.vue";
 
 defineProps<{
 	group: TemplateGroup | null;
-	blank: boolean;
 	loading: boolean;
 }>();
 
-defineEmits(["select", "edit", "blank"]);
+defineEmits(["select", "edit"]);
 </script>

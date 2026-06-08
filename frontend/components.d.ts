@@ -146,7 +146,7 @@ declare module 'vue' {
     StringOptions: typeof import('./src/components/PropsOptions/StringOptions.vue')['default']
     StylePropertyControl: typeof import('./src/components/Controls/StylePropertyControl.vue')['default']
     TabButtons: typeof import('./src/components/Controls/TabButtons.vue')['default']
-    TemplateGroupList: typeof import('./src/components/Templates/TemplateGroupList.vue')['default']
+    TemplateGroupCard: typeof import('./src/components/Templates/TemplateGroupCard.vue')['default']
     TemplatePageCard: typeof import('./src/components/Templates/TemplatePageCard.vue')['default']
     TemplatePageGrid: typeof import('./src/components/Templates/TemplatePageGrid.vue')['default']
     TemplatesDialog: typeof import('./src/components/Templates/TemplatesDialog.vue')['default']

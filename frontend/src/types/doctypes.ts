@@ -12,7 +12,28 @@ interface DocType {
     parenttype?: string;
     idx?: number;
   }
-  
+
+// Template picker shapes returned by builder.api.get_template_groups
+// (built from the Builder Hub catalog). Asset URLs are absolute.
+export interface TemplatePageSummary {
+	name: string;
+	page_title?: string;
+	preview?: string;
+	route?: string;
+	template_group?: string;
+	/** absolute URL of the published page on the hub; absent for local templates */
+	live_url?: string | null;
+}
+
+export interface TemplateGroup {
+	name: string;
+	title: string;
+	description?: string;
+	preview?: string;
+	order?: number | null;
+	pages: TemplatePageSummary[];
+}
+
 // Last updated: 2026-05-24 12:00:00.000000
 export interface BuilderVariable extends DocType {
 	/** Type: Select */
