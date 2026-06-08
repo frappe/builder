@@ -75,6 +75,7 @@ import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { TemplateGroup, TemplatePageSummary } from "@/types/doctypes";
 import { createResource, toast } from "frappe-ui";
+import { useTelemetry } from "frappe-ui/frappe";
 import { DialogDescription, DialogTitle } from "reka-ui";
 import { computed, ref, watch } from "vue";
 import PlusIcon from "~icons/lucide/plus";
@@ -84,6 +85,7 @@ import TemplatePageGrid from "./TemplatePageGrid.vue";
 const { showTemplatesDialog, lastTemplateGroup } = useDashboardState();
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
+const { capture } = useTelemetry();
 
 // "" = top-level gallery; a group name = drilled into that group's pages.
 // persisted so reopening the picker lands on the last template you viewed.
@@ -96,9 +98,11 @@ const activeGroup = computed<TemplateGroup | null>(
 const heading = computed(() => activeGroup.value?.title || "New page");
 
 watch(showTemplatesDialog, (open) => {
+	if (!open) return;
+	capture("builder_template_dialog_opened");
 	// revalidate on open — the cache (IndexedDB-backed) renders instantly
 	// but goes stale when new template groups are synced on migrate
-	if (open && !templateGroups.loading) {
+	if (!templateGroups.loading) {
 		templateGroups.fetch();
 	}
 });
@@ -120,6 +124,11 @@ const useTemplate = (page: TemplatePageSummary) => {
 			project_folder: builderStore.activeFolder || undefined,
 		})
 		.then((newPageName: string) => {
+			capture("builder_page_template_used", {
+				template_page: page.name,
+				template_group: page.template_group,
+				source: page.live_url ? "hub" : "local",
+			});
 			showTemplatesDialog.value = false;
 			router.push({ name: "builder", params: { pageId: newPageName }, force: true });
 			pageStore.setPage(newPageName);
