@@ -45,6 +45,17 @@ from builder.utils import (
 )
 
 
+def safe_segment(name):
+	"""Make a value safe for use as one filesystem path segment.
+
+	Replaces path separators and blocks empty/traversal values.
+	"""
+	segment = str(name).replace("/", "_").replace("\\", "_")
+	if segment in ("", ".", ".."):
+		frappe.throw(frappe._("Unsafe template fixture name: {0}").format(name))
+	return segment
+
+
 def get_templates_root(app="builder"):
 	return os.path.join(frappe.get_app_path(app), "builder_templates")
 
@@ -96,10 +107,11 @@ def import_template_pages(pages_path, group, publish=False):
 		return page_names
 
 	for fname in sorted(os.listdir(pages_path)):
-		page_file = os.path.join(pages_path, fname, f"{fname}.json")
+		safe_fname = safe_segment(fname)
+		page_file = os.path.join(pages_path, safe_fname, f"{safe_fname}.json")
 		if not os.path.isfile(page_file):
 			continue
-		with open(page_file, encoding="utf-8") as f:
+		with open(page_file, encoding="utf-8") as f:  # nosemgrep
 			fixture = frappe.parse_json(f.read())
 		page_name = fixture.get("name") or fname
 		import_file_by_path(page_file)
@@ -155,7 +167,7 @@ def export_template_group(group, target_app="builder"):
 
 	`target_app` selects which app's builder_templates/ dir + www/builder_assets/
 	to write to (the hub site sets template_target_app=builder_hub)."""
-	group_folder = frappe.scrub(group)
+	group_folder = safe_segment(frappe.scrub(group))
 	group_path = os.path.join(get_templates_root(target_app), group_folder)
 	paths = {
 		key: os.path.join(group_path, key)
@@ -219,10 +231,10 @@ def export_template_page(page_doc, pages_path, group_folder, target_app="builder
 			if new_url:
 				page_config[field] = new_url
 
-	export_name = frappe.scrub(str(page_doc.name))
+	export_name = safe_segment(frappe.scrub(str(page_doc.name)))
 	page_dir = os.path.join(pages_path, export_name)
 	os.makedirs(page_dir, exist_ok=True)
-	with open(os.path.join(page_dir, f"{export_name}.json"), "w", encoding="utf-8") as f:
+	with open(os.path.join(page_dir, f"{export_name}.json"), "w", encoding="utf-8") as f:  # nosemgrep
 		f.write(frappe.as_json(page_config, ensure_ascii=False))
 	return blocks
 
@@ -239,10 +251,10 @@ def export_template_component(component_id, components_path, group_folder, targe
 	# page references are site-local and meaningless in fixtures
 	component_config["for_web_page"] = None
 
-	export_name = frappe.scrub(str(component_doc.name)).replace("/", "_")
+	export_name = safe_segment(frappe.scrub(str(component_doc.name)))
 	component_dir = os.path.join(components_path, export_name)
 	os.makedirs(component_dir, exist_ok=True)
-	with open(os.path.join(component_dir, f"{export_name}.json"), "w", encoding="utf-8") as f:
+	with open(os.path.join(component_dir, f"{export_name}.json"), "w", encoding="utf-8") as f:  # nosemgrep
 		f.write(frappe.as_json(component_config, ensure_ascii=False))
 	return component_blocks
 
@@ -264,9 +276,10 @@ def export_template_variables(group, variables_path):
 			"dark_value": var.dark_value,
 			"group": var.group,
 		}
-		var_dir = os.path.join(variables_path, var.name)
+		safe_name = safe_segment(var.name)
+		var_dir = os.path.join(variables_path, safe_name)
 		os.makedirs(var_dir, exist_ok=True)
-		with open(os.path.join(var_dir, f"{var.name}.json"), "w", encoding="utf-8") as f:
+		with open(os.path.join(var_dir, f"{safe_name}.json"), "w", encoding="utf-8") as f:  # nosemgrep
 			f.write(frappe.as_json(var_config, ensure_ascii=False))
 
 
@@ -292,10 +305,10 @@ def export_template_fonts(fonts, fonts_path, group_folder, target_app="builder")
 			"font_name": font.font_name,
 			"font_file": font_file,
 		}
-		export_name = frappe.scrub(font.font_name)
+		export_name = safe_segment(frappe.scrub(font.font_name))
 		font_dir = os.path.join(fonts_path, export_name)
 		os.makedirs(font_dir, exist_ok=True)
-		with open(os.path.join(font_dir, f"{export_name}.json"), "w", encoding="utf-8") as f:
+		with open(os.path.join(font_dir, f"{export_name}.json"), "w", encoding="utf-8") as f:  # nosemgrep
 			f.write(frappe.as_json(font_config, ensure_ascii=False))
 
 
@@ -323,7 +336,7 @@ def update_template_manifest(group_path, page_names, title=None):
 	manifest_path = os.path.join(group_path, "template.json")
 	manifest = {}
 	if os.path.exists(manifest_path):
-		with open(manifest_path, encoding="utf-8") as f:
+		with open(manifest_path, encoding="utf-8") as f:  # nosemgrep
 			try:
 				manifest = json.load(f)
 			except ValueError:
@@ -341,21 +354,22 @@ def update_template_manifest(group_path, page_names, title=None):
 	pages += [{"name": name} for name in page_names if name not in known]
 	manifest["pages"] = pages
 
-	with open(manifest_path, "w", encoding="utf-8") as f:
+	with open(manifest_path, "w", encoding="utf-8") as f:  # nosemgrep
 		f.write(frappe.as_json(manifest, ensure_ascii=False))
 
 
 def delete_template_page_fixture(page_doc, app="builder"):
 	"""Remove a template page's fixture and assets (dev-mode on_trash). Shared
 	components/variables of the group are intentionally left in place."""
-	group_folder = frappe.scrub(str(page_doc.template_group))
+	group_folder = safe_segment(frappe.scrub(str(page_doc.template_group)))
 	group_path = os.path.join(get_templates_root(app), group_folder)
 
-	page_dir = os.path.join(group_path, "pages", frappe.scrub(str(page_doc.name)))
+	page_segment = safe_segment(frappe.scrub(str(page_doc.name)))
+	page_dir = os.path.join(group_path, "pages", page_segment)
 	if os.path.exists(page_dir):
 		shutil.rmtree(page_dir)
 
-	assets_dir = os.path.join(get_group_assets_root(group_folder, app), str(page_doc.name))
+	assets_dir = os.path.join(get_group_assets_root(group_folder, app), safe_segment(str(page_doc.name)))
 	if os.path.exists(assets_dir):
 		shutil.rmtree(assets_dir)
 
@@ -363,9 +377,10 @@ def delete_template_page_fixture(page_doc, app="builder"):
 	if os.path.isdir(pages_path):
 		remaining = []
 		for fname in sorted(os.listdir(pages_path)):
-			page_file = os.path.join(pages_path, fname, f"{fname}.json")
+			safe = safe_segment(fname)
+			page_file = os.path.join(pages_path, safe, f"{safe}.json")
 			if os.path.isfile(page_file):
-				with open(page_file, encoding="utf-8") as f:
+				with open(page_file, encoding="utf-8") as f:  # nosemgrep
 					remaining.append(frappe.parse_json(f.read()).get("name") or fname)
 		update_template_manifest(group_path, remaining)
 
@@ -374,10 +389,10 @@ def delete_template_page_fixture(page_doc, app="builder"):
 # manifest / assets helpers
 # ---------------------------------------------------------------------------
 def get_group_manifest(group_folder, app="builder"):
-	manifest_path = os.path.join(get_templates_root(app), group_folder, "template.json")
+	manifest_path = os.path.join(get_templates_root(app), safe_segment(group_folder), "template.json")
 	if not os.path.exists(manifest_path):
 		return {}
-	with open(manifest_path, encoding="utf-8") as f:
+	with open(manifest_path, encoding="utf-8") as f:  # nosemgrep
 		try:
 			return json.load(f)
 		except ValueError:
