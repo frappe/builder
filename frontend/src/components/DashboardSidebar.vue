@@ -12,11 +12,7 @@
 								items: [
 									{
 										label: 'New Page',
-										onClick: () =>
-											$router.push({
-												name: 'builder',
-												params: { pageId: 'new' },
-											}),
+										onClick: () => (showTemplatesDialog = true),
 										icon: 'lucide-plus',
 									},
 								],
@@ -184,6 +180,7 @@ import EditableSpan from "@/components/EditableSpan.vue";
 import FilesIcon from "@/components/Icons/Files.vue";
 import FolderIcon from "@/components/Icons/Folder.vue";
 import SettingsIcon from "@/components/Icons/SettingsGear.vue";
+import { useDashboardState } from "@/composables/useDashboardState";
 import { promptCreateFolder } from "@/utils/dialogs";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import useBuilderStore from "@/stores/builderStore";
@@ -201,6 +198,7 @@ const isDark = useDark({
 });
 const toggleDark = useToggle(isDark);
 const builderStore = useBuilderStore();
+const { showTemplatesDialog } = useDashboardState();
 const renamingFolder = ref("");
 
 const apps = createResource({

@@ -53,6 +53,7 @@ export function useBuilderEvents(
 	useEventListener(document, "copy", (e) => {
 		if (isTargetEditable(e) || canvasStore.editableBlock) return;
 		if (isDialogOpen() && canvasStore.requiresConfirmationForCopyingEntirePage) return;
+		if (window.getSelection()?.toString()) return;
 		copySelectedBlocksToClipboard(e);
 	});
 

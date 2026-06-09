@@ -14,6 +14,7 @@
 	</Dropdown>
 </template>
 <script setup lang="ts">
+import { useDashboardState } from "@/composables/useDashboardState";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
@@ -22,6 +23,7 @@ import { useDark, useToggle } from "@vueuse/core";
 import { Dropdown } from "frappe-ui";
 import { useRouter } from "vue-router";
 
+const { showTemplatesDialog } = useDashboardState();
 const pageStore = usePageStore();
 const isDark = useDark({
 	attribute: "data-theme",
@@ -53,7 +55,7 @@ const mainMenuOptions = [
 		items: [
 			{
 				label: "New Page",
-				onClick: () => router.push({ name: "builder", params: { pageId: "new" } }),
+				onClick: () => (showTemplatesDialog.value = true),
 				icon: "lucide-plus",
 			},
 			{

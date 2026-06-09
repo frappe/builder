@@ -1,6 +1,4 @@
 import os
-import time
-from typing import cast
 
 import duckdb
 import frappe
@@ -34,7 +32,7 @@ def get_date_filter(from_date: str | None = None, to_date: str | None = None) ->
 	if len(to_date) == 10:  # YYYY-MM-DD format
 		to_date += " 23:59:59"
 
-	return "creation >= ? AND creation <= ?", [from_date, to_date]
+	return "creation >= CAST(? AS TIMESTAMP) AND creation <= CAST(? AS TIMESTAMP)", [from_date, to_date]
 
 
 def get_empty_analytics():
@@ -85,7 +83,7 @@ def setup_duckdb_table(table_name=DUCKDB_TABLE):
 		)
 		db.register("df", df)
 		db.execute(
-			f"CREATE OR REPLACE TABLE {table_name} AS SELECT creation, CAST(CASE WHEN is_unique = '' OR is_unique IS NULL THEN '0' ELSE CAST(is_unique AS VARCHAR) END AS INTEGER) as is_unique, path, referrer, time_zone, user_agent FROM df"
+			f"CREATE OR REPLACE TABLE {table_name} AS SELECT TRY_CAST(creation AS TIMESTAMP) as creation, CAST(CASE WHEN is_unique = '' OR is_unique IS NULL THEN '0' ELSE CAST(is_unique AS VARCHAR) END AS INTEGER) as is_unique, CAST(path AS VARCHAR) as path, CAST(referrer AS VARCHAR) as referrer, CAST(time_zone AS VARCHAR) as time_zone, CAST(user_agent AS VARCHAR) as user_agent FROM df"
 		)
 		print(f"Successfully ingested {len(df)} records into DuckDB")
 
@@ -96,6 +94,15 @@ def ingest_web_page_views_to_duckdb(table_name=DUCKDB_TABLE):
 			f"SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '{table_name}'"
 		).fetchone()
 		if table_exists and table_exists[0] == 0:
+			setup_duckdb_table(table_name)
+			return
+
+		# Recreate table if creation column has a stale/incompatible type (not TIMESTAMP)
+		col_type = db.execute(
+			f"SELECT data_type FROM information_schema.columns WHERE table_name = '{table_name}' AND column_name = 'creation'"
+		).fetchone()
+		if col_type and col_type[0].upper() != "TIMESTAMP":
+			print(f"Recreating {table_name}: creation column type is {col_type[0]}, expected TIMESTAMP")
 			setup_duckdb_table(table_name)
 			return
 
@@ -131,7 +138,7 @@ def ingest_web_page_views_to_duckdb(table_name=DUCKDB_TABLE):
 				break
 
 			db.executemany(
-				f"INSERT INTO {table_name} (creation, is_unique, path, referrer, time_zone, user_agent) VALUES (?, CAST(COALESCE(NULLIF(?, ''), '0') AS INTEGER), ?, ?, ?, ?)",
+				f"INSERT INTO {table_name} (creation, is_unique, path, referrer, time_zone, user_agent) VALUES (TRY_CAST(? AS TIMESTAMP), CAST(COALESCE(NULLIF(?, ''), '0') AS INTEGER), ?, ?, ?, ?)",
 				records,
 			)
 
@@ -185,7 +192,7 @@ def get_interval_views_query(where_clause, interval, table_name=DUCKDB_TABLE):
 			COUNT(*) as total_page_views,
 			SUM(is_unique) as unique_page_views
 		FROM {table_name}
-		WHERE {where_clause}
+		WHERE ({where_clause}) AND creation IS NOT NULL
 		GROUP BY interval, strftime('{sort_fmt}', creation)
 		ORDER BY strftime('{sort_fmt}', creation)
 	"""
@@ -268,20 +275,24 @@ def get_top_pages(
 	to_date: str | None = None,
 	route_filter_type: str = "wildcard",
 ):
-	inner_clause, params = build_where_clause(route, from_date, to_date, route_filter_type)
-	where_clause = "" if inner_clause == "1=1" else f"WHERE {inner_clause}"
+	try:
+		inner_clause, params = build_where_clause(route, from_date, to_date, route_filter_type)
+		where_clause = "" if inner_clause == "1=1" else f"WHERE {inner_clause}"
 
-	with DuckDBConnection() as db:
-		q = f"""
-			SELECT path as route, COUNT(*) as view_count, SUM(is_unique) as unique_view_count
-			FROM {table_name}
-			{where_clause}
-			GROUP BY path
-			ORDER BY view_count DESC
-			LIMIT 20
-		"""
-		rows = db.execute(q, params).fetchall()
-		return [{"route": r[0], "view_count": r[1], "unique_view_count": r[2]} for r in rows]
+		with DuckDBConnection() as db:
+			q = f"""
+				SELECT path as route, COUNT(*) as view_count, SUM(is_unique) as unique_view_count
+				FROM {table_name}
+				{where_clause}
+				GROUP BY path
+				ORDER BY view_count DESC
+				LIMIT 20
+			"""
+			rows = db.execute(q, params).fetchall()
+			return [{"route": r[0], "view_count": r[1], "unique_view_count": r[2]} for r in rows]
+	except Exception as e:
+		frappe.log_error("DuckDB Analytics Error in top pages", str(e))
+		return []
 
 
 def get_top_referrers(

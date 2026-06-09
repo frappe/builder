@@ -5,6 +5,7 @@ import frappe
 import litellm
 import yaml
 from frappe import _
+from frappe.utils.telemetry import capture
 
 from builder.utils import has_page_write, to_compact_yaml
 
@@ -470,6 +471,7 @@ def enqueue_ai_job(fn, model=None, **kwargs):
 		now=True,
 		**kwargs,
 	)
+	capture("builder_ai_used", "builder")
 	frappe.local.response.http_status_code = 202
 	return {"status": "accepted"}
 

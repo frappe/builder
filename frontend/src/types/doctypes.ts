@@ -12,40 +12,63 @@ interface DocType {
     parenttype?: string;
     idx?: number;
   }
-  
-// Last updated: 2025-08-18 19:54:11.776268
+
+// Template picker shapes returned by builder.api.get_template_groups
+// (built from the Builder Hub catalog). Asset URLs are absolute.
+export interface TemplatePageSummary {
+	name: string;
+	page_title?: string;
+	preview?: string;
+	route?: string;
+	template_group?: string;
+	/** absolute URL of the published page on the hub; absent for local templates */
+	live_url?: string | null;
+}
+
+export interface TemplateGroup {
+	name: string;
+	title: string;
+	description?: string;
+	preview?: string;
+	order?: number | null;
+	pages: TemplatePageSummary[];
+}
+
+// Last updated: 2026-05-24 12:00:00.000000
 export interface BuilderVariable extends DocType {
-  /** Type: Select */
-  type?: 'Color' | 'Spacing';
-  /** Value: Data */
-  value: string;
-  /** Variable Name: Data */
-  variable_name: string;
-  /** Is Standard: Check */
-  is_standard: 0 | 1;
-  /** Dark Value: Data */
-  dark_value?: string;
+	/** Type: Select */
+	type?: "Color" | "Dimension";
+	/** Value: Data */
+	value: string;
+	/** Variable Name: Data */
+	variable_name: string;
+	/** Is Standard: Check */
+	is_standard: 0 | 1;
+	/** Dark Value: Data */
+	dark_value?: string;
+	/** Group: Data */
+	group?: string;
 }
 
 // Last updated: 2024-09-19 13:07:00.935349
 export interface BlockTemplate extends DocType {
-  /** Template Name: Data */
-  template_name: string;
-  /** Block: JSON */
-  block: any;
-  /** Preview: Data */
-  preview: string;
-  /** Category: Select */
-  category?: 'Structure' | 'Basic' | 'Typography' | 'Basic Forms' | 'Form parts' | 'Media' | 'Advanced';
-  /** Preview Width: Int */
-  preview_width?: number;
-  /** Preview Height: Int */
-  preview_height?: number;
-  /** Sort Order: Int */
-  sort_order?: number;
+	/** Template Name: Data */
+	template_name: string;
+	/** Block: JSON */
+	block: any;
+	/** Preview: Data */
+	preview: string;
+	/** Category: Select */
+	category?: "Structure" | "Basic" | "Typography" | "Basic Forms" | "Form parts" | "Media" | "Advanced";
+	/** Preview Width: Int */
+	preview_width?: number;
+	/** Preview Height: Int */
+	preview_height?: number;
+	/** Sort Order: Int */
+	sort_order?: number;
 }
 
-// Last updated: 2026-05-14 22:54:25.353324
+// Last updated: 2026-06-04 10:00:00.000000
 export interface BuilderPage extends DocType {
   /** Page Name: Data */
   page_name?: string;
@@ -77,6 +100,8 @@ export interface BuilderPage extends DocType {
   client_scripts: BuilderPageClientScript[];
   /** Is Template: Check */
   is_template: 0 | 1;
+  /** Template Group: Data */
+  template_group?: string;
   /** Favicon: Attach Image */
   favicon?: string;
   /** Authenticated Access: Check */
@@ -99,49 +124,49 @@ export interface BuilderPage extends DocType {
 
 // Last updated: 2024-11-13 20:08:54.615438
 export interface BuilderClientScript extends DocType {
-  /** Script: Code */
-  script: string;
-  /** Script Type: Autocomplete */
-  script_type: string;
-  /** Public URL: Read Only */
-  public_url?: string;
+	/** Script: Code */
+	script: string;
+	/** Script Type: Autocomplete */
+	script_type: string;
+	/** Public URL: Read Only */
+	public_url?: string;
 }
 
 // Last updated: 2024-11-13 20:08:24.187664
 export interface UserFont extends DocType {
-  /** Font Name: Data */
-  font_name?: string;
-  /** Font File: Attach */
-  font_file?: any;
+	/** Font Name: Data */
+	font_name?: string;
+	/** Font File: Attach */
+	font_file?: any;
 }
 
 // Last updated: 2025-11-11 11:51:16.422175
 export interface BuilderProjectFolder extends DocType {
-  /** Folder Name: Data */
-  folder_name?: string;
-  /** Is Standard: Check */
-  is_standard: 0 | 1;
+	/** Folder Name: Data */
+	folder_name?: string;
+	/** Is Standard: Check */
+	is_standard: 0 | 1;
 }
 
 // Last updated: 2023-11-21 12:47:20.938211
 export interface BuilderPageClientScript extends ChildDocType {
-  /** Builder Script: Link (Builder Client Script) */
-  builder_script: string;
+	/** Builder Script: Link (Builder Client Script) */
+	builder_script: string;
 }
 
 // Last updated: 2025-01-29 09:30:34.896956
 export interface BuilderComponent extends DocType {
-  /** Component Name: Data */
-  component_name?: string;
-  /** Block: JSON */
-  block?: any;
-  /** For Web Page: Link (Builder Page) */
-  for_web_page?: string;
-  /** Component ID: Data */
-  component_id?: string;
+	/** Component Name: Data */
+	component_name?: string;
+	/** Block: JSON */
+	block?: any;
+	/** For Web Page: Link (Builder Page) */
+	for_web_page?: string;
+	/** Component ID: Data */
+	component_id?: string;
 }
 
-// Last updated: 2026-01-24 12:49:59.610151
+// Last updated: 2026-06-05 16:00:00.000000
 export interface BuilderSettings extends DocType {
   /** Script: Code */
   script?: string;

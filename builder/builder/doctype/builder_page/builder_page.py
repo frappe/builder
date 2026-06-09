@@ -2,16 +2,12 @@
 # For license information, please see license.txt
 
 import copy
-import os
 import re
-import shutil
 from typing import Any
 
 import bs4 as bs
 import frappe
 import frappe.utils
-from frappe.modules import scrub
-from frappe.modules.export_file import export_to_files
 from frappe.utils import now, set_request
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
@@ -19,24 +15,22 @@ from frappe.utils.telemetry import capture
 from frappe.website.page_renderers.document_page import DocumentPage
 from frappe.website.path_resolver import evaluate_dynamic_routes
 from frappe.website.path_resolver import resolve_path as original_resolve_path
-from frappe.website.serve import get_response_content
 from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
 
+from builder.builder.doctype.builder_project_folder.builder_project_folder import is_system_activity
 from builder.builder.doctype.user_font.user_font import get_all_user_fonts
 from builder.export_import_standard_page import export_page_as_standard
 from builder.hooks import builder_path
 from builder.html_preview_image import generate_preview
+from builder.template_sync import delete_template_page_fixture, export_template_group
 from builder.utils import (
-	Block,
 	ColonRule,
 	camel_case_to_kebab_case,
 	clean_data,
-	copy_img_to_asset_folder,
 	escape_single_quotes,
 	execute_script,
 	get_builder_page_preview_file_paths,
-	get_template_assets_folder_path,
 	is_component_used,
 	sanitize_style_value,
 	split_styles,
@@ -126,6 +120,7 @@ class BuilderPage(WebsiteGenerator):
 		published: DF.Check
 		published_at: DF.Datetime | None
 		route: DF.Data | None
+		template_group: DF.Data | None
 	# end: auto-generated types
 
 	def onload(self):
@@ -168,6 +163,21 @@ class BuilderPage(WebsiteGenerator):
 				self.autoname()
 			self.route = f"pages/{self.name}"
 
+	def validate(self):
+		super().validate()  # WebsiteGenerator route normalization
+
+		# pages of shipped template groups can only be edited in developer mode
+		if (
+			self.is_template
+			and self.template_group
+			and not frappe.conf.get("developer_mode")
+			and not is_system_activity()
+		):
+			frappe.throw(
+				frappe._("Template pages can only be modified in developer mode."),
+				frappe.PermissionError,
+			)
+
 	def on_update(self):
 		if self.has_value_changed("route"):
 			if self.route and (":" in self.route or "<" in self.route):
@@ -190,8 +200,17 @@ class BuilderPage(WebsiteGenerator):
 			if frappe.get_cached_value("Builder Settings", "Builder Settings", "home_page") == self.route:
 				frappe.db.set_value("Builder Settings", "Builder Settings", "home_page", None)
 
-		if frappe.conf.developer_mode and self.is_template:
-			save_as_template(self)
+		if (
+			frappe.conf.developer_mode
+			and self.is_template
+			and self.template_group
+			and not is_system_activity()
+		):
+			# target app is the hub on the hub site (template_target_app=builder_hub),
+			# builder by default — keeps builder from importing the hub (circular)
+			export_template_group(
+				self.template_group, target_app=frappe.conf.get("template_target_app") or "builder"
+			)
 
 		if frappe.conf.developer_mode and self.is_standard and self.app:
 			export_page_as_standard(self.name, target_app=self.app)
@@ -202,15 +221,14 @@ class BuilderPage(WebsiteGenerator):
 		clear_cache(self.route)
 
 	def on_trash(self):
-		if self.is_template and frappe.conf.developer_mode:
-			page_template_folder = os.path.join(
-				frappe.get_app_path("builder"), "builder", "builder_page_template", scrub(str(self.name))
-			)
-			if os.path.exists(page_template_folder):
-				shutil.rmtree(page_template_folder)
-			assets_path = get_template_assets_folder_path(self)
-			if os.path.exists(assets_path):
-				shutil.rmtree(assets_path)
+		if self.is_template and self.template_group:
+			if frappe.conf.developer_mode:
+				delete_template_page_fixture(self, app=frappe.conf.get("template_target_app") or "builder")
+			elif not is_system_activity():
+				frappe.throw(
+					frappe._("Template pages can only be deleted in developer mode."),
+					frappe.PermissionError,
+				)
 
 	def add_comment(self, comment_type="Comment", text=None, comment_email=None, comment_by=None):
 		if comment_type in ["Attachment Removed", "Attachment"]:
@@ -262,7 +280,7 @@ class BuilderPage(WebsiteGenerator):
 				"Builder Settings", "Builder Settings", "disable_auto_dark_mode"
 			)
 
-		page_data = self.get_page_data()
+		page_data = self._get_page_data(for_render=True)
 		if page_data.get("title"):
 			context.title = page_data.get("page_title")
 
@@ -271,10 +289,11 @@ class BuilderPage(WebsiteGenerator):
 		if context.preview and self.draft_blocks:
 			blocks = self.draft_blocks
 
-		content, style, fonts, has_block_script = get_block_html(blocks)
+		content, style, fonts, has_block_script, has_dual_mode_image = get_block_html(blocks)
 
-		if self.dynamic_route or page_data or has_block_script:
+		if self.dynamic_route or page_data or has_block_script or self.page_data_script:
 			context.no_cache = 1
+		context.has_dual_mode_image = has_dual_mode_image
 
 		self.set_custom_font(context, fonts)
 		context.fonts = fonts
@@ -374,11 +393,20 @@ class BuilderPage(WebsiteGenerator):
 
 	@frappe.whitelist()
 	def get_page_data(self, route_variables: dict | None = None) -> dict:
+		return self._get_page_data(route_variables=route_variables, for_render=False)
+
+	def _get_page_data(self, route_variables: dict | None = None, for_render: bool = False) -> dict:
 		if route_variables:
 			frappe.form_dict.update({k: v for k, v in route_variables.items()})
 		page_data = frappe._dict()
 		if self.page_data_script:
-			_locals = dict(data=frappe._dict(), page=frappe._dict())
+
+			def redirect(location: str, http_status_code: int = 302):
+				if for_render:
+					frappe.local.flags.redirect_location = location
+					raise frappe.Redirect(http_status_code)
+
+			_locals = dict(data=frappe._dict(), page=frappe._dict(), redirect=redirect)
 			execute_script(self.page_data_script, _locals, self.name)
 			page_data.update(_locals["data"])
 			page_data.update(_locals["page"])
@@ -391,15 +419,26 @@ class BuilderPage(WebsiteGenerator):
 	def generate_page_preview_image(self, html=None):
 		public_path, local_path = get_builder_page_preview_file_paths(self)
 		if not html:
-			set_request(method="GET", path=self.route)
-			frappe.local.request.for_preview = True
-			html = get_response_content()
+			html = self.get_preview_html()
 
 		generate_preview(
 			html,
 			local_path,
 		)
 		self.db_set("preview", public_path, commit=True, update_modified=False)
+
+	def get_preview_html(self) -> str:
+		"""Render this page in preview mode (uses draft_blocks when present), so a
+		preview can be generated for unpublished/draft pages too — not just for
+		pages reachable via their published route."""
+		set_request(method="GET", path=f"/{self.route or ''}")
+		frappe.local.request.for_preview = True
+		frappe.local.no_cache = 1
+		renderer = BuilderPageRenderer(path="")
+		renderer.docname = self.name
+		renderer.doctype = "Builder Page"
+		renderer.init_context()
+		return str(renderer.render().data, "utf-8")
 
 	def set_custom_font(self, context, font_map):
 		all_user_fonts = get_all_user_fonts()
@@ -451,61 +490,6 @@ def replace_component_in_blocks(blocks, target_component, replace_with) -> list[
 	return blocks
 
 
-def save_as_template(page_doc: BuilderPage):
-	# move all assets to www/builder_assets/{page_name}
-	if page_doc.draft_blocks:
-		page_doc.publish()
-	if not page_doc.template_name:
-		page_doc.template_name = page_doc.page_title
-
-	blocks: list[Block] = frappe.parse_json(page_doc.blocks or "[]")  # type: ignore
-	for block in blocks:
-		copy_img_to_asset_folder(block, page_doc)
-
-	page_doc.db_set("draft_blocks", None)
-	page_doc.db_set("blocks", frappe.as_json(blocks, indent=0))
-	page_doc.reload()
-	export_to_files(
-		record_list=[["Builder Page", page_doc.name, "builder_page_template"]], record_module="builder"
-	)
-
-	components = set()
-
-	def get_component(block):
-		if block.get("extendedFromComponent"):
-			component = block.get("extendedFromComponent")
-			components.add(component)
-			# export nested components as well
-			component_doc = frappe.get_cached_doc("Builder Component", component)
-			if component_doc.block:
-				component_block = frappe.parse_json(component_doc.block)
-				get_component(component_block)
-		for child in block.get("children", []) or []:
-			get_component(child)
-
-	for block in blocks:
-		get_component(block)
-
-	if components:
-		export_to_files(
-			record_list=[["Builder Component", c, "builder_component"] for c in components],
-			record_module="builder",
-		)
-
-	scripts = frappe.get_all(
-		"Builder Page Client Script",
-		filters={"parent": page_doc.name},
-		fields=["name", "builder_script"],
-	)
-	if scripts:
-		export_to_files(
-			record_list=[
-				["Builder Client Script", s.builder_script, "builder_client_script"] for s in scripts
-			],
-			record_module="builder",
-		)
-
-
 @frappe.whitelist()
 def get_block_data(
 	block_id: str,
@@ -527,7 +511,7 @@ def get_block_data(
 	return block_data
 
 
-def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
+def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool, bool]:
 	"""
 	Main entry point for converting blocks to HTML.
 
@@ -535,7 +519,7 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 		blocks: JSON string or list of block dictionaries
 
 	#### Returns:
-		Tuple of (`html_content`, `css_styles`, `font_map`, `has_block_script`)
+		Tuple of (`html_content`, `css_styles`, `font_map`, `has_block_script`, `has_dual_mode_image`)
 	"""
 	blocks = frappe.parse_json(blocks)
 	if not isinstance(blocks, list):
@@ -551,6 +535,7 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 		"style_tag": style_tag,
 		"font_map": font_map,
 		"has_block_script": False,
+		"has_dual_mode_image": False,
 		"standard_props_stack": {},  # prop_name -> list of prop_info
 		"global_script_tag": soup.new_tag("script"),
 		"used_block_scripts": set(),
@@ -572,7 +557,13 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 		html = wrap_html_with_context(str(tag), block_context)
 		html_parts.append(html)
 
-	return "".join(html_parts), str(style_tag), font_map, shared_state["has_block_script"]
+	return (
+		"".join(html_parts),
+		str(style_tag),
+		font_map,
+		shared_state["has_block_script"],
+		shared_state["has_dual_mode_image"],
+	)
 
 
 def build_tag(
@@ -739,8 +730,10 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 			dark_source = soup.new_tag("source")
 			dark_source["srcset"] = dark_src
 			dark_source["media"] = "(prefers-color-scheme: dark)"
+			dark_source["data-scheme"] = "dark"  # used by manual theme toggle script
 			picture_tag.append(dark_source)
 			picture_tag.attrs["style"] = "display: contents;"
+			state["has_dual_mode_image"] = True
 
 			tag = soup.new_tag("img")
 			tag.attrs = {k: v for k, v in attributes.items() if k != "darkSrc"}

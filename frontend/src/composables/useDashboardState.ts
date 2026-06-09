@@ -5,6 +5,10 @@ const searchFilter = ref("");
 const selectionMode = ref(false);
 const selectedPages = ref(new Set<string>());
 const treeExpanded = ref(true);
+const showTemplatesDialog = ref(false);
+
+// remembers the template group the picker was last drilled into ("" = gallery)
+const lastTemplateGroup = useStorage("lastTemplateGroup", "") as Ref<string>;
 
 const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list" | "tree">;
 const typeFilter = useStorage("typeFilter", "") as Ref<"" | "draft" | "published" | "unpublished" | "all">;
@@ -21,6 +25,8 @@ export function useDashboardState() {
 		selectionMode,
 		selectedPages,
 		treeExpanded,
+		showTemplatesDialog,
+		lastTemplateGroup,
 		displayType,
 		typeFilter,
 		orderBy,
