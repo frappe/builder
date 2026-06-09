@@ -231,7 +231,11 @@ const usePageStore = defineStore("pageStore", {
 
 		savePage() {
 			const builderStore = useBuilderStore();
-			if (builderStore.readOnlyMode) return;
+			if (builderStore.readOnlyMode) {
+				// callers may have optimistically set this before invoking savePage
+				this.savingPage = false;
+				return;
+			}
 
 			// Own the flag here (not only in the editor watch) so every caller —
 			// including direct savePage() calls — keeps waitTillPageIsSaved reliable.

@@ -64,7 +64,7 @@ import { BuilderPage } from "@/types/doctypes";
 import { watchDebounced } from "@vueuse/core";
 import { useShortcut } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
-import { onActivated, onMounted, onUnmounted, ref, watch } from "vue";
+import { onActivated, onDeactivated, onMounted, onUnmounted, ref, watch } from "vue";
 
 const routeTreeRef = ref<InstanceType<typeof RouteTreeView>>();
 
@@ -80,6 +80,17 @@ const {
 	expandTreeFn,
 	collapseTreeFn,
 } = useDashboardState();
+
+onActivated(() => {
+	builderStore.realtime.doctype_subscribe("Builder Page");
+	builderStore.realtime.on("list_update", (e) => {
+		if (e.doctype == "Builder Page") fetchPages();
+	});
+});
+
+onDeactivated(() => {
+	builderStore.realtime.doctype_unsubscribe("Builder Page");
+});
 
 onMounted(() => {
 	expandTreeFn.value = () => routeTreeRef.value?.expandAll();
@@ -98,8 +109,15 @@ const orderMap = {
 	alphabetically_z_a: "page_title desc",
 };
 
+let freshlyMounted = true;
 onActivated(() => {
 	capture("builder_dashboard_page_visited");
+	// the dashboard is kept alive — refresh the list when returning to it so
+	// pages created elsewhere (e.g. from a template) show up without a reload
+	if (!freshlyMounted) {
+		fetchPages();
+	}
+	freshlyMounted = false;
 });
 
 watch(
