@@ -5,30 +5,32 @@
 			<DialogDescription class="sr-only">
 				Start from a blank page or pick a page from a template.
 			</DialogDescription>
-			<div class="relative flex max-h-[85vh] min-h-[560px] flex-col overflow-hidden bg-surface-white">
+			<div class="relative flex max-h-[85vh] min-h-[660px] flex-col overflow-hidden">
 				<!-- header -->
-				<div class="px-8 pb-4 pt-7">
+				<div class="px-8 pb-4 pr-5 pt-7">
 					<Button
 						v-if="activeGroup"
 						icon-left="lucide-arrow-left"
 						variant="ghost"
-						class="-ml-2 mb-3 !text-ink-gray-6 hover:!text-ink-gray-9"
+						class="-ml-3 mb-5"
 						@click="selectedGroup = ''">
 						Back to all templates
 					</Button>
 					<div class="mb-2 flex flex-col gap-2">
-						<h2 class="text-xl font-semibold leading-none text-ink-gray-9">{{ heading }}</h2>
-						<div
-							class="flex max-w-2xl flex-col gap-2 text-sm leading-relaxed text-ink-gray-5"
-							v-if="activeGroup?.description">
-							{{ activeGroup.description }}
-							<Button class="w-fit" variant="outline" :loading="importingAll" @click="importAll">
-								<template #prefix>
-									<LucideImport class="size-4" />
-								</template>
-								Import all
+						<div class="flex items-center justify-between">
+							<h2 class="text-xl font-semibold leading-none text-ink-gray-9">{{ heading }}</h2>
+							<Button
+								v-if="activeGroup"
+								variant="outline"
+								:loading="importingAll"
+								icon-left="lucide-copy-plus"
+								@click="importAll">
+								Use all {{ activeGroup?.pages.length }} pages
 							</Button>
 						</div>
+						<p class="max-w-2xl text-sm leading-relaxed text-ink-gray-5" v-if="activeGroup?.description">
+							{{ activeGroup.description }}
+						</p>
 						<p class="text-p-sm text-ink-gray-5" v-else-if="!activeGroup">
 							Start from a blank page or pick a template.
 						</p>
@@ -77,7 +79,7 @@
 <script setup lang="ts">
 import Dialog from "@/components/Controls/Dialog.vue";
 import { useDashboardState } from "@/composables/useDashboardState";
-import { templateGroups } from "@/data/webPage";
+import { templateGroups, webPages } from "@/data/webPage";
 import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
@@ -168,11 +170,15 @@ const importAll = () => {
 				page_count: pageNames.length,
 			});
 			showTemplatesDialog.value = false;
+			// land on the dashboard with the freshly imported pages so the user can
+			// pick which one to open (Import all creates several pages at once)
+			webPages.reload();
+			router.push({ name: "home" });
 		});
 	toast.promise(promise, {
-		loading: "Importing all pages...",
-		success: () => "All pages imported",
-		error: () => "Could not import pages",
+		loading: "Adding all pages...",
+		success: () => "All pages added",
+		error: () => "Could not add pages",
 	});
 	promise.finally(() => {
 		importingAll.value = false;

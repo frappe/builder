@@ -292,10 +292,12 @@ def create_page_from_bundle(bundle: dict, project_folder: str | None = None) -> 
 
 	page = bundle.get("page")
 	assert isinstance(page, dict)
+	preview = page.get("preview")
 	new_page = frappe.get_doc(
 		{
 			"doctype": "Builder Page",
 			"page_title": page.get("page_title") or "My Page",
+			"preview": preview or None,
 			"draft_blocks": frappe.as_json(page.get("blocks") or []),
 			"page_data_script": page.get("page_data_script"),
 			"head_html": page.get("head_html"),
@@ -316,13 +318,15 @@ def create_page_from_bundle(bundle: dict, project_folder: str | None = None) -> 
 		new_script.insert(ignore_permissions=True)
 		new_page.append("client_scripts", {"builder_script": new_script.name})
 	new_page.insert()
-	frappe.enqueue_doc(
-		"Builder Page",
-		new_page.name,
-		"generate_page_preview_image",
-		queue="short",
-		enqueue_after_commit=True,
-	)
+	# only fall back to async generation when the template carried no preview
+	if not preview:
+		frappe.enqueue_doc(
+			"Builder Page",
+			new_page.name,
+			"generate_page_preview_image",
+			queue="short",
+			enqueue_after_commit=True,
+		)
 	return new_page.name or ""
 
 
