@@ -248,13 +248,20 @@ def hub_url() -> str:
 	return (frappe.conf.get("template_hub_url") or DEFAULT_HUB_URL).rstrip("/")
 
 
-def hub_get(method: str, **params):
+@redis_cache(ttl=600)
+def hub_get_cached(method: str, params_key: tuple):
 	# make_get_request (not builder's make_safe_get_request, which blocks private
 	# IPs and would reject a localhost hub). Trust = admin-set hub URL.
 	from frappe.integrations.utils import make_get_request
 
-	resp = make_get_request(f"{hub_url()}/api/method/builder_hub.api.{method}", params=params or None)
+	resp = make_get_request(
+		f"{hub_url()}/api/method/builder_hub.api.{method}", params=dict(params_key) or None
+	)
 	return resp.get("message") if resp else None
+
+
+def hub_get(method: str, **params):
+	return hub_get_cached(method, tuple(sorted(params.items())))
 
 
 @frappe.whitelist()
