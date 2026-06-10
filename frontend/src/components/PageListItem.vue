@@ -1,7 +1,7 @@
 <template>
-	<router-link :to="{ name: 'builder', params: { pageId: page.page_name } }" class="h-fit w-full">
+	<router-link :to="{ name: 'builder', params: { pageId: page.page_name } }" class="group block h-fit w-full">
 		<div
-			class="group relative flex w-full justify-between overflow-hidden rounded-2xl border-b-[1px] border-outline-gray-1 p-3 hover:cursor-pointer hover:bg-surface-gray-1"
+			class="group relative flex w-full justify-between overflow-hidden rounded-2xl p-3 hover:cursor-pointer hover:bg-surface-gray-1"
 			:class="{
 				'bg-surface-gray-2': selected,
 			}">
@@ -62,6 +62,7 @@
 				</PageActionsDropdown>
 			</div>
 		</div>
+		<div class="mx-4 border-b border-outline-gray-1 group-last:hidden"></div>
 	</router-link>
 </template>
 <script setup lang="ts">
