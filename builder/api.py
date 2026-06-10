@@ -495,17 +495,16 @@ def reorder_component_client_scripts(script_order: list[str]):
 
 
 @frappe.whitelist()
-def get_component_data(component_name: str, props: dict | str | None = None, block_id: str | None = None) -> dict:
+def get_component_data(component_name: str, props: dict | str | None = None) -> dict:
 	"""Execute a component's data script and return the resulting data.
 
 	Args:
 		component_name: The name/ID of the Builder Component
 		props: Resolved props to pass to the data script
-		block_id: Optional block ID for caching per-instance data
 
 	Returns:
 		A dict containing the component's data
 	"""
 	from builder.utils import get_component_data as _get_component_data
 
-	return _get_component_data(component_name, props, block_id)
+	return _get_component_data(component_name, props)

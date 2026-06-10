@@ -228,7 +228,6 @@ const useComponentStore = defineStore("componentStore", {
 				params: {
 					component_name: componentId,
 					props: JSON.stringify(props),
-					block_id: blockId,
 				},
 			})
 				.fetch()
