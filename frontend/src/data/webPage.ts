@@ -1,4 +1,4 @@
-import { createListResource } from "frappe-ui";
+import { createListResource, createResource } from "frappe-ui";
 
 const webPages = createListResource({
 	method: "GET",
@@ -28,30 +28,9 @@ const webPages = createListResource({
 	pageLength: 50,
 });
 
-const templates = createListResource({
-	method: "GET",
-	doctype: "Builder Page",
-	fields: [
-		"name",
-		"route",
-		"blocks",
-		"page_name",
-		"preview",
-		"page_title",
-		"creation",
-		"published",
-		"dynamic_route",
-		"modified",
-		"is_template",
-		"template_name",
-		"owner",
-	],
-	filters: {
-		is_template: 1,
-	},
-	cache: "templates",
-	orderBy: "modified desc",
-	pageLength: 50,
+const templateGroups = createResource({
+	url: "builder.api.get_template_groups",
+	cache: "template-groups",
 });
 
 const searchablePages = createListResource({
@@ -66,4 +45,4 @@ const searchablePages = createListResource({
 	pageLength: 10,
 });
 
-export { searchablePages, templates, webPages };
+export { searchablePages, templateGroups, webPages };
