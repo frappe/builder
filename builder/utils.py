@@ -496,7 +496,6 @@ def get_component_data(component_name: str, props: dict | str | None = None) -> 
 
 	execute_script(component_doc.component_data_script, _locals, component_name)
 
-	print(_locals["component"])
 	return _locals["component"]
 
 
