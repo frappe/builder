@@ -55,7 +55,7 @@ import {
 	getPropValue,
 } from "@/utils/helpers";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
-import { computed, inject, nextTick, onMounted, reactive, ref, useAttrs, watch, watchEffect } from "vue";
+import { computed, inject, nextTick, onMounted, onUnmounted, reactive, ref, useAttrs, watch, watchEffect } from "vue";
 import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
 import DataLoaderBlock from "./DataLoaderBlock.vue";
@@ -410,7 +410,10 @@ onMounted(async () => {
 			reactive({ ghostScale: canvasProps?.scale || 1 }),
 		);
 	}
-	isMounted.value = true;
+	isMounted.value = true;	
+});
+
+onUnmounted(() => {
 	if (props.block.isExtendedFromComponent()) {
 		componentStore.deleteComponentData(
 			props.block.extendedFromComponent || (props.block.isChildOfComponent as string),
