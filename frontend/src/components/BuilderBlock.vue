@@ -462,7 +462,14 @@ if (!props.preview) {
 		() => canvasStore.activeCanvas?.selectedBlockIds,
 		() => {
 			if (canvasStore.activeCanvas?.isSelected(props.block)) {
-				isSelected.value = true;
+				if (props.block.isImage()) {
+					// delay setting selected state for images to accecpt double click for triggering image upload in editor
+					setTimeout(() => {
+						isSelected.value = true;
+					}, 200);
+				} else {
+					isSelected.value = true;
+				}
 			} else {
 				isSelected.value = false;
 			}
