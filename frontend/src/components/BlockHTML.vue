@@ -14,9 +14,7 @@ import { computed, ref } from "vue";
 const component = ref<HTMLElement | null>(null);
 const props = defineProps<{
 	block: Block;
-	uid: string;
 	data?: Record<string, unknown> | null;
-	blockData?: Record<string, unknown> | null;
 	defaultProps?: Record<string, unknown> | null;
 }>();
 
@@ -27,20 +25,20 @@ const hasBlockProps = computed(() => {
 const getDataScriptValue = (path: string): any => {
 	return getDataForKey(props.data || {}, path);
 };
-const getBlockDataScriptValue = (path: string): any => {
-	return getDataForKey(props.blockData || {}, path);
-};
 
 const getDynamicContent = () => {
 	let innerHTML = null as string | null;
-	if (props.data || props.blockData || hasBlockProps.value) {
+	if (props.data || hasBlockProps.value) {
 		if (props.block.getDataKey("property") === "innerHTML") {
 			let value;
 			if (props.block.getDataKey("comesFrom") === "props") {
 				// props are checked first as unavailablity of comesFrom means it comes from dataScript (legacy)
-				value = getPropValue(props.block.getDataKey("key"), props.block);
-			} else if (props.block.getDataKey("comesFrom") === "blockDataScript") {
-				value = getBlockDataScriptValue(props.block.getDataKey("key"));
+				value = getPropValue(
+					props.block.getDataKey("key"),
+					props.block,
+					getDataScriptValue,
+					props.defaultProps,
+				);
 			} else {
 				value = getDataScriptValue(props.block.getDataKey("key"));
 			}
@@ -54,9 +52,7 @@ const getDynamicContent = () => {
 			?.forEach((dataKeyObj: BlockDataKey) => {
 				let value;
 				if (dataKeyObj.comesFrom === "props") {
-					value = getPropValue(dataKeyObj.key as string, props.block, props.uid);
-				} else if (dataKeyObj.comesFrom === "blockDataScript") {
-					value = getBlockDataScriptValue(dataKeyObj.key as string);
+					value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue, props.defaultProps);
 				} else {
 					value = getDataScriptValue(dataKeyObj.key as string);
 				}

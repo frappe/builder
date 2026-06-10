@@ -513,19 +513,6 @@ export function useBuilderEvents(
 		{
 			key: "l",
 			ctrl: true,
-			triggeredOn: "hold",
-			description: "Highlight Blocks with Data Scripts",
-			group: "View",
-			onHold: () => {
-				builderStore.highlightBlocksWithDataScripts = true;
-			},
-			onRelease: () => {
-				builderStore.highlightBlocksWithDataScripts = false;
-			},
-		},
-		{
-			key: "l",
-			ctrl: true,
 			shift: true,
 			triggeredOn: "hold",
 			description: "Highlight Blocks with Client Scripts",

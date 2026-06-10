@@ -198,10 +198,7 @@ const isExpanded = (block: Block) => {
 };
 
 const showCodeIcon = (block: Block) => {
-	return (
-		(builderStore.highlightBlocksWithClientScripts && block.getBlockClientScript()) ||
-		(builderStore.highlightBlocksWithDataScripts && block.getBlockDataScript())
-	);
+	return builderStore.highlightBlocksWithClientScripts && block.getBlockClientScript();
 };
 
 // TODO: Refactor this!
