@@ -345,6 +345,9 @@ defineExpose({
 <style scoped>
 .__text_block__ :deep([contenteditable="true"]) {
 	caret-color: currentcolor;
+	/* blocks inherit `select-none`; re-enable native text selection while editing */
+	user-select: text;
+	-webkit-user-select: text;
 }
 
 .__text_block__ :deep(.ProseMirror) {
