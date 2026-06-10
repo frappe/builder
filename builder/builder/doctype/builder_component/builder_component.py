@@ -37,7 +37,17 @@ class BuilderComponent(Document):
 		capture("builder_component_created", "builder")
 
 	def on_update(self):
-		self.queue_action("clear_page_cache")
+		# Skip the background cache-clear during bulk imports (install / migrate /
+		# import_doc). queue_action enqueues a job AND locks the doc, which can raise
+		# DocumentLockedError mid-import — e.g. when create_page_from_template
+		# import_doc's a hub template's components. Nothing to clear on a fresh import.
+		if not (
+			frappe.flags.in_import
+			or frappe.flags.in_install
+			or frappe.flags.in_migrate
+			or frappe.flags.in_patch
+		):
+			self.queue_action("clear_page_cache")
 		self.update_exported_component()
 
 	def clear_page_cache(self):

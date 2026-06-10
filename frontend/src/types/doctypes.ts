@@ -1,18 +1,39 @@
 interface DocType {
-    name: string;
-    creation: string;
-    modified: string;
-    owner: string;
-    modified_by: string;
-  }
+	name: string;
+	creation: string;
+	modified: string;
+	owner: string;
+	modified_by: string;
+}
 
-  interface ChildDocType extends DocType {
-    parent?: string;
-    parentfield?: string;
-    parenttype?: string;
-    idx?: number;
-  }
-  
+interface ChildDocType extends DocType {
+	parent?: string;
+	parentfield?: string;
+	parenttype?: string;
+	idx?: number;
+}
+
+// Template picker shapes returned by builder.api.get_template_groups
+// (built from the Builder Hub catalog). Asset URLs are absolute.
+export interface TemplatePageSummary {
+	name: string;
+	page_title?: string;
+	preview?: string;
+	route?: string;
+	template_group?: string;
+	/** absolute URL of the published page on the hub; absent for local templates */
+	live_url?: string | null;
+}
+
+export interface TemplateGroup {
+	name: string;
+	title: string;
+	description?: string;
+	preview?: string;
+	order?: number | null;
+	pages: TemplatePageSummary[];
+}
+
 // Last updated: 2026-05-24 12:00:00.000000
 export interface BuilderVariable extends DocType {
 	/** Type: Select */
@@ -47,7 +68,7 @@ export interface BlockTemplate extends DocType {
 	sort_order?: number;
 }
 
-// Last updated: 2026-05-14 22:54:25.353324
+// Last updated: 2026-06-04 10:00:00.000000
 export interface BuilderPage extends DocType {
 	/** Page Name: Data */
 	page_name?: string;
@@ -79,6 +100,8 @@ export interface BuilderPage extends DocType {
 	client_scripts: BuilderPageClientScript[];
 	/** Is Template: Check */
 	is_template: 0 | 1;
+	/** Template Group: Data */
+	template_group?: string;
 	/** Favicon: Attach Image */
 	favicon?: string;
 	/** Authenticated Access: Check */
@@ -130,8 +153,19 @@ export interface BuilderPageClientScript extends ChildDocType {
 	/** Builder Script: Link (Builder Client Script) */
 	builder_script: string;
 }
+// Last updated: 2025-01-29 09:30:34.896956
+export interface BuilderComponent extends DocType {
+	/** Component Name: Data */
+	component_name?: string;
+	/** Block: JSON */
+	block?: any;
+	/** For Web Page: Link (Builder Page) */
+	for_web_page?: string;
+	/** Component ID: Data */
+	component_id?: string;
+}
 
-// Last updated: 2026-01-24 12:49:59.610151
+// Last updated: 2026-06-05 16:00:00.000000
 export interface BuilderSettings extends DocType {
 	/** Script: Code */
 	script?: string;
@@ -165,22 +199,22 @@ export interface BuilderSettings extends DocType {
 
 // Last updated: 2026-06-09 10:00:00.000000
 export interface BuilderComponentClientScript extends ChildDocType {
-  /** Builder Script: Link (Builder Client Script) */
-  builder_script: string;
+	/** Builder Script: Link (Builder Client Script) */
+	builder_script: string;
 }
 
 // Last updated: 2025-01-29 09:30:34.896956
 export interface BuilderComponent extends DocType {
-  /** Component Name: Data */
-  component_name?: string;
-  /** Block: JSON */
-  block?: any;
-  /** For Web Page: Link (Builder Page) */
-  for_web_page?: string;
-  /** Component ID: Data */
-  component_id?: string;
-  /** Component Data Script: Code */
-  component_data_script?: string;
-  /** Component Client Scripts: Table MultiSelect (Builder Component Client Script) */
-  component_client_scripts: BuilderComponentClientScript[];
+	/** Component Name: Data */
+	component_name?: string;
+	/** Block: JSON */
+	block?: any;
+	/** For Web Page: Link (Builder Page) */
+	for_web_page?: string;
+	/** Component ID: Data */
+	component_id?: string;
+	/** Component Data Script: Code */
+	component_data_script?: string;
+	/** Component Client Scripts: Table MultiSelect (Builder Component Client Script) */
+	component_client_scripts: BuilderComponentClientScript[];
 }
