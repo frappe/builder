@@ -13,6 +13,12 @@ export const COMPONENT_DATA_FRAGMENT_KEY = "__fragment__";
 
 export type ComponentDataStore = Record<string, Record<string, Record<string, any>>>;
 
+const componentDataRequestSeq = new Map<string, number>();
+
+function getComponentDataRequestKey(componentId: string, instanceKey: string) {
+	return `${componentId}::${instanceKey}`;
+}
+
 const useComponentStore = defineStore("componentStore", {
 	state: () => ({
 		components: <BlockComponent[]>[],
@@ -210,6 +216,12 @@ const useComponentStore = defineStore("componentStore", {
 		},
 		async setComponentData(componentId: string, props: Record<string, any> = {}, blockId: string | null = null) {
 			const instanceKey = blockId ?? COMPONENT_DATA_FRAGMENT_KEY;
+			const requestKey = getComponentDataRequestKey(componentId, instanceKey);
+			const requestSeq = (componentDataRequestSeq.get(requestKey) ?? 0) + 1;
+			componentDataRequestSeq.set(requestKey, requestSeq);
+
+			const isLatestRequest = () => componentDataRequestSeq.get(requestKey) === requestSeq;
+
 			return createResource({
 				url: "builder.api.get_component_data",
 				method: "GET",
@@ -221,12 +233,18 @@ const useComponentStore = defineStore("componentStore", {
 			})
 				.fetch()
 				.then((data: { [key: string]: any }) => {
+					if (!isLatestRequest()) {
+						return;
+					}
 					if (!this.componentData[componentId]) {
 						this.componentData[componentId] = {};
 					}
 					this.componentData[componentId][instanceKey] = data || {};
 				})
 				.catch((e: { message: string }) => {
+					if (!isLatestRequest()) {
+						return;
+					}
 					console.error("Failed to fetch component data:", e.message);
 					if (!this.componentData[componentId]) {
 						this.componentData[componentId] = {};
