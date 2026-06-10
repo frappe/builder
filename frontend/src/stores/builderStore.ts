@@ -32,7 +32,6 @@ const useBuilderStore = defineStore("builderStore", {
 			optionsPanelWidth: 57,
 		},
 		leftPanelActiveTab: <LeftSidebarTabOption>"Layers",
-		rightPanelActiveTab: <RightSidebarTabOption>"Properties",
 		showRightPanel: <boolean>true,
 		showLeftPanel: <boolean>true,
 		showHTMLDialog: false,
@@ -50,6 +49,7 @@ const useBuilderStore = defineStore("builderStore", {
 		highlightBlocksWithClientScripts: false,
 		showSettingsDialog: false,
 		settingsActiveTab: <string>"page_general",
+		openImageUpload: false,
 	}),
 	getters: {
 		isAIEnabled(): boolean {
