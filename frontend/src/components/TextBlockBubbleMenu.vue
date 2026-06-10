@@ -151,9 +151,8 @@ import type { Editor } from "@tiptap/vue-3";
 import { BubbleMenu } from "@tiptap/vue-3/menus";
 import { vOnClickOutside } from "@vueuse/components";
 import { debouncedWatch } from "@vueuse/core";
-import { debounce } from "frappe-ui";
+import { debounce, toast } from "frappe-ui";
 import { computed, nextTick, ref, watch, type Ref } from "vue";
-import { toast } from "frappe-ui";
 
 const props = defineProps<{
 	block: Block;
@@ -215,6 +214,8 @@ const setLink = (value: string | null, closeModal = true) => {
 };
 
 const setHeading = (level: 1 | 2 | 3) => {
+	props.block.setBaseStyle("font-size", level === 1 ? "2rem" : level === 2 ? "1.5rem" : "1.25rem");
+	props.block.setBaseStyle("font-weight", "bold");
 	const tag = `h${level}`;
 	if (props.block.element === tag) {
 		props.block.element = "p";
