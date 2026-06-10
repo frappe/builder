@@ -125,6 +125,7 @@ const handleChange = (value: string) => {
 };
 
 const handleSave = (value: string) => {
+	console.log(88)
 	if (props.readonly) return;
 
 	if (props.type === "JSON" && value) {

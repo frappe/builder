@@ -11,7 +11,12 @@
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
-import { getDataArray, getDefaultPropsList, getParentProps, getRepeaterScopedData } from "@/utils/helpers";
+import {
+	getDataArray,
+	getDefaultPropsList,
+	getParentProps,
+	getRepeaterScopedData,
+} from "@/utils/helpers";
 import { computed, ref, watch } from "vue";
 
 const props = defineProps<{
@@ -31,6 +36,7 @@ const pageDataArray = computed(() => {
 	}
 	return getDataArray(getRepeaterScopedData(currentBlock, pageStore.pageData));
 });
+// TODO: add component data
 const ownProps = computed(() => {
 	const currentBlock = blockController.getFirstSelectedBlock();
 	if (!currentBlock) {
@@ -63,6 +69,14 @@ const getOptions = async (query: string) => {
 			});
 		}
 	});
+	// componentDataArray.value.map((prop) => {
+	// 	if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
+	// 		options.push({
+	// 			label: prop,
+	// 			value: `${prop}--componentData`,
+	// 		});
+	// 	}
+	// });
 	const combinedProps = [...new Set([...ownProps.value, ...parentProps.value])];
 
 	combinedProps.map((prop) => {

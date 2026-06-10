@@ -128,7 +128,7 @@ const blockController = {
 		} else {
 			// TODO: handle it better
 			let key: string | undefined = "__initial__";
-			let comesFrom: "props" | "dataScript" | undefined = undefined;
+			let comesFrom: "props" | "dataScript" | "componentData" | undefined = undefined;
 			canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 				const condition: BlockVisibilityCondition | undefined = block.getVisibilityCondition();
 				if (key === "__initial__") {
@@ -328,11 +328,17 @@ const blockController = {
 			block.unsetLink();
 		});
 	},
-	getComponentRootBlock: (block?: Block): Block => {
+	getComponentRootBlock: (block?: Block): Block | null => {
 		if (!block) {
 			block = blockController.getFirstSelectedBlock();
 		}
 		const editingMode = canvasStore.editingMode;
+
+		if (editingMode == "page") {
+			if (block && !block.isExtendedFromComponent()) {
+				return null;
+			}
+		}
 
 		while (block && block.isExtendedFromComponent()) {
 			if (block.extendedFromComponent) break;

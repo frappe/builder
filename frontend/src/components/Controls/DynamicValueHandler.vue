@@ -80,9 +80,13 @@ import {
 } from "@/utils/helpers";
 import { computed, ref } from "vue";
 import MiddleTruncate from "../MiddleTruncate.vue";
+import useComponentStore from "@/stores/componentStore.js";
+import useCanvasStore from "@/stores/canvasStore.js";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
+const componentStore = useComponentStore();
+const canvasStore = useCanvasStore();
 
 type DynamicValueItem = {
 	key: string;
@@ -107,12 +111,23 @@ const currentBlock = computed(() => {
 	return props.block || blockController.getFirstSelectedBlock();
 });
 
+// Page Data Array maybe not be allowed in fragment mode
 const pageDataArray = computed(() => {
+	if (canvasStore.editingMode == "fragment") return [];
 	return getDataArray(getRepeaterScopedData(currentBlock.value, pageStore.pageData));
 });
 
 const defaultProps = computed(() => {
 	return getDefaultPropsList(currentBlock.value!, blockController);
+});
+
+const componentData = computed(() => {
+	if (canvasStore.editingMode != "fragment") return {};
+	return componentStore.getComponentInstanceData(canvasStore.fragmentData.fragmentId!, canvasStore.fragmentData.block?.blockId);
+});
+
+const componentDataArray = computed(() => {
+	return getDataArray(getRepeaterScopedData(currentBlock.value, componentData.value, "componentData"));
 });
 
 const filteredBlockProps = computed(() => {
@@ -139,12 +154,21 @@ const filteredBlockProps = computed(() => {
 
 const filteredItems = computed(() => {
 	const pageDataArrayItems = pageDataArray.value.map((item) => ({ key: item, comesFrom: "dataScript" }));
+	const componentDataArrayItems = componentDataArray.value.map((item) => ({
+		key: item,
+		comesFrom: "componentData",
+	}));
 	const propItems = filteredBlockProps.value.map((item) => ({ key: item, comesFrom: "props" }));
 	const defaultPropsKeys = Object.keys(defaultProps.value || {}).map((item) => ({
 		key: item,
 		comesFrom: "props",
 	}));
-	const allItems = [...pageDataArrayItems, ...propItems, ...defaultPropsKeys] as DynamicValueItem[];
+	const allItems = [
+		...pageDataArrayItems,
+		...componentDataArrayItems,
+		...propItems,
+		...defaultPropsKeys,
+	] as DynamicValueItem[];
 	if (!searchQuery.value) return allItems;
 	const query = searchQuery.value.toLowerCase();
 	return allItems.filter(
@@ -162,6 +186,8 @@ const selectedItem = ref<DynamicValueItem | null>(props.selectedValue || null);
 const getValue = (item: DynamicValueItem): any => {
 	if (item.comesFrom == "props") {
 		return getPropValue(item.key, currentBlock.value, getDataScriptValue, defaultProps.value);
+	} else if (item.comesFrom == "componentData") {
+		return getComponentDataValue(item.key);
 	} else {
 		return getDataScriptValue(item.key);
 	}
@@ -171,6 +197,12 @@ const getDataScriptValue = (path: string): any => {
 	const collectionObject = getRepeaterScopedData(currentBlock.value, pageStore.pageData);
 	return path.split(".").reduce((obj: Record<string, any>, key: string) => obj?.[key], collectionObject);
 };
+
+const getComponentDataValue = (path: string): any => {
+	const collectionObject = getRepeaterScopedData(currentBlock.value, componentData.value, "componentData");
+	return path.split(".").reduce((obj: Record<string, any>, key: string) => obj?.[key], collectionObject);
+};
+
 function selectAndSetItem(item: DynamicValueItem) {
 	selectedItem.value = item;
 	emit("setDynamicValue", item);

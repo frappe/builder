@@ -548,17 +548,20 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 	html_parts = []
 
 	for block in blocks:
-		block = extend_block_with_component(block)
+		block, component_id = extend_block_with_component(block)
 		props = process_block_props(block, None, shared_state["standard_props_stack"])
-		block_context = get_block_context(block, props)
+		block_context = get_block_context(block, props, component_id)
 
 		tag = build_tag(block, shared_state)
 		# Add global script to the top
 		tag.insert(0, shared_state["global_script_tag"])
 
 		html = wrap_html_with_context(str(tag), block_context)
+
 		cleanup_props_stack(props, shared_state["standard_props_stack"])
+
 		html_parts.append(html)
+		print("".join(html_parts))
 
 	return (
 		"".join(html_parts),
@@ -611,7 +614,7 @@ def build_tag(
 	return tag
 
 
-def get_block_context(block: dict, props: dict) -> dict:
+def get_block_context(block: dict, props: dict, component_id: str | None) -> dict:
 	"""
 	Get the Jinja template context for a block.
 
@@ -623,6 +626,7 @@ def get_block_context(block: dict, props: dict) -> dict:
 
 	return {
 		"block_id": block.get("blockId"),
+		"component_id": component_id,
 		"all_props": all_props,
 		"passed_down_props": passed_down_props,
 	}
@@ -693,6 +697,8 @@ def get_dynamic_props_template(
 	"""Get a Jinja template reference for dynamic properties."""
 	if comes_from == "props":
 		key = jinja_safe_key(f"props.{prop_value}")
+	elif comes_from == "componentData":
+		key = jinja_safe_key(f"component.{prop_value}")
 	else:  # dataScript
 		if data_key:
 			base_key = extract_data_key(data_key)
@@ -841,9 +847,9 @@ def render_children(
 ):
 	"""Render (non-repeater) children."""
 	for child in block.get("children", []) or []:
-		child = extend_block_with_component(child)
+		child, component_id = extend_block_with_component(child)
 		child_props = process_block_props(child, data_key, state["standard_props_stack"])
-		child_context = get_block_context(child, child_props)
+		child_context = get_block_context(child, child_props, component_id)
 		child_context["visibility_key"] = get_visibility_condition_key(child, data_key)
 
 		child_tag = build_tag(child, state, data_key, ancestor_font=ancestor_font)
@@ -861,10 +867,10 @@ def render_repeater_children(
 	tag.append(f"{{% for {loop_info['loop_var']} in {loop_info['iterator_key']} %}}")
 
 	child = block.get("children")[0]
-	child = extend_block_with_component(child)
+	child, component_id = extend_block_with_component(child)
 
 	child_props = process_block_props(child, loop_info["data_key"], state["standard_props_stack"])
-	child_context = get_block_context(child, child_props)
+	child_context = get_block_context(child, child_props, component_id)
 
 	if block.get("dataKey", {}).get("comesFrom") == "props":
 		data_key_key = block.get("dataKey").get("key")
@@ -899,6 +905,13 @@ def get_loop_info(block: dict, data_key: dict | None, props_stack: dict) -> dict
 			safe_key = f"{safe_key}.items()"
 
 		return {"loop_var": loop_var, "iterator_key": safe_key, "data_key": data_key}
+
+	elif comes_from == "componentData":
+		return {
+			"loop_var": "component",
+			"iterator_key": jinja_safe_key(f"component.{iterator_key}"),
+			"data_key": data_key,
+		}
 
 	else:  # dataScript
 		if data_key:
@@ -952,6 +965,8 @@ def get_visibility_condition_key(block: dict, data_key: dict | None) -> str | No
 	# Get key based on source
 	if comes_from == "props":
 		return jinja_safe_key(f"props.{key}")
+	elif comes_from == "componentData":
+		return jinja_safe_key(f"component.{key}")
 	else:  # dataScript
 		if data_key:
 			return f"{extract_data_key(data_key)}.{key}"
@@ -960,34 +975,57 @@ def get_visibility_condition_key(block: dict, data_key: dict | None) -> str | No
 
 def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 	"""Attach client-side JavaScript to the block."""
-	script = block.get("blockClientScript")
-	if not script:
-		return
+	scripts: dict = {}
+	if block.get("blockClientScripts"):
+		script = block.get("blockClientScript")
+		script_unique_id = block.get("blockId")
+		if block.get("isBlockClientScriptOverridden"):
+			script_unique_id = frappe.generate_hash(length=8)
+		scripts[str(script_unique_id)] = {"script": script, "type": "JavaScript", "from" : "block"}
 
-	# Generate unique identifier for the script
-	script_unique_id = block.get("blockId")
-	if block.get("isBlockClientScriptOverridden"):
-		script_unique_id = frappe.generate_hash(length=8)
+	if block.get("componentScripts"):
+		for component_script in block.get("componentScripts"):
+			script = component_script["script"]
+			script_unique_id = component_script["name"]
+			scripts[str(script_unique_id)] = {"script": script, "type": component_script["type"], "from" : "component"}
 
-	# Add global function definition (only once)
-	if script_unique_id not in state["used_block_scripts"]:
-		state["global_script_tag"].append(
-			f"function client_script_{script_unique_id}(props) {{{script}}}\n"
-		)
-		state["used_block_scripts"].add(script_unique_id)
+	for script_unique_id, script in scripts.items():
+		# Add global function definition (only once)
+		if script_unique_id not in state["used_block_scripts"]:
+			if script["type"] == "JavaScript":
+				if script["from"] == "block":
+					state["global_script_tag"].append(f"function client_script_{script_unique_id}(props) {{{script['script']}}}\n")
+				else:
+					state["global_script_tag"].append(f"function client_script_{script_unique_id}(component_data, props) {{{script['script']}}}\n")
+			else:
+				state["global_script_tag"].append(f"<style>{script['script']}</style>\n")
+			state["used_block_scripts"].add(script_unique_id)
 
-	# Add data attribute for selecting this specific block
-	tag.attrs["data-block-uid"] = "{{ unique_hash }}"
+		# Add data attribute for selecting this specific block
+		tag.attrs["data-block-uid"] = "{{ unique_hash }}"
 
-	# Add local script to call the function
-	local_script = state["soup"].new_tag("script")
-	local_script.string = (
-		f"(client_script_{script_unique_id}).call("
-		f"document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]'), "
-		f"{{{{ props | to_safe_json }}}}"
-		f");"
-	)
-	tag.append(local_script)
+		# Add local script to call the function
+		if script["type"] == "JavaScript":
+			local_script = state["soup"].new_tag("script")
+			if script["from"] == "block":
+				local_script.string = (
+					f"(client_script_{script_unique_id}).call("
+					f"document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]'), "
+					f"{{{{ props | to_safe_json }}}}"
+					f");"
+				)
+			else:
+				local_script.string = (
+					f"(client_script_{script_unique_id})("
+					f"{{{{ component.component_data | to_safe_json }}}}, "
+					f"{{{{ props | to_safe_json }}}}"
+					f");"
+				)
+		else:
+			local_script = state["soup"].new_tag("style")
+			local_script.string = script['script']
+
+		tag.append(local_script)
 
 
 def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
@@ -1011,7 +1049,16 @@ def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
 	if context.get("visibility_key"):
 		parent.append(f"{{% if {context['visibility_key']} %}}")
 
+	if context.get("component_id"):
+		print(777)
+		parent.append(
+			f"{{% with component = get_component_data('{context['component_id']}', props, block_id) %}}"
+		)
+
 	parent.append(child)
+
+	if context.get("component_id"):
+		parent.append("{% endwith %}")
 
 	if context.get("visibility_key"):
 		parent.append("{% endif %}")
@@ -1073,6 +1120,8 @@ def get_dynamic_value_key(dynamic_value_doc: dict, original_key: str, data_key: 
 
 	if comes_from == "props":
 		return jinja_safe_key(f"props.{original_key}")
+	elif comes_from == "componentData":
+		return jinja_safe_key(f"component.{original_key}")
 	else:  # dataScript
 		key = dynamic_value_doc.get("key")
 		if data_key:
@@ -1098,23 +1147,37 @@ def wrap_html_with_context(html: str, context: dict) -> str:
 	return html
 
 
-def extend_block_with_component(block: dict) -> dict:
+def extend_block_with_component(block: dict) -> tuple[dict, str | None]:
 	if not block.get("extendedFromComponent"):
-		return block
+		return block, None
 
+	component_id = block.get("extendedFromComponent")
 	component = frappe.get_cached_value(
 		"Builder Component",
-		block["extendedFromComponent"],
-		["block", "name"],
+		component_id,
+		["block", "name", "component_client_scripts"],
 		as_dict=True,
 	)
 
 	component_block = frappe.parse_json(component.block if component else "{}")
 	if component_block:
 		extend_block(component_block, block)
-		return component_block
+		if component.component_client_scripts:
+			script_names = set()
+			for script_row in component.component_client_scripts:
+				script_names.add(script_row.builder_script)
+			component_scripts = []
+			for script_name in script_names:
+				print(script_name, "script_name")
+				script_doc = frappe.get_cached_doc("Builder Client Script", script_name)
+				if script_doc:
+					component_scripts.append(
+						{"name": frappe.scrub(script_doc.name), "script": script_doc.script, "type": script_doc.script_type}
+					)
+			component_block["componentScripts"] = component_scripts
+		return component_block, component_id
 
-	return block
+	return block, None
 
 
 def wrap_with_media_query(style_string, device):
@@ -1303,6 +1366,7 @@ def extend_block(block, overridden_block):
 		else:
 			extended_children.append(overridden_child)
 	block["children"] = extended_children
+	print(block.get("extendedFromComponent"), "hello")
 	return block
 
 

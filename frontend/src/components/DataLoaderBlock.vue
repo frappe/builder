@@ -8,6 +8,7 @@
 		<BuilderBlock
 			v-else
 			:data="repeatingFrom == 'dataScript' ? _data : data"
+			:componentData="repeatingFrom == 'componentData' ? _data : componentData"
 			:defaultProps="repeatingFrom == 'props' ? _data : null"
 			:block="block.children[0]"
 			:preview="Number(index) !== 0 || preview"
@@ -22,7 +23,10 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import usePageStore from "@/stores/pageStore";
-import { getDataForKey, getStandardPropValue } from "@/utils/helpers";
+import {
+	getDataForKey,
+	getStandardPropValue,
+} from "@/utils/helpers";
 import { Ref, computed, ref } from "vue";
 import BuilderBlock from "./BuilderBlock.vue";
 import blockController from "@/utils/blockController";
@@ -36,12 +40,15 @@ const props = withDefaults(
 		preview?: boolean;
 		breakpoint?: string;
 		data?: Record<string, any> | null;
+		componentData?: Record<string, any> | null;
 		readonly?: boolean;
 	}>(),
 	{
 		preview: false,
 		breakpoint: "desktop",
 		readonly: false,
+		data: null,
+		componentData: null,
 	},
 );
 
@@ -60,6 +67,12 @@ const blockRepeaterData = computed(() => {
 			return data.slice(0, 100);
 		}
 		return data;
+	} else if (repeatingFrom.value === "componentData" && key) {
+		const compData = getDataForKey(props.componentData || {}, key);
+		if (Array.isArray(compData)) {
+			return compData.slice(0, 100);
+		}
+		return compData || [];
 	} else if (repeatingFrom.value == "props" && key) {
 		const defaultProps: BlockProps[] = [];
 		const componentRoot = blockController.getComponentRootBlock(props.block);
@@ -106,6 +119,7 @@ const blockRepeaterData = computed(() => {
 });
 
 const getRepeaterIndex = (index: number | string) => {
+	console.log(repeatingFrom.value)
 	if (props.repeaterIndex !== undefined) {
 		const parsedPropIndex =
 			typeof props.repeaterIndex === "string" ? parseInt(props.repeaterIndex, 10) : props.repeaterIndex;

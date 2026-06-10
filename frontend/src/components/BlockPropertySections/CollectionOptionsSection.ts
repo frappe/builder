@@ -1,4 +1,6 @@
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
+import useCanvasStore from "@/stores/canvasStore";
+import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
 import { getRepeaterScopedData } from "@/utils/helpers";
@@ -6,13 +8,34 @@ import { computed, h } from "vue";
 
 const keyOptions = computed(() => {
 	const pageStore = usePageStore();
+	const componentStore = useComponentStore();
+	const canvasStore = useCanvasStore();
+
 	let result: { label: string; value: string; prefix: any }[] = [];
 
 	const repeatablePageDataKeys: string[] = [];
+	const repeatableComponentDataKeys: string[] = [];
 
-	const pageDataCollectionObject = getRepeaterScopedData(
+	const pageDataCollectionObject = canvasStore.editingMode == "fragment" ? {} : getRepeaterScopedData(
 		blockController.getFirstSelectedBlock(),
 		pageStore.pageData,
+	);
+
+	let componetData: Record<string, any> = {};
+
+	const selectedBlock = blockController.getFirstSelectedBlock();
+	const componentRoot = blockController.getComponentRootBlock(selectedBlock);
+	if (componentRoot) {
+		let componentId = componentRoot.extendedFromComponent!;
+		if (canvasStore.editingMode == "fragment") {
+			componentId = canvasStore.fragmentData.fragmentId!;
+		}
+		componetData = componentStore.getComponentInstanceData(componentId, componentRoot.blockId);
+	}
+
+	const componentDataCollectionObject = getRepeaterScopedData(
+		blockController.getFirstSelectedBlock(),
+		componetData,
 	);
 
 	const isInsideRepeater = blockController.getFirstSelectedBlock()?.isInsideRepeater();
@@ -38,11 +61,12 @@ const keyOptions = computed(() => {
 	}
 
 	processObject(pageDataCollectionObject, "", repeatablePageDataKeys);
+	processObject(componentDataCollectionObject, "", repeatableComponentDataKeys);
 
 	const isPropsBasedRepeater = isInsideRepeater && repeaterDataKeyComesFrom == "props";
 	const repeatableProps: string[] = [];
 
-	const propsOfComponentRoot = blockController.getComponentRootBlock()?.getBlockProps();
+	const propsOfComponentRoot = blockController.getComponentRootBlock(blockController.getFirstSelectedBlock())?.getBlockProps();
 
 	if (propsOfComponentRoot && !isPropsBasedRepeater) {
 		Object.entries(propsOfComponentRoot).forEach(([key, value]) => {
@@ -56,6 +80,13 @@ const keyOptions = computed(() => {
 		result.push({
 			label: item,
 			value: `${item}--dataScript`,
+			prefix: h("span", { class: "lucide-zap size-3", "aria-hidden": "true" }),
+		});
+	});
+	repeatableComponentDataKeys.forEach((item) => {
+		result.push({
+			label: item,
+			value: `${item}--componentData`,
 			prefix: h("span", { class: "lucide-zap size-3", "aria-hidden": "true" }),
 		});
 	});

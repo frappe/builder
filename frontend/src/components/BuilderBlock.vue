@@ -13,6 +13,7 @@
 		ref="component">
 		<BuilderBlock
 			:data="data"
+			:componentData="resolvedComponentData"
 			:defaultProps="defaultProps"
 			:block="child"
 			:breakpoint="breakpoint"
@@ -21,6 +22,7 @@
 			:isChildOfComponent="block.isExtendedFromComponent() || isChildOfComponent"
 			:key="child.blockId"
 			:repeater-index="repeaterIndex"
+			:parent-block-uid="uidToUse"
 			v-for="child in block.getChildren().filter((child) => child.isVisible(breakpoint))" />
 	</component>
 	<teleport to="#overlay" v-if="canvasProps?.overlayElement && !preview && Boolean(canvasProps)">
@@ -42,6 +44,7 @@ import type Block from "@/block";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
+import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import { setFont } from "@/utils/fontManager";
 import {
@@ -60,6 +63,7 @@ import TextBlock from "./TextBlock.vue";
 
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
+const componentStore = useComponentStore();
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
 const attrs = useAttrs();
 const isMounted = ref(false);
@@ -74,8 +78,10 @@ const props = withDefaults(
 		preview?: boolean;
 		readonly?: boolean;
 		data?: Record<string, any> | null;
+		componentData?: Record<string, any> | null;
 		defaultProps?: Record<string, any> | null;
 		repeaterIndex?: string | number | null;
+		parentBlockUid?: string | null;
 	}>(),
 	{
 		isChildOfComponent: false,
@@ -83,10 +89,24 @@ const props = withDefaults(
 		preview: false,
 		readonly: false,
 		data: null,
+		componentData: null,
 		defaultProps: null,
 		repeaterIndex: null,
+		parentBlockUid: null,
 	},
 );
+
+const resolvedComponentData = computed(() => {
+	if (props.block.isExtendedFromComponent()) {
+		if (props.block.extendedFromComponent) {
+			return componentStore.getComponentInstanceData(props.block.extendedFromComponent, uidToUse);
+		}
+	} else if (canvasStore.editingMode == "fragment" && !props.block.getParentBlock()) {
+		console.log(canvasStore.fragmentData.fragmentId!, uidToUse, "kk");
+		return componentStore.getComponentInstanceData(canvasStore.fragmentData.fragmentId!, uidToUse);
+	}
+	return props.componentData;
+});
 
 defineOptions({
 	inheritAttrs: false,
@@ -138,6 +158,10 @@ const getDataScriptValue = (path: string): any => {
 	return getDataForKey(props.data || {}, path);
 };
 
+const getComponentDataValue = (path: string): any => {
+	return getDataForKey(props.componentData || {}, path);
+};
+
 const attributes = computed(() => {
 	const RESTRICTED_ATTRIBS = ["data-block-id", "data-block-uid", "data-breakpoint"];
 	let additionalAttributes: Record<string, any> = {};
@@ -182,10 +206,15 @@ const attributes = computed(() => {
 		attribs.preview = props.preview;
 		attribs.breakpoint = props.breakpoint;
 		attribs.data = props.data;
+		attribs.componentData = props.componentData;
 		attribs.defaultProps = props.defaultProps;
 	}
 
-	if (props.data || hasBlockProps.value) {
+	if (
+		props.data ||
+		hasBlockProps.value ||
+		(props.componentData && Object.keys(props.componentData).length > 0)
+	) {
 		if (props.block.getDataKey("type") === "attribute") {
 			let value;
 			if (props.block.getDataKey("comesFrom") === "props") {
@@ -194,6 +223,7 @@ const attributes = computed(() => {
 					props.block,
 					getDataScriptValue,
 					props.defaultProps,
+					getComponentDataValue,
 				);
 			} else {
 				value = getDataScriptValue(props.block.getDataKey("key") as string);
@@ -210,7 +240,15 @@ const attributes = computed(() => {
 				const property = dataKeyObj.property as string;
 				let value;
 				if (dataKeyObj.comesFrom === "props") {
-					value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue, props.defaultProps);
+					value = getPropValue(
+						dataKeyObj.key as string,
+						props.block,
+						getDataScriptValue,
+						props.defaultProps,
+						getComponentDataValue,
+					);
+				} else if (dataKeyObj.comesFrom === "componentData") {
+					value = getComponentDataValue(dataKeyObj.key as string);
 				} else {
 					value = getDataScriptValue(dataKeyObj.key as string);
 				}
@@ -238,7 +276,11 @@ const target = computed(() => {
 
 const styles = computed(() => {
 	let dynamicStyles = {} as { [key: string]: string };
-	if (props.data || hasBlockProps.value) {
+	if (
+		props.data ||
+		hasBlockProps.value ||
+		(props.componentData && Object.keys(props.componentData).length > 0)
+	) {
 		if (props.block.getDataKey("type") === "style") {
 			let value;
 			if (props.block.getDataKey("comesFrom") === "props") {
@@ -247,6 +289,7 @@ const styles = computed(() => {
 					props.block,
 					getDataScriptValue,
 					props.defaultProps,
+					getComponentDataValue,
 				);
 			} else {
 				value = getDataForKey(props.data as Object, props.block.getDataKey("key") as string);
@@ -264,7 +307,15 @@ const styles = computed(() => {
 				const property = dataKeyObj.property as string;
 				let value;
 				if (dataKeyObj.comesFrom === "props") {
-					value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue, props.defaultProps);
+					value = getPropValue(
+						dataKeyObj.key as string,
+						props.block,
+						getDataScriptValue,
+						props.defaultProps,
+						getComponentDataValue,
+					);
+				} else if (dataKeyObj.comesFrom === "componentData") {
+					value = getComponentDataValue(dataKeyObj.key as string);
 				} else {
 					value = getDataForKey(props.data as Object, dataKeyObj.key as string);
 				}
@@ -360,37 +411,31 @@ onMounted(async () => {
 		);
 	}
 	isMounted.value = true;
+	if (props.block.isExtendedFromComponent()) {
+		componentStore.deleteComponentData(
+			props.block.extendedFromComponent || (props.block.isChildOfComponent as string),
+			uidToUse,
+		);
+	}
 });
 
 const allResolvedProps = computed(() => {
-	if (!isMounted.value) {
-		return {};
-	}
-	const defaultProps = Object.entries(props.defaultProps || {}).reduce(
-		(acc, [key, value]) => {
-			acc[key] = value.value;
-			return acc;
-		},
-		{} as Record<string, any>,
-	);
+	const defaultProps = Object.entries(props.defaultProps || {}).reduce((acc, [key, value]) => {
+		acc[key] = value.value;
+		return acc;
+	}, {} as Record<string, any>);
 
 	const blockProps = Object.entries({
 		...props.block.getBlockProps(),
-	}).reduce(
-		(acc, [key]) => {
-			acc[key] = getPropValue(key, props.block, getDataScriptValue, props.defaultProps);
-			return acc;
-		},
-		{} as Record<string, any>,
-	);
+	}).reduce((acc, [key]) => {
+		acc[key] = getPropValue(key, props.block, getDataScriptValue, props.defaultProps, getComponentDataValue);
+		return acc;
+	}, {} as Record<string, any>);
 
-	const parentProps = Object.entries(getParentProps(props.block)).reduce(
-		(acc, [key, value]) => {
-			acc[key] = getPropValue(key, value.block!, getDataScriptValue, props.defaultProps);
-			return acc;
-		},
-		{} as Record<string, any>,
-	);
+	const parentProps = Object.entries(getParentProps(props.block)).reduce((acc, [key, value]) => {
+		acc[key] = getPropValue(key, value.block!, getDataScriptValue, props.defaultProps, getComponentDataValue);
+		return acc;
+	}, {} as Record<string, any>);
 
 	return {
 		...parentProps,
@@ -398,6 +443,27 @@ const allResolvedProps = computed(() => {
 		...defaultProps,
 	};
 });
+
+watch(
+	[
+		() => props.block.extendedFromComponent,
+		() => canvasStore.editingMode,
+		() => props.componentData,
+		() => uidToUse,
+		allResolvedProps,
+	],
+	([componentId, editingMode]) => {
+		if (!componentId) {
+			if (editingMode == "fragment" && !props.block.getParentBlock()) {
+				componentId = canvasStore.fragmentData.fragmentId!;
+			} else {
+				return;
+			}
+		}
+		componentStore.setComponentData(componentId, allResolvedProps.value, uidToUse);
+	},
+	{ immediate: true },
+);
 
 // Execute client script
 watch(
@@ -441,8 +507,17 @@ const hiddenDueToVisibilityCondition = computed(() => {
 	if (comesFrom == "dataScript") {
 		const value = getDataScriptValue(key as string);
 		return !Boolean(value);
+	} else if (comesFrom == "componentData") {
+		const value = getComponentDataValue(key as string);
+		return !Boolean(value);
 	} else {
-		const value = getPropValue(key as string, props.block, getDataScriptValue, props.defaultProps);
+		const value = getPropValue(
+			key as string,
+			props.block,
+			getDataScriptValue,
+			props.defaultProps,
+			getComponentDataValue,
+		);
 		return !Boolean(value);
 	}
 });

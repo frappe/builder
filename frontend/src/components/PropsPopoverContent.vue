@@ -296,10 +296,11 @@ function filterDataOptions(dataArray: string[], query: string) {
 }
 
 const getOptions = async (query: string) => {
-	return filterDataOptions(pageDataArray.value, query).map((opt) => ({
+	const pageOptions = filterDataOptions(pageDataArray.value, query).map((opt) => ({
 		...opt,
 		value: `${opt.value}--dataScript`,
 	}));
+	return pageOptions;
 };
 
 const handleIsStandardChange = async (newVal: string) => {

@@ -1,5 +1,6 @@
 import Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
+import useComponentStore, { COMPONENT_DATA_FRAGMENT_KEY } from "@/stores/componentStore";
 import { BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { dialog, FileUploadHandler, toast } from "frappe-ui";
@@ -588,11 +589,16 @@ function getCollectionKeys(block: any, type: BlockDataKey["comesFrom"] = "dataSc
 	return keys;
 }
 
-// Drill into page data for blocks inside repeaters (uses the first item of each collection)
-function getRepeaterScopedData(block: Block | null, pageData: Record<string, any>): Record<string, any> {
-	let collectionObject = pageData || {};
+
+// Drill into data for blocks inside repeaters (uses the first item of each collection)
+function getRepeaterScopedData(
+	block: Block | null,
+	data: Record<string, any>,
+	type: BlockDataKey["comesFrom"] = "dataScript",
+): Record<string, any> {
+	let collectionObject = data || {};
 	if (block?.isInsideRepeater()) {
-		const keys = getCollectionKeys(block);
+		const keys = getCollectionKeys(block, type);
 		collectionObject = keys.reduce((acc: any, key: string) => {
 			const data = getDataForKey(acc, key);
 			return Array.isArray(data) && data.length > 0 ? data[0] : data;
@@ -682,7 +688,9 @@ const getPropValue = (
 	block: Block,
 	getDataScriptValue: (path: string) => any = () => undefined,
 	defaultProps?: BlockProps | null,
+	getComponentScopedDataValue: (path: string) => any = () => undefined,
 ): any => {
+	console.log({ propName, block, defaultProps });
 	// Check default props first
 	if (defaultProps?.[propName] !== undefined) {
 		return defaultProps[propName].value;
@@ -702,15 +710,21 @@ const getPropValue = (
 	// Handle dynamic props
 	if (matchingProp.isDynamic) {
 		if (matchingProp.comesFrom === "props" && matchingProp.value) {
+			if (defaultProps?.[matchingProp.value] !== undefined) {
+				return defaultProps[matchingProp.value].value;
+			}
 			if (parentProps === null) {
 				parentProps = getParentProps(block);
 			}
 			const newMatchingProp = parentProps[matchingProp.value];
 			if (!newMatchingProp?.block) return undefined;
-			return getPropValue(matchingProp.value, newMatchingProp.block, getDataScriptValue, defaultProps);
+			return getPropValue(matchingProp.value, newMatchingProp.block, getDataScriptValue, defaultProps, getComponentScopedDataValue);
 		}
 		if (matchingProp.comesFrom === "dataScript" && matchingProp.value) {
 			return getDataScriptValue(matchingProp.value);
+		}
+		if (matchingProp.comesFrom === "componentData" && matchingProp.value) {
+			return getComponentScopedDataValue(matchingProp.value);
 		}
 
 		// Fallback to default props

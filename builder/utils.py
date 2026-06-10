@@ -447,6 +447,34 @@ def execute_script(script, _locals, script_filename):
 		safer_exec(script, None, _locals, script_filename=script_filename)
 
 
+def get_component_data(component_name: str, props: dict | str | None = None, block_id: str | None = None) -> dict:
+	"""Execute a component's data script with the given props and return the data dict.
+
+	Args:
+		component_name: The name/ID of the Builder Component
+		props: Resolved props to pass to the data script
+		block_id: Optional block ID to identify the specific component instance
+
+	Returns:
+		A dict containing the component's data
+	"""
+	if isinstance(props, str):
+		props = frappe.parse_json(props)
+	component_doc = frappe.get_cached_doc("Builder Component", component_name)
+	if not component_doc or not component_doc.component_data_script:
+		return {}
+
+	_locals = dict(
+		component=frappe._dict(),
+		props=frappe._dict(props or {}),
+	)
+
+	execute_script(component_doc.component_data_script, _locals, component_name)
+
+	print(_locals["component"])
+	return _locals["component"]
+
+
 def clean_data(data):
 	if isinstance(data, dict):
 		return {

@@ -1,0 +1,402 @@
+<template>
+	<div class="flex gap-5">
+		<div class="flex flex-col gap-3">
+			<div class="flex h-full w-48 flex-col justify-between gap-1">
+				<div class="flex flex-col gap-1">
+					<draggable
+						v-model="attachedScriptResource.data"
+						:item-key="(script: attachedScript) => script.name"
+						handle=".drag-handle"
+						@end="onScriptReorder"
+						class="flex flex-col gap-1">
+						<template #item="{ element: script }">
+							<a
+								href="#"
+								:class="{
+									'text-ink-gray-5': activeScript !== script,
+									'font-medium !text-ink-gray-8': activeScript === script,
+								}"
+								@click="selectScript(script)"
+								class="group flex h-6 items-center justify-between gap-1 text-sm first-of-type:mt-6 last-of-type:mb-2 hover:text-ink-gray-7">
+								<div class="flex w-[90%] items-center gap-1">
+									<GripVertical class="drag-handle cursor-grab text-ink-gray-5 hover:text-ink-gray-8" />
+									<CSSIcon class="shrink-0" v-if="script.script_type === 'CSS'" />
+
+									<JavaScriptIcon class="shrink-0" v-if="script.script_type === 'JavaScript'" />
+
+									<EditableSpan
+										v-model="script.script_name"
+										:editable="script.editable && !builderStore.readOnlyMode"
+										:onChange="
+											async (newName) => {
+												await updateScriptName(newName, script);
+											}
+										"
+										class="w-full truncate">
+										{{ script.script_name }}
+									</EditableSpan>
+								</div>
+
+								<Dropdown
+									class="script-options"
+									placement="right"
+									v-if="activeScript === script && !builderStore.readOnlyMode"
+									:options="[
+										{
+											label: 'Rename',
+											onClick: () => {
+												script.editable = true;
+											},
+											icon: 'lucide-edit',
+										},
+										{
+											label: 'Remove Script',
+											onClick: () => deleteScript(script.name),
+											icon: 'lucide-trash',
+										},
+									]">
+									<template v-slot="{ open }">
+										<Button icon="lucide-more-horizontal" size="sm" variant="ghost" @click="open"></Button>
+									</template>
+								</Dropdown>
+							</a>
+						</template>
+					</draggable>
+
+					<div
+						class="grid w-full grid-cols-1 gap-2"
+						v-if="!builderStore.readOnlyMode"
+						:class="
+							clientScriptResource.data && clientScriptResource.data.length > 0
+								? 'grid-cols-2'
+								: 'grid-cols-1'
+						">
+						<Dropdown
+							:options="[
+								{ label: 'JavaScript', onClick: () => addScript('JavaScript') },
+								{ label: 'CSS', onClick: () => addScript('CSS') },
+							]"
+							size="sm"
+							class="[&>div>div>div]:w-full">
+							<template v-slot="{ open }">
+								<Button class="w-full text-xs" @click="open">New Script</Button>
+							</template>
+						</Dropdown>
+
+						<Autocomplete
+							v-if="clientScriptResource.data && clientScriptResource.data.length > 0"
+							:options="clientScriptOptions"
+							bodyClasses="overflow-hidden [&>ul]:!bg-surface-white max-w-[300px]"
+							@update:modelValue="(option: Option) => attachScript(option.value)"
+							placeholder="Attach Script">
+							<template v-slot:target="{ open }">
+								<Button class="w-full text-xs" @click="open">Attach Script</Button>
+							</template>
+						</Autocomplete>
+					</div>
+				</div>
+
+				<div class="text-xs leading-4 text-ink-gray-6">
+					<b>Note:</b>
+					All client scripts are executed in preview mode and on published pages.
+				</div>
+			</div>
+		</div>
+
+		<div
+			class="flex h-[calc(65vh+68px)] w-full items-center justify-center rounded bg-surface-gray-1 text-base text-ink-gray-6"
+			v-show="!activeScript">
+			Add Script
+		</div>
+
+		<div v-if="activeScript" class="flex h-full w-full flex-col">
+			<CodeEditor
+				ref="scriptEditor"
+				:modelValue="activeScript.script"
+				:label="activeScript.script_name"
+				:type="activeScript.script_type as 'JavaScript' | 'CSS'"
+				class="flex-1"
+				mode="page"
+				height="65vh"
+				:readonly="builderStore.readOnlyMode"
+				:autofocus="false"
+				:show-save-button="true"
+				@save="updateScript"
+				:show-line-numbers="true"></CodeEditor>
+		</div>
+	</div>
+</template>
+
+<script setup lang="ts">
+import EditableSpan from "@/components/EditableSpan.vue";
+import useBuilderStore from "@/stores/builderStore";
+import usePageStore from "@/stores/pageStore";
+import { BuilderClientScript } from "@/types/doctypes";
+import { Autocomplete, createListResource, createResource, Dropdown } from "frappe-ui";
+import { useTelemetry } from "frappe-ui/frappe";
+import { computed, nextTick, ref, watch } from "vue";
+import { toast } from "frappe-ui";
+import draggable from "vuedraggable";
+import CodeEditor from "./Controls/CodeEditor.vue";
+import CSSIcon from "./Icons/CSS.vue";
+import GripVertical from "./Icons/GripVertical.vue";
+import JavaScriptIcon from "./Icons/JavaScript.vue";
+
+const { capture } = useTelemetry();
+
+const scriptEditor = ref<InstanceType<typeof CodeEditor> | null>(null);
+const builderStore = useBuilderStore();
+const pageStore = usePageStore();
+
+type attachedScript = {
+	script: string;
+	script_type: string;
+	name: string;
+	script_name: string;
+	editable: boolean;
+};
+
+type Option = {
+	label: string;
+	value: string;
+};
+
+const activeScript = ref<attachedScript | null>(null);
+
+const props = defineProps<{
+	parentDoctype: "Builder Page" | "Builder Component";
+	parentName: string;
+}>();
+
+const childTableDoctype = props.parentDoctype === "Builder Page" 
+	? "Builder Page Client Script" 
+	: "Builder Component Client Script";
+
+const parentField = props.parentDoctype === "Builder Page" 
+	? "client_scripts" 
+	: "component_client_scripts";
+
+const attachedScriptResource = createListResource({
+	doctype: childTableDoctype,
+	parent: props.parentDoctype,
+	filters: {
+		parent: props.parentName,
+	},
+	fields: [
+		"builder_script.script",
+		"builder_script.script_type",
+		"builder_script.name as script_name",
+		"name",
+	],
+	orderBy: `\`tab${childTableDoctype}\`.idx asc`,
+	auto: true,
+	onSuccess: (data: attachedScript[]) => {
+		if (data && data.length > 0 && !activeScript.value) {
+			selectScript(data[0]);
+		}
+	},
+});
+
+const clientScriptResource = createListResource({
+	doctype: "Builder Client Script",
+	fields: ["script_type", "name"],
+	pageLength: 10000,
+	auto: true,
+});
+
+const selectScript = (script: attachedScript) => {
+	activeScript.value = script;
+	nextTick(() => {
+		scriptEditor.value?.resetEditor(true);
+	});
+};
+
+const updateScript = (value: string) => {
+	if (!activeScript.value || builderStore.readOnlyMode) return;
+
+	if (!value || !value.trim()) {
+		toast.warning("Script cannot be empty");
+		return;
+	}
+
+	if (props.parentDoctype === "Builder Page") {
+		pageStore.activePageScripts = pageStore.activePageScripts.map((script: BuilderClientScript) => {
+			if (script.name === activeScript.value?.script_name) {
+				script.script = value;
+			}
+			return script;
+		});
+	}
+
+	clientScriptResource.setValue
+		.submit({
+			name: activeScript.value.script_name,
+			script: value,
+		})
+		.then(async () => {
+			await attachedScriptResource.reload();
+			attachedScriptResource.data?.forEach((script: attachedScript) => {
+				if (script.script_name === activeScript.value?.script_name) {
+					activeScript.value = script;
+				}
+			});
+			toast.success("Script saved successfully");
+		})
+		.catch((e: { message: string; exc: string }) => {
+			const error_message = e.exc.split("\n").slice(-2)[0];
+			toast.error("Failed to save script", {
+				description: error_message,
+			});
+		});
+};
+
+const addScript = (scriptType: "JavaScript" | "CSS") => {
+	if (builderStore.readOnlyMode) return;
+
+	clientScriptResource.insert
+		.submit({
+			script_type: scriptType,
+			script: scriptType === "JavaScript" ? "// Write your script here\n" : "/* Write your CSS here */\n",
+		})
+		.then((res: BuilderClientScript) => {
+			attachedScriptResource.insert
+				.submit({
+					parent: props.parentName,
+					parenttype: props.parentDoctype,
+					parentfield: parentField,
+					builder_script: res.name,
+				})
+				.then(async () => {
+					await attachedScriptResource.reload();
+					attachedScriptResource.data?.forEach((script: attachedScript) => {
+						if (script.script_name === res.name) {
+							selectScript(script);
+						}
+					});
+					if (props.parentDoctype === "Builder Page") {
+						pageStore.activePageScripts.push(res);
+					}
+				});
+		});
+};
+
+const attachScript = (builder_script_name: string) => {
+	if (builderStore.readOnlyMode) return;
+
+	attachedScriptResource.insert
+		.submit({
+			parent: props.parentName,
+			parenttype: props.parentDoctype,
+			parentfield: parentField,
+			builder_script: builder_script_name,
+		})
+		.then(async () => {
+			capture("builder_client_script_attached");
+			await attachedScriptResource.reload();
+			attachedScriptResource.data?.forEach((script: attachedScript) => {
+				if (script.script_name === builder_script_name) {
+					selectScript(script);
+				}
+			});
+		});
+};
+
+const deleteScript = (scriptName: string) => {
+	if (builderStore.readOnlyMode) return;
+
+	activeScript.value = null;
+	attachedScriptResource.delete.submit(scriptName).then(() => {
+		attachedScriptResource.reload();
+	});
+	if (props.parentDoctype === "Builder Page") {
+		pageStore.activePageScripts = pageStore.activePageScripts.filter(
+			(script: BuilderClientScript) => script.name !== scriptName,
+		);
+	}
+};
+
+const updateScriptName = async (newName: string, script: attachedScript) => {
+	if (!newName || builderStore.readOnlyMode) return;
+	script.editable = false;
+	if (props.parentDoctype === "Builder Page") {
+		pageStore.activePageScripts = pageStore.activePageScripts.map((_script: BuilderClientScript) => {
+			if (_script.name === script.name) {
+				script.name = newName;
+			}
+			return _script;
+		});
+	}
+	return createResource({
+		url: "frappe.client.rename_doc",
+	})
+		.submit({
+			doctype: "Builder Client Script",
+			old_name: script?.script_name,
+			new_name: newName,
+		})
+		.then(async () => {
+			attachedScriptResource.data = attachedScriptResource.data.map(
+				(s: { script_name: string; script: string }) => {
+					if (s.script_name === script.script_name) {
+						s.script_name = newName;
+					}
+					return s;
+				},
+			);
+		});
+};
+
+const clientScriptOptions = computed(() =>
+	clientScriptResource.data?.map((script: { name: string; script_type: string }) => ({
+		label: `${script.name}.${script.script_type == "JavaScript" ? "js" : script.script_type.toLowerCase()}`,
+		value: script.name,
+	})),
+);
+
+const onScriptReorder = () => {
+	if (!attachedScriptResource.data) return;
+
+	const scriptOrder = attachedScriptResource.data.map((script: attachedScript) => script.name);
+
+	const reorderEndpoint = props.parentDoctype === "Builder Page" 
+		? "builder.api.reorder_client_scripts"
+		: "builder.api.reorder_component_client_scripts";
+
+	createResource({
+		url: reorderEndpoint,
+	})
+		.submit({
+			script_order: scriptOrder,
+		})
+		.then(() => {
+			toast.success("Script order updated");
+		})
+		.catch((e: { message: string; exc: string }) => {
+			const error_message = e.exc.split("\n").slice(-2)[0];
+			toast.error("Failed to update script order", {
+				description: error_message,
+			});
+		});
+};
+
+watch(
+	() => props.parentName,
+	async () => {
+		activeScript.value = null;
+		attachedScriptResource.filters.parent = props.parentName;
+		await attachedScriptResource.reload();
+		if (attachedScriptResource.data && attachedScriptResource.data.length > 0) {
+			selectScript(attachedScriptResource.data[0]);
+		}
+	},
+);
+
+defineExpose({ scriptEditor });
+</script>
+
+<style scoped>
+:deep(.editor > .ace_editor) {
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
+}
+</style>

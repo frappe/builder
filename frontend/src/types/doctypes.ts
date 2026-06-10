@@ -1,18 +1,18 @@
 interface DocType {
-	name: string;
-	creation: string;
-	modified: string;
-	owner: string;
-	modified_by: string;
-}
+    name: string;
+    creation: string;
+    modified: string;
+    owner: string;
+    modified_by: string;
+  }
 
-interface ChildDocType extends DocType {
-	parent?: string;
-	parentfield?: string;
-	parenttype?: string;
-	idx?: number;
-}
-
+  interface ChildDocType extends DocType {
+    parent?: string;
+    parentfield?: string;
+    parenttype?: string;
+    idx?: number;
+  }
+  
 // Last updated: 2026-05-24 12:00:00.000000
 export interface BuilderVariable extends DocType {
 	/** Type: Select */
@@ -131,18 +131,6 @@ export interface BuilderPageClientScript extends ChildDocType {
 	builder_script: string;
 }
 
-// Last updated: 2025-01-29 09:30:34.896956
-export interface BuilderComponent extends DocType {
-	/** Component Name: Data */
-	component_name?: string;
-	/** Block: JSON */
-	block?: any;
-	/** For Web Page: Link (Builder Page) */
-	for_web_page?: string;
-	/** Component ID: Data */
-	component_id?: string;
-}
-
 // Last updated: 2026-01-24 12:49:59.610151
 export interface BuilderSettings extends DocType {
 	/** Script: Code */
@@ -173,4 +161,26 @@ export interface BuilderSettings extends DocType {
 	restrict_click_handlers: 0 | 1;
 	/** AI API Key: Password */
 	ai_api_key?: string;
+}
+
+// Last updated: 2026-06-09 10:00:00.000000
+export interface BuilderComponentClientScript extends ChildDocType {
+  /** Builder Script: Link (Builder Client Script) */
+  builder_script: string;
+}
+
+// Last updated: 2025-01-29 09:30:34.896956
+export interface BuilderComponent extends DocType {
+  /** Component Name: Data */
+  component_name?: string;
+  /** Block: JSON */
+  block?: any;
+  /** For Web Page: Link (Builder Page) */
+  for_web_page?: string;
+  /** Component ID: Data */
+  component_id?: string;
+  /** Component Data Script: Code */
+  component_data_script?: string;
+  /** Component Client Scripts: Table MultiSelect (Builder Component Client Script) */
+  component_client_scripts: BuilderComponentClientScript[];
 }

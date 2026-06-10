@@ -55,6 +55,9 @@ website_generators = ["Builder Page"]
 
 # add methods and filters to jinja environment
 jinja = {
+	"methods": [
+		"builder.utils.get_component_data",
+	],
 	"filters": [
 		"builder.utils.combine",
 		"builder.utils.hash",

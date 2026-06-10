@@ -9,6 +9,10 @@ import { createDocumentResource, createResource, toast } from "frappe-ui";
 import { defineStore } from "pinia";
 import { markRaw } from "vue";
 
+export const COMPONENT_DATA_FRAGMENT_KEY = "__fragment__";
+
+export type ComponentDataStore = Record<string, Record<string, Record<string, any>>>;
+
 const useComponentStore = defineStore("componentStore", {
 	state: () => ({
 		components: <BlockComponent[]>[],
@@ -16,6 +20,7 @@ const useComponentStore = defineStore("componentStore", {
 		componentDocMap: <Map<string, BuilderComponent>>new Map(),
 		fetchingComponent: new Set(),
 		selectedComponent: null as string | null,
+		componentData: <ComponentDataStore>{},
 	}),
 	actions: {
 		async editComponent(block?: Block | null, componentName?: string) {
@@ -27,6 +32,11 @@ const useComponentStore = defineStore("componentStore", {
 			await this.loadComponent(componentName);
 			const component = this.getComponent(componentName);
 			const componentBlock = this.getComponentBlock(componentName);
+			
+			// Fetch component data for preview when entering fragment mode
+			// const defaultProps = getComponentDefaultProps(componentBlock);
+			// this.setComponentData(componentName, defaultProps);
+			
 			const canvasStore = useCanvasStore();
 			canvasStore.editOnCanvas(
 				componentBlock,
@@ -194,6 +204,40 @@ const useComponentStore = defineStore("componentStore", {
 				}
 			}
 		},
+		getComponentInstanceData(componentId: string, blockId: string | null = null) {
+			const instanceKey = blockId ?? COMPONENT_DATA_FRAGMENT_KEY;
+			return this.componentData[componentId]?.[instanceKey] ?? {};
+		},
+		async setComponentData(componentId: string, props: Record<string, any> = {}, blockId: string | null = null) {
+			const instanceKey = blockId ?? COMPONENT_DATA_FRAGMENT_KEY;
+			return createResource({
+				url: "builder.api.get_component_data",
+				method: "GET",
+				params: {
+					component_name: componentId,
+					props: JSON.stringify(props),
+					block_id: blockId,
+				},
+			})
+				.fetch()
+				.then((data: { [key: string]: any }) => {
+					if (!this.componentData[componentId]) {
+						this.componentData[componentId] = {};
+					}
+					this.componentData[componentId][instanceKey] = data || {};
+				})
+				.catch((e: { message: string }) => {
+					console.error("Failed to fetch component data:", e.message);
+					if (!this.componentData[componentId]) {
+						this.componentData[componentId] = {};
+					}
+					this.componentData[componentId][instanceKey] = {};
+				});
+		},
+		async deleteComponentData(componentId: string, blockId: string | null = null) {
+			const instanceKey = blockId ?? COMPONENT_DATA_FRAGMENT_KEY;
+			this.componentData[componentId][instanceKey] = {};
+		}
 	},
 });
 
