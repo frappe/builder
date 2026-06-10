@@ -1023,59 +1023,83 @@ def get_visibility_condition_key(block: dict, data_key: dict | None) -> str | No
 		return key
 
 
+def collect_client_scripts(block: dict) -> dict[str, dict]:
+	"""Collect block and component client scripts keyed by unique id."""
+	scripts = {}
+
+	if block.get("blockClientScript"):
+		script_id = block.get("blockId")
+		if block.get("isBlockClientScriptOverridden"):
+			script_id = frappe.generate_hash(length=8)
+		scripts[str(script_id)] = {
+			"script": block["blockClientScript"],
+			"type": "JavaScript",
+			"from": "block",
+		}
+
+	for component_script in block.get("componentScripts") or []:
+		scripts[str(component_script["name"])] = {
+			"script": component_script["script"],
+			"type": component_script["type"],
+			"from": "component",
+		}
+
+	return scripts
+
+
+def append_global_client_script(state: dict, script_id: str, script: dict):
+	"""Register a client script in the shared global script tag (once per id)."""
+	if script_id in state["used_block_scripts"]:
+		return
+
+	if script["type"] == "JavaScript":
+		fn_args = "props" if script["from"] == "block" else "component_data, props"
+		state["global_script_tag"].append(
+			f"function client_script_{script_id}({fn_args}) {{{script['script']}}}\n"
+		)
+	else:
+		state["global_script_tag"].append(f"<style>{script['script']}</style>\n")
+
+	state["used_block_scripts"].add(script_id)
+
+
+def create_local_client_script_tag(state: dict, script_id: str, script: dict) -> bs.Tag:
+	"""Create a per-block script or style tag that invokes the global client script."""
+	if script["type"] == "JavaScript":
+		local_script = state["soup"].new_tag("script")
+		local_script.attrs["defer"] = True
+		if script["from"] == "block":
+			local_script.string = (
+				f"(client_script_{script_id}).call("
+				f"document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]'), "
+				f"{{{{ props | to_safe_json }}}}"
+				f");"
+			)
+		else:
+			local_script.string = (
+				f"(client_script_{script_id})("
+				f"{{{{ component.component_data | to_safe_json }}}}, "
+				f"{{{{ props | to_safe_json }}}}"
+				f");"
+			)
+		return local_script
+
+	local_script = state["soup"].new_tag("style")
+	local_script.string = script["script"]
+	return local_script
+
+
 def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 	"""Attach client-side JavaScript to the block."""
-	scripts: dict = {}
-	if block.get("blockClientScripts"):
-		script = block.get("blockClientScript")
-		script_unique_id = block.get("blockId")
-		if block.get("isBlockClientScriptOverridden"):
-			script_unique_id = frappe.generate_hash(length=8)
-		scripts[str(script_unique_id)] = {"script": script, "type": "JavaScript", "from" : "block"}
+	scripts = collect_client_scripts(block)
+	if not scripts:
+		return
 
-	if block.get("componentScripts"):
-		for component_script in block.get("componentScripts"):
-			script = component_script["script"]
-			script_unique_id = component_script["name"]
-			scripts[str(script_unique_id)] = {"script": script, "type": component_script["type"], "from" : "component"}
+	tag.attrs["data-block-uid"] = "{{ unique_hash }}"
 
-	for script_unique_id, script in scripts.items():
-		# Add global function definition (only once)
-		if script_unique_id not in state["used_block_scripts"]:
-			if script["type"] == "JavaScript":
-				if script["from"] == "block":
-					state["global_script_tag"].append(f"function client_script_{script_unique_id}(props) {{{script['script']}}}\n")
-				else:
-					state["global_script_tag"].append(f"function client_script_{script_unique_id}(component_data, props) {{{script['script']}}}\n")
-			else:
-				state["global_script_tag"].append(f"<style>{script['script']}</style>\n")
-			state["used_block_scripts"].add(script_unique_id)
-
-		# Add data attribute for selecting this specific block
-		tag.attrs["data-block-uid"] = "{{ unique_hash }}"
-
-		# Add local script to call the function
-		if script["type"] == "JavaScript":
-			local_script = state["soup"].new_tag("script")
-			if script["from"] == "block":
-				local_script.string = (
-					f"(client_script_{script_unique_id}).call("
-					f"document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]'), "
-					f"{{{{ props | to_safe_json }}}}"
-					f");"
-				)
-			else:
-				local_script.string = (
-					f"(client_script_{script_unique_id})("
-					f"{{{{ component.component_data | to_safe_json }}}}, "
-					f"{{{{ props | to_safe_json }}}}"
-					f");"
-				)
-		else:
-			local_script = state["soup"].new_tag("style")
-			local_script.string = script['script']
-
-		tag.append(local_script)
+	for script_id, script in scripts.items():
+		append_global_client_script(state, script_id, script)
+		tag.insert(0, create_local_client_script_tag(state, script_id, script))
 
 
 def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
@@ -1100,7 +1124,6 @@ def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
 		parent.append(f"{{% if {context['visibility_key']} %}}")
 
 	if context.get("component_id"):
-		print(777)
 		parent.append(
 			f"{{% with component = get_component_data('{context['component_id']}', props, block_id) %}}"
 		)
@@ -1212,19 +1235,22 @@ def extend_block_with_component(block: dict) -> tuple[dict, str | None]:
 	component_block = frappe.parse_json(component.block if component else "{}")
 	if component_block:
 		extend_block(component_block, block)
+
 		if component.component_client_scripts:
-			script_names = set()
-			for script_row in component.component_client_scripts:
-				script_names.add(script_row.builder_script)
 			component_scripts = []
-			for script_name in script_names:
-				print(script_name, "script_name")
+			for script_name in dict.fromkeys(
+				row.builder_script for row in component.component_client_scripts
+			):
 				script_doc = frappe.get_cached_doc("Builder Client Script", script_name)
-				if script_doc:
-					component_scripts.append(
-						{"name": frappe.scrub(script_doc.name), "script": script_doc.script, "type": script_doc.script_type}
-					)
+				component_scripts.append(
+					{
+						"name": frappe.scrub(script_doc.name),
+						"script": script_doc.script,
+						"type": script_doc.script_type,
+					}
+				)
 			component_block["componentScripts"] = component_scripts
+
 		return component_block, component_id
 
 	return block, None
