@@ -350,6 +350,10 @@ defineExpose({
 	-webkit-user-select: text;
 }
 
+.__text_block__ :deep([contenteditable="true"]):focus-visible {
+	outline: none;
+}
+
 .__text_block__ :deep(.ProseMirror) {
 	white-space: pre-wrap;
 	word-break: unset;
