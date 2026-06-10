@@ -100,6 +100,7 @@ export function useCanvasEvents(
 					childBlock.setBaseStyle("position", "static");
 					childBlock.setBaseStyle("top", "auto");
 					childBlock.setBaseStyle("left", "auto");
+					const wasImageMode = builderStore.mode === "image";
 					setTimeout(() => {
 						builderStore.mode = "select";
 					}, 50);
@@ -120,6 +121,9 @@ export function useCanvasEvents(
 						}
 					}
 					pauseId && canvasHistory.value?.resume(pauseId, true);
+					if (wasImageMode) {
+						builderStore.openImageUpload = true;
+					}
 				},
 				{ once: true },
 			);

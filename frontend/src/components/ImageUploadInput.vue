@@ -1,5 +1,5 @@
 <template>
-	<Popover placement="left" class="!block w-full" :offset="popoverOffset">
+	<Popover ref="popoverRef" placement="left" class="!block w-full" :offset="popoverOffset">
 		<template #target="{ togglePopover, isOpen }">
 			<div class="flex items-center justify-between">
 				<InputLabel v-if="label && labelPosition === 'left'">{{ label }}</InputLabel>
@@ -38,6 +38,7 @@
 		<template #body>
 			<div class="rounded-lg bg-surface-white p-3 shadow-lg">
 				<FileUploader
+					ref="fileUploaderRef"
 					@success="(file: FileDoc) => setImageURL(file.file_url)"
 					fileTypes="image/*"
 					:uploadArgs="{
@@ -70,7 +71,12 @@
 					class="mt-4"
 					:modelValue="imageFit"
 					type="select"
-					:options="['contain', 'cover', 'fill', 'none']"
+					:options="[
+						{ label: 'Fit Inside', value: 'contain' },
+						{ label: 'Fill & Crop', value: 'cover' },
+						{ label: 'Stretch', value: 'fill' },
+						{ label: 'Original Size', value: 'none' },
+					]"
 					@update:modelValue="setImageFit" />
 			</div>
 		</template>
@@ -80,8 +86,9 @@
 import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
+import useBuilderStore from "@/stores/builderStore";
 import { FileUploader, Popover } from "frappe-ui";
-import { computed } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 
 const props = withDefaults(
 	defineProps<{
@@ -99,6 +106,21 @@ const props = withDefaults(
 		placeholder: "Set Image",
 		imageFit: "contain",
 		popoverOffset: 10,
+	},
+);
+
+const builderStore = useBuilderStore();
+const popoverRef = ref<InstanceType<typeof Popover> | null>(null);
+const fileUploaderRef = ref<{ inputRef: () => HTMLInputElement } | null>(null);
+
+watch(
+	() => builderStore.openImageUpload,
+	(val) => {
+		if (val && props.labelPosition === "left") {
+			builderStore.openImageUpload = false;
+			popoverRef.value?.open();
+			nextTick(() => fileUploaderRef.value?.inputRef()?.click());
+		}
 	},
 );
 
