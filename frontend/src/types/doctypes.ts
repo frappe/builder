@@ -132,6 +132,20 @@ export interface BuilderClientScript extends DocType {
 	public_url?: string;
 }
 
+// Last updated: 2026-06-10 00:00:00.000000
+export interface BuilderSnapshot extends DocType {
+	/** Reference Doctype: Link (DocType) */
+	reference_doctype: string;
+	/** Reference Name: Data */
+	reference_name: string;
+	/** Snapshot Type: Data */
+	snapshot_type?: string;
+	/** Label: Data */
+	label?: string;
+	/** Data: Code (JSON) */
+	data: string;
+}
+
 // Last updated: 2024-11-13 20:08:24.187664
 export interface UserFont extends DocType {
 	/** Font Name: Data */

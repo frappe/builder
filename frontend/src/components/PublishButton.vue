@@ -20,6 +20,11 @@
 			v-if="showDropdown"
 			:options="[
 				{
+					label: 'Version History',
+					onClick: () => (showVersionHistory = true),
+					icon: 'lucide-history',
+				},
+				{
 					label: 'Revert Changes',
 					onClick: () => pageStore.revertChanges(),
 					condition: () => pageStore.activePage?.draft_blocks,
@@ -44,9 +49,11 @@
 					class="!w-6 justify-start rounded-bl-none rounded-tl-none border-0 pr-0 text-xs"></Button>
 			</template>
 		</Dropdown>
+		<VersionHistory v-model="showVersionHistory" />
 	</div>
 </template>
 <script lang="ts" setup>
+import VersionHistory from "@/components/VersionHistory.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { Dropdown } from "frappe-ui";
@@ -60,8 +67,11 @@ const pageStore = usePageStore();
 const canvasStore = useCanvasStore();
 
 const publishing = ref(false);
+const showVersionHistory = ref(false);
 const showDropdown = computed(() => {
-	return Boolean(pageStore.activePage?.published) && canvasStore.editingMode !== "fragment";
+	// Always available (so Version History is reachable); individual items
+	// (Revert / Unpublish) remain gated by their own `condition`.
+	return canvasStore.editingMode !== "fragment" && !pageStore.activePage?.is_template;
 });
 
 const publishButtonLabel = computed(() => {

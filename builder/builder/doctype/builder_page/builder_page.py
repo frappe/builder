@@ -19,6 +19,10 @@ from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
 
 from builder.builder.doctype.builder_project_folder.builder_project_folder import is_system_activity
+from builder.builder.doctype.builder_snapshot.builder_snapshot import (
+	prune_snapshots,
+	take_snapshot,
+)
 from builder.builder.doctype.user_font.user_font import get_all_user_fonts
 from builder.export_import_standard_page import export_page_as_standard
 from builder.hooks import builder_path
@@ -39,6 +43,9 @@ from builder.utils import (
 MOBILE_BREAKPOINT = 576
 TABLET_BREAKPOINT = 768
 DESKTOP_BREAKPOINT = 1024
+
+# Number of "Publish" snapshots retained per page (manual snapshots are never auto-pruned)
+KEEP_PUBLISH_SNAPSHOTS = 25
 
 
 class BuilderPageRenderer(DocumentPage):
@@ -229,6 +236,10 @@ class BuilderPage(WebsiteGenerator):
 					frappe._("Template pages can only be deleted in developer mode."),
 					frappe.PermissionError,
 				)
+		# clean up snapshots (reference_name is plain Data, so no link-guard removes them)
+		frappe.db.delete(
+			"Builder Snapshot", {"reference_doctype": "Builder Page", "reference_name": self.name}
+		)
 
 	def add_comment(self, comment_type="Comment", text=None, comment_email=None, comment_by=None):
 		if comment_type in ["Attachment Removed", "Attachment"]:
@@ -246,6 +257,9 @@ class BuilderPage(WebsiteGenerator):
 		self.published = 1
 		self.published_at = now()
 		if self.draft_blocks:
+			# snapshot the content going live before it overwrites `blocks`
+			take_snapshot("Builder Page", self.name, fields=["draft_blocks"], snapshot_type="Publish")
+			prune_snapshots("Builder Page", self.name, keep=KEEP_PUBLISH_SNAPSHOTS, snapshot_type="Publish")
 			self.blocks = self.draft_blocks
 			self.draft_blocks = None
 		self.save()
@@ -265,6 +279,26 @@ class BuilderPage(WebsiteGenerator):
 		self.published = 0
 		self.save()
 		capture("builder_page_unpublished", "builder")
+
+	@frappe.whitelist()
+	def create_manual_snapshot(self, label: str | None = None):
+		# snapshot the current working content (unpublished draft if present, else live)
+		field = "draft_blocks" if self.draft_blocks else "blocks"
+		if not self.get(field):
+			return
+		return take_snapshot("Builder Page", self.name, fields=[field], snapshot_type="Manual", label=label)
+
+	@frappe.whitelist()
+	def restore_snapshot(self, snapshot: str):
+		# restore into the draft for review (non-destructive); user publishes to go live
+		snap = frappe.get_doc("Builder Snapshot", snapshot)
+		if snap.reference_doctype != "Builder Page" or snap.reference_name != self.name:
+			frappe.throw(frappe._("Snapshot does not belong to this page"))
+		data = frappe.parse_json(snap.data)
+		# snapshots may store blocks under either key depending on capture-time state
+		self.draft_blocks = data.get("draft_blocks") or data.get("blocks")
+		self.save()
+		return self.draft_blocks
 
 	def get_context(self, context):
 		# delete default favicon
@@ -1021,9 +1055,7 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 
 	# Add global function definition (only once)
 	if script_unique_id not in state["used_block_scripts"]:
-		state["global_script_tag"].append(
-			f"function client_script_{script_unique_id}(props) {{{script}}}\n"
-		)
+		state["global_script_tag"].append(f"function client_script_{script_unique_id}(props) {{{script}}}\n")
 		state["used_block_scripts"].add(script_unique_id)
 
 	# Add data attribute for selecting this specific block

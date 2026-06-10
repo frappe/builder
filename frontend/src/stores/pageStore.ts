@@ -192,6 +192,30 @@ const usePageStore = defineStore("pageStore", {
 			}
 		},
 
+		async createManualSnapshot(label?: string) {
+			return webPages.runDocMethod.submit({
+				name: this.selectedPage as string,
+				method: "create_manual_snapshot",
+				label: label || null,
+			});
+		},
+
+		async restoreSnapshot(snapshotName: string) {
+			// wait out any in-flight autosave so it can't clobber the restored draft
+			await this.waitTillPageIsSaved();
+			await webPages.runDocMethod.submit({
+				name: this.selectedPage as string,
+				method: "restore_snapshot",
+				snapshot: snapshotName,
+			});
+			// The server has written the restored content into draft_blocks. Hard-reload the
+			// editor so it loads that draft fresh from the server (the in-memory canvas +
+			// cached document resource still hold the pre-restore content; reusing them would
+			// show stale content and let autosave clobber the restore). Nothing mutates the
+			// canvas between the restore and the reload, so there is no stale save to race.
+			router.go(0);
+		},
+
 		async unpublishPage(page?: BuilderPage) {
 			const targetName = page?.name || this.selectedPage;
 			const targetTitle = page?.page_title || page?.page_name || "this page";
