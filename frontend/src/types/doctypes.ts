@@ -196,4 +196,6 @@ export interface BuilderSettings extends DocType {
   restrict_click_handlers: 0 | 1;
   /** AI API Key: Password */
   ai_api_key?: string;
+  /** Persona Survey Done: Check */
+  persona_survey_done: 0 | 1;
 }
