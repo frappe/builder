@@ -92,6 +92,29 @@ class TestBuilderPage(FrappeTestCase):
 		content = get_response_content("/test-page")
 		self.assertTrue("Hello World!" in content)
 
+	def test_get_preview_html_preserves_outer_request(self):
+		"""get_preview_html() fakes a request via set_request(); when it runs
+		synchronously inside a real web request (e.g. run_doc_method) it must not
+		clobber it — doing so dropped the request's after_response and broke
+		sync_database with a 500."""
+		from frappe.utils import CallbackManager
+		from werkzeug.test import EnvironBuilder
+		from werkzeug.wrappers import Request
+
+		previous = getattr(frappe.local, "request", None)
+		try:
+			req = Request(EnvironBuilder(path="/api/method/run_doc_method").get_environ())
+			sentinel = CallbackManager()
+			req.after_response = sentinel
+			frappe.local.request = req
+
+			self.page.get_preview_html()
+
+			self.assertIs(frappe.local.request, req)
+			self.assertIs(frappe.local.request.after_response, sentinel)
+		finally:
+			frappe.local.request = previous
+
 	def test_onload(self):
 		getdoc("Builder Page", self.page.name)
 		self.assertEqual(frappe.response.docs[0].get("__onload").get("builder_path"), "builder")

@@ -431,14 +431,22 @@ class BuilderPage(WebsiteGenerator):
 		"""Render this page in preview mode (uses draft_blocks when present), so a
 		preview can be generated for unpublished/draft pages too — not just for
 		pages reachable via their published route."""
-		set_request(method="GET", path=f"/{self.route or ''}")
-		frappe.local.request.for_preview = True
-		frappe.local.no_cache = 1
-		renderer = BuilderPageRenderer(path="")
-		renderer.docname = self.name
-		renderer.doctype = "Builder Page"
-		renderer.init_context()
-		return str(renderer.render().data, "utf-8")
+		# set_request() swaps frappe.local.request for a faked GET request. When
+		# this runs synchronously inside a real web request (e.g. run_doc_method),
+		# that clobbers the live request and drops its `after_response`, which
+		# then breaks sync_database. Save and restore the original request.
+		previous_request = getattr(frappe.local, "request", None)
+		try:
+			set_request(method="GET", path=f"/{self.route or ''}")
+			frappe.local.request.for_preview = True
+			frappe.local.no_cache = 1
+			renderer = BuilderPageRenderer(path="")
+			renderer.docname = self.name
+			renderer.doctype = "Builder Page"
+			renderer.init_context()
+			return str(renderer.render().data, "utf-8")
+		finally:
+			frappe.local.request = previous_request
 
 	def set_custom_font(self, context, font_map):
 		all_user_fonts = get_all_user_fonts()
