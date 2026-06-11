@@ -50,12 +50,24 @@ import { setFont } from "@/utils/fontManager";
 import {
 	executeBlockClientScriptRestricted,
 	executeBlockClientScriptUnrestricted,
+	extractComponentId,
 	getDataForKey,
 	getParentProps,
 	getPropValue,
 } from "@/utils/helpers";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
-import { computed, inject, nextTick, onMounted, onUnmounted, reactive, ref, useAttrs, watch, watchEffect } from "vue";
+import {
+	computed,
+	inject,
+	nextTick,
+	onMounted,
+	onUnmounted,
+	reactive,
+	ref,
+	useAttrs,
+	watch,
+	watchEffect,
+} from "vue";
 import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
 import DataLoaderBlock from "./DataLoaderBlock.vue";
@@ -97,15 +109,12 @@ const props = withDefaults(
 );
 
 const resolvedComponentData = computed(() => {
-	if (props.block.isExtendedFromComponent()) {
-		if (props.block.extendedFromComponent) {
-			return componentStore.getComponentInstanceData(props.block.extendedFromComponent, uidToUse);
-		}
-	} else if (canvasStore.editingMode == "fragment" && !props.block.getParentBlock()) {
-		console.log(canvasStore.fragmentData.fragmentId!, uidToUse, "kk");
-		return componentStore.getComponentInstanceData(canvasStore.fragmentData.fragmentId!, uidToUse);
+	const componentId = extractComponentId(props.block);
+	if (componentId) {
+		return componentStore.getComponentInstanceData(componentId, uidToUse);
+	} else {
+		return props.componentData;
 	}
-	return props.componentData;
 });
 
 defineOptions({
@@ -410,35 +419,54 @@ onMounted(async () => {
 			reactive({ ghostScale: canvasProps?.scale || 1 }),
 		);
 	}
-	isMounted.value = true;	
+	isMounted.value = true;
 });
 
 onUnmounted(() => {
-	if (props.block.isExtendedFromComponent()) {
-		componentStore.deleteComponentData(
-			props.block.extendedFromComponent || (props.block.isChildOfComponent as string),
-			uidToUse,
-		);
+	const componentId = extractComponentId(props.block);
+	if (componentId) {
+		componentStore.deleteComponentData(componentId, uidToUse);
 	}
 });
 
 const allResolvedProps = computed(() => {
-	const defaultProps = Object.entries(props.defaultProps || {}).reduce((acc, [key, value]) => {
-		acc[key] = value.value;
-		return acc;
-	}, {} as Record<string, any>);
+	const defaultProps = Object.entries(props.defaultProps || {}).reduce(
+		(acc, [key, value]) => {
+			acc[key] = value.value;
+			return acc;
+		},
+		{} as Record<string, any>,
+	);
 
 	const blockProps = Object.entries({
 		...props.block.getBlockProps(),
-	}).reduce((acc, [key]) => {
-		acc[key] = getPropValue(key, props.block, getDataScriptValue, props.defaultProps, getComponentDataValue);
-		return acc;
-	}, {} as Record<string, any>);
+	}).reduce(
+		(acc, [key]) => {
+			acc[key] = getPropValue(
+				key,
+				props.block,
+				getDataScriptValue,
+				props.defaultProps,
+				getComponentDataValue,
+			);
+			return acc;
+		},
+		{} as Record<string, any>,
+	);
 
-	const parentProps = Object.entries(getParentProps(props.block)).reduce((acc, [key, value]) => {
-		acc[key] = getPropValue(key, value.block!, getDataScriptValue, props.defaultProps, getComponentDataValue);
-		return acc;
-	}, {} as Record<string, any>);
+	const parentProps = Object.entries(getParentProps(props.block)).reduce(
+		(acc, [key, value]) => {
+			acc[key] = getPropValue(
+				key,
+				value.block!,
+				getDataScriptValue,
+				props.defaultProps,
+				getComponentDataValue,
+			);
+			return acc;
+		},
+		{} as Record<string, any>,
+	);
 
 	return {
 		...parentProps,
@@ -456,6 +484,7 @@ watch(
 		allResolvedProps,
 	],
 	([componentId, editingMode]) => {
+		// can use extractComponentId but below code is more efficient
 		if (!componentId) {
 			if (editingMode == "fragment" && !props.block.getParentBlock()) {
 				componentId = canvasStore.fragmentData.fragmentId!;

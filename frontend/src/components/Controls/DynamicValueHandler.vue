@@ -123,7 +123,10 @@ const defaultProps = computed(() => {
 
 const componentData = computed(() => {
 	if (canvasStore.editingMode != "fragment") return {};
-	return componentStore.getComponentInstanceData(canvasStore.fragmentData.fragmentId!, canvasStore.fragmentData.block?.blockId);
+
+	const componentId = canvasStore.fragmentData.fragmentId!;
+	const blockId = canvasStore.fragmentData.block?.blockId;
+	return componentStore.getComponentInstanceData(componentId, blockId);
 });
 
 const componentDataArray = computed(() => {

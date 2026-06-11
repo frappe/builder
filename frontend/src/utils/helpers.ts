@@ -589,7 +589,6 @@ function getCollectionKeys(block: any, type: BlockDataKey["comesFrom"] = "dataSc
 	return keys;
 }
 
-
 // Drill into data for blocks inside repeaters (uses the first item of each collection)
 function getRepeaterScopedData(
 	block: Block | null,
@@ -718,7 +717,13 @@ const getPropValue = (
 			}
 			const newMatchingProp = parentProps[matchingProp.value];
 			if (!newMatchingProp?.block) return undefined;
-			return getPropValue(matchingProp.value, newMatchingProp.block, getDataScriptValue, defaultProps, getComponentScopedDataValue);
+			return getPropValue(
+				matchingProp.value,
+				newMatchingProp.block,
+				getDataScriptValue,
+				defaultProps,
+				getComponentScopedDataValue,
+			);
 		}
 		if (matchingProp.comesFrom === "dataScript" && matchingProp.value) {
 			return getDataScriptValue(matchingProp.value);
@@ -786,6 +791,16 @@ const getStandardPropValue = (
 	}
 };
 
+const extractComponentId = (block: Block): string | null => {
+	const { editingMode, fragmentData } = useCanvasStore();
+	let componentId = block.extendedFromComponent || null;
+	if (!componentId) {
+		// in fragment mode the component root does not have extendedFromComponent
+		if (editingMode == "fragment" && !block.getParentBlock()) componentId = fragmentData.fragmentId!;
+	}
+	return componentId;
+};
+
 const getDataArray = (collectionObject: Record<string, any>) => {
 	const result: string[] = [];
 	let collectionObjectCopy = { ...collectionObject };
@@ -849,6 +864,7 @@ export {
 	getRootBlockTemplate,
 	getRouteVariables,
 	getStandardPropValue,
+	extractComponentId,
 	getTextContent,
 	getVideoBlock,
 	handleBase64Attribute,

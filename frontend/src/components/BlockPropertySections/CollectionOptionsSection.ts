@@ -9,33 +9,28 @@ import { computed, h } from "vue";
 const keyOptions = computed(() => {
 	const pageStore = usePageStore();
 	const componentStore = useComponentStore();
-	const canvasStore = useCanvasStore();
+	const {editingMode, fragmentData} = useCanvasStore();
 
 	let result: { label: string; value: string; prefix: any }[] = [];
 
 	const repeatablePageDataKeys: string[] = [];
 	const repeatableComponentDataKeys: string[] = [];
 
-	const pageDataCollectionObject = canvasStore.editingMode == "fragment" ? {} : getRepeaterScopedData(
-		blockController.getFirstSelectedBlock(),
-		pageStore.pageData,
-	);
+	const pageDataCollectionObject =
+		editingMode == "fragment"
+			? {}
+			: getRepeaterScopedData(blockController.getFirstSelectedBlock(), pageStore.pageData);
 
-	let componetData: Record<string, any> = {};
-
-	const selectedBlock = blockController.getFirstSelectedBlock();
-	const componentRoot = blockController.getComponentRootBlock(selectedBlock);
-	if (componentRoot) {
-		let componentId = componentRoot.extendedFromComponent!;
-		if (canvasStore.editingMode == "fragment") {
-			componentId = canvasStore.fragmentData.fragmentId!;
-		}
-		componetData = componentStore.getComponentInstanceData(componentId, componentRoot.blockId);
+	let componentData = {}
+	if (editingMode == "fragment") {
+		const componentId = fragmentData.fragmentId;
+		const blockId = fragmentData.block?.blockId;
+		componentData = componentStore.getComponentInstanceData(componentId!, blockId);
 	}
 
 	const componentDataCollectionObject = getRepeaterScopedData(
 		blockController.getFirstSelectedBlock(),
-		componetData,
+		componentData,
 	);
 
 	const isInsideRepeater = blockController.getFirstSelectedBlock()?.isInsideRepeater();
@@ -66,7 +61,9 @@ const keyOptions = computed(() => {
 	const isPropsBasedRepeater = isInsideRepeater && repeaterDataKeyComesFrom == "props";
 	const repeatableProps: string[] = [];
 
-	const propsOfComponentRoot = blockController.getComponentRootBlock(blockController.getFirstSelectedBlock())?.getBlockProps();
+	const propsOfComponentRoot = blockController
+		.getComponentRootBlock(blockController.getFirstSelectedBlock())
+		?.getBlockProps();
 
 	if (propsOfComponentRoot && !isPropsBasedRepeater) {
 		Object.entries(propsOfComponentRoot).forEach(([key, value]) => {
