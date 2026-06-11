@@ -1053,7 +1053,8 @@ def append_global_client_script(state: dict, script_id: str, script: dict):
 		return
 
 	if script["type"] == "JavaScript":
-		fn_args = "props" if script["from"] == "block" else "component_data, props"
+		fn_args = "props" if script["from"] == "block" else "component, component_data, props"
+
 		state["global_script_tag"].append(
 			f"function client_script_{script_id}({fn_args}) {{{script['script']}}}\n"
 		)
@@ -1074,6 +1075,7 @@ def create_client_script_invocation(script_id: str, script: dict) -> str:
 		)
 	return (
 		f"(client_script_{script_id})("
+		f"document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]'), "
 		f"{{{{ component.component_data | to_safe_json }}}}, "
 		f"{{{{ props | to_safe_json }}}}"
 		f");"
@@ -1084,7 +1086,6 @@ def create_local_client_script_tag(state: dict, script_id: str, script: dict) ->
 	"""Create a per-block script or style tag that invokes the global client script."""
 	if script["type"] == "JavaScript":
 		script_tag = state["soup"].new_tag("script")
-		script_tag.attrs["defer"] = True
 		script_tag.string = create_client_script_invocation(script_id, script)
 		return script_tag
 
@@ -1098,8 +1099,7 @@ def create_local_client_script_tag(state: dict, script_id: str, script: dict) ->
 def create_combined_component_script_tag(state: dict, invocations: list[str]) -> bs.Tag:
 	"""Create one script tag that runs all component script invocations in order."""
 	local_script = state["soup"].new_tag("script")
-	local_script.attrs["defer"] = True
-	script_string = "let sample_var = 99;\n" + "\n".join(invocations)
+	script_string = "let count = ref(0);\n" + "\n".join(invocations) # here insert component variables, for eg: count
 	local_script.string = script_string
 	return local_script
 
@@ -1117,6 +1117,8 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 
 	# bunch all component javascript scripts together
 	for script_id, script in scripts.items():
+		if script["type"] == "CSS":
+			continue
 		append_global_client_script(state, script_id, script)
 		if script["type"] == "JavaScript" and script["from"] == "component":
 			component_js_invocations.append(create_client_script_invocation(script_id, script))
@@ -1129,10 +1131,10 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 		local_tags.append(create_local_client_script_tag(state, script_id, script))
 
 	if component_js_invocations:
-		local_tags.insert(0, create_combined_component_script_tag(state, component_js_invocations))
+		local_tags.append(create_combined_component_script_tag(state, component_js_invocations))
 
 	for local_tag in reversed(local_tags):
-		tag.insert(0, local_tag)
+		tag.append(local_tag)
 
 
 def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
