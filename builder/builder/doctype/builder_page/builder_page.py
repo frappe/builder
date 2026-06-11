@@ -1063,31 +1063,44 @@ def append_global_client_script(state: dict, script_id: str, script: dict):
 	state["used_block_scripts"].add(script_id)
 
 
+def create_client_script_invocation(script_id: str, script: dict) -> str:
+	"""Return the inline invocation for a registered global client script."""
+	if script["from"] == "block":
+		return (
+			f"(client_script_{script_id}).call("
+			f"document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]'), "
+			f"{{{{ props | to_safe_json }}}}"
+			f");"
+		)
+	return (
+		f"(client_script_{script_id})("
+		f"{{{{ component.component_data | to_safe_json }}}}, "
+		f"{{{{ props | to_safe_json }}}}"
+		f");"
+	)
+
+
 def create_local_client_script_tag(state: dict, script_id: str, script: dict) -> bs.Tag:
 	"""Create a per-block script or style tag that invokes the global client script."""
 	if script["type"] == "JavaScript":
-		local_script = state["soup"].new_tag("script")
-		local_script.attrs["defer"] = True
-		if script["from"] == "block":
-			local_script.string = (
-				f"(client_script_{script_id}).call("
-				f"document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]'), "
-				f"{{{{ props | to_safe_json }}}}"
-				f");"
-			)
-		else:
-			local_script.string = (
-				f"(client_script_{script_id})("
-				f"{{{{ component.component_data | to_safe_json }}}}, "
-				f"{{{{ props | to_safe_json }}}}"
-				f");"
-			)
-		return local_script
+		script_tag = state["soup"].new_tag("script")
+		script_tag.attrs["defer"] = True
+		script_tag.string = create_client_script_invocation(script_id, script)
+		return script_tag
 
-	local_script = state["soup"].new_tag("style")
-	local_script.string = (
+	style_tag = state["soup"].new_tag("style")
+	style_tag.string = (
 		f"[data-block-uid=\"{{{{ unique_hash }}}}\"] {{ {script['script']} }}"
 	)
+	return style_tag
+
+
+def create_combined_component_script_tag(state: dict, invocations: list[str]) -> bs.Tag:
+	"""Create one script tag that runs all component script invocations in order."""
+	local_script = state["soup"].new_tag("script")
+	local_script.attrs["defer"] = True
+	script_string = "let sample_var = 99;\n" + "\n".join(invocations)
+	local_script.string = script_string
 	return local_script
 
 
@@ -1099,9 +1112,27 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 
 	tag.attrs["data-block-uid"] = "{{ unique_hash }}"
 
+	component_js_invocations: list[str] = []
+	local_tags: list[bs.Tag] = []
+
+	# bunch all component javascript scripts together
 	for script_id, script in scripts.items():
 		append_global_client_script(state, script_id, script)
-		tag.insert(0, create_local_client_script_tag(state, script_id, script))
+		if script["type"] == "JavaScript" and script["from"] == "component":
+			component_js_invocations.append(create_client_script_invocation(script_id, script))
+
+
+	# add all other scripts
+	for script_id, script in reversed(list(scripts.items())):
+		if script["type"] == "JavaScript" and script["from"] == "component":
+			continue
+		local_tags.append(create_local_client_script_tag(state, script_id, script))
+
+	if component_js_invocations:
+		local_tags.insert(0, create_combined_component_script_tag(state, component_js_invocations))
+
+	for local_tag in reversed(local_tags):
+		tag.insert(0, local_tag)
 
 
 def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
