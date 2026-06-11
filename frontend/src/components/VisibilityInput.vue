@@ -9,6 +9,8 @@
 </template>
 <script setup lang="ts">
 import InlineInput from "@/components/Controls/InlineInput.vue";
+import useCanvasStore from "@/stores/canvasStore";
+import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
 import { getDataArray, getDefaultPropsList, getParentProps, getRepeaterScopedData } from "@/utils/helpers";
@@ -21,37 +23,51 @@ const props = defineProps<{
 }>();
 
 const pageStore = usePageStore();
+const componentStore = useComponentStore();
+const { editingMode, fragmentData } = useCanvasStore();
 
+const currentBlock = computed(() => blockController.getFirstSelectedBlock());
 const autocompleteRef = ref<InstanceType<typeof InlineInput> | null>(null);
 
 const pageDataArray = computed(() => {
-	const currentBlock = blockController.getFirstSelectedBlock();
-	if (!currentBlock) {
+	if (!currentBlock.value) {
 		return [];
 	}
-	return getDataArray(getRepeaterScopedData(currentBlock, pageStore.pageData));
+	return getDataArray(getRepeaterScopedData(currentBlock.value, pageStore.pageData));
 });
-// TODO: add component data
-const ownProps = computed(() => {
-	const currentBlock = blockController.getFirstSelectedBlock();
-	if (!currentBlock) {
+
+let componentData = {};
+if (editingMode == "fragment") {
+	const componentId = fragmentData.fragmentId;
+	const blockId = fragmentData.block?.blockId;
+	componentData = componentStore.getComponentInstanceData(componentId!, blockId);
+}
+
+const componentDataArray = computed(() => {
+	if (!currentBlock.value) {
 		return [];
 	}
-	return Object.keys(currentBlock.getBlockProps());
+	return getDataArray(getRepeaterScopedData(currentBlock.value, componentData));
+});
+
+const ownProps = computed(() => {
+	if (!currentBlock.value) {
+		return [];
+	}
+	return Object.keys(currentBlock.value.getBlockProps());
 });
 const parentProps = computed(() => {
-	const currentBlock = blockController.getFirstSelectedBlock();
-	if (!currentBlock) {
+	if (!currentBlock.value) {
 		return [];
 	}
-	return Object.keys(getParentProps(currentBlock));
+	return Object.keys(getParentProps(currentBlock.value));
 });
+
 const defaultProps = computed(() => {
-	const currentBlock = blockController.getFirstSelectedBlock();
-	if (!currentBlock) {
+	if (!currentBlock.value) {
 		return [];
 	}
-	return Object.keys(getDefaultPropsList(currentBlock, blockController));
+	return Object.keys(getDefaultPropsList(currentBlock.value, blockController));
 });
 const getOptions = async (query: string) => {
 	let options: { label: string; value: string }[] = [];
@@ -64,14 +80,14 @@ const getOptions = async (query: string) => {
 			});
 		}
 	});
-	// componentDataArray.value.map((prop) => {
-	// 	if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
-	// 		options.push({
-	// 			label: prop,
-	// 			value: `${prop}--componentData`,
-	// 		});
-	// 	}
-	// });
+	componentDataArray.value.map((prop) => {
+		if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
+			options.push({
+				label: prop,
+				value: `${prop}--componentData`,
+			});
+		}
+	});
 	const combinedProps = [...new Set([...ownProps.value, ...parentProps.value])];
 
 	combinedProps.map((prop) => {
