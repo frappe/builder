@@ -156,7 +156,13 @@ const getDynamicContent = () => {
 		?.forEach((dataKeyObj: BlockDataKey) => {
 			let value;
 			if (dataKeyObj.comesFrom === "props") {
-				value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue, props.defaultProps, getComponentDataValue);
+				value = getPropValue(
+					dataKeyObj.key as string,
+					props.block,
+					getDataScriptValue,
+					props.defaultProps,
+					getComponentDataValue,
+				);
 			} else if (dataKeyObj.comesFrom === "componentData") {
 				value = getComponentDataValue(dataKeyObj.key as string);
 			} else {

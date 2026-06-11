@@ -187,7 +187,13 @@ const isFragmentMode = computed(() => canvasStore.editingMode == "fragment");
 const modeButtons = computed(() => {
 	if (isFragmentMode.value) {
 		return [
-			{ label: "Component", icon: "lucide-component", hideLabel: true, value: "component", showTooltip: true },
+			{
+				label: "Component",
+				icon: "lucide-component",
+				hideLabel: true,
+				value: "component",
+				showTooltip: true,
+			},
 			{ label: "Block", icon: "lucide-layers", hideLabel: true, value: "block", showTooltip: true },
 		];
 	}
@@ -231,7 +237,6 @@ const componentDataPreview = computed(() => {
 
 const componentDataScript = computed(() => {
 	const name = currentComponentName.value;
-	console.log("No name")
 	if (!name) return "";
 	const doc = componentStore.getComponent(name);
 	console.log(doc, 99);

@@ -23,10 +23,7 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import usePageStore from "@/stores/pageStore";
-import {
-	getDataForKey,
-	getStandardPropValue,
-} from "@/utils/helpers";
+import { getDataForKey, getStandardPropValue } from "@/utils/helpers";
 import { Ref, computed, ref } from "vue";
 import BuilderBlock from "./BuilderBlock.vue";
 import blockController from "@/utils/blockController";
@@ -119,7 +116,6 @@ const blockRepeaterData = computed(() => {
 });
 
 const getRepeaterIndex = (index: number | string) => {
-	console.log(repeatingFrom.value)
 	if (props.repeaterIndex !== undefined) {
 		const parsedPropIndex =
 			typeof props.repeaterIndex === "string" ? parseInt(props.repeaterIndex, 10) : props.repeaterIndex;

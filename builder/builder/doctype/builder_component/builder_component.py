@@ -21,7 +21,10 @@ class BuilderComponent(Document):
 
 	if TYPE_CHECKING:
 		from frappe.types import DF
-		from builder.builder.doctype.builder_component_client_script.builder_component_client_script import BuilderComponentClientScript
+
+		from builder.builder.doctype.builder_component_client_script.builder_component_client_script import (
+			BuilderComponentClientScript,
+		)
 
 		block: DF.JSON | None
 		component_client_scripts: DF.TableMultiSelect["BuilderComponentClientScript"]

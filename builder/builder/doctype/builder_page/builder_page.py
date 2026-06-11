@@ -1090,16 +1090,16 @@ def create_local_client_script_tag(state: dict, script_id: str, script: dict) ->
 		return script_tag
 
 	style_tag = state["soup"].new_tag("style")
-	style_tag.string = (
-		f"[data-block-uid=\"{{{{ unique_hash }}}}\"] {{ {script['script']} }}"
-	)
+	style_tag.string = f'[data-block-uid="{{{{ unique_hash }}}}"] {{ {script["script"]} }}'
 	return style_tag
 
 
 def create_combined_component_script_tag(state: dict, invocations: list[str]) -> bs.Tag:
 	"""Create one script tag that runs all component script invocations in order."""
 	local_script = state["soup"].new_tag("script")
-	script_string = "let count = ref(0);\n" + "\n".join(invocations) # here insert component variables, for eg: count
+	script_string = "let count = ref(0);\n" + "\n".join(
+		invocations
+	)  # here insert component variables, for eg: count
 	local_script.string = script_string
 	return local_script
 
@@ -1122,7 +1122,6 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 		append_global_client_script(state, script_id, script)
 		if script["type"] == "JavaScript" and script["from"] == "component":
 			component_js_invocations.append(create_client_script_invocation(script_id, script))
-
 
 	# add all other scripts
 	for script_id, script in reversed(list(scripts.items())):
@@ -1159,9 +1158,7 @@ def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
 		parent.append(f"{{% if {context['visibility_key']} %}}")
 
 	if context.get("component_id"):
-		parent.append(
-			f"{{% with component = get_component_data('{context['component_id']}', props) %}}"
-		)
+		parent.append(f"{{% with component = get_component_data('{context['component_id']}', props) %}}")
 
 	parent.append(child)
 

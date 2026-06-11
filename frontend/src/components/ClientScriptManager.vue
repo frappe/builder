@@ -168,13 +168,10 @@ const props = defineProps<{
 	parentName: string;
 }>();
 
-const childTableDoctype = props.parentDoctype === "Builder Page" 
-	? "Builder Page Client Script" 
-	: "Builder Component Client Script";
+const childTableDoctype =
+	props.parentDoctype === "Builder Page" ? "Builder Page Client Script" : "Builder Component Client Script";
 
-const parentField = props.parentDoctype === "Builder Page" 
-	? "client_scripts" 
-	: "component_client_scripts";
+const parentField = props.parentDoctype === "Builder Page" ? "client_scripts" : "component_client_scripts";
 
 const attachedScriptResource = createListResource({
 	doctype: childTableDoctype,
@@ -358,9 +355,10 @@ const onScriptReorder = () => {
 
 	const scriptOrder = attachedScriptResource.data.map((script: attachedScript) => script.name);
 
-	const reorderEndpoint = props.parentDoctype === "Builder Page" 
-		? "builder.api.reorder_client_scripts"
-		: "builder.api.reorder_component_client_scripts";
+	const reorderEndpoint =
+		props.parentDoctype === "Builder Page"
+			? "builder.api.reorder_client_scripts"
+			: "builder.api.reorder_component_client_scripts";
 
 	createResource({
 		url: reorderEndpoint,

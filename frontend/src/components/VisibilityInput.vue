@@ -11,12 +11,7 @@
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
-import {
-	getDataArray,
-	getDefaultPropsList,
-	getParentProps,
-	getRepeaterScopedData,
-} from "@/utils/helpers";
+import { getDataArray, getDefaultPropsList, getParentProps, getRepeaterScopedData } from "@/utils/helpers";
 import { computed, ref, watch } from "vue";
 
 const props = defineProps<{
