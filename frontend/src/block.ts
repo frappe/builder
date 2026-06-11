@@ -71,6 +71,7 @@ class Block implements BlockOptions {
 	dynamicValues: Array<BlockDataKey>;
 	blockClientScript?: string;
 	props?: BlockProps;
+	vars?: BlockVars;
 	editorConfig?: BlockEditorConfig;
 	// @ts-expect-error
 	referenceComponent: Block | null;
@@ -137,6 +138,7 @@ class Block implements BlockOptions {
 		this.dynamicValues = reactive(options.dynamicValues || []);
 		this.blockClientScript = options.blockClientScript || "";
 		this.props = reactive(options.props || {});
+		this.vars = reactive(options.vars || {});
 		this.editorConfig = options.editorConfig;
 
 		this.blockName = options.blockName;
@@ -1017,6 +1019,12 @@ class Block implements BlockOptions {
 	}
 	setBlockProps(props: BlockProps) {
 		this.props = props;
+	}
+	getBlockVars(): BlockVars {
+		return this.vars || {};
+	}
+	setBlockVars(vars: BlockVars) {
+		this.vars = vars;
 	}
 }
 

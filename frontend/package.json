@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && yarn build:runtime",
+    "build:runtime": "vite build --config vite.runtime.config.mjs",
     "build:reset": "tailwindcss -i ./src/reset.css -o ../builder/public/reset.css --minify && node ./scripts/strip-css-comments.js",
     "preview": "vite preview",
     "test-local": "cypress open --e2e --browser chrome",
@@ -33,6 +34,7 @@
     "@tiptap/pm": "^3.11.0",
     "@tiptap/starter-kit": "^3.11.0",
     "@tiptap/vue-3": "^3.11.0",
+    "@vue/reactivity": "3.5.15",
     "@vitejs/plugin-vue": "5",
     "@vueuse/components": "^10.2.1",
     "@vueuse/core": "^10.2.1",

@@ -49,7 +49,7 @@ const props = withDefaults(
 	defineProps<{
 		modelValue?: Object | String | Array<any>;
 		type?: "JSON" | "HTML" | "Python" | "JavaScript" | "CSS";
-		mode?: "block" | "page";
+		mode?: "block" | "page" | "component";
 		label?: string;
 		readonly?: boolean;
 		height?: string;

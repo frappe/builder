@@ -105,6 +105,7 @@ class Block:
 	dynamicValues: ClassVar[list[BlockDataKey]] = []
 	blockClientScript: str = ""
 	props: ClassVar[dict] = {}
+	vars: ClassVar[dict] = {}
 
 	def __init__(self, **kwargs) -> None:
 		for key, value in kwargs.items():
@@ -171,6 +172,7 @@ class Block:
 			"dynamicValues": self.dynamicValues,
 			"blockClientScript": self.blockClientScript,
 			"props": self.props,
+			"vars": self.vars,
 		}
 
 	def as_json(self, wrap_in_array=False):

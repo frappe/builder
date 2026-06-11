@@ -16,7 +16,7 @@
 					:autofocus="false"
 					:readonly="true" />
 			</div>
-			<div class="h-full" v-if="mode == 'component'">
+			<div class="h-fit" v-if="mode == 'component'">
 				<CodeEditor
 					v-model="componentDataPreview"
 					type="JSON"
@@ -24,12 +24,20 @@
 					:autofocus="false"
 					:readonly="true" />
 			</div>
-			<div class="box-border h-full overflow-y-auto pb-12" v-if="mode == 'block' && showPropsInput">
-				<div class="flex min-h-full w-full flex-col" v-if="isBlockSelected">
-					<div class="my-3 mt-4 text-sm text-ink-gray-8">Block Props</div>
-					<PropsEditor
-						:obj="blockController.getBlockProps()"
-						@update:obj="(obj: BlockProps) => blockController.setBlockProps(obj)" />
+			<div class="box-border h-full overflow-y-auto pb-12" v-if="showPropsInput">
+				<div class="flex min-h-full w-full flex-col gap-6" v-if="isBlockSelected">
+					<div>
+						<div class="mb-3 mt-4 text-sm text-ink-gray-8">Component Props</div>
+						<PropsEditor
+							:obj="blockController.getBlockProps()"
+							@update:obj="(obj: BlockProps) => blockController.setBlockProps(obj)" />
+					</div>
+					<div>
+						<div class="mb-3 text-sm text-ink-gray-8">Component Variables</div>
+						<VarsEditor
+							:obj="blockController.getBlockVars()"
+							@update:obj="(obj: BlockVars) => blockController.setBlockVars(obj)" />
+					</div>
 				</div>
 			</div>
 			<div v-else-if="mode == 'block'" class="mt-2 text-center text-sm text-ink-gray-6">
@@ -37,6 +45,7 @@
 			</div>
 		</div>
 		<div
+			v-if="false"
 			class="absolute bottom-0 left-0 box-border flex w-full items-center justify-between border-t bg-surface-white p-4 py-2">
 			<h2 class="text-base text-ink-gray-6">Mode</h2>
 			<TabButtons class="w-fit" :buttons="modeButtons" v-model="mode" />
@@ -109,7 +118,7 @@
 								height="calc(100% - 110px)"
 								description='Use Component Data Script to provide dynamic data to your component.<br>
 								<b>Example:</b> data.items = frappe.get_list("Item")<br><br>
-								Props are accessible via the <b>props</b> object.'
+								Props are accessible via the <b>props</b> object. Component Variables are accessible via the <b>vars</b> object.'
 								:readonly="true"></CodeEditor>
 						</div>
 					</div>
@@ -152,6 +161,7 @@ import CodeEditor from "./Controls/CodeEditor.vue";
 import TabButtons from "./Controls/TabButtons.vue";
 import ClientScriptManager from "./ClientScriptManager.vue";
 import PropsEditor from "./PropsEditor.vue";
+import VarsEditor from "./VarsEditor.vue";
 import useCanvasStore from "@/stores/canvasStore.js";
 
 const { capture } = useTelemetry();

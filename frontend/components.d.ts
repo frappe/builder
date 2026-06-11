@@ -46,6 +46,7 @@ declare module 'vue' {
     BuilderSettings: typeof import('./src/components/BuilderSettings.vue')['default']
     BuilderToolbar: typeof import('./src/components/BuilderToolbar.vue')['default']
     Chart: typeof import('./src/components/Icons/Chart.vue')['default']
+    ClientScriptManager: typeof import('./src/components/ClientScriptManager.vue')['default']
     Code: typeof import('./src/components/Icons/Code.vue')['default']
     CodeEditor: typeof import('./src/components/Controls/CodeEditor.vue')['default']
     CodeMirrorEditor: typeof import('./src/components/Controls/CodeMirror/CodeMirrorEditor.vue')['default']
@@ -155,6 +156,8 @@ declare module 'vue' {
     Underline: typeof import('./src/components/Icons/Underline.vue')['default']
     VariableManager: typeof import('./src/components/Modals/VariableManager.vue')['default']
     VariantControl: typeof import('./src/components/Controls/VariantControl.vue')['default']
+    VarsEditor: typeof import('./src/components/VarsEditor.vue')['default']
+    VarsPopoverContent: typeof import('./src/components/VarsPopoverContent.vue')['default']
     VisibilityInput: typeof import('./src/components/VisibilityInput.vue')['default']
     WebPagePresetPicker: typeof import('./src/components/WebPagePresetPicker.vue')['default']
   }

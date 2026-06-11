@@ -4,7 +4,7 @@
 		@mousedown.stop
 		class="props-popover-content flex max-h-80 w-80 flex-col gap-3 overflow-auto rounded-lg bg-surface-white p-4 shadow-lg">
 		<div v-if="showIsStandardInput" class="flex items-center justify-between gap-2">
-			<InputLabel>Is Standard</InputLabel>
+			<InputLabel class="w-1/3 min-w-[88px] shrink-0'">Is Standard</InputLabel>
 			<OptionToggle
 				:options="toggleOptions"
 				:model-value="isStandard"

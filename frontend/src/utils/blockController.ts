@@ -384,6 +384,21 @@ const blockController = {
 		});
 		Object.assign(block.props, props);
 	},
+	getBlockVars: () => {
+		return blockController.getFirstSelectedBlock()?.getBlockVars() || {};
+	},
+	setBlockVars: (vars: BlockVars) => {
+		const block = blockController.getFirstSelectedBlock();
+		if (!block.vars) {
+			block.vars = {};
+		}
+		Object.keys(block.vars).forEach((key) => {
+			if (!vars[key]) {
+				delete block.vars?.[key];
+			}
+		});
+		Object.assign(block.vars, vars);
+	},
 };
 
 export default blockController;

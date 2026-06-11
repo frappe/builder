@@ -20,7 +20,7 @@ import { tomorrow } from "thememirror";
 
 const props = defineProps<{
 	type: "Python" | "JavaScript" | "HTML" | "CSS" | "JSON";
-	mode?: "block" | "page";
+	mode?: "block" | "page" | "component";
 	initialValue?: string;
 	readonly: boolean;
 	allowSave: boolean;
@@ -67,6 +67,7 @@ const resetEditor = async (params: { content: string; resetHistory: boolean; aut
 						extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
 						mode: props.mode,
 						blockProps: allBlockProps.value,
+						blockVars: allBlockVars.value,
 					})
 				).startState,
 			);
@@ -122,6 +123,13 @@ const allBlockProps = computed(() => {
 	};
 });
 
+const allBlockVars = computed(() => {
+	if (props.mode !== "component") {
+		return {};
+	}
+	return blockController.getBlockVars();
+});
+
 onMounted(async () => {
 	if (!editorContainer.value) {
 		console.warn("CodeMirror: editor container not found, skipping mount");
@@ -138,6 +146,7 @@ onMounted(async () => {
 		extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
 		mode: props.mode,
 		blockProps: allBlockProps.value,
+		blockVars: allBlockVars.value,
 	});
 
 	editor = new EditorView({

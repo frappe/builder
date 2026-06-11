@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import copy
+import json
 import re
 from typing import Any
 
@@ -1053,7 +1054,11 @@ def append_global_client_script(state: dict, script_id: str, script: dict):
 		return
 
 	if script["type"] == "JavaScript":
-		fn_args = "props" if script["from"] == "block" else "component, component_data, props"
+		fn_args = (
+			"props"
+			if script["from"] == "block"
+			else "component, component_data, props, vars"
+		)
 
 		state["global_script_tag"].append(
 			f"function client_script_{script_id}({fn_args}) {{{script['script']}}}\n"
@@ -1077,7 +1082,8 @@ def create_client_script_invocation(script_id: str, script: dict) -> str:
 		f"(client_script_{script_id})("
 		f"document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]'), "
 		f"{{{{ component.component_data | to_safe_json }}}}, "
-		f"{{{{ props | to_safe_json }}}}"
+		f"{{{{ props | to_safe_json }}}}, "
+		f"vars"
 		f");"
 	)
 
@@ -1094,13 +1100,47 @@ def create_local_client_script_tag(state: dict, script_id: str, script: dict) ->
 	return style_tag
 
 
-def create_combined_component_script_tag(state: dict, invocations: list[str]) -> bs.Tag:
+REACTIVE_COMPONENT_VAR_TYPES = {"object", "array"}
+DEFAULT_COMPONENT_VAR_VALUES = {
+	"number": 0,
+	"string": "",
+	"boolean": False,
+	"object": {},
+	"array": [],
+}
+
+
+def get_component_var_initial_value(var_def: dict):
+	if "initialValue" in var_def and var_def["initialValue"] is not None:
+		return var_def["initialValue"]
+	return DEFAULT_COMPONENT_VAR_VALUES.get(var_def.get("type", "string"), "")
+
+
+def format_component_var_entry(name: str, var_def: dict) -> str:
+	var_type = var_def.get("type", "string")
+	initial_value = get_component_var_initial_value(var_def)
+	value_json = json.dumps(initial_value)
+	wrapper = "reactive" if var_type in REACTIVE_COMPONENT_VAR_TYPES else "ref"
+	return f"{name}: {wrapper}({value_json})"
+
+
+def build_component_vars_fence(invocations: list[str], block_vars: dict | None = None) -> str:
+	block_vars = block_vars or {}
+	entries = [format_component_var_entry(name, var_def) for name, var_def in block_vars.items()]
+	vars_body = ", ".join(entries)
+	lines = ["{"]
+	lines.append(f"  const vars = {{ {vars_body} }};")
+	lines.extend(f"  {invocation}" for invocation in invocations)
+	lines.append("}")
+	return "\n".join(lines)
+
+
+def create_combined_component_script_tag(
+	state: dict, invocations: list[str], block_vars: dict | None = None
+) -> bs.Tag:
 	"""Create one script tag that runs all component script invocations in order."""
 	local_script = state["soup"].new_tag("script")
-	script_string = "let count = ref(0);\n" + "\n".join(
-		invocations
-	)  # here insert component variables, for eg: count
-	local_script.string = script_string
+	local_script.string = build_component_vars_fence(invocations, block_vars)
 	return local_script
 
 
@@ -1130,7 +1170,9 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 		local_tags.append(create_local_client_script_tag(state, script_id, script))
 
 	if component_js_invocations:
-		local_tags.append(create_combined_component_script_tag(state, component_js_invocations))
+		local_tags.append(
+			create_combined_component_script_tag(state, component_js_invocations, block.get("vars"))
+		)
 
 	for local_tag in reversed(local_tags):
 		tag.append(local_tag)

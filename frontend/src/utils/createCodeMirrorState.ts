@@ -43,8 +43,9 @@ interface CreateStateParams {
 	onChangeCallback: any;
 	onBlurCallback?: any;
 	initialValue?: string;
-	mode?: "block" | "page";
+	mode?: "block" | "page" | "component";
 	blockProps?: Record<string, any>;
+	blockVars?: Record<string, any>;
 }
 
 export const createStartingState = async ({
@@ -57,6 +58,7 @@ export const createStartingState = async ({
 	initialValue = "", // to override initial value without recreating state (eg: when resetting)
 	mode,
 	blockProps,
+	blockVars,
 }: CreateStateParams) => {
 	const updateEmitter = EditorView.updateListener.of((update: ViewUpdate) => {
 		if (update.docChanged) onChangeCallback();
@@ -170,7 +172,11 @@ export const createStartingState = async ({
 				javascript(),
 				javascriptLanguage.data.of({
 					autocomplete: (context: any) =>
-						jsCompletionsFromGlobalScope(context, { ...(mode == "block" ? { ...blockProps } : {}) }),
+						jsCompletionsFromGlobalScope(
+							context,
+							{ ...(mode == "block" ? { ...blockProps } : {}) },
+							{ ...(mode == "component" ? { ...blockVars } : {}) },
+						),
 				}),
 			);
 			break;
