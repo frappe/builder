@@ -1085,7 +1085,9 @@ def create_local_client_script_tag(state: dict, script_id: str, script: dict) ->
 		return local_script
 
 	local_script = state["soup"].new_tag("style")
-	local_script.string = script["script"]
+	local_script.string = (
+		f"[data-block-uid=\"{{{{ unique_hash }}}}\"] {{ {script['script']} }}"
+	)
 	return local_script
 
 
