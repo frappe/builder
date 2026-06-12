@@ -1,7 +1,6 @@
 import html as html_parser
 
 import frappe
-from frappe.utils import cint
 
 
 def generate_preview(html, output_path):
@@ -15,12 +14,12 @@ def _render(html: str) -> bytes:
 	# render previews in-process — no external service, and local assets resolve.
 	# Builder still supports v15, where that helper doesn't exist; fall back to
 	# the preview_generator HTTP service there.
-	if cint(frappe.__version__.split(".")[0]) >= 16:
+	try:
 		from frappe.utils.preview import get_preview_from_html
+	except ImportError:
+		return _render_via_service(html)
 
-		return get_preview_from_html(html, format="webp")
-
-	return _render_via_service(html)
+	return get_preview_from_html(html, format="webp")
 
 
 def _render_via_service(html: str) -> bytes:
