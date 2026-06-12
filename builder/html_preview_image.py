@@ -10,10 +10,10 @@ def generate_preview(html, output_path):
 
 
 def render(html: str) -> bytes:
-	# Frappe v16+ ships a built-in headless-Chromium screenshot generator, so we
-	# render previews in-process — no external service, and local assets resolve.
-	# Builder still supports v15, where that helper doesn't exist; fall back to
-	# the preview_generator HTTP service there.
+	# Newer Frappe versions ship a built-in headless-Chromium screenshot generator,
+	# so we render previews in-process — no external service, and local assets
+	# resolve. Older versions don't have this helper; fall back to the
+	# preview_generator HTTP service there.
 	try:
 		from frappe.utils.preview import get_preview_from_html
 	except ImportError:
