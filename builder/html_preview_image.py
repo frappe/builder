@@ -4,12 +4,12 @@ import frappe
 
 
 def generate_preview(html, output_path):
-	image = _render(html)
+	image = render(html)
 	with open(output_path, "wb") as f:
 		f.write(image)
 
 
-def _render(html: str) -> bytes:
+def render(html: str) -> bytes:
 	# Frappe v16+ ships a built-in headless-Chromium screenshot generator, so we
 	# render previews in-process — no external service, and local assets resolve.
 	# Builder still supports v15, where that helper doesn't exist; fall back to
@@ -17,12 +17,12 @@ def _render(html: str) -> bytes:
 	try:
 		from frappe.utils.preview import get_preview_from_html
 	except ImportError:
-		return _render_via_service(html)
+		return render_via_service(html)
 
 	return get_preview_from_html(html, format="webp")
 
 
-def _render_via_service(html: str) -> bytes:
+def render_via_service(html: str) -> bytes:
 	# Note: while working locally, "preview.frappe.cloud" can't reach the local
 	# server for assets, so set `preview_generator_url` to a local/self-hosted
 	# preview_generator (https://github.com/frappe/preview_generator).
