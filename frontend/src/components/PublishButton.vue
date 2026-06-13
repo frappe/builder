@@ -21,7 +21,7 @@
 			:options="[
 				{
 					label: 'Version History',
-					onClick: () => (showVersionHistory = true),
+					onClick: () => (builderStore.showVersionHistory = true),
 					icon: 'lucide-history',
 				},
 				{
@@ -49,11 +49,10 @@
 					class="!w-6 justify-start rounded-bl-none rounded-tl-none border-0 pr-0 text-xs"></Button>
 			</template>
 		</Dropdown>
-		<VersionHistory v-model="showVersionHistory" />
 	</div>
 </template>
 <script lang="ts" setup>
-import VersionHistory from "@/components/VersionHistory.vue";
+import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { Dropdown } from "frappe-ui";
@@ -65,9 +64,9 @@ defineProps<{
 
 const pageStore = usePageStore();
 const canvasStore = useCanvasStore();
+const builderStore = useBuilderStore();
 
 const publishing = ref(false);
-const showVersionHistory = ref(false);
 const showDropdown = computed(() => {
 	// Always available (so Version History is reachable); individual items
 	// (Revert / Unpublish) remain gated by their own `condition`.

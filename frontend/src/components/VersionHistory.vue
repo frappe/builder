@@ -1,68 +1,101 @@
 <template>
-	<Dialog v-model="show" title="Version History" size="lg">
-		<template #default>
-			<div class="flex flex-col gap-4">
-				<!-- Save a manual checkpoint -->
-				<div class="flex items-end gap-2">
-					<TextInput
-						v-model="newLabel"
-						type="text"
-						label="Save current version"
-						placeholder="Optional name (e.g. before redesign)"
-						class="flex-1"
-						@keydown.enter="saveVersion" />
-					<Button
-						variant="solid"
-						icon-left="save"
-						:loading="saving"
-						label="Save Version"
-						@click="saveVersion" />
+	<Transition
+		enter-active-class="transition-transform duration-200 ease-out"
+		leave-active-class="transition-transform duration-150 ease-in"
+		enter-from-class="translate-x-full"
+		leave-to-class="translate-x-full">
+		<div
+			v-if="show"
+			class="bg-surface-white absolute bottom-0 right-0 top-[var(--toolbar-height)] z-10 flex w-72 flex-col border-l border-outline-gray-2 shadow-xl">
+			<!-- header -->
+			<div class="flex items-center justify-between px-4 py-3">
+				<span class="text-base font-medium text-ink-gray-8">Version History</span>
+				<button
+					class="grid h-6 w-6 place-items-center rounded text-ink-gray-6 hover:bg-surface-gray-3"
+					@click="show = false">
+					<span class="lucide-x h-4 w-4" aria-hidden="true" />
+				</button>
+			</div>
+
+			<!-- save current version -->
+			<div class="flex items-center gap-2 px-4 pb-3">
+				<TextInput
+					v-model="newLabel"
+					type="text"
+					placeholder="Name this version (optional)"
+					class="flex-1"
+					@keydown.enter="saveVersion" />
+				<Button variant="solid" :loading="saving" label="Save" @click="saveVersion" />
+			</div>
+
+			<!-- timeline -->
+			<div class="relative flex-1 overflow-y-auto px-3 pb-4">
+				<div
+					v-if="!snapshots.data?.length && !snapshots.loading"
+					class="px-1 pt-10 text-center text-p-sm text-ink-gray-4">
+					No saved versions yet. A version is captured every time you publish, or when you save one manually.
 				</div>
 
-				<!-- Snapshot list -->
-				<div class="flex max-h-[50vh] flex-col overflow-y-auto">
-					<div
-						v-if="!snapshots.data?.length && !snapshots.loading"
-						class="py-10 text-center text-p-sm text-ink-gray-4">
-						No saved versions yet. Versions are captured each time you publish, or when you save one manually.
+				<template v-else>
+					<!-- vertical line -->
+					<div class="bg-outline-gray-2 pointer-events-none absolute bottom-3 left-[15px] top-3 w-px" />
+
+					<!-- current (live) marker -->
+					<div class="relative flex items-center gap-3 py-2 pl-7 pr-1">
+						<span
+							class="bg-ink-gray-8 ring-surface-white absolute left-[9px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full ring-4" />
+						<div class="flex min-w-0 flex-1 flex-col">
+							<span class="text-p-sm font-medium text-ink-gray-8">Current version</span>
+							<span class="text-p-xs text-ink-gray-5">Live · unsaved edits</span>
+						</div>
+						<Avatar
+							:shape="'circle'"
+							:image="user(activePageOwner).image"
+							:label="user(activePageOwner).fullname"
+							size="sm" />
 					</div>
-					<div
+
+					<!-- saved versions -->
+					<button
 						v-for="snapshot in snapshots.data"
 						:key="snapshot.name"
-						class="flex items-center justify-between gap-3 border-b border-outline-gray-1 py-3 last:border-b-0">
-						<div class="flex min-w-0 flex-col gap-1">
-							<div class="flex items-center gap-2">
-								<Badge
-									:theme="snapshot.snapshot_type === 'Manual' ? 'blue' : 'green'"
-									variant="subtle"
-									:label="snapshot.snapshot_type || 'Snapshot'" />
-								<span v-if="snapshot.label" class="truncate text-sm text-ink-gray-8">
-									{{ snapshot.label }}
-								</span>
-							</div>
-							<span class="text-xs text-ink-gray-5">
-								{{ formatRelative(snapshot.creation) }} · {{ snapshot.owner }}
+						class="group relative flex w-full items-center gap-3 rounded py-2 pl-7 pr-1 text-left hover:bg-surface-gray-2"
+						:title="`Restore this version as a draft`"
+						@click="restore(snapshot)">
+						<span
+							class="ring-surface-white absolute left-[9px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full ring-4"
+							:class="snapshot.snapshot_type === 'Manual' ? 'bg-blue-500' : 'bg-green-500'" />
+						<div class="flex min-w-0 flex-1 flex-col">
+							<span class="truncate text-p-sm text-ink-gray-8">
+								{{ snapshot.label || formatRelative(snapshot.creation) }}
+							</span>
+							<span class="truncate text-p-xs text-ink-gray-5">
+								{{ snapshot.label ? formatRelative(snapshot.creation) : snapshot.snapshot_type || "Version" }}
 							</span>
 						</div>
-						<Button
-							variant="subtle"
-							icon-left="rotate-ccw"
-							:loading="restoringName === snapshot.name"
-							label="Restore"
-							@click="restore(snapshot)" />
-					</div>
-				</div>
+						<span
+							v-if="restoringName === snapshot.name"
+							class="lucide-loader-circle h-4 w-4 animate-spin text-ink-gray-5" />
+						<Avatar
+							v-else
+							:shape="'circle'"
+							:image="user(snapshot.owner).image"
+							:label="user(snapshot.owner).fullname"
+							size="sm"
+							:title="user(snapshot.owner).fullname" />
+					</button>
+				</template>
 			</div>
-		</template>
-	</Dialog>
+		</div>
+	</Transition>
 </template>
 
 <script setup lang="ts">
-import Dialog from "@/components/Controls/Dialog.vue";
 import usePageStore from "@/stores/pageStore";
 import { BuilderSnapshot } from "@/types/doctypes";
+import { getUserInfo } from "@/usersInfo";
 import { confirm } from "@/utils/helpers";
-import { Badge, Button, createListResource, TextInput, toast } from "frappe-ui";
+import { Avatar, Button, createListResource, TextInput, toast } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
 const props = defineProps<{ modelValue: boolean }>();
@@ -79,6 +112,9 @@ const newLabel = ref("");
 const saving = ref(false);
 const restoringName = ref<string | null>(null);
 
+const user = (email: string) => getUserInfo(email || "Administrator");
+const activePageOwner = computed(() => pageStore.activePage?.owner || "Administrator");
+
 const snapshots = createListResource({
 	doctype: "Builder Snapshot",
 	fields: ["name", "label", "snapshot_type", "creation", "owner"],
@@ -90,7 +126,7 @@ const snapshots = createListResource({
 	pageLength: 100,
 });
 
-// (re)load the list whenever the dialog opens for the active page
+// (re)load the list whenever the panel opens for the active page
 watch(
 	() => [props.modelValue, pageStore.selectedPage],
 	([visible]) => {

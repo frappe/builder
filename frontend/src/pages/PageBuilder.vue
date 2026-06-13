@@ -28,7 +28,7 @@
 			}"
 			class="canvas-container absolute bottom-0 flex justify-center overflow-hidden bg-surface-gray-2 p-10">
 			<template v-slot:header>
-				<div class="flex items-center justify-between bg-surface-white p-2 text-sm text-ink-gray-8 shadow-sm">
+				<div class="bg-surface-white flex items-center justify-between p-2 text-sm text-ink-gray-8 shadow-sm">
 					<div class="flex items-center gap-1 pl-2 text-xs">
 						<a @click="canvasStore.exitFragmentMode" class="cursor-pointer">Page</a>
 						<span class="lucide-chevron-right h-3 w-3" aria-hidden="true" />
@@ -70,10 +70,11 @@
 		<!-- Panels layer (middle) - comes after canvas in DOM -->
 		<BuilderLeftPanel
 			v-show="builderStore.showLeftPanel"
-			class="absolute bottom-0 left-0 top-[var(--toolbar-height)] w-fit border-r-[1px] border-outline-gray-2 bg-surface-white"></BuilderLeftPanel>
+			class="bg-surface-white absolute bottom-0 left-0 top-[var(--toolbar-height)] w-fit border-r-[1px] border-outline-gray-2"></BuilderLeftPanel>
 		<BuilderRightPanel
 			v-show="builderStore.showRightPanel"
-			class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] overflow-auto border-l-[1px] border-outline-gray-2 bg-surface-white"></BuilderRightPanel>
+			class="no-scrollbar bg-surface-white absolute bottom-0 right-0 top-[var(--toolbar-height)] overflow-auto border-l-[1px] border-outline-gray-2"></BuilderRightPanel>
+		<VersionHistory v-model="builderStore.showVersionHistory" />
 
 		<!-- Toolbar layer (top) - comes last in DOM -->
 		<BuilderToolbar class="absolute left-0 right-0 top-0"></BuilderToolbar>
@@ -124,6 +125,7 @@ import BuilderCanvas from "@/components/BuilderCanvas.vue";
 import BuilderCommandPalette from "@/components/BuilderCommandPalette.vue";
 import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
+import VersionHistory from "@/components/VersionHistory.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
 import PageListModal from "@/components/Modals/PageListModal.vue";
