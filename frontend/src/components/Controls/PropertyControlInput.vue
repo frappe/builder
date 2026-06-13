@@ -30,13 +30,12 @@
 			class="absolute right-1 top-1 cursor-pointer p-1 text-ink-gray-4 hover:text-ink-gray-5"
 			tabindex="-1"
 			@click="$emit('clearDynamic')">
-			<CrossIcon />
+			<span class="lucide-x size-3.5" />
 		</button>
 	</div>
 </template>
 
 <script lang="ts" setup>
-import CrossIcon from "@/components/Icons/Cross.vue";
 import type { Component } from "vue";
 import MiddleTruncate from "../MiddleTruncate.vue";
 

@@ -19,7 +19,8 @@
 								@click="selectScript(script)"
 								class="group flex h-6 items-center justify-between gap-1 text-sm first-of-type:mt-6 last-of-type:mb-2 hover:text-ink-gray-7">
 								<div class="flex w-[90%] items-center gap-1">
-									<GripVertical class="drag-handle cursor-grab text-ink-gray-5 hover:text-ink-gray-8" />
+									<span
+										class="drag-handle lucide-grip-vertical size-3.5 cursor-grab text-ink-gray-5 hover:text-ink-gray-8" />
 									<CSSIcon class="shrink-0" v-if="script.script_type === 'CSS'" />
 
 									<JavaScriptIcon class="shrink-0" v-if="script.script_type === 'JavaScript'" />
@@ -138,7 +139,6 @@ import { toast } from "frappe-ui";
 import draggable from "vuedraggable";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import CSSIcon from "./Icons/CSS.vue";
-import GripVertical from "./Icons/GripVertical.vue";
 import JavaScriptIcon from "./Icons/JavaScript.vue";
 
 const { capture } = useTelemetry();

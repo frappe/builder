@@ -32,11 +32,9 @@
 									class="lucide-check-circle size-4 text-ink-green-6"
 									aria-hidden="true"
 									v-if="pageStore.activePage?.published && !pageStore.activePage.authenticated_access" />
-								<AuthenticatedUserIcon
-									class="size-4 text-ink-amber-6"
-									v-else-if="
-										pageStore.activePage?.published && pageStore.activePage?.authenticated_access
-									"></AuthenticatedUserIcon>
+								<span
+									class="lucide-shield-user size-4 text-ink-amber-6"
+									v-else-if="pageStore.activePage?.published && pageStore.activePage?.authenticated_access" />
 								<span
 									class="lucide-alert-circle size-4 text-ink-gray-4"
 									aria-hidden="true"
@@ -177,7 +175,6 @@
 </template>
 <script setup lang="ts">
 import ImageUploader from "@/components/Controls/ImageUploader.vue";
-import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";

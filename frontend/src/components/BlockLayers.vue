@@ -65,8 +65,8 @@
 							]"
 							aria-hidden="true"
 							v-if="!Boolean(element.extendedFromComponent) && !showCodeIcon(element)" />
-						<BlocksIcon
-							class="mr-1 h-3 w-3"
+						<span
+							class="lucide-blocks mr-1 h-3 w-3"
 							:class="{
 								'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
 									element.isExtendedFromComponent(),
@@ -141,7 +141,6 @@ import useCanvasStore from "@/stores/canvasStore";
 import { nextTick, ref, watch } from "vue";
 import draggable from "vuedraggable";
 import BlockLayers from "./BlockLayers.vue";
-import BlocksIcon from "./Icons/Blocks.vue";
 
 type LayerInstance = InstanceType<typeof BlockLayers>;
 

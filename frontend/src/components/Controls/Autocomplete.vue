@@ -46,7 +46,7 @@
 						tabindex="-1"
 						@click.stop="clearSelection"
 						@mousedown.prevent>
-						<CrossIcon />
+						<span class="lucide-x size-3.5" />
 					</button>
 				</div>
 			</div>
@@ -112,7 +112,6 @@
 
 <script setup lang="ts">
 import NumberArrows from "@/components/Controls/NumberArrows.vue";
-import CrossIcon from "@/components/Icons/Cross.vue";
 import { useNumberInput } from "@/utils/useNumberInput";
 import {
 	ComboboxContent,

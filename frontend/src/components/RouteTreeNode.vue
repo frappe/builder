@@ -46,10 +46,10 @@
 							v-if="node.page.authenticated_access"
 							text="This page has limited access"
 							:hoverDelay="0.5">
-							<AuthenticatedUserIcon class="size-3.5 text-ink-amber-6" />
+							<span class="lucide-shield-user size-3.5 text-ink-amber-6" />
 						</Tooltip>
 						<Tooltip v-if="!node.page.published" text="Not published" :hoverDelay="0.5">
-							<GlobeOffIcon class="size-3.5 text-ink-gray-4" />
+							<span class="lucide-globe-x size-3.5 text-ink-gray-4" />
 						</Tooltip>
 					</span>
 				</div>
@@ -98,8 +98,6 @@
 </template>
 
 <script setup lang="ts">
-import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
-import GlobeOffIcon from "@/components/Icons/GlobeOff.vue";
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
 import { BuilderPage } from "@/types/doctypes";
 import { Tooltip } from "frappe-ui";

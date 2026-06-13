@@ -41,11 +41,9 @@
 									v-if="pageStore.isHomePage(pageStore.activePage)" />
 							</Tooltip>
 							<Tooltip text="This page has limited access" :hoverDelay="0.6">
-								<AuthenticatedUserIcon
-									class="size-4 text-ink-amber-6"
-									v-if="
-										pageStore.activePage?.published && pageStore.activePage?.authenticated_access
-									"></AuthenticatedUserIcon>
+								<span
+									class="lucide-shield-user size-4 text-ink-amber-6"
+									v-if="pageStore.activePage?.published && pageStore.activePage?.authenticated_access" />
 							</Tooltip>
 							<span
 								class="max-w-48 truncate text-base text-ink-gray-8"
@@ -163,7 +161,6 @@
 </template>
 <script setup lang="ts">
 import Dialog from "@/components/Controls/Dialog.vue";
-import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import PlayIcon from "@/components/Icons/Play.vue";
 import SettingsGearIcon from "@/components/Icons/SettingsGear.vue";
 import PublishButton from "@/components/PublishButton.vue";

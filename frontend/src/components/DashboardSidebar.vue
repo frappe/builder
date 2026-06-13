@@ -117,7 +117,7 @@
 				}"
 				@click="setFolderActive(project.folder_name)">
 				<span class="flex flex-1 gap-2 overflow-hidden">
-					<FolderIcon class="size-4"></FolderIcon>
+					<span class="lucide-folder size-4" />
 					<EditableSpan
 						v-model="project.folder_name"
 						:editable="renamingFolder === project.folder_name"
@@ -179,7 +179,6 @@
 <script lang="ts" setup>
 import EditableSpan from "@/components/EditableSpan.vue";
 import FilesIcon from "@/components/Icons/Files.vue";
-import FolderIcon from "@/components/Icons/Folder.vue";
 import SettingsIcon from "@/components/Icons/SettingsGear.vue";
 import { useDashboardState } from "@/composables/useDashboardState";
 import { promptCreateFolder } from "@/utils/dialogs";
