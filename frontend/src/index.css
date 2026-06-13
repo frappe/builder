@@ -66,6 +66,12 @@ p:empty::before {
 	background-color: var(--surface-base);
 }
 
+/* surface-base resolves to dark-gray-950 (#171717); pin it to the deeper
+   gray-950 (#0f0f0f) in dark mode for a darker base/page background. */
+[data-theme='dark'] .bg-surface-base {
+	background-color: var(--gray-950);
+}
+
 [contenteditable=true]:focus-visible {
 	outline: 1px solid var(--outline-gray-4);
 	outline-offset: 3px;
