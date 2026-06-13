@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="toolbar border-outline border-outline flex items-center justify-center border-b-[1px] border-outline-gray-1 bg-surface-white px-2 py-1"
+		class="toolbar border-outline border-outline bg-surface-white flex items-center justify-center border-b-[1px] border-outline-gray-1 px-2 py-1"
 		ref="toolbar">
 		<div class="absolute left-3 flex items-center gap-4">
 			<MainMenu
@@ -67,7 +67,7 @@
 				</template>
 				<template #body="{ close }">
 					<div
-						class="flex w-72 flex-col gap-3 rounded bg-surface-white p-4 shadow-lg"
+						class="bg-surface-white flex w-72 flex-col gap-3 rounded p-4 shadow-lg"
 						v-if="pageStore.activePage">
 						<PageOptions v-if="pageStore.activePage"></PageOptions>
 					</div>
@@ -125,6 +125,7 @@
 					v-if="pageStore.savingPage && pageStore.activePage?.is_template">
 					Saving template
 				</span>
+				<ComponentUpdates />
 				<Tooltip text="Settings" :hoverDelay="0.6" arrow-class="mb-3">
 					<Button variant="ghost" @click="openSettings" :icon="SettingsGearIcon"></Button>
 				</Tooltip>
@@ -166,6 +167,7 @@ import Dialog from "@/components/Controls/Dialog.vue";
 import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import PlayIcon from "@/components/Icons/Play.vue";
 import SettingsGearIcon from "@/components/Icons/SettingsGear.vue";
+import ComponentUpdates from "@/components/ComponentUpdates.vue";
 import PublishButton from "@/components/PublishButton.vue";
 import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";

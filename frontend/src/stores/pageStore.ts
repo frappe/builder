@@ -90,6 +90,16 @@ const usePageStore = defineStore("pageStore", {
 						this.settingPage = false;
 						window.name = `editor-${pageName}`;
 						clearInterval(interval);
+						// detect pinned component instances whose live component drifted
+						componentStore.refreshComponentUpdates();
+						// surface any warnings stashed by a just-completed snapshot restore
+						const restoreWarnings = sessionStorage.getItem("builder:restoreWarnings");
+						if (restoreWarnings) {
+							sessionStorage.removeItem("builder:restoreWarnings");
+							for (const message of JSON.parse(restoreWarnings) as string[]) {
+								toast.warning(message);
+							}
+						}
 					}
 				}, 50);
 			});
@@ -203,11 +213,16 @@ const usePageStore = defineStore("pageStore", {
 		async restoreSnapshot(snapshotName: string) {
 			// wait out any in-flight autosave so it can't clobber the restored draft
 			await this.waitTillPageIsSaved();
-			await webPages.runDocMethod.submit({
+			const res = await webPages.runDocMethod.submit({
 				name: this.selectedPage as string,
 				method: "restore_snapshot",
 				snapshot: snapshotName,
 			});
+			// surface any deleted-dependency warnings after the upcoming reload
+			const warnings = (res?.message?.warnings || []) as string[];
+			if (warnings.length) {
+				sessionStorage.setItem("builder:restoreWarnings", JSON.stringify(warnings));
+			}
 			// The server has written the restored content into draft_blocks. Hard-reload the
 			// editor so it loads that draft fresh from the server (the in-memory canvas +
 			// cached document resource still hold the pre-restore content; reusing them would

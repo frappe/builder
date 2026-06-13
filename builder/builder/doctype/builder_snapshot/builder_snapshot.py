@@ -33,14 +33,22 @@ class BuilderSnapshot(Document):
 # ---------------------------------------------------------------------------
 
 
-def take_snapshot(reference_doctype, reference_name, fields, label=None, snapshot_type=None):
+def take_snapshot(reference_doctype, reference_name, fields, label=None, snapshot_type=None, transform=None):
 	"""Capture the current value of `fields` on a document as a snapshot.
 
 	Stores `{fieldname: value}` as JSON in the snapshot's `data` field.
 	Returns the new snapshot's name.
+
+	`transform`, if given, is a callable that receives the captured
+	`{fieldname: value}` dict and returns a (possibly rewritten) dict to store.
+	It lets a consuming app post-process the captured values — e.g. pin
+	dependency versions into a JSON field — without this generic layer needing
+	any domain knowledge.
 	"""
 	doc = frappe.get_doc(reference_doctype, reference_name)
 	data = {field: doc.get(field) for field in fields}
+	if transform:
+		data = transform(data)
 	snapshot = frappe.get_doc(
 		{
 			"doctype": "Builder Snapshot",
@@ -60,17 +68,33 @@ def get_snapshot_data(snapshot_name) -> dict:
 	return frappe.parse_json(snapshot.data)
 
 
-def restore_snapshot(snapshot_name, save=True):
-	"""Generic write-back: apply a snapshot's stored fields onto its document as-is.
+def get_versioned_doc(snapshot_name):
+	"""Return the referenced doc with this snapshot's captured fields overlaid (unsaved).
 
-	Apps that need custom restore semantics (e.g. routing the value into a draft
-	field for review) should use `get_snapshot_data` and apply it themselves
-	rather than calling this.
+	Like `get_doc`, but as the document looked at `snapshot_name` for the captured fields —
+	every other field comes from the current doc. If the referenced doc was deleted, the
+	captured fields are overlaid onto a fresh doc (non-captured fields are doctype defaults)
+	so the version stays resolvable.
 	"""
 	snapshot = frappe.get_doc("Builder Snapshot", snapshot_name)
-	doc = frappe.get_doc(snapshot.reference_doctype, snapshot.reference_name)
+	try:
+		doc = frappe.get_doc(snapshot.reference_doctype, snapshot.reference_name)
+	except frappe.DoesNotExistError:
+		doc = frappe.new_doc(snapshot.reference_doctype)
+		doc.name = snapshot.reference_name
 	for field, value in frappe.parse_json(snapshot.data).items():
 		doc.set(field, value)
+	return doc
+
+
+def restore_snapshot(snapshot_name, save=True):
+	"""Generic write-back: apply a snapshot's stored fields onto its document.
+
+	Apps that need custom restore semantics (e.g. routing the value into a draft
+	field for review) should use `get_versioned_doc` / `get_snapshot_data` and apply
+	it themselves rather than calling this.
+	"""
+	doc = get_versioned_doc(snapshot_name)
 	if save:
 		doc.save()
 	return doc

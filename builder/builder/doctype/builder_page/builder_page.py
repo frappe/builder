@@ -18,6 +18,13 @@ from frappe.website.path_resolver import resolve_path as original_resolve_path
 from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
 
+from builder.builder.component_versions import (
+	collect_restore_warnings,
+	ensure_component_version,
+	is_pin_outdated,
+	pin_components_in_page_data,
+	resolve_component_block,
+)
 from builder.builder.doctype.builder_project_folder.builder_project_folder import is_system_activity
 from builder.builder.doctype.builder_snapshot.builder_snapshot import (
 	prune_snapshots,
@@ -257,8 +264,14 @@ class BuilderPage(WebsiteGenerator):
 		self.published = 1
 		self.published_at = now()
 		if self.draft_blocks:
-			# snapshot the content going live before it overwrites `blocks`
-			take_snapshot("Builder Page", self.name, fields=["draft_blocks"], snapshot_type="Publish")
+			# snapshot the content going live (component versions pinned) before it overwrites `blocks`
+			take_snapshot(
+				"Builder Page",
+				self.name,
+				fields=["draft_blocks", "page_data_script"],
+				snapshot_type="Publish",
+				transform=pin_components_in_page_data,
+			)
 			prune_snapshots("Builder Page", self.name, keep=KEEP_PUBLISH_SNAPSHOTS, snapshot_type="Publish")
 			self.blocks = self.draft_blocks
 			self.draft_blocks = None
@@ -286,7 +299,14 @@ class BuilderPage(WebsiteGenerator):
 		field = "draft_blocks" if self.draft_blocks else "blocks"
 		if not self.get(field):
 			return
-		return take_snapshot("Builder Page", self.name, fields=[field], snapshot_type="Manual", label=label)
+		return take_snapshot(
+			"Builder Page",
+			self.name,
+			fields=[field, "page_data_script"],
+			snapshot_type="Manual",
+			label=label,
+			transform=pin_components_in_page_data,
+		)
 
 	@frappe.whitelist()
 	def restore_snapshot(self, snapshot: str):
@@ -295,10 +315,29 @@ class BuilderPage(WebsiteGenerator):
 		if snap.reference_doctype != "Builder Page" or snap.reference_name != self.name:
 			frappe.throw(frappe._("Snapshot does not belong to this page"))
 		data = frappe.parse_json(snap.data)
-		# snapshots may store blocks under either key depending on capture-time state
-		self.draft_blocks = data.get("draft_blocks") or data.get("blocks")
+		# stored blocks already carry pinned component versions; key depends on capture-time state
+		blocks = data.get("draft_blocks") or data.get("blocks")
+		self.draft_blocks = blocks
+		if "page_data_script" in data:
+			self.page_data_script = data.get("page_data_script")
 		self.save()
-		return self.draft_blocks
+		return {"draft_blocks": blocks, "warnings": collect_restore_warnings(blocks)}
+
+	@frappe.whitelist()
+	def get_current_component_version(self, component_id: str):
+		# mint/reuse a version of the component's current state for the editor to re-pin to
+		return ensure_component_version(component_id)
+
+	@frappe.whitelist()
+	def get_outdated_component_pins(self, pins: str):
+		# of the editor's pinned (component_id, version) pairs, return those whose live component changed
+		pins = frappe.parse_json(pins) if isinstance(pins, str) else pins
+		outdated = []
+		for pin in pins or []:
+			component_id, version = pin.get("component_id"), pin.get("version")
+			if component_id and version and is_pin_outdated(component_id, version):
+				outdated.append({"component_id": component_id, "version": version})
+		return outdated
 
 	def get_context(self, context):
 		# delete default favicon
@@ -1184,14 +1223,12 @@ def extend_block_with_component(block: dict) -> dict:
 	if not block.get("extendedFromComponent"):
 		return block
 
-	component = frappe.get_cached_value(
-		"Builder Component",
-		block["extendedFromComponent"],
-		["block", "name"],
-		as_dict=True,
+	# honor a pinned component version on snapshot-restored blocks (else latest live)
+	component_block_json = resolve_component_block(
+		block["extendedFromComponent"], block.get("componentVersion")
 	)
 
-	component_block = frappe.parse_json(component.block if component else "{}")
+	component_block = frappe.parse_json(component_block_json or "{}")
 	if component_block:
 		extend_block(component_block, block)
 		return component_block

@@ -23,7 +23,7 @@
 				<div class="flex max-h-[50vh] flex-col overflow-y-auto">
 					<div
 						v-if="!snapshots.data?.length && !snapshots.loading"
-						class="py-10 text-center text-sm text-ink-gray-4">
+						class="py-10 text-center text-p-sm text-ink-gray-4">
 						No saved versions yet. Versions are captured each time you publish, or when you save one manually.
 					</div>
 					<div

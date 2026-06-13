@@ -19,7 +19,14 @@ from werkzeug.wrappers import Response
 
 from builder import builder_analytics
 from builder.builder.doctype.builder_page.builder_page import BuilderPageRenderer
+from builder.builder.doctype.builder_snapshot import builder_snapshot
 from builder.utils import has_page_read, has_page_write
+
+
+@frappe.whitelist()
+def get_versioned_doc(snapshot: str) -> dict:
+	"""Return the referenced doc as it looked at `snapshot`, with versioned fields overlaid."""
+	return builder_snapshot.get_versioned_doc(snapshot).as_dict()
 
 
 @frappe.whitelist()

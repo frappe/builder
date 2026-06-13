@@ -57,6 +57,7 @@ declare module 'vue' {
     CommandPalette: typeof import('./src/components/CommandPalette.vue')['default']
     CommandPaletteItem: typeof import('./src/components/CommandPaletteItem.vue')['default']
     Component: typeof import('./src/components/Icons/Component.vue')['default']
+    ComponentUpdates: typeof import('./src/components/ComponentUpdates.vue')['default']
     ContextMenu: typeof import('./src/components/ContextMenu.vue')['default']
     Cross: typeof import('./src/components/Icons/Cross.vue')['default']
     CSS: typeof import('./src/components/Icons/CSS.vue')['default']
