@@ -351,12 +351,6 @@ const blockController = {
 		}
 		return block;
 	},
-	getBlockClientScript: () => {
-		return blockController.getFirstSelectedBlock()?.getBlockClientScript();
-	},
-	setBlockClientScript: (script: string) => {
-		blockController.getFirstSelectedBlock()?.setBlockClientScript(script);
-	},
 	getBlockProps: () => {
 		return blockController.getFirstSelectedBlock()?.getBlockProps();
 	},
@@ -383,21 +377,6 @@ const blockController = {
 			}
 		});
 		Object.assign(block.props, props);
-	},
-	getBlockVars: () => {
-		return blockController.getFirstSelectedBlock()?.getBlockVars() || {};
-	},
-	setBlockVars: (vars: BlockVars) => {
-		const block = blockController.getFirstSelectedBlock();
-		if (!block.vars) {
-			block.vars = {};
-		}
-		Object.keys(block.vars).forEach((key) => {
-			if (!vars[key]) {
-				delete block.vars?.[key];
-			}
-		});
-		Object.assign(block.vars, vars);
 	},
 };
 

@@ -47,14 +47,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import { setFont } from "@/utils/fontManager";
-import {
-	executeBlockClientScriptRestricted,
-	executeBlockClientScriptUnrestricted,
-	extractComponentId,
-	getDataForKey,
-	getParentProps,
-	getPropValue,
-} from "@/utils/helpers";
+import { extractComponentId, getDataForKey, getParentProps, getPropValue } from "@/utils/helpers";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
 import {
 	computed,
@@ -430,43 +423,22 @@ onUnmounted(() => {
 });
 
 const allResolvedProps = computed(() => {
-	const defaultProps = Object.entries(props.defaultProps || {}).reduce(
-		(acc, [key, value]) => {
-			acc[key] = value.value;
-			return acc;
-		},
-		{} as Record<string, any>,
-	);
+	const defaultProps = Object.entries(props.defaultProps || {}).reduce((acc, [key, value]) => {
+		acc[key] = value.value;
+		return acc;
+	}, {} as Record<string, any>);
 
 	const blockProps = Object.entries({
 		...props.block.getBlockProps(),
-	}).reduce(
-		(acc, [key]) => {
-			acc[key] = getPropValue(
-				key,
-				props.block,
-				getDataScriptValue,
-				props.defaultProps,
-				getComponentDataValue,
-			);
-			return acc;
-		},
-		{} as Record<string, any>,
-	);
+	}).reduce((acc, [key]) => {
+		acc[key] = getPropValue(key, props.block, getDataScriptValue, props.defaultProps, getComponentDataValue);
+		return acc;
+	}, {} as Record<string, any>);
 
-	const parentProps = Object.entries(getParentProps(props.block)).reduce(
-		(acc, [key, value]) => {
-			acc[key] = getPropValue(
-				key,
-				value.block!,
-				getDataScriptValue,
-				props.defaultProps,
-				getComponentDataValue,
-			);
-			return acc;
-		},
-		{} as Record<string, any>,
-	);
+	const parentProps = Object.entries(getParentProps(props.block)).reduce((acc, [key, value]) => {
+		acc[key] = getPropValue(key, value.block!, getDataScriptValue, props.defaultProps, getComponentDataValue);
+		return acc;
+	}, {} as Record<string, any>);
 
 	return {
 		...parentProps,
@@ -498,36 +470,36 @@ watch(
 );
 
 // Execute client script
-watch(
-	[
-		component,
-		allResolvedProps,
-		() => props.block.getBlockClientScript(),
-		() => builderSettings.doc?.execute_block_scripts_in_editor,
-		() => pageStore.settingPage,
-	],
-	() => {
-		if (!isMounted.value) return;
-		if (pageStore.settingPage) return;
+// watch(
+// 	[
+// 		component,
+// 		allResolvedProps,
+// 		() => getComponentClientScript(props.block),
+// 		() => builderSettings.doc?.execute_block_scripts_in_editor,
+// 		() => pageStore.settingPage,
+// 	],
+// 	() => {
+// 		if (!isMounted.value) return;
+// 		if (pageStore.settingPage) return;
 
-		const script = props.block.getBlockClientScript().trim();
-		if (!script) return;
+// 		const script = getComponentClientScript(props.block).trim();
+// 		if (!script) return;
 
-		const mode = builderSettings.doc?.execute_block_scripts_in_editor;
-		if (mode === "Don't Execute") return;
+// 		const mode = builderSettings.doc?.execute_block_scripts_in_editor;
+// 		if (mode === "Don't Execute") return;
 
-		if (mode === "Restricted")
-			executeBlockClientScriptRestricted(uidToUse, props.breakpoint, script, allResolvedProps.value);
-		else executeBlockClientScriptUnrestricted(uidToUse, props.breakpoint, script, allResolvedProps.value);
-	},
-	{ immediate: true },
-);
+// 		if (mode === "Restricted")
+// 			executeBlockClientScriptRestricted(uidToUse, props.breakpoint, script, allResolvedProps.value);
+// 		else executeBlockClientScriptUnrestricted(uidToUse, props.breakpoint, script, allResolvedProps.value);
+// 	},
+// 	{ immediate: true },
+// );
 
 // watch(
 // 	[
 // 		() => canvasStore.editingMode,
 // 		() => canvasStore.fragmentData?.fragmentId,
-// 		() => props.block.getBlockVars(),
+// 		() => getComponentVars(props.block),
 // 		resolvedComponentData,
 // 		allResolvedProps,
 // 		() => builderSettings.doc?.execute_block_scripts_in_editor,
@@ -557,7 +529,7 @@ watch(
 // 				element,
 // 				resolvedComponentData.value,
 // 				allResolvedProps.value,
-// 				props.block.getBlockVars(),
+// 				getComponentVars(props.block),
 // 				script,
 // 			);
 // 		}

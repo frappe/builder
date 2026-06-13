@@ -144,6 +144,7 @@ import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, w
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
 import useComponentStore from "@/stores/componentStore.js";
+import componentController from "@/utils/componentController.js";
 
 const expandedEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
 const aiGeneratorModal = ref<null | InstanceType<typeof AIPageGeneratorModal>>(null);
@@ -358,6 +359,7 @@ useEventListener(document, "keyup", (e) => {
 });
 
 async function saveAndExitFragmentMode(e: Event) {
+	componentController.applyComponentDoc();
 	await canvasStore.fragmentData.saveAction?.(fragmentCanvas.value?.getRootBlock());
 	fragmentCanvas.value?.toggleDirty(false);
 	canvasStore.exitFragmentMode(e);
@@ -384,16 +386,12 @@ let expandedEditorOptions = computed(() => {
 function getExpandedEditorContent() {
 	if (canvasStore.editingContentType === "html") {
 		return canvasStore.editableBlock?.getInnerHTML();
-	} else if (canvasStore.editingContentType === "js") {
-		return canvasStore.editableBlock?.getBlockClientScript();
 	}
 }
 
 async function saveExpandedEditorContent(val: string) {
 	if (canvasStore.editingContentType === "html") {
 		canvasStore.editableBlock?.setInnerHTML(val);
-	} else if (canvasStore.editingContentType === "js") {
-		canvasStore.editableBlock?.setBlockClientScript(val);
 	}
 	canvasStore.showEditorDialog = false;
 }

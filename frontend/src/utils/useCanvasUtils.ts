@@ -281,3 +281,7 @@ export function useCanvasUtils(
 		isDirty,
 	};
 }
+
+export function markCanvasDirty(dirty: boolean = true) {
+	canvasStore.activeCanvas?.toggleDirty(dirty);
+}

@@ -1025,18 +1025,8 @@ def get_visibility_condition_key(block: dict, data_key: dict | None) -> str | No
 
 
 def collect_client_scripts(block: dict) -> dict[str, dict]:
-	"""Collect block and component client scripts keyed by unique id."""
+	"""Collect component client scripts keyed by unique id."""
 	scripts = {}
-
-	if block.get("blockClientScript"):
-		script_id = block.get("blockId")
-		if block.get("isBlockClientScriptOverridden"):
-			script_id = frappe.generate_hash(length=8)
-		scripts[str(script_id)] = {
-			"script": block["blockClientScript"],
-			"type": "JavaScript",
-			"from": "block",
-		}
 
 	for component_script in block.get("componentScripts") or []:
 		scripts[str(component_script["name"])] = {
@@ -1054,14 +1044,8 @@ def append_global_client_script(state: dict, script_id: str, script: dict):
 		return
 
 	if script["type"] == "JavaScript":
-		fn_args = (
-			"props"
-			if script["from"] == "block"
-			else "component, component_data, props, vars"
-		)
-
 		state["global_script_tag"].append(
-			f"function client_script_{script_id}({fn_args}) {{{script['script']}}}\n"
+			f"function client_script_{script_id}(component, component_data, props, vars) {{{script['script']}}}\n"
 		)
 	else:
 		state["global_script_tag"].append(f"<style>{script['script']}</style>\n")
@@ -1071,13 +1055,6 @@ def append_global_client_script(state: dict, script_id: str, script: dict):
 
 def create_client_script_invocation(script_id: str, script: dict) -> str:
 	"""Return the inline invocation for a registered global client script."""
-	if script["from"] == "block":
-		return (
-			f"(client_script_{script_id}).call("
-			f"document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]'), "
-			f"{{{{ props | to_safe_json }}}}"
-			f");"
-		)
 	return (
 		f"(client_script_{script_id})("
 		f"document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]'), "
@@ -1302,12 +1279,17 @@ def extend_block_with_component(block: dict) -> tuple[dict, str | None]:
 	component = frappe.get_cached_value(
 		"Builder Component",
 		component_id,
-		["block", "name", "component_js", "component_css"],
+		["block", "name", "component_js", "component_css", "component_props", "component_vars"],
 		as_dict=True,
 	)
 
 	component_block = frappe.parse_json(component.block if component else "{}")
 	if component_block:
+		if component.component_props:
+			component_block["props"] = frappe.parse_json(component.component_props) or {}
+		if component.component_vars:
+			component_block["vars"] = frappe.parse_json(component.component_vars) or {}
+
 		extend_block(component_block, block)
 
 		component_scripts = []
@@ -1329,6 +1311,7 @@ def extend_block_with_component(block: dict) -> tuple[dict, str | None]:
 			)
 		if component_scripts:
 			component_block["componentScripts"] = component_scripts
+
 
 		return component_block, component_id
 
@@ -1489,10 +1472,6 @@ def extend_block(block, overridden_block):
 		block["props"] = {}
 	block["props"].update(overridden_block.get("props", {}))
 
-	if overridden_block.get("blockClientScript"):
-		block["blockClientScript"] = overridden_block.get("blockClientScript")
-		block["isBlockClientScriptOverridden"] = True
-
 	dataKey = overridden_block.get("dataKey", {})
 	if not block.get("dataKey"):
 		block["dataKey"] = {}
@@ -1596,7 +1575,6 @@ def reset_block(block):
 	block["classes"] = []
 	block["dataKey"] = {}
 	block["props"] = {}
-	block["blockClientScript"] = None
 	block["dynamicValues"] = []
 	return block
 

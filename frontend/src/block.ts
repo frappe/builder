@@ -69,9 +69,7 @@ class Block implements BlockOptions {
 	parentBlock: Block | null;
 	activeState?: string | null = null;
 	dynamicValues: Array<BlockDataKey>;
-	blockClientScript?: string;
 	props?: BlockProps;
-	vars?: BlockVars;
 	editorConfig?: BlockEditorConfig;
 	// @ts-expect-error
 	referenceComponent: Block | null;
@@ -136,9 +134,7 @@ class Block implements BlockOptions {
 		this.tabletStyles = reactive(options.tabletStyles || {});
 		this.attributes = reactive(options.attributes || {});
 		this.dynamicValues = reactive(options.dynamicValues || []);
-		this.blockClientScript = options.blockClientScript || "";
 		this.props = reactive(options.props || {});
-		this.vars = reactive(options.vars || {});
 		this.editorConfig = options.editorConfig;
 
 		this.blockName = options.blockName;
@@ -996,35 +992,18 @@ class Block implements BlockOptions {
 	isInsideRepeater(): boolean {
 		return Boolean(this.getRepeaterParent());
 	}
-	getBlockClientScript(): string {
-		let blockClientScript = "";
-		if (this.isExtendedFromComponent() && !this.blockClientScript) {
-			blockClientScript = this.referenceComponent?.getBlockClientScript() || "";
-		} else {
-			blockClientScript = this.blockClientScript || "";
-		}
-		return blockClientScript;
-	}
-	setBlockClientScript(script: string) {
-		this.blockClientScript = script;
-	}
 	getBlockProps(): BlockProps {
 		let blockProps = {};
 		if (this.isExtendedFromComponent() && !Object.keys(this.props || {}).length) {
-			blockProps = this.referenceComponent?.getBlockProps() || {};
+			blockProps =
+				useComponentStore().getComponent(this.extendedFromComponent as string)?.component_props || {};
 		} else {
 			blockProps = this.props || {};
 		}
-		return blockProps;
+		return blockProps as BlockProps;
 	}
 	setBlockProps(props: BlockProps) {
 		this.props = props;
-	}
-	getBlockVars(): BlockVars {
-		return this.vars || {};
-	}
-	setBlockVars(vars: BlockVars) {
-		this.vars = vars;
 	}
 }
 
@@ -1132,7 +1111,6 @@ function resetBlock(
 		block.dataKey = null;
 		block.dynamicValues = [];
 		block.props = {};
-		block.blockClientScript = "";
 	}
 
 	if (resetChildren) {

@@ -29,14 +29,14 @@
 					<div>
 						<div class="mb-3 mt-4 text-sm text-ink-gray-8">Component Props</div>
 						<PropsEditor
-							:obj="blockController.getBlockProps()"
-							@update:obj="(obj: BlockProps) => blockController.setBlockProps(obj)" />
+							:obj="componentProps"
+							@update:obj="(obj: BlockProps) => componentController.setComponentProps(obj)" />
 					</div>
 					<div>
 						<div class="mb-3 text-sm text-ink-gray-8">Component Variables</div>
 						<VarsEditor
-							:obj="blockController.getBlockVars()"
-							@update:obj="(obj: BlockVars) => blockController.setBlockVars(obj)" />
+							:obj="componentVars"
+							@update:obj="(obj: BlockVars) => componentController.setComponentVars(obj)" />
 					</div>
 				</div>
 			</div>
@@ -52,7 +52,7 @@
 		</div>
 		<Dialog class="overscroll-none" :title="dialogTitle" size="7xl" :isDirty="isDirty" v-model="showDialog">
 			<template #title>
-				<div class="flex items-center w-full justify-between gap-3 pr-2">
+				<div class="flex w-full items-center justify-between gap-3 pr-2">
 					<span class="text-xl font-semibold text-ink-gray-9">{{ dialogTitle }}</span>
 					<TabButtons
 						v-if="showComponentClientScriptToggle"
@@ -156,23 +156,6 @@
 						</div>
 					</div>
 				</div>
-				<div v-if="mode == 'block'">
-					<CodeEditor
-						class="overscroll-none"
-						ref="blockClientScriptEditor"
-						v-model="blockClientScript"
-						type="JavaScript"
-						mode="block"
-						height="60vh"
-						:readonly="builderStore.readOnlyMode"
-						:autofocus="true"
-						@save="saveBlockClientScript"
-						:showSaveButton="true"
-						:show-line-numbers="true"
-						description='Use Block Client Script to add interactivity to your block. You can access the current DOM node using the keyword `this`. All Block props are accessible using the read-only `props` object.<br>
-						<b>Example:</b> <pre style="display:inline; font-size: 11px;">this.addEventListener("click", () => { console.log(props) })</pre><br><br>
-						For more details on how to write data script, refer to <b><a class="underline" href="https://docs.frappe.io/builder/data-script" target="_blank">this documentation</a></b>.'></CodeEditor>
-				</div>
 			</template>
 		</Dialog>
 	</div>
@@ -180,12 +163,11 @@
 <script lang="ts" setup>
 import Dialog from "@/components/Controls/Dialog.vue";
 import { webPages } from "@/data/webPage";
-import webComponent from "@/data/webComponent";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
-import useComponentStore from "@/stores/componentStore";
 import { BuilderPage } from "@/types/doctypes";
 import blockController from "@/utils/blockController";
+import componentController from "@/utils/componentController";
 import { useStorage } from "@vueuse/core";
 import { toast } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
@@ -200,9 +182,18 @@ import useCanvasStore from "@/stores/canvasStore.js";
 const { capture } = useTelemetry();
 
 const pageStore = usePageStore();
-const componentStore = useComponentStore();
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
+
+const {
+	currentComponentId,
+	componentDataPreview,
+	componentProps,
+	componentVars,
+	componentDataScript,
+	componentJavaScript,
+	componentCSS,
+} = componentController;
 
 const showPropsInput = computed(() => {
 	return canvasStore.editingMode == "fragment" && !blockController.getFirstSelectedBlock()?.getParentBlock();
@@ -229,6 +220,7 @@ const isBlockSelected = computed(() => {
 
 const isFragmentMode = computed(() => canvasStore.editingMode == "fragment");
 
+// TODO: Remove Block mode
 const modeButtons = computed(() => {
 	if (isFragmentMode.value) {
 		return [
@@ -274,50 +266,6 @@ const showComponentClientScriptToggle = computed(() => {
 	return mode.value === "component" && currentScriptEditor.value === "client";
 });
 
-const currentComponentName = computed(() => {
-	if (isFragmentMode.value && canvasStore.fragmentData) {
-		console.log(canvasStore.fragmentData);
-		return canvasStore.fragmentData.fragmentId || "";
-	}
-	return "";
-});
-
-const componentDataPreview = computed(() => {
-	const componentId = currentComponentName.value;
-	if (!componentId) {
-		return {};
-	}
-	return componentStore.getComponentInstanceData(componentId, canvasStore.fragmentData.block?.blockId);
-});
-
-const componentDataScript = computed(() => {
-	const name = currentComponentName.value;
-	if (!name) return "";
-	const doc = componentStore.getComponent(name);
-	return doc?.component_data_script || "";
-});
-
-const componentJavaScript = computed(() => {
-	const name = currentComponentName.value;
-	if (!name) return "";
-	const doc = componentStore.getComponent(name);
-	return doc?.component_js || "";
-});
-
-const componentCSS = computed(() => {
-	const name = currentComponentName.value;
-	if (!name) return "";
-	const doc = componentStore.getComponent(name);
-	return doc?.component_css || "";
-});
-
-const blockClientScript = computed(() => {
-	if (isBlockSelected.value) {
-		return blockController.getFirstSelectedBlock()?.getBlockClientScript() || "";
-	}
-	return "";
-});
-
 const savePageDataScript = (value: string) => {
 	webPages.setValue
 		.submit({
@@ -343,82 +291,14 @@ const savePageDataScript = (value: string) => {
 		});
 };
 
-const saveComponentDataScript = (value: string) => {
-	const name = currentComponentName.value;
-	if (!name) return;
-
-	webComponent.setValue
-		.submit({
-			name: name,
-			component_data_script: value,
-		})
-		.then(async () => {
-			capture("builder_component_data_script_saved");
-			const doc = componentStore.getComponent(name);
-			if (doc) {
-				doc.component_data_script = value;
-			}
-			// Pass default props when re-fetching so the preview reflects prop-dependent data
-			const block = blockController.getComponentRootBlock(blockController.getFirstSelectedBlock());
-			const defaultProps: Record<string, any> = {};
-			if (block) {
-				const blockProps = block.getBlockProps();
-				for (const [propName, config] of Object.entries(blockProps)) {
-					if (config.isStandard && config.propOptions?.options?.defaultValue !== undefined) {
-						defaultProps[propName] = config.propOptions.options.defaultValue;
-					} else if (config.value) {
-						defaultProps[propName] = config.value;
-					}
-				}
-			}
-			console.log(defaultProps);
-			await componentStore.setComponentData(name, defaultProps, canvasStore.fragmentData.block?.blockId);
-			toast.success("Component data script saved");
-		})
-		.catch((e: { message: string; exc: string }) => {
-			const errorMessage = e.exc?.split("\n").slice(-2)[0];
-			toast.error("Failed to save script", {
-				description: errorMessage,
-			});
-		});
+const saveComponentDataScript = async (value: string) => {
+	if (!currentComponentId.value) return;
+	componentController.setComponentDataScript(value);
 };
 
 const saveComponentClientScript = (field: "component_js" | "component_css", value: string) => {
-	const name = currentComponentName.value;
-	if (!name) return;
-
-	webComponent.setValue
-		.submit({
-			name,
-			[field]: value,
-		})
-		.then(() => {
-			capture(field === "component_js" ? "builder_component_js_saved" : "builder_component_css_saved");
-			const doc = componentStore.getComponent(name);
-			if (doc) {
-				doc[field] = value;
-			}
-			nextTick(() => {
-				if (field === "component_js") {
-					componentJavaScriptEditor.value?.resetEditor(true);
-				} else {
-					componentCSSEditor.value?.resetEditor(true);
-				}
-			});
-			toast.success(field === "component_js" ? "Component JavaScript saved" : "Component CSS saved");
-		})
-		.catch((e: { message: string; exc: string }) => {
-			const errorMessage = e.exc?.split("\n").slice(-2)[0];
-			toast.error("Failed to save script", {
-				description: errorMessage,
-			});
-		});
-};
-
-const saveBlockClientScript = (value: string) => {
-	if (isBlockSelected.value) {
-		blockController.getFirstSelectedBlock()?.setBlockClientScript(value);
-	}
+	if (!currentComponentId.value) return;
+	componentController.setComponentClientScript(value, field === "component_js" ? "js" : "css");
 };
 
 const showClientScriptEditor = () => {

@@ -103,9 +103,7 @@ class Block:
 	elementBeforeConversion: str | None = None
 	customAttributes: ClassVar[dict] = {}
 	dynamicValues: ClassVar[list[BlockDataKey]] = []
-	blockClientScript: str = ""
 	props: ClassVar[dict] = {}
-	vars: ClassVar[dict] = {}
 
 	def __init__(self, **kwargs) -> None:
 		for key, value in kwargs.items():
@@ -170,9 +168,7 @@ class Block:
 			"elementBeforeConversion": self.elementBeforeConversion,
 			"customAttributes": self.customAttributes,
 			"dynamicValues": self.dynamicValues,
-			"blockClientScript": self.blockClientScript,
 			"props": self.props,
-			"vars": self.vars,
 		}
 
 	def as_json(self, wrap_in_array=False):
@@ -475,7 +471,7 @@ def execute_script(script, _locals, script_filename):
 		safer_exec(script, None, _locals, script_filename=script_filename)
 
 
-def get_component_data(component_name: str, props: dict | str | None = None) -> dict:
+def get_component_data(component_name: str, props: dict | str | None = None, script: str | None = None) -> dict:
 	"""Execute a component's data script with the given props and return the data dict.
 
 	Args:
@@ -488,7 +484,8 @@ def get_component_data(component_name: str, props: dict | str | None = None) -> 
 	if isinstance(props, str):
 		props = frappe.parse_json(props)
 	component_doc = frappe.get_cached_doc("Builder Component", component_name)
-	if not component_doc or not component_doc.component_data_script:
+	script = script or component_doc.component_data_script
+	if not component_doc or not script:
 		return {}
 
 	_locals = dict(
@@ -496,7 +493,7 @@ def get_component_data(component_name: str, props: dict | str | None = None) -> 
 		props=frappe._dict(props or {}),
 	)
 
-	execute_script(component_doc.component_data_script, _locals, component_name)
+	execute_script(script, _locals, component_name)
 
 	return _locals["component"]
 

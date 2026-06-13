@@ -171,6 +171,10 @@ export interface BuilderComponent extends DocType {
 	component_name?: string;
 	/** Block: JSON */
 	block?: any;
+	/** Component Props: JSON */
+	component_props?: BlockProps;
+	/** Component Variables: JSON */
+	component_vars?: BlockVars;
 	/** For Web Page: Link (Builder Page) */
 	for_web_page?: string;
 	/** Component ID: Data */

@@ -9,6 +9,7 @@ import { computed, onMounted, ref, watch } from "vue";
 
 import codeCompletions from "@/data/codeCompletions";
 import blockController from "@/utils/blockController";
+import componentController from "@/utils/componentController";
 import { createStartingState } from "@/utils/createCodeMirrorState";
 import { getDefaultPropsList, getParentProps } from "@/utils/helpers";
 import { openSearchPanel } from "@codemirror/search";
@@ -127,7 +128,7 @@ const allBlockVars = computed(() => {
 	if (props.mode !== "component") {
 		return {};
 	}
-	return blockController.getBlockVars();
+	return componentController.getComponentVars();
 });
 
 onMounted(async () => {

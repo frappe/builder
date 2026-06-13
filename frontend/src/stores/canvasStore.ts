@@ -28,7 +28,7 @@ const useCanvasStore = defineStore("canvasStore", {
 			index: <number | null>null,
 		},
 		editableBlock: <Block | null>null,
-		editingContentType: <"html" | "css" | "js">"html",
+		editingContentType: <"html" | "css" | "js">"html", // TODO: Remove js and css
 		editingMode: <EditingMode>"page",
 		settingPage: false,
 		showEditorDialog: false,
@@ -102,14 +102,6 @@ const useCanvasStore = defineStore("canvasStore", {
 		editHTML(block: Block) {
 			this.editableBlock = block;
 			this.editingContentType = "html";
-			nextTick(() => {
-				this.showEditorDialog = true;
-			});
-		},
-
-		editBlockClientScript(block: Block) {
-			this.editableBlock = block;
-			this.editingContentType = "js";
 			nextTick(() => {
 				this.showEditorDialog = true;
 			});

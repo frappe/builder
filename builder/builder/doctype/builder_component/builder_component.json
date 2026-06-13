@@ -10,6 +10,8 @@
  "field_order": [
   "component_name",
   "block",
+  "component_props",
+  "component_vars",
   "for_web_page",
   "component_id",
   "component_data_script",
@@ -27,6 +29,16 @@
    "fieldtype": "JSON",
    "label": "Block",
    "read_only": 1
+  },
+  {
+   "fieldname": "component_props",
+   "fieldtype": "JSON",
+   "label": "Component Props"
+  },
+  {
+   "fieldname": "component_vars",
+   "fieldtype": "JSON",
+   "label": "Component Variables"
   },
   {
    "fieldname": "for_web_page",

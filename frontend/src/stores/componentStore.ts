@@ -19,6 +19,17 @@ function getComponentDataRequestKey(componentId: string, instanceKey: string) {
 	return `${componentId}::${instanceKey}`;
 }
 
+function parseJSONWithFallback<T>(value: T | string | undefined, fallback: T): T {
+	if (value === undefined || value === null || value === "") {
+		return fallback;
+	}
+	if (typeof value === "string") {
+		return JSON.parse(value || JSON.stringify(fallback)) as T;
+	}
+	return value as T;
+}
+
+
 const useComponentStore = defineStore("componentStore", {
 	state: () => ({
 		components: <BlockComponent[]>[],
@@ -46,7 +57,9 @@ const useComponentStore = defineStore("componentStore", {
 			const canvasStore = useCanvasStore();
 			canvasStore.editOnCanvas(
 				componentBlock,
-				(block: Block) => this.saveComponent(block, componentName),
+				(block: Block) => {
+					this.saveComponent(block, componentName)	
+				},
 				"Save Component",
 				component.component_name,
 				component.name,
@@ -55,10 +68,16 @@ const useComponentStore = defineStore("componentStore", {
 		},
 		saveComponent(block: Block, componentName: string) {
 			const pageStore = usePageStore();
+			const doc = this.getComponent(componentName);
 			return webComponent.setValue
 				.submit({
 					name: componentName,
 					block: getBlockObject(block),
+					component_props: doc?.component_props || {},
+					component_vars: doc?.component_vars || {},
+					component_data_script: doc?.component_data_script || "",
+					component_js: doc?.component_js || "",
+					component_css: doc?.component_css || "",
 				})
 				.then(async (data: BuilderComponent) => {
 					this.setComponentMap(data);
@@ -143,6 +162,8 @@ const useComponentStore = defineStore("componentStore", {
 			}
 		},
 		setComponentMap(componentDoc: BuilderComponent) {
+			componentDoc.component_props = parseJSONWithFallback(componentDoc.component_props, {});
+			componentDoc.component_vars = parseJSONWithFallback(componentDoc.component_vars, {});
 			this.componentDocMap.set(componentDoc.name, componentDoc);
 			this.componentMap.set(componentDoc.name, markRaw(getBlockInstance(componentDoc.block)));
 		},
