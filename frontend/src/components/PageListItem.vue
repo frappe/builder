@@ -24,7 +24,7 @@
 								<div v-show="page.published">
 									<AuthenticatedUserIcon
 										title="Limited access"
-										class="size-4 text-ink-amber-3"
+										class="size-4 text-ink-amber-6"
 										v-if="page.authenticated_access" />
 									<GlobeIcon class="size-4" title="Publicly accessible" v-else />
 								</div>

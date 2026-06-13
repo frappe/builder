@@ -4,7 +4,7 @@
 			<div
 				class="group flex cursor-pointer select-none items-center gap-1.5 border-b border-outline-gray-1 px-1 hover:rounded-md hover:bg-surface-gray-1"
 				:class="[
-					node.hasChildren ? 'sticky bg-surface-white shadow-[0_1px_0_var(--border-color)]' : '',
+					node.hasChildren ? 'sticky bg-surface-base shadow-[0_1px_0_var(--border-color)]' : '',
 					{ 'rounded-md !bg-surface-gray-2': focusedNodeId === node.id },
 				]"
 				:ref="
@@ -40,13 +40,13 @@
 					</span>
 					<span class="ml-auto mr-1 flex shrink-0 items-center gap-1">
 						<Tooltip v-if="isHomePage(node.page)" text="Home page" :hoverDelay="0.5">
-							<HomeIcon class="size-3.5 text-ink-green-3" />
+							<HomeIcon class="size-3.5 text-ink-green-6" />
 						</Tooltip>
 						<Tooltip
 							v-if="node.page.authenticated_access"
 							text="This page has limited access"
 							:hoverDelay="0.5">
-							<AuthenticatedUserIcon class="size-3.5 text-ink-amber-3" />
+							<AuthenticatedUserIcon class="size-3.5 text-ink-amber-6" />
 						</Tooltip>
 						<Tooltip v-if="!node.page.published" text="Not published" :hoverDelay="0.5">
 							<GlobeOffIcon class="size-3.5 text-ink-gray-4" />
@@ -64,7 +64,7 @@
 							icon="lucide-more-horizontal"
 							size="sm"
 							variant="subtle"
-							class="bg-surface-white !text-ink-gray-5 hover:!text-ink-gray-9"
+							class="bg-surface-base !text-ink-gray-5 hover:!text-ink-gray-9"
 							@click.stop></Button>
 					</template>
 				</PageActionsDropdown>

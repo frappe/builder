@@ -62,8 +62,8 @@ p:empty::before {
 	filter: revert;
 }
 
-[role='dialog'].bg-surface-modal, [role='dialog'] .bg-surface-modal {
-	background-color: var(--surface-white);
+[role='dialog'].bg-surface-elevation-2, [role='dialog'] .bg-surface-elevation-2 {
+	background-color: var(--surface-base);
 }
 
 [contenteditable=true]:focus-visible {

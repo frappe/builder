@@ -8,7 +8,7 @@
 				:class="[
 					'flex flex-1 justify-center gap-2 whitespace-nowrap rounded px-2 py-1 leading-none transition-colors focus:outline-none focus-visible:ring focus-visible:ring-outline-gray-2',
 					isValueSet()
-						? 'text-ink-gray-7 data-[state=active]:bg-surface-white data-[state=active]:text-ink-gray-9 data-[state=active]:shadow'
+						? 'text-ink-gray-7 data-[state=active]:bg-surface-base data-[state=active]:text-ink-gray-9 data-[state=active]:shadow'
 						: 'text-ink-gray-7 data-[state=active]:border data-[state=active]:border-dashed data-[state=active]:border-outline-gray-3',
 				]">
 				<Tooltip :disabled="!button.showTooltip" :text="button.label" placement="top">

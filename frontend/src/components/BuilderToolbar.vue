@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="toolbar border-outline border-outline flex items-center justify-center border-b-[1px] border-outline-gray-1 bg-surface-white px-2 py-1"
+		class="toolbar border-outline border-outline flex items-center justify-center border-b-[1px] border-outline-gray-1 bg-surface-base px-2 py-1"
 		ref="toolbar">
 		<div class="absolute left-3 flex items-center gap-4">
 			<MainMenu
@@ -42,7 +42,7 @@
 							</Tooltip>
 							<Tooltip text="This page has limited access" :hoverDelay="0.6">
 								<AuthenticatedUserIcon
-									class="size-4 text-ink-amber-3"
+									class="size-4 text-ink-amber-6"
 									v-if="
 										pageStore.activePage?.published && pageStore.activePage?.authenticated_access
 									"></AuthenticatedUserIcon>
@@ -67,7 +67,7 @@
 				</template>
 				<template #body="{ close }">
 					<div
-						class="flex w-72 flex-col gap-3 rounded bg-surface-white p-4 shadow-lg"
+						class="flex w-72 flex-col gap-3 rounded bg-surface-base p-4 shadow-lg"
 						v-if="pageStore.activePage">
 						<PageOptions v-if="pageStore.activePage"></PageOptions>
 					</div>

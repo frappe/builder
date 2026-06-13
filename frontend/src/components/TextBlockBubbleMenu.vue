@@ -7,7 +7,7 @@
 		:plugin-key="bubbleMenuPluginKey"
 		v-show="!canvasProps?.panning && !canvasProps?.scaling"
 		v-if="editor"
-		class="rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-ink-gray-9 shadow-2xl">
+		class="rounded-md border border-outline-gray-3 bg-surface-base p-1 text-xl text-ink-gray-9 shadow-2xl">
 		<div
 			v-if="settingLink"
 			class="flex flex-col gap-2 p-1"
