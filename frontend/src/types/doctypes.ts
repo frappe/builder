@@ -1,39 +1,18 @@
 interface DocType {
-	name: string;
-	creation: string;
-	modified: string;
-	owner: string;
-	modified_by: string;
-}
+    name: string;
+    creation: string;
+    modified: string;
+    owner: string;
+    modified_by: string;
+  }
 
-interface ChildDocType extends DocType {
-	parent?: string;
-	parentfield?: string;
-	parenttype?: string;
-	idx?: number;
-}
-
-// Template picker shapes returned by builder.api.get_template_groups
-// (built from the Builder Hub catalog). Asset URLs are absolute.
-export interface TemplatePageSummary {
-	name: string;
-	page_title?: string;
-	preview?: string;
-	route?: string;
-	template_group?: string;
-	/** absolute URL of the published page on the hub; absent for local templates */
-	live_url?: string | null;
-}
-
-export interface TemplateGroup {
-	name: string;
-	title: string;
-	description?: string;
-	preview?: string;
-	order?: number | null;
-	pages: TemplatePageSummary[];
-}
-
+  interface ChildDocType extends DocType {
+    parent?: string;
+    parentfield?: string;
+    parenttype?: string;
+    idx?: number;
+  }
+  
 // Last updated: 2026-05-24 12:00:00.000000
 export interface BuilderVariable extends DocType {
 	/** Type: Select */
@@ -122,14 +101,14 @@ export interface BuilderPage extends DocType {
 	published_at?: string;
 }
 
-// Last updated: 2024-11-13 20:08:54.615438
+// Last updated: 2026-06-10 10:55:22.349246
 export interface BuilderClientScript extends DocType {
-	/** Script: Code */
-	script: string;
-	/** Script Type: Autocomplete */
-	script_type: string;
-	/** Public URL: Read Only */
-	public_url?: string;
+  /** Script: Code */
+  script: string;
+  /** Script Type: Autocomplete */
+  script_type: string;
+  /** Public URL: Read Only */
+  public_url?: string;
 }
 
 // Last updated: 2024-11-13 20:08:24.187664
@@ -152,17 +131,6 @@ export interface BuilderProjectFolder extends DocType {
 export interface BuilderPageClientScript extends ChildDocType {
 	/** Builder Script: Link (Builder Client Script) */
 	builder_script: string;
-}
-// Last updated: 2025-01-29 09:30:34.896956
-export interface BuilderComponent extends DocType {
-	/** Component Name: Data */
-	component_name?: string;
-	/** Block: JSON */
-	block?: any;
-	/** For Web Page: Link (Builder Page) */
-	for_web_page?: string;
-	/** Component ID: Data */
-	component_id?: string;
 }
 
 // Last updated: 2026-06-05 16:00:00.000000
@@ -197,12 +165,6 @@ export interface BuilderSettings extends DocType {
 	ai_api_key?: string;
 }
 
-// Last updated: 2026-06-09 10:00:00.000000
-export interface BuilderComponentClientScript extends ChildDocType {
-	/** Builder Script: Link (Builder Client Script) */
-	builder_script: string;
-}
-
 // Last updated: 2025-01-29 09:30:34.896956
 export interface BuilderComponent extends DocType {
 	/** Component Name: Data */
@@ -215,6 +177,8 @@ export interface BuilderComponent extends DocType {
 	component_id?: string;
 	/** Component Data Script: Code */
 	component_data_script?: string;
-	/** Component Client Scripts: Table MultiSelect (Builder Component Client Script) */
-	component_client_scripts: BuilderComponentClientScript[];
+	/** Component JavaScript: Code */
+	component_js?: string;
+	/** Component CSS: Code */
+	component_css?: string;
 }

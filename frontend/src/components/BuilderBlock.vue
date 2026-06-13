@@ -47,7 +47,6 @@ import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import { setFont } from "@/utils/fontManager";
-import { getComponentJavaScriptScripts } from "@/utils/componentClientScripts";
 import {
 	executeBlockClientScriptRestricted,
 	executeBlockClientScriptUnrestricted,
@@ -56,7 +55,6 @@ import {
 	getParentProps,
 	getPropValue,
 } from "@/utils/helpers";
-import { executeComponentClientScript } from "@/utils/scriptSandbox";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
 import {
 	computed,

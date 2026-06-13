@@ -44,10 +44,7 @@
 				@update:model-value="(val) => (initialValue = val)"
 				placeholder="Enter initial value" />
 		</div>
-		<ArrayOptions
-			v-else-if="type === 'array'"
-			:options="arrayOptions"
-			@update:options="updateArrayOptions" />
+		<ArrayOptions v-else-if="type === 'array'" :options="arrayOptions" @update:options="updateArrayOptions" />
 		<ObjectOptions
 			v-else-if="type === 'object'"
 			:options="objectOptions"
@@ -68,7 +65,7 @@ import Input from "@/components/Controls/Input.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
-import { getDefaultInitialValue, isValidVarName } from "@/utils/componentVars";
+// import { getDefaultInitialValue, isValidVarName } from "@/utils/componentVars";
 import { computed, ref, watch } from "vue";
 import { toast } from "frappe-ui";
 
@@ -163,16 +160,59 @@ function save() {
 	});
 }
 
-function reset() {
-	name.value = props.varName ?? "";
-	type.value = props.varDetails?.type ?? "number";
-	initialValue.value = props.varDetails?.initialValue ?? getDefaultInitialValue(type.value);
+interface ResetParams {
+	keepName: boolean;
+	keepProps: boolean;
+	keepType: boolean;
+}
+
+function resetState(params: ResetParams) {
+	const { keepName, keepProps, keepType } = params;
+	const details = keepProps ? props.varDetails : null;
+
+	if (!keepName) {
+		name.value = props.varName ?? "";
+	}
+
+	if (details) {
+		if (!keepType) {
+			type.value = details.type ?? "number";
+		}
+		initialValue.value = details.initialValue ?? getDefaultInitialValue(type.value);
+	} else {
+		if (!keepType) {
+			type.value = "number";
+		}
+		initialValue.value = getDefaultInitialValue(type.value);
+	}
+}
+
+function getDefaultInitialValue(type: BlockVarType) {
+	switch (type) {
+		case "number":
+			return 0;
+		case "string":
+			return "";
+		case "boolean":
+			return false;
+		case "object":
+			return {};
+		case "array":
+			return [];
+		default:
+			return "";
+	}
+}
+
+function isValidVarName(name: string) {
+	return /^[a-zA-Z][a-zA-Z0-9]*$/.test(name);
 }
 
 watch(
 	() => [props.varName, props.varDetails],
-	() => reset(),
+	() => resetState({ keepName: false, keepProps: true, keepType: false }),
+	{ immediate: true, deep: true },
 );
 
-defineExpose({ reset });
+defineExpose({ reset: resetState });
 </script>

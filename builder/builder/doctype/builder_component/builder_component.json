@@ -13,7 +13,8 @@
   "for_web_page",
   "component_id",
   "component_data_script",
-  "component_client_scripts"
+  "component_js",
+  "component_css"
  ],
  "fields": [
   {
@@ -50,10 +51,16 @@
     "description": "Server-side Python script that populates component data. Receives props as input. Use: data.events = frappe.get_list('Event')"
    },
    {
-    "fieldname": "component_client_scripts",
-    "fieldtype": "Table MultiSelect",
-    "label": "Component Client Scripts",
-    "options": "Builder Component Client Script"
+   "fieldname": "component_js",
+   "fieldtype": "Code",
+   "label": "Component JavaScript",
+   "options": "JavaScript"
+  },
+  {
+   "fieldname": "component_css",
+   "fieldtype": "Code",
+   "label": "Component CSS",
+   "options": "CSS"
    }
   ],
  "index_web_pages_for_search": 1,

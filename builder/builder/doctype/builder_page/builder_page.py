@@ -1302,7 +1302,7 @@ def extend_block_with_component(block: dict) -> tuple[dict, str | None]:
 	component = frappe.get_cached_value(
 		"Builder Component",
 		component_id,
-		["block", "name", "component_client_scripts"],
+		["block", "name", "component_js", "component_css"],
 		as_dict=True,
 	)
 
@@ -1310,19 +1310,24 @@ def extend_block_with_component(block: dict) -> tuple[dict, str | None]:
 	if component_block:
 		extend_block(component_block, block)
 
-		if component.component_client_scripts:
-			component_scripts = []
-			for script_name in dict.fromkeys(
-				row.builder_script for row in component.component_client_scripts
-			):
-				script_doc = frappe.get_cached_doc("Builder Client Script", script_name)
-				component_scripts.append(
-					{
-						"name": frappe.scrub(script_doc.name),
-						"script": script_doc.script,
-						"type": script_doc.script_type,
-					}
-				)
+		component_scripts = []
+		if component.component_css:
+			component_scripts.append(
+				{
+					"name": f"{frappe.scrub(component.name)}_css",
+					"script": component.component_css,
+					"type": "CSS",
+				}
+			)
+		if component.component_js:
+			component_scripts.append(
+				{
+					"name": f"{frappe.scrub(component.name)}_js",
+					"script": component.component_js,
+					"type": "JavaScript",
+				}
+			)
+		if component_scripts:
 			component_block["componentScripts"] = component_scripts
 
 		return component_block, component_id

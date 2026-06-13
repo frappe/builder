@@ -2,7 +2,7 @@
 	<div class="flex flex-col gap-2">
 		<div class="flex flex-col gap-2 rounded-lg">
 			<template v-for="(value, name, index) in obj" :key="index">
-				<div class="relative flex w-full flex-col rounded bg-surface-gray-1 p-2 text-ink-gray-6">
+				<div class="var-list-item relative flex w-full flex-col rounded bg-surface-gray-1 p-2 text-ink-gray-6">
 					<Popover :offset="32" placement="right">
 						<template #target="{ open }">
 							<div
@@ -10,7 +10,11 @@
 								@click.stop="
 									() => {
 										popupMode = 'edit';
-										popoverContentItemsRef[index]?.reset();
+										popoverContentItemsRef[index]?.reset({
+											keepName: false,
+											keepProps: true,
+											keepType: false,
+										});
 										keyBeingEdited = name as string;
 										open();
 									}
@@ -38,7 +42,7 @@
 									class="flex-shrink-0 bg-transparent text-xs text-ink-gray-6"
 									variant="subtle"
 									icon="lucide-x"
-									@click.stop="deleteVar(name as string)" />
+									@click="deleteVar(name as string)" />
 							</div>
 						</template>
 						<template #body="{ close }">
@@ -58,7 +62,7 @@
 				</div>
 			</template>
 		</div>
-		<Popover :offset="24" placement="right">
+		<Popover ref="popOverRef" :offset="24" placement="right">
 			<template #target="{ open }">
 				<Button
 					class="w-full"
@@ -66,7 +70,11 @@
 					label="Add"
 					@click="
 						() => {
-							popoverContentAddRef?.reset();
+							popoverContentAddRef?.reset({
+								keepName: false,
+								keepProps: false,
+								keepType: false,
+							});
 							keyBeingEdited = null;
 							popupMode = 'add';
 							open();
@@ -114,20 +122,26 @@ const emit = defineEmits({
 const popupMode = ref<"add" | "edit">("add");
 const keyBeingEdited = ref<string | null>(null);
 const varDetailsOfKeyBeingEdited = ref<BlockVars[string] | null>(null);
-const popoverContentAddRef = ref<InstanceType<typeof VarsPopoverContent> | null>(null);
-const popoverContentItemsRef = ref<Array<InstanceType<typeof VarsPopoverContent> | null>>([]);
+const popoverContentAddRef = ref<typeof VarsPopoverContent | null>(null);
+const popoverContentItemsRef = ref<Array<typeof VarsPopoverContent | null>>([]);
 
 function formatInitialValue(value: BlockVars[string]) {
 	if (value.type === "object" || value.type === "array") {
 		return JSON.stringify(value.initialValue ?? (value.type === "array" ? [] : {}));
 	}
-	return String(value.initialValue ?? "");
+	return String(value.initialValue ?? "Empty String Value");
 }
 
 const addVar = ({ name, value }: { name: string; value: BlockVars[string] }) => {
 	const map = new Map(Object.entries(props.obj));
 	map.set(name, value);
+	popupMode.value = "edit";
 	emit("update:obj", mapToObject(map));
+};
+
+const replaceKey = (map: Map<string, BlockVars[string]>, oldKey: string, newKey: string) => {
+	keyBeingEdited.value = newKey;
+	return mapToObject(replaceMapKey(map, oldKey, newKey));
 };
 
 const updateVar = ({
@@ -140,9 +154,11 @@ const updateVar = ({
 	newValue: BlockVars[string];
 }) => {
 	let map = new Map(Object.entries(props.obj));
+
 	if (oldVarName !== newName) {
-		map = new Map(Object.entries(replaceMapKey(map, oldVarName, newName)));
+		map = new Map(Object.entries(replaceKey(map, oldVarName, newName)));
 	}
+
 	map.set(newName, newValue);
 	emit("update:obj", mapToObject(map));
 };
@@ -161,3 +177,9 @@ watch([keyBeingEdited, () => props.obj], () => {
 	}
 });
 </script>
+
+<style scoped>
+.var-list-item > div:first-child {
+	width: 100%;
+}
+</style>

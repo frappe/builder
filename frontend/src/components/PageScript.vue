@@ -51,6 +51,16 @@
 			<TabButtons class="w-fit" :buttons="modeButtons" v-model="mode" />
 		</div>
 		<Dialog class="overscroll-none" :title="dialogTitle" size="7xl" :isDirty="isDirty" v-model="showDialog">
+			<template #title>
+				<div class="flex items-center w-full justify-between gap-3 pr-2">
+					<span class="text-xl font-semibold text-ink-gray-9">{{ dialogTitle }}</span>
+					<TabButtons
+						v-if="showComponentClientScriptToggle"
+						v-model="activeComponentClientScript"
+						:buttons="componentClientScriptTabs"
+						class="w-48" />
+				</div>
+			</template>
 			<template #default>
 				<div v-if="mode == 'page'">
 					<div v-if="currentScriptEditor == 'client'">
@@ -90,10 +100,33 @@
 				</div>
 				<div v-if="mode == 'component'">
 					<div v-if="currentScriptEditor == 'client'">
-						<ClientScriptManager
-							parentDoctype="Builder Component"
-							:parentName="currentComponentName"
-							ref="componentClientScriptManager"></ClientScriptManager>
+						<div class="flex h-full flex-col">
+							<CodeEditor
+								v-show="activeComponentClientScript === 'component_js'"
+								ref="componentJavaScriptEditor"
+								:modelValue="componentJavaScript"
+								type="JavaScript"
+								label="Component JavaScript"
+								mode="component"
+								height="60vh"
+								:readonly="builderStore.readOnlyMode"
+								:autofocus="true"
+								@save="(value: string) => saveComponentClientScript('component_js', value)"
+								:showSaveButton="true"
+								:show-line-numbers="true"></CodeEditor>
+							<CodeEditor
+								v-show="activeComponentClientScript === 'component_css'"
+								ref="componentCSSEditor"
+								:modelValue="componentCSS"
+								type="CSS"
+								label="Component CSS"
+								height="60vh"
+								:readonly="builderStore.readOnlyMode"
+								:autofocus="false"
+								@save="(value: string) => saveComponentClientScript('component_css', value)"
+								:showSaveButton="true"
+								:show-line-numbers="true"></CodeEditor>
+						</div>
 					</div>
 					<div v-else>
 						<div class="flex gap-4">
@@ -156,7 +189,7 @@ import blockController from "@/utils/blockController";
 import { useStorage } from "@vueuse/core";
 import { toast } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
-import { computed, defineComponent, ref, watch } from "vue";
+import { computed, defineComponent, nextTick, ref, watch } from "vue";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import TabButtons from "./Controls/TabButtons.vue";
 import ClientScriptManager from "./ClientScriptManager.vue";
@@ -177,15 +210,17 @@ const showPropsInput = computed(() => {
 
 const showDialog = ref(false);
 const mode = useStorage("builder_last_used_script_editor_mode", "page");
+const activeComponentClientScript = ref<"component_js" | "component_css">("component_js");
 
 const props = defineProps<{
 	page: BuilderPage;
 }>();
 
 const clientScriptManager = ref<null | InstanceType<typeof ClientScriptManager>>(null);
-const componentClientScriptManager = ref<null | InstanceType<typeof ClientScriptManager>>(null);
 const dataScriptEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
 const componentDataScriptEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
+const componentJavaScriptEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
+const componentCSSEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
 
 const currentScriptEditor = ref<"client" | "data">("client");
 const isBlockSelected = computed(() => {
@@ -213,6 +248,11 @@ const modeButtons = computed(() => {
 	];
 });
 
+const componentClientScriptTabs = [
+	{ label: "JavaScript", value: "component_js", icon: "lucide-braces" },
+	{ label: "CSS", value: "component_css", icon: "lucide-paintbrush" },
+];
+
 watch(
 	isFragmentMode,
 	() => {
@@ -230,8 +270,13 @@ const dialogTitle = computed(() => {
 	return currentScriptEditor.value == "data" ? `${modeLabel} Data Script` : `${modeLabel} Client Script`;
 });
 
+const showComponentClientScriptToggle = computed(() => {
+	return mode.value === "component" && currentScriptEditor.value === "client";
+});
+
 const currentComponentName = computed(() => {
 	if (isFragmentMode.value && canvasStore.fragmentData) {
+		console.log(canvasStore.fragmentData);
 		return canvasStore.fragmentData.fragmentId || "";
 	}
 	return "";
@@ -249,8 +294,21 @@ const componentDataScript = computed(() => {
 	const name = currentComponentName.value;
 	if (!name) return "";
 	const doc = componentStore.getComponent(name);
-	console.log(doc, 99);
 	return doc?.component_data_script || "";
+});
+
+const componentJavaScript = computed(() => {
+	const name = currentComponentName.value;
+	if (!name) return "";
+	const doc = componentStore.getComponent(name);
+	return doc?.component_js || "";
+});
+
+const componentCSS = computed(() => {
+	const name = currentComponentName.value;
+	if (!name) return "";
+	const doc = componentStore.getComponent(name);
+	return doc?.component_css || "";
 });
 
 const blockClientScript = computed(() => {
@@ -302,19 +360,52 @@ const saveComponentDataScript = (value: string) => {
 			}
 			// Pass default props when re-fetching so the preview reflects prop-dependent data
 			const block = blockController.getComponentRootBlock(blockController.getFirstSelectedBlock());
-			const blockProps = block.getBlockProps();
 			const defaultProps: Record<string, any> = {};
-			for (const [propName, config] of Object.entries(blockProps)) {
-				console.log(propName, config, 99);
-				if (config.isStandard && config.propOptions?.options?.defaultValue !== undefined) {
-					defaultProps[propName] = config.propOptions.options.defaultValue;
-				} else if (config.value) {
-					defaultProps[propName] = config.value;
+			if (block) {
+				const blockProps = block.getBlockProps();
+				for (const [propName, config] of Object.entries(blockProps)) {
+					if (config.isStandard && config.propOptions?.options?.defaultValue !== undefined) {
+						defaultProps[propName] = config.propOptions.options.defaultValue;
+					} else if (config.value) {
+						defaultProps[propName] = config.value;
+					}
 				}
 			}
-			console.log(defaultProps, 99);
-			await componentStore.setComponentData(name, defaultProps);
+			console.log(defaultProps);
+			await componentStore.setComponentData(name, defaultProps, canvasStore.fragmentData.block?.blockId);
 			toast.success("Component data script saved");
+		})
+		.catch((e: { message: string; exc: string }) => {
+			const errorMessage = e.exc?.split("\n").slice(-2)[0];
+			toast.error("Failed to save script", {
+				description: errorMessage,
+			});
+		});
+};
+
+const saveComponentClientScript = (field: "component_js" | "component_css", value: string) => {
+	const name = currentComponentName.value;
+	if (!name) return;
+
+	webComponent.setValue
+		.submit({
+			name,
+			[field]: value,
+		})
+		.then(() => {
+			capture(field === "component_js" ? "builder_component_js_saved" : "builder_component_css_saved");
+			const doc = componentStore.getComponent(name);
+			if (doc) {
+				doc[field] = value;
+			}
+			nextTick(() => {
+				if (field === "component_js") {
+					componentJavaScriptEditor.value?.resetEditor(true);
+				} else {
+					componentCSSEditor.value?.resetEditor(true);
+				}
+			});
+			toast.success(field === "component_js" ? "Component JavaScript saved" : "Component CSS saved");
 		})
 		.catch((e: { message: string; exc: string }) => {
 			const errorMessage = e.exc?.split("\n").slice(-2)[0];
@@ -349,8 +440,8 @@ const isDirty = computed(() => {
 			return dataScriptEditor.value.isDirty;
 		}
 	} else if (currentScriptEditor.value === "client") {
-		if (mode.value === "component" && componentClientScriptManager.value?.scriptEditor) {
-			return componentClientScriptManager.value?.scriptEditor.isDirty;
+		if (mode.value === "component") {
+			return Boolean(componentJavaScriptEditor.value?.isDirty || componentCSSEditor.value?.isDirty);
 		}
 		if (clientScriptManager.value?.scriptEditor) {
 			return clientScriptManager.value?.scriptEditor.isDirty;
