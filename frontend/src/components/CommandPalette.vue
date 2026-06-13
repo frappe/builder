@@ -3,7 +3,7 @@
 		<DialogPortal>
 			<DialogOverlay class="fixed inset-0 z-[100] bg-black/30 backdrop-blur-[2px] dark:bg-black/60" />
 			<DialogContent
-				class="fixed left-1/2 top-[10%] z-[100] w-full max-w-[560px] -translate-x-1/2 overflow-hidden rounded-md bg-surface-white shadow-[0_24px_60px_-12px_rgba(0,0,0,0.25)] ring-1 ring-black/[0.06] focus-visible:outline-none dark:ring-white/[0.08]"
+				class="fixed left-1/2 top-[10%] z-[100] w-full max-w-[560px] -translate-x-1/2 overflow-hidden rounded-md bg-surface-base shadow-[0_24px_60px_-12px_rgba(0,0,0,0.25)] ring-1 ring-black/[0.06] focus-visible:outline-none dark:ring-white/[0.08]"
 				@open-auto-focus.prevent
 				@escape-key-down.prevent="onEscapeKey">
 				<DialogTitle class="sr-only">Command Palette</DialogTitle>
@@ -15,7 +15,7 @@
 					<button
 						v-if="stepLabel"
 						type="button"
-						class="ml-3 flex shrink-0 items-center gap-2 py-1 text-base font-semibold text-ink-gray-7 transition-colors hover:bg-surface-gray-3"
+						class="text-base-semibold ml-3 flex shrink-0 items-center gap-2 py-1 text-ink-gray-7 transition-colors hover:bg-surface-gray-3"
 						@click="goBack">
 						{{ stepLabel }}
 						<span class="lucide-chevron-right size-3 text-ink-gray-4" aria-hidden="true" />
@@ -29,7 +29,7 @@
 						spellcheck="false"
 						@keydown="handleKeydown" />
 					<kbd
-						class="mr-1.5 flex shrink-0 items-center gap-0.5 rounded border border-outline-gray-2 px-1.5 py-1 text-xs font-medium text-ink-gray-4"
+						class="text-xs-medium mr-1.5 flex shrink-0 items-center gap-0.5 rounded border border-outline-gray-2 px-1.5 py-1 text-ink-gray-4"
 						title="Close">
 						esc
 					</kbd>

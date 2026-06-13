@@ -14,7 +14,7 @@
 			</div>
 		</div>
 		<div class="flex items-center justify-between gap-2 px-[2px]">
-			<p class="truncate text-sm font-medium text-ink-gray-7 group-hover:text-ink-gray-9">
+			<p class="text-sm-medium truncate text-ink-gray-7 group-hover:text-ink-gray-9">
 				{{ group.title }}
 			</p>
 			<span class="shrink-0 text-xs text-ink-gray-4">

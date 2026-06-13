@@ -7,7 +7,7 @@
 		:plugin-key="bubbleMenuPluginKey"
 		v-show="!canvasProps?.panning && !canvasProps?.scaling"
 		v-if="editor"
-		class="rounded-md border border-outline-gray-3 bg-surface-white p-1 text-lg text-ink-gray-9 shadow-2xl">
+		class="rounded-md border border-outline-gray-3 bg-surface-base p-1 text-xl text-ink-gray-9 shadow-2xl">
 		<div
 			v-if="settingLink"
 			class="flex flex-col gap-2 p-1"
@@ -78,7 +78,7 @@
 				@click="editor?.chain().focus().toggleStrike().run()"
 				class="rounded px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('strike') }">
-				<StrikeThroughIcon />
+				<span class="lucide-strikethrough size-4" />
 			</button>
 
 			<button
@@ -86,7 +86,7 @@
 				@click="editor?.chain().focus().toggleUnderline().run()"
 				class="rounded px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('underline') }">
-				<UnderlineIcon />
+				<span class="lucide-underline size-4" />
 			</button>
 
 			<button
@@ -145,8 +145,6 @@
 import type Block from "@/block";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import Input from "@/components/Controls/Input.vue";
-import StrikeThroughIcon from "@/components/Icons/StrikeThrough.vue";
-import UnderlineIcon from "@/components/Icons/Underline.vue";
 import type { Editor } from "@tiptap/vue-3";
 import { BubbleMenu } from "@tiptap/vue-3/menus";
 import { vOnClickOutside } from "@vueuse/components";

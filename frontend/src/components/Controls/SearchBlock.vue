@@ -40,18 +40,17 @@
 					</Button>
 				</template>
 				<template #body>
-					<div class="w-48 rounded-lg bg-surface-white py-2 shadow-lg ring-1 ring-black ring-opacity-5">
-						<div class="px-3 py-2 text-xs font-medium text-ink-gray-5">Filter search results by:</div>
+					<div class="w-48 rounded-lg bg-surface-base py-2 shadow-lg ring-1 ring-black ring-opacity-5">
+						<div class="text-xs-medium px-3 py-2 text-ink-gray-5">Filter search results by:</div>
 						<div class="space-y-1 px-2">
 							<label
 								v-for="filter in filters"
 								:key="filter.name"
 								class="flex cursor-pointer items-center rounded px-2 py-1.5 text-sm text-ink-gray-8 hover:bg-surface-gray-1">
-								<Input
-									type="checkbox"
-									:checked="filter.selected"
-									@change="toggleFilter(filter)"
-									class="focus:ring-ink-gray-5 mr-3 size-4 rounded border-outline-gray-1 text-ink-gray-7" />
+								<Checkbox
+									:modelValue="filter.selected"
+									@update:modelValue="toggleFilter(filter)"
+									class="mr-3" />
 								<span>{{ filter.name }}</span>
 							</label>
 						</div>
@@ -65,11 +64,7 @@
 
 		<div v-if="canvasStore.activeCanvas?.selectedBlocks?.length" class="mb-4">
 			<label class="flex cursor-pointer items-center text-sm text-ink-gray-7">
-				<Input
-					type="checkbox"
-					v-model="searchInSelectedBlock"
-					@change="performSearch"
-					class="focus:ring-ink-gray-5 mr-2 size-4 border-outline-gray-1 text-ink-gray-7" />
+				<Checkbox v-model="searchInSelectedBlock" @update:modelValue="performSearch" class="mr-2" />
 				<span>Search inside selected block only</span>
 			</label>
 		</div>
@@ -104,7 +99,7 @@
 				<div class="mb-4 flex size-16 items-center justify-center rounded-full bg-surface-gray-2">
 					<span class="lucide-search size-8 text-ink-gray-4" aria-hidden="true" />
 				</div>
-				<h3 class="mb-2 text-sm font-medium text-ink-gray-6">Search your blocks</h3>
+				<h3 class="text-sm-medium mb-2 text-ink-gray-6">Search your blocks</h3>
 			</div>
 		</div>
 
@@ -137,7 +132,7 @@
 			<!-- No Results State -->
 			<div class="flex flex-col items-center justify-center py-6">
 				<span class="lucide-search mb-3 size-6 text-ink-gray-4" aria-hidden="true" />
-				<h3 class="mb-1 text-sm font-medium text-ink-gray-6">No results found</h3>
+				<h3 class="text-sm-medium mb-1 text-ink-gray-6">No results found</h3>
 				<p class="text-xs text-ink-gray-5">Try different keywords or adjust your filters</p>
 			</div>
 		</div>
@@ -147,7 +142,7 @@
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { watchDebounced } from "@vueuse/core";
-import { Input, Popover } from "frappe-ui";
+import { Checkbox, Popover } from "frappe-ui";
 import { computed, nextTick, onMounted, Ref, ref } from "vue";
 import { toast } from "frappe-ui";
 import OptionToggle from "./OptionToggle.vue";
