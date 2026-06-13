@@ -83,16 +83,15 @@
 							</template>
 						</Dropdown>
 
-						<Autocomplete
+						<Combobox
 							v-if="clientScriptResource.data && clientScriptResource.data.length > 0"
 							:options="clientScriptOptions"
-							bodyClasses="overflow-hidden [&>ul]:!bg-surface-white max-w-[300px]"
-							@update:modelValue="(option: Option) => attachScript(option.value)"
-							placeholder="Attach Script">
-							<template v-slot:target="{ open }">
-								<Button class="w-full text-xs" @click="open">Attach Script</Button>
+							placeholder="Attach Script"
+							@update:modelValue="(value: string | null) => value && attachScript(value)">
+							<template #trigger>
+								<Button class="w-full text-xs">Attach Script</Button>
 							</template>
-						</Autocomplete>
+						</Combobox>
 					</div>
 				</div>
 
@@ -132,7 +131,7 @@ import EditableSpan from "@/components/EditableSpan.vue";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
-import { Autocomplete, createListResource, createResource, Dropdown } from "frappe-ui";
+import { Combobox, createListResource, createResource, Dropdown } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
 import { computed, nextTick, ref, watch } from "vue";
 import { toast } from "frappe-ui";
@@ -154,11 +153,6 @@ type attachedScript = {
 	name: string;
 	script_name: string;
 	editable: boolean;
-};
-
-type Option = {
-	label: string;
-	value: string;
 };
 
 const activeScript = ref<attachedScript | null>(null);
