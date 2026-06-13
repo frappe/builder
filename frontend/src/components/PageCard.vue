@@ -1,7 +1,7 @@
 <template>
 	<router-link :to="{ name: 'builder', params: { pageId: page.page_name } }">
 		<div
-			class="group relative flex w-full cursor-pointer flex-col gap-2 rounded-2xl bg-surface-elevation-1 p-3"
+			class="group relative flex w-full cursor-pointer flex-col gap-2 rounded-2xl p-3 hover:bg-surface-elevation-1"
 			:class="{
 				'!bg-surface-gray-2': selected,
 			}">
