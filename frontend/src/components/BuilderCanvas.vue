@@ -31,7 +31,9 @@
 							aria-hidden="true" />
 					</div>
 				</Tooltip>
-				<div v-show="!canvasProps.scaling && !canvasProps.panning" class="bg-outline-gray-2 my-2 w-px"></div>
+				<div
+					v-show="!canvasProps.scaling && !canvasProps.panning"
+					class="m-2 my-3 w-px bg-[var(--outline-gray-2)]"></div>
 				<div
 					v-show="!canvasProps.scaling && !canvasProps.panning"
 					class="w-auto cursor-pointer p-2"
