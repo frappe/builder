@@ -13,7 +13,7 @@
 				:class="
 					modelValue?.id === preset.id
 						? 'border-outline-gray-9 ring-2 ring-outline-gray-4'
-						: 'border-outline-gray-2 bg-surface-white hover:border-outline-gray-4 hover:shadow-sm'
+						: 'border-outline-gray-2 bg-surface-base hover:border-outline-gray-4 hover:shadow-sm'
 				"
 				@click="$emit('update:modelValue', preset)">
 				<!-- Preview -->

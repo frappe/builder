@@ -317,13 +317,11 @@ function normalizeValueWithUnits(value: string, unitOptions: string[], propertyK
 
 export {
 	addPxToNumber,
-	addUnitToNumber,
 	extractNumberAndUnit,
 	getBoxSpacing,
 	getNumberFromPx,
 	normalizeValueWithUnits,
 	parseAndSetBackground,
-	parseBackground,
 	setBoxSpacing,
 	shortenNumber,
 };

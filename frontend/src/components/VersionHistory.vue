@@ -6,7 +6,7 @@
 		leave-to-class="translate-x-full">
 		<div
 			v-if="show"
-			class="bg-surface-white absolute bottom-0 right-0 top-[var(--toolbar-height)] z-10 flex w-72 flex-col border-l border-outline-gray-2 shadow-xl">
+			class="bg-surface-base absolute bottom-0 right-0 top-[var(--toolbar-height)] z-10 flex w-72 flex-col border-l border-outline-gray-2 shadow-xl">
 			<!-- header -->
 			<div class="flex items-center justify-between px-4 py-3">
 				<span class="text-base font-medium text-ink-gray-8">Version History</span>
@@ -43,7 +43,7 @@
 					<!-- current (live) marker -->
 					<div class="relative flex items-center gap-3 py-2 pl-7 pr-1">
 						<span
-							class="bg-ink-gray-8 ring-surface-white absolute left-[9px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full ring-4" />
+							class="bg-ink-gray-8 ring-surface-base absolute left-[9px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full ring-4" />
 						<div class="flex min-w-0 flex-1 flex-col">
 							<span class="text-p-sm font-medium text-ink-gray-8">Current version</span>
 							<span class="text-p-xs text-ink-gray-5">Live · unsaved edits</span>
@@ -63,7 +63,7 @@
 						:title="`Restore this version as a draft`"
 						@click="restore(snapshot)">
 						<span
-							class="ring-surface-white absolute left-[9px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full ring-4"
+							class="ring-surface-base absolute left-[9px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full ring-4"
 							:class="snapshot.snapshot_type === 'Manual' ? 'bg-blue-500' : 'bg-green-500'" />
 						<div class="flex min-w-0 flex-1 flex-col">
 							<span class="truncate text-p-sm text-ink-gray-8">

@@ -62,8 +62,14 @@ p:empty::before {
 	filter: revert;
 }
 
-[role='dialog'].bg-surface-modal, [role='dialog'] .bg-surface-modal {
-	background-color: var(--surface-white);
+[role='dialog'].bg-surface-elevation-2, [role='dialog'] .bg-surface-elevation-2 {
+	background-color: var(--surface-base);
+}
+
+/* surface-base resolves to dark-gray-950 (#171717); pin it to the deeper
+   gray-950 (#0f0f0f) in dark mode for a darker base/page background. */
+[data-theme='dark'] .bg-surface-base {
+	background-color: var(--gray-950);
 }
 
 [contenteditable=true]:focus-visible {

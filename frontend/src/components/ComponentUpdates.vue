@@ -14,7 +14,7 @@
 			</Tooltip>
 		</template>
 		<template #body="{ close }">
-			<div class="bg-surface-white w-72 rounded-lg p-3 shadow-xl">
+			<div class="bg-surface-base w-72 rounded-lg p-3 shadow-xl">
 				<div class="mb-2 flex items-center justify-between">
 					<span class="text-sm font-medium text-ink-gray-8">Component updates</span>
 					<Button variant="subtle" size="sm" label="Update all" :loading="updatingAll" @click="updateAll" />

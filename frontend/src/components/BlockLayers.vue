@@ -21,7 +21,7 @@
 					:data-block-layer-id="element.blockId"
 					:data-indent="indent"
 					:title="element.blockId"
-					class="block-layer-item bg-surface-white relative min-w-24 cursor-pointer select-none rounded border border-transparent bg-opacity-50 text-base text-ink-gray-7"
+					class="block-layer-item relative min-w-24 cursor-pointer select-none rounded border border-transparent bg-surface-base bg-opacity-50 text-base text-ink-gray-7"
 					:class="{
 						'border-blue-500 !bg-blue-100 dark:!bg-blue-900':
 							canvasStore.layerDraggingOverBlock === element.blockId,
@@ -65,8 +65,8 @@
 							]"
 							aria-hidden="true"
 							v-if="!Boolean(element.extendedFromComponent) && !showCodeIcon(element)" />
-						<BlocksIcon
-							class="mr-1 h-3 w-3"
+						<span
+							class="lucide-blocks mr-1 h-3 w-3"
 							:class="{
 								'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
 									element.isExtendedFromComponent(),
@@ -102,7 +102,7 @@
 						<!-- component-version update indicator (Figma-style) -->
 						<span
 							v-if="componentStore.isPinOutdated(element.extendedFromComponent, element.componentVersion)"
-							class="lucide-arrow-up-circle ml-1 h-3 w-3 shrink-0 text-ink-amber-3"
+							class="lucide-arrow-up-circle ml-1 h-3 w-3 shrink-0 text-ink-amber-6"
 							:title="`Component has updates — click to update this instance`"
 							aria-hidden="true"
 							@click.stop="!readonly && componentStore.updatePinnedComponent(element)" />
@@ -150,7 +150,6 @@ import useComponentStore from "@/stores/componentStore";
 import { nextTick, ref, watch } from "vue";
 import draggable from "vuedraggable";
 import BlockLayers from "./BlockLayers.vue";
-import BlocksIcon from "./Icons/Blocks.vue";
 
 type LayerInstance = InstanceType<typeof BlockLayers>;
 

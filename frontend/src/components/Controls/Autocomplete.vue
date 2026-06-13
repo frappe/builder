@@ -7,7 +7,7 @@
 		:reset-search-term-on-blur="false">
 		<div class="group/autocomplete relative" ref="containerRef">
 			<div
-				class="group form-input flex h-7 flex-1 items-center gap-2 rounded bg-surface-gray-2 p-0 text-sm text-ink-gray-8 transition-colors focus-within:bg-surface-white focus-within:ring-2 focus-within:ring-outline-gray-3"
+				class="group form-input flex h-7 flex-1 items-center gap-2 rounded bg-surface-gray-2 p-0 text-sm text-ink-gray-8 transition-colors focus-within:bg-surface-base focus-within:ring-2 focus-within:ring-outline-gray-3"
 				:class="{
 					'can-show-arrows': canShowArrows,
 				}">
@@ -46,7 +46,7 @@
 						tabindex="-1"
 						@click.stop="clearSelection"
 						@mousedown.prevent>
-						<CrossIcon />
+						<span class="lucide-x size-3.5" />
 					</button>
 				</div>
 			</div>
@@ -66,7 +66,7 @@
 					:class="referenceElementSelector ? 'fixed' : 'absolute'"
 					:style="fixedPositionStyles"
 					ref="contentRef"
-					class="z-50 mt-1 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-white shadow-xl">
+					class="z-50 mt-1 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base shadow-xl">
 					<div class="overflow-y-auto p-1">
 						<template v-for="(option, index) in displayOptions" :key="`${option.value}-${index}`">
 							<ComboboxSeparator
@@ -74,7 +74,7 @@
 								class="bg-outline-gray-2 mx-2 my-1 h-px" />
 							<ComboboxLabel
 								v-else-if="option.value.startsWith('_separator')"
-								class="px-2 py-1 text-xs font-semibold text-ink-gray-5">
+								class="text-xs-semibold px-2 py-1 text-ink-gray-5">
 								{{ option.label }}
 							</ComboboxLabel>
 							<ComboboxItem
@@ -112,7 +112,6 @@
 
 <script setup lang="ts">
 import NumberArrows from "@/components/Controls/NumberArrows.vue";
-import CrossIcon from "@/components/Icons/Cross.vue";
 import { useNumberInput } from "@/utils/useNumberInput";
 import {
 	ComboboxContent,

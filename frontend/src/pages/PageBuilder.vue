@@ -2,7 +2,7 @@
 	<div v-show="isSmallScreen" class="grid h-screen w-screen place-content-center gap-4 text-ink-gray-9">
 		<img src="/builder_logo.png" alt="logo" class="h-10" />
 		<div class="flex flex-col">
-			<h1 class="text-p-2xl font-semibold">Screen too small</h1>
+			<h1 class="text-p-4xl-semibold">Screen too small</h1>
 			<p class="text-p-base">Please switch to a larger screen to edit</p>
 		</div>
 	</div>
@@ -28,7 +28,8 @@
 			}"
 			class="canvas-container absolute bottom-0 flex justify-center overflow-hidden bg-surface-gray-2 p-10">
 			<template v-slot:header>
-				<div class="bg-surface-white flex items-center justify-between p-2 text-sm text-ink-gray-8 shadow-sm">
+				<div class="flex items-center justify-between bg-surface-base p-2 text-sm text-ink-gray-8 shadow-sm">
+
 					<div class="flex items-center gap-1 pl-2 text-xs">
 						<a @click="canvasStore.exitFragmentMode" class="cursor-pointer">Page</a>
 						<span class="lucide-chevron-right h-3 w-3" aria-hidden="true" />
@@ -70,10 +71,10 @@
 		<!-- Panels layer (middle) - comes after canvas in DOM -->
 		<BuilderLeftPanel
 			v-show="builderStore.showLeftPanel"
-			class="bg-surface-white absolute bottom-0 left-0 top-[var(--toolbar-height)] w-fit border-r-[1px] border-outline-gray-2"></BuilderLeftPanel>
+			class="absolute bottom-0 left-0 top-[var(--toolbar-height)] w-fit border-r-[1px] border-outline-gray-2 bg-surface-base"></BuilderLeftPanel>
 		<BuilderRightPanel
 			v-show="builderStore.showRightPanel"
-			class="no-scrollbar bg-surface-white absolute bottom-0 right-0 top-[var(--toolbar-height)] overflow-auto border-l-[1px] border-outline-gray-2"></BuilderRightPanel>
+			class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] overflow-auto border-l-[1px] border-outline-gray-2 bg-surface-base"></BuilderRightPanel>
 		<VersionHistory v-model="builderStore.showVersionHistory" />
 
 		<!-- Toolbar layer (top) - comes last in DOM -->
