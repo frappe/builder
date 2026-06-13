@@ -1,7 +1,7 @@
 <template>
 	<router-link :to="{ name: 'builder', params: { pageId: page.page_name } }">
 		<div
-			class="group relative flex w-full cursor-pointer flex-col gap-2 rounded-2xl bg-surface-white p-3"
+			class="group relative flex w-full cursor-pointer flex-col gap-2 rounded-2xl bg-surface-elevation-1 p-3"
 			:class="{
 				'!bg-surface-gray-2': selected,
 			}">
@@ -14,7 +14,7 @@
 			<div class="flex items-center justify-between border-outline-gray-2">
 				<span class="inline-block max-w-[160px]">
 					<div class="flex items-center gap-1">
-						<p class="truncate text-base font-medium text-ink-gray-7 group-hover:text-ink-gray-9">
+						<p class="text-base-medium truncate text-ink-gray-7 group-hover:text-ink-gray-9">
 							{{ page.page_title || page.page_name }}
 						</p>
 					</div>
@@ -28,7 +28,7 @@
 							icon="lucide-more-horizontal"
 							size="sm"
 							variant="subtle"
-							class="bg-surface-white !text-ink-gray-5 hover:!text-ink-gray-9"
+							class="bg-surface-elevation-1 !text-ink-gray-5 hover:!text-ink-gray-9"
 							@click="open"></Button>
 					</template>
 				</PageActionsDropdown>
