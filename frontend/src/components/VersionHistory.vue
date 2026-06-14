@@ -136,6 +136,12 @@ watch(
 	},
 );
 
+// instantly refresh the list whenever a new version is created (publish or manual save)
+watch(
+	() => pageStore.snapshotsVersion,
+	() => snapshots.reload(),
+);
+
 // closing the panel must always exit the preview (restores edit mode)
 function close() {
 	canvasStore.clearVersionPreview();

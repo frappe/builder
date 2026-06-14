@@ -31,6 +31,7 @@ const usePageStore = defineStore("pageStore", {
 		activePageScripts: <BuilderClientScript[]>[],
 		savingPage: false,
 		settingPage: false,
+		snapshotsVersion: 0,
 	}),
 	actions: {
 		async setPage(pageName: string, resetCanvas = true, routeParams = null as Object | null) {
@@ -188,6 +189,7 @@ const usePageStore = defineStore("pageStore", {
 				})
 				.then(async () => {
 					this.activePage = await this.fetchActivePage(this.selectedPage as string);
+					this.snapshotsVersion++;
 					if (openInBrowser) {
 						this.openPageInBrowser(this.activePage as BuilderPage);
 					}
@@ -205,11 +207,13 @@ const usePageStore = defineStore("pageStore", {
 		},
 
 		async createManualSnapshot(label?: string) {
-			return webPages.runDocMethod.submit({
+			const res = await webPages.runDocMethod.submit({
 				name: this.selectedPage as string,
 				method: "create_manual_snapshot",
 				label: label || null,
 			});
+			this.snapshotsVersion++;
+			return res;
 		},
 
 		async restoreSnapshot(snapshotName: string) {
