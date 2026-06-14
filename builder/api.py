@@ -25,7 +25,6 @@ from builder.utils import compact_json, has_page_read, has_page_write
 
 @frappe.whitelist()
 def get_versioned_doc(snapshot: str) -> dict:
-	"""Return the referenced doc as it looked at `snapshot`, with versioned fields overlaid."""
 	return builder_snapshot.get_versioned_doc(snapshot).as_dict()
 
 

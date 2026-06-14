@@ -54,8 +54,6 @@ declare interface BlockOptions {
 	dynamicValues?: Array<BlockDataKey>;
 	draggable?: boolean;
 	editorConfig?: BlockEditorConfig;
-	// pins a restored component instance to an immutable component version
-	// (the name of a "Component Version" Builder Snapshot)
 	componentVersion?: string;
 	[key: string]: any;
 }

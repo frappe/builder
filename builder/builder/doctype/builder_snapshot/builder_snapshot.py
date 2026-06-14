@@ -25,16 +25,6 @@ class BuilderSnapshot(Document):
 	pass
 
 
-# ---------------------------------------------------------------------------
-# Generic, framework-promotable snapshot utilities.
-#
-# These helpers are intentionally domain-agnostic: they take a doctype/name and
-# a list of fieldnames, and never reference Builder-specific fields. Apps store
-# a point-in-time copy of selected fields and can restore them later. This layer
-# is a candidate for promotion into Frappe core.
-# ---------------------------------------------------------------------------
-
-
 def take_snapshot(reference_doctype, reference_name, fields, label=None, snapshot_type=None, transform=None):
 	"""Capture the current value of `fields` on a document as a snapshot.
 

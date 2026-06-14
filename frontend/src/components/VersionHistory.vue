@@ -64,10 +64,14 @@
 						:class="snapshot.snapshot_type === 'Manual' ? 'bg-blue-500' : 'bg-green-500'" />
 					<div class="flex min-w-0 flex-1 flex-col">
 						<span class="truncate text-p-sm text-ink-gray-8">
-							{{ snapshot.label || formatRelative(snapshot.creation) }}
+							<template v-if="snapshot.label">{{ snapshot.label }}</template>
+							<UseTimeAgo v-else v-slot="{ timeAgo }" :time="snapshot.creation">{{ timeAgo }}</UseTimeAgo>
 						</span>
 						<span class="truncate text-p-xs text-ink-gray-5">
-							{{ snapshot.label ? formatRelative(snapshot.creation) : snapshot.snapshot_type || "Version" }}
+							<UseTimeAgo v-if="snapshot.label" v-slot="{ timeAgo }" :time="snapshot.creation">
+								{{ timeAgo }}
+							</UseTimeAgo>
+							<template v-else>{{ snapshot.snapshot_type || "Version" }}</template>
 						</span>
 					</div>
 					<Button
@@ -99,6 +103,7 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderSnapshot } from "@/types/doctypes";
 import { getUserInfo } from "@/usersInfo";
 import { confirm } from "@/utils/helpers";
+import { UseTimeAgo } from "@vueuse/components";
 import { Avatar, Button, createListResource, TextInput, toast } from "frappe-ui";
 import { nextTick, onBeforeUnmount, ref, watch } from "vue";
 
@@ -182,27 +187,5 @@ async function restore(snapshot: BuilderSnapshot) {
 	} finally {
 		restoringName.value = null;
 	}
-}
-
-function formatRelative(timestamp: string) {
-	const date = new Date(timestamp.replace(" ", "T"));
-	const seconds = Math.round((Date.now() - date.getTime()) / 1000);
-	const units: [number, Intl.RelativeTimeFormatUnit][] = [
-		[60, "second"],
-		[3600, "minute"],
-		[86400, "hour"],
-		[604800, "day"],
-		[2592000, "week"],
-		[31536000, "month"],
-		[Infinity, "year"],
-	];
-	const divisors = [1, 60, 3600, 86400, 604800, 2592000, 31536000];
-	const formatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
-	for (let i = 0; i < units.length; i++) {
-		if (seconds < units[i][0]) {
-			return formatter.format(-Math.round(seconds / divisors[i]), units[i][1]);
-		}
-	}
-	return date.toLocaleDateString();
 }
 </script>
