@@ -71,8 +71,6 @@ const builderStore = useBuilderStore();
 
 const publishing = ref(false);
 const showDropdown = computed(() => {
-	// Always available (so Version History is reachable); individual items
-	// (Revert / Unpublish) remain gated by their own `condition`.
 	return canvasStore.editingMode !== "fragment" && !pageStore.activePage?.is_template;
 });
 

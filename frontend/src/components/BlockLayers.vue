@@ -99,7 +99,6 @@
 							{{ element.getBlockDescription() }}
 						</span>
 
-						<!-- component-version update indicator (Figma-style) -->
 						<span
 							v-if="componentStore.isPinOutdated(element.extendedFromComponent, element.componentVersion)"
 							class="lucide-arrow-up-circle ml-1 h-3 w-3 shrink-0 text-ink-amber-6"

@@ -43,11 +43,6 @@ def canonical(block_json, strip_pins=False):
 	return frappe.as_json(parsed)
 
 
-# ---------------------------------------------------------------------------
-# Capture: pin component versions into a page's blocks
-# ---------------------------------------------------------------------------
-
-
 def pin_components_in_page_data(data: dict) -> dict:
 	"""`take_snapshot` transform: pin component versions inside captured blocks.
 
@@ -154,11 +149,6 @@ def latest_version(component_id: str) -> str | None:
 		pluck="name",
 	)
 	return names[0] if names else None
-
-
-# ---------------------------------------------------------------------------
-# Resolve / drift detection
-# ---------------------------------------------------------------------------
 
 
 def resolve_component_block(component_id: str, pinned_version: str | None = None) -> str | None:

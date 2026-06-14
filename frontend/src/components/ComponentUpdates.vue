@@ -14,7 +14,7 @@
 			</Tooltip>
 		</template>
 		<template #body="{ close }">
-			<div class="bg-surface-base w-72 rounded-lg p-3 shadow-xl">
+			<div class="w-72 rounded-lg bg-surface-base p-3 shadow-xl">
 				<div class="mb-2 flex items-center justify-between">
 					<span class="text-sm font-medium text-ink-gray-8">Component updates</span>
 					<Button variant="subtle" size="sm" label="Update all" :loading="updatingAll" @click="updateAll" />
@@ -60,7 +60,6 @@ const canvasStore = useCanvasStore();
 const updating = ref<string | null>(null);
 const updatingAll = ref(false);
 
-// getOutdatedComponentList reads outdatedPins, so this recomputes when drift changes
 const outdated = computed(() => componentStore.getOutdatedComponentList());
 
 async function update(componentId: string) {
@@ -81,7 +80,6 @@ async function updateAll() {
 	}
 }
 
-// recompute drift when the active page changes (e.g. after a restore reload)
 watch(
 	() => pageStore.selectedPage,
 	(page) => {
@@ -90,8 +88,6 @@ watch(
 	{ immediate: true },
 );
 
-// re-check drift on returning to page edit mode (e.g. right after editing a
-// component on the canvas) so the indicator appears without a reload
 watch(
 	() => canvasStore.editingMode,
 	(mode, prev) => {
