@@ -1,4 +1,7 @@
 {% block script %}
+{%- if page_vars_script -%}
+<script>{{ page_vars_script | safe }}</script>
+{%- endif -%}
 {%- if scripts -%}
 {% for script_path in scripts %}
 <script src="{{ script_path }}"></script>

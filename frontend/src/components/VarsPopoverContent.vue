@@ -2,7 +2,7 @@
 	<div
 		@click.stop
 		@mousedown.stop
-		class="vars-popover-content flex max-h-80 w-80 flex-col gap-3 overflow-auto rounded-lg bg-surface-white p-4 shadow-lg">
+		class="vars-popover-content flex max-h-80 w-80 flex-col gap-3 overflow-auto rounded-lg bg-surface-base p-4 shadow-lg">
 		<div class="flex items-center justify-between gap-2">
 			<InlineInput
 				label="Name"

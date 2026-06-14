@@ -8,6 +8,7 @@
 import { computed, onMounted, ref, watch } from "vue";
 
 import codeCompletions from "@/data/codeCompletions";
+import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
 import componentController from "@/utils/componentController";
 import { createStartingState } from "@/utils/createCodeMirrorState";
@@ -125,10 +126,13 @@ const allBlockProps = computed(() => {
 });
 
 const allBlockVars = computed(() => {
-	if (props.mode !== "component") {
-		return {};
+	if (props.mode === "component") {
+		return componentController.getComponentVars();
 	}
-	return componentController.getComponentVars();
+	if (props.mode === "page") {
+		return usePageStore().activePage?.page_vars ?? {};
+	}
+	return {};
 });
 
 onMounted(async () => {

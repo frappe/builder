@@ -15,6 +15,10 @@
 					label="Page Data Preview"
 					:autofocus="false"
 					:readonly="true" />
+				<div class="my-6">
+					<div class="mb-3 text-sm text-ink-gray-8">Page Variables</div>
+					<VarsEditor :obj="pageVars" @update:obj="savePageVars" />
+				</div>
 			</div>
 			<div class="h-fit" v-if="mode == 'component'">
 				<CodeEditor
@@ -46,7 +50,7 @@
 		</div>
 		<div
 			v-if="false"
-			class="absolute bottom-0 left-0 box-border flex w-full items-center justify-between border-t bg-surface-white p-4 py-2">
+			class="bg-surface-white absolute bottom-0 left-0 box-border flex w-full items-center justify-between border-t p-4 py-2">
 			<h2 class="text-base text-ink-gray-6">Mode</h2>
 			<TabButtons class="w-fit" :buttons="modeButtons" v-model="mode" />
 		</div>
@@ -147,7 +151,7 @@
 								type="JSON"
 								label="Component Data Preview"
 								:showLineNumbers="true"
-								class="-mt-5 w-1/3 [&>div>div]:bg-surface-white"
+								class="[&>div>div]:bg-surface-white -mt-5 w-1/3"
 								height="calc(100% - 110px)"
 								description='Use Component Data Script to provide dynamic data to your component.<br>
 								<b>Example:</b> data.items = frappe.get_list("Item")<br><br>
@@ -265,6 +269,15 @@ const dialogTitle = computed(() => {
 const showComponentClientScriptToggle = computed(() => {
 	return mode.value === "component" && currentScriptEditor.value === "client";
 });
+
+const pageVars = computed(() => {
+	return JSON.parse(props.page.page_vars ?? "{}");
+});
+
+const savePageVars = (vars: BlockVars) => {
+	pageStore.updateActivePage("page_vars", JSON.stringify(vars));
+	props.page.page_vars = JSON.stringify(vars);
+};
 
 const savePageDataScript = (value: string) => {
 	webPages.setValue

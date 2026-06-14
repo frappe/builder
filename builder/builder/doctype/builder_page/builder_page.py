@@ -114,6 +114,7 @@ class BuilderPage(WebsiteGenerator):
 		meta_description: DF.SmallText | None
 		meta_image: DF.AttachImage | None
 		page_data_script: DF.Code | None
+		page_vars: DF.JSON | None
 		page_name: DF.Data | None
 		page_title: DF.Data | None
 		preview: DF.Data | None
@@ -290,7 +291,7 @@ class BuilderPage(WebsiteGenerator):
 		if context.preview and self.draft_blocks:
 			blocks = self.draft_blocks
 
-		content, style, fonts, has_dual_mode_image = get_block_html(blocks)
+		content, style, fonts, has_dual_mode_image, has_component_vars = get_block_html(blocks)
 
 		if self.dynamic_route or page_data or self.page_data_script:
 			context.no_cache = 1
@@ -320,6 +321,7 @@ class BuilderPage(WebsiteGenerator):
 		context.update(page_data)
 
 		self.set_style_and_script(context)
+		context.needs_reactivity = has_component_vars or bool(context.get("page_vars_script"))
 		self.set_meta_tags(context=context, page_data=page_data)
 		self.set_favicon(context)
 		self.set_language(context)
@@ -364,6 +366,10 @@ class BuilderPage(WebsiteGenerator):
 			context.setdefault("scripts", []).append(builder_settings.script_public_url)
 		if builder_settings.style:
 			context.setdefault("styles", []).append(builder_settings.style_public_url)
+
+		page_vars = frappe.parse_json(self.page_vars) if self.page_vars else {}
+		if page_vars_script := build_page_vars_script(page_vars):
+			context.page_vars_script = page_vars_script
 
 		client_scripts = self.get("client_scripts") or []
 		for script in client_scripts:
@@ -575,7 +581,7 @@ def get_block_data(
 	return block_data
 
 
-def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
+def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool, bool]:
 	"""
 	Main entry point for converting blocks to HTML.
 
@@ -583,7 +589,7 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 		blocks: JSON string or list of block dictionaries
 
 	#### Returns:
-		Tuple of (`html_content`, `css_styles`, `font_map`, `has_dual_mode_image`)
+		Tuple of (`html_content`, `css_styles`, `font_map`, `has_dual_mode_image`, `has_component_vars`)
 	"""
 	blocks = frappe.parse_json(blocks)
 	if not isinstance(blocks, list):
@@ -599,6 +605,7 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 		"style_tag": style_tag,
 		"font_map": font_map,
 		"has_dual_mode_image": False,
+		"has_component_vars": False,
 		"standard_props_stack": {},  # prop_name -> list of prop_info
 		"global_script_tag": soup.new_tag("script"),
 		"used_block_scripts": set(),
@@ -627,6 +634,7 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 		str(style_tag),
 		font_map,
 		shared_state["has_dual_mode_image"],
+		shared_state["has_component_vars"],
 	)
 
 
@@ -1073,11 +1081,17 @@ def create_client_script_invocation(script_id: str, script: dict) -> str:
 	)
 
 
-def create_local_client_script_tag(state: dict, script_id: str, script: dict) -> bs.Tag:
+def create_local_client_script_tag(
+	state: dict, script_id: str, script: dict, block_vars: dict | None = None
+) -> bs.Tag:
 	"""Create a per-block script or style tag that invokes the global client script."""
 	if script["type"] == "JavaScript":
 		script_tag = state["soup"].new_tag("script")
-		script_tag.string = create_client_script_invocation(script_id, script)
+		invocation = create_client_script_invocation(script_id, script)
+		if script.get("from") == "component":
+			script_tag.string = build_component_vars_fence(invocation, block_vars)
+		else:
+			script_tag.string = invocation
 		return script_tag
 
 	style_tag = state["soup"].new_tag("style")
@@ -1109,24 +1123,34 @@ def format_component_var_entry(name: str, var_def: dict) -> str:
 	return f"{name}: {wrapper}({value_json})"
 
 
-def build_component_vars_fence(invocations: list[str], block_vars: dict | None = None) -> str:
+def build_component_vars_fence(invocation: str, block_vars: dict | None = None) -> str:
 	block_vars = block_vars or {}
 	entries = [format_component_var_entry(name, var_def) for name, var_def in block_vars.items()]
 	vars_body = ", ".join(entries)
-	lines = ["{"]
-	lines.append(f"  const vars = {{ {vars_body} }};")
-	lines.extend(f"  {invocation}" for invocation in invocations)
-	lines.append("}")
-	return "\n".join(lines)
+	return "\n".join(
+		[
+			"{",
+			f"  const vars = {{ {vars_body} }};",
+			f"  {invocation}",
+			"}",
+		]
+	)
 
 
-def create_combined_component_script_tag(
-	state: dict, invocations: list[str], block_vars: dict | None = None
-) -> bs.Tag:
-	"""Create one script tag that runs all component script invocations in order."""
-	local_script = state["soup"].new_tag("script")
-	local_script.string = build_component_vars_fence(invocations, block_vars)
-	return local_script
+def build_page_vars_script(page_vars: dict | None = None) -> str:
+	page_vars = page_vars or {}
+	entries = [format_component_var_entry(name, var_def) for name, var_def in page_vars.items()]
+	if not entries:
+		return ""
+	vars_body = ", ".join(entries)
+	return f"const vars = {{ {vars_body} }};"
+
+
+def block_uses_reactive_vars(block: dict) -> bool:
+	block_vars = block.get("vars") or {}
+	if not block_vars:
+		return False
+	return any(script.get("type") == "JavaScript" for script in block.get("componentScripts") or [])
 
 
 def attach_client_script(tag: bs.Tag, block: dict, state: dict):
@@ -1135,32 +1159,16 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 	if not scripts:
 		return
 
+	if block_uses_reactive_vars(block):
+		state["has_component_vars"] = True
+
 	tag.attrs["data-block-uid"] = "{{ unique_hash }}"
+	block_vars = block.get("vars")
 
-	component_js_invocations: list[str] = []
-	local_tags: list[bs.Tag] = []
-
-	# bunch all component javascript scripts together
-	for script_id, script in scripts.items():
-		if script["type"] == "CSS":
-			continue
-		append_global_client_script(state, script_id, script)
-		if script["type"] == "JavaScript" and script["from"] == "component":
-			component_js_invocations.append(create_client_script_invocation(script_id, script))
-
-	# add all other scripts
 	for script_id, script in reversed(list(scripts.items())):
-		if script["type"] == "JavaScript" and script["from"] == "component":
-			continue
-		local_tags.append(create_local_client_script_tag(state, script_id, script))
-
-	if component_js_invocations:
-		local_tags.append(
-			create_combined_component_script_tag(state, component_js_invocations, block.get("vars"))
-		)
-
-	for local_tag in reversed(local_tags):
-		tag.append(local_tag)
+		if script["type"] == "JavaScript":
+			append_global_client_script(state, script_id, script)
+		tag.append(create_local_client_script_tag(state, script_id, script, block_vars))
 
 
 def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):

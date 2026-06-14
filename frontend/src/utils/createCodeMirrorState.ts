@@ -175,7 +175,9 @@ export const createStartingState = async ({
 						jsCompletionsFromGlobalScope(
 							context,
 							{ ...(mode == "block" ? { ...blockProps } : {}) },
-							{ ...(mode == "component" ? { ...blockVars } : {}) },
+							{
+								...(mode == "component" || mode == "page" ? { ...blockVars } : {}),
+							},
 						),
 				}),
 			);
