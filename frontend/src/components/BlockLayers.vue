@@ -21,7 +21,7 @@
 					:data-block-layer-id="element.blockId"
 					:data-indent="indent"
 					:title="element.blockId"
-					class="block-layer-item relative min-w-24 cursor-pointer select-none rounded border border-transparent bg-surface-white bg-opacity-50 text-base text-ink-gray-7"
+					class="block-layer-item relative min-w-24 cursor-pointer select-none rounded border border-transparent bg-surface-base bg-opacity-50 text-base text-ink-gray-7"
 					:class="{
 						'border-blue-500 !bg-blue-100 dark:!bg-blue-900':
 							canvasStore.layerDraggingOverBlock === element.blockId,
@@ -136,7 +136,6 @@ import useCanvasStore from "@/stores/canvasStore";
 import { nextTick, ref, watch } from "vue";
 import draggable from "vuedraggable";
 import BlockLayers from "./BlockLayers.vue";
-import BlocksIcon from "./Icons/Blocks.vue";
 
 type LayerInstance = InstanceType<typeof BlockLayers>;
 

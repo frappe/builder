@@ -38,7 +38,7 @@
 						class="h-40 w-full rounded-t object-cover" />
 					<div class="flex flex-1 flex-col gap-1 border-t border-outline-gray-2 p-2">
 						<span class="text-base text-ink-gray-6">{{ pageStore.activePage?.route }}</span>
-						<span class="mt-2 text-base font-medium text-ink-gray-9">
+						<span class="text-base-medium mt-2 text-ink-gray-9">
 							{{ pageStore.activePage?.page_title }}
 						</span>
 						<span class="line-clamp-3 text-base leading-5 text-ink-gray-6">

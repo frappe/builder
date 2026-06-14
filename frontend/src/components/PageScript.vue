@@ -88,7 +88,7 @@
 								type="JSON"
 								label="Data Preview"
 								:showLineNumbers="true"
-								class="-mt-5 w-1/3 [&>div>div]:bg-surface-white"
+								class="-mt-5 w-1/3 [&>div>div]:bg-surface-base"
 								height="calc(100% - 110px)"
 								description='Use Data Script to provide dynamic data to your web page.<br>
 								<b>Example:</b> data.events = frappe.get_list("Event")<br><br>

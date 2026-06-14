@@ -1,6 +1,6 @@
 <template>
 	<div class="flex h-full flex-col items-center gap-5 overflow-y-auto">
-		<div class="flex w-full max-w-[500px] gap-4">
+		<div class="flex h-full w-full flex-1 flex-col gap-4">
 			<CodeEditor
 				class="overscroll-none"
 				:modelValue="websiteSettings.doc.robots_txt"
@@ -12,7 +12,7 @@
 					}
 				"
 				type="Python"
-				height="60vh"
+				height="100%"
 				label="robot.txt"
 				:showSaveButton="true"
 				description='Specify rules to control how search engines interact with your site.

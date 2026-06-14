@@ -20,7 +20,7 @@
 				'--canvas-scale': canvasProps.scale,
 				colorScheme: builderStore.canvasDarkMode ? 'dark' : 'light',
 			}">
-			<div class="absolute right-0 top-[-60px] flex rounded-md bg-surface-white px-3">
+			<div class="absolute right-0 top-[-60px] flex rounded-md bg-surface-base px-3">
 				<Tooltip text="Toggle Canvas Dark Mode" :hoverDelay="0.6">
 					<div
 						v-show="!canvasProps.scaling && !canvasProps.panning"
@@ -31,7 +31,9 @@
 							aria-hidden="true" />
 					</div>
 				</Tooltip>
-				<div v-show="!canvasProps.scaling && !canvasProps.panning" class="bg-outline-gray-2 my-2 w-px"></div>
+				<div
+					v-show="!canvasProps.scaling && !canvasProps.panning"
+					class="m-2 my-3 w-px bg-[var(--outline-gray-2)]"></div>
 				<div
 					v-show="!canvasProps.scaling && !canvasProps.panning"
 					class="w-auto cursor-pointer p-2"
@@ -48,7 +50,7 @@
 				</div>
 			</div>
 			<div
-				class="canvas relative flex h-full bg-surface-white shadow-2xl contain-layout"
+				class="canvas relative flex h-full bg-surface-base shadow-2xl contain-layout"
 				:data-breakpoint="breakpoint.device"
 				:style="{
 					...canvasStyles,
@@ -59,7 +61,7 @@
 				v-show="breakpoint.visible"
 				:key="breakpoint.device">
 				<div
-					class="absolute left-0 cursor-pointer select-none text-3xl text-ink-gray-7"
+					class="absolute left-0 cursor-pointer select-none text-5xl text-ink-gray-7"
 					:style="{
 						fontSize: `calc(${12}px * 1/${canvasProps.scale})`,
 						top: `calc(${-20}px * 1/${canvasProps.scale})`,
@@ -80,7 +82,7 @@
 			</div>
 		</div>
 		<div
-			class="fixed bottom-12 left-[50%] flex translate-x-[-50%] cursor-default items-center justify-center gap-2 rounded-lg bg-surface-white px-3 py-2 text-center text-sm font-semibold text-ink-gray-7 shadow-md"
+			class="text-sm-semibold fixed bottom-12 left-[50%] flex translate-x-[-50%] cursor-default items-center justify-center gap-2 rounded-lg bg-surface-base px-3 py-2 text-center text-ink-gray-7 shadow-md"
 			v-show="!canvasProps.panning">
 			{{ Math.round(canvasProps.scale * 100) + "%" }}
 			<div class="ml-2 cursor-pointer" @click="setScaleAndTranslate">
@@ -446,5 +448,11 @@ const renderedBreakpoints = computed(() => canvasProps.breakpoints.filter((bp) =
 /* Lightweight marquee-drag highlight — applied via DOM attribute, not Vue reactive state */
 .__builder_component__[data-marquee-selected] {
 	box-shadow: inset 0 0 0 calc(2px / var(--canvas-scale, 1)) theme("colors.blue.400 / 85%");
+}
+
+.canvas-container {
+	p:not(:where(.prose, .ProseMirror) *) {
+		line-height: revert;
+	}
 }
 </style>

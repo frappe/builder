@@ -52,7 +52,7 @@
 											class="h-4 w-4 text-ink-gray-4" />
 									</div>
 									<div class="flex max-w-full flex-col gap-1">
-										<p class="text-sm font-medium">
+										<p class="text-sm-medium">
 											{{ value.label || name }}
 										</p>
 										<p

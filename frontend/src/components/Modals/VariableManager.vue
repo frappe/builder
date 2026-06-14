@@ -15,7 +15,7 @@
 		action-label="Add Variable"
 		:action-handler="addNewVariable"
 		placement="top-left">
-		<template #header><h2 class="py-2 text-lg font-semibold">Manage Variables</h2></template>
+		<template #header><h2 class="text-xl-semibold py-2">Manage Variables</h2></template>
 		<template #content>
 			<div @keydown.esc="clearSelection">
 				<div class="mb-3">
@@ -32,7 +32,7 @@
 				<div class="max-h-[60vh] overflow-y-auto">
 					<!-- Header row -->
 					<div
-						class="sticky top-0 z-10 border-b border-outline-gray-1 bg-surface-white pb-2 pt-1 text-sm text-ink-gray-5"
+						class="sticky top-0 z-10 border-b border-outline-gray-1 bg-surface-base pb-2 pt-1 text-sm text-ink-gray-5"
 						:class="rowGridClass">
 						<div class="pl-2">Name</div>
 						<div class="border-l border-outline-gray-1 pl-2">Light</div>
@@ -44,7 +44,7 @@
 						<div
 							v-if="group.group !== null"
 							data-group-header
-							class="sticky top-7 z-10 border-b border-outline-gray-1 bg-surface-white px-3 pb-2 pt-5 text-sm font-medium text-ink-gray-5">
+							class="text-sm-medium sticky top-7 z-10 border-b border-outline-gray-1 bg-surface-base px-3 pb-2 pt-5 text-ink-gray-5">
 							{{ group.group }}
 						</div>
 
@@ -70,7 +70,7 @@
 									<div
 										:class="[
 											colorCellBoxClass,
-											'rounded-l-none border-l border-outline-gray-1 bg-surface-white ring-2 ring-outline-gray-3',
+											'rounded-l-none border-l border-outline-gray-1 bg-surface-base ring-2 ring-outline-gray-3',
 										]">
 										<ColorPicker
 											class="!w-auto shrink-0"
@@ -97,7 +97,7 @@
 									<div
 										:class="[
 											colorCellBoxClass,
-											'rounded-l-none border-l border-outline-gray-1 bg-surface-white ring-2 ring-outline-gray-3',
+											'rounded-l-none border-l border-outline-gray-1 bg-surface-base ring-2 ring-outline-gray-3',
 										]">
 										<ColorPicker
 											class="!w-auto shrink-0"
@@ -176,7 +176,7 @@
 											colorCellBoxClass,
 											'rounded-l-none border-l border-outline-gray-1',
 											isEditing(row, 'value')
-												? 'bg-surface-white ring-2 ring-outline-gray-3'
+												? 'bg-surface-base ring-2 ring-outline-gray-3'
 												: cellTextClass(row),
 										]"
 										@dblclick="startEdit(row, 'value')">
@@ -219,7 +219,7 @@
 											colorCellBoxClass,
 											'rounded-l-none border-l border-outline-gray-1',
 											isEditing(row, 'dark_value')
-												? 'bg-surface-white ring-2 ring-outline-gray-3'
+												? 'bg-surface-base ring-2 ring-outline-gray-3'
 												: cellTextClass(row),
 										]"
 										@dblclick="startEdit(row, 'dark_value')">
@@ -268,7 +268,7 @@
 						</div>
 					</template>
 					<div v-if="!hasRows" class="py-10 text-center">
-						<div class="text-base font-medium text-ink-gray-7">
+						<div class="text-base-medium text-ink-gray-7">
 							{{ searchQuery.trim() ? "No Variables Found" : "No Variables" }}
 						</div>
 						<div class="mt-1 text-sm text-ink-gray-5">
@@ -357,7 +357,7 @@ const rowGridClass = "grid grid-cols-[minmax(0,1fr)_128px_128px] items-center ga
 const cellBoxClass = "w-full min-w-0 rounded-sm px-2 py-1 text-sm";
 // the focus: variants out-rank @tailwindcss/forms' blue [type='text']:focus ring/border
 const editableInputClass =
-	"border-none bg-surface-white text-ink-gray-8 outline-none ring-2 ring-outline-gray-3 placeholder:text-ink-gray-4 focus:outline-none focus:ring-2 focus:ring-outline-gray-3";
+	"border-none bg-surface-base text-ink-gray-8 outline-none ring-2 ring-outline-gray-3 placeholder:text-ink-gray-4 focus:outline-none focus:ring-2 focus:ring-outline-gray-3";
 const cellTextClass = (row: Row) =>
 	row.is_standard ? "truncate text-ink-gray-8" : "cursor-default truncate text-ink-gray-8";
 // color cells render the swatch and the value as a single unit

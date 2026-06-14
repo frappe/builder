@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="toolbar border-outline border-outline flex items-center justify-center border-b-[1px] border-outline-gray-1 bg-surface-white px-2 py-1"
+		class="toolbar border-outline border-outline flex items-center justify-center border-b-[1px] border-outline-gray-1 bg-surface-base px-2 py-1"
 		ref="toolbar">
 		<div class="absolute left-3 flex items-center gap-4">
 			<MainMenu
@@ -41,11 +41,9 @@
 									v-if="pageStore.isHomePage(pageStore.activePage)" />
 							</Tooltip>
 							<Tooltip text="This page has limited access" :hoverDelay="0.6">
-								<AuthenticatedUserIcon
-									class="size-4 text-ink-amber-3"
-									v-if="
-										pageStore.activePage?.published && pageStore.activePage?.authenticated_access
-									"></AuthenticatedUserIcon>
+								<span
+									class="lucide-shield-user size-4 text-ink-amber-6"
+									v-if="pageStore.activePage?.published && pageStore.activePage?.authenticated_access" />
 							</Tooltip>
 							<span
 								class="max-w-48 truncate text-base text-ink-gray-8"
@@ -67,7 +65,7 @@
 				</template>
 				<template #body="{ close }">
 					<div
-						class="flex w-72 flex-col gap-3 rounded bg-surface-white p-4 shadow-lg"
+						class="flex w-72 flex-col gap-3 rounded bg-surface-base p-4 shadow-lg"
 						v-if="pageStore.activePage">
 						<PageOptions v-if="pageStore.activePage"></PageOptions>
 					</div>
@@ -163,7 +161,6 @@
 </template>
 <script setup lang="ts">
 import Dialog from "@/components/Controls/Dialog.vue";
-import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import PlayIcon from "@/components/Icons/Play.vue";
 import SettingsGearIcon from "@/components/Icons/SettingsGear.vue";
 import PublishButton from "@/components/PublishButton.vue";

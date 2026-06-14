@@ -33,7 +33,7 @@
 								@click="(e) => !hasMoved && togglePopover()" />
 						</template>
 						<template #body="{ close }">
-							<div class="rounded-lg border border-outline-gray-2 bg-surface-white p-3 shadow-xl">
+							<div class="rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-xl">
 								<ColorPicker
 									renderMode="inline"
 									:showInput="true"
