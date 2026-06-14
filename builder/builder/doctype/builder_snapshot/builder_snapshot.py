@@ -4,6 +4,8 @@
 import frappe
 from frappe.model.document import Document
 
+from builder.utils import compact_json
+
 
 class BuilderSnapshot(Document):
 	# begin: auto-generated types
@@ -54,7 +56,7 @@ def take_snapshot(reference_doctype, reference_name, fields, label=None, snapsho
 			"doctype": "Builder Snapshot",
 			"reference_doctype": reference_doctype,
 			"reference_name": reference_name,
-			"data": frappe.as_json(data),
+			"data": compact_json(data),
 			"label": label,
 			"snapshot_type": snapshot_type,
 		}

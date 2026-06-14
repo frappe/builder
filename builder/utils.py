@@ -28,6 +28,10 @@ from RestrictedPython import safe_globals as restricted_safe_globals
 from werkzeug.routing import Rule
 
 
+def compact_json(obj) -> str:
+	return frappe.as_json(obj, indent=None, separators=(",", ":"))
+
+
 def has_page_permission(ptype: str = "write", message: str | None = None):
 	"""Decorator to check if user has the given permission on Builder Page.
 

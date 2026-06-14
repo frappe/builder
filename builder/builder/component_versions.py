@@ -18,6 +18,7 @@ from builder.builder.doctype.builder_snapshot.builder_snapshot import (
 	get_snapshot_data,
 	prune_snapshots,
 )
+from builder.utils import compact_json
 
 COMPONENT_VERSION_TYPE = "Component Version"
 # A pin to a pruned version degrades to the latest live component, so pruning is safe.
@@ -58,7 +59,7 @@ def pin_components_in_page_data(data: dict) -> dict:
 			continue
 		blocks = copy.deepcopy(frappe.parse_json(value))
 		walk_blocks(blocks, lambda block: pin_block(block, set(), cache))
-		out[key] = frappe.as_json(blocks)
+		out[key] = compact_json(blocks)
 	return out
 
 
@@ -103,7 +104,7 @@ def ensure_component_version(
 		block = frappe.parse_json(block_json or "{}")
 		if isinstance(block, dict) and block:
 			walk_blocks(block, lambda nested: pin_block(nested, visited, cache))
-		pinned_block_json = frappe.as_json(block)
+		pinned_block_json = compact_json(block)
 
 		latest = latest_version(component_id)
 		if latest and canonical(get_snapshot_data(latest).get("block")) == canonical(pinned_block_json):
@@ -116,7 +117,7 @@ def ensure_component_version(
 						"reference_doctype": "Builder Component",
 						"reference_name": component_id,
 						"snapshot_type": COMPONENT_VERSION_TYPE,
-						"data": frappe.as_json({"block": pinned_block_json}),
+						"data": compact_json({"block": pinned_block_json}),
 					}
 				)
 				.insert(ignore_permissions=True)

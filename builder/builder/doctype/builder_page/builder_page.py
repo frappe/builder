@@ -39,6 +39,7 @@ from builder.utils import (
 	ColonRule,
 	camel_case_to_kebab_case,
 	clean_data,
+	compact_json,
 	escape_single_quotes,
 	execute_script,
 	get_builder_page_preview_file_paths,
@@ -159,7 +160,7 @@ class BuilderPage(WebsiteGenerator):
 	def process_blocks(self):
 		for block_type in ["blocks", "draft_blocks"]:
 			if isinstance(getattr(self, block_type), list):
-				setattr(self, block_type, frappe.as_json(getattr(self, block_type), indent=0))
+				setattr(self, block_type, compact_json(getattr(self, block_type)))
 		if not self.blocks:
 			self.blocks = "[]"
 
@@ -317,6 +318,9 @@ class BuilderPage(WebsiteGenerator):
 		data = frappe.parse_json(snap.data)
 		# stored blocks already carry pinned component versions; key depends on capture-time state
 		blocks = data.get("draft_blocks") or data.get("blocks")
+		# re-compact: older snapshots may hold pretty-printed blocks
+		if blocks:
+			blocks = compact_json(frappe.parse_json(blocks))
 		self.draft_blocks = blocks
 		if "page_data_script" in data:
 			self.page_data_script = data.get("page_data_script")
@@ -533,11 +537,11 @@ class BuilderPage(WebsiteGenerator):
 		updates = {}
 		if self.blocks:
 			blocks = frappe.parse_json(self.blocks)
-			self.blocks = frappe.as_json(replace_component_in_blocks(blocks, target_component, replace_with))
+			self.blocks = compact_json(replace_component_in_blocks(blocks, target_component, replace_with))
 			updates["blocks"] = self.blocks
 		if self.draft_blocks:
 			draft_blocks = frappe.parse_json(self.draft_blocks)
-			self.draft_blocks = frappe.as_json(
+			self.draft_blocks = compact_json(
 				replace_component_in_blocks(draft_blocks, target_component, replace_with)
 			)
 			updates["draft_blocks"] = self.draft_blocks
