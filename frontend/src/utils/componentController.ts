@@ -120,6 +120,7 @@ const componentController = {
 	setComponentProps: (props: BlockProps) => {
 		if (!currentComponentId.value) return;
 		componentDocDraft.component_props = props;
+		canvasStore.fragmentData.block?.setBlockProps(props);
 		markCanvasDirty(true);
 		componentController.setComponentDataPreview();
 	},
@@ -213,6 +214,16 @@ watch(
 		}
 	},
 	{ deep: true, immediate: true },
+);
+
+watch(
+	currentComponentId,
+	() => {
+		const initialProps = componentController.getComponentProps();
+		canvasStore.fragmentData.block?.setBlockProps(initialProps);
+		markCanvasDirty(false);
+	},
+	{ immediate: true },
 );
 
 export default componentController;

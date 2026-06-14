@@ -10,9 +10,9 @@
 <script setup lang="ts">
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import useCanvasStore from "@/stores/canvasStore";
-import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
+import componentController from "@/utils/componentController";
 import { getDataArray, getDefaultPropsList, getParentProps, getRepeaterScopedData } from "@/utils/helpers";
 import { computed, ref, watch } from "vue";
 
@@ -23,8 +23,7 @@ const props = defineProps<{
 }>();
 
 const pageStore = usePageStore();
-const componentStore = useComponentStore();
-const { editingMode, fragmentData } = useCanvasStore();
+const { editingMode } = useCanvasStore();
 
 const currentBlock = computed(() => blockController.getFirstSelectedBlock());
 const autocompleteRef = ref<InstanceType<typeof InlineInput> | null>(null);
@@ -38,9 +37,7 @@ const pageDataArray = computed(() => {
 
 let componentData = {};
 if (editingMode == "fragment") {
-	const componentId = fragmentData.fragmentId;
-	const blockId = fragmentData.block?.blockId;
-	componentData = componentStore.getComponentInstanceData(componentId!, blockId);
+	componentData = componentController.getComponentDataPreview();
 }
 
 const componentDataArray = computed(() => {

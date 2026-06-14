@@ -65,6 +65,7 @@ import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
 import DataLoaderBlock from "./DataLoaderBlock.vue";
 import TextBlock from "./TextBlock.vue";
+import componentController from "@/utils/componentController.js";
 
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
@@ -102,6 +103,9 @@ const props = withDefaults(
 );
 
 const resolvedComponentData = computed(() => {
+	if (canvasStore.editingMode == "fragment" && !props.block.getParentBlock()) {
+		return componentController.getComponentDataPreview();
+	}
 	const componentId = extractComponentId(props.block);
 	if (componentId) {
 		return componentStore.getComponentInstanceData(componentId, uidToUse);

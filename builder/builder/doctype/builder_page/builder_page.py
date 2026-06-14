@@ -612,7 +612,7 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 		cleanup_props_stack(props, shared_state["standard_props_stack"])
 
 		html_parts.append(html)
-		print("".join(html_parts))
+		# print("".join(html_parts))
 
 	return (
 		"".join(html_parts),

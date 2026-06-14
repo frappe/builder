@@ -80,12 +80,11 @@ import {
 } from "@/utils/helpers";
 import { computed, ref } from "vue";
 import MiddleTruncate from "../MiddleTruncate.vue";
-import useComponentStore from "@/stores/componentStore.js";
 import useCanvasStore from "@/stores/canvasStore.js";
+import componentController from "@/utils/componentController.js";
 
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
-const componentStore = useComponentStore();
 const canvasStore = useCanvasStore();
 
 type DynamicValueItem = {
@@ -122,11 +121,7 @@ const defaultProps = computed(() => {
 });
 
 const componentData = computed(() => {
-	if (canvasStore.editingMode != "fragment") return {};
-
-	const componentId = canvasStore.fragmentData.fragmentId!;
-	const blockId = canvasStore.fragmentData.block?.blockId;
-	return componentStore.getComponentInstanceData(componentId, blockId);
+	return componentController.getComponentDataPreview();
 });
 
 const componentDataArray = computed(() => {
@@ -142,9 +137,11 @@ const filteredBlockProps = computed(() => {
 	}
 	let parentProps: string[];
 	if (props.options?.excludePassedDownProps || !currentBlock.value) {
+		console.log("excluding parent props");
 		parentProps = [];
 	} else {
 		parentProps = Object.keys(getParentProps(currentBlock.value));
+		console.log({parentProps});
 	}
 	const combinedProps = [...ownBlockProps, ...parentProps].reduce((acc, prop) => {
 		if (!acc.find((p: string) => p === prop)) {
@@ -152,6 +149,7 @@ const filteredBlockProps = computed(() => {
 		}
 		return acc;
 	}, [] as string[]);
+	console.log({combinedProps});
 	return combinedProps;
 });
 

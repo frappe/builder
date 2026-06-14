@@ -1,6 +1,7 @@
 import type { default as Block, default as BlockDataKey } from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import getBlockTemplate from "./blockTemplate";
+import componentController from "./componentController";
 
 const canvasStore = useCanvasStore();
 
@@ -352,6 +353,10 @@ const blockController = {
 		return block;
 	},
 	getBlockProps: () => {
+		const canvasStore = useCanvasStore()
+		if (canvasStore.editingMode == "fragment" && !blockController.getFirstSelectedBlock()?.getParentBlock()) {
+			return componentController.getComponentProps();
+		}
 		return blockController.getFirstSelectedBlock()?.getBlockProps();
 	},
 	setBlockProp: (key: string, value: Record<string, any>) => {

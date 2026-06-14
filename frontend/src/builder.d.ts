@@ -22,7 +22,7 @@ declare type BlockProps = Record<
 		isPassedDown: boolean;
 		comesFrom: "props" | "dataScript" | "componentData" | null;
 		value: string?;
-		isStandard?: boolean;
+		isStandard?: boolean; // always true as used only in components
 		propOptions?: BlockPropOptions;
 	}
 >;

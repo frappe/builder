@@ -1,14 +1,13 @@
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import useCanvasStore from "@/stores/canvasStore";
-import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
+import componentController from "@/utils/componentController";
 import { getRepeaterScopedData } from "@/utils/helpers";
 import { computed, h } from "vue";
 
 const keyOptions = computed(() => {
 	const pageStore = usePageStore();
-	const componentStore = useComponentStore();
 	const {editingMode, fragmentData} = useCanvasStore();
 
 	let result: { label: string; value: string; prefix: any }[] = [];
@@ -23,9 +22,7 @@ const keyOptions = computed(() => {
 
 	let componentData = {}
 	if (editingMode == "fragment") {
-		const componentId = fragmentData.fragmentId;
-		const blockId = fragmentData.block?.blockId;
-		componentData = componentStore.getComponentInstanceData(componentId!, blockId);
+		componentData = componentController.getComponentDataPreview();
 	}
 
 	const componentDataCollectionObject = getRepeaterScopedData(
