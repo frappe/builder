@@ -571,61 +571,6 @@ def replace_component_in_blocks(blocks, target_component, replace_with) -> list[
 	return blocks
 
 
-def save_as_template(page_doc: BuilderPage):
-	# move all assets to www/builder_assets/{page_name}
-	if page_doc.draft_blocks:
-		page_doc.publish()
-	if not page_doc.template_name:
-		page_doc.template_name = page_doc.page_title
-
-	blocks: list[Block] = frappe.parse_json(page_doc.blocks or "[]")  # type: ignore
-	for block in blocks:
-		copy_img_to_asset_folder(block, page_doc)
-
-	page_doc.db_set("draft_blocks", None)
-	page_doc.db_set("blocks", frappe.as_json(blocks, indent=0))
-	page_doc.reload()
-	export_to_files(
-		record_list=[["Builder Page", page_doc.name, "builder_page_template"]], record_module="builder"
-	)
-
-	components = set()
-
-	def get_component(block):
-		if block.get("extendedFromComponent"):
-			component = block.get("extendedFromComponent")
-			components.add(component)
-			# export nested components as well
-			component_doc = frappe.get_cached_doc("Builder Component", component)
-			if component_doc.block:
-				component_block = frappe.parse_json(component_doc.block)
-				get_component(component_block)
-		for child in block.get("children", []) or []:
-			get_component(child)
-
-	for block in blocks:
-		get_component(block)
-
-	if components:
-		export_to_files(
-			record_list=[["Builder Component", c, "builder_component"] for c in components],
-			record_module="builder",
-		)
-
-	scripts = frappe.get_all(
-		"Builder Page Client Script",
-		filters={"parent": page_doc.name},
-		fields=["name", "builder_script"],
-	)
-	if scripts:
-		export_to_files(
-			record_list=[
-				["Builder Client Script", s.builder_script, "builder_client_script"] for s in scripts
-			],
-			record_module="builder",
-		)
-
-
 @frappe.whitelist()
 def get_block_data(
 	block_id: str,
@@ -1176,16 +1121,18 @@ def set_dynamic_content_placeholders(block: dict, data_key: dict | None = None):
 		value_type = dynamic_value_doc.get("type")
 
 		if value_type == "attribute":
-			current_value = block["attributes"].get(property_name, "")
-			block["attributes"][property_name] = f"{{{{ {key} or '{escape_single_quotes(current_value)}' }}}}"
+			attributes = block.setdefault("attributes", {})
+			current_value = attributes.get(property_name, "")
+			attributes[property_name] = f"{{{{ {key} or '{escape_single_quotes(current_value)}' }}}}"
 
 		elif value_type == "style":
-			if not block["attributes"].get("style"):
-				block["attributes"]["style"] = ""
+			attributes = block.setdefault("attributes", {})
+			if not attributes.get("style"):
+				attributes["style"] = ""
 
 			css_property = camel_case_to_kebab_case(property_name)
-			current_value = block["baseStyles"].get(property_name, "") or ""
-			block["attributes"]["style"] += (
+			current_value = (block.get("baseStyles") or {}).get(property_name, "") or ""
+			attributes["style"] += (
 				f"{css_property}: {{{{ {key} or '{escape_single_quotes(current_value)}' }}}};"
 			)
 
@@ -1365,10 +1312,10 @@ def set_fonts_from_html(soup, font_map):
 
 
 def extend_block(block, overridden_block):
-	block["baseStyles"].update(overridden_block["baseStyles"])
-	block["mobileStyles"].update(overridden_block["mobileStyles"])
-	block["tabletStyles"].update(overridden_block["tabletStyles"])
-	block["attributes"].update(overridden_block["attributes"])
+	block.setdefault("baseStyles", {}).update(overridden_block.get("baseStyles") or {})
+	block.setdefault("mobileStyles", {}).update(overridden_block.get("mobileStyles") or {})
+	block.setdefault("tabletStyles", {}).update(overridden_block.get("tabletStyles") or {})
+	block.setdefault("attributes", {}).update(overridden_block.get("attributes") or {})
 
 	dynamicValues = overridden_block.get("dynamicValues") or []
 	dynamicValuesProperties = [dv.get("property") for dv in dynamicValues]
@@ -1392,7 +1339,7 @@ def extend_block(block, overridden_block):
 		block["rawStyles"] = {}
 	block["rawStyles"].update(overridden_block.get("rawStyles", {}))
 
-	block["classes"].extend(overridden_block["classes"])
+	block.setdefault("classes", []).extend(overridden_block.get("classes") or [])
 
 	if not block.get("props"):
 		block["props"] = {}
