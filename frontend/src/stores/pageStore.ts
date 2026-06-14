@@ -39,8 +39,6 @@ const usePageStore = defineStore("pageStore", {
 			if (!pageName) {
 				return;
 			}
-			// switching pages always exits any active version preview
-			useCanvasStore().clearVersionPreview();
 
 			const page = await this.fetchActivePage(pageName);
 			if (!page) {
@@ -69,6 +67,8 @@ const usePageStore = defineStore("pageStore", {
 			await this.setPageData(this.activePage);
 
 			const canvasStore = useCanvasStore();
+			// switching pages always exits any active version preview
+			canvasStore.clearVersionPreview();
 			canvasStore.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas);
 
 			if (page.client_scripts?.length) {
@@ -229,12 +229,10 @@ const usePageStore = defineStore("pageStore", {
 			if (warnings.length) {
 				sessionStorage.setItem("builder:restoreWarnings", JSON.stringify(warnings));
 			}
-			// The server has written the restored content into draft_blocks. Hard-reload the
-			// editor so it loads that draft fresh from the server (the in-memory canvas +
-			// cached document resource still hold the pre-restore content; reusing them would
-			// show stale content and let autosave clobber the restore). Nothing mutates the
-			// canvas between the restore and the reload, so there is no stale save to race.
-			router.go(0);
+			// router.go(0);
+			// Instead of a hard reload, we could are just re-fetching the page document
+			this.setPage(this.selectedPage as string, false);
+			toast.success("Version restored");
 		},
 
 		async unpublishPage(page?: BuilderPage) {
