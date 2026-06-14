@@ -1,8 +1,12 @@
 import type Block from "@/block";
 import type BuilderCanvas from "@/components/BuilderCanvas.vue";
+import { getVersionedDoc } from "@/data/snapshot";
 import { confirm, getBlockCopy, getBlockInstance } from "@/utils/helpers";
+import { toast } from "frappe-ui";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
+
+const PREVIEW_TOAST_ID = "version-preview-readonly";
 
 const useCanvasStore = defineStore("canvasStore", {
 	state: () => ({
@@ -40,8 +44,29 @@ const useCanvasStore = defineStore("canvasStore", {
 			fragmentId: <string | null>null,
 			showUsageCount: false,
 		},
+		versionPreviewBlock: <Block | null>null,
+		previewSnapshotName: <string | null>null,
 	}),
 	actions: {
+		async previewVersion(snapshotName: string) {
+			const doc = await getVersionedDoc(snapshotName);
+			const blocks = JSON.parse((doc?.draft_blocks || doc?.blocks || "[]") as string);
+			if (!blocks[0]) return;
+			this.versionPreviewBlock = getBlockInstance(blocks[0]);
+			this.previewSnapshotName = snapshotName;
+			toast.info("Read-only preview · Use <b>Restore</b> to load this version.", {
+				id: PREVIEW_TOAST_ID,
+				duration: Infinity,
+				dismissible: false,
+				closeButton: false,
+				position: "bottom-center",
+			});
+		},
+		clearVersionPreview() {
+			this.versionPreviewBlock = null;
+			this.previewSnapshotName = null;
+			toast.dismiss(PREVIEW_TOAST_ID);
+		},
 		clearBlocks() {
 			this.activeCanvas?.clearCanvas();
 		},

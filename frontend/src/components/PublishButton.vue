@@ -21,7 +21,10 @@
 			:options="[
 				{
 					label: 'Version History',
-					onClick: () => (builderStore.showVersionHistory = true),
+					onClick: () => {
+						builderStore.showRightPanel = true;
+						builderStore.showVersionHistory = true;
+					},
 					icon: 'lucide-history',
 				},
 				{
@@ -44,7 +47,7 @@
 				<Button
 					variant="solid"
 					@click="open"
-					:disabled="Boolean(pageStore.activePage?.is_template)"
+					:disabled="Boolean(pageStore.activePage?.is_template) || builderStore.readOnlyMode"
 					icon="lucide-chevron-down"
 					class="!w-6 justify-start rounded-bl-none rounded-tl-none border-0 pr-0 text-xs"></Button>
 			</template>

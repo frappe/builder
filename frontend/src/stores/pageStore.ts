@@ -38,6 +38,8 @@ const usePageStore = defineStore("pageStore", {
 			if (!pageName) {
 				return;
 			}
+			// switching pages always exits any active version preview
+			useCanvasStore().clearVersionPreview();
 
 			const page = await this.fetchActivePage(pageName);
 			if (!page) {

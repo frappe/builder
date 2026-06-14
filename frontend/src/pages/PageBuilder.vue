@@ -29,7 +29,6 @@
 			class="canvas-container absolute bottom-0 flex justify-center overflow-hidden bg-surface-gray-2 p-10">
 			<template v-slot:header>
 				<div class="flex items-center justify-between bg-surface-base p-2 text-sm text-ink-gray-8 shadow-sm">
-
 					<div class="flex items-center gap-1 pl-2 text-xs">
 						<a @click="canvasStore.exitFragmentMode" class="cursor-pointer">Page</a>
 						<span class="lucide-chevron-right h-3 w-3" aria-hidden="true" />
@@ -50,10 +49,31 @@
 			</template>
 		</BuilderCanvas>
 		<BuilderCanvas
-			v-show="canvasStore.editingMode === 'page'"
+			v-show="canvasStore.editingMode === 'page' && !canvasStore.versionPreviewBlock"
 			ref="pageCanvas"
 			v-if="pageStore.pageBlocks[0]"
 			:block-data="pageStore.pageBlocks[0]"
+			:canvas-styles="{
+				minHeight: '1000px',
+			}"
+			:style="{
+				top: 'var(--toolbar-height)',
+				left: `${
+					builderStore.showLeftPanel
+						? builderStore.builderLayout.leftPanelWidth + builderStore.builderLayout.optionsPanelWidth
+						: 0
+				}px`,
+				right: `${builderStore.showRightPanel ? builderStore.builderLayout.rightPanelWidth : 0}px`,
+			}"
+			class="canvas-container absolute bottom-0 flex justify-center overflow-hidden bg-surface-gray-1 p-10"></BuilderCanvas>
+
+		<!-- Read-only version preview canvas (Version History) -->
+		<BuilderCanvas
+			v-show="canvasStore.editingMode === 'page'"
+			ref="previewCanvas"
+			v-if="canvasStore.versionPreviewBlock"
+			:key="canvasStore.previewSnapshotName || 'preview'"
+			:block-data="canvasStore.versionPreviewBlock"
 			:canvas-styles="{
 				minHeight: '1000px',
 			}"
@@ -75,7 +95,6 @@
 		<BuilderRightPanel
 			v-show="builderStore.showRightPanel"
 			class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] overflow-auto border-l-[1px] border-outline-gray-2 bg-surface-base"></BuilderRightPanel>
-		<VersionHistory v-model="builderStore.showVersionHistory" />
 
 		<!-- Toolbar layer (top) - comes last in DOM -->
 		<BuilderToolbar class="absolute left-0 right-0 top-0"></BuilderToolbar>
@@ -126,7 +145,6 @@ import BuilderCanvas from "@/components/BuilderCanvas.vue";
 import BuilderCommandPalette from "@/components/BuilderCommandPalette.vue";
 import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
-import VersionHistory from "@/components/VersionHistory.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
 import PageListModal from "@/components/Modals/PageListModal.vue";
@@ -261,14 +279,15 @@ watch(
 		() => canvasStore.editableBlock,
 		() => pageStore.activePage?.is_standard,
 		() => pageStore.activePage?.is_template,
+		() => canvasStore.versionPreviewBlock,
 	],
 	() => {
-		builderStore.toggleReadOnlyMode(
-			canvasStore.editingMode === "page" &&
-				(Boolean(pageStore.activePage?.is_standard) ||
-					Boolean(pageStore.activePage?.is_template && pageStore.activePage?.template_group)) &&
-				!window.is_developer_mode,
-		);
+		const previewing = Boolean(canvasStore.versionPreviewBlock);
+		const isProtected =
+			(Boolean(pageStore.activePage?.is_standard) ||
+				Boolean(pageStore.activePage?.is_template && pageStore.activePage?.template_group)) &&
+			!window.is_developer_mode;
+		builderStore.toggleReadOnlyMode(canvasStore.editingMode === "page" && (previewing || isProtected));
 	},
 );
 
@@ -282,6 +301,7 @@ window.blockController = blockController;
 
 const pageCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 const fragmentCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
+const previewCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 
 provide("pageCanvas", pageCanvas);
 provide("fragmentCanvas", fragmentCanvas);
@@ -447,6 +467,8 @@ onMounted(() => {
 watchEffect(() => {
 	if (fragmentCanvas.value) {
 		canvasStore.activeCanvas = fragmentCanvas.value;
+	} else if (canvasStore.versionPreviewBlock && previewCanvas.value) {
+		canvasStore.activeCanvas = previewCanvas.value;
 	} else {
 		canvasStore.activeCanvas = pageCanvas.value;
 	}
