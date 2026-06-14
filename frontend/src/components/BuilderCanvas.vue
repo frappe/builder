@@ -449,4 +449,10 @@ const renderedBreakpoints = computed(() => canvasProps.breakpoints.filter((bp) =
 .__builder_component__[data-marquee-selected] {
 	box-shadow: inset 0 0 0 calc(2px / var(--canvas-scale, 1)) theme("colors.blue.400 / 85%");
 }
+
+.canvas-container {
+	p:not(:where(.prose, .ProseMirror) *) {
+		line-height: revert;
+	}
+}
 </style>
