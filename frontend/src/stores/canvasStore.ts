@@ -46,13 +46,23 @@ const useCanvasStore = defineStore("canvasStore", {
 		},
 		versionPreviewBlock: <Block | null>null,
 		previewSnapshotName: <string | null>null,
+		draftRootBackup: <Block | null>null,
 	}),
 	actions: {
+		// Preview a snapshot on the live page canvas itself so pan/zoom stay in place.
+		// Setting versionPreviewBlock flips the canvas to read-only (PageBuilder.vue
+		// watcher), which hibernates history — so swapping the root in/out never touches
+		// the draft's content or undo stack. We just stash the draft root to restore it.
 		async previewVersion(snapshotName: string) {
 			const doc = await getVersionedDoc(snapshotName);
 			const blocks = JSON.parse((doc?.draft_blocks || doc?.blocks || "[]") as string);
-			if (!blocks[0]) return;
-			this.versionPreviewBlock = getBlockInstance(blocks[0]);
+			if (!blocks[0] || !this.activeCanvas) return;
+			const previewRoot = getBlockInstance(blocks[0]);
+			if (!this.versionPreviewBlock) {
+				this.draftRootBackup = this.activeCanvas.getRootBlock() ?? null;
+			}
+			this.activeCanvas.setRootBlock(previewRoot, false, false);
+			this.versionPreviewBlock = previewRoot;
 			this.previewSnapshotName = snapshotName;
 			toast.info("Read-only preview · Use <b>Restore</b> to load this version.", {
 				id: PREVIEW_TOAST_ID,
@@ -63,6 +73,10 @@ const useCanvasStore = defineStore("canvasStore", {
 			});
 		},
 		clearVersionPreview() {
+			if (this.versionPreviewBlock && this.draftRootBackup && this.activeCanvas) {
+				this.activeCanvas.setRootBlock(this.draftRootBackup, false, false);
+			}
+			this.draftRootBackup = null;
 			this.versionPreviewBlock = null;
 			this.previewSnapshotName = null;
 			toast.dismiss(PREVIEW_TOAST_ID);

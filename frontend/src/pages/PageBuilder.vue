@@ -49,31 +49,10 @@
 			</template>
 		</BuilderCanvas>
 		<BuilderCanvas
-			v-show="canvasStore.editingMode === 'page' && !canvasStore.versionPreviewBlock"
+			v-show="canvasStore.editingMode === 'page'"
 			ref="pageCanvas"
 			v-if="pageStore.pageBlocks[0]"
 			:block-data="pageStore.pageBlocks[0]"
-			:canvas-styles="{
-				minHeight: '1000px',
-			}"
-			:style="{
-				top: 'var(--toolbar-height)',
-				left: `${
-					builderStore.showLeftPanel
-						? builderStore.builderLayout.leftPanelWidth + builderStore.builderLayout.optionsPanelWidth
-						: 0
-				}px`,
-				right: `${builderStore.showRightPanel ? builderStore.builderLayout.rightPanelWidth : 0}px`,
-			}"
-			class="canvas-container absolute bottom-0 flex justify-center overflow-hidden bg-surface-gray-1 p-10"></BuilderCanvas>
-
-		<!-- Read-only version preview canvas (Version History) -->
-		<BuilderCanvas
-			v-show="canvasStore.editingMode === 'page'"
-			ref="previewCanvas"
-			v-if="canvasStore.versionPreviewBlock"
-			:key="canvasStore.previewSnapshotName || 'preview'"
-			:block-data="canvasStore.versionPreviewBlock"
 			:canvas-styles="{
 				minHeight: '1000px',
 			}"
@@ -301,7 +280,6 @@ window.blockController = blockController;
 
 const pageCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 const fragmentCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
-const previewCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 
 provide("pageCanvas", pageCanvas);
 provide("fragmentCanvas", fragmentCanvas);
@@ -467,8 +445,6 @@ onMounted(() => {
 watchEffect(() => {
 	if (fragmentCanvas.value) {
 		canvasStore.activeCanvas = fragmentCanvas.value;
-	} else if (canvasStore.versionPreviewBlock && previewCanvas.value) {
-		canvasStore.activeCanvas = previewCanvas.value;
 	} else {
 		canvasStore.activeCanvas = pageCanvas.value;
 	}
@@ -493,6 +469,7 @@ watch(
 			pageStore.selectedPage &&
 			!pageStore.settingPage &&
 			canvasStore.editingMode === "page" &&
+			!builderStore.readOnlyMode &&
 			!pageCanvas.value?.canvasProps?.settingCanvas &&
 			!isAIGenerating.value
 		) {
