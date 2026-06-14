@@ -498,61 +498,6 @@ def replace_component_in_blocks(blocks, target_component, replace_with) -> list[
 	return blocks
 
 
-def save_as_template(page_doc: BuilderPage):
-	# move all assets to www/builder_assets/{page_name}
-	if page_doc.draft_blocks:
-		page_doc.publish()
-	if not page_doc.template_name:
-		page_doc.template_name = page_doc.page_title
-
-	blocks: list[Block] = frappe.parse_json(page_doc.blocks or "[]")  # type: ignore
-	for block in blocks:
-		copy_img_to_asset_folder(block, page_doc)
-
-	page_doc.db_set("draft_blocks", None)
-	page_doc.db_set("blocks", frappe.as_json(blocks, indent=0))
-	page_doc.reload()
-	export_to_files(
-		record_list=[["Builder Page", page_doc.name, "builder_page_template"]], record_module="builder"
-	)
-
-	components = set()
-
-	def get_component(block):
-		if block.get("extendedFromComponent"):
-			component = block.get("extendedFromComponent")
-			components.add(component)
-			# export nested components as well
-			component_doc = frappe.get_cached_doc("Builder Component", component)
-			if component_doc.block:
-				component_block = frappe.parse_json(component_doc.block)
-				get_component(component_block)
-		for child in block.get("children", []) or []:
-			get_component(child)
-
-	for block in blocks:
-		get_component(block)
-
-	if components:
-		export_to_files(
-			record_list=[["Builder Component", c, "builder_component"] for c in components],
-			record_module="builder",
-		)
-
-	scripts = frappe.get_all(
-		"Builder Page Client Script",
-		filters={"parent": page_doc.name},
-		fields=["name", "builder_script"],
-	)
-	if scripts:
-		export_to_files(
-			record_list=[
-				["Builder Client Script", s.builder_script, "builder_client_script"] for s in scripts
-			],
-			record_module="builder",
-		)
-
-
 @frappe.whitelist()
 def get_block_data(
 	block_id: str,
