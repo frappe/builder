@@ -1029,9 +1029,7 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 
 	# Add global function definition (only once)
 	if script_unique_id not in state["used_block_scripts"]:
-		state["global_script_tag"].append(
-			f"function client_script_{script_unique_id}(props) {{{script}}}\n"
-		)
+		state["global_script_tag"].append(f"function client_script_{script_unique_id}(props) {{{script}}}\n")
 		state["used_block_scripts"].add(script_unique_id)
 
 	# Add data attribute for selecting this specific block
@@ -1105,16 +1103,18 @@ def set_dynamic_content_placeholders(block: dict, data_key: dict | None = None):
 		value_type = dynamic_value_doc.get("type")
 
 		if value_type == "attribute":
-			current_value = block["attributes"].get(property_name, "")
-			block["attributes"][property_name] = f"{{{{ {key} or '{escape_single_quotes(current_value)}' }}}}"
+			attributes = block.setdefault("attributes", {})
+			current_value = attributes.get(property_name, "")
+			attributes[property_name] = f"{{{{ {key} or '{escape_single_quotes(current_value)}' }}}}"
 
 		elif value_type == "style":
-			if not block["attributes"].get("style"):
-				block["attributes"]["style"] = ""
+			attributes = block.setdefault("attributes", {})
+			if not attributes.get("style"):
+				attributes["style"] = ""
 
 			css_property = camel_case_to_kebab_case(property_name)
-			current_value = block["baseStyles"].get(property_name, "") or ""
-			block["attributes"]["style"] += (
+			current_value = (block.get("baseStyles") or {}).get(property_name, "") or ""
+			attributes["style"] += (
 				f"{css_property}: {{{{ {key} or '{escape_single_quotes(current_value)}' }}}};"
 			)
 
@@ -1296,10 +1296,10 @@ def set_fonts_from_html(soup, font_map):
 
 
 def extend_block(block, overridden_block):
-	block["baseStyles"].update(overridden_block["baseStyles"])
-	block["mobileStyles"].update(overridden_block["mobileStyles"])
-	block["tabletStyles"].update(overridden_block["tabletStyles"])
-	block["attributes"].update(overridden_block["attributes"])
+	block.setdefault("baseStyles", {}).update(overridden_block.get("baseStyles") or {})
+	block.setdefault("mobileStyles", {}).update(overridden_block.get("mobileStyles") or {})
+	block.setdefault("tabletStyles", {}).update(overridden_block.get("tabletStyles") or {})
+	block.setdefault("attributes", {}).update(overridden_block.get("attributes") or {})
 
 	dynamicValues = overridden_block.get("dynamicValues") or []
 	dynamicValuesProperties = [dv.get("property") for dv in dynamicValues]
@@ -1323,7 +1323,7 @@ def extend_block(block, overridden_block):
 		block["rawStyles"] = {}
 	block["rawStyles"].update(overridden_block.get("rawStyles", {}))
 
-	block["classes"].extend(overridden_block["classes"])
+	block.setdefault("classes", []).extend(overridden_block.get("classes") or [])
 
 	if not block.get("props"):
 		block["props"] = {}
