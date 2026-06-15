@@ -1,10 +1,11 @@
 import type Block from "@/block";
+import { useLatestRequest } from "@/composables/useLatestRequest";
 import webComponent from "@/data/webComponent";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderComponent } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { alert, confirm, getBlockInstance, getBlockObject } from "@/utils/helpers";
+import { alert, confirm, getBlockInstance, getBlockObject, parseJSONWithFallback } from "@/utils/helpers";
 import { createDocumentResource, createResource, toast } from "frappe-ui";
 import { defineStore } from "pinia";
 import { markRaw } from "vue";
@@ -13,22 +14,7 @@ export const COMPONENT_DATA_FRAGMENT_KEY = "__fragment__";
 
 export type ComponentDataStore = Record<string, Record<string, Record<string, any>>>;
 
-const componentDataRequestSeq = new Map<string, number>();
-
-function getComponentDataRequestKey(componentId: string, instanceKey: string) {
-	return `${componentId}::${instanceKey}`;
-}
-
-function parseJSONWithFallback<T>(value: T | string | undefined, fallback: T): T {
-	if (value === undefined || value === null || value === "") {
-		return fallback;
-	}
-	if (typeof value === "string") {
-		return JSON.parse(value || JSON.stringify(fallback)) as T;
-	}
-	return value as T;
-}
-
+const { run: runLatestRequest } = useLatestRequest();
 
 const useComponentStore = defineStore("componentStore", {
 	state: () => ({
@@ -237,40 +223,31 @@ const useComponentStore = defineStore("componentStore", {
 		},
 		async setComponentData(componentId: string, props: Record<string, any> = {}, blockId: string | null = null) {
 			const instanceKey = blockId ?? COMPONENT_DATA_FRAGMENT_KEY;
-			const requestKey = getComponentDataRequestKey(componentId, instanceKey);
-			const requestSeq = (componentDataRequestSeq.get(requestKey) ?? 0) + 1;
-			componentDataRequestSeq.set(requestKey, requestSeq);
-
-			const isLatestRequest = () => componentDataRequestSeq.get(requestKey) === requestSeq;
-
-			return createResource({
-				url: "builder.api.get_component_data",
-				method: "GET",
-				params: {
-					component_name: componentId,
-					props: JSON.stringify(props),
-				},
-			})
-				.fetch()
-				.then((data: { [key: string]: any }) => {
-					if (!isLatestRequest()) {
-						return;
-					}
-					if (!this.componentData[componentId]) {
-						this.componentData[componentId] = {};
-					}
-					this.componentData[componentId][instanceKey] = data || {};
+			const requestKey = `${componentId}::${instanceKey}`;
+			const result = await runLatestRequest(requestKey, () =>
+				createResource({
+					url: "builder.api.get_component_data",
+					method: "GET",
+					auto: false,
 				})
-				.catch((e: { message: string }) => {
-					if (!isLatestRequest()) {
-						return;
-					}
-					console.error("Failed to fetch component data:", e.message);
-					if (!this.componentData[componentId]) {
-						this.componentData[componentId] = {};
-					}
-					this.componentData[componentId][instanceKey] = {};
-				});
+					.fetch({
+						component_name: componentId,
+						props: JSON.stringify(props),
+					})
+					.then((data: { [key: string]: any }) => data ?? {})
+					.catch((e: { message: string }) => {
+						console.error("Failed to fetch component data:", e.message);
+						return {};
+					}),
+			);
+			if (result.stale) {
+				return;
+			}
+
+			if (!this.componentData[componentId]) {
+				this.componentData[componentId] = {};
+			}
+			this.componentData[componentId][instanceKey] = result.value;
 		},
 		async deleteComponentData(componentId: string, blockId: string | null = null) {
 			const instanceKey = blockId ?? COMPONENT_DATA_FRAGMENT_KEY;

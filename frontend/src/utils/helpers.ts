@@ -815,6 +815,16 @@ function isDialogOpen() {
 	return !!document.querySelector("[role='dialog']");
 }
 
+function parseJSONWithFallback<T>(value: T | string | undefined, fallback: T): T {
+	if (value === undefined || value === null || value === "") {
+		return fallback;
+	}
+	if (typeof value === "string") {
+		return JSON.parse(value || JSON.stringify(fallback)) as T;
+	}
+	return value as T;
+}
+
 export {
 	addPxToNumber,
 	alert,
@@ -874,4 +884,5 @@ export {
 	triggerCopyEvent,
 	uploadBuilderAsset,
 	uploadUserFont,
+	parseJSONWithFallback,
 };

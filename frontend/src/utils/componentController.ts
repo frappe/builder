@@ -1,14 +1,20 @@
 import useCanvasStore from "@/stores/canvasStore";
-import useComponentStore, { COMPONENT_DATA_FRAGMENT_KEY } from "@/stores/componentStore";
+import useComponentStore from "@/stores/componentStore";
+import { useLatestRequest } from "@/composables/useLatestRequest";
 import { BuilderComponent } from "@/types/doctypes";
 import { markCanvasDirty } from "@/utils/useCanvasUtils";
 import { createResource } from "frappe-ui";
 import { computed, reactive, watch } from "vue";
+import { parseJSONWithFallback } from "./helpers";
+
+const { run: runLatestRequest } = useLatestRequest();
 
 type ComponentDocDraft = Pick<
 	BuilderComponent,
 	"component_props" | "component_vars" | "component_data_script" | "component_js" | "component_css"
->;
+> & {
+	component_data_preview: Record<string, any>;
+};
 
 const EMPTY_DRAFT: ComponentDocDraft = {
 	component_props: {},
@@ -16,6 +22,7 @@ const EMPTY_DRAFT: ComponentDocDraft = {
 	component_data_script: "",
 	component_js: "",
 	component_css: "",
+	component_data_preview: {},
 };
 
 const canvasStore = useCanvasStore();
@@ -24,21 +31,18 @@ const componentStore = useComponentStore();
 const currentComponentId = computed(() => canvasStore.fragmentData?.fragmentId ?? "");
 const componentDocDraft = reactive<ComponentDocDraft>({ ...EMPTY_DRAFT });
 
-function cloneJsonField<T>(value: T | undefined, fallback: T): T {
-	if (value === undefined || value === null) {
-		return fallback;
-	}
-	// JSON fields may be Vue reactive proxies; structuredClone cannot clone those.
-	return JSON.parse(JSON.stringify(value)) as T;
-}
 
-function cloneComponentDocFields(doc: BuilderComponent): ComponentDocDraft {
+function cloneComponentDocFields(
+	doc: ComponentDocDraft,
+	preview: Record<string, any> = {},
+): ComponentDocDraft {
 	return {
-		component_props: cloneJsonField(doc.component_props, {}),
-		component_vars: cloneJsonField(doc.component_vars, {}),
+		component_props: parseJSONWithFallback(doc.component_props, {}),
+		component_vars: parseJSONWithFallback(doc.component_vars, {}),
 		component_data_script: doc.component_data_script ?? "",
 		component_js: doc.component_js ?? "",
 		component_css: doc.component_css ?? "",
+		component_data_preview: parseJSONWithFallback(preview, {}),
 	};
 }
 
@@ -55,19 +59,17 @@ function loadDraftFromOriginal() {
 		return;
 	}
 
-	const cloned = cloneComponentDocFields(original);
-	componentDocDraft.component_props = cloned.component_props;
-	componentDocDraft.component_vars = cloned.component_vars;
-	componentDocDraft.component_data_script = cloned.component_data_script;
-	componentDocDraft.component_js = cloned.component_js;
-	componentDocDraft.component_css = cloned.component_css;
+	const componentId = currentComponentId.value;
+	const preview =
+		componentStore.componentData[componentId]?.[canvasStore.fragmentData.block?.blockId ?? ""] ?? {};
+	Object.assign(componentDocDraft, cloneComponentDocFields(original, preview));
 }
 
 function applyDraftToOriginal() {
 	const original = getOriginalDoc();
 	if (!original) return;
 
-	const cloned = cloneComponentDocFields(componentDocDraft as BuilderComponent);
+	const cloned = cloneComponentDocFields(componentDocDraft);
 	original.component_props = cloned.component_props;
 	original.component_vars = cloned.component_vars;
 	original.component_data_script = cloned.component_data_script;
@@ -76,9 +78,8 @@ function applyDraftToOriginal() {
 }
 
 const componentDataPreview = computed(() => {
-	const componentId = currentComponentId.value;
-	if (!componentId) return {};
-	return componentStore.componentData[componentId]?.[COMPONENT_DATA_FRAGMENT_KEY] ?? {};
+	if (!currentComponentId.value) return {};
+	return componentDocDraft.component_data_preview ?? {};
 });
 
 const componentProps = computed(() => {
@@ -122,7 +123,6 @@ const componentController = {
 		componentDocDraft.component_props = props;
 		canvasStore.fragmentData.block?.setBlockProps(props);
 		markCanvasDirty(true);
-		componentController.setComponentDataPreview();
 	},
 
 	getComponentVars: () => componentVars.value,
@@ -139,7 +139,6 @@ const componentController = {
 		if (!currentComponentId.value) return;
 		componentDocDraft.component_data_script = script;
 		markCanvasDirty(true);
-		componentController.setComponentDataPreview();
 	},
 
 	getComponentClientScript: (type: "js" | "css" = "js") => {
@@ -154,9 +153,9 @@ const componentController = {
 
 	getComponentDataPreview: () => componentDataPreview.value,
 
-	resetComponentDoc: () => {
+	resetComponentDoc: async () => {
 		loadDraftFromOriginal();
-		componentController.setComponentDataPreview();
+		await componentController.setComponentDataPreview();
 	},
 
 	applyComponentDoc: () => {
@@ -165,32 +164,31 @@ const componentController = {
 
 	setComponentDataPreview: async () => {
 		const componentId = currentComponentId.value;
-		if (componentId) {
-			const data = await componentController.executeComponentDataScript();
-			if (!componentStore.componentData[componentId]) {
-				componentStore.componentData[componentId] = {};
-			}
-			componentStore.componentData[componentId][COMPONENT_DATA_FRAGMENT_KEY] = data;
-		}
-	},
+		if (!componentId) return;
 
-	executeComponentDataScript: async () => {
-		const componentId = currentComponentId.value;
-		return createResource({
-			url: "builder.api.get_component_data",
-			method: "GET",
-			params: {
-				component_name: componentId,
-				props: JSON.stringify(componentController.getComponentProps()),
-				script: componentController.getComponentDataScript(),
-			},
-		})
-			.fetch()
-			.then((data: { [key: string]: any }) => data)
-			.catch((e: { message: string }) => {
-				console.error("Failed to execute component data script:", e.message);
-				return {};
-			});
+		const props = componentDocDraft.component_props ?? {};
+		const script = componentDocDraft.component_data_script ?? "";
+		const requestKey = `${componentId}::preview`;
+		const result = await runLatestRequest(requestKey, () =>
+			createResource({
+				url: "builder.api.get_component_data",
+				method: "GET",
+				auto: false,
+			})
+				.fetch({
+					component_name: componentId,
+					props: JSON.stringify(props),
+					script,
+				})
+				.then((data: { [key: string]: any }) => data ?? {})
+				.catch((e: { message: string }) => {
+					console.error("Failed to execute component data script:", e.message);
+					return {};
+				}),
+		);
+		if (result.stale || componentId !== currentComponentId.value) return;
+
+		componentDocDraft.component_data_preview = result.value;
 	},
 };
 
