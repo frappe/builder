@@ -10,7 +10,7 @@ from frappe.modules.export_file import export_to_files
 from frappe.utils.telemetry import capture
 from frappe.website.utils import clear_website_cache
 
-from builder.utils import Block
+from builder.utils import Block, execute_script
 
 
 class BuilderComponent(Document):
@@ -172,3 +172,37 @@ def reset_block_styles(block: Block) -> None:
 	block.customAttributes = dict()
 	block.classes = []
 	block.children = block.children or []
+
+
+def get_component_data(
+	component_name: str, props: dict | str | None = None, script: str | None = None
+) -> dict:
+	"""Execute a component's data script with the given props and return the data dict.
+
+	Args:
+		component_name: The name/ID of the Builder Component
+		props: Provided props or Component Props to pass to data script
+		script: Provided data script or Component Data Script to execute
+
+	Returns:
+		A dict containing the component's data
+	"""
+
+	component_doc = frappe.get_cached_doc("Builder Component", component_name)
+	script = script or component_doc.component_data_script
+	props = props or component_doc.component_props
+
+	if isinstance(props, str):
+		props = frappe.parse_json(props)
+
+	if not component_doc or not script:
+		return {}
+
+	_locals = dict(
+		component=frappe._dict(),
+		props=frappe._dict(props or {}),
+	)
+
+	execute_script(script, _locals, component_name)
+
+	return _locals["component"]

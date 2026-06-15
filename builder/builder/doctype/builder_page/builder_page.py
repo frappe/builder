@@ -693,6 +693,7 @@ def get_block_context(block: dict, props: dict, component_id: str | None) -> dic
 	return {
 		"block_id": block.get("blockId"),
 		"component_id": component_id,
+		"component_data_script": block.get("componentDataScript", ""),
 		"all_props": all_props,
 		"passed_down_props": passed_down_props,
 	}
@@ -1043,7 +1044,7 @@ def collect_client_scripts(block: dict) -> dict[str, dict]:
 	"""Collect component client scripts keyed by unique id."""
 	scripts = {}
 
-	for component_script in block.get("componentScripts") or []:
+	for component_script in block.get("componentClientScripts") or []:
 		scripts[str(component_script["name"])] = {
 			"script": component_script["script"],
 			"type": component_script["type"],
@@ -1149,7 +1150,7 @@ def block_uses_reactive_vars(block: dict) -> bool:
 	block_vars = block.get("vars") or {}
 	if not block_vars:
 		return False
-	return any(script.get("type") == "JavaScript" for script in block.get("componentScripts") or [])
+	return any(script.get("type") == "JavaScript" for script in block.get("componentClientScripts") or [])
 
 
 def attach_client_script(tag: bs.Tag, block: dict, state: dict):
@@ -1192,7 +1193,9 @@ def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
 		parent.append(f"{{% if {context['visibility_key']} %}}")
 
 	if context.get("component_id"):
-		parent.append(f"{{% with component = get_component_data('{context['component_id']}', props) %}}")
+		parent.append(
+			f"{{% with component = get_component_data('{context['component_id']}', props, '{context['component_data_script']}') %}}"
+		)
 
 	parent.append(child)
 
@@ -1302,8 +1305,6 @@ def extend_block_with_component(block: dict) -> tuple[dict, str | None]:
 	if component_block:
 		if component.component_props:
 			component_block["props"] = frappe.parse_json(component.component_props) or {}
-		if component.component_vars:
-			component_block["vars"] = frappe.parse_json(component.component_vars) or {}
 
 		extend_block(component_block, block)
 
@@ -1324,9 +1325,15 @@ def extend_block_with_component(block: dict) -> tuple[dict, str | None]:
 					"type": "JavaScript",
 				}
 			)
-		if component_scripts:
-			component_block["componentScripts"] = component_scripts
 
+		if component.component_vars:
+			component_block["vars"] = frappe.parse_json(component.component_vars) or {}
+
+		if component_scripts:
+			component_block["componentClientScripts"] = component_scripts
+
+		if component.component_data_script:
+			component_block["componentDataScript"] = component.component_data_script
 
 		return component_block, component_id
 
@@ -1515,7 +1522,6 @@ def extend_block(block, overridden_block):
 		else:
 			extended_children.append(overridden_child)
 	block["children"] = extended_children
-	print(block.get("extendedFromComponent"), "hello")
 	return block
 
 
