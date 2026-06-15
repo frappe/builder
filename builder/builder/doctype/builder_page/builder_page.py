@@ -1061,7 +1061,7 @@ def append_global_client_script(state: dict, script_id: str, script: dict):
 
 	if script["type"] == "JavaScript":
 		state["global_script_tag"].append(
-			f"function client_script_{script_id}(component, component_data, props, vars) {{{script['script']}}}\n"
+			f"function client_script_{script_id}(component_data, props, variables) {{{script['script']}}}\n"
 		)
 	else:
 		state["global_script_tag"].append(f"<style>{script['script']}</style>\n")
@@ -1072,11 +1072,11 @@ def append_global_client_script(state: dict, script_id: str, script: dict):
 def create_client_script_invocation(script_id: str, script: dict) -> str:
 	"""Return the inline invocation for a registered global client script."""
 	return (
-		f"(client_script_{script_id})("
+		f"(client_script_{script_id}).call("
 		f"document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]'), "
 		f"{{{{ component.component_data | to_safe_json }}}}, "
 		f"{{{{ props | to_safe_json }}}}, "
-		f"vars"
+		f"variables"
 		f");"
 	)
 
@@ -1130,7 +1130,7 @@ def build_component_vars_fence(invocation: str, block_vars: dict | None = None) 
 	return "\n".join(
 		[
 			"{",
-			f"  const vars = {{ {vars_body} }};",
+			f"  const variables = {{ {vars_body} }};",
 			f"  {invocation}",
 			"}",
 		]
@@ -1143,7 +1143,7 @@ def build_page_vars_script(page_vars: dict | None = None) -> str:
 	if not entries:
 		return ""
 	vars_body = ", ".join(entries)
-	return f"const vars = {{ {vars_body} }};"
+	return f"const variables = {{ {vars_body} }};"
 
 
 def block_uses_reactive_vars(block: dict) -> bool:
