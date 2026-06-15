@@ -368,7 +368,7 @@ class BuilderPage(WebsiteGenerator):
 			context.setdefault("styles", []).append(builder_settings.style_public_url)
 
 		page_vars = frappe.parse_json(self.page_vars) if self.page_vars else {}
-		if page_vars_script := build_page_vars_script(page_vars):
+		if page_vars_script := render_variables_script(page_vars):
 			context.page_vars_script = page_vars_script
 
 		client_scripts = self.get("client_scripts") or []
@@ -1040,56 +1040,61 @@ def get_visibility_condition_key(block: dict, data_key: dict | None) -> str | No
 		return key
 
 
-def collect_client_scripts(block: dict) -> dict[str, dict]:
-	"""Collect component client scripts keyed by unique id."""
-	scripts = {}
+def render_variables_script(vars: dict | None = None, *, invocation: str | None = None) -> str:
+	"""Build Vue ref/reactive declarations for page or block vars, optionally wrapping a script invocation."""
+	REACTIVE_VAR_TYPES = {"object", "array"}
+	DEFAULT_VAR_VALUES = {
+		"number": 0,
+		"string": "",
+		"boolean": False,
+		"object": {},
+		"array": [],
+	}
+	vars = vars or {}
+	if not vars:
+		return invocation or ""
 
-	for component_script in block.get("componentClientScripts") or []:
-		scripts[str(component_script["name"])] = {
-			"script": component_script["script"],
-			"type": component_script["type"],
-			"from": "component",
-		}
+	entries = []
+	for name, var_def in vars.items():
+		var_type = var_def.get("type", "string")
+		if "initialValue" in var_def and var_def["initialValue"] is not None:
+			initial_value = var_def["initialValue"]
+		else:
+			initial_value = DEFAULT_VAR_VALUES.get(var_type, "")
+		wrapper = "reactive" if var_type in REACTIVE_VAR_TYPES else "ref"
+		entries.append(f"{name}: {wrapper}({json.dumps(initial_value)})")
 
-	return scripts
+	vars_body = ", ".join(entries)
+	declaration = f"const variables = {{ {vars_body} }};"
 
+	if invocation is None:
+		return declaration
 
-def append_global_client_script(state: dict, script_id: str, script: dict):
-	"""Register a client script in the shared global script tag (once per id)."""
-	if script_id in state["used_block_scripts"]:
-		return
-
-	if script["type"] == "JavaScript":
-		state["global_script_tag"].append(
-			f"function client_script_{script_id}(component_data, props, variables) {{{script['script']}}}\n"
-		)
-	else:
-		state["global_script_tag"].append(f"<style>{script['script']}</style>\n")
-
-	state["used_block_scripts"].add(script_id)
-
-
-def create_client_script_invocation(script_id: str, script: dict) -> str:
-	"""Return the inline invocation for a registered global client script."""
-	return (
-		f"(client_script_{script_id}).call("
-		f"document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]'), "
-		f"{{{{ component.component_data | to_safe_json }}}}, "
-		f"{{{{ props | to_safe_json }}}}, "
-		f"variables"
-		f");"
-	)
+	return "\n".join(["{", f"  {declaration}", f"  {invocation}", "}"])
 
 
-def create_local_client_script_tag(
+def create_client_script_tag(
 	state: dict, script_id: str, script: dict, block_vars: dict | None = None
 ) -> bs.Tag:
-	"""Create a per-block script or style tag that invokes the global client script."""
+	"""Register a client script globally (once) and return its per-block tag."""
 	if script["type"] == "JavaScript":
+		if script_id not in state["used_block_scripts"]:
+			state["global_script_tag"].append(
+				f"function client_script_{script_id}(component_data, props, variables) {{{script['script']}}}\n"
+			)
+			state["used_block_scripts"].add(script_id)
+
 		script_tag = state["soup"].new_tag("script")
-		invocation = create_client_script_invocation(script_id, script)
+		invocation = (
+			f"(client_script_{script_id}).call("
+			f"document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]'), "
+			f"{{{{ component.component_data | to_safe_json }}}}, "
+			f"{{{{ props | to_safe_json }}}}, "
+			f"variables"
+			f");"
+		)
 		if script.get("from") == "component":
-			script_tag.string = build_component_vars_fence(invocation, block_vars)
+			script_tag.string = render_variables_script(block_vars, invocation=invocation)
 		else:
 			script_tag.string = invocation
 		return script_tag
@@ -1099,76 +1104,29 @@ def create_local_client_script_tag(
 	return style_tag
 
 
-REACTIVE_COMPONENT_VAR_TYPES = {"object", "array"}
-DEFAULT_COMPONENT_VAR_VALUES = {
-	"number": 0,
-	"string": "",
-	"boolean": False,
-	"object": {},
-	"array": [],
-}
-
-
-def get_component_var_initial_value(var_def: dict):
-	if "initialValue" in var_def and var_def["initialValue"] is not None:
-		return var_def["initialValue"]
-	return DEFAULT_COMPONENT_VAR_VALUES.get(var_def.get("type", "string"), "")
-
-
-def format_component_var_entry(name: str, var_def: dict) -> str:
-	var_type = var_def.get("type", "string")
-	initial_value = get_component_var_initial_value(var_def)
-	value_json = json.dumps(initial_value)
-	wrapper = "reactive" if var_type in REACTIVE_COMPONENT_VAR_TYPES else "ref"
-	return f"{name}: {wrapper}({value_json})"
-
-
-def build_component_vars_fence(invocation: str, block_vars: dict | None = None) -> str:
-	block_vars = block_vars or {}
-	entries = [format_component_var_entry(name, var_def) for name, var_def in block_vars.items()]
-	vars_body = ", ".join(entries)
-	return "\n".join(
-		[
-			"{",
-			f"  const variables = {{ {vars_body} }};",
-			f"  {invocation}",
-			"}",
-		]
-	)
-
-
-def build_page_vars_script(page_vars: dict | None = None) -> str:
-	page_vars = page_vars or {}
-	entries = [format_component_var_entry(name, var_def) for name, var_def in page_vars.items()]
-	if not entries:
-		return ""
-	vars_body = ", ".join(entries)
-	return f"const variables = {{ {vars_body} }};"
-
-
-def block_uses_reactive_vars(block: dict) -> bool:
-	block_vars = block.get("vars") or {}
-	if not block_vars:
-		return False
-	return any(script.get("type") == "JavaScript" for script in block.get("componentClientScripts") or [])
-
-
 def attach_client_script(tag: bs.Tag, block: dict, state: dict):
-	"""Attach client-side JavaScript to the block."""
-	scripts = collect_client_scripts(block)
+	"""Attach client-side JavaScript/CSS to the block."""
+	component_scripts = block.get("componentClientScripts") or []
+	scripts = {
+		str(component_script["name"]): {
+			"script": component_script["script"],
+			"type": component_script["type"],
+			"from": "component",
+		}
+		for component_script in component_scripts
+	}
+
 	if not scripts:
 		return
 
-	if block_uses_reactive_vars(block):
+	block_vars = block.get("vars") or {}
+	if block_vars and any(script.get("type") == "JavaScript" for script in component_scripts):
 		state["has_component_vars"] = True
 
 	tag.attrs["data-block-uid"] = "{{ unique_hash }}"
-	block_vars = block.get("vars")
 
 	for script_id, script in reversed(list(scripts.items())):
-		if script["type"] == "JavaScript":
-			append_global_client_script(state, script_id, script)
-		tag.append(create_local_client_script_tag(state, script_id, script, block_vars))
+		tag.append(create_client_script_tag(state, script_id, script, block_vars))
 
 
 def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
