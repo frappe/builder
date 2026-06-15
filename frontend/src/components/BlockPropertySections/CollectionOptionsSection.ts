@@ -20,7 +20,7 @@ const keyOptions = computed(() => {
 			? {}
 			: getRepeaterScopedData(blockController.getFirstSelectedBlock(), pageStore.pageData);
 
-	let componentData = {}
+	let componentData = {};
 	if (canvasStore.editingMode == "fragment") {
 		componentData = componentController.getComponentDataPreview();
 	}
@@ -58,9 +58,7 @@ const keyOptions = computed(() => {
 	const isPropsBasedRepeater = isInsideRepeater && repeaterDataKeyComesFrom == "props";
 	const repeatableProps: string[] = [];
 
-	const propsOfComponentRoot = blockController
-		.getComponentRootBlock(blockController.getFirstSelectedBlock())
-		?.getBlockProps();
+	const propsOfComponentRoot = blockController.getComponentRootBlock()?.getBlockProps();
 
 	if (propsOfComponentRoot && !isPropsBasedRepeater) {
 		Object.entries(propsOfComponentRoot).forEach(([key, value]) => {
