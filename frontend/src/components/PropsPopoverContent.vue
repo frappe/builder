@@ -3,14 +3,7 @@
 		@click.stop
 		@mousedown.stop
 		class="props-popover-content flex max-h-80 w-80 flex-col gap-3 overflow-auto rounded-lg bg-surface-base p-4 shadow-lg">
-		<div v-if="showIsStandardInput" class="flex items-center justify-between gap-2">
-			<InputLabel class="w-1/3 min-w-[88px] shrink-0'">Is Standard</InputLabel>
-			<OptionToggle
-				:options="toggleOptions"
-				:model-value="isStandard"
-				@update:model-value="handleIsStandardChange" />
-		</div>
-		<div v-if="isStandardBool" class="flex items-center justify-between gap-2">
+		<div class="flex items-center justify-between gap-2">
 			<InlineInput
 				label="Label"
 				class="w-full"
@@ -30,60 +23,24 @@
 			<InlineInput
 				label="Type"
 				class="w-full"
-				:type="isStandardBool ? 'select' : 'autocomplete'"
-				:modelValue="selectedPropType"
+				type="select"
+				:modelValue="standardPropOptions.type"
 				@update:modelValue="handleTypeChange"
 				:options="propTypes" />
 		</div>
-		<div v-if="!isStandardBool" class="flex items-center justify-between gap-2">
-			<InputLabel v-model="value">Value</InputLabel>
-			<Input
-				v-if="isStaticProp"
-				v-model="value"
-				placeholder="Enter prop value"
-				@update:model-value="(val) => (value = val)"
-				@input="(val) => (value = val)"></Input>
-			<Autocomplete
-				v-else
-				referenceElementSelector=".props-popover-content"
-				class="w-full [&>.form-input]:border-none [&>.form-input]:hover:border-none"
-				ref="autoCompleteRef"
-				placeholder="Choose prop value"
-				:allow-arbitrary-value="false"
-				:modelValue="value"
-				:getOptions="getOptions"
-				@update:modelValue="handleValueSelection" />
-		</div>
-		<div v-if="!isStandardBool" class="flex items-center justify-between gap-2">
-			<InputLabel>Pass Down</InputLabel>
+		<!-- Disabled for now -->
+		<div v-if="false" class="flex items-center justify-between">
+			<InputLabel class="w-[88px] shrink-0">Is Required</InputLabel>
 			<OptionToggle
 				:options="toggleOptions"
-				:model-value="isPassedDown"
-				@update:model-value="(val) => (isPassedDown = val)" />
+				:model-value="String(standardPropOptions.isRequired)"
+				@update:model-value="(val) => (standardPropOptions.isRequired = val === 'true')" />
 		</div>
-		<!-- Disabled for now-->
-		<div v-if="false && !isStandardBool && isInFragmentMode" class="flex items-center justify-between">
-			<InputLabel class="w-[88px] shrink-0">Is Editable</InputLabel>
-			<OptionToggle
-				:options="toggleOptions"
-				:model-value="isEditable"
-				@update:model-value="(val) => (isEditable = val)" />
-		</div>
-		<template v-if="isStandardBool">
-			<!-- Disabled for now -->
-			<div v-if="false" class="flex items-center justify-between">
-				<InputLabel class="w-[88px] shrink-0">Is Required</InputLabel>
-				<OptionToggle
-					:options="toggleOptions"
-					:model-value="String(standardPropOptions.isRequired)"
-					@update:model-value="(val) => (standardPropOptions.isRequired = val === 'true')" />
-			</div>
-			<component
-				:is="standardPropTypeComponent"
-				:options="standardPropOptions.options || {}"
-				ref="optionsComponentRef"
-				@update:options="updateStandardPropOptions" />
-		</template>
+		<component
+			:is="standardPropTypeComponent"
+			:options="standardPropOptions.options || {}"
+			ref="optionsComponentRef"
+			@update:options="updateStandardPropOptions" />
 		<Button
 			:disabled="!key.trim().length && !label.trim().length"
 			label="Save"
@@ -94,17 +51,10 @@
 </template>
 
 <script setup lang="ts">
-import Block from "@/block";
-
 import InputLabel from "@/components/Controls/InputLabel.vue";
-import Input from "@/components/Controls/Input.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
-import Autocomplete from "@/components/Controls/Autocomplete.vue";
 
 import { computed, nextTick, reactive, ref, watch } from "vue";
-
-import useCanvasStore from "@/stores/canvasStore";
-import blockController from "@/utils/blockController";
 
 import NumberOptions from "@/components/PropsOptions/NumberOptions.vue";
 import StringOptions from "@/components/PropsOptions/StringOptions.vue";
@@ -113,8 +63,7 @@ import ObjectOptions from "@/components/PropsOptions/ObjectOptions.vue";
 import BooleanOptions from "@/components/PropsOptions/BooleanOptions.vue";
 import SelectOptions from "@/components/PropsOptions/SelectOptions.vue";
 
-import { getDataArray, getRepeaterScopedData, toKebabCase } from "@/utils/helpers";
-import usePageStore from "@/stores/pageStore";
+import { toKebabCase } from "@/utils/helpers";
 import ColorOptions from "./PropsOptions/ColorOptions.vue";
 import ImageOptions from "./PropsOptions/ImageOptions.vue";
 import InlineInput from "./Controls/InlineInput.vue";
@@ -130,9 +79,6 @@ const props = withDefaults(
 		mode: "add",
 	},
 );
-
-const canvasStore = useCanvasStore();
-const pageStore = usePageStore();
 
 const STANDARD_PROP_TYPES = [
 	"string",
@@ -160,17 +106,10 @@ const TOGGLE_OPTIONS: { label: string; value: string }[] = [
 	{ label: "No", value: "false" },
 ];
 
-const isStandard = ref(props.propDetails?.isStandard ? "true" : "false");
-const isEditable = ref("false");
-const isPassedDown = ref(props.propDetails?.isPassedDown ? "true" : "false");
 const label = ref(props.propDetails?.label ?? "");
 const key = ref(props.propName ?? "");
-const value = ref(props.propDetails?.value ?? "");
-const comesFrom = ref<BlockProps[string]["comesFrom"]>(props.propDetails?.comesFrom ?? null);
-const selectedNonStandardPropType = ref(getInitialNonStandardPropType());
 const standardPropOptions = reactive<BlockPropOptions>(getInitialStandardPropOptions());
 const standardPropDependencyMap = reactive<{ [key: string]: any }>(getInitialDependencies());
-const autoCompleteRef = ref<typeof Autocomplete | null>(null);
 const optionsComponentRef = ref<any>(null);
 
 const emit = defineEmits({
@@ -193,47 +132,16 @@ const computedKey = computed({
 	},
 });
 
-const isStandardBool = computed(() => isStandard.value === "true");
-const isInFragmentMode = computed(() => canvasStore.editingMode == "fragment");
-const isStaticProp = computed(() => selectedNonStandardPropType.value === "static");
-
-const showIsStandardInput = computed(() => {
-	return isInFragmentMode.value && !blockController.getFirstSelectedBlock()?.getParentBlock();
-});
-
 const toggleOptions = computed(() => TOGGLE_OPTIONS);
 
-const propTypes = computed(() => {
-	return isStandardBool.value ? getStandardPropTypes() : getNonStandardPropTypes();
-});
-
-const selectedPropType = computed(() => {
-	return isStandardBool.value ? standardPropOptions.type : selectedNonStandardPropType.value;
-});
+const propTypes = computed(() => getStandardPropTypes());
 
 const standardPropTypeComponent = computed(() => {
 	return COMPONENT_MAPPING[standardPropOptions.type as keyof typeof COMPONENT_MAPPING];
 });
 
-const currentBlock = computed(() => blockController.getFirstSelectedBlock());
-
-const pageDataArray = computed(() => {
-	if (currentBlock.value) {
-		return getDataArray(getRepeaterScopedData(currentBlock.value, pageStore.pageData));
-	}
-	return [];
-});
-
-function getInitialNonStandardPropType() {
-	return props.propDetails && !props.propDetails.isStandard
-		? props.propDetails.isDynamic
-			? "dynamic"
-			: "static"
-		: "static";
-}
-
 function getInitialStandardPropOptions(): BlockPropOptions {
-	if (props.propDetails?.isStandard) {
+	if (props.propDetails?.propOptions) {
 		return {
 			...props.propDetails.propOptions,
 			isRequired: Boolean(props.propDetails.propOptions?.isRequired),
@@ -250,7 +158,7 @@ function getInitialStandardPropOptions(): BlockPropOptions {
 }
 
 function getInitialDependencies() {
-	return props.propDetails?.isStandard ? props.propDetails.propOptions?.dependencies || {} : {};
+	return props.propDetails?.propOptions?.dependencies || {};
 }
 
 function getStandardPropTypes() {
@@ -266,13 +174,6 @@ function getStandardPropTypes() {
 	];
 }
 
-function getNonStandardPropTypes() {
-	return [
-		{ label: "Static", value: "static" },
-		{ label: "Dynamic", value: "dynamic" },
-	];
-}
-
 function isValidStandardPropType(
 	type: string,
 ): type is "string" | "number" | "boolean" | "select" | "array" | "object" {
@@ -280,50 +181,15 @@ function isValidStandardPropType(
 }
 
 function setPropType(type: string) {
-	if (isStandardBool.value && isValidStandardPropType(type)) {
+	if (isValidStandardPropType(type)) {
 		standardPropOptions.type = type;
-	} else {
-		selectedNonStandardPropType.value = type as "static" | "dynamic";
 	}
-	comesFrom.value = null;
-	value.value = "";
 }
-
-function filterDataOptions(dataArray: string[], query: string) {
-	return dataArray
-		.filter((prop) => query.trim() === "" || prop.toLowerCase().includes(query.toLowerCase()))
-		.map((prop) => ({ label: prop, value: prop }));
-}
-
-const getOptions = async (query: string) => {
-	const pageOptions = filterDataOptions(pageDataArray.value, query).map((opt) => ({
-		...opt,
-		value: `${opt.value}--dataScript`,
-	}));
-	return pageOptions;
-};
-
-const handleIsStandardChange = async (newVal: string) => {
-	isStandard.value = newVal;
-	await nextTick();
-	resetState({ keepName: true, keepIsStandard: true, keepProps: false, keepType: false });
-};
 
 const handleTypeChange = async (newVal: string) => {
 	setPropType(newVal);
 	await nextTick();
-	resetState({ keepName: true, keepIsStandard: true, keepProps: false, keepType: true });
-};
-
-const handleValueSelection = (option: string | null) => {
-	if (option) {
-		const parts = option.split("--");
-		comesFrom.value = parts[parts.length - 1] as BlockProps[string]["comesFrom"];
-		value.value = parts.slice(0, -1).join("--");
-	} else {
-		comesFrom.value = null;
-		value.value = "";
-	}
+	resetState({ keepName: true, keepProps: false, keepType: true });
 };
 
 const updateStandardPropOptions = (options: any) => {
@@ -332,32 +198,14 @@ const updateStandardPropOptions = (options: any) => {
 
 interface ResetParams {
 	keepName: boolean;
-	keepIsStandard: boolean;
 	keepProps: boolean;
 	keepType: boolean;
-}
-
-function getDefaultIsStandard(keepProps: boolean): string {
-	const isStandardByDefault = showIsStandardInput.value && isInFragmentMode.value && props.mode === "add";
-	const propDetailsStandard = keepProps ? props.propDetails?.isStandard : undefined;
-	return propDetailsStandard !== undefined
-		? String(propDetailsStandard)
-		: isStandardByDefault
-			? "true"
-			: "false";
-}
-
-function resetNonStandardState(keepProps: boolean, keepType: boolean) {
-	if (!keepType) {
-		const details = keepProps ? props.propDetails : null;
-		selectedNonStandardPropType.value = details?.isDynamic ? "dynamic" : "static";
-	}
 }
 
 function resetStandardState(keepProps: boolean, keepType: boolean) {
 	const details = keepProps ? props.propDetails : null;
 
-	if (details?.isStandard) {
+	if (details?.propOptions) {
 		const nextType = keepType ? standardPropOptions.type : (details.propOptions?.type ?? "string");
 
 		Object.assign(standardPropOptions, {
@@ -367,7 +215,7 @@ function resetStandardState(keepProps: boolean, keepType: boolean) {
 		});
 
 		updateDependencyMap(details.propOptions?.dependencies || {});
-	} else if (isStandardBool.value) {
+	} else {
 		if (!keepType) {
 			standardPropOptions.type = "string";
 		}
@@ -389,7 +237,7 @@ function updateDependencyMap(deps: { [key: string]: any }) {
 }
 
 const resetState = async (params: ResetParams) => {
-	const { keepName, keepIsStandard, keepProps, keepType } = params;
+	const { keepName, keepProps, keepType } = params;
 	const details = keepProps ? props.propDetails : null;
 
 	if (!keepName) {
@@ -397,17 +245,7 @@ const resetState = async (params: ResetParams) => {
 		label.value = details?.label ?? "";
 	}
 
-	if (!keepIsStandard) {
-		isStandard.value = getDefaultIsStandard(keepProps);
-	}
-
-	value.value = details?.value ?? "";
-
-	if (isStandardBool.value) {
-		resetStandardState(keepProps, keepType);
-	} else {
-		resetNonStandardState(keepProps, keepType);
-	}
+	resetStandardState(keepProps, keepType);
 
 	optionsComponentRef.value?.reset(!!keepProps);
 };
@@ -415,17 +253,15 @@ const resetState = async (params: ResetParams) => {
 function buildPropValue(): BlockProps[string] {
 	return {
 		label: label.value,
-		isStandard: isStandardBool.value,
-		isDynamic: isStandardBool.value ? false : selectedNonStandardPropType.value === "dynamic",
-		isPassedDown: isStandardBool.value || isPassedDown.value === "true",
-		comesFrom: comesFrom.value,
-		value: isStandardBool.value ? null : value.value,
-		propOptions: isStandardBool.value
-			? {
-					...standardPropOptions,
-					dependencies: standardPropDependencyMap.value,
-				}
-			: undefined,
+		isStandard: true,
+		isDynamic: false,
+		isPassedDown: true,
+		comesFrom: null,
+		value: null,
+		propOptions: {
+			...standardPropOptions,
+			dependencies: standardPropDependencyMap,
+		},
 	};
 }
 
@@ -446,11 +282,9 @@ const save = async () => {
 
 watch(
 	[() => props.propName, () => props.propDetails],
-	() => resetState({ keepName: false, keepIsStandard: false, keepProps: true, keepType: false }),
+	() => resetState({ keepName: false, keepProps: true, keepType: false }),
 	{ immediate: true, deep: true },
 );
-
-watch(selectedPropType, () => autoCompleteRef.value?.refreshOptions(), { immediate: true });
 
 defineExpose({ reset: resetState });
 </script>
