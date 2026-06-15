@@ -54,6 +54,7 @@ declare interface BlockOptions {
 	dynamicValues?: Array<BlockDataKey>;
 	draggable?: boolean;
 	editorConfig?: BlockEditorConfig;
+	componentVersion?: string;
 	[key: string]: any;
 }
 

@@ -235,6 +235,7 @@ const detachBlockFromComponent = (block: Block, componentId: null | string) => {
 	);
 
 	delete blockCopy.extendedFromComponent;
+	delete blockCopy.componentVersion;
 	delete blockCopy.isChildOfComponent;
 	delete blockCopy.referenceBlockId;
 	blockCopy.children = blockCopy.children.map((block) => detachBlockFromComponent(block, componentId));

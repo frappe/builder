@@ -258,14 +258,15 @@ watch(
 		() => canvasStore.editableBlock,
 		() => pageStore.activePage?.is_standard,
 		() => pageStore.activePage?.is_template,
+		() => canvasStore.versionPreviewBlock,
 	],
 	() => {
-		builderStore.toggleReadOnlyMode(
-			canvasStore.editingMode === "page" &&
-				(Boolean(pageStore.activePage?.is_standard) ||
-					Boolean(pageStore.activePage?.is_template && pageStore.activePage?.template_group)) &&
-				!window.is_developer_mode,
-		);
+		const previewing = Boolean(canvasStore.versionPreviewBlock);
+		const isProtected =
+			(Boolean(pageStore.activePage?.is_standard) ||
+				Boolean(pageStore.activePage?.is_template && pageStore.activePage?.template_group)) &&
+			!window.is_developer_mode;
+		builderStore.toggleReadOnlyMode(canvasStore.editingMode === "page" && (previewing || isProtected));
 	},
 );
 
@@ -468,6 +469,7 @@ watch(
 			pageStore.selectedPage &&
 			!pageStore.settingPage &&
 			canvasStore.editingMode === "page" &&
+			!builderStore.readOnlyMode &&
 			!pageCanvas.value?.canvasProps?.settingCanvas &&
 			!isAIGenerating.value
 		) {

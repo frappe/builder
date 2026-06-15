@@ -52,6 +52,7 @@ declare module 'vue' {
     ColorPickerContent: typeof import('./src/components/Controls/ColorPickerContent.vue')['default']
     CommandPalette: typeof import('./src/components/CommandPalette.vue')['default']
     CommandPaletteItem: typeof import('./src/components/CommandPaletteItem.vue')['default']
+    ComponentUpdates: typeof import('./src/components/ComponentUpdates.vue')['default']
     ContextMenu: typeof import('./src/components/ContextMenu.vue')['default']
     CSS: typeof import('./src/components/Icons/CSS.vue')['default']
     CustomSearchPanel: typeof import('./src/components/Controls/CodeMirror/CustomSearchPanel.vue')['default']
@@ -138,6 +139,7 @@ declare module 'vue' {
     TextBlockBubbleMenu: typeof import('./src/components/TextBlockBubbleMenu.vue')['default']
     VariableManager: typeof import('./src/components/Modals/VariableManager.vue')['default']
     VariantControl: typeof import('./src/components/Controls/VariantControl.vue')['default']
+    VersionHistory: typeof import('./src/components/VersionHistory.vue')['default']
     VisibilityInput: typeof import('./src/components/VisibilityInput.vue')['default']
     WebPagePresetPicker: typeof import('./src/components/WebPagePresetPicker.vue')['default']
   }

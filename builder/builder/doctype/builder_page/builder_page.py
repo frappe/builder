@@ -18,7 +18,18 @@ from frappe.website.path_resolver import resolve_path as original_resolve_path
 from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
 
+from builder.builder.component_versions import (
+	collect_restore_warnings,
+	ensure_component_version,
+	is_pin_outdated,
+	pin_components_in_page_data,
+	resolve_component_block,
+)
 from builder.builder.doctype.builder_project_folder.builder_project_folder import is_system_activity
+from builder.builder.doctype.builder_snapshot.builder_snapshot import (
+	prune_snapshots,
+	take_snapshot,
+)
 from builder.builder.doctype.user_font.user_font import get_all_user_fonts
 from builder.export_import_standard_page import export_page_as_standard
 from builder.hooks import builder_path
@@ -28,6 +39,7 @@ from builder.utils import (
 	ColonRule,
 	camel_case_to_kebab_case,
 	clean_data,
+	compact_json,
 	escape_single_quotes,
 	execute_script,
 	get_builder_page_preview_file_paths,
@@ -39,6 +51,9 @@ from builder.utils import (
 MOBILE_BREAKPOINT = 576
 TABLET_BREAKPOINT = 768
 DESKTOP_BREAKPOINT = 1024
+
+# Number of "Publish" snapshots retained per page (manual snapshots are never auto-pruned)
+KEEP_PUBLISH_SNAPSHOTS = 25
 
 
 class BuilderPageRenderer(DocumentPage):
@@ -145,7 +160,7 @@ class BuilderPage(WebsiteGenerator):
 	def process_blocks(self):
 		for block_type in ["blocks", "draft_blocks"]:
 			if isinstance(getattr(self, block_type), list):
-				setattr(self, block_type, frappe.as_json(getattr(self, block_type), indent=0))
+				setattr(self, block_type, compact_json(getattr(self, block_type)))
 		if not self.blocks:
 			self.blocks = "[]"
 
@@ -229,6 +244,10 @@ class BuilderPage(WebsiteGenerator):
 					frappe._("Template pages can only be deleted in developer mode."),
 					frappe.PermissionError,
 				)
+		# clean up snapshots (reference_name is plain Data, so no link-guard removes them)
+		frappe.db.delete(
+			"Builder Snapshot", {"reference_doctype": "Builder Page", "reference_name": self.name}
+		)
 
 	def add_comment(self, comment_type="Comment", text=None, comment_email=None, comment_by=None):
 		if comment_type in ["Attachment Removed", "Attachment"]:
@@ -246,6 +265,15 @@ class BuilderPage(WebsiteGenerator):
 		self.published = 1
 		self.published_at = now()
 		if self.draft_blocks:
+			# snapshot the content going live (component versions pinned) before it overwrites `blocks`
+			take_snapshot(
+				"Builder Page",
+				self.name,
+				fields=["draft_blocks", "page_data_script"],
+				snapshot_type="Publish",
+				transform=pin_components_in_page_data,
+			)
+			prune_snapshots("Builder Page", self.name, keep=KEEP_PUBLISH_SNAPSHOTS, snapshot_type="Publish")
 			self.blocks = self.draft_blocks
 			self.draft_blocks = None
 		self.save()
@@ -265,6 +293,55 @@ class BuilderPage(WebsiteGenerator):
 		self.published = 0
 		self.save()
 		capture("builder_page_unpublished", "builder")
+
+	@frappe.whitelist()
+	def create_manual_snapshot(self, label: str | None = None):
+		# snapshot the current working content (unpublished draft if present, else live)
+		field = "draft_blocks" if self.draft_blocks else "blocks"
+		if not self.get(field):
+			return
+		return take_snapshot(
+			"Builder Page",
+			self.name,
+			fields=[field, "page_data_script"],
+			snapshot_type="Manual",
+			label=label,
+			transform=pin_components_in_page_data,
+		)
+
+	@frappe.whitelist()
+	def restore_snapshot(self, snapshot: str):
+		# restore into the draft for review (non-destructive); user publishes to go live
+		snap = frappe.get_doc("Builder Snapshot", snapshot)
+		if snap.reference_doctype != "Builder Page" or snap.reference_name != self.name:
+			frappe.throw(frappe._("Snapshot does not belong to this page"))
+		data = frappe.parse_json(snap.data)
+		# stored blocks already carry pinned component versions; key depends on capture-time state
+		blocks = data.get("draft_blocks") or data.get("blocks")
+		# re-compact: older snapshots may hold pretty-printed blocks
+		if blocks:
+			blocks = compact_json(frappe.parse_json(blocks))
+		self.draft_blocks = blocks
+		if "page_data_script" in data:
+			self.page_data_script = data.get("page_data_script")
+		self.save()
+		return {"draft_blocks": blocks, "warnings": collect_restore_warnings(blocks)}
+
+	@frappe.whitelist()
+	def get_current_component_version(self, component_id: str):
+		# mint/reuse a version of the component's current state for the editor to re-pin to
+		return ensure_component_version(component_id)
+
+	@frappe.whitelist()
+	def get_outdated_component_pins(self, pins: str):
+		# of the editor's pinned (component_id, version) pairs, return those whose live component changed
+		pins = frappe.parse_json(pins) if isinstance(pins, str) else pins
+		outdated = []
+		for pin in pins or []:
+			component_id, version = pin.get("component_id"), pin.get("version")
+			if component_id and version and is_pin_outdated(component_id, version):
+				outdated.append({"component_id": component_id, "version": version})
+		return outdated
 
 	def get_context(self, context):
 		# delete default favicon
@@ -460,11 +537,11 @@ class BuilderPage(WebsiteGenerator):
 		updates = {}
 		if self.blocks:
 			blocks = frappe.parse_json(self.blocks)
-			self.blocks = frappe.as_json(replace_component_in_blocks(blocks, target_component, replace_with))
+			self.blocks = compact_json(replace_component_in_blocks(blocks, target_component, replace_with))
 			updates["blocks"] = self.blocks
 		if self.draft_blocks:
 			draft_blocks = frappe.parse_json(self.draft_blocks)
-			self.draft_blocks = frappe.as_json(
+			self.draft_blocks = compact_json(
 				replace_component_in_blocks(draft_blocks, target_component, replace_with)
 			)
 			updates["draft_blocks"] = self.draft_blocks
@@ -1105,14 +1182,12 @@ def extend_block_with_component(block: dict) -> dict:
 	if not block.get("extendedFromComponent"):
 		return block
 
-	component = frappe.get_cached_value(
-		"Builder Component",
-		block["extendedFromComponent"],
-		["block", "name"],
-		as_dict=True,
+	# honor a pinned component version on snapshot-restored blocks (else latest live)
+	component_block_json = resolve_component_block(
+		block["extendedFromComponent"], block.get("componentVersion")
 	)
 
-	component_block = frappe.parse_json(component.block if component else "{}")
+	component_block = frappe.parse_json(component_block_json or "{}")
 	if component_block:
 		extend_block(component_block, block)
 		return component_block

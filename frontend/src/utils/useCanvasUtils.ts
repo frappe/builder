@@ -158,7 +158,12 @@ export function useCanvasUtils(
 	}
 
 	function setRootBlock(newBlock: Block, resetCanvas = false, resetHistory = true) {
-		rootBlock.value = newBlock;
+		if (!resetHistory && canvasHistory.value?.silentSetSource) {
+			// swap the root without recording it or disposing the stack (version preview)
+			canvasHistory.value.silentSetSource(newBlock);
+		} else {
+			rootBlock.value = newBlock;
+		}
 		if (canvasHistory.value && resetHistory) {
 			canvasHistory.value.dispose();
 			setupHistory();

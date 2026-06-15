@@ -20,6 +20,14 @@
 			v-if="showDropdown"
 			:options="[
 				{
+					label: 'Version History',
+					onClick: () => {
+						builderStore.showRightPanel = true;
+						builderStore.showVersionHistory = true;
+					},
+					icon: 'lucide-history',
+				},
+				{
 					label: 'Revert Changes',
 					onClick: () => pageStore.revertChanges(),
 					condition: () => pageStore.activePage?.draft_blocks,
@@ -39,7 +47,7 @@
 				<Button
 					variant="solid"
 					@click="open"
-					:disabled="Boolean(pageStore.activePage?.is_template)"
+					:disabled="Boolean(pageStore.activePage?.is_template) || builderStore.readOnlyMode"
 					icon="lucide-chevron-down"
 					class="!w-6 justify-start rounded-bl-none rounded-tl-none border-0 pr-0 text-xs"></Button>
 			</template>
@@ -47,6 +55,7 @@
 	</div>
 </template>
 <script lang="ts" setup>
+import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { Dropdown } from "frappe-ui";
@@ -58,10 +67,11 @@ defineProps<{
 
 const pageStore = usePageStore();
 const canvasStore = useCanvasStore();
+const builderStore = useBuilderStore();
 
 const publishing = ref(false);
 const showDropdown = computed(() => {
-	return Boolean(pageStore.activePage?.published) && canvasStore.editingMode !== "fragment";
+	return canvasStore.editingMode !== "fragment" && !pageStore.activePage?.is_template;
 });
 
 const publishButtonLabel = computed(() => {
