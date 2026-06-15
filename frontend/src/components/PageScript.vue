@@ -68,10 +68,9 @@
 			<template #default>
 				<div v-if="mode == 'page'">
 					<div v-if="currentScriptEditor == 'client'">
-						<ClientScriptManager
-							parentDoctype="Builder Page"
-							:parentName="pageStore.activePage?.name as string"
-							ref="clientScriptManager"></ClientScriptManager>
+						<PageClientScriptManager
+							:page="pageStore.activePage as BuilderPage"
+							ref="clientScriptManager"></PageClientScriptManager>
 					</div>
 					<div v-else>
 						<div class="flex gap-4">
@@ -178,10 +177,10 @@ import { useTelemetry } from "frappe-ui/frappe";
 import { computed, defineComponent, nextTick, ref, watch } from "vue";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import TabButtons from "./Controls/TabButtons.vue";
-import ClientScriptManager from "./ClientScriptManager.vue";
 import PropsEditor from "./PropsEditor.vue";
 import VarsEditor from "./VarsEditor.vue";
 import useCanvasStore from "@/stores/canvasStore.js";
+import PageClientScriptManager from "./PageClientScriptManager.vue";
 
 const { capture } = useTelemetry();
 
