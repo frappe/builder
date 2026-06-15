@@ -1000,7 +1000,7 @@ class Block implements BlockOptions {
 		} else {
 			blockProps = this.props || {};
 		}
-		return blockProps as BlockProps;
+		return blockProps;
 	}
 	setBlockProps(props: BlockProps) {
 		this.props = props;
