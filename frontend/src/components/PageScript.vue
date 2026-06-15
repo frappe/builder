@@ -28,7 +28,7 @@
 					:autofocus="false"
 					:readonly="true" />
 			</div>
-			<div class="box-border h-full overflow-y-auto pb-12" v-if="showPropsInput">
+			<div class="box-border h-full overflow-y-auto pb-12" v-if="mode == 'component'">
 				<div class="flex min-h-full w-full flex-col gap-6" v-if="isBlockSelected">
 					<div>
 						<div class="mb-3 mt-4 text-sm text-ink-gray-8">Component Props</div>
@@ -198,10 +198,6 @@ const {
 	componentCSS,
 } = componentController;
 
-const showPropsInput = computed(() => {
-	return canvasStore.editingMode == "fragment" && !blockController.getFirstSelectedBlock()?.getParentBlock();
-});
-
 const showDialog = ref(false);
 const mode = useStorage("builder_last_used_script_editor_mode", "page");
 const activeComponentClientScript = ref<"component_js" | "component_css">("component_js");
@@ -210,7 +206,7 @@ const props = defineProps<{
 	page: BuilderPage;
 }>();
 
-const clientScriptManager = ref<null | InstanceType<typeof ClientScriptManager>>(null);
+const clientScriptManager = ref<null | InstanceType<typeof PageClientScriptManager>>(null);
 const dataScriptEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
 const componentDataScriptEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
 const componentJavaScriptEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
