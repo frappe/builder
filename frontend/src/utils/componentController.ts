@@ -2,7 +2,6 @@ import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import { useLatestRequest } from "@/composables/useLatestRequest";
 import { BuilderComponent } from "@/types/doctypes";
-import { markCanvasDirty } from "@/utils/useCanvasUtils";
 import { createResource } from "frappe-ui";
 import { computed, reactive, watch } from "vue";
 import { parseJSONWithFallback } from "./helpers";
@@ -31,6 +30,9 @@ const componentStore = useComponentStore();
 const currentComponentId = computed(() => canvasStore.fragmentData?.fragmentId ?? "");
 const componentDocDraft = reactive<ComponentDocDraft>({ ...EMPTY_DRAFT });
 
+function markCanvasDirty(dirty: boolean = true) {
+	canvasStore.activeCanvas?.toggleDirty(dirty);
+}
 
 function cloneComponentDocFields(
 	doc: ComponentDocDraft,
