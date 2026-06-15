@@ -23,7 +23,7 @@ const props = defineProps<{
 }>();
 
 const pageStore = usePageStore();
-const { editingMode } = useCanvasStore();
+const canvasStore = useCanvasStore();
 
 const currentBlock = computed(() => blockController.getFirstSelectedBlock());
 const autocompleteRef = ref<InstanceType<typeof InlineInput> | null>(null);
@@ -36,7 +36,7 @@ const pageDataArray = computed(() => {
 });
 
 let componentData = {};
-if (editingMode == "fragment") {
+if (canvasStore.editingMode == "fragment") {
 	componentData = componentController.getComponentDataPreview();
 }
 

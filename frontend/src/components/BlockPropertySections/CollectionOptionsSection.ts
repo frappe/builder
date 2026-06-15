@@ -8,7 +8,7 @@ import { computed, h } from "vue";
 
 const keyOptions = computed(() => {
 	const pageStore = usePageStore();
-	const {editingMode, fragmentData} = useCanvasStore();
+	const canvasStore = useCanvasStore();
 
 	let result: { label: string; value: string; prefix: any }[] = [];
 
@@ -16,12 +16,12 @@ const keyOptions = computed(() => {
 	const repeatableComponentDataKeys: string[] = [];
 
 	const pageDataCollectionObject =
-		editingMode == "fragment"
+		canvasStore.editingMode == "fragment"
 			? {}
 			: getRepeaterScopedData(blockController.getFirstSelectedBlock(), pageStore.pageData);
 
 	let componentData = {}
-	if (editingMode == "fragment") {
+	if (canvasStore.editingMode == "fragment") {
 		componentData = componentController.getComponentDataPreview();
 	}
 
