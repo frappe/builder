@@ -1297,7 +1297,15 @@ def extend_block_with_component(block: dict) -> tuple[dict, str | None]:
 	component = frappe.get_cached_value(
 		"Builder Component",
 		component_id,
-		["block", "name", "component_js", "component_css", "component_props", "component_vars"],
+		[
+			"block",
+			"name",
+			"component_js",
+			"component_css",
+			"component_props",
+			"component_vars",
+			"component_data_script",
+		],
 		as_dict=True,
 	)
 
