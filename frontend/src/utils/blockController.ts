@@ -353,10 +353,6 @@ const blockController = {
 		return block;
 	},
 	getBlockProps: () => {
-		const canvasStore = useCanvasStore()
-		if (canvasStore.editingMode == "fragment" && !blockController.getFirstSelectedBlock()?.getParentBlock()) {
-			return componentController.getComponentProps();
-		}
 		return blockController.getFirstSelectedBlock()?.getBlockProps();
 	},
 	setBlockProp: (key: string, value: Record<string, any>) => {
