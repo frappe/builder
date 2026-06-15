@@ -65,8 +65,8 @@
 							]"
 							aria-hidden="true"
 							v-if="!Boolean(element.extendedFromComponent)" />
-						<BlocksIcon
-							class="mr-1 h-3 w-3"
+						<span
+							class="lucide-blocks mr-1 h-3 w-3"
 							:class="{
 								'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
 									element.isExtendedFromComponent(),
@@ -189,7 +189,6 @@ const expandedLayers = ref(new Set(["root"]));
 const isExpanded = (block: Block) => {
 	return expandedLayers.value.has(block.blockId);
 };
-
 
 // TODO: Refactor this!
 const toggleExpanded = (block: Block) => {

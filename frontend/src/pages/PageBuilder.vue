@@ -143,7 +143,6 @@ import { createResource, KeyboardShortcutsModal, useShortcut } from "frappe-ui";
 import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
-import useComponentStore from "@/stores/componentStore.js";
 import componentController from "@/utils/componentController.js";
 
 const expandedEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
@@ -157,7 +156,6 @@ const router = useRouter();
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 const canvasStore = useCanvasStore();
-const componentStore = useComponentStore();
 const usageCount = ref(0);
 const componentUsedInPages = ref<BuilderPage[]>([]);
 const pageListDialog = ref(false);
@@ -275,14 +273,10 @@ watch(
 declare global {
 	interface Window {
 		blockController: typeof blockController;
-		canvasStore: ReturnType<typeof useCanvasStore>;
-		componentStore: ReturnType<typeof useComponentStore>;
 	}
 }
 
 window.blockController = blockController;
-window.canvasStore = canvasStore;
-window.componentStore = componentStore;
 
 const pageCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 const fragmentCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
