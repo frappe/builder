@@ -77,35 +77,47 @@ export function lockPreviewNavigation(iframe: HTMLIFrameElement | null | undefin
 	}
 }
 
-export function proxyPreviewKeyboardEvents(iframe: HTMLIFrameElement | null | undefined) {
+export function proxyPreviewKeyboardEvents(
+	iframe: HTMLIFrameElement | null | undefined,
+	shouldForward?: (event: KeyboardEvent) => boolean,
+) {
 	try {
 		const win = iframe?.contentWindow;
-		if (!win) return;
-		const builderStore = useBuilderStore();
+		if (!win || !shouldForward) return;
 
-		win.addEventListener("keydown", (ev: KeyboardEvent) => {
-			if (ev.altKey) {
-				builderStore.setPreviewIframeScrollHeld(true);
-			}
-		});
+		const forwardKeyEvent = (event: KeyboardEvent) => {
+			if (!shouldForward(event)) return;
+			const synthetic = new KeyboardEvent(event.type, {
+				key: event.key,
+				code: event.code,
+				ctrlKey: event.ctrlKey,
+				altKey: event.altKey,
+				shiftKey: event.shiftKey,
+				metaKey: event.metaKey,
+				bubbles: true,
+				cancelable: true,
+			});
+			document.dispatchEvent(synthetic);
+		};
 
-		win.addEventListener("keyup", (ev: KeyboardEvent) => {
-			if (ev.key === "Alt") {
-				builderStore.setPreviewIframeScrollHeld(false);
-			}
-		});
+		win.addEventListener("keydown", forwardKeyEvent);
+		win.addEventListener("keyup", forwardKeyEvent);
 	} catch {
 		// ignore cross-origin or timing errors
 	}
 }
 
-export function setupPreviewIframe(iframe: HTMLIFrameElement | null | undefined, scheme: "dark" | "light") {
+export function setupPreviewIframe(
+	iframe: HTMLIFrameElement | null | undefined,
+	scheme: "dark" | "light",
+	shouldForward?: (event: KeyboardEvent) => boolean,
+) {
 	applyPreviewColorScheme(iframe, scheme);
 	lockPreviewNavigation(iframe);
-	proxyPreviewKeyboardEvents(iframe);
+	proxyPreviewKeyboardEvents(iframe, shouldForward);
 }
 
-export function usePagePreview() {
+export function usePagePreview(shouldForward?: (event: KeyboardEvent) => boolean) {
 	const builderStore = useBuilderStore();
 	const pageStore = usePageStore();
 	const refreshKey = ref(0);
@@ -186,7 +198,7 @@ export function usePagePreview() {
 	}
 
 	const onIframeLoad = (device: string) => {
-		setupPreviewIframe(previewIframes.value[device], builderStore.canvasDarkMode ? "dark" : "light");
+		setupPreviewIframe(previewIframes.value[device], builderStore.canvasDarkMode ? "dark" : "light", shouldForward);
 		setPreviewLoading(device, false);
 		updatePreviewHeight(device);
 		observePreviewHeight(device);

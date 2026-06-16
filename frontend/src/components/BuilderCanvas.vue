@@ -205,6 +205,12 @@ const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 const pageStore = usePageStore();
 
+const shouldForwardPreviewKeys = (event: KeyboardEvent) => {
+	if (event.key === "Alt") return true;
+	if (event.key === "p" && (event.ctrlKey || event.metaKey)) return true;
+	return false;
+};
+
 const {
 	previewUrl,
 	refreshKey: previewRefreshKey,
@@ -212,7 +218,7 @@ const {
 	previewHeights,
 	setPreviewIframe,
 	onIframeLoad,
-} = usePagePreview();
+} = usePagePreview(shouldForwardPreviewKeys);
 
 const showPagePreviewToggle = computed(
 	() => canvasStore.editingMode === "page" && !canvasStore.versionPreviewBlock,
