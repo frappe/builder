@@ -7,11 +7,11 @@
 				<LoadingIcon></LoadingIcon>
 			</div>
 		</Transition>
-		<BlockSnapGuides></BlockSnapGuides>
+		<BlockSnapGuides v-if="!builderStore.showPagePreview"></BlockSnapGuides>
 		<div
 			class="fixed flex gap-40"
 			:class="{
-				'scheme-dark': builderStore.canvasDarkMode,
+				'scheme-dark': builderStore.canvasDarkMode && !builderStore.showPagePreview,
 			}"
 			ref="canvas"
 			:style="{
@@ -21,7 +21,26 @@
 				colorScheme: builderStore.canvasDarkMode ? 'dark' : 'light',
 			}">
 			<div class="absolute right-0 top-[-60px] flex rounded-md bg-surface-base px-3">
-				<Tooltip text="Toggle Canvas Dark Mode" :hoverDelay="0.6">
+				<Tooltip v-if="showPagePreviewToggle" text="Toggle Page Preview" :hoverDelay="0.6">
+					<div
+						v-show="!canvasProps.scaling && !canvasProps.panning"
+						class="w-auto cursor-pointer p-2"
+						@click.stop="togglePagePreview">
+						<span
+							:class="[
+								builderStore.showPagePreview ? 'lucide-mouse-pointer' : 'lucide-play',
+								'h-8 w-6 text-ink-gray-8',
+							]"
+							aria-hidden="true" />
+					</div>
+				</Tooltip>
+				<div
+					v-if="showPagePreviewToggle"
+					v-show="!canvasProps.scaling && !canvasProps.panning"
+					class="m-2 my-3 w-px bg-[var(--outline-gray-2)]"></div>
+				<Tooltip
+					:text="builderStore.showPagePreview ? 'Toggle Preview Color Scheme' : 'Toggle Canvas Dark Mode'"
+					:hoverDelay="0.6">
 					<div
 						v-show="!canvasProps.scaling && !canvasProps.panning"
 						class="w-auto cursor-pointer p-2"
@@ -49,37 +68,81 @@
 						aria-hidden="true" />
 				</div>
 			</div>
-			<div
-				class="canvas relative flex h-full bg-surface-base shadow-2xl contain-layout"
-				:data-breakpoint="breakpoint.device"
-				:style="{
-					...canvasStyles,
-					background: canvasProps.background,
-					width: `${breakpoint.width}px`,
-				}"
-				v-for="breakpoint in renderedBreakpoints"
-				v-show="breakpoint.visible"
-				:key="breakpoint.device">
+			<template v-if="builderStore.showPagePreview">
 				<div
-					class="absolute left-0 cursor-pointer select-none text-5xl text-ink-gray-7"
+					class="canvas relative flex h-full min-h-[inherit] flex-col bg-surface-base shadow-2xl"
+					:data-breakpoint="breakpoint.device"
 					:style="{
-						fontSize: `calc(${12}px * 1/${canvasProps.scale})`,
-						top: `calc(${-20}px * 1/${canvasProps.scale})`,
+						...canvasStyles,
+						width: `${breakpoint.width}px`,
 					}"
-					v-show="!canvasProps.scaling && !canvasProps.panning"
-					@click="activeBreakpoint = breakpoint.device">
-					{{ breakpoint.displayName }}
+					v-for="breakpoint in renderedBreakpoints"
+					v-show="breakpoint.visible"
+					:key="`preview-${breakpoint.device}`">
+					<div
+						class="absolute left-0 cursor-pointer select-none text-5xl text-ink-gray-7"
+						:style="{
+							fontSize: `calc(${12}px * 1/${canvasProps.scale})`,
+							top: `calc(${-20}px * 1/${canvasProps.scale})`,
+						}"
+						v-show="!canvasProps.scaling && !canvasProps.panning"
+						@click="activeBreakpoint = breakpoint.device">
+						{{ breakpoint.displayName }}
+					</div>
+					<iframe
+						v-if="previewUrl"
+						:src="previewUrl"
+						:key="`${breakpoint.device}-${previewRefreshKey}`"
+						:ref="(el) => setPreviewIframe(breakpoint.device, el as HTMLIFrameElement | null)"
+						frameborder="0"
+						:sandbox="PREVIEW_IFRAME_SANDBOX"
+						data-builder-preview-iframe
+						class="h-full min-h-[inherit] w-full flex-1 rounded-sm"
+						@load="onIframeLoad(breakpoint.device)" />
+					<div
+						v-show="previewLoading[breakpoint.device]"
+						class="absolute inset-0 z-20 grid place-items-center bg-surface-gray-1/80 text-ink-gray-5">
+						<LoadingIcon />
+					</div>
+					<div
+						v-show="builderStore.previewIframeScrollHeld"
+						class="absolute inset-0 z-10"
+						aria-hidden="true" />
 				</div>
-				<BuilderBlock
-					class="h-full min-h-[inherit]"
-					:block="block"
-					:style="variables"
-					:key="block.blockId"
-					:readonly="builderStore.readOnlyMode"
-					v-if="showBlocks"
-					:breakpoint="breakpoint.device"
-					:data="pageStore.pageData" />
-			</div>
+			</template>
+			<template v-else>
+				<div
+					class="canvas relative flex h-full bg-surface-base shadow-2xl contain-layout"
+					:data-breakpoint="breakpoint.device"
+					:style="{
+						...canvasStyles,
+						background: canvasProps.background,
+						width: `${breakpoint.width}px`,
+					}"
+					v-for="breakpoint in renderedBreakpoints"
+					v-show="breakpoint.visible"
+					:key="breakpoint.device">
+					<div
+						class="absolute left-0 cursor-pointer select-none text-5xl text-ink-gray-7"
+						:style="{
+							fontSize: `calc(${12}px * 1/${canvasProps.scale})`,
+							top: `calc(${-20}px * 1/${canvasProps.scale})`,
+						}"
+						v-show="!canvasProps.scaling && !canvasProps.panning"
+						@click="activeBreakpoint = breakpoint.device">
+						{{ breakpoint.displayName }}
+					</div>
+					<BuilderBlock
+						class="h-full min-h-[inherit]"
+						:block="block"
+						:style="variables"
+						:key="block.blockId"
+						:readonly="builderStore.readOnlyMode"
+						v-if="showBlocks"
+						:breakpoint="breakpoint.device"
+						:data="pageStore.pageData" />
+				</div>
+			</template>
 		</div>
 		<div
 			class="text-sm-semibold fixed bottom-12 left-[50%] flex translate-x-[-50%] cursor-default items-center justify-center gap-2 rounded-lg bg-surface-base px-3 py-2 text-center text-ink-gray-7 shadow-md"
@@ -117,6 +180,7 @@ import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
 import SearchBlock from "@/components/Controls/SearchBlock.vue";
 import LoadingIcon from "@/components/Icons/Loading.vue";
 import useBuilderStore from "@/stores/builderStore";
+import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
 import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
@@ -127,6 +191,7 @@ import { useCanvasDropZone } from "@/utils/useCanvasDropZone";
 import { useCanvasEvents } from "@/utils/useCanvasEvents";
 import { useCanvasMarqueeSelection } from "@/utils/useCanvasMarqueeSelection";
 import { useCanvasUtils } from "@/utils/useCanvasUtils";
+import { PREVIEW_IFRAME_SANDBOX, usePagePreview } from "@/utils/usePagePreview";
 import { Tooltip } from "frappe-ui";
 import { Ref, computed, onMounted, onUnmounted, provide, reactive, ref, watch } from "vue";
 import setPanAndZoom from "../utils/panAndZoom";
@@ -135,7 +200,24 @@ import BuilderBlock from "./BuilderBlock.vue";
 import FitScreenIcon from "./Icons/FitScreen.vue";
 
 const builderStore = useBuilderStore();
+const canvasStore = useCanvasStore();
 const pageStore = usePageStore();
+
+const {
+	previewUrl,
+	refreshKey: previewRefreshKey,
+	previewLoading,
+	setPreviewIframe,
+	onIframeLoad,
+} = usePagePreview();
+
+const showPagePreviewToggle = computed(
+	() => canvasStore.editingMode === "page" && !canvasStore.versionPreviewBlock,
+);
+
+function togglePagePreview() {
+	builderStore.showPagePreview = !builderStore.showPagePreview;
+}
 
 const { cssVariables, darkCssVariables } = useBuilderVariable();
 
@@ -282,6 +364,10 @@ onUnmounted(() => {
 });
 
 const handleClick = (ev: MouseEvent) => {
+	if (builderStore.showPagePreview) {
+		return;
+	}
+
 	if (suppressNextClick.value) {
 		suppressNextClick.value = false;
 		return;

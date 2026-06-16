@@ -291,6 +291,15 @@ provide("showShortcuts", () => {
 	shortcutsModalOpen.value = true;
 });
 
+const canUsePreviewPanOverlay = () =>
+	builderStore.showPagePreview &&
+	canvasStore.editingMode === "page" &&
+	!canvasStore.versionPreviewBlock;
+
+useEventListener(window, "blur", () => {
+	builderStore.setPreviewIframeScrollHeld(false);
+});
+
 useShortcut([
 	{
 		key: " ",
@@ -310,6 +319,17 @@ useShortcut([
 		handler: () => {
 			shortcutsModalOpen.value = true;
 		},
+	},
+	{
+		key: "Shift",
+		shift: true,
+		description: "Hold to pan over preview",
+		group: "View",
+		condition: canUsePreviewPanOverlay,
+		triggeredOn: "hold",
+		preventDefault: true,
+		onHold: () => builderStore.setPreviewIframeScrollHeld(true),
+		onRelease: () => builderStore.setPreviewIframeScrollHeld(false),
 	},
 	{
 		key: "i",

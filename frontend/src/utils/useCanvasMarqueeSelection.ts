@@ -229,6 +229,7 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 		if (ev.button !== 0) return false;
 		if (builderStore.mode !== "select") return false;
 		if (builderStore.readOnlyMode) return false;
+		if (builderStore.showPagePreview) return false;
 		if (canvasStore.isDragging || canvasProps.panning || canvasProps.scaling) return false;
 
 		const target = ev.target as HTMLElement | null;

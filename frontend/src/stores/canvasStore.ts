@@ -1,6 +1,7 @@
 import type Block from "@/block";
 import type BuilderCanvas from "@/components/BuilderCanvas.vue";
 import { getVersionedDoc } from "@/data/snapshot";
+import useBuilderStore from "@/stores/builderStore";
 import { confirm, getBlockCopy, getBlockInstance } from "@/utils/helpers";
 import { toast } from "frappe-ui";
 import { defineStore } from "pinia";
@@ -54,6 +55,8 @@ const useCanvasStore = defineStore("canvasStore", {
 		// watcher), which hibernates history — so swapping the root in/out never touches
 		// the draft's content or undo stack. We just stash the draft root to restore it.
 		async previewVersion(snapshotName: string) {
+			const builderStore = useBuilderStore();
+			builderStore.clearPagePreview();
 			const doc = await getVersionedDoc(snapshotName);
 			const blocks = JSON.parse((doc?.draft_blocks || doc?.blocks || "[]") as string);
 			if (!blocks[0] || !this.activeCanvas) return;

@@ -31,7 +31,7 @@ export function useCanvasDropZone(
 ) {
 	const { isOverDropZone } = useDropZone(canvasContainer, {
 		onDrop: async (files, ev) => {
-			if (builderStore.readOnlyMode) return;
+			if (builderStore.readOnlyMode || builderStore.showPagePreview) return;
 			canvasStore.isDropping = true;
 			if (files && files.length) {
 				handleFileDrop(files, ev);
@@ -43,7 +43,7 @@ export function useCanvasDropZone(
 		},
 
 		onOver: (files, ev) => {
-			if (builderStore.readOnlyMode) return;
+			if (builderStore.readOnlyMode || builderStore.showPagePreview) return;
 			const initialBlock = getInitialParentBlock(ev);
 			const shouldReplaceImage = initialBlock?.isImage();
 

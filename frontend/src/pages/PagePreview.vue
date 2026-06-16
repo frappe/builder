@@ -55,6 +55,7 @@
 			<iframe
 				:src="previewRoute"
 				frameborder="0"
+				:sandbox="PREVIEW_IFRAME_SANDBOX"
 				v-if="previewRoute"
 				class="flex-1 rounded-sm"
 				ref="previewWindow"></iframe>
@@ -78,6 +79,7 @@ import PanelResizer from "@/components/PanelResizer.vue";
 import PublishButton from "@/components/PublishButton.vue";
 import router from "@/router";
 import usePageStore from "@/stores/pageStore";
+import { PREVIEW_IFRAME_SANDBOX, applyPreviewColorScheme, buildPagePreviewUrl, setupPreviewIframe } from "@/utils/usePagePreview";
 import { useDark, useToggle } from "@vueuse/core";
 import { Tooltip, useShortcut } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
@@ -159,18 +161,6 @@ useShortcut({
 	condition: () => router.currentRoute.value.name === "preview",
 });
 
-const applyColorSchemeToIframe = (scheme: "dark" | "light") => {
-	try {
-		const win = previewWindow.value?.contentWindow;
-		const doc = win?.document;
-		if (doc && doc.documentElement) {
-			doc.documentElement.setAttribute("data-prefers-color-scheme", scheme);
-		}
-	} catch (e) {
-		// ignore cross-origin or timing errors
-	}
-};
-
 watchEffect(() => {
 	if (previewWindow.value) {
 		loading.value = true;
@@ -190,7 +180,7 @@ watchEffect(() => {
 					document.dispatchEvent(new MouseEvent("mousemove", ev));
 				});
 
-				applyColorSchemeToIframe(isDark.value ? "dark" : "light");
+				setupPreviewIframe(previewWindow.value, isDark.value ? "dark" : "light");
 			},
 			{ once: true },
 		);
@@ -200,7 +190,7 @@ watchEffect(() => {
 watch(isDark, async (val) => {
 	setPreviewURL();
 	setTimeout(() => {
-		applyColorSchemeToIframe(val ? "dark" : "light");
+		applyPreviewColorScheme(previewWindow.value, val ? "dark" : "light");
 	}, 100);
 });
 
@@ -216,14 +206,11 @@ const setWidth = (device: string) => {
 };
 
 const setPreviewURL = () => {
-	let queryParams: Record<string, any> = {
-		page: route.params.pageId,
-		...pageStore.routeVariables,
-		prefers_color_scheme: isDark.value ? "dark" : "light",
-	};
-	previewRoute.value = `/api/method/builder.api.get_page_preview_html?${Object.entries(queryParams)
-		.map(([key, value]) => `${key}=${value}`)
-		.join("&")}`;
+	previewRoute.value = buildPagePreviewUrl(
+		route.params.pageId as string,
+		pageStore.routeVariables,
+		isDark.value ? "dark" : "light",
+	);
 };
 
 onActivated(() => {

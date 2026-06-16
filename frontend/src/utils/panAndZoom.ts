@@ -118,14 +118,12 @@ function setPanAndZoom(
 		}, 200);
 	};
 
-	panAndZoomAreaElement.addEventListener(
-		"wheel",
-		(e) => {
-			e.preventDefault();
-			requestAnimationFrame(() => updatePanAndZoom(e));
-		},
-		{ passive: false },
-	);
+	const handleWheel = (e: WheelEvent) => {
+		e.preventDefault();
+		requestAnimationFrame(() => updatePanAndZoom(e));
+	};
+
+	panAndZoomAreaElement.addEventListener("wheel", handleWheel, { passive: false });
 
 	return { setZoom };
 }

@@ -67,8 +67,10 @@ const usePageStore = defineStore("pageStore", {
 			await this.setPageData(this.activePage);
 
 			const canvasStore = useCanvasStore();
+			const builderStore = useBuilderStore();
 			// switching pages always exits any active version preview
 			canvasStore.clearVersionPreview();
+			builderStore.clearPagePreview();
 			canvasStore.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas);
 
 			if (page.client_scripts?.length) {

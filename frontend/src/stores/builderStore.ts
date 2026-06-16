@@ -46,6 +46,9 @@ const useBuilderStore = defineStore("builderStore", {
 			attribute: "data-theme",
 		}),
 		canvasDarkMode: useStorage("canvasDarkMode", false),
+		showPagePreview: false,
+		/** True while Shift+X is held — shows overlay on preview iframes for canvas pan/zoom. */
+		previewIframeScrollHeld: false,
 		highlightBlocksWithClientScripts: false,
 		showSettingsDialog: false,
 		settingsActiveTab: <string>"page_general",
@@ -57,6 +60,16 @@ const useBuilderStore = defineStore("builderStore", {
 		},
 	},
 	actions: {
+		clearPagePreview() {
+			this.showPagePreview = false;
+			this.previewIframeScrollHeld = false;
+		},
+		setPreviewIframeScrollHeld(held: boolean) {
+			this.previewIframeScrollHeld = held;
+			if (held && this.mode === "move") {
+				this.mode = "select";
+			}
+		},
 		toggleReadOnlyMode(readonly: boolean | null = null) {
 			this.readOnlyMode = readonly ?? !this.readOnlyMode;
 		},
