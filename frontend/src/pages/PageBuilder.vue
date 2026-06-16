@@ -321,8 +321,8 @@ useShortcut([
 		},
 	},
 	{
-		key: "Shift",
-		shift: true,
+		key: "Alt",
+		alt: true,
 		description: "Hold to pan over preview",
 		group: "View",
 		condition: canUsePreviewPanOverlay,
