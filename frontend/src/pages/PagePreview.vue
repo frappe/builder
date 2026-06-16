@@ -79,7 +79,12 @@ import PanelResizer from "@/components/PanelResizer.vue";
 import PublishButton from "@/components/PublishButton.vue";
 import router from "@/router";
 import usePageStore from "@/stores/pageStore";
-import { PREVIEW_IFRAME_SANDBOX, applyPreviewColorScheme, buildPagePreviewUrl, setupPreviewIframe } from "@/utils/usePagePreview";
+import {
+	PREVIEW_IFRAME_SANDBOX,
+	applyPreviewColorScheme,
+	buildPagePreviewUrl,
+	setupPreviewIframe,
+} from "@/utils/usePagePreview";
 import { useDark, useToggle } from "@vueuse/core";
 import { Tooltip, useShortcut } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";

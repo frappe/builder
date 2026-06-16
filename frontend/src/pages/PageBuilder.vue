@@ -292,9 +292,7 @@ provide("showShortcuts", () => {
 });
 
 const canUsePreviewPanOverlay = () =>
-	builderStore.showPagePreview &&
-	canvasStore.editingMode === "page" &&
-	!canvasStore.versionPreviewBlock;
+	builderStore.showPagePreview && canvasStore.editingMode === "page" && !canvasStore.versionPreviewBlock;
 
 useEventListener(window, "blur", () => {
 	builderStore.setPreviewIframeScrollHeld(false);
@@ -326,8 +324,7 @@ useShortcut([
 		shift: true,
 		description: "Toggle page preview",
 		group: "View",
-		condition: () =>
-			canvasStore.editingMode === "page" && !canvasStore.versionPreviewBlock,
+		condition: () => canvasStore.editingMode === "page" && !canvasStore.versionPreviewBlock,
 		handler: () => {
 			builderStore.showPagePreview = !builderStore.showPagePreview;
 		},
