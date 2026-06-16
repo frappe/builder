@@ -111,6 +111,8 @@ export function usePagePreview() {
 	const refreshKey = ref(0);
 	const previewIframes = ref<Record<string, HTMLIFrameElement | null>>({});
 	const previewLoading = ref<Record<string, boolean>>({});
+	const previewHeights = ref<Record<string, string>>({});
+	const heightObservers: Record<string, ResizeObserver> = {};
 
 	const previewUrl = computed(() => {
 		if (!pageStore.selectedPage) {
@@ -157,9 +159,37 @@ export function usePagePreview() {
 		}
 	};
 
+	function updatePreviewHeight(device: string) {
+		const iframe = previewIframes.value[device];
+		try {
+			const doc = iframe?.contentWindow?.document;
+			if (doc?.body) {
+				previewHeights.value = { ...previewHeights.value, [device]: doc.body.scrollHeight + "px" };
+			}
+		} catch {
+			// ignore cross-origin or timing errors
+		}
+	}
+
+	function observePreviewHeight(device: string) {
+		const iframe = previewIframes.value[device];
+		try {
+			const doc = iframe?.contentWindow?.document;
+			if (!doc?.body) return;
+			heightObservers[device]?.disconnect();
+			const observer = new ResizeObserver(() => updatePreviewHeight(device));
+			observer.observe(doc.body);
+			heightObservers[device] = observer;
+		} catch {
+			// ignore cross-origin or timing errors
+		}
+	}
+
 	const onIframeLoad = (device: string) => {
 		setupPreviewIframe(previewIframes.value[device], builderStore.canvasDarkMode ? "dark" : "light");
 		setPreviewLoading(device, false);
+		updatePreviewHeight(device);
+		observePreviewHeight(device);
 	};
 
 	watch(
@@ -169,6 +199,10 @@ export function usePagePreview() {
 				refreshPreview();
 			} else {
 				previewLoading.value = {};
+				previewHeights.value = {};
+				for (const device of Object.keys(heightObservers)) {
+					heightObservers[device]?.disconnect();
+				}
 			}
 		},
 	);
@@ -192,6 +226,7 @@ export function usePagePreview() {
 		previewUrl,
 		refreshKey,
 		previewLoading,
+		previewHeights,
 		refreshPreview,
 		setPreviewIframe,
 		onIframeLoad,

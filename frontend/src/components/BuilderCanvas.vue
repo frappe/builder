@@ -70,11 +70,12 @@
 			</div>
 			<template v-if="builderStore.showPagePreview">
 				<div
-					class="canvas relative flex h-full min-h-[inherit] flex-col bg-surface-base shadow-2xl"
+					class="canvas relative bg-surface-base shadow-2xl"
 					:data-breakpoint="breakpoint.device"
 					:style="{
 						...canvasStyles,
 						width: `${breakpoint.width}px`,
+						height: previewHeights[breakpoint.device] || '200px',
 					}"
 					v-for="breakpoint in renderedBreakpoints"
 					v-show="breakpoint.visible"
@@ -97,7 +98,8 @@
 						frameborder="0"
 						:sandbox="PREVIEW_IFRAME_SANDBOX"
 						data-builder-preview-iframe
-						class="h-full min-h-[inherit] w-full flex-1 rounded-sm"
+						class="w-full rounded-sm"
+						style="display: block; height: 100%"
 						@load="onIframeLoad(breakpoint.device)" />
 					<div
 						v-show="previewLoading[breakpoint.device]"
@@ -207,6 +209,7 @@ const {
 	previewUrl,
 	refreshKey: previewRefreshKey,
 	previewLoading,
+	previewHeights,
 	setPreviewIframe,
 	onIframeLoad,
 } = usePagePreview();
