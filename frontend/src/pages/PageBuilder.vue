@@ -321,6 +321,18 @@ useShortcut([
 		},
 	},
 	{
+		key: "p",
+		ctrl: true,
+		shift: true,
+		description: "Toggle page preview",
+		group: "View",
+		condition: () =>
+			canvasStore.editingMode === "page" && !canvasStore.versionPreviewBlock,
+		handler: () => {
+			builderStore.showPagePreview = !builderStore.showPagePreview;
+		},
+	},
+	{
 		key: "Alt",
 		alt: true,
 		description: "Hold to pan over preview",
