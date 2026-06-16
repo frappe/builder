@@ -77,9 +77,32 @@ export function lockPreviewNavigation(iframe: HTMLIFrameElement | null | undefin
 	}
 }
 
+export function proxyPreviewKeyboardEvents(iframe: HTMLIFrameElement | null | undefined) {
+	try {
+		const win = iframe?.contentWindow;
+		if (!win) return;
+		const builderStore = useBuilderStore();
+
+		win.addEventListener("keydown", (ev: KeyboardEvent) => {
+			if (ev.altKey) {
+				builderStore.setPreviewIframeScrollHeld(true);
+			}
+		});
+
+		win.addEventListener("keyup", (ev: KeyboardEvent) => {
+			if (ev.key === "Alt") {
+				builderStore.setPreviewIframeScrollHeld(false);
+			}
+		});
+	} catch {
+		// ignore cross-origin or timing errors
+	}
+}
+
 export function setupPreviewIframe(iframe: HTMLIFrameElement | null | undefined, scheme: "dark" | "light") {
 	applyPreviewColorScheme(iframe, scheme);
 	lockPreviewNavigation(iframe);
+	proxyPreviewKeyboardEvents(iframe);
 }
 
 export function usePagePreview() {
@@ -135,10 +158,7 @@ export function usePagePreview() {
 	};
 
 	const onIframeLoad = (device: string) => {
-		setupPreviewIframe(
-			previewIframes.value[device],
-			builderStore.canvasDarkMode ? "dark" : "light",
-		);
+		setupPreviewIframe(previewIframes.value[device], builderStore.canvasDarkMode ? "dark" : "light");
 		setPreviewLoading(device, false);
 	};
 
