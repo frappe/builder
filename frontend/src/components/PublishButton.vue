@@ -28,12 +28,6 @@
 					icon: 'lucide-history',
 				},
 				{
-					label: 'Revert Changes',
-					onClick: () => pageStore.revertChanges(),
-					condition: () => pageStore.activePage?.draft_blocks,
-					icon: 'lucide-refresh-cw',
-				},
-				{
 					label: 'Unpublish',
 					onClick: () => pageStore.unpublishPage(),
 					condition: () => Boolean(pageStore.activePage?.published),

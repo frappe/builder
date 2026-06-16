@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="toolbar border-outline border-outline flex items-center justify-center border-b-[1px] border-outline-gray-1 bg-surface-base px-2 py-1"
+		class="toolbar border-outline border-outline flex items-center justify-center border-b-[1px] border-outline-gray-2 bg-surface-base px-2 py-1 dark:border-outline-gray-1"
 		ref="toolbar">
 		<div class="absolute left-3 flex items-center gap-4">
 			<MainMenu

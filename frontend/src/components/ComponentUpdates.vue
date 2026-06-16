@@ -19,7 +19,7 @@
 					<span class="text-sm font-medium text-ink-gray-8">Component updates</span>
 					<Button variant="subtle" size="sm" label="Update all" :loading="updatingAll" @click="updateAll" />
 				</div>
-				<p class="mb-3 text-p-xs text-ink-gray-5">
+				<p class="mb-3 text-xs text-ink-gray-5">
 					These components changed since this page was last updated. Update to use the latest.
 				</p>
 				<div class="flex max-h-72 flex-col overflow-y-auto">

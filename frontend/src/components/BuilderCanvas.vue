@@ -50,7 +50,7 @@
 				</div>
 			</div>
 			<div
-				class="canvas relative flex h-full bg-surface-base shadow-2xl contain-layout"
+				class="canvas relative flex h-full bg-surface-base shadow-xl contain-layout"
 				:data-breakpoint="breakpoint.device"
 				:style="{
 					...canvasStyles,
