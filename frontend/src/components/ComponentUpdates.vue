@@ -14,7 +14,7 @@
 			</Tooltip>
 		</template>
 		<template #body="{ close }">
-			<div class="w-72 rounded-lg bg-surface-base p-3 shadow-xl">
+			<div class="w-72 rounded-lg bg-surface-base p-3 shadow-xl" @mouseleave="clearHighlight">
 				<div class="mb-2 flex items-center justify-between">
 					<span class="text-sm font-medium text-ink-gray-8">Component updates</span>
 					<Button variant="subtle" size="sm" label="Update all" :loading="updatingAll" @click="updateAll" />
@@ -26,7 +26,9 @@
 					<div
 						v-for="item in outdated"
 						:key="item.component_id"
-						class="flex items-center justify-between gap-2 border-b border-outline-gray-1 py-2 last:border-b-0">
+						class="flex cursor-pointer items-center justify-between gap-2 rounded border-b border-outline-gray-1 px-2 py-2 last:border-b-0 hover:bg-surface-gray-1"
+						@mouseenter="highlight(item.component_id)"
+						@mouseleave="clearHighlight">
 						<div class="flex min-w-0 flex-col">
 							<span class="truncate text-sm text-ink-gray-8">{{ item.component_name }}</span>
 							<span class="text-xs text-ink-gray-5">
@@ -51,7 +53,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import { Button, Popover, Tooltip } from "frappe-ui";
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, nextTick, onUnmounted, ref, watch } from "vue";
 
 const componentStore = useComponentStore();
 const pageStore = usePageStore();
@@ -61,6 +63,17 @@ const updating = ref<string | null>(null);
 const updatingAll = ref(false);
 
 const outdated = computed(() => componentStore.getOutdatedComponentList());
+
+function highlight(componentId: string) {
+	const instance = componentStore.getComponentInstanceBlock(componentId);
+	canvasStore.activeCanvas?.setHoveredBlock(instance?.blockId ?? null);
+}
+
+function clearHighlight() {
+	canvasStore.activeCanvas?.setHoveredBlock(null);
+}
+
+onUnmounted(clearHighlight);
 
 async function update(componentId: string) {
 	updating.value = componentId;

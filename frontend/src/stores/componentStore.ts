@@ -260,6 +260,16 @@ const useComponentStore = defineStore("componentStore", {
 				refresh,
 			);
 		},
+		// first instance block of a component on the current page (for canvas highlight on hover)
+		getComponentInstanceBlock(componentId: string) {
+			let instance: Block | null = null;
+			walkBlocks(useCanvasStore().activeCanvas?.getRootBlock(), (block) => {
+				if (!instance && block.extendedFromComponent === componentId) {
+					instance = block;
+				}
+			});
+			return instance as Block | null;
+		},
 		// summary of outdated pinned components on the page (for the roll-up panel)
 		getOutdatedComponentList() {
 			const counts = new Map<string, number>();

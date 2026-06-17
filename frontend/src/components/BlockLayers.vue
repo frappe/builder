@@ -99,13 +99,6 @@
 							{{ element.getBlockDescription() }}
 						</span>
 
-						<span
-							v-if="componentStore.isPinOutdated(element.extendedFromComponent, element.componentVersion)"
-							class="lucide-arrow-up-circle ml-1 h-3 w-3 shrink-0 text-ink-amber-6"
-							:title="`Component has updates — click to update this instance`"
-							aria-hidden="true"
-							@click.stop="!readonly && componentStore.updatePinnedComponent(element)" />
-
 						<!-- toggle visibility -->
 						<span
 							v-if="!element.isRoot() && !isParentHidden && !readonly"
@@ -145,7 +138,6 @@
 import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
-import useComponentStore from "@/stores/componentStore";
 import { nextTick, ref, watch } from "vue";
 import draggable from "vuedraggable";
 import BlockLayers from "./BlockLayers.vue";
@@ -154,7 +146,6 @@ type LayerInstance = InstanceType<typeof BlockLayers>;
 
 const canvasStore = useCanvasStore();
 const builderStore = useBuilderStore();
-const componentStore = useComponentStore();
 
 const rootContainer = ref<HTMLElement | null>(null);
 const childLayers = ref<LayerInstance[]>([]);
