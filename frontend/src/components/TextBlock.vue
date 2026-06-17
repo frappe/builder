@@ -255,6 +255,11 @@ if (!props.preview) {
 						StarterKit.configure({
 							link: { openOnClick: false },
 							underline: false,
+							// Disable the auto-appended trailing paragraph. StarterKit's TrailingNode
+							// extension re-adds an empty <p> after any non-paragraph block (lists,
+							// headings, etc.), which makes the trailing empty line undeletable and
+							// leaks into the saved/rendered innerHTML as a blank line.
+							trailingNode: false,
 						}),
 						TextStyle.extend({
 							addGlobalAttributes() {
