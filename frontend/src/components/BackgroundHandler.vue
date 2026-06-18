@@ -167,7 +167,7 @@ const BackgroundInput = defineComponent({
 					class: [
 						attrs.class,
 						showsVariableName.value
-							? "[&_input]:font-mono [&_input]:text-sm [&_input]:text-ink-violet-1"
+							? "[&_input]:font-mono [&_input]:text-sm [&_input]:text-ink-violet-6"
 							: "",
 					],
 				},
