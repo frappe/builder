@@ -64,7 +64,7 @@ export function useAnalytics({
 		axisLineColor: "var(--ink-gray-4)",
 		gridLineColor: "var(--outline-gray-1)",
 		backgroundColor: "transparent",
-		tooltipBg: "var(--surface-white)",
+		tooltipBg: "var(--surface-base)",
 		tooltipBorder: "var(--outline-gray-1)",
 		tooltipText: "var(--ink-gray-7)",
 	};

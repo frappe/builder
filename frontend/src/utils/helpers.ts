@@ -4,16 +4,14 @@ import { BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { dialog, FileUploadHandler, toast } from "frappe-ui";
 import { reactive, toRaw } from "vue";
-import { getRandomColor, getRGB, HexToHSV, HSVToHex } from "./colors";
+import { getRGB, HexToHSV, HSVToHex } from "./colors";
 import {
 	addPxToNumber,
-	addUnitToNumber,
 	extractNumberAndUnit,
 	getBoxSpacing,
 	getNumberFromPx,
 	normalizeValueWithUnits,
 	parseAndSetBackground,
-	parseBackground,
 	setBoxSpacing,
 	shortenNumber,
 } from "./cssUtils";
@@ -237,6 +235,7 @@ const detachBlockFromComponent = (block: Block, componentId: null | string) => {
 	);
 
 	delete blockCopy.extendedFromComponent;
+	delete blockCopy.componentVersion;
 	delete blockCopy.isChildOfComponent;
 	delete blockCopy.referenceBlockId;
 	blockCopy.children = blockCopy.children.map((block) => detachBlockFromComponent(block, componentId));
@@ -256,7 +255,29 @@ function getCopyWithoutParent(block: BlockOptions | Block): BlockOptions {
 	blockCopy.children = blockCopy.children?.map((child) => getCopyWithoutParent(child));
 	delete blockCopy.parentBlock;
 	delete blockCopy.referenceComponent;
-	return blockCopy;
+	return removeEmptyBlockValues(blockCopy);
+}
+
+function isEmptyValue(value: unknown): boolean {
+	if (value === null || value === "") {
+		return true;
+	}
+	if (Array.isArray(value)) {
+		return value.length === 0;
+	}
+	if (value && typeof value === "object") {
+		return Object.keys(value).length === 0;
+	}
+	return false;
+}
+
+function removeEmptyBlockValues(block: BlockOptions): BlockOptions {
+	for (const key of Object.keys(block)) {
+		if (isEmptyValue(block[key])) {
+			delete block[key];
+		}
+	}
+	return block;
 }
 
 function getRouteVariables(route: string) {
@@ -381,16 +402,6 @@ async function decompressFontIfWoff2(arrayBuffer: ArrayBuffer, isWoff2: boolean)
 		await loadScript(path).then(() => init);
 	}
 	return Uint8Array.from(window.Module.decompress(arrayBuffer)).buffer;
-}
-
-async function getFontArrayBuffer(file_url: string) {
-	const arrayBuffer = await fetch(file_url).then((res) => res.arrayBuffer());
-	return decompressFontIfWoff2(arrayBuffer, file_url.endsWith(".woff2"));
-}
-
-async function getFontName(file_url: string) {
-	const opentype = await import("opentype.js");
-	return opentype.parse(await getFontArrayBuffer(file_url)).names.fullName.en;
 }
 
 async function getFontNameFromFile(file: File): Promise<string> {
@@ -800,7 +811,6 @@ function isDialogOpen() {
 
 export {
 	addPxToNumber,
-	addUnitToNumber,
 	alert,
 	confirm,
 	copyToClipboard,
@@ -819,17 +829,14 @@ export {
 	getBlockObjectCopy as getBlockObject,
 	getBlockString,
 	getBoxSpacing,
-	getCollectionKeys,
 	getCopyWithoutParent,
 	getDataArray,
 	getDataForKey,
 	getDefaultPropsList,
-	getFontName,
 	getImageBlock,
 	getNumberFromPx,
 	getParentProps,
 	getPropValue,
-	getRandomColor,
 	getRepeaterScopedData,
 	getRGB,
 	getRootBlockTemplate,
@@ -851,7 +858,6 @@ export {
 	normalizeValueWithUnits,
 	openInDesk,
 	parseAndSetBackground,
-	parseBackground,
 	replaceMapKey,
 	setBoxSpacing,
 	shortenNumber,

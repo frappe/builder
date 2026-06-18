@@ -19,7 +19,8 @@
 								@click="selectScript(script)"
 								class="group flex h-6 items-center justify-between gap-1 text-sm first-of-type:mt-6 last-of-type:mb-2 hover:text-ink-gray-7">
 								<div class="flex w-[90%] items-center gap-1">
-									<GripVertical class="drag-handle cursor-grab text-ink-gray-5 hover:text-ink-gray-8" />
+									<span
+										class="drag-handle lucide-grip-vertical size-3.5 cursor-grab text-ink-gray-5 hover:text-ink-gray-8" />
 									<CSSIcon class="shrink-0" v-if="script.script_type === 'CSS'" />
 
 									<JavaScriptIcon class="shrink-0" v-if="script.script_type === 'JavaScript'" />
@@ -83,16 +84,15 @@
 							</template>
 						</Dropdown>
 
-						<Autocomplete
+						<Combobox
 							v-if="clientScriptResource.data && clientScriptResource.data.length > 0"
 							:options="clientScriptOptions"
-							bodyClasses="overflow-hidden [&>ul]:!bg-surface-white max-w-[300px]"
-							@update:modelValue="(option: Option) => attachScript(option.value)"
-							placeholder="Attach Script">
-							<template v-slot:target="{ open }">
-								<Button class="w-full text-xs" @click="open">Attach Script</Button>
+							placeholder="Attach Script"
+							@update:modelValue="(value: string | null) => value && attachScript(value)">
+							<template #trigger>
+								<Button class="w-full text-xs">Attach Script</Button>
 							</template>
-						</Autocomplete>
+						</Combobox>
 					</div>
 				</div>
 
@@ -104,7 +104,7 @@
 		</div>
 
 		<div
-			class="flex h-[calc(65vh+68px)] w-full items-center justify-center rounded bg-surface-gray-1 text-base text-ink-gray-6"
+			class="flex h-[calc(65vh+68px)] w-full items-center justify-center rounded border border-dashed border-outline-gray-2 bg-surface-gray-1 text-base text-ink-gray-6"
 			v-show="!activeScript">
 			Add Script
 		</div>
@@ -132,14 +132,13 @@ import EditableSpan from "@/components/EditableSpan.vue";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
-import { Autocomplete, createListResource, createResource, Dropdown } from "frappe-ui";
+import { Combobox, createListResource, createResource, Dropdown } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
 import { computed, nextTick, ref, watch } from "vue";
 import { toast } from "frappe-ui";
 import draggable from "vuedraggable";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import CSSIcon from "./Icons/CSS.vue";
-import GripVertical from "./Icons/GripVertical.vue";
 import JavaScriptIcon from "./Icons/JavaScript.vue";
 
 const { capture } = useTelemetry();
@@ -154,11 +153,6 @@ type attachedScript = {
 	name: string;
 	script_name: string;
 	editable: boolean;
-};
-
-type Option = {
-	label: string;
-	value: string;
 };
 
 const activeScript = ref<attachedScript | null>(null);

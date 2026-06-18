@@ -23,7 +23,9 @@
 			:repeater-index="repeaterIndex"
 			v-for="child in block.getChildren().filter((child) => child.isVisible(breakpoint))" />
 	</component>
-	<teleport to="#overlay" v-if="canvasProps?.overlayElement && !preview && Boolean(canvasProps)">
+	<teleport
+		:to="canvasProps?.overlayElement"
+		v-if="canvasProps?.overlayElement && !preview && Boolean(canvasProps)">
 		<!-- prettier-ignore -->
 		<BlockEditor
 			ref="editor"

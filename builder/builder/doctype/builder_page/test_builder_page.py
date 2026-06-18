@@ -92,6 +92,29 @@ class TestBuilderPage(FrappeTestCase):
 		content = get_response_content("/test-page")
 		self.assertTrue("Hello World!" in content)
 
+	def test_get_preview_html_preserves_outer_request(self):
+		"""get_preview_html() fakes a request via set_request(); when it runs
+		synchronously inside a real web request (e.g. run_doc_method) it must not
+		clobber it — doing so dropped the request's after_response and broke
+		sync_database with a 500."""
+		from frappe.utils import CallbackManager
+		from werkzeug.test import EnvironBuilder
+		from werkzeug.wrappers import Request
+
+		previous = getattr(frappe.local, "request", None)
+		try:
+			req = Request(EnvironBuilder(path="/api/method/run_doc_method").get_environ())
+			sentinel = CallbackManager()
+			req.after_response = sentinel
+			frappe.local.request = req
+
+			self.page.get_preview_html()
+
+			self.assertIs(frappe.local.request, req)
+			self.assertIs(frappe.local.request.after_response, sentinel)
+		finally:
+			frappe.local.request = previous
+
 	def test_onload(self):
 		getdoc("Builder Page", self.page.name)
 		self.assertEqual(frappe.response.docs[0].get("__onload").get("builder_path"), "builder")
@@ -928,6 +951,111 @@ class TestBuilderPage(FrappeTestCase):
 		_, _, font_map, _ = get_block_html(blocks)
 		self.assertNotIn("InterVar", font_map)
 		self.assertNotIn("intervar", font_map)
+
+	def test_renders_blocks_with_stripped_empty_values(self):
+		"""Blocks are saved with empty defaults (attributes={}, classes=[], dataKey=null,
+		empty styles, etc.) stripped out to keep documents small"""
+		import re
+
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		def empties():
+			return {
+				"rawStyles": {},
+				"mobileStyles": {},
+				"tabletStyles": {},
+				"attributes": {},
+				"customAttributes": {},
+				"classes": [],
+				"props": {},
+				"dynamicValues": [],
+				"dataKey": None,
+				"activeState": None,
+				"blockClientScript": "",
+			}
+
+		full = [
+			{
+				"blockId": "root",
+				"element": "div",
+				"originalElement": "body",
+				"baseStyles": {"display": "flex"},
+				"children": [
+					{
+						"blockId": "child1",
+						"element": "h1",
+						"innerHTML": "Hello World!",
+						"baseStyles": {"color": "red"},
+						"children": [],
+						**empties(),
+					}
+				],
+				**empties(),
+			}
+		]
+		stripped = [
+			{
+				"blockId": "root",
+				"element": "div",
+				"originalElement": "body",
+				"baseStyles": {"display": "flex"},
+				"children": [
+					{
+						"blockId": "child1",
+						"element": "h1",
+						"innerHTML": "Hello World!",
+						"baseStyles": {"color": "red"},
+					}
+				],
+			}
+		]
+
+		# CSS class names are a random hash per render (frappe.generate_hash) — ignore them.
+		def normalize(text):
+			return re.sub(r"[0-9a-f]{8,}", "H", text)
+
+		html_full, css_full, _, _ = get_block_html(full)
+		html_stripped, css_stripped, _, _ = get_block_html(stripped)
+
+		self.assertIn("Hello World!", html_stripped)
+		self.assertEqual(normalize(html_full), normalize(html_stripped))
+		self.assertEqual(normalize(css_full), normalize(css_stripped))
+
+		# A block carrying dynamicValues but with attributes/styles stripped used to
+		# raise KeyError in set_dynamic_content_placeholders — guard against regression.
+		dynamic = [
+			{
+				"blockId": "root",
+				"element": "div",
+				"originalElement": "body",
+				"baseStyles": {"display": "flex"},
+				"children": [
+					{
+						"blockId": "img1",
+						"element": "img",
+						"dynamicValues": [
+							{"key": "logo", "type": "attribute", "property": "src", "comesFrom": "dataScript"}
+						],
+					}
+				],
+			}
+		]
+		html_dynamic, _, _, _ = get_block_html(dynamic)
+		self.assertIn("logo", html_dynamic)
+
+		with_unset_style = [
+			{
+				"blockId": "root",
+				"element": "div",
+				"originalElement": "body",
+				"baseStyles": {"color": "red", "display": None},
+				"children": [],
+			}
+		]
+		_, css_unset, _, _ = get_block_html(with_unset_style)
+		self.assertIn("color: red", css_unset)
+		self.assertNotIn("display:", css_unset)
+		self.assertNotIn("None", css_unset)
 
 	def test_conflicting_routes_picks_last_published(self):
 		"""Pages sharing a route should resolve to the most recently published one."""

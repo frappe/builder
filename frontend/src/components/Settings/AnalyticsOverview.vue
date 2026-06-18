@@ -1,18 +1,18 @@
 <template>
 	<div class="my-5 flex flex-col gap-4 text-ink-gray-9">
 		<div class="flex items-center justify-between gap-4">
-			<span class="text-lg font-medium">Overview</span>
+			<span class="text-xl-medium">Overview</span>
 			<div class="flex gap-2">
 				<slot name="filters"></slot>
 			</div>
 		</div>
 		<div class="flex gap-8">
 			<div class="flex flex-col gap-2">
-				<span class="text-3xl">{{ loading ? "-" : shortenNumber(data.total_unique_views) }}</span>
+				<span class="text-5xl">{{ loading ? "-" : shortenNumber(data.total_unique_views) }}</span>
 				<span class="text-sm text-ink-gray-7">Unique Visitors</span>
 			</div>
 			<div class="flex flex-col gap-2">
-				<span class="text-3xl">{{ loading ? "-" : shortenNumber(data.total_views) }}</span>
+				<span class="text-5xl">{{ loading ? "-" : shortenNumber(data.total_views) }}</span>
 				<span class="text-sm text-ink-gray-7">Total Pageviews</span>
 			</div>
 		</div>

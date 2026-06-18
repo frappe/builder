@@ -18,7 +18,18 @@ from frappe.website.path_resolver import resolve_path as original_resolve_path
 from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
 
+from builder.builder.component_versions import (
+	collect_restore_warnings,
+	ensure_component_version,
+	is_pin_outdated,
+	pin_components_in_page_data,
+	resolve_component_block,
+)
 from builder.builder.doctype.builder_project_folder.builder_project_folder import is_system_activity
+from builder.builder.doctype.builder_snapshot.builder_snapshot import (
+	prune_snapshots,
+	take_snapshot,
+)
 from builder.builder.doctype.user_font.user_font import get_all_user_fonts
 from builder.export_import_standard_page import export_page_as_standard
 from builder.hooks import builder_path
@@ -28,6 +39,7 @@ from builder.utils import (
 	ColonRule,
 	camel_case_to_kebab_case,
 	clean_data,
+	compact_json,
 	escape_single_quotes,
 	execute_script,
 	get_builder_page_preview_file_paths,
@@ -39,6 +51,9 @@ from builder.utils import (
 MOBILE_BREAKPOINT = 576
 TABLET_BREAKPOINT = 768
 DESKTOP_BREAKPOINT = 1024
+
+# Number of "Publish" snapshots retained per page (manual snapshots are never auto-pruned)
+KEEP_PUBLISH_SNAPSHOTS = 25
 
 
 class BuilderPageRenderer(DocumentPage):
@@ -145,7 +160,7 @@ class BuilderPage(WebsiteGenerator):
 	def process_blocks(self):
 		for block_type in ["blocks", "draft_blocks"]:
 			if isinstance(getattr(self, block_type), list):
-				setattr(self, block_type, frappe.as_json(getattr(self, block_type), indent=0))
+				setattr(self, block_type, compact_json(getattr(self, block_type)))
 		if not self.blocks:
 			self.blocks = "[]"
 
@@ -229,6 +244,10 @@ class BuilderPage(WebsiteGenerator):
 					frappe._("Template pages can only be deleted in developer mode."),
 					frappe.PermissionError,
 				)
+		# clean up snapshots (reference_name is plain Data, so no link-guard removes them)
+		frappe.db.delete(
+			"Builder Snapshot", {"reference_doctype": "Builder Page", "reference_name": self.name}
+		)
 
 	def add_comment(self, comment_type="Comment", text=None, comment_email=None, comment_by=None):
 		if comment_type in ["Attachment Removed", "Attachment"]:
@@ -246,6 +265,15 @@ class BuilderPage(WebsiteGenerator):
 		self.published = 1
 		self.published_at = now()
 		if self.draft_blocks:
+			# snapshot the content going live (component versions pinned) before it overwrites `blocks`
+			take_snapshot(
+				"Builder Page",
+				self.name,
+				fields=["draft_blocks", "page_data_script"],
+				snapshot_type="Publish",
+				transform=pin_components_in_page_data,
+			)
+			prune_snapshots("Builder Page", self.name, keep=KEEP_PUBLISH_SNAPSHOTS, snapshot_type="Publish")
 			self.blocks = self.draft_blocks
 			self.draft_blocks = None
 		self.save()
@@ -265,6 +293,55 @@ class BuilderPage(WebsiteGenerator):
 		self.published = 0
 		self.save()
 		capture("builder_page_unpublished", "builder")
+
+	@frappe.whitelist()
+	def create_manual_snapshot(self, label: str | None = None):
+		# snapshot the current working content (unpublished draft if present, else live)
+		field = "draft_blocks" if self.draft_blocks else "blocks"
+		if not self.get(field):
+			return
+		return take_snapshot(
+			"Builder Page",
+			self.name,
+			fields=[field, "page_data_script"],
+			snapshot_type="Manual",
+			label=label,
+			transform=pin_components_in_page_data,
+		)
+
+	@frappe.whitelist()
+	def restore_snapshot(self, snapshot: str):
+		# restore into the draft for review (non-destructive); user publishes to go live
+		snap = frappe.get_doc("Builder Snapshot", snapshot)
+		if snap.reference_doctype != "Builder Page" or snap.reference_name != self.name:
+			frappe.throw(frappe._("Snapshot does not belong to this page"))
+		data = frappe.parse_json(snap.data)
+		# stored blocks already carry pinned component versions; key depends on capture-time state
+		blocks = data.get("draft_blocks") or data.get("blocks")
+		# re-compact: older snapshots may hold pretty-printed blocks
+		if blocks:
+			blocks = compact_json(frappe.parse_json(blocks))
+		self.draft_blocks = blocks
+		if "page_data_script" in data:
+			self.page_data_script = data.get("page_data_script")
+		self.save()
+		return {"draft_blocks": blocks, "warnings": collect_restore_warnings(blocks)}
+
+	@frappe.whitelist()
+	def get_current_component_version(self, component_id: str):
+		# mint/reuse a version of the component's current state for the editor to re-pin to
+		return ensure_component_version(component_id)
+
+	@frappe.whitelist()
+	def get_outdated_component_pins(self, pins: str):
+		# of the editor's pinned (component_id, version) pairs, return those whose live component changed
+		pins = frappe.parse_json(pins) if isinstance(pins, str) else pins
+		outdated = []
+		for pin in pins or []:
+			component_id, version = pin.get("component_id"), pin.get("version")
+			if component_id and version and is_pin_outdated(component_id, version):
+				outdated.append({"component_id": component_id, "version": version})
+		return outdated
 
 	def get_context(self, context):
 		# delete default favicon
@@ -431,14 +508,22 @@ class BuilderPage(WebsiteGenerator):
 		"""Render this page in preview mode (uses draft_blocks when present), so a
 		preview can be generated for unpublished/draft pages too — not just for
 		pages reachable via their published route."""
-		set_request(method="GET", path=f"/{self.route or ''}")
-		frappe.local.request.for_preview = True
-		frappe.local.no_cache = 1
-		renderer = BuilderPageRenderer(path="")
-		renderer.docname = self.name
-		renderer.doctype = "Builder Page"
-		renderer.init_context()
-		return str(renderer.render().data, "utf-8")
+		# set_request() swaps frappe.local.request for a faked GET request. When
+		# this runs synchronously inside a real web request (e.g. run_doc_method),
+		# that clobbers the live request and drops its `after_response`, which
+		# then breaks sync_database. Save and restore the original request.
+		previous_request = getattr(frappe.local, "request", None)
+		try:
+			set_request(method="GET", path=f"/{self.route or ''}")
+			frappe.local.request.for_preview = True
+			frappe.local.no_cache = 1
+			renderer = BuilderPageRenderer(path="")
+			renderer.docname = self.name
+			renderer.doctype = "Builder Page"
+			renderer.init_context()
+			return str(renderer.render().data, "utf-8")
+		finally:
+			frappe.local.request = previous_request
 
 	def set_custom_font(self, context, font_map):
 		all_user_fonts = get_all_user_fonts()
@@ -452,11 +537,11 @@ class BuilderPage(WebsiteGenerator):
 		updates = {}
 		if self.blocks:
 			blocks = frappe.parse_json(self.blocks)
-			self.blocks = frappe.as_json(replace_component_in_blocks(blocks, target_component, replace_with))
+			self.blocks = compact_json(replace_component_in_blocks(blocks, target_component, replace_with))
 			updates["blocks"] = self.blocks
 		if self.draft_blocks:
 			draft_blocks = frappe.parse_json(self.draft_blocks)
-			self.draft_blocks = frappe.as_json(
+			self.draft_blocks = compact_json(
 				replace_component_in_blocks(draft_blocks, target_component, replace_with)
 			)
 			updates["draft_blocks"] = self.draft_blocks
@@ -488,61 +573,6 @@ def replace_component_in_blocks(blocks, target_component, replace_with) -> list[
 			)
 
 	return blocks
-
-
-def save_as_template(page_doc: BuilderPage):
-	# move all assets to www/builder_assets/{page_name}
-	if page_doc.draft_blocks:
-		page_doc.publish()
-	if not page_doc.template_name:
-		page_doc.template_name = page_doc.page_title
-
-	blocks: list[Block] = frappe.parse_json(page_doc.blocks or "[]")  # type: ignore
-	for block in blocks:
-		copy_img_to_asset_folder(block, page_doc)
-
-	page_doc.db_set("draft_blocks", None)
-	page_doc.db_set("blocks", frappe.as_json(blocks, indent=0))
-	page_doc.reload()
-	export_to_files(
-		record_list=[["Builder Page", page_doc.name, "builder_page_template"]], record_module="builder"
-	)
-
-	components = set()
-
-	def get_component(block):
-		if block.get("extendedFromComponent"):
-			component = block.get("extendedFromComponent")
-			components.add(component)
-			# export nested components as well
-			component_doc = frappe.get_cached_doc("Builder Component", component)
-			if component_doc.block:
-				component_block = frappe.parse_json(component_doc.block)
-				get_component(component_block)
-		for child in block.get("children", []) or []:
-			get_component(child)
-
-	for block in blocks:
-		get_component(block)
-
-	if components:
-		export_to_files(
-			record_list=[["Builder Component", c, "builder_component"] for c in components],
-			record_module="builder",
-		)
-
-	scripts = frappe.get_all(
-		"Builder Page Client Script",
-		filters={"parent": page_doc.name},
-		fields=["name", "builder_script"],
-	)
-	if scripts:
-		export_to_files(
-			record_list=[
-				["Builder Client Script", s.builder_script, "builder_client_script"] for s in scripts
-			],
-			record_module="builder",
-		)
 
 
 @frappe.whitelist()
@@ -1021,9 +1051,7 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 
 	# Add global function definition (only once)
 	if script_unique_id not in state["used_block_scripts"]:
-		state["global_script_tag"].append(
-			f"function client_script_{script_unique_id}(props) {{{script}}}\n"
-		)
+		state["global_script_tag"].append(f"function client_script_{script_unique_id}(props) {{{script}}}\n")
 		state["used_block_scripts"].add(script_unique_id)
 
 	# Add data attribute for selecting this specific block
@@ -1097,16 +1125,18 @@ def set_dynamic_content_placeholders(block: dict, data_key: dict | None = None):
 		value_type = dynamic_value_doc.get("type")
 
 		if value_type == "attribute":
-			current_value = block["attributes"].get(property_name, "")
-			block["attributes"][property_name] = f"{{{{ {key} or '{escape_single_quotes(current_value)}' }}}}"
+			attributes = block.setdefault("attributes", {})
+			current_value = attributes.get(property_name, "")
+			attributes[property_name] = f"{{{{ {key} or '{escape_single_quotes(current_value)}' }}}}"
 
 		elif value_type == "style":
-			if not block["attributes"].get("style"):
-				block["attributes"]["style"] = ""
+			attributes = block.setdefault("attributes", {})
+			if not attributes.get("style"):
+				attributes["style"] = ""
 
 			css_property = camel_case_to_kebab_case(property_name)
-			current_value = block["baseStyles"].get(property_name, "") or ""
-			block["attributes"]["style"] += (
+			current_value = (block.get("baseStyles") or {}).get(property_name, "") or ""
+			attributes["style"] += (
 				f"{css_property}: {{{{ {key} or '{escape_single_quotes(current_value)}' }}}};"
 			)
 
@@ -1152,14 +1182,12 @@ def extend_block_with_component(block: dict) -> dict:
 	if not block.get("extendedFromComponent"):
 		return block
 
-	component = frappe.get_cached_value(
-		"Builder Component",
-		block["extendedFromComponent"],
-		["block", "name"],
-		as_dict=True,
+	# honor a pinned component version on snapshot-restored blocks (else latest live)
+	component_block_json = resolve_component_block(
+		block["extendedFromComponent"], block.get("componentVersion")
 	)
 
-	component_block = frappe.parse_json(component.block if component else "{}")
+	component_block = frappe.parse_json(component_block_json or "{}")
 	if component_block:
 		extend_block(component_block, block)
 		return component_block
@@ -1288,10 +1316,10 @@ def set_fonts_from_html(soup, font_map):
 
 
 def extend_block(block, overridden_block):
-	block["baseStyles"].update(overridden_block["baseStyles"])
-	block["mobileStyles"].update(overridden_block["mobileStyles"])
-	block["tabletStyles"].update(overridden_block["tabletStyles"])
-	block["attributes"].update(overridden_block["attributes"])
+	block.setdefault("baseStyles", {}).update(overridden_block.get("baseStyles") or {})
+	block.setdefault("mobileStyles", {}).update(overridden_block.get("mobileStyles") or {})
+	block.setdefault("tabletStyles", {}).update(overridden_block.get("tabletStyles") or {})
+	block.setdefault("attributes", {}).update(overridden_block.get("attributes") or {})
 
 	dynamicValues = overridden_block.get("dynamicValues") or []
 	dynamicValuesProperties = [dv.get("property") for dv in dynamicValues]
@@ -1315,7 +1343,7 @@ def extend_block(block, overridden_block):
 		block["rawStyles"] = {}
 	block["rawStyles"].update(overridden_block.get("rawStyles", {}))
 
-	block["classes"].extend(overridden_block["classes"])
+	block.setdefault("classes", []).extend(overridden_block.get("classes") or [])
 
 	if not block.get("props"):
 		block["props"] = {}
