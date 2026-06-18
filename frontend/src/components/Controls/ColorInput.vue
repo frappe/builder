@@ -28,7 +28,7 @@
 								:referenceElementSelector="autocompleteReferenceElementSelector"
 								@keydown.enter="handleEnter"
 								@focus="togglePopover"
-								:placeholder="placeholder"
+								:placeholder="displayPlaceholder"
 								:modelValue="displayValue"
 								:getOptions="getOptions"
 								:actionButton="
@@ -206,6 +206,15 @@ const displayValue = computed(() => {
 		return getVariableName(props.modelValue) ?? props.modelValue;
 	}
 	return props.modelValue;
+});
+
+// resolve the placeholder (e.g. inherited/cascading color) to a variable name when it is a CSS variable
+const displayPlaceholder = computed(() => {
+	const placeholder = props.placeholder;
+	if (typeof placeholder === "string" && (placeholder.startsWith("var(--") || placeholder.startsWith("--"))) {
+		return getVariableName(placeholder) ?? placeholder;
+	}
+	return placeholder;
 });
 
 const emit = defineEmits(["update:modelValue"]);
