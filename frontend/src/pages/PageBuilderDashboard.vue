@@ -9,7 +9,6 @@
 	</div>
 	<BuilderCommandPalette />
 	<TemplatesDialog />
-	<PersonaSurveyDialog />
 </template>
 <script setup lang="ts">
 import BuilderCommandPalette from "@/components/BuilderCommandPalette.vue";
@@ -17,6 +16,37 @@ import DashboardContent from "@/components/DashboardContent.vue";
 import DashboardHead from "@/components/DashboardHead.vue";
 import DashboardSidebar from "@/components/DashboardSidebar.vue";
 import DashboardToolbar from "@/components/DashboardToolbar.vue";
-import PersonaSurveyDialog from "@/components/PersonaSurveyDialog.vue";
 import TemplatesDialog from "@/components/Templates/TemplatesDialog.vue";
+import { builderSettings } from "@/data/builderSettings";
+import router, { sessionUser } from "@/router";
+import { useTelemetry } from "frappe-ui/frappe";
+import { watch } from "vue";
+
+// Keep the reactive object (don't destructure) so `isEnabled` stays reactive —
+// it resolves asynchronously after the plugin's is_enabled() call returns.
+const telemetry = useTelemetry();
+
+// TEMP (local testing): telemetry — and therefore this survey — is disabled on
+// dev benches (Pulse requires FrappeCloud). To exercise the flow locally, open
+// the dashboard with `?persona_survey=test2`; that forces the redirect to the
+// survey page. Remove this block before shipping.
+const devForceShow = new URLSearchParams(window.location.search).get("persona_survey") === "test2";
+
+// Only ask once telemetry is confirmed on (capture is a no-op otherwise — no
+// point surfacing a survey we can't record) and the survey hasn't run yet.
+watch(
+	[() => telemetry.isEnabled, () => builderSettings.doc, sessionUser],
+	() => {
+		if (!telemetry.isEnabled && !devForceShow) return;
+		if (!builderSettings.doc) return;
+		// devForceShow ignores the show-once flag so the flow can be re-run on reload
+		if (builderSettings.doc.persona_survey_done && !devForceShow) return;
+		if (!sessionUser.value || sessionUser.value === "Guest") return;
+		router.replace({
+			name: "persona-survey",
+			query: devForceShow ? { persona_survey: "test2" } : {},
+		});
+	},
+	{ immediate: true },
+);
 </script>
