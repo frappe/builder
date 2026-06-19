@@ -1,21 +1,23 @@
 <template>
 	<div class="flex h-screen items-center justify-center bg-surface-gray-1 p-5">
 		<div class="flex w-full max-w-lg flex-col gap-6 rounded-lg border bg-surface-base p-8 shadow-sm">
+			<img src="/builder_logo.png" alt="Builder" class="h-8 self-start" />
 			<div class="flex flex-col gap-1">
 				<h1 class="text-xl font-semibold text-ink-gray-9">Help us tailor Builder to you</h1>
 				<p class="text-p-sm text-ink-gray-6">
-					A few quick questions so we can point you at the right templates and guides. Optional, takes 15
-					seconds.
+					A few quick questions so we can point you at the right templates and guides.
 				</p>
 			</div>
 			<div class="flex flex-col gap-5">
 				<div v-for="q in questions" :key="q.key" class="flex flex-col gap-2">
-					<label class="text-xs leading-5 text-ink-gray-6">{{ q.label }}</label>
-					<Select v-model="answers[q.key]" :placeholder="q.placeholder" :options="q.options" />
+					<Select
+						v-model="answers[q.key]"
+						:label="q.label"
+						:placeholder="q.placeholder"
+						:options="q.options" />
 				</div>
 			</div>
-			<div class="flex justify-between">
-				<Button variant="ghost" @click="dismiss">Skip</Button>
+			<div class="flex justify-end">
 				<Button variant="solid" :disabled="!hasAnyAnswer" @click="submit">Submit</Button>
 			</div>
 		</div>

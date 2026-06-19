@@ -22,18 +22,14 @@ import router, { sessionUser } from "@/router";
 import { useTelemetry } from "frappe-ui/frappe";
 import { watch } from "vue";
 
-// Keep the reactive object (don't destructure) so `isEnabled` stays reactive —
-// it resolves asynchronously after the plugin's is_enabled() call returns.
 const telemetry = useTelemetry();
 
 // TEMP (local testing): telemetry — and therefore this survey — is disabled on
 // dev benches (Pulse requires FrappeCloud). To exercise the flow locally, open
-// the dashboard with `?persona_survey=test2`; that forces the redirect to the
+// the dashboard with `?persona_survey=test`; that forces the redirect to the
 // survey page. Remove this block before shipping.
-const devForceShow = new URLSearchParams(window.location.search).get("persona_survey") === "test2";
+const devForceShow = new URLSearchParams(window.location.search).get("persona_survey") === "test";
 
-// Only ask once telemetry is confirmed on (capture is a no-op otherwise — no
-// point surfacing a survey we can't record) and the survey hasn't run yet.
 watch(
 	[() => telemetry.isEnabled, () => builderSettings.doc, sessionUser],
 	() => {
@@ -44,7 +40,7 @@ watch(
 		if (!sessionUser.value || sessionUser.value === "Guest") return;
 		router.replace({
 			name: "persona-survey",
-			query: devForceShow ? { persona_survey: "test2" } : {},
+			query: devForceShow ? { persona_survey: "test" } : {},
 		});
 	},
 	{ immediate: true },
