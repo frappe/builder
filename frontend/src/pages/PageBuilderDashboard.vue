@@ -23,11 +23,7 @@ import { useTelemetry } from "frappe-ui/frappe";
 import { watch } from "vue";
 
 const telemetry = useTelemetry();
-
-// TEMP (local testing): telemetry — and therefore this survey — is disabled on
-// dev benches (Pulse requires FrappeCloud). To exercise the flow locally, open
-// the dashboard with `?persona_survey=test`; that forces the redirect to the
-// survey page. Remove this block before shipping.
+// Dev benches have telemetry (and thus the survey) off; ?persona_survey=test forces the redirect.
 const devForceShow = new URLSearchParams(window.location.search).get("persona_survey") === "test";
 
 watch(
@@ -35,7 +31,6 @@ watch(
 	() => {
 		if (!telemetry.isEnabled && !devForceShow) return;
 		if (!builderSettings.doc) return;
-		// devForceShow ignores the show-once flag so the flow can be re-run on reload
 		if (builderSettings.doc.persona_survey_done && !devForceShow) return;
 		if (!sessionUser.value || sessionUser.value === "Guest") return;
 		router.replace({

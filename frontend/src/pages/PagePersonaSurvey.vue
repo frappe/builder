@@ -35,11 +35,8 @@ import { computed, reactive } from "vue";
 // (anonymized, stable) user id, so this single event can be joined to the
 // rest of the user's funnel for persona-wise segmentation.
 const telemetry = useTelemetry();
-
-// TEMP (local testing): telemetry is disabled on dev benches (Pulse requires
-// FrappeCloud), so capture() is a no-op there. Append `?persona_survey=test2`
-// when navigating here to log the payload that would be sent. Remove before shipping.
-const devForceShow = new URLSearchParams(window.location.search).get("persona_survey") === "test2";
+// Dev benches have telemetry off; ?persona_survey=test logs the payload instead.
+const devForceShow = new URLSearchParams(window.location.search).get("persona_survey") === "test";
 
 type QuestionKey = "role" | "use_case" | "source";
 
@@ -98,37 +95,19 @@ const answers = reactive<Record<QuestionKey, string | undefined>>({
 
 const hasAnyAnswer = computed(() => Object.values(answers).some(Boolean));
 
-function markDone() {
-	// Site-wide flag (Builder Settings is a Single). Acceptable show-once proxy
-	// for single-user trial sites; revisit if Builder gains multi-user trials.
-	// Update the local doc optimistically so the dashboard's redirect guard sees
-	// the survey as done the moment we navigate back (the submit is async).
+function submit() {
+	// Optimistically flag done so the dashboard's redirect guard sees it before the async save lands.
 	if (builderSettings.doc) builderSettings.doc.persona_survey_done = 1;
 	builderSettings.setValue.submit({ persona_survey_done: 1 });
-}
 
-function track(event: string, props: Record<string, any> = {}) {
-	// In dev, capture() is a no-op (telemetry off) — log so the flow is observable.
-	if (devForceShow) console.log("[persona-survey] capture", event, props);
-	telemetry.capture(event, props);
-}
-
-function finish() {
-	markDone();
-	router.replace({ name: "home" });
-}
-
-function submit() {
-	track("builder_persona_submitted", {
+	const props = {
 		role: answers.role || null,
 		use_case: answers.use_case || null,
 		source: answers.source || null,
-	});
-	finish();
-}
+	};
+	if (devForceShow) console.log("[persona-survey] capture", props);
+	telemetry.capture("builder_persona_submitted", props);
 
-function dismiss() {
-	track("builder_persona_skipped");
-	finish();
+	router.replace({ name: "home" });
 }
 </script>
