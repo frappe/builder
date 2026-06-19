@@ -276,6 +276,38 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
+	def test_repeater_with_malformed_data_key_renders_empty(self):
+		# A corrupt dataKey.key (e.g. an array stringified to "[object Object],...") must
+		# not crash the page render with an invalid-Jinja error — the repeater should just
+		# render no rows.
+		body = Block(element="div", originalElement="body")
+		repeater_block = Block(element="div", isRepeaterBlock=True)
+		item_name = Block(element="h2")
+
+		repeater_block.attach_data_key("[object Object],[object Object]", "innerHTML")
+		item_name.set_dynamic_value("name", "key", "innerHTML")
+
+		repeater_block.attach_children(item_name)
+		body.attach_children(repeater_block)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Malformed Repeater Test",
+				"published": 1,
+				"route": "/malformed-repeater-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/malformed-repeater-test")
+			self.assertIn("Malformed Repeater Test", content)  # page rendered, no 500
+			self.assertNotIn("[object Object]", content)
+			self.assertNotIn("key_invalid", content)
+		finally:
+			page.delete()
+
 	def test_component_dynamic_values(self):
 		"Test if dynamic values in component are overridden correctly by the page using it"
 		component_root = Block(element="div", blockId="comp-block-1")

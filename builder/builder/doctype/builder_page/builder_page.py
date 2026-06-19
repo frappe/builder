@@ -989,6 +989,14 @@ def get_loop_info(block: dict, data_key: dict | None, props_stack: dict) -> dict
 		else:
 			full_key = iterator_key
 
+		if not is_safe_data_key(full_key):
+			loop_var = f"key_invalid_{block.get('blockId', 'x')}"
+			return {
+				"loop_var": loop_var,
+				"iterator_key": "[]",
+				"data_key": {"key": loop_var, "comesFrom": "dataScript"},
+			}
+
 		loop_var = f"key_{full_key.replace('.', '__')}"
 
 		return {
@@ -1471,9 +1479,22 @@ def extract_data_key(data_key):
 	return None
 
 
+# A data key is a dotted path of Jinja-safe identifiers (e.g. "features" or "props.items").
+# Anything else (spaces, commas, brackets — e.g. an array stringified to "[object Object],...")
+# would generate invalid Jinja and crash the page render.
+SAFE_DATA_KEY = re.compile(r"^\w[\w.]*$")
+
+
+def is_safe_data_key(key) -> bool:
+	return isinstance(key, str) and bool(SAFE_DATA_KEY.match(key))
+
+
 def jinja_safe_key(key):
 	# convert a.b to (a or {}).get('b', {})
 	# to avoid undefined error in jinja
+	if not is_safe_data_key(key):
+		# render nothing rather than emitting a broken Jinja expression
+		return "{}"
 	keys = (key or "").split(".")
 	key = f"({keys[0]} or {{}})"
 	for k in keys[1:]:
