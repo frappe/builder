@@ -32,10 +32,10 @@
 		</template>
 		<template #body>
 			<div
-				class="shadow-popover-body max-h-[80vh] w-64 select-none overflow-y-auto rounded-lg border border-outline-gray-1 bg-surface-white p-3 shadow-xl">
+				class="shadow-popover-body max-h-[80vh] w-64 select-none overflow-y-auto rounded-lg border border-outline-gray-1 bg-surface-base p-3 shadow-xl">
 				<div class="mb-3 space-y-3">
 					<div
-						class="flex h-24 w-full items-center justify-center overflow-hidden rounded-md border border-outline-gray-1 bg-surface-white"
+						class="flex h-24 w-full items-center justify-center overflow-hidden rounded-md border border-outline-gray-1 bg-surface-base"
 						style="
 							background-image: conic-gradient(
 								var(--surface-gray-1) 90deg,
@@ -72,7 +72,7 @@
 						</div>
 						<div class="flex gap-2">
 							<div
-								class="relative flex aspect-square w-[64px] cursor-crosshair items-center justify-center overflow-hidden rounded border border-outline-gray-2 bg-surface-white p-1"
+								class="relative flex aspect-square w-[64px] cursor-crosshair items-center justify-center overflow-hidden rounded border border-outline-gray-2 bg-surface-base p-1"
 								style="
 									background-image: conic-gradient(
 										var(--surface-gray-1) 90deg,

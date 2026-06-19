@@ -5,7 +5,7 @@
 		</DropdownMenuTrigger>
 		<DropdownMenuPortal>
 			<DropdownMenuContent
-				class="z-50 min-w-[120px] rounded-lg bg-surface-white p-1 text-sm shadow-xl"
+				class="z-50 min-w-[120px] rounded-lg bg-surface-base p-1 text-sm shadow-xl"
 				:side-offset="0"
 				align="start"
 				avoid-collisions>

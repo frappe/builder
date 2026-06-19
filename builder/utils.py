@@ -13,7 +13,6 @@ import yaml
 from frappe.model.document import Document
 from frappe.modules.import_file import import_file_by_path
 from frappe.utils import get_url
-from frappe.utils.html_utils import unescape_html
 from frappe.utils.safe_exec import (
 	SERVER_SCRIPT_FILE_PREFIX,
 	FrappeTransformer,
@@ -27,6 +26,10 @@ from frappe.utils.safe_exec import (
 from RestrictedPython import compile_restricted
 from RestrictedPython import safe_globals as restricted_safe_globals
 from werkzeug.routing import Rule
+
+
+def compact_json(obj) -> str:
+	return frappe.as_json(obj, indent=None, separators=(",", ":"))
 
 
 def has_page_permission(ptype: str = "write", message: str | None = None):
@@ -105,7 +108,6 @@ class Block:
 	customAttributes: ClassVar[dict] = {}
 	dynamicValues: ClassVar[list[BlockDataKey]] = []
 	blockClientScript: str = ""
-	blockDataScript: str = ""
 	props: ClassVar[dict] = {}
 
 	def __init__(self, **kwargs) -> None:
@@ -172,7 +174,6 @@ class Block:
 			"customAttributes": self.customAttributes,
 			"dynamicValues": self.dynamicValues,
 			"blockClientScript": self.blockClientScript,
-			"blockDataScript": self.blockDataScript,
 			"props": self.props,
 		}
 
@@ -306,10 +307,6 @@ def sync_page_templates():
 	builder_script_path = frappe.get_module_path("builder", "builder_script")
 	make_records(builder_script_path)
 
-	print("Syncing Builder Page Templates")
-	builder_page_template_path = frappe.get_module_path("builder", "builder_page_template")
-	make_records(builder_page_template_path)
-
 
 def sync_block_templates():
 	print("Syncing Builder Block Templates")
@@ -331,7 +328,7 @@ def make_records(path):
 			import_file_by_path(f"{path}/{fname}/{fname}.json")
 
 
-def copy_img_to_asset_folder(block, page_doc):
+def copy_img_to_asset_folder(block, page_doc, app=None):
 	def safe_get(obj, attr, default=None):
 		if isinstance(obj, dict):
 			return obj.get(attr, default)
@@ -362,10 +359,10 @@ def copy_img_to_asset_folder(block, page_doc):
 			files = frappe.get_all("File", filters={"file_url": src}, fields=["name"])
 			if files:
 				_file = frappe.get_doc("File", files[0].name)
-				assets_folder_path = get_template_assets_folder_path(page_doc)
+				assets_folder_path = get_template_assets_folder_path(page_doc, app=app)
 				shutil.copy(_file.get_full_path(), assets_folder_path)
 
-			new_src = f"/builder_assets/{page_doc.name}/{src.split('/')[-1]}"
+			new_src = f"{get_template_assets_public_path(page_doc)}/{src.split('/')[-1]}"
 			if attributes:
 				if isinstance(attributes, dict):
 					attributes["src"] = new_src
@@ -374,21 +371,51 @@ def copy_img_to_asset_folder(block, page_doc):
 
 	children = safe_get(block, "children", [])
 	for child in children or []:
-		copy_img_to_asset_folder(child, page_doc)
+		copy_img_to_asset_folder(child, page_doc, app=app)
 
 
-def get_template_assets_folder_path(page_doc):
-	path = os.path.join(frappe.get_app_path("builder"), "www", "builder_assets", page_doc.name)
+def get_template_assets_subfolder(page_doc):
+	"""Relative folder under www/builder_assets for a page's exported assets.
+
+	Template-group pages are namespaced under their group folder so multiple
+	templates can ship assets without colliding."""
+	if getattr(page_doc, "is_template", None) and getattr(page_doc, "template_group", None):
+		return os.path.join(frappe.scrub(page_doc.template_group), str(page_doc.name))
+	return str(page_doc.name)
+
+
+def get_template_assets_public_path(page_doc):
+	"""Public URL prefix (no trailing slash) for a page's exported assets.
+
+	App-agnostic: whichever app/site serves the assets does so under
+	/builder_assets/, so only the filesystem write root (below) varies by app."""
+	return f"/builder_assets/{get_template_assets_subfolder(page_doc).replace(os.sep, '/')}"
+
+
+def template_target_app():
+	"""App whose www/builder_assets directory holds exported template assets.
+	Defaults to builder; the hub site sets template_target_app=builder_hub so
+	template authoring on the hub writes assets into the hub app."""
+	return frappe.conf.get("template_target_app") or "builder"
+
+
+def get_template_assets_folder_path(page_doc, app=None):
+	path = os.path.join(
+		frappe.get_app_path(app or template_target_app()),
+		"www",
+		"builder_assets",
+		get_template_assets_subfolder(page_doc),
+	)
 	if not os.path.exists(path):
 		os.makedirs(path)
 	return path
 
 
-def get_builder_page_preview_file_paths(page_doc):
+def get_builder_page_preview_file_paths(page_doc, app=None):
 	public_path, local_path = None, None
 	if page_doc.is_template:
-		local_path = os.path.join(get_template_assets_folder_path(page_doc), "preview.webp")
-		public_path = f"/builder_assets/{page_doc.name}/preview.webp"
+		local_path = os.path.join(get_template_assets_folder_path(page_doc, app=app), "preview.webp")
+		public_path = f"{get_template_assets_public_path(page_doc)}/preview.webp"
 	else:
 		file_name = f"{page_doc.name}-preview.webp"
 		local_path = os.path.join(frappe.local.site_path, "public", "files", file_name)
@@ -673,15 +700,6 @@ def hash(s):
 
 def to_safe_json(data):
 	return frappe.as_json(data or {})
-
-
-def execute_script_and_combine(prev_block_data, block_data_script, props, block_id):
-	props = frappe._dict(frappe.parse_json(props or "{}"))
-	block_data = frappe._dict()
-	_locals = dict(block=to_dict_with_fallback(prev_block_data or {}), props=props)
-	execute_script(unescape_html(block_data_script), _locals, f"block_script_for_{block_id}")
-	block_data.update(_locals["block"])
-	return combine(prev_block_data, block_data)
 
 
 class CompactDumper(yaml.Dumper):

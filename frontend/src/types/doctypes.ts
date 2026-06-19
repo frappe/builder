@@ -1,16 +1,37 @@
 interface DocType {
+    name: string;
+    creation: string;
+    modified: string;
+    owner: string;
+    modified_by: string;
+  }
+
+  interface ChildDocType extends DocType {
+    parent?: string;
+    parentfield?: string;
+    parenttype?: string;
+    idx?: number;
+  }
+
+// Template picker shapes returned by builder.api.get_template_groups
+// (built from the Builder Hub catalog). Asset URLs are absolute.
+export interface TemplatePageSummary {
 	name: string;
-	creation: string;
-	modified: string;
-	owner: string;
-	modified_by: string;
+	page_title?: string;
+	preview?: string;
+	route?: string;
+	template_group?: string;
+	/** absolute URL of the published page on the hub; absent for local templates */
+	live_url?: string | null;
 }
 
-interface ChildDocType extends DocType {
-	parent?: string;
-	parentfield?: string;
-	parenttype?: string;
-	idx?: number;
+export interface TemplateGroup {
+	name: string;
+	title: string;
+	description?: string;
+	preview?: string;
+	order?: number | null;
+	pages: TemplatePageSummary[];
 }
 
 // Last updated: 2026-05-24 12:00:00.000000
@@ -47,56 +68,58 @@ export interface BlockTemplate extends DocType {
 	sort_order?: number;
 }
 
-// Last updated: 2026-05-14 22:54:25.353324
+// Last updated: 2026-06-04 10:00:00.000000
 export interface BuilderPage extends DocType {
-	/** Page Name: Data */
-	page_name?: string;
-	/** Route: Data */
-	route?: string;
-	/** Published: Check */
-	published: 0 | 1;
-	/** Blocks: Long Text */
-	blocks?: any;
-	/** Page Preview: Data */
-	preview?: string;
-	/** Title: Data */
-	page_title?: string;
-	/** Page Data Script: Code */
-	page_data_script?: string;
-	/** Dynamic Route: Check */
-	dynamic_route: 0 | 1;
-	/** Draft Blocks: Long Text */
-	draft_blocks?: any;
-	/** Image: Attach Image */
-	meta_image?: string;
-	/** Description: Small Text */
-	meta_description?: string;
-	/** Canonical URL: Data */
-	canonical_url?: string;
-	/** Language: Data */
-	language?: string;
-	/** Client Scripts: Table MultiSelect (Builder Page Client Script) */
-	client_scripts: BuilderPageClientScript[];
-	/** Is Template: Check */
-	is_template: 0 | 1;
-	/** Favicon: Attach Image */
-	favicon?: string;
-	/** Authenticated Access: Check */
-	authenticated_access: 0 | 1;
-	/** Disable Indexing: Check */
-	disable_indexing: 0 | 1;
-	/** Project Folder: Link (Builder Project Folder) */
-	project_folder?: string;
-	/** Head HTML: Code */
-	head_html?: string;
-	/** Body HTML: Code */
-	body_html?: string;
-	/** Is Standard: Check */
-	is_standard: 0 | 1;
-	/** App: Select */
-	app?: any;
-	/** Published At: Datetime */
-	published_at?: string;
+  /** Page Name: Data */
+  page_name?: string;
+  /** Route: Data */
+  route?: string;
+  /** Published: Check */
+  published: 0 | 1;
+  /** Blocks: Long Text */
+  blocks?: any;
+  /** Page Preview: Data */
+  preview?: string;
+  /** Title: Data */
+  page_title?: string;
+  /** Page Data Script: Code */
+  page_data_script?: string;
+  /** Dynamic Route: Check */
+  dynamic_route: 0 | 1;
+  /** Draft Blocks: Long Text */
+  draft_blocks?: any;
+  /** Image: Attach Image */
+  meta_image?: string;
+  /** Description: Small Text */
+  meta_description?: string;
+  /** Canonical URL: Data */
+  canonical_url?: string;
+  /** Language: Data */
+  language?: string;
+  /** Client Scripts: Table MultiSelect (Builder Page Client Script) */
+  client_scripts: BuilderPageClientScript[];
+  /** Is Template: Check */
+  is_template: 0 | 1;
+  /** Template Group: Data */
+  template_group?: string;
+  /** Favicon: Attach Image */
+  favicon?: string;
+  /** Authenticated Access: Check */
+  authenticated_access: 0 | 1;
+  /** Disable Indexing: Check */
+  disable_indexing: 0 | 1;
+  /** Project Folder: Link (Builder Project Folder) */
+  project_folder?: string;
+  /** Head HTML: Code */
+  head_html?: string;
+  /** Body HTML: Code */
+  body_html?: string;
+  /** Is Standard: Check */
+  is_standard: 0 | 1;
+  /** App: Select */
+  app?: any;
+  /** Published At: Datetime */
+  published_at?: string;
 }
 
 // Last updated: 2024-11-13 20:08:54.615438
@@ -107,6 +130,20 @@ export interface BuilderClientScript extends DocType {
 	script_type: string;
 	/** Public URL: Read Only */
 	public_url?: string;
+}
+
+// Last updated: 2026-06-10 00:00:00.000000
+export interface BuilderSnapshot extends DocType {
+	/** Reference Doctype: Link (DocType) */
+	reference_doctype: string;
+	/** Reference Name: Data */
+	reference_name: string;
+	/** Snapshot Type: Data */
+	snapshot_type?: string;
+	/** Label: Data */
+	label?: string;
+	/** Data: Code (JSON) */
+	data: string;
 }
 
 // Last updated: 2024-11-13 20:08:24.187664
@@ -143,34 +180,36 @@ export interface BuilderComponent extends DocType {
 	component_id?: string;
 }
 
-// Last updated: 2026-01-24 12:49:59.610151
+// Last updated: 2026-06-05 16:00:00.000000
 export interface BuilderSettings extends DocType {
-	/** Script: Code */
-	script?: string;
-	/** Style: Code */
-	style?: string;
-	/** Script Public URL: Read Only */
-	script_public_url?: string;
-	/** Style Public URL: Read Only */
-	style_public_url?: string;
-	/** Favicon: Attach Image */
-	favicon?: string;
-	/** Home Page: Data */
-	home_page?: string;
-	/** Auto convert images to WebP: Check */
-	auto_convert_images_to_webp: 0 | 1;
-	/** Disable Auto Dark Mode: Check */
-	disable_auto_dark_mode: 0 | 1;
-	/** Default Language: Data */
-	default_language?: string;
-	/** Head HTML: Code */
-	head_html?: string;
-	/** Body HTML: Code */
-	body_html?: string;
-	/** Execute Block Scripts in Editor: Select */
-	execute_block_scripts_in_editor?: "Don't Execute" | "Restricted" | "Unrestricted";
-	/** Restrict Click Handlers: Check */
-	restrict_click_handlers: 0 | 1;
-	/** AI API Key: Password */
-	ai_api_key?: string;
+  /** Script: Code */
+  script?: string;
+  /** Style: Code */
+  style?: string;
+  /** Script Public URL: Read Only */
+  script_public_url?: string;
+  /** Style Public URL: Read Only */
+  style_public_url?: string;
+  /** Favicon: Attach Image */
+  favicon?: string;
+  /** Home Page: Data */
+  home_page?: string;
+  /** Auto convert images to WebP: Check */
+  auto_convert_images_to_webp: 0 | 1;
+  /** Disable Auto Dark Mode: Check */
+  disable_auto_dark_mode: 0 | 1;
+  /** Default Language: Data */
+  default_language?: string;
+  /** Head HTML: Code */
+  head_html?: string;
+  /** Body HTML: Code */
+  body_html?: string;
+  /** Execute Block Scripts in Editor: Select */
+  execute_block_scripts_in_editor?: 'Don\'t Execute' | 'Restricted' | 'Unrestricted';
+  /** Restrict Click Handlers: Check */
+  restrict_click_handlers: 0 | 1;
+  /** AI API Key: Password */
+  ai_api_key?: string;
+  /** Persona Survey Done: Check */
+  persona_survey_done: 0 | 1;
 }

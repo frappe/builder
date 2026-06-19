@@ -70,7 +70,9 @@ def retry_add_domain(domain: str) -> str:
 
 @frappe.whitelist()
 def set_host_name(domain: str) -> str:
-	return fc_call("set_host_name", domain=domain)
+	result = fc_call("set_host_name", domain=domain)
+	capture("builder_custom_domain_set_primary", "builder")
+	return result
 
 
 @frappe.whitelist()

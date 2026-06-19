@@ -101,10 +101,12 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 	};
 
 	const handleMarqueeStart = (ev: MouseEvent) => {
-		ev.preventDefault();
 		if (!shouldStartMarquee(ev)) {
 			return;
 		}
+		// preventDefault only once we're committing to a marquee — calling it
+		// unconditionally swallows native caret placement inside editable text blocks
+		ev.preventDefault();
 
 		marquee.active = true;
 		marquee.visible = false;

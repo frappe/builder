@@ -2,7 +2,7 @@
 	<div
 		:class="[
 			'color-picker-container flex flex-col gap-2',
-			renderMode === 'inline' ? 'w-full' : 'rounded-lg bg-surface-white p-3 shadow-lg',
+			renderMode === 'inline' ? 'w-full' : 'rounded-lg bg-surface-base p-3 shadow-lg',
 		]">
 		<div
 			ref="colorMap"
@@ -162,7 +162,7 @@ const hueMapStyle = computed(() => ({
 }));
 
 const alphaMapStyle = computed(() => ({
-	background: `linear-gradient(90deg, transparent, ${liveSolidColor.value}), repeating-conic-gradient(#ccc 0% 25%, var(--surface-white) 0% 50%) 0 0 / 8px 8px`,
+	background: `linear-gradient(90deg, transparent, ${liveSolidColor.value}), repeating-conic-gradient(#ccc 0% 25%, var(--surface-base) 0% 50%) 0 0 / 8px 8px`,
 }));
 
 const selectorClass =

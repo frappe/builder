@@ -31,6 +31,13 @@ export function useBlockEventHandlers(target: HTMLElement) {
 		canvasStore.editableBlock = null;
 		const block = getBlock(e);
 		if (!block) return;
+		if (block.isImage()) {
+			nextTick(() => {
+				builderStore.openImageUpload = true;
+			});
+			e.stopPropagation();
+			return;
+		}
 		if (block.isText() || block.isLink() || block.isButton()) {
 			canvasStore.editableBlock = block;
 			e.stopPropagation();
@@ -96,5 +103,4 @@ const selectBlock = (e: MouseEvent) => {
 	if (!["Code", "Chat"].includes(builderStore.leftPanelActiveTab)) {
 		builderStore.leftPanelActiveTab = "Layers";
 	}
-	builderStore.rightPanelActiveTab = "Properties";
 };

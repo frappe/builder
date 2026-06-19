@@ -20,7 +20,7 @@ declare type BlockProps = Record<
 		label?: string;
 		isDynamic: boolean;
 		isPassedDown: boolean;
-		comesFrom: "props" | "dataScript" | "blockDataScript" | null;
+		comesFrom: "props" | "dataScript" | null;
 		value: string?;
 		isStandard?: boolean;
 		propOptions?: BlockPropOptions;
@@ -29,7 +29,7 @@ declare type BlockProps = Record<
 
 declare type BlockVisibilityCondition = {
 	key: string | undefined;
-	comesFrom: "props" | "dataScript" | "blockDataScript" | undefined;
+	comesFrom: "props" | "dataScript" | undefined;
 };
 
 declare interface BlockAttributeMap {
@@ -54,6 +54,7 @@ declare interface BlockOptions {
 	dynamicValues?: Array<BlockDataKey>;
 	draggable?: boolean;
 	editorConfig?: BlockEditorConfig;
+	componentVersion?: string;
 	[key: string]: any;
 }
 
@@ -103,7 +104,6 @@ declare type HashString = `#${string}`;
 declare type RGBString = `rgb(${number}, ${number}, ${number})`;
 
 declare type LeftSidebarTabOption = "Blocks" | "Layers" | "Assets" | "Code" | "Chat" | "variables";
-declare type RightSidebarTabOption = "Properties" | "Script" | "Options";
 
 declare type BuilderMode = "select" | "text" | "container" | "image" | "repeater" | "move";
 
@@ -138,7 +138,7 @@ declare type FileDoc = {
 declare interface BlockDataKey {
 	key?: string;
 	type?: BlockDataKeyType;
-	comesFrom?: "props" | "dataScript" | "blockDataScript";
+	comesFrom?: "props" | "dataScript";
 	property?: string;
 }
 

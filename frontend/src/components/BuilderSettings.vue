@@ -1,9 +1,9 @@
 <template>
 	<div class="flex h-[88vh] max-h-[800px] overflow-hidden">
 		<div class="flex w-48 shrink-0 flex-col gap-5 bg-surface-gray-1 p-4 px-2">
-			<span class="px-2 text-lg font-semibold text-ink-gray-9">Settings</span>
+			<span class="text-xl-semibold px-2 text-ink-gray-9">Settings</span>
 			<div class="flex flex-col" v-for="(item, index) in settingsSidebarItems" :key="index">
-				<span class="mb-2 px-2 text-base font-medium text-ink-gray-5">
+				<span class="text-base-medium mb-2 px-2 text-ink-gray-5">
 					{{ item.title }}
 				</span>
 				<Button
@@ -20,8 +20,8 @@
 				</Button>
 			</div>
 		</div>
-		<div class="flex flex-1 flex-col gap-5 overflow-hidden bg-surface-white p-14 px-16 pb-0">
-			<h2 class="text-xl font-semibold leading-none text-ink-gray-9">{{ selectedItemDoc?.title }}</h2>
+		<div class="flex flex-1 flex-col gap-5 overflow-hidden bg-surface-base p-14 px-16 pb-0">
+			<h2 class="text-3xl-semibold leading-none text-ink-gray-9">{{ selectedItemDoc?.title }}</h2>
 			<Button
 				icon="lucide-x"
 				variant="subtle"
@@ -37,6 +37,7 @@
 <script setup lang="ts">
 import GlobalRedirects from "@/components/Settings/GlobalRedirects.vue";
 import PageCode from "@/components/Settings/PageCode.vue";
+import PageRobots from "@/components/Settings/PageRobots.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
 import usePageStore from "@/stores/pageStore";
@@ -131,6 +132,13 @@ const globalSettings = {
 			component: GlobalRedirects,
 			title: "Redirects",
 			icon: "lucide-shuffle",
+		},
+		{
+			label: "Robots",
+			value: "global_robots",
+			component: PageRobots,
+			title: "Robots.txt",
+			icon: "lucide-bot",
 		},
 		...(window.is_fc_site || window.is_developer_mode
 			? [
