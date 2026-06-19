@@ -112,6 +112,7 @@ declare module 'vue' {
     PageRobots: typeof import('./src/components/Settings/PageRobots.vue')['default']
     PageScript: typeof import('./src/components/PageScript.vue')['default']
     PanelResizer: typeof import('./src/components/PanelResizer.vue')['default']
+    PersonaSurveyDialog: typeof import('./src/components/PersonaSurveyDialog.vue')['default']
     PlacementControl: typeof import('./src/components/PlacementControl.vue')['default']
     Play: typeof import('./src/components/Icons/Play.vue')['default']
     PropertyControlInput: typeof import('./src/components/Controls/PropertyControlInput.vue')['default']
