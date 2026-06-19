@@ -31,11 +31,14 @@ generate_page = Tool(
 				"type": "string",
 				"description": (
 					"A concise spec of the page to build, drawn from the approved plan and "
-					"conversation: the DESIGN DIRECTION (the agreed visual character — layout "
-					"feel, typography, colour mood), the brand/product name, positioning, "
-					"audience, the section list, and the palette (with hex codes). Lead with the "
-					"design direction so the page is built to that aesthetic. Do NOT write the "
-					"YAML yourself — the brief guides a dedicated generation step."
+					"conversation. Must include: (1) DESIGN DIRECTION — the agreed visual character "
+					"(layout style, typography mood, e.g. 'Swiss editorial, asymmetric grid, tight "
+					"condensed type'); (2) brand/product name and one-line positioning; (3) section "
+					"list with real copy intent; (4) palette with hex codes; (5) font pairing direction "
+					"(e.g. 'Syne headings 800 + Space Grotesk body 400'). The brief must be specific "
+					"enough that the generation step can output correct letterSpacing, fontWeight, and "
+					"section alternation without re-inferring from adjectives. Do NOT write the YAML "
+					"yourself — the brief guides a dedicated generation step."
 				),
 			},
 		},
