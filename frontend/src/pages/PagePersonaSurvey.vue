@@ -1,11 +1,11 @@
 <template>
-	<div class="flex h-screen items-center justify-center bg-surface-gray-1 p-5">
-		<div class="flex w-full max-w-lg flex-col gap-6 rounded-lg border bg-surface-base p-8 shadow-sm">
+	<div class="flex h-screen items-center justify-center p-5">
+		<div class="flex w-full max-w-lg flex-col gap-6 rounded-lg bg-surface-base p-8">
 			<img src="/builder_logo.png" alt="Builder" class="h-8 self-start" />
 			<div class="flex flex-col gap-1">
-				<h1 class="text-xl font-semibold text-ink-gray-9">Help us tailor Builder to you</h1>
+				<h1 class="text-xl font-semibold text-ink-gray-9">Before we start</h1>
 				<p class="text-p-sm text-ink-gray-6">
-					A few quick questions so we can point you at the right templates and guides.
+					Answer a few quick questions so we can improve your Builder experience.
 				</p>
 			</div>
 			<div class="flex flex-col gap-5">
@@ -50,8 +50,21 @@ const questions: {
 	options: { value: string; label: string }[];
 }[] = [
 	{
+		key: "use_case",
+		label: "What do you want to build first?",
+		placeholder: "Pick what you'll build",
+		options: [
+			{ value: "marketing_site", label: "Marketing / landing site" },
+			{ value: "web_app_ui", label: "Web app UI" },
+			{ value: "internal_tool", label: "Internal tool" },
+			{ value: "dashboard", label: "Dashboard / admin panel" },
+			{ value: "portfolio", label: "Portfolio / personal site" },
+			{ value: "exploring", label: "Just exploring" },
+		],
+	},
+	{
 		key: "role",
-		label: "Which best describes you?",
+		label: "Which one best describes you?",
 		placeholder: "Pick what fits best",
 		options: [
 			{ value: "designer", label: "Designer" },
@@ -60,19 +73,6 @@ const questions: {
 			{ value: "marketer", label: "Marketer" },
 			{ value: "agency_freelancer", label: "Agency / Freelancer" },
 			{ value: "other", label: "Other" },
-		],
-	},
-	{
-		key: "use_case",
-		label: "What do you want to build first?",
-		placeholder: "Pick what you'll build",
-		options: [
-			{ value: "marketing_site", label: "Marketing / landing site" },
-			{ value: "web_app_ui", label: "Web app UI" },
-			{ value: "internal_tool", label: "Internal tool" },
-			{ value: "portfolio", label: "Portfolio / personal site" },
-			{ value: "client_work", label: "Client work" },
-			{ value: "exploring", label: "Just exploring" },
 		],
 	},
 	{
