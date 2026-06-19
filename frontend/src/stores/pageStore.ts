@@ -31,6 +31,7 @@ const usePageStore = defineStore("pageStore", {
 		activePageScripts: <BuilderClientScript[]>[],
 		savingPage: false,
 		settingPage: false,
+		snapshotsVersion: 0,
 	}),
 	actions: {
 		async setPage(pageName: string, resetCanvas = true, routeParams = null as Object | null) {
@@ -66,6 +67,8 @@ const usePageStore = defineStore("pageStore", {
 			await this.setPageData(this.activePage);
 
 			const canvasStore = useCanvasStore();
+			// switching pages always exits any active version preview
+			canvasStore.clearVersionPreview();
 			canvasStore.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas);
 
 			if (page.client_scripts?.length) {
@@ -90,6 +93,16 @@ const usePageStore = defineStore("pageStore", {
 						this.settingPage = false;
 						window.name = `editor-${pageName}`;
 						clearInterval(interval);
+						// detect pinned component instances whose live component drifted
+						componentStore.refreshComponentUpdates();
+						// surface any warnings stashed by a just-completed snapshot restore
+						const restoreWarnings = sessionStorage.getItem("builder:restoreWarnings");
+						if (restoreWarnings) {
+							sessionStorage.removeItem("builder:restoreWarnings");
+							for (const message of JSON.parse(restoreWarnings) as string[]) {
+								toast.warning(message);
+							}
+						}
 					}
 				}, 50);
 			});
@@ -176,6 +189,7 @@ const usePageStore = defineStore("pageStore", {
 				})
 				.then(async () => {
 					this.activePage = await this.fetchActivePage(this.selectedPage as string);
+					this.snapshotsVersion++;
 					if (openInBrowser) {
 						this.openPageInBrowser(this.activePage as BuilderPage);
 					}
@@ -190,6 +204,35 @@ const usePageStore = defineStore("pageStore", {
 				await this.updateActivePage("draft_blocks", null);
 				this.setPage(this.activePage?.name as string);
 			}
+		},
+
+		async createManualSnapshot(label?: string) {
+			const res = await webPages.runDocMethod.submit({
+				name: this.selectedPage as string,
+				method: "create_manual_snapshot",
+				label: label || null,
+			});
+			this.snapshotsVersion++;
+			return res;
+		},
+
+		async restoreSnapshot(snapshotName: string) {
+			// wait out any in-flight autosave so it can't clobber the restored draft
+			await this.waitTillPageIsSaved();
+			const res = await webPages.runDocMethod.submit({
+				name: this.selectedPage as string,
+				method: "restore_snapshot",
+				snapshot: snapshotName,
+			});
+			// surface any deleted-dependency warnings after the upcoming reload
+			const warnings = (res?.message?.warnings || []) as string[];
+			if (warnings.length) {
+				sessionStorage.setItem("builder:restoreWarnings", JSON.stringify(warnings));
+			}
+			// router.go(0);
+			// Instead of a hard reload, we could are just re-fetching the page document
+			this.setPage(this.selectedPage as string, false);
+			toast.success("Version restored");
 		},
 
 		async unpublishPage(page?: BuilderPage) {
@@ -231,7 +274,11 @@ const usePageStore = defineStore("pageStore", {
 
 		savePage() {
 			const builderStore = useBuilderStore();
-			if (builderStore.readOnlyMode) return;
+			if (builderStore.readOnlyMode) {
+				// callers may have optimistically set this before invoking savePage
+				this.savingPage = false;
+				return;
+			}
 
 			// Own the flag here (not only in the editor watch) so every caller —
 			// including direct savePage() calls — keeps waitTillPageIsSaved reliable.

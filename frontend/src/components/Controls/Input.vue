@@ -37,7 +37,7 @@
 						class="cursor-pointer text-ink-gray-4 hover:text-ink-gray-5"
 						tabindex="-1"
 						@click="clearValue">
-						<CrossIcon />
+						<span class="lucide-x size-3.5" />
 					</button>
 				</div>
 			</template>
@@ -46,7 +46,6 @@
 </template>
 <script lang="ts" setup>
 import NumberArrows from "@/components/Controls/NumberArrows.vue";
-import CrossIcon from "@/components/Icons/Cross.vue";
 import { useNumberInput } from "@/utils/useNumberInput";
 import { useDebounceFn, useResizeObserver, useVModel } from "@vueuse/core";
 import { Select } from "frappe-ui";

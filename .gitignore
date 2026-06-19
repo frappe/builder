@@ -7,6 +7,6 @@ node_modules
 builder/public/frontend
 builder/public/page_scripts
 builder/public/page_styles
-builder/www/_builder.html
+**/www/_builder.html
 builder/public/dist
 codedb.snapshot

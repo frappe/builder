@@ -1,19 +1,19 @@
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
-import { useBlockDataStore } from "@/stores/blockStore";
+import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
+import { getRepeaterScopedData } from "@/utils/helpers";
 import { computed, h } from "vue";
 
 const keyOptions = computed(() => {
-	const blockDataStore = useBlockDataStore();
+	const pageStore = usePageStore();
 	let result: { label: string; value: string; prefix: any }[] = [];
 
 	const repeatablePageDataKeys: string[] = [];
-	const repeatableBlockDataKeys: string[] = [];
 
-	let pageDataCollectionObject =
-		blockDataStore.getPageData(blockController.getFirstSelectedBlock()?.blockId || "") || {};
-	let blockDataCollectionObject =
-		blockDataStore.getBlockData(blockController.getFirstSelectedBlock()?.blockId || "") || {};
+	const pageDataCollectionObject = getRepeaterScopedData(
+		blockController.getFirstSelectedBlock(),
+		pageStore.pageData,
+	);
 
 	const isInsideRepeater = blockController.getFirstSelectedBlock()?.isInsideRepeater();
 	const repeaterDataKeyComesFrom: BlockDataKey["comesFrom"] | undefined = blockController
@@ -38,7 +38,6 @@ const keyOptions = computed(() => {
 	}
 
 	processObject(pageDataCollectionObject, "", repeatablePageDataKeys);
-	processObject(blockDataCollectionObject, "", repeatableBlockDataKeys);
 
 	const isPropsBasedRepeater = isInsideRepeater && repeaterDataKeyComesFrom == "props";
 	const repeatableProps: string[] = [];
@@ -57,13 +56,6 @@ const keyOptions = computed(() => {
 		result.push({
 			label: item,
 			value: `${item}--dataScript`,
-			prefix: h("span", { class: "lucide-zap size-3", "aria-hidden": "true" }),
-		});
-	});
-	repeatableBlockDataKeys.forEach((item) => {
-		result.push({
-			label: item,
-			value: `${item}--blockDataScript`,
 			prefix: h("span", { class: "lucide-zap size-3", "aria-hidden": "true" }),
 		});
 	});

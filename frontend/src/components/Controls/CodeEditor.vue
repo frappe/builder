@@ -42,7 +42,7 @@
 			<Button
 				@click="actionButton?.handler"
 				variant="subtle"
-				class="!h-6 !w-6 border !border-outline-gray-2 bg-surface-white [&>svg]:!h-3.5 [&>svg]:!w-3.5"
+				class="bg-surface-base !h-6 !w-6 border !border-outline-gray-2 [&>svg]:!h-3.5 [&>svg]:!w-3.5"
 				:icon="actionButton.icon"
 				:title="actionButton.label"
 				:disabled="readonly"></Button>

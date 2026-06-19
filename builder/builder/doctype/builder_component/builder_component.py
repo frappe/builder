@@ -10,7 +10,7 @@ from frappe.modules.export_file import export_to_files
 from frappe.utils.telemetry import capture
 from frappe.website.utils import clear_website_cache
 
-from builder.utils import Block
+from builder.utils import Block, compact_json
 
 
 class BuilderComponent(Document):
@@ -34,7 +34,17 @@ class BuilderComponent(Document):
 		capture("builder_component_created", "builder")
 
 	def on_update(self):
-		self.queue_action("clear_page_cache")
+		# Skip the background cache-clear during bulk imports (install / migrate /
+		# import_doc). queue_action enqueues a job AND locks the doc, which can raise
+		# DocumentLockedError mid-import — e.g. when create_page_from_template
+		# import_doc's a hub template's components. Nothing to clear on a fresh import.
+		if not (
+			frappe.flags.in_import
+			or frappe.flags.in_install
+			or frappe.flags.in_migrate
+			or frappe.flags.in_patch
+		):
+			self.queue_action("clear_page_cache")
 		self.update_exported_component()
 
 	def clear_page_cache(self):
@@ -102,7 +112,7 @@ class ComponentSyncer:
 			else:
 				self.sync_blocks(block.children or [], component)
 		blocks_dict = [block.as_dict() if isinstance(block, Block) else block for block in blocks_list]
-		return frappe.as_json(blocks_dict)
+		return compact_json(blocks_dict)
 
 	def sync_single_block(self, target_block: Block, component_name: str, component_children: list[Block]):
 		"""Sync a single block with its component template"""

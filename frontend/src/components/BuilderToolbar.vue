@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="toolbar border-outline border-outline flex items-center justify-center border-b-[1px] border-outline-gray-1 bg-surface-white px-2 py-1"
+		class="toolbar border-outline border-outline flex items-center justify-center border-b-[1px] border-outline-gray-2 bg-surface-base px-2 py-1 dark:border-outline-gray-1"
 		ref="toolbar">
 		<div class="absolute left-3 flex items-center gap-4">
 			<MainMenu
@@ -41,11 +41,9 @@
 									v-if="pageStore.isHomePage(pageStore.activePage)" />
 							</Tooltip>
 							<Tooltip text="This page has limited access" :hoverDelay="0.6">
-								<AuthenticatedUserIcon
-									class="size-4 text-ink-amber-3"
-									v-if="
-										pageStore.activePage?.published && pageStore.activePage?.authenticated_access
-									"></AuthenticatedUserIcon>
+								<span
+									class="lucide-shield-user size-4 text-ink-amber-6"
+									v-if="pageStore.activePage?.published && pageStore.activePage?.authenticated_access" />
 							</Tooltip>
 							<span
 								class="max-w-48 truncate text-base text-ink-gray-8"
@@ -67,7 +65,7 @@
 				</template>
 				<template #body="{ close }">
 					<div
-						class="flex w-72 flex-col gap-3 rounded bg-surface-white p-4 shadow-lg"
+						class="flex w-72 flex-col gap-3 rounded bg-surface-base p-4 shadow-lg"
 						v-if="pageStore.activePage">
 						<PageOptions v-if="pageStore.activePage"></PageOptions>
 					</div>
@@ -94,8 +92,19 @@
 					</Tooltip>
 				</div>
 			</div>
-			<Badge variant="subtle" theme="orange" v-if="builderStore.readOnlyMode">Read Only</Badge>
-			<div class="flex gap-2">
+			<div class="flex items-center gap-2" v-if="builderStore.readOnlyMode">
+				<Badge variant="subtle" theme="orange">
+					{{ pageStore.activePage?.is_template ? "Template" : "Read Only" }}
+				</Badge>
+				<Button
+					v-if="pageStore.activePage?.is_template && pageStore.activePage?.template_group"
+					size="sm"
+					variant="subtle"
+					@click="duplicateToEdit">
+					Duplicate to edit
+				</Button>
+			</div>
+			<div class="flex items-center gap-2">
 				<Tooltip v-if="builderStore.isAIEnabled" text="Generate with AI" :hoverDelay="0.6" arrow-class="mb-3">
 					<Button
 						variant="ghost"
@@ -114,6 +123,7 @@
 					v-if="pageStore.savingPage && pageStore.activePage?.is_template">
 					Saving template
 				</span>
+				<ComponentUpdates />
 				<Tooltip text="Settings" :hoverDelay="0.6" arrow-class="mb-3">
 					<Button variant="ghost" @click="openSettings" :icon="SettingsGearIcon"></Button>
 				</Tooltip>
@@ -123,7 +133,9 @@
 					</Tooltip>
 				</router-link>
 			</div>
-			<PublishButton :disabled="builderStore.readOnlyMode"></PublishButton>
+			<PublishButton
+				v-if="!(builderStore.readOnlyMode && pageStore.activePage?.is_template)"
+				:disabled="builderStore.readOnlyMode"></PublishButton>
 		</div>
 		<Dialog title="Get Started" size="4xl" v-model="showInfoDialog">
 			<template #default>
@@ -150,17 +162,17 @@
 </template>
 <script setup lang="ts">
 import Dialog from "@/components/Controls/Dialog.vue";
-import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
 import PlayIcon from "@/components/Icons/Play.vue";
 import SettingsGearIcon from "@/components/Icons/SettingsGear.vue";
+import ComponentUpdates from "@/components/ComponentUpdates.vue";
 import PublishButton from "@/components/PublishButton.vue";
-import { webPages } from "@/data/webPage";
+import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { getTextContent } from "@/utils/helpers";
 import { useDark, useToggle } from "@vueuse/core";
-import { Badge, Popover, toast, Tooltip } from "frappe-ui";
+import { Badge, createResource, Popover, toast, Tooltip } from "frappe-ui";
 import { DialogDescription, DialogTitle } from "reka-ui";
 import { computed, defineAsyncComponent, inject, ref } from "vue";
 import SparklesIcon from "~icons/lucide/sparkles";
@@ -250,20 +262,20 @@ const transitionTheme = (toggleDark: () => void) => {
 	}
 };
 
-const saveAsTemplate = async () => {
+const duplicateToEdit = async () => {
 	toast.promise(
-		webPages.setValue.submit({
-			name: pageStore.activePage?.name,
-			is_template: true,
-		}),
+		createResource({
+			url: "builder.api.create_page_from_template",
+		})
+			.submit({ template_page: pageStore.activePage?.name })
+			.then((newPageName: string) => {
+				router.push({ name: "builder", params: { pageId: newPageName }, force: true });
+				pageStore.setPage(newPageName);
+			}),
 		{
-			loading: "Saving as template",
-			success: () => {
-				pageStore.fetchActivePage(pageStore.selectedPage as string).then((page) => {
-					pageStore.activePage = page;
-				});
-				return "Page saved as template";
-			},
+			loading: "Creating an editable copy...",
+			success: () => "Page created",
+			error: () => "Could not create page from template",
 		},
 	);
 };

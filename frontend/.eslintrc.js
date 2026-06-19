@@ -3,9 +3,6 @@ export default {
 		browser: true,
 		es2021: true,
 	},
-	globals: {
-		convertHTMLToBlocks: true,
-	},
 	extends: ["plugin:vue/vue3-recommended", "prettier"],
 	parser: "vue-eslint-parser",
 	parserOptions: {

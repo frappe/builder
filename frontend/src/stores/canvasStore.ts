@@ -1,8 +1,12 @@
 import type Block from "@/block";
 import type BuilderCanvas from "@/components/BuilderCanvas.vue";
+import { getVersionedDoc } from "@/data/snapshot";
 import { confirm, getBlockCopy, getBlockInstance } from "@/utils/helpers";
+import { toast } from "frappe-ui";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
+
+const PREVIEW_TOAST_ID = "version-preview-readonly";
 
 const useCanvasStore = defineStore("canvasStore", {
 	state: () => ({
@@ -28,7 +32,7 @@ const useCanvasStore = defineStore("canvasStore", {
 			index: <number | null>null,
 		},
 		editableBlock: <Block | null>null,
-		editingContentType: <"html" | "css" | "js" | "python">"html",
+		editingContentType: <"html" | "css" | "js">"html",
 		editingMode: <EditingMode>"page",
 		settingPage: false,
 		showEditorDialog: false,
@@ -40,8 +44,43 @@ const useCanvasStore = defineStore("canvasStore", {
 			fragmentId: <string | null>null,
 			showUsageCount: false,
 		},
+		versionPreviewBlock: <Block | null>null,
+		previewSnapshotName: <string | null>null,
+		draftRootBackup: <Block | null>null,
 	}),
 	actions: {
+		// Preview a snapshot on the live page canvas itself so pan/zoom stay in place.
+		// Setting versionPreviewBlock flips the canvas to read-only (PageBuilder.vue
+		// watcher), which hibernates history — so swapping the root in/out never touches
+		// the draft's content or undo stack. We just stash the draft root to restore it.
+		async previewVersion(snapshotName: string) {
+			const doc = await getVersionedDoc(snapshotName);
+			const blocks = JSON.parse((doc?.draft_blocks || doc?.blocks || "[]") as string);
+			if (!blocks[0] || !this.activeCanvas) return;
+			const previewRoot = getBlockInstance(blocks[0]);
+			if (!this.versionPreviewBlock) {
+				this.draftRootBackup = this.activeCanvas.getRootBlock() ?? null;
+			}
+			this.activeCanvas.setRootBlock(previewRoot, false, false);
+			this.versionPreviewBlock = previewRoot;
+			this.previewSnapshotName = snapshotName;
+			toast.info("Read-only preview · Use <b>Restore</b> to load this version.", {
+				id: PREVIEW_TOAST_ID,
+				duration: Infinity,
+				dismissible: false,
+				closeButton: false,
+				position: "bottom-center",
+			});
+		},
+		clearVersionPreview() {
+			if (this.versionPreviewBlock && this.draftRootBackup && this.activeCanvas) {
+				this.activeCanvas.setRootBlock(this.draftRootBackup, false, false);
+			}
+			this.draftRootBackup = null;
+			this.versionPreviewBlock = null;
+			this.previewSnapshotName = null;
+			toast.dismiss(PREVIEW_TOAST_ID);
+		},
 		clearBlocks() {
 			this.activeCanvas?.clearCanvas();
 		},
@@ -110,14 +149,6 @@ const useCanvasStore = defineStore("canvasStore", {
 		editBlockClientScript(block: Block) {
 			this.editableBlock = block;
 			this.editingContentType = "js";
-			nextTick(() => {
-				this.showEditorDialog = true;
-			});
-		},
-
-		editBlockDataScript(block: Block) {
-			this.editableBlock = block;
-			this.editingContentType = "python";
 			nextTick(() => {
 				this.showEditorDialog = true;
 			});

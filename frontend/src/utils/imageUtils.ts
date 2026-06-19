@@ -6,11 +6,11 @@ export interface ImageOptimizationOptions {
 	onSuccess: (newUrl: string) => void;
 }
 
-export const isExternalImage = (imageUrl: string): boolean => {
+const isExternalImage = (imageUrl: string): boolean => {
 	return imageUrl.startsWith("http://") || imageUrl.startsWith("https://");
 };
 
-export const isConvertibleToWebP = (imageUrl: string): boolean => {
+const isConvertibleToWebP = (imageUrl: string): boolean => {
 	return [".jpg", ".jpeg", ".png"].some((ext) => imageUrl.toLowerCase().endsWith(ext));
 };
 

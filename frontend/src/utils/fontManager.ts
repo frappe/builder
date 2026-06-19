@@ -63,7 +63,9 @@ export function setFont(font: string | null, weight?: string): Promise<string> {
 	const cacheKey = weight ? `${font}:${weight}` : font;
 	if (fontCache.has(cacheKey)) return fontCache.get(cacheKey)!;
 
-	const customFont = userFont.data.find(
+	// userFont list resource may not have loaded yet (e.g. a page rendered right
+	// after navigation); fall back to treating it as a Google font until it does.
+	const customFont = (userFont.data || []).find(
 		(f: { font_name: string; font_file: string }) => f.font_name === font,
 	);
 

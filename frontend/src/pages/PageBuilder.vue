@@ -2,7 +2,7 @@
 	<div v-show="isSmallScreen" class="grid h-screen w-screen place-content-center gap-4 text-ink-gray-9">
 		<img src="/builder_logo.png" alt="logo" class="h-10" />
 		<div class="flex flex-col">
-			<h1 class="text-p-2xl font-semibold">Screen too small</h1>
+			<h1 class="text-p-4xl-semibold">Screen too small</h1>
 			<p class="text-p-base">Please switch to a larger screen to edit</p>
 		</div>
 	</div>
@@ -28,7 +28,7 @@
 			}"
 			class="canvas-container absolute bottom-0 flex justify-center overflow-hidden bg-surface-gray-2 p-10">
 			<template v-slot:header>
-				<div class="flex items-center justify-between bg-surface-white p-2 text-sm text-ink-gray-8 shadow-sm">
+				<div class="flex items-center justify-between bg-surface-base p-2 text-sm text-ink-gray-8 shadow-sm">
 					<div class="flex items-center gap-1 pl-2 text-xs">
 						<a @click="canvasStore.exitFragmentMode" class="cursor-pointer">Page</a>
 						<span class="lucide-chevron-right h-3 w-3" aria-hidden="true" />
@@ -70,10 +70,10 @@
 		<!-- Panels layer (middle) - comes after canvas in DOM -->
 		<BuilderLeftPanel
 			v-show="builderStore.showLeftPanel"
-			class="absolute bottom-0 left-0 top-[var(--toolbar-height)] w-fit border-r-[1px] border-outline-gray-2 bg-surface-white"></BuilderLeftPanel>
+			class="absolute bottom-0 left-0 top-[var(--toolbar-height)] w-fit border-r-[1px] border-outline-gray-2 bg-surface-base dark:border-outline-gray-1"></BuilderLeftPanel>
 		<BuilderRightPanel
 			v-show="builderStore.showRightPanel"
-			class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] overflow-auto border-l-[1px] border-outline-gray-2 bg-surface-white"></BuilderRightPanel>
+			class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] overflow-auto border-l-[1px] border-outline-gray-2 bg-surface-base dark:border-outline-gray-1"></BuilderRightPanel>
 
 		<!-- Toolbar layer (top) - comes last in DOM -->
 		<BuilderToolbar class="absolute left-0 right-0 top-0"></BuilderToolbar>
@@ -113,6 +113,7 @@
 	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
 	<BuilderCommandPalette ref="commandPalette" />
 	<KeyboardShortcutsModal v-model:open="shortcutsModalOpen" />
+	<TemplatesDialog />
 </template>
 
 <script setup lang="ts">
@@ -126,6 +127,7 @@ import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
 import PageListModal from "@/components/Modals/PageListModal.vue";
+import TemplatesDialog from "@/components/Templates/TemplatesDialog.vue";
 import { webPages } from "@/data/webPage";
 import { sessionUser } from "@/router";
 import useBuilderStore from "@/stores/builderStore";
@@ -254,13 +256,22 @@ const handleModifyStreamingBlocks = (block: BlockOptions) => {
 	}
 };
 
-watch([() => canvasStore.editableBlock, () => pageStore.activePage?.is_standard], () => {
-	builderStore.toggleReadOnlyMode(
-		canvasStore.editingMode === "page" &&
-			Boolean(pageStore.activePage?.is_standard) &&
-			!window.is_developer_mode,
-	);
-});
+watch(
+	[
+		() => canvasStore.editableBlock,
+		() => pageStore.activePage?.is_standard,
+		() => pageStore.activePage?.is_template,
+		() => canvasStore.versionPreviewBlock,
+	],
+	() => {
+		const previewing = Boolean(canvasStore.versionPreviewBlock);
+		const isProtected =
+			(Boolean(pageStore.activePage?.is_standard) ||
+				Boolean(pageStore.activePage?.is_template && pageStore.activePage?.template_group)) &&
+			!window.is_developer_mode;
+		builderStore.toggleReadOnlyMode(canvasStore.editingMode === "page" && (previewing || isProtected));
+	},
+);
 
 declare global {
 	interface Window {
@@ -352,7 +363,7 @@ async function saveAndExitFragmentMode(e: Event) {
 
 let expandedEditorOptions = computed(() => {
 	let title, label;
-	let type: "HTML" | "JavaScript" | "CSS" | "Python" = "HTML";
+	let type: "HTML" | "JavaScript" | "CSS" = "HTML";
 	if (canvasStore.editingContentType === "html") {
 		title = "HTML";
 		label = "Edit HTML";
@@ -364,10 +375,6 @@ let expandedEditorOptions = computed(() => {
 		title = "CSS";
 		label = "Edit CSS";
 		type = "CSS";
-	} else if (canvasStore.editingContentType === "python") {
-		title = "Block Data Script";
-		label = "Edit Block Data Script";
-		type = "Python";
 	}
 	return { title, label, type };
 });
@@ -377,8 +384,6 @@ function getExpandedEditorContent() {
 		return canvasStore.editableBlock?.getInnerHTML();
 	} else if (canvasStore.editingContentType === "js") {
 		return canvasStore.editableBlock?.getBlockClientScript();
-	} else if (canvasStore.editingContentType === "python") {
-		return canvasStore.editableBlock?.getBlockDataScript();
 	}
 }
 
@@ -387,8 +392,6 @@ async function saveExpandedEditorContent(val: string) {
 		canvasStore.editableBlock?.setInnerHTML(val);
 	} else if (canvasStore.editingContentType === "js") {
 		canvasStore.editableBlock?.setBlockClientScript(val);
-	} else if (canvasStore.editingContentType === "python") {
-		canvasStore.editableBlock?.setBlockDataScript(val);
 	}
 	canvasStore.showEditorDialog = false;
 }
@@ -469,6 +472,7 @@ watch(
 			pageStore.selectedPage &&
 			!pageStore.settingPage &&
 			canvasStore.editingMode === "page" &&
+			!builderStore.readOnlyMode &&
 			!pageCanvas.value?.canvasProps?.settingCanvas &&
 			!isAIGenerating.value
 		) {

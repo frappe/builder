@@ -1,17 +1,9 @@
 <template>
 	<div class="flex flex-col gap-5">
-		<div class="flex justify-between gap-x-2.5">
-			<div class="flex flex-col gap-1">
-				<label class="w-fit shrink-0 text-p-base font-medium text-ink-gray-8">
-					Execute Block Client Scripts in Editor
-				</label>
-				<div class="flex flex-col gap-2">
-					<p class="text-p-sm text-ink-gray-7">
-						Block Scripts are executed in a sandboxed environment. This may have limitations and might not
-						perfectly replicate live site behavior. Executing untrusted scripts could be unsafe.
-					</p>
-				</div>
-			</div>
+		<div class="flex justify-between">
+			<label class="text-p-base-medium w-fit shrink-0 text-ink-gray-8">
+				Execute Block Client Scripts in Editor
+			</label>
 			<Select
 				class="h-max !w-[200px]"
 				:modelValue="builderSettings.doc?.execute_block_scripts_in_editor"

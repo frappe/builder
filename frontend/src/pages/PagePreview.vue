@@ -1,5 +1,5 @@
 <template>
-	<div class="flex h-screen flex-col items-center bg-surface-white py-2">
+	<div class="flex h-screen flex-col items-center bg-surface-base py-2">
 		<div class="space-between relative flex w-full items-center justify-between px-3 py-1">
 			<router-link
 				:to="{ name: 'builder', params: { pageId: route.params.pageId || 'new' } }"
@@ -13,7 +13,7 @@
 					v-for="breakpoint in deviceBreakpoints"
 					:key="breakpoint.device"
 					:class="{
-						'bg-surface-white': activeBreakpoint === breakpoint.device,
+						'bg-surface-base': activeBreakpoint === breakpoint.device,
 					}"
 					@click.stop="() => setWidth(breakpoint.device)">
 					<span
