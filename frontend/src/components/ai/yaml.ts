@@ -33,8 +33,12 @@ export function getValidPartialYAML(yamlStr: string): any {
 	try {
 		return yaml.load(cleaned);
 	} catch {
+		// Mid-stream YAML fails because the TAIL is incomplete — dropping the last
+		// (partial) line or few usually yields a valid prefix. Bound the retry to a
+		// few trailing lines instead of scanning all N (that was O(N²) per chunk).
 		const lines = cleaned.split("\n");
-		for (let i = lines.length - 1; i > 0; i--) {
+		const floor = Math.max(1, lines.length - 12);
+		for (let i = lines.length - 1; i >= floor; i--) {
 			try {
 				const parsed = yaml.load(lines.slice(0, i).join("\n"));
 				if (parsed) return parsed;
