@@ -12,7 +12,6 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AIAffectedItems: typeof import('./src/components/AIAffectedItems.vue')['default']
-    AIPageGeneratorModal: typeof import('./src/components/AIPageGeneratorModal.vue')['default']
     AnalyticsFilters: typeof import('./src/components/Settings/AnalyticsFilters.vue')['default']
     AnalyticsOverview: typeof import('./src/components/Settings/AnalyticsOverview.vue')['default']
     AnglePicker: typeof import('./src/components/Controls/AnglePicker.vue')['default']
@@ -114,7 +113,6 @@ declare module 'vue' {
     PageRobots: typeof import('./src/components/Settings/PageRobots.vue')['default']
     PageScript: typeof import('./src/components/PageScript.vue')['default']
     PanelResizer: typeof import('./src/components/PanelResizer.vue')['default']
-    PersonaSurveyDialog: typeof import('./src/components/PersonaSurveyDialog.vue')['default']
     PlacementControl: typeof import('./src/components/PlacementControl.vue')['default']
     Play: typeof import('./src/components/Icons/Play.vue')['default']
     PropertyControlInput: typeof import('./src/components/Controls/PropertyControlInput.vue')['default']
@@ -132,7 +130,6 @@ declare module 'vue' {
     SettingsGear: typeof import('./src/components/Icons/SettingsGear.vue')['default']
     ShadowHandler: typeof import('./src/components/ShadowHandler.vue')['default']
     Sparkles: typeof import('./src/components/Icons/Sparkles.vue')['default']
-    StrikeThrough: typeof import('./src/components/Icons/StrikeThrough.vue')['default']
     StringOptions: typeof import('./src/components/PropsOptions/StringOptions.vue')['default']
     StylePropertyControl: typeof import('./src/components/Controls/StylePropertyControl.vue')['default']
     TabButtons: typeof import('./src/components/Controls/TabButtons.vue')['default']
