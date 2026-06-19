@@ -16,6 +16,7 @@ from builder.ai.agent.loop import run_agent_job
 from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.session import AISession
+from builder.ai.snapshots import capture_page_state
 from builder.utils import has_page_write
 
 logger = frappe.logger("builder.ai.api")
@@ -66,8 +67,19 @@ def run(
 	api_key = _resolve_api_key()
 	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
 
+	# Capture the pre-turn page state now (synchronously, before the worker or any
+	# streaming touches the canvas — so it's reliably pre-turn). The snapshot DOC is
+	# created later, by the loop, only if the turn actually changes the page.
+	pre_turn_state = capture_page_state(page_id)
+
+	# Background queue (not now=True): a streaming generation can run 30-60s, and
+	# now=True would hold this web worker open for the entire stream — exhausting the
+	# worker pool under concurrency. Realtime events flow over Redis pub/sub regardless
+	# of which process runs the job.
 	frappe.enqueue(
 		run_agent_job,
+		queue="default",
+		timeout=600,
 		prompt=prompt,
 		page_context_json=page_context,
 		model=resolved_model,
@@ -77,7 +89,7 @@ def run(
 		session_id=session_id,
 		selected_block_ids=selected_block_ids,
 		image_url=image_url,
-		now=True,
+		pre_turn_state=pre_turn_state,
 	)
 	frappe.local.response.http_status_code = 202
 	return {"status": "accepted", "session_id": session_id}
@@ -92,6 +104,17 @@ def cancel(session_id: str):
 	if session_id:
 		frappe.cache.set_value(f"builder_ai_cancel:{session_id}", "1", expires_in_sec=300)
 	return {"status": "ok"}
+
+
+@frappe.whitelist()
+@has_page_write()
+def revert_to_message(session_id: str, message_id: str):
+	"""Rewind the conversation to before the given turn: delete that turn's user
+	prompt, its assistant reply, and every message after it. The page itself is
+	restored separately by the client via the turn's snapshot."""
+	session = AISession.get(session_id)
+	session.truncate_from_turn(message_id)
+	return {"messages": session.get_messages()}
 
 
 @frappe.whitelist()
@@ -157,8 +180,6 @@ def test_api_key():
 		return {"success": False, "message": _("Please set an OpenRouter API key")}
 
 	actual_model = ModelRegistry.get_default(model)
-	if actual_model.startswith("gemini-"):
-		actual_model = f"gemini/{actual_model}"
 
 	try:
 		litellm.completion(

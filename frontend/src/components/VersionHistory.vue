@@ -125,6 +125,8 @@ const snapshots = createListResource({
 	filters: {
 		reference_doctype: "Builder Page",
 		reference_name: pageStore.selectedPage as string,
+		// AI revert snapshots are surfaced in the chat panel, not here.
+		snapshot_type: ["!=", "AI"],
 	},
 	orderBy: "creation desc",
 	pageLength: 100,
@@ -136,7 +138,11 @@ watch(
 	() => pageStore.selectedPage,
 	(page) => {
 		if (!page) return;
-		snapshots.filters = { reference_doctype: "Builder Page", reference_name: page as string };
+		snapshots.filters = {
+			reference_doctype: "Builder Page",
+			reference_name: page as string,
+			snapshot_type: ["!=", "AI"],
+		};
 		snapshots.reload();
 	},
 );

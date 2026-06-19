@@ -1,16 +1,16 @@
 <template>
-	<div class="flex h-full min-h-full flex-col bg-surface-white">
+	<div class="bg-surface-white flex h-full min-h-full flex-col">
 		<div class="flex items-center justify-between border-b border-outline-gray-1 px-3 py-2.5">
 			<div class="flex flex-col gap-1">
 				<div class="mt-1 text-sm font-semibold text-ink-gray-9">Bob AI</div>
 				<div class="text-p-xs leading-4 text-ink-gray-5">Session persists for this page</div>
 			</div>
-			<button
+			<Button
 				v-if="builderStore.isAIEnabled && messages.length"
-				class="text-xs text-ink-gray-4 hover:text-ink-gray-9"
-				@click="clearSession">
-				Clear
-			</button>
+				variant="ghost"
+				size="sm"
+				label="Clear"
+				@click="clearSession" />
 		</div>
 
 		<div v-if="!builderStore.isAIEnabled" class="flex flex-1 flex-col items-start gap-3 p-4">
@@ -65,6 +65,14 @@
 							:affected-scripts="message.metadata.affectedScripts || []"
 							@select-block="selectBlockById"
 							@open-script="openScriptByName" />
+						<button
+							v-if="message.metadata?.revertSnapshot"
+							class="mt-1.5 inline-flex items-center gap-1 text-[11px] text-ink-gray-4 transition-colors hover:text-ink-gray-7"
+							title="Revert the page to before this AI edit"
+							@click="revertTurn(message)">
+							<FeatherIcon name="rotate-ccw" class="size-3" />
+							Revert this edit
+						</button>
 						<!-- Plan summary card -->
 						<div
 							v-if="message.metadata?.status === 'plan_summary'"
@@ -191,7 +199,7 @@
 							<span class="max-w-[120px] truncate">{{ imageFileName }}</span>
 							<button
 								type="button"
-								class="hover:text-ink-red-7 ml-0.5 flex items-center text-ink-gray-4"
+								class="ml-0.5 flex items-center text-ink-gray-4 hover:text-ink-red-7"
 								title="Remove image"
 								@click="clearImage">
 								<FeatherIcon name="x" class="h-3 w-3" />
@@ -208,7 +216,7 @@
 					<textarea
 						v-model="prompt"
 						rows="4"
-						class="w-full resize-none rounded border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:border-outline-gray-modals hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:bg-surface-white focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
+						class="hover:border-outline-gray-modals focus:bg-surface-white w-full resize-none rounded border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
 						:disabled="isSubmitting"
 						placeholder="Ask to create or edit this page..."
 						@keydown.meta.enter="submitPrompt"
@@ -216,8 +224,8 @@
 					<Transition name="fade">
 						<div
 							v-if="isDragging"
-							class="border-outline-blue-3 pointer-events-none absolute inset-0 flex items-center justify-center rounded-md border-2 border-dashed bg-surface-blue-1/60">
-							<div class="text-ink-blue-4 flex items-center gap-1.5 text-xs font-medium">
+							class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-md border-2 border-dashed border-outline-blue-3 bg-surface-blue-1/60">
+							<div class="flex items-center gap-1.5 text-xs font-medium text-ink-blue-4">
 								<FeatherIcon name="image" class="h-3.5 w-3.5" />
 								Drop image to attach
 							</div>
@@ -231,33 +239,13 @@
 				</div>
 				<div class="mt-2 flex items-center justify-between gap-2">
 					<div class="flex items-center gap-0.5">
-						<Popover placement="top-start" :offset="6">
-							<template #target="{ togglePopover }">
-								<button
-									class="flex h-7 max-w-[9rem] items-center gap-1.5 rounded px-1.5 text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8"
-									@click="togglePopover">
-									<FeatherIcon name="cpu" class="size-3.5 shrink-0" />
-									<span class="truncate text-xs">{{ modelLabel }}</span>
-								</button>
-							</template>
-							<template #body="{ close }">
-								<div class="min-w-40 rounded-lg border border-outline-gray-2 bg-surface-white py-1 shadow-lg">
-									<button
-										v-for="option in modelOptions"
-										:key="option.label"
-										class="flex w-full items-center px-3 py-1.5 text-left text-sm text-ink-gray-7 hover:bg-surface-gray-2"
-										:class="{ 'font-medium text-ink-gray-9': option.label === modelLabel }"
-										@click="
-											() => {
-												option.onClick();
-												close();
-											}
-										">
-										{{ option.label }}
-									</button>
-								</div>
-							</template>
-						</Popover>
+						<Dropdown :options="modelOptions" side="top" :offset="6">
+							<button
+								class="flex h-7 max-w-[9rem] items-center gap-1.5 rounded px-1.5 text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8">
+								<FeatherIcon name="cpu" class="size-3.5 shrink-0" />
+								<span class="truncate text-xs">{{ modelLabel }}</span>
+							</button>
+						</Dropdown>
 						<Popover v-if="!messages.length" placement="top-start" :offset="6">
 							<template #target="{ togglePopover }">
 								<Tooltip :text="selectedPreset ? selectedPreset.name : 'Style Preset'" placement="top">
@@ -270,7 +258,7 @@
 								</Tooltip>
 							</template>
 							<template #body>
-								<div class="w-96 rounded-lg border border-outline-gray-2 bg-surface-white p-3 shadow-lg">
+								<div class="bg-surface-white w-96 rounded-lg border border-outline-gray-2 p-3 shadow-lg">
 									<WebPagePresetPicker v-model="selectedPreset" />
 								</div>
 							</template>
@@ -297,7 +285,7 @@ import SparklesIcon from "@/components/Icons/Sparkles.vue";
 import WebPagePresetPicker from "@/components/WebPagePresetPicker.vue";
 import useBuilderStore from "@/stores/builderStore";
 import DOMPurify from "dompurify";
-import { Button, FeatherIcon, Popover, Tooltip } from "frappe-ui";
+import { Button, Dropdown, FeatherIcon, Popover, Tooltip } from "frappe-ui";
 import { marked } from "marked";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
@@ -332,7 +320,7 @@ function renderMarkdown(content: string): string {
 const chat = new AIChatController();
 
 const { prompt, isSubmitting, isCancelling, messages, modelLabel, modelOptions, canSubmit } = chat;
-const { clearSession, undoAgentScript, selectOption, approvePlan } = chat;
+const { clearSession, undoAgentScript, revertTurn, selectOption, approvePlan } = chat;
 const { selectBlockById, openScriptByName } = chat;
 const { selectedBlocks } = chat;
 const { imagePreviewUrl, imageFileName, isDragging, isVisionModel } = chat;

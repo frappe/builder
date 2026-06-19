@@ -48,17 +48,21 @@ export class ToolDispatcher {
 		return null;
 	}
 
-	/** Replace the entire page with a freshly generated YAML document. */
-	applyPageYaml(yamlString: string) {
+	/** Replace the entire page with a freshly generated YAML document.
+	 * `persistRepeaterData` is true only on the FINAL apply — never while streaming
+	 * (persisting per chunk would fire a network setValue + re-parse on every token). */
+	applyPageYaml(yamlString: string, persistRepeaterData = false) {
 		const block = parseBlock(yamlString);
 		if (!block) return;
 		try {
 			this.pageStore.pageBlocks = [getBlockInstance(block)];
 			this.canvasStore.activeCanvas?.setRootBlock(this.pageStore.pageBlocks[0] as Block, false);
-			// Any repeaters in the generated page carry static JSON data; persist it as
-			// the page_data_script shim so the loops render in the editor and on publish.
-			const dataScript = buildRepeaterDataScript(yamlString);
-			if (dataScript) this.pageStore.applyRepeaterDataScript(dataScript);
+			// Repeaters carry static JSON data; persist it as the page_data_script shim
+			// so the loops render. Final apply only — see note above.
+			if (persistRepeaterData) {
+				const dataScript = buildRepeaterDataScript(yamlString);
+				if (dataScript) this.pageStore.applyRepeaterDataScript(dataScript);
+			}
 		} catch {}
 	}
 
@@ -133,7 +137,8 @@ export class ToolDispatcher {
 	applyToolOperation(toolName: string, args: Record<string, any>) {
 		switch (toolName) {
 			case "generate_page": {
-				this.applyPageYaml(args.yaml as string);
+				// Final authoritative apply — persist repeater data here (not while streaming).
+				this.applyPageYaml(args.yaml as string, true);
 				return;
 			}
 			case "update_block": {

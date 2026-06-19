@@ -41,6 +41,15 @@ def take_snapshot(reference_doctype, reference_name, fields, label=None, snapsho
 	data = {field: doc.get(field) for field in fields}
 	if transform:
 		data = transform(data)
+	return create_snapshot(reference_doctype, reference_name, data, label, snapshot_type)
+
+
+def create_snapshot(reference_doctype, reference_name, data: dict, label=None, snapshot_type=None):
+	"""Store an already-captured `{fieldname: value}` dict as a snapshot.
+
+	Use this when the data was captured earlier (e.g. before a long async operation)
+	rather than read live from the document. `take_snapshot` is the read-live wrapper.
+	"""
 	snapshot = frappe.get_doc(
 		{
 			"doctype": "Builder Snapshot",

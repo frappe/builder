@@ -7,7 +7,7 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import type { BuilderClientScript } from "@/types/Builder/BuilderClientScript";
-import { getBlockObject } from "@/utils/helpers";
+import { confirm, getBlockObject } from "@/utils/helpers";
 import { useLocalStorage } from "@vueuse/core";
 import { createResource } from "frappe-ui";
 import { computed, nextTick, ref, watch } from "vue";
@@ -51,6 +51,12 @@ export class AIChatController {
 	private readonly summaryContent = ref(""); // accumulates summary chunks
 	private readonly pendingAssistantId = ref<string | null>(null);
 	private submittedForPageId: string | null = null;
+	// Streaming re-render is throttled: re-parsing + rebuilding the whole block tree
+	// on every chunk pegs the CPU. The final generate_page op re-applies the
+	// authoritative document, so this preview can render at a coarse cadence.
+	private static readonly STREAM_RENDER_MS = 200;
+	private streamRenderTimer: ReturnType<typeof setTimeout> | null = null;
+	private lastStreamRenderAt = 0;
 
 	readonly pageId = computed(() => this.route.params.pageId as string);
 	readonly isUnsavedPage = computed(() => !this.pageId.value || this.pageId.value === "new");
@@ -119,6 +125,7 @@ export class AIChatController {
 	}
 
 	resetTransientState() {
+		this.clearStreamRenderTimer();
 		this.progressMessage.value = "";
 		this.pageStreamContent.value = "";
 		this.summaryContent.value = "";
@@ -126,6 +133,35 @@ export class AIChatController {
 		this.dispatcher.reset();
 		this.isSubmitting.value = false;
 		this.isCancelling.value = false;
+	}
+
+	/** Throttle the streaming canvas preview: render at most every STREAM_RENDER_MS
+	 * (leading + trailing) instead of re-parsing/rebuilding the whole tree per chunk. */
+	private scheduleStreamRender() {
+		const elapsed = Date.now() - this.lastStreamRenderAt;
+		if (elapsed >= AIChatController.STREAM_RENDER_MS) {
+			this.flushStreamRender();
+		} else if (this.streamRenderTimer === null) {
+			this.streamRenderTimer = setTimeout(
+				() => this.flushStreamRender(),
+				AIChatController.STREAM_RENDER_MS - elapsed,
+			);
+		}
+	}
+
+	private flushStreamRender() {
+		this.clearStreamRenderTimer();
+		this.lastStreamRenderAt = Date.now();
+		try {
+			this.dispatcher.applyPageYaml(this.pageStreamContent.value);
+		} catch {}
+	}
+
+	private clearStreamRenderTimer() {
+		if (this.streamRenderTimer !== null) {
+			clearTimeout(this.streamRenderTimer);
+			this.streamRenderTimer = null;
+		}
 	}
 
 	private replacePendingAssistant(content: string, metadata: Record<string, any> = {}) {
@@ -206,9 +242,7 @@ export class AIChatController {
 		if (data.kind === "page_yaml") {
 			if (this.submittedForPageId && this.submittedForPageId !== this.pageId.value) return;
 			this.pageStreamContent.value += data.chunk;
-			try {
-				this.dispatcher.applyPageYaml(this.pageStreamContent.value);
-			} catch {}
+			this.scheduleStreamRender();
 		} else {
 			this.summaryContent.value += data.chunk;
 			this.replacePendingAssistant(this.summaryContent.value, { status: "running" });
@@ -217,6 +251,9 @@ export class AIChatController {
 	};
 
 	onToolBatch = (data: { operations?: Array<{ tool_name: string; args: Record<string, any> }> }) => {
+		// Cancel any pending throttled stream render so it can't fire AFTER and clobber
+		// the authoritative apply below with stale partial YAML.
+		this.clearStreamRenderTimer();
 		if (!data.operations?.length) return;
 		for (const op of data.operations) {
 			this.dispatcher.trackAffectedItem(op.tool_name, op.args); // track before apply (remove_block)
@@ -232,6 +269,7 @@ export class AIChatController {
 	};
 
 	onComplete = async (data: { message?: string }) => {
+		this.clearStreamRenderTimer();
 		if (this.submittedForPageId && this.submittedForPageId !== this.pageId.value) {
 			this.submittedForPageId = null;
 			return;
@@ -300,6 +338,7 @@ export class AIChatController {
 	};
 
 	onError = async (data: { message?: string }) => {
+		this.clearStreamRenderTimer();
 		this.isSubmitting.value = false;
 		this.isCancelling.value = false;
 		this.progressMessage.value = "";
@@ -320,6 +359,7 @@ export class AIChatController {
 		sections?: string[];
 		palette?: string;
 	}) => {
+		this.clearStreamRenderTimer();
 		this.isSubmitting.value = false;
 		this.isCancelling.value = false;
 		this.progressMessage.value = "";
@@ -428,11 +468,52 @@ export class AIChatController {
 					...(attachedImageData ? { image_data: attachedImageData } : {}),
 				}),
 			}).submit();
-			const response = result as { session_id?: string };
+			const response = result as { session_id?: string; status?: string; message?: string };
+			if (response.status === "budget_exceeded") {
+				await this.onError({ message: response.message || "Monthly AI budget reached." });
+				return;
+			}
 			if (response.session_id) this.sessionId.value = response.session_id;
 		} catch (error) {
 			await this.onError({ message: error instanceof Error ? error.message : "Request failed" });
 		}
+	};
+
+	/** Revert an AI turn: restore the page to the snapshot taken just before it AND
+	 * rewind the conversation — this turn and every message after it are removed.
+	 * Reuses Builder's snapshot restore (loads the pre-turn state into the draft); page
+	 * scripts the turn created are reverted separately via the "Undo script" action. */
+	revertTurn = async (message: ChatMessage) => {
+		const snapshot: string | undefined = message.metadata?.revertSnapshot;
+		if (!snapshot || !this.sessionId.value) return;
+		const confirmed = await confirm(
+			"Revert this AI edit? The page returns to how it was just before this turn, and this message and everything after it are removed from the chat. Your live page won't change until you publish.",
+		);
+		if (!confirmed) return;
+		// 1. Delete any client scripts this turn created — the page snapshot only
+		// covers blocks + page data, not Builder Client Script docs.
+		const createdScripts: string[] = message.metadata?.undoScripts || [];
+		if (createdScripts.length) {
+			await Promise.all(
+				createdScripts.map((name) =>
+					createResource({ url: "frappe.client.delete" })
+						.submit({ doctype: "Builder Client Script", name })
+						.catch(() => null),
+				),
+			);
+			this.pageStore.activePageScripts = this.pageStore.activePageScripts.filter(
+				(s: BuilderClientScript) => !createdScripts.includes(s.name),
+			);
+		}
+		// 2. Rewind the conversation server-side (delete this turn + everything after).
+		await createResource({ url: "builder.ai.api.revert_to_message" })
+			.submit({ session_id: this.sessionId.value, message_id: message.id })
+			.catch(() => null);
+		// 3. Restore the page draft from the pre-turn snapshot (re-fetches the page).
+		await this.pageStore.restoreSnapshot(snapshot);
+		// 4. Reload the (now truncated) chat — restoreSnapshot doesn't touch the session.
+		await this.loadSession();
+		this.scrollToBottom();
 	};
 
 	undoAgentScript = async (message: ChatMessage) => {

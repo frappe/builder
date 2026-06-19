@@ -32,13 +32,22 @@ from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
 from builder.ai.session import AISession
+from builder.ai.snapshots import save_revert_snapshot
 from builder.utils import to_compact_yaml
 
 logger = frappe.logger("builder.ai.agent.loop")
 logger.setLevel(logging.INFO)
 
-MAX_ROUNDS = 100
+# One turn may span several rounds: server-tool reads, plus a model that applies a
+# page-wide change in batches across rounds. High enough to finish a big bulk edit
+# (e.g. translate every block of a large page), bounded so a runaway loop can't spin.
+MAX_ROUNDS = 25
 EVENT_PREFIX = "ai_chat"
+
+# Tools that change the block tree — the only changes a page snapshot can revert. A
+# turn touching only scripts is reverted via the per-message "Undo script" action, so
+# it gets no snapshot (and no misleading "Revert this edit" button).
+BLOCK_TOOLS = frozenset({"add_block", "update_block", "remove_block", "move_block", "generate_page"})
 
 
 class CancelledError(Exception):
@@ -68,6 +77,7 @@ class AgentRunner:
 		image_url: str | None = None,
 		registry: ToolRegistry | None = None,
 		system_prompt: str | None = None,
+		pre_turn_state: dict | None = None,
 	):
 		self.prompt = prompt
 		self.page_context_json = page_context_json
@@ -80,6 +90,16 @@ class AgentRunner:
 		self.image_url = image_url
 		self.registry = registry or build_default_registry()
 		self.system_prompt = system_prompt or Prompts.AGENT_SYSTEM
+		# Page state captured before this turn (in api.run). A snapshot doc is created
+		# from it ONLY if the turn mutates the page; its name lands on the final
+		# assistant message as the revert handle. None when the page was empty.
+		self.pre_turn_state = pre_turn_state
+		self.revert_snapshot: str | None = None
+		# Per-turn debug trace (one entry per round) + why the turn ended. Persisted on
+		# the assistant message so the agent debugger can explain what the model did and
+		# why it stopped (e.g. "model_finished after 1 round, 2 tool calls").
+		self.trace: list[dict] = []
+		self.stop_reason = ""
 		# Tiered model selection: resolved in run() once we know the scenario.
 		self.loop_model = self.model
 
@@ -106,6 +126,35 @@ class AgentRunner:
 		if self.page_id:
 			event = f"{event}_{self.page_id}"
 		frappe.publish_realtime(event, {"page_id": self.page_id, **kwargs}, user=self.user)
+
+	def ensure_revert_snapshot(self) -> None:
+		"""Create the pre-turn snapshot the first time the turn changes the block tree.
+		Consumes pre_turn_state so it runs at most once — and runs as soon as the first
+		block batch is applied, so even a cancelled multi-round edit stays revertable."""
+		if self.pre_turn_state is None:
+			return
+		state, self.pre_turn_state = self.pre_turn_state, None
+		self.revert_snapshot = save_revert_snapshot(self.page_id, state)
+
+	def record_round(self, round_index: int, tool_operations: list[dict], text: str) -> None:
+		"""Append one round to the debug trace: which tools the model called (with
+		truncated args) and any text it wrote. This is what the agent debugger reads to
+		explain a turn — e.g. why it applied only N blocks."""
+		self.trace.append(
+			{
+				"round": round_index,
+				"tools": [
+					{
+						"name": op["tool_name"],
+						"args": BlockCodec.truncate_for_log(
+							json.dumps(op.get("args", {}), ensure_ascii=False), 300
+						),
+					}
+					for op in tool_operations
+				],
+				"text": BlockCodec.truncate_for_log(text or "", 300),
+			}
+		)
 
 	# --- message construction --------------------------------------------
 
@@ -285,10 +334,14 @@ class AgentRunner:
 	def run(self):
 		# Clear any stale cancel flag from a previous turn before starting.
 		self.clear_cancel_flag()
-		# The conversational loop always runs on the fast model (clarify, plan,
-		# targeted edits). Full-page generation runs on the user's selected heavy
-		# model, but inside the artifact generator — not here.
-		self.loop_model = ModelRegistry.get_simple(self.model)
+		# Editing an existing page runs the loop on the user's CHOSEN model — edit
+		# taste matters as much as generation taste, and silently downgrading a
+		# deliberately-picked heavy model is the surest way to degrade output. Only
+		# the lightweight new-page conversation (clarify/plan on an empty page) drops
+		# to the cheap model; full-page generation always uses the heavy model inside
+		# the artifact generator regardless.
+		has_content = self._page_root() is not None
+		self.loop_model = self.model if has_content else ModelRegistry.get_simple(self.model)
 		logger.info(
 			f"AgentRunner.run: page_id={self.page_id}, model={self.model}, loop_model={self.loop_model}, "
 			f"session_id={self.session_id}, user={self.user}"
@@ -316,6 +369,7 @@ class AgentRunner:
 		try:
 			for _round in range(MAX_ROUNDS):
 				tool_operations, summary_text, raw_tool_calls = self.call_tool_llm(messages)
+				self.record_round(_round, tool_operations, summary_text)
 
 				# Classify each call. Artifact tools (e.g. generate_page) take
 				# precedence over their nominal side — they're handled by their
@@ -331,8 +385,6 @@ class AgentRunner:
 						server_ops.append(op)
 					else:
 						client_ops.append(op)
-				client_operations.extend(client_ops)
-
 				# A terminal tool ends the turn and hands control back to the user.
 				# If the model emits more than one, the first wins (the turn is over).
 				if terminal_ops:
@@ -343,16 +395,34 @@ class AgentRunner:
 				# its generator streams the artifact live on the heavy model and
 				# returns the canonical client op(s). Generation ends the loop.
 				if artifact_ops:
+					self.stop_reason = "generated"
+					self.ensure_revert_snapshot()  # generate_page replaces the block tree
 					for op in artifact_ops:
 						tool = self.registry.get(op["tool_name"])
 						if tool and tool.generator:
-							client_operations.extend(tool.generator(self, op["args"]))
+							ops = tool.generator(self, op["args"])
+							client_operations.extend(ops)
+							if ops:
+								self.emit("tool_batch", operations=ops)
 					break
 
-				if not server_ops:
+				# Apply this round's edits immediately so the canvas updates live and the
+				# user sees progress during a long multi-block change.
+				if client_ops:
+					if any(op["tool_name"] in BLOCK_TOOLS for op in client_ops):
+						self.ensure_revert_snapshot()
+					client_operations.extend(client_ops)
+					self.emit("tool_batch", operations=client_ops)
+
+				# Keep looping as long as the model is still calling tools. A page-wide
+				# change (translate every block, restyle all buttons) spans several rounds,
+				# emitting a batch each round; the model ENDS the turn by replying with a
+				# final summary and NO tool calls. (Previously the loop broke after the
+				# first client-only round, so bulk edits silently did just the first few.)
+				if not tool_operations:
+					self.stop_reason = "model_finished"
 					break
 
-				# Resolve server tools, feed results back, and loop.
 				messages.append(
 					{"role": "assistant", "content": summary_text or None, "tool_calls": raw_tool_calls}
 				)
@@ -361,8 +431,12 @@ class AgentRunner:
 					if tool and tool.side == "server" and tool.handler:
 						content = tool.handler(self, op["args"])
 					else:
-						content = "Will be applied by the frontend."
+						content = "Applied."
 					messages.append({"role": "tool", "tool_call_id": tc_dict["id"], "content": content})
+			else:
+				# Loop ran the full MAX_ROUNDS without the model finishing — a very large
+				# bulk edit or a stuck loop. The work done so far still applies.
+				self.stop_reason = "max_rounds"
 
 		except CancelledError:
 			self._emit_cancelled()
@@ -370,11 +444,14 @@ class AgentRunner:
 		except Exception as e:
 			logger.error(f"Agent LLM call failed: {e!s}", exc_info=True)
 			frappe.log_error(f"Agent LLM call failed: {e}", "AgentRunner.run")
+			# Show a generic message to the user — raw provider/exception strings can
+			# leak internals (keys, model ids, stack detail). Full error is logged above.
+			user_msg = "Something went wrong while building your changes. Please try again."
 			AISession.try_append_message(
-				self.session_id, "assistant", str(e), message_type="status", metadata={"status": "error"}
+				self.session_id, "assistant", user_msg, message_type="status", metadata={"status": "error"}
 			)
 			frappe.db.commit()  # commit before emit so the client's reload sees it
-			self.emit("error", message=str(e))
+			self.emit("error", message=user_msg)
 			return
 		finally:
 			self.clear_cancel_flag()
@@ -389,8 +466,11 @@ class AgentRunner:
 		if not client_operations and _looks_like_page_yaml(summary_text):
 			logger.info("Recovering YAML-as-content into a synthetic generate_page op")
 			yaml_text = BlockCodec.strip_fences(summary_text)
-			client_operations.append({"tool_name": "generate_page", "args": {"yaml": yaml_text}})
+			op = {"tool_name": "generate_page", "args": {"yaml": yaml_text}}
+			client_operations.append(op)
+			self.ensure_revert_snapshot()
 			self.emit("stream", chunk=yaml_text, kind="page_yaml")
+			self.emit("tool_batch", operations=[op])
 			summary_text = ""
 
 		if not client_operations and not summary_text:
@@ -398,10 +478,8 @@ class AgentRunner:
 			self.emit("error", message="The AI returned an empty response. Please try rephrasing.")
 			return
 
-		if client_operations:
-			logger.info(f"Emitting {len(client_operations)} tool operations to frontend")
-			self.emit("tool_batch", operations=client_operations)
-
+		# Block/script edits and generation ops were already emitted incrementally inside
+		# the loop (live canvas progress); nothing more to emit here.
 		generated = any(op["tool_name"] == "generate_page" for op in client_operations)
 		if summary_text:
 			# The model wrote a summary alongside its tool calls — richest, and
@@ -421,13 +499,31 @@ class AgentRunner:
 			summary_text = self.describe_operations(client_operations)
 			self.emit("stream", chunk=summary_text)
 
+		# The revert snapshot was created lazily during the loop, the first time a block
+		# change was applied (see ensure_revert_snapshot). Script-only / no-op / clarify
+		# turns never trigger it, so they carry no revert handle.
+		final_metadata = {
+			"status": "complete",
+			"model": self.model,
+			"operations": len(client_operations),
+			# Trace for the agent debugger: why the turn ended + what the model did each
+			# round. Explains cases like "only 2 blocks updated" at a glance.
+			"debug": {
+				"stopReason": self.stop_reason or "model_finished",
+				"loopModel": self.loop_model,
+				"rounds": len(self.trace),
+				"trace": self.trace,
+			},
+		}
+		if self.revert_snapshot:
+			final_metadata["revertSnapshot"] = self.revert_snapshot
 		AISession.try_append_message(
 			self.session_id,
 			"assistant",
 			summary_text or f"Applying {len(client_operations)} change(s).",
 			message_type="chat",
 			task_type="agent",
-			metadata={"status": "complete", "model": self.model, "operations": len(client_operations)},
+			metadata=final_metadata,
 		)
 		frappe.db.commit()  # commit before emit so the client's reload sees the final turn
 		self.emit("complete", message=summary_text or "Done")
