@@ -73,20 +73,18 @@
 							<FeatherIcon name="rotate-ccw" class="size-3" />
 							Revert this edit
 						</button>
-						<!-- Per-turn cost/latency + debugger trigger -->
+						<!-- Time taken + debugger trigger (full breakdown lives in the debug panel) -->
 						<div
 							v-if="message.metadata?.debug"
 							class="mt-1.5 flex items-center gap-2 font-mono text-[10px] text-ink-gray-4">
-							<span
-								v-if="(message.metadata.debug.tokens?.total_tokens ?? 0) > 0"
-								:title="turnStatsTitle(message.metadata.debug)">
-								{{ turnStats(message.metadata.debug) }}
+							<span v-if="message.metadata.debug.elapsedMs">
+								took {{ formatDuration(message.metadata.debug.elapsedMs) }}
 							</span>
 							<button
 								class="inline-flex items-center gap-1 transition-colors"
 								:class="
 									debugHasSignal(message.metadata.debug)
-										? 'text-ink-amber-3 hover:text-ink-amber-2'
+										? 'text-ink-amber-8 hover:text-ink-amber-7'
 										: 'text-ink-gray-4 hover:text-ink-gray-7'
 								"
 								title="Inspect this turn (rounds, tools, tokens, why it stopped)"
@@ -384,39 +382,15 @@ function debugHasSignal(debug: Record<string, any>): boolean {
 	);
 }
 
-/** One-line per-turn cost/latency summary shown under an assistant message. */
-function turnStats(debug: Record<string, any>): string {
-	const t = debug?.tokens || {};
-	const total = (t.total_tokens || 0).toLocaleString();
-	const rounds = debug?.rounds ?? 0;
-	const secs = ((debug?.elapsedMs || 0) / 1000).toFixed(1);
-	return `${total} tokens · ${rounds} round${rounds === 1 ? "" : "s"} · ${secs}s`;
-}
-
-/** Hover breakdown for the per-turn summary. */
-function turnStatsTitle(debug: Record<string, any>): string {
-	const t = debug?.tokens || {};
-	const n = (v: number) => (v || 0).toLocaleString();
-	const cached = t.cached_tokens || 0;
-	const lines = [
-		`prompt: ${n(t.prompt_tokens)}${cached ? `  (${n(cached)} cached)` : ""}`,
-		`completion: ${n(t.completion_tokens)}`,
-		`total: ${n(t.total_tokens)}`,
-		`LLM calls: ${t.calls || 0}`,
-	];
-	// Per-call split so you can see which round carried the cost. Cap the list — a
-	// long turn (25+ calls) would overflow the native tooltip and clip; the totals
-	// above stay complete regardless.
-	const perCall = t.per_call || [];
-	const MAX_ROWS = 12;
-	const shown = perCall.length > MAX_ROWS ? perCall.slice(0, MAX_ROWS) : perCall;
-	for (const [i, c] of shown.entries()) {
-		const cc = c.cached ? ` (${n(c.cached)} cached)` : "";
-		lines.push(`  #${i + 1}  ${n(c.prompt)} prompt${cc} · ${n(c.completion)} completion`);
-	}
-	if (perCall.length > MAX_ROWS) lines.push(`  … +${perCall.length - MAX_ROWS} more calls`);
-	lines.push(`stop: ${debug?.stopReason || "?"}`, `model: ${debug?.loopModel || "?"}`);
-	return lines.join("\n");
+/** Human-readable elapsed time, e.g. 950ms→"1s", 147900ms→"2m 28s". The full
+ * token/round breakdown now lives in the debug panel, so the inline line is just this. */
+function formatDuration(ms: number): string {
+	const secs = Math.round((ms || 0) / 1000);
+	if (secs < 60) return `${secs}s`;
+	const mins = Math.floor(secs / 60);
+	if (mins < 60) return secs % 60 ? `${mins}m ${secs % 60}s` : `${mins}m`;
+	const hrs = Math.floor(mins / 60);
+	return mins % 60 ? `${hrs}h ${mins % 60}m` : `${hrs}h`;
 }
 
 /** Split a clarification option like "Editorial — asymmetric, serif headlines" or

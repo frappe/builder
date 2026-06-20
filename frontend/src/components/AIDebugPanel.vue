@@ -24,8 +24,8 @@
 				class="rounded-full px-2.5 py-1 text-xs font-medium ring-1"
 				:class="
 					s.tone === 'bad'
-						? 'bg-surface-red-1 text-ink-red-3 ring-outline-red-2'
-						: 'bg-surface-amber-1 text-ink-amber-3 ring-outline-amber-2'
+						? 'bg-surface-red-2 text-ink-red-8 ring-outline-red-3'
+						: 'bg-surface-amber-2 text-ink-amber-8 ring-outline-amber-3'
 				">
 				{{ s.text }}
 			</span>
@@ -75,10 +75,10 @@
 		</div>
 
 		<!-- Tool failures -->
-		<div v-if="toolFailures.length" class="rounded-lg border border-outline-red-2 bg-surface-red-1 p-3">
-			<span class="text-xs font-semibold uppercase tracking-wider text-ink-red-3">Tool failures</span>
+		<div v-if="toolFailures.length" class="rounded-lg border border-outline-red-3 bg-surface-red-2 p-3">
+			<span class="text-xs font-semibold uppercase tracking-wider text-ink-red-8">Tool failures</span>
 			<ul class="mt-1.5 flex flex-col gap-1">
-				<li v-for="(f, i) in toolFailures" :key="i" class="font-mono text-[11px] leading-snug text-ink-red-3">
+				<li v-for="(f, i) in toolFailures" :key="i" class="font-mono text-[11px] leading-snug text-ink-red-8">
 					{{ f }}
 				</li>
 			</ul>
@@ -141,9 +141,9 @@ const modelLabel = computed(() => (props.debug?.loopModel || "?").replace(/^open
 const stopPill = computed(() => {
 	const meta = STOP_META[props.debug?.stopReason] || { label: props.debug?.stopReason || "?", tone: "warn" };
 	const cls = {
-		good: "bg-surface-green-1 text-ink-green-3 ring-1 ring-outline-green-2",
-		bad: "bg-surface-red-1 text-ink-red-3 ring-1 ring-outline-red-2",
-		warn: "bg-surface-amber-1 text-ink-amber-3 ring-1 ring-outline-amber-2",
+		good: "bg-surface-green-2 text-ink-green-8 ring-1 ring-outline-green-3",
+		bad: "bg-surface-red-2 text-ink-red-8 ring-1 ring-outline-red-3",
+		warn: "bg-surface-amber-2 text-ink-amber-8 ring-1 ring-outline-amber-3",
 	}[meta.tone];
 	return { label: meta.label, class: cls };
 });
@@ -176,11 +176,11 @@ const signals = computed(() => {
 
 // Colour tool chips by what they do, so a trace reads at a glance. Semantic tokens
 // (surface/ink) auto-handle dark mode — light bg-*-1 + dark ink-*-3 reads in both.
-const BLUE = "bg-surface-blue-1 text-ink-blue-3"; // read / inspect
-const GREEN = "bg-surface-green-1 text-ink-green-3"; // create
-const AMBER = "bg-surface-amber-1 text-ink-amber-3"; // mutate
-const RED = "bg-surface-red-1 text-ink-red-3"; // delete
-const GRAY = "bg-surface-gray-3 text-ink-gray-6"; // converse
+const BLUE = "bg-surface-blue-2 text-ink-blue-8"; // read / inspect
+const GREEN = "bg-surface-green-2 text-ink-green-8"; // create
+const AMBER = "bg-surface-amber-2 text-ink-amber-8"; // mutate
+const RED = "bg-surface-red-2 text-ink-red-8"; // delete
+const GRAY = "bg-surface-gray-3 text-ink-gray-7"; // converse
 const TOOL_TONES: Record<string, string> = {
 	read_block: BLUE,
 	query_blocks: BLUE,
