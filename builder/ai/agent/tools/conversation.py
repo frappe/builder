@@ -30,9 +30,27 @@ def _ask_clarification(ctx, args: dict) -> None:
 	ctx.emit("clarify", question=question, options=options, previews=previews)
 
 
+def normalize_sections(raw) -> list[str]:
+	"""Accept sections as a newline-delimited string (the robust contract for weaker
+	models — one quoted JSON array per item is where their tool-call JSON breaks) OR a
+	list (Claude does arrays fine). Strip bullets/leading dashes and stray quotes."""
+	if isinstance(raw, str):
+		items = raw.splitlines()
+	elif isinstance(raw, list):
+		items = [str(s) for s in raw]
+	else:
+		items = []
+	out = []
+	for item in items:
+		s = item.strip().lstrip("-•*").strip().strip("'\"").strip()
+		if s:
+			out.append(s)
+	return out
+
+
 def _propose_plan(ctx, args: dict) -> None:
 	headline = (args.get("headline") or "Here's my plan").strip()
-	sections = [str(s).strip() for s in (args.get("sections") or []) if str(s).strip()]
+	sections = normalize_sections(args.get("sections"))
 	palette = (args.get("palette") or "").strip()
 	AISession.try_append_message(
 		ctx.session_id,
@@ -124,18 +142,17 @@ propose_plan = Tool(
 				"description": "One concrete line stating what the page is and who it's for — not a slogan.",
 			},
 			"sections": {
-				"type": "array",
-				"items": {"type": "string"},
+				"type": "string",
 				"description": (
-					"3–5 sections. Make each one DECISION-USEFUL: state the actual content — the real "
+					"3–5 sections as ONE string, with each section on its OWN LINE (separate them with "
+					"a newline). Do NOT send a JSON array. Make each line DECISION-USEFUL: the real "
 					"headline/key copy it will use (in 'single quotes'), what's concretely in it (named "
 					"items, not 'categories'), and the layout (e.g. 'full-bleed split, photo right'). "
-					"Quote copy with SINGLE quotes only — never double quotes inside a section string "
-					"(unescaped double quotes break this tool call). "
-					"Write real nouns and copy, never mood-adjective filler — do NOT use 'striking', "
-					"'clean', 'elegant', 'minimalist', 'sleek', 'modern', or 'premium'. "
-					"Example: 'Hero — deep-green full-bleed panel, headline 'Bring the forest home', "
-					"sapling photo on the right, 'Shop the collection' button'."
+					"Use single quotes for any quoted copy. Write real nouns and copy, never "
+					"mood-adjective filler — do NOT use 'striking', 'clean', 'elegant', 'minimalist', "
+					"'sleek', 'modern', or 'premium'. Example (two lines):\n"
+					"Hero — deep-green full-bleed panel, headline 'Bring the forest home', sapling photo right, 'Shop the collection' button\n"
+					"Story — two-column split, founder portrait left, 120-word origin note right"
 				),
 			},
 			"palette": {"type": "string", "description": "Palette description with hex codes."},

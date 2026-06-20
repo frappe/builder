@@ -4,6 +4,7 @@ This is the ONLY place that knows about provider-specific quirks. The agent
 loop and tools talk to LLMs exclusively through the functions defined here.
 """
 
+import json
 import logging
 
 import frappe
@@ -13,6 +14,30 @@ litellm.drop_params = True
 
 logger = frappe.logger("builder.ai.llm")
 logger.setLevel(logging.INFO)
+
+
+def loads_tolerant(raw: str) -> tuple[object | None, bool]:
+	"""Parse tool-call argument JSON, tolerating the malformed JSON weaker models emit
+	(single-quote delimiters, unescaped quotes, trailing commas, truncated/missing
+	brackets). Strict json.loads first; on failure fall back to json_repair if available.
+	Returns (parsed_or_None, was_repaired)."""
+	raw = (raw or "").strip()
+	if not raw:
+		return None, False
+	try:
+		return json.loads(raw), False
+	except json.JSONDecodeError:
+		pass
+	try:
+		from json_repair import repair_json
+
+		obj = repair_json(raw, return_objects=True)
+		if obj not in ("", None, [], {}):
+			return obj, True
+	except Exception:
+		pass
+	return None, False
+
 
 # Token/temperature budgets per task tier.
 TASK_PARAMS = {

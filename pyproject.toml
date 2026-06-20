@@ -13,6 +13,7 @@ dependencies = [
     "pandas (>=2.3.2,<3.0.0)",
     "duckdb==1.4.3",
     "litellm==1.83.7",
+    "json-repair>=0.30",
 ]
 
 [project.urls]

@@ -134,6 +134,10 @@ class AgentRunner:
 		self.stop_reason = ""
 		# Set once the no-op-claim guard has spent its single corrective round this turn.
 		self.noop_corrected = False
+		# Debug signals: how many tool-arg blobs needed json_repair, and the finish_reason
+		# of each LLM call (="length" flags truncation — the usual cause of broken args).
+		self.args_repaired = 0
+		self.finish_reasons: list[str | None] = []
 		# Tiered model selection: resolved in run() once we know the scenario.
 		self.loop_model = self.model
 		# Per-turn token tally, summed across every LLM call this turn (the loop's
@@ -335,6 +339,7 @@ class AgentRunner:
 		content_parts: list[str] = []
 		# index -> {"id", "name", "args"}; preserves call order across chunks.
 		acc: dict[int, dict] = {}
+		finish_reason = None
 
 		for chunk in stream:
 			if self.is_cancelled():
@@ -347,6 +352,8 @@ class AgentRunner:
 			# The final include_usage chunk carries usage but no choices.
 			if not chunk.choices:
 				continue
+			if fr := chunk.choices[0].finish_reason:
+				finish_reason = fr
 			delta = chunk.choices[0].delta
 			if getattr(delta, "content", None):
 				content_parts.append(delta.content)
@@ -368,22 +375,29 @@ class AgentRunner:
 			if not entry["name"]:
 				continue
 			raw_arguments = entry["args"] or ""
-			try:
-				args = json.loads(raw_arguments)
-			except json.JSONDecodeError as e:
-				# Invalid JSON tool args (commonly: unescaped double quotes inside a long
-				# string value). Don't silently drop to {} with no trace — that surfaces as
-				# an empty plan/edit. Log it loudly so the failure is visible.
+			parsed, repaired = llm.loads_tolerant(raw_arguments)
+			if parsed is None:
+				# Even tolerant parsing failed — don't silently drop to {} with no trace
+				# (that surfaces as an empty plan/edit). Log it loudly.
 				args = {}
 				logger.warning(
-					"AI tool args failed to parse (tool=%s, err=%s): %s",
+					"AI tool args UNPARSEABLE (tool=%s): %s",
 					entry["name"],
-					e,
 					BlockCodec.truncate_for_log(raw_arguments, 2000),
 				)
+			else:
+				args = parsed if isinstance(parsed, dict) else {}
+				if repaired:
+					self.args_repaired += 1
+					logger.warning(
+						"AI tool args recovered via json_repair (tool=%s): %s",
+						entry["name"],
+						BlockCodec.truncate_for_log(raw_arguments, 2000),
+					)
 			logger.info(
-				"AI tool response: tool=%s, raw_arguments=%s",
+				"AI tool response: tool=%s, repaired=%s, raw_arguments=%s",
 				entry["name"],
+				repaired,
 				BlockCodec.truncate_for_log(raw_arguments, 2000),
 			)
 			tool_operations.append({"tool_name": entry["name"], "args": args})
@@ -396,7 +410,17 @@ class AgentRunner:
 			)
 
 		content = "".join(content_parts)
-		logger.info("Agent LLM responded: tool_calls=%d, has_text=%s", len(tool_operations), bool(content))
+		self.finish_reasons.append(finish_reason)
+		# finish_reason="length" means the model hit max_tokens mid-output — the usual
+		# cause of truncated/unparseable tool args. Surface it as the prime suspect.
+		if finish_reason == "length":
+			logger.warning("Agent LLM hit max_tokens (finish_reason=length) — tool args may be truncated")
+		logger.info(
+			"Agent LLM responded: tool_calls=%d, has_text=%s, finish_reason=%s",
+			len(tool_operations),
+			bool(content),
+			finish_reason,
+		)
 		return tool_operations, content, raw_tool_calls
 
 	def _page_root(self) -> dict | None:
@@ -688,6 +712,8 @@ class AgentRunner:
 				"loopModel": self.loop_model,
 				"rounds": len(self.trace),
 				"noopCorrected": self.noop_corrected,
+				"argsRepaired": self.args_repaired,
+				"finishReasons": self.finish_reasons,
 				# Per-turn cost signal for the selector/tiered-context experiment.
 				"tokens": self.usage,
 				"elapsedMs": elapsed_ms,
