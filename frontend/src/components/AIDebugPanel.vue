@@ -10,7 +10,7 @@
 			</div>
 			<div class="grid grid-cols-3 gap-x-4 gap-y-3">
 				<div v-for="m in metrics" :key="m.label" class="flex flex-col gap-0.5">
-					<span class="text-[10px] uppercase tracking-wider text-ink-gray-4">{{ m.label }}</span>
+					<span class="text-xs text-ink-gray-5">{{ m.label }}</span>
 					<span class="font-mono text-sm text-ink-gray-8">{{ m.value }}</span>
 				</div>
 			</div>
@@ -34,7 +34,7 @@
 		<!-- Round-by-round trace -->
 		<div v-if="trace.length" class="flex flex-col gap-2">
 			<div class="flex items-baseline justify-between">
-				<span class="text-xs font-semibold uppercase tracking-wider text-ink-gray-5">Trace</span>
+				<span class="text-xs font-semibold text-ink-gray-5">Trace</span>
 				<span class="text-xs text-ink-gray-4">{{ trace.length }} rounds</span>
 			</div>
 			<div class="flex flex-col gap-2">
@@ -76,7 +76,7 @@
 
 		<!-- Tool failures -->
 		<div v-if="toolFailures.length" class="rounded-lg border border-outline-red-3 bg-surface-red-2 p-3">
-			<span class="text-xs font-semibold uppercase tracking-wider text-ink-red-8">Tool failures</span>
+			<span class="text-xs font-semibold text-ink-red-8">Tool failures</span>
 			<ul class="mt-1.5 flex flex-col gap-1">
 				<li v-for="(f, i) in toolFailures" :key="i" class="font-mono text-[11px] leading-snug text-ink-red-8">
 					{{ f }}
@@ -86,7 +86,7 @@
 
 		<!-- Per-call token breakdown -->
 		<details v-if="perCall.length" class="rounded-lg border border-outline-gray-1 px-3 py-2">
-			<summary class="cursor-pointer text-xs font-semibold uppercase tracking-wider text-ink-gray-5">
+			<summary class="cursor-pointer text-xs font-semibold text-ink-gray-5">
 				Per-call tokens · {{ perCall.length }}
 			</summary>
 			<div class="mt-2 max-h-48 overflow-y-auto font-mono text-[11px] leading-relaxed text-ink-gray-6">
@@ -99,8 +99,7 @@
 
 		<!-- Raw JSON + copy -->
 		<details class="rounded-lg border border-outline-gray-1 px-3 py-2">
-			<summary
-				class="flex cursor-pointer items-center justify-between text-xs font-semibold uppercase tracking-wider text-ink-gray-5">
+			<summary class="flex cursor-pointer items-center justify-between text-xs font-semibold text-ink-gray-5">
 				Raw JSON
 				<button
 					class="text-[10px] font-medium normal-case text-ink-gray-5 hover:text-ink-gray-8"
