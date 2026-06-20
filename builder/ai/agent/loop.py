@@ -52,11 +52,21 @@ EVENT_PREFIX = "ai_chat"
 STREAM_MAX_ATTEMPTS = 3
 STREAM_BACKOFF_BASE = 1.0
 
-# Tools that change the block tree — the only changes a page snapshot can revert. A
-# turn touching only scripts is reverted via the per-message "Undo script" action, so
-# it gets no snapshot (and no misleading "Revert this edit" button).
-BLOCK_TOOLS = frozenset(
-	{"add_block", "update_block", "update_blocks", "remove_block", "move_block", "generate_page"}
+# Tools whose changes a pre-turn snapshot can revert. The snapshot captures blocks +
+# page data + client scripts, so block edits AND script create/edit are all undone by
+# one "Revert" — no separate "undo script" action. A turn touching none of these (clarify,
+# plan, no-op) creates no snapshot and gets no Revert button.
+SNAPSHOT_TOOLS = frozenset(
+	{
+		"add_block",
+		"update_block",
+		"update_blocks",
+		"remove_block",
+		"move_block",
+		"generate_page",
+		"set_page_script",
+		"update_script",
+	}
 )
 
 
@@ -628,7 +638,7 @@ class AgentRunner:
 				# Apply this round's edits immediately so the canvas updates live and the
 				# user sees progress during a long multi-block change.
 				if client_ops:
-					if any(op["tool_name"] in BLOCK_TOOLS for op in client_ops):
+					if any(op["tool_name"] in SNAPSHOT_TOOLS for op in client_ops):
 						self.ensure_revert_snapshot()
 					client_operations.extend(client_ops)
 					self.emit("tool_batch", operations=client_ops)

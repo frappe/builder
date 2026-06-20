@@ -327,7 +327,23 @@ class BuilderPage(WebsiteGenerator):
 		self.draft_blocks = blocks
 		if "page_data_script" in data:
 			self.page_data_script = data.get("page_data_script")
+		# AI snapshots also capture client scripts (publish/manual ones don't), so a single
+		# revert restores them: re-set the page's links to the pre-turn set (this unlinks any
+		# scripts the turn created) and restore each captured script's content (this reverts
+		# scripts the turn edited).
+		if "client_scripts" in data:
+			self.set(
+				"client_scripts",
+				[{"builder_script": s.get("builder_script")} for s in (data.get("client_scripts") or [])],
+			)
 		self.save()
+		for name, content in (data.get("_ai_scripts") or {}).items():
+			if frappe.db.exists("Builder Client Script", name):
+				frappe.db.set_value(
+					"Builder Client Script",
+					name,
+					{"script": content.get("script"), "script_type": content.get("script_type")},
+				)
 		return {"draft_blocks": blocks, "warnings": collect_restore_warnings(blocks)}
 
 	@frappe.whitelist()

@@ -52,13 +52,6 @@
 						<div v-else>
 							<div class="whitespace-pre-wrap break-words">{{ message.content }}</div>
 						</div>
-						<Button
-							v-if="message.metadata?.undoScripts?.length"
-							class="mt-1"
-							variant="ghost"
-							size="sm"
-							label="Undo script"
-							@click="undoAgentScript(message)" />
 						<div
 							v-if="
 								message.metadata?.affectedBlocks?.length ||
@@ -361,7 +354,7 @@ function renderMarkdown(content: string): string {
 const chat = new AIChatController();
 
 const { prompt, isSubmitting, isCancelling, messages, modelLabel, modelOptions, canSubmit } = chat;
-const { clearSession, undoAgentScript, revertTurn, selectOption, approvePlan } = chat;
+const { clearSession, revertTurn, selectOption, approvePlan } = chat;
 const { selectBlockById, openScriptByName } = chat;
 const { selectedBlocks } = chat;
 const { imagePreviewUrl, imageFileName, isDragging, isVisionModel } = chat;

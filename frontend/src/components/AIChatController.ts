@@ -6,7 +6,6 @@ import { buildLocalMessage } from "@/components/ai/yaml";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
-import type { BuilderClientScript } from "@/types/Builder/BuilderClientScript";
 import { confirm, getBlockObject } from "@/utils/helpers";
 import { useLocalStorage } from "@vueuse/core";
 import { createResource } from "frappe-ui";
@@ -480,60 +479,28 @@ export class AIChatController {
 		}
 	};
 
-	/** Revert an AI turn: restore the page to the snapshot taken just before it AND
-	 * rewind the conversation — this turn and every message after it are removed.
-	 * Reuses Builder's snapshot restore (loads the pre-turn state into the draft); page
-	 * scripts the turn created are reverted separately via the "Undo script" action. */
+	/** Revert an AI turn in ONE go: restore the page to the snapshot taken just before it
+	 * — blocks, page data AND client scripts (created ones get unlinked, edited ones
+	 * reverted) — and rewind the conversation, removing this message and everything after.
+	 * The pre-turn snapshot is the single source of truth; there is no separate undo. */
 	revertTurn = async (message: ChatMessage) => {
 		const snapshot: string | undefined = message.metadata?.revertSnapshot;
 		if (!snapshot || !this.sessionId.value) return;
 		const confirmed = await confirm(
-			"Revert this AI edit? The page returns to how it was just before this turn, and this message and everything after it are removed from the chat. Your live page won't change until you publish.",
+			"Revert this AI edit? The page (blocks and scripts) returns to how it was just before this turn, and this message and everything after it are removed from the chat. Your live page won't change until you publish.",
 		);
 		if (!confirmed) return;
-		// 1. Delete any client scripts this turn created — the page snapshot only
-		// covers blocks + page data, not Builder Client Script docs.
-		const createdScripts: string[] = message.metadata?.undoScripts || [];
-		if (createdScripts.length) {
-			await Promise.all(
-				createdScripts.map((name) =>
-					createResource({ url: "frappe.client.delete" })
-						.submit({ doctype: "Builder Client Script", name })
-						.catch(() => null),
-				),
-			);
-			this.pageStore.activePageScripts = this.pageStore.activePageScripts.filter(
-				(s: BuilderClientScript) => !createdScripts.includes(s.name),
-			);
-		}
-		// 2. Rewind the conversation server-side (delete this turn + everything after).
+		// 1. Rewind the conversation server-side (delete this turn + everything after).
 		await createResource({ url: "builder.ai.api.revert_to_message" })
 			.submit({ session_id: this.sessionId.value, message_id: message.id })
 			.catch(() => null);
-		// 3. Restore the page draft from the pre-turn snapshot (re-fetches the page).
+		// 2. Restore the page draft + scripts from the pre-turn snapshot. restore_snapshot
+		// re-applies blocks, page data and the client-script set/content, then re-fetches
+		// the page (which refreshes activePageScripts), so scripts revert in the same step.
 		await this.pageStore.restoreSnapshot(snapshot);
-		// 4. Reload the (now truncated) chat — restoreSnapshot doesn't touch the session.
+		// 3. Reload the (now truncated) chat — restoreSnapshot doesn't touch the session.
 		await this.loadSession();
 		this.scrollToBottom();
-	};
-
-	undoAgentScript = async (message: ChatMessage) => {
-		const scriptNames: string[] = message.metadata?.undoScripts || [];
-		await Promise.all(
-			scriptNames.map((name) =>
-				createResource({ url: "frappe.client.delete" }).submit({ doctype: "Builder Client Script", name }),
-			),
-		);
-		this.pageStore.activePageScripts = this.pageStore.activePageScripts.filter(
-			(s: BuilderClientScript) => !scriptNames.includes(s.name),
-		);
-		const idx = this.messages.value.findIndex((m) => m.id === message.id);
-		if (idx !== -1) {
-			this.messages.value[idx] = {
-				...this.messages.value[idx],
-				metadata: { ...this.messages.value[idx].metadata, undoScripts: [] },
-			};
-		}
 	};
 
 	selectBlockById = (blockId: string) => {

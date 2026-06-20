@@ -18,7 +18,8 @@ KEEP_AI_SNAPSHOTS = 10
 
 
 def capture_page_state(page_id: str | None) -> dict | None:
-	"""Read the page's current blocks + data script into a plain dict (no doc created).
+	"""Read the page's current blocks + data script + client scripts into a plain dict
+	(no doc created), so ONE revert restores everything the turn touched.
 
 	Returns None when there is nothing worth reverting to (missing/empty page)."""
 	if not page_id or not frappe.db.exists("Builder Page", page_id):
@@ -27,7 +28,23 @@ def capture_page_state(page_id: str | None) -> dict | None:
 	field = "draft_blocks" if doc.get("draft_blocks") else "blocks"
 	if not doc.get(field):
 		return None
-	return {field: doc.get(field), "page_data_script": doc.get("page_data_script")}
+	state = {field: doc.get(field), "page_data_script": doc.get("page_data_script")}
+	# Capture client scripts so revert handles them too (no separate "undo script"):
+	# the page's links (always, even empty — so scripts the turn CREATES get unlinked on
+	# revert) plus each linked script's content (so scripts the turn EDITS are reverted).
+	links = doc.get("client_scripts") or []
+	state["client_scripts"] = [{"builder_script": row.builder_script} for row in links if row.builder_script]
+	contents: dict[str, dict] = {}
+	for row in links:
+		if not row.builder_script:
+			continue
+		script = frappe.db.get_value(
+			"Builder Client Script", row.builder_script, ["script", "script_type"], as_dict=True
+		)
+		if script:
+			contents[row.builder_script] = {"script": script.script, "script_type": script.script_type}
+	state["_ai_scripts"] = contents
+	return state
 
 
 def save_revert_snapshot(page_id: str | None, state: dict | None) -> str | None:

@@ -6,7 +6,7 @@
 			<span
 				class="lucide-chevron-right size-3 transition-transform duration-150"
 				:class="open ? 'rotate-90' : ''" />
-			{{ totalCount }} {{ totalCount === 1 ? "block" : "blocks" }} updated
+			{{ summaryLabel }}
 		</button>
 		<div v-if="open" class="order-last mt-1 flex w-full flex-col gap-px">
 			<button
@@ -47,6 +47,15 @@ defineEmits<{
 	"open-script": [scriptName: string];
 }>();
 
-const totalCount = computed(() => props.affectedBlocks.length + props.affectedScripts.length);
+// Label by what actually changed — blocks, scripts, or a mix — so a script-only turn
+// never reads as "1 block updated".
+const summaryLabel = computed(() => {
+	const b = props.affectedBlocks.length;
+	const s = props.affectedScripts.length;
+	const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+	if (b && s) return `${plural(b, "block")}, ${plural(s, "script")} updated`;
+	if (s) return `${plural(s, "script")} updated`;
+	return `${plural(b, "block")} updated`;
+});
 const open = ref(false);
 </script>
