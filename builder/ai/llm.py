@@ -16,6 +16,37 @@ logger = frappe.logger("builder.ai.llm")
 logger.setLevel(logging.INFO)
 
 
+# Transient failures worth retrying a streaming round: rate limits, 5xx, and
+# connection/stream drops (incl. mid-stream resets). Matched by class name across the
+# exception's MRO so subclasses — and both litellm and raw httpx transport errors — are
+# covered without version-pinning exact types. Permanent errors (auth, bad request,
+# content policy, not found) are deliberately absent: retrying them only burns tokens.
+TRANSIENT_ERROR_NAMES = frozenset(
+	{
+		"RateLimitError",
+		"Timeout",
+		"TimeoutError",
+		"APITimeoutError",
+		"APIConnectionError",
+		"InternalServerError",
+		"ServiceUnavailableError",
+		"RemoteProtocolError",
+		"ReadError",
+		"ReadTimeout",
+		"ConnectError",
+		"ConnectionError",
+		"ChunkedEncodingError",
+		"ProtocolError",
+	}
+)
+
+
+def is_retryable(exc: BaseException) -> bool:
+	"""True if this exception looks like a transient network/provider hiccup worth
+	retrying. Walks the class MRO and matches by name (see TRANSIENT_ERROR_NAMES)."""
+	return any(cls.__name__ in TRANSIENT_ERROR_NAMES for cls in type(exc).__mro__)
+
+
 def loads_tolerant(raw: str) -> tuple[object | None, bool]:
 	"""Parse tool-call argument JSON, tolerating the malformed JSON weaker models emit
 	(single-quote delimiters, unescaped quotes, trailing commas, truncated/missing

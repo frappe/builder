@@ -47,6 +47,11 @@ logger.setLevel(logging.INFO)
 MAX_ROUNDS = 40
 EVENT_PREFIX = "ai_chat"
 
+# A streaming round is retried on transient failure (litellm can't fall back mid-stream).
+# Backoff is STREAM_BACKOFF_BASE * 2**attempt → ~1s, 2s before the final give-up.
+STREAM_MAX_ATTEMPTS = 3
+STREAM_BACKOFF_BASE = 1.0
+
 # Tools that change the block tree — the only changes a page snapshot can revert. A
 # turn touching only scripts is reverted via the per-message "Undo script" action, so
 # it gets no snapshot (and no misleading "Revert this edit" button).
@@ -144,6 +149,10 @@ class AgentRunner:
 		# Each is fed back to the model to self-correct; also logged and surfaced here so a
 		# "why didn't my edit land" is traceable in the agent debugger, not just live logs.
 		self.tool_failures: list[str] = []
+		# How many streaming rounds had to be retried after a transient failure this turn.
+		# Surfaced like args_repaired so a flaky provider shows up in the data, not as a
+		# silent turn failure.
+		self.stream_retries = 0
 		# Tiered model selection: resolved in run() once we know the scenario.
 		self.loop_model = self.model
 		# Per-turn token tally, summed across every LLM call this turn (the loop's
@@ -175,6 +184,17 @@ class AgentRunner:
 	def clear_cancel_flag(self) -> None:
 		if key := self._cancel_key():
 			frappe.cache.delete_value(key)
+
+	def interruptible_sleep(self, seconds: float) -> None:
+		"""Sleep in small steps so a cancel during retry backoff is honored within ~0.25s
+		instead of blocking the worker for the full delay."""
+		waited = 0.0
+		while waited < seconds:
+			if self.is_cancelled():
+				raise CancelledError
+			step = min(0.25, seconds - waited)
+			time.sleep(step)
+			waited += step
 
 	# --- realtime ---------------------------------------------------------
 
@@ -333,8 +353,35 @@ class AgentRunner:
 	# --- LLM call ---------------------------------------------------------
 
 	def call_tool_llm(self, messages: list[dict]) -> tuple[list[dict], str, list[dict]]:
+		"""Stream one tool-calling round, retrying the WHOLE round on a transient stream
+		failure (network drop, 429, 5xx, mid-stream reset). Safe because a round applies
+		nothing until it returns — ops are emitted and `messages` mutated by the caller only
+		after this returns, so a failed attempt leaves no partial state; we just re-issue the
+		identical completion (the cached prefix makes the retry cheap). litellm can't fall
+		back mid-stream (fallbacks are off while streaming), so this is the retry layer."""
+		for attempt in range(STREAM_MAX_ATTEMPTS):
+			try:
+				return self.stream_tool_round(messages)
+			except CancelledError:
+				raise
+			except Exception as exc:
+				if attempt == STREAM_MAX_ATTEMPTS - 1 or not llm.is_retryable(exc):
+					raise
+				self.stream_retries += 1
+				backoff = STREAM_BACKOFF_BASE * (2**attempt)
+				logger.warning(
+					"Stream round failed (attempt %d/%d): %s — retrying in %.1fs",
+					attempt + 1,
+					STREAM_MAX_ATTEMPTS,
+					exc,
+					backoff,
+				)
+				self.interruptible_sleep(backoff)
+
+	def stream_tool_round(self, messages: list[dict]) -> tuple[list[dict], str, list[dict]]:
 		"""Stream one tool-calling completion. Returns (tool_operations,
-		text_content, raw_tool_calls).
+		text_content, raw_tool_calls). Side-effect-free until it returns (see
+		call_tool_llm) — accumulates into locals only, so it is safe to re-run.
 
 		Tool-call arguments are accumulated by index across chunks.
 		`raw_tool_calls` reconstruct the assistant turn for a follow-up round.
@@ -720,7 +767,8 @@ class AgentRunner:
 		elapsed_ms = round((time.monotonic() - started) * 1000)
 		logger.info(
 			"AI turn done | page=%s rounds=%d llm_calls=%d prompt_tokens=%d "
-			"cached_tokens=%d completion_tokens=%d total_tokens=%d tool_failures=%d elapsed_ms=%d stop=%s",
+			"cached_tokens=%d completion_tokens=%d total_tokens=%d tool_failures=%d "
+			"stream_retries=%d elapsed_ms=%d stop=%s",
 			self.page_id,
 			len(self.trace),
 			self.usage["calls"],
@@ -729,6 +777,7 @@ class AgentRunner:
 			self.usage["completion_tokens"],
 			self.usage["total_tokens"],
 			len(self.tool_failures),
+			self.stream_retries,
 			elapsed_ms,
 			self.stop_reason or "model_finished",
 		)
@@ -746,6 +795,7 @@ class AgentRunner:
 				"argsRepaired": self.args_repaired,
 				"finishReasons": self.finish_reasons,
 				"toolFailures": self.tool_failures,
+				"streamRetries": self.stream_retries,
 				# Per-turn cost signal for the selector/tiered-context experiment.
 				"tokens": self.usage,
 				"elapsedMs": elapsed_ms,
