@@ -73,6 +73,13 @@
 							<FeatherIcon name="rotate-ccw" class="size-3" />
 							Revert this edit
 						</button>
+						<!-- Per-turn cost/latency (for the selector/tiered-context experiment) -->
+						<div
+							v-if="(message.metadata?.debug?.tokens?.total_tokens ?? 0) > 0"
+							class="mt-1.5 font-mono text-[10px] text-ink-gray-4"
+							:title="turnStatsTitle(message.metadata.debug)">
+							{{ turnStats(message.metadata.debug) }}
+						</div>
 						<!-- Plan summary card -->
 						<div
 							v-if="message.metadata?.status === 'plan_summary'"
@@ -332,6 +339,27 @@ const lastMessageId = computed(() => messages.value.at(-1)?.id ?? null);
 /** Extract hex colour codes from a palette description for swatch previews. */
 function paletteColors(palette: string): string[] {
 	return palette.match(/#[0-9a-fA-F]{3,8}\b/g) || [];
+}
+
+/** One-line per-turn cost/latency summary shown under an assistant message. */
+function turnStats(debug: Record<string, any>): string {
+	const t = debug?.tokens || {};
+	const total = (t.total_tokens || 0).toLocaleString();
+	const rounds = debug?.rounds ?? 0;
+	const secs = ((debug?.elapsedMs || 0) / 1000).toFixed(1);
+	return `${total} tokens · ${rounds} round${rounds === 1 ? "" : "s"} · ${secs}s`;
+}
+
+/** Hover breakdown for the per-turn summary. */
+function turnStatsTitle(debug: Record<string, any>): string {
+	const t = debug?.tokens || {};
+	return [
+		`prompt: ${(t.prompt_tokens || 0).toLocaleString()}`,
+		`completion: ${(t.completion_tokens || 0).toLocaleString()}`,
+		`LLM calls: ${t.calls || 0}`,
+		`stop: ${debug?.stopReason || "?"}`,
+		`model: ${debug?.loopModel || "?"}`,
+	].join("\n");
 }
 
 /** Split a clarification option like "Editorial — asymmetric, serif headlines" or
