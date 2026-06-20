@@ -86,6 +86,13 @@ class ModelRegistry:
 					"vision": True,
 				},
 				{
+					"name": "openrouter/z-ai/glm-5.2",
+					"label": "GLM-5.2",
+					"max_tokens": 203000,
+					"input_price": 1.1,
+					"vision": False,
+				},
+				{
 					"name": "openrouter/z-ai/glm-5.1",
 					"label": "GLM-5.1",
 					"max_tokens": 203000,
