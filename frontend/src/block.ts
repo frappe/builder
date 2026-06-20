@@ -39,6 +39,7 @@ const TEXT_ELEMENTS = new Set([
 	"em",
 	"i",
 	"blockquote",
+	"summary",
 ]);
 
 const CONTAINER_ELEMENTS = new Set(["section", "div"]);
@@ -116,7 +117,7 @@ class Block implements BlockOptions {
 					// falling back to the live component
 					const componentBlock = this.componentVersion
 						? componentStore.getComponentVersionBlock(this.componentVersion as string) ||
-							componentStore.getComponentBlock(this.isChildOfComponent as string)
+						  componentStore.getComponentBlock(this.isChildOfComponent as string)
 						: componentStore.getComponentBlock(this.isChildOfComponent as string);
 					return findBlockInTree(this.referenceBlockId as string, [componentBlock]);
 				}
