@@ -83,8 +83,12 @@
 								{{ turnStats(message.metadata.debug) }}
 							</span>
 							<button
-								class="inline-flex items-center gap-1 text-ink-gray-4 transition-colors hover:text-ink-gray-7"
-								:class="{ 'text-ink-amber-3 hover:text-ink-amber-3': debugHasSignal(message.metadata.debug) }"
+								class="inline-flex items-center gap-1 transition-colors"
+								:class="
+									debugHasSignal(message.metadata.debug)
+										? 'text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300'
+										: 'text-ink-gray-4 hover:text-ink-gray-7'
+								"
 								title="Inspect this turn (rounds, tools, tokens, why it stopped)"
 								@click="openDebug(message.metadata.debug)">
 								<FeatherIcon name="activity" class="size-3" />
@@ -293,7 +297,7 @@
 				</div>
 			</div>
 		</template>
-		<Dialog title="Turn debug" size="2xl" v-model="debugOpen">
+		<Dialog title="Turn debug" size="5xl" v-model="debugOpen">
 			<template #default>
 				<AIDebugPanel :debug="debugData" />
 			</template>

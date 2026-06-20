@@ -24,8 +24,8 @@
 				class="rounded-full px-2.5 py-1 text-xs font-medium ring-1"
 				:class="
 					s.tone === 'bad'
-						? 'bg-red-50 text-red-700 ring-red-200'
-						: 'bg-amber-50 text-amber-700 ring-amber-200'
+						? 'bg-red-50 text-red-700 ring-red-200 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/20'
+						: 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/20'
 				">
 				{{ s.text }}
 			</span>
@@ -37,8 +37,8 @@
 				<span class="text-xs font-semibold uppercase tracking-wider text-ink-gray-5">Trace</span>
 				<span class="text-xs text-ink-gray-4">{{ trace.length }} rounds</span>
 			</div>
-			<ol class="flex flex-col gap-2">
-				<li
+			<div class="flex flex-col gap-2">
+				<div
 					v-for="(round, idx) in trace"
 					:key="idx"
 					class="bg-surface-white rounded-lg border border-outline-gray-1 p-3">
@@ -70,15 +70,22 @@
 						class="mt-2 whitespace-pre-wrap break-words border-l-2 border-outline-gray-3 pl-2 text-xs italic text-ink-gray-6">
 						{{ round.text }}
 					</p>
-				</li>
-			</ol>
+				</div>
+			</div>
 		</div>
 
 		<!-- Tool failures -->
-		<div v-if="toolFailures.length" class="rounded-lg border border-red-200 bg-red-50 p-3">
-			<span class="text-xs font-semibold uppercase tracking-wider text-red-700">Tool failures</span>
+		<div
+			v-if="toolFailures.length"
+			class="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-400/20 dark:bg-red-400/10">
+			<span class="text-xs font-semibold uppercase tracking-wider text-red-700 dark:text-red-300">
+				Tool failures
+			</span>
 			<ul class="mt-1.5 flex flex-col gap-1">
-				<li v-for="(f, i) in toolFailures" :key="i" class="font-mono text-[11px] leading-snug text-red-700">
+				<li
+					v-for="(f, i) in toolFailures"
+					:key="i"
+					class="font-mono text-[11px] leading-snug text-red-700 dark:text-red-300">
 					{{ f }}
 				</li>
 			</ul>
@@ -141,9 +148,9 @@ const modelLabel = computed(() => (props.debug?.loopModel || "?").replace(/^open
 const stopPill = computed(() => {
 	const meta = STOP_META[props.debug?.stopReason] || { label: props.debug?.stopReason || "?", tone: "warn" };
 	const cls = {
-		good: "bg-green-50 text-green-700 ring-green-200",
-		bad: "bg-red-50 text-red-700 ring-red-200",
-		warn: "bg-amber-50 text-amber-700 ring-amber-200",
+		good: "bg-green-50 text-green-700 ring-green-200 dark:bg-green-400/10 dark:text-green-300 dark:ring-green-400/20",
+		bad: "bg-red-50 text-red-700 ring-red-200 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/20",
+		warn: "bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/20",
 	}[meta.tone];
 	return { label: meta.label, class: cls };
 });
@@ -176,21 +183,22 @@ const signals = computed(() => {
 
 // Colour tool chips by what they do, so a trace reads at a glance.
 const TOOL_TONES: Record<string, string> = {
-	read_block: "bg-blue-50 text-blue-700",
-	query_blocks: "bg-blue-50 text-blue-700",
-	get_page_scripts: "bg-blue-50 text-blue-700",
-	add_block: "bg-green-50 text-green-700",
-	set_page_script: "bg-green-50 text-green-700",
-	update_block: "bg-amber-50 text-amber-700",
-	update_blocks: "bg-amber-50 text-amber-700",
-	update_script: "bg-amber-50 text-amber-700",
-	remove_block: "bg-red-50 text-red-700",
-	move_block: "bg-purple-50 text-purple-700",
-	generate_page: "bg-indigo-50 text-indigo-700",
-	propose_plan: "bg-gray-100 text-gray-600",
-	ask_clarification: "bg-gray-100 text-gray-600",
+	read_block: "bg-blue-50 text-blue-700 dark:bg-blue-400/10 dark:text-blue-300",
+	query_blocks: "bg-blue-50 text-blue-700 dark:bg-blue-400/10 dark:text-blue-300",
+	get_page_scripts: "bg-blue-50 text-blue-700 dark:bg-blue-400/10 dark:text-blue-300",
+	add_block: "bg-green-50 text-green-700 dark:bg-green-400/10 dark:text-green-300",
+	set_page_script: "bg-green-50 text-green-700 dark:bg-green-400/10 dark:text-green-300",
+	update_block: "bg-amber-50 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300",
+	update_blocks: "bg-amber-50 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300",
+	update_script: "bg-amber-50 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300",
+	remove_block: "bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300",
+	move_block: "bg-purple-50 text-purple-700 dark:bg-purple-400/10 dark:text-purple-300",
+	generate_page: "bg-indigo-50 text-indigo-700 dark:bg-indigo-400/10 dark:text-indigo-300",
+	propose_plan: "bg-gray-100 text-gray-600 dark:bg-gray-400/10 dark:text-gray-300",
+	ask_clarification: "bg-gray-100 text-gray-600 dark:bg-gray-400/10 dark:text-gray-300",
 };
-const toolTone = (name: string) => TOOL_TONES[name] || "bg-gray-100 text-gray-600";
+const toolTone = (name: string) =>
+	TOOL_TONES[name] || "bg-gray-100 text-gray-600 dark:bg-gray-400/10 dark:text-gray-300";
 
 const rawJson = computed(() => JSON.stringify(props.debug || {}, null, 2));
 const copied = ref(false);
