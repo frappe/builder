@@ -633,6 +633,16 @@ class AgentRunner:
 					client_operations.extend(client_ops)
 					self.emit("tool_batch", operations=client_ops)
 
+				# Live narration: surface what the model said / did THIS round so a long
+				# multi-round turn shows real progress instead of a frozen "Applying…".
+				# Only for rounds that CONTINUE — the final round's text is the turn summary.
+				if tool_operations:
+					note = (summary_text or "").strip() or (
+						self.describe_operations(client_ops) if client_ops else ""
+					)
+					if note:
+						self.emit("progress", message=note)
+
 				# Keep looping as long as the model is still calling tools. A page-wide
 				# change (translate every block, restyle all buttons) spans several rounds,
 				# emitting a batch each round; the model ENDS the turn by replying with a

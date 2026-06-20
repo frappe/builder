@@ -192,7 +192,7 @@ export class AIChatController {
 		const session = result as { session_id: string; messages: ChatMessage[] };
 		this.sessionId.value = session.session_id;
 		this.messages.value = (session.messages || []).map(
-			(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" } as ChatMessage),
+			(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" }) as ChatMessage,
 		);
 	}
 
@@ -263,8 +263,9 @@ export class AIChatController {
 				console.warn(`[AI agent] tool "${op.tool_name}" failed:`, e);
 			}
 		}
-		const n = data.operations.length;
-		this.replacePendingAssistant(`Applying ${n} change${n !== 1 ? "s" : ""}…`, { status: "running" });
+		// Don't overwrite the bubble with a static "Applying N changes…" — the loop emits
+		// a per-round progress note (the model's words, or a "Updated N blocks" summary)
+		// right after each batch, which is what the user actually sees update.
 		this.scrollToBottom();
 	};
 
