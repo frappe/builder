@@ -8,8 +8,8 @@
 				</span>
 				<span class="truncate font-mono text-xs text-ink-gray-5" :title="modelLabel">{{ modelLabel }}</span>
 			</div>
-			<div class="flex flex-wrap gap-x-6 gap-y-2">
-				<div v-for="m in metrics" :key="m.label" class="flex flex-col">
+			<div class="grid grid-cols-3 gap-x-4 gap-y-3">
+				<div v-for="m in metrics" :key="m.label" class="flex flex-col gap-0.5">
 					<span class="text-[10px] uppercase tracking-wider text-ink-gray-4">{{ m.label }}</span>
 					<span class="font-mono text-sm text-ink-gray-8">{{ m.value }}</span>
 				</div>

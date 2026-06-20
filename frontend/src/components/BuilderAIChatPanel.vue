@@ -47,7 +47,7 @@
 						]">
 						<div
 							v-if="message.role === 'assistant'"
-							class="ai-prose prose prose-sm max-w-none text-p-sm"
+							class="ai-prose prose prose-sm max-w-none break-words text-p-sm"
 							v-html="renderMarkdown(message.content)" />
 						<div v-else>
 							<div class="whitespace-pre-wrap break-words">{{ message.content }}</div>
@@ -59,38 +59,48 @@
 							size="sm"
 							label="Undo script"
 							@click="undoAgentScript(message)" />
-						<AIAffectedItems
-							v-if="message.metadata?.affectedBlocks?.length || message.metadata?.affectedScripts?.length"
-							:affected-blocks="message.metadata.affectedBlocks || []"
-							:affected-scripts="message.metadata.affectedScripts || []"
-							@select-block="selectBlockById"
-							@open-script="openScriptByName" />
-						<button
-							v-if="message.metadata?.revertSnapshot"
-							class="mt-1.5 inline-flex items-center gap-1 text-[11px] text-ink-gray-4 transition-colors hover:text-ink-gray-7"
-							title="Revert the page to before this AI edit"
-							@click="revertTurn(message)">
-							<span class="lucide-rotate-ccw size-3" />
-							Revert this edit
-						</button>
-						<!-- Time taken + debugger trigger (full breakdown lives in the debug panel) -->
 						<div
-							v-if="message.metadata?.debug"
-							class="mt-1.5 flex items-center gap-2 font-mono text-[10px] text-ink-gray-4">
-							<span v-if="message.metadata.debug.elapsedMs">
-								took {{ formatDuration(message.metadata.debug.elapsedMs) }}
-							</span>
+							v-if="
+								message.metadata?.affectedBlocks?.length ||
+								message.metadata?.affectedScripts?.length ||
+								message.metadata?.revertSnapshot ||
+								message.metadata?.debug
+							"
+							class="mb-2 mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-ink-gray-4">
+							<AIAffectedItems
+								v-if="message.metadata?.affectedBlocks?.length || message.metadata?.affectedScripts?.length"
+								:affected-blocks="message.metadata.affectedBlocks || []"
+								:affected-scripts="message.metadata.affectedScripts || []"
+								@select-block="selectBlockById"
+								@open-script="openScriptByName" />
+
 							<button
-								class="inline-flex items-center gap-1 transition-colors"
-								:class="
-									debugHasSignal(message.metadata.debug)
-										? 'text-ink-amber-8 hover:text-ink-amber-7'
-										: 'text-ink-gray-4 hover:text-ink-gray-7'
-								"
-								title="Inspect this turn (rounds, tools, tokens, why it stopped)"
-								@click="openDebug(message.metadata.debug)">
-								<span class="lucide-info size-3" />
+								v-if="message.metadata?.revertSnapshot"
+								class="inline-flex items-center gap-1 transition-colors hover:text-ink-gray-7"
+								title="Revert the page to before this AI edit"
+								@click="revertTurn(message)">
+								<span class="lucide-rotate-ccw size-3" />
+								Revert
 							</button>
+							<!-- Time taken + debugger trigger (full breakdown lives in the debug panel) -->
+							<template v-if="message.metadata?.debug">
+								<div class="ml-auto flex items-center gap-2">
+									<span v-if="message.metadata.debug.elapsedMs" class="font-mono">
+										took {{ formatDuration(message.metadata.debug.elapsedMs) }}
+									</span>
+									<button
+										class="inline-flex items-center transition-colors"
+										:class="
+											debugHasSignal(message.metadata.debug)
+												? 'text-ink-amber-8 hover:text-ink-amber-7'
+												: 'text-ink-gray-4 hover:text-ink-gray-7'
+										"
+										title="Inspect this turn (rounds, tools, tokens, why it stopped)"
+										@click="openDebug(message.metadata.debug)">
+										<span class="lucide-activity size-2.5" />
+									</button>
+								</div>
+							</template>
 						</div>
 						<!-- Plan summary card -->
 						<div
@@ -102,7 +112,7 @@
 									:key="section"
 									class="flex items-start gap-2 text-p-sm leading-snug text-ink-gray-7">
 									<span class="mt-[6px] size-1 shrink-0 rounded-full bg-surface-gray-4" />
-									<span>{{ section }}</span>
+									<span class="min-w-0 break-words">{{ section }}</span>
 								</li>
 							</ul>
 							<div v-if="message.metadata.palette" class="mt-2.5 border-t border-outline-gray-1 pt-2.5">
@@ -299,7 +309,7 @@
 				</div>
 			</div>
 		</template>
-		<Dialog title="Turn debug" size="5xl" v-model="debugOpen">
+		<Dialog title="Turn debug" size="3xl" v-model="debugOpen">
 			<template #default>
 				<AIDebugPanel :debug="debugData" />
 			</template>

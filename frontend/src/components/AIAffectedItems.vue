@@ -1,14 +1,14 @@
 <template>
-	<div class="mt-2">
+	<div class="contents">
 		<button
-			class="flex items-center gap-1 text-[11px] text-ink-gray-4 hover:text-ink-gray-6"
+			class="inline-flex items-center gap-1 transition-colors hover:text-ink-gray-6"
 			@click="open = !open">
 			<span
 				class="lucide-chevron-right size-3 transition-transform duration-150"
 				:class="open ? 'rotate-90' : ''" />
 			{{ totalCount }} {{ totalCount === 1 ? "block" : "blocks" }} updated
 		</button>
-		<div v-if="open" class="mt-1 flex flex-col gap-px">
+		<div v-if="open" class="order-last mt-1 flex w-full flex-col gap-px">
 			<button
 				v-for="block in affectedBlocks"
 				:key="block.block_id"
