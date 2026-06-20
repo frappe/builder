@@ -65,6 +65,30 @@ def _looks_like_page_yaml(text: str) -> bool:
 	return stripped.startswith(("el:", "- el:", "id: root", "- id:"))
 
 
+# Past-tense verbs a summary uses when it CLAIMS it changed the page. The no-op-claim
+# guard uses this: if the model says it did one of these but called no tool, nothing was
+# applied — a hallucinated success (weaker models narrate the action instead of doing it).
+ACTION_CLAIM_RE = re.compile(
+	r"\b(added|created|updated|changed|removed|deleted|applied|attached|inserted|"
+	r"replaced|moved|translated|restyled|recolou?red|rebuilt|built|wired|enabled|"
+	r"adjusted|swapped|renamed|resized|reordered|set up)\b",
+	re.IGNORECASE,
+)
+
+NOOP_CORRECTION = (
+	"You wrote a summary describing changes, but you called no tools — so NOTHING was "
+	"applied to the page. If the request needs a change, call the appropriate tool(s) now "
+	"(update_block, update_blocks, add_block, set_page_script, …) and actually do the work. "
+	"If no change is genuinely needed, or you were only answering a question, reply plainly "
+	"and do NOT claim you changed anything."
+)
+
+
+def claims_unbacked_action(summary_text: str) -> bool:
+	"""True if the summary reads like a completed edit ('Added a confetti burst…')."""
+	return bool(summary_text) and bool(ACTION_CLAIM_RE.search(summary_text))
+
+
 class AgentRunner:
 	# Above this many chars of compact-YAML page structure, switch the page context
 	# from the full tree to a compact outline (read_block pulls detail on demand).
@@ -108,6 +132,8 @@ class AgentRunner:
 		# why it stopped (e.g. "model_finished after 1 round, 2 tool calls").
 		self.trace: list[dict] = []
 		self.stop_reason = ""
+		# Set once the no-op-claim guard has spent its single corrective round this turn.
+		self.noop_corrected = False
 		# Tiered model selection: resolved in run() once we know the scenario.
 		self.loop_model = self.model
 		# Per-turn token tally, summed across every LLM call this turn (the loop's
@@ -524,6 +550,24 @@ class AgentRunner:
 				# final summary and NO tool calls. (Previously the loop broke after the
 				# first client-only round, so bulk edits silently did just the first few.)
 				if not tool_operations:
+					# No-op-claim guard: the model wrote a summary that CLAIMS an edit but
+					# called no tool, and nothing has been applied this whole turn — a
+					# hallucinated success (weaker models narrate instead of acting). Spend
+					# exactly one corrective round telling it to actually call the tools.
+					if (
+						not client_operations
+						and not self.noop_corrected
+						and claims_unbacked_action(summary_text)
+					):
+						self.noop_corrected = True
+						self.stop_reason = "noop_retry"
+						logger.warning(
+							"No-op claim from model (no tools called): %s",
+							BlockCodec.truncate_for_log(summary_text, 300),
+						)
+						messages.append({"role": "assistant", "content": summary_text})
+						messages.append({"role": "user", "content": NOOP_CORRECTION})
+						continue
 					self.stop_reason = "model_finished"
 					break
 
@@ -582,6 +626,19 @@ class AgentRunner:
 			self.emit("error", message="The AI returned an empty response. Please try rephrasing.")
 			return
 
+		# Backstop: the model still claims an edit it never made (no ops applied, even
+		# after the corrective round). Don't present a hallucinated success — say so.
+		if not client_operations and claims_unbacked_action(summary_text):
+			logger.warning(
+				"Unbacked action claim persisted (no ops applied): %s",
+				BlockCodec.truncate_for_log(summary_text, 300),
+			)
+			summary_text = (
+				"I described that change but didn't actually apply it — so nothing on the page "
+				"changed. Could you rephrase, or tell me more specifically what to change?"
+			)
+			self.stop_reason = self.stop_reason or "noop_unbacked"
+
 		# Block/script edits and generation ops were already emitted incrementally inside
 		# the loop (live canvas progress); nothing more to emit here.
 		generated = any(op["tool_name"] == "generate_page" for op in client_operations)
@@ -630,6 +687,7 @@ class AgentRunner:
 				"stopReason": self.stop_reason or "model_finished",
 				"loopModel": self.loop_model,
 				"rounds": len(self.trace),
+				"noopCorrected": self.noop_corrected,
 				# Per-turn cost signal for the selector/tiered-context experiment.
 				"tokens": self.usage,
 				"elapsedMs": elapsed_ms,
