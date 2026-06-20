@@ -1,67 +1,95 @@
 <template>
-	<div class="flex flex-col gap-4 text-ink-gray-7">
-		<!-- Summary grid -->
-		<div class="grid grid-cols-2 gap-x-6 gap-y-2 text-p-sm sm:grid-cols-3">
-			<div v-for="stat in summary" :key="stat.label" class="flex flex-col">
-				<span class="text-xs uppercase tracking-wide text-ink-gray-4">{{ stat.label }}</span>
-				<span class="font-mono text-ink-gray-8">{{ stat.value }}</span>
+	<div class="flex flex-col gap-4 text-sm text-ink-gray-7">
+		<!-- Header: verdict + model + key metrics -->
+		<div class="flex flex-col gap-3 rounded-lg border border-outline-gray-2 bg-surface-gray-1 p-3">
+			<div class="flex items-center justify-between gap-3">
+				<span class="rounded-full px-2.5 py-1 text-xs font-semibold ring-1" :class="stopPill.class">
+					{{ stopPill.label }}
+				</span>
+				<span class="truncate font-mono text-xs text-ink-gray-5" :title="modelLabel">{{ modelLabel }}</span>
+			</div>
+			<div class="flex flex-wrap gap-x-6 gap-y-2">
+				<div v-for="m in metrics" :key="m.label" class="flex flex-col">
+					<span class="text-[10px] uppercase tracking-wider text-ink-gray-4">{{ m.label }}</span>
+					<span class="font-mono text-sm text-ink-gray-8">{{ m.value }}</span>
+				</div>
 			</div>
 		</div>
 
-		<!-- Signals -->
+		<!-- Signal badges -->
 		<div v-if="signals.length" class="flex flex-wrap gap-1.5">
 			<span
 				v-for="s in signals"
 				:key="s.text"
-				class="rounded-full px-2 py-0.5 text-xs font-medium"
-				:class="s.tone === 'bad' ? 'bg-surface-red-2 text-ink-red-3' : 'bg-surface-amber-2 text-ink-amber-3'">
+				class="rounded-full px-2.5 py-1 text-xs font-medium ring-1"
+				:class="
+					s.tone === 'bad'
+						? 'bg-red-50 text-red-700 ring-red-200'
+						: 'bg-amber-50 text-amber-700 ring-amber-200'
+				">
 				{{ s.text }}
 			</span>
 		</div>
 
-		<!-- Per-round trace: what the model did, round by round -->
+		<!-- Round-by-round trace -->
 		<div v-if="trace.length" class="flex flex-col gap-2">
-			<span class="text-xs uppercase tracking-wide text-ink-gray-4">Trace ({{ trace.length }} rounds)</span>
-			<div
-				v-for="(round, idx) in trace"
-				:key="idx"
-				class="rounded-md border border-outline-gray-1 bg-surface-gray-1 p-2.5">
-				<div class="mb-1.5 flex items-center gap-2">
-					<span class="rounded bg-surface-gray-3 px-1.5 py-0.5 font-mono text-[10px] text-ink-gray-6">
-						round {{ round.round ?? idx }}
-					</span>
-					<span v-if="!round.tools?.length" class="text-xs italic text-ink-gray-4">no tool calls</span>
-				</div>
-				<div v-if="round.tools?.length" class="flex flex-col gap-1.5">
-					<div v-for="(tool, ti) in round.tools" :key="ti" class="flex flex-col gap-0.5">
-						<span class="font-mono text-xs font-medium text-ink-gray-8">{{ tool.name }}</span>
+			<div class="flex items-baseline justify-between">
+				<span class="text-xs font-semibold uppercase tracking-wider text-ink-gray-5">Trace</span>
+				<span class="text-xs text-ink-gray-4">{{ trace.length }} rounds</span>
+			</div>
+			<ol class="flex flex-col gap-2">
+				<li
+					v-for="(round, idx) in trace"
+					:key="idx"
+					class="bg-surface-white rounded-lg border border-outline-gray-1 p-3">
+					<div class="mb-2 flex items-center gap-2">
 						<span
-							v-if="tool.args"
-							class="overflow-x-auto whitespace-pre-wrap break-words font-mono text-[11px] leading-snug text-ink-gray-5">
-							{{ tool.args }}
+							class="grid size-5 place-items-center rounded-full bg-surface-gray-3 font-mono text-[10px] font-semibold text-ink-gray-7">
+							{{ (round.round ?? idx) + 1 }}
+						</span>
+						<span v-if="!round.tools?.length" class="text-xs italic text-ink-gray-4">
+							{{ round.text ? "message only" : "no output" }}
 						</span>
 					</div>
-				</div>
-				<p v-if="round.text" class="mt-1.5 whitespace-pre-wrap break-words text-xs text-ink-gray-6">
-					“{{ round.text }}”
-				</p>
-			</div>
+					<div v-if="round.tools?.length" class="flex flex-col gap-2">
+						<div v-for="(tool, ti) in round.tools" :key="ti">
+							<span
+								class="inline-block rounded px-1.5 py-0.5 font-mono text-[11px] font-semibold"
+								:class="toolTone(tool.name)">
+								{{ tool.name }}
+							</span>
+							<pre
+								v-if="tool.args"
+								class="mt-1 overflow-x-auto rounded bg-surface-gray-2 px-2 py-1 font-mono text-[10px] leading-snug text-ink-gray-6"
+								>{{ tool.args }}</pre
+							>
+						</div>
+					</div>
+					<p
+						v-if="round.text"
+						class="mt-2 whitespace-pre-wrap break-words border-l-2 border-outline-gray-3 pl-2 text-xs italic text-ink-gray-6">
+						{{ round.text }}
+					</p>
+				</li>
+			</ol>
 		</div>
 
 		<!-- Tool failures -->
-		<div v-if="toolFailures.length" class="flex flex-col gap-1">
-			<span class="text-xs uppercase tracking-wide text-ink-red-3">Tool failures</span>
-			<span v-for="(f, i) in toolFailures" :key="i" class="font-mono text-[11px] leading-snug text-ink-red-3">
-				{{ f }}
-			</span>
+		<div v-if="toolFailures.length" class="rounded-lg border border-red-200 bg-red-50 p-3">
+			<span class="text-xs font-semibold uppercase tracking-wider text-red-700">Tool failures</span>
+			<ul class="mt-1.5 flex flex-col gap-1">
+				<li v-for="(f, i) in toolFailures" :key="i" class="font-mono text-[11px] leading-snug text-red-700">
+					{{ f }}
+				</li>
+			</ul>
 		</div>
 
 		<!-- Per-call token breakdown -->
-		<details v-if="perCall.length" class="text-p-sm">
-			<summary class="cursor-pointer text-xs uppercase tracking-wide text-ink-gray-4">
-				Per-call tokens ({{ perCall.length }})
+		<details v-if="perCall.length" class="rounded-lg border border-outline-gray-1 px-3 py-2">
+			<summary class="cursor-pointer text-xs font-semibold uppercase tracking-wider text-ink-gray-5">
+				Per-call tokens · {{ perCall.length }}
 			</summary>
-			<div class="mt-1.5 max-h-48 overflow-y-auto font-mono text-[11px] leading-relaxed text-ink-gray-6">
+			<div class="mt-2 max-h-48 overflow-y-auto font-mono text-[11px] leading-relaxed text-ink-gray-6">
 				<div v-for="(c, i) in perCall" :key="i">
 					#{{ i + 1 }} · {{ fmt(c.prompt) }} prompt{{ c.cached ? ` (${fmt(c.cached)} cached)` : "" }} ·
 					{{ fmt(c.completion) }} completion
@@ -69,11 +97,19 @@
 			</div>
 		</details>
 
-		<!-- Raw -->
-		<details class="text-p-sm">
-			<summary class="cursor-pointer text-xs uppercase tracking-wide text-ink-gray-4">Raw JSON</summary>
+		<!-- Raw JSON + copy -->
+		<details class="rounded-lg border border-outline-gray-1 px-3 py-2">
+			<summary
+				class="flex cursor-pointer items-center justify-between text-xs font-semibold uppercase tracking-wider text-ink-gray-5">
+				Raw JSON
+				<button
+					class="text-[10px] font-medium normal-case text-ink-gray-5 hover:text-ink-gray-8"
+					@click.prevent="copyRaw">
+					{{ copied ? "copied ✓" : "copy" }}
+				</button>
+			</summary>
 			<pre
-				class="mt-1.5 max-h-64 overflow-auto rounded-md bg-surface-gray-2 p-2 font-mono text-[11px] leading-snug text-ink-gray-7"
+				class="mt-2 max-h-64 overflow-auto rounded bg-surface-gray-2 p-2 font-mono text-[11px] leading-snug text-ink-gray-7"
 				>{{ rawJson }}</pre
 			>
 		</details>
@@ -81,18 +117,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 
 const props = defineProps<{ debug: Record<string, any> | null }>();
 
 const fmt = (v: number) => (v || 0).toLocaleString();
 
-const STOP_LABELS: Record<string, string> = {
-	model_finished: "model finished",
-	generated: "page generated",
-	max_rounds: "hit round cap (incomplete)",
-	noop_retry: "no-op corrected",
-	noop_unbacked: "claimed edit, applied nothing",
+const STOP_META: Record<string, { label: string; tone: "good" | "bad" | "warn" }> = {
+	model_finished: { label: "Finished", tone: "good" },
+	generated: { label: "Page generated", tone: "good" },
+	max_rounds: { label: "Incomplete — hit round cap", tone: "bad" },
+	noop_retry: { label: "No-op corrected", tone: "warn" },
+	noop_unbacked: { label: "Claimed edit, applied nothing", tone: "bad" },
 };
 
 const tokens = computed(() => props.debug?.tokens || {});
@@ -100,18 +136,30 @@ const trace = computed<any[]>(() => props.debug?.trace || []);
 const perCall = computed<any[]>(() => tokens.value.per_call || []);
 const toolFailures = computed<string[]>(() => props.debug?.toolFailures || []);
 
-const summary = computed(() => {
+const modelLabel = computed(() => (props.debug?.loopModel || "?").replace(/^openrouter\//, ""));
+
+const stopPill = computed(() => {
+	const meta = STOP_META[props.debug?.stopReason] || { label: props.debug?.stopReason || "?", tone: "warn" };
+	const cls = {
+		good: "bg-green-50 text-green-700 ring-green-200",
+		bad: "bg-red-50 text-red-700 ring-red-200",
+		warn: "bg-amber-50 text-amber-700 ring-amber-200",
+	}[meta.tone];
+	return { label: meta.label, class: cls };
+});
+
+const metrics = computed(() => {
 	const d = props.debug || {};
 	const t = tokens.value;
 	const secs = ((d.elapsedMs || 0) / 1000).toFixed(1);
 	const cached = t.cached_tokens ? ` (${fmt(t.cached_tokens)} cached)` : "";
 	return [
-		{ label: "Model", value: (d.loopModel || "?").replace(/^openrouter\//, "") },
-		{ label: "Stop reason", value: STOP_LABELS[d.stopReason] || d.stopReason || "?" },
 		{ label: "Rounds", value: `${d.rounds ?? trace.value.length}` },
+		{ label: "LLM calls", value: `${t.calls || 0}` },
 		{ label: "Latency", value: `${secs}s` },
 		{ label: "Total tokens", value: `${fmt(t.total_tokens)}${cached}` },
-		{ label: "Prompt / completion", value: `${fmt(t.prompt_tokens)} / ${fmt(t.completion_tokens)}` },
+		{ label: "Prompt", value: fmt(t.prompt_tokens) },
+		{ label: "Completion", value: fmt(t.completion_tokens) },
 	];
 });
 
@@ -121,12 +169,36 @@ const signals = computed(() => {
 	if ((d.finishReasons || []).includes("length")) out.push({ text: "truncated (max_tokens)", tone: "bad" });
 	if (toolFailures.value.length)
 		out.push({ text: `${toolFailures.value.length} tool failure(s)`, tone: "bad" });
-	if (d.stopReason === "max_rounds") out.push({ text: "incomplete — hit round cap", tone: "bad" });
-	if (d.stopReason === "noop_unbacked") out.push({ text: "claimed edit, applied nothing", tone: "bad" });
 	if (d.argsRepaired > 0) out.push({ text: `JSON repaired ×${d.argsRepaired}`, tone: "warn" });
 	if (d.noopCorrected) out.push({ text: "no-op corrected", tone: "warn" });
 	return out;
 });
 
+// Colour tool chips by what they do, so a trace reads at a glance.
+const TOOL_TONES: Record<string, string> = {
+	read_block: "bg-blue-50 text-blue-700",
+	query_blocks: "bg-blue-50 text-blue-700",
+	get_page_scripts: "bg-blue-50 text-blue-700",
+	add_block: "bg-green-50 text-green-700",
+	set_page_script: "bg-green-50 text-green-700",
+	update_block: "bg-amber-50 text-amber-700",
+	update_blocks: "bg-amber-50 text-amber-700",
+	update_script: "bg-amber-50 text-amber-700",
+	remove_block: "bg-red-50 text-red-700",
+	move_block: "bg-purple-50 text-purple-700",
+	generate_page: "bg-indigo-50 text-indigo-700",
+	propose_plan: "bg-gray-100 text-gray-600",
+	ask_clarification: "bg-gray-100 text-gray-600",
+};
+const toolTone = (name: string) => TOOL_TONES[name] || "bg-gray-100 text-gray-600";
+
 const rawJson = computed(() => JSON.stringify(props.debug || {}, null, 2));
+const copied = ref(false);
+function copyRaw() {
+	if (!navigator.clipboard) return;
+	navigator.clipboard.writeText(rawJson.value).then(() => {
+		copied.value = true;
+		setTimeout(() => (copied.value = false), 1500);
+	});
+}
 </script>
