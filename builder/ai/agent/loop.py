@@ -41,9 +41,10 @@ logger = frappe.logger("builder.ai.agent.loop")
 logger.setLevel(logging.INFO)
 
 # One turn may span several rounds: server-tool reads, plus a model that applies a
-# page-wide change in batches across rounds. High enough to finish a big bulk edit
-# (e.g. translate every block of a large page), bounded so a runaway loop can't spin.
-MAX_ROUNDS = 25
+# page-wide change in batches across rounds. High enough to finish a big multi-block
+# fix (a "fix everything" can drip a few edits per round on weaker models), bounded so
+# a runaway loop can't spin. When the cap IS hit the turn ends with a "continue" hint.
+MAX_ROUNDS = 40
 EVENT_PREFIX = "ai_chat"
 
 # Tools that change the block tree — the only changes a page snapshot can revert. A
@@ -705,6 +706,13 @@ class AgentRunner:
 			# updated from the tool_batch above; this just ends the turn sooner.
 			summary_text = self.describe_operations(client_operations)
 			self.emit("stream", chunk=summary_text)
+
+		# Hit the per-turn round cap → the work is INCOMPLETE. Say so, so a big edit
+		# doesn't look finished; the user can reply "continue" to resume from here.
+		if self.stop_reason == "max_rounds":
+			hint = '\n\n⚠️ I hit my edit-step limit for one turn before finishing — reply "continue" and I\'ll pick up where I left off.'
+			summary_text += hint
+			self.emit("stream", chunk=hint)
 
 		# The revert snapshot was created lazily during the loop, the first time a block
 		# change was applied (see ensure_revert_snapshot). Script-only / no-op / clarify
