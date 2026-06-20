@@ -12,6 +12,20 @@ import { buildRepeaterDataScript, convertYAMLtoBlock, parseBlock, STANDARD_ATTRS
 type PageStore = ReturnType<typeof usePageStore>;
 type CanvasStore = ReturnType<typeof useCanvasStore>;
 
+/** Make an AI-suggested script name safe to use as a Builder Client Script doc name:
+ * keep letters/numbers/spaces/hyphens (the doc name is also used in the public file path),
+ * collapse whitespace, and cap the length. Returns "" if nothing usable remains. */
+function sanitizeScriptName(raw?: string): string {
+	if (!raw || typeof raw !== "string") return "";
+	return raw
+		.trim()
+		.replace(/[^\w\s-]/g, "")
+		.replace(/\s+/g, " ")
+		.trim()
+		.slice(0, 40)
+		.trim();
+}
+
 /**
  * Applies the agent's client-side tool operations to the canvas block tree and
  * tracks what changed (for the "affected items" UI and script undo). Holds its
@@ -158,9 +172,7 @@ export class ToolDispatcher {
 		const baseStyles = normalizeStyles(args.base_styles);
 		const mobileStyles = normalizeStyles(args.mobile_styles);
 		const tabletStyles = normalizeStyles(args.tablet_styles);
-		Object.entries(baseStyles).forEach(([key, value]) =>
-			block.setBaseStyle(key as any, value as StyleValue),
-		);
+		Object.entries(baseStyles).forEach(([key, value]) => block.setBaseStyle(key as any, value as StyleValue));
 		Object.entries(mobileStyles).forEach(([key, value]) => {
 			block.mobileStyles[key] = value as StyleValue;
 		});
@@ -272,10 +284,21 @@ export class ToolDispatcher {
 			}
 			case "set_page_script": {
 				const scriptType = (args.script_type as string) || "JavaScript";
-				const op = createResource({ url: "frappe.client.insert" })
-					.submit({
-						doc: { doctype: "Builder Client Script", script_type: scriptType, script: args.script as string },
-					})
+				// Use the model's descriptive name as the doc name (autoname is "prompt"), so the
+				// script list reads "Confetti On Load", not "JavaScript-52b52". Falls back to the
+				// auto hash name if the chosen name is empty or already taken.
+				const desiredName = sanitizeScriptName(args.name as string);
+				const insertScript = (useName: boolean) =>
+					createResource({ url: "frappe.client.insert" }).submit({
+						doc: {
+							doctype: "Builder Client Script",
+							script_type: scriptType,
+							script: args.script as string,
+							...(useName && desiredName ? { name: desiredName } : {}),
+						},
+					}) as Promise<BuilderClientScript>;
+				const op = insertScript(true)
+					.catch(() => insertScript(false))
 					.then((res: BuilderClientScript) =>
 						createResource({ url: "frappe.client.insert" })
 							.submit({

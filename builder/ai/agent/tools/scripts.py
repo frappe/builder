@@ -71,8 +71,16 @@ set_page_script = Tool(
 				"enum": ["JavaScript", "CSS"],
 				"description": "Whether this is a JavaScript or CSS script. Defaults to 'JavaScript'.",
 			},
+			"name": {
+				"type": "string",
+				"description": (
+					"A short, descriptive name for the script (2–4 words, Title Case) saying what it "
+					"does — e.g. 'Confetti On Load', 'Mobile Nav Toggle', 'Hero Parallax'. Shown in the "
+					"page's script list. Do NOT use generic names like 'Script' or 'JavaScript'."
+				),
+			},
 		},
-		"required": ["script"],
+		"required": ["script", "name"],
 	},
 )
 
