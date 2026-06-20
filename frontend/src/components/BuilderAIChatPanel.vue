@@ -361,11 +361,17 @@ function turnStatsTitle(debug: Record<string, any>): string {
 		`total: ${n(t.total_tokens)}`,
 		`LLM calls: ${t.calls || 0}`,
 	];
-	// Per-call split so you can see which round carried the cost.
-	for (const [i, c] of (t.per_call || []).entries()) {
+	// Per-call split so you can see which round carried the cost. Cap the list — a
+	// long turn (25+ calls) would overflow the native tooltip and clip; the totals
+	// above stay complete regardless.
+	const perCall = t.per_call || [];
+	const MAX_ROWS = 12;
+	const shown = perCall.length > MAX_ROWS ? perCall.slice(0, MAX_ROWS) : perCall;
+	for (const [i, c] of shown.entries()) {
 		const cc = c.cached ? ` (${n(c.cached)} cached)` : "";
 		lines.push(`  #${i + 1}  ${n(c.prompt)} prompt${cc} · ${n(c.completion)} completion`);
 	}
+	if (perCall.length > MAX_ROWS) lines.push(`  … +${perCall.length - MAX_ROWS} more calls`);
 	lines.push(`stop: ${debug?.stopReason || "?"}`, `model: ${debug?.loopModel || "?"}`);
 	return lines.join("\n");
 }
