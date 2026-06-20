@@ -113,7 +113,16 @@ class AgentRunner:
 		# Per-turn token tally, summed across every LLM call this turn (the loop's
 		# tool-calling rounds + the generation stream). Surfaced in debug metadata and
 		# logged so the selector/tiered-context changes can be measured against baseline.
-		self.usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0, "calls": 0}
+		# `cached_tokens` is the cache-read slice of prompt_tokens (cheap, ~10% price);
+		# `per_call` keeps each call's split so a turn's cost can be read round by round.
+		self.usage = {
+			"prompt_tokens": 0,
+			"completion_tokens": 0,
+			"total_tokens": 0,
+			"cached_tokens": 0,
+			"calls": 0,
+			"per_call": [],
+		}
 
 	# --- cancellation -----------------------------------------------------
 
@@ -148,16 +157,32 @@ class AgentRunner:
 		state, self.pre_turn_state = self.pre_turn_state, None
 		self.revert_snapshot = save_revert_snapshot(self.page_id, state)
 
+	@staticmethod
+	def cached_prompt_tokens(usage) -> int:
+		"""The cache-read slice of prompt tokens, across provider shapes: OpenAI/litellm
+		put it under prompt_tokens_details.cached_tokens; Anthropic exposes
+		cache_read_input_tokens. 0 when the provider reports neither."""
+		details = getattr(usage, "prompt_tokens_details", None)
+		if details and (cached := getattr(details, "cached_tokens", None)):
+			return cached
+		return getattr(usage, "cache_read_input_tokens", 0) or 0
+
 	def record_usage(self, chunk) -> None:
 		"""Add a streamed chunk's usage to the per-turn tally. Only the final chunk of
 		a stream (stream_options.include_usage) carries usage; the rest are None."""
 		usage = getattr(chunk, "usage", None)
 		if not usage:
 			return
-		self.usage["prompt_tokens"] += getattr(usage, "prompt_tokens", 0) or 0
-		self.usage["completion_tokens"] += getattr(usage, "completion_tokens", 0) or 0
-		self.usage["total_tokens"] += getattr(usage, "total_tokens", 0) or 0
+		prompt = getattr(usage, "prompt_tokens", 0) or 0
+		completion = getattr(usage, "completion_tokens", 0) or 0
+		total = getattr(usage, "total_tokens", 0) or 0
+		cached = self.cached_prompt_tokens(usage)
+		self.usage["prompt_tokens"] += prompt
+		self.usage["completion_tokens"] += completion
+		self.usage["total_tokens"] += total
+		self.usage["cached_tokens"] += cached
 		self.usage["calls"] += 1
+		self.usage["per_call"].append({"prompt": prompt, "completion": completion, "cached": cached})
 
 	def record_round(self, round_index: int, tool_operations: list[dict], text: str) -> None:
 		"""Append one round to the debug trace: which tools the model called (with
@@ -584,11 +609,12 @@ class AgentRunner:
 		elapsed_ms = round((time.monotonic() - started) * 1000)
 		logger.info(
 			"AI turn done | page=%s rounds=%d llm_calls=%d prompt_tokens=%d "
-			"completion_tokens=%d total_tokens=%d elapsed_ms=%d stop=%s",
+			"cached_tokens=%d completion_tokens=%d total_tokens=%d elapsed_ms=%d stop=%s",
 			self.page_id,
 			len(self.trace),
 			self.usage["calls"],
 			self.usage["prompt_tokens"],
+			self.usage["cached_tokens"],
 			self.usage["completion_tokens"],
 			self.usage["total_tokens"],
 			elapsed_ms,

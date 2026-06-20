@@ -353,13 +353,21 @@ function turnStats(debug: Record<string, any>): string {
 /** Hover breakdown for the per-turn summary. */
 function turnStatsTitle(debug: Record<string, any>): string {
 	const t = debug?.tokens || {};
-	return [
-		`prompt: ${(t.prompt_tokens || 0).toLocaleString()}`,
-		`completion: ${(t.completion_tokens || 0).toLocaleString()}`,
+	const n = (v: number) => (v || 0).toLocaleString();
+	const cached = t.cached_tokens || 0;
+	const lines = [
+		`prompt: ${n(t.prompt_tokens)}${cached ? `  (${n(cached)} cached)` : ""}`,
+		`completion: ${n(t.completion_tokens)}`,
+		`total: ${n(t.total_tokens)}`,
 		`LLM calls: ${t.calls || 0}`,
-		`stop: ${debug?.stopReason || "?"}`,
-		`model: ${debug?.loopModel || "?"}`,
-	].join("\n");
+	];
+	// Per-call split so you can see which round carried the cost.
+	for (const [i, c] of (t.per_call || []).entries()) {
+		const cc = c.cached ? ` (${n(c.cached)} cached)` : "";
+		lines.push(`  #${i + 1}  ${n(c.prompt)} prompt${cc} · ${n(c.completion)} completion`);
+	}
+	lines.push(`stop: ${debug?.stopReason || "?"}`, `model: ${debug?.loopModel || "?"}`);
+	return lines.join("\n");
 }
 
 /** Split a clarification option like "Editorial — asymmetric, serif headlines" or
