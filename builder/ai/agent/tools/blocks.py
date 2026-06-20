@@ -132,6 +132,81 @@ add_block = Tool(
 	},
 )
 
+update_blocks = Tool(
+	name="update_blocks",
+	side="client",
+	description=(
+		"Apply edits to MANY blocks in ONE call — the right tool for page-wide changes "
+		"(translate every text block, restyle all buttons, recolour all headings). Pair it "
+		"with query_blocks: query the set, then update it here in a single call. Two modes:\n"
+		"• UNIFORM — set 'block_ids' (a list of refs) plus any of base_styles / mobile_styles / "
+		"tablet_styles / attributes / classes / element. The SAME change is merged into every "
+		"listed block. Use this when the change is identical (e.g. colour all headings red).\n"
+		"• PER-BLOCK — set 'patches', a list where each item is {block_id, …same fields as "
+		"update_block}. Each block gets its OWN values. Use this for translation/rewrites where "
+		"the new text differs per block.\n"
+		"If 'patches' is given it takes precedence and the uniform fields are ignored. Style "
+		"merging follows update_block (merges, does not replace)."
+	),
+	parameters={
+		"type": "object",
+		"properties": {
+			"block_ids": {
+				"type": "array",
+				"items": {"type": "string"},
+				"description": "UNIFORM mode: the refs to apply the same change to. Ignored if 'patches' is set.",
+			},
+			"base_styles": {
+				"type": "object",
+				"description": "UNIFORM mode: desktop styles to merge into every listed block.",
+			},
+			"mobile_styles": {
+				"type": "object",
+				"description": "UNIFORM mode: mobile style overrides to merge.",
+			},
+			"tablet_styles": {
+				"type": "object",
+				"description": "UNIFORM mode: tablet style overrides to merge.",
+			},
+			"attributes": {
+				"type": "object",
+				"description": "UNIFORM mode: HTML attributes to merge into every listed block.",
+			},
+			"classes": {
+				"type": "array",
+				"items": {"type": "string"},
+				"description": "UNIFORM mode: replace the classes array on every listed block.",
+			},
+			"element": {
+				"type": "string",
+				"description": "UNIFORM mode: change the HTML tag on every listed block.",
+			},
+			"patches": {
+				"type": "array",
+				"description": "PER-BLOCK mode: one object per block, each with 'block_id' plus the fields to change on that block.",
+				"items": {
+					"type": "object",
+					"properties": {
+						"block_id": {"type": "string", "description": "The target block's ref."},
+						"base_styles": {"type": "object"},
+						"mobile_styles": {"type": "object"},
+						"tablet_styles": {"type": "object"},
+						"attributes": {"type": "object"},
+						"inner_text": {
+							"type": "string",
+							"description": "Replace the block's text (plain text).",
+						},
+						"inner_html": {"type": "string", "description": "Replace the block's inner HTML."},
+						"element": {"type": "string"},
+						"classes": {"type": "array", "items": {"type": "string"}},
+					},
+					"required": ["block_id"],
+				},
+			},
+		},
+	},
+)
+
 remove_block = Tool(
 	name="remove_block",
 	side="client",
@@ -176,4 +251,4 @@ move_block = Tool(
 	},
 )
 
-TOOLS = [update_block, add_block, remove_block, move_block]
+TOOLS = [update_block, update_blocks, add_block, remove_block, move_block]

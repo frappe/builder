@@ -47,7 +47,9 @@ EVENT_PREFIX = "ai_chat"
 # Tools that change the block tree — the only changes a page snapshot can revert. A
 # turn touching only scripts is reverted via the per-message "Undo script" action, so
 # it gets no snapshot (and no misleading "Revert this edit" button).
-BLOCK_TOOLS = frozenset({"add_block", "update_block", "remove_block", "move_block", "generate_page"})
+BLOCK_TOOLS = frozenset(
+	{"add_block", "update_block", "update_blocks", "remove_block", "move_block", "generate_page"}
+)
 
 
 class CancelledError(Exception):
@@ -301,10 +303,20 @@ class AgentRunner:
 		def blk(n: int) -> str:
 			return "block" if n == 1 else "blocks"
 
+		# update_blocks edits many blocks in one op — count the blocks it touched,
+		# not the single call, so the summary reads "updated 12 blocks" not "1".
+		batched = 0
+		for op in operations:
+			if op.get("tool_name") != "update_blocks":
+				continue
+			args = op.get("args") or {}
+			patches = args.get("patches")
+			batched += len(patches) if isinstance(patches, list) else len(args.get("block_ids") or [])
+
 		parts: list[str] = []
 		if n := counts.get("add_block"):
 			parts.append(f"added {n} {blk(n)}")
-		if n := counts.get("update_block"):
+		if n := (counts.get("update_block", 0) + batched):
 			parts.append(f"updated {n} {blk(n)}")
 		if n := counts.get("remove_block"):
 			parts.append(f"removed {n} {blk(n)}")

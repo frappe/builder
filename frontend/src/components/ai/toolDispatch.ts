@@ -99,11 +99,8 @@ export class ToolDispatcher {
 	/** Record what a tool op changed. Call BEFORE applying so remove_block can
 	 * still read the block's info while it exists. */
 	trackAffectedItem(toolName: string, args: Record<string, any>) {
-		const changedProps = this.extractChangedProps(toolName, args);
-		if (!changedProps.length) return;
-
-		const trackBlock = (blockId: string) => {
-			if (!blockId) return;
+		const trackBlock = (blockId: string, changedProps: string[]) => {
+			if (!blockId || !changedProps.length) return;
 			const block = this.findBlockInTree(blockId);
 			const existing = this.pendingAffectedBlocks.value.find((b) => b.block_id === blockId);
 			if (existing) {
@@ -118,10 +115,27 @@ export class ToolDispatcher {
 			}
 		};
 
+		// Batch edit: each block may have changed different props (patches mode), so
+		// derive props per-block rather than once for the whole op.
+		if (toolName === "update_blocks") {
+			if (Array.isArray(args.patches)) {
+				for (const patch of args.patches as Record<string, any>[]) {
+					trackBlock(patch.block_id as string, this.extractChangedProps("update_block", patch));
+				}
+			} else {
+				const props = this.extractChangedProps("update_block", args);
+				for (const id of (args.block_ids as string[]) || []) trackBlock(id, props);
+			}
+			return;
+		}
+
+		const changedProps = this.extractChangedProps(toolName, args);
+		if (!changedProps.length) return;
+
 		if (["update_block", "remove_block", "move_block"].includes(toolName)) {
-			trackBlock(args.block_id as string);
+			trackBlock(args.block_id as string, changedProps);
 		} else if (toolName === "add_block") {
-			trackBlock(args.parent_block_id as string);
+			trackBlock(args.parent_block_id as string, changedProps);
 		} else if (toolName === "update_script") {
 			const scriptName = args.script_name as string | undefined;
 			if (!scriptName) return;
@@ -134,6 +148,40 @@ export class ToolDispatcher {
 		}
 	}
 
+	/** Merge one block's worth of changes (styles/attrs/text/element/classes) into
+	 * `block`. Shared by update_block (single) and update_blocks (batch) so the two
+	 * can never drift. Reads the same field names the tools declare. */
+	private applyBlockUpdate(block: Block, args: Record<string, any>) {
+		if (args.base_styles) {
+			Object.entries(args.base_styles).forEach(([key, value]) =>
+				block.setBaseStyle(key as any, value as StyleValue),
+			);
+		}
+		if (args.mobile_styles) {
+			Object.entries(args.mobile_styles).forEach(([key, value]) => {
+				block.mobileStyles[key] = value as StyleValue;
+			});
+		}
+		if (args.tablet_styles) {
+			Object.entries(args.tablet_styles).forEach(([key, value]) => {
+				block.tabletStyles[key] = value as StyleValue;
+			});
+		}
+		if (args.attributes) {
+			Object.entries(args.attributes).forEach(([key, value]) => {
+				if (STANDARD_ATTRS.has(key)) {
+					block.setAttribute(key, value as string | undefined);
+				} else {
+					block.customAttributes[key] = value as string | undefined;
+				}
+			});
+		}
+		if (args.inner_text !== undefined) block.setInnerHTML(args.inner_text);
+		if (args.inner_html !== undefined) block.setInnerHTML(args.inner_html);
+		if (args.element !== undefined) block.element = args.element;
+		if (args.classes !== undefined) block.classes = args.classes;
+	}
+
 	applyToolOperation(toolName: string, args: Record<string, any>) {
 		switch (toolName) {
 			case "generate_page": {
@@ -144,34 +192,23 @@ export class ToolDispatcher {
 			case "update_block": {
 				const block = this.findBlockInTree(args.block_id);
 				if (!block) return;
-				if (args.base_styles) {
-					Object.entries(args.base_styles).forEach(([key, value]) =>
-						block.setBaseStyle(key as any, value as StyleValue),
-					);
+				this.applyBlockUpdate(block, args);
+				return;
+			}
+			case "update_blocks": {
+				// Per-block mode wins over uniform mode (matches the tool contract).
+				if (Array.isArray(args.patches)) {
+					for (const patch of args.patches as Record<string, any>[]) {
+						const block = this.findBlockInTree(patch.block_id);
+						if (block) this.applyBlockUpdate(block, patch);
+					}
+					return;
 				}
-				if (args.mobile_styles) {
-					Object.entries(args.mobile_styles).forEach(([key, value]) => {
-						block.mobileStyles[key] = value as StyleValue;
-					});
+				const ids = (args.block_ids as string[]) || [];
+				for (const id of ids) {
+					const block = this.findBlockInTree(id);
+					if (block) this.applyBlockUpdate(block, args);
 				}
-				if (args.tablet_styles) {
-					Object.entries(args.tablet_styles).forEach(([key, value]) => {
-						block.tabletStyles[key] = value as StyleValue;
-					});
-				}
-				if (args.attributes) {
-					Object.entries(args.attributes).forEach(([key, value]) => {
-						if (STANDARD_ATTRS.has(key)) {
-							block.setAttribute(key, value as string | undefined);
-						} else {
-							block.customAttributes[key] = value as string | undefined;
-						}
-					});
-				}
-				if (args.inner_text !== undefined) block.setInnerHTML(args.inner_text);
-				if (args.inner_html !== undefined) block.setInnerHTML(args.inner_html);
-				if (args.element !== undefined) block.element = args.element;
-				if (args.classes !== undefined) block.classes = args.classes;
 				return;
 			}
 			case "add_block": {
