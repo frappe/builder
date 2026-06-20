@@ -1,6 +1,7 @@
 // @ts-ignore
 import yaml from "js-yaml";
 import { lucideSVG } from "./lucideIcon";
+import { normalizeStyles } from "./normalizeStyles";
 import type { ChatMessage } from "./types";
 
 /** HTML attributes that map to first-class Block attributes (vs. customAttributes). */
@@ -64,10 +65,10 @@ export function convertYAMLtoBlock(yamlBlock: Record<string, any>, isRoot = fals
 	const block: BlockOptions = {
 		element: yamlBlock.el || "div",
 		blockName: yamlBlock.name || "",
-		baseStyles: ensureObject(yamlBlock.style),
+		baseStyles: normalizeStyles(yamlBlock.style),
 		attributes: ensureObject(yamlBlock.attrs),
-		mobileStyles: ensureObject(yamlBlock.m_style),
-		tabletStyles: ensureObject(yamlBlock.t_style),
+		mobileStyles: normalizeStyles(yamlBlock.m_style),
+		tabletStyles: normalizeStyles(yamlBlock.t_style),
 		classes: ensureArray(yamlBlock.classes),
 	};
 	if (isRoot) block.originalElement = "body";
@@ -132,7 +133,7 @@ function convertIconBlock(
 	ensureArray: (v: any) => any[],
 ): BlockOptions {
 	const name = String(node.icon).trim();
-	const style = ensureObject(node.style);
+	const style = normalizeStyles(node.style);
 	// Size lives on the WRAPPER (the inner svg fills it at 100%), so it stays
 	// editable — resizing the block or setting style.width/height resizes the icon.
 	const rawSize = node.size ?? "24px";
@@ -153,8 +154,8 @@ function convertIconBlock(
 		},
 		attributes: ensureObject(node.attrs),
 		customAttributes: { "data-lucide": name },
-		mobileStyles: ensureObject(node.m_style),
-		tabletStyles: ensureObject(node.t_style),
+		mobileStyles: normalizeStyles(node.m_style),
+		tabletStyles: normalizeStyles(node.t_style),
 		classes: ensureArray(node.classes),
 		children: [],
 	};

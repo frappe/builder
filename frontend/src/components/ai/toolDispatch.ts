@@ -5,6 +5,7 @@ import type { BuilderClientScript } from "@/types/Builder/BuilderClientScript";
 import { getBlockInstance } from "@/utils/helpers";
 import { createResource } from "frappe-ui";
 import { ref } from "vue";
+import { normalizeStyles } from "./normalizeStyles";
 import type { AffectedBlock, AffectedScript } from "./types";
 import { buildRepeaterDataScript, convertYAMLtoBlock, parseBlock, STANDARD_ATTRS } from "./yaml";
 
@@ -152,21 +153,20 @@ export class ToolDispatcher {
 	 * `block`. Shared by update_block (single) and update_blocks (batch) so the two
 	 * can never drift. Reads the same field names the tools declare. */
 	private applyBlockUpdate(block: Block, args: Record<string, any>) {
-		if (args.base_styles) {
-			Object.entries(args.base_styles).forEach(([key, value]) =>
-				block.setBaseStyle(key as any, value as StyleValue),
-			);
-		}
-		if (args.mobile_styles) {
-			Object.entries(args.mobile_styles).forEach(([key, value]) => {
-				block.mobileStyles[key] = value as StyleValue;
-			});
-		}
-		if (args.tablet_styles) {
-			Object.entries(args.tablet_styles).forEach(([key, value]) => {
-				block.tabletStyles[key] = value as StyleValue;
-			});
-		}
+		// Fix the model's mechanical CSS slips (camelCased values, missing units, …) at the
+		// single point styles land — same pass the generation path uses (see normalizeStyles).
+		const baseStyles = normalizeStyles(args.base_styles);
+		const mobileStyles = normalizeStyles(args.mobile_styles);
+		const tabletStyles = normalizeStyles(args.tablet_styles);
+		Object.entries(baseStyles).forEach(([key, value]) =>
+			block.setBaseStyle(key as any, value as StyleValue),
+		);
+		Object.entries(mobileStyles).forEach(([key, value]) => {
+			block.mobileStyles[key] = value as StyleValue;
+		});
+		Object.entries(tabletStyles).forEach(([key, value]) => {
+			block.tabletStyles[key] = value as StyleValue;
+		});
 		if (args.attributes) {
 			Object.entries(args.attributes).forEach(([key, value]) => {
 				if (STANDARD_ATTRS.has(key)) {
