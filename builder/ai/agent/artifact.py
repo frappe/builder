@@ -26,6 +26,34 @@ logger = frappe.logger("builder.ai.agent.artifact")
 logger.setLevel(logging.INFO)
 
 
+def log_generation_quality(model: str, finish_reason: str | None, yaml_text: str) -> None:
+	"""Make the generation path debuggable: log model, finish_reason, YAML size, parse
+	result, and top-level section count. A thin/broken page shows up here as a 'length'
+	finish, a parse error, or very few sections — distinguishing a weak model from a
+	pipeline bug."""
+	import yaml as yaml_lib
+
+	chars = len(yaml_text)
+	sections = -1  # -1 = did not parse
+	try:
+		parsed = yaml_lib.safe_load(yaml_text)
+		root = parsed[0] if isinstance(parsed, list) and parsed else parsed
+		if isinstance(root, dict):
+			sections = len(root.get("c") or [])
+	except Exception as e:
+		logger.warning("generate_page: YAML did not parse (model=%s): %s", model, e)
+
+	level = logging.WARNING if (finish_reason == "length" or sections in (-1, 0, 1)) else logging.INFO
+	logger.log(
+		level,
+		"generate_page quality | model=%s finish_reason=%s yaml_chars=%d top_sections=%s",
+		model,
+		finish_reason,
+		chars,
+		sections,
+	)
+
+
 def generate_page_yaml(ctx, args: dict) -> list[dict]:
 	"""Stream a complete page of YAML on the heavy model, then return a
 	`generate_page` client op carrying the authoritative full document.
@@ -48,6 +76,7 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 	ctx.emit("progress", message="Building the page…")
 
 	yaml_content = ""
+	finish_reason = None
 	stream = llm.complete(
 		ctx.model,  # heavy model — generation quality
 		messages,
@@ -67,14 +96,20 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 		ctx.record_usage(chunk)
 		if not chunk.choices:
 			continue
+		if fr := chunk.choices[0].finish_reason:
+			finish_reason = fr
 		delta = chunk.choices[0].delta.content
 		if delta:
 			yaml_content += delta
 			ctx.emit("stream", chunk=delta, kind="page_yaml")
 
 	yaml_text = BlockCodec.strip_fences(yaml_content).strip()
+	# Generation was a blind spot — log enough to explain a thin/broken/truncated page:
+	# the model, finish_reason (="length" → ran out of tokens mid-page), the YAML size,
+	# whether it parses, and how many top-level sections (root.c) it actually produced.
+	log_generation_quality(ctx.model, finish_reason, yaml_text)
 	if not yaml_text:
-		logger.warning("generate_page_yaml: model produced empty YAML")
+		logger.warning("generate_page_yaml: model produced empty YAML (model=%s)", ctx.model)
 		return []
 
 	return [{"tool_name": "generate_page", "args": {"yaml": yaml_text}}]
