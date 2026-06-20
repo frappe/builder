@@ -63,18 +63,18 @@ def fallbacks_for(model: str) -> list[str]:
 
 
 def patch_messages_for_provider(model: str, messages: list[dict]) -> None:
-	"""Anthropic via OpenRouter needs the system prompt as a content-block list
-	with cache_control set ON THE BLOCK (not the message) for the ephemeral cache
-	to be honoured. Move any message-level marker into the block. Mutates in place."""
+	"""Anthropic via OpenRouter reads cache_control from INSIDE a content block, not
+	from the message level (a message-level marker is silently ignored → full input
+	price every turn). For any Claude message that carries a cache_control marker with
+	plain string content, wrap it in a text block and move the marker inside. Mutates
+	in place. Callers set the markers (system prompt + page context); each becomes a
+	cache breakpoint, well within Anthropic's limit of four."""
 	if "claude-" in model:
 		for m in messages:
-			if m["role"] == "system" and isinstance(m.get("content"), str):
-				block = {"type": "text", "text": m["content"]}
-				# Anthropic reads cache_control from inside the content block; a
-				# message-level marker is silently ignored (full input price every turn).
-				if cache_control := m.pop("cache_control", None):
-					block["cache_control"] = cache_control
-				m["content"] = [block]
+			if isinstance(m.get("content"), str) and "cache_control" in m:
+				m["content"] = [
+					{"type": "text", "text": m["content"], "cache_control": m.pop("cache_control")}
+				]
 
 
 def complete(model: str, messages: list, params: dict, *, stream: bool, api_key: str | None = None):

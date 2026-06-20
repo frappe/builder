@@ -290,7 +290,16 @@ class AgentRunner:
 		]
 
 		if page_context_message := self.build_page_context():
-			messages.append({"role": "user", "content": page_context_message})
+			# Cache the page structure too (system prompt is the other breakpoint): it's
+			# the largest stable block and is resent on every round of a multi-round edit,
+			# so caching it cuts both latency and input cost across the loop.
+			messages.append(
+				{
+					"role": "user",
+					"content": page_context_message,
+					"cache_control": {"type": "ephemeral"},
+				}
+			)
 			messages.append(
 				{
 					"role": "assistant",
