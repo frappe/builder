@@ -338,12 +338,15 @@ class BuilderPage(WebsiteGenerator):
 			)
 		self.save()
 		for name, content in (data.get("_ai_scripts") or {}).items():
-			if frappe.db.exists("Builder Client Script", name):
-				frappe.db.set_value(
-					"Builder Client Script",
-					name,
-					{"script": content.get("script"), "script_type": content.get("script_type")},
-				)
+			if not frappe.db.exists("Builder Client Script", name):
+				continue
+			# Save through the doc (NOT db.set_value): on_update regenerates the public JS/CSS
+			# file the published page actually loads (via public_url). A bare db write reverts
+			# the field but leaves the stale file, so publish would keep serving the old script.
+			script_doc = frappe.get_doc("Builder Client Script", name)
+			script_doc.script = content.get("script")
+			script_doc.script_type = content.get("script_type")
+			script_doc.save(ignore_permissions=True)
 		return {"draft_blocks": blocks, "warnings": collect_restore_warnings(blocks)}
 
 	@frappe.whitelist()
