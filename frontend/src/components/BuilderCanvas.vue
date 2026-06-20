@@ -50,7 +50,7 @@
 				</div>
 			</div>
 			<div
-				class="canvas relative flex h-full bg-surface-base shadow-2xl contain-layout"
+				class="canvas relative flex h-full bg-surface-base shadow-xl contain-layout"
 				:data-breakpoint="breakpoint.device"
 				:style="{
 					...canvasStyles,
@@ -257,6 +257,13 @@ onMounted(() => {
 	setScaleAndTranslate();
 	showBlocks.value = true;
 	setupHistory();
+	// a read-only canvas (version preview / protected page) fully disables history;
+	// editing the canvas re-enables it
+	watch(
+		() => builderStore.readOnlyMode,
+		(readOnly) => (readOnly ? history.value?.disable() : history.value?.enable()),
+		{ immediate: true },
+	);
 	useCanvasEvents(
 		canvasContainer as unknown as Ref<HTMLElement>,
 		canvasProps,

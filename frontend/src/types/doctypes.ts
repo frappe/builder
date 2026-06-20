@@ -167,6 +167,52 @@ export interface BuilderPage extends DocType {
   published_at?: string;
 }
 
+// Last updated: 2024-11-13 20:08:54.615438
+export interface BuilderClientScript extends DocType {
+	/** Script: Code */
+	script: string;
+	/** Script Type: Autocomplete */
+	script_type: string;
+	/** Public URL: Read Only */
+	public_url?: string;
+}
+
+// Last updated: 2026-06-10 00:00:00.000000
+export interface BuilderSnapshot extends DocType {
+	/** Reference Doctype: Link (DocType) */
+	reference_doctype: string;
+	/** Reference Name: Data */
+	reference_name: string;
+	/** Snapshot Type: Data */
+	snapshot_type?: string;
+	/** Label: Data */
+	label?: string;
+	/** Data: Code (JSON) */
+	data: string;
+}
+
+// Last updated: 2024-11-13 20:08:24.187664
+export interface UserFont extends DocType {
+	/** Font Name: Data */
+	font_name?: string;
+	/** Font File: Attach */
+	font_file?: any;
+}
+
+// Last updated: 2025-11-11 11:51:16.422175
+export interface BuilderProjectFolder extends DocType {
+	/** Folder Name: Data */
+	folder_name?: string;
+	/** Is Standard: Check */
+	is_standard: 0 | 1;
+}
+
+// Last updated: 2023-11-21 12:47:20.938211
+export interface BuilderPageClientScript extends ChildDocType {
+	/** Builder Script: Link (Builder Client Script) */
+	builder_script: string;
+}
+
 // Last updated: 2025-01-29 09:30:34.896956
 export interface BuilderComponent extends DocType {
   /** Component Name: Data */
@@ -187,4 +233,6 @@ export interface BuilderComponent extends DocType {
   component_js?: string;
   /** Component CSS: Code */
   component_css?: string;
+  /** Persona Survey Done: Check */
+  persona_survey_done: 0 | 1;
 }

@@ -242,6 +242,15 @@ const contextMenuOptions: ContextMenuOption[] = [
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
+		label: "Update to Latest Component",
+		action: () => {
+			componentStore.updatePinnedComponent(block.value);
+		},
+		condition: () =>
+			componentStore.isPinOutdated(block.value.extendedFromComponent, block.value.componentVersion),
+		disabled: () => builderStore.readOnlyMode,
+	},
+	{
 		label: "Edit Component",
 		action: () => {
 			componentStore.editComponent(block.value);

@@ -70,10 +70,10 @@
 		<!-- Panels layer (middle) - comes after canvas in DOM -->
 		<BuilderLeftPanel
 			v-show="builderStore.showLeftPanel"
-			class="absolute bottom-0 left-0 top-[var(--toolbar-height)] w-fit border-r-[1px] border-outline-gray-2 bg-surface-base"></BuilderLeftPanel>
+			class="absolute bottom-0 left-0 top-[var(--toolbar-height)] w-fit border-r-[1px] border-outline-gray-2 bg-surface-base dark:border-outline-gray-1"></BuilderLeftPanel>
 		<BuilderRightPanel
 			v-show="builderStore.showRightPanel"
-			class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] overflow-auto border-l-[1px] border-outline-gray-2 bg-surface-base"></BuilderRightPanel>
+			class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] overflow-auto border-l-[1px] border-outline-gray-2 bg-surface-base dark:border-outline-gray-1"></BuilderRightPanel>
 
 		<!-- Toolbar layer (top) - comes last in DOM -->
 		<BuilderToolbar class="absolute left-0 right-0 top-0"></BuilderToolbar>
@@ -259,14 +259,15 @@ watch(
 		() => canvasStore.editableBlock,
 		() => pageStore.activePage?.is_standard,
 		() => pageStore.activePage?.is_template,
+		() => canvasStore.versionPreviewBlock,
 	],
 	() => {
-		builderStore.toggleReadOnlyMode(
-			canvasStore.editingMode === "page" &&
-				(Boolean(pageStore.activePage?.is_standard) ||
-					Boolean(pageStore.activePage?.is_template && pageStore.activePage?.template_group)) &&
-				!window.is_developer_mode,
-		);
+		const previewing = Boolean(canvasStore.versionPreviewBlock);
+		const isProtected =
+			(Boolean(pageStore.activePage?.is_standard) ||
+				Boolean(pageStore.activePage?.is_template && pageStore.activePage?.template_group)) &&
+			!window.is_developer_mode;
+		builderStore.toggleReadOnlyMode(canvasStore.editingMode === "page" && (previewing || isProtected));
 	},
 );
 
@@ -466,6 +467,7 @@ watch(
 			pageStore.selectedPage &&
 			!pageStore.settingPage &&
 			canvasStore.editingMode === "page" &&
+			!builderStore.readOnlyMode &&
 			!pageCanvas.value?.canvasProps?.settingCanvas &&
 			!isAIGenerating.value
 		) {

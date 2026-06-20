@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="toolbar border-outline border-outline flex items-center justify-center border-b-[1px] border-outline-gray-1 bg-surface-base px-2 py-1"
+		class="toolbar border-outline border-outline flex items-center justify-center border-b-[1px] border-outline-gray-2 bg-surface-base px-2 py-1 dark:border-outline-gray-1"
 		ref="toolbar">
 		<div class="absolute left-3 flex items-center gap-4">
 			<MainMenu
@@ -123,6 +123,7 @@
 					v-if="pageStore.savingPage && pageStore.activePage?.is_template">
 					Saving template
 				</span>
+				<ComponentUpdates />
 				<Tooltip text="Settings" :hoverDelay="0.6" arrow-class="mb-3">
 					<Button variant="ghost" @click="openSettings" :icon="SettingsGearIcon"></Button>
 				</Tooltip>
@@ -163,6 +164,7 @@
 import Dialog from "@/components/Controls/Dialog.vue";
 import PlayIcon from "@/components/Icons/Play.vue";
 import SettingsGearIcon from "@/components/Icons/SettingsGear.vue";
+import ComponentUpdates from "@/components/ComponentUpdates.vue";
 import PublishButton from "@/components/PublishButton.vue";
 import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";

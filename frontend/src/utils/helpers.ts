@@ -236,6 +236,7 @@ const detachBlockFromComponent = (block: Block, componentId: null | string) => {
 	);
 
 	delete blockCopy.extendedFromComponent;
+	delete blockCopy.componentVersion;
 	delete blockCopy.isChildOfComponent;
 	delete blockCopy.referenceBlockId;
 	blockCopy.children = blockCopy.children.map((block) => detachBlockFromComponent(block, componentId));
@@ -255,7 +256,29 @@ function getCopyWithoutParent(block: BlockOptions | Block): BlockOptions {
 	blockCopy.children = blockCopy.children?.map((child) => getCopyWithoutParent(child));
 	delete blockCopy.parentBlock;
 	delete blockCopy.referenceComponent;
-	return blockCopy;
+	return removeEmptyBlockValues(blockCopy);
+}
+
+function isEmptyValue(value: unknown): boolean {
+	if (value === null || value === "") {
+		return true;
+	}
+	if (Array.isArray(value)) {
+		return value.length === 0;
+	}
+	if (value && typeof value === "object") {
+		return Object.keys(value).length === 0;
+	}
+	return false;
+}
+
+function removeEmptyBlockValues(block: BlockOptions): BlockOptions {
+	for (const key of Object.keys(block)) {
+		if (isEmptyValue(block[key])) {
+			delete block[key];
+		}
+	}
+	return block;
 }
 
 function getRouteVariables(route: string) {

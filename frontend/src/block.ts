@@ -60,6 +60,7 @@ class Block implements BlockOptions {
 	innerText?: string;
 	innerHTML?: string;
 	extendedFromComponent?: string;
+	componentVersion?: string;
 	originalElement?: string | undefined;
 	isChildOfComponent?: string;
 	referenceBlockId?: string;
@@ -79,20 +80,42 @@ class Block implements BlockOptions {
 		this.element = options.element;
 		this.innerHTML = options.innerHTML;
 		this.extendedFromComponent = options.extendedFromComponent;
+		this.componentVersion = options.componentVersion;
 		this.isRepeaterBlock = options.isRepeaterBlock;
 		this.isChildOfComponent = options.isChildOfComponent;
 		this.referenceBlockId = options.referenceBlockId;
 		this.parentBlock = options.parentBlock || null;
 		if (this.extendedFromComponent) {
-			componentStore.loadComponent(this.extendedFromComponent);
+			if (this.componentVersion) {
+				// restored/pinned instance: load the frozen version from its snapshot
+				componentStore.loadComponentVersion(this.componentVersion, this.extendedFromComponent);
+			} else {
+				componentStore.loadComponent(this.extendedFromComponent);
+			}
+		} else if (this.isChildOfComponent && this.componentVersion) {
+			// a pinned instance's child resolves its component from the frozen version too
+			componentStore.loadComponentVersion(this.componentVersion, this.isChildOfComponent);
 		}
 		// to keep this property out of block reactivity
 		Object.defineProperty(this, "referenceComponent", {
 			value: computed(() => {
 				if (this.extendedFromComponent) {
+					if (this.componentVersion) {
+						// prefer the pinned version; fall back to live if it was pruned
+						return (
+							componentStore.getComponentVersionBlock(this.componentVersion as string) ||
+							componentStore.getComponentBlock(this.extendedFromComponent as string) ||
+							null
+						);
+					}
 					return componentStore.getComponentBlock(this.extendedFromComponent as string) || null;
 				} else if (this.isChildOfComponent) {
-					const componentBlock = componentStore.getComponentBlock(this.isChildOfComponent as string);
+					// honor the pinned version (set on restored instance children) before
+					// falling back to the live component
+					const componentBlock = this.componentVersion
+						? componentStore.getComponentVersionBlock(this.componentVersion as string) ||
+							componentStore.getComponentBlock(this.isChildOfComponent as string)
+						: componentStore.getComponentBlock(this.isChildOfComponent as string);
 					return findBlockInTree(this.referenceBlockId as string, [componentBlock]);
 				}
 				return null;

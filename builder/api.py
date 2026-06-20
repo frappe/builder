@@ -19,7 +19,13 @@ from werkzeug.wrappers import Response
 
 from builder import builder_analytics
 from builder.builder.doctype.builder_page.builder_page import BuilderPageRenderer
-from builder.utils import has_page_read, has_page_write
+from builder.builder.doctype.builder_snapshot import builder_snapshot
+from builder.utils import compact_json, has_page_read, has_page_write
+
+
+@frappe.whitelist()
+def get_versioned_doc(snapshot: str) -> dict:
+	return builder_snapshot.get_versioned_doc(snapshot).as_dict()
 
 
 @frappe.whitelist()
@@ -298,7 +304,7 @@ def create_page_from_bundle(bundle: dict, project_folder: str | None = None) -> 
 			"doctype": "Builder Page",
 			"page_title": page.get("page_title") or "My Page",
 			"preview": preview or None,
-			"draft_blocks": frappe.as_json(page.get("blocks") or []),
+			"draft_blocks": compact_json(page.get("blocks") or []),
 			"page_data_script": page.get("page_data_script"),
 			"head_html": page.get("head_html"),
 			"body_html": page.get("body_html"),

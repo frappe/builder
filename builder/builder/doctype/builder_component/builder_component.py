@@ -10,7 +10,7 @@ from frappe.modules.export_file import export_to_files
 from frappe.utils.telemetry import capture
 from frappe.website.utils import clear_website_cache
 
-from builder.utils import Block, execute_script
+from builder.utils import Block, execute_script, compact_json
 
 
 class BuilderComponent(Document):
@@ -117,7 +117,7 @@ class ComponentSyncer:
 			else:
 				self.sync_blocks(block.children or [], component)
 		blocks_dict = [block.as_dict() if isinstance(block, Block) else block for block in blocks_list]
-		return frappe.as_json(blocks_dict)
+		return compact_json(blocks_dict)
 
 	def sync_single_block(self, target_block: Block, component_name: str, component_children: list[Block]):
 		"""Sync a single block with its component template"""
