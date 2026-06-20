@@ -86,7 +86,7 @@
 								class="inline-flex items-center gap-1 transition-colors"
 								:class="
 									debugHasSignal(message.metadata.debug)
-										? 'text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300'
+										? 'text-ink-amber-3 hover:text-ink-amber-2'
 										: 'text-ink-gray-4 hover:text-ink-gray-7'
 								"
 								title="Inspect this turn (rounds, tools, tokens, why it stopped)"
