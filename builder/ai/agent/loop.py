@@ -29,6 +29,7 @@ import frappe
 
 from builder.ai import llm
 from builder.ai.agent.registry import ToolRegistry, build_default_registry
+from builder.ai.agent.tree import WorkingTree
 from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
@@ -138,6 +139,10 @@ class AgentRunner:
 		# of each LLM call (="length" flags truncation — the usual cause of broken args).
 		self.args_repaired = 0
 		self.finish_reasons: list[str | None] = []
+		# Client ops the WorkingTree rejected (bad ref, wrong parent, partial bulk miss).
+		# Each is fed back to the model to self-correct; also logged and surfaced here so a
+		# "why didn't my edit land" is traceable in the agent debugger, not just live logs.
+		self.tool_failures: list[str] = []
 		# Tiered model selection: resolved in run() once we know the scenario.
 		self.loop_model = self.model
 		# Per-turn token tally, summed across every LLM call this turn (the loop's
@@ -517,6 +522,9 @@ class AgentRunner:
 				pass
 
 		messages = self.build_messages()
+		# Mirror of the page tree this turn. Client ops are validated against it so the
+		# tool result fed back is the truth, not a blanket "Applied." (see WorkingTree).
+		self.tree = WorkingTree(self._page_root())
 		client_operations: list[dict] = []
 		summary_text = ""
 
@@ -603,7 +611,12 @@ class AgentRunner:
 					if tool and tool.side == "server" and tool.handler:
 						content = tool.handler(self, op["args"])
 					else:
-						content = "Applied."
+						content = self.tree.apply(op["tool_name"], op["args"])
+						# "FAILED" (hard miss) or "NOT FOUND" (partial bulk miss) — a correction
+						# the model is now being asked to make. Record + log so it's not invisible.
+						if "FAILED" in content or "NOT FOUND" in content:
+							self.tool_failures.append(f"{op['tool_name']}: {content}")
+							logger.warning("Client op rejected — %s: %s", op["tool_name"], content)
 					messages.append({"role": "tool", "tool_call_id": tc_dict["id"], "content": content})
 			else:
 				# Loop ran the full MAX_ROUNDS without the model finishing — a very large
@@ -690,7 +703,7 @@ class AgentRunner:
 		elapsed_ms = round((time.monotonic() - started) * 1000)
 		logger.info(
 			"AI turn done | page=%s rounds=%d llm_calls=%d prompt_tokens=%d "
-			"cached_tokens=%d completion_tokens=%d total_tokens=%d elapsed_ms=%d stop=%s",
+			"cached_tokens=%d completion_tokens=%d total_tokens=%d tool_failures=%d elapsed_ms=%d stop=%s",
 			self.page_id,
 			len(self.trace),
 			self.usage["calls"],
@@ -698,6 +711,7 @@ class AgentRunner:
 			self.usage["cached_tokens"],
 			self.usage["completion_tokens"],
 			self.usage["total_tokens"],
+			len(self.tool_failures),
 			elapsed_ms,
 			self.stop_reason or "model_finished",
 		)
@@ -714,6 +728,7 @@ class AgentRunner:
 				"noopCorrected": self.noop_corrected,
 				"argsRepaired": self.args_repaired,
 				"finishReasons": self.finish_reasons,
+				"toolFailures": self.tool_failures,
 				# Per-turn cost signal for the selector/tiered-context experiment.
 				"tokens": self.usage,
 				"elapsedMs": elapsed_ms,
