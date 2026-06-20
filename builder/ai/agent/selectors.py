@@ -8,30 +8,6 @@ children / …) — the same shape `BlockCodec` operates on.
 
 from collections.abc import Iterator
 
-# Elements that carry user-visible copy — the set "translate the page" / "rewrite
-# all text" must touch. Used by query_blocks(text_only=True).
-TEXT_ELEMENTS = frozenset(
-	{
-		"h1",
-		"h2",
-		"h3",
-		"h4",
-		"h5",
-		"h6",
-		"p",
-		"span",
-		"a",
-		"button",
-		"li",
-		"label",
-		"blockquote",
-		"figcaption",
-		"small",
-		"strong",
-		"em",
-	}
-)
-
 
 def walk_blocks(root: dict, depth: int = 0) -> Iterator[tuple[dict, int]]:
 	"""Yield (block, depth) for the root and every descendant, depth-first."""
@@ -76,8 +52,16 @@ def render_skeleton(root: dict, max_text: int = 60) -> str:
 
 
 def is_text_block(block: dict) -> bool:
-	"""A block that carries its own copy — a text element with non-empty innerHTML."""
-	return bool(block_text(block)) and (block.get("element") or "") in TEXT_ELEMENTS
+	"""A leaf block that carries user-visible copy. Defined by SHAPE, not a tag
+	whitelist: non-empty innerHTML and no block children — so it catches text in
+	non-semantic containers too (a div/td/dd with direct text), which is common on
+	imported/replicated pages and is exactly what a translate-everything must reach.
+	Excludes raw SVG/markup blobs (decorative illustrations live in a div's innerHTML)
+	— that is not copy to translate."""
+	text = block_text(block)
+	if not text or block.get("children"):
+		return False
+	return not text.lstrip().lower().startswith("<svg")
 
 
 def match_block(
