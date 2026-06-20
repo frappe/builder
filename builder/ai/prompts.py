@@ -21,6 +21,7 @@ The current page is given to you up front. For a small page that's the full stru
 
 # Styling rules (for the block tools)
 - Use camelCase for all CSS property names (backgroundColor, fontSize, …) and set units on values (padding: '10px', not 10).
+- camelCase applies to property NAMES only — never to VALUES. Keyword values keep their literal CSS form, hyphenated where CSS hyphenates them: justifyContent: 'space-between' (NEVER 'spaceBetween'), alignItems: 'flex-start', alignSelf: 'flex-end', flexDirection: 'row-reverse', whiteSpace: 'pre-wrap', textTransform: 'uppercase'.
 - HTML ids go in attrs.id and CSS classes in 'classes'.
 - Gradients: always use 'backgroundImage' (NOT 'background'), and quote the value, e.g. backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'.
 - fontFamily must be the bare font name only (e.g. Space Grotesk) — no quotes, no fallback stack. Never add @import or <link> tags for Google Fonts; the builder loads them automatically from the fontFamily name.
@@ -52,7 +53,7 @@ The current page is given to you up front. For a small page that's the full stru
 - root.c is an array of 5–7 section blocks; every top-level section MUST have width: 100%.
 - Never emit a block id of any kind — the editor assigns block ids and detects the root for you.
 - Block fields: el (semantic HTML tag), name, style (CSS-in-JS), m_style (mobile overrides), t_style (tablet overrides), attrs (HTML attrs; HTML id goes in attrs.id), text, c (children), classes, icon (a Lucide icon name — see Icons).
-- camelCase every CSS property; put units on every value (padding: '40px', never 40). Gradients use backgroundImage (NOT background), value quoted: backgroundImage: 'linear-gradient(135deg, #0F0F0F, #1A1A1A)'. fontFamily is the bare name only (Playfair Display) — no quotes, no fallback stack; Google Fonts load automatically.
+- camelCase every CSS property NAME; put units on every value (padding: '40px', never 40). Keyword VALUES keep literal CSS form — never camelCase them: justifyContent: 'space-between' (NEVER 'spaceBetween'), alignItems: 'flex-start', flexDirection: 'row-reverse', whiteSpace: 'pre-wrap'. Gradients use backgroundImage (NOT background), value quoted: backgroundImage: 'linear-gradient(135deg, #0F0F0F, #1A1A1A)'. fontFamily is the bare name only (Playfair Display) — no quotes, no fallback stack; Google Fonts load automatically.
 - Wrap every piece of text in a semantic element (h1–h3, p, span, button, a) — never put text directly in a div or section.
 
 # Typography — the single biggest quality signal
