@@ -73,12 +73,23 @@
 							<FeatherIcon name="rotate-ccw" class="size-3" />
 							Revert this edit
 						</button>
-						<!-- Per-turn cost/latency (for the selector/tiered-context experiment) -->
+						<!-- Per-turn cost/latency + debugger trigger -->
 						<div
-							v-if="(message.metadata?.debug?.tokens?.total_tokens ?? 0) > 0"
-							class="mt-1.5 font-mono text-[10px] text-ink-gray-4"
-							:title="turnStatsTitle(message.metadata.debug)">
-							{{ turnStats(message.metadata.debug) }}
+							v-if="message.metadata?.debug"
+							class="mt-1.5 flex items-center gap-2 font-mono text-[10px] text-ink-gray-4">
+							<span
+								v-if="(message.metadata.debug.tokens?.total_tokens ?? 0) > 0"
+								:title="turnStatsTitle(message.metadata.debug)">
+								{{ turnStats(message.metadata.debug) }}
+							</span>
+							<button
+								class="inline-flex items-center gap-1 text-ink-gray-4 transition-colors hover:text-ink-gray-7"
+								:class="{ 'text-ink-amber-3 hover:text-ink-amber-3': debugHasSignal(message.metadata.debug) }"
+								title="Inspect this turn (rounds, tools, tokens, why it stopped)"
+								@click="openDebug(message.metadata.debug)">
+								<FeatherIcon name="activity" class="size-3" />
+								debug
+							</button>
 						</div>
 						<!-- Plan summary card -->
 						<div
@@ -282,12 +293,19 @@
 				</div>
 			</div>
 		</template>
+		<Dialog title="Turn debug" size="2xl" v-model="debugOpen">
+			<template #default>
+				<AIDebugPanel :debug="debugData" />
+			</template>
+		</Dialog>
 	</div>
 </template>
 
 <script setup lang="ts">
 import AIAffectedItems from "@/components/AIAffectedItems.vue";
+import AIDebugPanel from "@/components/AIDebugPanel.vue";
 import { AIChatController, type ChatMessage } from "@/components/AIChatController";
+import Dialog from "@/components/Controls/Dialog.vue";
 import SparklesIcon from "@/components/Icons/Sparkles.vue";
 import WebPagePresetPicker from "@/components/WebPagePresetPicker.vue";
 import useBuilderStore from "@/stores/builderStore";
@@ -339,6 +357,27 @@ const lastMessageId = computed(() => messages.value.at(-1)?.id ?? null);
 /** Extract hex colour codes from a palette description for swatch previews. */
 function paletteColors(palette: string): string[] {
 	return palette.match(/#[0-9a-fA-F]{3,8}\b/g) || [];
+}
+
+// --- Turn debugger ---------------------------------------------------------
+const debugOpen = ref(false);
+const debugData = ref<Record<string, any> | null>(null);
+function openDebug(debug: Record<string, any>) {
+	debugData.value = debug;
+	debugOpen.value = true;
+}
+/** True when a turn had something noteworthy (truncation, repair, failures, cap) —
+ * tints the debug trigger so problems are spottable without opening it. */
+function debugHasSignal(debug: Record<string, any>): boolean {
+	if (!debug) return false;
+	return Boolean(
+		debug.noopCorrected ||
+			(debug.argsRepaired ?? 0) > 0 ||
+			(debug.toolFailures?.length ?? 0) > 0 ||
+			(debug.finishReasons || []).includes("length") ||
+			debug.stopReason === "max_rounds" ||
+			debug.stopReason === "noop_unbacked",
+	);
 }
 
 /** One-line per-turn cost/latency summary shown under an assistant message. */
