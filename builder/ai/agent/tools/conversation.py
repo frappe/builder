@@ -128,12 +128,14 @@ propose_plan = Tool(
 				"items": {"type": "string"},
 				"description": (
 					"3–5 sections. Make each one DECISION-USEFUL: state the actual content — the real "
-					"headline/key copy it will use (in quotes), what's concretely in it (named items, "
-					"not 'categories'), and the layout (e.g. 'full-bleed split, photo right'). "
+					"headline/key copy it will use (in 'single quotes'), what's concretely in it (named "
+					"items, not 'categories'), and the layout (e.g. 'full-bleed split, photo right'). "
+					"Quote copy with SINGLE quotes only — never double quotes inside a section string "
+					"(unescaped double quotes break this tool call). "
 					"Write real nouns and copy, never mood-adjective filler — do NOT use 'striking', "
 					"'clean', 'elegant', 'minimalist', 'sleek', 'modern', or 'premium'. "
-					'Example: \'Hero — deep-green full-bleed panel, headline "Bring the forest home", '
-					'sapling photo on the right, "Shop the collection" button\'.'
+					"Example: 'Hero — deep-green full-bleed panel, headline 'Bring the forest home', "
+					"sapling photo on the right, 'Shop the collection' button'."
 				),
 			},
 			"palette": {"type": "string", "description": "Palette description with hex codes."},

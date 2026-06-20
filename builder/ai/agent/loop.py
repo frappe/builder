@@ -319,8 +319,17 @@ class AgentRunner:
 			raw_arguments = entry["args"] or ""
 			try:
 				args = json.loads(raw_arguments)
-			except json.JSONDecodeError:
+			except json.JSONDecodeError as e:
+				# Invalid JSON tool args (commonly: unescaped double quotes inside a long
+				# string value). Don't silently drop to {} with no trace — that surfaces as
+				# an empty plan/edit. Log it loudly so the failure is visible.
 				args = {}
+				logger.warning(
+					"AI tool args failed to parse (tool=%s, err=%s): %s",
+					entry["name"],
+					e,
+					BlockCodec.truncate_for_log(raw_arguments, 2000),
+				)
 			logger.info(
 				"AI tool response: tool=%s, raw_arguments=%s",
 				entry["name"],
