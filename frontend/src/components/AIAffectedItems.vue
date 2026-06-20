@@ -3,9 +3,8 @@
 		<button
 			class="flex items-center gap-1 text-[11px] text-ink-gray-4 hover:text-ink-gray-6"
 			@click="open = !open">
-			<FeatherIcon
-				name="chevron-right"
-				class="size-3 transition-transform duration-150"
+			<span
+				class="lucide-chevron-right size-3 transition-transform duration-150"
 				:class="open ? 'rotate-90' : ''" />
 			{{ totalCount }} {{ totalCount === 1 ? "block" : "blocks" }} updated
 		</button>
@@ -36,7 +35,6 @@
 
 <script setup lang="ts">
 import type { AffectedBlock, AffectedScript } from "@/components/AIChatController";
-import { FeatherIcon } from "frappe-ui";
 import { computed, ref } from "vue";
 
 const props = defineProps<{

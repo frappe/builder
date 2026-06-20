@@ -70,7 +70,7 @@
 							class="mt-1.5 inline-flex items-center gap-1 text-[11px] text-ink-gray-4 transition-colors hover:text-ink-gray-7"
 							title="Revert the page to before this AI edit"
 							@click="revertTurn(message)">
-							<FeatherIcon name="rotate-ccw" class="size-3" />
+							<span class="lucide-rotate-ccw size-3" />
 							Revert this edit
 						</button>
 						<!-- Time taken + debugger trigger (full breakdown lives in the debug panel) -->
@@ -89,8 +89,7 @@
 								"
 								title="Inspect this turn (rounds, tools, tokens, why it stopped)"
 								@click="openDebug(message.metadata.debug)">
-								<FeatherIcon name="activity" class="size-3" />
-								debug
+								<span class="lucide-info size-3" />
 							</button>
 						</div>
 						<!-- Plan summary card -->
@@ -222,7 +221,7 @@
 								class="ml-0.5 flex items-center text-ink-gray-4 hover:text-ink-red-7"
 								title="Remove image"
 								@click="clearImage">
-								<FeatherIcon name="x" class="h-3 w-3" />
+								<span class="lucide-x h-3 w-3" />
 							</button>
 						</span>
 					</div>
@@ -246,7 +245,7 @@
 							v-if="isDragging"
 							class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-md border-2 border-dashed border-outline-blue-3 bg-surface-blue-1/60">
 							<div class="flex items-center gap-1.5 text-xs font-medium text-ink-blue-4">
-								<FeatherIcon name="image" class="h-3.5 w-3.5" />
+								<span class="lucide-image h-3.5 w-3.5" />
 								Drop image to attach
 							</div>
 						</div>
@@ -262,7 +261,7 @@
 						<Dropdown :options="modelOptions" side="top" :offset="6">
 							<button
 								class="flex h-7 max-w-[9rem] items-center gap-1.5 rounded px-1.5 text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8">
-								<FeatherIcon name="cpu" class="size-3.5 shrink-0" />
+								<span class="lucide-cpu size-3.5 shrink-0" />
 								<span class="truncate text-xs">{{ modelLabel }}</span>
 							</button>
 						</Dropdown>
@@ -273,7 +272,7 @@
 										class="flex size-7 items-center justify-center rounded text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8"
 										:class="{ 'bg-surface-gray-2 text-ink-gray-8': selectedPreset }"
 										@click="togglePopover">
-										<FeatherIcon name="layout" class="size-3.5" />
+										<span class="lucide-layout size-3.5" />
 									</button>
 								</Tooltip>
 							</template>
@@ -287,11 +286,16 @@
 					<Button
 						v-if="isSubmitting"
 						variant="solid"
-						icon="square"
+						icon="lucide-square"
 						:loading="isCancelling"
 						:title="isCancelling ? 'Cancelling…' : 'Cancel generation'"
 						@click="chat.cancel" />
-					<Button v-else variant="solid" icon="arrow-up" :disabled="!canSubmit" @click="submitPrompt" />
+					<Button
+						v-else
+						variant="solid"
+						icon="lucide-arrow-up"
+						:disabled="!canSubmit"
+						@click="submitPrompt" />
 				</div>
 			</div>
 		</template>
@@ -305,14 +309,14 @@
 
 <script setup lang="ts">
 import AIAffectedItems from "@/components/AIAffectedItems.vue";
-import AIDebugPanel from "@/components/AIDebugPanel.vue";
 import { AIChatController, type ChatMessage } from "@/components/AIChatController";
+import AIDebugPanel from "@/components/AIDebugPanel.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
 import SparklesIcon from "@/components/Icons/Sparkles.vue";
 import WebPagePresetPicker from "@/components/WebPagePresetPicker.vue";
 import useBuilderStore from "@/stores/builderStore";
 import DOMPurify from "dompurify";
-import { Button, Dropdown, FeatherIcon, Popover, Tooltip } from "frappe-ui";
+import { Button, Dropdown, Popover, Tooltip } from "frappe-ui";
 import { marked } from "marked";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
