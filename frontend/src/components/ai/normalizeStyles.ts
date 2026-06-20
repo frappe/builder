@@ -30,15 +30,46 @@ const KEYWORD_VALUE_FIX: Record<string, string> = {
 // Properties that take a length: a bare number gets 'px'. Whitelist (not blocklist) so
 // unitless props — lineHeight, fontWeight, opacity, zIndex, flex* — are never touched.
 const LENGTH_PROPS = new Set([
-	"padding", "paddingTop", "paddingRight", "paddingBottom", "paddingLeft",
-	"margin", "marginTop", "marginRight", "marginBottom", "marginLeft",
-	"top", "right", "bottom", "left", "inset",
-	"width", "height", "minWidth", "maxWidth", "minHeight", "maxHeight",
-	"fontSize", "gap", "rowGap", "columnGap", "borderRadius", "borderWidth",
-	"letterSpacing", "wordSpacing", "textIndent", "outlineWidth", "flexBasis",
+	"padding",
+	"paddingTop",
+	"paddingRight",
+	"paddingBottom",
+	"paddingLeft",
+	"margin",
+	"marginTop",
+	"marginRight",
+	"marginBottom",
+	"marginLeft",
+	"top",
+	"right",
+	"bottom",
+	"left",
+	"inset",
+	"width",
+	"height",
+	"minWidth",
+	"maxWidth",
+	"minHeight",
+	"maxHeight",
+	"fontSize",
+	"gap",
+	"rowGap",
+	"columnGap",
+	"borderRadius",
+	"borderWidth",
+	"letterSpacing",
+	"wordSpacing",
+	"textIndent",
+	"outlineWidth",
+	"flexBasis",
 ]);
 
 const BARE_NUMBER = /^-?\d+(\.\d+)?$/;
+
+// Props where a leading/trailing quote is meaningful CSS (don't strip it). fontFamily is
+// handled separately above; everything else (position, display, color, gradients, …) never
+// legitimately starts or ends with a quote, so a stray one is a model slip.
+const QUOTE_MEANINGFUL = new Set(["content", "quotes"]);
 
 function normalizeValue(prop: string, value: unknown): unknown {
 	if (prop === "fontFamily" && typeof value === "string") {
@@ -46,11 +77,20 @@ function normalizeValue(prop: string, value: unknown): unknown {
 		return value.split(",")[0].replace(/['"]/g, "").trim();
 	}
 	if (typeof value === "string") {
-		if (KEYWORD_VALUE_FIX[value]) return KEYWORD_VALUE_FIX[value];
-		if (LENGTH_PROPS.has(prop) && BARE_NUMBER.test(value.trim()) && value.trim() !== "0") {
-			return `${value.trim()}px`;
+		let v = value.trim();
+		// Strip stray wrapping/trailing quotes the model leaves in keyword values
+		// (position: "absolute'" → absolute), which otherwise produce invalid CSS.
+		// Only the outer quotes go; internal ones (url('x'), repeat(3, 1fr)) are kept.
+		if (!QUOTE_MEANINGFUL.has(prop))
+			v = v
+				.replace(/^['"]+/, "")
+				.replace(/['"]+$/, "")
+				.trim();
+		if (KEYWORD_VALUE_FIX[v]) return KEYWORD_VALUE_FIX[v];
+		if (LENGTH_PROPS.has(prop) && BARE_NUMBER.test(v) && v !== "0") {
+			return `${v}px`;
 		}
-		return value;
+		return v;
 	}
 	if (typeof value === "number" && LENGTH_PROPS.has(prop) && value !== 0) {
 		return `${value}px`;
