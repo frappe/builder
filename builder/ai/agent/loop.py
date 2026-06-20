@@ -23,6 +23,7 @@ before the event fires, so a session reload on receipt is race-free.
 import json
 import logging
 import re
+import time
 
 import frappe
 
@@ -109,6 +110,10 @@ class AgentRunner:
 		self.stop_reason = ""
 		# Tiered model selection: resolved in run() once we know the scenario.
 		self.loop_model = self.model
+		# Per-turn token tally, summed across every LLM call this turn (the loop's
+		# tool-calling rounds + the generation stream). Surfaced in debug metadata and
+		# logged so the selector/tiered-context changes can be measured against baseline.
+		self.usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0, "calls": 0}
 
 	# --- cancellation -----------------------------------------------------
 
@@ -142,6 +147,17 @@ class AgentRunner:
 			return
 		state, self.pre_turn_state = self.pre_turn_state, None
 		self.revert_snapshot = save_revert_snapshot(self.page_id, state)
+
+	def record_usage(self, chunk) -> None:
+		"""Add a streamed chunk's usage to the per-turn tally. Only the final chunk of
+		a stream (stream_options.include_usage) carries usage; the rest are None."""
+		usage = getattr(chunk, "usage", None)
+		if not usage:
+			return
+		self.usage["prompt_tokens"] += getattr(usage, "prompt_tokens", 0) or 0
+		self.usage["completion_tokens"] += getattr(usage, "completion_tokens", 0) or 0
+		self.usage["total_tokens"] += getattr(usage, "total_tokens", 0) or 0
+		self.usage["calls"] += 1
 
 	def record_round(self, round_index: int, tool_operations: list[dict], text: str) -> None:
 		"""Append one round to the debug trace: which tools the model called (with
@@ -276,6 +292,10 @@ class AgentRunner:
 				except Exception:
 					pass
 				raise CancelledError
+			self.record_usage(chunk)
+			# The final include_usage chunk carries usage but no choices.
+			if not chunk.choices:
+				continue
 			delta = chunk.choices[0].delta
 			if getattr(delta, "content", None):
 				content_parts.append(delta.content)
@@ -383,6 +403,7 @@ class AgentRunner:
 	def run(self):
 		# Clear any stale cancel flag from a previous turn before starting.
 		self.clear_cancel_flag()
+		started = time.monotonic()
 		# Editing an existing page runs the loop on the user's CHOSEN model — edit
 		# taste matters as much as generation taste, and silently downgrading a
 		# deliberately-picked heavy model is the surest way to degrade output. Only
@@ -551,6 +572,19 @@ class AgentRunner:
 		# The revert snapshot was created lazily during the loop, the first time a block
 		# change was applied (see ensure_revert_snapshot). Script-only / no-op / clarify
 		# turns never trigger it, so they carry no revert handle.
+		elapsed_ms = round((time.monotonic() - started) * 1000)
+		logger.info(
+			"AI turn done | page=%s rounds=%d llm_calls=%d prompt_tokens=%d "
+			"completion_tokens=%d total_tokens=%d elapsed_ms=%d stop=%s",
+			self.page_id,
+			len(self.trace),
+			self.usage["calls"],
+			self.usage["prompt_tokens"],
+			self.usage["completion_tokens"],
+			self.usage["total_tokens"],
+			elapsed_ms,
+			self.stop_reason or "model_finished",
+		)
 		final_metadata = {
 			"status": "complete",
 			"model": self.model,
@@ -561,6 +595,9 @@ class AgentRunner:
 				"stopReason": self.stop_reason or "model_finished",
 				"loopModel": self.loop_model,
 				"rounds": len(self.trace),
+				# Per-turn cost signal for the selector/tiered-context experiment.
+				"tokens": self.usage,
+				"elapsedMs": elapsed_ms,
 				"trace": self.trace,
 			},
 		}

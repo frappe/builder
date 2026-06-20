@@ -70,6 +70,9 @@ def complete(model: str, messages: list, params: dict, *, stream: bool, api_key:
 		# MidStreamFallbackError. Fallbacks only work safely for non-streaming calls.
 		fallbacks=[] if stream else fallbacks_for(model),
 		num_retries=1,
+		# Emit a final usage chunk while streaming so the loop can tally tokens per
+		# turn (dropped automatically for providers that don't support it).
+		**({"stream_options": {"include_usage": True}} if stream else {}),
 		**params,
 	)
 	if not stream:
@@ -104,5 +107,7 @@ def complete_with_tools(
 		# Fallbacks disabled during streaming — see comment in complete().
 		fallbacks=[] if stream else fallbacks_for(model),
 		num_retries=1,
+		# Final usage chunk while streaming — see complete().
+		**({"stream_options": {"include_usage": True}} if stream else {}),
 		**params,
 	)
