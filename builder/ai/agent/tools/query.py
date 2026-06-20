@@ -10,6 +10,7 @@ Text is returned in FULL — translation/rewrite needs every block's real copy.
 
 from builder.ai.agent.registry import Tool
 from builder.ai.agent.selectors import block_text, find_block, match_block, walk_blocks
+from builder.ai.block_codec import BlockCodec
 from builder.utils import to_compact_yaml
 
 
@@ -95,4 +96,36 @@ query_blocks = Tool(
 	},
 )
 
-TOOLS = [query_blocks]
+
+def run_read_block(ctx, args: dict) -> str:
+	root = ctx._page_root()
+	if root is None:
+		return "The page is empty."
+	ref = args.get("block_id")
+	block = find_block(root, ref) if ref else None
+	if block is None:
+		return f"No block found with ref {ref}."
+	detail = to_compact_yaml(BlockCodec.compress(block, depth=0, task_tier="complex"))
+	return f"Block {ref} (full styles/attributes/children, as of the start of this turn):\n{detail}"
+
+
+read_block = Tool(
+	name="read_block",
+	side="server",
+	handler=run_read_block,
+	description=(
+		"Return a block's FULL detail — its styles, attributes, text, and child subtree — "
+		"by ref. Use this on a large page (where the context is only an outline) before "
+		"editing a block whose current styles you need to see, or to match the styling of an "
+		"existing section. Reflects the page at the start of this turn."
+	),
+	parameters={
+		"type": "object",
+		"properties": {
+			"block_id": {"type": "string", "description": "The ref of the block to inspect."},
+		},
+		"required": ["block_id"],
+	},
+)
+
+TOOLS = [query_blocks, read_block]

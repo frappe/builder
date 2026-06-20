@@ -56,6 +56,25 @@ def block_text(block: dict) -> str:
 	return (block.get("innerHTML") or "").strip()
 
 
+def render_skeleton(root: dict, max_text: int = 60) -> str:
+	"""A compact one-line-per-block outline: indent shows nesting, then the block's
+	ref, element, optional name, and a short text preview. Styles and attributes are
+	omitted — the model pulls those with read_block when it actually needs them. Text
+	is previewed only; query_blocks returns it in full for bulk edits."""
+	lines: list[str] = []
+	for block, depth in walk_blocks(root):
+		ref = block.get("blockId") or "?"
+		el = block.get("element") or "div"
+		parts = [f"{'  ' * depth}{ref} {el}"]
+		if name := block.get("blockName"):
+			parts.append(f"({name})")
+		if text := block_text(block):
+			preview = text if len(text) <= max_text else text[: max_text - 1] + "…"
+			parts.append(f'"{preview}"')
+		lines.append(" ".join(parts))
+	return "\n".join(lines)
+
+
 def is_text_block(block: dict) -> bool:
 	"""A block that carries its own copy — a text element with non-empty innerHTML."""
 	return bool(block_text(block)) and (block.get("element") or "") in TEXT_ELEMENTS

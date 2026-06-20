@@ -65,6 +65,11 @@ def _looks_like_page_yaml(text: str) -> bool:
 
 
 class AgentRunner:
+	# Above this many chars of compact-YAML page structure, switch the page context
+	# from the full tree to a compact outline (read_block pulls detail on demand).
+	# Tuned so a typical multi-section page still ships in full; only big pages skeletonise.
+	FULL_CONTEXT_LIMIT = 9000
+
 	def __init__(
 		self,
 		prompt: str,
@@ -164,8 +169,40 @@ class AgentRunner:
 		root = self._page_root()
 		if root is None:
 			return ""
-		compressed = BlockCodec.compress(root, depth=0, task_tier="complex")
-		return f"Current page structure (YAML — pass a block's 'ref' value as block_id to edit it):\n{to_compact_yaml(compressed)}"
+		full = to_compact_yaml(BlockCodec.compress(root, depth=0, task_tier="complex"))
+		# Small pages: ship the full structure — cheapest path is no extra read_block
+		# round-trips, and the model can match existing styles directly. Big pages: ship
+		# a compact outline instead (styles/attrs omitted) and let the model pull detail
+		# on demand with read_block. The threshold is on the full serialisation length,
+		# which tracks token cost closely.
+		if len(full) <= self.FULL_CONTEXT_LIMIT:
+			return (
+				f"Current page structure (YAML — pass a block's 'ref' value as block_id to edit it):\n{full}"
+			)
+		return self.build_skeleton_context(root)
+
+	def build_skeleton_context(self, root: dict) -> str:
+		"""Outline + full detail for any blocks the user has selected (so the common
+		targeted-edit case needs no read_block round-trip)."""
+		from builder.ai.agent.selectors import find_block, render_skeleton
+
+		outline = render_skeleton(root)
+		parts = [
+			"This page is large, so you're given a compact OUTLINE (one line per block: "
+			"indentation = nesting, then ref, element, optional name, and a short text "
+			"preview). Styles and attributes are omitted. Pass a block's ref as block_id to "
+			"edit it. To see a block's full styles/attributes/text before editing, call "
+			"read_block(ref); to act on many blocks at once, call query_blocks then "
+			"update_blocks. The outline reflects the page at the start of this turn.",
+			outline,
+		]
+		for ref in self.selected_block_ids:
+			block = find_block(root, ref)
+			if block is None:
+				continue
+			detail = to_compact_yaml(BlockCodec.compress(block, depth=0, task_tier="complex"))
+			parts.append(f"Full detail for selected block {ref}:\n{detail}")
+		return "\n\n".join(parts)
 
 	def build_messages(self) -> list[dict]:
 		messages: list[dict] = [
