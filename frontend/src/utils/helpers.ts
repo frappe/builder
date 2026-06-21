@@ -256,6 +256,9 @@ function getCopyWithoutParent(block: BlockOptions | Block): BlockOptions {
 	blockCopy.children = blockCopy.children?.map((child) => getCopyWithoutParent(child));
 	delete blockCopy.parentBlock;
 	delete blockCopy.referenceComponent;
+	if (!blockCopy.extendedFromComponent) {
+		delete blockCopy.componentVersion;
+	}
 	return removeEmptyBlockValues(blockCopy);
 }
 
@@ -271,6 +274,13 @@ function isEmptyValue(value: unknown): boolean {
 	}
 	return false;
 }
+
+const diffArray = <T>(src: T[] | undefined, oldComp: T[] | undefined): T[] => {
+	const oldJson = new Set((oldComp || []).map((item) => JSON.stringify(item)));
+	return (src || []).filter((item) => !oldJson.has(JSON.stringify(item)));
+};
+
+const deepEqual = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
 function removeEmptyBlockValues(block: BlockOptions): BlockOptions {
 	for (const key of Object.keys(block)) {
@@ -908,4 +918,6 @@ export {
 	uploadBuilderAsset,
 	uploadUserFont,
 	parseJSONWithFallback,
+	deepEqual,
+	diffArray
 };

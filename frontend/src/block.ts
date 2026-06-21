@@ -4,6 +4,8 @@ import {
 	addPxToNumber,
 	cssUrl,
 	dataURLtoFile,
+	deepEqual,
+	diffArray,
 	generateId,
 	getBlockCopy,
 	getBlockInstance,
@@ -96,6 +98,13 @@ class Block implements BlockOptions {
 			// a pinned instance's child resolves its component from the frozen version too
 			componentStore.loadComponentVersion(this.componentVersion, this.isChildOfComponent);
 		}
+		if (this.isChildOfComponent && !this.componentVersion) {
+			let parentBlock = this.getParentBlock();
+			while (parentBlock && parentBlock?.extendedFromComponent != this.isChildOfComponent) {
+				parentBlock = parentBlock?.getParentBlock();
+			}
+			this.componentVersion = parentBlock?.componentVersion;
+		}
 		// to keep this property out of block reactivity
 		Object.defineProperty(this, "referenceComponent", {
 			value: computed(() => {
@@ -114,7 +123,7 @@ class Block implements BlockOptions {
 					// falling back to the live component
 					const componentBlock = this.componentVersion
 						? componentStore.getComponentVersionBlock(this.componentVersion as string) ||
-							componentStore.getComponentBlock(this.isChildOfComponent as string)
+						  componentStore.getComponentBlock(this.isChildOfComponent as string)
 						: componentStore.getComponentBlock(this.isChildOfComponent as string);
 					return findBlockInTree(this.referenceBlockId as string, [componentBlock]);
 				}
@@ -320,7 +329,7 @@ class Block implements BlockOptions {
 	}
 	getComponentBlockDescription() {
 		const componentStore = useComponentStore();
-		return componentStore.getComponentName(this.extendedFromComponent as string);
+		return componentStore.getComponentName(this.extendedFromComponent as string, this.componentVersion);
 	}
 	getTextContent() {
 		return getTextContent(this.getInnerHTML() || "");
@@ -834,6 +843,21 @@ class Block implements BlockOptions {
 			syncBlockWithComponent(this, this, this.extendedFromComponent as string, component.children);
 		}
 	}
+	smartRebuildWithComponent(
+		componentId: string,
+		newComponentChildren: Block[],
+		oldComponentChildren: Block[],
+	) {
+		const oldChildrenByRefId = indexChildrenByRefId(this.children);
+		const oldComponentChildrenByBlockId = indexChildrenByBlockId(oldComponentChildren);
+		smartRebuildWithComponent(
+			this,
+			componentId,
+			newComponentChildren,
+			oldChildrenByRefId,
+			oldComponentChildrenByBlockId,
+		);
+	}
 	resetChanges(resetChildren: boolean = false) {
 		resetBlock(this, resetChildren);
 	}
@@ -1018,8 +1042,13 @@ class Block implements BlockOptions {
 	getBlockProps(): BlockProps {
 		let blockProps = {};
 		if (this.isExtendedFromComponent() && !Object.keys(this.props || {}).length) {
-			blockProps =
-				useComponentStore().getComponent(this.extendedFromComponent as string)?.component_props || {};
+			if (this.componentVersion) {
+				blockProps =
+					useComponentStore().getComponentVersionDoc(this.componentVersion as string)?.component_props || {};
+			} else {
+				blockProps =
+					useComponentStore().getComponent(this.extendedFromComponent as string)?.component_props || {};
+			}
 		} else {
 			blockProps = this.props || {};
 		}
@@ -1064,6 +1093,9 @@ function resetWithComponent(
 		const blockComponent = getBlockCopy(componentChild);
 		blockComponent.isChildOfComponent = extendedWithComponent;
 		blockComponent.referenceBlockId = componentChild.blockId;
+		if (!blockComponent.extendedFromComponent) {
+			blockComponent.componentVersion = block.componentVersion;
+		}
 		const childBlock = block.addChild(blockComponent, null, false);
 		if (componentChild.extendedFromComponent) {
 			const component = childBlock.referenceComponent;
@@ -1096,6 +1128,124 @@ function syncBlockWithComponent(
 		const componentChild = componentChildren.find((c) => c.blockId === child.referenceBlockId);
 		if (componentChild) {
 			syncBlockWithComponent(parentBlock, child, componentName, componentChild.children);
+		}
+	});
+}
+
+const mergeOverrideMap = (
+	src: Record<string, any> | undefined,
+	oldComp: Record<string, any> | undefined,
+	dst: Record<string, any>,
+) => {
+	for (const key of Object.keys(src || {})) {
+		if (!deepEqual(src?.[key], oldComp?.[key])) {
+			dst[key] = src?.[key];
+		}
+	}
+};
+
+// Props have a schema defined by the component: only keys present in the new version's props
+// are valid. User overrides survive only for keys the new version still declares; props the
+// new version dropped are removed even if the user overrode them.
+const mergeOverrideProps = (
+	src: Record<string, any> | undefined,
+	oldComp: Record<string, any> | undefined,
+	dstProps: Record<string, any>,
+): Record<string, any> => {
+	const result: Record<string, any> = {};
+	for (const key of Object.keys(dstProps)) {
+		if (src && key in src && !deepEqual(src[key], oldComp?.[key])) {
+			result[key] = src[key];
+		} else {
+			result[key] = dstProps[key];
+		}
+	}
+	return result;
+};
+
+const copyUserOverrides = (src: Block, dst: Block, oldComponentChild: Block) => {
+	mergeOverrideMap(src.baseStyles, oldComponentChild.baseStyles, dst.baseStyles);
+	mergeOverrideMap(src.rawStyles, oldComponentChild.rawStyles, dst.rawStyles);
+	mergeOverrideMap(src.mobileStyles, oldComponentChild.mobileStyles, dst.mobileStyles);
+	mergeOverrideMap(src.tabletStyles, oldComponentChild.tabletStyles, dst.tabletStyles);
+	mergeOverrideMap(src.attributes, oldComponentChild.attributes, dst.attributes);
+	mergeOverrideMap(src.customAttributes, oldComponentChild.customAttributes, dst.customAttributes);
+	dst.props = mergeOverrideProps(src.props, oldComponentChild.props, dst.props || {});
+	if (src.classes) {
+		dst.classes = [...(dst.classes || []), ...diffArray(src.classes, oldComponentChild.classes)];
+	}
+	if (src.dynamicValues) {
+		dst.dynamicValues = [
+			...(dst.dynamicValues || []),
+			...diffArray(src.dynamicValues, oldComponentChild.dynamicValues),
+		];
+	}
+	if (src.innerHTML !== undefined && !deepEqual(src.innerHTML, oldComponentChild.innerHTML)) {
+		dst.innerHTML = src.innerHTML;
+	}
+	if (src.dataKey && !deepEqual(src.dataKey, oldComponentChild.dataKey)) {
+		dst.dataKey = src.dataKey;
+	}
+	if (src.visibilityCondition && !deepEqual(src.visibilityCondition, oldComponentChild.visibilityCondition)) {
+		dst.visibilityCondition = src.visibilityCondition;
+	}
+};
+
+const indexChildrenByRefId = (children: Block[] | undefined): Map<string, Block> => {
+	const map = new Map<string, Block>();
+	(children || []).forEach((child) => {
+		if (child.referenceBlockId) {
+			map.set(child.referenceBlockId, child);
+		}
+	});
+	return map;
+};
+
+const indexChildrenByBlockId = (children: Block[] | undefined): Map<string, Block> => {
+	const map = new Map<string, Block>();
+	(children || []).forEach((child) => {
+		if (child.blockId) {
+			map.set(child.blockId, child);
+		}
+	});
+	return map;
+};
+
+// Rebuild a component instance's children from the new version's structure, preserving user
+// overrides on matched children (matched by referenceBlockId via three-way diff against the old
+// version). Children with no counterpart in the new version are dropped — component subtrees
+// can't host detached blocks. Nested component instances fall back to resetWithComponent.
+function smartRebuildWithComponent(
+	block: Block,
+	componentId: string,
+	componentChildren: Block[],
+	oldChildrenByRefId: Map<string, Block>,
+	oldComponentChildrenByBlockId: Map<string, Block>,
+) {
+	block = toRaw(block);
+	block.children.splice(0, block.children.length);
+	componentChildren.forEach((componentChild) => {
+		const fresh = getBlockCopy(componentChild);
+		fresh.isChildOfComponent = componentId;
+		fresh.referenceBlockId = componentChild.blockId;
+		if (!fresh.extendedFromComponent) {
+			fresh.componentVersion = block.componentVersion;
+		}
+		const matched = oldChildrenByRefId.get(componentChild.blockId);
+		const oldComponentChild = oldComponentChildrenByBlockId.get(componentChild.blockId);
+		if (matched && oldComponentChild && !fresh.extendedFromComponent) {
+			copyUserOverrides(matched, fresh, oldComponentChild);
+		}
+		const childBlock = block.addChild(fresh, null, false);
+		if (componentChild.extendedFromComponent) {
+			const nestedComponent = childBlock.referenceComponent;
+			if (nestedComponent) {
+				resetWithComponent(childBlock, componentChild.extendedFromComponent, nestedComponent.children, false);
+			}
+		} else {
+			const nestedOld = indexChildrenByRefId(matched?.children);
+			const nestedOldComp = indexChildrenByBlockId(oldComponentChild?.children);
+			smartRebuildWithComponent(childBlock, componentId, componentChild.children, nestedOld, nestedOldComp);
 		}
 	});
 }

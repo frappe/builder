@@ -285,7 +285,11 @@ const useComponentStore = defineStore("componentStore", {
 			this.versionBump++;
 		},
 		// mint the component's latest version, apply the given re-pin, and persist
-		async repinToLatest(componentId: string, repin: (version: string) => void, refresh = true) {
+		async repinToLatest(
+			componentId: string,
+			repin: (newVersion: string, newComponentBlock: Block) => Promise<void> | void,
+			refresh = true,
+		) {
 			const pageStore = usePageStore();
 			const res = await webPages.runDocMethod.submit({
 				name: pageStore.selectedPage as string,
@@ -295,31 +299,61 @@ const useComponentStore = defineStore("componentStore", {
 			const newVersion = (res?.message ?? res) as string;
 			if (!newVersion) return;
 			await this.loadComponentVersion(newVersion, componentId);
-			repin(newVersion);
+			const newComponentBlock = this.getComponentVersionBlock(newVersion);
+			if (!newComponentBlock) return;
+			await repin(newVersion, newComponentBlock);
 			this.versionBump++;
 			useCanvasStore().activeCanvas?.toggleDirty(true);
 			pageStore.savePage();
 			if (refresh) await this.refreshComponentUpdates();
 		},
+		// re-pin an instance to the latest version and rebuild its subtree from the new version,
+		// preserving user overrides on matched children via three-way diff against the old version
+		async smartRebuildInstance(
+			block: Block,
+			componentId: string,
+			newVersion: string,
+			newComponentBlock: Block,
+		) {
+			const oldVersion = block.componentVersion;
+			let oldComponentBlock: Block | null = null;
+			if (oldVersion) {
+				await this.loadComponentVersion(oldVersion, componentId);
+				oldComponentBlock = this.getComponentVersionBlock(oldVersion);
+			}
+			if (!oldComponentBlock) {
+				oldComponentBlock = this.getComponentBlock(componentId);
+			}
+			block.componentVersion = newVersion;
+			block.smartRebuildWithComponent(
+				componentId,
+				newComponentBlock.children,
+				oldComponentBlock?.children || [],
+			);
+		},
 		// re-pin a single instance (and its materialized children) to the latest version
 		updatePinnedComponent(block: Block) {
 			const componentId = block.extendedFromComponent;
 			if (!componentId) return;
-			return this.repinToLatest(componentId, (version) =>
-				setSubtreeComponentVersion(block, componentId, version, true),
+			return this.repinToLatest(componentId, (newVersion, newComponentBlock) =>
+				this.smartRebuildInstance(block, componentId, newVersion, newComponentBlock),
 			);
 		},
 		// re-pin every instance of a component on the page to the latest version
 		updateComponentInstances(componentId: string, refresh = true) {
 			return this.repinToLatest(
 				componentId,
-				(version) =>
-					setSubtreeComponentVersion(
-						useCanvasStore().activeCanvas?.getRootBlock(),
-						componentId,
-						version,
-						true,
-					),
+				async (newVersion, newComponentBlock) => {
+					const roots: Block[] = [];
+					walkBlocks(useCanvasStore().activeCanvas?.getRootBlock(), (b) => {
+						if (b.extendedFromComponent === componentId && b.componentVersion) {
+							roots.push(b);
+						}
+					});
+					for (const root of roots) {
+						await this.smartRebuildInstance(root, componentId, newVersion, newComponentBlock);
+					}
+				},
 				refresh,
 			);
 		},
@@ -391,8 +425,11 @@ const useComponentStore = defineStore("componentStore", {
 					}
 				});
 		},
-		getComponentName(componentId: string) {
+		getComponentName(componentId: string, componentVersion?: string) {
 			let componentObj = this.componentDocMap.get(componentId);
+			if (!componentObj && componentVersion) {
+				componentObj = this.componentVersionMap.get(componentVersion);
+			}
 			if (!componentObj) {
 				return componentId;
 			}
