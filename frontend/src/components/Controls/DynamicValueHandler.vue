@@ -141,7 +141,6 @@ const filteredBlockProps = computed(() => {
 		parentProps = [];
 	} else {
 		parentProps = Object.keys(getParentProps(currentBlock.value));
-		console.log({parentProps});
 	}
 	const combinedProps = [...ownBlockProps, ...parentProps].reduce((acc, prop) => {
 		if (!acc.find((p: string) => p === prop)) {
@@ -149,7 +148,6 @@ const filteredBlockProps = computed(() => {
 		}
 		return acc;
 	}, [] as string[]);
-	console.log({combinedProps});
 	return combinedProps;
 });
 

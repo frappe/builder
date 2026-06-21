@@ -2,7 +2,8 @@
 	<div ref="propsEditor" class="flex flex-col gap-2">
 		<div class="flex flex-col gap-2 rounded-lg">
 			<template v-for="(value, name, index) in props.obj" :key="index">
-				<div class="prop-list-item relative flex w-full flex-col rounded bg-surface-gray-1 p-2 text-ink-gray-6">
+				<div
+					class="prop-list-item relative flex w-full flex-col rounded bg-surface-gray-1 p-2 text-ink-gray-6">
 					<Popover :offset="32" placement="right">
 						<template #target="{ open }">
 							<div

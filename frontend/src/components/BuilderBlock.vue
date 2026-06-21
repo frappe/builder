@@ -429,22 +429,43 @@ onUnmounted(() => {
 });
 
 const allResolvedProps = computed(() => {
-	const defaultProps = Object.entries(props.defaultProps || {}).reduce((acc, [key, value]) => {
-		acc[key] = value.value;
-		return acc;
-	}, {} as Record<string, any>);
+	const defaultProps = Object.entries(props.defaultProps || {}).reduce(
+		(acc, [key, value]) => {
+			acc[key] = value.value;
+			return acc;
+		},
+		{} as Record<string, any>,
+	);
 
 	const blockProps = Object.entries({
 		...props.block.getBlockProps(),
-	}).reduce((acc, [key]) => {
-		acc[key] = getPropValue(key, props.block, getDataScriptValue, props.defaultProps, getComponentDataValue);
-		return acc;
-	}, {} as Record<string, any>);
+	}).reduce(
+		(acc, [key]) => {
+			acc[key] = getPropValue(
+				key,
+				props.block,
+				getDataScriptValue,
+				props.defaultProps,
+				getComponentDataValue,
+			);
+			return acc;
+		},
+		{} as Record<string, any>,
+	);
 
-	const parentProps = Object.entries(getParentProps(props.block)).reduce((acc, [key, value]) => {
-		acc[key] = getPropValue(key, value.block!, getDataScriptValue, props.defaultProps, getComponentDataValue);
-		return acc;
-	}, {} as Record<string, any>);
+	const parentProps = Object.entries(getParentProps(props.block)).reduce(
+		(acc, [key, value]) => {
+			acc[key] = getPropValue(
+				key,
+				value.block!,
+				getDataScriptValue,
+				props.defaultProps,
+				getComponentDataValue,
+			);
+			return acc;
+		},
+		{} as Record<string, any>,
+	);
 
 	return {
 		...parentProps,
@@ -470,7 +491,12 @@ watch(
 				return;
 			}
 		}
-		componentStore.setComponentData(componentId, allResolvedProps.value, uidToUse);
+		componentStore.setComponentData(
+			componentId,
+			allResolvedProps.value,
+			uidToUse,
+			props.block.componentVersion,
+		);
 	},
 	{ immediate: true },
 );

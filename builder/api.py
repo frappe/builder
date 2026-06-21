@@ -495,7 +495,9 @@ def reorder_client_scripts(script_order: list[str]):
 
 
 @frappe.whitelist()
-def get_component_data(component_name: str, props: dict | str | None = None, script: str | None = None) -> dict:
+def get_component_data(
+	component_name: str, props: dict | str | None = None, script: str | None = None
+) -> dict:
 	from builder.builder.doctype.builder_component.builder_component import (
 		get_component_data as _get_component_data,
 	)
