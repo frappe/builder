@@ -28,11 +28,21 @@ const walkBlocks = (block: Block | null | undefined, visitor: (block: Block) => 
 	(block.children || []).forEach((child) => walkBlocks(child, visitor));
 };
 
-// re-pin every block belonging to `componentId` (instance root + materialized children) in a subtree
-const repinSubtree = (block: Block | null | undefined, componentId: string, newVersion: string) =>
+// set the component version on every block belonging to `componentId` (instance root + materialized
+// children) in a subtree. When `onlyPinned` is true, only blocks that already have a componentVersion
+// are touched (used for re-pin); otherwise all matching blocks are pinned (used for fresh instances).
+const setSubtreeComponentVersion = (
+	block: Block | null | undefined,
+	componentId: string,
+	version: string,
+	onlyPinned = false,
+) =>
 	walkBlocks(block, (b) => {
-		if ((b.extendedFromComponent === componentId || b.isChildOfComponent === componentId) && b.componentVersion) {
-			b.componentVersion = newVersion;
+		if (
+			(b.extendedFromComponent === componentId || b.isChildOfComponent === componentId) &&
+			(!onlyPinned || b.componentVersion)
+		) {
+			b.componentVersion = version;
 		}
 	});
 
@@ -44,7 +54,7 @@ const useComponentStore = defineStore("componentStore", {
 		fetchingComponent: new Set(),
 		selectedComponent: null as string | null,
 		// frozen component versions, keyed by the version snapshot name (the pin)
-		componentVersionMap: <Map<string, Block>>new Map(),
+		componentVersionMap: <Map<string, BuilderComponent>>new Map(),
 		fetchingComponentVersion: new Set(),
 		// `${componentId}::${version}` for pinned instances whose live component changed
 		outdatedPins: <Set<string>>new Set(),
@@ -64,16 +74,16 @@ const useComponentStore = defineStore("componentStore", {
 			await this.loadComponent(componentName);
 			const component = this.getComponent(componentName);
 			const componentBlock = this.getComponentBlock(componentName);
-			
+
 			// Fetch component data for preview when entering fragment mode
 			// const defaultProps = getComponentDefaultProps(componentBlock);
 			// this.setComponentData(componentName, defaultProps);
-			
+
 			const canvasStore = useCanvasStore();
 			canvasStore.editOnCanvas(
 				componentBlock,
 				(block: Block) => {
-					this.saveComponent(block, componentName)	
+					this.saveComponent(block, componentName);
 				},
 				"Save Component",
 				component.component_name,
@@ -195,7 +205,12 @@ const useComponentStore = defineStore("componentStore", {
 			// touch versionBump so a re-pin (which changes a block's componentVersion to a
 			// brand-new key this computed never read) still invalidates the computed
 			this.versionBump;
-			return (this.componentVersionMap.get(versionName) as Block) || null;
+			const doc = this.componentVersionMap.get(versionName);
+			return doc ? (markRaw(getBlockInstance(doc.block)) as Block) : null;
+		},
+		getComponentVersionDoc(versionName: string) {
+			this.versionBump;
+			return this.componentVersionMap.get(versionName) ?? null;
 		},
 		async loadComponentVersion(versionName: string, componentId: string) {
 			if (this.componentVersionMap.has(versionName) || this.fetchingComponentVersion.has(versionName)) {
@@ -203,11 +218,13 @@ const useComponentStore = defineStore("componentStore", {
 			}
 			this.fetchingComponentVersion.add(versionName);
 			try {
-				// fetch the component doc as it was at this version (versioned block overlaid)
+				// fetch the component doc as it was at this version (versioned fields overlaid)
 				const doc = await getVersionedDoc(versionName);
-				const block = doc?.block ? JSON.parse(doc.block) : null;
-				if (block) {
-					this.componentVersionMap.set(versionName, markRaw(getBlockInstance(block)));
+				if (doc?.block) {
+					const versionedDoc = { ...doc } as BuilderComponent;
+					versionedDoc.component_props = parseJSONWithFallback(versionedDoc.component_props, {});
+					versionedDoc.component_vars = parseJSONWithFallback(versionedDoc.component_vars, {});
+					this.componentVersionMap.set(versionName, versionedDoc);
 				} else {
 					// pruned/missing version — show the live component instead
 					await this.loadComponent(componentId);
@@ -252,6 +269,21 @@ const useComponentStore = defineStore("componentStore", {
 			if (!componentId || !version) return false;
 			return this.outdatedPins.has(pinKey(componentId, version));
 		},
+		// mint the component's latest version and pin a freshly-used instance to it
+		async pinComponentInstance(block: Block, componentName: string) {
+			const pageStore = usePageStore();
+			if (!pageStore.selectedPage) return;
+			const res = await webPages.runDocMethod.submit({
+				name: pageStore.selectedPage as string,
+				method: "get_current_component_version",
+				component_id: componentName,
+			});
+			const version = (res?.message ?? res) as string;
+			if (!version) return;
+			await this.loadComponentVersion(version, componentName);
+			setSubtreeComponentVersion(block, componentName, version);
+			this.versionBump++;
+		},
 		// mint the component's latest version, apply the given re-pin, and persist
 		async repinToLatest(componentId: string, repin: (version: string) => void, refresh = true) {
 			const pageStore = usePageStore();
@@ -273,13 +305,21 @@ const useComponentStore = defineStore("componentStore", {
 		updatePinnedComponent(block: Block) {
 			const componentId = block.extendedFromComponent;
 			if (!componentId) return;
-			return this.repinToLatest(componentId, (version) => repinSubtree(block, componentId, version));
+			return this.repinToLatest(componentId, (version) =>
+				setSubtreeComponentVersion(block, componentId, version, true),
+			);
 		},
 		// re-pin every instance of a component on the page to the latest version
 		updateComponentInstances(componentId: string, refresh = true) {
 			return this.repinToLatest(
 				componentId,
-				(version) => repinSubtree(useCanvasStore().activeCanvas?.getRootBlock(), componentId, version),
+				(version) =>
+					setSubtreeComponentVersion(
+						useCanvasStore().activeCanvas?.getRootBlock(),
+						componentId,
+						version,
+						true,
+					),
 				refresh,
 			);
 		},
@@ -376,9 +416,17 @@ const useComponentStore = defineStore("componentStore", {
 			const instanceKey = blockId ?? COMPONENT_DATA_FRAGMENT_KEY;
 			return this.componentData[componentId]?.[instanceKey] ?? {};
 		},
-		async setComponentData(componentId: string, props: Record<string, any> = {}, blockId: string | null = null) {
+		async setComponentData(
+			componentId: string,
+			props: Record<string, any> = {},
+			blockId: string | null = null,
+			componentVersion?: string,
+		) {
 			const instanceKey = blockId ?? COMPONENT_DATA_FRAGMENT_KEY;
 			const requestKey = `${componentId}::${instanceKey}`;
+			// use the data script from the pinned version when available, else live component
+			const versionedDoc = componentVersion ? this.getComponentVersionDoc(componentVersion) : null;
+			const script = versionedDoc?.component_data_script ?? undefined;
 			const result = await runLatestRequest(requestKey, () =>
 				createResource({
 					url: "builder.api.get_component_data",
@@ -388,6 +436,7 @@ const useComponentStore = defineStore("componentStore", {
 					.fetch({
 						component_name: componentId,
 						props: JSON.stringify(props),
+						script,
 					})
 					.then((data: { [key: string]: any }) => data ?? {})
 					.catch((e: { message: string }) => {
@@ -407,7 +456,7 @@ const useComponentStore = defineStore("componentStore", {
 		async deleteComponentData(componentId: string, blockId: string | null = null) {
 			const instanceKey = blockId ?? COMPONENT_DATA_FRAGMENT_KEY;
 			this.componentData[componentId][instanceKey] = {};
-		}
+		},
 	},
 });
 

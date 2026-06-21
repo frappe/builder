@@ -10,7 +10,8 @@ from frappe.modules.export_file import export_to_files
 from frappe.utils.telemetry import capture
 from frappe.website.utils import clear_website_cache
 
-from builder.utils import Block, execute_script, compact_json
+from builder.builder.component_versions import ensure_component_version
+from builder.utils import Block, compact_json, execute_script
 
 
 class BuilderComponent(Document):
@@ -39,10 +40,13 @@ class BuilderComponent(Document):
 		capture("builder_component_created", "builder")
 
 	def on_update(self):
-		# Skip the background cache-clear during bulk imports (install / migrate /
-		# import_doc). queue_action enqueues a job AND locks the doc, which can raise
-		# DocumentLockedError mid-import — e.g. when create_page_from_template
-		# import_doc's a hub template's components. Nothing to clear on a fresh import.
+		# Skip the background cache-clear and version snapshot during bulk imports
+		# (install / migrate / import_doc). queue_action enqueues a job AND locks the
+		# doc, which can raise DocumentLockedError mid-import — e.g. when
+		# create_page_from_template import_doc's a hub template's components.
+		# ensure_component_version also walks nested components and prunes, which is
+		# unsafe when not all components are loaded yet. Versions are minted on the
+		# next real edit, so nothing is lost by skipping a fresh import.
 		if not (
 			frappe.flags.in_import
 			or frappe.flags.in_install
@@ -50,6 +54,7 @@ class BuilderComponent(Document):
 			or frappe.flags.in_patch
 		):
 			self.queue_action("clear_page_cache")
+			ensure_component_version(self.name)
 		self.update_exported_component()
 
 	def clear_page_cache(self):

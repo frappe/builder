@@ -29,7 +29,7 @@
 					:readonly="true" />
 			</div>
 			<div class="box-border h-full overflow-y-auto pb-12" v-if="mode == 'component'">
-				<div class="flex min-h-full w-full flex-col gap-6" v-if="isBlockSelected">
+				<div class="flex min-h-full w-full flex-col gap-6">
 					<div>
 						<div class="mb-3 mt-4 text-sm text-ink-gray-8">Component Props</div>
 						<PropsEditor

@@ -219,6 +219,7 @@ export function useCanvasDropZone(
 			const component = componentStore.componentMap.get(componentName) as Block;
 			const newBlock = getBlockCopy(component);
 			newBlock.extendFromComponent(componentName);
+			await componentStore.pinComponentInstance(newBlock, componentName);
 			// if shift key is pressed, replace parent block with new block
 			if (ev.shiftKey) {
 				if (!parentBlock) return;

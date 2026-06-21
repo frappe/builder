@@ -23,8 +23,7 @@ from builder.builder.component_versions import (
 	collect_restore_warnings,
 	ensure_component_version,
 	is_pin_outdated,
-	pin_components_in_page_data,
-	resolve_component_block,
+	resolve_component,
 )
 from builder.builder.doctype.builder_project_folder.builder_project_folder import is_system_activity
 from builder.builder.doctype.builder_snapshot.builder_snapshot import (
@@ -267,13 +266,13 @@ class BuilderPage(WebsiteGenerator):
 		self.published = 1
 		self.published_at = now()
 		if self.draft_blocks:
-			# snapshot the content going live (component versions pinned) before it overwrites `blocks`
+			# snapshot the content going live; blocks already carry componentVersion pins
+			# from when each component was used in the page (pinned at drag-drop)
 			take_snapshot(
 				"Builder Page",
 				self.name,
 				fields=["draft_blocks", "page_data_script"],
 				snapshot_type="Publish",
-				transform=pin_components_in_page_data,
 			)
 			prune_snapshots("Builder Page", self.name, keep=KEEP_PUBLISH_SNAPSHOTS, snapshot_type="Publish")
 			self.blocks = self.draft_blocks
@@ -308,7 +307,6 @@ class BuilderPage(WebsiteGenerator):
 			fields=[field, "page_data_script"],
 			snapshot_type="Manual",
 			label=label,
-			transform=pin_components_in_page_data,
 		)
 
 	@frappe.whitelist()
@@ -1276,54 +1274,43 @@ def extend_block_with_component(block: dict) -> tuple[dict, str | None]:
 		return block, None
 
 	component_id = block.get("extendedFromComponent")
-	component = frappe.get_cached_value(
-		"Builder Component",
-		component_id,
-		[
-			"block",
-			"name",
-			"component_js",
-			"component_css",
-			"component_props",
-			"component_vars",
-			"component_data_script",
-		],
-		as_dict=True,
-	)
+	component = resolve_component(component_id, block.get("componentVersion"))
+	if not component:
+		return block, None
 
-	component_block = frappe.parse_json(component_block_json or "{}")
+	component_block = frappe.parse_json(component.get("block") or "{}")
 	if component_block:
-		if component.component_props:
-			component_block["props"] = frappe.parse_json(component.component_props) or {}
+		if component.get("component_props"):
+			component_block["props"] = frappe.parse_json(component["component_props"]) or {}
 
 		extend_block(component_block, block)
 
 		component_scripts = []
-		if component.component_css:
+		if component.get("component_css"):
 			component_scripts.append(
 				{
-					"name": f"{frappe.scrub(component.name)}_css",
-					"script": component.component_css,
+					"name": f"{frappe.scrub(component_id)}_css",
+					"script": component["component_css"],
 					"type": "CSS",
 				}
 			)
-		if component.component_js:
+		if component.get("component_js"):
 			component_scripts.append(
 				{
-					"name": f"{frappe.scrub(component.name)}_js",
-					"script": component.component_js,
+					"name": f"{frappe.scrub(component_id)}_js",
+					"script": component["component_js"],
 					"type": "JavaScript",
 				}
 			)
 
-		if component.component_vars:
-			component_block["vars"] = frappe.parse_json(component.component_vars) or {}
+		if component.get("component_vars"):
+			component_block["vars"] = frappe.parse_json(component["component_vars"]) or {}
 
 		if component_scripts:
 			component_block["componentClientScripts"] = component_scripts
 
-		if component.component_data_script:
-			component_block["componentDataScript"] = component.component_data_script
+		if component.get("component_data_script"):
+			component_block["componentDataScript"] = component["component_data_script"]
 
 		return component_block, component_id
 
@@ -1564,11 +1551,16 @@ def reset_with_component(block, extended_with_component, component_children):
 		child_block["referenceBlockId"] = component_child_id
 		block["children"].append(child_block)
 		if child_block.get("extendedFromComponent"):
-			component = frappe.get_cached_doc("Builder Component", child_block.get("extendedFromComponent"))
-			component_block = frappe.parse_json(component.block)
-			reset_with_component(
-				child_block, child_block.get("extendedFromComponent"), component_block.get("children")
+			resolved = resolve_component(
+				child_block.get("extendedFromComponent"), child_block.get("componentVersion")
 			)
+			if resolved:
+				nested_block = frappe.parse_json(resolved.get("block") or "{}")
+				reset_with_component(
+					child_block, child_block.get("extendedFromComponent"), nested_block.get("children")
+				)
+			else:
+				reset_with_component(child_block, extended_with_component, child_block.get("children"))
 		else:
 			reset_with_component(child_block, extended_with_component, child_block.get("children"))
 
