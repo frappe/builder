@@ -352,6 +352,11 @@ class BuilderPage(WebsiteGenerator):
 
 		if context.preview:
 			context.disable_auto_dark_mode = 0
+			# /builder_assets/variables.css is a rendered route, not a real file, so
+			# the preview/PDF generator can't fetch it. Inline the variables instead.
+			from builder.builder.doctype.builder_variable.builder_variable import get_variables_css
+
+			context.inline_variables_css = get_variables_css()
 		else:
 			context.disable_auto_dark_mode = frappe.get_cached_value(
 				"Builder Settings", "Builder Settings", "disable_auto_dark_mode"
