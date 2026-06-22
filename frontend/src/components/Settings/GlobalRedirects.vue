@@ -1,5 +1,38 @@
 <template>
 	<div class="flex-1 overflow-y-hidden">
+		<Popover placement="bottom-start">
+			<template #target="{ togglePopover }">
+				<button
+					type="button"
+					class="mb-2 flex items-center gap-1 text-xs text-ink-gray-5 hover:text-ink-gray-7"
+					@click="togglePopover">
+					<span class="lucide-info size-3" aria-hidden="true" />
+					Supported syntax
+				</button>
+			</template>
+			<template #body>
+				<div class="w-80 rounded-lg bg-surface-base p-3 text-xs shadow-xl">
+					<p class="mb-3 text-ink-gray-6">
+						Redirect visitors from one path to another.
+						<strong>From</strong>
+						is matched as a regular expression (anchored to the full path);
+						<strong>To</strong>
+						is the destination.
+					</p>
+					<div class="flex flex-col gap-3">
+						<div v-for="example in syntaxExamples" :key="example.title">
+							<div class="mb-1 font-medium text-ink-gray-8">{{ example.title }}</div>
+							<p class="mb-1.5 text-ink-gray-5">{{ example.description }}</p>
+							<div class="flex items-center gap-1.5 font-mono text-ink-gray-7">
+								<code class="rounded bg-surface-gray-2 px-1.5 py-0.5" v-html="highlight(example.from)" />
+								<span class="lucide-arrow-right size-3 text-ink-gray-4" aria-hidden="true" />
+								<code class="rounded bg-surface-gray-2 px-1.5 py-0.5" v-html="highlight(example.to)" />
+							</div>
+						</div>
+					</div>
+				</div>
+			</template>
+		</Popover>
 		<form @submit.prevent="addRedirect" class="mb-5">
 			<div class="flex gap-2 px-[2px] py-2">
 				<BuilderInput v-model="redirectMap.from" placeholder="From" :hideClearButton="true" required />
@@ -36,9 +69,8 @@
 						<code
 							v-else
 							class="block cursor-pointer truncate rounded px-1 py-1 pr-2 hover:bg-surface-gray-1"
-							@click="startEdit(row.id, row.from, row.to)">
-							{{ row.from }}
-						</code>
+							@click="startEdit(row.id, row.from, row.to)"
+							v-html="highlight(row.from)" />
 					</div>
 					<div class="w-[calc(50%-.5rem)] pl-3 pr-2">
 						<BuilderInput
@@ -51,9 +83,8 @@
 						<code
 							v-else
 							class="block cursor-pointer truncate rounded px-1 py-1 hover:bg-surface-gray-1"
-							@click="startEdit(row.id, row.from, row.to)">
-							{{ row.to }}
-						</code>
+							@click="startEdit(row.id, row.from, row.to)"
+							v-html="highlight(row.to)" />
 					</div>
 					<div class="flex gap-1">
 						<template v-if="editingRedirect === row.id">
@@ -81,7 +112,36 @@
 import routeRedirects from "@/data/routeRedirects";
 import { confirm } from "@/utils/helpers";
 import { computed, onMounted, ref } from "vue";
-import { toast } from "frappe-ui";
+import { Popover, toast } from "frappe-ui";
+
+const syntaxExamples = [
+	{
+		title: "Exact path",
+		description: "Redirect a single page to another path.",
+		from: "/old-page",
+		to: "/new-page",
+	},
+	{
+		title: "External URL",
+		description: "Redirect to a full URL on another site.",
+		from: "/docs",
+		to: "https://example.com/docs",
+	},
+	{
+		title: "Wildcard with capture",
+		description: "Match a pattern and reuse captured groups with \\1, \\2, …",
+		from: "/blog/(.*)",
+		to: "/news/\\1",
+	},
+];
+
+// Wrap regex metacharacters and backreferences in colored spans for a light syntax highlight.
+const highlight = (value: string) => {
+	const escaped = value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+	return escaped
+		.replace(/\\\d+/g, (m) => `<span class="text-ink-blue-8">${m}</span>`)
+		.replace(/[()[\].*+?^$|]/g, (m) => `<span class="text-ink-amber-6">${m}</span>`);
+};
 
 const redirectMap = ref({ from: "", to: "" });
 const searchQuery = ref({ from: "", to: "" });
