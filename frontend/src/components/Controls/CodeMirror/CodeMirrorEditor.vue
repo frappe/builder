@@ -116,7 +116,7 @@ const allBlockProps = computed(() => {
 
 	const ownBlockProps = currentBlock.getBlockProps();
 	const inheritedBlockProps = getParentProps(currentBlock);
-	const defaultProps = getDefaultPropsList(currentBlock, blockController);
+	const defaultProps = getDefaultPropsList(currentBlock);
 
 	return {
 		...defaultProps,

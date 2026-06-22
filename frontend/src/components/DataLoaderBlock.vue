@@ -26,7 +26,6 @@ import usePageStore from "@/stores/pageStore";
 import { getDataForKey, getStandardPropValue } from "@/utils/helpers";
 import { Ref, computed, ref } from "vue";
 import BuilderBlock from "./BuilderBlock.vue";
-import blockController from "@/utils/blockController";
 
 const pageStore = usePageStore();
 
@@ -72,7 +71,7 @@ const blockRepeaterData = computed(() => {
 		return compData || [];
 	} else if (repeatingFrom.value == "props" && key) {
 		const defaultProps: BlockProps[] = [];
-		const componentRoot = blockController.getComponentRootBlock(props.block);
+		const componentRoot = props.block.getComponentRoot();
 		const parsedValue = getStandardPropValue(key, componentRoot)?.value;
 		if (Array.isArray(parsedValue)) {
 			parsedValue.slice(0, 100).forEach((item: any) =>

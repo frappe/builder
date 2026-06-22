@@ -117,7 +117,7 @@ const pageDataArray = computed(() => {
 });
 
 const defaultProps = computed(() => {
-	return getDefaultPropsList(currentBlock.value!, blockController);
+	return getDefaultPropsList(currentBlock.value!);
 });
 
 const componentData = computed(() => {

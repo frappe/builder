@@ -64,7 +64,7 @@ const defaultProps = computed(() => {
 	if (!currentBlock.value) {
 		return [];
 	}
-	return Object.keys(getDefaultPropsList(currentBlock.value, blockController));
+	return Object.keys(getDefaultPropsList(currentBlock.value));
 });
 const getOptions = async (query: string) => {
 	let options: { label: string; value: string }[] = [];

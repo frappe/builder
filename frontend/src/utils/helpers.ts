@@ -657,15 +657,15 @@ const getParentProps = (
 	}
 };
 
-const getDefaultPropsList = (block: Block, blockController: any): BlockProps => {
-	// we need to pass blockController because during initialization phase, blockController can't use canvasStore
+const getDefaultPropsList = (block: Block): BlockProps => {
 	const isCurrentBlockInRepeater = block?.isInsideRepeater();
 	const repeaterRoot = isCurrentBlockInRepeater ? block?.getRepeaterParent() : null;
 	if (repeaterRoot) {
 		const key = repeaterRoot.getDataKey("key");
 		const comesFrom = repeaterRoot.getDataKey("comesFrom");
 		if (key && comesFrom === "props") {
-			const componentRoot = blockController.getComponentRootBlock(repeaterRoot);
+			const componentRoot = repeaterRoot.getComponentRoot();
+			if (!componentRoot) return {};
 			const parsedValue = getStandardPropValue(key, componentRoot)?.value;
 			if (!parsedValue) return {};
 			if (Array.isArray(parsedValue)) {

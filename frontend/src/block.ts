@@ -745,6 +745,27 @@ class Block implements BlockOptions {
 	isExtendedFromComponent() {
 		return Boolean(this.extendedFromComponent) || Boolean(this.isChildOfComponent);
 	}
+	getComponentRoot(): Block | null {
+		let block: Block | null = this;
+		const editingMode = useCanvasStore().editingMode;
+
+		if (editingMode == "page") {
+			if (!block.isExtendedFromComponent()) {
+				return null;
+			}
+		}
+
+		while (block && block.isExtendedFromComponent()) {
+			if (block.extendedFromComponent) return block;
+			block = block.getParentBlock()!;
+		}
+		if (editingMode == "fragment") {
+			while (block && !block.isExtendedFromComponent() && block.getParentBlock()) {
+				block = block.getParentBlock()!;
+			}
+		}
+		return block;
+	}
 	convertToRepeater() {
 		this.setBaseStyle("display", "flex");
 		this.setBaseStyle("flexDirection", "column");
@@ -1040,22 +1061,25 @@ class Block implements BlockOptions {
 		return Boolean(this.getRepeaterParent());
 	}
 	getBlockProps(): BlockProps {
-		let blockProps = {};
-		if (this.isExtendedFromComponent() && !Object.keys(this.props || {}).length) {
-			if (this.componentVersion) {
-				blockProps =
-					useComponentStore().getComponentVersionDoc(this.componentVersion as string)?.component_props || {};
-			} else {
-				blockProps =
-					useComponentStore().getComponent(this.extendedFromComponent as string)?.component_props || {};
-			}
+		const componentRoot = this.getComponentRoot();
+		if (!componentRoot) return {};
+		if (componentRoot.props && Object.keys(componentRoot.props).length > 0) {
+			return { ...(componentRoot.props || {}) };
+		} else if (componentRoot.componentVersion) {
+			return (
+				useComponentStore().getComponentVersionDoc(componentRoot.componentVersion as string)
+					?.component_props || {}
+			);
 		} else {
-			blockProps = this.props || {};
+			return (
+				useComponentStore().getComponent(componentRoot.extendedFromComponent as string)?.component_props || {}
+			);
 		}
-		return blockProps;
 	}
 	setBlockProps(props: BlockProps) {
-		this.props = props;
+		const componentRoot = this.getComponentRoot();
+		if (!componentRoot) return;
+		componentRoot.props = props;
 	}
 }
 

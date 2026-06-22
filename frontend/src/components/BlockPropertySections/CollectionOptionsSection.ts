@@ -58,7 +58,7 @@ const keyOptions = computed(() => {
 	const isPropsBasedRepeater = isInsideRepeater && repeaterDataKeyComesFrom == "props";
 	const repeatableProps: string[] = [];
 
-	const propsOfComponentRoot = blockController.getComponentRootBlock()?.getBlockProps();
+	const propsOfComponentRoot = blockController.getFirstSelectedBlock()?.getComponentRoot()?.getBlockProps();
 
 	if (propsOfComponentRoot && !isPropsBasedRepeater) {
 		Object.entries(propsOfComponentRoot).forEach(([key, value]) => {

@@ -76,7 +76,7 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 			blockController.setBlockProp(propName, { value });
 		},
 		getModelValue: () => {
-			const value = blockController.getFirstSelectedBlock().props?.[propName]?.value;
+			const value = blockController.getFirstSelectedBlock().getBlockProps()[propName]?.value;
 			return value;
 		},
 		getPlaceholder: () => {

@@ -329,29 +329,6 @@ const blockController = {
 			block.unsetLink();
 		});
 	},
-	getComponentRootBlock: (block?: Block): Block | null => {
-		if (!block) {
-			block = blockController.getFirstSelectedBlock();
-		}
-		const editingMode = canvasStore.editingMode;
-
-		if (editingMode == "page") {
-			if (block && !block.isExtendedFromComponent()) {
-				return null;
-			}
-		}
-
-		while (block && block.isExtendedFromComponent()) {
-			if (block.extendedFromComponent) break;
-			block = block.getParentBlock()!;
-		}
-		if (editingMode == "fragment") {
-			while (block && !block.isExtendedFromComponent() && block.getParentBlock()) {
-				block = block.getParentBlock()!;
-			}
-		}
-		return block;
-	},
 	getBlockProps: () => {
 		return blockController.getFirstSelectedBlock()?.getBlockProps();
 	},
@@ -369,15 +346,8 @@ const blockController = {
 	},
 	setBlockProps: (props: BlockProps) => {
 		const block = blockController.getFirstSelectedBlock();
-		if (!block.props) {
-			block.props = {};
-		}
-		Object.keys(block.props).forEach((key) => {
-			if (!props[key]) {
-				delete block.props?.[key];
-			}
-		});
-		Object.assign(block.props, props);
+		if (!block) return;
+		block.setBlockProps(props);
 	},
 };
 
