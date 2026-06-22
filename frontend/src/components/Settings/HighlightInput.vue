@@ -7,7 +7,8 @@
 			autocomplete="off"
 			spellcheck="false"
 			:value="modelValue"
-			:class="[cellBoxClass, editableInputClass, 'caret-ink-gray-8 text-transparent']"
+			:class="[cellBoxClass, editableInputClass, 'text-transparent']"
+			style="caret-color: var(--ink-gray-8)"
 			v-bind="$attrs"
 			@input="onInput"
 			@scroll="syncScroll" />

@@ -1,13 +1,14 @@
 <template>
 	<div class="flex h-full flex-col" @keydown.esc="cancelNew">
-		<div class="mb-3 flex items-center gap-2">
+		<div class="mb-3">
 			<BuilderInput
-				v-model="searchQuery"
+				:modelValue="searchQuery"
+				@input="(val: string) => (searchQuery = val)"
+				@update:modelValue="(val: string) => (searchQuery = val)"
 				type="text"
 				placeholder="Search redirects"
 				class="w-full"
 				icon-left="search" />
-			<Button label="Add Redirect" variant="subtle" iconLeft="lucide-plus" @click="addNewRow" />
 		</div>
 
 		<div class="min-h-0 flex-1 overflow-y-auto">
@@ -86,33 +87,45 @@
 				</div>
 			</div>
 
-			<div v-if="!rows.length && !newRow" class="py-10 text-center">
-				<div class="text-base-medium text-ink-gray-7">
-					{{ searchQuery.trim() ? "No redirects found" : "No redirects" }}
-				</div>
-				<div class="mt-1 text-sm text-ink-gray-5">
-					{{
-						searchQuery.trim()
-							? `No redirects match "${searchQuery}". Try a different search term.`
-							: "Click 'Add Redirect' to create your first one."
-					}}
-				</div>
+			<div v-if="searchQuery.trim() && !rows.length" class="px-2 py-6 text-center text-sm text-ink-gray-5">
+				No redirects match "{{ searchQuery }}"
 			</div>
+
+			<!-- Trailing add row, sits below the table like the Variable Manager's footer action -->
+			<button
+				v-if="!searchQuery.trim()"
+				class="flex w-full items-center gap-2 border-b border-outline-gray-1 px-2 py-2 text-sm text-ink-gray-5 hover:bg-surface-gray-1 hover:text-ink-gray-8"
+				@click="addNewRow">
+				<span class="lucide-plus size-4" aria-hidden="true" />
+				Add Redirect
+			</button>
 		</div>
 
 		<!-- Supported syntax -->
-		<p
-			class="mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-1 border-t border-outline-gray-1 pt-3 text-xs text-ink-gray-5">
-			<span class="text-ink-gray-6">From</span>
-			is matched as a regex, reuse captured groups in
-			<span class="text-ink-gray-6">To</span>
-			with
-			<code class="rounded bg-surface-gray-2 px-1 py-0.5" v-html="highlight('\\1')" />
-			— e.g.
-			<code class="rounded bg-surface-gray-2 px-1 py-0.5" v-html="highlight('/blog/(.*)')" />
-			<span class="lucide-arrow-right size-3 text-ink-gray-4" aria-hidden="true" />
-			<code class="rounded bg-surface-gray-2 px-1 py-0.5" v-html="highlight('/news/\\1')" />
-		</p>
+		<div class="mt-3 border-t border-outline-gray-1 pt-3">
+			<p class="mb-2.5 text-xs text-ink-gray-5">
+				<span class="text-ink-gray-7">From</span>
+				is matched as a regular expression — capture a part with
+				<code class="rounded bg-surface-gray-2 px-1 py-0.5 text-ink-gray-7" v-html="highlight('(.*)')" />
+				and reuse it in
+				<span class="text-ink-gray-7">To</span>
+				as
+				<code class="rounded bg-surface-gray-2 px-1 py-0.5 text-ink-gray-7" v-html="highlight('\\1')" />
+				.
+			</p>
+			<div class="grid w-fit grid-cols-[auto_auto_auto_1fr] items-center gap-x-2 gap-y-1.5 text-xs">
+				<template v-for="example in syntaxExamples" :key="example.label">
+					<code
+						class="rounded bg-surface-gray-2 px-1.5 py-0.5 text-ink-gray-7"
+						v-html="highlight(example.from)" />
+					<span class="lucide-arrow-right size-3 text-ink-gray-4" aria-hidden="true" />
+					<code
+						class="rounded bg-surface-gray-2 px-1.5 py-0.5 text-ink-gray-7"
+						v-html="highlight(example.to)" />
+					<span class="pl-2 text-ink-gray-5">{{ example.label }}</span>
+				</template>
+			</div>
+		</div>
 	</div>
 </template>
 <script setup lang="ts">
@@ -128,6 +141,12 @@ type RedirectRow = { id: string; from: string; to: string };
 
 // shared column template so the header and every row stay aligned
 const rowGridClass = "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_28px] items-center gap-x-2 px-1";
+
+const syntaxExamples = [
+	{ from: "/old-page", to: "/new-page", label: "Exact path" },
+	{ from: "/docs", to: "https://example.com/docs", label: "External URL" },
+	{ from: "/blog/(.*)", to: "/news/\\1", label: "Regex capture" },
+];
 
 const searchQuery = ref("");
 const newRow = ref<{ from: string; to: string } | null>(null);
