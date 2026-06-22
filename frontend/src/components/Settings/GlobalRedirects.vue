@@ -21,6 +21,15 @@
 				<div></div>
 			</div>
 
+			<!-- Add row, sits at the top of the table -->
+			<button
+				v-if="!searchQuery.trim() && !newRow"
+				class="flex w-full items-center gap-2 border-b border-outline-gray-1 px-2 py-2 text-sm text-ink-gray-5 hover:bg-surface-gray-1 hover:text-ink-gray-8"
+				@click="addNewRow">
+				<span class="lucide-plus size-4" aria-hidden="true" />
+				Add Redirect
+			</button>
+
 			<!-- New redirect row: live inputs until it is created -->
 			<div
 				v-if="newRow"
@@ -92,15 +101,6 @@
 			<div v-if="searchQuery.trim() && !rows.length" class="px-2 py-6 text-center text-sm text-ink-gray-5">
 				No redirects match "{{ searchQuery }}"
 			</div>
-
-			<!-- Trailing add row, sits below the table like the Variable Manager's footer action -->
-			<button
-				v-if="!searchQuery.trim()"
-				class="flex w-full items-center gap-2 border-b border-outline-gray-1 px-2 py-2 text-sm text-ink-gray-5 hover:bg-surface-gray-1 hover:text-ink-gray-8"
-				@click="addNewRow">
-				<span class="lucide-plus size-4" aria-hidden="true" />
-				Add Redirect
-			</button>
 		</div>
 
 		<!-- Supported syntax -->
