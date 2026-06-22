@@ -1,26 +1,30 @@
 <template>
 	<div class="relative w-full">
-		<!-- Native-looking input; its own text is transparent so the colored mirror shows through. -->
+		<!-- Real input drives caret, focus ring and bg; its own text is transparent so the colored mirror shows through. -->
 		<input
 			ref="inputRef"
 			type="text"
 			autocomplete="off"
 			spellcheck="false"
 			:value="modelValue"
-			class="h-7 w-full rounded border border-gray-100 bg-gray-100 px-2 py-1.5 text-base text-transparent caret-gray-800 transition-colors hover:border-gray-200 hover:bg-gray-200 focus:border-gray-500 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-0 focus-visible:ring-2 focus-visible:ring-gray-400"
+			:class="[cellBoxClass, editableInputClass, 'caret-ink-gray-8 text-transparent']"
 			v-bind="$attrs"
 			@input="onInput"
 			@scroll="syncScroll" />
 		<div
 			ref="mirrorRef"
 			aria-hidden="true"
-			class="pointer-events-none absolute inset-0 flex items-center overflow-hidden whitespace-pre rounded border border-transparent px-2 py-1.5 text-base text-gray-800">
-			<span v-if="modelValue" v-html="highlighted" />
-			<span v-else class="text-gray-500">{{ placeholder }}</span>
+			:class="[
+				cellBoxClass,
+				'pointer-events-none absolute inset-0 flex items-center overflow-hidden whitespace-pre',
+			]">
+			<span v-if="modelValue" class="text-ink-gray-8" v-html="highlighted" />
+			<span v-else class="text-ink-gray-4">{{ placeholder }}</span>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
+import { cellBoxClass, editableInputClass } from "@/utils/editableTable";
 import { highlightRedirectSyntax } from "@/utils/redirectSyntax";
 import { computed, ref } from "vue";
 

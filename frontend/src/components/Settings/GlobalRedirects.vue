@@ -1,15 +1,108 @@
 <template>
-	<div class="flex-1 overflow-y-hidden">
-		<form @submit.prevent="addRedirect" class="mb-2">
-			<div class="flex gap-2 px-[2px] py-2">
-				<HighlightInput v-model="redirectMap.from" placeholder="From" />
-				<HighlightInput v-model="redirectMap.to" placeholder="To" />
+	<div class="flex h-full flex-col" @keydown.esc="cancelNew">
+		<div class="mb-3 flex items-center gap-2">
+			<BuilderInput
+				v-model="searchQuery"
+				type="text"
+				placeholder="Search redirects"
+				class="w-full"
+				icon-left="search" />
+			<Button label="Add Redirect" variant="subtle" iconLeft="lucide-plus" @click="addNewRow" />
+		</div>
+
+		<div class="min-h-0 flex-1 overflow-y-auto">
+			<!-- Header row -->
+			<div
+				class="sticky top-0 z-10 border-b border-outline-gray-1 bg-surface-base pb-2 pt-1 text-sm text-ink-gray-5"
+				:class="rowGridClass">
+				<div class="pl-2">From</div>
+				<div class="border-l border-outline-gray-1 pl-2">To</div>
+				<div></div>
 			</div>
-			<div class="mr-1 justify-self-end py-1">
-				<Button type="submit" label="Add Redirect" variant="ghost" iconLeft="lucide-plus" />
+
+			<!-- New redirect row: live inputs until it is created -->
+			<div
+				v-if="newRow"
+				data-row
+				class="border-b border-outline-gray-1 py-1"
+				:class="rowGridClass"
+				@focusout="handleNewRowFocusOut">
+				<HighlightInput
+					v-model="newRow.from"
+					placeholder="/blog/(.*)"
+					data-new-from
+					@keydown.enter.prevent="createNew"
+					@keydown.esc.stop.prevent="cancelNew" />
+				<div class="border-l border-outline-gray-1 pl-2">
+					<HighlightInput
+						v-model="newRow.to"
+						placeholder="/news/\1"
+						@keydown.enter.prevent="createNew"
+						@keydown.esc.stop.prevent="cancelNew" />
+				</div>
+				<div></div>
 			</div>
-		</form>
-		<p class="mb-4 flex flex-wrap items-center gap-x-1.5 px-[2px] text-xs text-ink-gray-5">
+
+			<!-- Existing rows: text by default, one cell editable on double-click -->
+			<div
+				v-for="row in rows"
+				:key="row.id"
+				data-row
+				:data-row-id="row.id"
+				class="group/row border-b border-outline-gray-1 py-1 hover:bg-surface-gray-1"
+				:class="rowGridClass">
+				<div class="min-w-0" @dblclick="startEdit(row, 'from')">
+					<HighlightInput
+						v-if="isEditing(row, 'from')"
+						v-model="editValue"
+						:ref="focusEditInput"
+						@blur="commitEdit(row, 'from')"
+						@keydown.enter.prevent="commitEdit(row, 'from')"
+						@keydown.esc.stop.prevent="cancelEdit"
+						@keydown.tab.prevent="commitAndEditNext(row, 'from')" />
+					<div
+						v-else
+						:class="[cellBoxClass, 'cursor-default truncate text-ink-gray-8']"
+						v-html="highlight(row.from)" />
+				</div>
+				<div class="min-w-0 border-l border-outline-gray-1 pl-2" @dblclick="startEdit(row, 'to')">
+					<HighlightInput
+						v-if="isEditing(row, 'to')"
+						v-model="editValue"
+						:ref="focusEditInput"
+						@blur="commitEdit(row, 'to')"
+						@keydown.enter.prevent="commitEdit(row, 'to')"
+						@keydown.esc.stop.prevent="cancelEdit" />
+					<div
+						v-else
+						:class="[cellBoxClass, 'cursor-default truncate text-ink-gray-8']"
+						v-html="highlight(row.to)" />
+				</div>
+				<div class="flex justify-end">
+					<span
+						class="lucide-trash size-3.5 cursor-pointer text-ink-gray-5 opacity-0 hover:text-ink-gray-8 group-hover/row:opacity-100"
+						aria-hidden="true"
+						@click="deleteRedirect(row.id)" />
+				</div>
+			</div>
+
+			<div v-if="!rows.length && !newRow" class="py-10 text-center">
+				<div class="text-base-medium text-ink-gray-7">
+					{{ searchQuery.trim() ? "No redirects found" : "No redirects" }}
+				</div>
+				<div class="mt-1 text-sm text-ink-gray-5">
+					{{
+						searchQuery.trim()
+							? `No redirects match "${searchQuery}". Try a different search term.`
+							: "Click 'Add Redirect' to create your first one."
+					}}
+				</div>
+			</div>
+		</div>
+
+		<!-- Supported syntax -->
+		<p
+			class="mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-1 border-t border-outline-gray-1 pt-3 text-xs text-ink-gray-5">
 			<span class="text-ink-gray-6">From</span>
 			is matched as a regex, reuse captured groups in
 			<span class="text-ink-gray-6">To</span>
@@ -20,96 +113,40 @@
 			<span class="lucide-arrow-right size-3 text-ink-gray-4" aria-hidden="true" />
 			<code class="rounded bg-surface-gray-2 px-1 py-0.5" v-html="highlight('/news/\\1')" />
 		</p>
-		<div
-			v-if="!rows.length && !searchQuery.from && !searchQuery.to"
-			class="flex h-full flex-col items-center justify-center">
-			<div class="h-28 text-base text-ink-gray-4">No redirects set</div>
-		</div>
-		<div v-else class="h-full text-sm">
-			<div
-				class="sticky top-0 flex gap-2 rounded-t-md border-b border-outline-gray-1 bg-surface-gray-1 px-[2px] text-ink-gray-5">
-				<BuilderInput v-model="searchQuery.from" placeholder="From URL" />
-				<BuilderInput v-model="searchQuery.to" placeholder="To URL" />
-			</div>
-			<div class="h-[calc(100%-115px)] overflow-y-auto">
-				<div
-					v-for="row in rows"
-					:key="row.id"
-					class="group flex items-center rounded-sm border-b border-outline-gray-1 px-2 py-2 text-sm text-ink-gray-7 hover:bg-surface-gray-2">
-					<div class="w-[calc(50%-.5rem)]">
-						<HighlightInput
-							v-if="editingRedirect === row.id"
-							v-model="editForm.from"
-							@keyup.enter="saveRedirect(row.id)"
-							@keyup.escape="cancelEdit" />
-						<code
-							v-else
-							class="block cursor-pointer truncate rounded px-1 py-1 pr-2 hover:bg-surface-gray-1"
-							@click="startEdit(row.id, row.from, row.to)"
-							v-html="highlight(row.from)" />
-					</div>
-					<div class="w-[calc(50%-.5rem)] pl-3 pr-2">
-						<HighlightInput
-							v-if="editingRedirect === row.id"
-							v-model="editForm.to"
-							@keyup.enter="saveRedirect(row.id)"
-							@keyup.escape="cancelEdit" />
-						<code
-							v-else
-							class="block cursor-pointer truncate rounded px-1 py-1 hover:bg-surface-gray-1"
-							@click="startEdit(row.id, row.from, row.to)"
-							v-html="highlight(row.to)" />
-					</div>
-					<div class="flex gap-1">
-						<template v-if="editingRedirect === row.id">
-							<span
-								class="lucide-check size-3 cursor-pointer text-ink-gray-5 hover:text-ink-gray-9"
-								aria-hidden="true"
-								@click="saveRedirect(row.id)" />
-							<span
-								class="lucide-x size-3 cursor-pointer text-ink-gray-5 hover:text-ink-gray-9"
-								aria-hidden="true"
-								@click="cancelEdit" />
-						</template>
-						<span
-							v-else
-							class="lucide-trash size-3 cursor-pointer text-ink-gray-5 hover:text-ink-gray-9"
-							aria-hidden="true"
-							@click="deleteRedirect(row.id)" />
-					</div>
-				</div>
-			</div>
-		</div>
 	</div>
 </template>
 <script setup lang="ts">
 import HighlightInput from "@/components/Settings/HighlightInput.vue";
 import routeRedirects from "@/data/routeRedirects";
+import { cellBoxClass } from "@/utils/editableTable";
 import { confirm } from "@/utils/helpers";
 import { highlightRedirectSyntax as highlight } from "@/utils/redirectSyntax";
 import { toast } from "frappe-ui";
-import { computed, onMounted, ref } from "vue";
+import { computed, nextTick, onMounted, ref, type ComponentPublicInstance } from "vue";
 
-const redirectMap = ref({ from: "", to: "" });
-const searchQuery = ref({ from: "", to: "" });
-const editingRedirect = ref<string | null>(null);
-const editForm = ref({ from: "", to: "" });
+type RedirectRow = { id: string; from: string; to: string };
+
+// shared column template so the header and every row stay aligned
+const rowGridClass = "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_28px] items-center gap-x-2 px-1";
+
+const searchQuery = ref("");
+const newRow = ref<{ from: string; to: string } | null>(null);
 
 onMounted(() => routeRedirects.fetch());
 
-const rows = computed(() =>
-	(routeRedirects.data || [])
+const rows = computed<RedirectRow[]>(() => {
+	const query = searchQuery.value.toLowerCase().trim();
+	return (routeRedirects.data || [])
 		.map((redirect: { source: string; target: string; name: string }) => ({
+			id: redirect.name,
 			from: redirect.source,
 			to: redirect.target,
-			id: redirect.name,
 		}))
 		.filter(
-			(row: { from: string; to: string; id: string }) =>
-				row.from.toLowerCase().includes(searchQuery.value.from.toLowerCase()) &&
-				row.to.toLowerCase().includes(searchQuery.value.to.toLowerCase()),
-		),
-);
+			(row: RedirectRow) =>
+				!query || row.from.toLowerCase().includes(query) || row.to.toLowerCase().includes(query),
+		);
+});
 
 const performOptimisticUpdate = (
 	operation: () => Promise<any>,
@@ -125,11 +162,29 @@ const performOptimisticUpdate = (
 	});
 };
 
-const addRedirect = () => {
-	const { from, to } = redirectMap.value;
-	if (!from || !to) return;
+// --- create: "Add Redirect" inserts a live row at the top ---
+const addNewRow = async () => {
+	newRow.value = { from: "", to: "" };
+	await nextTick();
+	document.querySelector<HTMLInputElement>("input[data-new-from]")?.focus();
+};
+
+const cancelNew = () => (newRow.value = null);
+
+// create once focus leaves the new row entirely (tabbing between its cells is fine)
+const handleNewRowFocusOut = (e: FocusEvent) => {
+	const rowEl = e.currentTarget as HTMLElement;
+	if (e.relatedTarget && rowEl.contains(e.relatedTarget as Node)) return;
+	createNew();
+};
+
+const createNew = () => {
+	if (!newRow.value) return;
+	const { from, to } = newRow.value;
+	if (!from || !to) return (newRow.value = null);
 
 	const tempId = `temp_${Date.now()}`;
+	newRow.value = null;
 	performOptimisticUpdate(
 		() =>
 			routeRedirects.insert.submit({
@@ -142,7 +197,6 @@ const addRedirect = () => {
 		() => {
 			if (!routeRedirects.data) routeRedirects.data = [];
 			routeRedirects.data.unshift({ source: from, target: to, name: tempId });
-			redirectMap.value = { from: "", to: "" };
 		},
 		() => {
 			const index = routeRedirects.data.findIndex((r: any) => r.name === tempId);
@@ -152,44 +206,62 @@ const addRedirect = () => {
 	);
 };
 
-const deleteRedirect = async (id: string) => {
-	const redirect = rows.value.find((row: any) => row.id === id);
-	const message = redirect
-		? `Are you sure you want to delete the redirect from "${redirect.from}" to "${redirect.to}"?`
-		: "Are you sure you want to delete this redirect?";
+// --- inline edit: double-click a cell, Enter/blur commits, Esc cancels, Tab moves From -> To ---
+const editing = ref<{ id: string; field: "from" | "to" } | null>(null);
+const editValue = ref("");
 
-	if (await confirm(message)) {
-		const index = routeRedirects.data.findIndex((r: any) => r.name === id);
-		const backup = index !== -1 ? { ...routeRedirects.data[index] } : null;
+const isEditing = (row: RedirectRow, field: "from" | "to") =>
+	editing.value?.id === row.id && editing.value?.field === field;
 
-		performOptimisticUpdate(
-			() => routeRedirects.delete.submit(id),
-			() => index !== -1 && routeRedirects.data.splice(index, 1),
-			() => backup && index !== -1 && routeRedirects.data.splice(index, 0, backup),
-			{ loading: "Deleting redirect...", success: "Redirect deleted", error: "Error deleting redirect" },
-		);
+const startEdit = (row: RedirectRow, field: "from" | "to") => {
+	editing.value = { id: row.id, field };
+	editValue.value = row[field];
+};
+
+const focusEditInput = (el: Element | ComponentPublicInstance | null) =>
+	(el as { focus?: () => void } | null)?.focus?.();
+
+const cancelEdit = () => (editing.value = null);
+
+const commitEdit = (row: RedirectRow, field: "from" | "to") => {
+	if (!isEditing(row, field)) return;
+	const value = editValue.value.trim();
+	editing.value = null;
+	if (value && value !== row[field]) {
+		updateRedirect(row.id, field === "from" ? value : row.from, field === "to" ? value : row.to);
 	}
+};
+
+const commitAndEditNext = (row: RedirectRow, field: "from" | "to") => {
+	commitEdit(row, field);
+	if (field === "from") startEdit({ ...row, from: editValue.value.trim() || row.from }, "to");
 };
 
 const updateRedirect = (id: string, from: string, to: string) => {
 	const index = routeRedirects.data.findIndex((r: any) => r.name === id);
+	const backup = index !== -1 ? { ...routeRedirects.data[index] } : null;
 	performOptimisticUpdate(
 		() => routeRedirects.setValue.submit({ name: id, source: from, target: to }),
 		() => index !== -1 && Object.assign(routeRedirects.data[index], { source: from, target: to }),
-		() => routeRedirects.fetch(),
+		() => backup && index !== -1 && Object.assign(routeRedirects.data[index], backup),
 		{ loading: "Updating redirect...", success: "Redirect updated", error: "Error updating redirect" },
 	);
 };
 
-const startEdit = (id: string, from: string, to: string) => (
-	(editingRedirect.value = id), (editForm.value = { from, to })
-);
+const deleteRedirect = async (id: string) => {
+	const row = rows.value.find((r) => r.id === id);
+	const message = row
+		? `Are you sure you want to delete the redirect from "${row.from}" to "${row.to}"?`
+		: "Are you sure you want to delete this redirect?";
+	if (!(await confirm(message))) return;
 
-const cancelEdit = () => ((editingRedirect.value = null), (editForm.value = { from: "", to: "" }));
-const saveRedirect = (id: string) => {
-	if (editForm.value.from && editForm.value.to) {
-		updateRedirect(id, editForm.value.from, editForm.value.to);
-		cancelEdit();
-	}
+	const index = routeRedirects.data.findIndex((r: any) => r.name === id);
+	const backup = index !== -1 ? { ...routeRedirects.data[index] } : null;
+	performOptimisticUpdate(
+		() => routeRedirects.delete.submit(id),
+		() => index !== -1 && routeRedirects.data.splice(index, 1),
+		() => backup && index !== -1 && routeRedirects.data.splice(index, 0, backup),
+		{ loading: "Deleting redirect...", success: "Redirect deleted", error: "Error deleting redirect" },
+	);
 };
 </script>
