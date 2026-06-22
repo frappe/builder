@@ -26,10 +26,13 @@
 </template>
 <script setup lang="ts">
 import { cellBoxClass, editableInputClass } from "@/utils/editableTable";
-import { highlightRedirectSyntax } from "@/utils/redirectSyntax";
+import { highlightSource, highlightTarget } from "@/utils/redirectSyntax";
 import { computed, ref } from "vue";
 
-const props = defineProps<{ modelValue: string; placeholder?: string }>();
+const props = withDefaults(
+	defineProps<{ modelValue: string; placeholder?: string; kind?: "source" | "target" }>(),
+	{ kind: "source" },
+);
 const emit = defineEmits(["update:modelValue"]);
 
 defineOptions({ inheritAttrs: false });
@@ -37,7 +40,9 @@ defineOptions({ inheritAttrs: false });
 const inputRef = ref<HTMLInputElement | null>(null);
 const mirrorRef = ref<HTMLElement | null>(null);
 
-const highlighted = computed(() => highlightRedirectSyntax(props.modelValue));
+const highlighted = computed(() =>
+	props.kind === "target" ? highlightTarget(props.modelValue) : highlightSource(props.modelValue),
+);
 
 const onInput = (event: Event) => emit("update:modelValue", (event.target as HTMLInputElement).value);
 

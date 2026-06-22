@@ -37,6 +37,7 @@
 				<div class="border-l border-outline-gray-1 pl-2">
 					<HighlightInput
 						v-model="newRow.to"
+						kind="target"
 						placeholder="/news/\1"
 						@keydown.enter.prevent="createNew"
 						@keydown.esc.stop.prevent="cancelNew" />
@@ -64,12 +65,13 @@
 					<div
 						v-else
 						:class="[cellBoxClass, 'cursor-default truncate text-ink-gray-8']"
-						v-html="highlight(row.from)" />
+						v-html="highlightSource(row.from)" />
 				</div>
 				<div class="min-w-0 border-l border-outline-gray-1 pl-2" @dblclick="startEdit(row, 'to')">
 					<HighlightInput
 						v-if="isEditing(row, 'to')"
 						v-model="editValue"
+						kind="target"
 						:ref="focusEditInput"
 						@blur="commitEdit(row, 'to')"
 						@keydown.enter.prevent="commitEdit(row, 'to')"
@@ -77,7 +79,7 @@
 					<div
 						v-else
 						:class="[cellBoxClass, 'cursor-default truncate text-ink-gray-8']"
-						v-html="highlight(row.to)" />
+						v-html="highlightTarget(row.to)" />
 				</div>
 				<div class="flex justify-end">
 					<span
@@ -102,30 +104,18 @@
 		</div>
 
 		<!-- Supported syntax -->
-		<div class="mt-3 border-t border-outline-gray-1 pt-3">
-			<p class="mb-2.5 text-xs text-ink-gray-5">
-				<span class="text-ink-gray-7">From</span>
-				is matched as a regular expression — capture a part with
-				<code class="rounded bg-surface-gray-2 px-1 py-0.5 text-ink-gray-7" v-html="highlight('(.*)')" />
-				and reuse it in
-				<span class="text-ink-gray-7">To</span>
-				as
-				<code class="rounded bg-surface-gray-2 px-1 py-0.5 text-ink-gray-7" v-html="highlight('\\1')" />
-				.
-			</p>
-			<div class="grid w-fit grid-cols-[auto_auto_auto_1fr] items-center gap-x-2 gap-y-1.5 text-xs">
-				<template v-for="example in syntaxExamples" :key="example.label">
-					<code
-						class="rounded bg-surface-gray-2 px-1.5 py-0.5 text-ink-gray-7"
-						v-html="highlight(example.from)" />
-					<span class="lucide-arrow-right size-3 text-ink-gray-4" aria-hidden="true" />
-					<code
-						class="rounded bg-surface-gray-2 px-1.5 py-0.5 text-ink-gray-7"
-						v-html="highlight(example.to)" />
-					<span class="pl-2 text-ink-gray-5">{{ example.label }}</span>
-				</template>
-			</div>
-		</div>
+		<p
+			class="mt-3 flex flex-wrap items-center gap-x-1 gap-y-1 border-t border-outline-gray-1 pt-3 text-xs text-ink-gray-5">
+			<span class="lucide-info size-3 text-ink-gray-4" aria-hidden="true" />
+			<span class="text-ink-gray-6">From</span>
+			is a regular expression — capture with
+			<code class="rounded bg-surface-gray-2 px-1 py-0.5 text-ink-gray-7" v-html="highlightSource('(.*)')" />
+			and reuse it in
+			<span class="text-ink-gray-6">To</span>
+			as
+			<code class="rounded bg-surface-gray-2 px-1 py-0.5 text-ink-gray-7" v-html="highlightTarget('\\1')" />
+			. External URLs are allowed.
+		</p>
 	</div>
 </template>
 <script setup lang="ts">
@@ -133,7 +123,7 @@ import HighlightInput from "@/components/Settings/HighlightInput.vue";
 import routeRedirects from "@/data/routeRedirects";
 import { cellBoxClass } from "@/utils/editableTable";
 import { confirm } from "@/utils/helpers";
-import { highlightRedirectSyntax as highlight } from "@/utils/redirectSyntax";
+import { highlightSource, highlightTarget } from "@/utils/redirectSyntax";
 import { toast } from "frappe-ui";
 import { computed, nextTick, onMounted, ref, type ComponentPublicInstance } from "vue";
 
@@ -141,12 +131,6 @@ type RedirectRow = { id: string; from: string; to: string };
 
 // shared column template so the header and every row stay aligned
 const rowGridClass = "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_28px] items-center gap-x-2 px-1";
-
-const syntaxExamples = [
-	{ from: "/old-page", to: "/new-page", label: "Exact path" },
-	{ from: "/docs", to: "https://example.com/docs", label: "External URL" },
-	{ from: "/blog/(.*)", to: "/news/\\1", label: "Regex capture" },
-];
 
 const searchQuery = ref("");
 const newRow = ref<{ from: string; to: string } | null>(null);
