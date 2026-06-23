@@ -59,7 +59,6 @@ export function promptCreateComponent(block: Block) {
 			updatedBlock?.extendFromComponent(componentData.name);
 			if (updatedBlock) {
 				await componentStore.pinComponentInstance(updatedBlock, componentData.name);
-				useCanvasStore().activeCanvas?.toggleDirty(true);
 				pageStore.savePage();
 			}
 		},
