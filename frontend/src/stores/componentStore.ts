@@ -492,6 +492,7 @@ const useComponentStore = defineStore("componentStore", {
 		},
 		async deleteComponentData(componentId: string, blockId: string | null = null) {
 			const instanceKey = blockId ?? COMPONENT_DATA_FRAGMENT_KEY;
+			if (!this.componentData[componentId]) return;
 			this.componentData[componentId][instanceKey] = {};
 		},
 	},
