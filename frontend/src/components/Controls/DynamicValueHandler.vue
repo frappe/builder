@@ -137,7 +137,6 @@ const filteredBlockProps = computed(() => {
 	}
 	let parentProps: string[];
 	if (props.options?.excludePassedDownProps || !currentBlock.value) {
-		console.log("excluding parent props");
 		parentProps = [];
 	} else {
 		parentProps = Object.keys(getParentProps(currentBlock.value));
