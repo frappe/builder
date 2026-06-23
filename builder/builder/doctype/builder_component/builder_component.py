@@ -193,14 +193,18 @@ def get_component_data(
 		A dict containing the component's data
 	"""
 
-	component_doc = frappe.get_cached_doc("Builder Component", component_name)
+	try:
+		component_doc = frappe.get_cached_doc("Builder Component", component_name)
+	except frappe.DoesNotExistError:
+		return {}
+
 	script = script or component_doc.component_data_script
 	props = props or component_doc.component_props
 
 	if isinstance(props, str):
 		props = frappe.parse_json(props)
 
-	if not component_doc or not script:
+	if not script:
 		return {}
 
 	_locals = dict(
