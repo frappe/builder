@@ -703,6 +703,7 @@ const getDefaultPropsList = (block: Block): BlockProps => {
 
 const PARSEABLE_STANDARD_TYPES = ["number", "boolean", "object", "array"];
 
+// TODO: re-visit all props related functions as block props are now replaced with component props
 const getPropValue = (
 	propName: string,
 	block: Block,

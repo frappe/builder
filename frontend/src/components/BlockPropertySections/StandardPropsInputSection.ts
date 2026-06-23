@@ -5,6 +5,7 @@ import ColorInput from "../Controls/ColorInput.vue";
 import OptionToggle from "../Controls/OptionToggle.vue";
 import ImageUploadInput from "../ImageUploadInput.vue";
 import ObjectInput from "../ObjectInput.vue";
+import useCanvasStore from "@/stores/canvasStore.js";
 
 const componentMap = {
 	array: ArrayInput,
@@ -145,5 +146,7 @@ export default {
 	name: "Block Options",
 	properties: getStandardPropsInputSection,
 	collapsed: false,
-	condition: () => Object.keys(getStandardProps(blockController.getBlockProps())).length > 0,
+	condition: () =>
+		useCanvasStore().editingMode != "fragment" &&
+		Object.keys(getStandardProps(blockController.getBlockProps())).length > 0,
 };
