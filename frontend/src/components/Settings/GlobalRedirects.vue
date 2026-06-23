@@ -37,17 +37,12 @@
 				class="border-b border-outline-gray-1 py-1"
 				:class="rowGridClass"
 				@focusout="handleNewRowFocusOut">
-				<HighlightInput
-					v-model="newRow.from"
-					placeholder="/blog/(.*)"
-					data-new-from
-					@keydown.enter.prevent="createNew"
-					@keydown.esc.stop.prevent="cancelNew" />
-				<div class="border-l border-outline-gray-1 pl-2">
+				<div v-for="(field, i) in fields" :key="field" :class="i === 1 && cellDividerClass">
 					<HighlightInput
-						v-model="newRow.to"
-						kind="target"
-						placeholder="/news/\1"
+						v-model="newRow[field]"
+						:kind="kindOf(field)"
+						:placeholder="placeholders[field]"
+						:data-new-from="field === 'from' || undefined"
 						@keydown.enter.prevent="createNew"
 						@keydown.esc.stop.prevent="cancelNew" />
 				</div>
@@ -62,33 +57,25 @@
 				:data-row-id="row.id"
 				class="group/row border-b border-outline-gray-1 py-1 hover:bg-surface-gray-1"
 				:class="rowGridClass">
-				<div class="min-w-0" @dblclick="startEdit(row, 'from')">
+				<div
+					v-for="(field, i) in fields"
+					:key="field"
+					class="min-w-0"
+					:class="i === 1 && cellDividerClass"
+					@dblclick="startEdit(row, field)">
 					<HighlightInput
-						v-if="isEditing(row, 'from')"
+						v-if="isEditing(row, field)"
 						v-model="editValue"
+						:kind="kindOf(field)"
 						:ref="focusEditInput"
-						@blur="commitEdit(row, 'from')"
-						@keydown.enter.prevent="commitEdit(row, 'from')"
+						@blur="commitEdit(row, field)"
+						@keydown.enter.prevent="commitEdit(row, field)"
 						@keydown.esc.stop.prevent="cancelEdit"
-						@keydown.tab.prevent="commitAndEditNext(row, 'from')" />
+						@keydown.tab="onTab(row, field, $event)" />
 					<div
 						v-else
 						:class="[cellBoxClass, 'cursor-default truncate text-ink-gray-8']"
-						v-html="highlightSource(row.from)" />
-				</div>
-				<div class="min-w-0 border-l border-outline-gray-1 pl-2" @dblclick="startEdit(row, 'to')">
-					<HighlightInput
-						v-if="isEditing(row, 'to')"
-						v-model="editValue"
-						kind="target"
-						:ref="focusEditInput"
-						@blur="commitEdit(row, 'to')"
-						@keydown.enter.prevent="commitEdit(row, 'to')"
-						@keydown.esc.stop.prevent="cancelEdit" />
-					<div
-						v-else
-						:class="[cellBoxClass, 'cursor-default truncate text-ink-gray-8']"
-						v-html="highlightTarget(row.to)" />
+						v-html="highlight(field, row[field])" />
 				</div>
 				<div class="flex justify-end">
 					<span
@@ -108,9 +95,9 @@
 			<p class="mb-2 text-ink-gray-5">Examples</p>
 			<div class="grid w-fit grid-cols-[auto_auto_auto_1fr] items-center gap-x-3 gap-y-1.5">
 				<template v-for="example in examples" :key="example.label">
-					<code class="font-mono text-ink-gray-7" v-html="highlightSource(example.from)" />
+					<code class="font-mono text-ink-gray-7" v-html="highlight('from', example.from)" />
 					<span class="lucide-arrow-right size-3 text-ink-gray-4" aria-hidden="true" />
-					<code class="font-mono text-ink-gray-7" v-html="highlightTarget(example.to)" />
+					<code class="font-mono text-ink-gray-7" v-html="highlight('to', example.to)" />
 					<span class="pl-4 text-ink-gray-5">{{ example.label }}</span>
 				</template>
 			</div>
@@ -126,10 +113,19 @@ import { highlightSource, highlightTarget } from "@/utils/redirectSyntax";
 import { toast } from "frappe-ui";
 import { computed, nextTick, onMounted, ref, type ComponentPublicInstance } from "vue";
 
+type Field = "from" | "to";
 type RedirectRow = { id: string; from: string; to: string };
 
 // shared column template so the header and every row stay aligned
 const rowGridClass = "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_28px] items-center gap-x-2 px-1";
+const cellDividerClass = "border-l border-outline-gray-1 pl-2";
+const fields = ["from", "to"] as const;
+const placeholders: Record<Field, string> = { from: "/blog/(.*)", to: "/news/\\1" };
+
+// From is a regex (highlight metacharacters); To is a replacement string (highlight \1 backrefs)
+const kindOf = (field: Field) => (field === "to" ? "target" : "source");
+const highlight = (field: Field, value: string) =>
+	field === "to" ? highlightTarget(value) : highlightSource(value);
 
 const examples = [
 	{ from: "/old-page", to: "/new-page", label: "Exact path" },
@@ -138,21 +134,18 @@ const examples = [
 ];
 
 const searchQuery = ref("");
-const newRow = ref<{ from: string; to: string } | null>(null);
+const newRow = ref<Record<Field, string> | null>(null);
 
 onMounted(() => routeRedirects.fetch());
+
+const findIndex = (id: string) => routeRedirects.data.findIndex((r: any) => r.name === id);
 
 const rows = computed<RedirectRow[]>(() => {
 	const query = searchQuery.value.toLowerCase().trim();
 	return (routeRedirects.data || [])
-		.map((redirect: { source: string; target: string; name: string }) => ({
-			id: redirect.name,
-			from: redirect.source,
-			to: redirect.target,
-		}))
+		.map((r: any): RedirectRow => ({ id: r.name, from: r.source, to: r.target }))
 		.filter(
-			(row: RedirectRow) =>
-				!query || row.from.toLowerCase().includes(query) || row.to.toLowerCase().includes(query),
+			(row) => !query || row.from.toLowerCase().includes(query) || row.to.toLowerCase().includes(query),
 		);
 });
 
@@ -182,17 +175,15 @@ const cancelNew = () => (newRow.value = null);
 // create once focus leaves the new row entirely (tabbing between its cells is fine)
 const handleNewRowFocusOut = (e: FocusEvent) => {
 	const rowEl = e.currentTarget as HTMLElement;
-	if (e.relatedTarget && rowEl.contains(e.relatedTarget as Node)) return;
-	createNew();
+	if (!e.relatedTarget || !rowEl.contains(e.relatedTarget as Node)) createNew();
 };
 
 const createNew = () => {
-	if (!newRow.value) return;
-	const { from, to } = newRow.value;
-	if (!from || !to) return (newRow.value = null);
+	const { from, to } = newRow.value || {};
+	newRow.value = null;
+	if (!from || !to) return;
 
 	const tempId = `temp_${Date.now()}`;
-	newRow.value = null;
 	performOptimisticUpdate(
 		() =>
 			routeRedirects.insert.submit({
@@ -206,22 +197,19 @@ const createNew = () => {
 			if (!routeRedirects.data) routeRedirects.data = [];
 			routeRedirects.data.unshift({ source: from, target: to, name: tempId });
 		},
-		() => {
-			const index = routeRedirects.data.findIndex((r: any) => r.name === tempId);
-			if (index !== -1) routeRedirects.data.splice(index, 1);
-		},
+		() => findIndex(tempId) !== -1 && routeRedirects.data.splice(findIndex(tempId), 1),
 		{ loading: "Adding redirect...", success: "Redirect added", error: "Error adding redirect" },
 	);
 };
 
 // --- inline edit: double-click a cell, Enter/blur commits, Esc cancels, Tab moves From -> To ---
-const editing = ref<{ id: string; field: "from" | "to" } | null>(null);
+const editing = ref<{ id: string; field: Field } | null>(null);
 const editValue = ref("");
 
-const isEditing = (row: RedirectRow, field: "from" | "to") =>
+const isEditing = (row: RedirectRow, field: Field) =>
 	editing.value?.id === row.id && editing.value?.field === field;
 
-const startEdit = (row: RedirectRow, field: "from" | "to") => {
+const startEdit = (row: RedirectRow, field: Field) => {
 	editing.value = { id: row.id, field };
 	editValue.value = row[field];
 };
@@ -231,27 +219,30 @@ const focusEditInput = (el: Element | ComponentPublicInstance | null) =>
 
 const cancelEdit = () => (editing.value = null);
 
-const commitEdit = (row: RedirectRow, field: "from" | "to") => {
+const commitEdit = (row: RedirectRow, field: Field) => {
 	if (!isEditing(row, field)) return;
 	const value = editValue.value.trim();
 	editing.value = null;
 	if (value && value !== row[field]) {
-		updateRedirect(row.id, field === "from" ? value : row.from, field === "to" ? value : row.to);
+		const next = { ...row, [field]: value };
+		updateRedirect(row.id, next.from, next.to);
 	}
 };
 
-const commitAndEditNext = (row: RedirectRow, field: "from" | "to") => {
+const onTab = (row: RedirectRow, field: Field, e: KeyboardEvent) => {
+	if (field !== "from") return;
+	e.preventDefault();
 	commitEdit(row, field);
-	if (field === "from") startEdit({ ...row, from: editValue.value.trim() || row.from }, "to");
+	startEdit(row, "to");
 };
 
 const updateRedirect = (id: string, from: string, to: string) => {
-	const index = routeRedirects.data.findIndex((r: any) => r.name === id);
+	const index = findIndex(id);
 	const backup = index !== -1 ? { ...routeRedirects.data[index] } : null;
 	performOptimisticUpdate(
 		() => routeRedirects.setValue.submit({ name: id, source: from, target: to }),
 		() => index !== -1 && Object.assign(routeRedirects.data[index], { source: from, target: to }),
-		() => backup && index !== -1 && Object.assign(routeRedirects.data[index], backup),
+		() => backup && Object.assign(routeRedirects.data[index], backup),
 		{ loading: "Updating redirect...", success: "Redirect updated", error: "Error updating redirect" },
 	);
 };
@@ -263,12 +254,12 @@ const deleteRedirect = async (id: string) => {
 		: "Are you sure you want to delete this redirect?";
 	if (!(await confirm(message))) return;
 
-	const index = routeRedirects.data.findIndex((r: any) => r.name === id);
+	const index = findIndex(id);
 	const backup = index !== -1 ? { ...routeRedirects.data[index] } : null;
 	performOptimisticUpdate(
 		() => routeRedirects.delete.submit(id),
 		() => index !== -1 && routeRedirects.data.splice(index, 1),
-		() => backup && index !== -1 && routeRedirects.data.splice(index, 0, backup),
+		() => backup && routeRedirects.data.splice(index, 0, backup),
 		{ loading: "Deleting redirect...", success: "Redirect deleted", error: "Error deleting redirect" },
 	);
 };
