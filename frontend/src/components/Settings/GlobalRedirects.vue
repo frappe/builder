@@ -44,18 +44,20 @@
 					class="min-w-0"
 					:class="i === 1 && cellDividerClass"
 					@dblclick="startEdit(row, field)">
-					<HighlightInput
+					<BuilderInput
 						v-if="isEditing(row, field)"
-						v-model="editValue"
-						:kind="kindOf(field)"
-						:ref="focusEditInput"
-						@blur="commitEdit(row, field)"
+						:ref="focusInput"
+						:modelValue="editValue"
+						type="text"
+						:hideClearButton="true"
+						class="text-sm"
+						@input="(val: string) => (editValue = val)"
+						@focusout="commitEdit(row, field)"
 						@keydown.enter.prevent="commitEdit(row, field)"
-						@keydown.esc.stop.prevent="cancelEdit"
-						@keydown.tab="onTab(row, field, $event)" />
+						@keydown.esc.stop.prevent="cancelEdit" />
 					<div
 						v-else
-						:class="[cellBoxClass, 'cursor-default truncate text-ink-gray-8']"
+						class="w-full min-w-0 cursor-default truncate rounded-sm px-2 py-1 text-sm text-ink-gray-8"
 						v-html="highlight(field, row[field])" />
 				</div>
 				<div class="flex justify-end">
@@ -77,14 +79,17 @@
 			:actions="[{ label: 'Add Redirect', variant: 'solid', onClick: commitAdd }]">
 			<template #default>
 				<div class="flex flex-col gap-3">
-					<HighlightInput
+					<BuilderInput
 						v-for="field in fields"
 						:key="field"
-						v-model="draft[field]"
-						:label="field"
-						:kind="kindOf(field)"
+						required
+						:ref="(el) => field === 'from' && (addFromRef = el)"
+						:modelValue="draft[field]"
+						:label="field === 'from' ? 'From' : 'To'"
+						type="text"
+						:hideClearButton="true"
 						:placeholder="placeholders[field]"
-						:data-add-from="field === 'from' || undefined"
+						@input="(val: string) => (draft[field] = val)"
 						@keydown.enter.prevent="commitAdd" />
 
 					<!-- Supported syntax -->
@@ -105,13 +110,11 @@
 	</div>
 </template>
 <script setup lang="ts">
-import HighlightInput from "@/components/Settings/HighlightInput.vue";
 import routeRedirects from "@/data/routeRedirects";
-import { cellBoxClass } from "@/utils/editableTable";
 import { confirm } from "@/utils/helpers";
 import { highlightSource, highlightTarget } from "@/utils/redirectSyntax";
 import { Dialog, toast } from "frappe-ui";
-import { computed, nextTick, onMounted, ref, type ComponentPublicInstance } from "vue";
+import { computed, nextTick, onMounted, ref } from "vue";
 
 type Field = "from" | "to";
 type RedirectRow = { id: string; from: string; to: string };
@@ -123,7 +126,6 @@ const fields = ["from", "to"] as const;
 const placeholders: Record<Field, string> = { from: "/old-path", to: "/new-path" };
 
 // From is a regex (highlight metacharacters); To is a replacement string (highlight \1 backrefs)
-const kindOf = (field: Field) => (field === "to" ? "target" : "source");
 const highlight = (field: Field, value: string) =>
 	field === "to" ? highlightTarget(value) : highlightSource(value);
 
@@ -136,6 +138,10 @@ const examples = [
 const searchQuery = ref("");
 const showAddDialog = ref(false);
 const draft = ref<Record<Field, string>>({ from: "", to: "" });
+const addFromRef = ref<any>(null);
+
+// BuilderInput doesn't expose focus(); reach into its inner <input>.
+const focusInput = (el: any) => el?.$el?.querySelector?.("input")?.focus();
 
 onMounted(() => routeRedirects.fetch());
 
@@ -146,7 +152,8 @@ const rows = computed<RedirectRow[]>(() => {
 	return (routeRedirects.data || [])
 		.map((r: any): RedirectRow => ({ id: r.name, from: r.source, to: r.target }))
 		.filter(
-			(row) => !query || row.from.toLowerCase().includes(query) || row.to.toLowerCase().includes(query),
+			(row: RedirectRow) =>
+				!query || row.from.toLowerCase().includes(query) || row.to.toLowerCase().includes(query),
 		);
 });
 
@@ -169,7 +176,7 @@ const openAdd = async () => {
 	draft.value = { from: "", to: "" };
 	showAddDialog.value = true;
 	await nextTick();
-	document.querySelector<HTMLInputElement>("input[data-add-from]")?.focus();
+	focusInput(addFromRef.value);
 };
 
 const commitAdd = () => {
@@ -191,12 +198,15 @@ const commitAdd = () => {
 			if (!routeRedirects.data) routeRedirects.data = [];
 			routeRedirects.data.unshift({ source: from, target: to, name: tempId });
 		},
-		() => findIndex(tempId) !== -1 && routeRedirects.data.splice(findIndex(tempId), 1),
+		() => {
+			const i = findIndex(tempId);
+			if (i !== -1) routeRedirects.data.splice(i, 1);
+		},
 		{ loading: "Adding redirect...", success: "Redirect added", error: "Error adding redirect" },
 	);
 };
 
-// --- inline edit: double-click a cell, Enter/blur commits, Esc cancels, Tab moves From -> To ---
+// --- inline edit: double-click a cell, Enter/blur commits, Esc cancels ---
 const editing = ref<{ id: string; field: Field } | null>(null);
 const editValue = ref("");
 
@@ -208,9 +218,6 @@ const startEdit = (row: RedirectRow, field: Field) => {
 	editValue.value = row[field];
 };
 
-const focusEditInput = (el: Element | ComponentPublicInstance | null) =>
-	(el as { focus?: () => void } | null)?.focus?.();
-
 const cancelEdit = () => (editing.value = null);
 
 const commitEdit = (row: RedirectRow, field: Field) => {
@@ -221,13 +228,6 @@ const commitEdit = (row: RedirectRow, field: Field) => {
 		const next = { ...row, [field]: value };
 		updateRedirect(row.id, next.from, next.to);
 	}
-};
-
-const onTab = (row: RedirectRow, field: Field, e: KeyboardEvent) => {
-	if (field !== "from") return;
-	e.preventDefault();
-	commitEdit(row, field);
-	startEdit(row, "to");
 };
 
 const updateRedirect = (id: string, from: string, to: string) => {

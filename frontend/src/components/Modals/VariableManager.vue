@@ -320,7 +320,7 @@ import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
 import { BuilderVariable } from "@/types/doctypes";
-import { cellBoxClass, editableInputClass } from "@/utils/editableTable";
+import { cellBoxClass } from "@/utils/editableTable";
 import { confirm } from "@/utils/helpers";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useDebounceFn } from "@vueuse/core";
@@ -354,6 +354,10 @@ const isCreating = ref(false);
 // shared column template so the header and every row stay aligned
 const rowGridClass = "grid grid-cols-[minmax(0,1fr)_128px_128px] items-center gap-x-2 px-1";
 
+const cellBoxClass = "w-full min-w-0 rounded-sm px-2 py-1 text-sm";
+// the focus: variants out-rank @tailwindcss/forms' blue [type='text']:focus ring/border
+const editableInputClass =
+	"border-none bg-surface-base text-ink-gray-8 outline-none ring-2 ring-outline-gray-3 placeholder:text-ink-gray-4 focus:outline-none focus:ring-2 focus:ring-outline-gray-3";
 const cellTextClass = (row: Row) =>
 	row.is_standard ? "truncate text-ink-gray-8" : "cursor-default truncate text-ink-gray-8";
 // color cells render the swatch and the value as a single unit
