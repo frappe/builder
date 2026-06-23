@@ -187,8 +187,9 @@ const blockController = {
 	setCustomAttributes: (customAttributes: BlockAttributeMap) => {
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 			Object.keys(block.customAttributes).forEach((key) => {
-				if (!customAttributes[key]) {
+				if (!(key in customAttributes)) {
 					delete block.customAttributes[key];
+					block.removeDynamicValue(key, "attribute");
 				}
 			});
 			Object.assign(block.customAttributes, customAttributes);
