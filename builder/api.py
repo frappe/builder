@@ -495,6 +495,7 @@ def reorder_client_scripts(script_order: list[str]):
 
 
 @frappe.whitelist()
+@has_page_write("You do not have permission to evaluate component scripts")
 def get_component_data(
 	component_name: str, props: dict | str | None = None, script: str | None = None
 ) -> dict:
