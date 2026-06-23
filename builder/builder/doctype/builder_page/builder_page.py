@@ -713,7 +713,6 @@ def get_block_context(block: dict, props: dict, component_id: str | None) -> dic
 	return {
 		"block_id": block.get("blockId"),
 		"component_id": component_id,
-		"component_data_script": block.get("componentDataScript", ""),
 		"all_props": all_props,
 		"passed_down_props": passed_down_props,
 	}
@@ -1172,7 +1171,7 @@ def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
 
 	if context.get("component_id"):
 		parent.append(
-			f"{{% with component = get_component_data('{context['component_id']}', props, '{context['component_data_script']}') %}}"
+			f"{{% with component = get_component_data('{context['component_id']}', props) %}}"
 		)
 
 	parent.append(child)
@@ -1308,9 +1307,6 @@ def extend_block_with_component(block: dict) -> tuple[dict, str | None]:
 
 		if component_scripts:
 			component_block["componentClientScripts"] = component_scripts
-
-		if component.get("component_data_script"):
-			component_block["componentDataScript"] = component["component_data_script"]
 
 		return component_block, component_id
 
