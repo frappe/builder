@@ -1,7 +1,3 @@
-// Light syntax highlight for redirect rules, matching what the framework's
-// path_resolver actually treats as special:
-// - "source" (From) is a regular expression  -> highlight its metacharacters
-// - "target" (To) is a replacement string    -> only \1, \2 … backreferences matter
 const METACHARS = /[()[\].*+?^$|]/g;
 const BACKREFS = /\\\d+/g;
 

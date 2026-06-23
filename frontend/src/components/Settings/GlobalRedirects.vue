@@ -12,7 +12,6 @@
 		</div>
 
 		<div class="min-h-0 flex-1 overflow-y-auto">
-			<!-- Header row -->
 			<div
 				class="sticky top-0 z-10 border-b border-outline-gray-1 bg-surface-base pb-2 pt-1 text-sm text-ink-gray-5"
 				:class="rowGridClass">
@@ -21,7 +20,6 @@
 				<div></div>
 			</div>
 
-			<!-- Add row, sits at the top of the table -->
 			<button
 				v-if="!searchQuery.trim()"
 				class="flex w-full items-center gap-2 border-b border-outline-gray-1 px-2 py-2 text-sm text-ink-gray-5 hover:bg-surface-gray-1 hover:text-ink-gray-8"
@@ -30,7 +28,6 @@
 				Add Redirect
 			</button>
 
-			<!-- Existing rows: text by default, one cell editable on double-click -->
 			<div
 				v-for="row in rows"
 				:key="row.id"
@@ -92,7 +89,6 @@
 						@input="(val: string) => (draft[field] = val)"
 						@keydown.enter.prevent="commitAdd" />
 
-					<!-- Supported syntax -->
 					<div class="mt-1 text-xs">
 						<p class="mb-2 text-ink-gray-5">Examples</p>
 						<div class="grid w-fit grid-cols-[auto_auto_auto_1fr] items-center gap-x-3 gap-y-1.5">
@@ -119,13 +115,11 @@ import { computed, nextTick, onMounted, ref } from "vue";
 type Field = "from" | "to";
 type RedirectRow = { id: string; from: string; to: string };
 
-// shared column template so the header and every row stay aligned
 const rowGridClass = "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_28px] items-center gap-x-2 px-1";
 const cellDividerClass = "border-l border-outline-gray-1 pl-2";
 const fields = ["from", "to"] as const;
 const placeholders: Record<Field, string> = { from: "/old-path", to: "/new-path" };
 
-// From is a regex (highlight metacharacters); To is a replacement string (highlight \1 backrefs)
 const highlight = (field: Field, value: string) =>
 	field === "to" ? highlightTarget(value) : highlightSource(value);
 
@@ -140,7 +134,6 @@ const showAddDialog = ref(false);
 const draft = ref<Record<Field, string>>({ from: "", to: "" });
 const addFromRef = ref<any>(null);
 
-// BuilderInput doesn't expose focus(); reach into its inner <input>.
 const focusInput = (el: any) => el?.$el?.querySelector?.("input")?.focus();
 
 onMounted(() => routeRedirects.fetch());
@@ -171,7 +164,6 @@ const performOptimisticUpdate = (
 	});
 };
 
-// --- create: "Add Redirect" opens a modal carrying the From/To inputs and the docs ---
 const openAdd = async () => {
 	draft.value = { from: "", to: "" };
 	showAddDialog.value = true;
@@ -206,7 +198,6 @@ const commitAdd = () => {
 	);
 };
 
-// --- inline edit: double-click a cell, Enter/blur commits, Esc cancels ---
 const editing = ref<{ id: string; field: Field } | null>(null);
 const editValue = ref("");
 

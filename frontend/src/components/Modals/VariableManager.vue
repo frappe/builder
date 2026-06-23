@@ -320,7 +320,6 @@ import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
 import { BuilderVariable } from "@/types/doctypes";
-import { cellBoxClass } from "@/utils/editableTable";
 import { confirm } from "@/utils/helpers";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useDebounceFn } from "@vueuse/core";
