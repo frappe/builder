@@ -15,6 +15,10 @@
 				<span class="text-5xl">{{ loading ? "-" : shortenNumber(data.total_views) }}</span>
 				<span class="text-sm text-ink-gray-7">Total Pageviews</span>
 			</div>
+			<div v-if="ctr !== undefined" class="flex flex-col gap-2">
+				<span class="text-5xl">{{ loading ? "-" : `${ctr}%` }}</span>
+				<span class="text-sm text-ink-gray-7">Click-through Rate</span>
+			</div>
 		</div>
 	</div>
 	<div class="mx-[-16px] [&>div]:h-[250px] [&>div]:!min-h-[200px]">
@@ -35,6 +39,7 @@ const props = defineProps<{
 	data: AnalyticsResponse;
 	chartConfig: any;
 	loading: boolean;
+	ctr?: number;
 }>();
 
 const chartConfigData = computed(() => {

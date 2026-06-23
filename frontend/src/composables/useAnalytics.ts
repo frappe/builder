@@ -17,6 +17,25 @@ export interface AnalyticsResponse {
 	}>;
 }
 
+export interface CTRElement {
+	label: string;
+	tag: string;
+	text: string;
+	href: string;
+	route: string;
+	clicks: number;
+	unique_clicks: number;
+	views: number;
+	ctr: number;
+}
+
+export interface CTRResponse {
+	total_views: number;
+	total_clicks: number;
+	ctr: number;
+	elements: CTRElement[];
+}
+
 export interface CustomDateRange {
 	from_date: string;
 	to_date: string;
@@ -31,6 +50,7 @@ export interface RouteFilter {
 
 export function useAnalytics({
 	apiUrl,
+	ctrApiUrl,
 	initialRange = "last_30_days",
 	initialInterval = "daily",
 	initialRoute = "",
@@ -39,6 +59,7 @@ export function useAnalytics({
 	onSuccess,
 }: {
 	apiUrl: string;
+	ctrApiUrl?: string;
 	initialRange?: string;
 	initialInterval?: string;
 	initialRoute?: string;
@@ -337,8 +358,28 @@ export function useAnalytics({
 		},
 	});
 
+	const ctrData = ref<CTRResponse>({
+		total_views: 0,
+		total_clicks: 0,
+		ctr: 0,
+		elements: [],
+	});
+
+	const ctr = ctrApiUrl
+		? createResource({
+				method: "POST",
+				url: ctrApiUrl,
+				params: getParams(),
+				auto: true,
+				onSuccess(res: CTRResponse) {
+					ctrData.value = res;
+				},
+			})
+		: null;
+
 	const debouncedSubmit = debounce(() => {
 		analytics.submit(getParams());
+		ctr?.submit(getParams());
 	}, 100);
 
 	watch(
@@ -361,6 +402,8 @@ export function useAnalytics({
 		chartConfigWithEvents,
 		processedAnalyticsData,
 		analytics,
+		ctr,
+		ctrData,
 		onPageRowClick,
 	};
 }

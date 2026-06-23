@@ -41,7 +41,7 @@ import PageRobots from "@/components/Settings/PageRobots.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
 import usePageStore from "@/stores/pageStore";
-import { computed, onActivated, onMounted, ref, watch } from "vue";
+import { computed, onActivated, onMounted, provide, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import GlobalAI from "./Settings/GlobalAI.vue";
 import GlobalAnalytics from "./Settings/GlobalAnalytics.vue";
@@ -181,6 +181,8 @@ if (!props.onlyGlobal) settingsSidebarItems.unshift(pageSettings);
 const selectItem = (value: string) => {
 	selectedItem.value = value;
 };
+
+provide("selectSettingsTab", selectItem);
 
 watch(
 	() => props.initialTab,

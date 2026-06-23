@@ -5,6 +5,7 @@ import frappe
 import pandas as pd
 
 DUCKDB_TABLE = "web_page_views"
+CLICKS_TABLE = "web_page_clicks"
 
 
 class DuckDBConnection:
@@ -37,6 +38,10 @@ def get_date_filter(from_date: str | None = None, to_date: str | None = None) ->
 
 def get_empty_analytics():
 	return {"total_unique_views": 0, "total_views": 0, "data": [], "top_referrers": []}
+
+
+def get_empty_ctr():
+	return {"total_views": 0, "total_clicks": 0, "ctr": 0, "elements": []}
 
 
 def get_route_filter(route: str | None = None, route_filter_type: str = "wildcard") -> tuple[str, list]:
@@ -354,3 +359,154 @@ def enqueue_web_page_view_ingesion():
 		"builder.builder_analytics.ingest_web_page_views_to_duckdb",
 		queue="long",
 	)
+
+
+CLICK_FIELDS = ["creation", "is_unique", "path", "element", "tag", "text", "href", "visitor_id"]
+
+
+def setup_clicks_table(table_name=CLICKS_TABLE):
+	with DuckDBConnection() as db:
+		sql_connection = frappe.db.get_connection()
+		df = pd.read_sql(
+			"SELECT creation, is_unique, path, element, tag, text, href, visitor_id FROM `tabBuilder Page Click`",
+			sql_connection,  # type: ignore
+		)
+		db.register("df", df)
+		db.execute(
+			f"CREATE OR REPLACE TABLE {table_name} AS SELECT TRY_CAST(creation AS TIMESTAMP) as creation, CAST(CASE WHEN is_unique = '' OR is_unique IS NULL THEN '0' ELSE CAST(is_unique AS VARCHAR) END AS INTEGER) as is_unique, CAST(path AS VARCHAR) as path, CAST(element AS VARCHAR) as element, CAST(tag AS VARCHAR) as tag, CAST(text AS VARCHAR) as text, CAST(href AS VARCHAR) as href, CAST(visitor_id AS VARCHAR) as visitor_id FROM df"
+		)
+		print(f"Successfully ingested {len(df)} click records into DuckDB")
+
+
+def ingest_clicks_to_duckdb(table_name=CLICKS_TABLE):
+	with DuckDBConnection() as db:
+		table_exists = db.execute(
+			f"SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '{table_name}'"
+		).fetchone()
+		if table_exists and table_exists[0] == 0:
+			setup_clicks_table(table_name)
+			return
+
+		col_type = db.execute(
+			f"SELECT data_type FROM information_schema.columns WHERE table_name = '{table_name}' AND column_name = 'creation'"
+		).fetchone()
+		if col_type and col_type[0].upper() != "TIMESTAMP":
+			print(f"Recreating {table_name}: creation column type is {col_type[0]}, expected TIMESTAMP")
+			setup_clicks_table(table_name)
+			return
+
+		page_size = 20000
+		db.begin()
+
+		while True:
+			result = db.execute(f"SELECT MAX(creation) FROM {table_name}").fetchone()
+			last_record = result[0] if result and result[0] else None
+
+			filters = {"creation": [">", last_record]} if last_record else {}
+			records = frappe.get_all(
+				"Builder Page Click",
+				filters=filters,
+				fields=["creation", "is_unique", "path", "element", "tag", "text", "href", "visitor_id"],
+				as_list=True,
+				limit=page_size,
+				order_by="creation asc",
+			)
+
+			if not records:
+				break
+
+			db.executemany(
+				f"INSERT INTO {table_name} (creation, is_unique, path, element, tag, text, href, visitor_id) "
+				f"VALUES (TRY_CAST(? AS TIMESTAMP), CAST(COALESCE(NULLIF(?, ''), '0') AS INTEGER), ?, ?, ?, ?, ?, ?)",
+				records,
+			)
+
+			if len(records) < page_size:
+				break
+
+		db.commit()
+
+
+def enqueue_click_ingestion():
+	frappe.enqueue(
+		"builder.builder_analytics.ingest_clicks_to_duckdb",
+		queue="long",
+	)
+
+
+def get_page_ctr(
+	route: str | None = None,
+	from_date: str | None = None,
+	to_date: str | None = None,
+	route_filter_type: str = "wildcard",
+):
+	"""Click-through rate per page/element: clicks (from web_page_clicks) over page views
+	(from web_page_views), joined on the shared `path`."""
+	try:
+		date_filter, _ = get_date_filter(from_date, to_date)
+		if not date_filter:
+			return get_empty_ctr()
+
+		where_clause, params = build_where_clause(route, from_date, to_date, route_filter_type)
+
+		with DuckDBConnection() as db:
+			total_views = (
+				db.execute(f"SELECT COUNT(*) FROM {DUCKDB_TABLE} WHERE {where_clause}", params).fetchone()[0]
+				or 0
+			)
+			total_clicks = (
+				db.execute(f"SELECT COUNT(*) FROM {CLICKS_TABLE} WHERE {where_clause}", params).fetchone()[0]
+				or 0
+			)
+
+			# element label falls back element-name -> visible text -> href -> tag
+			element_rows = db.execute(
+				f"""
+				WITH clicks AS (
+					SELECT
+						path,
+						COALESCE(NULLIF(element, ''), NULLIF(text, ''), NULLIF(href, ''), tag) AS label,
+						ANY_VALUE(tag) AS tag,
+						ANY_VALUE(text) AS text,
+						ANY_VALUE(href) AS href,
+						COUNT(*) AS clicks,
+						SUM(is_unique) AS unique_clicks
+					FROM {CLICKS_TABLE}
+					WHERE {where_clause}
+					GROUP BY path, label
+				),
+				views AS (
+					SELECT path, COUNT(*) AS views FROM {DUCKDB_TABLE} WHERE {where_clause} GROUP BY path
+				)
+				SELECT clicks.label, clicks.tag, clicks.text, clicks.href, clicks.path,
+					clicks.clicks, clicks.unique_clicks, COALESCE(views.views, 0) AS views
+				FROM clicks
+				LEFT JOIN views ON clicks.path = views.path
+				ORDER BY clicks.clicks DESC
+				LIMIT 50
+				""",
+				params + params,
+			).fetchall()
+
+		return {
+			"total_views": total_views,
+			"total_clicks": total_clicks,
+			"ctr": round(total_clicks / total_views * 100, 2) if total_views else 0,
+			"elements": [
+				{
+					"label": r[0],
+					"tag": r[1],
+					"text": r[2],
+					"href": r[3],
+					"route": r[4],
+					"clicks": r[5],
+					"unique_clicks": r[6],
+					"views": r[7],
+					"ctr": round(r[5] / r[7] * 100, 2) if r[7] else 0,
+				}
+				for r in element_rows
+			],
+		}
+	except Exception as e:
+		frappe.log_error("DuckDB CTR Error", str(e))
+		return get_empty_ctr()
