@@ -168,7 +168,14 @@ const componentController = {
 		const componentId = currentComponentId.value;
 		if (!componentId) return;
 
-		const props = componentDocDraft.component_props ?? {};
+		// convert props to {propName: propValue} format
+		const props = Object.entries((componentDocDraft.component_props as BlockProps) ?? {}).reduce(
+			(acc: Record<string, any>, [key, value]: [string, BlockProps[string]]) => {
+				acc[key] = value.value ?? value.propOptions?.options?.defaultValue;
+				return acc;
+			},
+			{} as Record<string, any>,
+		);
 		const script = componentDocDraft.component_data_script ?? "";
 		const requestKey = `${componentId}::preview`;
 		const result = await runLatestRequest(requestKey, () =>
