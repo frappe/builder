@@ -710,7 +710,6 @@ const getPropValue = (
 	defaultProps?: BlockProps | null,
 	getComponentScopedDataValue: (path: string) => any = () => undefined,
 ): any => {
-	console.log({ propName, block, defaultProps });
 	// Check default props first
 	if (defaultProps?.[propName] !== undefined) {
 		return defaultProps[propName].value;
