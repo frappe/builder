@@ -25,7 +25,7 @@
 					Loading...
 				</div>
 				<ListView
-					v-else
+					v-else-if="ctrRows.length"
 					class="!w-auto"
 					:columns="[
 						{ label: 'Element', key: 'label', width: '50%' },
@@ -35,6 +35,10 @@
 					:options="{ selectable: false, emptyState: {}, showTooltip: false }"
 					:rows="ctrRows"
 					row-key="label" />
+				<AnalyticsEmptyState
+					v-else
+					title="No clicks tracked yet"
+					hint="Clicks on links and buttons will appear here." />
 			</div>
 			<div class="mt-8">
 				<h3 class="text-xl-medium mb-4 text-ink-gray-7">Top Referrers</h3>
@@ -44,7 +48,7 @@
 					Loading...
 				</div>
 				<ListView
-					v-else
+					v-else-if="processedAnalyticsData.top_referrers?.length"
 					class="!w-auto"
 					:columns="[
 						{
@@ -70,12 +74,14 @@
 					:options="{ selectable: false, emptyState: {} }"
 					:rows="processedAnalyticsData.top_referrers"
 					row-key="domain" />
+				<AnalyticsEmptyState v-else title="No referrers yet" />
 			</div>
 		</template>
 	</div>
 </template>
 
 <script setup lang="ts">
+import AnalyticsEmptyState from "@/components/Settings/AnalyticsEmptyState.vue";
 import AnalyticsFilters from "@/components/Settings/AnalyticsFilters.vue";
 import AnalyticsOverview from "@/components/Settings/AnalyticsOverview.vue";
 import TrackingDisabledNotice from "@/components/Settings/TrackingDisabledNotice.vue";

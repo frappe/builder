@@ -5,7 +5,7 @@
 		</div>
 		<div class="flex flex-col gap-1">
 			<h3 class="text-lg-medium text-ink-gray-9">View tracking is off</h3>
-			<p class="max-w-sm text-sm text-ink-gray-6">
+			<p class="max-w-sm text-p-sm text-ink-gray-6">
 				Turn on view tracking to start collecting page views, clicks and click-through rates for your
 				published pages.
 			</p>

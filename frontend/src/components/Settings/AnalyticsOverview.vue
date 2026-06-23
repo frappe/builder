@@ -26,10 +26,15 @@
 			Loading...
 		</div>
 		<AxisChart v-else-if="data.data && data.data.length" :config="chartConfigData" :events="chartEvents" />
+		<AnalyticsEmptyState
+			v-else
+			title="No views in this period"
+			hint="Pick a wider date range, or share your page to start collecting data." />
 	</div>
 </template>
 
 <script setup lang="ts">
+import AnalyticsEmptyState from "@/components/Settings/AnalyticsEmptyState.vue";
 import type { AnalyticsResponse } from "@/composables/useAnalytics";
 import { shortenNumber } from "@/utils/helpers";
 import { AxisChart } from "frappe-ui";
