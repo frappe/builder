@@ -1,5 +1,5 @@
 <template>
-	<div class="flex h-full flex-col" @keydown.esc="cancelNew">
+	<div class="flex h-full flex-col">
 		<div class="mb-3">
 			<BuilderInput
 				:modelValue="searchQuery"
@@ -23,31 +23,12 @@
 
 			<!-- Add row, sits at the top of the table -->
 			<button
-				v-if="!searchQuery.trim() && !newRow"
+				v-if="!searchQuery.trim()"
 				class="flex w-full items-center gap-2 border-b border-outline-gray-1 px-2 py-2 text-sm text-ink-gray-5 hover:bg-surface-gray-1 hover:text-ink-gray-8"
-				@click="addNewRow">
+				@click="openAdd">
 				<span class="lucide-plus size-4" aria-hidden="true" />
 				Add Redirect
 			</button>
-
-			<!-- New redirect row: live inputs until it is created -->
-			<div
-				v-if="newRow"
-				data-row
-				class="border-b border-outline-gray-1 py-1"
-				:class="rowGridClass"
-				@focusout="handleNewRowFocusOut">
-				<div v-for="(field, i) in fields" :key="field" :class="i === 1 && cellDividerClass">
-					<HighlightInput
-						v-model="newRow[field]"
-						:kind="kindOf(field)"
-						:placeholder="placeholders[field]"
-						:data-new-from="field === 'from' || undefined"
-						@keydown.enter.prevent="createNew"
-						@keydown.esc.stop.prevent="cancelNew" />
-				</div>
-				<div></div>
-			</div>
 
 			<!-- Existing rows: text by default, one cell editable on double-click -->
 			<div
@@ -90,18 +71,37 @@
 			</div>
 		</div>
 
-		<!-- Supported syntax -->
-		<div class="mt-3 border-t border-outline-gray-1 pt-3 text-xs">
-			<p class="mb-2 text-ink-gray-5">Examples</p>
-			<div class="grid w-fit grid-cols-[auto_auto_auto_1fr] items-center gap-x-3 gap-y-1.5">
-				<template v-for="example in examples" :key="example.label">
-					<code class="font-mono text-ink-gray-7" v-html="highlight('from', example.from)" />
-					<span class="lucide-arrow-right size-3 text-ink-gray-4" aria-hidden="true" />
-					<code class="font-mono text-ink-gray-7" v-html="highlight('to', example.to)" />
-					<span class="pl-4 text-ink-gray-5">{{ example.label }}</span>
-				</template>
-			</div>
-		</div>
+		<Dialog
+			v-model="showAddDialog"
+			title="Add Redirect"
+			:actions="[{ label: 'Add Redirect', variant: 'solid', onClick: commitAdd }]">
+			<template #default>
+				<div class="flex flex-col gap-3">
+					<HighlightInput
+						v-for="field in fields"
+						:key="field"
+						v-model="draft[field]"
+						:label="field"
+						:kind="kindOf(field)"
+						:placeholder="placeholders[field]"
+						:data-add-from="field === 'from' || undefined"
+						@keydown.enter.prevent="commitAdd" />
+
+					<!-- Supported syntax -->
+					<div class="mt-1 text-xs">
+						<p class="mb-2 text-ink-gray-5">Examples</p>
+						<div class="grid w-fit grid-cols-[auto_auto_auto_1fr] items-center gap-x-3 gap-y-1.5">
+							<template v-for="example in examples" :key="example.label">
+								<code class="font-mono text-ink-gray-7" v-html="highlight('from', example.from)" />
+								<span class="lucide-arrow-right size-3 text-ink-gray-4" aria-hidden="true" />
+								<code class="font-mono text-ink-gray-7" v-html="highlight('to', example.to)" />
+								<span class="pl-4 text-ink-gray-5">{{ example.label }}</span>
+							</template>
+						</div>
+					</div>
+				</div>
+			</template>
+		</Dialog>
 	</div>
 </template>
 <script setup lang="ts">
@@ -110,7 +110,7 @@ import routeRedirects from "@/data/routeRedirects";
 import { cellBoxClass } from "@/utils/editableTable";
 import { confirm } from "@/utils/helpers";
 import { highlightSource, highlightTarget } from "@/utils/redirectSyntax";
-import { toast } from "frappe-ui";
+import { Dialog, toast } from "frappe-ui";
 import { computed, nextTick, onMounted, ref, type ComponentPublicInstance } from "vue";
 
 type Field = "from" | "to";
@@ -120,7 +120,7 @@ type RedirectRow = { id: string; from: string; to: string };
 const rowGridClass = "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_28px] items-center gap-x-2 px-1";
 const cellDividerClass = "border-l border-outline-gray-1 pl-2";
 const fields = ["from", "to"] as const;
-const placeholders: Record<Field, string> = { from: "/blog/(.*)", to: "/news/\\1" };
+const placeholders: Record<Field, string> = { from: "/old-path", to: "/new-path" };
 
 // From is a regex (highlight metacharacters); To is a replacement string (highlight \1 backrefs)
 const kindOf = (field: Field) => (field === "to" ? "target" : "source");
@@ -134,7 +134,8 @@ const examples = [
 ];
 
 const searchQuery = ref("");
-const newRow = ref<Record<Field, string> | null>(null);
+const showAddDialog = ref(false);
+const draft = ref<Record<Field, string>>({ from: "", to: "" });
 
 onMounted(() => routeRedirects.fetch());
 
@@ -163,25 +164,18 @@ const performOptimisticUpdate = (
 	});
 };
 
-// --- create: "Add Redirect" inserts a live row at the top ---
-const addNewRow = async () => {
-	newRow.value = { from: "", to: "" };
+// --- create: "Add Redirect" opens a modal carrying the From/To inputs and the docs ---
+const openAdd = async () => {
+	draft.value = { from: "", to: "" };
+	showAddDialog.value = true;
 	await nextTick();
-	document.querySelector<HTMLInputElement>("input[data-new-from]")?.focus();
+	document.querySelector<HTMLInputElement>("input[data-add-from]")?.focus();
 };
 
-const cancelNew = () => (newRow.value = null);
-
-// create once focus leaves the new row entirely (tabbing between its cells is fine)
-const handleNewRowFocusOut = (e: FocusEvent) => {
-	const rowEl = e.currentTarget as HTMLElement;
-	if (!e.relatedTarget || !rowEl.contains(e.relatedTarget as Node)) createNew();
-};
-
-const createNew = () => {
-	const { from, to } = newRow.value || {};
-	newRow.value = null;
+const commitAdd = () => {
+	const { from, to } = draft.value;
 	if (!from || !to) return;
+	showAddDialog.value = false;
 
 	const tempId = `temp_${Date.now()}`;
 	performOptimisticUpdate(
