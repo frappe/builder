@@ -204,10 +204,10 @@ def get_component_data(
 		return {}
 
 	_locals = dict(
-		data=frappe._dict(),
+		component=frappe._dict(),
 		props=frappe._dict(props or {}),
 	)
 
 	execute_script(script, _locals, component_name)
 
-	return _locals["data"]
+	return _locals["component"]
