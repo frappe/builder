@@ -1170,9 +1170,7 @@ def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
 		parent.append(f"{{% if {context['visibility_key']} %}}")
 
 	if context.get("component_id"):
-		parent.append(
-			f"{{% with component = get_component_data('{context['component_id']}', props) %}}"
-		)
+		parent.append(f"{{% with component = get_component_data('{context['component_id']}', props) %}}")
 
 	parent.append(child)
 
