@@ -864,14 +864,14 @@ class Block implements BlockOptions {
 			syncBlockWithComponent(this, this, this.extendedFromComponent as string, component.children);
 		}
 	}
-	smartRebuildWithComponent(
+	rebuildWithComponent(
 		componentId: string,
 		newComponentChildren: Block[],
 		oldComponentChildren: Block[],
 	) {
 		const oldChildrenByRefId = indexChildrenByRefId(this.children);
 		const oldComponentChildrenByBlockId = indexChildrenByBlockId(oldComponentChildren);
-		smartRebuildWithComponent(
+		rebuildWithComponent(
 			this,
 			componentId,
 			newComponentChildren,
@@ -1239,7 +1239,7 @@ const indexChildrenByBlockId = (children: Block[] | undefined): Map<string, Bloc
 // overrides on matched children (matched by referenceBlockId via three-way diff against the old
 // version). Children with no counterpart in the new version are dropped — component subtrees
 // can't host detached blocks. Nested component instances fall back to resetWithComponent.
-function smartRebuildWithComponent(
+function rebuildWithComponent(
 	block: Block,
 	componentId: string,
 	componentChildren: Block[],
@@ -1269,7 +1269,7 @@ function smartRebuildWithComponent(
 		} else {
 			const nestedOld = indexChildrenByRefId(matched?.children);
 			const nestedOldComp = indexChildrenByBlockId(oldComponentChild?.children);
-			smartRebuildWithComponent(childBlock, componentId, componentChild.children, nestedOld, nestedOldComp);
+			rebuildWithComponent(childBlock, componentId, componentChild.children, nestedOld, nestedOldComp);
 		}
 	});
 }

@@ -309,7 +309,7 @@ const useComponentStore = defineStore("componentStore", {
 		},
 		// re-pin an instance to the latest version and rebuild its subtree from the new version,
 		// preserving user overrides on matched children via three-way diff against the old version
-		async smartRebuildInstance(
+		async rebuildInstance(
 			block: Block,
 			componentId: string,
 			newVersion: string,
@@ -325,7 +325,7 @@ const useComponentStore = defineStore("componentStore", {
 				oldComponentBlock = this.getComponentBlock(componentId);
 			}
 			block.componentVersion = newVersion;
-			block.smartRebuildWithComponent(
+			block.rebuildWithComponent(
 				componentId,
 				newComponentBlock.children,
 				oldComponentBlock?.children || [],
@@ -336,7 +336,7 @@ const useComponentStore = defineStore("componentStore", {
 			const componentId = block.extendedFromComponent;
 			if (!componentId) return;
 			return this.repinToLatest(componentId, (newVersion, newComponentBlock) =>
-				this.smartRebuildInstance(block, componentId, newVersion, newComponentBlock),
+				this.rebuildInstance(block, componentId, newVersion, newComponentBlock),
 			);
 		},
 		// re-pin every instance of a component on the page to the latest version
@@ -351,7 +351,7 @@ const useComponentStore = defineStore("componentStore", {
 						}
 					});
 					for (const root of roots) {
-						await this.smartRebuildInstance(root, componentId, newVersion, newComponentBlock);
+						await this.rebuildInstance(root, componentId, newVersion, newComponentBlock);
 					}
 				},
 				refresh,
