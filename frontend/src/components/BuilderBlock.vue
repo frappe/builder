@@ -474,29 +474,32 @@ const allResolvedProps = computed(() => {
 	};
 });
 
+const fetchingComponentDetails = computed(() => {
+	return (
+		componentStore.fetchingComponentVersion.has(props.block.componentVersion || "") ||
+		componentStore.fetchingComponent.has(props.block.extendedFromComponent || "")
+	);
+});
+
 watch(
 	[
 		() => props.block.extendedFromComponent,
+		() => props.block.componentVersion,
 		() => canvasStore.editingMode,
 		() => props.componentData,
 		() => uidToUse,
+		fetchingComponentDetails,
 		allResolvedProps,
 	],
-	([componentId, editingMode]) => {
+	([componentId, , , , , fetchingComponentDetails, allResolvedProps]) => {
 		// can use extractComponentId but below code is more efficient
 		if (!componentId) {
-			if (editingMode == "fragment" && !props.block.getParentBlock()) {
-				componentId = canvasStore.fragmentData.fragmentId!;
-			} else {
-				return;
-			}
+			return;
 		}
-		componentStore.setComponentData(
-			componentId,
-			allResolvedProps.value,
-			uidToUse,
-			props.block.componentVersion,
-		);
+		if (fetchingComponentDetails) {
+			return;
+		}
+		componentStore.setComponentData(componentId, allResolvedProps, uidToUse, props.block.componentVersion);
 	},
 	{ immediate: true },
 );

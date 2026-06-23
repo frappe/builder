@@ -462,7 +462,7 @@ const useComponentStore = defineStore("componentStore", {
 			const instanceKey = blockId ?? COMPONENT_DATA_FRAGMENT_KEY;
 			const requestKey = `${componentId}::${instanceKey}`;
 			// use the data script from the pinned version when available, else live component
-			const versionedDoc = componentVersion ? this.getComponentVersionDoc(componentVersion) : null;
+			const versionedDoc = componentVersion ? this.getComponentVersionDoc(componentVersion) : this.getComponent(componentId);
 			const script = versionedDoc?.component_data_script ?? undefined;
 			const result = await runLatestRequest(requestKey, () =>
 				createResource({

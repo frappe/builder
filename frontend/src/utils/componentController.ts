@@ -214,8 +214,9 @@ watch(
 );
 
 watch(
-	[currentComponentId, componentProps, componentDataScript],
+	[currentComponentId, componentProps, componentDataScript, () => canvasStore.editingMode],
 	async () => {
+		if (canvasStore.editingMode != "fragment") return;
 		if (currentComponentId.value) {
 			await componentController.setComponentDataPreview();
 		}
@@ -224,8 +225,9 @@ watch(
 );
 
 watch(
-	currentComponentId,
+	[currentComponentId, () => canvasStore.editingMode],
 	() => {
+		if (canvasStore.editingMode != "fragment") return;
 		const initialProps = componentController.getComponentProps();
 		canvasStore.fragmentData.block?.setBlockProps(initialProps);
 		markCanvasDirty(false);
