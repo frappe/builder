@@ -43,7 +43,7 @@
 					<AnalyticsEmptyState v-else title="No page views yet" />
 				</div>
 				<div>
-					<h3 class="text-xl-medium mb-4 text-ink-gray-7">Top Clicked Elements</h3>
+					<h3 class="text-xl-medium mb-4 text-ink-gray-7">Top Clicks</h3>
 					<div
 						v-if="ctr?.loading"
 						class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">
@@ -53,7 +53,7 @@
 						v-else-if="ctrRows.length"
 						class="!w-auto"
 						:columns="[
-							{ label: 'Element', key: 'label', width: '50%' },
+							{ label: 'Target', key: 'label', width: '50%' },
 							{ label: 'Clicks', key: 'clicks', align: 'right' },
 							{ label: 'CTR', key: 'ctr_label', align: 'right' },
 						]"

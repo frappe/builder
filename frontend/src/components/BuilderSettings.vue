@@ -108,7 +108,7 @@ const pageSettings = {
 			label: "Analytics",
 			value: "page_analytics",
 			component: PageAnalytics,
-			title: "Page Views",
+			title: "Page Analytics",
 			icon: "lucide-chart-bar",
 		},
 	],
@@ -155,7 +155,7 @@ const globalSettings = {
 			label: "Analytics",
 			value: "global_analytics",
 			component: GlobalAnalytics,
-			title: "Site Views",
+			title: "Site Analytics",
 			icon: "lucide-chart-bar",
 		},
 		{
