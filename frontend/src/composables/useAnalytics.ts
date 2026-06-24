@@ -1,3 +1,4 @@
+import { websiteSettings } from "@/data/websiteSettings";
 import { shortenNumber } from "@/utils/helpers";
 import { createResource, debounce } from "frappe-ui";
 import { computed, ref, watch } from "vue";
@@ -67,6 +68,11 @@ export function useAnalytics({
 	extraParams?: Record<string, any>;
 	onSuccess?: (res: AnalyticsResponse) => void;
 }) {
+	// undefined while settings load, so callers can avoid flashing the "tracking disabled" notice prematurely
+	const trackingEnabled = computed(() =>
+		websiteSettings.doc ? Boolean(websiteSettings.doc.enable_view_tracking) : undefined,
+	);
+
 	const range = ref(initialRange);
 	const interval = ref(initialInterval);
 	const route = ref(initialRoute);
@@ -398,6 +404,7 @@ export function useAnalytics({
 		interval,
 		route,
 		customDateRange,
+		trackingEnabled,
 		analyticsData,
 		chartConfigWithEvents,
 		processedAnalyticsData,

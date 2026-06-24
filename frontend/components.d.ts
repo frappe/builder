@@ -138,6 +138,8 @@ declare module 'vue' {
     TemplatesDialog: typeof import('./src/components/Templates/TemplatesDialog.vue')['default']
     TextBlock: typeof import('./src/components/TextBlock.vue')['default']
     TextBlockBubbleMenu: typeof import('./src/components/TextBlockBubbleMenu.vue')['default']
+    TopClicksList: typeof import('./src/components/Settings/TopClicksList.vue')['default']
+    TopReferrersList: typeof import('./src/components/Settings/TopReferrersList.vue')['default']
     TrackingDisabledNotice: typeof import('./src/components/Settings/TrackingDisabledNotice.vue')['default']
     VariableManager: typeof import('./src/components/Modals/VariableManager.vue')['default']
     VariantControl: typeof import('./src/components/Controls/VariantControl.vue')['default']
