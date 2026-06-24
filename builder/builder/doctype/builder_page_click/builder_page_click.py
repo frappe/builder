@@ -19,7 +19,7 @@ class BuilderPageClick(Document):
 		is_unique: DF.Check
 		path: DF.Data | None
 		tag: DF.Data | None
-		text: DF.SmallText | None
+		text: DF.Data | None
 		visitor_id: DF.Data | None
 	# end: auto-generated types
 

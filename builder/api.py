@@ -486,7 +486,7 @@ def make_click_log(
 	click.path = path
 	click.element = element
 	click.tag = tag
-	click.text = text
+	click.text = text[:140] if text else text  # cap server-side; deferred_insert skips controller validation
 	click.href = href
 	click.is_unique = is_unique
 	click.visitor_id = visitor_id

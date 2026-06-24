@@ -34,7 +34,7 @@
   },
   {
    "fieldname": "text",
-   "fieldtype": "Small Text",
+   "fieldtype": "Data",
    "label": "Text",
    "set_only_once": 1
   },
