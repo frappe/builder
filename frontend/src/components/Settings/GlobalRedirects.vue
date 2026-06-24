@@ -1,108 +1,154 @@
 <template>
-	<div class="flex-1 overflow-y-hidden">
-		<form @submit.prevent="addRedirect" class="mb-5">
-			<div class="flex gap-2 px-[2px] py-2">
-				<BuilderInput v-model="redirectMap.from" placeholder="From" :hideClearButton="true" required />
-				<BuilderInput v-model="redirectMap.to" placeholder="To" :hideClearButton="true" required />
-			</div>
-			<div class="mr-1 justify-self-end py-1">
-				<Button type="submit" label="Add Redirect" variant="ghost" iconLeft="lucide-plus" />
-			</div>
-		</form>
-		<div
-			v-if="!rows.length && !searchQuery.from && !searchQuery.to"
-			class="flex h-full flex-col items-center justify-center">
-			<div class="h-28 text-base text-ink-gray-4">No redirects set</div>
+	<div class="flex h-full flex-col">
+		<div class="mb-3">
+			<BuilderInput
+				:modelValue="searchQuery"
+				@input="(val: string) => (searchQuery = val)"
+				@update:modelValue="(val: string) => (searchQuery = val)"
+				type="text"
+				placeholder="Search redirects"
+				class="w-full"
+				icon-left="search" />
 		</div>
-		<div v-else class="h-full text-sm">
+
+		<div class="min-h-0 flex-1 overflow-y-auto">
 			<div
-				class="sticky top-0 flex gap-2 rounded-t-md border-b border-outline-gray-1 bg-surface-gray-1 px-[2px] text-ink-gray-5">
-				<BuilderInput v-model="searchQuery.from" placeholder="From URL" />
-				<BuilderInput v-model="searchQuery.to" placeholder="To URL" />
+				class="sticky top-0 z-10 border-b border-outline-gray-1 bg-surface-base pb-2 pt-1 text-sm text-ink-gray-5"
+				:class="rowGridClass">
+				<div class="pl-2">From</div>
+				<div class="border-l border-outline-gray-1 pl-2">To</div>
+				<div></div>
 			</div>
-			<div class="h-[calc(100%-115px)] overflow-y-auto">
+
+			<button
+				v-if="!searchQuery.trim()"
+				class="flex w-full items-center gap-2 border-b border-outline-gray-1 px-2 py-2 text-sm text-ink-gray-5 hover:bg-surface-gray-1 hover:text-ink-gray-8"
+				@click="openAdd">
+				<span class="lucide-plus size-4" aria-hidden="true" />
+				Add Redirect
+			</button>
+
+			<div
+				v-for="row in rows"
+				:key="row.id"
+				data-row
+				:data-row-id="row.id"
+				class="group/row border-b border-outline-gray-1 py-1 hover:bg-surface-gray-1"
+				:class="rowGridClass">
 				<div
-					v-for="row in rows"
-					:key="row.id"
-					class="group flex items-center rounded-sm border-b border-outline-gray-1 px-2 py-2 text-sm text-ink-gray-7 hover:bg-surface-gray-2">
-					<div class="w-[calc(50%-.5rem)]">
-						<BuilderInput
-							v-if="editingRedirect === row.id"
-							v-model="editForm.from"
-							:hideClearButton="true"
-							class="text-sm"
-							@keyup.enter="saveRedirect(row.id)"
-							@keyup.escape="cancelEdit" />
-						<code
-							v-else
-							class="block cursor-pointer truncate rounded px-1 py-1 pr-2 hover:bg-surface-gray-1"
-							@click="startEdit(row.id, row.from, row.to)">
-							{{ row.from }}
-						</code>
-					</div>
-					<div class="w-[calc(50%-.5rem)] pl-3 pr-2">
-						<BuilderInput
-							v-if="editingRedirect === row.id"
-							v-model="editForm.to"
-							:hideClearButton="true"
-							class="pl-2 text-sm"
-							@keyup.enter="saveRedirect(row.id)"
-							@keyup.escape="cancelEdit" />
-						<code
-							v-else
-							class="block cursor-pointer truncate rounded px-1 py-1 hover:bg-surface-gray-1"
-							@click="startEdit(row.id, row.from, row.to)">
-							{{ row.to }}
-						</code>
-					</div>
-					<div class="flex gap-1">
-						<template v-if="editingRedirect === row.id">
-							<span
-								class="lucide-check size-3 cursor-pointer text-ink-gray-5 hover:text-ink-gray-9"
-								aria-hidden="true"
-								@click="saveRedirect(row.id)" />
-							<span
-								class="lucide-x size-3 cursor-pointer text-ink-gray-5 hover:text-ink-gray-9"
-								aria-hidden="true"
-								@click="cancelEdit" />
-						</template>
-						<span
-							v-else
-							class="lucide-trash size-3 cursor-pointer text-ink-gray-5 hover:text-ink-gray-9"
-							aria-hidden="true"
-							@click="deleteRedirect(row.id)" />
-					</div>
+					v-for="(field, i) in fields"
+					:key="field"
+					class="min-w-0"
+					:class="i === 1 && cellDividerClass"
+					@dblclick="startEdit(row, field)">
+					<BuilderInput
+						v-if="isEditing(row, field)"
+						:ref="focusInput"
+						:modelValue="editValue"
+						type="text"
+						:hideClearButton="true"
+						class="text-sm"
+						@input="(val: string) => (editValue = val)"
+						@focusout="commitEdit(row, field)"
+						@keydown.enter.prevent="commitEdit(row, field)"
+						@keydown.esc.stop.prevent="cancelEdit" />
+					<div
+						v-else
+						class="w-full min-w-0 cursor-default truncate rounded-sm px-2 py-1 text-sm text-ink-gray-8"
+						v-html="highlight(field, row[field])" />
+				</div>
+				<div class="flex justify-end">
+					<span
+						class="lucide-trash size-3.5 cursor-pointer text-ink-gray-5 opacity-0 hover:text-ink-gray-8 group-hover/row:opacity-100"
+						aria-hidden="true"
+						@click="deleteRedirect(row.id)" />
 				</div>
 			</div>
+
+			<div v-if="searchQuery.trim() && !rows.length" class="px-2 py-6 text-center text-sm text-ink-gray-5">
+				No redirects match "{{ searchQuery }}"
+			</div>
 		</div>
+
+		<Dialog
+			v-model="showAddDialog"
+			title="Add Redirect"
+			:actions="[{ label: 'Add Redirect', variant: 'solid', onClick: commitAdd }]">
+			<template #default>
+				<div class="flex flex-col gap-3">
+					<BuilderInput
+						v-for="field in fields"
+						:key="field"
+						required
+						:ref="(el) => field === 'from' && (addFromRef = el)"
+						:modelValue="draft[field]"
+						:label="field === 'from' ? 'From' : 'To'"
+						type="text"
+						:hideClearButton="true"
+						:placeholder="placeholders[field]"
+						@input="(val: string) => (draft[field] = val)"
+						@keydown.enter.prevent="commitAdd" />
+
+					<div class="mt-1 text-xs">
+						<p class="mb-2 text-ink-gray-5">Examples</p>
+						<div class="grid w-fit grid-cols-[auto_auto_auto_1fr] items-center gap-x-3 gap-y-1.5">
+							<template v-for="example in examples" :key="example.label">
+								<code class="font-mono text-ink-gray-7" v-html="highlight('from', example.from)" />
+								<span class="lucide-arrow-right size-3 text-ink-gray-4" aria-hidden="true" />
+								<code class="font-mono text-ink-gray-7" v-html="highlight('to', example.to)" />
+								<span class="pl-4 text-ink-gray-5">{{ example.label }}</span>
+							</template>
+						</div>
+					</div>
+				</div>
+			</template>
+		</Dialog>
 	</div>
 </template>
 <script setup lang="ts">
 import routeRedirects from "@/data/routeRedirects";
 import { confirm } from "@/utils/helpers";
-import { computed, onMounted, ref } from "vue";
-import { toast } from "frappe-ui";
+import { highlightSource, highlightTarget } from "@/utils/redirectSyntax";
+import { Dialog, toast } from "frappe-ui";
+import { computed, nextTick, onMounted, ref } from "vue";
 
-const redirectMap = ref({ from: "", to: "" });
-const searchQuery = ref({ from: "", to: "" });
-const editingRedirect = ref<string | null>(null);
-const editForm = ref({ from: "", to: "" });
+type Field = "from" | "to";
+type RedirectRow = { id: string; from: string; to: string };
+
+const rowGridClass = "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_28px] items-center gap-x-2 px-1";
+const cellDividerClass = "border-l border-outline-gray-1 pl-2";
+const fields = ["from", "to"] as const;
+const placeholders: Record<Field, string> = { from: "/old-path", to: "/new-path" };
+
+const highlight = (field: Field, value: string) =>
+	field === "to" ? highlightTarget(value) : highlightSource(value);
+
+const examples = [
+	{ from: "/old-page", to: "/new-page", label: "Exact path" },
+	{ from: "/docs", to: "https://example.com/docs", label: "External URL" },
+	{ from: "/blog/(.*)", to: "/news/\\1", label: "Regex capture" },
+];
+
+const searchQuery = ref("");
+const showAddDialog = ref(false);
+const draft = ref<Record<Field, string>>({ from: "", to: "" });
+const addFromRef = ref<any>(null);
+
+const focusInput = (el: any) => el?.$el?.querySelector?.("input")?.focus();
 
 onMounted(() => routeRedirects.fetch());
 
-const rows = computed(() =>
-	(routeRedirects.data || [])
-		.map((redirect: { source: string; target: string; name: string }) => ({
-			from: redirect.source,
-			to: redirect.target,
-			id: redirect.name,
-		}))
+const findIndex = (id: string) => routeRedirects.data.findIndex((r: any) => r.name === id);
+
+const rows = computed<RedirectRow[]>(() => {
+	const query = searchQuery.value.toLowerCase().trim();
+	return (routeRedirects.data || [])
+		.map((r: any): RedirectRow => ({ id: r.name, from: r.source, to: r.target }))
 		.filter(
-			(row: { from: string; to: string; id: string }) =>
-				row.from.toLowerCase().includes(searchQuery.value.from.toLowerCase()) &&
-				row.to.toLowerCase().includes(searchQuery.value.to.toLowerCase()),
-		),
-);
+			(row: RedirectRow) =>
+				!query || row.from.toLowerCase().includes(query) || row.to.toLowerCase().includes(query),
+		);
+});
 
 const performOptimisticUpdate = (
 	operation: () => Promise<any>,
@@ -118,9 +164,17 @@ const performOptimisticUpdate = (
 	});
 };
 
-const addRedirect = () => {
-	const { from, to } = redirectMap.value;
+const openAdd = async () => {
+	draft.value = { from: "", to: "" };
+	showAddDialog.value = true;
+	await nextTick();
+	focusInput(addFromRef.value);
+};
+
+const commitAdd = () => {
+	const { from, to } = draft.value;
 	if (!from || !to) return;
+	showAddDialog.value = false;
 
 	const tempId = `temp_${Date.now()}`;
 	performOptimisticUpdate(
@@ -135,54 +189,63 @@ const addRedirect = () => {
 		() => {
 			if (!routeRedirects.data) routeRedirects.data = [];
 			routeRedirects.data.unshift({ source: from, target: to, name: tempId });
-			redirectMap.value = { from: "", to: "" };
 		},
 		() => {
-			const index = routeRedirects.data.findIndex((r: any) => r.name === tempId);
-			if (index !== -1) routeRedirects.data.splice(index, 1);
+			const i = findIndex(tempId);
+			if (i !== -1) routeRedirects.data.splice(i, 1);
 		},
 		{ loading: "Adding redirect...", success: "Redirect added", error: "Error adding redirect" },
 	);
 };
 
-const deleteRedirect = async (id: string) => {
-	const redirect = rows.value.find((row: any) => row.id === id);
-	const message = redirect
-		? `Are you sure you want to delete the redirect from "${redirect.from}" to "${redirect.to}"?`
-		: "Are you sure you want to delete this redirect?";
+const editing = ref<{ id: string; field: Field } | null>(null);
+const editValue = ref("");
 
-	if (await confirm(message)) {
-		const index = routeRedirects.data.findIndex((r: any) => r.name === id);
-		const backup = index !== -1 ? { ...routeRedirects.data[index] } : null;
+const isEditing = (row: RedirectRow, field: Field) =>
+	editing.value?.id === row.id && editing.value?.field === field;
 
-		performOptimisticUpdate(
-			() => routeRedirects.delete.submit(id),
-			() => index !== -1 && routeRedirects.data.splice(index, 1),
-			() => backup && index !== -1 && routeRedirects.data.splice(index, 0, backup),
-			{ loading: "Deleting redirect...", success: "Redirect deleted", error: "Error deleting redirect" },
-		);
+const startEdit = (row: RedirectRow, field: Field) => {
+	editing.value = { id: row.id, field };
+	editValue.value = row[field];
+};
+
+const cancelEdit = () => (editing.value = null);
+
+const commitEdit = (row: RedirectRow, field: Field) => {
+	if (!isEditing(row, field)) return;
+	const value = editValue.value.trim();
+	editing.value = null;
+	if (value && value !== row[field]) {
+		const next = { ...row, [field]: value };
+		updateRedirect(row.id, next.from, next.to);
 	}
 };
 
 const updateRedirect = (id: string, from: string, to: string) => {
-	const index = routeRedirects.data.findIndex((r: any) => r.name === id);
+	const index = findIndex(id);
+	const backup = index !== -1 ? { ...routeRedirects.data[index] } : null;
 	performOptimisticUpdate(
 		() => routeRedirects.setValue.submit({ name: id, source: from, target: to }),
 		() => index !== -1 && Object.assign(routeRedirects.data[index], { source: from, target: to }),
-		() => routeRedirects.fetch(),
+		() => backup && Object.assign(routeRedirects.data[index], backup),
 		{ loading: "Updating redirect...", success: "Redirect updated", error: "Error updating redirect" },
 	);
 };
 
-const startEdit = (id: string, from: string, to: string) => (
-	(editingRedirect.value = id), (editForm.value = { from, to })
-);
+const deleteRedirect = async (id: string) => {
+	const row = rows.value.find((r) => r.id === id);
+	const message = row
+		? `Are you sure you want to delete the redirect from "${row.from}" to "${row.to}"?`
+		: "Are you sure you want to delete this redirect?";
+	if (!(await confirm(message))) return;
 
-const cancelEdit = () => ((editingRedirect.value = null), (editForm.value = { from: "", to: "" }));
-const saveRedirect = (id: string) => {
-	if (editForm.value.from && editForm.value.to) {
-		updateRedirect(id, editForm.value.from, editForm.value.to);
-		cancelEdit();
-	}
+	const index = findIndex(id);
+	const backup = index !== -1 ? { ...routeRedirects.data[index] } : null;
+	performOptimisticUpdate(
+		() => routeRedirects.delete.submit(id),
+		() => index !== -1 && routeRedirects.data.splice(index, 1),
+		() => backup && routeRedirects.data.splice(index, 0, backup),
+		{ loading: "Deleting redirect...", success: "Redirect deleted", error: "Error deleting redirect" },
+	);
 };
 </script>
