@@ -437,6 +437,66 @@ def get_overall_analytics(
 	)
 
 
+@frappe.whitelist()
+@has_page_read("You do not have permission to view analytics.")
+def get_page_ctr(
+	route: str | None = None,
+	from_date: str | None = None,
+	to_date: str | None = None,
+	route_filter_type: str = "wildcard",
+):
+	return builder_analytics.get_page_ctr(
+		route=route,
+		from_date=from_date,
+		to_date=to_date,
+		route_filter_type=route_filter_type,
+	)
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+def make_click_log(
+	element: str | None = None,
+	tag: str | None = None,
+	text: str | None = None,
+	href: str | None = None,
+	visitor_id: str | None = None,
+):
+	"""Autocapture a click on a published Builder page. Mirrors Frappe's make_view_log so
+	clicks share the exact same `path` (derived from the Referer) as Web Page View rows."""
+	from frappe.website.doctype.web_page_view.web_page_view import is_tracking_enabled
+
+	if not is_tracking_enabled():
+		return
+
+	path = frappe.request.headers.get("Referer")
+	if not frappe.utils.is_site_link(path):
+		return
+
+	path = urlparse(path).path
+	if path != "/" and path.startswith("/"):
+		path = path[1:]
+	if path.startswith(("api/", "app/", "assets/", "private/files/")):
+		return
+
+	is_unique = bool(visitor_id) and not frappe.db.exists(
+		"Builder Page Click", {"visitor_id": visitor_id, "path": path, "element": element or ""}
+	)
+
+	click = frappe.new_doc("Builder Page Click")
+	click.path = path
+	click.element = element
+	click.tag = tag
+	click.text = text[:140] if text else text  # cap server-side; deferred_insert skips controller validation
+	click.href = href
+	click.is_unique = is_unique
+	click.visitor_id = visitor_id
+
+	try:
+		click.deferred_insert()
+	except Exception:
+		frappe.log_error("Failed to log builder page click")
+
+
 def get_keys_for_autocomplete(
 	key: str,
 	value: Any,

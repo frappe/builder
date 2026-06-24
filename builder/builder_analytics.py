@@ -5,6 +5,7 @@ import frappe
 import pandas as pd
 
 DUCKDB_TABLE = "web_page_views"
+CLICKS_TABLE = "web_page_clicks"
 
 
 class DuckDBConnection:
@@ -37,6 +38,10 @@ def get_date_filter(from_date: str | None = None, to_date: str | None = None) ->
 
 def get_empty_analytics():
 	return {"total_unique_views": 0, "total_views": 0, "data": [], "top_referrers": []}
+
+
+def get_empty_ctr():
+	return {"total_views": 0, "total_clicks": 0, "ctr": 0, "elements": []}
 
 
 def get_route_filter(route: str | None = None, route_filter_type: str = "wildcard") -> tuple[str, list]:
@@ -74,27 +79,47 @@ def build_where_clause(
 	return where_clause, params
 
 
-def setup_duckdb_table(table_name=DUCKDB_TABLE):
+VIEW_FIELDS = ["creation", "is_unique", "path", "referrer", "time_zone", "user_agent"]
+CLICK_FIELDS = ["creation", "is_unique", "path", "element", "tag", "text", "href", "visitor_id"]
+
+
+def duckdb_column_cast(field: str) -> str:
+	"""DuckDB cast for a source column when (re)building a table from a DataFrame snapshot."""
+	if field == "creation":
+		return "TRY_CAST(creation AS TIMESTAMP) as creation"
+	if field == "is_unique":
+		# is_unique is a string on Web Page View and an int on Builder Page Click; normalize both to 0/1
+		return "CAST(COALESCE(NULLIF(CAST(is_unique AS VARCHAR), ''), '0') AS INTEGER) as is_unique"
+	return f"CAST({field} AS VARCHAR) as {field}"
+
+
+def duckdb_insert_placeholder(field: str) -> str:
+	"""DuckDB VALUES() placeholder matching duckdb_column_cast for incremental inserts."""
+	if field == "creation":
+		return "TRY_CAST(? AS TIMESTAMP)"
+	if field == "is_unique":
+		return "CAST(COALESCE(NULLIF(CAST(? AS VARCHAR), ''), '0') AS INTEGER)"
+	return "?"
+
+
+def setup_table(table_name: str, doctype: str, fields: list[str]):
+	"""(Re)build a DuckDB table as a full snapshot of `doctype`."""
 	with DuckDBConnection() as db:
-		sql_connection = frappe.db.get_connection()
-		df = pd.read_sql(
-			"SELECT creation, is_unique, path, referrer, time_zone, user_agent FROM `tabWeb Page View`",
-			sql_connection,  # type: ignore
-		)
+		df = pd.read_sql(f"SELECT {', '.join(fields)} FROM `tab{doctype}`", frappe.db.get_connection())  # type: ignore
 		db.register("df", df)
-		db.execute(
-			f"CREATE OR REPLACE TABLE {table_name} AS SELECT TRY_CAST(creation AS TIMESTAMP) as creation, CAST(CASE WHEN is_unique = '' OR is_unique IS NULL THEN '0' ELSE CAST(is_unique AS VARCHAR) END AS INTEGER) as is_unique, CAST(path AS VARCHAR) as path, CAST(referrer AS VARCHAR) as referrer, CAST(time_zone AS VARCHAR) as time_zone, CAST(user_agent AS VARCHAR) as user_agent FROM df"
-		)
-		print(f"Successfully ingested {len(df)} records into DuckDB")
+		select_cols = ", ".join(duckdb_column_cast(f) for f in fields)
+		db.execute(f"CREATE OR REPLACE TABLE {table_name} AS SELECT {select_cols} FROM df")
+		frappe.logger().info(f"Ingested {len(df)} {doctype} records into DuckDB ({table_name})")
 
 
-def ingest_web_page_views_to_duckdb(table_name=DUCKDB_TABLE):
+def ingest_to_duckdb(doctype: str, table_name: str, fields: list[str]):
+	"""Incrementally append new `doctype` rows into its DuckDB table, recreating it if missing or stale."""
 	with DuckDBConnection() as db:
 		table_exists = db.execute(
 			f"SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '{table_name}'"
 		).fetchone()
 		if table_exists and table_exists[0] == 0:
-			setup_duckdb_table(table_name)
+			setup_table(table_name, doctype, fields)
 			return
 
 		# Recreate table if creation column has a stale/incompatible type (not TIMESTAMP)
@@ -102,22 +127,15 @@ def ingest_web_page_views_to_duckdb(table_name=DUCKDB_TABLE):
 			f"SELECT data_type FROM information_schema.columns WHERE table_name = '{table_name}' AND column_name = 'creation'"
 		).fetchone()
 		if col_type and col_type[0].upper() != "TIMESTAMP":
-			print(f"Recreating {table_name}: creation column type is {col_type[0]}, expected TIMESTAMP")
-			setup_duckdb_table(table_name)
+			frappe.logger().info(
+				f"Recreating {table_name}: creation column type is {col_type[0]}, expected TIMESTAMP"
+			)
+			setup_table(table_name, doctype, fields)
 			return
 
-		result = db.execute(f"SELECT MAX(creation) FROM {table_name}").fetchone()
-		last_record = result[0] if result and result[0] else None
-
-		filters = {"creation": [">", last_record]} if last_record else {}
-
-		total_count = frappe.db.count("Web Page View", filters=filters)
-		print(f"Starting ingestion of {total_count} records...")
-
+		columns = ", ".join(fields)
+		placeholders = ", ".join(duckdb_insert_placeholder(f) for f in fields)
 		page_size = 20000
-		start = 0
-		processed = 0
-
 		db.begin()
 
 		while True:
@@ -126,9 +144,9 @@ def ingest_web_page_views_to_duckdb(table_name=DUCKDB_TABLE):
 
 			filters = {"creation": [">", last_record]} if last_record else {}
 			records = frappe.get_all(
-				"Web Page View",
+				doctype,
 				filters=filters,
-				fields=["creation", "is_unique", "path", "referrer", "time_zone", "user_agent"],
+				fields=fields,
 				as_list=True,
 				limit=page_size,
 				order_by="creation asc",
@@ -137,22 +155,20 @@ def ingest_web_page_views_to_duckdb(table_name=DUCKDB_TABLE):
 			if not records:
 				break
 
-			db.executemany(
-				f"INSERT INTO {table_name} (creation, is_unique, path, referrer, time_zone, user_agent) VALUES (TRY_CAST(? AS TIMESTAMP), CAST(COALESCE(NULLIF(?, ''), '0') AS INTEGER), ?, ?, ?, ?)",
-				records,
-			)
-
-			processed += len(records)
-			progress = (processed / total_count) * 100 if total_count > 0 else 100
-			print(f"Progress: {processed}/{total_count} ({progress:.1f}%) records ingested")
+			db.executemany(f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})", records)
 
 			if len(records) < page_size:
 				break
 
-			start += page_size
-
 		db.commit()
-		print(f"Successfully ingested {processed} records into DuckDB")
+
+
+def setup_duckdb_table(table_name=DUCKDB_TABLE):
+	setup_table(table_name, "Web Page View", VIEW_FIELDS)
+
+
+def ingest_web_page_views_to_duckdb(table_name=DUCKDB_TABLE):
+	ingest_to_duckdb("Web Page View", table_name, VIEW_FIELDS)
 
 
 def get_interval_formats(interval):
@@ -354,3 +370,89 @@ def enqueue_web_page_view_ingesion():
 		"builder.builder_analytics.ingest_web_page_views_to_duckdb",
 		queue="long",
 	)
+
+
+def setup_clicks_table(table_name=CLICKS_TABLE):
+	setup_table(table_name, "Builder Page Click", CLICK_FIELDS)
+
+
+def ingest_clicks_to_duckdb(table_name=CLICKS_TABLE):
+	ingest_to_duckdb("Builder Page Click", table_name, CLICK_FIELDS)
+
+
+def get_page_ctr(
+	route: str | None = None,
+	from_date: str | None = None,
+	to_date: str | None = None,
+	route_filter_type: str = "wildcard",
+):
+	"""Click-through rate per page/element: clicks (from web_page_clicks) over page views
+	(from web_page_views), joined on the shared `path`."""
+	try:
+		date_filter, _ = get_date_filter(from_date, to_date)
+		if not date_filter:
+			return get_empty_ctr()
+
+		where_clause, params = build_where_clause(route, from_date, to_date, route_filter_type)
+
+		with DuckDBConnection() as db:
+			total_views = (
+				db.execute(f"SELECT COUNT(*) FROM {DUCKDB_TABLE} WHERE {where_clause}", params).fetchone()[0]
+				or 0
+			)
+			total_clicks = (
+				db.execute(f"SELECT COUNT(*) FROM {CLICKS_TABLE} WHERE {where_clause}", params).fetchone()[0]
+				or 0
+			)
+
+			# element label falls back element-name -> visible text -> href -> tag
+			element_rows = db.execute(
+				f"""
+				WITH clicks AS (
+					SELECT
+						path,
+						COALESCE(NULLIF(element, ''), NULLIF(text, ''), NULLIF(href, ''), tag) AS label,
+						ANY_VALUE(tag) AS tag,
+						ANY_VALUE(text) AS text,
+						ANY_VALUE(href) AS href,
+						COUNT(*) AS clicks,
+						SUM(is_unique) AS unique_clicks
+					FROM {CLICKS_TABLE}
+					WHERE {where_clause}
+					GROUP BY path, label
+				),
+				views AS (
+					SELECT path, COUNT(*) AS views FROM {DUCKDB_TABLE} WHERE {where_clause} GROUP BY path
+				)
+				SELECT clicks.label, clicks.tag, clicks.text, clicks.href, clicks.path,
+					clicks.clicks, clicks.unique_clicks, COALESCE(views.views, 0) AS views
+				FROM clicks
+				LEFT JOIN views ON clicks.path = views.path
+				ORDER BY clicks.clicks DESC
+				LIMIT 50
+				""",
+				params + params,
+			).fetchall()
+
+		return {
+			"total_views": total_views,
+			"total_clicks": total_clicks,
+			"ctr": round(total_clicks / total_views * 100, 2) if total_views else 0,
+			"elements": [
+				{
+					"label": r[0],
+					"tag": r[1],
+					"text": r[2],
+					"href": r[3],
+					"route": r[4],
+					"clicks": r[5],
+					"unique_clicks": r[6],
+					"views": r[7],
+					"ctr": round(r[5] / r[7] * 100, 2) if r[7] else 0,
+				}
+				for r in element_rows
+			],
+		}
+	except Exception as e:
+		frappe.log_error("DuckDB CTR Error", str(e))
+		return get_empty_ctr()
