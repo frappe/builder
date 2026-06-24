@@ -267,8 +267,8 @@ class BuilderPage(WebsiteGenerator):
 		self.published = 1
 		self.published_at = now()
 		if self.draft_blocks:
-			# snapshot the content going live; blocks already carry componentVersion pins
-			# from when each component was used in the page (pinned at drag-drop)
+			# snapshot the content going live; blocks (ideally) already carry componentVersion pins
+			# from when each component was used in the page (pinned at drag-drop), if not they are pinned now
 			take_snapshot(
 				"Builder Page",
 				self.name,
